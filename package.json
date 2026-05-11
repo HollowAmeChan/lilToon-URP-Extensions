@@ -1,0 +1,21 @@
+{
+  "name": "jp.lilxyzw.liltoon.urp.extensions",
+  "version": "0.1.0",
+  "displayName": "lilToon URP Extensions",
+  "description": "URP renderer extensions for lilToon, starting with Weighted OIT support.",
+  "unity": "2022.3",
+  "dependencies": {
+    "com.unity.render-pipelines.universal": "14.0.0"
+  },
+  "keywords": [
+    "lilToon",
+    "URP",
+    "OIT",
+    "Transparency",
+    "Renderer Feature"
+  ],
+  "author": {
+    "name": "lilToon URP Extensions contributors"
+  },
+  "license": "MIT"
+}
