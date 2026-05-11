@@ -7,7 +7,7 @@ float _lilOITAlphaClipThreshold;
 struct lilWeightedOITOutput
 {
     float4 accumulation : SV_Target0;
-    float4 coverage : SV_Target1;
+    float4 revealage : SV_Target1;
 };
 
 float lilWeightedOITCalculateWeight(float alpha, float linearDepth)
@@ -25,8 +25,8 @@ lilWeightedOITOutput lilWeightedOITResolveOutput(float4 color, float linearDepth
     float weight = lilWeightedOITCalculateWeight(alpha, linearDepth);
 
     lilWeightedOITOutput output;
-    output.accumulation = float4(color.rgb * alpha * weight, alpha * weight);
-    output.coverage = float4(alpha, 0.0, 0.0, 0.0);
+    output.accumulation = float4(color.rgb * weight, alpha * weight);
+    output.revealage = float4(alpha, 0.0, 0.0, 0.0);
     return output;
 }
 
