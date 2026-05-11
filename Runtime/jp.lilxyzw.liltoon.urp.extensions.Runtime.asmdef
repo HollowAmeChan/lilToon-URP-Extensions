@@ -2,6 +2,7 @@
   "name": "jp.lilxyzw.liltoon.urp.extensions.Runtime",
   "rootNamespace": "lilToon.URP.Extensions",
   "references": [
+    "Unity.RenderPipelines.Core.Runtime",
     "Unity.RenderPipelines.Universal.Runtime"
   ],
   "includePlatforms": [],
