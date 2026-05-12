@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.OIT
@@ -67,6 +68,9 @@ namespace lilToon.URP.Extensions.OIT
             }
 
             clearPass.Setup(settings, renderTargets);
+            opaqueCopyPass.SetupRenderGraph(settings, renderTargets);
+            accumulationPass.SetupRenderGraph(settings, renderTargets);
+            compositePass.SetupRenderGraph(settings, renderTargets, compositeMaterial);
 
             renderer.EnqueuePass(clearPass);
             renderer.EnqueuePass(opaqueCopyPass);
@@ -150,6 +154,10 @@ namespace lilToon.URP.Extensions.OIT
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon Weighted OIT Reset");
 
+        private sealed class PassData
+        {
+        }
+
         public void Setup()
         {
             renderPassEvent = RenderPassEvent.BeforeRendering;
@@ -166,6 +174,19 @@ namespace lilToon.URP.Extensions.OIT
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
+
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+        {
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon Weighted OIT Reset", out _, ProfilingSampler))
+            {
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                {
+                    context.cmd.SetGlobalFloat(WeightedOITShaderConstants.OITActiveId, 0.0f);
+                });
+            }
+        }
     }
 
     internal sealed class WeightedOITOpaqueCopyPass : ScriptableRenderPass
@@ -174,9 +195,21 @@ namespace lilToon.URP.Extensions.OIT
         private RTHandle cameraColorTarget;
         private WeightedOITRenderTargets renderTargets;
 
+        private sealed class PassData
+        {
+            public TextureHandle source;
+            public Vector4 texelSize;
+        }
+
         public void Setup(WeightedOITSettings settings, RTHandle cameraColorTarget, WeightedOITRenderTargets renderTargets)
         {
             this.cameraColorTarget = cameraColorTarget;
+            this.renderTargets = renderTargets;
+            renderPassEvent = GetOpaqueCopyPassEvent(settings.accumulationPassEvent);
+        }
+
+        public void SetupRenderGraph(WeightedOITSettings settings, WeightedOITRenderTargets renderTargets)
+        {
             this.renderTargets = renderTargets;
             renderPassEvent = GetOpaqueCopyPassEvent(settings.accumulationPassEvent);
         }
@@ -197,6 +230,44 @@ namespace lilToon.URP.Extensions.OIT
 
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
+        }
+
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+        {
+            UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
+            WeightedOITRenderGraphResources oitResources = frameData.GetOrCreate<WeightedOITRenderGraphResources>();
+
+            TextureHandle source = resourceData.activeColorTexture;
+            if (!source.IsValid())
+            {
+                return;
+            }
+
+            TextureDesc destinationDesc = source.GetDescriptor(renderGraph);
+            destinationDesc.name = WeightedOITShaderConstants.OpaqueTextureName;
+            destinationDesc.clearBuffer = false;
+            destinationDesc.depthBufferBits = 0;
+            destinationDesc.msaaSamples = MSAASamples.None;
+            destinationDesc.filterMode = FilterMode.Bilinear;
+            destinationDesc.wrapMode = TextureWrapMode.Clamp;
+            TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
+            oitResources.opaqueTexture = destination;
+
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon Weighted OIT Opaque Copy", out var passData, ProfilingSampler))
+            {
+                passData.source = source;
+                passData.texelSize = GetTexelSize(destinationDesc);
+                builder.UseTexture(source, AccessFlags.Read);
+                builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
+                builder.SetGlobalTextureAfterPass(destination, WeightedOITShaderConstants.OpaqueTextureId);
+                builder.SetGlobalTextureAfterPass(destination, WeightedOITShaderConstants.CameraOpaqueTextureId);
+                builder.AllowGlobalStateModification(true);
+                builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                {
+                    Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), 0.0f, false);
+                    context.cmd.SetGlobalVector(WeightedOITShaderConstants.CameraOpaqueTextureTexelSizeId, data.texelSize);
+                });
+            }
         }
 
         private static RenderPassEvent GetOpaqueCopyPassEvent(RenderPassEvent accumulationPassEvent)
@@ -229,6 +300,21 @@ namespace lilToon.URP.Extensions.OIT
                     WeightedOITShaderConstants.CameraOpaqueTextureTexelSizeId,
                     new Vector4(1.0f / rt.width, 1.0f / rt.height, rt.width, rt.height));
             }
+        }
+
+        private static Vector4 GetTexelSize(RTHandle texture)
+        {
+            RenderTexture rt = texture != null ? texture.rt : null;
+            return rt != null
+                ? new Vector4(1.0f / rt.width, 1.0f / rt.height, rt.width, rt.height)
+                : Vector4.zero;
+        }
+
+        private static Vector4 GetTexelSize(TextureDesc textureDesc)
+        {
+            return textureDesc.width > 0 && textureDesc.height > 0
+                ? new Vector4(1.0f / textureDesc.width, 1.0f / textureDesc.height, textureDesc.width, textureDesc.height)
+                : Vector4.zero;
         }
     }
 
@@ -269,6 +355,30 @@ namespace lilToon.URP.Extensions.OIT
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
+
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+        {
+            UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
+            WeightedOITRenderGraphResources oitResources = frameData.GetOrCreate<WeightedOITRenderGraphResources>();
+
+            TextureDesc accumulationDesc = WeightedOITRenderGraphResources.CreateDescriptor(
+                cameraData.cameraTargetDescriptor,
+                settings,
+                GraphicsFormat.R16G16B16A16_SFloat,
+                WeightedOITShaderConstants.AccumulationTextureName,
+                Color.clear);
+            TextureDesc revealageDesc = WeightedOITRenderGraphResources.CreateDescriptor(
+                cameraData.cameraTargetDescriptor,
+                settings,
+                GraphicsFormat.R8_UNorm,
+                WeightedOITShaderConstants.RevealageTextureName,
+                Color.white);
+
+            TextureHandle accumulation = renderGraph.CreateTexture(accumulationDesc);
+            TextureHandle revealage = renderGraph.CreateTexture(revealageDesc);
+            oitResources.accumulationTexture = accumulation;
+            oitResources.revealageTexture = revealage;
+        }
     }
 
     internal sealed class WeightedOITAccumulationPass : ScriptableRenderPass
@@ -282,6 +392,14 @@ namespace lilToon.URP.Extensions.OIT
         private WeightedOITRenderTargets renderTargets;
         private RTHandle cameraDepthTarget;
 
+        private sealed class PassData
+        {
+            public RendererListHandle rendererList;
+            public TextureHandle opaqueTexture;
+            public float weight;
+            public float alphaClipThreshold;
+        }
+
         public WeightedOITAccumulationPass()
         {
             renderStateBlock = new RenderStateBlock(RenderStateMask.Nothing);
@@ -292,6 +410,19 @@ namespace lilToon.URP.Extensions.OIT
             this.settings = settings;
             this.renderTargets = renderTargets;
             this.cameraDepthTarget = cameraDepthTarget;
+            RenderQueueRange renderQueueRange = new RenderQueueRange
+            {
+                lowerBound = settings.minRenderQueue,
+                upperBound = settings.maxRenderQueue
+            };
+            filteringSettings = new FilteringSettings(renderQueueRange, settings.layerMask);
+            renderPassEvent = settings.accumulationPassEvent;
+        }
+
+        public void SetupRenderGraph(WeightedOITSettings settings, WeightedOITRenderTargets renderTargets)
+        {
+            this.settings = settings;
+            this.renderTargets = renderTargets;
             RenderQueueRange renderQueueRange = new RenderQueueRange
             {
                 lowerBound = settings.minRenderQueue,
@@ -352,6 +483,93 @@ namespace lilToon.URP.Extensions.OIT
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
+
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+        {
+            UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
+            UniversalRenderingData renderingData = frameData.Get<UniversalRenderingData>();
+            UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
+            UniversalLightData lightData = frameData.Get<UniversalLightData>();
+            WeightedOITRenderGraphResources oitResources = frameData.GetOrCreate<WeightedOITRenderGraphResources>();
+
+            TextureHandle accumulation = oitResources.accumulationTexture;
+            TextureHandle revealage = oitResources.revealageTexture;
+            if (!accumulation.IsValid() || !revealage.IsValid())
+            {
+                return;
+            }
+
+            TextureHandle opaque = oitResources.opaqueTexture;
+
+            DrawingSettings drawingSettings = RenderingUtils.CreateDrawingSettings(
+                shaderTagIds,
+                renderingData,
+                cameraData,
+                lightData,
+                SortingCriteria.CommonTransparent);
+
+            RendererListParams rendererListParams = new RendererListParams(
+                renderingData.cullResults,
+                drawingSettings,
+                filteringSettings);
+
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon Weighted OIT Accumulation", out var passData, ProfilingSampler))
+            {
+                passData.rendererList = renderGraph.CreateRendererList(rendererListParams);
+                passData.opaqueTexture = opaque;
+                passData.weight = settings.weight;
+                passData.alphaClipThreshold = settings.alphaClipThreshold;
+
+                if (!passData.rendererList.IsValid())
+                {
+                    return;
+                }
+
+                builder.UseRendererList(passData.rendererList);
+                if (opaque.IsValid())
+                {
+                    builder.UseTexture(opaque, AccessFlags.Read);
+                }
+
+                builder.SetRenderAttachment(accumulation, 0, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(revealage, 1, AccessFlags.ReadWrite);
+                if (CanUseDepthTarget(renderGraph, accumulation, resourceData.activeDepthTexture, settings))
+                {
+                    builder.SetRenderAttachmentDepth(resourceData.activeDepthTexture, AccessFlags.Read);
+                }
+
+                builder.SetGlobalTextureAfterPass(accumulation, WeightedOITShaderConstants.AccumulationTextureId);
+                builder.SetGlobalTextureAfterPass(revealage, WeightedOITShaderConstants.RevealageTextureId);
+                builder.AllowGlobalStateModification(true);
+                builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                {
+                    context.cmd.SetGlobalFloat(WeightedOITShaderConstants.OITActiveId, 1.0f);
+                    context.cmd.SetGlobalFloat("_lilOITWeight", data.weight);
+                    context.cmd.SetGlobalFloat("_lilOITAlphaClipThreshold", data.alphaClipThreshold);
+                    if (data.opaqueTexture.IsValid())
+                    {
+                        context.cmd.SetGlobalTexture(WeightedOITShaderConstants.OpaqueTextureId, data.opaqueTexture);
+                        context.cmd.SetGlobalTexture(WeightedOITShaderConstants.CameraOpaqueTextureId, data.opaqueTexture);
+                    }
+                    context.cmd.DrawRendererList(data.rendererList);
+                });
+            }
+        }
+
+        private static bool CanUseDepthTarget(RenderGraph renderGraph, TextureHandle colorTarget, TextureHandle depthTarget, WeightedOITSettings settings)
+        {
+            if (settings.renderScale != WeightedOITRenderScale.Full || !colorTarget.IsValid() || !depthTarget.IsValid())
+            {
+                return false;
+            }
+
+            TextureDesc colorDesc = colorTarget.GetDescriptor(renderGraph);
+            TextureDesc depthDesc = depthTarget.GetDescriptor(renderGraph);
+            return colorDesc.width == depthDesc.width &&
+                   colorDesc.height == depthDesc.height &&
+                   colorDesc.slices == depthDesc.slices &&
+                   colorDesc.msaaSamples == depthDesc.msaaSamples;
+        }
     }
 
     internal sealed class WeightedOITCompositePass : ScriptableRenderPass
@@ -361,6 +579,18 @@ namespace lilToon.URP.Extensions.OIT
         private WeightedOITRenderTargets renderTargets;
         private Material compositeMaterial;
 
+        private sealed class PassData
+        {
+            public TextureHandle source;
+            public TextureHandle accumulationTexture;
+            public TextureHandle revealageTexture;
+            public Material compositeMaterial;
+        }
+
+        private sealed class ResetPassData
+        {
+        }
+
         public void Setup(
             WeightedOITSettings settings,
             RTHandle cameraColorTarget,
@@ -368,6 +598,16 @@ namespace lilToon.URP.Extensions.OIT
             Material compositeMaterial)
         {
             this.cameraColorTarget = cameraColorTarget;
+            this.renderTargets = renderTargets;
+            this.compositeMaterial = compositeMaterial;
+            renderPassEvent = settings.compositePassEvent;
+        }
+
+        public void SetupRenderGraph(
+            WeightedOITSettings settings,
+            WeightedOITRenderTargets renderTargets,
+            Material compositeMaterial)
+        {
             this.renderTargets = renderTargets;
             this.compositeMaterial = compositeMaterial;
             renderPassEvent = settings.compositePassEvent;
@@ -410,6 +650,112 @@ namespace lilToon.URP.Extensions.OIT
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
+
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+        {
+            if (compositeMaterial == null)
+            {
+                AddResetPass(renderGraph);
+                return;
+            }
+
+            UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
+            WeightedOITRenderGraphResources oitResources = frameData.GetOrCreate<WeightedOITRenderGraphResources>();
+            TextureHandle source = resourceData.activeColorTexture;
+            TextureHandle accumulation = oitResources.accumulationTexture;
+            TextureHandle revealage = oitResources.revealageTexture;
+            if (!source.IsValid() || !accumulation.IsValid() || !revealage.IsValid())
+            {
+                AddResetPass(renderGraph);
+                return;
+            }
+
+            TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
+            destinationDesc.name = "_lilOITCompositeColor";
+            destinationDesc.clearBuffer = false;
+            destinationDesc.depthBufferBits = 0;
+            TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
+
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon Weighted OIT Composite", out var passData, ProfilingSampler))
+            {
+                passData.source = source;
+                passData.accumulationTexture = accumulation;
+                passData.revealageTexture = revealage;
+                passData.compositeMaterial = compositeMaterial;
+
+                builder.UseTexture(source, AccessFlags.Read);
+                builder.UseTexture(accumulation, AccessFlags.Read);
+                builder.UseTexture(revealage, AccessFlags.Read);
+                builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
+                builder.AllowGlobalStateModification(true);
+                builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                {
+                    context.cmd.SetGlobalTexture(WeightedOITShaderConstants.AccumulationTextureId, data.accumulationTexture);
+                    context.cmd.SetGlobalTexture(WeightedOITShaderConstants.RevealageTextureId, data.revealageTexture);
+                    Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.compositeMaterial, 0);
+                    context.cmd.SetGlobalFloat(WeightedOITShaderConstants.OITActiveId, 0.0f);
+                });
+            }
+
+            resourceData.cameraColor = destination;
+        }
+
+        private static void AddResetPass(RenderGraph renderGraph)
+        {
+            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("lilToon Weighted OIT Reset", out _, ProfilingSampler))
+            {
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (ResetPassData data, RasterGraphContext context) =>
+                {
+                    context.cmd.SetGlobalFloat(WeightedOITShaderConstants.OITActiveId, 0.0f);
+                });
+            }
+        }
+    }
+
+    internal sealed class WeightedOITRenderGraphResources : ContextItem
+    {
+        public TextureHandle accumulationTexture = TextureHandle.nullHandle;
+        public TextureHandle revealageTexture = TextureHandle.nullHandle;
+        public TextureHandle opaqueTexture = TextureHandle.nullHandle;
+
+        public override void Reset()
+        {
+            accumulationTexture = TextureHandle.nullHandle;
+            revealageTexture = TextureHandle.nullHandle;
+            opaqueTexture = TextureHandle.nullHandle;
+        }
+
+        public static TextureDesc CreateDescriptor(
+            RenderTextureDescriptor cameraTextureDescriptor,
+            WeightedOITSettings settings,
+            GraphicsFormat format,
+            string name,
+            Color clearColor)
+        {
+            int divisor = Mathf.Max(1, (int)settings.renderScale);
+            TextureDesc descriptor = new TextureDesc(
+                Mathf.Max(1, cameraTextureDescriptor.width / divisor),
+                Mathf.Max(1, cameraTextureDescriptor.height / divisor));
+            descriptor.name = name;
+            descriptor.format = format;
+            descriptor.dimension = cameraTextureDescriptor.dimension;
+            descriptor.slices = cameraTextureDescriptor.volumeDepth;
+            descriptor.depthBufferBits = 0;
+            descriptor.msaaSamples = divisor == 1
+                ? (MSAASamples)cameraTextureDescriptor.msaaSamples
+                : MSAASamples.None;
+            descriptor.clearBuffer = true;
+            descriptor.clearColor = clearColor;
+            descriptor.filterMode = FilterMode.Bilinear;
+            descriptor.wrapMode = TextureWrapMode.Clamp;
+            descriptor.bindTextureMS = cameraTextureDescriptor.bindMS && divisor == 1;
+            descriptor.useDynamicScale = cameraTextureDescriptor.useDynamicScale;
+            descriptor.useDynamicScaleExplicit = cameraTextureDescriptor.useDynamicScaleExplicit;
+            descriptor.vrUsage = cameraTextureDescriptor.vrUsage;
+            return descriptor;
+        }
     }
 
     internal sealed class WeightedOITRenderTargets
@@ -432,6 +778,7 @@ namespace lilToon.URP.Extensions.OIT
             int divisor = Mathf.Max(1, (int)settings.renderScale);
             RenderTextureDescriptor accumulationDescriptor = cameraTextureDescriptor;
             accumulationDescriptor.depthBufferBits = 0;
+            accumulationDescriptor.depthStencilFormat = GraphicsFormat.None;
             accumulationDescriptor.graphicsFormat = GraphicsFormat.R16G16B16A16_SFloat;
             accumulationDescriptor.width = Mathf.Max(1, accumulationDescriptor.width / divisor);
             accumulationDescriptor.height = Mathf.Max(1, accumulationDescriptor.height / divisor);
@@ -450,6 +797,7 @@ namespace lilToon.URP.Extensions.OIT
         public void ReAllocateOpaqueTexture(RenderTextureDescriptor cameraTextureDescriptor)
         {
             cameraTextureDescriptor.depthBufferBits = 0;
+            cameraTextureDescriptor.depthStencilFormat = GraphicsFormat.None;
             cameraTextureDescriptor.msaaSamples = 1;
             RenderingUtils.ReAllocateIfNeeded(ref opaqueTexture, cameraTextureDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: WeightedOITShaderConstants.OpaqueTextureName);
         }
@@ -457,6 +805,7 @@ namespace lilToon.URP.Extensions.OIT
         public void ReAllocateCompositeSource(RenderTextureDescriptor cameraTextureDescriptor)
         {
             cameraTextureDescriptor.depthBufferBits = 0;
+            cameraTextureDescriptor.depthStencilFormat = GraphicsFormat.None;
             cameraTextureDescriptor.msaaSamples = 1;
             RenderingUtils.ReAllocateIfNeeded(ref compositeSourceTexture, cameraTextureDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: WeightedOITShaderConstants.CompositeSourceTextureName);
         }
