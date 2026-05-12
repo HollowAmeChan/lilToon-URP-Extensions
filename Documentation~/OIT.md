@@ -1,64 +1,55 @@
-# lilToon URP Weighted OIT Implementation Notes
+# lilToon URP 加权 OIT 实现笔记
 
-This document records the completed Weighted OIT integration between the
-`lilToon` fork and the companion `lilToon-URP-Extensions` package.
+本文记录 `lilToon` fork 与配套 `lilToon-URP-Extensions` 包之间已经完成的加权 OIT 集成。
 
-It is intentionally written as an implementation case study, not just a feature
-overview. The goal is to preserve the architecture, the actual file-level
-workflow, and the traps that were found while debugging RenderDoc captures.
+它不是单纯的功能概览，而是一份实现案例笔记。目标是保留架构、实际到文件级别的工作流，以及通过 RenderDoc 抓帧调试时踩到的坑。
 
-## Final Goal
+## 最终目标
 
-The feature adds optional Weighted Order-Independent Transparency for lilToon
-transparent shaders under URP.
+这个功能为 URP 下的 lilToon 透明 shader 增加可选的加权 Order-Independent Transparency，也就是加权 OIT。
 
-When a material enables `_lilOITEnabled`:
+当材质启用 `_lilOITEnabled` 时：
 
-- lilToon writes transparent color into OIT accumulation and revealage buffers.
-- The URP renderer feature composites the resolved transparent result back into
-  camera color.
-- Skybox-only backgrounds work.
-- Overlapping transparent lilToon objects no longer depend on object sorting in
-  the same way as regular alpha blending.
+- lilToon 会把透明颜色写入 OIT accumulation 与 revealage 缓冲。
+- URP Renderer Feature 会把解析后的透明结果合成回相机颜色。
+- 只有 skybox 作为背景时也能正常工作。
+- 多个透明 lilToon 对象重叠时，不再像普通 alpha blending 那样强依赖对象排序。
 
-The implementation target is:
+实现目标环境是：
 
 - Unity 2022.3
 - URP 14.x
-- lilToon fork shader-template layout
-- `lilToon-URP-Extensions` as an external renderer-feature package
+- lilToon fork 的 shader-template 布局
+- `lilToon-URP-Extensions` 作为外部 Renderer Feature 包
 
-## Architecture
+## 架构
 
-The implementation is split across two repositories on purpose.
+实现有意拆在两个仓库里。
 
-### lilToon fork side
+### lilToon fork 侧
 
-The lilToon fork owns material properties, shader template assembly, and shader
-fragment output.
+lilToon fork 负责材质属性、shader 模板组装，以及 shader 片元输出。
 
-It adds:
+它增加了：
 
-- A material property named `_lilOITEnabled`.
-- URP use-pass templates that include a `LILTOON_OIT` pass.
-- A shared `lil_oit.hlsl` include that converts lilToon forward color into MRT
-  OIT output.
-- Forward shader guards that skip the normal forward transparent pass while the
-  OIT accumulation pass is active.
+- 名为 `_lilOITEnabled` 的材质属性。
+- 包含 `LILTOON_OIT` pass 的 URP use-pass 模板。
+- 共享的 `lil_oit.hlsl` include，用来把 lilToon forward color 转换成 MRT OIT 输出。
+- forward shader guard，用来在 OIT accumulation pass 激活时跳过普通 forward transparent pass。
 
-The shader pass tag used for OIT is:
+OIT 使用的 shader pass tag 是：
 
 ```shaderlab
 Tags {"LightMode" = "lilToonOIT"}
 ```
 
-This is the contract consumed by the extension package.
+这是扩展包消费的契约。
 
-### URP extension side
+### URP 扩展侧
 
-The extension package owns URP render target allocation and render pass timing.
+扩展包负责 URP 渲染目标分配和 render pass 时机。
 
-It adds:
+它增加了：
 
 - `WeightedOITRendererFeature`
 - `WeightedOITClearPass`
@@ -66,50 +57,44 @@ It adds:
 - `WeightedOITAccumulationPass`
 - `WeightedOITCompositePass`
 - `WeightedOITComposite.shader`
-- OIT shader constants and settings
+- OIT shader 常量与设置
 
-The renderer feature draws only passes tagged with `LightMode = lilToonOIT`.
-It does not know about lilToon material internals except the global shader
-properties used by the OIT include.
+Renderer Feature 只绘制带有 `LightMode = lilToonOIT` tag 的 pass。除了 OIT include 使用的全局 shader 属性之外，它不需要知道 lilToon 材质内部细节。
 
-## Data Flow
+## 数据流
 
-The intended frame flow is:
+预期的每帧流程是：
 
-1. Reset `_lilOITActive` to `0` when each camera starts rendering.
-2. Render opaque objects.
-3. Render skybox.
-4. Copy camera color after skybox into `_lilOITOpaqueTexture`.
-5. Clear OIT accumulation to transparent black.
-6. Clear OIT revealage to white.
-7. Draw lilToon objects with `LightMode = lilToonOIT`.
-8. Set `_lilOITActive = 1` only while drawing the OIT accumulation pass.
-9. Composite accumulation and revealage over the camera color target.
-10. Set `_lilOITActive = 0` again after composite.
+1. 每个相机开始渲染时，把 `_lilOITActive` 重置为 `0`。
+2. 渲染 opaque 对象。
+3. 渲染 skybox。
+4. 在 skybox 之后，把 camera color 复制到 `_lilOITOpaqueTexture`。
+5. 将 OIT accumulation 清成透明黑。
+6. 将 OIT revealage 清成白色。
+7. 绘制带有 `LightMode = lilToonOIT` 的 lilToon 对象。
+8. 只在绘制 OIT accumulation pass 时设置 `_lilOITActive = 1`。
+9. 将 accumulation 与 revealage 合成到 camera color target 上。
+10. composite 结束后再次设置 `_lilOITActive = 0`。
 
-The background copy is also published as `_CameraOpaqueTexture` during the OIT
-draw. This lets existing lilToon background/refraction macros continue to sample
-a useful skybox-inclusive background without rewriting all shader-side sampling
-sites.
+在 OIT draw 期间，背景拷贝也会作为 `_CameraOpaqueTexture` 发布。这样现有的 lilToon 背景/折射宏仍然可以采样到包含 skybox 的有效背景，不需要重写所有 shader 侧的采样点。
 
-## Weighted OIT Buffers
+## 加权 OIT 缓冲
 
-The shader writes two MRT outputs:
+shader 会写入两个 MRT 输出：
 
 - `_lilOITAccumulationTexture`
 - `_lilOITRevealageTexture`
 
-The lilToon OIT include currently uses:
+lilToon 的 OIT include 当前使用：
 
 ```hlsl
 output.accumulation = float4(color.rgb * alpha * weight, alpha * weight);
 output.revealage = float4(alpha, 0.0, 0.0, 0.0);
 ```
 
-The accumulation buffer stores weighted premultiplied color and total weight.
-The revealage buffer is blended separately by the pass blend state.
+accumulation 缓冲保存加权后的预乘颜色和总权重。revealage 缓冲由 pass 的 blend state 单独混合。
 
-Composite resolves:
+composite 的解析逻辑是：
 
 ```hlsl
 transparentColor = accumulation.rgb / max(accumulation.a, epsilon);
@@ -117,140 +102,116 @@ transparentAlpha = saturate(1.0 - revealage);
 cameraColor.rgb = lerp(cameraColor.rgb, transparentColor, transparentAlpha);
 ```
 
-## Render Pass Timing
+## Render Pass 时机
 
-The important URP timing choices are:
+几个重要的 URP 时机选择是：
 
-- Opaque background copy: after skybox, before OIT accumulation.
-- OIT accumulation: `BeforeRenderingTransparents`.
-- OIT composite: `AfterRenderingTransparents`.
+- opaque 背景拷贝：skybox 之后，OIT accumulation 之前。
+- OIT accumulation：`BeforeRenderingTransparents`。
+- OIT composite：`AfterRenderingTransparents`。
 
-URP normally draws skybox after opaque objects and before transparent objects.
-That ordering is correct and should not be fought. The OIT system needs a
-background texture captured after skybox, not a second manual skybox draw.
+URP 通常会在 opaque 对象之后、transparent 对象之前绘制 skybox。这个顺序是正确的，不应该绕开它。OIT 系统需要的是一张在 skybox 之后捕获的背景纹理，而不是再手动绘制一次 skybox。
 
-## Background And Skybox
+## 背景与 Skybox
 
-An early bug made OIT objects too dark when their background was only skybox.
+早期有一个 bug：当 OIT 对象背后只有 skybox 时，对象会显得太暗。
 
-The cause was that the shader-side background sampling path ultimately relied on
-`_CameraOpaqueTexture`, but URP's opaque texture path does not necessarily give
-the OIT shader a skybox-inclusive texture in this custom timing.
+原因是 shader 侧的背景采样路径最终依赖 `_CameraOpaqueTexture`，但在这个自定义时机里，URP 的 opaque texture 路径不一定会给 OIT shader 一张包含 skybox 的纹理。
 
-The working solution is:
+有效的解决方案是：
 
-1. After skybox, copy the camera color target into `_lilOITOpaqueTexture`.
-2. Bind that texture as both:
+1. skybox 之后，把 camera color target 复制到 `_lilOITOpaqueTexture`。
+2. 将这张纹理同时绑定为：
    - `_lilOITOpaqueTexture`
    - `_CameraOpaqueTexture`
-3. Also update `_CameraOpaqueTexture_TexelSize`.
+3. 同时更新 `_CameraOpaqueTexture_TexelSize`。
 
-This preserves lilToon's existing `LIL_GET_BG_TEX` / `LIL_GET_GRAB_TEX` style
-paths while giving OIT shaders the right background.
+这样既保留了 lilToon 现有的 `LIL_GET_BG_TEX` / `LIL_GET_GRAB_TEX` 风格路径，又能给 OIT shader 正确的背景。
 
-## Render Queue Notes
+## Render Queue 说明
 
-lilToon transparent shaders intentionally use:
+lilToon 透明 shader 有意使用：
 
 ```shaderlab
 "RenderType" = "TransparentCutout"
 "Queue" = "AlphaTest+10"
 ```
 
-This is not an accident. lilToon also defaults transparent `_ZWrite` to `1`.
-That combination makes many toon/avatar transparent surfaces behave more like a
-depth-stable alpha-test-adjacent object than a normal Unity transparent object.
+这不是失误。lilToon 的透明 `_ZWrite` 默认也为 `1`。这个组合会让很多 toon/avatar 透明表面表现得更像一个深度稳定、接近 alpha-test 的对象，而不是普通 Unity 透明对象。
 
-This is useful for regular lilToon rendering, especially for character parts
-such as hair, eyelashes, and layered clothing where stable self-occlusion is
-often more important than physically correct alpha sorting.
+这对常规 lilToon 渲染很有用，尤其是头发、睫毛、叠层衣物这类角色部件。对这些部件来说，稳定的自遮挡通常比物理正确的 alpha 排序更重要。
 
-However, this queue choice complicates OIT:
+不过，这个队列选择会让 OIT 复杂化：
 
-- `AlphaTest+10` is still in the opaque/alpha-test range.
-- It renders before skybox in URP.
-- Regular forward rendering can appear before the OIT pass.
+- `AlphaTest+10` 仍然在 opaque/alpha-test 范围里。
+- 它在 URP 中会早于 skybox 渲染。
+- 常规 forward 渲染可能出现在 OIT pass 之前。
 
-The final implementation does not globally change lilToon's queue. Changing all
-transparent shaders to `Transparent` would alter existing material behavior too
-much. Instead, OIT is added as an optional pass and renderer-feature path.
+最终实现没有全局修改 lilToon 的队列。把所有透明 shader 改到 `Transparent` 会过度改变现有材质行为。因此，OIT 被实现为一个可选 pass 和 Renderer Feature 路径。
 
-If a future version chooses to force OIT materials into queue 3000, do it as a
-material-level opt-in and verify that the OIT accumulation and composite passes
-are definitely producing output first. During debugging, forcing queue 3000 too
-early made OIT materials disappear because the normal forward pass was skipped
-but OIT accumulation was invalid.
+如果未来版本选择把 OIT 材质强制放进 queue 3000，应该把它做成材质级 opt-in，并先确认 OIT accumulation 和 composite pass 一定有输出。调试时过早强制 queue 3000 曾经导致 OIT 材质消失，因为普通 forward pass 已经被跳过，但 OIT accumulation 还无效。
 
 ## `_lilOITActive`
 
-`_lilOITActive` is a global shader state used as a handshake between the
-extension package and lilToon shader code.
+`_lilOITActive` 是扩展包与 lilToon shader 代码之间握手用的全局 shader 状态。
 
-In the regular forward shader path:
+在常规 forward shader 路径中：
 
 ```hlsl
 clip(0.5 - _lilOITEnabled * _lilOITActive);
 ```
 
-This prevents OIT-enabled materials from also drawing in the regular forward
-path while the OIT accumulation pass is active.
+这会阻止启用了 OIT 的材质在 OIT accumulation pass 激活时同时走普通 forward 路径绘制。
 
-Important rule:
+重要规则：
 
-`_lilOITActive` must be reset to `0` for every camera.
+`_lilOITActive` 必须针对每个相机重置为 `0`。
 
-It is global, so if one camera leaves it as `1`, editor preview or scene camera
-paths can lose OIT-enabled materials while non-OIT materials continue to draw.
-The extension registers `RenderPipelineManager.beginCameraRendering` to reset
-the value before each camera begins.
+它是全局状态。如果某个相机把它留在 `1`，editor preview 或 scene camera 路径可能会丢失 OIT 材质，而非 OIT 材质仍然继续绘制。扩展通过注册 `RenderPipelineManager.beginCameraRendering`，在每个相机开始前重置该值。
 
-## Render Target Sizing And MSAA
+## Render Target 尺寸与 MSAA
 
-The largest practical bug in this implementation was not shader math. It was
-illegal render target binding.
+这个实现里最大的实际 bug 不是 shader 数学，而是非法的 render target 绑定。
 
-RenderDoc showed this D3D warning:
+RenderDoc 显示了这条 D3D 警告：
 
 ```text
 Invalid output merger - Depth target is different size or MS count to render target(s).
 ```
 
-Two captures exposed two variants:
+两次抓帧暴露了两个变体：
 
-- OIT accumulation was `238x790`, but camera depth had a different size.
-- OIT accumulation was `1056x790` non-MSAA, but camera depth was `1056x790 MSAA8x`.
+- OIT accumulation 是 `238x790`，但 camera depth 是另一个尺寸。
+- OIT accumulation 是 `1056x790` 非 MSAA，但 camera depth 是 `1056x790 MSAA8x`。
 
-When this happens, the OIT accumulation pass can silently fail to write useful
-results. If the regular forward path is skipped, OIT objects disappear.
+发生这种情况时，OIT accumulation pass 可能会静默失败，写不出有效结果。如果普通 forward 路径又被跳过，OIT 对象就会消失。
 
-The final rules are:
+最终规则是：
 
-- Full scale OIT keeps the camera descriptor MSAA sample count.
-- Half/Quarter OIT forces `msaaSamples = 1`.
-- The accumulation pass binds camera depth only when color and depth match:
+- Full scale OIT 保留 camera descriptor 的 MSAA sample count。
+- Half/Quarter OIT 强制 `msaaSamples = 1`。
+- 只有当 color 和 depth 匹配时，accumulation pass 才绑定 camera depth：
   - width
   - height
   - volume depth
   - anti-aliasing sample count
-- If they do not match, the pass binds only the OIT MRTs.
+- 如果不匹配，该 pass 只绑定 OIT MRT。
 
-This avoids invalid output merger state and makes the feature work in Game view
-and Scene view.
+这样可以避免非法 output merger 状态，并让功能在 Game view 和 Scene view 中都能工作。
 
-## Files Changed: lilToon Fork
+## lilToon Fork 中变更的文件
 
-### Base shader resources
+### 基础 shader 资源
 
-Transparent shader descriptors were switched to OIT-aware URP use-pass blocks.
-Affected families include:
+透明 shader descriptor 已切换到支持 OIT 的 URP use-pass block。受影响的系列包括：
 
 - `lts*_trans*.lilinternal`
 - `lts*_onetrans*.lilinternal`
 - `lts*_twotrans*.lilinternal`
 - `lts*_overlay*.lilinternal`
-- lite and tessellation variants
+- lite 和 tessellation 变体
 
-These files select blocks such as:
+这些文件会选择类似下面的 block：
 
 - `DefaultUsePassOIT`
 - `DefaultUsePassOutlineOIT`
@@ -258,15 +219,15 @@ These files select blocks such as:
 - `DefaultUsePassOutlineTwoSideOIT`
 - `DefaultUsePassOverlayOIT`
 
-### URP shader templates
+### URP shader 模板
 
-OIT passes were added to the hidden pass shaders:
+OIT pass 被加入到隐藏 pass shader：
 
 - `Assets/lilToon/CustomShaderResources/URP/DefaultTwoSide.lilblock`
 - `Assets/lilToon/CustomShaderResources/URP/DefaultLiteTwoSide.lilblock`
 - `Assets/lilToon/CustomShaderResources/URP/DefaultTessellationTwoSide.lilblock`
 
-The pass uses:
+该 pass 使用：
 
 ```shaderlab
 Name "LILTOON_OIT"
@@ -278,9 +239,9 @@ Blend 0 One One
 Blend 1 Zero OneMinusSrcColor
 ```
 
-### URP use-pass templates
+### URP use-pass 模板
 
-New URP use-pass templates route transparent shaders to the OIT pass:
+新的 URP use-pass 模板会把透明 shader 路由到 OIT pass：
 
 - `DefaultUsePassOIT.lilblock`
 - `DefaultUsePassOutlineOIT.lilblock`
@@ -288,29 +249,28 @@ New URP use-pass templates route transparent shaders to the OIT pass:
 - `DefaultUsePassOutlineTwoSideOIT.lilblock`
 - `DefaultUsePassOverlayOIT.lilblock`
 
-These keep the regular lilToon passes and add:
+这些模板保留常规 lilToon pass，并额外加入：
 
 ```shaderlab
 UsePass "*LIL_PASS_SHADER_NAME*/LILTOON_OIT"
 ```
 
-### Material property and Inspector
+### 材质属性与 Inspector
 
-The transparent property block adds:
+透明属性 block 增加：
 
 ```shaderlab
 [lilToggle] _lilOITEnabled ("Weighted OIT", Int) = 0
 ```
 
-Inspector changes:
+Inspector 变更：
 
-- `lilMaterialProperties.cs` binds `_lilOITEnabled`.
-- `lilPropertyGroupDrawerBaseSetting.cs` displays the toggle only for URP
-  transparent materials.
+- `lilMaterialProperties.cs` 绑定 `_lilOITEnabled`。
+- `lilPropertyGroupDrawerBaseSetting.cs` 只在 URP 透明材质中显示该 toggle。
 
-### Shader includes
+### Shader include
 
-Changed/added includes:
+变更/新增的 include：
 
 - `Shader/Includes/lil_oit.hlsl`
 - `Shader/Includes/lil_common_input.hlsl`
@@ -319,26 +279,25 @@ Changed/added includes:
 - `Shader/Includes/lil_pass_forward_normal.hlsl`
 - `Shader/Includes/lil_pass_forward_lite.hlsl`
 
-`lil_pass_forward_*` switches the fragment return type to an MRT output for
-`LIL_OIT_PASS` and calls `LIL_OIT_RETURN(...)` instead of normal output.
+`lil_pass_forward_*` 会在 `LIL_OIT_PASS` 下把 fragment return type 切换成 MRT 输出，并调用 `LIL_OIT_RETURN(...)`，而不是常规输出。
 
-## Files Changed: URP Extension Package
+## URP 扩展包中变更的文件
 
 ### Runtime/OIT/WeightedOITRendererFeature.cs
 
-Owns render pass orchestration:
+负责 render pass 编排：
 
-- reset global OIT state per camera
-- allocate OIT RTs
-- copy skybox-inclusive background
-- clear accumulation/revealage
-- draw `lilToonOIT` shader-tag pass
-- composite back to camera color
-- release RTHandles
+- 按相机重置全局 OIT 状态
+- 分配 OIT RT
+- 复制包含 skybox 的背景
+- 清理 accumulation/revealage
+- 绘制 `lilToonOIT` shader-tag pass
+- 合成回 camera color
+- 释放 RTHandle
 
 ### Runtime/OIT/WeightedOITShaderConstants.cs
 
-Centralizes shader names and property IDs:
+集中管理 shader 名称和 property ID：
 
 - `_lilOITAccumulationTexture`
 - `_lilOITRevealageTexture`
@@ -350,91 +309,87 @@ Centralizes shader names and property IDs:
 
 ### Runtime/OIT/WeightedOITComposite.shader
 
-Fullscreen composite shader. It samples:
+Fullscreen composite shader。它会采样：
 
-- `_BlitTexture` for current camera color
+- `_BlitTexture`，即当前 camera color
 - `_lilOITAccumulationTexture`
 - `_lilOITRevealageTexture`
 
-Then resolves weighted color over camera color.
+然后把加权透明颜色解析到 camera color 上。
 
 ### Runtime/OIT/WeightedOIT.hlsl
 
-Package-side helper include retained for extension consumers. The lilToon fork
-currently has its own `lil_oit.hlsl` include because it is integrated into the
-lilToon shader generation pipeline.
+保留给扩展包使用者的 package-side helper include。lilToon fork 目前有自己的 `lil_oit.hlsl` include，因为它已经集成进 lilToon 的 shader 生成管线。
 
-## Debugging Timeline And Traps
+## 调试时间线与坑点
 
-### 1. Skybox-only background was dark
+### 1. 只有 skybox 背景时画面偏暗
 
-Symptom:
+现象：
 
-- OIT object looked correct when opaque objects were behind it.
-- OIT object looked too dark when only skybox was behind it.
+- OIT 对象背后有 opaque 对象时看起来正确。
+- OIT 对象背后只有 skybox 时看起来太暗。
 
-Cause:
+原因：
 
-- OIT shader background sampling did not have a skybox-inclusive texture.
+- OIT shader 的背景采样没有拿到包含 skybox 的纹理。
 
-Fix:
+修复：
 
-- Copy camera color after skybox.
-- Publish the copy as `_CameraOpaqueTexture` for the OIT draw.
+- 在 skybox 之后复制 camera color。
+- 在 OIT draw 期间把该拷贝发布为 `_CameraOpaqueTexture`。
 
-### 2. Forcing queue 3000 made objects disappear
+### 2. 强制 queue 3000 导致对象消失
 
-Symptom:
+现象：
 
-- Moving OIT materials into the transparent queue made them disappear.
+- 把 OIT 材质移到 transparent queue 后对象消失。
 
-Cause:
+原因：
 
-- The regular forward pass was skipped by `_lilOITActive`.
-- The OIT accumulation pass was failing because render target binding was
-  invalid.
+- 普通 forward pass 被 `_lilOITActive` 跳过。
+- OIT accumulation pass 因为 render target 绑定非法而失败。
 
-Lesson:
+经验：
 
-- Queue issues were real, but they were not the first bug to fix.
-- Always confirm accumulation and composite are actually producing output before
-  changing material queue behavior.
+- 队列问题确实存在，但它不是第一个要修的 bug。
+- 在修改材质队列行为前，一定要先确认 accumulation 和 composite 确实在产出结果。
 
-### 3. RenderDoc exposed invalid output merger state
+### 3. RenderDoc 暴露非法 output merger 状态
 
-Symptom:
+现象：
 
-- OIT effect unstable or invisible in Scene view / camera preview.
+- OIT 效果在 Scene view / camera preview 中不稳定或不可见。
 
-RenderDoc warning:
+RenderDoc 警告：
 
 ```text
 Invalid output merger - Depth target is different size or MS count to render target(s).
 ```
 
-Fix:
+修复：
 
-- Match MSAA in full-scale OIT RTs.
-- Bind camera depth only when compatible.
+- Full-scale OIT RT 匹配 MSAA。
+- 只有 depth 兼容时才绑定 camera depth。
 
-### 4. Preview/camera state could lose OIT objects
+### 4. Preview/camera 状态可能丢失 OIT 对象
 
-Symptom:
+现象：
 
-- OIT objects missing in preview paths while non-OIT objects were visible.
+- preview 路径里 OIT 对象丢失，而非 OIT 对象可见。
 
-Cause:
+原因：
 
-- `_lilOITActive` is global state.
+- `_lilOITActive` 是全局状态。
 
-Fix:
+修复：
 
-- Reset `_lilOITActive` at `RenderPipelineManager.beginCameraRendering`.
-- Also keep a preview reset pass as a defensive fallback.
+- 在 `RenderPipelineManager.beginCameraRendering` 重置 `_lilOITActive`。
+- 同时保留 preview reset pass 作为防御性兜底。
 
-## How To Verify
+## 如何验证
 
-In Frame Debugger or RenderDoc, look for:
+在 Frame Debugger 或 RenderDoc 中查找：
 
 ```text
 lilToon Weighted OIT Opaque Copy
@@ -443,56 +398,49 @@ lilToon Weighted OIT Accumulation
 lilToon Weighted OIT Composite
 ```
 
-Check that:
+确认：
 
-- OIT accumulation draw calls exist.
-- No `Invalid output merger` warnings appear.
-- `_lilOITAccumulationTexture` size and MSAA match camera depth when depth is
-  bound.
-- Skybox is visible through OIT-only objects.
-- OIT and non-OIT transparent objects can coexist.
+- 存在 OIT accumulation draw call。
+- 没有出现 `Invalid output merger` 警告。
+- 绑定 depth 时，`_lilOITAccumulationTexture` 的尺寸和 MSAA 与 camera depth 匹配。
+- skybox 可以透过只启用 OIT 的对象看到。
+- OIT 和非 OIT 透明对象可以共存。
 
-If OIT objects disappear:
+如果 OIT 对象消失：
 
-1. Check whether the composite shader was found.
-2. Check whether `lilToon Weighted OIT Accumulation` has draw calls.
-3. Check RenderDoc warnings for RT/depth size or MSAA mismatch.
-4. Check whether `_lilOITActive` is stuck at `1` outside the accumulation pass.
-5. Check material render queue overrides; manually forced queue 3000 can hide
-   other bugs.
+1. 检查 composite shader 是否找到。
+2. 检查 `lilToon Weighted OIT Accumulation` 是否有 draw call。
+3. 检查 RenderDoc 警告里是否有 RT/depth 尺寸或 MSAA 不匹配。
+4. 检查 `_lilOITActive` 是否在 accumulation pass 外卡在 `1`。
+5. 检查材质 render queue override；手动强制 queue 3000 可能会掩盖其他 bug。
 
-## Extension And lilToon Contract
+## 扩展包与 lilToon 的契约
 
-The package/fork boundary is deliberately narrow.
+package/fork 边界刻意保持得很窄。
 
-lilToon promises:
+lilToon 承诺：
 
-- OIT-enabled transparent shaders expose `_lilOITEnabled`.
-- OIT-capable shaders include a pass tagged `LightMode = lilToonOIT`.
-- That pass writes MRT accumulation/revealage output.
-- Regular forward passes respect `_lilOITActive`.
+- 启用 OIT 的透明 shader 暴露 `_lilOITEnabled`。
+- 支持 OIT 的 shader 包含带有 `LightMode = lilToonOIT` tag 的 pass。
+- 该 pass 写入 MRT accumulation/revealage 输出。
+- 常规 forward pass 尊重 `_lilOITActive`。
 
-The extension promises:
+扩展包承诺：
 
-- Allocate and bind the MRTs.
-- Set OIT global constants.
-- Draw only the `lilToonOIT` pass in the accumulation stage.
-- Provide a skybox-inclusive background texture.
-- Composite the final result back to camera color.
-- Reset global OIT state for every camera.
+- 分配并绑定 MRT。
+- 设置 OIT 全局常量。
+- 在 accumulation 阶段只绘制 `lilToonOIT` pass。
+- 提供包含 skybox 的背景纹理。
+- 将最终结果合成回 camera color。
+- 为每个相机重置全局 OIT 状态。
 
-Keeping this contract small makes future lilToon shader changes easier and keeps
-URP renderer-feature code independent from lilToon editor internals.
+保持这个契约足够小，可以让未来 lilToon shader 修改更容易，也让 URP Renderer Feature 代码独立于 lilToon editor 内部实现。
 
-## Practical Guidance For Future Changes
+## 后续修改的实践建议
 
-- Do not globally change lilToon's transparent queue without checking existing
-  avatar/toon material behavior.
-- Do not draw skybox manually as a substitute for a background texture.
-- Do not bind camera depth to scaled OIT RTs unless dimensions and MSAA match.
-- Do not leave `_lilOITActive` set after the accumulation pass.
-- Use RenderDoc early. The fastest path to the final fix was the D3D output
-  merger warning, not shader-side visual guessing.
-- Treat generated `Assets/lilToon/Shader/*.shader` files as verification
-  output. Long-term edits belong in `.lilinternal`, `.lilblock`, editor binding,
-  or HLSL include files.
+- 不要在没有检查现有 avatar/toon 材质行为的情况下全局修改 lilToon 的 transparent queue。
+- 不要手动绘制 skybox 来替代背景纹理。
+- 除非尺寸和 MSAA 匹配，否则不要把 camera depth 绑定到缩放过的 OIT RT。
+- 不要在 accumulation pass 结束后让 `_lilOITActive` 保持开启。
+- 尽早使用 RenderDoc。最终最快定位修复的是 D3D output merger 警告，而不是 shader 侧视觉猜测。
+- 把生成的 `Assets/lilToon/Shader/*.shader` 文件当作验证输出。长期编辑应放在 `.lilinternal`、`.lilblock`、editor binding 或 HLSL include 文件中。
