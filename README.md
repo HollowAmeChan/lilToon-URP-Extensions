@@ -37,3 +37,11 @@ Weighted OIT is implemented as a production-facing first milestone:
 The matching lilToon fork supplies `_lilOITEnabled`, `LILTOON_OIT` passes, and `lil_oit.hlsl`.
 
 See `Documentation~/OIT.md` for implementation notes, debugging steps, and known edge cases around skybox backgrounds, render scale, MSAA, and Scene view.
+
+## Planar Reflection
+
+`LILPlanarReflectionSurface` is a shared planar reflection runtime for flat mirrors, polished floors, and water-like sheets. Add it to the reflective mesh, then use a shader/material that samples `_LILPBRPlanarReflectionTexture`.
+
+The modified lilPBR shader already has a `Planar Reflection` foldout that consumes this texture through per-renderer material property blocks.
+
+See `Documentation~/PlanarReflection.md` for setup notes.
