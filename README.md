@@ -21,8 +21,19 @@ Add this folder as a local Unity Package Manager package.
 }
 ```
 
-This package expects Unity 2022.3, URP 14.x, and the lilToon fork in the project. lilToon is treated as a peer requirement for now so local `Assets/lilToon` installs do not break UPM dependency resolution.
+This package expects Unity 6000.0, URP 17.3.0, and the lilToon fork in the project. lilToon is treated as a peer requirement for now so local `Assets/lilToon` installs do not break UPM dependency resolution.
 
 ## Current Status
 
-The package shell and OIT renderer feature entry point are in place. Rendering passes are intentionally stubbed until the accumulation, revealage, and composite shaders are added.
+Weighted OIT is implemented as a production-facing first milestone:
+
+- `WeightedOITRendererFeature` allocates accumulation and revealage render targets.
+- The opaque camera color is copied after skybox and exposed as `_lilOITOpaqueTexture` and `_CameraOpaqueTexture`.
+- The accumulation pass draws only shader passes tagged `LightMode = "lilToonOIT"`.
+- The composite pass blends accumulation and revealage back into the camera color target.
+- `_lilOITActive` is reset per camera and only enabled while the accumulation pass is drawing.
+- RenderGraph and non-RenderGraph paths are both present.
+
+The matching lilToon fork supplies `_lilOITEnabled`, `LILTOON_OIT` passes, and `lil_oit.hlsl`.
+
+See `Documentation~/OIT.md` for implementation notes, debugging steps, and known edge cases around skybox backgrounds, render scale, MSAA, and Scene view.
