@@ -2,7 +2,7 @@
 
 Shoost v0.16.3 看起来是以 Unity Post Processing Stack v2 作为后处理宿主框架，再整合多个外部后处理包，最后叠加一层 `Custom/*` 自定义效果、改版效果和预设。
 
-重要提醒：Shoost 经 AssetRipper 解包得到的大多数 shader 都包含 `//DummyShaderTextExporter`。这些 shader 通常只适合参考名称、属性和材质引用，不要当作真实算法源码。
+重要提醒：Shoost 经 AssetRipper 解包得到的大多数 shader 都包含 `//DummyShaderTextExporter`。这些 shader 通常只适合参考名称、属性和材质引用，不要当作真实算法源码。Shoost 自定义 shader 目前应优先参考 `D:\Unity_Fork\Shoost_v0.16.3\RenderDocShaderDump` 中的 DXBC 反汇编，并结合 `D:\Unity_Fork\Shoost_v0.16.3\DecompileWorkFiles\Cpp2ILOutputs\ISIL` 里的 C# renderer 流程重写。
 
 ## Unity Post Processing Stack v2
 
@@ -214,4 +214,3 @@ Shoost 解包工程主要用于参考参数名、参数范围、菜单路径、�
 - `RLProTVEffect_Custom`
 - `CRTEffects`
 - `Tube`
-
