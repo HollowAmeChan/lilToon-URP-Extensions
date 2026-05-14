@@ -47,6 +47,62 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "RetroLookPro TV Effect"
         };
 
+        private static readonly GUIContent[] BlendModeDisplayNames =
+        {
+            new GUIContent("正常"),
+            new GUIContent("相加"),
+            new GUIContent("正片叠底"),
+            new GUIContent("滤色"),
+            new GUIContent("变暗"),
+            new GUIContent("颜色加深"),
+            new GUIContent("线性加深"),
+            new GUIContent("变亮"),
+            new GUIContent("颜色减淡"),
+            new GUIContent("叠加"),
+            new GUIContent("柔光"),
+            new GUIContent("强光"),
+            new GUIContent("亮光"),
+            new GUIContent("线性光"),
+            new GUIContent("点光"),
+            new GUIContent("实色混合"),
+            new GUIContent("差值"),
+            new GUIContent("排除"),
+            new GUIContent("减去"),
+            new GUIContent("划分"),
+            new GUIContent("色相"),
+            new GUIContent("饱和度"),
+            new GUIContent("颜色"),
+            new GUIContent("明度")
+        };
+
+        private static readonly int[] BlendModeValues =
+        {
+            (int)ShoostPostProcessBlendMode.Normal,
+            (int)ShoostPostProcessBlendMode.Add,
+            (int)ShoostPostProcessBlendMode.Multiply,
+            (int)ShoostPostProcessBlendMode.Screen,
+            (int)ShoostPostProcessBlendMode.Darken,
+            (int)ShoostPostProcessBlendMode.ColorBurn,
+            (int)ShoostPostProcessBlendMode.LinearBurn,
+            (int)ShoostPostProcessBlendMode.Lighten,
+            (int)ShoostPostProcessBlendMode.ColorDodge,
+            (int)ShoostPostProcessBlendMode.Overlay,
+            (int)ShoostPostProcessBlendMode.SoftLight,
+            (int)ShoostPostProcessBlendMode.HardLight,
+            (int)ShoostPostProcessBlendMode.VividLight,
+            (int)ShoostPostProcessBlendMode.LinearLight,
+            (int)ShoostPostProcessBlendMode.PinLight,
+            (int)ShoostPostProcessBlendMode.HardMix,
+            (int)ShoostPostProcessBlendMode.Difference,
+            (int)ShoostPostProcessBlendMode.Exclusion,
+            (int)ShoostPostProcessBlendMode.Subtract,
+            (int)ShoostPostProcessBlendMode.Divide,
+            (int)ShoostPostProcessBlendMode.Hue,
+            (int)ShoostPostProcessBlendMode.Saturation,
+            (int)ShoostPostProcessBlendMode.Color,
+            (int)ShoostPostProcessBlendMode.Luminosity
+        };
+
         private SerializedDataParameter enable;
         private SerializedDataParameter showInSceneView;
         private SerializedProperty layers;
@@ -69,6 +125,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             layerList.drawHeaderCallback = DrawHeader;
             layerList.elementHeightCallback = GetElementHeight;
             layerList.drawElementCallback = DrawElement;
+            layerList.onAddCallback = AddLayer;
         }
 
         public override void OnInspectorGUI()
@@ -144,6 +201,16 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return (LineHeight + LineSpacing) * 16.0f + 12.0f;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.LUTColorGrading)
+            {
+                return (LineHeight + LineSpacing) * 17.0f + 12.0f;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.LevelAdjustment)
+            {
+                return (LineHeight + LineSpacing) * 16.0f + 12.0f;
+            }
+
             return (LineHeight + LineSpacing) * 18.0f + 12.0f;
         }
 
@@ -183,11 +250,44 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             if (GetEffect(element) == ShoostPostProcessEffect.VignetteCustom)
             {
                 DrawVignetteCustomElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.LUTColorGrading)
+            {
+                DrawLutColorGradingElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.LevelAdjustment)
+            {
+                DrawLevelAdjustmentElement(rect, element);
             }
             else
             {
                 DrawSimpleLayerElement(rect, element);
             }
+        }
+
+        private void AddLayer(ReorderableList list)
+        {
+            if (list == null || list.serializedProperty == null)
+            {
+                return;
+            }
+
+            serializedObject.Update();
+
+            SerializedProperty array = list.serializedProperty;
+            int index = array.arraySize;
+            array.InsertArrayElementAtIndex(index);
+
+            SerializedProperty element = array.GetArrayElementAtIndex(index);
+            ResetLayerDefaults(element);
+            element.isExpanded = true;
+            list.index = index;
+
+            serializedObject.ApplyModifiedProperties();
         }
 
         private SerializedProperty GetLayerProperty(int index)
@@ -264,6 +364,108 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             y = DrawSliderLine(rect.x, y, rect.width, "柔和度", vignetteParams.w, 0.0f, 1.0f, value => vignetteParams.w = value);
             parameters0.vector4Value = vignetteParams;
 
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawLutColorGradingElement(Rect rect, SerializedProperty element)
+        {
+            SerializedProperty texture = element.FindPropertyRelative("texture");
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
+
+            EnsureLutColorGradingDefaults(parameters1);
+
+            float y = rect.y;
+            y = DrawFoldoutLine(rect, y, element);
+            if (!element.isExpanded)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeParameters: false);
+            y = DrawPropertyLine(rect.x, y, rect.width, texture, "LUT 贴图");
+
+            Vector4 colorParams = parameters0.vector4Value;
+            Vector4 contributionParams = parameters1.vector4Value;
+            colorParams.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "色温", colorParams.x, -100.0f, 100.0f);
+            y += LineHeight + LineSpacing;
+            colorParams.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "色调", colorParams.y, -100.0f, 100.0f);
+            y += LineHeight + LineSpacing;
+            colorParams.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "饱和度", colorParams.z, -100.0f, 100.0f);
+            y += LineHeight + LineSpacing;
+            colorParams.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "亮度", colorParams.w, -100.0f, 100.0f);
+            y += LineHeight + LineSpacing;
+            contributionParams.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "对比度", contributionParams.x, -100.0f, 100.0f);
+            y += LineHeight + LineSpacing;
+            contributionParams.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "LUT 贡献", contributionParams.y, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+
+            parameters0.vector4Value = colorParams;
+            parameters1.vector4Value = contributionParams;
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawLevelAdjustmentElement(Rect rect, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
+            SerializedProperty parameters2 = element.FindPropertyRelative("parameters2");
+            SerializedProperty parameters3 = element.FindPropertyRelative("parameters3");
+
+            EnsureLevelAdjustmentDefaults(parameters0, parameters1, parameters2, parameters3);
+
+            float y = rect.y;
+            y = DrawFoldoutLine(rect, y, element);
+            if (!element.isExpanded)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeParameters: false);
+
+            Vector4 rgbParams = parameters0.vector4Value;
+            Vector4 rgbModeParams = parameters1.vector4Value;
+            Vector4 channelParams = parameters2.vector4Value;
+            Vector4 channelOutputParams = parameters3.vector4Value;
+
+            int channel = Mathf.Clamp(Mathf.RoundToInt(rgbModeParams.y), 0, 3);
+            channel = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "调整范围", channel, new[] { "RGB", "红通道", "绿通道", "蓝通道" });
+            rgbModeParams.y = channel;
+            y += LineHeight + LineSpacing;
+
+            if (channel == 0)
+            {
+                rgbParams.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "输入黑场", rgbParams.x, 0.0f, 1.0f);
+                y += LineHeight + LineSpacing;
+                rgbParams.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "输入白场", rgbParams.y, 0.0f, 1.0f);
+                y += LineHeight + LineSpacing;
+                rgbParams.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "伽马", rgbParams.z, 0.01f, 10.0f);
+                y += LineHeight + LineSpacing;
+                rgbParams.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "输出黑场", rgbParams.w, 0.0f, 1.0f);
+                y += LineHeight + LineSpacing;
+                rgbModeParams.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "输出白场", rgbModeParams.x, 0.0f, 1.0f);
+                y += LineHeight + LineSpacing;
+            }
+            else
+            {
+                channelParams.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "输入黑场", channelParams.x, 0.0f, 1.0f);
+                y += LineHeight + LineSpacing;
+                channelParams.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "输入白场", channelParams.y, 0.0f, 1.0f);
+                y += LineHeight + LineSpacing;
+                channelParams.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "伽马", channelParams.z, 0.01f, 10.0f);
+                y += LineHeight + LineSpacing;
+                channelParams.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "输出黑场", channelParams.w, 0.0f, 1.0f);
+                y += LineHeight + LineSpacing;
+                channelOutputParams.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "输出白场", channelOutputParams.x, 0.0f, 1.0f);
+                y += LineHeight + LineSpacing;
+            }
+
+            parameters0.vector4Value = rgbParams;
+            parameters1.vector4Value = rgbModeParams;
+            parameters2.vector4Value = channelParams;
+            parameters3.vector4Value = channelOutputParams;
             EditorGUI.indentLevel--;
         }
 
@@ -497,7 +699,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             if (includeBlendMode)
             {
-                y = DrawPropertyLine(x, y, width, blendMode, "混合模式");
+                y = DrawBlendModeLine(x, y, width, blendMode);
             }
 
             y = DrawPropertyLine(x, y, width, injectionPoint, "插入位置");
@@ -556,6 +758,25 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             int value = Mathf.Clamp(property.intValue, 0, options.Length - 1);
             value = EditorGUI.Popup(lineRect, label, value, options);
             property.intValue = value;
+            return y + LineHeight + LineSpacing;
+        }
+
+        private static float DrawBlendModeLine(float x, float y, float width, SerializedProperty property)
+        {
+            if (property == null)
+            {
+                return y;
+            }
+
+            Rect lineRect = new Rect(x, y, width, LineHeight);
+            int selected = System.Array.IndexOf(BlendModeValues, property.intValue);
+            if (selected < 0)
+            {
+                selected = 0;
+            }
+
+            selected = EditorGUI.Popup(lineRect, new GUIContent("混合模式"), selected, BlendModeDisplayNames);
+            property.intValue = BlendModeValues[Mathf.Clamp(selected, 0, BlendModeValues.Length - 1)];
             return y + LineHeight + LineSpacing;
         }
 
@@ -681,6 +902,164 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             parameters0.vector4Value = new Vector4(0.5f, 0.5f, 0.35f, 0.25f);
+        }
+
+        private static void ResetLayerDefaults(SerializedProperty element)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            SetString(element, "name", "Post Process Layer");
+            SetBool(element, "enabled", true);
+            SetEnum(element, "effect", (int)ShoostPostProcessEffect.CustomMaterial);
+            SetBool(element, "showInSceneView", true);
+            SetObjectReference(element, "materialOverride", null);
+            SetObjectReference(element, "shaderOverride", null);
+            SetInt(element, "passIndex", 0);
+            SetFloat(element, "intensity", 1.0f);
+            SetEnum(element, "blendMode", (int)ShoostPostProcessBlendMode.Normal);
+            SetEnum(element, "injectionPoint", (int)ShoostPostProcessInjectionPoint.EffectDefault);
+            SetColor(element, "color", Color.white);
+            SetObjectReference(element, "texture", null);
+            SetVector4(element, "parameters0", Vector4.zero);
+            SetVector4(element, "parameters1", Vector4.zero);
+            SetVector4(element, "parameters2", Vector4.zero);
+            SetVector4(element, "parameters3", Vector4.zero);
+        }
+
+        private static void SetString(SerializedProperty element, string name, string value)
+        {
+            SerializedProperty property = element.FindPropertyRelative(name);
+            if (property != null && property.propertyType == SerializedPropertyType.String)
+            {
+                property.stringValue = value;
+            }
+        }
+
+        private static void SetBool(SerializedProperty element, string name, bool value)
+        {
+            SerializedProperty property = element.FindPropertyRelative(name);
+            if (property != null && property.propertyType == SerializedPropertyType.Boolean)
+            {
+                property.boolValue = value;
+            }
+        }
+
+        private static void SetInt(SerializedProperty element, string name, int value)
+        {
+            SerializedProperty property = element.FindPropertyRelative(name);
+            if (property != null && property.propertyType == SerializedPropertyType.Integer)
+            {
+                property.intValue = value;
+            }
+        }
+
+        private static void SetFloat(SerializedProperty element, string name, float value)
+        {
+            SerializedProperty property = element.FindPropertyRelative(name);
+            if (property != null && property.propertyType == SerializedPropertyType.Float)
+            {
+                property.floatValue = value;
+            }
+        }
+
+        private static void SetEnum(SerializedProperty element, string name, int value)
+        {
+            SerializedProperty property = element.FindPropertyRelative(name);
+            if (property != null && property.propertyType == SerializedPropertyType.Enum)
+            {
+                property.enumValueIndex = value;
+            }
+        }
+
+        private static void SetColor(SerializedProperty element, string name, Color value)
+        {
+            SerializedProperty property = element.FindPropertyRelative(name);
+            if (property != null && property.propertyType == SerializedPropertyType.Color)
+            {
+                property.colorValue = value;
+            }
+        }
+
+        private static void SetObjectReference(SerializedProperty element, string name, UnityEngine.Object value)
+        {
+            SerializedProperty property = element.FindPropertyRelative(name);
+            if (property != null && property.propertyType == SerializedPropertyType.ObjectReference)
+            {
+                property.objectReferenceValue = value;
+            }
+        }
+
+        private static void SetVector4(SerializedProperty element, string name, Vector4 value)
+        {
+            SerializedProperty property = element.FindPropertyRelative(name);
+            if (property != null && property.propertyType == SerializedPropertyType.Vector4)
+            {
+                property.vector4Value = value;
+            }
+        }
+
+        private static void EnsureLutColorGradingDefaults(SerializedProperty parameters1)
+        {
+            if (parameters1 == null || parameters1.propertyType != SerializedPropertyType.Vector4)
+            {
+                return;
+            }
+
+            Vector4 value = parameters1.vector4Value;
+            if (value.sqrMagnitude <= 0.000001f)
+            {
+                value.y = 1.0f;
+                parameters1.vector4Value = value;
+            }
+        }
+
+        private static void EnsureLevelAdjustmentDefaults(SerializedProperty parameters0, SerializedProperty parameters1, SerializedProperty parameters2, SerializedProperty parameters3)
+        {
+            if (parameters0 == null || parameters1 == null || parameters2 == null || parameters3 == null)
+            {
+                return;
+            }
+
+            if (parameters0.propertyType != SerializedPropertyType.Vector4
+                || parameters1.propertyType != SerializedPropertyType.Vector4
+                || parameters2.propertyType != SerializedPropertyType.Vector4
+                || parameters3.propertyType != SerializedPropertyType.Vector4)
+            {
+                return;
+            }
+
+            Vector4 rgbParams = parameters0.vector4Value;
+            Vector4 rgbModeParams = parameters1.vector4Value;
+            Vector4 channelParams = parameters2.vector4Value;
+            Vector4 channelOutputParams = parameters3.vector4Value;
+
+            if (rgbParams.sqrMagnitude <= 0.000001f)
+            {
+                rgbParams = new Vector4(0.0f, 1.0f, 1.0f, 0.0f);
+            }
+
+            if (rgbModeParams.sqrMagnitude <= 0.000001f)
+            {
+                rgbModeParams = new Vector4(1.0f, 0.0f, 0.0f, 0.0f);
+            }
+
+            if (channelParams.sqrMagnitude <= 0.000001f)
+            {
+                channelParams = new Vector4(0.0f, 1.0f, 1.0f, 0.0f);
+            }
+
+            if (channelOutputParams.sqrMagnitude <= 0.000001f)
+            {
+                channelOutputParams = new Vector4(1.0f, 0.0f, 0.0f, 0.0f);
+            }
+
+            parameters0.vector4Value = rgbParams;
+            parameters1.vector4Value = rgbModeParams;
+            parameters2.vector4Value = channelParams;
+            parameters3.vector4Value = channelOutputParams;
         }
 
     }

@@ -485,6 +485,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             material.SetFloat(ShoostPostProcessShaderConstants.AngleId, layer.parameters0.z * Mathf.Deg2Rad);
             material.SetFloat(ShoostPostProcessShaderConstants.LayerBlendModeId, (float)layer.blendMode);
             material.SetColor(ShoostPostProcessShaderConstants.LayerColorId, layer.color);
+            material.SetFloat(ShoostPostProcessShaderConstants.LayerTextureEnabledId, layer.texture != null ? 1.0f : 0.0f);
             material.SetVector(ShoostPostProcessShaderConstants.LayerParams0Id, layer.parameters0);
             material.SetVector(ShoostPostProcessShaderConstants.LayerParams1Id, layer.parameters1);
             material.SetVector(ShoostPostProcessShaderConstants.LayerParams2Id, layer.parameters2);

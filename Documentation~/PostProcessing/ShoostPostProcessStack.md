@@ -14,10 +14,13 @@
   - `_LayerBlendMode`
   - `_LayerColor`
   - `_LayerTexture`
+  - `_LayerTextureEnabled`
   - `_LayerParams0`
   - `_LayerParams1`
   - `_LayerParams2`
   - `_LayerParams3`
+
+当前已经补上的具体效果包括 `VignetteCustom`、`Sharpen`、`RGBSplit`、`KawaseBlur`、`IrisBlur`、`LUTColorGrading` 和 `LevelAdjustment`。
 
 ## 设置
 
@@ -27,6 +30,14 @@
 4. 启用这个 override，并在 `Layers` 列表里添加图层。
 5. 烟雾测试可以先使用没有 override 的 `CustomMaterial`。它会解析到 `Hidden/lilToon-Shoost/URP/Shoost/PostProcessLayerBlit`。
 6. 把 `Color` 改成非白色，或者修改 `Blend Mode`，确认图层确实在运行。
+
+## 图层混合
+
+Shoost 自己的 `BlendingModeChanger.BlendType` 里有一套 Photoshop 式混合模式，包括 `Darken`、`Add`、`Screen`、`SoftLight` 等。当前 `CustomMaterial` 默认解析到的 `PostProcessLayerBlit` 已经实现这套混合模式，所以可以先用它验证“加光源”和“压暗”这类图层叠加：
+
+- 做加光：添加 `CustomMaterial` 图层，`混合模式` 选 `加亮`、`滤色`、`颜色减淡`、`叠加` 或 `柔光`，再用 `颜色` 和 `强度` 控制范围外的全局叠加；如果有光斑/渐变贴图，把它放到 `纹理`。
+- 做压暗：添加 `CustomMaterial` 图层，`混合模式` 选 `变暗`、`正片叠底`、`颜色加深` 或 `线性加深`；如果只是暗角，优先使用 `暗角` 效果的 `压暗` 模式。
+- 这里移植的是 Shoost 的图层混合思路，不等同于 `LightingGradientValue` / `FlareValue` 里那些场景对象、粒子、体积光和 RawImage 组合。那些属于 Shoost UI/场景叠加系统，后面要单独决定是否放进后处理栈。
 
 ## 顺序说明
 

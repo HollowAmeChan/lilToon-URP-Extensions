@@ -40,7 +40,27 @@ namespace lilToon.URP.Extensions.PostProcessing
         Normal = 0,
         Add = 1,
         Multiply = 2,
-        Screen = 3
+        Screen = 3,
+        Darken = 4,
+        ColorBurn = 5,
+        LinearBurn = 6,
+        Lighten = 7,
+        ColorDodge = 8,
+        Overlay = 9,
+        SoftLight = 10,
+        HardLight = 11,
+        VividLight = 12,
+        LinearLight = 13,
+        PinLight = 14,
+        HardMix = 15,
+        Difference = 16,
+        Exclusion = 17,
+        Subtract = 18,
+        Divide = 19,
+        Hue = 20,
+        Saturation = 21,
+        Color = 22,
+        Luminosity = 23
     }
 
     public enum ShoostPostProcessInjectionPoint
