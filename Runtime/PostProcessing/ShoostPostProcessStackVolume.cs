@@ -21,9 +21,9 @@ namespace lilToon.URP.Extensions.PostProcessing
     }
 
 #if UNITY_2023_1_OR_NEWER
-    [VolumeComponentMenu("Post-processing/lilToon/Shoost Post Process Stack"), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+    [VolumeComponentMenu("Post-processing/lilToon-Shoost/Post Process Stack"), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
 #else
-    [VolumeComponentMenuForRenderPipeline("Post-processing/lilToon/Shoost Post Process Stack", typeof(UniversalRenderPipeline))]
+    [VolumeComponentMenuForRenderPipeline("Post-processing/lilToon-Shoost/Post Process Stack", typeof(UniversalRenderPipeline))]
 #endif
 #if UNITY_2023_3_OR_NEWER
     [VolumeRequiresRendererFeatures(typeof(ShoostPostProcessRendererFeature))]
@@ -34,7 +34,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public ShoostPostProcessStackVolume()
         {
 #if !UNITY_6000_3_OR_NEWER
-            displayName = "Shoost Post Process Stack";
+            displayName = "lilToon-Shoost Post Process Stack";
 #endif
         }
 

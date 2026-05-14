@@ -7,7 +7,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.PostProcessing
 {
-    [DisallowMultipleRendererFeature("lilToon Shoost Post Process Stack")]
+    [DisallowMultipleRendererFeature("lilToon-Shoost Post Process Stack")]
     [ExecuteAlways]
     public sealed class ShoostPostProcessRendererFeature : ScriptableRendererFeature
     {
@@ -33,9 +33,9 @@ namespace lilToon.URP.Extensions.PostProcessing
         public override void Create()
         {
             IsUseVolumes = UseVolumes;
-            beforePostProcessPass = new ShoostPostProcessPass("lilToon Shoost Post Process Before URP Post");
-            afterPostProcessPass = new ShoostPostProcessPass("lilToon Shoost Post Process After URP Post");
-            afterRenderingPass = new ShoostPostProcessPass("lilToon Shoost Post Process After Rendering");
+            beforePostProcessPass = new ShoostPostProcessPass("lilToon-Shoost Before URP Post");
+            afterPostProcessPass = new ShoostPostProcessPass("lilToon-Shoost After URP Post");
+            afterRenderingPass = new ShoostPostProcessPass("lilToon-Shoost After Rendering");
         }
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
@@ -238,7 +238,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            Debug.LogWarning($"lilToon Shoost Post Process Stack skipped layer '{layer.name}' because shader '{shaderName}' was not found.");
+            Debug.LogWarning($"lilToon-Shoost Post Process Stack skipped layer '{layer.name}' because shader '{shaderName}' was not found.");
         }
     }
 

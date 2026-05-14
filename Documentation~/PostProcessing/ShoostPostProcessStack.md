@@ -1,11 +1,11 @@
-# Shoost 风格后处理图层栈
+# lilToon-Shoost 后处理图层栈
 
 `ShoostPostProcessRendererFeature` 是在 URP 中重建 Shoost 后处理图层栈的入口。RendererFeature 只负责把 render pass 安装进管线；真正的图层列表放在 Volume component 里，这样就能像 HTrace 和 URP 后处理 override 一样由 Volume profile 控制。
 
 当前版本有意先做成框架层：
 
 - 一个 renderer feature 安装后处理 pass，并提供 HTrace 风格的 `Use Volumes` 开关；
-- 一个 `Shoost Post Process Stack` Volume override 持有完整后处理列表；
+- 一个 `lilToon-Shoost Post Process Stack` Volume override 持有完整后处理列表；
 - 每个列表项都可以在 Volume profile 里启用、禁用、重排、复制或删除；
 - 图层通过 ping-pong 全屏 blit 按顺序执行；
 - RenderGraph 和非 RenderGraph 路径都已实现；
@@ -23,9 +23,9 @@
 
 1. 把 `ShoostPostProcessRendererFeature` 加到 URP renderer data asset。
 2. 保持 renderer feature 上的 `Use Volumes` 开启。
-3. 在 Volume profile 里通过 `Add Override > Post-processing > lilToon` 添加 `Shoost Post Process Stack`。
+3. 在 Volume profile 里通过 `Add Override > Post-processing > lilToon-Shoost` 添加 `Post Process Stack`。
 4. 启用这个 override，并在 `Layers` 列表里添加图层。
-5. 烟雾测试可以先使用没有 override 的 `CustomMaterial`。它会解析到 `Hidden/lilToon/URP/Shoost/PostProcessLayerBlit`。
+5. 烟雾测试可以先使用没有 override 的 `CustomMaterial`。它会解析到 `Hidden/lilToon-Shoost/URP/Shoost/PostProcessLayerBlit`。
 6. 把 `Color` 改成非白色，或者修改 `Blend Mode`，确认图层确实在运行。
 
 ## 顺序说明
@@ -70,7 +70,7 @@ Volume 里只有一个面向用户的大图层列表，但运行时会把它拆�
 2. 读 AssetRipper 导出的 Shoost setting class，确定哪些 inspector 字段需要变成真实 typed setting。
 3. 读 Cpp2IL ISIL renderer 输出，提取 `Shader.Find`、uniform 名、临时 render texture 分配、pass 顺序和 blit 顺序。
 4. 读 RenderDoc `.dxbc.asm` dump，还原 shader 行为。
-5. 在 `Hidden/lilToon/URP/Shoost/...` 下实现对应 shader。
+5. 在 `Hidden/lilToon-Shoost/URP/Shoost/...` 下实现对应 shader。
 6. 如果单次 blit 不够，就为该 enum 槽补专用 C# 调度逻辑。
 
 如果某个效果或 variant 在 C# 或参考包里出现，但当前 RenderDoc dump 里没有，优先认为这次抓帧没覆盖对应滤镜或模式。记录缺失项，并在目标开关打开后重新抓帧。

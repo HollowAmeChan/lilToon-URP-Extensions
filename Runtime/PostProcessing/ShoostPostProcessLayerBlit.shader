@@ -1,4 +1,4 @@
-Shader "Hidden/lilToon/URP/Shoost/PostProcessLayerBlit"
+Shader "Hidden/lilToon-Shoost/URP/Shoost/PostProcessLayerBlit"
 {
     SubShader
     {

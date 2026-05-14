@@ -21,7 +21,7 @@
 }
 ```
 
-这个包目前面向 Unity 6000.0 和 URP 17.3.0。项目里还需要对应的 lilToon fork。lilToon 暂时作为 peer requirement 处理，这样本地 `Assets/lilToon` 安装不会破坏 UPM 依赖解析。
+这个包目前面向 Unity 6000.0 和 URP 17.x。项目里还需要对应的 URP 运行时和 lilToon fork。URP 和 lilToon 暂时作为 peer requirement 处理，这样特供 URP 或本地 `Assets/lilToon` 安装不会被 UPM 依赖解析强行替换。
 
 ## 当前状态
 
@@ -40,7 +40,7 @@ Weighted OIT 已经作为第一个可用里程碑实现：
 
 ## Shoost 风格后处理
 
-`ShoostPostProcessRendererFeature` 是把 Shoost 后处理移植到 URP 的入口。它按 HTrace 风格安装由 Volume 驱动的 pass；真正的图层列表由 Volume profile 里的 `Shoost Post Process Stack` 控制。这个列表可以像 Shoost 图层一样启用、禁用、重排、添加和删除效果。
+`ShoostPostProcessRendererFeature` 是把 Shoost 后处理移植到 URP 的入口。它按 HTrace 风格安装由 Volume 驱动的 pass；真正的图层列表由 Volume profile 里的 `lilToon-Shoost Post Process Stack` 控制。这个列表可以像 Shoost 图层一样启用、禁用、重排、添加和删除效果。
 
 当前框架已经包含：
 

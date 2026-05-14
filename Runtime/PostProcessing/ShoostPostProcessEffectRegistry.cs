@@ -9,65 +9,65 @@ namespace lilToon.URP.Extensions.PostProcessing
                 case ShoostPostProcessEffect.CustomMaterial:
                     return ShoostPostProcessShaderConstants.DefaultLayerShaderName;
                 case ShoostPostProcessEffect.AutoWhiteBalance:
-                    return "Hidden/lilToon/URP/Shoost/AutoWhiteBalance";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/AutoWhiteBalance";
                 case ShoostPostProcessEffect.ChangeFrameRate:
-                    return "Hidden/lilToon/URP/Shoost/ChangeFrameRate";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/ChangeFrameRate";
                 case ShoostPostProcessEffect.ColorGradingCustom:
-                    return "Hidden/lilToon/URP/Shoost/ColorGradingCustom";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/ColorGradingCustom";
                 case ShoostPostProcessEffect.CRTEffects:
-                    return "Hidden/lilToon/URP/Shoost/CRTEffects";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/CRTEffects";
                 case ShoostPostProcessEffect.Distortion:
-                    return "Hidden/lilToon/URP/Shoost/Distortion";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/Distortion";
                 case ShoostPostProcessEffect.DitheringCustom:
-                    return "Hidden/lilToon/URP/Shoost/DitheringCustom";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/DitheringCustom";
                 case ShoostPostProcessEffect.DownScaleResolution:
-                    return "Hidden/lilToon/URP/Shoost/DownScaleResolution";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/DownScaleResolution";
                 case ShoostPostProcessEffect.FilmBreathGateWeave:
-                    return "Hidden/lilToon/URP/Shoost/FilmBreathGateWeave";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/FilmBreathGateWeave";
                 case ShoostPostProcessEffect.Fisheye:
-                    return "Hidden/lilToon/URP/Shoost/Fisheye";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/Fisheye";
                 case ShoostPostProcessEffect.GateWeave:
-                    return "Hidden/lilToon/URP/Shoost/GateWeave";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/GateWeave";
                 case ShoostPostProcessEffect.GrainCustom:
-                    return "Hidden/lilToon/URP/Shoost/GrainCustom";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/GrainCustom";
                 case ShoostPostProcessEffect.IrisBlur:
-                    return "Hidden/lilToon/URP/Shoost/IrisBlur";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/IrisBlur";
                 case ShoostPostProcessEffect.KawaseBlur:
-                    return "Hidden/lilToon/URP/Shoost/KawaseBlur";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/KawaseBlur";
                 case ShoostPostProcessEffect.LensDistortionCustom:
-                    return "Hidden/lilToon/URP/Shoost/LensDistortionCustom";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/LensDistortionCustom";
                 case ShoostPostProcessEffect.LevelAdjustment:
-                    return "Hidden/lilToon/URP/Shoost/LevelAdjustment";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/LevelAdjustment";
                 case ShoostPostProcessEffect.LUTColorGrading:
-                    return "Hidden/lilToon/URP/Shoost/LUTColorGrading";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/LUTColorGrading";
                 case ShoostPostProcessEffect.MotionTrail:
-                    return "Hidden/lilToon/URP/Shoost/MotionTrail";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/MotionTrail";
                 case ShoostPostProcessEffect.Pixelize:
-                    return "Hidden/lilToon/URP/Shoost/Pixelize";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/Pixelize";
                 case ShoostPostProcessEffect.RGBBlur:
-                    return "Hidden/lilToon/URP/Shoost/RGBBlur";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/RGBBlur";
                 case ShoostPostProcessEffect.RGBBlurV2:
-                    return "Hidden/lilToon/URP/Shoost/RGBBlurV2";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/RGBBlurV2";
                 case ShoostPostProcessEffect.RGBChannelSeparator:
-                    return "Hidden/lilToon/URP/Shoost/RGBChannelSeparator";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/RGBChannelSeparator";
                 case ShoostPostProcessEffect.RGBSplit:
-                    return "Hidden/lilToon/URP/Shoost/RGBSplit";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/RGBSplit";
                 case ShoostPostProcessEffect.SharpenBefore:
-                    return "Hidden/lilToon/URP/Shoost/SharpenBefore";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/SharpenBefore";
                 case ShoostPostProcessEffect.SharpenAfter:
-                    return "Hidden/lilToon/URP/Shoost/SharpenAfter";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/SharpenAfter";
                 case ShoostPostProcessEffect.Tube:
-                    return "Hidden/lilToon/URP/Shoost/Tube";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/Tube";
                 case ShoostPostProcessEffect.VignetteCustom:
-                    return "Hidden/lilToon/URP/Shoost/VignetteCustom";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/VignetteCustom";
                 case ShoostPostProcessEffect.RetroLookProBleedCustom:
-                    return "Hidden/lilToon/URP/Shoost/RetroLookProBleedCustom";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/RetroLookProBleedCustom";
                 case ShoostPostProcessEffect.RetroLookProNoise2Custom:
-                    return "Hidden/lilToon/URP/Shoost/RetroLookProNoise2Custom";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/RetroLookProNoise2Custom";
                 case ShoostPostProcessEffect.RetroLookProOldFilm2Custom:
-                    return "Hidden/lilToon/URP/Shoost/RetroLookProOldFilm2Custom";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/RetroLookProOldFilm2Custom";
                 case ShoostPostProcessEffect.RetroLookProTVEffectCustom:
-                    return "Hidden/lilToon/URP/Shoost/RetroLookProTVEffectCustom";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/RetroLookProTVEffectCustom";
                 default:
                     return ShoostPostProcessShaderConstants.DefaultLayerShaderName;
             }

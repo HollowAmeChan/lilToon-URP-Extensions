@@ -4,7 +4,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 {
     internal static class ShoostPostProcessShaderConstants
     {
-        public const string DefaultLayerShaderName = "Hidden/lilToon/URP/Shoost/PostProcessLayerBlit";
+        public const string DefaultLayerShaderName = "Hidden/lilToon-Shoost/URP/Shoost/PostProcessLayerBlit";
         public const string TempTextureAName = "_lilShoostPostProcessTempA";
         public const string TempTextureBName = "_lilShoostPostProcessTempB";
 

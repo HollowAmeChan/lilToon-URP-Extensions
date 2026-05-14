@@ -3,6 +3,7 @@
   "rootNamespace": "lilToon.URP.Extensions.Editor",
   "references": [
     "jp.lilxyzw.liltoon.urp.extensions.Runtime",
+    "Unity.RenderPipelines.Core.Runtime",
     "Unity.RenderPipelines.Core.Editor"
   ],
   "includePlatforms": [

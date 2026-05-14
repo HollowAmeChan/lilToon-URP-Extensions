@@ -5,8 +5,7 @@
   "description": "URP renderer extensions for lilToon, starting with Weighted OIT support.",
   "unity": "6000.0",
   "dependencies": {
-    "com.unity.render-pipelines.core": "17.3.0",
-    "com.unity.render-pipelines.universal": "17.3.0"
+    "com.unity.render-pipelines.core": "17.3.0"
   },
   "keywords": [
     "lilToon",
