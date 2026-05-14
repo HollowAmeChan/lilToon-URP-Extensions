@@ -124,6 +124,16 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return (LineHeight + LineSpacing) * 16.0f + 12.0f;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.SharpenBefore || GetEffect(element) == ShoostPostProcessEffect.SharpenAfter)
+            {
+                return (LineHeight + LineSpacing) * 10.0f + 12.0f;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.RGBSplit)
+            {
+                return (LineHeight + LineSpacing) * 12.0f + 12.0f;
+            }
+
             if (GetEffect(element) == ShoostPostProcessEffect.IrisBlur)
             {
                 return (LineHeight + LineSpacing) * 25.0f + 12.0f;
@@ -149,6 +159,18 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             if (GetEffect(element) == ShoostPostProcessEffect.KawaseBlur)
             {
                 DrawKawaseBlurElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.SharpenBefore || GetEffect(element) == ShoostPostProcessEffect.SharpenAfter)
+            {
+                DrawSharpenElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.RGBSplit)
+            {
+                DrawRgbSplitElement(rect, element);
                 return;
             }
 
@@ -303,6 +325,58 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             EditorGUI.indentLevel++;
             DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: true, includeColor: true, includeTexture: true, includePassIndex: true, includeParameters: true);
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawSharpenElement(Rect rect, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            EnsureSharpenDefaults(parameters0);
+
+            float y = rect.y;
+            y = DrawFoldoutLine(rect, y, element);
+            if (!element.isExpanded)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeParameters: false);
+
+            Vector4 sharpenParams = parameters0.vector4Value;
+            sharpenParams.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "锐化强度", sharpenParams.x, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            parameters0.vector4Value = sharpenParams;
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawRgbSplitElement(Rect rect, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            EnsureRgbSplitDefaults(parameters0);
+
+            float y = rect.y;
+            y = DrawFoldoutLine(rect, y, element);
+            if (!element.isExpanded)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeParameters: false);
+
+            Vector4 splitParams = parameters0.vector4Value;
+            int mode = Mathf.Clamp(Mathf.RoundToInt(splitParams.x), 0, 1);
+            mode = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "模式", mode, new[] { "RGB 分离", "径向色差" });
+            splitParams.x = mode;
+            y += LineHeight + LineSpacing;
+
+            splitParams.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "分离强度", splitParams.y, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            splitParams.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "角度", splitParams.z, 0.0f, 360.0f);
+            y += LineHeight + LineSpacing;
+
+            parameters0.vector4Value = splitParams;
             EditorGUI.indentLevel--;
         }
 
@@ -523,6 +597,34 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 {
                     parameters1.vector4Value = new Vector4(0.5f, 2.0f, 6.0f, 0.0f);
                 }
+            }
+        }
+
+        private static void EnsureSharpenDefaults(SerializedProperty parameters0)
+        {
+            if (parameters0 == null || parameters0.propertyType != SerializedPropertyType.Vector4)
+            {
+                return;
+            }
+
+            Vector4 value = parameters0.vector4Value;
+            if (value.sqrMagnitude <= 0.000001f)
+            {
+                parameters0.vector4Value = new Vector4(0.2f, 0.0f, 0.0f, 0.0f);
+            }
+        }
+
+        private static void EnsureRgbSplitDefaults(SerializedProperty parameters0)
+        {
+            if (parameters0 == null || parameters0.propertyType != SerializedPropertyType.Vector4)
+            {
+                return;
+            }
+
+            Vector4 value = parameters0.vector4Value;
+            if (value.sqrMagnitude <= 0.000001f)
+            {
+                parameters0.vector4Value = new Vector4(0.0f, 0.35f, 0.0f, 0.0f);
             }
         }
 

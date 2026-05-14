@@ -473,7 +473,16 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         private static void ApplyLayerProperties(ShoostPostProcessLayer layer, Material material)
         {
+            float sharpness = layer.parameters0.x;
+            if ((layer.effect == ShoostPostProcessEffect.SharpenBefore || layer.effect == ShoostPostProcessEffect.SharpenAfter) && sharpness <= 0.0f)
+            {
+                sharpness = 0.2f;
+            }
+
             material.SetFloat(ShoostPostProcessShaderConstants.IntensityId, layer.intensity);
+            material.SetFloat(ShoostPostProcessShaderConstants.SharpnessId, sharpness);
+            material.SetFloat(ShoostPostProcessShaderConstants.ModeId, layer.parameters0.x);
+            material.SetFloat(ShoostPostProcessShaderConstants.AngleId, layer.parameters0.z * Mathf.Deg2Rad);
             material.SetFloat(ShoostPostProcessShaderConstants.LayerBlendModeId, (float)layer.blendMode);
             material.SetColor(ShoostPostProcessShaderConstants.LayerColorId, layer.color);
             material.SetVector(ShoostPostProcessShaderConstants.LayerParams0Id, layer.parameters0);

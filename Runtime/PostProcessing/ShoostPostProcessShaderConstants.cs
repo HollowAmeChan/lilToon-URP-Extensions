@@ -16,7 +16,9 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static readonly int LayerParams1Id = Shader.PropertyToID("_LayerParams1");
         public static readonly int LayerParams2Id = Shader.PropertyToID("_LayerParams2");
         public static readonly int LayerParams3Id = Shader.PropertyToID("_LayerParams3");
+        public static readonly int ModeId = Shader.PropertyToID("_Mode");
         public static readonly int RadiusId = Shader.PropertyToID("_Radius");
+        public static readonly int SharpnessId = Shader.PropertyToID("_Sharpness");
         public static readonly int ScreenRatioId = Shader.PropertyToID("_ScreenRatio");
         public static readonly int OriginalTexId = Shader.PropertyToID("_OriginalTex");
         public static readonly int BlurredTexId = Shader.PropertyToID("_BlurredTex");
