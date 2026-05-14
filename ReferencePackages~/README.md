@@ -19,3 +19,4 @@ ReferencePackages~/
 
 Use `PackageSourceMap.md` as the checklist for which upstream package to inspect for each Shoost effect.
 
+Use `ShoostSourceReadingGuide.md` for the practical workflow: how to combine the AssetRipper project, Cpp2IL ISIL, RenderDoc shader dumps, and upstream package source when rebuilding an effect.

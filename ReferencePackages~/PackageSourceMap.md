@@ -4,6 +4,8 @@ Shoost v0.16.3 看起来是以 Unity Post Processing Stack v2 作为后处理宿
 
 重要提醒：Shoost 经 AssetRipper 解包得到的大多数 shader 都包含 `//DummyShaderTextExporter`。这些 shader 通常只适合参考名称、属性和材质引用，不要当作真实算法源码。Shoost 自定义 shader 目前应优先参考 `D:\Unity_Fork\Shoost_v0.16.3\RenderDocShaderDump` 中的 DXBC 反汇编，并结合 `D:\Unity_Fork\Shoost_v0.16.3\DecompileWorkFiles\Cpp2ILOutputs\ISIL` 里的 C# renderer 流程重写。
 
+具体阅读流程见 `ShoostSourceReadingGuide.md`。
+
 ## Unity Post Processing Stack v2
 
 这一部分用于参考 PPS v2 标准效果和框架执行方式。
