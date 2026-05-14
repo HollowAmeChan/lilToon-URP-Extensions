@@ -1,0 +1,14 @@
+*
+!.gitignore
+!README.md
+!PackageSourceMap.md
+!UnityPostProcessingV2/
+!UnityPostProcessingV2/README.md
+!RetroLookPro/
+!RetroLookPro/README.md
+!XPostProcessing/
+!XPostProcessing/README.md
+!KinoPostprocessing/
+!KinoPostprocessing/README.md
+!ShoostUnpack/
+!ShoostUnpack/README.md
