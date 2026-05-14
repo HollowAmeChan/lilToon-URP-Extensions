@@ -6,54 +6,54 @@ namespace lilToon.URP.Extensions.PostProcessing
     [Serializable]
     public sealed class ShoostPostProcessLayer
     {
-        [Tooltip("Name shown in the Volume layer list.")]
+        [Tooltip("显示在 Volume 图层列表里的名称。")]
         public string name = "Post Process Layer";
 
-        [Tooltip("Skip this layer without removing it from the stack.")]
+        [Tooltip("不从列表移除，但跳过这个图层。")]
         public bool enabled = true;
 
-        [Tooltip("Shoost effect slot this layer represents. Custom Material uses the material or shader override directly.")]
+        [Tooltip("这个图层对应的 Shoost 效果槽。Custom Material 会直接使用材质或 Shader 覆盖。")]
         public ShoostPostProcessEffect effect = ShoostPostProcessEffect.CustomMaterial;
 
-        [Tooltip("If disabled, Scene view cameras skip this layer.")]
+        [Tooltip("关闭后，Scene 视图相机将跳过这个图层。")]
         public bool showInSceneView = true;
 
-        [Tooltip("Optional material override. This is the safest way to test a newly ported shader.")]
+        [Tooltip("可选材质覆盖。测试新移植的 Shader 时最安全。")]
         public Material materialOverride;
 
-        [Tooltip("Optional shader override. A runtime material is created and cached for this shader.")]
+        [Tooltip("可选 Shader 覆盖。运行时会为这个 Shader 创建并缓存材质。")]
         public Shader shaderOverride;
 
-        [Tooltip("Shader pass index used by this layer.")]
+        [Tooltip("这个图层使用的 Shader Pass 索引。")]
         [Min(0)]
         public int passIndex;
 
-        [Tooltip("Common layer strength. Ported shaders should read _Intensity.")]
+        [Tooltip("图层强度。移植的 Shader 应读取 _Intensity。")]
         [Range(0.0f, 1.0f)]
         public float intensity = 1.0f;
 
-        [Tooltip("Common blend mode value exposed to shaders as _LayerBlendMode.")]
+        [Tooltip("混合模式。会以 _LayerBlendMode 暴露给 Shader。")]
         public ShoostPostProcessBlendMode blendMode = ShoostPostProcessBlendMode.Normal;
 
-        [Tooltip("Where this layer is injected. Effect Default follows the original Shoost/PPS v2 BeforeStack or AfterStack category when known.")]
+        [Tooltip("插入位置。Effect Default 会尽量跟随原 Shoost / PPS v2 的 BeforeStack 或 AfterStack。")]
         public ShoostPostProcessInjectionPoint injectionPoint = ShoostPostProcessInjectionPoint.EffectDefault;
 
-        [Tooltip("Common color exposed to shaders as _LayerColor.")]
+        [Tooltip("颜色参数。会以 _LayerColor 暴露给 Shader。")]
         public Color color = Color.white;
 
-        [Tooltip("Optional texture exposed to shaders as _LayerTexture.")]
+        [Tooltip("可选纹理。会以 _LayerTexture 暴露给 Shader。")]
         public Texture texture;
 
-        [Tooltip("Generic parameter vector exposed as _LayerParams0.")]
+        [Tooltip("通用参数向量 0。会以 _LayerParams0 暴露给 Shader。")]
         public Vector4 parameters0;
 
-        [Tooltip("Generic parameter vector exposed as _LayerParams1.")]
+        [Tooltip("通用参数向量 1。会以 _LayerParams1 暴露给 Shader。")]
         public Vector4 parameters1;
 
-        [Tooltip("Generic parameter vector exposed as _LayerParams2.")]
+        [Tooltip("通用参数向量 2。会以 _LayerParams2 暴露给 Shader。")]
         public Vector4 parameters2;
 
-        [Tooltip("Generic parameter vector exposed as _LayerParams3.")]
+        [Tooltip("通用参数向量 3。会以 _LayerParams3 暴露给 Shader。")]
         public Vector4 parameters3;
 
         public bool IsActive => enabled && intensity > 0.0f;
