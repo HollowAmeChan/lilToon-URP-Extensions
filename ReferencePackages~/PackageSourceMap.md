@@ -6,6 +6,45 @@ Shoost v0.16.3 看起来是以 Unity Post Processing Stack v2 作为后处理宿
 
 具体阅读流程见 `ShoostSourceReadingGuide.md`。
 
+## 参考包获取方式
+
+截至 2026-05-15 核对，当前移植 Shoost 后处理主要涉及 5 组参考资料。
+
+可以直接从公开仓库拉取的有 3 组：
+
+- `UnityPostProcessingV2`
+  - 仓库：`https://github.com/Unity-Technologies/PostProcessing`
+  - 本地：`ReferencePackages~/UnityPostProcessingV2/PostProcessing`
+  - 用途：参考 PPS v2 框架、内置 Bloom、Color Grading、Vignette、Grain、Uber/FinalPass 等。
+  - 注意：仓库已归档，适合读源码，不建议照搬运行时架构到 URP。
+- `XPostProcessing`
+  - 仓库：`https://github.com/QianMo/X-PostProcessing-Library`
+  - 本地：`ReferencePackages~/XPostProcessing/X-PostProcessing-Library`
+  - 用途：参考 Kawase/DualKawase、IrisBlur、Pixelize、RGBSplit/Glitch 等算法写法。
+- `KinoPostprocessing`
+  - 主仓库：`https://github.com/keijiro/Kino`
+  - 旧版/单效果仓库示例：`https://github.com/keijiro/KinoGlitch`、`https://github.com/keijiro/KinoBloom`
+  - 本地：`ReferencePackages~/KinoPostprocessing/Kino`、`KinoBloom`、`KinoBokeh`、`KinoGlitch`、`KinoTube`
+  - 用途：参考 Kino Glitch、Tube、Bloom、Bokeh 一类效果的算法和命名习惯。
+  - 注意：Shoost 里的 `Kino.Postprocessing.dll` 更像 PPS v2/旧版 Kino 系列整合，不一定完全对应当前 HDRP 版 `keijiro/Kino`。
+
+需要你自己找资源包的有 1 组：
+
+- `RetroLookPro`
+  - 资源名：`Retro Look Pro`
+  - 常见来源：Unity Asset Store / itch.io 的 `Limitless Development` 资源包。
+  - 用途：参考 VHS、CRT、OldFilm、Noise、Bleed、TV、NTSC、Jitter 等复杂复古效果。
+  - 注意：这是商业资源，不适合直接放进仓库。你可以本地安装/导入后只用来读源码和对照参数。
+
+本地已有、不是外部可拉取仓库的有 1 组：
+
+- `ShoostUnpack`
+  - 来源：`D:\Unity_Fork\Shoost_v0.16.3` 下的 AssetRipper、Cpp2IL 和 RenderDoc 输出。
+  - 用途：参考 Shoost 自己的参数、预设、renderer 调用顺序、uniform 名和实际编译后 shader 行为。
+  - 注意：这组就是 Shoost 本体分析资料。遇到某个 shader/variant 在当前 dump 里缺失，优先提醒重新打开对应滤镜/模式抓帧。
+
+如果只按“要你额外去找资源”来算，目前是 1 组：`RetroLookPro`。如果按“能直接 clone/拉取源码”来算，目前是 3 组：`UnityPostProcessingV2`、`XPostProcessing`、`KinoPostprocessing`。`ShoostUnpack` 已经在本地，不算外部资源。
+
 ## Unity Post Processing Stack v2
 
 这一部分用于参考 PPS v2 标准效果和框架执行方式。
