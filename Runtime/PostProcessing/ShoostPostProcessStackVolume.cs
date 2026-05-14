@@ -38,13 +38,13 @@ namespace lilToon.URP.Extensions.PostProcessing
 #endif
         }
 
-        [Tooltip("Enable the Shoost-style post-process stack.")]
+        [InspectorName("启用"), Tooltip("启用 Shoost 风格的后处理栈。")]
         public BoolParameter Enable = new BoolParameter(false, BoolParameter.DisplayType.EnumPopup);
 
-        [InspectorName("Scene View"), Tooltip("Render the stack for Scene view cameras.")]
+        [InspectorName("场景视图"), Tooltip("是否让 Scene View 也应用这个后处理栈。")]
         public BoolParameter ShowInSceneView = new BoolParameter(true, false);
 
-        [Tooltip("Ordered post-process layers. The list is evaluated from top to bottom inside each injection group.")]
+        [Tooltip("按顺序排列的后处理图层。")]
         public ShoostPostProcessLayerListParameter layers = new ShoostPostProcessLayerListParameter(
             new List<ShoostPostProcessLayer>(),
             true);

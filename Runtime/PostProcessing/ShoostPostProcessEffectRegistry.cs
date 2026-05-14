@@ -53,9 +53,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                 case ShoostPostProcessEffect.RGBSplit:
                     return "Hidden/lilToon-Shoost/URP/Shoost/RGBSplit";
                 case ShoostPostProcessEffect.SharpenBefore:
-                    return "Hidden/lilToon-Shoost/URP/Shoost/SharpenBefore";
                 case ShoostPostProcessEffect.SharpenAfter:
-                    return "Hidden/lilToon-Shoost/URP/Shoost/SharpenAfter";
+                    return "Hidden/lilToon-Shoost/URP/Shoost/Sharpen";
                 case ShoostPostProcessEffect.Tube:
                     return "Hidden/lilToon-Shoost/URP/Shoost/Tube";
                 case ShoostPostProcessEffect.VignetteCustom:

@@ -12,30 +12,30 @@ namespace lilToon.URP.Extensions.PostProcessing
         [Tooltip("不从列表移除，但跳过这个图层。")]
         public bool enabled = true;
 
-        [Tooltip("这个图层对应的 Shoost 效果槽。Custom Material 会直接使用材质或 Shader 覆盖。")]
+        [Tooltip("这个图层对应的 Shoost 效果。Custom Material 会直接使用材质或 Shader 覆盖。")]
         public ShoostPostProcessEffect effect = ShoostPostProcessEffect.CustomMaterial;
 
-        [Tooltip("关闭后，Scene 视图相机将跳过这个图层。")]
+        [Tooltip("关闭后，Scene 视图相机会跳过这个图层。")]
         public bool showInSceneView = true;
 
-        [Tooltip("可选材质覆盖。测试新移植的 Shader 时最安全。")]
+        [Tooltip("可选材质覆盖。移植新 Shader 时最安全。")]
         public Material materialOverride;
 
-        [Tooltip("可选 Shader 覆盖。运行时会为这个 Shader 创建并缓存材质。")]
+        [Tooltip("可选 Shader 覆盖。运行时会为它创建并缓存材质。")]
         public Shader shaderOverride;
 
         [Tooltip("这个图层使用的 Shader Pass 索引。")]
         [Min(0)]
         public int passIndex;
 
-        [Tooltip("图层强度。移植的 Shader 应读取 _Intensity。")]
+        [Tooltip("图层强度。移植的 Shader 应该读取 _Intensity。")]
         [Range(0.0f, 1.0f)]
         public float intensity = 1.0f;
 
         [Tooltip("混合模式。会以 _LayerBlendMode 暴露给 Shader。")]
         public ShoostPostProcessBlendMode blendMode = ShoostPostProcessBlendMode.Normal;
 
-        [Tooltip("插入位置。Effect Default 会尽量跟随原 Shoost / PPS v2 的 BeforeStack 或 AfterStack。")]
+        [Tooltip("插入位置。Effect Default 会尽量沿用 Shoost / PPS v2 的默认顺序。")]
         public ShoostPostProcessInjectionPoint injectionPoint = ShoostPostProcessInjectionPoint.EffectDefault;
 
         [Tooltip("颜色参数。会以 _LayerColor 暴露给 Shader。")]
