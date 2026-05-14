@@ -124,6 +124,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return (LineHeight + LineSpacing) * 16.0f + 12.0f;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.IrisBlur)
+            {
+                return (LineHeight + LineSpacing) * 25.0f + 12.0f;
+            }
+
             if (GetEffect(element) == ShoostPostProcessEffect.VignetteCustom)
             {
                 return (LineHeight + LineSpacing) * 16.0f + 12.0f;
@@ -144,6 +149,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             if (GetEffect(element) == ShoostPostProcessEffect.KawaseBlur)
             {
                 DrawKawaseBlurElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.IrisBlur)
+            {
+                DrawIrisBlurElement(rect, element);
                 return;
             }
 
@@ -295,6 +306,80 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             EditorGUI.indentLevel--;
         }
 
+        private void DrawIrisBlurElement(Rect rect, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
+            SerializedProperty parameters2 = element.FindPropertyRelative("parameters2");
+            SerializedProperty parameters3 = element.FindPropertyRelative("parameters3");
+
+            EnsureIrisBlurDefaults(parameters0, parameters1, parameters2, parameters3);
+
+            float y = rect.y;
+            y = DrawFoldoutLine(rect, y, element);
+            if (!element.isExpanded)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeParameters: false);
+
+            Vector4 irisParams0 = parameters0.vector4Value;
+            Vector4 irisParams1 = parameters1.vector4Value;
+            Vector4 irisParams2 = parameters2.vector4Value;
+            Vector4 irisParams3 = parameters3.vector4Value;
+
+            int resolutionMode = Mathf.Clamp(Mathf.RoundToInt(irisParams0.x), 0, 1);
+            resolutionMode = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "分辨率模式", resolutionMode, new[] { "游戏视图", "自定义尺寸" });
+            irisParams0.x = resolutionMode;
+            y += LineHeight + LineSpacing;
+
+            if (resolutionMode == 1)
+            {
+                irisParams0.y = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "自定义宽度", Mathf.RoundToInt(irisParams0.y), 1, 8192));
+                y += LineHeight + LineSpacing;
+                irisParams0.z = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "自定义高度", Mathf.RoundToInt(irisParams0.z), 1, 8192));
+                y += LineHeight + LineSpacing;
+            }
+
+            irisParams0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "距离", irisParams0.w, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+
+            irisParams1.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "半径", irisParams1.x, 0.0f, 10.0f);
+            y += LineHeight + LineSpacing;
+            irisParams1.y = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "降采样", Mathf.RoundToInt(irisParams1.y), 1, 4));
+            y += LineHeight + LineSpacing;
+            irisParams1.z = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "迭代次数", Mathf.RoundToInt(irisParams1.z), 1, 8));
+            y += LineHeight + LineSpacing;
+            irisParams1.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "角度", irisParams1.w, 0.0f, 360.0f);
+            y += LineHeight + LineSpacing;
+
+            irisParams2.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "中心 X", irisParams2.x, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            irisParams2.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "中心 Y", irisParams2.y, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            irisParams2.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "中心范围", irisParams2.z, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            irisParams2.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "柔和度", irisParams2.w, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+
+            irisParams3.x = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "启用 RGB 模糊", irisParams3.x > 0.5f) ? 1.0f : 0.0f;
+            y += LineHeight + LineSpacing;
+            irisParams3.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "红通道模糊半径", irisParams3.y, 0.0f, 5.0f);
+            y += LineHeight + LineSpacing;
+            irisParams3.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "绿通道模糊半径", irisParams3.z, 0.0f, 5.0f);
+            y += LineHeight + LineSpacing;
+            irisParams3.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "蓝通道模糊半径", irisParams3.w, 0.0f, 5.0f);
+            y += LineHeight + LineSpacing;
+
+            parameters0.vector4Value = irisParams0;
+            parameters1.vector4Value = irisParams1;
+            parameters2.vector4Value = irisParams2;
+            parameters3.vector4Value = irisParams3;
+            EditorGUI.indentLevel--;
+        }
+
         private float DrawFoldoutLine(Rect rect, float y, SerializedProperty element)
         {
             Rect lineRect = new Rect(rect.x, y, rect.width, LineHeight);
@@ -437,6 +522,45 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 if (value.sqrMagnitude <= 0.000001f)
                 {
                     parameters1.vector4Value = new Vector4(0.5f, 2.0f, 6.0f, 0.0f);
+                }
+            }
+        }
+
+        private static void EnsureIrisBlurDefaults(SerializedProperty parameters0, SerializedProperty parameters1, SerializedProperty parameters2, SerializedProperty parameters3)
+        {
+            if (parameters0 != null && parameters0.propertyType == SerializedPropertyType.Vector4)
+            {
+                Vector4 value = parameters0.vector4Value;
+                if (value.sqrMagnitude <= 0.000001f)
+                {
+                    parameters0.vector4Value = new Vector4(0.0f, 0.0f, 0.0f, 0.15f);
+                }
+            }
+
+            if (parameters1 != null && parameters1.propertyType == SerializedPropertyType.Vector4)
+            {
+                Vector4 value = parameters1.vector4Value;
+                if (value.sqrMagnitude <= 0.000001f)
+                {
+                    parameters1.vector4Value = new Vector4(1.0f, 1.0f, 1.0f, 0.0f);
+                }
+            }
+
+            if (parameters2 != null && parameters2.propertyType == SerializedPropertyType.Vector4)
+            {
+                Vector4 value = parameters2.vector4Value;
+                if (value.sqrMagnitude <= 0.000001f)
+                {
+                    parameters2.vector4Value = new Vector4(0.5f, 0.5f, 0.35f, 0.25f);
+                }
+            }
+
+            if (parameters3 != null && parameters3.propertyType == SerializedPropertyType.Vector4)
+            {
+                Vector4 value = parameters3.vector4Value;
+                if (value.sqrMagnitude <= 0.000001f)
+                {
+                    parameters3.vector4Value = new Vector4(0.0f, 1.0f, 1.0f, 1.0f);
                 }
             }
         }
