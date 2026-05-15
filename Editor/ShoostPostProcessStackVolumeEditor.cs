@@ -16,41 +16,104 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private const float LevelAdjustmentInitMarker = -12345.0f;
         private const float EffectIconSize = 22.0f;
         private const float EffectIconSpacing = 2.0f;
+        private const string DefaultDistortionTextureGuid = "f4c1f3c21e3ec4a479c69cffea26c6cd";
         private const string PackageAssetRoot = "Packages/jp.lilxyzw.liltoon.urp.extensions";
+
+        private readonly struct EffectToggleEntry
+        {
+            public readonly ShoostPostProcessEffect Effect;
+            public readonly string Label;
+            public readonly string IconName;
+
+            public EffectToggleEntry(ShoostPostProcessEffect effect, string label, string iconName)
+            {
+                Effect = effect;
+                Label = label;
+                IconName = iconName;
+            }
+        }
 
         private static readonly ShoostPostProcessEffect[] FixedEffectOrder =
         {
-            ShoostPostProcessEffect.CustomMaterial,
+            ShoostPostProcessEffect.SharpenBefore,
             ShoostPostProcessEffect.AutoWhiteBalance,
-            ShoostPostProcessEffect.ChangeFrameRate,
-            ShoostPostProcessEffect.ColorGradingCustom,
-            ShoostPostProcessEffect.CRTEffects,
-            ShoostPostProcessEffect.Distortion,
-            ShoostPostProcessEffect.DitheringCustom,
-            ShoostPostProcessEffect.DownScaleResolution,
-            ShoostPostProcessEffect.FilmBreathGateWeave,
-            ShoostPostProcessEffect.Fisheye,
-            ShoostPostProcessEffect.GateWeave,
-            ShoostPostProcessEffect.GrainCustom,
-            ShoostPostProcessEffect.IrisBlur,
-            ShoostPostProcessEffect.KawaseBlur,
-            ShoostPostProcessEffect.LensDistortionCustom,
             ShoostPostProcessEffect.LevelAdjustment,
             ShoostPostProcessEffect.LUTColorGrading,
-            ShoostPostProcessEffect.MotionTrail,
-            ShoostPostProcessEffect.Pixelize,
-            ShoostPostProcessEffect.RGBBlur,
-            ShoostPostProcessEffect.RGBBlurV2,
-            ShoostPostProcessEffect.RGBChannelSeparator,
-            ShoostPostProcessEffect.RGBSplit,
-            ShoostPostProcessEffect.SharpenBefore,
-            ShoostPostProcessEffect.SharpenAfter,
+            ShoostPostProcessEffect.EdgeLight,
+            ShoostPostProcessEffect.Outline,
+            ShoostPostProcessEffect.DropShadow,
+            ShoostPostProcessEffect.Gradient,
+            ShoostPostProcessEffect.Glow,
+            ShoostPostProcessEffect.Lighting,
+            ShoostPostProcessEffect.CenterColorCorrection,
+            ShoostPostProcessEffect.LED,
+            ShoostPostProcessEffect.Weather,
+            ShoostPostProcessEffect.Particle,
+            ShoostPostProcessEffect.CameraSwitcher,
+            ShoostPostProcessEffect.TransparentBackground,
+            ShoostPostProcessEffect.FilmBreathGateWeave,
             ShoostPostProcessEffect.Tube,
+            ShoostPostProcessEffect.VHS,
+            ShoostPostProcessEffect.CRTEffects,
+            ShoostPostProcessEffect.DitheringCustom,
+            ShoostPostProcessEffect.IrisBlur,
+            ShoostPostProcessEffect.RGBBlurV2,
+            ShoostPostProcessEffect.RGBSplit,
+            ShoostPostProcessEffect.GrainCustom,
             ShoostPostProcessEffect.VignetteCustom,
+            ShoostPostProcessEffect.Pixelize,
+            ShoostPostProcessEffect.ChangeFrameRate,
+            ShoostPostProcessEffect.Distortion,
+            ShoostPostProcessEffect.Fisheye,
+            ShoostPostProcessEffect.CameraFlash,
+            ShoostPostProcessEffect.CustomMaterial,
+            ShoostPostProcessEffect.ColorGradingCustom,
+            ShoostPostProcessEffect.GateWeave,
+            ShoostPostProcessEffect.KawaseBlur,
+            ShoostPostProcessEffect.LensDistortionCustom,
+            ShoostPostProcessEffect.MotionTrail,
+            ShoostPostProcessEffect.RGBBlur,
+            ShoostPostProcessEffect.RGBChannelSeparator,
+            ShoostPostProcessEffect.SharpenAfter,
             ShoostPostProcessEffect.RetroLookProBleedCustom,
             ShoostPostProcessEffect.RetroLookProNoise2Custom,
             ShoostPostProcessEffect.RetroLookProOldFilm2Custom,
             ShoostPostProcessEffect.RetroLookProTVEffectCustom
+        };
+
+        private static readonly EffectToggleEntry[] VisibleEffectOrder =
+        {
+            new EffectToggleEntry(ShoostPostProcessEffect.SharpenBefore, "锐化", "icon_Sharpen_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.AutoWhiteBalance, "白平衡", "icon_WhiteBalance_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.LevelAdjustment, "色阶", "icon_LevelsAdjustment_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.LUTColorGrading, "调色", "icon_ColorGrading_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.EdgeLight, "边缘光", "icon_RimLight_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.Outline, "轮廓", "icon_OutLine_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.DropShadow, "投影", "icon_DropShadow_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.Gradient, "渐变", "icon_Gradient_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.Glow, "发光", "icon_Glow_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.Lighting, "光照", "icon_Lighting_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.CenterColorCorrection, "中心色彩校正", "icon_CenterColorCorrection"),
+            new EffectToggleEntry(ShoostPostProcessEffect.LED, "LED", "icon_LEDPanel_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.Weather, "天气", "icon_Weather_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.Particle, "粒子", "icon_Particle_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.CameraSwitcher, "摄像头切换器", "icon_CameraSwitch_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.TransparentBackground, "透明背景", "icon_TransparentBackground_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.FilmBreathGateWeave, "胶片", "icon_Film_v3"),
+            new EffectToggleEntry(ShoostPostProcessEffect.Tube, "电视", "icon_TV_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.VHS, "VHS", "icon_VHS_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.CRTEffects, "显示器", "icon_Monitor_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.DitheringCustom, "视频游戏", "icon_GameBoy_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.IrisBlur, "光圈模糊", "icon_IrisBlur_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.RGBBlurV2, "通道模糊", "icon_RGBBlur_v2"),
+            new EffectToggleEntry(ShoostPostProcessEffect.RGBSplit, "RGB 分离", "icon_RGBSplit_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.GrainCustom, "颗粒", "icon_Grain_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.VignetteCustom, "暗角", "icon_Vignette_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.Pixelize, "像素化", "icon_Pixel_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.ChangeFrameRate, "帧率限制", "icon_FPS_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.Distortion, "湍流置换", "icon_Distortion_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.Fisheye, "镜头畸变", "icon_FishEye_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.CameraFlash, "摄像机闪光", "icon_CameraFlash_v1")
         };
 
         private static readonly string[] EffectDisplayNames =
@@ -59,33 +122,47 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "自动白平衡",
             "变更帧率",
             "自定义调色",
-            "CRT",
-            "扭曲",
+            "显示器",
+            "湍流置换",
+            "视频游戏",
             "自定义抖动",
-            "降分辨率",
-            "胶片呼吸/网格抖动",
-            "鱼眼",
+            "胶片",
+            "镜头畸变",
             "画幅抖动",
             "自定义颗粒",
-            "虹膜模糊",
+            "光圈模糊",
             "Kawase 模糊",
-            "镜头畸变",
+            "镜头畸变（自定义）",
             "色阶",
-            "LUT 调色",
+            "调色",
             "运动拖影",
             "像素化",
             "RGB 模糊",
-            "RGB 模糊 V2",
+            "通道模糊",
             "RGB 通道分离",
             "RGB 分离",
-            "锐化（前）",
+            "锐化",
             "锐化（后）",
-            "Tube",
+            "电视",
             "暗角",
             "RetroLookPro Bleed",
             "RetroLookPro Noise2",
             "RetroLookPro Old Film 2",
-            "RetroLookPro TV Effect"
+            "RetroLookPro TV Effect",
+            "边缘光",
+            "轮廓",
+            "投影",
+            "渐变",
+            "发光",
+            "光照",
+            "中心色彩校正",
+            "LED",
+            "天气",
+            "粒子",
+            "摄像头切换器",
+            "透明背景",
+            "VHS",
+            "摄像机闪光"
         };
 
         private static readonly GUIContent[] BlendModeDisplayNames =
@@ -153,7 +230,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             { ShoostPostProcessEffect.CRTEffects, "icon_TV_v1" },
             { ShoostPostProcessEffect.Distortion, "icon_Distortion_v1" },
             { ShoostPostProcessEffect.DitheringCustom, "icon_Pixel_v1" },
-            { ShoostPostProcessEffect.DownScaleResolution, "icon_Monitor_v1" },
             { ShoostPostProcessEffect.FilmBreathGateWeave, "icon_Film_v3" },
             { ShoostPostProcessEffect.Fisheye, "icon_FishEye_v1" },
             { ShoostPostProcessEffect.GateWeave, "icon_Film_v2" },
@@ -285,6 +361,66 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.AutoWhiteBalance)
+            {
+                DrawAutoWhiteBalanceElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.Fisheye)
+            {
+                DrawFisheyeElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.GateWeave)
+            {
+                DrawGateWeaveElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.FilmBreathGateWeave)
+            {
+                DrawFilmBreathGateWeaveElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.GrainCustom)
+            {
+                DrawGrainCustomElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.Tube)
+            {
+                DrawTubeElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.Pixelize)
+            {
+                DrawPixelizeElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.DownScaleResolution)
+            {
+                DrawDownScaleResolutionElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.Distortion)
+            {
+                DrawDistortionElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.RGBChannelSeparator)
+            {
+                DrawRgbChannelSeparatorElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ShoostPostProcessEffect.VignetteCustom)
             {
                 DrawVignetteCustomElement(rect, element);
@@ -337,6 +473,46 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ShoostPostProcessEffect.IrisBlur:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
                     lineCount += 11 + (GetIrisBlurUsesCustomResolution(element) ? 2 : 0) + (GetIrisBlurUsesRgbBlur(element) ? 3 : 0);
+                    break;
+                case ShoostPostProcessEffect.AutoWhiteBalance:
+                    lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
+                    lineCount += 3;
+                    break;
+                case ShoostPostProcessEffect.Fisheye:
+                    lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
+                    lineCount += 3;
+                    break;
+                case ShoostPostProcessEffect.GateWeave:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 5;
+                    break;
+                case ShoostPostProcessEffect.FilmBreathGateWeave:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 13;
+                    break;
+                case ShoostPostProcessEffect.GrainCustom:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 6 + (GetGrainCustomUsesCustomResolution(element) ? 2 : 0);
+                    break;
+                case ShoostPostProcessEffect.Tube:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 7 + (GetTubeUsesCustomResolution(element) ? 2 : 0);
+                    break;
+                case ShoostPostProcessEffect.Pixelize:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 4 + (GetPixelizeUsesCustomResolution(element) ? 2 : 0) + (GetPixelizeUsesManualAspect(element) ? 1 : 0) + (GetPixelizeUsesBlur(element) ? 1 : 0);
+                    break;
+                case ShoostPostProcessEffect.DownScaleResolution:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 1 + (GetDownScaleUsesCustomResolution(element) ? 2 : 0) + 1;
+                    break;
+                case ShoostPostProcessEffect.Distortion:
+                    lineCount += GetCoreLineCount(false, false, true, false, false, showAdvanced);
+                    lineCount += 8;
+                    break;
+                case ShoostPostProcessEffect.RGBChannelSeparator:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 1;
                     break;
                 case ShoostPostProcessEffect.VignetteCustom:
                     lineCount += GetCoreLineCount(false, GetVignetteCustomUsesTintMode(element), false, false, false, showAdvanced);
@@ -441,6 +617,72 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return Mathf.RoundToInt(parameters0.vector4Value.x) == 0;
         }
 
+        private static bool GetPixelizeUsesCustomResolution(SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element?.FindPropertyRelative("parameters0");
+            if (parameters0 == null || parameters0.propertyType != SerializedPropertyType.Vector4)
+            {
+                return false;
+            }
+
+            return Mathf.RoundToInt(parameters0.vector4Value.x) == 0;
+        }
+
+        private static bool GetPixelizeUsesManualAspect(SerializedProperty element)
+        {
+            SerializedProperty parameters1 = element?.FindPropertyRelative("parameters1");
+            if (parameters1 == null || parameters1.propertyType != SerializedPropertyType.Vector4)
+            {
+                return false;
+            }
+
+            return Mathf.RoundToInt(parameters1.vector4Value.x) == 1;
+        }
+
+        private static bool GetPixelizeUsesBlur(SerializedProperty element)
+        {
+            SerializedProperty parameters1 = element?.FindPropertyRelative("parameters1");
+            if (parameters1 == null || parameters1.propertyType != SerializedPropertyType.Vector4)
+            {
+                return false;
+            }
+
+            return parameters1.vector4Value.z > 0.5f;
+        }
+
+        private static bool GetDownScaleUsesCustomResolution(SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element?.FindPropertyRelative("parameters0");
+            if (parameters0 == null || parameters0.propertyType != SerializedPropertyType.Vector4)
+            {
+                return false;
+            }
+
+            return Mathf.RoundToInt(parameters0.vector4Value.x) == 1;
+        }
+
+        private static bool GetGrainCustomUsesCustomResolution(SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element?.FindPropertyRelative("parameters0");
+            if (parameters0 == null || parameters0.propertyType != SerializedPropertyType.Vector4)
+            {
+                return false;
+            }
+
+            return Mathf.RoundToInt(parameters0.vector4Value.x) == 1;
+        }
+
+        private static bool GetTubeUsesCustomResolution(SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element?.FindPropertyRelative("parameters0");
+            if (parameters0 == null || parameters0.propertyType != SerializedPropertyType.Vector4)
+            {
+                return false;
+            }
+
+            return Mathf.RoundToInt(parameters0.vector4Value.x) == 1;
+        }
+
         private static bool GetVignetteCustomUsesTintMode(SerializedProperty element)
         {
             SerializedProperty passIndex = element?.FindPropertyRelative("passIndex");
@@ -457,7 +699,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             float width = EditorGUIUtility.currentViewWidth - 40.0f;
             width = Mathf.Max(160.0f, width);
             int buttonsPerRow = Mathf.Max(1, Mathf.FloorToInt((width + EffectIconSpacing) / (EffectIconSize + EffectIconSpacing)));
-            int rowCount = Mathf.CeilToInt(FixedEffectOrder.Length / (float)buttonsPerRow);
+            int rowCount = Mathf.CeilToInt(VisibleEffectOrder.Length / (float)buttonsPerRow);
             float height = rowCount * EffectIconSize + Mathf.Max(0, rowCount - 1) * EffectIconSpacing;
 
             Rect rect = GUILayoutUtility.GetRect(0.0f, height, GUILayout.ExpandWidth(true));
@@ -465,7 +707,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             float y = rect.y;
             int column = 0;
 
-            foreach (ShoostPostProcessEffect effect in FixedEffectOrder)
+            foreach (EffectToggleEntry entry in VisibleEffectOrder)
             {
                 if (column >= buttonsPerRow)
                 {
@@ -475,7 +717,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 }
 
                 Rect buttonRect = new Rect(x, y, EffectIconSize, EffectIconSize);
-                DrawEffectIconButton(buttonRect, effect);
+                DrawEffectIconButton(buttonRect, entry);
                 x += EffectIconSize + EffectIconSpacing;
                 column++;
             }
@@ -496,6 +738,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SerializedProperty element = layerValues.GetArrayElementAtIndex(index);
             ResetLayerDefaults(element);
             SetEnum(element, "effect", (int)effect);
+            ResetEffectDefaults(element, effect);
             element.isExpanded = true;
             SortLayersByEffectOrder();
         }
@@ -594,10 +837,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return false;
         }
 
-        private void DrawEffectIconButton(Rect rect, ShoostPostProcessEffect effect)
+        private void DrawEffectIconButton(Rect rect, EffectToggleEntry entry)
         {
-            bool active = HasLayer(effect);
-            GUIContent content = GetEffectIconContent(effect);
+            bool active = HasLayer(entry.Effect);
+            GUIContent content = GetEffectIconContent(entry);
             Texture icon = content.image;
 
             if (icon != null)
@@ -616,28 +859,27 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
             if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
             {
-                ToggleEffect(effect);
+                ToggleEffect(entry.Effect);
                 Event.current.Use();
             }
         }
 
-        private static GUIContent GetEffectIconContent(ShoostPostProcessEffect effect)
+        private static GUIContent GetEffectIconContent(EffectToggleEntry entry)
         {
-            if (EffectIconContents.TryGetValue(effect, out GUIContent cached))
+            if (EffectIconContents.TryGetValue(entry.Effect, out GUIContent cached))
             {
                 return cached;
             }
 
-            Texture2D icon = LoadEffectIcon(effect);
-            string label = GetEffectDisplayName(effect);
-            GUIContent content = icon != null ? new GUIContent(icon, label) : new GUIContent(label);
-            EffectIconContents[effect] = content;
+            Texture2D icon = LoadEffectIcon(entry.IconName);
+            GUIContent content = icon != null ? new GUIContent(icon, entry.Label) : new GUIContent(entry.Label);
+            EffectIconContents[entry.Effect] = content;
             return content;
         }
 
-        private static Texture2D LoadEffectIcon(ShoostPostProcessEffect effect)
+        private static Texture2D LoadEffectIcon(string iconName)
         {
-            if (!EffectIconNames.TryGetValue(effect, out string iconName) || string.IsNullOrEmpty(iconName))
+            if (string.IsNullOrEmpty(iconName))
             {
                 return null;
             }
@@ -721,6 +963,440 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             return int.MaxValue;
+        }
+
+        private void DrawAutoWhiteBalanceElement(Rect rect, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
+
+            EnsureAutoWhiteBalanceDefaults(parameters0);
+
+            float y = rect.y;
+            y = DrawFoldoutLine(rect, y, element, enabled);
+            if (!element.isExpanded)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: true, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
+
+            Vector4 whiteBalanceParams = parameters0.vector4Value;
+            whiteBalanceParams.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "色温", whiteBalanceParams.x, -100.0f, 100.0f);
+            y += LineHeight + LineSpacing;
+            whiteBalanceParams.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "色调", whiteBalanceParams.y, -100.0f, 100.0f);
+            y += LineHeight + LineSpacing;
+            bool preserveLuminance = whiteBalanceParams.z > 0.5f;
+            preserveLuminance = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "保持亮度", preserveLuminance);
+            whiteBalanceParams.z = preserveLuminance ? 1.0f : 0.0f;
+            y += LineHeight + LineSpacing;
+            parameters0.vector4Value = whiteBalanceParams;
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawFisheyeElement(Rect rect, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
+
+            EnsureFisheyeDefaults(parameters0);
+
+            float y = rect.y;
+            y = DrawFoldoutLine(rect, y, element, enabled);
+            if (!element.isExpanded)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: true, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
+
+            Vector4 fisheyeParams = parameters0.vector4Value;
+            fisheyeParams.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "缩放", fisheyeParams.x, 0.01f, 2.0f);
+            y += LineHeight + LineSpacing;
+            fisheyeParams.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "边缘柔和", fisheyeParams.y, 0.01f, 0.5f);
+            y += LineHeight + LineSpacing;
+            bool isCircular = fisheyeParams.z > 0.5f;
+            isCircular = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "圆形柔和", isCircular);
+            fisheyeParams.z = isCircular ? 1.0f : 0.0f;
+            y += LineHeight + LineSpacing;
+
+            parameters0.vector4Value = fisheyeParams;
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawGateWeaveElement(Rect rect, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
+
+            EnsureGateWeaveDefaults(parameters0, parameters1);
+
+            float y = rect.y;
+            y = DrawFoldoutLine(rect, y, element, enabled);
+            if (!element.isExpanded)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
+
+            Vector4 gateParams0 = parameters0.vector4Value;
+            Vector4 gateParams1 = parameters1.vector4Value;
+
+            gateParams0.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "位置抖动幅度", gateParams0.x, 0.0f, 0.1f);
+            y += LineHeight + LineSpacing;
+            gateParams0.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "位置抖动频率", gateParams0.y, 0.0f, 50.0f);
+            y += LineHeight + LineSpacing;
+            gateParams0.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "旋转抖动幅度", gateParams0.z, 0.0f, 0.1f);
+            y += LineHeight + LineSpacing;
+            gateParams0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "旋转抖动频率", gateParams0.w, 0.0f, 50.0f);
+            y += LineHeight + LineSpacing;
+            gateParams1.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "缩放", gateParams1.x, 1.0f, 2.0f);
+            y += LineHeight + LineSpacing;
+
+            parameters0.vector4Value = gateParams0;
+            parameters1.vector4Value = gateParams1;
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawFilmBreathGateWeaveElement(Rect rect, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
+            SerializedProperty parameters2 = element.FindPropertyRelative("parameters2");
+            SerializedProperty parameters3 = element.FindPropertyRelative("parameters3");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
+
+            EnsureFilmBreathGateWeaveDefaults(parameters0, parameters1, parameters2, parameters3);
+
+            float y = rect.y;
+            y = DrawFoldoutLine(rect, y, element, enabled);
+            if (!element.isExpanded)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
+
+            Vector4 filmParams0 = parameters0.vector4Value;
+            Vector4 filmParams1 = parameters1.vector4Value;
+            Vector4 filmParams2 = parameters2.vector4Value;
+            Vector4 filmParams3 = parameters3.vector4Value;
+
+            filmParams0.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "位置幅度", filmParams0.x, 0.0f, 0.1f);
+            y += LineHeight + LineSpacing;
+            filmParams0.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "位置频率", filmParams0.y, 0.0f, 50.0f);
+            y += LineHeight + LineSpacing;
+            filmParams0.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "旋转幅度", filmParams0.z, 0.0f, 0.1f);
+            y += LineHeight + LineSpacing;
+            filmParams0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "旋转频率", filmParams0.w, 0.0f, 50.0f);
+            y += LineHeight + LineSpacing;
+
+            filmParams1.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "缩放呼吸幅度", filmParams1.x, 0.0f, 0.1f);
+            y += LineHeight + LineSpacing;
+            filmParams1.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "缩放呼吸频率", filmParams1.y, 0.0f, 50.0f);
+            y += LineHeight + LineSpacing;
+            filmParams1.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "曝光变化幅度", filmParams1.z, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            filmParams1.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "曝光变化频率", filmParams1.w, 0.0f, 50.0f);
+            y += LineHeight + LineSpacing;
+
+            filmParams2.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "对比度变化幅度", filmParams2.x, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            filmParams2.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "对比度变化频率", filmParams2.y, 0.0f, 50.0f);
+            y += LineHeight + LineSpacing;
+            filmParams2.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "颜色变化幅度", filmParams2.z, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            filmParams2.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "颜色变化频率", filmParams2.w, 0.0f, 50.0f);
+            y += LineHeight + LineSpacing;
+
+            filmParams3.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "不规则度", filmParams3.x, 0.0f, 2.0f);
+            y += LineHeight + LineSpacing;
+
+            parameters0.vector4Value = filmParams0;
+            parameters1.vector4Value = filmParams1;
+            parameters2.vector4Value = filmParams2;
+            parameters3.vector4Value = filmParams3;
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawGrainCustomElement(Rect rect, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
+
+            EnsureGrainCustomDefaults(parameters0, parameters1);
+
+            float y = rect.y;
+            y = DrawFoldoutLine(rect, y, element, enabled);
+            if (!element.isExpanded)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
+
+            Vector4 grainParams0 = parameters0.vector4Value;
+            Vector4 grainParams1 = parameters1.vector4Value;
+
+            int resolutionType = Mathf.Clamp(Mathf.RoundToInt(grainParams0.x), 0, 1);
+            resolutionType = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "分辨率模式", resolutionType, new[] { "游戏视图", "自定义尺寸" });
+            grainParams0.x = resolutionType;
+            y += LineHeight + LineSpacing;
+            if (resolutionType == 1)
+            {
+                grainParams0.y = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "自定义宽度", Mathf.RoundToInt(grainParams0.y), 1, 8192));
+                y += LineHeight + LineSpacing;
+                grainParams0.z = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "自定义高度", Mathf.RoundToInt(grainParams0.z), 1, 8192));
+                y += LineHeight + LineSpacing;
+            }
+
+            grainParams0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "降采样", grainParams0.w, 1.0f, 4.0f);
+            y += LineHeight + LineSpacing;
+            grainParams1.x = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "彩色颗粒", grainParams1.x > 0.5f) ? 1.0f : 0.0f;
+            y += LineHeight + LineSpacing;
+            grainParams1.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "强度", grainParams1.y, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            grainParams1.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "尺寸", grainParams1.z, 0.3f, 3.0f);
+            y += LineHeight + LineSpacing;
+            grainParams1.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "亮度贡献", grainParams1.w, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+
+            parameters0.vector4Value = grainParams0;
+            parameters1.vector4Value = grainParams1;
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawTubeElement(Rect rect, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
+            SerializedProperty parameters2 = element.FindPropertyRelative("parameters2");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
+
+            EnsureTubeDefaults(parameters0, parameters1, parameters2);
+
+            float y = rect.y;
+            y = DrawFoldoutLine(rect, y, element, enabled);
+            if (!element.isExpanded)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
+
+            Vector4 tubeParams0 = parameters0.vector4Value;
+            Vector4 tubeParams1 = parameters1.vector4Value;
+            Vector4 tubeParams2 = parameters2.vector4Value;
+
+            int resolutionType = Mathf.Clamp(Mathf.RoundToInt(tubeParams0.x), 0, 1);
+            resolutionType = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "分辨率模式", resolutionType, new[] { "游戏视图", "自定义尺寸" });
+            tubeParams0.x = resolutionType;
+            y += LineHeight + LineSpacing;
+            if (resolutionType == 1)
+            {
+                tubeParams0.y = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "自定义宽度", Mathf.RoundToInt(tubeParams0.y), 1, 8192));
+                y += LineHeight + LineSpacing;
+                tubeParams0.z = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "自定义高度", Mathf.RoundToInt(tubeParams0.z), 1, 8192));
+                y += LineHeight + LineSpacing;
+            }
+
+            tubeParams0.w = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "降采样", Mathf.RoundToInt(tubeParams0.w), 1, 4));
+            y += LineHeight + LineSpacing;
+            tubeParams1.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "拖影", tubeParams1.x, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            tubeParams1.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "色边", tubeParams1.y, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            tubeParams1.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "不透明度", tubeParams1.z, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            tubeParams1.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "扫描线", tubeParams1.w, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            tubeParams2.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "扫描线宽度", tubeParams2.x, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+
+            parameters0.vector4Value = tubeParams0;
+            parameters1.vector4Value = tubeParams1;
+            parameters2.vector4Value = tubeParams2;
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawPixelizeElement(Rect rect, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
+
+            EnsurePixelizeDefaults(parameters0, parameters1);
+
+            float y = rect.y;
+            y = DrawFoldoutLine(rect, y, element, enabled);
+            if (!element.isExpanded)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
+
+            Vector4 pixelParams0 = parameters0.vector4Value;
+            Vector4 pixelParams1 = parameters1.vector4Value;
+            int resolutionType = Mathf.Clamp(Mathf.RoundToInt(pixelParams0.x), 0, 5);
+            resolutionType = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "分辨率", resolutionType, new[] { "自定义", "QVGA 320x240", "SDTV 640x480", "EDTV 854x480", "HD 1280x720", "FHD 1920x1080" });
+            pixelParams0.x = resolutionType;
+            y += LineHeight + LineSpacing;
+
+            if (resolutionType == 0)
+            {
+                pixelParams0.y = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "自定义宽度", Mathf.RoundToInt(pixelParams0.y), 1, 8192));
+                y += LineHeight + LineSpacing;
+                pixelParams0.z = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "自定义高度", Mathf.RoundToInt(pixelParams0.z), 1, 8192));
+                y += LineHeight + LineSpacing;
+            }
+
+            pixelParams0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "分辨率缩放", pixelParams0.w, 0.01f, 1.0f);
+            y += LineHeight + LineSpacing;
+
+            int aspectMode = Mathf.Clamp(Mathf.RoundToInt(pixelParams1.x), 0, 1);
+            aspectMode = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "像素宽高比", aspectMode, new[] { "自动", "手动" });
+            pixelParams1.x = aspectMode;
+            y += LineHeight + LineSpacing;
+            if (aspectMode == 1)
+            {
+                pixelParams1.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "宽高比", pixelParams1.y, 0.5f, 2.0f);
+                y += LineHeight + LineSpacing;
+            }
+
+            bool enableBlur = pixelParams1.z > 0.5f;
+            enableBlur = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "启用模糊", enableBlur);
+            pixelParams1.z = enableBlur ? 1.0f : 0.0f;
+            y += LineHeight + LineSpacing;
+            if (enableBlur)
+            {
+                pixelParams1.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "模糊半径", pixelParams1.w, 0.0f, 5.0f);
+                y += LineHeight + LineSpacing;
+            }
+
+            parameters0.vector4Value = pixelParams0;
+            parameters1.vector4Value = pixelParams1;
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawDownScaleResolutionElement(Rect rect, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
+
+            EnsureDownScaleResolutionDefaults(parameters0);
+
+            float y = rect.y;
+            y = DrawFoldoutLine(rect, y, element, enabled);
+            if (!element.isExpanded)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
+
+            Vector4 resolutionParams = parameters0.vector4Value;
+            int resolutionType = Mathf.Clamp(Mathf.RoundToInt(resolutionParams.x), 0, 6);
+            resolutionType = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "分辨率", resolutionType, new[] { "游戏视图", "自定义", "QVGA 320x240", "SDTV 640x480", "EDTV 854x480", "HD 1280x720", "FHD 1920x1080" });
+            resolutionParams.x = resolutionType;
+            y += LineHeight + LineSpacing;
+
+            if (resolutionType == 1)
+            {
+                resolutionParams.y = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "自定义宽度", Mathf.RoundToInt(resolutionParams.y), 1, 8192));
+                y += LineHeight + LineSpacing;
+                resolutionParams.z = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "自定义高度", Mathf.RoundToInt(resolutionParams.z), 1, 8192));
+                y += LineHeight + LineSpacing;
+            }
+
+            resolutionParams.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "降采样倍率", resolutionParams.w, 1.0f, 10.0f);
+            y += LineHeight + LineSpacing;
+            parameters0.vector4Value = resolutionParams;
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawDistortionElement(Rect rect, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
+            SerializedProperty texture = element.FindPropertyRelative("texture");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
+
+            EnsureDistortionDefaults(parameters0, parameters1);
+            if (texture != null && texture.propertyType == SerializedPropertyType.ObjectReference && texture.objectReferenceValue == null)
+            {
+                texture.objectReferenceValue = LoadDefaultDistortionTexture();
+            }
+
+            float y = rect.y;
+            y = DrawFoldoutLine(rect, y, element, enabled);
+            if (!element.isExpanded)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: true, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
+
+            Vector4 distortionParams0 = parameters0.vector4Value;
+            Vector4 distortionParams1 = parameters1.vector4Value;
+            distortionParams1.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "纹理平铺 X", distortionParams1.x, 0.01f, 10.0f);
+            y += LineHeight + LineSpacing;
+            distortionParams1.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "纹理平铺 Y", distortionParams1.y, 0.01f, 10.0f);
+            y += LineHeight + LineSpacing;
+            distortionParams0.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "衰减", distortionParams0.x, 0.0f, 10.0f);
+            y += LineHeight + LineSpacing;
+            distortionParams0.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "X 影响", distortionParams0.y, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            distortionParams0.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Y 影响", distortionParams0.z, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            distortionParams0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "流动强度", distortionParams0.w, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            distortionParams1.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "速度 X", distortionParams1.z, -2.0f, 2.0f);
+            y += LineHeight + LineSpacing;
+            distortionParams1.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "速度 Y", distortionParams1.w, -2.0f, 2.0f);
+            y += LineHeight + LineSpacing;
+
+            parameters0.vector4Value = distortionParams0;
+            parameters1.vector4Value = distortionParams1;
+            EditorGUI.indentLevel--;
+        }
+
+        private void DrawRgbChannelSeparatorElement(Rect rect, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
+
+            EnsureRgbChannelSeparatorDefaults(parameters0);
+
+            float y = rect.y;
+            y = DrawFoldoutLine(rect, y, element, enabled);
+            if (!element.isExpanded)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
+
+            Vector4 separatorParams = parameters0.vector4Value;
+            int channel = Mathf.Clamp(Mathf.RoundToInt(separatorParams.x), 0, 4);
+            channel = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "通道", channel, new[] { "RGB", "红", "绿", "蓝", "Alpha" });
+            separatorParams.x = channel;
+            y += LineHeight + LineSpacing;
+            parameters0.vector4Value = separatorParams;
+            EditorGUI.indentLevel--;
         }
 
         private void DrawVignetteCustomElement(Rect rect, SerializedProperty element)
@@ -1332,6 +2008,235 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             parameters0.vector4Value = new Vector4(0.5f, 0.5f, 0.35f, 0.25f);
         }
 
+        private static void EnsureAutoWhiteBalanceDefaults(SerializedProperty parameters0)
+        {
+            if (parameters0 == null || parameters0.propertyType != SerializedPropertyType.Vector4)
+            {
+                return;
+            }
+
+            Vector4 value = parameters0.vector4Value;
+            if (value.sqrMagnitude <= 0.000001f)
+            {
+                parameters0.vector4Value = new Vector4(0.0f, 0.0f, 1.0f, 0.0f);
+            }
+        }
+
+        private static void EnsureFisheyeDefaults(SerializedProperty parameters0)
+        {
+            if (parameters0 == null || parameters0.propertyType != SerializedPropertyType.Vector4)
+            {
+                return;
+            }
+
+            Vector4 value = parameters0.vector4Value;
+            if (value.sqrMagnitude <= 0.000001f)
+            {
+                parameters0.vector4Value = new Vector4(1.0f, 0.25f, 0.0f, 0.0f);
+            }
+        }
+
+        private static void EnsureGateWeaveDefaults(SerializedProperty parameters0, SerializedProperty parameters1)
+        {
+            if (parameters0 != null && parameters0.propertyType == SerializedPropertyType.Vector4 && parameters0.vector4Value.sqrMagnitude <= 0.000001f)
+            {
+                parameters0.vector4Value = new Vector4(0.02f, 20.0f, 0.05f, 15.0f);
+            }
+
+            if (parameters1 != null && parameters1.propertyType == SerializedPropertyType.Vector4 && parameters1.vector4Value.sqrMagnitude <= 0.000001f)
+            {
+                parameters1.vector4Value = new Vector4(1.0f, 0.0f, 0.0f, 0.0f);
+            }
+        }
+
+        private static void EnsureFilmBreathGateWeaveDefaults(SerializedProperty parameters0, SerializedProperty parameters1, SerializedProperty parameters2, SerializedProperty parameters3)
+        {
+            if (parameters0 != null && parameters0.propertyType == SerializedPropertyType.Vector4 && parameters0.vector4Value.sqrMagnitude <= 0.000001f)
+            {
+                parameters0.vector4Value = new Vector4(0.02f, 20.0f, 0.05f, 15.0f);
+            }
+
+            if (parameters1 != null && parameters1.propertyType == SerializedPropertyType.Vector4 && parameters1.vector4Value.sqrMagnitude <= 0.000001f)
+            {
+                parameters1.vector4Value = new Vector4(0.005f, 5.0f, 0.2f, 15.0f);
+            }
+
+            if (parameters2 != null && parameters2.propertyType == SerializedPropertyType.Vector4 && parameters2.vector4Value.sqrMagnitude <= 0.000001f)
+            {
+                parameters2.vector4Value = new Vector4(0.1f, 12.0f, 0.1f, 16.0f);
+            }
+
+            if (parameters3 != null && parameters3.propertyType == SerializedPropertyType.Vector4 && parameters3.vector4Value.sqrMagnitude <= 0.000001f)
+            {
+                parameters3.vector4Value = new Vector4(1.0f, 0.0f, 0.0f, 0.0f);
+            }
+        }
+
+        private static void EnsureGrainCustomDefaults(SerializedProperty parameters0, SerializedProperty parameters1)
+        {
+            if (parameters0 != null && parameters0.propertyType == SerializedPropertyType.Vector4 && parameters0.vector4Value.sqrMagnitude <= 0.000001f)
+            {
+                parameters0.vector4Value = new Vector4(1.0f, 1920.0f, 1080.0f, 1.0f);
+            }
+
+            if (parameters1 != null && parameters1.propertyType == SerializedPropertyType.Vector4 && parameters1.vector4Value.sqrMagnitude <= 0.000001f)
+            {
+                parameters1.vector4Value = new Vector4(0.0f, 0.5f, 2.0f, 0.9f);
+            }
+        }
+
+        private static void EnsureTubeDefaults(SerializedProperty parameters0, SerializedProperty parameters1, SerializedProperty parameters2)
+        {
+            if (parameters0 != null && parameters0.propertyType == SerializedPropertyType.Vector4 && parameters0.vector4Value.sqrMagnitude <= 0.000001f)
+            {
+                parameters0.vector4Value = new Vector4(1.0f, 1920.0f, 1080.0f, 1.0f);
+            }
+
+            if (parameters1 != null && parameters1.propertyType == SerializedPropertyType.Vector4 && parameters1.vector4Value.sqrMagnitude <= 0.000001f)
+            {
+                parameters1.vector4Value = new Vector4(0.5f, 0.0f, 1.0f, 0.0f);
+            }
+
+            if (parameters2 != null && parameters2.propertyType == SerializedPropertyType.Vector4 && parameters2.vector4Value.sqrMagnitude <= 0.000001f)
+            {
+                parameters2.vector4Value = Vector4.zero;
+            }
+        }
+
+        private static void EnsurePixelizeDefaults(SerializedProperty parameters0, SerializedProperty parameters1)
+        {
+            if (parameters0 != null && parameters0.propertyType == SerializedPropertyType.Vector4 && parameters0.vector4Value.sqrMagnitude <= 0.000001f)
+            {
+                parameters0.vector4Value = new Vector4(0.0f, 320.0f, 240.0f, 1.0f);
+            }
+
+            if (parameters1 != null && parameters1.propertyType == SerializedPropertyType.Vector4 && parameters1.vector4Value.sqrMagnitude <= 0.000001f)
+            {
+                parameters1.vector4Value = new Vector4(0.0f, 1.0f, 0.0f, 0.0f);
+            }
+        }
+
+        private static void EnsureDownScaleResolutionDefaults(SerializedProperty parameters0)
+        {
+            if (parameters0 == null || parameters0.propertyType != SerializedPropertyType.Vector4)
+            {
+                return;
+            }
+
+            Vector4 value = parameters0.vector4Value;
+            if (value.sqrMagnitude <= 0.000001f)
+            {
+                parameters0.vector4Value = new Vector4(0.0f, 0.0f, 0.0f, 1.0f);
+            }
+        }
+
+        private static void EnsureDistortionDefaults(SerializedProperty parameters0, SerializedProperty parameters1)
+        {
+            if (parameters0 != null && parameters0.propertyType == SerializedPropertyType.Vector4 && parameters0.vector4Value.sqrMagnitude <= 0.000001f)
+            {
+                parameters0.vector4Value = new Vector4(5.0f, 0.1f, 0.2f, 0.1f);
+            }
+
+            if (parameters1 != null && parameters1.propertyType == SerializedPropertyType.Vector4 && parameters1.vector4Value.sqrMagnitude <= 0.000001f)
+            {
+                parameters1.vector4Value = new Vector4(1.0f, 1.0f, 0.0f, -2.0f);
+            }
+        }
+
+        private static void EnsureRgbChannelSeparatorDefaults(SerializedProperty parameters0)
+        {
+            if (parameters0 == null || parameters0.propertyType != SerializedPropertyType.Vector4)
+            {
+                return;
+            }
+
+            Vector4 value = parameters0.vector4Value;
+            if (value.sqrMagnitude <= 0.000001f)
+            {
+                parameters0.vector4Value = Vector4.zero;
+            }
+        }
+
+        private static void ResetEffectDefaults(SerializedProperty element, ShoostPostProcessEffect effect)
+        {
+            if (element == null)
+            {
+                return;
+            }
+
+            switch (effect)
+            {
+                case ShoostPostProcessEffect.AutoWhiteBalance:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetColor(element, "color", Color.white);
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 0.0f, 1.0f, 0.0f));
+                    break;
+                case ShoostPostProcessEffect.Fisheye:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetColor(element, "color", Color.white);
+                    SetVector4(element, "parameters0", new Vector4(1.0f, 0.25f, 0.0f, 0.0f));
+                    break;
+                case ShoostPostProcessEffect.GateWeave:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetVector4(element, "parameters0", new Vector4(0.02f, 20.0f, 0.05f, 15.0f));
+                    SetVector4(element, "parameters1", new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
+                    break;
+                case ShoostPostProcessEffect.FilmBreathGateWeave:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetVector4(element, "parameters0", new Vector4(0.02f, 20.0f, 0.05f, 15.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.005f, 5.0f, 0.2f, 15.0f));
+                    SetVector4(element, "parameters2", new Vector4(0.1f, 12.0f, 0.1f, 16.0f));
+                    SetVector4(element, "parameters3", new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
+                    break;
+                case ShoostPostProcessEffect.GrainCustom:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetVector4(element, "parameters0", new Vector4(1.0f, 1920.0f, 1080.0f, 1.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.0f, 0.5f, 2.0f, 0.9f));
+                    break;
+                case ShoostPostProcessEffect.Pixelize:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 320.0f, 240.0f, 1.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.0f, 1.0f, 0.0f, 0.0f));
+                    break;
+                case ShoostPostProcessEffect.DownScaleResolution:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+                    break;
+                case ShoostPostProcessEffect.Distortion:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetObjectReference(element, "texture", LoadDefaultDistortionTexture());
+                    SetVector4(element, "parameters0", new Vector4(5.0f, 0.1f, 0.2f, 0.1f));
+                    SetVector4(element, "parameters1", new Vector4(1.0f, 1.0f, 0.0f, -2.0f));
+                    break;
+                case ShoostPostProcessEffect.RGBChannelSeparator:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetVector4(element, "parameters0", Vector4.zero);
+                    break;
+                case ShoostPostProcessEffect.Tube:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetVector4(element, "parameters0", new Vector4(1.0f, 1920.0f, 1080.0f, 1.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.5f, 0.0f, 1.0f, 0.0f));
+                    SetVector4(element, "parameters2", Vector4.zero);
+                    break;
+                case ShoostPostProcessEffect.EdgeLight:
+                case ShoostPostProcessEffect.Outline:
+                case ShoostPostProcessEffect.DropShadow:
+                case ShoostPostProcessEffect.Gradient:
+                case ShoostPostProcessEffect.Glow:
+                case ShoostPostProcessEffect.Lighting:
+                case ShoostPostProcessEffect.CenterColorCorrection:
+                case ShoostPostProcessEffect.LED:
+                case ShoostPostProcessEffect.Weather:
+                case ShoostPostProcessEffect.Particle:
+                case ShoostPostProcessEffect.CameraSwitcher:
+                case ShoostPostProcessEffect.TransparentBackground:
+                case ShoostPostProcessEffect.VHS:
+                case ShoostPostProcessEffect.CameraFlash:
+                    SetFloat(element, "intensity", 1.0f);
+                    break;
+            }
+        }
+
         private static void ResetLayerDefaults(SerializedProperty element)
         {
             if (element == null)
@@ -1417,6 +2322,17 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             {
                 property.vector4Value = value;
             }
+        }
+
+        private static Texture2D LoadDefaultDistortionTexture()
+        {
+            string assetPath = AssetDatabase.GUIDToAssetPath(DefaultDistortionTextureGuid);
+            if (string.IsNullOrEmpty(assetPath))
+            {
+                return null;
+            }
+
+            return AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
         }
 
         private static void EnsureLutColorGradingDefaults(SerializedProperty parameters1)

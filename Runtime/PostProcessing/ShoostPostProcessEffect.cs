@@ -32,7 +32,21 @@ namespace lilToon.URP.Extensions.PostProcessing
         RetroLookProBleedCustom,
         RetroLookProNoise2Custom,
         RetroLookProOldFilm2Custom,
-        RetroLookProTVEffectCustom
+        RetroLookProTVEffectCustom,
+        EdgeLight,
+        Outline,
+        DropShadow,
+        Gradient,
+        Glow,
+        Lighting,
+        CenterColorCorrection,
+        LED,
+        Weather,
+        Particle,
+        CameraSwitcher,
+        TransparentBackground,
+        VHS,
+        CameraFlash
     }
 
     public enum ShoostPostProcessBlendMode
