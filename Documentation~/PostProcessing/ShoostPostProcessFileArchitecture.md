@@ -80,3 +80,6 @@ Runtime 先不强拆，避免在 RenderGraph 链路还没完全稳定前引入�
 - `Runtime/PostProcessing/ShoostPostProcessDitheringCustom.shader`：视频游戏滤镜的 URP fullscreen pass。当前实现把 Shoost 的低分辨率采样、抖动量化、单色调三色映射和颜色模式通道量化合并到一个 pass。
 - `Runtime/PostProcessing/Textures/ShoostDitheringV1.png`、`ShoostDitheringV2.png`、`ShoostDitheringV3.png`：从 Shoost 解包资源复制来的三张抖动图，对应 UI 中的 V1/V2/V3。
 - `GrainCustom / 颗粒` 已确认完美对齐：shader 读取 Shoost 噪声图 Alpha 通道，默认插入点为 `After URP Post Processing`。
+- `Editor/PostProcessing/ShoostStack/Filters/CRTEffects.cs`：显示器滤镜 UI。只绘制 Shoost 用户侧的“类型”和“分辨率”，并按类型自动绑定扫描线贴图。
+- `Runtime/PostProcessing/ShoostPostProcessCRTEffects.shader`：显示器滤镜的 URP fullscreen pass。参考 RenderDoc 中 `Hidden/CRTEffects` 的扫描线合成 pass，实现降采样、扫描线贴图、slot/shadow mask、brightness 和 glow。
+- `Runtime/PostProcessing/Textures/ShoostCRTScanlinesRGB.png`、`ShoostCRTScanlinesRGBMono.png`、`ShoostCRTScanlinesCircle.png`、`ShoostCRTScanlinesLine.png`：从 Shoost 解包资源复制来的四张显示器扫描线/荧光屏 mask。

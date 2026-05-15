@@ -416,6 +416,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.CRTEffects)
+            {
+                DrawCrtEffectsElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ShoostPostProcessEffect.Tube)
             {
                 DrawTubeElement(rect, element);
@@ -532,6 +538,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ShoostPostProcessEffect.DitheringCustom:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
                     lineCount += GetDitheringCustomUsesColorMode(element) ? 8 : 8;
+                    break;
+                case ShoostPostProcessEffect.CRTEffects:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 2;
                     break;
                 case ShoostPostProcessEffect.Tube:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -1297,6 +1307,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters3", new Vector4(0.1254902f, 0.2f, 0.1764706f, 1.0f));
                     SetVector4(element, "parameters4", new Vector4(0.3372549f, 0.4980392f, 0.3803922f, 1.0f));
                     SetVector4(element, "parameters5", new Vector4(0.8627451f, 0.8862745f, 0.3882353f, 1.0f));
+                    break;
+                case ShoostPostProcessEffect.CRTEffects:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetObjectReference(element, "texture", LoadCrtEffectsTexture(0));
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 1.0f, 3.0f, 0.0f));
                     break;
                 case ShoostPostProcessEffect.RGBChannelSeparator:
                     SetFloat(element, "intensity", 1.0f);
