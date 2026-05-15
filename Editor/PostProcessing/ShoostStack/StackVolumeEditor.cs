@@ -22,6 +22,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private const float ColorWheelGap = 4.0f;
         private const string TrackballShaderName = "Hidden/Universal Render Pipeline/Editor/Trackball";
         private const string DefaultDistortionTextureGuid = "f4c1f3c21e3ec4a479c69cffea26c6cd";
+        private const string DefaultVhsEdgeNoiseTextureGuid = "014de9bcc7cd0a148929d7e58755ee44";
         private const string PackageAssetRoot = "Packages/jp.lilxyzw.liltoon.urp.extensions";
         private static Texture2D colorWheelTexture;
         private static GUIStyle colorWheelThumbStyle;
@@ -422,6 +423,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.VHS)
+            {
+                DrawVhsElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ShoostPostProcessEffect.Tube)
             {
                 DrawTubeElement(rect, element);
@@ -542,6 +549,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ShoostPostProcessEffect.CRTEffects:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
                     lineCount += 2;
+                    break;
+                case ShoostPostProcessEffect.VHS:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += GetVhsUsesScanline(element) ? 5 : 4;
                     break;
                 case ShoostPostProcessEffect.Tube:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -1323,6 +1334,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters1", new Vector4(0.5f, 0.0f, 1.0f, 0.0f));
                     SetVector4(element, "parameters2", Vector4.zero);
                     break;
+                case ShoostPostProcessEffect.VHS:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetObjectReference(element, "texture", LoadDefaultVhsEdgeNoiseTexture());
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+                    SetVector4(element, "parameters1", new Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+                    break;
                 case ShoostPostProcessEffect.EdgeLight:
                 case ShoostPostProcessEffect.Outline:
                 case ShoostPostProcessEffect.DropShadow:
@@ -1335,7 +1352,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ShoostPostProcessEffect.Particle:
                 case ShoostPostProcessEffect.CameraSwitcher:
                 case ShoostPostProcessEffect.TransparentBackground:
-                case ShoostPostProcessEffect.VHS:
                 case ShoostPostProcessEffect.CameraFlash:
                     SetFloat(element, "intensity", 1.0f);
                     break;

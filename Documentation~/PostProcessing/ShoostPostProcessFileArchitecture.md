@@ -83,3 +83,5 @@ Runtime 先不强拆，避免在 RenderGraph 链路还没完全稳定前引入�
 - `Editor/PostProcessing/ShoostStack/Filters/CRTEffects.cs`：显示器滤镜 UI。只绘制 Shoost 用户侧的“类型”和“分辨率”，并按类型自动绑定扫描线贴图。
 - `Runtime/PostProcessing/ShoostPostProcessCRTEffects.shader`：显示器滤镜的 URP fullscreen pass。参考 RenderDoc 中 `Hidden/CRTEffects` 的扫描线合成 pass，实现降采样、扫描线贴图、slot/shadow mask、brightness 和 glow。
 - `Runtime/PostProcessing/Textures/ShoostCRTScanlinesRGB.png`、`ShoostCRTScanlinesRGBMono.png`、`ShoostCRTScanlinesCircle.png`、`ShoostCRTScanlinesLine.png`：从 Shoost 解包资源复制来的四张显示器扫描线/荧光屏 mask。
+- `Editor/PostProcessing/ShoostStack/Filters/VHS.cs`：VHS 滤镜 UI。负责 Shoost 用户侧的弱/中/强类型、噪点强度、锐化、扫描线开关和扫描线大小。
+- `Runtime/PostProcessing/ShoostPostProcessVHS.shader`：VHS 滤镜的 URP fullscreen pass。当前把 Shoost VHS profile 中的 RGB 模糊、Noise2/EdgeNoise 式噪点、轻微横向扰动、锐化和 TVEffect_Custom 式扫描线合并到一个 pass，状态仍为对齐中。

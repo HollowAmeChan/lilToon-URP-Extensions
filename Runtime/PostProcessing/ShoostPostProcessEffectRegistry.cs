@@ -55,6 +55,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                     return "Hidden/lilToon-Shoost/URP/Shoost/Sharpen";
                 case ShoostPostProcessEffect.Tube:
                     return "Hidden/lilToon-Shoost/URP/Shoost/Tube";
+                case ShoostPostProcessEffect.VHS:
+                    return "Hidden/lilToon-Shoost/URP/Shoost/VHS";
                 case ShoostPostProcessEffect.VignetteCustom:
                     return "Hidden/lilToon-Shoost/URP/Shoost/VignetteCustom";
                 case ShoostPostProcessEffect.RetroLookProBleedCustom:
