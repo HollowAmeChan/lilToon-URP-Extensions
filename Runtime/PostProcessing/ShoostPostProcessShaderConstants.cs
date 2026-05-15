@@ -17,6 +17,15 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static readonly int LayerParams1Id = Shader.PropertyToID("_LayerParams1");
         public static readonly int LayerParams2Id = Shader.PropertyToID("_LayerParams2");
         public static readonly int LayerParams3Id = Shader.PropertyToID("_LayerParams3");
+        public static readonly int LayerParams4Id = Shader.PropertyToID("_LayerParams4");
+        public static readonly int LayerParams5Id = Shader.PropertyToID("_LayerParams5");
+        public static readonly int LayerParams6Id = Shader.PropertyToID("_LayerParams6");
+        public static readonly int LayerParams7Id = Shader.PropertyToID("_LayerParams7");
+        public static readonly int LayerParams8Id = Shader.PropertyToID("_LayerParams8");
+        public static readonly int LayerParams9Id = Shader.PropertyToID("_LayerParams9");
+        public static readonly int LayerParams10Id = Shader.PropertyToID("_LayerParams10");
+        public static readonly int LayerParams11Id = Shader.PropertyToID("_LayerParams11");
+        public static readonly int LayerParams12Id = Shader.PropertyToID("_LayerParams12");
         public static readonly int ModeId = Shader.PropertyToID("_Mode");
         public static readonly int RadiusId = Shader.PropertyToID("_Radius");
         public static readonly int SharpnessId = Shader.PropertyToID("_Sharpness");

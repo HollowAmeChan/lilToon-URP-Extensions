@@ -56,6 +56,33 @@ namespace lilToon.URP.Extensions.PostProcessing
         [Tooltip("通用参数向量 3。会以 _LayerParams3 暴露给 Shader。")]
         public Vector4 parameters3;
 
+        [Tooltip("通用参数向量 4。会以 _LayerParams4 暴露给 Shader。")]
+        public Vector4 parameters4;
+
+        [Tooltip("通用参数向量 5。会以 _LayerParams5 暴露给 Shader。")]
+        public Vector4 parameters5;
+
+        [Tooltip("通用参数向量 6。会以 _LayerParams6 暴露给 Shader。")]
+        public Vector4 parameters6;
+
+        [Tooltip("通用参数向量 7。会以 _LayerParams7 暴露给 Shader。")]
+        public Vector4 parameters7;
+
+        [Tooltip("通用参数向量 8。会以 _LayerParams8 暴露给 Shader。")]
+        public Vector4 parameters8;
+
+        [Tooltip("通用参数向量 9。会以 _LayerParams9 暴露给 Shader。")]
+        public Vector4 parameters9;
+
+        [Tooltip("通用参数向量 10。会以 _LayerParams10 暴露给 Shader。")]
+        public Vector4 parameters10;
+
+        [Tooltip("通用参数向量 11。会以 _LayerParams11 暴露给 Shader。")]
+        public Vector4 parameters11;
+
+        [Tooltip("通用参数向量 12。会以 _LayerParams12 暴露给 Shader。")]
+        public Vector4 parameters12;
+
         public bool IsActive => enabled && intensity > 0.0f;
     }
 }

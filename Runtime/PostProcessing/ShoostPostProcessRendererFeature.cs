@@ -268,6 +268,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         private RTHandle irisTextureB;
         private RTHandle rgbBlurTextureA;
         private RTHandle rgbBlurTextureB;
+        private bool warnedBackBuffer;
         private readonly Dictionary<int, ChangeFrameRateState> changeFrameRateStates = new Dictionary<int, ChangeFrameRateState>();
 
         private sealed class PassData
@@ -342,12 +343,14 @@ namespace lilToon.URP.Extensions.PostProcessing
             this.cameraColorTarget = cameraColorTarget;
             CopyLayers(layers);
             ConfigurePass(passEvent);
+            requiresIntermediateTexture = true;
         }
 
         public void SetupRenderGraph(List<ShoostPostProcessRuntimeLayer> layers, RenderPassEvent passEvent)
         {
             CopyLayers(layers);
             ConfigurePass(passEvent);
+            requiresIntermediateTexture = true;
         }
 
         public void Dispose()
@@ -449,6 +452,16 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
+            if (resourceData.isActiveTargetBackBuffer)
+            {
+                if (!warnedBackBuffer)
+                {
+                    Debug.LogWarning($"{passName} skipped because the active color target is the backbuffer. The Shoost post process stack requires an intermediate color texture.");
+                    warnedBackBuffer = true;
+                }
+                return;
+            }
+
             TextureHandle source = resourceData.activeColorTexture;
             if (!source.IsValid())
             {
@@ -496,6 +509,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     builder.UseTexture(source, AccessFlags.Read);
                     builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
                     builder.AllowGlobalStateModification(true);
+                    builder.AllowPassCulling(false);
                     builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                     {
                         ApplyLayerProperties(data.layer, data.material);
@@ -546,6 +560,15 @@ namespace lilToon.URP.Extensions.PostProcessing
             material.SetVector(ShoostPostProcessShaderConstants.LayerParams1Id, layer.parameters1);
             material.SetVector(ShoostPostProcessShaderConstants.LayerParams2Id, layer.parameters2);
             material.SetVector(ShoostPostProcessShaderConstants.LayerParams3Id, layer.parameters3);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams4Id, layer.parameters4);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams5Id, layer.parameters5);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams6Id, layer.parameters6);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams7Id, layer.parameters7);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams8Id, layer.parameters8);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams9Id, layer.parameters9);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams10Id, layer.parameters10);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams11Id, layer.parameters11);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams12Id, layer.parameters12);
             if (layer.texture != null)
             {
                 material.SetTexture(ShoostPostProcessShaderConstants.LayerTextureId, layer.texture);
@@ -961,6 +984,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     builder.UseTexture(source, AccessFlags.Read);
                     builder.SetRenderAttachment(frozenFrameTexture, 0, AccessFlags.WriteAll);
                     builder.AllowGlobalStateModification(true);
+                    builder.AllowPassCulling(false);
                     builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                     {
                         ApplyLayerProperties(data.layer, data.material);
@@ -989,6 +1013,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 builder.UseTexture(frozenFrameTexture, AccessFlags.Read);
                 builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
                     ApplyLayerProperties(data.layer, data.material);
@@ -1024,6 +1049,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
                     ApplyLayerProperties(data.layer, data.material);
@@ -1071,6 +1097,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
 
                 if (blurredTexture.IsValid())
                 {
@@ -1138,6 +1165,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
 
                 if (blurredTexture.IsValid())
                 {

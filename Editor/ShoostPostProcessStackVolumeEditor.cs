@@ -206,6 +206,40 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new GUIContent("明度")
         };
 
+        private static readonly string[] ColorGradingWheelModeNames =
+        {
+            "色轮",
+            "对数色轮"
+        };
+
+        private static readonly string[] ColorGradingShiftModeNames =
+        {
+            "色相对色相",
+            "色相对饱和度",
+            "色相对明度",
+            "明度对饱和度"
+        };
+
+        private static readonly string[] SixColorNames =
+        {
+            "红色",
+            "黄色",
+            "绿色",
+            "青色",
+            "蓝色",
+            "洋红"
+        };
+
+        private static readonly Color[] SixColorSwatches =
+        {
+            new Color(0.85f, 0.0f, 0.0f),
+            new Color(0.78f, 0.78f, 0.0f),
+            new Color(0.0f, 0.75f, 0.0f),
+            new Color(0.0f, 0.7f, 0.75f),
+            new Color(0.0f, 0.08f, 0.75f),
+            new Color(0.7f, 0.0f, 0.7f)
+        };
+
         private static readonly int[] BlendModeValues =
         {
             (int)ShoostPostProcessBlendMode.Normal,
@@ -523,7 +557,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.ColorGradingCustom:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
-                    lineCount += 10;
+                    lineCount += 18 + (GetColorGradingUsesLogWheels(element) ? 2 : 0);
                     break;
                 case ShoostPostProcessEffect.CustomMaterial:
                     lineCount += GetCoreLineCount(true, true, true, true, true, showAdvanced);
@@ -614,6 +648,17 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             return Mathf.RoundToInt(parameters0.vector4Value.x) == 0;
+        }
+
+        private static bool GetColorGradingUsesLogWheels(SerializedProperty element)
+        {
+            SerializedProperty parameters6 = element?.FindPropertyRelative("parameters6");
+            if (parameters6 == null || parameters6.propertyType != SerializedPropertyType.Vector4)
+            {
+                return false;
+            }
+
+            return Mathf.RoundToInt(parameters6.vector4Value.z) == 1;
         }
 
         private static bool GetDownScaleUsesCustomResolution(SerializedProperty element)
@@ -1486,9 +1531,19 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
             SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
             SerializedProperty parameters2 = element.FindPropertyRelative("parameters2");
+            SerializedProperty parameters3 = element.FindPropertyRelative("parameters3");
+            SerializedProperty parameters4 = element.FindPropertyRelative("parameters4");
+            SerializedProperty parameters5 = element.FindPropertyRelative("parameters5");
+            SerializedProperty parameters6 = element.FindPropertyRelative("parameters6");
+            SerializedProperty parameters7 = element.FindPropertyRelative("parameters7");
+            SerializedProperty parameters8 = element.FindPropertyRelative("parameters8");
+            SerializedProperty parameters9 = element.FindPropertyRelative("parameters9");
+            SerializedProperty parameters10 = element.FindPropertyRelative("parameters10");
+            SerializedProperty parameters11 = element.FindPropertyRelative("parameters11");
+            SerializedProperty parameters12 = element.FindPropertyRelative("parameters12");
             SerializedProperty enabled = element.FindPropertyRelative("enabled");
 
-            EnsureColorGradingCustomDefaults(parameters0, parameters1, parameters2);
+            EnsureColorGradingCustomDefaults(parameters0, parameters1, parameters2, parameters3, parameters4, parameters5, parameters6);
 
             float y = rect.y;
             y = DrawFoldoutLine(rect, y, element, enabled);
@@ -1503,14 +1558,64 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Vector4 lift = parameters0.vector4Value;
             Vector4 gamma = parameters1.vector4Value;
             Vector4 gain = parameters2.vector4Value;
+            Vector4 shadows = parameters3.vector4Value;
+            Vector4 midtones = parameters4.vector4Value;
+            Vector4 highlights = parameters5.vector4Value;
+            Vector4 modeParams = parameters6.vector4Value;
+            Vector4 hueVsHueA = parameters7.vector4Value;
+            Vector4 hueVsHueB = parameters8.vector4Value;
+            Vector4 hueVsSatA = parameters9.vector4Value;
+            Vector4 hueVsSatB = parameters10.vector4Value;
+            Vector4 hueVsLumA = parameters11.vector4Value;
+            Vector4 hueVsLumB = parameters12.vector4Value;
+
+            int wheelMode = Mathf.Clamp(Mathf.RoundToInt(modeParams.z), 0, ColorGradingWheelModeNames.Length - 1);
+            wheelMode = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "类型", wheelMode, ColorGradingWheelModeNames);
+            modeParams.z = wheelMode;
+            y += LineHeight + LineSpacing;
 
             Rect wheelArea = new Rect(rect.x, y, rect.width, GetColorWheelTripletHeight(rect.width));
-            DrawColorWheelTriplet(wheelArea, ref lift, ref gamma, ref gain);
+            if (wheelMode == 0)
+            {
+                DrawColorWheelTriplet(wheelArea, "提升", ref lift, "伽马", ref gamma, "增益", ref gain, new Vector4(1.0f, 1.0f, 1.0f, 0.0f));
+            }
+            else
+            {
+                DrawColorWheelTriplet(wheelArea, "阴影", ref shadows, "中间调", ref midtones, "高光", ref highlights, Vector4.zero);
+            }
             y += wheelArea.height + LineSpacing;
+
+            if (wheelMode == 1)
+            {
+                modeParams.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "阴影范围", Mathf.Clamp01(modeParams.x), 0.0f, 1.0f);
+                y += LineHeight + LineSpacing;
+                modeParams.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "高光范围", Mathf.Clamp01(modeParams.y), 0.0f, 1.0f);
+                y += LineHeight + LineSpacing;
+            }
+
+            EditorGUI.LabelField(new Rect(rect.x, y, rect.width, LineHeight), "色偏", EditorStyles.boldLabel);
+            y += LineHeight + LineSpacing;
+
+            int shiftMode = Mathf.Clamp(Mathf.RoundToInt(modeParams.w), 0, ColorGradingShiftModeNames.Length - 1);
+            shiftMode = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "模式", shiftMode, ColorGradingShiftModeNames);
+            modeParams.w = shiftMode;
+            y += LineHeight + LineSpacing;
+
+            DrawSixColorAdjustmentSliders(rect.x, ref y, rect.width, shiftMode, ref hueVsHueA, ref hueVsHueB, ref hueVsSatA, ref hueVsSatB, ref hueVsLumA, ref hueVsLumB);
 
             parameters0.vector4Value = lift;
             parameters1.vector4Value = gamma;
             parameters2.vector4Value = gain;
+            parameters3.vector4Value = shadows;
+            parameters4.vector4Value = midtones;
+            parameters5.vector4Value = highlights;
+            parameters6.vector4Value = modeParams;
+            parameters7.vector4Value = hueVsHueA;
+            parameters8.vector4Value = hueVsHueB;
+            parameters9.vector4Value = hueVsSatA;
+            parameters10.vector4Value = hueVsSatB;
+            parameters11.vector4Value = hueVsLumA;
+            parameters12.vector4Value = hueVsLumB;
             EditorGUI.indentLevel--;
         }
 
@@ -1783,6 +1888,15 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
             SerializedProperty parameters2 = element.FindPropertyRelative("parameters2");
             SerializedProperty parameters3 = element.FindPropertyRelative("parameters3");
+            SerializedProperty parameters4 = element.FindPropertyRelative("parameters4");
+            SerializedProperty parameters5 = element.FindPropertyRelative("parameters5");
+            SerializedProperty parameters6 = element.FindPropertyRelative("parameters6");
+            SerializedProperty parameters7 = element.FindPropertyRelative("parameters7");
+            SerializedProperty parameters8 = element.FindPropertyRelative("parameters8");
+            SerializedProperty parameters9 = element.FindPropertyRelative("parameters9");
+            SerializedProperty parameters10 = element.FindPropertyRelative("parameters10");
+            SerializedProperty parameters11 = element.FindPropertyRelative("parameters11");
+            SerializedProperty parameters12 = element.FindPropertyRelative("parameters12");
 
             if (showAdvancedFields)
             {
@@ -1822,6 +1936,15 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 y = DrawPropertyLine(x, y, width, parameters1, "参数 1");
                 y = DrawPropertyLine(x, y, width, parameters2, "参数 2");
                 y = DrawPropertyLine(x, y, width, parameters3, "参数 3");
+                y = DrawPropertyLine(x, y, width, parameters4, "参数 4");
+                y = DrawPropertyLine(x, y, width, parameters5, "参数 5");
+                y = DrawPropertyLine(x, y, width, parameters6, "参数 6");
+                y = DrawPropertyLine(x, y, width, parameters7, "参数 7");
+                y = DrawPropertyLine(x, y, width, parameters8, "参数 8");
+                y = DrawPropertyLine(x, y, width, parameters9, "参数 9");
+                y = DrawPropertyLine(x, y, width, parameters10, "参数 10");
+                y = DrawPropertyLine(x, y, width, parameters11, "参数 11");
+                y = DrawPropertyLine(x, y, width, parameters12, "参数 12");
             }
 
             return y;
@@ -1880,19 +2003,19 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return y + LineHeight + LineSpacing;
         }
 
-        private static void DrawColorWheelTriplet(Rect rect, ref Vector4 lift, ref Vector4 gamma, ref Vector4 gain)
+        private static void DrawColorWheelTriplet(Rect rect, string firstLabel, ref Vector4 first, string secondLabel, ref Vector4 second, string thirdLabel, ref Vector4 third, Vector4 resetValue)
         {
             float cellWidth = (rect.width - ColorWheelGap * 2.0f) / 3.0f;
-            DrawColorWheelCell(new Rect(rect.x, rect.y, cellWidth, rect.height), "Lift", ref lift);
-            DrawColorWheelCell(new Rect(rect.x + cellWidth + ColorWheelGap, rect.y, cellWidth, rect.height), "Gamma", ref gamma);
-            DrawColorWheelCell(new Rect(rect.x + (cellWidth + ColorWheelGap) * 2.0f, rect.y, cellWidth, rect.height), "Gain", ref gain);
+            DrawColorWheelCell(new Rect(rect.x, rect.y, cellWidth, rect.height), firstLabel, ref first, resetValue);
+            DrawColorWheelCell(new Rect(rect.x + cellWidth + ColorWheelGap, rect.y, cellWidth, rect.height), secondLabel, ref second, resetValue);
+            DrawColorWheelCell(new Rect(rect.x + (cellWidth + ColorWheelGap) * 2.0f, rect.y, cellWidth, rect.height), thirdLabel, ref third, resetValue);
         }
 
-        private static void DrawColorWheelCell(Rect rect, string label, ref Vector4 value)
+        private static void DrawColorWheelCell(Rect rect, string label, ref Vector4 value, Vector4 resetValue)
         {
             float wheelSize = GetColorWheelSize(rect.width);
             Rect wheelRect = new Rect(rect.x + (rect.width - wheelSize) * 0.5f, rect.y, wheelSize, wheelSize);
-            value = DrawColorWheel(wheelRect, value);
+            value = DrawColorWheel(wheelRect, value, resetValue);
 
             Rect sliderRect = new Rect(rect.x + rect.width * 0.05f, wheelRect.yMax + 4.0f, rect.width * 0.9f, 17.0f);
             value.w = GUI.HorizontalSlider(sliderRect, value.w, -1.0f, 1.0f);
@@ -1920,7 +2043,128 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return Mathf.Clamp(width, ColorWheelMinSize, ColorWheelMaxSize);
         }
 
-        private static Vector4 DrawColorWheel(Rect rect, Vector4 value)
+        private static void DrawSixColorAdjustmentSliders(
+            float x,
+            ref float y,
+            float width,
+            int mode,
+            ref Vector4 hueVsHueA,
+            ref Vector4 hueVsHueB,
+            ref Vector4 hueVsSatA,
+            ref Vector4 hueVsSatB,
+            ref Vector4 hueVsLumA,
+            ref Vector4 hueVsLumB)
+        {
+            float min = mode == 0 ? -180.0f : -1.0f;
+            float max = mode == 0 ? 180.0f : 1.0f;
+            for (int i = 0; i < SixColorNames.Length; i++)
+            {
+                float value = GetSixColorAdjustment(mode, i, hueVsHueA, hueVsHueB, hueVsSatA, hueVsSatB, hueVsLumA, hueVsLumB);
+                value = DrawSixColorAdjustmentLine(x, y, width, SixColorNames[i], SixColorSwatches[i], value, min, max);
+                SetSixColorAdjustment(mode, i, value, ref hueVsHueA, ref hueVsHueB, ref hueVsSatA, ref hueVsSatB, ref hueVsLumA, ref hueVsLumB);
+                y += LineHeight + LineSpacing;
+            }
+        }
+
+        private static float DrawSixColorAdjustmentLine(float x, float y, float width, string label, Color swatch, float value, float min, float max)
+        {
+            Rect swatchRect = new Rect(x, y + 3.0f, 14.0f, 14.0f);
+            EditorGUI.DrawRect(swatchRect, swatch);
+
+            Rect labelRect = new Rect(x + 22.0f, y, 68.0f, LineHeight);
+            EditorGUI.LabelField(labelRect, label);
+
+            float fieldWidth = 58.0f;
+            Rect valueRect = new Rect(x + width - fieldWidth, y, fieldWidth, LineHeight);
+            Rect sliderRect = new Rect(labelRect.xMax + 8.0f, y, Mathf.Max(40.0f, valueRect.x - labelRect.xMax - 14.0f), LineHeight);
+            value = GUI.HorizontalSlider(new Rect(sliderRect.x, sliderRect.y + 2.0f, sliderRect.width, sliderRect.height - 4.0f), value, min, max);
+            value = EditorGUI.FloatField(valueRect, value);
+            return Mathf.Clamp(value, min, max);
+        }
+
+        private static float GetSixColorAdjustment(
+            int mode,
+            int colorIndex,
+            Vector4 hueVsHueA,
+            Vector4 hueVsHueB,
+            Vector4 hueVsSatA,
+            Vector4 hueVsSatB,
+            Vector4 hueVsLumA,
+            Vector4 hueVsLumB)
+        {
+            int index = mode * 6 + colorIndex;
+            switch (index)
+            {
+                case 0: return hueVsHueA.x;
+                case 1: return hueVsHueA.y;
+                case 2: return hueVsHueA.z;
+                case 3: return hueVsHueA.w;
+                case 4: return hueVsHueB.x;
+                case 5: return hueVsHueB.y;
+                case 6: return hueVsHueB.z;
+                case 7: return hueVsHueB.w;
+                case 8: return hueVsSatA.x;
+                case 9: return hueVsSatA.y;
+                case 10: return hueVsSatA.z;
+                case 11: return hueVsSatA.w;
+                case 12: return hueVsSatB.x;
+                case 13: return hueVsSatB.y;
+                case 14: return hueVsSatB.z;
+                case 15: return hueVsSatB.w;
+                case 16: return hueVsLumA.x;
+                case 17: return hueVsLumA.y;
+                case 18: return hueVsLumA.z;
+                case 19: return hueVsLumA.w;
+                case 20: return hueVsLumB.x;
+                case 21: return hueVsLumB.y;
+                case 22: return hueVsLumB.z;
+                case 23: return hueVsLumB.w;
+                default: return 0.0f;
+            }
+        }
+
+        private static void SetSixColorAdjustment(
+            int mode,
+            int colorIndex,
+            float value,
+            ref Vector4 hueVsHueA,
+            ref Vector4 hueVsHueB,
+            ref Vector4 hueVsSatA,
+            ref Vector4 hueVsSatB,
+            ref Vector4 hueVsLumA,
+            ref Vector4 hueVsLumB)
+        {
+            int index = mode * 6 + colorIndex;
+            switch (index)
+            {
+                case 0: hueVsHueA.x = value; break;
+                case 1: hueVsHueA.y = value; break;
+                case 2: hueVsHueA.z = value; break;
+                case 3: hueVsHueA.w = value; break;
+                case 4: hueVsHueB.x = value; break;
+                case 5: hueVsHueB.y = value; break;
+                case 6: hueVsHueB.z = value; break;
+                case 7: hueVsHueB.w = value; break;
+                case 8: hueVsSatA.x = value; break;
+                case 9: hueVsSatA.y = value; break;
+                case 10: hueVsSatA.z = value; break;
+                case 11: hueVsSatA.w = value; break;
+                case 12: hueVsSatB.x = value; break;
+                case 13: hueVsSatB.y = value; break;
+                case 14: hueVsSatB.z = value; break;
+                case 15: hueVsSatB.w = value; break;
+                case 16: hueVsLumA.x = value; break;
+                case 17: hueVsLumA.y = value; break;
+                case 18: hueVsLumA.z = value; break;
+                case 19: hueVsLumA.w = value; break;
+                case 20: hueVsLumB.x = value; break;
+                case 21: hueVsLumB.y = value; break;
+                case 22: hueVsLumB.z = value; break;
+                case 23: hueVsLumB.w = value; break;
+            }
+        }
+
+        private static Vector4 DrawColorWheel(Rect rect, Vector4 value, Vector4 resetValue)
         {
             DrawTrackballTexture(rect, value);
 
@@ -1941,7 +2185,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
             else if (current.type == EventType.MouseDown && current.button == 1 && rect.Contains(current.mousePosition))
             {
-                value = new Vector4(1.0f, 1.0f, 1.0f, 0.0f);
+                value = resetValue;
                 GUI.changed = true;
                 current.Use();
             }
@@ -2469,6 +2713,16 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters0", new Vector4(1.0f, 1.0f, 1.0f, 0.0f));
                     SetVector4(element, "parameters1", new Vector4(1.0f, 1.0f, 1.0f, 0.0f));
                     SetVector4(element, "parameters2", new Vector4(1.0f, 1.0f, 1.0f, 0.0f));
+                    SetVector4(element, "parameters3", Vector4.zero);
+                    SetVector4(element, "parameters4", Vector4.zero);
+                    SetVector4(element, "parameters5", Vector4.zero);
+                    SetVector4(element, "parameters6", new Vector4(0.3f, 0.55f, 0.0f, 0.0f));
+                    SetVector4(element, "parameters7", Vector4.zero);
+                    SetVector4(element, "parameters8", Vector4.zero);
+                    SetVector4(element, "parameters9", Vector4.zero);
+                    SetVector4(element, "parameters10", Vector4.zero);
+                    SetVector4(element, "parameters11", Vector4.zero);
+                    SetVector4(element, "parameters12", Vector4.zero);
                     break;
                 case ShoostPostProcessEffect.Pixelize:
                     SetFloat(element, "intensity", 1.0f);
@@ -2548,6 +2802,15 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetVector4(element, "parameters1", Vector4.zero);
             SetVector4(element, "parameters2", Vector4.zero);
             SetVector4(element, "parameters3", Vector4.zero);
+            SetVector4(element, "parameters4", Vector4.zero);
+            SetVector4(element, "parameters5", Vector4.zero);
+            SetVector4(element, "parameters6", Vector4.zero);
+            SetVector4(element, "parameters7", Vector4.zero);
+            SetVector4(element, "parameters8", Vector4.zero);
+            SetVector4(element, "parameters9", Vector4.zero);
+            SetVector4(element, "parameters10", Vector4.zero);
+            SetVector4(element, "parameters11", Vector4.zero);
+            SetVector4(element, "parameters12", Vector4.zero);
         }
 
         private static void SetBool(SerializedProperty element, string name, bool value)
@@ -2624,11 +2887,22 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return AssetDatabase.LoadAssetAtPath<Texture2D>(assetPath);
         }
 
-        private static void EnsureColorGradingCustomDefaults(SerializedProperty parameters0, SerializedProperty parameters1, SerializedProperty parameters2)
+        private static void EnsureColorGradingCustomDefaults(
+            SerializedProperty parameters0,
+            SerializedProperty parameters1,
+            SerializedProperty parameters2,
+            SerializedProperty parameters3,
+            SerializedProperty parameters4,
+            SerializedProperty parameters5,
+            SerializedProperty parameters6)
         {
             EnsureColorWheelVector(parameters0);
             EnsureColorWheelVector(parameters1);
             EnsureColorWheelVector(parameters2);
+            EnsureLogColorWheelVector(parameters3);
+            EnsureLogColorWheelVector(parameters4);
+            EnsureLogColorWheelVector(parameters5);
+            EnsureColorGradingModeDefaults(parameters6);
         }
 
         private static void EnsureColorWheelVector(SerializedProperty property)
@@ -2645,6 +2919,34 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 value.y = 1.0f;
                 value.z = 1.0f;
                 property.vector4Value = value;
+            }
+        }
+
+        private static void EnsureLogColorWheelVector(SerializedProperty property)
+        {
+            if (property == null || property.propertyType != SerializedPropertyType.Vector4)
+            {
+                return;
+            }
+
+            Vector4 value = property.vector4Value;
+            if (Mathf.Abs(value.x - 1.0f) <= 0.0001f && Mathf.Abs(value.y - 1.0f) <= 0.0001f && Mathf.Abs(value.z - 1.0f) <= 0.0001f && Mathf.Abs(value.w) <= 0.0001f)
+            {
+                property.vector4Value = Vector4.zero;
+            }
+        }
+
+        private static void EnsureColorGradingModeDefaults(SerializedProperty property)
+        {
+            if (property == null || property.propertyType != SerializedPropertyType.Vector4)
+            {
+                return;
+            }
+
+            Vector4 value = property.vector4Value;
+            if (value.sqrMagnitude <= 0.000001f)
+            {
+                property.vector4Value = new Vector4(0.3f, 0.55f, 0.0f, 0.0f);
             }
         }
 
