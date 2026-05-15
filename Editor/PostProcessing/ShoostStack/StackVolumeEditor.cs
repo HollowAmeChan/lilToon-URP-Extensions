@@ -486,6 +486,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.Gradient)
+            {
+                DrawGradientElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ShoostPostProcessEffect.LevelAdjustment)
             {
                 DrawLevelAdjustmentElement(rect, element);
@@ -596,6 +602,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ShoostPostProcessEffect.VignetteCustom:
                     lineCount += GetCoreLineCount(false, GetVignetteCustomUsesTintMode(element), false, false, false, showAdvanced);
                     lineCount += 4;
+                    break;
+                case ShoostPostProcessEffect.Gradient:
+                    lineCount += GetGradientLineCount(element);
                     break;
                 case ShoostPostProcessEffect.LevelAdjustment:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -1366,10 +1375,18 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters0", new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
                     SetVector4(element, "parameters1", new Vector4(1.0f, 0.0f, 0.0f, 1.0f));
                     break;
+                case ShoostPostProcessEffect.Gradient:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetEnum(element, "blendMode", (int)ShoostPostProcessBlendMode.Multiply);
+                    SetColor(element, "color", Color.white);
+                    SetVector4(element, "parameters0", new Vector4(1.0f, 1.0f, 5.0f, 1.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+                    SetVector4(element, "parameters2", new Vector4(1.0f, 0.5f, 1.0f, 0.0f));
+                    SetVector4(element, "parameters3", new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+                    break;
                 case ShoostPostProcessEffect.EdgeLight:
                 case ShoostPostProcessEffect.Outline:
                 case ShoostPostProcessEffect.DropShadow:
-                case ShoostPostProcessEffect.Gradient:
                 case ShoostPostProcessEffect.Glow:
                 case ShoostPostProcessEffect.Lighting:
                 case ShoostPostProcessEffect.CenterColorCorrection:
