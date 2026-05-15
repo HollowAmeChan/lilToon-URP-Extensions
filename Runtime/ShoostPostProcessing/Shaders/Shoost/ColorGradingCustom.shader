@@ -69,7 +69,7 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/ColorGradingCustom"
                 return saturate(color.rgb) + color.w;
             }
 
-            float3 RgbToHsv(float3 color)
+            float3 ShoostRgbToHsv(float3 color)
             {
                 float4 k = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
                 float4 p = lerp(float4(color.bg, k.wz), float4(color.gb, k.xy), step(color.b, color.g));
@@ -79,7 +79,7 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/ColorGradingCustom"
                 return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
             }
 
-            float3 HsvToRgb(float3 hsv)
+            float3 ShoostHsvToRgb(float3 hsv)
             {
                 float3 p = abs(frac(hsv.xxx + float3(0.0, 2.0 / 3.0, 1.0 / 3.0)) * 6.0 - 3.0);
                 return hsv.z * lerp(float3(1.0, 1.0, 1.0), saturate(p - 1.0), hsv.y);
@@ -89,6 +89,13 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/ColorGradingCustom"
             {
                 float distance = abs(frac(hue - targetHue + 0.5) - 0.5);
                 return saturate(1.0 - distance * 6.0);
+            }
+
+            float LuminanceWeight(float luminance, int bandIndex)
+            {
+                float targetLuminance = bandIndex / 5.0;
+                float distance = abs(saturate(luminance) - targetLuminance);
+                return saturate(1.0 - distance * 5.0);
             }
 
             float GetSixColorValue(int mode, int index)
@@ -123,10 +130,11 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/ColorGradingCustom"
 
             float3 ApplySixColorAdjustments(float3 color)
             {
-                float3 hsv = RgbToHsv(saturate(color));
+                float3 hsv = ShoostRgbToHsv(saturate(color));
                 float hueOffset = 0.0;
                 float saturationOffset = 0.0;
                 float valueOffset = 0.0;
+                float luminance = ShoostLuminance(color);
                 float luminanceSaturationOffset = 0.0;
 
                 [unroll]
@@ -137,14 +145,13 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/ColorGradingCustom"
                     hueOffset += weight * (GetSixColorValue(0, i) / 360.0);
                     saturationOffset += weight * GetSixColorValue(1, i);
                     valueOffset += weight * GetSixColorValue(2, i);
-                    luminanceSaturationOffset += weight * GetSixColorValue(3, i);
+                    luminanceSaturationOffset += LuminanceWeight(luminance, i) * GetSixColorValue(3, i);
                 }
 
-                float luminance = ShoostLuminance(color);
                 hsv.x = frac(hsv.x + hueOffset + 1.0);
-                hsv.y = saturate(hsv.y + saturationOffset + luminanceSaturationOffset * saturate(luminance));
+                hsv.y = saturate(hsv.y + saturationOffset + luminanceSaturationOffset);
                 hsv.z = max(0.0, hsv.z + valueOffset);
-                return HsvToRgb(hsv);
+                return ShoostHsvToRgb(hsv);
             }
 
             float3 ApplyLogWheels(float3 color)

@@ -77,7 +77,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static Texture2D LoadDefaultGrainNoiseTexture()
         {
-            return AssetDatabase.LoadAssetAtPath<Texture2D>($"{PackageAssetRoot}/Runtime/PostProcessing/Textures/ShoostGrainNoise.png");
+            return AssetDatabase.LoadAssetAtPath<Texture2D>($"{PackageAssetRoot}/Runtime/ShoostPostProcessing/Textures/ShoostGrainNoise.png");
         }
     }
 }

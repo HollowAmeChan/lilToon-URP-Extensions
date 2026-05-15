@@ -70,6 +70,12 @@ UI 入口可以继续沿用 Shoost 名称和图标，但编辑器内部需要给
 
 编辑器表现上，暂时跳过或需要重写的入口可以保留图标占位，但文档和 tooltip 应明确状态；不要把它们标成“已对齐”。
 
+`边缘光` 的编辑器入口应优先保持 Shoost 用户习惯：颜色、透明度、大小、亮度、对比度、角度、模式、混合模式。底层实现则按 [`ShoostEdgeLightDesign.md`](ShoostEdgeLightDesign.md) 走主体 normal/mask RT，并默认显示为 `Before URP Post Processing`，因为这个效果需要被 URP Bloom 捕捉。
+
+如果后续将 Shoost 面板重构成最终图层系统，编辑器里应区分两个入口：`Shoost Final Stack` 管理最终滤镜和图层混合，默认在 URP 后处理之后；`lilToon Subject Effects` 管理边缘光、轮廓、投影等主体数据效果，允许放在 URP Bloom 前。两者可以共享 Shoost 名称、图标和部分参数习惯，但不应在同一个执行栈里混排。
+
+UI 上也要标出 HDR 语义：在 Bloom 前运行的效果可以写 HDR 亮度；在 Shoost Final Stack 里运行的效果默认按最终显示空间处理。亮度、发光、闪光这类参数如果被移动到 URP 后处理之后，应提示“不会再触发 URP Bloom”，避免用户把 LDR 叠白误认为 Bloom 失效。
+
 ## 标题栏风格
 
 - 标题栏优先显示效果类型。

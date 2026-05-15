@@ -142,6 +142,28 @@ Volume 里只有一个面向用户的大图层列表，但运行时会把它拆�
 - `Film / 胶片`：暂时跳过。Shoost 的 `AMS_AnimeFilm_60s/70s/80s/90s` 和 TV 的年代命名只共享 UI 名称，不共享滤镜语义；胶片入口需要单独处理 `LUTColorGrading`、`Grain_Custom`、`RLProOldFilm2_Custom` 等 profile 层，并且还要重新核对各层顺序、LUT 导入与 RenderDoc 汇编。状态标记为：暂时跳过。
 - LUT 语义备忘：TV 组合的 `AMS_TV_60s/70s/80s/90s` 分别引用 `Monochrome Soft`、`Film Fuji v2`、`Film Fuji v2`、`Film Fuji v3`；胶片组合的 `AMS_AnimeFilm_60s/70s/80s/90s` 分别引用 `Monochrome Soft`、`Film Kodak v1`、`Film Kodak v2`、`Film Kodak v3`。这两组 60/70/80/90 只共享年代 UI 命名，不共享滤镜语义。RenderDoc 中 `Hidden/Custom/LUTColorGrading` 的 32x32 strip 是 B 通道切片、R 为横向、G 为纵向；LUT 纹理按非 sRGB 导入，由 shader 显式执行 sRGB/Linear 转换。该备忘仅保留给后续重启 Tube/胶片移植时参考。
 
+## 图层系统重构方向
+
+Shoost 的核心不是“某一个 URP pass”，而是一个可以叠很多层、每层再挂效果和混合模式的最终图层系统。后续更推荐把现在已经移植的 Shoost 滤镜逐步收敛成 `Shoost Final Stack`：默认在 URP 内置后处理之后执行，只处理最终画面或显式输入的图层 RT，不再承担角色边缘光、轮廓、投影这类需要主体数据的职责。
+
+执行点建议不要粗暴统一成 `AfterRendering`。在 URP 里 `AfterRenderingPostProcessing` 更适合作为 Shoost 最终滤镜默认位置：它已经晚于 URP Bloom / Tonemapping / FXAA / Color Adjustments，但通常仍能稳定读写 camera color。`AfterRendering` 可以保留给最终覆盖、截图/导出、调试预览或明确需要在所有渲染之后执行的少数层。
+
+移动执行点时必须同时看 HDR 语义。URP Bloom 只会响应它之前写进 HDR camera color 的高亮能量；Tonemapping 之后的画面通常已经被压到显示范围，很多“加亮”只是在 LDR 画面上叠白，不会再触发 Bloom。迁移时按意图分流：
+
+- 需要给 Bloom 提供能量的效果：边缘光、光照、发光、镜头闪光、部分强 emissive/glow 合成，应放在 URP 内置后处理前，或放进自研 subject effects / lighting feature。
+- 只改变最终观感的效果：颗粒、CRT scanline、VHS 噪声、像素化、最终色阶、最终暗角，可以放在 URP 后处理之后。
+- 色彩类效果要明确是 HDR/scene-linear 调整还是 LDR/display-space 调整；同一个参数放在 Tonemapping 前后会有不同手感。
+- 如果 Shoost Final Stack 需要在 URP 后处理之后继续用 HDR 数值，必须确保 renderer 的 camera color 仍是 HDR RT，并明确哪些层允许写超过 1 的值；否则默认按 LDR 最终图层看待。
+
+新的分层边界建议如下：
+
+- `lilToon / URP 渲染阶段`：正常输出 camera color、depth，以及 lilToon 自己的 subject normal/mask/depth/color 等可选 RT。
+- `自研主体效果 RendererFeature`：消费 lilToon 输出的主体数据，实现边缘光、轮廓、投影、二次打光等需要角色边界的效果；需要 Bloom 的效果放在 URP 内置后处理前。
+- `URP 内置后处理`：Bloom、Tonemapping、FXAA、Color Adjustments 等项目级画面处理。
+- `Shoost Final Stack`：消费最终 camera color 和可选图层 RT，执行 Shoost 风格的图层、滤镜、混合、颗粒、CRT、VHS、像素化、色阶、最终调色等纯最终处理。
+
+这样 Shoost 这一块可以被归类为“最终图层/滤镜系统”，而不是混杂承担渲染数据生产。Tube、胶片、VHS 这类 Shoost profile 组合以后也更适合在这个 final stack 里按图层组合恢复；边缘光、轮廓、投影则移动到新的 subject effects 管线，只在 UI 或参数命名上参考 Shoost。
+
 ## 透明源语义与重写边界
 
 Shoost 原始工作流更像在处理一个可能带 alpha 的图片/视频源，而不是 URP 相机的最终不透明颜色缓冲。Shoost 场景里默认有背景、角色、前景三层，很多用户侧效果实际只作用于角色或前景，背景会被 alpha 或源图层边界自然排除。URP fullscreen post 看到的通常是已经合成后的 camera color，背景、角色和前景已经混在一起，alpha 也未必还保留可用语义。因此后续迁移分成三类：
@@ -161,3 +183,5 @@ Shoost 原始工作流更像在处理一个可能带 alpha 的图片/视频源�
 - `EdgeLight / 边缘光`：用角色 normal + view direction 做 rim，乘角色 mask/stencil 控制作用范围；需要时再叠加深度边缘，避免背景参与。
 - `Outline / 轮廓`：用 depth + normal 的屏幕空间描边，最好配合角色 stencil 或 layer mask 限定对象；不要按 Shoost 的透明图片边缘膨胀硬搬。
 - `DropShadow / 投影`：不要依赖最终图像 alpha 做偏移阴影。优先考虑基于角色 mask/depth 的投影，或基于 normal/depth 的二次打光/接触阴影式实现，让阴影和 URP 场景空间对齐。
+
+边缘光的第一版设计见 [`ShoostEdgeLightDesign.md`](ShoostEdgeLightDesign.md)。结论是 lilToon 材质侧可以有“写入主体数据”的开关，但它只负责 opt-in 到 normal/mask RT；实际边缘光颜色、亮度、方向、模式和 pre-Bloom 合成都放在 Shoost EdgeLight 图层里处理。

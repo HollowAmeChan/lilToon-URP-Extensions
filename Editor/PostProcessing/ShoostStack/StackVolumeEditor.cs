@@ -231,6 +231,16 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "洋红"
         };
 
+        private static readonly string[] LuminanceBandNames =
+        {
+            "阴影",
+            "暗部",
+            "中间调",
+            "亮部",
+            "明亮",
+            "高光"
+        };
+
         private static readonly Color[] SixColorSwatches =
         {
             new Color(0.85f, 0.0f, 0.0f),
@@ -239,6 +249,16 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new Color(0.0f, 0.7f, 0.75f),
             new Color(0.0f, 0.08f, 0.75f),
             new Color(0.7f, 0.0f, 0.7f)
+        };
+
+        private static readonly Color[] LuminanceBandSwatches =
+        {
+            new Color(0.08f, 0.08f, 0.08f),
+            new Color(0.2f, 0.2f, 0.2f),
+            new Color(0.38f, 0.38f, 0.38f),
+            new Color(0.58f, 0.58f, 0.58f),
+            new Color(0.78f, 0.78f, 0.78f),
+            new Color(0.95f, 0.95f, 0.95f)
         };
 
         private static readonly int[] BlendModeValues =
@@ -588,7 +608,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.ColorGradingCustom:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
-                    lineCount += 18 + (GetColorGradingUsesLogWheels(element) ? 2 : 0);
+                    lineCount += 19 + (GetColorGradingUsesLogWheels(element) ? 2 : 0);
                     break;
                 case ShoostPostProcessEffect.CustomMaterial:
                     lineCount += GetCoreLineCount(true, true, true, true, true, showAdvanced);
@@ -1131,12 +1151,34 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             float min = mode == 0 ? -180.0f : -1.0f;
             float max = mode == 0 ? 180.0f : 1.0f;
+            Color[] swatches = mode == 3 ? LuminanceBandSwatches : SixColorSwatches;
             for (int i = 0; i < SixColorNames.Length; i++)
             {
                 float value = GetSixColorAdjustment(mode, i, hueVsHueA, hueVsHueB, hueVsSatA, hueVsSatB, hueVsLumA, hueVsLumB);
-                value = DrawSixColorAdjustmentLine(x, y, width, SixColorNames[i], SixColorSwatches[i], value, min, max);
+                value = DrawSixColorAdjustmentLine(x, y, width, GetSixColorAdjustmentLabel(mode, i), swatches[i], value, min, max);
                 SetSixColorAdjustment(mode, i, value, ref hueVsHueA, ref hueVsHueB, ref hueVsSatA, ref hueVsSatB, ref hueVsLumA, ref hueVsLumB);
                 y += LineHeight + LineSpacing;
+            }
+        }
+
+        private static string GetSixColorAdjustmentLabel(int mode, int index)
+        {
+            if (mode == 3)
+            {
+                return LuminanceBandNames[Mathf.Clamp(index, 0, LuminanceBandNames.Length - 1)] + "饱和度";
+            }
+
+            string colorName = SixColorNames[Mathf.Clamp(index, 0, SixColorNames.Length - 1)];
+            switch (mode)
+            {
+                case 0:
+                    return colorName + "色相";
+                case 1:
+                    return colorName + "饱和度";
+                case 2:
+                    return colorName + "明度";
+                default:
+                    return colorName;
             }
         }
 

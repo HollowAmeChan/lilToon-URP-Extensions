@@ -79,7 +79,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
             }
 
-            return AssetDatabase.LoadAssetAtPath<Texture2D>($"{PackageAssetRoot}/Runtime/PostProcessing/Textures/{name}.png");
+            return AssetDatabase.LoadAssetAtPath<Texture2D>($"{PackageAssetRoot}/Runtime/ShoostPostProcessing/Textures/{name}.png");
         }
     }
 }

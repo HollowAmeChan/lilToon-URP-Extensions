@@ -159,7 +159,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private static Texture2D LoadDitheringTexture(int index)
         {
             string name = index == 1 ? "ShoostDitheringV2" : index == 2 ? "ShoostDitheringV3" : "ShoostDitheringV1";
-            return AssetDatabase.LoadAssetAtPath<Texture2D>($"{PackageAssetRoot}/Runtime/PostProcessing/Textures/{name}.png");
+            return AssetDatabase.LoadAssetAtPath<Texture2D>($"{PackageAssetRoot}/Runtime/ShoostPostProcessing/Textures/{name}.png");
         }
     }
 }

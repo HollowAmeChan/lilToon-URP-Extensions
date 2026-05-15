@@ -155,7 +155,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Rect swatchRect = new Rect(x, y + 3.0f, 14.0f, 14.0f);
             EditorGUI.DrawRect(swatchRect, swatch);
 
-            Rect labelRect = new Rect(x + 22.0f, y, 68.0f, LineHeight);
+            float labelWidth = Mathf.Min(92.0f, Mathf.Max(68.0f, width * 0.24f));
+            Rect labelRect = new Rect(x + 22.0f, y, labelWidth, LineHeight);
             EditorGUI.LabelField(labelRect, label);
 
             float fieldWidth = 58.0f;
