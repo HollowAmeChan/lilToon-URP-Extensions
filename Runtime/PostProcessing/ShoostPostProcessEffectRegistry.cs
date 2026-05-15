@@ -75,6 +75,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             switch (effect)
             {
                 case ShoostPostProcessEffect.CRTEffects:
+                case ShoostPostProcessEffect.GrainCustom:
                 case ShoostPostProcessEffect.LevelAdjustment:
                 case ShoostPostProcessEffect.RGBChannelSeparator:
                 case ShoostPostProcessEffect.SharpenAfter:

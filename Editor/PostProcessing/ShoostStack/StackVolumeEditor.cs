@@ -410,6 +410,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.DitheringCustom)
+            {
+                DrawDitheringCustomElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ShoostPostProcessEffect.Tube)
             {
                 DrawTubeElement(rect, element);
@@ -521,7 +527,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.GrainCustom:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
-                    lineCount += 6 + (GetGrainCustomUsesCustomResolution(element) ? 2 : 0);
+                    lineCount += 2;
+                    break;
+                case ShoostPostProcessEffect.DitheringCustom:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += GetDitheringCustomUsesColorMode(element) ? 8 : 8;
                     break;
                 case ShoostPostProcessEffect.Tube:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -1231,8 +1241,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.GrainCustom:
                     SetFloat(element, "intensity", 1.0f);
-                    SetVector4(element, "parameters0", new Vector4(1.0f, 1920.0f, 1080.0f, 1.0f));
-                    SetVector4(element, "parameters1", new Vector4(0.0f, 0.5f, 2.0f, 0.9f));
+                    SetVector4(element, "parameters0", new Vector4(0.5f, 2.0f, 0.9f, 0.0f));
+                    SetVector4(element, "parameters1", Vector4.zero);
+                    SetObjectReference(element, "texture", LoadDefaultGrainNoiseTexture());
                     break;
                 case ShoostPostProcessEffect.ColorGradingCustom:
                     SetFloat(element, "intensity", 1.0f);
@@ -1276,6 +1287,16 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetObjectReference(element, "texture", LoadDefaultDistortionTexture());
                     SetVector4(element, "parameters0", new Vector4(5.0f, 0.1f, 0.2f, 0.1f));
                     SetVector4(element, "parameters1", new Vector4(1.0f, 1.0f, 0.0f, -2.0f));
+                    break;
+                case ShoostPostProcessEffect.DitheringCustom:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetObjectReference(element, "texture", LoadDitheringTexture(0));
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 1.0f, 0.0f, 1.0f));
+                    SetVector4(element, "parameters1", new Vector4(4.0f, 32.0f, 32.0f, 32.0f));
+                    SetVector4(element, "parameters2", new Vector4(0.5f, 0.0f, 0.0f, 0.0f));
+                    SetVector4(element, "parameters3", new Vector4(0.1254902f, 0.2f, 0.1764706f, 1.0f));
+                    SetVector4(element, "parameters4", new Vector4(0.3372549f, 0.4980392f, 0.3803922f, 1.0f));
+                    SetVector4(element, "parameters5", new Vector4(0.8627451f, 0.8862745f, 0.3882353f, 1.0f));
                     break;
                 case ShoostPostProcessEffect.RGBChannelSeparator:
                     SetFloat(element, "intensity", 1.0f);

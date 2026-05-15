@@ -129,3 +129,10 @@ Volume 里只有一个面向用户的大图层列表，但运行时会把它拆�
 保持 Volume 图层栈作为用户面对的排序界面，具体效果移植时再在 enum 槽背后添加专用执行代码。
 
 如果目标是完全由 Shoost 控制画面风格，等等效 Shoost 图层实现后，最好关闭相机内置的 `Render Post Processing`。只有在明确需要过渡混用 URP Bloom、Tonemapping、FXAA 或 Color Adjustments 时才保留它。
+
+## 当前对齐状态补记
+
+- `GrainCustom / 颗粒`：已按 Shoost 对齐完成。当前实现使用 Shoost 解包里的 blue-noise/alpha 噪声图，shader 会读取 Alpha 通道噪声，并默认放在 `After URP Post Processing`，与 Shoost 最终画面颗粒叠加时机一致。状态标记为：完美对齐。
+- `DitheringCustom / 视频游戏`：来源是 Shoost 的 `Custom/DitheringCustom`，原始 PPS v2 事件为 `BeforeStack`。用户侧面板暴露“模式（单色调/颜色）”“分辨率”“抖动类型（V1/V2/V3）”“网格线”，单色调模式使用“亮度阶调 + 阴影/中间调/高光”，颜色模式使用 RGB 三通道阶调和混合量。
+- `DitheringCustom` 的三张抖动图来自 Shoost 解包工程的 `dithering_2x2_4_Steps_v2.png`、`dithering_2x2_4_Steps_v4.png`、`dithering_4x4_16_Steps.png`，在包内对应 `ShoostDitheringV1/V2/V3.png`。
+- `DitheringCustom / 视频游戏` 当前仍标记为对齐中。已按 Shoost renderer 的 `_ResolutionX/_ResolutionY` 思路修正屏幕像素宽高归一化，并加入抖动图随时间切换相位；后续仍需要用 Shoost 实机画面对照单色调/颜色模式的最终色彩映射。
