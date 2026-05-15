@@ -15,7 +15,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         GateWeave,
         GrainCustom,
         IrisBlur,
-        KawaseBlur,
+        RemovedEffectSlot13,
         LensDistortionCustom,
         LevelAdjustment,
         MotionTrail,

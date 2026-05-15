@@ -102,7 +102,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
             foreach (ShoostPostProcessLayer layer in layers)
             {
-                if (layer == null || !layer.IsActive)
+                if (layer == null || !layer.IsActive || layer.effect == ShoostPostProcessEffect.RemovedEffectSlot13)
                 {
                     continue;
                 }
@@ -220,12 +220,12 @@ namespace lilToon.URP.Extensions.PostProcessing
         private RTHandle cameraColorTarget;
         private RTHandle tempTextureA;
         private RTHandle tempTextureB;
-        private RTHandle kawaseTextureA;
-        private RTHandle kawaseTextureB;
         private RTHandle irisTextureA;
         private RTHandle irisTextureB;
         private RTHandle rgbBlurTextureA;
         private RTHandle rgbBlurTextureB;
+        private RTHandle glowTextureA;
+        private RTHandle glowTextureB;
         private bool warnedBackBuffer;
         private readonly Dictionary<int, ChangeFrameRateState> changeFrameRateStates = new Dictionary<int, ChangeFrameRateState>();
 
@@ -249,6 +249,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             public float blurOffsetB;
             public bool enableRgbSplit;
             public TextureHandle frozenFrameTexture;
+            public TextureHandle bloomTexture;
         }
 
         private sealed class ChangeFrameRateState
@@ -317,10 +318,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             tempTextureB?.Release();
             tempTextureA = null;
             tempTextureB = null;
-            kawaseTextureA?.Release();
-            kawaseTextureB?.Release();
-            kawaseTextureA = null;
-            kawaseTextureB = null;
             irisTextureA?.Release();
             irisTextureB?.Release();
             irisTextureA = null;
@@ -329,6 +326,10 @@ namespace lilToon.URP.Extensions.PostProcessing
             rgbBlurTextureB?.Release();
             rgbBlurTextureA = null;
             rgbBlurTextureB = null;
+            glowTextureA?.Release();
+            glowTextureB?.Release();
+            glowTextureA = null;
+            glowTextureB = null;
             foreach (ChangeFrameRateState state in changeFrameRateStates.Values)
             {
                 state.Release();
@@ -370,17 +371,17 @@ namespace lilToon.URP.Extensions.PostProcessing
                 {
                     ShoostPostProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
                     RTHandle destination = writeToA ? tempTextureA : tempTextureB;
-                    if (runtimeLayer.settings.effect == ShoostPostProcessEffect.KawaseBlur)
-                    {
-                        ApplyKawaseBlurLayer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, destination, runtimeLayer);
-                    }
-                    else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.IrisBlur)
+                    if (runtimeLayer.settings.effect == ShoostPostProcessEffect.IrisBlur)
                     {
                         ApplyIrisBlurLayer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, destination, runtimeLayer);
                     }
                     else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.RGBBlurV2)
                     {
                         ApplyRgbBlurV2Layer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, destination, runtimeLayer);
+                    }
+                    else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.Glow)
+                    {
+                        ApplyGlowLayer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, destination, runtimeLayer);
                     }
                     else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.ChangeFrameRate)
                     {
@@ -429,11 +430,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             for (int i = 0; i < runtimeLayers.Count; i++)
             {
                 ShoostPostProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
-                if (runtimeLayer.settings.effect == ShoostPostProcessEffect.KawaseBlur)
-                {
-                    source = RecordKawaseBlurLayer(renderGraph, source, runtimeLayer, i);
-                    continue;
-                }
                 if (runtimeLayer.settings.effect == ShoostPostProcessEffect.IrisBlur)
                 {
                     source = RecordIrisBlurLayer(renderGraph, source, runtimeLayer, i);
@@ -442,6 +438,11 @@ namespace lilToon.URP.Extensions.PostProcessing
                 if (runtimeLayer.settings.effect == ShoostPostProcessEffect.RGBBlurV2)
                 {
                     source = RecordRgbBlurV2Layer(renderGraph, source, runtimeLayer, i);
+                    continue;
+                }
+                if (runtimeLayer.settings.effect == ShoostPostProcessEffect.Glow)
+                {
+                    source = RecordGlowLayer(renderGraph, source, runtimeLayer, i);
                     continue;
                 }
                 if (runtimeLayer.settings.effect == ShoostPostProcessEffect.ChangeFrameRate)
@@ -643,57 +644,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
         }
 
-        private void ApplyKawaseBlurLayer(CommandBuffer cmd, RenderTextureDescriptor sourceDescriptor, RTHandle source, RTHandle destination, ShoostPostProcessRuntimeLayer runtimeLayer)
-        {
-            ShoostPostProcessLayer layer = runtimeLayer.settings;
-            Material material = runtimeLayer.material;
-            ApplyLayerProperties(layer, material);
-
-            int resolutionType = Mathf.RoundToInt(layer.parameters0.x);
-            Vector2Int customResolution = new Vector2Int(Mathf.RoundToInt(layer.parameters0.y), Mathf.RoundToInt(layer.parameters0.z));
-            float radius = layer.parameters1.x > 0.0f ? layer.parameters1.x : 0.5f;
-            int downScale = Mathf.Max(1, Mathf.RoundToInt(layer.parameters1.y > 0.0f ? layer.parameters1.y : 2.0f));
-            int iterations = Mathf.Clamp(Mathf.RoundToInt(layer.parameters1.z > 0.0f ? layer.parameters1.z : 6.0f), 1, 10);
-
-            int width = resolutionType == 1 && customResolution.x > 0 ? customResolution.x : sourceDescriptor.width;
-            int height = resolutionType == 1 && customResolution.y > 0 ? customResolution.y : sourceDescriptor.height;
-            width = Mathf.Max(1, width / downScale);
-            height = Mathf.Max(1, height / downScale);
-
-            RenderTextureDescriptor blurDescriptor = sourceDescriptor;
-            blurDescriptor.width = width;
-            blurDescriptor.height = height;
-            blurDescriptor.depthBufferBits = 0;
-            blurDescriptor.depthStencilFormat = GraphicsFormat.None;
-            blurDescriptor.msaaSamples = 1;
-
-            RenderingUtils.ReAllocateIfNeeded(ref kawaseTextureA, blurDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilShoostKawaseBlurA");
-            RenderingUtils.ReAllocateIfNeeded(ref kawaseTextureB, blurDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilShoostKawaseBlurB");
-
-            float screenRatio = Mathf.Max(1.0f, sourceDescriptor.width) / Mathf.Max(1.0f, sourceDescriptor.height);
-            material.SetFloat(ShoostPostProcessShaderConstants.ScreenRatioId, screenRatio);
-            cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.OriginalTexId, source);
-
-            RTHandle current = kawaseTextureA;
-            RTHandle next = kawaseTextureB;
-            float iterationStep = 1.0f / downScale;
-
-            material.SetFloat(ShoostPostProcessShaderConstants.RadiusId, radius);
-            Blitter.BlitCameraTexture(cmd, source, current, material, 0);
-
-            for (int i = 0; i < iterations; i++)
-            {
-                material.SetFloat(ShoostPostProcessShaderConstants.RadiusId, radius + (i * iterationStep));
-                Blitter.BlitCameraTexture(cmd, current, next, material, 0);
-                RTHandle swap = current;
-                current = next;
-                next = swap;
-            }
-
-            material.SetFloat(ShoostPostProcessShaderConstants.RadiusId, radius + (iterations * iterationStep));
-            Blitter.BlitCameraTexture(cmd, current, destination, material, 0);
-        }
-
         private void ApplyIrisBlurLayer(CommandBuffer cmd, RenderTextureDescriptor sourceDescriptor, RTHandle source, RTHandle destination, ShoostPostProcessRuntimeLayer runtimeLayer)
         {
             ShoostPostProcessLayer layer = runtimeLayer.settings;
@@ -776,6 +726,56 @@ namespace lilToon.URP.Extensions.PostProcessing
             Blitter.BlitCameraTexture(cmd, source, destination, material, 1);
         }
 
+        private void ApplyGlowLayer(CommandBuffer cmd, RenderTextureDescriptor sourceDescriptor, RTHandle source, RTHandle destination, ShoostPostProcessRuntimeLayer runtimeLayer)
+        {
+            ShoostPostProcessLayer layer = runtimeLayer.settings;
+            Material material = runtimeLayer.material;
+            ApplyLayerProperties(layer, material);
+
+            float radius = Mathf.Clamp(layer.parameters0.z, 0.0f, 6.0f);
+            int mode = Mathf.Clamp(Mathf.RoundToInt(layer.parameters0.w), 0, 2);
+            int downScale = radius > 0.75f ? 2 : 1;
+            int iterations = Mathf.Clamp(2 + Mathf.RoundToInt(radius * 1.25f), 2, 10);
+
+            RenderTextureDescriptor glowDescriptor = sourceDescriptor;
+            glowDescriptor.width = Mathf.Max(1, sourceDescriptor.width / downScale);
+            glowDescriptor.height = Mathf.Max(1, sourceDescriptor.height / downScale);
+            glowDescriptor.depthBufferBits = 0;
+            glowDescriptor.depthStencilFormat = GraphicsFormat.None;
+            glowDescriptor.msaaSamples = 1;
+
+            RenderingUtils.ReAllocateIfNeeded(ref glowTextureA, glowDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilShoostGlowA");
+            RenderingUtils.ReAllocateIfNeeded(ref glowTextureB, glowDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilShoostGlowB");
+
+            RTHandle current = glowTextureA;
+            RTHandle next = glowTextureB;
+
+            material.SetFloat(ShoostPostProcessShaderConstants.RadiusId, Mathf.Max(0.75f, radius));
+            Blitter.BlitCameraTexture(cmd, source, current, material, 0);
+
+            for (int i = 0; i < iterations; i++)
+            {
+                material.SetFloat(ShoostPostProcessShaderConstants.RadiusId, Mathf.Lerp(0.75f, 2.5f + radius, (i + 1.0f) / iterations));
+                Blitter.BlitCameraTexture(cmd, current, next, material, 1);
+                RTHandle swap = current;
+                current = next;
+                next = swap;
+            }
+
+            if (mode != 0)
+            {
+                float angle = mode == 2 ? layer.parameters2.y : 0.0f;
+                material.SetFloat(ShoostPostProcessShaderConstants.AngleId, angle);
+                material.SetFloat(ShoostPostProcessShaderConstants.RadiusId, Mathf.Max(1.0f, radius * 1.75f));
+                Blitter.BlitCameraTexture(cmd, current, next, material, 2);
+                current = next;
+            }
+
+            cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.OriginalTexId, source);
+            cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.BloomTexId, current);
+            Blitter.BlitCameraTexture(cmd, source, destination, material, 3);
+        }
+
         private void ApplyChangeFrameRateLayer(CommandBuffer cmd, RenderTextureDescriptor sourceDescriptor, Camera camera, RTHandle source, RTHandle destination, ShoostPostProcessRuntimeLayer runtimeLayer)
         {
             ShoostPostProcessLayer layer = runtimeLayer.settings;
@@ -792,57 +792,6 @@ namespace lilToon.URP.Extensions.PostProcessing
 
             cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.FrozenFrameTexId, state.frozenTexture);
             Blitter.BlitCameraTexture(cmd, source, destination, material, 1);
-        }
-
-        private TextureHandle RecordKawaseBlurLayer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex)
-        {
-            TextureDesc sourceDesc = renderGraph.GetTextureDesc(source);
-            ShoostPostProcessLayer layer = runtimeLayer.settings;
-            Material material = runtimeLayer.material;
-            ApplyLayerProperties(layer, material);
-
-            int resolutionType = Mathf.RoundToInt(layer.parameters0.x);
-            Vector2Int customResolution = new Vector2Int(Mathf.RoundToInt(layer.parameters0.y), Mathf.RoundToInt(layer.parameters0.z));
-            float radius = layer.parameters1.x > 0.0f ? layer.parameters1.x : 0.5f;
-            int downScale = Mathf.Max(1, Mathf.RoundToInt(layer.parameters1.y > 0.0f ? layer.parameters1.y : 2.0f));
-            int iterations = Mathf.Clamp(Mathf.RoundToInt(layer.parameters1.z > 0.0f ? layer.parameters1.z : 6.0f), 1, 10);
-
-            int width = resolutionType == 1 && customResolution.x > 0 ? customResolution.x : sourceDesc.width;
-            int height = resolutionType == 1 && customResolution.y > 0 ? customResolution.y : sourceDesc.height;
-            width = Mathf.Max(1, width / downScale);
-            height = Mathf.Max(1, height / downScale);
-
-            TextureDesc blurDesc = sourceDesc;
-            blurDesc.name = $"_lilShoostKawaseBlur_{layerIndex}";
-            blurDesc.width = width;
-            blurDesc.height = height;
-            blurDesc.clearBuffer = false;
-            blurDesc.depthBufferBits = 0;
-
-            TextureHandle blurA = renderGraph.CreateTexture(blurDesc);
-            TextureHandle blurB = renderGraph.CreateTexture(blurDesc);
-            float screenRatio = Mathf.Max(1.0f, sourceDesc.width) / Mathf.Max(1.0f, sourceDesc.height);
-            float iterationStep = 1.0f / downScale;
-
-            AddKawasePass(renderGraph, source, blurA, material, 0, radius, screenRatio, runtimeLayer.settings, _profilingSampler, _passName);
-
-            TextureHandle current = blurA;
-            TextureHandle next = blurB;
-            for (int i = 0; i < iterations; i++)
-            {
-                TextureHandle passSource = current;
-                TextureHandle passDestination = next;
-                AddKawasePass(renderGraph, passSource, passDestination, material, 0, radius + (i * iterationStep), screenRatio, runtimeLayer.settings, _profilingSampler, _passName);
-                current = passDestination;
-                next = passSource;
-            }
-
-            TextureDesc outputDesc = sourceDesc;
-            outputDesc.name = $"_lilShoostPostProcessLayer{layerIndex}";
-            outputDesc.clearBuffer = false;
-            outputDesc.depthBufferBits = 0;
-            TextureHandle destination = renderGraph.CreateTexture(outputDesc);
-            return AddKawasePass(renderGraph, current, destination, material, 0, radius + (iterations * iterationStep), screenRatio, runtimeLayer.settings, _profilingSampler, _passName);
         }
 
         private TextureHandle RecordIrisBlurLayer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex)
@@ -924,6 +873,54 @@ namespace lilToon.URP.Extensions.PostProcessing
             return AddRgbBlurV2Pass(renderGraph, source, destination, material, 1, radius, runtimeLayer.settings, _profilingSampler, _passName, current);
         }
 
+        private TextureHandle RecordGlowLayer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex)
+        {
+            TextureDesc sourceDesc = renderGraph.GetTextureDesc(source);
+            ShoostPostProcessLayer layer = runtimeLayer.settings;
+            Material material = runtimeLayer.material;
+
+            float radius = Mathf.Clamp(layer.parameters0.z, 0.0f, 6.0f);
+            int mode = Mathf.Clamp(Mathf.RoundToInt(layer.parameters0.w), 0, 2);
+            int downScale = radius > 0.75f ? 2 : 1;
+            int iterations = Mathf.Clamp(2 + Mathf.RoundToInt(radius * 1.25f), 2, 10);
+
+            TextureDesc glowDesc = sourceDesc;
+            glowDesc.name = $"_lilShoostGlow_{layerIndex}";
+            glowDesc.width = Mathf.Max(1, sourceDesc.width / downScale);
+            glowDesc.height = Mathf.Max(1, sourceDesc.height / downScale);
+            glowDesc.clearBuffer = false;
+            glowDesc.depthBufferBits = 0;
+
+            TextureHandle glowA = renderGraph.CreateTexture(glowDesc);
+            TextureHandle glowB = renderGraph.CreateTexture(glowDesc);
+            TextureHandle current = AddGlowPass(renderGraph, source, glowA, material, 0, Mathf.Max(0.75f, radius), runtimeLayer.settings, _profilingSampler, _passName);
+            TextureHandle next = glowB;
+
+            for (int i = 0; i < iterations; i++)
+            {
+                TextureHandle passSource = current;
+                TextureHandle passDestination = next;
+                float passRadius = Mathf.Lerp(0.75f, 2.5f + radius, (i + 1.0f) / iterations);
+                current = AddGlowPass(renderGraph, passSource, passDestination, material, 1, passRadius, runtimeLayer.settings, _profilingSampler, _passName);
+                next = passSource;
+            }
+
+            if (mode != 0)
+            {
+                TextureHandle passSource = current;
+                TextureHandle passDestination = next;
+                float angle = mode == 2 ? layer.parameters2.y : 0.0f;
+                current = AddGlowPass(renderGraph, passSource, passDestination, material, 2, Mathf.Max(1.0f, radius * 1.75f), runtimeLayer.settings, _profilingSampler, _passName, default, angle);
+            }
+
+            TextureDesc outputDesc = sourceDesc;
+            outputDesc.name = $"_lilShoostPostProcessLayer{layerIndex}";
+            outputDesc.clearBuffer = false;
+            outputDesc.depthBufferBits = 0;
+            TextureHandle destination = renderGraph.CreateTexture(outputDesc);
+            return AddGlowPass(renderGraph, source, destination, material, 3, radius, runtimeLayer.settings, _profilingSampler, _passName, current);
+        }
+
         private TextureHandle RecordChangeFrameRateLayer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex, UniversalCameraData cameraData)
         {
             int cameraId = cameraData.camera != null ? cameraData.camera.GetInstanceID() : 0;
@@ -976,43 +973,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                 {
                     ApplyLayerProperties(data.layer, data.material);
                     context.cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.FrozenFrameTexId, data.frozenFrameTexture);
-                    Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, data.passIndex);
-                });
-            }
-
-            return destination;
-        }
-
-        private TextureHandle AddKawasePass(
-            RenderGraph renderGraph,
-            TextureHandle source,
-            TextureHandle destination,
-            Material material,
-            int passIndex,
-            float radius,
-            float screenRatio,
-            ShoostPostProcessLayer layer,
-            ProfilingSampler passProfilingSampler,
-            string label)
-        {
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{label} Kawase", out PassData passData, passProfilingSampler))
-            {
-                passData.source = source;
-                passData.layer = layer;
-                passData.material = material;
-                passData.passIndex = Mathf.Max(0, passIndex);
-                passData.radius = radius;
-                passData.screenRatio = screenRatio;
-
-                builder.UseTexture(source, AccessFlags.Read);
-                builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
-                builder.AllowGlobalStateModification(true);
-                builder.AllowPassCulling(false);
-                builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
-                {
-                    ApplyLayerProperties(data.layer, data.material);
-                    data.material.SetFloat(ShoostPostProcessShaderConstants.RadiusId, data.radius);
-                    data.material.SetFloat(ShoostPostProcessShaderConstants.ScreenRatioId, data.screenRatio);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, data.passIndex);
                 });
             }
@@ -1139,6 +1099,59 @@ namespace lilToon.URP.Extensions.PostProcessing
                     {
                         context.cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.OriginalTexId, data.originalTexture);
                         context.cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.BlurredTexId, data.blurredTexture);
+                    }
+
+                    Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, data.passIndex);
+                });
+            }
+
+            return destination;
+        }
+
+        private TextureHandle AddGlowPass(
+            RenderGraph renderGraph,
+            TextureHandle source,
+            TextureHandle destination,
+            Material material,
+            int passIndex,
+            float radius,
+            ShoostPostProcessLayer layer,
+            ProfilingSampler passProfilingSampler,
+            string label,
+            TextureHandle bloomTexture = default,
+            float angle = 0.0f)
+        {
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{label} Glow", out PassData passData, passProfilingSampler))
+            {
+                passData.source = source;
+                passData.originalTexture = source;
+                passData.layer = layer;
+                passData.material = material;
+                passData.passIndex = Mathf.Max(0, passIndex);
+                passData.radius = radius;
+                passData.angle = angle;
+                passData.bloomTexture = bloomTexture;
+
+                builder.UseTexture(source, AccessFlags.Read);
+                builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+
+                if (bloomTexture.IsValid())
+                {
+                    builder.UseTexture(bloomTexture, AccessFlags.Read);
+                    builder.SetGlobalTextureAfterPass(bloomTexture, ShoostPostProcessShaderConstants.BloomTexId);
+                }
+
+                builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                {
+                    ApplyLayerProperties(data.layer, data.material);
+                    data.material.SetFloat(ShoostPostProcessShaderConstants.RadiusId, data.radius);
+                    data.material.SetFloat(ShoostPostProcessShaderConstants.AngleId, data.angle);
+                    if (data.bloomTexture.IsValid())
+                    {
+                        context.cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.OriginalTexId, data.originalTexture);
+                        context.cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.BloomTexId, data.bloomTexture);
                     }
 
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, data.passIndex);

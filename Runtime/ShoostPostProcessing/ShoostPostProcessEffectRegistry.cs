@@ -32,10 +32,10 @@ namespace lilToon.URP.Extensions.PostProcessing
                     return "Hidden/lilToon-Shoost/URP/Shoost/GrainCustom";
                 case ShoostPostProcessEffect.Gradient:
                     return "Hidden/lilToon-Shoost/URP/Shoost/Gradient";
+                case ShoostPostProcessEffect.Glow:
+                    return "Hidden/lilToon-Shoost/URP/Shoost/Glow";
                 case ShoostPostProcessEffect.IrisBlur:
                     return "Hidden/lilToon-Shoost/URP/Shoost/IrisBlur";
-                case ShoostPostProcessEffect.KawaseBlur:
-                    return "Hidden/lilToon-Shoost/URP/Shoost/KawaseBlur";
                 case ShoostPostProcessEffect.LensDistortionCustom:
                     return "Hidden/lilToon-Shoost/URP/Shoost/LensDistortionCustom";
                 case ShoostPostProcessEffect.LevelAdjustment:

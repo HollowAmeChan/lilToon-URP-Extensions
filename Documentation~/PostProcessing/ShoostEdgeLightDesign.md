@@ -17,6 +17,8 @@
 
 如果 Shoost 后续重构为纯最终图层/滤镜系统，`EdgeLight` 不应该继续作为 Shoost final layer 实际执行。它可以保留 Shoost 的名称、图标和参数习惯，但运行时应归入新的 `lilToon Subject Effects` RendererFeature。原因是边缘光需要主体 normal/mask，并且通常希望在 URP Bloom 前写入 HDR 颜色；这和 Shoost final stack 的“URP 后处理之后做最终图层混合”不是同一类职责。
 
+当前实现边界下，`EdgeLight / 边缘光`、`Outline / 轮廓`、`DropShadow / 投影` 先从 Shoost Final Stack 的公开 UI 隐藏。它们不是“普通后处理还没补 shader”，而是需要重新确认输入数据、subject RT、mask/stencil/depth/normal 和执行阶段的主体效果。旧 enum 或旧序列化数据可以保留用于兼容，但不再作为当前 stack list 的新增入口。
+
 这里的 HDR 边界很重要：边缘光的 `Brightness` 应该能写出超过 1 的 HDR 能量，让 URP Bloom 在后面捕捉。如果把边缘光移动到 Tonemapping / Bloom 之后，它只能在最终 LDR 画面上加白，视觉会更硬，也不会产生项目 Bloom 的扩散。
 
 推荐边界：

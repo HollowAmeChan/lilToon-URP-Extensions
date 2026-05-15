@@ -31,7 +31,7 @@
 - 粒子
 - 摄像头切换器
 - 透明背景
-- 胶片（暂时跳过：底层组合链路复杂）
+- 胶片（可用近似版：按 Shoost 组合入口压成单 pass）
 - 电视（Tube，暂时跳过：底层组合链路复杂）
 - VHS
 - 显示器
@@ -47,9 +47,9 @@
 - 镜头畸变
 - 摄像机闪光
 
-其中一部分是纯后处理 shader，一部分更像 Shoost 的场景叠加、UI 驱动或摄像机控制入口。我们在 URP 里会尽量保持它们的用户命名和图标入口一致，但底层实现不一定都是单个 fullscreen pass。
+其中一部分是纯后处理 shader，一部分更像 Shoost 的场景叠加、UI 驱动或摄像机控制入口。我们在 URP 里会尽量保持它们的用户命名和图标入口一致，但底层实现不一定都是单个 fullscreen pass。当前公开 UI 只显示适合 Shoost Final Stack 的入口；`边缘光`、`轮廓`、`投影`、`LED`、`透明背景`、`摄像头切换器` 先隐藏，等主体数据、输入 RT、场景对象或相机合成边界重新确认后再决定是否恢复。
 
-当前已经补上的具体效果包括 `VignetteCustom`、`Sharpen`、`RGBSplit`、`KawaseBlur`、`IrisBlur`、`ColorGradingCustom`、`LevelAdjustment`、`AutoWhiteBalance`、`Fisheye` / `LensDistortionCustom`、`Pixelize`、`Distortion`（湍流置换）和 `RGBChannelSeparator`。`LUTColorGrading` 已从公开实现中移除，第 4 个“调色”入口对齐 Shoost 的 `ColorGrading_Custom`：包含普通 `Lift / Gamma / Gain` 色轮、对数 `Shadows / Midtones / Highlights` 色轮，以及六色偏移的 `HueVsHue / HueVsSat / HueVsLum / LumVsSat` 模式。`DownScaleResolution` 只保留旧资产兼容，不再作为公开图层入口；新面板里应该用 `Pixelize`。`SharpenAfter` 也不再作为公开图层入口，用户侧统一用 `SharpenBefore`；当前普通 Shoost 滤镜默认已经作为最终滤镜后置执行，旧 `SharpenAfter` 只保留兼容。
+当前已经补上的公开效果包括 `VignetteCustom`、`Sharpen`、`RGBSplit`、`RGBChannelSeparator`、`IrisBlur`、`ColorGradingCustom`、`LevelAdjustment`、`AutoWhiteBalance`、`Fisheye` / `LensDistortionCustom`、`Pixelize`、`Distortion`（湍流置换）和 `Glow`。旧的 `KawaseBlur` 已整体摘除，shader、editor filter 和 runtime 调度都不再保留；旧 Volume 数据残留该槽位时由编辑器自动清理。`LUTColorGrading` 已从公开实现中移除，第 4 个“调色”入口对齐 Shoost 的 `ColorGrading_Custom`：包含普通 `Lift / Gamma / Gain` 色轮、对数 `Shadows / Midtones / Highlights` 色轮，以及六色偏移的 `HueVsHue / HueVsSat / HueVsLum / LumVsSat` 模式。`DownScaleResolution` 只保留旧资产兼容，不再作为公开图层入口；新面板里应该用 `Pixelize`。`SharpenAfter` 也不再作为公开图层入口，用户侧统一用 `SharpenBefore`；当前普通 Shoost 滤镜默认已经作为最终滤镜后置执行，旧 `SharpenAfter` 只保留兼容。
 
 ## 设置
 
@@ -86,7 +86,7 @@ Volume 里只有一个面向用户的大图层列表。Shoost stack 不再提供
 
 这意味着 Shoost stack 统一运行在 URP 主后处理之后；在某些相机配置下，后面仍可能接着 URP 的 final post pass。需要 Bloom 响应或需要主体数据的效果后续应移动到 subject effects / lighting feature，而不是重新塞进 Shoost 图层插入点。
 
-图层列表的顺序会在当前 final stack 内部保留。主体数据、HDR 发光和 pre-Bloom 合成后续应移动到新的 subject effects / lighting feature；调色、CRT mask、final sharpen、VHS、颗粒、像素化这类最终滤镜则统一留在 Shoost final stack。
+图层列表的顺序会在当前 final stack 内部保留。主体数据、HDR 发光和 pre-Bloom 合成后续应移动到新的 subject effects / lighting feature；调色、CRT mask、final sharpen、VHS、颗粒、像素化，以及已经明确为 LDR 纯后期 bloom 的 `Glow / 发光`，则统一留在 Shoost final stack。
 
 从 Shoost v0.16.3 解包结果看，一共找到 59 个 `BeforeStack` 和 16 个 `AfterStack` 的 PPS v2 effect：
 
@@ -118,7 +118,7 @@ Volume 里只有一个面向用户的大图层列表。Shoost stack 不再提供
 
 - 历史 buffer：`MotionTrail`、`ChangeFrameRate`；
 - 生成 lookup texture：`GrainCustom`；
-- blur pyramid 或多个临时 render target：`KawaseBlur`、`IrisBlur`、`RGBBlurV2`；`RGBBlurV2` 用户侧只暴露三个 RGB 模糊度，但运行时仍按 Shoost 的临时 RT blur + 原图合成思路处理；
+- blur pyramid 或多个临时 render target：`IrisBlur`、`RGBBlurV2`、`Glow`；`RGBBlurV2` 用户侧只暴露三个 RGB 模糊度，但运行时仍按 Shoost 的临时 RT blur + 原图合成思路处理；
 - 多 pass 复古合成：`CRTEffects`、`Tube`、Retro Look Pro 派生 custom 效果。
 
 保持 Volume 图层栈作为用户面对的排序界面，具体效果移植时再在 enum 槽背后添加专用执行代码。
@@ -132,9 +132,14 @@ Volume 里只有一个面向用户的大图层列表。Shoost stack 不再提供
 - `DitheringCustom` 的三张抖动图来自 Shoost 解包工程的 `dithering_2x2_4_Steps_v2.png`、`dithering_2x2_4_Steps_v4.png`、`dithering_4x4_16_Steps.png`，在包内对应 `ShoostDitheringV1/V2/V3.png`。
 - `DitheringCustom / 视频游戏`：已由实机核对确认完美对齐。当前实现已按 Shoost renderer 的 `_ResolutionX/_ResolutionY` 思路修正屏幕像素宽高归一化，并修正网格线为屏幕像素稳定宽度。
 - `CRTEffects / 显示器`：已由实机核对确认完美对齐。来源是 Shoost 的 `Custom/CRTEffects`。用户侧只暴露“类型（RGB/RGB 单色/圆形/线条）”和“分辨率”，类型实际对应 Shoost UI 中 `_scanlineTexture` 列表的四张贴图：`crt_scanlines_A_v1.png`、`crt_scanlines_A_v2.png`、`crt_scanlines_D_v2.png`、`crt_scanlines_B.png`。shader 按 RenderDoc 中 `Hidden/CRTEffects` 第一 pass 的思路实现：以 FC `256x240` 为基础，并按 `当前屏幕宽高比 / (256/240)` 修正横向分辨率，再重复采样扫描线贴图，用 slot mask、shadow mask、brightness 和 glow 叠加到源图上。
+- `RGBChannelSeparator / RGB 通道分离`：已从旧实现上位到公开入口。它是直接消费最终 camera color 的单 pass 通道查看/分离滤镜，保留 Shoost 用户侧入口，不再放在“旧实现”栏。
 - `VHS`：来源是 Shoost 的 `PostProcess_VHSValue` 组合滤镜。Shoost 用户侧以弱/中/强三档切换 profile，并联动 `RLProVHSEffect`、`RLProNoise2_Custom`、`RLProEdgeNoise`、`RGBBlurV2`、`Grain_Custom`、`Sharpen_Before`、`Tube`，扫描线子开关来自 `RLProTVEffect_Custom`。当前 URP 版压成一个用户滤镜和一个 fullscreen pass，暴露“类型、噪点强度、锐化、扫描线、大小”，默认作为 `After URP Post Processing` 的最终滤镜执行。已由实机核对确认完美对齐，状态标记为：完美对齐。
+- `Gradient / 渐变`：已由实机核对确认完美对齐。来源是 Shoost 的 `GradientValue` / `Layer_GradientValue` 和 `Custom/AnimeComposition` 中的 Gradient Generator 参数。用户侧对齐 Shoost 面板的“类型、混合模式、颜色 1/颜色 2、反相、半径、柔和度、偏移 X/Y、角度、不透明度”；当前 URP 版作为 final stack 的单 pass fullscreen 效果执行。Shoost 的透明背景/排除背景开关属于透明源与图层合成语义，在 URP camera color 后处理里不参与。
+- `Glow / 发光`：已按 Shoost 的 `GlowValue` / Kino `Bloom_Custom` 对齐完成。当前 URP 版是不依赖 HDR 的纯后期 LDR bloom，多 pass 流程为阈值 soft-knee 预滤波、模糊金字塔、模式化方向采样和最终合成；用户侧对齐 Shoost 面板的“阈值、阈值平滑、半径、强度、饱和度、颜色、不透明度、发光类型”，三种类型为“正常 / 条纹 / 星芒”，星芒额外暴露数量和角度。当前默认阈值为 `0.9`，默认强度为 `2.0`，强度 UI 上限为 `12.0`。状态标记为：完美对齐。
 - `Tube / 电视`：暂时跳过。来源是 Shoost 的 `PostProcess_TVValue` 组合滤镜，用户侧 60/70/80/90 四档不是单个 `Custom/Tube` shader 的模式，而是 profile 组合：`FilmBreath_GateWeave`、`RGBBlur`、`LUTColorGrading`、`Tube`、`Sharpen_Before` 等层，60 年代还包含 `RLProJitter`。此前尝试把它压进单个 fullscreen pass，但 LUT、锐化、Tube/YIQ 漏色、年代 profile 和第三方包语义之间耦合较深，当前不继续对齐。状态标记为：暂时跳过。
-- `Film / 胶片`：暂时跳过。Shoost 的 `AMS_AnimeFilm_60s/70s/80s/90s` 和 TV 的年代命名只共享 UI 名称，不共享滤镜语义；胶片入口需要单独处理 `LUTColorGrading`、`Grain_Custom`、`RLProOldFilm2_Custom` 等 profile 层，并且还要重新核对各层顺序、LUT 导入与 RenderDoc 汇编。状态标记为：暂时跳过。
+- `Film / 胶片`：来源是 Shoost 的 `PostProcess_FilmValue` 组合入口和 `AMS_AnimeFilm_60s/70s/80s/90s` profile。当前 URP 版已从旧的裸 `FilmBreath_GateWeave` 调试参数改成 Shoost 面板语义：模式、滤镜类型、滤镜强度、锐化、颗粒强度、颗粒大小、屏幕抖动量。运行时先压成一个 fullscreen pass，近似串联 LUTColorGrading、RGBBlur、FilmBreath/GateWeave、RLProOldFilm2_Custom 和 Grain_Custom，目标是稳定可用、不报错；仍未标记为完美对齐。
+- `EdgeLight / 边缘光`、`Outline / 轮廓`、`DropShadow / 投影`：当前从 Shoost Final Stack 公开入口隐藏。它们需要主体 mask/stencil/depth/normal 或独立 subject RT，不应作为只消费 camera color 的普通图层添加。
+- `LED`、`TransparentBackground / 透明背景`、`CameraSwitcher / 摄像头切换器`：当前从公开入口隐藏。它们更接近输入 RT、场景对象、相机或合成控制，对当前最终滤镜风格没有直接意义；后续如果 stack list 能明确控制输入 RT 或场景合成语义，再重新设计入口。
 - LUT 语义备忘：TV 组合的 `AMS_TV_60s/70s/80s/90s` 分别引用 `Monochrome Soft`、`Film Fuji v2`、`Film Fuji v2`、`Film Fuji v3`；胶片组合的 `AMS_AnimeFilm_60s/70s/80s/90s` 分别引用 `Monochrome Soft`、`Film Kodak v1`、`Film Kodak v2`、`Film Kodak v3`。这两组 60/70/80/90 只共享年代 UI 命名，不共享滤镜语义。RenderDoc 中 `Hidden/Custom/LUTColorGrading` 的 32x32 strip 是 B 通道切片、R 为横向、G 为纵向；LUT 纹理按非 sRGB 导入，由 shader 显式执行 sRGB/Linear 转换。该备忘仅保留给后续重启 Tube/胶片移植时参考。
 
 ## 图层系统重构方向
@@ -145,7 +150,7 @@ Shoost 的核心不是“某一个 URP pass”，而是一个可以叠很多层�
 
 移动执行点时必须同时看 HDR 语义。URP Bloom 只会响应它之前写进 HDR camera color 的高亮能量；Tonemapping 之后的画面通常已经被压到显示范围，很多“加亮”只是在 LDR 画面上叠白，不会再触发 Bloom。迁移时按意图分流：
 
-- 需要给 Bloom 提供能量的效果：边缘光、光照、发光、镜头闪光、部分强 emissive/glow 合成，应放在 URP 内置后处理前，或放进自研 subject effects / lighting feature。
+- 需要给 URP Bloom 提供 HDR 能量的效果：边缘光、光照、镜头闪光、部分强 emissive/glow 合成，应放在 URP 内置后处理前，或放进自研 subject effects / lighting feature。已实现的 `Glow / 发光` 例外：它是 Shoost/Kino 风格的 LDR final-stack bloom，自身负责扩散和合成，不再依赖 URP Bloom。
 - 只改变最终观感的效果：颗粒、CRT scanline、VHS 噪声、像素化、最终色阶、最终暗角，可以放在 URP 后处理之后。
 - 色彩类效果要明确是 HDR/scene-linear 调整还是 LDR/display-space 调整；同一个参数放在 Tonemapping 前后会有不同手感。
 - 如果 Shoost Final Stack 需要在 URP 后处理之后继续用 HDR 数值，必须确保 renderer 的 camera color 仍是 HDR RT，并明确哪些层允许写超过 1 的值；否则默认按 LDR 最终图层看待。
@@ -164,8 +169,8 @@ Shoost 的核心不是“某一个 URP pass”，而是一个可以叠很多层�
 Shoost 原始工作流更像在处理一个可能带 alpha 的图片/视频源，而不是 URP 相机的最终不透明颜色缓冲。Shoost 场景里默认有背景、角色、前景三层，很多用户侧效果实际只作用于角色或前景，背景会被 alpha 或源图层边界自然排除。URP fullscreen post 看到的通常是已经合成后的 camera color，背景、角色和前景已经混在一起，alpha 也未必还保留可用语义。因此后续迁移分成三类：
 
 - `直接按 Shoost/RenderDoc 复刻`：主要依赖最终屏幕颜色的滤镜。包括 `SharpenBefore`、`AutoWhiteBalance`、`LevelAdjustment`、`ColorGradingCustom`、`VignetteCustom`、`Pixelize`、`Distortion`、`Fisheye / LensDistortionCustom`、`RGBSplit`、`RGBChannelSeparator`、`GrainCustom`、`DitheringCustom`、`CRTEffects`、`VHS`。这些可以继续走 fullscreen pass 或现有多 pass 调度。
-- `按 Shoost 语义实现，但需要专用调度`：不是透明源问题，主要是运行时结构更复杂。包括 `KawaseBlur`、`IrisBlur`、`RGBBlurV2` 这类多 RT / blur pyramid，`MotionTrail`、`ChangeFrameRate` 这类历史 buffer，以及 `CustomMaterial` 的 Photoshop 式混合。
-- `不要硬搬 Shoost，改成 URP 主体数据效果`：强依赖透明源、主体边界、alpha 或 Shoost 场景层级的效果。包括 `EdgeLight / 边缘光`、`Outline / 轮廓`、`DropShadow / 投影`，以及大概率需要重新设计的 `Glow / 发光`、`Lighting / 光照`、`TransparentBackground / 透明背景`、`Particle / 粒子`、`Weather / 天气`、`CameraSwitcher / 摄像头切换器`。这些不应该从最终 camera color 里猜 alpha，应使用明确的角色 mask、stencil、depth、normal 或单独的角色渲染目标。
+- `按 Shoost 语义实现，但需要专用调度`：不是透明源问题，主要是运行时结构更复杂。包括 `IrisBlur`、`RGBBlurV2`、`Glow` 这类多 RT / blur pyramid，`MotionTrail`、`ChangeFrameRate` 这类历史 buffer，以及 `CustomMaterial` 的 Photoshop 式混合。
+- `不要硬搬 Shoost，改成 URP 主体数据效果`：强依赖透明源、主体边界、alpha 或 Shoost 场景层级的效果。包括 `EdgeLight / 边缘光`、`Outline / 轮廓`、`DropShadow / 投影`，以及大概率需要重新设计的 `Lighting / 光照`、`TransparentBackground / 透明背景`、`Particle / 粒子`、`Weather / 天气`、`CameraSwitcher / 摄像头切换器`。这些不应该从最终 camera color 里猜 alpha，应使用明确的角色 mask、stencil、depth、normal 或单独的角色渲染目标。`Glow / 发光` 已按纯后期 LDR bloom 对齐，不再归入这一类。
 
 建议的新数据契约：
 

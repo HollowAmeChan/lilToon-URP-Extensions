@@ -41,5 +41,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static readonly int BlurOffsetBId = Shader.PropertyToID("_BlurOffsetB");
         public static readonly int DistanceId = Shader.PropertyToID("_Distance");
         public static readonly int AngleId = Shader.PropertyToID("_Angle");
+        public static readonly int BloomTexId = Shader.PropertyToID("_BloomTex");
     }
 }

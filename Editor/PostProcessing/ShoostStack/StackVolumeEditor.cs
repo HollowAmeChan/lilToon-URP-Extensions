@@ -70,6 +70,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ShoostPostProcessEffect.IrisBlur,
             ShoostPostProcessEffect.RGBBlurV2,
             ShoostPostProcessEffect.RGBSplit,
+            ShoostPostProcessEffect.RGBChannelSeparator,
             ShoostPostProcessEffect.GrainCustom,
             ShoostPostProcessEffect.VignetteCustom,
             ShoostPostProcessEffect.Pixelize,
@@ -79,11 +80,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ShoostPostProcessEffect.CameraFlash,
             ShoostPostProcessEffect.CustomMaterial,
             ShoostPostProcessEffect.GateWeave,
-            ShoostPostProcessEffect.KawaseBlur,
             ShoostPostProcessEffect.LensDistortionCustom,
             ShoostPostProcessEffect.MotionTrail,
             ShoostPostProcessEffect.RGBBlur,
-            ShoostPostProcessEffect.RGBChannelSeparator,
             ShoostPostProcessEffect.SharpenAfter,
             ShoostPostProcessEffect.RetroLookProBleedCustom,
             ShoostPostProcessEffect.RetroLookProNoise2Custom,
@@ -97,18 +96,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ShoostPostProcessEffect.AutoWhiteBalance, "白平衡", "icon_WhiteBalance_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.LevelAdjustment, "色阶", "icon_LevelsAdjustment_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.ColorGradingCustom, "调色", "icon_ColorGrading_v1"),
-            new EffectToggleEntry(ShoostPostProcessEffect.EdgeLight, "边缘光", "icon_RimLight_v1"),
-            new EffectToggleEntry(ShoostPostProcessEffect.Outline, "轮廓", "icon_OutLine_v1"),
-            new EffectToggleEntry(ShoostPostProcessEffect.DropShadow, "投影", "icon_DropShadow_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Gradient, "渐变", "icon_Gradient_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Glow, "发光", "icon_Glow_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Lighting, "光照", "icon_Lighting_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.CenterColorCorrection, "中心色彩校正", "icon_CenterColorCorrection"),
-            new EffectToggleEntry(ShoostPostProcessEffect.LED, "LED", "icon_LEDPanel_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Weather, "天气", "icon_Weather_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Particle, "粒子", "icon_Particle_v1"),
-            new EffectToggleEntry(ShoostPostProcessEffect.CameraSwitcher, "摄像头切换器", "icon_CameraSwitch_v1"),
-            new EffectToggleEntry(ShoostPostProcessEffect.TransparentBackground, "透明背景", "icon_TransparentBackground_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.FilmBreathGateWeave, "胶片", "icon_Film_v3"),
             new EffectToggleEntry(ShoostPostProcessEffect.Tube, "电视", "icon_TV_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.VHS, "VHS", "icon_VHS_v1"),
@@ -117,6 +110,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ShoostPostProcessEffect.IrisBlur, "光圈模糊", "icon_IrisBlur_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.RGBBlurV2, "通道模糊", "icon_RGBBlur_v2"),
             new EffectToggleEntry(ShoostPostProcessEffect.RGBSplit, "RGB 分离", "icon_RGBSplit_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.RGBChannelSeparator, "RGB 通道分离", "icon_RGBChannel_RGB"),
             new EffectToggleEntry(ShoostPostProcessEffect.GrainCustom, "颗粒", "icon_Grain_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.VignetteCustom, "暗角", "icon_Vignette_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Pixelize, "像素化", "icon_Pixel_v1"),
@@ -128,8 +122,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static readonly EffectToggleEntry[] LegacyEffectOrder =
         {
-            new EffectToggleEntry(ShoostPostProcessEffect.KawaseBlur, "Kawase 模糊", "icon_Blur_v1"),
-            new EffectToggleEntry(ShoostPostProcessEffect.RGBChannelSeparator, "RGB 通道分离", "icon_RGBChannel_RGB"),
         };
 
         private static readonly string[] EffectDisplayNames =
@@ -147,7 +139,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "画幅抖动",
             "颗粒",
             "光圈模糊",
-            "Kawase 模糊",
+            "已移除",
             "镜头畸变（自定义）",
             "色阶",
             "运动拖影",
@@ -366,12 +358,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             rect.y += 2.0f;
-            if (GetEffect(element) == ShoostPostProcessEffect.KawaseBlur)
-            {
-                DrawKawaseBlurElement(rect, element);
-                return;
-            }
-
             if (GetEffect(element) == ShoostPostProcessEffect.SharpenBefore || GetEffect(element) == ShoostPostProcessEffect.SharpenAfter)
             {
                 DrawSharpenElement(rect, element);
@@ -492,6 +478,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.Glow)
+            {
+                DrawGlowElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ShoostPostProcessEffect.LevelAdjustment)
             {
                 DrawLevelAdjustmentElement(rect, element);
@@ -522,10 +514,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             switch (effect)
             {
-                case ShoostPostProcessEffect.KawaseBlur:
-                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
-                    lineCount += 1 + (GetKawaseBlurUsesCustomResolution(element) ? 2 : 0) + 3;
-                    break;
                 case ShoostPostProcessEffect.SharpenBefore:
                 case ShoostPostProcessEffect.SharpenAfter:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -557,7 +545,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.FilmBreathGateWeave:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
-                    lineCount += 13;
+                    lineCount += 7;
                     break;
                 case ShoostPostProcessEffect.GrainCustom:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -605,6 +593,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.Gradient:
                     lineCount += GetGradientLineCount(element);
+                    break;
+                case ShoostPostProcessEffect.Glow:
+                    lineCount += GetGlowLineCount(element);
                     break;
                 case ShoostPostProcessEffect.LevelAdjustment:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -665,9 +656,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             DrawEffectIconRow(VisibleEffectOrder);
-            EditorGUILayout.Space(3.0f);
-            EditorGUILayout.LabelField("旧实现", EditorStyles.miniBoldLabel);
-            DrawEffectIconRow(LegacyEffectOrder);
+            if (LegacyEffectOrder.Length > 0)
+            {
+                EditorGUILayout.Space(3.0f);
+                EditorGUILayout.LabelField("旧实现", EditorStyles.miniBoldLabel);
+                DrawEffectIconRow(LegacyEffectOrder);
+            }
         }
 
         private void DrawEffectIconRow(EffectToggleEntry[] entries)
@@ -768,6 +762,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             {
                 SerializedProperty element = layerValues.GetArrayElementAtIndex(index);
                 int effectIndex = GetEffectIndex(element);
+                if (effectIndex == (int)ShoostPostProcessEffect.RemovedEffectSlot13)
+                {
+                    layerValues.DeleteArrayElementAtIndex(index);
+                    continue;
+                }
+
                 if (effectIndex >= 0 && !seenEffects.Add(effectIndex))
                 {
                     layerValues.DeleteArrayElementAtIndex(index);
@@ -1289,10 +1289,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.FilmBreathGateWeave:
                     SetFloat(element, "intensity", 1.0f);
-                    SetVector4(element, "parameters0", new Vector4(0.02f, 20.0f, 0.05f, 15.0f));
-                    SetVector4(element, "parameters1", new Vector4(0.005f, 5.0f, 0.2f, 15.0f));
-                    SetVector4(element, "parameters2", new Vector4(0.1f, 12.0f, 0.1f, 16.0f));
-                    SetVector4(element, "parameters3", new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 0.0f, 1.0f, 0.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.2f, 1.0f, 1.0f, 0.0f));
+                    SetVector4(element, "parameters2", new Vector4(0.0f, 0.0f, 0.0f, 202605.0f));
+                    SetVector4(element, "parameters3", Vector4.zero);
+                    SetObjectReference(element, "texture", AssetDatabase.LoadAssetAtPath<Texture2D>(AssetDatabase.GUIDToAssetPath("4cdb4a3a04be3954f81ba4e7912a2a54")));
                     break;
                 case ShoostPostProcessEffect.GrainCustom:
                     SetFloat(element, "intensity", 1.0f);
@@ -1384,10 +1385,16 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters2", new Vector4(1.0f, 0.5f, 1.0f, 0.0f));
                     SetVector4(element, "parameters3", new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
                     break;
+                case ShoostPostProcessEffect.Glow:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetColor(element, "color", Color.white);
+                    SetVector4(element, "parameters0", new Vector4(0.9f, 0.0f, 3.0f, 0.0f));
+                    SetVector4(element, "parameters1", new Vector4(2.0f, 0.0f, 0.0f, 1.0f));
+                    SetVector4(element, "parameters2", new Vector4(3.0f, 180.0f, 0.0f, 0.0f));
+                    break;
                 case ShoostPostProcessEffect.EdgeLight:
                 case ShoostPostProcessEffect.Outline:
                 case ShoostPostProcessEffect.DropShadow:
-                case ShoostPostProcessEffect.Glow:
                 case ShoostPostProcessEffect.Lighting:
                 case ShoostPostProcessEffect.CenterColorCorrection:
                 case ShoostPostProcessEffect.LED:
