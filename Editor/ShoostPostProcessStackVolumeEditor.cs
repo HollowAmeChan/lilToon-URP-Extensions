@@ -1,3 +1,5 @@
+using System;
+using System.Collections.Generic;
 using lilToon.URP.Extensions.PostProcessing;
 using UnityEditor;
 using UnityEditorInternal;
@@ -11,6 +13,45 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
     {
         private const float LineHeight = 18.0f;
         private const float LineSpacing = 2.0f;
+        private const float LevelAdjustmentInitMarker = -12345.0f;
+        private const float EffectIconSize = 22.0f;
+        private const float EffectIconSpacing = 2.0f;
+        private const string PackageAssetRoot = "Packages/jp.lilxyzw.liltoon.urp.extensions";
+
+        private static readonly ShoostPostProcessEffect[] FixedEffectOrder =
+        {
+            ShoostPostProcessEffect.CustomMaterial,
+            ShoostPostProcessEffect.AutoWhiteBalance,
+            ShoostPostProcessEffect.ChangeFrameRate,
+            ShoostPostProcessEffect.ColorGradingCustom,
+            ShoostPostProcessEffect.CRTEffects,
+            ShoostPostProcessEffect.Distortion,
+            ShoostPostProcessEffect.DitheringCustom,
+            ShoostPostProcessEffect.DownScaleResolution,
+            ShoostPostProcessEffect.FilmBreathGateWeave,
+            ShoostPostProcessEffect.Fisheye,
+            ShoostPostProcessEffect.GateWeave,
+            ShoostPostProcessEffect.GrainCustom,
+            ShoostPostProcessEffect.IrisBlur,
+            ShoostPostProcessEffect.KawaseBlur,
+            ShoostPostProcessEffect.LensDistortionCustom,
+            ShoostPostProcessEffect.LevelAdjustment,
+            ShoostPostProcessEffect.LUTColorGrading,
+            ShoostPostProcessEffect.MotionTrail,
+            ShoostPostProcessEffect.Pixelize,
+            ShoostPostProcessEffect.RGBBlur,
+            ShoostPostProcessEffect.RGBBlurV2,
+            ShoostPostProcessEffect.RGBChannelSeparator,
+            ShoostPostProcessEffect.RGBSplit,
+            ShoostPostProcessEffect.SharpenBefore,
+            ShoostPostProcessEffect.SharpenAfter,
+            ShoostPostProcessEffect.Tube,
+            ShoostPostProcessEffect.VignetteCustom,
+            ShoostPostProcessEffect.RetroLookProBleedCustom,
+            ShoostPostProcessEffect.RetroLookProNoise2Custom,
+            ShoostPostProcessEffect.RetroLookProOldFilm2Custom,
+            ShoostPostProcessEffect.RetroLookProTVEffectCustom
+        };
 
         private static readonly string[] EffectDisplayNames =
         {
@@ -103,16 +144,52 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             (int)ShoostPostProcessBlendMode.Luminosity
         };
 
-        private SerializedDataParameter enable;
+        private static readonly Dictionary<ShoostPostProcessEffect, string> EffectIconNames = new Dictionary<ShoostPostProcessEffect, string>
+        {
+            { ShoostPostProcessEffect.CustomMaterial, "icon_LayerAdd_v1" },
+            { ShoostPostProcessEffect.AutoWhiteBalance, "icon_WhiteBalance_v1" },
+            { ShoostPostProcessEffect.ChangeFrameRate, "icon_FPS_v1" },
+            { ShoostPostProcessEffect.ColorGradingCustom, "icon_ColorGrading_v1" },
+            { ShoostPostProcessEffect.CRTEffects, "icon_TV_v1" },
+            { ShoostPostProcessEffect.Distortion, "icon_Distortion_v1" },
+            { ShoostPostProcessEffect.DitheringCustom, "icon_Pixel_v1" },
+            { ShoostPostProcessEffect.DownScaleResolution, "icon_Monitor_v1" },
+            { ShoostPostProcessEffect.FilmBreathGateWeave, "icon_Film_v3" },
+            { ShoostPostProcessEffect.Fisheye, "icon_FishEye_v1" },
+            { ShoostPostProcessEffect.GateWeave, "icon_Film_v2" },
+            { ShoostPostProcessEffect.GrainCustom, "icon_Grain_v1" },
+            { ShoostPostProcessEffect.IrisBlur, "icon_IrisBlur_v1" },
+            { ShoostPostProcessEffect.KawaseBlur, "icon_Blur_v1" },
+            { ShoostPostProcessEffect.LensDistortionCustom, "icon_Distortion_v1" },
+            { ShoostPostProcessEffect.LevelAdjustment, "icon_LevelsAdjustment_v1" },
+            { ShoostPostProcessEffect.LUTColorGrading, "icon_ColorGrading_v1" },
+            { ShoostPostProcessEffect.MotionTrail, "icon_CameraSwitch_Move_01" },
+            { ShoostPostProcessEffect.Pixelize, "icon_Pixel_v1" },
+            { ShoostPostProcessEffect.RGBBlur, "icon_RGBBlur_v2" },
+            { ShoostPostProcessEffect.RGBBlurV2, "icon_RGBBlur_v2" },
+            { ShoostPostProcessEffect.RGBChannelSeparator, "icon_RGBChannel_RGB" },
+            { ShoostPostProcessEffect.RGBSplit, "icon_RGBSplit_v1" },
+            { ShoostPostProcessEffect.SharpenBefore, "icon_Sharpen_v1" },
+            { ShoostPostProcessEffect.SharpenAfter, "icon_Sharpen_v1" },
+            { ShoostPostProcessEffect.Tube, "icon_TV_v1" },
+            { ShoostPostProcessEffect.VignetteCustom, "icon_Vignette_v1" },
+            { ShoostPostProcessEffect.RetroLookProBleedCustom, "icon_Glow_v1" },
+            { ShoostPostProcessEffect.RetroLookProNoise2Custom, "icon_Grain_v1" },
+            { ShoostPostProcessEffect.RetroLookProOldFilm2Custom, "icon_Film_v4" },
+            { ShoostPostProcessEffect.RetroLookProTVEffectCustom, "icon_TV_v1" }
+        };
+
+        private static readonly Dictionary<ShoostPostProcessEffect, GUIContent> EffectIconContents = new Dictionary<ShoostPostProcessEffect, GUIContent>();
+
         private SerializedDataParameter showInSceneView;
         private SerializedProperty layers;
         private SerializedProperty layerValues;
         private ReorderableList layerList;
+        private bool showAdvancedSettings;
 
         public override void OnEnable()
         {
             PropertyFetcher<ShoostPostProcessStackVolume> fetcher = new PropertyFetcher<ShoostPostProcessStackVolume>(serializedObject);
-            enable = Unpack(fetcher.Find(x => x.Enable));
             showInSceneView = Unpack(fetcher.Find(x => x.ShowInSceneView));
             layers = serializedObject.FindProperty("layers");
             layerValues = layers != null ? layers.FindPropertyRelative("m_Value") : null;
@@ -121,20 +198,26 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
-            layerList = new ReorderableList(serializedObject, layerValues, true, true, true, true);
-            layerList.drawHeaderCallback = DrawHeader;
+            layerList = new ReorderableList(serializedObject, layerValues, false, false, false, false);
+            layerList.drawHeaderCallback = null;
+            layerList.headerHeight = 0.0f;
             layerList.elementHeightCallback = GetElementHeight;
             layerList.drawElementCallback = DrawElement;
-            layerList.onAddCallback = AddLayer;
         }
 
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
+            SortLayersByEffectOrder();
 
-            PropertyField(enable, new GUIContent("启用"));
-            PropertyField(showInSceneView, new GUIContent("场景视图"));
+            showAdvancedSettings = EditorGUILayout.ToggleLeft("高级", showAdvancedSettings);
+            if (showAdvancedSettings)
+            {
+                PropertyField(showInSceneView, new GUIContent("场景视图"));
+            }
 
+            EditorGUILayout.Space(4.0f);
+            DrawEffectIconToggles();
             EditorGUILayout.Space(4.0f);
             DrawLayerList();
             serializedObject.ApplyModifiedProperties();
@@ -147,12 +230,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
-            SerializedProperty overrideState = layers.FindPropertyRelative("m_OverrideState");
-            if (overrideState != null)
-            {
-                EditorGUILayout.PropertyField(overrideState, new GUIContent("覆盖图层列表"));
-            }
-
             if (layerList != null)
             {
                 layerList.DoLayoutList();
@@ -163,11 +240,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
         }
 
-        private static void DrawHeader(Rect rect)
-        {
-            EditorGUI.LabelField(rect, "图层");
-        }
-
         private float GetElementHeight(int index)
         {
             SerializedProperty element = GetLayerProperty(index);
@@ -176,42 +248,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return LineHeight + 6.0f;
             }
 
-            if (GetEffect(element) == ShoostPostProcessEffect.KawaseBlur)
-            {
-                return (LineHeight + LineSpacing) * 16.0f + 12.0f;
-            }
-
-            if (GetEffect(element) == ShoostPostProcessEffect.SharpenBefore || GetEffect(element) == ShoostPostProcessEffect.SharpenAfter)
-            {
-                return (LineHeight + LineSpacing) * 10.0f + 12.0f;
-            }
-
-            if (GetEffect(element) == ShoostPostProcessEffect.RGBSplit)
-            {
-                return (LineHeight + LineSpacing) * 12.0f + 12.0f;
-            }
-
-            if (GetEffect(element) == ShoostPostProcessEffect.IrisBlur)
-            {
-                return (LineHeight + LineSpacing) * 25.0f + 12.0f;
-            }
-
-            if (GetEffect(element) == ShoostPostProcessEffect.VignetteCustom)
-            {
-                return (LineHeight + LineSpacing) * 16.0f + 12.0f;
-            }
-
-            if (GetEffect(element) == ShoostPostProcessEffect.LUTColorGrading)
-            {
-                return (LineHeight + LineSpacing) * 17.0f + 12.0f;
-            }
-
-            if (GetEffect(element) == ShoostPostProcessEffect.LevelAdjustment)
-            {
-                return (LineHeight + LineSpacing) * 16.0f + 12.0f;
-            }
-
-            return (LineHeight + LineSpacing) * 18.0f + 12.0f;
+            int lineCount = GetElementLineCount(element);
+            return (LineHeight + LineSpacing) * lineCount + 12.0f;
         }
 
         private void DrawElement(Rect rect, int index, bool isActive, bool isFocused)
@@ -269,25 +307,357 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
         }
 
-        private void AddLayer(ReorderableList list)
+        private int GetElementLineCount(SerializedProperty element)
         {
-            if (list == null || list.serializedProperty == null)
+            if (element == null)
+            {
+                return 1;
+            }
+
+            ShoostPostProcessEffect effect = GetEffect(element);
+            bool showAdvanced = showAdvancedSettings;
+
+            int lineCount = 1;
+
+            switch (effect)
+            {
+                case ShoostPostProcessEffect.KawaseBlur:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 1 + (GetKawaseBlurUsesCustomResolution(element) ? 2 : 0) + 3;
+                    break;
+                case ShoostPostProcessEffect.SharpenBefore:
+                case ShoostPostProcessEffect.SharpenAfter:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 1;
+                    break;
+                case ShoostPostProcessEffect.RGBSplit:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 2 + (GetRgbSplitUsesAngle(element) ? 1 : 0);
+                    break;
+                case ShoostPostProcessEffect.IrisBlur:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 11 + (GetIrisBlurUsesCustomResolution(element) ? 2 : 0) + (GetIrisBlurUsesRgbBlur(element) ? 3 : 0);
+                    break;
+                case ShoostPostProcessEffect.VignetteCustom:
+                    lineCount += GetCoreLineCount(false, GetVignetteCustomUsesTintMode(element), false, false, false, showAdvanced);
+                    lineCount += 4;
+                    break;
+                case ShoostPostProcessEffect.LUTColorGrading:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 7;
+                    break;
+                case ShoostPostProcessEffect.LevelAdjustment:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 6;
+                    break;
+                case ShoostPostProcessEffect.CustomMaterial:
+                    lineCount += GetCoreLineCount(true, true, true, true, true, showAdvanced);
+                    break;
+                default:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    break;
+            }
+
+            return lineCount;
+        }
+
+        private static int GetCoreLineCount(bool includeBlendMode, bool includeColor, bool includeTexture, bool includePassIndex, bool includeMaterialOverride, bool showAdvancedFields)
+        {
+            int count = 0;
+            if (showAdvancedFields)
+            {
+                count += 2;
+            }
+
+            if (includeBlendMode)
+            {
+                count += 1;
+            }
+
+            if (includeColor)
+            {
+                count += 1;
+            }
+
+            if (includeTexture)
+            {
+                count += 1;
+            }
+
+            if (includeMaterialOverride)
+            {
+                count += 2;
+            }
+
+            if (includePassIndex)
+            {
+                count += 1;
+            }
+
+            return count;
+        }
+
+        private static bool GetKawaseBlurUsesCustomResolution(SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element?.FindPropertyRelative("parameters0");
+            if (parameters0 == null || parameters0.propertyType != SerializedPropertyType.Vector4)
+            {
+                return false;
+            }
+
+            return Mathf.RoundToInt(parameters0.vector4Value.x) == 1;
+        }
+
+        private static bool GetIrisBlurUsesRgbBlur(SerializedProperty element)
+        {
+            SerializedProperty parameters3 = element?.FindPropertyRelative("parameters3");
+            if (parameters3 == null || parameters3.propertyType != SerializedPropertyType.Vector4)
+            {
+                return false;
+            }
+
+            return parameters3.vector4Value.x > 0.5f;
+        }
+
+        private static bool GetIrisBlurUsesCustomResolution(SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element?.FindPropertyRelative("parameters0");
+            if (parameters0 == null || parameters0.propertyType != SerializedPropertyType.Vector4)
+            {
+                return false;
+            }
+
+            return Mathf.RoundToInt(parameters0.vector4Value.x) == 1;
+        }
+
+        private static bool GetRgbSplitUsesAngle(SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element?.FindPropertyRelative("parameters0");
+            if (parameters0 == null || parameters0.propertyType != SerializedPropertyType.Vector4)
+            {
+                return false;
+            }
+
+            return Mathf.RoundToInt(parameters0.vector4Value.x) == 0;
+        }
+
+        private static bool GetVignetteCustomUsesTintMode(SerializedProperty element)
+        {
+            SerializedProperty passIndex = element?.FindPropertyRelative("passIndex");
+            return passIndex != null && passIndex.propertyType == SerializedPropertyType.Integer && passIndex.intValue == 1;
+        }
+
+        private void DrawEffectIconToggles()
+        {
+            if (layerValues == null || !layerValues.isArray)
             {
                 return;
             }
 
-            serializedObject.Update();
+            float width = EditorGUIUtility.currentViewWidth - 40.0f;
+            width = Mathf.Max(160.0f, width);
+            int buttonsPerRow = Mathf.Max(1, Mathf.FloorToInt((width + EffectIconSpacing) / (EffectIconSize + EffectIconSpacing)));
+            int rowCount = Mathf.CeilToInt(FixedEffectOrder.Length / (float)buttonsPerRow);
+            float height = rowCount * EffectIconSize + Mathf.Max(0, rowCount - 1) * EffectIconSpacing;
 
-            SerializedProperty array = list.serializedProperty;
-            int index = array.arraySize;
-            array.InsertArrayElementAtIndex(index);
+            Rect rect = GUILayoutUtility.GetRect(0.0f, height, GUILayout.ExpandWidth(true));
+            float x = rect.x;
+            float y = rect.y;
+            int column = 0;
 
-            SerializedProperty element = array.GetArrayElementAtIndex(index);
+            foreach (ShoostPostProcessEffect effect in FixedEffectOrder)
+            {
+                if (column >= buttonsPerRow)
+                {
+                    column = 0;
+                    x = rect.x;
+                    y += EffectIconSize + EffectIconSpacing;
+                }
+
+                Rect buttonRect = new Rect(x, y, EffectIconSize, EffectIconSize);
+                DrawEffectIconButton(buttonRect, effect);
+                x += EffectIconSize + EffectIconSpacing;
+                column++;
+            }
+        }
+
+        private void AddLayer(ShoostPostProcessEffect effect)
+        {
+            if (layerValues == null || !layerValues.isArray || HasLayer(effect))
+            {
+                return;
+            }
+
+            Undo.RecordObject(serializedObject.targetObject, "Add Shoost Effect");
+
+            int index = layerValues.arraySize;
+            layerValues.InsertArrayElementAtIndex(index);
+
+            SerializedProperty element = layerValues.GetArrayElementAtIndex(index);
             ResetLayerDefaults(element);
+            SetEnum(element, "effect", (int)effect);
             element.isExpanded = true;
-            list.index = index;
+            SortLayersByEffectOrder();
+        }
 
-            serializedObject.ApplyModifiedProperties();
+        private void RemoveLayer(ShoostPostProcessEffect effect)
+        {
+            if (layerValues == null || !layerValues.isArray)
+            {
+                return;
+            }
+
+            for (int index = 0; index < layerValues.arraySize; index++)
+            {
+                if (GetEffectIndex(layerValues.GetArrayElementAtIndex(index)) != (int)effect)
+                {
+                    continue;
+                }
+
+                Undo.RecordObject(serializedObject.targetObject, "Remove Shoost Effect");
+                layerValues.DeleteArrayElementAtIndex(index);
+                break;
+            }
+        }
+
+        private void ToggleEffect(ShoostPostProcessEffect effect)
+        {
+            if (HasLayer(effect))
+            {
+                RemoveLayer(effect);
+            }
+            else
+            {
+                AddLayer(effect);
+            }
+        }
+
+        private void SortLayersByEffectOrder()
+        {
+            if (layerValues == null || !layerValues.isArray)
+            {
+                return;
+            }
+
+            uint seenEffects = 0u;
+            for (int index = layerValues.arraySize - 1; index >= 0; index--)
+            {
+                SerializedProperty element = layerValues.GetArrayElementAtIndex(index);
+                int effectIndex = GetEffectIndex(element);
+                uint effectMask = effectIndex >= 0 && effectIndex < 32 ? 1u << effectIndex : 0u;
+                if (effectMask != 0u && (seenEffects & effectMask) != 0u)
+                {
+                    layerValues.DeleteArrayElementAtIndex(index);
+                    continue;
+                }
+
+                seenEffects |= effectMask;
+            }
+
+            for (int targetIndex = 0; targetIndex < layerValues.arraySize; targetIndex++)
+            {
+                int bestIndex = targetIndex;
+                int bestOrder = GetEffectSortIndex(layerValues.GetArrayElementAtIndex(targetIndex));
+                for (int candidateIndex = targetIndex + 1; candidateIndex < layerValues.arraySize; candidateIndex++)
+                {
+                    int candidateOrder = GetEffectSortIndex(layerValues.GetArrayElementAtIndex(candidateIndex));
+                    if (candidateOrder < bestOrder)
+                    {
+                        bestIndex = candidateIndex;
+                        bestOrder = candidateOrder;
+                    }
+                }
+
+                if (bestIndex != targetIndex)
+                {
+                    layerValues.MoveArrayElement(bestIndex, targetIndex);
+                }
+            }
+        }
+
+        private bool HasLayer(ShoostPostProcessEffect effect)
+        {
+            if (layerValues == null || !layerValues.isArray)
+            {
+                return false;
+            }
+
+            int effectIndex = (int)effect;
+            for (int index = 0; index < layerValues.arraySize; index++)
+            {
+                if (GetEffectIndex(layerValues.GetArrayElementAtIndex(index)) == effectIndex)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void DrawEffectIconButton(Rect rect, ShoostPostProcessEffect effect)
+        {
+            bool active = HasLayer(effect);
+            GUIContent content = GetEffectIconContent(effect);
+            Texture icon = content.image;
+
+            if (icon != null)
+            {
+                Color oldColor = GUI.color;
+                GUI.color = active ? new Color(0.35f, 1.0f, 0.35f, 1.0f) : Color.white;
+                GUI.DrawTexture(rect, icon, ScaleMode.ScaleToFit, true);
+                GUI.color = oldColor;
+            }
+            else
+            {
+                EditorGUI.LabelField(rect, content);
+            }
+
+            GUI.Label(rect, new GUIContent(string.Empty, content.tooltip), GUIStyle.none);
+            EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
+            if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
+            {
+                ToggleEffect(effect);
+                Event.current.Use();
+            }
+        }
+
+        private static GUIContent GetEffectIconContent(ShoostPostProcessEffect effect)
+        {
+            if (EffectIconContents.TryGetValue(effect, out GUIContent cached))
+            {
+                return cached;
+            }
+
+            Texture2D icon = LoadEffectIcon(effect);
+            string label = GetEffectDisplayName(effect);
+            GUIContent content = icon != null ? new GUIContent(icon, label) : new GUIContent(label);
+            EffectIconContents[effect] = content;
+            return content;
+        }
+
+        private static Texture2D LoadEffectIcon(ShoostPostProcessEffect effect)
+        {
+            if (!EffectIconNames.TryGetValue(effect, out string iconName) || string.IsNullOrEmpty(iconName))
+            {
+                return null;
+            }
+
+            string[] candidatePaths =
+            {
+                $"{PackageAssetRoot}/Editor/ShoostIcons/{iconName}.png",
+                $"Assets/Editor/ShoostIcons/{iconName}.png"
+            };
+
+            foreach (string path in candidatePaths)
+            {
+                Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                if (texture != null)
+                {
+                    return texture;
+                }
+            }
+
+            return null;
         }
 
         private SerializedProperty GetLayerProperty(int index)
@@ -303,11 +673,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private static GUIContent GetLayerLabel(SerializedProperty layer)
         {
             string effectName = GetEffectDisplayName(GetEffect(layer));
-
-            SerializedProperty nameProperty = layer.FindPropertyRelative("name");
-            string layerName = nameProperty != null ? nameProperty.stringValue : string.Empty;
-            string tooltip = string.IsNullOrWhiteSpace(layerName) ? "图层名称为空" : $"图层名称：{layerName}";
-            return new GUIContent(effectName, tooltip);
+            return new GUIContent(effectName, $"效果类型：{effectName}");
         }
 
         private static string GetEffectDisplayName(ShoostPostProcessEffect effect)
@@ -338,24 +704,54 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return (ShoostPostProcessEffect)effectIndex;
         }
 
+        private static int GetEffectIndex(SerializedProperty layer)
+        {
+            return (int)GetEffect(layer);
+        }
+
+        private static int GetEffectSortIndex(SerializedProperty layer)
+        {
+            ShoostPostProcessEffect effect = GetEffect(layer);
+            for (int index = 0; index < FixedEffectOrder.Length; index++)
+            {
+                if (FixedEffectOrder[index] == effect)
+                {
+                    return index;
+                }
+            }
+
+            return int.MaxValue;
+        }
+
         private void DrawVignetteCustomElement(Rect rect, SerializedProperty element)
         {
             SerializedProperty passIndex = element.FindPropertyRelative("passIndex");
             SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
 
             EnsureVignetteCustomDefaults(parameters0);
 
             float y = rect.y;
-            y = DrawFoldoutLine(rect, y, element);
+            y = DrawFoldoutLine(rect, y, element, enabled);
             if (!element.isExpanded)
             {
                 return;
             }
 
             EditorGUI.indentLevel++;
-            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: true, includeTexture: false, includePassIndex: true, includeParameters: false);
-
             y = DrawPopupLine(rect.x, y, rect.width, passIndex, "模式", new[] { "压暗", "染色" });
+            y = DrawLayerCoreFields(
+                rect.x,
+                y,
+                rect.width,
+                element,
+                includeBlendMode: false,
+                includeColor: GetVignetteCustomUsesTintMode(element),
+                includeTexture: false,
+                includePassIndex: false,
+                includeMaterialOverride: false,
+                includeParameters: false,
+                showAdvancedFields: showAdvancedSettings);
 
             Vector4 vignetteParams = parameters0.vector4Value;
             y = DrawSliderLine(rect.x, y, rect.width, "中心 X", vignetteParams.x, 0.0f, 1.0f, value => vignetteParams.x = value);
@@ -372,18 +768,19 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SerializedProperty texture = element.FindPropertyRelative("texture");
             SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
             SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
 
             EnsureLutColorGradingDefaults(parameters1);
 
             float y = rect.y;
-            y = DrawFoldoutLine(rect, y, element);
+            y = DrawFoldoutLine(rect, y, element, enabled);
             if (!element.isExpanded)
             {
                 return;
             }
 
             EditorGUI.indentLevel++;
-            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeParameters: false);
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
             y = DrawPropertyLine(rect.x, y, rect.width, texture, "LUT 贴图");
 
             Vector4 colorParams = parameters0.vector4Value;
@@ -412,18 +809,19 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
             SerializedProperty parameters2 = element.FindPropertyRelative("parameters2");
             SerializedProperty parameters3 = element.FindPropertyRelative("parameters3");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
 
             EnsureLevelAdjustmentDefaults(parameters0, parameters1, parameters2, parameters3);
 
             float y = rect.y;
-            y = DrawFoldoutLine(rect, y, element);
+            y = DrawFoldoutLine(rect, y, element, enabled);
             if (!element.isExpanded)
             {
                 return;
             }
 
             EditorGUI.indentLevel++;
-            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeParameters: false);
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
 
             Vector4 rgbParams = parameters0.vector4Value;
             Vector4 rgbModeParams = parameters1.vector4Value;
@@ -473,18 +871,19 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
             SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
 
             EnsureKawaseBlurDefaults(parameters0, parameters1);
 
             float y = rect.y;
-            y = DrawFoldoutLine(rect, y, element);
+            y = DrawFoldoutLine(rect, y, element, enabled);
             if (!element.isExpanded)
             {
                 return;
             }
 
             EditorGUI.indentLevel++;
-            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeParameters: false);
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
 
             Vector4 blurParams0 = parameters0.vector4Value;
             Vector4 blurParams1 = parameters1.vector4Value;
@@ -518,32 +917,46 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private void DrawSimpleLayerElement(Rect rect, SerializedProperty element)
         {
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
+            bool isCustomMaterial = GetEffect(element) == ShoostPostProcessEffect.CustomMaterial;
             float y = rect.y;
-            y = DrawFoldoutLine(rect, y, element);
+            y = DrawFoldoutLine(rect, y, element, enabled);
             if (!element.isExpanded)
             {
                 return;
             }
 
             EditorGUI.indentLevel++;
-            DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: true, includeColor: true, includeTexture: true, includePassIndex: true, includeParameters: true);
+            DrawLayerCoreFields(
+                rect.x,
+                y,
+                rect.width,
+                element,
+                includeBlendMode: isCustomMaterial,
+                includeColor: isCustomMaterial,
+                includeTexture: isCustomMaterial,
+                includePassIndex: isCustomMaterial,
+                includeMaterialOverride: isCustomMaterial,
+                includeParameters: false,
+                showAdvancedFields: showAdvancedSettings);
             EditorGUI.indentLevel--;
         }
 
         private void DrawSharpenElement(Rect rect, SerializedProperty element)
         {
             SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
             EnsureSharpenDefaults(parameters0);
 
             float y = rect.y;
-            y = DrawFoldoutLine(rect, y, element);
+            y = DrawFoldoutLine(rect, y, element, enabled);
             if (!element.isExpanded)
             {
                 return;
             }
 
             EditorGUI.indentLevel++;
-            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeParameters: false);
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
 
             Vector4 sharpenParams = parameters0.vector4Value;
             sharpenParams.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "锐化强度", sharpenParams.x, 0.0f, 1.0f);
@@ -555,17 +968,18 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private void DrawRgbSplitElement(Rect rect, SerializedProperty element)
         {
             SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
             EnsureRgbSplitDefaults(parameters0);
 
             float y = rect.y;
-            y = DrawFoldoutLine(rect, y, element);
+            y = DrawFoldoutLine(rect, y, element, enabled);
             if (!element.isExpanded)
             {
                 return;
             }
 
             EditorGUI.indentLevel++;
-            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeParameters: false);
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
 
             Vector4 splitParams = parameters0.vector4Value;
             int mode = Mathf.Clamp(Mathf.RoundToInt(splitParams.x), 0, 1);
@@ -575,8 +989,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             splitParams.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "分离强度", splitParams.y, 0.0f, 1.0f);
             y += LineHeight + LineSpacing;
-            splitParams.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "角度", splitParams.z, 0.0f, 360.0f);
-            y += LineHeight + LineSpacing;
+            if (mode == 0)
+            {
+                splitParams.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "角度", splitParams.z, 0.0f, 360.0f);
+                y += LineHeight + LineSpacing;
+            }
 
             parameters0.vector4Value = splitParams;
             EditorGUI.indentLevel--;
@@ -588,18 +1005,19 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
             SerializedProperty parameters2 = element.FindPropertyRelative("parameters2");
             SerializedProperty parameters3 = element.FindPropertyRelative("parameters3");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
 
             EnsureIrisBlurDefaults(parameters0, parameters1, parameters2, parameters3);
 
             float y = rect.y;
-            y = DrawFoldoutLine(rect, y, element);
+            y = DrawFoldoutLine(rect, y, element, enabled);
             if (!element.isExpanded)
             {
                 return;
             }
 
             EditorGUI.indentLevel++;
-            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeParameters: false);
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
 
             Vector4 irisParams0 = parameters0.vector4Value;
             Vector4 irisParams1 = parameters1.vector4Value;
@@ -640,14 +1058,19 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             irisParams2.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "柔和度", irisParams2.w, 0.0f, 1.0f);
             y += LineHeight + LineSpacing;
 
-            irisParams3.x = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "启用 RGB 模糊", irisParams3.x > 0.5f) ? 1.0f : 0.0f;
+            bool useRgbBlur = irisParams3.x > 0.5f;
+            useRgbBlur = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "启用 RGB 模糊", useRgbBlur);
+            irisParams3.x = useRgbBlur ? 1.0f : 0.0f;
             y += LineHeight + LineSpacing;
-            irisParams3.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "红通道模糊半径", irisParams3.y, 0.0f, 5.0f);
-            y += LineHeight + LineSpacing;
-            irisParams3.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "绿通道模糊半径", irisParams3.z, 0.0f, 5.0f);
-            y += LineHeight + LineSpacing;
-            irisParams3.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "蓝通道模糊半径", irisParams3.w, 0.0f, 5.0f);
-            y += LineHeight + LineSpacing;
+            if (useRgbBlur)
+            {
+                irisParams3.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "红通道模糊半径", irisParams3.y, 0.0f, 5.0f);
+                y += LineHeight + LineSpacing;
+                irisParams3.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "绿通道模糊半径", irisParams3.z, 0.0f, 5.0f);
+                y += LineHeight + LineSpacing;
+                irisParams3.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "蓝通道模糊半径", irisParams3.w, 0.0f, 5.0f);
+                y += LineHeight + LineSpacing;
+            }
 
             parameters0.vector4Value = irisParams0;
             parameters1.vector4Value = irisParams1;
@@ -656,10 +1079,30 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             EditorGUI.indentLevel--;
         }
 
-        private float DrawFoldoutLine(Rect rect, float y, SerializedProperty element)
+        private float DrawFoldoutLine(Rect rect, float y, SerializedProperty element, SerializedProperty enabled)
         {
             Rect lineRect = new Rect(rect.x, y, rect.width, LineHeight);
-            element.isExpanded = EditorGUI.Foldout(lineRect, element.isExpanded, GetLayerLabel(element), true);
+            float checkboxWidth = 18.0f;
+            SerializedProperty intensity = element.FindPropertyRelative("intensity");
+            float intensityWidth = Mathf.Clamp(rect.width * 0.34f, 140.0f, 220.0f);
+            float foldoutWidth = Mathf.Max(0.0f, rect.width - checkboxWidth - intensityWidth - 6.0f);
+
+            if (enabled != null)
+            {
+                Rect enabledRect = new Rect(lineRect.x, lineRect.y, checkboxWidth, lineRect.height);
+                enabled.boolValue = EditorGUI.Toggle(enabledRect, enabled.boolValue);
+            }
+
+            Rect foldoutRect = new Rect(lineRect.x + checkboxWidth, lineRect.y, foldoutWidth, lineRect.height);
+            element.isExpanded = EditorGUI.Foldout(foldoutRect, element.isExpanded, GetLayerLabel(element), true);
+
+            if (intensity != null && intensity.propertyType == SerializedPropertyType.Float)
+            {
+                Rect intensityRect = new Rect(lineRect.xMax - intensityWidth, lineRect.y, intensityWidth, lineRect.height);
+                Rect sliderRect = new Rect(intensityRect.x, intensityRect.y + 2.0f, intensityRect.width, intensityRect.height - 4.0f);
+                intensity.floatValue = GUI.HorizontalSlider(sliderRect, intensity.floatValue, 0.0f, 1.0f);
+            }
+
             return y + LineHeight + LineSpacing;
         }
 
@@ -672,13 +1115,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             bool includeColor,
             bool includeTexture,
             bool includePassIndex,
-            bool includeParameters)
+            bool includeMaterialOverride,
+            bool includeParameters,
+            bool showAdvancedFields)
         {
-            SerializedProperty layerName = element.FindPropertyRelative("name");
-            SerializedProperty enabled = element.FindPropertyRelative("enabled");
-            SerializedProperty effect = element.FindPropertyRelative("effect");
             SerializedProperty showInSceneView = element.FindPropertyRelative("showInSceneView");
-            SerializedProperty intensity = element.FindPropertyRelative("intensity");
             SerializedProperty blendMode = element.FindPropertyRelative("blendMode");
             SerializedProperty injectionPoint = element.FindPropertyRelative("injectionPoint");
             SerializedProperty color = element.FindPropertyRelative("color");
@@ -691,18 +1132,16 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SerializedProperty parameters2 = element.FindPropertyRelative("parameters2");
             SerializedProperty parameters3 = element.FindPropertyRelative("parameters3");
 
-            y = DrawPropertyLine(x, y, width, layerName, "图层名称");
-            y = DrawPropertyLine(x, y, width, enabled, "启用");
-            y = DrawEffectLine(x, y, width, effect);
-            y = DrawPropertyLine(x, y, width, showInSceneView, "场景视图");
-            y = DrawPropertyLine(x, y, width, intensity, "强度");
+            if (showAdvancedFields)
+            {
+                y = DrawPropertyLine(x, y, width, showInSceneView, "场景视图");
+                y = DrawPropertyLine(x, y, width, injectionPoint, "插入位置");
+            }
 
             if (includeBlendMode)
             {
                 y = DrawBlendModeLine(x, y, width, blendMode);
             }
-
-            y = DrawPropertyLine(x, y, width, injectionPoint, "插入位置");
 
             if (includeColor)
             {
@@ -714,8 +1153,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 y = DrawPropertyLine(x, y, width, texture, "纹理");
             }
 
-            y = DrawPropertyLine(x, y, width, materialOverride, "材质覆盖");
-            y = DrawPropertyLine(x, y, width, shaderOverride, "Shader 覆盖");
+            if (includeMaterialOverride)
+            {
+                y = DrawPropertyLine(x, y, width, materialOverride, "材质覆盖");
+                y = DrawPropertyLine(x, y, width, shaderOverride, "Shader 覆盖");
+            }
 
             if (includePassIndex)
             {
@@ -731,20 +1173,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             return y;
-        }
-
-        private static float DrawEffectLine(float x, float y, float width, SerializedProperty property)
-        {
-            if (property == null)
-            {
-                return y;
-            }
-
-            Rect lineRect = new Rect(x, y, width, LineHeight);
-            int index = Mathf.Clamp(property.enumValueIndex, 0, EffectDisplayNames.Length - 1);
-            index = EditorGUI.Popup(lineRect, "效果类型", index, EffectDisplayNames);
-            property.enumValueIndex = index;
-            return y + LineHeight + LineSpacing;
         }
 
         private static float DrawPopupLine(float x, float y, float width, SerializedProperty property, string label, string[] options)
@@ -911,7 +1339,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
-            SetString(element, "name", "Post Process Layer");
             SetBool(element, "enabled", true);
             SetEnum(element, "effect", (int)ShoostPostProcessEffect.CustomMaterial);
             SetBool(element, "showInSceneView", true);
@@ -927,15 +1354,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetVector4(element, "parameters1", Vector4.zero);
             SetVector4(element, "parameters2", Vector4.zero);
             SetVector4(element, "parameters3", Vector4.zero);
-        }
-
-        private static void SetString(SerializedProperty element, string name, string value)
-        {
-            SerializedProperty property = element.FindPropertyRelative(name);
-            if (property != null && property.propertyType == SerializedPropertyType.String)
-            {
-                property.stringValue = value;
-            }
         }
 
         private static void SetBool(SerializedProperty element, string name, bool value)
@@ -1036,24 +1454,13 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Vector4 channelParams = parameters2.vector4Value;
             Vector4 channelOutputParams = parameters3.vector4Value;
 
-            if (rgbParams.sqrMagnitude <= 0.000001f)
+            bool needsReset = Mathf.Abs(channelOutputParams.w - LevelAdjustmentInitMarker) > 0.001f;
+            if (needsReset)
             {
                 rgbParams = new Vector4(0.0f, 1.0f, 1.0f, 0.0f);
-            }
-
-            if (rgbModeParams.sqrMagnitude <= 0.000001f)
-            {
                 rgbModeParams = new Vector4(1.0f, 0.0f, 0.0f, 0.0f);
-            }
-
-            if (channelParams.sqrMagnitude <= 0.000001f)
-            {
                 channelParams = new Vector4(0.0f, 1.0f, 1.0f, 0.0f);
-            }
-
-            if (channelOutputParams.sqrMagnitude <= 0.000001f)
-            {
-                channelOutputParams = new Vector4(1.0f, 0.0f, 0.0f, 0.0f);
+                channelOutputParams = new Vector4(1.0f, 0.0f, 0.0f, LevelAdjustmentInitMarker);
             }
 
             parameters0.vector4Value = rgbParams;
