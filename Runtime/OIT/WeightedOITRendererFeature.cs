@@ -1,4 +1,7 @@
 using System.Collections.Generic;
+// Compatibility-mode hooks are kept for projects that still run URP's non-RenderGraph path.
+#pragma warning disable CS0618, CS0672
+
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;

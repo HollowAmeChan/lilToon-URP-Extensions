@@ -24,6 +24,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private const string DefaultDistortionTextureGuid = "f4c1f3c21e3ec4a479c69cffea26c6cd";
         private const string DefaultVhsEdgeNoiseTextureGuid = "014de9bcc7cd0a148929d7e58755ee44";
         private const string PackageAssetRoot = "Packages/jp.lilxyzw.liltoon.urp.extensions";
+        private const bool showAdvancedSettings = false;
         private static Texture2D colorWheelTexture;
         private static GUIStyle colorWheelThumbStyle;
         private static Vector2 colorWheelThumbSize;
@@ -295,7 +296,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private SerializedProperty layers;
         private SerializedProperty layerValues;
         private ReorderableList layerList;
-        private bool showAdvancedSettings;
 
         public override void OnEnable()
         {
@@ -320,12 +320,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             serializedObject.Update();
             SortLayersByEffectOrder();
 
-            showAdvancedSettings = EditorGUILayout.ToggleLeft("高级", showAdvancedSettings);
-            if (showAdvancedSettings)
-            {
-                PropertyField(showInSceneView, new GUIContent("场景视图"));
-            }
-
+            PropertyField(showInSceneView, new GUIContent("场景视图"));
             EditorGUILayout.Space(4.0f);
             DrawEffectIconToggles();
             EditorGUILayout.Space(4.0f);
@@ -624,10 +619,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private static int GetCoreLineCount(bool includeBlendMode, bool includeColor, bool includeTexture, bool includePassIndex, bool includeMaterialOverride, bool showAdvancedFields)
         {
             int count = 0;
-            if (showAdvancedFields)
-            {
-                count += 2;
-            }
 
             if (includeBlendMode)
             {
@@ -1010,9 +1001,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             bool includeParameters,
             bool showAdvancedFields)
         {
-            SerializedProperty showInSceneView = element.FindPropertyRelative("showInSceneView");
             SerializedProperty blendMode = element.FindPropertyRelative("blendMode");
-            SerializedProperty injectionPoint = element.FindPropertyRelative("injectionPoint");
             SerializedProperty color = element.FindPropertyRelative("color");
             SerializedProperty texture = element.FindPropertyRelative("texture");
             SerializedProperty materialOverride = element.FindPropertyRelative("materialOverride");
@@ -1031,12 +1020,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SerializedProperty parameters10 = element.FindPropertyRelative("parameters10");
             SerializedProperty parameters11 = element.FindPropertyRelative("parameters11");
             SerializedProperty parameters12 = element.FindPropertyRelative("parameters12");
-
-            if (showAdvancedFields)
-            {
-                y = DrawPropertyLine(x, y, width, showInSceneView, "场景视图");
-                y = DrawPropertyLine(x, y, width, injectionPoint, "插入位置");
-            }
 
             if (includeBlendMode)
             {
@@ -1410,13 +1393,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             SetBool(element, "enabled", true);
             SetEnum(element, "effect", (int)ShoostPostProcessEffect.CustomMaterial);
-            SetBool(element, "showInSceneView", true);
             SetObjectReference(element, "materialOverride", null);
             SetObjectReference(element, "shaderOverride", null);
             SetInt(element, "passIndex", 0);
             SetFloat(element, "intensity", 1.0f);
             SetEnum(element, "blendMode", (int)ShoostPostProcessBlendMode.Normal);
-            SetEnum(element, "injectionPoint", (int)ShoostPostProcessInjectionPoint.EffectDefault);
             SetColor(element, "color", Color.white);
             SetObjectReference(element, "texture", null);
             SetVector4(element, "parameters0", Vector4.zero);

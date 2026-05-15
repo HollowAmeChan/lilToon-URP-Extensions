@@ -71,21 +71,5 @@ namespace lilToon.URP.Extensions.PostProcessing
                     return ShoostPostProcessShaderConstants.DefaultLayerShaderName;
             }
         }
-
-        public static ShoostPostProcessInjectionPoint GetDefaultInjectionPoint(ShoostPostProcessEffect effect)
-        {
-            switch (effect)
-            {
-                case ShoostPostProcessEffect.CRTEffects:
-                case ShoostPostProcessEffect.GrainCustom:
-                case ShoostPostProcessEffect.LevelAdjustment:
-                case ShoostPostProcessEffect.RGBChannelSeparator:
-                case ShoostPostProcessEffect.SharpenAfter:
-                case ShoostPostProcessEffect.RetroLookProTVEffectCustom:
-                    return ShoostPostProcessInjectionPoint.AfterURPPostProcessing;
-                default:
-                    return ShoostPostProcessInjectionPoint.BeforeURPPostProcessing;
-            }
-        }
     }
 }

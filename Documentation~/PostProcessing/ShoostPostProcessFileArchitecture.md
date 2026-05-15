@@ -44,10 +44,10 @@ Shoost Runtime 当前仍放在：
 
 主要文件职责：
 
-- `ShoostPostProcessRendererFeature.cs`：Volume 读取、材质缓存、按插入点分组、Compatibility path 和 RenderGraph path 的 pass 调度。当前也包含 Kawase、Iris、RGBBlurV2、ChangeFrameRate 等特殊多 pass / 跨帧逻辑。
-- `ShoostPostProcessEffect.cs`：用户侧滤镜 enum、混合模式 enum、插入位置 enum。
-- `ShoostPostProcessLayer.cs`：单个滤镜图层的数据结构。当前仍使用 `parameters0` 到 `parameters12` 承载不同滤镜参数。
-- `ShoostPostProcessEffectRegistry.cs`：enum 到 shader name、默认插入点的映射。
+- `ShoostPostProcessRendererFeature.cs`：Volume 读取、全局 SceneView 开关、材质缓存、Compatibility path 和 RenderGraph path 的 final stack pass 调度。当前也包含 Kawase、Iris、RGBBlurV2、ChangeFrameRate 等特殊多 pass / 跨帧逻辑。
+- `ShoostPostProcessEffect.cs`：用户侧滤镜 enum、混合模式 enum。
+- `ShoostPostProcessLayer.cs`：单个滤镜图层的数据结构。当前仍使用 `parameters0` 到 `parameters12` 承载不同滤镜参数；每层 `showInSceneView` 和 `injectionPoint` 已移除。
+- `ShoostPostProcessEffectRegistry.cs`：enum 到 shader name 的映射；Shoost stack 当前统一作为 `After URP Post Processing` 的 final stack 执行。
 - `ShoostPostProcessShaderConstants.cs`：shader property id 集中表。
 - `Shaders/Shoost/*.shader`：各 Shoost 滤镜实际 shader。文件名只保留效果名，例如 `VHS.shader`、`CRTEffects.shader`、`ColorGradingCustom.shader`；shader 内部命名保持 `Hidden/lilToon-Shoost/URP/Shoost/...`，这是 `Shader.Find()` 的运行时契约。
 
@@ -90,7 +90,7 @@ Shoost 中有一组效果依赖透明源或角色/前景图层：边缘光、轮
 1. 在 `ShoostPostProcessEffect` enum 中补效果类型。
 2. 在 `StackVolumeEditor.cs` 的图标顺序表、显示名、`DrawElement` 和高度计算里注册入口。
 3. 新建或扩展 `Editor/PostProcessing/ShoostStack/Filters/<EffectName>.cs`，把 `Draw...Element`、`Ensure...Defaults`、条件显示 helper 放进去。
-4. 在 `ShoostPostProcessEffectRegistry.cs` 中注册 shader 名和默认插入点。
+4. 在 `ShoostPostProcessEffectRegistry.cs` 中注册 shader 名；执行点不暴露给用户，Shoost stack 统一后置。
 5. 添加或更新 `Runtime/ShoostPostProcessing/Shaders/Shoost/<EffectName>.shader`。物理文件名保持短名，shader 内部 `Hidden/lilToon-Shoost/URP/Shoost/...` 名称保持稳定。
 6. 如果不是单次 fullscreen blit，就在 Runtime pass 中补专用调度逻辑。
 
@@ -99,7 +99,7 @@ Shoost 中有一组效果依赖透明源或角色/前景图层：边缘光、轮
 - `Editor/PostProcessing/ShoostStack/Filters/DitheringCustom.cs`：视频游戏滤镜 UI。负责 Shoost 风格的模式、分辨率、抖动 V1/V2/V3、网格线、单色调三色、颜色模式 RGB 阶调等参数绘制，并根据抖动类型自动绑定对应纹理。
 - `Runtime/ShoostPostProcessing/Shaders/Shoost/DitheringCustom.shader`：视频游戏滤镜的 URP fullscreen pass。当前实现把 Shoost 的低分辨率采样、抖动量化、单色调三色映射和颜色模式通道量化合并到一个 pass。
 - `Runtime/ShoostPostProcessing/Textures/ShoostDitheringV1.png`、`ShoostDitheringV2.png`、`ShoostDitheringV3.png`：从 Shoost 解包资源复制来的三张抖动图，对应 UI 中的 V1/V2/V3。
-- `GrainCustom / 颗粒` 已确认完美对齐：shader 读取 Shoost 噪声图 Alpha 通道，默认插入点为 `After URP Post Processing`。
+- `GrainCustom / 颗粒` 已确认完美对齐：shader 读取 Shoost 噪声图 Alpha 通道，并随 Shoost final stack 执行在 `After URP Post Processing`。
 - `Editor/PostProcessing/ShoostStack/Filters/CRTEffects.cs`：显示器滤镜 UI。只绘制 Shoost 用户侧的“类型”和“分辨率”，并按类型自动绑定扫描线贴图。
 - `Runtime/ShoostPostProcessing/Shaders/Shoost/CRTEffects.shader`：显示器滤镜的 URP fullscreen pass。参考 RenderDoc 中 `Hidden/CRTEffects` 的扫描线合成 pass，实现降采样、扫描线贴图、slot/shadow mask、brightness 和 glow。
 - `Runtime/ShoostPostProcessing/Textures/ShoostCRTScanlinesRGB.png`、`ShoostCRTScanlinesRGBMono.png`、`ShoostCRTScanlinesCircle.png`、`ShoostCRTScanlinesLine.png`：从 Shoost 解包资源复制来的四张显示器扫描线/荧光屏 mask。

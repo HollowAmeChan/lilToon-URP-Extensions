@@ -1,4 +1,7 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+// Compatibility-mode hooks are kept for projects that still run URP's non-RenderGraph path.
+#pragma warning disable CS0618, CS0672
+
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -16,12 +19,8 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         private readonly Dictionary<Shader, Material> materialCache = new Dictionary<Shader, Material>();
         private readonly HashSet<string> warnedMissingShaders = new HashSet<string>();
-        private readonly List<ShoostPostProcessRuntimeLayer> beforePostProcessLayers = new List<ShoostPostProcessRuntimeLayer>();
         private readonly List<ShoostPostProcessRuntimeLayer> afterPostProcessLayers = new List<ShoostPostProcessRuntimeLayer>();
-        private readonly List<ShoostPostProcessRuntimeLayer> afterRenderingLayers = new List<ShoostPostProcessRuntimeLayer>();
-        private ShoostPostProcessPass beforePostProcessPass;
         private ShoostPostProcessPass afterPostProcessPass;
-        private ShoostPostProcessPass afterRenderingPass;
 
         [Tooltip("Match HTrace-style setup: the renderer feature installs the pass, and Volume profiles provide the active settings.")]
         public bool UseVolumes = true;
@@ -33,9 +32,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public override void Create()
         {
             IsUseVolumes = UseVolumes;
-            beforePostProcessPass = new ShoostPostProcessPass("lilToon-Shoost Before URP Post");
             afterPostProcessPass = new ShoostPostProcessPass("lilToon-Shoost After URP Post");
-            afterRenderingPass = new ShoostPostProcessPass("lilToon-Shoost After Rendering");
         }
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
@@ -46,10 +43,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            BuildRuntimeLayers(renderingData.cameraData.cameraType, volume);
-            SetupCompatibilityPass(beforePostProcessPass, renderer.cameraColorTargetHandle, beforePostProcessLayers, RenderPassEvent.BeforeRenderingPostProcessing);
+            BuildRuntimeLayers(volume);
             SetupCompatibilityPass(afterPostProcessPass, renderer.cameraColorTargetHandle, afterPostProcessLayers, RenderPassEvent.AfterRenderingPostProcessing);
-            SetupCompatibilityPass(afterRenderingPass, renderer.cameraColorTargetHandle, afterRenderingLayers, RenderPassEvent.AfterRendering);
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -60,20 +55,14 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            BuildRuntimeLayers(renderingData.cameraData.cameraType, volume);
-            EnqueueRenderGraphPass(renderer, beforePostProcessPass, beforePostProcessLayers, RenderPassEvent.BeforeRenderingPostProcessing);
+            BuildRuntimeLayers(volume);
             EnqueueRenderGraphPass(renderer, afterPostProcessPass, afterPostProcessLayers, RenderPassEvent.AfterRenderingPostProcessing);
-            EnqueueRenderGraphPass(renderer, afterRenderingPass, afterRenderingLayers, RenderPassEvent.AfterRendering);
         }
 
         protected override void Dispose(bool disposing)
         {
-            beforePostProcessPass?.Dispose();
             afterPostProcessPass?.Dispose();
-            afterRenderingPass?.Dispose();
-            beforePostProcessPass = null;
             afterPostProcessPass = null;
-            afterRenderingPass = null;
 
             foreach (Material material in materialCache.Values)
             {
@@ -81,9 +70,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             materialCache.Clear();
-            beforePostProcessLayers.Clear();
             afterPostProcessLayers.Clear();
-            afterRenderingLayers.Clear();
             warnedMissingShaders.Clear();
         }
 
@@ -104,11 +91,9 @@ namespace lilToon.URP.Extensions.PostProcessing
             return cameraType == CameraType.Game && volume != null && volume.IsActive();
         }
 
-        private void BuildRuntimeLayers(CameraType cameraType, ShoostPostProcessStackVolume volume)
+        private void BuildRuntimeLayers(ShoostPostProcessStackVolume volume)
         {
-            beforePostProcessLayers.Clear();
             afterPostProcessLayers.Clear();
-            afterRenderingLayers.Clear();
             List<ShoostPostProcessLayer> layers = volume != null && volume.layers != null ? volume.layers.value : null;
             if (layers == null)
             {
@@ -122,31 +107,14 @@ namespace lilToon.URP.Extensions.PostProcessing
                     continue;
                 }
 
-                if (cameraType == CameraType.SceneView && !layer.showInSceneView)
-                {
-                    continue;
-                }
-
                 Material material = ResolveMaterial(layer);
                 if (material == null)
                 {
                     continue;
                 }
 
-                ShoostPostProcessInjectionPoint injectionPoint = ResolveInjectionPoint(layer);
                 ShoostPostProcessRuntimeLayer runtimeLayer = new ShoostPostProcessRuntimeLayer(layer, material);
-                switch (injectionPoint)
-                {
-                    case ShoostPostProcessInjectionPoint.AfterURPPostProcessing:
-                        afterPostProcessLayers.Add(runtimeLayer);
-                        break;
-                    case ShoostPostProcessInjectionPoint.AfterRendering:
-                        afterRenderingLayers.Add(runtimeLayer);
-                        break;
-                    default:
-                        beforePostProcessLayers.Add(runtimeLayer);
-                        break;
-                }
+                afterPostProcessLayers.Add(runtimeLayer);
             }
         }
 
@@ -177,16 +145,6 @@ namespace lilToon.URP.Extensions.PostProcessing
 
             pass.SetupRenderGraph(layers, passEvent);
             renderer.EnqueuePass(pass);
-        }
-
-        private static ShoostPostProcessInjectionPoint ResolveInjectionPoint(ShoostPostProcessLayer layer)
-        {
-            if (layer.injectionPoint != ShoostPostProcessInjectionPoint.EffectDefault)
-            {
-                return layer.injectionPoint;
-            }
-
-            return ShoostPostProcessEffectRegistry.GetDefaultInjectionPoint(layer.effect);
         }
 
         private static ShoostPostProcessStackVolume GetVolumeComponent()
@@ -257,8 +215,8 @@ namespace lilToon.URP.Extensions.PostProcessing
     internal sealed class ShoostPostProcessPass : ScriptableRenderPass
     {
         private readonly List<ShoostPostProcessRuntimeLayer> runtimeLayers = new List<ShoostPostProcessRuntimeLayer>();
-        private readonly ProfilingSampler profilingSampler;
-        private readonly string passName;
+        private readonly ProfilingSampler _profilingSampler;
+        private readonly string _passName;
         private RTHandle cameraColorTarget;
         private RTHandle tempTextureA;
         private RTHandle tempTextureB;
@@ -334,8 +292,8 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         public ShoostPostProcessPass(string passName)
         {
-            this.passName = passName;
-            profilingSampler = new ProfilingSampler(passName);
+            _passName = passName;
+            _profilingSampler = new ProfilingSampler(passName);
         }
 
         public void Setup(RTHandle cameraColorTarget, List<ShoostPostProcessRuntimeLayer> layers, RenderPassEvent passEvent)
@@ -403,7 +361,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             CommandBuffer cmd = CommandBufferPool.Get();
-            using (new ProfilingScope(cmd, profilingSampler))
+            using (new ProfilingScope(cmd, _profilingSampler))
             {
                 RTHandle source = cameraColorTarget;
                 bool writeToA = true;
@@ -456,7 +414,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             {
                 if (!warnedBackBuffer)
                 {
-                    Debug.LogWarning($"{passName} skipped because the active color target is the backbuffer. The Shoost post process stack requires an intermediate color texture.");
+                    Debug.LogWarning($"{_passName} skipped because the active color target is the backbuffer. The Shoost post process stack requires an intermediate color texture.");
                     warnedBackBuffer = true;
                 }
                 return;
@@ -499,7 +457,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 destinationDesc.depthBufferBits = 0;
                 TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
-                using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{passName} Layer {i}", out PassData passData, profilingSampler))
+                using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{_passName} Layer {i}", out PassData passData, _profilingSampler))
                 {
                     passData.source = source;
                     passData.layer = runtimeLayer.settings;
@@ -866,7 +824,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             float screenRatio = Mathf.Max(1.0f, sourceDesc.width) / Mathf.Max(1.0f, sourceDesc.height);
             float iterationStep = 1.0f / downScale;
 
-            AddKawasePass(renderGraph, source, blurA, material, 0, radius, screenRatio, runtimeLayer.settings, profilingSampler, passName);
+            AddKawasePass(renderGraph, source, blurA, material, 0, radius, screenRatio, runtimeLayer.settings, _profilingSampler, _passName);
 
             TextureHandle current = blurA;
             TextureHandle next = blurB;
@@ -874,7 +832,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             {
                 TextureHandle passSource = current;
                 TextureHandle passDestination = next;
-                AddKawasePass(renderGraph, passSource, passDestination, material, 0, radius + (i * iterationStep), screenRatio, runtimeLayer.settings, profilingSampler, passName);
+                AddKawasePass(renderGraph, passSource, passDestination, material, 0, radius + (i * iterationStep), screenRatio, runtimeLayer.settings, _profilingSampler, _passName);
                 current = passDestination;
                 next = passSource;
             }
@@ -884,7 +842,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             outputDesc.clearBuffer = false;
             outputDesc.depthBufferBits = 0;
             TextureHandle destination = renderGraph.CreateTexture(outputDesc);
-            return AddKawasePass(renderGraph, current, destination, material, 0, radius + (iterations * iterationStep), screenRatio, runtimeLayer.settings, profilingSampler, passName);
+            return AddKawasePass(renderGraph, current, destination, material, 0, radius + (iterations * iterationStep), screenRatio, runtimeLayer.settings, _profilingSampler, _passName);
         }
 
         private TextureHandle RecordIrisBlurLayer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex)
@@ -910,13 +868,13 @@ namespace lilToon.URP.Extensions.PostProcessing
             TextureHandle blurB = renderGraph.CreateTexture(blurDesc);
             float screenRatio = Mathf.Max(1.0f, sourceDesc.width) / Mathf.Max(1.0f, sourceDesc.height);
 
-            TextureHandle current = AddIrisPass(renderGraph, source, blurA, material, 0, parameters, screenRatio, runtimeLayer.settings, profilingSampler, passName);
+            TextureHandle current = AddIrisPass(renderGraph, source, blurA, material, 0, parameters, screenRatio, runtimeLayer.settings, _profilingSampler, _passName);
             TextureHandle next = blurB;
             for (int i = 1; i < parameters.iterations; i++)
             {
                 TextureHandle passSource = current;
                 TextureHandle passDestination = next;
-                current = AddIrisPass(renderGraph, passSource, passDestination, material, 1, parameters, screenRatio, runtimeLayer.settings, profilingSampler, passName);
+                current = AddIrisPass(renderGraph, passSource, passDestination, material, 1, parameters, screenRatio, runtimeLayer.settings, _profilingSampler, _passName);
                 next = passSource;
             }
 
@@ -925,7 +883,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             outputDesc.clearBuffer = false;
             outputDesc.depthBufferBits = 0;
             TextureHandle destination = renderGraph.CreateTexture(outputDesc);
-            return AddIrisPass(renderGraph, source, destination, material, 2, parameters, screenRatio, runtimeLayer.settings, profilingSampler, passName, current);
+            return AddIrisPass(renderGraph, source, destination, material, 2, parameters, screenRatio, runtimeLayer.settings, _profilingSampler, _passName, current);
         }
 
         private TextureHandle RecordRgbBlurV2Layer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex)
@@ -948,13 +906,13 @@ namespace lilToon.URP.Extensions.PostProcessing
 
             TextureHandle blurA = renderGraph.CreateTexture(blurDesc);
             TextureHandle blurB = renderGraph.CreateTexture(blurDesc);
-            TextureHandle current = AddRgbBlurV2Pass(renderGraph, source, blurA, material, 0, radius, runtimeLayer.settings, profilingSampler, passName);
+            TextureHandle current = AddRgbBlurV2Pass(renderGraph, source, blurA, material, 0, radius, runtimeLayer.settings, _profilingSampler, _passName);
             TextureHandle next = blurB;
             for (int i = 1; i < iterations; i++)
             {
                 TextureHandle passSource = current;
                 TextureHandle passDestination = next;
-                current = AddRgbBlurV2Pass(renderGraph, passSource, passDestination, material, 0, radius + i, runtimeLayer.settings, profilingSampler, passName);
+                current = AddRgbBlurV2Pass(renderGraph, passSource, passDestination, material, 0, radius + i, runtimeLayer.settings, _profilingSampler, _passName);
                 next = passSource;
             }
 
@@ -963,7 +921,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             outputDesc.clearBuffer = false;
             outputDesc.depthBufferBits = 0;
             TextureHandle destination = renderGraph.CreateTexture(outputDesc);
-            return AddRgbBlurV2Pass(renderGraph, source, destination, material, 1, radius, runtimeLayer.settings, profilingSampler, passName, current);
+            return AddRgbBlurV2Pass(renderGraph, source, destination, material, 1, radius, runtimeLayer.settings, _profilingSampler, _passName, current);
         }
 
         private TextureHandle RecordChangeFrameRateLayer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex, UniversalCameraData cameraData)
@@ -974,7 +932,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
             if (ShouldRefreshChangeFrameRateState(state, runtimeLayer.settings, out int targetFrameRate, out double now))
             {
-                using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{passName} Change Frame Rate Capture", out PassData passData, profilingSampler))
+                using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{_passName} Change Frame Rate Capture", out PassData passData, _profilingSampler))
                 {
                     passData.source = source;
                     passData.layer = runtimeLayer.settings;
@@ -1001,7 +959,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             destinationDesc.depthBufferBits = 0;
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{passName} Change Frame Rate", out PassData passData, profilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{_passName} Change Frame Rate", out PassData passData, _profilingSampler))
             {
                 passData.source = source;
                 passData.frozenFrameTexture = frozenFrameTexture;

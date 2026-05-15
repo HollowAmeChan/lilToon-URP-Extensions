@@ -49,7 +49,7 @@
 
 其中一部分是纯后处理 shader，一部分更像 Shoost 的场景叠加、UI 驱动或摄像机控制入口。我们在 URP 里会尽量保持它们的用户命名和图标入口一致，但底层实现不一定都是单个 fullscreen pass。
 
-当前已经补上的具体效果包括 `VignetteCustom`、`Sharpen`、`RGBSplit`、`KawaseBlur`、`IrisBlur`、`ColorGradingCustom`、`LevelAdjustment`、`AutoWhiteBalance`、`Fisheye` / `LensDistortionCustom`、`Pixelize`、`Distortion`（湍流置换）和 `RGBChannelSeparator`。`LUTColorGrading` 已从公开实现中移除，第 4 个“调色”入口对齐 Shoost 的 `ColorGrading_Custom`：包含普通 `Lift / Gamma / Gain` 色轮、对数 `Shadows / Midtones / Highlights` 色轮，以及六色偏移的 `HueVsHue / HueVsSat / HueVsLum / LumVsSat` 模式。`DownScaleResolution` 只保留旧资产兼容，不再作为公开图层入口；新面板里应该用 `Pixelize`。`SharpenAfter` 也不再作为公开图层入口，统一用 `SharpenBefore`，需要后置时去高级里的 `Injection Point` 改位置。
+当前已经补上的具体效果包括 `VignetteCustom`、`Sharpen`、`RGBSplit`、`KawaseBlur`、`IrisBlur`、`ColorGradingCustom`、`LevelAdjustment`、`AutoWhiteBalance`、`Fisheye` / `LensDistortionCustom`、`Pixelize`、`Distortion`（湍流置换）和 `RGBChannelSeparator`。`LUTColorGrading` 已从公开实现中移除，第 4 个“调色”入口对齐 Shoost 的 `ColorGrading_Custom`：包含普通 `Lift / Gamma / Gain` 色轮、对数 `Shadows / Midtones / Highlights` 色轮，以及六色偏移的 `HueVsHue / HueVsSat / HueVsLum / LumVsSat` 模式。`DownScaleResolution` 只保留旧资产兼容，不再作为公开图层入口；新面板里应该用 `Pixelize`。`SharpenAfter` 也不再作为公开图层入口，用户侧统一用 `SharpenBefore`；当前普通 Shoost 滤镜默认已经作为最终滤镜后置执行，旧 `SharpenAfter` 只保留兼容。
 
 ## 设置
 
@@ -70,14 +70,9 @@ Shoost 自己的 `BlendingModeChanger.BlendType` 里有一套 Photoshop 式混�
 
 ## 顺序说明
 
-Volume 里只有一个面向用户的大图层列表，但运行时会把它拆成不同插入组。每个 layer 都有一个 `Injection Point` 字段：
+Volume 里只有一个面向用户的大图层列表。Shoost stack 不再提供每层 `Injection Point`：所有 Shoost 图层都会进入 `AfterRenderingPostProcessing`，作为 URP 内置后处理之后的 final stack 执行。
 
-- `Effect Default`：已知的 Shoost `BeforeStack` 效果映射到 `BeforeRenderingPostProcessing`，已知的 `AfterStack` 效果映射到 `AfterRenderingPostProcessing`；
-- `Before URP Post Processing`：在 opaque / transparent 渲染后、URP Bloom / Tonemapping / Color Adjustments / Film Grain 等内置后处理前运行；
-- `After URP Post Processing`：在 URP 主后处理栈之后运行，更接近 PPS v2 的 `AfterStack`，适合最终画面叠加类效果；
-- `After Rendering`：更晚的逃生插入点，用于必须接近最终 blit 的效果。
-
-补充一点：`ColorGradingCustom` 对齐 Shoost / PPS v2 的 `BeforeStack`，默认走 `Before URP Post Processing`，让后面的 URP Bloom、Tonemapping 等继续基于调色后的画面工作。`LevelAdjustment` 更像最终重映射，默认仍走 `After URP Post Processing`。
+补充一点：`ColorGradingCustom` 在当前 URP 移植里按最终显示空间调色处理，默认走 `After URP Post Processing`。如果后续需要 scene-linear / pre-Bloom 的调色，应把它拆到 HoPost 或新的 pre-post 管线里，而不是让 Shoost final stack 同时承担两套语义。`LevelAdjustment` 同样按最终重映射处理，默认走 `After URP Post Processing`。
 
 重要事项：URP 内置后处理不会显示为 renderer data asset 里的 `ScriptableRendererFeature`。即使可见的 renderer feature 列表里只有 lilOIT、HTrace、Shoost 这些自定义功能，只要相机开启了 `Render Post Processing`，并且有 active 的 Volume override，URP 仍然会从 `UniversalRenderer` 内部注入自己的后处理 pass。
 
@@ -89,16 +84,16 @@ Volume 里只有一个面向用户的大图层列表，但运行时会把它拆�
 - 自定义 pass 的 `AfterRenderingPostProcessing` 组；
 - 当 FXAA、最终缩放、TAA sharpening 或类似最终阶段功能需要运行时，URP `FinalPostProcessPass` 会接近 `AfterRendering - 1`。
 
-这意味着设置为 `Before URP Post Processing` 的 Shoost 图层，后面仍然可能被 URP Bloom、Tonemapping、Color Adjustments、Film Grain、FXAA 等内置后处理再次修改。设置为 `After URP Post Processing` 的 Shoost 图层会在 URP 主后处理之后运行，但在某些相机配置下，后面仍可能接着 URP 的 final post pass。
+这意味着 Shoost stack 统一运行在 URP 主后处理之后；在某些相机配置下，后面仍可能接着 URP 的 final post pass。需要 Bloom 响应或需要主体数据的效果后续应移动到 subject effects / lighting feature，而不是重新塞进 Shoost 图层插入点。
 
-图层列表的顺序会在每个插入组内部保留。也就是说，即使一个 `Before URP Post Processing` 图层在列表中排在 `After URP Post Processing` 图层后面，它运行时仍会先执行。这是有意设计的：它模拟 PPS v2 的 stack 分类，避免 color grading、tonemapping、CRT mask、final sharpen 这类效果被意外折进错误阶段。
+图层列表的顺序会在当前 final stack 内部保留。主体数据、HDR 发光和 pre-Bloom 合成后续应移动到新的 subject effects / lighting feature；调色、CRT mask、final sharpen、VHS、颗粒、像素化这类最终滤镜则统一留在 Shoost final stack。
 
 从 Shoost v0.16.3 解包结果看，一共找到 59 个 `BeforeStack` 和 16 个 `AfterStack` 的 PPS v2 effect：
 
 - 大多数 Shoost 自定义效果和 Retro Look Pro 效果都是 `PostProcessEvent.BeforeStack`；
 - `CRTEffects`、`RGBChannelSeparator`、`Sharpen_After`、`RLProTVEffect_Custom` 是 `PostProcessEvent.AfterStack`；
 - 很多 X-PostProcessing 的 blur / sharpen / glitch 效果也是 `PostProcessEvent.AfterStack`；
-- 用户侧不再单独显示 `Sharpen_After`，需要后置锐化时用 `锐化` 的高级插入位置控制；
+- 用户侧不再单独显示 `Sharpen_After`；`锐化` 作为普通 Shoost final stack 滤镜默认后置执行；
 - blur pyramid 和 bloom-like 效果通常需要在最终颜色和细节叠加前运行；
 - `MotionTrail`、`ChangeFrameRate` 这类历史帧效果需要 per-camera 持久 buffer，后面应作为同一个 Volume 列表背后的专用执行阶段处理。
 
@@ -137,7 +132,7 @@ Volume 里只有一个面向用户的大图层列表，但运行时会把它拆�
 - `DitheringCustom` 的三张抖动图来自 Shoost 解包工程的 `dithering_2x2_4_Steps_v2.png`、`dithering_2x2_4_Steps_v4.png`、`dithering_4x4_16_Steps.png`，在包内对应 `ShoostDitheringV1/V2/V3.png`。
 - `DitheringCustom / 视频游戏`：已由实机核对确认完美对齐。当前实现已按 Shoost renderer 的 `_ResolutionX/_ResolutionY` 思路修正屏幕像素宽高归一化，并修正网格线为屏幕像素稳定宽度。
 - `CRTEffects / 显示器`：已由实机核对确认完美对齐。来源是 Shoost 的 `Custom/CRTEffects`。用户侧只暴露“类型（RGB/RGB 单色/圆形/线条）”和“分辨率”，类型实际对应 Shoost UI 中 `_scanlineTexture` 列表的四张贴图：`crt_scanlines_A_v1.png`、`crt_scanlines_A_v2.png`、`crt_scanlines_D_v2.png`、`crt_scanlines_B.png`。shader 按 RenderDoc 中 `Hidden/CRTEffects` 第一 pass 的思路实现：以 FC `256x240` 为基础，并按 `当前屏幕宽高比 / (256/240)` 修正横向分辨率，再重复采样扫描线贴图，用 slot mask、shadow mask、brightness 和 glow 叠加到源图上。
-- `VHS`：来源是 Shoost 的 `PostProcess_VHSValue` 组合滤镜。Shoost 用户侧以弱/中/强三档切换 profile，并联动 `RLProVHSEffect`、`RLProNoise2_Custom`、`RLProEdgeNoise`、`RGBBlurV2`、`Grain_Custom`、`Sharpen_Before`、`Tube`，扫描线子开关来自 `RLProTVEffect_Custom`。当前 URP 版压成一个用户滤镜和一个 fullscreen pass，暴露“类型、噪点强度、锐化、扫描线、大小”，默认插入 `Before URP Post Processing`。已由实机核对确认完美对齐，状态标记为：完美对齐。
+- `VHS`：来源是 Shoost 的 `PostProcess_VHSValue` 组合滤镜。Shoost 用户侧以弱/中/强三档切换 profile，并联动 `RLProVHSEffect`、`RLProNoise2_Custom`、`RLProEdgeNoise`、`RGBBlurV2`、`Grain_Custom`、`Sharpen_Before`、`Tube`，扫描线子开关来自 `RLProTVEffect_Custom`。当前 URP 版压成一个用户滤镜和一个 fullscreen pass，暴露“类型、噪点强度、锐化、扫描线、大小”，默认作为 `After URP Post Processing` 的最终滤镜执行。已由实机核对确认完美对齐，状态标记为：完美对齐。
 - `Tube / 电视`：暂时跳过。来源是 Shoost 的 `PostProcess_TVValue` 组合滤镜，用户侧 60/70/80/90 四档不是单个 `Custom/Tube` shader 的模式，而是 profile 组合：`FilmBreath_GateWeave`、`RGBBlur`、`LUTColorGrading`、`Tube`、`Sharpen_Before` 等层，60 年代还包含 `RLProJitter`。此前尝试把它压进单个 fullscreen pass，但 LUT、锐化、Tube/YIQ 漏色、年代 profile 和第三方包语义之间耦合较深，当前不继续对齐。状态标记为：暂时跳过。
 - `Film / 胶片`：暂时跳过。Shoost 的 `AMS_AnimeFilm_60s/70s/80s/90s` 和 TV 的年代命名只共享 UI 名称，不共享滤镜语义；胶片入口需要单独处理 `LUTColorGrading`、`Grain_Custom`、`RLProOldFilm2_Custom` 等 profile 层，并且还要重新核对各层顺序、LUT 导入与 RenderDoc 汇编。状态标记为：暂时跳过。
 - LUT 语义备忘：TV 组合的 `AMS_TV_60s/70s/80s/90s` 分别引用 `Monochrome Soft`、`Film Fuji v2`、`Film Fuji v2`、`Film Fuji v3`；胶片组合的 `AMS_AnimeFilm_60s/70s/80s/90s` 分别引用 `Monochrome Soft`、`Film Kodak v1`、`Film Kodak v2`、`Film Kodak v3`。这两组 60/70/80/90 只共享年代 UI 命名，不共享滤镜语义。RenderDoc 中 `Hidden/Custom/LUTColorGrading` 的 32x32 strip 是 B 通道切片、R 为横向、G 为纵向；LUT 纹理按非 sRGB 导入，由 shader 显式执行 sRGB/Linear 转换。该备忘仅保留给后续重启 Tube/胶片移植时参考。

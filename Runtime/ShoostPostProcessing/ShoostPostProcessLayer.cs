@@ -15,9 +15,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         [Tooltip("这个图层对应的 Shoost 效果。Custom Material 会直接使用材质或 Shader 覆盖。")]
         public ShoostPostProcessEffect effect = ShoostPostProcessEffect.CustomMaterial;
 
-        [Tooltip("关闭后，Scene 视图相机会跳过这个图层。")]
-        public bool showInSceneView = true;
-
         [Tooltip("可选材质覆盖。移植新 Shader 时最安全。")]
         public Material materialOverride;
 
@@ -34,9 +31,6 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         [Tooltip("混合模式。会以 _LayerBlendMode 暴露给 Shader。")]
         public ShoostPostProcessBlendMode blendMode = ShoostPostProcessBlendMode.Normal;
-
-        [Tooltip("插入位置。Effect Default 会尽量沿用 Shoost / PPS v2 的默认顺序。")]
-        public ShoostPostProcessInjectionPoint injectionPoint = ShoostPostProcessInjectionPoint.EffectDefault;
 
         [Tooltip("颜色参数。会以 _LayerColor 暴露给 Shader。")]
         public Color color = Color.white;

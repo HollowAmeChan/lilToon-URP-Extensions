@@ -265,7 +265,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
             if (reflectionTexture != null)
             {
                 reflectionTexture.Release();
-                DestroyObject(reflectionTexture);
+                DestroyUnityObject(reflectionTexture);
             }
 
             reflectionTexture = new RenderTexture(width, height, 24, RenderTextureFormat.DefaultHDR)
@@ -352,18 +352,18 @@ namespace lilToon.URP.Extensions.PlanarReflection
             if (reflectionTexture != null)
             {
                 reflectionTexture.Release();
-                DestroyObject(reflectionTexture);
+                DestroyUnityObject(reflectionTexture);
                 reflectionTexture = null;
             }
 
             if (reflectionCamera != null)
             {
-                DestroyObject(reflectionCamera.gameObject);
+                DestroyUnityObject(reflectionCamera.gameObject);
                 reflectionCamera = null;
             }
         }
 
-        private static void DestroyObject(Object target)
+        private static void DestroyUnityObject(Object target)
         {
             if (target == null)
             {

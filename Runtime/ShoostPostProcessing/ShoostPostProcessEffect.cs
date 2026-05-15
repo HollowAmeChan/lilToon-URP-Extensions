@@ -76,11 +76,4 @@ namespace lilToon.URP.Extensions.PostProcessing
         Luminosity = 23
     }
 
-    public enum ShoostPostProcessInjectionPoint
-    {
-        EffectDefault = 0,
-        BeforeURPPostProcessing = 1,
-        AfterURPPostProcessing = 2,
-        AfterRendering = 3
-    }
 }

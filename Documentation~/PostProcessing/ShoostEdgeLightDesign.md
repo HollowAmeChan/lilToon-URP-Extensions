@@ -40,7 +40,7 @@
 - EdgeLight：`BeforeRenderingPostProcessing`
 - URP Bloom/Tonemapping：URP 内部 post process
 
-如果 EdgeLight 为兼容旧 Shoost 图层列表而保留同名入口，它仍然应该默认解析为 `BeforeURPPostProcessing`，或者提示用户去 `lilToon Subject Effects` 面板调整。用户把它手动改到 After URP Post Processing 时要提示：这会失去 Bloom 参与。
+如果 EdgeLight 为兼容旧 Shoost 图层列表而保留同名入口，它也会随 Shoost final stack 后置执行，不再提供每层插入点。需要 Bloom 参与时，应提示用户去 `lilToon Subject Effects` / lighting feature 面板调整，而不是在 Shoost 图层里切执行阶段。
 
 ## 主体数据 RT
 
