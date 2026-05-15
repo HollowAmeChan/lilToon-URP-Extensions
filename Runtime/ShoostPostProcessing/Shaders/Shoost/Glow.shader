@@ -122,7 +122,7 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/Glow"
 
             half amount = saturate(_Intensity) * saturate(_LayerParams1.w) * max((half)_LayerParams1.x, 0.0);
             half3 color = source.rgb + bloom * amount;
-            return half4(saturate(color), source.a);
+            return half4(max(color, half3(0.0, 0.0, 0.0)), source.a);
         }
         ENDHLSL
 

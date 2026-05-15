@@ -62,9 +62,9 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/CRTEffects"
                 float3 result = slotMask * shadowMask * source.rgb * (scanlineBrightness + 1.0);
                 float luma = dot(result, float3(0.3, 0.59, 0.11));
                 float glow = saturate(luma - glowThreshold) * glowAmount + 1.0;
-                result = saturate(result * glow);
+                result = max(result * glow, 0.0);
 
-                result = lerp(original.rgb, saturate(result), amount);
+                result = lerp(original.rgb, max(result, 0.0), amount);
                 return half4(result, original.a);
             }
             ENDHLSL

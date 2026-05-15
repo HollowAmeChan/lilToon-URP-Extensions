@@ -12,6 +12,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                     return "Hidden/lilToon-Shoost/URP/Shoost/AutoWhiteBalance";
                 case ShoostPostProcessEffect.ChangeFrameRate:
                     return "Hidden/lilToon-Shoost/URP/Shoost/ChangeFrameRate";
+                case ShoostPostProcessEffect.CenterColorCorrection:
+                    return "Hidden/lilToon-Shoost/URP/Shoost/CenterColorCorrection";
                 case ShoostPostProcessEffect.ColorGradingCustom:
                     return "Hidden/lilToon-Shoost/URP/Shoost/ColorGradingCustom";
                 case ShoostPostProcessEffect.CRTEffects:
@@ -57,8 +59,12 @@ namespace lilToon.URP.Extensions.PostProcessing
                     return "Hidden/lilToon-Shoost/URP/Shoost/Sharpen";
                 case ShoostPostProcessEffect.Tube:
                     return "Hidden/lilToon-Shoost/URP/Shoost/Tube";
+                case ShoostPostProcessEffect.ToonMap:
+                    return "Hidden/lilToon-Shoost/URP/Shoost/ToonMap";
                 case ShoostPostProcessEffect.VHS:
                     return "Hidden/lilToon-Shoost/URP/Shoost/VHS";
+                case ShoostPostProcessEffect.Weather:
+                    return "Hidden/lilToon-Shoost/URP/Shoost/Weather";
                 case ShoostPostProcessEffect.VignetteCustom:
                     return "Hidden/lilToon-Shoost/URP/Shoost/VignetteCustom";
                 case ShoostPostProcessEffect.RetroLookProBleedCustom:

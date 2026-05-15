@@ -54,7 +54,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ShoostPostProcessEffect.Outline,
             ShoostPostProcessEffect.DropShadow,
             ShoostPostProcessEffect.Gradient,
-            ShoostPostProcessEffect.Glow,
             ShoostPostProcessEffect.Lighting,
             ShoostPostProcessEffect.CenterColorCorrection,
             ShoostPostProcessEffect.LED,
@@ -71,6 +70,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ShoostPostProcessEffect.RGBBlurV2,
             ShoostPostProcessEffect.RGBSplit,
             ShoostPostProcessEffect.RGBChannelSeparator,
+            ShoostPostProcessEffect.Glow,
+            ShoostPostProcessEffect.ToonMap,
             ShoostPostProcessEffect.GrainCustom,
             ShoostPostProcessEffect.VignetteCustom,
             ShoostPostProcessEffect.Pixelize,
@@ -98,6 +99,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ShoostPostProcessEffect.ColorGradingCustom, "调色", "icon_ColorGrading_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Gradient, "渐变", "icon_Gradient_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Glow, "发光", "icon_Glow_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.ToonMap, "ToonMap", "icon_ColorGrading_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Lighting, "光照", "icon_Lighting_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.CenterColorCorrection, "中心色彩校正", "icon_CenterColorCorrection"),
             new EffectToggleEntry(ShoostPostProcessEffect.Weather, "天气", "icon_Weather_v1"),
@@ -169,7 +171,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "摄像头切换器",
             "透明背景",
             "VHS",
-            "摄像机闪光"
+            "摄像机闪光",
+            "ToonMap"
         };
 
         private static readonly GUIContent[] BlendModeDisplayNames =
@@ -484,6 +487,24 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.ToonMap)
+            {
+                DrawToonMapElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.CenterColorCorrection)
+            {
+                DrawCenterColorCorrectionElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.Weather)
+            {
+                DrawWeatherElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ShoostPostProcessEffect.LevelAdjustment)
             {
                 DrawLevelAdjustmentElement(rect, element);
@@ -537,7 +558,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.Fisheye:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
-                    lineCount += 4;
+                    lineCount += 6;
                     break;
                 case ShoostPostProcessEffect.GateWeave:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -596,6 +617,18 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.Glow:
                     lineCount += GetGlowLineCount(element);
+                    break;
+                case ShoostPostProcessEffect.ToonMap:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 1;
+                    break;
+                case ShoostPostProcessEffect.CenterColorCorrection:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 10;
+                    break;
+                case ShoostPostProcessEffect.Weather:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += GetWeatherLineCount(element);
                     break;
                 case ShoostPostProcessEffect.LevelAdjustment:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -725,6 +758,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            Dictionary<int, bool> expandedByEffect = CaptureLayerExpandedStates();
+
             for (int index = 0; index < layerValues.arraySize; index++)
             {
                 if (GetEffectIndex(layerValues.GetArrayElementAtIndex(index)) != (int)effect)
@@ -734,6 +769,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
                 Undo.RecordObject(serializedObject.targetObject, "Remove Shoost Effect");
                 layerValues.DeleteArrayElementAtIndex(index);
+                RestoreLayerExpandedStates(expandedByEffect);
                 break;
             }
         }
@@ -756,6 +792,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             {
                 return;
             }
+
+            Dictionary<int, bool> expandedByEffect = CaptureLayerExpandedStates();
 
             HashSet<int> seenEffects = new HashSet<int>();
             for (int index = layerValues.arraySize - 1; index >= 0; index--)
@@ -792,6 +830,52 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 if (bestIndex != targetIndex)
                 {
                     layerValues.MoveArrayElement(bestIndex, targetIndex);
+                }
+            }
+
+            RestoreLayerExpandedStates(expandedByEffect);
+        }
+
+        private Dictionary<int, bool> CaptureLayerExpandedStates()
+        {
+            Dictionary<int, bool> expandedByEffect = new Dictionary<int, bool>();
+            if (layerValues == null || !layerValues.isArray)
+            {
+                return expandedByEffect;
+            }
+
+            for (int index = 0; index < layerValues.arraySize; index++)
+            {
+                SerializedProperty element = layerValues.GetArrayElementAtIndex(index);
+                int effectIndex = GetEffectIndex(element);
+                bool isExpanded = element.isExpanded;
+                if (expandedByEffect.TryGetValue(effectIndex, out bool existing))
+                {
+                    expandedByEffect[effectIndex] = existing || isExpanded;
+                }
+                else
+                {
+                    expandedByEffect.Add(effectIndex, isExpanded);
+                }
+            }
+
+            return expandedByEffect;
+        }
+
+        private void RestoreLayerExpandedStates(Dictionary<int, bool> expandedByEffect)
+        {
+            if (layerValues == null || !layerValues.isArray || expandedByEffect == null)
+            {
+                return;
+            }
+
+            for (int index = 0; index < layerValues.arraySize; index++)
+            {
+                SerializedProperty element = layerValues.GetArrayElementAtIndex(index);
+                int effectIndex = GetEffectIndex(element);
+                if (expandedByEffect.TryGetValue(effectIndex, out bool isExpanded))
+                {
+                    element.isExpanded = isExpanded;
                 }
             }
         }
@@ -1274,6 +1358,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetFloat(element, "intensity", 1.0f);
                     SetColor(element, "color", Color.black);
                     SetVector4(element, "parameters0", new Vector4(0.2f, 1.0f, 0.1f, 0.0f));
+                    SetVector4(element, "parameters1", new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
                     break;
                 case ShoostPostProcessEffect.IrisBlur:
                     SetFloat(element, "intensity", 1.0f);
@@ -1363,6 +1448,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetFloat(element, "intensity", 1.0f);
                     SetVector4(element, "parameters0", Vector4.zero);
                     break;
+                case ShoostPostProcessEffect.VignetteCustom:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetVector4(element, "parameters0", new Vector4(0.5f, 0.5f, 1.0f, 0.5f));
+                    break;
                 case ShoostPostProcessEffect.Tube:
                     SetFloat(element, "intensity", 1.0f);
                     SetObjectReference(element, "texture", LoadTubeLutTexture(0));
@@ -1392,13 +1481,29 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters1", new Vector4(2.0f, 0.0f, 0.0f, 1.0f));
                     SetVector4(element, "parameters2", new Vector4(3.0f, 180.0f, 0.0f, 0.0f));
                     break;
+                case ShoostPostProcessEffect.ToonMap:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetVector4(element, "parameters0", new Vector4(2.0f, 0.0f, 0.0f, 0.0f));
+                    break;
+                case ShoostPostProcessEffect.CenterColorCorrection:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetVector4(element, "parameters0", new Vector4(0.18f, 0.0f, 0.0f, 0.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.5f, 0.5f, 0.0f, 0.0f));
+                    SetVector4(element, "parameters2", new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
+                    break;
+                case ShoostPostProcessEffect.Weather:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetColor(element, "color", Color.white);
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 1.0f, 1.0f, 1.0f));
+                    SetVector4(element, "parameters1", new Vector4(1.0f, 0.35f, 1.0f, 1.0f));
+                    SetVector4(element, "parameters2", new Vector4(1.0f, 1.0f, 1.0f, 0.35f));
+                    SetVector4(element, "parameters3", Vector4.one);
+                    break;
                 case ShoostPostProcessEffect.EdgeLight:
                 case ShoostPostProcessEffect.Outline:
                 case ShoostPostProcessEffect.DropShadow:
                 case ShoostPostProcessEffect.Lighting:
-                case ShoostPostProcessEffect.CenterColorCorrection:
                 case ShoostPostProcessEffect.LED:
-                case ShoostPostProcessEffect.Weather:
                 case ShoostPostProcessEffect.Particle:
                 case ShoostPostProcessEffect.CameraSwitcher:
                 case ShoostPostProcessEffect.TransparentBackground:

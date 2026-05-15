@@ -130,7 +130,7 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/ColorGradingCustom"
 
             float3 ApplySixColorAdjustments(float3 color)
             {
-                float3 hsv = ShoostRgbToHsv(saturate(color));
+                float3 hsv = ShoostRgbToHsv(max(color, 0.0));
                 float hueOffset = 0.0;
                 float saturationOffset = 0.0;
                 float valueOffset = 0.0;

@@ -45,7 +45,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Vector4 vignetteParams = parameters0.vector4Value;
             y = DrawSliderLine(rect.x, y, rect.width, "中心 X", vignetteParams.x, 0.0f, 1.0f, value => vignetteParams.x = value);
             y = DrawSliderLine(rect.x, y, rect.width, "中心 Y", vignetteParams.y, 0.0f, 1.0f, value => vignetteParams.y = value);
-            y = DrawSliderLine(rect.x, y, rect.width, "半径", vignetteParams.z, 0.0f, 1.0f, value => vignetteParams.z = value);
+            y = DrawSliderLine(rect.x, y, rect.width, "半径", vignetteParams.z, 0.0f, 2.0f, value => vignetteParams.z = value);
             y = DrawSliderLine(rect.x, y, rect.width, "柔和度", vignetteParams.w, 0.0f, 1.0f, value => vignetteParams.w = value);
             parameters0.vector4Value = vignetteParams;
 
@@ -65,7 +65,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
-            parameters0.vector4Value = new Vector4(0.5f, 0.5f, 0.35f, 0.25f);
+            parameters0.vector4Value = new Vector4(0.5f, 0.5f, 1.0f, 0.5f);
         }
     }
 }

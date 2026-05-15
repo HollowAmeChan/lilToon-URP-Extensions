@@ -45,7 +45,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         CameraSwitcher,
         TransparentBackground,
         VHS,
-        CameraFlash
+        CameraFlash,
+        ToonMap
     }
 
     public enum ShoostPostProcessBlendMode

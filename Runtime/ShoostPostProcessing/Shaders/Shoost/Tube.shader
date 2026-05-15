@@ -355,7 +355,8 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/Tube"
                 float3 color = ProcessTubeBeforeSharpen(baseUV, mode, irregularity, motionTrail);
                 color = ApplySharpen(baseUV, color, mode, sharpen, irregularity, motionTrail);
 
-                return half4(lerp(original.rgb, saturate(color), amount), original.a);
+                float3 hdrResidual = max(original.rgb - saturate(original.rgb), 0.0);
+                return half4(lerp(original.rgb, max(color, 0.0) + hdrResidual, amount), original.a);
             }
             ENDHLSL
         }

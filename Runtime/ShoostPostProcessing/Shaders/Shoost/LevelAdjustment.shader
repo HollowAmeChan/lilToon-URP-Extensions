@@ -97,7 +97,8 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/LevelAdjustment"
                 }
 
                 float blend = saturate(_Intensity);
-                return half4(lerp(source.rgb, saturate(result), blend), source.a);
+                float3 hdrResidual = max(source.rgb - saturate(source.rgb), 0.0);
+                return half4(lerp(source.rgb, max(result, 0.0) + hdrResidual, blend), source.a);
             }
             ENDHLSL
         }

@@ -40,12 +40,12 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/VignetteCustom"
 
             float ResolveRadius()
             {
-                return _LayerParams0.z > 0.0001 ? _LayerParams0.z : 0.35;
+                return _LayerParams0.z > 0.0001 ? _LayerParams0.z : 1.0;
             }
 
             float ResolveSoftness()
             {
-                return _LayerParams0.w > 0.0001 ? _LayerParams0.w : 0.25;
+                return _LayerParams0.w > 0.0001 ? _LayerParams0.w : 0.5;
             }
 
             half ComputeVignetteMask(float2 uv)
@@ -104,12 +104,12 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/VignetteCustom"
 
             float ResolveRadius()
             {
-                return _LayerParams0.z > 0.0001 ? _LayerParams0.z : 0.35;
+                return _LayerParams0.z > 0.0001 ? _LayerParams0.z : 1.0;
             }
 
             float ResolveSoftness()
             {
-                return _LayerParams0.w > 0.0001 ? _LayerParams0.w : 0.25;
+                return _LayerParams0.w > 0.0001 ? _LayerParams0.w : 0.5;
             }
 
             half ComputeVignetteMask(float2 uv)

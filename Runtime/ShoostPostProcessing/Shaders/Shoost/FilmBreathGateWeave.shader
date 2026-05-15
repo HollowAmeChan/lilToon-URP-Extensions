@@ -258,7 +258,8 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/FilmBreathGateWeave"
                     color += (color * 4.0 - north - south - east - west) * sharpen * 0.45;
                 }
 
-                return half4(lerp(original.rgb, saturate(color), amount), original.a);
+                float3 hdrResidual = max(original.rgb - saturate(original.rgb), 0.0);
+                return half4(lerp(original.rgb, max(color, 0.0) + hdrResidual, amount), original.a);
             }
             ENDHLSL
         }

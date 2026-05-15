@@ -207,7 +207,8 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/VHS"
                     color *= mask;
                 }
 
-                return half4(saturate(color), original.a);
+                float3 hdrResidual = max(original.rgb - saturate(original.rgb), 0.0);
+                return half4(max(color, 0.0) + hdrResidual, original.a);
             }
             ENDHLSL
         }

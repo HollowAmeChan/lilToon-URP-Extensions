@@ -116,6 +116,66 @@ namespace lilToon.URP.Extensions.PostProcessing
                 ShoostPostProcessRuntimeLayer runtimeLayer = new ShoostPostProcessRuntimeLayer(layer, material);
                 afterPostProcessLayers.Add(runtimeLayer);
             }
+
+            afterPostProcessLayers.Sort(CompareRuntimeLayerOrder);
+        }
+
+        private static int CompareRuntimeLayerOrder(ShoostPostProcessRuntimeLayer a, ShoostPostProcessRuntimeLayer b)
+        {
+            int orderA = GetRuntimeEffectOrder(a.settings.effect);
+            int orderB = GetRuntimeEffectOrder(b.settings.effect);
+            return orderA.CompareTo(orderB);
+        }
+
+        private static int GetRuntimeEffectOrder(ShoostPostProcessEffect effect)
+        {
+            switch (effect)
+            {
+                case ShoostPostProcessEffect.SharpenBefore: return 0;
+                case ShoostPostProcessEffect.AutoWhiteBalance: return 1;
+                case ShoostPostProcessEffect.LevelAdjustment: return 2;
+                case ShoostPostProcessEffect.ColorGradingCustom: return 3;
+                case ShoostPostProcessEffect.EdgeLight: return 4;
+                case ShoostPostProcessEffect.Outline: return 5;
+                case ShoostPostProcessEffect.DropShadow: return 6;
+                case ShoostPostProcessEffect.Gradient: return 7;
+                case ShoostPostProcessEffect.Lighting: return 8;
+                case ShoostPostProcessEffect.CenterColorCorrection: return 9;
+                case ShoostPostProcessEffect.LED: return 10;
+                case ShoostPostProcessEffect.Weather: return 11;
+                case ShoostPostProcessEffect.Particle: return 12;
+                case ShoostPostProcessEffect.CameraSwitcher: return 13;
+                case ShoostPostProcessEffect.TransparentBackground: return 14;
+                case ShoostPostProcessEffect.FilmBreathGateWeave: return 15;
+                case ShoostPostProcessEffect.Tube: return 16;
+                case ShoostPostProcessEffect.VHS: return 17;
+                case ShoostPostProcessEffect.CRTEffects: return 18;
+                case ShoostPostProcessEffect.DitheringCustom: return 19;
+                case ShoostPostProcessEffect.IrisBlur: return 20;
+                case ShoostPostProcessEffect.RGBBlurV2: return 21;
+                case ShoostPostProcessEffect.RGBSplit: return 22;
+                case ShoostPostProcessEffect.RGBChannelSeparator: return 23;
+                case ShoostPostProcessEffect.Glow: return 24;
+                case ShoostPostProcessEffect.ToonMap: return 25;
+                case ShoostPostProcessEffect.GrainCustom: return 26;
+                case ShoostPostProcessEffect.VignetteCustom: return 27;
+                case ShoostPostProcessEffect.Pixelize: return 28;
+                case ShoostPostProcessEffect.ChangeFrameRate: return 29;
+                case ShoostPostProcessEffect.Distortion: return 30;
+                case ShoostPostProcessEffect.Fisheye: return 31;
+                case ShoostPostProcessEffect.CameraFlash: return 32;
+                case ShoostPostProcessEffect.CustomMaterial: return 33;
+                case ShoostPostProcessEffect.GateWeave: return 34;
+                case ShoostPostProcessEffect.LensDistortionCustom: return 35;
+                case ShoostPostProcessEffect.MotionTrail: return 36;
+                case ShoostPostProcessEffect.RGBBlur: return 37;
+                case ShoostPostProcessEffect.SharpenAfter: return 38;
+                case ShoostPostProcessEffect.RetroLookProBleedCustom: return 39;
+                case ShoostPostProcessEffect.RetroLookProNoise2Custom: return 40;
+                case ShoostPostProcessEffect.RetroLookProOldFilm2Custom: return 41;
+                case ShoostPostProcessEffect.RetroLookProTVEffectCustom: return 42;
+                default: return int.MaxValue;
+            }
         }
 
         private static void SetupCompatibilityPass(
@@ -350,6 +410,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             descriptor.depthBufferBits = 0;
             descriptor.depthStencilFormat = GraphicsFormat.None;
             descriptor.msaaSamples = 1;
+            EnsureHdrDescriptor(ref descriptor);
             RenderingUtils.ReAllocateIfNeeded(ref tempTextureA, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: ShoostPostProcessShaderConstants.TempTextureAName);
             RenderingUtils.ReAllocateIfNeeded(ref tempTextureB, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: ShoostPostProcessShaderConstants.TempTextureBName);
         }
@@ -456,6 +517,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 destinationDesc.name = $"_lilShoostPostProcessLayer{i}";
                 destinationDesc.clearBuffer = false;
                 destinationDesc.depthBufferBits = 0;
+                EnsureHdrTextureDesc(ref destinationDesc);
                 TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
                 using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{_passName} Layer {i}", out PassData passData, _profilingSampler))
@@ -497,6 +559,32 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             renderPassEvent = passEvent;
             ConfigureInput(ScriptableRenderPassInput.Color);
+        }
+
+        private static void EnsureHdrDescriptor(ref RenderTextureDescriptor descriptor)
+        {
+            GraphicsFormat hdrFormat = GetShoostHdrGraphicsFormat();
+            if (hdrFormat != GraphicsFormat.None)
+            {
+                descriptor.graphicsFormat = hdrFormat;
+            }
+        }
+
+        private static void EnsureHdrTextureDesc(ref TextureDesc descriptor)
+        {
+            GraphicsFormat hdrFormat = GetShoostHdrGraphicsFormat();
+            if (hdrFormat != GraphicsFormat.None)
+            {
+                descriptor.format = hdrFormat;
+            }
+        }
+
+        private static GraphicsFormat GetShoostHdrGraphicsFormat()
+        {
+            const GraphicsFormat preferredFormat = GraphicsFormat.R16G16B16A16_SFloat;
+            return SystemInfo.IsFormatSupported(preferredFormat, FormatUsage.Render)
+                ? preferredFormat
+                : GraphicsFormat.None;
         }
 
         private static void ApplyLayerProperties(ShoostPostProcessLayer layer, Material material)
@@ -551,6 +639,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             descriptor.depthBufferBits = 0;
             descriptor.depthStencilFormat = GraphicsFormat.None;
             descriptor.msaaSamples = 1;
+            EnsureHdrDescriptor(ref descriptor);
 
             bool descriptorChanged = state.frozenTexture == null
                 || state.width != descriptor.width
@@ -661,6 +750,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             blurDescriptor.depthBufferBits = 0;
             blurDescriptor.depthStencilFormat = GraphicsFormat.None;
             blurDescriptor.msaaSamples = 1;
+            EnsureHdrDescriptor(ref blurDescriptor);
 
             RenderingUtils.ReAllocateIfNeeded(ref irisTextureA, blurDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilShoostIrisBlurA");
             RenderingUtils.ReAllocateIfNeeded(ref irisTextureB, blurDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilShoostIrisBlurB");
@@ -703,6 +793,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             blurDescriptor.depthBufferBits = 0;
             blurDescriptor.depthStencilFormat = GraphicsFormat.None;
             blurDescriptor.msaaSamples = 1;
+            EnsureHdrDescriptor(ref blurDescriptor);
 
             RenderingUtils.ReAllocateIfNeeded(ref rgbBlurTextureA, blurDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilShoostRGBBlurV2A");
             RenderingUtils.ReAllocateIfNeeded(ref rgbBlurTextureB, blurDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilShoostRGBBlurV2B");
@@ -743,6 +834,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             glowDescriptor.depthBufferBits = 0;
             glowDescriptor.depthStencilFormat = GraphicsFormat.None;
             glowDescriptor.msaaSamples = 1;
+            EnsureHdrDescriptor(ref glowDescriptor);
 
             RenderingUtils.ReAllocateIfNeeded(ref glowTextureA, glowDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilShoostGlowA");
             RenderingUtils.ReAllocateIfNeeded(ref glowTextureB, glowDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilShoostGlowB");
@@ -812,6 +904,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             blurDesc.height = height;
             blurDesc.clearBuffer = false;
             blurDesc.depthBufferBits = 0;
+            EnsureHdrTextureDesc(ref blurDesc);
 
             TextureHandle blurA = renderGraph.CreateTexture(blurDesc);
             TextureHandle blurB = renderGraph.CreateTexture(blurDesc);
@@ -831,6 +924,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             outputDesc.name = $"_lilShoostPostProcessLayer{layerIndex}";
             outputDesc.clearBuffer = false;
             outputDesc.depthBufferBits = 0;
+            EnsureHdrTextureDesc(ref outputDesc);
             TextureHandle destination = renderGraph.CreateTexture(outputDesc);
             return AddIrisPass(renderGraph, source, destination, material, 2, parameters, screenRatio, runtimeLayer.settings, _profilingSampler, _passName, current);
         }
@@ -852,6 +946,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             blurDesc.height = Mathf.Max(1, sourceDesc.height / downScale);
             blurDesc.clearBuffer = false;
             blurDesc.depthBufferBits = 0;
+            EnsureHdrTextureDesc(ref blurDesc);
 
             TextureHandle blurA = renderGraph.CreateTexture(blurDesc);
             TextureHandle blurB = renderGraph.CreateTexture(blurDesc);
@@ -869,6 +964,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             outputDesc.name = $"_lilShoostPostProcessLayer{layerIndex}";
             outputDesc.clearBuffer = false;
             outputDesc.depthBufferBits = 0;
+            EnsureHdrTextureDesc(ref outputDesc);
             TextureHandle destination = renderGraph.CreateTexture(outputDesc);
             return AddRgbBlurV2Pass(renderGraph, source, destination, material, 1, radius, runtimeLayer.settings, _profilingSampler, _passName, current);
         }
@@ -890,6 +986,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             glowDesc.height = Mathf.Max(1, sourceDesc.height / downScale);
             glowDesc.clearBuffer = false;
             glowDesc.depthBufferBits = 0;
+            EnsureHdrTextureDesc(ref glowDesc);
 
             TextureHandle glowA = renderGraph.CreateTexture(glowDesc);
             TextureHandle glowB = renderGraph.CreateTexture(glowDesc);
@@ -917,6 +1014,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             outputDesc.name = $"_lilShoostPostProcessLayer{layerIndex}";
             outputDesc.clearBuffer = false;
             outputDesc.depthBufferBits = 0;
+            EnsureHdrTextureDesc(ref outputDesc);
             TextureHandle destination = renderGraph.CreateTexture(outputDesc);
             return AddGlowPass(renderGraph, source, destination, material, 3, radius, runtimeLayer.settings, _profilingSampler, _passName, current);
         }
@@ -954,6 +1052,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             destinationDesc.name = $"_lilShoostPostProcessLayer{layerIndex}";
             destinationDesc.clearBuffer = false;
             destinationDesc.depthBufferBits = 0;
+            EnsureHdrTextureDesc(ref destinationDesc);
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
             using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{_passName} Change Frame Rate", out PassData passData, _profilingSampler))

@@ -130,8 +130,9 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/DitheringCustom"
                     result *= lerp(1.0, 0.55, saturate(lineMask));
                 }
 
-                result = lerp(source.rgb, result, amount);
-                return half4(saturate(result), source.a);
+                float3 hdrResidual = max(source.rgb - saturate(source.rgb), 0.0);
+                result = lerp(source.rgb, max(result, 0.0) + hdrResidual, amount);
+                return half4(max(result, 0.0), source.a);
             }
             ENDHLSL
         }

@@ -35,12 +35,12 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/PostProcessLayerBlit"
 
             half3 ColorBurn(half3 baseColor, half3 layerColor)
             {
-                return saturate(1.0 - (1.0 - baseColor) / max(layerColor, 0.0001));
+                return max(1.0 - (1.0 - baseColor) / max(layerColor, 0.0001), 0.0);
             }
 
             half3 ColorDodge(half3 baseColor, half3 layerColor)
             {
-                return saturate(baseColor / max(1.0 - layerColor, 0.0001));
+                return max(baseColor / max(1.0 - layerColor, 0.0001), 0.0);
             }
 
             half3 Overlay(half3 baseColor, half3 layerColor)
@@ -120,7 +120,7 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/PostProcessLayerBlit"
 
                 if (mode == 1)
                 {
-                    return saturate(baseColor + layerColor);
+                    return max(baseColor + layerColor, 0.0);
                 }
 
                 if (mode == 2)
@@ -145,7 +145,7 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/PostProcessLayerBlit"
 
                 if (mode == 6)
                 {
-                    return saturate(baseColor + layerColor - 1.0);
+                    return max(baseColor + layerColor - 1.0, 0.0);
                 }
 
                 if (mode == 7)
@@ -180,7 +180,7 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/PostProcessLayerBlit"
 
                 if (mode == 13)
                 {
-                    return saturate(baseColor + 2.0 * layerColor - 1.0);
+                    return max(baseColor + 2.0 * layerColor - 1.0, 0.0);
                 }
 
                 if (mode == 14)
@@ -205,12 +205,12 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/PostProcessLayerBlit"
 
                 if (mode == 18)
                 {
-                    return saturate(baseColor - layerColor);
+                    return max(baseColor - layerColor, 0.0);
                 }
 
                 if (mode == 19)
                 {
-                    return saturate(baseColor / max(layerColor, 0.0001));
+                    return max(baseColor / max(layerColor, 0.0001), 0.0);
                 }
 
                 if (mode == 20)

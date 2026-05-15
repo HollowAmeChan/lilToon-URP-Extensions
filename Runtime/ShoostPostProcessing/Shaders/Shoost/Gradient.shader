@@ -33,12 +33,12 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/Gradient"
 
             half3 ColorBurn(half3 baseColor, half3 layerColor)
             {
-                return saturate(1.0 - (1.0 - baseColor) / max(layerColor, 0.0001));
+                return max(1.0 - (1.0 - baseColor) / max(layerColor, 0.0001), 0.0);
             }
 
             half3 ColorDodge(half3 baseColor, half3 layerColor)
             {
-                return saturate(baseColor / max(1.0 - layerColor, 0.0001));
+                return max(baseColor / max(1.0 - layerColor, 0.0001), 0.0);
             }
 
             half3 Overlay(half3 baseColor, half3 layerColor)
@@ -112,25 +112,25 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/Gradient"
             {
                 int mode = (int)round(blendMode);
                 if (mode == 0) return layerColor;
-                if (mode == 1) return saturate(baseColor + layerColor);
+                if (mode == 1) return max(baseColor + layerColor, 0.0);
                 if (mode == 2) return baseColor * layerColor;
                 if (mode == 3) return 1.0 - (1.0 - baseColor) * (1.0 - layerColor);
                 if (mode == 4) return min(baseColor, layerColor);
                 if (mode == 5) return ColorBurn(baseColor, layerColor);
-                if (mode == 6) return saturate(baseColor + layerColor - 1.0);
+                if (mode == 6) return max(baseColor + layerColor - 1.0, 0.0);
                 if (mode == 7) return max(baseColor, layerColor);
                 if (mode == 8) return ColorDodge(baseColor, layerColor);
                 if (mode == 9) return Overlay(baseColor, layerColor);
                 if (mode == 10) return SoftLight(baseColor, layerColor);
                 if (mode == 11) return Overlay(layerColor, baseColor);
                 if (mode == 12) return VividLight(baseColor, layerColor);
-                if (mode == 13) return saturate(baseColor + 2.0 * layerColor - 1.0);
+                if (mode == 13) return max(baseColor + 2.0 * layerColor - 1.0, 0.0);
                 if (mode == 14) return lerp(min(baseColor, 2.0 * layerColor), max(baseColor, 2.0 * (layerColor - 0.5)), step(0.5, layerColor));
                 if (mode == 15) return step(0.5, VividLight(baseColor, layerColor));
                 if (mode == 16) return abs(baseColor - layerColor);
                 if (mode == 17) return baseColor + layerColor - 2.0 * baseColor * layerColor;
-                if (mode == 18) return saturate(baseColor - layerColor);
-                if (mode == 19) return saturate(baseColor / max(layerColor, 0.0001));
+                if (mode == 18) return max(baseColor - layerColor, 0.0);
+                if (mode == 19) return max(baseColor / max(layerColor, 0.0001), 0.0);
                 if (mode == 20) return SetLum(SetSat(layerColor, Sat(baseColor)), Lum(baseColor));
                 if (mode == 21) return SetLum(SetSat(baseColor, Sat(layerColor)), Lum(baseColor));
                 if (mode == 22) return SetLum(layerColor, Lum(baseColor));

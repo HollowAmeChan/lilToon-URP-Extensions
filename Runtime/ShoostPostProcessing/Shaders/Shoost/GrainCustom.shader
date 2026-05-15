@@ -90,7 +90,7 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/GrainCustom"
 
                 float3 grained = source.rgb + grainWeight * (source.rgb * (1.0 - darkNoise) - source.rgb);
                 grained += grained * brightNoise * grainWeight;
-                return half4(saturate(grained), source.a);
+                return half4(max(grained, 0.0), source.a);
             }
             ENDHLSL
         }
