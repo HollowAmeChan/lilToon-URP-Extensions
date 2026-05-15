@@ -27,43 +27,6 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/Pixelize"
             float4 _LayerParams0;
             float4 _LayerParams1;
 
-            float2 GetPresetResolution(float typeValue)
-            {
-                int resolutionType = (int)round(typeValue);
-                if (resolutionType == 1)
-                {
-                    return float2(320.0, 240.0);
-                }
-
-                if (resolutionType == 2)
-                {
-                    return float2(640.0, 480.0);
-                }
-
-                if (resolutionType == 3)
-                {
-                    return float2(854.0, 480.0);
-                }
-
-                if (resolutionType == 4)
-                {
-                    return float2(1280.0, 720.0);
-                }
-
-                if (resolutionType == 5)
-                {
-                    return float2(1920.0, 1080.0);
-                }
-
-                float2 screenResolution = _ScreenParams.xy;
-                if (_LayerParams0.y > 1.0 && _LayerParams0.z > 1.0)
-                {
-                    screenResolution = float2(_LayerParams0.y, _LayerParams0.z);
-                }
-
-                return screenResolution;
-            }
-
             half4 SamplePixelated(float2 uv, float2 pixelCount)
             {
                 float2 snappedUV = (floor(uv * pixelCount) + 0.5) / pixelCount;
@@ -81,13 +44,12 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/Pixelize"
                     return source;
                 }
 
-                float2 resolution = GetPresetResolution(_LayerParams0.x);
                 float scale = saturate(_LayerParams0.w);
-                resolution *= max(scale, 0.01);
-
-                float aspect = _LayerParams1.x > 0.5 ? max(_LayerParams1.y, 0.01) : (_ScreenParams.x / max(_ScreenParams.y, 1.0));
-                resolution.x *= aspect;
-                float2 pixelCount = max(resolution, 1.0);
+                float2 pixelCount = max(_ScreenParams.xy * max(scale, 0.01), 1.0);
+                if (_LayerParams1.x > 0.5)
+                {
+                    pixelCount.x = max(pixelCount.y * max(_LayerParams1.y, 0.01), 1.0);
+                }
 
                 half4 pixelated = SamplePixelated(input.texcoord, pixelCount);
                 if (_LayerParams1.z > 0.5 && _LayerParams1.w > 0.0001)

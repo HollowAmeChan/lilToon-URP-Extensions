@@ -49,7 +49,7 @@
 
 其中一部分是纯后处理 shader，一部分更像 Shoost 的场景叠加、UI 驱动或摄像机控制入口。我们在 URP 里会尽量保持它们的用户命名和图标入口一致，但底层实现不一定都是单个 fullscreen pass。
 
-当前已经补上的具体效果包括 `VignetteCustom`、`Sharpen`、`RGBSplit`、`KawaseBlur`、`IrisBlur`、`LUTColorGrading`、`LevelAdjustment`、`AutoWhiteBalance`、`Fisheye` / `LensDistortionCustom`、`Pixelize`、`Distortion`（湍流置换）和 `RGBChannelSeparator`。`DownScaleResolution` 只保留底层兼容，不再作为公开图层入口。
+当前已经补上的具体效果包括 `VignetteCustom`、`Sharpen`、`RGBSplit`、`KawaseBlur`、`IrisBlur`、`LUTColorGrading`、`LevelAdjustment`、`AutoWhiteBalance`、`Fisheye` / `LensDistortionCustom`、`Pixelize`、`Distortion`（湍流置换）和 `RGBChannelSeparator`。`DownScaleResolution` 只保留旧资产兼容，不再作为公开图层入口；新面板里应该用 `Pixelize`。`SharpenAfter` 也不再作为公开图层入口，统一用 `SharpenBefore`，需要后置时去高级里的 `Injection Point` 改位置。
 
 ## 设置
 

@@ -118,20 +118,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static readonly EffectToggleEntry[] LegacyEffectOrder =
         {
-            new EffectToggleEntry(ShoostPostProcessEffect.CustomMaterial, "自定义材质", "icon_LayerAdd_v1"),
-            new EffectToggleEntry(ShoostPostProcessEffect.ColorGradingCustom, "自定义调色", "icon_ColorGrading_v1"),
-            new EffectToggleEntry(ShoostPostProcessEffect.DownScaleResolution, "降分辨率", "icon_Monitor_v1"),
-            new EffectToggleEntry(ShoostPostProcessEffect.GateWeave, "画幅抖动", "icon_Film_v2"),
             new EffectToggleEntry(ShoostPostProcessEffect.KawaseBlur, "Kawase 模糊", "icon_Blur_v1"),
-            new EffectToggleEntry(ShoostPostProcessEffect.LensDistortionCustom, "镜头畸变（自定义）", "icon_Distortion_v1"),
-            new EffectToggleEntry(ShoostPostProcessEffect.MotionTrail, "运动拖影", "icon_CameraSwitch_Move_01"),
-            new EffectToggleEntry(ShoostPostProcessEffect.RGBBlur, "RGB 模糊", "icon_RGBBlur_v2"),
             new EffectToggleEntry(ShoostPostProcessEffect.RGBChannelSeparator, "RGB 通道分离", "icon_RGBChannel_RGB"),
-            new EffectToggleEntry(ShoostPostProcessEffect.SharpenAfter, "锐化（后）", "icon_Sharpen_v1"),
-            new EffectToggleEntry(ShoostPostProcessEffect.RetroLookProBleedCustom, "RetroLookPro Bleed", "icon_Glow_v1"),
-            new EffectToggleEntry(ShoostPostProcessEffect.RetroLookProNoise2Custom, "RetroLookPro Noise2", "icon_Grain_v1"),
-            new EffectToggleEntry(ShoostPostProcessEffect.RetroLookProOldFilm2Custom, "RetroLookPro Old Film 2", "icon_Film_v4"),
-            new EffectToggleEntry(ShoostPostProcessEffect.RetroLookProTVEffectCustom, "RetroLookPro TV Effect", "icon_TV_v1")
         };
 
         private static readonly string[] EffectDisplayNames =
@@ -484,7 +472,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.Pixelize:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
-                    lineCount += 4 + (GetPixelizeUsesCustomResolution(element) ? 2 : 0) + (GetPixelizeUsesManualAspect(element) ? 1 : 0) + (GetPixelizeUsesBlur(element) ? 1 : 0);
+                    lineCount += 1;
                     break;
                 case ShoostPostProcessEffect.DownScaleResolution:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -599,39 +587,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             return Mathf.RoundToInt(parameters0.vector4Value.x) == 0;
-        }
-
-        private static bool GetPixelizeUsesCustomResolution(SerializedProperty element)
-        {
-            SerializedProperty parameters0 = element?.FindPropertyRelative("parameters0");
-            if (parameters0 == null || parameters0.propertyType != SerializedPropertyType.Vector4)
-            {
-                return false;
-            }
-
-            return Mathf.RoundToInt(parameters0.vector4Value.x) == 0;
-        }
-
-        private static bool GetPixelizeUsesManualAspect(SerializedProperty element)
-        {
-            SerializedProperty parameters1 = element?.FindPropertyRelative("parameters1");
-            if (parameters1 == null || parameters1.propertyType != SerializedPropertyType.Vector4)
-            {
-                return false;
-            }
-
-            return Mathf.RoundToInt(parameters1.vector4Value.x) == 1;
-        }
-
-        private static bool GetPixelizeUsesBlur(SerializedProperty element)
-        {
-            SerializedProperty parameters1 = element?.FindPropertyRelative("parameters1");
-            if (parameters1 == null || parameters1.propertyType != SerializedPropertyType.Vector4)
-            {
-                return false;
-            }
-
-            return parameters1.vector4Value.z > 0.5f;
         }
 
         private static bool GetDownScaleUsesCustomResolution(SerializedProperty element)
@@ -779,19 +734,16 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
-            uint seenEffects = 0u;
+            HashSet<int> seenEffects = new HashSet<int>();
             for (int index = layerValues.arraySize - 1; index >= 0; index--)
             {
                 SerializedProperty element = layerValues.GetArrayElementAtIndex(index);
                 int effectIndex = GetEffectIndex(element);
-                uint effectMask = effectIndex >= 0 && effectIndex < 32 ? 1u << effectIndex : 0u;
-                if (effectMask != 0u && (seenEffects & effectMask) != 0u)
+                if (effectIndex >= 0 && !seenEffects.Add(effectIndex))
                 {
                     layerValues.DeleteArrayElementAtIndex(index);
                     continue;
                 }
-
-                seenEffects |= effectMask;
             }
 
             for (int targetIndex = 0; targetIndex < layerValues.arraySize; targetIndex++)
@@ -1228,8 +1180,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private void DrawPixelizeElement(Rect rect, SerializedProperty element)
         {
             SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
-            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
             SerializedProperty enabled = element.FindPropertyRelative("enabled");
+            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
 
             EnsurePixelizeDefaults(parameters0, parameters1);
 
@@ -1244,45 +1196,13 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
 
             Vector4 pixelParams0 = parameters0.vector4Value;
-            Vector4 pixelParams1 = parameters1.vector4Value;
-            int resolutionType = Mathf.Clamp(Mathf.RoundToInt(pixelParams0.x), 0, 5);
-            resolutionType = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "分辨率", resolutionType, new[] { "自定义", "QVGA 320x240", "SDTV 640x480", "EDTV 854x480", "HD 1280x720", "FHD 1920x1080" });
-            pixelParams0.x = resolutionType;
+            pixelParams0.x = 0.0f;
+            pixelParams0.y = 1920.0f;
+            pixelParams0.z = 1080.0f;
+            pixelParams0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "分辨率缩放", Mathf.Clamp01(pixelParams0.w), 0.0f, 1.0f);
             y += LineHeight + LineSpacing;
-
-            if (resolutionType == 0)
-            {
-                pixelParams0.y = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "自定义宽度", Mathf.RoundToInt(pixelParams0.y), 1, 8192));
-                y += LineHeight + LineSpacing;
-                pixelParams0.z = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "自定义高度", Mathf.RoundToInt(pixelParams0.z), 1, 8192));
-                y += LineHeight + LineSpacing;
-            }
-
-            pixelParams0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "分辨率缩放", pixelParams0.w, 0.01f, 1.0f);
-            y += LineHeight + LineSpacing;
-
-            int aspectMode = Mathf.Clamp(Mathf.RoundToInt(pixelParams1.x), 0, 1);
-            aspectMode = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "像素宽高比", aspectMode, new[] { "自动", "手动" });
-            pixelParams1.x = aspectMode;
-            y += LineHeight + LineSpacing;
-            if (aspectMode == 1)
-            {
-                pixelParams1.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "宽高比", pixelParams1.y, 0.5f, 2.0f);
-                y += LineHeight + LineSpacing;
-            }
-
-            bool enableBlur = pixelParams1.z > 0.5f;
-            enableBlur = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "启用模糊", enableBlur);
-            pixelParams1.z = enableBlur ? 1.0f : 0.0f;
-            y += LineHeight + LineSpacing;
-            if (enableBlur)
-            {
-                pixelParams1.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "模糊半径", pixelParams1.w, 0.0f, 5.0f);
-                y += LineHeight + LineSpacing;
-            }
 
             parameters0.vector4Value = pixelParams0;
-            parameters1.vector4Value = pixelParams1;
             EditorGUI.indentLevel--;
         }
 
@@ -2104,7 +2024,15 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             if (parameters0 != null && parameters0.propertyType == SerializedPropertyType.Vector4 && parameters0.vector4Value.sqrMagnitude <= 0.000001f)
             {
-                parameters0.vector4Value = new Vector4(0.0f, 320.0f, 240.0f, 1.0f);
+                parameters0.vector4Value = new Vector4(0.0f, 1920.0f, 1080.0f, 1.0f);
+            }
+            else if (parameters0 != null && parameters0.propertyType == SerializedPropertyType.Vector4)
+            {
+                Vector4 value = parameters0.vector4Value;
+                if (Mathf.Approximately(value.x, 0.0f) && Mathf.Approximately(value.y, 320.0f) && Mathf.Approximately(value.z, 240.0f) && Mathf.Approximately(value.w, 1.0f))
+                {
+                    parameters0.vector4Value = new Vector4(0.0f, 1920.0f, 1080.0f, 1.0f);
+                }
             }
 
             if (parameters1 != null && parameters1.propertyType == SerializedPropertyType.Vector4 && parameters1.vector4Value.sqrMagnitude <= 0.000001f)
@@ -2192,7 +2120,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.Pixelize:
                     SetFloat(element, "intensity", 1.0f);
-                    SetVector4(element, "parameters0", new Vector4(0.0f, 320.0f, 240.0f, 1.0f));
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 1920.0f, 1080.0f, 1.0f));
                     SetVector4(element, "parameters1", new Vector4(0.0f, 1.0f, 0.0f, 0.0f));
                     break;
                 case ShoostPostProcessEffect.DownScaleResolution:
