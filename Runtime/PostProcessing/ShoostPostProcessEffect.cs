@@ -18,7 +18,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         KawaseBlur,
         LensDistortionCustom,
         LevelAdjustment,
-        LUTColorGrading,
         MotionTrail,
         Pixelize,
         RGBBlur,

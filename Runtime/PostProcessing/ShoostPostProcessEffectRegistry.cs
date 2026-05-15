@@ -38,8 +38,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                     return "Hidden/lilToon-Shoost/URP/Shoost/LensDistortionCustom";
                 case ShoostPostProcessEffect.LevelAdjustment:
                     return "Hidden/lilToon-Shoost/URP/Shoost/LevelAdjustment";
-                case ShoostPostProcessEffect.LUTColorGrading:
-                    return "Hidden/lilToon-Shoost/URP/Shoost/LUTColorGrading";
                 case ShoostPostProcessEffect.MotionTrail:
                     return "Hidden/lilToon-Shoost/URP/Shoost/MotionTrail";
                 case ShoostPostProcessEffect.Pixelize:
@@ -77,7 +75,8 @@ namespace lilToon.URP.Extensions.PostProcessing
             switch (effect)
             {
                 case ShoostPostProcessEffect.CRTEffects:
-                case ShoostPostProcessEffect.LUTColorGrading:
+                case ShoostPostProcessEffect.ColorGradingCustom:
+                case ShoostPostProcessEffect.LevelAdjustment:
                 case ShoostPostProcessEffect.RGBChannelSeparator:
                 case ShoostPostProcessEffect.SharpenAfter:
                 case ShoostPostProcessEffect.RetroLookProTVEffectCustom:

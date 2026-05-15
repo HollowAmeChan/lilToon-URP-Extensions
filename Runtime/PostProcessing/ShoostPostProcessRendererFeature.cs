@@ -268,6 +268,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         private RTHandle irisTextureB;
         private RTHandle rgbBlurTextureA;
         private RTHandle rgbBlurTextureB;
+        private readonly Dictionary<int, ChangeFrameRateState> changeFrameRateStates = new Dictionary<int, ChangeFrameRateState>();
 
         private sealed class PassData
         {
@@ -288,6 +289,28 @@ namespace lilToon.URP.Extensions.PostProcessing
             public float blurOffsetG;
             public float blurOffsetB;
             public bool enableRgbSplit;
+            public TextureHandle frozenFrameTexture;
+        }
+
+        private sealed class ChangeFrameRateState
+        {
+            public RTHandle frozenTexture;
+            public int width;
+            public int height;
+            public int volumeDepth;
+            public int msaaSamples;
+            public TextureDimension dimension;
+            public GraphicsFormat graphicsFormat;
+            public bool isValid;
+            public int targetFrameRate;
+            public double nextUpdateTime;
+
+            public void Release()
+            {
+                frozenTexture?.Release();
+                frozenTexture = null;
+                isValid = false;
+            }
         }
 
         private struct IrisBlurParameters
@@ -345,6 +368,12 @@ namespace lilToon.URP.Extensions.PostProcessing
             rgbBlurTextureB?.Release();
             rgbBlurTextureA = null;
             rgbBlurTextureB = null;
+            foreach (ChangeFrameRateState state in changeFrameRateStates.Values)
+            {
+                state.Release();
+            }
+
+            changeFrameRateStates.Clear();
             runtimeLayers.Clear();
         }
 
@@ -392,6 +421,10 @@ namespace lilToon.URP.Extensions.PostProcessing
                     {
                         ApplyRgbBlurV2Layer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, destination, runtimeLayer);
                     }
+                    else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.ChangeFrameRate)
+                    {
+                        ApplyChangeFrameRateLayer(cmd, renderingData.cameraData.cameraTargetDescriptor, renderingData.cameraData.camera, source, destination, runtimeLayer);
+                    }
                     else
                     {
                         ApplyLayerProperties(runtimeLayer.settings, runtimeLayer.material);
@@ -438,6 +471,12 @@ namespace lilToon.URP.Extensions.PostProcessing
                 if (runtimeLayer.settings.effect == ShoostPostProcessEffect.RGBBlurV2)
                 {
                     source = RecordRgbBlurV2Layer(renderGraph, source, runtimeLayer, i);
+                    continue;
+                }
+                if (runtimeLayer.settings.effect == ShoostPostProcessEffect.ChangeFrameRate)
+                {
+                    UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
+                    source = RecordChangeFrameRateLayer(renderGraph, source, runtimeLayer, i, cameraData);
                     continue;
                 }
 
@@ -511,6 +550,67 @@ namespace lilToon.URP.Extensions.PostProcessing
             {
                 material.SetTexture(ShoostPostProcessShaderConstants.LayerTextureId, layer.texture);
             }
+        }
+
+        private static int GetChangeFrameRateTargetFrameRate(ShoostPostProcessLayer layer)
+        {
+            float value = layer.parameters0.x > 0.0f ? layer.parameters0.x : 12.0f;
+            return Mathf.Clamp(Mathf.RoundToInt(value), 1, 60);
+        }
+
+        private ChangeFrameRateState GetChangeFrameRateState(int cameraId, RenderTextureDescriptor descriptor)
+        {
+            if (!changeFrameRateStates.TryGetValue(cameraId, out ChangeFrameRateState state))
+            {
+                state = new ChangeFrameRateState();
+                changeFrameRateStates.Add(cameraId, state);
+            }
+
+            descriptor.depthBufferBits = 0;
+            descriptor.depthStencilFormat = GraphicsFormat.None;
+            descriptor.msaaSamples = 1;
+
+            bool descriptorChanged = state.frozenTexture == null
+                || state.width != descriptor.width
+                || state.height != descriptor.height
+                || state.volumeDepth != descriptor.volumeDepth
+                || state.msaaSamples != descriptor.msaaSamples
+                || state.dimension != descriptor.dimension
+                || state.graphicsFormat != descriptor.graphicsFormat;
+
+            if (descriptorChanged)
+            {
+                state.Release();
+                state.width = descriptor.width;
+                state.height = descriptor.height;
+                state.volumeDepth = descriptor.volumeDepth;
+                state.msaaSamples = descriptor.msaaSamples;
+                state.dimension = descriptor.dimension;
+                state.graphicsFormat = descriptor.graphicsFormat;
+            }
+
+            RenderingUtils.ReAllocateIfNeeded(ref state.frozenTexture, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: $"_lilShoostChangeFrameRate_{cameraId}");
+            return state;
+        }
+
+        private static bool ShouldRefreshChangeFrameRateState(ChangeFrameRateState state, ShoostPostProcessLayer layer, out int targetFrameRate, out double now)
+        {
+            targetFrameRate = GetChangeFrameRateTargetFrameRate(layer);
+            now = Time.realtimeSinceStartupAsDouble;
+            if (state.targetFrameRate != targetFrameRate)
+            {
+                state.targetFrameRate = targetFrameRate;
+                state.nextUpdateTime = 0.0;
+                state.isValid = false;
+            }
+
+            return !state.isValid || now >= state.nextUpdateTime;
+        }
+
+        private static void MarkChangeFrameRateStateRefreshed(ChangeFrameRateState state, int targetFrameRate, double now)
+        {
+            state.isValid = true;
+            state.nextUpdateTime = now + (1.0 / Mathf.Max(1, targetFrameRate));
         }
 
         private static IrisBlurParameters GetIrisBlurParameters(ShoostPostProcessLayer layer)
@@ -695,6 +795,24 @@ namespace lilToon.URP.Extensions.PostProcessing
             Blitter.BlitCameraTexture(cmd, source, destination, material, 1);
         }
 
+        private void ApplyChangeFrameRateLayer(CommandBuffer cmd, RenderTextureDescriptor sourceDescriptor, Camera camera, RTHandle source, RTHandle destination, ShoostPostProcessRuntimeLayer runtimeLayer)
+        {
+            ShoostPostProcessLayer layer = runtimeLayer.settings;
+            Material material = runtimeLayer.material;
+            int cameraId = camera != null ? camera.GetInstanceID() : 0;
+            ChangeFrameRateState state = GetChangeFrameRateState(cameraId, sourceDescriptor);
+
+            ApplyLayerProperties(layer, material);
+            if (ShouldRefreshChangeFrameRateState(state, layer, out int targetFrameRate, out double now))
+            {
+                Blitter.BlitCameraTexture(cmd, source, state.frozenTexture, material, 0);
+                MarkChangeFrameRateStateRefreshed(state, targetFrameRate, now);
+            }
+
+            cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.FrozenFrameTexId, state.frozenTexture);
+            Blitter.BlitCameraTexture(cmd, source, destination, material, 1);
+        }
+
         private TextureHandle RecordKawaseBlurLayer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex)
         {
             TextureDesc sourceDesc = renderGraph.GetTextureDesc(source);
@@ -823,6 +941,63 @@ namespace lilToon.URP.Extensions.PostProcessing
             outputDesc.depthBufferBits = 0;
             TextureHandle destination = renderGraph.CreateTexture(outputDesc);
             return AddRgbBlurV2Pass(renderGraph, source, destination, material, 1, radius, runtimeLayer.settings, profilingSampler, passName, current);
+        }
+
+        private TextureHandle RecordChangeFrameRateLayer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex, UniversalCameraData cameraData)
+        {
+            int cameraId = cameraData.camera != null ? cameraData.camera.GetInstanceID() : 0;
+            ChangeFrameRateState state = GetChangeFrameRateState(cameraId, cameraData.cameraTargetDescriptor);
+            TextureHandle frozenFrameTexture = renderGraph.ImportTexture(state.frozenTexture);
+
+            if (ShouldRefreshChangeFrameRateState(state, runtimeLayer.settings, out int targetFrameRate, out double now))
+            {
+                using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{passName} Change Frame Rate Capture", out PassData passData, profilingSampler))
+                {
+                    passData.source = source;
+                    passData.layer = runtimeLayer.settings;
+                    passData.material = runtimeLayer.material;
+                    passData.passIndex = 0;
+
+                    builder.UseTexture(source, AccessFlags.Read);
+                    builder.SetRenderAttachment(frozenFrameTexture, 0, AccessFlags.WriteAll);
+                    builder.AllowGlobalStateModification(true);
+                    builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                    {
+                        ApplyLayerProperties(data.layer, data.material);
+                        Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, data.passIndex);
+                    });
+                }
+
+                MarkChangeFrameRateStateRefreshed(state, targetFrameRate, now);
+            }
+
+            TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
+            destinationDesc.name = $"_lilShoostPostProcessLayer{layerIndex}";
+            destinationDesc.clearBuffer = false;
+            destinationDesc.depthBufferBits = 0;
+            TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
+
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{passName} Change Frame Rate", out PassData passData, profilingSampler))
+            {
+                passData.source = source;
+                passData.frozenFrameTexture = frozenFrameTexture;
+                passData.layer = runtimeLayer.settings;
+                passData.material = runtimeLayer.material;
+                passData.passIndex = 1;
+
+                builder.UseTexture(source, AccessFlags.Read);
+                builder.UseTexture(frozenFrameTexture, AccessFlags.Read);
+                builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
+                builder.AllowGlobalStateModification(true);
+                builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                {
+                    ApplyLayerProperties(data.layer, data.material);
+                    context.cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.FrozenFrameTexId, data.frozenFrameTexture);
+                    Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, data.passIndex);
+                });
+            }
+
+            return destination;
         }
 
         private TextureHandle AddKawasePass(

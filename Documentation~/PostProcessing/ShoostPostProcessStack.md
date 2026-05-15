@@ -49,7 +49,7 @@
 
 其中一部分是纯后处理 shader，一部分更像 Shoost 的场景叠加、UI 驱动或摄像机控制入口。我们在 URP 里会尽量保持它们的用户命名和图标入口一致，但底层实现不一定都是单个 fullscreen pass。
 
-当前已经补上的具体效果包括 `VignetteCustom`、`Sharpen`、`RGBSplit`、`KawaseBlur`、`IrisBlur`、`LUTColorGrading`、`LevelAdjustment`、`AutoWhiteBalance`、`Fisheye` / `LensDistortionCustom`、`Pixelize`、`Distortion`（湍流置换）和 `RGBChannelSeparator`。`DownScaleResolution` 只保留旧资产兼容，不再作为公开图层入口；新面板里应该用 `Pixelize`。`SharpenAfter` 也不再作为公开图层入口，统一用 `SharpenBefore`，需要后置时去高级里的 `Injection Point` 改位置。
+当前已经补上的具体效果包括 `VignetteCustom`、`Sharpen`、`RGBSplit`、`KawaseBlur`、`IrisBlur`、`ColorGradingCustom`、`LevelAdjustment`、`AutoWhiteBalance`、`Fisheye` / `LensDistortionCustom`、`Pixelize`、`Distortion`（湍流置换）和 `RGBChannelSeparator`。`LUTColorGrading` 已从公开实现中移除，第 4 个“调色”入口对齐 Shoost 的三色轮调色。`DownScaleResolution` 只保留旧资产兼容，不再作为公开图层入口；新面板里应该用 `Pixelize`。`SharpenAfter` 也不再作为公开图层入口，统一用 `SharpenBefore`，需要后置时去高级里的 `Injection Point` 改位置。
 
 ## 设置
 
@@ -77,7 +77,7 @@ Volume 里只有一个面向用户的大图层列表，但运行时会把它拆�
 - `After URP Post Processing`：在 URP 主后处理栈之后运行，更接近 PPS v2 的 `AfterStack`，适合最终画面叠加类效果；
 - `After Rendering`：更晚的逃生插入点，用于必须接近最终 blit 的效果。
 
-补充一点：`LUTColorGrading` 默认也应该走 `After URP Post Processing`。如果它放在更早的位置，LUT 的截断和色彩变换会先把高亮压掉，后面的 Bloom 就只能吃到已经被压平的结果。
+补充一点：色阶、调色这类最终色彩重映射默认走 `After URP Post Processing`。如果它们放在更早的位置，色彩变换会先影响高亮，后面的 Bloom 就只能吃到已经被改变过的结果。
 
 重要事项：URP 内置后处理不会显示为 renderer data asset 里的 `ScriptableRendererFeature`。即使可见的 renderer feature 列表里只有 lilOIT、HTrace、Shoost 这些自定义功能，只要相机开启了 `Render Post Processing`，并且有 active 的 Volume override，URP 仍然会从 `UniversalRenderer` 内部注入自己的后处理 pass。
 

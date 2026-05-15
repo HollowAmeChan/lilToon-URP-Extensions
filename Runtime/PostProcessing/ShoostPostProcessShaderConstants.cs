@@ -23,6 +23,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static readonly int ScreenRatioId = Shader.PropertyToID("_ScreenRatio");
         public static readonly int OriginalTexId = Shader.PropertyToID("_OriginalTex");
         public static readonly int BlurredTexId = Shader.PropertyToID("_BlurredTex");
+        public static readonly int FrozenFrameTexId = Shader.PropertyToID("_FrozenFrameTex");
         public static readonly int CenterId = Shader.PropertyToID("_Center");
         public static readonly int CenterSizeId = Shader.PropertyToID("_CenterSize");
         public static readonly int SmoothnessId = Shader.PropertyToID("_Smoothness");
