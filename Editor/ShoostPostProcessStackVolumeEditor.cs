@@ -116,6 +116,24 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ShoostPostProcessEffect.CameraFlash, "摄像机闪光", "icon_CameraFlash_v1")
         };
 
+        private static readonly EffectToggleEntry[] LegacyEffectOrder =
+        {
+            new EffectToggleEntry(ShoostPostProcessEffect.CustomMaterial, "自定义材质", "icon_LayerAdd_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.ColorGradingCustom, "自定义调色", "icon_ColorGrading_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.DownScaleResolution, "降分辨率", "icon_Monitor_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.GateWeave, "画幅抖动", "icon_Film_v2"),
+            new EffectToggleEntry(ShoostPostProcessEffect.KawaseBlur, "Kawase 模糊", "icon_Blur_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.LensDistortionCustom, "镜头畸变（自定义）", "icon_Distortion_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.MotionTrail, "运动拖影", "icon_CameraSwitch_Move_01"),
+            new EffectToggleEntry(ShoostPostProcessEffect.RGBBlur, "RGB 模糊", "icon_RGBBlur_v2"),
+            new EffectToggleEntry(ShoostPostProcessEffect.RGBChannelSeparator, "RGB 通道分离", "icon_RGBChannel_RGB"),
+            new EffectToggleEntry(ShoostPostProcessEffect.SharpenAfter, "锐化（后）", "icon_Sharpen_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.RetroLookProBleedCustom, "RetroLookPro Bleed", "icon_Glow_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.RetroLookProNoise2Custom, "RetroLookPro Noise2", "icon_Grain_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.RetroLookProOldFilm2Custom, "RetroLookPro Old Film 2", "icon_Film_v4"),
+            new EffectToggleEntry(ShoostPostProcessEffect.RetroLookProTVEffectCustom, "RetroLookPro TV Effect", "icon_TV_v1")
+        };
+
         private static readonly string[] EffectDisplayNames =
         {
             "自定义材质",
@@ -125,11 +143,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "显示器",
             "湍流置换",
             "视频游戏",
-            "自定义抖动",
+            "降分辨率",
             "胶片",
             "镜头畸变",
             "画幅抖动",
-            "自定义颗粒",
+            "颗粒",
             "光圈模糊",
             "Kawase 模糊",
             "镜头畸变（自定义）",
@@ -219,40 +237,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             (int)ShoostPostProcessBlendMode.Saturation,
             (int)ShoostPostProcessBlendMode.Color,
             (int)ShoostPostProcessBlendMode.Luminosity
-        };
-
-        private static readonly Dictionary<ShoostPostProcessEffect, string> EffectIconNames = new Dictionary<ShoostPostProcessEffect, string>
-        {
-            { ShoostPostProcessEffect.CustomMaterial, "icon_LayerAdd_v1" },
-            { ShoostPostProcessEffect.AutoWhiteBalance, "icon_WhiteBalance_v1" },
-            { ShoostPostProcessEffect.ChangeFrameRate, "icon_FPS_v1" },
-            { ShoostPostProcessEffect.ColorGradingCustom, "icon_ColorGrading_v1" },
-            { ShoostPostProcessEffect.CRTEffects, "icon_TV_v1" },
-            { ShoostPostProcessEffect.Distortion, "icon_Distortion_v1" },
-            { ShoostPostProcessEffect.DitheringCustom, "icon_Pixel_v1" },
-            { ShoostPostProcessEffect.FilmBreathGateWeave, "icon_Film_v3" },
-            { ShoostPostProcessEffect.Fisheye, "icon_FishEye_v1" },
-            { ShoostPostProcessEffect.GateWeave, "icon_Film_v2" },
-            { ShoostPostProcessEffect.GrainCustom, "icon_Grain_v1" },
-            { ShoostPostProcessEffect.IrisBlur, "icon_IrisBlur_v1" },
-            { ShoostPostProcessEffect.KawaseBlur, "icon_Blur_v1" },
-            { ShoostPostProcessEffect.LensDistortionCustom, "icon_Distortion_v1" },
-            { ShoostPostProcessEffect.LevelAdjustment, "icon_LevelsAdjustment_v1" },
-            { ShoostPostProcessEffect.LUTColorGrading, "icon_ColorGrading_v1" },
-            { ShoostPostProcessEffect.MotionTrail, "icon_CameraSwitch_Move_01" },
-            { ShoostPostProcessEffect.Pixelize, "icon_Pixel_v1" },
-            { ShoostPostProcessEffect.RGBBlur, "icon_RGBBlur_v2" },
-            { ShoostPostProcessEffect.RGBBlurV2, "icon_RGBBlur_v2" },
-            { ShoostPostProcessEffect.RGBChannelSeparator, "icon_RGBChannel_RGB" },
-            { ShoostPostProcessEffect.RGBSplit, "icon_RGBSplit_v1" },
-            { ShoostPostProcessEffect.SharpenBefore, "icon_Sharpen_v1" },
-            { ShoostPostProcessEffect.SharpenAfter, "icon_Sharpen_v1" },
-            { ShoostPostProcessEffect.Tube, "icon_TV_v1" },
-            { ShoostPostProcessEffect.VignetteCustom, "icon_Vignette_v1" },
-            { ShoostPostProcessEffect.RetroLookProBleedCustom, "icon_Glow_v1" },
-            { ShoostPostProcessEffect.RetroLookProNoise2Custom, "icon_Grain_v1" },
-            { ShoostPostProcessEffect.RetroLookProOldFilm2Custom, "icon_Film_v4" },
-            { ShoostPostProcessEffect.RetroLookProTVEffectCustom, "icon_TV_v1" }
         };
 
         private static readonly Dictionary<ShoostPostProcessEffect, GUIContent> EffectIconContents = new Dictionary<ShoostPostProcessEffect, GUIContent>();
@@ -696,10 +680,23 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            DrawEffectIconRow(VisibleEffectOrder);
+            EditorGUILayout.Space(3.0f);
+            EditorGUILayout.LabelField("旧实现", EditorStyles.miniBoldLabel);
+            DrawEffectIconRow(LegacyEffectOrder);
+        }
+
+        private void DrawEffectIconRow(EffectToggleEntry[] entries)
+        {
+            if (entries == null || entries.Length == 0)
+            {
+                return;
+            }
+
             float width = EditorGUIUtility.currentViewWidth - 40.0f;
             width = Mathf.Max(160.0f, width);
             int buttonsPerRow = Mathf.Max(1, Mathf.FloorToInt((width + EffectIconSpacing) / (EffectIconSize + EffectIconSpacing)));
-            int rowCount = Mathf.CeilToInt(VisibleEffectOrder.Length / (float)buttonsPerRow);
+            int rowCount = Mathf.CeilToInt(entries.Length / (float)buttonsPerRow);
             float height = rowCount * EffectIconSize + Mathf.Max(0, rowCount - 1) * EffectIconSpacing;
 
             Rect rect = GUILayoutUtility.GetRect(0.0f, height, GUILayout.ExpandWidth(true));
@@ -707,7 +704,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             float y = rect.y;
             int column = 0;
 
-            foreach (EffectToggleEntry entry in VisibleEffectOrder)
+            foreach (EffectToggleEntry entry in entries)
             {
                 if (column >= buttonsPerRow)
                 {
