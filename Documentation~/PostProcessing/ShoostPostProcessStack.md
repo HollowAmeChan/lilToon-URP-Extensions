@@ -31,8 +31,8 @@
 - 粒子
 - 摄像头切换器
 - 透明背景
-- 胶片
-- 电视
+- 胶片（暂时跳过：底层组合链路复杂）
+- 电视（Tube，暂时跳过：底层组合链路复杂）
 - VHS
 - 显示器
 - 视频游戏
@@ -137,4 +137,27 @@ Volume 里只有一个面向用户的大图层列表，但运行时会把它拆�
 - `DitheringCustom` 的三张抖动图来自 Shoost 解包工程的 `dithering_2x2_4_Steps_v2.png`、`dithering_2x2_4_Steps_v4.png`、`dithering_4x4_16_Steps.png`，在包内对应 `ShoostDitheringV1/V2/V3.png`。
 - `DitheringCustom / 视频游戏`：已由实机核对确认完美对齐。当前实现已按 Shoost renderer 的 `_ResolutionX/_ResolutionY` 思路修正屏幕像素宽高归一化，并修正网格线为屏幕像素稳定宽度。
 - `CRTEffects / 显示器`：已由实机核对确认完美对齐。来源是 Shoost 的 `Custom/CRTEffects`。用户侧只暴露“类型（RGB/RGB 单色/圆形/线条）”和“分辨率”，类型实际对应 Shoost UI 中 `_scanlineTexture` 列表的四张贴图：`crt_scanlines_A_v1.png`、`crt_scanlines_A_v2.png`、`crt_scanlines_D_v2.png`、`crt_scanlines_B.png`。shader 按 RenderDoc 中 `Hidden/CRTEffects` 第一 pass 的思路实现：以 FC `256x240` 为基础，并按 `当前屏幕宽高比 / (256/240)` 修正横向分辨率，再重复采样扫描线贴图，用 slot mask、shadow mask、brightness 和 glow 叠加到源图上。
-- `VHS`：来源是 Shoost 的 `PostProcess_VHSValue` 组合滤镜。Shoost 用户侧以弱/中/强三档切换 profile，并联动 `RLProVHSEffect`、`RLProNoise2_Custom`、`RLProEdgeNoise`、`RGBBlurV2`、`Grain_Custom`、`Sharpen_Before`、`Tube`，扫描线子开关来自 `RLProTVEffect_Custom`。当前 URP 版先压成一个用户滤镜和一个 fullscreen pass，暴露“类型、噪点强度、锐化、扫描线、大小”，默认插入 `Before URP Post Processing`，状态标记为：对齐中。
+- `VHS`：来源是 Shoost 的 `PostProcess_VHSValue` 组合滤镜。Shoost 用户侧以弱/中/强三档切换 profile，并联动 `RLProVHSEffect`、`RLProNoise2_Custom`、`RLProEdgeNoise`、`RGBBlurV2`、`Grain_Custom`、`Sharpen_Before`、`Tube`，扫描线子开关来自 `RLProTVEffect_Custom`。当前 URP 版压成一个用户滤镜和一个 fullscreen pass，暴露“类型、噪点强度、锐化、扫描线、大小”，默认插入 `Before URP Post Processing`。已由实机核对确认完美对齐，状态标记为：完美对齐。
+- `Tube / 电视`：暂时跳过。来源是 Shoost 的 `PostProcess_TVValue` 组合滤镜，用户侧 60/70/80/90 四档不是单个 `Custom/Tube` shader 的模式，而是 profile 组合：`FilmBreath_GateWeave`、`RGBBlur`、`LUTColorGrading`、`Tube`、`Sharpen_Before` 等层，60 年代还包含 `RLProJitter`。此前尝试把它压进单个 fullscreen pass，但 LUT、锐化、Tube/YIQ 漏色、年代 profile 和第三方包语义之间耦合较深，当前不继续对齐。状态标记为：暂时跳过。
+- `Film / 胶片`：暂时跳过。Shoost 的 `AMS_AnimeFilm_60s/70s/80s/90s` 和 TV 的年代命名只共享 UI 名称，不共享滤镜语义；胶片入口需要单独处理 `LUTColorGrading`、`Grain_Custom`、`RLProOldFilm2_Custom` 等 profile 层，并且还要重新核对各层顺序、LUT 导入与 RenderDoc 汇编。状态标记为：暂时跳过。
+- LUT 语义备忘：TV 组合的 `AMS_TV_60s/70s/80s/90s` 分别引用 `Monochrome Soft`、`Film Fuji v2`、`Film Fuji v2`、`Film Fuji v3`；胶片组合的 `AMS_AnimeFilm_60s/70s/80s/90s` 分别引用 `Monochrome Soft`、`Film Kodak v1`、`Film Kodak v2`、`Film Kodak v3`。这两组 60/70/80/90 只共享年代 UI 命名，不共享滤镜语义。RenderDoc 中 `Hidden/Custom/LUTColorGrading` 的 32x32 strip 是 B 通道切片、R 为横向、G 为纵向；LUT 纹理按非 sRGB 导入，由 shader 显式执行 sRGB/Linear 转换。该备忘仅保留给后续重启 Tube/胶片移植时参考。
+
+## 透明源语义与重写边界
+
+Shoost 原始工作流更像在处理一个可能带 alpha 的图片/视频源，而不是 URP 相机的最终不透明颜色缓冲。Shoost 场景里默认有背景、角色、前景三层，很多用户侧效果实际只作用于角色或前景，背景会被 alpha 或源图层边界自然排除。URP fullscreen post 看到的通常是已经合成后的 camera color，背景、角色和前景已经混在一起，alpha 也未必还保留可用语义。因此后续迁移分成三类：
+
+- `直接按 Shoost/RenderDoc 复刻`：主要依赖最终屏幕颜色的滤镜。包括 `SharpenBefore`、`AutoWhiteBalance`、`LevelAdjustment`、`ColorGradingCustom`、`VignetteCustom`、`Pixelize`、`Distortion`、`Fisheye / LensDistortionCustom`、`RGBSplit`、`RGBChannelSeparator`、`GrainCustom`、`DitheringCustom`、`CRTEffects`、`VHS`。这些可以继续走 fullscreen pass 或现有多 pass 调度。
+- `按 Shoost 语义实现，但需要专用调度`：不是透明源问题，主要是运行时结构更复杂。包括 `KawaseBlur`、`IrisBlur`、`RGBBlurV2` 这类多 RT / blur pyramid，`MotionTrail`、`ChangeFrameRate` 这类历史 buffer，以及 `CustomMaterial` 的 Photoshop 式混合。
+- `不要硬搬 Shoost，改成 URP 主体数据效果`：强依赖透明源、主体边界、alpha 或 Shoost 场景层级的效果。包括 `EdgeLight / 边缘光`、`Outline / 轮廓`、`DropShadow / 投影`，以及大概率需要重新设计的 `Glow / 发光`、`Lighting / 光照`、`TransparentBackground / 透明背景`、`Particle / 粒子`、`Weather / 天气`、`CameraSwitcher / 摄像头切换器`。这些不应该从最终 camera color 里猜 alpha，应使用明确的角色 mask、stencil、depth、normal 或单独的角色渲染目标。
+
+建议的新数据契约：
+
+- 普通画面滤镜只读 camera color。
+- 主体相关滤镜读取角色 mask / stencil，并可选读取 depth、normal、motion 或单独角色 color。
+- 背景、角色、前景的分层语义不要默认等同于 URP 最终颜色缓冲；需要分层时，应在渲染管线里显式产出 mask 或中间 RT。
+
+三个高优先级重写项：
+
+- `EdgeLight / 边缘光`：用角色 normal + view direction 做 rim，乘角色 mask/stencil 控制作用范围；需要时再叠加深度边缘，避免背景参与。
+- `Outline / 轮廓`：用 depth + normal 的屏幕空间描边，最好配合角色 stencil 或 layer mask 限定对象；不要按 Shoost 的透明图片边缘膨胀硬搬。
+- `DropShadow / 投影`：不要依赖最终图像 alpha 做偏移阴影。优先考虑基于角色 mask/depth 的投影，或基于 normal/depth 的二次打光/接触阴影式实现，让阴影和 URP 场景空间对齐。

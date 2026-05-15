@@ -556,7 +556,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.Tube:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
-                    lineCount += 7 + (GetTubeUsesCustomResolution(element) ? 2 : 0);
+                    lineCount += 4;
                     break;
                 case ShoostPostProcessEffect.Pixelize:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -1330,9 +1330,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.Tube:
                     SetFloat(element, "intensity", 1.0f);
-                    SetVector4(element, "parameters0", new Vector4(1.0f, 1920.0f, 1080.0f, 1.0f));
-                    SetVector4(element, "parameters1", new Vector4(0.5f, 0.0f, 1.0f, 0.0f));
-                    SetVector4(element, "parameters2", Vector4.zero);
+                    SetObjectReference(element, "texture", LoadTubeLutTexture(0));
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 0.0f, 1.0f, 0.0f));
+                    SetVector4(element, "parameters1", Vector4.zero);
+                    SetVector4(element, "parameters2", new Vector4(0.0f, 0.0f, 0.0f, TubeInitMarker));
                     break;
                 case ShoostPostProcessEffect.VHS:
                     SetFloat(element, "intensity", 1.0f);

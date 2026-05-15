@@ -34,7 +34,7 @@ Shoost 的滤镜 UI 分部放在：
 - `Fisheye.cs`：Shoost 用户侧的“镜头畸变”。包含强度、缩放、柔和度、圆形黑边等 UI。
 - `Distortion.cs`：湍流置换。包含速度、强度、纹理等 UI，并负责加载默认置换纹理。
 
-其他 `Filters/*.cs` 是已经迁出的较小滤镜或占位滤镜，例如锐化、白平衡、胶片、电视、颗粒、像素化、帧率限制等。即使暂时是占位，也先保留独立文件边界，后续补实现时直接进对应文件。
+其他 `Filters/*.cs` 是已经迁出的较小滤镜或占位滤镜，例如锐化、白平衡、胶片、电视、颗粒、像素化、帧率限制等。即使暂时是占位，也先保留独立文件边界，后续补实现时直接进对应文件。注意：胶片和 Tube/电视目前明确标记为暂时跳过，因为它们不是单 shader 效果，而是多个 Shoost profile 层和第三方包语义组合出来的复杂入口。
 
 ## Runtime 侧
 
@@ -65,6 +65,20 @@ Runtime 先不强拆，避免在 RenderGraph 链路还没完全稳定前引入�
 - `ShoostStack`：尽量对齐 Shoost 原 UI、图标顺序、参数命名和默认值。
 - 自研后处理：按你自己的 RenderFeature / Volume 设计走，可以不受 Shoost 的单实例、固定顺序和图标面板限制。
 
+## 主体数据效果
+
+Shoost 中有一组效果依赖透明源或角色/前景图层：边缘光、轮廓、投影，以及部分发光、光照、透明背景、粒子、天气和摄像头切换器。它们在 Shoost 里可以利用图片/视频源 alpha、背景/角色/前景分层和 UI 场景对象；在 URP fullscreen post 中，这些信息通常已经丢失，所以不建议按 Shoost shader 或 profile 硬搬。
+
+这类效果后续应单独建一个主体数据管线，而不是继续塞进普通 Shoost fullscreen pass：
+
+- Runtime 侧需要能产出或读取角色 `stencil / mask / depth / normal`，必要时增加角色 color RT。
+- Editor 侧可以沿用 Shoost 的用户入口名称和图标，但参数语义以 URP 实现为准。
+- `EdgeLight` 应按 normal + view direction 的 rim light 写。
+- `Outline` 应按 depth + normal 屏幕空间描边写，并用 stencil/layer mask 限定对象。
+- `DropShadow` 应按角色 mask/depth 投影，或做 normal/depth 的二次打光/接触阴影近似。
+- `TransparentBackground` 更接近相机 clear / 合成 / 导出设置，不应作为普通颜色后处理滤镜处理。
+- `Particle`、`Weather`、`CameraSwitcher` 更接近场景对象或相机控制入口，应在需要时独立设计调度层。
+
 ## 新增 Shoost 滤镜流程
 
 1. 在 `ShoostPostProcessEffect` enum 中补效果类型。
@@ -84,4 +98,9 @@ Runtime 先不强拆，避免在 RenderGraph 链路还没完全稳定前引入�
 - `Runtime/PostProcessing/ShoostPostProcessCRTEffects.shader`：显示器滤镜的 URP fullscreen pass。参考 RenderDoc 中 `Hidden/CRTEffects` 的扫描线合成 pass，实现降采样、扫描线贴图、slot/shadow mask、brightness 和 glow。
 - `Runtime/PostProcessing/Textures/ShoostCRTScanlinesRGB.png`、`ShoostCRTScanlinesRGBMono.png`、`ShoostCRTScanlinesCircle.png`、`ShoostCRTScanlinesLine.png`：从 Shoost 解包资源复制来的四张显示器扫描线/荧光屏 mask。
 - `Editor/PostProcessing/ShoostStack/Filters/VHS.cs`：VHS 滤镜 UI。负责 Shoost 用户侧的弱/中/强类型、噪点强度、锐化、扫描线开关和扫描线大小。
-- `Runtime/PostProcessing/ShoostPostProcessVHS.shader`：VHS 滤镜的 URP fullscreen pass。当前把 Shoost VHS profile 中的 RGB 模糊、Noise2/EdgeNoise 式噪点、轻微横向扰动、锐化和 TVEffect_Custom 式扫描线合并到一个 pass，状态仍为对齐中。
+- `Runtime/PostProcessing/ShoostPostProcessVHS.shader`：VHS 滤镜的 URP fullscreen pass。当前把 Shoost VHS profile 中的 RGB 模糊、Noise2/EdgeNoise 式噪点、轻微横向扰动、锐化和 TVEffect_Custom 式扫描线合并到一个 pass。已由实机核对确认完美对齐。
+- `Editor/PostProcessing/ShoostStack/Filters/Tube.cs`：电视滤镜 UI。当前保留文件边界和已有试验代码，但 Tube/电视滤镜暂时跳过，不再继续对齐。原因是 Shoost 的 `PostProcess_TVValue` 是 profile 组合入口，涉及 `FilmBreath_GateWeave`、`RGBBlur`、`LUTColorGrading`、`Custom/Tube`、`Sharpen_Before`、`RLProJitter` 等多层语义。
+- `Runtime/PostProcessing/ShoostPostProcessTube.shader`：Tube/电视滤镜的试验 fullscreen pass。当前不作为对齐完成实现看待，状态为暂时跳过。后续如重启，应优先拆清 Shoost profile 层顺序、Kino/Custom Tube 来源差异、LUT 导入与 RenderDoc 汇编，再决定是否继续单 pass 压缩或改成多 pass。
+- `Film / 胶片`：暂时跳过。胶片年代入口应单独按 `AMS_AnimeFilm_*` profile 处理，不复用 TV 的 60/70/80/90 语义；需要重新核对 `LUTColorGrading`、`Grain_Custom`、`RLProOldFilm2_Custom` 等层。
+- `EdgeLight / Outline / DropShadow`：保留 Shoost 用户入口，但实现策略改为 URP 主体数据效果。不要从最终颜色缓冲或后处理 alpha 里反推主体边界；后续应依赖角色 mask/stencil/depth/normal。
+- `Glow / Lighting / TransparentBackground / Particle / Weather / CameraSwitcher`：暂不按普通 Shoost fullscreen pass 实现。需要先明确它们在 URP 中是画面后处理、主体特效、场景对象，还是相机/合成控制。
