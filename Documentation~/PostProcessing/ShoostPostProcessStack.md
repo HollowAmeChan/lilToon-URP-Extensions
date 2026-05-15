@@ -98,7 +98,7 @@ Volume 里只有一个面向用户的大图层列表，但运行时会把它拆�
 - 大多数 Shoost 自定义效果和 Retro Look Pro 效果都是 `PostProcessEvent.BeforeStack`；
 - `CRTEffects`、`RGBChannelSeparator`、`Sharpen_After`、`RLProTVEffect_Custom` 是 `PostProcessEvent.AfterStack`；
 - 很多 X-PostProcessing 的 blur / sharpen / glitch 效果也是 `PostProcessEvent.AfterStack`；
-- `Sharpen_Before` 和 `Sharpen_After` 应该保持为两个独立效果，因为 Shoost 原本就把它们放在 stack 两侧；
+- 用户侧不再单独显示 `Sharpen_After`，需要后置锐化时用 `锐化` 的高级插入位置控制；
 - blur pyramid 和 bloom-like 效果通常需要在最终颜色和细节叠加前运行；
 - `MotionTrail`、`ChangeFrameRate` 这类历史帧效果需要 per-camera 持久 buffer，后面应作为同一个 Volume 列表背后的专用执行阶段处理。
 
@@ -123,7 +123,7 @@ Volume 里只有一个面向用户的大图层列表，但运行时会把它拆�
 
 - 历史 buffer：`MotionTrail`、`ChangeFrameRate`；
 - 生成 lookup texture：`GrainCustom`；
-- blur pyramid 或多个临时 render target：`KawaseBlur`、`IrisBlur`、`RGBBlurV2`；
+- blur pyramid 或多个临时 render target：`KawaseBlur`、`IrisBlur`、`RGBBlurV2`；`RGBBlurV2` 用户侧只暴露三个 RGB 模糊度，但运行时仍按 Shoost 的临时 RT blur + 原图合成思路处理；
 - 多 pass 复古合成：`CRTEffects`、`Tube`、Retro Look Pro 派生 custom 效果。
 
 保持 Volume 图层栈作为用户面对的排序界面，具体效果移植时再在 enum 槽背后添加专用执行代码。

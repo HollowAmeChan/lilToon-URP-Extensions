@@ -266,10 +266,13 @@ namespace lilToon.URP.Extensions.PostProcessing
         private RTHandle kawaseTextureB;
         private RTHandle irisTextureA;
         private RTHandle irisTextureB;
+        private RTHandle rgbBlurTextureA;
+        private RTHandle rgbBlurTextureB;
 
         private sealed class PassData
         {
             public TextureHandle source;
+            public TextureHandle originalTexture;
             public ShoostPostProcessLayer layer;
             public Material material;
             public int passIndex;
@@ -338,6 +341,10 @@ namespace lilToon.URP.Extensions.PostProcessing
             irisTextureB?.Release();
             irisTextureA = null;
             irisTextureB = null;
+            rgbBlurTextureA?.Release();
+            rgbBlurTextureB?.Release();
+            rgbBlurTextureA = null;
+            rgbBlurTextureB = null;
             runtimeLayers.Clear();
         }
 
@@ -381,6 +388,10 @@ namespace lilToon.URP.Extensions.PostProcessing
                     {
                         ApplyIrisBlurLayer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, destination, runtimeLayer);
                     }
+                    else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.RGBBlurV2)
+                    {
+                        ApplyRgbBlurV2Layer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, destination, runtimeLayer);
+                    }
                     else
                     {
                         ApplyLayerProperties(runtimeLayer.settings, runtimeLayer.material);
@@ -422,6 +433,11 @@ namespace lilToon.URP.Extensions.PostProcessing
                 if (runtimeLayer.settings.effect == ShoostPostProcessEffect.IrisBlur)
                 {
                     source = RecordIrisBlurLayer(renderGraph, source, runtimeLayer, i);
+                    continue;
+                }
+                if (runtimeLayer.settings.effect == ShoostPostProcessEffect.RGBBlurV2)
+                {
+                    source = RecordRgbBlurV2Layer(renderGraph, source, runtimeLayer, i);
                     continue;
                 }
 
@@ -484,7 +500,8 @@ namespace lilToon.URP.Extensions.PostProcessing
             material.SetFloat(ShoostPostProcessShaderConstants.ModeId, layer.parameters0.x);
             material.SetFloat(ShoostPostProcessShaderConstants.AngleId, layer.parameters0.z * Mathf.Deg2Rad);
             material.SetFloat(ShoostPostProcessShaderConstants.LayerBlendModeId, (float)layer.blendMode);
-            material.SetColor(ShoostPostProcessShaderConstants.LayerColorId, layer.color);
+            Color layerColor = layer.effect == ShoostPostProcessEffect.Fisheye ? Color.black : layer.color;
+            material.SetColor(ShoostPostProcessShaderConstants.LayerColorId, layerColor);
             material.SetFloat(ShoostPostProcessShaderConstants.LayerTextureEnabledId, layer.texture != null ? 1.0f : 0.0f);
             material.SetVector(ShoostPostProcessShaderConstants.LayerParams0Id, layer.parameters0);
             material.SetVector(ShoostPostProcessShaderConstants.LayerParams1Id, layer.parameters1);
@@ -508,11 +525,11 @@ namespace lilToon.URP.Extensions.PostProcessing
                 resolutionType = Mathf.Clamp(Mathf.RoundToInt(parameters0.x), 0, 1),
                 customResolution = new Vector2Int(Mathf.RoundToInt(parameters0.y), Mathf.RoundToInt(parameters0.z)),
                 radius = parameters1.x > 0.0f ? parameters1.x : 1.0f,
-                downScale = Mathf.Clamp(Mathf.RoundToInt(parameters1.y > 0.0f ? parameters1.y : 1.0f), 1, 4),
-                iterations = Mathf.Clamp(Mathf.RoundToInt(parameters1.z > 0.0f ? parameters1.z : 1.0f), 1, 8),
+                downScale = Mathf.Clamp(Mathf.RoundToInt(parameters1.y > 0.0f ? parameters1.y : 2.0f), 1, 4),
+                iterations = Mathf.Clamp(Mathf.RoundToInt(parameters1.z > 0.0f ? parameters1.z : 3.0f), 1, 8),
                 center = new Vector2(parameters2.x, parameters2.y),
-                centerSize = parameters2.z > 0.0f ? parameters2.z : 0.35f,
-                smoothness = parameters2.w > 0.0f ? parameters2.w : 0.25f,
+                centerSize = parameters2.z > 0.0f ? parameters2.z : 0.8f,
+                smoothness = parameters2.w > 0.0f ? parameters2.w : 0.1f,
                 enableRgbSplit = parameters3.x > 0.5f,
                 blurRadiusR = Mathf.Max(0.0f, parameters3.y),
                 blurRadiusG = Mathf.Max(0.0f, parameters3.z),
@@ -524,15 +541,15 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         private static void ApplyIrisBlurProperties(Material material, IrisBlurParameters parameters, float screenRatio)
         {
-            material.SetFloat(ShoostPostProcessShaderConstants.RadiusId, parameters.radius);
+            material.SetFloat(ShoostPostProcessShaderConstants.RadiusId, parameters.radius * 0.01f);
             material.SetFloat(ShoostPostProcessShaderConstants.ScreenRatioId, screenRatio);
             material.SetVector(ShoostPostProcessShaderConstants.CenterId, new Vector4(parameters.center.x, parameters.center.y, 0.0f, 0.0f));
-            material.SetFloat(ShoostPostProcessShaderConstants.CenterSizeId, parameters.centerSize);
+            material.SetFloat(ShoostPostProcessShaderConstants.CenterSizeId, 1.0f - parameters.centerSize);
             material.SetFloat(ShoostPostProcessShaderConstants.SmoothnessId, parameters.smoothness);
-            material.SetFloat(ShoostPostProcessShaderConstants.BlurOffsetRId, parameters.blurRadiusR);
-            material.SetFloat(ShoostPostProcessShaderConstants.BlurOffsetGId, parameters.blurRadiusG);
-            material.SetFloat(ShoostPostProcessShaderConstants.BlurOffsetBId, parameters.blurRadiusB);
-            material.SetFloat(ShoostPostProcessShaderConstants.DistanceId, parameters.distance);
+            material.SetFloat(ShoostPostProcessShaderConstants.BlurOffsetRId, parameters.blurRadiusR * 0.01f);
+            material.SetFloat(ShoostPostProcessShaderConstants.BlurOffsetGId, parameters.blurRadiusG * 0.01f);
+            material.SetFloat(ShoostPostProcessShaderConstants.BlurOffsetBId, parameters.blurRadiusB * 0.01f);
+            material.SetFloat(ShoostPostProcessShaderConstants.DistanceId, parameters.distance * 0.01f);
             material.SetFloat(ShoostPostProcessShaderConstants.AngleId, parameters.angleRadians);
 
             if (parameters.enableRgbSplit)
@@ -638,6 +655,46 @@ namespace lilToon.URP.Extensions.PostProcessing
             Blitter.BlitCameraTexture(cmd, source, destination, material, 2);
         }
 
+        private void ApplyRgbBlurV2Layer(CommandBuffer cmd, RenderTextureDescriptor sourceDescriptor, RTHandle source, RTHandle destination, ShoostPostProcessRuntimeLayer runtimeLayer)
+        {
+            ShoostPostProcessLayer layer = runtimeLayer.settings;
+            Material material = runtimeLayer.material;
+            ApplyLayerProperties(layer, material);
+
+            float maxChannelBlur = Mathf.Clamp01(Mathf.Max(layer.parameters0.x, layer.parameters0.y, layer.parameters0.z) * layer.intensity);
+            int downScale = maxChannelBlur > 0.0001f ? 2 : 1;
+            int iterations = Mathf.Clamp(2 + Mathf.RoundToInt(maxChannelBlur * 4.0f), 2, 6);
+            float radius = Mathf.Lerp(0.75f, 9.0f, maxChannelBlur);
+
+            RenderTextureDescriptor blurDescriptor = sourceDescriptor;
+            blurDescriptor.width = Mathf.Max(1, sourceDescriptor.width / downScale);
+            blurDescriptor.height = Mathf.Max(1, sourceDescriptor.height / downScale);
+            blurDescriptor.depthBufferBits = 0;
+            blurDescriptor.depthStencilFormat = GraphicsFormat.None;
+            blurDescriptor.msaaSamples = 1;
+
+            RenderingUtils.ReAllocateIfNeeded(ref rgbBlurTextureA, blurDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilShoostRGBBlurV2A");
+            RenderingUtils.ReAllocateIfNeeded(ref rgbBlurTextureB, blurDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilShoostRGBBlurV2B");
+
+            RTHandle current = rgbBlurTextureA;
+            RTHandle next = rgbBlurTextureB;
+            material.SetFloat(ShoostPostProcessShaderConstants.RadiusId, radius);
+            Blitter.BlitCameraTexture(cmd, source, current, material, 0);
+
+            for (int i = 1; i < iterations; i++)
+            {
+                material.SetFloat(ShoostPostProcessShaderConstants.RadiusId, radius + i);
+                Blitter.BlitCameraTexture(cmd, current, next, material, 0);
+                RTHandle swap = current;
+                current = next;
+                next = swap;
+            }
+
+            cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.OriginalTexId, source);
+            cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.BlurredTexId, current);
+            Blitter.BlitCameraTexture(cmd, source, destination, material, 1);
+        }
+
         private TextureHandle RecordKawaseBlurLayer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex)
         {
             TextureDesc sourceDesc = renderGraph.GetTextureDesc(source);
@@ -730,6 +787,44 @@ namespace lilToon.URP.Extensions.PostProcessing
             return AddIrisPass(renderGraph, source, destination, material, 2, parameters, screenRatio, runtimeLayer.settings, profilingSampler, passName, current);
         }
 
+        private TextureHandle RecordRgbBlurV2Layer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex)
+        {
+            TextureDesc sourceDesc = renderGraph.GetTextureDesc(source);
+            ShoostPostProcessLayer layer = runtimeLayer.settings;
+            Material material = runtimeLayer.material;
+
+            float maxChannelBlur = Mathf.Clamp01(Mathf.Max(layer.parameters0.x, layer.parameters0.y, layer.parameters0.z) * layer.intensity);
+            int downScale = maxChannelBlur > 0.0001f ? 2 : 1;
+            int iterations = Mathf.Clamp(2 + Mathf.RoundToInt(maxChannelBlur * 4.0f), 2, 6);
+            float radius = Mathf.Lerp(0.75f, 9.0f, maxChannelBlur);
+
+            TextureDesc blurDesc = sourceDesc;
+            blurDesc.name = $"_lilShoostRGBBlurV2_{layerIndex}";
+            blurDesc.width = Mathf.Max(1, sourceDesc.width / downScale);
+            blurDesc.height = Mathf.Max(1, sourceDesc.height / downScale);
+            blurDesc.clearBuffer = false;
+            blurDesc.depthBufferBits = 0;
+
+            TextureHandle blurA = renderGraph.CreateTexture(blurDesc);
+            TextureHandle blurB = renderGraph.CreateTexture(blurDesc);
+            TextureHandle current = AddRgbBlurV2Pass(renderGraph, source, blurA, material, 0, radius, runtimeLayer.settings, profilingSampler, passName);
+            TextureHandle next = blurB;
+            for (int i = 1; i < iterations; i++)
+            {
+                TextureHandle passSource = current;
+                TextureHandle passDestination = next;
+                current = AddRgbBlurV2Pass(renderGraph, passSource, passDestination, material, 0, radius + i, runtimeLayer.settings, profilingSampler, passName);
+                next = passSource;
+            }
+
+            TextureDesc outputDesc = sourceDesc;
+            outputDesc.name = $"_lilShoostPostProcessLayer{layerIndex}";
+            outputDesc.clearBuffer = false;
+            outputDesc.depthBufferBits = 0;
+            TextureHandle destination = renderGraph.CreateTexture(outputDesc);
+            return AddRgbBlurV2Pass(renderGraph, source, destination, material, 1, radius, runtimeLayer.settings, profilingSampler, passName, current);
+        }
+
         private TextureHandle AddKawasePass(
             RenderGraph renderGraph,
             TextureHandle source,
@@ -811,15 +906,15 @@ namespace lilToon.URP.Extensions.PostProcessing
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
                     ApplyLayerProperties(data.layer, data.material);
-                    data.material.SetFloat(ShoostPostProcessShaderConstants.RadiusId, data.radius);
+                    data.material.SetFloat(ShoostPostProcessShaderConstants.RadiusId, data.radius * 0.01f);
                     data.material.SetFloat(ShoostPostProcessShaderConstants.ScreenRatioId, data.screenRatio);
                     data.material.SetVector(ShoostPostProcessShaderConstants.CenterId, new Vector4(data.center.x, data.center.y, 0.0f, 0.0f));
-                    data.material.SetFloat(ShoostPostProcessShaderConstants.CenterSizeId, data.centerSize);
+                    data.material.SetFloat(ShoostPostProcessShaderConstants.CenterSizeId, 1.0f - data.centerSize);
                     data.material.SetFloat(ShoostPostProcessShaderConstants.SmoothnessId, data.smoothness);
-                    data.material.SetFloat(ShoostPostProcessShaderConstants.BlurOffsetRId, data.blurOffsetR);
-                    data.material.SetFloat(ShoostPostProcessShaderConstants.BlurOffsetGId, data.blurOffsetG);
-                    data.material.SetFloat(ShoostPostProcessShaderConstants.BlurOffsetBId, data.blurOffsetB);
-                    data.material.SetFloat(ShoostPostProcessShaderConstants.DistanceId, data.distance);
+                    data.material.SetFloat(ShoostPostProcessShaderConstants.BlurOffsetRId, data.blurOffsetR * 0.01f);
+                    data.material.SetFloat(ShoostPostProcessShaderConstants.BlurOffsetGId, data.blurOffsetG * 0.01f);
+                    data.material.SetFloat(ShoostPostProcessShaderConstants.BlurOffsetBId, data.blurOffsetB * 0.01f);
+                    data.material.SetFloat(ShoostPostProcessShaderConstants.DistanceId, data.distance * 0.01f);
                     data.material.SetFloat(ShoostPostProcessShaderConstants.AngleId, data.angle);
 
                     if (data.enableRgbSplit)
@@ -833,6 +928,55 @@ namespace lilToon.URP.Extensions.PostProcessing
 
                     if (data.blurredTexture.IsValid())
                     {
+                        context.cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.BlurredTexId, data.blurredTexture);
+                    }
+
+                    Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, data.passIndex);
+                });
+            }
+
+            return destination;
+        }
+
+        private TextureHandle AddRgbBlurV2Pass(
+            RenderGraph renderGraph,
+            TextureHandle source,
+            TextureHandle destination,
+            Material material,
+            int passIndex,
+            float radius,
+            ShoostPostProcessLayer layer,
+            ProfilingSampler passProfilingSampler,
+            string label,
+            TextureHandle blurredTexture = default)
+        {
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{label} RGB Blur V2", out PassData passData, passProfilingSampler))
+            {
+                passData.source = source;
+                passData.originalTexture = source;
+                passData.layer = layer;
+                passData.material = material;
+                passData.passIndex = Mathf.Max(0, passIndex);
+                passData.radius = radius;
+                passData.blurredTexture = blurredTexture;
+
+                builder.UseTexture(source, AccessFlags.Read);
+                builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
+                builder.AllowGlobalStateModification(true);
+
+                if (blurredTexture.IsValid())
+                {
+                    builder.UseTexture(blurredTexture, AccessFlags.Read);
+                    builder.SetGlobalTextureAfterPass(blurredTexture, ShoostPostProcessShaderConstants.BlurredTexId);
+                }
+
+                builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                {
+                    ApplyLayerProperties(data.layer, data.material);
+                    data.material.SetFloat(ShoostPostProcessShaderConstants.RadiusId, data.radius);
+                    if (data.blurredTexture.IsValid())
+                    {
+                        context.cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.OriginalTexId, data.originalTexture);
                         context.cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.BlurredTexId, data.blurredTexture);
                     }
 

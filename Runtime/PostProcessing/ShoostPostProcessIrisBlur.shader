@@ -100,7 +100,6 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/IrisBlur"
         {
             float2 center = ResolveCenter();
             float2 delta = uv - center;
-            delta.x *= max(_ScreenRatio, 0.0001);
 
             float innerRadius = saturate(_CenterSize);
             float feather = max(_Smoothness, 0.0001);

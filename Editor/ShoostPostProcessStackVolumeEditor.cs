@@ -14,6 +14,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private const float LineHeight = 18.0f;
         private const float LineSpacing = 2.0f;
         private const float LevelAdjustmentInitMarker = -12345.0f;
+        private const float RgbSplitInitMarker = -12346.0f;
         private const float EffectIconSize = 22.0f;
         private const float EffectIconSpacing = 2.0f;
         private const string DefaultDistortionTextureGuid = "f4c1f3c21e3ec4a479c69cffea26c6cd";
@@ -327,6 +328,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.RGBBlurV2)
+            {
+                DrawRgbBlurV2Element(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ShoostPostProcessEffect.IrisBlur)
             {
                 DrawIrisBlurElement(rect, element);
@@ -442,17 +449,21 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
                     lineCount += 2 + (GetRgbSplitUsesAngle(element) ? 1 : 0);
                     break;
+                case ShoostPostProcessEffect.RGBBlurV2:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 3;
+                    break;
                 case ShoostPostProcessEffect.IrisBlur:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
-                    lineCount += 11 + (GetIrisBlurUsesCustomResolution(element) ? 2 : 0) + (GetIrisBlurUsesRgbBlur(element) ? 3 : 0);
+                    lineCount += 5;
                     break;
                 case ShoostPostProcessEffect.AutoWhiteBalance:
                     lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
                     lineCount += 3;
                     break;
                 case ShoostPostProcessEffect.Fisheye:
-                    lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
-                    lineCount += 3;
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 4;
                     break;
                 case ShoostPostProcessEffect.GateWeave:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -947,9 +958,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private void DrawFisheyeElement(Rect rect, SerializedProperty element)
         {
             SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty color = element.FindPropertyRelative("color");
             SerializedProperty enabled = element.FindPropertyRelative("enabled");
 
             EnsureFisheyeDefaults(parameters0);
+            if (color != null && color.propertyType == SerializedPropertyType.Color)
+            {
+                color.colorValue = Color.black;
+            }
 
             float y = rect.y;
             y = DrawFoldoutLine(rect, y, element, enabled);
@@ -959,16 +975,18 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             EditorGUI.indentLevel++;
-            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: true, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
 
             Vector4 fisheyeParams = parameters0.vector4Value;
-            fisheyeParams.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "缩放", fisheyeParams.x, 0.01f, 2.0f);
+            fisheyeParams.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "强度", fisheyeParams.x, 0.0f, 1.0f);
             y += LineHeight + LineSpacing;
-            fisheyeParams.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "边缘柔和", fisheyeParams.y, 0.01f, 0.5f);
+            fisheyeParams.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "缩放", fisheyeParams.y, 0.01f, 2.0f);
             y += LineHeight + LineSpacing;
-            bool isCircular = fisheyeParams.z > 0.5f;
-            isCircular = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "圆形柔和", isCircular);
-            fisheyeParams.z = isCircular ? 1.0f : 0.0f;
+            fisheyeParams.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "柔和度", fisheyeParams.z, 0.01f, 0.5f);
+            y += LineHeight + LineSpacing;
+            bool isCircular = fisheyeParams.w > 0.5f;
+            isCircular = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "是否圆形", isCircular);
+            fisheyeParams.w = isCircular ? 1.0f : 0.0f;
             y += LineHeight + LineSpacing;
 
             parameters0.vector4Value = fisheyeParams;
@@ -1592,6 +1610,34 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             EditorGUI.indentLevel--;
         }
 
+        private void DrawRgbBlurV2Element(Rect rect, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty enabled = element.FindPropertyRelative("enabled");
+            EnsureRgbBlurV2Defaults(parameters0);
+
+            float y = rect.y;
+            y = DrawFoldoutLine(rect, y, element, enabled);
+            if (!element.isExpanded)
+            {
+                return;
+            }
+
+            EditorGUI.indentLevel++;
+            y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
+
+            Vector4 blurParams = parameters0.vector4Value;
+            blurParams.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "红通道模糊度", Mathf.Clamp01(blurParams.x), 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            blurParams.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "绿通道模糊度", Mathf.Clamp01(blurParams.y), 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            blurParams.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "蓝通道模糊度", Mathf.Clamp01(blurParams.z), 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+
+            parameters0.vector4Value = blurParams;
+            EditorGUI.indentLevel--;
+        }
+
         private void DrawIrisBlurElement(Rect rect, SerializedProperty element)
         {
             SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
@@ -1617,53 +1663,30 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Vector4 irisParams2 = parameters2.vector4Value;
             Vector4 irisParams3 = parameters3.vector4Value;
 
-            int resolutionMode = Mathf.Clamp(Mathf.RoundToInt(irisParams0.x), 0, 1);
-            resolutionMode = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "分辨率模式", resolutionMode, new[] { "游戏视图", "自定义尺寸" });
-            irisParams0.x = resolutionMode;
+            irisParams1.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "模糊大小", irisParams1.x, 0.0f, 10.0f);
             y += LineHeight + LineSpacing;
-
-            if (resolutionMode == 1)
-            {
-                irisParams0.y = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "自定义宽度", Mathf.RoundToInt(irisParams0.y), 1, 8192));
-                y += LineHeight + LineSpacing;
-                irisParams0.z = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "自定义高度", Mathf.RoundToInt(irisParams0.z), 1, 8192));
-                y += LineHeight + LineSpacing;
-            }
-
-            irisParams0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "距离", irisParams0.w, 0.0f, 1.0f);
-            y += LineHeight + LineSpacing;
-
-            irisParams1.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "半径", irisParams1.x, 0.0f, 10.0f);
-            y += LineHeight + LineSpacing;
-            irisParams1.y = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "降采样", Mathf.RoundToInt(irisParams1.y), 1, 4));
-            y += LineHeight + LineSpacing;
-            irisParams1.z = Mathf.Max(1.0f, EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "迭代次数", Mathf.RoundToInt(irisParams1.z), 1, 8));
-            y += LineHeight + LineSpacing;
-            irisParams1.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "角度", irisParams1.w, 0.0f, 360.0f);
-            y += LineHeight + LineSpacing;
-
-            irisParams2.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "中心 X", irisParams2.x, 0.0f, 1.0f);
-            y += LineHeight + LineSpacing;
-            irisParams2.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "中心 Y", irisParams2.y, 0.0f, 1.0f);
-            y += LineHeight + LineSpacing;
-            irisParams2.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "中心范围", irisParams2.z, 0.0f, 1.0f);
+            irisParams2.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "中心半径", irisParams2.z, 0.0f, 1.0f);
             y += LineHeight + LineSpacing;
             irisParams2.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "柔和度", irisParams2.w, 0.0f, 1.0f);
             y += LineHeight + LineSpacing;
 
-            bool useRgbBlur = irisParams3.x > 0.5f;
-            useRgbBlur = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "启用 RGB 模糊", useRgbBlur);
-            irisParams3.x = useRgbBlur ? 1.0f : 0.0f;
+            float centerX = Mathf.Clamp((irisParams2.x * 2.0f) - 1.0f, -1.0f, 1.0f);
+            float centerY = Mathf.Clamp((irisParams2.y * 2.0f) - 1.0f, -1.0f, 1.0f);
+            centerX = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "中心位置 X", centerX, -1.0f, 1.0f);
             y += LineHeight + LineSpacing;
-            if (useRgbBlur)
-            {
-                irisParams3.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "红通道模糊半径", irisParams3.y, 0.0f, 5.0f);
-                y += LineHeight + LineSpacing;
-                irisParams3.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "绿通道模糊半径", irisParams3.z, 0.0f, 5.0f);
-                y += LineHeight + LineSpacing;
-                irisParams3.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "蓝通道模糊半径", irisParams3.w, 0.0f, 5.0f);
-                y += LineHeight + LineSpacing;
-            }
+            centerY = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "中心位置 Y", centerY, -1.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+
+            irisParams0.x = 0.0f;
+            irisParams0.y = 1.0f;
+            irisParams0.z = 1.0f;
+            irisParams0.w = 0.0f;
+            irisParams1.y = 2.0f;
+            irisParams1.z = 3.0f;
+            irisParams1.w = 0.0f;
+            irisParams2.x = (centerX + 1.0f) * 0.5f;
+            irisParams2.y = (centerY + 1.0f) * 0.5f;
+            irisParams3 = Vector4.zero;
 
             parameters0.vector4Value = irisParams0;
             parameters1.vector4Value = irisParams1;
@@ -1864,9 +1887,31 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             Vector4 value = parameters0.vector4Value;
+            if (Mathf.Approximately(value.w, RgbSplitInitMarker))
+            {
+                return;
+            }
+
             if (value.sqrMagnitude <= 0.000001f)
             {
-                parameters0.vector4Value = new Vector4(0.0f, 0.35f, 0.0f, 0.0f);
+                parameters0.vector4Value = new Vector4(0.0f, 0.35f, 0.0f, RgbSplitInitMarker);
+                return;
+            }
+
+            value.w = RgbSplitInitMarker;
+            parameters0.vector4Value = value;
+        }
+
+        private static void EnsureRgbBlurV2Defaults(SerializedProperty parameters0)
+        {
+            if (parameters0 == null || parameters0.propertyType != SerializedPropertyType.Vector4)
+            {
+                return;
+            }
+
+            if (parameters0.vector4Value.sqrMagnitude <= 0.000001f)
+            {
+                parameters0.vector4Value = Vector4.zero;
             }
         }
 
@@ -1877,7 +1922,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 Vector4 value = parameters0.vector4Value;
                 if (value.sqrMagnitude <= 0.000001f)
                 {
-                    parameters0.vector4Value = new Vector4(0.0f, 0.0f, 0.0f, 0.15f);
+                    parameters0.vector4Value = new Vector4(0.0f, 1.0f, 1.0f, 0.0f);
                 }
             }
 
@@ -1886,7 +1931,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 Vector4 value = parameters1.vector4Value;
                 if (value.sqrMagnitude <= 0.000001f)
                 {
-                    parameters1.vector4Value = new Vector4(1.0f, 1.0f, 1.0f, 0.0f);
+                    parameters1.vector4Value = new Vector4(1.0f, 2.0f, 3.0f, 0.0f);
                 }
             }
 
@@ -1895,7 +1940,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 Vector4 value = parameters2.vector4Value;
                 if (value.sqrMagnitude <= 0.000001f)
                 {
-                    parameters2.vector4Value = new Vector4(0.5f, 0.5f, 0.35f, 0.25f);
+                    parameters2.vector4Value = new Vector4(0.5f, 0.5f, 0.8f, 0.1f);
                 }
             }
 
@@ -1904,7 +1949,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 Vector4 value = parameters3.vector4Value;
                 if (value.sqrMagnitude <= 0.000001f)
                 {
-                    parameters3.vector4Value = new Vector4(0.0f, 1.0f, 1.0f, 1.0f);
+                    parameters3.vector4Value = Vector4.zero;
                 }
             }
         }
@@ -1949,8 +1994,20 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Vector4 value = parameters0.vector4Value;
             if (value.sqrMagnitude <= 0.000001f)
             {
-                parameters0.vector4Value = new Vector4(1.0f, 0.25f, 0.0f, 0.0f);
+                parameters0.vector4Value = new Vector4(0.2f, 1.0f, 0.1f, 0.0f);
+                return;
             }
+
+            if (IsLegacyFisheyeParams(value))
+            {
+                parameters0.vector4Value = new Vector4(0.2f, Mathf.Clamp(value.x, 0.01f, 2.0f), Mathf.Clamp(value.y, 0.01f, 0.5f), value.z > 0.5f ? 1.0f : 0.0f);
+            }
+        }
+
+        private static bool IsLegacyFisheyeParams(Vector4 value)
+        {
+            bool legacyCircularSlot = Mathf.Abs(value.z) <= 0.0001f || Mathf.Abs(value.z - 1.0f) <= 0.0001f;
+            return Mathf.Abs(value.w) <= 0.0001f && legacyCircularSlot && value.x >= 0.01f && value.y >= 0.01f && value.y <= 0.5f;
         }
 
         private static void EnsureGateWeaveDefaults(SerializedProperty parameters0, SerializedProperty parameters1)
@@ -2098,8 +2155,15 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.Fisheye:
                     SetFloat(element, "intensity", 1.0f);
-                    SetColor(element, "color", Color.white);
-                    SetVector4(element, "parameters0", new Vector4(1.0f, 0.25f, 0.0f, 0.0f));
+                    SetColor(element, "color", Color.black);
+                    SetVector4(element, "parameters0", new Vector4(0.2f, 1.0f, 0.1f, 0.0f));
+                    break;
+                case ShoostPostProcessEffect.IrisBlur:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 1.0f, 1.0f, 0.0f));
+                    SetVector4(element, "parameters1", new Vector4(1.0f, 2.0f, 3.0f, 0.0f));
+                    SetVector4(element, "parameters2", new Vector4(0.5f, 0.5f, 0.8f, 0.1f));
+                    SetVector4(element, "parameters3", Vector4.zero);
                     break;
                 case ShoostPostProcessEffect.GateWeave:
                     SetFloat(element, "intensity", 1.0f);
@@ -2122,6 +2186,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetFloat(element, "intensity", 1.0f);
                     SetVector4(element, "parameters0", new Vector4(0.0f, 1920.0f, 1080.0f, 1.0f));
                     SetVector4(element, "parameters1", new Vector4(0.0f, 1.0f, 0.0f, 0.0f));
+                    break;
+                case ShoostPostProcessEffect.RGBBlurV2:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetVector4(element, "parameters0", Vector4.zero);
+                    break;
+                case ShoostPostProcessEffect.RGBSplit:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 0.35f, 0.0f, RgbSplitInitMarker));
                     break;
                 case ShoostPostProcessEffect.DownScaleResolution:
                     SetFloat(element, "intensity", 1.0f);

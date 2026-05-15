@@ -32,30 +32,45 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/Fisheye"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord);
-                float intensity = saturate(_Intensity);
-                if (intensity <= 0.0001)
+                float layerIntensity = saturate(_Intensity);
+                if (layerIntensity <= 0.0001)
                 {
                     return source;
                 }
 
-                float2 centered = input.texcoord - 0.5;
+                float2 viewCentered = input.texcoord - 0.5;
                 float aspect = _ScreenParams.x / max(_ScreenParams.y, 1.0);
-                centered.x *= aspect;
 
-                float scale = max(_LayerParams0.x, 0.01);
-                float softness = saturate(_LayerParams0.y);
-                bool circular = _LayerParams0.z > 0.5;
+                float distortion = saturate(_LayerParams0.x);
+                float scale = max(_LayerParams0.y * 0.5, 0.005);
+                float softness = clamp(_LayerParams0.z, 0.01, 0.5);
+                bool circular = _LayerParams0.w > 0.5;
 
-                float radius = circular ? length(centered) : max(abs(centered.x), abs(centered.y));
-                float warp = radius * radius * scale * intensity * 0.65;
-
-                float2 warpedUV = input.texcoord + centered * warp;
+                float autoscale = 0.5 - saturate(distortion * 0.5);
+                float2 fitScale = float2(min(1.0 / max(aspect, 0.0001), 1.0), min(aspect, 1.0));
+                float2 lensCoord = viewCentered / scale / fitScale;
+                float lensRadiusSq = dot(lensCoord, lensCoord);
+                float lensDenom = max(1.0 - lensRadiusSq * distortion, 0.0001);
+                float2 warpedCentered = lensCoord * (autoscale / lensDenom) * fitScale;
+                float2 warpedUV = warpedCentered + 0.5;
                 half4 warped = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, warpedUV);
 
-                float edgeStart = max(0.5 - softness, 0.0);
-                float edgeMask = smoothstep(edgeStart, 0.5, radius);
-                warped.rgb = lerp(warped.rgb, _LayerColor.rgb, edgeMask * intensity);
-                return warped;
+                float maskAspect = circular ? aspect : 1.0;
+                float squareRadius = max(abs(warpedCentered.x) * maskAspect, abs(warpedCentered.y)) * 2.0;
+                float circularRadius = length(float2(warpedCentered.x * maskAspect, warpedCentered.y)) * 2.0;
+                float edgeRadius = circular ? circularRadius : squareRadius;
+                float edgeMask = smoothstep(1.0 - softness, 1.0, edgeRadius);
+
+                float inBounds = step(0.0, warpedUV.x) * step(warpedUV.x, 1.0) * step(0.0, warpedUV.y) * step(warpedUV.y, 1.0);
+                float blackMask = saturate(max(edgeMask, 1.0 - inBounds));
+                warped.rgb = lerp(warped.rgb, _LayerColor.rgb, blackMask);
+
+                float vignetteScale = 2.0 - distortion * 1.02;
+                float2 vignetteCoord = abs(viewCentered) * distortion * vignetteScale / scale;
+                vignetteCoord.x *= aspect;
+                float vignetteMask = pow(max(1.0 - dot(vignetteCoord, vignetteCoord), 0.0), 0.001);
+                warped.rgb = lerp(_LayerColor.rgb, warped.rgb, vignetteMask);
+                return lerp(source, warped, layerIntensity);
             }
             ENDHLSL
         }
