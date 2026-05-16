@@ -22,6 +22,7 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AOV/Shaders/HoAOV/HoAovSampling.hlsl"
 
             float _lilHoAovActive;
             float _HoAovDebugMode;
@@ -29,6 +30,7 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
 
             TEXTURE2D_X(_lilHoAovMaskIdTexture);
             TEXTURE2D_X(_lilHoAovNormalDepthTexture);
+            TEXTURE2D_X(_lilHoAovTangentNormalTexture);
             TEXTURE2D_X(_lilHoAovSurfaceDataTexture);
             TEXTURE2D_X(_lilHoAovCustom0_3Texture);
             TEXTURE2D_X(_lilHoAovCustom4_7Texture);
@@ -56,6 +58,18 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
                     return values[customIndex];
                 }
 
+                if (customIndex < 8)
+                {
+                    half4 values = SAMPLE_TEXTURE2D_X(_lilHoAovCustom4_7Texture, sampler_LinearClamp, uv);
+                    return values[customIndex - 4];
+                }
+
+                if (customIndex < 12)
+                {
+                    half4 values = SAMPLE_TEXTURE2D_X(_lilHoAovCustom8_11Texture, sampler_LinearClamp, uv);
+                    return values[customIndex - 8];
+                }
+
                 return 0.0;
             }
 
@@ -73,6 +87,7 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
                 int mode = (int)round(_HoAovDebugMode);
                 half4 maskId = SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_LinearClamp, uv);
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_lilHoAovNormalDepthTexture, sampler_LinearClamp, uv);
+                half4 tangentNormal = SAMPLE_TEXTURE2D_X(_lilHoAovTangentNormalTexture, sampler_LinearClamp, uv);
                 half4 surfaceData = SAMPLE_TEXTURE2D_X(_lilHoAovSurfaceDataTexture, sampler_LinearClamp, uv);
 
                 if (mode == 1)
@@ -92,27 +107,32 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
 
                 if (mode == 4)
                 {
-                    half depth = saturate((normalDepth.a - _HoAovDebugDepthParams.x) * _HoAovDebugDepthParams.z);
+                    half depth = saturate((LilHoAovLinearDepthOrFar(normalDepth, _HoAovDebugDepthParams.y) - _HoAovDebugDepthParams.x) * _HoAovDebugDepthParams.z);
                     return half4(depth, depth, depth, 1.0);
                 }
 
                 if (mode == 5)
                 {
-                    return half4(normalDepth.rgb, 1.0);
+                    return half4(LilHoAovEncodedNormalOrBlack(normalDepth), 1.0);
                 }
 
                 if (mode == 6 || mode == 7 || mode == 8 || mode == 9 || mode == 10 || mode == 11 || mode == 12)
                 {
                     if (mode == 6)
                     {
-                        float3 normalWS = normalize((float3)normalDepth.rgb * 2.0 - 1.0);
+                        float3 normalWS = LilHoAovWorldNormalOrZero(normalDepth);
+                        if (dot(normalWS, normalWS) < LIL_HOAOV_NORMAL_EPSILON)
+                        {
+                            return half4(0.0, 0.0, 0.0, 1.0);
+                        }
+
                         float3 normalVS = mul((float3x3)UNITY_MATRIX_V, normalWS);
                         return half4(normalVS * 0.5 + 0.5, 1.0);
                     }
 
                     if (mode == 7)
                     {
-                        return half4(normalDepth.rgb, 1.0);
+                        return half4(tangentNormal.rgb * step(0.0001, tangentNormal.a), 1.0);
                     }
 
                     if (mode == 8)

@@ -18,11 +18,14 @@ namespace lilToon.URP.Extensions.AOV
         private readonly HoAovRenderTargets renderTargets = new HoAovRenderTargets();
         private HoAovOutputPass outputPass;
         private HoAovDebugPass debugPass;
+        private Material clearMaterial;
         private Material fallbackMaterial;
         private Material debugMaterial;
+        private Shader clearShader;
         private Shader fallbackShader;
         private Shader debugShader;
         private bool registeredCameraReset;
+        private bool warnedMissingClearShader;
         private bool warnedMissingFallbackShader;
         private bool warnedMissingDebugShader;
 
@@ -43,7 +46,7 @@ namespace lilToon.URP.Extensions.AOV
             }
 
             EnsureMaterials();
-            outputPass?.Setup(settings, renderTargets, renderer.cameraDepthTargetHandle, fallbackMaterial);
+            outputPass?.Setup(settings, renderTargets, clearMaterial, fallbackMaterial);
             debugPass?.Setup(settings, renderTargets, renderer.cameraColorTargetHandle, debugMaterial);
         }
 
@@ -57,7 +60,7 @@ namespace lilToon.URP.Extensions.AOV
             EnsureMaterials();
             if (outputPass != null)
             {
-                outputPass.SetupRenderGraph(settings, renderTargets, fallbackMaterial);
+                outputPass.SetupRenderGraph(settings, renderTargets, clearMaterial, fallbackMaterial);
                 renderer.EnqueuePass(outputPass);
             }
 
@@ -75,10 +78,13 @@ namespace lilToon.URP.Extensions.AOV
             outputPass = null;
             debugPass?.Dispose();
             debugPass = null;
+            CoreUtils.Destroy(clearMaterial);
             CoreUtils.Destroy(fallbackMaterial);
             CoreUtils.Destroy(debugMaterial);
+            clearMaterial = null;
             fallbackMaterial = null;
             debugMaterial = null;
+            clearShader = null;
             fallbackShader = null;
             debugShader = null;
         }
@@ -135,8 +141,35 @@ namespace lilToon.URP.Extensions.AOV
 
         private void EnsureMaterials()
         {
+            EnsureClearMaterial();
             EnsureFallbackMaterial();
             EnsureDebugMaterial();
+        }
+
+        private void EnsureClearMaterial()
+        {
+            Shader shader = Shader.Find(HoAovShaderConstants.ClearShaderName);
+
+            if (clearMaterial != null && clearShader == shader)
+            {
+                return;
+            }
+
+            CoreUtils.Destroy(clearMaterial);
+            clearMaterial = null;
+            clearShader = shader;
+            if (shader == null)
+            {
+                if (!warnedMissingClearShader)
+                {
+                    warnedMissingClearShader = true;
+                    Debug.LogWarning($"HoAOV clear pass is unavailable because shader '{HoAovShaderConstants.ClearShaderName}' could not be found.");
+                }
+
+                return;
+            }
+
+            clearMaterial = CoreUtils.CreateEngineMaterial(shader);
         }
 
         private void EnsureFallbackMaterial()
@@ -201,9 +234,9 @@ namespace lilToon.URP.Extensions.AOV
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-HoAOV Output");
         private static readonly List<ShaderTagId> FallbackShaderTagIds = new List<ShaderTagId>
         {
+            new ShaderTagId("SRPDefaultUnlit"),
             new ShaderTagId("UniversalForward"),
-            new ShaderTagId("UniversalForwardOnly"),
-            new ShaderTagId("SRPDefaultUnlit")
+            new ShaderTagId("UniversalForwardOnly")
         };
 
         private static readonly List<ShaderTagId> AovShaderTagIds = new List<ShaderTagId>
@@ -211,21 +244,27 @@ namespace lilToon.URP.Extensions.AOV
             HoAovShaderConstants.ShaderTagId
         };
 
-        private readonly RTHandle[] colorTargets = new RTHandle[4];
+        private readonly RTHandle[] colorTargets = new RTHandle[7];
         private HoAovSettings settings;
         private HoAovRenderTargets renderTargets;
-        private RTHandle cameraDepthTarget;
+        private Material clearMaterial;
         private Material fallbackMaterial;
         private FilteringSettings filteringSettings;
         private RenderStateBlock renderStateBlock;
 
         private sealed class PassData
         {
-            public RendererListHandle rendererList;
+            public RendererListHandle fallbackRendererList;
+            public RendererListHandle aovRendererList;
+            public Material clearMaterial;
+            public bool drawFallback;
             public TextureHandle maskIdTexture;
             public TextureHandle normalDepthTexture;
+            public TextureHandle tangentNormalTexture;
             public TextureHandle surfaceDataTexture;
             public TextureHandle custom0Texture;
+            public TextureHandle custom1Texture;
+            public TextureHandle custom2Texture;
             public float systemChannelMask;
         }
 
@@ -241,12 +280,12 @@ namespace lilToon.URP.Extensions.AOV
         public void Setup(
             HoAovSettings settings,
             HoAovRenderTargets renderTargets,
-            RTHandle cameraDepthTarget,
+            Material clearMaterial,
             Material fallbackMaterial)
         {
             this.settings = settings;
             this.renderTargets = renderTargets;
-            this.cameraDepthTarget = cameraDepthTarget;
+            this.clearMaterial = clearMaterial;
             this.fallbackMaterial = fallbackMaterial;
             renderPassEvent = settings != null ? settings.aovPassEvent : RenderPassEvent.AfterRenderingTransparents;
             ConfigureInput(ScriptableRenderPassInput.None);
@@ -256,10 +295,12 @@ namespace lilToon.URP.Extensions.AOV
         public void SetupRenderGraph(
             HoAovSettings settings,
             HoAovRenderTargets renderTargets,
+            Material clearMaterial,
             Material fallbackMaterial)
         {
             this.settings = settings;
             this.renderTargets = renderTargets;
+            this.clearMaterial = clearMaterial;
             this.fallbackMaterial = fallbackMaterial;
             renderPassEvent = settings != null ? settings.aovPassEvent : RenderPassEvent.AfterRenderingTransparents;
             ConfigureInput(ScriptableRenderPassInput.None);
@@ -276,11 +317,14 @@ namespace lilToon.URP.Extensions.AOV
             renderTargets.ReAllocateIfNeeded(cameraTextureDescriptor, settings);
             colorTargets[0] = renderTargets.MaskIdTexture;
             colorTargets[1] = renderTargets.NormalDepthTexture;
-            colorTargets[2] = renderTargets.SurfaceDataTexture;
-            colorTargets[3] = renderTargets.Custom0Texture;
+            colorTargets[2] = renderTargets.TangentNormalTexture;
+            colorTargets[3] = renderTargets.SurfaceDataTexture;
+            colorTargets[4] = renderTargets.Custom0Texture;
+            colorTargets[5] = renderTargets.Custom1Texture;
+            colorTargets[6] = renderTargets.Custom2Texture;
 
-            ConfigureTarget(colorTargets);
-            ConfigureClear(ClearFlag.Color, Color.clear);
+            ConfigureTarget(colorTargets, renderTargets.DepthTexture);
+            ConfigureClear(ClearFlag.All, Color.clear);
         }
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
@@ -290,31 +334,28 @@ namespace lilToon.URP.Extensions.AOV
                 return;
             }
 
-            if (settings.useFallbackMaterial && fallbackMaterial == null)
-            {
-                SetInactive(context);
-                return;
-            }
-
             ApplyFallbackMaterialProperties();
             CommandBuffer cmd = CommandBufferPool.Get();
             using (new ProfilingScope(cmd, ProfilingSampler))
             {
+                ClearAovTargets(cmd);
                 SetGlobalTextures(cmd);
                 cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 1.0f);
                 cmd.SetGlobalFloat(HoAovShaderConstants.SystemChannelMaskId, GetSystemChannelMask(settings));
+                SetDefaultSubjectProperties(cmd);
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
 
-                List<ShaderTagId> shaderTagIds = settings.useFallbackMaterial ? FallbackShaderTagIds : AovShaderTagIds;
-                DrawingSettings drawingSettings = CreateDrawingSettings(shaderTagIds, ref renderingData, SortingCriteria.CommonOpaque);
-                if (settings.useFallbackMaterial)
+                if (settings.useFallbackMaterial && fallbackMaterial != null)
                 {
-                    drawingSettings.overrideMaterial = fallbackMaterial;
-                    drawingSettings.overrideMaterialPassIndex = 0;
+                    DrawingSettings fallbackDrawingSettings = CreateDrawingSettings(FallbackShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
+                    fallbackDrawingSettings.overrideMaterial = fallbackMaterial;
+                    fallbackDrawingSettings.overrideMaterialPassIndex = 0;
+                    context.DrawRenderers(renderingData.cullResults, ref fallbackDrawingSettings, ref filteringSettings, ref renderStateBlock);
                 }
 
-                context.DrawRenderers(renderingData.cullResults, ref drawingSettings, ref filteringSettings, ref renderStateBlock);
+                DrawingSettings aovDrawingSettings = CreateDrawingSettings(AovShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
+                context.DrawRenderers(renderingData.cullResults, ref aovDrawingSettings, ref filteringSettings, ref renderStateBlock);
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -329,13 +370,6 @@ namespace lilToon.URP.Extensions.AOV
                 return;
             }
 
-            if (settings.useFallbackMaterial && fallbackMaterial == null)
-            {
-                AddResetPass(renderGraph);
-                return;
-            }
-
-            UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             UniversalRenderingData renderingData = frameData.Get<UniversalRenderingData>();
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
@@ -343,66 +377,137 @@ namespace lilToon.URP.Extensions.AOV
 
             TextureHandle maskIdTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetMaskGraphicsFormat(), HoAovShaderConstants.MaskIdTextureName));
             TextureHandle normalDepthTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.NormalDepthTextureName));
+            TextureHandle tangentNormalTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.TangentNormalTextureName));
             TextureHandle surfaceDataTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.SurfaceDataTextureName));
             TextureHandle custom0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.Custom0TextureName));
+            TextureHandle custom1Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.Custom1TextureName));
+            TextureHandle custom2Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.Custom2TextureName));
+            TextureHandle depthTexture = UniversalRenderer.CreateRenderGraphTexture(
+                renderGraph,
+                HoAovRenderTargets.CreateDepthDescriptor(cameraData.cameraTargetDescriptor, settings),
+                HoAovShaderConstants.DepthTextureName,
+                true,
+                FilterMode.Point,
+                TextureWrapMode.Clamp);
 
             ApplyFallbackMaterialProperties();
             aovResources.maskIdTexture = maskIdTexture;
             aovResources.normalDepthTexture = normalDepthTexture;
+            aovResources.tangentNormalTexture = tangentNormalTexture;
             aovResources.surfaceDataTexture = surfaceDataTexture;
             aovResources.custom0Texture = custom0Texture;
+            aovResources.custom1Texture = custom1Texture;
+            aovResources.custom2Texture = custom2Texture;
 
-            List<ShaderTagId> shaderTagIds = settings.useFallbackMaterial ? FallbackShaderTagIds : AovShaderTagIds;
-            DrawingSettings drawingSettings = RenderingUtils.CreateDrawingSettings(
-                shaderTagIds,
+            bool drawFallback = settings.useFallbackMaterial && fallbackMaterial != null;
+            DrawingSettings fallbackDrawingSettings = RenderingUtils.CreateDrawingSettings(
+                FallbackShaderTagIds,
                 renderingData,
                 cameraData,
                 lightData,
-                SortingCriteria.CommonOpaque);
+                SortingCriteria.CommonTransparent);
+            fallbackDrawingSettings.overrideMaterial = fallbackMaterial;
+            fallbackDrawingSettings.overrideMaterialPassIndex = 0;
 
-            if (settings.useFallbackMaterial)
-            {
-                drawingSettings.overrideMaterial = fallbackMaterial;
-                drawingSettings.overrideMaterialPassIndex = 0;
-            }
+            DrawingSettings aovDrawingSettings = RenderingUtils.CreateDrawingSettings(
+                AovShaderTagIds,
+                renderingData,
+                cameraData,
+                lightData,
+                SortingCriteria.CommonTransparent);
 
-            RendererListParams rendererListParams = new RendererListParams(
+            RendererListParams fallbackRendererListParams = new RendererListParams(
                 renderingData.cullResults,
-                drawingSettings,
+                fallbackDrawingSettings,
+                filteringSettings);
+            RendererListParams aovRendererListParams = new RendererListParams(
+                renderingData.cullResults,
+                aovDrawingSettings,
                 filteringSettings);
 
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoAOV Output", out PassData passData, ProfilingSampler))
             {
-                passData.rendererList = renderGraph.CreateRendererList(rendererListParams);
+                passData.drawFallback = drawFallback;
+                passData.clearMaterial = clearMaterial;
+                passData.fallbackRendererList = drawFallback ? renderGraph.CreateRendererList(fallbackRendererListParams) : default;
+                passData.aovRendererList = renderGraph.CreateRendererList(aovRendererListParams);
                 passData.maskIdTexture = maskIdTexture;
                 passData.normalDepthTexture = normalDepthTexture;
+                passData.tangentNormalTexture = tangentNormalTexture;
                 passData.surfaceDataTexture = surfaceDataTexture;
                 passData.custom0Texture = custom0Texture;
+                passData.custom1Texture = custom1Texture;
+                passData.custom2Texture = custom2Texture;
                 passData.systemChannelMask = GetSystemChannelMask(settings);
 
-                if (!passData.rendererList.IsValid())
+                if (drawFallback && passData.fallbackRendererList.IsValid())
                 {
-                    return;
+                    builder.UseRendererList(passData.fallbackRendererList);
                 }
 
-                builder.UseRendererList(passData.rendererList);
+                if (passData.aovRendererList.IsValid())
+                {
+                    builder.UseRendererList(passData.aovRendererList);
+                }
+
                 builder.SetRenderAttachment(maskIdTexture, 0, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(normalDepthTexture, 1, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(surfaceDataTexture, 2, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(custom0Texture, 3, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(tangentNormalTexture, 2, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(surfaceDataTexture, 3, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(custom0Texture, 4, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(custom1Texture, 5, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(custom2Texture, 6, AccessFlags.WriteAll);
+                builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.WriteAll);
                 builder.SetGlobalTextureAfterPass(maskIdTexture, HoAovShaderConstants.MaskIdTextureId);
                 builder.SetGlobalTextureAfterPass(normalDepthTexture, HoAovShaderConstants.NormalDepthTextureId);
+                builder.SetGlobalTextureAfterPass(tangentNormalTexture, HoAovShaderConstants.TangentNormalTextureId);
                 builder.SetGlobalTextureAfterPass(surfaceDataTexture, HoAovShaderConstants.SurfaceDataTextureId);
                 builder.SetGlobalTextureAfterPass(custom0Texture, HoAovShaderConstants.Custom0TextureId);
+                builder.SetGlobalTextureAfterPass(custom1Texture, HoAovShaderConstants.Custom1TextureId);
+                builder.SetGlobalTextureAfterPass(custom2Texture, HoAovShaderConstants.Custom2TextureId);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
+                    ClearAovTargets(context.cmd, data.clearMaterial);
                     context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 1.0f);
                     context.cmd.SetGlobalFloat(HoAovShaderConstants.SystemChannelMaskId, data.systemChannelMask);
-                    context.cmd.DrawRendererList(data.rendererList);
+                    SetDefaultSubjectProperties(context.cmd);
+                    if (data.drawFallback && data.fallbackRendererList.IsValid())
+                    {
+                        context.cmd.DrawRendererList(data.fallbackRendererList);
+                    }
+
+                    if (data.aovRendererList.IsValid())
+                    {
+                        context.cmd.DrawRendererList(data.aovRendererList);
+                    }
                 });
             }
+        }
+
+        private void ClearAovTargets(CommandBuffer cmd)
+        {
+            cmd.ClearRenderTarget(RTClearFlags.Depth, Color.clear, 1.0f, 0);
+            if (clearMaterial != null)
+            {
+                cmd.DrawProcedural(Matrix4x4.identity, clearMaterial, 0, MeshTopology.Triangles, 3, 1);
+                return;
+            }
+
+            cmd.ClearRenderTarget(RTClearFlags.Color, Color.clear, 1.0f, 0);
+        }
+
+        private static void ClearAovTargets(RasterCommandBuffer cmd, Material material)
+        {
+            cmd.ClearRenderTarget(RTClearFlags.Depth, Color.clear, 1.0f, 0);
+            if (material != null)
+            {
+                cmd.DrawProcedural(Matrix4x4.identity, material, 0, MeshTopology.Triangles, 3, 1);
+                return;
+            }
+
+            cmd.ClearRenderTarget(RTClearFlags.Color, Color.clear, 1.0f, 0);
         }
 
         private void SetInactive(ScriptableRenderContext context)
@@ -464,6 +569,7 @@ namespace lilToon.URP.Extensions.AOV
         {
             cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, renderTargets.MaskIdTexture.nameID);
             cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
+            cmd.SetGlobalTexture(HoAovShaderConstants.TangentNormalTextureId, renderTargets.TangentNormalTexture.nameID);
             cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, renderTargets.SurfaceDataTexture.nameID);
             cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, renderTargets.Custom0Texture.nameID);
             cmd.SetGlobalTexture(HoAovShaderConstants.Custom1TextureId, renderTargets.Custom1Texture.nameID);
@@ -478,6 +584,42 @@ namespace lilToon.URP.Extensions.AOV
             }
 
             fallbackMaterial.SetFloat(HoAovShaderConstants.SystemChannelMaskId, GetSystemChannelMask(settings));
+        }
+
+        private static void SetDefaultSubjectProperties(CommandBuffer cmd)
+        {
+            cmd.SetGlobalFloat(HoAovShaderConstants.MaskWeightId, 1.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.SystemWriteMaskId, (float)HoAovChannelMask.Default);
+            cmd.SetGlobalFloat(HoAovShaderConstants.CustomWriteMaskId, 0.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.GroupIdId, 0.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.ObjectIdId, 0.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.MaterialClassId, 0.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.FlagsId, 1.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.ThicknessId, 0.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.CurvatureId, 0.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.UtilityId, 0.0f);
+            cmd.SetGlobalVector(HoAovShaderConstants.DebugColorId, Vector4.one);
+            cmd.SetGlobalVector(HoAovShaderConstants.CustomValues0Id, Vector4.zero);
+            cmd.SetGlobalVector(HoAovShaderConstants.CustomValues1Id, Vector4.zero);
+            cmd.SetGlobalVector(HoAovShaderConstants.CustomValues2Id, Vector4.zero);
+        }
+
+        private static void SetDefaultSubjectProperties(RasterCommandBuffer cmd)
+        {
+            cmd.SetGlobalFloat(HoAovShaderConstants.MaskWeightId, 1.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.SystemWriteMaskId, (float)HoAovChannelMask.Default);
+            cmd.SetGlobalFloat(HoAovShaderConstants.CustomWriteMaskId, 0.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.GroupIdId, 0.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.ObjectIdId, 0.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.MaterialClassId, 0.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.FlagsId, 1.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.ThicknessId, 0.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.CurvatureId, 0.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.UtilityId, 0.0f);
+            cmd.SetGlobalVector(HoAovShaderConstants.DebugColorId, Vector4.one);
+            cmd.SetGlobalVector(HoAovShaderConstants.CustomValues0Id, Vector4.zero);
+            cmd.SetGlobalVector(HoAovShaderConstants.CustomValues1Id, Vector4.zero);
+            cmd.SetGlobalVector(HoAovShaderConstants.CustomValues2Id, Vector4.zero);
         }
 
         private void ConfigureFiltering()
@@ -497,20 +639,6 @@ namespace lilToon.URP.Extensions.AOV
             filteringSettings = new FilteringSettings(renderQueueRange, settings != null ? settings.layerMask.value : -1);
         }
 
-        private static bool CanUseDepthTarget(RTHandle colorTarget, RTHandle depthTarget)
-        {
-            RenderTexture color = colorTarget != null ? colorTarget.rt : null;
-            RenderTexture depth = depthTarget != null ? depthTarget.rt : null;
-            if (color == null || depth == null)
-            {
-                return false;
-            }
-
-            return color.width == depth.width
-                && color.height == depth.height
-                && color.volumeDepth == depth.volumeDepth
-                && color.antiAliasing == depth.antiAliasing;
-        }
     }
 
     internal sealed class HoAovDebugPass : ScriptableRenderPass
@@ -527,8 +655,11 @@ namespace lilToon.URP.Extensions.AOV
             public TextureHandle source;
             public TextureHandle maskIdTexture;
             public TextureHandle normalDepthTexture;
+            public TextureHandle tangentNormalTexture;
             public TextureHandle surfaceDataTexture;
             public TextureHandle custom0Texture;
+            public TextureHandle custom1Texture;
+            public TextureHandle custom2Texture;
             public Material debugMaterial;
             public HoAovDebugMode debugMode;
             public Vector4 debugDepthParams;
@@ -589,6 +720,7 @@ namespace lilToon.URP.Extensions.AOV
                 SetMaterialProperties(debugMaterial, settings);
                 cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, renderTargets.MaskIdTexture.nameID);
                 cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
+                cmd.SetGlobalTexture(HoAovShaderConstants.TangentNormalTextureId, renderTargets.TangentNormalTexture.nameID);
                 cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, renderTargets.SurfaceDataTexture.nameID);
                 cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, renderTargets.Custom0Texture.nameID);
                 cmd.SetGlobalTexture(HoAovShaderConstants.Custom1TextureId, renderTargets.Custom1Texture.nameID);
@@ -614,8 +746,11 @@ namespace lilToon.URP.Extensions.AOV
             if (!source.IsValid()
                 || !aovResources.maskIdTexture.IsValid()
                 || !aovResources.normalDepthTexture.IsValid()
+                || !aovResources.tangentNormalTexture.IsValid()
                 || !aovResources.surfaceDataTexture.IsValid()
-                || !aovResources.custom0Texture.IsValid())
+                || !aovResources.custom0Texture.IsValid()
+                || !aovResources.custom1Texture.IsValid()
+                || !aovResources.custom2Texture.IsValid())
             {
                 return;
             }
@@ -631,8 +766,11 @@ namespace lilToon.URP.Extensions.AOV
                 passData.source = source;
                 passData.maskIdTexture = aovResources.maskIdTexture;
                 passData.normalDepthTexture = aovResources.normalDepthTexture;
+                passData.tangentNormalTexture = aovResources.tangentNormalTexture;
                 passData.surfaceDataTexture = aovResources.surfaceDataTexture;
                 passData.custom0Texture = aovResources.custom0Texture;
+                passData.custom1Texture = aovResources.custom1Texture;
+                passData.custom2Texture = aovResources.custom2Texture;
                 passData.debugMaterial = debugMaterial;
                 passData.debugMode = settings.debugMode;
                 passData.debugDepthParams = GetDebugDepthParams(settings);
@@ -640,8 +778,11 @@ namespace lilToon.URP.Extensions.AOV
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.UseTexture(passData.maskIdTexture, AccessFlags.Read);
                 builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
+                builder.UseTexture(passData.tangentNormalTexture, AccessFlags.Read);
                 builder.UseTexture(passData.surfaceDataTexture, AccessFlags.Read);
                 builder.UseTexture(passData.custom0Texture, AccessFlags.Read);
+                builder.UseTexture(passData.custom1Texture, AccessFlags.Read);
+                builder.UseTexture(passData.custom2Texture, AccessFlags.Read);
                 builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
@@ -652,8 +793,11 @@ namespace lilToon.URP.Extensions.AOV
                     context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 1.0f);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.maskIdTexture);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
+                    context.cmd.SetGlobalTexture(HoAovShaderConstants.TangentNormalTextureId, data.tangentNormalTexture);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, data.custom0Texture);
+                    context.cmd.SetGlobalTexture(HoAovShaderConstants.Custom1TextureId, data.custom1Texture);
+                    context.cmd.SetGlobalTexture(HoAovShaderConstants.Custom2TextureId, data.custom2Texture);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.debugMaterial, 0);
                 });
             }
@@ -679,15 +823,21 @@ namespace lilToon.URP.Extensions.AOV
     {
         public TextureHandle maskIdTexture = TextureHandle.nullHandle;
         public TextureHandle normalDepthTexture = TextureHandle.nullHandle;
+        public TextureHandle tangentNormalTexture = TextureHandle.nullHandle;
         public TextureHandle surfaceDataTexture = TextureHandle.nullHandle;
         public TextureHandle custom0Texture = TextureHandle.nullHandle;
+        public TextureHandle custom1Texture = TextureHandle.nullHandle;
+        public TextureHandle custom2Texture = TextureHandle.nullHandle;
 
         public override void Reset()
         {
             maskIdTexture = TextureHandle.nullHandle;
             normalDepthTexture = TextureHandle.nullHandle;
+            tangentNormalTexture = TextureHandle.nullHandle;
             surfaceDataTexture = TextureHandle.nullHandle;
             custom0Texture = TextureHandle.nullHandle;
+            custom1Texture = TextureHandle.nullHandle;
+            custom2Texture = TextureHandle.nullHandle;
         }
     }
 
@@ -695,17 +845,21 @@ namespace lilToon.URP.Extensions.AOV
     {
         private RTHandle maskIdTexture;
         private RTHandle normalDepthTexture;
+        private RTHandle tangentNormalTexture;
         private RTHandle surfaceDataTexture;
         private RTHandle custom0Texture;
         private RTHandle custom1Texture;
         private RTHandle custom2Texture;
+        private RTHandle depthTexture;
 
         public RTHandle MaskIdTexture => maskIdTexture;
         public RTHandle NormalDepthTexture => normalDepthTexture;
+        public RTHandle TangentNormalTexture => tangentNormalTexture;
         public RTHandle SurfaceDataTexture => surfaceDataTexture;
         public RTHandle Custom0Texture => custom0Texture;
         public RTHandle Custom1Texture => custom1Texture;
         public RTHandle Custom2Texture => custom2Texture;
+        public RTHandle DepthTexture => depthTexture;
 
         public void ReAllocateIfNeeded(RenderTextureDescriptor cameraTextureDescriptor, HoAovSettings settings)
         {
@@ -731,44 +885,121 @@ namespace lilToon.URP.Extensions.AOV
                 highPrecisionDescriptor.graphicsFormat = highPrecisionFormat;
             }
 
+            RenderTextureDescriptor depthDescriptor = CreateDepthDescriptor(cameraTextureDescriptor, settings);
+
             RenderingUtils.ReAllocateIfNeeded(ref maskIdTexture, maskDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.MaskIdTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref normalDepthTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.NormalDepthTextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref tangentNormalTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.TangentNormalTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref surfaceDataTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.SurfaceDataTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref custom0Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.Custom0TextureName);
             RenderingUtils.ReAllocateIfNeeded(ref custom1Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.Custom1TextureName);
             RenderingUtils.ReAllocateIfNeeded(ref custom2Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.Custom2TextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref depthTexture, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.DepthTextureName);
         }
 
         public void Release()
         {
             maskIdTexture?.Release();
             normalDepthTexture?.Release();
+            tangentNormalTexture?.Release();
             surfaceDataTexture?.Release();
             custom0Texture?.Release();
             custom1Texture?.Release();
             custom2Texture?.Release();
+            depthTexture?.Release();
             maskIdTexture = null;
             normalDepthTexture = null;
+            tangentNormalTexture = null;
             surfaceDataTexture = null;
             custom0Texture = null;
             custom1Texture = null;
             custom2Texture = null;
+            depthTexture = null;
         }
 
         internal static GraphicsFormat GetMaskGraphicsFormat()
         {
             const GraphicsFormat preferredFormat = GraphicsFormat.R8G8B8A8_UNorm;
-            return SystemInfo.IsFormatSupported(preferredFormat, FormatUsage.Render)
-                ? preferredFormat
-                : GraphicsFormat.None;
+            return IsColorFormatUsable(preferredFormat) ? preferredFormat : GetFallbackColorFormat();
         }
 
         internal static GraphicsFormat GetHighPrecisionGraphicsFormat()
         {
             const GraphicsFormat preferredFormat = GraphicsFormat.R16G16B16A16_SFloat;
-            return SystemInfo.IsFormatSupported(preferredFormat, FormatUsage.Render)
-                ? preferredFormat
-                : GraphicsFormat.None;
+            return IsColorFormatUsable(preferredFormat) ? preferredFormat : GetFallbackColorFormat();
+        }
+
+        private static GraphicsFormat GetFallbackColorFormat()
+        {
+            GraphicsFormat format = SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
+            if (IsColorFormatUsable(format))
+            {
+                return format;
+            }
+
+            if (IsColorFormatUsable(GraphicsFormat.R8G8B8A8_UNorm))
+            {
+                return GraphicsFormat.R8G8B8A8_UNorm;
+            }
+
+            return GraphicsFormat.B8G8R8A8_UNorm;
+        }
+
+        private static bool IsColorFormatUsable(GraphicsFormat format)
+        {
+            return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, FormatUsage.Render);
+        }
+
+        internal static RenderTextureDescriptor CreateDepthDescriptor(RenderTextureDescriptor cameraTextureDescriptor, HoAovSettings settings)
+        {
+            int divisor = Mathf.Max(1, (int)settings.renderScale);
+            int width = Mathf.Max(1, cameraTextureDescriptor.width / divisor);
+            int height = Mathf.Max(1, cameraTextureDescriptor.height / divisor);
+            GraphicsFormat depthFormat = GetDepthStencilFormat(cameraTextureDescriptor);
+            RenderTextureDescriptor descriptor = new RenderTextureDescriptor(width, height, GraphicsFormat.None, depthFormat);
+            descriptor.dimension = cameraTextureDescriptor.dimension;
+            descriptor.volumeDepth = cameraTextureDescriptor.volumeDepth;
+            descriptor.msaaSamples = divisor == 1 ? Mathf.Max(1, cameraTextureDescriptor.msaaSamples) : 1;
+            descriptor.bindMS = false;
+            descriptor.useMipMap = false;
+            descriptor.autoGenerateMips = false;
+            descriptor.useDynamicScale = cameraTextureDescriptor.useDynamicScale;
+            descriptor.vrUsage = cameraTextureDescriptor.vrUsage;
+            return descriptor;
+        }
+
+        internal static GraphicsFormat GetDepthStencilFormat(RenderTextureDescriptor cameraTextureDescriptor)
+        {
+            GraphicsFormat format = cameraTextureDescriptor.depthStencilFormat;
+            if (IsDepthStencilFormatUsable(format))
+            {
+                return format;
+            }
+
+            format = CoreUtils.GetDefaultDepthStencilFormat();
+            if (IsDepthStencilFormatUsable(format))
+            {
+                return format;
+            }
+
+            format = GraphicsFormatUtility.GetDepthStencilFormat(24);
+            if (IsDepthStencilFormatUsable(format))
+            {
+                return format;
+            }
+
+            format = GraphicsFormatUtility.GetDepthStencilFormat(32);
+            if (IsDepthStencilFormatUsable(format))
+            {
+                return format;
+            }
+
+            return GraphicsFormat.D32_SFloat;
+        }
+
+        private static bool IsDepthStencilFormatUsable(GraphicsFormat format)
+        {
+            return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, FormatUsage.Render);
         }
     }
 }

@@ -35,7 +35,7 @@ namespace lilToon.URP.Extensions.AOV
         [InspectorName("系统预留")]
         Utility = 1 << 11,
         [InspectorName("默认")]
-        Default = Mask | Id | Flags | LinearDepth | WorldNormal | Thickness | Curvature | Material | Utility
+        Default = Mask | Id | Flags | LinearDepth | WorldNormal | TangentNormal | Thickness | Curvature | Material | Utility
     }
 
     public enum HoAovDebugMode

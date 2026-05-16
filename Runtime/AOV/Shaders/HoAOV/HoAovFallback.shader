@@ -4,7 +4,7 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
     {
         [HideInInspector] _HoAovMaskWeight ("HoAOV Mask Weight", Float) = 1
         [HideInInspector] _lilHoAovSystemChannelMask ("HoAOV Feature System Channel Mask", Float) = 4095
-        [HideInInspector] _HoAovSystemWriteMask ("HoAOV System Write Mask", Float) = 1055
+        [HideInInspector] _HoAovSystemWriteMask ("HoAOV System Write Mask", Float) = 1119
         [HideInInspector] _HoAovCustomWriteMask ("HoAOV Custom Write Mask", Float) = 0
         [HideInInspector] _HoAovGroupId ("HoAOV Group Id", Float) = 0
         [HideInInspector] _HoAovObjectId ("HoAOV Object Id", Float) = 0
@@ -27,8 +27,8 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
             "RenderType" = "Opaque"
         }
 
-        ZWrite Off
-        ZTest Always
+        ZWrite On
+        ZTest LEqual
         Cull Off
 
         Pass
@@ -37,7 +37,7 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
             Tags { "LightMode" = "HoAOV" }
 
             HLSLPROGRAM
-            #pragma target 3.5
+            #pragma target 4.5
             #pragma vertex Vert
             #pragma fragment Frag
 
@@ -78,8 +78,11 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
             {
                 half4 maskId : SV_Target0;
                 half4 normalDepth : SV_Target1;
-                half4 surfaceData : SV_Target2;
-                half4 custom0 : SV_Target3;
+                half4 tangentNormal : SV_Target2;
+                half4 surfaceData : SV_Target3;
+                half4 custom0 : SV_Target4;
+                half4 custom1 : SV_Target5;
+                half4 custom2 : SV_Target6;
             };
 
             float HasBit(float value, float bitValue)
@@ -125,8 +128,8 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
                 float maskEnabled = HasSystemChannel(1.0);
                 float idEnabled = HasSystemChannel(2.0);
                 float flagsEnabled = HasSystemChannel(4.0);
-                float depthEnabled = HasSystemChannel(8.0);
                 float worldNormalEnabled = HasSystemChannel(16.0);
+                float tangentNormalEnabled = HasSystemChannel(64.0);
                 float thicknessEnabled = HasSystemChannel(256.0);
                 float curvatureEnabled = HasSystemChannel(512.0);
                 float materialEnabled = HasSystemChannel(1024.0);
@@ -142,17 +145,21 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
                     EncodeScalar(_HoAovGroupId) * idEnabled,
                     EncodeScalar(effectiveObjectId) * idEnabled,
                     EncodeScalar(_HoAovFlags) * flagsEnabled);
-                output.normalDepth = half4(normalWS * 0.5 + 0.5, linearDepth) * half4(worldNormalEnabled, worldNormalEnabled, worldNormalEnabled, depthEnabled);
+                output.normalDepth = half4((normalWS * 0.5 + 0.5) * worldNormalEnabled, linearDepth);
+                output.tangentNormal = half4(float3(0.5, 0.5, 1.0) * tangentNormalEnabled, tangentNormalEnabled);
                 output.surfaceData = half4(
                     saturate(_HoAovThickness) * thicknessEnabled,
                     saturate(abs(_HoAovCurvature)) * curvatureEnabled,
                     EncodeScalar(_HoAovMaterialClass) * materialEnabled,
                     saturate(_HoAovUtility) * utilityEnabled);
                 output.custom0 = half4(ApplyCustomWriteMask(_HoAovCustomValues0, 0.0));
+                output.custom1 = half4(ApplyCustomWriteMask(_HoAovCustomValues1, 4.0));
+                output.custom2 = half4(ApplyCustomWriteMask(_HoAovCustomValues2, 8.0));
                 return output;
             }
             ENDHLSL
         }
+
     }
 
     Fallback Off

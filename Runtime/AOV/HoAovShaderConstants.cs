@@ -7,16 +7,19 @@ namespace lilToon.URP.Extensions.AOV
     {
         public const string FallbackShaderName = "Hidden/lilToon-HoAOV/URP/Fallback";
         public const string DebugShaderName = "Hidden/lilToon-HoAOV/URP/DebugView";
+        public const string ClearShaderName = "Hidden/lilToon-HoAOV/URP/Clear";
         public const string ShaderPassName = "HoAOV";
 
         public const string ActiveName = "_lilHoAovActive";
         public const string SystemChannelMaskName = "_lilHoAovSystemChannelMask";
         public const string MaskIdTextureName = "_lilHoAovMaskIdTexture";
         public const string NormalDepthTextureName = "_lilHoAovNormalDepthTexture";
+        public const string TangentNormalTextureName = "_lilHoAovTangentNormalTexture";
         public const string SurfaceDataTextureName = "_lilHoAovSurfaceDataTexture";
         public const string Custom0TextureName = "_lilHoAovCustom0_3Texture";
         public const string Custom1TextureName = "_lilHoAovCustom4_7Texture";
         public const string Custom2TextureName = "_lilHoAovCustom8_11Texture";
+        public const string DepthTextureName = "_lilHoAovDepthTexture";
 
         public const string MaskWeightName = "_HoAovMaskWeight";
         public const string SystemWriteMaskName = "_HoAovSystemWriteMask";
@@ -39,6 +42,7 @@ namespace lilToon.URP.Extensions.AOV
         public static readonly int SystemChannelMaskId = Shader.PropertyToID(SystemChannelMaskName);
         public static readonly int MaskIdTextureId = Shader.PropertyToID(MaskIdTextureName);
         public static readonly int NormalDepthTextureId = Shader.PropertyToID(NormalDepthTextureName);
+        public static readonly int TangentNormalTextureId = Shader.PropertyToID(TangentNormalTextureName);
         public static readonly int SurfaceDataTextureId = Shader.PropertyToID(SurfaceDataTextureName);
         public static readonly int Custom0TextureId = Shader.PropertyToID(Custom0TextureName);
         public static readonly int Custom1TextureId = Shader.PropertyToID(Custom1TextureName);
