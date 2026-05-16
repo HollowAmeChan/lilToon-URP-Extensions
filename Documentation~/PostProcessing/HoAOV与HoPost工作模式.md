@@ -54,6 +54,95 @@ _lilHoAovCustom8_11Texture
 
 重要警告：之前尝试把 `_lilHoAovCustom4_7Texture` 和 `_lilHoAovCustom8_11Texture` 也接成真实 custom 输入时，多次遇到 Unity / URP / SRP 在 shader import 或启动阶段直接崩溃。现象不像普通 shader 编译错误，更像 native 侧对大量材质贴图输入、SRP Batcher 常量布局或 texture binding 数量组合不稳定。因此这两张纹理当前只能视为协议预留名，不要默认给 lilToon / lilPBR 继续补 `Custom4..Custom11` 的独立贴图入口。
 
+## AOV 数据分层
+
+HoAOV 不是一个无限扩展的材质 custom 池。当前设计分成三类 AOV：
+
+```text
+HoPost 固定消费 AOV
+- 系统级输入，由 HoPost 内置效果稳定消费
+- 例如 Mask、GroupId、ObjectId、Flags、Normal、Depth、Thickness、Curvature、Material、Utility
+- 不作为用户随意扩容的 custom 容量
+
+Material AOV
+- 材质级、贴图级、需要 UV 的细节遮罩
+- 默认只支持 MaterialCustom0..MaterialCustom3
+- 允许灰度颜色 * 灰度贴图 R
+- 来源是 lilToon / lilPBR 材质 UI
+
+Object AOV
+- 物体级、分组级、可批量配置的语义遮罩
+- 目标支持 ObjectCustom0..ObjectCustom7
+- 不允许贴图输入，不进入 lilToon / lilPBR 材质 UI
+- 来源是场景里的 HoAovGroup 空物体组件
+```
+
+容量规则：
+
+```text
+贴图型 AOV：最多 4 个，只属于 Material AOV
+物体型 AOV：默认预留 8 个，只由 HoAovGroup 批量标记
+不要把 ObjectCustom4..7 解释成材质 Custom4..7
+不要再给 lilToon/lilPBR 追加更多 custom 贴图入口
+```
+
+这样做的原因是：之前崩溃风险来自大量材质 texture binding，而物体 AOV 可以走分组数据、MaterialPropertyBlock 或未来的对象 buffer，不需要新增 sampler。眼透、角色分层合成、前发/脸/眼睛分组这类需求也更适合 Object AOV，而不是材质贴图。
+
+## 物体 AOV 指定方式
+
+Object AOV 第一版应挂在空物体上，而不是塞进 Volume，也不是强制每个 Renderer 都挂组件。建议组件名：
+
+```text
+HoAovGroup
+- enabled
+- includeChildren
+- explicitRenderers[]
+- layerMask / rendererFilter
+- priority
+- groupId
+- objectIdMode
+- objectId
+- flags
+- materialClass
+- utility
+- objectCustom0
+- objectCustom1
+- objectCustom2
+- objectCustom3
+- objectCustom4
+- objectCustom5
+- objectCustom6
+- objectCustom7
+```
+
+用法约定：
+
+```text
+角色根节点挂一个 HoAovGroup，控制整套角色的 groupId / flags。
+头发、脸、眼睛、配件等子空物体可以再挂 HoAovGroup 覆盖局部分组。
+includeChildren 为 true 时收集子层级 Renderer。
+explicitRenderers[] 用于补充不在子层级里的 Renderer。
+同一个 Renderer 命中多个 HoAovGroup 时，priority 高者覆盖；priority 相同时离 Renderer 最近的层级覆盖。
+没有命中 HoAovGroup 的 Renderer 使用材质默认 AOV 和系统默认值。
+```
+
+Object AOV 不放进 Volume 的原因：Volume 适合混合后处理参数，不适合混合离散 Renderer 列表。列表在空间权重里很难定义“半影响”或“区域内才属于某组”。Object AOV 属于场景/角色语义，应该跟 prefab 或空物体层级走。
+
+眼透预留建议：
+
+```text
+ObjectCustom0 = Character / 主体
+ObjectCustom1 = Face
+ObjectCustom2 = FrontHair
+ObjectCustom3 = Eye
+ObjectCustom4 = EyeRevealArea / 允许眼透区域
+ObjectCustom5 = Accessory / 配件
+ObjectCustom6 = Reserved
+ObjectCustom7 = Reserved
+```
+
+眼透如果要恢复被前发挡住的眼睛颜色，AOV 只负责 mask，还需要额外 Eye Color Buffer 或角色合成 pass。AOV 侧提前预留 Face / FrontHair / Eye / EyeRevealArea，是为了后续能做简单、统一的角色合成，而不是回到每个材质各自写 stencil 重绘逻辑。
+
 当前通道布局：
 
 ```text
@@ -73,10 +162,10 @@ SurfaceData.g        curvature
 SurfaceData.b        encoded material class
 SurfaceData.a        utility
 
-Custom0_3.r          Custom0
-Custom0_3.g          Custom1
-Custom0_3.b          Custom2
-Custom0_3.a          Custom3
+Custom0_3.r          MaterialCustom0
+Custom0_3.g          MaterialCustom1
+Custom0_3.b          MaterialCustom2
+Custom0_3.a          MaterialCustom3
 ```
 
 ID、flags、material 这类离散值不是直接写原始数字，而是写 `frac(abs(value) * 0.61803398875)` 的稳定编码值。HoPost 做数值匹配时必须对目标值使用同一套编码逻辑。
@@ -108,10 +197,23 @@ Thickness
 Curvature
 Material
 Utility
-Custom0
-Custom1
-Custom2
-Custom3
+MaterialCustom0
+MaterialCustom1
+MaterialCustom2
+MaterialCustom3
+```
+
+Object AOV 接入后，目标范围应继续增加：
+
+```text
+ObjectCustom0
+ObjectCustom1
+ObjectCustom2
+ObjectCustom3
+ObjectCustom4
+ObjectCustom5
+ObjectCustom6
+ObjectCustom7
 ```
 
 `aovMaskMode` 当前含义：
@@ -130,6 +232,64 @@ Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl
 ```
 
 效果 shader 不要重复实现 AOV 匹配逻辑。HoPost 已经有公共方法可以按不同方式把 AOV 转成蒙版，包括直接灰度、阈值、数值匹配、颜色匹配、softness 和 invert。具体由图层参数 `_LayerAovSource`、`_LayerAovMode`、`_LayerAovParams`、`_LayerAovMatchColor` 驱动。
+
+Editor 侧也应该只维护一套公共 AOV 遮罩 UI。当前入口是 `HoPostProcessStackVolumeEditor.DrawAovMaskProperties`，内部再拆成 source/mode 绘制和 match 参数绘制。后续新增 HoPost 图层时不要在各自效果里复制一套 AOV UI，否则很容易出现“UI 画了参数，但 shader 没用”的假接口。
+
+公共 UI 的显示规则：
+
+```text
+始终显示：
+- AOV 遮罩 foldout / 启用
+- AOV 源
+- 使用方式
+- 反转
+- 输出匹配结果
+
+Direct / 直接灰度：
+- 只使用 AOV 源本身的灰度值
+- 不使用 aovThreshold
+- 不使用 aovSoftness
+- 不使用 aovMatchValue
+- 不使用 aovMatchColor
+- UI 不应显示阈值、柔和度、匹配数值或匹配颜色
+
+Threshold / 阈值：
+- 使用 aovThreshold 作为选中起点
+- 使用 aovSoftness 作为 threshold 到 threshold + softness 的软过渡宽度
+- 不使用 aovMatchValue
+- 不使用 aovMatchColor
+- UI 只显示阈值和阈值柔和度
+
+MatchValue / 匹配数值：
+- 使用 aovMatchValue 作为目标值
+- 使用 aovThreshold 作为数值容差
+- 使用 aovSoftness 作为容差边缘的软过渡宽度
+- 不使用 aovMatchColor
+- GroupId、ObjectId、Flags、Material 会把目标值先做稳定编码再比较
+- Mask、Thickness、Curvature、Utility、MaterialCustom0..3、ObjectCustom0..7 使用原始标量值比较
+- UI 应显示匹配数值 / ID、数值容差、匹配柔和度
+
+MatchColor / 匹配颜色：
+- 使用 aovMatchColor.rgb 作为目标颜色
+- 使用 aovThreshold 作为 RGB 距离容差
+- 使用 aovSoftness 作为颜色容差边缘的软过渡宽度
+- 不使用 aovMatchValue
+- 颜色来自所选 AOV 源所在的 packed texture 的 RGB
+- MaterialCustom 和 ObjectCustom 通常更适合 Direct / Threshold / MatchValue；MatchColor 只在确实把颜色语义打进 packed texture 时使用
+- UI 应显示匹配颜色、颜色容差、颜色柔和度
+```
+
+参数打包约定：
+
+```text
+_LayerAovParams.x = threshold / tolerance
+_LayerAovParams.y = softness
+_LayerAovParams.z = match value
+_LayerAovParams.w = invert
+_LayerAovMatchColor = match color
+```
+
+`反转` 不是简单的 `1 - mask`。它只在 HoAOV 覆盖范围内做 `coverage - selected`，避免启用反转后把背景整屏选中。`输出匹配结果` 必须走同一套解析路径，用来验证当前 layer 实际喂给效果的 mask，而不是预览原始 AOV 纹理。
 
 普通图层使用：
 
@@ -237,19 +397,26 @@ fallback 不应该被当成最终质量路径
 
 如果怀疑 fallback 污染结果，第一步在 RendererFeature 里关闭 `useFallbackMaterial` 对比。
 
-## Custom 通道限制
+## Material / Object AOV 限制
 
 当前工程的硬约束：
 
 ```text
-默认只支持 Custom0..Custom3
-四个 custom 通道打包进一张 RGBA 纹理
-每个 custom 通道 = 灰度贴图 R * 灰度颜色 R
-默认值必须是 0
-UI 不需要每通道启用开关
+Material AOV 默认只支持 MaterialCustom0..MaterialCustom3
+四个 MaterialCustom 通道打包进一张 RGBA 纹理
+每个 MaterialCustom 通道 = 灰度贴图 R * 灰度颜色 R
+MaterialCustom 默认值必须是 0
+Material AOV UI 不需要每通道启用开关
+
+Object AOV 目标支持 ObjectCustom0..ObjectCustom7
+ObjectCustom 不允许贴图输入
+ObjectCustom 默认值必须是 0
+ObjectCustom 由 HoAovGroup 空物体批量指定
 ```
 
-不要再默认扩展到 8 或 12 个独立 custom 贴图输入。实际测试中，大量独立 custom texture 输入会导致 Unity 在 shader/import/启动阶段 native 崩溃，不是普通 shader 编译错误。
+不要再默认扩展到 8 或 12 个独立 MaterialCustom 贴图输入。实际测试中，大量独立 custom texture 输入会导致 Unity 在 shader/import/启动阶段 native 崩溃，不是普通 shader 编译错误。
+
+更多用户遮罩应优先走 Object AOV，而不是继续往材质 UI 里加贴图。Object AOV 解决的是“哪个物体/部件属于哪个合成层”，Material AOV 解决的是“材质表面上哪个 UV 区域属于某个遮罩”。这两类不要混成同一套 custom 编号。
 
 如果未来确实需要更多通道，优先考虑：
 
@@ -300,17 +467,20 @@ cutout 洞里黑，背后对象没露出
 1. URP Renderer Data 加 `HoAovRendererFeature`。
 2. URP Renderer Data 加 `HoPostProcessRendererFeature`，并放在 Shoost 之前。
 3. Volume Profile 添加 `lilToon-HoPost / Process Stack`。
-4. lilToon/lilPBR 材质在 HoAOV 栏设置 `Custom0..Custom3` 的灰度颜色和贴图。
-5. HoPost 图层打开 `AOV Mask`，选择需要的 source 和 mask mode。
-6. 调试时先用 `debugAovMask`，确认 mask 后再调具体效果参数。
+4. lilToon/lilPBR 材质在 HoAOV 栏设置 `MaterialCustom0..MaterialCustom3` 的灰度颜色和贴图。
+5. 需要物体/部件分组时，在角色根节点、头发、脸、眼睛或配件空物体上挂 `HoAovGroup`。
+6. `HoAovGroup` 用 `includeChildren` 或 `explicitRenderers[]` 指定本组影响哪些 Renderer。
+7. HoPost 图层打开 `AOV Mask`，选择需要的 source 和 mask mode。
+8. 调试时先用 `debugAovMask`，确认 mask 后再调具体效果参数。
 
 材质或 shader 侧新增功能时：
 
 1. 先确认是否真的需要新增通道。
-2. 优先复用现有 `Custom0..Custom3`。
-3. 必须保持默认值为 0。
-4. 必须复用材质 alpha/cutout/dissolve 规则。
-5. 不要让 fallback 覆盖真正 HoAOV pass 的结果。
+2. 需要贴图/UV 时优先复用现有 `MaterialCustom0..MaterialCustom3`。
+3. 需要物体/部件批量分组时优先走 `HoAovGroup` 的 `ObjectCustom0..ObjectCustom7`。
+4. 必须保持默认值为 0。
+5. 必须复用材质 alpha/cutout/dissolve 规则。
+6. 不要让 fallback 覆盖真正 HoAOV pass 的结果。
 
 ## 文件入口
 
@@ -318,6 +488,7 @@ cutout 洞里黑，背后对象没露出
 
 ```text
 Runtime/AOV/HoAovRendererFeature.cs
+Runtime/AOV/HoAovGroup.cs
 Runtime/AOV/HoAovShaderConstants.cs
 Runtime/AOV/Shaders/HoAOV/HoAovFallback.shader
 Runtime/AOV/Shaders/HoAOV/HoAovDebugView.shader
@@ -348,6 +519,7 @@ HoAOV 只生产数据，不做视觉效果
 HoPost 只消费 AOV 和 camera color，不重新发明 AOV 采集
 Shoost 默认只处理最终画面，不默认依赖 AOV
 材质 pass 负责材质语义，RendererFeature 负责收集和绑定
+物体 AOV 由 HoAovGroup 空物体提供，不放进 Volume 的 renderer 列表
 fallback 是过渡路径，不是质量路径
-custom 通道保守扩展，先稳定再增加容量
+Material AOV 贴图通道固定 4 个，更多语义遮罩走 Object AOV
 ```

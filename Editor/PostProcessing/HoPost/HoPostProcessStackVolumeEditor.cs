@@ -210,7 +210,22 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return 1;
             }
 
-            return 8;
+            SerializedProperty aovMaskMode = element.FindPropertyRelative("aovMaskMode");
+            HoPostAovMaskMode mode = aovMaskMode != null
+                ? (HoPostAovMaskMode)Mathf.Clamp(aovMaskMode.enumValueIndex, 0, AovMaskModes.Length - 1)
+                : HoPostAovMaskMode.Direct;
+
+            switch (mode)
+            {
+                case HoPostAovMaskMode.Threshold:
+                    return 7;
+                case HoPostAovMaskMode.MatchValue:
+                case HoPostAovMaskMode.MatchColor:
+                    return 8;
+                case HoPostAovMaskMode.Direct:
+                default:
+                    return 5;
+            }
         }
 
         private float DrawFoldoutLine(Rect rect, float y, SerializedProperty element, SerializedProperty enabled)
@@ -426,23 +441,80 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SerializedProperty invertAovMask,
             SerializedProperty debugAovMask)
         {
-            aovThreshold.floatValue = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "阈值 / 容差", Mathf.Max(0.0f, aovThreshold.floatValue), 0.0f, 1.0f);
-            y += LineHeight + LineSpacing;
-            aovSoftness.floatValue = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "柔和度", Mathf.Max(0.0001f, aovSoftness.floatValue), 0.0001f, 1.0f);
-            y += LineHeight + LineSpacing;
-            if ((HoPostAovMaskMode)aovMaskMode.enumValueIndex == HoPostAovMaskMode.MatchColor)
+            HoPostAovMaskMode mode = (HoPostAovMaskMode)Mathf.Clamp(aovMaskMode.enumValueIndex, 0, AovMaskModes.Length - 1);
+            switch (mode)
             {
-                aovMatchColor.colorValue = EditorGUI.ColorField(new Rect(rect.x, y, rect.width, LineHeight), "匹配颜色", aovMatchColor.colorValue);
-            }
-            else
-            {
-                aovMatchValue.floatValue = EditorGUI.FloatField(new Rect(rect.x, y, rect.width, LineHeight), "匹配数值 / ID", aovMatchValue.floatValue);
+                case HoPostAovMaskMode.Threshold:
+                    aovThreshold.floatValue = EditorGUI.Slider(
+                        new Rect(rect.x, y, rect.width, LineHeight),
+                        new GUIContent("阈值", "通道灰度达到这个值后开始被选中。"),
+                        Mathf.Max(0.0f, aovThreshold.floatValue),
+                        0.0f,
+                        1.0f);
+                    y += LineHeight + LineSpacing;
+                    aovSoftness.floatValue = EditorGUI.Slider(
+                        new Rect(rect.x, y, rect.width, LineHeight),
+                        new GUIContent("阈值柔和度", "从阈值到阈值 + 柔和度之间平滑过渡。"),
+                        Mathf.Max(0.0001f, aovSoftness.floatValue),
+                        0.0001f,
+                        1.0f);
+                    y += LineHeight + LineSpacing;
+                    break;
+
+                case HoPostAovMaskMode.MatchValue:
+                    aovMatchValue.floatValue = EditorGUI.FloatField(
+                        new Rect(rect.x, y, rect.width, LineHeight),
+                        new GUIContent("匹配数值 / ID", "目标值。GroupId、ObjectId、Flags、Material 会在 shader 里先编码再比较。"),
+                        aovMatchValue.floatValue);
+                    y += LineHeight + LineSpacing;
+                    aovThreshold.floatValue = EditorGUI.Slider(
+                        new Rect(rect.x, y, rect.width, LineHeight),
+                        new GUIContent("数值容差", "允许目标值附近多宽的范围被选中。"),
+                        Mathf.Max(0.0f, aovThreshold.floatValue),
+                        0.0f,
+                        1.0f);
+                    y += LineHeight + LineSpacing;
+                    aovSoftness.floatValue = EditorGUI.Slider(
+                        new Rect(rect.x, y, rect.width, LineHeight),
+                        new GUIContent("匹配柔和度", "容差边缘的软过渡宽度。"),
+                        Mathf.Max(0.0001f, aovSoftness.floatValue),
+                        0.0001f,
+                        1.0f);
+                    y += LineHeight + LineSpacing;
+                    break;
+
+                case HoPostAovMaskMode.MatchColor:
+                    aovMatchColor.colorValue = EditorGUI.ColorField(
+                        new Rect(rect.x, y, rect.width, LineHeight),
+                        new GUIContent("匹配颜色", "目标 RGB。会和所选 AOV 源所在 packed texture 的 RGB 做距离匹配。"),
+                        aovMatchColor.colorValue);
+                    y += LineHeight + LineSpacing;
+                    aovThreshold.floatValue = EditorGUI.Slider(
+                        new Rect(rect.x, y, rect.width, LineHeight),
+                        new GUIContent("颜色容差", "RGB 距离小于这个范围时被选中。"),
+                        Mathf.Max(0.0f, aovThreshold.floatValue),
+                        0.0f,
+                        1.0f);
+                    y += LineHeight + LineSpacing;
+                    aovSoftness.floatValue = EditorGUI.Slider(
+                        new Rect(rect.x, y, rect.width, LineHeight),
+                        new GUIContent("颜色柔和度", "颜色容差边缘的软过渡宽度。"),
+                        Mathf.Max(0.0001f, aovSoftness.floatValue),
+                        0.0001f,
+                        1.0f);
+                    y += LineHeight + LineSpacing;
+                    break;
             }
 
+            invertAovMask.boolValue = EditorGUI.Toggle(
+                new Rect(rect.x, y, rect.width, LineHeight),
+                new GUIContent("反转", "只在当前 HoAOV 覆盖范围内反转，避免把背景也选中。"),
+                invertAovMask.boolValue);
             y += LineHeight + LineSpacing;
-            invertAovMask.boolValue = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "反转", invertAovMask.boolValue);
-            y += LineHeight + LineSpacing;
-            debugAovMask.boolValue = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "输出匹配结果", debugAovMask.boolValue);
+            debugAovMask.boolValue = EditorGUI.Toggle(
+                new Rect(rect.x, y, rect.width, LineHeight),
+                new GUIContent("输出匹配结果", "直接输出当前 AOV 源和使用方式解析出的 mask，用于调试。"),
+                debugAovMask.boolValue);
             y += LineHeight + LineSpacing;
         }
 

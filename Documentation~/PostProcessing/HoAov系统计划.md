@@ -65,7 +65,7 @@ ShoostStack 的设计目标是不需要额外喂数据，用户打开滤镜就�
 - Glow 只扩散指定 AOV mask。
 - ToonMap 分主体和背景处理。
 - Weather 用 depth/AOV 做遮挡。
-- 任意支持 AOV 的 Shoost 滤镜都可以选择 `Custom0..Custom11` 作为用户自定义局部遮罩。
+- 任意支持 AOV 的 Shoost 滤镜都可以选择 `MaterialCustom0..3` 或 `ObjectCustom0..7` 作为用户自定义局部遮罩。
 
 但这些必须是高级选项，默认关闭。ShoostStack 的基础运行不应依赖 AOV。
 
@@ -126,30 +126,46 @@ URP 已经有一些类似 AOV 的内部中间纹理：
 
 ## 标记放在哪里
 
-HoAOV 的参与标记应该放在对象或 Renderer 上，而不是只放在材质上。
+HoAOV 的参与标记不应该只放在材质上。材质适合表达“这个表面按 UV 写出什么”，但不适合表达“这一组 Renderer 属于角色脸部、前发、眼睛、配件，参与哪个后期合成层”。
 
-原因是同一个材质资产可能被多个对象复用：角色 A 要参与投影，角色 B 不参与；头发要参与边缘光，眼睛不参与。只靠材质开关会很快失控。
+第一版对象级标记应该挂在空物体上，而不是塞进 Volume 的 renderer 列表，也不是强制每个 Renderer 都挂组件。Volume 适合混合后处理参数，不适合混合离散对象集合；renderer 列表在 Volume 权重里很难定义“半影响”或“只影响空间区域内的某些对象”。对象 AOV 属于场景/角色语义，应该跟 prefab 和层级走。
 
 推荐新增组件：
 
 ```text
-HoAovSubject
+HoAovGroup
 - enabled
-- groupId
-- objectId
-- maskWeight
-- writeMask
-- writeNormal
-- writeDepth
-- writeVelocity
-- writeThickness
-- writeCurvature
-- affectsHoPost
-- affectsTrace
+- includeChildren
+- explicitRenderers[]
+- layerMask / rendererFilter
 - priority
+- groupId
+- objectIdMode
+- objectId
+- flags
+- materialClass
+- utility
+- objectCustom0
+- objectCustom1
+- objectCustom2
+- objectCustom3
+- objectCustom4
+- objectCustom5
+- objectCustom6
+- objectCustom7
 ```
 
-对象组件负责“谁参与、属于哪一组、写哪些通道”。
+空物体组件负责“这组 Renderer 属于哪个 AOV 语义层”。典型用法是角色根节点挂一个总组，头发、脸、眼睛、衣服、配件子空物体再挂局部组覆盖。
+
+合并规则建议：
+
+```text
+includeChildren 为 true 时收集子层级 Renderer
+explicitRenderers[] 可以补充不在子层级下的 Renderer
+同一个 Renderer 命中多个 HoAovGroup 时，priority 高者覆盖
+priority 相同时，离 Renderer 最近的层级覆盖
+未命中 HoAovGroup 的 Renderer 使用材质默认 AOV 和系统默认值
+```
 
 材质负责“如何正确输出这些通道”。lilToon / lilPBR 应提供专用 pass：
 
@@ -161,9 +177,9 @@ Tags { "LightMode" = "HoAOV" }
 
 ## 建议的 AOV 通道
 
-第一版可以直接占 12 个系统逻辑通道位，并额外保留 12 个用户自定义通道位。这些通道位不等于 24 张完整 RT。它们更像稳定的协议和 UI/资产占位：RendererFeature 根据当前启用的通道决定实际分配哪些纹理，以及哪些通道可以打包到同一张纹理里。
+第一版可以直接占 12 个系统逻辑通道位，并额外保留 4 个 Material AOV 和 8 个 Object AOV。这些通道位不等于 24 张完整 RT。它们更像稳定的协议和 UI/资产占位：RendererFeature 根据当前启用的通道决定实际分配哪些纹理，以及哪些通道可以打包到同一张纹理里。
 
-系统 slot 和 custom slot 必须分开管理。系统 slot 是 HoAOV 自己的长期协议，未来可能增加新的内置数据，例如 bent normal、material AO、light vector、trace result 等；custom slot 是用户容量，未来可能从 12 扩到 16、24 或 32。两者的扩容节奏和兼容策略不同，不应该塞进同一个固定 enum 位段里。
+系统 slot、Material AOV 和 Object AOV 必须分开管理。系统 slot 是 HoAOV 自己的长期协议，未来可能增加新的内置数据，例如 bent normal、material AO、light vector、trace result 等；Material AOV 是材质贴图容量；Object AOV 是物体/部件分组容量。三者的扩容节奏和兼容策略不同，不应该塞进同一个固定 enum 位段里。
 
 建议第一版固定 12 个系统 slot：
 
@@ -182,26 +198,44 @@ Tags { "LightMode" = "HoAOV" }
 11 Utility         预留给系统级桥接，例如 HTrace AO、材质 AO 或未来特殊输入
 ```
 
-另外固定保留 12 个用户 custom slot：
+用户可控 AOV 不再作为一组并列的 `Custom0..Custom11` 来理解，而是拆成 Material AOV 和 Object AOV 两类：
 
 ```text
-Custom0
-Custom1
-Custom2
-Custom3
-Custom4
-Custom5
-Custom6
-Custom7
-Custom8
-Custom9
-Custom10
-Custom11
+MaterialCustom0
+MaterialCustom1
+MaterialCustom2
+MaterialCustom3
+
+ObjectCustom0
+ObjectCustom1
+ObjectCustom2
+ObjectCustom3
+ObjectCustom4
+ObjectCustom5
+ObjectCustom6
+ObjectCustom7
 ```
 
-这些 custom slot 的目标不是内部算法，而是给用户和 Shoost 高级模式使用。例如用户可以把“皮肤区域”“头发区域”“眼睛区域”“衣服发光区域”“只吃某个滤镜的遮罩”等标记写进 custom 通道，Shoost 滤镜再选择读取其中一个 custom slot 做局部 Kuwahara、局部 Glow、局部色彩分级或局部 Weather 遮挡。
+Material AOV 的目标是贴图/UV 细节遮罩，例如用户画出的皮肤区域、衣服花纹、发光区域、局部滤镜权重。它只允许 4 个通道，并且只在 lilToon/lilPBR 材质 UI 中暴露这 4 个灰度颜色 + 灰度贴图入口。
 
-对应代码层建议把系统通道和 custom 通道拆成两套结构，而不是用一组散乱 bool，也不要让 custom slot 挤占系统 enum：
+Object AOV 的目标是物体/部件分组和实时合成遮罩，例如角色主体、脸、前发、眼睛、配件、只吃某个后处理的对象组。它默认预留 8 个通道，不允许贴图输入，不回到 lilToon/lilPBR 材质 UI，由 `HoAovGroup` 空物体批量指定。
+
+眼透是 Object AOV 的刚需用例之一。建议预留默认语义：
+
+```text
+ObjectCustom0 = Character / 主体
+ObjectCustom1 = Face
+ObjectCustom2 = FrontHair
+ObjectCustom3 = Eye
+ObjectCustom4 = EyeRevealArea / 允许眼透区域
+ObjectCustom5 = Accessory / 配件
+ObjectCustom6 = Reserved
+ObjectCustom7 = Reserved
+```
+
+这不是把材质 custom 扩到 12 个，而是把用户可控 matte 分成“画出来的遮罩”和“标出来的对象/部件”。底层可以打包进 AOV RT，但文档、UI 和命名必须保持这两类清晰分离，避免后续又把 `ObjectCustom4..7` 误解成应该给 lilToon 增加的贴图入口。
+
+对应代码层建议把系统通道、材质 AOV 和物体 AOV 拆成三套结构，而不是用一组散乱 bool，也不要让用户 slot 挤占系统 enum：
 
 ```csharp
 [Flags]
@@ -221,47 +255,61 @@ public enum HoAovChannelMask
     Utility       = 1 << 11,
 }
 
-public static class HoAovCustomChannels
+public static class HoAovMaterialChannels
 {
     public const int DefaultCount = 4;
     public const int MaxSupportedCount = 4;
 }
+
+public static class HoAovObjectChannels
+{
+    public const int DefaultCount = 8;
+    public const int MaxSupportedCount = 8;
+}
 ```
 
-`HoAovSubject` 上也应该使用同一套 channel mask，例如：
+`HoAovGroup` 上应该使用对象 AOV 字段，例如：
 
 ```text
-writeChannels
-debugColor
+enabled
+includeChildren
+explicitRenderers[]
+priority
 groupId
 objectId
+flags
 materialClass
-customChannelMask
-customValues
+utility
+objectCustomValues[8]
 ```
 
-这样第一版 UI 就可以先把系统 slot 和 custom slot 全部占出来，后续新增真实输出时不用频繁改资产结构。
+这样第一版 UI 就可以先把 Material AOV 和 Object AOV 的语义占出来，后续新增真实输出时不用频繁改资产结构。
 
 推荐字段分层：
 
 ```text
 HoAovSettings
 - systemChannels
-- customChannelCount
-- customChannelNames[]
-- customChannelColors[]
+- materialChannelCount = 4
+- objectChannelCount = 8
+- materialChannelNames[]
+- objectChannelNames[]
+- objectChannelColors[]
 
-HoAovSubject
-- systemWriteChannels
-- customWriteMask
-- customValues[]
+HoAovGroup
+- groupId
+- objectId
+- flags
+- materialClass
+- utility
+- objectCustomValues[8]
 ```
 
-`customChannelCount` 第一版默认为 4。UI 显示数量跟随 settings，shader 常量和纹理分配跟随实际启用数量，旧资产缺少新增 custom slot 时按 0 处理。
+`materialChannelCount` 第一版固定为 4。`objectChannelCount` 第一版固定为 8。旧资产缺少新增字段时按 0 处理。Object AOV 的 8 个通道是为了角色分组、眼透和局部合成预留，不代表材质侧可以继续新增贴图。
 
 当前扩展包里没有直接包含 lilPBR 源码或已有层位定义，因此 HoAOV 不应该先假设具体字段名。设计上把第 10 位 `Material` 作为 lilPBR/lilToon 层语义的承接口：未来如果发现 lilPBR 已经有材质层、区域层、debug 层或类似 layer slot，就把它映射到 `Material`/`Flags`，不要在 HoAOV 里并行发明第二套互相重叠的层系统。长期目标是 HoAOV 成为更通用的替代层，而不是只给后处理临时使用的小补丁。
 
-虽然协议上保留 12 个系统 slot 和 12 个 custom slot，第一阶段仍推荐先做足够支撑 HoPost 的最小实际输出：
+虽然协议上保留系统 slot、4 个 Material AOV 和 8 个 Object AOV，第一阶段仍推荐先做足够支撑 HoPost 的最小实际输出：
 
 ```text
 Mask
@@ -302,7 +350,9 @@ _HoAovVelocityTexture
 _HoAovThicknessTexture
 _HoAovCurvatureTexture
 _HoAovUtilityTexture
-_HoAovCustom0Texture ... _HoAovCustom11Texture
+_HoAovMaterialCustom0_3Texture
+_HoAovObjectCustom0_3Texture
+_HoAovObjectCustom4_7Texture
 ```
 
 建议精度：
@@ -327,7 +377,7 @@ _HoAovCustom0Texture ... _HoAovCustom11Texture
 - Velocity：优先复用 URP `_MotionVectorTexture`；自定义需求再由 AOV pass 输出 object velocity。
 - Thickness：第一版用材质属性、顶点色或固定值近似；高级版做 backface depth - frontface depth。
 - Curvature：第一版用 normal derivative 屏幕空间近似；高级版用预烘 vertex color 或 mesh attribute。
-- ID/Group：由 `HoAovSubject` 通过 MaterialPropertyBlock 或 renderer 数据传给 pass。
+- ID/Group/Object AOV：由 `HoAovGroup` 通过 MaterialPropertyBlock、renderer 数据或后续对象 buffer 传给 pass。
 
 ## 渲染顺序
 
@@ -360,7 +410,7 @@ HoAOV Transparent/Subject
 Runtime/AOV/
 - HoAovRendererFeature.cs
 - HoAovSettings.cs
-- HoAovSubject.cs
+- HoAovGroup.cs
 - HoAovShaderConstants.cs
 - Shaders/HoAOV/HoAovFallback.shader
 ```
@@ -422,14 +472,15 @@ Tags { "LightMode" = "HoAOV" }
 
 不要再把 HoAOV custom 通道默认扩成大量独立贴图输入。lilToon / lilPBR 侧实际测试过 4、5、7、8、12 张 custom 贴图入口：
 
-- `Custom0..Custom3` 打包到 `custom0.rgba`，稳定，可作为默认上限。
-- 单独加到 `Custom4` 时没有复现崩溃，但不能证明继续扩展安全。
+- `MaterialCustom0..MaterialCustom3` 打包到 `custom0.rgba`，稳定，可作为材质贴图输入的默认上限。
+- 单独加到材质 `Custom4` 时没有复现崩溃，但不能证明继续扩展安全。
 - 加到 7 张、8 张、12 张独立贴图入口时，Unity 会在 shader/import/启动阶段直接崩溃，表现不像普通 shader 编译错误。
 - 曾尝试把 `_lilHoAovCustom4_7Texture` 和 `_lilHoAovCustom8_11Texture` 也接成真实 custom 输入链路，但 SRP/Unity 仍然反复崩溃；这两张纹理当前只能视为协议预留名，不应默认绑定到 lilToon/lilPBR 的新增贴图输入。
-- 因此当前工程约束是：默认只暴露 4 个 custom 遮罩通道，颜色乘贴图 R，默认值为 0。
+- 因此当前工程约束是：默认只暴露 4 个 Material AOV 贴图遮罩通道，颜色乘贴图 R，默认值为 0。
+- 需要更多用户可控遮罩时，优先走 Object AOV：`ObjectCustom0..ObjectCustom7` 由 `HoAovGroup` 空物体批量指定，不新增材质贴图输入。
 - 后续如果确实需要更多遮罩，不要直接堆 `_HoAovCustomNTexture`。优先考虑 atlas、packed texture、数组纹理、外部 mask buffer，或做成明确的实验开关，并先在干净工程里逐级验证。
 
-这不是 UI 难不难画的问题，而是 Unity/URP/lilToon/lilPBR 组合下大量材质 texture binding 可能触发 native 侧不稳定。后续维护者不要把 12 通道独立贴图作为默认方案重新加回来。
+这不是 UI 难不难画的问题，而是 Unity/URP/lilToon/lilPBR 组合下大量材质 texture binding 可能触发 native 侧不稳定。后续维护者不要把 12 通道独立贴图作为默认方案重新加回来，也不要把 Object AOV 误接成材质贴图入口。
 
 这个 pass 应该：
 
@@ -461,18 +512,18 @@ Thickness
 Curvature
 Material
 Utility
-Custom0
-Custom1
-Custom2
-Custom3
-Custom4
-Custom5
-Custom6
-Custom7
-Custom8
-Custom9
-Custom10
-Custom11
+MaterialCustom0
+MaterialCustom1
+MaterialCustom2
+MaterialCustom3
+ObjectCustom0
+ObjectCustom1
+ObjectCustom2
+ObjectCustom3
+ObjectCustom4
+ObjectCustom5
+ObjectCustom6
+ObjectCustom7
 ```
 
 场景视图预览建议放在 `HoAovRendererFeature` 里，由一个只在 debug mode 开启时执行的 fullscreen debug pass 输出。它读取 HoAOV 全局纹理，不改变真实 AOV 生成逻辑。第一版可以对 `CameraType.SceneView` 和 GameView 都支持开关，默认只给 SceneView 打开，避免调试画面误进正式相机。
@@ -492,6 +543,8 @@ HoPost 图层需要有独立于 HoAOV 原始通道预览的“消费端匹配结
 - AOV 的消费端匹配也应统一走 `HoPostAovMask.hlsl`。当前公共方法支持直接灰度、阈值、数值匹配、颜色匹配、softness 和 invert；效果 shader 只需要调用 `LilHoPostResolveAovLayerMask` 或 `LilHoPostResolveRequiredAovMask`，不要各自重写 source/mode/threshold 分支。
 - DropShadow / 投影属于强依赖主体 mask 的效果，调试时应使用同一套 AOV 解析结果作为“主体来源”预览；EdgeLight、Outline 等普通图层则只在 `AOV 遮罩` 开启时把该 mask 作为图层强度限制。
 
+Editor 侧也必须统一走公共 AOV 遮罩 UI。`DrawAovMaskProperties` / `DrawAovMatchProperties` 只应该按当前 `aovMaskMode` 显示真正生效的字段：`Direct` 只需要源；`Threshold` 只需要阈值和柔和度；`MatchValue` 需要匹配值、容差和柔和度；`MatchColor` 需要匹配颜色、颜色容差和柔和度。不要把所有参数一口气画出来，否则后续维护者会误以为每个模式都消费所有字段。
+
 - Mask：黑白显示，权重越高越白。
 - Id：hash 到稳定伪彩色，便于看分组。
 - Flags：按 bit 映射颜色，检查参与关系。
@@ -501,7 +554,8 @@ HoPost 图层需要有独立于 HoAOV 原始通道预览的“消费端匹配结
 - Velocity：RG 映射到红绿，静止为中灰。
 - Thickness/Curvature：热力图，低值暗，高值亮。
 - Material/Utility：按值或材质分类显示伪彩色。
-- Custom0..Custom11：默认黑白显示，也可以按用户给定颜色或 slot 名称显示。
+- MaterialCustom0..3：默认黑白显示，用来检查材质贴图遮罩。
+- ObjectCustom0..7：默认黑白显示，用来检查 HoAovGroup 物体/部件分组。
 
 材质球 debug 可以作为第二层接入：lilToon/lilPBR 的材质 debug 模式里增加 `HoAOV` 分组，把材质自身将要写出的 AOV 值显示在 preview sphere 上。这个 debug 入口只验证“材质会输出什么”，SceneView debug 验证“RendererFeature 最终收到了什么”。两者都要有，因为材质正确不代表 render queue、对象标记、override pass 和透明阶段都正确。
 
@@ -515,9 +569,10 @@ HoPost 图层需要有独立于 HoAOV 原始通道预览的“消费端匹配结
 2. 使用 fallback shader 输出 `Mask + Geometry Normal + Depth + ID`，验证 RenderFeature 顺序。
 3. HoPost DropShadow 改读 HoAOV mask/depth，让投影从临时 subject mask 中解耦。
 4. HoPost EdgeLight / Outline 改读 HoAOV normal/mask/depth。
-5. 给 lilToon/lilPBR shader 模板加入真正的 `HoAOV` pass。
-6. 增加 thickness、curvature、velocity 等高级通道。
-7. 根据需要增加 HTrace bridge，但不作为第一阶段目标。
+5. 新增 `HoAovGroup` 空物体组件，用于批量指定 Object AOV、groupId、flags 和角色部件分组。
+6. 给 lilToon/lilPBR shader 模板加入真正的 `HoAOV` pass。
+7. 增加 thickness、curvature、velocity 等高级通道。
+8. 根据需要增加 HTrace bridge，但不作为第一阶段目标。
 
 ## 非目标
 
