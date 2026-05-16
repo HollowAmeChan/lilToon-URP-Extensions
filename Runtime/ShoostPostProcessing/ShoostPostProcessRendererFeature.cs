@@ -44,7 +44,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             BuildRuntimeLayers(volume);
-            SetupCompatibilityPass(afterPostProcessPass, renderer.cameraColorTargetHandle, afterPostProcessLayers, RenderPassEvent.AfterRenderingPostProcessing);
+            SetupCompatibilityPass(afterPostProcessPass, renderer.cameraColorTargetHandle, afterPostProcessLayers, HoPostProcessRenderPassEvents.ShoostFinalStack);
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -56,7 +56,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             BuildRuntimeLayers(volume);
-            EnqueueRenderGraphPass(renderer, afterPostProcessPass, afterPostProcessLayers, RenderPassEvent.AfterRenderingPostProcessing);
+            EnqueueRenderGraphPass(renderer, afterPostProcessPass, afterPostProcessLayers, HoPostProcessRenderPassEvents.ShoostFinalStack);
         }
 
         protected override void Dispose(bool disposing)

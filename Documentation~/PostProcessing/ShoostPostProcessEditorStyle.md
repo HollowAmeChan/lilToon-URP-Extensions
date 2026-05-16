@@ -76,9 +76,9 @@ UI 入口可以继续沿用 Shoost 名称和图标，但编辑器内部需要给
 
 编辑器表现上，暂时跳过或需要重写的入口默认不显示在公开图标栏；只有已经有实际 shader、明确兼容价值，且不会误导用户认为它属于当前 final stack 的旧实现，才可以放进“旧实现”图标栏。当前旧实现栏为空，因此 UI 不显示该栏。不要把隐藏项标成“已对齐”。
 
-`边缘光` 的编辑器入口应优先保持 Shoost 用户习惯：颜色、透明度、大小、亮度、对比度、角度、模式、混合模式。当前 Shoost stack 统一后置；如果这个效果需要被 URP Bloom 捕捉，底层实现应按 [`ShoostEdgeLightDesign.md`](ShoostEdgeLightDesign.md) 走独立 subject effects / lighting feature，而不是依赖 Shoost 图层插入位置。
+`边缘光` 的编辑器入口应优先保持 Shoost 用户习惯：颜色、透明度、大小、亮度、对比度、角度、模式、混合模式。当前 Shoost stack 统一后置；边缘光、轮廓、投影的第一版入口已经改为 `HoPostProcessing` 栈，运行在 URP 主后处理之后、Shoost Final Stack 之前，并允许用户拖拽排序。这个 HoPost 栈先作为可调顺序的主体/特调效果框架，后续如果某个效果需要被 URP Bloom 捕捉，底层实现应按 [`ShoostEdgeLightDesign.md`](ShoostEdgeLightDesign.md) 继续拆到更早的 subject data / lighting 阶段，而不是依赖 Shoost 图层插入位置。
 
-如果后续将 Shoost 面板重构成最终图层系统，编辑器里应区分两个入口：`Shoost Final Stack` 管理最终滤镜和图层混合，默认在 URP 后处理之后；`lilToon Subject Effects` 管理边缘光、轮廓、投影等主体数据效果，允许放在 URP Bloom 前。两者可以共享 Shoost 名称、图标和部分参数习惯，但不应在同一个执行栈里混排。
+如果后续将 Shoost 面板重构成最终图层系统，编辑器里应区分两个入口：`Shoost Final Stack` 管理最终滤镜和图层混合，默认在 URP 后处理之后；`HoPostProcessing` 管理边缘光、轮廓、投影等主体数据效果，并位于 Shoost 之前。两者可以共享 Shoost 名称、图标和部分参数习惯，但不应在同一个执行栈里混排。需要 pre-Bloom 的主体效果再从 HoPost 框架下拆出更早的专用执行阶段。
 
 UI 上也要标出 HDR 语义：在 Bloom 前运行的效果可以写 HDR 亮度；在 Shoost Final Stack 里运行的效果默认按最终显示空间处理。亮度、闪光这类参数如果被移动到 URP 后处理之后，应提示“不会再触发 URP Bloom”，避免用户把 LDR 叠白误认为 Bloom 失效。`发光` 当前是例外：它自身就是 LDR 纯后期 bloom，不依赖 URP Bloom。`ToonMap` 负责把 Shoost stack 保留下来的 HDR headroom 映射回最终显示范围，因此应放在 Glow 之后、颗粒/像素化等显示收尾之前。
 

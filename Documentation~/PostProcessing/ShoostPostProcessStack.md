@@ -63,6 +63,8 @@
 5. 烟雾测试可以先使用没有 override 的 `CustomMaterial`。它会解析到 `Hidden/lilToon-Shoost/URP/Shoost/PostProcessLayerBlit`。
 6. 把 `Color` 改成非白色，或者修改 `Blend Mode`，确认图层确实在运行。
 
+边缘光、轮廓、投影不再回到 Shoost Final Stack。它们的可排序框架放在 `HoPostProcessRendererFeature` 与 `lilToon-HoPost / Process Stack` Volume 里：把 HoPost renderer feature 加到同一个 URP renderer data asset，保持 `Use Volumes` 开启，然后在 Volume profile 里添加 `Post-processing > lilToon-HoPost > Process Stack`。HoPost 栈允许用户拖拽调整顺序，当前统一在 URP 主后处理之后、Shoost Final Stack 之前执行；Shoost Final Stack 的 pass 事件相应后移到 `AfterRenderingPostProcessing + 1`，保证 HoPost 先于 Shoost。
+
 ## 图层混合
 
 Shoost 自己的 `BlendingModeChanger.BlendType` 里有一套 Photoshop 式混合模式，包括 `Darken`、`Add`、`Screen`、`SoftLight` 等。当前 `CustomMaterial` 默认解析到的 `PostProcessLayerBlit` 已经实现这套混合模式，所以可以先用它验证“加光源”和“压暗”这类图层叠加：
@@ -73,7 +75,7 @@ Shoost 自己的 `BlendingModeChanger.BlendType` 里有一套 Photoshop 式混�
 
 ## 顺序说明
 
-Volume 里只有一个面向用户的大图层列表。Shoost stack 不再提供每层 `Injection Point`：所有 Shoost 图层都会进入 `AfterRenderingPostProcessing`，作为 URP 内置后处理之后的 final stack 执行。
+Volume 里只有一个面向用户的大图层列表。Shoost stack 不再提供每层 `Injection Point`：所有 Shoost 图层都会进入 `AfterRenderingPostProcessing + 1`，作为 URP 内置后处理和 HoPost 之后的 final stack 执行。
 
 补充一点：`ColorGradingCustom` 在当前 URP 移植里按最终显示空间调色处理，默认走 `After URP Post Processing`。如果后续需要 scene-linear / pre-Bloom 的调色，应把它拆到 HoPost 或新的 pre-post 管线里，而不是让 Shoost final stack 同时承担两套语义。`LevelAdjustment` 同样按最终重映射处理，默认走 `After URP Post Processing`。
 
@@ -87,9 +89,9 @@ Volume 里只有一个面向用户的大图层列表。Shoost stack 不再提供
 - 自定义 pass 的 `AfterRenderingPostProcessing` 组；
 - 当 FXAA、最终缩放、TAA sharpening 或类似最终阶段功能需要运行时，URP `FinalPostProcessPass` 会接近 `AfterRendering - 1`。
 
-这意味着 Shoost stack 统一运行在 URP 主后处理之后；在某些相机配置下，后面仍可能接着 URP 的 final post pass。需要 Bloom 响应或需要主体数据的效果后续应移动到 subject effects / lighting feature，而不是重新塞进 Shoost 图层插入点。
+这意味着 HoPost 和 Shoost stack 都统一运行在 URP 主后处理之后；HoPost 先执行，Shoost Final Stack 后执行，在某些相机配置下，后面仍可能接着 URP 的 final post pass。需要 Bloom 响应或需要更早主体数据合成的效果后续应移动到 subject effects / lighting feature，而不是重新塞进 Shoost 图层插入点。
 
-图层列表的顺序会在当前 final stack 内部保留。主体数据、HDR 发光和 pre-Bloom 合成后续应移动到新的 subject effects / lighting feature；调色、CRT mask、final sharpen、VHS、颗粒、像素化，以及已经明确为 LDR 纯后期 bloom 的 `Glow / 发光`，则统一留在 Shoost final stack。当前固定排序里 `BokehZoomBlur / 光斑变焦` 和 `ApertureBokeh / 光圈散景` 位于 RGB 分离/通道分离之后、`Glow / 发光` 之前，让它们产出的高亮拖影/散焦光斑还能继续进入 Shoost 内部发光；`Glow / 发光` 被放到后段，在天气、胶片、VHS、CRT、dither、模糊和 RGB 分离之后执行；`ToonMap` 紧跟 `Glow`，用于在 Shoost stack 内做最终 Neutral / ACES 映射；两者仍早于颗粒、暗角、像素化和帧率限制这类最终显示收尾效果。
+Shoost 图层列表的顺序会在当前 final stack 内部保留，但仍由固定效果顺序重排；HoPost 图层列表则直接使用用户拖拽顺序。主体数据、HDR 发光和 pre-Bloom 合成后续应移动到新的 subject effects / lighting feature；调色、CRT mask、final sharpen、VHS、颗粒、像素化，以及已经明确为 LDR 纯后期 bloom 的 `Glow / 发光`，则统一留在 Shoost final stack。当前固定排序里 `BokehZoomBlur / 光斑变焦` 和 `ApertureBokeh / 光圈散景` 位于 RGB 分离/通道分离之后、`Glow / 发光` 之前，让它们产出的高亮拖影/散焦光斑还能继续进入 Shoost 内部发光；`Glow / 发光` 被放到后段，在天气、胶片、VHS、CRT、dither、模糊和 RGB 分离之后执行；`ToonMap` 紧跟 `Glow`，用于在 Shoost stack 内做最终 Neutral / ACES 映射；两者仍早于颗粒、暗角、像素化和帧率限制这类最终显示收尾效果。
 
 从 Shoost v0.16.3 解包结果看，一共找到 59 个 `BeforeStack` 和 16 个 `AfterStack` 的 PPS v2 effect：
 
@@ -144,10 +146,10 @@ Volume 里只有一个面向用户的大图层列表。Shoost stack 不再提供
 - `ApertureBokeh / 光圈散景`：URP 扩展滤镜，不来自 Shoost 原包。它模拟全局焦外光圈成像，不读取深度，默认把整张画面当作同一焦外平面。实现结构参考 Unity DoF/Bokeh 的成熟管线，改为 prefilter/downsample、半分辨率 disk kernel bokeh blur、小 post filter、composite 四个 pass：先按亮度阈值、soft-knee 和局部边缘梯度提取焦外信号，再用圆形或叶片多边形 aperture kernel 从各方向采样合并，得到远景虚焦时一块块圆形光斑的感觉。主要参数为 `光圈大小`、`亮度阈值`、`阈值柔化`、`曝光`、`边缘提取`、`光斑硬度`、`叶片数 / 曲率 / 旋转`、`色散`、`光斑增益`、`叠加模式` 和 `只显示光斑层`。默认使用高质量、光圈大小 `1`、光斑增益 `4`、亮度阈值 `0.4`、阈值柔化 `0.2`、曝光 `1`、边缘提取 `0.35`、光斑硬度 `1`、叶片数 `0`、叶片曲率 `1`、叶片旋转 `0`、色散 `0.35`、相加混合，并关闭 `只显示光斑层`。固定排序同样位于 `Glow / 发光` 之前。
 - `Glow / 发光`：已按 Shoost 的 `GlowValue` / Kino `Bloom_Custom` 对齐完成。当前 URP 版是不依赖 HDR 的纯后期 LDR bloom，多 pass 流程为阈值 soft-knee 预滤波、模糊金字塔、模式化方向采样和最终合成；用户侧对齐 Shoost 面板的“阈值、阈值平滑、半径、强度、饱和度、颜色、不透明度、发光类型”，三种类型为“正常 / 条纹 / 星芒”，星芒额外暴露数量和角度。当前默认阈值为 `0.9`，默认强度为 `2.0`，强度 UI 上限为 `12.0`。状态标记为：完美对齐。
 - `ToonMap`：URP 扩展滤镜，不来自 Shoost 原包。用途是在关闭 URP 内置 Tonemapping 后，仍能把 Shoost stack 内保留的 HDR 颜色统一映射到最终显示范围。用户侧只暴露“模式”，包含 `None / Neutral / ACES`，默认 `ACES`；`None` 不改变颜色，`Neutral` 和 `ACES` 分别复用 URP 的 `NeutralTonemap` 和 `AcesTonemap(unity_to_ACES(...))`。固定排序紧跟 `Glow / 发光`，早于 Grain、Vignette、Pixelize 和 ChangeFrameRate。
-- `Weather / 天气`：来源是 Shoost 的 `ParticleValue` 和 `Particle_Weather_Rain/Snow/Smoke` prefab，不是 PPS fullscreen shader。Unity `ParticleSystem` 场景粒子路线在 RendererFeature/Volume 调参时存在编辑器崩溃风险，当前 URP 版改为稳定的 fullscreen 程序化粒子 pass，但仍按相机空间 2D 合成层处理，并继续作为 Shoost final stack 图层跑在 `AfterRenderingPostProcessing`。HDR 颜色当前用于 Shoost 内部合成强度，不依赖 URP 内置 Bloom；后续如果需要发亮链路，应在 Shoost stack 内新增带 LUT 输入/可管理的泛光滤镜，而不是把 Weather 提前到 URP 后处理之前。用户侧按折叠组暴露“基础 / 假景深 / 粒子变化”：基础包含“粒子、HDR 颜色、发生率、不透明度、叠加模式”，假景深包含“焦距、虚化强度、虚化柔化、虚化曲线”，粒子变化包含“速度、数量、大小、随机、漂移、层次、上下不均、明暗变化”。默认发生率为 `1`，默认随机为 `0.35`，避免程序化格子粒子过早出现截断感。粒子为“雨 / 雪 / 烟雾 / 灰尘”。雨参考原 prefab 的 `Particle_Rain_Storm / S / M / L / Storm_L` 五层比例，雪参考 `Particle_Snow_BG / M / L` 加烟雾层，烟雾参考 `Particle_Smoke_BG / L` 两层软粒子。`灰尘` 是 URP 扩展模式，基于雪式漂浮粒子但加入细尘、中层颗粒、近景软斑和薄雾层。`焦距` 与虚化参数是 URP 扩展的假景深控制：每层程序化粒子分配伪深度，焦距前方的近层会按曲线变宽变软，远层保持较实；`层次` 控制伪深度分布宽度，`上下不均` 控制 Shoost 式上下质量分布。叠加模式当前提供“正常 / 加亮 / 滤色 / 柔光”，其中加亮路径保留 HDR 颜色强度。状态标记为：相机空间程序化粒子近似版。
+- `Weather / 天气`：来源是 Shoost 的 `ParticleValue` 和 `Particle_Weather_Rain/Snow/Smoke` prefab，不是 PPS fullscreen shader。Unity `ParticleSystem` 场景粒子路线在 RendererFeature/Volume 调参时存在编辑器崩溃风险，当前 URP 版改为稳定的 fullscreen 程序化粒子 pass，但仍按相机空间 2D 合成层处理，并继续作为 Shoost final stack 图层跑在 `AfterRenderingPostProcessing + 1`。HDR 颜色当前用于 Shoost 内部合成强度，不依赖 URP 内置 Bloom；后续如果需要发亮链路，应在 Shoost stack 内新增带 LUT 输入/可管理的泛光滤镜，而不是把 Weather 提前到 URP 后处理之前。用户侧按折叠组暴露“基础 / 假景深 / 粒子变化”：基础包含“粒子、HDR 颜色、发生率、不透明度、叠加模式”，假景深包含“焦距、虚化强度、虚化柔化、虚化曲线”，粒子变化包含“速度、数量、大小、随机、漂移、层次、上下不均、明暗变化”。默认发生率为 `1`，默认随机为 `0.35`，避免程序化格子粒子过早出现截断感。粒子为“雨 / 雪 / 烟雾 / 灰尘”。雨参考原 prefab 的 `Particle_Rain_Storm / S / M / L / Storm_L` 五层比例，雪参考 `Particle_Snow_BG / M / L` 加烟雾层，烟雾参考 `Particle_Smoke_BG / L` 两层软粒子。`灰尘` 是 URP 扩展模式，基于雪式漂浮粒子但加入细尘、中层颗粒、近景软斑和薄雾层。`焦距` 与虚化参数是 URP 扩展的假景深控制：每层程序化粒子分配伪深度，焦距前方的近层会按曲线变宽变软，远层保持较实；`层次` 控制伪深度分布宽度，`上下不均` 控制 Shoost 式上下质量分布。叠加模式当前提供“正常 / 加亮 / 滤色 / 柔光”，其中加亮路径保留 HDR 颜色强度。状态标记为：相机空间程序化粒子近似版。
 - `Tube / 电视`：暂时跳过。来源是 Shoost 的 `PostProcess_TVValue` 组合滤镜，用户侧 60/70/80/90 四档不是单个 `Custom/Tube` shader 的模式，而是 profile 组合：`FilmBreath_GateWeave`、`RGBBlur`、`LUTColorGrading`、`Tube`、`Sharpen_Before` 等层，60 年代还包含 `RLProJitter`。此前尝试把它压进单个 fullscreen pass，但 LUT、锐化、Tube/YIQ 漏色、年代 profile 和第三方包语义之间耦合较深，当前不继续对齐。状态标记为：暂时跳过。
 - `Film / 胶片`：来源是 Shoost 的 `PostProcess_FilmValue` 组合入口和 `AMS_AnimeFilm_60s/70s/80s/90s` profile。当前 URP 版已从旧的裸 `FilmBreath_GateWeave` 调试参数改成 Shoost 面板语义：模式、滤镜类型、滤镜强度、锐化、颗粒强度、颗粒大小、屏幕抖动量。运行时先压成一个 fullscreen pass，近似串联 LUTColorGrading、RGBBlur、FilmBreath/GateWeave、RLProOldFilm2_Custom 和 Grain_Custom，目标是稳定可用、不报错；仍未标记为完美对齐。
-- `EdgeLight / 边缘光`、`Outline / 轮廓`、`DropShadow / 投影`：当前从 Shoost Final Stack 公开入口隐藏。它们需要主体 mask/stencil/depth/normal 或独立 subject RT，不应作为只消费 camera color 的普通图层添加。
+- `EdgeLight / 边缘光`、`Outline / 轮廓`、`DropShadow / 投影`：当前从 Shoost Final Stack 公开入口隐藏，并先进入 `HoPostProcessing` 的可排序栈框架。它们需要主体 mask/stencil/depth/normal 或独立 subject RT，不应作为只消费 camera color 的普通 Shoost 图层添加；当前 HoPost fallback shader 只是 no-op 占位，真正效果后续接 subject data 后实现。
 - `LED`、`TransparentBackground / 透明背景`、`CameraSwitcher / 摄像头切换器`：当前从公开入口隐藏。它们更接近输入 RT、场景对象、相机或合成控制，对当前最终滤镜风格没有直接意义；后续如果 stack list 能明确控制输入 RT 或场景合成语义，再重新设计入口。
 - LUT 语义备忘：TV 组合的 `AMS_TV_60s/70s/80s/90s` 分别引用 `Monochrome Soft`、`Film Fuji v2`、`Film Fuji v2`、`Film Fuji v3`；胶片组合的 `AMS_AnimeFilm_60s/70s/80s/90s` 分别引用 `Monochrome Soft`、`Film Kodak v1`、`Film Kodak v2`、`Film Kodak v3`。这两组 60/70/80/90 只共享年代 UI 命名，不共享滤镜语义。RenderDoc 中 `Hidden/Custom/LUTColorGrading` 的 32x32 strip 是 B 通道切片、R 为横向、G 为纵向；LUT 纹理按非 sRGB 导入，由 shader 显式执行 sRGB/Linear 转换。该备忘仅保留给后续重启 Tube/胶片移植时参考。
 
@@ -167,7 +169,8 @@ Shoost 的核心不是“某一个 URP pass”，而是一个可以叠很多层�
 新的分层边界建议如下：
 
 - `lilToon / URP 渲染阶段`：正常输出 camera color、depth，以及 lilToon 自己的 subject normal/mask/depth/color 等可选 RT。
-- `自研主体效果 RendererFeature`：消费 lilToon 输出的主体数据，实现边缘光、轮廓、投影、二次打光等需要角色边界的效果；需要 Bloom 的效果放在 URP 内置后处理前。
+- `HoPostProcessing RendererFeature`：第一版作为可排序的主体/特调效果栈，运行在 URP 主后处理之后、Shoost Final Stack 之前；当前包含边缘光、轮廓、投影和自定义材质槽位。
+- `更早的主体数据 RendererFeature`：后续消费 lilToon 输出的主体数据，实现需要 URP Bloom 捕捉的边缘光、轮廓、投影、二次打光等效果；需要 Bloom 的效果放在 URP 内置后处理前。
 - `URP 内置后处理`：Bloom、Tonemapping、FXAA、Color Adjustments 等项目级画面处理。
 - `Shoost Final Stack`：消费最终 camera color 和可选图层 RT，执行 Shoost 风格的图层、滤镜、混合、颗粒、CRT、VHS、像素化、色阶、最终调色等纯最终处理。
 
