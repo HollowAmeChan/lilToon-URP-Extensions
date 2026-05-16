@@ -25,7 +25,7 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
             "RenderType" = "Opaque"
         }
 
-        ZWrite On
+        ZWrite Off
         ZTest LEqual
         Cull Off
 

@@ -425,6 +425,7 @@ Tags { "LightMode" = "HoAOV" }
 - `Custom0..Custom3` 打包到 `custom0.rgba`，稳定，可作为默认上限。
 - 单独加到 `Custom4` 时没有复现崩溃，但不能证明继续扩展安全。
 - 加到 7 张、8 张、12 张独立贴图入口时，Unity 会在 shader/import/启动阶段直接崩溃，表现不像普通 shader 编译错误。
+- 曾尝试把 `_lilHoAovCustom4_7Texture` 和 `_lilHoAovCustom8_11Texture` 也接成真实 custom 输入链路，但 SRP/Unity 仍然反复崩溃；这两张纹理当前只能视为协议预留名，不应默认绑定到 lilToon/lilPBR 的新增贴图输入。
 - 因此当前工程约束是：默认只暴露 4 个 custom 遮罩通道，颜色乘贴图 R，默认值为 0。
 - 后续如果确实需要更多遮罩，不要直接堆 `_HoAovCustomNTexture`。优先考虑 atlas、packed texture、数组纹理、外部 mask buffer，或做成明确的实验开关，并先在干净工程里逐级验证。
 
@@ -488,6 +489,7 @@ HoPost 图层需要有独立于 HoAOV 原始通道预览的“消费端匹配结
 - `输出匹配结果` 打开后，该图层不再输出原效果，而是直接输出当前 AOV 匹配结果。
 - 输出颜色为灰度：白色表示该像素被当前图层选中，黑色表示未选中，灰色表示直接灰度或柔和阈值的中间结果。
 - shader 侧不要在每个效果里重复实现调试输出；统一调用 `Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl` 中的公共方法。
+- AOV 的消费端匹配也应统一走 `HoPostAovMask.hlsl`。当前公共方法支持直接灰度、阈值、数值匹配、颜色匹配、softness 和 invert；效果 shader 只需要调用 `LilHoPostResolveAovLayerMask` 或 `LilHoPostResolveRequiredAovMask`，不要各自重写 source/mode/threshold 分支。
 - DropShadow / 投影属于强依赖主体 mask 的效果，调试时应使用同一套 AOV 解析结果作为“主体来源”预览；EdgeLight、Outline 等普通图层则只在 `AOV 遮罩` 开启时把该 mask 作为图层强度限制。
 
 - Mask：黑白显示，权重越高越白。
