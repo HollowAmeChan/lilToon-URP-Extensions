@@ -50,9 +50,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ShoostPostProcessEffect.AutoWhiteBalance,
             ShoostPostProcessEffect.LevelAdjustment,
             ShoostPostProcessEffect.ColorGradingCustom,
-            ShoostPostProcessEffect.EdgeLight,
-            ShoostPostProcessEffect.Outline,
-            ShoostPostProcessEffect.DropShadow,
             ShoostPostProcessEffect.Gradient,
             ShoostPostProcessEffect.Lighting,
             ShoostPostProcessEffect.CenterColorCorrection,
@@ -164,9 +161,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "RetroLookPro Noise2",
             "RetroLookPro Old Film 2",
             "RetroLookPro TV Effect",
-            "边缘光",
-            "轮廓",
-            "投影",
+            "已移除",
+            "已移除",
+            "已移除",
             "渐变",
             "发光",
             "光照",
@@ -839,7 +836,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             {
                 SerializedProperty element = layerValues.GetArrayElementAtIndex(index);
                 int effectIndex = GetEffectIndex(element);
-                if (effectIndex == (int)ShoostPostProcessEffect.RemovedEffectSlot13)
+                if (IsRemovedEffectSlot(effectIndex))
                 {
                     layerValues.DeleteArrayElementAtIndex(index);
                     continue;
@@ -1050,6 +1047,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private static int GetEffectIndex(SerializedProperty layer)
         {
             return (int)GetEffect(layer);
+        }
+
+        private static bool IsRemovedEffectSlot(int effectIndex)
+        {
+            return effectIndex == (int)ShoostPostProcessEffect.RemovedEffectSlot13 ||
+                   effectIndex == (int)ShoostPostProcessEffect.RemovedEffectSlot30 ||
+                   effectIndex == (int)ShoostPostProcessEffect.RemovedEffectSlot31 ||
+                   effectIndex == (int)ShoostPostProcessEffect.RemovedEffectSlot32;
         }
 
         private static int GetEffectSortIndex(SerializedProperty layer)
@@ -1560,9 +1565,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters2", new Vector4(1.0f, 1.0f, 1.0f, 0.35f));
                     SetVector4(element, "parameters3", Vector4.one);
                     break;
-                case ShoostPostProcessEffect.EdgeLight:
-                case ShoostPostProcessEffect.Outline:
-                case ShoostPostProcessEffect.DropShadow:
                 case ShoostPostProcessEffect.Lighting:
                 case ShoostPostProcessEffect.LED:
                 case ShoostPostProcessEffect.Particle:

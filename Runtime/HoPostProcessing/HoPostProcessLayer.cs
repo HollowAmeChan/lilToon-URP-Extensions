@@ -45,6 +45,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         public Vector4 parameters4;
         public Vector4 parameters5;
 
-        public bool IsActive => enabled && intensity > 0.0f;
+        public bool IsActive => enabled && intensity > 0.0001f;
     }
 }

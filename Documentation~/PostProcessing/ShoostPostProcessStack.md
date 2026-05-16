@@ -19,9 +19,6 @@
 - 白平衡
 - 色阶
 - 调色
-- 边缘光
-- 轮廓
-- 投影
 - 渐变
 - 发光
 - ToonMap（URP 扩展：自管 Tonemapping）
@@ -50,7 +47,7 @@
 - 镜头畸变
 - 摄像机闪光
 
-其中一部分是纯后处理 shader，一部分更像 Shoost 的场景叠加、UI 驱动或摄像机控制入口。我们在 URP 里会尽量保持它们的用户命名和图标入口一致，但底层实现不一定都是单个 fullscreen pass。当前公开 UI 只显示适合 Shoost Final Stack 的入口；`天气` 已先按 Volume 驱动的相机空间程序化粒子实现雨 / 雪 / 烟雾近似版；`边缘光`、`轮廓`、`投影`、`LED`、`透明背景`、`摄像头切换器` 先隐藏，等主体数据、输入 RT、场景对象或相机合成边界重新确认后再决定是否恢复。
+其中一部分是纯后处理 shader，一部分更像 Shoost 的场景叠加、UI 驱动或摄像机控制入口。我们在 URP 里会尽量保持它们的用户命名和图标入口一致，但底层实现不一定都是单个 fullscreen pass。当前公开 UI 只显示适合 Shoost Final Stack 的入口；`天气` 已先按 Volume 驱动的相机空间程序化粒子实现雨 / 雪 / 烟雾近似版；`边缘光`、`轮廓`、`投影` 已迁移到 `HoPostProcessing`，Shoost enum 中只保留空 removed slot，避免它们继续被当作普通 final-stack 图层；`LED`、`透明背景`、`摄像头切换器` 先隐藏，等输入 RT、场景对象或相机合成边界重新确认后再决定是否恢复。
 
 当前已经补上的公开效果包括 `VignetteCustom`、`Sharpen`、`RGBSplit`、`RGBChannelSeparator`、`IrisBlur`、`ColorGradingCustom`、`LevelAdjustment`、`AutoWhiteBalance`、`Fisheye` / `LensDistortionCustom`、`Pixelize`、`Distortion`（湍流置换）、`Glow`、`ToonMap`、`Kuwahara`、`BokehZoomBlur` 和 `ApertureBokeh`。`ToonMap` 不是 Shoost 原包滤镜，而是为了在 Shoost stack 内统一管理最终映射而加入的 URP 扩展项，当前提供 None / Neutral / ACES，其中 Neutral / ACES 直接复用 URP Tonemapping。`Kuwahara / 桑原` 同样是 URP 扩展滤镜，来源是 [`桑原滤镜研究.md`](桑原滤镜研究.md) 的方案整理，按 final stack fullscreen pass 实现基础桑原、色阶、Sobel 线稿和噪声组合，并提供可选高质量模式。`BokehZoomBlur / 光斑变焦` 来自 [`光板变焦滤镜研究.md`](光板变焦滤镜研究.md)，当前按纯屏幕空间高亮提取 + 径向光斑拖影实现，提供高成本质量档位但暂不依赖深度/法线。`ApertureBokeh / 光圈散景` 是独立的全局光圈虚焦近似：不使用深度，直接从最终画面的亮度和边缘提取焦外信号，再用圆形/多边形光圈核向各方向合并成真实摄影式 bokeh。旧的 `KawaseBlur` 和试验性的无方向光斑旧实现已整体摘除，shader、editor filter 和 runtime 调度都不再保留；旧 Volume 数据残留这些槽位时由编辑器自动清理。`LUTColorGrading` 已从公开实现中移除，第 4 个“调色”入口对齐 Shoost 的 `ColorGrading_Custom`：包含普通 `Lift / Gamma / Gain` 色轮、对数 `Shadows / Midtones / Highlights` 色轮，以及六色偏移的 `HueVsHue / HueVsSat / HueVsLum / LumVsSat` 模式。`DownScaleResolution` 只保留旧资产兼容，不再作为公开图层入口；新面板里应该用 `Pixelize`。`SharpenAfter` 也不再作为公开图层入口，用户侧统一用 `SharpenBefore`；当前普通 Shoost 滤镜默认已经作为最终滤镜后置执行，旧 `SharpenAfter` 只保留兼容。
 
@@ -63,7 +60,7 @@
 5. 烟雾测试可以先使用没有 override 的 `CustomMaterial`。它会解析到 `Hidden/lilToon-Shoost/URP/Shoost/PostProcessLayerBlit`。
 6. 把 `Color` 改成非白色，或者修改 `Blend Mode`，确认图层确实在运行。
 
-边缘光、轮廓、投影不再回到 Shoost Final Stack。它们的可排序框架放在 `HoPostProcessRendererFeature` 与 `lilToon-HoPost / Process Stack` Volume 里：把 HoPost renderer feature 加到同一个 URP renderer data asset，保持 `Use Volumes` 开启，然后在 Volume profile 里添加 `Post-processing > lilToon-HoPost > Process Stack`。HoPost 栈允许用户拖拽调整顺序，当前统一在 URP 主后处理之后、Shoost Final Stack 之前执行；Shoost Final Stack 的 pass 事件相应后移到 `AfterRenderingPostProcessing + 1`，保证 HoPost 先于 Shoost。
+边缘光、轮廓、投影不再回到 Shoost Final Stack。它们的可排序框架放在 `HoPostProcessRendererFeature` 与 `lilToon-HoPost / Process Stack` Volume 里：把 HoPost renderer feature 加到同一个 URP renderer data asset，保持 `Use Volumes` 开启，然后在 Volume profile 里添加 `Post-processing > lilToon-HoPost > Process Stack`。HoPost 栈允许用户拖拽调整顺序，当前统一在 URP 主后处理之后、Shoost Final Stack 之前执行；Shoost Final Stack 的 pass 事件保持在 `AfterRenderingPostProcessing + 1`，所以 HoPost 的 HDR 边缘光会先写入 camera color，再交给 ShoostStack 内部 Glow / ToonMap 等后续图层处理。
 
 ## 图层混合
 
@@ -149,7 +146,7 @@ Shoost 图层列表的顺序会在当前 final stack 内部保留，但仍由固
 - `Weather / 天气`：来源是 Shoost 的 `ParticleValue` 和 `Particle_Weather_Rain/Snow/Smoke` prefab，不是 PPS fullscreen shader。Unity `ParticleSystem` 场景粒子路线在 RendererFeature/Volume 调参时存在编辑器崩溃风险，当前 URP 版改为稳定的 fullscreen 程序化粒子 pass，但仍按相机空间 2D 合成层处理，并继续作为 Shoost final stack 图层跑在 `AfterRenderingPostProcessing + 1`。HDR 颜色当前用于 Shoost 内部合成强度，不依赖 URP 内置 Bloom；后续如果需要发亮链路，应在 Shoost stack 内新增带 LUT 输入/可管理的泛光滤镜，而不是把 Weather 提前到 URP 后处理之前。用户侧按折叠组暴露“基础 / 假景深 / 粒子变化”：基础包含“粒子、HDR 颜色、发生率、不透明度、叠加模式”，假景深包含“焦距、虚化强度、虚化柔化、虚化曲线”，粒子变化包含“速度、数量、大小、随机、漂移、层次、上下不均、明暗变化”。默认发生率为 `1`，默认随机为 `0.35`，避免程序化格子粒子过早出现截断感。粒子为“雨 / 雪 / 烟雾 / 灰尘”。雨参考原 prefab 的 `Particle_Rain_Storm / S / M / L / Storm_L` 五层比例，雪参考 `Particle_Snow_BG / M / L` 加烟雾层，烟雾参考 `Particle_Smoke_BG / L` 两层软粒子。`灰尘` 是 URP 扩展模式，基于雪式漂浮粒子但加入细尘、中层颗粒、近景软斑和薄雾层。`焦距` 与虚化参数是 URP 扩展的假景深控制：每层程序化粒子分配伪深度，焦距前方的近层会按曲线变宽变软，远层保持较实；`层次` 控制伪深度分布宽度，`上下不均` 控制 Shoost 式上下质量分布。叠加模式当前提供“正常 / 加亮 / 滤色 / 柔光”，其中加亮路径保留 HDR 颜色强度。状态标记为：相机空间程序化粒子近似版。
 - `Tube / 电视`：暂时跳过。来源是 Shoost 的 `PostProcess_TVValue` 组合滤镜，用户侧 60/70/80/90 四档不是单个 `Custom/Tube` shader 的模式，而是 profile 组合：`FilmBreath_GateWeave`、`RGBBlur`、`LUTColorGrading`、`Tube`、`Sharpen_Before` 等层，60 年代还包含 `RLProJitter`。此前尝试把它压进单个 fullscreen pass，但 LUT、锐化、Tube/YIQ 漏色、年代 profile 和第三方包语义之间耦合较深，当前不继续对齐。状态标记为：暂时跳过。
 - `Film / 胶片`：来源是 Shoost 的 `PostProcess_FilmValue` 组合入口和 `AMS_AnimeFilm_60s/70s/80s/90s` profile。当前 URP 版已从旧的裸 `FilmBreath_GateWeave` 调试参数改成 Shoost 面板语义：模式、滤镜类型、滤镜强度、锐化、颗粒强度、颗粒大小、屏幕抖动量。运行时先压成一个 fullscreen pass，近似串联 LUTColorGrading、RGBBlur、FilmBreath/GateWeave、RLProOldFilm2_Custom 和 Grain_Custom，目标是稳定可用、不报错；仍未标记为完美对齐。
-- `EdgeLight / 边缘光`、`Outline / 轮廓`、`DropShadow / 投影`：当前从 Shoost Final Stack 公开入口隐藏，并先进入 `HoPostProcessing` 的可排序栈框架。它们需要主体 mask/stencil/depth/normal 或独立 subject RT，不应作为只消费 camera color 的普通 Shoost 图层添加；当前 HoPost fallback shader 只是 no-op 占位，真正效果后续接 subject data 后实现。
+- `EdgeLight / 边缘光`、`Outline / 轮廓`、`DropShadow / 投影`：已从 Shoost Final Stack 迁移到 `HoPostProcessing` 的可排序栈框架；Shoost 侧删除同名 enum 入口，只保留空 removed slot 清理残留数据。它们需要主体 mask/stencil/depth/normal 或独立 subject RT，不应作为只消费 camera color 的普通 Shoost 图层添加；当前 `EdgeLight` 已按 normal rim 接入，`Outline` 已按 depth + normal 屏幕空间 Sobel 接入，`DropShadow` 已接入 subject mask 偏移投影第一版。
 - `LED`、`TransparentBackground / 透明背景`、`CameraSwitcher / 摄像头切换器`：当前从公开入口隐藏。它们更接近输入 RT、场景对象、相机或合成控制，对当前最终滤镜风格没有直接意义；后续如果 stack list 能明确控制输入 RT 或场景合成语义，再重新设计入口。
 - LUT 语义备忘：TV 组合的 `AMS_TV_60s/70s/80s/90s` 分别引用 `Monochrome Soft`、`Film Fuji v2`、`Film Fuji v2`、`Film Fuji v3`；胶片组合的 `AMS_AnimeFilm_60s/70s/80s/90s` 分别引用 `Monochrome Soft`、`Film Kodak v1`、`Film Kodak v2`、`Film Kodak v3`。这两组 60/70/80/90 只共享年代 UI 命名，不共享滤镜语义。RenderDoc 中 `Hidden/Custom/LUTColorGrading` 的 32x32 strip 是 B 通道切片、R 为横向、G 为纵向；LUT 纹理按非 sRGB 导入，由 shader 显式执行 sRGB/Linear 转换。该备忘仅保留给后续重启 Tube/胶片移植时参考。
 
@@ -196,4 +193,4 @@ Shoost 原始工作流更像在处理一个可能带 alpha 的图片/视频源�
 - `Outline / 轮廓`：用 depth + normal 的屏幕空间描边，最好配合角色 stencil 或 layer mask 限定对象；不要按 Shoost 的透明图片边缘膨胀硬搬。
 - `DropShadow / 投影`：不要依赖最终图像 alpha 做偏移阴影。优先考虑基于角色 mask/depth 的投影，或基于 normal/depth 的二次打光/接触阴影式实现，让阴影和 URP 场景空间对齐。
 
-边缘光的第一版设计见 [`ShoostEdgeLightDesign.md`](ShoostEdgeLightDesign.md)。结论是 lilToon 材质侧可以有“写入主体数据”的开关，但它只负责 opt-in 到 normal/mask RT；实际边缘光颜色、亮度、方向、模式和 pre-Bloom 合成都放在 Shoost EdgeLight 图层里处理。
+边缘光的第一版设计见 [`ShoostEdgeLightDesign.md`](ShoostEdgeLightDesign.md)。结论是 lilToon 材质侧可以有“写入主体数据”的开关，但它只负责 opt-in 到 normal/mask RT；实际边缘光颜色、亮度、方向、模式和 pre-Bloom 合成都放在 HoPost EdgeLight 图层里处理。

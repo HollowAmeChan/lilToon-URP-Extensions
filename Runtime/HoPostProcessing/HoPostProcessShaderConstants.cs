@@ -5,8 +5,13 @@ namespace lilToon.URP.Extensions.PostProcessing
     internal static class HoPostProcessShaderConstants
     {
         public const string DefaultLayerShaderName = "Hidden/lilToon-HoPost/URP/HoPost/LayerBlit";
+        public const string EdgeLightShaderName = "Hidden/lilToon-HoPost/URP/HoPost/EdgeLight";
+        public const string OutlineShaderName = "Hidden/lilToon-HoPost/URP/HoPost/Outline";
+        public const string DropShadowShaderName = "Hidden/lilToon-HoPost/URP/HoPost/DropShadow";
+        public const string SubjectMaskShaderName = "Hidden/lilToon-HoPost/URP/HoPost/SubjectMask";
         public const string TempTextureAName = "_lilHoPostProcessTempA";
         public const string TempTextureBName = "_lilHoPostProcessTempB";
+        public const string SubjectMaskTextureName = "_lilHoPostSubjectMaskTexture";
 
         public static readonly int IntensityId = Shader.PropertyToID("_Intensity");
         public static readonly int LayerBlendModeId = Shader.PropertyToID("_LayerBlendMode");
@@ -19,5 +24,9 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static readonly int LayerParams3Id = Shader.PropertyToID("_LayerParams3");
         public static readonly int LayerParams4Id = Shader.PropertyToID("_LayerParams4");
         public static readonly int LayerParams5Id = Shader.PropertyToID("_LayerParams5");
+        public static readonly int CameraDepthTextureId = Shader.PropertyToID("_CameraDepthTexture");
+        public static readonly int CameraNormalsTextureId = Shader.PropertyToID("_CameraNormalsTexture");
+        public static readonly int SubjectMaskTextureId = Shader.PropertyToID(SubjectMaskTextureName);
+        public static readonly int SubjectMaskValidId = Shader.PropertyToID("_SubjectMaskValid");
     }
 }

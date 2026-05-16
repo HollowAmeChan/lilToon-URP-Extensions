@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using lilToon.URP.Extensions.PostProcessing;
 using UnityEditor;
 using UnityEditorInternal;
@@ -11,8 +12,42 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
     {
         private const float LineHeight = 18.0f;
         private const float LineSpacing = 2.0f;
+        private const float EffectIconSize = 22.0f;
+        private const float EffectIconSpacing = 2.0f;
+        private const string PackageAssetRoot = "Packages/jp.lilxyzw.liltoon.urp.extensions";
 
-        private SerializedDataParameter enable;
+        private static readonly string[] EdgeLightModes =
+        {
+            "Single",
+            "Double",
+            "Single Sharp",
+            "Double Sharp"
+        };
+
+        private readonly struct EffectToggleEntry
+        {
+            public readonly HoPostProcessEffect Effect;
+            public readonly string Label;
+            public readonly string IconName;
+
+            public EffectToggleEntry(HoPostProcessEffect effect, string label, string iconName)
+            {
+                Effect = effect;
+                Label = label;
+                IconName = iconName;
+            }
+        }
+
+        private static readonly EffectToggleEntry[] VisibleEffectOrder =
+        {
+            new EffectToggleEntry(HoPostProcessEffect.EdgeLight, "边缘光", "icon_RimLight_v1"),
+            new EffectToggleEntry(HoPostProcessEffect.Outline, "轮廓", "icon_OutLine_v1"),
+            new EffectToggleEntry(HoPostProcessEffect.DropShadow, "投影", "icon_DropShadow_v1"),
+            new EffectToggleEntry(HoPostProcessEffect.CustomMaterial, "自定义", "icon_Effects_v1")
+        };
+
+        private static readonly Dictionary<HoPostProcessEffect, GUIContent> EffectIconContents = new Dictionary<HoPostProcessEffect, GUIContent>();
+
         private SerializedDataParameter showInSceneView;
         private SerializedProperty layers;
         private SerializedProperty layerValues;
@@ -21,7 +56,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         public override void OnEnable()
         {
             PropertyFetcher<HoPostProcessStackVolume> fetcher = new PropertyFetcher<HoPostProcessStackVolume>(serializedObject);
-            enable = Unpack(fetcher.Find(x => x.Enable));
             showInSceneView = Unpack(fetcher.Find(x => x.ShowInSceneView));
             layers = serializedObject.FindProperty("layers");
             layerValues = layers != null ? layers.FindPropertyRelative("m_Value") : null;
@@ -30,8 +64,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
-            layerList = new ReorderableList(serializedObject, layerValues, true, true, false, false);
-            layerList.drawHeaderCallback = rect => EditorGUI.LabelField(rect, "HoPost Stack - After URP / Before Shoost");
+            layerList = new ReorderableList(serializedObject, layerValues, true, false, false, false);
+            layerList.drawHeaderCallback = null;
+            layerList.headerHeight = 0.0f;
             layerList.elementHeightCallback = GetElementHeight;
             layerList.drawElementCallback = DrawElement;
         }
@@ -40,44 +75,31 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             serializedObject.Update();
 
-            PropertyField(enable, new GUIContent("启用"));
-            PropertyField(showInSceneView, new GUIContent("场景视图"));
+            PropertyField(showInSceneView, new GUIContent("Scene View"));
             EditorGUILayout.Space(4.0f);
 
-            DrawAddButtons();
+            DrawEffectIconToggles();
             EditorGUILayout.Space(4.0f);
+
+            DrawLayerList();
+
+            serializedObject.ApplyModifiedProperties();
+        }
+
+        private void DrawLayerList()
+        {
+            if (layers == null)
+            {
+                return;
+            }
 
             if (layerList != null)
             {
                 layerList.DoLayoutList();
             }
-
-            serializedObject.ApplyModifiedProperties();
-        }
-
-        private void DrawAddButtons()
-        {
-            using (new EditorGUILayout.HorizontalScope())
+            else
             {
-                if (GUILayout.Button("边缘光"))
-                {
-                    AddLayer(HoPostProcessEffect.EdgeLight);
-                }
-
-                if (GUILayout.Button("轮廓"))
-                {
-                    AddLayer(HoPostProcessEffect.Outline);
-                }
-
-                if (GUILayout.Button("投影"))
-                {
-                    AddLayer(HoPostProcessEffect.DropShadow);
-                }
-
-                if (GUILayout.Button("自定义"))
-                {
-                    AddLayer(HoPostProcessEffect.CustomMaterial);
-                }
+                EditorGUILayout.PropertyField(layers, true);
             }
         }
 
@@ -89,8 +111,13 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return LineHeight + 6.0f;
             }
 
-            int lines = element.isExpanded ? 16 : 1;
-            return lines * (LineHeight + LineSpacing) + 6.0f;
+            if (!element.isExpanded)
+            {
+                return LineHeight + 6.0f;
+            }
+
+            int lineCount = GetElementLineCount(element);
+            return (LineHeight + LineSpacing) * lineCount + 12.0f;
         }
 
         private void DrawElement(Rect rect, int index, bool isActive, bool isFocused)
@@ -102,68 +129,207 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             rect.y += 2.0f;
-            rect.height = LineHeight;
-
             SerializedProperty enabledProperty = element.FindPropertyRelative("enabled");
-            SerializedProperty effectProperty = element.FindPropertyRelative("effect");
-            SerializedProperty nameProperty = element.FindPropertyRelative("name");
-
-            Rect foldoutRect = new Rect(rect.x, rect.y, 18.0f, LineHeight);
-            Rect toggleRect = new Rect(rect.x + 18.0f, rect.y, 18.0f, LineHeight);
-            Rect titleRect = new Rect(rect.x + 40.0f, rect.y, rect.width - 66.0f, LineHeight);
-            Rect removeRect = new Rect(rect.xMax - 22.0f, rect.y, 22.0f, LineHeight);
-
-            element.isExpanded = EditorGUI.Foldout(foldoutRect, element.isExpanded, GUIContent.none, true);
-            enabledProperty.boolValue = EditorGUI.Toggle(toggleRect, enabledProperty.boolValue);
-            EditorGUI.LabelField(titleRect, GetLayerTitle(element));
-            if (GUI.Button(removeRect, "x", EditorStyles.miniButton))
-            {
-                RemoveLayer(index);
-                return;
-            }
-
+            float y = DrawFoldoutLine(rect, rect.y, element, enabledProperty);
             if (!element.isExpanded)
             {
                 return;
             }
 
             EditorGUI.indentLevel++;
-            float y = rect.y + LineHeight + LineSpacing;
+            HoPostProcessEffect effect = GetEffect(element);
+            DrawCoreFields(
+                rect,
+                ref y,
+                element,
+                includeTexture: effect == HoPostProcessEffect.CustomMaterial,
+                includePassIndex: effect == HoPostProcessEffect.CustomMaterial,
+                includeMaterialOverride: effect == HoPostProcessEffect.CustomMaterial);
 
-            EditorGUI.BeginChangeCheck();
-            HoPostProcessEffect effect = (HoPostProcessEffect)effectProperty.enumValueIndex;
-            effect = (HoPostProcessEffect)EditorGUI.EnumPopup(new Rect(rect.x, y, rect.width, LineHeight), "效果", effect);
-            if (EditorGUI.EndChangeCheck())
+            switch (effect)
             {
-                effectProperty.enumValueIndex = (int)effect;
-                ResetLayerDefaults(element, effect);
+                case HoPostProcessEffect.EdgeLight:
+                    DrawEdgeLightProperties(rect, ref y, element);
+                    break;
+                case HoPostProcessEffect.Outline:
+                    DrawOutlineProperties(rect, ref y, element);
+                    break;
+                case HoPostProcessEffect.DropShadow:
+                    DrawDropShadowProperties(rect, ref y, element);
+                    break;
             }
-            y += LineHeight + LineSpacing;
-
-            nameProperty.stringValue = EditorGUI.TextField(new Rect(rect.x, y, rect.width, LineHeight), "名称", nameProperty.stringValue);
-            y += LineHeight + LineSpacing;
-
-            SerializedProperty intensity = element.FindPropertyRelative("intensity");
-            intensity.floatValue = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "强度", intensity.floatValue, 0.0f, 1.0f);
-            y += LineHeight + LineSpacing;
-
-            SerializedProperty color = element.FindPropertyRelative("color");
-            color.colorValue = EditorGUI.ColorField(new Rect(rect.x, y, rect.width, LineHeight), new GUIContent("颜色"), color.colorValue, true, true, true);
-            y += LineHeight + LineSpacing;
-
-            DrawPropertyLine(rect, ref y, element, "blendMode", "混合模式");
-            DrawPropertyLine(rect, ref y, element, "materialOverride", "材质覆盖");
-            DrawPropertyLine(rect, ref y, element, "shaderOverride", "Shader 覆盖");
-            DrawPropertyLine(rect, ref y, element, "passIndex", "Pass");
-            DrawPropertyLine(rect, ref y, element, "texture", "纹理");
-            DrawPropertyLine(rect, ref y, element, "parameters0", "参数 0");
-            DrawPropertyLine(rect, ref y, element, "parameters1", "参数 1");
-            DrawPropertyLine(rect, ref y, element, "parameters2", "参数 2");
-            DrawPropertyLine(rect, ref y, element, "parameters3", "参数 3");
-            DrawPropertyLine(rect, ref y, element, "parameters4", "参数 4");
-            DrawPropertyLine(rect, ref y, element, "parameters5", "参数 5");
 
             EditorGUI.indentLevel--;
+        }
+
+        private static int GetElementLineCount(SerializedProperty element)
+        {
+            switch (GetEffect(element))
+            {
+                case HoPostProcessEffect.EdgeLight:
+                case HoPostProcessEffect.Outline:
+                    return 11;
+                case HoPostProcessEffect.CustomMaterial:
+                    return 7;
+                case HoPostProcessEffect.DropShadow:
+                default:
+                    return 9;
+            }
+        }
+
+        private float DrawFoldoutLine(Rect rect, float y, SerializedProperty element, SerializedProperty enabled)
+        {
+            Rect lineRect = new Rect(rect.x, y, rect.width, LineHeight);
+            float checkboxWidth = 18.0f;
+            float intensityWidth = Mathf.Clamp(rect.width * 0.34f, 140.0f, 220.0f);
+            float foldoutWidth = Mathf.Max(0.0f, rect.width - checkboxWidth - intensityWidth - 6.0f);
+
+            if (enabled != null && enabled.propertyType == SerializedPropertyType.Boolean)
+            {
+                Rect enabledRect = new Rect(lineRect.x, lineRect.y, checkboxWidth, lineRect.height);
+                EditorGUI.BeginChangeCheck();
+                bool enabledValue = EditorGUI.Toggle(enabledRect, enabled.boolValue);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    enabled.boolValue = enabledValue;
+                    ApplyLayerListChanges();
+                }
+            }
+
+            Rect foldoutRect = new Rect(lineRect.x + checkboxWidth, lineRect.y, foldoutWidth, lineRect.height);
+            element.isExpanded = EditorGUI.Foldout(foldoutRect, element.isExpanded, GetLayerLabel(element), true);
+
+            SerializedProperty intensity = element.FindPropertyRelative("intensity");
+            if (intensity != null && intensity.propertyType == SerializedPropertyType.Float)
+            {
+                Rect intensityRect = new Rect(lineRect.xMax - intensityWidth, lineRect.y, intensityWidth, lineRect.height);
+                Rect sliderRect = new Rect(intensityRect.x, intensityRect.y + 2.0f, intensityRect.width, intensityRect.height - 4.0f);
+                EditorGUI.BeginChangeCheck();
+                float intensityValue = GUI.HorizontalSlider(sliderRect, intensity.floatValue, 0.0f, 1.0f);
+                if (EditorGUI.EndChangeCheck())
+                {
+                    intensity.floatValue = intensityValue;
+                    ApplyLayerListChanges();
+                }
+            }
+
+            return y + LineHeight + LineSpacing;
+        }
+
+        private static void DrawCoreFields(Rect rect, ref float y, SerializedProperty element, bool includeTexture, bool includePassIndex, bool includeMaterialOverride)
+        {
+            DrawPropertyLine(rect, ref y, element, "color", "颜色");
+            DrawPropertyLine(rect, ref y, element, "blendMode", "混合模式");
+            if (includeTexture)
+            {
+                DrawPropertyLine(rect, ref y, element, "texture", "纹理");
+            }
+
+            if (includeMaterialOverride)
+            {
+                DrawPropertyLine(rect, ref y, element, "materialOverride", "材质覆盖");
+                DrawPropertyLine(rect, ref y, element, "shaderOverride", "Shader 覆盖");
+            }
+
+            if (includePassIndex)
+            {
+                DrawPropertyLine(rect, ref y, element, "passIndex", "Pass 索引");
+            }
+        }
+
+        private static void DrawEdgeLightProperties(Rect rect, ref float y, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
+            if (parameters0 == null || parameters1 == null)
+            {
+                return;
+            }
+
+            Vector4 p0 = parameters0.vector4Value;
+            Vector4 p1 = parameters1.vector4Value;
+
+            p0.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "大小", p0.x, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            p0.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "HDR 亮度", p0.y, 0.0f, 10.0f);
+            y += LineHeight + LineSpacing;
+            p0.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "对比度", p0.z, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            p0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "不透明度", p0.w, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            p1.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "角度", p1.x, -180.0f, 180.0f);
+            y += LineHeight + LineSpacing;
+            p1.y = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "模式", Mathf.Clamp(Mathf.RoundToInt(p1.y), 0, EdgeLightModes.Length - 1), EdgeLightModes);
+            y += LineHeight + LineSpacing;
+            p1.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "外扩宽度", p1.z, 0.0f, 8.0f);
+            y += LineHeight + LineSpacing;
+            p1.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "外扩强度", p1.w, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+
+            parameters0.vector4Value = p0;
+            parameters1.vector4Value = p1;
+        }
+
+        private static void DrawOutlineProperties(Rect rect, ref float y, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
+            if (parameters0 == null || parameters1 == null)
+            {
+                return;
+            }
+
+            Vector4 p0 = parameters0.vector4Value;
+            Vector4 p1 = parameters1.vector4Value;
+
+            p0.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "线宽(像素)", p0.x, 0.0f, 8.0f);
+            y += LineHeight + LineSpacing;
+            p0.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "深度权重", p0.y, 0.0f, 10.0f);
+            y += LineHeight + LineSpacing;
+            p0.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "法线权重", p0.z, 0.0f, 10.0f);
+            y += LineHeight + LineSpacing;
+            p0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "阈值", p0.w, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            p1.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "柔和度", p1.x, 0.0001f, 1.0f);
+            y += LineHeight + LineSpacing;
+            p1.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "深度灵敏度", p1.y, 0.0f, 5.0f);
+            y += LineHeight + LineSpacing;
+            p1.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "法线灵敏度", p1.z, 0.0f, 5.0f);
+            y += LineHeight + LineSpacing;
+            p1.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "不透明度", p1.w, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+
+            parameters0.vector4Value = p0;
+            parameters1.vector4Value = p1;
+        }
+
+        private static void DrawDropShadowProperties(Rect rect, ref float y, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
+            if (parameters0 == null || parameters1 == null)
+            {
+                return;
+            }
+
+            Vector4 p0 = parameters0.vector4Value;
+            Vector4 p1 = parameters1.vector4Value;
+
+            p0.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "距离", p0.x, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            p0.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "角度", p0.y, -180.0f, 180.0f);
+            y += LineHeight + LineSpacing;
+            p0.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "不透明度", p0.z, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            p0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "柔和度(像素)", p0.w, 0.0f, 32.0f);
+            y += LineHeight + LineSpacing;
+            p1.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "扩散(像素)", p1.x, 0.0f, 8.0f);
+            y += LineHeight + LineSpacing;
+            p1.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "天空淡出", p1.y, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+
+            parameters0.vector4Value = p0;
+            parameters1.vector4Value = p1;
         }
 
         private static void DrawPropertyLine(Rect rect, ref float y, SerializedProperty element, string propertyName, string label)
@@ -178,13 +344,154 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             y += LineHeight + LineSpacing;
         }
 
-        private void AddLayer(HoPostProcessEffect effect)
+        private void DrawEffectIconToggles()
         {
             if (layerValues == null || !layerValues.isArray)
             {
                 return;
             }
 
+            DrawEffectIconRow(VisibleEffectOrder);
+        }
+
+        private void DrawEffectIconRow(EffectToggleEntry[] entries)
+        {
+            if (entries == null || entries.Length == 0)
+            {
+                return;
+            }
+
+            float width = Mathf.Max(160.0f, EditorGUIUtility.currentViewWidth - 40.0f);
+            int buttonsPerRow = Mathf.Max(1, Mathf.FloorToInt((width + EffectIconSpacing) / (EffectIconSize + EffectIconSpacing)));
+            int rowCount = Mathf.CeilToInt(entries.Length / (float)buttonsPerRow);
+            float height = rowCount * EffectIconSize + Mathf.Max(0, rowCount - 1) * EffectIconSpacing;
+
+            Rect rect = GUILayoutUtility.GetRect(0.0f, height, GUILayout.ExpandWidth(true));
+            float x = rect.x;
+            float y = rect.y;
+            int column = 0;
+
+            foreach (EffectToggleEntry entry in entries)
+            {
+                if (column >= buttonsPerRow)
+                {
+                    column = 0;
+                    x = rect.x;
+                    y += EffectIconSize + EffectIconSpacing;
+                }
+
+                DrawEffectIconButton(new Rect(x, y, EffectIconSize, EffectIconSize), entry);
+                x += EffectIconSize + EffectIconSpacing;
+                column++;
+            }
+        }
+
+        private void DrawEffectIconButton(Rect rect, EffectToggleEntry entry)
+        {
+            bool active = HasLayer(entry.Effect);
+            GUIContent content = GetEffectIconContent(entry);
+            Texture icon = content.image;
+
+            if (icon != null)
+            {
+                Color oldColor = GUI.color;
+                GUI.color = active ? new Color(0.35f, 1.0f, 0.35f, 1.0f) : Color.white;
+                GUI.DrawTexture(rect, icon, ScaleMode.ScaleToFit, true);
+                GUI.color = oldColor;
+            }
+            else
+            {
+                EditorGUI.LabelField(rect, content);
+            }
+
+            GUI.Label(rect, new GUIContent(string.Empty, content.tooltip), GUIStyle.none);
+            EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
+            if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
+            {
+                ToggleEffect(entry.Effect);
+                Event.current.Use();
+            }
+        }
+
+        private static GUIContent GetEffectIconContent(EffectToggleEntry entry)
+        {
+            if (EffectIconContents.TryGetValue(entry.Effect, out GUIContent cached))
+            {
+                return cached;
+            }
+
+            Texture2D icon = LoadEffectIcon(entry.IconName);
+            GUIContent content = icon != null ? new GUIContent(icon, entry.Label) : new GUIContent(entry.Label);
+            EffectIconContents[entry.Effect] = content;
+            return content;
+        }
+
+        private static Texture2D LoadEffectIcon(string iconName)
+        {
+            if (string.IsNullOrEmpty(iconName))
+            {
+                return null;
+            }
+
+            string[] candidatePaths =
+            {
+                $"{PackageAssetRoot}/Editor/ShoostIcons/{iconName}.png",
+                $"Assets/Editor/ShoostIcons/{iconName}.png"
+            };
+
+            foreach (string path in candidatePaths)
+            {
+                Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
+                if (texture != null)
+                {
+                    return texture;
+                }
+            }
+
+            return null;
+        }
+
+        private void ToggleEffect(HoPostProcessEffect effect)
+        {
+            if (HasLayer(effect))
+            {
+                RemoveLayer(effect);
+            }
+            else
+            {
+                AddLayer(effect);
+            }
+
+            ApplyLayerListChanges();
+        }
+
+        private bool HasLayer(HoPostProcessEffect effect)
+        {
+            if (layerValues == null || !layerValues.isArray)
+            {
+                return false;
+            }
+
+            int effectIndex = (int)effect;
+            for (int index = 0; index < layerValues.arraySize; index++)
+            {
+                if ((int)GetEffect(layerValues.GetArrayElementAtIndex(index)) == effectIndex)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private void AddLayer(HoPostProcessEffect effect)
+        {
+            if (layerValues == null || !layerValues.isArray || HasLayer(effect))
+            {
+                return;
+            }
+
+            Undo.RecordObject(serializedObject.targetObject, "Add HoPost Effect");
             int index = layerValues.arraySize;
             layerValues.InsertArrayElementAtIndex(index);
             SerializedProperty element = layerValues.GetArrayElementAtIndex(index);
@@ -192,14 +499,39 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             element.isExpanded = true;
         }
 
-        private void RemoveLayer(int index)
+        private void RemoveLayer(HoPostProcessEffect effect)
         {
-            if (layerValues == null || index < 0 || index >= layerValues.arraySize)
+            if (layerValues == null || !layerValues.isArray)
             {
                 return;
             }
 
-            layerValues.DeleteArrayElementAtIndex(index);
+            int effectIndex = (int)effect;
+            bool recordedUndo = false;
+            for (int index = layerValues.arraySize - 1; index >= 0; index--)
+            {
+                if ((int)GetEffect(layerValues.GetArrayElementAtIndex(index)) != effectIndex)
+                {
+                    continue;
+                }
+
+                if (!recordedUndo)
+                {
+                    Undo.RecordObject(serializedObject.targetObject, "Remove HoPost Effect");
+                    recordedUndo = true;
+                }
+
+                layerValues.DeleteArrayElementAtIndex(index);
+            }
+        }
+
+        private void ApplyLayerListChanges()
+        {
+            serializedObject.ApplyModifiedProperties();
+            if (serializedObject.targetObject != null)
+            {
+                EditorUtility.SetDirty(serializedObject.targetObject);
+            }
         }
 
         private SerializedProperty GetLayerProperty(int index)
@@ -212,12 +544,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return layerValues.GetArrayElementAtIndex(index);
         }
 
-        private static string GetLayerTitle(SerializedProperty element)
+        private static GUIContent GetLayerLabel(SerializedProperty element)
         {
-            HoPostProcessEffect effect = GetEffect(element);
-            SerializedProperty name = element.FindPropertyRelative("name");
-            string displayName = !string.IsNullOrEmpty(name.stringValue) ? name.stringValue : GetEffectDisplayName(effect);
-            return $"{displayName} ({GetEffectDisplayName(effect)})";
+            string effectName = GetEffectDisplayName(GetEffect(element));
+            return new GUIContent(effectName, $"效果类型: {effectName}");
         }
 
         private static HoPostProcessEffect GetEffect(SerializedProperty element)
@@ -264,13 +594,23 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             switch (effect)
             {
+                case HoPostProcessEffect.EdgeLight:
+                    SetColor(element, "color", new Color(1.0f, 0.82f, 0.55f, 1.0f));
+                    SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Add);
+                    SetVector4(element, "parameters0", new Vector4(0.45f, 2.0f, 0.35f, 1.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.0f, 1.0f, 0.0f, 0.0f));
+                    break;
                 case HoPostProcessEffect.Outline:
                     SetColor(element, "color", Color.black);
                     SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
+                    SetVector4(element, "parameters0", new Vector4(1.5f, 1.0f, 0.7f, 0.08f));
+                    SetVector4(element, "parameters1", new Vector4(0.08f, 1.0f, 1.0f, 1.0f));
                     break;
                 case HoPostProcessEffect.DropShadow:
-                    SetColor(element, "color", new Color(0.0f, 0.0f, 0.0f, 0.5f));
+                    SetColor(element, "color", new Color(0.0f, 0.0f, 0.0f, 0.65f));
                     SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Multiply);
+                    SetVector4(element, "parameters0", new Vector4(0.35f, -45.0f, 0.85f, 6.0f));
+                    SetVector4(element, "parameters1", new Vector4(1.0f, 1.0f, 0.0f, 1.0f));
                     break;
                 case HoPostProcessEffect.CustomMaterial:
                     SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);

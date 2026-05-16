@@ -40,6 +40,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             ShoostPostProcessStackVolume volume = GetVolumeComponent();
             if (!ShouldRender(in renderingData, volume))
             {
+                afterPostProcessPass?.ClearRuntimeLayers();
                 return;
             }
 
@@ -52,6 +53,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             ShoostPostProcessStackVolume volume = GetVolumeComponent();
             if (!ShouldRender(in renderingData, volume))
             {
+                afterPostProcessPass?.ClearRuntimeLayers();
                 return;
             }
 
@@ -104,7 +106,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             {
                 if (layer == null ||
                     !layer.IsActive ||
-                    layer.effect == ShoostPostProcessEffect.RemovedEffectSlot13)
+                    IsRemovedEffectSlot(layer.effect))
                 {
                     continue;
                 }
@@ -122,6 +124,14 @@ namespace lilToon.URP.Extensions.PostProcessing
             afterPostProcessLayers.Sort(CompareRuntimeLayerOrder);
         }
 
+        private static bool IsRemovedEffectSlot(ShoostPostProcessEffect effect)
+        {
+            return effect == ShoostPostProcessEffect.RemovedEffectSlot13 ||
+                   effect == ShoostPostProcessEffect.RemovedEffectSlot30 ||
+                   effect == ShoostPostProcessEffect.RemovedEffectSlot31 ||
+                   effect == ShoostPostProcessEffect.RemovedEffectSlot32;
+        }
+
         private static int CompareRuntimeLayerOrder(ShoostPostProcessRuntimeLayer a, ShoostPostProcessRuntimeLayer b)
         {
             int orderA = GetRuntimeEffectOrder(a.settings.effect);
@@ -137,9 +147,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                 case ShoostPostProcessEffect.AutoWhiteBalance: return 1;
                 case ShoostPostProcessEffect.LevelAdjustment: return 2;
                 case ShoostPostProcessEffect.ColorGradingCustom: return 3;
-                case ShoostPostProcessEffect.EdgeLight: return 4;
-                case ShoostPostProcessEffect.Outline: return 5;
-                case ShoostPostProcessEffect.DropShadow: return 6;
                 case ShoostPostProcessEffect.Gradient: return 7;
                 case ShoostPostProcessEffect.Lighting: return 8;
                 case ShoostPostProcessEffect.CenterColorCorrection: return 9;
@@ -191,6 +198,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             if (pass == null || layers.Count == 0)
             {
+                pass?.ClearRuntimeLayers();
                 return;
             }
 
@@ -205,6 +213,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             if (pass == null || layers.Count == 0)
             {
+                pass?.ClearRuntimeLayers();
                 return;
             }
 
@@ -407,6 +416,11 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             changeFrameRateStates.Clear();
+            runtimeLayers.Clear();
+        }
+
+        public void ClearRuntimeLayers()
+        {
             runtimeLayers.Clear();
         }
 
