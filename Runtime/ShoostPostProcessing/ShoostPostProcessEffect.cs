@@ -46,7 +46,10 @@ namespace lilToon.URP.Extensions.PostProcessing
         TransparentBackground,
         VHS,
         CameraFlash,
-        ToonMap
+        ToonMap,
+        Kuwahara,
+        BokehZoomBlur,
+        ApertureBokeh
     }
 
     public enum ShoostPostProcessBlendMode

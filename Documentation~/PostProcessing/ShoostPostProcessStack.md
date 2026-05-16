@@ -27,6 +27,7 @@
 - ToonMap（URP 扩展：自管 Tonemapping）
 - 光照
 - 中心色彩校正
+- 桑原（URP 扩展：Kuwahara 风格化）
 - LED
 - 天气
 - 粒子
@@ -40,6 +41,7 @@
 - 光圈模糊
 - 通道模糊
 - RGB 分离
+- 光斑变焦（URP 扩展：Bokeh Zoom Blur）
 - 颗粒
 - 暗角
 - 像素化
@@ -50,7 +52,7 @@
 
 其中一部分是纯后处理 shader，一部分更像 Shoost 的场景叠加、UI 驱动或摄像机控制入口。我们在 URP 里会尽量保持它们的用户命名和图标入口一致，但底层实现不一定都是单个 fullscreen pass。当前公开 UI 只显示适合 Shoost Final Stack 的入口；`天气` 已先按 Volume 驱动的相机空间程序化粒子实现雨 / 雪 / 烟雾近似版；`边缘光`、`轮廓`、`投影`、`LED`、`透明背景`、`摄像头切换器` 先隐藏，等主体数据、输入 RT、场景对象或相机合成边界重新确认后再决定是否恢复。
 
-当前已经补上的公开效果包括 `VignetteCustom`、`Sharpen`、`RGBSplit`、`RGBChannelSeparator`、`IrisBlur`、`ColorGradingCustom`、`LevelAdjustment`、`AutoWhiteBalance`、`Fisheye` / `LensDistortionCustom`、`Pixelize`、`Distortion`（湍流置换）、`Glow` 和 `ToonMap`。`ToonMap` 不是 Shoost 原包滤镜，而是为了在 Shoost stack 内统一管理最终映射而加入的 URP 扩展项，当前提供 None / Neutral / ACES，其中 Neutral / ACES 直接复用 URP Tonemapping。旧的 `KawaseBlur` 已整体摘除，shader、editor filter 和 runtime 调度都不再保留；旧 Volume 数据残留该槽位时由编辑器自动清理。`LUTColorGrading` 已从公开实现中移除，第 4 个“调色”入口对齐 Shoost 的 `ColorGrading_Custom`：包含普通 `Lift / Gamma / Gain` 色轮、对数 `Shadows / Midtones / Highlights` 色轮，以及六色偏移的 `HueVsHue / HueVsSat / HueVsLum / LumVsSat` 模式。`DownScaleResolution` 只保留旧资产兼容，不再作为公开图层入口；新面板里应该用 `Pixelize`。`SharpenAfter` 也不再作为公开图层入口，用户侧统一用 `SharpenBefore`；当前普通 Shoost 滤镜默认已经作为最终滤镜后置执行，旧 `SharpenAfter` 只保留兼容。
+当前已经补上的公开效果包括 `VignetteCustom`、`Sharpen`、`RGBSplit`、`RGBChannelSeparator`、`IrisBlur`、`ColorGradingCustom`、`LevelAdjustment`、`AutoWhiteBalance`、`Fisheye` / `LensDistortionCustom`、`Pixelize`、`Distortion`（湍流置换）、`Glow`、`ToonMap`、`Kuwahara`、`BokehZoomBlur` 和 `ApertureBokeh`。`ToonMap` 不是 Shoost 原包滤镜，而是为了在 Shoost stack 内统一管理最终映射而加入的 URP 扩展项，当前提供 None / Neutral / ACES，其中 Neutral / ACES 直接复用 URP Tonemapping。`Kuwahara / 桑原` 同样是 URP 扩展滤镜，来源是 [`桑原滤镜研究.md`](桑原滤镜研究.md) 的方案整理，按 final stack fullscreen pass 实现基础桑原、色阶、Sobel 线稿和噪声组合，并提供可选高质量模式。`BokehZoomBlur / 光斑变焦` 来自 [`光板变焦滤镜研究.md`](光板变焦滤镜研究.md)，当前按纯屏幕空间高亮提取 + 径向光斑拖影实现，提供高成本质量档位但暂不依赖深度/法线。`ApertureBokeh / 光圈散景` 是独立的全局光圈虚焦近似：不使用深度，直接从最终画面的亮度和边缘提取焦外信号，再用圆形/多边形光圈核向各方向合并成真实摄影式 bokeh。旧的 `KawaseBlur` 和试验性的无方向光斑旧实现已整体摘除，shader、editor filter 和 runtime 调度都不再保留；旧 Volume 数据残留这些槽位时由编辑器自动清理。`LUTColorGrading` 已从公开实现中移除，第 4 个“调色”入口对齐 Shoost 的 `ColorGrading_Custom`：包含普通 `Lift / Gamma / Gain` 色轮、对数 `Shadows / Midtones / Highlights` 色轮，以及六色偏移的 `HueVsHue / HueVsSat / HueVsLum / LumVsSat` 模式。`DownScaleResolution` 只保留旧资产兼容，不再作为公开图层入口；新面板里应该用 `Pixelize`。`SharpenAfter` 也不再作为公开图层入口，用户侧统一用 `SharpenBefore`；当前普通 Shoost 滤镜默认已经作为最终滤镜后置执行，旧 `SharpenAfter` 只保留兼容。
 
 ## 设置
 
@@ -87,7 +89,7 @@ Volume 里只有一个面向用户的大图层列表。Shoost stack 不再提供
 
 这意味着 Shoost stack 统一运行在 URP 主后处理之后；在某些相机配置下，后面仍可能接着 URP 的 final post pass。需要 Bloom 响应或需要主体数据的效果后续应移动到 subject effects / lighting feature，而不是重新塞进 Shoost 图层插入点。
 
-图层列表的顺序会在当前 final stack 内部保留。主体数据、HDR 发光和 pre-Bloom 合成后续应移动到新的 subject effects / lighting feature；调色、CRT mask、final sharpen、VHS、颗粒、像素化，以及已经明确为 LDR 纯后期 bloom 的 `Glow / 发光`，则统一留在 Shoost final stack。当前固定排序里 `Glow / 发光` 被放到后段，在天气、胶片、VHS、CRT、dither、模糊和 RGB 分离之后执行；`ToonMap` 紧跟 `Glow`，用于在 Shoost stack 内做最终 Neutral / ACES 映射；两者仍早于颗粒、暗角、像素化和帧率限制这类最终显示收尾效果。
+图层列表的顺序会在当前 final stack 内部保留。主体数据、HDR 发光和 pre-Bloom 合成后续应移动到新的 subject effects / lighting feature；调色、CRT mask、final sharpen、VHS、颗粒、像素化，以及已经明确为 LDR 纯后期 bloom 的 `Glow / 发光`，则统一留在 Shoost final stack。当前固定排序里 `BokehZoomBlur / 光斑变焦` 和 `ApertureBokeh / 光圈散景` 位于 RGB 分离/通道分离之后、`Glow / 发光` 之前，让它们产出的高亮拖影/散焦光斑还能继续进入 Shoost 内部发光；`Glow / 发光` 被放到后段，在天气、胶片、VHS、CRT、dither、模糊和 RGB 分离之后执行；`ToonMap` 紧跟 `Glow`，用于在 Shoost stack 内做最终 Neutral / ACES 映射；两者仍早于颗粒、暗角、像素化和帧率限制这类最终显示收尾效果。
 
 从 Shoost v0.16.3 解包结果看，一共找到 59 个 `BeforeStack` 和 16 个 `AfterStack` 的 PPS v2 effect：
 
@@ -137,6 +139,9 @@ Volume 里只有一个面向用户的大图层列表。Shoost stack 不再提供
 - `VHS`：来源是 Shoost 的 `PostProcess_VHSValue` 组合滤镜。Shoost 用户侧以弱/中/强三档切换 profile，并联动 `RLProVHSEffect`、`RLProNoise2_Custom`、`RLProEdgeNoise`、`RGBBlurV2`、`Grain_Custom`、`Sharpen_Before`、`Tube`，扫描线子开关来自 `RLProTVEffect_Custom`。当前 URP 版压成一个用户滤镜和一个 fullscreen pass，暴露“类型、噪点强度、锐化、扫描线、大小”，默认作为 `After URP Post Processing` 的最终滤镜执行。已由实机核对确认完美对齐，状态标记为：完美对齐。
 - `Gradient / 渐变`：已由实机核对确认完美对齐。来源是 Shoost 的 `GradientValue` / `Layer_GradientValue` 和 `Custom/AnimeComposition` 中的 Gradient Generator 参数。用户侧对齐 Shoost 面板的“类型、混合模式、颜色 1/颜色 2、反相、半径、柔和度、偏移 X/Y、角度、不透明度”；当前 URP 版作为 final stack 的单 pass fullscreen 效果执行。Shoost 的透明背景/排除背景开关属于透明源与图层合成语义，在 URP camera color 后处理里不参与。
 - `CenterColorCorrection / 中心色彩校正`：来源是 Shoost `CenterColorCorrectionValue` 和 `Custom/AnimeComposition` 材质属性。当前 URP 版按纯 fullscreen 后处理实现，用户侧暴露“饱和度、色相、亮度、对比度、反相、半径、柔和度、中心位置 X/Y、不透明度”，其中“色相”是 URP 扩展参数，非 Shoost 原生项。默认值对齐当前面板截图：饱和度 `0.18`、色相 `0`、半径 `0.5`、柔和度 `0.5`、不透明度 `1`。shader 以中心圆形 mask 混合校正结果，按最终 LDR 画面处理。
+- `Kuwahara / 桑原`：URP 扩展滤镜，不来自 Shoost 原包。参考 [`桑原滤镜研究.md`](桑原滤镜研究.md) 的“平衡 / 高质量”方案，在一个 fullscreen pass 中实现 Kuwahara 保边平滑、可选色阶、Sobel 线稿和噪声。用户侧暴露“质量、半径、色阶、线稿颜色、线稿强度、线稿阈值、噪声强度”，质量为“基础 / 平衡 / 高质量”；默认半径 `3`、平衡质量、色阶 `0`（关闭）、线稿强度 `0.25`、噪声 `0.05`。色阶开启后使用亮度量化再回乘原色比例，尽量保留色相；高质量模式会启用更多候选区域，成本更高但更适合强绘画感或截图。
+- `BokehZoomBlur / 光斑变焦`：URP 扩展滤镜，不来自 Shoost 原包。参考 [`光板变焦滤镜研究.md`](光板变焦滤镜研究.md) 的 Bokeh Zoom Blur 方案，当前实现为单 pass fullscreen：先按曝光、阈值和 soft-knee 提取高亮，再沿屏幕中心径向采样形成方向性光斑变焦拖影，并支持叶片数、叶片曲率、旋转、色散、染色、亮度衰减、增益、相加/滤色/叠加/正常混合和“只显示光斑层”。质量档位为“快速 / 平衡 / 高质量”，分别对应 8 / 16 / 32 次采样；默认使用高质量、半径 `1`、光斑增益 `0.5`、阈值 `0`、阈值柔化 `0`、曝光 `1`、亮度衰减 `4`、叶片数 `0`、叶片曲率 `1`、色散 `1`、相加混合。固定排序位于 `Glow / 发光` 之前，方便用内部 Glow 继续扩散光斑。
+- `ApertureBokeh / 光圈散景`：URP 扩展滤镜，不来自 Shoost 原包。它模拟全局焦外光圈成像，不读取深度，默认把整张画面当作同一焦外平面。实现结构参考 Unity DoF/Bokeh 的成熟管线，改为 prefilter/downsample、半分辨率 disk kernel bokeh blur、小 post filter、composite 四个 pass：先按亮度阈值、soft-knee 和局部边缘梯度提取焦外信号，再用圆形或叶片多边形 aperture kernel 从各方向采样合并，得到远景虚焦时一块块圆形光斑的感觉。主要参数为 `光圈大小`、`亮度阈值`、`阈值柔化`、`曝光`、`边缘提取`、`光斑硬度`、`叶片数 / 曲率 / 旋转`、`色散`、`光斑增益`、`叠加模式` 和 `只显示光斑层`。默认使用高质量、光圈大小 `1`、光斑增益 `4`、亮度阈值 `0.4`、阈值柔化 `0.2`、曝光 `1`、边缘提取 `0.35`、光斑硬度 `1`、叶片数 `0`、叶片曲率 `1`、叶片旋转 `0`、色散 `0.35`、相加混合，并关闭 `只显示光斑层`。固定排序同样位于 `Glow / 发光` 之前。
 - `Glow / 发光`：已按 Shoost 的 `GlowValue` / Kino `Bloom_Custom` 对齐完成。当前 URP 版是不依赖 HDR 的纯后期 LDR bloom，多 pass 流程为阈值 soft-knee 预滤波、模糊金字塔、模式化方向采样和最终合成；用户侧对齐 Shoost 面板的“阈值、阈值平滑、半径、强度、饱和度、颜色、不透明度、发光类型”，三种类型为“正常 / 条纹 / 星芒”，星芒额外暴露数量和角度。当前默认阈值为 `0.9`，默认强度为 `2.0`，强度 UI 上限为 `12.0`。状态标记为：完美对齐。
 - `ToonMap`：URP 扩展滤镜，不来自 Shoost 原包。用途是在关闭 URP 内置 Tonemapping 后，仍能把 Shoost stack 内保留的 HDR 颜色统一映射到最终显示范围。用户侧只暴露“模式”，包含 `None / Neutral / ACES`，默认 `ACES`；`None` 不改变颜色，`Neutral` 和 `ACES` 分别复用 URP 的 `NeutralTonemap` 和 `AcesTonemap(unity_to_ACES(...))`。固定排序紧跟 `Glow / 发光`，早于 Grain、Vignette、Pixelize 和 ChangeFrameRate。
 - `Weather / 天气`：来源是 Shoost 的 `ParticleValue` 和 `Particle_Weather_Rain/Snow/Smoke` prefab，不是 PPS fullscreen shader。Unity `ParticleSystem` 场景粒子路线在 RendererFeature/Volume 调参时存在编辑器崩溃风险，当前 URP 版改为稳定的 fullscreen 程序化粒子 pass，但仍按相机空间 2D 合成层处理，并继续作为 Shoost final stack 图层跑在 `AfterRenderingPostProcessing`。HDR 颜色当前用于 Shoost 内部合成强度，不依赖 URP 内置 Bloom；后续如果需要发亮链路，应在 Shoost stack 内新增带 LUT 输入/可管理的泛光滤镜，而不是把 Weather 提前到 URP 后处理之前。用户侧按折叠组暴露“基础 / 假景深 / 粒子变化”：基础包含“粒子、HDR 颜色、发生率、不透明度、叠加模式”，假景深包含“焦距、虚化强度、虚化柔化、虚化曲线”，粒子变化包含“速度、数量、大小、随机、漂移、层次、上下不均、明暗变化”。默认发生率为 `1`，默认随机为 `0.35`，避免程序化格子粒子过早出现截断感。粒子为“雨 / 雪 / 烟雾 / 灰尘”。雨参考原 prefab 的 `Particle_Rain_Storm / S / M / L / Storm_L` 五层比例，雪参考 `Particle_Snow_BG / M / L` 加烟雾层，烟雾参考 `Particle_Smoke_BG / L` 两层软粒子。`灰尘` 是 URP 扩展模式，基于雪式漂浮粒子但加入细尘、中层颗粒、近景软斑和薄雾层。`焦距` 与虚化参数是 URP 扩展的假景深控制：每层程序化粒子分配伪深度，焦距前方的近层会按曲线变宽变软，远层保持较实；`层次` 控制伪深度分布宽度，`上下不均` 控制 Shoost 式上下质量分布。叠加模式当前提供“正常 / 加亮 / 滤色 / 柔光”，其中加亮路径保留 HDR 颜色强度。状态标记为：相机空间程序化粒子近似版。
@@ -172,7 +177,7 @@ Shoost 的核心不是“某一个 URP pass”，而是一个可以叠很多层�
 
 Shoost 原始工作流更像在处理一个可能带 alpha 的图片/视频源，而不是 URP 相机的最终不透明颜色缓冲。Shoost 场景里默认有背景、角色、前景三层，很多用户侧效果实际只作用于角色或前景，背景会被 alpha 或源图层边界自然排除。URP fullscreen post 看到的通常是已经合成后的 camera color，背景、角色和前景已经混在一起，alpha 也未必还保留可用语义。因此后续迁移分成三类：
 
-- `直接按 Shoost/RenderDoc 复刻`：主要依赖最终屏幕颜色的滤镜。包括 `SharpenBefore`、`AutoWhiteBalance`、`LevelAdjustment`、`ColorGradingCustom`、`VignetteCustom`、`Pixelize`、`Distortion`、`Fisheye / LensDistortionCustom`、`RGBSplit`、`RGBChannelSeparator`、`GrainCustom`、`DitheringCustom`、`CRTEffects`、`VHS`。这些可以继续走 fullscreen pass 或现有多 pass 调度。
+- `直接按 Shoost/RenderDoc 复刻`：主要依赖最终屏幕颜色的滤镜。包括 `SharpenBefore`、`AutoWhiteBalance`、`LevelAdjustment`、`ColorGradingCustom`、`VignetteCustom`、`Pixelize`、`Distortion`、`Fisheye / LensDistortionCustom`、`RGBSplit`、`RGBChannelSeparator`、`GrainCustom`、`DitheringCustom`、`CRTEffects`、`VHS`。这些可以继续走 fullscreen pass 或现有多 pass 调度。`Kuwahara / 桑原`、`BokehZoomBlur / 光斑变焦` 和 `ApertureBokeh / 光圈散景` 是自研 URP 扩展，虽然同样只依赖最终屏幕颜色，但不标记为 Shoost 原包复刻。
 - `按 Shoost 语义实现，但需要专用调度`：不是透明源问题，主要是运行时结构更复杂。包括 `IrisBlur`、`RGBBlurV2`、`Glow` 这类多 RT / blur pyramid，`MotionTrail`、`ChangeFrameRate` 这类历史 buffer，以及 `CustomMaterial` 的 Photoshop 式混合。
 - `不要硬搬 Shoost，改成 URP 主体数据效果或明确的合成层`：强依赖透明源、主体边界、alpha 或 Shoost 场景层级的效果。包括 `EdgeLight / 边缘光`、`Outline / 轮廓`、`DropShadow / 投影`，以及大概率需要重新设计的 `Lighting / 光照`、`TransparentBackground / 透明背景`、`Particle / 粒子`、`CameraSwitcher / 摄像头切换器`。这些不应该从最终 camera color 里猜 alpha，应使用明确的角色 mask、stencil、depth、normal、单独的角色渲染目标或明确的场景合成对象。`Glow / 发光` 已按纯后期 LDR bloom 对齐，不再归入这一类；`Weather / 天气` 当前按相机空间程序化粒子处理。
 

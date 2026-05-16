@@ -1,6 +1,6 @@
 # Shoost 后处理文件架构
 
-这份文档记录 `lilToon-Shoost` 后处理移植侧的文件拆分方式。当前的 Shoost 滤镜只是归属于 `ShoostPostProcessRendererFeature` 的一组实现，不代表整个包只能做 Shoost。以后如果加入你自己的非 Shoost 滤镜，原则上应该另开自己的 Runtime / Editor 目录，避免和 Shoost 复刻层混在一起。`ToonMap` 是当前的明确例外：它不是 Shoost 原包滤镜，但为了和 Shoost stack 里的 HDR / Glow / 最终显示顺序统一管理，暂时作为 Shoost stack 扩展项注册。
+这份文档记录 `lilToon-Shoost` 后处理移植侧的文件拆分方式。当前的 Shoost 滤镜只是归属于 `ShoostPostProcessRendererFeature` 的一组实现，不代表整个包只能做 Shoost。以后如果加入你自己的非 Shoost 滤镜，原则上应该另开自己的 Runtime / Editor 目录，避免和 Shoost 复刻层混在一起。`ToonMap` 是当前的明确例外：它不是 Shoost 原包滤镜，但为了和 Shoost stack 里的 HDR / Glow / 最终显示顺序统一管理，暂时作为 Shoost stack 扩展项注册。`Kuwahara`、`BokehZoomBlur` 和 `ApertureBokeh` 也是当前放进 Shoost stack 的 URP 扩展项：前者服务风格化，后两者服务 Shoost 内部光斑/发光顺序管理。
 
 ## Editor 侧
 
@@ -108,13 +108,19 @@ Shoost 中有一组效果依赖透明源、角色/前景图层或场景对象：
 - `Runtime/ShoostPostProcessing/Shaders/Shoost/Gradient.shader`：渐变滤镜的 URP fullscreen pass。按 Shoost 的单色、线性、圆形、椭圆四种模式和 Photoshop 式混合实现。已由实机核对确认完美对齐。
 - `Editor/PostProcessing/ShoostStack/Filters/CenterColorCorrection.cs`：中心色彩校正 UI。对齐 Shoost 用户侧的饱和度、亮度、对比度、反相、半径、柔和度、中心位置 X/Y 和不透明度，并额外提供 URP 扩展参数“色相”。
 - `Runtime/ShoostPostProcessing/Shaders/Shoost/CenterColorCorrection.shader`：中心色彩校正的 URP fullscreen pass。按 `Custom/AnimeComposition` 的 Center Color Correction 属性语义，在中心圆形 mask 内混合 LDR 色彩校正结果。
+- `Editor/PostProcessing/ShoostStack/Filters/Kuwahara.cs`：桑原滤镜 UI。作为 Shoost stack 扩展项，暴露质量、半径、色阶、线稿颜色、线稿强度、线稿阈值和噪声强度；质量包含基础、平衡、高质量，高质量是可选高成本路径。
+- `Runtime/ShoostPostProcessing/Shaders/Shoost/Kuwahara.shader`：单 pass fullscreen Kuwahara 风格化 shader。按最终 camera color 做保边平滑，并可叠加 Posterize 色阶、Sobel 线稿和轻噪声；高质量模式启用更多候选区域统计。
+- `Editor/PostProcessing/ShoostStack/Filters/BokehZoomBlur.cs`：光斑变焦滤镜 UI。作为 Shoost stack 扩展项，暴露质量、半径、阈值、阈值柔化、曝光、HDR 染色、中心位置、亮度衰减、叶片数、叶片曲率、叶片旋转、色散、叠加模式和只显示光斑层。
+- `Runtime/ShoostPostProcessing/Shaders/Shoost/BokehZoomBlur.shader`：单 pass fullscreen Bokeh Zoom Blur shader。按高亮阈值和 soft-knee 提取散景层，沿屏幕中心径向采样，支持 8/16/32 次采样质量、叶片方向权重、色散、HDR 染色和相加/滤色/叠加/正常合成。固定排序位于 `Glow / 发光` 之前，让内部发光可以继续扩散光斑结果。
+- `Editor/PostProcessing/ShoostStack/Filters/ApertureBokeh.cs`：光圈散景滤镜 UI。参数保持少量摄影语义：光圈大小、亮度阈值、阈值柔化、曝光、边缘提取、光斑硬度、叶片形状、色散、叠加模式和只显示光斑层。
+- `Runtime/ShoostPostProcessing/Shaders/Shoost/ApertureBokeh.shader`：多 pass fullscreen Aperture Bokeh shader。不读取深度，按全局焦外处理最终画面：先 prefilter/downsample 提取亮度阈值和局部边缘梯度，再在半分辨率上做圆形/多边形 disk kernel bokeh blur，随后做一次小 post filter 并合成回原图。固定排序位于 `Glow / 发光` 之前。
 - `Editor/PostProcessing/ShoostStack/Filters/Glow.cs`：发光滤镜 UI。对齐 Shoost 用户侧的阈值、阈值平滑、半径、强度、饱和度、颜色、不透明度和发光类型；类型为正常、条纹、星芒，星芒额外显示数量和角度。
 - `Runtime/ShoostPostProcessing/Shaders/Shoost/Glow.shader`：发光滤镜的 URP 多 pass fullscreen shader。来源对齐 Shoost 的 `GlowValue` / Kino `Bloom_Custom`，按 LDR 阈值预滤波、模糊金字塔、方向/星芒采样和最终合成实现。固定排序中 `Glow / 发光` 放在后段，尽量吃到 Weather、Film、VHS、CRT、Dithering、Iris/RGB Blur 和 RGB Split/Channel Separator 之后的结果，但仍早于 Grain、Vignette、Pixelize 和 ChangeFrameRate 这类最终显示收尾。状态标记为：完美对齐。
 - `Editor/PostProcessing/ShoostStack/Filters/ToonMap.cs`：ToonMap 的 Shoost stack 扩展 UI。当前只暴露模式，提供 `None`、`Neutral` 和 `ACES`，默认 `ACES`。
 - `Runtime/ShoostPostProcessing/Shaders/Shoost/ToonMap.shader`：直接复用 URP Core `Color.hlsl` / `ACES.hlsl` 里的 Neutral / ACES Tonemapping 函数，把 Shoost stack 中保留的 HDR 颜色映射到最终显示范围。固定排序紧跟 `Glow / 发光`，用于关掉 URP 内置 Tonemapping 后仍由 Shoost 栈统一收口。
 - `Editor/PostProcessing/ShoostStack/Filters/Weather.cs`：天气 UI。保留 Shoost 面板的“粒子、颜色、发生率、不透明度”，颜色使用 HDR ColorField；并按“基础 / 假景深 / 粒子变化”折叠组提供 URP 扩展参数，包括焦距、虚化强度、虚化柔化、虚化曲线、叠加模式、速度、数量、大小、随机、漂移、层次、上下不均和明暗变化；粒子类型为雨、雪、烟雾、灰尘。
 - `Runtime/ShoostPostProcessing/Shaders/Shoost/Weather.shader`：天气滤镜的相机空间程序化粒子 fullscreen pass。雨参考原 prefab 五层，雪参考三层雪加两层烟雾，烟雾参考两层软粒子组织；灰尘为 URP 扩展模式，使用细尘、中层颗粒、近景软斑和薄雾层。Weather 继续作为 Shoost final stack 图层运行在 `AfterRenderingPostProcessing`；HDR 颜色用于 Shoost 内部高亮链路，后续泛光应在 Shoost stack 内实现，而不是依赖 URP Bloom。参数由 Volume 的 Weather 图层提供：`parameters0.y` 默认发生率为 `1`，`parameters2` 为速度、数量、大小、随机且默认随机为 `0.35`，`parameters3` 为层次、上下不均、明暗变化、漂移。`焦距` 和虚化参数通过每层伪深度控制假景深，近处粒子软化，远处粒子保持较实；叠加模式在 shader 内部执行正常、加亮、滤色和柔光，其中加亮不主动压低 HDR 颜色。
-- `Runtime/ShoostPostProcessing/ShoostPostProcessRendererFeature.cs`：Shoost stack 的中间 RT 强制优先使用 `R16G16B16A16_SFloat`，保证 Weather / Glow / 后续内部 Bloom 这类大于 1 的颜色在 Shoost 图层之间不会被 LDR RT 截断。runtime 构建 layer 时也会按固定顺序排序，避免旧 Volume 资产还没被 editor 重排时使用旧执行顺序；其中 `Glow / 发光` 位于后段，`ToonMap` 紧跟其后，二者早于最终显示收尾效果。现有 shader 已清理主要最终颜色输出钳制：`Glow`、`CRT`、`Grain`、`Dithering`、`LevelAdjustment`、`Film`、`Tube`、`VHS`、`Gradient` 和通用 `LayerBlit` 不再把最终 RGB 上限压到 1；Film/Tube/VHS/Dithering/LevelAdjustment 这类偏 LDR 的风格化滤镜会把输入的 HDR headroom 加回输出，避免切断后续内部泛光源。
+- `Runtime/ShoostPostProcessing/ShoostPostProcessRendererFeature.cs`：Shoost stack 的中间 RT 强制优先使用 `R16G16B16A16_SFloat`，保证 Weather / BokehZoomBlur / ApertureBokeh / Glow / 后续内部 Bloom 这类大于 1 的颜色在 Shoost 图层之间不会被 LDR RT 截断。runtime 构建 layer 时也会按固定顺序排序，避免旧 Volume 资产还没被 editor 重排时使用旧执行顺序；其中 `BokehZoomBlur / 光斑变焦` 和 `ApertureBokeh / 光圈散景` 位于 RGB 分离之后、`Glow / 发光` 之前，`Glow / 发光` 位于后段，`ToonMap` 紧跟其后，二者早于最终显示收尾效果。现有 shader 已清理主要最终颜色输出钳制：`Glow`、`CRT`、`Grain`、`Dithering`、`LevelAdjustment`、`Film`、`Tube`、`VHS`、`Gradient` 和通用 `LayerBlit` 不再把最终 RGB 上限压到 1；Film/Tube/VHS/Dithering/LevelAdjustment 这类偏 LDR 的风格化滤镜会把输入的 HDR headroom 加回输出，避免切断后续内部泛光源。
 - `RGBChannelSeparator / RGB 通道分离`：已从旧实现栏上位到公开入口。它保留单 pass camera color 通道分离语义，属于当前 Shoost Final Stack 可直接添加的最终滤镜。
 - `KawaseBlur / Kawase 模糊`：已整体摘除。对应 editor filter、runtime 调度和 shader 文件都已删除；旧 enum 数值位置仅保留为“已移除槽位”，用于避免后续 enum 整体位移。
 - `Editor/PostProcessing/ShoostStack/Filters/Tube.cs`：电视滤镜 UI。当前保留文件边界和已有试验代码，但 Tube/电视滤镜暂时跳过，不再继续对齐。原因是 Shoost 的 `PostProcess_TVValue` 是 profile 组合入口，涉及 `FilmBreath_GateWeave`、`RGBBlur`、`LUTColorGrading`、`Custom/Tube`、`Sharpen_Before`、`RLProJitter` 等多层语义。

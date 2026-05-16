@@ -37,6 +37,7 @@ Shoost 真正给用户看的滤镜分类，建议以后都按这个口径来做�
 - ToonMap（URP 扩展）
 - 光照
 - 中心色彩校正
+- 桑原（URP 扩展）
 - LED
 - 天气
 - 粒子
@@ -50,6 +51,8 @@ Shoost 真正给用户看的滤镜分类，建议以后都按这个口径来做�
 - 光圈模糊
 - 通道模糊
 - RGB 分离
+- 光斑变焦（URP 扩展）
+- 光圈散景（URP 扩展）
 - 颗粒
 - 暗角
 - 像素化
@@ -60,14 +63,14 @@ Shoost 真正给用户看的滤镜分类，建议以后都按这个口径来做�
 
 这份清单是用户入口，不是源码类名。后面找参考包、导出图标和排面板时，优先跟这份 UI 名称对齐。
 
-当前公开入口只显示适合 `Shoost Final Stack` 的最终画面滤镜、已经有明确专用调度的纯后期效果，或由 Volume 驱动且语义清晰的相机空间合成层。`Weather / 天气` 已按相机空间程序化粒子实现，保留公开入口；颜色使用 HDR ColorField，扩展参数按“基础 / 假景深 / 粒子变化”折叠，避免速度、数量、大小、随机、漂移、层次等控制挤在一个平面列表里。`ToonMap` 是 Shoost stack 扩展项，不是 Shoost 原包入口；它公开出来是为了在关闭 URP 内置 Tonemapping 后仍能由 Shoost 面板管理最终 Neutral / ACES 映射。`RGBChannelSeparator / RGB 通道分离` 已从旧实现上位到公开入口。旧的 `KawaseBlur / Kawase 模糊` 已整体摘除；如果旧 Volume 数据里还残留该槽位，编辑器会自动清掉。`边缘光`、`轮廓`、`投影` 暂时从公开入口隐藏：它们依赖主体边界、alpha、normal/depth 或独立 subject RT，不应在当前只消费 camera color 的 stack 里假装是普通后处理。`LED`、`透明背景`、`摄像头切换器` 也暂时隐藏：它们更像输入 RT、场景对象、相机或合成控制，只有未来 stack list 能明确控制输入 RT 或相机合成语义时才有重新开放的价值。
+当前公开入口只显示适合 `Shoost Final Stack` 的最终画面滤镜、已经有明确专用调度的纯后期效果，或由 Volume 驱动且语义清晰的相机空间合成层。`Weather / 天气` 已按相机空间程序化粒子实现，保留公开入口；颜色使用 HDR ColorField，扩展参数按“基础 / 假景深 / 粒子变化”折叠，避免速度、数量、大小、随机、漂移、层次等控制挤在一个平面列表里。`ToonMap` 是 Shoost stack 扩展项，不是 Shoost 原包入口；它公开出来是为了在关闭 URP 内置 Tonemapping 后仍能由 Shoost 面板管理最终 Neutral / ACES 映射。`Kuwahara / 桑原` 也是 Shoost stack 扩展项，来自桑原滤镜研究报告，作为纯 fullscreen 风格化滤镜公开，并提供高质量高成本选项。`BokehZoomBlur / 光斑变焦` 来自光斑变焦研究报告，作为纯屏幕空间高亮径向采样滤镜公开；它提供高质量高成本采样档位、HDR 染色、叶片形状、色散和调试光斑层。`ApertureBokeh / 光圈散景` 是独立入口，用全局光圈虚焦语义模拟亮度/边缘经过圆形或多边形光圈后的焦外块状光斑；它暂不做深度分层。`RGBChannelSeparator / RGB 通道分离` 已从旧实现上位到公开入口。旧的 `KawaseBlur / Kawase 模糊` 已整体摘除；如果旧 Volume 数据里还残留该槽位，编辑器会自动清掉。`边缘光`、`轮廓`、`投影` 暂时从公开入口隐藏：它们依赖主体边界、alpha、normal/depth 或独立 subject RT，不应在当前只消费 camera color 的 stack 里假装是普通后处理。`LED`、`透明背景`、`摄像头切换器` 也暂时隐藏：它们更像输入 RT、场景对象、相机或合成控制，只有未来 stack list 能明确控制输入 RT 或相机合成语义时才有重新开放的价值。
 
 ## 实现策略标记
 
 UI 入口可以继续沿用 Shoost 名称和图标，但编辑器内部需要给复杂项保留实现策略标记，避免用户入口误导底层实现：
 
 - `普通后处理`：只依赖 camera color，可以直接走 fullscreen pass。典型项是调色、色阶、锐化、暗角、像素化、颗粒、视频游戏、显示器、VHS。
-- `专用调度`：仍然是 Shoost 后处理语义，但需要多 RT、历史 buffer、blur pyramid 或 profile 组合。典型项是模糊、发光、运动轨迹、帧率限制、Tube、胶片。`Glow / 发光` 已按 Kino `Bloom_Custom` 的 LDR bloom 三模式完成对齐；`ToonMap` 紧跟 `Glow`，作为 Shoost stack 的最终映射扩展；`Film / 胶片` 先按 Shoost 组合入口压成单 pass 可用近似版。
+- `专用调度`：仍然是 Shoost 后处理语义，但需要多 RT、历史 buffer、blur pyramid 或 profile 组合。典型项是模糊、发光、运动轨迹、帧率限制、Tube、胶片。`BokehZoomBlur / 光斑变焦` 当前先按单 pass 高亮径向采样实现，排序放在 `Glow` 前；如果后续需要更大半径或真实散景层，再升级成专用低分辨率 RT / 多 pass。`Glow / 发光` 已按 Kino `Bloom_Custom` 的 LDR bloom 三模式完成对齐；`ToonMap` 紧跟 `Glow`，作为 Shoost stack 的最终映射扩展；`Film / 胶片` 先按 Shoost 组合入口压成单 pass 可用近似版。
 - `主体数据效果`：依赖角色边界、alpha、depth 或 normal，不按 Shoost 透明图片源硬搬。典型项是边缘光、轮廓、投影，也包括可能需要 mask 的光照。边缘光、轮廓、投影当前在 Shoost Final Stack UI 中隐藏。
 - `场景/相机控制`：更像 Shoost 场景功能，不应伪装成单个颜色后处理。典型项是 LED、透明背景、粒子、摄像头切换器。LED、透明背景、摄像头切换器当前在 Shoost Final Stack UI 中隐藏。`Weather / 天气` 作为例外，按 Volume 驱动的相机空间程序化粒子公开。
 
@@ -118,7 +121,7 @@ UI 上也要标出 HDR 语义：在 Bloom 前运行的效果可以写 HDR 亮度
 
 - Shoost 解包出的图标已经复制到 `Editor/ShoostIcons/`。
 - 来源目录是 `Shoost_v0.16.3/unpack/ExportedProject/Assets/Texture2D/`。
-- 当前复制的是所有 `icon_*.png` 及其 `.meta`，后面做一排滤镜开关时优先从这里取图。
+- 当前复制的是所有 `icon_*.png` 及其 `.meta`，另补了用于桑原滤镜的 `filter_v2.png`。后面做一排滤镜开关时优先从这里取图。
 - 常用效果图标包括 `icon_AddEffects_v1`、`icon_Effects_v1`、`icon_Blur_v1`、`icon_IrisBlur_v1`、`icon_RGBSplit_v1`、`icon_RGBBlur_v2`、`icon_Sharpen_v1`、`icon_LevelsAdjustment_v1`、`icon_ColorGrading_v1`、`icon_WhiteBalance_v1`、`icon_Vignette_v1`、`icon_Distortion_v1`、`icon_FishEye_v1`、`icon_Pixel_v1` 和 `icon_Grain_v1`。
 
 ## 参考位置

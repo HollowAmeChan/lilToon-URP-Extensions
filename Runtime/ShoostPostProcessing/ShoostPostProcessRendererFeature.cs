@@ -102,7 +102,9 @@ namespace lilToon.URP.Extensions.PostProcessing
 
             foreach (ShoostPostProcessLayer layer in layers)
             {
-                if (layer == null || !layer.IsActive || layer.effect == ShoostPostProcessEffect.RemovedEffectSlot13)
+                if (layer == null ||
+                    !layer.IsActive ||
+                    layer.effect == ShoostPostProcessEffect.RemovedEffectSlot13)
                 {
                     continue;
                 }
@@ -141,39 +143,42 @@ namespace lilToon.URP.Extensions.PostProcessing
                 case ShoostPostProcessEffect.Gradient: return 7;
                 case ShoostPostProcessEffect.Lighting: return 8;
                 case ShoostPostProcessEffect.CenterColorCorrection: return 9;
-                case ShoostPostProcessEffect.LED: return 10;
-                case ShoostPostProcessEffect.Weather: return 11;
-                case ShoostPostProcessEffect.Particle: return 12;
-                case ShoostPostProcessEffect.CameraSwitcher: return 13;
-                case ShoostPostProcessEffect.TransparentBackground: return 14;
-                case ShoostPostProcessEffect.FilmBreathGateWeave: return 15;
-                case ShoostPostProcessEffect.Tube: return 16;
-                case ShoostPostProcessEffect.VHS: return 17;
-                case ShoostPostProcessEffect.CRTEffects: return 18;
-                case ShoostPostProcessEffect.DitheringCustom: return 19;
-                case ShoostPostProcessEffect.IrisBlur: return 20;
-                case ShoostPostProcessEffect.RGBBlurV2: return 21;
-                case ShoostPostProcessEffect.RGBSplit: return 22;
-                case ShoostPostProcessEffect.RGBChannelSeparator: return 23;
-                case ShoostPostProcessEffect.Glow: return 24;
-                case ShoostPostProcessEffect.ToonMap: return 25;
-                case ShoostPostProcessEffect.GrainCustom: return 26;
-                case ShoostPostProcessEffect.VignetteCustom: return 27;
-                case ShoostPostProcessEffect.Pixelize: return 28;
-                case ShoostPostProcessEffect.ChangeFrameRate: return 29;
-                case ShoostPostProcessEffect.Distortion: return 30;
-                case ShoostPostProcessEffect.Fisheye: return 31;
-                case ShoostPostProcessEffect.CameraFlash: return 32;
-                case ShoostPostProcessEffect.CustomMaterial: return 33;
-                case ShoostPostProcessEffect.GateWeave: return 34;
-                case ShoostPostProcessEffect.LensDistortionCustom: return 35;
-                case ShoostPostProcessEffect.MotionTrail: return 36;
-                case ShoostPostProcessEffect.RGBBlur: return 37;
-                case ShoostPostProcessEffect.SharpenAfter: return 38;
-                case ShoostPostProcessEffect.RetroLookProBleedCustom: return 39;
-                case ShoostPostProcessEffect.RetroLookProNoise2Custom: return 40;
-                case ShoostPostProcessEffect.RetroLookProOldFilm2Custom: return 41;
-                case ShoostPostProcessEffect.RetroLookProTVEffectCustom: return 42;
+                case ShoostPostProcessEffect.Kuwahara: return 10;
+                case ShoostPostProcessEffect.LED: return 11;
+                case ShoostPostProcessEffect.Weather: return 12;
+                case ShoostPostProcessEffect.Particle: return 13;
+                case ShoostPostProcessEffect.CameraSwitcher: return 14;
+                case ShoostPostProcessEffect.TransparentBackground: return 15;
+                case ShoostPostProcessEffect.FilmBreathGateWeave: return 16;
+                case ShoostPostProcessEffect.Tube: return 17;
+                case ShoostPostProcessEffect.VHS: return 18;
+                case ShoostPostProcessEffect.CRTEffects: return 19;
+                case ShoostPostProcessEffect.DitheringCustom: return 20;
+                case ShoostPostProcessEffect.IrisBlur: return 21;
+                case ShoostPostProcessEffect.RGBBlurV2: return 22;
+                case ShoostPostProcessEffect.RGBSplit: return 23;
+                case ShoostPostProcessEffect.RGBChannelSeparator: return 24;
+                case ShoostPostProcessEffect.BokehZoomBlur: return 25;
+                case ShoostPostProcessEffect.ApertureBokeh: return 26;
+                case ShoostPostProcessEffect.Glow: return 27;
+                case ShoostPostProcessEffect.ToonMap: return 28;
+                case ShoostPostProcessEffect.GrainCustom: return 29;
+                case ShoostPostProcessEffect.VignetteCustom: return 30;
+                case ShoostPostProcessEffect.Pixelize: return 31;
+                case ShoostPostProcessEffect.ChangeFrameRate: return 32;
+                case ShoostPostProcessEffect.Distortion: return 33;
+                case ShoostPostProcessEffect.Fisheye: return 34;
+                case ShoostPostProcessEffect.CameraFlash: return 35;
+                case ShoostPostProcessEffect.CustomMaterial: return 36;
+                case ShoostPostProcessEffect.GateWeave: return 37;
+                case ShoostPostProcessEffect.LensDistortionCustom: return 38;
+                case ShoostPostProcessEffect.MotionTrail: return 39;
+                case ShoostPostProcessEffect.RGBBlur: return 40;
+                case ShoostPostProcessEffect.SharpenAfter: return 41;
+                case ShoostPostProcessEffect.RetroLookProBleedCustom: return 42;
+                case ShoostPostProcessEffect.RetroLookProNoise2Custom: return 43;
+                case ShoostPostProcessEffect.RetroLookProOldFilm2Custom: return 44;
+                case ShoostPostProcessEffect.RetroLookProTVEffectCustom: return 45;
                 default: return int.MaxValue;
             }
         }
@@ -286,6 +291,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         private RTHandle rgbBlurTextureB;
         private RTHandle glowTextureA;
         private RTHandle glowTextureB;
+        private RTHandle apertureBokehTextureA;
+        private RTHandle apertureBokehTextureB;
         private bool warnedBackBuffer;
         private readonly Dictionary<int, ChangeFrameRateState> changeFrameRateStates = new Dictionary<int, ChangeFrameRateState>();
 
@@ -390,6 +397,10 @@ namespace lilToon.URP.Extensions.PostProcessing
             glowTextureB?.Release();
             glowTextureA = null;
             glowTextureB = null;
+            apertureBokehTextureA?.Release();
+            apertureBokehTextureB?.Release();
+            apertureBokehTextureA = null;
+            apertureBokehTextureB = null;
             foreach (ChangeFrameRateState state in changeFrameRateStates.Values)
             {
                 state.Release();
@@ -443,6 +454,10 @@ namespace lilToon.URP.Extensions.PostProcessing
                     else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.Glow)
                     {
                         ApplyGlowLayer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, destination, runtimeLayer);
+                    }
+                    else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.ApertureBokeh)
+                    {
+                        ApplyApertureBokehLayer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, destination, runtimeLayer);
                     }
                     else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.ChangeFrameRate)
                     {
@@ -504,6 +519,11 @@ namespace lilToon.URP.Extensions.PostProcessing
                 if (runtimeLayer.settings.effect == ShoostPostProcessEffect.Glow)
                 {
                     source = RecordGlowLayer(renderGraph, source, runtimeLayer, i);
+                    continue;
+                }
+                if (runtimeLayer.settings.effect == ShoostPostProcessEffect.ApertureBokeh)
+                {
+                    source = RecordApertureBokehLayer(renderGraph, source, runtimeLayer, i);
                     continue;
                 }
                 if (runtimeLayer.settings.effect == ShoostPostProcessEffect.ChangeFrameRate)
@@ -868,6 +888,37 @@ namespace lilToon.URP.Extensions.PostProcessing
             Blitter.BlitCameraTexture(cmd, source, destination, material, 3);
         }
 
+        private void ApplyApertureBokehLayer(CommandBuffer cmd, RenderTextureDescriptor sourceDescriptor, RTHandle source, RTHandle destination, ShoostPostProcessRuntimeLayer runtimeLayer)
+        {
+            ShoostPostProcessLayer layer = runtimeLayer.settings;
+            Material material = runtimeLayer.material;
+            ApplyLayerProperties(layer, material);
+
+            float apertureSize = Mathf.Clamp01(layer.parameters0.x);
+            float radius = Mathf.Lerp(2.0f, 24.0f, apertureSize);
+            int downScale = apertureSize > 0.35f ? 2 : 1;
+
+            RenderTextureDescriptor bokehDescriptor = sourceDescriptor;
+            bokehDescriptor.width = Mathf.Max(1, sourceDescriptor.width / downScale);
+            bokehDescriptor.height = Mathf.Max(1, sourceDescriptor.height / downScale);
+            bokehDescriptor.depthBufferBits = 0;
+            bokehDescriptor.depthStencilFormat = GraphicsFormat.None;
+            bokehDescriptor.msaaSamples = 1;
+            EnsureHdrDescriptor(ref bokehDescriptor);
+
+            RenderingUtils.ReAllocateIfNeeded(ref apertureBokehTextureA, bokehDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilShoostApertureBokehA");
+            RenderingUtils.ReAllocateIfNeeded(ref apertureBokehTextureB, bokehDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilShoostApertureBokehB");
+
+            material.SetFloat(ShoostPostProcessShaderConstants.RadiusId, radius);
+            Blitter.BlitCameraTexture(cmd, source, apertureBokehTextureA, material, 0);
+            Blitter.BlitCameraTexture(cmd, apertureBokehTextureA, apertureBokehTextureB, material, 1);
+            Blitter.BlitCameraTexture(cmd, apertureBokehTextureB, apertureBokehTextureA, material, 2);
+
+            cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.OriginalTexId, source);
+            cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.BloomTexId, apertureBokehTextureA);
+            Blitter.BlitCameraTexture(cmd, source, destination, material, 3);
+        }
+
         private void ApplyChangeFrameRateLayer(CommandBuffer cmd, RenderTextureDescriptor sourceDescriptor, Camera camera, RTHandle source, RTHandle destination, ShoostPostProcessRuntimeLayer runtimeLayer)
         {
             ShoostPostProcessLayer layer = runtimeLayer.settings;
@@ -1017,6 +1068,40 @@ namespace lilToon.URP.Extensions.PostProcessing
             EnsureHdrTextureDesc(ref outputDesc);
             TextureHandle destination = renderGraph.CreateTexture(outputDesc);
             return AddGlowPass(renderGraph, source, destination, material, 3, radius, runtimeLayer.settings, _profilingSampler, _passName, current);
+        }
+
+        private TextureHandle RecordApertureBokehLayer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex)
+        {
+            TextureDesc sourceDesc = renderGraph.GetTextureDesc(source);
+            ShoostPostProcessLayer layer = runtimeLayer.settings;
+            Material material = runtimeLayer.material;
+            float apertureSize = Mathf.Clamp01(layer.parameters0.x);
+            float radius = Mathf.Lerp(2.0f, 24.0f, apertureSize);
+            int downScale = apertureSize > 0.35f ? 2 : 1;
+
+            TextureDesc bokehDesc = sourceDesc;
+            bokehDesc.name = $"_lilShoostApertureBokeh_{layerIndex}";
+            bokehDesc.width = Mathf.Max(1, sourceDesc.width / downScale);
+            bokehDesc.height = Mathf.Max(1, sourceDesc.height / downScale);
+            bokehDesc.clearBuffer = false;
+            bokehDesc.depthBufferBits = 0;
+            EnsureHdrTextureDesc(ref bokehDesc);
+
+            TextureHandle bokehA = renderGraph.CreateTexture(bokehDesc);
+            bokehDesc.name = $"_lilShoostApertureBokehTmp_{layerIndex}";
+            TextureHandle bokehB = renderGraph.CreateTexture(bokehDesc);
+
+            TextureHandle current = AddGlowPass(renderGraph, source, bokehA, material, 0, radius, layer, _profilingSampler, _passName);
+            current = AddGlowPass(renderGraph, current, bokehB, material, 1, radius, layer, _profilingSampler, _passName);
+            current = AddGlowPass(renderGraph, current, bokehA, material, 2, radius, layer, _profilingSampler, _passName);
+
+            TextureDesc outputDesc = sourceDesc;
+            outputDesc.name = $"_lilShoostPostProcessLayer{layerIndex}";
+            outputDesc.clearBuffer = false;
+            outputDesc.depthBufferBits = 0;
+            EnsureHdrTextureDesc(ref outputDesc);
+            TextureHandle destination = renderGraph.CreateTexture(outputDesc);
+            return AddGlowPass(renderGraph, source, destination, material, 3, radius, layer, _profilingSampler, _passName, current);
         }
 
         private TextureHandle RecordChangeFrameRateLayer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex, UniversalCameraData cameraData)

@@ -10,6 +10,10 @@ namespace lilToon.URP.Extensions.PostProcessing
                     return ShoostPostProcessShaderConstants.DefaultLayerShaderName;
                 case ShoostPostProcessEffect.AutoWhiteBalance:
                     return "Hidden/lilToon-Shoost/URP/Shoost/AutoWhiteBalance";
+                case ShoostPostProcessEffect.BokehZoomBlur:
+                    return "Hidden/lilToon-Shoost/URP/Shoost/BokehZoomBlur";
+                case ShoostPostProcessEffect.ApertureBokeh:
+                    return "Hidden/lilToon-Shoost/URP/Shoost/ApertureBokeh";
                 case ShoostPostProcessEffect.ChangeFrameRate:
                     return "Hidden/lilToon-Shoost/URP/Shoost/ChangeFrameRate";
                 case ShoostPostProcessEffect.CenterColorCorrection:
@@ -38,6 +42,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                     return "Hidden/lilToon-Shoost/URP/Shoost/Glow";
                 case ShoostPostProcessEffect.IrisBlur:
                     return "Hidden/lilToon-Shoost/URP/Shoost/IrisBlur";
+                case ShoostPostProcessEffect.Kuwahara:
+                    return "Hidden/lilToon-Shoost/URP/Shoost/Kuwahara";
                 case ShoostPostProcessEffect.LensDistortionCustom:
                     return "Hidden/lilToon-Shoost/URP/Shoost/LensDistortionCustom";
                 case ShoostPostProcessEffect.LevelAdjustment:

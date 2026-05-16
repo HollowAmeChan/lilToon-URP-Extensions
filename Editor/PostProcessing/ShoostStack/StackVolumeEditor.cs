@@ -56,6 +56,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ShoostPostProcessEffect.Gradient,
             ShoostPostProcessEffect.Lighting,
             ShoostPostProcessEffect.CenterColorCorrection,
+            ShoostPostProcessEffect.Kuwahara,
             ShoostPostProcessEffect.LED,
             ShoostPostProcessEffect.Weather,
             ShoostPostProcessEffect.Particle,
@@ -70,6 +71,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ShoostPostProcessEffect.RGBBlurV2,
             ShoostPostProcessEffect.RGBSplit,
             ShoostPostProcessEffect.RGBChannelSeparator,
+            ShoostPostProcessEffect.BokehZoomBlur,
+            ShoostPostProcessEffect.ApertureBokeh,
             ShoostPostProcessEffect.Glow,
             ShoostPostProcessEffect.ToonMap,
             ShoostPostProcessEffect.GrainCustom,
@@ -99,9 +102,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ShoostPostProcessEffect.ColorGradingCustom, "调色", "icon_ColorGrading_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Gradient, "渐变", "icon_Gradient_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Glow, "发光", "icon_Glow_v1"),
-            new EffectToggleEntry(ShoostPostProcessEffect.ToonMap, "ToonMap", "icon_ColorGrading_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.ToonMap, "ToonMap", "icon_ScreenEffects_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Lighting, "光照", "icon_Lighting_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.CenterColorCorrection, "中心色彩校正", "icon_CenterColorCorrection"),
+            new EffectToggleEntry(ShoostPostProcessEffect.Kuwahara, "桑原", "filter_v2"),
             new EffectToggleEntry(ShoostPostProcessEffect.Weather, "天气", "icon_Weather_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Particle, "粒子", "icon_Particle_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.FilmBreathGateWeave, "胶片", "icon_Film_v3"),
@@ -113,6 +117,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ShoostPostProcessEffect.RGBBlurV2, "通道模糊", "icon_RGBBlur_v2"),
             new EffectToggleEntry(ShoostPostProcessEffect.RGBSplit, "RGB 分离", "icon_RGBSplit_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.RGBChannelSeparator, "RGB 通道分离", "icon_RGBChannel_RGB"),
+            new EffectToggleEntry(ShoostPostProcessEffect.BokehZoomBlur, "光斑变焦", "icon_Flare_Ray_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.ApertureBokeh, "光圈散景", "icon_Glow_SelectColor_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.GrainCustom, "颗粒", "icon_Grain_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.VignetteCustom, "暗角", "icon_Vignette_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Pixelize, "像素化", "icon_Pixel_v1"),
@@ -172,7 +178,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "透明背景",
             "VHS",
             "摄像机闪光",
-            "ToonMap"
+            "ToonMap",
+            "桑原",
+            "光斑变焦",
+            "光圈散景"
         };
 
         private static readonly GUIContent[] BlendModeDisplayNames =
@@ -385,6 +394,18 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.BokehZoomBlur)
+            {
+                DrawBokehZoomBlurElement(rect, element);
+                return;
+            }
+
+            if (GetEffect(element) == ShoostPostProcessEffect.ApertureBokeh)
+            {
+                DrawApertureBokehElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ShoostPostProcessEffect.AutoWhiteBalance)
             {
                 DrawAutoWhiteBalanceElement(rect, element);
@@ -499,6 +520,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.Kuwahara)
+            {
+                DrawKuwaharaElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ShoostPostProcessEffect.Weather)
             {
                 DrawWeatherElement(rect, element);
@@ -551,6 +578,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ShoostPostProcessEffect.IrisBlur:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
                     lineCount += 5;
+                    break;
+                case ShoostPostProcessEffect.BokehZoomBlur:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 16;
+                    break;
+                case ShoostPostProcessEffect.ApertureBokeh:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 15;
                     break;
                 case ShoostPostProcessEffect.AutoWhiteBalance:
                     lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
@@ -625,6 +660,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ShoostPostProcessEffect.CenterColorCorrection:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
                     lineCount += 10;
+                    break;
+                case ShoostPostProcessEffect.Kuwahara:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 7;
                     break;
                 case ShoostPostProcessEffect.Weather:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -1490,6 +1529,28 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters0", new Vector4(0.18f, 0.0f, 0.0f, 0.0f));
                     SetVector4(element, "parameters1", new Vector4(0.5f, 0.5f, 0.0f, 0.0f));
                     SetVector4(element, "parameters2", new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
+                    break;
+                case ShoostPostProcessEffect.Kuwahara:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetColor(element, "color", Color.black);
+                    SetVector4(element, "parameters0", new Vector4(3.0f, 1.0f, 0.0f, 0.1f));
+                    SetVector4(element, "parameters1", new Vector4(0.25f, 0.05f, 0.0f, 0.0f));
+                    break;
+                case ShoostPostProcessEffect.BokehZoomBlur:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetColor(element, "color", Color.white);
+                    SetVector4(element, "parameters0", new Vector4(1.0f, 0.0f, 0.0f, 1.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.0f, 0.0f, 4.0f, 2.0f));
+                    SetVector4(element, "parameters2", new Vector4(0.0f, 1.0f, 0.0f, 1.0f));
+                    SetVector4(element, "parameters3", new Vector4(0.0f, 0.0f, 0.5f, 0.0f));
+                    break;
+                case ShoostPostProcessEffect.ApertureBokeh:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetColor(element, "color", Color.white);
+                    SetVector4(element, "parameters0", new Vector4(1.0f, 0.4f, 0.2f, 1.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.35f, 1.0f, 0.0f, 2.0f));
+                    SetVector4(element, "parameters2", new Vector4(0.0f, 1.0f, 0.0f, 0.35f));
+                    SetVector4(element, "parameters3", new Vector4(0.0f, 0.0f, 4.0f, 0.0f));
                     break;
                 case ShoostPostProcessEffect.Weather:
                     SetFloat(element, "intensity", 1.0f);
