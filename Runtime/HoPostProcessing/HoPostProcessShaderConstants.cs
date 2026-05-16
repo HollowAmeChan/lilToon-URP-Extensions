@@ -24,6 +24,12 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static readonly int LayerParams3Id = Shader.PropertyToID("_LayerParams3");
         public static readonly int LayerParams4Id = Shader.PropertyToID("_LayerParams4");
         public static readonly int LayerParams5Id = Shader.PropertyToID("_LayerParams5");
+        public static readonly int LayerAovMaskEnabledId = Shader.PropertyToID("_LayerAovMaskEnabled");
+        public static readonly int LayerAovSourceId = Shader.PropertyToID("_LayerAovSource");
+        public static readonly int LayerAovModeId = Shader.PropertyToID("_LayerAovMode");
+        public static readonly int LayerAovParamsId = Shader.PropertyToID("_LayerAovParams");
+        public static readonly int LayerAovMatchColorId = Shader.PropertyToID("_LayerAovMatchColor");
+        public static readonly int LayerAovDebugOutputId = Shader.PropertyToID("_LayerAovDebugOutput");
         public static readonly int CameraDepthTextureId = Shader.PropertyToID("_CameraDepthTexture");
         public static readonly int CameraNormalsTextureId = Shader.PropertyToID("_CameraNormalsTexture");
         public static readonly int SubjectMaskTextureId = Shader.PropertyToID(SubjectMaskTextureName);

@@ -3,6 +3,30 @@ using UnityEngine;
 
 namespace lilToon.URP.Extensions.PostProcessing
 {
+    public enum HoPostAovSource
+    {
+        Mask = 0,
+        GroupId = 1,
+        ObjectId = 2,
+        Flags = 3,
+        Thickness = 4,
+        Curvature = 5,
+        Material = 6,
+        Utility = 7,
+        Custom0 = 8,
+        Custom1 = 9,
+        Custom2 = 10,
+        Custom3 = 11
+    }
+
+    public enum HoPostAovMaskMode
+    {
+        Direct = 0,
+        Threshold = 1,
+        MatchValue = 2,
+        MatchColor = 3
+    }
+
     [Serializable]
     public sealed class HoPostProcessLayer
     {
@@ -44,6 +68,35 @@ namespace lilToon.URP.Extensions.PostProcessing
         public Vector4 parameters3;
         public Vector4 parameters4;
         public Vector4 parameters5;
+
+        [Tooltip("Use HoAOV data as a per-layer mask.")]
+        public bool useAovMask;
+
+        [Tooltip("HoAOV channel sampled by this layer mask.")]
+        public HoPostAovSource aovSource = HoPostAovSource.Mask;
+
+        [Tooltip("How the sampled HoAOV data is converted into a mask.")]
+        public HoPostAovMaskMode aovMaskMode = HoPostAovMaskMode.Direct;
+
+        [Tooltip("Threshold, tolerance, or match width used by the HoAOV mask.")]
+        [Min(0.0f)]
+        public float aovThreshold = 0.5f;
+
+        [Tooltip("Soft transition width for threshold and match modes.")]
+        [Min(0.0001f)]
+        public float aovSoftness = 0.02f;
+
+        [Tooltip("Numeric value used by Match Value mode. ID sources encode this value before comparison.")]
+        public float aovMatchValue;
+
+        [Tooltip("Color used by Match Color mode.")]
+        public Color aovMatchColor = Color.white;
+
+        [Tooltip("Invert the resolved HoAOV mask within covered HoAOV pixels.")]
+        public bool invertAovMask;
+
+        [Tooltip("Replace this layer output with the resolved HoAOV mask for debugging.")]
+        public bool debugAovMask;
 
         public bool IsActive => enabled && intensity > 0.0001f;
     }

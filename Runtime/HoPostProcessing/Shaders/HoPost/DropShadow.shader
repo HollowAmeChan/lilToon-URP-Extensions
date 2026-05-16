@@ -21,27 +21,23 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/DropShadow"
             #pragma fragment Frag
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl"
 
             float _Intensity;
             float _LayerBlendMode;
-            float _SubjectMaskValid;
             float4 _LayerColor;
             float4 _LayerParams0; // x distance 0-1, y angle degrees, z opacity, w softness px
-            float4 _LayerParams1; // x spread px, y sky/depth fade, z reserved, w keep off subject
-
-            TEXTURE2D_X(_lilHoPostSubjectMaskTexture);
-            float4 _lilHoPostSubjectMaskTexture_TexelSize;
+            float4 _LayerParams1; // x spread px, y reserved, z reserved, w keep off subject
 
             float SampleSubjectMask(float2 uv)
             {
-                return SAMPLE_TEXTURE2D_X(_lilHoPostSubjectMaskTexture, sampler_LinearClamp, uv).r;
+                return LilHoPostResolveRequiredAovMask(uv);
             }
 
-            float SampleDilatedMask(float2 uv, float radiusPx)
+            float SampleSpreadMask(float2 uv, float radiusPx)
             {
-                float2 texel = _lilHoPostSubjectMaskTexture_TexelSize.xy * max(radiusPx, 0.0);
+                float2 texel = LilHoPostAovTexelSize() * max(radiusPx, 0.0);
                 float mask = SampleSubjectMask(uv);
                 if (radiusPx <= 0.0001)
                 {
@@ -59,60 +55,36 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/DropShadow"
                 return mask;
             }
 
-            float SampleSoftMask(float2 uv, float spreadPx, float softnessPx)
+            float SampleBlurredMask(float2 uv, float softnessPx)
             {
-                float center = SampleDilatedMask(uv, spreadPx);
+                float center = SampleSubjectMask(uv);
                 if (softnessPx <= 0.0001)
                 {
                     return center;
                 }
 
-                float2 texel = _lilHoPostSubjectMaskTexture_TexelSize.xy * softnessPx;
+                float2 texel = LilHoPostAovTexelSize() * softnessPx;
                 float mask = center * 0.24;
-                mask += SampleDilatedMask(uv + float2( texel.x, 0.0), spreadPx) * 0.095;
-                mask += SampleDilatedMask(uv + float2(-texel.x, 0.0), spreadPx) * 0.095;
-                mask += SampleDilatedMask(uv + float2(0.0,  texel.y), spreadPx) * 0.095;
-                mask += SampleDilatedMask(uv + float2(0.0, -texel.y), spreadPx) * 0.095;
-                mask += SampleDilatedMask(uv + float2( texel.x,  texel.y), spreadPx) * 0.095;
-                mask += SampleDilatedMask(uv + float2(-texel.x,  texel.y), spreadPx) * 0.095;
-                mask += SampleDilatedMask(uv + float2( texel.x, -texel.y), spreadPx) * 0.095;
-                mask += SampleDilatedMask(uv + float2(-texel.x, -texel.y), spreadPx) * 0.095;
+                mask += SampleSubjectMask(uv + float2( texel.x, 0.0)) * 0.095;
+                mask += SampleSubjectMask(uv + float2(-texel.x, 0.0)) * 0.095;
+                mask += SampleSubjectMask(uv + float2(0.0,  texel.y)) * 0.095;
+                mask += SampleSubjectMask(uv + float2(0.0, -texel.y)) * 0.095;
+                mask += SampleSubjectMask(uv + float2( texel.x,  texel.y)) * 0.095;
+                mask += SampleSubjectMask(uv + float2(-texel.x,  texel.y)) * 0.095;
+                mask += SampleSubjectMask(uv + float2( texel.x, -texel.y)) * 0.095;
+                mask += SampleSubjectMask(uv + float2(-texel.x, -texel.y)) * 0.095;
                 return saturate(mask);
             }
 
-            half3 ApplyBlend(half3 baseColor, half3 layerColor, float blendMode)
+            float ResolveSimpleShadowMask(float2 uv, float2 offset)
             {
-                int mode = (int)round(blendMode);
-                if (mode == 1)
-                {
-                    return max(baseColor + layerColor, 0.0);
-                }
-
-                if (mode == 2)
-                {
-                    return 1.0 - (1.0 - baseColor) * (1.0 - layerColor);
-                }
-
-                if (mode == 3)
-                {
-                    return baseColor * layerColor;
-                }
-
-                return layerColor;
-            }
-
-            float ResolveSkyFade(float2 uv)
-            {
-                float depthFade = saturate(_LayerParams1.y);
-                if (depthFade <= 0.0001)
-                {
-                    return 1.0;
-                }
-
-                float rawDepth = SampleSceneDepth(uv);
-                float linearDepth = Linear01Depth(rawDepth, _ZBufferParams);
-                float skyMask = smoothstep(0.985, 1.0, linearDepth);
-                return lerp(1.0, 1.0 - skyMask, depthFade);
+                float spreadPx = max(_LayerParams1.x, 0.0);
+                float softnessPx = max(_LayerParams0.w, 0.0);
+                float shifted = SampleSpreadMask(uv - offset, spreadPx);
+                shifted = max(shifted, SampleBlurredMask(uv - offset, softnessPx));
+                float original = SampleSubjectMask(uv);
+                float keepOffSubject = _LayerParams1.w <= 0.0001 ? 1.0 : saturate(_LayerParams1.w);
+                return saturate(shifted - original * keepOffSubject);
             }
 
             half4 Frag(Varyings input) : SV_Target
@@ -121,36 +93,34 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/DropShadow"
 
                 float2 uv = input.texcoord;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
+                if (LilHoPostShouldOutputAovDebug())
+                {
+                    return LilHoPostAovDebugColor(uv, true, source.a);
+                }
 
-                float opacity = saturate(_Intensity) * saturate(_LayerParams0.z) * _LayerColor.a;
-                if (_SubjectMaskValid <= 0.5 || opacity <= 0.0001)
+                float opacity = saturate(_Intensity) * saturate(_LayerParams0.z);
+                if (_lilHoAovActive <= 0.5 || opacity <= 0.0001)
                 {
                     return source;
                 }
 
                 float distance = max(_LayerParams0.x, 0.0);
-                float minDimension = min(_lilHoPostSubjectMaskTexture_TexelSize.z, _lilHoPostSubjectMaskTexture_TexelSize.w);
+                float2 aovTextureSize = LilHoPostAovTextureSize();
+                float minDimension = min(aovTextureSize.x, aovTextureSize.y);
                 float distancePx = distance <= 1.0 ? distance * minDimension * 0.08 : distance;
                 float angleRadians = radians(_LayerParams0.y);
                 float2 direction = float2(cos(angleRadians), sin(angleRadians));
-                float2 offset = direction * distancePx * _lilHoPostSubjectMaskTexture_TexelSize.xy;
+                float2 offset = direction * distancePx * LilHoPostAovTexelSize();
 
-                float spreadPx = max(_LayerParams1.x, 0.0);
-                float softnessPx = max(_LayerParams0.w, 0.0);
-                float shiftedMask = SampleSoftMask(uv - offset, spreadPx, softnessPx);
-                float subjectMask = SampleSubjectMask(uv);
-                float keepOffSubject = _LayerParams1.w <= 0.0001 ? 1.0 : saturate(_LayerParams1.w);
-                float shadowMask = saturate(shiftedMask - subjectMask * keepOffSubject);
-                shadowMask *= ResolveSkyFade(uv);
-
+                float shadowMask = ResolveSimpleShadowMask(uv, offset);
                 float amount = shadowMask * opacity;
                 if (amount <= 0.0001)
                 {
                     return source;
                 }
 
-                half3 blended = ApplyBlend(source.rgb, (half3)_LayerColor.rgb, _LayerBlendMode);
-                return half4(lerp(source.rgb, blended, amount), source.a);
+                half3 shadowColor = (half3)_LayerColor.rgb;
+                return half4(lerp(source.rgb, shadowColor, amount), source.a);
             }
             ENDHLSL
         }

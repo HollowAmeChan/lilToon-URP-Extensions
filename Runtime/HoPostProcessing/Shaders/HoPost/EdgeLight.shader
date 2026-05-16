@@ -24,6 +24,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/EdgeLight"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl"
 
             float _Intensity;
             float _LayerBlendMode;
@@ -125,13 +126,17 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/EdgeLight"
 
                 float2 uv = input.texcoord;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
+                if (LilHoPostShouldOutputAovDebug())
+                {
+                    return LilHoPostAovDebugColor(uv, false, source.a);
+                }
 
                 float3 normalWS = SampleSceneNormals(uv);
                 float subjectMask = step(0.0001, dot(normalWS, normalWS));
                 float rim = ResolveRim(normalWS) * subjectMask;
                 rim = saturate(rim + ResolveOuterMask(uv, subjectMask));
 
-                float amount = rim * saturate(_Intensity) * saturate(_LayerParams0.w);
+                float amount = rim * saturate(_Intensity) * saturate(_LayerParams0.w) * LilHoPostResolveAovLayerMask(uv);
                 if (amount <= 0.0001)
                 {
                     return source;

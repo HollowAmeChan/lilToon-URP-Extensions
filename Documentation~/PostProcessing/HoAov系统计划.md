@@ -478,6 +478,18 @@ Custom11
 
 可视化约定：
 
+### HoPost 消费端 AOV 遮罩调试
+
+HoPost 图层需要有独立于 HoAOV 原始通道预览的“消费端匹配结果”调试。HoAOV debug view 用来确认原始 AOV 纹理是否写对；HoPost 的 AOV 遮罩调试用来确认某个图层选择的 `AOV 源 + 使用方式 + 阈值/容差 + 匹配值/颜色 + 反转` 最终得到什么 mask。
+
+当前约定：
+
+- 每个 HoPost 图层提供通用 `AOV 遮罩` 设置。
+- `输出匹配结果` 打开后，该图层不再输出原效果，而是直接输出当前 AOV 匹配结果。
+- 输出颜色为灰度：白色表示该像素被当前图层选中，黑色表示未选中，灰色表示直接灰度或柔和阈值的中间结果。
+- shader 侧不要在每个效果里重复实现调试输出；统一调用 `Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl` 中的公共方法。
+- DropShadow / 投影属于强依赖主体 mask 的效果，调试时应使用同一套 AOV 解析结果作为“主体来源”预览；EdgeLight、Outline 等普通图层则只在 `AOV 遮罩` 开启时把该 mask 作为图层强度限制。
+
 - Mask：黑白显示，权重越高越白。
 - Id：hash 到稳定伪彩色，便于看分组。
 - Flags：按 bit 映射颜色，检查参与关系。

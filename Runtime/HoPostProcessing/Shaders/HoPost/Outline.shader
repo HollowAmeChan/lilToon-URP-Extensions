@@ -25,6 +25,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/Outline"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl"
 
             float _Intensity;
             float _LayerBlendMode;
@@ -102,6 +103,10 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/Outline"
 
                 float2 uv = input.texcoord;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
+                if (LilHoPostShouldOutputAovDebug())
+                {
+                    return LilHoPostAovDebugColor(uv, false, source.a);
+                }
 
                 float thickness = max(_LayerParams0.x, 0.0);
                 if (thickness <= 0.0001)
@@ -117,7 +122,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/Outline"
                 float threshold = max(_LayerParams0.w, 0.0);
                 float softness = max(_LayerParams1.x, 0.0001);
                 float mask = smoothstep(threshold, threshold + softness, edge);
-                float amount = mask * saturate(_Intensity) * saturate(_LayerParams1.w) * _LayerColor.a;
+                float amount = mask * saturate(_Intensity) * saturate(_LayerParams1.w) * _LayerColor.a * LilHoPostResolveAovLayerMask(uv);
                 if (amount <= 0.0001)
                 {
                     return source;

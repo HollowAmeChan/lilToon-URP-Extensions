@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
+using lilToon.URP.Extensions.AOV;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -136,7 +137,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            pass.Setup(cameraColorTarget, cameraDepthTarget, layers, HoPostProcessRenderPassEvents.HoPostStack, settings, EnsureSubjectMaskMaterial());
+            pass.Setup(cameraColorTarget, cameraDepthTarget, layers, HoPostProcessRenderPassEvents.HoPostStack, settings, null);
         }
 
         private void EnqueueRenderGraphPass(
@@ -304,9 +305,17 @@ namespace lilToon.URP.Extensions.PostProcessing
         private sealed class PassData
         {
             public TextureHandle source;
+            public TextureHandle aovMaskIdTexture;
+            public TextureHandle aovSurfaceDataTexture;
+            public TextureHandle aovCustom0Texture;
             public HoPostProcessLayer layer;
             public Material material;
             public int passIndex;
+            public bool isDropShadow;
+            public bool useAovMask;
+            public bool useAovMaskTexture;
+            public bool useAovSurfaceData;
+            public bool useAovCustom0;
         }
 
         public HoPostProcessPass(string passName)
@@ -482,16 +491,13 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
+            HoAovRenderGraphResources aovResources = frameData.GetOrCreate<HoAovRenderGraphResources>();
+
             int writtenLayerCount = 0;
             for (int i = 0; i < runtimeLayers.Count; i++)
             {
                 HoPostProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
                 if (!IsRuntimeLayerActive(runtimeLayer))
-                {
-                    continue;
-                }
-
-                if (EffectRequiresSubjectMask(runtimeLayer.settings.effect))
                 {
                     continue;
                 }
@@ -506,17 +512,78 @@ namespace lilToon.URP.Extensions.PostProcessing
                 using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{hoPostPassName} Layer {writtenLayerCount}", out PassData passData, hoPostProfilingSampler))
                 {
                     passData.source = source;
+                    passData.aovMaskIdTexture = aovResources.maskIdTexture;
+                    passData.aovSurfaceDataTexture = aovResources.surfaceDataTexture;
+                    passData.aovCustom0Texture = aovResources.custom0Texture;
                     passData.layer = runtimeLayer.settings;
                     passData.material = runtimeLayer.material;
                     passData.passIndex = Mathf.Max(0, runtimeLayer.settings.passIndex);
+                    passData.isDropShadow = runtimeLayer.settings.effect == HoPostProcessEffect.DropShadow;
+                    bool needsAov = passData.isDropShadow || runtimeLayer.settings.useAovMask || runtimeLayer.settings.debugAovMask;
+                    passData.useAovMask = needsAov;
+                    passData.useAovMaskTexture = needsAov && aovResources.maskIdTexture.IsValid();
+                    passData.useAovSurfaceData = needsAov && aovResources.surfaceDataTexture.IsValid();
+                    passData.useAovCustom0 = needsAov && aovResources.custom0Texture.IsValid();
 
                     builder.UseTexture(source, AccessFlags.Read);
+                    if (passData.useAovMaskTexture)
+                    {
+                        builder.UseTexture(aovResources.maskIdTexture, AccessFlags.Read);
+                    }
+
+                    if (passData.useAovSurfaceData)
+                    {
+                        builder.UseTexture(aovResources.surfaceDataTexture, AccessFlags.Read);
+                    }
+
+                    if (passData.useAovCustom0)
+                    {
+                        builder.UseTexture(aovResources.custom0Texture, AccessFlags.Read);
+                    }
+
                     builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
                     builder.AllowGlobalStateModification(true);
                     builder.AllowPassCulling(false);
                     builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                     {
                         ApplyLayerProperties(data.layer, data.material);
+                        if (data.isDropShadow)
+                        {
+                            if (data.useAovMaskTexture)
+                            {
+                                context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 1.0f);
+                                context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
+                            }
+
+                            if (data.useAovSurfaceData)
+                            {
+                                context.cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
+                            }
+
+                            if (data.useAovCustom0)
+                            {
+                                context.cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, data.aovCustom0Texture);
+                            }
+                        }
+                        else if (data.layer.useAovMask)
+                        {
+                            if (data.useAovMaskTexture)
+                            {
+                                context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 1.0f);
+                                context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
+                            }
+
+                            if (data.useAovSurfaceData)
+                            {
+                                context.cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
+                            }
+
+                            if (data.useAovCustom0)
+                            {
+                                context.cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, data.aovCustom0Texture);
+                            }
+                        }
+
                         Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, data.passIndex);
                     });
                 }
@@ -721,6 +788,18 @@ namespace lilToon.URP.Extensions.PostProcessing
             material.SetVector(HoPostProcessShaderConstants.LayerParams3Id, layer.parameters3);
             material.SetVector(HoPostProcessShaderConstants.LayerParams4Id, layer.parameters4);
             material.SetVector(HoPostProcessShaderConstants.LayerParams5Id, layer.parameters5);
+            material.SetFloat(HoPostProcessShaderConstants.LayerAovMaskEnabledId, layer.useAovMask ? 1.0f : 0.0f);
+            material.SetFloat(HoPostProcessShaderConstants.LayerAovSourceId, (float)layer.aovSource);
+            material.SetFloat(HoPostProcessShaderConstants.LayerAovModeId, (float)layer.aovMaskMode);
+            material.SetVector(
+                HoPostProcessShaderConstants.LayerAovParamsId,
+                new Vector4(
+                    Mathf.Max(0.0f, layer.aovThreshold),
+                    Mathf.Max(0.0001f, layer.aovSoftness),
+                    layer.aovMatchValue,
+                    layer.invertAovMask ? 1.0f : 0.0f));
+            material.SetColor(HoPostProcessShaderConstants.LayerAovMatchColorId, layer.aovMatchColor);
+            material.SetFloat(HoPostProcessShaderConstants.LayerAovDebugOutputId, layer.debugAovMask ? 1.0f : 0.0f);
             material.SetFloat(HoPostProcessShaderConstants.SubjectMaskValidId, 0.0f);
             if (layer.texture != null)
             {
