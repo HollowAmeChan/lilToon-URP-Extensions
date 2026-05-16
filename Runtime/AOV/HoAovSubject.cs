@@ -14,8 +14,12 @@ namespace lilToon.URP.Extensions.AOV
         [Tooltip("此对象允许写入的系统 AOV 通道。最终输出还会受 HoAOV RendererFeature 的系统通道过滤。")]
         public HoAovChannelMask systemWriteChannels = HoAovChannelMask.Default;
 
+        [InspectorName("Override Material Custom Channels")]
+        [Tooltip("When enabled, this component writes Custom channel mask and values through MaterialPropertyBlock. When disabled, the material inspector values are used.")]
+        public bool overrideMaterialCustomChannels;
+
         [InspectorName("自定义写入遮罩")]
-        [Tooltip("自定义通道写入位。Bit 0 对应 Custom0。")]
+        [Tooltip("自定义通道写入位。Bit 0 对应 Custom0。仅在启用 Override Material Custom Channels 时覆盖材质面板。")]
         public uint customWriteMask;
 
         [InspectorName("遮罩权重")]
@@ -112,7 +116,6 @@ namespace lilToon.URP.Extensions.AOV
         {
             block.SetFloat(HoAovShaderConstants.MaskWeightId, maskWeight);
             block.SetFloat(HoAovShaderConstants.SystemWriteMaskId, (float)systemWriteChannels);
-            block.SetFloat(HoAovShaderConstants.CustomWriteMaskId, customWriteMask);
             block.SetFloat(HoAovShaderConstants.GroupIdId, groupId);
             block.SetFloat(HoAovShaderConstants.ObjectIdId, GetEffectiveObjectId());
             block.SetFloat(HoAovShaderConstants.MaterialClassId, materialClass);
@@ -121,9 +124,13 @@ namespace lilToon.URP.Extensions.AOV
             block.SetFloat(HoAovShaderConstants.CurvatureId, curvature);
             block.SetFloat(HoAovShaderConstants.UtilityId, utility);
             block.SetColor(HoAovShaderConstants.DebugColorId, debugColor);
-            block.SetVector(HoAovShaderConstants.CustomValues0Id, GetCustomVector(0));
-            block.SetVector(HoAovShaderConstants.CustomValues1Id, GetCustomVector(4));
-            block.SetVector(HoAovShaderConstants.CustomValues2Id, GetCustomVector(8));
+            if (overrideMaterialCustomChannels)
+            {
+                block.SetFloat(HoAovShaderConstants.CustomWriteMaskId, customWriteMask);
+                block.SetVector(HoAovShaderConstants.CustomValues0Id, GetCustomVector(0));
+                block.SetVector(HoAovShaderConstants.CustomValues1Id, GetCustomVector(4));
+                block.SetVector(HoAovShaderConstants.CustomValues2Id, GetCustomVector(8));
+            }
         }
 
         private int GetEffectiveObjectId()
