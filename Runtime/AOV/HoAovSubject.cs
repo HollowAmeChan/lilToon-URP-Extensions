@@ -128,8 +128,6 @@ namespace lilToon.URP.Extensions.AOV
             {
                 block.SetFloat(HoAovShaderConstants.CustomWriteMaskId, customWriteMask);
                 block.SetVector(HoAovShaderConstants.CustomValues0Id, GetCustomVector(0));
-                block.SetVector(HoAovShaderConstants.CustomValues1Id, GetCustomVector(4));
-                block.SetVector(HoAovShaderConstants.CustomValues2Id, GetCustomVector(8));
             }
         }
 
@@ -162,7 +160,7 @@ namespace lilToon.URP.Extensions.AOV
                 return;
             }
 
-            if (customValues.Length >= HoAovCustomChannels.DefaultCount)
+            if (customValues.Length == HoAovCustomChannels.DefaultCount)
             {
                 return;
             }

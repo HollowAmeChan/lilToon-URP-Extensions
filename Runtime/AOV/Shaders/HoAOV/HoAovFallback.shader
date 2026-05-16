@@ -15,8 +15,6 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
         [HideInInspector] _HoAovUtility ("HoAOV Utility", Float) = 0
         [HideInInspector] _HoAovDebugColor ("HoAOV Debug Color", Color) = (1, 1, 1, 1)
         [HideInInspector] _HoAovCustomValues0 ("HoAOV Custom 0-3", Vector) = (0, 0, 0, 0)
-        [HideInInspector] _HoAovCustomValues1 ("HoAOV Custom 4-7", Vector) = (0, 0, 0, 0)
-        [HideInInspector] _HoAovCustomValues2 ("HoAOV Custom 8-11", Vector) = (0, 0, 0, 0)
     }
 
     SubShader
@@ -56,8 +54,6 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
             float _HoAovUtility;
             float4 _HoAovDebugColor;
             float4 _HoAovCustomValues0;
-            float4 _HoAovCustomValues1;
-            float4 _HoAovCustomValues2;
 
             struct Attributes
             {
@@ -153,8 +149,8 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
                     EncodeScalar(_HoAovMaterialClass) * materialEnabled,
                     saturate(_HoAovUtility) * utilityEnabled);
                 output.custom0 = half4(ApplyCustomWriteMask(_HoAovCustomValues0, 0.0));
-                output.custom1 = half4(ApplyCustomWriteMask(_HoAovCustomValues1, 4.0));
-                output.custom2 = half4(ApplyCustomWriteMask(_HoAovCustomValues2, 8.0));
+                output.custom1 = half4(0.0, 0.0, 0.0, 0.0);
+                output.custom2 = half4(0.0, 0.0, 0.0, 0.0);
                 return output;
             }
             ENDHLSL

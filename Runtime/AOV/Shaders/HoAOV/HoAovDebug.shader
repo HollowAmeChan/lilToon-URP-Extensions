@@ -33,8 +33,6 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
             TEXTURE2D_X(_lilHoAovTangentNormalTexture);
             TEXTURE2D_X(_lilHoAovSurfaceDataTexture);
             TEXTURE2D_X(_lilHoAovCustom0_3Texture);
-            TEXTURE2D_X(_lilHoAovCustom4_7Texture);
-            TEXTURE2D_X(_lilHoAovCustom8_11Texture);
 
             half3 HashColor(float3 value)
             {
@@ -56,18 +54,6 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
                 {
                     half4 values = SAMPLE_TEXTURE2D_X(_lilHoAovCustom0_3Texture, sampler_LinearClamp, uv);
                     return values[customIndex];
-                }
-
-                if (customIndex < 8)
-                {
-                    half4 values = SAMPLE_TEXTURE2D_X(_lilHoAovCustom4_7Texture, sampler_LinearClamp, uv);
-                    return values[customIndex - 4];
-                }
-
-                if (customIndex < 12)
-                {
-                    half4 values = SAMPLE_TEXTURE2D_X(_lilHoAovCustom8_11Texture, sampler_LinearClamp, uv);
-                    return values[customIndex - 8];
                 }
 
                 return 0.0;
@@ -158,7 +144,7 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
                     return half4(surfaceData.aaa, 1.0);
                 }
 
-                if (mode >= 13 && mode <= 24)
+                if (mode >= 13 && mode <= 16)
                 {
                     half value = GetCustomValue(mode - 13, uv);
                     return half4(value, value, value, 1.0);

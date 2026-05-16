@@ -33,8 +33,6 @@ namespace lilToon.URP.Extensions.AOV
         public const string UtilityName = "_HoAovUtility";
         public const string DebugColorName = "_HoAovDebugColor";
         public const string CustomValues0Name = "_HoAovCustomValues0";
-        public const string CustomValues1Name = "_HoAovCustomValues1";
-        public const string CustomValues2Name = "_HoAovCustomValues2";
 
         public static readonly ShaderTagId ShaderTagId = new ShaderTagId(ShaderPassName);
 
@@ -62,7 +60,5 @@ namespace lilToon.URP.Extensions.AOV
         public static readonly int UtilityId = Shader.PropertyToID(UtilityName);
         public static readonly int DebugColorId = Shader.PropertyToID(DebugColorName);
         public static readonly int CustomValues0Id = Shader.PropertyToID(CustomValues0Name);
-        public static readonly int CustomValues1Id = Shader.PropertyToID(CustomValues1Name);
-        public static readonly int CustomValues2Id = Shader.PropertyToID(CustomValues2Name);
     }
 }

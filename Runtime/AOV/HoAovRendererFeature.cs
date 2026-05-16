@@ -33,9 +33,15 @@ namespace lilToon.URP.Extensions.AOV
 
         public override void Create()
         {
+            settings?.ClampCustomChannels();
             RegisterCameraReset();
             outputPass = new HoAovOutputPass();
             debugPass = new HoAovDebugPass();
+        }
+
+        private void OnValidate()
+        {
+            settings?.ClampCustomChannels();
         }
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
@@ -600,8 +606,6 @@ namespace lilToon.URP.Extensions.AOV
             cmd.SetGlobalFloat(HoAovShaderConstants.UtilityId, 0.0f);
             cmd.SetGlobalVector(HoAovShaderConstants.DebugColorId, Vector4.one);
             cmd.SetGlobalVector(HoAovShaderConstants.CustomValues0Id, Vector4.zero);
-            cmd.SetGlobalVector(HoAovShaderConstants.CustomValues1Id, Vector4.zero);
-            cmd.SetGlobalVector(HoAovShaderConstants.CustomValues2Id, Vector4.zero);
         }
 
         private static void SetDefaultSubjectProperties(RasterCommandBuffer cmd)
@@ -618,8 +622,6 @@ namespace lilToon.URP.Extensions.AOV
             cmd.SetGlobalFloat(HoAovShaderConstants.UtilityId, 0.0f);
             cmd.SetGlobalVector(HoAovShaderConstants.DebugColorId, Vector4.one);
             cmd.SetGlobalVector(HoAovShaderConstants.CustomValues0Id, Vector4.zero);
-            cmd.SetGlobalVector(HoAovShaderConstants.CustomValues1Id, Vector4.zero);
-            cmd.SetGlobalVector(HoAovShaderConstants.CustomValues2Id, Vector4.zero);
         }
 
         private void ConfigureFiltering()

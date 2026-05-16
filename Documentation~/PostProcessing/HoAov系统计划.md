@@ -223,8 +223,8 @@ public enum HoAovChannelMask
 
 public static class HoAovCustomChannels
 {
-    public const int DefaultCount = 12;
-    public const int MaxSupportedCount = 32;
+    public const int DefaultCount = 4;
+    public const int MaxSupportedCount = 4;
 }
 ```
 
@@ -257,7 +257,7 @@ HoAovSubject
 - customValues[]
 ```
 
-`customChannelCount` 第一版默认为 12，但资产里不要假设它永远是 12。UI 显示数量跟随 settings，shader 常量和纹理分配跟随实际启用数量，旧资产缺少新增 custom slot 时按 0 处理。
+`customChannelCount` 第一版默认为 4。UI 显示数量跟随 settings，shader 常量和纹理分配跟随实际启用数量，旧资产缺少新增 custom slot 时按 0 处理。
 
 当前扩展包里没有直接包含 lilPBR 源码或已有层位定义，因此 HoAOV 不应该先假设具体字段名。设计上把第 10 位 `Material` 作为 lilPBR/lilToon 层语义的承接口：未来如果发现 lilPBR 已经有材质层、区域层、debug 层或类似 layer slot，就把它映射到 `Material`/`Flags`，不要在 HoAOV 里并行发明第二套互相重叠的层系统。长期目标是 HoAOV 成为更通用的替代层，而不是只给后处理临时使用的小补丁。
 
@@ -417,6 +417,18 @@ _HoAovCurvature
 ```shaderlab
 Tags { "LightMode" = "HoAOV" }
 ```
+
+### 2026-05-17 Custom 贴图输入踩坑记录
+
+不要再把 HoAOV custom 通道默认扩成大量独立贴图输入。lilToon / lilPBR 侧实际测试过 4、5、7、8、12 张 custom 贴图入口：
+
+- `Custom0..Custom3` 打包到 `custom0.rgba`，稳定，可作为默认上限。
+- 单独加到 `Custom4` 时没有复现崩溃，但不能证明继续扩展安全。
+- 加到 7 张、8 张、12 张独立贴图入口时，Unity 会在 shader/import/启动阶段直接崩溃，表现不像普通 shader 编译错误。
+- 因此当前工程约束是：默认只暴露 4 个 custom 遮罩通道，颜色乘贴图 R，默认值为 0。
+- 后续如果确实需要更多遮罩，不要直接堆 `_HoAovCustomNTexture`。优先考虑 atlas、packed texture、数组纹理、外部 mask buffer，或做成明确的实验开关，并先在干净工程里逐级验证。
+
+这不是 UI 难不难画的问题，而是 Unity/URP/lilToon/lilPBR 组合下大量材质 texture binding 可能触发 native 侧不稳定。后续维护者不要把 12 通道独立贴图作为默认方案重新加回来。
 
 这个 pass 应该：
 

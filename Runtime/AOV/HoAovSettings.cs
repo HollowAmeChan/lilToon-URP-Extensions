@@ -73,23 +73,7 @@ namespace lilToon.URP.Extensions.AOV
         [InspectorName("自定义 2")]
         Custom2,
         [InspectorName("自定义 3")]
-        Custom3,
-        [InspectorName("自定义 4")]
-        Custom4,
-        [InspectorName("自定义 5")]
-        Custom5,
-        [InspectorName("自定义 6")]
-        Custom6,
-        [InspectorName("自定义 7")]
-        Custom7,
-        [InspectorName("自定义 8")]
-        Custom8,
-        [InspectorName("自定义 9")]
-        Custom9,
-        [InspectorName("自定义 10")]
-        Custom10,
-        [InspectorName("自定义 11")]
-        Custom11
+        Custom3
     }
 
     public enum HoAovRenderScale
@@ -104,8 +88,8 @@ namespace lilToon.URP.Extensions.AOV
 
     public static class HoAovCustomChannels
     {
-        public const int DefaultCount = 12;
-        public const int MaxSupportedCount = 32;
+        public const int DefaultCount = 4;
+        public const int MaxSupportedCount = 4;
         public const int ChannelsPerTexture = 4;
 
         public static int GetTextureCount(int channelCount)
@@ -198,5 +182,26 @@ namespace lilToon.URP.Extensions.AOV
         public Color[] customChannelColors = new Color[HoAovCustomChannels.DefaultCount];
 
         public int ClampedCustomChannelCount => Mathf.Clamp(customChannelCount, 0, HoAovCustomChannels.MaxSupportedCount);
+
+        public void ClampCustomChannels()
+        {
+            customChannelCount = ClampedCustomChannelCount;
+            ResizeArray(ref customChannelNames);
+            ResizeArray(ref customChannelColors);
+        }
+
+        private static void ResizeArray<T>(ref T[] values)
+        {
+            if (values == null)
+            {
+                values = new T[HoAovCustomChannels.DefaultCount];
+                return;
+            }
+
+            if (values.Length != HoAovCustomChannels.DefaultCount)
+            {
+                Array.Resize(ref values, HoAovCustomChannels.DefaultCount);
+            }
+        }
     }
 }
