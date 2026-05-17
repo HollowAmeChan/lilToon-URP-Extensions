@@ -306,14 +306,16 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             public TextureHandle source;
             public TextureHandle aovMaskIdTexture;
+            public TextureHandle aovNormalDepthTexture;
             public TextureHandle aovSurfaceDataTexture;
             public TextureHandle aovCustom0Texture;
             public HoPostProcessLayer layer;
             public Material material;
             public int passIndex;
+            public bool isEdgeLight;
             public bool isDropShadow;
-            public bool useAovMask;
             public bool useAovMaskTexture;
+            public bool useAovNormalDepth;
             public bool useAovSurfaceData;
             public bool useAovCustom0;
         }
@@ -513,22 +515,30 @@ namespace lilToon.URP.Extensions.PostProcessing
                 {
                     passData.source = source;
                     passData.aovMaskIdTexture = aovResources.maskIdTexture;
+                    passData.aovNormalDepthTexture = aovResources.normalDepthTexture;
                     passData.aovSurfaceDataTexture = aovResources.surfaceDataTexture;
                     passData.aovCustom0Texture = aovResources.custom0Texture;
                     passData.layer = runtimeLayer.settings;
                     passData.material = runtimeLayer.material;
                     passData.passIndex = Mathf.Max(0, runtimeLayer.settings.passIndex);
+                    passData.isEdgeLight = runtimeLayer.settings.effect == HoPostProcessEffect.EdgeLight;
                     passData.isDropShadow = runtimeLayer.settings.effect == HoPostProcessEffect.DropShadow;
-                    bool needsAov = passData.isDropShadow || runtimeLayer.settings.useAovMask || runtimeLayer.settings.debugAovMask;
-                    passData.useAovMask = needsAov;
+                    bool needsAov = passData.isEdgeLight || passData.isDropShadow || runtimeLayer.settings.useAovMask || runtimeLayer.settings.debugAovMask;
+                    bool needsAovMaskResolve = passData.isDropShadow || runtimeLayer.settings.useAovMask || (!passData.isEdgeLight && runtimeLayer.settings.debugAovMask);
                     passData.useAovMaskTexture = needsAov && aovResources.maskIdTexture.IsValid();
-                    passData.useAovSurfaceData = needsAov && aovResources.surfaceDataTexture.IsValid();
-                    passData.useAovCustom0 = needsAov && aovResources.custom0Texture.IsValid();
+                    passData.useAovNormalDepth = passData.isEdgeLight && aovResources.normalDepthTexture.IsValid();
+                    passData.useAovSurfaceData = needsAovMaskResolve && aovResources.surfaceDataTexture.IsValid();
+                    passData.useAovCustom0 = needsAovMaskResolve && aovResources.custom0Texture.IsValid();
 
                     builder.UseTexture(source, AccessFlags.Read);
                     if (passData.useAovMaskTexture)
                     {
                         builder.UseTexture(aovResources.maskIdTexture, AccessFlags.Read);
+                    }
+
+                    if (passData.useAovNormalDepth)
+                    {
+                        builder.UseTexture(aovResources.normalDepthTexture, AccessFlags.Read);
                     }
 
                     if (passData.useAovSurfaceData)
@@ -547,11 +557,34 @@ namespace lilToon.URP.Extensions.PostProcessing
                     builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                     {
                         ApplyLayerProperties(data.layer, data.material);
-                        if (data.isDropShadow)
+                        if (data.isEdgeLight)
                         {
+                            bool hasAov = data.useAovMaskTexture && data.useAovNormalDepth;
+                            context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, hasAov ? 1.0f : 0.0f);
+                            if (hasAov)
+                            {
+                                context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
+                                context.cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, data.aovNormalDepthTexture);
+                            }
+
+                            if (data.layer.useAovMask)
+                            {
+                                if (data.useAovSurfaceData)
+                                {
+                                    context.cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
+                                }
+
+                                if (data.useAovCustom0)
+                                {
+                                    context.cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, data.aovCustom0Texture);
+                                }
+                            }
+                        }
+                        else if (data.isDropShadow)
+                        {
+                            context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, data.useAovMaskTexture ? 1.0f : 0.0f);
                             if (data.useAovMaskTexture)
                             {
-                                context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 1.0f);
                                 context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
                             }
 
@@ -567,9 +600,9 @@ namespace lilToon.URP.Extensions.PostProcessing
                         }
                         else if (data.layer.useAovMask)
                         {
+                            context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, data.useAovMaskTexture ? 1.0f : 0.0f);
                             if (data.useAovMaskTexture)
                             {
-                                context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 1.0f);
                                 context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
                             }
 
@@ -714,7 +747,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         private static bool RequiresCameraNormals(HoPostProcessEffect effect)
         {
-            return effect == HoPostProcessEffect.EdgeLight || effect == HoPostProcessEffect.Outline;
+            return effect == HoPostProcessEffect.Outline;
         }
 
         private static bool IsRuntimeLayerActive(HoPostProcessRuntimeLayer runtimeLayer)

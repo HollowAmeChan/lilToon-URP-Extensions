@@ -25,7 +25,7 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
             "RenderType" = "Opaque"
         }
 
-        ZWrite Off
+        ZWrite On
         ZTest LEqual
         Cull Off
 
@@ -124,12 +124,15 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
                 float maskEnabled = HasSystemChannel(1.0);
                 float idEnabled = HasSystemChannel(2.0);
                 float flagsEnabled = HasSystemChannel(4.0);
+                float linearDepthEnabled = HasSystemChannel(8.0);
                 float worldNormalEnabled = HasSystemChannel(16.0);
                 float tangentNormalEnabled = HasSystemChannel(64.0);
                 float thicknessEnabled = HasSystemChannel(256.0);
                 float curvatureEnabled = HasSystemChannel(512.0);
                 float materialEnabled = HasSystemChannel(1024.0);
                 float utilityEnabled = HasSystemChannel(2048.0);
+                float subjectCoverage = saturate(_HoAovMaskWeight);
+                float subjectValid = step(0.0001, subjectCoverage);
 
                 float3 normalWS = normalize(input.normalWS);
                 float linearDepth = LinearEyeDepth(input.positionCS.z, _ZBufferParams);
@@ -137,18 +140,18 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
 
                 FragmentOutput output;
                 output.maskId = half4(
-                    saturate(_HoAovMaskWeight) * maskEnabled,
-                    EncodeScalar(_HoAovGroupId) * idEnabled,
-                    EncodeScalar(effectiveObjectId) * idEnabled,
-                    EncodeScalar(_HoAovFlags) * flagsEnabled);
-                output.normalDepth = half4((normalWS * 0.5 + 0.5) * worldNormalEnabled, linearDepth);
-                output.tangentNormal = half4(float3(0.5, 0.5, 1.0) * tangentNormalEnabled, tangentNormalEnabled);
+                    subjectCoverage * maskEnabled,
+                    EncodeScalar(_HoAovGroupId) * idEnabled * subjectValid,
+                    EncodeScalar(effectiveObjectId) * idEnabled * subjectValid,
+                    EncodeScalar(_HoAovFlags) * flagsEnabled * subjectValid);
+                output.normalDepth = half4((normalWS * 0.5 + 0.5) * worldNormalEnabled * subjectValid, linearDepth * linearDepthEnabled * subjectValid);
+                output.tangentNormal = half4(float3(0.5, 0.5, 1.0) * tangentNormalEnabled * subjectValid, tangentNormalEnabled * subjectValid);
                 output.surfaceData = half4(
-                    saturate(_HoAovThickness) * thicknessEnabled,
-                    saturate(abs(_HoAovCurvature)) * curvatureEnabled,
-                    EncodeScalar(_HoAovMaterialClass) * materialEnabled,
-                    saturate(_HoAovUtility) * utilityEnabled);
-                output.custom0 = half4(ApplyCustomWriteMask(_HoAovCustomValues0, 0.0));
+                    saturate(_HoAovThickness) * thicknessEnabled * subjectValid,
+                    saturate(abs(_HoAovCurvature)) * curvatureEnabled * subjectValid,
+                    EncodeScalar(_HoAovMaterialClass) * materialEnabled * subjectValid,
+                    saturate(_HoAovUtility) * utilityEnabled * subjectValid);
+                output.custom0 = half4(ApplyCustomWriteMask(_HoAovCustomValues0, 0.0) * subjectValid);
                 output.custom1 = half4(0.0, 0.0, 0.0, 0.0);
                 output.custom2 = half4(0.0, 0.0, 0.0, 0.0);
                 return output;

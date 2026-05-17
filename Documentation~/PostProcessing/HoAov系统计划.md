@@ -429,6 +429,17 @@ Runtime/AOV/
 - 优点：不需要立刻改 lilToon/lilPBR shader 生成。
 - 缺点：拿不到完整 alpha/dissolve/normal map/材质厚度语义。
 
+### 2026-05-17 fallback / cutout 回归记录
+
+实际踩坑确认：fallback 不能作为“所有没有 HoAOV pass 的材质都画一遍”的通用兜底。它使用 override material，无法读取源材质 cutout alpha、dither、dissolve 和透明排序语义。若 fallback renderer list 包含 `AlphaTest` / cutout 队列，它会先把镂空面整片写进 AOV；随后材质自己的 `HoAOV` pass 即使正确 `clip`，也只会跳过洞里的像素，不能把 fallback 已写入的黑色 custom 值擦回 clear color。
+
+这次修复后的设计规则：
+
+- fallback renderer list 限制在 opaque 队列，当前上限应小于 `RenderQueue.AlphaTest`。
+- `AlphaTest`、cutout、dither、dissolve、transparent 必须依赖材质专用 `LightMode = "HoAOV"` pass。
+- 为修深度脏块而拆出的独立 clear pass 可以保留；output pass 使用 `ReadWrite` 承接 clear 后结果，但不要因此把 fallback 重新扩到 cutout 队列。
+- Custom AOV debug 中如果 discard 区域出现黑色，优先检查 fallback 是否抢先写入，而不是只盯 lilToon pass 的 `clip` 代码。
+
 长期仍应在 lilToon/lilPBR 中加入真正的 `HoAOV` pass。
 
 ## HoPost 改造方向

@@ -250,19 +250,22 @@ namespace lilToon.URP.Extensions.AOV
             HoAovShaderConstants.ShaderTagId
         };
 
+        private const int FallbackMaxRenderQueue = (int)RenderQueue.AlphaTest - 1;
+
         private readonly RTHandle[] colorTargets = new RTHandle[7];
         private HoAovSettings settings;
         private HoAovRenderTargets renderTargets;
         private Material clearMaterial;
         private Material fallbackMaterial;
-        private FilteringSettings filteringSettings;
+        private FilteringSettings aovFilteringSettings;
+        private FilteringSettings fallbackFilteringSettings;
+        private bool fallbackFilteringEnabled;
         private RenderStateBlock renderStateBlock;
 
         private sealed class PassData
         {
             public RendererListHandle fallbackRendererList;
             public RendererListHandle aovRendererList;
-            public Material clearMaterial;
             public bool drawFallback;
             public TextureHandle maskIdTexture;
             public TextureHandle normalDepthTexture;
@@ -272,6 +275,11 @@ namespace lilToon.URP.Extensions.AOV
             public TextureHandle custom1Texture;
             public TextureHandle custom2Texture;
             public float systemChannelMask;
+        }
+
+        private sealed class ClearPassData
+        {
+            public Material clearMaterial;
         }
 
         private sealed class ResetPassData
@@ -352,16 +360,16 @@ namespace lilToon.URP.Extensions.AOV
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
 
-                if (settings.useFallbackMaterial && fallbackMaterial != null)
+                if (settings.useFallbackMaterial && fallbackMaterial != null && fallbackFilteringEnabled)
                 {
                     DrawingSettings fallbackDrawingSettings = CreateDrawingSettings(FallbackShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
                     fallbackDrawingSettings.overrideMaterial = fallbackMaterial;
                     fallbackDrawingSettings.overrideMaterialPassIndex = 0;
-                    context.DrawRenderers(renderingData.cullResults, ref fallbackDrawingSettings, ref filteringSettings, ref renderStateBlock);
+                    context.DrawRenderers(renderingData.cullResults, ref fallbackDrawingSettings, ref fallbackFilteringSettings, ref renderStateBlock);
                 }
 
                 DrawingSettings aovDrawingSettings = CreateDrawingSettings(AovShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
-                context.DrawRenderers(renderingData.cullResults, ref aovDrawingSettings, ref filteringSettings, ref renderStateBlock);
+                context.DrawRenderers(renderingData.cullResults, ref aovDrawingSettings, ref aovFilteringSettings, ref renderStateBlock);
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -405,7 +413,7 @@ namespace lilToon.URP.Extensions.AOV
             aovResources.custom1Texture = custom1Texture;
             aovResources.custom2Texture = custom2Texture;
 
-            bool drawFallback = settings.useFallbackMaterial && fallbackMaterial != null;
+            bool drawFallback = settings.useFallbackMaterial && fallbackMaterial != null && fallbackFilteringEnabled;
             DrawingSettings fallbackDrawingSettings = RenderingUtils.CreateDrawingSettings(
                 FallbackShaderTagIds,
                 renderingData,
@@ -425,16 +433,27 @@ namespace lilToon.URP.Extensions.AOV
             RendererListParams fallbackRendererListParams = new RendererListParams(
                 renderingData.cullResults,
                 fallbackDrawingSettings,
-                filteringSettings);
+                fallbackFilteringSettings);
             RendererListParams aovRendererListParams = new RendererListParams(
                 renderingData.cullResults,
                 aovDrawingSettings,
-                filteringSettings);
+                aovFilteringSettings);
+
+            AddClearPass(
+                renderGraph,
+                maskIdTexture,
+                normalDepthTexture,
+                tangentNormalTexture,
+                surfaceDataTexture,
+                custom0Texture,
+                custom1Texture,
+                custom2Texture,
+                depthTexture,
+                clearMaterial);
 
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoAOV Output", out PassData passData, ProfilingSampler))
             {
                 passData.drawFallback = drawFallback;
-                passData.clearMaterial = clearMaterial;
                 passData.fallbackRendererList = drawFallback ? renderGraph.CreateRendererList(fallbackRendererListParams) : default;
                 passData.aovRendererList = renderGraph.CreateRendererList(aovRendererListParams);
                 passData.maskIdTexture = maskIdTexture;
@@ -456,14 +475,14 @@ namespace lilToon.URP.Extensions.AOV
                     builder.UseRendererList(passData.aovRendererList);
                 }
 
-                builder.SetRenderAttachment(maskIdTexture, 0, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(normalDepthTexture, 1, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(tangentNormalTexture, 2, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(surfaceDataTexture, 3, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(custom0Texture, 4, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(custom1Texture, 5, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(custom2Texture, 6, AccessFlags.WriteAll);
-                builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(maskIdTexture, 0, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(normalDepthTexture, 1, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(tangentNormalTexture, 2, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(surfaceDataTexture, 3, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(custom0Texture, 4, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(custom1Texture, 5, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(custom2Texture, 6, AccessFlags.ReadWrite);
+                builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.ReadWrite);
                 builder.SetGlobalTextureAfterPass(maskIdTexture, HoAovShaderConstants.MaskIdTextureId);
                 builder.SetGlobalTextureAfterPass(normalDepthTexture, HoAovShaderConstants.NormalDepthTextureId);
                 builder.SetGlobalTextureAfterPass(tangentNormalTexture, HoAovShaderConstants.TangentNormalTextureId);
@@ -475,7 +494,6 @@ namespace lilToon.URP.Extensions.AOV
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
-                    ClearAovTargets(context.cmd, data.clearMaterial);
                     context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 1.0f);
                     context.cmd.SetGlobalFloat(HoAovShaderConstants.SystemChannelMaskId, data.systemChannelMask);
                     SetDefaultSubjectProperties(context.cmd);
@@ -492,9 +510,40 @@ namespace lilToon.URP.Extensions.AOV
             }
         }
 
+        private static void AddClearPass(
+            RenderGraph renderGraph,
+            TextureHandle maskIdTexture,
+            TextureHandle normalDepthTexture,
+            TextureHandle tangentNormalTexture,
+            TextureHandle surfaceDataTexture,
+            TextureHandle custom0Texture,
+            TextureHandle custom1Texture,
+            TextureHandle custom2Texture,
+            TextureHandle depthTexture,
+            Material clearMaterial)
+        {
+            using (var builder = renderGraph.AddRasterRenderPass<ClearPassData>("lilToon-HoAOV Clear", out ClearPassData passData, ProfilingSampler))
+            {
+                passData.clearMaterial = clearMaterial;
+                builder.SetRenderAttachment(maskIdTexture, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(normalDepthTexture, 1, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(tangentNormalTexture, 2, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(surfaceDataTexture, 3, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(custom0Texture, 4, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(custom1Texture, 5, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(custom2Texture, 6, AccessFlags.WriteAll);
+                builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.WriteAll);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (ClearPassData data, RasterGraphContext context) =>
+                {
+                    ClearAovTargets(context.cmd, data.clearMaterial);
+                });
+            }
+        }
+
         private void ClearAovTargets(CommandBuffer cmd)
         {
-            cmd.ClearRenderTarget(RTClearFlags.Depth, Color.clear, 1.0f, 0);
+            cmd.ClearRenderTarget(RTClearFlags.DepthStencil, Color.clear, 1.0f, 0);
             if (clearMaterial != null)
             {
                 cmd.DrawProcedural(Matrix4x4.identity, clearMaterial, 0, MeshTopology.Triangles, 3, 1);
@@ -506,7 +555,7 @@ namespace lilToon.URP.Extensions.AOV
 
         private static void ClearAovTargets(RasterCommandBuffer cmd, Material material)
         {
-            cmd.ClearRenderTarget(RTClearFlags.Depth, Color.clear, 1.0f, 0);
+            cmd.ClearRenderTarget(RTClearFlags.DepthStencil, Color.clear, 1.0f, 0);
             if (material != null)
             {
                 cmd.DrawProcedural(Matrix4x4.identity, material, 0, MeshTopology.Triangles, 3, 1);
@@ -638,7 +687,19 @@ namespace lilToon.URP.Extensions.AOV
                 lowerBound = minQueue,
                 upperBound = maxQueue
             };
-            filteringSettings = new FilteringSettings(renderQueueRange, settings != null ? settings.layerMask.value : -1);
+            int layerMask = settings != null ? settings.layerMask.value : -1;
+            aovFilteringSettings = new FilteringSettings(renderQueueRange, layerMask);
+
+            // The override fallback material cannot see the source material alpha/cutout data.
+            // Keep it away from alpha-test and transparent queues; native HoAOV passes cover those.
+            int fallbackMaxQueue = Mathf.Min(maxQueue, FallbackMaxRenderQueue);
+            fallbackFilteringEnabled = fallbackMaxQueue >= minQueue;
+            RenderQueueRange fallbackRenderQueueRange = new RenderQueueRange
+            {
+                lowerBound = minQueue,
+                upperBound = fallbackFilteringEnabled ? fallbackMaxQueue : minQueue
+            };
+            fallbackFilteringSettings = new FilteringSettings(fallbackRenderQueueRange, fallbackFilteringEnabled ? layerMask : 0);
         }
 
     }

@@ -130,9 +130,9 @@ float LilHoPostResolveAovMaskInternal(float2 uv, bool forceEnabled)
     float matchValue = _LayerAovParams.z;
     float invert = saturate(_LayerAovParams.w);
 
-    float4 maskId = SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_LinearClamp, uv);
-    float4 surfaceData = SAMPLE_TEXTURE2D_X(_lilHoAovSurfaceDataTexture, sampler_LinearClamp, uv);
-    float4 custom0 = SAMPLE_TEXTURE2D_X(_lilHoAovCustom0_3Texture, sampler_LinearClamp, uv);
+    float4 maskId = SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_PointClamp, uv);
+    float4 surfaceData = SAMPLE_TEXTURE2D_X(_lilHoAovSurfaceDataTexture, sampler_PointClamp, uv);
+    float4 custom0 = SAMPLE_TEXTURE2D_X(_lilHoAovCustom0_3Texture, sampler_PointClamp, uv);
     float coverage = saturate(maskId.r);
     float scalar = LilHoPostSelectAovScalar(maskId, surfaceData, custom0, source);
     float selected = saturate(scalar);
@@ -187,7 +187,7 @@ float LilHoPostAovCoverage(float2 uv)
         return 0.0;
     }
 
-    return saturate(SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_LinearClamp, uv).r);
+    return saturate(SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_PointClamp, uv).r);
 }
 
 float2 LilHoPostAovTexelSize()

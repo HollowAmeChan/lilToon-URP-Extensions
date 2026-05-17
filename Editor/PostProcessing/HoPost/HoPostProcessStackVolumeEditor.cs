@@ -8,7 +8,7 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.Editor.PostProcessing
 {
     [CustomEditor(typeof(HoPostProcessStackVolume))]
-    internal sealed class HoPostProcessStackVolumeEditor : VolumeComponentEditor
+    internal sealed partial class HoPostProcessStackVolumeEditor : VolumeComponentEditor
     {
         private const float LineHeight = 18.0f;
         private const float LineSpacing = 2.0f;
@@ -18,10 +18,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static readonly string[] EdgeLightModes =
         {
-            "Single",
-            "Double",
-            "Single Sharp",
-            "Double Sharp"
+            "单向",
+            "双向",
+            "单向锐化",
+            "双向锐化"
         };
 
         private static readonly string[] AovSources =
@@ -192,6 +192,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             switch (GetEffect(element))
             {
                 case HoPostProcessEffect.EdgeLight:
+                    return 15 + GetAovLineCount(element);
                 case HoPostProcessEffect.Outline:
                     return 11 + GetAovLineCount(element);
                 case HoPostProcessEffect.CustomMaterial:
@@ -232,8 +233,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             Rect lineRect = new Rect(rect.x, y, rect.width, LineHeight);
             float checkboxWidth = 18.0f;
+            float presetWidth = LayerPresetButtonSize;
             float intensityWidth = Mathf.Clamp(rect.width * 0.34f, 140.0f, 220.0f);
-            float foldoutWidth = Mathf.Max(0.0f, rect.width - checkboxWidth - intensityWidth - 6.0f);
+            float foldoutWidth = Mathf.Max(0.0f, rect.width - checkboxWidth - presetWidth - intensityWidth - 10.0f);
 
             if (enabled != null && enabled.propertyType == SerializedPropertyType.Boolean)
             {
@@ -249,6 +251,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             Rect foldoutRect = new Rect(lineRect.x + checkboxWidth, lineRect.y, foldoutWidth, lineRect.height);
             element.isExpanded = EditorGUI.Foldout(foldoutRect, element.isExpanded, GetLayerLabel(element), true);
+
+            Rect presetRect = new Rect(lineRect.xMax - intensityWidth - presetWidth - 4.0f, lineRect.y, presetWidth, lineRect.height);
+            DrawLayerPresetButton(presetRect, element);
 
             SerializedProperty intensity = element.FindPropertyRelative("intensity");
             if (intensity != null && intensity.propertyType == SerializedPropertyType.Float)
@@ -292,15 +297,21 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
             SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
-            if (parameters0 == null || parameters1 == null)
+            SerializedProperty parameters2 = element.FindPropertyRelative("parameters2");
+            if (parameters0 == null || parameters1 == null || parameters2 == null)
             {
                 return;
             }
 
             Vector4 p0 = parameters0.vector4Value;
             Vector4 p1 = parameters1.vector4Value;
+            Vector4 p2 = parameters2.vector4Value;
+            if (p2 == Vector4.zero)
+            {
+                p2 = new Vector4(1.0f, 0.65f, 0.45f, 1.0f);
+            }
 
-            p0.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "大小", p0.x, 0.0f, 1.0f);
+            p0.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "边缘宽度", p0.x, 0.0f, 1.0f);
             y += LineHeight + LineSpacing;
             p0.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "HDR 亮度", p0.y, 0.0f, 10.0f);
             y += LineHeight + LineSpacing;
@@ -316,9 +327,18 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             y += LineHeight + LineSpacing;
             p1.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "外扩强度", p1.w, 0.0f, 1.0f);
             y += LineHeight + LineSpacing;
+            p2.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "表面法线权重", p2.x, 0.0f, 2.0f);
+            y += LineHeight + LineSpacing;
+            p2.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "深度边界权重", p2.y, 0.0f, 2.0f);
+            y += LineHeight + LineSpacing;
+            p2.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "深度灵敏度", p2.z, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            p2.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "方向影响", p2.w, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
 
             parameters0.vector4Value = p0;
             parameters1.vector4Value = p1;
+            parameters2.vector4Value = p2;
         }
 
         private static void DrawOutlineProperties(Rect rect, ref float y, SerializedProperty element)
@@ -794,12 +814,13 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Add);
                     SetVector4(element, "parameters0", new Vector4(0.45f, 2.0f, 0.35f, 1.0f));
                     SetVector4(element, "parameters1", new Vector4(0.0f, 1.0f, 0.0f, 0.0f));
+                    SetVector4(element, "parameters2", new Vector4(1.0f, 0.65f, 0.45f, 1.0f));
                     break;
                 case HoPostProcessEffect.Outline:
                     SetColor(element, "color", Color.black);
                     SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
-                    SetVector4(element, "parameters0", new Vector4(1.5f, 1.0f, 0.7f, 0.08f));
-                    SetVector4(element, "parameters1", new Vector4(0.08f, 1.0f, 1.0f, 1.0f));
+                    SetVector4(element, "parameters0", new Vector4(1.5f, 1.0f, 2.0f, 0.15f));
+                    SetVector4(element, "parameters1", new Vector4(0.3f, 1.0f, 0.2f, 1.0f));
                     break;
                 case HoPostProcessEffect.DropShadow:
                     SetColor(element, "color", new Color(0.0f, 0.0f, 0.0f, 0.65f));

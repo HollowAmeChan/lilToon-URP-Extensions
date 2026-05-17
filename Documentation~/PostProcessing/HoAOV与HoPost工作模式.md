@@ -36,6 +36,19 @@ HoAOV Output 每帧会：
 5. 绘制所有带 `LightMode = "HoAOV"` 的材质 pass。
 6. 将 AOV RT 绑定为全局纹理供 HoPost 和 debug shader 读取。
 
+### 2026-05-17 fallback / cutout 踩坑记录
+
+这次问题表现为：修复 RenderGraph 深度里的脏块后，lilToon cutout 材质在 Custom AOV debug 中又把被 alpha discard 的位置画成黑色。RenderDoc 帧里能看到 `lilToon-HoAOV Output` 写入 `_lilHoAovCustom0_3Texture`，同时场景里大量 cutout 材质来自 `Hidden/ltspass_cutout`。
+
+根因不是 lilToon `HoAOV` pass 的 `clip` 失效，而是 fallback renderer list 先用 override fallback 材质绘制了 `UniversalForward` / `UniversalForwardOnly` 对象。override material 拿不到源材质的 `_MainTex.a`、`_Cutoff`、dither、dissolve 等 alpha 语义，于是会把整片 cutout mesh 写进 AOV。后续真正的 lilToon `HoAOV` pass 只能覆盖未丢弃的像素，已经被 fallback 写过的洞不会自动恢复为 clear color，于是 custom 通道里留下黑色。
+
+当前约束：
+
+- fallback material 只允许兜底 opaque 队列，不能碰 `AlphaTest` / cutout / transparent 队列。
+- cutout、dither、dissolve、transparent 只能由材质自己的 `LightMode = "HoAOV"` pass 输出，因为只有它能复用完整 alpha 语义。
+- RenderGraph 下可以把 clear 拆成独立 pass，再让 output pass 用 `ReadWrite` 附着；这能避免深度/颜色 load-store 脏块，但不能用 fallback 去补 cutout 覆盖。
+- 如果以后发现 custom AOV 的镂空区域又变黑，第一检查项是 fallback renderer list 的 render queue filter 是否重新包含了 `RenderQueue.AlphaTest` 或更高队列。
+
 ## AOV 纹理契约
 
 当前全局纹理名：

@@ -122,6 +122,18 @@ rim += outerMask * outerAmount
 
 但第一版应以角色表面的 normal rim 为主，外扩只作为发光扩散友好的补充，避免边缘光变成轮廓描边。
 
+当前 HoAOV 版本的 EdgeLight 已改为读取 `_lilHoAovNormalDepthTexture`，不再依赖 `_CameraNormalsTexture`。新的 rim 由三层组成：
+
+```text
+coverage = HoAOV mask * HoAOV normalDepth.a 覆盖
+surfaceRim = view-space normal 的切线角 rim * Angle 方向权重
+depthRim = HoAOV 线性深度断层 / subject mask 边界 * Angle 方向权重
+outerHalo = subject mask 外扩一圈，仅作为发光补偿
+rim = contrast(saturate(surfaceRim * surfaceWeight + depthRim * depthWeight)) + outerHalo
+```
+
+这样正面朝镜头、表面法线 rim 很弱的角色外轮廓，仍然可以通过 HoAOV 深度边界获得稳定高光；而曲面、头发束、衣褶等仍然由法线 rim 提供表面层次。
+
 ## Shoost 参数映射
 
 用户面板保持 Shoost 习惯，但底层语义写清楚：
@@ -148,6 +160,10 @@ rim += outerMask * outerAmount
 - `parameters1.y`：Mode
 - `parameters1.z`：Outer Width
 - `parameters1.w`：Outer Amount
+- `parameters2.x`：Surface Normal Weight
+- `parameters2.y`：Depth Edge Weight
+- `parameters2.z`：Depth Sensitivity
+- `parameters2.w`：Direction Amount
 
 后续如果主体数据效果变多，再考虑给 EdgeLight 独立 serializable settings，避免通用 Vector4 继续膨胀。
 

@@ -1103,8 +1103,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Rect lineRect = new Rect(rect.x, y, rect.width, LineHeight);
             float checkboxWidth = 18.0f;
             SerializedProperty intensity = element.FindPropertyRelative("intensity");
+            float presetWidth = LayerPresetButtonSize;
             float intensityWidth = Mathf.Clamp(rect.width * 0.34f, 140.0f, 220.0f);
-            float foldoutWidth = Mathf.Max(0.0f, rect.width - checkboxWidth - intensityWidth - 6.0f);
+            float foldoutWidth = Mathf.Max(0.0f, rect.width - checkboxWidth - presetWidth - intensityWidth - 10.0f);
 
             if (enabled != null)
             {
@@ -1114,6 +1115,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             Rect foldoutRect = new Rect(lineRect.x + checkboxWidth, lineRect.y, foldoutWidth, lineRect.height);
             element.isExpanded = EditorGUI.Foldout(foldoutRect, element.isExpanded, GetLayerLabel(element), true);
+
+            Rect presetRect = new Rect(lineRect.xMax - intensityWidth - presetWidth - 4.0f, lineRect.y, presetWidth, lineRect.height);
+            DrawLayerPresetButton(presetRect, element);
 
             if (intensity != null && intensity.propertyType == SerializedPropertyType.Float)
             {
