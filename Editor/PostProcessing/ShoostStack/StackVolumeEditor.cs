@@ -335,8 +335,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         public override void OnEnable()
         {
-            RegisterSceneViewControls();
-
             PropertyFetcher<ShoostPostProcessStackVolume> fetcher = new PropertyFetcher<ShoostPostProcessStackVolume>(serializedObject);
             showInSceneView = Unpack(fetcher.Find(x => x.ShowInSceneView));
             layers = serializedObject.FindProperty("layers");
@@ -355,8 +353,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         public override void OnDisable()
         {
-            UnregisterSceneViewControls();
-            DisableGradientSceneControlForThisEditor();
+            DisableGradientViewControlForThisEditor();
             base.OnDisable();
         }
 
@@ -1580,7 +1577,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.Gradient:
                     SetFloat(element, "intensity", 1.0f);
-                    SetEnum(element, "blendMode", (int)ShoostPostProcessBlendMode.Multiply);
+                    SetEnum(element, "blendMode", (int)ShoostPostProcessBlendMode.SoftLight);
                     SetColor(element, "color", Color.white);
                     SetVector4(element, "parameters0", new Vector4(1.0f, 1.0f, 5.0f, 1.0f));
                     SetVector4(element, "parameters1", new Vector4(0.0f, 0.0f, 0.0f, 0.0f));

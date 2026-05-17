@@ -121,6 +121,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     AddShoostPresetMenuItem(menu, propertyPath, effect, "冷调", ApplyShoostCoolGradePreset);
                     break;
                 case ShoostPostProcessEffect.Gradient:
+                    AddShoostPresetMenuItem(menu, propertyPath, effect, "顶光", ApplyShoostTopLightGradientPreset);
+                    AddShoostPresetMenuItem(menu, propertyPath, effect, "底光", ApplyShoostBottomLightGradientPreset);
+                    AddShoostPresetMenuItem(menu, propertyPath, effect, "黄昏", ApplyShoostDuskGradientPreset);
+                    AddShoostPresetMenuItem(menu, propertyPath, effect, "黄昏夜晚", ApplyShoostDuskNightGradientPreset);
+                    AddShoostPresetMenuItem(menu, propertyPath, effect, "冷月夜", ApplyShoostMoonNightGradientPreset);
                     AddShoostPresetMenuItem(menu, propertyPath, effect, "压暗圆形", ApplyShoostRadialShadeGradientPreset);
                     AddShoostPresetMenuItem(menu, propertyPath, effect, "暖色叠光", ApplyShoostWarmOverlayGradientPreset);
                     break;
@@ -281,6 +286,56 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ApplyShoostDefaultPreset(element, effect);
             SetVector4(element, "parameters1", new Vector4(0.9f, 0.96f, 1.08f, 0.02f));
             SetVector4(element, "parameters2", new Vector4(0.92f, 1.0f, 1.12f, 0.03f));
+        }
+
+        private static void ApplyShoostTopLightGradientPreset(SerializedProperty element, ShoostPostProcessEffect effect)
+        {
+            ApplyShoostDefaultPreset(element, effect);
+            SetEnum(element, "blendMode", (int)ShoostPostProcessBlendMode.SoftLight);
+            SetColor(element, "color", Color.white);
+            SetVector4(element, "parameters0", new Vector4(1.0f, 1.0f, 5.0f, 0.45f));
+            SetVector4(element, "parameters1", new Vector4(0.0f, 0.0f, 0.0f, 0.0f));
+            SetVector4(element, "parameters3", new Vector4(0.04f, 0.05f, 0.07f, 1.0f));
+        }
+
+        private static void ApplyShoostBottomLightGradientPreset(SerializedProperty element, ShoostPostProcessEffect effect)
+        {
+            ApplyShoostDefaultPreset(element, effect);
+            SetEnum(element, "blendMode", (int)ShoostPostProcessBlendMode.SoftLight);
+            SetColor(element, "color", new Color(1.0f, 0.86f, 0.62f, 1.0f));
+            SetVector4(element, "parameters0", new Vector4(1.0f, 1.0f, 5.0f, 0.42f));
+            SetVector4(element, "parameters1", new Vector4(0.0f, 0.0f, 180.0f, 0.0f));
+            SetVector4(element, "parameters3", new Vector4(0.03f, 0.04f, 0.06f, 1.0f));
+        }
+
+        private static void ApplyShoostDuskGradientPreset(SerializedProperty element, ShoostPostProcessEffect effect)
+        {
+            ApplyShoostDefaultPreset(element, effect);
+            SetEnum(element, "blendMode", (int)ShoostPostProcessBlendMode.SoftLight);
+            SetColor(element, "color", new Color(1.0f, 0.58f, 0.25f, 1.0f));
+            SetVector4(element, "parameters0", new Vector4(1.0f, 1.25f, 6.0f, 0.52f));
+            SetVector4(element, "parameters1", new Vector4(0.0f, -0.12f, 180.0f, 0.0f));
+            SetVector4(element, "parameters3", new Vector4(0.10f, 0.16f, 0.34f, 1.0f));
+        }
+
+        private static void ApplyShoostDuskNightGradientPreset(SerializedProperty element, ShoostPostProcessEffect effect)
+        {
+            ApplyShoostDefaultPreset(element, effect);
+            SetEnum(element, "blendMode", (int)ShoostPostProcessBlendMode.SoftLight);
+            SetColor(element, "color", new Color(0.95f, 0.42f, 0.18f, 1.0f));
+            SetVector4(element, "parameters0", new Vector4(1.0f, 1.18f, 6.5f, 0.58f));
+            SetVector4(element, "parameters1", new Vector4(0.0f, -0.18f, 180.0f, 0.0f));
+            SetVector4(element, "parameters3", new Vector4(0.015f, 0.025f, 0.09f, 1.0f));
+        }
+
+        private static void ApplyShoostMoonNightGradientPreset(SerializedProperty element, ShoostPostProcessEffect effect)
+        {
+            ApplyShoostDefaultPreset(element, effect);
+            SetEnum(element, "blendMode", (int)ShoostPostProcessBlendMode.SoftLight);
+            SetColor(element, "color", new Color(0.70f, 0.82f, 1.0f, 1.0f));
+            SetVector4(element, "parameters0", new Vector4(1.0f, 1.05f, 5.5f, 0.45f));
+            SetVector4(element, "parameters1", new Vector4(0.0f, 0.04f, -20.0f, 0.0f));
+            SetVector4(element, "parameters3", new Vector4(0.01f, 0.015f, 0.05f, 1.0f));
         }
 
         private static void ApplyShoostRadialShadeGradientPreset(SerializedProperty element, ShoostPostProcessEffect effect)
