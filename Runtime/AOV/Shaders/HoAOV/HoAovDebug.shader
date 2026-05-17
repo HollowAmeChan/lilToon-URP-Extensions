@@ -78,6 +78,20 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
                 return 0.0;
             }
 
+            half GetObjectCustomAny(float2 uv)
+            {
+                half4 objectCustom0 = SAMPLE_TEXTURE2D_X(_lilHoAovObjectCustom0_3Texture, sampler_PointClamp, uv);
+                half4 objectCustom1 = SAMPLE_TEXTURE2D_X(_lilHoAovObjectCustom4_7Texture, sampler_PointClamp, uv);
+                half sum = dot(step(0.0001, objectCustom0), half4(1.0, 1.0, 1.0, 1.0))
+                    + dot(step(0.0001, objectCustom1), half4(1.0, 1.0, 1.0, 1.0));
+                return saturate(sum);
+            }
+
+            half3 HashScalar(half value)
+            {
+                return HashColor(float3(value, value * 2.17, value * 4.31)) * step(0.0001, value);
+            }
+
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -175,6 +189,43 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
                     half value = GetObjectCustomValue(mode - 17, uv);
                     half valid = step(0.0001, maskId.r);
                     return lerp(source, half4(value, value, value, 1.0), valid);
+                }
+
+                if (mode == 25)
+                {
+                    half valid = step(0.0001, maskId.r);
+                    half hasRsuv = saturate(max(max(step(0.0001, maskId.g), step(0.0001, maskId.b)), step(0.0001, maskId.a)));
+                    return lerp(source, half4(maskId.gba, 1.0), valid * hasRsuv);
+                }
+
+                if (mode == 26)
+                {
+                    half valid = step(0.0001, maskId.r);
+                    half hasValue = step(0.0001, maskId.g);
+                    return lerp(source, half4(HashScalar(maskId.g), 1.0), valid * hasValue);
+                }
+
+                if (mode == 27)
+                {
+                    half valid = step(0.0001, maskId.r);
+                    half hasValue = step(0.0001, maskId.b);
+                    return lerp(source, half4(HashScalar(maskId.b), 1.0), valid * hasValue);
+                }
+
+                if (mode == 28)
+                {
+                    half valid = step(0.0001, maskId.r);
+                    half hasValue = step(0.0001, maskId.a);
+                    return lerp(source, half4(Heat(maskId.a), 1.0), valid * hasValue);
+                }
+
+                if (mode == 29)
+                {
+                    half valid = step(0.0001, maskId.r);
+                    half hasId = saturate(max(step(0.0001, maskId.g), step(0.0001, maskId.b)));
+                    half noObjectCustom = 1.0 - GetObjectCustomAny(uv);
+                    half selected = valid * hasId * noObjectCustom;
+                    return lerp(source, half4(0.15, 0.78, 1.0, 1.0), selected);
                 }
 
                 return source;

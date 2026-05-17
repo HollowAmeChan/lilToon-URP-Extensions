@@ -649,7 +649,7 @@ namespace lilToon.URP.Extensions.AOV
             cmd.SetGlobalFloat(HoAovShaderConstants.GroupIdId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.ObjectIdId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.MaterialClassId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.FlagsId, 1.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.FlagsId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.ThicknessId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.CurvatureId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.UtilityId, 0.0f);
@@ -666,7 +666,7 @@ namespace lilToon.URP.Extensions.AOV
             cmd.SetGlobalFloat(HoAovShaderConstants.GroupIdId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.ObjectIdId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.MaterialClassId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.FlagsId, 1.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.FlagsId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.ThicknessId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.CurvatureId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.UtilityId, 0.0f);

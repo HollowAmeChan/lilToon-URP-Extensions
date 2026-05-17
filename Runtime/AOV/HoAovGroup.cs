@@ -12,6 +12,8 @@ namespace lilToon.URP.Extensions.AOV
         private static readonly Dictionary<Renderer, Assignment> Assignments = new Dictionary<Renderer, Assignment>();
         private static readonly List<Renderer> AssignedRenderers = new List<Renderer>();
         private static readonly List<Renderer> RendererCache = new List<Renderer>();
+        private static readonly List<HoAovGroup> GroupCache = new List<HoAovGroup>();
+        private static readonly List<HoAovSubject> SubjectCache = new List<HoAovSubject>();
         private static MaterialPropertyBlock clearPropertyBlock;
 
         [InspectorName("优先级")]
@@ -114,6 +116,14 @@ namespace lilToon.URP.Extensions.AOV
             RebuildAll();
         }
 
+        public static void RefreshLoadedScenes()
+        {
+            ClearSceneRenderers();
+            ApplyActiveSubjects();
+            RebuildActiveGroupList();
+            RebuildAll();
+        }
+
         private static void RebuildAll()
         {
             ClearAssignedRenderers();
@@ -165,6 +175,64 @@ namespace lilToon.URP.Extensions.AOV
             }
 
             AssignedRenderers.Clear();
+        }
+
+        private static void ClearSceneRenderers()
+        {
+            RendererCache.Clear();
+            RendererCache.AddRange(UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.None));
+            clearPropertyBlock ??= new MaterialPropertyBlock();
+
+            for (int i = 0; i < RendererCache.Count; i++)
+            {
+                Renderer targetRenderer = RendererCache[i];
+                if (targetRenderer == null || targetRenderer.gameObject.scene.IsValid() == false)
+                {
+                    continue;
+                }
+
+                TrySetRendererUserValue(targetRenderer, 0);
+                targetRenderer.GetPropertyBlock(clearPropertyBlock);
+                HoAovSubject.ClearProperties(clearPropertyBlock);
+                clearPropertyBlock.SetFloat(HoAovShaderConstants.ObjectCustomMaskId, 0.0f);
+                targetRenderer.SetPropertyBlock(clearPropertyBlock);
+            }
+
+            RendererCache.Clear();
+            AssignedRenderers.Clear();
+        }
+
+        private static void ApplyActiveSubjects()
+        {
+            SubjectCache.Clear();
+            SubjectCache.AddRange(UnityEngine.Object.FindObjectsByType<HoAovSubject>(FindObjectsInactive.Exclude, FindObjectsSortMode.None));
+            for (int i = 0; i < SubjectCache.Count; i++)
+            {
+                HoAovSubject subject = SubjectCache[i];
+                if (subject != null && subject.isActiveAndEnabled)
+                {
+                    subject.ApplyToRenderers();
+                }
+            }
+
+            SubjectCache.Clear();
+        }
+
+        private static void RebuildActiveGroupList()
+        {
+            ActiveGroups.Clear();
+            GroupCache.Clear();
+            GroupCache.AddRange(UnityEngine.Object.FindObjectsByType<HoAovGroup>(FindObjectsInactive.Exclude, FindObjectsSortMode.None));
+            for (int i = 0; i < GroupCache.Count; i++)
+            {
+                HoAovGroup group = GroupCache[i];
+                if (group != null && group.isActiveAndEnabled)
+                {
+                    ActiveGroups.Add(group);
+                }
+            }
+
+            GroupCache.Clear();
         }
 
         private void CollectLocalMasks()

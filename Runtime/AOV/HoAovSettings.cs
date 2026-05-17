@@ -89,7 +89,17 @@ namespace lilToon.URP.Extensions.AOV
         [InspectorName("ObjectCustom 6")]
         ObjectCustom6,
         [InspectorName("ObjectCustom 7")]
-        ObjectCustom7
+        ObjectCustom7,
+        [InspectorName("RSUV 总览")]
+        RsuvPacked,
+        [InspectorName("RSUV 角色组 ID")]
+        RsuvCharacterId,
+        [InspectorName("RSUV 部件 ID")]
+        RsuvPartId,
+        [InspectorName("RSUV 标记")]
+        RsuvFlags,
+        [InspectorName("RSUV 仅写 ID")]
+        RsuvIdOnly
     }
 
     public enum HoAovRenderScale

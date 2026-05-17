@@ -53,7 +53,7 @@ namespace lilToon.URP.Extensions.Editor.AOV
         private static readonly Color IdOnlyColor = new Color(0.40f, 0.62f, 0.78f);
         private static readonly GUIContent AddSlotLabel = new GUIContent("+", "添加空槽");
         private static readonly GUIContent ClearLabel = new GUIContent("×", "清空本通道");
-        private static readonly GUIContent RefreshLabel = new GUIContent("立即刷新 RSUV");
+        private static readonly GUIContent RefreshLabel = new GUIContent("刷新全场景 RSUV");
         private static GUIStyle channelNameStyle;
 
         private string validationMessage;
@@ -69,13 +69,14 @@ namespace lilToon.URP.Extensions.Editor.AOV
             DrawPrioritySection();
 
             bool changed = serializedObject.ApplyModifiedProperties();
+            bool refreshScene = false;
             EditorGUILayout.Space(Spacing);
             using (new EditorGUILayout.HorizontalScope())
             {
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button(RefreshLabel, GUILayout.Width(150.0f)))
                 {
-                    changed = true;
+                    refreshScene = true;
                 }
             }
 
@@ -84,7 +85,18 @@ namespace lilToon.URP.Extensions.Editor.AOV
                 EditorGUILayout.HelpBox(validationMessage, MessageType.Warning);
             }
 
-            if (changed)
+            if (refreshScene)
+            {
+                HoAovGroup.RefreshLoadedScenes();
+                foreach (Object targetObject in targets)
+                {
+                    if (targetObject is HoAovGroup group)
+                    {
+                        EditorUtility.SetDirty(group);
+                    }
+                }
+            }
+            else if (changed)
             {
                 ApplyTargets();
             }

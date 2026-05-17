@@ -112,6 +112,23 @@ PartId            按 8-bit 数字读取，范围 0..255，通常 0 表示未设
 flags             可按 bit 读取，也可作为 0..255 的小整数标记，第一版优先按 bit 读取
 ```
 
+默认值约定：
+
+```text
+未命中 HoAovGroup 的 Renderer：
+- unity_RendererUserValue 应为 0
+- ObjectCustom0..7 = 0
+- CharacterId / GroupId = 0
+- PartId / ObjectId = 0
+- Flags = 0
+
+HoAovGroup 组件自身：
+- CharacterId / PartId / Flags 默认都是 0
+- 只有拖进 ObjectCustom 列表或“仅写 ID”列表的 Renderer 才会写入 RSUV
+```
+
+历史踩坑：早期 fallback 和 lilToon/lilPBR pass 会在 `_HoAovObjectId = 0` 时用物体位置生成 `objectSeed`，导致“没有指定任何 AOV 的物体”也显示出随机 ObjectId。这个行为已经废弃；0 就是 0，不再自动生成对象 ID。`_HoAovFlags` 的 shader property、RendererFeature 全局默认和 `HoAovSubject` 默认也必须保持 0。
+
 `CharacterId` 不是 8 个角色开关，`PartId` 也不是 8 个部件开关。脸、前发、眼睛、配件这类可以同时成立的语义放在 `ObjectCustom0..7`；角色编号和部件编号放在 `CharacterId` / `PartId` 里，用于同角色比较、眼透和角色合成。
 
 `ObjectCustom0..7` 是二值开关，不是 8 个可贴图的 float 通道。需要 UV 细节、软遮罩或材质 slot 级差异时，继续走 `MaterialCustom0..3`。如果同一个 Renderer 内部混合了需要不同 Object AOV 的多个 submesh，应优先拆 Renderer；不能拆时才用 Material AOV 承接局部差异。
@@ -136,11 +153,10 @@ Object AOV 第一版应挂在空物体上，而不是塞进 Volume，也不是�
 ```text
 HoAovGroup
 - enabled
-- priority
 - characterId / groupId
 - partId / objectId
 - flags
-- includeChildrenForListedObjects
+- explicitRenderers[] / 仅写 ID
 - ObjectCustom0 Character      objects[]
 - ObjectCustom1 Face           objects[]
 - ObjectCustom2 FrontHair      objects[]
@@ -149,10 +165,8 @@ HoAovGroup
 - ObjectCustom5 Accessory      objects[]
 - ObjectCustom6 Reserved       objects[]
 - ObjectCustom7 Reserved       objects[]
-- explicitRenderers[]
-- layerMask / rendererFilter
-- materialClass
-- utility
+- includeChildrenForListedObjects / 展开预制件
+- priority
 ```
 
 用法约定：
@@ -163,8 +177,9 @@ HoAovGroup
 编辑器显示 8 个 ObjectCustom 列表，列表里拖 GameObject 或 Renderer。
 拖进 ObjectCustomN 列表表示命中 Renderer 的对应 bit 写 1。
 同一 Renderer 可以同时出现在多个 ObjectCustom 列表里，最终 bit 按 OR 合并。
-includeChildrenForListedObjects 为 true 时，列表中的 GameObject 会收集子层级 Renderer。
-explicitRenderers[] 用于补充不在列表物体层级里的 Renderer。
+“仅写 ID”列表用于只写 CharacterId / PartId / Flags，不写任何 ObjectCustom bit。
+“展开预制件”为整个组件级开关，ObjectCustom 列表和“仅写 ID”列表都遵守它。
+“展开预制件”为 true 时，列表中的 GameObject 会收集子层级 Renderer。
 同一个 Renderer 命中多个 HoAovGroup 时，priority 高者覆盖；priority 相同时离 Renderer 最近的层级覆盖。
 没有命中 HoAovGroup 的 Renderer 使用材质默认 AOV 和系统默认值。
 ```
@@ -174,6 +189,8 @@ explicitRenderers[] 用于补充不在列表物体层级里的 Renderer。
 Prefab 的正确用法是在 prefab 内部挂 `HoAovGroup`，并引用同一 prefab stage 内的子物体或 Renderer；实例化后组件再把 RSUV 写到实例 Renderer。不要把 prefab asset 拖到另一个场景对象的 `HoAovGroup` 列表里期待它自动标记某个场景实例，这种跨上下文引用应在 Editor 中警告或拒绝。
 
 `HoAovGroup` 的序列化字段是 authoring 源。RSUV 值本身不序列化，进入 Play Mode、场景载入、prefab 实例化或组件校验后都要重新写入目标 Renderer。Unity 6.3+ 使用 RSUV；RSUV API 不可用时才走 MaterialPropertyBlock 兼容路径，并提示 SRP Batcher 风险。
+
+Inspector 的“刷新全场景 RSUV”按钮必须显式清理当前已加载场景中的所有 Renderer，再重建当前启用的 `HoAovSubject` 和 `HoAovGroup`。它不是只刷新当前组件。清理内容包括 `SetShaderUserValue(0)` 和 HoAOV 相关 MPB 字段，目的是处理旧版本、删组件、改列表或切 prefab 后遗留的 RSUV/MPB 脏值。
 
 ### HoAovGroup 使用方法
 
@@ -207,6 +224,8 @@ ObjectCustom7 Reserved       项目自定义
 ```
 
 注意：`HoAovSubject` 使用 MaterialPropertyBlock，可能影响 SRP Batcher。Object AOV 的 `CharacterId / PartId / ObjectCustom0..7` 主路径由 `HoAovGroup` 写 RSUV，不要在 `HoAovSubject` 里寻找这些列表。
+
+`HoAovSubject` 是兼容覆盖路径，不应该给默认对象制造身份。默认 `objectId = 0` 就写 0，不能自动 fallback 到组件实例 ID；默认 `flags = 0`，不能默认写 1。禁用或销毁 `HoAovSubject` 时必须清掉它写过的 MPB，否则旧的 GroupId/ObjectId/Flags 会继续留在 Renderer 上，让未分组物体看起来像仍然有 RSUV。
 
 Object AOV 不放进 Volume 的原因：Volume 适合混合后处理参数，不适合混合离散 Renderer 列表。列表在空间权重里很难定义“半影响”或“区域内才属于某组”。Object AOV 属于场景/角色语义，应该跟 prefab 或空物体层级走。
 
@@ -485,6 +504,8 @@ HoAOV fallback 只用于没有 `LightMode = "HoAOV"` pass 的普通物体。它�
 fallback 不应该写 HoAOV depth
 fallback 不应该遮挡后续真正 HoAOV pass
 fallback 不应该被当成最终质量路径
+fallback 默认 GroupId/ObjectId/Flags/ObjectCustom 全部为 0
+fallback 不允许在 ObjectId 为 0 时生成随机 objectSeed
 ```
 
 之前出现过的问题是 fallback 先于真正 HoAOV pass 绘制，并且 `ZWrite On`。它会把 cutout 洞当成实心写入 HoAOV depth，导致背后的白色 custom 无法通过深度测试，最终洞里仍是黑的。当前规则是 fallback 使用 `ZWrite Off`。
@@ -539,6 +560,24 @@ texture array
 
 Object AOV 排查时，先在 HoAOV debug view 中看 `ObjectCustom0..7` 原始通道，确认 `HoAovGroup` 列表、RSUV 打包和材质 HoAOV pass 都正确写入；再到 HoPost 图层打开 `debugAovMask`，确认该图层选择的 `ObjectCustomN` source 能被消费端解析为预期遮罩。
 
+### Debug View 读到的是什么
+
+HoAOV debug view 是 fullscreen 后处理，它读取的是已经写入 HoAOV MRT 的结果，不是直接读 `HoAovGroup`、`HoAovSubject`、材质面板或 `unity_RendererUserValue` 原始值。
+
+```text
+_lilHoAovMaskIdTexture.r    AOV coverage / mask
+_lilHoAovMaskIdTexture.g    encoded CharacterId / GroupId
+_lilHoAovMaskIdTexture.b    encoded PartId / ObjectId
+_lilHoAovMaskIdTexture.a    encoded Flags
+ObjectCustom RT             ObjectCustom0..7 的最终二值结果
+```
+
+debug 里看到“没有绘制”通常表示该像素 `maskId.r = 0`，也就是没有 HoAOV coverage。未进 `HoAovGroup`、没有 `HoAovSubject` 覆盖、材质默认值也是 0 的对象，即使材质 HoAOV pass 写入 coverage，也不应该在 `RSUV 总览 / 角色组 ID / 部件 ID / 标记 / 仅写 ID` 中显示有效 ID。0 值不应被画成黑色覆盖层，否则会误判成“有数据但颜色很暗”。
+
+ID debug 的颜色是把编码后的 ID 值 hash 成稳定伪彩色，只用于人眼区分，不是后处理消费的数据源。HoPost 或其他消费者必须读取 AOV RT 中的编码值和 mask，不能读取 debug 画面颜色。
+
+`RSUV 仅写 ID` 的 debug 语义是：有 CharacterId 或 PartId 信号，但没有任何 ObjectCustom bit。它用于检查“仅写 ID”列表，而不是检查所有未分组物体。没有组的物体应该不亮。
+
 常见症状：
 
 ```text
@@ -556,6 +595,12 @@ cutout 洞里黑，背后对象没露出
 
 投影没效果
 => 先打开 DropShadow 的 AOV debug，看输入 mask 是否存在
+
+没有放进 HoAovGroup 的 lilPBR/lilToon 物体在 RSUV debug 里亮
+=> 先点 HoAovGroup 的“刷新全场景 RSUV”清旧值；再查是否有 HoAovSubject、材质/MPB 隐藏值或旧 shader property 把 GroupId/ObjectId/Flags 写成非 0
+
+角色组 ID 或 Flags debug 里整块变黑，看起来像有数据
+=> debug shader 可能把 0 值当成有效覆盖显示；正确规则是只有非 0 ID/Flags 才覆盖显示
 ```
 
 ## 使用流程
@@ -572,6 +617,7 @@ cutout 洞里黑，背后对象没露出
 8. 只有需要覆盖系统 AOV、厚度、曲率或 MaterialCustom0..3 时，才额外挂 `HoAovSubject`。
 9. HoPost 图层打开 `AOV Mask`，选择需要的 source 和 mask mode。
 10. 调试时先看 HoAOV debug view 的原始 `ObjectCustom0..7`，再用 HoPost 图层的 `debugAovMask` 确认消费结果。
+11. 发现旧 RSUV 或 MPB 清不掉时，点 `HoAovGroup` 的“刷新全场景 RSUV”。这个按钮会清所有已加载场景 Renderer，再重建所有启用的 `HoAovSubject` 和 `HoAovGroup`。
 
 材质或 shader 侧新增功能时：
 

@@ -8,6 +8,7 @@ namespace lilToon.URP.Extensions.AOV
     [DisallowMultipleComponent]
     public sealed class HoAovSubject : MonoBehaviour
     {
+        private const int CurrentSerializedVersion = 1;
         private static readonly List<Renderer> RendererCache = new List<Renderer>();
 
         [InspectorName("系统写入通道")]
@@ -32,7 +33,7 @@ namespace lilToon.URP.Extensions.AOV
         public int groupId;
 
         [InspectorName("对象 ID")]
-        [Tooltip("对象 ID。为 0 时使用组件实例 ID。")]
+        [Tooltip("对象 ID。默认 0 表示不写入对象 ID。")]
         public int objectId;
 
         [InspectorName("材质分类")]
@@ -41,7 +42,7 @@ namespace lilToon.URP.Extensions.AOV
 
         [InspectorName("标记")]
         [Tooltip("给 AOV 消费者使用的自由标记值。")]
-        public uint flags = 1;
+        public uint flags;
 
         [InspectorName("厚度")]
         [Tooltip("近似材质厚度。第一版由用户/材质手动提供。")]
@@ -64,26 +65,44 @@ namespace lilToon.URP.Extensions.AOV
         [Tooltip("用户自定义通道值。缺失的项按 0 处理。")]
         public float[] customValues = new float[HoAovCustomChannels.DefaultCount];
 
+        [SerializeField]
+        [HideInInspector]
+        private int serializedVersion;
+
         private MaterialPropertyBlock propertyBlock;
 
         private void Reset()
         {
+            MigrateSerializedDefaults();
             ApplyToRenderers();
         }
 
         private void OnEnable()
         {
+            MigrateSerializedDefaults();
             ApplyToRenderers();
+        }
+
+        private void OnDisable()
+        {
+            ClearRenderers();
+        }
+
+        private void OnDestroy()
+        {
+            ClearRenderers();
         }
 
         private void OnValidate()
         {
+            MigrateSerializedDefaults();
             EnsureCustomValues();
             ApplyToRenderers();
         }
 
         public void ApplyToRenderers()
         {
+            MigrateSerializedDefaults();
             EnsureCustomValues();
             if (!isActiveAndEnabled)
             {
@@ -112,12 +131,36 @@ namespace lilToon.URP.Extensions.AOV
             RendererCache.Clear();
         }
 
+        private void ClearRenderers()
+        {
+            if (propertyBlock == null)
+            {
+                propertyBlock = new MaterialPropertyBlock();
+            }
+
+            GetComponentsInChildren(true, RendererCache);
+            for (int i = 0; i < RendererCache.Count; i++)
+            {
+                Renderer targetRenderer = RendererCache[i];
+                if (targetRenderer == null)
+                {
+                    continue;
+                }
+
+                targetRenderer.GetPropertyBlock(propertyBlock);
+                ClearProperties(propertyBlock);
+                targetRenderer.SetPropertyBlock(propertyBlock);
+            }
+
+            RendererCache.Clear();
+        }
+
         private void ApplyProperties(MaterialPropertyBlock block)
         {
             block.SetFloat(HoAovShaderConstants.MaskWeightId, maskWeight);
             block.SetFloat(HoAovShaderConstants.SystemWriteMaskId, (float)systemWriteChannels);
             block.SetFloat(HoAovShaderConstants.GroupIdId, groupId);
-            block.SetFloat(HoAovShaderConstants.ObjectIdId, GetEffectiveObjectId());
+            block.SetFloat(HoAovShaderConstants.ObjectIdId, objectId);
             block.SetFloat(HoAovShaderConstants.MaterialClassId, materialClass);
             block.SetFloat(HoAovShaderConstants.FlagsId, flags);
             block.SetFloat(HoAovShaderConstants.ThicknessId, thickness);
@@ -131,9 +174,35 @@ namespace lilToon.URP.Extensions.AOV
             }
         }
 
-        private int GetEffectiveObjectId()
+        internal static void ClearProperties(MaterialPropertyBlock block)
         {
-            return objectId != 0 ? objectId : Math.Abs(GetInstanceID());
+            block.SetFloat(HoAovShaderConstants.MaskWeightId, 1.0f);
+            block.SetFloat(HoAovShaderConstants.SystemWriteMaskId, (float)HoAovChannelMask.Default);
+            block.SetFloat(HoAovShaderConstants.GroupIdId, 0.0f);
+            block.SetFloat(HoAovShaderConstants.ObjectIdId, 0.0f);
+            block.SetFloat(HoAovShaderConstants.MaterialClassId, 0.0f);
+            block.SetFloat(HoAovShaderConstants.FlagsId, 0.0f);
+            block.SetFloat(HoAovShaderConstants.ThicknessId, 0.0f);
+            block.SetFloat(HoAovShaderConstants.CurvatureId, 0.0f);
+            block.SetFloat(HoAovShaderConstants.UtilityId, 0.0f);
+            block.SetColor(HoAovShaderConstants.DebugColorId, Color.white);
+            block.SetFloat(HoAovShaderConstants.CustomWriteMaskId, 0.0f);
+            block.SetVector(HoAovShaderConstants.CustomValues0Id, Vector4.zero);
+        }
+
+        private void MigrateSerializedDefaults()
+        {
+            if (serializedVersion >= CurrentSerializedVersion)
+            {
+                return;
+            }
+
+            if (flags == 1)
+            {
+                flags = 0;
+            }
+
+            serializedVersion = CurrentSerializedVersion;
         }
 
         private Vector4 GetCustomVector(int startIndex)

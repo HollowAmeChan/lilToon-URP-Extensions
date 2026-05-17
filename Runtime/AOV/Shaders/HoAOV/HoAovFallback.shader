@@ -9,7 +9,7 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
         [HideInInspector] _HoAovGroupId ("HoAOV Group Id", Float) = 0
         [HideInInspector] _HoAovObjectId ("HoAOV Object Id", Float) = 0
         [HideInInspector] _HoAovMaterialClass ("HoAOV Material Class", Float) = 0
-        [HideInInspector] _HoAovFlags ("HoAOV Flags", Float) = 1
+        [HideInInspector] _HoAovFlags ("HoAOV Flags", Float) = 0
         [HideInInspector] _HoAovThickness ("HoAOV Thickness", Float) = 0
         [HideInInspector] _HoAovCurvature ("HoAOV Curvature", Float) = 0
         [HideInInspector] _HoAovUtility ("HoAOV Utility", Float) = 0
@@ -68,7 +68,6 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
             {
                 float4 positionCS : SV_POSITION;
                 float3 normalWS : TEXCOORD0;
-                float objectSeed : TEXCOORD1;
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -142,8 +141,6 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
                 output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
                 output.normalWS = TransformObjectToWorldNormal(input.normalOS);
-                float3 objectPositionWS = TransformObjectToWorld(float3(0.0, 0.0, 0.0));
-                output.objectSeed = dot(objectPositionWS, float3(0.13, 0.31, 0.73));
                 return output;
             }
 
@@ -170,7 +167,7 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
                 bool hasRendererUserValue = rendererUserValue != 0u;
                 uint objectCustomMask = hasRendererUserValue ? (rendererUserValue & 255u) : (uint)round(saturate(_HoAovObjectCustomMask / 255.0) * 255.0);
                 float effectiveGroupId = hasRendererUserValue ? ByteToFloat(rendererUserValue, 8u) : _HoAovGroupId;
-                float effectiveObjectId = hasRendererUserValue ? ByteToFloat(rendererUserValue, 16u) : lerp(input.objectSeed * 1000.0, _HoAovObjectId, step(0.5, abs(_HoAovObjectId)));
+                float effectiveObjectId = hasRendererUserValue ? ByteToFloat(rendererUserValue, 16u) : _HoAovObjectId;
                 float effectiveFlags = hasRendererUserValue ? ByteToFloat(rendererUserValue, 24u) : _HoAovFlags;
 
                 FragmentOutput output;
