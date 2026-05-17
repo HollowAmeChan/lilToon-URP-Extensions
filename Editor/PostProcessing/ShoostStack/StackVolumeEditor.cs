@@ -335,6 +335,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         public override void OnEnable()
         {
+            RegisterSceneViewControls();
+
             PropertyFetcher<ShoostPostProcessStackVolume> fetcher = new PropertyFetcher<ShoostPostProcessStackVolume>(serializedObject);
             showInSceneView = Unpack(fetcher.Find(x => x.ShowInSceneView));
             layers = serializedObject.FindProperty("layers");
@@ -349,6 +351,13 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             layerList.headerHeight = 0.0f;
             layerList.elementHeightCallback = GetElementHeight;
             layerList.drawElementCallback = DrawElement;
+        }
+
+        public override void OnDisable()
+        {
+            UnregisterSceneViewControls();
+            DisableGradientSceneControlForThisEditor();
+            base.OnDisable();
         }
 
         public override void OnInspectorGUI()
