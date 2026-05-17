@@ -20,6 +20,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                     return "Hidden/lilToon-Shoost/URP/Shoost/ChangeFrameRate";
                 case ShoostPostProcessEffect.CenterColorCorrection:
                     return "Hidden/lilToon-Shoost/URP/Shoost/CenterColorCorrection";
+                case ShoostPostProcessEffect.CinematicBars:
+                    return "Hidden/lilToon-Shoost/URP/Shoost/CinematicBars";
                 case ShoostPostProcessEffect.ColorGradingCustom:
                     return "Hidden/lilToon-Shoost/URP/Shoost/ColorGradingCustom";
                 case ShoostPostProcessEffect.CRTEffects:
