@@ -73,7 +73,23 @@ namespace lilToon.URP.Extensions.AOV
         [InspectorName("自定义 2")]
         Custom2,
         [InspectorName("自定义 3")]
-        Custom3
+        Custom3,
+        [InspectorName("ObjectCustom 0")]
+        ObjectCustom0,
+        [InspectorName("ObjectCustom 1")]
+        ObjectCustom1,
+        [InspectorName("ObjectCustom 2")]
+        ObjectCustom2,
+        [InspectorName("ObjectCustom 3")]
+        ObjectCustom3,
+        [InspectorName("ObjectCustom 4")]
+        ObjectCustom4,
+        [InspectorName("ObjectCustom 5")]
+        ObjectCustom5,
+        [InspectorName("ObjectCustom 6")]
+        ObjectCustom6,
+        [InspectorName("ObjectCustom 7")]
+        ObjectCustom7
     }
 
     public enum HoAovRenderScale
@@ -203,5 +219,12 @@ namespace lilToon.URP.Extensions.AOV
                 Array.Resize(ref values, HoAovCustomChannels.DefaultCount);
             }
         }
+    }
+
+    public static class HoAovObjectChannels
+    {
+        public const int DefaultCount = 8;
+        public const int MaxSupportedCount = 8;
+        public const int ChannelsPerTexture = 4;
     }
 }

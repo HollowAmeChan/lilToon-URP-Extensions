@@ -13,6 +13,8 @@ TEXTURE2D_X(_lilHoAovMaskIdTexture);
 float4 _lilHoAovMaskIdTexture_TexelSize;
 TEXTURE2D_X(_lilHoAovSurfaceDataTexture);
 TEXTURE2D_X(_lilHoAovCustom0_3Texture);
+TEXTURE2D_X(_lilHoAovObjectCustom0_3Texture);
+TEXTURE2D_X(_lilHoAovObjectCustom4_7Texture);
 
 float LilHoPostEncodeAovScalar(float value)
 {
@@ -36,7 +38,7 @@ float LilHoPostMatchEncodedValue(float value, float target, float tolerance, flo
     return 1.0 - smoothstep(edge0, edge1, delta);
 }
 
-float LilHoPostSelectAovScalar(float4 maskId, float4 surfaceData, float4 custom0, int source)
+float LilHoPostSelectAovScalar(float4 maskId, float4 surfaceData, float4 custom0, float4 objectCustom0, float4 objectCustom1, int source)
 {
     if (source == 1)
     {
@@ -93,10 +95,50 @@ float LilHoPostSelectAovScalar(float4 maskId, float4 surfaceData, float4 custom0
         return custom0.a;
     }
 
+    if (source == 12)
+    {
+        return objectCustom0.r;
+    }
+
+    if (source == 13)
+    {
+        return objectCustom0.g;
+    }
+
+    if (source == 14)
+    {
+        return objectCustom0.b;
+    }
+
+    if (source == 15)
+    {
+        return objectCustom0.a;
+    }
+
+    if (source == 16)
+    {
+        return objectCustom1.r;
+    }
+
+    if (source == 17)
+    {
+        return objectCustom1.g;
+    }
+
+    if (source == 18)
+    {
+        return objectCustom1.b;
+    }
+
+    if (source == 19)
+    {
+        return objectCustom1.a;
+    }
+
     return maskId.r;
 }
 
-float4 LilHoPostSelectAovColor(float4 maskId, float4 surfaceData, float4 custom0, int source)
+float4 LilHoPostSelectAovColor(float4 maskId, float4 surfaceData, float4 custom0, float4 objectCustom0, float4 objectCustom1, int source)
 {
     if (source >= 4 && source <= 7)
     {
@@ -108,7 +150,27 @@ float4 LilHoPostSelectAovColor(float4 maskId, float4 surfaceData, float4 custom0
         return custom0;
     }
 
+    if (source >= 12 && source <= 15)
+    {
+        return objectCustom0;
+    }
+
+    if (source >= 16 && source <= 19)
+    {
+        return objectCustom1;
+    }
+
     return maskId;
+}
+
+float LilHoPostSelectAovScalar(float4 maskId, float4 surfaceData, float4 custom0, int source)
+{
+    return LilHoPostSelectAovScalar(maskId, surfaceData, custom0, float4(0.0, 0.0, 0.0, 0.0), float4(0.0, 0.0, 0.0, 0.0), source);
+}
+
+float4 LilHoPostSelectAovColor(float4 maskId, float4 surfaceData, float4 custom0, int source)
+{
+    return LilHoPostSelectAovColor(maskId, surfaceData, custom0, float4(0.0, 0.0, 0.0, 0.0), float4(0.0, 0.0, 0.0, 0.0), source);
 }
 
 float LilHoPostResolveAovMaskInternal(float2 uv, bool forceEnabled)
@@ -123,7 +185,7 @@ float LilHoPostResolveAovMaskInternal(float2 uv, bool forceEnabled)
         return 0.0;
     }
 
-    int source = (int)clamp(round(_LayerAovSource), 0.0, 11.0);
+    int source = (int)clamp(round(_LayerAovSource), 0.0, 19.0);
     int mode = (int)clamp(round(_LayerAovMode), 0.0, 3.0);
     float threshold = max(_LayerAovParams.x, 0.0);
     float softness = max(_LayerAovParams.y, 0.0001);
@@ -133,8 +195,10 @@ float LilHoPostResolveAovMaskInternal(float2 uv, bool forceEnabled)
     float4 maskId = SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_PointClamp, uv);
     float4 surfaceData = SAMPLE_TEXTURE2D_X(_lilHoAovSurfaceDataTexture, sampler_PointClamp, uv);
     float4 custom0 = SAMPLE_TEXTURE2D_X(_lilHoAovCustom0_3Texture, sampler_PointClamp, uv);
+    float4 objectCustom0 = SAMPLE_TEXTURE2D_X(_lilHoAovObjectCustom0_3Texture, sampler_PointClamp, uv);
+    float4 objectCustom1 = SAMPLE_TEXTURE2D_X(_lilHoAovObjectCustom4_7Texture, sampler_PointClamp, uv);
     float coverage = saturate(maskId.r);
-    float scalar = LilHoPostSelectAovScalar(maskId, surfaceData, custom0, source);
+    float scalar = LilHoPostSelectAovScalar(maskId, surfaceData, custom0, objectCustom0, objectCustom1, source);
     float selected = saturate(scalar);
 
     if (mode == 1)
@@ -150,7 +214,7 @@ float LilHoPostResolveAovMaskInternal(float2 uv, bool forceEnabled)
     }
     else if (mode == 3)
     {
-        float4 colorSample = LilHoPostSelectAovColor(maskId, surfaceData, custom0, source);
+        float4 colorSample = LilHoPostSelectAovColor(maskId, surfaceData, custom0, objectCustom0, objectCustom1, source);
         float colorDistance = distance(colorSample.rgb, _LayerAovMatchColor.rgb);
         selected = 1.0 - smoothstep(threshold, threshold + softness, colorDistance);
     }

@@ -34,10 +34,18 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "Curvature",
             "Material",
             "Utility",
-            "Custom 0",
-            "Custom 1",
-            "Custom 2",
-            "Custom 3"
+            "MaterialCustom 0",
+            "MaterialCustom 1",
+            "MaterialCustom 2",
+            "MaterialCustom 3",
+            "ObjectCustom 0",
+            "ObjectCustom 1",
+            "ObjectCustom 2",
+            "ObjectCustom 3",
+            "ObjectCustom 4",
+            "ObjectCustom 5",
+            "ObjectCustom 6",
+            "ObjectCustom 7"
         };
 
         private static readonly string[] AovMaskModes =

@@ -28,7 +28,7 @@ namespace lilToon.URP.Extensions.Editor.AOV
             }
 
             EditorGUILayout.HelpBox(
-                "HoAOV 是数据层 RendererFeature。第一次确认是否跑通时，请把“调试模式”设为“遮罩”，并确保“场景视图显示调试”已开启。ID 和 Custom 通道需要 HoAovSubject 写入数据后才明显。",
+                "HoAOV 是数据层 RendererFeature。第一次确认是否跑通时，请把“调试模式”设为“遮罩”，并确保“场景视图显示调试”已开启。ObjectCustom 通道需要 HoAovGroup 写入 RSUV 后才明显。",
                 MessageType.Info);
 
             DrawSettings();

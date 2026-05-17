@@ -190,6 +190,8 @@ HoAovGroup
 
 Prefab 使用规则必须明确：在 prefab 自身内部挂 `HoAovGroup` 并拖它的子物体/Renderer 是推荐路径，实例化后组件会重新把 RSUV 写到实例 Renderer。把一个 prefab asset 拖进场景中另一个 `HoAovGroup` 的列表，不代表会自动标记场景里的某个实例；这种引用应该在 Editor 中警告或拒绝。场景对象只应引用同场景对象，Prefab Mode 中只应引用同一 prefab stage 内的对象。
 
+`HoAovGroup` 是普通用户入口，Inspector 应按“ID / Flags”、“ObjectCustom 列表”、“高级”分区展示，并提供“立即刷新 RSUV”按钮。`HoAovSubject` 应标记为高级/兼容覆盖组件，只用于系统 AOV、厚度、曲率、旧式 ID 或 `MaterialCustom0..3` 的 MPB 覆盖，不作为 Object AOV 分组入口。
+
 合并规则建议：
 
 ```text
@@ -388,7 +390,7 @@ _HoAovObjectCustom0_3Texture
 _HoAovObjectCustom4_7Texture
 ```
 
-ObjectCustom 应使用独立 RT 名称，不要复用材质 custom 的预留纹理名。实现命名建议与现有全局纹理前缀保持一致：`_lilHoAovObjectCustom0_3Texture` 和 `_lilHoAovObjectCustom4_7Texture`。`_lilHoAovCustom4_7Texture` / `_lilHoAovCustom8_11Texture` 只能继续视为材质 custom 扩展实验的预留名，不作为 Object AOV 输出。
+ObjectCustom 应使用独立 RT 名称，不要复用材质 custom 的旧预留纹理名。实现命名建议与现有全局纹理前缀保持一致：`_lilHoAovObjectCustom0_3Texture` 和 `_lilHoAovObjectCustom4_7Texture`。`_lilHoAovCustom4_7Texture` / `_lilHoAovCustom8_11Texture` 已从运行时输出链路移除，不作为 Object AOV 输出，也不作为默认材质 custom 扩展。
 
 建议精度：
 
@@ -521,7 +523,7 @@ Tags { "LightMode" = "HoAOV" }
 - `MaterialCustom0..MaterialCustom3` 打包到 `custom0.rgba`，稳定，可作为材质贴图输入的默认上限。
 - 单独加到材质 `Custom4` 时没有复现崩溃，但不能证明继续扩展安全。
 - 加到 7 张、8 张、12 张独立贴图入口时，Unity 会在 shader/import/启动阶段直接崩溃，表现不像普通 shader 编译错误。
-- 曾尝试把 `_lilHoAovCustom4_7Texture` 和 `_lilHoAovCustom8_11Texture` 也接成真实 custom 输入链路，但 SRP/Unity 仍然反复崩溃；这两张纹理当前只能视为协议预留名，不应默认绑定到 lilToon/lilPBR 的新增贴图输入。
+- 曾尝试把 `_lilHoAovCustom4_7Texture` 和 `_lilHoAovCustom8_11Texture` 也接成真实 custom 输入链路，但 SRP/Unity 仍然反复崩溃；这两张旧预留纹理不再进入运行时输出链路，不应默认绑定到 lilToon/lilPBR 的新增贴图输入。
 - 因此当前工程约束是：默认只暴露 4 个 Material AOV 贴图遮罩通道，颜色乘贴图 R，默认值为 0。
 - 需要更多用户可控遮罩时，优先走 Object AOV：`ObjectCustom0..ObjectCustom7` 由 `HoAovGroup` 空物体批量指定，不新增材质贴图输入。
 - 后续如果确实需要更多遮罩，不要直接堆 `_HoAovCustomNTexture`。优先考虑 atlas、packed texture、数组纹理、外部 mask buffer，或做成明确的实验开关，并先在干净工程里逐级验证。
@@ -618,9 +620,10 @@ Editor 侧也必须统一走公共 AOV 遮罩 UI。`DrawAovMaskProperties` / `Dr
 3. HoPost DropShadow 改读 HoAOV mask/depth，让投影从临时 subject mask 中解耦。
 4. HoPost EdgeLight / Outline 改读 HoAOV normal/mask/depth。
 5. 新增 `HoAovGroup` 空物体组件，用于批量指定 Object AOV、groupId、flags 和角色部件分组。
-6. 给 lilToon/lilPBR shader 模板加入真正的 `HoAOV` pass。
-7. 增加 thickness、curvature、velocity 等高级通道。
-8. 根据需要增加 HTrace bridge，但不作为第一阶段目标。
+6. 将 `HoAovGroup` Inspector 做成面向用户的 RSUV 分组面板；将 `HoAovSubject` Inspector 标记为高级/兼容 MPB 覆盖面板。
+7. 给 lilToon/lilPBR shader 模板加入真正的 `HoAOV` pass。
+8. 增加 thickness、curvature、velocity 等高级通道。
+9. 根据需要增加 HTrace bridge，但不作为第一阶段目标。
 
 ## 非目标
 

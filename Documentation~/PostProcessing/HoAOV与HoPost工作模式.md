@@ -59,17 +59,15 @@ _lilHoAovNormalDepthTexture
 _lilHoAovTangentNormalTexture
 _lilHoAovSurfaceDataTexture
 _lilHoAovCustom0_3Texture
-_lilHoAovCustom4_7Texture
-_lilHoAovCustom8_11Texture
 _lilHoAovObjectCustom0_3Texture
 _lilHoAovObjectCustom4_7Texture
 ```
 
-当前实际稳定使用的是 `Custom0..Custom3`，打包在 `_lilHoAovCustom0_3Texture.rgba`。`Custom4..Custom11` 目前只保留纹理和协议占位，不作为默认可用功能扩展。
+当前实际稳定使用的材质 custom 是 `MaterialCustom0..MaterialCustom3`，打包在 `_lilHoAovCustom0_3Texture.rgba`。`Custom4..Custom11` 的旧预留纹理已从运行时输出链路移除，不作为默认可用功能扩展。
 
-Object AOV 接入后，应新增独立的 ObjectCustom RT，不要复用 `_lilHoAovCustom4_7Texture` / `_lilHoAovCustom8_11Texture` 作为物体语义输出名。材质 custom 和物体 custom 在纹理命名、debug mode 和 HoPost source 中都要分开显示。
+Object AOV 使用独立的 ObjectCustom RT，不复用 `_lilHoAovCustom4_7Texture` / `_lilHoAovCustom8_11Texture` 作为物体语义输出名。材质 custom 和物体 custom 在纹理命名、debug mode 和 HoPost source 中都要分开显示。
 
-重要警告：之前尝试把 `_lilHoAovCustom4_7Texture` 和 `_lilHoAovCustom8_11Texture` 也接成真实 custom 输入时，多次遇到 Unity / URP / SRP 在 shader import 或启动阶段直接崩溃。现象不像普通 shader 编译错误，更像 native 侧对大量材质贴图输入、SRP Batcher 常量布局或 texture binding 数量组合不稳定。因此这两张纹理当前只能视为协议预留名，不要默认给 lilToon / lilPBR 继续补 `Custom4..Custom11` 的独立贴图入口。
+重要警告：之前尝试把 `_lilHoAovCustom4_7Texture` 和 `_lilHoAovCustom8_11Texture` 也接成真实 custom 输入时，多次遇到 Unity / URP / SRP 在 shader import 或启动阶段直接崩溃。现象不像普通 shader 编译错误，更像 native 侧对大量材质贴图输入、SRP Batcher 常量布局或 texture binding 数量组合不稳定。因此这两张旧预留纹理已删除，不要默认给 lilToon / lilPBR 继续补 `Custom4..Custom11` 的独立贴图入口。
 
 ## AOV 数据分层
 
@@ -176,6 +174,39 @@ explicitRenderers[] 用于补充不在列表物体层级里的 Renderer。
 Prefab 的正确用法是在 prefab 内部挂 `HoAovGroup`，并引用同一 prefab stage 内的子物体或 Renderer；实例化后组件再把 RSUV 写到实例 Renderer。不要把 prefab asset 拖到另一个场景对象的 `HoAovGroup` 列表里期待它自动标记某个场景实例，这种跨上下文引用应在 Editor 中警告或拒绝。
 
 `HoAovGroup` 的序列化字段是 authoring 源。RSUV 值本身不序列化，进入 Play Mode、场景载入、prefab 实例化或组件校验后都要重新写入目标 Renderer。Unity 6.3+ 使用 RSUV；RSUV API 不可用时才走 MaterialPropertyBlock 兼容路径，并提示 SRP Batcher 风险。
+
+### HoAovGroup 使用方法
+
+普通对象/角色分组只用 `HoAovGroup`。推荐在角色 prefab 根节点挂一个 `HoAovGroup`，设置 `CharacterId`，然后按语义把对象拖进 8 个列表：
+
+```text
+ObjectCustom0 Character      拖角色根节点或身体/衣服等主体对象
+ObjectCustom1 Face           拖脸部对象
+ObjectCustom2 FrontHair      拖前发对象
+ObjectCustom3 Eye            拖眼睛对象
+ObjectCustom4 EyeRevealArea  拖允许眼睛透出的区域对象
+ObjectCustom5 Accessory      拖配件对象
+ObjectCustom6 Reserved       项目自定义
+ObjectCustom7 Reserved       项目自定义
+```
+
+拖 `GameObject` 时，如果 `列表物体包含子级` 打开，会把底下所有 Renderer 都标上对应 bit；拖 `Renderer` 时只影响这个 Renderer。一个 Renderer 可以出现在多个列表里，最终 bit 会 OR，例如前发可以同时在 `Character` 和 `FrontHair` 中。
+
+`CharacterId` / `PartId` 是 0..255 的数字。`ObjectCustom0..7` 才是 8 个可多选开关。多角色眼透或角色合成时，前发、眼睛和眼透区域应使用同一个 `CharacterId`，合成时再比较 SameCharacterId。
+
+### HoAovSubject 使用方法
+
+`HoAovSubject` 不是 Object AOV 分组入口。它是高级/兼容覆盖组件，用于把系统 AOV、旧式 ID、厚度、曲率或 `MaterialCustom0..3` 值通过 MaterialPropertyBlock 写到子级 Renderer。普通角色部件分组不要用它，优先用 `HoAovGroup`。
+
+典型使用场景：
+
+```text
+需要临时覆盖某个对象的 maskWeight / thickness / curvature
+需要用 MPB 覆盖 MaterialCustom0..3，而不是改材质资产
+需要兼容旧的 HoAovSubject 场景
+```
+
+注意：`HoAovSubject` 使用 MaterialPropertyBlock，可能影响 SRP Batcher。Object AOV 的 `CharacterId / PartId / ObjectCustom0..7` 主路径由 `HoAovGroup` 写 RSUV，不要在 `HoAovSubject` 里寻找这些列表。
 
 Object AOV 不放进 Volume 的原因：Volume 适合混合后处理参数，不适合混合离散 Renderer 列表。列表在空间权重里很难定义“半影响”或“区域内才属于某组”。Object AOV 属于场景/角色语义，应该跟 prefab 或空物体层级走。
 
@@ -538,8 +569,9 @@ cutout 洞里黑，背后对象没露出
 5. 需要物体/部件分组时，在角色根节点、头发、脸、眼睛或配件空物体上挂 `HoAovGroup`。
 6. `HoAovGroup` 的 8 个 ObjectCustom 列表中拖入 GameObject 或 Renderer，表示对应 ObjectCustom bit 写 1。
 7. Unity 6.3+ 下 `HoAovGroup` 将最终 object mask、characterId、partId 和 flags 打包进 RSUV；RSUV 不可用时才走 MPB 兼容模式。
-8. HoPost 图层打开 `AOV Mask`，选择需要的 source 和 mask mode。
-9. 调试时先用 `debugAovMask`，确认 mask 后再调具体效果参数。
+8. 只有需要覆盖系统 AOV、厚度、曲率或 MaterialCustom0..3 时，才额外挂 `HoAovSubject`。
+9. HoPost 图层打开 `AOV Mask`，选择需要的 source 和 mask mode。
+10. 调试时先看 HoAOV debug view 的原始 `ObjectCustom0..7`，再用 HoPost 图层的 `debugAovMask` 确认消费结果。
 
 材质或 shader 侧新增功能时：
 

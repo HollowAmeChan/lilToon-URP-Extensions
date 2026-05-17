@@ -17,8 +17,8 @@ namespace lilToon.URP.Extensions.AOV
         public const string TangentNormalTextureName = "_lilHoAovTangentNormalTexture";
         public const string SurfaceDataTextureName = "_lilHoAovSurfaceDataTexture";
         public const string Custom0TextureName = "_lilHoAovCustom0_3Texture";
-        public const string Custom1TextureName = "_lilHoAovCustom4_7Texture";
-        public const string Custom2TextureName = "_lilHoAovCustom8_11Texture";
+        public const string ObjectCustom0TextureName = "_lilHoAovObjectCustom0_3Texture";
+        public const string ObjectCustom1TextureName = "_lilHoAovObjectCustom4_7Texture";
         public const string DepthTextureName = "_lilHoAovDepthTexture";
 
         public const string MaskWeightName = "_HoAovMaskWeight";
@@ -33,6 +33,7 @@ namespace lilToon.URP.Extensions.AOV
         public const string UtilityName = "_HoAovUtility";
         public const string DebugColorName = "_HoAovDebugColor";
         public const string CustomValues0Name = "_HoAovCustomValues0";
+        public const string ObjectCustomMaskName = "_HoAovObjectCustomMask";
 
         public static readonly ShaderTagId ShaderTagId = new ShaderTagId(ShaderPassName);
 
@@ -43,8 +44,8 @@ namespace lilToon.URP.Extensions.AOV
         public static readonly int TangentNormalTextureId = Shader.PropertyToID(TangentNormalTextureName);
         public static readonly int SurfaceDataTextureId = Shader.PropertyToID(SurfaceDataTextureName);
         public static readonly int Custom0TextureId = Shader.PropertyToID(Custom0TextureName);
-        public static readonly int Custom1TextureId = Shader.PropertyToID(Custom1TextureName);
-        public static readonly int Custom2TextureId = Shader.PropertyToID(Custom2TextureName);
+        public static readonly int ObjectCustom0TextureId = Shader.PropertyToID(ObjectCustom0TextureName);
+        public static readonly int ObjectCustom1TextureId = Shader.PropertyToID(ObjectCustom1TextureName);
         public static readonly int DebugModeId = Shader.PropertyToID("_HoAovDebugMode");
         public static readonly int DebugDepthParamsId = Shader.PropertyToID("_HoAovDebugDepthParams");
 
@@ -60,5 +61,6 @@ namespace lilToon.URP.Extensions.AOV
         public static readonly int UtilityId = Shader.PropertyToID(UtilityName);
         public static readonly int DebugColorId = Shader.PropertyToID(DebugColorName);
         public static readonly int CustomValues0Id = Shader.PropertyToID(CustomValues0Name);
+        public static readonly int ObjectCustomMaskId = Shader.PropertyToID(ObjectCustomMaskName);
     }
 }

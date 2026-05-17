@@ -15,6 +15,7 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
         [HideInInspector] _HoAovUtility ("HoAOV Utility", Float) = 0
         [HideInInspector] _HoAovDebugColor ("HoAOV Debug Color", Color) = (1, 1, 1, 1)
         [HideInInspector] _HoAovCustomValues0 ("HoAOV Custom 0-3", Vector) = (0, 0, 0, 0)
+        [HideInInspector] _HoAovObjectCustomMask ("HoAOV Object Custom Mask", Float) = 0
     }
 
     SubShader
@@ -54,6 +55,7 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
             float _HoAovUtility;
             float4 _HoAovDebugColor;
             float4 _HoAovCustomValues0;
+            float _HoAovObjectCustomMask;
 
             struct Attributes
             {
@@ -77,8 +79,8 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
                 half4 tangentNormal : SV_Target2;
                 half4 surfaceData : SV_Target3;
                 half4 custom0 : SV_Target4;
-                half4 custom1 : SV_Target5;
-                half4 custom2 : SV_Target6;
+                half4 objectCustom0 : SV_Target5;
+                half4 objectCustom1 : SV_Target6;
             };
 
             float HasBit(float value, float bitValue)
@@ -103,6 +105,34 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
                     values.y * HasBit(_HoAovCustomWriteMask, exp2(startBit + 1.0)),
                     values.z * HasBit(_HoAovCustomWriteMask, exp2(startBit + 2.0)),
                     values.w * HasBit(_HoAovCustomWriteMask, exp2(startBit + 3.0)));
+            }
+
+            float ByteToFloat(uint value, uint shift)
+            {
+                return (float)((value >> shift) & 255u);
+            }
+
+            float HasObjectCustomBit(uint mask, uint bitIndex)
+            {
+                return (float)((mask >> bitIndex) & 1u);
+            }
+
+            float4 DecodeObjectCustom0(uint mask)
+            {
+                return float4(
+                    HasObjectCustomBit(mask, 0u),
+                    HasObjectCustomBit(mask, 1u),
+                    HasObjectCustomBit(mask, 2u),
+                    HasObjectCustomBit(mask, 3u));
+            }
+
+            float4 DecodeObjectCustom1(uint mask)
+            {
+                return float4(
+                    HasObjectCustomBit(mask, 4u),
+                    HasObjectCustomBit(mask, 5u),
+                    HasObjectCustomBit(mask, 6u),
+                    HasObjectCustomBit(mask, 7u));
             }
 
             Varyings Vert(Attributes input)
@@ -136,14 +166,19 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
 
                 float3 normalWS = normalize(input.normalWS);
                 float linearDepth = LinearEyeDepth(input.positionCS.z, _ZBufferParams);
-                float effectiveObjectId = lerp(input.objectSeed * 1000.0, _HoAovObjectId, step(0.5, abs(_HoAovObjectId)));
+                uint rendererUserValue = unity_RendererUserValue;
+                bool hasRendererUserValue = rendererUserValue != 0u;
+                uint objectCustomMask = hasRendererUserValue ? (rendererUserValue & 255u) : (uint)round(saturate(_HoAovObjectCustomMask / 255.0) * 255.0);
+                float effectiveGroupId = hasRendererUserValue ? ByteToFloat(rendererUserValue, 8u) : _HoAovGroupId;
+                float effectiveObjectId = hasRendererUserValue ? ByteToFloat(rendererUserValue, 16u) : lerp(input.objectSeed * 1000.0, _HoAovObjectId, step(0.5, abs(_HoAovObjectId)));
+                float effectiveFlags = hasRendererUserValue ? ByteToFloat(rendererUserValue, 24u) : _HoAovFlags;
 
                 FragmentOutput output;
                 output.maskId = half4(
                     subjectCoverage * maskEnabled,
-                    EncodeScalar(_HoAovGroupId) * idEnabled * subjectValid,
+                    EncodeScalar(effectiveGroupId) * idEnabled * subjectValid,
                     EncodeScalar(effectiveObjectId) * idEnabled * subjectValid,
-                    EncodeScalar(_HoAovFlags) * flagsEnabled * subjectValid);
+                    EncodeScalar(effectiveFlags) * flagsEnabled * subjectValid);
                 output.normalDepth = half4((normalWS * 0.5 + 0.5) * worldNormalEnabled * subjectValid, linearDepth * linearDepthEnabled * subjectValid);
                 output.tangentNormal = half4(float3(0.5, 0.5, 1.0) * tangentNormalEnabled * subjectValid, tangentNormalEnabled * subjectValid);
                 output.surfaceData = half4(
@@ -152,8 +187,8 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
                     EncodeScalar(_HoAovMaterialClass) * materialEnabled * subjectValid,
                     saturate(_HoAovUtility) * utilityEnabled * subjectValid);
                 output.custom0 = half4(ApplyCustomWriteMask(_HoAovCustomValues0, 0.0) * subjectValid);
-                output.custom1 = half4(0.0, 0.0, 0.0, 0.0);
-                output.custom2 = half4(0.0, 0.0, 0.0, 0.0);
+                output.objectCustom0 = half4(DecodeObjectCustom0(objectCustomMask) * subjectValid);
+                output.objectCustom1 = half4(DecodeObjectCustom1(objectCustomMask) * subjectValid);
                 return output;
             }
             ENDHLSL

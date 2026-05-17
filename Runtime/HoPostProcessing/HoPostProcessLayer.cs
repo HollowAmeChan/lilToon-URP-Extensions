@@ -16,7 +16,15 @@ namespace lilToon.URP.Extensions.PostProcessing
         Custom0 = 8,
         Custom1 = 9,
         Custom2 = 10,
-        Custom3 = 11
+        Custom3 = 11,
+        ObjectCustom0 = 12,
+        ObjectCustom1 = 13,
+        ObjectCustom2 = 14,
+        ObjectCustom3 = 15,
+        ObjectCustom4 = 16,
+        ObjectCustom5 = 17,
+        ObjectCustom6 = 18,
+        ObjectCustom7 = 19
     }
 
     public enum HoPostAovMaskMode
