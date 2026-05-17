@@ -367,7 +367,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static void ApplyShoostDustWeatherPreset(SerializedProperty element, ShoostPostProcessEffect effect)
         {
-            ApplyShoostWeatherPreset(element, effect, 3, new Color(1.0f, 0.86f, 0.58f, 1.0f), new Vector4(0.45f, 1.25f, 0.85f, 0.7f), new Vector4(1.0f, 1.35f, 1.25f, 0.9f));
+            ApplyShoostWeatherPreset(element, effect, 3, new Color(0.96f, 0.88f, 0.68f, 1.0f), new Vector4(0.62f, 0.78f, 0.82f, 0.95f), new Vector4(1.15f, 1.30f, 0.72f, 0.82f));
         }
 
         private static void ApplyShoostWeatherPreset(SerializedProperty element, ShoostPostProcessEffect effect, int particle, Color color, Vector4 particleParams, Vector4 variationParams)

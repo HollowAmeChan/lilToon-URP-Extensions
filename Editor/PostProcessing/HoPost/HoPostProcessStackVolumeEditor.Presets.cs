@@ -116,6 +116,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     AddHoPostPresetMenuItem(menu, propertyPath, effect, "硬投影", ApplyHoPostHardDropShadowPreset);
                     AddHoPostPresetMenuItem(menu, propertyPath, effect, "长投影", ApplyHoPostLongDropShadowPreset);
                     break;
+                case HoPostProcessEffect.DepthOfField:
+                    AddHoPostPresetMenuItem(menu, propertyPath, effect, "Gaussian 远景虚化", ApplyHoPostGaussianDepthOfFieldPreset);
+                    AddHoPostPresetMenuItem(menu, propertyPath, effect, "Bokeh 人像虚化", ApplyHoPostBokehDepthOfFieldPreset);
+                    break;
             }
         }
 
@@ -206,6 +210,24 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Multiply);
             SetVector4(element, "parameters0", new Vector4(0.6f, -38.0f, 0.75f, 14.0f));
             SetVector4(element, "parameters1", new Vector4(2.5f, 0.0f, 0.0f, 1.0f));
+        }
+
+        private static void ApplyHoPostGaussianDepthOfFieldPreset(SerializedProperty element, HoPostProcessEffect effect)
+        {
+            ApplyHoPostDefaultPreset(element, effect);
+            SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
+            SetVector4(element, "parameters0", new Vector4(0.0f, 10.0f, 50.0f, 5.6f));
+            SetVector4(element, "parameters1", new Vector4(8.0f, 28.0f, 7.0f, 1.0f));
+            SetVector4(element, "parameters2", new Vector4(5.0f, 1.0f, 0.0f, 0.0f));
+        }
+
+        private static void ApplyHoPostBokehDepthOfFieldPreset(SerializedProperty element, HoPostProcessEffect effect)
+        {
+            ApplyHoPostDefaultPreset(element, effect);
+            SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
+            SetVector4(element, "parameters0", new Vector4(1.0f, 6.0f, 70.0f, 2.8f));
+            SetVector4(element, "parameters1", new Vector4(6.0f, 20.0f, 10.0f, 1.0f));
+            SetVector4(element, "parameters2", new Vector4(6.0f, 0.85f, 0.0f, 0.0f));
         }
 
         private readonly struct AovMaskState

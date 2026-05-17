@@ -251,12 +251,20 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/Weather"
                 center = lerp(0.5, 0.18 + center * 0.64, saturate(randomness));
                 float2 d = local - center;
                 d.x *= aspect;
-                float particleSize = size * lerp(1.0, lerp(0.45, 1.85, ShoostWeatherHash12(cell + seed + 101.0)), saturate(randomness));
-                float particleSoftness = softness * lerp(1.0, lerp(0.65, 1.8, rnd), saturate(randomness));
-                float core = smoothstep(particleSize, particleSize * 0.25, length(d));
-                float halo = smoothstep(particleSize + particleSoftness, particleSize, length(d)) * 0.45;
-                float shimmer = lerp(1.0, lerp(0.55, 1.15, ShoostWeatherHash12(cell + floor(_Time.y * 0.8) + seed + 19.0)), saturate(shimmerAmount));
-                return (core + halo) * active * shimmer;
+                float angle = ShoostWeatherHash12(cell + seed + 151.0) * 6.2831853;
+                float2 axis = float2(cos(angle), sin(angle));
+                float2 side = float2(-axis.y, axis.x);
+                float stretch = lerp(1.25, 2.65, ShoostWeatherHash12(cell + seed + 83.0));
+                float particleSize = max(size * lerp(1.0, lerp(0.55, 1.70, ShoostWeatherHash12(cell + seed + 101.0)), saturate(randomness)), 0.0001);
+                float particleSoftness = softness * lerp(1.0, lerp(0.90, 1.65, rnd), saturate(randomness));
+                float2 q = float2(dot(d, axis) / stretch, dot(d, side));
+                float dist = length(q);
+                float veil = smoothstep(particleSize + particleSoftness * 1.85, 0.0, dist);
+                float body = exp2(-dist * dist / max(particleSize * particleSize * 1.75, 0.000001)) * 0.38;
+                float breakup = lerp(1.0, lerp(0.62, 1.08, ShoostWeatherNoise((p + seed) * 1.65 + float2(rnd, seed * 0.01))), saturate(randomness));
+                float rimFade = lerp(0.55, 1.0, smoothstep(particleSize + particleSoftness, 0.0, dist));
+                float shimmer = lerp(1.0, lerp(0.72, 1.08, ShoostWeatherHash12(cell + floor(_Time.y * 0.8) + seed + 19.0)), saturate(shimmerAmount));
+                return saturate((veil * 0.72 + body) * breakup * rimFade) * active * shimmer;
             }
 
             float ShoostWeatherDust(float2 uv, float rate, float focusDistance, float blurAmount, float blurSoftness, float blurCurve, float speedMul, float countMul, float sizeMul, float randomness, float depthSpread, float verticalAmount, float shimmerAmount, float driftAmount)
@@ -272,13 +280,13 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/Weather"
                 float midBlur = ShoostWeatherDepthBlur(ShoostWeatherScaledDepth(0.46, depthSpread), focusDistance, blurAmount, blurSoftness, blurCurve);
 
                 float drift = max(driftAmount, 0.0);
-                float fine = ShoostWeatherDustLayer(uv, 28.0 / max(sizeMul, 0.1), -0.030 * speedMul, saturate(lerp(0.04, 0.18, r) * countMul), 0.012 * sizeMul, 0.020 * sizeMul, 0.030 * drift, 211.0, randomness, shimmerAmount);
-                float mid = ShoostWeatherDustLayer(uv, lerp(15.0, 10.0, midBlur) / max(sizeMul, 0.1), -0.020 * speedMul, saturate(lerp(0.05, 0.20, r) * countMul), lerp(0.022, 0.042, midBlur) * sizeMul, 0.050 * sizeMul, 0.045 * drift, 251.0, randomness, shimmerAmount);
-                float near = ShoostWeatherDustLayer(uv, lerp(7.0, 4.5, nearBlur) / max(sizeMul, 0.1), -0.010 * speedMul, saturate(lerp(0.03, 0.12, r) * countMul), lerp(0.040, 0.110, nearBlur) * sizeMul, 0.120 * sizeMul, 0.060 * drift, 307.0, randomness, shimmerAmount);
+                float fine = ShoostWeatherDustLayer(uv, 30.0 / max(sizeMul, 0.1), -0.028 * speedMul, saturate(lerp(0.035, 0.150, r) * countMul), 0.008 * sizeMul, 0.040 * sizeMul, 0.030 * drift, 211.0, randomness, shimmerAmount);
+                float mid = ShoostWeatherDustLayer(uv, lerp(15.0, 10.0, midBlur) / max(sizeMul, 0.1), -0.018 * speedMul, saturate(lerp(0.045, 0.165, r) * countMul), lerp(0.018, 0.034, midBlur) * sizeMul, 0.085 * sizeMul, 0.045 * drift, 251.0, randomness, shimmerAmount);
+                float near = ShoostWeatherDustLayer(uv, lerp(7.0, 4.5, nearBlur) / max(sizeMul, 0.1), -0.009 * speedMul, saturate(lerp(0.025, 0.090, r) * countMul), lerp(0.034, 0.080, nearBlur) * sizeMul, 0.180 * sizeMul, 0.060 * drift, 307.0, randomness, shimmerAmount);
 
                 float hazeNoise = ShoostWeatherFbm(uv * 4.2 / max(sizeMul, 0.1) + _Time.y * float2(0.035, -0.012) * speedMul);
-                float haze = smoothstep(0.36, 0.86, hazeNoise) * lerp(0.30, 1.0, lowerMass + midBand * 0.6) * r * 0.10;
-                float layers = fine * (0.34 + topDust * 0.34) + mid * (0.46 + midBand * 0.34) + near * (0.28 + lowerMass * 0.34);
+                float haze = smoothstep(0.34, 0.82, hazeNoise) * lerp(0.30, 1.0, lowerMass + midBand * 0.6) * r * 0.12;
+                float layers = fine * (0.30 + topDust * 0.30) + mid * (0.42 + midBand * 0.30) + near * (0.20 + lowerMass * 0.25);
                 return saturate((layers + haze) * lerp(0.65, 1.18, midBand + lowerMass * 0.4));
             }
 
@@ -356,10 +364,10 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/Weather"
                 }
                 else
                 {
-                    float3 dustTint = tint * float3(1.12, 0.98, 0.78);
+                    float3 dustTint = tint * float3(1.04, 0.98, 0.86);
                     alpha = ShoostWeatherDust(input.texcoord, rate, focusDistance, blurAmount, blurSoftness, blurCurve, speedMul, countMul, sizeMul, randomness, depthSpread, verticalAmount, shimmerAmount, driftAmount) * amount;
-                    result = ShoostWeatherBlend(source.rgb, dustTint, alpha * 0.86, blendMode);
-                    result = max(result + dustTint * alpha * 0.06, 0.0);
+                    result = ShoostWeatherBlend(source.rgb, dustTint, alpha * 0.72, blendMode);
+                    result = max(result + dustTint * alpha * 0.035, 0.0);
                 }
 
                 return half4(result, source.a);

@@ -8,6 +8,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public const string EdgeLightShaderName = "Hidden/lilToon-HoPost/URP/HoPost/EdgeLight";
         public const string OutlineShaderName = "Hidden/lilToon-HoPost/URP/HoPost/Outline";
         public const string DropShadowShaderName = "Hidden/lilToon-HoPost/URP/HoPost/DropShadow";
+        public const string DepthOfFieldShaderName = "Hidden/lilToon-HoPost/URP/HoPost/DepthOfField";
         public const string SubjectMaskShaderName = "Hidden/lilToon-HoPost/URP/HoPost/SubjectMask";
         public const string TempTextureAName = "_lilHoPostProcessTempA";
         public const string TempTextureBName = "_lilHoPostProcessTempB";

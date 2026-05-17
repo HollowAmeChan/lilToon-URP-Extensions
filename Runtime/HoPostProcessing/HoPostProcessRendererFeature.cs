@@ -751,7 +751,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 }
 
                 HoPostProcessEffect effect = runtimeLayer.settings.effect;
-                if (effect == HoPostProcessEffect.Outline || EffectRequiresSubjectMask(effect))
+                if (effect == HoPostProcessEffect.Outline || effect == HoPostProcessEffect.DepthOfField || EffectRequiresSubjectMask(effect))
                 {
                     return true;
                 }

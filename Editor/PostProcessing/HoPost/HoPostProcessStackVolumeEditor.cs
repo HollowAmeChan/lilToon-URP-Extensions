@@ -24,6 +24,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "双向锐化"
         };
 
+        private static readonly string[] DepthOfFieldModes =
+        {
+            "Gaussian",
+            "Bokeh"
+        };
+
         private static readonly string[] AovSources =
         {
             "遮罩",
@@ -75,6 +81,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(HoPostProcessEffect.EdgeLight, "边缘光", "icon_RimLight_v1"),
             new EffectToggleEntry(HoPostProcessEffect.Outline, "轮廓", "icon_OutLine_v1"),
             new EffectToggleEntry(HoPostProcessEffect.DropShadow, "投影", "icon_DropShadow_v1"),
+            new EffectToggleEntry(HoPostProcessEffect.DepthOfField, "景深", "icon_Effects_v1"),
             new EffectToggleEntry(HoPostProcessEffect.CustomMaterial, "自定义", "icon_Effects_v1")
         };
 
@@ -174,6 +181,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 rect,
                 ref y,
                 element,
+                includeColorBlend: effect != HoPostProcessEffect.DepthOfField,
                 includeTexture: effect == HoPostProcessEffect.CustomMaterial,
                 includePassIndex: effect == HoPostProcessEffect.CustomMaterial,
                 includeMaterialOverride: effect == HoPostProcessEffect.CustomMaterial);
@@ -190,6 +198,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case HoPostProcessEffect.DropShadow:
                     DrawDropShadowProperties(rect, ref y, element);
                     break;
+                case HoPostProcessEffect.DepthOfField:
+                    DrawDepthOfFieldProperties(rect, ref y, element);
+                    break;
             }
 
             EditorGUI.indentLevel--;
@@ -203,6 +214,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     return 15 + GetAovLineCount(element);
                 case HoPostProcessEffect.Outline:
                     return 11 + GetAovLineCount(element);
+                case HoPostProcessEffect.DepthOfField:
+                    return GetDepthOfFieldLineCount(element) + GetAovLineCount(element);
                 case HoPostProcessEffect.CustomMaterial:
                     return 7 + GetAovLineCount(element);
                 case HoPostProcessEffect.DropShadow:
@@ -214,6 +227,13 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private static int GetAovLineCount(SerializedProperty element)
         {
             return HoPostAovMaskEditorUtility.GetLineCount(element);
+        }
+
+        private static int GetDepthOfFieldLineCount(SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            int mode = parameters0 != null ? Mathf.Clamp(Mathf.RoundToInt(parameters0.vector4Value.x), 0, DepthOfFieldModes.Length - 1) : 1;
+            return mode == 0 ? 6 : 8;
         }
 
         private float DrawFoldoutLine(Rect rect, float y, SerializedProperty element, SerializedProperty enabled)
@@ -259,10 +279,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return y + LineHeight + LineSpacing;
         }
 
-        private static void DrawCoreFields(Rect rect, ref float y, SerializedProperty element, bool includeTexture, bool includePassIndex, bool includeMaterialOverride)
+        private static void DrawCoreFields(Rect rect, ref float y, SerializedProperty element, bool includeColorBlend, bool includeTexture, bool includePassIndex, bool includeMaterialOverride)
         {
+            if (includeColorBlend)
+            {
             DrawPropertyLine(rect, ref y, element, "color", "颜色");
             DrawPropertyLine(rect, ref y, element, "blendMode", "混合模式");
+            }
+
             if (includeTexture)
             {
                 DrawPropertyLine(rect, ref y, element, "texture", "纹理");
@@ -391,6 +415,66 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             parameters0.vector4Value = p0;
             parameters1.vector4Value = p1;
+        }
+
+        private static void DrawDepthOfFieldProperties(Rect rect, ref float y, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
+            SerializedProperty parameters2 = element.FindPropertyRelative("parameters2");
+            if (parameters0 == null || parameters1 == null || parameters2 == null)
+            {
+                return;
+            }
+
+            Vector4 p0 = parameters0.vector4Value;
+            Vector4 p1 = parameters1.vector4Value;
+            Vector4 p2 = parameters2.vector4Value;
+            if (p0 == Vector4.zero && p1 == Vector4.zero && p2 == Vector4.zero)
+            {
+                p0 = new Vector4(1.0f, 10.0f, 50.0f, 5.6f);
+                p1 = new Vector4(10.0f, 30.0f, 8.0f, 1.0f);
+                p2 = new Vector4(5.0f, 1.0f, 0.0f, 0.0f);
+            }
+
+            int mode = EditorGUI.Popup(
+                new Rect(rect.x, y, rect.width, LineHeight),
+                "模式",
+                Mathf.Clamp(Mathf.RoundToInt(p0.x), 0, DepthOfFieldModes.Length - 1),
+                DepthOfFieldModes);
+            p0.x = mode;
+            y += LineHeight + LineSpacing;
+
+            if (mode == 0)
+            {
+                p1.x = EditorGUI.FloatField(new Rect(rect.x, y, rect.width, LineHeight), "开始距离", Mathf.Max(0.0f, p1.x));
+                y += LineHeight + LineSpacing;
+                p1.y = EditorGUI.FloatField(new Rect(rect.x, y, rect.width, LineHeight), "结束距离", Mathf.Max(p1.x + 0.001f, p1.y));
+                y += LineHeight + LineSpacing;
+                p1.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "最大半径", p1.z, 0.0f, 16.0f);
+                y += LineHeight + LineSpacing;
+                p1.w = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "高质量采样", p1.w > 0.5f) ? 1.0f : 0.0f;
+                y += LineHeight + LineSpacing;
+            }
+            else
+            {
+                p0.y = EditorGUI.FloatField(new Rect(rect.x, y, rect.width, LineHeight), "焦点距离", Mathf.Max(0.001f, p0.y));
+                y += LineHeight + LineSpacing;
+                p0.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "焦距", p0.z, 1.0f, 300.0f);
+                y += LineHeight + LineSpacing;
+                p0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "光圈", p0.w, 1.0f, 32.0f);
+                y += LineHeight + LineSpacing;
+                p2.x = EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "叶片数量", Mathf.Clamp(Mathf.RoundToInt(p2.x), 3, 9), 3, 9);
+                y += LineHeight + LineSpacing;
+                p2.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "叶片弧度", p2.y, 0.0f, 1.0f);
+                y += LineHeight + LineSpacing;
+                p2.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "叶片旋转", p2.z, -180.0f, 180.0f);
+                y += LineHeight + LineSpacing;
+            }
+
+            parameters0.vector4Value = p0;
+            parameters1.vector4Value = p1;
+            parameters2.vector4Value = p2;
         }
 
         private static void DrawAovMaskProperties(Rect rect, ref float y, SerializedProperty element)
@@ -698,7 +782,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             SerializedProperty effect = element.FindPropertyRelative("effect");
             int value = effect != null ? effect.enumValueIndex : 0;
-            return (HoPostProcessEffect)Mathf.Clamp(value, 0, 3);
+            return (HoPostProcessEffect)Mathf.Clamp(value, 0, 4);
         }
 
         private static string GetEffectDisplayName(HoPostProcessEffect effect)
@@ -711,6 +795,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     return "轮廓";
                 case HoPostProcessEffect.DropShadow:
                     return "投影";
+                case HoPostProcessEffect.DepthOfField:
+                    return "景深";
                 case HoPostProcessEffect.CustomMaterial:
                 default:
                     return "自定义";
@@ -766,6 +852,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters0", new Vector4(0.35f, -45.0f, 0.85f, 6.0f));
                     SetVector4(element, "parameters1", new Vector4(1.0f, 0.0f, 0.0f, 1.0f));
                     SetBool(element, "useAovMask", true);
+                    break;
+                case HoPostProcessEffect.DepthOfField:
+                    SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
+                    SetVector4(element, "parameters0", new Vector4(1.0f, 10.0f, 50.0f, 5.6f));
+                    SetVector4(element, "parameters1", new Vector4(10.0f, 30.0f, 8.0f, 1.0f));
+                    SetVector4(element, "parameters2", new Vector4(5.0f, 1.0f, 0.0f, 0.0f));
                     break;
                 case HoPostProcessEffect.CustomMaterial:
                     SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
