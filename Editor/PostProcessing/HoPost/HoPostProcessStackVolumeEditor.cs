@@ -580,6 +580,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetVector4(element, "parameters3", Vector4.zero);
             SetVector4(element, "parameters4", Vector4.zero);
             SetVector4(element, "parameters5", Vector4.zero);
+            SetObjectReference(element, "depthOfFieldFocusTarget", null);
+            SetString(element, "depthOfFieldFocusTargetPath", string.Empty);
+            SetFloat(element, "depthOfFieldFocusOffset", 0.0f);
             SetBool(element, "useAovMask", false);
             SetEnum(element, "aovSource", (int)HoPostAovSource.Mask);
             SetEnum(element, "aovMaskMode", (int)HoPostAovMaskMode.Direct);
@@ -615,8 +618,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case HoPostProcessEffect.DepthOfField:
                     SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
                     SetVector4(element, "parameters0", new Vector4(1.0f, 10.0f, 50.0f, 5.6f));
-                    SetVector4(element, "parameters1", new Vector4(10.0f, 30.0f, 8.0f, 1.0f));
+                    SetVector4(element, "parameters1", new Vector4(10.0f, 30.0f, 18.0f, 1.0f));
                     SetVector4(element, "parameters2", new Vector4(5.0f, 1.0f, 0.0f, 0.0f));
+                    SetVector4(element, "parameters3", new Vector4(3.0f, 1.35f, 1.0f, 1.0f));
                     break;
                 case HoPostProcessEffect.PostLighting:
                     SetColor(element, "color", new Color(1.0f, 0.82f, 0.55f, 1.0f));

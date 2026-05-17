@@ -314,6 +314,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             public HoPostProcessLayer layer;
             public Material material;
             public int passIndex;
+            public float dynamicFocusDistance;
             public bool isEdgeLight;
             public bool isDropShadow;
             public bool isPostLighting;
@@ -428,7 +429,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                     }
 
                     RTHandle destination = writeToA ? tempTextureA : tempTextureB;
-                    ApplyLayerProperties(runtimeLayer.settings, runtimeLayer.material);
+                    float dynamicFocusDistance = ResolveDepthOfFieldFocusDistance(runtimeLayer.settings, renderingData.cameraData.camera);
+                    ApplyLayerProperties(runtimeLayer.settings, runtimeLayer.material, dynamicFocusDistance);
                     if (EffectRequiresSubjectMask(runtimeLayer.settings.effect))
                     {
                         bool hasSubjectMask = subjectMaskTexture != null && subjectMaskMaterial != null;
@@ -487,6 +489,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
+            UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             if (resourceData.isActiveTargetBackBuffer)
             {
                 return;
@@ -528,6 +531,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     passData.layer = runtimeLayer.settings;
                     passData.material = runtimeLayer.material;
                     passData.passIndex = Mathf.Max(0, runtimeLayer.settings.passIndex);
+                    passData.dynamicFocusDistance = ResolveDepthOfFieldFocusDistance(runtimeLayer.settings, cameraData.camera);
                     passData.isEdgeLight = runtimeLayer.settings.effect == HoPostProcessEffect.EdgeLight;
                     passData.isDropShadow = runtimeLayer.settings.effect == HoPostProcessEffect.DropShadow;
                     passData.isPostLighting = runtimeLayer.settings.effect == HoPostProcessEffect.PostLighting;
@@ -576,7 +580,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     builder.AllowPassCulling(false);
                     builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                     {
-                        ApplyLayerProperties(data.layer, data.material);
+                        ApplyLayerProperties(data.layer, data.material, data.dynamicFocusDistance);
                         if (data.isEdgeLight)
                         {
                             bool hasAov = data.useAovMaskTexture && data.useAovNormalDepth;
@@ -889,13 +893,19 @@ namespace lilToon.URP.Extensions.PostProcessing
                    color.antiAliasing == depth.antiAliasing;
         }
 
-        private static void ApplyLayerProperties(HoPostProcessLayer layer, Material material)
+        private static void ApplyLayerProperties(HoPostProcessLayer layer, Material material, float dynamicFocusDistance = -1.0f)
         {
             material.SetFloat(HoPostProcessShaderConstants.IntensityId, layer.intensity);
             material.SetFloat(HoPostProcessShaderConstants.LayerBlendModeId, (float)layer.blendMode);
             material.SetColor(HoPostProcessShaderConstants.LayerColorId, layer.color);
             material.SetFloat(HoPostProcessShaderConstants.LayerTextureEnabledId, layer.texture != null ? 1.0f : 0.0f);
-            material.SetVector(HoPostProcessShaderConstants.LayerParams0Id, layer.parameters0);
+            Vector4 parameters0 = layer.parameters0;
+            if (dynamicFocusDistance > 0.0f)
+            {
+                parameters0.y = dynamicFocusDistance;
+            }
+
+            material.SetVector(HoPostProcessShaderConstants.LayerParams0Id, parameters0);
             material.SetVector(HoPostProcessShaderConstants.LayerParams1Id, layer.parameters1);
             material.SetVector(HoPostProcessShaderConstants.LayerParams2Id, layer.parameters2);
             material.SetVector(HoPostProcessShaderConstants.LayerParams3Id, layer.parameters3);
@@ -926,6 +936,50 @@ namespace lilToon.URP.Extensions.PostProcessing
             {
                 material.SetTexture(HoPostProcessShaderConstants.LayerTextureId, layer.texture);
             }
+        }
+
+        private static float ResolveDepthOfFieldFocusDistance(HoPostProcessLayer layer, Camera camera)
+        {
+            if (layer == null ||
+                layer.effect != HoPostProcessEffect.DepthOfField ||
+                camera == null ||
+                Mathf.RoundToInt(layer.parameters0.x) != 2)
+            {
+                return -1.0f;
+            }
+
+            Transform target = ResolveDepthOfFieldFocusTarget(layer);
+            if (target == null)
+            {
+                return -1.0f;
+            }
+
+            Transform cameraTransform = camera.transform;
+            Vector3 targetPosition = ResolveDepthOfFieldFocusTargetPosition(target);
+            float distance = Vector3.Dot(targetPosition - cameraTransform.position, cameraTransform.forward);
+            return Mathf.Max(0.001f, distance + layer.depthOfFieldFocusOffset);
+        }
+
+        private static Transform ResolveDepthOfFieldFocusTarget(HoPostProcessLayer layer)
+        {
+            if (layer.depthOfFieldFocusTarget != null)
+            {
+                return layer.depthOfFieldFocusTarget;
+            }
+
+            if (string.IsNullOrEmpty(layer.depthOfFieldFocusTargetPath))
+            {
+                return null;
+            }
+
+            GameObject target = GameObject.Find(layer.depthOfFieldFocusTargetPath);
+            return target != null ? target.transform : null;
+        }
+
+        private static Vector3 ResolveDepthOfFieldFocusTargetPosition(Transform target)
+        {
+            Renderer renderer = target.GetComponentInChildren<Renderer>();
+            return renderer != null ? renderer.bounds.center : target.position;
         }
     }
 }

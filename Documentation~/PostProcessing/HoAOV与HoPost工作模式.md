@@ -449,6 +449,12 @@ shadow = offset(mask) - mask
 
 投影不透明度为 1 时应该可以输出死黑。不要再把最终阴影强度隐式乘以颜色 alpha，除非 UI 明确把 alpha 当作强度参数。
 
+### DepthOfField
+
+景深是 HoPost 的真实相机深度效果，读取 `_CameraDepthTexture` 计算 CoC，并可叠加 HoPost 的通用 AOV mask。当前模式包括 Gaussian、Bokeh 和目标跟焦 Bokeh。目标跟焦模式会优先使用图层里的 `depthOfFieldFocusTarget`，如果 Volume Profile 作为 asset 无法稳定保存场景对象引用，则回退到 `depthOfFieldFocusTargetPath` 层级路径，用当前相机到目标中心的 eye-depth 动态覆盖焦点距离。
+
+当前 Bokeh 参数里 `parameters1.z` 是最大模糊半径，`parameters3.x/y/z/w` 分别是景深强度、前景虚化、远景虚化和虚化曲线。需要“差别很大”的镜头过渡时，优先使用目标跟焦 Bokeh 预设，再拉高最大半径与景深强度；Shoost 的 `BokehZoomBlur` / `ApertureBokeh` 仍属于最终画面光斑/散景层，不替代这个真实深度景深。
+
 ## 材质侧 HoAOV pass 规则
 
 lilToon / lilPBR 负责提供真正的：

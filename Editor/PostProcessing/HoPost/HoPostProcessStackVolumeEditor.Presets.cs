@@ -124,6 +124,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case HoPostProcessEffect.DepthOfField:
                     AddHoPostPresetMenuItem(menu, propertyPath, effect, "Gaussian 远景虚化", ApplyHoPostGaussianDepthOfFieldPreset);
                     AddHoPostPresetMenuItem(menu, propertyPath, effect, "Bokeh 人像虚化", ApplyHoPostBokehDepthOfFieldPreset);
+                    AddHoPostPresetMenuItem(menu, propertyPath, effect, "目标跟焦强景深", ApplyHoPostTargetDepthOfFieldPreset);
                     break;
             }
         }
@@ -222,8 +223,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ApplyHoPostDefaultPreset(element, effect);
             SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
             SetVector4(element, "parameters0", new Vector4(0.0f, 10.0f, 50.0f, 5.6f));
-            SetVector4(element, "parameters1", new Vector4(8.0f, 28.0f, 7.0f, 1.0f));
+            SetVector4(element, "parameters1", new Vector4(8.0f, 28.0f, 20.0f, 1.0f));
             SetVector4(element, "parameters2", new Vector4(5.0f, 1.0f, 0.0f, 0.0f));
+            SetVector4(element, "parameters3", new Vector4(2.4f, 1.0f, 1.0f, 1.0f));
         }
 
         private static void ApplyHoPostBokehDepthOfFieldPreset(SerializedProperty element, HoPostProcessEffect effect)
@@ -231,8 +233,19 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ApplyHoPostDefaultPreset(element, effect);
             SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
             SetVector4(element, "parameters0", new Vector4(1.0f, 6.0f, 70.0f, 2.8f));
-            SetVector4(element, "parameters1", new Vector4(6.0f, 20.0f, 10.0f, 1.0f));
+            SetVector4(element, "parameters1", new Vector4(6.0f, 20.0f, 34.0f, 1.0f));
             SetVector4(element, "parameters2", new Vector4(6.0f, 0.85f, 0.0f, 0.0f));
+            SetVector4(element, "parameters3", new Vector4(4.0f, 1.45f, 1.2f, 0.9f));
+        }
+
+        private static void ApplyHoPostTargetDepthOfFieldPreset(SerializedProperty element, HoPostProcessEffect effect)
+        {
+            ApplyHoPostDefaultPreset(element, effect);
+            SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
+            SetVector4(element, "parameters0", new Vector4(2.0f, 4.0f, 95.0f, 1.8f));
+            SetVector4(element, "parameters1", new Vector4(4.0f, 18.0f, 56.0f, 1.0f));
+            SetVector4(element, "parameters2", new Vector4(7.0f, 0.78f, 0.0f, 0.0f));
+            SetVector4(element, "parameters3", new Vector4(6.0f, 1.8f, 1.35f, 0.75f));
         }
 
         private static void ApplyHoPostWarmTopPostLightingPreset(SerializedProperty element, HoPostProcessEffect effect)

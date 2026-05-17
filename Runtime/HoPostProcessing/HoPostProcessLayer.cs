@@ -180,6 +180,15 @@ namespace lilToon.URP.Extensions.PostProcessing
         public Vector4 parameters4;
         public Vector4 parameters5;
 
+        [Tooltip("Scene object used by HoPost Depth Of Field target focus mode.")]
+        public Transform depthOfFieldFocusTarget;
+
+        [Tooltip("Fallback scene hierarchy path used when a Volume Profile asset cannot keep a scene object reference.")]
+        public string depthOfFieldFocusTargetPath;
+
+        [Tooltip("Additional camera-space distance offset added to the Depth Of Field focus target.")]
+        public float depthOfFieldFocusOffset;
+
         [Tooltip("Use HoAOV data as a per-layer mask.")]
         public bool useAovMask;
 
