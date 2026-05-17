@@ -269,7 +269,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             for (int i = 0; i < layers.Count; i++)
             {
                 ShoostPostProcessLayer layer = layers[i]?.settings;
-                if (layer != null && (layer.useAovMask || layer.debugAovMask))
+                if (layer != null && ShoostPostProcessAovSupport.SupportsComposite(layer.effect) && (layer.useAovMask || layer.debugAovMask))
                 {
                     return true;
                 }
@@ -340,6 +340,53 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             this.settings = settings;
             this.material = material;
+        }
+    }
+
+    internal static class ShoostPostProcessAovSupport
+    {
+        public static bool SupportsComposite(ShoostPostProcessEffect effect)
+        {
+            switch (effect)
+            {
+                case ShoostPostProcessEffect.AutoWhiteBalance:
+                case ShoostPostProcessEffect.ChangeFrameRate:
+                case ShoostPostProcessEffect.CRTEffects:
+                case ShoostPostProcessEffect.Distortion:
+                case ShoostPostProcessEffect.DitheringCustom:
+                case ShoostPostProcessEffect.DownScaleResolution:
+                case ShoostPostProcessEffect.FilmBreathGateWeave:
+                case ShoostPostProcessEffect.Fisheye:
+                case ShoostPostProcessEffect.GateWeave:
+                case ShoostPostProcessEffect.GrainCustom:
+                case ShoostPostProcessEffect.Gradient:
+                case ShoostPostProcessEffect.IrisBlur:
+                case ShoostPostProcessEffect.LensDistortionCustom:
+                case ShoostPostProcessEffect.MotionTrail:
+                case ShoostPostProcessEffect.Pixelize:
+                case ShoostPostProcessEffect.RGBBlur:
+                case ShoostPostProcessEffect.RGBBlurV2:
+                case ShoostPostProcessEffect.RGBChannelSeparator:
+                case ShoostPostProcessEffect.RGBSplit:
+                case ShoostPostProcessEffect.Tube:
+                case ShoostPostProcessEffect.VignetteCustom:
+                case ShoostPostProcessEffect.RetroLookProBleedCustom:
+                case ShoostPostProcessEffect.RetroLookProNoise2Custom:
+                case ShoostPostProcessEffect.RetroLookProOldFilm2Custom:
+                case ShoostPostProcessEffect.RetroLookProTVEffectCustom:
+                case ShoostPostProcessEffect.TransparentBackground:
+                case ShoostPostProcessEffect.VHS:
+                case ShoostPostProcessEffect.CameraFlash:
+                case ShoostPostProcessEffect.ToonMap:
+                case ShoostPostProcessEffect.Weather:
+                case ShoostPostProcessEffect.BokehZoomBlur:
+                case ShoostPostProcessEffect.ApertureBokeh:
+                case ShoostPostProcessEffect.LensFlare:
+                case ShoostPostProcessEffect.Glow:
+                    return false;
+                default:
+                    return true;
+            }
         }
     }
 
@@ -715,7 +762,10 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         private bool RequiresAovComposite(ShoostPostProcessLayer layer)
         {
-            return aovCompositeMaterial != null && layer != null && (layer.useAovMask || layer.debugAovMask);
+            return aovCompositeMaterial != null &&
+                   layer != null &&
+                   ShoostPostProcessAovSupport.SupportsComposite(layer.effect) &&
+                   (layer.useAovMask || layer.debugAovMask);
         }
 
         private TextureHandle RecordAovCompositeIfNeeded(
@@ -1113,7 +1163,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             Material material = runtimeLayer.material;
             ApplyLayerProperties(layer, material);
 
-            float radius = Mathf.Clamp(layer.parameters0.z, 0.0f, 6.0f);
+            float radius = Mathf.Clamp(layer.parameters0.z, 0.0f, 12.0f);
             int mode = Mathf.Clamp(Mathf.RoundToInt(layer.parameters0.w), 0, 2);
             int downScale = radius > 0.75f ? 2 : 1;
             int iterations = Mathf.Clamp(2 + Mathf.RoundToInt(radius * 1.25f), 2, 10);
@@ -1296,7 +1346,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             ShoostPostProcessLayer layer = runtimeLayer.settings;
             Material material = runtimeLayer.material;
 
-            float radius = Mathf.Clamp(layer.parameters0.z, 0.0f, 6.0f);
+            float radius = Mathf.Clamp(layer.parameters0.z, 0.0f, 12.0f);
             int mode = Mathf.Clamp(Mathf.RoundToInt(layer.parameters0.w), 0, 2);
             int downScale = radius > 0.75f ? 2 : 1;
             int iterations = Mathf.Clamp(2 + Mathf.RoundToInt(radius * 1.25f), 2, 10);

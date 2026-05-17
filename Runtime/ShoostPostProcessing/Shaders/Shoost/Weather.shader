@@ -364,10 +364,9 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/Weather"
                 }
                 else
                 {
-                    float3 dustTint = tint * float3(1.04, 0.98, 0.86);
+                    float3 dustTint = tint;
                     alpha = ShoostWeatherDust(input.texcoord, rate, focusDistance, blurAmount, blurSoftness, blurCurve, speedMul, countMul, sizeMul, randomness, depthSpread, verticalAmount, shimmerAmount, driftAmount) * amount;
-                    result = ShoostWeatherBlend(source.rgb, dustTint, alpha * 0.72, blendMode);
-                    result = max(result + dustTint * alpha * 0.035, 0.0);
+                    result = ShoostWeatherBlend(source.rgb, dustTint, alpha * 0.55, blendMode);
                 }
 
                 return half4(result, source.a);

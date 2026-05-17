@@ -100,7 +100,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ShoostPostProcessEffect.ColorGradingCustom, "调色", "icon_ColorGrading_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Gradient, "渐变", "icon_Gradient_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Glow, "发光", "icon_Glow_v1"),
-            new EffectToggleEntry(ShoostPostProcessEffect.ToonMap, "ToonMap", "icon_ScreenEffects_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.ToonMap, "色调映射", "icon_ScreenEffects_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Lighting, "光照", "icon_Lighting_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.CenterColorCorrection, "中心色彩校正", "icon_CenterColorCorrection"),
             new EffectToggleEntry(ShoostPostProcessEffect.Kuwahara, "桑原", "filter_v2"),
@@ -177,7 +177,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "透明背景",
             "VHS",
             "摄像机闪光",
-            "ToonMap",
+            "色调映射",
             "桑原",
             "光斑变焦",
             "光圈散景",
@@ -354,6 +354,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         public override void OnDisable()
         {
             DisableGradientViewControlForThisEditor();
+            DisableShoostLayerViewControlsForThisEditor();
             base.OnDisable();
         }
 
@@ -621,11 +622,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.IrisBlur:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
-                    lineCount += 5;
+                    lineCount += 6;
                     break;
                 case ShoostPostProcessEffect.BokehZoomBlur:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
-                    lineCount += 16;
+                    lineCount += 17;
                     break;
                 case ShoostPostProcessEffect.ApertureBokeh:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -633,7 +634,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.LensFlare:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
-                    lineCount += 17;
+                    lineCount += 18;
                     break;
                 case ShoostPostProcessEffect.AutoWhiteBalance:
                     lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
@@ -693,7 +694,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.VignetteCustom:
                     lineCount += GetCoreLineCount(false, GetVignetteCustomUsesTintMode(element), false, false, false, showAdvanced);
-                    lineCount += 4;
+                    lineCount += 5;
                     break;
                 case ShoostPostProcessEffect.Gradient:
                     lineCount += GetGradientLineCount(element);
@@ -707,7 +708,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.CenterColorCorrection:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
-                    lineCount += 10;
+                    lineCount += 11;
                     break;
                 case ShoostPostProcessEffect.Kuwahara:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -733,7 +734,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
             }
 
-            return lineCount + GetAovMaskLineCount(element);
+            return lineCount + (SupportsShoostAovMask(element) ? GetAovMaskLineCount(element) : 0);
         }
 
         private static int GetCoreLineCount(bool includeBlendMode, bool includeColor, bool includeTexture, bool includePassIndex, bool includeMaterialOverride, bool showAdvancedFields)
@@ -771,6 +772,51 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private static int GetAovMaskLineCount(SerializedProperty element)
         {
             return HoPostAovMaskEditorUtility.GetLineCount(element);
+        }
+
+        private static bool SupportsShoostAovMask(SerializedProperty element)
+        {
+            ShoostPostProcessEffect effect = GetEffect(element);
+            switch (effect)
+            {
+                case ShoostPostProcessEffect.AutoWhiteBalance:
+                case ShoostPostProcessEffect.ChangeFrameRate:
+                case ShoostPostProcessEffect.CRTEffects:
+                case ShoostPostProcessEffect.Distortion:
+                case ShoostPostProcessEffect.DitheringCustom:
+                case ShoostPostProcessEffect.DownScaleResolution:
+                case ShoostPostProcessEffect.FilmBreathGateWeave:
+                case ShoostPostProcessEffect.Fisheye:
+                case ShoostPostProcessEffect.GateWeave:
+                case ShoostPostProcessEffect.GrainCustom:
+                case ShoostPostProcessEffect.Gradient:
+                case ShoostPostProcessEffect.IrisBlur:
+                case ShoostPostProcessEffect.LensDistortionCustom:
+                case ShoostPostProcessEffect.MotionTrail:
+                case ShoostPostProcessEffect.Pixelize:
+                case ShoostPostProcessEffect.RGBBlur:
+                case ShoostPostProcessEffect.RGBBlurV2:
+                case ShoostPostProcessEffect.RGBChannelSeparator:
+                case ShoostPostProcessEffect.RGBSplit:
+                case ShoostPostProcessEffect.Tube:
+                case ShoostPostProcessEffect.VignetteCustom:
+                case ShoostPostProcessEffect.RetroLookProBleedCustom:
+                case ShoostPostProcessEffect.RetroLookProNoise2Custom:
+                case ShoostPostProcessEffect.RetroLookProOldFilm2Custom:
+                case ShoostPostProcessEffect.RetroLookProTVEffectCustom:
+                case ShoostPostProcessEffect.TransparentBackground:
+                case ShoostPostProcessEffect.VHS:
+                case ShoostPostProcessEffect.CameraFlash:
+                case ShoostPostProcessEffect.ToonMap:
+                case ShoostPostProcessEffect.Weather:
+                case ShoostPostProcessEffect.BokehZoomBlur:
+                case ShoostPostProcessEffect.ApertureBokeh:
+                case ShoostPostProcessEffect.LensFlare:
+                case ShoostPostProcessEffect.Glow:
+                    return false;
+                default:
+                    return true;
+            }
         }
 
         private void DrawEffectIconToggles()
@@ -1267,6 +1313,13 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static float DrawAovMaskProperties(float x, float y, float width, SerializedProperty element)
         {
+            if (!SupportsShoostAovMask(element))
+            {
+                SetBool(element, "useAovMask", false);
+                SetBool(element, "debugAovMask", false);
+                return y;
+            }
+
             return HoPostAovMaskEditorUtility.Draw(x, y, width, element, LineHeight, LineSpacing);
         }
 
@@ -1587,8 +1640,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ShoostPostProcessEffect.Glow:
                     SetFloat(element, "intensity", 1.0f);
                     SetColor(element, "color", Color.white);
-                    SetVector4(element, "parameters0", new Vector4(0.9f, 0.0f, 3.0f, 0.0f));
-                    SetVector4(element, "parameters1", new Vector4(2.0f, 0.0f, 0.0f, 1.0f));
+                    SetVector4(element, "parameters0", new Vector4(1.0f, 0.0f, 2.0f, 0.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.2f, 0.0f, 0.0f, 1.0f));
                     SetVector4(element, "parameters2", new Vector4(3.0f, 180.0f, 0.0f, 0.0f));
                     break;
                 case ShoostPostProcessEffect.ToonMap:

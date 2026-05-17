@@ -24,6 +24,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             y = DrawFoldoutLine(rect, y, element, enabled);
             if (!element.isExpanded)
             {
+                if (IsShoostCenterRadiusViewControlActive(element))
+                {
+                    ShoostCenterRadiusViewControl.Stop();
+                }
+
                 return;
             }
 
@@ -41,6 +46,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 includeMaterialOverride: false,
                 includeParameters: false,
                 showAdvancedFields: showAdvancedSettings);
+            y = DrawShoostCenterRadiusViewControlButton(rect, y, element);
 
             Vector4 vignetteParams = parameters0.vector4Value;
             y = DrawSliderLine(rect.x, y, rect.width, "中心 X", vignetteParams.x, 0.0f, 1.0f, value => vignetteParams.x = value);

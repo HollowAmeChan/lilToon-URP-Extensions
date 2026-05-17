@@ -28,6 +28,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             y = DrawFoldoutLine(rect, y, element, enabled);
             if (!element.isExpanded)
             {
+                if (IsShoostDirectionDistanceViewControlActive(element))
+                {
+                    ShoostDirectionDistanceViewControl.Stop();
+                }
+
                 return;
             }
 
@@ -40,6 +45,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 includeMaterialOverride: false,
                 includeParameters: false,
                 showAdvancedFields: showAdvancedSettings);
+            y = DrawShoostDirectionDistanceViewControlButton(rect, y, element);
 
             Vector4 p0 = parameters0.vector4Value;
             Vector4 p1 = parameters1.vector4Value;

@@ -195,7 +195,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             activeGradientViewTargetId = serializedObject.targetObject.GetInstanceID();
             activeGradientViewPropertyPath = element.propertyPath;
             activeGradientViewHandle = (int)GradientViewHandle.None;
-            ShoostScreenSpaceViewControl.Start(GradientViewControlOwner, OnGradientGameViewGUI);
+            PostProcessScreenSpaceViewControl.Start(GradientViewControlOwner, OnGradientGameViewGUI);
         }
 
         private static void DisableGradientViewControl()
@@ -203,7 +203,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             activeGradientViewTargetId = 0;
             activeGradientViewPropertyPath = null;
             activeGradientViewHandle = (int)GradientViewHandle.None;
-            ShoostScreenSpaceViewControl.Stop(GradientViewControlOwner);
+            PostProcessScreenSpaceViewControl.Stop(GradientViewControlOwner);
         }
 
         private void DisableGradientViewControlForThisEditor()
@@ -221,7 +221,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                    element != null &&
                    activeGradientViewTargetId == serializedObject.targetObject.GetInstanceID() &&
                    activeGradientViewPropertyPath == element.propertyPath &&
-                   ShoostScreenSpaceViewControl.IsActive(GradientViewControlOwner);
+                   PostProcessScreenSpaceViewControl.IsActive(GradientViewControlOwner);
         }
 
         private static void OnGradientGameViewGUI(Rect viewRect, Event evt)
@@ -264,22 +264,22 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             int controlId = GUIUtility.GetControlID(FocusType.Passive);
-            float aspect = ShoostScreenSpaceViewControl.Aspect(viewRect);
-            Vector2 centerUv = ShoostScreenSpaceViewControl.OffsetToUvCenter(new Vector2(p1.x, p1.y));
+            float aspect = PostProcessScreenSpaceViewControl.Aspect(viewRect);
+            Vector2 centerUv = PostProcessScreenSpaceViewControl.OffsetToUvCenter(new Vector2(p1.x, p1.y));
             Vector2 centerGui = GradientUvToGui(centerUv, viewRect);
             Vector2 radiusGui = GetGradientRadiusHandleGui(mode, p0, p1, p2, viewRect, aspect);
             Vector2 angleGui = GetGradientAngleHandleGui(mode, p0, p1, viewRect);
             Vector2 scaleXGui = GetGradientScaleHandleGui(p0, p1, p2, viewRect, aspect, true);
             Vector2 scaleYGui = GetGradientScaleHandleGui(p0, p1, p2, viewRect, aspect, false);
-            ShoostScreenSpaceHandle[] handles = BuildGradientHandles(mode, centerGui, radiusGui, angleGui, scaleXGui, scaleYGui);
+            PostProcessScreenSpaceHandle[] handles = BuildGradientHandles(mode, centerGui, radiusGui, angleGui, scaleXGui, scaleYGui);
 
             if (evt.type == EventType.MouseDown && evt.button == 0)
             {
-                activeGradientViewHandle = ShoostScreenSpaceViewControl.PickHandle(evt.mousePosition, handles, (int)GradientViewHandle.None);
+                activeGradientViewHandle = PostProcessScreenSpaceViewControl.PickHandle(evt.mousePosition, handles, (int)GradientViewHandle.None);
                 if (activeGradientViewHandle != (int)GradientViewHandle.None)
                 {
                     GUIUtility.hotControl = controlId;
-                    ShoostScreenSpaceViewControl.RequestRepaint();
+                    PostProcessScreenSpaceViewControl.RequestRepaint();
                     Undo.RecordObject(target, "Adjust Shoost Gradient In View");
                     evt.Use();
                 }
@@ -294,14 +294,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 so.ApplyModifiedProperties();
                 EditorUtility.SetDirty(target);
                 evt.Use();
-                ShoostScreenSpaceViewControl.RequestRepaint();
+                PostProcessScreenSpaceViewControl.RequestRepaint();
             }
             else if (evt.type == EventType.MouseUp && GUIUtility.hotControl == controlId)
             {
                 GUIUtility.hotControl = 0;
                 activeGradientViewHandle = (int)GradientViewHandle.None;
                 evt.Use();
-                ShoostScreenSpaceViewControl.RequestRepaint();
+                PostProcessScreenSpaceViewControl.RequestRepaint();
             }
             else if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.Escape)
             {
@@ -314,21 +314,21 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static Vector2 GradientUvToGui(Vector2 uv, Rect rect)
         {
-            return ShoostScreenSpaceViewControl.UvToGui(uv, rect);
+            return PostProcessScreenSpaceViewControl.UvToGui(uv, rect);
         }
 
         private static Vector2 GradientGuiToUv(Vector2 gui, Rect rect)
         {
-            return ShoostScreenSpaceViewControl.GuiToUv(gui, rect);
+            return PostProcessScreenSpaceViewControl.GuiToUv(gui, rect);
         }
 
         private static Vector2 GetGradientRadiusHandleGui(int mode, Vector4 p0, Vector4 p1, Vector4 p2, Rect rect, float aspect)
         {
-            Vector2 center = ShoostScreenSpaceViewControl.OffsetToUvCenter(new Vector2(p1.x, p1.y));
+            Vector2 center = PostProcessScreenSpaceViewControl.OffsetToUvCenter(new Vector2(p1.x, p1.y));
             float radius = Mathf.Max(p0.y, 0.0001f);
             if (mode == 1)
             {
-                Vector2 direction = ShoostScreenSpaceViewControl.DirectionFromDegrees(p1.z);
+                Vector2 direction = PostProcessScreenSpaceViewControl.DirectionFromDegrees(p1.z);
                 return GradientUvToGui(center + direction * radius * 0.5f, rect);
             }
 
@@ -338,19 +338,19 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static Vector2 GetGradientAngleHandleGui(int mode, Vector4 p0, Vector4 p1, Rect rect)
         {
-            Vector2 center = ShoostScreenSpaceViewControl.OffsetToUvCenter(new Vector2(p1.x, p1.y));
+            Vector2 center = PostProcessScreenSpaceViewControl.OffsetToUvCenter(new Vector2(p1.x, p1.y));
             if (mode != 1)
             {
                 return center;
             }
 
-            Vector2 direction = ShoostScreenSpaceViewControl.DirectionFromDegrees(p1.z);
+            Vector2 direction = PostProcessScreenSpaceViewControl.DirectionFromDegrees(p1.z);
             return GradientUvToGui(center + direction * Mathf.Max(p0.y, 0.1f) * 0.35f, rect);
         }
 
         private static Vector2 GetGradientScaleHandleGui(Vector4 p0, Vector4 p1, Vector4 p2, Rect rect, float aspect, bool horizontal)
         {
-            Vector2 center = ShoostScreenSpaceViewControl.OffsetToUvCenter(new Vector2(p1.x, p1.y));
+            Vector2 center = PostProcessScreenSpaceViewControl.OffsetToUvCenter(new Vector2(p1.x, p1.y));
             float radius = Mathf.Max(p0.y, 0.0001f);
             if (horizontal)
             {
@@ -374,7 +374,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             if (handle == GradientViewHandle.Angle)
             {
-                p1.z = ShoostScreenSpaceViewControl.AngleDegreesFromUvDelta(uv, center);
+                p1.z = PostProcessScreenSpaceViewControl.AngleDegreesFromUvDelta(uv, center);
                 return;
             }
 
@@ -392,7 +392,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             if (mode == 1)
             {
-                Vector2 direction = ShoostScreenSpaceViewControl.DirectionFromDegrees(p1.z);
+                Vector2 direction = PostProcessScreenSpaceViewControl.DirectionFromDegrees(p1.z);
                 p0.y = Mathf.Clamp(Mathf.Abs(Vector2.Dot(delta, direction)) * 2.0f, 0.0f, 3.0f);
                 return;
             }
@@ -407,15 +407,15 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             p0.y = Mathf.Clamp(scaled.magnitude, 0.0f, 3.0f);
         }
 
-        private static ShoostScreenSpaceHandle[] BuildGradientHandles(int mode, Vector2 center, Vector2 radius, Vector2 angle, Vector2 scaleX, Vector2 scaleY)
+        private static PostProcessScreenSpaceHandle[] BuildGradientHandles(int mode, Vector2 center, Vector2 radius, Vector2 angle, Vector2 scaleX, Vector2 scaleY)
         {
             if (mode == 1)
             {
                 return new[]
                 {
-                    new ShoostScreenSpaceHandle((int)GradientViewHandle.Center, "C", center, Color.white, ShoostScreenSpaceHandleKind.Point, false),
-                    new ShoostScreenSpaceHandle((int)GradientViewHandle.Radius, "R", radius, Color.white, ShoostScreenSpaceHandleKind.Radius),
-                    new ShoostScreenSpaceHandle((int)GradientViewHandle.Angle, "A", angle, Color.white, ShoostScreenSpaceHandleKind.Angle, true, 0.62f),
+                    new PostProcessScreenSpaceHandle((int)GradientViewHandle.Center, "C", center, Color.white, PostProcessScreenSpaceHandleKind.Point, false),
+                    new PostProcessScreenSpaceHandle((int)GradientViewHandle.Radius, "R", radius, Color.white, PostProcessScreenSpaceHandleKind.Radius),
+                    new PostProcessScreenSpaceHandle((int)GradientViewHandle.Angle, "A", angle, Color.white, PostProcessScreenSpaceHandleKind.Angle, true, 0.62f),
                 };
             }
 
@@ -423,28 +423,28 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             {
                 return new[]
                 {
-                    new ShoostScreenSpaceHandle((int)GradientViewHandle.Center, "C", center, Color.white, ShoostScreenSpaceHandleKind.Point, false),
-                    new ShoostScreenSpaceHandle((int)GradientViewHandle.Radius, "R", radius, Color.white, ShoostScreenSpaceHandleKind.Radius),
-                    new ShoostScreenSpaceHandle((int)GradientViewHandle.ScaleX, "X", scaleX, Color.white, ShoostScreenSpaceHandleKind.HorizontalScale, true, 0.54f),
-                    new ShoostScreenSpaceHandle((int)GradientViewHandle.ScaleY, "Y", scaleY, Color.white, ShoostScreenSpaceHandleKind.VerticalScale, true, 0.54f),
+                    new PostProcessScreenSpaceHandle((int)GradientViewHandle.Center, "C", center, Color.white, PostProcessScreenSpaceHandleKind.Point, false),
+                    new PostProcessScreenSpaceHandle((int)GradientViewHandle.Radius, "R", radius, Color.white, PostProcessScreenSpaceHandleKind.Radius),
+                    new PostProcessScreenSpaceHandle((int)GradientViewHandle.ScaleX, "X", scaleX, Color.white, PostProcessScreenSpaceHandleKind.HorizontalScale, true, 0.54f),
+                    new PostProcessScreenSpaceHandle((int)GradientViewHandle.ScaleY, "Y", scaleY, Color.white, PostProcessScreenSpaceHandleKind.VerticalScale, true, 0.54f),
                 };
             }
 
             return new[]
             {
-                new ShoostScreenSpaceHandle((int)GradientViewHandle.Center, "C", center, Color.white, ShoostScreenSpaceHandleKind.Point, false),
-                new ShoostScreenSpaceHandle((int)GradientViewHandle.Radius, "R", radius, Color.white, ShoostScreenSpaceHandleKind.Radius),
+                new PostProcessScreenSpaceHandle((int)GradientViewHandle.Center, "C", center, Color.white, PostProcessScreenSpaceHandleKind.Point, false),
+                new PostProcessScreenSpaceHandle((int)GradientViewHandle.Radius, "R", radius, Color.white, PostProcessScreenSpaceHandleKind.Radius),
             };
         }
 
-        private static void DrawGradientViewHandles(Rect viewRect, int mode, Vector2 center, ShoostScreenSpaceHandle[] handles)
+        private static void DrawGradientViewHandles(Rect viewRect, int mode, Vector2 center, PostProcessScreenSpaceHandle[] handles)
         {
             string hint = mode == 1
                 ? "\u6e10\u53d8  C \u4e2d\u5fc3  R \u534a\u5f84  A \u89d2\u5ea6  Esc \u9000\u51fa"
                 : mode == 3
                     ? "\u6e10\u53d8  C \u4e2d\u5fc3  R \u534a\u5f84  X/Y \u6bd4\u4f8b  Esc \u9000\u51fa"
                     : "\u6e10\u53d8  C \u4e2d\u5fc3  R \u534a\u5f84  Esc \u9000\u51fa";
-            ShoostScreenSpaceViewControl.DrawHandleSet(viewRect, center, handles, activeGradientViewHandle, hint);
+            PostProcessScreenSpaceViewControl.DrawHandleSet(viewRect, center, handles, activeGradientViewHandle, hint);
         }
     }
 }

@@ -52,7 +52,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Vector4 look = parameters1.vector4Value;
             Vector4 star = parameters2.vector4Value;
 
-            threshold.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "阈值", Mathf.Clamp01(threshold.x), 0.0f, 1.0f);
+            threshold.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "阈值", Mathf.Clamp(threshold.x, 0.0f, 16.0f), 0.0f, 16.0f);
             y += LineHeight + LineSpacing;
             threshold.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "阈值平滑", Mathf.Clamp01(threshold.y), 0.0f, 1.0f);
             y += LineHeight + LineSpacing;
@@ -89,7 +89,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             if (parameters0 != null && parameters0.propertyType == SerializedPropertyType.Vector4 && parameters0.vector4Value.sqrMagnitude <= 0.000001f)
             {
-                parameters0.vector4Value = new Vector4(0.9f, 0.0f, 3.0f, 0.0f);
+                parameters0.vector4Value = new Vector4(1.0f, 0.0f, 2.0f, 0.0f);
             }
 
             if (parameters1 != null && parameters1.propertyType == SerializedPropertyType.Vector4)
@@ -97,7 +97,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 Vector4 value = parameters1.vector4Value;
                 if (Mathf.Abs(value.w) <= 0.000001f && Mathf.Abs(value.x) <= 0.000001f && Mathf.Abs(value.y) <= 0.000001f && Mathf.Abs(value.z) <= 0.000001f)
                 {
-                    parameters1.vector4Value = new Vector4(2.0f, 0.0f, 0.0f, 1.0f);
+                    parameters1.vector4Value = new Vector4(0.2f, 0.0f, 0.0f, 1.0f);
                 }
             }
 

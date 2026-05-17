@@ -5,9 +5,9 @@ using UnityEngine.UIElements;
 
 namespace lilToon.URP.Extensions.Editor.PostProcessing
 {
-    internal static class ShoostScreenSpaceViewControl
+    internal static class PostProcessScreenSpaceViewControl
     {
-        private const string OverlayName = "ShoostScreenSpaceViewControlOverlay";
+        private const string OverlayName = "PostProcessScreenSpaceViewControlOverlay";
         private static readonly Color HintText = new Color(0.86f, 0.9f, 0.94f, 0.9f);
         private static readonly Color HandleWhite = new Color(1.0f, 1.0f, 1.0f, 0.94f);
         private static readonly Color HandleBlack = new Color(0.0f, 0.0f, 0.0f, 0.86f);
@@ -125,7 +125,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return Vector2.Distance(mouse, point) <= radius;
         }
 
-        public static int PickHandle(Vector2 mouse, ShoostScreenSpaceHandle[] handles, int fallbackId = 0, float radius = 16.0f)
+        public static int PickHandle(Vector2 mouse, PostProcessScreenSpaceHandle[] handles, int fallbackId = 0, float radius = 16.0f)
         {
             if (handles == null)
             {
@@ -143,13 +143,13 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return fallbackId;
         }
 
-        public static void DrawHandleSet(Rect viewRect, Vector2 center, ShoostScreenSpaceHandle[] handles, int activeId, string hint)
+        public static void DrawHandleSet(Rect viewRect, Vector2 center, PostProcessScreenSpaceHandle[] handles, int activeId, string hint)
         {
             if (handles != null)
             {
                 for (int i = 0; i < handles.Length; i++)
                 {
-                    ShoostScreenSpaceHandle handle = handles[i];
+                    PostProcessScreenSpaceHandle handle = handles[i];
                     if (!handle.ConnectToCenter)
                     {
                         continue;
@@ -161,7 +161,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
                 for (int i = 0; i < handles.Length; i++)
                 {
-                    ShoostScreenSpaceHandle handle = handles[i];
+                    PostProcessScreenSpaceHandle handle = handles[i];
                     DrawHandle(handle, handle.Id == activeId);
                 }
             }
@@ -193,6 +193,31 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
         }
 
+        public static void DrawDashedCircle(Vector2 center, float radius, Color color, float thickness = 1.0f, float dashLength = 7.0f, float gapLength = 5.0f)
+        {
+            if (Event.current.type != EventType.Repaint || radius <= 0.001f)
+            {
+                return;
+            }
+
+            float circumference = Mathf.Max(1.0f, 2.0f * Mathf.PI * radius);
+            int steps = Mathf.Clamp(Mathf.CeilToInt(circumference / Mathf.Max(1.0f, dashLength + gapLength)) * 2, 24, 192);
+            bool drawSegment = true;
+            Vector2 previous = center + new Vector2(radius, 0.0f);
+            for (int i = 1; i <= steps; i++)
+            {
+                float angle = ((float)i / steps) * Mathf.PI * 2.0f;
+                Vector2 next = center + new Vector2(Mathf.Cos(angle), Mathf.Sin(angle)) * radius;
+                if (drawSegment)
+                {
+                    DrawLine(previous, next, color, thickness);
+                }
+
+                previous = next;
+                drawSegment = !drawSegment;
+            }
+        }
+
         public static void DrawLine(Vector2 start, Vector2 end, Color color, float thickness = 2.0f)
         {
             if (Event.current.type != EventType.Repaint)
@@ -215,17 +240,17 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             GUI.color = oldColor;
         }
 
-        public static void DrawHandle(ShoostScreenSpaceHandle handle, bool active = false)
+        public static void DrawHandle(PostProcessScreenSpaceHandle handle, bool active = false)
         {
-            if (handle.Kind == ShoostScreenSpaceHandleKind.Angle || handle.Kind == ShoostScreenSpaceHandleKind.Direction)
+            if (handle.Kind == PostProcessScreenSpaceHandleKind.Angle || handle.Kind == PostProcessScreenSpaceHandleKind.Direction)
             {
                 DrawRotationHandle(handle.Position, active);
                 return;
             }
 
-            if (handle.Kind == ShoostScreenSpaceHandleKind.HorizontalScale || handle.Kind == ShoostScreenSpaceHandleKind.VerticalScale)
+            if (handle.Kind == PostProcessScreenSpaceHandleKind.HorizontalScale || handle.Kind == PostProcessScreenSpaceHandleKind.VerticalScale)
             {
-                DrawScaleHandle(handle.Position, handle.Kind == ShoostScreenSpaceHandleKind.HorizontalScale, active);
+                DrawScaleHandle(handle.Position, handle.Kind == PostProcessScreenSpaceHandleKind.HorizontalScale, active);
                 return;
             }
 

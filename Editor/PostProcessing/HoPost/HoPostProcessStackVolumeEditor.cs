@@ -16,52 +16,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private const float EffectIconSpacing = 2.0f;
         private const string PackageAssetRoot = "Packages/jp.lilxyzw.liltoon.urp.extensions";
 
-        private static readonly string[] EdgeLightModes =
-        {
-            "单向",
-            "双向",
-            "单向锐化",
-            "双向锐化"
-        };
-
-        private static readonly string[] DepthOfFieldModes =
-        {
-            "Gaussian",
-            "Bokeh"
-        };
-
-        private static readonly string[] AovSources =
-        {
-            "遮罩",
-            "角色组 ID",
-            "部件 ID",
-            "标记",
-            "厚度",
-            "曲率",
-            "材质分类",
-            "预留值",
-            "材质自定义通道 0",
-            "材质自定义通道 1",
-            "材质自定义通道 2",
-            "材质自定义通道 3",
-            "主体",
-            "脸",
-            "前发",
-            "眼睛",
-            "眼透区域",
-            "配件",
-            "预留 6",
-            "预留 7"
-        };
-
-        private static readonly string[] AovMaskModes =
-        {
-            "直接灰度",
-            "阈值",
-            "匹配数值 / ID",
-            "匹配颜色"
-        };
-
         private readonly struct EffectToggleEntry
         {
             public readonly HoPostProcessEffect Effect;
@@ -108,6 +62,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             layerList.headerHeight = 0.0f;
             layerList.elementHeightCallback = GetElementHeight;
             layerList.drawElementCallback = DrawElement;
+        }
+
+        public override void OnDisable()
+        {
+            DisableHoPostLayerViewControlsForThisEditor();
+            base.OnDisable();
         }
 
         public override void OnInspectorGUI()
@@ -172,6 +132,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             float y = DrawFoldoutLine(rect, rect.y, element, enabledProperty);
             if (!element.isExpanded)
             {
+                if (IsHoPostDirectionDistanceViewControlActive(element))
+                {
+                    HoPostDirectionDistanceViewControl.Stop();
+                }
+
                 return;
             }
 
@@ -211,7 +176,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             switch (GetEffect(element))
             {
                 case HoPostProcessEffect.EdgeLight:
-                    return 15 + GetAovLineCount(element);
+                    return 16 + GetAovLineCount(element);
                 case HoPostProcessEffect.Outline:
                     return 11 + GetAovLineCount(element);
                 case HoPostProcessEffect.DepthOfField:
@@ -220,20 +185,13 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     return 7 + GetAovLineCount(element);
                 case HoPostProcessEffect.DropShadow:
                 default:
-                    return 8 + GetAovLineCount(element);
+                    return 9 + GetAovLineCount(element);
             }
         }
 
         private static int GetAovLineCount(SerializedProperty element)
         {
             return HoPostAovMaskEditorUtility.GetLineCount(element);
-        }
-
-        private static int GetDepthOfFieldLineCount(SerializedProperty element)
-        {
-            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
-            int mode = parameters0 != null ? Mathf.Clamp(Mathf.RoundToInt(parameters0.vector4Value.x), 0, DepthOfFieldModes.Length - 1) : 1;
-            return mode == 0 ? 6 : 8;
         }
 
         private float DrawFoldoutLine(Rect rect, float y, SerializedProperty element, SerializedProperty enabled)
@@ -283,8 +241,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             if (includeColorBlend)
             {
-            DrawPropertyLine(rect, ref y, element, "color", "颜色");
-            DrawPropertyLine(rect, ref y, element, "blendMode", "混合模式");
+                DrawPropertyLine(rect, ref y, element, "color", "颜色");
+                DrawPropertyLine(rect, ref y, element, "blendMode", "混合模式");
             }
 
             if (includeTexture)
@@ -304,260 +262,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
         }
 
-        private static void DrawEdgeLightProperties(Rect rect, ref float y, SerializedProperty element)
-        {
-            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
-            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
-            SerializedProperty parameters2 = element.FindPropertyRelative("parameters2");
-            if (parameters0 == null || parameters1 == null || parameters2 == null)
-            {
-                return;
-            }
-
-            Vector4 p0 = parameters0.vector4Value;
-            Vector4 p1 = parameters1.vector4Value;
-            Vector4 p2 = parameters2.vector4Value;
-            if (p2 == Vector4.zero)
-            {
-                p2 = new Vector4(1.0f, 0.65f, 0.45f, 1.0f);
-            }
-
-            p0.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "边缘宽度", p0.x, 0.0f, 1.0f);
-            y += LineHeight + LineSpacing;
-            p0.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "HDR 亮度", p0.y, 0.0f, 10.0f);
-            y += LineHeight + LineSpacing;
-            p0.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "对比度", p0.z, 0.0f, 1.0f);
-            y += LineHeight + LineSpacing;
-            p0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "不透明度", p0.w, 0.0f, 1.0f);
-            y += LineHeight + LineSpacing;
-            p1.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "角度", p1.x, -180.0f, 180.0f);
-            y += LineHeight + LineSpacing;
-            p1.y = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "模式", Mathf.Clamp(Mathf.RoundToInt(p1.y), 0, EdgeLightModes.Length - 1), EdgeLightModes);
-            y += LineHeight + LineSpacing;
-            p1.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "外扩宽度", p1.z, 0.0f, 8.0f);
-            y += LineHeight + LineSpacing;
-            p1.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "外扩强度", p1.w, 0.0f, 1.0f);
-            y += LineHeight + LineSpacing;
-            p2.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "表面法线权重", p2.x, 0.0f, 2.0f);
-            y += LineHeight + LineSpacing;
-            p2.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "深度边界权重", p2.y, 0.0f, 2.0f);
-            y += LineHeight + LineSpacing;
-            p2.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "深度灵敏度", p2.z, 0.0f, 1.0f);
-            y += LineHeight + LineSpacing;
-            p2.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "方向影响", p2.w, 0.0f, 1.0f);
-            y += LineHeight + LineSpacing;
-
-            parameters0.vector4Value = p0;
-            parameters1.vector4Value = p1;
-            parameters2.vector4Value = p2;
-        }
-
-        private static void DrawOutlineProperties(Rect rect, ref float y, SerializedProperty element)
-        {
-            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
-            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
-            if (parameters0 == null || parameters1 == null)
-            {
-                return;
-            }
-
-            Vector4 p0 = parameters0.vector4Value;
-            Vector4 p1 = parameters1.vector4Value;
-
-            p0.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "线宽(像素)", p0.x, 0.0f, 8.0f);
-            y += LineHeight + LineSpacing;
-            p0.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "深度权重", p0.y, 0.0f, 10.0f);
-            y += LineHeight + LineSpacing;
-            p0.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "法线权重", p0.z, 0.0f, 10.0f);
-            y += LineHeight + LineSpacing;
-            p0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "阈值", p0.w, 0.0f, 1.0f);
-            y += LineHeight + LineSpacing;
-            p1.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "柔和度", p1.x, 0.0001f, 1.0f);
-            y += LineHeight + LineSpacing;
-            p1.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "深度灵敏度", p1.y, 0.0f, 5.0f);
-            y += LineHeight + LineSpacing;
-            p1.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "法线灵敏度", p1.z, 0.0f, 5.0f);
-            y += LineHeight + LineSpacing;
-            p1.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "不透明度", p1.w, 0.0f, 1.0f);
-            y += LineHeight + LineSpacing;
-
-            parameters0.vector4Value = p0;
-            parameters1.vector4Value = p1;
-        }
-
-        private static void DrawDropShadowProperties(Rect rect, ref float y, SerializedProperty element)
-        {
-            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
-            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
-            if (parameters0 == null || parameters1 == null)
-            {
-                return;
-            }
-
-            Vector4 p0 = parameters0.vector4Value;
-            Vector4 p1 = parameters1.vector4Value;
-            if (p0 == Vector4.zero && p1 == Vector4.zero)
-            {
-                p0 = new Vector4(0.35f, -45.0f, 0.85f, 6.0f);
-                p1 = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
-            }
-
-            p0.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "距离", p0.x, 0.0f, 1.0f);
-            y += LineHeight + LineSpacing;
-            p0.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "角度", p0.y, -180.0f, 180.0f);
-            y += LineHeight + LineSpacing;
-            p0.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "不透明度", p0.z, 0.0f, 1.0f);
-            y += LineHeight + LineSpacing;
-            p0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "柔和度(像素)", p0.w, 0.0f, 32.0f);
-            y += LineHeight + LineSpacing;
-            p1.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "扩散(像素)", p1.x, 0.0f, 8.0f);
-            y += LineHeight + LineSpacing;
-
-            parameters0.vector4Value = p0;
-            parameters1.vector4Value = p1;
-        }
-
-        private static void DrawDepthOfFieldProperties(Rect rect, ref float y, SerializedProperty element)
-        {
-            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
-            SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
-            SerializedProperty parameters2 = element.FindPropertyRelative("parameters2");
-            if (parameters0 == null || parameters1 == null || parameters2 == null)
-            {
-                return;
-            }
-
-            Vector4 p0 = parameters0.vector4Value;
-            Vector4 p1 = parameters1.vector4Value;
-            Vector4 p2 = parameters2.vector4Value;
-            if (p0 == Vector4.zero && p1 == Vector4.zero && p2 == Vector4.zero)
-            {
-                p0 = new Vector4(1.0f, 10.0f, 50.0f, 5.6f);
-                p1 = new Vector4(10.0f, 30.0f, 8.0f, 1.0f);
-                p2 = new Vector4(5.0f, 1.0f, 0.0f, 0.0f);
-            }
-
-            int mode = EditorGUI.Popup(
-                new Rect(rect.x, y, rect.width, LineHeight),
-                "模式",
-                Mathf.Clamp(Mathf.RoundToInt(p0.x), 0, DepthOfFieldModes.Length - 1),
-                DepthOfFieldModes);
-            p0.x = mode;
-            y += LineHeight + LineSpacing;
-
-            if (mode == 0)
-            {
-                p1.x = EditorGUI.FloatField(new Rect(rect.x, y, rect.width, LineHeight), "开始距离", Mathf.Max(0.0f, p1.x));
-                y += LineHeight + LineSpacing;
-                p1.y = EditorGUI.FloatField(new Rect(rect.x, y, rect.width, LineHeight), "结束距离", Mathf.Max(p1.x + 0.001f, p1.y));
-                y += LineHeight + LineSpacing;
-                p1.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "最大半径", p1.z, 0.0f, 16.0f);
-                y += LineHeight + LineSpacing;
-                p1.w = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "高质量采样", p1.w > 0.5f) ? 1.0f : 0.0f;
-                y += LineHeight + LineSpacing;
-            }
-            else
-            {
-                p0.y = EditorGUI.FloatField(new Rect(rect.x, y, rect.width, LineHeight), "焦点距离", Mathf.Max(0.001f, p0.y));
-                y += LineHeight + LineSpacing;
-                p0.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "焦距", p0.z, 1.0f, 300.0f);
-                y += LineHeight + LineSpacing;
-                p0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "光圈", p0.w, 1.0f, 32.0f);
-                y += LineHeight + LineSpacing;
-                p2.x = EditorGUI.IntSlider(new Rect(rect.x, y, rect.width, LineHeight), "叶片数量", Mathf.Clamp(Mathf.RoundToInt(p2.x), 3, 9), 3, 9);
-                y += LineHeight + LineSpacing;
-                p2.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "叶片弧度", p2.y, 0.0f, 1.0f);
-                y += LineHeight + LineSpacing;
-                p2.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "叶片旋转", p2.z, -180.0f, 180.0f);
-                y += LineHeight + LineSpacing;
-            }
-
-            parameters0.vector4Value = p0;
-            parameters1.vector4Value = p1;
-            parameters2.vector4Value = p2;
-        }
-
         private static void DrawAovMaskProperties(Rect rect, ref float y, SerializedProperty element)
         {
             HoPostAovMaskEditorUtility.Draw(rect, ref y, element, LineHeight, LineSpacing);
-        }
-
-        private static void DrawAovSourceProperties(
-            Rect rect,
-            ref float y,
-            SerializedProperty aovSource,
-            SerializedProperty aovMaskMode)
-        {
-            aovSource.enumValueIndex = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "AOV 源", Mathf.Clamp(aovSource.enumValueIndex, 0, AovSources.Length - 1), AovSources);
-            y += LineHeight + LineSpacing;
-            aovMaskMode.enumValueIndex = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "使用方式", Mathf.Clamp(aovMaskMode.enumValueIndex, 0, AovMaskModes.Length - 1), AovMaskModes);
-            y += LineHeight + LineSpacing;
-        }
-
-        private static void DrawAovMatchProperties(
-            Rect rect,
-            ref float y,
-            SerializedProperty aovMaskMode,
-            SerializedProperty aovThreshold,
-            SerializedProperty aovMatchValue,
-            SerializedProperty aovMatchColor,
-            SerializedProperty invertAovMask,
-            SerializedProperty debugAovMask)
-        {
-            HoPostAovMaskMode mode = (HoPostAovMaskMode)Mathf.Clamp(aovMaskMode.enumValueIndex, 0, AovMaskModes.Length - 1);
-            switch (mode)
-            {
-                case HoPostAovMaskMode.Threshold:
-                    aovThreshold.floatValue = EditorGUI.Slider(
-                        new Rect(rect.x, y, rect.width, LineHeight),
-                        new GUIContent("阈值", "通道灰度达到这个值后开始被选中。"),
-                        Mathf.Max(0.0f, aovThreshold.floatValue),
-                        0.0f,
-                        1.0f);
-                    y += LineHeight + LineSpacing;
-                    break;
-
-                case HoPostAovMaskMode.MatchValue:
-                    aovMatchValue.floatValue = EditorGUI.FloatField(
-                        new Rect(rect.x, y, rect.width, LineHeight),
-                        new GUIContent("匹配数值 / ID", "目标值。GroupId、ObjectId、Flags、Material 会在 shader 里先编码再比较。"),
-                        aovMatchValue.floatValue);
-                    y += LineHeight + LineSpacing;
-                    aovThreshold.floatValue = EditorGUI.Slider(
-                        new Rect(rect.x, y, rect.width, LineHeight),
-                        new GUIContent("数值容差", "允许目标值附近多宽的范围被选中。"),
-                        Mathf.Max(0.0f, aovThreshold.floatValue),
-                        0.0f,
-                        1.0f);
-                    y += LineHeight + LineSpacing;
-                    break;
-
-                case HoPostAovMaskMode.MatchColor:
-                    aovMatchColor.colorValue = EditorGUI.ColorField(
-                        new Rect(rect.x, y, rect.width, LineHeight),
-                        new GUIContent("匹配颜色", "目标 RGB。会和所选 AOV 源所在 packed texture 的 RGB 做距离匹配。"),
-                        aovMatchColor.colorValue);
-                    y += LineHeight + LineSpacing;
-                    aovThreshold.floatValue = EditorGUI.Slider(
-                        new Rect(rect.x, y, rect.width, LineHeight),
-                        new GUIContent("颜色容差", "RGB 距离小于这个范围时被选中。"),
-                        Mathf.Max(0.0f, aovThreshold.floatValue),
-                        0.0f,
-                        1.0f);
-                    y += LineHeight + LineSpacing;
-                    break;
-            }
-
-            invertAovMask.boolValue = EditorGUI.Toggle(
-                new Rect(rect.x, y, rect.width, LineHeight),
-                new GUIContent("反转", "只在当前 HoAOV 覆盖范围内反转，避免把背景也选中。"),
-                invertAovMask.boolValue);
-            y += LineHeight + LineSpacing;
-            debugAovMask.boolValue = EditorGUI.Toggle(
-                new Rect(rect.x, y, rect.width, LineHeight),
-                new GUIContent("输出匹配结果", "直接输出当前 AOV 源和使用方式解析出的 mask，用于调试。"),
-                debugAovMask.boolValue);
-            y += LineHeight + LineSpacing;
         }
 
         private static void DrawPropertyLine(Rect rect, ref float y, SerializedProperty element, string propertyName, string label)

@@ -2,7 +2,7 @@ using UnityEngine;
 
 namespace lilToon.URP.Extensions.Editor.PostProcessing
 {
-    internal enum ShoostScreenSpaceHandleKind
+    internal enum PostProcessScreenSpaceHandleKind
     {
         Point,
         Radius,
@@ -12,23 +12,23 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         VerticalScale
     }
 
-    internal struct ShoostScreenSpaceHandle
+    internal struct PostProcessScreenSpaceHandle
     {
         public int Id;
         public string Label;
         public Vector2 Position;
         public Color Color;
-        public ShoostScreenSpaceHandleKind Kind;
+        public PostProcessScreenSpaceHandleKind Kind;
         public bool ConnectToCenter;
         public float LineAlpha;
         public float LineThickness;
 
-        public ShoostScreenSpaceHandle(
+        public PostProcessScreenSpaceHandle(
             int id,
             string label,
             Vector2 position,
             Color color,
-            ShoostScreenSpaceHandleKind kind,
+            PostProcessScreenSpaceHandleKind kind,
             bool connectToCenter = true,
             float lineAlpha = 0.56f,
             float lineThickness = 2.0f)

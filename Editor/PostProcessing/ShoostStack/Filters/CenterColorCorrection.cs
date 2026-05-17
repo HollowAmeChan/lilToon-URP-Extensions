@@ -19,11 +19,17 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             y = DrawFoldoutLine(rect, y, element, enabled);
             if (!element.isExpanded)
             {
+                if (IsShoostCenterRadiusViewControlActive(element))
+                {
+                    ShoostCenterRadiusViewControl.Stop();
+                }
+
                 return;
             }
 
             EditorGUI.indentLevel++;
             y = DrawLayerCoreFields(rect.x, y, rect.width, element, includeBlendMode: false, includeColor: false, includeTexture: false, includePassIndex: false, includeMaterialOverride: false, includeParameters: false, showAdvancedFields: showAdvancedSettings);
+            y = DrawShoostCenterRadiusViewControlButton(rect, y, element);
 
             Vector4 colorParams = parameters0.vector4Value;
             Vector4 maskParams = parameters1.vector4Value;

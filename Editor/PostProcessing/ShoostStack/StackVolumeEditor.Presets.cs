@@ -360,21 +360,22 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private static void ApplyShoostSoftGlowPreset(SerializedProperty element, ShoostPostProcessEffect effect)
         {
             ApplyShoostDefaultPreset(element, effect);
-            SetVector4(element, "parameters0", new Vector4(0.75f, 0.25f, 2.5f, 0.0f));
-            SetVector4(element, "parameters1", new Vector4(1.2f, 0.05f, 0.0f, 0.75f));
+            SetVector4(element, "parameters0", new Vector4(1.2f, 0.12f, 2.0f, 0.0f));
+            SetVector4(element, "parameters1", new Vector4(0.18f, 0.0f, 0.0f, 0.75f));
         }
 
         private static void ApplyShoostStrongGlowPreset(SerializedProperty element, ShoostPostProcessEffect effect)
         {
             ApplyShoostDefaultPreset(element, effect);
-            SetVector4(element, "parameters0", new Vector4(0.55f, 0.35f, 4.5f, 0.0f));
-            SetVector4(element, "parameters1", new Vector4(4.0f, 0.15f, 0.0f, 1.0f));
+            SetVector4(element, "parameters0", new Vector4(1.0f, 0.18f, 3.0f, 0.0f));
+            SetVector4(element, "parameters1", new Vector4(0.45f, 0.02f, 0.0f, 0.9f));
         }
 
         private static void ApplyShoostStarGlowPreset(SerializedProperty element, ShoostPostProcessEffect effect)
         {
             ApplyShoostStrongGlowPreset(element, effect);
-            SetVector4(element, "parameters0", new Vector4(0.65f, 0.2f, 3.5f, 2.0f));
+            SetVector4(element, "parameters0", new Vector4(1.1f, 0.12f, 2.6f, 2.0f));
+            SetVector4(element, "parameters1", new Vector4(0.35f, 0.0f, 0.0f, 0.85f));
             SetVector4(element, "parameters2", new Vector4(4.0f, 45.0f, 0.0f, 0.0f));
         }
 
@@ -426,7 +427,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static void ApplyShoostDustWeatherPreset(SerializedProperty element, ShoostPostProcessEffect effect)
         {
-            ApplyShoostWeatherPreset(element, effect, 3, new Color(0.96f, 0.88f, 0.68f, 1.0f), new Vector4(0.62f, 0.78f, 0.82f, 0.95f), new Vector4(1.15f, 1.30f, 0.72f, 0.82f));
+            ApplyShoostWeatherPreset(element, effect, 3, Color.black, new Vector4(1.54f, 2.88f, 2.0f, 0.8f), new Vector4(1.05f, 2.0f, 2.0f, 0.55f));
+            SetVector4(element, "parameters0", new Vector4(3.0f, 1.0f, 1.0f, 0.85f));
+            SetVector4(element, "parameters1", new Vector4(0.45f, 0.30f, 1.0f, 0.0f));
         }
 
         private static void ApplyShoostWeatherPreset(SerializedProperty element, ShoostPostProcessEffect effect, int particle, Color color, Vector4 particleParams, Vector4 variationParams)

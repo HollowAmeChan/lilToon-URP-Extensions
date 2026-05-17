@@ -28,20 +28,20 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/Glow"
         TEXTURE2D_X(_BloomTex);
         SAMPLER(sampler_BloomTex);
 
-        half LuminanceMax(half3 color)
+        float LuminanceMax(float3 color)
         {
             return max(color.r, max(color.g, color.b));
         }
 
         half3 ApplySoftThreshold(half3 color)
         {
-            half threshold = saturate(_LayerParams0.x);
-            half knee = max(threshold * saturate(_LayerParams0.y), 0.0001);
-            half brightness = LuminanceMax(color);
-            half soft = saturate((brightness - threshold + knee) / (2.0 * knee));
+            float threshold = max(_LayerParams0.x, 0.0);
+            float knee = max(threshold * saturate(_LayerParams0.y), 0.0001);
+            float brightness = LuminanceMax((float3)color);
+            float soft = saturate((brightness - threshold + knee) / (2.0 * knee));
             soft = soft * soft * knee;
-            half contribution = max(brightness - threshold, soft) / max(brightness, 0.0001);
-            return color * saturate(contribution);
+            float contribution = max(brightness - threshold, soft) / max(brightness, 0.0001);
+            return color * (half)saturate(contribution);
         }
 
         half3 ApplyBloomLook(half3 bloom)
