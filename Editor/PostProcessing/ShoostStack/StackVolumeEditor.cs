@@ -70,6 +70,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ShoostPostProcessEffect.RGBChannelSeparator,
             ShoostPostProcessEffect.BokehZoomBlur,
             ShoostPostProcessEffect.ApertureBokeh,
+            ShoostPostProcessEffect.LensFlare,
             ShoostPostProcessEffect.Glow,
             ShoostPostProcessEffect.ToonMap,
             ShoostPostProcessEffect.GrainCustom,
@@ -116,6 +117,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ShoostPostProcessEffect.RGBChannelSeparator, "RGB 通道分离", "icon_RGBChannel_RGB"),
             new EffectToggleEntry(ShoostPostProcessEffect.BokehZoomBlur, "光斑变焦", "icon_Flare_Ray_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.ApertureBokeh, "光圈散景", "icon_Glow_SelectColor_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.LensFlare, "镜头光晕", "icon_Flare_Ray_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.GrainCustom, "颗粒", "icon_Grain_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.VignetteCustom, "暗角", "icon_Vignette_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Pixelize, "像素化", "icon_Pixel_v1"),
@@ -178,7 +180,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "ToonMap",
             "桑原",
             "光斑变焦",
-            "光圈散景"
+            "光圈散景",
+            "镜头光晕"
         };
 
         private static readonly GUIContent[] BlendModeDisplayNames =
@@ -435,6 +438,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.LensFlare)
+            {
+                DrawLensFlareElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ShoostPostProcessEffect.AutoWhiteBalance)
             {
                 DrawAutoWhiteBalanceElement(rect, element);
@@ -615,6 +624,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ShoostPostProcessEffect.ApertureBokeh:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
                     lineCount += 15;
+                    break;
+                case ShoostPostProcessEffect.LensFlare:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 17;
                     break;
                 case ShoostPostProcessEffect.AutoWhiteBalance:
                     lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
@@ -1603,6 +1616,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters1", new Vector4(0.35f, 1.0f, 0.0f, 2.0f));
                     SetVector4(element, "parameters2", new Vector4(0.0f, 1.0f, 0.0f, 0.35f));
                     SetVector4(element, "parameters3", new Vector4(0.0f, 0.0f, 4.0f, 0.0f));
+                    break;
+                case ShoostPostProcessEffect.LensFlare:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetColor(element, "color", new Color(1.0f, 0.86f, 0.55f, 1.0f));
+                    SetVector4(element, "parameters0", new Vector4(-0.38f, 0.32f, -18.0f, 1.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.065f, 0.34f, 0.92f, 6.0f));
+                    SetVector4(element, "parameters2", new Vector4(0.78f, 1.0f, 0.55f, 0.55f));
+                    SetVector4(element, "parameters3", new Vector4(0.85f, 2.4f, 0.0f, 0.0f));
                     break;
                 case ShoostPostProcessEffect.Weather:
                     SetFloat(element, "intensity", 1.0f);

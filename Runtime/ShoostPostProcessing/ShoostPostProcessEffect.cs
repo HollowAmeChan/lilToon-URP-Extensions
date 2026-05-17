@@ -49,7 +49,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         ToonMap,
         Kuwahara,
         BokehZoomBlur,
-        ApertureBokeh
+        ApertureBokeh,
+        LensFlare
     }
 
     public enum ShoostPostProcessBlendMode

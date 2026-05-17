@@ -187,6 +187,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     AddShoostPresetMenuItem(menu, propertyPath, effect, "柔和散景", ApplyShoostSoftAperturePreset);
                     AddShoostPresetMenuItem(menu, propertyPath, effect, "硬质光斑", ApplyShoostHardAperturePreset);
                     break;
+                case ShoostPostProcessEffect.LensFlare:
+                    AddShoostPresetMenuItem(menu, propertyPath, effect, "明亮太阳", ApplyShoostBrightSunLensFlarePreset);
+                    AddShoostPresetMenuItem(menu, propertyPath, effect, "电影横光", ApplyShoostCinematicLensFlarePreset);
+                    break;
                 case ShoostPostProcessEffect.GrainCustom:
                     AddShoostPresetMenuItem(menu, propertyPath, effect, "细颗粒", ApplyShoostFineGrainPreset);
                     AddShoostPresetMenuItem(menu, propertyPath, effect, "粗颗粒", ApplyShoostCoarseGrainPreset);
@@ -543,6 +547,26 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetVector4(element, "parameters1", new Vector4(0.45f, 1.0f, 0.0f, 2.0f));
             SetVector4(element, "parameters2", new Vector4(6.0f, 0.75f, 12.0f, 0.45f));
             SetVector4(element, "parameters3", new Vector4(0.0f, 0.0f, 4.5f, 0.0f));
+        }
+
+        private static void ApplyShoostBrightSunLensFlarePreset(SerializedProperty element, ShoostPostProcessEffect effect)
+        {
+            ApplyShoostDefaultPreset(element, effect);
+            SetColor(element, "color", new Color(1.0f, 0.86f, 0.55f, 1.0f));
+            SetVector4(element, "parameters0", new Vector4(-0.38f, 0.32f, -18.0f, 1.0f));
+            SetVector4(element, "parameters1", new Vector4(0.070f, 0.38f, 1.0f, 7.0f));
+            SetVector4(element, "parameters2", new Vector4(0.90f, 1.08f, 0.62f, 0.62f));
+            SetVector4(element, "parameters3", new Vector4(0.90f, 2.7f, 0.0f, 0.0f));
+        }
+
+        private static void ApplyShoostCinematicLensFlarePreset(SerializedProperty element, ShoostPostProcessEffect effect)
+        {
+            ApplyShoostDefaultPreset(element, effect);
+            SetColor(element, "color", new Color(0.78f, 0.88f, 1.0f, 1.0f));
+            SetVector4(element, "parameters0", new Vector4(-0.55f, 0.18f, 0.0f, 1.35f));
+            SetVector4(element, "parameters1", new Vector4(0.040f, 0.24f, 0.65f, 4.0f));
+            SetVector4(element, "parameters2", new Vector4(0.55f, 1.20f, 0.38f, 0.85f));
+            SetVector4(element, "parameters3", new Vector4(1.65f, 1.9f, 0.0f, 0.0f));
         }
 
         private static void ApplyShoostFineGrainPreset(SerializedProperty element, ShoostPostProcessEffect effect)
