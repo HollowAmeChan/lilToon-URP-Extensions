@@ -100,6 +100,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ShoostPostProcessEffect.BokehZoomBlur:
                     changed = HandleShoostBokehZoomBlurViewControl(viewRect, evt, target, element);
                     break;
+                case ShoostPostProcessEffect.PrismFracture:
+                    changed = HandleShoostPrismFractureViewControl(viewRect, evt, target, element);
+                    break;
                 default:
                     ShoostCenterRadiusViewControl.Stop();
                     return;
@@ -266,6 +269,35 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 p1.y = Mathf.Clamp((center.y - 0.5f) * 2.0f, -1.0f, 1.0f);
                 parameters0.vector4Value = p0;
                 parameters1.vector4Value = p1;
+            }
+
+            return changed;
+        }
+
+        private static bool HandleShoostPrismFractureViewControl(Rect viewRect, Event evt, UnityEngine.Object target, SerializedProperty element)
+        {
+            SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
+            EnsurePrismFractureDefaults(parameters0, element.FindPropertyRelative("parameters1"), element.FindPropertyRelative("parameters2"));
+            Vector4 p0 = parameters0.vector4Value;
+            Vector2 center = new Vector2(p0.x, p0.y);
+            float radius = p0.z;
+            bool changed = PostProcessScreenSpaceControlTemplates.HandleCenterRadius(
+                viewRect,
+                evt,
+                target,
+                "Adjust Shoost Prism Fracture In View",
+                ref ShoostCenterRadiusViewControl.ActiveHandle,
+                ref center,
+                ref radius,
+                0.0f,
+                1.5f,
+                "棱镜破碎  C 中心  R 半径  Esc 退出");
+            if (changed)
+            {
+                p0.x = center.x;
+                p0.y = center.y;
+                p0.z = radius;
+                parameters0.vector4Value = p0;
             }
 
             return changed;

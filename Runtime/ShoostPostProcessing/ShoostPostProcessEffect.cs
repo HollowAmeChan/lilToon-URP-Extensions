@@ -52,7 +52,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         ApertureBokeh,
         LensFlare,
         CinematicBars,
-        GlitchArt
+        GlitchArt,
+        PrismFracture
     }
 
     public enum ShoostPostProcessBlendMode

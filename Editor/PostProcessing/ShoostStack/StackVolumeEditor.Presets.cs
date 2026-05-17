@@ -153,6 +153,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     AddShoostPresetMenuItem(menu, propertyPath, effect, "轻微故障", ApplyShoostSoftGlitchArtPreset);
                     AddShoostPresetMenuItem(menu, propertyPath, effect, "强烈故障", ApplyShoostStrongGlitchArtPreset);
                     break;
+                case ShoostPostProcessEffect.PrismFracture:
+                    AddShoostPresetMenuItem(menu, propertyPath, effect, "柔和棱镜", ApplyShoostSoftPrismFracturePreset);
+                    AddShoostPresetMenuItem(menu, propertyPath, effect, "中心碎裂", ApplyShoostCenterPrismFracturePreset);
+                    AddShoostPresetMenuItem(menu, propertyPath, effect, "强彩虹折射", ApplyShoostRainbowPrismFracturePreset);
+                    break;
                 case ShoostPostProcessEffect.FilmBreathGateWeave:
                     AddShoostPresetMenuItem(menu, propertyPath, effect, "60年代单色", ApplyShoostFilm60Preset);
                     AddShoostPresetMenuItem(menu, propertyPath, effect, "80年代彩色", ApplyShoostFilm80Preset);
@@ -456,6 +461,30 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ApplyShoostDefaultPreset(element, effect);
             SetVector4(element, "parameters0", new Vector4(0.32f, 0.55f, 0.42f, 0.22f));
             SetVector4(element, "parameters1", new Vector4(0.62f, 1.35f, 0.08f, 9.0f));
+        }
+
+        private static void ApplyShoostSoftPrismFracturePreset(SerializedProperty element, ShoostPostProcessEffect effect)
+        {
+            ApplyShoostDefaultPreset(element, effect);
+            SetVector4(element, "parameters0", new Vector4(0.5f, 0.5f, 0.36f, 0.18f));
+            SetVector4(element, "parameters1", new Vector4(0.30f, 0.46f, 10.0f, -8.0f));
+            SetVector4(element, "parameters2", new Vector4(0.22f, 1.0f, 0.0f, 0.0f));
+        }
+
+        private static void ApplyShoostCenterPrismFracturePreset(SerializedProperty element, ShoostPostProcessEffect effect)
+        {
+            ApplyShoostDefaultPreset(element, effect);
+            SetVector4(element, "parameters0", new Vector4(0.5f, 0.5f, 0.42f, 0.12f));
+            SetVector4(element, "parameters1", new Vector4(0.58f, 0.74f, 15.0f, 0.0f));
+            SetVector4(element, "parameters2", new Vector4(0.38f, 1.0f, 0.0f, 0.0f));
+        }
+
+        private static void ApplyShoostRainbowPrismFracturePreset(SerializedProperty element, ShoostPostProcessEffect effect)
+        {
+            ApplyShoostDefaultPreset(element, effect);
+            SetVector4(element, "parameters0", new Vector4(0.5f, 0.5f, 0.48f, 0.10f));
+            SetVector4(element, "parameters1", new Vector4(0.78f, 1.0f, 20.0f, 14.0f));
+            SetVector4(element, "parameters2", new Vector4(0.52f, 4.0f, 0.0f, 0.0f));
         }
 
         private static void ApplyShoostWeatherPreset(SerializedProperty element, ShoostPostProcessEffect effect, int particle, Color color, Vector4 particleParams, Vector4 variationParams)
