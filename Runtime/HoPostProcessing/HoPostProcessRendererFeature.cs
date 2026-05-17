@@ -316,6 +316,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             public int passIndex;
             public bool isEdgeLight;
             public bool isDropShadow;
+            public bool isPostLighting;
             public bool useAovMaskTexture;
             public bool useAovNormalDepth;
             public bool useAovSurfaceData;
@@ -529,10 +530,11 @@ namespace lilToon.URP.Extensions.PostProcessing
                     passData.passIndex = Mathf.Max(0, runtimeLayer.settings.passIndex);
                     passData.isEdgeLight = runtimeLayer.settings.effect == HoPostProcessEffect.EdgeLight;
                     passData.isDropShadow = runtimeLayer.settings.effect == HoPostProcessEffect.DropShadow;
-                    bool needsAov = passData.isEdgeLight || passData.isDropShadow || runtimeLayer.settings.useAovMask || runtimeLayer.settings.debugAovMask;
+                    passData.isPostLighting = runtimeLayer.settings.effect == HoPostProcessEffect.PostLighting;
+                    bool needsAov = passData.isEdgeLight || passData.isDropShadow || passData.isPostLighting || runtimeLayer.settings.useAovMask || runtimeLayer.settings.debugAovMask;
                     bool needsAovMaskResolve = passData.isDropShadow || runtimeLayer.settings.useAovMask || runtimeLayer.settings.debugAovMask;
                     passData.useAovMaskTexture = needsAov && aovResources.maskIdTexture.IsValid();
-                    passData.useAovNormalDepth = passData.isEdgeLight && aovResources.normalDepthTexture.IsValid();
+                    passData.useAovNormalDepth = (passData.isEdgeLight || passData.isPostLighting) && aovResources.normalDepthTexture.IsValid();
                     passData.useAovSurfaceData = needsAovMaskResolve && aovResources.surfaceDataTexture.IsValid();
                     passData.useAovCustom0 = needsAovMaskResolve && aovResources.custom0Texture.IsValid();
                     passData.useAovObjectCustom0 = needsAovMaskResolve && aovResources.objectCustom0Texture.IsValid();
@@ -606,6 +608,36 @@ namespace lilToon.URP.Extensions.PostProcessing
                                 {
                                     context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
                                 }
+                            }
+                        }
+                        else if (data.isPostLighting)
+                        {
+                            bool hasAov = data.useAovMaskTexture && data.useAovNormalDepth;
+                            context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, hasAov ? 1.0f : 0.0f);
+                            if (hasAov)
+                            {
+                                context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
+                                context.cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, data.aovNormalDepthTexture);
+                            }
+
+                            if (data.useAovSurfaceData)
+                            {
+                                context.cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
+                            }
+
+                            if (data.useAovCustom0)
+                            {
+                                context.cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, data.aovCustom0Texture);
+                            }
+
+                            if (data.useAovObjectCustom0)
+                            {
+                                context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
+                            }
+
+                            if (data.useAovObjectCustom1)
+                            {
+                                context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
                             }
                         }
                         else if (data.isDropShadow)

@@ -29,7 +29,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             y += LineHeight + LineSpacing;
             p1.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "深度灵敏度", p1.y, 0.0f, 5.0f);
             y += LineHeight + LineSpacing;
-            p1.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "法线灵敏度", p1.z, 0.0f, 5.0f);
+            p1.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "法线灵敏度", p1.z, 0.0f, 1.0f);
             y += LineHeight + LineSpacing;
             p1.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "不透明度", p1.w, 0.0f, 1.0f);
             y += LineHeight + LineSpacing;

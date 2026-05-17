@@ -34,6 +34,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             new EffectToggleEntry(HoPostProcessEffect.EdgeLight, "边缘光", "icon_RimLight_v1"),
             new EffectToggleEntry(HoPostProcessEffect.Outline, "轮廓", "icon_OutLine_v1"),
+            new EffectToggleEntry(HoPostProcessEffect.PostLighting, "后期打光", "icon_RimLight_v1"),
             new EffectToggleEntry(HoPostProcessEffect.DropShadow, "投影", "icon_DropShadow_v1"),
             new EffectToggleEntry(HoPostProcessEffect.DepthOfField, "景深", "icon_Effects_v1"),
             new EffectToggleEntry(HoPostProcessEffect.CustomMaterial, "自定义", "icon_Effects_v1")
@@ -137,6 +138,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     HoPostDirectionDistanceViewControl.Stop();
                 }
 
+                if (IsHoPostCenterRadiusViewControlActive(element))
+                {
+                    HoPostCenterRadiusViewControl.Stop();
+                }
+
                 return;
             }
 
@@ -166,6 +172,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case HoPostProcessEffect.DepthOfField:
                     DrawDepthOfFieldProperties(rect, ref y, element);
                     break;
+                case HoPostProcessEffect.PostLighting:
+                    DrawPostLightingProperties(rect, ref y, element);
+                    break;
             }
 
             EditorGUI.indentLevel--;
@@ -181,6 +190,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     return 11 + GetAovLineCount(element);
                 case HoPostProcessEffect.DepthOfField:
                     return GetDepthOfFieldLineCount(element) + GetAovLineCount(element);
+                case HoPostProcessEffect.PostLighting:
+                    return GetPostLightingLineCount(element) + GetAovLineCount(element);
                 case HoPostProcessEffect.CustomMaterial:
                     return 7 + GetAovLineCount(element);
                 case HoPostProcessEffect.DropShadow:
@@ -427,11 +438,50 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             Undo.RecordObject(serializedObject.targetObject, "Add HoPost Effect");
-            int index = layerValues.arraySize;
+            int index = GetLayerInsertIndex(effect);
             layerValues.InsertArrayElementAtIndex(index);
             SerializedProperty element = layerValues.GetArrayElementAtIndex(index);
             ResetLayerDefaults(element, effect);
             element.isExpanded = true;
+        }
+
+        private int GetLayerInsertIndex(HoPostProcessEffect effect)
+        {
+            if (layerValues == null || !layerValues.isArray)
+            {
+                return 0;
+            }
+
+            int newOrder = GetPreferredLayerOrder(effect);
+            for (int index = 0; index < layerValues.arraySize; index++)
+            {
+                if (GetPreferredLayerOrder(GetEffect(layerValues.GetArrayElementAtIndex(index))) > newOrder)
+                {
+                    return index;
+                }
+            }
+
+            return layerValues.arraySize;
+        }
+
+        private static int GetPreferredLayerOrder(HoPostProcessEffect effect)
+        {
+            switch (effect)
+            {
+                case HoPostProcessEffect.EdgeLight:
+                    return 10;
+                case HoPostProcessEffect.Outline:
+                    return 20;
+                case HoPostProcessEffect.PostLighting:
+                    return 30;
+                case HoPostProcessEffect.DropShadow:
+                    return 40;
+                case HoPostProcessEffect.DepthOfField:
+                    return 50;
+                case HoPostProcessEffect.CustomMaterial:
+                default:
+                    return 100;
+            }
         }
 
         private void RemoveLayer(HoPostProcessEffect effect)
@@ -489,13 +539,15 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             SerializedProperty effect = element.FindPropertyRelative("effect");
             int value = effect != null ? effect.enumValueIndex : 0;
-            return (HoPostProcessEffect)Mathf.Clamp(value, 0, 4);
+            return (HoPostProcessEffect)Mathf.Clamp(value, 0, 5);
         }
 
         private static string GetEffectDisplayName(HoPostProcessEffect effect)
         {
             switch (effect)
             {
+                case HoPostProcessEffect.PostLighting:
+                    return "后期打光";
                 case HoPostProcessEffect.EdgeLight:
                     return "边缘光";
                 case HoPostProcessEffect.Outline:
@@ -550,8 +602,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case HoPostProcessEffect.Outline:
                     SetColor(element, "color", Color.black);
                     SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
-                    SetVector4(element, "parameters0", new Vector4(1.5f, 1.0f, 2.0f, 0.15f));
-                    SetVector4(element, "parameters1", new Vector4(0.3f, 1.0f, 0.2f, 1.0f));
+                    SetVector4(element, "parameters0", new Vector4(0.85f, 0.85f, 0.45f, 0.11f));
+                    SetVector4(element, "parameters1", new Vector4(0.08f, 0.85f, 0.32f, 0.9f));
                     break;
                 case HoPostProcessEffect.DropShadow:
                     SetColor(element, "color", new Color(0.0f, 0.0f, 0.0f, 0.65f));
@@ -565,6 +617,16 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters0", new Vector4(1.0f, 10.0f, 50.0f, 5.6f));
                     SetVector4(element, "parameters1", new Vector4(10.0f, 30.0f, 8.0f, 1.0f));
                     SetVector4(element, "parameters2", new Vector4(5.0f, 1.0f, 0.0f, 0.0f));
+                    break;
+                case HoPostProcessEffect.PostLighting:
+                    SetColor(element, "color", new Color(1.0f, 0.82f, 0.55f, 1.0f));
+                    SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Screen);
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 0.55f, 0.18f, 0.38f));
+                    SetVector4(element, "parameters1", new Vector4(90.0f, 1.15f, 0.06f, 0.55f));
+                    SetVector4(element, "parameters2", new Vector4(0.5f, 0.58f, 0.62f, 0.28f));
+                    SetVector4(element, "parameters3", new Vector4(1.0f, 0.84f, 0.62f, 1.0f));
+                    SetVector4(element, "parameters4", new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+                    SetVector4(element, "parameters5", new Vector4(0.35f, 0.28f, 0.0f, 0.45f));
                     break;
                 case HoPostProcessEffect.CustomMaterial:
                     SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);

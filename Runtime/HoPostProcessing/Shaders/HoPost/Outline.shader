@@ -74,7 +74,9 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/Outline"
 
                 float3 gx = n20 + 2.0 * n21 + n22 - n00 - 2.0 * n01 - n02;
                 float3 gy = n02 + 2.0 * n12 + n22 - n00 - 2.0 * n10 - n20;
-                return (length(gx) + length(gy)) * 0.5 * max(_LayerParams1.z, 0.0);
+                float normalSensitivity = saturate(_LayerParams1.z);
+                float normalScale = normalSensitivity * normalSensitivity * 1.5;
+                return (length(gx) + length(gy)) * 0.5 * normalScale;
             }
 
             half3 ApplyBlend(half3 baseColor, half3 layerColor, float blendMode)

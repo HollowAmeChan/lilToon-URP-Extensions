@@ -14,6 +14,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                     return HoPostProcessShaderConstants.DropShadowShaderName;
                 case HoPostProcessEffect.DepthOfField:
                     return HoPostProcessShaderConstants.DepthOfFieldShaderName;
+                case HoPostProcessEffect.PostLighting:
+                    return HoPostProcessShaderConstants.PostLightingShaderName;
                 case HoPostProcessEffect.CustomMaterial:
                 default:
                     return HoPostProcessShaderConstants.DefaultLayerShaderName;

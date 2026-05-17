@@ -101,6 +101,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             switch (effect)
             {
+                case HoPostProcessEffect.PostLighting:
+                    AddHoPostPresetMenuItem(menu, propertyPath, effect, "暖色顶光", ApplyHoPostWarmTopPostLightingPreset);
+                    AddHoPostPresetMenuItem(menu, propertyPath, effect, "中心聚光", ApplyHoPostCenterPostLightingPreset);
+                    AddHoPostPresetMenuItem(menu, propertyPath, effect, "冷暖 MatCap", ApplyHoPostMatcapPostLightingPreset);
+                    break;
                 case HoPostProcessEffect.EdgeLight:
                     AddHoPostPresetMenuItem(menu, propertyPath, effect, "柔和边缘光", ApplyHoPostSoftEdgeLightPreset);
                     AddHoPostPresetMenuItem(menu, propertyPath, effect, "锐利轮廓光", ApplyHoPostSharpEdgeLightPreset);
@@ -163,8 +168,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ApplyHoPostDefaultPreset(element, effect);
             SetColor(element, "color", Color.black);
             SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
-            SetVector4(element, "parameters0", new Vector4(1.0f, 1.0f, 0.7f, 0.08f));
-            SetVector4(element, "parameters1", new Vector4(0.06f, 1.0f, 1.0f, 0.95f));
+            SetVector4(element, "parameters0", new Vector4(0.55f, 0.8f, 0.35f, 0.10f));
+            SetVector4(element, "parameters1", new Vector4(0.04f, 0.75f, 0.28f, 0.85f));
         }
 
         private static void ApplyHoPostThickOutlinePreset(SerializedProperty element, HoPostProcessEffect effect)
@@ -172,8 +177,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ApplyHoPostDefaultPreset(element, effect);
             SetColor(element, "color", Color.black);
             SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
-            SetVector4(element, "parameters0", new Vector4(3.0f, 1.2f, 0.9f, 0.07f));
-            SetVector4(element, "parameters1", new Vector4(0.1f, 1.1f, 1.0f, 1.0f));
+            SetVector4(element, "parameters0", new Vector4(1.35f, 0.95f, 0.48f, 0.10f));
+            SetVector4(element, "parameters1", new Vector4(0.06f, 0.85f, 0.42f, 0.95f));
         }
 
         private static void ApplyHoPostSoftOutlinePreset(SerializedProperty element, HoPostProcessEffect effect)
@@ -181,8 +186,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ApplyHoPostDefaultPreset(element, effect);
             SetColor(element, "color", new Color(0.04f, 0.06f, 0.1f, 1.0f));
             SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
-            SetVector4(element, "parameters0", new Vector4(2.0f, 0.75f, 0.7f, 0.08f));
-            SetVector4(element, "parameters1", new Vector4(0.22f, 0.8f, 0.8f, 0.72f));
+            SetVector4(element, "parameters0", new Vector4(0.95f, 0.65f, 0.35f, 0.12f));
+            SetVector4(element, "parameters1", new Vector4(0.18f, 0.70f, 0.34f, 0.65f));
         }
 
         private static void ApplyHoPostSoftDropShadowPreset(SerializedProperty element, HoPostProcessEffect effect)
@@ -228,6 +233,45 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetVector4(element, "parameters0", new Vector4(1.0f, 6.0f, 70.0f, 2.8f));
             SetVector4(element, "parameters1", new Vector4(6.0f, 20.0f, 10.0f, 1.0f));
             SetVector4(element, "parameters2", new Vector4(6.0f, 0.85f, 0.0f, 0.0f));
+        }
+
+        private static void ApplyHoPostWarmTopPostLightingPreset(SerializedProperty element, HoPostProcessEffect effect)
+        {
+            ApplyHoPostDefaultPreset(element, effect);
+            SetColor(element, "color", new Color(1.0f, 0.82f, 0.55f, 1.0f));
+            SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Screen);
+            SetVector4(element, "parameters0", new Vector4(0.0f, 0.55f, 0.18f, 0.38f));
+            SetVector4(element, "parameters1", new Vector4(90.0f, 1.15f, 0.06f, 0.55f));
+            SetVector4(element, "parameters2", new Vector4(0.5f, 0.58f, 0.62f, 0.28f));
+            SetVector4(element, "parameters3", new Vector4(1.0f, 0.84f, 0.62f, 1.0f));
+            SetVector4(element, "parameters4", new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+            SetVector4(element, "parameters5", new Vector4(0.35f, 0.28f, 0.0f, 0.45f));
+        }
+
+        private static void ApplyHoPostCenterPostLightingPreset(SerializedProperty element, HoPostProcessEffect effect)
+        {
+            ApplyHoPostDefaultPreset(element, effect);
+            SetColor(element, "color", new Color(1.0f, 0.94f, 0.82f, 1.0f));
+            SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Multiply);
+            SetVector4(element, "parameters0", new Vector4(1.0f, 0.70f, 0.20f, 0.42f));
+            SetVector4(element, "parameters1", new Vector4(0.0f, 0.85f, 0.0f, 0.50f));
+            SetVector4(element, "parameters2", new Vector4(0.5f, 0.52f, 0.48f, 0.34f));
+            SetVector4(element, "parameters3", new Vector4(1.0f, 0.94f, 0.82f, 1.0f));
+            SetVector4(element, "parameters4", new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+            SetVector4(element, "parameters5", new Vector4(0.35f, 0.32f, 0.0f, 0.45f));
+        }
+
+        private static void ApplyHoPostMatcapPostLightingPreset(SerializedProperty element, HoPostProcessEffect effect)
+        {
+            ApplyHoPostDefaultPreset(element, effect);
+            SetColor(element, "color", new Color(0.72f, 0.86f, 1.0f, 1.0f));
+            SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Screen);
+            SetVector4(element, "parameters0", new Vector4(2.0f, 0.48f, 0.24f, 0.34f));
+            SetVector4(element, "parameters1", new Vector4(135.0f, 0.9f, 0.0f, 0.72f));
+            SetVector4(element, "parameters2", new Vector4(0.5f, 0.5f, 0.5f, 0.2f));
+            SetVector4(element, "parameters3", new Vector4(0.72f, 0.86f, 1.0f, 1.0f));
+            SetVector4(element, "parameters4", new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+            SetVector4(element, "parameters5", new Vector4(0.45f, 0.24f, 1.0f, 1.25f));
         }
 
         private readonly struct AovMaskState

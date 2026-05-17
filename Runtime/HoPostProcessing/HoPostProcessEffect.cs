@@ -6,7 +6,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         EdgeLight = 1,
         Outline = 2,
         DropShadow = 3,
-        DepthOfField = 4
+        DepthOfField = 4,
+        PostLighting = 5
     }
 
     public enum HoPostProcessBlendMode
