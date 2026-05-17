@@ -44,6 +44,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                     return "Hidden/lilToon-Shoost/URP/Shoost/Gradient";
                 case ShoostPostProcessEffect.Glow:
                     return "Hidden/lilToon-Shoost/URP/Shoost/Glow";
+                case ShoostPostProcessEffect.GlitchArt:
+                    return "Hidden/lilToon-Shoost/URP/Shoost/GlitchArt";
                 case ShoostPostProcessEffect.IrisBlur:
                     return "Hidden/lilToon-Shoost/URP/Shoost/IrisBlur";
                 case ShoostPostProcessEffect.Kuwahara:

@@ -148,6 +148,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     AddShoostPresetMenuItem(menu, propertyPath, effect, "烟雾", ApplyShoostSmokeWeatherPreset);
                     AddShoostPresetMenuItem(menu, propertyPath, effect, "灰尘", ApplyShoostDustWeatherPreset);
                     break;
+                case ShoostPostProcessEffect.GlitchArt:
+                    AddShoostPresetMenuItem(menu, propertyPath, effect, "赛博慢抖", ApplyShoostCyberGlitchArtPreset);
+                    AddShoostPresetMenuItem(menu, propertyPath, effect, "轻微故障", ApplyShoostSoftGlitchArtPreset);
+                    AddShoostPresetMenuItem(menu, propertyPath, effect, "强烈故障", ApplyShoostStrongGlitchArtPreset);
+                    break;
                 case ShoostPostProcessEffect.FilmBreathGateWeave:
                     AddShoostPresetMenuItem(menu, propertyPath, effect, "60年代单色", ApplyShoostFilm60Preset);
                     AddShoostPresetMenuItem(menu, propertyPath, effect, "80年代彩色", ApplyShoostFilm80Preset);
@@ -430,6 +435,27 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ApplyShoostWeatherPreset(element, effect, 3, Color.black, new Vector4(1.54f, 2.88f, 2.0f, 0.8f), new Vector4(1.05f, 2.0f, 2.0f, 0.55f));
             SetVector4(element, "parameters0", new Vector4(3.0f, 1.0f, 1.0f, 0.85f));
             SetVector4(element, "parameters1", new Vector4(0.45f, 0.30f, 1.0f, 0.0f));
+        }
+
+        private static void ApplyShoostSoftGlitchArtPreset(SerializedProperty element, ShoostPostProcessEffect effect)
+        {
+            ApplyShoostDefaultPreset(element, effect);
+            SetVector4(element, "parameters0", new Vector4(0.08f, 0.18f, 0.10f, 0.05f));
+            SetVector4(element, "parameters1", new Vector4(0.24f, 0.90f, 0.02f, 6.0f));
+        }
+
+        private static void ApplyShoostCyberGlitchArtPreset(SerializedProperty element, ShoostPostProcessEffect effect)
+        {
+            ApplyShoostDefaultPreset(element, effect);
+            SetVector4(element, "parameters0", new Vector4(0.18f, 0.34f, 0.24f, 0.12f));
+            SetVector4(element, "parameters1", new Vector4(0.42f, 1.10f, 0.04f, 7.0f));
+        }
+
+        private static void ApplyShoostStrongGlitchArtPreset(SerializedProperty element, ShoostPostProcessEffect effect)
+        {
+            ApplyShoostDefaultPreset(element, effect);
+            SetVector4(element, "parameters0", new Vector4(0.32f, 0.55f, 0.42f, 0.22f));
+            SetVector4(element, "parameters1", new Vector4(0.62f, 1.35f, 0.08f, 9.0f));
         }
 
         private static void ApplyShoostWeatherPreset(SerializedProperty element, ShoostPostProcessEffect effect, int particle, Color color, Vector4 particleParams, Vector4 variationParams)

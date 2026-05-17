@@ -57,6 +57,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ShoostPostProcessEffect.LED,
             ShoostPostProcessEffect.Weather,
             ShoostPostProcessEffect.Particle,
+            ShoostPostProcessEffect.GlitchArt,
             ShoostPostProcessEffect.CinematicBars,
             ShoostPostProcessEffect.CameraSwitcher,
             ShoostPostProcessEffect.TransparentBackground,
@@ -107,6 +108,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ShoostPostProcessEffect.Kuwahara, "桑原", "filter_v2"),
             new EffectToggleEntry(ShoostPostProcessEffect.Weather, "天气", "icon_Weather_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Particle, "粒子", "icon_Particle_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.GlitchArt, "故障艺术", "icon_Distortion_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.CinematicBars, "电影黑边", "icon_ScreenEffects_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.FilmBreathGateWeave, "胶片", "icon_Film_v3"),
             new EffectToggleEntry(ShoostPostProcessEffect.Tube, "电视", "icon_TV_v1"),
@@ -184,7 +186,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "光斑变焦",
             "光圈散景",
             "镜头光晕",
-            "电影黑边"
+            "电影黑边",
+            "故障艺术"
         };
 
         private static readonly GUIContent[] BlendModeDisplayNames =
@@ -586,6 +589,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.GlitchArt)
+            {
+                DrawGlitchArtElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ShoostPostProcessEffect.LevelAdjustment)
             {
                 DrawLevelAdjustmentElement(rect, element);
@@ -731,6 +740,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
                     lineCount += 3;
                     break;
+                case ShoostPostProcessEffect.GlitchArt:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += 8;
+                    break;
                 case ShoostPostProcessEffect.LevelAdjustment:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
                     lineCount += 6;
@@ -823,6 +836,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ShoostPostProcessEffect.ToonMap:
                 case ShoostPostProcessEffect.Weather:
                 case ShoostPostProcessEffect.CinematicBars:
+                case ShoostPostProcessEffect.GlitchArt:
                 case ShoostPostProcessEffect.BokehZoomBlur:
                 case ShoostPostProcessEffect.ApertureBokeh:
                 case ShoostPostProcessEffect.LensFlare:
@@ -1710,6 +1724,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetFloat(element, "intensity", 1.0f);
                     SetColor(element, "color", Color.black);
                     SetVector4(element, "parameters0", new Vector4(2.39f, 0.0f, 0.0f, 0.0f));
+                    break;
+                case ShoostPostProcessEffect.GlitchArt:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetVector4(element, "parameters0", new Vector4(0.18f, 0.34f, 0.24f, 0.12f));
+                    SetVector4(element, "parameters1", new Vector4(0.42f, 1.10f, 0.04f, 7.0f));
                     break;
                 case ShoostPostProcessEffect.Lighting:
                 case ShoostPostProcessEffect.LED:
