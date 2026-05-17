@@ -9,6 +9,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
     {
         private const float LayerPresetButtonSize = 18.0f;
         private const string LayerPresetIconName = "icon_Settings_v1";
+        private const int MaxAovRuleCount = 4;
         private static GUIContent layerPresetIconContent;
 
         private void DrawLayerPresetButton(Rect rect, SerializedProperty element)
@@ -214,11 +215,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             public readonly int AovSource;
             public readonly int AovMaskMode;
             public readonly float AovThreshold;
-            public readonly float AovSoftness;
             public readonly float AovMatchValue;
             public readonly Color AovMatchColor;
             public readonly bool InvertAovMask;
             public readonly bool DebugAovMask;
+            public readonly AovRuleState[] Rules;
 
             public AovMaskState(SerializedProperty element)
             {
@@ -228,11 +229,43 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 AovSource = GetEnumValue(element, "aovSource", (int)HoPostAovSource.Mask);
                 AovMaskMode = GetEnumValue(element, "aovMaskMode", (int)HoPostAovMaskMode.Direct);
                 AovThreshold = GetFloatValue(element, "aovThreshold", 0.5f);
-                AovSoftness = GetFloatValue(element, "aovSoftness", 0.02f);
                 AovMatchValue = GetFloatValue(element, "aovMatchValue", 0.0f);
                 AovMatchColor = GetColorValue(element, "aovMatchColor", Color.white);
                 InvertAovMask = GetBoolValue(element, "invertAovMask", false);
                 DebugAovMask = GetBoolValue(element, "debugAovMask", false);
+                Rules = CaptureAovRules(element);
+            }
+        }
+
+        private readonly struct AovRuleState
+        {
+            public readonly bool Enabled;
+            public readonly string Name;
+            public readonly int Source;
+            public readonly int MatchOperator;
+            public readonly float Value;
+            public readonly float MinValue;
+            public readonly float MaxValue;
+            public readonly float Tolerance;
+            public readonly Color MatchColor;
+            public readonly int Combine;
+            public readonly bool Invert;
+            public readonly bool Expanded;
+
+            public AovRuleState(SerializedProperty rule)
+            {
+                Enabled = GetBoolValue(rule, "enabled", true);
+                Name = GetStringValue(rule, "name", "AOV Rule");
+                Source = GetEnumValue(rule, "source", (int)HoPostAovSource.Mask);
+                MatchOperator = GetEnumValue(rule, "matchOperator", (int)HoPostAovMaskOperator.Direct);
+                Value = GetFloatValue(rule, "value", 0.5f);
+                MinValue = GetFloatValue(rule, "minValue", 0.0f);
+                MaxValue = GetFloatValue(rule, "maxValue", 1.0f);
+                Tolerance = GetFloatValue(rule, "tolerance", 0.02f);
+                MatchColor = GetColorValue(rule, "matchColor", Color.white);
+                Combine = GetEnumValue(rule, "combine", (int)HoPostAovMaskCombine.Replace);
+                Invert = GetBoolValue(rule, "invert", false);
+                Expanded = rule != null && rule.isExpanded;
             }
         }
 
@@ -253,11 +286,58 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetEnum(element, "aovSource", state.AovSource);
             SetEnum(element, "aovMaskMode", state.AovMaskMode);
             SetFloat(element, "aovThreshold", state.AovThreshold);
-            SetFloat(element, "aovSoftness", state.AovSoftness);
             SetFloat(element, "aovMatchValue", state.AovMatchValue);
             SetColor(element, "aovMatchColor", state.AovMatchColor);
             SetBool(element, "invertAovMask", state.InvertAovMask);
             SetBool(element, "debugAovMask", state.DebugAovMask);
+            RestoreAovRules(element, state.Rules);
+        }
+
+        private static AovRuleState[] CaptureAovRules(SerializedProperty element)
+        {
+            SerializedProperty rules = element.FindPropertyRelative("aovRules");
+            if (rules == null || !rules.isArray || rules.arraySize == 0)
+            {
+                return Array.Empty<AovRuleState>();
+            }
+
+            int ruleCount = Mathf.Min(rules.arraySize, MaxAovRuleCount);
+            AovRuleState[] states = new AovRuleState[ruleCount];
+            for (int i = 0; i < ruleCount; i++)
+            {
+                states[i] = new AovRuleState(rules.GetArrayElementAtIndex(i));
+            }
+
+            return states;
+        }
+
+        private static void RestoreAovRules(SerializedProperty element, AovRuleState[] states)
+        {
+            SerializedProperty rules = element.FindPropertyRelative("aovRules");
+            if (rules == null || !rules.isArray || states == null)
+            {
+                return;
+            }
+
+            rules.ClearArray();
+            int ruleCount = Mathf.Min(states.Length, MaxAovRuleCount);
+            for (int i = 0; i < ruleCount; i++)
+            {
+                rules.InsertArrayElementAtIndex(i);
+                SerializedProperty rule = rules.GetArrayElementAtIndex(i);
+                SetBool(rule, "enabled", states[i].Enabled);
+                SetString(rule, "name", states[i].Name);
+                SetEnum(rule, "source", states[i].Source);
+                SetEnum(rule, "matchOperator", states[i].MatchOperator);
+                SetFloat(rule, "value", states[i].Value);
+                SetFloat(rule, "minValue", states[i].MinValue);
+                SetFloat(rule, "maxValue", states[i].MaxValue);
+                SetFloat(rule, "tolerance", states[i].Tolerance);
+                SetColor(rule, "matchColor", states[i].MatchColor);
+                SetEnum(rule, "combine", states[i].Combine);
+                SetBool(rule, "invert", states[i].Invert);
+                rule.isExpanded = states[i].Expanded;
+            }
         }
 
         private static bool GetBoolValue(SerializedProperty element, string name, bool fallback)
@@ -289,6 +369,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SerializedProperty property = element.FindPropertyRelative(name);
             return property != null && property.propertyType == SerializedPropertyType.Color
                 ? property.colorValue
+                : fallback;
+        }
+
+        private static string GetStringValue(SerializedProperty element, string name, string fallback)
+        {
+            SerializedProperty property = element.FindPropertyRelative(name);
+            return property != null && property.propertyType == SerializedPropertyType.String
+                ? property.stringValue
                 : fallback;
         }
     }

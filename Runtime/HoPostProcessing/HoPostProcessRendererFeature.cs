@@ -876,11 +876,19 @@ namespace lilToon.URP.Extensions.PostProcessing
                 HoPostProcessShaderConstants.LayerAovParamsId,
                 new Vector4(
                     Mathf.Max(0.0f, layer.aovThreshold),
-                    Mathf.Max(0.0001f, layer.aovSoftness),
+                    0.0f,
                     layer.aovMatchValue,
                     layer.invertAovMask ? 1.0f : 0.0f));
             material.SetColor(HoPostProcessShaderConstants.LayerAovMatchColorId, layer.aovMatchColor);
             material.SetFloat(HoPostProcessShaderConstants.LayerAovDebugOutputId, layer.debugAovMask ? 1.0f : 0.0f);
+            HoPostAovMaskRuntime.ApplyToMaterial(
+                layer,
+                material,
+                HoPostProcessShaderConstants.LayerAovRuleCountId,
+                HoPostProcessShaderConstants.LayerAovRuleData0Id,
+                HoPostProcessShaderConstants.LayerAovRuleData1Id,
+                HoPostProcessShaderConstants.LayerAovRuleData2Id,
+                HoPostProcessShaderConstants.LayerAovRuleColorId);
             material.SetFloat(HoPostProcessShaderConstants.SubjectMaskValidId, 0.0f);
             if (layer.texture != null)
             {

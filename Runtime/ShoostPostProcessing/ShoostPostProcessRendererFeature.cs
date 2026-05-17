@@ -896,11 +896,19 @@ namespace lilToon.URP.Extensions.PostProcessing
                 ShoostPostProcessShaderConstants.LayerAovParamsId,
                 new Vector4(
                     Mathf.Max(0.0f, layer.aovThreshold),
-                    Mathf.Max(0.0001f, layer.aovSoftness),
+                    0.0f,
                     layer.aovMatchValue,
                     layer.invertAovMask ? 1.0f : 0.0f));
             material.SetColor(ShoostPostProcessShaderConstants.LayerAovMatchColorId, layer.aovMatchColor);
             material.SetFloat(ShoostPostProcessShaderConstants.LayerAovDebugOutputId, layer.debugAovMask ? 1.0f : 0.0f);
+            HoPostAovMaskRuntime.ApplyToMaterial(
+                layer,
+                material,
+                ShoostPostProcessShaderConstants.LayerAovRuleCountId,
+                ShoostPostProcessShaderConstants.LayerAovRuleData0Id,
+                ShoostPostProcessShaderConstants.LayerAovRuleData1Id,
+                ShoostPostProcessShaderConstants.LayerAovRuleData2Id,
+                ShoostPostProcessShaderConstants.LayerAovRuleColorId);
         }
 
         private static int GetChangeFrameRateTargetFrameRate(ShoostPostProcessLayer layer)

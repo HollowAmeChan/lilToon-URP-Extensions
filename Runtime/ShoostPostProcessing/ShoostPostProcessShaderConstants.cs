@@ -34,6 +34,11 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static readonly int LayerAovParamsId = Shader.PropertyToID("_LayerAovParams");
         public static readonly int LayerAovMatchColorId = Shader.PropertyToID("_LayerAovMatchColor");
         public static readonly int LayerAovDebugOutputId = Shader.PropertyToID("_LayerAovDebugOutput");
+        public static readonly int LayerAovRuleCountId = Shader.PropertyToID("_LayerAovRuleCount");
+        public static readonly int LayerAovRuleData0Id = Shader.PropertyToID("_LayerAovRuleData0");
+        public static readonly int LayerAovRuleData1Id = Shader.PropertyToID("_LayerAovRuleData1");
+        public static readonly int LayerAovRuleData2Id = Shader.PropertyToID("_LayerAovRuleData2");
+        public static readonly int LayerAovRuleColorId = Shader.PropertyToID("_LayerAovRuleColor");
         public static readonly int ModeId = Shader.PropertyToID("_Mode");
         public static readonly int RadiusId = Shader.PropertyToID("_Radius");
         public static readonly int SharpnessId = Shader.PropertyToID("_Sharpness");

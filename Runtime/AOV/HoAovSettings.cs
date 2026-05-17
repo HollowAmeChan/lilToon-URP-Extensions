@@ -66,13 +66,13 @@ namespace lilToon.URP.Extensions.AOV
         Material,
         [InspectorName("系统预留")]
         Utility,
-        [InspectorName("自定义 0")]
+        [InspectorName("材质自定义通道 0")]
         Custom0,
-        [InspectorName("自定义 1")]
+        [InspectorName("材质自定义通道 1")]
         Custom1,
-        [InspectorName("自定义 2")]
+        [InspectorName("材质自定义通道 2")]
         Custom2,
-        [InspectorName("自定义 3")]
+        [InspectorName("材质自定义通道 3")]
         Custom3,
         [InspectorName("主体")]
         ObjectCustom0,

@@ -97,6 +97,11 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
                 return frac(abs(value) * 0.61803398875);
             }
 
+            float EncodeByte(float value)
+            {
+                return saturate(round(clamp(value, 0.0, 255.0)) / 255.0);
+            }
+
             float4 ApplyCustomWriteMask(float4 values, float startBit)
             {
                 return float4(
@@ -173,9 +178,9 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
                 FragmentOutput output;
                 output.maskId = half4(
                     subjectCoverage * maskEnabled,
-                    EncodeScalar(effectiveGroupId) * idEnabled * subjectValid,
-                    EncodeScalar(effectiveObjectId) * idEnabled * subjectValid,
-                    EncodeScalar(effectiveFlags) * flagsEnabled * subjectValid);
+                    EncodeByte(effectiveGroupId) * idEnabled * subjectValid,
+                    EncodeByte(effectiveObjectId) * idEnabled * subjectValid,
+                    EncodeByte(effectiveFlags) * flagsEnabled * subjectValid);
                 output.normalDepth = half4((normalWS * 0.5 + 0.5) * worldNormalEnabled * subjectValid, linearDepth * linearDepthEnabled * subjectValid);
                 output.tangentNormal = half4(float3(0.5, 0.5, 1.0) * tangentNormalEnabled * subjectValid, tangentNormalEnabled * subjectValid);
                 output.surfaceData = half4(

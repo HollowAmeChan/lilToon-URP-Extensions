@@ -17,6 +17,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/EdgeLight"
             Name "HoPost Edge Light"
 
             HLSLPROGRAM
+            #pragma target 4.5
             #pragma vertex Vert
             #pragma fragment Frag
 

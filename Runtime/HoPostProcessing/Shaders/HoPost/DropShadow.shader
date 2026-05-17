@@ -17,6 +17,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/DropShadow"
             Name "HoPost Drop Shadow"
 
             HLSLPROGRAM
+            #pragma target 4.5
             #pragma vertex Vert
             #pragma fragment Frag
 

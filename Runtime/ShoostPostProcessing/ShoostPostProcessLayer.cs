@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace lilToon.URP.Extensions.PostProcessing
@@ -90,10 +91,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         [Min(0.0f)]
         public float aovThreshold = 0.5f;
 
-        [Tooltip("阈值和匹配模式的柔和过渡宽度。")]
-        [Min(0.0001f)]
-        public float aovSoftness = 0.02f;
-
         [Tooltip("匹配数值模式使用的目标值。ID 类通道会先编码再比较。")]
         public float aovMatchValue;
 
@@ -105,6 +102,9 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         [Tooltip("调试时直接输出解析后的 HoAOV 遮罩。")]
         public bool debugAovMask;
+
+        [Tooltip("精细化 HoAOV 遮罩规则列表。运行时最多解析四条规则；为空时会兼容旧的单条 AOV 遮罩字段。")]
+        public List<HoPostAovMaskRule> aovRules = new List<HoPostAovMaskRule>();
 
         public bool IsActive => enabled && intensity > 0.0f;
     }

@@ -290,7 +290,6 @@ useAovMask
 aovSource
 aovMaskMode
 aovThreshold
-aovSoftness
 aovMatchValue
 aovMatchColor
 invertAovMask
@@ -333,7 +332,6 @@ ObjectCustom7
 
 ```text
 Direct      直接使用通道灰度
-Threshold   通道值高于阈值时选中，可用 softness 软化
 MatchValue  匹配数值，ID/Flags/Material 会先编码目标值再匹配
 MatchColor  从同一张 packed texture 取 RGB，按颜色距离匹配
 ```
@@ -344,7 +342,6 @@ MatchColor  从同一张 packed texture 取 RGB，按颜色距离匹配
 Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl
 ```
 
-效果 shader 不要重复实现 AOV 匹配逻辑。HoPost 已经有公共方法可以按不同方式把 AOV 转成蒙版，包括直接灰度、阈值、数值匹配、颜色匹配、softness 和 invert。具体由图层参数 `_LayerAovSource`、`_LayerAovMode`、`_LayerAovParams`、`_LayerAovMatchColor` 驱动。
 
 Editor 侧也应该只维护一套公共 AOV 遮罩 UI。当前入口是 `HoPostProcessStackVolumeEditor.DrawAovMaskProperties`，内部再拆成 source/mode 绘制和 match 参数绘制。后续新增 HoPost 图层时不要在各自效果里复制一套 AOV UI，否则很容易出现“UI 画了参数，但 shader 没用”的假接口。
 
@@ -361,42 +358,34 @@ Editor 侧也应该只维护一套公共 AOV 遮罩 UI。当前入口是 `HoPost
 Direct / 直接灰度：
 - 只使用 AOV 源本身的灰度值
 - 不使用 aovThreshold
-- 不使用 aovSoftness
 - 不使用 aovMatchValue
 - 不使用 aovMatchColor
-- UI 不应显示阈值、柔和度、匹配数值或匹配颜色
 
 Threshold / 阈值：
 - 使用 aovThreshold 作为选中起点
-- 使用 aovSoftness 作为 threshold 到 threshold + softness 的软过渡宽度
 - 不使用 aovMatchValue
 - 不使用 aovMatchColor
-- UI 只显示阈值和阈值柔和度
 
 MatchValue / 匹配数值：
 - 使用 aovMatchValue 作为目标值
 - 使用 aovThreshold 作为数值容差
-- 使用 aovSoftness 作为容差边缘的软过渡宽度
 - 不使用 aovMatchColor
 - GroupId、ObjectId、Flags、Material 会把目标值先做稳定编码再比较
 - Mask、Thickness、Curvature、Utility、MaterialCustom0..3、ObjectCustom0..7 使用原始标量值比较
-- UI 应显示匹配数值 / ID、数值容差、匹配柔和度
 
 MatchColor / 匹配颜色：
 - 使用 aovMatchColor.rgb 作为目标颜色
 - 使用 aovThreshold 作为 RGB 距离容差
-- 使用 aovSoftness 作为颜色容差边缘的软过渡宽度
 - 不使用 aovMatchValue
 - 颜色来自所选 AOV 源所在的 packed texture 的 RGB
 - MaterialCustom 和 ObjectCustom 通常更适合 Direct / Threshold / MatchValue；MatchColor 只在确实把颜色语义打进 packed texture 时使用
-- UI 应显示匹配颜色、颜色容差、颜色柔和度
 ```
 
 参数打包约定：
 
 ```text
 _LayerAovParams.x = threshold / tolerance
-_LayerAovParams.y = softness
+_LayerAovParams.y = reserved
 _LayerAovParams.z = match value
 _LayerAovParams.w = invert
 _LayerAovMatchColor = match color
@@ -669,3 +658,41 @@ Shoost 默认只处理最终画面，不默认依赖 AOV
 fallback 是过渡路径，不是质量路径
 Material AOV 贴图通道固定 4 个，更多语义遮罩走 Object AOV
 ```
+
+## 2026-05-17 AOV 遮罩规则组工作模式
+
+当前 HoPost 和 ShoostStack 的 AOV 遮罩升级为规则组，而不是单条规则。目标是让 ID 成为主要选择手段，同时允许 ID、Object AOV 和 Material AOV 混合：
+
+```text
+规则 0: 角色组 ID 范围 1..3
+规则 1: AND 主体
+规则 2: OR 眼睛
+规则 3: Subtract 前发
+```
+
+UI 入口是每个图层内部的折叠 box：
+
+```text
+AOV 遮罩
+- 启用
+- 输出匹配结果
+- 最终反转
+- 规则列表（最多 4 条）
+```
+
+规则列表最多 4 条。每项显示启用、名称、AOV 源、匹配方式、匹配参数、混合方式和反转本规则。匹配方式至少包括直接灰度、阈值、大于、大于等于、小于、小于等于、等于、不等于、范围、匹配颜色、包含任意标记 bit 和包含全部标记 bit。混合方式至少包括 Replace、Or、And、Subtract、Add、Multiply。
+
+ID 通道按 raw normalized 值消费：
+
+```text
+GroupId / CharacterId = rawId / 255
+ObjectId / PartId     = rawId / 255
+Flags                 = rawFlags / 255
+```
+
+因此 ID 可以做小于、大于、范围和等值比较。debug shader 可以把 raw ID hash 成伪彩显示，但 HoPost/ShoostStack 不能把 debug 颜色当作数据源。Flags 的 bit 匹配以 0..255 的整数语义解析，shader 侧从归一化值还原为 8-bit mask 后执行 Any/All。
+
+
+
+
+2026-05-17 更新：AOV 规则组现在为硬 0/1 判断，规则参数不再包含过渡宽度字段。

@@ -648,10 +648,8 @@ HoPost 图层需要有独立于 HoAOV 原始通道预览的“消费端匹配结
 - `输出匹配结果` 打开后，该图层不再输出原效果，而是直接输出当前 AOV 匹配结果。
 - 输出颜色为灰度：白色表示该像素被当前图层选中，黑色表示未选中，灰色表示直接灰度或柔和阈值的中间结果。
 - shader 侧不要在每个效果里重复实现调试输出；统一调用 `Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl` 中的公共方法。
-- AOV 的消费端匹配也应统一走 `HoPostAovMask.hlsl`。当前公共方法支持直接灰度、阈值、数值匹配、颜色匹配、softness 和 invert；效果 shader 只需要调用 `LilHoPostResolveAovLayerMask` 或 `LilHoPostResolveRequiredAovMask`，不要各自重写 source/mode/threshold 分支。
 - DropShadow / 投影属于强依赖主体 mask 的效果，调试时应使用同一套 AOV 解析结果作为“主体来源”预览；EdgeLight、Outline 等普通图层则只在 `AOV 遮罩` 开启时把该 mask 作为图层强度限制。
 
-Editor 侧也必须统一走公共 AOV 遮罩 UI。`DrawAovMaskProperties` / `DrawAovMatchProperties` 只应该按当前 `aovMaskMode` 显示真正生效的字段：`Direct` 只需要源；`Threshold` 只需要阈值和柔和度；`MatchValue` 需要匹配值、容差和柔和度；`MatchColor` 需要匹配颜色、颜色容差和柔和度。不要把所有参数一口气画出来，否则后续维护者会误以为每个模式都消费所有字段。
 
 - Mask：黑白显示，权重越高越白。
 - Id：非 0 时 hash 到稳定伪彩色，便于看分组；0 不覆盖显示。
@@ -700,3 +698,63 @@ Editor 侧也必须统一走公共 AOV 遮罩 UI。`DrawAovMaskProperties` / `Dr
 HoAOV 应该作为独立 RendererFeature 存在。它统一产出主体和材质相关的可复用数据，HoPost、未来风格化效果、调试工具和可选的 HTrace bridge 都可以读取它。
 
 短期目标是解决 HoPost 的投影、边缘光和轮廓输入不稳定问题；长期目标是建立一个类似 HTrace 可复用数据层的通道系统，让材质、后处理和追踪效果共享同一套稳定 AOV。
+
+## 2026-05-17 AOV 遮罩规则组设计
+
+HoPost 和可选的 ShoostStack AOV 遮罩升级为规则组，而不是继续把单个 `source + mode + value` 当成长期接口。Object AOV 接入后，`CharacterId / PartId / Flags / ObjectCustom0..7 / MaterialCustom0..3` 会共同参与角色、部件和局部效果选择；单条规则无法表达“角色 ID 在 1..3，且是主体，排除前发”这类实际需求。
+
+新的消费端模型为：
+
+```text
+AOV 遮罩
+- 启用
+- 输出匹配结果
+- 最终反转
+- 规则列表，最多 4 条
+
+AOV 遮罩规则
+- enabled
+- name
+- source
+- operator
+- value
+- minValue
+- maxValue
+- tolerance
+- matchColor
+- combine
+- invert
+```
+
+规则 `operator` 至少支持直接灰度、阈值、大于、大于等于、小于、小于等于、等于、不等于、范围、颜色匹配、Flags 任意 bit 和 Flags 全部 bit。规则 `combine` 至少支持 Replace、Or、And、Subtract、Add 和 Multiply。
+
+shader 侧评估约定：
+
+```text
+coverage = _lilHoAovMaskIdTexture.r
+mask = 0
+for each enabled rule:
+    ruleMask = EvaluateRule(source, operator, params)
+    if rule.invert:
+        ruleMask = coverage - ruleMask
+    mask = Combine(mask, ruleMask, rule.combine)
+mask *= coverage
+if finalInvert:
+    mask = coverage - mask
+```
+
+为了支持 ID 的小于、大于和范围匹配，HoAOV 数据 RT 必须保存可比较的原始归一化 ID，而不是只保存 debug 用伪彩或 hash 值：
+
+```text
+_lilHoAovMaskIdTexture.r = coverage / mask
+_lilHoAovMaskIdTexture.g = CharacterId / GroupId / 255
+_lilHoAovMaskIdTexture.b = PartId / ObjectId / 255
+_lilHoAovMaskIdTexture.a = Flags / 255
+```
+
+debug view 可以继续把非 0 ID hash 成伪彩颜色，但后处理消费者只能读取 raw AOV RT。数据纹理负责可比较数据，debug shader 负责可视化颜色；不要把伪彩编码写回 AOV RT。
+
+
+
+
+2026-05-17 更新：AOV 规则组现在为硬 0/1 判断，规则参数不再包含过渡宽度字段。

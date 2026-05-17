@@ -213,28 +213,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static int GetAovLineCount(SerializedProperty element)
         {
-            SerializedProperty useAovMask = element.FindPropertyRelative("useAovMask");
-            if (useAovMask == null || !useAovMask.boolValue || !useAovMask.isExpanded)
-            {
-                return 1;
-            }
-
-            SerializedProperty aovMaskMode = element.FindPropertyRelative("aovMaskMode");
-            HoPostAovMaskMode mode = aovMaskMode != null
-                ? (HoPostAovMaskMode)Mathf.Clamp(aovMaskMode.enumValueIndex, 0, AovMaskModes.Length - 1)
-                : HoPostAovMaskMode.Direct;
-
-            switch (mode)
-            {
-                case HoPostAovMaskMode.Threshold:
-                    return 7;
-                case HoPostAovMaskMode.MatchValue:
-                case HoPostAovMaskMode.MatchColor:
-                    return 8;
-                case HoPostAovMaskMode.Direct:
-                default:
-                    return 5;
-            }
+            return HoPostAovMaskEditorUtility.GetLineCount(element);
         }
 
         private float DrawFoldoutLine(Rect rect, float y, SerializedProperty element, SerializedProperty enabled)
@@ -416,34 +395,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static void DrawAovMaskProperties(Rect rect, ref float y, SerializedProperty element)
         {
-            SerializedProperty useAovMask = element.FindPropertyRelative("useAovMask");
-            SerializedProperty aovSource = element.FindPropertyRelative("aovSource");
-            SerializedProperty aovMaskMode = element.FindPropertyRelative("aovMaskMode");
-            SerializedProperty aovThreshold = element.FindPropertyRelative("aovThreshold");
-            SerializedProperty aovSoftness = element.FindPropertyRelative("aovSoftness");
-            SerializedProperty aovMatchValue = element.FindPropertyRelative("aovMatchValue");
-            SerializedProperty aovMatchColor = element.FindPropertyRelative("aovMatchColor");
-            SerializedProperty invertAovMask = element.FindPropertyRelative("invertAovMask");
-            SerializedProperty debugAovMask = element.FindPropertyRelative("debugAovMask");
-            if (useAovMask == null || aovSource == null || aovMaskMode == null || aovThreshold == null || aovSoftness == null || aovMatchValue == null || aovMatchColor == null || invertAovMask == null || debugAovMask == null)
-            {
-                return;
-            }
-
-            Rect headerRect = new Rect(rect.x, y, rect.width, LineHeight);
-            float toggleWidth = 58.0f;
-            Rect foldoutRect = new Rect(headerRect.x, headerRect.y, Mathf.Max(0.0f, headerRect.width - toggleWidth), headerRect.height);
-            Rect toggleRect = new Rect(headerRect.xMax - toggleWidth, headerRect.y, toggleWidth, headerRect.height);
-            useAovMask.isExpanded = EditorGUI.Foldout(foldoutRect, useAovMask.isExpanded, "AOV 遮罩", true);
-            useAovMask.boolValue = EditorGUI.ToggleLeft(toggleRect, "启用", useAovMask.boolValue);
-            y += LineHeight + LineSpacing;
-            if (!useAovMask.boolValue || !useAovMask.isExpanded)
-            {
-                return;
-            }
-
-            DrawAovSourceProperties(rect, ref y, aovSource, aovMaskMode);
-            DrawAovMatchProperties(rect, ref y, aovMaskMode, aovThreshold, aovSoftness, aovMatchValue, aovMatchColor, invertAovMask, debugAovMask);
+            HoPostAovMaskEditorUtility.Draw(rect, ref y, element, LineHeight, LineSpacing);
         }
 
         private static void DrawAovSourceProperties(
@@ -463,7 +415,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ref float y,
             SerializedProperty aovMaskMode,
             SerializedProperty aovThreshold,
-            SerializedProperty aovSoftness,
             SerializedProperty aovMatchValue,
             SerializedProperty aovMatchColor,
             SerializedProperty invertAovMask,
@@ -478,13 +429,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                         new GUIContent("阈值", "通道灰度达到这个值后开始被选中。"),
                         Mathf.Max(0.0f, aovThreshold.floatValue),
                         0.0f,
-                        1.0f);
-                    y += LineHeight + LineSpacing;
-                    aovSoftness.floatValue = EditorGUI.Slider(
-                        new Rect(rect.x, y, rect.width, LineHeight),
-                        new GUIContent("阈值柔和度", "从阈值到阈值 + 柔和度之间平滑过渡。"),
-                        Mathf.Max(0.0001f, aovSoftness.floatValue),
-                        0.0001f,
                         1.0f);
                     y += LineHeight + LineSpacing;
                     break;
@@ -502,13 +446,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                         0.0f,
                         1.0f);
                     y += LineHeight + LineSpacing;
-                    aovSoftness.floatValue = EditorGUI.Slider(
-                        new Rect(rect.x, y, rect.width, LineHeight),
-                        new GUIContent("匹配柔和度", "容差边缘的软过渡宽度。"),
-                        Mathf.Max(0.0001f, aovSoftness.floatValue),
-                        0.0001f,
-                        1.0f);
-                    y += LineHeight + LineSpacing;
                     break;
 
                 case HoPostAovMaskMode.MatchColor:
@@ -522,13 +459,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                         new GUIContent("颜色容差", "RGB 距离小于这个范围时被选中。"),
                         Mathf.Max(0.0f, aovThreshold.floatValue),
                         0.0f,
-                        1.0f);
-                    y += LineHeight + LineSpacing;
-                    aovSoftness.floatValue = EditorGUI.Slider(
-                        new Rect(rect.x, y, rect.width, LineHeight),
-                        new GUIContent("颜色柔和度", "颜色容差边缘的软过渡宽度。"),
-                        Mathf.Max(0.0001f, aovSoftness.floatValue),
-                        0.0001f,
                         1.0f);
                     y += LineHeight + LineSpacing;
                     break;
@@ -809,11 +739,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetEnum(element, "aovSource", (int)HoPostAovSource.Mask);
             SetEnum(element, "aovMaskMode", (int)HoPostAovMaskMode.Direct);
             SetFloat(element, "aovThreshold", 0.5f);
-            SetFloat(element, "aovSoftness", 0.02f);
             SetFloat(element, "aovMatchValue", 0.0f);
             SetColor(element, "aovMatchColor", Color.white);
             SetBool(element, "invertAovMask", false);
             SetBool(element, "debugAovMask", false);
+            HoPostAovMaskEditorUtility.ResetRules(element);
 
             switch (effect)
             {

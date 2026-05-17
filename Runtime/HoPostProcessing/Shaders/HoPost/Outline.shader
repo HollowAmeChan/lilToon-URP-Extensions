@@ -17,6 +17,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/Outline"
             Name "HoPost Outline"
 
             HLSLPROGRAM
+            #pragma target 4.5
             #pragma vertex Vert
             #pragma fragment Frag
             #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
