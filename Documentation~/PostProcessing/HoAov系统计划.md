@@ -128,6 +128,36 @@ URP 已经有一些类似 AOV 的内部中间纹理：
 
 HoAOV 的参与标记不应该只放在材质上。材质适合表达“这个表面按 UV 写出什么”，但不适合表达“这一组 Renderer 属于角色脸部、前发、眼睛、配件，参与哪个后期合成层”。
 
+### 2026-05-17 RSUV / Object AOV 决议
+
+Object AOV 是 Renderer 级协议，来源为 `HoAovGroup` 写入 Renderer Shader User Value。Material AOV 是材质/slot/UV 级协议，来源为现有 HoCustomAOV，固定为 `MaterialCustom0..MaterialCustom3` 四个通道。两者编号独立，不共享 `Custom0..N` 命名空间。
+
+Unity 6.3+ / URP 主路径使用 RSUV。`HoAovGroup` 将对象级语义打包成一个 32-bit `uint`，材质侧 `LightMode = "HoAOV"` pass 读取 `unity_RendererUserValue`，再按材质自身 alpha/cutout/dither/dissolve 规则写入 HoAOV RT。RSUV 只回答“这个 Renderer 是什么”，不回答“哪些像素存在”；像素级存在性永远由材质 HoAOV pass 决定。
+
+第一版 RSUV 打包约定：
+
+```text
+bits 0..7    ObjectCustom0..7 二值开关
+bits 8..15   CharacterId / GroupId
+bits 16..23  PartId / ObjectId
+bits 24..31  flags
+```
+
+读取语义：
+
+```text
+ObjectCustom0..7  按 bit 读取，可以多选，例如 Character + FrontHair 同时为 1
+CharacterId       按 8-bit 数字读取，范围 0..255，通常 0 表示未设置
+PartId            按 8-bit 数字读取，范围 0..255，通常 0 表示未设置
+flags             可按 bit 读取，也可作为 0..255 的小整数标记，第一版优先按 bit 读取
+```
+
+`CharacterId` 不是 8 个角色开关，`PartId` 也不是 8 个部件开关。脸、前发、眼睛、配件这类可以同时成立的语义放在 `ObjectCustom0..7`；角色编号和部件编号放在 `CharacterId` / `PartId` 里，用于同角色比较、眼透和角色合成。
+
+`ObjectCustom0..7` 在 RSUV 中是 8 个 bit mask，不是 8 个 float 贴图通道。需要 UV 细节、软遮罩或 slot 级差异时，继续使用 `MaterialCustom0..3`。如果一个 Renderer 内部混合了需要不同 Object AOV 的多个 submesh，应优先拆 Renderer；不能拆时再用现有材质级 HoCustomAOV 承接局部差异。
+
+RSUV 值不作为 authoring 数据保存。`HoAovGroup` 组件字段才是序列化源，必须在 `OnEnable`、`OnValidate`、prefab instantiate 和 scene load 后重新写入目标 Renderer。Unity 6.3 以下或 RSUV API 不可用时，才启用 MaterialPropertyBlock 兼容路径，并在 UI 中明确提示 SRP Batcher 风险。
+
 第一版对象级标记应该挂在空物体上，而不是塞进 Volume 的 renderer 列表，也不是强制每个 Renderer 都挂组件。Volume 适合混合后处理参数，不适合混合离散对象集合；renderer 列表在 Volume 权重里很难定义“半影响”或“只影响空间区域内的某些对象”。对象 AOV 属于场景/角色语义，应该跟 prefab 和层级走。
 
 推荐新增组件：
@@ -135,27 +165,30 @@ HoAOV 的参与标记不应该只放在材质上。材质适合表达“这个�
 ```text
 HoAovGroup
 - enabled
-- includeChildren
+- priority
+- characterId / groupId
+- partId / objectId
+- flags
+- includeChildrenForListedObjects
+- ObjectCustom0 Character      objects[]
+- ObjectCustom1 Face           objects[]
+- ObjectCustom2 FrontHair      objects[]
+- ObjectCustom3 Eye            objects[]
+- ObjectCustom4 EyeRevealArea  objects[]
+- ObjectCustom5 Accessory      objects[]
+- ObjectCustom6 Reserved       objects[]
+- ObjectCustom7 Reserved       objects[]
 - explicitRenderers[]
 - layerMask / rendererFilter
-- priority
-- groupId
-- objectIdMode
-- objectId
-- flags
 - materialClass
 - utility
-- objectCustom0
-- objectCustom1
-- objectCustom2
-- objectCustom3
-- objectCustom4
-- objectCustom5
-- objectCustom6
-- objectCustom7
 ```
 
-空物体组件负责“这组 Renderer 属于哪个 AOV 语义层”。典型用法是角色根节点挂一个总组，头发、脸、眼睛、衣服、配件子空物体再挂局部组覆盖。
+空物体组件负责“这组 Renderer 属于哪个 AOV 语义层”。典型用法是角色根节点挂一个总组，头发、脸、眼睛、衣服、配件子空物体再挂局部组覆盖。编辑器 UI 显示 8 个 ObjectCustom 列表，列表里可以拖 `GameObject` 或 `Renderer`；命中列表就表示该 Renderer 对应 bit 写 1。同一 Renderer 出现在多个 ObjectCustom 列表时按 bit OR 合并，例如前发可以同时写 `Character` 和 `FrontHair`。
+
+列表实现建议使用 `UnityEngine.Object` 引用并在 Editor 中校验，只接受 `GameObject` 和 `Renderer`。拖入 `GameObject` 时，若 `includeChildrenForListedObjects` 为 true，则收集该物体及其子层级下所有 Renderer；否则只收集该物体自身的 Renderer。拖入 `Renderer` 时只影响该 Renderer。不要接受 `Mesh`、`MeshFilter` 或 mesh asset，因为 RSUV 写在 Renderer 上，不写在网格资源上。
+
+Prefab 使用规则必须明确：在 prefab 自身内部挂 `HoAovGroup` 并拖它的子物体/Renderer 是推荐路径，实例化后组件会重新把 RSUV 写到实例 Renderer。把一个 prefab asset 拖进场景中另一个 `HoAovGroup` 的列表，不代表会自动标记场景里的某个实例；这种引用应该在 Editor 中警告或拒绝。场景对象只应引用同场景对象，Prefab Mode 中只应引用同一 prefab stage 内的对象。
 
 合并规则建议：
 
@@ -198,7 +231,7 @@ Tags { "LightMode" = "HoAOV" }
 11 Utility         预留给系统级桥接，例如 HTrace AO、材质 AO 或未来特殊输入
 ```
 
-用户可控 AOV 不再作为一组并列的 `Custom0..Custom11` 来理解，而是拆成 Material AOV 和 Object AOV 两类：
+用户可控 AOV 不再作为一组并列的 `Custom0..Custom11` 来理解，而是拆成 Material AOV 和 Object AOV 两类。铁律是：Object AOV 是 Renderer 级协议，Material AOV 是材质/slot/UV 级协议。
 
 ```text
 MaterialCustom0
@@ -216,9 +249,9 @@ ObjectCustom6
 ObjectCustom7
 ```
 
-Material AOV 的目标是贴图/UV 细节遮罩，例如用户画出的皮肤区域、衣服花纹、发光区域、局部滤镜权重。它只允许 4 个通道，并且只在 lilToon/lilPBR 材质 UI 中暴露这 4 个灰度颜色 + 灰度贴图入口。
+Material AOV 的目标是贴图/UV 细节遮罩，例如用户画出的皮肤区域、衣服花纹、发光区域、局部滤镜权重。它只允许 4 个通道，并且只在 lilToon/lilPBR 材质 UI 中暴露这 4 个灰度颜色 + 灰度贴图入口。现有 HoCustomAOV 就负责这层，不再扩展到 `MaterialCustom4..11`。
 
-Object AOV 的目标是物体/部件分组和实时合成遮罩，例如角色主体、脸、前发、眼睛、配件、只吃某个后处理的对象组。它默认预留 8 个通道，不允许贴图输入，不回到 lilToon/lilPBR 材质 UI，由 `HoAovGroup` 空物体批量指定。
+Object AOV 的目标是物体/部件分组和实时合成遮罩，例如角色主体、脸、前发、眼睛、配件、只吃某个后处理的对象组。它默认预留 8 个二值开关，不允许贴图输入，不回到 lilToon/lilPBR 材质 UI，由 `HoAovGroup` 空物体批量指定，并通过 RSUV 写到 Renderer。
 
 眼透是 Object AOV 的刚需用例之一。建议预留默认语义：
 
@@ -355,6 +388,8 @@ _HoAovObjectCustom0_3Texture
 _HoAovObjectCustom4_7Texture
 ```
 
+ObjectCustom 应使用独立 RT 名称，不要复用材质 custom 的预留纹理名。实现命名建议与现有全局纹理前缀保持一致：`_lilHoAovObjectCustom0_3Texture` 和 `_lilHoAovObjectCustom4_7Texture`。`_lilHoAovCustom4_7Texture` / `_lilHoAovCustom8_11Texture` 只能继续视为材质 custom 扩展实验的预留名，不作为 Object AOV 输出。
+
 建议精度：
 
 - Mask: `R8_UNorm`
@@ -377,7 +412,7 @@ _HoAovObjectCustom4_7Texture
 - Velocity：优先复用 URP `_MotionVectorTexture`；自定义需求再由 AOV pass 输出 object velocity。
 - Thickness：第一版用材质属性、顶点色或固定值近似；高级版做 backface depth - frontface depth。
 - Curvature：第一版用 normal derivative 屏幕空间近似；高级版用预烘 vertex color 或 mesh attribute。
-- ID/Group/Object AOV：由 `HoAovGroup` 通过 MaterialPropertyBlock、renderer 数据或后续对象 buffer 传给 pass。
+- ID/Group/Object AOV：Unity 6.3+ 主路径由 `HoAovGroup` 通过 RSUV 传给 pass；RSUV 不可用时才退回 MaterialPropertyBlock 或后续对象 buffer 兼容路径。
 
 ## 渲染顺序
 
@@ -538,6 +573,8 @@ ObjectCustom7
 ```
 
 场景视图预览建议放在 `HoAovRendererFeature` 里，由一个只在 debug mode 开启时执行的 fullscreen debug pass 输出。它读取 HoAOV 全局纹理，不改变真实 AOV 生成逻辑。第一版可以对 `CameraType.SceneView` 和 GameView 都支持开关，默认只给 SceneView 打开，避免调试画面误进正式相机。
+
+Object AOV 接入后，HoAOV debug view 必须能直接预览 `_lilHoAovObjectCustom0_3Texture` 和 `_lilHoAovObjectCustom4_7Texture` 的 8 个通道，确认 `HoAovGroup -> RSUV -> HoAOV pass -> ObjectCustom RT` 链路是否正确。HoPost 的图层级 `debugAovMask` 也必须支持 `ObjectCustom0..7`，用于验证某个后期图层在 source/mode/threshold/match/invert 解析后实际消费到的遮罩。
 
 可视化约定：
 
