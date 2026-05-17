@@ -26,26 +26,26 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static readonly string[] AovSources =
         {
-            "Mask",
-            "Group ID",
-            "Object ID",
-            "Flags",
-            "Thickness",
-            "Curvature",
-            "Material",
-            "Utility",
-            "MaterialCustom 0",
-            "MaterialCustom 1",
-            "MaterialCustom 2",
-            "MaterialCustom 3",
-            "ObjectCustom 0",
-            "ObjectCustom 1",
-            "ObjectCustom 2",
-            "ObjectCustom 3",
-            "ObjectCustom 4",
-            "ObjectCustom 5",
-            "ObjectCustom 6",
-            "ObjectCustom 7"
+            "遮罩",
+            "角色组 ID",
+            "部件 ID",
+            "标记",
+            "厚度",
+            "曲率",
+            "材质分类",
+            "预留值",
+            "材质自定义通道 0",
+            "材质自定义通道 1",
+            "材质自定义通道 2",
+            "材质自定义通道 3",
+            "主体",
+            "脸",
+            "前发",
+            "眼睛",
+            "眼透区域",
+            "配件",
+            "预留 6",
+            "预留 7"
         };
 
         private static readonly string[] AovMaskModes =

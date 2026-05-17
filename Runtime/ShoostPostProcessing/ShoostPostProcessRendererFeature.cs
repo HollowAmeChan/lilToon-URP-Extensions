@@ -2,6 +2,7 @@
 // Compatibility-mode hooks are kept for projects that still run URP's non-RenderGraph path.
 #pragma warning disable CS0618, CS0672
 
+using lilToon.URP.Extensions.AOV;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -20,6 +21,9 @@ namespace lilToon.URP.Extensions.PostProcessing
         private readonly Dictionary<Shader, Material> materialCache = new Dictionary<Shader, Material>();
         private readonly HashSet<string> warnedMissingShaders = new HashSet<string>();
         private readonly List<ShoostPostProcessRuntimeLayer> afterPostProcessLayers = new List<ShoostPostProcessRuntimeLayer>();
+        private Material aovCompositeMaterial;
+        private Shader aovCompositeShader;
+        private bool warnedMissingAovCompositeShader;
         private ShoostPostProcessPass afterPostProcessPass;
 
         [Tooltip("Match HTrace-style setup: the renderer feature installs the pass, and Volume profiles provide the active settings.")]
@@ -71,6 +75,9 @@ namespace lilToon.URP.Extensions.PostProcessing
                 CoreUtils.Destroy(material);
             }
 
+            CoreUtils.Destroy(aovCompositeMaterial);
+            aovCompositeMaterial = null;
+            aovCompositeShader = null;
             materialCache.Clear();
             afterPostProcessLayers.Clear();
             warnedMissingShaders.Clear();
@@ -190,7 +197,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
         }
 
-        private static void SetupCompatibilityPass(
+        private void SetupCompatibilityPass(
             ShoostPostProcessPass pass,
             RTHandle cameraColorTarget,
             List<ShoostPostProcessRuntimeLayer> layers,
@@ -202,10 +209,10 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            pass.Setup(cameraColorTarget, layers, passEvent);
+            pass.Setup(cameraColorTarget, layers, passEvent, EnsureAovCompositeMaterial(layers));
         }
 
-        private static void EnqueueRenderGraphPass(
+        private void EnqueueRenderGraphPass(
             ScriptableRenderer renderer,
             ShoostPostProcessPass pass,
             List<ShoostPostProcessRuntimeLayer> layers,
@@ -217,8 +224,57 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            pass.SetupRenderGraph(layers, passEvent);
+            pass.SetupRenderGraph(layers, passEvent, EnsureAovCompositeMaterial(layers));
             renderer.EnqueuePass(pass);
+        }
+
+        private Material EnsureAovCompositeMaterial(List<ShoostPostProcessRuntimeLayer> layers)
+        {
+            if (!ContainsAovMaskedLayer(layers))
+            {
+                return null;
+            }
+
+            Shader shader = Shader.Find(ShoostPostProcessShaderConstants.AovCompositeShaderName);
+            if (aovCompositeMaterial != null && aovCompositeShader == shader)
+            {
+                return aovCompositeMaterial;
+            }
+
+            if (shader == null)
+            {
+                if (!warnedMissingAovCompositeShader)
+                {
+                    warnedMissingAovCompositeShader = true;
+                    Debug.LogWarning($"Shoost AOV 遮罩已跳过：找不到 Shader '{ShoostPostProcessShaderConstants.AovCompositeShaderName}'。");
+                }
+
+                return null;
+            }
+
+            CoreUtils.Destroy(aovCompositeMaterial);
+            aovCompositeShader = shader;
+            aovCompositeMaterial = CoreUtils.CreateEngineMaterial(shader);
+            return aovCompositeMaterial;
+        }
+
+        private static bool ContainsAovMaskedLayer(List<ShoostPostProcessRuntimeLayer> layers)
+        {
+            if (layers == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < layers.Count; i++)
+            {
+                ShoostPostProcessLayer layer = layers[i]?.settings;
+                if (layer != null && (layer.useAovMask || layer.debugAovMask))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private static ShoostPostProcessStackVolume GetVolumeComponent()
@@ -270,7 +326,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            Debug.LogWarning($"lilToon-Shoost Post Process Stack skipped layer '{layer.name}' because shader '{shaderName}' was not found.");
+            Debug.LogWarning($"lilToon-Shoost 后处理图层 '{layer.name}' 已跳过：找不到 Shader '{shaderName}'。");
         }
     }
 
@@ -294,6 +350,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         private RTHandle cameraColorTarget;
         private RTHandle tempTextureA;
         private RTHandle tempTextureB;
+        private RTHandle tempTextureC;
         private RTHandle irisTextureA;
         private RTHandle irisTextureB;
         private RTHandle rgbBlurTextureA;
@@ -302,6 +359,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         private RTHandle glowTextureB;
         private RTHandle apertureBokehTextureA;
         private RTHandle apertureBokehTextureB;
+        private Material aovCompositeMaterial;
         private bool warnedBackBuffer;
         private readonly Dictionary<int, ChangeFrameRateState> changeFrameRateStates = new Dictionary<int, ChangeFrameRateState>();
 
@@ -309,9 +367,20 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             public TextureHandle source;
             public TextureHandle originalTexture;
+            public TextureHandle layerResultTexture;
+            public TextureHandle aovMaskIdTexture;
+            public TextureHandle aovSurfaceDataTexture;
+            public TextureHandle aovCustom0Texture;
+            public TextureHandle aovObjectCustom0Texture;
+            public TextureHandle aovObjectCustom1Texture;
             public ShoostPostProcessLayer layer;
             public Material material;
             public int passIndex;
+            public bool useAovMaskTexture;
+            public bool useAovSurfaceData;
+            public bool useAovCustom0;
+            public bool useAovObjectCustom0;
+            public bool useAovObjectCustom1;
             public float radius;
             public float screenRatio;
             public TextureHandle blurredTexture;
@@ -373,16 +442,26 @@ namespace lilToon.URP.Extensions.PostProcessing
             _profilingSampler = new ProfilingSampler(passName);
         }
 
-        public void Setup(RTHandle cameraColorTarget, List<ShoostPostProcessRuntimeLayer> layers, RenderPassEvent passEvent)
+        public void Setup(
+            RTHandle cameraColorTarget,
+            List<ShoostPostProcessRuntimeLayer> layers,
+            RenderPassEvent passEvent,
+            Material aovCompositeMaterial)
         {
             this.cameraColorTarget = cameraColorTarget;
+            this.aovCompositeMaterial = aovCompositeMaterial;
             CopyLayers(layers);
             ConfigurePass(passEvent);
             requiresIntermediateTexture = true;
         }
 
-        public void SetupRenderGraph(List<ShoostPostProcessRuntimeLayer> layers, RenderPassEvent passEvent)
+        public void SetupRenderGraph(
+            List<ShoostPostProcessRuntimeLayer> layers,
+            RenderPassEvent passEvent,
+            Material aovCompositeMaterial)
         {
+            this.cameraColorTarget = null;
+            this.aovCompositeMaterial = aovCompositeMaterial;
             CopyLayers(layers);
             ConfigurePass(passEvent);
             requiresIntermediateTexture = true;
@@ -392,8 +471,10 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             tempTextureA?.Release();
             tempTextureB?.Release();
+            tempTextureC?.Release();
             tempTextureA = null;
             tempTextureB = null;
+            tempTextureC = null;
             irisTextureA?.Release();
             irisTextureB?.Release();
             irisTextureA = null;
@@ -438,6 +519,10 @@ namespace lilToon.URP.Extensions.PostProcessing
             EnsureHdrDescriptor(ref descriptor);
             RenderingUtils.ReAllocateIfNeeded(ref tempTextureA, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: ShoostPostProcessShaderConstants.TempTextureAName);
             RenderingUtils.ReAllocateIfNeeded(ref tempTextureB, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: ShoostPostProcessShaderConstants.TempTextureBName);
+            if (RequiresAovComposite())
+            {
+                RenderingUtils.ReAllocateIfNeeded(ref tempTextureC, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: ShoostPostProcessShaderConstants.TempTextureCName);
+            }
         }
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
@@ -457,31 +542,43 @@ namespace lilToon.URP.Extensions.PostProcessing
                 {
                     ShoostPostProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
                     RTHandle destination = writeToA ? tempTextureA : tempTextureB;
+                    RTHandle effectDestination = RequiresAovComposite(runtimeLayer.settings) && tempTextureC != null
+                        ? tempTextureC
+                        : destination;
+
                     if (runtimeLayer.settings.effect == ShoostPostProcessEffect.IrisBlur)
                     {
-                        ApplyIrisBlurLayer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, destination, runtimeLayer);
+                        ApplyIrisBlurLayer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, effectDestination, runtimeLayer);
                     }
                     else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.RGBBlurV2)
                     {
-                        ApplyRgbBlurV2Layer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, destination, runtimeLayer);
+                        ApplyRgbBlurV2Layer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, effectDestination, runtimeLayer);
                     }
                     else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.Glow)
                     {
-                        ApplyGlowLayer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, destination, runtimeLayer);
+                        ApplyGlowLayer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, effectDestination, runtimeLayer);
                     }
                     else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.ApertureBokeh)
                     {
-                        ApplyApertureBokehLayer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, destination, runtimeLayer);
+                        ApplyApertureBokehLayer(cmd, renderingData.cameraData.cameraTargetDescriptor, source, effectDestination, runtimeLayer);
                     }
                     else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.ChangeFrameRate)
                     {
-                        ApplyChangeFrameRateLayer(cmd, renderingData.cameraData.cameraTargetDescriptor, renderingData.cameraData.camera, source, destination, runtimeLayer);
+                        ApplyChangeFrameRateLayer(cmd, renderingData.cameraData.cameraTargetDescriptor, renderingData.cameraData.camera, source, effectDestination, runtimeLayer);
                     }
                     else
                     {
                         ApplyLayerProperties(runtimeLayer.settings, runtimeLayer.material);
-                        Blitter.BlitCameraTexture(cmd, source, destination, runtimeLayer.material, Mathf.Max(0, runtimeLayer.settings.passIndex));
+                        Blitter.BlitCameraTexture(cmd, source, effectDestination, runtimeLayer.material, Mathf.Max(0, runtimeLayer.settings.passIndex));
                     }
+
+                    if (effectDestination != destination)
+                    {
+                        ApplyShoostAovCompositeProperties(runtimeLayer.settings, aovCompositeMaterial);
+                        aovCompositeMaterial.SetTexture(ShoostPostProcessShaderConstants.LayerResultTextureId, effectDestination);
+                        Blitter.BlitCameraTexture(cmd, source, destination, aovCompositeMaterial, 0);
+                    }
+
                     source = destination;
                     writeToA = !writeToA;
                 }
@@ -517,62 +614,64 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
+            HoAovRenderGraphResources aovResources = frameData.GetOrCreate<HoAovRenderGraphResources>();
             for (int i = 0; i < runtimeLayers.Count; i++)
             {
                 ShoostPostProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
+                TextureHandle layerInput = source;
+                TextureHandle effectResult;
                 if (runtimeLayer.settings.effect == ShoostPostProcessEffect.IrisBlur)
                 {
-                    source = RecordIrisBlurLayer(renderGraph, source, runtimeLayer, i);
-                    continue;
+                    effectResult = RecordIrisBlurLayer(renderGraph, source, runtimeLayer, i);
                 }
-                if (runtimeLayer.settings.effect == ShoostPostProcessEffect.RGBBlurV2)
+                else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.RGBBlurV2)
                 {
-                    source = RecordRgbBlurV2Layer(renderGraph, source, runtimeLayer, i);
-                    continue;
+                    effectResult = RecordRgbBlurV2Layer(renderGraph, source, runtimeLayer, i);
                 }
-                if (runtimeLayer.settings.effect == ShoostPostProcessEffect.Glow)
+                else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.Glow)
                 {
-                    source = RecordGlowLayer(renderGraph, source, runtimeLayer, i);
-                    continue;
+                    effectResult = RecordGlowLayer(renderGraph, source, runtimeLayer, i);
                 }
-                if (runtimeLayer.settings.effect == ShoostPostProcessEffect.ApertureBokeh)
+                else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.ApertureBokeh)
                 {
-                    source = RecordApertureBokehLayer(renderGraph, source, runtimeLayer, i);
-                    continue;
+                    effectResult = RecordApertureBokehLayer(renderGraph, source, runtimeLayer, i);
                 }
-                if (runtimeLayer.settings.effect == ShoostPostProcessEffect.ChangeFrameRate)
+                else if (runtimeLayer.settings.effect == ShoostPostProcessEffect.ChangeFrameRate)
                 {
                     UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
-                    source = RecordChangeFrameRateLayer(renderGraph, source, runtimeLayer, i, cameraData);
-                    continue;
+                    effectResult = RecordChangeFrameRateLayer(renderGraph, source, runtimeLayer, i, cameraData);
                 }
-
-                TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
-                destinationDesc.name = $"_lilShoostPostProcessLayer{i}";
-                destinationDesc.clearBuffer = false;
-                destinationDesc.depthBufferBits = 0;
-                EnsureHdrTextureDesc(ref destinationDesc);
-                TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
-
-                using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{_passName} Layer {i}", out PassData passData, _profilingSampler))
+                else
                 {
-                    passData.source = source;
-                    passData.layer = runtimeLayer.settings;
-                    passData.material = runtimeLayer.material;
-                    passData.passIndex = Mathf.Max(0, runtimeLayer.settings.passIndex);
+                    TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
+                    destinationDesc.name = $"_lilShoostPostProcessLayer{i}";
+                    destinationDesc.clearBuffer = false;
+                    destinationDesc.depthBufferBits = 0;
+                    EnsureHdrTextureDesc(ref destinationDesc);
+                    TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
-                    builder.UseTexture(source, AccessFlags.Read);
-                    builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
-                    builder.AllowGlobalStateModification(true);
-                    builder.AllowPassCulling(false);
-                    builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                    using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{_passName} Layer {i}", out PassData passData, _profilingSampler))
                     {
-                        ApplyLayerProperties(data.layer, data.material);
-                        Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, data.passIndex);
-                    });
+                        passData.source = source;
+                        passData.layer = runtimeLayer.settings;
+                        passData.material = runtimeLayer.material;
+                        passData.passIndex = Mathf.Max(0, runtimeLayer.settings.passIndex);
+
+                        builder.UseTexture(source, AccessFlags.Read);
+                        builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
+                        builder.AllowGlobalStateModification(true);
+                        builder.AllowPassCulling(false);
+                        builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                        {
+                            ApplyLayerProperties(data.layer, data.material);
+                            Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, data.passIndex);
+                        });
+                    }
+
+                    effectResult = destination;
                 }
 
-                source = destination;
+                source = RecordAovCompositeIfNeeded(renderGraph, layerInput, effectResult, runtimeLayer.settings, i, aovResources);
             }
 
             resourceData.cameraColor = source;
@@ -593,6 +692,133 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             renderPassEvent = passEvent;
             ConfigureInput(ScriptableRenderPassInput.Color);
+        }
+
+        private bool RequiresAovComposite()
+        {
+            if (aovCompositeMaterial == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < runtimeLayers.Count; i++)
+            {
+                if (RequiresAovComposite(runtimeLayers[i]?.settings))
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        private bool RequiresAovComposite(ShoostPostProcessLayer layer)
+        {
+            return aovCompositeMaterial != null && layer != null && (layer.useAovMask || layer.debugAovMask);
+        }
+
+        private TextureHandle RecordAovCompositeIfNeeded(
+            RenderGraph renderGraph,
+            TextureHandle source,
+            TextureHandle layerResult,
+            ShoostPostProcessLayer layer,
+            int layerIndex,
+            HoAovRenderGraphResources aovResources)
+        {
+            if (!RequiresAovComposite(layer) || !source.IsValid() || !layerResult.IsValid())
+            {
+                return layerResult;
+            }
+
+            TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
+            destinationDesc.name = $"_lilShoostPostProcessLayer{layerIndex}_AOV";
+            destinationDesc.clearBuffer = false;
+            destinationDesc.depthBufferBits = 0;
+            EnsureHdrTextureDesc(ref destinationDesc);
+            TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
+
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{_passName} AOV Mask {layerIndex}", out PassData passData, _profilingSampler))
+            {
+                passData.source = source;
+                passData.layerResultTexture = layerResult;
+                passData.layer = layer;
+                passData.material = aovCompositeMaterial;
+                passData.aovMaskIdTexture = aovResources.maskIdTexture;
+                passData.aovSurfaceDataTexture = aovResources.surfaceDataTexture;
+                passData.aovCustom0Texture = aovResources.custom0Texture;
+                passData.aovObjectCustom0Texture = aovResources.objectCustom0Texture;
+                passData.aovObjectCustom1Texture = aovResources.objectCustom1Texture;
+                passData.useAovMaskTexture = aovResources.maskIdTexture.IsValid();
+                passData.useAovSurfaceData = aovResources.surfaceDataTexture.IsValid();
+                passData.useAovCustom0 = aovResources.custom0Texture.IsValid();
+                passData.useAovObjectCustom0 = aovResources.objectCustom0Texture.IsValid();
+                passData.useAovObjectCustom1 = aovResources.objectCustom1Texture.IsValid();
+
+                builder.UseTexture(source, AccessFlags.Read);
+                builder.UseTexture(layerResult, AccessFlags.Read);
+                if (passData.useAovMaskTexture)
+                {
+                    builder.UseTexture(aovResources.maskIdTexture, AccessFlags.Read);
+                }
+
+                if (passData.useAovSurfaceData)
+                {
+                    builder.UseTexture(aovResources.surfaceDataTexture, AccessFlags.Read);
+                }
+
+                if (passData.useAovCustom0)
+                {
+                    builder.UseTexture(aovResources.custom0Texture, AccessFlags.Read);
+                }
+
+                if (passData.useAovObjectCustom0)
+                {
+                    builder.UseTexture(aovResources.objectCustom0Texture, AccessFlags.Read);
+                }
+
+                if (passData.useAovObjectCustom1)
+                {
+                    builder.UseTexture(aovResources.objectCustom1Texture, AccessFlags.Read);
+                }
+
+                builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                {
+                    ApplyShoostAovCompositeProperties(data.layer, data.material);
+                    context.cmd.SetGlobalTexture(ShoostPostProcessShaderConstants.LayerResultTextureId, data.layerResultTexture);
+                    context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, data.useAovMaskTexture ? 1.0f : 0.0f);
+                    if (data.useAovMaskTexture)
+                    {
+                        context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
+                    }
+
+                    if (data.useAovSurfaceData)
+                    {
+                        context.cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
+                    }
+
+                    if (data.useAovCustom0)
+                    {
+                        context.cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, data.aovCustom0Texture);
+                    }
+
+                    if (data.useAovObjectCustom0)
+                    {
+                        context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
+                    }
+
+                    if (data.useAovObjectCustom1)
+                    {
+                        context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
+                    }
+
+                    Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
+                });
+            }
+
+            return destination;
         }
 
         private static void EnsureHdrDescriptor(ref RenderTextureDescriptor descriptor)
@@ -654,6 +880,27 @@ namespace lilToon.URP.Extensions.PostProcessing
             {
                 material.SetTexture(ShoostPostProcessShaderConstants.LayerTextureId, layer.texture);
             }
+        }
+
+        private static void ApplyShoostAovCompositeProperties(ShoostPostProcessLayer layer, Material material)
+        {
+            if (layer == null || material == null)
+            {
+                return;
+            }
+
+            material.SetFloat(ShoostPostProcessShaderConstants.LayerAovMaskEnabledId, layer.useAovMask ? 1.0f : 0.0f);
+            material.SetFloat(ShoostPostProcessShaderConstants.LayerAovSourceId, (float)layer.aovSource);
+            material.SetFloat(ShoostPostProcessShaderConstants.LayerAovModeId, (float)layer.aovMaskMode);
+            material.SetVector(
+                ShoostPostProcessShaderConstants.LayerAovParamsId,
+                new Vector4(
+                    Mathf.Max(0.0f, layer.aovThreshold),
+                    Mathf.Max(0.0001f, layer.aovSoftness),
+                    layer.aovMatchValue,
+                    layer.invertAovMask ? 1.0f : 0.0f));
+            material.SetColor(ShoostPostProcessShaderConstants.LayerAovMatchColorId, layer.aovMatchColor);
+            material.SetFloat(ShoostPostProcessShaderConstants.LayerAovDebugOutputId, layer.debugAovMask ? 1.0f : 0.0f);
         }
 
         private static int GetChangeFrameRateTargetFrameRate(ShoostPostProcessLayer layer)

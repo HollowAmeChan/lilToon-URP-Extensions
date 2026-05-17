@@ -74,21 +74,21 @@ namespace lilToon.URP.Extensions.AOV
         Custom2,
         [InspectorName("自定义 3")]
         Custom3,
-        [InspectorName("ObjectCustom 0")]
+        [InspectorName("主体")]
         ObjectCustom0,
-        [InspectorName("ObjectCustom 1")]
+        [InspectorName("脸")]
         ObjectCustom1,
-        [InspectorName("ObjectCustom 2")]
+        [InspectorName("前发")]
         ObjectCustom2,
-        [InspectorName("ObjectCustom 3")]
+        [InspectorName("眼睛")]
         ObjectCustom3,
-        [InspectorName("ObjectCustom 4")]
+        [InspectorName("眼透区域")]
         ObjectCustom4,
-        [InspectorName("ObjectCustom 5")]
+        [InspectorName("配件")]
         ObjectCustom5,
-        [InspectorName("ObjectCustom 6")]
+        [InspectorName("预留 6")]
         ObjectCustom6,
-        [InspectorName("ObjectCustom 7")]
+        [InspectorName("预留 7")]
         ObjectCustom7,
         [InspectorName("RSUV 总览")]
         RsuvPacked,

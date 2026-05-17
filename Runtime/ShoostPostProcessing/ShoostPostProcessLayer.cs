@@ -77,6 +77,35 @@ namespace lilToon.URP.Extensions.PostProcessing
         [Tooltip("通用参数向量 12。会以 _LayerParams12 暴露给 Shader。")]
         public Vector4 parameters12;
 
+        [Tooltip("使用 HoAOV 数据限制当前图层作用范围。")]
+        public bool useAovMask;
+
+        [Tooltip("当前图层遮罩读取的 HoAOV 通道。")]
+        public HoPostAovSource aovSource = HoPostAovSource.Mask;
+
+        [Tooltip("把 HoAOV 通道转换成遮罩的方式。")]
+        public HoPostAovMaskMode aovMaskMode = HoPostAovMaskMode.Direct;
+
+        [Tooltip("HoAOV 遮罩使用的阈值、容差或匹配宽度。")]
+        [Min(0.0f)]
+        public float aovThreshold = 0.5f;
+
+        [Tooltip("阈值和匹配模式的柔和过渡宽度。")]
+        [Min(0.0001f)]
+        public float aovSoftness = 0.02f;
+
+        [Tooltip("匹配数值模式使用的目标值。ID 类通道会先编码再比较。")]
+        public float aovMatchValue;
+
+        [Tooltip("匹配颜色模式使用的目标颜色。")]
+        public Color aovMatchColor = Color.white;
+
+        [Tooltip("在 HoAOV 覆盖范围内反转解析后的遮罩。")]
+        public bool invertAovMask;
+
+        [Tooltip("调试时直接输出解析后的 HoAOV 遮罩。")]
+        public bool debugAovMask;
+
         public bool IsActive => enabled && intensity > 0.0f;
     }
 }

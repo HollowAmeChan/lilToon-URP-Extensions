@@ -152,7 +152,7 @@ namespace lilToon.URP.Extensions.Editor.AOV
                 ObjectCustomProperties[channelIndex],
                 label,
                 ObjectCustomColors[channelIndex],
-                $"{channelIndex}  ObjectCustom{channelIndex}  {label.text}");
+                $"通道 {channelIndex}  {label.text}");
         }
 
         private void DrawObjectList(string propertyName, GUIContent label, Color channelColor, string displayName)

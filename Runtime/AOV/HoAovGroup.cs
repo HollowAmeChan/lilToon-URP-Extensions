@@ -36,28 +36,28 @@ namespace lilToon.URP.Extensions.AOV
         [Tooltip("拖入 GameObject 或预制件实例时，包含它下面的子级 Renderer。关闭时只使用物体自身的 Renderer。")]
         public bool includeChildrenForListedObjects = true;
 
-        [InspectorName("ObjectCustom0 主体")]
+        [InspectorName("主体")]
         public UnityEngine.Object[] objectCustom0;
 
-        [InspectorName("ObjectCustom1 脸")]
+        [InspectorName("脸")]
         public UnityEngine.Object[] objectCustom1;
 
-        [InspectorName("ObjectCustom2 前发")]
+        [InspectorName("前发")]
         public UnityEngine.Object[] objectCustom2;
 
-        [InspectorName("ObjectCustom3 眼睛")]
+        [InspectorName("眼睛")]
         public UnityEngine.Object[] objectCustom3;
 
-        [InspectorName("ObjectCustom4 眼透区域")]
+        [InspectorName("眼透区域")]
         public UnityEngine.Object[] objectCustom4;
 
-        [InspectorName("ObjectCustom5 配件")]
+        [InspectorName("配件")]
         public UnityEngine.Object[] objectCustom5;
 
-        [InspectorName("ObjectCustom6 预留")]
+        [InspectorName("预留 6")]
         public UnityEngine.Object[] objectCustom6;
 
-        [InspectorName("ObjectCustom7 预留")]
+        [InspectorName("预留 7")]
         public UnityEngine.Object[] objectCustom7;
 
         [InspectorName("仅写 ID")]

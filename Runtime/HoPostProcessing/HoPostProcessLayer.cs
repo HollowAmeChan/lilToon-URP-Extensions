@@ -5,25 +5,45 @@ namespace lilToon.URP.Extensions.PostProcessing
 {
     public enum HoPostAovSource
     {
+        [InspectorName("遮罩")]
         Mask = 0,
+        [InspectorName("角色组 ID")]
         GroupId = 1,
+        [InspectorName("部件 ID")]
         ObjectId = 2,
+        [InspectorName("标记")]
         Flags = 3,
+        [InspectorName("厚度")]
         Thickness = 4,
+        [InspectorName("曲率")]
         Curvature = 5,
+        [InspectorName("材质分类")]
         Material = 6,
+        [InspectorName("预留值")]
         Utility = 7,
+        [InspectorName("材质自定义通道 0")]
         Custom0 = 8,
+        [InspectorName("材质自定义通道 1")]
         Custom1 = 9,
+        [InspectorName("材质自定义通道 2")]
         Custom2 = 10,
+        [InspectorName("材质自定义通道 3")]
         Custom3 = 11,
+        [InspectorName("主体")]
         ObjectCustom0 = 12,
+        [InspectorName("脸")]
         ObjectCustom1 = 13,
+        [InspectorName("前发")]
         ObjectCustom2 = 14,
+        [InspectorName("眼睛")]
         ObjectCustom3 = 15,
+        [InspectorName("眼透区域")]
         ObjectCustom4 = 16,
+        [InspectorName("配件")]
         ObjectCustom5 = 17,
+        [InspectorName("预留 6")]
         ObjectCustom6 = 18,
+        [InspectorName("预留 7")]
         ObjectCustom7 = 19
     }
 

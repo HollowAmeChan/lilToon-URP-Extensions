@@ -76,13 +76,13 @@ namespace lilToon.URP.Extensions.Editor.AOV
         private void DrawMaterialCustomSection()
         {
             EditorGUILayout.Space(6.0f);
-            EditorGUILayout.LabelField("MaterialCustom0..3 覆盖", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("材质自定义通道 0..3 覆盖", EditorStyles.boldLabel);
             DrawProperty("overrideMaterialCustomChannels");
             SerializedProperty overrideCustom = serializedObject.FindProperty("overrideMaterialCustomChannels");
             if (overrideCustom == null || !overrideCustom.boolValue)
             {
                 EditorGUILayout.HelpBox(
-                    "关闭时使用材质面板里的 HoCustomAOV / MaterialCustom0..3。打开后才会用下面的 MPB 值覆盖。",
+                    "关闭时使用材质面板里的 HoCustomAOV / 材质自定义通道 0..3。打开后才会用下面的 MPB 值覆盖。",
                     MessageType.None);
                 return;
             }
