@@ -90,9 +90,12 @@ HTraceAovBridge
 - HTrace Reads HoAOV Depth
 - HTrace Reads HoAOV Normal
 - HoAOV Imports HTrace AO
+- HTrace SSRTS Reads HoAOV Character / Receiver Semantics
 ```
 
 这不是第一阶段目标。
+
+2026-05-18 决定：角色多光源 cast 不放进 `HoCharacterSpecializationRendererFeature`。它未来作为 HTrace 扩展做 SSRTS（Screen Space Ray Traced Shadow），由 HTrace 负责光源筛选、tracing budget、history/denoise 和阴影输出；HoAOV/角色特化只提供角色语义、receiver mask 和可选桥接入口。
 
 ## URP 内置 Buffer 的定位
 

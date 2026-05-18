@@ -138,7 +138,7 @@ Final
 HoCharacterSpecialization = 角色专属屏幕/局部空间合成管线
 ```
 
-它和 HoPost 的区别是：HoPost 处理通用画面效果，通常只关心“一个 mask 作用到当前画面”；角色特化处理“同一个角色内部的源/接收面/颜色缓存/局部光照关系”，例如前发投到脸、眼睛从前发下透出、角色局部反射、只对角色生效的点光阴影。
+它和 HoPost 的区别是：HoPost 处理通用画面效果，通常只关心“一个 mask 作用到当前画面”；角色特化处理“同一个角色内部的源/接收面/颜色缓存/局部合成关系”，例如前发投到脸、眼睛从前发下透出、角色局部反射。只对角色生效的多光源 cast 不再塞进这里，未来走 HTrace SSRTS 扩展。
 
 推荐模块边界：
 
@@ -154,7 +154,7 @@ HoCharacterSpecializationRendererFeature
 - HairDropShadow
 - FarPlaneShadow
 - ReflectionSpace
-- CharacterLocalLightCast
+- HTraceSSRTSBridge / Reserved
 - Reserved / Custom
 ```
 
@@ -245,44 +245,43 @@ Composite:
 
 当前 HoAOV 的 `SurfaceData.b = Material` 和 `MaterialCustom0..3` 可以承接一部分开关，但没有真正的 roughness、specular、reflection weight。未来如果反射空间要做得好，需要新增角色特化 surface capture，或在 lilToon/lilPBR HoAOV pass 中额外输出可选材质响应数据。
 
-### 角色多光源投射 / Character Local Light Cast
+### HTrace SSRTS 扩展口 / HTrace SSRTS Bridge
 
-这里的目标不是让所有点光/聚光都给场景投实时阴影，而是让少量被选中的点光、聚光或特效灯只对角色产生可信的局部阴影。例如舞台灯扫过角色、手持灯照到脸、头发或帽檐在脸上留下阴影。
+原先文档里的 `CharacterLocalLightCast` 不再作为角色特化 RendererFeature 的长期模块。多光源 cast 本质上更接近“按光源做屏幕空间/短程追踪阴影”，继续塞在角色特化里会让这个小管线同时承担光源筛选、caster atlas、receiver 重建和材质侧接收，边界会变脏。
 
-推荐先把它定义成可选高级模块，而不是第一版就实现：
+新的决定是：多光源 cast 未来直接做成 HTrace 的扩展，方向暂定为 SSRTS（Screen Space Ray Traced Shadow）。角色特化只保留桥接口和资源预留名，不在第一版实现，也不维护自己的点光/聚光阴影 atlas。
 
-```text
-HoCharacterLocalLightCast
-- max lights per camera / per character
-- light filter: layer, tag, component, distance, importance
-- caster set: Character / FrontHair / Accessory / custom flags
-- receiver set: Face / Body / Eye / custom flags
-- shadow atlas scale
-- softness / bias / opacity
-```
-
-实现路径可以有两种：
+推荐边界：
 
 ```text
-屏幕空间接收:
-  为选中光源渲染角色 caster shadow map
-  在 fullscreen composite 中用 AOV depth/normal/world position 判断接收
-  只修改 camera color
+HoCharacterSpecialization
+- 负责 EyeReveal / HairDropShadow / 角色局部合成
+- 可向 HTrace SSRTS 暴露角色 AOV、ObjectCustom、CharacterId、receiver 规则
+- 不管理候选光源列表、不渲染多光源 shadow map
 
-材质侧接收:
-  把角色局部阴影图作为全局纹理给 lilToon/lilPBR shader 采样
-  更接近真实光照，但侵入材质管线更深
+HTrace SSRTS Extension
+- 负责光源筛选、屏幕空间射线/短程 tracing、时间稳定、降噪
+- 可读取 HoAOV depth/normal/object semantics
+- 输出角色或全局可消费的 SSRTS shadow texture
 ```
 
-第一版如果要做，建议先走屏幕空间接收，最多 1 到 2 个额外光，且默认关闭。它比 URP 全局 additional light shadows 更可控，因为它的 caster/receiver 都是角色语义，不污染场景，也不用让普通环境对象进 shadow map。
+未来如果需要桥接，建议命名为：
 
-它需要 HoAOV 之外的信息：
+```text
+HTraceCharacterSSRTSBridge
+- import HoAOV depth / normal / ObjectCustom
+- import CharacterId / receiver mask
+- export _HTraceCharacterSSRTSShadowTexture
+- optional composite hook before HoPost
+```
+
+它需要 HoAOV 之外的信息仍然存在，但应归 HTrace 扩展管理：
 
 ```text
 候选点光/聚光列表
 每个光源的矩阵、范围、角度、颜色、重要性
-角色 caster renderer list 或 caster depth atlas
-接收像素的 world position，或可从 depth 重建
+SSRTS tracing budget / denoise / temporal history
+接收像素 world position 或 depth 重建
 receiver 材质阴影强度/是否接收局部光阴影
 ```
 
@@ -343,7 +342,7 @@ IHoCharacterModule
 
 5. HoAOV 不提供材质响应数据。
    - 反射需要 roughness / reflection weight。
-   - 局部光阴影需要 receive intensity / shadow tint。
+   - HTrace SSRTS 如果要做角色接收，也需要 receive intensity / shadow tint。
    - 第一版可用 `MaterialCustom0..3` 或 `SurfaceData.Utility` 近似，长期应考虑角色特化 surface capture。
 
 6. HoAOV 不提供 caster renderer list。
@@ -351,8 +350,8 @@ IHoCharacterModule
    - 建议角色特化维护 `HoCharacterRegistry`，从 `HoAovGroup` 或新 `HoCharacterProfile` 收集 Face/Eye/FrontHair/Character renderer lists。
 
 7. HoAOV 不提供多光源数据。
-   - 点光/聚光筛选、矩阵、shadow atlas、importance 都应由角色特化自己管理。
-   - HoAOV 只提供接收像素的角色语义和可重建位置。
+   - 点光/聚光筛选、矩阵、importance、SSRTS budget 和 history 应由 HTrace 扩展管理。
+   - HoAOV 只提供接收像素的角色语义和可重建位置；角色特化只保留桥接入口。
 
 8. HoAOV 不解决透明颜色排序。
    - OIT 可解决部分透明叠加，但 EyeColor capture 仍要明确绘制顺序。
@@ -395,13 +394,12 @@ HoCharacterRegistry
 
 ```text
 _lilHoCharacterEyeColorTexture
-_lilHoCharacterEyeAlphaTexture
-_lilHoCharacterEyeDepthTexture
+_lilHoCharacterEyeDataTexture        // r EyeAlpha, g EyeDepth*Alpha, b CharacterId*Alpha, a capture alpha
 _lilHoCharacterRevealMaskTexture
 _lilHoCharacterHairShadowTexture
 _lilHoCharacterFarShadowTexture       // 未来模块
 _lilHoCharacterReflectionTexture      // 未来模块
-_lilHoCharacterLocalLightShadowAtlas  // 未来模块
+_HTraceCharacterSSRTSShadowTexture    // 未来由 HTrace SSRTS 扩展输出
 ```
 
 其中 `EyeColor` 不是只画眼睛，它应该先有脸部底色，再把眼睛/眉毛按原材质透明规则画上去。否则半透明眉毛背后没有脸色，还是会错。
@@ -438,7 +436,7 @@ MaterialCustom0..3 作为前发或眼部的 UV 级软遮罩
 
 ```text
 frontHair = ObjectCustom2
-eyeAlpha = _lilHoCharacterEyeAlphaTexture
+eyeAlpha = _lilHoCharacterEyeDataTexture.r
 eyeRevealArea = ObjectCustom4 或 1
 sameCharacter = 当前像素 CharacterId 与捕获角色 CharacterId 相同
 hairInFront = frontHair && hairDepth <= eyeDepth + depthBias
@@ -521,6 +519,16 @@ Eye:  写 EyeColor，并把材质 alpha 写入 EyeAlpha
 其他: discard
 ```
 
+当前实现提供了公共 include：
+
+```hlsl
+Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterSpecialization/Shaders/HoCharacterCaptureCommon.hlsl
+```
+
+材质 pass 应先执行自己的 alpha clip / dissolve / dither / main texture alpha 逻辑，再调用 `LilHoCharacterBuildCaptureOutput(color, positionCS.z)` 输出到 `EyeColor + EyeData`。这个 capture pass 需要 `Blend One OneMinusSrcAlpha`，公共 include 会输出预乘数据，这样半透明眉毛、睫毛和眼部叠加能按同一套 alpha 语义累积，且 `Character Capture Opacity` 调低时不会把颜色混白。
+
+2026-05-18 回滚决策：DropShadow 暂不走材质专用捕获 RT，不在 lilToon/lilPBR 材质面板暴露投出/接收参数。第一版保持 `ObjectCustom2 -> ObjectCustom1` 简单路径，颜色和强度只由 Volume 控制。
+
 优点是最接近真实材质，能支持半透明、贴图 alpha、dissolve、normal/lighting、眉毛叠加等。缺点是需要改 shader 模板，工作量比纯 fullscreen pass 大。
 
 ### 方案 B：CPU 收集 Renderer 后重绘
@@ -552,7 +560,7 @@ Eye:  写 EyeColor，并把材质 alpha 写入 EyeAlpha
 
 5. 预留模块资源申请。
    - EyeReveal、HairDropShadow 先落地。
-   - FarPlaneShadow、ReflectionSpace、CharacterLocalLightCast 先只占 settings / enum / debug 名称，不必实现。
+   - FarPlaneShadow、ReflectionSpace、HTraceSSRTSBridge 先只占 settings / enum / debug 名称，不必实现。
 
 6. 新增调试视图。
    - FrontHair mask
@@ -562,7 +570,7 @@ Eye:  写 EyeColor，并把材质 alpha 写入 EyeAlpha
    - HairShadowMask
    - SameCharacter / depth reject
    - Character bounds / screen rect
-   - FarPlaneShadow / ReflectionSpace / LocalLightCast 预留入口
+   - FarPlaneShadow / ReflectionSpace / HTraceSSRTSBridge 预留入口
 
 ## 第一版落地建议
 
@@ -573,7 +581,7 @@ Eye:  写 EyeColor，并把材质 alpha 写入 EyeAlpha
 3. 新增轻量 `HoCharacterRegistry`，第一版只做 CharacterId、bounds、screen rect 和 debug。
 4. 先做 fullscreen debug，确认能读到 ObjectCustom2/3/4、CharacterId、screen rect。
 5. 先做前发 DropShadow：读取 FrontHair mask，偏移后 clip 到 Face，同角色生效。
-6. 增加 Eye Capture RT 和 `HoCharacterCapture` pass，先支持 lilToon 标准/透明/双面模板。
+6. 增加 Eye Capture RT 和 `HoCharacterCapture` pass，先支持 lilToon 标准/透明/双面模板以及 lilPBR URP 普通/细分模板。
 7. 做 EyeReveal composite，重点验证半透明眉毛/眼睛、OIT 前发、多角色同屏、侧发不投影这四类场景。
 
 第一版不建议做：
@@ -584,7 +592,7 @@ Eye:  写 EyeColor，并把材质 alpha 写入 EyeAlpha
 不把 ObjectCustom4..7 变成材质贴图
 不让 HoPost DropShadow 承担“源/接收面分离”的角色投影
 不在没有 EyeColorBuffer 的情况下宣称支持半透明眉眼
-不实现完整多光源角色阴影，只保留接口和资源预算
+不在角色特化里实现多光源角色阴影；未来由 HTrace SSRTS 扩展管理光源、tracing 和资源预算
 不实现完整动态反射空间，只保留 profile/anchor/RT 入口
 ```
 
@@ -635,7 +643,7 @@ Modules:
 - Character Local Light Cast: Disabled / Reserved
 
 Eye Reveal:
-- Strength 0.75
+- Strength 0.05
 - Feather 1.0 px
 - Dilation 2.0 px
 - Same Character Only true
@@ -645,20 +653,20 @@ Hair DropShadow:
 - Source ObjectCustom2 FrontHair
 - Receiver ObjectCustom1 Face + EyeRevealMask
 - Blend Multiply
-- Opacity 0.35
-- Distance 8 px
-- Angle 115 degrees
+- Opacity 1.0
+- Distance 15 px
+- Angle 240 degrees
 - Softness 2 px
 
 Resource Budget:
 - Max Characters 8
-- Max Local Cast Lights 0 in first version
+- HTrace SSRTS Bridge Off in first version
 - Reflection Update Off in first version
 ```
 
 ## 结论
 
-HoAOV 已经让这件事比传统 lilToon stencil 流程简单很多：对象语义、角色 ID、前发/脸/眼睛分组、ObjectCustom 调试和 HoPost 规则组都已经具备。真正新增的难点不只是眼透合成，而是建立一层角色专属缓存/合成管线：被前发遮住的半透明眉眼颜色不能从最终画面恢复，必须通过角色特化功能额外捕获 `Face + Eye` 的颜色与 alpha；未来远平面阴影、动态反射空间和角色局部多光源阴影也都需要角色 bounds、renderer lists、anchors、局部 RT 和模块化资源管理。
+HoAOV 已经让这件事比传统 lilToon stencil 流程简单很多：对象语义、角色 ID、前发/脸/眼睛分组、ObjectCustom 调试和 HoPost 规则组都已经具备。真正新增的难点不只是眼透合成，而是建立一层角色专属缓存/合成管线：被前发遮住的半透明眉眼颜色不能从最终画面恢复，必须通过角色特化功能额外捕获 `Face + Eye` 的颜色与 alpha；未来远平面阴影、动态反射空间也都需要角色 bounds、renderer lists、anchors、局部 RT 和模块化资源管理。多光源 cast 则从角色特化拆出去，归 HTrace SSRTS 扩展处理。
 
 因此推荐的长期架构是：
 
@@ -673,4 +681,4 @@ HoPost:
   继续负责通用主体后处理，不承接角色专属的源/接收面双对象逻辑。
 ```
 
-这样可以彻底摆脱复制材质和 stencil 队列手工表演，同时把传统方案最处理不了的半透明眉眼一起解决掉，并给角色远平面阴影、动态反射空间、角色专属多光源投射和未知模块留下清晰入口。
+这样可以彻底摆脱复制材质和 stencil 队列手工表演，同时把传统方案最处理不了的半透明眉眼一起解决掉，并给角色远平面阴影、动态反射空间、HTrace SSRTS 桥接和未知模块留下清晰入口。
