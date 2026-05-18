@@ -98,6 +98,8 @@ HTraceAovBridge
 
 2026-05-18 决定：角色多光源 cast 不放进 `HoCharacterSpecializationRendererFeature`。少量必须 shadowcast 的项目级光源由 `HoShadowCastController` 统一管理并输出 shadow atlas / light data；SSRTS（Screen Space Ray Traced Shadow）和 HTrace 消费 HoShadowCast 数据与 HoAOV 角色语义，负责次级阴影、tracing budget、history/denoise 和 AO；HoAOV/角色特化只提供角色语义、receiver mask 和可选桥接入口。
 
+2026-05-18 补充：SSRTS 作为独立系统记录，后续可以单独开仓库。当前 `lilToon-URP-Extensions` 内的 HoShadowCast 只负责少量指定光源的 shadow atlas 与全局光源数据，不实现 SSRTS tracing、history、denoise 或最终 composite。
+
 ## URP 内置 Buffer 的定位
 
 URP 已经有一些类似 AOV 的内部中间纹理：
