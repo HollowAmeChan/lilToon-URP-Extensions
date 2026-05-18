@@ -10,12 +10,16 @@ namespace lilToon.URP.Extensions.ShadowCast
         public const int MaxPointLights = 4;
         public const int MaxLights = MaxDirectionalLights + MaxSpotLights + MaxPointLights;
         public const int MaxShadowSlices = MaxDirectionalLights + MaxSpotLights + MaxPointLights * 6;
+        public const int MaxSecondDirectionalCascades = 4;
+        public const int MaxSecondDirectionalSlices = MaxDirectionalLights * MaxSecondDirectionalCascades;
 
         public const string AtlasTextureName = "_HoShadowCastAtlas";
+        public const string SecondDirectionalAtlasTextureName = "_HoShadowCastSecondDirectionalAtlas";
         public const string DebugShaderName = "Hidden/lilToon-HoShadowCast/URP/DebugView";
         public const string CastingPunctualKeywordName = "_CASTING_PUNCTUAL_LIGHT_SHADOW";
 
         public static readonly int AtlasTextureId = Shader.PropertyToID(AtlasTextureName);
+        public static readonly int SecondDirectionalAtlasTextureId = Shader.PropertyToID(SecondDirectionalAtlasTextureName);
         public static readonly int ActiveId = Shader.PropertyToID("_HoShadowCastActive");
         public static readonly int LightCountId = Shader.PropertyToID("_HoShadowCastLightCount");
         public static readonly int SliceCountId = Shader.PropertyToID("_HoShadowCastSliceCount");
@@ -30,6 +34,16 @@ namespace lilToon.URP.Extensions.ShadowCast
         public static readonly int LightAttenuationId = Shader.PropertyToID("_HoShadowCastLightAttenuation");
         public static readonly int LightColorId = Shader.PropertyToID("_HoShadowCastLightColor");
         public static readonly int SliceDataId = Shader.PropertyToID("_HoShadowCastSliceData");
+        public static readonly int SecondDirectionalParamsId = Shader.PropertyToID("_HoShadowCastSecondDirectionalParams");
+        public static readonly int SecondDirectionalCameraPositionId = Shader.PropertyToID("_HoShadowCastSecondDirectionalCameraPosition");
+        public static readonly int SecondDirectionalAtlasSizeId = Shader.PropertyToID("_HoShadowCastSecondDirectionalAtlasSize");
+        public static readonly int SecondDirectionalWorldToShadowRow0Id = Shader.PropertyToID("_HoShadowCastSecondDirectionalWorldToShadowRow0");
+        public static readonly int SecondDirectionalWorldToShadowRow1Id = Shader.PropertyToID("_HoShadowCastSecondDirectionalWorldToShadowRow1");
+        public static readonly int SecondDirectionalWorldToShadowRow2Id = Shader.PropertyToID("_HoShadowCastSecondDirectionalWorldToShadowRow2");
+        public static readonly int SecondDirectionalWorldToShadowRow3Id = Shader.PropertyToID("_HoShadowCastSecondDirectionalWorldToShadowRow3");
+        public static readonly int SecondDirectionalLightDataId = Shader.PropertyToID("_HoShadowCastSecondDirectionalLightData");
+        public static readonly int SecondDirectionalSliceDataId = Shader.PropertyToID("_HoShadowCastSecondDirectionalSliceData");
+        public static readonly int DebugModeId = Shader.PropertyToID("_HoShadowCastDebugMode");
 
         public static readonly int ShadowBiasId = Shader.PropertyToID("_ShadowBias");
         public static readonly int LightDirectionId = Shader.PropertyToID("_LightDirection");

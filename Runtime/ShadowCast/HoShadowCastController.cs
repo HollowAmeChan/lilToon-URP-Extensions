@@ -6,7 +6,8 @@ namespace lilToon.URP.Extensions.ShadowCast
     public enum HoShadowCastDebugMode
     {
         Off = 0,
-        Atlas = 1
+        Atlas = 1,
+        SecondDirectionalAtlas = 2
     }
 
     [ExecuteAlways]
@@ -39,6 +40,34 @@ namespace lilToon.URP.Extensions.ShadowCast
         [InspectorName("点光/聚光投影强度")]
         [Range(0.0f, 1.0f)]
         public float punctualShadowStrength = 1.0f;
+
+        [InspectorName("点光/聚光范围衰减速度")]
+        [Range(0.1f, 4.0f)]
+        public float punctualShadowFadeSpeed = 1.0f;
+
+        [Header("第二天光级联")]
+        [InspectorName("第二天光投影强度")]
+        [Range(0.0f, 1.0f)]
+        public float secondDirectionalShadowStrength = 1.0f;
+
+        [InspectorName("第二天光 Atlas 尺寸")]
+        [Min(256)]
+        public int secondDirectionalAtlasSize = 4096;
+
+        [InspectorName("第二天光级联数")]
+        [Range(1, HoShadowCastShaderConstants.MaxSecondDirectionalCascades)]
+        public int secondDirectionalCascadeCount = 4;
+
+        [InspectorName("第二天光最大距离")]
+        [Min(0.01f)]
+        public float secondDirectionalMaxDistance = 80.0f;
+
+        [InspectorName("第二天光深度")]
+        [Min(0.01f)]
+        public float secondDirectionalShadowDepth = 80.0f;
+
+        [InspectorName("第二天光级联分割")]
+        public Vector3 secondDirectionalCascadeSplits = new Vector3(0.08f, 0.22f, 0.5f);
 
         [InspectorName("Atlas 尺寸")]
         [Min(256)]
@@ -127,6 +156,13 @@ namespace lilToon.URP.Extensions.ShadowCast
 
             shadowStrength = Mathf.Clamp01(shadowStrength);
             punctualShadowStrength = Mathf.Clamp01(punctualShadowStrength);
+            punctualShadowFadeSpeed = punctualShadowFadeSpeed <= 0.0f ? 1.0f : Mathf.Clamp(punctualShadowFadeSpeed, 0.1f, 4.0f);
+            secondDirectionalShadowStrength = Mathf.Clamp01(secondDirectionalShadowStrength);
+            secondDirectionalAtlasSize = Mathf.Max(256, secondDirectionalAtlasSize);
+            secondDirectionalCascadeCount = Mathf.Clamp(secondDirectionalCascadeCount, 1, HoShadowCastShaderConstants.MaxSecondDirectionalCascades);
+            secondDirectionalMaxDistance = Mathf.Max(0.01f, secondDirectionalMaxDistance);
+            secondDirectionalShadowDepth = Mathf.Max(0.01f, secondDirectionalShadowDepth);
+            secondDirectionalCascadeSplits = ClampCascadeSplits(secondDirectionalCascadeSplits);
             atlasSize = Mathf.Max(256, atlasSize);
             directionalResolution = Mathf.Max(64, directionalResolution);
             spotResolution = Mathf.Max(64, spotResolution);
@@ -134,6 +170,14 @@ namespace lilToon.URP.Extensions.ShadowCast
             directionalNearPlane = Mathf.Max(0.001f, directionalNearPlane);
             directionalShadowSize = Mathf.Max(0.01f, directionalShadowSize);
             directionalShadowDepth = Mathf.Max(0.01f, directionalShadowDepth);
+        }
+
+        private static Vector3 ClampCascadeSplits(Vector3 splits)
+        {
+            float x = Mathf.Clamp(splits.x, 0.001f, 0.997f);
+            float y = Mathf.Clamp(splits.y, x + 0.001f, 0.998f);
+            float z = Mathf.Clamp(splits.z, y + 0.001f, 0.999f);
+            return new Vector3(x, y, z);
         }
 
         private static void EnsureArraySize(ref Light[] array, int size)

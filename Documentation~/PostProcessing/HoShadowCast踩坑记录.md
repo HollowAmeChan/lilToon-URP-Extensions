@@ -10,7 +10,7 @@
 2. receiver 不要依赖“已经烘进 atlas offset 的矩阵黑盒”。CPU 输出 slice-local `worldToShadow`，shader 再用 `_HoShadowCastSliceData.xy/z` 显式计算 `atlasUV = sliceOffset + localUV * sliceScale`。
 3. `_HoShadowCastWorldToShadow` 不再直接用 matrix array 上传给 shader。已改为 4 组 `Vector4[]` row 上传，并在 HLSL 里用 dot 手动乘。这个路径和 light/slice data 一样稳定，避免 RenderGraph/平台矩阵数组布局问题。
 4. Unity light/camera view 约定是看向本地 `-Z`。手写 directional/spot/point fallback view matrix 时必须用 `Quaternion.LookRotation(-forward, up)`，不能用 `LookRotation(forward, up)`。后者会让 xy 似乎进了 slice，但 z/depth compare 永远不成立。
-5. RenderGraph shadow pass 内不能对当前正在作为 depth attachment 写入的 atlas 调 `SetGlobalTexture`。应使用 `builder.SetGlobalTextureAfterPass(atlasTexture, _HoShadowCastAtlas)` 在 pass 结束后发布给 receiver。
+5. RenderGraph shadow pass 内不能对当前正在作为 depth attachment 写入的 atlas 调 `SetGlobalTexture`。普通 atlas 和第二天光 atlas 都应使用 `builder.SetGlobalTextureAfterPass(...)` 在 pass 结束后发布给 receiver。
 6. `Light.shadows == None` 仍允许 HoShadowCast 投影。receiver 强度不能直接使用可能为 0 的 `light.shadowStrength`，当前规则是 Shadows None 时按 1 处理，再乘 controller 的 `shadowStrength`。
 
 ## 推荐排查顺序
@@ -29,10 +29,11 @@
 
 当前规则：
 
-1. CPU 为每盏 punctual light 上传 `_HoShadowCastLightAttenuation`。`x` 是 `1 / range^2`，`zw` 是 spot 内外锥角的 `scale/offset` 参数。
+1. CPU 为每盏 punctual light 上传 `_HoShadowCastLightAttenuation`。`x` 是 `1 / range^2`，`y` 是 Controller 的点光/聚光范围衰减速度，`zw` 是 spot 内外锥角的 `scale/offset` 参数。
 2. HLSL 侧先用 `rangeFactor = distanceSqr / range^2` 算平滑淡出，只把这个 0..1 fade 乘进 shadow strength，不使用光照的 `1 / distance^2` 亮度衰减。这里控制的是“投影影响范围”，不是重算灯光亮度。
-3. spot 额外乘 cone fade，使用 `Light.innerSpotAngle` 到 `Light.spotAngle` 的软边。这样聚光边缘和 range 边缘都会自然退掉。
-4. directional light 不走这套衰减，始终是全局 influence 1。
+3. 范围衰减速度默认 1，保持旧曲线；大于 1 会让阴影更快淡出，小于 1 会让影响范围内的阴影保持更久。
+4. spot 额外乘 cone fade，使用 `Light.innerSpotAngle` 到 `Light.spotAngle` 的软边。这样聚光边缘和 range 边缘都会自然退掉。
+5. directional light 不走这套衰减，始终是全局 influence 1。
 
 ## 2026-05-18 receiver 消费模型
 
@@ -57,4 +58,16 @@
 - 手写 view matrix 使用 `-forward`。
 - point/spot receiver 按 `Light.range` 与 spot 内外锥角做淡出。
 - directional / point / spot receiver 统一混进主光阴影入口，由材质自身阴影模型消费。
-- Atlas debug 只用于看 `_HoShadowCastAtlas` 本体，receiver 不保留临时调试模式。
+- Atlas debug 只用于看 `_HoShadowCastAtlas` 或 `_HoShadowCastSecondDirectionalAtlas` 本体，receiver 不保留临时调试模式。
+
+## 2026-05-18 第二天光多槽级联
+
+“第二天光”不是单独再拖一个 Light，而是 Controller 上已有的 4 个额外方向光槽。每个有效方向光都会写入独立第二天光 atlas，并分配 `secondDirectionalCascadeCount` 个 cascade tile。
+
+关键约束：
+
+1. 普通 `_HoShadowCastAtlas` 不再写入方向光，只负责 spot / point，避免方向光级联挤占普通 atlas slice。
+2. 第二天光 atlas 的固定容量是 `4 lights * 4 cascades = 16 slices`。C# 的 row/slice 数组、HLSL 的数组长度和 debug shader 的循环上限必须一起改，不能只改一边。
+3. receiver 按相机距离为每盏方向光选择一个 cascade，只采样该 cascade，再把多盏额外方向光相乘。
+4. Debug Mode 需要能在普通 atlas 和第二天光 atlas 之间切换。排查时先确认选的是正确 atlas，否则会误判为 AtlasRaw 空。
+5. Controller 上遗留的单 slice 方向光字段只作为序列化兼容保留，不再暴露在 Inspector。当前方向光实际由“第二天光级联”栏控制。

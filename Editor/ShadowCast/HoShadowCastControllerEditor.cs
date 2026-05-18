@@ -13,13 +13,16 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         private static readonly Color SpotColor = new Color(0.55f, 0.48f, 0.90f);
         private static readonly Color PointColor = new Color(0.38f, 0.76f, 0.55f);
         private static readonly Color AtlasColor = new Color(0.30f, 0.72f, 0.78f);
+        private static readonly Color DebugColor = new Color(0.86f, 0.68f, 0.34f);
         private static readonly Color StatusColor = new Color(0.70f, 0.70f, 0.70f);
 
         private static bool showDirectionalLights = true;
         private static bool showSpotLights = true;
         private static bool showPointLights = true;
         private static bool showAtlasSettings = true;
+        private static bool showSecondDirectionalSettings = true;
         private static bool showStatus = true;
+        private static bool showDebugSettings = true;
 
         private static GUIStyle sectionTitleStyle;
         private static GUIStyle sectionSummaryStyle;
@@ -29,15 +32,18 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         private SerializedProperty spotLightsProperty;
         private SerializedProperty pointLightsProperty;
         private SerializedProperty casterLayerMaskProperty;
-        private SerializedProperty shadowStrengthProperty;
         private SerializedProperty punctualShadowStrengthProperty;
+        private SerializedProperty punctualShadowFadeSpeedProperty;
+        private SerializedProperty secondDirectionalShadowStrengthProperty;
+        private SerializedProperty secondDirectionalAtlasSizeProperty;
+        private SerializedProperty secondDirectionalCascadeCountProperty;
+        private SerializedProperty secondDirectionalMaxDistanceProperty;
+        private SerializedProperty secondDirectionalShadowDepthProperty;
+        private SerializedProperty secondDirectionalCascadeSplitsProperty;
         private SerializedProperty atlasSizeProperty;
         private SerializedProperty directionalResolutionProperty;
         private SerializedProperty spotResolutionProperty;
         private SerializedProperty pointFaceResolutionProperty;
-        private SerializedProperty directionalNearPlaneProperty;
-        private SerializedProperty directionalShadowSizeProperty;
-        private SerializedProperty directionalShadowDepthProperty;
         private SerializedProperty debugModeProperty;
 
         private static GUIStyle SectionTitleStyle
@@ -83,15 +89,18 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             spotLightsProperty = serializedObject.FindProperty("spotLights");
             pointLightsProperty = serializedObject.FindProperty("pointLights");
             casterLayerMaskProperty = serializedObject.FindProperty("casterLayerMask");
-            shadowStrengthProperty = serializedObject.FindProperty("shadowStrength");
             punctualShadowStrengthProperty = serializedObject.FindProperty("punctualShadowStrength");
+            punctualShadowFadeSpeedProperty = serializedObject.FindProperty("punctualShadowFadeSpeed");
+            secondDirectionalShadowStrengthProperty = serializedObject.FindProperty("secondDirectionalShadowStrength");
+            secondDirectionalAtlasSizeProperty = serializedObject.FindProperty("secondDirectionalAtlasSize");
+            secondDirectionalCascadeCountProperty = serializedObject.FindProperty("secondDirectionalCascadeCount");
+            secondDirectionalMaxDistanceProperty = serializedObject.FindProperty("secondDirectionalMaxDistance");
+            secondDirectionalShadowDepthProperty = serializedObject.FindProperty("secondDirectionalShadowDepth");
+            secondDirectionalCascadeSplitsProperty = serializedObject.FindProperty("secondDirectionalCascadeSplits");
             atlasSizeProperty = serializedObject.FindProperty("atlasSize");
             directionalResolutionProperty = serializedObject.FindProperty("directionalResolution");
             spotResolutionProperty = serializedObject.FindProperty("spotResolution");
             pointFaceResolutionProperty = serializedObject.FindProperty("pointFaceResolution");
-            directionalNearPlaneProperty = serializedObject.FindProperty("directionalNearPlane");
-            directionalShadowSizeProperty = serializedObject.FindProperty("directionalShadowSize");
-            directionalShadowDepthProperty = serializedObject.FindProperty("directionalShadowDepth");
             debugModeProperty = serializedObject.FindProperty("debugMode");
         }
 
@@ -105,7 +114,6 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
                 directionalLightsProperty,
                 directionalResolutionProperty,
                 "额外方向光",
-                "每个方向光 1 个 shadow slice。不要把 URP 主光放进来；运行时如果发现某个灯就是当前 URP mainLightIndex，会自动跳过。",
                 LightType.Directional,
                 DirectionalColor,
                 ref showDirectionalLights);
@@ -113,7 +121,6 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
                 spotLightsProperty,
                 spotResolutionProperty,
                 "额外聚光",
-                "每个聚光 1 个 shadow slice",
                 LightType.Spot,
                 SpotColor,
                 ref showSpotLights);
@@ -121,12 +128,13 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
                 pointLightsProperty,
                 pointFaceResolutionProperty,
                 "额外点光",
-                "每个点光 6 个 cube face slice",
                 LightType.Point,
                 PointColor,
                 ref showPointLights);
             DrawAtlasSection();
+            DrawSecondDirectionalSection();
             DrawStatus();
+            DrawDebugSection();
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -150,13 +158,14 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             SerializedProperty arrayProperty,
             SerializedProperty resolutionProperty,
             string label,
-            string hint,
             LightType expectedType,
             Color color,
             ref bool expanded)
         {
             int assignedCount = CountAssigned(arrayProperty);
-            string summary = string.Format("{0}/{1}  |  分辨率 {2}", assignedCount, arrayProperty.arraySize, resolutionProperty.intValue);
+            string summary = expectedType == LightType.Directional
+                ? string.Format("{0}/{1}  |  级联 atlas", assignedCount, arrayProperty.arraySize)
+                : string.Format("{0}/{1}  |  分辨率 {2}", assignedCount, arrayProperty.arraySize, resolutionProperty.intValue);
             if (!DrawSectionHeader(ref expanded, label, summary, color))
             {
                 return;
@@ -164,10 +173,11 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.PropertyField(resolutionProperty, new GUIContent(expectedType == LightType.Point ? "单面分辨率" : "分辨率"));
-                DrawResolutionCapacityWarning(resolutionProperty, expectedType);
-                EditorGUILayout.HelpBox(hint, MessageType.None);
-
+                if (expectedType != LightType.Directional)
+                {
+                    EditorGUILayout.PropertyField(resolutionProperty, new GUIContent(expectedType == LightType.Point ? "单面分辨率" : "分辨率"));
+                    DrawResolutionCapacityWarning(resolutionProperty, expectedType);
+                }
                 EditorGUILayout.Space(2.0f);
                 EditorGUI.indentLevel++;
                 for (int i = 0; i < arrayProperty.arraySize; i++)
@@ -180,10 +190,6 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
                     {
                         EditorGUILayout.HelpBox(string.Format("{0} 需要 {1}，当前是 {2}。", label, expectedType, light.type), MessageType.Warning);
                     }
-                    else if (light != null && light.shadows == LightShadows.None)
-                    {
-                        EditorGUILayout.HelpBox("这个 Light 的 Shadows 是 None。URP 自带 additional shadow 不会运行；HoShadowCast 仍会按这个灯生成自己的 atlas。", MessageType.Info);
-                    }
                     else if (light != null && expectedType == LightType.Directional && RenderSettings.sun == light)
                     {
                         EditorGUILayout.HelpBox("这个方向光当前是 RenderSettings.sun，通常会被 URP 当作主光。HoShadowCast 运行时会跳过 URP 主光，建议不要放在额外投影列表里。", MessageType.Warning);
@@ -195,32 +201,46 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
 
         private void DrawAtlasSection()
         {
-            string summary = string.Format("{0}px  |  方向 {1:0.##} / 点聚 {2:0.##}", atlasSizeProperty.intValue, shadowStrengthProperty.floatValue, punctualShadowStrengthProperty.floatValue);
-            if (!DrawSectionHeader(ref showAtlasSettings, "Atlas 与调试", summary, AtlasColor))
+            string summary = string.Format("{0}px  |  点聚 {1:0.##}", atlasSizeProperty.intValue, punctualShadowStrengthProperty.floatValue);
+            if (!DrawSectionHeader(ref showAtlasSettings, "普通 Atlas", summary, AtlasColor))
             {
                 return;
             }
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.PropertyField(shadowStrengthProperty, new GUIContent("方向光投影强度"));
                 EditorGUILayout.PropertyField(punctualShadowStrengthProperty, new GUIContent("点光/聚光投影强度"));
+                EditorGUILayout.PropertyField(punctualShadowFadeSpeedProperty, new GUIContent("点光/聚光范围衰减速度", "1 保持旧曲线；更大更快淡出，更小保留更久。"));
                 EditorGUILayout.PropertyField(atlasSizeProperty, new GUIContent("Atlas 尺寸"));
                 DrawAtlasCapacitySummary();
-                EditorGUILayout.PropertyField(directionalNearPlaneProperty, new GUIContent("方向光近裁剪"));
-                EditorGUILayout.PropertyField(directionalShadowSizeProperty, new GUIContent("方向光投影范围"));
-                EditorGUILayout.PropertyField(directionalShadowDepthProperty, new GUIContent("方向光投影深度"));
 
                 EditorGUILayout.Space(2.0f);
                 EditorGUILayout.PropertyField(casterLayerMaskProperty, new GUIContent("Caster 图层遮罩"));
                 EditorGUILayout.HelpBox("生成 HoShadowCast atlas 时只绘制这个图层范围内、拥有 ShadowCaster pass 的投射物；接收阴影的材质不受这个遮罩影响。", MessageType.None);
+            }
+        }
 
-                EditorGUILayout.Space(2.0f);
-                EditorGUILayout.PropertyField(debugModeProperty, new GUIContent("调试模式"));
-                if (debugModeProperty.enumValueIndex == (int)HoShadowCastDebugMode.Atlas)
-                {
-                    EditorGUILayout.HelpBox("Atlas 模式会把 _HoShadowCastAtlas 全屏显示到相机颜色上。若仍显示正常画面，通常说明本帧没有生成可用 shadow slice。", MessageType.Info);
-                }
+        private void DrawSecondDirectionalSection()
+        {
+            string summary = string.Format(
+                "{0}/{1} lights | {2} cascades | {3}px",
+                CountAssigned(directionalLightsProperty),
+                directionalLightsProperty.arraySize,
+                secondDirectionalCascadeCountProperty.intValue,
+                secondDirectionalAtlasSizeProperty.intValue);
+            if (!DrawSectionHeader(ref showSecondDirectionalSettings, "第二天光级联", summary, DirectionalColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.PropertyField(secondDirectionalShadowStrengthProperty, new GUIContent("投影强度"));
+                EditorGUILayout.PropertyField(secondDirectionalAtlasSizeProperty, new GUIContent("Atlas 尺寸"));
+                EditorGUILayout.PropertyField(secondDirectionalCascadeCountProperty, new GUIContent("级联数"));
+                EditorGUILayout.PropertyField(secondDirectionalMaxDistanceProperty, new GUIContent("最大距离"));
+                EditorGUILayout.PropertyField(secondDirectionalShadowDepthProperty, new GUIContent("投影深度"));
+                EditorGUILayout.PropertyField(secondDirectionalCascadeSplitsProperty, new GUIContent("级联分割"));
             }
         }
 
@@ -238,10 +258,31 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.LabelField("最大容量", "4 额外方向光 / 4 额外聚光 / 4 额外点光，最多 32 个 shadow slice");
+                EditorGUILayout.LabelField("最大容量", "4 级联方向光 / 4 聚光 / 4 点光");
                 EditorGUILayout.LabelField("主光处理", "运行时跳过 URP 当前 mainLightIndex");
-                EditorGUILayout.LabelField("材质接入", "使用材质自己的 ShadowCaster pass");
-                EditorGUILayout.LabelField("输出数据", "_HoShadowCastAtlas 与固定数组全局 light data");
+                EditorGUILayout.LabelField("Atlas", "普通点聚 atlas + 独立第二天光 atlas");
+            }
+        }
+
+        private void DrawDebugSection()
+        {
+            string summary = ((HoShadowCastDebugMode)debugModeProperty.enumValueIndex).ToString();
+            if (!DrawSectionHeader(ref showDebugSettings, "调试", summary, DebugColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.PropertyField(debugModeProperty, new GUIContent("调试模式"));
+                if (debugModeProperty.enumValueIndex == (int)HoShadowCastDebugMode.Atlas)
+                {
+                    EditorGUILayout.HelpBox("显示普通 _HoShadowCastAtlas。若仍显示正常画面，通常说明本帧没有生成 point/spot slice。", MessageType.Info);
+                }
+                else if (debugModeProperty.enumValueIndex == (int)HoShadowCastDebugMode.SecondDirectionalAtlas)
+                {
+                    EditorGUILayout.HelpBox("显示 _HoShadowCastSecondDirectionalAtlas。若仍显示正常画面，通常说明额外方向光槽为空、方向光被识别为 URP 主光，或本帧没有生成 cascade。", MessageType.Info);
+                }
             }
         }
 
@@ -339,7 +380,6 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         private int CountRequestedSlices()
         {
             int count = 0;
-            count += CountRequestedSlices(directionalLightsProperty, LightType.Directional, 1);
             count += CountRequestedSlices(spotLightsProperty, LightType.Spot, 1);
             count += CountRequestedSlices(pointLightsProperty, LightType.Point, 6);
             return count;

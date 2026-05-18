@@ -94,7 +94,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         private static bool ShouldDebug()
         {
             HoShadowCastController controller = HoShadowCastController.ActiveController;
-            return controller != null && controller.debugMode == HoShadowCastDebugMode.Atlas;
+            return controller != null && controller.debugMode != HoShadowCastDebugMode.Off;
         }
 
         private void EnsureMaterials()
@@ -150,6 +150,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             Shader.SetGlobalFloat(HoShadowCastShaderConstants.ActiveId, 0.0f);
             Shader.SetGlobalInt(HoShadowCastShaderConstants.LightCountId, 0);
             Shader.SetGlobalInt(HoShadowCastShaderConstants.SliceCountId, 0);
+            Shader.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalParamsId, Vector4.zero);
         }
     }
 
@@ -176,9 +177,16 @@ namespace lilToon.URP.Extensions.ShadowCast
         private static readonly Vector4[] LightAttenuation = new Vector4[HoShadowCastShaderConstants.MaxLights];
         private static readonly Vector4[] LightColor = new Vector4[HoShadowCastShaderConstants.MaxLights];
         private static readonly Vector4[] SliceData = new Vector4[HoShadowCastShaderConstants.MaxShadowSlices];
+        private static readonly Vector4[] SecondDirectionalWorldToShadowRow0 = new Vector4[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
+        private static readonly Vector4[] SecondDirectionalWorldToShadowRow1 = new Vector4[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
+        private static readonly Vector4[] SecondDirectionalWorldToShadowRow2 = new Vector4[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
+        private static readonly Vector4[] SecondDirectionalWorldToShadowRow3 = new Vector4[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
+        private static readonly Vector4[] SecondDirectionalLightData = new Vector4[HoShadowCastShaderConstants.MaxDirectionalLights];
+        private static readonly Vector4[] SecondDirectionalSliceData = new Vector4[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
         private static readonly ShaderTagId ShadowCasterShaderTagId = new ShaderTagId("ShadowCaster");
         private static int lastDebugLogFrame = -1000;
         private readonly HoShadowCastFrame frame = new HoShadowCastFrame();
+        private readonly HoShadowCastSecondDirectionalFrame secondDirectionalFrame = new HoShadowCastSecondDirectionalFrame();
         private HoShadowCastSettings settings;
         private HoShadowCastRenderTargets renderTargets;
 
@@ -186,6 +194,13 @@ namespace lilToon.URP.Extensions.ShadowCast
         {
             public TextureHandle atlasTexture;
             public HoShadowCastFrame frame;
+            public RendererListHandle[] rendererLists;
+        }
+
+        private sealed class SecondDirectionalPassData
+        {
+            public TextureHandle atlasTexture;
+            public HoShadowCastSecondDirectionalFrame frame;
             public RendererListHandle[] rendererLists;
         }
 
@@ -216,6 +231,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             }
 
             renderTargets.ReAllocateIfNeeded(CreateAtlasDescriptor(controller));
+            renderTargets.ReAllocateSecondDirectionalIfNeeded(CreateSecondDirectionalAtlasDescriptor(controller));
             ConfigureTarget(renderTargets.AtlasTexture);
             ConfigureClear(ClearFlag.Depth, Color.clear);
         }
@@ -235,41 +251,92 @@ namespace lilToon.URP.Extensions.ShadowCast
                     ref renderingData.cullResults,
                     lightData,
                     ref shadowData,
+                    renderingData.cameraData.camera,
                     lightData.mainLightIndex,
                     renderingData.cameraData.worldSpaceCameraPos,
                     renderingData.cameraData.GetViewMatrix(),
                     renderingData.cameraData.GetProjectionMatrix(),
                     frame);
-            MaybeLogDebugFrame(controller, frame, "Compatibility", hasFrame);
-            if (!hasFrame)
+            bool hasSecondDirectionalFrame = BuildSecondDirectionalFrameData(
+                    controller,
+                    ref renderingData.cullResults,
+                    lightData.visibleLights,
+                    renderingData.cameraData.camera,
+                    lightData.mainLightIndex,
+                    renderingData.cameraData.worldSpaceCameraPos,
+                    renderingData.cameraData.GetViewMatrix(),
+                    renderingData.cameraData.GetProjectionMatrix(),
+                    secondDirectionalFrame);
+            MaybeLogDebugFrame(controller, frame, secondDirectionalFrame, "Compatibility", hasFrame, hasSecondDirectionalFrame);
+            if (!hasFrame && !hasSecondDirectionalFrame)
             {
                 SetGlobalEmpty();
+                SetSecondDirectionalGlobalEmpty();
                 return;
             }
 
             CommandBuffer cmd = CommandBufferPool.Get();
             using (new ProfilingScope(cmd, ProfilingSampler))
             {
-                cmd.SetRenderTarget(renderTargets.AtlasTexture.nameID);
-                cmd.ClearRenderTarget(true, false, Color.clear);
-                ApplyGlobalData(cmd, frame, renderTargets.AtlasTexture.nameID);
-
-                context.ExecuteCommandBuffer(cmd);
-                cmd.Clear();
-
-                for (int i = 0; i < frame.sliceCount; i++)
+                if (hasFrame)
                 {
-                    ShadowSliceInfo slice = frame.slices[i];
-                    DrawingSettings drawingSettings = CreateShadowCasterDrawingSettings(renderingData.cameraData.camera);
-                    FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(controller);
+                    cmd.SetRenderTarget(renderTargets.AtlasTexture.nameID);
+                    cmd.ClearRenderTarget(true, false, Color.clear);
+                    ApplyGlobalData(cmd, frame, renderTargets.AtlasTexture.nameID);
 
-                    SetShadowCasterGlobals(cmd, frame.cameraPosition, slice);
-                    RenderShadowSlice(cmd, ref context, ref renderingData.cullResults, ref slice.shadowSliceData, ref drawingSettings, ref filteringSettings, slice.projectionMatrix, slice.viewMatrix);
+                    context.ExecuteCommandBuffer(cmd);
+                    cmd.Clear();
+
+                    for (int i = 0; i < frame.sliceCount; i++)
+                    {
+                        ShadowSliceInfo slice = frame.slices[i];
+                        DrawingSettings drawingSettings = CreateShadowCasterDrawingSettings(renderingData.cameraData.camera);
+                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(controller);
+
+                        SetShadowCasterGlobals(cmd, frame.cameraPosition, slice);
+                        RenderShadowSlice(cmd, ref context, ref renderingData.cullResults, ref slice.shadowSliceData, ref drawingSettings, ref filteringSettings, slice.projectionMatrix, slice.viewMatrix);
+                    }
+                }
+                else
+                {
+                    SetGlobalEmpty(cmd);
+                }
+
+                if (hasSecondDirectionalFrame && renderTargets.SecondDirectionalAtlasTexture != null)
+                {
+                    cmd.SetRenderTarget(renderTargets.SecondDirectionalAtlasTexture.nameID);
+                    cmd.ClearRenderTarget(true, false, Color.clear);
+                    ApplySecondDirectionalGlobalData(cmd, secondDirectionalFrame, renderTargets.SecondDirectionalAtlasTexture.nameID);
+
+                    context.ExecuteCommandBuffer(cmd);
+                    cmd.Clear();
+
+                    for (int i = 0; i < secondDirectionalFrame.sliceCount; i++)
+                    {
+                        ShadowSliceInfo slice = secondDirectionalFrame.slices[i];
+                        DrawingSettings drawingSettings = CreateShadowCasterDrawingSettings(renderingData.cameraData.camera);
+                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(controller);
+
+                        SetShadowCasterGlobals(cmd, secondDirectionalFrame.cameraPosition, slice);
+                        RenderShadowSlice(cmd, ref context, ref renderingData.cullResults, ref slice.shadowSliceData, ref drawingSettings, ref filteringSettings, slice.projectionMatrix, slice.viewMatrix);
+                    }
+                }
+                else
+                {
+                    SetSecondDirectionalGlobalEmpty(cmd);
                 }
 
                 cmd.SetKeyword(HoShadowCastShaderConstants.CastingPunctualLightShadowKeyword, false);
-                RestoreCameraGlobals(cmd, frame);
-                ApplyGlobalData(cmd, frame, renderTargets.AtlasTexture.nameID);
+                RestoreCameraGlobals(cmd, hasFrame ? frame.cameraPosition : secondDirectionalFrame.cameraPosition, hasFrame ? frame.cameraViewMatrix : secondDirectionalFrame.cameraViewMatrix, hasFrame ? frame.cameraProjectionMatrix : secondDirectionalFrame.cameraProjectionMatrix);
+                if (hasFrame)
+                {
+                    ApplyGlobalData(cmd, frame, renderTargets.AtlasTexture.nameID);
+                }
+
+                if (hasSecondDirectionalFrame && renderTargets.SecondDirectionalAtlasTexture != null)
+                {
+                    ApplySecondDirectionalGlobalData(cmd, secondDirectionalFrame, renderTargets.SecondDirectionalAtlasTexture.nameID);
+                }
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -296,64 +363,131 @@ namespace lilToon.URP.Extensions.ShadowCast
                     ref renderingData.cullResults,
                     lightData,
                     shadowData,
+                    cameraData.camera,
                     lightData.mainLightIndex,
                     cameraData.worldSpaceCameraPos,
                     cameraData.GetViewMatrix(),
                     cameraData.GetProjectionMatrix(),
                     renderGraphFrame);
-            MaybeLogDebugFrame(controller, renderGraphFrame, "RenderGraph", hasFrame);
-            if (!hasFrame)
+            HoShadowCastSecondDirectionalFrame renderGraphSecondDirectionalFrame = new HoShadowCastSecondDirectionalFrame();
+            bool hasSecondDirectionalFrame = BuildSecondDirectionalFrameData(
+                    controller,
+                    ref renderingData.cullResults,
+                    lightData.visibleLights,
+                    cameraData.camera,
+                    lightData.mainLightIndex,
+                    cameraData.worldSpaceCameraPos,
+                    cameraData.GetViewMatrix(),
+                    cameraData.GetProjectionMatrix(),
+                    renderGraphSecondDirectionalFrame);
+            MaybeLogDebugFrame(controller, renderGraphFrame, renderGraphSecondDirectionalFrame, "RenderGraph", hasFrame, hasSecondDirectionalFrame);
+            if (!hasFrame && !hasSecondDirectionalFrame)
             {
                 return;
             }
 
-            TextureHandle atlasTexture = UniversalRenderer.CreateRenderGraphTexture(
-                renderGraph,
-                CreateAtlasDescriptor(controller),
-                HoShadowCastShaderConstants.AtlasTextureName,
-                true,
-                FilterMode.Bilinear,
-                TextureWrapMode.Clamp);
-
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoShadowCast ShadowMap", out PassData passData, ProfilingSampler))
+            if (hasFrame)
             {
-                passData.atlasTexture = atlasTexture;
-                passData.frame = renderGraphFrame;
-                passData.rendererLists = new RendererListHandle[renderGraphFrame.sliceCount];
+                TextureHandle atlasTexture = UniversalRenderer.CreateRenderGraphTexture(
+                    renderGraph,
+                    CreateAtlasDescriptor(controller),
+                    HoShadowCastShaderConstants.AtlasTextureName,
+                    true,
+                    FilterMode.Bilinear,
+                    TextureWrapMode.Clamp);
 
-                for (int i = 0; i < renderGraphFrame.sliceCount; i++)
+                using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoShadowCast ShadowMap", out PassData passData, ProfilingSampler))
                 {
-                    DrawingSettings drawingSettings = CreateShadowCasterDrawingSettings(cameraData.camera);
-                    FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(controller);
-                    RendererListParams rendererListParams = new RendererListParams(renderingData.cullResults, drawingSettings, filteringSettings);
-                    passData.rendererLists[i] = renderGraph.CreateRendererList(rendererListParams);
-                    builder.UseRendererList(passData.rendererLists[i]);
-                }
+                    passData.atlasTexture = atlasTexture;
+                    passData.frame = renderGraphFrame;
+                    passData.rendererLists = new RendererListHandle[renderGraphFrame.sliceCount];
 
-                builder.SetRenderAttachmentDepth(atlasTexture, AccessFlags.Write);
-                builder.AllowGlobalStateModification(true);
-                builder.AllowPassCulling(false);
-                builder.SetGlobalTextureAfterPass(atlasTexture, HoShadowCastShaderConstants.AtlasTextureId);
-                builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
-                {
-                    RasterCommandBuffer cmd = context.cmd;
-                    HoShadowCastFrame frame = data.frame;
-                    cmd.ClearRenderTarget(RTClearFlags.Depth, Color.clear, 1.0f, 0);
-                    ApplyGlobalData(cmd, frame);
-
-                    for (int i = 0; i < frame.sliceCount; i++)
+                    for (int i = 0; i < renderGraphFrame.sliceCount; i++)
                     {
-                        ShadowSliceInfo slice = frame.slices[i];
-                        SetShadowCasterGlobals(cmd, frame.cameraPosition, slice);
-                        RenderShadowSlice(cmd, ref slice.shadowSliceData, data.rendererLists[i], slice.projectionMatrix, slice.viewMatrix);
+                        DrawingSettings drawingSettings = CreateShadowCasterDrawingSettings(cameraData.camera);
+                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(controller);
+                        RendererListParams rendererListParams = new RendererListParams(renderingData.cullResults, drawingSettings, filteringSettings);
+                        passData.rendererLists[i] = renderGraph.CreateRendererList(rendererListParams);
+                        builder.UseRendererList(passData.rendererLists[i]);
                     }
 
-                    cmd.SetKeyword(HoShadowCastShaderConstants.CastingPunctualLightShadowKeyword, false);
-                    RestoreCameraGlobals(cmd, frame);
-                    ApplyGlobalData(cmd, frame);
-                });
+                    builder.SetRenderAttachmentDepth(atlasTexture, AccessFlags.Write);
+                    builder.AllowGlobalStateModification(true);
+                    builder.AllowPassCulling(false);
+                    builder.SetGlobalTextureAfterPass(atlasTexture, HoShadowCastShaderConstants.AtlasTextureId);
+                    builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                    {
+                        RasterCommandBuffer cmd = context.cmd;
+                        HoShadowCastFrame frame = data.frame;
+                        cmd.ClearRenderTarget(RTClearFlags.Depth, Color.clear, 1.0f, 0);
+                        ApplyGlobalData(cmd, frame);
 
-                shadowCastResources.atlasTexture = atlasTexture;
+                        for (int i = 0; i < frame.sliceCount; i++)
+                        {
+                            ShadowSliceInfo slice = frame.slices[i];
+                            SetShadowCasterGlobals(cmd, frame.cameraPosition, slice);
+                            RenderShadowSlice(cmd, ref slice.shadowSliceData, data.rendererLists[i], slice.projectionMatrix, slice.viewMatrix);
+                        }
+
+                        cmd.SetKeyword(HoShadowCastShaderConstants.CastingPunctualLightShadowKeyword, false);
+                        RestoreCameraGlobals(cmd, frame);
+                        ApplyGlobalData(cmd, frame);
+                    });
+
+                    shadowCastResources.atlasTexture = atlasTexture;
+                }
+            }
+
+            if (hasSecondDirectionalFrame)
+            {
+                TextureHandle secondDirectionalAtlasTexture = UniversalRenderer.CreateRenderGraphTexture(
+                    renderGraph,
+                    CreateSecondDirectionalAtlasDescriptor(controller),
+                    HoShadowCastShaderConstants.SecondDirectionalAtlasTextureName,
+                    true,
+                    FilterMode.Bilinear,
+                    TextureWrapMode.Clamp);
+
+                using (var builder = renderGraph.AddRasterRenderPass<SecondDirectionalPassData>("lilToon-HoShadowCast Second Directional", out SecondDirectionalPassData passData, ProfilingSampler))
+                {
+                    passData.atlasTexture = secondDirectionalAtlasTexture;
+                    passData.frame = renderGraphSecondDirectionalFrame;
+                    passData.rendererLists = new RendererListHandle[renderGraphSecondDirectionalFrame.sliceCount];
+
+                    for (int i = 0; i < renderGraphSecondDirectionalFrame.sliceCount; i++)
+                    {
+                        DrawingSettings drawingSettings = CreateShadowCasterDrawingSettings(cameraData.camera);
+                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(controller);
+                        RendererListParams rendererListParams = new RendererListParams(renderingData.cullResults, drawingSettings, filteringSettings);
+                        passData.rendererLists[i] = renderGraph.CreateRendererList(rendererListParams);
+                        builder.UseRendererList(passData.rendererLists[i]);
+                    }
+
+                    builder.SetRenderAttachmentDepth(secondDirectionalAtlasTexture, AccessFlags.Write);
+                    builder.AllowGlobalStateModification(true);
+                    builder.AllowPassCulling(false);
+                    builder.SetGlobalTextureAfterPass(secondDirectionalAtlasTexture, HoShadowCastShaderConstants.SecondDirectionalAtlasTextureId);
+                    builder.SetRenderFunc(static (SecondDirectionalPassData data, RasterGraphContext context) =>
+                    {
+                        RasterCommandBuffer cmd = context.cmd;
+                        HoShadowCastSecondDirectionalFrame frame = data.frame;
+                        cmd.ClearRenderTarget(RTClearFlags.Depth, Color.clear, 1.0f, 0);
+                        ApplySecondDirectionalGlobalData(cmd, frame);
+
+                        for (int i = 0; i < frame.sliceCount; i++)
+                        {
+                            ShadowSliceInfo slice = frame.slices[i];
+                            SetShadowCasterGlobals(cmd, frame.cameraPosition, slice);
+                            RenderShadowSlice(cmd, ref slice.shadowSliceData, data.rendererLists[i], slice.projectionMatrix, slice.viewMatrix);
+                        }
+
+                        cmd.SetKeyword(HoShadowCastShaderConstants.CastingPunctualLightShadowKeyword, false);
+                        RestoreCameraGlobals(cmd, frame.cameraPosition, frame.cameraViewMatrix, frame.cameraProjectionMatrix);
+                        ApplySecondDirectionalGlobalData(cmd, frame);
+                    });
+
+                    shadowCastResources.secondDirectionalAtlasTexture = secondDirectionalAtlasTexture;
+                }
             }
         }
 
@@ -366,6 +500,17 @@ namespace lilToon.URP.Extensions.ShadowCast
         private static RenderTextureDescriptor CreateAtlasDescriptor(HoShadowCastController controller)
         {
             int size = Mathf.Max(1, controller != null ? controller.atlasSize : 1);
+            return CreateDepthAtlasDescriptor(size);
+        }
+
+        private static RenderTextureDescriptor CreateSecondDirectionalAtlasDescriptor(HoShadowCastController controller)
+        {
+            int size = Mathf.Max(1, controller != null ? controller.secondDirectionalAtlasSize : 1);
+            return CreateDepthAtlasDescriptor(size);
+        }
+
+        private static RenderTextureDescriptor CreateDepthAtlasDescriptor(int size)
+        {
             RenderTextureDescriptor descriptor = new RenderTextureDescriptor(size, size, GraphicsFormat.None, GraphicsFormatUtility.GetDepthStencilFormat(32, 0));
             descriptor.msaaSamples = 1;
             descriptor.depthBufferBits = 32;
@@ -380,6 +525,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             ref CullingResults cullResults,
             LightData lightData,
             ref ShadowData shadowData,
+            Camera camera,
             int mainLightIndex,
             Vector3 cameraPosition,
             Matrix4x4 cameraViewMatrix,
@@ -393,6 +539,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 null,
                 ref shadowData,
                 true,
+                camera,
                 mainLightIndex,
                 cameraPosition,
                 cameraViewMatrix,
@@ -405,6 +552,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             ref CullingResults cullResults,
             UniversalLightData lightData,
             UniversalShadowData shadowData,
+            Camera camera,
             int mainLightIndex,
             Vector3 cameraPosition,
             Matrix4x4 cameraViewMatrix,
@@ -419,6 +567,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 shadowData,
                 ref unusedCompatibilityShadowData,
                 false,
+                camera,
                 mainLightIndex,
                 cameraPosition,
                 cameraViewMatrix,
@@ -433,6 +582,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             UniversalShadowData universalShadowData,
             ref ShadowData compatibilityShadowData,
             bool useCompatibilityShadowData,
+            Camera camera,
             int mainLightIndex,
             Vector3 cameraPosition,
             Matrix4x4 cameraViewMatrix,
@@ -448,12 +598,300 @@ namespace lilToon.URP.Extensions.ShadowCast
             int requestedSliceCount = CountRequestedSlices(controller, visibleLights, mainLightIndex);
             int maxSliceResolution = GetMaxResolutionForSliceCount(target.atlasSize, requestedSliceCount);
             HoShadowCastAtlasPacker packer = new HoShadowCastAtlasPacker(target.atlasSize);
-            AddLightArray(controller.directionalLights, LightType.Directional, controller, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
             AddLightArray(controller.spotLights, LightType.Spot, controller, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
             AddLightArray(controller.pointLights, LightType.Point, controller, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
 
             target.FillUnused();
             return target.lightCount > 0 && target.sliceCount > 0;
+        }
+
+        private static bool BuildSecondDirectionalFrameData(
+            HoShadowCastController controller,
+            ref CullingResults cullResults,
+            NativeArray<VisibleLight> visibleLights,
+            Camera camera,
+            int mainLightIndex,
+            Vector3 cameraPosition,
+            Matrix4x4 cameraViewMatrix,
+            Matrix4x4 cameraProjectionMatrix,
+            HoShadowCastSecondDirectionalFrame target)
+        {
+            target.Clear();
+            target.cameraPosition = cameraPosition;
+            target.cameraViewMatrix = cameraViewMatrix;
+            target.cameraProjectionMatrix = cameraProjectionMatrix;
+
+            if (controller == null || camera == null)
+            {
+                return false;
+            }
+
+            int cascadeCount = Mathf.Clamp(controller.secondDirectionalCascadeCount, 1, HoShadowCastShaderConstants.MaxSecondDirectionalCascades);
+            int atlasSize = Mathf.Max(1, controller.secondDirectionalAtlasSize);
+            int requestedSliceCount = CountRequestedSecondDirectionalSlices(controller.directionalLights, visibleLights, mainLightIndex, cascadeCount);
+            if (requestedSliceCount <= 0)
+            {
+                return false;
+            }
+
+            int gridSize = Mathf.CeilToInt(Mathf.Sqrt(requestedSliceCount));
+            int resolution = Mathf.Max(64, atlasSize / Mathf.Max(1, gridSize));
+            float nearDistance = Mathf.Max(0.001f, camera.nearClipPlane);
+            float farDistance = Mathf.Min(Mathf.Max(nearDistance + 0.01f, controller.secondDirectionalMaxDistance), Mathf.Max(nearDistance + 0.01f, camera.farClipPlane));
+
+            target.atlasSize = atlasSize;
+            target.cascadeCountPerLight = cascadeCount;
+            target.lightCount = 0;
+            target.sliceCount = 0;
+
+            Light[] lights = controller.directionalLights;
+            for (int lightSlot = 0; lights != null && lightSlot < lights.Length; lightSlot++)
+            {
+                Light light = lights[lightSlot];
+                if (light == null || light.type != LightType.Directional || !light.isActiveAndEnabled)
+                {
+                    continue;
+                }
+
+                int visibleLightIndex = FindVisibleLightIndex(visibleLights, light, LightType.Directional);
+                if (visibleLightIndex >= 0 && visibleLightIndex == mainLightIndex)
+                {
+                    continue;
+                }
+
+                if (target.lightCount >= HoShadowCastShaderConstants.MaxDirectionalLights || target.sliceCount + cascadeCount > HoShadowCastShaderConstants.MaxSecondDirectionalSlices)
+                {
+                    break;
+                }
+
+                int firstSlice = target.sliceCount;
+                float lightShadowStrength = light.shadows == LightShadows.None ? 1.0f : light.shadowStrength;
+                float shadowStrength = Mathf.Clamp01(controller.secondDirectionalShadowStrength * lightShadowStrength);
+
+                float previousDistance = nearDistance;
+                for (int cascadeIndex = 0; cascadeIndex < cascadeCount; cascadeIndex++)
+                {
+                    float splitRatio = GetSecondDirectionalCascadeSplit(controller.secondDirectionalCascadeSplits, cascadeCount, cascadeIndex);
+                    float cascadeFarDistance = cascadeIndex == cascadeCount - 1
+                        ? farDistance
+                        : Mathf.Lerp(nearDistance, farDistance, splitRatio);
+                    cascadeFarDistance = Mathf.Max(previousDistance + 0.01f, cascadeFarDistance);
+
+                    int tileIndex = target.sliceCount;
+                    int tileX = tileIndex % gridSize;
+                    int tileY = tileIndex / gridSize;
+                    int offsetX = tileX * resolution;
+                    int offsetY = tileY * resolution;
+                    if (!TryBuildSecondDirectionalCascadeSlice(
+                            light,
+                            camera,
+                            previousDistance,
+                            cascadeFarDistance,
+                            controller,
+                            atlasSize,
+                            resolution,
+                            offsetX,
+                            offsetY,
+                            out ShadowSliceInfo slice))
+                    {
+                        target.Clear();
+                        return false;
+                    }
+
+                    target.slices[target.sliceCount] = slice;
+                    target.worldToShadow[target.sliceCount] = slice.worldToShadow;
+                    target.sliceData[target.sliceCount] = slice.sliceData;
+                    target.sliceCount++;
+                    previousDistance = cascadeFarDistance;
+                }
+
+                int lightIndex = target.lightCount++;
+                target.sourceLights[lightIndex] = light;
+                target.lightData[lightIndex] = new Vector4(firstSlice, cascadeCount, shadowStrength, 0.0f);
+            }
+
+            target.FillUnused();
+            return target.lightCount > 0 && target.sliceCount > 0;
+        }
+
+        private static int CountRequestedSecondDirectionalSlices(Light[] lights, NativeArray<VisibleLight> visibleLights, int mainLightIndex, int cascadeCount)
+        {
+            if (lights == null)
+            {
+                return 0;
+            }
+
+            int count = 0;
+            for (int i = 0; i < lights.Length; i++)
+            {
+                Light light = lights[i];
+                if (light == null || light.type != LightType.Directional || !light.isActiveAndEnabled)
+                {
+                    continue;
+                }
+
+                int visibleLightIndex = FindVisibleLightIndex(visibleLights, light, LightType.Directional);
+                if (visibleLightIndex >= 0 && visibleLightIndex == mainLightIndex)
+                {
+                    continue;
+                }
+
+                count += cascadeCount;
+            }
+
+            return Mathf.Min(count, HoShadowCastShaderConstants.MaxSecondDirectionalSlices);
+        }
+
+        private static float GetSecondDirectionalCascadeSplit(Vector3 splits, int cascadeCount, int cascadeIndex)
+        {
+            float splitX = Mathf.Clamp(splits.x, 0.001f, 0.997f);
+            float splitY = Mathf.Clamp(splits.y, splitX + 0.001f, 0.998f);
+            float splitZ = Mathf.Clamp(splits.z, splitY + 0.001f, 0.999f);
+            if (cascadeCount <= 1)
+            {
+                return 1.0f;
+            }
+
+            if (cascadeCount == 2)
+            {
+                return cascadeIndex == 0 ? splitX : 1.0f;
+            }
+
+            if (cascadeCount == 3)
+            {
+                if (cascadeIndex == 0)
+                {
+                    return splitX;
+                }
+
+                return cascadeIndex == 1 ? splitY : 1.0f;
+            }
+
+            return cascadeIndex switch
+            {
+                0 => splitX,
+                1 => splitY,
+                2 => splitZ,
+                _ => 1.0f
+            };
+        }
+
+        private static bool TryBuildSecondDirectionalCascadeSlice(
+            Light light,
+            Camera camera,
+            float cascadeNearDistance,
+            float cascadeFarDistance,
+            HoShadowCastController controller,
+            int atlasSize,
+            int resolution,
+            int offsetX,
+            int offsetY,
+            out ShadowSliceInfo slice)
+        {
+            slice = new ShadowSliceInfo
+            {
+                visibleLightIndex = -1,
+                lightType = LightType.Directional,
+                faceIndex = 0
+            };
+
+            if (light == null || camera == null)
+            {
+                return false;
+            }
+
+            Vector3[] corners = new Vector3[8];
+            FillCameraFrustumCorners(camera, cascadeNearDistance, cascadeFarDistance, corners);
+
+            Vector3 center = Vector3.zero;
+            for (int i = 0; i < corners.Length; i++)
+            {
+                center += corners[i];
+            }
+
+            center /= corners.Length;
+
+            Vector3 lightForward = light.transform.forward;
+            float minLightDistance = float.PositiveInfinity;
+            float maxLightDistance = float.NegativeInfinity;
+            for (int i = 0; i < corners.Length; i++)
+            {
+                float lightDistance = Vector3.Dot(corners[i] - center, lightForward);
+                minLightDistance = Mathf.Min(minLightDistance, lightDistance);
+                maxLightDistance = Mathf.Max(maxLightDistance, lightDistance);
+            }
+
+            float cascadeDepth = maxLightDistance - minLightDistance;
+            float depth = Mathf.Max(Mathf.Max(0.01f, controller.secondDirectionalShadowDepth), cascadeDepth + 1.0f);
+            Matrix4x4 fitViewMatrix = CreateViewMatrix(center - lightForward * (depth * 0.5f), lightForward, light.transform.up);
+            float size = 0.01f;
+            for (int i = 0; i < corners.Length; i++)
+            {
+                Vector3 cornerView = fitViewMatrix.MultiplyPoint(corners[i]);
+                size = Mathf.Max(size, Mathf.Max(Mathf.Abs(cornerView.x), Mathf.Abs(cornerView.y)));
+            }
+
+            size *= 1.05f;
+            center = SnapDirectionalCascadeCenter(center, lightForward, light.transform.up, size, resolution);
+
+            float nearPlane = Mathf.Max(0.001f, light.shadowNearPlane);
+            Matrix4x4 viewMatrix = CreateViewMatrix(center - lightForward * (depth * 0.5f), lightForward, light.transform.up);
+            Matrix4x4 projectionMatrix = Matrix4x4.Ortho(-size, size, -size, size, nearPlane, depth);
+            Matrix4x4 shadowMatrix = GetShadowTransform(projectionMatrix, viewMatrix);
+
+            ShadowSliceData shadowSliceData = new ShadowSliceData
+            {
+                viewMatrix = viewMatrix,
+                projectionMatrix = projectionMatrix,
+                shadowTransform = shadowMatrix,
+                splitData = default,
+                offsetX = offsetX,
+                offsetY = offsetY,
+                resolution = resolution
+            };
+            ShadowUtils.ApplySliceTransform(ref shadowSliceData, atlasSize, atlasSize);
+
+            slice.shadowSliceData = shadowSliceData;
+            slice.viewMatrix = viewMatrix;
+            slice.projectionMatrix = projectionMatrix;
+            slice.splitData = default;
+            slice.shadowBias = ComputeShadowBias(light, LightType.Directional, projectionMatrix, resolution);
+            slice.lightDirection = -light.transform.forward;
+            slice.lightPosition = light.transform.position;
+            slice.worldToShadow = shadowMatrix;
+            slice.sliceData = new Vector4((float)offsetX / atlasSize, (float)offsetY / atlasSize, (float)resolution / atlasSize, cascadeFarDistance * cascadeFarDistance);
+            return true;
+        }
+
+        private static void FillCameraFrustumCorners(Camera camera, float nearDistance, float farDistance, Vector3[] corners)
+        {
+            Vector3[] tempCorners = new Vector3[4];
+            camera.CalculateFrustumCorners(new Rect(0.0f, 0.0f, 1.0f, 1.0f), nearDistance, Camera.MonoOrStereoscopicEye.Mono, tempCorners);
+            for (int i = 0; i < 4; i++)
+            {
+                corners[i] = camera.transform.position + camera.transform.TransformVector(tempCorners[i]);
+            }
+
+            camera.CalculateFrustumCorners(new Rect(0.0f, 0.0f, 1.0f, 1.0f), farDistance, Camera.MonoOrStereoscopicEye.Mono, tempCorners);
+            for (int i = 0; i < 4; i++)
+            {
+                corners[i + 4] = camera.transform.position + camera.transform.TransformVector(tempCorners[i]);
+            }
+        }
+
+        private static Vector3 SnapDirectionalCascadeCenter(Vector3 center, Vector3 lightForward, Vector3 lightUp, float size, int resolution)
+        {
+            if (resolution <= 0 || size <= 0.0f)
+            {
+                return center;
+            }
+
+            Matrix4x4 lightViewAtOrigin = CreateViewMatrix(Vector3.zero, lightForward, lightUp);
+            Vector3 centerLightSpace = lightViewAtOrigin.MultiplyPoint(center);
+            float texelSize = (size * 2.0f) / resolution;
+            centerLightSpace.x = Mathf.Round(centerLightSpace.x / texelSize) * texelSize;
+            centerLightSpace.y = Mathf.Round(centerLightSpace.y / texelSize) * texelSize;
+            return lightViewAtOrigin.inverse.MultiplyPoint(centerLightSpace);
         }
 
         private static void AddLightArray(
@@ -560,7 +998,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             target.lightData0[lightIndex] = new Vector4(GetLightTypeId(requiredType), firstSlice, writtenSlices, Mathf.Clamp01(controllerStrength * lightShadowStrength));
             target.lightData1[lightIndex] = new Vector4(position.x, position.y, position.z, light.range);
             target.lightData2[lightIndex] = new Vector4(direction.x, direction.y, direction.z, Mathf.Cos(light.spotAngle * 0.5f * Mathf.Deg2Rad));
-            target.lightAttenuation[lightIndex] = ComputeLightAttenuation(light, requiredType);
+            target.lightAttenuation[lightIndex] = ComputeLightAttenuation(light, requiredType, controller.punctualShadowFadeSpeed);
             target.lightColor[lightIndex] = new Vector4(finalColor.r, finalColor.g, finalColor.b, 1.0f);
         }
 
@@ -742,9 +1180,9 @@ namespace lilToon.URP.Extensions.ShadowCast
             }
         }
 
-        private static void MaybeLogDebugFrame(HoShadowCastController controller, HoShadowCastFrame frame, string path, bool hasFrame)
+        private static void MaybeLogDebugFrame(HoShadowCastController controller, HoShadowCastFrame frame, HoShadowCastSecondDirectionalFrame secondDirectionalFrame, string path, bool hasFrame, bool hasSecondDirectionalFrame)
         {
-            if (controller == null || controller.debugMode != HoShadowCastDebugMode.Atlas)
+            if (controller == null || controller.debugMode == HoShadowCastDebugMode.Off)
             {
                 return;
             }
@@ -767,10 +1205,20 @@ namespace lilToon.URP.Extensions.ShadowCast
             builder.Append(frame.sliceCount);
             builder.Append(", atlas=");
             builder.Append(frame.atlasSize);
+            builder.Append(", secondDirectional=");
+            builder.Append(hasSecondDirectionalFrame);
+            builder.Append("@");
+            builder.Append(secondDirectionalFrame.lightCount);
+            builder.Append("x");
+            builder.Append(secondDirectionalFrame.cascadeCountPerLight);
+            builder.Append("/");
+            builder.Append(secondDirectionalFrame.sliceCount);
+            builder.Append("x");
+            builder.Append(secondDirectionalFrame.atlasSize);
             builder.Append(", casterMask=0x");
             builder.Append(controller.casterLayerMask.value.ToString("X8"));
-            builder.Append(", strength=");
-            builder.Append(controller.shadowStrength.ToString("0.##"));
+            builder.Append(", strength second/punctual=");
+            builder.Append(controller.secondDirectionalShadowStrength.ToString("0.##"));
             builder.Append("/");
             builder.Append(controller.punctualShadowStrength.ToString("0.##"));
             builder.Append(", assigned D/S/P=");
@@ -919,7 +1367,6 @@ namespace lilToon.URP.Extensions.ShadowCast
             }
 
             int count = 0;
-            count += CountRequestedSlices(controller.directionalLights, LightType.Directional, visibleLights, mainLightIndex);
             count += CountRequestedSlices(controller.spotLights, LightType.Spot, visibleLights, mainLightIndex);
             count += CountRequestedSlices(controller.pointLights, LightType.Point, visibleLights, mainLightIndex);
             return count;
@@ -990,7 +1437,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             };
         }
 
-        private static Vector4 ComputeLightAttenuation(Light light, LightType lightType)
+        private static Vector4 ComputeLightAttenuation(Light light, LightType lightType, float fadeSpeed)
         {
             if (light == null || lightType == LightType.Directional)
             {
@@ -999,6 +1446,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 
             float range = Mathf.Max(0.0001f, light.range);
             float oneOverRangeSqr = 1.0f / (range * range);
+            fadeSpeed = fadeSpeed <= 0.0f ? 1.0f : Mathf.Clamp(fadeSpeed, 0.1f, 4.0f);
             float spotScale = 0.0f;
             float spotOffset = 0.0f;
 
@@ -1013,7 +1461,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 spotOffset = -cosOuterAngle * spotScale;
             }
 
-            return new Vector4(oneOverRangeSqr, 0.0f, spotScale, spotOffset);
+            return new Vector4(oneOverRangeSqr, fadeSpeed, spotScale, spotOffset);
         }
 
         private static void SetShadowCasterGlobals(CommandBuffer cmd, Vector3 cameraPosition, ShadowSliceInfo slice)
@@ -1073,16 +1521,26 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         private static void RestoreCameraGlobals(CommandBuffer cmd, HoShadowCastFrame frame)
         {
-            cmd.SetGlobalVector(HoShadowCastShaderConstants.WorldSpaceCameraPosId, frame.cameraPosition);
-            SetWorldToCameraMatrices(cmd, frame.cameraViewMatrix);
-            cmd.SetViewProjectionMatrices(frame.cameraViewMatrix, frame.cameraProjectionMatrix);
+            RestoreCameraGlobals(cmd, frame.cameraPosition, frame.cameraViewMatrix, frame.cameraProjectionMatrix);
+        }
+
+        private static void RestoreCameraGlobals(CommandBuffer cmd, Vector3 cameraPosition, Matrix4x4 cameraViewMatrix, Matrix4x4 cameraProjectionMatrix)
+        {
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.WorldSpaceCameraPosId, cameraPosition);
+            SetWorldToCameraMatrices(cmd, cameraViewMatrix);
+            cmd.SetViewProjectionMatrices(cameraViewMatrix, cameraProjectionMatrix);
         }
 
         private static void RestoreCameraGlobals(RasterCommandBuffer cmd, HoShadowCastFrame frame)
         {
-            cmd.SetGlobalVector(HoShadowCastShaderConstants.WorldSpaceCameraPosId, frame.cameraPosition);
-            SetWorldToCameraMatrices(cmd, frame.cameraViewMatrix);
-            cmd.SetViewProjectionMatrices(frame.cameraViewMatrix, frame.cameraProjectionMatrix);
+            RestoreCameraGlobals(cmd, frame.cameraPosition, frame.cameraViewMatrix, frame.cameraProjectionMatrix);
+        }
+
+        private static void RestoreCameraGlobals(RasterCommandBuffer cmd, Vector3 cameraPosition, Matrix4x4 cameraViewMatrix, Matrix4x4 cameraProjectionMatrix)
+        {
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.WorldSpaceCameraPosId, cameraPosition);
+            SetWorldToCameraMatrices(cmd, cameraViewMatrix);
+            cmd.SetViewProjectionMatrices(cameraViewMatrix, cameraProjectionMatrix);
         }
 
         private static void RenderShadowSlice(
@@ -1165,6 +1623,52 @@ namespace lilToon.URP.Extensions.ShadowCast
             Shader.SetGlobalInt(HoShadowCastShaderConstants.SliceCountId, 0);
         }
 
+        private static void SetGlobalEmpty(CommandBuffer cmd)
+        {
+            cmd.SetGlobalFloat(HoShadowCastShaderConstants.ActiveId, 0.0f);
+            cmd.SetGlobalInt(HoShadowCastShaderConstants.LightCountId, 0);
+            cmd.SetGlobalInt(HoShadowCastShaderConstants.SliceCountId, 0);
+        }
+
+        private static void SetSecondDirectionalGlobalEmpty()
+        {
+            Shader.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalParamsId, Vector4.zero);
+        }
+
+        private static void SetSecondDirectionalGlobalEmpty(CommandBuffer cmd)
+        {
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalParamsId, Vector4.zero);
+        }
+
+        private static void ApplySecondDirectionalGlobalData(CommandBuffer cmd, HoShadowCastSecondDirectionalFrame frame, RenderTargetIdentifier atlas)
+        {
+            CopySecondDirectionalFrameArrays(frame);
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalParamsId, new Vector4(frame.lightCount > 0 ? 1.0f : 0.0f, frame.lightCount, frame.cascadeCountPerLight, 0.0f));
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalCameraPositionId, new Vector4(frame.cameraPosition.x, frame.cameraPosition.y, frame.cameraPosition.z, 1.0f));
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalAtlasSizeId, new Vector4(frame.atlasSize, frame.atlasSize, 1.0f / Mathf.Max(1, frame.atlasSize), 1.0f / Mathf.Max(1, frame.atlasSize)));
+            cmd.SetGlobalTexture(HoShadowCastShaderConstants.SecondDirectionalAtlasTextureId, atlas);
+            cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalWorldToShadowRow0Id, SecondDirectionalWorldToShadowRow0);
+            cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalWorldToShadowRow1Id, SecondDirectionalWorldToShadowRow1);
+            cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalWorldToShadowRow2Id, SecondDirectionalWorldToShadowRow2);
+            cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalWorldToShadowRow3Id, SecondDirectionalWorldToShadowRow3);
+            cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalLightDataId, SecondDirectionalLightData);
+            cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalSliceDataId, SecondDirectionalSliceData);
+        }
+
+        private static void ApplySecondDirectionalGlobalData(RasterCommandBuffer cmd, HoShadowCastSecondDirectionalFrame frame)
+        {
+            CopySecondDirectionalFrameArrays(frame);
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalParamsId, new Vector4(frame.lightCount > 0 ? 1.0f : 0.0f, frame.lightCount, frame.cascadeCountPerLight, 0.0f));
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalCameraPositionId, new Vector4(frame.cameraPosition.x, frame.cameraPosition.y, frame.cameraPosition.z, 1.0f));
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalAtlasSizeId, new Vector4(frame.atlasSize, frame.atlasSize, 1.0f / Mathf.Max(1, frame.atlasSize), 1.0f / Mathf.Max(1, frame.atlasSize)));
+            cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalWorldToShadowRow0Id, SecondDirectionalWorldToShadowRow0);
+            cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalWorldToShadowRow1Id, SecondDirectionalWorldToShadowRow1);
+            cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalWorldToShadowRow2Id, SecondDirectionalWorldToShadowRow2);
+            cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalWorldToShadowRow3Id, SecondDirectionalWorldToShadowRow3);
+            cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalLightDataId, SecondDirectionalLightData);
+            cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalSliceDataId, SecondDirectionalSliceData);
+        }
+
         private static void CopyFrameArrays(HoShadowCastFrame frame)
         {
             for (int i = 0; i < HoShadowCastShaderConstants.MaxShadowSlices; i++)
@@ -1185,23 +1689,49 @@ namespace lilToon.URP.Extensions.ShadowCast
                 LightColor[i] = frame.lightColor[i];
             }
         }
+
+        private static void CopySecondDirectionalFrameArrays(HoShadowCastSecondDirectionalFrame frame)
+        {
+            for (int i = 0; i < HoShadowCastShaderConstants.MaxSecondDirectionalSlices; i++)
+            {
+                SecondDirectionalWorldToShadowRow0[i] = frame.worldToShadow[i].GetRow(0);
+                SecondDirectionalWorldToShadowRow1[i] = frame.worldToShadow[i].GetRow(1);
+                SecondDirectionalWorldToShadowRow2[i] = frame.worldToShadow[i].GetRow(2);
+                SecondDirectionalWorldToShadowRow3[i] = frame.worldToShadow[i].GetRow(3);
+                SecondDirectionalSliceData[i] = frame.sliceData[i];
+            }
+
+            for (int i = 0; i < HoShadowCastShaderConstants.MaxDirectionalLights; i++)
+            {
+                SecondDirectionalLightData[i] = frame.lightData[i];
+            }
+        }
     }
 
     internal sealed class HoShadowCastRenderTargets
     {
         private RTHandle atlasTexture;
+        private RTHandle secondDirectionalAtlasTexture;
 
         public RTHandle AtlasTexture => atlasTexture;
+        public RTHandle SecondDirectionalAtlasTexture => secondDirectionalAtlasTexture;
 
         public void ReAllocateIfNeeded(RenderTextureDescriptor descriptor)
         {
             RenderingUtils.ReAllocateIfNeeded(ref atlasTexture, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: HoShadowCastShaderConstants.AtlasTextureName);
         }
 
+        public void ReAllocateSecondDirectionalIfNeeded(RenderTextureDescriptor descriptor)
+        {
+            RenderingUtils.ReAllocateIfNeeded(ref secondDirectionalAtlasTexture, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: HoShadowCastShaderConstants.SecondDirectionalAtlasTextureName);
+        }
+
         public void Release()
         {
             atlasTexture?.Release();
             atlasTexture = null;
+            secondDirectionalAtlasTexture?.Release();
+            secondDirectionalAtlasTexture = null;
         }
     }
 
@@ -1219,6 +1749,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             public TextureHandle source;
             public TextureHandle atlasTexture;
             public Material debugMaterial;
+            public int debugMode;
         }
 
         public void Setup(HoShadowCastRenderTargets renderTargets, RTHandle cameraColorTarget, Material debugMaterial)
@@ -1255,7 +1786,16 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            if (debugMaterial == null || renderTargets == null || renderTargets.AtlasTexture == null || cameraColorTarget == null || tempTexture == null)
+            HoShadowCastController controller = HoShadowCastController.ActiveController;
+            if (debugMaterial == null || renderTargets == null || controller == null || cameraColorTarget == null || tempTexture == null)
+            {
+                return;
+            }
+
+            RTHandle debugAtlas = controller.debugMode == HoShadowCastDebugMode.SecondDirectionalAtlas
+                ? renderTargets.SecondDirectionalAtlasTexture
+                : renderTargets.AtlasTexture;
+            if (debugAtlas == null)
             {
                 return;
             }
@@ -1263,7 +1803,16 @@ namespace lilToon.URP.Extensions.ShadowCast
             CommandBuffer cmd = CommandBufferPool.Get();
             using (new ProfilingScope(cmd, ProfilingSampler))
             {
-                cmd.SetGlobalTexture(HoShadowCastShaderConstants.AtlasTextureId, renderTargets.AtlasTexture.nameID);
+                cmd.SetGlobalInt(HoShadowCastShaderConstants.DebugModeId, (int)controller.debugMode);
+                if (controller.debugMode == HoShadowCastDebugMode.SecondDirectionalAtlas)
+                {
+                    cmd.SetGlobalTexture(HoShadowCastShaderConstants.SecondDirectionalAtlasTextureId, debugAtlas.nameID);
+                }
+                else
+                {
+                    cmd.SetGlobalTexture(HoShadowCastShaderConstants.AtlasTextureId, debugAtlas.nameID);
+                }
+
                 Blitter.BlitCameraTexture(cmd, cameraColorTarget, tempTexture, 0, true);
                 Blitter.BlitCameraTexture(cmd, tempTexture, cameraColorTarget, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, debugMaterial, 0);
             }
@@ -1282,7 +1831,15 @@ namespace lilToon.URP.Extensions.ShadowCast
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             HoShadowCastRenderGraphResources shadowCastResources = frameData.GetOrCreate<HoShadowCastRenderGraphResources>();
             TextureHandle source = resourceData.activeColorTexture;
-            TextureHandle atlas = shadowCastResources.atlasTexture;
+            HoShadowCastController controller = HoShadowCastController.ActiveController;
+            if (controller == null)
+            {
+                return;
+            }
+
+            TextureHandle atlas = controller.debugMode == HoShadowCastDebugMode.SecondDirectionalAtlas
+                ? shadowCastResources.secondDirectionalAtlasTexture
+                : shadowCastResources.atlasTexture;
             if (!source.IsValid() || !atlas.IsValid())
             {
                 return;
@@ -1299,6 +1856,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 passData.source = source;
                 passData.atlasTexture = atlas;
                 passData.debugMaterial = debugMaterial;
+                passData.debugMode = (int)controller.debugMode;
 
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.UseTexture(atlas, AccessFlags.Read);
@@ -1307,7 +1865,16 @@ namespace lilToon.URP.Extensions.ShadowCast
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
-                    context.cmd.SetGlobalTexture(HoShadowCastShaderConstants.AtlasTextureId, data.atlasTexture);
+                    context.cmd.SetGlobalInt(HoShadowCastShaderConstants.DebugModeId, data.debugMode);
+                    if (data.debugMode == (int)HoShadowCastDebugMode.SecondDirectionalAtlas)
+                    {
+                        context.cmd.SetGlobalTexture(HoShadowCastShaderConstants.SecondDirectionalAtlasTextureId, data.atlasTexture);
+                    }
+                    else
+                    {
+                        context.cmd.SetGlobalTexture(HoShadowCastShaderConstants.AtlasTextureId, data.atlasTexture);
+                    }
+
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.debugMaterial, 0);
                 });
             }
@@ -1382,6 +1949,54 @@ namespace lilToon.URP.Extensions.ShadowCast
                 sliceData[i] = slices[i].sliceData;
             }
 
+            for (int i = sliceCount; i < worldToShadow.Length; i++)
+            {
+                worldToShadow[i] = Matrix4x4.identity;
+                sliceData[i] = Vector4.zero;
+            }
+        }
+    }
+
+    internal sealed class HoShadowCastSecondDirectionalFrame
+    {
+        public int atlasSize;
+        public int lightCount;
+        public int cascadeCountPerLight;
+        public int sliceCount;
+        public Vector3 cameraPosition;
+        public Matrix4x4 cameraViewMatrix;
+        public Matrix4x4 cameraProjectionMatrix;
+        public readonly Light[] sourceLights = new Light[HoShadowCastShaderConstants.MaxDirectionalLights];
+        public readonly Vector4[] lightData = new Vector4[HoShadowCastShaderConstants.MaxDirectionalLights];
+        public readonly ShadowSliceInfo[] slices = new ShadowSliceInfo[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
+        public readonly Matrix4x4[] worldToShadow = new Matrix4x4[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
+        public readonly Vector4[] sliceData = new Vector4[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
+
+        public void Clear()
+        {
+            atlasSize = 1;
+            lightCount = 0;
+            cascadeCountPerLight = 0;
+            sliceCount = 0;
+            cameraPosition = Vector3.zero;
+            cameraViewMatrix = Matrix4x4.identity;
+            cameraProjectionMatrix = Matrix4x4.identity;
+            for (int i = 0; i < sourceLights.Length; i++)
+            {
+                sourceLights[i] = null;
+                lightData[i] = Vector4.zero;
+            }
+
+            for (int i = 0; i < slices.Length; i++)
+            {
+                slices[i] = default;
+                worldToShadow[i] = Matrix4x4.identity;
+                sliceData[i] = Vector4.zero;
+            }
+        }
+
+        public void FillUnused()
+        {
             for (int i = sliceCount; i < worldToShadow.Length; i++)
             {
                 worldToShadow[i] = Matrix4x4.identity;
