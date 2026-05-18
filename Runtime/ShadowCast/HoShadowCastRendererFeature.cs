@@ -173,6 +173,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         private static readonly Vector4[] LightData0 = new Vector4[HoShadowCastShaderConstants.MaxLights];
         private static readonly Vector4[] LightData1 = new Vector4[HoShadowCastShaderConstants.MaxLights];
         private static readonly Vector4[] LightData2 = new Vector4[HoShadowCastShaderConstants.MaxLights];
+        private static readonly Vector4[] LightAttenuation = new Vector4[HoShadowCastShaderConstants.MaxLights];
         private static readonly Vector4[] LightColor = new Vector4[HoShadowCastShaderConstants.MaxLights];
         private static readonly Vector4[] SliceData = new Vector4[HoShadowCastShaderConstants.MaxShadowSlices];
         private static readonly ShaderTagId ShadowCasterShaderTagId = new ShaderTagId("ShadowCaster");
@@ -555,9 +556,11 @@ namespace lilToon.URP.Extensions.ShadowCast
             Vector3 direction = -light.transform.forward;
             Color finalColor = light.color * light.intensity;
             float lightShadowStrength = light.shadows == LightShadows.None ? 1.0f : light.shadowStrength;
-            target.lightData0[lightIndex] = new Vector4(GetLightTypeId(requiredType), firstSlice, writtenSlices, Mathf.Clamp01(controller.shadowStrength * lightShadowStrength));
+            float controllerStrength = requiredType == LightType.Directional ? controller.shadowStrength : controller.punctualShadowStrength;
+            target.lightData0[lightIndex] = new Vector4(GetLightTypeId(requiredType), firstSlice, writtenSlices, Mathf.Clamp01(controllerStrength * lightShadowStrength));
             target.lightData1[lightIndex] = new Vector4(position.x, position.y, position.z, light.range);
             target.lightData2[lightIndex] = new Vector4(direction.x, direction.y, direction.z, Mathf.Cos(light.spotAngle * 0.5f * Mathf.Deg2Rad));
+            target.lightAttenuation[lightIndex] = ComputeLightAttenuation(light, requiredType);
             target.lightColor[lightIndex] = new Vector4(finalColor.r, finalColor.g, finalColor.b, 1.0f);
         }
 
@@ -768,6 +771,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             builder.Append(controller.casterLayerMask.value.ToString("X8"));
             builder.Append(", strength=");
             builder.Append(controller.shadowStrength.ToString("0.##"));
+            builder.Append("/");
+            builder.Append(controller.punctualShadowStrength.ToString("0.##"));
             builder.Append(", assigned D/S/P=");
             builder.Append(CountAssigned(controller.directionalLights));
             builder.Append('/');
@@ -985,6 +990,32 @@ namespace lilToon.URP.Extensions.ShadowCast
             };
         }
 
+        private static Vector4 ComputeLightAttenuation(Light light, LightType lightType)
+        {
+            if (light == null || lightType == LightType.Directional)
+            {
+                return Vector4.zero;
+            }
+
+            float range = Mathf.Max(0.0001f, light.range);
+            float oneOverRangeSqr = 1.0f / (range * range);
+            float spotScale = 0.0f;
+            float spotOffset = 0.0f;
+
+            if (lightType == LightType.Spot)
+            {
+                float spotAngle = Mathf.Max(2.6f, light.spotAngle);
+                float innerSpotAngle = Mathf.Clamp(light.innerSpotAngle, 0.0f, spotAngle);
+                float cosOuterAngle = Mathf.Cos(spotAngle * 0.5f * Mathf.Deg2Rad);
+                float cosInnerAngle = Mathf.Cos(innerSpotAngle * 0.5f * Mathf.Deg2Rad);
+                float smoothAngleRange = Mathf.Max(0.001f, cosInnerAngle - cosOuterAngle);
+                spotScale = 1.0f / smoothAngleRange;
+                spotOffset = -cosOuterAngle * spotScale;
+            }
+
+            return new Vector4(oneOverRangeSqr, 0.0f, spotScale, spotOffset);
+        }
+
         private static void SetShadowCasterGlobals(CommandBuffer cmd, Vector3 cameraPosition, ShadowSliceInfo slice)
         {
             cmd.SetGlobalVector(HoShadowCastShaderConstants.WorldSpaceCameraPosId, cameraPosition);
@@ -1103,6 +1134,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.LightData0Id, LightData0);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.LightData1Id, LightData1);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.LightData2Id, LightData2);
+            cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.LightAttenuationId, LightAttenuation);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.LightColorId, LightColor);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SliceDataId, SliceData);
         }
@@ -1121,6 +1153,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.LightData0Id, LightData0);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.LightData1Id, LightData1);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.LightData2Id, LightData2);
+            cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.LightAttenuationId, LightAttenuation);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.LightColorId, LightColor);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SliceDataId, SliceData);
         }
@@ -1148,6 +1181,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 LightData0[i] = frame.lightData0[i];
                 LightData1[i] = frame.lightData1[i];
                 LightData2[i] = frame.lightData2[i];
+                LightAttenuation[i] = frame.lightAttenuation[i];
                 LightColor[i] = frame.lightColor[i];
             }
         }
@@ -1296,6 +1330,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         public readonly Vector4[] lightData0 = new Vector4[HoShadowCastShaderConstants.MaxLights];
         public readonly Vector4[] lightData1 = new Vector4[HoShadowCastShaderConstants.MaxLights];
         public readonly Vector4[] lightData2 = new Vector4[HoShadowCastShaderConstants.MaxLights];
+        public readonly Vector4[] lightAttenuation = new Vector4[HoShadowCastShaderConstants.MaxLights];
         public readonly Vector4[] lightColor = new Vector4[HoShadowCastShaderConstants.MaxLights];
         public readonly Vector4[] sliceData = new Vector4[HoShadowCastShaderConstants.MaxShadowSlices];
 
@@ -1314,6 +1349,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 lightData0[i] = Vector4.zero;
                 lightData1[i] = Vector4.zero;
                 lightData2[i] = Vector4.zero;
+                lightAttenuation[i] = Vector4.zero;
                 lightColor[i] = Vector4.zero;
             }
 

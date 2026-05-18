@@ -30,6 +30,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         private SerializedProperty pointLightsProperty;
         private SerializedProperty casterLayerMaskProperty;
         private SerializedProperty shadowStrengthProperty;
+        private SerializedProperty punctualShadowStrengthProperty;
         private SerializedProperty atlasSizeProperty;
         private SerializedProperty directionalResolutionProperty;
         private SerializedProperty spotResolutionProperty;
@@ -83,6 +84,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             pointLightsProperty = serializedObject.FindProperty("pointLights");
             casterLayerMaskProperty = serializedObject.FindProperty("casterLayerMask");
             shadowStrengthProperty = serializedObject.FindProperty("shadowStrength");
+            punctualShadowStrengthProperty = serializedObject.FindProperty("punctualShadowStrength");
             atlasSizeProperty = serializedObject.FindProperty("atlasSize");
             directionalResolutionProperty = serializedObject.FindProperty("directionalResolution");
             spotResolutionProperty = serializedObject.FindProperty("spotResolution");
@@ -193,7 +195,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
 
         private void DrawAtlasSection()
         {
-            string summary = string.Format("{0}px  |  强度 {1:0.##}", atlasSizeProperty.intValue, shadowStrengthProperty.floatValue);
+            string summary = string.Format("{0}px  |  方向 {1:0.##} / 点聚 {2:0.##}", atlasSizeProperty.intValue, shadowStrengthProperty.floatValue, punctualShadowStrengthProperty.floatValue);
             if (!DrawSectionHeader(ref showAtlasSettings, "Atlas 与调试", summary, AtlasColor))
             {
                 return;
@@ -201,7 +203,8 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.PropertyField(shadowStrengthProperty, new GUIContent("投影强度"));
+                EditorGUILayout.PropertyField(shadowStrengthProperty, new GUIContent("方向光投影强度"));
+                EditorGUILayout.PropertyField(punctualShadowStrengthProperty, new GUIContent("点光/聚光投影强度"));
                 EditorGUILayout.PropertyField(atlasSizeProperty, new GUIContent("Atlas 尺寸"));
                 DrawAtlasCapacitySummary();
                 EditorGUILayout.PropertyField(directionalNearPlaneProperty, new GUIContent("方向光近裁剪"));

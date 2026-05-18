@@ -7,6 +7,7 @@
 #define HO_SHADOW_CAST_LIGHT_SPOT 1.0
 #define HO_SHADOW_CAST_LIGHT_POINT 2.0
 #define HO_SHADOW_CAST_MIN_ATTENUATION 0.35
+#define HO_SHADOW_CAST_MIN_RECEIVER_ATTENUATION 0.15
 
 float _HoShadowCastActive;
 int _HoShadowCastLightCount;
@@ -19,6 +20,7 @@ float4 _HoShadowCastWorldToShadowRow3[HO_SHADOW_CAST_MAX_SLICES];
 float4 _HoShadowCastLightData0[HO_SHADOW_CAST_MAX_LIGHTS];
 float4 _HoShadowCastLightData1[HO_SHADOW_CAST_MAX_LIGHTS];
 float4 _HoShadowCastLightData2[HO_SHADOW_CAST_MAX_LIGHTS];
+float4 _HoShadowCastLightAttenuation[HO_SHADOW_CAST_MAX_LIGHTS];
 float4 _HoShadowCastLightColor[HO_SHADOW_CAST_MAX_LIGHTS];
 float4 _HoShadowCastSliceData[HO_SHADOW_CAST_MAX_SLICES];
 
@@ -46,23 +48,27 @@ float HoShadowCastLightInfluence(int lightIndex, float3 positionWS)
 
     float4 lightData1 = _HoShadowCastLightData1[lightIndex];
     float3 lightPositionWS = lightData1.xyz;
-    float lightRange = max(lightData1.w, 0.0001);
     float3 lightToReceiver = positionWS - lightPositionWS;
-    float distanceToLight = length(lightToReceiver);
-    if (distanceToLight >= lightRange)
+    float distanceSqr = dot(lightToReceiver, lightToReceiver);
+    float rangeFactor = saturate(distanceSqr * _HoShadowCastLightAttenuation[lightIndex].x);
+    if (rangeFactor >= 1.0)
     {
         return 0.0;
     }
 
+    float rangeFade = saturate(1.0 - rangeFactor * rangeFactor);
+    rangeFade *= rangeFade;
+
     if (lightType == HO_SHADOW_CAST_LIGHT_POINT)
     {
-        return 1.0;
+        return rangeFade;
     }
 
     float3 spotDirectionWS = normalize(_HoShadowCastLightData2[lightIndex].xyz);
-    float spotCosHalfAngle = _HoShadowCastLightData2[lightIndex].w;
-    float receiverCosAngle = dot(normalize(lightToReceiver), spotDirectionWS);
-    return receiverCosAngle > spotCosHalfAngle ? 1.0 : 0.0;
+    float receiverCosAngle = dot(lightToReceiver * rsqrt(max(distanceSqr, 0.000001)), spotDirectionWS);
+    float2 spotAttenuation = _HoShadowCastLightAttenuation[lightIndex].zw;
+    float spotFade = saturate(receiverCosAngle * spotAttenuation.x + spotAttenuation.y);
+    return rangeFade * spotFade * spotFade;
 }
 
 int HoShadowCastPointFaceIndex(float3 lightToReceiver)
@@ -131,7 +137,41 @@ float HoShadowCastSampleSlice(int sliceIndex, float3 positionWS)
     return HoShadowCastSampleAtlas(shadowCoord.xyz, sliceData);
 }
 
-float HoShadowCastAttenuation(float3 positionWS)
+float HoShadowCastLightShadowAttenuation(int lightIndex, float3 positionWS)
+{
+    float influence = HoShadowCastLightInfluence(lightIndex, positionWS);
+    if (influence <= 0.0)
+    {
+        return 1.0;
+    }
+
+    float4 lightData0 = _HoShadowCastLightData0[lightIndex];
+    int firstSlice = (int)round(lightData0.y);
+    float lightType = lightData0.x;
+    int sliceCount = min((int)round(lightData0.z), 6);
+    float shadowStrength = saturate(lightData0.w * influence);
+    float lightShadow = 1.0;
+
+    if (lightType == HO_SHADOW_CAST_LIGHT_POINT && sliceCount >= 6)
+    {
+        float3 lightPositionWS = _HoShadowCastLightData1[lightIndex].xyz;
+        int faceIndex = HoShadowCastPointFaceIndex(positionWS - lightPositionWS);
+        lightShadow = HoShadowCastSampleSlice(firstSlice + faceIndex, positionWS);
+    }
+    else
+    {
+        [loop]
+        for (int sliceOffset = 0; sliceOffset < sliceCount; sliceOffset++)
+        {
+            lightShadow = min(lightShadow, HoShadowCastSampleSlice(firstSlice + sliceOffset, positionWS));
+        }
+    }
+
+    lightShadow = max(lightShadow, HO_SHADOW_CAST_MIN_ATTENUATION);
+    return lerp(1.0, lightShadow, shadowStrength);
+}
+
+float HoShadowCastDirectionalAttenuation(float3 positionWS)
 {
     if (_HoShadowCastActive < 0.5 || _HoShadowCastLightCount <= 0 || _HoShadowCastSliceCount <= 0)
     {
@@ -143,39 +183,44 @@ float HoShadowCastAttenuation(float3 positionWS)
     [loop]
     for (int lightIndex = 0; lightIndex < lightCount; lightIndex++)
     {
-        float influence = HoShadowCastLightInfluence(lightIndex, positionWS);
-        if (influence <= 0.0)
+        if (_HoShadowCastLightData0[lightIndex].x != HO_SHADOW_CAST_LIGHT_DIRECTIONAL)
         {
             continue;
         }
 
-        float4 lightData0 = _HoShadowCastLightData0[lightIndex];
-        int firstSlice = (int)round(lightData0.y);
-        float lightType = lightData0.x;
-        int sliceCount = min((int)round(lightData0.z), 6);
-        float shadowStrength = saturate(lightData0.w * influence);
-        float lightShadow = 1.0;
-
-        if (lightType == HO_SHADOW_CAST_LIGHT_POINT && sliceCount >= 6)
-        {
-            float3 lightPositionWS = _HoShadowCastLightData1[lightIndex].xyz;
-            int faceIndex = HoShadowCastPointFaceIndex(positionWS - lightPositionWS);
-            lightShadow = HoShadowCastSampleSlice(firstSlice + faceIndex, positionWS);
-        }
-        else
-        {
-            [loop]
-            for (int sliceOffset = 0; sliceOffset < sliceCount; sliceOffset++)
-            {
-                lightShadow = min(lightShadow, HoShadowCastSampleSlice(firstSlice + sliceOffset, positionWS));
-            }
-        }
-
-        lightShadow = max(lightShadow, HO_SHADOW_CAST_MIN_ATTENUATION);
-        attenuation *= lerp(1.0, lightShadow, shadowStrength);
+        attenuation *= HoShadowCastLightShadowAttenuation(lightIndex, positionWS);
     }
 
     return saturate(attenuation);
+}
+
+float HoShadowCastPunctualAttenuation(float3 positionWS)
+{
+    if (_HoShadowCastActive < 0.5 || _HoShadowCastLightCount <= 0 || _HoShadowCastSliceCount <= 0)
+    {
+        return 1.0;
+    }
+
+    float attenuation = 1.0;
+    int lightCount = min(_HoShadowCastLightCount, HO_SHADOW_CAST_MAX_LIGHTS);
+    [loop]
+    for (int lightIndex = 0; lightIndex < lightCount; lightIndex++)
+    {
+        if (_HoShadowCastLightData0[lightIndex].x == HO_SHADOW_CAST_LIGHT_DIRECTIONAL)
+        {
+            continue;
+        }
+
+        attenuation *= HoShadowCastLightShadowAttenuation(lightIndex, positionWS);
+    }
+
+    return saturate(attenuation);
+}
+
+float HoShadowCastAttenuation(float3 positionWS)
+{
+    float attenuation = HoShadowCastDirectionalAttenuation(positionWS) * HoShadowCastPunctualAttenuation(positionWS);
+    return max(attenuation, HO_SHADOW_CAST_MIN_RECEIVER_ATTENUATION);
 }
 
 #endif

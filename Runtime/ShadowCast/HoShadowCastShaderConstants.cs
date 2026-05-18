@@ -27,6 +27,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         public static readonly int LightData0Id = Shader.PropertyToID("_HoShadowCastLightData0");
         public static readonly int LightData1Id = Shader.PropertyToID("_HoShadowCastLightData1");
         public static readonly int LightData2Id = Shader.PropertyToID("_HoShadowCastLightData2");
+        public static readonly int LightAttenuationId = Shader.PropertyToID("_HoShadowCastLightAttenuation");
         public static readonly int LightColorId = Shader.PropertyToID("_HoShadowCastLightColor");
         public static readonly int SliceDataId = Shader.PropertyToID("_HoShadowCastSliceData");
 

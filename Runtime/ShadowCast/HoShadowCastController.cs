@@ -36,6 +36,10 @@ namespace lilToon.URP.Extensions.ShadowCast
         [Range(0.0f, 1.0f)]
         public float shadowStrength = 1.0f;
 
+        [InspectorName("点光/聚光投影强度")]
+        [Range(0.0f, 1.0f)]
+        public float punctualShadowStrength = 1.0f;
+
         [InspectorName("Atlas 尺寸")]
         [Min(256)]
         public int atlasSize = 4096;
@@ -122,6 +126,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             EnsureArraySize(ref pointLights, HoShadowCastShaderConstants.MaxPointLights);
 
             shadowStrength = Mathf.Clamp01(shadowStrength);
+            punctualShadowStrength = Mathf.Clamp01(punctualShadowStrength);
             atlasSize = Mathf.Max(256, atlasSize);
             directionalResolution = Mathf.Max(64, directionalResolution);
             spotResolution = Mathf.Max(64, spotResolution);
