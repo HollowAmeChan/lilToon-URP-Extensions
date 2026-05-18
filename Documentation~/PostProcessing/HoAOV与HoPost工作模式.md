@@ -17,16 +17,19 @@ HoAOV 不改 camera color，只写一组全局 AOV 纹理。HoPost 读取这些�
 推荐顺序：
 
 ```text
+HoShadowCast ShadowMap（可选：主天光 / 少量强制投影光源）
 lilToon / lilPBR 正常渲染
 HoAOV Output
 HoCharacterSpecialization（可选：眼透 / 前发投影）
+HoShadowCast Composite / SSRTS Bridge（可选：主阴影与次级阴影）
+HTrace AO（可选：剩余环境遮蔽）
 URP Post Processing
 HoPost Stack
 Shoost Final Stack
 Final
 ```
 
-当前 HoAOV pass event 默认为 `AfterRenderingTransparents`。`HoCharacterSpecializationRendererFeature` 如果启用，建议紧跟 HoAOV 之后放置，先用 `HoCharacterCapture` 捕获 Face/Eye，再把眼透和前发投影合成回 camera color。HoPost 固定在 URP 主后处理之后、Shoost Final Stack 之前执行。
+当前 HoAOV pass event 默认为 `AfterRenderingTransparents`。`HoCharacterSpecializationRendererFeature` 如果启用，建议紧跟 HoAOV 之后放置，先用 `HoCharacterCapture` 捕获 Face/Eye，再把眼透和前发投影合成回 camera color。HoShadowCast 是项目级阴影光源系统：ShadowMap 阶段在正常渲染前产出少量强制投影光源的 atlas，Composite / SSRTS Bridge 阶段在角色特化之后统一打暗或交给 SSRTS 消费；HTrace AO 只负责剩余环境遮蔽。HoPost 固定在 URP 主后处理之后、Shoost Final Stack 之前执行。详见 `HoShadowCast主灯光与阴影设计.md`。
 
 HoAOV Output 每帧会：
 

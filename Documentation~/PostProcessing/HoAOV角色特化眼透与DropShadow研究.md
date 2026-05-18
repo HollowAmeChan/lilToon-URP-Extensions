@@ -138,7 +138,7 @@ Final
 HoCharacterSpecialization = 角色专属屏幕/局部空间合成管线
 ```
 
-它和 HoPost 的区别是：HoPost 处理通用画面效果，通常只关心“一个 mask 作用到当前画面”；角色特化处理“同一个角色内部的源/接收面/颜色缓存/局部合成关系”，例如前发投到脸、眼睛从前发下透出、角色局部反射。只对角色生效的多光源 cast 不再塞进这里，未来走 HTrace SSRTS 扩展。
+它和 HoPost 的区别是：HoPost 处理通用画面效果，通常只关心“一个 mask 作用到当前画面”；角色特化处理“同一个角色内部的源/接收面/颜色缓存/局部合成关系”，例如前发投到脸、眼睛从前发下透出、角色局部反射。多光源 cast 不再塞进这里；少量必须 shadowcast 的项目级光源走 HoShadowCast，SSRTS / HTrace 再消费这些光源数据和 HoAOV 语义。
 
 推荐模块边界：
 
@@ -245,23 +245,28 @@ Composite:
 
 当前 HoAOV 的 `SurfaceData.b = Material` 和 `MaterialCustom0..3` 可以承接一部分开关，但没有真正的 roughness、specular、reflection weight。未来如果反射空间要做得好，需要新增角色特化 surface capture，或在 lilToon/lilPBR HoAOV pass 中额外输出可选材质响应数据。
 
-### HTrace SSRTS 扩展口 / HTrace SSRTS Bridge
+### HoShadowCast / HTrace SSRTS 扩展口
 
-原先文档里的 `CharacterLocalLightCast` 不再作为角色特化 RendererFeature 的长期模块。多光源 cast 本质上更接近“按光源做屏幕空间/短程追踪阴影”，继续塞在角色特化里会让这个小管线同时承担光源筛选、caster atlas、receiver 重建和材质侧接收，边界会变脏。
+原先文档里的 `CharacterLocalLightCast` 不再作为角色特化 RendererFeature 的长期模块。多光源 cast 继续塞在角色特化里会让这个小管线同时承担光源筛选、caster atlas、receiver 重建和材质侧接收，边界会变脏。
 
-新的决定是：多光源 cast 未来直接做成 HTrace 的扩展，方向暂定为 SSRTS（Screen Space Ray Traced Shadow）。角色特化只保留桥接口和资源预留名，不在第一版实现，也不维护自己的点光/聚光阴影 atlas。
+新的决定是：少量必须产生 shadowcast 的项目级光源由 HoShadowCast 管理，输出 shadow atlas / light data；SSRTS（Screen Space Ray Traced Shadow）和 HTrace 消费这些数据继续做次级阴影、追踪、时间稳定、降噪和 AO。角色特化只保留桥接口和资源预留名，不在第一版实现，也不维护自己的点光/聚光阴影 atlas。
 
 推荐边界：
 
 ```text
 HoCharacterSpecialization
 - 负责 EyeReveal / HairDropShadow / 角色局部合成
-- 可向 HTrace SSRTS 暴露角色 AOV、ObjectCustom、CharacterId、receiver 规则
+- 可向 HoShadowCast / HTrace SSRTS 暴露角色 AOV、ObjectCustom、CharacterId、receiver 规则
 - 不管理候选光源列表、不渲染多光源 shadow map
 
+HoShadowCast
+- 负责主天光、少量方向光/聚光/点光筛选和 shadow atlas
+- 输出主天光与选中光源数据
+- 不做材质级接收排除
+
 HTrace SSRTS Extension
-- 负责光源筛选、屏幕空间射线/短程 tracing、时间稳定、降噪
-- 可读取 HoAOV depth/normal/object semantics
+- 负责屏幕空间射线/短程 tracing、时间稳定、降噪
+- 可读取 HoShadowCast light data 和 HoAOV depth/normal/object semantics
 - 输出角色或全局可消费的 SSRTS shadow texture
 ```
 
@@ -275,14 +280,14 @@ HTraceCharacterSSRTSBridge
 - optional composite hook before HoPost
 ```
 
-它需要 HoAOV 之外的信息仍然存在，但应归 HTrace 扩展管理：
+它需要 HoAOV 之外的信息仍然存在，但应分别归 HoShadowCast 和 HTrace / SSRTS 扩展管理：
 
 ```text
-候选点光/聚光列表
-每个光源的矩阵、范围、角度、颜色、重要性
+HoShadowCast 主天光 / 点光 / 聚光 / 方向光列表
+每个光源的矩阵、范围、角度、重要性
 SSRTS tracing budget / denoise / temporal history
 接收像素 world position 或 depth 重建
-receiver 材质阴影强度/是否接收局部光阴影
+统一打暗强度，不做材质级接收排除
 ```
 
 ### 未知未来模块
@@ -342,15 +347,16 @@ IHoCharacterModule
 
 5. HoAOV 不提供材质响应数据。
    - 反射需要 roughness / reflection weight。
-   - HTrace SSRTS 如果要做角色接收，也需要 receive intensity / shadow tint。
-   - 第一版可用 `MaterialCustom0..3` 或 `SurfaceData.Utility` 近似，长期应考虑角色特化 surface capture。
+   - HoShadowCast / SSRTS 第一版是统一打暗，不需要材质侧 receive intensity / shadow tint。
+   - 如果未来要做反射或彩色局部响应，可用 `MaterialCustom0..3` 或 `SurfaceData.Utility` 近似，长期应考虑角色特化 surface capture。
 
 6. HoAOV 不提供 caster renderer list。
    - RSUV 能让 shader 知道像素属于谁，但 RenderFeature 若要渲染 shadow map / reflection capture，仍需要 renderer 集合。
    - 建议角色特化维护 `HoCharacterRegistry`，从 `HoAovGroup` 或新 `HoCharacterProfile` 收集 Face/Eye/FrontHair/Character renderer lists。
 
 7. HoAOV 不提供多光源数据。
-   - 点光/聚光筛选、矩阵、importance、SSRTS budget 和 history 应由 HTrace 扩展管理。
+   - 主天光、点光/聚光/方向光筛选、矩阵和 importance 应由 HoShadowCast 管理。
+   - SSRTS budget 和 history 应由 HTrace / SSRTS 扩展管理。
    - HoAOV 只提供接收像素的角色语义和可重建位置；角色特化只保留桥接入口。
 
 8. HoAOV 不解决透明颜色排序。
@@ -592,7 +598,7 @@ Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterSpecialization/Shade
 不把 ObjectCustom4..7 变成材质贴图
 不让 HoPost DropShadow 承担“源/接收面分离”的角色投影
 不在没有 EyeColorBuffer 的情况下宣称支持半透明眉眼
-不在角色特化里实现多光源角色阴影；未来由 HTrace SSRTS 扩展管理光源、tracing 和资源预算
+不在角色特化里实现多光源角色阴影；未来由 HoShadowCast 管理关键光源和 shadow atlas，由 HTrace SSRTS 管理 tracing 和资源预算
 不实现完整动态反射空间，只保留 profile/anchor/RT 入口
 ```
 
@@ -666,7 +672,7 @@ Resource Budget:
 
 ## 结论
 
-HoAOV 已经让这件事比传统 lilToon stencil 流程简单很多：对象语义、角色 ID、前发/脸/眼睛分组、ObjectCustom 调试和 HoPost 规则组都已经具备。真正新增的难点不只是眼透合成，而是建立一层角色专属缓存/合成管线：被前发遮住的半透明眉眼颜色不能从最终画面恢复，必须通过角色特化功能额外捕获 `Face + Eye` 的颜色与 alpha；未来远平面阴影、动态反射空间也都需要角色 bounds、renderer lists、anchors、局部 RT 和模块化资源管理。多光源 cast 则从角色特化拆出去，归 HTrace SSRTS 扩展处理。
+HoAOV 已经让这件事比传统 lilToon stencil 流程简单很多：对象语义、角色 ID、前发/脸/眼睛分组、ObjectCustom 调试和 HoPost 规则组都已经具备。真正新增的难点不只是眼透合成，而是建立一层角色专属缓存/合成管线：被前发遮住的半透明眉眼颜色不能从最终画面恢复，必须通过角色特化功能额外捕获 `Face + Eye` 的颜色与 alpha；未来远平面阴影、动态反射空间也都需要角色 bounds、renderer lists、anchors、局部 RT 和模块化资源管理。多光源 cast 则从角色特化拆出去：HoShadowCast 管理关键光源和 shadow atlas，HTrace SSRTS 管理次级 tracing、history 和 denoise。
 
 因此推荐的长期架构是：
 

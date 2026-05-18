@@ -7,7 +7,7 @@
 2. 前发投到脸和透出眼部上的屏幕空间 DropShadow
 ```
 
-它不是 HoPost 的通用图层，也不是 HTrace 的替代品。多光源 cast 已经决定未来交给 HTrace SSRTS 扩展处理。
+它不是 HoPost 的通用图层，也不是 HTrace 的替代品。项目级强制投影光源交给 HoShadowCast；SSRTS/HTrace 只消费这些光源数据和 HoAOV 语义做次级阴影、追踪、降噪和 AO。
 
 ## 一句话分工
 
@@ -374,10 +374,11 @@ HTrace SSRTS Bridge
 
 详见：`HoCharacterCapture材质Pass接入说明.md`。
 
-多光源 cast 不在这里继续扩展。未来如果要做，只保留桥接方向：
+多光源 cast 不在这里继续扩展。项目级强制投影光源交给 `HoShadowCastController` / `HoShadowCastRendererFeature`，详见 `HoShadowCast主灯光与阴影设计.md`。本模块只保留桥接方向：
 
 ```text
-HTrace SSRTS reads HoAOV semantics
-HTrace manages lights / tracing / denoise / history
+HoShadowCast provides main sun / selected light shadow data
+HTrace SSRTS reads HoAOV semantics and HoShadowCast light data
+HTrace manages tracing / denoise / history
 HoCharacterSpecialization optionally composites or shares receiver masks
 ```
