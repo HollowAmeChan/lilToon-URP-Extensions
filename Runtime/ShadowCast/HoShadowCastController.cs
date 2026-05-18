@@ -6,8 +6,7 @@ namespace lilToon.URP.Extensions.ShadowCast
     public enum HoShadowCastDebugMode
     {
         Off = 0,
-        Atlas = 1,
-        SelectedLights = 2
+        Atlas = 1
     }
 
     [ExecuteAlways]
@@ -30,7 +29,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         public Light[] pointLights = new Light[HoShadowCastShaderConstants.MaxPointLights];
 
         [InspectorName("Caster 图层遮罩")]
-        [Tooltip("预留给后续 caster scope 过滤。第一版直接使用 URP 可见 shadow caster。")]
+        [Tooltip("HoShadowCast 生成 shadow atlas 时使用的投射物图层过滤。接收侧不看这个遮罩。")]
         public LayerMask casterLayerMask = -1;
 
         [InspectorName("投影强度")]
@@ -56,6 +55,14 @@ namespace lilToon.URP.Extensions.ShadowCast
         [InspectorName("方向光近裁剪")]
         [Min(0.001f)]
         public float directionalNearPlane = 0.1f;
+
+        [InspectorName("方向光投影范围")]
+        [Min(0.01f)]
+        public float directionalShadowSize = 20.0f;
+
+        [InspectorName("方向光投影深度")]
+        [Min(0.01f)]
+        public float directionalShadowDepth = 40.0f;
 
         [InspectorName("调试模式")]
         public HoShadowCastDebugMode debugMode = HoShadowCastDebugMode.Off;
@@ -120,6 +127,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             spotResolution = Mathf.Max(64, spotResolution);
             pointFaceResolution = Mathf.Max(64, pointFaceResolution);
             directionalNearPlane = Mathf.Max(0.001f, directionalNearPlane);
+            directionalShadowSize = Mathf.Max(0.01f, directionalShadowSize);
+            directionalShadowDepth = Mathf.Max(0.01f, directionalShadowDepth);
         }
 
         private static void EnsureArraySize(ref Light[] array, int size)

@@ -12,6 +12,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         public const int MaxShadowSlices = MaxDirectionalLights + MaxSpotLights + MaxPointLights * 6;
 
         public const string AtlasTextureName = "_HoShadowCastAtlas";
+        public const string DebugShaderName = "Hidden/lilToon-HoShadowCast/URP/DebugView";
         public const string CastingPunctualKeywordName = "_CASTING_PUNCTUAL_LIGHT_SHADOW";
 
         public static readonly int AtlasTextureId = Shader.PropertyToID(AtlasTextureName);
@@ -19,7 +20,10 @@ namespace lilToon.URP.Extensions.ShadowCast
         public static readonly int LightCountId = Shader.PropertyToID("_HoShadowCastLightCount");
         public static readonly int SliceCountId = Shader.PropertyToID("_HoShadowCastSliceCount");
         public static readonly int AtlasSizeId = Shader.PropertyToID("_HoShadowCastAtlasSize");
-        public static readonly int WorldToShadowId = Shader.PropertyToID("_HoShadowCastWorldToShadow");
+        public static readonly int WorldToShadowRow0Id = Shader.PropertyToID("_HoShadowCastWorldToShadowRow0");
+        public static readonly int WorldToShadowRow1Id = Shader.PropertyToID("_HoShadowCastWorldToShadowRow1");
+        public static readonly int WorldToShadowRow2Id = Shader.PropertyToID("_HoShadowCastWorldToShadowRow2");
+        public static readonly int WorldToShadowRow3Id = Shader.PropertyToID("_HoShadowCastWorldToShadowRow3");
         public static readonly int LightData0Id = Shader.PropertyToID("_HoShadowCastLightData0");
         public static readonly int LightData1Id = Shader.PropertyToID("_HoShadowCastLightData1");
         public static readonly int LightData2Id = Shader.PropertyToID("_HoShadowCastLightData2");

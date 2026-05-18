@@ -1,16 +1,14 @@
-# HoShadowCast 主灯光与阴影设计
+# HoShadowCast 额外投影光源与 ShadowMap 设计
 
-本文记录 HoShadowCast 第一版设计。它用于补齐项目里“必须产生 shadowcast 的少量光源”，并作为后续 SSRTS 与 HTrace AO 的上游语义层。
+本文记录 HoShadowCast 第一版设计。它用于补齐项目里“必须产生 shadowcast 的少量光源”，并产出一套独立 shadow atlas。
 
 ## 一句话分工
 
 ```text
 HoShadowCast = 少量确定性 shadow map 光源
-SSRTS        = 次级屏幕空间阴影和接触关系
-HTrace AO    = 剩余环境暗部和兜底遮蔽
 ```
 
-HoShadowCast 不替代 URP 光照，也不接管所有灯。它只回答“哪些光必须产生可控阴影”，并输出一组项目自己的 shadow atlas 和 light data，供后续阴影合成或 SSRTS 使用。
+HoShadowCast 不替代 URP 光照，也不接管所有灯。它只回答“哪些光必须产生可控 shadowmap”，并输出一组项目自己的 shadow atlas 与必要的 atlas 描述数据。
 
 ## 管理方式
 
@@ -37,6 +35,10 @@ Debug Mode
 ```
 
 灯本身仍然是普通 Unity `Light`。Controller 只是引用这些 Light，并决定它们是否进入 HoShadowCast 阴影链路。
+
+被引用的 Light 可以把 Unity 自带 `Shadows` 保持为 `None`。HoShadowCast 生成侧不再依赖 URP additional shadow caster culling，因此可以只借用 Light 的位置、方向、范围、颜色和阴影参数来生成自己的 `_HoShadowCastAtlas`。
+
+这不代表画面要消费 URP 自己的 additional light shadow。lilToon / lilPBR 接收侧会忽略 URP additional lights 的 `shadowAttenuation`；最终额外投影由 `_HoShadowCastAtlas` 决定。URP 主光 shadow receiver 仍然保持原样。
 
 ## URP 主光边界
 
@@ -84,7 +86,7 @@ Total:       32 slices
 
 ## 第一版阴影形态
 
-第一版先做硬阴影，不深入做软阴影。
+第一版先做简单阴影，不深入做完整软阴影。receiver 侧使用 3x3 compare 采样做基础边缘过渡，并保留一个暗部下限，避免强度为 1 时直接把材质光照压成死黑。
 
 ```text
 Directional:
@@ -97,6 +99,7 @@ Spot:
 
 Point:
   每个点光 6 个 cube face slice。
+  receiver 根据像素相对点光的方向选择对应 face，只采样命中的 cube face。
 ```
 
 因为 URP additional shadow atlas 不支持 additional directional shadow，HoShadowCast 不应依赖 URP 内置 additional shadow 机制来表达这套设计。它应渲染项目自己的 shadow atlas。
@@ -110,7 +113,6 @@ HoShadowCastController
 HoShadowCastLightRegistry
 HoShadowCastRendererFeature
 HoShadowCastShadowPass
-HoShadowCastComposite / SSRTS Bridge
 ```
 
 每帧流程：
@@ -118,10 +120,10 @@ HoShadowCastComposite / SSRTS Bridge
 ```text
 1. Registry 找到当前场景启用的 HoShadowCastController。
 2. Controller 收集方向光、聚光、点光引用。
-3. RendererFeature 从 UniversalLightData.visibleLights 中匹配这些 Light。
+3. RendererFeature 只用 UniversalLightData.visibleLights 判断是否误放了 URP 主光；普通额外灯即使不在 URP additional shadow 列表里，也会按 Controller 引用强制生成 slice。
 4. ShadowPass 按固定容量渲染 _HoShadowCastAtlas。
 5. 写入全局 shadow/light 数据。
-6. 后续 fullscreen shadow composite 或 SSRTS 读取这些数据。
+6. lilToon / lilPBR 在自己的接收侧读取 `_HoShadowCastAtlas`，并把结果作为独立阴影衰减乘进材质光照。
 ```
 
 建议全局资源：
@@ -152,14 +154,14 @@ RenderGraph 注意事项：
 
 ## 材质接入
 
-材质侧第一版不增加接收排除、不增加阴影接收强度，也不增加 lilToon / lilPBR 面板参数。
+材质侧第一版不增加接收排除、不增加每材质阴影接收强度，也不增加 lilToon / lilPBR 面板参数。接收语义统一由 `HoShadowCastController.shadowStrength` 和每盏 Light 的 `shadowStrength` 控制。
 
 原因：
 
 ```text
-HoShadowCast 是打暗设计，不是带颜色的发光或局部材质特效。
-接收侧统一由后处理 / SSRTS 合成处理。
-材质只需要作为 caster 正确写 shadow depth。
+HoShadowCast 与 URP 内置主光/附加光 shadow receiver 平行存在。
+投射侧用材质自己的 ShadowCaster pass 写 shadow depth。
+接收侧由 lilToon / lilPBR 调用 HoShadowCast 独立采样函数，不塞回 URP 内置 shadow atlas。
 ```
 
 lilToon 和 lilPBR 接入方式：
@@ -171,33 +173,18 @@ lilPBR: 使用现有 URP ShadowCaster pass。
 
 不要用 override material 去替代材质自己的 ShadowCaster pass。cutout、dither、dissolve、透明裁剪、双面和 wind 等语义应由材质自己的 ShadowCaster pass 处理。没有 ShadowCaster pass 的材质第一版就不参与 HoShadowCast。
 
-## 接收与合成
+## 接收边界
 
-接收侧不走材质 UI。第一版合成可以按屏幕空间统一打暗：
+HoShadowCast 不把结果塞回 URP 内置阴影接收链路，也不修改 `_MainLightShadowmapTexture` / `_AdditionalLightsShadowmapTexture`。URP 内置 shadow atlas 的 layout、light index、shadow params 都由 URP 管理，外部强行写入风险太高。
 
-```text
-receiver pixel = 当前可见像素
-world position = camera depth 或 HoAOV depth 重建
-shadow = sample HoShadowCast atlas
-color *= lerp(1, darken, shadow * strength)
-```
-
-是否使用 HoAOV 参与 receiver 语义，留给 SSRTS / composite 阶段决定。第一版不做材质级“接收排除”。
-
-## 与 SSRTS / HTrace 的关系
-
-HoShadowCast 只负责确定性强光阴影。
+lilToon / lilPBR 的接入分为两侧：
 
 ```text
-HoShadowCast:
-  必须存在、必须稳定、需要由少量关键光源投出的 shadowcast。
-
-SSRTS:
-  使用 HoShadowCast 的少量额外光源数据，补次级阴影、接触阴影和屏幕空间关系。
-
-HTrace AO:
-  处理剩余环境遮蔽，不追求逐光源精确投影。
+投射侧：RendererFeature 使用材质自己的 URP ShadowCaster pass 写入 `_HoShadowCastAtlas`。
+接收侧：材质 forward pass 调用 `HoShadowCastAttenuation(positionWS)`，读取 `_HoShadowCastAtlas` 和固定数组 light/slice data。
 ```
+
+这套接收是 HoShadowCast 自己的平行 receiver，不等同于 URP 内置 shadow receiver。第一版只做基础 PCF 采样和统一打暗，不做每材质接收排除、每材质强度或彩色阴影。
 
 不要把多光源阴影继续塞进 HoCharacterSpecialization 的前发 DropShadow。DropShadow 仍然是角色特化的局部屏幕空间效果；HoShadowCast 是项目级阴影光源系统。
 
@@ -214,7 +201,7 @@ Directional cascade
 材质级 receiver 排除
 ```
 
-第一版优先目标是跑通 Controller、shadow atlas、debug view 和后续 SSRTS 可消费的数据格式。
+第一版优先目标是跑通 Controller、shadow atlas、debug view 和 lilToon/lilPBR 独立接收。
 
 ## 2026-05-18 实现记录
 
@@ -225,6 +212,8 @@ Runtime/ShadowCast/HoShadowCastController.cs
 Runtime/ShadowCast/HoShadowCastRendererFeature.cs
 Runtime/ShadowCast/HoShadowCastShaderConstants.cs
 Runtime/ShadowCast/HoShadowCastRenderGraphResources.cs
+Runtime/ShadowCast/Shaders/HoShadowCastDebug.shader
+Runtime/ShadowCast/Shaders/HoShadowCastSampling.hlsl
 Editor/ShadowCast/HoShadowCastControllerEditor.cs
 Editor/ShadowCast/HoShadowCastRendererFeatureEditor.cs
 ```
@@ -238,16 +227,61 @@ Editor/ShadowCast/HoShadowCastRendererFeatureEditor.cs
 4. 使用材质自己的 ShadowCaster pass，不使用 override material。
 5. 每个 shadow slice 单独创建 RendererList，避免同帧重复执行同一个 RendererList。
 6. 输出固定数组全局数据：light count、slice count、atlas size、world-to-shadow、light data、slice data。
+7. 调试模式 Atlas 会在后处理阶段把 `_HoShadowCastAtlas` 直接显示到相机颜色上，用来确认 shadowmap 是否已经生成。
+8. lilToon / lilPBR forward shader 通过 `HoShadowCastSampling.hlsl` 读取 atlas，作为独立 receiver 衰减材质光照。
+9. receiver 侧使用 3x3 compare 采样、暗部下限和点光 cube face 选择，避免第一版阴影过黑、过硬或点光采样不到正确 face。
+10. Runtime 不要求 `Light.shadows` 必须开启；点光/聚光可以保持 Shadows None，只由 HoShadowCast 生成和接收自己的阴影。
+11. lilToon / lilPBR 会忽略 URP additional light 的 `light.shadowAttenuation`，避免 Light.shadows 开启后又吃到 URP 自带低分辨率 additional shadow receiver。
 ```
 
 暂不包含：
 
 ```text
-1. SSRTS 本体。SSRTS 可能单独仓库实现；HoShadowCast 只作为它的上游光源与 shadow atlas 数据源。
-2. fullscreen shadow composite。
-3. debug atlas view。
+1. 全屏最终投影合成。
+2. 把 HoShadowCast atlas 接入 URP 内置 shadow receiver。
+3. debug atlas view 之外的可视化工具。
 4. caster scope / region 过滤。Controller 里保留 caster layer mask 语义位，第一版还没有用它重新 cull 或过滤 shadow caster。
 5. 材质侧 receiver 排除或 receiver 强度。
 ```
 
-因此第一版判断标准是：选定的普通 Unity Light 能通过 lilToon / lilPBR 现有 ShadowCaster pass 写入 `_HoShadowCastAtlas`，并把后续 SSRTS 或 composite 需要的数据稳定暴露出来。
+因此第一版判断标准是：选定的普通 Unity Light 能通过 lilToon / lilPBR 现有 ShadowCaster pass 写入 `_HoShadowCastAtlas`，并且 lilToon / lilPBR forward 材质能读取该 atlas 产生额外接收阴影。
+
+## 2026-05-18 接收隔离与生成侧修正
+
+这次确认的边界如下：
+
+```text
+URP 主光阴影：保持 URP 原生 main light receiver，不由 HoShadowCast 替换。
+URP 附加光阴影：lilToon / lilPBR 接收侧忽略 additional light 的 light.shadowAttenuation，避免吃到 URP 低分辨率 additional shadow。
+HoShadowCast 阴影：作为一套平行 receiver，由 _HoShadowCastAtlas + HoShadowCastAttenuation(positionWS) 单独打暗材质光照。
+```
+
+生成侧也不能继续依赖 URP `ShadowDrawingSettings` / `CreateShadowRendererList`。那条路径会绑定到 URP 自己为 main/additional shadow 准备的 shadow caster culling，点光或聚光即使被 HoShadowCastController 引用，也可能因为没有进入 URP additional shadow 数据而得到空 atlas。
+
+现在的规则是：
+
+```text
+1. 借用 Unity Light 的位置、方向、范围和 bias 参数，HoShadowCast 自己计算每盏灯、每个 slice 的 view/projection/world-to-shadow。
+2. 每个 shadow slice 单独创建普通 RendererList。
+3. RendererList 使用材质自己的 ShadowCaster pass。
+4. RendererList 使用 HoShadowCastController.casterLayerMask 过滤投射物图层。
+5. 不使用 override material，不写回 _MainLightShadowmapTexture 或 _AdditionalLightsShadowmapTexture。
+```
+
+这个修正让“生成 HoShadowCast 自己的 shadow atlas”与“最终接收不吃 URP additional shadow”两件事分离。点光/聚光可以不打开 Unity 自带 Shadows，从而避免触发 URP additional shadow receiver；主光仍由 URP 负责；HoShadowCast 只处理被 Controller 显式列出的非主光额外 shadowcast。列表里的灯只要非空、类型匹配、启用中、不是当前 URP 主光，就会尝试分配 slice。当前第一版仍基于相机已有 culling results 创建 RendererList，离相机可见集很远的离屏投射物如果之后暴露问题，再补独立 light-space culling。
+
+实现注意：
+
+```text
+ShadowCaster pass 渲染时，unity_WorldToCamera 必须设置为当前 shadow slice 的 light-view 矩阵，而不是相机 view 矩阵。
+手写 spot/point/directional slice 时，view matrix 使用 TRS(position, rotation, one).inverse。
+本帧会先统计需要的 slice 总数，再按 atlas 网格容量自动压低单 slice 分辨率；点光 6 个 face 不能因为 UI 分辨率过大而整盏灯回滚到 0 输出。
+Controller Inspector 会显示同一套容量估算；当某类分辨率超过当前 atlas / slice 数能容纳的上限时，UI 会直接警告运行时会自动降级。
+receiver 侧点光按接收点相对点光的主轴方向选择一个 cube face 采样，避免多个 face 叠加造成扇形叠影。slice uv 与 z 范围都必须落在有效区间内，否则视为 lit，不允许把 frustum 外的点强行 clamp 进 shadow compare。
+receiver 侧不使用硬件 `TEXTURE2D_SHADOW` compare，而是读取 depth 后手动比较。空 depth 视为 lit，并按 `UNITY_REVERSED_Z` 选择比较方向，附带一个小 receiver bias，避免地面这类 caster/receiver 自投影成整圈黑。
+额外方向光第一版使用 Controller 物体位置作为正交投影中心，并沿灯方向后退半个 shadow depth；`directionalShadowSize` 控制 XY 范围，`directionalShadowDepth` 控制深度，不再跟随相机位置。
+lilToon Console 调试日志会输出 `lightSlices=[name:type@firstSlice+sliceCount]`，用于确认多个点光是否真的写到了不同 atlas slice。
+点光/聚光的 shadow view/projection 优先使用 Unity `CullingResults.ComputePointShadowMatricesAndCullingPrimitives` / `ComputeSpotShadowMatricesAndCullingPrimitives`，只保留自建 RendererList、atlas 和 receiver。这样避免手写 cube face 矩阵与 URP ShadowCaster pass 约定不一致导致点光 slice 分配了但 atlas 不写深度。
+lilPBR 接收侧在 ComputeLights / ComputeSubsurface 结束时统一乘一次 HoShadowCastAttenuation，不再把 HoShadowCast 绑定到每盏 URP additional light 的循环里。
+Atlas Debug 开启时，Runtime 每隔约 60 帧输出一次 HoShadowCast 状态：路径、lightCount、sliceCount、atlas、casterMask、已分配灯数和首个 slice 信息。
+```
