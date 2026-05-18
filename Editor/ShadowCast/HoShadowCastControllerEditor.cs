@@ -21,6 +21,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         private static bool showPointLights = true;
         private static bool showAtlasSettings = true;
         private static bool showSecondDirectionalSettings = true;
+        private static bool showPcssSettings = true;
         private static bool showStatus = true;
         private static bool showDebugSettings = true;
 
@@ -34,6 +35,13 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         private SerializedProperty casterLayerMaskProperty;
         private SerializedProperty punctualShadowStrengthProperty;
         private SerializedProperty punctualShadowFadeSpeedProperty;
+        private SerializedProperty pcssEnabledProperty;
+        private SerializedProperty pcssQualityProperty;
+        private SerializedProperty punctualPcssSoftnessProperty;
+        private SerializedProperty secondDirectionalPcssSoftnessProperty;
+        private SerializedProperty pcssBlockerSearchRadiusProperty;
+        private SerializedProperty pcssMaxPenumbraRadiusProperty;
+        private SerializedProperty pcssDepthBiasProperty;
         private SerializedProperty secondDirectionalShadowStrengthProperty;
         private SerializedProperty secondDirectionalAtlasSizeProperty;
         private SerializedProperty secondDirectionalCascadeCountProperty;
@@ -91,6 +99,13 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             casterLayerMaskProperty = serializedObject.FindProperty("casterLayerMask");
             punctualShadowStrengthProperty = serializedObject.FindProperty("punctualShadowStrength");
             punctualShadowFadeSpeedProperty = serializedObject.FindProperty("punctualShadowFadeSpeed");
+            pcssEnabledProperty = serializedObject.FindProperty("pcssEnabled");
+            pcssQualityProperty = serializedObject.FindProperty("pcssQuality");
+            punctualPcssSoftnessProperty = serializedObject.FindProperty("punctualPcssSoftness");
+            secondDirectionalPcssSoftnessProperty = serializedObject.FindProperty("secondDirectionalPcssSoftness");
+            pcssBlockerSearchRadiusProperty = serializedObject.FindProperty("pcssBlockerSearchRadius");
+            pcssMaxPenumbraRadiusProperty = serializedObject.FindProperty("pcssMaxPenumbraRadius");
+            pcssDepthBiasProperty = serializedObject.FindProperty("pcssDepthBias");
             secondDirectionalShadowStrengthProperty = serializedObject.FindProperty("secondDirectionalShadowStrength");
             secondDirectionalAtlasSizeProperty = serializedObject.FindProperty("secondDirectionalAtlasSize");
             secondDirectionalCascadeCountProperty = serializedObject.FindProperty("secondDirectionalCascadeCount");
@@ -133,6 +148,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
                 ref showPointLights);
             DrawAtlasSection();
             DrawSecondDirectionalSection();
+            DrawPcssSection();
             DrawStatus();
             DrawDebugSection();
 
@@ -241,6 +257,31 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
                 EditorGUILayout.PropertyField(secondDirectionalMaxDistanceProperty, new GUIContent("最大距离"));
                 EditorGUILayout.PropertyField(secondDirectionalShadowDepthProperty, new GUIContent("投影深度"));
                 EditorGUILayout.PropertyField(secondDirectionalCascadeSplitsProperty, new GUIContent("级联分割"));
+            }
+        }
+
+        private void DrawPcssSection()
+        {
+            string summary = pcssEnabledProperty.boolValue
+                ? string.Format("{0} | P {1:0.##} / D {2:0.##}", pcssQualityProperty.enumDisplayNames[pcssQualityProperty.enumValueIndex], punctualPcssSoftnessProperty.floatValue, secondDirectionalPcssSoftnessProperty.floatValue)
+                : "Off";
+            if (!DrawSectionHeader(ref showPcssSettings, "PCSS 软阴影", summary, AtlasColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                EditorGUILayout.PropertyField(pcssEnabledProperty, new GUIContent("启用 PCSS"));
+                using (new EditorGUI.DisabledScope(!pcssEnabledProperty.boolValue))
+                {
+                    EditorGUILayout.PropertyField(pcssQualityProperty, new GUIContent("质量"));
+                    EditorGUILayout.PropertyField(punctualPcssSoftnessProperty, new GUIContent("点光/聚光半径"));
+                    EditorGUILayout.PropertyField(secondDirectionalPcssSoftnessProperty, new GUIContent("第二天光半径"));
+                    EditorGUILayout.PropertyField(pcssBlockerSearchRadiusProperty, new GUIContent("Blocker Search 半径"));
+                    EditorGUILayout.PropertyField(pcssMaxPenumbraRadiusProperty, new GUIContent("最大半影半径"));
+                    EditorGUILayout.PropertyField(pcssDepthBiasProperty, new GUIContent("Depth Bias"));
+                }
             }
         }
 

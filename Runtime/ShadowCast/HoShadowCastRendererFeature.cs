@@ -150,6 +150,9 @@ namespace lilToon.URP.Extensions.ShadowCast
             Shader.SetGlobalFloat(HoShadowCastShaderConstants.ActiveId, 0.0f);
             Shader.SetGlobalInt(HoShadowCastShaderConstants.LightCountId, 0);
             Shader.SetGlobalInt(HoShadowCastShaderConstants.SliceCountId, 0);
+            Shader.SetGlobalVector(HoShadowCastShaderConstants.PcssParamsId, Vector4.zero);
+            Shader.SetGlobalVector(HoShadowCastShaderConstants.PcssParams2Id, Vector4.zero);
+            Shader.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalPcssParamsId, Vector4.zero);
             Shader.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalParamsId, Vector4.zero);
         }
     }
@@ -594,6 +597,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             target.cameraPosition = cameraPosition;
             target.cameraViewMatrix = cameraViewMatrix;
             target.cameraProjectionMatrix = cameraProjectionMatrix;
+            target.pcssParams = CreatePcssParams(controller, controller.punctualPcssSoftness);
+            target.pcssParams2 = CreatePcssParams2(controller);
 
             int requestedSliceCount = CountRequestedSlices(controller, visibleLights, mainLightIndex);
             int maxSliceResolution = GetMaxResolutionForSliceCount(target.atlasSize, requestedSliceCount);
@@ -620,6 +625,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             target.cameraPosition = cameraPosition;
             target.cameraViewMatrix = cameraViewMatrix;
             target.cameraProjectionMatrix = cameraProjectionMatrix;
+            target.pcssParams = CreatePcssParams(controller, controller.secondDirectionalPcssSoftness);
+            target.pcssParams2 = CreatePcssParams2(controller);
 
             if (controller == null || camera == null)
             {
@@ -1464,6 +1471,58 @@ namespace lilToon.URP.Extensions.ShadowCast
             return new Vector4(oneOverRangeSqr, fadeSpeed, spotScale, spotOffset);
         }
 
+        private static Vector4 CreatePcssParams(HoShadowCastController controller, float softness)
+        {
+            if (controller == null || !controller.pcssEnabled || softness <= 0.0f)
+            {
+                return Vector4.zero;
+            }
+
+            return new Vector4(
+                1.0f,
+                Mathf.Clamp(softness, 0.0f, 4.0f),
+                Mathf.Clamp(controller.pcssBlockerSearchRadius, 0.25f, 8.0f),
+                Mathf.Clamp(controller.pcssMaxPenumbraRadius, 1.0f, 32.0f));
+        }
+
+        private static Vector4 CreatePcssParams2(HoShadowCastController controller)
+        {
+            if (controller == null || !controller.pcssEnabled)
+            {
+                return Vector4.zero;
+            }
+
+            GetPcssSampleCounts(controller.pcssQuality, out int blockerSamples, out int filterSamples);
+            return new Vector4(
+                Mathf.Clamp(controller.pcssDepthBias, 0.0f, 0.01f),
+                blockerSamples,
+                filterSamples,
+                0.0f);
+        }
+
+        private static void GetPcssSampleCounts(HoShadowCastPcssQuality quality, out int blockerSamples, out int filterSamples)
+        {
+            switch (quality)
+            {
+                case HoShadowCastPcssQuality.Low:
+                    blockerSamples = 8;
+                    filterSamples = 16;
+                    break;
+                case HoShadowCastPcssQuality.High:
+                    blockerSamples = 24;
+                    filterSamples = 48;
+                    break;
+                case HoShadowCastPcssQuality.Ultra:
+                    blockerSamples = 32;
+                    filterSamples = 64;
+                    break;
+                default:
+                    blockerSamples = 16;
+                    filterSamples = 32;
+                    break;
+            }
+        }
+
         private static void SetShadowCasterGlobals(CommandBuffer cmd, Vector3 cameraPosition, ShadowSliceInfo slice)
         {
             cmd.SetGlobalVector(HoShadowCastShaderConstants.WorldSpaceCameraPosId, cameraPosition);
@@ -1595,6 +1654,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.LightAttenuationId, LightAttenuation);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.LightColorId, LightColor);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SliceDataId, SliceData);
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.PcssParamsId, frame.pcssParams);
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.PcssParams2Id, frame.pcssParams2);
         }
 
         private static void ApplyGlobalData(RasterCommandBuffer cmd, HoShadowCastFrame frame)
@@ -1614,6 +1675,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.LightAttenuationId, LightAttenuation);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.LightColorId, LightColor);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SliceDataId, SliceData);
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.PcssParamsId, frame.pcssParams);
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.PcssParams2Id, frame.pcssParams2);
         }
 
         private static void SetGlobalEmpty()
@@ -1621,6 +1684,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             Shader.SetGlobalFloat(HoShadowCastShaderConstants.ActiveId, 0.0f);
             Shader.SetGlobalInt(HoShadowCastShaderConstants.LightCountId, 0);
             Shader.SetGlobalInt(HoShadowCastShaderConstants.SliceCountId, 0);
+            Shader.SetGlobalVector(HoShadowCastShaderConstants.PcssParamsId, Vector4.zero);
+            Shader.SetGlobalVector(HoShadowCastShaderConstants.PcssParams2Id, Vector4.zero);
         }
 
         private static void SetGlobalEmpty(CommandBuffer cmd)
@@ -1628,16 +1693,20 @@ namespace lilToon.URP.Extensions.ShadowCast
             cmd.SetGlobalFloat(HoShadowCastShaderConstants.ActiveId, 0.0f);
             cmd.SetGlobalInt(HoShadowCastShaderConstants.LightCountId, 0);
             cmd.SetGlobalInt(HoShadowCastShaderConstants.SliceCountId, 0);
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.PcssParamsId, Vector4.zero);
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.PcssParams2Id, Vector4.zero);
         }
 
         private static void SetSecondDirectionalGlobalEmpty()
         {
             Shader.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalParamsId, Vector4.zero);
+            Shader.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalPcssParamsId, Vector4.zero);
         }
 
         private static void SetSecondDirectionalGlobalEmpty(CommandBuffer cmd)
         {
             cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalParamsId, Vector4.zero);
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalPcssParamsId, Vector4.zero);
         }
 
         private static void ApplySecondDirectionalGlobalData(CommandBuffer cmd, HoShadowCastSecondDirectionalFrame frame, RenderTargetIdentifier atlas)
@@ -1646,6 +1715,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalParamsId, new Vector4(frame.lightCount > 0 ? 1.0f : 0.0f, frame.lightCount, frame.cascadeCountPerLight, 0.0f));
             cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalCameraPositionId, new Vector4(frame.cameraPosition.x, frame.cameraPosition.y, frame.cameraPosition.z, 1.0f));
             cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalAtlasSizeId, new Vector4(frame.atlasSize, frame.atlasSize, 1.0f / Mathf.Max(1, frame.atlasSize), 1.0f / Mathf.Max(1, frame.atlasSize)));
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalPcssParamsId, frame.pcssParams);
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.PcssParams2Id, frame.pcssParams2);
             cmd.SetGlobalTexture(HoShadowCastShaderConstants.SecondDirectionalAtlasTextureId, atlas);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalWorldToShadowRow0Id, SecondDirectionalWorldToShadowRow0);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalWorldToShadowRow1Id, SecondDirectionalWorldToShadowRow1);
@@ -1661,6 +1732,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalParamsId, new Vector4(frame.lightCount > 0 ? 1.0f : 0.0f, frame.lightCount, frame.cascadeCountPerLight, 0.0f));
             cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalCameraPositionId, new Vector4(frame.cameraPosition.x, frame.cameraPosition.y, frame.cameraPosition.z, 1.0f));
             cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalAtlasSizeId, new Vector4(frame.atlasSize, frame.atlasSize, 1.0f / Mathf.Max(1, frame.atlasSize), 1.0f / Mathf.Max(1, frame.atlasSize)));
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.SecondDirectionalPcssParamsId, frame.pcssParams);
+            cmd.SetGlobalVector(HoShadowCastShaderConstants.PcssParams2Id, frame.pcssParams2);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalWorldToShadowRow0Id, SecondDirectionalWorldToShadowRow0);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalWorldToShadowRow1Id, SecondDirectionalWorldToShadowRow1);
             cmd.SetGlobalVectorArray(HoShadowCastShaderConstants.SecondDirectionalWorldToShadowRow2Id, SecondDirectionalWorldToShadowRow2);
@@ -1891,6 +1964,8 @@ namespace lilToon.URP.Extensions.ShadowCast
         public Vector3 cameraPosition;
         public Matrix4x4 cameraViewMatrix;
         public Matrix4x4 cameraProjectionMatrix;
+        public Vector4 pcssParams;
+        public Vector4 pcssParams2;
         public readonly Light[] sourceLights = new Light[HoShadowCastShaderConstants.MaxLights];
         public readonly ShadowSliceInfo[] slices = new ShadowSliceInfo[HoShadowCastShaderConstants.MaxShadowSlices];
         public readonly Matrix4x4[] worldToShadow = new Matrix4x4[HoShadowCastShaderConstants.MaxShadowSlices];
@@ -1909,6 +1984,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             cameraPosition = Vector3.zero;
             cameraViewMatrix = Matrix4x4.identity;
             cameraProjectionMatrix = Matrix4x4.identity;
+            pcssParams = Vector4.zero;
+            pcssParams2 = Vector4.zero;
 
             for (int i = 0; i < sourceLights.Length; i++)
             {
@@ -1966,6 +2043,8 @@ namespace lilToon.URP.Extensions.ShadowCast
         public Vector3 cameraPosition;
         public Matrix4x4 cameraViewMatrix;
         public Matrix4x4 cameraProjectionMatrix;
+        public Vector4 pcssParams;
+        public Vector4 pcssParams2;
         public readonly Light[] sourceLights = new Light[HoShadowCastShaderConstants.MaxDirectionalLights];
         public readonly Vector4[] lightData = new Vector4[HoShadowCastShaderConstants.MaxDirectionalLights];
         public readonly ShadowSliceInfo[] slices = new ShadowSliceInfo[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
@@ -1981,6 +2060,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             cameraPosition = Vector3.zero;
             cameraViewMatrix = Matrix4x4.identity;
             cameraProjectionMatrix = Matrix4x4.identity;
+            pcssParams = Vector4.zero;
+            pcssParams2 = Vector4.zero;
             for (int i = 0; i < sourceLights.Length; i++)
             {
                 sourceLights[i] = null;

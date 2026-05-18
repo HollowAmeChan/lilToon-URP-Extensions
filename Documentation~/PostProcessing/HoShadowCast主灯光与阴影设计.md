@@ -208,7 +208,7 @@ lilToon / lilPBR 的接入分为两侧：
 Caster scope / region
 某些 caster 只被附近几个标记光影响
 基于 AOV 或 group id 的 caster 分组
-软阴影质量分级
+PCSS 软阴影：见 `HoShadowCast软阴影PCSS规划.md`
 材质级 receiver 排除
 Per-light 多光源染色：见 `HoShadowCast可选升级-PerLight多光源.md`
 ```

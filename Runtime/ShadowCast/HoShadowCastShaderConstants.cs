@@ -34,6 +34,9 @@ namespace lilToon.URP.Extensions.ShadowCast
         public static readonly int LightAttenuationId = Shader.PropertyToID("_HoShadowCastLightAttenuation");
         public static readonly int LightColorId = Shader.PropertyToID("_HoShadowCastLightColor");
         public static readonly int SliceDataId = Shader.PropertyToID("_HoShadowCastSliceData");
+        public static readonly int PcssParamsId = Shader.PropertyToID("_HoShadowCastPcssParams");
+        public static readonly int PcssParams2Id = Shader.PropertyToID("_HoShadowCastPcssParams2");
+        public static readonly int SecondDirectionalPcssParamsId = Shader.PropertyToID("_HoShadowCastSecondDirectionalPcssParams");
         public static readonly int SecondDirectionalParamsId = Shader.PropertyToID("_HoShadowCastSecondDirectionalParams");
         public static readonly int SecondDirectionalCameraPositionId = Shader.PropertyToID("_HoShadowCastSecondDirectionalCameraPosition");
         public static readonly int SecondDirectionalAtlasSizeId = Shader.PropertyToID("_HoShadowCastSecondDirectionalAtlasSize");

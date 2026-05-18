@@ -71,3 +71,56 @@
 3. receiver 按相机距离为每盏方向光选择一个 cascade，只采样该 cascade，再把多盏额外方向光相乘。
 4. Debug Mode 需要能在普通 atlas 和第二天光 atlas 之间切换。排查时先确认选的是正确 atlas，否则会误判为 AtlasRaw 空。
 5. Controller 上遗留的单 slice 方向光字段只作为序列化兼容保留，不再暴露在 Inspector。当前方向光实际由“第二天光级联”栏控制。
+
+## 2026-05-18 点光贴近墙面出现正方形亮块
+
+现象：点光源参与 HoShadowCast 时，如果灯非常贴近墙壁或接收面，画面上可能出现一个近似正方形的亮块。它看起来不像正常的圆形点光衰减，也不像普通 shadow acne，而更像点光 cube face / shadow slice 的投影边界被直接显露出来。
+
+已观察到的特征：
+
+```text
+1. 光源离墙越近越容易出现。
+2. 亮块形状接近点光单个 cube face 的方形投影。
+3. 这类问题可能在 PCSS 或较大 filter 半径下更明显，因为 blocker/filter 采样会把 tile 或 face 边缘问题放大。
+4. 开启 PCSS 后，方形亮块的半径会明显变大。这不是另一个独立问题，而是 PCSS 在 near plane / cube face footprint 边界周围做 blocker search 和 variable filter，把原本较小的方形有效区扩散出来。
+```
+
+优先排查方向：
+
+```text
+1. 点光 near plane 过大或光源进入接收面，导致 cube face shadow projection 的近裁剪区域直接落在墙上。
+2. 点光 receiver 只采当前 face，不跨 face；贴墙时 face 选择、face 边缘和 filter clamp 可能让方形 face footprint 变成可见亮块。
+3. PCSS blocker search / filter radius clamp 在当前 tile 内，贴近表面时可能把大量采样压在 tile 边缘或空 depth 上，空 depth 又被视为 lit，形成亮块。
+4. 点光 range 衰减和 shadow influence 是圆形的，但 shadow map slice 是方形透视投影；当灯贴墙时，两者不再自然掩盖 slice footprint。
+```
+
+临时规避：
+
+```text
+1. 不要把参与 cast 的点光贴到墙面或接收面内部，给 light position 留一点离墙距离。
+2. 降低点光 PCSS 半径 / 最大半影半径，确认是否由软阴影采样放大。
+3. 必要时增大点光 near plane / 调整 light range，观察方块是否随 cube face 投影变化。
+```
+
+后续修复候选：
+
+```text
+1. 已加近距离保护：PCSS 半径会在 shadowCoord.z 接近 near plane 时自动缩小，点光 receiver 距离 light 太近时也会缩小，最后退回 3x3 manual PCF。第一次阈值太保守，贴墙点光仍会放大方块；当前规则是点光 receiver 距离小于 light range 的约 10% 时基本不走 PCSS，10%-35% 之间逐步恢复。
+2. 为点光 receiver 增加 face-edge fade，接近 cube face 边缘时减弱 shadow contribution。
+3. PCSS 对点光增加更严格的有效深度判断，避免贴墙时把空 depth 当作大面积 lit filter。
+4. 长期方案是点光 PCSS 支持跨 cube face 采样，但实现复杂，第一版先不做。
+```
+
+## 2026-05-18 PCSS raw depth 比较方向
+
+从 hardware shadow compare 改成 raw depth + manual compare 后，必须显式处理 `UNITY_REVERSED_Z`。否则会出现第二天光黑白反相，或者 blocker search 按错误方向寻找遮挡物。
+
+规则：
+
+```text
+1. 空 depth 仍然优先视为 lit，避免 atlas 未写入区域整片变黑。
+2. 非 reversed-Z：rawDepth >= receiverDepth - bias 表示 lit；rawDepth < receiverDepth - bias 是 blocker。
+3. reversed-Z：rawDepth <= receiverDepth + bias 表示 lit；rawDepth > receiverDepth + bias 是 blocker。
+4. PCSS 的 penumbra 公式也要跟着反向：reversed-Z 用 averageBlockerDepth - receiverDepth。
+5. 修改 compare 方向时必须同时改 blocker search，否则硬阴影看似对了，软阴影仍会乱。
+```

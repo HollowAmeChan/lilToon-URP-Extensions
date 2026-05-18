@@ -10,6 +10,14 @@ namespace lilToon.URP.Extensions.ShadowCast
         SecondDirectionalAtlas = 2
     }
 
+    public enum HoShadowCastPcssQuality
+    {
+        Low = 0,
+        Medium = 1,
+        High = 2,
+        Ultra = 3
+    }
+
     [ExecuteAlways]
     [DisallowMultipleComponent]
     [AddComponentMenu("lilToon/URP Extensions/HoShadowCast 额外投影控制器")]
@@ -44,6 +52,33 @@ namespace lilToon.URP.Extensions.ShadowCast
         [InspectorName("点光/聚光范围衰减速度")]
         [Range(0.1f, 4.0f)]
         public float punctualShadowFadeSpeed = 1.0f;
+
+        [Header("PCSS 软阴影")]
+        [InspectorName("启用 PCSS")]
+        public bool pcssEnabled = true;
+
+        [InspectorName("PCSS 质量")]
+        public HoShadowCastPcssQuality pcssQuality = HoShadowCastPcssQuality.High;
+
+        [InspectorName("点光/聚光软阴影半径")]
+        [Range(0.0f, 4.0f)]
+        public float punctualPcssSoftness = 0.6f;
+
+        [InspectorName("第二天光软阴影半径")]
+        [Range(0.0f, 4.0f)]
+        public float secondDirectionalPcssSoftness = 4.0f;
+
+        [InspectorName("Blocker Search 半径")]
+        [Range(0.25f, 8.0f)]
+        public float pcssBlockerSearchRadius = 2.8f;
+
+        [InspectorName("最大半影半径")]
+        [Range(1.0f, 32.0f)]
+        public float pcssMaxPenumbraRadius = 7.4f;
+
+        [InspectorName("PCSS Depth Bias")]
+        [Range(0.0f, 0.01f)]
+        public float pcssDepthBias = 0.0f;
 
         [Header("第二天光级联")]
         [InspectorName("第二天光投影强度")]
@@ -157,6 +192,12 @@ namespace lilToon.URP.Extensions.ShadowCast
             shadowStrength = Mathf.Clamp01(shadowStrength);
             punctualShadowStrength = Mathf.Clamp01(punctualShadowStrength);
             punctualShadowFadeSpeed = punctualShadowFadeSpeed <= 0.0f ? 1.0f : Mathf.Clamp(punctualShadowFadeSpeed, 0.1f, 4.0f);
+            pcssQuality = (HoShadowCastPcssQuality)Mathf.Clamp((int)pcssQuality, 0, 3);
+            punctualPcssSoftness = Mathf.Clamp(punctualPcssSoftness, 0.0f, 4.0f);
+            secondDirectionalPcssSoftness = Mathf.Clamp(secondDirectionalPcssSoftness, 0.0f, 4.0f);
+            pcssBlockerSearchRadius = Mathf.Clamp(pcssBlockerSearchRadius, 0.25f, 8.0f);
+            pcssMaxPenumbraRadius = Mathf.Clamp(pcssMaxPenumbraRadius, 1.0f, 32.0f);
+            pcssDepthBias = Mathf.Clamp(pcssDepthBias, 0.0f, 0.01f);
             secondDirectionalShadowStrength = Mathf.Clamp01(secondDirectionalShadowStrength);
             secondDirectionalAtlasSize = Mathf.Max(256, secondDirectionalAtlasSize);
             secondDirectionalCascadeCount = Mathf.Clamp(secondDirectionalCascadeCount, 1, HoShadowCastShaderConstants.MaxSecondDirectionalCascades);
