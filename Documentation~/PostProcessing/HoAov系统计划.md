@@ -629,12 +629,12 @@ HoAOV debug view 读取的是 HoAOV MRT 的最终结果，不直接读组件字�
 
 ```text
 MaskId.r    coverage / mask
-MaskId.g    encoded CharacterId / GroupId
-MaskId.b    encoded PartId / ObjectId
-MaskId.a    encoded Flags
+MaskId.g    raw normalized CharacterId / GroupId
+MaskId.b    raw normalized PartId / ObjectId
+MaskId.a    raw normalized Flags
 ```
 
-ID 颜色可以使用编码值 hash 成稳定伪彩色，只作为可视化。后处理消费者必须读取 AOV RT 的编码值，不能读取 debug 画面的颜色。0 值不应覆盖显示；否则未设置 ID/Flags 的像素会被画成黑色块，看起来像“有数据”。`RSUV 仅写 ID` 应只标出有 CharacterId 或 PartId 且没有 ObjectCustom bit 的像素，不应标出所有未分组物体。
+ID 颜色可以使用 raw normalized 值 hash 成稳定伪彩色，只作为可视化。后处理消费者必须读取 AOV RT 的 raw normalized 值，不能读取 debug 画面的颜色。0 值不应覆盖显示；否则未设置 ID/Flags 的像素会被画成黑色块，看起来像“有数据”。`RSUV 仅写 ID` 应只标出有 CharacterId 或 PartId 且没有 ObjectCustom bit 的像素，不应标出所有未分组物体。
 
 可视化约定：
 

@@ -279,7 +279,7 @@ ObjectCustom4_7.b    ObjectCustom6
 ObjectCustom4_7.a    ObjectCustom7
 ```
 
-ID、flags、material 这类离散值不是直接写原始数字，而是写 `frac(abs(value) * 0.61803398875)` 的稳定编码值。HoPost 做数值匹配时必须对目标值使用同一套编码逻辑。
+GroupId / CharacterId、ObjectId / PartId、Flags 这类 0..255 ID 值直接写 raw byte normalized，即 `round(value) / 255`。MaterialClass 仍然写 `frac(abs(value) * 0.61803398875)` 的稳定编码值，用来表达材质分类而不是 byte ID。HoPost 做数值匹配时必须按 source 类型选择同一套解析逻辑。
 
 ## HoPost 的 AOV Mask
 
@@ -332,7 +332,7 @@ ObjectCustom7
 
 ```text
 Direct      直接使用通道灰度
-MatchValue  匹配数值，ID/Flags/Material 会先编码目标值再匹配
+MatchValue  匹配数值，GroupId/ObjectId/Flags 按 0..255 byte 匹配；Material 会先编码目标值再匹配
 MatchColor  从同一张 packed texture 取 RGB，按颜色距离匹配
 ```
 
@@ -370,7 +370,7 @@ MatchValue / 匹配数值：
 - 使用 aovMatchValue 作为目标值
 - 使用 aovThreshold 作为数值容差
 - 不使用 aovMatchColor
-- GroupId、ObjectId、Flags、Material 会把目标值先做稳定编码再比较
+- GroupId、ObjectId、Flags 会按 0..255 byte 归一化比较；Material 会把目标值先做稳定编码再比较
 - Mask、Thickness、Curvature、Utility、MaterialCustom0..3、ObjectCustom0..7 使用原始标量值比较
 
 MatchColor / 匹配颜色：
@@ -561,15 +561,15 @@ HoAOV debug view 是 fullscreen 后处理，它读取的是已经写入 HoAOV MR
 
 ```text
 _lilHoAovMaskIdTexture.r    AOV coverage / mask
-_lilHoAovMaskIdTexture.g    encoded CharacterId / GroupId
-_lilHoAovMaskIdTexture.b    encoded PartId / ObjectId
-_lilHoAovMaskIdTexture.a    encoded Flags
+_lilHoAovMaskIdTexture.g    raw normalized CharacterId / GroupId
+_lilHoAovMaskIdTexture.b    raw normalized PartId / ObjectId
+_lilHoAovMaskIdTexture.a    raw normalized Flags
 ObjectCustom RT             ObjectCustom0..7 的最终二值结果
 ```
 
 debug 里看到“没有绘制”通常表示该像素 `maskId.r = 0`，也就是没有 HoAOV coverage。未进 `HoAovGroup`、没有 `HoAovSubject` 覆盖、材质默认值也是 0 的对象，即使材质 HoAOV pass 写入 coverage，也不应该在 `RSUV 总览 / 角色组 ID / 部件 ID / 标记 / 仅写 ID` 中显示有效 ID。0 值不应被画成黑色覆盖层，否则会误判成“有数据但颜色很暗”。
 
-ID debug 的颜色是把编码后的 ID 值 hash 成稳定伪彩色，只用于人眼区分，不是后处理消费的数据源。HoPost 或其他消费者必须读取 AOV RT 中的编码值和 mask，不能读取 debug 画面颜色。
+ID debug 的颜色是把 raw normalized ID 值 hash 成稳定伪彩色，只用于人眼区分，不是后处理消费的数据源。HoPost 或其他消费者必须读取 AOV RT 中的 raw normalized 值和 mask，不能读取 debug 画面颜色。
 
 `RSUV 仅写 ID` 的 debug 语义是：有 CharacterId 或 PartId 信号，但没有任何 ObjectCustom bit。它用于检查“仅写 ID”列表，而不是检查所有未分组物体。没有组的物体应该不亮。
 

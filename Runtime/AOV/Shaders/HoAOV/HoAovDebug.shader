@@ -116,7 +116,9 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
 
                 if (mode == 2)
                 {
-                    return half4(HashColor(maskId.gba), 1.0);
+                    half valid = step(0.0001, maskId.r);
+                    half hasValue = saturate(max(max(step(0.0001, maskId.g), step(0.0001, maskId.b)), step(0.0001, maskId.a)));
+                    return lerp(source, half4(HashColor(maskId.gba), 1.0), valid * hasValue);
                 }
 
                 if (mode == 3)
