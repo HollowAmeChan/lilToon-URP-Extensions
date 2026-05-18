@@ -39,7 +39,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         [InspectorName("点光/聚光投影强度")]
         [Range(0.0f, 1.0f)]
-        public float punctualShadowStrength = 1.0f;
+        public float punctualShadowStrength = 0.5f;
 
         [InspectorName("点光/聚光范围衰减速度")]
         [Range(0.1f, 4.0f)]
@@ -48,7 +48,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         [Header("第二天光级联")]
         [InspectorName("第二天光投影强度")]
         [Range(0.0f, 1.0f)]
-        public float secondDirectionalShadowStrength = 1.0f;
+        public float secondDirectionalShadowStrength = 0.3f;
 
         [InspectorName("第二天光 Atlas 尺寸")]
         [Min(256)]
@@ -79,7 +79,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         [InspectorName("聚光分辨率")]
         [Min(64)]
-        public int spotResolution = 1024;
+        public int spotResolution = 512;
 
         [InspectorName("点光单面分辨率")]
         [Min(64)]
