@@ -1,66 +1,68 @@
 # lilToon URP Extensions
 
-这个包用于整理 lilToon 在 URP 下需要的自定义 renderer 扩展、实验性渲染功能和后续可投入实际使用的画质功能。
+这个包包含本地 lilToon/lilPBR 渲染系统使用的 URP RendererFeature 和 runtime 桥接代码。它是整套系统里的管线层：`lilToon` 和 `lilPBR` 暴露 shader pass 与材质属性，而这个包负责分配 render target、调度 pass、发布全局贴图和缓冲。
 
-当前第一阶段已经落地的是 lilToon 透明材质用的 Weighted Blended OIT：
+## 在整套系统里的定位
 
-- URP `ScriptableRendererFeature` 入口；
-- accumulation / revealage 渲染目标；
-- 最终相机颜色合成；
-- 给 lilToon 透明 pass 使用的材质和 shader 集成点。
+- `lilToon`：消费 OIT、HoAOV、HoCharacterCapture、HoShadowCast 和后处理 mask 的角色/NPR shader。
+- `lilPBR`：消费平面反射和 HoAOV 的场景/PBR shader。
+- `HoUrp17.3.0`：本包面向的本地 URP 版本。
+- `HoUrpConfig17.0.3`：本地 URP shader 配置包。
+- `lilToon-UnityGLTF-Extensions`：保存导入阶段的材质契约，后续可映射到 lilToon/lilPBR。
+
+## Runtime 模块
+
+- `Runtime/OIT`：给 lilToon 透明 pass 使用的 Weighted Blended OIT。它会绘制 `LightMode = "lilToonOIT"`，写入 accumulation/revealage，再合成回 camera color。
+- `Runtime/AOV`：HoAOV 输出、fallback、clear、debug 和采样支持。它生成给 HoPost、Shoost、HTrace、角色特化等功能使用的语义缓冲。
+- `Runtime/CharacterSpecialization`：角色捕获和角色定制后处理，包括头发/脸部等风格化处理路径。
+- `Runtime/HoPostProcessing`：用户可控的 HoPost 图层栈，支持 HoAOV mask rule，并有 RenderGraph/非 RenderGraph 路径。
+- `Runtime/ShoostPostProcessing`：Shoost 风格后处理栈和具体效果移植。
+- `Runtime/PlanarReflection`：`LILPlanarReflectionSurface` 平面反射运行时，向材质提供 `_LILPBRPlanarReflectionTexture` 和相关 property block 数据。
+- `Runtime/ShadowCast`：独立 HoShadowCast atlas 生成，用于指定的额外方向光、聚光和点光。
+
+## Editor 模块
+
+- `Editor/AOV`：HoAOV Inspector 和工具。
+- `Editor/CharacterSpecialization`：角色特化编辑器 UI。
+- `Editor/LilMatConvert`：材质转换工具。
+- `Editor/PostProcessing`：HoPost/Shoost 图层栈编辑器。
+- `Editor/ShadowCast`：HoShadowCast Controller Inspector。
+- `Editor/ShoostIcons`：编辑器图标资源。
+
+## 主要 RendererFeature
+
+按需要添加到 URP Renderer Asset：
+
+- `WeightedOITRendererFeature`
+- `HoAovRendererFeature`
+- `HoCharacterSpecializationRendererFeature`
+- `HoPostProcessRendererFeature`
+- `ShoostPostProcessRendererFeature`
+- `HoShadowCastRendererFeature`
+
+平面反射不走 RendererFeature，而是由场景组件驱动：把 `LILPlanarReflectionSurface` 加到反射平面 mesh 上。
 
 ## 安装
-
-把这个文件夹作为本地 Unity Package Manager 包加入项目。
 
 ```json
 {
   "dependencies": {
-    "jp.lilxyzw.liltoon.urp.extensions": "file:../lilToon-URP-Extensions"
+    "jp.lilxyzw.liltoon.urp.extensions": "file:D:/Unity_Fork/lilToon-URP-Extensions"
   }
 }
 ```
 
-这个包目前面向 Unity 6000.0 和 URP 17.x。项目里还需要对应的 URP 运行时和 lilToon fork。URP 和 lilToon 暂时作为 peer requirement 处理，这样特供 URP 或本地 `Assets/lilToon` 安装不会被 UPM 依赖解析强行替换。
+Peer requirement：
 
-## 当前状态
+- Unity 6000.x
+- URP 17.x，推荐使用本地 `HoUrp17.3.0`
+- 本地 `lilToon` fork，用于 toon shader pass 集成
+- `lilPBR`，用于平面反射和 PBR 侧 HoAOV 工作流
 
-Weighted OIT 已经作为第一个可用里程碑实现：
+## 注意事项
 
-- `WeightedOITRendererFeature` 分配 accumulation 和 revealage RT；
-- skybox 后复制 opaque camera color，并暴露为 `_lilOITOpaqueTexture` 和 `_CameraOpaqueTexture`；
-- accumulation pass 只绘制 `LightMode = "lilToonOIT"` 的 shader pass；
-- composite pass 把 accumulation / revealage 合回相机颜色；
-- `_lilOITActive` 每个相机都会重置，只在 accumulation pass 绘制时启用；
-- RenderGraph 和非 RenderGraph 路径都已实现。
+- 主要功能同时实现了 RenderGraph 和兼容模式路径。
+- HoShadowCast 使用自己的 atlas：`_HoShadowCastAtlas` 和 `_HoShadowCastSecondDirectionalAtlas`，不依赖 URP additional light shadow receiver。
+- 这个包把 `lilToon` 和 `lilPBR` 当作 peer package，而不是硬依赖，方便项目自己控制包解析。
 
-配套的 lilToon fork 提供 `_lilOITEnabled`、`LILTOON_OIT` pass 和 `lil_oit.hlsl`。
-
-实现说明、调试方法，以及 skybox 背景、render scale、MSAA、Scene view 等边界情况见 `Documentation~/OIT.md`。
-
-## Shoost 风格后处理
-
-`ShoostPostProcessRendererFeature` 是把 Shoost 后处理移植到 URP 的入口。它按 HTrace 风格安装由 Volume 驱动的 pass；真正的图层列表由 Volume profile 里的 `lilToon-Shoost Post Process Stack` 控制。这个列表可以像 Shoost 图层一样启用、禁用、重排、添加和删除效果。
-
-当前框架已经包含：
-
-- Volume 图层栈容器；
-- Shoost `BeforeStack` / `AfterStack` 插入分组；
-- ping-pong 全屏 blit 调度；
-- 通用 shader 参数；
-- 默认图层 blit shader；
-- RenderGraph 和非 RenderGraph 路径。
-
-单个 Shoost 效果还需要继续从参考包、Cpp2IL renderer 流程和 RenderDoc shader dump 里逐个移植。
-
-重要事项：URP 内置后处理由 `UniversalRenderer` 内部注入。只要相机开启了 `Render Post Processing`，它就可能运行 URP Bloom、Tonemapping、FXAA、Color Adjustments 等内置 pass；这些 pass 不会出现在 renderer feature 列表里。把 Shoost 图层和 URP 内置后处理混用时，一定要把这件事算进顺序判断里。
-
-设置和移植说明见 `Documentation~/PostProcessing/ShoostPostProcessStack.md`。
-
-## 平面反射
-
-`LILPlanarReflectionSurface` 是共享的平面反射 runtime，适合平面镜、抛光地面和水面一类对象。把它加到反射 mesh 上，然后使用会采样 `_LILPBRPlanarReflectionTexture` 的 shader / material。
-
-修改后的 lilPBR shader 已经有 `Planar Reflection` foldout，并通过 per-renderer material property block 使用这张反射纹理。
-
-设置说明见 `Documentation~/PlanarReflection.md`。
+更多设计和排查记录见 `Documentation~/`。
