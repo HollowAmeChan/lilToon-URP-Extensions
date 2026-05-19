@@ -998,7 +998,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             int lightIndex = target.lightCount++;
             target.sourceLights[lightIndex] = light;
             Vector3 position = light.transform.position;
-            Vector3 direction = -light.transform.forward;
+            Vector3 direction = light.transform.forward;
             Color finalColor = light.color * light.intensity;
             float lightShadowStrength = light.shadows == LightShadows.None ? 1.0f : light.shadowStrength;
             float controllerStrength = requiredType == LightType.Directional ? controller.shadowStrength : controller.punctualShadowStrength;
