@@ -42,8 +42,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Vector4 p2 = parameters2.vector4Value;
             Vector4 p3 = parameters3.vector4Value;
             y = DrawSkyGodRaysSection(rect.x, y, rect.width, "分形噪声");
-            y = DrawSliderLine(rect.x, y, rect.width, "缩放宽度", Mathf.Clamp(p1.x, 40.0f, 600.0f), 40.0f, 600.0f, value => p1.x = value);
-            y = DrawSliderLine(rect.x, y, rect.width, "缩放高度", Mathf.Clamp(p1.y, 30.0f, 420.0f), 30.0f, 420.0f, value => p1.y = value);
+            y = DrawSliderLine(rect.x, y, rect.width, "光斑宽度", Mathf.Clamp(p1.x, 40.0f, 600.0f), 40.0f, 600.0f, value => p1.x = value);
+            y = DrawSliderLine(rect.x, y, rect.width, "光斑高度", Mathf.Clamp(p1.y, 30.0f, 420.0f), 30.0f, 420.0f, value => p1.y = value);
             y = DrawSliderLine(rect.x, y, rect.width, "对比度", Mathf.Clamp(p1.z, 50.0f, 600.0f), 50.0f, 600.0f, value => p1.z = value);
             y = DrawSliderLine(rect.x, y, rect.width, "亮度", Mathf.Clamp(p1.w, -150.0f, 50.0f), -150.0f, 50.0f, value => p1.w = value);
 
@@ -61,6 +61,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             y = DrawSkyGodRaysSection(rect.x, y, rect.width, "颜色减淡合成");
             y = DrawSliderLine(rect.x, y, rect.width, "图层曝光", Mathf.Clamp(p0.w, 0.0f, 2.5f), 0.0f, 2.5f, value => p0.w = value);
             y = DrawSliderLine(rect.x, y, rect.width, "遮罩柔和", Mathf.Clamp01(p3.y), 0.0f, 1.0f, value => p3.y = value);
+            y = DrawSliderLine(rect.x, y, rect.width, "单层预览", Mathf.Clamp01(p3.z), 0.0f, 1.0f, value => p3.z = value);
             y = DrawSliderLine(rect.x, y, rect.width, "颜色减淡", Mathf.Clamp01(p3.w), 0.0f, 1.0f, value => p3.w = value);
             parameters0.vector4Value = p0;
             parameters1.vector4Value = p1;
@@ -83,7 +84,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             if (parameters1 != null && parameters1.propertyType == SerializedPropertyType.Vector4 && parameters1.vector4Value.sqrMagnitude <= 0.000001f)
             {
-                parameters1.vector4Value = new Vector4(167.0f, 109.0f, 234.0f, -53.0f);
+                parameters1.vector4Value = new Vector4(130.0f, 85.0f, 234.0f, -53.0f);
             }
 
             if (parameters2 != null && parameters2.propertyType == SerializedPropertyType.Vector4 && parameters2.vector4Value.sqrMagnitude <= 0.000001f)
@@ -93,7 +94,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             if (parameters3 != null && parameters3.propertyType == SerializedPropertyType.Vector4 && parameters3.vector4Value.sqrMagnitude <= 0.000001f)
             {
-                parameters3.vector4Value = new Vector4(32.0f, 0.36f, 0.10f, 0.21f);
+                parameters3.vector4Value = new Vector4(32.0f, 0.36f, 0.0f, 0.21f);
             }
         }
 

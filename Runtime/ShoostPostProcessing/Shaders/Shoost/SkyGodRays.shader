@@ -30,7 +30,7 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/SkyGodRays"
             float4 _LayerParams0; // x radial center x, y radial center y, z AE radial amount, w layer exposure
             float4 _LayerParams1; // x/y fractal scale at 1920x1080, z AE contrast, w AE brightness
             float4 _LayerParams2; // x chromatic strength, y chromatic falloff pixels, z evolution speed, w seed
-            float4 _LayerParams3; // x radial samples, y matte softness, z source keep, w color dodge
+            float4 _LayerParams3; // x radial samples, y matte softness, z layer preview, w color dodge
 
             float4 ShoostSkyResolveParams(float4 value, float4 fallbackValue)
             {
@@ -153,9 +153,9 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/SkyGodRays"
                 }
 
                 float4 p0 = ShoostSkyResolveParams(_LayerParams0, float4(1.22, 0.99, 181.0, 1.08));
-                float4 p1 = ShoostSkyResolveParams(_LayerParams1, float4(167.0, 109.0, 234.0, -53.0));
+                float4 p1 = ShoostSkyResolveParams(_LayerParams1, float4(130.0, 85.0, 234.0, -53.0));
                 float4 p2 = ShoostSkyResolveParams(_LayerParams2, float4(1.04, 146.0, 3.0, 3.0));
-                float4 p3 = ShoostSkyResolveParams(_LayerParams3, float4(32.0, 0.36, 0.10, 0.21));
+                float4 p3 = ShoostSkyResolveParams(_LayerParams3, float4(32.0, 0.36, 0.0, 0.21));
 
                 float2 center = p0.xy;
                 float samples = clamp(round(p3.x), 6.0, (float)ShoostSkyMaxSamples);
@@ -166,11 +166,13 @@ Shader "Hidden/lilToon-Shoost/URP/Shoost/SkyGodRays"
                 float layerAlpha = _LayerColor.a <= 0.0001 ? 1.0 : _LayerColor.a;
 
                 float exposure = max(p0.w, 0.0);
-                float sourceKeep = saturate(p3.z);
+                float preview = saturate(p3.z);
                 float dodgeAmount = saturate(p3.w);
-                float layerLuma = dot(layer, float3(0.299, 0.587, 0.114));
                 float3 colorLayer = saturate(layer * layerColor * exposure);
-                colorLayer = saturate(colorLayer + layerLuma.xxx * sourceKeep * 0.16);
+                if (preview > 0.999)
+                {
+                    return half4(colorLayer * opacity * layerAlpha, source.a);
+                }
 
                 float amount = opacity * layerAlpha;
                 float3 dodged = ShoostSkyColorDodge(source.rgb, colorLayer * amount);

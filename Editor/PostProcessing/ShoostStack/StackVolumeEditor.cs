@@ -781,7 +781,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ShoostPostProcessEffect.SkyGodRays:
                     lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
-                    lineCount += 18;
+                    lineCount += 19;
                     break;
                 case ShoostPostProcessEffect.LevelAdjustment:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -1790,9 +1790,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetFloat(element, "intensity", 1.0f);
                     SetColor(element, "color", Color.white);
                     SetVector4(element, "parameters0", new Vector4(1.22f, 0.99f, 181.0f, 1.08f));
-                    SetVector4(element, "parameters1", new Vector4(167.0f, 109.0f, 234.0f, -53.0f));
+                    SetVector4(element, "parameters1", new Vector4(130.0f, 85.0f, 234.0f, -53.0f));
                     SetVector4(element, "parameters2", new Vector4(1.04f, 146.0f, 3.0f, 3.0f));
-                    SetVector4(element, "parameters3", new Vector4(32.0f, 0.36f, 0.10f, 0.21f));
+                    SetVector4(element, "parameters3", new Vector4(32.0f, 0.36f, 0.0f, 0.21f));
                     break;
                 case ShoostPostProcessEffect.Lighting:
                 case ShoostPostProcessEffect.LED:

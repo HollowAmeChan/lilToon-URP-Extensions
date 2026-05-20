@@ -944,7 +944,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
                 if (layerParams1.sqrMagnitude <= 0.000001f)
                 {
-                    layerParams1 = new Vector4(167.0f, 109.0f, 234.0f, -53.0f);
+                    layerParams1 = new Vector4(130.0f, 85.0f, 234.0f, -53.0f);
                 }
 
                 if (layerParams2.sqrMagnitude <= 0.000001f)
@@ -954,7 +954,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
                 if (layerParams3.sqrMagnitude <= 0.000001f)
                 {
-                    layerParams3 = new Vector4(32.0f, 0.36f, 0.10f, 0.21f);
+                    layerParams3 = new Vector4(32.0f, 0.36f, 0.0f, 0.21f);
                 }
             }
 
