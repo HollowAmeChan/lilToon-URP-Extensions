@@ -7,7 +7,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
 {
     [ExecuteAlways]
     [DisallowMultipleComponent]
-    [AddComponentMenu("Rendering/lilToon URP/Planar Reflection Surface")]
+    [AddComponentMenu("Rendering/lilToon URP/平面反射表面")]
     public sealed class LILPlanarReflectionSurface : MonoBehaviour
     {
         private static readonly List<LILPlanarReflectionSurface> ActiveSurfaces = new List<LILPlanarReflectionSurface>();
@@ -18,37 +18,57 @@ namespace lilToon.URP.Extensions.PlanarReflection
         private static bool registered;
         private static bool isRenderingReflection;
 
-        [SerializeField]
+        [Header("目标")]
+        [SerializeField, InspectorName("目标渲染器"), Tooltip("接收平面反射纹理和材质参数的 Renderer。留空时会自动使用当前物体上的 Renderer。")]
         private Renderer targetRenderer;
 
-        [SerializeField]
+        [Header("反射平面")]
+        [SerializeField, InspectorName("反射平面锚点"), Tooltip("指定反射平面的位置和法线。留空时会自动使用目标渲染器作为平面来源。")]
+        private Transform planeTransform;
+
+        [SerializeField, InspectorName("使用渲染器中心"), Tooltip("未指定反射平面锚点时，用目标渲染器的包围盒中心作为反射平面位置，避免组件挂载物体的 Transform 偏移影响反射。")]
+        private bool useTargetRendererBoundsCenter = true;
+
+        [Header("反射渲染")]
+        [SerializeField, InspectorName("反射层遮罩"), Tooltip("只有这些层会被渲染进平面反射。")]
         private LayerMask reflectionMask = -1;
 
-        [SerializeField, Range(64, 4096)]
+        [SerializeField, Range(64, 4096), InspectorName("反射分辨率"), Tooltip("反射纹理的宽度。高度会按源相机宽高比自动计算。")]
         private int resolution = 1024;
 
-        [SerializeField, Min(0.0f)]
-        private float clipPlaneOffset = 0.05f;
+        [SerializeField, Min(0.0f), InspectorName("裁剪平面偏移"), Tooltip("把反射相机的裁剪面沿反射平面法线偏移，0 表示精确贴合反射平面。")]
+        private float clipPlaneOffset = 0.0f;
 
-        [SerializeField]
+        [SerializeField, InspectorName("使用平面裁剪"), Tooltip("开启后用反射平面作为斜裁剪面，避免镜面背后的物体进入反射。关闭后使用普通相机裁剪，适合排查裁剪导致的反射消失。")]
+        private bool useObliqueClipPlane = true;
+
+        [SerializeField, Min(0.0f), InspectorName("最小裁剪距离"), Tooltip("源相机太贴近反射平面时，把裁剪面略微后退，避免斜裁剪面贴到反射相机导致整张反射消失。")]
+        private float minClipPlaneDistance = 0.02f;
+
+        [SerializeField, Min(0.001f), InspectorName("反射相机近裁剪"), Tooltip("反射相机的最小 near clip。调小可减少贴近镜面时的裁切，调大可减少近处穿模噪声。")]
+        private float reflectionNearClipPlane = 0.01f;
+
+        [SerializeField, InspectorName("反射中隐藏本体"), Tooltip("渲染反射时临时隐藏目标渲染器，避免平面自己递归反射。")]
         private bool hideSurfaceInReflection = true;
 
-        [SerializeField]
+        [SerializeField, InspectorName("自动启用材质开关"), Tooltip("通过 MaterialPropertyBlock 自动写入 _UsePlanarReflection。关闭后需要在材质上手动启用平面反射。")]
         private bool overrideMaterialToggle = true;
 
-        [SerializeField]
+        [Header("背景")]
+        [SerializeField, InspectorName("复制相机清屏设置"), Tooltip("开启时使用源相机的清屏方式和背景色；关闭时使用下面的备用设置。")]
         private bool copyCameraClearFlags = true;
 
-        [SerializeField]
+        [SerializeField, InspectorName("备用清屏方式")]
         private CameraClearFlags fallbackClearFlags = CameraClearFlags.SolidColor;
 
-        [SerializeField]
+        [SerializeField, InspectorName("备用背景色")]
         private Color fallbackBackgroundColor = Color.black;
 
-        [SerializeField]
+        [Header("调试与性能")]
+        [SerializeField, InspectorName("反射场景视图"), Tooltip("在 Scene View 相机中也渲染平面反射，方便编辑时预览。")]
         private bool reflectSceneView = true;
 
-        [SerializeField, Min(1)]
+        [SerializeField, Min(1), InspectorName("更新帧间隔"), Tooltip("每隔多少帧更新一次反射。1 表示每帧更新。")]
         private int frameInterval = 1;
 
         private Camera reflectionCamera;
@@ -101,6 +121,9 @@ namespace lilToon.URP.Extensions.PlanarReflection
         {
             resolution = Mathf.Clamp(resolution, 64, 4096);
             frameInterval = Mathf.Max(1, frameInterval);
+            clipPlaneOffset = Mathf.Max(0.0f, clipPlaneOffset);
+            minClipPlaneDistance = Mathf.Max(0.0f, minClipPlaneDistance);
+            reflectionNearClipPlane = Mathf.Max(0.001f, reflectionNearClipPlane);
 
             if (isActiveAndEnabled)
             {
@@ -188,8 +211,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 return;
             }
 
-            Vector3 planePosition = transform.position;
-            Vector3 planeNormal = transform.up.normalized;
+            Vector3 planePosition = GetPlanePosition(surfaceRenderer);
+            Vector3 planeNormal = GetPlaneNormal(surfaceRenderer);
             if (planeNormal.sqrMagnitude < 0.0001f)
             {
                 ApplyDisabledPropertyBlock();
@@ -202,7 +225,9 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 planeNormal.z,
                 -Vector3.Dot(planeNormal, planePosition)));
 
-            ConfigureReflectionCamera(sourceCamera, reflectionMatrix, planePosition, planeNormal);
+            float cameraPlaneDistance = Vector3.Dot(sourceCamera.transform.position - planePosition, planeNormal);
+            Vector3 clipNormal = cameraPlaneDistance >= 0.0f ? planeNormal : -planeNormal;
+            ConfigureReflectionCamera(sourceCamera, reflectionMatrix, planePosition, clipNormal, Mathf.Abs(cameraPlaneDistance));
 
             bool previousInvertCulling = GL.invertCulling;
             bool previousForceRenderingOff = surfaceRenderer.forceRenderingOff;
@@ -229,6 +254,38 @@ namespace lilToon.URP.Extensions.PlanarReflection
             }
 
             ApplyEnabledPropertyBlock();
+        }
+
+        private Vector3 GetPlanePosition(Renderer surfaceRenderer)
+        {
+            if (planeTransform != null)
+            {
+                return planeTransform.position;
+            }
+
+            if (useTargetRendererBoundsCenter && surfaceRenderer != null)
+            {
+                return surfaceRenderer.bounds.center;
+            }
+
+            return transform.position;
+        }
+
+        private Vector3 GetPlaneNormal(Renderer surfaceRenderer)
+        {
+            Transform normalSource = planeTransform;
+            if (normalSource == null && surfaceRenderer != null)
+            {
+                normalSource = surfaceRenderer.transform;
+            }
+
+            if (normalSource == null)
+            {
+                normalSource = transform;
+            }
+
+            Vector3 normal = normalSource.up;
+            return normal.sqrMagnitude > 0.0001f ? normal.normalized : Vector3.zero;
         }
 
         private void EnsureResources(Camera sourceCamera)
@@ -280,7 +337,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
             reflectionTexture.Create();
         }
 
-        private void ConfigureReflectionCamera(Camera sourceCamera, Matrix4x4 reflectionMatrix, Vector3 planePosition, Vector3 planeNormal)
+        private void ConfigureReflectionCamera(Camera sourceCamera, Matrix4x4 reflectionMatrix, Vector3 planePosition, Vector3 clipNormal, float cameraPlaneDistance)
         {
             reflectionCamera.CopyFrom(sourceCamera);
             reflectionCamera.enabled = false;
@@ -289,6 +346,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
             reflectionCamera.cullingMask = reflectionMask;
             reflectionCamera.allowMSAA = false;
             reflectionCamera.useOcclusionCulling = false;
+            reflectionCamera.nearClipPlane = Mathf.Max(0.001f, reflectionNearClipPlane);
 
             if (!copyCameraClearFlags)
             {
@@ -304,8 +362,17 @@ namespace lilToon.URP.Extensions.PlanarReflection
             Matrix4x4 worldToCamera = sourceCamera.worldToCameraMatrix * reflectionMatrix;
             reflectionCamera.worldToCameraMatrix = worldToCamera;
 
-            Vector4 clipPlane = CameraSpacePlane(reflectionCamera, planePosition, planeNormal, 1.0f);
-            reflectionCamera.projectionMatrix = sourceCamera.CalculateObliqueMatrix(clipPlane);
+            if (useObliqueClipPlane)
+            {
+                Vector3 clipPlanePosition = planePosition;
+                if (cameraPlaneDistance < minClipPlaneDistance)
+                {
+                    clipPlanePosition += clipNormal * (minClipPlaneDistance - cameraPlaneDistance);
+                }
+
+                Vector4 clipPlane = CameraSpacePlane(reflectionCamera, clipPlanePosition, clipNormal, 1.0f);
+                reflectionCamera.projectionMatrix = reflectionCamera.CalculateObliqueMatrix(clipPlane);
+            }
         }
 
         private void ApplyEnabledPropertyBlock()
