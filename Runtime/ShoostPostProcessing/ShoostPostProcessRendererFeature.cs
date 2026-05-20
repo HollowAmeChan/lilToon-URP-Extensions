@@ -164,40 +164,41 @@ namespace lilToon.URP.Extensions.PostProcessing
                 case ShoostPostProcessEffect.GlitchArt: return 14;
                 case ShoostPostProcessEffect.PrismFracture: return 15;
                 case ShoostPostProcessEffect.SpeedLines: return 16;
-                case ShoostPostProcessEffect.CinematicBars: return 17;
-                case ShoostPostProcessEffect.CameraSwitcher: return 18;
-                case ShoostPostProcessEffect.TransparentBackground: return 19;
-                case ShoostPostProcessEffect.FilmBreathGateWeave: return 20;
-                case ShoostPostProcessEffect.Tube: return 21;
-                case ShoostPostProcessEffect.VHS: return 22;
-                case ShoostPostProcessEffect.CRTEffects: return 23;
-                case ShoostPostProcessEffect.DitheringCustom: return 24;
-                case ShoostPostProcessEffect.IrisBlur: return 25;
-                case ShoostPostProcessEffect.RGBBlurV2: return 26;
-                case ShoostPostProcessEffect.RGBSplit: return 27;
-                case ShoostPostProcessEffect.RGBChannelSeparator: return 28;
-                case ShoostPostProcessEffect.BokehZoomBlur: return 29;
-                case ShoostPostProcessEffect.ApertureBokeh: return 30;
-                case ShoostPostProcessEffect.LensFlare: return 31;
-                case ShoostPostProcessEffect.Glow: return 32;
-                case ShoostPostProcessEffect.ToonMap: return 33;
-                case ShoostPostProcessEffect.GrainCustom: return 34;
-                case ShoostPostProcessEffect.VignetteCustom: return 35;
-                case ShoostPostProcessEffect.Pixelize: return 36;
-                case ShoostPostProcessEffect.ChangeFrameRate: return 37;
-                case ShoostPostProcessEffect.Distortion: return 38;
-                case ShoostPostProcessEffect.Fisheye: return 39;
-                case ShoostPostProcessEffect.CameraFlash: return 40;
-                case ShoostPostProcessEffect.CustomMaterial: return 41;
-                case ShoostPostProcessEffect.GateWeave: return 42;
-                case ShoostPostProcessEffect.LensDistortionCustom: return 43;
-                case ShoostPostProcessEffect.MotionTrail: return 44;
-                case ShoostPostProcessEffect.RGBBlur: return 45;
-                case ShoostPostProcessEffect.SharpenAfter: return 46;
-                case ShoostPostProcessEffect.RetroLookProBleedCustom: return 47;
-                case ShoostPostProcessEffect.RetroLookProNoise2Custom: return 48;
-                case ShoostPostProcessEffect.RetroLookProOldFilm2Custom: return 49;
-                case ShoostPostProcessEffect.RetroLookProTVEffectCustom: return 50;
+                case ShoostPostProcessEffect.SkyGodRays: return 17;
+                case ShoostPostProcessEffect.CinematicBars: return 18;
+                case ShoostPostProcessEffect.CameraSwitcher: return 19;
+                case ShoostPostProcessEffect.TransparentBackground: return 20;
+                case ShoostPostProcessEffect.FilmBreathGateWeave: return 21;
+                case ShoostPostProcessEffect.Tube: return 22;
+                case ShoostPostProcessEffect.VHS: return 23;
+                case ShoostPostProcessEffect.CRTEffects: return 24;
+                case ShoostPostProcessEffect.DitheringCustom: return 25;
+                case ShoostPostProcessEffect.IrisBlur: return 26;
+                case ShoostPostProcessEffect.RGBBlurV2: return 27;
+                case ShoostPostProcessEffect.RGBSplit: return 28;
+                case ShoostPostProcessEffect.RGBChannelSeparator: return 29;
+                case ShoostPostProcessEffect.BokehZoomBlur: return 30;
+                case ShoostPostProcessEffect.ApertureBokeh: return 31;
+                case ShoostPostProcessEffect.LensFlare: return 32;
+                case ShoostPostProcessEffect.Glow: return 33;
+                case ShoostPostProcessEffect.ToonMap: return 34;
+                case ShoostPostProcessEffect.GrainCustom: return 35;
+                case ShoostPostProcessEffect.VignetteCustom: return 36;
+                case ShoostPostProcessEffect.Pixelize: return 37;
+                case ShoostPostProcessEffect.ChangeFrameRate: return 38;
+                case ShoostPostProcessEffect.Distortion: return 39;
+                case ShoostPostProcessEffect.Fisheye: return 40;
+                case ShoostPostProcessEffect.CameraFlash: return 41;
+                case ShoostPostProcessEffect.CustomMaterial: return 42;
+                case ShoostPostProcessEffect.GateWeave: return 43;
+                case ShoostPostProcessEffect.LensDistortionCustom: return 44;
+                case ShoostPostProcessEffect.MotionTrail: return 45;
+                case ShoostPostProcessEffect.RGBBlur: return 46;
+                case ShoostPostProcessEffect.SharpenAfter: return 47;
+                case ShoostPostProcessEffect.RetroLookProBleedCustom: return 48;
+                case ShoostPostProcessEffect.RetroLookProNoise2Custom: return 49;
+                case ShoostPostProcessEffect.RetroLookProOldFilm2Custom: return 50;
+                case ShoostPostProcessEffect.RetroLookProTVEffectCustom: return 51;
                 default: return int.MaxValue;
             }
         }
@@ -387,6 +388,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 case ShoostPostProcessEffect.GlitchArt:
                 case ShoostPostProcessEffect.PrismFracture:
                 case ShoostPostProcessEffect.SpeedLines:
+                case ShoostPostProcessEffect.SkyGodRays:
                 case ShoostPostProcessEffect.BokehZoomBlur:
                 case ShoostPostProcessEffect.ApertureBokeh:
                 case ShoostPostProcessEffect.LensFlare:
@@ -920,12 +922,48 @@ namespace lilToon.URP.Extensions.PostProcessing
             material.SetFloat(ShoostPostProcessShaderConstants.AngleId, layer.parameters0.z * Mathf.Deg2Rad);
             material.SetFloat(ShoostPostProcessShaderConstants.LayerBlendModeId, (float)layer.blendMode);
             Color layerColor = layer.effect == ShoostPostProcessEffect.Fisheye ? Color.black : layer.color;
+            Vector4 layerParams0 = layer.parameters0;
+            Vector4 layerParams1 = layer.parameters1;
+            Vector4 layerParams2 = layer.parameters2;
+            Vector4 layerParams3 = layer.parameters3;
+            if (layer.effect == ShoostPostProcessEffect.SkyGodRays)
+            {
+                if (Mathf.Max(layerColor.r, Mathf.Max(layerColor.g, layerColor.b)) <= 0.0001f && layerColor.a <= 0.0001f)
+                {
+                    layerColor = Color.white;
+                }
+                else if (layerColor.a <= 0.0001f)
+                {
+                    layerColor.a = 1.0f;
+                }
+
+                if (layerParams0.sqrMagnitude <= 0.000001f)
+                {
+                    layerParams0 = new Vector4(1.22f, 0.99f, 181.0f, 1.08f);
+                }
+
+                if (layerParams1.sqrMagnitude <= 0.000001f)
+                {
+                    layerParams1 = new Vector4(167.0f, 109.0f, 234.0f, -53.0f);
+                }
+
+                if (layerParams2.sqrMagnitude <= 0.000001f)
+                {
+                    layerParams2 = new Vector4(1.04f, 146.0f, 3.0f, 3.0f);
+                }
+
+                if (layerParams3.sqrMagnitude <= 0.000001f)
+                {
+                    layerParams3 = new Vector4(32.0f, 0.36f, 0.10f, 0.21f);
+                }
+            }
+
             material.SetColor(ShoostPostProcessShaderConstants.LayerColorId, layerColor);
             material.SetFloat(ShoostPostProcessShaderConstants.LayerTextureEnabledId, layer.texture != null ? 1.0f : 0.0f);
-            material.SetVector(ShoostPostProcessShaderConstants.LayerParams0Id, layer.parameters0);
-            material.SetVector(ShoostPostProcessShaderConstants.LayerParams1Id, layer.parameters1);
-            material.SetVector(ShoostPostProcessShaderConstants.LayerParams2Id, layer.parameters2);
-            material.SetVector(ShoostPostProcessShaderConstants.LayerParams3Id, layer.parameters3);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams0Id, layerParams0);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams1Id, layerParams1);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams2Id, layerParams2);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams3Id, layerParams3);
             material.SetVector(ShoostPostProcessShaderConstants.LayerParams4Id, layer.parameters4);
             material.SetVector(ShoostPostProcessShaderConstants.LayerParams5Id, layer.parameters5);
             material.SetVector(ShoostPostProcessShaderConstants.LayerParams6Id, layer.parameters6);

@@ -54,7 +54,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         CinematicBars,
         GlitchArt,
         PrismFracture,
-        SpeedLines
+        SpeedLines,
+        SkyGodRays
     }
 
     public enum ShoostPostProcessBlendMode

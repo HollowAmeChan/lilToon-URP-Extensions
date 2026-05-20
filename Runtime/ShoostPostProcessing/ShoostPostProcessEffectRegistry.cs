@@ -62,6 +62,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                     return "Hidden/lilToon-Shoost/URP/Shoost/PrismFracture";
                 case ShoostPostProcessEffect.SpeedLines:
                     return "Hidden/lilToon-Shoost/URP/Shoost/SpeedLines";
+                case ShoostPostProcessEffect.SkyGodRays:
+                    return "Hidden/lilToon-Shoost/URP/Shoost/SkyGodRays";
                 case ShoostPostProcessEffect.RGBBlur:
                     return "Hidden/lilToon-Shoost/URP/Shoost/RGBBlur";
                 case ShoostPostProcessEffect.RGBBlurV2:
