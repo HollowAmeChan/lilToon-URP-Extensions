@@ -80,6 +80,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             DrawProperty("hairShadowColor");
             DrawProperty("hairShadowOpacity");
             DrawProperty("hairShadowDistancePixels");
+            DrawProperty("hairShadowDistancePerspectiveStrength");
+            DrawProperty("hairShadowDistanceReferenceDepth");
+            DrawProperty("hairShadowDistanceMinScale");
             DrawProperty("hairShadowAngleDegrees");
             DrawProperty("hairShadowSoftnessPixels");
             DrawProperty("hairShadowSpreadPixels");

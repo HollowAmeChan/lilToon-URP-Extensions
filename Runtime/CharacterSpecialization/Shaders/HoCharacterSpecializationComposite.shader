@@ -28,6 +28,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             float4 _HoCharacterEyeRevealParams; // x strength, y feather px, z dilation px, w depth bias
             float4 _HoCharacterHairShadowParams; // x opacity, y distance px, z angle deg, w softness px
             float4 _HoCharacterHairShadowParams1; // x spread px, y keep off hair, z blend mode, w use reveal area
+            float4 _HoCharacterHairShadowParams2; // x perspective strength, y reference depth, z min scale
             float4 _HoCharacterHairShadowColor;
             float4 _HoCharacterOptions; // x eye enabled, y shadow enabled, z same character only, w debug mode
 
@@ -178,6 +179,23 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 return saturate(mask);
             }
 
+            float ResolveHairShadowDistanceScale(float2 uv)
+            {
+                float strength = saturate(_HoCharacterHairShadowParams2.x);
+                float referenceDepth = max(_HoCharacterHairShadowParams2.y, 0.0);
+                if (strength <= 0.0001 || referenceDepth <= 0.0001)
+                {
+                    return 1.0;
+                }
+
+                float receiverDepth = SAMPLE_TEXTURE2D_X(_lilHoAovNormalDepthTexture, sampler_PointClamp, uv).a;
+                float hasDepth = step(0.0001, receiverDepth);
+                float minScale = saturate(_HoCharacterHairShadowParams2.z);
+                float perspectiveScale = clamp(referenceDepth / max(receiverDepth, 0.0001), minScale, 1.0);
+                float scale = lerp(1.0, perspectiveScale, hasDepth * strength);
+                return lerp(scale, 1.0, unity_OrthoParams.w);
+            }
+
             float ResolveHairShadowMask(float2 uv, float revealMask)
             {
                 if (_HoCharacterOptions.y <= 0.5)
@@ -185,7 +203,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                     return 0.0;
                 }
 
-                float distancePx = max(_HoCharacterHairShadowParams.y, 0.0);
+                float distancePx = max(_HoCharacterHairShadowParams.y, 0.0) * ResolveHairShadowDistanceScale(uv);
                 float angleRadians = radians(_HoCharacterHairShadowParams.z);
                 float2 offset = float2(cos(angleRadians), sin(angleRadians)) * distancePx * AovTexelSize();
                 float2 shiftedUv = uv - offset;

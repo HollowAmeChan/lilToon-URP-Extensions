@@ -216,6 +216,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public Vector4 eyeRevealParams;
             public Vector4 hairShadowParams;
             public Vector4 hairShadowParams1;
+            public Vector4 hairShadowParams2;
             public Color hairShadowColor;
             public Vector4 options;
         }
@@ -430,7 +431,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 passData.eyeColorTexture = eyeColorTexture;
                 passData.eyeDataTexture = eyeDataTexture;
                 passData.material = compositeMaterial;
-                FillMaterialVectors(settings, out passData.eyeRevealParams, out passData.hairShadowParams, out passData.hairShadowParams1, out passData.hairShadowColor, out passData.options);
+                FillMaterialVectors(settings, out passData.eyeRevealParams, out passData.hairShadowParams, out passData.hairShadowParams1, out passData.hairShadowParams2, out passData.hairShadowColor, out passData.options);
 
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.UseTexture(passData.aovMaskIdTexture, AccessFlags.Read);
@@ -444,7 +445,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (CompositePassData data, RasterGraphContext context) =>
                 {
-                    ApplyMaterialProperties(data.material, data.eyeRevealParams, data.hairShadowParams, data.hairShadowParams1, data.hairShadowColor, data.options);
+                    ApplyMaterialProperties(data.material, data.eyeRevealParams, data.hairShadowParams, data.hairShadowParams1, data.hairShadowParams2, data.hairShadowColor, data.options);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, data.aovNormalDepthTexture);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
@@ -506,8 +507,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         private static void ApplyMaterialProperties(Material material, HoCharacterSpecializationSettings settings)
         {
-            FillMaterialVectors(settings, out Vector4 eyeRevealParams, out Vector4 hairShadowParams, out Vector4 hairShadowParams1, out Color hairShadowColor, out Vector4 options);
-            ApplyMaterialProperties(material, eyeRevealParams, hairShadowParams, hairShadowParams1, hairShadowColor, options);
+            FillMaterialVectors(settings, out Vector4 eyeRevealParams, out Vector4 hairShadowParams, out Vector4 hairShadowParams1, out Vector4 hairShadowParams2, out Color hairShadowColor, out Vector4 options);
+            ApplyMaterialProperties(material, eyeRevealParams, hairShadowParams, hairShadowParams1, hairShadowParams2, hairShadowColor, options);
         }
 
         private static void ApplyMaterialProperties(
@@ -515,12 +516,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             Vector4 eyeRevealParams,
             Vector4 hairShadowParams,
             Vector4 hairShadowParams1,
+            Vector4 hairShadowParams2,
             Color hairShadowColor,
             Vector4 options)
         {
             material.SetVector(HoCharacterSpecializationShaderConstants.EyeRevealParamsId, eyeRevealParams);
             material.SetVector(HoCharacterSpecializationShaderConstants.HairShadowParamsId, hairShadowParams);
             material.SetVector(HoCharacterSpecializationShaderConstants.HairShadowParams1Id, hairShadowParams1);
+            material.SetVector(HoCharacterSpecializationShaderConstants.HairShadowParams2Id, hairShadowParams2);
             material.SetColor(HoCharacterSpecializationShaderConstants.HairShadowColorId, hairShadowColor);
             material.SetVector(HoCharacterSpecializationShaderConstants.OptionsId, options);
         }
@@ -530,6 +533,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             out Vector4 eyeRevealParams,
             out Vector4 hairShadowParams,
             out Vector4 hairShadowParams1,
+            out Vector4 hairShadowParams2,
             out Color hairShadowColor,
             out Vector4 options)
         {
@@ -538,6 +542,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 eyeRevealParams = Vector4.zero;
                 hairShadowParams = Vector4.zero;
                 hairShadowParams1 = Vector4.zero;
+                hairShadowParams2 = Vector4.zero;
                 hairShadowColor = Color.white;
                 options = Vector4.zero;
                 return;
@@ -558,6 +563,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 Mathf.Clamp01(settings.hairShadowKeepOffHair),
                 (float)settings.hairShadowBlendMode,
                 settings.useEyeRevealArea ? 1.0f : 0.0f);
+            hairShadowParams2 = new Vector4(
+                Mathf.Clamp01(settings.hairShadowDistancePerspectiveStrength),
+                Mathf.Max(0.0f, settings.hairShadowDistanceReferenceDepth),
+                Mathf.Clamp01(settings.hairShadowDistanceMinScale),
+                0.0f);
             hairShadowColor = settings.hairShadowColor;
             options = new Vector4(
                 settings.eyeRevealEnabled ? 1.0f : 0.0f,

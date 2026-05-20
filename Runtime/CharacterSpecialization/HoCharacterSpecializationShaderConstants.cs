@@ -20,6 +20,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public static readonly int EyeRevealParamsId = Shader.PropertyToID("_HoCharacterEyeRevealParams");
         public static readonly int HairShadowParamsId = Shader.PropertyToID("_HoCharacterHairShadowParams");
         public static readonly int HairShadowParams1Id = Shader.PropertyToID("_HoCharacterHairShadowParams1");
+        public static readonly int HairShadowParams2Id = Shader.PropertyToID("_HoCharacterHairShadowParams2");
         public static readonly int HairShadowColorId = Shader.PropertyToID("_HoCharacterHairShadowColor");
         public static readonly int OptionsId = Shader.PropertyToID("_HoCharacterOptions");
     }

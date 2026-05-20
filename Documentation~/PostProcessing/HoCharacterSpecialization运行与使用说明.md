@@ -244,6 +244,9 @@ EyeRevealArea / ObjectCustom4:
 Volume 投影颜色
 投影不透明度
 投影距离像素
+投影距离透视衰减
+投影距离参考深度
+投影距离最小倍率
 投影角度
 柔化像素
 扩散像素
@@ -308,6 +311,8 @@ shadowMask  = shiftedHair * receiver * sameCharacter
 shadowMask -= currentHair * keepOffHair
 shadowColor = VolumeColor
 ```
+
+`投影距离像素` 仍然是主距离参数。打开 `投影距离透视衰减` 后，合成 shader 会读取 AOV 线性深度，把远处的偏移按 `参考深度 / 当前深度` 缩短，并用 `投影距离最小倍率` 保底；近处不会被额外放大，正交相机保持原始像素距离。
 
 当前 DropShadow 不读取材质专用参数，只由 Volume 控制颜色、强度、距离、柔化、扩散、避开前发和混合模式。
 

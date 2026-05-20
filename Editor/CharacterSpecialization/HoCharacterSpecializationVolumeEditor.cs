@@ -26,6 +26,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private SerializedDataParameter hairShadowColor;
         private SerializedDataParameter hairShadowOpacity;
         private SerializedDataParameter hairShadowDistancePixels;
+        private SerializedDataParameter hairShadowDistancePerspectiveStrength;
+        private SerializedDataParameter hairShadowDistanceReferenceDepth;
+        private SerializedDataParameter hairShadowDistanceMinScale;
         private SerializedDataParameter hairShadowAngleDegrees;
         private SerializedDataParameter hairShadowSoftnessPixels;
         private SerializedDataParameter hairShadowSpreadPixels;
@@ -54,6 +57,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             hairShadowColor = Unpack(fetcher.Find(x => x.HairShadowColor));
             hairShadowOpacity = Unpack(fetcher.Find(x => x.HairShadowOpacity));
             hairShadowDistancePixels = Unpack(fetcher.Find(x => x.HairShadowDistancePixels));
+            hairShadowDistancePerspectiveStrength = Unpack(fetcher.Find(x => x.HairShadowDistancePerspectiveStrength));
+            hairShadowDistanceReferenceDepth = Unpack(fetcher.Find(x => x.HairShadowDistanceReferenceDepth));
+            hairShadowDistanceMinScale = Unpack(fetcher.Find(x => x.HairShadowDistanceMinScale));
             hairShadowAngleDegrees = Unpack(fetcher.Find(x => x.HairShadowAngleDegrees));
             hairShadowSoftnessPixels = Unpack(fetcher.Find(x => x.HairShadowSoftnessPixels));
             hairShadowSpreadPixels = Unpack(fetcher.Find(x => x.HairShadowSpreadPixels));
@@ -103,6 +109,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             PropertyField(hairShadowColor, new GUIContent("投影颜色"));
             PropertyField(hairShadowOpacity, new GUIContent("投影不透明度"));
             PropertyField(hairShadowDistancePixels, new GUIContent("投影距离像素"));
+            PropertyField(hairShadowDistancePerspectiveStrength, new GUIContent("投影距离透视衰减"));
+            PropertyField(hairShadowDistanceReferenceDepth, new GUIContent("投影距离参考深度"));
+            PropertyField(hairShadowDistanceMinScale, new GUIContent("投影距离最小倍率"));
             PropertyField(hairShadowAngleDegrees, new GUIContent("投影角度"));
             PropertyField(hairShadowSoftnessPixels, new GUIContent("柔化像素"));
             PropertyField(hairShadowSpreadPixels, new GUIContent("扩散像素"));

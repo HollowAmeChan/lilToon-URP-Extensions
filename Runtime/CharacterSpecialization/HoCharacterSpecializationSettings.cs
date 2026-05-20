@@ -111,6 +111,21 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [Min(0.0f)]
         public float hairShadowDistancePixels = 15.0f;
 
+        [InspectorName("投影距离透视衰减")]
+        [Tooltip("按 AOV 线性深度压缩远处的投影偏移，避免角色离镜头较远时固定像素距离显得过大。0 为关闭，1 为完全按深度衰减。")]
+        [Range(0.0f, 1.0f)]
+        public float hairShadowDistancePerspectiveStrength = 1.0f;
+
+        [InspectorName("投影距离参考深度")]
+        [Tooltip("线性深度小于或等于此值时保持原始像素距离；更远处会按参考深度 / 当前深度缩短。单位通常近似为米。")]
+        [Min(0.0f)]
+        public float hairShadowDistanceReferenceDepth = 2.0f;
+
+        [InspectorName("投影距离最小倍率")]
+        [Tooltip("远处投影距离衰减的下限，避免阴影在远景完全贴回前发。")]
+        [Range(0.0f, 1.0f)]
+        public float hairShadowDistanceMinScale = 0.25f;
+
         [InspectorName("投影角度")]
         [Tooltip("投影方向，单位为角度。")]
         public float hairShadowAngleDegrees = 240.0f;
@@ -170,6 +185,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             hairShadowColor = source.hairShadowColor;
             hairShadowOpacity = source.hairShadowOpacity;
             hairShadowDistancePixels = source.hairShadowDistancePixels;
+            hairShadowDistancePerspectiveStrength = source.hairShadowDistancePerspectiveStrength;
+            hairShadowDistanceReferenceDepth = source.hairShadowDistanceReferenceDepth;
+            hairShadowDistanceMinScale = source.hairShadowDistanceMinScale;
             hairShadowAngleDegrees = source.hairShadowAngleDegrees;
             hairShadowSoftnessPixels = source.hairShadowSoftnessPixels;
             hairShadowSpreadPixels = source.hairShadowSpreadPixels;
