@@ -58,7 +58,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
             foreach (ShoostPostProcessLayer layer in layers.value)
             {
-                if (layer != null && layer.IsActive && !IsRemovedEffectSlot(layer.effect))
+                if (layer != null && layer.IsActive && !ShoostPostProcessEffectDescriptor.Get(layer.effect).IsRemoved)
                 {
                     return true;
                 }
@@ -70,14 +70,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         public bool IsTileCompatible()
         {
             return false;
-        }
-
-        private static bool IsRemovedEffectSlot(ShoostPostProcessEffect effect)
-        {
-            return effect == ShoostPostProcessEffect.RemovedEffectSlot13 ||
-                   effect == ShoostPostProcessEffect.RemovedEffectSlot30 ||
-                   effect == ShoostPostProcessEffect.RemovedEffectSlot31 ||
-                   effect == ShoostPostProcessEffect.RemovedEffectSlot32;
         }
     }
 }
