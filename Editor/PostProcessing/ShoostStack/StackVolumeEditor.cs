@@ -15,6 +15,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private const float LineSpacing = 2.0f;
         private const float LevelAdjustmentInitMarker = -12345.0f;
         private const float RgbSplitInitMarker = -12346.0f;
+        private const float LogoOverlayInitMarker = -12347.0f;
         private const float EffectIconSize = 22.0f;
         private const float EffectIconSpacing = 2.0f;
         private const float ColorWheelMinSize = 64.0f;
@@ -48,6 +49,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             ShoostPostProcessEffect.SharpenBefore,
             ShoostPostProcessEffect.AutoWhiteBalance,
+            ShoostPostProcessEffect.LogoOverlay,
             ShoostPostProcessEffect.LevelAdjustment,
             ShoostPostProcessEffect.ColorGradingCustom,
             ShoostPostProcessEffect.Gradient,
@@ -61,7 +63,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ShoostPostProcessEffect.PrismFracture,
             ShoostPostProcessEffect.SpeedLines,
             ShoostPostProcessEffect.SkyGodRays,
-            ShoostPostProcessEffect.CinematicBars,
             ShoostPostProcessEffect.CameraSwitcher,
             ShoostPostProcessEffect.TransparentBackground,
             ShoostPostProcessEffect.FilmBreathGateWeave,
@@ -94,13 +95,16 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ShoostPostProcessEffect.RetroLookProBleedCustom,
             ShoostPostProcessEffect.RetroLookProNoise2Custom,
             ShoostPostProcessEffect.RetroLookProOldFilm2Custom,
-            ShoostPostProcessEffect.RetroLookProTVEffectCustom
+            ShoostPostProcessEffect.RetroLookProTVEffectCustom,
+            // 特殊置底：电影黑边必须最后覆盖，避免再被后续 Shoost 滤镜影响。
+            ShoostPostProcessEffect.CinematicBars
         };
 
         private static readonly EffectToggleEntry[] VisibleEffectOrder =
         {
             new EffectToggleEntry(ShoostPostProcessEffect.SharpenBefore, "锐化", "icon_Sharpen_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.AutoWhiteBalance, "白平衡", "icon_WhiteBalance_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.LogoOverlay, "图标显示", "icon_Picture_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.LevelAdjustment, "色阶", "icon_LevelsAdjustment_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.ColorGradingCustom, "调色", "icon_ColorGrading_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.Gradient, "渐变", "icon_Gradient_v1"),
@@ -196,7 +200,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "故障艺术",
             "棱镜破碎",
             "集中线",
-            "天空神光"
+            "天空神光",
+            "图标显示"
         };
 
         private static readonly GUIContent[] BlendModeDisplayNames =
@@ -472,6 +477,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.LogoOverlay)
+            {
+                DrawLogoOverlayElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ShoostPostProcessEffect.Fisheye)
             {
                 DrawFisheyeElement(rect, element);
@@ -685,6 +696,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
                     lineCount += 3;
                     break;
+                case ShoostPostProcessEffect.LogoOverlay:
+                    lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
+                    lineCount += 24;
+                    break;
                 case ShoostPostProcessEffect.Fisheye:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
                     lineCount += 6;
@@ -882,6 +897,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ShoostPostProcessEffect.BokehZoomBlur:
                 case ShoostPostProcessEffect.ApertureBokeh:
                 case ShoostPostProcessEffect.LensFlare:
+                case ShoostPostProcessEffect.LogoOverlay:
                 case ShoostPostProcessEffect.Glow:
                     return false;
                 default:
@@ -1587,6 +1603,23 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetColor(element, "color", Color.white);
                     SetVector4(element, "parameters0", new Vector4(0.0f, 0.0f, 1.0f, 0.0f));
                     break;
+                case ShoostPostProcessEffect.LogoOverlay:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetColor(element, "color", Color.white);
+                    SetVector4(element, "parameters0", new Vector4(0.5f, 0.5f, 0.2f, 1.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.5f, 0.5f, 0.2f, 1.0f));
+                    SetVector4(element, "parameters2", new Vector4(0.5f, 0.5f, 0.2f, 1.0f));
+                    SetVector4(element, "parameters3", new Vector4(0.5f, 0.5f, 0.2f, 1.0f));
+                    SetVector4(element, "parameters4", new Vector4(0.5f, 0.5f, 0.2f, 1.0f));
+                    SetVector4(element, "parameters5", new Vector4(0.5f, 0.5f, 0.2f, 1.0f));
+                    SetVector4(element, "parameters6", new Vector4(0.5f, 0.5f, 0.2f, 1.0f));
+                    SetVector4(element, "parameters7", new Vector4(0.5f, 0.5f, 0.2f, 1.0f));
+                    SetVector4(element, "parameters8", new Vector4(0.0f, 1.0f, 2.0f, 3.0f));
+                    SetVector4(element, "parameters9", new Vector4(4.0f, 5.0f, 6.0f, 7.0f));
+                    SetVector4(element, "parameters10", Vector4.one);
+                    SetVector4(element, "parameters11", Vector4.one);
+                    SetVector4(element, "parameters12", new Vector4(LogoOverlayInitMarker, 0.0f, 0.0f, 0.0f));
+                    break;
                 case ShoostPostProcessEffect.Fisheye:
                     SetFloat(element, "intensity", 1.0f);
                     SetColor(element, "color", Color.black);
@@ -1821,6 +1854,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetEnum(element, "blendMode", (int)ShoostPostProcessBlendMode.Normal);
             SetColor(element, "color", Color.white);
             SetObjectReference(element, "texture", null);
+            SetObjectReference(element, "logoTexture0", null);
+            SetObjectReference(element, "logoTexture1", null);
+            SetObjectReference(element, "logoTexture2", null);
+            SetObjectReference(element, "logoTexture3", null);
+            SetObjectReference(element, "logoTexture4", null);
+            SetObjectReference(element, "logoTexture5", null);
+            SetObjectReference(element, "logoTexture6", null);
+            SetObjectReference(element, "logoTexture7", null);
             SetVector4(element, "parameters0", Vector4.zero);
             SetVector4(element, "parameters1", Vector4.zero);
             SetVector4(element, "parameters2", Vector4.zero);

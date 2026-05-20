@@ -55,7 +55,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         GlitchArt,
         PrismFracture,
         SpeedLines,
-        SkyGodRays
+        SkyGodRays,
+        LogoOverlay
     }
 
     public enum ShoostPostProcessBlendMode

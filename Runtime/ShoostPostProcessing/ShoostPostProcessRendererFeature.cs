@@ -152,8 +152,9 @@ namespace lilToon.URP.Extensions.PostProcessing
             {
                 case ShoostPostProcessEffect.SharpenBefore: return 0;
                 case ShoostPostProcessEffect.AutoWhiteBalance: return 1;
-                case ShoostPostProcessEffect.LevelAdjustment: return 2;
-                case ShoostPostProcessEffect.ColorGradingCustom: return 3;
+                case ShoostPostProcessEffect.LogoOverlay: return 2;
+                case ShoostPostProcessEffect.LevelAdjustment: return 3;
+                case ShoostPostProcessEffect.ColorGradingCustom: return 4;
                 case ShoostPostProcessEffect.Gradient: return 7;
                 case ShoostPostProcessEffect.Lighting: return 8;
                 case ShoostPostProcessEffect.CenterColorCorrection: return 9;
@@ -165,7 +166,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                 case ShoostPostProcessEffect.PrismFracture: return 15;
                 case ShoostPostProcessEffect.SpeedLines: return 16;
                 case ShoostPostProcessEffect.SkyGodRays: return 17;
-                case ShoostPostProcessEffect.CinematicBars: return 18;
+                // 特殊置底：电影黑边必须最后覆盖，避免再被后续 Shoost 滤镜影响。
+                case ShoostPostProcessEffect.CinematicBars: return 10000;
                 case ShoostPostProcessEffect.CameraSwitcher: return 19;
                 case ShoostPostProcessEffect.TransparentBackground: return 20;
                 case ShoostPostProcessEffect.FilmBreathGateWeave: return 21;
@@ -392,6 +394,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 case ShoostPostProcessEffect.BokehZoomBlur:
                 case ShoostPostProcessEffect.ApertureBokeh:
                 case ShoostPostProcessEffect.LensFlare:
+                case ShoostPostProcessEffect.LogoOverlay:
                 case ShoostPostProcessEffect.Glow:
                     return false;
                 default:
@@ -402,6 +405,8 @@ namespace lilToon.URP.Extensions.PostProcessing
 
     internal sealed class ShoostPostProcessPass : ScriptableRenderPass
     {
+        private const float LogoOverlayInitMarker = -12347.0f;
+
         private readonly List<ShoostPostProcessRuntimeLayer> runtimeLayers = new List<ShoostPostProcessRuntimeLayer>();
         private readonly ProfilingSampler _profilingSampler;
         private readonly string _passName;
@@ -926,6 +931,15 @@ namespace lilToon.URP.Extensions.PostProcessing
             Vector4 layerParams1 = layer.parameters1;
             Vector4 layerParams2 = layer.parameters2;
             Vector4 layerParams3 = layer.parameters3;
+            Vector4 layerParams4 = layer.parameters4;
+            Vector4 layerParams5 = layer.parameters5;
+            Vector4 layerParams6 = layer.parameters6;
+            Vector4 layerParams7 = layer.parameters7;
+            Vector4 layerParams8 = layer.parameters8;
+            Vector4 layerParams9 = layer.parameters9;
+            Vector4 layerParams10 = layer.parameters10;
+            Vector4 layerParams11 = layer.parameters11;
+            Vector4 layerParams12 = layer.parameters12;
             if (layer.effect == ShoostPostProcessEffect.SkyGodRays)
             {
                 if (Mathf.Max(layerColor.r, Mathf.Max(layerColor.g, layerColor.b)) <= 0.0001f && layerColor.a <= 0.0001f)
@@ -957,6 +971,25 @@ namespace lilToon.URP.Extensions.PostProcessing
                     layerParams3 = new Vector4(32.0f, 0.36f, 0.0f, 0.21f);
                 }
             }
+            else if (layer.effect == ShoostPostProcessEffect.LogoOverlay)
+            {
+                if (!Mathf.Approximately(layerParams12.x, LogoOverlayInitMarker))
+                {
+                    layerParams0 = new Vector4(0.5f, 0.5f, 0.2f, 1.0f);
+                    layerParams1 = new Vector4(0.5f, 0.5f, 0.2f, 1.0f);
+                    layerParams2 = new Vector4(0.5f, 0.5f, 0.2f, 1.0f);
+                    layerParams3 = new Vector4(0.5f, 0.5f, 0.2f, 1.0f);
+                    layerParams4 = new Vector4(0.5f, 0.5f, 0.2f, 1.0f);
+                    layerParams5 = new Vector4(0.5f, 0.5f, 0.2f, 1.0f);
+                    layerParams6 = new Vector4(0.5f, 0.5f, 0.2f, 1.0f);
+                    layerParams7 = new Vector4(0.5f, 0.5f, 0.2f, 1.0f);
+                    layerParams8 = new Vector4(0.0f, 1.0f, 2.0f, 3.0f);
+                    layerParams9 = new Vector4(4.0f, 5.0f, 6.0f, 7.0f);
+                    layerParams10 = Vector4.one;
+                    layerParams11 = Vector4.one;
+                    layerParams12 = new Vector4(LogoOverlayInitMarker, 0.0f, 0.0f, 0.0f);
+                }
+            }
 
             material.SetColor(ShoostPostProcessShaderConstants.LayerColorId, layerColor);
             material.SetFloat(ShoostPostProcessShaderConstants.LayerTextureEnabledId, layer.texture != null ? 1.0f : 0.0f);
@@ -964,19 +997,52 @@ namespace lilToon.URP.Extensions.PostProcessing
             material.SetVector(ShoostPostProcessShaderConstants.LayerParams1Id, layerParams1);
             material.SetVector(ShoostPostProcessShaderConstants.LayerParams2Id, layerParams2);
             material.SetVector(ShoostPostProcessShaderConstants.LayerParams3Id, layerParams3);
-            material.SetVector(ShoostPostProcessShaderConstants.LayerParams4Id, layer.parameters4);
-            material.SetVector(ShoostPostProcessShaderConstants.LayerParams5Id, layer.parameters5);
-            material.SetVector(ShoostPostProcessShaderConstants.LayerParams6Id, layer.parameters6);
-            material.SetVector(ShoostPostProcessShaderConstants.LayerParams7Id, layer.parameters7);
-            material.SetVector(ShoostPostProcessShaderConstants.LayerParams8Id, layer.parameters8);
-            material.SetVector(ShoostPostProcessShaderConstants.LayerParams9Id, layer.parameters9);
-            material.SetVector(ShoostPostProcessShaderConstants.LayerParams10Id, layer.parameters10);
-            material.SetVector(ShoostPostProcessShaderConstants.LayerParams11Id, layer.parameters11);
-            material.SetVector(ShoostPostProcessShaderConstants.LayerParams12Id, layer.parameters12);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams4Id, layerParams4);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams5Id, layerParams5);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams6Id, layerParams6);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams7Id, layerParams7);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams8Id, layerParams8);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams9Id, layerParams9);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams10Id, layerParams10);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams11Id, layerParams11);
+            material.SetVector(ShoostPostProcessShaderConstants.LayerParams12Id, layerParams12);
             if (layer.texture != null)
             {
                 material.SetTexture(ShoostPostProcessShaderConstants.LayerTextureId, layer.texture);
             }
+
+            material.SetVector(
+                ShoostPostProcessShaderConstants.LogoTextureEnabled0Id,
+                new Vector4(
+                    layer.logoTexture0 != null ? 1.0f : 0.0f,
+                    layer.logoTexture1 != null ? 1.0f : 0.0f,
+                    layer.logoTexture2 != null ? 1.0f : 0.0f,
+                    layer.logoTexture3 != null ? 1.0f : 0.0f));
+            material.SetVector(
+                ShoostPostProcessShaderConstants.LogoTextureEnabled1Id,
+                new Vector4(
+                    layer.logoTexture4 != null ? 1.0f : 0.0f,
+                    layer.logoTexture5 != null ? 1.0f : 0.0f,
+                    layer.logoTexture6 != null ? 1.0f : 0.0f,
+                    layer.logoTexture7 != null ? 1.0f : 0.0f));
+            SetLogoTexture(material, 0, layer.logoTexture0);
+            SetLogoTexture(material, 1, layer.logoTexture1);
+            SetLogoTexture(material, 2, layer.logoTexture2);
+            SetLogoTexture(material, 3, layer.logoTexture3);
+            SetLogoTexture(material, 4, layer.logoTexture4);
+            SetLogoTexture(material, 5, layer.logoTexture5);
+            SetLogoTexture(material, 6, layer.logoTexture6);
+            SetLogoTexture(material, 7, layer.logoTexture7);
+        }
+
+        private static void SetLogoTexture(Material material, int index, Texture texture)
+        {
+            if (texture == null)
+            {
+                return;
+            }
+
+            material.SetTexture(ShoostPostProcessShaderConstants.LogoTextureIds[index], texture);
         }
 
         private static void ApplyShoostAovCompositeProperties(ShoostPostProcessLayer layer, Material material)

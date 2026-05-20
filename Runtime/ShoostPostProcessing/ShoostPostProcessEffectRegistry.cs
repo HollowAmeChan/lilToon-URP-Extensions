@@ -16,6 +16,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                     return "Hidden/lilToon-Shoost/URP/Shoost/ApertureBokeh";
                 case ShoostPostProcessEffect.LensFlare:
                     return "Hidden/lilToon-Shoost/URP/Shoost/LensFlare";
+                case ShoostPostProcessEffect.LogoOverlay:
+                    return "Hidden/lilToon-Shoost/URP/Shoost/LogoOverlay";
                 case ShoostPostProcessEffect.ChangeFrameRate:
                     return "Hidden/lilToon-Shoost/URP/Shoost/ChangeFrameRate";
                 case ShoostPostProcessEffect.CenterColorCorrection:

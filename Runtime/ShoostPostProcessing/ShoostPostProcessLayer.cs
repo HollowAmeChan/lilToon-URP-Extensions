@@ -39,6 +39,30 @@ namespace lilToon.URP.Extensions.PostProcessing
         [Tooltip("可选纹理。会以 _LayerTexture 暴露给 Shader。")]
         public Texture texture;
 
+        [Tooltip("Logo overlay input texture 0.")]
+        public Texture logoTexture0;
+
+        [Tooltip("Logo overlay input texture 1.")]
+        public Texture logoTexture1;
+
+        [Tooltip("Logo overlay input texture 2.")]
+        public Texture logoTexture2;
+
+        [Tooltip("Logo overlay input texture 3.")]
+        public Texture logoTexture3;
+
+        [Tooltip("Logo overlay input texture 4.")]
+        public Texture logoTexture4;
+
+        [Tooltip("Logo overlay input texture 5.")]
+        public Texture logoTexture5;
+
+        [Tooltip("Logo overlay input texture 6.")]
+        public Texture logoTexture6;
+
+        [Tooltip("Logo overlay input texture 7.")]
+        public Texture logoTexture7;
+
         [Tooltip("通用参数向量 0。会以 _LayerParams0 暴露给 Shader。")]
         public Vector4 parameters0;
 

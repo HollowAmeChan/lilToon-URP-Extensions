@@ -15,6 +15,19 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static readonly int LayerColorId = Shader.PropertyToID("_LayerColor");
         public static readonly int LayerTextureId = Shader.PropertyToID("_LayerTexture");
         public static readonly int LayerTextureEnabledId = Shader.PropertyToID("_LayerTextureEnabled");
+        public static readonly int[] LogoTextureIds =
+        {
+            Shader.PropertyToID("_LogoTexture0"),
+            Shader.PropertyToID("_LogoTexture1"),
+            Shader.PropertyToID("_LogoTexture2"),
+            Shader.PropertyToID("_LogoTexture3"),
+            Shader.PropertyToID("_LogoTexture4"),
+            Shader.PropertyToID("_LogoTexture5"),
+            Shader.PropertyToID("_LogoTexture6"),
+            Shader.PropertyToID("_LogoTexture7")
+        };
+        public static readonly int LogoTextureEnabled0Id = Shader.PropertyToID("_LogoTextureEnabled0");
+        public static readonly int LogoTextureEnabled1Id = Shader.PropertyToID("_LogoTextureEnabled1");
         public static readonly int LayerParams0Id = Shader.PropertyToID("_LayerParams0");
         public static readonly int LayerParams1Id = Shader.PropertyToID("_LayerParams1");
         public static readonly int LayerParams2Id = Shader.PropertyToID("_LayerParams2");
