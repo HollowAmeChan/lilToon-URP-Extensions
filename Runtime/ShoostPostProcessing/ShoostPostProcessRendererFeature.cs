@@ -163,40 +163,41 @@ namespace lilToon.URP.Extensions.PostProcessing
                 case ShoostPostProcessEffect.Particle: return 13;
                 case ShoostPostProcessEffect.GlitchArt: return 14;
                 case ShoostPostProcessEffect.PrismFracture: return 15;
-                case ShoostPostProcessEffect.CinematicBars: return 16;
-                case ShoostPostProcessEffect.CameraSwitcher: return 17;
-                case ShoostPostProcessEffect.TransparentBackground: return 18;
-                case ShoostPostProcessEffect.FilmBreathGateWeave: return 19;
-                case ShoostPostProcessEffect.Tube: return 20;
-                case ShoostPostProcessEffect.VHS: return 21;
-                case ShoostPostProcessEffect.CRTEffects: return 22;
-                case ShoostPostProcessEffect.DitheringCustom: return 23;
-                case ShoostPostProcessEffect.IrisBlur: return 24;
-                case ShoostPostProcessEffect.RGBBlurV2: return 25;
-                case ShoostPostProcessEffect.RGBSplit: return 26;
-                case ShoostPostProcessEffect.RGBChannelSeparator: return 27;
-                case ShoostPostProcessEffect.BokehZoomBlur: return 28;
-                case ShoostPostProcessEffect.ApertureBokeh: return 29;
-                case ShoostPostProcessEffect.LensFlare: return 30;
-                case ShoostPostProcessEffect.Glow: return 31;
-                case ShoostPostProcessEffect.ToonMap: return 32;
-                case ShoostPostProcessEffect.GrainCustom: return 33;
-                case ShoostPostProcessEffect.VignetteCustom: return 34;
-                case ShoostPostProcessEffect.Pixelize: return 35;
-                case ShoostPostProcessEffect.ChangeFrameRate: return 36;
-                case ShoostPostProcessEffect.Distortion: return 37;
-                case ShoostPostProcessEffect.Fisheye: return 38;
-                case ShoostPostProcessEffect.CameraFlash: return 39;
-                case ShoostPostProcessEffect.CustomMaterial: return 40;
-                case ShoostPostProcessEffect.GateWeave: return 41;
-                case ShoostPostProcessEffect.LensDistortionCustom: return 42;
-                case ShoostPostProcessEffect.MotionTrail: return 43;
-                case ShoostPostProcessEffect.RGBBlur: return 44;
-                case ShoostPostProcessEffect.SharpenAfter: return 45;
-                case ShoostPostProcessEffect.RetroLookProBleedCustom: return 46;
-                case ShoostPostProcessEffect.RetroLookProNoise2Custom: return 47;
-                case ShoostPostProcessEffect.RetroLookProOldFilm2Custom: return 48;
-                case ShoostPostProcessEffect.RetroLookProTVEffectCustom: return 49;
+                case ShoostPostProcessEffect.SpeedLines: return 16;
+                case ShoostPostProcessEffect.CinematicBars: return 17;
+                case ShoostPostProcessEffect.CameraSwitcher: return 18;
+                case ShoostPostProcessEffect.TransparentBackground: return 19;
+                case ShoostPostProcessEffect.FilmBreathGateWeave: return 20;
+                case ShoostPostProcessEffect.Tube: return 21;
+                case ShoostPostProcessEffect.VHS: return 22;
+                case ShoostPostProcessEffect.CRTEffects: return 23;
+                case ShoostPostProcessEffect.DitheringCustom: return 24;
+                case ShoostPostProcessEffect.IrisBlur: return 25;
+                case ShoostPostProcessEffect.RGBBlurV2: return 26;
+                case ShoostPostProcessEffect.RGBSplit: return 27;
+                case ShoostPostProcessEffect.RGBChannelSeparator: return 28;
+                case ShoostPostProcessEffect.BokehZoomBlur: return 29;
+                case ShoostPostProcessEffect.ApertureBokeh: return 30;
+                case ShoostPostProcessEffect.LensFlare: return 31;
+                case ShoostPostProcessEffect.Glow: return 32;
+                case ShoostPostProcessEffect.ToonMap: return 33;
+                case ShoostPostProcessEffect.GrainCustom: return 34;
+                case ShoostPostProcessEffect.VignetteCustom: return 35;
+                case ShoostPostProcessEffect.Pixelize: return 36;
+                case ShoostPostProcessEffect.ChangeFrameRate: return 37;
+                case ShoostPostProcessEffect.Distortion: return 38;
+                case ShoostPostProcessEffect.Fisheye: return 39;
+                case ShoostPostProcessEffect.CameraFlash: return 40;
+                case ShoostPostProcessEffect.CustomMaterial: return 41;
+                case ShoostPostProcessEffect.GateWeave: return 42;
+                case ShoostPostProcessEffect.LensDistortionCustom: return 43;
+                case ShoostPostProcessEffect.MotionTrail: return 44;
+                case ShoostPostProcessEffect.RGBBlur: return 45;
+                case ShoostPostProcessEffect.SharpenAfter: return 46;
+                case ShoostPostProcessEffect.RetroLookProBleedCustom: return 47;
+                case ShoostPostProcessEffect.RetroLookProNoise2Custom: return 48;
+                case ShoostPostProcessEffect.RetroLookProOldFilm2Custom: return 49;
+                case ShoostPostProcessEffect.RetroLookProTVEffectCustom: return 50;
                 default: return int.MaxValue;
             }
         }
@@ -385,6 +386,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 case ShoostPostProcessEffect.CinematicBars:
                 case ShoostPostProcessEffect.GlitchArt:
                 case ShoostPostProcessEffect.PrismFracture:
+                case ShoostPostProcessEffect.SpeedLines:
                 case ShoostPostProcessEffect.BokehZoomBlur:
                 case ShoostPostProcessEffect.ApertureBokeh:
                 case ShoostPostProcessEffect.LensFlare:

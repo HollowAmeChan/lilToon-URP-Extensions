@@ -59,6 +59,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ShoostPostProcessEffect.Particle,
             ShoostPostProcessEffect.GlitchArt,
             ShoostPostProcessEffect.PrismFracture,
+            ShoostPostProcessEffect.SpeedLines,
             ShoostPostProcessEffect.CinematicBars,
             ShoostPostProcessEffect.CameraSwitcher,
             ShoostPostProcessEffect.TransparentBackground,
@@ -111,6 +112,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ShoostPostProcessEffect.Particle, "粒子", "icon_Particle_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.GlitchArt, "故障艺术", "icon_Distortion_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.PrismFracture, "棱镜破碎", "icon_RGBSplit_v1"),
+            new EffectToggleEntry(ShoostPostProcessEffect.SpeedLines, "集中线", "icon_Flare_Ray_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.CinematicBars, "电影黑边", "icon_ScreenEffects_v1"),
             new EffectToggleEntry(ShoostPostProcessEffect.FilmBreathGateWeave, "胶片", "icon_Film_v3"),
             new EffectToggleEntry(ShoostPostProcessEffect.Tube, "电视", "icon_TV_v1"),
@@ -190,7 +192,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "镜头光晕",
             "电影黑边",
             "故障艺术",
-            "棱镜破碎"
+            "棱镜破碎",
+            "集中线"
         };
 
         private static readonly GUIContent[] BlendModeDisplayNames =
@@ -604,6 +607,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ShoostPostProcessEffect.SpeedLines)
+            {
+                DrawSpeedLinesElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ShoostPostProcessEffect.LevelAdjustment)
             {
                 DrawLevelAdjustmentElement(rect, element);
@@ -757,6 +766,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
                     lineCount += 11;
                     break;
+                case ShoostPostProcessEffect.SpeedLines:
+                    lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
+                    lineCount += 11;
+                    break;
                 case ShoostPostProcessEffect.LevelAdjustment:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
                     lineCount += 6;
@@ -851,6 +864,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ShoostPostProcessEffect.CinematicBars:
                 case ShoostPostProcessEffect.GlitchArt:
                 case ShoostPostProcessEffect.PrismFracture:
+                case ShoostPostProcessEffect.SpeedLines:
                 case ShoostPostProcessEffect.BokehZoomBlur:
                 case ShoostPostProcessEffect.ApertureBokeh:
                 case ShoostPostProcessEffect.LensFlare:
@@ -1749,6 +1763,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters0", new Vector4(0.5f, 0.5f, 0.42f, 0.12f));
                     SetVector4(element, "parameters1", new Vector4(0.58f, 0.74f, 15.0f, 0.0f));
                     SetVector4(element, "parameters2", new Vector4(0.38f, 1.0f, 0.0f, 0.0f));
+                    break;
+                case ShoostPostProcessEffect.SpeedLines:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetColor(element, "color", Color.black);
+                    SetVector4(element, "parameters0", new Vector4(0.5f, 0.5f, 0.34f, 0.82f));
+                    SetVector4(element, "parameters1", new Vector4(88.0f, 0.24f, 0.72f, 0.05f));
+                    SetVector4(element, "parameters2", new Vector4(2.0f, 0.0f, 0.16f, 2.0f));
+                    SetVector4(element, "parameters3", new Vector4(0.55f, 0.10f, 10.0f, 0.10f));
                     break;
                 case ShoostPostProcessEffect.Lighting:
                 case ShoostPostProcessEffect.LED:
