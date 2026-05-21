@@ -146,7 +146,7 @@ namespace lilToon.URP.Extensions.AOV
 
         [InspectorName("AOV 写入时机")]
         [Tooltip("HoAOV 写入数据纹理的时机。应早于 HoPost 和 ShoostStack。")]
-        public RenderPassEvent aovPassEvent = RenderPassEvent.AfterRenderingTransparents;
+        public RenderPassEvent aovPassEvent = RenderPassEvent.AfterRenderingOpaques;
 
         [InspectorName("调试显示时机")]
         [Tooltip("调试预览写回 camera color 的时机。")]

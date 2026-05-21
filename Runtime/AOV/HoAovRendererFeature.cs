@@ -301,7 +301,7 @@ namespace lilToon.URP.Extensions.AOV
             this.renderTargets = renderTargets;
             this.clearMaterial = clearMaterial;
             this.fallbackMaterial = fallbackMaterial;
-            renderPassEvent = settings != null ? settings.aovPassEvent : RenderPassEvent.AfterRenderingTransparents;
+            renderPassEvent = settings != null ? settings.aovPassEvent : RenderPassEvent.AfterRenderingOpaques;
             ConfigureInput(ScriptableRenderPassInput.None);
             ConfigureFiltering();
         }
@@ -316,7 +316,7 @@ namespace lilToon.URP.Extensions.AOV
             this.renderTargets = renderTargets;
             this.clearMaterial = clearMaterial;
             this.fallbackMaterial = fallbackMaterial;
-            renderPassEvent = settings != null ? settings.aovPassEvent : RenderPassEvent.AfterRenderingTransparents;
+            renderPassEvent = settings != null ? settings.aovPassEvent : RenderPassEvent.AfterRenderingOpaques;
             ConfigureInput(ScriptableRenderPassInput.None);
             ConfigureFiltering();
         }
@@ -893,6 +893,10 @@ namespace lilToon.URP.Extensions.AOV
         public TextureHandle custom0Texture = TextureHandle.nullHandle;
         public TextureHandle objectCustom0Texture = TextureHandle.nullHandle;
         public TextureHandle objectCustom1Texture = TextureHandle.nullHandle;
+
+        public bool HasRequiredTextures => maskIdTexture.IsValid()
+            && normalDepthTexture.IsValid()
+            && surfaceDataTexture.IsValid();
 
         public override void Reset()
         {

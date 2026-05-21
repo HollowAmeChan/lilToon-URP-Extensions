@@ -27,7 +27,7 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
         }
 
         ZWrite On
-        ZTest LEqual
+        ZTest Less
         Cull Off
 
         Pass
