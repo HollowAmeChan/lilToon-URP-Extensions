@@ -99,7 +99,9 @@ namespace lilToon.URP.Extensions.AOV
         [InspectorName("RSUV 标记")]
         RsuvFlags,
         [InspectorName("RSUV 仅写 ID")]
-        RsuvIdOnly
+        RsuvIdOnly,
+        [InspectorName("SSS 源色")]
+        Sss
     }
 
     public enum HoAovRenderScale

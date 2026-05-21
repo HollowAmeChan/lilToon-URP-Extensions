@@ -162,8 +162,8 @@ float2 HoShadowCastPcssOffset(int index, int sampleCount, float rotation)
 float HoShadowCastSampleRawDepth(float2 atlasUv, bool secondDirectional)
 {
     return secondDirectional
-        ? SAMPLE_TEXTURE2D(_HoShadowCastSecondDirectionalAtlas, sampler_PointClamp, atlasUv).r
-        : SAMPLE_TEXTURE2D(_HoShadowCastAtlas, sampler_PointClamp, atlasUv).r;
+        ? SAMPLE_TEXTURE2D_LOD(_HoShadowCastSecondDirectionalAtlas, sampler_PointClamp, atlasUv, 0).r
+        : SAMPLE_TEXTURE2D_LOD(_HoShadowCastAtlas, sampler_PointClamp, atlasUv, 0).r;
 }
 
 float HoShadowCastSampleManualPcf(float3 sliceCoord, float4 sliceData, float4 atlasSize, float4 pcssParams2, bool secondDirectional)
@@ -227,14 +227,14 @@ float HoShadowCastSamplePcss(float3 sliceCoord, float4 sliceData, float4 atlasSi
     int blockerCount = 0;
     float blockerRadius = max(pcssParams.z, 0.0) * radiusScale;
     [loop]
-    for (int i = 0; i < HO_SHADOW_CAST_MAX_PCSS_BLOCKER_SAMPLES; i++)
+    for (int blockerIndex = 0; blockerIndex < HO_SHADOW_CAST_MAX_PCSS_BLOCKER_SAMPLES; blockerIndex++)
     {
-        if (i >= blockerSampleCount)
+        if (blockerIndex >= blockerSampleCount)
         {
             break;
         }
 
-        float2 sampleUv = clamp(atlasUv + HoShadowCastPcssOffset(i, blockerSampleCount, rotation) * texelSize * blockerRadius, atlasMin, atlasMax);
+        float2 sampleUv = clamp(atlasUv + HoShadowCastPcssOffset(blockerIndex, blockerSampleCount, rotation) * texelSize * blockerRadius, atlasMin, atlasMax);
         float rawDepth = HoShadowCastSampleRawDepth(sampleUv, secondDirectional);
         if (HoShadowCastIsBlocker(rawDepth, sliceCoord.z, pcssParams2.x))
         {
@@ -262,14 +262,14 @@ float HoShadowCastSamplePcss(float3 sliceCoord, float4 sliceData, float4 atlasSi
 
     float result = 0.0;
     [loop]
-    for (int i = 0; i < HO_SHADOW_CAST_MAX_PCSS_FILTER_SAMPLES; i++)
+    for (int filterIndex = 0; filterIndex < HO_SHADOW_CAST_MAX_PCSS_FILTER_SAMPLES; filterIndex++)
     {
-        if (i >= filterSampleCount)
+        if (filterIndex >= filterSampleCount)
         {
             break;
         }
 
-        float2 sampleUv = clamp(atlasUv + HoShadowCastPcssOffset(i, filterSampleCount, rotation + 1.731) * texelSize * filterRadius, atlasMin, atlasMax);
+        float2 sampleUv = clamp(atlasUv + HoShadowCastPcssOffset(filterIndex, filterSampleCount, rotation + 1.731) * texelSize * filterRadius, atlasMin, atlasMax);
         result += HoShadowCastCompareDepth(HoShadowCastSampleRawDepth(sampleUv, secondDirectional), sliceCoord.z, pcssParams2.x);
     }
 

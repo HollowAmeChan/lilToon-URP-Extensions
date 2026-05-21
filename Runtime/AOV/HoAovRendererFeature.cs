@@ -250,6 +250,11 @@ namespace lilToon.URP.Extensions.AOV
             HoAovShaderConstants.ShaderTagId
         };
 
+        private static readonly List<ShaderTagId> SssShaderTagIds = new List<ShaderTagId>
+        {
+            HoAovShaderConstants.SssShaderTagId
+        };
+
         private const int FallbackMaxRenderQueue = (int)RenderQueue.AlphaTest - 1;
 
         private readonly RTHandle[] colorTargets = new RTHandle[7];
@@ -274,6 +279,7 @@ namespace lilToon.URP.Extensions.AOV
             public TextureHandle custom0Texture;
             public TextureHandle objectCustom0Texture;
             public TextureHandle objectCustom1Texture;
+            public TextureHandle sssTexture;
             public float systemChannelMask;
         }
 
@@ -370,6 +376,21 @@ namespace lilToon.URP.Extensions.AOV
 
                 DrawingSettings aovDrawingSettings = CreateDrawingSettings(AovShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
                 context.DrawRenderers(renderingData.cullResults, ref aovDrawingSettings, ref aovFilteringSettings, ref renderStateBlock);
+
+                cmd.SetRenderTarget(
+                    renderTargets.SssTexture,
+                    RenderBufferLoadAction.DontCare,
+                    RenderBufferStoreAction.Store,
+                    renderTargets.DepthTexture,
+                    RenderBufferLoadAction.Load,
+                    RenderBufferStoreAction.Store);
+                cmd.ClearRenderTarget(RTClearFlags.Color, Color.clear, 1.0f, 0);
+                context.ExecuteCommandBuffer(cmd);
+                cmd.Clear();
+
+                DrawingSettings sssDrawingSettings = CreateDrawingSettings(SssShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
+                context.DrawRenderers(renderingData.cullResults, ref sssDrawingSettings, ref aovFilteringSettings, ref renderStateBlock);
+                cmd.SetGlobalTexture(HoAovShaderConstants.SssTextureId, renderTargets.SssTexture.nameID);
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -396,6 +417,7 @@ namespace lilToon.URP.Extensions.AOV
             TextureHandle custom0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.Custom0TextureName));
             TextureHandle objectCustom0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.ObjectCustom0TextureName));
             TextureHandle objectCustom1Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.ObjectCustom1TextureName));
+            TextureHandle sssTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.SssTextureName));
             TextureHandle depthTexture = UniversalRenderer.CreateRenderGraphTexture(
                 renderGraph,
                 HoAovRenderTargets.CreateDepthDescriptor(cameraData.cameraTargetDescriptor, settings),
@@ -412,6 +434,7 @@ namespace lilToon.URP.Extensions.AOV
             aovResources.custom0Texture = custom0Texture;
             aovResources.objectCustom0Texture = objectCustom0Texture;
             aovResources.objectCustom1Texture = objectCustom1Texture;
+            aovResources.sssTexture = sssTexture;
 
             bool drawFallback = settings.useFallbackMaterial && fallbackMaterial != null && fallbackFilteringEnabled;
             DrawingSettings fallbackDrawingSettings = RenderingUtils.CreateDrawingSettings(
@@ -438,6 +461,16 @@ namespace lilToon.URP.Extensions.AOV
                 renderingData.cullResults,
                 aovDrawingSettings,
                 aovFilteringSettings);
+            DrawingSettings sssDrawingSettings = RenderingUtils.CreateDrawingSettings(
+                SssShaderTagIds,
+                renderingData,
+                cameraData,
+                lightData,
+                SortingCriteria.CommonTransparent);
+            RendererListParams sssRendererListParams = new RendererListParams(
+                renderingData.cullResults,
+                sssDrawingSettings,
+                aovFilteringSettings);
 
             AddClearPass(
                 renderGraph,
@@ -450,6 +483,8 @@ namespace lilToon.URP.Extensions.AOV
                 objectCustom1Texture,
                 depthTexture,
                 clearMaterial);
+
+            AddSssClearPass(renderGraph, sssTexture);
 
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoAOV Output", out PassData passData, ProfilingSampler))
             {
@@ -508,6 +543,34 @@ namespace lilToon.URP.Extensions.AOV
                     }
                 });
             }
+
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoAOV SSS", out PassData passData, ProfilingSampler))
+            {
+                passData.aovRendererList = renderGraph.CreateRendererList(sssRendererListParams);
+                passData.sssTexture = sssTexture;
+                passData.systemChannelMask = GetSystemChannelMask(settings);
+
+                if (passData.aovRendererList.IsValid())
+                {
+                    builder.UseRendererList(passData.aovRendererList);
+                }
+
+                builder.SetRenderAttachment(sssTexture, 0, AccessFlags.ReadWrite);
+                builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.Read);
+                builder.SetGlobalTextureAfterPass(sssTexture, HoAovShaderConstants.SssTextureId);
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                {
+                    context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 1.0f);
+                    context.cmd.SetGlobalFloat(HoAovShaderConstants.SystemChannelMaskId, data.systemChannelMask);
+                    SetDefaultSubjectProperties(context.cmd);
+                    if (data.aovRendererList.IsValid())
+                    {
+                        context.cmd.DrawRendererList(data.aovRendererList);
+                    }
+                });
+            }
         }
 
         private static void AddClearPass(
@@ -537,6 +600,19 @@ namespace lilToon.URP.Extensions.AOV
                 builder.SetRenderFunc(static (ClearPassData data, RasterGraphContext context) =>
                 {
                     ClearAovTargets(context.cmd, data.clearMaterial);
+                });
+            }
+        }
+
+        private static void AddSssClearPass(RenderGraph renderGraph, TextureHandle sssTexture)
+        {
+            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("lilToon-HoAOV SSS Clear", out _, ProfilingSampler))
+            {
+                builder.SetRenderAttachment(sssTexture, 0, AccessFlags.WriteAll);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (ResetPassData data, RasterGraphContext context) =>
+                {
+                    context.cmd.ClearRenderTarget(RTClearFlags.Color, Color.clear, 1.0f, 0);
                 });
             }
         }
@@ -629,6 +705,7 @@ namespace lilToon.URP.Extensions.AOV
             cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, renderTargets.Custom0Texture.nameID);
             cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, renderTargets.ObjectCustom0Texture.nameID);
             cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom1TextureId, renderTargets.ObjectCustom1Texture.nameID);
+            cmd.SetGlobalTexture(HoAovShaderConstants.SssTextureId, renderTargets.SssTexture.nameID);
         }
 
         private void ApplyFallbackMaterialProperties()
@@ -725,6 +802,7 @@ namespace lilToon.URP.Extensions.AOV
             public TextureHandle custom0Texture;
             public TextureHandle objectCustom0Texture;
             public TextureHandle objectCustom1Texture;
+            public TextureHandle sssTexture;
             public Material debugMaterial;
             public HoAovDebugMode debugMode;
             public Vector4 debugDepthParams;
@@ -790,6 +868,7 @@ namespace lilToon.URP.Extensions.AOV
                 cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, renderTargets.Custom0Texture.nameID);
                 cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, renderTargets.ObjectCustom0Texture.nameID);
                 cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom1TextureId, renderTargets.ObjectCustom1Texture.nameID);
+                cmd.SetGlobalTexture(HoAovShaderConstants.SssTextureId, renderTargets.SssTexture.nameID);
                 Blitter.BlitCameraTexture(cmd, cameraColorTarget, tempTexture, 0, true);
                 Blitter.BlitCameraTexture(cmd, tempTexture, cameraColorTarget, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, debugMaterial, 0);
             }
@@ -815,7 +894,8 @@ namespace lilToon.URP.Extensions.AOV
                 || !aovResources.surfaceDataTexture.IsValid()
                 || !aovResources.custom0Texture.IsValid()
                 || !aovResources.objectCustom0Texture.IsValid()
-                || !aovResources.objectCustom1Texture.IsValid())
+                || !aovResources.objectCustom1Texture.IsValid()
+                || !aovResources.sssTexture.IsValid())
             {
                 return;
             }
@@ -836,6 +916,7 @@ namespace lilToon.URP.Extensions.AOV
                 passData.custom0Texture = aovResources.custom0Texture;
                 passData.objectCustom0Texture = aovResources.objectCustom0Texture;
                 passData.objectCustom1Texture = aovResources.objectCustom1Texture;
+                passData.sssTexture = aovResources.sssTexture;
                 passData.debugMaterial = debugMaterial;
                 passData.debugMode = settings.debugMode;
                 passData.debugDepthParams = GetDebugDepthParams(settings);
@@ -848,6 +929,7 @@ namespace lilToon.URP.Extensions.AOV
                 builder.UseTexture(passData.custom0Texture, AccessFlags.Read);
                 builder.UseTexture(passData.objectCustom0Texture, AccessFlags.Read);
                 builder.UseTexture(passData.objectCustom1Texture, AccessFlags.Read);
+                builder.UseTexture(passData.sssTexture, AccessFlags.Read);
                 builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
@@ -863,6 +945,7 @@ namespace lilToon.URP.Extensions.AOV
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, data.custom0Texture);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, data.objectCustom0Texture);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom1TextureId, data.objectCustom1Texture);
+                    context.cmd.SetGlobalTexture(HoAovShaderConstants.SssTextureId, data.sssTexture);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.debugMaterial, 0);
                 });
             }
@@ -893,10 +976,12 @@ namespace lilToon.URP.Extensions.AOV
         public TextureHandle custom0Texture = TextureHandle.nullHandle;
         public TextureHandle objectCustom0Texture = TextureHandle.nullHandle;
         public TextureHandle objectCustom1Texture = TextureHandle.nullHandle;
+        public TextureHandle sssTexture = TextureHandle.nullHandle;
 
         public bool HasRequiredTextures => maskIdTexture.IsValid()
             && normalDepthTexture.IsValid()
-            && surfaceDataTexture.IsValid();
+            && surfaceDataTexture.IsValid()
+            && sssTexture.IsValid();
 
         public override void Reset()
         {
@@ -907,6 +992,7 @@ namespace lilToon.URP.Extensions.AOV
             custom0Texture = TextureHandle.nullHandle;
             objectCustom0Texture = TextureHandle.nullHandle;
             objectCustom1Texture = TextureHandle.nullHandle;
+            sssTexture = TextureHandle.nullHandle;
         }
     }
 
@@ -919,6 +1005,7 @@ namespace lilToon.URP.Extensions.AOV
         private RTHandle custom0Texture;
         private RTHandle objectCustom0Texture;
         private RTHandle objectCustom1Texture;
+        private RTHandle sssTexture;
         private RTHandle depthTexture;
 
         public RTHandle MaskIdTexture => maskIdTexture;
@@ -928,6 +1015,7 @@ namespace lilToon.URP.Extensions.AOV
         public RTHandle Custom0Texture => custom0Texture;
         public RTHandle ObjectCustom0Texture => objectCustom0Texture;
         public RTHandle ObjectCustom1Texture => objectCustom1Texture;
+        public RTHandle SssTexture => sssTexture;
         public RTHandle DepthTexture => depthTexture;
 
         public void ReAllocateIfNeeded(RenderTextureDescriptor cameraTextureDescriptor, HoAovSettings settings)
@@ -963,6 +1051,7 @@ namespace lilToon.URP.Extensions.AOV
             RenderingUtils.ReAllocateIfNeeded(ref custom0Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.Custom0TextureName);
             RenderingUtils.ReAllocateIfNeeded(ref objectCustom0Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.ObjectCustom0TextureName);
             RenderingUtils.ReAllocateIfNeeded(ref objectCustom1Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.ObjectCustom1TextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref sssTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.SssTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref depthTexture, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.DepthTextureName);
         }
 
@@ -975,6 +1064,7 @@ namespace lilToon.URP.Extensions.AOV
             custom0Texture?.Release();
             objectCustom0Texture?.Release();
             objectCustom1Texture?.Release();
+            sssTexture?.Release();
             depthTexture?.Release();
             maskIdTexture = null;
             normalDepthTexture = null;
@@ -983,6 +1073,7 @@ namespace lilToon.URP.Extensions.AOV
             custom0Texture = null;
             objectCustom0Texture = null;
             objectCustom1Texture = null;
+            sssTexture = null;
             depthTexture = null;
         }
 

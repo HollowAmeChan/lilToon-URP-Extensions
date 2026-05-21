@@ -35,6 +35,7 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
             TEXTURE2D_X(_lilHoAovCustom0_3Texture);
             TEXTURE2D_X(_lilHoAovObjectCustom0_3Texture);
             TEXTURE2D_X(_lilHoAovObjectCustom4_7Texture);
+            TEXTURE2D_X(_lilHoAovSssTexture);
 
             half3 HashColor(float3 value)
             {
@@ -228,6 +229,13 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
                     half noObjectCustom = 1.0 - GetObjectCustomAny(uv);
                     half selected = valid * hasId * noObjectCustom;
                     return lerp(source, half4(0.15, 0.78, 1.0, 1.0), selected);
+                }
+
+                if (mode == 30)
+                {
+                    half4 sss = SAMPLE_TEXTURE2D_X(_lilHoAovSssTexture, sampler_PointClamp, uv);
+                    half valid = step(0.0001, maskId.r) * step(0.0001, sss.a);
+                    return lerp(source, half4(sss.rgb, 1.0), valid);
                 }
 
                 return source;

@@ -9,6 +9,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private static readonly string[] GradientModeNames = { "单色", "线性", "圆形", "椭圆" };
 
         private const string GradientViewControlOwner = "Shoost.Gradient";
+        private static UnityEngine.Object activeGradientViewTarget;
         private static int activeGradientViewTargetId;
         private static string activeGradientViewPropertyPath;
         private static int activeGradientViewHandle;
@@ -193,6 +194,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             activeGradientViewTargetId = serializedObject.targetObject.GetInstanceID();
+            activeGradientViewTarget = serializedObject.targetObject;
             activeGradientViewPropertyPath = element.propertyPath;
             activeGradientViewHandle = (int)GradientViewHandle.None;
             PostProcessScreenSpaceViewControl.Start(GradientViewControlOwner, OnGradientGameViewGUI);
@@ -201,6 +203,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private static void DisableGradientViewControl()
         {
             activeGradientViewTargetId = 0;
+            activeGradientViewTarget = null;
             activeGradientViewPropertyPath = null;
             activeGradientViewHandle = (int)GradientViewHandle.None;
             PostProcessScreenSpaceViewControl.Stop(GradientViewControlOwner);
@@ -231,7 +234,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
-            UnityEngine.Object target = EditorUtility.InstanceIDToObject(activeGradientViewTargetId);
+            UnityEngine.Object target = activeGradientViewTarget;
             if (target == null)
             {
                 DisableGradientViewControl();

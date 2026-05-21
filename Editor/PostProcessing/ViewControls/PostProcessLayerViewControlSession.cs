@@ -7,6 +7,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
     internal sealed class PostProcessLayerViewControlSession
     {
         private readonly string owner;
+        private UnityEngine.Object targetObject;
         private int targetId;
         private string propertyPath;
 
@@ -34,6 +35,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             targetId = target.GetInstanceID();
+            targetObject = target;
             propertyPath = element.propertyPath;
             ActiveHandle = 0;
             PostProcessScreenSpaceViewControl.Start(owner, guiHandler);
@@ -42,6 +44,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         public void Stop()
         {
             targetId = 0;
+            targetObject = null;
             propertyPath = null;
             ActiveHandle = 0;
             PostProcessScreenSpaceViewControl.Stop(owner);
@@ -67,7 +70,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return false;
             }
 
-            target = EditorUtility.InstanceIDToObject(targetId);
+            target = targetObject;
             if (target == null)
             {
                 Stop();

@@ -9,6 +9,7 @@ namespace lilToon.URP.Extensions.AOV
         public const string DebugShaderName = "Hidden/lilToon-HoAOV/URP/DebugView";
         public const string ClearShaderName = "Hidden/lilToon-HoAOV/URP/Clear";
         public const string ShaderPassName = "HoAOV";
+        public const string SssShaderPassName = "HoAOVSSS";
 
         public const string ActiveName = "_lilHoAovActive";
         public const string SystemChannelMaskName = "_lilHoAovSystemChannelMask";
@@ -19,6 +20,7 @@ namespace lilToon.URP.Extensions.AOV
         public const string Custom0TextureName = "_lilHoAovCustom0_3Texture";
         public const string ObjectCustom0TextureName = "_lilHoAovObjectCustom0_3Texture";
         public const string ObjectCustom1TextureName = "_lilHoAovObjectCustom4_7Texture";
+        public const string SssTextureName = "_lilHoAovSssTexture";
         public const string DepthTextureName = "_lilHoAovDepthTexture";
 
         public const string MaskWeightName = "_HoAovMaskWeight";
@@ -36,6 +38,7 @@ namespace lilToon.URP.Extensions.AOV
         public const string ObjectCustomMaskName = "_HoAovObjectCustomMask";
 
         public static readonly ShaderTagId ShaderTagId = new ShaderTagId(ShaderPassName);
+        public static readonly ShaderTagId SssShaderTagId = new ShaderTagId(SssShaderPassName);
 
         public static readonly int ActiveId = Shader.PropertyToID(ActiveName);
         public static readonly int SystemChannelMaskId = Shader.PropertyToID(SystemChannelMaskName);
@@ -46,6 +49,7 @@ namespace lilToon.URP.Extensions.AOV
         public static readonly int Custom0TextureId = Shader.PropertyToID(Custom0TextureName);
         public static readonly int ObjectCustom0TextureId = Shader.PropertyToID(ObjectCustom0TextureName);
         public static readonly int ObjectCustom1TextureId = Shader.PropertyToID(ObjectCustom1TextureName);
+        public static readonly int SssTextureId = Shader.PropertyToID(SssTextureName);
         public static readonly int DebugModeId = Shader.PropertyToID("_HoAovDebugMode");
         public static readonly int DebugDepthParamsId = Shader.PropertyToID("_HoAovDebugDepthParams");
 

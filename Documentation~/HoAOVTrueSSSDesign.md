@@ -1,28 +1,179 @@
-# HoAOV 与真 SSS 设计说明
+# HoAOV / HoSSS 设计现状
 
-这份文档记录从当前材质内 Fake SSS 走向 URP 屏幕空间真 SSS 的路线。结论先写清楚：SSS 不应该塞进 HoAOV 或 HoPost 里执行，应该是和 OIT、平面反射平级的独立 RendererFeature。HoAOV 负责在真实渲染队列之前写数据，HoSubsurfaceScatteringRendererFeature 负责读取这些数据并做扩散与合成。
+本文只记录已经落地的 HoSSS 工作、当前数据契约，以及对照 Unity HDRP 17.3 SSS 源码后确认的差距。早期试验过程和按日期堆叠的流水账不再保留。
 
-## 当前状态
+## 目标边界
 
-lilToon 和 lilPBR 现在都有可用的材质内 Fake SSS：
+HoSSS 的目标是给 lilToon / lilPBR 的不透明与镂空皮肤材质提供屏幕空间次表面散射。它是独立的 URP RendererFeature，不属于 HoPost，也不属于 HoAOV 的调试输出。
 
-- lilToon：`_UseSSS`、`_SSSThicknessMap`、`_SSSStrength`、`_SSSColor`，以及 shadow、view、normal shaping。
-- lilPBR：`_SUBSURFACE`、`_SubsurfaceMap`、`_SubsurfaceScattering`、`_SubsurfaceThickness`、`_SubsurfaceColor`。
-- HoAOV：已经输出 `_lilHoAovMaskIdTexture`、`_lilHoAovNormalDepthTexture`、`_lilHoAovSurfaceDataTexture`。
+HoAOV 负责输出材质级数据；HoSSS 负责读取这些数据、做扩散与合成。当前目标优先服务皮肤观感，不追求玉石、玻璃、厚介质折射或体积路径追踪。
 
-真 SSS 缺的不是再加一次颜色，而是一张可以跨像素扩散的缓冲，并且扩散时要尊重 coverage、depth、normal 和材质的 SSS mask。
+## 当前已落地
 
-## 推荐帧顺序
+### 独立 RendererFeature
 
-推荐顺序如下：
+已新增并接入：
+
+```text
+Runtime/SubsurfaceScattering/HoSubsurfaceScatteringRendererFeature.cs
+Runtime/SubsurfaceScattering/HoSubsurfaceScatteringSettings.cs
+Runtime/SubsurfaceScattering/HoSubsurfaceScatteringShaderConstants.cs
+Runtime/SubsurfaceScattering/HoSubsurfaceScattering.shader
+```
+
+当前 pass 链路：
+
+```text
+HoSSS Source
+HoSSS Diffusion X
+HoSSS Diffusion Y
+HoSSS Transmission Gather
+HoSSS Transmission Blur X
+HoSSS Transmission Blur Y
+HoSSS Composite
+```
+
+当前中间 RT：
+
+```text
+_lilHoSSSSourceTexture
+_lilHoSSSDiffusedTexture
+_lilHoSSSTransmissionTexture
+_lilHoSSSTransmissionTempTexture
+_lilHoSSSCompositeSourceTexture
+```
+
+`Transmission` 已经从 composite 现场计算拆成独立 RT，再做双向 bilateral blur。这样 debug 看到的是 blur 后结果，避免之前单方向 gather 的等高线直接进入合成。
+
+### HoAOV 数据输入
+
+HoSSS 当前依赖 HoAOV 输出：
+
+```text
+_lilHoAovMaskIdTexture.r        coverage / subject gate
+_lilHoAovNormalDepthTexture.rgb world normal，0..1 编码
+_lilHoAovNormalDepthTexture.a   linear eye depth
+_lilHoAovSurfaceDataTexture.r   SSS thinness / scattering mask
+_lilHoAovSurfaceDataTexture.g   curvature / transmission strength boost
+_lilHoAovSurfaceDataTexture.b   SSS profile id / material class
+_lilHoAovSurfaceDataTexture.a   transmission radius utility
+_lilHoAovSssTexture.rgb         SSS source color
+_lilHoAovSssTexture.a           source validity / SSS weight
+```
+
+HoAOV RenderGraph 与非 RenderGraph 路径都已经分配并全局绑定 SSS 专用 MRT。`_lilHoAovCustom0_3Texture` 继续作为后处理/材质自定义通道使用，不再挪给 SSS：
+
+```text
+SV_Target4 -> _lilHoAovCustom0_3Texture
+SV_Target7 -> _lilHoAovSssTexture
+```
+
+当前 lilToon HoAOV pass 在启用 `_UseSSS` 时把 `_SSSColor` / albedo 混合结果写入 `_lilHoAovSssTexture`；lilPBR 在启用 Subsurface 时把 `_SubsurfaceColor` 与 albedo blend 后写入同一通道。HoSSS Source pass 会优先读取这个专用通道，未写入时回退 camera color。
+
+### 材质接口
+
+lilToon 已接入 HoSSS 相关材质数据：
+
+```text
+_HoSSSProfileId
+_HoSSSThicknessScale
+_HoSSSTransmissionStrength
+_HoSSSTransmissionRadius
+```
+
+启用 `_UseSSS` 时：
+
+```text
+surfaceData.r = SSS thinness / scattering mask
+surfaceData.b = byte encoded _HoSSSProfileId
+```
+
+lilPBR 已接入：
+
+```text
+_HoSSSProfileId
+```
+
+启用 `_SUBSURFACE` 时：
+
+```text
+surfaceData.r = Subsurface mask / thickness proxy
+surfaceData.b = byte encoded _HoSSSProfileId
+```
+
+未启用 SSS / Subsurface 的材质继续使用原来的 material class 语义，避免非皮肤材质被误当作 SSS profile。
+
+### Profile 驱动参数
+
+RendererFeature 已有 8 个固定 profile 槽位。shader 侧通过常量数组读取：
+
+```text
+_lilHoSSSProfileIds
+_lilHoSSSProfileDiffusionParams
+_lilHoSSSProfileTransmissionParams
+_lilHoSSSProfileShapeParams
+```
+
+每个 profile 当前包含：
+
+```text
+enabled
+profileId
+diffusionColor
+diffusionRadius
+sourcePreserve
+transmissionColor
+transmissionStrength
+transmissionRadius
+thicknessScale
+```
+
+已实现 profile-aware diffusion / transmission：
+
+- diffusion radius 来自 profile，而不是只用全局 radius。
+- diffusion color 来自 profile。
+- transmission strength / radius / color 来自 profile。
+- blur 和 transmission gather 使用 profile gate，避免不同 profile 之间串色。
+- 半径进入 shader 前做平方响应打包，让小半径区间更容易微调。
+
+### 调试模式
+
+HoSSS 已提供调试输出：
+
+```text
+Off
+Mask
+Source
+Diffusion
+Transmission
+TransmissionGate
+CompositeWeight
+ProfileId
+Thickness
+ProfileRadius
+TransmissionDirection
+TransmissionRim
+```
+
+这些模式用于定位材质是否写入 profile、mask 是否为 0、厚度是否有效、半径是否过大、transmission 方向是否异常。
+
+### BIRP 支持移除
+
+lilPBR / shader 侧已经按当前项目方向移除 BIRP 支持，不再维护 `unity_birp.hlsl` 路径。HoSSS 只面向 URP。
+
+## 当前帧顺序
+
+推荐顺序保持为：
 
 ```text
 HoShadowCast ShadowMap
-Opaque / Cutout 正常渲染
+Opaque / Cutout
 HoAOV Output                  // AfterRenderingOpaques
-HoSSS Source Capture          // opaque color 与 HoAOV 已存在
-HoSSS Separable Diffusion     // depth/normal aware blur
-HoSSS Composite               // 写回 camera color
+HoSSS Source Capture
+HoSSS Diffusion X/Y
+HoSSS Transmission Gather
+HoSSS Transmission Blur X/Y
+HoSSS Composite               // BeforeRenderingTransparents
 Transparent / OIT
 HoCharacterSpecialization
 URP Post Processing
@@ -30,141 +181,187 @@ HoPost Stack
 Shoost Final Stack
 ```
 
-如果启用真 SSS，HoAOV 第一版应放在 `AfterRenderingOpaques`，并早于 HoSSS Source。这样 HoAOV 仍然在透明/OIT 之前提供数据，但不会提前到真实不透明绘制之前破坏现有 AOV 的材质采样、法线和深度行为。若后续确实需要真实渲染前的数据，应新增专门的 EarlyAOV/prepass，而不是把现有 HoAOV 整体前移。
+HoAOV 必须早于 HoSSS Source。HoSSS Composite 通常应早于透明与 OIT，避免皮肤散射结果被后续透明顺序污染。
 
-## HoAOV 输入语义
+## HDRP 17.3 对照
 
-第一版 SSS 消费这些 HoAOV 数据：
-
-```text
-_lilHoAovMaskIdTexture.r        主体 coverage
-_lilHoAovNormalDepthTexture.rgb world normal，0..1 编码
-_lilHoAovNormalDepthTexture.a   linear eye depth
-_lilHoAovSurfaceDataTexture.r   SSS thinness / scattering mask
-_lilHoAovSurfaceDataTexture.g   curvature，后续可做 profile boost
-_lilHoAovSurfaceDataTexture.b   material class，后续可做 profile selector
-```
-
-`surfaceData.r` 在第一版里定义为 SSS thinness/scattering mask。值越高，屏幕空间扩散越强。这与 lilToon 当前 thickness workflow 保持一致：白色表示更明显的 SSS。未来如果加入背面深度或物理 thickness prepass，也应该 remap 到同一个 consumer-facing mask。
-
-## 材质契约
-
-材质侧 HoAOV pass 负责写逐像素 SSS 参与度：
-
-- lilToon：启用 `_UseSSS` 时，写入 `max(_HoAovThickness, _SSSThicknessMap.r * _SSSStrength)`。
-- lilPBR：启用 `_SUBSURFACE` 时，写入 `max(_HoAovThickness, pow(_SubsurfaceMap[channel], _SubsurfacePower) * _SubsurfaceScattering * rim)`。
-- 手动 `_HoAovThickness` 仍然是非 lil 材质的 fallback 和 override 路径。
-
-cutout、dither、dissolve、透明覆盖和法线贴图仍由各自材质的 HoAOV pass 负责，因为它们必须匹配真实材质。
-
-## 独立 RendererFeature
-
-新增功能应命名为 `HoSubsurfaceScatteringRendererFeature`，放在 `Runtime/SubsurfaceScattering`。它和 OIT、PlanarReflection 平级，不属于 HoPost 的 filter，也不属于 HoAOV 的输出 pass。
-
-第一版最小缓冲：
+参考源码已拉取到：
 
 ```text
-_lilHoSSSSourceTexture      从 camera color 提取出的 SSS 源
-_lilHoSSSDiffusedTexture    中间扩散结果
+D:/Unity_Fork/UnityGraphics-6000.3-HDRP
 ```
 
-第一版最小 pass：
-
-1. Source
-   - 读取 opaque/cutout 之后的 camera color。
-   - 读取 HoAOV coverage、normal-depth、surfaceData.r。
-   - 只在参与 SSS 的像素写入 source。
-
-2. Horizontal Diffusion
-   - 横向 separable kernel。
-   - 半径受全局 radius 和 thinness mask 控制。
-   - 用 depth/normal/coverage 抑制跨轮廓扩散。
-
-3. Vertical Diffusion + Composite
-   - 纵向扩散。
-   - 将扩散结果按 thinness 和全局 strength 写回 camera color。
-
-第一版可以用 camera color 作为 source proxy。质量版再考虑更干净的 diffuse irradiance/source pass 或 MRT 路径。
-
-## 为什么 HoAOV 参与
-
-HoAOV 适合做 SSS 的数据层，因为它已经拥有每个对象和材质的 subject contract：
-
-- 能匹配 lilToon/lilPBR 的 cutout 和 dither。
-- 能拿到材质法线，而不仅是 mesh normal。
-- 能携带逐像素 SSS mask/thinness。
-- 后续可以用 object/material ID 选择 SSS profile。
-
-URP 自带 depth/normal texture 不够，因为它没有材质 SSS 参与度、profile 数据，也不理解这些自定义材质的 alpha 语义。
-
-## 已开始实现
-
-当前第一版实现路径：
-
-- `Runtime/SubsurfaceScattering/HoSubsurfaceScatteringRendererFeature.cs`
-- `Runtime/SubsurfaceScattering/HoSubsurfaceScatteringSettings.cs`
-- `Runtime/SubsurfaceScattering/HoSubsurfaceScatteringShaderConstants.cs`
-- `Runtime/SubsurfaceScattering/HoSubsurfaceScattering.shader`
-
-这版先做可跑的 screen-space diffusion 骨架：读取 HoAOV，捕获 camera color，做横向/纵向双边扩散，再合成回 camera color。它还不是最终物理版 SSS，但已经把 HoAOV 和真正 SSS RenderFeature 的边界划清楚了。
-
-## 2026-05-21 HDRP 方向增强记录
-
-本次增强目标先服务皮肤，而不是玉石、玻璃或厚介质。HoSSS 应参考 HDRP 的屏幕空间 SSS + transmission 分层思路：用已有 HoAOV / depth / normal / camera color 在角色皮肤上做更稳定、更容易调的“有方向的深度散射”，让脸颊、鼻翼、耳缘、手指边缘和皮肤阴影交界处出现更柔和的透光和血色感。
-
-推荐把 HoSSS 拆成两层：
+对应项目版本：
 
 ```text
-HoSSS Diffusion                 // 现有 depth/normal aware screen-space blur
-HoSSS Directional Transmission  // 皮肤用的屏幕空间方向性透射 gather
-HoSSS Composite                 // 按 profile 混合回 camera color
+Unity 6000.3.15f1
+HDRP package 17.3.0
 ```
 
-`HoSSS Diffusion` 继续负责表面扩散和细节软化。它适合皮肤主观质感，也是第一版已经落地的稳定基础。
-
-`HoSSS Directional Transmission` 作为第二层增强，不做真正体积 ray tracing，而是在屏幕空间内沿主光方向、法线投影方向或 view/normal 混合方向做短距离 gather。它的目标是把较亮、较薄、较高处的皮肤颜色带到当前像素的阴影或凹陷区域，形成“皮下血色被散进暗部”的感觉。对皮肤来说，这比长距离折射步进更可控，也更接近角色渲染里常见的 screen-space SSS / transmission hybrid。
-
-最小输入仍然来自 HoAOV：
+关键源码：
 
 ```text
-_lilHoAovMaskIdTexture.r        coverage / subject gate
-_lilHoAovNormalDepthTexture.rgb material normal
-_lilHoAovNormalDepthTexture.a   linear eye depth
-_lilHoAovSurfaceDataTexture.r   SSS thinness / skin scattering mask
-_lilHoSSSSourceTexture          skin lighting source
-_CameraDepthTexture             depth rejection / thickness proxy
+Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/HDRenderPipeline.SubsurfaceScattering.cs
+Packages/com.unity.render-pipelines.high-definition/Runtime/Material/SubsurfaceScattering/SubsurfaceScattering.compute
+Packages/com.unity.render-pipelines.high-definition/Runtime/Material/SubsurfaceScattering/SubsurfaceScattering.hlsl
+Packages/com.unity.render-pipelines.high-definition/Runtime/Material/SubsurfaceScattering/CombineLighting.shader
+Packages/com.unity.render-pipelines.high-definition/Runtime/Material/DiffusionProfile/DiffusionProfileSettings.cs
+Packages/com.unity.render-pipelines.high-definition/Runtime/Material/DiffusionProfile/DiffusionProfile.hlsl
+Packages/com.unity.render-pipelines.high-definition/Runtime/RenderPipeline/ShaderPass/ShaderPassForward.hlsl
 ```
 
-第一版 Directional Transmission 可以这样定义：
+HDRP 的主要结构：
 
-- 只在 `surfaceData.r > 0` 且 coverage 有效的皮肤像素运行。
-- 步进距离短，优先 4 到 12 taps，不追求长距离透明感。
-- gather 方向优先使用主光屏幕投影方向；没有主光时使用 normal/view 派生方向。
-- 每个 tap 使用 depth gate、normal gate、coverage gate 和 material/object gate，避免串到头发、眼睛、衣服或背景。
-- 权重随深度差、法线差、thinness、曲率和皮肤 profile 衰减。
-- 颜色吸收以皮肤血色为主，默认偏红橙，不能把整张脸推成玻璃或蜡。
+1. Diffusion Profile 不是简单颜色参数，而是资产/Volume 驱动的 profile 列表。
+2. `HDRenderPipeline.SubsurfaceScattering.cs` 每帧把 profile 转成常量数组，例如 shape、max scatter distance、transmission tint、world scale、filter radius、thickness remap、dual lobe、border attenuation。
+3. HDRP 使用 `SSSBuffer` 存储 albedo + SSS profile/mask 数据。
+4. `SubsurfaceScattering.compute` 读取 diffuse lighting source、depth、SSSBuffer、profile index，执行屏幕空间 Burley diffusion。
+5. compute 里有 profile index packing、sample budget、downsample、random rotation、LDS cache、bilateral depth weight、profile gate。
+6. `CombineLighting.shader` 负责把过滤后的 diffuse lighting 重新合成回最终 lighting/color。
+7. Transmission 和 SSS 同属 Diffusion Profile 体系，但 transmission 不是靠当前 HoSSS 这种任意屏幕方向投射来模拟。
 
-合成语义：
+HDRP diffusion 核心来自 Burley profile：
 
 ```text
-diffused = HoSSS Diffusion(source)
-transmitted = DirectionalTransmissionGather(source, HoAOV, depth)
-skinSSS = lerp(diffused, diffused + transmitted * skinTransmissionColor, transmissionStrength)
-cameraColor = lerp(cameraColor, skinSSS, surfaceData.r * globalStrength)
+EvalBurleyDiffusionProfile()
+SampleBurleyDiffusionProfile()
+ComputeBilateralWeight()
 ```
 
-后续如果需要更准的厚度，可以增加 backface thickness prepass，但它不应成为皮肤版 HoSSS 的前置条件。皮肤第一目标是角色观感：脸部暗部变柔、耳缘有透光、鼻翼和手指更有血色、阴影边界不硬，而不是模拟厚介质内部折射。
+这和 HoSSS 当前的简化 gaussian-like separable blur 有本质差距。
 
-非目标：
+## HoSSS 与 HDRP 的差距
 
-- 不做玻璃 transmission、透明排序或 refraction。
-- 不让透明头发、眼球、衣服进入皮肤 transmission gather。
-- 不把 Directional Transmission 暴露成材质里的复杂物理参数；材质侧优先保留 `SSS strength / thickness / color / profile` 这种美术可控语义。
-- 不替代 HTrace AO / SSGI。HoSSS 是皮肤材质效果，HTrace 仍负责屏幕空间 AO / GI。
+### 已接近的部分
 
-## 后续问题
+```text
+独立 SSS RendererFeature
+屏幕空间 source / diffusion / composite
+材质 mask / normal / depth / profile id 输入
+profile-driven 参数
+debug view
+中间 RT 拆分
+```
 
-- Source pass 需要比 camera color 更干净的 diffuse/lighting separation。第一版可用 color proxy，质量版应做材质 source pass 或 MRT。
-- 透明皮肤语义复杂。第一版只针对 opaque/cutout 皮肤，透明头发和玻璃不进 SSS diffusion。
-- 物理 thickness 可以后续作为 HoAOV 或 HoSSS prepass 加入，再 remap 到 `surfaceData.r`。
-- 如果项目同时需要 early HoAOV 和 late HoAOV，后续需要支持两套输出或明确 per-renderer asset 的 pass event 配置。
+这些方向与 HDRP 是一致的：SSS 不应该只是材质里的一段 fake lighting，也不应该塞进普通后处理 filter。
+
+### 仍明显缺失的部分
+
+```text
+Burley / Disney diffusion kernel
+真实 Diffusion Profile asset 或等价 profile 数据结构
+lighting source 与 camera color 分离
+SSSBuffer 等价 MRT 数据
+profile index packing / stable profile lookup
+sample budget 与 downsample quality path
+random rotation + TAA 友好的采样
+与主光、阴影、occlusion 更明确的 transmission 关系
+backface thickness 或更稳定的 thickness proxy
+```
+
+当前最大问题不是“参数不够多”，而是 source 与 kernel 仍不够像 HDRP：
+
+- Source 仍主要来自 camera color，包含高光、阴影、后续合成影响，不是干净的 diffuse lighting / irradiance。
+- Diffusion kernel 还是简化 separable blur，不是按 profile 半径采样 Burley distribution。
+- Directional transmission 的艺术化 gather 容易退化成 rim / tint，视觉收益不稳定。
+
+## 下一步实现方向
+
+### 1. 用 HoAOV SSS 专用 MRT 作为 source
+
+已落地。HoAOV 新增专用 SSS MRT：
+
+```text
+_lilHoAovSssTexture.rgb = SSS source color
+_lilHoAovSssTexture.a   = source validity / SSS weight
+```
+
+优先级：
+
+```text
+if sss.a > 0:
+    source = lerp(cameraColor, sss.rgb, sss.a)
+else:
+    source = camera color fallback
+```
+
+这样可以减少从屏幕投射里“猜颜色”，也更接近 HDRP 的 SSSBuffer / lighting source 思路。Custom0 保持给后处理链路，不再承担 SSS 数据契约。
+
+### 2. 替换 diffusion kernel
+
+当前 `HoSSSProfileWeight()` 应替换为 HDRP 对照的 Burley profile 采样逻辑：
+
+```text
+SampleBurleyDiffusionProfile()
+EvalBurleyDiffusionProfile()
+ComputeBilateralWeight()
+```
+
+第一步不必照搬 compute shader，可以先在现有 fullscreen shader 里实现固定 tap 的 Burley-like disk sampling。目标是先消除当前半径敏感、等高线、单方向感强的问题。
+
+### 3. 降低 transmission gather 权重
+
+现有 transmission gather 可以保留为艺术增强，但不应作为主 SSS 质量来源。皮肤的主要柔和感应该来自 profile diffusion；transmission 只负责耳缘、鼻翼、指尖、薄处的暖色边缘补偿。
+
+推荐默认：
+
+```text
+transmissionStrength 低于 diffusion strength
+transmissionRadius 小于 diffusion radius
+transmissionBlendMode 使用 SoftTint
+transmission debug 只作为诊断，不作为主外观判断
+```
+
+### 4. 压缩 UI 参数
+
+当前 HoSSS 参数过多，调参难。应把大部分参数收进 profile preset，RendererFeature 只保留：
+
+```text
+enabled
+renderScale
+masterStrength
+quality
+debugMode
+profiles
+renderInSceneView
+```
+
+当前 RendererFeature inspector 已按这个方向收敛：主入口分为运行、Diffusion Profiles、调试；未命中 profile 的全局 radius/color/sourcePreserve、depth/normal gate、pass event、shader override 和 transmission 补偿都放在“高级/兼容”。`quality` 直接控制 Burley disk gather 的采样预算，当前为 Low 8 / Medium 16 / High 24 taps。Transmission 的细节参数保留在高级区，默认 profile 给出皮肤可用值。
+
+### 5. 后续 thickness
+
+短期继续使用：
+
+```text
+surfaceData.r
+depth gate
+normal gate
+view/rim factor
+```
+
+质量版再加入 backface thickness prepass：
+
+```text
+frontDepth = HoAOV / camera depth
+backDepth  = SSS object backface depth
+thickness  = max(0, backDepth - frontDepth)
+```
+
+这不是当前皮肤版的前置条件，但会明显改善耳朵、手指、鼻翼等薄处。
+
+## 2026-05-22 落地调整
+
+已在现有 fullscreen shader / pass 链路内先推进一版 HDRP 对齐：
+
+- Diffusion 主结果从双向 separable blur 改为 16 tap Burley-like disk gather。横向 pass 保留为轻量预滤波，纵向 pass 输出最终 profile diffusion。
+- RendererFeature 新增 quality/sample budget 主参数，并重做 inspector：普通调节聚焦运行状态、renderScale、quality、master strength 和 Diffusion Profiles。
+- Burley 采样参考 HDRP 的 `SampleBurleyDiffusionProfile()` / `EvalBurleyDiffusionProfile()`，继续使用 HoAOV depth、normal、profile id 做 bilateral / profile gate。
+- Transmission 保留为辅助暖边，不再作为主 SSS 观感来源；默认强度和半径已下调，合成阶段也降低了 transmission 注入权重。
+
+仍未落地的 HDRP 差距：真实 DiffusionProfile asset / Volume 驱动、compute path、sample budget 质量档、随机旋转与 TAA 的完整配合，以及从 diffuse lighting / irradiance 分离出的更干净 source。
+
+## 当前结论
+
+HoSSS 已经从“普通后处理 blur”推进到“HoAOV 数据驱动的独立屏幕空间 SSS 框架”。SSS source 已经从 camera color fallback 前进到 HoAOV 专用 MRT；但它离 HDRP 17.3 的关键差距仍在 kernel 和 lighting source：HDRP 的质量来自 Diffusion Profile + SSSBuffer + Burley diffusion compute，而不是方向性投射。
+
+后续应优先把 diffusion profile 数据结构和 quality / sampleBudget 接口补齐，并继续把参数入口收敛到 profile 风格。继续堆 transmission 投射参数的收益有限，且容易让效果看起来像普通 rim tint。
