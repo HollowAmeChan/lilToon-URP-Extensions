@@ -108,6 +108,60 @@ URP 自带 depth/normal texture 不够，因为它没有材质 SSS 参与度、p
 
 这版先做可跑的 screen-space diffusion 骨架：读取 HoAOV，捕获 camera color，做横向/纵向双边扩散，再合成回 camera color。它还不是最终物理版 SSS，但已经把 HoAOV 和真正 SSS RenderFeature 的边界划清楚了。
 
+## 2026-05-21 HDRP 方向增强记录
+
+本次增强目标先服务皮肤，而不是玉石、玻璃或厚介质。HoSSS 应参考 HDRP 的屏幕空间 SSS + transmission 分层思路：用已有 HoAOV / depth / normal / camera color 在角色皮肤上做更稳定、更容易调的“有方向的深度散射”，让脸颊、鼻翼、耳缘、手指边缘和皮肤阴影交界处出现更柔和的透光和血色感。
+
+推荐把 HoSSS 拆成两层：
+
+```text
+HoSSS Diffusion                 // 现有 depth/normal aware screen-space blur
+HoSSS Directional Transmission  // 皮肤用的屏幕空间方向性透射 gather
+HoSSS Composite                 // 按 profile 混合回 camera color
+```
+
+`HoSSS Diffusion` 继续负责表面扩散和细节软化。它适合皮肤主观质感，也是第一版已经落地的稳定基础。
+
+`HoSSS Directional Transmission` 作为第二层增强，不做真正体积 ray tracing，而是在屏幕空间内沿主光方向、法线投影方向或 view/normal 混合方向做短距离 gather。它的目标是把较亮、较薄、较高处的皮肤颜色带到当前像素的阴影或凹陷区域，形成“皮下血色被散进暗部”的感觉。对皮肤来说，这比长距离折射步进更可控，也更接近角色渲染里常见的 screen-space SSS / transmission hybrid。
+
+最小输入仍然来自 HoAOV：
+
+```text
+_lilHoAovMaskIdTexture.r        coverage / subject gate
+_lilHoAovNormalDepthTexture.rgb material normal
+_lilHoAovNormalDepthTexture.a   linear eye depth
+_lilHoAovSurfaceDataTexture.r   SSS thinness / skin scattering mask
+_lilHoSSSSourceTexture          skin lighting source
+_CameraDepthTexture             depth rejection / thickness proxy
+```
+
+第一版 Directional Transmission 可以这样定义：
+
+- 只在 `surfaceData.r > 0` 且 coverage 有效的皮肤像素运行。
+- 步进距离短，优先 4 到 12 taps，不追求长距离透明感。
+- gather 方向优先使用主光屏幕投影方向；没有主光时使用 normal/view 派生方向。
+- 每个 tap 使用 depth gate、normal gate、coverage gate 和 material/object gate，避免串到头发、眼睛、衣服或背景。
+- 权重随深度差、法线差、thinness、曲率和皮肤 profile 衰减。
+- 颜色吸收以皮肤血色为主，默认偏红橙，不能把整张脸推成玻璃或蜡。
+
+合成语义：
+
+```text
+diffused = HoSSS Diffusion(source)
+transmitted = DirectionalTransmissionGather(source, HoAOV, depth)
+skinSSS = lerp(diffused, diffused + transmitted * skinTransmissionColor, transmissionStrength)
+cameraColor = lerp(cameraColor, skinSSS, surfaceData.r * globalStrength)
+```
+
+后续如果需要更准的厚度，可以增加 backface thickness prepass，但它不应成为皮肤版 HoSSS 的前置条件。皮肤第一目标是角色观感：脸部暗部变柔、耳缘有透光、鼻翼和手指更有血色、阴影边界不硬，而不是模拟厚介质内部折射。
+
+非目标：
+
+- 不做玻璃 transmission、透明排序或 refraction。
+- 不让透明头发、眼球、衣服进入皮肤 transmission gather。
+- 不把 Directional Transmission 暴露成材质里的复杂物理参数；材质侧优先保留 `SSS strength / thickness / color / profile` 这种美术可控语义。
+- 不替代 HTrace AO / SSGI。HoSSS 是皮肤材质效果，HTrace 仍负责屏幕空间 AO / GI。
+
 ## 后续问题
 
 - Source pass 需要比 camera color 更干净的 diffuse/lighting separation。第一版可用 color proxy，质量版应做材质 source pass 或 MRT。
