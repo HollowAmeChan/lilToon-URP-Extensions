@@ -402,15 +402,17 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
 
         float2 HoSSSTransmissionDirection(float2 uv, float3 centerNormalView, float rimFactor)
         {
-            float2 screenFallback = HoSSSNormalizeDirection(uv - 0.5, float2(1.0, 0.0));
-            float2 viewExitDirection = HoSSSNormalizeDirection(-centerNormalView.xy, screenFallback);
             float3 mainLightView = TransformWorldToViewDir(_MainLightPosition.xyz, true);
-            float2 lightDirection = HoSSSNormalizeDirection(-mainLightView.xy, viewExitDirection);
+            float2 lightDirection = HoSSSNormalizeDirection(-mainLightView.xy, float2(1.0, 0.0));
+            float2 viewExitDirection = HoSSSNormalizeDirection(-centerNormalView.xy, lightDirection);
             float2 tangentDirection = HoSSSPerpendicular(viewExitDirection);
             tangentDirection *= sign(dot(tangentDirection, lightDirection) + 1.0e-4);
-            float2 rimDirection = HoSSSNormalizeDirection(lerp(viewExitDirection, tangentDirection, saturate(rimFactor)), viewExitDirection);
-            float2 litDirection = HoSSSNormalizeDirection(lerp(rimDirection, lightDirection, saturate(_lilHoSSSTransmissionParams.w)), rimDirection);
-            return litDirection;
+            float lightBlend = saturate(_lilHoSSSTransmissionParams.w);
+            float edgeBlend = saturate(rimFactor);
+            float2 edgeDirection = HoSSSNormalizeDirection(lerp(lightDirection, tangentDirection, edgeBlend), lightDirection);
+            float normalBlend = saturate((1.0 - lightBlend) * edgeBlend);
+            float2 surfaceDirection = HoSSSNormalizeDirection(lerp(edgeDirection, viewExitDirection, normalBlend), edgeDirection);
+            return HoSSSNormalizeDirection(lerp(surfaceDirection, lightDirection, lightBlend), lightDirection);
         }
 
         float HoSSSEdgeBoost(float rimFactor)
