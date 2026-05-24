@@ -347,6 +347,21 @@ ShadowCast 与 ScreenProcess 的关系：
 - `HoShadowCastRendererFeature.cs` 仍需继续拆 collector / atlas packer / publish。
 - 自动收集的 light layer / shadow layer 规则还未细化，当前仍主要依赖 URP visible lights、main light skip、`Light.shadows` 与 caster layer mask。
 
+## 10.4 2026-05-24 执行记录
+
+已继续拆分 ShadowCast 主文件里的配置与 frame/atlas 数据边界：
+
+- `HoShadowCastSettings` 与 `HoShadowCastFrameConfig` 从 `HoShadowCastRendererFeature.cs` 拆到 `Runtime/ShadowCast/HoShadowCastSettings.cs`，保持现有序列化字段、active controller override 语义和 frame-local config 解析方式不变。
+- `HoShadowCastRenderTargets`、`HoShadowCastFrame`、`HoShadowCastSecondDirectionalFrame`、`ShadowSliceInfo` 与 `HoShadowCastAtlasPacker` 从主文件拆到 `Runtime/ShadowCast/HoShadowCastFrameData.cs`。
+- 新增 `HoShadowCastAtlasDescriptors`，把普通 atlas 与 second directional atlas 的 depth RenderTextureDescriptor 创建从 pass 中移出；RenderGraph 与 compatibility path 继续使用同一套 descriptor。
+- `HoShadowCastRendererFeature.cs` 现在只保留 RendererFeature 壳、主 ShadowCast pass 和暂未拆出的 frame collector / publish helper；本次不改变 atlas 写入、receiver ABI、debug 按需加载、MaterialBuffer/GeometryBuffer 边界或 ImageProcess 禁止消费 ShadowCast 的规则。
+
+仍待处理：
+
+- 继续把 `BuildFrameData` / `BuildSecondDirectionalFrameData` 及其 light collection helper 拆到 `HoShadowCastFrameCollector`。
+- 继续把 `ApplyGlobalData` / reset / receiver global 发布拆到 `HoShadowCastPublisher`。
+- 自动收集的 light layer / shadow layer 规则还未细化，当前仍主要依赖 URP visible lights、main light skip、`Light.shadows` 与 caster layer mask。
+
 ---
 
 ## 11. 验收清单
