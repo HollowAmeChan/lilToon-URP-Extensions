@@ -20,9 +20,12 @@ namespace lilToon.URP.Extensions.PostProcessing
 
             foreach (ShoostPostProcessLayer layer in layers)
             {
+                ShoostPostProcessEffectDescriptor descriptor = layer != null
+                    ? ShoostPostProcessEffectDescriptor.Get(layer.effect)
+                    : default;
                 if (layer == null ||
                     !layer.IsActive ||
-                    ShoostPostProcessEffectOrder.IsRemovedEffectSlot(layer.effect))
+                    descriptor.IsRemoved)
                 {
                     continue;
                 }
@@ -33,7 +36,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     continue;
                 }
 
-                runtimeLayers.Add(new ShoostPostProcessRuntimeLayer(layer, material));
+                runtimeLayers.Add(new ShoostPostProcessRuntimeLayer(layer, material, descriptor));
             }
 
         }

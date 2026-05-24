@@ -198,7 +198,42 @@ Runtime/ShoostPostProcessing/Renderer/ShoostPostProcessAovSupport.cs
 
 ---
 
-## 8. 验收清单
+## 8. 2026-05-24 执行记录
+
+已在旧仓库 `Runtime/ShoostPostProcessing` 落地第一批 RDG 主线改造：
+
+- 新增 `Runtime/ShoostPostProcessing/Renderer/ImageChain/`，包含轻量 `ImageProcessChain`、`ImageProcessPassContext`、`ImageProcessResourceRequest`、`ImageProcessResourceKind`。
+- `ShoostPostProcessPass.RecordRenderGraph()` 改为通过 `ImageProcessChain` 统一推进 `Read -> Write -> Swap`。
+- 普通 `RecordSinglePassLayer()` 不再创建 `_lilShoostPostProcessLayer{n}` 这类每层独占输出，而是写入 ImageChain 提供的 `WorkA/WorkB`。
+- `Glow`、`IrisBlur`、`RGBBlurV2`、`ApertureBokeh`、`ChangeFrameRate` 的内部临时 RT 仍为当前 frame 的 RDG 资源，但最终输出写回 ImageChain 目标。
+- RenderGraph 路径不再读取 `HoAovRenderGraphResources`，也不再记录 Shoost AOV composite pass。
+- RenderGraph 路径不再通过 `ShoostPostProcessAovCompositeCache.Ensure()` 查找或创建 `AovComposite.shader` material；旧 AOV composite 仅暂留 compatibility path。
+- `ShoostPostProcessRuntimeLayerBuilder` 不再按 descriptor 的 `RuntimeOrder` 强制排序，当前执行顺序尊重 Volume layer 用户顺序。
+
+随后继续落地局部资源声明：
+
+- `ShoostPostProcessEffectDescriptor` 增加 `ResourceRequests`，用于记录 ImageProcess effect 的局部资源例外。
+- 第一批声明包括 `LocalPingPong`、`History`、`OriginalSource`、`ExternalTexture`。
+- `Glow`、`IrisBlur`、`RGBBlurV2`、`ApertureBokeh` 声明本地 ping-pong / composite 原图依赖。
+- `ChangeFrameRate`、`MotionTrail` 声明 image-domain history。
+- `Weather`、`Particle`、`LensFlare`、`LogoOverlay` 声明 layer-supplied external texture。
+- `ImageProcessResourceKind` 预留 `AovInput`、`MaterialBuffer`、`GeometryBuffer`、`ShadowCast` 作为禁止语义输入类型；RenderGraph 记录时如发现这类声明会 warning once，提示迁往 ScreenProcess。
+
+随后开始整理 ImageProcess Editor 边界：
+
+- `ShoostPostProcessStackVolumeEditor` 的 layer list 开启用户拖拽排序。
+- Inspector / preset 应用流程不再调用旧固定 effect order 自动重排。
+- 旧 Shoost AOV mask UI 不再作为 ImageProcess 可编辑能力显示；已有 `useAovMask` / `debugAovMask` 配置只显示迁移提示，要求迁到 ScreenProcess。
+
+本批验证：
+
+- `git diff --check` 通过，仅有 Git 换行提示。
+- 针对性扫描确认 Shoost RenderGraph 主路径没有 `GetOrCreate<HoAovRenderGraphResources>()`、没有 `RecordAovCompositeIfNeeded()` 调用。
+- 当前仓库是 UPM package，不是完整 Unity project，未找到直接引用该包的本地 Unity 工程，因此尚未跑 Unity batchmode 编译。
+
+---
+
+## 9. 验收清单
 
 - 普通 single-pass stack 只使用 source copy + WorkA/WorkB。
 - 多 pass effect 的额外 RT 都是 RenderGraph transient。

@@ -166,7 +166,25 @@ ImageProcess UI：
 
 ---
 
-## 7. 验收清单
+## 7. 2026-05-24 执行记录
+
+已在 ImageProcess 旧实现中完成第一批顺序与输入边界收敛：
+
+- `ShoostPostProcessRuntimeLayerBuilder` 保留 Volume `layers` 列表顺序，不再调用 `ShoostPostProcessEffectOrder.CompareRuntimeLayerOrder()` 强制重排。
+- `ShoostPostProcessPass.RecordRenderGraph()` 使用 ImageChain 双工作纹理推进用户层顺序。
+- ImageProcess RenderGraph 路径不再读取 AOV / MaterialBuffer mask 资源，不再提供 AOV composite 或 AOV debug 输出。
+- 旧 `useAovMask` / `debugAovMask` 字段仍保留在序列化数据中，后续需要迁移到 ScreenProcess 或提供明确迁移提示。
+
+已继续落地 Editor 侧顺序与迁移提示：
+
+- `ShoostPostProcessStackVolumeEditor` 的 layer list 开启拖拽排序。
+- Inspector 不再调用旧固定 effect order 自动重排，只保留废弃 effect slot / 重复 layer 清理。
+- 添加 layer 和应用 preset 后不再按旧 effect 顺序移动 layer，用户列表顺序即 ImageProcess 执行顺序。
+- Shoost/ImageProcess UI 不再显示 AOV mask 规则编辑器；旧 `useAovMask` / `debugAovMask` 为真时只显示迁移提示，指向 ScreenProcess。
+
+---
+
+## 8. 验收清单
 
 - ScreenProcess 用户拖拽顺序就是执行顺序。
 - ImageProcess 用户拖拽顺序就是执行顺序。

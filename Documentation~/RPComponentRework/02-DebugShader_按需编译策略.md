@@ -175,7 +175,22 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 
 ---
 
-## 7. 验收清单
+## 7. 2026-05-24 执行记录
+
+已对 ShadowCast debug shader 做第一批按需加载修正：
+
+- `HoShadowCastRendererFeature` 不再在主渲染路径默认调用 debug shader 查找。
+- 只有 `HoShadowCastController.debugMode != Off` 且 debug pass 即将入队时，才调用 `Shader.Find(HoShadowCastShaderConstants.DebugShaderName)` 并创建 debug material。
+- debug shader 缺失仍只 warning once 并跳过 debug pass，不影响 ShadowCast 主 pass。
+
+待处理：
+
+- AOV debug shader、SSS debug 分支、ScreenProcess AOV/rule debug 还未迁到局部按需收集策略。
+- 尚未增加 editor 菜单生成 debug shader collection。
+
+---
+
+## 8. 验收清单
 
 - 普通用户不打开 debug 时，不会加载重 debug shader。
 - 缺失 debug shader 不影响主 feature。

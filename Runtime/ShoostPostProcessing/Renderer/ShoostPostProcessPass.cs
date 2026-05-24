@@ -195,6 +195,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             for (int i = 0; i < runtimeLayers.Count; i++)
             {
                 ShoostPostProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
+                WarnIfImageProcessLayerRequestsSemanticInput(runtimeLayer);
                 ImageProcessPassContext passContext = imageChain.NextPass(renderGraph, i);
                 TextureHandle effectResult = RecordEffectLayer(
                     passContext.RenderGraph,
@@ -224,6 +225,29 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             renderPassEvent = passEvent;
             ConfigureInput(ScriptableRenderPassInput.Color);
+        }
+
+        private void WarnIfImageProcessLayerRequestsSemanticInput(ShoostPostProcessRuntimeLayer runtimeLayer)
+        {
+            ImageProcessResourceRequest[] requests = runtimeLayer?.descriptor.ResourceRequests;
+            if (requests == null || requests.Length == 0)
+            {
+                return;
+            }
+
+            for (int i = 0; i < requests.Length; i++)
+            {
+                if (!requests[i].IsSemanticInput)
+                {
+                    continue;
+                }
+
+                ShoostPostProcessEffect effect = runtimeLayer.settings.effect;
+                if (warnedSemanticInputEffects.Add(effect))
+                {
+                    Debug.LogWarning($"{_passName} ignored semantic resource request '{requests[i].Kind}' from ImageProcess effect '{effect}'. Move this effect to ScreenProcess.");
+                }
+            }
         }
 
     }

@@ -45,61 +45,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
         }
 
-        private static readonly ShoostPostProcessEffect[] FixedEffectOrder =
-        {
-            ShoostPostProcessEffect.SharpenBefore,
-            ShoostPostProcessEffect.AutoWhiteBalance,
-            ShoostPostProcessEffect.LogoOverlay,
-            ShoostPostProcessEffect.LevelAdjustment,
-            ShoostPostProcessEffect.ColorGradingCustom,
-            ShoostPostProcessEffect.Gradient,
-            ShoostPostProcessEffect.Lighting,
-            ShoostPostProcessEffect.CenterColorCorrection,
-            ShoostPostProcessEffect.Kuwahara,
-            ShoostPostProcessEffect.LED,
-            ShoostPostProcessEffect.Weather,
-            ShoostPostProcessEffect.Particle,
-            ShoostPostProcessEffect.GlitchArt,
-            ShoostPostProcessEffect.PrismFracture,
-            ShoostPostProcessEffect.SpeedLines,
-            ShoostPostProcessEffect.SkyGodRays,
-            ShoostPostProcessEffect.CameraSwitcher,
-            ShoostPostProcessEffect.TransparentBackground,
-            ShoostPostProcessEffect.FilmBreathGateWeave,
-            ShoostPostProcessEffect.Tube,
-            ShoostPostProcessEffect.VHS,
-            ShoostPostProcessEffect.CRTEffects,
-            ShoostPostProcessEffect.DitheringCustom,
-            ShoostPostProcessEffect.IrisBlur,
-            ShoostPostProcessEffect.RGBBlurV2,
-            ShoostPostProcessEffect.RGBSplit,
-            ShoostPostProcessEffect.RGBChannelSeparator,
-            ShoostPostProcessEffect.BokehZoomBlur,
-            ShoostPostProcessEffect.ApertureBokeh,
-            ShoostPostProcessEffect.LensFlare,
-            ShoostPostProcessEffect.Glow,
-            ShoostPostProcessEffect.ToonMap,
-            ShoostPostProcessEffect.GrainCustom,
-            ShoostPostProcessEffect.VignetteCustom,
-            ShoostPostProcessEffect.Pixelize,
-            ShoostPostProcessEffect.ChangeFrameRate,
-            ShoostPostProcessEffect.Distortion,
-            ShoostPostProcessEffect.Fisheye,
-            ShoostPostProcessEffect.CameraFlash,
-            ShoostPostProcessEffect.CustomMaterial,
-            ShoostPostProcessEffect.GateWeave,
-            ShoostPostProcessEffect.LensDistortionCustom,
-            ShoostPostProcessEffect.MotionTrail,
-            ShoostPostProcessEffect.RGBBlur,
-            ShoostPostProcessEffect.SharpenAfter,
-            ShoostPostProcessEffect.RetroLookProBleedCustom,
-            ShoostPostProcessEffect.RetroLookProNoise2Custom,
-            ShoostPostProcessEffect.RetroLookProOldFilm2Custom,
-            ShoostPostProcessEffect.RetroLookProTVEffectCustom,
-            // 特殊置底：电影黑边必须最后覆盖，避免再被后续 Shoost 滤镜影响。
-            ShoostPostProcessEffect.CinematicBars
-        };
-
         private static readonly EffectToggleEntry[] VisibleEffectOrder =
         {
             new EffectToggleEntry(ShoostPostProcessEffect.SharpenBefore, "锐化", "icon_Sharpen_v1"),
@@ -364,7 +309,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
-            layerList = new ReorderableList(serializedObject, layerValues, false, false, false, false);
+            layerList = new ReorderableList(serializedObject, layerValues, true, false, false, false);
             layerList.drawHeaderCallback = null;
             layerList.headerHeight = 0.0f;
             layerList.elementHeightCallback = GetElementHeight;
@@ -381,7 +326,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
-            SortLayersByEffectOrder();
+            CleanupLayersForUserOrder();
 
             PropertyField(showInSceneView, new GUIContent("场景视图"));
             EditorGUILayout.Space(4.0f);
@@ -814,7 +759,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
             }
 
-            return lineCount + (SupportsShoostAovMask(element) ? GetAovMaskLineCount(element) : 0);
+            return lineCount + (HasLegacyShoostAovMask(element) ? GetAovMigrationNoticeLineCount() : 0);
         }
 
         private static int GetCoreLineCount(bool includeBlendMode, bool includeColor, bool includeTexture, bool includePassIndex, bool includeMaterialOverride, bool showAdvancedFields)
@@ -849,60 +794,22 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return count;
         }
 
-        private static int GetAovMaskLineCount(SerializedProperty element)
+        private static int GetAovMigrationNoticeLineCount()
         {
-            return HoPostAovMaskEditorUtility.GetLineCount(element);
+            return 3;
         }
 
-        private static bool SupportsShoostAovMask(SerializedProperty element)
+        private static bool HasLegacyShoostAovMask(SerializedProperty element)
         {
-            ShoostPostProcessEffect effect = GetEffect(element);
-            switch (effect)
-            {
-                case ShoostPostProcessEffect.AutoWhiteBalance:
-                case ShoostPostProcessEffect.ChangeFrameRate:
-                case ShoostPostProcessEffect.CRTEffects:
-                case ShoostPostProcessEffect.Distortion:
-                case ShoostPostProcessEffect.DitheringCustom:
-                case ShoostPostProcessEffect.DownScaleResolution:
-                case ShoostPostProcessEffect.FilmBreathGateWeave:
-                case ShoostPostProcessEffect.Fisheye:
-                case ShoostPostProcessEffect.GateWeave:
-                case ShoostPostProcessEffect.GrainCustom:
-                case ShoostPostProcessEffect.Gradient:
-                case ShoostPostProcessEffect.IrisBlur:
-                case ShoostPostProcessEffect.LensDistortionCustom:
-                case ShoostPostProcessEffect.MotionTrail:
-                case ShoostPostProcessEffect.Pixelize:
-                case ShoostPostProcessEffect.RGBBlur:
-                case ShoostPostProcessEffect.RGBBlurV2:
-                case ShoostPostProcessEffect.RGBChannelSeparator:
-                case ShoostPostProcessEffect.RGBSplit:
-                case ShoostPostProcessEffect.Tube:
-                case ShoostPostProcessEffect.VignetteCustom:
-                case ShoostPostProcessEffect.RetroLookProBleedCustom:
-                case ShoostPostProcessEffect.RetroLookProNoise2Custom:
-                case ShoostPostProcessEffect.RetroLookProOldFilm2Custom:
-                case ShoostPostProcessEffect.RetroLookProTVEffectCustom:
-                case ShoostPostProcessEffect.TransparentBackground:
-                case ShoostPostProcessEffect.VHS:
-                case ShoostPostProcessEffect.CameraFlash:
-                case ShoostPostProcessEffect.ToonMap:
-                case ShoostPostProcessEffect.Weather:
-                case ShoostPostProcessEffect.CinematicBars:
-                case ShoostPostProcessEffect.GlitchArt:
-                case ShoostPostProcessEffect.PrismFracture:
-                case ShoostPostProcessEffect.SpeedLines:
-                case ShoostPostProcessEffect.SkyGodRays:
-                case ShoostPostProcessEffect.BokehZoomBlur:
-                case ShoostPostProcessEffect.ApertureBokeh:
-                case ShoostPostProcessEffect.LensFlare:
-                case ShoostPostProcessEffect.LogoOverlay:
-                case ShoostPostProcessEffect.Glow:
-                    return false;
-                default:
-                    return true;
-            }
+            return GetBool(element, "useAovMask") || GetBool(element, "debugAovMask");
+        }
+
+        private static bool GetBool(SerializedProperty element, string name)
+        {
+            SerializedProperty property = element.FindPropertyRelative(name);
+            return property != null &&
+                   property.propertyType == SerializedPropertyType.Boolean &&
+                   property.boolValue;
         }
 
         private void DrawEffectIconToggles()
@@ -972,7 +879,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetEnum(element, "effect", (int)effect);
             ResetEffectDefaults(element, effect);
             element.isExpanded = true;
-            SortLayersByEffectOrder();
         }
 
         private void RemoveLayer(ShoostPostProcessEffect effect)
@@ -1010,7 +916,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
         }
 
-        private void SortLayersByEffectOrder()
+        private void CleanupLayersForUserOrder()
         {
             if (layerValues == null || !layerValues.isArray)
             {
@@ -1034,26 +940,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 {
                     layerValues.DeleteArrayElementAtIndex(index);
                     continue;
-                }
-            }
-
-            for (int targetIndex = 0; targetIndex < layerValues.arraySize; targetIndex++)
-            {
-                int bestIndex = targetIndex;
-                int bestOrder = GetEffectSortIndex(layerValues.GetArrayElementAtIndex(targetIndex));
-                for (int candidateIndex = targetIndex + 1; candidateIndex < layerValues.arraySize; candidateIndex++)
-                {
-                    int candidateOrder = GetEffectSortIndex(layerValues.GetArrayElementAtIndex(candidateIndex));
-                    if (candidateOrder < bestOrder)
-                    {
-                        bestIndex = candidateIndex;
-                        bestOrder = candidateOrder;
-                    }
-                }
-
-                if (bestIndex != targetIndex)
-                {
-                    layerValues.MoveArrayElement(bestIndex, targetIndex);
                 }
             }
 
@@ -1245,20 +1131,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                    effectIndex == (int)ShoostPostProcessEffect.RemovedEffectSlot32;
         }
 
-        private static int GetEffectSortIndex(SerializedProperty layer)
-        {
-            ShoostPostProcessEffect effect = GetEffect(layer);
-            for (int index = 0; index < FixedEffectOrder.Length; index++)
-            {
-                if (FixedEffectOrder[index] == effect)
-                {
-                    return index;
-                }
-            }
-
-            return int.MaxValue;
-        }
-
         private void DrawSimpleLayerElement(Rect rect, SerializedProperty element)
         {
             SerializedProperty enabled = element.FindPropertyRelative("enabled");
@@ -1399,14 +1271,18 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static float DrawAovMaskProperties(float x, float y, float width, SerializedProperty element)
         {
-            if (!SupportsShoostAovMask(element))
+            if (!HasLegacyShoostAovMask(element))
             {
-                SetBool(element, "useAovMask", false);
-                SetBool(element, "debugAovMask", false);
                 return y;
             }
 
-            return HoPostAovMaskEditorUtility.Draw(x, y, width, element, LineHeight, LineSpacing);
+            float height = (LineHeight + LineSpacing) * GetAovMigrationNoticeLineCount();
+            Rect noticeRect = new Rect(x, y, width, height - LineSpacing);
+            EditorGUI.HelpBox(
+                noticeRect,
+                "Legacy AOV mask settings are serialized here for migration only. ImageProcess RenderGraph does not read AOV, MaterialBuffer, GeometryBuffer, depth/normal, object ids, or ShadowCast resources. Recreate semantic masked effects in ScreenProcess.",
+                MessageType.Warning);
+            return y + height;
         }
 
         private static float DrawPopupLine(float x, float y, float width, SerializedProperty property, string label, string[] options)

@@ -91,7 +91,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetEnum(element, "effect", (int)effect);
             SetBool(element, "enabled", wasEnabled);
             element.isExpanded = wasExpanded;
-            SortLayersByEffectOrder();
+            CleanupLayersForUserOrder();
             serializedObject.ApplyModifiedProperties();
             if (serializedObject.targetObject != null)
             {

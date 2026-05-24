@@ -10,5 +10,11 @@ namespace lilToon.URP.Extensions.PostProcessing
             Kind = kind;
             Reason = reason;
         }
+
+        public bool IsSemanticInput =>
+            Kind == ImageProcessResourceKind.AovInput ||
+            Kind == ImageProcessResourceKind.MaterialBuffer ||
+            Kind == ImageProcessResourceKind.GeometryBuffer ||
+            Kind == ImageProcessResourceKind.ShadowCast;
     }
 }
