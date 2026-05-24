@@ -16,7 +16,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         private ShoostPostProcessStackSettings settings = new ShoostPostProcessStackSettings();
 
         private readonly ShoostPostProcessMaterialCache materialCache = new ShoostPostProcessMaterialCache();
-        private readonly ShoostPostProcessAovCompositeCache aovCompositeCache = new ShoostPostProcessAovCompositeCache();
         private readonly List<ShoostPostProcessRuntimeLayer> afterPostProcessLayers = new List<ShoostPostProcessRuntimeLayer>();
         private ShoostPostProcessPass afterPostProcessPass;
 
@@ -64,7 +63,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             afterPostProcessPass?.Dispose();
             afterPostProcessPass = null;
             materialCache.Dispose();
-            aovCompositeCache.Dispose();
             afterPostProcessLayers.Clear();
         }
 
@@ -102,7 +100,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            pass.Setup(cameraColorTarget, layers, passEvent, aovCompositeCache.Ensure(layers));
+            pass.Setup(cameraColorTarget, layers, passEvent);
         }
 
         private void EnqueueRenderGraphPass(

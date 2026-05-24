@@ -18,7 +18,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         private RTHandle cameraColorTarget;
         private RTHandle tempTextureA;
         private RTHandle tempTextureB;
-        private RTHandle tempTextureC;
         private RTHandle irisTextureA;
         private RTHandle irisTextureB;
         private RTHandle rgbBlurTextureA;
@@ -27,8 +26,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         private RTHandle glowTextureB;
         private RTHandle apertureBokehTextureA;
         private RTHandle apertureBokehTextureB;
-        private Material aovCompositeMaterial;
         private bool warnedBackBuffer;
+        private bool warnedLegacyAovMask;
         private readonly Dictionary<int, ChangeFrameRateState> changeFrameRateStates = new Dictionary<int, ChangeFrameRateState>();
 
         public ShoostPostProcessPass(string passName)
@@ -40,11 +39,9 @@ namespace lilToon.URP.Extensions.PostProcessing
         public void Setup(
             RTHandle cameraColorTarget,
             List<ShoostPostProcessRuntimeLayer> layers,
-            RenderPassEvent passEvent,
-            Material aovCompositeMaterial)
+            RenderPassEvent passEvent)
         {
             this.cameraColorTarget = cameraColorTarget;
-            this.aovCompositeMaterial = aovCompositeMaterial;
             CopyLayers(layers);
             ConfigurePass(passEvent);
             requiresIntermediateTexture = true;
@@ -55,7 +52,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             RenderPassEvent passEvent)
         {
             this.cameraColorTarget = null;
-            this.aovCompositeMaterial = null;
             CopyLayers(layers);
             ConfigurePass(passEvent);
             requiresIntermediateTexture = true;
@@ -65,10 +61,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             tempTextureA?.Release();
             tempTextureB?.Release();
-            tempTextureC?.Release();
             tempTextureA = null;
             tempTextureB = null;
-            tempTextureC = null;
             irisTextureA?.Release();
             irisTextureB?.Release();
             irisTextureA = null;
@@ -113,10 +107,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             EnsureHdrDescriptor(ref descriptor);
             RenderingUtils.ReAllocateIfNeeded(ref tempTextureA, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: ShoostPostProcessShaderConstants.TempTextureAName);
             RenderingUtils.ReAllocateIfNeeded(ref tempTextureB, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: ShoostPostProcessShaderConstants.TempTextureBName);
-            if (RequiresAovComposite())
-            {
-                RenderingUtils.ReAllocateIfNeeded(ref tempTextureC, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: ShoostPostProcessShaderConstants.TempTextureCName);
-            }
         }
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
@@ -136,24 +126,15 @@ namespace lilToon.URP.Extensions.PostProcessing
                 {
                     ShoostPostProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
                     RTHandle destination = writeToA ? tempTextureA : tempTextureB;
-                    RTHandle effectDestination = RequiresAovComposite(runtimeLayer.settings) && tempTextureC != null
-                        ? tempTextureC
-                        : destination;
+                    WarnIfImageProcessLayerUsesLegacyAovMask(runtimeLayer);
 
                     ExecuteEffectLayer(
                         cmd,
                         renderingData.cameraData.cameraTargetDescriptor,
                         renderingData.cameraData.camera,
                         source,
-                        effectDestination,
+                        destination,
                         runtimeLayer);
-
-                    if (effectDestination != destination)
-                    {
-                        ApplyShoostAovCompositeProperties(runtimeLayer.settings, aovCompositeMaterial);
-                        aovCompositeMaterial.SetTexture(ShoostPostProcessShaderConstants.LayerResultTextureId, effectDestination);
-                        Blitter.BlitCameraTexture(cmd, source, destination, aovCompositeMaterial, 0);
-                    }
 
                     source = destination;
                     writeToA = !writeToA;
@@ -196,6 +177,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             {
                 ShoostPostProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
                 WarnIfImageProcessLayerRequestsSemanticInput(runtimeLayer);
+                WarnIfImageProcessLayerUsesLegacyAovMask(runtimeLayer);
                 ImageProcessPassContext passContext = imageChain.NextPass(renderGraph, i);
                 TextureHandle effectResult = RecordEffectLayer(
                     passContext.RenderGraph,
@@ -248,6 +230,18 @@ namespace lilToon.URP.Extensions.PostProcessing
                     Debug.LogWarning($"{_passName} ignored semantic resource request '{requests[i].Kind}' from ImageProcess effect '{effect}'. Move this effect to ScreenProcess.");
                 }
             }
+        }
+
+        private void WarnIfImageProcessLayerUsesLegacyAovMask(ShoostPostProcessRuntimeLayer runtimeLayer)
+        {
+            ShoostPostProcessLayer layer = runtimeLayer?.settings;
+            if (layer == null || warnedLegacyAovMask || (!layer.useAovMask && !layer.debugAovMask))
+            {
+                return;
+            }
+
+            warnedLegacyAovMask = true;
+            Debug.LogWarning($"{_passName} ignored legacy AOV mask settings on ImageProcess layer '{layer.effect}'. Move object/material/depth gated post effects to ScreenProcess.");
         }
 
     }

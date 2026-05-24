@@ -8,7 +8,7 @@ Shoost 后处理在 URP 中定位为 **Final Stack**。它消费当前 camera co
 
 需要角色 mask、stencil、depth、normal、单独 subject color 或 pre-Bloom HDR 能量的效果，应放进 HoPost、Subject Effects、Lighting 等更早或数据语义更明确的管线，而不是塞进 Shoost Final Stack。`EdgeLight`、`Outline`、`DropShadow` 已按这个原则移出 Shoost；`Weather` 当前作为相机空间程序化粒子近似保留在 Shoost；`Glow` 是 Shoost/Kino 风格的 LDR final-stack bloom，不依赖 URP Bloom。
 
-Shoost stack 使用 Volume profile 管理图层列表。用户面对的是一个后处理图层栈，运行时会按 Shoost 固定顺序重排，而不是完全按用户拖拽顺序执行。`RemovedEffectSlot*` 只用于兼容旧资源，不生成 runtime layer。
+Shoost stack 使用 Volume profile 管理图层列表。用户面对的是一个后处理图层栈，当前 ImageProcess 执行顺序尊重用户在列表中的顺序，不再按旧 Shoost 固定 effect order 重排。`RemovedEffectSlot*` 只用于兼容旧资源，不生成 runtime layer。
 
 编辑器设计以“图层栈”为核心：列表负责选择和排序意图，右侧或展开区域负责当前层参数；普通效果保持轻量、可扫读，多 pass 或状态型效果再暴露必要的高级参数。UI 命名应贴近 Shoost 用户侧语义，避免把内部 RenderGraph、RT、executor 等实现名暴露给普通用户。
 
@@ -20,26 +20,23 @@ Shoost stack 使用 Volume profile 管理图层列表。用户面对的是一个
 - `Runtime/ShoostPostProcessing/ShoostPostProcessStackSettings.cs`：renderer feature 级设置。
 - `Runtime/ShoostPostProcessing/ShoostPostProcessStackVolume.cs`：Volume component，持有图层列表并判断 stack 是否 active。
 - `Runtime/ShoostPostProcessing/ShoostPostProcessShaderConstants.cs`：shader property id 与固定 shader 名常量。
-- `Runtime/ShoostPostProcessing/ShoostPostProcessEffectDescriptor.cs`：effect catalog，集中维护默认 shader、固定排序、AOV composite 支持、removed slot 和执行类型。
+- `Runtime/ShoostPostProcessing/ShoostPostProcessEffectDescriptor.cs`：effect catalog，集中维护默认 shader、legacy 默认插入顺序、局部资源声明、removed slot 和执行类型。
 - `Runtime/ShoostPostProcessing/ShoostPostProcessEffectRegistry.cs`：兼容门面，只转发 descriptor 的默认 shader 名。
 
 ## Renderer
 
 - `Renderer/ShoostPostProcessRuntimeLayer.cs`：运行时图层容器，绑定 layer settings 与 material。
-- `Renderer/ShoostPostProcessRuntimeLayerBuilder.cs`：从 Volume stack 构建 runtime layer，跳过 inactive、removed slot 和缺失材质的图层，并按 descriptor 排序。
+- `Renderer/ShoostPostProcessRuntimeLayerBuilder.cs`：从 Volume stack 构建 runtime layer，跳过 inactive、removed slot 和缺失材质的图层，并保留 Volume layer 列表顺序。
 - `Renderer/ShoostPostProcessMaterialCache.cs`：解析 material override、shader override、默认 shader fallback，缓存 runtime material。
-- `Renderer/ShoostPostProcessAovCompositeCache.cs`：解析和缓存 AOV composite material。
 - `Renderer/ShoostPostProcessPass.cs`：主 render pass partial，保留 compatibility path 与 RenderGraph path 主循环、临时 RT 生命周期和 pass setup。
 - `Renderer/ShoostPostProcessPass.Data.cs`：RenderGraph pass data、ChangeFrameRate state、Iris 参数等共享数据结构。
 - `Renderer/ShoostPostProcessPass.Textures.cs`：HDR render texture descriptor 和 texture desc helper。
-- `Renderer/ShoostPostProcessPass.Aov.cs`：AOV composite 判断与 RenderGraph composite pass 记录。
 
 ## EffectPipeline
 
 - `Renderer/EffectPipeline/ShoostPostProcessPass.EffectDispatch.cs`：effect executor 注册表。每个 effect 注册 compatibility executor 与 RenderGraph executor，主循环只查表调用。
-- `Renderer/EffectPipeline/ShoostPostProcessPass.EffectProperties.cs`：通用 shader property 写入、AOV property 写入、`LayerPropertyBlock` 和 effect-specific defaults 分派入口。
+- `Renderer/EffectPipeline/ShoostPostProcessPass.EffectProperties.cs`：通用 shader property 写入、`LayerPropertyBlock` 和 effect-specific defaults 分派入口。
 - `Renderer/EffectPipeline/ShoostPostProcessEffectOrder.cs`：兼容门面，转发 descriptor 的排序和 removed slot 判断。
-- `Renderer/EffectPipeline/ShoostPostProcessAovSupport.cs`：兼容门面，转发 descriptor 的 AOV composite 支持判断。
 
 ## Effects
 
@@ -53,7 +50,7 @@ Shoost stack 使用 Volume profile 管理图层列表。用户面对的是一个
 
 ## Descriptor 规则
 
-`ShoostPostProcessEffectDescriptor` 是 effect metadata 的唯一事实来源。排序、默认 shader、AOV composite 支持、removed slot 和执行类型都应从这里读取，不要在 runtime layer builder、AOV 判断或 editor 中重新写一份 switch。
+`ShoostPostProcessEffectDescriptor` 是 effect metadata 的唯一事实来源。legacy 默认插入顺序、默认 shader、局部资源声明、removed slot 和执行类型都应从这里读取，不要在 runtime layer builder、editor 或 effect 文件中重新写一份 switch。
 
 Descriptor 的执行类型只描述 runtime 形态：
 
@@ -62,25 +59,25 @@ Descriptor 的执行类型只描述 runtime 形态：
 - `Stateful`：依赖 history、per-camera cache 或跨帧状态。
 - `Removed`：旧资源兼容占位，不参与运行。
 
-未知 effect 会回退为保留原始 enum 值的 single-pass descriptor，并使用默认 layer shader。这只是防御性 fallback，不是新增效果的注册方式。正式效果必须写入 `CreateCatalog()`，否则排序、AOV 和执行分派都不具备明确语义。
+未知 effect 会回退为保留原始 enum 值的 single-pass descriptor，并使用默认 layer shader。这只是防御性 fallback，不是新增效果的注册方式。正式效果必须写入 `CreateCatalog()`，否则默认插入顺序、资源声明和执行分派都不具备明确语义。
 
 ## 新增 Shoost 效果流程
 
 1. 在 `ShoostPostProcessEffect` enum 末尾追加新效果。不要插入已有枚举中间，不要复用 removed slot，除非明确是在做旧资源兼容迁移。
 2. 评估图层数据。优先复用 `ShoostPostProcessLayer` 的 `color`、`texture`、`parameters0-12`、`blendMode`、`intensity`。只有语义长期稳定且通用字段确实不够时，才新增明确字段。
 3. 在 editor 侧增加 UI。路径按现有 Shoost stack editor 结构放置，显示名、图标、默认值、折叠状态和条件显示应与用户侧语义一致。
-4. 在 `ShoostPostProcessEffectDescriptor.CreateCatalog()` 注册 descriptor。普通 fullscreen blit 用 `SinglePass(effect, order, supportsAovComposite)`；多 pass 用 `MultiPass(...)`；跨帧或持久状态用 `Stateful(...)`；旧资源空槽用 `Removed(...)`。默认 shader 不符合 `Hidden/lilToon-Shoost/URP/Shoost/<Effect>` 时，使用带 shader name 的重载。
+4. 在 `ShoostPostProcessEffectDescriptor.CreateCatalog()` 注册 descriptor。普通 fullscreen blit 用 `SinglePass(effect, order)`；多 pass 用 `MultiPass(...)`；跨帧或持久状态用 `Stateful(...)`；旧资源空槽用 `Removed(...)`。默认 shader 不符合 `Hidden/lilToon-Shoost/URP/Shoost/<Effect>` 时，使用带 shader name 的重载。需要本地 ping-pong、history、original source 或 layer-supplied external texture 时，用 `ImageProcessResourceRequest` 声明；不要为 ImageProcess 新增 AOV / MaterialBuffer / GeometryBuffer / ShadowCast 输入。
 5. 新增或更新 `Runtime/ShoostPostProcessing/Shaders/Shoost/<Effect>.shader`。shader 内部名称默认保持 `Hidden/lilToon-Shoost/URP/Shoost/<Effect>`。新增 property 时同时补 `ShoostPostProcessShaderConstants`，避免 magic string 散落在 effect 文件里。
 6. 在 `Renderer/Effects/` 新增 `ShoostPostProcessPass.<Effect>.cs`。普通 single-pass 效果实现 `Apply<Effect>Layer(...)` 与 `Record<Effect>Layer(...)`，内部调用共享 helper；多 pass/stateful 效果在该文件中实现专用 `Apply...`、`Record...` 和 helper。
 7. 在 `Renderer/EffectPipeline/ShoostPostProcessPass.EffectDispatch.cs` 注册 executor。普通 single-pass 使用 `RegisterSinglePassEffect`；多 pass 或 stateful 使用 `RegisterEffect`，同时提供 compatibility path 与 RenderGraph path。两条路径必须保持视觉行为一致。
-8. 验证 enum 覆盖、descriptor 覆盖、executor 覆盖、effect 文件命名、Unity `.meta`、Unity import/compile，以及实际画面。单 pass 至少验证开关、强度、混合、AOV mask；多 pass/stateful 还要验证 resolution、history、camera 切换和 RenderGraph/compatibility 一致性。
+8. 验证 enum 覆盖、descriptor 覆盖、executor 覆盖、effect 文件命名、Unity `.meta`、Unity import/compile，以及实际画面。单 pass 至少验证开关、强度、混合；多 pass/stateful 还要验证 resolution、history、camera 切换和 RenderGraph/compatibility 一致性。
 
 ## 当前约束
 
 - 不改变 `ShoostPostProcessEffect` 既有枚举值。
 - 不改变已有 shader property id、默认 shader 路径和 pass index 语义。
 - compatibility path 与 RenderGraph path 的视觉行为必须保持一致。
-- AOV mask composite 的启用条件由 descriptor 控制。
+- ImageProcess 不再支持 AOV mask composite；旧 `useAovMask` / `debugAovMask` 只作为迁移数据保留，运行时只提示迁往 ScreenProcess。
 - removed slot 只作为旧资源兼容保留。
 
 ## 后续改进方向

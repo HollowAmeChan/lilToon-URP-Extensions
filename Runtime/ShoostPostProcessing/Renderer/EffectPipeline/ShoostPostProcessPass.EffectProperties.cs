@@ -1,4 +1,3 @@
-using lilToon.URP.Extensions.AOV;
 using UnityEngine;
 #pragma warning disable CS0618, CS0672
 
@@ -130,35 +129,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                     Params12 = layer.parameters12
                 };
             }
-        }
-
-        private static void ApplyShoostAovCompositeProperties(ShoostPostProcessLayer layer, Material material)
-        {
-            if (layer == null || material == null)
-            {
-                return;
-            }
-
-            material.SetFloat(ShoostPostProcessShaderConstants.LayerAovMaskEnabledId, layer.useAovMask ? 1.0f : 0.0f);
-            material.SetFloat(ShoostPostProcessShaderConstants.LayerAovSourceId, (float)layer.aovSource);
-            material.SetFloat(ShoostPostProcessShaderConstants.LayerAovModeId, (float)layer.aovMaskMode);
-            material.SetVector(
-                ShoostPostProcessShaderConstants.LayerAovParamsId,
-                new Vector4(
-                    Mathf.Max(0.0f, layer.aovThreshold),
-                    0.0f,
-                    layer.aovMatchValue,
-                    layer.invertAovMask ? 1.0f : 0.0f));
-            material.SetColor(ShoostPostProcessShaderConstants.LayerAovMatchColorId, layer.aovMatchColor);
-            material.SetFloat(ShoostPostProcessShaderConstants.LayerAovDebugOutputId, layer.debugAovMask ? 1.0f : 0.0f);
-            HoPostAovMaskRuntime.ApplyToMaterial(
-                layer,
-                material,
-                ShoostPostProcessShaderConstants.LayerAovRuleCountId,
-                ShoostPostProcessShaderConstants.LayerAovRuleData0Id,
-                ShoostPostProcessShaderConstants.LayerAovRuleData1Id,
-                ShoostPostProcessShaderConstants.LayerAovRuleData2Id,
-                ShoostPostProcessShaderConstants.LayerAovRuleColorId);
         }
 
     }

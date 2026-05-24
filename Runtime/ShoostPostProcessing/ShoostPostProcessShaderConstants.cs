@@ -5,10 +5,8 @@ namespace lilToon.URP.Extensions.PostProcessing
     internal static class ShoostPostProcessShaderConstants
     {
         public const string DefaultLayerShaderName = "Hidden/lilToon-Shoost/URP/Shoost/PostProcessLayerBlit";
-        public const string AovCompositeShaderName = "Hidden/lilToon-Shoost/URP/Shoost/AOVComposite";
         public const string TempTextureAName = "_lilShoostPostProcessTempA";
         public const string TempTextureBName = "_lilShoostPostProcessTempB";
-        public const string TempTextureCName = "_lilShoostPostProcessTempC";
 
         public static readonly int IntensityId = Shader.PropertyToID("_Intensity");
         public static readonly int LayerBlendModeId = Shader.PropertyToID("_LayerBlendMode");
@@ -41,17 +39,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static readonly int LayerParams10Id = Shader.PropertyToID("_LayerParams10");
         public static readonly int LayerParams11Id = Shader.PropertyToID("_LayerParams11");
         public static readonly int LayerParams12Id = Shader.PropertyToID("_LayerParams12");
-        public static readonly int LayerAovMaskEnabledId = Shader.PropertyToID("_LayerAovMaskEnabled");
-        public static readonly int LayerAovSourceId = Shader.PropertyToID("_LayerAovSource");
-        public static readonly int LayerAovModeId = Shader.PropertyToID("_LayerAovMode");
-        public static readonly int LayerAovParamsId = Shader.PropertyToID("_LayerAovParams");
-        public static readonly int LayerAovMatchColorId = Shader.PropertyToID("_LayerAovMatchColor");
-        public static readonly int LayerAovDebugOutputId = Shader.PropertyToID("_LayerAovDebugOutput");
-        public static readonly int LayerAovRuleCountId = Shader.PropertyToID("_LayerAovRuleCount");
-        public static readonly int LayerAovRuleData0Id = Shader.PropertyToID("_LayerAovRuleData0");
-        public static readonly int LayerAovRuleData1Id = Shader.PropertyToID("_LayerAovRuleData1");
-        public static readonly int LayerAovRuleData2Id = Shader.PropertyToID("_LayerAovRuleData2");
-        public static readonly int LayerAovRuleColorId = Shader.PropertyToID("_LayerAovRuleColor");
         public static readonly int ModeId = Shader.PropertyToID("_Mode");
         public static readonly int RadiusId = Shader.PropertyToID("_Radius");
         public static readonly int SharpnessId = Shader.PropertyToID("_Sharpness");
@@ -68,6 +55,5 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static readonly int DistanceId = Shader.PropertyToID("_Distance");
         public static readonly int AngleId = Shader.PropertyToID("_Angle");
         public static readonly int BloomTexId = Shader.PropertyToID("_BloomTex");
-        public static readonly int LayerResultTextureId = Shader.PropertyToID("_LayerResultTexture");
     }
 }

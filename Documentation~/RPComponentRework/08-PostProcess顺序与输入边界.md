@@ -182,6 +182,13 @@ ImageProcess UI：
 - 添加 layer 和应用 preset 后不再按旧 effect 顺序移动 layer，用户列表顺序即 ImageProcess 执行顺序。
 - Shoost/ImageProcess UI 不再显示 AOV mask 规则编辑器；旧 `useAovMask` / `debugAovMask` 为真时只显示迁移提示，指向 ScreenProcess。
 
+已继续收敛 runtime 输入边界：
+
+- ImageProcess compatibility path 不再执行旧 AOV composite；`useAovMask` / `debugAovMask` 只触发迁移 warning。
+- 删除旧 AOV composite cache、RDG AOV composite partial、AOV support 门面和 `AovComposite.shader`。
+- ImageProcess descriptor 不再携带 `SupportsAovComposite`，新增 effect 不能再声明 AOV mask 支持。
+- 普通 ImageProcess layer material 不再写入 `_LayerAov*` property。
+
 ---
 
 ## 8. 验收清单

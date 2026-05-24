@@ -13,20 +13,9 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             public TextureHandle source;
             public TextureHandle originalTexture;
-            public TextureHandle layerResultTexture;
-            public TextureHandle aovMaskIdTexture;
-            public TextureHandle aovSurfaceDataTexture;
-            public TextureHandle aovCustom0Texture;
-            public TextureHandle aovObjectCustom0Texture;
-            public TextureHandle aovObjectCustom1Texture;
             public ShoostPostProcessLayer layer;
             public Material material;
             public int passIndex;
-            public bool useAovMaskTexture;
-            public bool useAovSurfaceData;
-            public bool useAovCustom0;
-            public bool useAovObjectCustom0;
-            public bool useAovObjectCustom1;
             public float radius;
             public float screenRatio;
             public TextureHandle blurredTexture;

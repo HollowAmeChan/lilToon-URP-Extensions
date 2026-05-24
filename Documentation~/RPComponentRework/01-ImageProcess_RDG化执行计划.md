@@ -191,7 +191,6 @@ Runtime/ShoostPostProcessing/Renderer/EffectPipeline/ShoostPostProcessPass.Effec
 Runtime/ShoostPostProcessing/Renderer/EffectPipeline/ShoostPostProcessPass.EffectProperties.cs
 Runtime/ShoostPostProcessing/Renderer/Effects/*.cs
 Runtime/ShoostPostProcessing/ShoostPostProcessEffectDescriptor.cs
-Runtime/ShoostPostProcessing/Renderer/ShoostPostProcessAovSupport.cs
 ```
 
 不要先改 editor UI。先让 runtime 资源生命周期正确，再整理 UI。
@@ -207,7 +206,7 @@ Runtime/ShoostPostProcessing/Renderer/ShoostPostProcessAovSupport.cs
 - 普通 `RecordSinglePassLayer()` 不再创建 `_lilShoostPostProcessLayer{n}` 这类每层独占输出，而是写入 ImageChain 提供的 `WorkA/WorkB`。
 - `Glow`、`IrisBlur`、`RGBBlurV2`、`ApertureBokeh`、`ChangeFrameRate` 的内部临时 RT 仍为当前 frame 的 RDG 资源，但最终输出写回 ImageChain 目标。
 - RenderGraph 路径不再读取 `HoAovRenderGraphResources`，也不再记录 Shoost AOV composite pass。
-- RenderGraph 路径不再通过 `ShoostPostProcessAovCompositeCache.Ensure()` 查找或创建 `AovComposite.shader` material；旧 AOV composite 仅暂留 compatibility path。
+- RenderGraph 路径不再通过 `ShoostPostProcessAovCompositeCache.Ensure()` 查找或创建 `AovComposite.shader` material。
 - `ShoostPostProcessRuntimeLayerBuilder` 不再按 descriptor 的 `RuntimeOrder` 强制排序，当前执行顺序尊重 Volume layer 用户顺序。
 
 随后继续落地局部资源声明：
@@ -230,6 +229,15 @@ Runtime/ShoostPostProcessing/Renderer/ShoostPostProcessAovSupport.cs
 - `git diff --check` 通过，仅有 Git 换行提示。
 - 针对性扫描确认 Shoost RenderGraph 主路径没有 `GetOrCreate<HoAovRenderGraphResources>()`、没有 `RecordAovCompositeIfNeeded()` 调用。
 - 当前仓库是 UPM package，不是完整 Unity project，未找到直接引用该包的本地 Unity 工程，因此尚未跑 Unity batchmode 编译。
+
+继续推进后，旧 AOV composite 从 ImageProcess compatibility path 中冻结删除：
+
+- 删除 `ShoostPostProcessAovCompositeCache`、`ShoostPostProcessPass.Aov`、`ShoostPostProcessAovSupport` 和 `Shaders/Shoost/AovComposite.shader`。
+- `ShoostPostProcessPass.Execute()` 不再为 `useAovMask` / `debugAovMask` 分配 `_lilShoostPostProcessTempC`，也不再做 AOV composite 二次 blit。
+- `ShoostPostProcessEffectDescriptor` 移除 `SupportsAovComposite` 标志，ImageProcess effect metadata 不再声明 semantic mask 支持。
+- 旧序列化字段 `useAovMask` / `debugAovMask` 暂留为迁移数据；runtime 发现启用时只 warning once，并提示迁往 ScreenProcess。
+- ImageProcess shader constants 移除 `_LayerAov*` 与 `_LayerResultTexture` id，普通 layer material 不再接收 AOV mask property。
+- 针对性扫描确认 `Runtime/ShoostPostProcessing` 没有 `HoAovRenderGraphResources`、`RecordAovCompositeIfNeeded`、`ShoostPostProcessAovSupport`、`AovCompositeShaderName` 或 `SupportsAovComposite` 残留。
 
 ---
 
