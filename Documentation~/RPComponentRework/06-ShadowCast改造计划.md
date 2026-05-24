@@ -333,6 +333,20 @@ ShadowCast 与 ScreenProcess 的关系：
 - `HoShadowCastRendererFeature.cs` 仍是大文件，collector / atlas packer / publish / debug 尚未拆成独立文件。
 - 自动收集的 light layer / shadow layer 规则还未细化，当前第一阶段主要依赖 URP visible lights、main light skip、`Light.shadows` 与 caster layer mask。
 
+## 10.3 2026-05-24 执行记录
+
+已继续拆分 ShadowCast debug ownership：
+
+- `HoShadowCastDebugPass` 从 `HoShadowCastRendererFeature.cs` 拆到 `Runtime/ShadowCast/HoShadowCastDebugPass.cs`，Debug pass 的 camera color copy、atlas 选择、RenderGraph 输出和 compatibility path 逻辑不再挤在 RendererFeature 大文件中。
+- `HoShadowCastRendererFeature` 仍负责 debug 开关、按需 `Shader.Find(HoShadowCastShaderConstants.DebugShaderName)` 和 debug material 生命周期；debug 关闭时会释放 debug material。
+- debug shader 缺失时只 warning once，不再入队空 debug pass，ShadowCast 主 atlas / publish 路径不受影响。
+- 这次拆分不改变 atlas、receiver ABI、MaterialBuffer/GeometryBuffer 边界，也不改变 ImageProcess 禁止消费 ShadowCast 的规则。
+
+仍待处理：
+
+- `HoShadowCastRendererFeature.cs` 仍需继续拆 collector / atlas packer / publish。
+- 自动收集的 light layer / shadow layer 规则还未细化，当前仍主要依赖 URP visible lights、main light skip、`Light.shadows` 与 caster layer mask。
+
 ---
 
 ## 11. 验收清单
