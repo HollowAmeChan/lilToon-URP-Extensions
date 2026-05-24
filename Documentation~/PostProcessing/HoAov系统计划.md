@@ -105,7 +105,7 @@ URP 已经有一些类似 AOV 的内部中间纹理：
 - `_CameraDepthTexture`
 - `_CameraNormalsTexture`
 - `_MotionVectorTexture`
-- GBuffer
+- URP 内置延迟缓冲
 - Rendering Layers Texture
 - Depth prepass / DepthNormals prepass
 - MotionVectors pass
@@ -116,7 +116,7 @@ URP 已经有一些类似 AOV 的内部中间纹理：
 - `cameraNormalsTexture`
 - `motionVectorColor`
 - `renderingLayersTexture`
-- `gBuffer`
+- `gBuffer`（URP 内置资源字段；本文自定义组分命名避免直接复用，后续统一称 GeometryBuffer）
 
 这些可以作为 HoAOV 的原料，但不能替代 HoAOV：
 

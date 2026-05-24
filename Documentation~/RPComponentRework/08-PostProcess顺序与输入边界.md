@@ -1,0 +1,177 @@
+# PostProcess 顺序与输入边界
+
+> 本文约束 `ScreenProcess` 与 `ImageProcess` 两个 post 系统。结论：两个系统都应支持用户自定义层顺序；只有 ScreenProcess 能消费语义输入；ImageProcess 只处理当前图像链。
+
+---
+
+## 0. 命名
+
+```text
+HoPost / HoPostProcessing         -> ScreenProcess
+Shoost / ShoostStack / ShoostPost -> ImageProcess
+```
+
+旧类名可作为迁移期实现名保留。用户文档、新 UI、新 descriptor 使用 `ScreenProcess` / `ImageProcess`。
+
+---
+
+## 1. 两个系统的职责
+
+### ScreenProcess
+
+ScreenProcess 是语义感知屏幕处理。
+
+允许读取：
+
+- MaterialBuffer。
+- GeometryBuffer。
+- camera depth / normal。
+- object id / group id / part bit / feature flag。
+- ShadowCast 资源，但必须是明确的 ScreenProcess receiver 或 debug。
+- SSS / OIT / CharacterSpecialization 明确发布给屏幕处理的资源。
+
+典型效果：
+
+- outline。
+- edge light。
+- drop shadow。
+- post lighting。
+- semantic depth of field。
+- character/object/material targeted composite。
+- screen-space shadow receiver。
+
+### ImageProcess
+
+ImageProcess 是最终图像处理链。
+
+只允许读取：
+
+- 当前 image chain 输入。
+- 自己 layer 参数。
+- 自己 layer 显式提供的用户贴图，例如 LUT、noise、logo、overlay texture。
+- 自己 effect 内部申请的 RDG 临时资源。
+- 自己 effect 明确声明的 history，且只能用于图像域 temporal 效果。
+
+禁止读取：
+
+- MaterialBuffer。
+- GeometryBuffer。
+- HoAOV / MaterialBuffer mask。
+- camera depth / normal。
+- object id / group id / part bit / feature flag。
+- ShadowCast atlas / attenuation / light data。
+- SSS diffusion / composite / profile buffer。
+- OIT accumulation / revealage。
+- CharacterSpecialization capture。
+
+如果一个旧 Shoost/ImageProcess effect 需要这些输入，它不再属于 ImageProcess，应迁到 ScreenProcess。
+
+---
+
+## 2. 顺序规则
+
+旧仓库中 HoPost / Shoost 有较多固定排序逻辑。新方向不继续固定内部顺序。
+
+规则：
+
+- ScreenProcess layer 按用户在 UI 中排列的顺序执行。
+- ImageProcess layer 按用户在 UI 中排列的顺序执行。
+- descriptor 只提供默认插入位置、显示分组、资源需求和迁移兼容信息。
+- descriptor 不应在运行时强制重排用户栈。
+- 只有依赖关系不可交换的复合效果，才允许在该 effect 内部固定自己的 sub-pass 顺序。
+
+示例：
+
+```text
+ScreenProcess:
+  Layer 0: Outline
+  Layer 1: EdgeLight
+  Layer 2: DropShadow
+
+ImageProcess:
+  Layer 0: ColorAdjust
+  Layer 1: Grain
+  Layer 2: CRT
+  Layer 3: Vignette
+```
+
+用户拖拽顺序就是实际执行顺序。
+
+---
+
+## 3. ImageChain 与顺序
+
+ImageChain 做好后，ImageProcess 的顺序调整应很简单：
+
+```text
+Begin(cameraColorCopy)
+
+For each user layer in order:
+  Read  = ImageChain.Current
+  Write = ImageChain.Next
+  Record layer pass
+  Swap()
+
+End(write current back to camera color)
+```
+
+这意味着普通图像层不再需要固定 effect order，也不需要每层独占同规格 RT。
+多 pass 图像效果仍可在自己的 effect 内部申请临时 RDG 资源，但外部层顺序仍由用户栈决定。
+
+---
+
+## 4. 旧 Shoost mask 处理
+
+旧 Shoost 的 AOV composite / useAovMask / debugAovMask 不作为新 ImageProcess 能力保留。
+
+迁移规则：
+
+- 如果某个 Shoost layer 只是纯图像效果，保留为 ImageProcess。
+- 如果某个 Shoost layer 需要 mask、object id、part bit、MaterialBuffer、GeometryBuffer、depth/normal 或 ShadowCast，迁到 ScreenProcess。
+- ImageProcess 不提供 `NeedsAovInput`、`semantic image pass` 或类似后门。
+- ImageProcess debug 只观察图像链、layer 参数和 effect 内部临时资源。
+
+这条规则会减少 ImageProcess 复杂度，也避免它重新变成第二套 ScreenProcess。
+
+---
+
+## 5. UI 规则
+
+ScreenProcess UI：
+
+- 以 layer list 为主。
+- 支持拖拽排序。
+- 每个 layer 显示输入依赖，例如 MaterialBuffer、GeometryBuffer、ShadowCast。
+- mask/rule UI 只出现在 ScreenProcess。
+
+ImageProcess UI：
+
+- 以 layer list 为主。
+- 支持拖拽排序。
+- 不显示 AOV mask、semantic mask、object/material rule。
+- 如果用户需要按对象/材质/区域控制效果，应提示使用 ScreenProcess。
+
+---
+
+## 6. 执行迁移
+
+1. 保留旧序列化数据，不立刻破坏用户资源。
+2. 给 ScreenProcess / ImageProcess 增加 `executionOrderMode` 迁移字段：
+   - `LegacyFixedOrder`：只用于旧资源兼容。
+   - `UserOrder`：新资源默认。
+3. Editor UI 对新资源默认启用拖拽排序。
+4. 旧 Shoost 的 AOV mask 配置迁移到 ScreenProcess layer。
+5. ImageProcess runtime 删除 AOV composite、semantic image pass 和 NeedsAovInput 路径。
+6. Frame Debugger pass 名标出用户 layer index，方便对照 UI 顺序。
+
+---
+
+## 7. 验收清单
+
+- ScreenProcess 用户拖拽顺序就是执行顺序。
+- ImageProcess 用户拖拽顺序就是执行顺序。
+- ImageProcess 没有 AOV mask / semantic mask UI。
+- ImageProcess runtime 不读取 MaterialBuffer / GeometryBuffer / ShadowCast。
+- 旧 Shoost AOV composite 能迁移或提示迁移到 ScreenProcess。
+- 10 个普通 ImageProcess layer 只复用 ImageChain 工作纹理。
+- 多 pass ImageProcess effect 的内部 sub-pass 顺序固定，但外部 layer 顺序仍由用户控制。
