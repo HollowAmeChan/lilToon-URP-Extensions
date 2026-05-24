@@ -17,6 +17,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         private static bool showAtlas = true;
         private static bool showPcss = true;
         private static bool showSecondDirectional = true;
+        private static bool showRuntime = true;
         private static bool showController = true;
         private static GUIStyle sectionTitleStyle;
         private static GUIStyle sectionSummaryStyle;
@@ -83,6 +84,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             DrawAtlas();
             DrawPcss();
             DrawSecondDirectional();
+            DrawRuntimeStatus();
             DrawControllerStatus();
             serializedObject.ApplyModifiedProperties();
         }
@@ -175,6 +177,94 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
                 DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalMaxDistance"), "Max Distance");
                 DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalShadowDepth"), "Shadow Depth");
                 DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalCascadeSplits"), "Cascade Splits");
+            }
+        }
+
+        private void DrawRuntimeStatus()
+        {
+            HoShadowCastRuntimeDiagnosticSnapshot snapshot = HoShadowCastRuntimeDiagnostics.CurrentSnapshot;
+            string summary = snapshot.IsValid
+                ? snapshot.LightCount + " lights / " + snapshot.SliceCount + " slices"
+                : "No frame yet";
+
+            if (!DrawSectionHeader(ref showRuntime, "Runtime", summary, SettingsColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                if (!snapshot.IsValid)
+                {
+                    EditorGUILayout.HelpBox("No ShadowCast frame has been recorded yet. Enter Play Mode or render a Scene/Game camera that uses this RendererFeature.", MessageType.Info);
+                    return;
+                }
+
+                EditorGUILayout.LabelField("Frame", snapshot.FrameCount.ToString());
+                EditorGUILayout.LabelField("Path", snapshot.Path);
+                EditorGUILayout.LabelField("Camera", snapshot.CameraName);
+                EditorGUILayout.LabelField("Source", snapshot.Source);
+                EditorGUILayout.LabelField("Visible Lights", snapshot.VisibleLightCount.ToString());
+                EditorGUILayout.LabelField("Candidates", snapshot.CandidateCount + " checked, " + snapshot.SkippedCandidateCount + " skipped");
+                EditorGUILayout.LabelField("Punctual Atlas", FormatAtlas(snapshot.HasFrame, snapshot.LightCount, snapshot.SliceCount, snapshot.AtlasSize));
+                EditorGUILayout.LabelField("Second Directional", FormatSecondDirectional(snapshot));
+
+                DrawAcceptedLights(snapshot.AcceptedLights);
+                DrawSkippedLights(snapshot.SkippedLights, snapshot.SkippedCandidateCount);
+            }
+        }
+
+        private static string FormatAtlas(bool active, int lightCount, int sliceCount, int atlasSize)
+        {
+            return active
+                ? lightCount + " lights, " + sliceCount + " slices, " + atlasSize + "px"
+                : "Inactive";
+        }
+
+        private static string FormatSecondDirectional(HoShadowCastRuntimeDiagnosticSnapshot snapshot)
+        {
+            return snapshot.HasSecondDirectionalFrame
+                ? snapshot.SecondDirectionalLightCount + " lights, " + snapshot.SecondDirectionalSliceCount + " slices, " + snapshot.SecondDirectionalCascadeCount + " cascades, " + snapshot.SecondDirectionalAtlasSize + "px"
+                : "Inactive";
+        }
+
+        private static void DrawAcceptedLights(HoShadowCastRuntimeDiagnosticLight[] lights)
+        {
+            if (lights == null || lights.Length == 0)
+            {
+                return;
+            }
+
+            EditorGUILayout.Space(3.0f);
+            EditorGUILayout.LabelField("Accepted Lights", EditorStyles.boldLabel);
+            for (int i = 0; i < lights.Length; i++)
+            {
+                HoShadowCastRuntimeDiagnosticLight light = lights[i];
+                EditorGUILayout.LabelField(
+                    light.Name,
+                    light.Stage + " " + light.Type + " slices " + light.FirstSlice + "+" + light.SliceCount + " @ " + light.Resolution + "px");
+            }
+        }
+
+        private static void DrawSkippedLights(HoShadowCastRuntimeDiagnosticSkip[] skippedLights, int skippedCandidateCount)
+        {
+            if (skippedLights == null || skippedLights.Length == 0)
+            {
+                return;
+            }
+
+            EditorGUILayout.Space(3.0f);
+            EditorGUILayout.LabelField("Skipped Lights", EditorStyles.boldLabel);
+            for (int i = 0; i < skippedLights.Length; i++)
+            {
+                HoShadowCastRuntimeDiagnosticSkip skipped = skippedLights[i];
+                EditorGUILayout.LabelField(skipped.Name, skipped.Stage + " " + skipped.Type + ": " + skipped.Reason);
+            }
+
+            int remaining = skippedCandidateCount - skippedLights.Length;
+            if (remaining > 0)
+            {
+                EditorGUILayout.LabelField("More skipped", remaining.ToString());
             }
         }
 

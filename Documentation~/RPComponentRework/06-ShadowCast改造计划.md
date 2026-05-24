@@ -314,7 +314,22 @@ ShadowCast 与 ScreenProcess 的关系：
 
 仍待处理：
 
-- frame debug 状态还只是日志摘要，没有正式 Inspector 运行时参与灯光 / 跳过原因 / slice 分配表。
+- `HoShadowCastRendererFeature.cs` 仍是大文件，collector / atlas packer / publish / debug 尚未拆成独立文件。
+- 自动收集的 light layer / shadow layer 规则还未细化，当前第一阶段主要依赖 URP visible lights、main light skip、`Light.shadows` 与 caster layer mask。
+
+## 10.2 2026-05-24 执行记录
+
+已继续落地 ShadowCast 运行时诊断与 Inspector 只读状态：
+
+- 新增 `HoShadowCastRuntimeDiagnostics`，把当前帧 ShadowCast 收集结果从 `HoShadowCastRendererFeature.cs` 拆到独立只读诊断出口。
+- compatibility path 与 RenderGraph path 都会发布最近一次 frame snapshot，记录执行路径、camera、来源、visible light 数、candidate 数、跳过数、atlas light/slice 数和第二方向光级联状态。
+- punctual atlas 收集会记录参与灯光、slice 起点、slice 数、resolution，并记录跳过原因，例如无阴影、容量限制、atlas 已满、构建 shadow slice 失败、重复灯光或 URP main light。
+- 第二方向光级联收集会记录参与方向光、cascade slice 起点和 resolution，并保持自动 visible light 路径只接收 `Light.shadows != None` 的方向光；legacy controller/manual path 仍保留旧语义。
+- `HoShadowCastRendererFeatureEditor` 新增 Runtime 只读区块，可在 Inspector 中查看最近帧来源、候选数量、参与灯光、跳过原因、punctual atlas 和 second directional atlas 状态。
+- 这批改造不改变 receiver ABI，不让 ShadowCast 写入 MaterialBuffer/GeometryBuffer，也不让 ImageProcess 消费 ShadowCast。
+
+仍待处理：
+
 - `HoShadowCastRendererFeature.cs` 仍是大文件，collector / atlas packer / publish / debug 尚未拆成独立文件。
 - 自动收集的 light layer / shadow layer 规则还未细化，当前第一阶段主要依赖 URP visible lights、main light skip、`Light.shadows` 与 caster layer mask。
 

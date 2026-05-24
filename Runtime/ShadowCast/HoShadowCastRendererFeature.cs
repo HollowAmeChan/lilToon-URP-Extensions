@@ -527,6 +527,11 @@ namespace lilToon.URP.Extensions.ShadowCast
 
             LightData lightData = renderingData.lightData;
             ShadowData shadowData = renderingData.shadowData;
+            HoShadowCastFrameDiagnostics diagnostics = HoShadowCastRuntimeDiagnostics.Begin(
+                "Compatibility",
+                config,
+                lightData.visibleLights.IsCreated ? lightData.visibleLights.Length : 0,
+                renderingData.cameraData.camera);
             bool hasFrame = BuildFrameData(
                     config,
                     ref renderingData.cullResults,
@@ -537,7 +542,8 @@ namespace lilToon.URP.Extensions.ShadowCast
                     renderingData.cameraData.worldSpaceCameraPos,
                     renderingData.cameraData.GetViewMatrix(),
                     renderingData.cameraData.GetProjectionMatrix(),
-                    frame);
+                    frame,
+                    diagnostics);
             bool hasSecondDirectionalFrame = BuildSecondDirectionalFrameData(
                     config,
                     ref renderingData.cullResults,
@@ -547,7 +553,9 @@ namespace lilToon.URP.Extensions.ShadowCast
                     renderingData.cameraData.worldSpaceCameraPos,
                     renderingData.cameraData.GetViewMatrix(),
                     renderingData.cameraData.GetProjectionMatrix(),
-                    secondDirectionalFrame);
+                    secondDirectionalFrame,
+                    diagnostics);
+            diagnostics.Publish(hasFrame, frame, hasSecondDirectionalFrame, secondDirectionalFrame);
             MaybeLogDebugFrame(config, frame, secondDirectionalFrame, "Compatibility", hasFrame, hasSecondDirectionalFrame);
             if (!hasFrame && !hasSecondDirectionalFrame)
             {
@@ -636,6 +644,11 @@ namespace lilToon.URP.Extensions.ShadowCast
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
             UniversalShadowData shadowData = frameData.Get<UniversalShadowData>();
             HoShadowCastRenderGraphResources shadowCastResources = frameData.GetOrCreate<HoShadowCastRenderGraphResources>();
+            HoShadowCastFrameDiagnostics diagnostics = HoShadowCastRuntimeDiagnostics.Begin(
+                "RenderGraph",
+                config,
+                lightData.visibleLights.IsCreated ? lightData.visibleLights.Length : 0,
+                cameraData.camera);
 
             HoShadowCastFrame renderGraphFrame = new HoShadowCastFrame();
             bool hasFrame = BuildFrameData(
@@ -648,7 +661,8 @@ namespace lilToon.URP.Extensions.ShadowCast
                     cameraData.worldSpaceCameraPos,
                     cameraData.GetViewMatrix(),
                     cameraData.GetProjectionMatrix(),
-                    renderGraphFrame);
+                    renderGraphFrame,
+                    diagnostics);
             HoShadowCastSecondDirectionalFrame renderGraphSecondDirectionalFrame = new HoShadowCastSecondDirectionalFrame();
             bool hasSecondDirectionalFrame = BuildSecondDirectionalFrameData(
                     config,
@@ -659,7 +673,9 @@ namespace lilToon.URP.Extensions.ShadowCast
                     cameraData.worldSpaceCameraPos,
                     cameraData.GetViewMatrix(),
                     cameraData.GetProjectionMatrix(),
-                    renderGraphSecondDirectionalFrame);
+                    renderGraphSecondDirectionalFrame,
+                    diagnostics);
+            diagnostics.Publish(hasFrame, renderGraphFrame, hasSecondDirectionalFrame, renderGraphSecondDirectionalFrame);
             MaybeLogDebugFrame(config, renderGraphFrame, renderGraphSecondDirectionalFrame, "RenderGraph", hasFrame, hasSecondDirectionalFrame);
             if (!hasFrame && !hasSecondDirectionalFrame)
             {
@@ -810,7 +826,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             Vector3 cameraPosition,
             Matrix4x4 cameraViewMatrix,
             Matrix4x4 cameraProjectionMatrix,
-            HoShadowCastFrame target)
+            HoShadowCastFrame target,
+            HoShadowCastFrameDiagnostics diagnostics)
         {
             return BuildFrameData(
                 config,
@@ -824,7 +841,8 @@ namespace lilToon.URP.Extensions.ShadowCast
                 cameraPosition,
                 cameraViewMatrix,
                 cameraProjectionMatrix,
-                target);
+                target,
+                diagnostics);
         }
 
         private static bool BuildFrameData(
@@ -837,7 +855,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             Vector3 cameraPosition,
             Matrix4x4 cameraViewMatrix,
             Matrix4x4 cameraProjectionMatrix,
-            HoShadowCastFrame target)
+            HoShadowCastFrame target,
+            HoShadowCastFrameDiagnostics diagnostics)
         {
             ShadowData unusedCompatibilityShadowData = default;
             return BuildFrameData(
@@ -852,7 +871,8 @@ namespace lilToon.URP.Extensions.ShadowCast
                 cameraPosition,
                 cameraViewMatrix,
                 cameraProjectionMatrix,
-                target);
+                target,
+                diagnostics);
         }
 
         private static bool BuildFrameData(
@@ -867,7 +887,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             Vector3 cameraPosition,
             Matrix4x4 cameraViewMatrix,
             Matrix4x4 cameraProjectionMatrix,
-            HoShadowCastFrame target)
+            HoShadowCastFrame target,
+            HoShadowCastFrameDiagnostics diagnostics)
         {
             if (config == null)
             {
@@ -887,13 +908,13 @@ namespace lilToon.URP.Extensions.ShadowCast
             HoShadowCastAtlasPacker packer = new HoShadowCastAtlasPacker(target.atlasSize);
             if (config.collectVisibleLights)
             {
-                AddVisibleLights(LightType.Spot, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
-                AddVisibleLights(LightType.Point, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
+                AddVisibleLights(LightType.Spot, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target, diagnostics);
+                AddVisibleLights(LightType.Point, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target, diagnostics);
             }
             else
             {
-                AddLightArray(config.spotLights, LightType.Spot, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
-                AddLightArray(config.pointLights, LightType.Point, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
+                AddLightArray(config.spotLights, LightType.Spot, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target, diagnostics);
+                AddLightArray(config.pointLights, LightType.Point, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target, diagnostics);
             }
 
             target.FillUnused();
@@ -909,7 +930,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             Vector3 cameraPosition,
             Matrix4x4 cameraViewMatrix,
             Matrix4x4 cameraProjectionMatrix,
-            HoShadowCastSecondDirectionalFrame target)
+            HoShadowCastSecondDirectionalFrame target,
+            HoShadowCastFrameDiagnostics diagnostics)
         {
             target.Clear();
             target.cameraPosition = cameraPosition;
@@ -951,22 +973,52 @@ namespace lilToon.URP.Extensions.ShadowCast
                 : (config.directionalLights != null ? config.directionalLights.Length : 0);
             for (int lightSlot = 0; lightSlot < directionalCandidateCount; lightSlot++)
             {
-                Light light = config.collectVisibleLights
-                    ? GetVisibleLight(visibleLights, lightSlot, LightType.Directional, mainLightIndex)
-                    : config.directionalLights[lightSlot];
-                if (light == null || light.type != LightType.Directional || !light.isActiveAndEnabled)
+                Light light;
+                if (config.collectVisibleLights)
                 {
+                    if (!visibleLights.IsCreated || lightSlot == mainLightIndex)
+                    {
+                        continue;
+                    }
+
+                    VisibleLight visibleLight = visibleLights[lightSlot];
+                    if (visibleLight.lightType != LightType.Directional)
+                    {
+                        continue;
+                    }
+
+                    light = visibleLight.light;
+                }
+                else
+                {
+                    light = config.directionalLights[lightSlot];
+                }
+
+                if (light == null && !config.collectVisibleLights)
+                {
+                    continue;
+                }
+
+                diagnostics?.AddCandidate();
+                if (light == null ||
+                    light.type != LightType.Directional ||
+                    !light.isActiveAndEnabled ||
+                    (config.collectVisibleLights && light.shadows == LightShadows.None))
+                {
+                    diagnostics?.AddSkipped(light, "SecondDirectional", LightType.Directional, GetCandidateSkipReason(light, LightType.Directional));
                     continue;
                 }
 
                 int visibleLightIndex = FindVisibleLightIndex(visibleLights, light, LightType.Directional);
                 if (visibleLightIndex >= 0 && visibleLightIndex == mainLightIndex)
                 {
+                    diagnostics?.AddSkipped(light, "SecondDirectional", LightType.Directional, "URP main light is skipped");
                     continue;
                 }
 
                 if (target.lightCount >= HoShadowCastShaderConstants.MaxDirectionalLights || target.sliceCount + cascadeCount > HoShadowCastShaderConstants.MaxSecondDirectionalSlices)
                 {
+                    diagnostics?.AddSkipped(light, "SecondDirectional", LightType.Directional, "capacity limit reached");
                     break;
                 }
 
@@ -1000,6 +1052,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                             offsetY,
                             out ShadowSliceInfo slice))
                     {
+                        diagnostics?.AddSkipped(light, "SecondDirectional", LightType.Directional, "failed to build cascade slice");
                         target.Clear();
                         return false;
                     }
@@ -1014,6 +1067,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 int lightIndex = target.lightCount++;
                 target.sourceLights[lightIndex] = light;
                 target.lightData[lightIndex] = new Vector4(firstSlice, cascadeCount, shadowStrength, 0.0f);
+                diagnostics?.AddAccepted(light, "SecondDirectional", LightType.Directional, firstSlice, cascadeCount, resolution);
             }
 
             target.FillUnused();
@@ -1227,7 +1281,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             int mainLightIndex,
             int maxSliceResolution,
             ref HoShadowCastAtlasPacker packer,
-            HoShadowCastFrame target)
+            HoShadowCastFrame target,
+            HoShadowCastFrameDiagnostics diagnostics)
         {
             if (lights == null)
             {
@@ -1236,7 +1291,12 @@ namespace lilToon.URP.Extensions.ShadowCast
 
             for (int i = 0; i < lights.Length; i++)
             {
-                AddLight(lights[i], requiredType, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
+                if (lights[i] == null)
+                {
+                    continue;
+                }
+
+                AddLight(lights[i], requiredType, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target, diagnostics);
             }
         }
 
@@ -1248,7 +1308,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             int mainLightIndex,
             int maxSliceResolution,
             ref HoShadowCastAtlasPacker packer,
-            HoShadowCastFrame target)
+            HoShadowCastFrame target,
+            HoShadowCastFrameDiagnostics diagnostics)
         {
             if (!visibleLights.IsCreated)
             {
@@ -1257,8 +1318,26 @@ namespace lilToon.URP.Extensions.ShadowCast
 
             for (int i = 0; i < visibleLights.Length; i++)
             {
-                Light light = GetVisibleLight(visibleLights, i, requiredType, mainLightIndex);
-                AddLight(light, requiredType, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
+                if (i == mainLightIndex)
+                {
+                    continue;
+                }
+
+                VisibleLight visibleLight = visibleLights[i];
+                if (visibleLight.lightType != requiredType)
+                {
+                    continue;
+                }
+
+                Light light = visibleLight.light;
+                if (light == null || light.type != requiredType || !light.isActiveAndEnabled || light.shadows == LightShadows.None)
+                {
+                    diagnostics?.AddCandidate();
+                    diagnostics?.AddSkipped(light, "Punctual", requiredType, GetCandidateSkipReason(light, requiredType));
+                    continue;
+                }
+
+                AddLight(light, requiredType, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target, diagnostics);
             }
         }
 
@@ -1271,21 +1350,26 @@ namespace lilToon.URP.Extensions.ShadowCast
             int mainLightIndex,
             int maxSliceResolution,
             ref HoShadowCastAtlasPacker packer,
-            HoShadowCastFrame target)
+            HoShadowCastFrame target,
+            HoShadowCastFrameDiagnostics diagnostics)
         {
+            diagnostics?.AddCandidate();
             if (light == null || light.type != requiredType || !light.isActiveAndEnabled || target.Contains(light))
             {
+                diagnostics?.AddSkipped(light, "Punctual", requiredType, GetCandidateSkipReason(light, requiredType, target));
                 return;
             }
 
             if (target.lightCount >= HoShadowCastShaderConstants.MaxLights)
             {
+                diagnostics?.AddSkipped(light, "Punctual", requiredType, "light capacity limit reached");
                 return;
             }
 
             int visibleLightIndex = FindVisibleLightIndex(visibleLights, light, requiredType);
             if (visibleLightIndex >= 0 && visibleLightIndex == mainLightIndex)
             {
+                diagnostics?.AddSkipped(light, "Punctual", requiredType, "URP main light is skipped");
                 return;
             }
 
@@ -1293,6 +1377,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             int requestedSlices = requiredType == LightType.Point ? 6 : 1;
             if (firstSlice + requestedSlices > HoShadowCastShaderConstants.MaxShadowSlices)
             {
+                diagnostics?.AddSkipped(light, "Punctual", requiredType, "slice capacity limit reached");
                 return;
             }
 
@@ -1303,6 +1388,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             {
                 if (!packer.TryAllocate(resolution, out int offsetX, out int offsetY))
                 {
+                    diagnostics?.AddSkipped(light, "Punctual", requiredType, "atlas is full");
                     completed = false;
                     break;
                 }
@@ -1320,6 +1406,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                         offsetY,
                         out ShadowSliceInfo slice))
                 {
+                    diagnostics?.AddSkipped(light, "Punctual", requiredType, "failed to build shadow slice");
                     completed = false;
                     break;
                 }
@@ -1346,6 +1433,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             target.lightData2[lightIndex] = new Vector4(direction.x, direction.y, direction.z, Mathf.Cos(light.spotAngle * 0.5f * Mathf.Deg2Rad));
             target.lightAttenuation[lightIndex] = ComputeLightAttenuation(light, requiredType, config.punctualShadowFadeSpeed);
             target.lightColor[lightIndex] = new Vector4(finalColor.r, finalColor.g, finalColor.b, 1.0f);
+            diagnostics?.AddAccepted(light, "Punctual", requiredType, firstSlice, writtenSlices, resolution);
         }
 
         private static bool TryBuildSlice(
@@ -1730,6 +1818,36 @@ namespace lilToon.URP.Extensions.ShadowCast
             }
 
             return light;
+        }
+
+        private static string GetCandidateSkipReason(Light light, LightType requiredType, HoShadowCastFrame target = null)
+        {
+            if (light == null)
+            {
+                return "no eligible visible light";
+            }
+
+            if (light.type != requiredType)
+            {
+                return "light type mismatch";
+            }
+
+            if (!light.isActiveAndEnabled)
+            {
+                return "light disabled";
+            }
+
+            if (light.shadows == LightShadows.None)
+            {
+                return "shadows disabled";
+            }
+
+            if (target != null && target.Contains(light))
+            {
+                return "duplicate light";
+            }
+
+            return "not eligible";
         }
 
         private static int CountRequestedSlices(HoShadowCastFrameConfig config, NativeArray<VisibleLight> visibleLights, int mainLightIndex)
