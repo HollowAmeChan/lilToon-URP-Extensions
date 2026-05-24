@@ -300,6 +300,26 @@ ShadowCast 与 ScreenProcess 的关系：
 
 ---
 
+## 10.1 2026-05-24 执行记录
+
+已落地 ShadowCast 自动收集第一阶段：
+
+- `HoShadowCastSettings` 增加 RendererFeature 侧主工作流配置，包含 `collectVisibleLights`、`useActiveControllerOverride`、caster layer、atlas、PCSS、第二方向光级联和 debug mode。
+- 新增 frame-local `HoShadowCastFrameConfig`，统一承载 RendererFeature 设置与旧 `HoShadowCastController` 覆盖数据。
+- `HoShadowCastRendererFeature` 不再因为没有 `HoShadowCastController.ActiveController` 而跳过入队；默认可从当前 camera 的 URP `visibleLights` 自动收集符合条件的 directional / spot / point light。
+- 自动收集路径跳过 URP main light，只接收当前 camera 可见、类型匹配、启用且 `Light.shadows != None` 的灯光。
+- 旧 `HoShadowCastController` 仍可通过 `useActiveControllerOverride` 作为 legacy manual light list 覆盖路径；启用覆盖时保持旧的手动列表和参数语义。
+- compatibility path 与 RenderGraph path 都改为消费同一个 frame config，debug pass 也改为读取 config 的 debug mode，不再直接读取 active controller。
+- RendererFeature Inspector 改为显示自动收集、legacy override、atlas、PCSS、第二方向光和 debug 配置；没有 controller 时不再提示功能不可用。
+
+仍待处理：
+
+- frame debug 状态还只是日志摘要，没有正式 Inspector 运行时参与灯光 / 跳过原因 / slice 分配表。
+- `HoShadowCastRendererFeature.cs` 仍是大文件，collector / atlas packer / publish / debug 尚未拆成独立文件。
+- 自动收集的 light layer / shadow layer 规则还未细化，当前第一阶段主要依赖 URP visible lights、main light skip、`Light.shadows` 与 caster layer mask。
+
+---
+
 ## 11. 验收清单
 
 - 无有效灯光时 receiver 全局状态被 reset。

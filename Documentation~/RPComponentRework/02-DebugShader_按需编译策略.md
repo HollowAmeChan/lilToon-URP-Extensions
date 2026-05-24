@@ -180,7 +180,7 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 已对 ShadowCast debug shader 做第一批按需加载修正：
 
 - `HoShadowCastRendererFeature` 不再在主渲染路径默认调用 debug shader 查找。
-- 只有 `HoShadowCastController.debugMode != Off` 且 debug pass 即将入队时，才调用 `Shader.Find(HoShadowCastShaderConstants.DebugShaderName)` 并创建 debug material。
+- 只有 ShadowCast frame config 的 `debugMode != Off` 且 debug pass 即将入队时，才调用 `Shader.Find(HoShadowCastShaderConstants.DebugShaderName)` 并创建 debug material；该 debug mode 可来自 RendererFeature 设置或 legacy controller override。
 - debug shader 缺失仍只 warning once 并跳过 debug pass，不影响 ShadowCast 主 pass。
 - `HoShadowCastDebug.shader` 已移动到 `Runtime/ShadowCast/Shaders/Debug/`，shader 名与 `.meta` GUID 保持不变，只调整资源归属。
 

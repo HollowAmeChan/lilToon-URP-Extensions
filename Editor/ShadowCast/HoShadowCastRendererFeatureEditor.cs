@@ -14,6 +14,9 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         private static readonly Color ControllerColor = new Color(0.38f, 0.76f, 0.55f);
 
         private static bool showSettings = true;
+        private static bool showAtlas = true;
+        private static bool showPcss = true;
+        private static bool showSecondDirectional = true;
         private static bool showController = true;
         private static GUIStyle sectionTitleStyle;
         private static GUIStyle sectionSummaryStyle;
@@ -66,7 +69,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             serializedObject.Update();
 
             EditorGUILayout.HelpBox(
-                "这个 RendererFeature 只负责把 HoShadowCast shadow atlas pass 装进 URP Renderer。光源选择请放在场景里的 HoShadowCastController 上。",
+                "ShadowCast now collects eligible URP visible lights from this RendererFeature by default. HoShadowCastController is kept as an optional legacy override for manual light lists.",
                 MessageType.Info);
 
             if (settingsProperty == null)
@@ -77,6 +80,9 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             }
 
             DrawSettings();
+            DrawAtlas();
+            DrawPcss();
+            DrawSecondDirectional();
             DrawControllerStatus();
             serializedObject.ApplyModifiedProperties();
         }
@@ -84,8 +90,10 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         private void DrawSettings()
         {
             SerializedProperty enabled = settingsProperty.FindPropertyRelative("enabled");
-            SerializedProperty passEvent = settingsProperty.FindPropertyRelative("passEvent");
-            string summary = enabled != null && enabled.boolValue ? "已启用" : "已关闭";
+            SerializedProperty collectVisibleLights = settingsProperty.FindPropertyRelative("collectVisibleLights");
+            string summary = enabled != null && enabled.boolValue
+                ? collectVisibleLights != null && collectVisibleLights.boolValue ? "Auto visible lights" : "Manual override only"
+                : "Disabled";
 
             if (!DrawSectionHeader(ref showSettings, "RendererFeature", summary, SettingsColor))
             {
@@ -94,21 +102,88 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                DrawProperty(enabled, "启用");
-                DrawProperty(passEvent, "渲染时机");
+                DrawProperty(enabled, "Enabled");
+                SerializedProperty passEvent = settingsProperty.FindPropertyRelative("passEvent");
+                DrawProperty(passEvent, "Pass Event");
+                DrawProperty(collectVisibleLights, "Collect Visible Lights");
+                DrawProperty(settingsProperty.FindPropertyRelative("useActiveControllerOverride"), "Use Active Controller Override");
+                DrawProperty(settingsProperty.FindPropertyRelative("casterLayerMask"), "Caster Layer Mask");
+                DrawProperty(settingsProperty.FindPropertyRelative("shadowStrength"), "Shadow Strength");
+                DrawProperty(settingsProperty.FindPropertyRelative("punctualShadowStrength"), "Punctual Shadow Strength");
+                DrawProperty(settingsProperty.FindPropertyRelative("punctualShadowFadeSpeed"), "Punctual Fade Speed");
+                DrawProperty(settingsProperty.FindPropertyRelative("debugMode"), "Debug Mode");
+
                 if (passEvent != null && passEvent.intValue < BeforeRenderingPrePassesValue)
                 {
-                    EditorGUILayout.HelpBox("HoShadowCast 不应插入到 URP 内置阴影阶段之前。运行时会钳制到 BeforeRenderingPrePasses。", MessageType.Info);
+                    EditorGUILayout.HelpBox("ShadowCast should not run before URP's built-in shadow stage. Runtime clamps this to BeforeRenderingPrePasses.", MessageType.Info);
                 }
+            }
+        }
+
+        private void DrawAtlas()
+        {
+            if (!DrawSectionHeader(ref showAtlas, "Atlas", GetIntSummary("atlasSize", "px"), SettingsColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawProperty(settingsProperty.FindPropertyRelative("atlasSize"), "Atlas Size");
+                DrawProperty(settingsProperty.FindPropertyRelative("spotResolution"), "Spot Resolution");
+                DrawProperty(settingsProperty.FindPropertyRelative("pointFaceResolution"), "Point Face Resolution");
+                DrawProperty(settingsProperty.FindPropertyRelative("directionalResolution"), "Directional Resolution");
+                DrawProperty(settingsProperty.FindPropertyRelative("directionalNearPlane"), "Directional Near Plane");
+                DrawProperty(settingsProperty.FindPropertyRelative("directionalShadowSize"), "Directional Shadow Size");
+                DrawProperty(settingsProperty.FindPropertyRelative("directionalShadowDepth"), "Directional Shadow Depth");
+            }
+        }
+
+        private void DrawPcss()
+        {
+            SerializedProperty enabled = settingsProperty.FindPropertyRelative("pcssEnabled");
+            string summary = enabled != null && enabled.boolValue ? "Enabled" : "Disabled";
+            if (!DrawSectionHeader(ref showPcss, "PCSS", summary, SettingsColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawProperty(enabled, "Enable PCSS");
+                DrawProperty(settingsProperty.FindPropertyRelative("pcssQuality"), "Quality");
+                DrawProperty(settingsProperty.FindPropertyRelative("punctualPcssSoftness"), "Punctual Softness");
+                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalPcssSoftness"), "Second Directional Softness");
+                DrawProperty(settingsProperty.FindPropertyRelative("pcssBlockerSearchRadius"), "Blocker Search Radius");
+                DrawProperty(settingsProperty.FindPropertyRelative("pcssMaxPenumbraRadius"), "Max Penumbra Radius");
+                DrawProperty(settingsProperty.FindPropertyRelative("pcssDepthBias"), "Depth Bias");
+            }
+        }
+
+        private void DrawSecondDirectional()
+        {
+            if (!DrawSectionHeader(ref showSecondDirectional, "Second Directional", GetIntSummary("secondDirectionalAtlasSize", "px"), SettingsColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalShadowStrength"), "Strength");
+                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalAtlasSize"), "Atlas Size");
+                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalCascadeCount"), "Cascade Count");
+                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalMaxDistance"), "Max Distance");
+                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalShadowDepth"), "Shadow Depth");
+                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalCascadeSplits"), "Cascade Splits");
             }
         }
 
         private void DrawControllerStatus()
         {
             HoShadowCastController controller = HoShadowCastController.ActiveController;
-            string summary = controller != null ? controller.name : "未找到";
+            string summary = controller != null ? controller.name : "No active override";
 
-            if (!DrawSectionHeader(ref showController, "场景控制器", summary, ControllerColor))
+            if (!DrawSectionHeader(ref showController, "Legacy Controller", summary, ControllerColor))
             {
                 return;
             }
@@ -117,17 +192,18 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             {
                 if (controller == null)
                 {
-                    EditorGUILayout.HelpBox("当前场景没有启用的 HoShadowCastController。需要在空物体上添加一个控制器后，本 pass 才会输出 atlas。", MessageType.Warning);
+                    EditorGUILayout.HelpBox("No active HoShadowCastController found. The RendererFeature will use automatic visible-light collection unless controller override is required for a legacy manual light list.", MessageType.Info);
 
-                    if (GUILayout.Button("创建 HoShadowCastController"))
+                    if (GUILayout.Button("Create HoShadowCastController"))
                     {
                         CreateController();
                     }
                 }
                 else
                 {
-                    EditorGUILayout.ObjectField("活动控制器", controller, typeof(HoShadowCastController), true);
-                    EditorGUILayout.LabelField("Atlas 尺寸", controller.atlasSize.ToString());
+                    EditorGUILayout.ObjectField("Active Controller", controller, typeof(HoShadowCastController), true);
+                    EditorGUILayout.LabelField("Atlas Size", controller.atlasSize.ToString());
+                    EditorGUILayout.HelpBox("When Use Active Controller Override is enabled, this controller supplies the manual light list and legacy tuning values.", MessageType.Info);
                 }
             }
         }
@@ -138,6 +214,12 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             Undo.RegisterCreatedObjectUndo(go, "Create HoShadowCast Controller");
             go.AddComponent<HoShadowCastController>();
             Selection.activeGameObject = go;
+        }
+
+        private string GetIntSummary(string propertyName, string suffix)
+        {
+            SerializedProperty property = settingsProperty.FindPropertyRelative(propertyName);
+            return property != null ? property.intValue + suffix : string.Empty;
         }
 
         private static void DrawProperty(SerializedProperty property, string label)

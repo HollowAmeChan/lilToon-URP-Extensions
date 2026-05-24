@@ -59,13 +59,15 @@ Renderer Data 中推荐顺序：
 - 是否启用。
 - Game View / Scene View 是否启用。
 - 自动收集可见灯光。
-- light layer / caster layer。
+- caster layer。
 - atlas 分辨率。
 - PCSS 质量与强度。
 - debug view。
 
 默认不需要在场景里创建 `HoShadowCastController`。
-Feature 应从当前 camera 的 URP visible lights 自动生成参与列表。手动灯光列表如果保留，只放在高级折叠区，作为补充入口。
+Feature 已从当前 camera 的 URP visible lights 自动生成参与列表。第一阶段规则是：跳过 URP main light，只收集当前 camera 可见、类型匹配、启用且 `Light.shadows != None` 的 directional / spot / point light，并使用 Feature 上的 caster layer、atlas、PCSS 和第二方向光设置。
+
+`HoShadowCastController` 现在是 legacy override / 高级手动列表入口。只有在 RendererFeature 打开 `Use Active Controller Override` 且场景里存在 active controller 时，才由 controller 的灯光列表和旧参数覆盖 Feature 设置。
 
 Debug 重点看：
 

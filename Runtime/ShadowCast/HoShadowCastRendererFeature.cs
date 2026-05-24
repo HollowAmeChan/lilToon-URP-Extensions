@@ -28,29 +28,37 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         public override void Create()
         {
+            settings?.Validate();
             RegisterCameraReset();
             pass = new HoShadowCastPass();
             debugPass = new HoShadowCastDebugPass();
         }
 
+        private void OnValidate()
+        {
+            settings?.Validate();
+        }
+
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
         {
-            if (!ShouldRender(in renderingData))
+            HoShadowCastFrameConfig config = HoShadowCastFrameConfig.Resolve(settings);
+            if (!ShouldRender(in renderingData, config))
             {
                 return;
             }
 
-            pass?.Setup(settings, renderTargets);
-            if (debugPass != null && ShouldDebug())
+            pass?.Setup(settings, config, renderTargets);
+            if (debugPass != null && ShouldDebug(config))
             {
                 EnsureDebugMaterial();
-                debugPass.Setup(renderTargets, renderer.cameraColorTargetHandle, debugMaterial);
+                debugPass.Setup(config, renderTargets, renderer.cameraColorTargetHandle, debugMaterial);
             }
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            if (!ShouldRender(in renderingData))
+            HoShadowCastFrameConfig config = HoShadowCastFrameConfig.Resolve(settings);
+            if (!ShouldRender(in renderingData, config))
             {
                 return;
             }
@@ -60,13 +68,13 @@ namespace lilToon.URP.Extensions.ShadowCast
                 return;
             }
 
-            pass.SetupRenderGraph(settings);
+            pass.SetupRenderGraph(settings, config);
             renderer.EnqueuePass(pass);
 
-            if (debugPass != null && ShouldDebug())
+            if (debugPass != null && ShouldDebug(config))
             {
                 EnsureDebugMaterial();
-                debugPass.SetupRenderGraph(debugMaterial);
+                debugPass.SetupRenderGraph(config, debugMaterial);
                 renderer.EnqueuePass(debugPass);
             }
         }
@@ -83,9 +91,9 @@ namespace lilToon.URP.Extensions.ShadowCast
             debugShader = null;
         }
 
-        private bool ShouldRender(in RenderingData renderingData)
+        private bool ShouldRender(in RenderingData renderingData, HoShadowCastFrameConfig config)
         {
-            if (settings == null || !settings.enabled || HoShadowCastController.ActiveController == null)
+            if (settings == null || !settings.enabled || config == null)
             {
                 return false;
             }
@@ -94,10 +102,9 @@ namespace lilToon.URP.Extensions.ShadowCast
             return cameraType == CameraType.Game || cameraType == CameraType.SceneView;
         }
 
-        private static bool ShouldDebug()
+        private static bool ShouldDebug(HoShadowCastFrameConfig config)
         {
-            HoShadowCastController controller = HoShadowCastController.ActiveController;
-            return controller != null && controller.debugMode != HoShadowCastDebugMode.Off;
+            return config != null && config.debugMode != HoShadowCastDebugMode.Off;
         }
 
         private void EnsureDebugMaterial()
@@ -168,6 +175,273 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         [InspectorName("渲染时机")]
         public RenderPassEvent passEvent = RenderPassEvent.BeforeRenderingPrePasses;
+
+        [InspectorName("Collect Visible Lights")]
+        public bool collectVisibleLights = true;
+
+        [InspectorName("Use Active Controller Override")]
+        public bool useActiveControllerOverride = true;
+
+        [InspectorName("Caster Layer Mask")]
+        public LayerMask casterLayerMask = -1;
+
+        [InspectorName("Shadow Strength")]
+        [Range(0.0f, 1.0f)]
+        public float shadowStrength = 1.0f;
+
+        [InspectorName("Punctual Shadow Strength")]
+        [Range(0.0f, 1.0f)]
+        public float punctualShadowStrength = 0.5f;
+
+        [InspectorName("Punctual Fade Speed")]
+        [Range(0.1f, 4.0f)]
+        public float punctualShadowFadeSpeed = 1.0f;
+
+        [Header("PCSS")]
+        [InspectorName("Enable PCSS")]
+        public bool pcssEnabled = true;
+
+        [InspectorName("PCSS Quality")]
+        public HoShadowCastPcssQuality pcssQuality = HoShadowCastPcssQuality.High;
+
+        [InspectorName("Punctual PCSS Softness")]
+        [Range(0.0f, 4.0f)]
+        public float punctualPcssSoftness = 0.6f;
+
+        [InspectorName("Second Directional PCSS Softness")]
+        [Range(0.0f, 4.0f)]
+        public float secondDirectionalPcssSoftness = 4.0f;
+
+        [InspectorName("Blocker Search Radius")]
+        [Range(0.25f, 8.0f)]
+        public float pcssBlockerSearchRadius = 2.8f;
+
+        [InspectorName("Max Penumbra Radius")]
+        [Range(1.0f, 32.0f)]
+        public float pcssMaxPenumbraRadius = 7.4f;
+
+        [InspectorName("PCSS Depth Bias")]
+        [Range(0.0f, 0.01f)]
+        public float pcssDepthBias = 0.0f;
+
+        [Header("Second Directional")]
+        [InspectorName("Second Directional Strength")]
+        [Range(0.0f, 1.0f)]
+        public float secondDirectionalShadowStrength = 0.3f;
+
+        [InspectorName("Second Directional Atlas Size")]
+        [Min(256)]
+        public int secondDirectionalAtlasSize = 4096;
+
+        [InspectorName("Second Directional Cascades")]
+        [Range(1, HoShadowCastShaderConstants.MaxSecondDirectionalCascades)]
+        public int secondDirectionalCascadeCount = 4;
+
+        [InspectorName("Second Directional Max Distance")]
+        [Min(0.01f)]
+        public float secondDirectionalMaxDistance = 80.0f;
+
+        [InspectorName("Second Directional Depth")]
+        [Min(0.01f)]
+        public float secondDirectionalShadowDepth = 80.0f;
+
+        [InspectorName("Second Directional Cascade Splits")]
+        public Vector3 secondDirectionalCascadeSplits = new Vector3(0.08f, 0.22f, 0.5f);
+
+        [Header("Atlas")]
+        [InspectorName("Atlas Size")]
+        [Min(256)]
+        public int atlasSize = 4096;
+
+        [InspectorName("Directional Resolution")]
+        [Min(64)]
+        public int directionalResolution = 1024;
+
+        [InspectorName("Spot Resolution")]
+        [Min(64)]
+        public int spotResolution = 512;
+
+        [InspectorName("Point Face Resolution")]
+        [Min(64)]
+        public int pointFaceResolution = 512;
+
+        [InspectorName("Directional Near Plane")]
+        [Min(0.001f)]
+        public float directionalNearPlane = 0.1f;
+
+        [InspectorName("Directional Shadow Size")]
+        [Min(0.01f)]
+        public float directionalShadowSize = 20.0f;
+
+        [InspectorName("Directional Shadow Depth")]
+        [Min(0.01f)]
+        public float directionalShadowDepth = 40.0f;
+
+        [InspectorName("Debug Mode")]
+        public HoShadowCastDebugMode debugMode = HoShadowCastDebugMode.Off;
+
+        public void Validate()
+        {
+            shadowStrength = Mathf.Clamp01(shadowStrength);
+            punctualShadowStrength = Mathf.Clamp01(punctualShadowStrength);
+            punctualShadowFadeSpeed = punctualShadowFadeSpeed <= 0.0f ? 1.0f : Mathf.Clamp(punctualShadowFadeSpeed, 0.1f, 4.0f);
+            pcssQuality = (HoShadowCastPcssQuality)Mathf.Clamp((int)pcssQuality, 0, 3);
+            punctualPcssSoftness = Mathf.Clamp(punctualPcssSoftness, 0.0f, 4.0f);
+            secondDirectionalPcssSoftness = Mathf.Clamp(secondDirectionalPcssSoftness, 0.0f, 4.0f);
+            pcssBlockerSearchRadius = Mathf.Clamp(pcssBlockerSearchRadius, 0.25f, 8.0f);
+            pcssMaxPenumbraRadius = Mathf.Clamp(pcssMaxPenumbraRadius, 1.0f, 32.0f);
+            pcssDepthBias = Mathf.Clamp(pcssDepthBias, 0.0f, 0.01f);
+            secondDirectionalShadowStrength = Mathf.Clamp01(secondDirectionalShadowStrength);
+            secondDirectionalAtlasSize = Mathf.Max(256, secondDirectionalAtlasSize);
+            secondDirectionalCascadeCount = Mathf.Clamp(secondDirectionalCascadeCount, 1, HoShadowCastShaderConstants.MaxSecondDirectionalCascades);
+            secondDirectionalMaxDistance = Mathf.Max(0.01f, secondDirectionalMaxDistance);
+            secondDirectionalShadowDepth = Mathf.Max(0.01f, secondDirectionalShadowDepth);
+            secondDirectionalCascadeSplits = ClampCascadeSplits(secondDirectionalCascadeSplits);
+            atlasSize = Mathf.Max(256, atlasSize);
+            directionalResolution = Mathf.Max(64, directionalResolution);
+            spotResolution = Mathf.Max(64, spotResolution);
+            pointFaceResolution = Mathf.Max(64, pointFaceResolution);
+            directionalNearPlane = Mathf.Max(0.001f, directionalNearPlane);
+            directionalShadowSize = Mathf.Max(0.01f, directionalShadowSize);
+            directionalShadowDepth = Mathf.Max(0.01f, directionalShadowDepth);
+        }
+
+        private static Vector3 ClampCascadeSplits(Vector3 splits)
+        {
+            float x = Mathf.Clamp(splits.x, 0.001f, 0.997f);
+            float y = Mathf.Clamp(splits.y, x + 0.001f, 0.998f);
+            float z = Mathf.Clamp(splits.z, y + 0.001f, 0.999f);
+            return new Vector3(x, y, z);
+        }
+    }
+
+    internal sealed class HoShadowCastFrameConfig
+    {
+        public bool collectVisibleLights;
+        public bool usingControllerOverride;
+        public HoShadowCastController controller;
+        public Light[] directionalLights;
+        public Light[] spotLights;
+        public Light[] pointLights;
+        public LayerMask casterLayerMask;
+        public float shadowStrength;
+        public float punctualShadowStrength;
+        public float punctualShadowFadeSpeed;
+        public bool pcssEnabled;
+        public HoShadowCastPcssQuality pcssQuality;
+        public float punctualPcssSoftness;
+        public float secondDirectionalPcssSoftness;
+        public float pcssBlockerSearchRadius;
+        public float pcssMaxPenumbraRadius;
+        public float pcssDepthBias;
+        public float secondDirectionalShadowStrength;
+        public int secondDirectionalAtlasSize;
+        public int secondDirectionalCascadeCount;
+        public float secondDirectionalMaxDistance;
+        public float secondDirectionalShadowDepth;
+        public Vector3 secondDirectionalCascadeSplits;
+        public int atlasSize;
+        public int directionalResolution;
+        public int spotResolution;
+        public int pointFaceResolution;
+        public float directionalNearPlane;
+        public float directionalShadowSize;
+        public float directionalShadowDepth;
+        public Vector3 directionalAnchorPosition;
+        public HoShadowCastDebugMode debugMode;
+
+        public static HoShadowCastFrameConfig Resolve(HoShadowCastSettings settings)
+        {
+            HoShadowCastController controller = settings != null && settings.useActiveControllerOverride
+                ? HoShadowCastController.ActiveController
+                : null;
+            var config = new HoShadowCastFrameConfig();
+            config.ApplySettings(settings);
+            if (controller != null)
+            {
+                config.ApplyController(controller);
+            }
+
+            return config;
+        }
+
+        private void ApplySettings(HoShadowCastSettings settings)
+        {
+            if (settings == null)
+            {
+                settings = new HoShadowCastSettings();
+            }
+
+            settings.Validate();
+            collectVisibleLights = settings.collectVisibleLights;
+            usingControllerOverride = false;
+            controller = null;
+            directionalLights = null;
+            spotLights = null;
+            pointLights = null;
+            casterLayerMask = settings.casterLayerMask;
+            shadowStrength = settings.shadowStrength;
+            punctualShadowStrength = settings.punctualShadowStrength;
+            punctualShadowFadeSpeed = settings.punctualShadowFadeSpeed;
+            pcssEnabled = settings.pcssEnabled;
+            pcssQuality = settings.pcssQuality;
+            punctualPcssSoftness = settings.punctualPcssSoftness;
+            secondDirectionalPcssSoftness = settings.secondDirectionalPcssSoftness;
+            pcssBlockerSearchRadius = settings.pcssBlockerSearchRadius;
+            pcssMaxPenumbraRadius = settings.pcssMaxPenumbraRadius;
+            pcssDepthBias = settings.pcssDepthBias;
+            secondDirectionalShadowStrength = settings.secondDirectionalShadowStrength;
+            secondDirectionalAtlasSize = settings.secondDirectionalAtlasSize;
+            secondDirectionalCascadeCount = settings.secondDirectionalCascadeCount;
+            secondDirectionalMaxDistance = settings.secondDirectionalMaxDistance;
+            secondDirectionalShadowDepth = settings.secondDirectionalShadowDepth;
+            secondDirectionalCascadeSplits = settings.secondDirectionalCascadeSplits;
+            atlasSize = settings.atlasSize;
+            directionalResolution = settings.directionalResolution;
+            spotResolution = settings.spotResolution;
+            pointFaceResolution = settings.pointFaceResolution;
+            directionalNearPlane = settings.directionalNearPlane;
+            directionalShadowSize = settings.directionalShadowSize;
+            directionalShadowDepth = settings.directionalShadowDepth;
+            directionalAnchorPosition = Vector3.zero;
+            debugMode = settings.debugMode;
+        }
+
+        private void ApplyController(HoShadowCastController source)
+        {
+            usingControllerOverride = true;
+            controller = source;
+            collectVisibleLights = false;
+            directionalLights = source.directionalLights;
+            spotLights = source.spotLights;
+            pointLights = source.pointLights;
+            casterLayerMask = source.casterLayerMask;
+            shadowStrength = source.shadowStrength;
+            punctualShadowStrength = source.punctualShadowStrength;
+            punctualShadowFadeSpeed = source.punctualShadowFadeSpeed;
+            pcssEnabled = source.pcssEnabled;
+            pcssQuality = source.pcssQuality;
+            punctualPcssSoftness = source.punctualPcssSoftness;
+            secondDirectionalPcssSoftness = source.secondDirectionalPcssSoftness;
+            pcssBlockerSearchRadius = source.pcssBlockerSearchRadius;
+            pcssMaxPenumbraRadius = source.pcssMaxPenumbraRadius;
+            pcssDepthBias = source.pcssDepthBias;
+            secondDirectionalShadowStrength = source.secondDirectionalShadowStrength;
+            secondDirectionalAtlasSize = source.secondDirectionalAtlasSize;
+            secondDirectionalCascadeCount = source.secondDirectionalCascadeCount;
+            secondDirectionalMaxDistance = source.secondDirectionalMaxDistance;
+            secondDirectionalShadowDepth = source.secondDirectionalShadowDepth;
+            secondDirectionalCascadeSplits = source.secondDirectionalCascadeSplits;
+            atlasSize = source.atlasSize;
+            directionalResolution = source.directionalResolution;
+            spotResolution = source.spotResolution;
+            pointFaceResolution = source.pointFaceResolution;
+            directionalNearPlane = source.directionalNearPlane;
+            directionalShadowSize = source.directionalShadowSize;
+            directionalShadowDepth = source.directionalShadowDepth;
+            directionalAnchorPosition = source.transform.position;
+            debugMode = source.debugMode;
+        }
     }
 
     internal sealed class HoShadowCastPass : ScriptableRenderPass
@@ -194,6 +468,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         private readonly HoShadowCastFrame frame = new HoShadowCastFrame();
         private readonly HoShadowCastSecondDirectionalFrame secondDirectionalFrame = new HoShadowCastSecondDirectionalFrame();
         private HoShadowCastSettings settings;
+        private HoShadowCastFrameConfig config;
         private HoShadowCastRenderTargets renderTargets;
 
         private sealed class PassData
@@ -215,37 +490,37 @@ namespace lilToon.URP.Extensions.ShadowCast
             profilingSampler = ProfilingSampler;
         }
 
-        public void Setup(HoShadowCastSettings settings, HoShadowCastRenderTargets renderTargets)
+        public void Setup(HoShadowCastSettings settings, HoShadowCastFrameConfig config, HoShadowCastRenderTargets renderTargets)
         {
             this.settings = settings;
+            this.config = config;
             this.renderTargets = renderTargets;
             ConfigurePass();
         }
 
-        public void SetupRenderGraph(HoShadowCastSettings settings)
+        public void SetupRenderGraph(HoShadowCastSettings settings, HoShadowCastFrameConfig config)
         {
             this.settings = settings;
+            this.config = config;
             ConfigurePass();
         }
 
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
-            HoShadowCastController controller = HoShadowCastController.ActiveController;
-            if (settings == null || renderTargets == null || controller == null)
+            if (settings == null || renderTargets == null || config == null)
             {
                 return;
             }
 
-            renderTargets.ReAllocateIfNeeded(CreateAtlasDescriptor(controller));
-            renderTargets.ReAllocateSecondDirectionalIfNeeded(CreateSecondDirectionalAtlasDescriptor(controller));
+            renderTargets.ReAllocateIfNeeded(CreateAtlasDescriptor(config));
+            renderTargets.ReAllocateSecondDirectionalIfNeeded(CreateSecondDirectionalAtlasDescriptor(config));
             ConfigureTarget(renderTargets.AtlasTexture);
             ConfigureClear(ClearFlag.Depth, Color.clear);
         }
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            HoShadowCastController controller = HoShadowCastController.ActiveController;
-            if (settings == null || renderTargets == null || controller == null || renderTargets.AtlasTexture == null)
+            if (settings == null || renderTargets == null || config == null || renderTargets.AtlasTexture == null)
             {
                 return;
             }
@@ -253,7 +528,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             LightData lightData = renderingData.lightData;
             ShadowData shadowData = renderingData.shadowData;
             bool hasFrame = BuildFrameData(
-                    controller,
+                    config,
                     ref renderingData.cullResults,
                     lightData,
                     ref shadowData,
@@ -264,7 +539,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     renderingData.cameraData.GetProjectionMatrix(),
                     frame);
             bool hasSecondDirectionalFrame = BuildSecondDirectionalFrameData(
-                    controller,
+                    config,
                     ref renderingData.cullResults,
                     lightData.visibleLights,
                     renderingData.cameraData.camera,
@@ -273,7 +548,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     renderingData.cameraData.GetViewMatrix(),
                     renderingData.cameraData.GetProjectionMatrix(),
                     secondDirectionalFrame);
-            MaybeLogDebugFrame(controller, frame, secondDirectionalFrame, "Compatibility", hasFrame, hasSecondDirectionalFrame);
+            MaybeLogDebugFrame(config, frame, secondDirectionalFrame, "Compatibility", hasFrame, hasSecondDirectionalFrame);
             if (!hasFrame && !hasSecondDirectionalFrame)
             {
                 SetGlobalEmpty();
@@ -297,7 +572,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     {
                         ShadowSliceInfo slice = frame.slices[i];
                         DrawingSettings drawingSettings = CreateShadowCasterDrawingSettings(renderingData.cameraData.camera);
-                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(controller);
+                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(config);
 
                         SetShadowCasterGlobals(cmd, frame.cameraPosition, slice);
                         RenderShadowSlice(cmd, ref context, ref renderingData.cullResults, ref slice.shadowSliceData, ref drawingSettings, ref filteringSettings, slice.projectionMatrix, slice.viewMatrix);
@@ -321,7 +596,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     {
                         ShadowSliceInfo slice = secondDirectionalFrame.slices[i];
                         DrawingSettings drawingSettings = CreateShadowCasterDrawingSettings(renderingData.cameraData.camera);
-                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(controller);
+                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(config);
 
                         SetShadowCasterGlobals(cmd, secondDirectionalFrame.cameraPosition, slice);
                         RenderShadowSlice(cmd, ref context, ref renderingData.cullResults, ref slice.shadowSliceData, ref drawingSettings, ref filteringSettings, slice.projectionMatrix, slice.viewMatrix);
@@ -351,8 +626,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
-            HoShadowCastController controller = HoShadowCastController.ActiveController;
-            if (settings == null || controller == null)
+            if (settings == null || config == null)
             {
                 return;
             }
@@ -365,7 +639,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 
             HoShadowCastFrame renderGraphFrame = new HoShadowCastFrame();
             bool hasFrame = BuildFrameData(
-                    controller,
+                    config,
                     ref renderingData.cullResults,
                     lightData,
                     shadowData,
@@ -377,7 +651,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     renderGraphFrame);
             HoShadowCastSecondDirectionalFrame renderGraphSecondDirectionalFrame = new HoShadowCastSecondDirectionalFrame();
             bool hasSecondDirectionalFrame = BuildSecondDirectionalFrameData(
-                    controller,
+                    config,
                     ref renderingData.cullResults,
                     lightData.visibleLights,
                     cameraData.camera,
@@ -386,7 +660,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     cameraData.GetViewMatrix(),
                     cameraData.GetProjectionMatrix(),
                     renderGraphSecondDirectionalFrame);
-            MaybeLogDebugFrame(controller, renderGraphFrame, renderGraphSecondDirectionalFrame, "RenderGraph", hasFrame, hasSecondDirectionalFrame);
+            MaybeLogDebugFrame(config, renderGraphFrame, renderGraphSecondDirectionalFrame, "RenderGraph", hasFrame, hasSecondDirectionalFrame);
             if (!hasFrame && !hasSecondDirectionalFrame)
             {
                 return;
@@ -396,7 +670,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             {
                 TextureHandle atlasTexture = UniversalRenderer.CreateRenderGraphTexture(
                     renderGraph,
-                    CreateAtlasDescriptor(controller),
+                    CreateAtlasDescriptor(config),
                     HoShadowCastShaderConstants.AtlasTextureName,
                     true,
                     FilterMode.Bilinear,
@@ -411,7 +685,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     for (int i = 0; i < renderGraphFrame.sliceCount; i++)
                     {
                         DrawingSettings drawingSettings = CreateShadowCasterDrawingSettings(cameraData.camera);
-                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(controller);
+                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(config);
                         RendererListParams rendererListParams = new RendererListParams(renderingData.cullResults, drawingSettings, filteringSettings);
                         passData.rendererLists[i] = renderGraph.CreateRendererList(rendererListParams);
                         builder.UseRendererList(passData.rendererLists[i]);
@@ -448,7 +722,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             {
                 TextureHandle secondDirectionalAtlasTexture = UniversalRenderer.CreateRenderGraphTexture(
                     renderGraph,
-                    CreateSecondDirectionalAtlasDescriptor(controller),
+                    CreateSecondDirectionalAtlasDescriptor(config),
                     HoShadowCastShaderConstants.SecondDirectionalAtlasTextureName,
                     true,
                     FilterMode.Bilinear,
@@ -463,7 +737,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     for (int i = 0; i < renderGraphSecondDirectionalFrame.sliceCount; i++)
                     {
                         DrawingSettings drawingSettings = CreateShadowCasterDrawingSettings(cameraData.camera);
-                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(controller);
+                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(config);
                         RendererListParams rendererListParams = new RendererListParams(renderingData.cullResults, drawingSettings, filteringSettings);
                         passData.rendererLists[i] = renderGraph.CreateRendererList(rendererListParams);
                         builder.UseRendererList(passData.rendererLists[i]);
@@ -503,15 +777,15 @@ namespace lilToon.URP.Extensions.ShadowCast
             renderPassEvent = passEvent < RenderPassEvent.BeforeRenderingPrePasses ? RenderPassEvent.BeforeRenderingPrePasses : passEvent;
         }
 
-        private static RenderTextureDescriptor CreateAtlasDescriptor(HoShadowCastController controller)
+        private static RenderTextureDescriptor CreateAtlasDescriptor(HoShadowCastFrameConfig config)
         {
-            int size = Mathf.Max(1, controller != null ? controller.atlasSize : 1);
+            int size = Mathf.Max(1, config != null ? config.atlasSize : 1);
             return CreateDepthAtlasDescriptor(size);
         }
 
-        private static RenderTextureDescriptor CreateSecondDirectionalAtlasDescriptor(HoShadowCastController controller)
+        private static RenderTextureDescriptor CreateSecondDirectionalAtlasDescriptor(HoShadowCastFrameConfig config)
         {
-            int size = Mathf.Max(1, controller != null ? controller.secondDirectionalAtlasSize : 1);
+            int size = Mathf.Max(1, config != null ? config.secondDirectionalAtlasSize : 1);
             return CreateDepthAtlasDescriptor(size);
         }
 
@@ -527,7 +801,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         }
 
         private static bool BuildFrameData(
-            HoShadowCastController controller,
+            HoShadowCastFrameConfig config,
             ref CullingResults cullResults,
             LightData lightData,
             ref ShadowData shadowData,
@@ -539,7 +813,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             HoShadowCastFrame target)
         {
             return BuildFrameData(
-                controller,
+                config,
                 ref cullResults,
                 lightData.visibleLights,
                 null,
@@ -554,7 +828,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         }
 
         private static bool BuildFrameData(
-            HoShadowCastController controller,
+            HoShadowCastFrameConfig config,
             ref CullingResults cullResults,
             UniversalLightData lightData,
             UniversalShadowData shadowData,
@@ -567,7 +841,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         {
             ShadowData unusedCompatibilityShadowData = default;
             return BuildFrameData(
-                controller,
+                config,
                 ref cullResults,
                 lightData.visibleLights,
                 shadowData,
@@ -582,7 +856,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         }
 
         private static bool BuildFrameData(
-            HoShadowCastController controller,
+            HoShadowCastFrameConfig config,
             ref CullingResults cullResults,
             NativeArray<VisibleLight> visibleLights,
             UniversalShadowData universalShadowData,
@@ -595,26 +869,39 @@ namespace lilToon.URP.Extensions.ShadowCast
             Matrix4x4 cameraProjectionMatrix,
             HoShadowCastFrame target)
         {
+            if (config == null)
+            {
+                return false;
+            }
+
             target.Clear();
-            target.atlasSize = Mathf.Max(1, controller.atlasSize);
+            target.atlasSize = Mathf.Max(1, config.atlasSize);
             target.cameraPosition = cameraPosition;
             target.cameraViewMatrix = cameraViewMatrix;
             target.cameraProjectionMatrix = cameraProjectionMatrix;
-            target.pcssParams = CreatePcssParams(controller, controller.punctualPcssSoftness);
-            target.pcssParams2 = CreatePcssParams2(controller);
+            target.pcssParams = CreatePcssParams(config, config.punctualPcssSoftness);
+            target.pcssParams2 = CreatePcssParams2(config);
 
-            int requestedSliceCount = CountRequestedSlices(controller, visibleLights, mainLightIndex);
+            int requestedSliceCount = CountRequestedSlices(config, visibleLights, mainLightIndex);
             int maxSliceResolution = GetMaxResolutionForSliceCount(target.atlasSize, requestedSliceCount);
             HoShadowCastAtlasPacker packer = new HoShadowCastAtlasPacker(target.atlasSize);
-            AddLightArray(controller.spotLights, LightType.Spot, controller, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
-            AddLightArray(controller.pointLights, LightType.Point, controller, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
+            if (config.collectVisibleLights)
+            {
+                AddVisibleLights(LightType.Spot, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
+                AddVisibleLights(LightType.Point, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
+            }
+            else
+            {
+                AddLightArray(config.spotLights, LightType.Spot, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
+                AddLightArray(config.pointLights, LightType.Point, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
+            }
 
             target.FillUnused();
             return target.lightCount > 0 && target.sliceCount > 0;
         }
 
         private static bool BuildSecondDirectionalFrameData(
-            HoShadowCastController controller,
+            HoShadowCastFrameConfig config,
             ref CullingResults cullResults,
             NativeArray<VisibleLight> visibleLights,
             Camera camera,
@@ -628,17 +915,22 @@ namespace lilToon.URP.Extensions.ShadowCast
             target.cameraPosition = cameraPosition;
             target.cameraViewMatrix = cameraViewMatrix;
             target.cameraProjectionMatrix = cameraProjectionMatrix;
-            target.pcssParams = CreatePcssParams(controller, controller.secondDirectionalPcssSoftness);
-            target.pcssParams2 = CreatePcssParams2(controller);
-
-            if (controller == null || camera == null)
+            if (config == null)
             {
                 return false;
             }
 
-            int cascadeCount = Mathf.Clamp(controller.secondDirectionalCascadeCount, 1, HoShadowCastShaderConstants.MaxSecondDirectionalCascades);
-            int atlasSize = Mathf.Max(1, controller.secondDirectionalAtlasSize);
-            int requestedSliceCount = CountRequestedSecondDirectionalSlices(controller.directionalLights, visibleLights, mainLightIndex, cascadeCount);
+            target.pcssParams = CreatePcssParams(config, config.secondDirectionalPcssSoftness);
+            target.pcssParams2 = CreatePcssParams2(config);
+
+            if (camera == null)
+            {
+                return false;
+            }
+
+            int cascadeCount = Mathf.Clamp(config.secondDirectionalCascadeCount, 1, HoShadowCastShaderConstants.MaxSecondDirectionalCascades);
+            int atlasSize = Mathf.Max(1, config.secondDirectionalAtlasSize);
+            int requestedSliceCount = CountRequestedSecondDirectionalSlices(config, visibleLights, mainLightIndex, cascadeCount);
             if (requestedSliceCount <= 0)
             {
                 return false;
@@ -647,17 +939,21 @@ namespace lilToon.URP.Extensions.ShadowCast
             int gridSize = Mathf.CeilToInt(Mathf.Sqrt(requestedSliceCount));
             int resolution = Mathf.Max(64, atlasSize / Mathf.Max(1, gridSize));
             float nearDistance = Mathf.Max(0.001f, camera.nearClipPlane);
-            float farDistance = Mathf.Min(Mathf.Max(nearDistance + 0.01f, controller.secondDirectionalMaxDistance), Mathf.Max(nearDistance + 0.01f, camera.farClipPlane));
+            float farDistance = Mathf.Min(Mathf.Max(nearDistance + 0.01f, config.secondDirectionalMaxDistance), Mathf.Max(nearDistance + 0.01f, camera.farClipPlane));
 
             target.atlasSize = atlasSize;
             target.cascadeCountPerLight = cascadeCount;
             target.lightCount = 0;
             target.sliceCount = 0;
 
-            Light[] lights = controller.directionalLights;
-            for (int lightSlot = 0; lights != null && lightSlot < lights.Length; lightSlot++)
+            int directionalCandidateCount = config.collectVisibleLights && visibleLights.IsCreated
+                ? visibleLights.Length
+                : (config.directionalLights != null ? config.directionalLights.Length : 0);
+            for (int lightSlot = 0; lightSlot < directionalCandidateCount; lightSlot++)
             {
-                Light light = lights[lightSlot];
+                Light light = config.collectVisibleLights
+                    ? GetVisibleLight(visibleLights, lightSlot, LightType.Directional, mainLightIndex)
+                    : config.directionalLights[lightSlot];
                 if (light == null || light.type != LightType.Directional || !light.isActiveAndEnabled)
                 {
                     continue;
@@ -676,12 +972,12 @@ namespace lilToon.URP.Extensions.ShadowCast
 
                 int firstSlice = target.sliceCount;
                 float lightShadowStrength = light.shadows == LightShadows.None ? 1.0f : light.shadowStrength;
-                float shadowStrength = Mathf.Clamp01(controller.secondDirectionalShadowStrength * lightShadowStrength);
+                float shadowStrength = Mathf.Clamp01(config.secondDirectionalShadowStrength * lightShadowStrength);
 
                 float previousDistance = nearDistance;
                 for (int cascadeIndex = 0; cascadeIndex < cascadeCount; cascadeIndex++)
                 {
-                    float splitRatio = GetSecondDirectionalCascadeSplit(controller.secondDirectionalCascadeSplits, cascadeCount, cascadeIndex);
+                    float splitRatio = GetSecondDirectionalCascadeSplit(config.secondDirectionalCascadeSplits, cascadeCount, cascadeIndex);
                     float cascadeFarDistance = cascadeIndex == cascadeCount - 1
                         ? farDistance
                         : Mathf.Lerp(nearDistance, farDistance, splitRatio);
@@ -697,7 +993,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                             camera,
                             previousDistance,
                             cascadeFarDistance,
-                            controller,
+                            config,
                             atlasSize,
                             resolution,
                             offsetX,
@@ -724,29 +1020,47 @@ namespace lilToon.URP.Extensions.ShadowCast
             return target.lightCount > 0 && target.sliceCount > 0;
         }
 
-        private static int CountRequestedSecondDirectionalSlices(Light[] lights, NativeArray<VisibleLight> visibleLights, int mainLightIndex, int cascadeCount)
+        private static int CountRequestedSecondDirectionalSlices(HoShadowCastFrameConfig config, NativeArray<VisibleLight> visibleLights, int mainLightIndex, int cascadeCount)
         {
-            if (lights == null)
+            if (config == null)
             {
                 return 0;
             }
 
             int count = 0;
-            for (int i = 0; i < lights.Length; i++)
+            if (config.collectVisibleLights)
             {
-                Light light = lights[i];
-                if (light == null || light.type != LightType.Directional || !light.isActiveAndEnabled)
+                if (!visibleLights.IsCreated)
                 {
-                    continue;
+                    return 0;
                 }
 
-                int visibleLightIndex = FindVisibleLightIndex(visibleLights, light, LightType.Directional);
-                if (visibleLightIndex >= 0 && visibleLightIndex == mainLightIndex)
+                for (int i = 0; i < visibleLights.Length; i++)
                 {
-                    continue;
+                    if (GetVisibleLight(visibleLights, i, LightType.Directional, mainLightIndex) != null)
+                    {
+                        count += cascadeCount;
+                    }
                 }
+            }
+            else if (config.directionalLights != null)
+            {
+                for (int i = 0; i < config.directionalLights.Length; i++)
+                {
+                    Light light = config.directionalLights[i];
+                    if (light == null || light.type != LightType.Directional || !light.isActiveAndEnabled)
+                    {
+                        continue;
+                    }
 
-                count += cascadeCount;
+                    int visibleLightIndex = FindVisibleLightIndex(visibleLights, light, LightType.Directional);
+                    if (visibleLightIndex >= 0 && visibleLightIndex == mainLightIndex)
+                    {
+                        continue;
+                    }
+
+                    count += cascadeCount;
+                }
             }
 
             return Mathf.Min(count, HoShadowCastShaderConstants.MaxSecondDirectionalSlices);
@@ -791,7 +1105,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             Camera camera,
             float cascadeNearDistance,
             float cascadeFarDistance,
-            HoShadowCastController controller,
+            HoShadowCastFrameConfig config,
             int atlasSize,
             int resolution,
             int offsetX,
@@ -832,7 +1146,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             }
 
             float cascadeDepth = maxLightDistance - minLightDistance;
-            float depth = Mathf.Max(Mathf.Max(0.01f, controller.secondDirectionalShadowDepth), cascadeDepth + 1.0f);
+            float depth = Mathf.Max(Mathf.Max(0.01f, config.secondDirectionalShadowDepth), cascadeDepth + 1.0f);
             Matrix4x4 fitViewMatrix = CreateViewMatrix(center - lightForward * (depth * 0.5f), lightForward, light.transform.up);
             float size = 0.01f;
             for (int i = 0; i < corners.Length; i++)
@@ -907,7 +1221,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         private static void AddLightArray(
             Light[] lights,
             LightType requiredType,
-            HoShadowCastController controller,
+            HoShadowCastFrameConfig config,
             ref CullingResults cullResults,
             NativeArray<VisibleLight> visibleLights,
             int mainLightIndex,
@@ -922,14 +1236,36 @@ namespace lilToon.URP.Extensions.ShadowCast
 
             for (int i = 0; i < lights.Length; i++)
             {
-                AddLight(lights[i], requiredType, controller, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
+                AddLight(lights[i], requiredType, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
+            }
+        }
+
+        private static void AddVisibleLights(
+            LightType requiredType,
+            HoShadowCastFrameConfig config,
+            ref CullingResults cullResults,
+            NativeArray<VisibleLight> visibleLights,
+            int mainLightIndex,
+            int maxSliceResolution,
+            ref HoShadowCastAtlasPacker packer,
+            HoShadowCastFrame target)
+        {
+            if (!visibleLights.IsCreated)
+            {
+                return;
+            }
+
+            for (int i = 0; i < visibleLights.Length; i++)
+            {
+                Light light = GetVisibleLight(visibleLights, i, requiredType, mainLightIndex);
+                AddLight(light, requiredType, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target);
             }
         }
 
         private static void AddLight(
             Light light,
             LightType requiredType,
-            HoShadowCastController controller,
+            HoShadowCastFrameConfig config,
             ref CullingResults cullResults,
             NativeArray<VisibleLight> visibleLights,
             int mainLightIndex,
@@ -960,7 +1296,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 return;
             }
 
-            int resolution = GetResolution(controller, requiredType, maxSliceResolution);
+            int resolution = GetResolution(config, requiredType, maxSliceResolution);
             int writtenSlices = 0;
             bool completed = true;
             for (int face = 0; face < requestedSlices; face++)
@@ -977,7 +1313,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                         visibleLightIndex,
                         requiredType,
                         face,
-                        controller,
+                        config,
                         target.atlasSize,
                         resolution,
                         offsetX,
@@ -1004,11 +1340,11 @@ namespace lilToon.URP.Extensions.ShadowCast
             Vector3 direction = light.transform.forward;
             Color finalColor = light.color * light.intensity;
             float lightShadowStrength = light.shadows == LightShadows.None ? 1.0f : light.shadowStrength;
-            float controllerStrength = requiredType == LightType.Directional ? controller.shadowStrength : controller.punctualShadowStrength;
+            float controllerStrength = requiredType == LightType.Directional ? config.shadowStrength : config.punctualShadowStrength;
             target.lightData0[lightIndex] = new Vector4(GetLightTypeId(requiredType), firstSlice, writtenSlices, Mathf.Clamp01(controllerStrength * lightShadowStrength));
             target.lightData1[lightIndex] = new Vector4(position.x, position.y, position.z, light.range);
             target.lightData2[lightIndex] = new Vector4(direction.x, direction.y, direction.z, Mathf.Cos(light.spotAngle * 0.5f * Mathf.Deg2Rad));
-            target.lightAttenuation[lightIndex] = ComputeLightAttenuation(light, requiredType, controller.punctualShadowFadeSpeed);
+            target.lightAttenuation[lightIndex] = ComputeLightAttenuation(light, requiredType, config.punctualShadowFadeSpeed);
             target.lightColor[lightIndex] = new Vector4(finalColor.r, finalColor.g, finalColor.b, 1.0f);
         }
 
@@ -1018,7 +1354,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             int visibleLightIndex,
             LightType lightType,
             int face,
-            HoShadowCastController controller,
+            HoShadowCastFrameConfig config,
             int atlasSize,
             int resolution,
             int offsetX,
@@ -1037,7 +1373,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             Matrix4x4 projectionMatrix;
             ShadowSplitData splitData = default;
 
-            if (!TryBuildLightMatrices(light, ref cullResults, visibleLightIndex, lightType, face, controller, out viewMatrix, out projectionMatrix, out splitData))
+            if (!TryBuildLightMatrices(light, ref cullResults, visibleLightIndex, lightType, face, config, out viewMatrix, out projectionMatrix, out splitData))
             {
                 return false;
             }
@@ -1073,7 +1409,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             int visibleLightIndex,
             LightType lightType,
             int face,
-            HoShadowCastController controller,
+            HoShadowCastFrameConfig config,
             out Matrix4x4 viewMatrix,
             out Matrix4x4 projectionMatrix,
             out ShadowSplitData splitData)
@@ -1090,10 +1426,10 @@ namespace lilToon.URP.Extensions.ShadowCast
             float nearPlane = Mathf.Max(0.001f, light.shadowNearPlane);
             if (lightType == LightType.Directional)
             {
-                float size = Mathf.Max(0.01f, controller.directionalShadowSize);
-                float depth = Mathf.Max(nearPlane + 0.01f, controller.directionalShadowDepth);
+                float size = Mathf.Max(0.01f, config.directionalShadowSize);
+                float depth = Mathf.Max(nearPlane + 0.01f, config.directionalShadowDepth);
                 Vector3 lightForward = lightTransform.forward;
-                Vector3 lightPosition = controller.transform.position - lightForward * (depth * 0.5f);
+                Vector3 lightPosition = config.directionalAnchorPosition - lightForward * (depth * 0.5f);
                 viewMatrix = CreateViewMatrix(lightPosition, lightForward, lightTransform.up);
                 projectionMatrix = Matrix4x4.Ortho(-size, size, -size, size, nearPlane, depth);
                 return true;
@@ -1190,9 +1526,9 @@ namespace lilToon.URP.Extensions.ShadowCast
             }
         }
 
-        private static void MaybeLogDebugFrame(HoShadowCastController controller, HoShadowCastFrame frame, HoShadowCastSecondDirectionalFrame secondDirectionalFrame, string path, bool hasFrame, bool hasSecondDirectionalFrame)
+        private static void MaybeLogDebugFrame(HoShadowCastFrameConfig config, HoShadowCastFrame frame, HoShadowCastSecondDirectionalFrame secondDirectionalFrame, string path, bool hasFrame, bool hasSecondDirectionalFrame)
         {
-            if (controller == null || controller.debugMode == HoShadowCastDebugMode.Off)
+            if (config == null || config.debugMode == HoShadowCastDebugMode.Off)
             {
                 return;
             }
@@ -1226,17 +1562,22 @@ namespace lilToon.URP.Extensions.ShadowCast
             builder.Append("x");
             builder.Append(secondDirectionalFrame.atlasSize);
             builder.Append(", casterMask=0x");
-            builder.Append(controller.casterLayerMask.value.ToString("X8"));
+            builder.Append(config.casterLayerMask.value.ToString("X8"));
             builder.Append(", strength second/punctual=");
-            builder.Append(controller.secondDirectionalShadowStrength.ToString("0.##"));
+            builder.Append(config.secondDirectionalShadowStrength.ToString("0.##"));
             builder.Append("/");
-            builder.Append(controller.punctualShadowStrength.ToString("0.##"));
-            builder.Append(", assigned D/S/P=");
-            builder.Append(CountAssigned(controller.directionalLights));
-            builder.Append('/');
-            builder.Append(CountAssigned(controller.spotLights));
-            builder.Append('/');
-            builder.Append(CountAssigned(controller.pointLights));
+            builder.Append(config.punctualShadowStrength.ToString("0.##"));
+            builder.Append(", source=");
+            builder.Append(config.collectVisibleLights ? "visibleLights" : "controller");
+            if (!config.collectVisibleLights)
+            {
+                builder.Append(", assigned D/S/P=");
+                builder.Append(CountAssigned(config.directionalLights));
+                builder.Append('/');
+                builder.Append(CountAssigned(config.spotLights));
+                builder.Append('/');
+                builder.Append(CountAssigned(config.pointLights));
+            }
 
             if (frame.lightCount > 0)
             {
@@ -1277,7 +1618,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 builder.Append(slice.shadowSliceData.resolution);
             }
 
-            Debug.Log(builder.ToString(), controller);
+            Debug.Log(builder.ToString(), config.controller);
         }
 
         private static int CountAssigned(Light[] lights)
@@ -1369,16 +1710,66 @@ namespace lilToon.URP.Extensions.ShadowCast
             return -1;
         }
 
-        private static int CountRequestedSlices(HoShadowCastController controller, NativeArray<VisibleLight> visibleLights, int mainLightIndex)
+        private static Light GetVisibleLight(NativeArray<VisibleLight> visibleLights, int index, LightType requiredType, int mainLightIndex)
         {
-            if (controller == null)
+            if (!visibleLights.IsCreated || index < 0 || index >= visibleLights.Length || index == mainLightIndex)
+            {
+                return null;
+            }
+
+            VisibleLight visibleLight = visibleLights[index];
+            Light light = visibleLight.light;
+            if (light == null || visibleLight.lightType != requiredType || light.type != requiredType || !light.isActiveAndEnabled)
+            {
+                return null;
+            }
+
+            if (light.shadows == LightShadows.None)
+            {
+                return null;
+            }
+
+            return light;
+        }
+
+        private static int CountRequestedSlices(HoShadowCastFrameConfig config, NativeArray<VisibleLight> visibleLights, int mainLightIndex)
+        {
+            if (config == null)
             {
                 return 0;
             }
 
             int count = 0;
-            count += CountRequestedSlices(controller.spotLights, LightType.Spot, visibleLights, mainLightIndex);
-            count += CountRequestedSlices(controller.pointLights, LightType.Point, visibleLights, mainLightIndex);
+            if (config.collectVisibleLights)
+            {
+                count += CountRequestedVisibleSlices(LightType.Spot, visibleLights, mainLightIndex);
+                count += CountRequestedVisibleSlices(LightType.Point, visibleLights, mainLightIndex);
+            }
+            else
+            {
+                count += CountRequestedSlices(config.spotLights, LightType.Spot, visibleLights, mainLightIndex);
+                count += CountRequestedSlices(config.pointLights, LightType.Point, visibleLights, mainLightIndex);
+            }
+
+            return count;
+        }
+
+        private static int CountRequestedVisibleSlices(LightType requiredType, NativeArray<VisibleLight> visibleLights, int mainLightIndex)
+        {
+            if (!visibleLights.IsCreated)
+            {
+                return 0;
+            }
+
+            int count = 0;
+            for (int i = 0; i < visibleLights.Length; i++)
+            {
+                if (GetVisibleLight(visibleLights, i, requiredType, mainLightIndex) != null)
+                {
+                    count += requiredType == LightType.Point ? 6 : 1;
+                }
+            }
+
             return count;
         }
 
@@ -1422,14 +1813,14 @@ namespace lilToon.URP.Extensions.ShadowCast
             return Mathf.Max(64, atlasSize / Mathf.Max(1, gridSize));
         }
 
-        private static int GetResolution(HoShadowCastController controller, LightType type, int maxSliceResolution)
+        private static int GetResolution(HoShadowCastFrameConfig config, LightType type, int maxSliceResolution)
         {
-            int atlasSize = Mathf.Max(1, controller.atlasSize);
+            int atlasSize = Mathf.Max(1, config.atlasSize);
             int resolution = type switch
             {
-                LightType.Directional => controller.directionalResolution,
-                LightType.Spot => controller.spotResolution,
-                LightType.Point => controller.pointFaceResolution,
+                LightType.Directional => config.directionalResolution,
+                LightType.Spot => config.spotResolution,
+                LightType.Point => config.pointFaceResolution,
                 _ => 64
             };
 
@@ -1474,9 +1865,9 @@ namespace lilToon.URP.Extensions.ShadowCast
             return new Vector4(oneOverRangeSqr, fadeSpeed, spotScale, spotOffset);
         }
 
-        private static Vector4 CreatePcssParams(HoShadowCastController controller, float softness)
+        private static Vector4 CreatePcssParams(HoShadowCastFrameConfig config, float softness)
         {
-            if (controller == null || !controller.pcssEnabled || softness <= 0.0f)
+            if (config == null || !config.pcssEnabled || softness <= 0.0f)
             {
                 return Vector4.zero;
             }
@@ -1484,20 +1875,20 @@ namespace lilToon.URP.Extensions.ShadowCast
             return new Vector4(
                 1.0f,
                 Mathf.Clamp(softness, 0.0f, 4.0f),
-                Mathf.Clamp(controller.pcssBlockerSearchRadius, 0.25f, 8.0f),
-                Mathf.Clamp(controller.pcssMaxPenumbraRadius, 1.0f, 32.0f));
+                Mathf.Clamp(config.pcssBlockerSearchRadius, 0.25f, 8.0f),
+                Mathf.Clamp(config.pcssMaxPenumbraRadius, 1.0f, 32.0f));
         }
 
-        private static Vector4 CreatePcssParams2(HoShadowCastController controller)
+        private static Vector4 CreatePcssParams2(HoShadowCastFrameConfig config)
         {
-            if (controller == null || !controller.pcssEnabled)
+            if (config == null || !config.pcssEnabled)
             {
                 return Vector4.zero;
             }
 
-            GetPcssSampleCounts(controller.pcssQuality, out int blockerSamples, out int filterSamples);
+            GetPcssSampleCounts(config.pcssQuality, out int blockerSamples, out int filterSamples);
             return new Vector4(
-                Mathf.Clamp(controller.pcssDepthBias, 0.0f, 0.01f),
+                Mathf.Clamp(config.pcssDepthBias, 0.0f, 0.01f),
                 blockerSamples,
                 filterSamples,
                 0.0f);
@@ -1575,9 +1966,9 @@ namespace lilToon.URP.Extensions.ShadowCast
             };
         }
 
-        private static FilteringSettings CreateShadowCasterFilteringSettings(HoShadowCastController controller)
+        private static FilteringSettings CreateShadowCasterFilteringSettings(HoShadowCastFrameConfig config)
         {
-            int layerMask = controller != null ? controller.casterLayerMask.value : -1;
+            int layerMask = config != null ? config.casterLayerMask.value : -1;
             return new FilteringSettings(RenderQueueRange.all, layerMask);
         }
 
@@ -1818,6 +2209,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         private HoShadowCastRenderTargets renderTargets;
         private RTHandle cameraColorTarget;
         private RTHandle tempTexture;
+        private HoShadowCastFrameConfig config;
         private Material debugMaterial;
 
         private sealed class PassData
@@ -1828,8 +2220,9 @@ namespace lilToon.URP.Extensions.ShadowCast
             public int debugMode;
         }
 
-        public void Setup(HoShadowCastRenderTargets renderTargets, RTHandle cameraColorTarget, Material debugMaterial)
+        public void Setup(HoShadowCastFrameConfig config, HoShadowCastRenderTargets renderTargets, RTHandle cameraColorTarget, Material debugMaterial)
         {
+            this.config = config;
             this.renderTargets = renderTargets;
             this.cameraColorTarget = cameraColorTarget;
             this.debugMaterial = debugMaterial;
@@ -1837,8 +2230,9 @@ namespace lilToon.URP.Extensions.ShadowCast
             ConfigureInput(ScriptableRenderPassInput.Color);
         }
 
-        public void SetupRenderGraph(Material debugMaterial)
+        public void SetupRenderGraph(HoShadowCastFrameConfig config, Material debugMaterial)
         {
+            this.config = config;
             this.debugMaterial = debugMaterial;
             renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
             ConfigureInput(ScriptableRenderPassInput.Color);
@@ -1862,13 +2256,12 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            HoShadowCastController controller = HoShadowCastController.ActiveController;
-            if (debugMaterial == null || renderTargets == null || controller == null || cameraColorTarget == null || tempTexture == null)
+            if (debugMaterial == null || renderTargets == null || config == null || cameraColorTarget == null || tempTexture == null)
             {
                 return;
             }
 
-            RTHandle debugAtlas = controller.debugMode == HoShadowCastDebugMode.SecondDirectionalAtlas
+            RTHandle debugAtlas = config.debugMode == HoShadowCastDebugMode.SecondDirectionalAtlas
                 ? renderTargets.SecondDirectionalAtlasTexture
                 : renderTargets.AtlasTexture;
             if (debugAtlas == null)
@@ -1879,8 +2272,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             CommandBuffer cmd = CommandBufferPool.Get();
             using (new ProfilingScope(cmd, ProfilingSampler))
             {
-                cmd.SetGlobalInt(HoShadowCastShaderConstants.DebugModeId, (int)controller.debugMode);
-                if (controller.debugMode == HoShadowCastDebugMode.SecondDirectionalAtlas)
+                cmd.SetGlobalInt(HoShadowCastShaderConstants.DebugModeId, (int)config.debugMode);
+                if (config.debugMode == HoShadowCastDebugMode.SecondDirectionalAtlas)
                 {
                     cmd.SetGlobalTexture(HoShadowCastShaderConstants.SecondDirectionalAtlasTextureId, debugAtlas.nameID);
                 }
@@ -1907,13 +2300,12 @@ namespace lilToon.URP.Extensions.ShadowCast
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             HoShadowCastRenderGraphResources shadowCastResources = frameData.GetOrCreate<HoShadowCastRenderGraphResources>();
             TextureHandle source = resourceData.activeColorTexture;
-            HoShadowCastController controller = HoShadowCastController.ActiveController;
-            if (controller == null)
+            if (config == null)
             {
                 return;
             }
 
-            TextureHandle atlas = controller.debugMode == HoShadowCastDebugMode.SecondDirectionalAtlas
+            TextureHandle atlas = config.debugMode == HoShadowCastDebugMode.SecondDirectionalAtlas
                 ? shadowCastResources.secondDirectionalAtlasTexture
                 : shadowCastResources.atlasTexture;
             if (!source.IsValid() || !atlas.IsValid())
@@ -1932,7 +2324,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 passData.source = source;
                 passData.atlasTexture = atlas;
                 passData.debugMaterial = debugMaterial;
-                passData.debugMode = (int)controller.debugMode;
+                passData.debugMode = (int)config.debugMode;
 
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.UseTexture(atlas, AccessFlags.Read);
