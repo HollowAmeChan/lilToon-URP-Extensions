@@ -19,7 +19,11 @@ namespace lilToon.URP.Extensions.Editor.Debugging
             new DebugShaderEntry(
                 "ShadowCast",
                 "Hidden/lilToon-HoShadowCast/URP/DebugView",
-                "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders/Debug/HoShadowCastDebug.shader")
+                "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders/Debug/HoShadowCastDebug.shader"),
+            new DebugShaderEntry(
+                "Subsurface Scattering",
+                "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView",
+                "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SubsurfaceScattering/Shaders/Debug/HoSubsurfaceScatteringDebug.shader")
         };
 
         [MenuItem(MenuPath, false, 2200)]

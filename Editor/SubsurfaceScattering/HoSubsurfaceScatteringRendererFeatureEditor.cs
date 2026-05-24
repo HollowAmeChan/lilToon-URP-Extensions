@@ -142,6 +142,7 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
             {
                 DrawProperty(debugMode);
                 DrawProperty("renderInSceneView");
+                EditorGUILayout.HelpBox("Debug shader 只在调试模式非关闭时按需查找。若要把它纳入构建，请显式生成 Debug Shader Collection。", MessageType.None);
             }
         }
 

@@ -201,8 +201,17 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 
 待处理：
 
-- SSS debug 分支、ScreenProcess AOV/rule debug 还未迁到局部按需收集策略。
+- ScreenProcess AOV/rule debug 还未迁到局部按需收集策略。
 - 后续 debug profile / tile view 仍需基于 feature 局部 view info 接入。
+
+已继续对 SSS debug 分支做按需编译拆分：
+
+- `HoSubsurfaceScattering.shader` 移除内置 debug 输出大分支，主 shader 只保留 Source / Diffusion / Transmission / Composite 主功能 pass。
+- 新增 `Runtime/SubsurfaceScattering/Shaders/Debug/HoSubsurfaceScatteringDebug.shader`，shader 名为 `Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView`，负责 `Mask`、`Source`、`Diffusion`、`Transmission`、`TransmissionGate`、`CompositeWeight`、`ProfileId`、`Thickness`、`ProfileRadius`、`TransmissionDirection`、`TransmissionRim` 等 SSS debug view。
+- `HoSubsurfaceScatteringRendererFeature` 只在 `debugMode != Off` 时才 `Shader.Find(HoSubsurfaceScatteringShaderConstants.DebugShaderName)` 并创建 debug material；缺失 debug shader 时只 warning once，主 SSS pass 继续运行。
+- Debug 输出从 Composite pass 内联分支改为独立 `HoSubsurfaceScatteringDebugPass.cs`，RenderGraph 与 compatibility path 都只在 debug 开启时入队，且读取当前帧 SSS / transmission / AOV 资源后覆盖 camera color。
+- 主合成参数从旧 `_lilHoSSSDebugParams` 拆为 `_lilHoSSSCompositeParams`，避免主 shader 继续携带 debug mode ABI。
+- `LilUrpDebugShaderCollectionGenerator` 显式收集 SSS debug shader；普通用户不生成 collection 时不会因为启用主 SSS 功能而主动查找该 debug shader。
 
 ---
 

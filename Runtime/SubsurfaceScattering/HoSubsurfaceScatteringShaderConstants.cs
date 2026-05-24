@@ -5,6 +5,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
     internal static class HoSubsurfaceScatteringShaderConstants
     {
         public const string ShaderName = "Hidden/lilToon/URP/HoSubsurfaceScattering";
+        public const string DebugShaderName = "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView";
         public const string SourceTextureName = "_lilHoSSSSourceTexture";
         public const string DiffusionTextureName = "_lilHoSSSDiffusedTexture";
         public const string TransmissionTextureName = "_lilHoSSSTransmissionTexture";
@@ -22,6 +23,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         public static readonly int TransmissionParamsId = Shader.PropertyToID("_lilHoSSSTransmissionParams");
         public static readonly int TransmissionColorId = Shader.PropertyToID("_lilHoSSSTransmissionColor");
         public static readonly int TransmissionShapeParamsId = Shader.PropertyToID("_lilHoSSSTransmissionShapeParams");
+        public static readonly int CompositeParamsId = Shader.PropertyToID("_lilHoSSSCompositeParams");
         public static readonly int DebugParamsId = Shader.PropertyToID("_lilHoSSSDebugParams");
         public static readonly int ProfileIdsId = Shader.PropertyToID("_lilHoSSSProfileIds");
         public static readonly int ProfileDiffusionParamsId = Shader.PropertyToID("_lilHoSSSProfileDiffusionParams");

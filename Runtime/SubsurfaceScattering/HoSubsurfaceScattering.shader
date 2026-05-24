@@ -31,7 +31,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
         float4 _lilHoSSSTransmissionParams; // x strength, y radius screen px, z samples, w main-light direction blend
         float4 _lilHoSSSTransmissionColor;
         float4 _lilHoSSSTransmissionShapeParams; // x depth weight, y edge boost, z rim weight, w smoothing
-        float4 _lilHoSSSDebugParams; // x debug mode, y transmission blend mode, z tint injection
+        float4 _lilHoSSSCompositeParams; // x transmission blend mode, y tint injection
         float4 _lilHoSSSProfileIds[8]; // x profile id, y enabled
         float4 _lilHoSSSProfileDiffusionParams[8]; // x radius, y source preserve, zw diffusion color rg
         float4 _lilHoSSSProfileTransmissionParams[8]; // x strength, y radius, zw transmission color rg
@@ -556,8 +556,8 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
         float3 HoSSSBlendTransmission(float3 cameraColor, float3 baseTarget, float3 transmission)
         {
             float transmissionMask = saturate(max(max(transmission.r, transmission.g), transmission.b));
-            float tintInjection = saturate(_lilHoSSSDebugParams.z);
-            float blendMode = _lilHoSSSDebugParams.y;
+            float tintInjection = saturate(_lilHoSSSCompositeParams.y);
+            float blendMode = _lilHoSSSCompositeParams.x;
             float luma = dot(cameraColor, float3(0.2126, 0.7152, 0.0722));
             float3 chroma = transmission - dot(transmission, float3(0.333333, 0.333333, 0.333333));
             float3 softTint = cameraColor + chroma * tintInjection * (0.35 + 0.65 * luma);
@@ -576,77 +576,6 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
             return max(lerp(baseTarget, result, saturate(transmissionMask * (0.5 + tintInjection * 1.5))), 0.0);
         }
 
-        float3 HoSSSDebugColor(
-            float debugMode,
-            float centerMask,
-            float compositeWeight,
-            float profileByte,
-            float thickness,
-            float profileRadius,
-            float2 transmissionDirection,
-            float4 source,
-            float3 tintedDiffusion,
-            float3 transmission,
-            float transmissionGate,
-            float transmissionRim)
-        {
-            if (debugMode < 0.5)
-            {
-                return -1.0;
-            }
-
-            if (debugMode < 1.5)
-            {
-                return centerMask.xxx;
-            }
-
-            if (debugMode < 2.5)
-            {
-                return source.rgb;
-            }
-
-            if (debugMode < 3.5)
-            {
-                return tintedDiffusion;
-            }
-
-            if (debugMode < 4.5)
-            {
-                return transmission;
-            }
-
-            if (debugMode < 5.5)
-            {
-                return transmissionGate.xxx;
-            }
-
-            if (debugMode < 6.5)
-            {
-                return compositeWeight.xxx;
-            }
-
-            if (debugMode < 7.5)
-            {
-                return (profileByte / 255.0).xxx;
-            }
-
-            if (debugMode < 8.5)
-            {
-                return thickness.xxx;
-            }
-
-            if (debugMode < 9.5)
-            {
-                return saturate(profileRadius / 32.0).xxx;
-            }
-
-            if (debugMode < 10.5)
-            {
-                return float3(transmissionDirection * 0.5 + 0.5, 0.0);
-            }
-
-            return transmissionRim.xxx;
-        }
         ENDHLSL
 
         Pass
@@ -766,40 +695,16 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
                 float4 profileDiffusionParams = HoSSSProfileDiffusionParams(profileByte);
                 float4 profileTransmissionParams = HoSSSProfileTransmissionParams(profileByte);
                 float4 profileShapeParams = HoSSSProfileShapeParams(profileByte);
-                float thickness = HoSSSThinness(surfaceData);
-                float3 centerNormal = HoSSSDecodeNormal(normalDepth.rgb);
-                float3 centerNormalView = TransformWorldToViewDir(centerNormal, true);
-                float transmissionRim = HoSSSRimFactor(centerNormalView);
-                float2 transmissionDirection = HoSSSTransmissionDirection(uv, centerNormalView, transmissionRim);
                 float centerMask = HoSSSSurfaceMask(uv, normalDepth, surfaceData);
                 float mask = saturate(centerMask * step(1.0e-4, sss.a) * _lilHoSSSParams.x);
                 float3 diffusionColor = max(float3(profileDiffusionParams.zw, profileShapeParams.y), 0.0);
                 float3 transmissionColor = max(float3(profileTransmissionParams.zw, profileShapeParams.z), 0.0);
                 float3 tintedDiffusion = sss.rgb * diffusionColor;
-                float transmissionGate = 0.0;
                 float4 transmissionSample = SAMPLE_TEXTURE2D_X(_lilHoSSSTransmissionTexture, sampler_LinearClamp, uv);
                 float3 transmission = transmissionSample.rgb * transmissionColor * 0.45;
-                transmissionGate = transmissionSample.a;
                 float compositeWeight = mask * saturate(profileShapeParams.w) * (1.0 - saturate(profileDiffusionParams.y));
                 float3 diffusionTarget = max(tintedDiffusion, cameraColor.rgb);
                 float3 targetColor = HoSSSBlendTransmission(cameraColor.rgb, diffusionTarget, transmission);
-                float3 debugColor = HoSSSDebugColor(
-                    _lilHoSSSDebugParams.x,
-                    centerMask,
-                    compositeWeight,
-                    profileByte,
-                    thickness,
-                    profileDiffusionParams.x,
-                    transmissionDirection,
-                    sss,
-                    tintedDiffusion,
-                    transmission,
-                    transmissionGate,
-                    transmissionRim);
-                if (debugColor.x >= 0.0)
-                {
-                    return float4(debugColor, cameraColor.a);
-                }
 
                 cameraColor.rgb = lerp(cameraColor.rgb, targetColor, compositeWeight);
                 return cameraColor;

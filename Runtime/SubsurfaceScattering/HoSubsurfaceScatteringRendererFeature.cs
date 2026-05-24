@@ -84,9 +84,13 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         private HoSubsurfaceScatteringTransmissionBlurPass transmissionHorizontalBlurPass;
         private HoSubsurfaceScatteringTransmissionBlurPass transmissionVerticalBlurPass;
         private HoSubsurfaceScatteringCompositePass compositePass;
+        private HoSubsurfaceScatteringDebugPass debugPass;
         private Material material;
         private Shader materialShader;
+        private Material debugMaterial;
+        private Shader debugMaterialShader;
         private bool warnedMissingShader;
+        private bool warnedMissingDebugShader;
 
         public HoSubsurfaceScatteringSettings Settings => settings;
 
@@ -100,6 +104,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             transmissionHorizontalBlurPass = new HoSubsurfaceScatteringTransmissionBlurPass("lilToon-HoSSS Transmission X", new Vector2(1.0f, 0.0f));
             transmissionVerticalBlurPass = new HoSubsurfaceScatteringTransmissionBlurPass("lilToon-HoSSS Transmission Y", new Vector2(0.0f, 1.0f));
             compositePass = new HoSubsurfaceScatteringCompositePass();
+            debugPass = new HoSubsurfaceScatteringDebugPass();
         }
 
         private void OnValidate()
@@ -128,6 +133,18 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             transmissionHorizontalBlurPass?.Setup(settings, renderTargets, material, false);
             transmissionVerticalBlurPass?.Setup(settings, renderTargets, material, true);
             compositePass?.Setup(settings, renderer.cameraColorTargetHandle, renderTargets, material);
+            if (IsDebugEnabled())
+            {
+                EnsureDebugMaterial();
+                if (debugMaterial != null)
+                {
+                    debugPass?.Setup(settings, renderer.cameraColorTargetHandle, renderTargets, debugMaterial);
+                }
+            }
+            else
+            {
+                ReleaseDebugMaterial();
+            }
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -159,12 +176,27 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             renderer.EnqueuePass(transmissionHorizontalBlurPass);
             renderer.EnqueuePass(transmissionVerticalBlurPass);
             renderer.EnqueuePass(compositePass);
+
+            if (IsDebugEnabled())
+            {
+                EnsureDebugMaterial();
+                if (debugMaterial != null)
+                {
+                    debugPass?.SetupRenderGraph(settings, renderTargets, debugMaterial);
+                    renderer.EnqueuePass(debugPass);
+                }
+            }
+            else
+            {
+                ReleaseDebugMaterial();
+            }
         }
 
         protected override void Dispose(bool disposing)
         {
             renderTargets.Release();
             CoreUtils.Destroy(material);
+            ReleaseDebugMaterial();
             sourcePass = null;
             horizontalBlurPass = null;
             verticalBlurPass = null;
@@ -172,6 +204,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             transmissionHorizontalBlurPass = null;
             transmissionVerticalBlurPass = null;
             compositePass = null;
+            debugPass = null;
             material = null;
             materialShader = null;
         }
@@ -218,6 +251,48 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             }
 
             material = CoreUtils.CreateEngineMaterial(shader);
+        }
+
+        private bool IsDebugEnabled()
+        {
+            return settings != null && settings.debugMode != HoSubsurfaceScatteringDebugMode.Off;
+        }
+
+        private void EnsureDebugMaterial()
+        {
+            if (!IsDebugEnabled())
+            {
+                return;
+            }
+
+            Shader shader = Shader.Find(HoSubsurfaceScatteringShaderConstants.DebugShaderName);
+            if (debugMaterial != null && debugMaterialShader == shader)
+            {
+                return;
+            }
+
+            CoreUtils.Destroy(debugMaterial);
+            debugMaterial = null;
+            debugMaterialShader = shader;
+            if (shader == null)
+            {
+                if (!warnedMissingDebugShader)
+                {
+                    warnedMissingDebugShader = true;
+                    Debug.LogWarning($"HoSSS debug 已跳过：找不到调试着色器 '{HoSubsurfaceScatteringShaderConstants.DebugShaderName}'。");
+                }
+
+                return;
+            }
+
+            debugMaterial = CoreUtils.CreateEngineMaterial(shader);
+        }
+
+        private void ReleaseDebugMaterial()
+        {
+            CoreUtils.Destroy(debugMaterial);
+            debugMaterial = null;
+            debugMaterialShader = null;
         }
     }
 
@@ -615,7 +690,6 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             public Vector4 transmissionParams;
             public Vector4 transmissionColor;
             public Vector4 transmissionShapeParams;
-            public Vector4 debugParams;
         }
 
         public void Setup(
@@ -697,7 +771,6 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 passData.transmissionParams = CreateTransmissionParams(settings);
                 passData.transmissionColor = settings.transmissionColor;
                 passData.transmissionShapeParams = CreateTransmissionShapeParams(settings);
-                passData.debugParams = CreateDebugParams(settings);
 
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.UseTexture(passData.maskIdTexture, AccessFlags.Read);
@@ -708,7 +781,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 builder.AllowGlobalStateModification(true);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
-                    SetMaterialProperties(data.material, data.gateParams, data.transmissionParams, data.transmissionColor, data.transmissionShapeParams, data.debugParams);
+                    SetMaterialProperties(data.material, data.gateParams, data.transmissionParams, data.transmissionColor, data.transmissionShapeParams);
                     context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.SourceTextureId, data.source);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.maskIdTexture);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
@@ -720,17 +793,16 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
         private static void SetMaterialProperties(Material material, HoSubsurfaceScatteringSettings settings)
         {
-            SetMaterialProperties(material, CreateGateParams(settings), CreateTransmissionParams(settings), settings.transmissionColor, CreateTransmissionShapeParams(settings), CreateDebugParams(settings));
+            SetMaterialProperties(material, CreateGateParams(settings), CreateTransmissionParams(settings), settings.transmissionColor, CreateTransmissionShapeParams(settings));
             HoSubsurfaceScatteringProfileShaderData.Set(material, settings);
         }
 
-        private static void SetMaterialProperties(Material material, Vector4 gateParams, Vector4 transmissionParams, Vector4 transmissionColor, Vector4 transmissionShapeParams, Vector4 debugParams)
+        private static void SetMaterialProperties(Material material, Vector4 gateParams, Vector4 transmissionParams, Vector4 transmissionColor, Vector4 transmissionShapeParams)
         {
             material.SetVector(HoSubsurfaceScatteringShaderConstants.GateParamsId, gateParams);
             material.SetVector(HoSubsurfaceScatteringShaderConstants.TransmissionParamsId, transmissionParams);
             material.SetVector(HoSubsurfaceScatteringShaderConstants.TransmissionColorId, transmissionColor);
             material.SetVector(HoSubsurfaceScatteringShaderConstants.TransmissionShapeParamsId, transmissionShapeParams);
-            material.SetVector(HoSubsurfaceScatteringShaderConstants.DebugParamsId, debugParams);
         }
 
         private static Vector4 CreateGateParams(HoSubsurfaceScatteringSettings settings)
@@ -754,11 +826,6 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 Mathf.Max(0.0f, settings.transmissionEdgeBoost),
                 Mathf.Clamp01(settings.transmissionRimWeight),
                 Mathf.Clamp01(settings.transmissionSmoothing));
-        }
-
-        private static Vector4 CreateDebugParams(HoSubsurfaceScatteringSettings settings)
-        {
-            return new Vector4((float)settings.debugMode, Mathf.Clamp((float)settings.transmissionBlendMode, 0.0f, 4.0f), Mathf.Clamp01(settings.transmissionTintInjection), 0.0f);
         }
 
         private static float PackRadius(float radius, float maxRadius)
@@ -977,7 +1044,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             public Vector4 transmissionParams;
             public Vector4 transmissionColor;
             public Vector4 transmissionShapeParams;
-            public Vector4 debugParams;
+            public Vector4 compositeParams;
         }
 
         public void Setup(
@@ -1071,7 +1138,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 passData.transmissionParams = CreateTransmissionParams(settings);
                 passData.transmissionColor = settings.transmissionColor;
                 passData.transmissionShapeParams = CreateTransmissionShapeParams(settings);
-                passData.debugParams = CreateDebugParams(settings);
+                passData.compositeParams = CreateCompositeParams(settings);
 
                 builder.UseTexture(cameraColor, AccessFlags.Read);
                 builder.UseTexture(sssTexture, AccessFlags.Read);
@@ -1089,7 +1156,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                     data.material.SetVector(HoSubsurfaceScatteringShaderConstants.TransmissionParamsId, data.transmissionParams);
                     data.material.SetVector(HoSubsurfaceScatteringShaderConstants.TransmissionColorId, data.transmissionColor);
                     data.material.SetVector(HoSubsurfaceScatteringShaderConstants.TransmissionShapeParamsId, data.transmissionShapeParams);
-                    data.material.SetVector(HoSubsurfaceScatteringShaderConstants.DebugParamsId, data.debugParams);
+                    data.material.SetVector(HoSubsurfaceScatteringShaderConstants.CompositeParamsId, data.compositeParams);
                     context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.SourceTextureId, data.sssTexture);
                     context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.TransmissionTextureId, data.transmissionTexture);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.maskIdTexture);
@@ -1110,7 +1177,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             material.SetVector(HoSubsurfaceScatteringShaderConstants.TransmissionParamsId, CreateTransmissionParams(settings));
             material.SetVector(HoSubsurfaceScatteringShaderConstants.TransmissionColorId, settings.transmissionColor);
             material.SetVector(HoSubsurfaceScatteringShaderConstants.TransmissionShapeParamsId, CreateTransmissionShapeParams(settings));
-            material.SetVector(HoSubsurfaceScatteringShaderConstants.DebugParamsId, CreateDebugParams(settings));
+            material.SetVector(HoSubsurfaceScatteringShaderConstants.CompositeParamsId, CreateCompositeParams(settings));
             HoSubsurfaceScatteringProfileShaderData.Set(material, settings);
         }
 
@@ -1148,12 +1215,12 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 Mathf.Clamp01(settings.transmissionSmoothing));
         }
 
-        private static Vector4 CreateDebugParams(HoSubsurfaceScatteringSettings settings)
+        private static Vector4 CreateCompositeParams(HoSubsurfaceScatteringSettings settings)
         {
             return new Vector4(
-                (float)settings.debugMode,
                 Mathf.Clamp((float)settings.transmissionBlendMode, 0.0f, 4.0f),
                 Mathf.Clamp01(settings.transmissionTintInjection),
+                0.0f,
                 0.0f);
         }
     }

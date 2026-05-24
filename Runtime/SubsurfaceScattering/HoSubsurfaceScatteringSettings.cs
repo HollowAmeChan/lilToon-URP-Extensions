@@ -110,6 +110,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         internal const int HorizontalBlurOffset = 2;
         internal const int VerticalBlurOffset = 3;
         internal const int CompositeOffset = 4;
+        internal const int DebugOffset = 5;
         internal const int MaxProfileCount = 8;
 
         [InspectorName("启用")]
@@ -292,7 +293,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             EnsureProfiles();
 
             const int earliestSourceAnchor = (int)RenderPassEvent.AfterRenderingOpaques;
-            const int latestSourceAnchor = (int)RenderPassEvent.BeforeRenderingTransparents - CompositeOffset - 1;
+            const int latestSourceAnchor = (int)RenderPassEvent.BeforeRenderingTransparents - DebugOffset;
 
             int source = (int)sourcePassEvent;
             if (source < earliestSourceAnchor || source > latestSourceAnchor || !IsNamedRenderPassEvent(sourcePassEvent))
@@ -328,6 +329,11 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         internal RenderPassEvent GetCompositeRenderPassEvent()
         {
             return (RenderPassEvent)((int)sourcePassEvent + CompositeOffset);
+        }
+
+        internal RenderPassEvent GetDebugRenderPassEvent()
+        {
+            return (RenderPassEvent)((int)sourcePassEvent + DebugOffset);
         }
 
         private static bool IsNamedRenderPassEvent(RenderPassEvent passEvent)
