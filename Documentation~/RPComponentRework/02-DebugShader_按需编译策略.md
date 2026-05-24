@@ -191,10 +191,18 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 - debug 关闭时仍正常创建 clear / fallback 主功能材质，但不会查找或加载 `HoAovDebug.shader`。
 - debug shader 缺失仍只 warning once，并且只影响 AOV debug pass，不影响 AOV output pass。
 
+已补上显式生成 debug shader collection 的 Editor 入口：
+
+- 新增 `Editor/Debug/LilUrpDebugShaderCollectionGenerator.cs`。
+- 菜单路径为 `lilToon URP Extensions/Debug/Generate Debug Shader Collection`。
+- 生成目标为宿主工程 `Assets/lilToon URP Extensions/Debug/LilUrpDebugShaders.shadervariants`，不把 collection 默认放入运行时包资源。
+- 第一批只收集已经按需加载的独立重 debug shader：`HoAovDebug.shader` 与 `HoShadowCastDebug.shader`。
+- 生成器优先通过 package asset path 加载 shader，失败时才 fallback 到 `Shader.Find`，因此普通运行时仍不会因为安装包而主动查找 debug shader。
+
 待处理：
 
 - SSS debug 分支、ScreenProcess AOV/rule debug 还未迁到局部按需收集策略。
-- 尚未增加 editor 菜单生成 debug shader collection。
+- 后续 debug profile / tile view 仍需基于 feature 局部 view info 接入。
 
 ---
 
