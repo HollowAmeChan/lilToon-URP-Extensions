@@ -224,7 +224,7 @@ Runtime/ShadowCast/HoShadowCastController.cs
 Runtime/ShadowCast/HoShadowCastRendererFeature.cs
 Runtime/ShadowCast/HoShadowCastShaderConstants.cs
 Runtime/ShadowCast/HoShadowCastRenderGraphResources.cs
-Runtime/ShadowCast/Shaders/HoShadowCastDebug.shader
+Runtime/ShadowCast/Shaders/Debug/HoShadowCastDebug.shader
 Runtime/ShadowCast/Shaders/HoShadowCastSampling.hlsl
 Editor/ShadowCast/HoShadowCastControllerEditor.cs
 Editor/ShadowCast/HoShadowCastRendererFeatureEditor.cs

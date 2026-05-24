@@ -165,7 +165,7 @@ if debug enabled:
 优先处理：
 
 - `Runtime/AOV/Shaders/HoAOV/HoAovDebug.shader`
-- `Runtime/ShadowCast/Shaders/HoShadowCastDebug.shader`
+- `Runtime/ShadowCast/Shaders/Debug/HoShadowCastDebug.shader`
 - `Runtime/SubsurfaceScattering/HoSubsurfaceScattering.shader` 内部 debug 分支
 - `Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl` 相关 debug 输出
 - `Runtime/ShoostPostProcessing/Shaders/Shoost/AovComposite.shader` 迁出到 ScreenProcess 或删除
@@ -182,6 +182,7 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 - `HoShadowCastRendererFeature` 不再在主渲染路径默认调用 debug shader 查找。
 - 只有 `HoShadowCastController.debugMode != Off` 且 debug pass 即将入队时，才调用 `Shader.Find(HoShadowCastShaderConstants.DebugShaderName)` 并创建 debug material。
 - debug shader 缺失仍只 warning once 并跳过 debug pass，不影响 ShadowCast 主 pass。
+- `HoShadowCastDebug.shader` 已移动到 `Runtime/ShadowCast/Shaders/Debug/`，shader 名与 `.meta` GUID 保持不变，只调整资源归属。
 
 已继续对 AOV debug shader 做按需加载修正：
 

@@ -46,7 +46,7 @@ ShadowCast 不负责：
 - `HoShadowCastController`：场景级控制器，显式维护额外方向光、聚光、点光列表。
 - `HoShadowCastRendererFeature`：安装 atlas pass 与 debug pass。
 - `HoShadowCastSampling.hlsl`：材质 receiver 采样入口。
-- `HoShadowCastDebug.shader`：atlas debug。
+- `Shaders/Debug/HoShadowCastDebug.shader`：atlas debug。
 - RenderGraph 路径：使用 `TextureHandle` 和 `RecordRenderGraph()`。
 - compatibility path：仍有 `RTHandle` 和非 RG 逻辑。
 
@@ -261,7 +261,7 @@ ReceiverAttenuation
 
 重 debug shader 必须按需启用：
 
-- `HoShadowCastDebug.shader` 移入或逻辑归入 `Runtime/ShadowCast/Shaders/Debug/`。
+- `HoShadowCastDebug.shader` 已移入 `Runtime/ShadowCast/Shaders/Debug/`。
 - `ShadowCastDebugShaderCollector` 放在 `Editor/ShadowCast/Debug/`。
 - RendererFeature 不在 debug off 时查找 debug shader。
 - 缺失 debug shader 不影响 ShadowCast 主功能。
