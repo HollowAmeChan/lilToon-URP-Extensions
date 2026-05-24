@@ -26,6 +26,11 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
         }
 
+        internal static void EnsureImageProcessHdrTextureDesc(ref TextureDesc descriptor)
+        {
+            EnsureHdrTextureDesc(ref descriptor);
+        }
+
         private static GraphicsFormat GetShoostHdrGraphicsFormat()
         {
             const GraphicsFormat preferredFormat = GraphicsFormat.R16G16B16A16_SFloat;

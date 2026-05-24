@@ -1,4 +1,3 @@
-using lilToon.URP.Extensions.AOV;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -61,7 +60,12 @@ namespace lilToon.URP.Extensions.PostProcessing
             Blitter.BlitCameraTexture(cmd, source, destination, material, 3);
         }
 
-        private TextureHandle RecordGlowLayer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex)
+        private TextureHandle RecordGlowLayer(
+            RenderGraph renderGraph,
+            TextureHandle source,
+            TextureHandle destination,
+            ShoostPostProcessRuntimeLayer runtimeLayer,
+            int layerIndex)
         {
             TextureDesc sourceDesc = renderGraph.GetTextureDesc(source);
             ShoostPostProcessLayer layer = runtimeLayer.settings;
@@ -102,12 +106,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                 current = AddGlowPass(renderGraph, passSource, passDestination, material, 2, Mathf.Max(1.0f, radius * 1.75f), runtimeLayer.settings, _profilingSampler, _passName, default, angle);
             }
 
-            TextureDesc outputDesc = sourceDesc;
-            outputDesc.name = $"_lilShoostPostProcessLayer{layerIndex}";
-            outputDesc.clearBuffer = false;
-            outputDesc.depthBufferBits = 0;
-            EnsureHdrTextureDesc(ref outputDesc);
-            TextureHandle destination = renderGraph.CreateTexture(outputDesc);
             return AddGlowPass(renderGraph, source, destination, material, 3, radius, runtimeLayer.settings, _profilingSampler, _passName, current);
         }
 

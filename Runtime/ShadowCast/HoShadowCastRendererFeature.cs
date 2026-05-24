@@ -40,9 +40,12 @@ namespace lilToon.URP.Extensions.ShadowCast
                 return;
             }
 
-            EnsureMaterials();
             pass?.Setup(settings, renderTargets);
-            debugPass?.Setup(renderTargets, renderer.cameraColorTargetHandle, debugMaterial);
+            if (debugPass != null && ShouldDebug())
+            {
+                EnsureDebugMaterial();
+                debugPass.Setup(renderTargets, renderer.cameraColorTargetHandle, debugMaterial);
+            }
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -57,12 +60,12 @@ namespace lilToon.URP.Extensions.ShadowCast
                 return;
             }
 
-            EnsureMaterials();
             pass.SetupRenderGraph(settings);
             renderer.EnqueuePass(pass);
 
             if (debugPass != null && ShouldDebug())
             {
+                EnsureDebugMaterial();
                 debugPass.SetupRenderGraph(debugMaterial);
                 renderer.EnqueuePass(debugPass);
             }
@@ -97,7 +100,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             return controller != null && controller.debugMode != HoShadowCastDebugMode.Off;
         }
 
-        private void EnsureMaterials()
+        private void EnsureDebugMaterial()
         {
             if (debugMaterial != null)
             {

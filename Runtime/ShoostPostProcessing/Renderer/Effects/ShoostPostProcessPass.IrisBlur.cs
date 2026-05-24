@@ -1,4 +1,3 @@
-using lilToon.URP.Extensions.AOV;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -102,7 +101,12 @@ namespace lilToon.URP.Extensions.PostProcessing
             Blitter.BlitCameraTexture(cmd, source, destination, material, 2);
         }
 
-        private TextureHandle RecordIrisBlurLayer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex)
+        private TextureHandle RecordIrisBlurLayer(
+            RenderGraph renderGraph,
+            TextureHandle source,
+            TextureHandle destination,
+            ShoostPostProcessRuntimeLayer runtimeLayer,
+            int layerIndex)
         {
             TextureDesc sourceDesc = renderGraph.GetTextureDesc(source);
             ShoostPostProcessLayer layer = runtimeLayer.settings;
@@ -136,12 +140,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                 next = passSource;
             }
 
-            TextureDesc outputDesc = sourceDesc;
-            outputDesc.name = $"_lilShoostPostProcessLayer{layerIndex}";
-            outputDesc.clearBuffer = false;
-            outputDesc.depthBufferBits = 0;
-            EnsureHdrTextureDesc(ref outputDesc);
-            TextureHandle destination = renderGraph.CreateTexture(outputDesc);
             return AddIrisPass(renderGraph, source, destination, material, 2, parameters, screenRatio, runtimeLayer.settings, _profilingSampler, _passName, current);
         }
 

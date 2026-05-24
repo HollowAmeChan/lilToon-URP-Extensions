@@ -1,5 +1,4 @@
 using System.Collections.Generic;
-using lilToon.URP.Extensions.AOV;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -53,11 +52,10 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         public void SetupRenderGraph(
             List<ShoostPostProcessRuntimeLayer> layers,
-            RenderPassEvent passEvent,
-            Material aovCompositeMaterial)
+            RenderPassEvent passEvent)
         {
             this.cameraColorTarget = null;
-            this.aovCompositeMaterial = aovCompositeMaterial;
+            this.aovCompositeMaterial = null;
             CopyLayers(layers);
             ConfigurePass(passEvent);
             requiresIntermediateTexture = true;
@@ -192,17 +190,23 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            HoAovRenderGraphResources aovResources = frameData.GetOrCreate<HoAovRenderGraphResources>();
+            var imageChain = new ImageProcessChain();
+            imageChain.Begin(renderGraph, source);
             for (int i = 0; i < runtimeLayers.Count; i++)
             {
                 ShoostPostProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
-                TextureHandle layerInput = source;
-                TextureHandle effectResult = RecordEffectLayer(renderGraph, source, runtimeLayer, i, frameData);
-
-                source = RecordAovCompositeIfNeeded(renderGraph, layerInput, effectResult, runtimeLayer.settings, i, aovResources);
+                ImageProcessPassContext passContext = imageChain.NextPass(renderGraph, i);
+                TextureHandle effectResult = RecordEffectLayer(
+                    passContext.RenderGraph,
+                    passContext.Read,
+                    passContext.Write,
+                    runtimeLayer,
+                    passContext.LayerIndex,
+                    frameData);
+                imageChain.Commit(effectResult);
             }
 
-            resourceData.cameraColor = source;
+            resourceData.cameraColor = imageChain.Current;
         }
 
         private void CopyLayers(List<ShoostPostProcessRuntimeLayer> layers)

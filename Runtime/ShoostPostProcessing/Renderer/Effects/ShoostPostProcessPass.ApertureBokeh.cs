@@ -1,4 +1,3 @@
-using lilToon.URP.Extensions.AOV;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -41,7 +40,12 @@ namespace lilToon.URP.Extensions.PostProcessing
             Blitter.BlitCameraTexture(cmd, source, destination, material, 3);
         }
 
-        private TextureHandle RecordApertureBokehLayer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex)
+        private TextureHandle RecordApertureBokehLayer(
+            RenderGraph renderGraph,
+            TextureHandle source,
+            TextureHandle destination,
+            ShoostPostProcessRuntimeLayer runtimeLayer,
+            int layerIndex)
         {
             TextureDesc sourceDesc = renderGraph.GetTextureDesc(source);
             ShoostPostProcessLayer layer = runtimeLayer.settings;
@@ -66,12 +70,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             current = AddGlowPass(renderGraph, current, bokehB, material, 1, radius, layer, _profilingSampler, _passName);
             current = AddGlowPass(renderGraph, current, bokehA, material, 2, radius, layer, _profilingSampler, _passName);
 
-            TextureDesc outputDesc = sourceDesc;
-            outputDesc.name = $"_lilShoostPostProcessLayer{layerIndex}";
-            outputDesc.clearBuffer = false;
-            outputDesc.depthBufferBits = 0;
-            EnsureHdrTextureDesc(ref outputDesc);
-            TextureHandle destination = renderGraph.CreateTexture(outputDesc);
             return AddGlowPass(renderGraph, source, destination, material, 3, radius, layer, _profilingSampler, _passName, current);
         }
 

@@ -1,4 +1,4 @@
-using UnityEngine.Rendering;
+﻿using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 #pragma warning disable CS0618, CS0672
 
@@ -18,10 +18,11 @@ namespace lilToon.URP.Extensions.PostProcessing
         private TextureHandle RecordGateWeaveLayer(
             RenderGraph renderGraph,
             TextureHandle source,
+            TextureHandle destination,
             ShoostPostProcessRuntimeLayer runtimeLayer,
             int layerIndex)
         {
-            return RecordSinglePassLayer(renderGraph, source, runtimeLayer, layerIndex);
+            return RecordSinglePassLayer(renderGraph, source, destination, runtimeLayer, layerIndex);
         }
     }
 }

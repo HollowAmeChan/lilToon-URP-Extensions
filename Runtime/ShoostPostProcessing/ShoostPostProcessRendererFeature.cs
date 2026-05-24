@@ -117,7 +117,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            pass.SetupRenderGraph(layers, passEvent, aovCompositeCache.Ensure(layers));
+            pass.SetupRenderGraph(layers, passEvent);
             renderer.EnqueuePass(pass);
         }
 

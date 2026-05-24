@@ -36,7 +36,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                 runtimeLayers.Add(new ShoostPostProcessRuntimeLayer(layer, material));
             }
 
-            runtimeLayers.Sort(ShoostPostProcessEffectOrder.CompareRuntimeLayerOrder);
         }
     }
 }

@@ -22,6 +22,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             ShoostPostProcessPass pass,
             RenderGraph renderGraph,
             TextureHandle source,
+            TextureHandle destination,
             ShoostPostProcessRuntimeLayer runtimeLayer,
             int layerIndex,
             ContextContainer frameData);
@@ -36,6 +37,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             ShoostPostProcessPass pass,
             RenderGraph renderGraph,
             TextureHandle source,
+            TextureHandle destination,
             ShoostPostProcessRuntimeLayer runtimeLayer,
             int layerIndex);
 
@@ -73,97 +75,98 @@ namespace lilToon.URP.Extensions.PostProcessing
         private TextureHandle RecordEffectLayer(
             RenderGraph renderGraph,
             TextureHandle source,
+            TextureHandle destination,
             ShoostPostProcessRuntimeLayer runtimeLayer,
             int layerIndex,
             ContextContainer frameData)
         {
             if (EffectExecutors.TryGetValue(runtimeLayer.settings.effect, out EffectExecutor executor))
             {
-                return executor.Record(this, renderGraph, source, runtimeLayer, layerIndex, frameData);
+                return executor.Record(this, renderGraph, source, destination, runtimeLayer, layerIndex, frameData);
             }
 
-            return RecordSinglePassLayer(renderGraph, source, runtimeLayer, layerIndex);
+            return RecordSinglePassLayer(renderGraph, source, destination, runtimeLayer, layerIndex);
         }
 
         private static Dictionary<ShoostPostProcessEffect, EffectExecutor> CreateEffectExecutors()
         {
             var executors = new Dictionary<ShoostPostProcessEffect, EffectExecutor>();
 
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.CustomMaterial, ApplyCustomMaterialLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordCustomMaterialLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.AutoWhiteBalance, ApplyAutoWhiteBalanceLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordAutoWhiteBalanceLayer(renderGraph, source, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.CustomMaterial, ApplyCustomMaterialLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordCustomMaterialLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.AutoWhiteBalance, ApplyAutoWhiteBalanceLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordAutoWhiteBalanceLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
             RegisterEffect(
                 executors,
                 ShoostPostProcessEffect.ChangeFrameRate,
                 (pass, cmd, cameraDescriptor, camera, source, destination, runtimeLayer) => pass.ApplyChangeFrameRateLayer(cmd, cameraDescriptor, camera, source, destination, runtimeLayer),
-                (pass, renderGraph, source, runtimeLayer, layerIndex, frameData) =>
+                (pass, renderGraph, source, destination, runtimeLayer, layerIndex, frameData) =>
                 {
                     UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
-                    return pass.RecordChangeFrameRateLayer(renderGraph, source, runtimeLayer, layerIndex, cameraData);
+                    return pass.RecordChangeFrameRateLayer(renderGraph, source, destination, runtimeLayer, layerIndex, cameraData);
                 });
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.ColorGradingCustom, ApplyColorGradingCustomLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordColorGradingCustomLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.CRTEffects, ApplyCRTEffectsLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordCRTEffectsLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Distortion, ApplyDistortionLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordDistortionLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.DitheringCustom, ApplyDitheringCustomLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordDitheringCustomLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.DownScaleResolution, ApplyDownScaleResolutionLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordDownScaleResolutionLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.FilmBreathGateWeave, ApplyFilmBreathGateWeaveLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordFilmBreathGateWeaveLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Fisheye, ApplyFisheyeLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordFisheyeLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.GateWeave, ApplyGateWeaveLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordGateWeaveLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.GrainCustom, ApplyGrainCustomLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordGrainCustomLayer(renderGraph, source, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.ColorGradingCustom, ApplyColorGradingCustomLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordColorGradingCustomLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.CRTEffects, ApplyCRTEffectsLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordCRTEffectsLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Distortion, ApplyDistortionLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordDistortionLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.DitheringCustom, ApplyDitheringCustomLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordDitheringCustomLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.DownScaleResolution, ApplyDownScaleResolutionLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordDownScaleResolutionLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.FilmBreathGateWeave, ApplyFilmBreathGateWeaveLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordFilmBreathGateWeaveLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Fisheye, ApplyFisheyeLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordFisheyeLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.GateWeave, ApplyGateWeaveLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordGateWeaveLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.GrainCustom, ApplyGrainCustomLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordGrainCustomLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
             RegisterEffect(
                 executors,
                 ShoostPostProcessEffect.IrisBlur,
                 (pass, cmd, cameraDescriptor, camera, source, destination, runtimeLayer) => pass.ApplyIrisBlurLayer(cmd, cameraDescriptor, source, destination, runtimeLayer),
-                (pass, renderGraph, source, runtimeLayer, layerIndex, frameData) => pass.RecordIrisBlurLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.LensDistortionCustom, ApplyLensDistortionCustomLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordLensDistortionCustomLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.LevelAdjustment, ApplyLevelAdjustmentLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordLevelAdjustmentLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.MotionTrail, ApplyMotionTrailLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordMotionTrailLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Pixelize, ApplyPixelizeLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordPixelizeLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.RGBBlur, ApplyRGBBlurLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordRGBBlurLayer(renderGraph, source, runtimeLayer, layerIndex));
+                (pass, renderGraph, source, destination, runtimeLayer, layerIndex, frameData) => pass.RecordIrisBlurLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.LensDistortionCustom, ApplyLensDistortionCustomLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordLensDistortionCustomLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.LevelAdjustment, ApplyLevelAdjustmentLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordLevelAdjustmentLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.MotionTrail, ApplyMotionTrailLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordMotionTrailLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Pixelize, ApplyPixelizeLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordPixelizeLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.RGBBlur, ApplyRGBBlurLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordRGBBlurLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
             RegisterEffect(
                 executors,
                 ShoostPostProcessEffect.RGBBlurV2,
                 (pass, cmd, cameraDescriptor, camera, source, destination, runtimeLayer) => pass.ApplyRGBBlurV2Layer(cmd, cameraDescriptor, source, destination, runtimeLayer),
-                (pass, renderGraph, source, runtimeLayer, layerIndex, frameData) => pass.RecordRGBBlurV2Layer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.RGBChannelSeparator, ApplyRGBChannelSeparatorLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordRGBChannelSeparatorLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.RGBSplit, ApplyRGBSplitLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordRGBSplitLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.SharpenBefore, ApplySharpenBeforeLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordSharpenBeforeLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.SharpenAfter, ApplySharpenAfterLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordSharpenAfterLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Tube, ApplyTubeLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordTubeLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.VignetteCustom, ApplyVignetteCustomLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordVignetteCustomLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.RetroLookProBleedCustom, ApplyRetroLookProBleedCustomLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordRetroLookProBleedCustomLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.RetroLookProNoise2Custom, ApplyRetroLookProNoise2CustomLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordRetroLookProNoise2CustomLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.RetroLookProOldFilm2Custom, ApplyRetroLookProOldFilm2CustomLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordRetroLookProOldFilm2CustomLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.RetroLookProTVEffectCustom, ApplyRetroLookProTVEffectCustomLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordRetroLookProTVEffectCustomLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Gradient, ApplyGradientLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordGradientLayer(renderGraph, source, runtimeLayer, layerIndex));
+                (pass, renderGraph, source, destination, runtimeLayer, layerIndex, frameData) => pass.RecordRGBBlurV2Layer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.RGBChannelSeparator, ApplyRGBChannelSeparatorLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordRGBChannelSeparatorLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.RGBSplit, ApplyRGBSplitLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordRGBSplitLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.SharpenBefore, ApplySharpenBeforeLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordSharpenBeforeLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.SharpenAfter, ApplySharpenAfterLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordSharpenAfterLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Tube, ApplyTubeLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordTubeLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.VignetteCustom, ApplyVignetteCustomLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordVignetteCustomLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.RetroLookProBleedCustom, ApplyRetroLookProBleedCustomLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordRetroLookProBleedCustomLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.RetroLookProNoise2Custom, ApplyRetroLookProNoise2CustomLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordRetroLookProNoise2CustomLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.RetroLookProOldFilm2Custom, ApplyRetroLookProOldFilm2CustomLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordRetroLookProOldFilm2CustomLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.RetroLookProTVEffectCustom, ApplyRetroLookProTVEffectCustomLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordRetroLookProTVEffectCustomLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Gradient, ApplyGradientLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordGradientLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
             RegisterEffect(
                 executors,
                 ShoostPostProcessEffect.Glow,
                 (pass, cmd, cameraDescriptor, camera, source, destination, runtimeLayer) => pass.ApplyGlowLayer(cmd, cameraDescriptor, source, destination, runtimeLayer),
-                (pass, renderGraph, source, runtimeLayer, layerIndex, frameData) => pass.RecordGlowLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Lighting, ApplyLightingLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordLightingLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.CenterColorCorrection, ApplyCenterColorCorrectionLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordCenterColorCorrectionLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.LED, ApplyLEDLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordLEDLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Weather, ApplyWeatherLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordWeatherLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Particle, ApplyParticleLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordParticleLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.CameraSwitcher, ApplyCameraSwitcherLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordCameraSwitcherLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.TransparentBackground, ApplyTransparentBackgroundLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordTransparentBackgroundLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.VHS, ApplyVHSLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordVHSLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.CameraFlash, ApplyCameraFlashLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordCameraFlashLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.ToonMap, ApplyToonMapLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordToonMapLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Kuwahara, ApplyKuwaharaLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordKuwaharaLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.BokehZoomBlur, ApplyBokehZoomBlurLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordBokehZoomBlurLayer(renderGraph, source, runtimeLayer, layerIndex));
+                (pass, renderGraph, source, destination, runtimeLayer, layerIndex, frameData) => pass.RecordGlowLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Lighting, ApplyLightingLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordLightingLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.CenterColorCorrection, ApplyCenterColorCorrectionLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordCenterColorCorrectionLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.LED, ApplyLEDLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordLEDLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Weather, ApplyWeatherLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordWeatherLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Particle, ApplyParticleLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordParticleLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.CameraSwitcher, ApplyCameraSwitcherLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordCameraSwitcherLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.TransparentBackground, ApplyTransparentBackgroundLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordTransparentBackgroundLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.VHS, ApplyVHSLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordVHSLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.CameraFlash, ApplyCameraFlashLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordCameraFlashLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.ToonMap, ApplyToonMapLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordToonMapLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.Kuwahara, ApplyKuwaharaLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordKuwaharaLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.BokehZoomBlur, ApplyBokehZoomBlurLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordBokehZoomBlurLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
             RegisterEffect(
                 executors,
                 ShoostPostProcessEffect.ApertureBokeh,
                 (pass, cmd, cameraDescriptor, camera, source, destination, runtimeLayer) => pass.ApplyApertureBokehLayer(cmd, cameraDescriptor, source, destination, runtimeLayer),
-                (pass, renderGraph, source, runtimeLayer, layerIndex, frameData) => pass.RecordApertureBokehLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.LensFlare, ApplyLensFlareLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordLensFlareLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.CinematicBars, ApplyCinematicBarsLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordCinematicBarsLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.GlitchArt, ApplyGlitchArtLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordGlitchArtLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.PrismFracture, ApplyPrismFractureLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordPrismFractureLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.SpeedLines, ApplySpeedLinesLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordSpeedLinesLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.SkyGodRays, ApplySkyGodRaysLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordSkyGodRaysLayer(renderGraph, source, runtimeLayer, layerIndex));
-            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.LogoOverlay, ApplyLogoOverlayLayer, (pass, renderGraph, source, runtimeLayer, layerIndex) => pass.RecordLogoOverlayLayer(renderGraph, source, runtimeLayer, layerIndex));
+                (pass, renderGraph, source, destination, runtimeLayer, layerIndex, frameData) => pass.RecordApertureBokehLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.LensFlare, ApplyLensFlareLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordLensFlareLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.CinematicBars, ApplyCinematicBarsLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordCinematicBarsLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.GlitchArt, ApplyGlitchArtLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordGlitchArtLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.PrismFracture, ApplyPrismFractureLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordPrismFractureLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.SpeedLines, ApplySpeedLinesLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordSpeedLinesLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.SkyGodRays, ApplySkyGodRaysLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordSkyGodRaysLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ShoostPostProcessEffect.LogoOverlay, ApplyLogoOverlayLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordLogoOverlayLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
 
             return executors;
         }
@@ -178,7 +181,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 executors,
                 effect,
                 (pass, cmd, cameraDescriptor, camera, source, destination, runtimeLayer) => execute(cmd, source, destination, runtimeLayer),
-                (pass, renderGraph, source, runtimeLayer, layerIndex, frameData) => record(pass, renderGraph, source, runtimeLayer, layerIndex));
+                (pass, renderGraph, source, destination, runtimeLayer, layerIndex, frameData) => record(pass, renderGraph, source, destination, runtimeLayer, layerIndex));
         }
 
         private static void RegisterEffect(
@@ -203,16 +206,10 @@ namespace lilToon.URP.Extensions.PostProcessing
         private TextureHandle RecordSinglePassLayer(
             RenderGraph renderGraph,
             TextureHandle source,
+            TextureHandle destination,
             ShoostPostProcessRuntimeLayer runtimeLayer,
             int layerIndex)
         {
-            TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
-            destinationDesc.name = $"_lilShoostPostProcessLayer{layerIndex}";
-            destinationDesc.clearBuffer = false;
-            destinationDesc.depthBufferBits = 0;
-            EnsureHdrTextureDesc(ref destinationDesc);
-            TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
-
             using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{_passName} Layer {layerIndex}", out PassData passData, _profilingSampler))
             {
                 passData.source = source;

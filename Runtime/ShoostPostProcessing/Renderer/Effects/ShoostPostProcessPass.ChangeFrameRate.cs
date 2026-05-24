@@ -1,4 +1,3 @@
-using lilToon.URP.Extensions.AOV;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -90,7 +89,13 @@ namespace lilToon.URP.Extensions.PostProcessing
             Blitter.BlitCameraTexture(cmd, source, destination, material, 1);
         }
 
-        private TextureHandle RecordChangeFrameRateLayer(RenderGraph renderGraph, TextureHandle source, ShoostPostProcessRuntimeLayer runtimeLayer, int layerIndex, UniversalCameraData cameraData)
+        private TextureHandle RecordChangeFrameRateLayer(
+            RenderGraph renderGraph,
+            TextureHandle source,
+            TextureHandle destination,
+            ShoostPostProcessRuntimeLayer runtimeLayer,
+            int layerIndex,
+            UniversalCameraData cameraData)
         {
             int cameraId = cameraData.camera != null ? cameraData.camera.GetInstanceID() : 0;
             ChangeFrameRateState state = GetChangeFrameRateState(cameraId, cameraData.cameraTargetDescriptor);
@@ -118,13 +123,6 @@ namespace lilToon.URP.Extensions.PostProcessing
 
                 MarkChangeFrameRateStateRefreshed(state, targetFrameRate, now);
             }
-
-            TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
-            destinationDesc.name = $"_lilShoostPostProcessLayer{layerIndex}";
-            destinationDesc.clearBuffer = false;
-            destinationDesc.depthBufferBits = 0;
-            EnsureHdrTextureDesc(ref destinationDesc);
-            TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
             using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{_passName} Change Frame Rate", out PassData passData, _profilingSampler))
             {
