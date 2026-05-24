@@ -51,7 +51,7 @@ namespace lilToon.URP.Extensions.AOV
                 return;
             }
 
-            EnsureMaterials();
+            EnsureMaterials(ShouldDebug(in renderingData));
             outputPass?.Setup(settings, renderTargets, clearMaterial, fallbackMaterial);
             debugPass?.Setup(settings, renderTargets, renderer.cameraColorTargetHandle, debugMaterial);
         }
@@ -63,14 +63,15 @@ namespace lilToon.URP.Extensions.AOV
                 return;
             }
 
-            EnsureMaterials();
+            bool shouldDebug = ShouldDebug(in renderingData);
+            EnsureMaterials(shouldDebug);
             if (outputPass != null)
             {
                 outputPass.SetupRenderGraph(settings, renderTargets, clearMaterial, fallbackMaterial);
                 renderer.EnqueuePass(outputPass);
             }
 
-            if (debugPass != null && ShouldDebug(in renderingData))
+            if (debugPass != null && shouldDebug)
             {
                 debugPass.SetupRenderGraph(settings, renderTargets, debugMaterial);
                 renderer.EnqueuePass(debugPass);
@@ -145,11 +146,14 @@ namespace lilToon.URP.Extensions.AOV
                 || (cameraType == CameraType.Game && settings.debugInGameView);
         }
 
-        private void EnsureMaterials()
+        private void EnsureMaterials(bool includeDebug)
         {
             EnsureClearMaterial();
             EnsureFallbackMaterial();
-            EnsureDebugMaterial();
+            if (includeDebug)
+            {
+                EnsureDebugMaterial();
+            }
         }
 
         private void EnsureClearMaterial()
