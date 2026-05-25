@@ -222,7 +222,7 @@ Debug 入口可以统一，但资源归属必须局部：
 公共 Debug UI 不拥有 feature 的 debug shader、debug material 或 collector。
 重 debug shader 默认不编译，用户显式启用 debug profile / define / shader collection 后才进入收集。
 当前已登记的 view info 覆盖 MetadataBuffer、GeometryBuffer、ShadowCast、SSS、ScreenProcess rule mask 和 ImageProcess layer chain；ScreenProcess 与 ImageProcess 条目是轻量观察入口，不进入重 debug shader collection。ScreenProcess rule mask 的实际输出入口仍是 layer 自己的 `debugRuleMask`，不需要 RendererFeature 级 debug view。
-只读公共入口位于 `lilToon URP Extensions/Debug/Open Debug View Registry`。这个窗口只显示 feature-local view info、短名、shader collection 状态和缺失降级说明，不生成 collection，也不创建 shader、material 或 render target。
+只读公共入口位于 `lilToon URP Extensions/Debug/Open Debug View Registry`。这个窗口只显示 feature-local view info、短名、shader collection 状态和缺失降级说明，不生成 collection，也不创建 shader、material 或 render target。它不是最终自动 tile view；真正 tile view 需要参考 `D:\Unity_Fork\HoUrp-Extensions` 的 `RenderCacheDebugRendererFeature` / `RenderCacheDebugTile`，由 registry 自动生成 tiled debug 画面。
 
 ---
 
@@ -288,7 +288,7 @@ Debug 入口可以统一，但资源归属必须局部：
 - 不需要 `HoShadowCastController` 场景组件也能产生 ShadowCast 参与列表。
 - MetadataBuffer/GeometryBuffer 对象语义主要从 `HoMetadataBufferGroup` 这类局部对象 UI 编辑。
 - RendererFeature Inspector 不再变成全场景对象大列表。
-- Debug tile 能显示每个 feature 自己声明的短命名。
+- Debug tile 能按 HoUrp 自动 tile 模式显示每个 feature 自己声明的短命名。
 - ImageProcess 不读取 MaterialBuffer / GeometryBuffer / ShadowCast，也没有 AOV mask UI。
 - 关闭 debug profile 后不会编译重 debug shader。
 - Frame Debugger / RenderDoc 中的 pass 名能对应本文顺序。
