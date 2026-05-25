@@ -611,8 +611,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             Vector3 direction = light.transform.forward;
             Color finalColor = light.color * light.intensity;
             float lightShadowStrength = light.shadows == LightShadows.None ? 1.0f : light.shadowStrength;
-            float controllerStrength = requiredType == LightType.Directional ? config.shadowStrength : config.punctualShadowStrength;
-            target.lightData0[lightIndex] = new Vector4(GetLightTypeId(requiredType), firstSlice, writtenSlices, Mathf.Clamp01(controllerStrength * lightShadowStrength));
+            float configuredStrength = requiredType == LightType.Directional ? config.shadowStrength : config.punctualShadowStrength;
+            target.lightData0[lightIndex] = new Vector4(GetLightTypeId(requiredType), firstSlice, writtenSlices, Mathf.Clamp01(configuredStrength * lightShadowStrength));
             target.lightData1[lightIndex] = new Vector4(position.x, position.y, position.z, light.range);
             target.lightData2[lightIndex] = new Vector4(direction.x, direction.y, direction.z, Mathf.Cos(light.spotAngle * 0.5f * Mathf.Deg2Rad));
             target.lightAttenuation[lightIndex] = ComputeLightAttenuation(light, requiredType, config.punctualShadowFadeSpeed);
@@ -714,7 +714,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     return true;
                 }
 
-                BuildManualSpotMatrix(lightTransform, light, nearPlane, out viewMatrix, out projectionMatrix);
+                BuildFallbackSpotMatrix(lightTransform, light, nearPlane, out viewMatrix, out projectionMatrix);
                 return true;
             }
 
@@ -730,14 +730,14 @@ namespace lilToon.URP.Extensions.ShadowCast
                     return true;
                 }
 
-                BuildManualPointMatrix(lightTransform, light, face, nearPlane, out viewMatrix, out projectionMatrix);
+                BuildFallbackPointMatrix(lightTransform, light, face, nearPlane, out viewMatrix, out projectionMatrix);
                 return true;
             }
 
             return false;
         }
 
-        private static void BuildManualSpotMatrix(Transform lightTransform, Light light, float nearPlane, out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix)
+        private static void BuildFallbackSpotMatrix(Transform lightTransform, Light light, float nearPlane, out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix)
         {
             float range = Mathf.Max(nearPlane + 0.01f, light.range);
             float fov = Mathf.Clamp(light.spotAngle, 0.1f, 179.0f);
@@ -745,7 +745,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             projectionMatrix = Matrix4x4.Perspective(fov, 1.0f, nearPlane, range);
         }
 
-        private static void BuildManualPointMatrix(Transform lightTransform, Light light, int face, float nearPlane, out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix)
+        private static void BuildFallbackPointMatrix(Transform lightTransform, Light light, int face, float nearPlane, out Matrix4x4 viewMatrix, out Matrix4x4 projectionMatrix)
         {
             float range = Mathf.Max(nearPlane + 0.01f, light.range);
             GetPointLightFaceVectors(face, out Vector3 direction, out Vector3 up);

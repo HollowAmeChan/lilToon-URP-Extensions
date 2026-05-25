@@ -449,6 +449,15 @@ ShadowCast 与 ScreenProcess 的关系：
 - Runtime diagnostics 与 RendererFeature Inspector 删除 Controller Override / Manual Lists 来源展示，只显示 visible-light 收集或 collection disabled 状态。
 - 本次不改变 receiver ABI、atlas shader 参数、debug shader 按需加载、MaterialBuffer/GeometryBuffer 边界或 ImageProcess 禁止消费 ShadowCast 的规则。
 
+## 10.13 2026-05-25 执行记录
+
+已继续收窄 ShadowCast 旧 controller 删除后的命名边界：
+
+- `HoShadowCastFrameCollector` 中 punctual light 的强度变量从旧 `controllerStrength` 改为 `configuredStrength`，明确数据来自 RendererFeature frame config。
+- spot / point fallback 矩阵构建函数从 `BuildManual*Matrix` 改为 `BuildFallback*Matrix`，表达其只是在 URP shadow matrix 不可用时的可见灯光 fallback，不再暗示手动灯光列表或场景 controller 入口。
+- `02-DebugShader_按需编译策略.md` 同步修正 ShadowCast debug mode 来源，删除 legacy controller override 的当前策略描述。
+- 本次只清理旧 controller 语义命名与文档，不改变 atlas 分配、receiver ABI、debug shader 按需加载、MaterialBuffer/GeometryBuffer 边界或 ImageProcess 禁止消费 ShadowCast 的规则。
+
 仍待处理：
 - 后续如果需要按 renderer/material 侧声明更细的 receiver gate，应放到 receiver / material 语义里，不反向扩张 ShadowCast 为对象分类系统。
 ---
