@@ -11,7 +11,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.CharacterSpecialization
 {
-    [DisallowMultipleRendererFeature("lilToon-HoCharacter Specialization")]
+    [DisallowMultipleRendererFeature("Ho-CharacterSpecialization")]
     public sealed class HoCharacterSpecializationRendererFeature : ScriptableRendererFeature
     {
         [SerializeField]
@@ -28,7 +28,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private bool warnedMissingCaptureClearShader;
 
         [InspectorName("使用 Volume 参数")]
-        [Tooltip("开启后，RendererFeature 只负责安装 pass，实际参数从 Volume 里的 lilToon-HoCharacter/角色特化 读取。")]
+        [Tooltip("开启后，RendererFeature 只负责安装 pass，实际参数从 Volume 里的 Ho-CharacterSpecialization/角色特化 读取。")]
         public bool UseVolumes = true;
 
         public static bool IsUseVolumes { get; private set; } = true;
@@ -176,7 +176,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
     internal sealed class HoCharacterSpecializationPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-HoCharacter Specialization");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-CharacterSpecialization");
         private static readonly List<ShaderTagId> CaptureShaderTagIds = new List<ShaderTagId>
         {
             HoCharacterSpecializationShaderConstants.CaptureShaderTagId
@@ -358,7 +358,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 SortingCriteria.CommonTransparent);
             RendererListParams rendererListParams = new RendererListParams(renderingData.cullResults, drawingSettings, filteringSettings);
 
-            using (var builder = renderGraph.AddRasterRenderPass<CapturePassData>("lilToon-HoCharacter Capture Face", out CapturePassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<CapturePassData>("Ho-CharacterSpecialization CaptureFace", out CapturePassData passData, ProfilingSampler))
             {
                 passData.rendererList = renderGraph.CreateRendererList(rendererListParams);
                 passData.eyeColorTexture = eyeColorTexture;
@@ -387,7 +387,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 });
             }
 
-            using (var builder = renderGraph.AddRasterRenderPass<CapturePassData>("lilToon-HoCharacter Capture Eye", out CapturePassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<CapturePassData>("Ho-CharacterSpecialization CaptureEye", out CapturePassData passData, ProfilingSampler))
             {
                 passData.rendererList = renderGraph.CreateRendererList(rendererListParams);
                 passData.eyeColorTexture = eyeColorTexture;
@@ -423,7 +423,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             EnsureHdrTextureDesc(ref destinationDesc);
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
-            using (var builder = renderGraph.AddRasterRenderPass<CompositePassData>("lilToon-HoCharacter Composite", out CompositePassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<CompositePassData>("Ho-CharacterSpecialization Composite", out CompositePassData passData, ProfilingSampler))
             {
                 passData.source = source;
                 passData.aovMaskIdTexture = metadataResources.maskIdTexture;

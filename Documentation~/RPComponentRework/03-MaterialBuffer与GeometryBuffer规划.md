@@ -367,7 +367,7 @@ GeometryBuffer.TangentNormal
 已把 MetadataBuffer 运行时入口继续从旧 HoAOV 类名中拆出：
 
 - `HoAovOutputPass` 迁入 `Runtime/MetadataBuffer/HoMetadataBufferPass.cs`，RendererFeature 不再直接引用旧 AOV output pass 类。
-- `HoAovDebugPass` 迁入 `Runtime/MetadataBuffer/HoMetadataBufferDebugPass.cs`，RenderGraph pass 名同步改为 `lilToon-MetadataBuffer Debug`。
+- `HoAovDebugPass` 迁入 `Runtime/MetadataBuffer/HoMetadataBufferDebugPass.cs`，RenderGraph pass 名已统一到 `Ho-MetadataBuffer Debug`。
 - 新增 `HoMetadataBufferSettings`，RendererFeature 面板字段改用 `passEvent`，旧 `HoAovSettings` 不再作为 MetadataBuffer 设置对象存在。
 - `HoAovBufferTypes` 只保留当前仍被材质、RSUV、CharacterSpecialization 和 shader ABI 使用的旧 HoAOV 枚举/通道类型。
 - `HoAovRenderTargets` 仍暂留在 AOV 目录，作为非 RenderGraph 路径的兼容 RTHandle 管理；后续拆 metadata-only shader target 时再迁到 MetadataBuffer 或删除。

@@ -10,7 +10,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.OIT
 {
-    [DisallowMultipleRendererFeature("lilToon Weighted OIT")]
+    [DisallowMultipleRendererFeature("Ho-WeightedOIT")]
     public sealed class WeightedOITRendererFeature : ScriptableRendererFeature
     {
         [SerializeField]
@@ -145,7 +145,7 @@ namespace lilToon.URP.Extensions.OIT
 
             if (shader == null)
             {
-                Debug.LogWarning($"lilToon Weighted OIT could not find composite shader '{WeightedOITShaderConstants.CompositeShaderName}'.");
+                Debug.LogWarning($"Ho-WeightedOIT could not find composite shader '{WeightedOITShaderConstants.CompositeShaderName}'.");
                 return;
             }
 
@@ -155,7 +155,7 @@ namespace lilToon.URP.Extensions.OIT
 
     internal sealed class WeightedOITResetPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon Weighted OIT Reset");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-WeightedOIT Reset");
 
         private sealed class PassData
         {
@@ -180,7 +180,7 @@ namespace lilToon.URP.Extensions.OIT
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon Weighted OIT Reset", out _, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-WeightedOIT Reset", out _, ProfilingSampler))
             {
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
@@ -194,7 +194,7 @@ namespace lilToon.URP.Extensions.OIT
 
     internal sealed class WeightedOITOpaqueCopyPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon Weighted OIT Opaque Copy");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-WeightedOIT OpaqueCopy");
         private RTHandle cameraColorTarget;
         private WeightedOITRenderTargets renderTargets;
 
@@ -256,7 +256,7 @@ namespace lilToon.URP.Extensions.OIT
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
             oitResources.opaqueTexture = destination;
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon Weighted OIT Opaque Copy", out var passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-WeightedOIT OpaqueCopy", out var passData, ProfilingSampler))
             {
                 passData.source = source;
                 passData.texelSize = GetTexelSize(destinationDesc);
@@ -323,7 +323,7 @@ namespace lilToon.URP.Extensions.OIT
 
     internal sealed class WeightedOITClearPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon Weighted OIT Clear");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-WeightedOIT Clear");
         private readonly RTHandle[] colorTargets = new RTHandle[2];
         private WeightedOITSettings settings;
         private WeightedOITRenderTargets renderTargets;
@@ -386,7 +386,7 @@ namespace lilToon.URP.Extensions.OIT
 
     internal sealed class WeightedOITAccumulationPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon Weighted OIT Accumulation");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-WeightedOIT Accumulation");
         private readonly List<ShaderTagId> shaderTagIds = new List<ShaderTagId> { WeightedOITShaderConstants.ShaderTagId };
         private readonly RTHandle[] colorTargets = new RTHandle[2];
         private WeightedOITSettings settings;
@@ -516,7 +516,7 @@ namespace lilToon.URP.Extensions.OIT
                 drawingSettings,
                 filteringSettings);
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon Weighted OIT Accumulation", out var passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-WeightedOIT Accumulation", out var passData, ProfilingSampler))
             {
                 passData.rendererList = renderGraph.CreateRendererList(rendererListParams);
                 passData.opaqueTexture = opaque;
@@ -577,7 +577,7 @@ namespace lilToon.URP.Extensions.OIT
 
     internal sealed class WeightedOITCompositePass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon Weighted OIT Composite");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-WeightedOIT Composite");
         private RTHandle cameraColorTarget;
         private WeightedOITRenderTargets renderTargets;
         private Material compositeMaterial;
@@ -679,7 +679,7 @@ namespace lilToon.URP.Extensions.OIT
             destinationDesc.depthBufferBits = 0;
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon Weighted OIT Composite", out var passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-WeightedOIT Composite", out var passData, ProfilingSampler))
             {
                 passData.source = source;
                 passData.accumulationTexture = accumulation;
@@ -705,7 +705,7 @@ namespace lilToon.URP.Extensions.OIT
 
         private static void AddResetPass(RenderGraph renderGraph)
         {
-            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("lilToon Weighted OIT Reset", out _, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("Ho-WeightedOIT Reset", out _, ProfilingSampler))
             {
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);

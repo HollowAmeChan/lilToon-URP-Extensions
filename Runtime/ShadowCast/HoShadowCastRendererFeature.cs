@@ -6,7 +6,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.ShadowCast
 {
-    [DisallowMultipleRendererFeature("lilToon-HoShadowCast")]
+    [DisallowMultipleRendererFeature("Ho-ShadowCast")]
     public sealed class HoShadowCastRendererFeature : ScriptableRendererFeature
     {
         [SerializeField]

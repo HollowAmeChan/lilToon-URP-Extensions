@@ -9,7 +9,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 {
     internal sealed class HoShadowCastPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-HoShadowCast");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-ShadowCast");
         private static readonly ShaderTagId ShadowCasterShaderTagId = new ShaderTagId("ShadowCaster");
         private readonly HoShadowCastFrame frame = new HoShadowCastFrame();
         private readonly HoShadowCastSecondDirectionalFrame secondDirectionalFrame = new HoShadowCastSecondDirectionalFrame();
@@ -238,7 +238,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     FilterMode.Bilinear,
                     TextureWrapMode.Clamp);
 
-                using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoShadowCast ShadowMap", out PassData passData, ProfilingSampler))
+                using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-ShadowCast ShadowMap", out PassData passData, ProfilingSampler))
                 {
                     passData.atlasTexture = atlasTexture;
                     passData.frame = renderGraphFrame;
@@ -291,7 +291,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     FilterMode.Bilinear,
                     TextureWrapMode.Clamp);
 
-                using (var builder = renderGraph.AddRasterRenderPass<SecondDirectionalPassData>("lilToon-HoShadowCast Second Directional", out SecondDirectionalPassData passData, ProfilingSampler))
+                using (var builder = renderGraph.AddRasterRenderPass<SecondDirectionalPassData>("Ho-ShadowCast SecondDirectional", out SecondDirectionalPassData passData, ProfilingSampler))
                 {
                     passData.atlasTexture = secondDirectionalAtlasTexture;
                     passData.frame = renderGraphSecondDirectionalFrame;

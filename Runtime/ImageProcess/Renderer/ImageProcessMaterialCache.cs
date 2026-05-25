@@ -64,7 +64,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            Debug.LogWarning($"lilToon-ImageProcess 后处理图层 '{layer.name}' 已跳过：找不到 Shader '{shaderName}'。");
+            Debug.LogWarning($"Ho-ImageProcess 后处理图层 '{layer.name}' 已跳过：找不到 Shader '{shaderName}'。");
         }
     }
 }

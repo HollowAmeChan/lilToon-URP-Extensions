@@ -71,7 +71,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         }
     }
 
-    [DisallowMultipleRendererFeature("lilToon-HoSSS 屏幕空间次表面散射")]
+    [DisallowMultipleRendererFeature("Ho-SubsurfaceScattering")]
     public sealed class HoSubsurfaceScatteringRendererFeature : ScriptableRendererFeature
     {
         [SerializeField, InspectorName("HoSSS 设置")]
@@ -99,11 +99,11 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         {
             settings?.ClampPassEvents();
             sourcePass = new HoSubsurfaceScatteringSourcePass();
-            horizontalBlurPass = new HoSubsurfaceScatteringBlurPass("lilToon-HoSSS 横向扩散", new Vector2(1.0f, 0.0f));
-            verticalBlurPass = new HoSubsurfaceScatteringBlurPass("lilToon-HoSSS 纵向扩散", new Vector2(0.0f, 1.0f));
+            horizontalBlurPass = new HoSubsurfaceScatteringBlurPass("Ho-SubsurfaceScattering BlurX", new Vector2(1.0f, 0.0f));
+            verticalBlurPass = new HoSubsurfaceScatteringBlurPass("Ho-SubsurfaceScattering BlurY", new Vector2(0.0f, 1.0f));
             transmissionGatherPass = new HoSubsurfaceScatteringTransmissionGatherPass();
-            transmissionHorizontalBlurPass = new HoSubsurfaceScatteringTransmissionBlurPass("lilToon-HoSSS Transmission X", new Vector2(1.0f, 0.0f));
-            transmissionVerticalBlurPass = new HoSubsurfaceScatteringTransmissionBlurPass("lilToon-HoSSS Transmission Y", new Vector2(0.0f, 1.0f));
+            transmissionHorizontalBlurPass = new HoSubsurfaceScatteringTransmissionBlurPass("Ho-SubsurfaceScattering TransmissionX", new Vector2(1.0f, 0.0f));
+            transmissionVerticalBlurPass = new HoSubsurfaceScatteringTransmissionBlurPass("Ho-SubsurfaceScattering TransmissionY", new Vector2(0.0f, 1.0f));
             compositePass = new HoSubsurfaceScatteringCompositePass();
             debugPass = new HoSubsurfaceScatteringDebugPass();
         }
@@ -299,7 +299,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
     internal sealed class HoSubsurfaceScatteringSourcePass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-HoSSS 源提取");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-SubsurfaceScattering Source");
         private RTHandle cameraColorTarget;
         private HoSubsurfaceScatteringSettings settings;
         private HoSubsurfaceScatteringRenderTargets renderTargets;
@@ -391,7 +391,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             sssResources.sourceTexture = source;
             HoSubsurfaceScatteringProfileShaderData.Set(material, settings);
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoSSS 源提取", out PassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-SubsurfaceScattering Source", out PassData passData, ProfilingSampler))
             {
                 passData.source = cameraColor;
                 passData.maskIdTexture = metadataResources.maskIdTexture;
@@ -676,7 +676,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
     internal sealed class HoSubsurfaceScatteringTransmissionGatherPass : ScriptableRenderPass
     {
         private const int TransmissionGatherPassIndex = 2;
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-HoSSS Transmission Gather");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-SubsurfaceScattering TransmissionGather");
         private HoSubsurfaceScatteringSettings settings;
         private HoSubsurfaceScatteringRenderTargets renderTargets;
         private Material material;
@@ -763,7 +763,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             sssResources.transmissionTexture = destination;
             HoSubsurfaceScatteringProfileShaderData.Set(material, settings);
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoSSS Transmission Gather", out PassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-SubsurfaceScattering TransmissionGather", out PassData passData, ProfilingSampler))
             {
                 passData.source = source;
                 passData.destination = destination;
@@ -1028,7 +1028,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
     internal sealed class HoSubsurfaceScatteringCompositePass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-HoSSS 合成");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-SubsurfaceScattering Composite");
         private RTHandle cameraColorTarget;
         private HoSubsurfaceScatteringSettings settings;
         private HoSubsurfaceScatteringRenderTargets renderTargets;
@@ -1133,7 +1133,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
             HoSubsurfaceScatteringProfileShaderData.Set(material, settings);
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoSSS 合成", out PassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-SubsurfaceScattering Composite", out PassData passData, ProfilingSampler))
             {
                 passData.cameraColor = cameraColor;
                 passData.sssTexture = sssTexture;

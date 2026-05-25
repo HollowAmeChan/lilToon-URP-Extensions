@@ -77,9 +77,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
     }
 
 #if UNITY_2023_1_OR_NEWER
-    [VolumeComponentMenu("Post-processing/lilToon-HoCharacter/角色特化"), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+    [VolumeComponentMenu("Post-processing/Ho-CharacterSpecialization/角色特化"), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
 #else
-    [VolumeComponentMenuForRenderPipeline("Post-processing/lilToon-HoCharacter/角色特化", typeof(UniversalRenderPipeline))]
+    [VolumeComponentMenuForRenderPipeline("Post-processing/Ho-CharacterSpecialization/角色特化", typeof(UniversalRenderPipeline))]
 #endif
 #if UNITY_2023_3_OR_NEWER
     [VolumeRequiresRendererFeatures(typeof(HoCharacterSpecializationRendererFeature))]
@@ -90,7 +90,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public HoCharacterSpecializationVolume()
         {
 #if !UNITY_6000_3_OR_NEWER
-            displayName = "lilToon-HoCharacter 角色特化";
+            displayName = "Ho-CharacterSpecialization 角色特化";
 #endif
             Enable.overrideState = true;
             EyeRevealEnabled.overrideState = true;

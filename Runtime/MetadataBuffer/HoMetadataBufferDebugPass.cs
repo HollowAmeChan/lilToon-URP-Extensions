@@ -12,7 +12,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 {
     internal sealed class HoMetadataBufferDebugPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-MetadataBuffer Debug");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-MetadataBuffer Debug");
         private HoMetadataBufferSettings settings;
         private HoMetadataBufferRenderTargets renderTargets;
         private RTHandle cameraColorTarget;
@@ -131,7 +131,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             destinationDesc.depthBufferBits = 0;
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-MetadataBuffer Debug", out PassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-MetadataBuffer Debug", out PassData passData, ProfilingSampler))
             {
                 passData.source = source;
                 passData.maskIdTexture = metadataResources.maskIdTexture;

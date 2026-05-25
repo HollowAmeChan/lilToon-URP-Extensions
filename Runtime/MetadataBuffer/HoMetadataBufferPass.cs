@@ -12,7 +12,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 {
     internal sealed class HoMetadataBufferPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-MetadataBuffer Output");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-MetadataBuffer Output");
         private static readonly List<ShaderTagId> FallbackShaderTagIds = new List<ShaderTagId>
         {
             new ShaderTagId("SRPDefaultUnlit"),
@@ -255,7 +255,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
             AddSssClearPass(renderGraph, sssTexture);
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-MetadataBuffer Output", out PassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-MetadataBuffer Output", out PassData passData, ProfilingSampler))
             {
                 passData.drawFallback = drawFallback;
                 passData.fallbackRendererList = drawFallback ? renderGraph.CreateRendererList(fallbackRendererListParams) : default;
@@ -309,7 +309,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 });
             }
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-MetadataBuffer Surface Color", out PassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-MetadataBuffer SurfaceColor", out PassData passData, ProfilingSampler))
             {
                 passData.aovRendererList = renderGraph.CreateRendererList(sssRendererListParams);
                 passData.sssTexture = sssTexture;
@@ -349,7 +349,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             TextureHandle depthTexture,
             Material clearMaterial)
         {
-            using (var builder = renderGraph.AddRasterRenderPass<ClearPassData>("lilToon-MetadataBuffer Clear", out ClearPassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<ClearPassData>("Ho-MetadataBuffer Clear", out ClearPassData passData, ProfilingSampler))
             {
                 passData.clearMaterial = clearMaterial;
                 builder.SetRenderAttachment(maskIdTexture, HoMetadataBufferAttachmentLayout.MaskId, AccessFlags.WriteAll);
@@ -369,7 +369,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         private static void AddSssClearPass(RenderGraph renderGraph, TextureHandle sssTexture)
         {
-            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("lilToon-MetadataBuffer Surface Color Clear", out _, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("Ho-MetadataBuffer SurfaceColorClear", out _, ProfilingSampler))
             {
                 builder.SetRenderAttachment(sssTexture, 0, AccessFlags.WriteAll);
                 builder.AllowPassCulling(false);
@@ -414,7 +414,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         private static void AddResetPass(RenderGraph renderGraph)
         {
-            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("lilToon-MetadataBuffer Reset", out _, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("Ho-MetadataBuffer Reset", out _, ProfilingSampler))
             {
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);

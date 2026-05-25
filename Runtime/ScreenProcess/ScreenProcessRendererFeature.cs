@@ -11,7 +11,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.PostProcessing
 {
-    [DisallowMultipleRendererFeature("lilToon-ScreenProcess")]
+    [DisallowMultipleRendererFeature("Ho-ScreenProcess")]
     [ExecuteAlways]
     public sealed class ScreenProcessRendererFeature : ScriptableRendererFeature
     {
@@ -36,7 +36,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public override void Create()
         {
             IsUseVolumes = UseVolumes;
-            pass = new ScreenProcessPass("lilToon-ScreenProcess After URP Before ImageProcess");
+            pass = new ScreenProcessPass("Ho-ScreenProcess AfterURP BeforeImageProcess");
         }
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)

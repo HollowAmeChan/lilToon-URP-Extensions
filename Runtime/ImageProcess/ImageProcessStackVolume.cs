@@ -21,9 +21,9 @@ namespace lilToon.URP.Extensions.PostProcessing
     }
 
 #if UNITY_2023_1_OR_NEWER
-    [VolumeComponentMenu("Post-processing/lilToon-ImageProcess/Post Process Stack"), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+    [VolumeComponentMenu("Post-processing/Ho-ImageProcess/Post Process Stack"), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
 #else
-    [VolumeComponentMenuForRenderPipeline("Post-processing/lilToon-ImageProcess/Post Process Stack", typeof(UniversalRenderPipeline))]
+    [VolumeComponentMenuForRenderPipeline("Post-processing/Ho-ImageProcess/Post Process Stack", typeof(UniversalRenderPipeline))]
 #endif
 #if UNITY_2023_3_OR_NEWER
     [VolumeRequiresRendererFeatures(typeof(ImageProcessRendererFeature))]
@@ -34,7 +34,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public ImageProcessStackVolume()
         {
 #if !UNITY_6000_3_OR_NEWER
-            displayName = "lilToon-ImageProcess Post Process Stack";
+            displayName = "Ho-ImageProcess";
 #endif
         }
 

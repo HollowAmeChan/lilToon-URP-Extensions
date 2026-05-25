@@ -10,7 +10,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 {
     internal sealed class HoGeometryBufferDebugPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-GeometryBuffer Debug");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-GeometryBuffer Debug");
         private HoGeometryBufferSettings settings;
         private HoGeometryBufferRenderTargets renderTargets;
         private RTHandle cameraColorTarget;
@@ -109,7 +109,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             destinationDesc.depthBufferBits = 0;
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-GeometryBuffer Debug", out PassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-GeometryBuffer Debug", out PassData passData, ProfilingSampler))
             {
                 passData.source = source;
                 passData.normalDepthTexture = geometryResources.normalDepthTexture;

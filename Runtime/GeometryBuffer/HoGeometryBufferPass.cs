@@ -11,7 +11,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 {
     internal sealed class HoGeometryBufferPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-GeometryBuffer Output");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-GeometryBuffer Output");
         private static readonly List<ShaderTagId> GeometryShaderTagIds = new List<ShaderTagId>
         {
             new ShaderTagId(HoGeometryBufferShaderConstants.ShaderPassName)
@@ -164,7 +164,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 fallbackDrawingSettings,
                 fallbackFilteringSettings);
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-GeometryBuffer Output", out PassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-GeometryBuffer Output", out PassData passData, ProfilingSampler))
             {
                 passData.geometryRendererList = renderGraph.CreateRendererList(geometryRendererListParams);
                 passData.drawFallback = drawFallback;

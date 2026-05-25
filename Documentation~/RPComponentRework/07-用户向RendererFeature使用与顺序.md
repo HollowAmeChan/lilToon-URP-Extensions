@@ -8,18 +8,19 @@
 
 迁移期 Unity 里仍可能看到部分旧类名。用户文档和新 UI 使用新语义名：
 
-| 用户侧名称 | 旧实现名 | 作用 |
-| --- | --- | --- |
-| `ShadowCast` | `HoShadowCastRendererFeature` | 额外投影光源 atlas 与 receiver 数据 |
-| `MetadataBuffer` | `HoMetadataBufferRendererFeature` | 材质、对象、mask、metadata 与当前 SSS source 输入 |
-| `GeometryBuffer` | `HoGeometryBufferRendererFeature` | normal/depth 几何输入缓存 |
-| `SSS` | `HoSubsurfaceScatteringRendererFeature` | 屏幕空间皮肤/材质散射 |
-| `OIT` | `WeightedOITRendererFeature` | 加权透明合成 |
-| `CharacterSpecialization` | `HoCharacterSpecializationRendererFeature` | 眼透、前发、角色局部合成 |
-| `ScreenProcess` | `ScreenProcessRendererFeature` | 读取 Buffer 的语义屏幕处理 |
-| `ImageProcess` | `ImageProcessRendererFeature` | 最终图像处理链 |
+| 用户侧名称 | Renderer Data 显示名 | 实现类 | 作用 |
+| --- | --- | --- | --- |
+| `ShadowCast` | `Ho-ShadowCast` | `HoShadowCastRendererFeature` | 额外投影光源 atlas 与 receiver 数据 |
+| `MetadataBuffer` | `Ho-MetadataBuffer` | `HoMetadataBufferRendererFeature` | 材质、对象、mask、metadata 与当前 SSS source 输入 |
+| `GeometryBuffer` | `Ho-GeometryBuffer` | `HoGeometryBufferRendererFeature` | normal/depth 几何输入缓存 |
+| `SSS` | `Ho-SubsurfaceScattering` | `HoSubsurfaceScatteringRendererFeature` | 屏幕空间皮肤/材质散射 |
+| `OIT` | `Ho-WeightedOIT` | `WeightedOITRendererFeature` | 加权透明合成 |
+| `CharacterSpecialization` | `Ho-CharacterSpecialization` | `HoCharacterSpecializationRendererFeature` | 眼透、前发、角色局部合成 |
+| `ScreenProcess` | `Ho-ScreenProcess` | `ScreenProcessRendererFeature` | 读取 Buffer 的语义屏幕处理 |
+| `ImageProcess` | `Ho-ImageProcess` | `ImageProcessRendererFeature` | 最终图像处理链 |
 
 旧名只用于引用历史迁移记录。用户侧主描述不再把 `HoPost`、`ShoostStack` 当作概念名。
+RendererFeature 防重名显示、Frame Debugger pass 名、对应 Volume 菜单和缺 shader 日志统一使用 `Ho-<规范模块名>` 前缀，模块名本身不带空格；shader Hidden 名和包名不跟随这条用户显示名规则。
 
 ---
 

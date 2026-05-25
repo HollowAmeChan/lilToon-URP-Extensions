@@ -6,7 +6,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.GeometryBuffer
 {
-    [DisallowMultipleRendererFeature("lilToon-GeometryBuffer")]
+    [DisallowMultipleRendererFeature("Ho-GeometryBuffer")]
     public sealed class HoGeometryBufferRendererFeature : ScriptableRendererFeature
     {
         [SerializeField]

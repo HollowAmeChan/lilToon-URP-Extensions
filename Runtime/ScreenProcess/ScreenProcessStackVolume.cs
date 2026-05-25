@@ -21,9 +21,9 @@ namespace lilToon.URP.Extensions.PostProcessing
     }
 
 #if UNITY_2023_1_OR_NEWER
-    [VolumeComponentMenu("Post-processing/lilToon-ScreenProcess/Process Stack"), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
+    [VolumeComponentMenu("Post-processing/Ho-ScreenProcess/Process Stack"), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
 #else
-    [VolumeComponentMenuForRenderPipeline("Post-processing/lilToon-ScreenProcess/Process Stack", typeof(UniversalRenderPipeline))]
+    [VolumeComponentMenuForRenderPipeline("Post-processing/Ho-ScreenProcess/Process Stack", typeof(UniversalRenderPipeline))]
 #endif
 #if UNITY_2023_3_OR_NEWER
     [VolumeRequiresRendererFeatures(typeof(ScreenProcessRendererFeature))]
@@ -34,7 +34,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public ScreenProcessStackVolume()
         {
 #if !UNITY_6000_3_OR_NEWER
-            displayName = "lilToon-ScreenProcess";
+            displayName = "Ho-ScreenProcess";
 #endif
         }
 

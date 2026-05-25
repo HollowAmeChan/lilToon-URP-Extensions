@@ -7,7 +7,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.MetadataBuffer
 {
-    [DisallowMultipleRendererFeature("lilToon-MetadataBuffer")]
+    [DisallowMultipleRendererFeature("Ho-MetadataBuffer")]
     public sealed class HoMetadataBufferRendererFeature : ScriptableRendererFeature
     {
         [SerializeField]

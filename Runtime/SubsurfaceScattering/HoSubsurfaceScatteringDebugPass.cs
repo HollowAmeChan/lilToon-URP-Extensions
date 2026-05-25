@@ -12,7 +12,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 {
     internal sealed class HoSubsurfaceScatteringDebugPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-HoSSS Debug");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-SubsurfaceScattering Debug");
         private RTHandle cameraColorTarget;
         private HoSubsurfaceScatteringSettings settings;
         private HoSubsurfaceScatteringRenderTargets renderTargets;
@@ -117,7 +117,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
             HoSubsurfaceScatteringProfileShaderData.Set(material, settings);
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoSSS Debug", out PassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-SubsurfaceScattering Debug", out PassData passData, ProfilingSampler))
             {
                 passData.cameraColor = cameraColor;
                 passData.sssTexture = sssTexture;

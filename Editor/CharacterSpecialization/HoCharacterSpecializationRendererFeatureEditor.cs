@@ -22,7 +22,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             serializedObject.Update();
 
             EditorGUILayout.HelpBox(
-                "这个 RendererFeature 负责把 HoCharacter 捕获/合成 pass 安装进当前 Renderer。推荐勾选“使用 Volume 参数”，然后在场景或全局 Volume 里添加“lilToon-HoCharacter/角色特化”来调眼睛透过和前发投影。",
+                "这个 RendererFeature 负责把 HoCharacter 捕获/合成 pass 安装进当前 Renderer。推荐勾选“使用 Volume 参数”，然后在场景或全局 Volume 里添加“Ho-CharacterSpecialization/角色特化”来调眼睛透过和前发投影。",
                 MessageType.Info);
 
             if (useVolumesProperty != null)

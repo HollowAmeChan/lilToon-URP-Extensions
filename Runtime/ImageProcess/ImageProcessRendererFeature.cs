@@ -8,7 +8,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.PostProcessing
 {
-    [DisallowMultipleRendererFeature("lilToon-ImageProcess Post Process Stack")]
+    [DisallowMultipleRendererFeature("Ho-ImageProcess")]
     [ExecuteAlways]
     public sealed class ImageProcessRendererFeature : ScriptableRendererFeature
     {
@@ -29,7 +29,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public override void Create()
         {
             IsUseVolumes = UseVolumes;
-            afterPostProcessPass = new ImageProcessPass("lilToon-ImageProcess After URP Post");
+            afterPostProcessPass = new ImageProcessPass("Ho-ImageProcess AfterURPPost");
         }
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)

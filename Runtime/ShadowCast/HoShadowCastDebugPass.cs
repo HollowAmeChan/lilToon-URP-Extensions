@@ -10,7 +10,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 {
     internal sealed class HoShadowCastDebugPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-HoShadowCast Debug");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-ShadowCast Debug");
 
         private HoShadowCastRenderTargets renderTargets;
         private RTHandle cameraColorTarget;
@@ -125,7 +125,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             destinationDesc.depthBufferBits = 0;
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoShadowCast Debug", out PassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-ShadowCast Debug", out PassData passData, ProfilingSampler))
             {
                 passData.source = source;
                 passData.atlasTexture = atlas;
