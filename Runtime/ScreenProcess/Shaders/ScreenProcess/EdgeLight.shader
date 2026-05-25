@@ -33,8 +33,8 @@ Shader "Hidden/lilToon/URP/ScreenProcess/EdgeLight"
             float4 _LayerParams1; // x angle degrees, y mode, z outer width px, w outer amount
             float4 _LayerParams2; // x surface weight, y depth edge weight, z depth sensitivity, w direction amount
 
-            TEXTURE2D_X(_lilHoAovNormalDepthTexture);
-            float4 _lilHoAovNormalDepthTexture_TexelSize;
+            TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
+            float4 _HoGeometryBufferNormalDepthTexture_TexelSize;
 
             struct BoundaryInfo
             {
@@ -44,7 +44,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/EdgeLight"
 
             half4 SampleRuleNormalDepth(float2 uv)
             {
-                return SAMPLE_TEXTURE2D_X(_lilHoAovNormalDepthTexture, sampler_PointClamp, uv);
+                return SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
             }
 
             int ResolveMode()
@@ -154,7 +154,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/EdgeLight"
                 }
 
                 float radiusPx = lerp(1.0, 4.0, saturate(_LayerParams0.x));
-                float2 texel = _lilHoAovNormalDepthTexture_TexelSize.xy * radiusPx;
+                float2 texel = _HoGeometryBufferNormalDepthTexture_TexelSize.xy * radiusPx;
                 float centerDepth = normalDepth.a;
 
                 AccumulateBoundarySample(boundary, uv, texel, float2( 1.0,  0.0), centerDepth, centerMask, sensitivity);
@@ -191,7 +191,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/EdgeLight"
                     return 0.0;
                 }
 
-                float2 texel = _lilHoAovNormalDepthTexture_TexelSize.xy * radiusPx;
+                float2 texel = _HoGeometryBufferNormalDepthTexture_TexelSize.xy * radiusPx;
                 BoundaryInfo outer;
                 outer.edge = 0.0;
                 outer.direction = float2(0.0, 0.0);

@@ -590,7 +590,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                             if (hasRule)
                             {
                                 context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.ruleMaskIdTexture);
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.NormalDepthTextureId, data.ruleNormalDepthTexture);
+                                context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.ruleNormalDepthTexture);
                             }
 
                             if (data.layer.useRuleMask || data.layer.debugRuleMask)
@@ -623,7 +623,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                             if (hasRule)
                             {
                                 context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.ruleMaskIdTexture);
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.NormalDepthTextureId, data.ruleNormalDepthTexture);
+                                context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.ruleNormalDepthTexture);
                             }
 
                             if (data.useRuleSurfaceData)

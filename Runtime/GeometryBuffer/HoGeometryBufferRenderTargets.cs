@@ -24,8 +24,8 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 descriptor.graphicsFormat = format;
             }
 
-            RenderingUtils.ReAllocateIfNeeded(ref normalDepthTexture, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_lilHoAovNormalDepthTexture");
-            RenderingUtils.ReAllocateIfNeeded(ref depthTexture, CreateDepthDescriptor(cameraTextureDescriptor, settings), FilterMode.Point, TextureWrapMode.Clamp, name: "_lilHoAovDepthTexture");
+            RenderingUtils.ReAllocateIfNeeded(ref normalDepthTexture, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.NormalDepthTextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref depthTexture, CreateDepthDescriptor(cameraTextureDescriptor, settings), FilterMode.Point, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.DepthTextureName);
         }
 
         public void Release()

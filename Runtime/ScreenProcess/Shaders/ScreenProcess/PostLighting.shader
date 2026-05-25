@@ -36,11 +36,11 @@ Shader "Hidden/lilToon/URP/ScreenProcess/PostLighting"
             float4 _LayerParams4; // gradient color B
             float4 _LayerParams5; // x ambient, y shadow amount, z matcap invert, w matcap focus
 
-            TEXTURE2D_X(_lilHoAovNormalDepthTexture);
+            TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
 
             half4 SampleRuleNormalDepth(float2 uv)
             {
-                return SAMPLE_TEXTURE2D_X(_lilHoAovNormalDepthTexture, sampler_PointClamp, uv);
+                return SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
             }
 
             half3 ApplyBlend(half3 baseColor, half3 layerColor, float blendMode)

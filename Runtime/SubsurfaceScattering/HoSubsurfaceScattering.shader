@@ -17,7 +17,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
         #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
         TEXTURE2D_X(_lilHoAovMaskIdTexture);
-        TEXTURE2D_X(_lilHoAovNormalDepthTexture);
+        TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
         TEXTURE2D_X(_lilHoAovSurfaceDataTexture);
         TEXTURE2D_X(_lilHoAovSssTexture);
         TEXTURE2D_X(_lilHoSSSSourceTexture);
@@ -50,12 +50,12 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
 
         float4 HoSSSNormalDepth(float2 uv)
         {
-            return SAMPLE_TEXTURE2D_X(_lilHoAovNormalDepthTexture, sampler_PointClamp, uv);
+            return SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
         }
 
         float4 HoSSSNormalDepthLinear(float2 uv)
         {
-            return SAMPLE_TEXTURE2D_X(_lilHoAovNormalDepthTexture, sampler_LinearClamp, uv);
+            return SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_LinearClamp, uv);
         }
 
         float3 HoSSSDecodeNormal(float3 encodedNormal)

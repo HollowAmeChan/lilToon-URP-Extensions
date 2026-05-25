@@ -105,6 +105,8 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
                 cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
                 cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, renderTargets.DepthTexture.nameID);
+                cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.LegacyNormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
+                cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.LegacyDepthTextureId, renderTargets.DepthTexture.nameID);
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -127,11 +129,11 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 cameraData.cameraTargetDescriptor,
                 settings,
                 HoGeometryBufferFormatUtility.GetHighPrecisionGraphicsFormat(),
-                "_lilHoAovNormalDepthTexture"));
+                HoGeometryBufferShaderConstants.NormalDepthTextureName));
             TextureHandle depthTexture = UniversalRenderer.CreateRenderGraphTexture(
                 renderGraph,
                 HoGeometryBufferRenderTargets.CreateDepthDescriptor(cameraData.cameraTargetDescriptor, settings),
-                "_lilHoAovDepthTexture",
+                HoGeometryBufferShaderConstants.DepthTextureName,
                 true,
                 FilterMode.Point,
                 TextureWrapMode.Clamp);
@@ -184,6 +186,8 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.WriteAll);
                 builder.SetGlobalTextureAfterPass(normalDepthTexture, HoGeometryBufferShaderConstants.NormalDepthTextureId);
                 builder.SetGlobalTextureAfterPass(depthTexture, HoGeometryBufferShaderConstants.DepthTextureId);
+                builder.SetGlobalTextureAfterPass(normalDepthTexture, HoGeometryBufferShaderConstants.LegacyNormalDepthTextureId);
+                builder.SetGlobalTextureAfterPass(depthTexture, HoGeometryBufferShaderConstants.LegacyDepthTextureId);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>

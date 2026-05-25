@@ -33,7 +33,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             float4 _HoCharacterOptions; // x eye enabled, y shadow enabled, z same character only, w debug mode
 
             TEXTURE2D_X(_lilHoAovMaskIdTexture);
-            TEXTURE2D_X(_lilHoAovNormalDepthTexture);
+            TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
             TEXTURE2D_X(_lilHoAovObjectCustom0_3Texture);
             TEXTURE2D_X(_lilHoAovObjectCustom4_7Texture);
             TEXTURE2D_X(_lilHoCharacterEyeColorTexture);
@@ -123,7 +123,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 }
 
                 float4 maskId = SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_PointClamp, uv);
-                float4 normalDepth = SAMPLE_TEXTURE2D_X(_lilHoAovNormalDepthTexture, sampler_PointClamp, uv);
+                float4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
                 float4 eyeData = SAMPLE_TEXTURE2D_X(_lilHoCharacterEyeDataTexture, sampler_PointClamp, uv);
                 float frontHair = SampleFrontHair(uv);
                 float eyeAlpha = SampleEyeAlpha(uv);
@@ -188,7 +188,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                     return 1.0;
                 }
 
-                float receiverDepth = SAMPLE_TEXTURE2D_X(_lilHoAovNormalDepthTexture, sampler_PointClamp, uv).a;
+                float receiverDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv).a;
                 float hasDepth = step(0.0001, receiverDepth);
                 float minScale = saturate(_HoCharacterHairShadowParams2.z);
                 float perspectiveScale = clamp(referenceDepth / max(receiverDepth, 0.0001), minScale, 1.0);

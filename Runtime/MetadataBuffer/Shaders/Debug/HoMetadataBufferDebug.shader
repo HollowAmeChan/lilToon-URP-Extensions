@@ -29,7 +29,7 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
             float4 _HoMetadataBufferDebugDepthParams; // x near, y far, z inv range
 
             TEXTURE2D_X(_lilHoAovMaskIdTexture);
-            TEXTURE2D_X(_lilHoAovNormalDepthTexture);
+            TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
             TEXTURE2D_X(_lilHoAovSurfaceDataTexture);
             TEXTURE2D_X(_lilHoAovCustom0_3Texture);
             TEXTURE2D_X(_lilHoAovObjectCustom0_3Texture);
@@ -105,7 +105,7 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
 
                 int mode = (int)round(_HoMetadataBufferDebugMode);
                 half4 maskId = SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_PointClamp, uv);
-                half4 normalDepth = SAMPLE_TEXTURE2D_X(_lilHoAovNormalDepthTexture, sampler_PointClamp, uv);
+                half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
                 half4 surfaceData = SAMPLE_TEXTURE2D_X(_lilHoAovSurfaceDataTexture, sampler_PointClamp, uv);
 
                 if (mode == 1)

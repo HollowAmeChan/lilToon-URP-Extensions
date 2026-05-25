@@ -455,3 +455,14 @@ GeometryBuffer.TangentNormal
 - HoSSS 设置面板和提示不再把源数据称作 HoAOV，改为 `MetadataBuffer` 的 SSS 专用通道与 `surfaceData`。
 
 仍保留的 `HoAOV` / `HoAOVSSS` 只作为材质 LightMode 与 shader ABI 名存在，由 `HoMetadataBufferShaderConstants` 承载；这不是 AOV 代码目录或用户入口。
+
+## 24. 2026-05-25 执行记录：GeometryBuffer normal/depth 公开 ABI 改名
+
+已开始把 GeometryBuffer 的公开采样 ABI 从旧 AOV 纹理名中拆出：
+
+- 新增 `_HoGeometryBufferNormalDepthTexture` / `_HoGeometryBufferDepthTexture` 作为 GeometryBuffer 公开 normal/depth 纹理名。
+- `HoGeometryBufferPass` 的 RenderGraph 与兼容路径都改用新纹理名创建资源，并在输出后同时绑定旧 `_lilHoAovNormalDepthTexture` / `_lilHoAovDepthTexture` alias，避免尚未迁移的旧 shader 立即断裂。
+- GeometryBuffer debug、MetadataBuffer debug、SSS、CharacterSpecialization、ScreenProcess 的 normal/depth shader 采样已改读 `_HoGeometryBufferNormalDepthTexture`。
+- RenderGraph 消费点已改用 `HoGeometryBufferShaderConstants.NormalDepthTextureId`，不再通过 MetadataBuffer 常量表达 normal/depth 依赖。
+
+本步没有改动 MetadataBuffer 的对象/材质语义纹理名，也没有移除 `HoAOV` / `HoAOVSSS` LightMode。下一步继续收口 MetadataBuffer 自身的 `_lilHoAovMaskIdTexture`、`_lilHoAovSurfaceDataTexture`、custom/object custom 与 SurfaceColor 纹理命名。

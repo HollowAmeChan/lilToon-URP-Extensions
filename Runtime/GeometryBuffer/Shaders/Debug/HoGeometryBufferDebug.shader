@@ -27,7 +27,7 @@ Shader "Hidden/lilToon/URP/GeometryBuffer/DebugView"
             float _HoGeometryBufferDebugMode;
             float4 _HoGeometryBufferDebugDepthParams; // x near, y far, z inv range
 
-            TEXTURE2D_X(_lilHoAovNormalDepthTexture);
+            TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
 
             half3 Heat(float value)
             {
@@ -41,7 +41,7 @@ Shader "Hidden/lilToon/URP/GeometryBuffer/DebugView"
 
                 float2 uv = input.texcoord;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
-                half4 normalDepth = SAMPLE_TEXTURE2D_X(_lilHoAovNormalDepthTexture, sampler_PointClamp, uv);
+                half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
                 int mode = (int)round(_HoGeometryBufferDebugMode);
 
                 if (mode == 1)

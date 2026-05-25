@@ -80,6 +80,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             {
                 SetMaterialProperties(debugMaterial, settings);
                 cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
+                cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.LegacyNormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
                 Blitter.BlitCameraTexture(cmd, cameraColorTarget, tempTexture, 0, true);
                 Blitter.BlitCameraTexture(cmd, tempTexture, cameraColorTarget, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, debugMaterial, 0);
             }
@@ -127,6 +128,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                     data.debugMaterial.SetFloat(HoGeometryBufferShaderConstants.DebugModeId, (float)data.debugMode);
                     data.debugMaterial.SetVector(HoGeometryBufferShaderConstants.DebugDepthParamsId, data.debugDepthParams);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
+                    context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.LegacyNormalDepthTextureId, data.normalDepthTexture);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.debugMaterial, 0);
                 });
             }
