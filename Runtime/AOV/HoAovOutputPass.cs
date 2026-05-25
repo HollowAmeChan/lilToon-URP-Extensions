@@ -1,6 +1,8 @@
 using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
+using lilToon.URP.Extensions.GeometryBuffer;
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
@@ -179,7 +181,8 @@ namespace lilToon.URP.Extensions.AOV
             UniversalRenderingData renderingData = frameData.Get<UniversalRenderingData>();
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
-            HoAovRenderGraphResources aovResources = frameData.GetOrCreate<HoAovRenderGraphResources>();
+            HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
+            HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
 
             TextureHandle maskIdTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetMaskGraphicsFormat(), HoAovShaderConstants.MaskIdTextureName));
             TextureHandle normalDepthTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.NormalDepthTextureName));
@@ -197,13 +200,14 @@ namespace lilToon.URP.Extensions.AOV
                 TextureWrapMode.Clamp);
 
             ApplyFallbackMaterialProperties();
-            aovResources.maskIdTexture = maskIdTexture;
-            aovResources.normalDepthTexture = normalDepthTexture;
-            aovResources.surfaceDataTexture = surfaceDataTexture;
-            aovResources.custom0Texture = custom0Texture;
-            aovResources.objectCustom0Texture = objectCustom0Texture;
-            aovResources.objectCustom1Texture = objectCustom1Texture;
-            aovResources.sssTexture = sssTexture;
+            metadataResources.maskIdTexture = maskIdTexture;
+            metadataResources.surfaceDataTexture = surfaceDataTexture;
+            metadataResources.custom0Texture = custom0Texture;
+            metadataResources.objectCustom0Texture = objectCustom0Texture;
+            metadataResources.objectCustom1Texture = objectCustom1Texture;
+            metadataResources.sssTexture = sssTexture;
+            geometryResources.normalDepthTexture = normalDepthTexture;
+            geometryResources.depthTexture = depthTexture;
 
             bool drawFallback = settings.useFallbackMaterial && fallbackMaterial != null && fallbackFilteringEnabled;
             DrawingSettings fallbackDrawingSettings = RenderingUtils.CreateDrawingSettings(

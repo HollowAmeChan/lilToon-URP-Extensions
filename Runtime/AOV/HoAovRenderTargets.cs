@@ -3,38 +3,10 @@
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
-using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.AOV
 {
-    internal sealed class HoAovRenderGraphResources : ContextItem
-    {
-        public TextureHandle maskIdTexture = TextureHandle.nullHandle;
-        public TextureHandle normalDepthTexture = TextureHandle.nullHandle;
-        public TextureHandle surfaceDataTexture = TextureHandle.nullHandle;
-        public TextureHandle custom0Texture = TextureHandle.nullHandle;
-        public TextureHandle objectCustom0Texture = TextureHandle.nullHandle;
-        public TextureHandle objectCustom1Texture = TextureHandle.nullHandle;
-        public TextureHandle sssTexture = TextureHandle.nullHandle;
-
-        public bool HasRequiredTextures => maskIdTexture.IsValid()
-            && normalDepthTexture.IsValid()
-            && surfaceDataTexture.IsValid()
-            && sssTexture.IsValid();
-
-        public override void Reset()
-        {
-            maskIdTexture = TextureHandle.nullHandle;
-            normalDepthTexture = TextureHandle.nullHandle;
-            surfaceDataTexture = TextureHandle.nullHandle;
-            custom0Texture = TextureHandle.nullHandle;
-            objectCustom0Texture = TextureHandle.nullHandle;
-            objectCustom1Texture = TextureHandle.nullHandle;
-            sssTexture = TextureHandle.nullHandle;
-        }
-    }
-
     internal sealed class HoAovRenderTargets
     {
         private RTHandle maskIdTexture;

@@ -7,6 +7,8 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 using lilToon.URP.Extensions.AOV;
+using lilToon.URP.Extensions.GeometryBuffer;
+using lilToon.URP.Extensions.MetadataBuffer;
 
 namespace lilToon.URP.Extensions.SubsurfaceScattering
 {
@@ -374,10 +376,11 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
-            HoAovRenderGraphResources aovResources = frameData.GetOrCreate<HoAovRenderGraphResources>();
+            HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
+            HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
             HoSubsurfaceScatteringRenderGraphResources sssResources = frameData.GetOrCreate<HoSubsurfaceScatteringRenderGraphResources>();
             TextureHandle cameraColor = resourceData.activeColorTexture;
-            if (!cameraColor.IsValid() || !aovResources.HasRequiredTextures)
+            if (!cameraColor.IsValid() || !metadataResources.HasRequiredTextures || !geometryResources.HasRequiredTextures)
             {
                 return;
             }
@@ -392,10 +395,10 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoSSS 源提取", out PassData passData, ProfilingSampler))
             {
                 passData.source = cameraColor;
-                passData.maskIdTexture = aovResources.maskIdTexture;
-                passData.normalDepthTexture = aovResources.normalDepthTexture;
-                passData.surfaceDataTexture = aovResources.surfaceDataTexture;
-                passData.sssTexture = aovResources.sssTexture;
+                passData.maskIdTexture = metadataResources.maskIdTexture;
+                passData.normalDepthTexture = geometryResources.normalDepthTexture;
+                passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
+                passData.sssTexture = metadataResources.sssTexture;
                 passData.material = material;
                 passData.sssParams = CreateSssParams(settings, cameraData.cameraTargetDescriptor, source.GetDescriptor(renderGraph));
                 passData.gateParams = CreateGateParams(settings);
@@ -573,10 +576,11 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             }
 
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
-            HoAovRenderGraphResources aovResources = frameData.GetOrCreate<HoAovRenderGraphResources>();
+            HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
+            HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
             HoSubsurfaceScatteringRenderGraphResources sssResources = frameData.GetOrCreate<HoSubsurfaceScatteringRenderGraphResources>();
             TextureHandle source = vertical ? sssResources.diffusionTexture : sssResources.sourceTexture;
-            if (!source.IsValid() || !aovResources.HasRequiredTextures)
+            if (!source.IsValid() || !metadataResources.HasRequiredTextures || !geometryResources.HasRequiredTextures)
             {
                 return;
             }
@@ -600,9 +604,9 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             {
                 passData.source = source;
                 passData.destination = destination;
-                passData.maskIdTexture = aovResources.maskIdTexture;
-                passData.normalDepthTexture = aovResources.normalDepthTexture;
-                passData.surfaceDataTexture = aovResources.surfaceDataTexture;
+                passData.maskIdTexture = metadataResources.maskIdTexture;
+                passData.normalDepthTexture = geometryResources.normalDepthTexture;
+                passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
                 passData.material = material;
                 passData.sssParams = CreateSssParams(settings, cameraData.cameraTargetDescriptor, destination.GetDescriptor(renderGraph));
                 passData.gateParams = CreateGateParams(settings);
@@ -744,10 +748,11 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             }
 
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
-            HoAovRenderGraphResources aovResources = frameData.GetOrCreate<HoAovRenderGraphResources>();
+            HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
+            HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
             HoSubsurfaceScatteringRenderGraphResources sssResources = frameData.GetOrCreate<HoSubsurfaceScatteringRenderGraphResources>();
             TextureHandle source = sssResources.sourceTexture;
-            if (!source.IsValid() || !aovResources.HasRequiredTextures)
+            if (!source.IsValid() || !metadataResources.HasRequiredTextures || !geometryResources.HasRequiredTextures)
             {
                 return;
             }
@@ -763,9 +768,9 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             {
                 passData.source = source;
                 passData.destination = destination;
-                passData.maskIdTexture = aovResources.maskIdTexture;
-                passData.normalDepthTexture = aovResources.normalDepthTexture;
-                passData.surfaceDataTexture = aovResources.surfaceDataTexture;
+                passData.maskIdTexture = metadataResources.maskIdTexture;
+                passData.normalDepthTexture = geometryResources.normalDepthTexture;
+                passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
                 passData.material = material;
                 passData.gateParams = CreateGateParams(settings);
                 passData.transmissionParams = CreateTransmissionParams(settings);
@@ -925,10 +930,11 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             }
 
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
-            HoAovRenderGraphResources aovResources = frameData.GetOrCreate<HoAovRenderGraphResources>();
+            HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
+            HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
             HoSubsurfaceScatteringRenderGraphResources sssResources = frameData.GetOrCreate<HoSubsurfaceScatteringRenderGraphResources>();
             TextureHandle source = vertical ? sssResources.transmissionTempTexture : sssResources.transmissionTexture;
-            if (!source.IsValid() || !aovResources.HasRequiredTextures)
+            if (!source.IsValid() || !metadataResources.HasRequiredTextures || !geometryResources.HasRequiredTextures)
             {
                 return;
             }
@@ -952,9 +958,9 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             {
                 passData.source = source;
                 passData.destination = destination;
-                passData.maskIdTexture = aovResources.maskIdTexture;
-                passData.normalDepthTexture = aovResources.normalDepthTexture;
-                passData.surfaceDataTexture = aovResources.surfaceDataTexture;
+                passData.maskIdTexture = metadataResources.maskIdTexture;
+                passData.normalDepthTexture = geometryResources.normalDepthTexture;
+                passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
                 passData.material = material;
                 passData.gateParams = CreateGateParams(settings);
                 passData.transmissionParams = CreateTransmissionParams(settings);
@@ -1106,12 +1112,17 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             }
 
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
-            HoAovRenderGraphResources aovResources = frameData.GetOrCreate<HoAovRenderGraphResources>();
+            HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
+            HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
             HoSubsurfaceScatteringRenderGraphResources sssResources = frameData.GetOrCreate<HoSubsurfaceScatteringRenderGraphResources>();
             TextureHandle cameraColor = resourceData.activeColorTexture;
             TextureHandle sssTexture = sssResources.sourceTexture;
             TextureHandle transmissionTexture = sssResources.transmissionTexture;
-            if (!cameraColor.IsValid() || !sssTexture.IsValid() || !transmissionTexture.IsValid() || !aovResources.HasRequiredTextures)
+            if (!cameraColor.IsValid()
+                || !sssTexture.IsValid()
+                || !transmissionTexture.IsValid()
+                || !metadataResources.HasRequiredTextures
+                || !geometryResources.HasRequiredTextures)
             {
                 return;
             }
@@ -1128,9 +1139,9 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 passData.cameraColor = cameraColor;
                 passData.sssTexture = sssTexture;
                 passData.transmissionTexture = transmissionTexture;
-                passData.maskIdTexture = aovResources.maskIdTexture;
-                passData.normalDepthTexture = aovResources.normalDepthTexture;
-                passData.surfaceDataTexture = aovResources.surfaceDataTexture;
+                passData.maskIdTexture = metadataResources.maskIdTexture;
+                passData.normalDepthTexture = geometryResources.normalDepthTexture;
+                passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
                 passData.material = material;
                 passData.sssParams = CreateSssParams(settings);
                 passData.gateParams = CreateGateParams(settings);

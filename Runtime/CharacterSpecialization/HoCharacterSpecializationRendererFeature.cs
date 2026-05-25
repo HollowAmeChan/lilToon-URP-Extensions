@@ -2,6 +2,8 @@ using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
 using lilToon.URP.Extensions.AOV;
+using lilToon.URP.Extensions.GeometryBuffer;
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -325,14 +327,15 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             UniversalRenderingData renderingData = frameData.Get<UniversalRenderingData>();
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
-            HoAovRenderGraphResources aovResources = frameData.GetOrCreate<HoAovRenderGraphResources>();
+            HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
+            HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
 
             if (resourceData.isActiveTargetBackBuffer
                 || !resourceData.activeColorTexture.IsValid()
-                || !aovResources.maskIdTexture.IsValid()
-                || !aovResources.normalDepthTexture.IsValid()
-                || !aovResources.objectCustom0Texture.IsValid()
-                || !aovResources.objectCustom1Texture.IsValid())
+                || !metadataResources.maskIdTexture.IsValid()
+                || !geometryResources.normalDepthTexture.IsValid()
+                || !metadataResources.objectCustom0Texture.IsValid()
+                || !metadataResources.objectCustom1Texture.IsValid())
             {
                 return;
             }
@@ -424,10 +427,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             using (var builder = renderGraph.AddRasterRenderPass<CompositePassData>("lilToon-HoCharacter Composite", out CompositePassData passData, ProfilingSampler))
             {
                 passData.source = source;
-                passData.aovMaskIdTexture = aovResources.maskIdTexture;
-                passData.aovNormalDepthTexture = aovResources.normalDepthTexture;
-                passData.aovObjectCustom0Texture = aovResources.objectCustom0Texture;
-                passData.aovObjectCustom1Texture = aovResources.objectCustom1Texture;
+                passData.aovMaskIdTexture = metadataResources.maskIdTexture;
+                passData.aovNormalDepthTexture = geometryResources.normalDepthTexture;
+                passData.aovObjectCustom0Texture = metadataResources.objectCustom0Texture;
+                passData.aovObjectCustom1Texture = metadataResources.objectCustom1Texture;
                 passData.eyeColorTexture = eyeColorTexture;
                 passData.eyeDataTexture = eyeDataTexture;
                 passData.material = compositeMaterial;

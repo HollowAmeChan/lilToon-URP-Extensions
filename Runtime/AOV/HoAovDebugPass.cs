@@ -1,5 +1,7 @@
 #pragma warning disable CS0618, CS0672
 
+using lilToon.URP.Extensions.GeometryBuffer;
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -108,16 +110,17 @@ namespace lilToon.URP.Extensions.AOV
             }
 
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
-            HoAovRenderGraphResources aovResources = frameData.GetOrCreate<HoAovRenderGraphResources>();
+            HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
+            HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
             TextureHandle source = resourceData.activeColorTexture;
             if (!source.IsValid()
-                || !aovResources.maskIdTexture.IsValid()
-                || !aovResources.normalDepthTexture.IsValid()
-                || !aovResources.surfaceDataTexture.IsValid()
-                || !aovResources.custom0Texture.IsValid()
-                || !aovResources.objectCustom0Texture.IsValid()
-                || !aovResources.objectCustom1Texture.IsValid()
-                || !aovResources.sssTexture.IsValid())
+                || !metadataResources.maskIdTexture.IsValid()
+                || !geometryResources.normalDepthTexture.IsValid()
+                || !metadataResources.surfaceDataTexture.IsValid()
+                || !metadataResources.custom0Texture.IsValid()
+                || !metadataResources.objectCustom0Texture.IsValid()
+                || !metadataResources.objectCustom1Texture.IsValid()
+                || !metadataResources.sssTexture.IsValid())
             {
                 return;
             }
@@ -131,13 +134,13 @@ namespace lilToon.URP.Extensions.AOV
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoAOV Debug", out PassData passData, ProfilingSampler))
             {
                 passData.source = source;
-                passData.maskIdTexture = aovResources.maskIdTexture;
-                passData.normalDepthTexture = aovResources.normalDepthTexture;
-                passData.surfaceDataTexture = aovResources.surfaceDataTexture;
-                passData.custom0Texture = aovResources.custom0Texture;
-                passData.objectCustom0Texture = aovResources.objectCustom0Texture;
-                passData.objectCustom1Texture = aovResources.objectCustom1Texture;
-                passData.sssTexture = aovResources.sssTexture;
+                passData.maskIdTexture = metadataResources.maskIdTexture;
+                passData.normalDepthTexture = geometryResources.normalDepthTexture;
+                passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
+                passData.custom0Texture = metadataResources.custom0Texture;
+                passData.objectCustom0Texture = metadataResources.objectCustom0Texture;
+                passData.objectCustom1Texture = metadataResources.objectCustom1Texture;
+                passData.sssTexture = metadataResources.sssTexture;
                 passData.debugMaterial = debugMaterial;
                 passData.debugMode = settings.debugMode;
                 passData.debugDepthParams = GetDebugDepthParams(settings);

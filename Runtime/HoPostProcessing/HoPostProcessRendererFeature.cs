@@ -2,6 +2,8 @@ using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
 using lilToon.URP.Extensions.AOV;
+using lilToon.URP.Extensions.GeometryBuffer;
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -501,7 +503,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            HoAovRenderGraphResources aovResources = frameData.GetOrCreate<HoAovRenderGraphResources>();
+            HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
+            HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
 
             int writtenLayerCount = 0;
             for (int i = 0; i < runtimeLayers.Count; i++)
@@ -522,12 +525,12 @@ namespace lilToon.URP.Extensions.PostProcessing
                 using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{hoPostPassName} Layer {writtenLayerCount}", out PassData passData, hoPostProfilingSampler))
                 {
                     passData.source = source;
-                    passData.aovMaskIdTexture = aovResources.maskIdTexture;
-                    passData.aovNormalDepthTexture = aovResources.normalDepthTexture;
-                    passData.aovSurfaceDataTexture = aovResources.surfaceDataTexture;
-                    passData.aovCustom0Texture = aovResources.custom0Texture;
-                    passData.aovObjectCustom0Texture = aovResources.objectCustom0Texture;
-                    passData.aovObjectCustom1Texture = aovResources.objectCustom1Texture;
+                    passData.aovMaskIdTexture = metadataResources.maskIdTexture;
+                    passData.aovNormalDepthTexture = geometryResources.normalDepthTexture;
+                    passData.aovSurfaceDataTexture = metadataResources.surfaceDataTexture;
+                    passData.aovCustom0Texture = metadataResources.custom0Texture;
+                    passData.aovObjectCustom0Texture = metadataResources.objectCustom0Texture;
+                    passData.aovObjectCustom1Texture = metadataResources.objectCustom1Texture;
                     passData.layer = runtimeLayer.settings;
                     passData.material = runtimeLayer.material;
                     passData.passIndex = Mathf.Max(0, runtimeLayer.settings.passIndex);
@@ -537,42 +540,42 @@ namespace lilToon.URP.Extensions.PostProcessing
                     passData.isPostLighting = runtimeLayer.settings.effect == HoPostProcessEffect.PostLighting;
                     bool needsAov = passData.isEdgeLight || passData.isDropShadow || passData.isPostLighting || runtimeLayer.settings.useAovMask || runtimeLayer.settings.debugAovMask;
                     bool needsAovMaskResolve = passData.isDropShadow || runtimeLayer.settings.useAovMask || runtimeLayer.settings.debugAovMask;
-                    passData.useAovMaskTexture = needsAov && aovResources.maskIdTexture.IsValid();
-                    passData.useAovNormalDepth = (passData.isEdgeLight || passData.isPostLighting) && aovResources.normalDepthTexture.IsValid();
-                    passData.useAovSurfaceData = needsAovMaskResolve && aovResources.surfaceDataTexture.IsValid();
-                    passData.useAovCustom0 = needsAovMaskResolve && aovResources.custom0Texture.IsValid();
-                    passData.useAovObjectCustom0 = needsAovMaskResolve && aovResources.objectCustom0Texture.IsValid();
-                    passData.useAovObjectCustom1 = needsAovMaskResolve && aovResources.objectCustom1Texture.IsValid();
+                    passData.useAovMaskTexture = needsAov && metadataResources.maskIdTexture.IsValid();
+                    passData.useAovNormalDepth = (passData.isEdgeLight || passData.isPostLighting) && geometryResources.normalDepthTexture.IsValid();
+                    passData.useAovSurfaceData = needsAovMaskResolve && metadataResources.surfaceDataTexture.IsValid();
+                    passData.useAovCustom0 = needsAovMaskResolve && metadataResources.custom0Texture.IsValid();
+                    passData.useAovObjectCustom0 = needsAovMaskResolve && metadataResources.objectCustom0Texture.IsValid();
+                    passData.useAovObjectCustom1 = needsAovMaskResolve && metadataResources.objectCustom1Texture.IsValid();
 
                     builder.UseTexture(source, AccessFlags.Read);
                     if (passData.useAovMaskTexture)
                     {
-                        builder.UseTexture(aovResources.maskIdTexture, AccessFlags.Read);
+                        builder.UseTexture(metadataResources.maskIdTexture, AccessFlags.Read);
                     }
 
                     if (passData.useAovNormalDepth)
                     {
-                        builder.UseTexture(aovResources.normalDepthTexture, AccessFlags.Read);
+                        builder.UseTexture(geometryResources.normalDepthTexture, AccessFlags.Read);
                     }
 
                     if (passData.useAovSurfaceData)
                     {
-                        builder.UseTexture(aovResources.surfaceDataTexture, AccessFlags.Read);
+                        builder.UseTexture(metadataResources.surfaceDataTexture, AccessFlags.Read);
                     }
 
                     if (passData.useAovCustom0)
                     {
-                        builder.UseTexture(aovResources.custom0Texture, AccessFlags.Read);
+                        builder.UseTexture(metadataResources.custom0Texture, AccessFlags.Read);
                     }
 
                     if (passData.useAovObjectCustom0)
                     {
-                        builder.UseTexture(aovResources.objectCustom0Texture, AccessFlags.Read);
+                        builder.UseTexture(metadataResources.objectCustom0Texture, AccessFlags.Read);
                     }
 
                     if (passData.useAovObjectCustom1)
                     {
-                        builder.UseTexture(aovResources.objectCustom1Texture, AccessFlags.Read);
+                        builder.UseTexture(metadataResources.objectCustom1Texture, AccessFlags.Read);
                     }
 
                     builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
