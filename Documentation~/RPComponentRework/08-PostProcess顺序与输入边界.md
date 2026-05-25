@@ -56,7 +56,7 @@ ImageProcess 是最终图像处理链。
 
 - MaterialBuffer。
 - GeometryBuffer。
-- HoAOV / MaterialBuffer mask。
+- MetadataBuffer / MaterialBuffer mask。
 - camera depth / normal。
 - object id / group id / part bit / feature flag。
 - ShadowCast atlas / attenuation / light data。
@@ -218,7 +218,7 @@ ImageProcess UI：
 - `HoPostProcess*` 运行时与 Editor 类型迁为 `ScreenProcess*`，Volume 入口改为 `ScreenProcessStackVolume`，RendererFeature 改为 `ScreenProcessRendererFeature`。
 - `HoPostAovMask` 相关类型、字段、Inspector 和 shader helper 迁为 `ScreenProcessRuleMask` / `ruleMask`，ScreenProcess 不再暴露 AOV 命名。
 - ScreenProcess shader Hidden 名迁到 `Hidden/lilToon/URP/ScreenProcess/...`，include 路径迁到 `Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl`。
-- `_lilHoAov*` 纹理/property ABI 和 `HoAOV` / `HoAOVSSS` LightMode 仍由 MetadataBuffer 承载，后续作为材质 ABI 单独迁移。
+- `_lilHoAov*` 纹理/property ABI 和 `HoAOV` / `HoAOVSSS` LightMode 已从运行时与材质模板迁出；ScreenProcess 只按 `_HoMetadataBuffer*` / `_HoGeometryBuffer*` 读取语义输入。
 
 ---
 

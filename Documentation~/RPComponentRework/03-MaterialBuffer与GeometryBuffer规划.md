@@ -479,3 +479,15 @@ GeometryBuffer.TangentNormal
 - `SSS`、`ScreenProcess`、`CharacterSpecialization` 和 MetadataBuffer debug shader 已改读新的 MetadataBuffer / GeometryBuffer 纹理名。
 
 后续重新对接材质时，材质生成器应直接生成 `HoMetadataBuffer`、`HoMetadataBufferSurfaceColor` 与 `HoGeometryBuffer` pass，不再生成或依赖旧 AOV pass。
+
+## 26. 2026-05-25 执行记录：材质模板重新对接 MetadataBuffer / GeometryBuffer
+
+已在 `lilToon` 材质生成资源侧完成原生 pass 对接，不再等待旧材质绑定兼容：
+
+- `Assets/lilToon/CustomShaderResources/URP/Default*.lilblock` 中的旧 `HoAOV` pass 改为 `HoMetadataBuffer`，只输出 `MaskId`、`SurfaceData`、`MaterialCustom0_3`、`ObjectCustom0_3`、`ObjectCustom4_7` 五个 metadata MRT。
+- 同一组模板新增 `HoGeometryBuffer` pass，单独输出 world normal + linear depth，匹配 `HoGeometryBufferRendererFeature` 搜索的 LightMode。
+- 旧 `HoAOVSSS` pass 改为 `HoMetadataBufferSurfaceColor`，继续作为 SSS / 透射类效果的表面颜色输入，和 metadata MRT 分离。
+- `lil_pass_hoaov.hlsl` 重命名为 `lil_pass_metadata_buffer.hlsl`，fragment entry 分成 `fragMetadataBuffer`、`fragGeometryBuffer`、`fragMetadataBufferSurfaceColor`。
+- 材质属性、Inspector 分组和 PropertyBlock 从 `HoAov` / `_HoAovCustom*` 迁到 `MetadataBuffer` / `_HoMetadataBufferCustom*`。
+
+这一步完成后，Buffer 主线的旧 ABI 与材质原生 pass 基本切干净。后续大块不再是旧 AOV 兼容，而是继续审查 `ScreenProcess` / `SSS` / `CharacterSpecialization` 的语义消费是否只声明自己真实需要的 MetadataBuffer / GeometryBuffer 输入。
