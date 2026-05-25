@@ -205,9 +205,10 @@ Debug 重点看：
 Debug 入口可以统一，但资源归属必须局部：
 
 - ShadowCast debug shader 在 `Runtime/ShadowCast/Shaders/Debug/`。
-- MaterialBuffer / GeometryBuffer debug shader 在 Buffer feature 自己目录。
+- MetadataBuffer / GeometryBuffer debug shader 在 Buffer feature 自己目录。
 - SSS debug shader 在 SSS 目录。
 - ScreenProcess / ImageProcess 的 debug 由各自 effect 目录提供。
+- 各 feature 的 debug view 由自己的 `<Feature>DebugViewInfo.cs` 声明，并通过 `HoDebugViewRegistry` 汇总给公共 UI。
 
 公共 Debug UI 只负责：
 
@@ -218,6 +219,7 @@ Debug 入口可以统一，但资源归属必须局部：
 
 公共 Debug UI 不拥有 feature 的 debug shader、debug material 或 collector。
 重 debug shader 默认不编译，用户显式启用 debug profile / define / shader collection 后才进入收集。
+当前已登记的 view info 覆盖 MetadataBuffer、GeometryBuffer、ShadowCast、SSS、ScreenProcess rule mask 和 ImageProcess layer chain；ScreenProcess 与 ImageProcess 条目是轻量观察入口，不进入重 debug shader collection。
 
 ---
 

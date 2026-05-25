@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+using lilToon.URP.Extensions.Debugging;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -9,26 +11,6 @@ namespace lilToon.URP.Extensions.Editor.Debugging
         private const string MenuPath = "lilToon URP Extensions/Debug/Generate Debug Shader Collection";
         private const string OutputDirectory = "Assets/lilToon URP Extensions/Debug";
         private const string OutputPath = OutputDirectory + "/LilUrpDebugShaders.shadervariants";
-
-        private static readonly DebugShaderEntry[] DebugShaders =
-        {
-            new DebugShaderEntry(
-                "MetadataBuffer",
-                "Hidden/lilToon/URP/MetadataBuffer/DebugView",
-                "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/MetadataBuffer/Shaders/Debug/HoMetadataBufferDebug.shader"),
-            new DebugShaderEntry(
-                "GeometryBuffer",
-                "Hidden/lilToon/URP/GeometryBuffer/DebugView",
-                "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/Debug/HoGeometryBufferDebug.shader"),
-            new DebugShaderEntry(
-                "ShadowCast",
-                "Hidden/lilToon-HoShadowCast/URP/DebugView",
-                "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders/Debug/HoShadowCastDebug.shader"),
-            new DebugShaderEntry(
-                "Subsurface Scattering",
-                "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView",
-                "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SubsurfaceScattering/Shaders/Debug/HoSubsurfaceScatteringDebug.shader")
-        };
 
         [MenuItem(MenuPath, false, 2200)]
         private static void Generate()
@@ -49,10 +31,17 @@ namespace lilToon.URP.Extensions.Editor.Debugging
             int shaderCount = 0;
             int variantCount = 0;
             int missingCount = 0;
+            HashSet<string> processedShaders = new HashSet<string>();
 
-            foreach (DebugShaderEntry entry in DebugShaders)
+            foreach (HoDebugViewInfo entry in HoDebugViewRegistry.ShaderCollectionViews)
             {
-                Shader shader = AssetDatabase.LoadAssetAtPath<Shader>(entry.AssetPath);
+                string shaderKey = entry.ShaderName + "|" + entry.ShaderAssetPath;
+                if (!processedShaders.Add(shaderKey))
+                {
+                    continue;
+                }
+
+                Shader shader = AssetDatabase.LoadAssetAtPath<Shader>(entry.ShaderAssetPath);
                 if (shader == null)
                 {
                     shader = Shader.Find(entry.ShaderName);
@@ -61,7 +50,7 @@ namespace lilToon.URP.Extensions.Editor.Debugging
                 if (shader == null)
                 {
                     missingCount++;
-                    Debug.LogWarning($"[lilToon URP Extensions] Debug shader not found for {entry.FeatureName}: {entry.ShaderName} ({entry.AssetPath})");
+                    Debug.LogWarning($"[lilToon URP Extensions] Debug shader not found for {entry.FeatureName}: {entry.ShaderName} ({entry.ShaderAssetPath}). {entry.MissingFallback}");
                     continue;
                 }
 
@@ -120,18 +109,5 @@ namespace lilToon.URP.Extensions.Editor.Debugging
             }
         }
 
-        private readonly struct DebugShaderEntry
-        {
-            public DebugShaderEntry(string featureName, string shaderName, string assetPath)
-            {
-                FeatureName = featureName;
-                ShaderName = shaderName;
-                AssetPath = assetPath;
-            }
-
-            public readonly string FeatureName;
-            public readonly string ShaderName;
-            public readonly string AssetPath;
-        }
     }
 }

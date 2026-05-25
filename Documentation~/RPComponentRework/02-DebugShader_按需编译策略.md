@@ -69,6 +69,8 @@ Feature 提供：
 
 公共 debug UI 只读取这些局部信息生成菜单和 tile，不重新定义资源归属。
 
+2026-05-26 后，运行时契约落在 `Runtime/Debug/HoDebugViewInfo.cs` 与 `HoDebugViewRegistry`。各 feature 仍在自己的目录声明 `<Feature>DebugViewInfo.cs`；公共 registry 只汇总 view 元数据，供 Editor 工具、未来 Debug UI 和 tile view 读取，不拥有 shader、material 或 RenderTexture。
+
 ---
 
 ## 3. 编译与收集策略
@@ -201,10 +203,11 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 - 生成目标为宿主工程 `Assets/lilToon URP Extensions/Debug/LilUrpDebugShaders.shadervariants`，不把 collection 默认放入运行时包资源。
 - 第一批只收集已经按需加载的独立重 debug shader：`HoMetadataBufferDebug.shader`、`HoGeometryBufferDebug.shader`、`HoShadowCastDebug.shader` 与 `HoSubsurfaceScatteringDebug.shader`。
 - 生成器优先通过 package asset path 加载 shader，失败时才 fallback 到 `Shader.Find`，因此普通运行时仍不会因为安装包而主动查找 debug shader。
+- 2026-05-26 生成器改为读取 `HoDebugViewRegistry.ShaderCollectionViews`，并按 shader name / asset path 去重；ScreenProcess 与 ImageProcess 这类非重 shader view 会登记到 view info，但不会进入 collection。
 
 待处理：
 
-- ScreenProcess rule mask debug 还未迁到局部按需收集策略。
+- ScreenProcess rule mask debug 已作为 `ScreenProcessDebugViewInfo` 的非重 shader view 登记；是否拆成独立 debug shader 仍是后续收口项。
 - 后续 debug profile / tile view 仍需基于 feature 局部 view info 接入。
 
 已继续对 SSS debug 分支做按需编译拆分：
@@ -228,6 +231,13 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 - `HoMetadataBufferDebugMode` 删除 `LinearDepth`、`WorldNormal`、`Velocity`，MetadataBuffer debug 只显示自身 metadata、custom、RSUV 和 SurfaceColor。
 - `HoMetadataBufferDebugPass` 不再读取 `HoGeometryBufferRenderGraphResources`，也不再向 debug shader 绑定 `_HoGeometryBufferNormalDepthTexture`。
 - MetadataBuffer debug shader 删除 `HoGeometryBufferSampling.hlsl` include 与 `_HoMetadataBufferDebugDepthParams`，几何调试统一转到 GeometryBuffer debug view。
+
+2026-05-26 继续补齐 feature-local debug view contract：
+
+- 新增 `Runtime/Debug/HoDebugViewInfo.cs` / `HoDebugViewRegistry.cs`，公共层只聚合 view id、短名、mode value、shader 名、asset path、是否进入 shader collection 和缺失降级说明。
+- MetadataBuffer、GeometryBuffer、ShadowCast、SSS、ScreenProcess、ImageProcess 分别新增 `<Feature>DebugViewInfo.cs`，view 列表归属仍留在 feature 目录。
+- `LilUrpDebugShaderCollectionGenerator` 不再维护硬编码 debug shader 表，改读 registry 中标记为 `RequiresShaderCollection` 的 view，并对同一 shader 去重。
+- ScreenProcess rule mask 和 ImageProcess layer chain 先登记为无独立 shader 的轻量观察入口，公共 Debug UI / tile view 不因此接管 effect shader 或图像链资源。
 
 ---
 
