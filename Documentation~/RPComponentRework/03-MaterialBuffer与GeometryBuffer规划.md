@@ -439,3 +439,12 @@ GeometryBuffer.TangentNormal
 - `HoAovRenderScale` 改为 CharacterSpecialization 局部的 `HoCharacterRenderScale`，不再为了一个捕获分辨率 enum 保留 AOV 命名空间。
 - 删除 `Runtime/AOV/`、`Editor/AOV/` 以及对应 `.meta` 文件，旧 AOV 不再作为代码目录或命名空间存在。
 - 当前仍保留 `_lilHoAov*` 纹理名、`HoAOV` / `HoAOVSSS` LightMode 和 ScreenProcess 里的 `AovMask` 字段名，作为材质 pass / shader ABI / ScreenProcess 语义遮罩的后续单独迁移项；它们不再由 AOV 目录承载。
+
+## 23. 2026-05-25 执行记录：补收用户可见 AOV 文案
+
+删除 AOV 代码目录后复查 Runtime/Editor 残留，旧 `HoAov*` 类型、命名空间和代码目录没有回流。已补收两处用户可见旧口径：
+
+- ScreenProcess rule mask Inspector 不再显示 `AOV 遮罩` / `AOV 规则` / `AOV 源`，改为规则遮罩、ScreenProcess 规则与 `MetadataBuffer 源`。
+- HoSSS 设置面板和提示不再把源数据称作 HoAOV，改为 `MetadataBuffer` 的 SSS 专用通道与 `surfaceData`。
+
+仍保留的 `HoAOV` / `HoAOVSSS` 只作为材质 LightMode 与 shader ABI 名存在，由 `HoMetadataBufferShaderConstants` 承载；这不是 AOV 代码目录或用户入口。

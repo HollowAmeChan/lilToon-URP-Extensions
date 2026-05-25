@@ -11,7 +11,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.PostProcessing
 {
-    [DisallowMultipleRendererFeature("lilToon-HoPost Process Stack")]
+    [DisallowMultipleRendererFeature("lilToon-ScreenProcess")]
     [ExecuteAlways]
     public sealed class HoPostProcessRendererFeature : ScriptableRendererFeature
     {
@@ -26,7 +26,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         private bool warnedMissingSubjectMaskShader;
         private HoPostProcessPass pass;
 
-        [Tooltip("The renderer feature installs the pass, and Volume profiles provide the active HoPost stack.")]
+        [Tooltip("The renderer feature installs the pass, and Volume profiles provide the active ScreenProcess stack.")]
         public bool UseVolumes = true;
 
         public static bool IsUseVolumes { get; private set; } = true;
@@ -36,7 +36,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public override void Create()
         {
             IsUseVolumes = UseVolumes;
-            pass = new HoPostProcessPass("lilToon-HoPost After URP Before Shoost");
+            pass = new HoPostProcessPass("lilToon-ScreenProcess After URP Before ImageProcess");
         }
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
@@ -218,7 +218,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 if (!warnedMissingSubjectMaskShader)
                 {
                     warnedMissingSubjectMaskShader = true;
-                    Debug.LogWarning($"HoPost Drop Shadow was skipped because shader '{HoPostProcessShaderConstants.SubjectMaskShaderName}' could not be found.");
+                    Debug.LogWarning($"ScreenProcess Drop Shadow was skipped because shader '{HoPostProcessShaderConstants.SubjectMaskShaderName}' could not be found.");
                 }
 
                 return null;
@@ -265,7 +265,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            Debug.LogWarning($"HoPost effect '{layer.effect}' was skipped because shader '{shaderName}' could not be found.");
+            Debug.LogWarning($"ScreenProcess effect '{layer.effect}' was skipped because shader '{shaderName}' could not be found.");
         }
     }
 
@@ -291,8 +291,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         };
 
         private readonly List<HoPostProcessRuntimeLayer> runtimeLayers = new List<HoPostProcessRuntimeLayer>();
-        private readonly ProfilingSampler hoPostProfilingSampler;
-        private readonly string hoPostPassName;
+        private readonly ProfilingSampler screenProcessProfilingSampler;
+        private readonly string screenProcessPassName;
         private RTHandle cameraColorTarget;
         private RTHandle cameraDepthTarget;
         private RTHandle tempTextureA;
@@ -329,8 +329,8 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         public HoPostProcessPass(string passName)
         {
-            hoPostPassName = passName;
-            hoPostProfilingSampler = new ProfilingSampler(passName);
+            screenProcessPassName = passName;
+            screenProcessProfilingSampler = new ProfilingSampler(passName);
             subjectMaskRenderStateBlock = new RenderStateBlock(RenderStateMask.Nothing);
         }
 
@@ -413,7 +413,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             CommandBuffer cmd = CommandBufferPool.Get();
-            using (new ProfilingScope(cmd, hoPostProfilingSampler))
+            using (new ProfilingScope(cmd, screenProcessProfilingSampler))
             {
                 RenderSubjectMask(context, cmd, ref renderingData);
 
@@ -521,7 +521,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 EnsureHdrTextureDesc(ref destinationDesc);
                 TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
-                using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{hoPostPassName} Layer {writtenLayerCount}", out PassData passData, hoPostProfilingSampler))
+                using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{screenProcessPassName} Layer {writtenLayerCount}", out PassData passData, screenProcessProfilingSampler))
                 {
                     passData.source = source;
                     passData.aovMaskIdTexture = metadataResources.maskIdTexture;

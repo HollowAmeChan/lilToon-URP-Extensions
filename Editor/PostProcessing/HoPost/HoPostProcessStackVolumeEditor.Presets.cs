@@ -88,7 +88,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             bool wasExpanded = element.isExpanded;
             bool wasEnabled = GetBoolValue(element, "enabled", true);
             AovMaskState aovMaskState = CaptureAovMaskState(element);
-            Undo.RecordObject(serializedObject.targetObject, "Apply HoPost Preset");
+            Undo.RecordObject(serializedObject.targetObject, "Apply ScreenProcess Preset");
             apply(element, effect);
             SetEnum(element, "effect", (int)effect);
             SetBool(element, "enabled", wasEnabled);
@@ -334,7 +334,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             public AovRuleState(SerializedProperty rule)
             {
                 Enabled = GetBoolValue(rule, "enabled", true);
-                Name = GetStringValue(rule, "name", "AOV Rule");
+                Name = GetStringValue(rule, "name", "ScreenProcess Rule");
                 Source = GetEnumValue(rule, "source", (int)HoPostAovSource.Mask);
                 MatchOperator = GetEnumValue(rule, "matchOperator", (int)HoPostAovMaskOperator.Direct);
                 Value = GetFloatValue(rule, "value", 0.5f);

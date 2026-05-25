@@ -103,16 +103,16 @@ namespace lilToon.URP.Extensions.PostProcessing
     [Serializable]
     public sealed class HoPostAovMaskRule
     {
-        [Tooltip("Skip only this AOV mask rule.")]
+        [Tooltip("Skip only this ScreenProcess rule mask rule.")]
         public bool enabled = true;
 
-        [Tooltip("Display name in the AOV mask rule list.")]
-        public string name = "AOV Rule";
+        [Tooltip("Display name in the ScreenProcess rule mask list.")]
+        public string name = "ScreenProcess Rule";
 
-        [Tooltip("HoAOV channel sampled by this rule.")]
+        [Tooltip("MetadataBuffer channel sampled by this rule.")]
         public HoPostAovSource source = HoPostAovSource.Mask;
 
-        [Tooltip("How the sampled HoAOV data is converted into a rule mask.")]
+        [Tooltip("How the sampled MetadataBuffer data is converted into a rule mask.")]
         public HoPostAovMaskOperator matchOperator = HoPostAovMaskOperator.Direct;
 
         [Tooltip("Primary numeric value used by threshold, compare, equality, and flags modes.")]
@@ -131,23 +131,23 @@ namespace lilToon.URP.Extensions.PostProcessing
         [Tooltip("Color used by Match Color mode.")]
         public Color matchColor = Color.white;
 
-        [Tooltip("How this rule is combined with the accumulated AOV mask.")]
+        [Tooltip("How this rule is combined with the accumulated ScreenProcess mask.")]
         public HoPostAovMaskCombine combine = HoPostAovMaskCombine.Replace;
 
-        [Tooltip("Invert this rule within covered HoAOV pixels before combining it.")]
+        [Tooltip("Invert this rule within covered MetadataBuffer pixels before combining it.")]
         public bool invert;
     }
 
     [Serializable]
     public sealed class HoPostProcessLayer
     {
-        [Tooltip("Display name in the HoPost stack.")]
-        public string name = "HoPost Layer";
+        [Tooltip("Display name in the ScreenProcess stack.")]
+        public string name = "ScreenProcess Layer";
 
         [Tooltip("Keep the layer in the stack, but skip it at runtime.")]
         public bool enabled = true;
 
-        [Tooltip("The HoPost effect slot represented by this layer.")]
+        [Tooltip("The ScreenProcess effect slot represented by this layer.")]
         public HoPostProcessEffect effect = HoPostProcessEffect.EdgeLight;
 
         [Tooltip("Optional material override. Used for experiments or custom passes.")]
@@ -164,7 +164,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         [Range(0.0f, 1.0f)]
         public float intensity = 1.0f;
 
-        [Tooltip("Blend mode hint for HoPost effects. The shader reads _LayerBlendMode.")]
+        [Tooltip("Blend mode hint for ScreenProcess effects. The shader reads _LayerBlendMode.")]
         public HoPostProcessBlendMode blendMode = HoPostProcessBlendMode.Add;
 
         [Tooltip("Primary color. EdgeLight and other HDR subject effects should treat this as HDR.")]
@@ -180,7 +180,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public Vector4 parameters4;
         public Vector4 parameters5;
 
-        [Tooltip("Scene object used by HoPost Depth Of Field target focus mode.")]
+        [Tooltip("Scene object used by ScreenProcess Depth Of Field target focus mode.")]
         public Transform depthOfFieldFocusTarget;
 
         [Tooltip("Fallback scene hierarchy path used when a Volume Profile asset cannot keep a scene object reference.")]
@@ -189,16 +189,16 @@ namespace lilToon.URP.Extensions.PostProcessing
         [Tooltip("Additional camera-space distance offset added to the Depth Of Field focus target.")]
         public float depthOfFieldFocusOffset;
 
-        [Tooltip("Use HoAOV data as a per-layer mask.")]
+        [Tooltip("Use MetadataBuffer data as a per-layer ScreenProcess mask.")]
         public bool useAovMask;
 
-        [Tooltip("HoAOV channel sampled by this layer mask.")]
+        [Tooltip("MetadataBuffer channel sampled by this layer mask.")]
         public HoPostAovSource aovSource = HoPostAovSource.Mask;
 
-        [Tooltip("How the sampled HoAOV data is converted into a mask.")]
+        [Tooltip("How the sampled MetadataBuffer data is converted into a mask.")]
         public HoPostAovMaskMode aovMaskMode = HoPostAovMaskMode.Direct;
 
-        [Tooltip("Threshold, tolerance, or match width used by the HoAOV mask.")]
+        [Tooltip("Threshold, tolerance, or match width used by the ScreenProcess mask.")]
         [Min(0.0f)]
         public float aovThreshold = 0.5f;
 
@@ -208,13 +208,13 @@ namespace lilToon.URP.Extensions.PostProcessing
         [Tooltip("Color used by Match Color mode.")]
         public Color aovMatchColor = Color.white;
 
-        [Tooltip("Invert the resolved HoAOV mask within covered HoAOV pixels.")]
+        [Tooltip("Invert the resolved ScreenProcess mask within covered MetadataBuffer pixels.")]
         public bool invertAovMask;
 
-        [Tooltip("Replace this layer output with the resolved HoAOV mask for debugging.")]
+        [Tooltip("Replace this layer output with the resolved ScreenProcess mask for debugging.")]
         public bool debugAovMask;
 
-        [Tooltip("Fine-grained HoAOV mask rule list. The runtime evaluates at most four rules. Empty lists fall back to the legacy single-rule fields above.")]
+        [Tooltip("Fine-grained ScreenProcess rule mask list. The runtime evaluates at most four rules. Empty lists fall back to the single-rule fields above.")]
         public List<HoPostAovMaskRule> aovRules = new List<HoPostAovMaskRule>();
 
         public bool IsActive => enabled && intensity > 0.0001f;

@@ -7,10 +7,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
     internal sealed partial class HoPostProcessStackVolumeEditor
     {
         private static PostProcessLayerViewControlSession HoPostCenterRadiusViewControl =
-            new PostProcessLayerViewControlSession("HoPost.CenterRadius");
+            new PostProcessLayerViewControlSession("ScreenProcess.CenterRadius");
 
         private static PostProcessLayerViewControlSession HoPostDirectionDistanceViewControl =
-            new PostProcessLayerViewControlSession("HoPost.DirectionDistance");
+            new PostProcessLayerViewControlSession("ScreenProcess.DirectionDistance");
 
         private float DrawHoPostCenterRadiusViewControlButton(Rect rect, float y, SerializedProperty element)
         {
@@ -155,7 +155,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 viewRect,
                 evt,
                 target,
-                "Adjust HoPost Edge Light In View",
+                "Adjust ScreenProcess Edge Light In View",
                 ref HoPostDirectionDistanceViewControl.ActiveHandle,
                 ref origin,
                 ref angle,
@@ -191,7 +191,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 viewRect,
                 evt,
                 target,
-                "Adjust HoPost Drop Shadow In View",
+                "Adjust ScreenProcess Drop Shadow In View",
                 ref HoPostDirectionDistanceViewControl.ActiveHandle,
                 ref origin,
                 ref angle,
@@ -228,7 +228,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 viewRect,
                 evt,
                 target,
-                "Adjust HoPost Post Lighting Direction In View",
+                "Adjust ScreenProcess Post Lighting Direction In View",
                 ref HoPostDirectionDistanceViewControl.ActiveHandle,
                 ref origin,
                 ref angle,
@@ -263,7 +263,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 viewRect,
                 evt,
                 target,
-                "Adjust HoPost Post Lighting Center In View",
+                "Adjust ScreenProcess Post Lighting Center In View",
                 ref HoPostCenterRadiusViewControl.ActiveHandle,
                 ref center,
                 ref radius,

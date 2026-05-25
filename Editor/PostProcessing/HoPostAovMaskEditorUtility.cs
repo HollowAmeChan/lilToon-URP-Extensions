@@ -104,7 +104,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             float toggleWidth = 58.0f;
             Rect foldoutRect = new Rect(headerRect.x, headerRect.y, Mathf.Max(0.0f, headerRect.width - toggleWidth), headerRect.height);
             Rect toggleRect = new Rect(headerRect.xMax - toggleWidth, headerRect.y, toggleWidth, headerRect.height);
-            useAovMask.isExpanded = EditorGUI.Foldout(foldoutRect, useAovMask.isExpanded, "AOV 遮罩", true);
+            useAovMask.isExpanded = EditorGUI.Foldout(foldoutRect, useAovMask.isExpanded, "规则遮罩", true);
             useAovMask.boolValue = EditorGUI.ToggleLeft(toggleRect, "启用", useAovMask.boolValue);
             y += lineHeight + lineSpacing;
 
@@ -118,13 +118,13 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             invertAovMask.boolValue = EditorGUI.Toggle(
                 new Rect(x, y, width, lineHeight),
-                new GUIContent("最终反转", "只在当前 HoAOV 覆盖范围内反转最终规则组结果。"),
+                new GUIContent("最终反转", "只在当前 MetadataBuffer 覆盖范围内反转最终规则组结果。"),
                 invertAovMask.boolValue);
             y += lineHeight + lineSpacing;
 
             debugAovMask.boolValue = EditorGUI.Toggle(
                 new Rect(x, y, width, lineHeight),
-                new GUIContent("输出匹配结果", "直接输出当前 AOV 规则组解析出的 mask，用于调试。"),
+                new GUIContent("输出匹配结果", "直接输出当前 ScreenProcess 规则组解析出的 mask，用于调试。"),
                 debugAovMask.boolValue);
             y += lineHeight + lineSpacing;
 
@@ -139,7 +139,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             EditorGUI.LabelField(
                 new Rect(innerX, y, innerWidth, lineHeight),
-                $"AOV 规则 ({rules.arraySize}/{MaxRuleCount})",
+                $"ScreenProcess 规则 ({rules.arraySize}/{MaxRuleCount})",
                 EditorStyles.boldLabel);
             y += lineHeight + lineSpacing;
 
@@ -155,7 +155,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Rect addRect = new Rect(innerX, y, innerWidth, lineHeight);
             using (new EditorGUI.DisabledScope(rules.arraySize >= MaxRuleCount))
             {
-                if (GUI.Button(addRect, $"添加 AOV 规则 ({rules.arraySize}/{MaxRuleCount})"))
+                if (GUI.Button(addRect, $"添加规则 ({rules.arraySize}/{MaxRuleCount})"))
                 {
                     int index = rules.arraySize;
                     rules.InsertArrayElementAtIndex(index);
@@ -238,7 +238,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             source.enumValueIndex = EditorGUI.Popup(
                 new Rect(x, y, width, lineHeight),
-                "AOV 源",
+                "MetadataBuffer 源",
                 Mathf.Clamp(source.enumValueIndex, 0, AovSources.Length - 1),
                 AovSources);
             y += lineHeight + lineSpacing;
@@ -261,7 +261,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             invert.boolValue = EditorGUI.Toggle(
                 new Rect(x, y, width, lineHeight),
-                new GUIContent("反转本规则", "在 HoAOV 覆盖范围内反转当前规则结果，再与规则组累计结果混合。"),
+                new GUIContent("反转本规则", "在 MetadataBuffer 覆盖范围内反转当前规则结果，再与规则组累计结果混合。"),
                 invert.boolValue);
             y += lineHeight + lineSpacing;
             return false;

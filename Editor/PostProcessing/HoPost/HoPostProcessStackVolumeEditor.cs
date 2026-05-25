@@ -437,7 +437,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
-            Undo.RecordObject(serializedObject.targetObject, "Add HoPost Effect");
+            Undo.RecordObject(serializedObject.targetObject, "Add ScreenProcess Effect");
             int index = GetLayerInsertIndex(effect);
             layerValues.InsertArrayElementAtIndex(index);
             SerializedProperty element = layerValues.GetArrayElementAtIndex(index);
@@ -502,7 +502,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
                 if (!recordedUndo)
                 {
-                    Undo.RecordObject(serializedObject.targetObject, "Remove HoPost Effect");
+                    Undo.RecordObject(serializedObject.targetObject, "Remove ScreenProcess Effect");
                     recordedUndo = true;
                 }
 

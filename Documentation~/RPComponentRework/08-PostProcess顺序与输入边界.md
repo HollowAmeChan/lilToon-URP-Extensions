@@ -199,7 +199,18 @@ ImageProcess UI：
 
 ---
 
-## 9. 验收清单
+## 9. 2026-05-25 执行记录：ScreenProcess 命名准备
+
+已开始把旧 HoPost 用户入口迁到 ScreenProcess 语义：
+
+- RendererFeature 防重名显示、Volume 菜单、Volume displayName、Frame Debugger pass 名与 shader 缺失日志改用 `ScreenProcess`。
+- Editor Undo 文本和 Game View 调整会话名改用 `ScreenProcess`。
+- ScreenProcess layer / rule mask Tooltip 不再把语义输入描述成 HoPost/HoAOV，而改为 `ScreenProcess`、`MaterialBuffer`、`MetadataBuffer` 口径。
+- 旧 `HoPostProcess*` 类型名、目录名和 Hidden shader 名仍作为迁移期实现名保留；它们是下一步 `ScreenProcessRendererFeature` / `ScreenProcessLayer` 文件级迁移的剩余边界。
+
+---
+
+## 10. 验收清单
 
 - ScreenProcess 用户拖拽顺序就是执行顺序。
 - ImageProcess 用户拖拽顺序就是执行顺序。

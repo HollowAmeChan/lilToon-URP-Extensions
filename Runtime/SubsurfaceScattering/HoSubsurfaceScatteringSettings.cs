@@ -118,7 +118,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         public bool enabled = true;
 
         [InspectorName("源提取时机")]
-        [Tooltip("捕获不透明/镂空相机颜色并提取 SSS 源颜色的时机。HoAOV 需要在它之前完成。")]
+        [Tooltip("捕获不透明/镂空相机颜色并提取 SSS 源颜色的时机。MetadataBuffer 需要在它之前完成。")]
         public RenderPassEvent sourcePassEvent = RenderPassEvent.AfterRenderingSkybox;
 
         [InspectorName("合成时机")]
@@ -138,7 +138,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         public Shader shader;
 
         [InspectorName("强度")]
-        [Tooltip("全局 SSS 合成强度。材质侧的 HoAOV surfaceData.r 仍然控制逐像素权重。")]
+        [Tooltip("全局 SSS 合成强度。材质侧的 MetadataBuffer surfaceData.r 仍然控制逐像素权重。")]
         [Range(0.0f, 2.0f)]
         public float strength = 0.45f;
 
@@ -158,7 +158,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         public float normalTolerance = 0.35f;
 
         [InspectorName("颜色")]
-        [Tooltip("用于给散射结果着色的全局颜色。材质专属配置后续可通过 HoAOV 材质/对象 ID 接入。")]
+        [Tooltip("用于给散射结果着色的全局颜色。材质专属配置后续可通过 MetadataBuffer 材质/对象 ID 接入。")]
         public Color color = new Color(1.0f, 0.43f, 0.32f, 1.0f);
 
         [InspectorName("保留源色")]
@@ -167,7 +167,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         public float sourcePreserve = 0.25f;
 
         [InspectorName("材质配置")]
-        [Tooltip("按 HoAOV surfaceData.b 中的 HoSSS Profile ID 选择材质级 SSS 参数。默认 1 号为皮肤。")]
+        [Tooltip("按 MetadataBuffer surfaceData.b 中的 HoSSS Profile ID 选择材质级 SSS 参数。默认 1 号为皮肤。")]
         public HoSubsurfaceScatteringProfileSettings[] profiles = CreateDefaultProfiles();
 
         [InspectorName("透射强度")]
