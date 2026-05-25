@@ -199,7 +199,7 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 - 新增 `Editor/Debug/LilUrpDebugShaderCollectionGenerator.cs`。
 - 菜单路径为 `lilToon URP Extensions/Debug/Generate Debug Shader Collection`。
 - 生成目标为宿主工程 `Assets/lilToon URP Extensions/Debug/LilUrpDebugShaders.shadervariants`，不把 collection 默认放入运行时包资源。
-- 第一批只收集已经按需加载的独立重 debug shader：`HoMetadataBufferDebug.shader`、`HoShadowCastDebug.shader` 与 `HoSubsurfaceScatteringDebug.shader`。
+- 第一批只收集已经按需加载的独立重 debug shader：`HoMetadataBufferDebug.shader`、`HoGeometryBufferDebug.shader`、`HoShadowCastDebug.shader` 与 `HoSubsurfaceScatteringDebug.shader`。
 - 生成器优先通过 package asset path 加载 shader，失败时才 fallback 到 `Shader.Find`，因此普通运行时仍不会因为安装包而主动查找 debug shader。
 
 待处理：
@@ -215,6 +215,13 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 - Debug 输出从 Composite pass 内联分支改为独立 `HoSubsurfaceScatteringDebugPass.cs`，RenderGraph 与 compatibility path 都只在 debug 开启时入队，且读取当前帧 SSS / transmission / AOV 资源后覆盖 camera color。
 - 主合成参数从旧 `_lilHoSSSDebugParams` 拆为 `_lilHoSSSCompositeParams`，避免主 shader 继续携带 debug mode ABI。
 - `LilUrpDebugShaderCollectionGenerator` 显式收集 SSS debug shader；普通用户不生成 collection 时不会因为启用主 SSS 功能而主动查找该 debug shader。
+
+已补上 GeometryBuffer 局部 debug 模式：
+
+- 新增 `HoGeometryBufferDebugMode`、`HoGeometryBufferDebugPass` 和 `Runtime/GeometryBuffer/Shaders/Debug/HoGeometryBufferDebug.shader`。
+- GeometryBuffer debug shader 名为 `Hidden/lilToon/URP/GeometryBuffer/DebugView`，提供 `Coverage`、`LinearDepth`、`WorldNormal`、`NormalValidity` 视图。
+- `HoGeometryBufferRendererFeature` 只在 `debugMode != Off` 且当前 camera 类型允许 debug 显示时才查找或创建 debug material；缺失 debug shader 只 warning once，不影响 GeometryBuffer 输出。
+- `LilUrpDebugShaderCollectionGenerator` 显式收集 GeometryBuffer debug shader；普通用户不生成 collection 时不会因为启用 GeometryBuffer 主功能而主动查找该 debug shader。
 
 ---
 

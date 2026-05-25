@@ -17,6 +17,10 @@ namespace lilToon.URP.Extensions.Editor.Debugging
                 "Hidden/lilToon/URP/MetadataBuffer/DebugView",
                 "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/MetadataBuffer/Shaders/Debug/HoMetadataBufferDebug.shader"),
             new DebugShaderEntry(
+                "GeometryBuffer",
+                "Hidden/lilToon/URP/GeometryBuffer/DebugView",
+                "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/Debug/HoGeometryBufferDebug.shader"),
+            new DebugShaderEntry(
                 "ShadowCast",
                 "Hidden/lilToon-HoShadowCast/URP/DebugView",
                 "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders/Debug/HoShadowCastDebug.shader"),

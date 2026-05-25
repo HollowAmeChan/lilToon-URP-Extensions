@@ -23,11 +23,34 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         [InspectorName("Pass Event")]
         public RenderPassEvent passEvent = RenderPassEvent.AfterRenderingOpaques;
 
+        [InspectorName("Debug Pass Event")]
+        public RenderPassEvent debugPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
+
         [InspectorName("Render Scale")]
         public HoGeometryBufferRenderScale renderScale = HoGeometryBufferRenderScale.Full;
 
         [InspectorName("Fallback Shader")]
         public Shader fallbackShader;
+
+        [InspectorName("Debug Shader")]
+        public Shader debugShader;
+
+        [InspectorName("Debug Mode")]
+        public HoGeometryBufferDebugMode debugMode = HoGeometryBufferDebugMode.Off;
+
+        [InspectorName("Debug In Scene View")]
+        public bool debugInSceneView = true;
+
+        [InspectorName("Debug In Game View")]
+        public bool debugInGameView;
+
+        [InspectorName("Debug Depth Near")]
+        [Min(0.0f)]
+        public float debugDepthNear = 0.0f;
+
+        [InspectorName("Debug Depth Far")]
+        [Min(0.0001f)]
+        public float debugDepthFar = 25.0f;
     }
 
     public enum HoGeometryBufferRenderScale

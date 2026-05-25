@@ -405,6 +405,13 @@ GeometryBuffer.TangentNormal
 - `HoAovDebugMode` 从 `Runtime/AOV/HoAovBufferTypes.cs` 移除。
 - 新增 `Runtime/MetadataBuffer/HoMetadataBufferDebugMode.cs`，只服务 MetadataBuffer debug UI / pass / settings。
 - MetadataBuffer debug shader 参数从 `_HoAovDebugMode` / `_HoAovDebugDepthParams` 改为 `_HoMetadataBufferDebugMode` / `_HoMetadataBufferDebugDepthParams`。
+
+继续补齐 GeometryBuffer 局部 debug：
+
+- 新增 `Runtime/GeometryBuffer/HoGeometryBufferDebugMode.cs` 与 `Runtime/GeometryBuffer/HoGeometryBufferDebugPass.cs`。
+- 新增 `Runtime/GeometryBuffer/Shaders/Debug/HoGeometryBufferDebug.shader`，只显示 GeometryBuffer 自己的 `Coverage`、`LinearDepth`、`WorldNormal`、`NormalValidity`。
+- `HoGeometryBufferRendererFeature` 的 debug material 只在 debug mode 打开且当前 camera 类型允许时按需加载；debug shader 缺失不影响 normal/depth 输出。
+- GeometryBuffer Inspector 增加 Debug Preview 区域，debug shader collection 生成器同步收集 `HoGeometryBufferDebug.shader`。
 - Debug mode 最后一项从旧 `SSS Source Color` 命名收敛为 `Surface Color`，继续读取当前兼容 ABI 的 `_lilHoAovSssTexture`，后续 shader target 拆分时再改资源名。
 
 这一步不改变主输出 MRT、`_lilHoAov*` 纹理/property ABI、`HoAOV` / `HoAOVSSS` 材质 LightMode，也不影响 ScreenProcess、SSS 或 CharacterSpecialization 的消费路径。

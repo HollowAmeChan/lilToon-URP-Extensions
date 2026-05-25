@@ -14,15 +14,20 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
         private readonly HoGeometryBufferRenderTargets renderTargets = new HoGeometryBufferRenderTargets();
         private HoGeometryBufferPass outputPass;
+        private HoGeometryBufferDebugPass debugPass;
         private Material fallbackMaterial;
+        private Material debugMaterial;
         private Shader fallbackShader;
+        private Shader debugShader;
         private bool warnedMissingFallbackShader;
+        private bool warnedMissingDebugShader;
 
         public HoGeometryBufferSettings Settings => settings;
 
         public override void Create()
         {
             outputPass = new HoGeometryBufferPass();
+            debugPass = new HoGeometryBufferDebugPass();
         }
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
@@ -32,8 +37,9 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 return;
             }
 
-            EnsureFallbackMaterial();
+            EnsureMaterials(ShouldDebug(in renderingData));
             outputPass?.Setup(settings, renderTargets, fallbackMaterial);
+            debugPass?.Setup(settings, renderTargets, renderer.cameraColorTargetHandle, debugMaterial);
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -43,11 +49,18 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 return;
             }
 
-            EnsureFallbackMaterial();
+            bool shouldDebug = ShouldDebug(in renderingData);
+            EnsureMaterials(shouldDebug);
             if (outputPass != null)
             {
                 outputPass.Setup(settings, renderTargets, fallbackMaterial);
                 renderer.EnqueuePass(outputPass);
+            }
+
+            if (debugPass != null && shouldDebug)
+            {
+                debugPass.SetupRenderGraph(settings, renderTargets, debugMaterial);
+                renderer.EnqueuePass(debugPass);
             }
         }
 
@@ -55,9 +68,14 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         {
             renderTargets.Release();
             outputPass = null;
+            debugPass?.Dispose();
+            debugPass = null;
             CoreUtils.Destroy(fallbackMaterial);
+            CoreUtils.Destroy(debugMaterial);
             fallbackMaterial = null;
+            debugMaterial = null;
             fallbackShader = null;
+            debugShader = null;
         }
 
         private bool ShouldRender(in RenderingData renderingData)
@@ -69,6 +87,27 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
             CameraType cameraType = renderingData.cameraData.cameraType;
             return cameraType == CameraType.Game || cameraType == CameraType.SceneView;
+        }
+
+        private bool ShouldDebug(in RenderingData renderingData)
+        {
+            if (settings == null || settings.debugMode == HoGeometryBufferDebugMode.Off)
+            {
+                return false;
+            }
+
+            CameraType cameraType = renderingData.cameraData.cameraType;
+            return (cameraType == CameraType.SceneView && settings.debugInSceneView)
+                || (cameraType == CameraType.Game && settings.debugInGameView);
+        }
+
+        private void EnsureMaterials(bool includeDebug)
+        {
+            EnsureFallbackMaterial();
+            if (includeDebug)
+            {
+                EnsureDebugMaterial();
+            }
         }
 
         private void EnsureFallbackMaterial()
@@ -97,6 +136,34 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             }
 
             fallbackMaterial = CoreUtils.CreateEngineMaterial(shader);
+        }
+
+        private void EnsureDebugMaterial()
+        {
+            Shader shader = settings != null && settings.debugShader != null
+                ? settings.debugShader
+                : Shader.Find(HoGeometryBufferShaderConstants.DebugShaderName);
+
+            if (debugMaterial != null && debugShader == shader)
+            {
+                return;
+            }
+
+            CoreUtils.Destroy(debugMaterial);
+            debugMaterial = null;
+            debugShader = shader;
+            if (shader == null)
+            {
+                if (!warnedMissingDebugShader)
+                {
+                    warnedMissingDebugShader = true;
+                    Debug.LogWarning($"GeometryBuffer debug view is unavailable because shader '{HoGeometryBufferShaderConstants.DebugShaderName}' could not be found.");
+                }
+
+                return;
+            }
+
+            debugMaterial = CoreUtils.CreateEngineMaterial(shader);
         }
     }
 }
