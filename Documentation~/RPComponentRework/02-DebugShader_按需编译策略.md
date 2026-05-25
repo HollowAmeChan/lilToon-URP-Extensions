@@ -164,7 +164,7 @@ if debug enabled:
 
 优先处理：
 
-- `Runtime/AOV/Shaders/HoAOV/HoAovDebug.shader`
+- `Runtime/AOV/Shaders/Debug/HoAovDebug.shader`
 - `Runtime/ShadowCast/Shaders/Debug/HoShadowCastDebug.shader`
 - `Runtime/SubsurfaceScattering/HoSubsurfaceScattering.shader` 内部 debug 分支
 - `Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl` 相关 debug 输出
@@ -191,6 +191,7 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 - 只有 `HoAovSettings.debugMode != Off` 且当前 camera 类型允许 debug 显示时，才调用 `Shader.Find(HoAovShaderConstants.DebugShaderName)` 并创建 debug material。
 - debug 关闭时仍正常创建 clear / fallback 主功能材质，但不会查找或加载 `HoAovDebug.shader`。
 - debug shader 缺失仍只 warning once，并且只影响 AOV debug pass，不影响 AOV output pass。
+- 2026-05-25 继续把 `HoAovDebug.shader` 移到 `Runtime/AOV/Shaders/Debug/`，shader 名与 `.meta` GUID 保持不变；`LilUrpDebugShaderCollectionGenerator` 的显式收集路径同步更新到新的 feature-local debug 目录。
 
 已补上显式生成 debug shader collection 的 Editor 入口：
 

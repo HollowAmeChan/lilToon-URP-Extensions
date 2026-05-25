@@ -264,3 +264,17 @@ GeometryBuffer.TangentNormal
 7. 更新 debug view，只显示仍存在的 Buffer 项。
 8. 再迁 ScreenProcess / ImageProcess 消费侧。
 9. 每次新增未来效果时，对照 HDRP/UE 参考文档复核它应该进入 Buffer、ScreenProcess、ImageProcess 还是 feature 私有资源。
+
+---
+
+## 9. 2026-05-25 执行记录
+
+已先完成 HoAOV 运行时文件拆分，作为后续 MaterialBuffer / GeometryBuffer 收敛前的可维护性整理：
+
+- `HoAovRendererFeature` 只保留 settings、pass enqueue、材质生命周期和 debug 按需加载决策。
+- `HoAovOutputPass` 承担 AOV/SSS source 输出与 RenderGraph 资源发布。
+- `HoAovDebugPass` 承担 debug overlay，只有 debug mode 打开且 debug shader/material 可用时入队。
+- `HoAovRenderTargets` / `HoAovRenderGraphResources` 集中管理兼容路径 RTHandle 与 RenderGraph texture handle。
+- `HoAovDebug.shader` 已移动到 `Runtime/AOV/Shaders/Debug/`，保持 feature-local debug 归属，并同步更新显式 debug shader collection 路径。
+
+这一步没有改动现有 MRT 语义布局；下一步再按真实消费者删除或重命名旧 HoAOV 通道。
