@@ -1,13 +1,14 @@
 #pragma warning disable CS0618, CS0672
 
+using lilToon.URP.Extensions.AOV;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace lilToon.URP.Extensions.AOV
+namespace lilToon.URP.Extensions.MetadataBuffer
 {
-    [DisallowMultipleRendererFeature("lilToon-HoAOV")]
-    public sealed class HoAovRendererFeature : ScriptableRendererFeature
+    [DisallowMultipleRendererFeature("lilToon-MetadataBuffer")]
+    public sealed class HoMetadataBufferRendererFeature : ScriptableRendererFeature
     {
         [SerializeField]
         private HoAovSettings settings = new HoAovSettings();
@@ -100,7 +101,7 @@ namespace lilToon.URP.Extensions.AOV
                 return;
             }
 
-            RenderPipelineManager.beginCameraRendering += ResetAovState;
+            RenderPipelineManager.beginCameraRendering += ResetMetadataBufferState;
             registeredCameraReset = true;
         }
 
@@ -111,11 +112,11 @@ namespace lilToon.URP.Extensions.AOV
                 return;
             }
 
-            RenderPipelineManager.beginCameraRendering -= ResetAovState;
+            RenderPipelineManager.beginCameraRendering -= ResetMetadataBufferState;
             registeredCameraReset = false;
         }
 
-        private static void ResetAovState(ScriptableRenderContext context, Camera camera)
+        private static void ResetMetadataBufferState(ScriptableRenderContext context, Camera camera)
         {
             Shader.SetGlobalFloat(HoAovShaderConstants.ActiveId, 0.0f);
         }
@@ -170,7 +171,7 @@ namespace lilToon.URP.Extensions.AOV
                 if (!warnedMissingClearShader)
                 {
                     warnedMissingClearShader = true;
-                    Debug.LogWarning($"HoAOV clear pass is unavailable because shader '{HoAovShaderConstants.ClearShaderName}' could not be found.");
+                    Debug.LogWarning($"MetadataBuffer clear pass is unavailable because shader '{HoAovShaderConstants.ClearShaderName}' could not be found.");
                 }
 
                 return;
@@ -198,7 +199,7 @@ namespace lilToon.URP.Extensions.AOV
                 if (!warnedMissingFallbackShader)
                 {
                     warnedMissingFallbackShader = true;
-                    Debug.LogWarning($"HoAOV fallback output is unavailable because shader '{HoAovShaderConstants.FallbackShaderName}' could not be found.");
+                    Debug.LogWarning($"MetadataBuffer fallback output is unavailable because shader '{HoAovShaderConstants.FallbackShaderName}' could not be found.");
                 }
 
                 return;
@@ -226,7 +227,7 @@ namespace lilToon.URP.Extensions.AOV
                 if (!warnedMissingDebugShader)
                 {
                     warnedMissingDebugShader = true;
-                    Debug.LogWarning($"HoAOV debug view is unavailable because shader '{HoAovShaderConstants.DebugShaderName}' could not be found.");
+                    Debug.LogWarning($"MetadataBuffer debug view is unavailable because shader '{HoAovShaderConstants.DebugShaderName}' could not be found.");
                 }
 
                 return;
@@ -235,5 +236,4 @@ namespace lilToon.URP.Extensions.AOV
             debugMaterial = CoreUtils.CreateEngineMaterial(shader);
         }
     }
-
 }

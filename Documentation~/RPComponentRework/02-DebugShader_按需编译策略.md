@@ -187,7 +187,7 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 
 已继续对 AOV debug shader 做按需加载修正：
 
-- `HoAovRendererFeature` 的主材质准备流程改为 `EnsureMaterials(includeDebug)`。
+- AOV/MetadataBuffer 主材质准备流程改为 `EnsureMaterials(includeDebug)`；2026-05-25 后用户入口类名已迁为 `HoMetadataBufferRendererFeature`。
 - 只有 `HoAovSettings.debugMode != Off` 且当前 camera 类型允许 debug 显示时，才调用 `Shader.Find(HoAovShaderConstants.DebugShaderName)` 并创建 debug material。
 - debug 关闭时仍正常创建 clear / fallback 主功能材质，但不会查找或加载 `HoAovDebug.shader`。
 - debug shader 缺失仍只 warning once，并且只影响 AOV debug pass，不影响 AOV output pass。

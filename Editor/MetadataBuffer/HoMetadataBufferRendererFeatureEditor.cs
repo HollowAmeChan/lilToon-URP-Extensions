@@ -1,11 +1,12 @@
 using lilToon.URP.Extensions.AOV;
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEditor;
 using UnityEngine;
 
-namespace lilToon.URP.Extensions.Editor.AOV
+namespace lilToon.URP.Extensions.Editor.MetadataBuffer
 {
-    [CustomEditor(typeof(HoAovRendererFeature))]
-    internal sealed class HoAovRendererFeatureEditor : UnityEditor.Editor
+    [CustomEditor(typeof(HoMetadataBufferRendererFeature))]
+    internal sealed class HoMetadataBufferRendererFeatureEditor : UnityEditor.Editor
     {
         private static bool showAdvancedSettings;
         private static bool showCustomChannels;
@@ -28,7 +29,7 @@ namespace lilToon.URP.Extensions.Editor.AOV
             }
 
             EditorGUILayout.HelpBox(
-                "HoAOV 是数据层 RendererFeature。第一次确认是否跑通时，请把“调试模式”设为“遮罩”，并确保“场景视图显示调试”已开启。ObjectCustom 通道需要 HoAovGroup 写入 RSUV 后才明显。",
+                "MetadataBuffer writes surface, material, object, and currently shared SSS source data. GeometryBuffer output is still produced by the same MRT pass until the geometry pass is split out.",
                 MessageType.Info);
 
             DrawSettings();
@@ -46,7 +47,7 @@ namespace lilToon.URP.Extensions.Editor.AOV
             DrawProperty("customChannelCount");
 
             EditorGUILayout.Space(6);
-            EditorGUILayout.LabelField("调试预览", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Debug Preview", EditorStyles.boldLabel);
             DrawProperty("debugMode");
             DrawProperty("debugInSceneView");
             DrawProperty("debugInGameView");
@@ -55,7 +56,7 @@ namespace lilToon.URP.Extensions.Editor.AOV
             DrawDebugInteractionNotice();
 
             EditorGUILayout.Space(6);
-            showCustomChannels = EditorGUILayout.Foldout(showCustomChannels, "自定义通道名称/颜色", true);
+            showCustomChannels = EditorGUILayout.Foldout(showCustomChannels, "Custom Channel Names / Colors", true);
             if (showCustomChannels)
             {
                 EditorGUI.indentLevel++;
@@ -65,7 +66,7 @@ namespace lilToon.URP.Extensions.Editor.AOV
             }
 
             EditorGUILayout.Space(6);
-            showAdvancedSettings = EditorGUILayout.Foldout(showAdvancedSettings, "高级设置", true);
+            showAdvancedSettings = EditorGUILayout.Foldout(showAdvancedSettings, "Advanced Settings", true);
             if (showAdvancedSettings)
             {
                 EditorGUI.indentLevel++;
@@ -96,7 +97,7 @@ namespace lilToon.URP.Extensions.Editor.AOV
             }
 
             EditorGUILayout.HelpBox(
-                "AOV 调试预览会写到当前视图颜色上。如果 HoPost 或 ShoostStack 也在 Scene View 生效，它们会继续处理这个调试画面，颜色可能被滤镜影响。检查原始 AOV 时，建议临时关闭 Shoost/HoPost 的 Scene View 显示或把 HoAOV 调试放在最后。",
+                "The debug preview writes to the current view color. If ScreenProcess or ImageProcess is also active in Scene View, those passes can still process the preview image.",
                 MessageType.Info);
         }
     }

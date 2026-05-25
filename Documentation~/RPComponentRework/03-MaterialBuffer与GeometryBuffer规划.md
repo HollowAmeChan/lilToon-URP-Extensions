@@ -277,7 +277,7 @@ GeometryBuffer.TangentNormal
 
 已先完成 HoAOV 运行时文件拆分，作为后续 MaterialBuffer / GeometryBuffer 收敛前的可维护性整理：
 
-- `HoAovRendererFeature` 只保留 settings、pass enqueue、材质生命周期和 debug 按需加载决策。
+- 旧 `HoAovRendererFeature` 当时只保留 settings、pass enqueue、材质生命周期和 debug 按需加载决策；后续入口已迁为 `HoMetadataBufferRendererFeature`。
 - `HoAovOutputPass` 承担 AOV/SSS source 输出与 RenderGraph 资源发布。
 - `HoAovDebugPass` 承担 debug overlay，只有 debug mode 打开且 debug shader/material 可用时入队。
 - `HoAovRenderTargets` / `HoAovRenderGraphResources` 集中管理兼容路径 RTHandle 与 RenderGraph texture handle。
@@ -332,3 +332,15 @@ GeometryBuffer.TangentNormal
 1. 新建 `HoMetadataBufferRendererFeature` 与 `HoGeometryBufferRendererFeature` 壳，先复用现有 shader pass / attachment layout。
 2. 把 `HoAovSettings` 拆成 MetadataBuffer settings 与 GeometryBuffer settings，RendererFeature 面板只保留各自输出、pass event、debug。
 3. 把 AOV debug view 改名为 Metadata/Geometry buffer debug view，并按 feature-local debug shader 策略继续拆。
+
+## 14. 2026-05-25 执行记录：MetadataBuffer RendererFeature 入口落地
+
+已把旧 HoAOV 用户入口迁到 MetadataBuffer：
+
+- 新增 `Runtime/MetadataBuffer/HoMetadataBufferRendererFeature.cs`，作为 Renderer Data 里新的 MetadataBuffer 入口。
+- 删除 `Runtime/AOV/HoAovRendererFeature.cs`，不再保留旧 HoAOV RendererFeature 类名。
+- 新增 `Editor/MetadataBuffer/HoMetadataBufferRendererFeatureEditor.cs`，旧 AOV RendererFeature editor 同步删除。
+- 当前 `HoMetadataBufferRendererFeature` 仍复用 `HoAovOutputPass` / `HoAovDebugPass` / `HoAovSettings`，因为 shader MRT layout 尚未拆成 Metadata-only 与 Geometry-only 两套 pass。
+- GeometryBuffer 目前已有独立 RenderGraph resource context 和目录；下一步再新增 `HoGeometryBufferRendererFeature` 并把 normal/depth 输出 pass 从 `HoAovOutputPass` 拆出。
+
+这一步会打断旧 Renderer Data 中直接引用 `HoAovRendererFeature` 的资产；快速开发阶段接受这种破坏性迁移。
