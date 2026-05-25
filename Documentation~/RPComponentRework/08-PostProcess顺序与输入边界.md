@@ -155,7 +155,7 @@ ImageProcess UI：
 
 ## 6. 执行迁移
 
-1. 快速开发阶段不保留旧 ImageProcess AOV mask 序列化兼容，直接删除旧字段。
+1. 快速开发阶段不保留旧 Shoost AOV mask 序列化兼容，直接删除旧字段。
 2. 直接删除旧固定 effect order 的 runtime 元数据和重排门面，不再为旧排序模式保留额外迁移字段。
 3. Editor UI 对现有资源统一启用拖拽排序。
 4. 需要 AOV mask 的旧 Shoost 效果在 ScreenProcess layer 重新实现，不从 ImageProcess 保留迁移字段。
@@ -168,15 +168,15 @@ ImageProcess UI：
 
 已在 ImageProcess 旧实现中完成第一批顺序与输入边界收敛：
 
-- `ShoostPostProcessRuntimeLayerBuilder` 保留 Volume `layers` 列表顺序，不再调用 `ShoostPostProcessEffectOrder.CompareRuntimeLayerOrder()` 强制重排。
-- `ShoostPostProcessPass.RecordRenderGraph()` 使用 ImageChain 双工作纹理推进用户层顺序。
+- `ImageProcessRuntimeLayerBuilder` 保留 Volume `layers` 列表顺序，不再调用 `ImageProcessEffectOrder.CompareRuntimeLayerOrder()` 强制重排。
+- `ImageProcessPass.RecordRenderGraph()` 使用 ImageChain 双工作纹理推进用户层顺序。
 - ImageProcess RenderGraph 路径不再读取 AOV / MaterialBuffer mask 资源，不再提供 AOV composite 或 AOV debug 输出。
 - 过渡期曾保留旧 `useAovMask` / `debugAovMask` 字段；该兼容外壳已在 2026-05-25 删除。
-- `ShoostPostProcessEffectDescriptor` 不再保留 `RuntimeOrder`；旧 `ShoostPostProcessEffectOrder` 兼容门面已删除，用户 layer 顺序成为唯一外部顺序来源。
+- `ImageProcessEffectDescriptor` 不再保留 `RuntimeOrder`；旧 `ImageProcessEffectOrder` 兼容门面已删除，用户 layer 顺序成为唯一外部顺序来源。
 
 已继续落地 Editor 侧顺序与迁移提示：
 
-- `ShoostPostProcessStackVolumeEditor` 的 layer list 开启拖拽排序。
+- `ImageProcessStackVolumeEditor` 的 layer list 开启拖拽排序。
 - Inspector 不再调用旧固定 effect order 自动重排，只保留废弃 effect slot / 重复 layer 清理。
 - 添加 layer 和应用 preset 后不再按旧 effect 顺序移动 layer，用户列表顺序即 ImageProcess 执行顺序。
 - Shoost/ImageProcess UI 不再显示 AOV mask 规则编辑器；过渡期迁移提示已在 2026-05-25 删除，语义 mask 只在 ScreenProcess 实现。
@@ -192,10 +192,10 @@ ImageProcess UI：
 
 在不需要旧资源兼容的快速开发阶段，已把 ImageProcess 的旧 AOV mask 迁移外壳直接删除：
 
-- `ShoostPostProcessLayer` 不再序列化 `useAovMask` / `debugAovMask` 和 AOV rule 数据。
-- `ShoostPostProcessPass` 不再为 legacy AOV mask 做 warning 或忽略分支；ImageProcess 中没有 semantic mask 状态可读。
+- `ImageProcessLayer` 不再序列化 `useAovMask` / `debugAovMask` 和 AOV rule 数据。
+- `ImageProcessPass` 不再为 legacy AOV mask 做 warning 或忽略分支；ImageProcess 中没有 semantic mask 状态可读。
 - `ImageProcessResourceKind` 只保留 image-chain 内部资源类型，不再包含 `AovInput`、`MaterialBuffer`、`GeometryBuffer`、`ShadowCast`。
-- `ShoostPostProcessStackVolumeEditor` 删除 legacy AOV mask 迁移提示与清理按钮。需要对象、材质、区域或 buffer 输入的效果必须在 ScreenProcess 实现。
+- `ImageProcessStackVolumeEditor` 删除 legacy AOV mask 迁移提示与清理按钮。需要对象、材质、区域或 buffer 输入的效果必须在 ScreenProcess 实现。
 
 ---
 
@@ -222,7 +222,18 @@ ImageProcess UI：
 
 ---
 
-## 11. 验收清单
+## 11. 2026-05-25 执行记录：ImageProcess 文件/类名迁移
+
+旧 ShoostStack 主路径已迁到 ImageProcess 命名：
+
+- `Runtime/ShoostPostProcessing` 迁为 `Runtime/ImageProcess`。
+- `Editor/PostProcessing/ShoostStack` 迁为 `Editor/PostProcessing/ImageProcess`。
+- `ShoostPostProcess*` 类型、partial pass 文件和 Editor 体积栈编辑器迁为 `ImageProcess*`。
+- `Runtime/ImageProcess/Shaders/Shoost` 迁为 `Runtime/ImageProcess/Shaders/ImageProcess`，Hidden shader 名统一为 `Hidden/lilToon/URP/ImageProcess/...`。
+- `Editor/ShoostIcons` 迁为 `Editor/ImageProcessIcons`，ScreenProcess 与 ImageProcess 编辑器共用新路径。
+- 迁移不重新引入 AOV mask / semantic mask；ImageProcess 仍只处理 image chain。
+
+## 12. 验收清单
 
 - ScreenProcess 用户拖拽顺序就是执行顺序。
 - ImageProcess 用户拖拽顺序就是执行顺序。

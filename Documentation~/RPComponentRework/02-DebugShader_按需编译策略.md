@@ -168,7 +168,7 @@ if debug enabled:
 - `Runtime/ShadowCast/Shaders/Debug/HoShadowCastDebug.shader`
 - `Runtime/SubsurfaceScattering/HoSubsurfaceScattering.shader` 内部 debug 分支
 - `Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl` 相关 debug 输出
-- `Runtime/ShoostPostProcessing/Shaders/Shoost/AovComposite.shader` 迁出到 ScreenProcess 或删除
+- `Runtime/ImageProcess/Shaders/ImageProcess/AovComposite.shader` 迁出到 ScreenProcess 或删除
 
 其中 MetadataBuffer / ShadowCast 更适合独立 debug shader；ScreenProcess 的 rule mask debug 应从常规效果 shader 中降级为局部可选路径。
 ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。

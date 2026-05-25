@@ -17,9 +17,9 @@
 | `OIT` | `WeightedOITRendererFeature` | 加权透明合成 |
 | `CharacterSpecialization` | `HoCharacterSpecializationRendererFeature` | 眼透、前发、角色局部合成 |
 | `ScreenProcess` | `ScreenProcessRendererFeature` | 读取 Buffer 的语义屏幕处理 |
-| `ImageProcess` | `ShoostPostProcessRendererFeature` | 最终图像处理链 |
+| `ImageProcess` | `ImageProcessRendererFeature` | 最终图像处理链 |
 
-旧名只用于引用尚未迁完的 Unity 类型和资源。用户侧主描述不再把 `HoPost`、`ShoostStack` 当作概念名。
+旧名只用于引用历史迁移记录。用户侧主描述不再把 `HoPost`、`ShoostStack` 当作概念名。
 
 ---
 

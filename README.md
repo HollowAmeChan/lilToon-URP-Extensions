@@ -17,7 +17,7 @@
 - `Runtime/GeometryBuffer`：normal/depth 几何输入缓冲。
 - `Runtime/CharacterSpecialization`：角色捕获和角色定制后处理，包括头发/脸部等风格化处理路径。
 - `Runtime/ScreenProcess`：用户可控的语义屏幕处理图层栈，支持 MetadataBuffer rule mask，并有 RenderGraph/非 RenderGraph 路径。
-- `Runtime/ShoostPostProcessing`：Shoost 风格后处理栈和具体效果移植。
+- `Runtime/ImageProcess`：最终图像处理链和具体效果移植。
 - `Runtime/PlanarReflection`：`LILPlanarReflectionSurface` 平面反射运行时，向材质提供 `_LILPBRPlanarReflectionTexture` 和相关 property block 数据。
 - `Runtime/ShadowCast`：独立 HoShadowCast atlas 生成，用于指定的额外方向光、聚光和点光。
 
@@ -26,9 +26,9 @@
 - `Editor/MetadataBuffer`：MetadataBuffer Inspector 和工具。
 - `Editor/CharacterSpecialization`：角色特化编辑器 UI。
 - `Editor/LilMatConvert`：材质转换工具。
-- `Editor/PostProcessing`：ScreenProcess/Shoost 图层栈编辑器。
+- `Editor/PostProcessing`：ScreenProcess/ImageProcess 图层栈编辑器。
 - `Editor/ShadowCast`：HoShadowCast Controller Inspector。
-- `Editor/ShoostIcons`：编辑器图标资源。
+- `Editor/ImageProcessIcons`：编辑器图标资源。
 
 ## 主要 RendererFeature
 
@@ -39,7 +39,7 @@
 - `HoGeometryBufferRendererFeature`
 - `HoCharacterSpecializationRendererFeature`
 - `ScreenProcessRendererFeature`
-- `ShoostPostProcessRendererFeature`
+- `ImageProcessRendererFeature`
 - `HoShadowCastRendererFeature`
 
 平面反射不走 RendererFeature，而是由场景组件驱动：把 `LILPlanarReflectionSurface` 加到反射平面 mesh 上。

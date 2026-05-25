@@ -381,8 +381,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             string[] candidatePaths =
             {
-                $"{PackageAssetRoot}/Editor/ShoostIcons/{iconName}.png",
-                $"Assets/Editor/ShoostIcons/{iconName}.png"
+                $"{PackageAssetRoot}/Editor/ImageProcessIcons/{iconName}.png",
+                $"Assets/Editor/ImageProcessIcons/{iconName}.png"
             };
 
             foreach (string path in candidatePaths)
