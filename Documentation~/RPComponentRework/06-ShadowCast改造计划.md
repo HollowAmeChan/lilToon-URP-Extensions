@@ -467,6 +467,15 @@ ShadowCast 与 ScreenProcess 的关系：
 - `HoShadowCastDebugPass` 继续只接收已创建好的 `Material`，不拥有 shader 查找或 material 生命周期。
 - 本次只拆分 debug material lifecycle，不改变 debug shader 名、按需加载条件、atlas 渲染、receiver ABI、MaterialBuffer/GeometryBuffer 边界或 ImageProcess 禁止消费 ShadowCast 的规则。
 
+## 10.15 2026-05-25 执行记录
+
+已开始更大粒度拆分 ShadowCast 主渲染 pass：
+
+- 新增 `Runtime/ShadowCast/HoShadowCastPass.cs`，把原本挤在 `HoShadowCastRendererFeature.cs` 里的 `HoShadowCastPass` 整体移出。
+- `HoShadowCastPass` 继续拥有 compatibility path、RenderGraph path、atlas texture 创建、renderer list 构建、shadow slice 绘制、camera global restore 与 publisher 调用。
+- `HoShadowCastRendererFeature.cs` 现在只保留 RendererFeature 壳：settings 校验、pass/debug pass 创建、Setup / Enqueue、debug material cache 生命周期和 camera reset 注册。
+- 这次是纯所有权拆分，不改变 atlas 写入顺序、light collection、receiver ABI、debug shader 按需加载、MaterialBuffer/GeometryBuffer 边界或 ImageProcess 禁止消费 ShadowCast 的规则。
+
 仍待处理：
 - 后续如果需要按 renderer/material 侧声明更细的 receiver gate，应放到 receiver / material 语义里，不反向扩张 ShadowCast 为对象分类系统。
 ---
