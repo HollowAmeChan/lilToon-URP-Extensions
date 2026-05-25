@@ -373,3 +373,14 @@ GeometryBuffer.TangentNormal
 - `HoAovRenderTargets` 仍暂留在 AOV 目录，作为非 RenderGraph 路径的兼容 RTHandle 管理；后续拆 metadata-only shader target 时再迁到 MetadataBuffer 或删除。
 
 这一步仍保留 `_lilHoAov*` shader property、`HoAOV` / `HoAOVSSS` LightMode 与 debug shader 文件名，原因是现有材质 pass 和消费者仍依赖这套 ABI。下一步再处理 shader target 拆分或 Metadata/Geometry feature-local debug shader 分拆。
+
+## 17. 2026-05-25 执行记录：RenderTarget 管理从 AOV 拆出
+
+已继续收敛非 RenderGraph 路径的 Buffer 目标管理：
+
+- `HoAovRenderTargets` 迁入 `Runtime/MetadataBuffer/HoMetadataBufferRenderTargets.cs`，作为 MetadataBuffer 兼容 RTHandle 管理类。
+- 新增 `Runtime/HoBufferFormatUtility.cs`，集中管理 mask、高精度颜色与 depth/stencil format fallback。
+- `GeometryBuffer` 不再借用 AOV render-target 类的静态格式 helper，改读 `HoBufferFormatUtility`。
+- `MetadataBuffer` RenderGraph 与 compatibility path 都改读 `HoMetadataBufferRenderTargets` / `HoBufferFormatUtility`。
+
+这一步仍没有重命名 `_lilHoAov*` 纹理名；当前 ScreenProcess、SSS、CharacterSpecialization 与旧材质 pass 仍共用这套 shader ABI。后续拆 metadata-only shader target 或 feature-local debug shader 时再处理资源名与 shader 路径。

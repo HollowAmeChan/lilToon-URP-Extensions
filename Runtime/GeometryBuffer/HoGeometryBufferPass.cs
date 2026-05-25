@@ -1,7 +1,7 @@
 #pragma warning disable CS0618, CS0672
 
 using System.Collections.Generic;
-using lilToon.URP.Extensions.AOV;
+using lilToon.URP.Extensions;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -127,7 +127,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             TextureHandle normalDepthTexture = renderGraph.CreateTexture(CreateTextureDesc(
                 cameraData.cameraTargetDescriptor,
                 settings,
-                HoAovRenderTargets.GetHighPrecisionGraphicsFormat(),
+                HoBufferFormatUtility.GetHighPrecisionGraphicsFormat(),
                 "_lilHoAovNormalDepthTexture"));
             TextureHandle depthTexture = UniversalRenderer.CreateRenderGraphTexture(
                 renderGraph,

@@ -14,7 +14,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-MetadataBuffer Debug");
         private HoMetadataBufferSettings settings;
-        private HoAovRenderTargets renderTargets;
+        private HoMetadataBufferRenderTargets renderTargets;
         private RTHandle cameraColorTarget;
         private RTHandle tempTexture;
         private Material debugMaterial;
@@ -36,7 +36,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         public void Setup(
             HoMetadataBufferSettings settings,
-            HoAovRenderTargets renderTargets,
+            HoMetadataBufferRenderTargets renderTargets,
             RTHandle cameraColorTarget,
             Material debugMaterial)
         {
@@ -50,7 +50,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         public void SetupRenderGraph(
             HoMetadataBufferSettings settings,
-            HoAovRenderTargets renderTargets,
+            HoMetadataBufferRenderTargets renderTargets,
             Material debugMaterial)
         {
             this.settings = settings;

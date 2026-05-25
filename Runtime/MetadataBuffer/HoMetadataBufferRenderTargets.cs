@@ -1,14 +1,15 @@
 #pragma warning disable CS0618, CS0672
 
-using lilToon.URP.Extensions.MetadataBuffer;
+using lilToon.URP.Extensions;
+using lilToon.URP.Extensions.AOV;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace lilToon.URP.Extensions.AOV
+namespace lilToon.URP.Extensions.MetadataBuffer
 {
-    internal sealed class HoAovRenderTargets
+    internal sealed class HoMetadataBufferRenderTargets
     {
         private RTHandle maskIdTexture;
         private RTHandle normalDepthTexture;
@@ -39,14 +40,14 @@ namespace lilToon.URP.Extensions.AOV
             descriptor.height = Mathf.Max(1, descriptor.height / divisor);
 
             RenderTextureDescriptor maskDescriptor = descriptor;
-            GraphicsFormat maskFormat = GetMaskGraphicsFormat();
+            GraphicsFormat maskFormat = HoBufferFormatUtility.GetMaskGraphicsFormat();
             if (maskFormat != GraphicsFormat.None)
             {
                 maskDescriptor.graphicsFormat = maskFormat;
             }
 
             RenderTextureDescriptor highPrecisionDescriptor = descriptor;
-            GraphicsFormat highPrecisionFormat = GetHighPrecisionGraphicsFormat();
+            GraphicsFormat highPrecisionFormat = HoBufferFormatUtility.GetHighPrecisionGraphicsFormat();
             if (highPrecisionFormat != GraphicsFormat.None)
             {
                 highPrecisionDescriptor.graphicsFormat = highPrecisionFormat;
@@ -84,45 +85,12 @@ namespace lilToon.URP.Extensions.AOV
             depthTexture = null;
         }
 
-        internal static GraphicsFormat GetMaskGraphicsFormat()
-        {
-            const GraphicsFormat preferredFormat = GraphicsFormat.R8G8B8A8_UNorm;
-            return IsColorFormatUsable(preferredFormat) ? preferredFormat : GetFallbackColorFormat();
-        }
-
-        internal static GraphicsFormat GetHighPrecisionGraphicsFormat()
-        {
-            const GraphicsFormat preferredFormat = GraphicsFormat.R16G16B16A16_SFloat;
-            return IsColorFormatUsable(preferredFormat) ? preferredFormat : GetFallbackColorFormat();
-        }
-
-        private static GraphicsFormat GetFallbackColorFormat()
-        {
-            GraphicsFormat format = SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
-            if (IsColorFormatUsable(format))
-            {
-                return format;
-            }
-
-            if (IsColorFormatUsable(GraphicsFormat.R8G8B8A8_UNorm))
-            {
-                return GraphicsFormat.R8G8B8A8_UNorm;
-            }
-
-            return GraphicsFormat.B8G8R8A8_UNorm;
-        }
-
-        private static bool IsColorFormatUsable(GraphicsFormat format)
-        {
-            return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, FormatUsage.Render);
-        }
-
         internal static RenderTextureDescriptor CreateDepthDescriptor(RenderTextureDescriptor cameraTextureDescriptor, HoMetadataBufferSettings settings)
         {
             int divisor = Mathf.Max(1, (int)settings.renderScale);
             int width = Mathf.Max(1, cameraTextureDescriptor.width / divisor);
             int height = Mathf.Max(1, cameraTextureDescriptor.height / divisor);
-            GraphicsFormat depthFormat = GetDepthStencilFormat(cameraTextureDescriptor);
+            GraphicsFormat depthFormat = HoBufferFormatUtility.GetDepthStencilFormat(cameraTextureDescriptor);
             RenderTextureDescriptor descriptor = new RenderTextureDescriptor(width, height, GraphicsFormat.None, depthFormat);
             descriptor.dimension = cameraTextureDescriptor.dimension;
             descriptor.volumeDepth = cameraTextureDescriptor.volumeDepth;
@@ -135,38 +103,5 @@ namespace lilToon.URP.Extensions.AOV
             return descriptor;
         }
 
-        internal static GraphicsFormat GetDepthStencilFormat(RenderTextureDescriptor cameraTextureDescriptor)
-        {
-            GraphicsFormat format = cameraTextureDescriptor.depthStencilFormat;
-            if (IsDepthStencilFormatUsable(format))
-            {
-                return format;
-            }
-
-            format = CoreUtils.GetDefaultDepthStencilFormat();
-            if (IsDepthStencilFormatUsable(format))
-            {
-                return format;
-            }
-
-            format = GraphicsFormatUtility.GetDepthStencilFormat(24);
-            if (IsDepthStencilFormatUsable(format))
-            {
-                return format;
-            }
-
-            format = GraphicsFormatUtility.GetDepthStencilFormat(32);
-            if (IsDepthStencilFormatUsable(format))
-            {
-                return format;
-            }
-
-            return GraphicsFormat.D32_SFloat;
-        }
-
-        private static bool IsDepthStencilFormatUsable(GraphicsFormat format)
-        {
-            return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, FormatUsage.Render);
-        }
     }
 }

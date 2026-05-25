@@ -13,7 +13,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         [SerializeField]
         private HoMetadataBufferSettings settings = new HoMetadataBufferSettings();
 
-        private readonly HoAovRenderTargets renderTargets = new HoAovRenderTargets();
+        private readonly HoMetadataBufferRenderTargets renderTargets = new HoMetadataBufferRenderTargets();
         private HoMetadataBufferPass outputPass;
         private HoMetadataBufferDebugPass debugPass;
         private Material clearMaterial;
