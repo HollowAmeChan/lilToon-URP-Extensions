@@ -420,6 +420,17 @@ ShadowCast 与 ScreenProcess 的关系：
 
 - 继续细化 light layer 与 URP rendering layer / light layer 的关系。
 
+## 10.9 2026-05-25 执行记录
+
+已继续细化 ShadowCast 自动收集里的 GameObject layer 与 URP Rendering Layer 边界：
+- `HoShadowCastSettings` 保留 `lightLayerMask` / `casterLayerMask` 作为 GameObject layer 过滤，并新增 `lightRenderingLayerMask` / `casterRenderingLayerMask` 作为 URP Rendering Layer 过滤。
+- 自动 visible light 与 legacy manual/controller light list 都会先检查灯光 GameObject layer，再检查灯光 `Light.renderingLayerMask` 是否命中特性允许的 light/caster rendering layer。
+- 每个 shadow slice 记录自己的 caster `renderingLayerMask`，RendererList / compatibility path 绘制该 slice 时按当前灯光的 rendering layer 与 Feature 的 caster rendering layer 交集过滤 caster。
+- Inspector 文案把 GameObject layer 与 Rendering Layer 分开显示，避免继续把两类 layer 混成一个用户概念。
+- 本次不改变 receiver ABI、atlas shader 参数、debug shader 按需加载、MaterialBuffer/GeometryBuffer 边界或 ImageProcess 禁止消费 ShadowCast 的规则。
+
+仍待处理：
+- 后续如果需要按 renderer/material 侧声明更细的 receiver gate，应放到 receiver / material 语义里，不反向扩张 ShadowCast 为对象分类系统。
 ---
 
 ## 11. 验收清单

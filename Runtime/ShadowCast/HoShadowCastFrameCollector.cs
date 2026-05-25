@@ -220,6 +220,13 @@ namespace lilToon.URP.Extensions.ShadowCast
                     break;
                 }
 
+                uint renderingLayerMask = GetShadowCasterRenderingLayerMask(light, config);
+                if (renderingLayerMask == 0u)
+                {
+                    diagnostics?.AddSkipped(light, "SecondDirectional", LightType.Directional, "rendering layer excluded");
+                    continue;
+                }
+
                 int firstSlice = target.sliceCount;
                 HoShadowCastAtlasPacker packerBeforeLight = packer;
                 if (!packer.TryAllocate(resolution * cascadeColumns, resolution * cascadeRows, out int blockOffsetX, out int blockOffsetY))
@@ -259,6 +266,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                         break;
                     }
 
+                    slice.renderingLayerMask = renderingLayerMask;
                     target.slices[target.sliceCount] = slice;
                     target.worldToShadow[target.sliceCount] = slice.worldToShadow;
                     target.sliceData[target.sliceCount] = slice.sliceData;
@@ -572,7 +580,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 if (!IsLightCollectable(light, config, requiredType, true))
                 {
                     diagnostics?.AddCandidate();
-                        diagnostics?.AddSkipped(light, "Punctual", requiredType, GetCandidateSkipReason(light, config, requiredType, true));
+                    diagnostics?.AddSkipped(light, "Punctual", requiredType, GetCandidateSkipReason(light, config, requiredType, true));
                     continue;
                 }
 
@@ -602,6 +610,13 @@ namespace lilToon.URP.Extensions.ShadowCast
             if (target.lightCount >= HoShadowCastShaderConstants.MaxLights)
             {
                 diagnostics?.AddSkipped(light, "Punctual", requiredType, "light capacity limit reached");
+                return;
+            }
+
+            uint renderingLayerMask = GetShadowCasterRenderingLayerMask(light, config);
+            if (renderingLayerMask == 0u)
+            {
+                diagnostics?.AddSkipped(light, "Punctual", requiredType, "rendering layer excluded");
                 return;
             }
 
@@ -650,6 +665,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     break;
                 }
 
+                slice.renderingLayerMask = renderingLayerMask;
                 target.slices[target.sliceCount++] = slice;
                 writtenSlices++;
             }
@@ -892,6 +908,10 @@ namespace lilToon.URP.Extensions.ShadowCast
             builder.Append(config.casterLayerMask.value.ToString("X8"));
             builder.Append(", lightMask=0x");
             builder.Append(config.lightLayerMask.value.ToString("X8"));
+            builder.Append(", lightRenderingMask=0x");
+            builder.Append(config.lightRenderingLayerMask.ToString("X8"));
+            builder.Append(", casterRenderingMask=0x");
+            builder.Append(config.casterRenderingLayerMask.ToString("X8"));
             builder.Append(", strength second/punctual=");
             builder.Append(config.secondDirectionalShadowStrength.ToString("0.##"));
             builder.Append("/");
@@ -1068,6 +1088,11 @@ namespace lilToon.URP.Extensions.ShadowCast
                 return false;
             }
 
+            if (!IsLightRenderingLayerAllowed(light, config))
+            {
+                return false;
+            }
+
             return !requireShadows || light.shadows != LightShadows.None;
         }
 
@@ -1080,6 +1105,44 @@ namespace lilToon.URP.Extensions.ShadowCast
 
             GameObject lightObject = light.gameObject;
             return lightObject == null || IsLayerInMask(lightObject.layer, config.lightLayerMask);
+        }
+
+        private static bool IsLightRenderingLayerAllowed(Light light, HoShadowCastFrameConfig config)
+        {
+            if (light == null || config == null)
+            {
+                return true;
+            }
+
+            uint lightMask = (uint)light.renderingLayerMask;
+            return (lightMask & GetConfigLightRenderingLayerMask(config)) != 0u
+                && (lightMask & GetConfigCasterRenderingLayerMask(config)) != 0u;
+        }
+
+        private static uint GetShadowCasterRenderingLayerMask(Light light, HoShadowCastFrameConfig config)
+        {
+            uint lightMask = light != null ? (uint)light.renderingLayerMask : uint.MaxValue;
+            return lightMask & GetConfigCasterRenderingLayerMask(config);
+        }
+
+        private static uint GetConfigLightRenderingLayerMask(HoShadowCastFrameConfig config)
+        {
+            if (config == null || config.lightRenderingLayerMask == 0u)
+            {
+                return uint.MaxValue;
+            }
+
+            return config.lightRenderingLayerMask;
+        }
+
+        private static uint GetConfigCasterRenderingLayerMask(HoShadowCastFrameConfig config)
+        {
+            if (config == null || config.casterRenderingLayerMask == 0u)
+            {
+                return uint.MaxValue;
+            }
+
+            return config.casterRenderingLayerMask;
         }
 
         private static bool IsLayerInMask(int layer, LayerMask mask)
@@ -1107,6 +1170,11 @@ namespace lilToon.URP.Extensions.ShadowCast
             if (!IsLightLayerAllowed(light, config))
             {
                 return "light layer excluded";
+            }
+
+            if (!IsLightRenderingLayerAllowed(light, config))
+            {
+                return "rendering layer excluded";
             }
 
             if (requireShadows && light.shadows == LightShadows.None)

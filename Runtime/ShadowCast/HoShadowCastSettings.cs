@@ -26,6 +26,12 @@ namespace lilToon.URP.Extensions.ShadowCast
         [InspectorName("Light Layer Mask")]
         public LayerMask lightLayerMask = -1;
 
+        [InspectorName("Light Rendering Layers")]
+        public RenderingLayerMask lightRenderingLayerMask = (RenderingLayerMask)uint.MaxValue;
+
+        [InspectorName("Caster Rendering Layers")]
+        public RenderingLayerMask casterRenderingLayerMask = (RenderingLayerMask)uint.MaxValue;
+
         [InspectorName("Shadow Strength")]
         [Range(0.0f, 1.0f)]
         public float shadowStrength = 1.0f;
@@ -123,6 +129,16 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         public void Validate()
         {
+            if ((uint)lightRenderingLayerMask == 0u)
+            {
+                lightRenderingLayerMask = (RenderingLayerMask)uint.MaxValue;
+            }
+
+            if ((uint)casterRenderingLayerMask == 0u)
+            {
+                casterRenderingLayerMask = (RenderingLayerMask)uint.MaxValue;
+            }
+
             shadowStrength = Mathf.Clamp01(shadowStrength);
             punctualShadowStrength = Mathf.Clamp01(punctualShadowStrength);
             punctualShadowFadeSpeed = punctualShadowFadeSpeed <= 0.0f ? 1.0f : Mathf.Clamp(punctualShadowFadeSpeed, 0.1f, 4.0f);
@@ -166,6 +182,8 @@ namespace lilToon.URP.Extensions.ShadowCast
         public Light[] pointLights;
         public LayerMask casterLayerMask;
         public LayerMask lightLayerMask;
+        public uint lightRenderingLayerMask;
+        public uint casterRenderingLayerMask;
         public float shadowStrength;
         public float punctualShadowStrength;
         public float punctualShadowFadeSpeed;
@@ -223,6 +241,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             pointLights = null;
             casterLayerMask = settings.casterLayerMask;
             lightLayerMask = settings.lightLayerMask;
+            lightRenderingLayerMask = (uint)settings.lightRenderingLayerMask;
+            casterRenderingLayerMask = (uint)settings.casterRenderingLayerMask;
             shadowStrength = settings.shadowStrength;
             punctualShadowStrength = settings.punctualShadowStrength;
             punctualShadowFadeSpeed = settings.punctualShadowFadeSpeed;

@@ -297,7 +297,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     {
                         ShadowSliceInfo slice = frame.slices[i];
                         DrawingSettings drawingSettings = CreateShadowCasterDrawingSettings(renderingData.cameraData.camera);
-                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(config);
+                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(config, slice.renderingLayerMask);
 
                         SetShadowCasterGlobals(cmd, frame.cameraPosition, slice);
                         RenderShadowSlice(cmd, ref context, ref renderingData.cullResults, ref slice.shadowSliceData, ref drawingSettings, ref filteringSettings, slice.projectionMatrix, slice.viewMatrix);
@@ -321,7 +321,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     {
                         ShadowSliceInfo slice = secondDirectionalFrame.slices[i];
                         DrawingSettings drawingSettings = CreateShadowCasterDrawingSettings(renderingData.cameraData.camera);
-                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(config);
+                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(config, slice.renderingLayerMask);
 
                         SetShadowCasterGlobals(cmd, secondDirectionalFrame.cameraPosition, slice);
                         RenderShadowSlice(cmd, ref context, ref renderingData.cullResults, ref slice.shadowSliceData, ref drawingSettings, ref filteringSettings, slice.projectionMatrix, slice.viewMatrix);
@@ -417,8 +417,9 @@ namespace lilToon.URP.Extensions.ShadowCast
 
                     for (int i = 0; i < renderGraphFrame.sliceCount; i++)
                     {
+                        ShadowSliceInfo slice = renderGraphFrame.slices[i];
                         DrawingSettings drawingSettings = CreateShadowCasterDrawingSettings(cameraData.camera);
-                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(config);
+                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(config, slice.renderingLayerMask);
                         RendererListParams rendererListParams = new RendererListParams(renderingData.cullResults, drawingSettings, filteringSettings);
                         passData.rendererLists[i] = renderGraph.CreateRendererList(rendererListParams);
                         builder.UseRendererList(passData.rendererLists[i]);
@@ -469,8 +470,9 @@ namespace lilToon.URP.Extensions.ShadowCast
 
                     for (int i = 0; i < renderGraphSecondDirectionalFrame.sliceCount; i++)
                     {
+                        ShadowSliceInfo slice = renderGraphSecondDirectionalFrame.slices[i];
                         DrawingSettings drawingSettings = CreateShadowCasterDrawingSettings(cameraData.camera);
-                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(config);
+                        FilteringSettings filteringSettings = CreateShadowCasterFilteringSettings(config, slice.renderingLayerMask);
                         RendererListParams rendererListParams = new RendererListParams(renderingData.cullResults, drawingSettings, filteringSettings);
                         passData.rendererLists[i] = renderGraph.CreateRendererList(rendererListParams);
                         builder.UseRendererList(passData.rendererLists[i]);
@@ -559,10 +561,12 @@ namespace lilToon.URP.Extensions.ShadowCast
             };
         }
 
-        private static FilteringSettings CreateShadowCasterFilteringSettings(HoShadowCastFrameConfig config)
+        private static FilteringSettings CreateShadowCasterFilteringSettings(HoShadowCastFrameConfig config, uint renderingLayerMask)
         {
             int layerMask = config != null ? config.casterLayerMask.value : -1;
-            return new FilteringSettings(RenderQueueRange.all, layerMask);
+            FilteringSettings filteringSettings = new FilteringSettings(RenderQueueRange.all, layerMask);
+            filteringSettings.renderingLayerMask = renderingLayerMask != 0u ? renderingLayerMask : uint.MaxValue;
+            return filteringSettings;
         }
 
         private static void RestoreCameraGlobals(CommandBuffer cmd, HoShadowCastFrame frame)

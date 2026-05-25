@@ -203,6 +203,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         public Vector4 shadowBias;
         public Vector3 lightDirection;
         public Vector3 lightPosition;
+        public uint renderingLayerMask;
         public Vector4 sliceData;
     }
 

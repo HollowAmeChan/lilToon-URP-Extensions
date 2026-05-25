@@ -109,8 +109,10 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
                 DrawProperty(passEvent, "Pass Event");
                 DrawProperty(collectVisibleLights, "Collect Visible Lights");
                 DrawProperty(settingsProperty.FindPropertyRelative("useActiveControllerOverride"), "Use Active Controller Override");
-                DrawProperty(settingsProperty.FindPropertyRelative("lightLayerMask"), "Light Layer Mask");
-                DrawProperty(settingsProperty.FindPropertyRelative("casterLayerMask"), "Caster Layer Mask");
+                DrawProperty(settingsProperty.FindPropertyRelative("lightLayerMask"), "Light GameObject Layers");
+                DrawProperty(settingsProperty.FindPropertyRelative("lightRenderingLayerMask"), "Light Rendering Layers");
+                DrawProperty(settingsProperty.FindPropertyRelative("casterLayerMask"), "Caster GameObject Layers");
+                DrawProperty(settingsProperty.FindPropertyRelative("casterRenderingLayerMask"), "Caster Rendering Layers");
                 DrawProperty(settingsProperty.FindPropertyRelative("shadowStrength"), "Shadow Strength");
                 DrawProperty(settingsProperty.FindPropertyRelative("punctualShadowStrength"), "Punctual Shadow Strength");
                 DrawProperty(settingsProperty.FindPropertyRelative("punctualShadowFadeSpeed"), "Punctual Fade Speed");
