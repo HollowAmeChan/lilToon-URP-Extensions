@@ -670,7 +670,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         private static bool IsColorFormatUsable(GraphicsFormat format)
         {
-            return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, FormatUsage.Render);
+            return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, GraphicsFormatUsage.Render);
         }
     }
 
@@ -758,25 +758,25 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         private static bool IsDepthStencilFormatUsable(GraphicsFormat format)
         {
-            return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, FormatUsage.Render);
+            return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, GraphicsFormatUsage.Render);
         }
 
         private static GraphicsFormat GetHdrGraphicsFormat()
         {
             const GraphicsFormat preferredFormat = GraphicsFormat.R16G16B16A16_SFloat;
-            if (SystemInfo.IsFormatSupported(preferredFormat, FormatUsage.Render))
+            if (SystemInfo.IsFormatSupported(preferredFormat, GraphicsFormatUsage.Render))
             {
                 return preferredFormat;
             }
 
             GraphicsFormat format = SystemInfo.GetGraphicsFormat(DefaultFormat.HDR);
-            if (format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, FormatUsage.Render))
+            if (format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, GraphicsFormatUsage.Render))
             {
                 return format;
             }
 
             format = SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
-            return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, FormatUsage.Render)
+            return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, GraphicsFormatUsage.Render)
                 ? format
                 : GraphicsFormat.B8G8R8A8_UNorm;
         }

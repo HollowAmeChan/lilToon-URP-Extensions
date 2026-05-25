@@ -867,7 +867,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         private static GraphicsFormat GetHdrGraphicsFormat()
         {
             const GraphicsFormat preferredFormat = GraphicsFormat.R16G16B16A16_SFloat;
-            return SystemInfo.IsFormatSupported(preferredFormat, FormatUsage.Render)
+            return SystemInfo.IsFormatSupported(preferredFormat, GraphicsFormatUsage.Render)
                 ? preferredFormat
                 : GraphicsFormat.None;
         }
@@ -875,7 +875,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         private static GraphicsFormat GetSubjectMaskGraphicsFormat()
         {
             const GraphicsFormat preferredFormat = GraphicsFormat.R8_UNorm;
-            return SystemInfo.IsFormatSupported(preferredFormat, FormatUsage.Render)
+            return SystemInfo.IsFormatSupported(preferredFormat, GraphicsFormatUsage.Render)
                 ? preferredFormat
                 : GraphicsFormat.None;
         }

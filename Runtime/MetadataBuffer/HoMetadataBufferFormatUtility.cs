@@ -65,12 +65,12 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         private static bool IsColorFormatUsable(GraphicsFormat format)
         {
-            return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, FormatUsage.Render);
+            return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, GraphicsFormatUsage.Render);
         }
 
         private static bool IsDepthStencilFormatUsable(GraphicsFormat format)
         {
-            return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, FormatUsage.Render);
+            return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, GraphicsFormatUsage.Render);
         }
     }
 }

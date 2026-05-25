@@ -34,7 +34,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         private static GraphicsFormat GetImageProcessHdrGraphicsFormat()
         {
             const GraphicsFormat preferredFormat = GraphicsFormat.R16G16B16A16_SFloat;
-            return SystemInfo.IsFormatSupported(preferredFormat, FormatUsage.Render)
+            return SystemInfo.IsFormatSupported(preferredFormat, GraphicsFormatUsage.Render)
                 ? preferredFormat
                 : GraphicsFormat.None;
         }

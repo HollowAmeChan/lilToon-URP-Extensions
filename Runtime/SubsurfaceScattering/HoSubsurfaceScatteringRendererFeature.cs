@@ -1331,12 +1331,12 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         internal static GraphicsFormat GetColorGraphicsFormat(RenderTextureDescriptor cameraTextureDescriptor)
         {
             if (cameraTextureDescriptor.graphicsFormat != GraphicsFormat.None &&
-                SystemInfo.IsFormatSupported(cameraTextureDescriptor.graphicsFormat, FormatUsage.Render))
+                SystemInfo.IsFormatSupported(cameraTextureDescriptor.graphicsFormat, GraphicsFormatUsage.Render))
             {
                 return cameraTextureDescriptor.graphicsFormat;
             }
 
-            if (SystemInfo.IsFormatSupported(GraphicsFormat.R16G16B16A16_SFloat, FormatUsage.Render))
+            if (SystemInfo.IsFormatSupported(GraphicsFormat.R16G16B16A16_SFloat, GraphicsFormatUsage.Render))
             {
                 return GraphicsFormat.R16G16B16A16_SFloat;
             }
