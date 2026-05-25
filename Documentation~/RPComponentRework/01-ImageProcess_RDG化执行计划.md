@@ -150,7 +150,7 @@ NeedsExternalTexture
 ```
 
 这些声明不进入全局注册表，只用于 ImageProcess pass 内部 plan 和 debug 输出。
-`NeedsAovInput`、`NeedsMaterialBuffer`、`NeedsGeometryBuffer`、`NeedsShadowCast` 这类语义输入声明不属于 ImageProcess。出现这些需求时，effect 应迁到 ScreenProcess。
+`NeedsAovInput`、`NeedsMaterialBuffer`、`NeedsGeometryBuffer`、`NeedsShadowCast` 这类语义输入声明不属于 ImageProcess，也不再作为 ImageProcess resource kind 保留。出现这些需求时，effect 应迁到 ScreenProcess。
 
 ---
 
@@ -162,7 +162,7 @@ NeedsExternalTexture
 
 - ImageProcess runtime 不读取 AOV / MaterialBuffer / GeometryBuffer / ShadowCast。
 - ImageProcess UI 不显示 AOV mask、semantic mask、object/material rule。
-- 旧资源中的 `useAovMask` / `debugAovMask` 应迁移到 ScreenProcess layer，或显示迁移提示。
+- 快速开发阶段不再保留旧资源兼容；旧资源中的 `useAovMask` / `debugAovMask` 不再进入 ImageProcess 序列化数据。
 - AOV debug 输出归 MaterialBuffer/GeometryBuffer 或 ScreenProcess 的局部 debug，不归 ImageProcess。
 
 如果某个 effect 对 object/material/depth/normal/mask/ShadowCast 有任何依赖，应迁出到 ScreenProcess，而不是留在 ImageProcess。
@@ -217,13 +217,13 @@ Runtime/ShoostPostProcessing/ShoostPostProcessEffectDescriptor.cs
 - `Glow`、`IrisBlur`、`RGBBlurV2`、`ApertureBokeh` 声明本地 ping-pong / composite 原图依赖。
 - `ChangeFrameRate`、`MotionTrail` 声明 image-domain history。
 - `Weather`、`Particle`、`LensFlare`、`LogoOverlay` 声明 layer-supplied external texture。
-- `ImageProcessResourceKind` 预留 `AovInput`、`MaterialBuffer`、`GeometryBuffer`、`ShadowCast` 作为禁止语义输入类型；RenderGraph 记录时如发现这类声明会 warning once，提示迁往 ScreenProcess。
+- 过渡期曾在 `ImageProcessResourceKind` 预留 `AovInput`、`MaterialBuffer`、`GeometryBuffer`、`ShadowCast` 作为禁止语义输入类型；该过渡门面已在 2026-05-25 删除，后续 ImageProcess 不再定义这些 resource kind。
 
 随后开始整理 ImageProcess Editor 边界：
 
 - `ShoostPostProcessStackVolumeEditor` 的 layer list 开启用户拖拽排序。
 - Inspector / preset 应用流程不再调用旧固定 effect order 自动重排。
-- 旧 Shoost AOV mask UI 不再作为 ImageProcess 可编辑能力显示；已有 `useAovMask` / `debugAovMask` 配置只显示迁移提示，要求迁到 ScreenProcess，并在迁移完成后清空 legacy 标记。
+- 旧 Shoost AOV mask UI 不再作为 ImageProcess 可编辑能力显示；过渡期提示已在 2026-05-25 删除，后续直接要求在 ScreenProcess 侧实现语义 mask。
 
 本批验证：
 
@@ -236,15 +236,15 @@ Runtime/ShoostPostProcessing/ShoostPostProcessEffectDescriptor.cs
 - 删除 `ShoostPostProcessAovCompositeCache`、`ShoostPostProcessPass.Aov`、`ShoostPostProcessAovSupport` 和 `Shaders/Shoost/AovComposite.shader`。
 - `ShoostPostProcessPass.Execute()` 不再为 `useAovMask` / `debugAovMask` 分配 `_lilShoostPostProcessTempC`，也不再做 AOV composite 二次 blit。
 - `ShoostPostProcessEffectDescriptor` 移除 `SupportsAovComposite` 标志，ImageProcess effect metadata 不再声明 semantic mask 支持。
-- 旧序列化字段 `useAovMask` / `debugAovMask` 暂留为迁移数据；runtime 发现启用时只 warning once，并提示迁往 ScreenProcess。
+- 过渡期曾暂留旧序列化字段 `useAovMask` / `debugAovMask` 并在 runtime warning；该迁移外壳已在 2026-05-25 删除。
 - ImageProcess shader constants 移除 `_LayerAov*` 与 `_LayerResultTexture` id，普通 layer material 不再接收 AOV mask property。
 - 针对性扫描确认 `Runtime/ShoostPostProcessing` 没有 `HoAovRenderGraphResources`、`RecordAovCompositeIfNeeded`、`ShoostPostProcessAovSupport`、`AovCompositeShaderName` 或 `SupportsAovComposite` 残留。
 
 继续推进后，ImageProcess Editor / 序列化边界进一步收窄：
 
-- `ShoostPostProcessLayer` 中旧 `useAovMask`、`debugAovMask`、AOV source / rule 等字段保留为隐藏序列化迁移数据，默认 Inspector 不再把它们暴露为 ImageProcess 正式参数。
-- `ShoostPostProcessStackVolumeEditor` 只在检测到旧 AOV flag 时显示迁移提示，并提供 `Clear legacy AOV mask settings` 按钮清空 legacy 标记和规则数据。
-- 本次不改变 runtime 行为：ImageProcess 仍只 warning once 并忽略 legacy AOV mask，不读取 AOV / MaterialBuffer / GeometryBuffer / ShadowCast。
+- 过渡期曾把 `ShoostPostProcessLayer` 中旧 `useAovMask`、`debugAovMask`、AOV source / rule 等字段保留为隐藏序列化迁移数据；该兼容外壳已在 2026-05-25 删除。
+- 过渡期曾让 `ShoostPostProcessStackVolumeEditor` 只在检测到旧 AOV flag 时显示迁移提示，并提供 `Clear legacy AOV mask settings` 按钮；该 UI 已在 2026-05-25 删除。
+- ImageProcess 不再 warning 或忽略 legacy AOV mask，因为运行时和序列化层都不再承载这类状态。
 
 继续推进后，ImageProcess 关闭时的短期资源生命周期收窄：
 
@@ -252,13 +252,24 @@ Runtime/ShoostPostProcessing/ShoostPostProcessEffectDescriptor.cs
 - `ShoostPostProcessRendererFeature` 在全局关闭、Volume 不活跃或构建后没有 active layer 时释放这些运行时资源；SceneView 只是未启用显示时不主动释放，避免 GameView 仍在使用 ImageProcess 时反复重分配。
 - 本次不改变 RenderGraph 主路径的 ImageChain 行为，也不重新引入 AOV / MaterialBuffer / GeometryBuffer / ShadowCast 输入。
 
+## 9. 2026-05-25 执行记录
+
+在快速开发阶段明确不保留旧 Shoost AOV mask 资产兼容后，继续删除 ImageProcess 中的 legacy semantic 输入残留：
+
+- `ShoostPostProcessLayer` 删除 `useAovMask`、`debugAovMask`、AOV source / mode / threshold / match / invert / rule 等隐藏迁移字段。
+- `ShoostPostProcessPass` 删除 legacy AOV mask warning 分支；ImageProcess 运行时不再检查或承载旧 AOV mask 数据。
+- `ImageProcessResourceKind` 删除 `AovInput`、`MaterialBuffer`、`GeometryBuffer`、`ShadowCast`，`ImageProcessResourceRequest` 不再提供 semantic input 判定后门。
+- `ShoostPostProcessStackVolumeEditor` 删除 legacy AOV mask 迁移提示、清理按钮和默认值重置中的旧字段处理。
+- 本次不改变 ScreenProcess / `Runtime/HoPostProcessing` 的 AOV mask 能力；mask/rule 仍归语义屏幕处理侧所有。
+
 ---
 
-## 9. 验收清单
+## 10. 验收清单
 
 - 普通 single-pass stack 只使用 source copy + WorkA/WorkB。
 - 多 pass effect 的额外 RT 都是 RenderGraph transient。
 - camera color 不被同一 pass 同时读写。
 - ImageProcess 没有 AOV composite / semantic mask / NeedsAovInput 路径。
 - ImageProcess 不读取 MaterialBuffer / GeometryBuffer / ShadowCast。
+- ImageProcess layer 序列化数据不再包含旧 Shoost AOV mask 字段。
 - 关闭 ImageProcess 后不保留 stale RT / global texture / debug state。

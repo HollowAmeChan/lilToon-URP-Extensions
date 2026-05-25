@@ -1,4 +1,3 @@
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -70,8 +69,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             public float distance;
             public float angleRadians;
         }
-
-        private readonly HashSet<ShoostPostProcessEffect> warnedSemanticInputEffects = new HashSet<ShoostPostProcessEffect>();
 
     }
 }

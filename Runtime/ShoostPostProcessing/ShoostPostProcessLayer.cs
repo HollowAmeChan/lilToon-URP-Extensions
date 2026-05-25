@@ -1,5 +1,4 @@
 using System;
-using System.Collections.Generic;
 using UnityEngine;
 
 namespace lilToon.URP.Extensions.PostProcessing
@@ -101,44 +100,6 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         [Tooltip("通用参数向量 12。会以 _LayerParams12 暴露给 Shader。")]
         public Vector4 parameters12;
-
-        [Tooltip("使用 HoAOV 数据限制当前图层作用范围。")]
-        // Legacy migration data only. ImageProcess no longer reads AOV masks.
-        [HideInInspector]
-        public bool useAovMask;
-
-        [Tooltip("当前图层遮罩读取的 HoAOV 通道。")]
-        [HideInInspector]
-        public HoPostAovSource aovSource = HoPostAovSource.Mask;
-
-        [Tooltip("把 HoAOV 通道转换成遮罩的方式。")]
-        [HideInInspector]
-        public HoPostAovMaskMode aovMaskMode = HoPostAovMaskMode.Direct;
-
-        [Tooltip("HoAOV 遮罩使用的阈值、容差或匹配宽度。")]
-        [Min(0.0f)]
-        [HideInInspector]
-        public float aovThreshold = 0.5f;
-
-        [Tooltip("匹配数值模式使用的目标值。ID 类通道会先编码再比较。")]
-        [HideInInspector]
-        public float aovMatchValue;
-
-        [Tooltip("匹配颜色模式使用的目标颜色。")]
-        [HideInInspector]
-        public Color aovMatchColor = Color.white;
-
-        [Tooltip("在 HoAOV 覆盖范围内反转解析后的遮罩。")]
-        [HideInInspector]
-        public bool invertAovMask;
-
-        [Tooltip("调试时直接输出解析后的 HoAOV 遮罩。")]
-        [HideInInspector]
-        public bool debugAovMask;
-
-        [Tooltip("精细化 HoAOV 遮罩规则列表。运行时最多解析四条规则；为空时会兼容旧的单条 AOV 遮罩字段。")]
-        [HideInInspector]
-        public List<HoPostAovMaskRule> aovRules = new List<HoPostAovMaskRule>();
 
         public bool IsActive => enabled && intensity > 0.0f;
     }

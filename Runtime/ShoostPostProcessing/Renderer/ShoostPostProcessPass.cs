@@ -27,7 +27,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         private RTHandle apertureBokehTextureA;
         private RTHandle apertureBokehTextureB;
         private bool warnedBackBuffer;
-        private bool warnedLegacyAovMask;
         private readonly Dictionary<int, ChangeFrameRateState> changeFrameRateStates = new Dictionary<int, ChangeFrameRateState>();
 
         public ShoostPostProcessPass(string passName)
@@ -142,7 +141,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                 {
                     ShoostPostProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
                     RTHandle destination = writeToA ? tempTextureA : tempTextureB;
-                    WarnIfImageProcessLayerUsesLegacyAovMask(runtimeLayer);
 
                     ExecuteEffectLayer(
                         cmd,
@@ -192,8 +190,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             for (int i = 0; i < runtimeLayers.Count; i++)
             {
                 ShoostPostProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
-                WarnIfImageProcessLayerRequestsSemanticInput(runtimeLayer);
-                WarnIfImageProcessLayerUsesLegacyAovMask(runtimeLayer);
                 ImageProcessPassContext passContext = imageChain.NextPass(renderGraph, i);
                 TextureHandle effectResult = RecordEffectLayer(
                     passContext.RenderGraph,
@@ -223,41 +219,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             renderPassEvent = passEvent;
             ConfigureInput(ScriptableRenderPassInput.Color);
-        }
-
-        private void WarnIfImageProcessLayerRequestsSemanticInput(ShoostPostProcessRuntimeLayer runtimeLayer)
-        {
-            ImageProcessResourceRequest[] requests = runtimeLayer?.descriptor.ResourceRequests;
-            if (requests == null || requests.Length == 0)
-            {
-                return;
-            }
-
-            for (int i = 0; i < requests.Length; i++)
-            {
-                if (!requests[i].IsSemanticInput)
-                {
-                    continue;
-                }
-
-                ShoostPostProcessEffect effect = runtimeLayer.settings.effect;
-                if (warnedSemanticInputEffects.Add(effect))
-                {
-                    Debug.LogWarning($"{_passName} ignored semantic resource request '{requests[i].Kind}' from ImageProcess effect '{effect}'. Move this effect to ScreenProcess.");
-                }
-            }
-        }
-
-        private void WarnIfImageProcessLayerUsesLegacyAovMask(ShoostPostProcessRuntimeLayer runtimeLayer)
-        {
-            ShoostPostProcessLayer layer = runtimeLayer?.settings;
-            if (layer == null || warnedLegacyAovMask || (!layer.useAovMask && !layer.debugAovMask))
-            {
-                return;
-            }
-
-            warnedLegacyAovMask = true;
-            Debug.LogWarning($"{_passName} ignored legacy AOV mask settings on ImageProcess layer '{layer.effect}'. Move object/material/depth gated post effects to ScreenProcess.");
         }
 
     }

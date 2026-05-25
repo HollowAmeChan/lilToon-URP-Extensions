@@ -191,38 +191,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "明度对饱和度"
         };
 
-        private static readonly string[] AovSources =
-        {
-            "遮罩",
-            "角色组 ID",
-            "部件 ID",
-            "标记",
-            "厚度",
-            "曲率",
-            "材质分类",
-            "预留值",
-            "材质自定义通道 0",
-            "材质自定义通道 1",
-            "材质自定义通道 2",
-            "材质自定义通道 3",
-            "主体",
-            "脸",
-            "前发",
-            "眼睛",
-            "眼透区域",
-            "配件",
-            "预留 6",
-            "预留 7"
-        };
-
-        private static readonly string[] AovMaskModes =
-        {
-            "直接灰度",
-            "阈值",
-            "匹配数值 / ID",
-            "匹配颜色"
-        };
-
         private static readonly string[] SixColorNames =
         {
             "红色",
@@ -759,7 +727,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
             }
 
-            return lineCount + (HasLegacyShoostAovMask(element) ? GetAovMigrationNoticeLineCount() : 0);
+            return lineCount;
         }
 
         private static int GetCoreLineCount(bool includeBlendMode, bool includeColor, bool includeTexture, bool includePassIndex, bool includeMaterialOverride, bool showAdvancedFields)
@@ -792,24 +760,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             return count;
-        }
-
-        private static int GetAovMigrationNoticeLineCount()
-        {
-            return 5;
-        }
-
-        private static bool HasLegacyShoostAovMask(SerializedProperty element)
-        {
-            return GetBool(element, "useAovMask") || GetBool(element, "debugAovMask");
-        }
-
-        private static bool GetBool(SerializedProperty element, string name)
-        {
-            SerializedProperty property = element.FindPropertyRelative(name);
-            return property != null &&
-                   property.propertyType == SerializedPropertyType.Boolean &&
-                   property.boolValue;
         }
 
         private void DrawEffectIconToggles()
@@ -1265,44 +1215,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 y = DrawPropertyLine(x, y, width, parameters12, "参数 12");
             }
 
-            y = DrawAovMaskProperties(x, y, width, element);
             return y;
-        }
-
-        private static float DrawAovMaskProperties(float x, float y, float width, SerializedProperty element)
-        {
-            if (!HasLegacyShoostAovMask(element))
-            {
-                return y;
-            }
-
-            float noticeHeight = (LineHeight + LineSpacing) * 4.0f - LineSpacing;
-            Rect noticeRect = new Rect(x, y, width, noticeHeight);
-            EditorGUI.HelpBox(
-                noticeRect,
-                "Legacy AOV mask settings are serialized here for migration only.\nImageProcess does not read AOV, MaterialBuffer, GeometryBuffer, depth/normal, object ids, or ShadowCast resources.\nMove semantic masked effects to ScreenProcess and clear the legacy flags once migration is complete.",
-                MessageType.Warning);
-            y += noticeHeight + LineSpacing;
-            if (GUI.Button(new Rect(x, y, width, LineHeight), "Clear legacy AOV mask settings"))
-            {
-                ClearLegacyShoostAovMask(element);
-                GUI.changed = true;
-            }
-
-            return y + LineHeight + LineSpacing;
-        }
-
-        private static void ClearLegacyShoostAovMask(SerializedProperty element)
-        {
-            SetBool(element, "useAovMask", false);
-            SetEnum(element, "aovSource", (int)HoPostAovSource.Mask);
-            SetEnum(element, "aovMaskMode", (int)HoPostAovMaskMode.Direct);
-            SetFloat(element, "aovThreshold", 0.5f);
-            SetFloat(element, "aovMatchValue", 0.0f);
-            SetColor(element, "aovMatchColor", Color.white);
-            SetBool(element, "invertAovMask", false);
-            SetBool(element, "debugAovMask", false);
-            HoPostAovMaskEditorUtility.ResetRules(element);
         }
 
         private static float DrawPopupLine(float x, float y, float width, SerializedProperty property, string label, string[] options)
@@ -1771,15 +1684,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetVector4(element, "parameters10", Vector4.zero);
             SetVector4(element, "parameters11", Vector4.zero);
             SetVector4(element, "parameters12", Vector4.zero);
-            SetBool(element, "useAovMask", false);
-            SetEnum(element, "aovSource", (int)HoPostAovSource.Mask);
-            SetEnum(element, "aovMaskMode", (int)HoPostAovMaskMode.Direct);
-            SetFloat(element, "aovThreshold", 0.5f);
-            SetFloat(element, "aovMatchValue", 0.0f);
-            SetColor(element, "aovMatchColor", Color.white);
-            SetBool(element, "invertAovMask", false);
-            SetBool(element, "debugAovMask", false);
-            HoPostAovMaskEditorUtility.ResetRules(element);
         }
 
         private static void SetBool(SerializedProperty element, string name, bool value)

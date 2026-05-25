@@ -7,10 +7,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         Pyramid,
         History,
         OriginalSource,
-        ExternalTexture,
-        AovInput,
-        MaterialBuffer,
-        GeometryBuffer,
-        ShadowCast
+        ExternalTexture
     }
 }
