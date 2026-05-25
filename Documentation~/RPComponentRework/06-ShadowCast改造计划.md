@@ -437,6 +437,14 @@ ShadowCast 与 ScreenProcess 的关系：
 - 普通 atlas debug 继续显示每个 slice 边界；second directional debug 现在区分 cascade slice 线与 per-light block 线，便于核对 1/2/3/4 cascade 的整光源 block packing。
 - 本次只增强 ShadowCast 局部 debug shader，不改变 debug shader 按需加载策略、ShadowCast receiver ABI、MaterialBuffer/GeometryBuffer 边界或 ImageProcess 禁止消费 ShadowCast 的规则。
 
+## 10.11 2026-05-25 执行记录
+
+已继续把 ShadowCast 核心配置类型从 legacy controller 文件中移出：
+
+- 新增 `HoShadowCastDebugMode.cs` 与 `HoShadowCastPcssQuality.cs`，让 RendererFeature、settings、collector、debug pass 和 controller 都引用独立枚举定义。
+- `HoShadowCastController.cs` 不再拥有 debug mode / PCSS quality 类型定义，保留为 legacy override / 高级手动列表入口。
+- 枚举命名空间、名称和值保持不变，不改变现有序列化 enum 值、RendererFeature Inspector、debug shader 按需加载、receiver ABI 或 atlas 行为。
+
 仍待处理：
 - 后续如果需要按 renderer/material 侧声明更细的 receiver gate，应放到 receiver / material 语义里，不反向扩张 ShadowCast 为对象分类系统。
 ---

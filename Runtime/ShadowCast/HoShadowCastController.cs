@@ -3,21 +3,6 @@ using UnityEngine;
 
 namespace lilToon.URP.Extensions.ShadowCast
 {
-    public enum HoShadowCastDebugMode
-    {
-        Off = 0,
-        Atlas = 1,
-        SecondDirectionalAtlas = 2
-    }
-
-    public enum HoShadowCastPcssQuality
-    {
-        Low = 0,
-        Medium = 1,
-        High = 2,
-        Ultra = 3
-    }
-
     [ExecuteAlways]
     [DisallowMultipleComponent]
     [AddComponentMenu("lilToon/URP Extensions/HoShadowCast 额外投影控制器")]
