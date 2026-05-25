@@ -376,6 +376,22 @@ ShadowCast 与 ScreenProcess 的关系：
 - 继续把 `BuildFrameData` / `BuildSecondDirectionalFrameData` 及其 light collection helper 拆到 `HoShadowCastFrameCollector`。
 - 自动收集的 light layer / shadow layer 规则还未细化，当前仍主要依赖 URP visible lights、main light skip、`Light.shadows` 与 caster layer mask。
 
+## 10.6 2026-05-25 执行记录
+
+已继续沿 ShadowCast 自动灯光收集线推进，并参考 `D:\Unity_Fork\HoUrp-Extensions` 的 visible light 收集边界：
+
+- 新增 `HoShadowCastFrameCollector`，把 `BuildFrameData`、`BuildSecondDirectionalFrameData`、visible light/manual list 收集、slice 请求计数、矩阵构建、PCSS 参数和 debug frame log 从 `HoShadowCastRendererFeature.cs` 拆出。
+- `HoShadowCastPass` 现在只负责 compatibility / RenderGraph pass 记录、atlas 绘制、renderer list 构建、camera global restore 和调用 publisher 发布 receiver 数据。
+- `HoShadowCastSettings` 增加 `lightLayerMask`，RendererFeature Inspector 显示 `Light Layer Mask`；自动 visible light 和 legacy manual/controller list 都会经过 light layer 过滤。
+- 自动收集路径继续跳过 URP main light，并要求 visible light 类型匹配、启用、light layer 命中且 `Light.shadows != None`；legacy manual/controller list 仍允许 `LightShadows.None`，但也会经过 light layer、类型和启用状态过滤。
+- 跳过诊断增加 light layer excluded 原因，便于 Inspector Runtime 区分“灯不可收集”和 atlas/容量/矩阵失败。
+- 本次不改变 ShadowCast atlas ABI、receiver sampling ABI、MaterialBuffer/GeometryBuffer 边界或 ImageProcess 禁止消费 ShadowCast 的规则。
+
+仍待处理：
+
+- 继续对齐参考仓库的 second directional atlas block packing：一盏次方向光的 cascade 应作为整体 block 分配，避免写入半套 cascade。
+- 继续细化 light layer 与 URP rendering layer / light layer 的关系；当前第一批落地的是 Unity GameObject layer 过滤。
+
 ---
 
 ## 11. 验收清单

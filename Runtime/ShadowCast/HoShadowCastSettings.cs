@@ -23,6 +23,9 @@ namespace lilToon.URP.Extensions.ShadowCast
         [InspectorName("Caster Layer Mask")]
         public LayerMask casterLayerMask = -1;
 
+        [InspectorName("Light Layer Mask")]
+        public LayerMask lightLayerMask = -1;
+
         [InspectorName("Shadow Strength")]
         [Range(0.0f, 1.0f)]
         public float shadowStrength = 1.0f;
@@ -162,6 +165,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         public Light[] spotLights;
         public Light[] pointLights;
         public LayerMask casterLayerMask;
+        public LayerMask lightLayerMask;
         public float shadowStrength;
         public float punctualShadowStrength;
         public float punctualShadowFadeSpeed;
@@ -218,6 +222,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             spotLights = null;
             pointLights = null;
             casterLayerMask = settings.casterLayerMask;
+            lightLayerMask = settings.lightLayerMask;
             shadowStrength = settings.shadowStrength;
             punctualShadowStrength = settings.punctualShadowStrength;
             punctualShadowFadeSpeed = settings.punctualShadowFadeSpeed;
