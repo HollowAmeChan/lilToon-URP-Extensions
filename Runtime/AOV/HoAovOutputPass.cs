@@ -30,7 +30,7 @@ namespace lilToon.URP.Extensions.AOV
 
         private const int FallbackMaxRenderQueue = (int)RenderQueue.AlphaTest - 1;
 
-        private readonly RTHandle[] colorTargets = new RTHandle[7];
+        private readonly RTHandle[] colorTargets = new RTHandle[HoAovAttachmentLayout.ColorTargetCount];
         private HoAovSettings settings;
         private HoAovRenderTargets renderTargets;
         private Material clearMaterial;
@@ -47,7 +47,6 @@ namespace lilToon.URP.Extensions.AOV
             public bool drawFallback;
             public TextureHandle maskIdTexture;
             public TextureHandle normalDepthTexture;
-            public TextureHandle tangentNormalTexture;
             public TextureHandle surfaceDataTexture;
             public TextureHandle custom0Texture;
             public TextureHandle objectCustom0Texture;
@@ -108,13 +107,12 @@ namespace lilToon.URP.Extensions.AOV
             }
 
             renderTargets.ReAllocateIfNeeded(cameraTextureDescriptor, settings);
-            colorTargets[0] = renderTargets.MaskIdTexture;
-            colorTargets[1] = renderTargets.NormalDepthTexture;
-            colorTargets[2] = renderTargets.TangentNormalTexture;
-            colorTargets[3] = renderTargets.SurfaceDataTexture;
-            colorTargets[4] = renderTargets.Custom0Texture;
-            colorTargets[5] = renderTargets.ObjectCustom0Texture;
-            colorTargets[6] = renderTargets.ObjectCustom1Texture;
+            colorTargets[HoAovAttachmentLayout.MaskId] = renderTargets.MaskIdTexture;
+            colorTargets[HoAovAttachmentLayout.NormalDepth] = renderTargets.NormalDepthTexture;
+            colorTargets[HoAovAttachmentLayout.SurfaceData] = renderTargets.SurfaceDataTexture;
+            colorTargets[HoAovAttachmentLayout.Custom0] = renderTargets.Custom0Texture;
+            colorTargets[HoAovAttachmentLayout.ObjectCustom0] = renderTargets.ObjectCustom0Texture;
+            colorTargets[HoAovAttachmentLayout.ObjectCustom1] = renderTargets.ObjectCustom1Texture;
 
             ConfigureTarget(colorTargets, renderTargets.DepthTexture);
             ConfigureClear(ClearFlag.All, Color.clear);
@@ -185,7 +183,6 @@ namespace lilToon.URP.Extensions.AOV
 
             TextureHandle maskIdTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetMaskGraphicsFormat(), HoAovShaderConstants.MaskIdTextureName));
             TextureHandle normalDepthTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.NormalDepthTextureName));
-            TextureHandle tangentNormalTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.TangentNormalTextureName));
             TextureHandle surfaceDataTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.SurfaceDataTextureName));
             TextureHandle custom0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.Custom0TextureName));
             TextureHandle objectCustom0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.ObjectCustom0TextureName));
@@ -202,7 +199,6 @@ namespace lilToon.URP.Extensions.AOV
             ApplyFallbackMaterialProperties();
             aovResources.maskIdTexture = maskIdTexture;
             aovResources.normalDepthTexture = normalDepthTexture;
-            aovResources.tangentNormalTexture = tangentNormalTexture;
             aovResources.surfaceDataTexture = surfaceDataTexture;
             aovResources.custom0Texture = custom0Texture;
             aovResources.objectCustom0Texture = objectCustom0Texture;
@@ -249,7 +245,6 @@ namespace lilToon.URP.Extensions.AOV
                 renderGraph,
                 maskIdTexture,
                 normalDepthTexture,
-                tangentNormalTexture,
                 surfaceDataTexture,
                 custom0Texture,
                 objectCustom0Texture,
@@ -266,7 +261,6 @@ namespace lilToon.URP.Extensions.AOV
                 passData.aovRendererList = renderGraph.CreateRendererList(aovRendererListParams);
                 passData.maskIdTexture = maskIdTexture;
                 passData.normalDepthTexture = normalDepthTexture;
-                passData.tangentNormalTexture = tangentNormalTexture;
                 passData.surfaceDataTexture = surfaceDataTexture;
                 passData.custom0Texture = custom0Texture;
                 passData.objectCustom0Texture = objectCustom0Texture;
@@ -283,17 +277,15 @@ namespace lilToon.URP.Extensions.AOV
                     builder.UseRendererList(passData.aovRendererList);
                 }
 
-                builder.SetRenderAttachment(maskIdTexture, 0, AccessFlags.ReadWrite);
-                builder.SetRenderAttachment(normalDepthTexture, 1, AccessFlags.ReadWrite);
-                builder.SetRenderAttachment(tangentNormalTexture, 2, AccessFlags.ReadWrite);
-                builder.SetRenderAttachment(surfaceDataTexture, 3, AccessFlags.ReadWrite);
-                builder.SetRenderAttachment(custom0Texture, 4, AccessFlags.ReadWrite);
-                builder.SetRenderAttachment(objectCustom0Texture, 5, AccessFlags.ReadWrite);
-                builder.SetRenderAttachment(objectCustom1Texture, 6, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(maskIdTexture, HoAovAttachmentLayout.MaskId, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(normalDepthTexture, HoAovAttachmentLayout.NormalDepth, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(surfaceDataTexture, HoAovAttachmentLayout.SurfaceData, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(custom0Texture, HoAovAttachmentLayout.Custom0, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(objectCustom0Texture, HoAovAttachmentLayout.ObjectCustom0, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(objectCustom1Texture, HoAovAttachmentLayout.ObjectCustom1, AccessFlags.ReadWrite);
                 builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.ReadWrite);
                 builder.SetGlobalTextureAfterPass(maskIdTexture, HoAovShaderConstants.MaskIdTextureId);
                 builder.SetGlobalTextureAfterPass(normalDepthTexture, HoAovShaderConstants.NormalDepthTextureId);
-                builder.SetGlobalTextureAfterPass(tangentNormalTexture, HoAovShaderConstants.TangentNormalTextureId);
                 builder.SetGlobalTextureAfterPass(surfaceDataTexture, HoAovShaderConstants.SurfaceDataTextureId);
                 builder.SetGlobalTextureAfterPass(custom0Texture, HoAovShaderConstants.Custom0TextureId);
                 builder.SetGlobalTextureAfterPass(objectCustom0Texture, HoAovShaderConstants.ObjectCustom0TextureId);
@@ -350,7 +342,6 @@ namespace lilToon.URP.Extensions.AOV
             RenderGraph renderGraph,
             TextureHandle maskIdTexture,
             TextureHandle normalDepthTexture,
-            TextureHandle tangentNormalTexture,
             TextureHandle surfaceDataTexture,
             TextureHandle custom0Texture,
             TextureHandle objectCustom0Texture,
@@ -361,13 +352,12 @@ namespace lilToon.URP.Extensions.AOV
             using (var builder = renderGraph.AddRasterRenderPass<ClearPassData>("lilToon-HoAOV Clear", out ClearPassData passData, ProfilingSampler))
             {
                 passData.clearMaterial = clearMaterial;
-                builder.SetRenderAttachment(maskIdTexture, 0, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(normalDepthTexture, 1, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(tangentNormalTexture, 2, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(surfaceDataTexture, 3, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(custom0Texture, 4, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(objectCustom0Texture, 5, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(objectCustom1Texture, 6, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(maskIdTexture, HoAovAttachmentLayout.MaskId, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(normalDepthTexture, HoAovAttachmentLayout.NormalDepth, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(surfaceDataTexture, HoAovAttachmentLayout.SurfaceData, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(custom0Texture, HoAovAttachmentLayout.Custom0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(objectCustom0Texture, HoAovAttachmentLayout.ObjectCustom0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(objectCustom1Texture, HoAovAttachmentLayout.ObjectCustom1, AccessFlags.WriteAll);
                 builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.WriteAll);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (ClearPassData data, RasterGraphContext context) =>
@@ -473,7 +463,6 @@ namespace lilToon.URP.Extensions.AOV
         {
             cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, renderTargets.MaskIdTexture.nameID);
             cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
-            cmd.SetGlobalTexture(HoAovShaderConstants.TangentNormalTextureId, renderTargets.TangentNormalTexture.nameID);
             cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, renderTargets.SurfaceDataTexture.nameID);
             cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, renderTargets.Custom0Texture.nameID);
             cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, renderTargets.ObjectCustom0Texture.nameID);

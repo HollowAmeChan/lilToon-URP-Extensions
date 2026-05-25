@@ -3,8 +3,8 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
     Properties
     {
         [HideInInspector] _HoAovMaskWeight ("HoAOV Mask Weight", Float) = 1
-        [HideInInspector] _lilHoAovSystemChannelMask ("HoAOV Feature System Channel Mask", Float) = 4095
-        [HideInInspector] _HoAovSystemWriteMask ("HoAOV System Write Mask", Float) = 1119
+        [HideInInspector] _lilHoAovSystemChannelMask ("HoAOV Feature System Channel Mask", Float) = 4031
+        [HideInInspector] _HoAovSystemWriteMask ("HoAOV System Write Mask", Float) = 1055
         [HideInInspector] _HoAovCustomWriteMask ("HoAOV Custom Write Mask", Float) = 0
         [HideInInspector] _HoAovGroupId ("HoAOV Group Id", Float) = 0
         [HideInInspector] _HoAovObjectId ("HoAOV Object Id", Float) = 0
@@ -75,11 +75,10 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
             {
                 half4 maskId : SV_Target0;
                 half4 normalDepth : SV_Target1;
-                half4 tangentNormal : SV_Target2;
-                half4 surfaceData : SV_Target3;
-                half4 custom0 : SV_Target4;
-                half4 objectCustom0 : SV_Target5;
-                half4 objectCustom1 : SV_Target6;
+                half4 surfaceData : SV_Target2;
+                half4 custom0 : SV_Target3;
+                half4 objectCustom0 : SV_Target4;
+                half4 objectCustom1 : SV_Target5;
             };
 
             float HasBit(float value, float bitValue)
@@ -158,7 +157,6 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
                 float flagsEnabled = HasSystemChannel(4.0);
                 float linearDepthEnabled = HasSystemChannel(8.0);
                 float worldNormalEnabled = HasSystemChannel(16.0);
-                float tangentNormalEnabled = HasSystemChannel(64.0);
                 float thicknessEnabled = HasSystemChannel(256.0);
                 float curvatureEnabled = HasSystemChannel(512.0);
                 float materialEnabled = HasSystemChannel(1024.0);
@@ -182,7 +180,6 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
                     EncodeByte(effectiveObjectId) * idEnabled * subjectValid,
                     EncodeByte(effectiveFlags) * flagsEnabled * subjectValid);
                 output.normalDepth = half4((normalWS * 0.5 + 0.5) * worldNormalEnabled * subjectValid, linearDepth * linearDepthEnabled * subjectValid);
-                output.tangentNormal = half4(float3(0.5, 0.5, 1.0) * tangentNormalEnabled * subjectValid, tangentNormalEnabled * subjectValid);
                 output.surfaceData = half4(
                     saturate(_HoAovThickness) * thicknessEnabled * subjectValid,
                     saturate(abs(_HoAovCurvature)) * curvatureEnabled * subjectValid,

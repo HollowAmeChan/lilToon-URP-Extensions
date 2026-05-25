@@ -15,7 +15,6 @@ namespace lilToon.URP.Extensions.AOV
         public const string SystemChannelMaskName = "_lilHoAovSystemChannelMask";
         public const string MaskIdTextureName = "_lilHoAovMaskIdTexture";
         public const string NormalDepthTextureName = "_lilHoAovNormalDepthTexture";
-        public const string TangentNormalTextureName = "_lilHoAovTangentNormalTexture";
         public const string SurfaceDataTextureName = "_lilHoAovSurfaceDataTexture";
         public const string Custom0TextureName = "_lilHoAovCustom0_3Texture";
         public const string ObjectCustom0TextureName = "_lilHoAovObjectCustom0_3Texture";
@@ -44,7 +43,6 @@ namespace lilToon.URP.Extensions.AOV
         public static readonly int SystemChannelMaskId = Shader.PropertyToID(SystemChannelMaskName);
         public static readonly int MaskIdTextureId = Shader.PropertyToID(MaskIdTextureName);
         public static readonly int NormalDepthTextureId = Shader.PropertyToID(NormalDepthTextureName);
-        public static readonly int TangentNormalTextureId = Shader.PropertyToID(TangentNormalTextureName);
         public static readonly int SurfaceDataTextureId = Shader.PropertyToID(SurfaceDataTextureName);
         public static readonly int Custom0TextureId = Shader.PropertyToID(Custom0TextureName);
         public static readonly int ObjectCustom0TextureId = Shader.PropertyToID(ObjectCustom0TextureName);

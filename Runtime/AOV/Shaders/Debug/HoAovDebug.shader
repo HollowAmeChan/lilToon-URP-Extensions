@@ -30,7 +30,6 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
 
             TEXTURE2D_X(_lilHoAovMaskIdTexture);
             TEXTURE2D_X(_lilHoAovNormalDepthTexture);
-            TEXTURE2D_X(_lilHoAovTangentNormalTexture);
             TEXTURE2D_X(_lilHoAovSurfaceDataTexture);
             TEXTURE2D_X(_lilHoAovCustom0_3Texture);
             TEXTURE2D_X(_lilHoAovObjectCustom0_3Texture);
@@ -107,7 +106,6 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
                 int mode = (int)round(_HoAovDebugMode);
                 half4 maskId = SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_PointClamp, uv);
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_lilHoAovNormalDepthTexture, sampler_PointClamp, uv);
-                half4 tangentNormal = SAMPLE_TEXTURE2D_X(_lilHoAovTangentNormalTexture, sampler_PointClamp, uv);
                 half4 surfaceData = SAMPLE_TEXTURE2D_X(_lilHoAovSurfaceDataTexture, sampler_PointClamp, uv);
 
                 if (mode == 1)
@@ -138,91 +136,86 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
                     return half4(LilHoAovEncodedNormalOrBlack(normalDepth), 1.0);
                 }
 
-                if (mode == 6 || mode == 7 || mode == 8 || mode == 9 || mode == 10 || mode == 11 || mode == 12)
+                if (mode == 6)
                 {
-                    if (mode == 6)
-                    {
-                        float3 normalWS = LilHoAovWorldNormalOrZero(normalDepth);
-                        if (dot(normalWS, normalWS) < LIL_HOAOV_NORMAL_EPSILON)
-                        {
-                            return half4(0.0, 0.0, 0.0, 1.0);
-                        }
-
-                        float3 normalVS = mul((float3x3)UNITY_MATRIX_V, normalWS);
-                        return half4(normalVS * 0.5 + 0.5, 1.0);
-                    }
-
-                    if (mode == 7)
-                    {
-                        return half4(tangentNormal.rgb * step(0.0001, tangentNormal.a), 1.0);
-                    }
-
-                    if (mode == 8)
+                    float3 normalWS = LilHoAovWorldNormalOrZero(normalDepth);
+                    if (dot(normalWS, normalWS) < LIL_HOAOV_NORMAL_EPSILON)
                     {
                         return half4(0.0, 0.0, 0.0, 1.0);
                     }
 
-                    if (mode == 9)
-                    {
-                        return half4(surfaceData.rrr, 1.0);
-                    }
+                    float3 normalVS = mul((float3x3)UNITY_MATRIX_V, normalWS);
+                    return half4(normalVS * 0.5 + 0.5, 1.0);
+                }
 
-                    if (mode == 10)
-                    {
-                        return half4(Heat(surfaceData.g) * step(0.0001, surfaceData.g), 1.0);
-                    }
+                if (mode == 7)
+                {
+                    return half4(0.0, 0.0, 0.0, 1.0);
+                }
 
-                    if (mode == 11)
-                    {
-                        return half4(HashColor(float3(surfaceData.b, surfaceData.b * 2.17, surfaceData.b * 4.31)) * step(0.0001, surfaceData.b), 1.0);
-                    }
+                if (mode == 8)
+                {
+                    return half4(surfaceData.rrr, 1.0);
+                }
 
+                if (mode == 9)
+                {
+                    return half4(Heat(surfaceData.g) * step(0.0001, surfaceData.g), 1.0);
+                }
+
+                if (mode == 10)
+                {
+                    return half4(HashColor(float3(surfaceData.b, surfaceData.b * 2.17, surfaceData.b * 4.31)) * step(0.0001, surfaceData.b), 1.0);
+                }
+
+                if (mode == 11)
+                {
                     return half4(surfaceData.aaa, 1.0);
                 }
 
-                if (mode >= 13 && mode <= 16)
+                if (mode >= 12 && mode <= 15)
                 {
-                    half value = GetCustomValue(mode - 13, uv);
+                    half value = GetCustomValue(mode - 12, uv);
                     half valid = step(0.0001, maskId.r);
                     return lerp(source, half4(value, value, value, 1.0), valid);
                 }
 
-                if (mode >= 17 && mode <= 24)
+                if (mode >= 16 && mode <= 23)
                 {
-                    half value = GetObjectCustomValue(mode - 17, uv);
+                    half value = GetObjectCustomValue(mode - 16, uv);
                     half valid = step(0.0001, maskId.r);
                     return lerp(source, half4(value, value, value, 1.0), valid);
                 }
 
-                if (mode == 25)
+                if (mode == 24)
                 {
                     half valid = step(0.0001, maskId.r);
                     half hasRsuv = saturate(max(max(step(0.0001, maskId.g), step(0.0001, maskId.b)), step(0.0001, maskId.a)));
                     return lerp(source, half4(maskId.gba, 1.0), valid * hasRsuv);
                 }
 
-                if (mode == 26)
+                if (mode == 25)
                 {
                     half valid = step(0.0001, maskId.r);
                     half hasValue = step(0.0001, maskId.g);
                     return lerp(source, half4(HashScalar(maskId.g), 1.0), valid * hasValue);
                 }
 
-                if (mode == 27)
+                if (mode == 26)
                 {
                     half valid = step(0.0001, maskId.r);
                     half hasValue = step(0.0001, maskId.b);
                     return lerp(source, half4(HashScalar(maskId.b), 1.0), valid * hasValue);
                 }
 
-                if (mode == 28)
+                if (mode == 27)
                 {
                     half valid = step(0.0001, maskId.r);
                     half hasValue = step(0.0001, maskId.a);
                     return lerp(source, half4(Heat(maskId.a), 1.0), valid * hasValue);
                 }
 
-                if (mode == 29)
+                if (mode == 28)
                 {
                     half valid = step(0.0001, maskId.r);
                     half hasId = saturate(max(step(0.0001, maskId.g), step(0.0001, maskId.b)));
@@ -231,7 +224,7 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
                     return lerp(source, half4(0.15, 0.78, 1.0, 1.0), selected);
                 }
 
-                if (mode == 30)
+                if (mode == 29)
                 {
                     half4 sss = SAMPLE_TEXTURE2D_X(_lilHoAovSssTexture, sampler_PointClamp, uv);
                     half valid = step(0.0001, maskId.r) * step(0.0001, sss.a);

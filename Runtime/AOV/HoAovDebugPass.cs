@@ -22,7 +22,6 @@ namespace lilToon.URP.Extensions.AOV
             public TextureHandle source;
             public TextureHandle maskIdTexture;
             public TextureHandle normalDepthTexture;
-            public TextureHandle tangentNormalTexture;
             public TextureHandle surfaceDataTexture;
             public TextureHandle custom0Texture;
             public TextureHandle objectCustom0Texture;
@@ -88,7 +87,6 @@ namespace lilToon.URP.Extensions.AOV
                 SetMaterialProperties(debugMaterial, settings);
                 cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, renderTargets.MaskIdTexture.nameID);
                 cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
-                cmd.SetGlobalTexture(HoAovShaderConstants.TangentNormalTextureId, renderTargets.TangentNormalTexture.nameID);
                 cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, renderTargets.SurfaceDataTexture.nameID);
                 cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, renderTargets.Custom0Texture.nameID);
                 cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, renderTargets.ObjectCustom0Texture.nameID);
@@ -115,7 +113,6 @@ namespace lilToon.URP.Extensions.AOV
             if (!source.IsValid()
                 || !aovResources.maskIdTexture.IsValid()
                 || !aovResources.normalDepthTexture.IsValid()
-                || !aovResources.tangentNormalTexture.IsValid()
                 || !aovResources.surfaceDataTexture.IsValid()
                 || !aovResources.custom0Texture.IsValid()
                 || !aovResources.objectCustom0Texture.IsValid()
@@ -136,7 +133,6 @@ namespace lilToon.URP.Extensions.AOV
                 passData.source = source;
                 passData.maskIdTexture = aovResources.maskIdTexture;
                 passData.normalDepthTexture = aovResources.normalDepthTexture;
-                passData.tangentNormalTexture = aovResources.tangentNormalTexture;
                 passData.surfaceDataTexture = aovResources.surfaceDataTexture;
                 passData.custom0Texture = aovResources.custom0Texture;
                 passData.objectCustom0Texture = aovResources.objectCustom0Texture;
@@ -149,7 +145,6 @@ namespace lilToon.URP.Extensions.AOV
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.UseTexture(passData.maskIdTexture, AccessFlags.Read);
                 builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
-                builder.UseTexture(passData.tangentNormalTexture, AccessFlags.Read);
                 builder.UseTexture(passData.surfaceDataTexture, AccessFlags.Read);
                 builder.UseTexture(passData.custom0Texture, AccessFlags.Read);
                 builder.UseTexture(passData.objectCustom0Texture, AccessFlags.Read);
@@ -165,7 +160,6 @@ namespace lilToon.URP.Extensions.AOV
                     context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 1.0f);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.maskIdTexture);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
-                    context.cmd.SetGlobalTexture(HoAovShaderConstants.TangentNormalTextureId, data.tangentNormalTexture);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, data.custom0Texture);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, data.objectCustom0Texture);

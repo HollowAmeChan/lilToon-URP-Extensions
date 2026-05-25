@@ -278,3 +278,15 @@ GeometryBuffer.TangentNormal
 - `HoAovDebug.shader` 已移动到 `Runtime/AOV/Shaders/Debug/`，保持 feature-local debug 归属，并同步更新显式 debug shader collection 路径。
 
 这一步没有改动现有 MRT 语义布局；下一步再按真实消费者删除或重命名旧 HoAOV 通道。
+
+## 10. 2026-05-25 执行记录：移除 TangentNormal 默认输出
+
+已完成第一批旧 HoAOV 通道瘦身：`TangentNormal` 没有真实 ScreenProcess / SSS / CharacterSpecialization 消费者，已从默认 Buffer 输出中移除。
+
+- `HoAovChannelMask.Default` 不再包含 `TangentNormal`，并从用户可选 debug mode 中移除切线法线视图。
+- `HoAovOutputPass` / `HoAovRenderTargets` / `HoAovRenderGraphResources` 不再创建、清理、发布 `_lilHoAovTangentNormalTexture`。
+- AOV fallback 与 clear shader 的 MRT 从 7 个缩到 6 个：`MaskId`、`NormalDepth`、`SurfaceData`、`Custom0_3`、`ObjectCustom0_3`、`ObjectCustom4_7`。
+- `HoAovDebugPass` 和 `HoAovDebug.shader` 不再读取 TangentNormal；后续 debug 只显示仍存在的 Buffer 项。
+- 新增 `HoAovAttachmentLayout` 固定剩余 MRT 索引，避免后续继续瘦身时在 `HoAovOutputPass` 中手写 attachment 数字。
+
+保留的判断：如果未来出现各向异性屏幕滤波、头发屏幕空间高光或明确的切线方向后处理，再以新的 `GeometryBuffer` 候选项重新引入，而不是把旧 HoAOV 实验通道常驻输出。

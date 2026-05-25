@@ -22,8 +22,6 @@ namespace lilToon.URP.Extensions.AOV
         WorldNormal = 1 << 4,
         [InspectorName("视图法线")]
         ViewNormal = 1 << 5,
-        [InspectorName("切线法线")]
-        TangentNormal = 1 << 6,
         [InspectorName("速度")]
         Velocity = 1 << 7,
         [InspectorName("厚度")]
@@ -35,7 +33,7 @@ namespace lilToon.URP.Extensions.AOV
         [InspectorName("系统预留")]
         Utility = 1 << 11,
         [InspectorName("默认")]
-        Default = Mask | Id | Flags | LinearDepth | WorldNormal | TangentNormal | Thickness | Curvature | Material | Utility
+        Default = Mask | Id | Flags | LinearDepth | WorldNormal | Thickness | Curvature | Material | Utility
     }
 
     public enum HoAovDebugMode
@@ -54,8 +52,6 @@ namespace lilToon.URP.Extensions.AOV
         WorldNormal,
         [InspectorName("视图法线")]
         ViewNormal,
-        [InspectorName("切线法线")]
-        TangentNormal,
         [InspectorName("速度")]
         Velocity,
         [InspectorName("厚度")]

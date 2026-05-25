@@ -12,7 +12,6 @@ namespace lilToon.URP.Extensions.AOV
     {
         public TextureHandle maskIdTexture = TextureHandle.nullHandle;
         public TextureHandle normalDepthTexture = TextureHandle.nullHandle;
-        public TextureHandle tangentNormalTexture = TextureHandle.nullHandle;
         public TextureHandle surfaceDataTexture = TextureHandle.nullHandle;
         public TextureHandle custom0Texture = TextureHandle.nullHandle;
         public TextureHandle objectCustom0Texture = TextureHandle.nullHandle;
@@ -28,7 +27,6 @@ namespace lilToon.URP.Extensions.AOV
         {
             maskIdTexture = TextureHandle.nullHandle;
             normalDepthTexture = TextureHandle.nullHandle;
-            tangentNormalTexture = TextureHandle.nullHandle;
             surfaceDataTexture = TextureHandle.nullHandle;
             custom0Texture = TextureHandle.nullHandle;
             objectCustom0Texture = TextureHandle.nullHandle;
@@ -41,7 +39,6 @@ namespace lilToon.URP.Extensions.AOV
     {
         private RTHandle maskIdTexture;
         private RTHandle normalDepthTexture;
-        private RTHandle tangentNormalTexture;
         private RTHandle surfaceDataTexture;
         private RTHandle custom0Texture;
         private RTHandle objectCustom0Texture;
@@ -51,7 +48,6 @@ namespace lilToon.URP.Extensions.AOV
 
         public RTHandle MaskIdTexture => maskIdTexture;
         public RTHandle NormalDepthTexture => normalDepthTexture;
-        public RTHandle TangentNormalTexture => tangentNormalTexture;
         public RTHandle SurfaceDataTexture => surfaceDataTexture;
         public RTHandle Custom0Texture => custom0Texture;
         public RTHandle ObjectCustom0Texture => objectCustom0Texture;
@@ -87,7 +83,6 @@ namespace lilToon.URP.Extensions.AOV
 
             RenderingUtils.ReAllocateIfNeeded(ref maskIdTexture, maskDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.MaskIdTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref normalDepthTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.NormalDepthTextureName);
-            RenderingUtils.ReAllocateIfNeeded(ref tangentNormalTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.TangentNormalTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref surfaceDataTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.SurfaceDataTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref custom0Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.Custom0TextureName);
             RenderingUtils.ReAllocateIfNeeded(ref objectCustom0Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.ObjectCustom0TextureName);
@@ -100,7 +95,6 @@ namespace lilToon.URP.Extensions.AOV
         {
             maskIdTexture?.Release();
             normalDepthTexture?.Release();
-            tangentNormalTexture?.Release();
             surfaceDataTexture?.Release();
             custom0Texture?.Release();
             objectCustom0Texture?.Release();
@@ -109,7 +103,6 @@ namespace lilToon.URP.Extensions.AOV
             depthTexture?.Release();
             maskIdTexture = null;
             normalDepthTexture = null;
-            tangentNormalTexture = null;
             surfaceDataTexture = null;
             custom0Texture = null;
             objectCustom0Texture = null;
