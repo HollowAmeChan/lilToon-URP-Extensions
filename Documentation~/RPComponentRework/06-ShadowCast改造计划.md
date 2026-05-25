@@ -362,6 +362,20 @@ ShadowCast 与 ScreenProcess 的关系：
 - 继续把 `ApplyGlobalData` / reset / receiver global 发布拆到 `HoShadowCastPublisher`。
 - 自动收集的 light layer / shadow layer 规则还未细化，当前仍主要依赖 URP visible lights、main light skip、`Light.shadows` 与 caster layer mask。
 
+## 10.5 2026-05-25 执行记录
+
+已继续拆分 ShadowCast receiver global 发布边界：
+
+- 新增 `HoShadowCastPublisher`，集中维护 punctual atlas、second directional atlas 的 shader global array 缓存、receiver ABI 写入和空状态 reset。
+- `HoShadowCastRendererFeature.ResetShadowCastState()` 改为调用 publisher 的统一 immediate reset，避免 RendererFeature 壳继续直接维护 receiver global 细节。
+- compatibility path 与 RenderGraph path 的 `ApplyGlobalData` / `ApplySecondDirectionalGlobalData` 调用都改为通过 `HoShadowCastPublisher` 发布，主 pass 只保留 atlas 渲染、slice 绘制、camera global restore 和入队逻辑。
+- 本次只移动发布代码，不改变 atlas 写入、light collection、debug 按需加载、receiver ABI、MaterialBuffer/GeometryBuffer 边界或 ImageProcess 禁止消费 ShadowCast 的规则。
+
+仍待处理：
+
+- 继续把 `BuildFrameData` / `BuildSecondDirectionalFrameData` 及其 light collection helper 拆到 `HoShadowCastFrameCollector`。
+- 自动收集的 light layer / shadow layer 规则还未细化，当前仍主要依赖 URP visible lights、main light skip、`Light.shadows` 与 caster layer mask。
+
 ---
 
 ## 11. 验收清单
