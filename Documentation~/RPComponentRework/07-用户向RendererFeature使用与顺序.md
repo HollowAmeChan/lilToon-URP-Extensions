@@ -175,6 +175,8 @@ Debug 重点看：
 - mask rule 实际命中值。
 - effect 是否误放到了 ImageProcess。
 
+Rule mask debug 不走 RendererFeature 侧独立调试视图。用户在具体 ScreenProcess layer 上打开规则遮罩的调试直出后，由该 layer 的效果 shader 通过 `_LayerRuleDebugOutput` 输出命中结果；公共 Debug UI 只需要把这一点作为 ScreenProcess 的轻量观察入口展示，不创建额外 shader、material 或 pass。
+
 ### ImageProcess
 
 ImageProcess 是最终图像链。
@@ -219,7 +221,7 @@ Debug 入口可以统一，但资源归属必须局部：
 
 公共 Debug UI 不拥有 feature 的 debug shader、debug material 或 collector。
 重 debug shader 默认不编译，用户显式启用 debug profile / define / shader collection 后才进入收集。
-当前已登记的 view info 覆盖 MetadataBuffer、GeometryBuffer、ShadowCast、SSS、ScreenProcess rule mask 和 ImageProcess layer chain；ScreenProcess 与 ImageProcess 条目是轻量观察入口，不进入重 debug shader collection。
+当前已登记的 view info 覆盖 MetadataBuffer、GeometryBuffer、ShadowCast、SSS、ScreenProcess rule mask 和 ImageProcess layer chain；ScreenProcess 与 ImageProcess 条目是轻量观察入口，不进入重 debug shader collection。ScreenProcess rule mask 的实际输出入口仍是 layer 自己的 `debugRuleMask`，不需要 RendererFeature 级 debug view。
 
 ---
 

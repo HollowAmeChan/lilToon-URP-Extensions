@@ -218,6 +218,7 @@ ImageProcess UI：
 - `HoPostProcess*` 运行时与 Editor 类型迁为 `ScreenProcess*`，Volume 入口改为 `ScreenProcessStackVolume`，RendererFeature 改为 `ScreenProcessRendererFeature`。
 - `HoPostAovMask` 相关类型、字段、Inspector 和 shader helper 迁为 `ScreenProcessRuleMask` / `ruleMask`，ScreenProcess 不再暴露 AOV 命名。
 - ScreenProcess shader Hidden 名迁到 `Hidden/lilToon/URP/ScreenProcess/...`，include 路径迁到 `Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl`。
+- ScreenProcess rule mask debug 不再作为 RendererFeature 级 debug pass 规划；它由 layer 上的 `debugRuleMask` 直接驱动 `_LayerRuleDebugOutput`，输出该 layer 的规则遮罩命中结果。
 - `_lilHoAov*` 纹理/property ABI 和 `HoAOV` / `HoAOVSSS` LightMode 已从运行时与材质模板迁出；ScreenProcess 只按 `_HoMetadataBuffer*` / `_HoGeometryBuffer*` 读取语义输入。
 
 ---
@@ -255,6 +256,7 @@ ScreenProcess 是唯一允许消费语义输入的 post stack。本次补齐它�
 
 - ScreenProcess RenderGraph stack pass 按 active layer 聚合 MetadataBuffer / GeometryBuffer 需求，而不是固定读取所有 Buffer。
 - `EdgeLight` / `PostLighting` 需要 maskId + normalDepth；`DropShadow`、`useRuleMask`、`debugRuleMask` 按 rule source 追加 surfaceData、custom0、objectCustom0 或 objectCustom1。
+- `debugRuleMask` 是 layer-local 直出开关，不需要公共 Debug UI 或 RendererFeature 额外创建调试资源。
 - 缺少当前 layer 需要的 Buffer 项时，问题显示在 ScreenProcess Volume Inspector 的运行状态中；ImageProcess 仍不承担任何语义输入诊断。
 
 ## 15. 验收清单

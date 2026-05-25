@@ -11,7 +11,7 @@
 - AOV debug 需要 decode 多个 MRT。
 - SSS debug 需要展示 source / diffusion / composite / profile。
 - ShadowCast debug 需要 atlas / slice / receiver 视图。
-- ScreenProcess rule mask debug 容易把 mask 规则和实际效果 shader 耦合。
+- ScreenProcess rule mask debug 已由每个 layer 的 `debugRuleMask` / `_LayerRuleDebugOutput` 直出承担，不需要 RendererFeature 侧独立 debug shader。
 - 旧 Shoost AOV composite / mask debug 是迁移对象，不作为 ImageProcess 新能力保留。
 
 如果这些 shader 默认被引用、默认进变体收集、默认编译，会让普通用户项目付出不必要的导入和编译成本。
@@ -169,10 +169,10 @@ if debug enabled:
 - `Runtime/MetadataBuffer/Shaders/Debug/HoMetadataBufferDebug.shader`
 - `Runtime/ShadowCast/Shaders/Debug/HoShadowCastDebug.shader`
 - `Runtime/SubsurfaceScattering/HoSubsurfaceScattering.shader` 内部 debug 分支
-- `Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl` 相关 debug 输出
+- `Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl` 相关 layer-local debug 输出
 - `Runtime/ImageProcess/Shaders/ImageProcess/AovComposite.shader` 迁出到 ScreenProcess 或删除
 
-其中 MetadataBuffer / ShadowCast 更适合独立 debug shader；ScreenProcess 的 rule mask debug 应从常规效果 shader 中降级为局部可选路径。
+其中 MetadataBuffer / ShadowCast 更适合独立 debug shader；ScreenProcess 的 rule mask debug 已经是局部可选直出路径：用户在具体 layer 上打开 `debugRuleMask` 后，由该 layer 的效果 shader 通过 `_LayerRuleDebugOutput` 输出规则遮罩结果，不再作为 RendererFeature debug pass 或公共 tile view 的待拆项。
 ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 
 ---
@@ -207,7 +207,7 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 
 待处理：
 
-- ScreenProcess rule mask debug 已作为 `ScreenProcessDebugViewInfo` 的非重 shader view 登记；是否拆成独立 debug shader 仍是后续收口项。
+- ScreenProcess rule mask debug 已作为 `ScreenProcessDebugViewInfo` 的非重 shader view 登记；它的执行入口就是 layer-local `debugRuleMask` 直出，不计划拆成独立 RendererFeature debug shader。
 - 后续 debug profile / tile view 仍需基于 feature 局部 view info 接入。
 
 已继续对 SSS debug 分支做按需编译拆分：
@@ -237,7 +237,7 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 - 新增 `Runtime/Debug/HoDebugViewInfo.cs` / `HoDebugViewRegistry.cs`，公共层只聚合 view id、短名、mode value、shader 名、asset path、是否进入 shader collection 和缺失降级说明。
 - MetadataBuffer、GeometryBuffer、ShadowCast、SSS、ScreenProcess、ImageProcess 分别新增 `<Feature>DebugViewInfo.cs`，view 列表归属仍留在 feature 目录。
 - `LilUrpDebugShaderCollectionGenerator` 不再维护硬编码 debug shader 表，改读 registry 中标记为 `RequiresShaderCollection` 的 view，并对同一 shader 去重。
-- ScreenProcess rule mask 和 ImageProcess layer chain 先登记为无独立 shader 的轻量观察入口，公共 Debug UI / tile view 不因此接管 effect shader 或图像链资源。
+- ScreenProcess rule mask 和 ImageProcess layer chain 登记为无独立 shader 的轻量观察入口，公共 Debug UI / tile view 不因此接管 effect shader 或图像链资源。ScreenProcess rule mask 的实际排障方式是打开具体 layer 的 `debugRuleMask` 直出，而不是切换 RendererFeature 级 debug view。
 
 ---
 
