@@ -1,25 +1,25 @@
-#ifndef LIL_HOPOST_AOV_MASK_INCLUDED
-#define LIL_HOPOST_AOV_MASK_INCLUDED
+#ifndef LIL_SCREEN_PROCESS_RULE_MASK_INCLUDED
+#define LIL_SCREEN_PROCESS_RULE_MASK_INCLUDED
 
-#ifndef LIL_HOPOST_AOV_RULE_GROUP_ENABLED
-#define LIL_HOPOST_AOV_RULE_GROUP_ENABLED 1
+#ifndef LIL_SCREEN_PROCESS_RULE_MASK_GROUP_ENABLED
+#define LIL_SCREEN_PROCESS_RULE_MASK_GROUP_ENABLED 1
 #endif
 
-#define LIL_HOPOST_AOV_RULE_MAX 4
+#define LIL_SCREEN_PROCESS_RULE_MASK_MAX 4
 
 float _lilHoAovActive;
-float _LayerAovMaskEnabled;
-float _LayerAovSource;
-float _LayerAovMode;
-float4 _LayerAovParams; // x threshold/tolerance, y reserved, z match value, w final invert
-float4 _LayerAovMatchColor;
-float _LayerAovDebugOutput;
-#if LIL_HOPOST_AOV_RULE_GROUP_ENABLED
-float _LayerAovRuleCount;
-float4 _LayerAovRuleData0[LIL_HOPOST_AOV_RULE_MAX]; // x enabled, y source, z operator, w combine
-float4 _LayerAovRuleData1[LIL_HOPOST_AOV_RULE_MAX]; // x value, y min, z max, w tolerance
-float4 _LayerAovRuleData2[LIL_HOPOST_AOV_RULE_MAX]; // x reserved, y invert
-float4 _LayerAovRuleColor[LIL_HOPOST_AOV_RULE_MAX];
+float _LayerRuleMaskEnabled;
+float _LayerRuleSource;
+float _LayerRuleMode;
+float4 _LayerRuleParams; // x threshold/tolerance, y reserved, z match value, w final invert
+float4 _LayerRuleMatchColor;
+float _LayerRuleDebugOutput;
+#if LIL_SCREEN_PROCESS_RULE_MASK_GROUP_ENABLED
+float _LayerRuleMaskCount;
+float4 _LayerRuleMaskData0[LIL_SCREEN_PROCESS_RULE_MASK_MAX]; // x enabled, y source, z operator, w combine
+float4 _LayerRuleMaskData1[LIL_SCREEN_PROCESS_RULE_MASK_MAX]; // x value, y min, z max, w tolerance
+float4 _LayerRuleMaskData2[LIL_SCREEN_PROCESS_RULE_MASK_MAX]; // x reserved, y invert
+float4 _LayerRuleMaskColor[LIL_SCREEN_PROCESS_RULE_MASK_MAX];
 #endif
 
 TEXTURE2D_X(_lilHoAovMaskIdTexture);
@@ -29,18 +29,18 @@ TEXTURE2D_X(_lilHoAovCustom0_3Texture);
 TEXTURE2D_X(_lilHoAovObjectCustom0_3Texture);
 TEXTURE2D_X(_lilHoAovObjectCustom4_7Texture);
 
-float LilHoPostEncodeAovScalar(float value)
+float LilScreenProcessEncodeRuleScalar(float value)
 {
     return frac(abs(value) * 0.61803398875);
 }
 
-#if LIL_HOPOST_AOV_RULE_GROUP_ENABLED
-float LilHoPostHasPackedBit(float value, float bitValue)
+#if LIL_SCREEN_PROCESS_RULE_MASK_GROUP_ENABLED
+float LilScreenProcessHasPackedBit(float value, float bitValue)
 {
     return step(0.5, fmod(floor(value / bitValue), 2.0));
 }
 
-float LilHoPostFlagsAny(float normalizedFlags, float targetFlags)
+float LilScreenProcessFlagsAny(float normalizedFlags, float targetFlags)
 {
     float current = floor(saturate(normalizedFlags) * 255.0 + 0.5);
     float target = floor(abs(targetFlags) + 0.5);
@@ -49,13 +49,13 @@ float LilHoPostFlagsAny(float normalizedFlags, float targetFlags)
     for (int bit = 0; bit < 8; bit++)
     {
         float bitValue = exp2((float)bit);
-        selected = max(selected, LilHoPostHasPackedBit(current, bitValue) * LilHoPostHasPackedBit(target, bitValue));
+        selected = max(selected, LilScreenProcessHasPackedBit(current, bitValue) * LilScreenProcessHasPackedBit(target, bitValue));
     }
 
     return selected * step(0.5, target);
 }
 
-float LilHoPostFlagsAll(float normalizedFlags, float targetFlags)
+float LilScreenProcessFlagsAll(float normalizedFlags, float targetFlags)
 {
     float current = floor(saturate(normalizedFlags) * 255.0 + 0.5);
     float target = floor(abs(targetFlags) + 0.5);
@@ -64,8 +64,8 @@ float LilHoPostFlagsAll(float normalizedFlags, float targetFlags)
     for (int bit = 0; bit < 8; bit++)
     {
         float bitValue = exp2((float)bit);
-        float targetBit = LilHoPostHasPackedBit(target, bitValue);
-        float currentBit = LilHoPostHasPackedBit(current, bitValue);
+        float targetBit = LilScreenProcessHasPackedBit(target, bitValue);
+        float currentBit = LilScreenProcessHasPackedBit(current, bitValue);
         selected *= lerp(1.0, currentBit, targetBit);
     }
 
@@ -73,59 +73,59 @@ float LilHoPostFlagsAll(float normalizedFlags, float targetFlags)
 }
 #endif
 
-bool LilHoPostIsByteAovSource(int source)
+bool LilScreenProcessIsByteRuleSource(int source)
 {
     return source == 1 || source == 2 || source == 3;
 }
 
-bool LilHoPostIsEncodedAovSource(int source)
+bool LilScreenProcessIsEncodedRuleSource(int source)
 {
     return source == 6;
 }
 
-float LilHoPostDecodeByteValue(float value)
+float LilScreenProcessDecodeByteValue(float value)
 {
     return floor(saturate(value) * 255.0 + 0.5);
 }
 
-float LilHoPostClampRuleByteValue(float value)
+float LilScreenProcessClampRuleByteValue(float value)
 {
     return clamp(round(value), 0.0, 255.0);
 }
 
-float LilHoPostMatchByteValue(float value, float target, float tolerance)
+float LilScreenProcessMatchByteValue(float value, float target, float tolerance)
 {
-    float valueByte = LilHoPostDecodeByteValue(value);
-    float targetByte = LilHoPostClampRuleByteValue(target);
+    float valueByte = LilScreenProcessDecodeByteValue(value);
+    float targetByte = LilScreenProcessClampRuleByteValue(target);
     return abs(valueByte - targetByte) <= max(tolerance, 0.0) ? 1.0 : 0.0;
 }
 
-float LilHoPostResolveMatchTolerance(int source, float tolerance)
+float LilScreenProcessResolveMatchTolerance(int source, float tolerance)
 {
-    return LilHoPostIsEncodedAovSource(source) ? max(tolerance, 0.001) : max(tolerance, 0.0);
+    return LilScreenProcessIsEncodedRuleSource(source) ? max(tolerance, 0.001) : max(tolerance, 0.0);
 }
 
-float LilHoPostNormalizeRuleValue(float value, int source)
+float LilScreenProcessNormalizeRuleValue(float value, int source)
 {
-    if (LilHoPostIsByteAovSource(source))
+    if (LilScreenProcessIsByteRuleSource(source))
     {
         return saturate(round(value) / 255.0);
     }
 
-    if (LilHoPostIsEncodedAovSource(source))
+    if (LilScreenProcessIsEncodedRuleSource(source))
     {
-        return LilHoPostEncodeAovScalar(value);
+        return LilScreenProcessEncodeRuleScalar(value);
     }
 
     return value;
 }
 
-float LilHoPostMatchRawValue(float value, float target, float tolerance)
+float LilScreenProcessMatchRawValue(float value, float target, float tolerance)
 {
     return abs(value - target) <= max(tolerance, 0.0) ? 1.0 : 0.0;
 }
 
-float LilHoPostSelectAovScalar(float4 maskId, float4 surfaceData, float4 custom0, float4 objectCustom0, float4 objectCustom1, int source)
+float LilScreenProcessSelectRuleScalar(float4 maskId, float4 surfaceData, float4 custom0, float4 objectCustom0, float4 objectCustom1, int source)
 {
     if (source == 1)
     {
@@ -225,7 +225,7 @@ float LilHoPostSelectAovScalar(float4 maskId, float4 surfaceData, float4 custom0
     return maskId.r;
 }
 
-float4 LilHoPostSelectAovColor(float4 maskId, float4 surfaceData, float4 custom0, float4 objectCustom0, float4 objectCustom1, int source)
+float4 LilScreenProcessSelectRuleColor(float4 maskId, float4 surfaceData, float4 custom0, float4 objectCustom0, float4 objectCustom1, int source)
 {
     if (source >= 4 && source <= 7)
     {
@@ -250,18 +250,18 @@ float4 LilHoPostSelectAovColor(float4 maskId, float4 surfaceData, float4 custom0
     return maskId;
 }
 
-float LilHoPostSelectAovScalar(float4 maskId, float4 surfaceData, float4 custom0, int source)
+float LilScreenProcessSelectRuleScalar(float4 maskId, float4 surfaceData, float4 custom0, int source)
 {
-    return LilHoPostSelectAovScalar(maskId, surfaceData, custom0, float4(0.0, 0.0, 0.0, 0.0), float4(0.0, 0.0, 0.0, 0.0), source);
+    return LilScreenProcessSelectRuleScalar(maskId, surfaceData, custom0, float4(0.0, 0.0, 0.0, 0.0), float4(0.0, 0.0, 0.0, 0.0), source);
 }
 
-float4 LilHoPostSelectAovColor(float4 maskId, float4 surfaceData, float4 custom0, int source)
+float4 LilScreenProcessSelectRuleColor(float4 maskId, float4 surfaceData, float4 custom0, int source)
 {
-    return LilHoPostSelectAovColor(maskId, surfaceData, custom0, float4(0.0, 0.0, 0.0, 0.0), float4(0.0, 0.0, 0.0, 0.0), source);
+    return LilScreenProcessSelectRuleColor(maskId, surfaceData, custom0, float4(0.0, 0.0, 0.0, 0.0), float4(0.0, 0.0, 0.0, 0.0), source);
 }
 
-#if LIL_HOPOST_AOV_RULE_GROUP_ENABLED
-float LilHoPostEvaluateAovRule(
+#if LIL_SCREEN_PROCESS_RULE_MASK_GROUP_ENABLED
+float LilScreenProcessEvaluateRuleMask(
     float4 maskId,
     float4 surfaceData,
     float4 custom0,
@@ -272,18 +272,18 @@ float LilHoPostEvaluateAovRule(
     float4 ruleValues,
     float4 matchColor)
 {
-    float scalar = LilHoPostSelectAovScalar(maskId, surfaceData, custom0, objectCustom0, objectCustom1, source);
-    float value = LilHoPostNormalizeRuleValue(ruleValues.x, source);
-    float minValue = LilHoPostNormalizeRuleValue(ruleValues.y, source);
-    float maxValue = LilHoPostNormalizeRuleValue(ruleValues.z, source);
+    float scalar = LilScreenProcessSelectRuleScalar(maskId, surfaceData, custom0, objectCustom0, objectCustom1, source);
+    float value = LilScreenProcessNormalizeRuleValue(ruleValues.x, source);
+    float minValue = LilScreenProcessNormalizeRuleValue(ruleValues.y, source);
+    float maxValue = LilScreenProcessNormalizeRuleValue(ruleValues.z, source);
     float tolerance = max(ruleValues.w, 0.0);
-    float matchTolerance = LilHoPostResolveMatchTolerance(source, tolerance);
-    if (LilHoPostIsByteAovSource(source))
+    float matchTolerance = LilScreenProcessResolveMatchTolerance(source, tolerance);
+    if (LilScreenProcessIsByteRuleSource(source))
     {
-        float scalarByte = LilHoPostDecodeByteValue(scalar);
-        float valueByte = LilHoPostClampRuleByteValue(ruleValues.x);
-        float minByte = LilHoPostClampRuleByteValue(ruleValues.y);
-        float maxByte = LilHoPostClampRuleByteValue(ruleValues.z);
+        float scalarByte = LilScreenProcessDecodeByteValue(scalar);
+        float valueByte = LilScreenProcessClampRuleByteValue(ruleValues.x);
+        float minByte = LilScreenProcessClampRuleByteValue(ruleValues.y);
+        float maxByte = LilScreenProcessClampRuleByteValue(ruleValues.z);
 
         if (ruleOperator == 1)
         {
@@ -312,12 +312,12 @@ float LilHoPostEvaluateAovRule(
 
         if (ruleOperator == 6)
         {
-            return LilHoPostMatchByteValue(scalar, ruleValues.x, tolerance);
+            return LilScreenProcessMatchByteValue(scalar, ruleValues.x, tolerance);
         }
 
         if (ruleOperator == 7)
         {
-            return 1.0 - LilHoPostMatchByteValue(scalar, ruleValues.x, tolerance);
+            return 1.0 - LilScreenProcessMatchByteValue(scalar, ruleValues.x, tolerance);
         }
 
         if (ruleOperator == 8)
@@ -372,25 +372,25 @@ float LilHoPostEvaluateAovRule(
 
     if (ruleOperator == 9)
     {
-        float4 colorSample = LilHoPostSelectAovColor(maskId, surfaceData, custom0, objectCustom0, objectCustom1, source);
+        float4 colorSample = LilScreenProcessSelectRuleColor(maskId, surfaceData, custom0, objectCustom0, objectCustom1, source);
         float colorDistance = distance(colorSample.rgb, matchColor.rgb);
         return colorDistance <= tolerance ? 1.0 : 0.0;
     }
 
     if (ruleOperator == 10)
     {
-        return LilHoPostFlagsAny(scalar, ruleValues.x);
+        return LilScreenProcessFlagsAny(scalar, ruleValues.x);
     }
 
     if (ruleOperator == 11)
     {
-        return LilHoPostFlagsAll(scalar, ruleValues.x);
+        return LilScreenProcessFlagsAll(scalar, ruleValues.x);
     }
 
     return saturate(scalar);
 }
 
-float LilHoPostCombineAovRule(float mask, float ruleMask, int combine)
+float LilScreenProcessCombineRuleMask(float mask, float ruleMask, int combine)
 {
     if (combine == 1)
     {
@@ -421,13 +421,13 @@ float LilHoPostCombineAovRule(float mask, float ruleMask, int combine)
 }
 #endif
 
-float LilHoPostResolveLegacyAovSelection(float4 maskId, float4 surfaceData, float4 custom0, float4 objectCustom0, float4 objectCustom1)
+float LilScreenProcessResolveLegacyRuleSelection(float4 maskId, float4 surfaceData, float4 custom0, float4 objectCustom0, float4 objectCustom1)
 {
-    int source = (int)clamp(round(_LayerAovSource), 0.0, 19.0);
-    int mode = (int)clamp(round(_LayerAovMode), 0.0, 3.0);
-    float threshold = max(_LayerAovParams.x, 0.0);
-    float matchValue = _LayerAovParams.z;
-    float scalar = LilHoPostSelectAovScalar(maskId, surfaceData, custom0, objectCustom0, objectCustom1, source);
+    int source = (int)clamp(round(_LayerRuleSource), 0.0, 19.0);
+    int mode = (int)clamp(round(_LayerRuleMode), 0.0, 3.0);
+    float threshold = max(_LayerRuleParams.x, 0.0);
+    float matchValue = _LayerRuleParams.z;
+    float scalar = LilScreenProcessSelectRuleScalar(maskId, surfaceData, custom0, objectCustom0, objectCustom1, source);
     float selected = saturate(scalar);
 
     if (mode == 1)
@@ -436,40 +436,40 @@ float LilHoPostResolveLegacyAovSelection(float4 maskId, float4 surfaceData, floa
     }
     else if (mode == 2)
     {
-        selected = LilHoPostIsByteAovSource(source)
-            ? LilHoPostMatchByteValue(scalar, matchValue, threshold)
-            : LilHoPostMatchRawValue(scalar, LilHoPostNormalizeRuleValue(matchValue, source), LilHoPostResolveMatchTolerance(source, threshold));
+        selected = LilScreenProcessIsByteRuleSource(source)
+            ? LilScreenProcessMatchByteValue(scalar, matchValue, threshold)
+            : LilScreenProcessMatchRawValue(scalar, LilScreenProcessNormalizeRuleValue(matchValue, source), LilScreenProcessResolveMatchTolerance(source, threshold));
     }
     else if (mode == 3)
     {
-        float4 colorSample = LilHoPostSelectAovColor(maskId, surfaceData, custom0, objectCustom0, objectCustom1, source);
-        float colorDistance = distance(colorSample.rgb, _LayerAovMatchColor.rgb);
+        float4 colorSample = LilScreenProcessSelectRuleColor(maskId, surfaceData, custom0, objectCustom0, objectCustom1, source);
+        float colorDistance = distance(colorSample.rgb, _LayerRuleMatchColor.rgb);
         selected = colorDistance <= threshold ? 1.0 : 0.0;
     }
 
     return selected;
 }
 
-float LilHoPostResolveAovRuleGroup(float4 maskId, float4 surfaceData, float4 custom0, float4 objectCustom0, float4 objectCustom1)
+float LilScreenProcessResolveRuleMaskGroup(float4 maskId, float4 surfaceData, float4 custom0, float4 objectCustom0, float4 objectCustom1)
 {
     float coverage = saturate(maskId.r);
-#if LIL_HOPOST_AOV_RULE_GROUP_ENABLED
-    int ruleCount = (int)clamp(round(_LayerAovRuleCount), 0.0, (float)LIL_HOPOST_AOV_RULE_MAX);
+#if LIL_SCREEN_PROCESS_RULE_MASK_GROUP_ENABLED
+    int ruleCount = (int)clamp(round(_LayerRuleMaskCount), 0.0, (float)LIL_SCREEN_PROCESS_RULE_MASK_MAX);
     if (ruleCount <= 0)
     {
-        return saturate(LilHoPostResolveLegacyAovSelection(maskId, surfaceData, custom0, objectCustom0, objectCustom1)) * coverage;
+        return saturate(LilScreenProcessResolveLegacyRuleSelection(maskId, surfaceData, custom0, objectCustom0, objectCustom1)) * coverage;
     }
 
     float mask = 0.0;
-    for (int ruleIndex = 0; ruleIndex < LIL_HOPOST_AOV_RULE_MAX; ruleIndex++)
+    for (int ruleIndex = 0; ruleIndex < LIL_SCREEN_PROCESS_RULE_MASK_MAX; ruleIndex++)
     {
-        float4 ruleData0 = _LayerAovRuleData0[ruleIndex];
+        float4 ruleData0 = _LayerRuleMaskData0[ruleIndex];
         float ruleActive = step((float)ruleIndex + 0.5, (float)ruleCount) * step(0.5, ruleData0.x);
 
         int source = (int)clamp(round(ruleData0.y), 0.0, 19.0);
         int ruleOperator = (int)clamp(round(ruleData0.z), 0.0, 11.0);
         int combine = (int)clamp(round(ruleData0.w), 0.0, 5.0);
-        float ruleMask = LilHoPostEvaluateAovRule(
+        float ruleMask = LilScreenProcessEvaluateRuleMask(
             maskId,
             surfaceData,
             custom0,
@@ -477,27 +477,27 @@ float LilHoPostResolveAovRuleGroup(float4 maskId, float4 surfaceData, float4 cus
             objectCustom1,
             source,
             ruleOperator,
-            _LayerAovRuleData1[ruleIndex],
-            _LayerAovRuleColor[ruleIndex]);
+            _LayerRuleMaskData1[ruleIndex],
+            _LayerRuleMaskColor[ruleIndex]);
 
         ruleMask = saturate(ruleMask) * coverage;
-        if (_LayerAovRuleData2[ruleIndex].y > 0.5)
+        if (_LayerRuleMaskData2[ruleIndex].y > 0.5)
         {
             ruleMask = saturate(coverage - ruleMask);
         }
 
-        mask = lerp(mask, LilHoPostCombineAovRule(mask, ruleMask, combine), ruleActive);
+        mask = lerp(mask, LilScreenProcessCombineRuleMask(mask, ruleMask, combine), ruleActive);
     }
 
     return saturate(mask) * coverage;
 #else
-    return saturate(LilHoPostResolveLegacyAovSelection(maskId, surfaceData, custom0, objectCustom0, objectCustom1)) * coverage;
+    return saturate(LilScreenProcessResolveLegacyRuleSelection(maskId, surfaceData, custom0, objectCustom0, objectCustom1)) * coverage;
 #endif
 }
 
-float LilHoPostResolveAovMaskInternal(float2 uv, bool forceEnabled)
+float LilScreenProcessResolveRuleMaskInternal(float2 uv, bool forceEnabled)
 {
-    if (!forceEnabled && _LayerAovMaskEnabled <= 0.5)
+    if (!forceEnabled && _LayerRuleMaskEnabled <= 0.5)
     {
         return 1.0;
     }
@@ -509,7 +509,7 @@ float LilHoPostResolveAovMaskInternal(float2 uv, bool forceEnabled)
 
     float4 maskId = SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_PointClamp, uv);
     float coverage = saturate(maskId.r);
-    if (forceEnabled && _LayerAovMaskEnabled <= 0.5)
+    if (forceEnabled && _LayerRuleMaskEnabled <= 0.5)
     {
         return coverage;
     }
@@ -518,33 +518,33 @@ float LilHoPostResolveAovMaskInternal(float2 uv, bool forceEnabled)
     float4 custom0 = SAMPLE_TEXTURE2D_X(_lilHoAovCustom0_3Texture, sampler_PointClamp, uv);
     float4 objectCustom0 = SAMPLE_TEXTURE2D_X(_lilHoAovObjectCustom0_3Texture, sampler_PointClamp, uv);
     float4 objectCustom1 = SAMPLE_TEXTURE2D_X(_lilHoAovObjectCustom4_7Texture, sampler_PointClamp, uv);
-    float selected = LilHoPostResolveAovRuleGroup(maskId, surfaceData, custom0, objectCustom0, objectCustom1);
-    float invert = saturate(_LayerAovParams.w);
+    float selected = LilScreenProcessResolveRuleMaskGroup(maskId, surfaceData, custom0, objectCustom0, objectCustom1);
+    float invert = saturate(_LayerRuleParams.w);
     return lerp(selected, saturate(coverage - selected), invert);
 }
 
-float LilHoPostResolveAovLayerMask(float2 uv)
+float LilScreenProcessResolveRuleLayerMask(float2 uv)
 {
-    return LilHoPostResolveAovMaskInternal(uv, false);
+    return LilScreenProcessResolveRuleMaskInternal(uv, false);
 }
 
-float LilHoPostResolveRequiredAovMask(float2 uv)
+float LilScreenProcessResolveRequiredRuleMask(float2 uv)
 {
-    return LilHoPostResolveAovMaskInternal(uv, true);
+    return LilScreenProcessResolveRuleMaskInternal(uv, true);
 }
 
-bool LilHoPostShouldOutputAovDebug()
+bool LilScreenProcessShouldOutputRuleDebug()
 {
-    return _LayerAovDebugOutput > 0.5;
+    return _LayerRuleDebugOutput > 0.5;
 }
 
-half4 LilHoPostAovDebugColor(float2 uv, bool forceEnabled, half alpha)
+half4 LilScreenProcessRuleDebugColor(float2 uv, bool forceEnabled, half alpha)
 {
-    half mask = (half)LilHoPostResolveAovMaskInternal(uv, forceEnabled);
+    half mask = (half)LilScreenProcessResolveRuleMaskInternal(uv, forceEnabled);
     return half4(mask, mask, mask, alpha);
 }
 
-float LilHoPostAovCoverage(float2 uv)
+float LilScreenProcessRuleCoverage(float2 uv)
 {
     if (_lilHoAovActive <= 0.5)
     {
@@ -554,12 +554,12 @@ float LilHoPostAovCoverage(float2 uv)
     return saturate(SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_PointClamp, uv).r);
 }
 
-float2 LilHoPostAovTexelSize()
+float2 LilScreenProcessRuleTexelSize()
 {
     return _lilHoAovMaskIdTexture_TexelSize.xy;
 }
 
-float2 LilHoPostAovTextureSize()
+float2 LilScreenProcessRuleTextureSize()
 {
     return _lilHoAovMaskIdTexture_TexelSize.zw;
 }

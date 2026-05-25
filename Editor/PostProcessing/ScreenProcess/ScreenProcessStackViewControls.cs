@@ -4,81 +4,81 @@ using UnityEngine;
 
 namespace lilToon.URP.Extensions.Editor.PostProcessing
 {
-    internal sealed partial class HoPostProcessStackVolumeEditor
+    internal sealed partial class ScreenProcessStackVolumeEditor
     {
-        private static PostProcessLayerViewControlSession HoPostCenterRadiusViewControl =
+        private static PostProcessLayerViewControlSession ScreenProcessCenterRadiusViewControl =
             new PostProcessLayerViewControlSession("ScreenProcess.CenterRadius");
 
-        private static PostProcessLayerViewControlSession HoPostDirectionDistanceViewControl =
+        private static PostProcessLayerViewControlSession ScreenProcessDirectionDistanceViewControl =
             new PostProcessLayerViewControlSession("ScreenProcess.DirectionDistance");
 
-        private float DrawHoPostCenterRadiusViewControlButton(Rect rect, float y, SerializedProperty element)
+        private float DrawScreenProcessCenterRadiusViewControlButton(Rect rect, float y, SerializedProperty element)
         {
-            bool active = IsHoPostCenterRadiusViewControlActive(element);
+            bool active = IsScreenProcessCenterRadiusViewControlActive(element);
             if (GUI.Button(new Rect(rect.x, y, rect.width, LineHeight), active ? "\u505c\u6b62\u6e38\u620f\u89c6\u56fe\u63a7\u5236" : "\u5728\u6e38\u620f\u89c6\u56fe\u4e2d\u8c03\u6574"))
             {
                 if (active)
                 {
-                    HoPostCenterRadiusViewControl.Stop();
+                    ScreenProcessCenterRadiusViewControl.Stop();
                 }
                 else if (serializedObject?.targetObject != null)
                 {
-                    HoPostDirectionDistanceViewControl.Stop();
-                    HoPostCenterRadiusViewControl.Start(serializedObject.targetObject, element, OnHoPostCenterRadiusGameViewGUI);
+                    ScreenProcessDirectionDistanceViewControl.Stop();
+                    ScreenProcessCenterRadiusViewControl.Start(serializedObject.targetObject, element, OnScreenProcessCenterRadiusGameViewGUI);
                 }
             }
 
             return y + LineHeight + LineSpacing;
         }
 
-        private float DrawHoPostDirectionDistanceViewControlButton(Rect rect, float y, SerializedProperty element)
+        private float DrawScreenProcessDirectionDistanceViewControlButton(Rect rect, float y, SerializedProperty element)
         {
-            bool active = IsHoPostDirectionDistanceViewControlActive(element);
+            bool active = IsScreenProcessDirectionDistanceViewControlActive(element);
             if (GUI.Button(new Rect(rect.x, y, rect.width, LineHeight), active ? "\u505c\u6b62\u6e38\u620f\u89c6\u56fe\u63a7\u5236" : "\u5728\u6e38\u620f\u89c6\u56fe\u4e2d\u8c03\u6574"))
             {
                 if (active)
                 {
-                    HoPostDirectionDistanceViewControl.Stop();
+                    ScreenProcessDirectionDistanceViewControl.Stop();
                 }
                 else if (serializedObject?.targetObject != null)
                 {
-                    HoPostCenterRadiusViewControl.Stop();
-                    HoPostDirectionDistanceViewControl.Start(serializedObject.targetObject, element, OnHoPostDirectionDistanceGameViewGUI);
+                    ScreenProcessCenterRadiusViewControl.Stop();
+                    ScreenProcessDirectionDistanceViewControl.Start(serializedObject.targetObject, element, OnScreenProcessDirectionDistanceGameViewGUI);
                 }
             }
 
             return y + LineHeight + LineSpacing;
         }
 
-        private bool IsHoPostCenterRadiusViewControlActive(SerializedProperty element)
+        private bool IsScreenProcessCenterRadiusViewControlActive(SerializedProperty element)
         {
-            return HoPostCenterRadiusViewControl.IsActive(serializedObject?.targetObject, element);
+            return ScreenProcessCenterRadiusViewControl.IsActive(serializedObject?.targetObject, element);
         }
 
-        private bool IsHoPostDirectionDistanceViewControlActive(SerializedProperty element)
+        private bool IsScreenProcessDirectionDistanceViewControlActive(SerializedProperty element)
         {
-            return HoPostDirectionDistanceViewControl.IsActive(serializedObject?.targetObject, element);
+            return ScreenProcessDirectionDistanceViewControl.IsActive(serializedObject?.targetObject, element);
         }
 
-        private void DisableHoPostLayerViewControlsForThisEditor()
+        private void DisableScreenProcessLayerViewControlsForThisEditor()
         {
             if (serializedObject?.targetObject != null)
             {
-                HoPostCenterRadiusViewControl.StopIfOwnedBy(serializedObject.targetObject);
-                HoPostDirectionDistanceViewControl.StopIfOwnedBy(serializedObject.targetObject);
+                ScreenProcessCenterRadiusViewControl.StopIfOwnedBy(serializedObject.targetObject);
+                ScreenProcessDirectionDistanceViewControl.StopIfOwnedBy(serializedObject.targetObject);
             }
         }
 
-        private static void OnHoPostCenterRadiusGameViewGUI(Rect viewRect, Event evt)
+        private static void OnScreenProcessCenterRadiusGameViewGUI(Rect viewRect, Event evt)
         {
             if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.Escape)
             {
-                HoPostCenterRadiusViewControl.Stop();
+                ScreenProcessCenterRadiusViewControl.Stop();
                 evt.Use();
                 return;
             }
 
-            if (!HoPostCenterRadiusViewControl.TryGetElement(out UnityEngine.Object target, out SerializedObject so, out SerializedProperty element))
+            if (!ScreenProcessCenterRadiusViewControl.TryGetElement(out UnityEngine.Object target, out SerializedObject so, out SerializedProperty element))
             {
                 return;
             }
@@ -86,11 +86,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             bool changed = false;
             switch (GetEffect(element))
             {
-                case HoPostProcessEffect.PostLighting:
-                    changed = HandleHoPostPostLightingCenterViewControl(viewRect, evt, target, element);
+                case ScreenProcessEffect.PostLighting:
+                    changed = HandleScreenProcessPostLightingCenterViewControl(viewRect, evt, target, element);
                     break;
                 default:
-                    HoPostCenterRadiusViewControl.Stop();
+                    ScreenProcessCenterRadiusViewControl.Stop();
                     return;
             }
 
@@ -101,16 +101,16 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
         }
 
-        private static void OnHoPostDirectionDistanceGameViewGUI(Rect viewRect, Event evt)
+        private static void OnScreenProcessDirectionDistanceGameViewGUI(Rect viewRect, Event evt)
         {
             if (evt.type == EventType.KeyDown && evt.keyCode == KeyCode.Escape)
             {
-                HoPostDirectionDistanceViewControl.Stop();
+                ScreenProcessDirectionDistanceViewControl.Stop();
                 evt.Use();
                 return;
             }
 
-            if (!HoPostDirectionDistanceViewControl.TryGetElement(out UnityEngine.Object target, out SerializedObject so, out SerializedProperty element))
+            if (!ScreenProcessDirectionDistanceViewControl.TryGetElement(out UnityEngine.Object target, out SerializedObject so, out SerializedProperty element))
             {
                 return;
             }
@@ -118,17 +118,17 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             bool changed = false;
             switch (GetEffect(element))
             {
-                case HoPostProcessEffect.EdgeLight:
-                    changed = HandleHoPostEdgeLightViewControl(viewRect, evt, target, element);
+                case ScreenProcessEffect.EdgeLight:
+                    changed = HandleScreenProcessEdgeLightViewControl(viewRect, evt, target, element);
                     break;
-                case HoPostProcessEffect.DropShadow:
-                    changed = HandleHoPostDropShadowViewControl(viewRect, evt, target, element);
+                case ScreenProcessEffect.DropShadow:
+                    changed = HandleScreenProcessDropShadowViewControl(viewRect, evt, target, element);
                     break;
-                case HoPostProcessEffect.PostLighting:
-                    changed = HandleHoPostPostLightingDirectionViewControl(viewRect, evt, target, element);
+                case ScreenProcessEffect.PostLighting:
+                    changed = HandleScreenProcessPostLightingDirectionViewControl(viewRect, evt, target, element);
                     break;
                 default:
-                    HoPostDirectionDistanceViewControl.Stop();
+                    ScreenProcessDirectionDistanceViewControl.Stop();
                     return;
             }
 
@@ -139,7 +139,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
         }
 
-        private static bool HandleHoPostEdgeLightViewControl(Rect viewRect, Event evt, UnityEngine.Object target, SerializedProperty element)
+        private static bool HandleScreenProcessEdgeLightViewControl(Rect viewRect, Event evt, UnityEngine.Object target, SerializedProperty element)
         {
             SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
             if (parameters1 == null || parameters1.propertyType != SerializedPropertyType.Vector4)
@@ -156,7 +156,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 evt,
                 target,
                 "Adjust ScreenProcess Edge Light In View",
-                ref HoPostDirectionDistanceViewControl.ActiveHandle,
+                ref ScreenProcessDirectionDistanceViewControl.ActiveHandle,
                 ref origin,
                 ref angle,
                 ref distance,
@@ -175,7 +175,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return changed;
         }
 
-        private static bool HandleHoPostDropShadowViewControl(Rect viewRect, Event evt, UnityEngine.Object target, SerializedProperty element)
+        private static bool HandleScreenProcessDropShadowViewControl(Rect viewRect, Event evt, UnityEngine.Object target, SerializedProperty element)
         {
             SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
             if (parameters0 == null || parameters0.propertyType != SerializedPropertyType.Vector4)
@@ -192,7 +192,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 evt,
                 target,
                 "Adjust ScreenProcess Drop Shadow In View",
-                ref HoPostDirectionDistanceViewControl.ActiveHandle,
+                ref ScreenProcessDirectionDistanceViewControl.ActiveHandle,
                 ref origin,
                 ref angle,
                 ref distance,
@@ -212,7 +212,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return changed;
         }
 
-        private static bool HandleHoPostPostLightingDirectionViewControl(Rect viewRect, Event evt, UnityEngine.Object target, SerializedProperty element)
+        private static bool HandleScreenProcessPostLightingDirectionViewControl(Rect viewRect, Event evt, UnityEngine.Object target, SerializedProperty element)
         {
             SerializedProperty parameters1 = element.FindPropertyRelative("parameters1");
             if (parameters1 == null || parameters1.propertyType != SerializedPropertyType.Vector4)
@@ -229,7 +229,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 evt,
                 target,
                 "Adjust ScreenProcess Post Lighting Direction In View",
-                ref HoPostDirectionDistanceViewControl.ActiveHandle,
+                ref ScreenProcessDirectionDistanceViewControl.ActiveHandle,
                 ref origin,
                 ref angle,
                 ref distance,
@@ -248,7 +248,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return changed;
         }
 
-        private static bool HandleHoPostPostLightingCenterViewControl(Rect viewRect, Event evt, UnityEngine.Object target, SerializedProperty element)
+        private static bool HandleScreenProcessPostLightingCenterViewControl(Rect viewRect, Event evt, UnityEngine.Object target, SerializedProperty element)
         {
             SerializedProperty parameters2 = element.FindPropertyRelative("parameters2");
             if (parameters2 == null || parameters2.propertyType != SerializedPropertyType.Vector4)
@@ -264,7 +264,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 evt,
                 target,
                 "Adjust ScreenProcess Post Lighting Center In View",
-                ref HoPostCenterRadiusViewControl.ActiveHandle,
+                ref ScreenProcessCenterRadiusViewControl.ActiveHandle,
                 ref center,
                 ref radius,
                 0.01f,

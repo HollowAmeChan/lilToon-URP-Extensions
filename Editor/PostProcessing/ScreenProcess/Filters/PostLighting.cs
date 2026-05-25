@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace lilToon.URP.Extensions.Editor.PostProcessing
 {
-    internal sealed partial class HoPostProcessStackVolumeEditor
+    internal sealed partial class ScreenProcessStackVolumeEditor
     {
         private static readonly string[] PostLightingModes =
         {
@@ -55,21 +55,21 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             if (mode == 1)
             {
-                if (IsHoPostDirectionDistanceViewControlActive(element))
+                if (IsScreenProcessDirectionDistanceViewControlActive(element))
                 {
-                    HoPostDirectionDistanceViewControl.Stop();
+                    ScreenProcessDirectionDistanceViewControl.Stop();
                 }
 
-                y = DrawHoPostCenterRadiusViewControlButton(rect, y, element);
+                y = DrawScreenProcessCenterRadiusViewControlButton(rect, y, element);
             }
             else
             {
-                if (IsHoPostCenterRadiusViewControlActive(element))
+                if (IsScreenProcessCenterRadiusViewControlActive(element))
                 {
-                    HoPostCenterRadiusViewControl.Stop();
+                    ScreenProcessCenterRadiusViewControl.Stop();
                 }
 
-                y = DrawHoPostDirectionDistanceViewControlButton(rect, y, element);
+                y = DrawScreenProcessDirectionDistanceViewControlButton(rect, y, element);
             }
 
             Color colorA = new Color(p3.x, p3.y, p3.z, p3.w);

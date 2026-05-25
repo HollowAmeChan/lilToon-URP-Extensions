@@ -11,7 +11,7 @@
 - AOV debug 需要 decode 多个 MRT。
 - SSS debug 需要展示 source / diffusion / composite / profile。
 - ShadowCast debug 需要 atlas / slice / receiver 视图。
-- ScreenProcess AOV/rule debug 容易把 mask 规则和实际效果 shader 耦合。
+- ScreenProcess rule mask debug 容易把 mask 规则和实际效果 shader 耦合。
 - 旧 Shoost AOV composite / mask debug 是迁移对象，不作为 ImageProcess 新能力保留。
 
 如果这些 shader 默认被引用、默认进变体收集、默认编译，会让普通用户项目付出不必要的导入和编译成本。
@@ -167,10 +167,10 @@ if debug enabled:
 - `Runtime/MetadataBuffer/Shaders/Debug/HoMetadataBufferDebug.shader`
 - `Runtime/ShadowCast/Shaders/Debug/HoShadowCastDebug.shader`
 - `Runtime/SubsurfaceScattering/HoSubsurfaceScattering.shader` 内部 debug 分支
-- `Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl` 相关 debug 输出
+- `Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl` 相关 debug 输出
 - `Runtime/ShoostPostProcessing/Shaders/Shoost/AovComposite.shader` 迁出到 ScreenProcess 或删除
 
-其中 AOV / ShadowCast 更适合独立 debug shader；ScreenProcess 的 AOV/rule mask debug 应从常规效果 shader 中降级为局部可选路径。
+其中 MetadataBuffer / ShadowCast 更适合独立 debug shader；ScreenProcess 的 rule mask debug 应从常规效果 shader 中降级为局部可选路径。
 ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 
 ---
@@ -204,7 +204,7 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 
 待处理：
 
-- ScreenProcess AOV/rule debug 还未迁到局部按需收集策略。
+- ScreenProcess rule mask debug 还未迁到局部按需收集策略。
 - 后续 debug profile / tile view 仍需基于 feature 局部 view info 接入。
 
 已继续对 SSS debug 分支做按需编译拆分：

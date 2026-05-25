@@ -1,6 +1,6 @@
 namespace lilToon.URP.Extensions.PostProcessing
 {
-    public enum HoPostProcessEffect
+    public enum ScreenProcessEffect
     {
         CustomMaterial = 0,
         EdgeLight = 1,
@@ -10,7 +10,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         PostLighting = 5
     }
 
-    public enum HoPostProcessBlendMode
+    public enum ScreenProcessBlendMode
     {
         Normal = 0,
         Add = 1,

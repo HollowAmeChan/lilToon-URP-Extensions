@@ -1,4 +1,4 @@
-Shader "Hidden/lilToon-HoPost/URP/HoPost/DepthOfField"
+Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
 {
     SubShader
     {
@@ -14,7 +14,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/DepthOfField"
 
         Pass
         {
-            Name "HoPost Depth Of Field"
+            Name "ScreenProcess Depth Of Field"
 
             HLSLPROGRAM
             #pragma target 4.5
@@ -24,7 +24,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/DepthOfField"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
 
             float _Intensity;
             float4 _LayerParams0; // x mode 0 Gaussian 1 Bokeh 2 Target Bokeh, y focus distance, z focal length, w aperture
@@ -32,8 +32,8 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/DepthOfField"
             float4 _LayerParams2; // x blade count, y blade curvature, z blade rotation
             float4 _LayerParams3; // x coc gain, y foreground boost, z background boost, w coc curve
 
-            static const int HoPostDofKernelLqCount = 12;
-            static const float2 HoPostDofKernelLq[HoPostDofKernelLqCount] =
+            static const int ScreenProcessDofKernelLqCount = 12;
+            static const float2 ScreenProcessDofKernelLq[ScreenProcessDofKernelLqCount] =
             {
                 float2(-0.326212, -0.405810),
                 float2(-0.840144, -0.073580),
@@ -49,8 +49,8 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/DepthOfField"
                 float2(-0.791559, -0.597710)
             };
 
-            static const int HoPostDofKernelHqCount = 28;
-            static const float3 HoPostDofKernelHq[HoPostDofKernelHqCount] =
+            static const int ScreenProcessDofKernelHqCount = 28;
+            static const float3 ScreenProcessDofKernelHq[ScreenProcessDofKernelHqCount] =
             {
                 float3( 0.62463,  0.54337, 0.82790),
                 float3(-0.13414, -0.94488, 0.95435),
@@ -157,18 +157,18 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/DepthOfField"
                 if (highQuality > 0.5)
                 {
                     [unroll]
-                    for (int i = 0; i < HoPostDofKernelHqCount; i++)
+                    for (int i = 0; i < ScreenProcessDofKernelHqCount; i++)
                     {
-                        float3 kernel = HoPostDofKernelHq[i];
+                        float3 kernel = ScreenProcessDofKernelHq[i];
                         ADD_DOF_SAMPLE(kernel.xy, lerp(1.12, 0.9, saturate(kernel.z)))
                     }
                 }
                 else
                 {
                     [unroll]
-                    for (int i = 0; i < HoPostDofKernelLqCount; i++)
+                    for (int i = 0; i < ScreenProcessDofKernelLqCount; i++)
                     {
-                        ADD_DOF_SAMPLE(HoPostDofKernelLq[i], 1.0)
+                        ADD_DOF_SAMPLE(ScreenProcessDofKernelLq[i], 1.0)
                     }
                 }
 
@@ -182,15 +182,15 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/DepthOfField"
 
                 float2 uv = input.texcoord;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
-                if (LilHoPostShouldOutputAovDebug())
+                if (LilScreenProcessShouldOutputRuleDebug())
                 {
-                    return LilHoPostAovDebugColor(uv, false, source.a);
+                    return LilScreenProcessRuleDebugColor(uv, false, source.a);
                 }
 
                 float depth = SampleEyeDepth(uv);
                 float coc = ResolveCoc(depth);
                 float radiusPx = coc * max(_LayerParams1.z, 0.0);
-                float amount = saturate(coc * _Intensity) * LilHoPostResolveAovLayerMask(uv);
+                float amount = saturate(coc * _Intensity) * LilScreenProcessResolveRuleLayerMask(uv);
                 if (radiusPx <= 0.0001 || amount <= 0.0001)
                 {
                     return source;

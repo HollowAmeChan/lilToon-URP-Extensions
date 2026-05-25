@@ -4,7 +4,7 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.PostProcessing
 {
     [Serializable]
-    public sealed class HoPostProcessStackSettings
+    public sealed class ScreenProcessStackSettings
     {
         [Tooltip("Skip the whole ScreenProcess stack without removing the renderer feature.")]
         public bool enabled = true;

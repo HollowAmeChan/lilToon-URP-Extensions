@@ -206,11 +206,23 @@ ImageProcess UI：
 - RendererFeature 防重名显示、Volume 菜单、Volume displayName、Frame Debugger pass 名与 shader 缺失日志改用 `ScreenProcess`。
 - Editor Undo 文本和 Game View 调整会话名改用 `ScreenProcess`。
 - ScreenProcess layer / rule mask Tooltip 不再把语义输入描述成 HoPost/HoAOV，而改为 `ScreenProcess`、`MaterialBuffer`、`MetadataBuffer` 口径。
-- 旧 `HoPostProcess*` 类型名、目录名和 Hidden shader 名仍作为迁移期实现名保留；它们是下一步 `ScreenProcessRendererFeature` / `ScreenProcessLayer` 文件级迁移的剩余边界。
+- 当时旧 `HoPostProcess*` 类型名、目录名和 Hidden shader 名仍作为迁移期实现名保留；这些剩余边界已在后续文件/类名迁移中处理。
 
 ---
 
-## 10. 验收清单
+## 10. 2026-05-25 执行记录：ScreenProcess 文件/类名迁移
+
+已把 HoPost 改名从用户可见外壳推进到代码实现名：
+
+- `Runtime/HoPostProcessing` 迁为 `Runtime/ScreenProcess`，Editor 侧 `Editor/PostProcessing/HoPost` 迁为 `Editor/PostProcessing/ScreenProcess`。
+- `HoPostProcess*` 运行时与 Editor 类型迁为 `ScreenProcess*`，Volume 入口改为 `ScreenProcessStackVolume`，RendererFeature 改为 `ScreenProcessRendererFeature`。
+- `HoPostAovMask` 相关类型、字段、Inspector 和 shader helper 迁为 `ScreenProcessRuleMask` / `ruleMask`，ScreenProcess 不再暴露 AOV 命名。
+- ScreenProcess shader Hidden 名迁到 `Hidden/lilToon/URP/ScreenProcess/...`，include 路径迁到 `Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl`。
+- `_lilHoAov*` 纹理/property ABI 和 `HoAOV` / `HoAOVSSS` LightMode 仍由 MetadataBuffer 承载，后续作为材质 ABI 单独迁移。
+
+---
+
+## 11. 验收清单
 
 - ScreenProcess 用户拖拽顺序就是执行顺序。
 - ImageProcess 用户拖拽顺序就是执行顺序。

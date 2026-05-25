@@ -1,4 +1,4 @@
-Shader "Hidden/lilToon-HoPost/URP/HoPost/SubjectMask"
+Shader "Hidden/lilToon/URP/ScreenProcess/SubjectMask"
 {
     SubShader
     {
@@ -15,7 +15,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/SubjectMask"
 
         Pass
         {
-            Name "HoPost Subject Mask"
+            Name "ScreenProcess Subject Mask"
 
             HLSLPROGRAM
             #pragma vertex Vert

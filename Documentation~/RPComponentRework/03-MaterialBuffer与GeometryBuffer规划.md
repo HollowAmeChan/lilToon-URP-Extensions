@@ -304,7 +304,7 @@ GeometryBuffer.TangentNormal
 - `HoAovChannelMask.Utility` / `HoAovDebugMode.Utility` 改名为 `TransmittanceHint`，保持原 bit 和 debug mode 顺序。
 - `HoAovSubject.utility` 改为 `transmittanceHint`，shader property 改为 `_HoAovTransmittanceHint`。
 - fallback shader 继续写入 `surfaceData.a`，但变量名改成 transmittance hint，避免后续把它误判为无命名预留通道。
-- HoPost/ScreenProcess 规则源里的第 7 项同步改名为 `TransmittanceHint`；物理采样仍是 `surfaceData.a`。
+- ScreenProcess 规则源里的第 7 项同步改名为 `TransmittanceHint`；物理采样仍是 `surfaceData.a`。
 
 ## 12. 2026-05-25 执行记录：移除 ViewNormal 输出与调试项
 
@@ -324,7 +324,7 @@ GeometryBuffer.TangentNormal
 - 新增 `Runtime/MetadataBuffer/HoMetadataBufferRenderGraphResources.cs`，承载 mask/id、surfaceData、material custom、object custom 与当前 SSS surface/source 纹理。
 - 新增 `Runtime/GeometryBuffer/HoGeometryBufferRenderGraphResources.cs`，承载 normalDepth 与独立 depth 纹理。
 - `HoAovOutputPass` 仍暂时用一次 MRT 绘制填充现有 metadata attachments，但不再发布旧 `HoAovRenderGraphResources`；GeometryBuffer 输出已在独立 RendererFeature 中拆出。
-- `HoAovDebugPass`、HoPost/ScreenProcess、HoSSS、CharacterSpecialization 的 RenderGraph 路径已按真实输入改读 MetadataBuffer / GeometryBuffer 两个上下文。
+- `HoAovDebugPass`、ScreenProcess、HoSSS、CharacterSpecialization 的 RenderGraph 路径已按真实输入改读 MetadataBuffer / GeometryBuffer 两个上下文。
 - compatibility path 的 `HoAovRenderTargets` 暂时保留在 AOV 目录，作为旧非 RenderGraph 路径的 RTHandle 管理；拆两个 RendererFeature 时再跟随对应 feature 移出。
 
 下一步优先级：
@@ -438,7 +438,7 @@ GeometryBuffer.TangentNormal
 - `HoAovShaderConstants` 合并进 `HoMetadataBufferShaderConstants`；MetadataBuffer、ScreenProcess、SSS 和 CharacterSpecialization 统一从 MetadataBuffer 命名空间读取当前共享 shader ABI 常量。
 - `HoAovRenderScale` 改为 CharacterSpecialization 局部的 `HoCharacterRenderScale`，不再为了一个捕获分辨率 enum 保留 AOV 命名空间。
 - 删除 `Runtime/AOV/`、`Editor/AOV/` 以及对应 `.meta` 文件，旧 AOV 不再作为代码目录或命名空间存在。
-- 当前仍保留 `_lilHoAov*` 纹理名、`HoAOV` / `HoAOVSSS` LightMode 和 ScreenProcess 里的 `AovMask` 字段名，作为材质 pass / shader ABI / ScreenProcess 语义遮罩的后续单独迁移项；它们不再由 AOV 目录承载。
+- 当前仍保留 `_lilHoAov*` 纹理名、`HoAOV` / `HoAOVSSS` LightMode，作为材质 pass / shader ABI 的后续单独迁移项；它们不再由 AOV 目录承载。
 
 ## 23. 2026-05-25 执行记录：补收用户可见 AOV 文案
 

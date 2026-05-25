@@ -7,14 +7,14 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.PostProcessing
 {
     [Serializable]
-    public sealed class HoPostProcessLayerListParameter : VolumeParameter<List<HoPostProcessLayer>>
+    public sealed class ScreenProcessLayerListParameter : VolumeParameter<List<ScreenProcessLayer>>
     {
-        public HoPostProcessLayerListParameter(List<HoPostProcessLayer> value, bool overrideState = false)
+        public ScreenProcessLayerListParameter(List<ScreenProcessLayer> value, bool overrideState = false)
             : base(value, overrideState)
         {
         }
 
-        public override void Interp(List<HoPostProcessLayer> from, List<HoPostProcessLayer> to, float t)
+        public override void Interp(List<ScreenProcessLayer> from, List<ScreenProcessLayer> to, float t)
         {
             value = t > 0.0f ? to : from;
         }
@@ -26,12 +26,12 @@ namespace lilToon.URP.Extensions.PostProcessing
     [VolumeComponentMenuForRenderPipeline("Post-processing/lilToon-ScreenProcess/Process Stack", typeof(UniversalRenderPipeline))]
 #endif
 #if UNITY_2023_3_OR_NEWER
-    [VolumeRequiresRendererFeatures(typeof(HoPostProcessRendererFeature))]
+    [VolumeRequiresRendererFeatures(typeof(ScreenProcessRendererFeature))]
 #endif
     [Serializable]
-    public sealed class HoPostProcessStackVolume : VolumeComponent, IPostProcessComponent
+    public sealed class ScreenProcessStackVolume : VolumeComponent, IPostProcessComponent
     {
-        public HoPostProcessStackVolume()
+        public ScreenProcessStackVolume()
         {
 #if !UNITY_6000_3_OR_NEWER
             displayName = "lilToon-ScreenProcess";
@@ -45,8 +45,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         public BoolParameter ShowInSceneView = new BoolParameter(true, false);
 
         [Tooltip("Ordered ScreenProcess layers. Unlike ImageProcess, these layers can consume semantic buffers.")]
-        public HoPostProcessLayerListParameter layers = new HoPostProcessLayerListParameter(
-            new List<HoPostProcessLayer>(),
+        public ScreenProcessLayerListParameter layers = new ScreenProcessLayerListParameter(
+            new List<ScreenProcessLayer>(),
             true);
 
         public bool IsActive()
@@ -56,7 +56,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return false;
             }
 
-            foreach (HoPostProcessLayer layer in layers.value)
+            foreach (ScreenProcessLayer layer in layers.value)
             {
                 if (layer != null && layer.IsActive)
                 {

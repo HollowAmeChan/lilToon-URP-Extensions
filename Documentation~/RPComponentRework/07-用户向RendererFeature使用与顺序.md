@@ -6,7 +6,7 @@
 
 ## 0. 命名口径
 
-迁移期 Unity 里仍可能看到旧类名。用户文档和新 UI 使用新语义名，并在括号里保留旧名：
+迁移期 Unity 里仍可能看到部分旧类名。用户文档和新 UI 使用新语义名：
 
 | 用户侧名称 | 旧实现名 | 作用 |
 | --- | --- | --- |
@@ -16,10 +16,10 @@
 | `SSS` | `HoSubsurfaceScatteringRendererFeature` | 屏幕空间皮肤/材质散射 |
 | `OIT` | `WeightedOITRendererFeature` | 加权透明合成 |
 | `CharacterSpecialization` | `HoCharacterSpecializationRendererFeature` | 眼透、前发、角色局部合成 |
-| `ScreenProcess` | `HoPostProcessRendererFeature` | 读取 Buffer 的语义屏幕处理 |
+| `ScreenProcess` | `ScreenProcessRendererFeature` | 读取 Buffer 的语义屏幕处理 |
 | `ImageProcess` | `ShoostPostProcessRendererFeature` | 最终图像处理链 |
 
-旧名只用于兼容现有 Unity 类型和资源。用户侧主描述不再把 `HoPost`、`ShoostStack` 当作概念名。
+旧名只用于引用尚未迁完的 Unity 类型和资源。用户侧主描述不再把 `HoPost`、`ShoostStack` 当作概念名。
 
 ---
 

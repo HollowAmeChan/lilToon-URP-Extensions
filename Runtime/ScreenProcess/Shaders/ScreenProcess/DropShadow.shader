@@ -1,4 +1,4 @@
-Shader "Hidden/lilToon-HoPost/URP/HoPost/DropShadow"
+Shader "Hidden/lilToon/URP/ScreenProcess/DropShadow"
 {
     SubShader
     {
@@ -14,7 +14,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/DropShadow"
 
         Pass
         {
-            Name "HoPost Drop Shadow"
+            Name "ScreenProcess Drop Shadow"
 
             HLSLPROGRAM
             #pragma target 4.5
@@ -23,7 +23,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/DropShadow"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
 
             float _Intensity;
             float _LayerBlendMode;
@@ -33,12 +33,12 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/DropShadow"
 
             float SampleSubjectMask(float2 uv)
             {
-                return LilHoPostResolveRequiredAovMask(uv);
+                return LilScreenProcessResolveRequiredRuleMask(uv);
             }
 
             float SampleSpreadMask(float2 uv, float radiusPx)
             {
-                float2 texel = LilHoPostAovTexelSize() * max(radiusPx, 0.0);
+                float2 texel = LilScreenProcessRuleTexelSize() * max(radiusPx, 0.0);
                 float mask = SampleSubjectMask(uv);
                 if (radiusPx <= 0.0001)
                 {
@@ -64,7 +64,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/DropShadow"
                     return center;
                 }
 
-                float2 texel = LilHoPostAovTexelSize() * softnessPx;
+                float2 texel = LilScreenProcessRuleTexelSize() * softnessPx;
                 float mask = center * 0.24;
                 mask += SampleSubjectMask(uv + float2( texel.x, 0.0)) * 0.095;
                 mask += SampleSubjectMask(uv + float2(-texel.x, 0.0)) * 0.095;
@@ -94,9 +94,9 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/DropShadow"
 
                 float2 uv = input.texcoord;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
-                if (LilHoPostShouldOutputAovDebug())
+                if (LilScreenProcessShouldOutputRuleDebug())
                 {
-                    return LilHoPostAovDebugColor(uv, true, source.a);
+                    return LilScreenProcessRuleDebugColor(uv, true, source.a);
                 }
 
                 float opacity = saturate(_Intensity) * saturate(_LayerParams0.z);
@@ -106,12 +106,12 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/DropShadow"
                 }
 
                 float distance = max(_LayerParams0.x, 0.0);
-                float2 aovTextureSize = LilHoPostAovTextureSize();
-                float minDimension = min(aovTextureSize.x, aovTextureSize.y);
+                float2 ruleTextureSize = LilScreenProcessRuleTextureSize();
+                float minDimension = min(ruleTextureSize.x, ruleTextureSize.y);
                 float distancePx = distance <= 1.0 ? distance * minDimension * 0.08 : distance;
                 float angleRadians = radians(_LayerParams0.y);
                 float2 direction = float2(cos(angleRadians), sin(angleRadians));
-                float2 offset = direction * distancePx * LilHoPostAovTexelSize();
+                float2 offset = direction * distancePx * LilScreenProcessRuleTexelSize();
 
                 float shadowMask = ResolveSimpleShadowMask(uv, offset);
                 float amount = shadowMask * opacity;

@@ -1,4 +1,4 @@
-Shader "Hidden/lilToon-HoPost/URP/HoPost/Outline"
+Shader "Hidden/lilToon/URP/ScreenProcess/Outline"
 {
     SubShader
     {
@@ -14,7 +14,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/Outline"
 
         Pass
         {
-            Name "HoPost Outline"
+            Name "ScreenProcess Outline"
 
             HLSLPROGRAM
             #pragma target 4.5
@@ -26,7 +26,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/Outline"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
 
             float _Intensity;
             float _LayerBlendMode;
@@ -106,9 +106,9 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/Outline"
 
                 float2 uv = input.texcoord;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
-                if (LilHoPostShouldOutputAovDebug())
+                if (LilScreenProcessShouldOutputRuleDebug())
                 {
-                    return LilHoPostAovDebugColor(uv, false, source.a);
+                    return LilScreenProcessRuleDebugColor(uv, false, source.a);
                 }
 
                 float thickness = max(_LayerParams0.x, 0.0);
@@ -125,7 +125,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/Outline"
                 float threshold = max(_LayerParams0.w, 0.0);
                 float softness = max(_LayerParams1.x, 0.0001);
                 float mask = smoothstep(threshold, threshold + softness, edge);
-                float amount = mask * saturate(_Intensity) * saturate(_LayerParams1.w) * _LayerColor.a * LilHoPostResolveAovLayerMask(uv);
+                float amount = mask * saturate(_Intensity) * saturate(_LayerParams1.w) * _LayerColor.a * LilScreenProcessResolveRuleLayerMask(uv);
                 if (amount <= 0.0001)
                 {
                     return source;

@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
 using lilToon.URP.Extensions.MetadataBuffer;
@@ -13,35 +13,35 @@ namespace lilToon.URP.Extensions.PostProcessing
 {
     [DisallowMultipleRendererFeature("lilToon-ScreenProcess")]
     [ExecuteAlways]
-    public sealed class HoPostProcessRendererFeature : ScriptableRendererFeature
+    public sealed class ScreenProcessRendererFeature : ScriptableRendererFeature
     {
         [SerializeField]
-        private HoPostProcessStackSettings settings = new HoPostProcessStackSettings();
+        private ScreenProcessStackSettings settings = new ScreenProcessStackSettings();
 
         private readonly Dictionary<Shader, Material> materialCache = new Dictionary<Shader, Material>();
         private readonly HashSet<string> warnedMissingShaders = new HashSet<string>();
-        private readonly List<HoPostProcessRuntimeLayer> runtimeLayers = new List<HoPostProcessRuntimeLayer>();
+        private readonly List<ScreenProcessRuntimeLayer> runtimeLayers = new List<ScreenProcessRuntimeLayer>();
         private Material subjectMaskMaterial;
         private Shader subjectMaskShader;
         private bool warnedMissingSubjectMaskShader;
-        private HoPostProcessPass pass;
+        private ScreenProcessPass pass;
 
         [Tooltip("The renderer feature installs the pass, and Volume profiles provide the active ScreenProcess stack.")]
         public bool UseVolumes = true;
 
         public static bool IsUseVolumes { get; private set; } = true;
 
-        public HoPostProcessStackSettings Settings => settings;
+        public ScreenProcessStackSettings Settings => settings;
 
         public override void Create()
         {
             IsUseVolumes = UseVolumes;
-            pass = new HoPostProcessPass("lilToon-ScreenProcess After URP Before ImageProcess");
+            pass = new ScreenProcessPass("lilToon-ScreenProcess After URP Before ImageProcess");
         }
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
         {
-            HoPostProcessStackVolume volume = GetVolumeComponent();
+            ScreenProcessStackVolume volume = GetVolumeComponent();
             if (!ShouldRender(in renderingData, volume))
             {
                 pass?.ClearRuntimeLayers();
@@ -54,7 +54,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            HoPostProcessStackVolume volume = GetVolumeComponent();
+            ScreenProcessStackVolume volume = GetVolumeComponent();
             if (!ShouldRender(in renderingData, volume))
             {
                 pass?.ClearRuntimeLayers();
@@ -83,7 +83,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             warnedMissingShaders.Clear();
         }
 
-        private bool ShouldRender(in RenderingData renderingData, HoPostProcessStackVolume volume)
+        private bool ShouldRender(in RenderingData renderingData, ScreenProcessStackVolume volume)
         {
             IsUseVolumes = UseVolumes;
             if (settings == null || !settings.enabled || !UseVolumes)
@@ -100,16 +100,16 @@ namespace lilToon.URP.Extensions.PostProcessing
             return cameraType == CameraType.Game && volume != null && volume.IsActive();
         }
 
-        private void BuildRuntimeLayers(HoPostProcessStackVolume volume)
+        private void BuildRuntimeLayers(ScreenProcessStackVolume volume)
         {
             runtimeLayers.Clear();
-            List<HoPostProcessLayer> layers = volume != null && volume.layers != null ? volume.layers.value : null;
+            List<ScreenProcessLayer> layers = volume != null && volume.layers != null ? volume.layers.value : null;
             if (layers == null)
             {
                 return;
             }
 
-            foreach (HoPostProcessLayer layer in layers)
+            foreach (ScreenProcessLayer layer in layers)
             {
                 if (layer == null || !layer.IsActive)
                 {
@@ -122,15 +122,15 @@ namespace lilToon.URP.Extensions.PostProcessing
                     continue;
                 }
 
-                runtimeLayers.Add(new HoPostProcessRuntimeLayer(layer, material));
+                runtimeLayers.Add(new ScreenProcessRuntimeLayer(layer, material));
             }
         }
 
         private void SetupCompatibilityPass(
-            HoPostProcessPass pass,
+            ScreenProcessPass pass,
             RTHandle cameraColorTarget,
             RTHandle cameraDepthTarget,
-            List<HoPostProcessRuntimeLayer> layers)
+            List<ScreenProcessRuntimeLayer> layers)
         {
             if (pass == null || layers.Count == 0)
             {
@@ -138,13 +138,13 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            pass.Setup(cameraColorTarget, cameraDepthTarget, layers, HoPostProcessRenderPassEvents.HoPostStack, settings, null);
+            pass.Setup(cameraColorTarget, cameraDepthTarget, layers, ScreenProcessRenderPassEvents.ScreenProcessStack, settings, null);
         }
 
         private void EnqueueRenderGraphPass(
             ScriptableRenderer renderer,
-            HoPostProcessPass pass,
-            List<HoPostProcessRuntimeLayer> layers)
+            ScreenProcessPass pass,
+            List<ScreenProcessRuntimeLayer> layers)
         {
             if (pass == null || layers.Count == 0)
             {
@@ -152,17 +152,17 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            pass.SetupRenderGraph(layers, HoPostProcessRenderPassEvents.HoPostStack);
+            pass.SetupRenderGraph(layers, ScreenProcessRenderPassEvents.ScreenProcessStack);
             renderer.EnqueuePass(pass);
         }
 
-        private static HoPostProcessStackVolume GetVolumeComponent()
+        private static ScreenProcessStackVolume GetVolumeComponent()
         {
             VolumeStack stack = VolumeManager.instance != null ? VolumeManager.instance.stack : null;
-            return stack != null ? stack.GetComponent<HoPostProcessStackVolume>() : null;
+            return stack != null ? stack.GetComponent<ScreenProcessStackVolume>() : null;
         }
 
-        private Material ResolveMaterial(HoPostProcessLayer layer)
+        private Material ResolveMaterial(ScreenProcessLayer layer)
         {
             if (layer.materialOverride != null)
             {
@@ -170,12 +170,12 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             Shader shader = layer.shaderOverride;
-            if (shader == null && layer.effect == HoPostProcessEffect.CustomMaterial)
+            if (shader == null && layer.effect == ScreenProcessEffect.CustomMaterial)
             {
                 shader = settings.defaultLayerShader;
             }
 
-            string shaderName = HoPostProcessEffectRegistry.GetDefaultShaderName(layer.effect);
+            string shaderName = ScreenProcessEffectRegistry.GetDefaultShaderName(layer.effect);
             if (shader == null)
             {
                 shader = Shader.Find(shaderName);
@@ -206,7 +206,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
             Shader shader = settings.subjectMaskShader != null
                 ? settings.subjectMaskShader
-                : Shader.Find(HoPostProcessShaderConstants.SubjectMaskShaderName);
+                : Shader.Find(ScreenProcessShaderConstants.SubjectMaskShaderName);
 
             if (subjectMaskMaterial != null && subjectMaskShader == shader)
             {
@@ -218,7 +218,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 if (!warnedMissingSubjectMaskShader)
                 {
                     warnedMissingSubjectMaskShader = true;
-                    Debug.LogWarning($"ScreenProcess Drop Shadow was skipped because shader '{HoPostProcessShaderConstants.SubjectMaskShaderName}' could not be found.");
+                    Debug.LogWarning($"ScreenProcess Drop Shadow was skipped because shader '{ScreenProcessShaderConstants.SubjectMaskShaderName}' could not be found.");
                 }
 
                 return null;
@@ -230,7 +230,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             return subjectMaskMaterial;
         }
 
-        private static bool ContainsSubjectMaskLayer(List<HoPostProcessRuntimeLayer> layers)
+        private static bool ContainsSubjectMaskLayer(List<ScreenProcessRuntimeLayer> layers)
         {
             if (layers == null)
             {
@@ -239,7 +239,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
             for (int i = 0; i < layers.Count; i++)
             {
-                HoPostProcessRuntimeLayer runtimeLayer = layers[i];
+                ScreenProcessRuntimeLayer runtimeLayer = layers[i];
                 if (runtimeLayer != null
                     && runtimeLayer.settings != null
                     && runtimeLayer.settings.IsActive
@@ -252,12 +252,12 @@ namespace lilToon.URP.Extensions.PostProcessing
             return false;
         }
 
-        private static bool EffectRequiresSubjectMask(HoPostProcessEffect effect)
+        private static bool EffectRequiresSubjectMask(ScreenProcessEffect effect)
         {
-            return effect == HoPostProcessEffect.DropShadow;
+            return effect == ScreenProcessEffect.DropShadow;
         }
 
-        private void WarnMissingShader(HoPostProcessLayer layer, string shaderName)
+        private void WarnMissingShader(ScreenProcessLayer layer, string shaderName)
         {
             string key = $"{layer.effect}:{shaderName}";
             if (!warnedMissingShaders.Add(key))
@@ -269,19 +269,19 @@ namespace lilToon.URP.Extensions.PostProcessing
         }
     }
 
-    internal sealed class HoPostProcessRuntimeLayer
+    internal sealed class ScreenProcessRuntimeLayer
     {
-        public readonly HoPostProcessLayer settings;
+        public readonly ScreenProcessLayer settings;
         public readonly Material material;
 
-        public HoPostProcessRuntimeLayer(HoPostProcessLayer settings, Material material)
+        public ScreenProcessRuntimeLayer(ScreenProcessLayer settings, Material material)
         {
             this.settings = settings;
             this.material = material;
         }
     }
 
-    internal sealed class HoPostProcessPass : ScriptableRenderPass
+    internal sealed class ScreenProcessPass : ScriptableRenderPass
     {
         private static readonly List<ShaderTagId> SubjectMaskShaderTagIds = new List<ShaderTagId>
         {
@@ -290,7 +290,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             new ShaderTagId("SRPDefaultUnlit")
         };
 
-        private readonly List<HoPostProcessRuntimeLayer> runtimeLayers = new List<HoPostProcessRuntimeLayer>();
+        private readonly List<ScreenProcessRuntimeLayer> runtimeLayers = new List<ScreenProcessRuntimeLayer>();
         private readonly ProfilingSampler screenProcessProfilingSampler;
         private readonly string screenProcessPassName;
         private RTHandle cameraColorTarget;
@@ -298,7 +298,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         private RTHandle tempTextureA;
         private RTHandle tempTextureB;
         private RTHandle subjectMaskTexture;
-        private HoPostProcessStackSettings settings;
+        private ScreenProcessStackSettings settings;
         private Material subjectMaskMaterial;
         private FilteringSettings subjectMaskFilteringSettings;
         private RenderStateBlock subjectMaskRenderStateBlock;
@@ -306,28 +306,28 @@ namespace lilToon.URP.Extensions.PostProcessing
         private sealed class PassData
         {
             public TextureHandle source;
-            public TextureHandle aovMaskIdTexture;
-            public TextureHandle aovNormalDepthTexture;
-            public TextureHandle aovSurfaceDataTexture;
-            public TextureHandle aovCustom0Texture;
-            public TextureHandle aovObjectCustom0Texture;
-            public TextureHandle aovObjectCustom1Texture;
-            public HoPostProcessLayer layer;
+            public TextureHandle ruleMaskIdTexture;
+            public TextureHandle ruleNormalDepthTexture;
+            public TextureHandle ruleSurfaceDataTexture;
+            public TextureHandle ruleCustom0Texture;
+            public TextureHandle ruleObjectCustom0Texture;
+            public TextureHandle ruleObjectCustom1Texture;
+            public ScreenProcessLayer layer;
             public Material material;
             public int passIndex;
             public float dynamicFocusDistance;
             public bool isEdgeLight;
             public bool isDropShadow;
             public bool isPostLighting;
-            public bool useAovMaskTexture;
-            public bool useAovNormalDepth;
-            public bool useAovSurfaceData;
-            public bool useAovCustom0;
-            public bool useAovObjectCustom0;
-            public bool useAovObjectCustom1;
+            public bool useRuleMaskTexture;
+            public bool useRuleNormalDepth;
+            public bool useRuleSurfaceData;
+            public bool useRuleCustom0;
+            public bool useRuleObjectCustom0;
+            public bool useRuleObjectCustom1;
         }
 
-        public HoPostProcessPass(string passName)
+        public ScreenProcessPass(string passName)
         {
             screenProcessPassName = passName;
             screenProcessProfilingSampler = new ProfilingSampler(passName);
@@ -337,9 +337,9 @@ namespace lilToon.URP.Extensions.PostProcessing
         public void Setup(
             RTHandle cameraColorTarget,
             RTHandle cameraDepthTarget,
-            List<HoPostProcessRuntimeLayer> layers,
+            List<ScreenProcessRuntimeLayer> layers,
             RenderPassEvent passEvent,
-            HoPostProcessStackSettings settings,
+            ScreenProcessStackSettings settings,
             Material subjectMaskMaterial)
         {
             this.cameraColorTarget = cameraColorTarget;
@@ -353,7 +353,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         }
 
         public void SetupRenderGraph(
-            List<HoPostProcessRuntimeLayer> layers,
+            List<ScreenProcessRuntimeLayer> layers,
             RenderPassEvent passEvent)
         {
             this.cameraColorTarget = null;
@@ -391,8 +391,8 @@ namespace lilToon.URP.Extensions.PostProcessing
             descriptor.depthStencilFormat = GraphicsFormat.None;
             descriptor.msaaSamples = 1;
             EnsureHdrDescriptor(ref descriptor);
-            RenderingUtils.ReAllocateIfNeeded(ref tempTextureA, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: HoPostProcessShaderConstants.TempTextureAName);
-            RenderingUtils.ReAllocateIfNeeded(ref tempTextureB, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: HoPostProcessShaderConstants.TempTextureBName);
+            RenderingUtils.ReAllocateIfNeeded(ref tempTextureA, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: ScreenProcessShaderConstants.TempTextureAName);
+            RenderingUtils.ReAllocateIfNeeded(ref tempTextureB, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: ScreenProcessShaderConstants.TempTextureBName);
 
             if (RequiresSubjectMask() && subjectMaskMaterial != null)
             {
@@ -401,7 +401,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 maskDescriptor.depthStencilFormat = GraphicsFormat.None;
                 maskDescriptor.msaaSamples = 1;
                 maskDescriptor.graphicsFormat = GetSubjectMaskGraphicsFormat();
-                RenderingUtils.ReAllocateIfNeeded(ref subjectMaskTexture, maskDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: HoPostProcessShaderConstants.SubjectMaskTextureName);
+                RenderingUtils.ReAllocateIfNeeded(ref subjectMaskTexture, maskDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: ScreenProcessShaderConstants.SubjectMaskTextureName);
             }
         }
 
@@ -423,7 +423,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 bool hasWritten = false;
                 for (int i = 0; i < runtimeLayers.Count; i++)
                 {
-                    HoPostProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
+                    ScreenProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
                     if (!IsRuntimeLayerActive(runtimeLayer))
                     {
                         continue;
@@ -435,9 +435,9 @@ namespace lilToon.URP.Extensions.PostProcessing
                     if (EffectRequiresSubjectMask(runtimeLayer.settings.effect))
                     {
                         bool hasSubjectMask = subjectMaskTexture != null && subjectMaskMaterial != null;
-                        runtimeLayer.material.SetFloat(HoPostProcessShaderConstants.SubjectMaskValidId, hasSubjectMask ? 1.0f : 0.0f);
+                        runtimeLayer.material.SetFloat(ScreenProcessShaderConstants.SubjectMaskValidId, hasSubjectMask ? 1.0f : 0.0f);
                         runtimeLayer.material.SetTexture(
-                            HoPostProcessShaderConstants.SubjectMaskTextureId,
+                            ScreenProcessShaderConstants.SubjectMaskTextureId,
                             hasSubjectMask ? subjectMaskTexture : Texture2D.blackTexture);
                     }
 
@@ -508,14 +508,14 @@ namespace lilToon.URP.Extensions.PostProcessing
             int writtenLayerCount = 0;
             for (int i = 0; i < runtimeLayers.Count; i++)
             {
-                HoPostProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
+                ScreenProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
                 if (!IsRuntimeLayerActive(runtimeLayer))
                 {
                     continue;
                 }
 
                 TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
-                destinationDesc.name = $"_lilHoPostProcessLayer{writtenLayerCount}";
+                destinationDesc.name = $"_lilScreenProcessLayer{writtenLayerCount}";
                 destinationDesc.clearBuffer = false;
                 destinationDesc.depthBufferBits = 0;
                 EnsureHdrTextureDesc(ref destinationDesc);
@@ -524,55 +524,55 @@ namespace lilToon.URP.Extensions.PostProcessing
                 using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{screenProcessPassName} Layer {writtenLayerCount}", out PassData passData, screenProcessProfilingSampler))
                 {
                     passData.source = source;
-                    passData.aovMaskIdTexture = metadataResources.maskIdTexture;
-                    passData.aovNormalDepthTexture = geometryResources.normalDepthTexture;
-                    passData.aovSurfaceDataTexture = metadataResources.surfaceDataTexture;
-                    passData.aovCustom0Texture = metadataResources.custom0Texture;
-                    passData.aovObjectCustom0Texture = metadataResources.objectCustom0Texture;
-                    passData.aovObjectCustom1Texture = metadataResources.objectCustom1Texture;
+                    passData.ruleMaskIdTexture = metadataResources.maskIdTexture;
+                    passData.ruleNormalDepthTexture = geometryResources.normalDepthTexture;
+                    passData.ruleSurfaceDataTexture = metadataResources.surfaceDataTexture;
+                    passData.ruleCustom0Texture = metadataResources.custom0Texture;
+                    passData.ruleObjectCustom0Texture = metadataResources.objectCustom0Texture;
+                    passData.ruleObjectCustom1Texture = metadataResources.objectCustom1Texture;
                     passData.layer = runtimeLayer.settings;
                     passData.material = runtimeLayer.material;
                     passData.passIndex = Mathf.Max(0, runtimeLayer.settings.passIndex);
                     passData.dynamicFocusDistance = ResolveDepthOfFieldFocusDistance(runtimeLayer.settings, cameraData.camera);
-                    passData.isEdgeLight = runtimeLayer.settings.effect == HoPostProcessEffect.EdgeLight;
-                    passData.isDropShadow = runtimeLayer.settings.effect == HoPostProcessEffect.DropShadow;
-                    passData.isPostLighting = runtimeLayer.settings.effect == HoPostProcessEffect.PostLighting;
-                    bool needsAov = passData.isEdgeLight || passData.isDropShadow || passData.isPostLighting || runtimeLayer.settings.useAovMask || runtimeLayer.settings.debugAovMask;
-                    bool needsAovMaskResolve = passData.isDropShadow || runtimeLayer.settings.useAovMask || runtimeLayer.settings.debugAovMask;
-                    passData.useAovMaskTexture = needsAov && metadataResources.maskIdTexture.IsValid();
-                    passData.useAovNormalDepth = (passData.isEdgeLight || passData.isPostLighting) && geometryResources.normalDepthTexture.IsValid();
-                    passData.useAovSurfaceData = needsAovMaskResolve && metadataResources.surfaceDataTexture.IsValid();
-                    passData.useAovCustom0 = needsAovMaskResolve && metadataResources.custom0Texture.IsValid();
-                    passData.useAovObjectCustom0 = needsAovMaskResolve && metadataResources.objectCustom0Texture.IsValid();
-                    passData.useAovObjectCustom1 = needsAovMaskResolve && metadataResources.objectCustom1Texture.IsValid();
+                    passData.isEdgeLight = runtimeLayer.settings.effect == ScreenProcessEffect.EdgeLight;
+                    passData.isDropShadow = runtimeLayer.settings.effect == ScreenProcessEffect.DropShadow;
+                    passData.isPostLighting = runtimeLayer.settings.effect == ScreenProcessEffect.PostLighting;
+                    bool needsRule = passData.isEdgeLight || passData.isDropShadow || passData.isPostLighting || runtimeLayer.settings.useRuleMask || runtimeLayer.settings.debugRuleMask;
+                    bool needsRuleMaskResolve = passData.isDropShadow || runtimeLayer.settings.useRuleMask || runtimeLayer.settings.debugRuleMask;
+                    passData.useRuleMaskTexture = needsRule && metadataResources.maskIdTexture.IsValid();
+                    passData.useRuleNormalDepth = (passData.isEdgeLight || passData.isPostLighting) && geometryResources.normalDepthTexture.IsValid();
+                    passData.useRuleSurfaceData = needsRuleMaskResolve && metadataResources.surfaceDataTexture.IsValid();
+                    passData.useRuleCustom0 = needsRuleMaskResolve && metadataResources.custom0Texture.IsValid();
+                    passData.useRuleObjectCustom0 = needsRuleMaskResolve && metadataResources.objectCustom0Texture.IsValid();
+                    passData.useRuleObjectCustom1 = needsRuleMaskResolve && metadataResources.objectCustom1Texture.IsValid();
 
                     builder.UseTexture(source, AccessFlags.Read);
-                    if (passData.useAovMaskTexture)
+                    if (passData.useRuleMaskTexture)
                     {
                         builder.UseTexture(metadataResources.maskIdTexture, AccessFlags.Read);
                     }
 
-                    if (passData.useAovNormalDepth)
+                    if (passData.useRuleNormalDepth)
                     {
                         builder.UseTexture(geometryResources.normalDepthTexture, AccessFlags.Read);
                     }
 
-                    if (passData.useAovSurfaceData)
+                    if (passData.useRuleSurfaceData)
                     {
                         builder.UseTexture(metadataResources.surfaceDataTexture, AccessFlags.Read);
                     }
 
-                    if (passData.useAovCustom0)
+                    if (passData.useRuleCustom0)
                     {
                         builder.UseTexture(metadataResources.custom0Texture, AccessFlags.Read);
                     }
 
-                    if (passData.useAovObjectCustom0)
+                    if (passData.useRuleObjectCustom0)
                     {
                         builder.UseTexture(metadataResources.objectCustom0Texture, AccessFlags.Read);
                     }
 
-                    if (passData.useAovObjectCustom1)
+                    if (passData.useRuleObjectCustom1)
                     {
                         builder.UseTexture(metadataResources.objectCustom1Texture, AccessFlags.Read);
                     }
@@ -585,121 +585,121 @@ namespace lilToon.URP.Extensions.PostProcessing
                         ApplyLayerProperties(data.layer, data.material, data.dynamicFocusDistance);
                         if (data.isEdgeLight)
                         {
-                            bool hasAov = data.useAovMaskTexture && data.useAovNormalDepth;
-                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, hasAov ? 1.0f : 0.0f);
-                            if (hasAov)
+                            bool hasRule = data.useRuleMaskTexture && data.useRuleNormalDepth;
+                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, hasRule ? 1.0f : 0.0f);
+                            if (hasRule)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.NormalDepthTextureId, data.aovNormalDepthTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.ruleMaskIdTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.NormalDepthTextureId, data.ruleNormalDepthTexture);
                             }
 
-                            if (data.layer.useAovMask || data.layer.debugAovMask)
+                            if (data.layer.useRuleMask || data.layer.debugRuleMask)
                             {
-                                if (data.useAovSurfaceData)
+                                if (data.useRuleSurfaceData)
                                 {
-                                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
+                                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.ruleSurfaceDataTexture);
                                 }
 
-                                if (data.useAovCustom0)
+                                if (data.useRuleCustom0)
                                 {
-                                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.aovCustom0Texture);
+                                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.ruleCustom0Texture);
                                 }
 
-                                if (data.useAovObjectCustom0)
+                                if (data.useRuleObjectCustom0)
                                 {
-                                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
+                                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.ruleObjectCustom0Texture);
                                 }
 
-                                if (data.useAovObjectCustom1)
+                                if (data.useRuleObjectCustom1)
                                 {
-                                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
+                                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.ruleObjectCustom1Texture);
                                 }
                             }
                         }
                         else if (data.isPostLighting)
                         {
-                            bool hasAov = data.useAovMaskTexture && data.useAovNormalDepth;
-                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, hasAov ? 1.0f : 0.0f);
-                            if (hasAov)
+                            bool hasRule = data.useRuleMaskTexture && data.useRuleNormalDepth;
+                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, hasRule ? 1.0f : 0.0f);
+                            if (hasRule)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.NormalDepthTextureId, data.aovNormalDepthTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.ruleMaskIdTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.NormalDepthTextureId, data.ruleNormalDepthTexture);
                             }
 
-                            if (data.useAovSurfaceData)
+                            if (data.useRuleSurfaceData)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.ruleSurfaceDataTexture);
                             }
 
-                            if (data.useAovCustom0)
+                            if (data.useRuleCustom0)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.aovCustom0Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.ruleCustom0Texture);
                             }
 
-                            if (data.useAovObjectCustom0)
+                            if (data.useRuleObjectCustom0)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.ruleObjectCustom0Texture);
                             }
 
-                            if (data.useAovObjectCustom1)
+                            if (data.useRuleObjectCustom1)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.ruleObjectCustom1Texture);
                             }
                         }
                         else if (data.isDropShadow)
                         {
-                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, data.useAovMaskTexture ? 1.0f : 0.0f);
-                            if (data.useAovMaskTexture)
+                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, data.useRuleMaskTexture ? 1.0f : 0.0f);
+                            if (data.useRuleMaskTexture)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.ruleMaskIdTexture);
                             }
 
-                            if (data.useAovSurfaceData)
+                            if (data.useRuleSurfaceData)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.ruleSurfaceDataTexture);
                             }
 
-                            if (data.useAovCustom0)
+                            if (data.useRuleCustom0)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.aovCustom0Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.ruleCustom0Texture);
                             }
 
-                            if (data.useAovObjectCustom0)
+                            if (data.useRuleObjectCustom0)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.ruleObjectCustom0Texture);
                             }
 
-                            if (data.useAovObjectCustom1)
+                            if (data.useRuleObjectCustom1)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.ruleObjectCustom1Texture);
                             }
                         }
-                        else if (data.layer.useAovMask || data.layer.debugAovMask)
+                        else if (data.layer.useRuleMask || data.layer.debugRuleMask)
                         {
-                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, data.useAovMaskTexture ? 1.0f : 0.0f);
-                            if (data.useAovMaskTexture)
+                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, data.useRuleMaskTexture ? 1.0f : 0.0f);
+                            if (data.useRuleMaskTexture)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.ruleMaskIdTexture);
                             }
 
-                            if (data.useAovSurfaceData)
+                            if (data.useRuleSurfaceData)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.ruleSurfaceDataTexture);
                             }
 
-                            if (data.useAovCustom0)
+                            if (data.useRuleCustom0)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.aovCustom0Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.ruleCustom0Texture);
                             }
 
-                            if (data.useAovObjectCustom0)
+                            if (data.useRuleObjectCustom0)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.ruleObjectCustom0Texture);
                             }
 
-                            if (data.useAovObjectCustom1)
+                            if (data.useRuleObjectCustom1)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.ruleObjectCustom1Texture);
                             }
                         }
 
@@ -717,7 +717,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
         }
 
-        private void CopyLayers(List<HoPostProcessRuntimeLayer> layers)
+        private void CopyLayers(List<ScreenProcessRuntimeLayer> layers)
         {
             runtimeLayers.Clear();
             if (layers == null)
@@ -768,7 +768,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             for (int i = 0; i < runtimeLayers.Count; i++)
             {
-                HoPostProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
+                ScreenProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
                 if (IsRuntimeLayerActive(runtimeLayer) && RequiresCameraNormals(runtimeLayer.settings.effect))
                 {
                     return true;
@@ -782,14 +782,14 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             for (int i = 0; i < runtimeLayers.Count; i++)
             {
-                HoPostProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
+                ScreenProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
                 if (!IsRuntimeLayerActive(runtimeLayer))
                 {
                     continue;
                 }
 
-                HoPostProcessEffect effect = runtimeLayer.settings.effect;
-                if (effect == HoPostProcessEffect.Outline || effect == HoPostProcessEffect.DepthOfField || EffectRequiresSubjectMask(effect))
+                ScreenProcessEffect effect = runtimeLayer.settings.effect;
+                if (effect == ScreenProcessEffect.Outline || effect == ScreenProcessEffect.DepthOfField || EffectRequiresSubjectMask(effect))
                 {
                     return true;
                 }
@@ -802,8 +802,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             for (int i = 0; i < runtimeLayers.Count; i++)
             {
-                HoPostProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
-                HoPostProcessLayer layer = runtimeLayer != null ? runtimeLayer.settings : null;
+                ScreenProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
+                ScreenProcessLayer layer = runtimeLayer != null ? runtimeLayer.settings : null;
                 if (IsLayerActive(layer) && EffectRequiresSubjectMask(layer.effect))
                 {
                     return true;
@@ -826,22 +826,22 @@ namespace lilToon.URP.Extensions.PostProcessing
             return false;
         }
 
-        private static bool EffectRequiresSubjectMask(HoPostProcessEffect effect)
+        private static bool EffectRequiresSubjectMask(ScreenProcessEffect effect)
         {
-            return effect == HoPostProcessEffect.DropShadow;
+            return effect == ScreenProcessEffect.DropShadow;
         }
 
-        private static bool RequiresCameraNormals(HoPostProcessEffect effect)
+        private static bool RequiresCameraNormals(ScreenProcessEffect effect)
         {
-            return effect == HoPostProcessEffect.Outline;
+            return effect == ScreenProcessEffect.Outline;
         }
 
-        private static bool IsRuntimeLayerActive(HoPostProcessRuntimeLayer runtimeLayer)
+        private static bool IsRuntimeLayerActive(ScreenProcessRuntimeLayer runtimeLayer)
         {
             return runtimeLayer != null && runtimeLayer.material != null && IsLayerActive(runtimeLayer.settings);
         }
 
-        private static bool IsLayerActive(HoPostProcessLayer layer)
+        private static bool IsLayerActive(ScreenProcessLayer layer)
         {
             return layer != null && layer.IsActive;
         }
@@ -895,55 +895,55 @@ namespace lilToon.URP.Extensions.PostProcessing
                    color.antiAliasing == depth.antiAliasing;
         }
 
-        private static void ApplyLayerProperties(HoPostProcessLayer layer, Material material, float dynamicFocusDistance = -1.0f)
+        private static void ApplyLayerProperties(ScreenProcessLayer layer, Material material, float dynamicFocusDistance = -1.0f)
         {
-            material.SetFloat(HoPostProcessShaderConstants.IntensityId, layer.intensity);
-            material.SetFloat(HoPostProcessShaderConstants.LayerBlendModeId, (float)layer.blendMode);
-            material.SetColor(HoPostProcessShaderConstants.LayerColorId, layer.color);
-            material.SetFloat(HoPostProcessShaderConstants.LayerTextureEnabledId, layer.texture != null ? 1.0f : 0.0f);
+            material.SetFloat(ScreenProcessShaderConstants.IntensityId, layer.intensity);
+            material.SetFloat(ScreenProcessShaderConstants.LayerBlendModeId, (float)layer.blendMode);
+            material.SetColor(ScreenProcessShaderConstants.LayerColorId, layer.color);
+            material.SetFloat(ScreenProcessShaderConstants.LayerTextureEnabledId, layer.texture != null ? 1.0f : 0.0f);
             Vector4 parameters0 = layer.parameters0;
             if (dynamicFocusDistance > 0.0f)
             {
                 parameters0.y = dynamicFocusDistance;
             }
 
-            material.SetVector(HoPostProcessShaderConstants.LayerParams0Id, parameters0);
-            material.SetVector(HoPostProcessShaderConstants.LayerParams1Id, layer.parameters1);
-            material.SetVector(HoPostProcessShaderConstants.LayerParams2Id, layer.parameters2);
-            material.SetVector(HoPostProcessShaderConstants.LayerParams3Id, layer.parameters3);
-            material.SetVector(HoPostProcessShaderConstants.LayerParams4Id, layer.parameters4);
-            material.SetVector(HoPostProcessShaderConstants.LayerParams5Id, layer.parameters5);
-            material.SetFloat(HoPostProcessShaderConstants.LayerAovMaskEnabledId, layer.useAovMask ? 1.0f : 0.0f);
-            material.SetFloat(HoPostProcessShaderConstants.LayerAovSourceId, (float)layer.aovSource);
-            material.SetFloat(HoPostProcessShaderConstants.LayerAovModeId, (float)layer.aovMaskMode);
+            material.SetVector(ScreenProcessShaderConstants.LayerParams0Id, parameters0);
+            material.SetVector(ScreenProcessShaderConstants.LayerParams1Id, layer.parameters1);
+            material.SetVector(ScreenProcessShaderConstants.LayerParams2Id, layer.parameters2);
+            material.SetVector(ScreenProcessShaderConstants.LayerParams3Id, layer.parameters3);
+            material.SetVector(ScreenProcessShaderConstants.LayerParams4Id, layer.parameters4);
+            material.SetVector(ScreenProcessShaderConstants.LayerParams5Id, layer.parameters5);
+            material.SetFloat(ScreenProcessShaderConstants.LayerRuleMaskEnabledId, layer.useRuleMask ? 1.0f : 0.0f);
+            material.SetFloat(ScreenProcessShaderConstants.LayerRuleSourceId, (float)layer.ruleSource);
+            material.SetFloat(ScreenProcessShaderConstants.LayerRuleModeId, (float)layer.ruleMaskMode);
             material.SetVector(
-                HoPostProcessShaderConstants.LayerAovParamsId,
+                ScreenProcessShaderConstants.LayerRuleParamsId,
                 new Vector4(
-                    Mathf.Max(0.0f, layer.aovThreshold),
+                    Mathf.Max(0.0f, layer.ruleThreshold),
                     0.0f,
-                    layer.aovMatchValue,
-                    layer.invertAovMask ? 1.0f : 0.0f));
-            material.SetColor(HoPostProcessShaderConstants.LayerAovMatchColorId, layer.aovMatchColor);
-            material.SetFloat(HoPostProcessShaderConstants.LayerAovDebugOutputId, layer.debugAovMask ? 1.0f : 0.0f);
-            HoPostAovMaskRuntime.ApplyToMaterial(
+                    layer.ruleMatchValue,
+                    layer.invertRuleMask ? 1.0f : 0.0f));
+            material.SetColor(ScreenProcessShaderConstants.LayerRuleMatchColorId, layer.ruleMatchColor);
+            material.SetFloat(ScreenProcessShaderConstants.LayerRuleDebugOutputId, layer.debugRuleMask ? 1.0f : 0.0f);
+            ScreenProcessRuleMaskRuntime.ApplyToMaterial(
                 layer,
                 material,
-                HoPostProcessShaderConstants.LayerAovRuleCountId,
-                HoPostProcessShaderConstants.LayerAovRuleData0Id,
-                HoPostProcessShaderConstants.LayerAovRuleData1Id,
-                HoPostProcessShaderConstants.LayerAovRuleData2Id,
-                HoPostProcessShaderConstants.LayerAovRuleColorId);
-            material.SetFloat(HoPostProcessShaderConstants.SubjectMaskValidId, 0.0f);
+                ScreenProcessShaderConstants.LayerRuleMaskCountId,
+                ScreenProcessShaderConstants.LayerRuleMaskData0Id,
+                ScreenProcessShaderConstants.LayerRuleMaskData1Id,
+                ScreenProcessShaderConstants.LayerRuleMaskData2Id,
+                ScreenProcessShaderConstants.LayerRuleMaskColorId);
+            material.SetFloat(ScreenProcessShaderConstants.SubjectMaskValidId, 0.0f);
             if (layer.texture != null)
             {
-                material.SetTexture(HoPostProcessShaderConstants.LayerTextureId, layer.texture);
+                material.SetTexture(ScreenProcessShaderConstants.LayerTextureId, layer.texture);
             }
         }
 
-        private static float ResolveDepthOfFieldFocusDistance(HoPostProcessLayer layer, Camera camera)
+        private static float ResolveDepthOfFieldFocusDistance(ScreenProcessLayer layer, Camera camera)
         {
             if (layer == null ||
-                layer.effect != HoPostProcessEffect.DepthOfField ||
+                layer.effect != ScreenProcessEffect.DepthOfField ||
                 camera == null ||
                 Mathf.RoundToInt(layer.parameters0.x) != 2)
             {
@@ -962,7 +962,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             return Mathf.Max(0.001f, distance + layer.depthOfFieldFocusOffset);
         }
 
-        private static Transform ResolveDepthOfFieldFocusTarget(HoPostProcessLayer layer)
+        private static Transform ResolveDepthOfFieldFocusTarget(ScreenProcessLayer layer)
         {
             if (layer.depthOfFieldFocusTarget != null)
             {

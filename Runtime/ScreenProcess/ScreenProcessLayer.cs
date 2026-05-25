@@ -4,7 +4,7 @@ using UnityEngine;
 
 namespace lilToon.URP.Extensions.PostProcessing
 {
-    public enum HoPostAovSource
+    public enum ScreenProcessRuleSource
     {
         [InspectorName("遮罩")]
         Mask = 0,
@@ -48,7 +48,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         ObjectCustom7 = 19
     }
 
-    public enum HoPostAovMaskMode
+    public enum ScreenProcessRuleMaskMode
     {
         Direct = 0,
         Threshold = 1,
@@ -56,7 +56,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         MatchColor = 3
     }
 
-    public enum HoPostAovMaskOperator
+    public enum ScreenProcessRuleMaskOperator
     {
         [InspectorName("直接灰度")]
         Direct = 0,
@@ -84,7 +84,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         FlagsAll = 11
     }
 
-    public enum HoPostAovMaskCombine
+    public enum ScreenProcessRuleMaskCombine
     {
         [InspectorName("替换")]
         Replace = 0,
@@ -101,7 +101,7 @@ namespace lilToon.URP.Extensions.PostProcessing
     }
 
     [Serializable]
-    public sealed class HoPostAovMaskRule
+    public sealed class ScreenProcessRuleMaskRule
     {
         [Tooltip("Skip only this ScreenProcess rule mask rule.")]
         public bool enabled = true;
@@ -110,10 +110,10 @@ namespace lilToon.URP.Extensions.PostProcessing
         public string name = "ScreenProcess Rule";
 
         [Tooltip("MetadataBuffer channel sampled by this rule.")]
-        public HoPostAovSource source = HoPostAovSource.Mask;
+        public ScreenProcessRuleSource source = ScreenProcessRuleSource.Mask;
 
         [Tooltip("How the sampled MetadataBuffer data is converted into a rule mask.")]
-        public HoPostAovMaskOperator matchOperator = HoPostAovMaskOperator.Direct;
+        public ScreenProcessRuleMaskOperator matchOperator = ScreenProcessRuleMaskOperator.Direct;
 
         [Tooltip("Primary numeric value used by threshold, compare, equality, and flags modes.")]
         public float value = 0.5f;
@@ -132,14 +132,14 @@ namespace lilToon.URP.Extensions.PostProcessing
         public Color matchColor = Color.white;
 
         [Tooltip("How this rule is combined with the accumulated ScreenProcess mask.")]
-        public HoPostAovMaskCombine combine = HoPostAovMaskCombine.Replace;
+        public ScreenProcessRuleMaskCombine combine = ScreenProcessRuleMaskCombine.Replace;
 
         [Tooltip("Invert this rule within covered MetadataBuffer pixels before combining it.")]
         public bool invert;
     }
 
     [Serializable]
-    public sealed class HoPostProcessLayer
+    public sealed class ScreenProcessLayer
     {
         [Tooltip("Display name in the ScreenProcess stack.")]
         public string name = "ScreenProcess Layer";
@@ -148,7 +148,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public bool enabled = true;
 
         [Tooltip("The ScreenProcess effect slot represented by this layer.")]
-        public HoPostProcessEffect effect = HoPostProcessEffect.EdgeLight;
+        public ScreenProcessEffect effect = ScreenProcessEffect.EdgeLight;
 
         [Tooltip("Optional material override. Used for experiments or custom passes.")]
         public Material materialOverride;
@@ -165,7 +165,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public float intensity = 1.0f;
 
         [Tooltip("Blend mode hint for ScreenProcess effects. The shader reads _LayerBlendMode.")]
-        public HoPostProcessBlendMode blendMode = HoPostProcessBlendMode.Add;
+        public ScreenProcessBlendMode blendMode = ScreenProcessBlendMode.Add;
 
         [Tooltip("Primary color. EdgeLight and other HDR subject effects should treat this as HDR.")]
         public Color color = Color.white;
@@ -190,37 +190,37 @@ namespace lilToon.URP.Extensions.PostProcessing
         public float depthOfFieldFocusOffset;
 
         [Tooltip("Use MetadataBuffer data as a per-layer ScreenProcess mask.")]
-        public bool useAovMask;
+        public bool useRuleMask;
 
         [Tooltip("MetadataBuffer channel sampled by this layer mask.")]
-        public HoPostAovSource aovSource = HoPostAovSource.Mask;
+        public ScreenProcessRuleSource ruleSource = ScreenProcessRuleSource.Mask;
 
         [Tooltip("How the sampled MetadataBuffer data is converted into a mask.")]
-        public HoPostAovMaskMode aovMaskMode = HoPostAovMaskMode.Direct;
+        public ScreenProcessRuleMaskMode ruleMaskMode = ScreenProcessRuleMaskMode.Direct;
 
         [Tooltip("Threshold, tolerance, or match width used by the ScreenProcess mask.")]
         [Min(0.0f)]
-        public float aovThreshold = 0.5f;
+        public float ruleThreshold = 0.5f;
 
         [Tooltip("Numeric value used by Match Value mode. ID sources encode this value before comparison.")]
-        public float aovMatchValue;
+        public float ruleMatchValue;
 
         [Tooltip("Color used by Match Color mode.")]
-        public Color aovMatchColor = Color.white;
+        public Color ruleMatchColor = Color.white;
 
         [Tooltip("Invert the resolved ScreenProcess mask within covered MetadataBuffer pixels.")]
-        public bool invertAovMask;
+        public bool invertRuleMask;
 
         [Tooltip("Replace this layer output with the resolved ScreenProcess mask for debugging.")]
-        public bool debugAovMask;
+        public bool debugRuleMask;
 
         [Tooltip("Fine-grained ScreenProcess rule mask list. The runtime evaluates at most four rules. Empty lists fall back to the single-rule fields above.")]
-        public List<HoPostAovMaskRule> aovRules = new List<HoPostAovMaskRule>();
+        public List<ScreenProcessRuleMaskRule> ruleMasks = new List<ScreenProcessRuleMaskRule>();
 
         public bool IsActive => enabled && intensity > 0.0001f;
     }
 
-    internal static class HoPostAovMaskRuntime
+    internal static class ScreenProcessRuleMaskRuntime
     {
         public const int MaxRuleCount = 4;
 
@@ -230,7 +230,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         private static readonly Vector4[] RuleColors = new Vector4[MaxRuleCount];
 
         public static void ApplyToMaterial(
-            HoPostProcessLayer layer,
+            ScreenProcessLayer layer,
             Material material,
             int ruleCountId,
             int ruleData0Id,
@@ -250,41 +250,12 @@ namespace lilToon.URP.Extensions.PostProcessing
                 ruleData1Id,
                 ruleData2Id,
                 ruleColorId,
-                layer.aovRules,
-                layer.aovSource,
-                layer.aovMaskMode,
-                layer.aovThreshold,
-                layer.aovMatchValue,
-                layer.aovMatchColor);
-        }
-
-        public static void ApplyToMaterial(
-            ShoostPostProcessLayer layer,
-            Material material,
-            int ruleCountId,
-            int ruleData0Id,
-            int ruleData1Id,
-            int ruleData2Id,
-            int ruleColorId)
-        {
-            if (layer == null || material == null)
-            {
-                return;
-            }
-
-            ApplyToMaterial(
-                material,
-                ruleCountId,
-                ruleData0Id,
-                ruleData1Id,
-                ruleData2Id,
-                ruleColorId,
-                layer.aovRules,
-                layer.aovSource,
-                layer.aovMaskMode,
-                layer.aovThreshold,
-                layer.aovMatchValue,
-                layer.aovMatchColor);
+                layer.ruleMasks,
+                layer.ruleSource,
+                layer.ruleMaskMode,
+                layer.ruleThreshold,
+                layer.ruleMatchValue,
+                layer.ruleMatchColor);
         }
 
         private static void ApplyToMaterial(
@@ -294,9 +265,9 @@ namespace lilToon.URP.Extensions.PostProcessing
             int ruleData1Id,
             int ruleData2Id,
             int ruleColorId,
-            List<HoPostAovMaskRule> rules,
-            HoPostAovSource legacySource,
-            HoPostAovMaskMode legacyMode,
+            List<ScreenProcessRuleMaskRule> rules,
+            ScreenProcessRuleSource legacySource,
+            ScreenProcessRuleMaskMode legacyMode,
             float legacyThreshold,
             float legacyMatchValue,
             Color legacyMatchColor)
@@ -318,9 +289,9 @@ namespace lilToon.URP.Extensions.PostProcessing
         }
 
         private static int FillRuleArrays(
-            List<HoPostAovMaskRule> rules,
-            HoPostAovSource legacySource,
-            HoPostAovMaskMode legacyMode,
+            List<ScreenProcessRuleMaskRule> rules,
+            ScreenProcessRuleSource legacySource,
+            ScreenProcessRuleMaskMode legacyMode,
             float legacyThreshold,
             float legacyMatchValue,
             Color legacyMatchColor)
@@ -342,38 +313,38 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         private static void WriteLegacyRule(
             int index,
-            HoPostAovSource source,
-            HoPostAovMaskMode mode,
+            ScreenProcessRuleSource source,
+            ScreenProcessRuleMaskMode mode,
             float threshold,
             float matchValue,
             Color matchColor)
         {
-            HoPostAovMaskOperator matchOperator = HoPostAovMaskOperator.Direct;
+            ScreenProcessRuleMaskOperator matchOperator = ScreenProcessRuleMaskOperator.Direct;
             float value = 0.0f;
             float tolerance = 0.02f;
 
             switch (mode)
             {
-                case HoPostAovMaskMode.Threshold:
-                    matchOperator = HoPostAovMaskOperator.Threshold;
+                case ScreenProcessRuleMaskMode.Threshold:
+                    matchOperator = ScreenProcessRuleMaskOperator.Threshold;
                     value = threshold;
                     break;
-                case HoPostAovMaskMode.MatchValue:
-                    matchOperator = HoPostAovMaskOperator.Equal;
+                case ScreenProcessRuleMaskMode.MatchValue:
+                    matchOperator = ScreenProcessRuleMaskOperator.Equal;
                     value = matchValue;
                     tolerance = threshold;
                     break;
-                case HoPostAovMaskMode.MatchColor:
-                    matchOperator = HoPostAovMaskOperator.MatchColor;
+                case ScreenProcessRuleMaskMode.MatchColor:
+                    matchOperator = ScreenProcessRuleMaskOperator.MatchColor;
                     tolerance = threshold;
                     break;
             }
 
             RuleData0[index] = new Vector4(
                 1.0f,
-                ClampEnumValue((int)source, (int)HoPostAovSource.Mask, (int)HoPostAovSource.ObjectCustom7),
+                ClampEnumValue((int)source, (int)ScreenProcessRuleSource.Mask, (int)ScreenProcessRuleSource.ObjectCustom7),
                 (int)matchOperator,
-                (int)HoPostAovMaskCombine.Replace);
+                (int)ScreenProcessRuleMaskCombine.Replace);
             RuleData1[index] = new Vector4(
                 value,
                 0.0f,
@@ -387,7 +358,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             RuleColors[index] = ColorToVector(matchColor);
         }
 
-        private static void WriteRule(int index, HoPostAovMaskRule rule)
+        private static void WriteRule(int index, ScreenProcessRuleMaskRule rule)
         {
             if (rule == null)
             {
@@ -396,9 +367,9 @@ namespace lilToon.URP.Extensions.PostProcessing
 
             RuleData0[index] = new Vector4(
                 rule.enabled ? 1.0f : 0.0f,
-                ClampEnumValue((int)rule.source, (int)HoPostAovSource.Mask, (int)HoPostAovSource.ObjectCustom7),
-                ClampEnumValue((int)rule.matchOperator, (int)HoPostAovMaskOperator.Direct, (int)HoPostAovMaskOperator.FlagsAll),
-                ClampEnumValue((int)rule.combine, (int)HoPostAovMaskCombine.Replace, (int)HoPostAovMaskCombine.Multiply));
+                ClampEnumValue((int)rule.source, (int)ScreenProcessRuleSource.Mask, (int)ScreenProcessRuleSource.ObjectCustom7),
+                ClampEnumValue((int)rule.matchOperator, (int)ScreenProcessRuleMaskOperator.Direct, (int)ScreenProcessRuleMaskOperator.FlagsAll),
+                ClampEnumValue((int)rule.combine, (int)ScreenProcessRuleMaskCombine.Replace, (int)ScreenProcessRuleMaskCombine.Multiply));
             RuleData1[index] = new Vector4(
                 rule.value,
                 rule.minValue,

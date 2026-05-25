@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace lilToon.URP.Extensions.Editor.PostProcessing
 {
-    internal sealed partial class HoPostProcessStackVolumeEditor
+    internal sealed partial class ScreenProcessStackVolumeEditor
     {
         private void DrawDropShadowProperties(Rect rect, ref float y, SerializedProperty element)
         {
@@ -22,7 +22,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 p1 = new Vector4(1.0f, 0.0f, 0.0f, 1.0f);
             }
 
-            y = DrawHoPostDirectionDistanceViewControlButton(rect, y, element);
+            y = DrawScreenProcessDirectionDistanceViewControlButton(rect, y, element);
 
             p0.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "距离", p0.x, 0.0f, 1.0f);
             y += LineHeight + LineSpacing;

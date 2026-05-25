@@ -1,4 +1,4 @@
-Shader "Hidden/lilToon-HoPost/URP/HoPost/LayerBlit"
+Shader "Hidden/lilToon/URP/ScreenProcess/LayerBlit"
 {
     SubShader
     {
@@ -14,7 +14,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/LayerBlit"
 
         Pass
         {
-            Name "HoPost Layer Blit"
+            Name "ScreenProcess Layer Blit"
 
             HLSLPROGRAM
             #pragma vertex Vert

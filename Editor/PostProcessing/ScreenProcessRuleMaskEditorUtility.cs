@@ -4,12 +4,12 @@ using UnityEngine;
 
 namespace lilToon.URP.Extensions.Editor.PostProcessing
 {
-    internal static class HoPostAovMaskEditorUtility
+    internal static class ScreenProcessRuleMaskEditorUtility
     {
         private const int MaxRuleCount = 4;
         private const float RuleGroupPadding = 6.0f;
 
-        private static readonly string[] AovSources =
+        private static readonly string[] RuleSources =
         {
             "遮罩",
             "角色组 ID",
@@ -33,7 +33,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "预留 7"
         };
 
-        private static readonly string[] AovRuleOperators =
+        private static readonly string[] RuleMaskOperators =
         {
             "直接灰度",
             "阈值",
@@ -49,7 +49,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "包含全部标记 bit"
         };
 
-        private static readonly string[] AovRuleCombines =
+        private static readonly string[] RuleMaskCombines =
         {
             "替换",
             "或",
@@ -61,13 +61,13 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         public static int GetLineCount(SerializedProperty element)
         {
-            SerializedProperty useAovMask = element.FindPropertyRelative("useAovMask");
-            if (useAovMask == null || !useAovMask.boolValue || !useAovMask.isExpanded)
+            SerializedProperty useRuleMask = element.FindPropertyRelative("useRuleMask");
+            if (useRuleMask == null || !useRuleMask.boolValue || !useRuleMask.isExpanded)
             {
                 return 1;
             }
 
-            SerializedProperty rules = element.FindPropertyRelative("aovRules");
+            SerializedProperty rules = element.FindPropertyRelative("ruleMasks");
             if (rules == null || !rules.isArray)
             {
                 return 1;
@@ -91,11 +91,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         public static float Draw(float x, float y, float width, SerializedProperty element, float lineHeight, float lineSpacing)
         {
-            SerializedProperty useAovMask = element.FindPropertyRelative("useAovMask");
-            SerializedProperty invertAovMask = element.FindPropertyRelative("invertAovMask");
-            SerializedProperty debugAovMask = element.FindPropertyRelative("debugAovMask");
-            SerializedProperty rules = element.FindPropertyRelative("aovRules");
-            if (useAovMask == null || invertAovMask == null || debugAovMask == null || rules == null || !rules.isArray)
+            SerializedProperty useRuleMask = element.FindPropertyRelative("useRuleMask");
+            SerializedProperty invertRuleMask = element.FindPropertyRelative("invertRuleMask");
+            SerializedProperty debugRuleMask = element.FindPropertyRelative("debugRuleMask");
+            SerializedProperty rules = element.FindPropertyRelative("ruleMasks");
+            if (useRuleMask == null || invertRuleMask == null || debugRuleMask == null || rules == null || !rules.isArray)
             {
                 return y;
             }
@@ -104,11 +104,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             float toggleWidth = 58.0f;
             Rect foldoutRect = new Rect(headerRect.x, headerRect.y, Mathf.Max(0.0f, headerRect.width - toggleWidth), headerRect.height);
             Rect toggleRect = new Rect(headerRect.xMax - toggleWidth, headerRect.y, toggleWidth, headerRect.height);
-            useAovMask.isExpanded = EditorGUI.Foldout(foldoutRect, useAovMask.isExpanded, "规则遮罩", true);
-            useAovMask.boolValue = EditorGUI.ToggleLeft(toggleRect, "启用", useAovMask.boolValue);
+            useRuleMask.isExpanded = EditorGUI.Foldout(foldoutRect, useRuleMask.isExpanded, "规则遮罩", true);
+            useRuleMask.boolValue = EditorGUI.ToggleLeft(toggleRect, "启用", useRuleMask.boolValue);
             y += lineHeight + lineSpacing;
 
-            if (!useAovMask.boolValue || !useAovMask.isExpanded)
+            if (!useRuleMask.boolValue || !useRuleMask.isExpanded)
             {
                 return y;
             }
@@ -116,16 +116,16 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             EnsureRuleListFromLegacy(element, rules);
             TrimRulesToMax(rules);
 
-            invertAovMask.boolValue = EditorGUI.Toggle(
+            invertRuleMask.boolValue = EditorGUI.Toggle(
                 new Rect(x, y, width, lineHeight),
                 new GUIContent("最终反转", "只在当前 MetadataBuffer 覆盖范围内反转最终规则组结果。"),
-                invertAovMask.boolValue);
+                invertRuleMask.boolValue);
             y += lineHeight + lineSpacing;
 
-            debugAovMask.boolValue = EditorGUI.Toggle(
+            debugRuleMask.boolValue = EditorGUI.Toggle(
                 new Rect(x, y, width, lineHeight),
                 new GUIContent("输出匹配结果", "直接输出当前 ScreenProcess 规则组解析出的 mask，用于调试。"),
-                debugAovMask.boolValue);
+                debugRuleMask.boolValue);
             y += lineHeight + lineSpacing;
 
             int visibleRuleCount = Mathf.Min(rules.arraySize, MaxRuleCount);
@@ -170,7 +170,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         public static void ResetRules(SerializedProperty element)
         {
-            SerializedProperty rules = element.FindPropertyRelative("aovRules");
+            SerializedProperty rules = element.FindPropertyRelative("ruleMasks");
             if (rules == null || !rules.isArray)
             {
                 return;
@@ -239,15 +239,15 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             source.enumValueIndex = EditorGUI.Popup(
                 new Rect(x, y, width, lineHeight),
                 "MetadataBuffer 源",
-                Mathf.Clamp(source.enumValueIndex, 0, AovSources.Length - 1),
-                AovSources);
+                Mathf.Clamp(source.enumValueIndex, 0, RuleSources.Length - 1),
+                RuleSources);
             y += lineHeight + lineSpacing;
 
             matchOperator.enumValueIndex = EditorGUI.Popup(
                 new Rect(x, y, width, lineHeight),
                 "匹配方式",
-                Mathf.Clamp(matchOperator.enumValueIndex, 0, AovRuleOperators.Length - 1),
-                AovRuleOperators);
+                Mathf.Clamp(matchOperator.enumValueIndex, 0, RuleMaskOperators.Length - 1),
+                RuleMaskOperators);
             y += lineHeight + lineSpacing;
 
             DrawRuleParameters(x, ref y, width, lineHeight, lineSpacing, matchOperator, value, minValue, maxValue, tolerance, matchColor);
@@ -255,8 +255,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             combine.enumValueIndex = EditorGUI.Popup(
                 new Rect(x, y, width, lineHeight),
                 "混合方式",
-                Mathf.Clamp(combine.enumValueIndex, 0, AovRuleCombines.Length - 1),
-                AovRuleCombines);
+                Mathf.Clamp(combine.enumValueIndex, 0, RuleMaskCombines.Length - 1),
+                RuleMaskCombines);
             y += lineHeight + lineSpacing;
 
             invert.boolValue = EditorGUI.Toggle(
@@ -280,36 +280,36 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SerializedProperty tolerance,
             SerializedProperty matchColor)
         {
-            HoPostAovMaskOperator op = (HoPostAovMaskOperator)Mathf.Clamp(matchOperator.enumValueIndex, 0, AovRuleOperators.Length - 1);
+            ScreenProcessRuleMaskOperator op = (ScreenProcessRuleMaskOperator)Mathf.Clamp(matchOperator.enumValueIndex, 0, RuleMaskOperators.Length - 1);
             switch (op)
             {
-                case HoPostAovMaskOperator.Threshold:
-                case HoPostAovMaskOperator.Greater:
-                case HoPostAovMaskOperator.GreaterOrEqual:
-                case HoPostAovMaskOperator.Less:
-                case HoPostAovMaskOperator.LessOrEqual:
+                case ScreenProcessRuleMaskOperator.Threshold:
+                case ScreenProcessRuleMaskOperator.Greater:
+                case ScreenProcessRuleMaskOperator.GreaterOrEqual:
+                case ScreenProcessRuleMaskOperator.Less:
+                case ScreenProcessRuleMaskOperator.LessOrEqual:
                     value.floatValue = EditorGUI.FloatField(new Rect(x, y, width, lineHeight), "比较值", value.floatValue);
                     y += lineHeight + lineSpacing;
                     break;
-                case HoPostAovMaskOperator.Equal:
-                case HoPostAovMaskOperator.NotEqual:
+                case ScreenProcessRuleMaskOperator.Equal:
+                case ScreenProcessRuleMaskOperator.NotEqual:
                     value.floatValue = EditorGUI.FloatField(new Rect(x, y, width, lineHeight), "匹配值 / ID", value.floatValue);
                     y += lineHeight + lineSpacing;
                     DrawTolerance(x, ref y, width, lineHeight, lineSpacing, tolerance);
                     break;
-                case HoPostAovMaskOperator.Range:
+                case ScreenProcessRuleMaskOperator.Range:
                     minValue.floatValue = EditorGUI.FloatField(new Rect(x, y, width, lineHeight), "最小值 / ID", minValue.floatValue);
                     y += lineHeight + lineSpacing;
                     maxValue.floatValue = EditorGUI.FloatField(new Rect(x, y, width, lineHeight), "最大值 / ID", maxValue.floatValue);
                     y += lineHeight + lineSpacing;
                     break;
-                case HoPostAovMaskOperator.MatchColor:
+                case ScreenProcessRuleMaskOperator.MatchColor:
                     matchColor.colorValue = EditorGUI.ColorField(new Rect(x, y, width, lineHeight), "匹配颜色", matchColor.colorValue);
                     y += lineHeight + lineSpacing;
                     DrawTolerance(x, ref y, width, lineHeight, lineSpacing, tolerance);
                     break;
-                case HoPostAovMaskOperator.FlagsAny:
-                case HoPostAovMaskOperator.FlagsAll:
+                case ScreenProcessRuleMaskOperator.FlagsAny:
+                case ScreenProcessRuleMaskOperator.FlagsAll:
                     value.floatValue = Mathf.Clamp(EditorGUI.IntField(new Rect(x, y, width, lineHeight), "标记 bit mask", Mathf.RoundToInt(value.floatValue)), 0, 255);
                     y += lineHeight + lineSpacing;
                     break;
@@ -330,28 +330,28 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             SerializedProperty matchOperator = rule.FindPropertyRelative("matchOperator");
-            HoPostAovMaskOperator op = matchOperator != null
-                ? (HoPostAovMaskOperator)Mathf.Clamp(matchOperator.enumValueIndex, 0, AovRuleOperators.Length - 1)
-                : HoPostAovMaskOperator.Direct;
+            ScreenProcessRuleMaskOperator op = matchOperator != null
+                ? (ScreenProcessRuleMaskOperator)Mathf.Clamp(matchOperator.enumValueIndex, 0, RuleMaskOperators.Length - 1)
+                : ScreenProcessRuleMaskOperator.Direct;
 
             int parameterLines = 0;
             switch (op)
             {
-                case HoPostAovMaskOperator.Threshold:
-                case HoPostAovMaskOperator.Greater:
-                case HoPostAovMaskOperator.GreaterOrEqual:
-                case HoPostAovMaskOperator.Less:
-                case HoPostAovMaskOperator.LessOrEqual:
+                case ScreenProcessRuleMaskOperator.Threshold:
+                case ScreenProcessRuleMaskOperator.Greater:
+                case ScreenProcessRuleMaskOperator.GreaterOrEqual:
+                case ScreenProcessRuleMaskOperator.Less:
+                case ScreenProcessRuleMaskOperator.LessOrEqual:
                     parameterLines = 1;
                     break;
-                case HoPostAovMaskOperator.Equal:
-                case HoPostAovMaskOperator.NotEqual:
-                case HoPostAovMaskOperator.Range:
-                case HoPostAovMaskOperator.MatchColor:
+                case ScreenProcessRuleMaskOperator.Equal:
+                case ScreenProcessRuleMaskOperator.NotEqual:
+                case ScreenProcessRuleMaskOperator.Range:
+                case ScreenProcessRuleMaskOperator.MatchColor:
                     parameterLines = 2;
                     break;
-                case HoPostAovMaskOperator.FlagsAny:
-                case HoPostAovMaskOperator.FlagsAll:
+                case ScreenProcessRuleMaskOperator.FlagsAny:
+                case ScreenProcessRuleMaskOperator.FlagsAll:
                     parameterLines = 1;
                     break;
             }
@@ -397,39 +397,39 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             SetBool(rule, "enabled", true);
             SetString(rule, "name", $"规则 {index + 1}");
-            SetEnum(rule, "source", (int)HoPostAovSource.Mask);
-            SetEnum(rule, "matchOperator", (int)HoPostAovMaskOperator.Direct);
+            SetEnum(rule, "source", (int)ScreenProcessRuleSource.Mask);
+            SetEnum(rule, "matchOperator", (int)ScreenProcessRuleMaskOperator.Direct);
             SetFloat(rule, "value", 0.5f);
             SetFloat(rule, "minValue", 0.0f);
             SetFloat(rule, "maxValue", 1.0f);
             SetFloat(rule, "tolerance", 0.02f);
             SetColor(rule, "matchColor", Color.white);
-            SetEnum(rule, "combine", index == 0 ? (int)HoPostAovMaskCombine.Replace : (int)HoPostAovMaskCombine.Or);
+            SetEnum(rule, "combine", index == 0 ? (int)ScreenProcessRuleMaskCombine.Replace : (int)ScreenProcessRuleMaskCombine.Or);
             SetBool(rule, "invert", false);
         }
 
         private static void SetRuleFromLegacy(SerializedProperty element, SerializedProperty rule)
         {
             SetDefaultRule(rule, 0);
-            SetEnum(rule, "source", GetEnum(element, "aovSource", (int)HoPostAovSource.Mask));
-            HoPostAovMaskMode mode = (HoPostAovMaskMode)GetEnum(element, "aovMaskMode", (int)HoPostAovMaskMode.Direct);
-            float threshold = GetFloat(element, "aovThreshold", 0.5f);
-            float matchValue = GetFloat(element, "aovMatchValue", 0.0f);
-            Color matchColor = GetColor(element, "aovMatchColor", Color.white);
+            SetEnum(rule, "source", GetEnum(element, "ruleSource", (int)ScreenProcessRuleSource.Mask));
+            ScreenProcessRuleMaskMode mode = (ScreenProcessRuleMaskMode)GetEnum(element, "ruleMaskMode", (int)ScreenProcessRuleMaskMode.Direct);
+            float threshold = GetFloat(element, "ruleThreshold", 0.5f);
+            float matchValue = GetFloat(element, "ruleMatchValue", 0.0f);
+            Color matchColor = GetColor(element, "ruleMatchColor", Color.white);
 
             switch (mode)
             {
-                case HoPostAovMaskMode.Threshold:
-                    SetEnum(rule, "matchOperator", (int)HoPostAovMaskOperator.Threshold);
+                case ScreenProcessRuleMaskMode.Threshold:
+                    SetEnum(rule, "matchOperator", (int)ScreenProcessRuleMaskOperator.Threshold);
                     SetFloat(rule, "value", threshold);
                     break;
-                case HoPostAovMaskMode.MatchValue:
-                    SetEnum(rule, "matchOperator", (int)HoPostAovMaskOperator.Equal);
+                case ScreenProcessRuleMaskMode.MatchValue:
+                    SetEnum(rule, "matchOperator", (int)ScreenProcessRuleMaskOperator.Equal);
                     SetFloat(rule, "value", matchValue);
                     SetFloat(rule, "tolerance", threshold);
                     break;
-                case HoPostAovMaskMode.MatchColor:
-                    SetEnum(rule, "matchOperator", (int)HoPostAovMaskOperator.MatchColor);
+                case ScreenProcessRuleMaskMode.MatchColor:
+                    SetEnum(rule, "matchOperator", (int)ScreenProcessRuleMaskOperator.MatchColor);
                     SetColor(rule, "matchColor", matchColor);
                     SetFloat(rule, "tolerance", threshold);
                     break;

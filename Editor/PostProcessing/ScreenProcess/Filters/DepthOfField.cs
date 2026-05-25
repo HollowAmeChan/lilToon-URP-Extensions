@@ -3,7 +3,7 @@ using UnityEngine;
 
 namespace lilToon.URP.Extensions.Editor.PostProcessing
 {
-    internal sealed partial class HoPostProcessStackVolumeEditor
+    internal sealed partial class ScreenProcessStackVolumeEditor
     {
         private static readonly string[] DepthOfFieldModes =
         {

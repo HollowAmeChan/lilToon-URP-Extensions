@@ -260,7 +260,7 @@ Runtime/ShoostPostProcessing/ShoostPostProcessEffectDescriptor.cs
 - `ShoostPostProcessPass` 删除 legacy AOV mask warning 分支；ImageProcess 运行时不再检查或承载旧 AOV mask 数据。
 - `ImageProcessResourceKind` 删除 `AovInput`、`MaterialBuffer`、`GeometryBuffer`、`ShadowCast`，`ImageProcessResourceRequest` 不再提供 semantic input 判定后门。
 - `ShoostPostProcessStackVolumeEditor` 删除 legacy AOV mask 迁移提示、清理按钮和默认值重置中的旧字段处理。
-- 本次不改变 ScreenProcess / `Runtime/HoPostProcessing` 的 AOV mask 能力；mask/rule 仍归语义屏幕处理侧所有。
+- 本次不改变 ScreenProcess / `Runtime/ScreenProcess` 的 rule mask 能力；mask/rule 仍归语义屏幕处理侧所有。
 
 ---
 

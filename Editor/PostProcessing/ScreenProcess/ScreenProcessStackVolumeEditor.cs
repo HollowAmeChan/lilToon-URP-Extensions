@@ -7,8 +7,8 @@ using UnityEngine;
 
 namespace lilToon.URP.Extensions.Editor.PostProcessing
 {
-    [CustomEditor(typeof(HoPostProcessStackVolume))]
-    internal sealed partial class HoPostProcessStackVolumeEditor : VolumeComponentEditor
+    [CustomEditor(typeof(ScreenProcessStackVolume))]
+    internal sealed partial class ScreenProcessStackVolumeEditor : VolumeComponentEditor
     {
         private const float LineHeight = 18.0f;
         private const float LineSpacing = 2.0f;
@@ -18,11 +18,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private readonly struct EffectToggleEntry
         {
-            public readonly HoPostProcessEffect Effect;
+            public readonly ScreenProcessEffect Effect;
             public readonly string Label;
             public readonly string IconName;
 
-            public EffectToggleEntry(HoPostProcessEffect effect, string label, string iconName)
+            public EffectToggleEntry(ScreenProcessEffect effect, string label, string iconName)
             {
                 Effect = effect;
                 Label = label;
@@ -32,15 +32,15 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static readonly EffectToggleEntry[] VisibleEffectOrder =
         {
-            new EffectToggleEntry(HoPostProcessEffect.EdgeLight, "边缘光", "icon_RimLight_v1"),
-            new EffectToggleEntry(HoPostProcessEffect.Outline, "轮廓", "icon_OutLine_v1"),
-            new EffectToggleEntry(HoPostProcessEffect.PostLighting, "后期打光", "icon_RimLight_v1"),
-            new EffectToggleEntry(HoPostProcessEffect.DropShadow, "投影", "icon_DropShadow_v1"),
-            new EffectToggleEntry(HoPostProcessEffect.DepthOfField, "景深", "icon_Effects_v1"),
-            new EffectToggleEntry(HoPostProcessEffect.CustomMaterial, "自定义", "icon_Effects_v1")
+            new EffectToggleEntry(ScreenProcessEffect.EdgeLight, "边缘光", "icon_RimLight_v1"),
+            new EffectToggleEntry(ScreenProcessEffect.Outline, "轮廓", "icon_OutLine_v1"),
+            new EffectToggleEntry(ScreenProcessEffect.PostLighting, "后期打光", "icon_RimLight_v1"),
+            new EffectToggleEntry(ScreenProcessEffect.DropShadow, "投影", "icon_DropShadow_v1"),
+            new EffectToggleEntry(ScreenProcessEffect.DepthOfField, "景深", "icon_Effects_v1"),
+            new EffectToggleEntry(ScreenProcessEffect.CustomMaterial, "自定义", "icon_Effects_v1")
         };
 
-        private static readonly Dictionary<HoPostProcessEffect, GUIContent> EffectIconContents = new Dictionary<HoPostProcessEffect, GUIContent>();
+        private static readonly Dictionary<ScreenProcessEffect, GUIContent> EffectIconContents = new Dictionary<ScreenProcessEffect, GUIContent>();
 
         private SerializedDataParameter showInSceneView;
         private SerializedProperty layers;
@@ -49,7 +49,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         public override void OnEnable()
         {
-            PropertyFetcher<HoPostProcessStackVolume> fetcher = new PropertyFetcher<HoPostProcessStackVolume>(serializedObject);
+            PropertyFetcher<ScreenProcessStackVolume> fetcher = new PropertyFetcher<ScreenProcessStackVolume>(serializedObject);
             showInSceneView = Unpack(fetcher.Find(x => x.ShowInSceneView));
             layers = serializedObject.FindProperty("layers");
             layerValues = layers != null ? layers.FindPropertyRelative("m_Value") : null;
@@ -67,7 +67,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         public override void OnDisable()
         {
-            DisableHoPostLayerViewControlsForThisEditor();
+            DisableScreenProcessLayerViewControlsForThisEditor();
             base.OnDisable();
         }
 
@@ -133,46 +133,46 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             float y = DrawFoldoutLine(rect, rect.y, element, enabledProperty);
             if (!element.isExpanded)
             {
-                if (IsHoPostDirectionDistanceViewControlActive(element))
+                if (IsScreenProcessDirectionDistanceViewControlActive(element))
                 {
-                    HoPostDirectionDistanceViewControl.Stop();
+                    ScreenProcessDirectionDistanceViewControl.Stop();
                 }
 
-                if (IsHoPostCenterRadiusViewControlActive(element))
+                if (IsScreenProcessCenterRadiusViewControlActive(element))
                 {
-                    HoPostCenterRadiusViewControl.Stop();
+                    ScreenProcessCenterRadiusViewControl.Stop();
                 }
 
                 return;
             }
 
             EditorGUI.indentLevel++;
-            HoPostProcessEffect effect = GetEffect(element);
+            ScreenProcessEffect effect = GetEffect(element);
             DrawCoreFields(
                 rect,
                 ref y,
                 element,
-                includeColorBlend: effect != HoPostProcessEffect.DepthOfField,
-                includeTexture: effect == HoPostProcessEffect.CustomMaterial,
-                includePassIndex: effect == HoPostProcessEffect.CustomMaterial,
-                includeMaterialOverride: effect == HoPostProcessEffect.CustomMaterial);
-            DrawAovMaskProperties(rect, ref y, element);
+                includeColorBlend: effect != ScreenProcessEffect.DepthOfField,
+                includeTexture: effect == ScreenProcessEffect.CustomMaterial,
+                includePassIndex: effect == ScreenProcessEffect.CustomMaterial,
+                includeMaterialOverride: effect == ScreenProcessEffect.CustomMaterial);
+            DrawRuleMaskProperties(rect, ref y, element);
 
             switch (effect)
             {
-                case HoPostProcessEffect.EdgeLight:
+                case ScreenProcessEffect.EdgeLight:
                     DrawEdgeLightProperties(rect, ref y, element);
                     break;
-                case HoPostProcessEffect.Outline:
+                case ScreenProcessEffect.Outline:
                     DrawOutlineProperties(rect, ref y, element);
                     break;
-                case HoPostProcessEffect.DropShadow:
+                case ScreenProcessEffect.DropShadow:
                     DrawDropShadowProperties(rect, ref y, element);
                     break;
-                case HoPostProcessEffect.DepthOfField:
+                case ScreenProcessEffect.DepthOfField:
                     DrawDepthOfFieldProperties(rect, ref y, element);
                     break;
-                case HoPostProcessEffect.PostLighting:
+                case ScreenProcessEffect.PostLighting:
                     DrawPostLightingProperties(rect, ref y, element);
                     break;
             }
@@ -184,25 +184,25 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             switch (GetEffect(element))
             {
-                case HoPostProcessEffect.EdgeLight:
-                    return 16 + GetAovLineCount(element);
-                case HoPostProcessEffect.Outline:
-                    return 11 + GetAovLineCount(element);
-                case HoPostProcessEffect.DepthOfField:
-                    return GetDepthOfFieldLineCount(element) + GetAovLineCount(element);
-                case HoPostProcessEffect.PostLighting:
-                    return GetPostLightingLineCount(element) + GetAovLineCount(element);
-                case HoPostProcessEffect.CustomMaterial:
-                    return 7 + GetAovLineCount(element);
-                case HoPostProcessEffect.DropShadow:
+                case ScreenProcessEffect.EdgeLight:
+                    return 16 + GetRuleLineCount(element);
+                case ScreenProcessEffect.Outline:
+                    return 11 + GetRuleLineCount(element);
+                case ScreenProcessEffect.DepthOfField:
+                    return GetDepthOfFieldLineCount(element) + GetRuleLineCount(element);
+                case ScreenProcessEffect.PostLighting:
+                    return GetPostLightingLineCount(element) + GetRuleLineCount(element);
+                case ScreenProcessEffect.CustomMaterial:
+                    return 7 + GetRuleLineCount(element);
+                case ScreenProcessEffect.DropShadow:
                 default:
-                    return 9 + GetAovLineCount(element);
+                    return 9 + GetRuleLineCount(element);
             }
         }
 
-        private static int GetAovLineCount(SerializedProperty element)
+        private static int GetRuleLineCount(SerializedProperty element)
         {
-            return HoPostAovMaskEditorUtility.GetLineCount(element);
+            return ScreenProcessRuleMaskEditorUtility.GetLineCount(element);
         }
 
         private float DrawFoldoutLine(Rect rect, float y, SerializedProperty element, SerializedProperty enabled)
@@ -273,9 +273,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
         }
 
-        private static void DrawAovMaskProperties(Rect rect, ref float y, SerializedProperty element)
+        private static void DrawRuleMaskProperties(Rect rect, ref float y, SerializedProperty element)
         {
-            HoPostAovMaskEditorUtility.Draw(rect, ref y, element, LineHeight, LineSpacing);
+            ScreenProcessRuleMaskEditorUtility.Draw(rect, ref y, element, LineHeight, LineSpacing);
         }
 
         private static void DrawPropertyLine(Rect rect, ref float y, SerializedProperty element, string propertyName, string label)
@@ -397,7 +397,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return null;
         }
 
-        private void ToggleEffect(HoPostProcessEffect effect)
+        private void ToggleEffect(ScreenProcessEffect effect)
         {
             if (HasLayer(effect))
             {
@@ -411,7 +411,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ApplyLayerListChanges();
         }
 
-        private bool HasLayer(HoPostProcessEffect effect)
+        private bool HasLayer(ScreenProcessEffect effect)
         {
             if (layerValues == null || !layerValues.isArray)
             {
@@ -430,7 +430,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return false;
         }
 
-        private void AddLayer(HoPostProcessEffect effect)
+        private void AddLayer(ScreenProcessEffect effect)
         {
             if (layerValues == null || !layerValues.isArray || HasLayer(effect))
             {
@@ -445,7 +445,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             element.isExpanded = true;
         }
 
-        private int GetLayerInsertIndex(HoPostProcessEffect effect)
+        private int GetLayerInsertIndex(ScreenProcessEffect effect)
         {
             if (layerValues == null || !layerValues.isArray)
             {
@@ -464,27 +464,27 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return layerValues.arraySize;
         }
 
-        private static int GetPreferredLayerOrder(HoPostProcessEffect effect)
+        private static int GetPreferredLayerOrder(ScreenProcessEffect effect)
         {
             switch (effect)
             {
-                case HoPostProcessEffect.EdgeLight:
+                case ScreenProcessEffect.EdgeLight:
                     return 10;
-                case HoPostProcessEffect.Outline:
+                case ScreenProcessEffect.Outline:
                     return 20;
-                case HoPostProcessEffect.PostLighting:
+                case ScreenProcessEffect.PostLighting:
                     return 30;
-                case HoPostProcessEffect.DropShadow:
+                case ScreenProcessEffect.DropShadow:
                     return 40;
-                case HoPostProcessEffect.DepthOfField:
+                case ScreenProcessEffect.DepthOfField:
                     return 50;
-                case HoPostProcessEffect.CustomMaterial:
+                case ScreenProcessEffect.CustomMaterial:
                 default:
                     return 100;
             }
         }
 
-        private void RemoveLayer(HoPostProcessEffect effect)
+        private void RemoveLayer(ScreenProcessEffect effect)
         {
             if (layerValues == null || !layerValues.isArray)
             {
@@ -535,34 +535,34 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return new GUIContent(effectName, $"效果类型: {effectName}");
         }
 
-        private static HoPostProcessEffect GetEffect(SerializedProperty element)
+        private static ScreenProcessEffect GetEffect(SerializedProperty element)
         {
             SerializedProperty effect = element.FindPropertyRelative("effect");
             int value = effect != null ? effect.enumValueIndex : 0;
-            return (HoPostProcessEffect)Mathf.Clamp(value, 0, 5);
+            return (ScreenProcessEffect)Mathf.Clamp(value, 0, 5);
         }
 
-        private static string GetEffectDisplayName(HoPostProcessEffect effect)
+        private static string GetEffectDisplayName(ScreenProcessEffect effect)
         {
             switch (effect)
             {
-                case HoPostProcessEffect.PostLighting:
+                case ScreenProcessEffect.PostLighting:
                     return "后期打光";
-                case HoPostProcessEffect.EdgeLight:
+                case ScreenProcessEffect.EdgeLight:
                     return "边缘光";
-                case HoPostProcessEffect.Outline:
+                case ScreenProcessEffect.Outline:
                     return "轮廓";
-                case HoPostProcessEffect.DropShadow:
+                case ScreenProcessEffect.DropShadow:
                     return "投影";
-                case HoPostProcessEffect.DepthOfField:
+                case ScreenProcessEffect.DepthOfField:
                     return "景深";
-                case HoPostProcessEffect.CustomMaterial:
+                case ScreenProcessEffect.CustomMaterial:
                 default:
                     return "自定义";
             }
         }
 
-        private static void ResetLayerDefaults(SerializedProperty element, HoPostProcessEffect effect)
+        private static void ResetLayerDefaults(SerializedProperty element, ScreenProcessEffect effect)
         {
             SetBool(element, "enabled", true);
             SetEnum(element, "effect", (int)effect);
@@ -573,7 +573,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetInt(element, "passIndex", 0);
             SetFloat(element, "intensity", 1.0f);
             SetColor(element, "color", Color.white);
-            SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Add);
+            SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Add);
             SetVector4(element, "parameters0", Vector4.zero);
             SetVector4(element, "parameters1", Vector4.zero);
             SetVector4(element, "parameters2", Vector4.zero);
@@ -583,48 +583,48 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetObjectReference(element, "depthOfFieldFocusTarget", null);
             SetString(element, "depthOfFieldFocusTargetPath", string.Empty);
             SetFloat(element, "depthOfFieldFocusOffset", 0.0f);
-            SetBool(element, "useAovMask", false);
-            SetEnum(element, "aovSource", (int)HoPostAovSource.Mask);
-            SetEnum(element, "aovMaskMode", (int)HoPostAovMaskMode.Direct);
-            SetFloat(element, "aovThreshold", 0.5f);
-            SetFloat(element, "aovMatchValue", 0.0f);
-            SetColor(element, "aovMatchColor", Color.white);
-            SetBool(element, "invertAovMask", false);
-            SetBool(element, "debugAovMask", false);
-            HoPostAovMaskEditorUtility.ResetRules(element);
+            SetBool(element, "useRuleMask", false);
+            SetEnum(element, "ruleSource", (int)ScreenProcessRuleSource.Mask);
+            SetEnum(element, "ruleMaskMode", (int)ScreenProcessRuleMaskMode.Direct);
+            SetFloat(element, "ruleThreshold", 0.5f);
+            SetFloat(element, "ruleMatchValue", 0.0f);
+            SetColor(element, "ruleMatchColor", Color.white);
+            SetBool(element, "invertRuleMask", false);
+            SetBool(element, "debugRuleMask", false);
+            ScreenProcessRuleMaskEditorUtility.ResetRules(element);
 
             switch (effect)
             {
-                case HoPostProcessEffect.EdgeLight:
+                case ScreenProcessEffect.EdgeLight:
                     SetColor(element, "color", new Color(1.0f, 0.82f, 0.55f, 1.0f));
-                    SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Add);
+                    SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Add);
                     SetVector4(element, "parameters0", new Vector4(0.45f, 2.0f, 0.35f, 1.0f));
                     SetVector4(element, "parameters1", new Vector4(0.0f, 1.0f, 0.0f, 0.0f));
                     SetVector4(element, "parameters2", new Vector4(1.0f, 0.65f, 0.45f, 1.0f));
                     break;
-                case HoPostProcessEffect.Outline:
+                case ScreenProcessEffect.Outline:
                     SetColor(element, "color", Color.black);
-                    SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
+                    SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Normal);
                     SetVector4(element, "parameters0", new Vector4(0.85f, 0.85f, 0.45f, 0.11f));
                     SetVector4(element, "parameters1", new Vector4(0.08f, 0.85f, 0.32f, 0.9f));
                     break;
-                case HoPostProcessEffect.DropShadow:
+                case ScreenProcessEffect.DropShadow:
                     SetColor(element, "color", new Color(0.0f, 0.0f, 0.0f, 0.65f));
-                    SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Multiply);
+                    SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Multiply);
                     SetVector4(element, "parameters0", new Vector4(0.35f, -45.0f, 0.85f, 6.0f));
                     SetVector4(element, "parameters1", new Vector4(1.0f, 0.0f, 0.0f, 1.0f));
-                    SetBool(element, "useAovMask", true);
+                    SetBool(element, "useRuleMask", true);
                     break;
-                case HoPostProcessEffect.DepthOfField:
-                    SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
+                case ScreenProcessEffect.DepthOfField:
+                    SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Normal);
                     SetVector4(element, "parameters0", new Vector4(1.0f, 10.0f, 50.0f, 5.6f));
                     SetVector4(element, "parameters1", new Vector4(10.0f, 30.0f, 18.0f, 1.0f));
                     SetVector4(element, "parameters2", new Vector4(5.0f, 1.0f, 0.0f, 0.0f));
                     SetVector4(element, "parameters3", new Vector4(3.0f, 1.35f, 1.0f, 1.0f));
                     break;
-                case HoPostProcessEffect.PostLighting:
+                case ScreenProcessEffect.PostLighting:
                     SetColor(element, "color", new Color(1.0f, 0.82f, 0.55f, 1.0f));
-                    SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Screen);
+                    SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Screen);
                     SetVector4(element, "parameters0", new Vector4(0.0f, 0.55f, 0.18f, 0.38f));
                     SetVector4(element, "parameters1", new Vector4(90.0f, 1.15f, 0.06f, 0.55f));
                     SetVector4(element, "parameters2", new Vector4(0.5f, 0.58f, 0.62f, 0.28f));
@@ -632,8 +632,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters4", new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
                     SetVector4(element, "parameters5", new Vector4(0.35f, 0.28f, 0.0f, 0.45f));
                     break;
-                case HoPostProcessEffect.CustomMaterial:
-                    SetEnum(element, "blendMode", (int)HoPostProcessBlendMode.Normal);
+                case ScreenProcessEffect.CustomMaterial:
+                    SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Normal);
                     break;
             }
         }

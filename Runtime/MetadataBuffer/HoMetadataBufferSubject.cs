@@ -29,7 +29,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         public float maskWeight = 1.0f;
 
         [InspectorName("分组 ID")]
-        [Tooltip("给 HoPost/Shoost/HTrace 等消费者使用的分组 ID。")]
+        [Tooltip("给 ScreenProcess、ImageProcess 或 HTrace 等消费者使用的分组 ID。")]
         public int groupId;
 
         [InspectorName("对象 ID")]

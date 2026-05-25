@@ -1,4 +1,4 @@
-Shader "Hidden/lilToon-HoPost/URP/HoPost/PostLighting"
+Shader "Hidden/lilToon/URP/ScreenProcess/PostLighting"
 {
     SubShader
     {
@@ -14,7 +14,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/PostLighting"
 
         Pass
         {
-            Name "HoPost Post Lighting"
+            Name "ScreenProcess Post Lighting"
 
             HLSLPROGRAM
             #pragma target 4.5
@@ -24,7 +24,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/PostLighting"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
 
             float _Intensity;
             float _LayerBlendMode;
@@ -38,7 +38,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/PostLighting"
 
             TEXTURE2D_X(_lilHoAovNormalDepthTexture);
 
-            half4 SampleAovNormalDepth(float2 uv)
+            half4 SampleRuleNormalDepth(float2 uv)
             {
                 return SAMPLE_TEXTURE2D_X(_lilHoAovNormalDepthTexture, sampler_PointClamp, uv);
             }
@@ -73,12 +73,12 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/PostLighting"
             float ResolveCoverage(float2 uv, half4 normalDepth)
             {
                 float coverage = LilHoGeometryBufferCoverage(normalDepth);
-                if (_LayerAovMaskEnabled > 0.5)
+                if (_LayerRuleMaskEnabled > 0.5)
                 {
-                    return coverage * LilHoPostResolveRequiredAovMask(uv);
+                    return coverage * LilScreenProcessResolveRequiredRuleMask(uv);
                 }
 
-                return coverage * LilHoPostAovCoverage(uv);
+                return coverage * LilScreenProcessRuleCoverage(uv);
             }
 
             half3 ResolveLineGradient(float2 uv, float2 direction, float width, float offset, half3 colorA, half3 colorB, out float gradientMask)
@@ -121,7 +121,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/PostLighting"
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
                 if (_lilHoAovActive <= 0.5)
                 {
-                    if (LilHoPostShouldOutputAovDebug())
+                    if (LilScreenProcessShouldOutputRuleDebug())
                     {
                         return half4(0.0, 0.0, 0.0, source.a);
                     }
@@ -129,9 +129,9 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/PostLighting"
                     return source;
                 }
 
-                half4 normalDepth = SampleAovNormalDepth(uv);
+                half4 normalDepth = SampleRuleNormalDepth(uv);
                 float subjectMask = ResolveCoverage(uv, normalDepth);
-                if (LilHoPostShouldOutputAovDebug())
+                if (LilScreenProcessShouldOutputRuleDebug())
                 {
                     return half4(subjectMask, subjectMask, subjectMask, source.a);
                 }
