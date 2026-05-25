@@ -397,7 +397,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 passData.maskIdTexture = metadataResources.maskIdTexture;
                 passData.normalDepthTexture = geometryResources.normalDepthTexture;
                 passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
-                passData.sssTexture = metadataResources.sssTexture;
+                passData.sssTexture = metadataResources.surfaceColorTexture;
                 passData.material = material;
                 passData.sssParams = CreateSssParams(settings, cameraData.cameraTargetDescriptor, source.GetDescriptor(renderGraph));
                 passData.gateParams = CreateGateParams(settings);
@@ -417,7 +417,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SssTextureId, data.sssTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, data.sssTexture);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                 });
             }

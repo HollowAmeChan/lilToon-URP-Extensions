@@ -159,7 +159,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("投影距离像素"), Tooltip("投影沿角度方向偏移的屏幕像素距离。")]
         public FloatParameter HairShadowDistancePixels = new FloatParameter(15.0f);
 
-        [InspectorName("投影距离透视衰减"), Tooltip("按 AOV 线性深度压缩远处的投影偏移。0 为关闭，1 为完全按深度衰减。")]
+        [InspectorName("投影距离透视衰减"), Tooltip("按 GeometryBuffer 线性深度压缩远处的投影偏移。0 为关闭，1 为完全按深度衰减。")]
         public ClampedFloatParameter HairShadowDistancePerspectiveStrength = new ClampedFloatParameter(1.0f, 0.0f, 1.0f);
 
         [InspectorName("投影距离参考深度"), Tooltip("线性深度小于或等于此值时保持原始像素距离；更远处会按参考深度 / 当前深度缩短。")]

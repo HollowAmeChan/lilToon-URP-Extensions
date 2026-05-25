@@ -7,7 +7,7 @@
 
 #define LIL_SCREEN_PROCESS_RULE_MASK_MAX 4
 
-float _lilHoAovActive;
+float _HoMetadataBufferActive;
 float _LayerRuleMaskEnabled;
 float _LayerRuleSource;
 float _LayerRuleMode;
@@ -22,12 +22,12 @@ float4 _LayerRuleMaskData2[LIL_SCREEN_PROCESS_RULE_MASK_MAX]; // x reserved, y i
 float4 _LayerRuleMaskColor[LIL_SCREEN_PROCESS_RULE_MASK_MAX];
 #endif
 
-TEXTURE2D_X(_lilHoAovMaskIdTexture);
-float4 _lilHoAovMaskIdTexture_TexelSize;
-TEXTURE2D_X(_lilHoAovSurfaceDataTexture);
-TEXTURE2D_X(_lilHoAovCustom0_3Texture);
-TEXTURE2D_X(_lilHoAovObjectCustom0_3Texture);
-TEXTURE2D_X(_lilHoAovObjectCustom4_7Texture);
+TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
+float4 _HoMetadataBufferMaskIdTexture_TexelSize;
+TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture);
+TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture);
+TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
+TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture);
 
 float LilScreenProcessEncodeRuleScalar(float value)
 {
@@ -502,22 +502,22 @@ float LilScreenProcessResolveRuleMaskInternal(float2 uv, bool forceEnabled)
         return 1.0;
     }
 
-    if (_lilHoAovActive <= 0.5)
+    if (_HoMetadataBufferActive <= 0.5)
     {
         return 0.0;
     }
 
-    float4 maskId = SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_PointClamp, uv);
+    float4 maskId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv);
     float coverage = saturate(maskId.r);
     if (forceEnabled && _LayerRuleMaskEnabled <= 0.5)
     {
         return coverage;
     }
 
-    float4 surfaceData = SAMPLE_TEXTURE2D_X(_lilHoAovSurfaceDataTexture, sampler_PointClamp, uv);
-    float4 custom0 = SAMPLE_TEXTURE2D_X(_lilHoAovCustom0_3Texture, sampler_PointClamp, uv);
-    float4 objectCustom0 = SAMPLE_TEXTURE2D_X(_lilHoAovObjectCustom0_3Texture, sampler_PointClamp, uv);
-    float4 objectCustom1 = SAMPLE_TEXTURE2D_X(_lilHoAovObjectCustom4_7Texture, sampler_PointClamp, uv);
+    float4 surfaceData = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture, sampler_PointClamp, uv);
+    float4 custom0 = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture, sampler_PointClamp, uv);
+    float4 objectCustom0 = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv);
+    float4 objectCustom1 = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture, sampler_PointClamp, uv);
     float selected = LilScreenProcessResolveRuleMaskGroup(maskId, surfaceData, custom0, objectCustom0, objectCustom1);
     float invert = saturate(_LayerRuleParams.w);
     return lerp(selected, saturate(coverage - selected), invert);
@@ -546,22 +546,22 @@ half4 LilScreenProcessRuleDebugColor(float2 uv, bool forceEnabled, half alpha)
 
 float LilScreenProcessRuleCoverage(float2 uv)
 {
-    if (_lilHoAovActive <= 0.5)
+    if (_HoMetadataBufferActive <= 0.5)
     {
         return 0.0;
     }
 
-    return saturate(SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_PointClamp, uv).r);
+    return saturate(SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv).r);
 }
 
 float2 LilScreenProcessRuleTexelSize()
 {
-    return _lilHoAovMaskIdTexture_TexelSize.xy;
+    return _HoMetadataBufferMaskIdTexture_TexelSize.xy;
 }
 
 float2 LilScreenProcessRuleTextureSize()
 {
-    return _lilHoAovMaskIdTexture_TexelSize.zw;
+    return _HoMetadataBufferMaskIdTexture_TexelSize.zw;
 }
 
 #endif

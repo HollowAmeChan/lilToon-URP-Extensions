@@ -458,11 +458,24 @@ GeometryBuffer.TangentNormal
 
 ## 24. 2026-05-25 执行记录：GeometryBuffer normal/depth 公开 ABI 改名
 
-已开始把 GeometryBuffer 的公开采样 ABI 从旧 AOV 纹理名中拆出：
+上一轮先把 GeometryBuffer 的公开采样 ABI 从旧 AOV 纹理名中拆出：
 
 - 新增 `_HoGeometryBufferNormalDepthTexture` / `_HoGeometryBufferDepthTexture` 作为 GeometryBuffer 公开 normal/depth 纹理名。
-- `HoGeometryBufferPass` 的 RenderGraph 与兼容路径都改用新纹理名创建资源，并在输出后同时绑定旧 `_lilHoAovNormalDepthTexture` / `_lilHoAovDepthTexture` alias，避免尚未迁移的旧 shader 立即断裂。
+- `HoGeometryBufferPass` 的 RenderGraph 与兼容路径都改用新纹理名创建资源；当时仍短暂绑定旧 `_lilHoAovNormalDepthTexture` / `_lilHoAovDepthTexture` alias，避免尚未迁移的旧 shader 立即断裂。
 - GeometryBuffer debug、MetadataBuffer debug、SSS、CharacterSpecialization、ScreenProcess 的 normal/depth shader 采样已改读 `_HoGeometryBufferNormalDepthTexture`。
 - RenderGraph 消费点已改用 `HoGeometryBufferShaderConstants.NormalDepthTextureId`，不再通过 MetadataBuffer 常量表达 normal/depth 依赖。
 
-本步没有改动 MetadataBuffer 的对象/材质语义纹理名，也没有移除 `HoAOV` / `HoAOVSSS` LightMode。下一步继续收口 MetadataBuffer 自身的 `_lilHoAovMaskIdTexture`、`_lilHoAovSurfaceDataTexture`、custom/object custom 与 SurfaceColor 纹理命名。
+本步没有改动 MetadataBuffer 的对象/材质语义纹理名，也没有移除 `HoAOV` / `HoAOVSSS` LightMode；这些遗留已在下一节删除。
+
+## 25. 2026-05-25 执行记录：删除旧 Buffer ABI 与旧材质 LightMode
+
+用户已明确后续会统一重新对接材质，Buffer 阶段不再为旧材质绑定保留兼容层。本步直接删除旧 AOV 命名 ABI：
+
+- `MetadataBuffer` 公开纹理名改为 `_HoMetadataBufferMaskIdTexture`、`_HoMetadataBufferSurfaceDataTexture`、`_HoMetadataBufferMaterialCustom0_3Texture`、`_HoMetadataBufferObjectCustom0_3Texture`、`_HoMetadataBufferObjectCustom4_7Texture`、`_HoMetadataBufferSurfaceColorTexture`。
+- `MetadataBuffer` 激活标记与写入参数改为 `_HoMetadataBuffer*` 命名，不再保留 `_lilHoAovActive`、`_lilHoAovSystemChannelMask` 或 `_HoAov*` property。
+- `MetadataBuffer` 材质 pass LightMode 改为 `HoMetadataBuffer`，SurfaceColor pass 改为 `HoMetadataBufferSurfaceColor`；旧 `HoAOV` / `HoAOVSSS` LightMode 不再被 RendererFeature 搜索。
+- `MetadataBuffer` 主输出拆成 metadata-only MRT：`MaskId`、`SurfaceData`、`MaterialCustom0_3`、`ObjectCustom0_3`、`ObjectCustom4_7`。旧私有 `NormalDepth` color attachment 删除，normal/depth 只由 `GeometryBuffer` 输出。
+- `GeometryBuffer` 删除上一轮保留的旧 `_lilHoAovNormalDepthTexture` / `_lilHoAovDepthTexture` alias，只发布 `_HoGeometryBufferNormalDepthTexture` / `_HoGeometryBufferDepthTexture`。
+- `SSS`、`ScreenProcess`、`CharacterSpecialization` 和 MetadataBuffer debug shader 已改读新的 MetadataBuffer / GeometryBuffer 纹理名。
+
+后续重新对接材质时，材质生成器应直接生成 `HoMetadataBuffer`、`HoMetadataBufferSurfaceColor` 与 `HoGeometryBuffer` pass，不再生成或依赖旧 AOV pass。

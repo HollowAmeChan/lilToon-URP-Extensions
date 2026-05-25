@@ -2,20 +2,20 @@
 {
     Properties
     {
-        [HideInInspector] _HoAovMaskWeight ("HoAOV Mask Weight", Float) = 1
-        [HideInInspector] _lilHoAovSystemChannelMask ("HoAOV Feature System Channel Mask", Float) = 4031
-        [HideInInspector] _HoAovSystemWriteMask ("HoAOV System Write Mask", Float) = 1055
-        [HideInInspector] _HoAovCustomWriteMask ("HoAOV Custom Write Mask", Float) = 0
-        [HideInInspector] _HoMetadataBufferGroupId ("HoAOV Group Id", Float) = 0
-        [HideInInspector] _HoAovObjectId ("HoAOV Object Id", Float) = 0
-        [HideInInspector] _HoAovMaterialClass ("HoAOV Material Class", Float) = 0
-        [HideInInspector] _HoAovFlags ("HoAOV Flags", Float) = 0
-        [HideInInspector] _HoAovThickness ("HoAOV Thickness", Float) = 0
-        [HideInInspector] _HoAovCurvature ("HoAOV Curvature", Float) = 0
-        [HideInInspector] _HoAovTransmittanceHint ("HoAOV Transmittance Hint", Float) = 0
-        [HideInInspector] _HoAovDebugColor ("HoAOV Debug Color", Color) = (1, 1, 1, 1)
-        [HideInInspector] _HoAovCustomValues0 ("HoAOV Custom 0-3", Vector) = (0, 0, 0, 0)
-        [HideInInspector] _HoAovObjectCustomMask ("HoAOV Object Custom Mask", Float) = 0
+        [HideInInspector] _HoMetadataBufferMaskWeight ("MetadataBuffer Mask Weight", Float) = 1
+        [HideInInspector] _HoMetadataBufferSystemChannelMask ("MetadataBuffer Feature System Channel Mask", Float) = 4031
+        [HideInInspector] _HoMetadataBufferSystemWriteMask ("MetadataBuffer System Write Mask", Float) = 1055
+        [HideInInspector] _HoMetadataBufferCustomWriteMask ("MetadataBuffer Custom Write Mask", Float) = 0
+        [HideInInspector] _HoMetadataBufferGroupId ("MetadataBuffer Group Id", Float) = 0
+        [HideInInspector] _HoMetadataBufferObjectId ("MetadataBuffer Object Id", Float) = 0
+        [HideInInspector] _HoMetadataBufferMaterialClass ("MetadataBuffer Material Class", Float) = 0
+        [HideInInspector] _HoMetadataBufferFlags ("MetadataBuffer Flags", Float) = 0
+        [HideInInspector] _HoMetadataBufferThickness ("MetadataBuffer Thickness", Float) = 0
+        [HideInInspector] _HoMetadataBufferCurvature ("MetadataBuffer Curvature", Float) = 0
+        [HideInInspector] _HoMetadataBufferTransmittanceHint ("MetadataBuffer Transmittance Hint", Float) = 0
+        [HideInInspector] _HoMetadataBufferDebugColor ("MetadataBuffer Debug Color", Color) = (1, 1, 1, 1)
+        [HideInInspector] _HoMetadataBufferCustomValues0 ("MetadataBuffer Custom 0-3", Vector) = (0, 0, 0, 0)
+        [HideInInspector] _HoMetadataBufferObjectCustomMask ("MetadataBuffer Object Custom Mask", Float) = 0
     }
 
     SubShader
@@ -33,7 +33,7 @@
         Pass
         {
             Name "MetadataBuffer Fallback"
-            Tags { "LightMode" = "HoAOV" }
+            Tags { "LightMode" = "HoMetadataBuffer" }
 
             HLSLPROGRAM
             #pragma target 4.5
@@ -42,43 +42,40 @@
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
-            float _HoAovMaskWeight;
-            float _lilHoAovSystemChannelMask;
-            float _HoAovSystemWriteMask;
-            float _HoAovCustomWriteMask;
+            float _HoMetadataBufferMaskWeight;
+            float _HoMetadataBufferSystemChannelMask;
+            float _HoMetadataBufferSystemWriteMask;
+            float _HoMetadataBufferCustomWriteMask;
             float _HoMetadataBufferGroupId;
-            float _HoAovObjectId;
-            float _HoAovMaterialClass;
-            float _HoAovFlags;
-            float _HoAovThickness;
-            float _HoAovCurvature;
-            float _HoAovTransmittanceHint;
-            float4 _HoAovDebugColor;
-            float4 _HoAovCustomValues0;
-            float _HoAovObjectCustomMask;
+            float _HoMetadataBufferObjectId;
+            float _HoMetadataBufferMaterialClass;
+            float _HoMetadataBufferFlags;
+            float _HoMetadataBufferThickness;
+            float _HoMetadataBufferCurvature;
+            float _HoMetadataBufferTransmittanceHint;
+            float4 _HoMetadataBufferDebugColor;
+            float4 _HoMetadataBufferCustomValues0;
+            float _HoMetadataBufferObjectCustomMask;
 
             struct Attributes
             {
                 float4 positionOS : POSITION;
-                float3 normalOS : NORMAL;
                 UNITY_VERTEX_INPUT_INSTANCE_ID
             };
 
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
-                float3 normalWS : TEXCOORD0;
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
             struct FragmentOutput
             {
                 half4 maskId : SV_Target0;
-                half4 normalDepth : SV_Target1;
-                half4 surfaceData : SV_Target2;
-                half4 custom0 : SV_Target3;
-                half4 objectCustom0 : SV_Target4;
-                half4 objectCustom1 : SV_Target5;
+                half4 surfaceData : SV_Target1;
+                half4 custom0 : SV_Target2;
+                half4 objectCustom0 : SV_Target3;
+                half4 objectCustom1 : SV_Target4;
             };
 
             float HasBit(float value, float bitValue)
@@ -88,7 +85,7 @@
 
             float HasSystemChannel(float bitValue)
             {
-                return HasBit(_HoAovSystemWriteMask, bitValue);
+                return HasBit(_HoMetadataBufferSystemWriteMask, bitValue);
             }
 
             float EncodeScalar(float value)
@@ -104,10 +101,10 @@
             float4 ApplyCustomWriteMask(float4 values, float startBit)
             {
                 return float4(
-                    values.x * HasBit(_HoAovCustomWriteMask, exp2(startBit)),
-                    values.y * HasBit(_HoAovCustomWriteMask, exp2(startBit + 1.0)),
-                    values.z * HasBit(_HoAovCustomWriteMask, exp2(startBit + 2.0)),
-                    values.w * HasBit(_HoAovCustomWriteMask, exp2(startBit + 3.0)));
+                    values.x * HasBit(_HoMetadataBufferCustomWriteMask, exp2(startBit)),
+                    values.y * HasBit(_HoMetadataBufferCustomWriteMask, exp2(startBit + 1.0)),
+                    values.z * HasBit(_HoMetadataBufferCustomWriteMask, exp2(startBit + 2.0)),
+                    values.w * HasBit(_HoMetadataBufferCustomWriteMask, exp2(startBit + 3.0)));
             }
 
             float ByteToFloat(uint value, uint shift)
@@ -144,7 +141,6 @@
                 UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
                 output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
-                output.normalWS = TransformObjectToWorldNormal(input.normalOS);
                 return output;
             }
 
@@ -155,23 +151,19 @@
                 float maskEnabled = HasSystemChannel(1.0);
                 float idEnabled = HasSystemChannel(2.0);
                 float flagsEnabled = HasSystemChannel(4.0);
-                float linearDepthEnabled = HasSystemChannel(8.0);
-                float worldNormalEnabled = HasSystemChannel(16.0);
                 float thicknessEnabled = HasSystemChannel(256.0);
                 float curvatureEnabled = HasSystemChannel(512.0);
                 float materialEnabled = HasSystemChannel(1024.0);
                 float transmittanceHintEnabled = HasSystemChannel(2048.0);
-                float subjectCoverage = saturate(_HoAovMaskWeight);
+                float subjectCoverage = saturate(_HoMetadataBufferMaskWeight);
                 float subjectValid = step(0.0001, subjectCoverage);
 
-                float3 normalWS = normalize(input.normalWS);
-                float linearDepth = LinearEyeDepth(input.positionCS.z, _ZBufferParams);
                 uint rendererUserValue = unity_RendererUserValue;
                 bool hasRendererUserValue = rendererUserValue != 0u;
-                uint objectCustomMask = hasRendererUserValue ? (rendererUserValue & 255u) : (uint)round(saturate(_HoAovObjectCustomMask / 255.0) * 255.0);
+                uint objectCustomMask = hasRendererUserValue ? (rendererUserValue & 255u) : (uint)round(saturate(_HoMetadataBufferObjectCustomMask / 255.0) * 255.0);
                 float effectiveGroupId = hasRendererUserValue ? ByteToFloat(rendererUserValue, 8u) : _HoMetadataBufferGroupId;
-                float effectiveObjectId = hasRendererUserValue ? ByteToFloat(rendererUserValue, 16u) : _HoAovObjectId;
-                float effectiveFlags = hasRendererUserValue ? ByteToFloat(rendererUserValue, 24u) : _HoAovFlags;
+                float effectiveObjectId = hasRendererUserValue ? ByteToFloat(rendererUserValue, 16u) : _HoMetadataBufferObjectId;
+                float effectiveFlags = hasRendererUserValue ? ByteToFloat(rendererUserValue, 24u) : _HoMetadataBufferFlags;
 
                 FragmentOutput output;
                 output.maskId = half4(
@@ -179,13 +171,12 @@
                     EncodeByte(effectiveGroupId) * idEnabled * subjectValid,
                     EncodeByte(effectiveObjectId) * idEnabled * subjectValid,
                     EncodeByte(effectiveFlags) * flagsEnabled * subjectValid);
-                output.normalDepth = half4((normalWS * 0.5 + 0.5) * worldNormalEnabled * subjectValid, linearDepth * linearDepthEnabled * subjectValid);
                 output.surfaceData = half4(
-                    saturate(_HoAovThickness) * thicknessEnabled * subjectValid,
-                    saturate(abs(_HoAovCurvature)) * curvatureEnabled * subjectValid,
-                    EncodeScalar(_HoAovMaterialClass) * materialEnabled * subjectValid,
-                    saturate(_HoAovTransmittanceHint) * transmittanceHintEnabled * subjectValid);
-                output.custom0 = half4(ApplyCustomWriteMask(_HoAovCustomValues0, 0.0) * subjectValid);
+                    saturate(_HoMetadataBufferThickness) * thicknessEnabled * subjectValid,
+                    saturate(abs(_HoMetadataBufferCurvature)) * curvatureEnabled * subjectValid,
+                    EncodeScalar(_HoMetadataBufferMaterialClass) * materialEnabled * subjectValid,
+                    saturate(_HoMetadataBufferTransmittanceHint) * transmittanceHintEnabled * subjectValid);
+                output.custom0 = half4(ApplyCustomWriteMask(_HoMetadataBufferCustomValues0, 0.0) * subjectValid);
                 output.objectCustom0 = half4(DecodeObjectCustom0(objectCustomMask) * subjectValid);
                 output.objectCustom1 = half4(DecodeObjectCustom1(objectCustomMask) * subjectValid);
                 return output;

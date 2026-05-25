@@ -11,21 +11,19 @@ namespace lilToon.URP.Extensions.MetadataBuffer
     internal sealed class HoMetadataBufferRenderTargets
     {
         private RTHandle maskIdTexture;
-        private RTHandle normalDepthTexture;
         private RTHandle surfaceDataTexture;
         private RTHandle custom0Texture;
         private RTHandle objectCustom0Texture;
         private RTHandle objectCustom1Texture;
-        private RTHandle sssTexture;
+        private RTHandle surfaceColorTexture;
         private RTHandle depthTexture;
 
         public RTHandle MaskIdTexture => maskIdTexture;
-        public RTHandle NormalDepthTexture => normalDepthTexture;
         public RTHandle SurfaceDataTexture => surfaceDataTexture;
         public RTHandle Custom0Texture => custom0Texture;
         public RTHandle ObjectCustom0Texture => objectCustom0Texture;
         public RTHandle ObjectCustom1Texture => objectCustom1Texture;
-        public RTHandle SssTexture => sssTexture;
+        public RTHandle SurfaceColorTexture => surfaceColorTexture;
         public RTHandle DepthTexture => depthTexture;
 
         public void ReAllocateIfNeeded(RenderTextureDescriptor cameraTextureDescriptor, HoMetadataBufferSettings settings)
@@ -55,32 +53,29 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             RenderTextureDescriptor depthDescriptor = CreateDepthDescriptor(cameraTextureDescriptor, settings);
 
             RenderingUtils.ReAllocateIfNeeded(ref maskIdTexture, maskDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.MaskIdTextureName);
-            RenderingUtils.ReAllocateIfNeeded(ref normalDepthTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.NormalDepthTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref surfaceDataTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.SurfaceDataTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref custom0Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.Custom0TextureName);
             RenderingUtils.ReAllocateIfNeeded(ref objectCustom0Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.ObjectCustom0TextureName);
             RenderingUtils.ReAllocateIfNeeded(ref objectCustom1Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.ObjectCustom1TextureName);
-            RenderingUtils.ReAllocateIfNeeded(ref sssTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.SssTextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref surfaceColorTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.SurfaceColorTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref depthTexture, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.DepthTextureName);
         }
 
         public void Release()
         {
             maskIdTexture?.Release();
-            normalDepthTexture?.Release();
             surfaceDataTexture?.Release();
             custom0Texture?.Release();
             objectCustom0Texture?.Release();
             objectCustom1Texture?.Release();
-            sssTexture?.Release();
+            surfaceColorTexture?.Release();
             depthTexture?.Release();
             maskIdTexture = null;
-            normalDepthTexture = null;
             surfaceDataTexture = null;
             custom0Texture = null;
             objectCustom0Texture = null;
             objectCustom1Texture = null;
-            sssTexture = null;
+            surfaceColorTexture = null;
             depthTexture = null;
         }
 

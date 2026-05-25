@@ -5,50 +5,48 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 {
     internal static class HoMetadataBufferShaderConstants
     {
-        public const string ShaderPassName = "HoAOV";
-        public const string SssShaderPassName = "HoAOVSSS";
+        public const string ShaderPassName = "HoMetadataBuffer";
+        public const string SurfaceColorShaderPassName = "HoMetadataBufferSurfaceColor";
 
-        public const string ActiveName = "_lilHoAovActive";
-        public const string SystemChannelMaskName = "_lilHoAovSystemChannelMask";
-        public const string MaskIdTextureName = "_lilHoAovMaskIdTexture";
-        public const string NormalDepthTextureName = "_lilHoAovNormalDepthTexture";
-        public const string SurfaceDataTextureName = "_lilHoAovSurfaceDataTexture";
-        public const string Custom0TextureName = "_lilHoAovCustom0_3Texture";
-        public const string ObjectCustom0TextureName = "_lilHoAovObjectCustom0_3Texture";
-        public const string ObjectCustom1TextureName = "_lilHoAovObjectCustom4_7Texture";
-        public const string SssTextureName = "_lilHoAovSssTexture";
-        public const string DepthTextureName = "_lilHoAovDepthTexture";
+        public const string ActiveName = "_HoMetadataBufferActive";
+        public const string SystemChannelMaskName = "_HoMetadataBufferSystemChannelMask";
+        public const string MaskIdTextureName = "_HoMetadataBufferMaskIdTexture";
+        public const string SurfaceDataTextureName = "_HoMetadataBufferSurfaceDataTexture";
+        public const string Custom0TextureName = "_HoMetadataBufferMaterialCustom0_3Texture";
+        public const string ObjectCustom0TextureName = "_HoMetadataBufferObjectCustom0_3Texture";
+        public const string ObjectCustom1TextureName = "_HoMetadataBufferObjectCustom4_7Texture";
+        public const string SurfaceColorTextureName = "_HoMetadataBufferSurfaceColorTexture";
+        public const string DepthTextureName = "_HoMetadataBufferDepthTexture";
 
-        public const string MaskWeightName = "_HoAovMaskWeight";
-        public const string SystemWriteMaskName = "_HoAovSystemWriteMask";
-        public const string CustomWriteMaskName = "_HoAovCustomWriteMask";
+        public const string MaskWeightName = "_HoMetadataBufferMaskWeight";
+        public const string SystemWriteMaskName = "_HoMetadataBufferSystemWriteMask";
+        public const string CustomWriteMaskName = "_HoMetadataBufferCustomWriteMask";
         public const string GroupIdName = "_HoMetadataBufferGroupId";
-        public const string ObjectIdName = "_HoAovObjectId";
-        public const string MaterialClassName = "_HoAovMaterialClass";
-        public const string FlagsName = "_HoAovFlags";
-        public const string ThicknessName = "_HoAovThickness";
-        public const string CurvatureName = "_HoAovCurvature";
-        public const string TransmittanceHintName = "_HoAovTransmittanceHint";
-        public const string DebugColorName = "_HoAovDebugColor";
-        public const string CustomValues0Name = "_HoAovCustomValues0";
-        public const string ObjectCustomMaskName = "_HoAovObjectCustomMask";
+        public const string ObjectIdName = "_HoMetadataBufferObjectId";
+        public const string MaterialClassName = "_HoMetadataBufferMaterialClass";
+        public const string FlagsName = "_HoMetadataBufferFlags";
+        public const string ThicknessName = "_HoMetadataBufferThickness";
+        public const string CurvatureName = "_HoMetadataBufferCurvature";
+        public const string TransmittanceHintName = "_HoMetadataBufferTransmittanceHint";
+        public const string DebugColorName = "_HoMetadataBufferDebugColor";
+        public const string CustomValues0Name = "_HoMetadataBufferCustomValues0";
+        public const string ObjectCustomMaskName = "_HoMetadataBufferObjectCustomMask";
 
         public const string ClearShaderName = "Hidden/lilToon/URP/MetadataBuffer/Clear";
         public const string FallbackShaderName = "Hidden/lilToon/URP/MetadataBuffer/Fallback";
         public const string DebugShaderName = "Hidden/lilToon/URP/MetadataBuffer/DebugView";
 
         public static readonly ShaderTagId ShaderTagId = new ShaderTagId(ShaderPassName);
-        public static readonly ShaderTagId SssShaderTagId = new ShaderTagId(SssShaderPassName);
+        public static readonly ShaderTagId SurfaceColorShaderTagId = new ShaderTagId(SurfaceColorShaderPassName);
 
         public static readonly int ActiveId = Shader.PropertyToID(ActiveName);
         public static readonly int SystemChannelMaskId = Shader.PropertyToID(SystemChannelMaskName);
         public static readonly int MaskIdTextureId = Shader.PropertyToID(MaskIdTextureName);
-        public static readonly int NormalDepthTextureId = Shader.PropertyToID(NormalDepthTextureName);
         public static readonly int SurfaceDataTextureId = Shader.PropertyToID(SurfaceDataTextureName);
         public static readonly int Custom0TextureId = Shader.PropertyToID(Custom0TextureName);
         public static readonly int ObjectCustom0TextureId = Shader.PropertyToID(ObjectCustom0TextureName);
         public static readonly int ObjectCustom1TextureId = Shader.PropertyToID(ObjectCustom1TextureName);
-        public static readonly int SssTextureId = Shader.PropertyToID(SssTextureName);
+        public static readonly int SurfaceColorTextureId = Shader.PropertyToID(SurfaceColorTextureName);
         public static readonly int MaskWeightId = Shader.PropertyToID(MaskWeightName);
         public static readonly int SystemWriteMaskId = Shader.PropertyToID(SystemWriteMaskName);
         public static readonly int CustomWriteMaskId = Shader.PropertyToID(CustomWriteMaskName);

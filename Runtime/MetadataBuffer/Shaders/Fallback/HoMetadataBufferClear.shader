@@ -38,11 +38,10 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/Clear"
             struct FragmentOutput
             {
                 half4 maskId : SV_Target0;
-                half4 normalDepth : SV_Target1;
-                half4 surfaceData : SV_Target2;
-                half4 custom0 : SV_Target3;
-                half4 objectCustom0 : SV_Target4;
-                half4 objectCustom1 : SV_Target5;
+                half4 surfaceData : SV_Target1;
+                half4 custom0 : SV_Target2;
+                half4 objectCustom0 : SV_Target3;
+                half4 objectCustom1 : SV_Target4;
             };
 
             Varyings Vert(Attributes input)
@@ -58,7 +57,6 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/Clear"
             {
                 FragmentOutput output;
                 output.maskId = 0;
-                output.normalDepth = 0;
                 output.surfaceData = 0;
                 output.custom0 = 0;
                 output.objectCustom0 = 0;

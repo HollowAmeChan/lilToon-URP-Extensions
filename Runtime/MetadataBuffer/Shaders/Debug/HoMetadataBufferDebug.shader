@@ -24,17 +24,17 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
 
-            float _lilHoAovActive;
+            float _HoMetadataBufferActive;
             float _HoMetadataBufferDebugMode;
             float4 _HoMetadataBufferDebugDepthParams; // x near, y far, z inv range
 
-            TEXTURE2D_X(_lilHoAovMaskIdTexture);
+            TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
-            TEXTURE2D_X(_lilHoAovSurfaceDataTexture);
-            TEXTURE2D_X(_lilHoAovCustom0_3Texture);
-            TEXTURE2D_X(_lilHoAovObjectCustom0_3Texture);
-            TEXTURE2D_X(_lilHoAovObjectCustom4_7Texture);
-            TEXTURE2D_X(_lilHoAovSssTexture);
+            TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture);
+            TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture);
+            TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
+            TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture);
+            TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
 
             half3 HashColor(float3 value)
             {
@@ -54,7 +54,7 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
             {
                 if (customIndex < 4)
                 {
-                    half4 values = SAMPLE_TEXTURE2D_X(_lilHoAovCustom0_3Texture, sampler_PointClamp, uv);
+                    half4 values = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture, sampler_PointClamp, uv);
                     return values[customIndex];
                 }
 
@@ -65,13 +65,13 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
             {
                 if (customIndex < 4)
                 {
-                    half4 values = SAMPLE_TEXTURE2D_X(_lilHoAovObjectCustom0_3Texture, sampler_PointClamp, uv);
+                    half4 values = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv);
                     return values[customIndex];
                 }
 
                 if (customIndex < 8)
                 {
-                    half4 values = SAMPLE_TEXTURE2D_X(_lilHoAovObjectCustom4_7Texture, sampler_PointClamp, uv);
+                    half4 values = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture, sampler_PointClamp, uv);
                     return values[customIndex - 4];
                 }
 
@@ -80,8 +80,8 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
 
             half GetObjectCustomAny(float2 uv)
             {
-                half4 objectCustom0 = SAMPLE_TEXTURE2D_X(_lilHoAovObjectCustom0_3Texture, sampler_PointClamp, uv);
-                half4 objectCustom1 = SAMPLE_TEXTURE2D_X(_lilHoAovObjectCustom4_7Texture, sampler_PointClamp, uv);
+                half4 objectCustom0 = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv);
+                half4 objectCustom1 = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture, sampler_PointClamp, uv);
                 half sum = dot(step(0.0001, objectCustom0), half4(1.0, 1.0, 1.0, 1.0))
                     + dot(step(0.0001, objectCustom1), half4(1.0, 1.0, 1.0, 1.0));
                 return saturate(sum);
@@ -98,15 +98,15 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
 
                 float2 uv = input.texcoord;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
-                if (_lilHoAovActive < 0.5)
+                if (_HoMetadataBufferActive < 0.5)
                 {
                     return source;
                 }
 
                 int mode = (int)round(_HoMetadataBufferDebugMode);
-                half4 maskId = SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_PointClamp, uv);
+                half4 maskId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv);
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
-                half4 surfaceData = SAMPLE_TEXTURE2D_X(_lilHoAovSurfaceDataTexture, sampler_PointClamp, uv);
+                half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture, sampler_PointClamp, uv);
 
                 if (mode == 1)
                 {
@@ -214,9 +214,9 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
 
                 if (mode == 28)
                 {
-                    half4 sss = SAMPLE_TEXTURE2D_X(_lilHoAovSssTexture, sampler_PointClamp, uv);
-                    half valid = step(0.0001, maskId.r) * step(0.0001, sss.a);
-                    return lerp(source, half4(sss.rgb, 1.0), valid);
+                    half4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_PointClamp, uv);
+                    half valid = step(0.0001, maskId.r) * step(0.0001, surfaceColor.a);
+                    return lerp(source, half4(surfaceColor.rgb, 1.0), valid);
                 }
 
                 return source;

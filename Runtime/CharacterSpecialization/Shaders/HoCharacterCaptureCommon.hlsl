@@ -11,8 +11,8 @@
 float _HoCharacterCaptureMode;
 #endif
 
-#ifndef LIL_HO_CHARACTER_CAPTURE_HAS_AOV_PROPERTIES
-float _HoAovObjectCustomMask;
+#ifndef LIL_HO_CHARACTER_CAPTURE_HAS_METADATA_PROPERTIES
+float _HoMetadataBufferObjectCustomMask;
 float _HoMetadataBufferGroupId;
 #endif
 
@@ -40,7 +40,7 @@ uint LilHoCharacterCaptureObjectMask()
         return rendererUserValue & 255u;
     }
 
-    return (uint)round(saturate(_HoAovObjectCustomMask / 255.0) * 255.0);
+    return (uint)round(saturate(_HoMetadataBufferObjectCustomMask / 255.0) * 255.0);
 }
 
 float LilHoCharacterCaptureCharacterId()

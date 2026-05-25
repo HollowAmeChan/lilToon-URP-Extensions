@@ -112,7 +112,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public float hairShadowDistancePixels = 15.0f;
 
         [InspectorName("投影距离透视衰减")]
-        [Tooltip("按 AOV 线性深度压缩远处的投影偏移，避免角色离镜头较远时固定像素距离显得过大。0 为关闭，1 为完全按深度衰减。")]
+        [Tooltip("按 GeometryBuffer 线性深度压缩远处的投影偏移，避免角色离镜头较远时固定像素距离显得过大。0 为关闭，1 为完全按深度衰减。")]
         [Range(0.0f, 1.0f)]
         public float hairShadowDistancePerspectiveStrength = 1.0f;
 

@@ -16,14 +16,14 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-        TEXTURE2D_X(_lilHoAovMaskIdTexture);
+        TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
         TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
-        TEXTURE2D_X(_lilHoAovSurfaceDataTexture);
-        TEXTURE2D_X(_lilHoAovSssTexture);
+        TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture);
+        TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
         TEXTURE2D_X(_lilHoSSSSourceTexture);
         TEXTURE2D_X(_lilHoSSSTransmissionTexture);
 
-        float _lilHoAovActive;
+        float _HoMetadataBufferActive;
 
         float4 _lilHoSSSParams;     // x strength, y radius screen px, z Burley sample budget, w RT scale compensation
         float4 _lilHoSSSGateParams; // x depth tolerance, y normal tolerance, z fallback source preserve
@@ -45,7 +45,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
 
         float HoSSSCoverage(float2 uv)
         {
-            return SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_PointClamp, uv).r;
+            return SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv).r;
         }
 
         float4 HoSSSNormalDepth(float2 uv)
@@ -65,12 +65,12 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
 
         float4 HoSSSSurfaceData(float2 uv)
         {
-            return SAMPLE_TEXTURE2D_X(_lilHoAovSurfaceDataTexture, sampler_PointClamp, uv);
+            return SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture, sampler_PointClamp, uv);
         }
 
         float4 HoSSSSurfaceDataLinear(float2 uv)
         {
-            return SAMPLE_TEXTURE2D_X(_lilHoAovSurfaceDataTexture, sampler_LinearClamp, uv);
+            return SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture, sampler_LinearClamp, uv);
         }
 
         float HoSSSInterleavedNoise(float2 uv)
@@ -160,7 +160,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
 
         float HoSSSSurfaceMask(float2 uv, float4 normalDepth, float4 surfaceData)
         {
-            return step(0.5, _lilHoAovActive) * saturate(HoSSSCoverage(uv) * HoSSSThinness(surfaceData)) * HoSSSGeometryValid(normalDepth);
+            return step(0.5, _HoMetadataBufferActive) * saturate(HoSSSCoverage(uv) * HoSSSThinness(surfaceData)) * HoSSSGeometryValid(normalDepth);
         }
 
         float HoSSSSurfaceMask(float2 uv, float4 normalDepth)
@@ -595,7 +595,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
                 float mask = HoSSSSurfaceMask(uv, normalDepth);
                 float active = step(1.0e-4, mask);
                 float4 cameraColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
-                float4 sssSource = SAMPLE_TEXTURE2D_X(_lilHoAovSssTexture, sampler_LinearClamp, uv);
+                float4 sssSource = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_LinearClamp, uv);
                 float sourceWeight = saturate(sssSource.a);
                 float3 sourceColor = lerp(cameraColor.rgb, sssSource.rgb, sourceWeight);
 

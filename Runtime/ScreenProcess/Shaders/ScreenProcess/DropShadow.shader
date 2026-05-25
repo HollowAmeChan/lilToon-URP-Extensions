@@ -100,7 +100,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DropShadow"
                 }
 
                 float opacity = saturate(_Intensity) * saturate(_LayerParams0.z);
-                if (_lilHoAovActive <= 0.5 || opacity <= 0.0001)
+                if (_HoMetadataBufferActive <= 0.5 || opacity <= 0.0001)
                 {
                     return source;
                 }

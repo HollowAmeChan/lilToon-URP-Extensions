@@ -207,10 +207,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private sealed class CompositePassData
         {
             public TextureHandle source;
-            public TextureHandle aovMaskIdTexture;
-            public TextureHandle aovNormalDepthTexture;
-            public TextureHandle aovObjectCustom0Texture;
-            public TextureHandle aovObjectCustom1Texture;
+            public TextureHandle metadataMaskIdTexture;
+            public TextureHandle geometryNormalDepthTexture;
+            public TextureHandle metadataObjectCustom0Texture;
+            public TextureHandle metadataObjectCustom1Texture;
             public TextureHandle eyeColorTexture;
             public TextureHandle eyeDataTexture;
             public Material material;
@@ -426,20 +426,20 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             using (var builder = renderGraph.AddRasterRenderPass<CompositePassData>("Ho-CharacterSpecialization Composite", out CompositePassData passData, ProfilingSampler))
             {
                 passData.source = source;
-                passData.aovMaskIdTexture = metadataResources.maskIdTexture;
-                passData.aovNormalDepthTexture = geometryResources.normalDepthTexture;
-                passData.aovObjectCustom0Texture = metadataResources.objectCustom0Texture;
-                passData.aovObjectCustom1Texture = metadataResources.objectCustom1Texture;
+                passData.metadataMaskIdTexture = metadataResources.maskIdTexture;
+                passData.geometryNormalDepthTexture = geometryResources.normalDepthTexture;
+                passData.metadataObjectCustom0Texture = metadataResources.objectCustom0Texture;
+                passData.metadataObjectCustom1Texture = metadataResources.objectCustom1Texture;
                 passData.eyeColorTexture = eyeColorTexture;
                 passData.eyeDataTexture = eyeDataTexture;
                 passData.material = compositeMaterial;
                 FillMaterialVectors(settings, out passData.eyeRevealParams, out passData.hairShadowParams, out passData.hairShadowParams1, out passData.hairShadowParams2, out passData.hairShadowColor, out passData.options);
 
                 builder.UseTexture(source, AccessFlags.Read);
-                builder.UseTexture(passData.aovMaskIdTexture, AccessFlags.Read);
-                builder.UseTexture(passData.aovNormalDepthTexture, AccessFlags.Read);
-                builder.UseTexture(passData.aovObjectCustom0Texture, AccessFlags.Read);
-                builder.UseTexture(passData.aovObjectCustom1Texture, AccessFlags.Read);
+                builder.UseTexture(passData.metadataMaskIdTexture, AccessFlags.Read);
+                builder.UseTexture(passData.geometryNormalDepthTexture, AccessFlags.Read);
+                builder.UseTexture(passData.metadataObjectCustom0Texture, AccessFlags.Read);
+                builder.UseTexture(passData.metadataObjectCustom1Texture, AccessFlags.Read);
                 builder.UseTexture(eyeColorTexture, AccessFlags.Read);
                 builder.UseTexture(eyeDataTexture, AccessFlags.Read);
                 builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
@@ -448,10 +448,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 builder.SetRenderFunc(static (CompositePassData data, RasterGraphContext context) =>
                 {
                     ApplyMaterialProperties(data.material, data.eyeRevealParams, data.hairShadowParams, data.hairShadowParams1, data.hairShadowParams2, data.hairShadowColor, data.options);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
-                    context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.aovNormalDepthTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.metadataMaskIdTexture);
+                    context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.geometryNormalDepthTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.metadataObjectCustom0Texture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.metadataObjectCustom1Texture);
                     context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, data.eyeColorTexture);
                     context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeDataTextureId, data.eyeDataTexture);
                     context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);

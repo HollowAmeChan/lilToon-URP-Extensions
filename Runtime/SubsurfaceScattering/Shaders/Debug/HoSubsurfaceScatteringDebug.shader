@@ -23,13 +23,13 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            TEXTURE2D_X(_lilHoAovMaskIdTexture);
+            TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
-            TEXTURE2D_X(_lilHoAovSurfaceDataTexture);
+            TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture);
             TEXTURE2D_X(_lilHoSSSSourceTexture);
             TEXTURE2D_X(_lilHoSSSTransmissionTexture);
 
-            float _lilHoAovActive;
+            float _HoMetadataBufferActive;
             float4 _lilHoSSSParams;
             float4 _lilHoSSSGateParams;
             float4 _lilHoSSSColor;
@@ -44,7 +44,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView"
 
             float HoSSSCoverage(float2 uv)
             {
-                return SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_PointClamp, uv).r;
+                return SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv).r;
             }
 
             float4 HoSSSNormalDepth(float2 uv)
@@ -54,7 +54,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView"
 
             float4 HoSSSSurfaceData(float2 uv)
             {
-                return SAMPLE_TEXTURE2D_X(_lilHoAovSurfaceDataTexture, sampler_PointClamp, uv);
+                return SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture, sampler_PointClamp, uv);
             }
 
             float3 HoSSSDecodeNormal(float3 encodedNormal)
@@ -128,7 +128,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView"
 
             float HoSSSSurfaceMask(float2 uv, float4 normalDepth, float4 surfaceData)
             {
-                return step(0.5, _lilHoAovActive) * saturate(HoSSSCoverage(uv) * HoSSSThinness(surfaceData)) * HoSSSGeometryValid(normalDepth);
+                return step(0.5, _HoMetadataBufferActive) * saturate(HoSSSCoverage(uv) * HoSSSThinness(surfaceData)) * HoSSSGeometryValid(normalDepth);
             }
 
             float2 HoSSSNormalizeDirection(float2 direction, float2 fallbackDirection)
