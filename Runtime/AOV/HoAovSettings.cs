@@ -48,8 +48,6 @@ namespace lilToon.URP.Extensions.AOV
         LinearDepth,
         [InspectorName("世界法线")]
         WorldNormal,
-        [InspectorName("视图法线")]
-        ViewNormal,
         [InspectorName("速度")]
         Velocity,
         [InspectorName("厚度")]

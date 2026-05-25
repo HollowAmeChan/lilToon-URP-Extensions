@@ -197,7 +197,7 @@ GeometryBuffer.ViewNormal
 GeometryBuffer.TangentNormal
 ```
 
-视图法线不作为 Buffer 输出项。它可以由 `GeometryBuffer.Normal` 结合当前 view matrix 廉价派生；debug view 可以保留派生显示，但不应占用输出通道或用户侧输出开关。
+视图法线不作为 Buffer 输出项，也不作为常驻 debug view。它可以由 `GeometryBuffer.Normal` 结合当前 view matrix 廉价派生；如果未来某个 feature 真需要观察它，应在该 feature 的局部调试里临时计算，而不是占用 AOV/GeometryBuffer 通用调试菜单。
 
 切线法线目前没有明确 screen-space 消费者。未来如果有各向异性屏幕滤波、头发高光后处理、特殊材质局部方向滤波，再作为明确需求加入。
 
@@ -252,7 +252,7 @@ GeometryBuffer.TangentNormal
 | Depth | GeometryBuffer | 保留 | 所有屏幕空间效果基础 |
 | Normal | GeometryBuffer | 保留 | SSS/outline/fog/deferred 需要 |
 | Motion | GeometryBuffer | 候选 | temporal 需求明确后加入 |
-| ViewNormal | GeometryBuffer | 不作为输出 | 可由 WorldNormal/Normal + view matrix 派生，debug view 可按需计算 |
+| ViewNormal | GeometryBuffer | 不作为输出/调试项 | 可由 WorldNormal/Normal + view matrix 派生 |
 | TangentNormal | GeometryBuffer | 删除默认 | 暂无真实消费者 |
 | OverallMask | MaterialBuffer | 删除默认 | 语义太宽，消费者应读具体项 |
 | ReservedCustom | 不进入公共 Buffer | 删除默认 | 无命名无消费者 |
@@ -306,10 +306,11 @@ GeometryBuffer.TangentNormal
 - fallback shader 继续写入 `surfaceData.a`，但变量名改成 transmittance hint，避免后续把它误判为无命名预留通道。
 - HoPost/ScreenProcess 规则源里的第 7 项同步改名为 `TransmittanceHint`；物理采样仍是 `surfaceData.a`。
 
-## 12. 2026-05-25 执行记录：移除 ViewNormal 输出选项
+## 12. 2026-05-25 执行记录：移除 ViewNormal 输出与调试项
 
-`ViewNormal` 不再作为 AOV / GeometryBuffer 输出候选暴露。视图空间法线可以从现有 world normal 结合 view matrix 派生，继续常驻一个输出开关只会扩大 Buffer 契约。
+`ViewNormal` 不再作为 AOV / GeometryBuffer 输出候选或常驻 debug view 暴露。视图空间法线可以从现有 world normal 结合 view matrix 派生，继续常驻输出/debug 开关只会扩大 Buffer 契约。
 
 - `HoAovChannelMask.ViewNormal` 已删除，避免用户侧把它理解为独立输出通道。
-- `HoAovDebugMode.ViewNormal` 保留；debug shader 当前直接从 world normal 派生 view normal，不依赖额外 MRT。
+- `HoAovDebugMode.ViewNormal` 同步删除；AOV debug 菜单只显示真实输出项或当前仍需观察的语义项。
+- debug shader 删除 view-normal 派生分支，并把后续 mode 编号前移一位。
 - bit 5 暂不复用，避免和旧序列化值或后续通道瘦身混在同一次改动里。
