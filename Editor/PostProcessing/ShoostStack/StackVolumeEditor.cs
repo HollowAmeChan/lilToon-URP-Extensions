@@ -796,7 +796,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static int GetAovMigrationNoticeLineCount()
         {
-            return 4;
+            return 5;
         }
 
         private static bool HasLegacyShoostAovMask(SerializedProperty element)
@@ -1276,13 +1276,33 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return y;
             }
 
-            float height = (LineHeight + LineSpacing) * GetAovMigrationNoticeLineCount();
-            Rect noticeRect = new Rect(x, y, width, height - LineSpacing);
+            float noticeHeight = (LineHeight + LineSpacing) * 4.0f - LineSpacing;
+            Rect noticeRect = new Rect(x, y, width, noticeHeight);
             EditorGUI.HelpBox(
                 noticeRect,
                 "Legacy AOV mask settings are serialized here for migration only.\nImageProcess does not read AOV, MaterialBuffer, GeometryBuffer, depth/normal, object ids, or ShadowCast resources.\nMove semantic masked effects to ScreenProcess and clear the legacy flags once migration is complete.",
                 MessageType.Warning);
-            return y + height;
+            y += noticeHeight + LineSpacing;
+            if (GUI.Button(new Rect(x, y, width, LineHeight), "Clear legacy AOV mask settings"))
+            {
+                ClearLegacyShoostAovMask(element);
+                GUI.changed = true;
+            }
+
+            return y + LineHeight + LineSpacing;
+        }
+
+        private static void ClearLegacyShoostAovMask(SerializedProperty element)
+        {
+            SetBool(element, "useAovMask", false);
+            SetEnum(element, "aovSource", (int)HoPostAovSource.Mask);
+            SetEnum(element, "aovMaskMode", (int)HoPostAovMaskMode.Direct);
+            SetFloat(element, "aovThreshold", 0.5f);
+            SetFloat(element, "aovMatchValue", 0.0f);
+            SetColor(element, "aovMatchColor", Color.white);
+            SetBool(element, "invertAovMask", false);
+            SetBool(element, "debugAovMask", false);
+            HoPostAovMaskEditorUtility.ResetRules(element);
         }
 
         private static float DrawPopupLine(float x, float y, float width, SerializedProperty property, string label, string[] options)

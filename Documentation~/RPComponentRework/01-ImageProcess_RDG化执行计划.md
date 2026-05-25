@@ -240,6 +240,12 @@ Runtime/ShoostPostProcessing/ShoostPostProcessEffectDescriptor.cs
 - ImageProcess shader constants 移除 `_LayerAov*` 与 `_LayerResultTexture` id，普通 layer material 不再接收 AOV mask property。
 - 针对性扫描确认 `Runtime/ShoostPostProcessing` 没有 `HoAovRenderGraphResources`、`RecordAovCompositeIfNeeded`、`ShoostPostProcessAovSupport`、`AovCompositeShaderName` 或 `SupportsAovComposite` 残留。
 
+继续推进后，ImageProcess Editor / 序列化边界进一步收窄：
+
+- `ShoostPostProcessLayer` 中旧 `useAovMask`、`debugAovMask`、AOV source / rule 等字段保留为隐藏序列化迁移数据，默认 Inspector 不再把它们暴露为 ImageProcess 正式参数。
+- `ShoostPostProcessStackVolumeEditor` 只在检测到旧 AOV flag 时显示迁移提示，并提供 `Clear legacy AOV mask settings` 按钮清空 legacy 标记和规则数据。
+- 本次不改变 runtime 行为：ImageProcess 仍只 warning once 并忽略 legacy AOV mask，不读取 AOV / MaterialBuffer / GeometryBuffer / ShadowCast。
+
 ---
 
 ## 9. 验收清单
