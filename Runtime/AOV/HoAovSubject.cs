@@ -53,9 +53,9 @@ namespace lilToon.URP.Extensions.AOV
         [Tooltip("近似曲率。第一版由用户/材质手动提供。")]
         public float curvature;
 
-        [InspectorName("系统预留")]
-        [Tooltip("系统预留值，可用于 AO、trace 输入或后续桥接。")]
-        public float utility;
+        [InspectorName("透射提示")]
+        [Tooltip("通用透射/次表面扩散提示，写入 MaterialBuffer surfaceData.a。")]
+        public float transmittanceHint;
 
         [InspectorName("调试颜色")]
         [Tooltip("调试视图和 ID 可视化可使用的颜色。")]
@@ -165,7 +165,7 @@ namespace lilToon.URP.Extensions.AOV
             block.SetFloat(HoAovShaderConstants.FlagsId, flags);
             block.SetFloat(HoAovShaderConstants.ThicknessId, thickness);
             block.SetFloat(HoAovShaderConstants.CurvatureId, curvature);
-            block.SetFloat(HoAovShaderConstants.UtilityId, utility);
+            block.SetFloat(HoAovShaderConstants.TransmittanceHintId, transmittanceHint);
             block.SetColor(HoAovShaderConstants.DebugColorId, debugColor);
             if (overrideMaterialCustomChannels)
             {
@@ -184,7 +184,7 @@ namespace lilToon.URP.Extensions.AOV
             block.SetFloat(HoAovShaderConstants.FlagsId, 0.0f);
             block.SetFloat(HoAovShaderConstants.ThicknessId, 0.0f);
             block.SetFloat(HoAovShaderConstants.CurvatureId, 0.0f);
-            block.SetFloat(HoAovShaderConstants.UtilityId, 0.0f);
+            block.SetFloat(HoAovShaderConstants.TransmittanceHintId, 0.0f);
             block.SetColor(HoAovShaderConstants.DebugColorId, Color.white);
             block.SetFloat(HoAovShaderConstants.CustomWriteMaskId, 0.0f);
             block.SetVector(HoAovShaderConstants.CustomValues0Id, Vector4.zero);

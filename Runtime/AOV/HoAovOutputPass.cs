@@ -491,7 +491,7 @@ namespace lilToon.URP.Extensions.AOV
             cmd.SetGlobalFloat(HoAovShaderConstants.FlagsId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.ThicknessId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.CurvatureId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.UtilityId, 0.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.TransmittanceHintId, 0.0f);
             cmd.SetGlobalVector(HoAovShaderConstants.DebugColorId, Vector4.one);
             cmd.SetGlobalVector(HoAovShaderConstants.CustomValues0Id, Vector4.zero);
             cmd.SetGlobalFloat(HoAovShaderConstants.ObjectCustomMaskId, 0.0f);
@@ -508,7 +508,7 @@ namespace lilToon.URP.Extensions.AOV
             cmd.SetGlobalFloat(HoAovShaderConstants.FlagsId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.ThicknessId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.CurvatureId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.UtilityId, 0.0f);
+            cmd.SetGlobalFloat(HoAovShaderConstants.TransmittanceHintId, 0.0f);
             cmd.SetGlobalVector(HoAovShaderConstants.DebugColorId, Vector4.one);
             cmd.SetGlobalVector(HoAovShaderConstants.CustomValues0Id, Vector4.zero);
             cmd.SetGlobalFloat(HoAovShaderConstants.ObjectCustomMaskId, 0.0f);

@@ -31,7 +31,7 @@ namespace lilToon.URP.Extensions.AOV
         public const string FlagsName = "_HoAovFlags";
         public const string ThicknessName = "_HoAovThickness";
         public const string CurvatureName = "_HoAovCurvature";
-        public const string UtilityName = "_HoAovUtility";
+        public const string TransmittanceHintName = "_HoAovTransmittanceHint";
         public const string DebugColorName = "_HoAovDebugColor";
         public const string CustomValues0Name = "_HoAovCustomValues0";
         public const string ObjectCustomMaskName = "_HoAovObjectCustomMask";
@@ -60,7 +60,7 @@ namespace lilToon.URP.Extensions.AOV
         public static readonly int FlagsId = Shader.PropertyToID(FlagsName);
         public static readonly int ThicknessId = Shader.PropertyToID(ThicknessName);
         public static readonly int CurvatureId = Shader.PropertyToID(CurvatureName);
-        public static readonly int UtilityId = Shader.PropertyToID(UtilityName);
+        public static readonly int TransmittanceHintId = Shader.PropertyToID(TransmittanceHintName);
         public static readonly int DebugColorId = Shader.PropertyToID(DebugColorName);
         public static readonly int CustomValues0Id = Shader.PropertyToID(CustomValues0Name);
         public static readonly int ObjectCustomMaskId = Shader.PropertyToID(ObjectCustomMaskName);

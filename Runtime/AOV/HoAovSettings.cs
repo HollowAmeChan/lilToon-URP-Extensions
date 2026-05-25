@@ -30,10 +30,10 @@ namespace lilToon.URP.Extensions.AOV
         Curvature = 1 << 9,
         [InspectorName("材质")]
         Material = 1 << 10,
-        [InspectorName("系统预留")]
-        Utility = 1 << 11,
+        [InspectorName("透射提示")]
+        TransmittanceHint = 1 << 11,
         [InspectorName("默认")]
-        Default = Mask | Id | Flags | LinearDepth | WorldNormal | Thickness | Curvature | Material | Utility
+        Default = Mask | Id | Flags | LinearDepth | WorldNormal | Thickness | Curvature | Material | TransmittanceHint
     }
 
     public enum HoAovDebugMode
@@ -60,8 +60,8 @@ namespace lilToon.URP.Extensions.AOV
         Curvature,
         [InspectorName("材质")]
         Material,
-        [InspectorName("系统预留")]
-        Utility,
+        [InspectorName("透射提示")]
+        TransmittanceHint,
         [InspectorName("材质自定义通道 0")]
         Custom0,
         [InspectorName("材质自定义通道 1")]

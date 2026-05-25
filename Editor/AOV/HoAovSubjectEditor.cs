@@ -61,7 +61,7 @@ namespace lilToon.URP.Extensions.Editor.AOV
             DrawProperty("objectId");
             DrawProperty("flags");
             DrawProperty("materialClass");
-            DrawProperty("utility");
+            DrawProperty("transmittanceHint");
             DrawProperty("debugColor");
         }
 

@@ -20,8 +20,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         Curvature = 5,
         [InspectorName("材质分类")]
         Material = 6,
-        [InspectorName("预留值")]
-        Utility = 7,
+        [InspectorName("透射提示")]
+        TransmittanceHint = 7,
         [InspectorName("材质自定义通道 0")]
         Custom0 = 8,
         [InspectorName("材质自定义通道 1")]

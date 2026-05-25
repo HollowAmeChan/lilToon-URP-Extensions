@@ -96,6 +96,7 @@ MaterialBuffer.MaterialClass
 MaterialBuffer.MaterialProfile
 MaterialBuffer.Thickness
 MaterialBuffer.Curvature
+MaterialBuffer.TransmittanceHint
 MaterialBuffer.ObjectId
 MaterialBuffer.GroupId
 MaterialBuffer.FeatureFlags
@@ -241,6 +242,7 @@ GeometryBuffer.TangentNormal
 | MaterialProfile | MaterialBuffer | 保留 | SSS 与未来材质响应 profile 需要 |
 | Thickness | MaterialBuffer | 保留 | SSS/透射/薄物体散射需要 |
 | Curvature | MaterialBuffer | 保留 | SSS/边缘散射/风格化边缘可能复用 |
+| TransmittanceHint | MaterialBuffer | 保留 | SSS transmission radius 与未来透射/透光表面可复用 |
 | ObjectId / GroupId | MaterialBuffer | 保留 | 角色合成与屏幕处理需要 |
 | CharacterPart | MaterialBuffer | 保留已命名位 | 眼透/前发/角色局部合成需要 |
 | FeatureFlags | MaterialBuffer | 保留已命名位 | 参与能力 gate |
@@ -290,3 +292,12 @@ GeometryBuffer.TangentNormal
 - 新增 `HoAovAttachmentLayout` 固定剩余 MRT 索引，避免后续继续瘦身时在 `HoAovOutputPass` 中手写 attachment 数字。
 
 保留的判断：如果未来出现各向异性屏幕滤波、头发屏幕空间高光或明确的切线方向后处理，再以新的 `GeometryBuffer` 候选项重新引入，而不是把旧 HoAOV 实验通道常驻输出。
+
+## 11. 2026-05-25 执行记录：明确 surfaceData.a 语义
+
+`surfaceData.a` 原名 `Utility` / 系统预留，但当前真实消费者是 SSS transmission radius multiplier。它不是无消费者 reserved custom，暂不删除；本步将运行时和 UI 语义改为 `TransmittanceHint`。
+
+- `HoAovChannelMask.Utility` / `HoAovDebugMode.Utility` 改名为 `TransmittanceHint`，保持原 bit 和 debug mode 顺序。
+- `HoAovSubject.utility` 改为 `transmittanceHint`，shader property 改为 `_HoAovTransmittanceHint`。
+- fallback shader 继续写入 `surfaceData.a`，但变量名改成 transmittance hint，避免后续把它误判为无命名预留通道。
+- HoPost/ScreenProcess 规则源里的第 7 项同步改名为 `TransmittanceHint`；物理采样仍是 `surfaceData.a`。

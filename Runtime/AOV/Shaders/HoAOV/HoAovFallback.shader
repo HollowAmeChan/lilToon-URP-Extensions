@@ -12,7 +12,7 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
         [HideInInspector] _HoAovFlags ("HoAOV Flags", Float) = 0
         [HideInInspector] _HoAovThickness ("HoAOV Thickness", Float) = 0
         [HideInInspector] _HoAovCurvature ("HoAOV Curvature", Float) = 0
-        [HideInInspector] _HoAovUtility ("HoAOV Utility", Float) = 0
+        [HideInInspector] _HoAovTransmittanceHint ("HoAOV Transmittance Hint", Float) = 0
         [HideInInspector] _HoAovDebugColor ("HoAOV Debug Color", Color) = (1, 1, 1, 1)
         [HideInInspector] _HoAovCustomValues0 ("HoAOV Custom 0-3", Vector) = (0, 0, 0, 0)
         [HideInInspector] _HoAovObjectCustomMask ("HoAOV Object Custom Mask", Float) = 0
@@ -52,7 +52,7 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
             float _HoAovFlags;
             float _HoAovThickness;
             float _HoAovCurvature;
-            float _HoAovUtility;
+            float _HoAovTransmittanceHint;
             float4 _HoAovDebugColor;
             float4 _HoAovCustomValues0;
             float _HoAovObjectCustomMask;
@@ -160,7 +160,7 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
                 float thicknessEnabled = HasSystemChannel(256.0);
                 float curvatureEnabled = HasSystemChannel(512.0);
                 float materialEnabled = HasSystemChannel(1024.0);
-                float utilityEnabled = HasSystemChannel(2048.0);
+                float transmittanceHintEnabled = HasSystemChannel(2048.0);
                 float subjectCoverage = saturate(_HoAovMaskWeight);
                 float subjectValid = step(0.0001, subjectCoverage);
 
@@ -184,7 +184,7 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
                     saturate(_HoAovThickness) * thicknessEnabled * subjectValid,
                     saturate(abs(_HoAovCurvature)) * curvatureEnabled * subjectValid,
                     EncodeScalar(_HoAovMaterialClass) * materialEnabled * subjectValid,
-                    saturate(_HoAovUtility) * utilityEnabled * subjectValid);
+                    saturate(_HoAovTransmittanceHint) * transmittanceHintEnabled * subjectValid);
                 output.custom0 = half4(ApplyCustomWriteMask(_HoAovCustomValues0, 0.0) * subjectValid);
                 output.objectCustom0 = half4(DecodeObjectCustom0(objectCustomMask) * subjectValid);
                 output.objectCustom1 = half4(DecodeObjectCustom1(objectCustomMask) * subjectValid);
