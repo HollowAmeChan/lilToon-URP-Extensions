@@ -1,5 +1,7 @@
 # HoShadowCast 踩坑记录
 
+> 历史资料：本文保留旧 `HoShadowCast` 开发排障记录，不作为当前 `Ho-ShadowCast` 使用说明。当前 ShadowCast 行为以 `../RPComponentRework/06-ShadowCast改造计划.md`、用户顺序以 `../RPComponentRework/07-用户向RendererFeature使用与顺序.md`、完成计划以 `../RPComponentRework/09-重构完成计划.md` 为准。
+
 ## 2026-05-18 atlas 分块与 receiver 不一致
 
 这次问题非常隐蔽：atlas debug 看起来已经正确写入，但材质侧完全没有投影。最终确认不是 caster、RendererList、lightData 或强度问题，而是生成侧 atlas 分块修复后，receiver 侧的矩阵与 tile 映射没有稳定跟上。

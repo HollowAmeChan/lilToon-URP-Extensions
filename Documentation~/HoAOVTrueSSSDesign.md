@@ -1,5 +1,7 @@
 # HoAOV / HoSSS 设计现状
 
+> 历史资料：本文记录旧 `HoAOV` / `HoSSS` 数据契约，不作为当前 `MetadataBuffer` / `GeometryBuffer` / `Ho-SubsurfaceScattering` 使用说明。当前 Buffer 与 SSS 边界以 `RPComponentRework/03-MaterialBuffer与GeometryBuffer规划.md`、用户顺序以 `RPComponentRework/07-用户向RendererFeature使用与顺序.md`、完成计划以 `RPComponentRework/09-重构完成计划.md` 为准。
+
 本文只记录已经落地的 HoSSS 工作、当前数据契约，以及对照 Unity HDRP 17.3 SSS 源码后确认的差距。早期试验过程和按日期堆叠的流水账不再保留。
 
 ## 目标边界

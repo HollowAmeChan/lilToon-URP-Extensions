@@ -1,5 +1,7 @@
 # HoAOV 系统计划
 
+> 历史资料：本文记录旧 `HoAOV` 设计计划，不作为当前 `MetadataBuffer` / `GeometryBuffer` 使用说明。当前 Buffer 边界以 `../RPComponentRework/03-MaterialBuffer与GeometryBuffer规划.md`、当前 RendererFeature 顺序以 `../RPComponentRework/07-用户向RendererFeature使用与顺序.md`、完成计划以 `../RPComponentRework/09-重构完成计划.md` 为准。
+
 本文记录 `HoAOV` 的设计目标、边界和落地顺序。它不是 ShoostStack 的一部分，也不是 HTrace 的替代品，而是为 HoPost、未来材质后处理、调试视图和可能的追踪/风格化效果提供统一可复用的 AOV 数据层。
 
 ## 背景

@@ -1,5 +1,7 @@
 # HoShadowCast 额外投影光源与 ShadowMap 设计
 
+> 历史资料：本文记录旧 controller/manual-list 阶段的 `HoShadowCast` 设计，不作为当前 `Ho-ShadowCast` 使用说明。当前 ShadowCast 行为以 `../RPComponentRework/06-ShadowCast改造计划.md`、用户顺序以 `../RPComponentRework/07-用户向RendererFeature使用与顺序.md`、完成计划以 `../RPComponentRework/09-重构完成计划.md` 为准。
+
 本文记录 HoShadowCast 第一版设计。它用于补齐项目里“必须产生 shadowcast 的少量光源”，并产出一套独立 shadow atlas。
 
 ## 一句话分工

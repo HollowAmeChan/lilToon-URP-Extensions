@@ -1,5 +1,7 @@
 # HoCharacterCapture 材质 Pass 接入说明
 
+> 历史资料：本文记录旧 `HoAOV` 语境下的材质 pass 接入说明，不作为当前模板或用户配置说明。当前 `MetadataBuffer` / `GeometryBuffer` / `CharacterSpecialization` 边界以 `../RPComponentRework/03-MaterialBuffer与GeometryBuffer规划.md`、`../RPComponentRework/07-用户向RendererFeature使用与顺序.md`、`../RPComponentRework/09-重构完成计划.md` 为准。
+
 角色特化眼透/前发投影不是只看 HoAOV 标记。运行时的 RendererFeature 会用
 `ShaderTagId("HoCharacterCapture")` 单独抓一次材质 pass；如果材质 shader 没有
 `Tags { "LightMode" = "HoCharacterCapture" }` 的 pass，就算 HoAOV 标记正确也不会写入角色捕获 RT。

@@ -1,5 +1,7 @@
 # HoAOV 与 HoPost 工作模式
 
+> 历史资料：本文记录旧 `HoAOV` / `HoPost` / `Shoost` 工作模式，不作为当前 `MetadataBuffer` / `GeometryBuffer` / `ScreenProcess` / `ImageProcess` 使用说明。当前使用顺序与输入边界以 `../RPComponentRework/07-用户向RendererFeature使用与顺序.md`、`../RPComponentRework/08-PostProcess顺序与输入边界.md`、`../RPComponentRework/09-重构完成计划.md` 为准。
+
 本文记录当前 HoAOV 的实际工作方式，以及 HoPost 图层如何消费 HoAOV。它不是远期愿景文档，而是给后续实现、排障和重做功能时参考的规则清单。
 
 ## 一句话分工

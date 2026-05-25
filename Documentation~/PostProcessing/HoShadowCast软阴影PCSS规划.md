@@ -1,5 +1,7 @@
 # HoShadowCast 软阴影 PCSS 规划
 
+> 历史资料：本文记录旧 controller/manual-list 阶段的 PCSS 规划，不作为当前 `Ho-ShadowCast` 使用说明。当前 ShadowCast 行为以 `../RPComponentRework/06-ShadowCast改造计划.md`、用户顺序以 `../RPComponentRework/07-用户向RendererFeature使用与顺序.md`、完成计划以 `../RPComponentRework/09-重构完成计划.md` 为准。
+
 本文记录 HoShadowCast 软阴影升级方案。结论：不先做轻量 PCF，直接做 PCSS。
 
 ## 2026-05-18 当前落地状态
