@@ -361,3 +361,15 @@ GeometryBuffer.TangentNormal
 - `HoAovOutputPass` 需要改名/迁入 MetadataBuffer，并把旧 MRT shader target 索引拆成 metadata-only shader。
 - 当前 GeometryBuffer 只对 fallback path 有专用 shader；未来材质原生输出应增加 `HoGeometryBuffer` LightMode。
 - Debug shader 仍使用旧 HoAOV 命名，后续按 MetadataBuffer / GeometryBuffer feature-local debug 分拆。
+
+## 16. 2026-05-25 执行记录：MetadataBuffer settings/pass 命名收敛
+
+已把 MetadataBuffer 运行时入口继续从旧 HoAOV 类名中拆出：
+
+- `HoAovOutputPass` 迁入 `Runtime/MetadataBuffer/HoMetadataBufferPass.cs`，RendererFeature 不再直接引用旧 AOV output pass 类。
+- `HoAovDebugPass` 迁入 `Runtime/MetadataBuffer/HoMetadataBufferDebugPass.cs`，RenderGraph pass 名同步改为 `lilToon-MetadataBuffer Debug`。
+- 新增 `HoMetadataBufferSettings`，RendererFeature 面板字段改用 `passEvent`，旧 `HoAovSettings` 不再作为 MetadataBuffer 设置对象存在。
+- `HoAovBufferTypes` 只保留当前仍被材质、RSUV、CharacterSpecialization 和 shader ABI 使用的旧 HoAOV 枚举/通道类型。
+- `HoAovRenderTargets` 仍暂留在 AOV 目录，作为非 RenderGraph 路径的兼容 RTHandle 管理；后续拆 metadata-only shader target 时再迁到 MetadataBuffer 或删除。
+
+这一步仍保留 `_lilHoAov*` shader property、`HoAOV` / `HoAOVSSS` LightMode 与 debug shader 文件名，原因是现有材质 pass 和消费者仍依赖这套 ABI。下一步再处理 shader target 拆分或 Metadata/Geometry feature-local debug shader 分拆。

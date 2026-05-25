@@ -70,7 +70,7 @@ namespace lilToon.URP.Extensions.Editor.MetadataBuffer
             if (showAdvancedSettings)
             {
                 EditorGUI.indentLevel++;
-                DrawProperty("aovPassEvent");
+                DrawProperty("passEvent");
                 DrawProperty("debugPassEvent");
                 DrawProperty("useFallbackMaterial");
                 DrawProperty("fallbackShader");

@@ -11,11 +11,11 @@ namespace lilToon.URP.Extensions.MetadataBuffer
     public sealed class HoMetadataBufferRendererFeature : ScriptableRendererFeature
     {
         [SerializeField]
-        private HoAovSettings settings = new HoAovSettings();
+        private HoMetadataBufferSettings settings = new HoMetadataBufferSettings();
 
         private readonly HoAovRenderTargets renderTargets = new HoAovRenderTargets();
-        private HoAovOutputPass outputPass;
-        private HoAovDebugPass debugPass;
+        private HoMetadataBufferPass outputPass;
+        private HoMetadataBufferDebugPass debugPass;
         private Material clearMaterial;
         private Material fallbackMaterial;
         private Material debugMaterial;
@@ -27,14 +27,14 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         private bool warnedMissingFallbackShader;
         private bool warnedMissingDebugShader;
 
-        public HoAovSettings Settings => settings;
+        public HoMetadataBufferSettings Settings => settings;
 
         public override void Create()
         {
             settings?.ClampCustomChannels();
             RegisterCameraReset();
-            outputPass = new HoAovOutputPass();
-            debugPass = new HoAovDebugPass();
+            outputPass = new HoMetadataBufferPass();
+            debugPass = new HoMetadataBufferDebugPass();
         }
 
         private void OnValidate()

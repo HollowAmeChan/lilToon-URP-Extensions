@@ -1,19 +1,19 @@
 #pragma warning disable CS0618, CS0672
 
 using lilToon.URP.Extensions.GeometryBuffer;
-using lilToon.URP.Extensions.MetadataBuffer;
+using lilToon.URP.Extensions.AOV;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 
-namespace lilToon.URP.Extensions.AOV
+namespace lilToon.URP.Extensions.MetadataBuffer
 {
-    internal sealed class HoAovDebugPass : ScriptableRenderPass
+    internal sealed class HoMetadataBufferDebugPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-HoAOV Debug");
-        private HoAovSettings settings;
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-MetadataBuffer Debug");
+        private HoMetadataBufferSettings settings;
         private HoAovRenderTargets renderTargets;
         private RTHandle cameraColorTarget;
         private RTHandle tempTexture;
@@ -35,7 +35,7 @@ namespace lilToon.URP.Extensions.AOV
         }
 
         public void Setup(
-            HoAovSettings settings,
+            HoMetadataBufferSettings settings,
             HoAovRenderTargets renderTargets,
             RTHandle cameraColorTarget,
             Material debugMaterial)
@@ -49,7 +49,7 @@ namespace lilToon.URP.Extensions.AOV
         }
 
         public void SetupRenderGraph(
-            HoAovSettings settings,
+            HoMetadataBufferSettings settings,
             HoAovRenderTargets renderTargets,
             Material debugMaterial)
         {
@@ -131,7 +131,7 @@ namespace lilToon.URP.Extensions.AOV
             destinationDesc.depthBufferBits = 0;
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoAOV Debug", out PassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-MetadataBuffer Debug", out PassData passData, ProfilingSampler))
             {
                 passData.source = source;
                 passData.maskIdTexture = metadataResources.maskIdTexture;
@@ -175,13 +175,13 @@ namespace lilToon.URP.Extensions.AOV
             resourceData.cameraColor = destination;
         }
 
-        private static void SetMaterialProperties(Material material, HoAovSettings settings)
+        private static void SetMaterialProperties(Material material, HoMetadataBufferSettings settings)
         {
             material.SetFloat(HoAovShaderConstants.DebugModeId, (float)settings.debugMode);
             material.SetVector(HoAovShaderConstants.DebugDepthParamsId, GetDebugDepthParams(settings));
         }
 
-        private static Vector4 GetDebugDepthParams(HoAovSettings settings)
+        private static Vector4 GetDebugDepthParams(HoMetadataBufferSettings settings)
         {
             float near = Mathf.Max(0.0f, settings.debugDepthNear);
             float far = Mathf.Max(near + 0.0001f, settings.debugDepthFar);

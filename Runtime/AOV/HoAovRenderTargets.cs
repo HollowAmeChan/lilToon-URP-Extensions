@@ -1,5 +1,6 @@
 #pragma warning disable CS0618, CS0672
 
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -27,7 +28,7 @@ namespace lilToon.URP.Extensions.AOV
         public RTHandle SssTexture => sssTexture;
         public RTHandle DepthTexture => depthTexture;
 
-        public void ReAllocateIfNeeded(RenderTextureDescriptor cameraTextureDescriptor, HoAovSettings settings)
+        public void ReAllocateIfNeeded(RenderTextureDescriptor cameraTextureDescriptor, HoMetadataBufferSettings settings)
         {
             int divisor = Mathf.Max(1, (int)settings.renderScale);
             RenderTextureDescriptor descriptor = cameraTextureDescriptor;
@@ -116,7 +117,7 @@ namespace lilToon.URP.Extensions.AOV
             return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, FormatUsage.Render);
         }
 
-        internal static RenderTextureDescriptor CreateDepthDescriptor(RenderTextureDescriptor cameraTextureDescriptor, HoAovSettings settings)
+        internal static RenderTextureDescriptor CreateDepthDescriptor(RenderTextureDescriptor cameraTextureDescriptor, HoMetadataBufferSettings settings)
         {
             int divisor = Mathf.Max(1, (int)settings.renderScale);
             int width = Mathf.Max(1, cameraTextureDescriptor.width / divisor);

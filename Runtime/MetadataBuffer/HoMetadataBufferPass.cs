@@ -1,15 +1,15 @@
 using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
-using lilToon.URP.Extensions.MetadataBuffer;
+using lilToon.URP.Extensions.AOV;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 
-namespace lilToon.URP.Extensions.AOV
+namespace lilToon.URP.Extensions.MetadataBuffer
 {
-    internal sealed class HoAovOutputPass : ScriptableRenderPass
+    internal sealed class HoMetadataBufferPass : ScriptableRenderPass
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-MetadataBuffer Output");
         private static readonly List<ShaderTagId> FallbackShaderTagIds = new List<ShaderTagId>
@@ -32,7 +32,7 @@ namespace lilToon.URP.Extensions.AOV
         private const int FallbackMaxRenderQueue = (int)RenderQueue.AlphaTest - 1;
 
         private readonly RTHandle[] colorTargets = new RTHandle[HoAovAttachmentLayout.ColorTargetCount];
-        private HoAovSettings settings;
+        private HoMetadataBufferSettings settings;
         private HoAovRenderTargets renderTargets;
         private Material clearMaterial;
         private Material fallbackMaterial;
@@ -65,13 +65,13 @@ namespace lilToon.URP.Extensions.AOV
         {
         }
 
-        public HoAovOutputPass()
+        public HoMetadataBufferPass()
         {
             renderStateBlock = new RenderStateBlock(RenderStateMask.Nothing);
         }
 
         public void Setup(
-            HoAovSettings settings,
+            HoMetadataBufferSettings settings,
             HoAovRenderTargets renderTargets,
             Material clearMaterial,
             Material fallbackMaterial)
@@ -80,13 +80,13 @@ namespace lilToon.URP.Extensions.AOV
             this.renderTargets = renderTargets;
             this.clearMaterial = clearMaterial;
             this.fallbackMaterial = fallbackMaterial;
-            renderPassEvent = settings != null ? settings.aovPassEvent : RenderPassEvent.AfterRenderingOpaques;
+            renderPassEvent = settings != null ? settings.passEvent : RenderPassEvent.AfterRenderingOpaques;
             ConfigureInput(ScriptableRenderPassInput.None);
             ConfigureFiltering();
         }
 
         public void SetupRenderGraph(
-            HoAovSettings settings,
+            HoMetadataBufferSettings settings,
             HoAovRenderTargets renderTargets,
             Material clearMaterial,
             Material fallbackMaterial)
@@ -95,7 +95,7 @@ namespace lilToon.URP.Extensions.AOV
             this.renderTargets = renderTargets;
             this.clearMaterial = clearMaterial;
             this.fallbackMaterial = fallbackMaterial;
-            renderPassEvent = settings != null ? settings.aovPassEvent : RenderPassEvent.AfterRenderingOpaques;
+            renderPassEvent = settings != null ? settings.passEvent : RenderPassEvent.AfterRenderingOpaques;
             ConfigureInput(ScriptableRenderPassInput.None);
             ConfigureFiltering();
         }
@@ -426,7 +426,7 @@ namespace lilToon.URP.Extensions.AOV
 
         private static TextureDesc CreateTextureDesc(
             RenderTextureDescriptor cameraTextureDescriptor,
-            HoAovSettings settings,
+            HoMetadataBufferSettings settings,
             GraphicsFormat format,
             string name)
         {
@@ -453,7 +453,7 @@ namespace lilToon.URP.Extensions.AOV
             return descriptor;
         }
 
-        private static float GetSystemChannelMask(HoAovSettings settings)
+        private static float GetSystemChannelMask(HoMetadataBufferSettings settings)
         {
             return settings != null ? (float)settings.systemChannels : (float)HoAovChannelMask.Default;
         }
