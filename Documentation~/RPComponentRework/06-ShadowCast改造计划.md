@@ -429,6 +429,14 @@ ShadowCast 与 ScreenProcess 的关系：
 - Inspector 文案把 GameObject layer 与 Rendering Layer 分开显示，避免继续把两类 layer 混成一个用户概念。
 - 本次不改变 receiver ABI、atlas shader 参数、debug shader 按需加载、MaterialBuffer/GeometryBuffer 边界或 ImageProcess 禁止消费 ShadowCast 的规则。
 
+## 10.10 2026-05-25 执行记录
+
+已补齐 ShadowCast feature-local debug atlas 的整光源 block 边界显示：
+
+- `Runtime/ShadowCast/Shaders/Debug/HoShadowCastDebug.shader` 读取已有 `_HoShadowCastSecondDirectionalLightData` 与 `_HoShadowCastSecondDirectionalSliceData`，在 `SecondDirectionalAtlas` debug view 中叠加每盏次方向光的 block 外框。
+- 普通 atlas debug 继续显示每个 slice 边界；second directional debug 现在区分 cascade slice 线与 per-light block 线，便于核对 1/2/3/4 cascade 的整光源 block packing。
+- 本次只增强 ShadowCast 局部 debug shader，不改变 debug shader 按需加载策略、ShadowCast receiver ABI、MaterialBuffer/GeometryBuffer 边界或 ImageProcess 禁止消费 ShadowCast 的规则。
+
 仍待处理：
 - 后续如果需要按 renderer/material 侧声明更细的 receiver gate，应放到 receiver / material 语义里，不反向扩张 ShadowCast 为对象分类系统。
 ---

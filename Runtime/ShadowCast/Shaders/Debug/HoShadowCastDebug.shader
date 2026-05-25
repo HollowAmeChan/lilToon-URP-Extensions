@@ -30,6 +30,7 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
             float4 _HoShadowCastSliceData[32];
             float4 _HoShadowCastSecondDirectionalParams;
             float4 _HoShadowCastSecondDirectionalAtlasSize;
+            float4 _HoShadowCastSecondDirectionalLightData[4];
             float4 _HoShadowCastSecondDirectionalSliceData[16];
             TEXTURE2D_FLOAT(_HoShadowCastAtlas);
             TEXTURE2D_FLOAT(_HoShadowCastSecondDirectionalAtlas);
@@ -38,6 +39,120 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
             {
                 value = saturate(value);
                 return saturate(half3(value * 2.0, 1.0 - abs(value - 0.5) * 2.0, (1.0 - value) * 2.0));
+            }
+
+            float RectLine(float2 uv, float4 rect, float lineUv)
+            {
+                float2 minUv = rect.xy;
+                float2 maxUv = rect.xy + rect.zw;
+                if (any(uv < minUv) || any(uv > maxUv))
+                {
+                    return 0.0;
+                }
+
+                float2 edgeDistance = min(uv - minUv, maxUv - uv);
+                return 1.0 - step(lineUv, min(edgeDistance.x, edgeDistance.y));
+            }
+
+            float SecondDirectionalBlockLine(float2 uv, int firstSlice, int sliceCount, float lineUv)
+            {
+                if (sliceCount <= 0)
+                {
+                    return 0.0;
+                }
+
+                float2 blockMin = float2(1.0, 1.0);
+                float2 blockMax = float2(0.0, 0.0);
+                [unroll]
+                for (int sliceOffset = 0; sliceOffset < 4; sliceOffset++)
+                {
+                    if (sliceOffset >= sliceCount)
+                    {
+                        break;
+                    }
+
+                    int sliceIndex = firstSlice + sliceOffset;
+                    if (sliceIndex < 0 || sliceIndex >= 16)
+                    {
+                        continue;
+                    }
+
+                    float4 slice = _HoShadowCastSecondDirectionalSliceData[sliceIndex];
+                    if (slice.z <= 0.0)
+                    {
+                        continue;
+                    }
+
+                    blockMin = min(blockMin, slice.xy);
+                    blockMax = max(blockMax, slice.xy + slice.zz);
+                }
+
+                if (any(blockMax <= blockMin))
+                {
+                    return 0.0;
+                }
+
+                return RectLine(uv, float4(blockMin, max(blockMax - blockMin, float2(0.0, 0.0))), lineUv);
+            }
+
+            half3 ApplySliceOverlay(float2 uv, half3 color)
+            {
+                float lineUv = max(max(_HoShadowCastAtlasSize.z, _HoShadowCastAtlasSize.w) * 2.0, 0.001);
+                int sliceCount = min(_HoShadowCastSliceCount, 32);
+                float sliceLine = 0.0;
+
+                [unroll]
+                for (int i = 0; i < 32; i++)
+                {
+                    if (i >= sliceCount)
+                    {
+                        break;
+                    }
+
+                    float4 slice = _HoShadowCastSliceData[i];
+                    sliceLine = max(sliceLine, RectLine(uv, float4(slice.xy, slice.zz), lineUv));
+                }
+
+                return lerp(color, half3(0.0, 0.95, 1.0), saturate(sliceLine * 0.85));
+            }
+
+            half3 ApplySecondDirectionalOverlay(float2 uv, half3 color)
+            {
+                float atlasTexel = max(_HoShadowCastSecondDirectionalAtlasSize.z, _HoShadowCastSecondDirectionalAtlasSize.w);
+                float cascadeLineUv = max(atlasTexel * 2.0, 0.001);
+                float blockLineUv = max(atlasTexel * 4.0, 0.0015);
+                int sliceCount = min((int)round(_HoShadowCastSecondDirectionalParams.y) * (int)round(_HoShadowCastSecondDirectionalParams.z), 16);
+                int lightCount = min((int)round(_HoShadowCastSecondDirectionalParams.y), 4);
+                float cascadeLine = 0.0;
+                float blockLine = 0.0;
+
+                [unroll]
+                for (int i = 0; i < 16; i++)
+                {
+                    if (i >= sliceCount)
+                    {
+                        break;
+                    }
+
+                    float4 slice = _HoShadowCastSecondDirectionalSliceData[i];
+                    cascadeLine = max(cascadeLine, RectLine(uv, float4(slice.xy, slice.zz), cascadeLineUv));
+                }
+
+                [unroll]
+                for (int lightIndex = 0; lightIndex < 4; lightIndex++)
+                {
+                    if (lightIndex >= lightCount)
+                    {
+                        break;
+                    }
+
+                    int firstSlice = (int)round(_HoShadowCastSecondDirectionalLightData[lightIndex].x);
+                    int perLightSliceCount = min((int)round(_HoShadowCastSecondDirectionalLightData[lightIndex].y), 4);
+                    blockLine = max(blockLine, SecondDirectionalBlockLine(uv, firstSlice, perLightSliceCount, blockLineUv));
+                }
+
+                color = lerp(color, half3(1.0, 0.52, 0.12), saturate(cascadeLine * 0.7));
+                return lerp(color, half3(1.0, 0.95, 0.05), saturate(blockLine));
             }
 
             half4 Frag(Varyings input) : SV_Target
@@ -51,7 +166,6 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
                 int sliceCount = debugSecondDirectional
                     ? (int)round(_HoShadowCastSecondDirectionalParams.y) * (int)round(_HoShadowCastSecondDirectionalParams.z)
                     : _HoShadowCastSliceCount;
-                float4 atlasSize = debugSecondDirectional ? _HoShadowCastSecondDirectionalAtlasSize : _HoShadowCastAtlasSize;
                 if (active < 0.5 || sliceCount <= 0)
                 {
                     return source;
@@ -69,50 +183,10 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
                 half valid = rawDepth < 0.99999;
                 half3 depthColor = Heat(1.0 - rawDepth);
 
-                half3 gridColor = half3(0.06, 0.16, 0.22);
-                if (debugSecondDirectional)
-                {
-                    [unroll]
-                    for (int i = 0; i < 16; i++)
-                    {
-                        if (i >= sliceCount)
-                        {
-                            break;
-                        }
-
-                        float4 slice = _HoShadowCastSecondDirectionalSliceData[i];
-                        float2 minUv = slice.xy;
-                        float2 maxUv = slice.xy + slice.zz;
-                        float2 inside = step(minUv, uv) * step(uv, maxUv);
-                        float inSlice = inside.x * inside.y;
-                        float2 borderDist = min(uv - minUv, maxUv - uv) * atlasSize.xy;
-                        float border = inSlice * step(min(borderDist.x, borderDist.y), 2.0);
-                        gridColor = lerp(gridColor, half3(1.0, 0.85, 0.25), border);
-                    }
-                }
-                else
-                {
-                    [unroll]
-                    for (int i = 0; i < 32; i++)
-                    {
-                        if (i >= sliceCount)
-                        {
-                            break;
-                        }
-
-                        float4 slice = _HoShadowCastSliceData[i];
-                        float2 minUv = slice.xy;
-                        float2 maxUv = slice.xy + slice.zz;
-                        float2 inside = step(minUv, uv) * step(uv, maxUv);
-                        float inSlice = inside.x * inside.y;
-                        float2 borderDist = min(uv - minUv, maxUv - uv) * atlasSize.xy;
-                        float border = inSlice * step(min(borderDist.x, borderDist.y), 2.0);
-                        gridColor = lerp(gridColor, half3(1.0, 0.85, 0.25), border);
-                    }
-                }
-
                 half3 atlasColor = lerp(depthColor, half3(0.0, 0.0, 0.0), 1.0 - valid);
-                atlasColor = max(atlasColor, gridColor);
+                atlasColor = debugSecondDirectional
+                    ? ApplySecondDirectionalOverlay(uv, atlasColor)
+                    : ApplySliceOverlay(uv, atlasColor);
                 return half4(atlasColor, 1.0);
             }
             ENDHLSL
