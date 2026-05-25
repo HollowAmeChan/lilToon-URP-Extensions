@@ -222,6 +222,7 @@ Debug 入口可以统一，但资源归属必须局部：
 公共 Debug UI 不拥有 feature 的 debug shader、debug material 或 collector。
 重 debug shader 默认不编译，用户显式启用 debug profile / define / shader collection 后才进入收集。
 当前已登记的 view info 覆盖 MetadataBuffer、GeometryBuffer、ShadowCast、SSS、ScreenProcess rule mask 和 ImageProcess layer chain；ScreenProcess 与 ImageProcess 条目是轻量观察入口，不进入重 debug shader collection。ScreenProcess rule mask 的实际输出入口仍是 layer 自己的 `debugRuleMask`，不需要 RendererFeature 级 debug view。
+只读公共入口位于 `lilToon URP Extensions/Debug/Open Debug View Registry`。这个窗口只显示 feature-local view info、短名、shader collection 状态和缺失降级说明，不生成 collection，也不创建 shader、material 或 render target。
 
 ---
 

@@ -208,7 +208,7 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 待处理：
 
 - ScreenProcess rule mask debug 已作为 `ScreenProcessDebugViewInfo` 的非重 shader view 登记；它的执行入口就是 layer-local `debugRuleMask` 直出，不计划拆成独立 RendererFeature debug shader。
-- 后续 debug profile / tile view 仍需基于 feature 局部 view info 接入。
+- 后续 debug profile 仍需基于 feature 局部 view info 接入；只读 tile view 已由 Debug View Registry 窗口覆盖。
 
 已继续对 SSS debug 分支做按需编译拆分：
 
@@ -238,6 +238,12 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 - MetadataBuffer、GeometryBuffer、ShadowCast、SSS、ScreenProcess、ImageProcess 分别新增 `<Feature>DebugViewInfo.cs`，view 列表归属仍留在 feature 目录。
 - `LilUrpDebugShaderCollectionGenerator` 不再维护硬编码 debug shader 表，改读 registry 中标记为 `RequiresShaderCollection` 的 view，并对同一 shader 去重。
 - ScreenProcess rule mask 和 ImageProcess layer chain 登记为无独立 shader 的轻量观察入口，公共 Debug UI / tile view 不因此接管 effect shader 或图像链资源。ScreenProcess rule mask 的实际排障方式是打开具体 layer 的 `debugRuleMask` 直出，而不是切换 RendererFeature 级 debug view。
+
+2026-05-26 继续补上只读公共 Debug UI：
+
+- 新增 `Editor/Debug/LilUrpDebugViewRegistryWindow.cs`，菜单路径为 `lilToon URP Extensions/Debug/Open Debug View Registry`。
+- 窗口只读取 `HoDebugViewRegistry.AllViews`，按 feature 分组显示短名 tile、view id、mode value、是否需要 shader collection、shader asset 状态和缺失降级说明。
+- 窗口不提供生成 collection 的按钮，不调用 `Shader.Find`，也不创建 shader、material、RenderTexture 或任何运行时调试资源。
 
 ---
 
