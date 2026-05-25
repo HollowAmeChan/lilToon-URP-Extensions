@@ -1,6 +1,5 @@
 #pragma warning disable CS0618, CS0672
 
-using lilToon.URP.Extensions;
 using lilToon.URP.Extensions.AOV;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -40,14 +39,14 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             descriptor.height = Mathf.Max(1, descriptor.height / divisor);
 
             RenderTextureDescriptor maskDescriptor = descriptor;
-            GraphicsFormat maskFormat = HoBufferFormatUtility.GetMaskGraphicsFormat();
+            GraphicsFormat maskFormat = HoMetadataBufferFormatUtility.GetMaskGraphicsFormat();
             if (maskFormat != GraphicsFormat.None)
             {
                 maskDescriptor.graphicsFormat = maskFormat;
             }
 
             RenderTextureDescriptor highPrecisionDescriptor = descriptor;
-            GraphicsFormat highPrecisionFormat = HoBufferFormatUtility.GetHighPrecisionGraphicsFormat();
+            GraphicsFormat highPrecisionFormat = HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat();
             if (highPrecisionFormat != GraphicsFormat.None)
             {
                 highPrecisionDescriptor.graphicsFormat = highPrecisionFormat;
@@ -90,7 +89,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             int divisor = Mathf.Max(1, (int)settings.renderScale);
             int width = Mathf.Max(1, cameraTextureDescriptor.width / divisor);
             int height = Mathf.Max(1, cameraTextureDescriptor.height / divisor);
-            GraphicsFormat depthFormat = HoBufferFormatUtility.GetDepthStencilFormat(cameraTextureDescriptor);
+            GraphicsFormat depthFormat = HoMetadataBufferFormatUtility.GetDepthStencilFormat(cameraTextureDescriptor);
             RenderTextureDescriptor descriptor = new RenderTextureDescriptor(width, height, GraphicsFormat.None, depthFormat);
             descriptor.dimension = cameraTextureDescriptor.dimension;
             descriptor.volumeDepth = cameraTextureDescriptor.volumeDepth;

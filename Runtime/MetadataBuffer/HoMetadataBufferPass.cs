@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
-using lilToon.URP.Extensions;
 using lilToon.URP.Extensions.AOV;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -183,13 +182,13 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
             HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
 
-            TextureHandle maskIdTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoBufferFormatUtility.GetMaskGraphicsFormat(), HoAovShaderConstants.MaskIdTextureName));
-            TextureHandle normalDepthTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.NormalDepthTextureName));
-            TextureHandle surfaceDataTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.SurfaceDataTextureName));
-            TextureHandle custom0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.Custom0TextureName));
-            TextureHandle objectCustom0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.ObjectCustom0TextureName));
-            TextureHandle objectCustom1Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.ObjectCustom1TextureName));
-            TextureHandle sssTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.SssTextureName));
+            TextureHandle maskIdTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetMaskGraphicsFormat(), HoAovShaderConstants.MaskIdTextureName));
+            TextureHandle normalDepthTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.NormalDepthTextureName));
+            TextureHandle surfaceDataTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.SurfaceDataTextureName));
+            TextureHandle custom0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.Custom0TextureName));
+            TextureHandle objectCustom0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.ObjectCustom0TextureName));
+            TextureHandle objectCustom1Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.ObjectCustom1TextureName));
+            TextureHandle sssTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.SssTextureName));
             TextureHandle depthTexture = UniversalRenderer.CreateRenderGraphTexture(
                 renderGraph,
                 HoMetadataBufferRenderTargets.CreateDepthDescriptor(cameraData.cameraTargetDescriptor, settings),

@@ -1,4 +1,4 @@
-Shader "Hidden/lilToon-HoAOV/URP/DebugView"
+Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
 {
     SubShader
     {
@@ -14,7 +14,7 @@ Shader "Hidden/lilToon-HoAOV/URP/DebugView"
 
         Pass
         {
-            Name "HoAOV Debug View"
+            Name "MetadataBuffer Debug View"
 
             HLSLPROGRAM
             #pragma vertex Vert

@@ -158,8 +158,8 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
-                    data.debugMaterial.SetFloat(HoAovShaderConstants.DebugModeId, (float)data.debugMode);
-                    data.debugMaterial.SetVector(HoAovShaderConstants.DebugDepthParamsId, data.debugDepthParams);
+                    data.debugMaterial.SetFloat(HoMetadataBufferShaderConstants.DebugModeId, (float)data.debugMode);
+                    data.debugMaterial.SetVector(HoMetadataBufferShaderConstants.DebugDepthParamsId, data.debugDepthParams);
                     context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 1.0f);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.maskIdTexture);
                     context.cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
@@ -177,8 +177,8 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         private static void SetMaterialProperties(Material material, HoMetadataBufferSettings settings)
         {
-            material.SetFloat(HoAovShaderConstants.DebugModeId, (float)settings.debugMode);
-            material.SetVector(HoAovShaderConstants.DebugDepthParamsId, GetDebugDepthParams(settings));
+            material.SetFloat(HoMetadataBufferShaderConstants.DebugModeId, (float)settings.debugMode);
+            material.SetVector(HoMetadataBufferShaderConstants.DebugDepthParamsId, GetDebugDepthParams(settings));
         }
 
         private static Vector4 GetDebugDepthParams(HoMetadataBufferSettings settings)

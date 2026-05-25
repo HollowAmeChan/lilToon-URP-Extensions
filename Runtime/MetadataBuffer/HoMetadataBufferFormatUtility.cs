@@ -2,9 +2,9 @@ using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 
-namespace lilToon.URP.Extensions
+namespace lilToon.URP.Extensions.MetadataBuffer
 {
-    internal static class HoBufferFormatUtility
+    internal static class HoMetadataBufferFormatUtility
     {
         public static GraphicsFormat GetMaskGraphicsFormat()
         {

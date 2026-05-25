@@ -384,3 +384,16 @@ GeometryBuffer.TangentNormal
 - `MetadataBuffer` RenderGraph 与 compatibility path 都改读 `HoMetadataBufferRenderTargets` / `HoBufferFormatUtility`。
 
 这一步仍没有重命名 `_lilHoAov*` 纹理名；当前 ScreenProcess、SSS、CharacterSpecialization 与旧材质 pass 仍共用这套 shader ABI。后续拆 metadata-only shader target 或 feature-local debug shader 时再处理资源名与 shader 路径。
+
+## 18. 2026-05-25 执行记录：fallback/format helper 回到 feature 目录
+
+已修正上一步把 `HoBufferFormatUtility.cs` 放到 Runtime 根目录的问题：
+
+- 删除根目录 `Runtime/HoBufferFormatUtility.cs`。
+- 新增 `Runtime/MetadataBuffer/HoMetadataBufferFormatUtility.cs`，只服务 MetadataBuffer 的 mask / high precision / depth format fallback。
+- 新增 `Runtime/GeometryBuffer/HoGeometryBufferFormatUtility.cs`，只服务 GeometryBuffer 的 high precision / depth format fallback。
+- `MetadataBuffer` / `GeometryBuffer` 不再通过根目录共享 helper 耦合 fallback 细节；少量重复代码接受为 feature-local ownership 的代价。
+- MetadataBuffer clear/fallback shader 迁到 `Runtime/MetadataBuffer/Shaders/Fallback/`，shader 名改为 `Hidden/lilToon/URP/MetadataBuffer/Clear` 与 `Hidden/lilToon/URP/MetadataBuffer/Fallback`。
+- `HoMetadataBufferDebug.shader` 迁到 `Runtime/MetadataBuffer/Shaders/Debug/`，shader 名改为 `Hidden/lilToon/URP/MetadataBuffer/DebugView`，debug shader collection 显式路径同步更新。
+
+这一步继续保留 `_lilHoAov*` 纹理/property ABI 和 `HoAOV` / `HoAOVSSS` 材质 LightMode；它们仍是当前材质 pass、ScreenProcess、SSS 与 CharacterSpecialization 的共享兼容层。

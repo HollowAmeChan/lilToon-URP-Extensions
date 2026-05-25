@@ -1,4 +1,4 @@
-Shader "Hidden/lilToon-HoAOV/URP/Fallback"
+Shader "Hidden/lilToon/URP/MetadataBuffer/Fallback"
 {
     Properties
     {
@@ -32,7 +32,7 @@ Shader "Hidden/lilToon-HoAOV/URP/Fallback"
 
         Pass
         {
-            Name "HoAOV Fallback"
+            Name "MetadataBuffer Fallback"
             Tags { "LightMode" = "HoAOV" }
 
             HLSLPROGRAM

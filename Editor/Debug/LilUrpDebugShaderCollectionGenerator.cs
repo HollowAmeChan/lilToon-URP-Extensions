@@ -13,9 +13,9 @@ namespace lilToon.URP.Extensions.Editor.Debugging
         private static readonly DebugShaderEntry[] DebugShaders =
         {
             new DebugShaderEntry(
-                "MaterialBuffer / GeometryBuffer (HoAOV)",
-                "Hidden/lilToon-HoAOV/URP/DebugView",
-                "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AOV/Shaders/Debug/HoAovDebug.shader"),
+                "MetadataBuffer",
+                "Hidden/lilToon/URP/MetadataBuffer/DebugView",
+                "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/MetadataBuffer/Shaders/Debug/HoMetadataBufferDebug.shader"),
             new DebugShaderEntry(
                 "ShadowCast",
                 "Hidden/lilToon-HoShadowCast/URP/DebugView",

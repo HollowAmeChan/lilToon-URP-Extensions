@@ -156,7 +156,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         private void EnsureClearMaterial()
         {
-            Shader shader = Shader.Find(HoAovShaderConstants.ClearShaderName);
+            Shader shader = Shader.Find(HoMetadataBufferShaderConstants.ClearShaderName);
 
             if (clearMaterial != null && clearShader == shader)
             {
@@ -171,7 +171,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 if (!warnedMissingClearShader)
                 {
                     warnedMissingClearShader = true;
-                    Debug.LogWarning($"MetadataBuffer clear pass is unavailable because shader '{HoAovShaderConstants.ClearShaderName}' could not be found.");
+                    Debug.LogWarning($"MetadataBuffer clear pass is unavailable because shader '{HoMetadataBufferShaderConstants.ClearShaderName}' could not be found.");
                 }
 
                 return;
@@ -184,7 +184,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         {
             Shader shader = settings != null && settings.fallbackShader != null
                 ? settings.fallbackShader
-                : Shader.Find(HoAovShaderConstants.FallbackShaderName);
+                : Shader.Find(HoMetadataBufferShaderConstants.FallbackShaderName);
 
             if (fallbackMaterial != null && fallbackShader == shader)
             {
@@ -199,7 +199,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 if (!warnedMissingFallbackShader)
                 {
                     warnedMissingFallbackShader = true;
-                    Debug.LogWarning($"MetadataBuffer fallback output is unavailable because shader '{HoAovShaderConstants.FallbackShaderName}' could not be found.");
+                    Debug.LogWarning($"MetadataBuffer fallback output is unavailable because shader '{HoMetadataBufferShaderConstants.FallbackShaderName}' could not be found.");
                 }
 
                 return;
@@ -212,7 +212,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         {
             Shader shader = settings != null && settings.debugShader != null
                 ? settings.debugShader
-                : Shader.Find(HoAovShaderConstants.DebugShaderName);
+                : Shader.Find(HoMetadataBufferShaderConstants.DebugShaderName);
 
             if (debugMaterial != null && debugShader == shader)
             {
@@ -227,7 +227,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 if (!warnedMissingDebugShader)
                 {
                     warnedMissingDebugShader = true;
-                    Debug.LogWarning($"MetadataBuffer debug view is unavailable because shader '{HoAovShaderConstants.DebugShaderName}' could not be found.");
+                    Debug.LogWarning($"MetadataBuffer debug view is unavailable because shader '{HoMetadataBufferShaderConstants.DebugShaderName}' could not be found.");
                 }
 
                 return;

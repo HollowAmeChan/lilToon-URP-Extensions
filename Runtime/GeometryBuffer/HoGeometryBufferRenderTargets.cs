@@ -1,6 +1,5 @@
 #pragma warning disable CS0618, CS0672
 
-using lilToon.URP.Extensions;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -19,7 +18,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         public void ReAllocateIfNeeded(RenderTextureDescriptor cameraTextureDescriptor, HoGeometryBufferSettings settings)
         {
             RenderTextureDescriptor descriptor = CreateColorDescriptor(cameraTextureDescriptor, settings);
-            GraphicsFormat format = HoBufferFormatUtility.GetHighPrecisionGraphicsFormat();
+            GraphicsFormat format = HoGeometryBufferFormatUtility.GetHighPrecisionGraphicsFormat();
             if (format != GraphicsFormat.None)
             {
                 descriptor.graphicsFormat = format;
@@ -54,7 +53,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             int divisor = Mathf.Max(1, (int)settings.renderScale);
             int width = Mathf.Max(1, cameraTextureDescriptor.width / divisor);
             int height = Mathf.Max(1, cameraTextureDescriptor.height / divisor);
-            GraphicsFormat depthFormat = HoBufferFormatUtility.GetDepthStencilFormat(cameraTextureDescriptor);
+            GraphicsFormat depthFormat = HoGeometryBufferFormatUtility.GetDepthStencilFormat(cameraTextureDescriptor);
             RenderTextureDescriptor descriptor = new RenderTextureDescriptor(width, height, GraphicsFormat.None, depthFormat);
             descriptor.dimension = cameraTextureDescriptor.dimension;
             descriptor.volumeDepth = cameraTextureDescriptor.volumeDepth;

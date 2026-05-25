@@ -5,9 +5,6 @@ namespace lilToon.URP.Extensions.AOV
 {
     internal static class HoAovShaderConstants
     {
-        public const string FallbackShaderName = "Hidden/lilToon-HoAOV/URP/Fallback";
-        public const string DebugShaderName = "Hidden/lilToon-HoAOV/URP/DebugView";
-        public const string ClearShaderName = "Hidden/lilToon-HoAOV/URP/Clear";
         public const string ShaderPassName = "HoAOV";
         public const string SssShaderPassName = "HoAOVSSS";
 
@@ -48,9 +45,6 @@ namespace lilToon.URP.Extensions.AOV
         public static readonly int ObjectCustom0TextureId = Shader.PropertyToID(ObjectCustom0TextureName);
         public static readonly int ObjectCustom1TextureId = Shader.PropertyToID(ObjectCustom1TextureName);
         public static readonly int SssTextureId = Shader.PropertyToID(SssTextureName);
-        public static readonly int DebugModeId = Shader.PropertyToID("_HoAovDebugMode");
-        public static readonly int DebugDepthParamsId = Shader.PropertyToID("_HoAovDebugDepthParams");
-
         public static readonly int MaskWeightId = Shader.PropertyToID(MaskWeightName);
         public static readonly int SystemWriteMaskId = Shader.PropertyToID(SystemWriteMaskName);
         public static readonly int CustomWriteMaskId = Shader.PropertyToID(CustomWriteMaskName);

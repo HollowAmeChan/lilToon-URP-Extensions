@@ -1,4 +1,4 @@
-Shader "Hidden/lilToon-HoAOV/URP/Clear"
+Shader "Hidden/lilToon/URP/MetadataBuffer/Clear"
 {
     SubShader
     {
@@ -14,7 +14,7 @@ Shader "Hidden/lilToon-HoAOV/URP/Clear"
 
         Pass
         {
-            Name "HoAOV Clear"
+            Name "MetadataBuffer Clear"
 
             HLSLPROGRAM
             #pragma target 4.5

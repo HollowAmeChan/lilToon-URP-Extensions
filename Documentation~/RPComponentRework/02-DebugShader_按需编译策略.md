@@ -164,7 +164,7 @@ if debug enabled:
 
 优先处理：
 
-- `Runtime/AOV/Shaders/Debug/HoAovDebug.shader`
+- `Runtime/MetadataBuffer/Shaders/Debug/HoMetadataBufferDebug.shader`
 - `Runtime/ShadowCast/Shaders/Debug/HoShadowCastDebug.shader`
 - `Runtime/SubsurfaceScattering/HoSubsurfaceScattering.shader` 内部 debug 分支
 - `Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl` 相关 debug 输出
@@ -188,17 +188,17 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 已继续对 AOV debug shader 做按需加载修正：
 
 - AOV/MetadataBuffer 主材质准备流程改为 `EnsureMaterials(includeDebug)`；2026-05-25 后用户入口类名已迁为 `HoMetadataBufferRendererFeature`。
-- 只有 `HoMetadataBufferSettings.debugMode != Off` 且当前 camera 类型允许 debug 显示时，才调用 `Shader.Find(HoAovShaderConstants.DebugShaderName)` 并创建 debug material。
-- debug 关闭时仍正常创建 clear / fallback 主功能材质，但不会查找或加载 `HoAovDebug.shader`。
+- 只有 `HoMetadataBufferSettings.debugMode != Off` 且当前 camera 类型允许 debug 显示时，才调用 `Shader.Find(HoMetadataBufferShaderConstants.DebugShaderName)` 并创建 debug material。
+- debug 关闭时仍正常创建 clear / fallback 主功能材质，但不会查找或加载 `HoMetadataBufferDebug.shader`。
 - debug shader 缺失仍只 warning once，并且只影响 AOV debug pass，不影响 AOV output pass。
-- 2026-05-25 继续把 `HoAovDebug.shader` 移到 `Runtime/AOV/Shaders/Debug/`，shader 名与 `.meta` GUID 保持不变；`LilUrpDebugShaderCollectionGenerator` 的显式收集路径同步更新到新的 feature-local debug 目录。
+- 2026-05-25 继续把 `HoAovDebug.shader` 更名并迁到 `Runtime/MetadataBuffer/Shaders/Debug/HoMetadataBufferDebug.shader`，shader 名改为 `Hidden/lilToon/URP/MetadataBuffer/DebugView`；`LilUrpDebugShaderCollectionGenerator` 的显式收集路径同步更新到 MetadataBuffer feature-local debug 目录。
 
 已补上显式生成 debug shader collection 的 Editor 入口：
 
 - 新增 `Editor/Debug/LilUrpDebugShaderCollectionGenerator.cs`。
 - 菜单路径为 `lilToon URP Extensions/Debug/Generate Debug Shader Collection`。
 - 生成目标为宿主工程 `Assets/lilToon URP Extensions/Debug/LilUrpDebugShaders.shadervariants`，不把 collection 默认放入运行时包资源。
-- 第一批只收集已经按需加载的独立重 debug shader：`HoAovDebug.shader` 与 `HoShadowCastDebug.shader`。
+- 第一批只收集已经按需加载的独立重 debug shader：`HoMetadataBufferDebug.shader`、`HoShadowCastDebug.shader` 与 `HoSubsurfaceScatteringDebug.shader`。
 - 生成器优先通过 package asset path 加载 shader，失败时才 fallback 到 `Shader.Find`，因此普通运行时仍不会因为安装包而主动查找 debug shader。
 
 待处理：
