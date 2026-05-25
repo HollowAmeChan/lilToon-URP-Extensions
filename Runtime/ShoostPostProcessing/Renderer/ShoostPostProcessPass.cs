@@ -59,6 +59,17 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         public void Dispose()
         {
+            ReleaseRuntimeResources();
+            runtimeLayers.Clear();
+        }
+
+        public void ClearRuntimeLayers()
+        {
+            runtimeLayers.Clear();
+        }
+
+        public void ReleaseRuntimeResources()
+        {
             tempTextureA?.Release();
             tempTextureB?.Release();
             tempTextureA = null;
@@ -85,12 +96,17 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             changeFrameRateStates.Clear();
-            runtimeLayers.Clear();
+            ResetGlobalTextures();
+            cameraColorTarget = null;
         }
 
-        public void ClearRuntimeLayers()
+        private static void ResetGlobalTextures()
         {
-            runtimeLayers.Clear();
+            Texture fallback = Texture2D.blackTexture;
+            Shader.SetGlobalTexture(ShoostPostProcessShaderConstants.OriginalTexId, fallback);
+            Shader.SetGlobalTexture(ShoostPostProcessShaderConstants.BlurredTexId, fallback);
+            Shader.SetGlobalTexture(ShoostPostProcessShaderConstants.BloomTexId, fallback);
+            Shader.SetGlobalTexture(ShoostPostProcessShaderConstants.FrozenFrameTexId, fallback);
         }
 
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)

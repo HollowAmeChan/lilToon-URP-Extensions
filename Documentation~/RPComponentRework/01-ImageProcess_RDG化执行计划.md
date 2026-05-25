@@ -246,6 +246,12 @@ Runtime/ShoostPostProcessing/ShoostPostProcessEffectDescriptor.cs
 - `ShoostPostProcessStackVolumeEditor` 只在检测到旧 AOV flag 时显示迁移提示，并提供 `Clear legacy AOV mask settings` 按钮清空 legacy 标记和规则数据。
 - 本次不改变 runtime 行为：ImageProcess 仍只 warning once 并忽略 legacy AOV mask，不读取 AOV / MaterialBuffer / GeometryBuffer / ShadowCast。
 
+继续推进后，ImageProcess 关闭时的短期资源生命周期收窄：
+
+- `ShoostPostProcessPass` 增加 `ReleaseRuntimeResources()`，集中释放 compatibility path 的 Work RT、Iris/RGBBlur/Glow/ApertureBokeh 临时 RT 和 ChangeFrameRate image-domain history，并把 `_OriginalTex`、`_BlurredTex`、`_BloomTex`、`_FrozenFrameTex` global texture reset 到黑纹理。
+- `ShoostPostProcessRendererFeature` 在全局关闭、Volume 不活跃或构建后没有 active layer 时释放这些运行时资源；SceneView 只是未启用显示时不主动释放，避免 GameView 仍在使用 ImageProcess 时反复重分配。
+- 本次不改变 RenderGraph 主路径的 ImageChain 行为，也不重新引入 AOV / MaterialBuffer / GeometryBuffer / ShadowCast 输入。
+
 ---
 
 ## 9. 验收清单

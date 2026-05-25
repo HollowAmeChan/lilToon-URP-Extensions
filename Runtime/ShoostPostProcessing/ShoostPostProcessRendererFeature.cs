@@ -38,6 +38,11 @@ namespace lilToon.URP.Extensions.PostProcessing
             if (!ShouldRender(in renderingData, volume))
             {
                 afterPostProcessPass?.ClearRuntimeLayers();
+                if (ShouldReleaseRuntimeResources(in renderingData, volume))
+                {
+                    afterPostProcessPass?.ReleaseRuntimeResources();
+                }
+
                 return;
             }
 
@@ -51,6 +56,11 @@ namespace lilToon.URP.Extensions.PostProcessing
             if (!ShouldRender(in renderingData, volume))
             {
                 afterPostProcessPass?.ClearRuntimeLayers();
+                if (ShouldReleaseRuntimeResources(in renderingData, volume))
+                {
+                    afterPostProcessPass?.ReleaseRuntimeResources();
+                }
+
                 return;
             }
 
@@ -83,6 +93,17 @@ namespace lilToon.URP.Extensions.PostProcessing
             return cameraType == CameraType.Game && volume != null && volume.IsActive();
         }
 
+        private bool ShouldReleaseRuntimeResources(in RenderingData renderingData, ShoostPostProcessStackVolume volume)
+        {
+            if (settings == null || !settings.enabled || !UseVolumes || volume == null || !volume.IsActive())
+            {
+                return true;
+            }
+
+            CameraType cameraType = renderingData.cameraData.cameraType;
+            return cameraType == CameraType.Game;
+        }
+
         private void BuildRuntimeLayers(ShoostPostProcessStackVolume volume)
         {
             ShoostPostProcessRuntimeLayerBuilder.Build(volume, settings, materialCache, afterPostProcessLayers);
@@ -97,6 +118,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             if (pass == null || layers.Count == 0)
             {
                 pass?.ClearRuntimeLayers();
+                pass?.ReleaseRuntimeResources();
                 return;
             }
 
@@ -112,6 +134,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             if (pass == null || layers.Count == 0)
             {
                 pass?.ClearRuntimeLayers();
+                pass?.ReleaseRuntimeResources();
                 return;
             }
 
