@@ -1,5 +1,6 @@
 #pragma warning disable CS0618, CS0672
 
+using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 
 namespace lilToon.URP.Extensions.MetadataBuffer
