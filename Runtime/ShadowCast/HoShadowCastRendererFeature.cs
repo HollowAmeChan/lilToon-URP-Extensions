@@ -14,12 +14,10 @@ namespace lilToon.URP.Extensions.ShadowCast
         private HoShadowCastSettings settings = new HoShadowCastSettings();
 
         private readonly HoShadowCastRenderTargets renderTargets = new HoShadowCastRenderTargets();
+        private readonly HoShadowCastDebugMaterial debugMaterialCache = new HoShadowCastDebugMaterial();
         private HoShadowCastPass pass;
         private HoShadowCastDebugPass debugPass;
-        private Material debugMaterial;
-        private Shader debugShader;
         private bool registeredCameraReset;
-        private bool warnedMissingDebugShader;
 
         public HoShadowCastSettings Settings => settings;
 
@@ -47,15 +45,14 @@ namespace lilToon.URP.Extensions.ShadowCast
             pass?.Setup(settings, config, renderTargets);
             if (debugPass != null && ShouldDebug(config))
             {
-                EnsureDebugMaterial();
-                if (debugMaterial != null)
+                if (debugMaterialCache.Ensure())
                 {
-                    debugPass.Setup(config, renderTargets, renderer.cameraColorTargetHandle, debugMaterial);
+                    debugPass.Setup(config, renderTargets, renderer.cameraColorTargetHandle, debugMaterialCache.Material);
                 }
             }
             else
             {
-                ReleaseDebugMaterial();
+                debugMaterialCache.Release();
             }
         }
 
@@ -77,16 +74,15 @@ namespace lilToon.URP.Extensions.ShadowCast
 
             if (debugPass != null && ShouldDebug(config))
             {
-                EnsureDebugMaterial();
-                if (debugMaterial != null)
+                if (debugMaterialCache.Ensure())
                 {
-                    debugPass.SetupRenderGraph(config, debugMaterial);
+                    debugPass.SetupRenderGraph(config, debugMaterialCache.Material);
                     renderer.EnqueuePass(debugPass);
                 }
             }
             else
             {
-                ReleaseDebugMaterial();
+                debugMaterialCache.Release();
             }
         }
 
@@ -97,7 +93,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             pass = null;
             debugPass?.Dispose();
             debugPass = null;
-            ReleaseDebugMaterial();
+            debugMaterialCache.Release();
         }
 
         private bool ShouldRender(in RenderingData renderingData, HoShadowCastFrameConfig config)
@@ -114,39 +110,6 @@ namespace lilToon.URP.Extensions.ShadowCast
         private static bool ShouldDebug(HoShadowCastFrameConfig config)
         {
             return config != null && config.debugMode != HoShadowCastDebugMode.Off;
-        }
-
-        private void EnsureDebugMaterial()
-        {
-            if (debugMaterial != null)
-            {
-                return;
-            }
-
-            if (debugShader == null)
-            {
-                debugShader = Shader.Find(HoShadowCastShaderConstants.DebugShaderName);
-            }
-
-            if (debugShader == null)
-            {
-                if (!warnedMissingDebugShader)
-                {
-                    Debug.LogWarning("[lilToon] HoShadowCast debug shader not found: " + HoShadowCastShaderConstants.DebugShaderName);
-                    warnedMissingDebugShader = true;
-                }
-
-                return;
-            }
-
-            debugMaterial = CoreUtils.CreateEngineMaterial(debugShader);
-        }
-
-        private void ReleaseDebugMaterial()
-        {
-            CoreUtils.Destroy(debugMaterial);
-            debugMaterial = null;
-            debugShader = null;
         }
 
         private void RegisterCameraReset()

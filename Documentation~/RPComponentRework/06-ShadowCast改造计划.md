@@ -458,6 +458,15 @@ ShadowCast 与 ScreenProcess 的关系：
 - `02-DebugShader_按需编译策略.md` 同步修正 ShadowCast debug mode 来源，删除 legacy controller override 的当前策略描述。
 - 本次只清理旧 controller 语义命名与文档，不改变 atlas 分配、receiver ABI、debug shader 按需加载、MaterialBuffer/GeometryBuffer 边界或 ImageProcess 禁止消费 ShadowCast 的规则。
 
+## 10.14 2026-05-25 执行记录
+
+已继续收窄 ShadowCast RendererFeature 主文件里的 debug material 生命周期边界：
+
+- 新增 `HoShadowCastDebugMaterial`，把 debug shader 按需 `Shader.Find`、warning once、debug material 创建和释放集中到 feature-local helper。
+- `HoShadowCastRendererFeature` 仍决定 debug pass 是否入队，只在 `debugMode != Off` 时调用 helper `Ensure()`，debug 关闭或 feature dispose 时调用 `Release()`。
+- `HoShadowCastDebugPass` 继续只接收已创建好的 `Material`，不拥有 shader 查找或 material 生命周期。
+- 本次只拆分 debug material lifecycle，不改变 debug shader 名、按需加载条件、atlas 渲染、receiver ABI、MaterialBuffer/GeometryBuffer 边界或 ImageProcess 禁止消费 ShadowCast 的规则。
+
 仍待处理：
 - 后续如果需要按 renderer/material 侧声明更细的 receiver gate，应放到 receiver / material 语义里，不反向扩张 ShadowCast 为对象分类系统。
 ---
