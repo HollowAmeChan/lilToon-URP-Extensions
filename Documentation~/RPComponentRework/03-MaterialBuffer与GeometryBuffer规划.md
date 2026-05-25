@@ -397,3 +397,14 @@ GeometryBuffer.TangentNormal
 - `HoMetadataBufferDebug.shader` 迁到 `Runtime/MetadataBuffer/Shaders/Debug/`，shader 名改为 `Hidden/lilToon/URP/MetadataBuffer/DebugView`，debug shader collection 显式路径同步更新。
 
 这一步继续保留 `_lilHoAov*` 纹理/property ABI 和 `HoAOV` / `HoAOVSSS` 材质 LightMode；它们仍是当前材质 pass、ScreenProcess、SSS 与 CharacterSpecialization 的共享兼容层。
+
+## 19. 2026-05-25 执行记录：MetadataBuffer debug mode 脱离 AOV 类型层
+
+已把 MetadataBuffer debug-only 类型和 shader 参数继续迁回 feature 局部：
+
+- `HoAovDebugMode` 从 `Runtime/AOV/HoAovBufferTypes.cs` 移除。
+- 新增 `Runtime/MetadataBuffer/HoMetadataBufferDebugMode.cs`，只服务 MetadataBuffer debug UI / pass / settings。
+- MetadataBuffer debug shader 参数从 `_HoAovDebugMode` / `_HoAovDebugDepthParams` 改为 `_HoMetadataBufferDebugMode` / `_HoMetadataBufferDebugDepthParams`。
+- Debug mode 最后一项从旧 `SSS Source Color` 命名收敛为 `Surface Color`，继续读取当前兼容 ABI 的 `_lilHoAovSssTexture`，后续 shader target 拆分时再改资源名。
+
+这一步不改变主输出 MRT、`_lilHoAov*` 纹理/property ABI、`HoAOV` / `HoAOVSSS` 材质 LightMode，也不影响 ScreenProcess、SSS 或 CharacterSpecialization 的消费路径。

@@ -47,7 +47,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         public Shader debugShader;
 
         [InspectorName("Debug Mode")]
-        public HoAovDebugMode debugMode = HoAovDebugMode.Off;
+        public HoMetadataBufferDebugMode debugMode = HoMetadataBufferDebugMode.Off;
 
         [InspectorName("Debug In Scene View")]
         public bool debugInSceneView = true;

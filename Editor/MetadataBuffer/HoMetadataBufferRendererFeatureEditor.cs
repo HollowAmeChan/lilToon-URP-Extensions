@@ -91,7 +91,7 @@ namespace lilToon.URP.Extensions.Editor.MetadataBuffer
         private void DrawDebugInteractionNotice()
         {
             SerializedProperty debugMode = settingsProperty.FindPropertyRelative("debugMode");
-            if (debugMode == null || debugMode.enumValueIndex == (int)HoAovDebugMode.Off)
+            if (debugMode == null || debugMode.enumValueIndex == (int)HoMetadataBufferDebugMode.Off)
             {
                 return;
             }

@@ -134,7 +134,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         private bool ShouldDebug(in RenderingData renderingData)
         {
-            if (settings == null || settings.debugMode == HoAovDebugMode.Off)
+            if (settings == null || settings.debugMode == HoMetadataBufferDebugMode.Off)
             {
                 return false;
             }

@@ -8,7 +8,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         public const string FallbackShaderName = "Hidden/lilToon/URP/MetadataBuffer/Fallback";
         public const string DebugShaderName = "Hidden/lilToon/URP/MetadataBuffer/DebugView";
 
-        public static readonly int DebugModeId = Shader.PropertyToID("_HoAovDebugMode");
-        public static readonly int DebugDepthParamsId = Shader.PropertyToID("_HoAovDebugDepthParams");
+        public static readonly int DebugModeId = Shader.PropertyToID("_HoMetadataBufferDebugMode");
+        public static readonly int DebugDepthParamsId = Shader.PropertyToID("_HoMetadataBufferDebugDepthParams");
     }
 }

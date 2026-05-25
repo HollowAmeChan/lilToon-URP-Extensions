@@ -192,6 +192,7 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 - debug 关闭时仍正常创建 clear / fallback 主功能材质，但不会查找或加载 `HoMetadataBufferDebug.shader`。
 - debug shader 缺失仍只 warning once，并且只影响 AOV debug pass，不影响 AOV output pass。
 - 2026-05-25 继续把 `HoAovDebug.shader` 更名并迁到 `Runtime/MetadataBuffer/Shaders/Debug/HoMetadataBufferDebug.shader`，shader 名改为 `Hidden/lilToon/URP/MetadataBuffer/DebugView`；`LilUrpDebugShaderCollectionGenerator` 的显式收集路径同步更新到 MetadataBuffer feature-local debug 目录。
+- 2026-05-25 继续把 `HoAovDebugMode` 迁为 `HoMetadataBufferDebugMode`，debug-only shader 参数改为 `_HoMetadataBufferDebugMode` / `_HoMetadataBufferDebugDepthParams`；旧 HoAOV 类型层不再承载 MetadataBuffer debug mode。
 
 已补上显式生成 debug shader collection 的 Editor 入口：
 

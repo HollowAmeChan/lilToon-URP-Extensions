@@ -30,7 +30,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             public TextureHandle objectCustom1Texture;
             public TextureHandle sssTexture;
             public Material debugMaterial;
-            public HoAovDebugMode debugMode;
+            public HoMetadataBufferDebugMode debugMode;
             public Vector4 debugDepthParams;
         }
 

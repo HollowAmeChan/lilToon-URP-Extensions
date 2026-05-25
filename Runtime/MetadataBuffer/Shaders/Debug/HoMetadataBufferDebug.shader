@@ -25,8 +25,8 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AOV/Shaders/HoAOV/HoAovSampling.hlsl"
 
             float _lilHoAovActive;
-            float _HoAovDebugMode;
-            float4 _HoAovDebugDepthParams; // x near, y far, z inv range
+            float _HoMetadataBufferDebugMode;
+            float4 _HoMetadataBufferDebugDepthParams; // x near, y far, z inv range
 
             TEXTURE2D_X(_lilHoAovMaskIdTexture);
             TEXTURE2D_X(_lilHoAovNormalDepthTexture);
@@ -103,7 +103,7 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
                     return source;
                 }
 
-                int mode = (int)round(_HoAovDebugMode);
+                int mode = (int)round(_HoMetadataBufferDebugMode);
                 half4 maskId = SAMPLE_TEXTURE2D_X(_lilHoAovMaskIdTexture, sampler_PointClamp, uv);
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_lilHoAovNormalDepthTexture, sampler_PointClamp, uv);
                 half4 surfaceData = SAMPLE_TEXTURE2D_X(_lilHoAovSurfaceDataTexture, sampler_PointClamp, uv);
@@ -127,7 +127,7 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
 
                 if (mode == 4)
                 {
-                    half depth = saturate((LilHoAovLinearDepthOrFar(normalDepth, _HoAovDebugDepthParams.y) - _HoAovDebugDepthParams.x) * _HoAovDebugDepthParams.z);
+                    half depth = saturate((LilHoAovLinearDepthOrFar(normalDepth, _HoMetadataBufferDebugDepthParams.y) - _HoMetadataBufferDebugDepthParams.x) * _HoMetadataBufferDebugDepthParams.z);
                     return half4(depth, depth, depth, 1.0);
                 }
 
