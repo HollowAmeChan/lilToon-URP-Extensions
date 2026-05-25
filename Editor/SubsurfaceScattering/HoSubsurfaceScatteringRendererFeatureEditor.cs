@@ -108,7 +108,34 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
                 DrawProperty(renderScale);
                 DrawProperty(quality);
                 DrawProperty(strength);
+                DrawRuntimeDiagnostics();
             }
+        }
+
+        private static void DrawRuntimeDiagnostics()
+        {
+            HoSubsurfaceScatteringRuntimeDiagnosticSnapshot snapshot = HoSubsurfaceScatteringRuntimeDiagnostics.CurrentSnapshot;
+            EditorGUILayout.Space(4.0f);
+            EditorGUILayout.LabelField("运行状态", EditorStyles.boldLabel);
+
+            if (!snapshot.IsValid)
+            {
+                EditorGUILayout.HelpBox("尚未记录 HoSSS 运行帧。进入 Play Mode，或让使用该 RendererFeature 的 Scene/Game camera 渲染一帧。", MessageType.Info);
+                return;
+            }
+
+            EditorGUILayout.LabelField("帧", snapshot.FrameCount.ToString());
+            EditorGUILayout.LabelField("相机", snapshot.CameraName);
+            EditorGUILayout.LabelField("阶段", snapshot.Stage);
+            EditorGUILayout.LabelField("Camera Color", FormatAvailable(snapshot.CameraColorAvailable));
+            EditorGUILayout.LabelField("MetadataBuffer", FormatAvailable(snapshot.MetadataBufferAvailable));
+            EditorGUILayout.LabelField("GeometryBuffer", FormatAvailable(snapshot.GeometryBufferAvailable));
+
+            EditorGUILayout.HelpBox(
+                snapshot.Ready
+                    ? "HoSSS 输入有效：MetadataBuffer 与 GeometryBuffer 均可用。"
+                    : "HoSSS 已跳过：" + snapshot.Reason,
+                snapshot.Ready ? MessageType.Info : MessageType.Warning);
         }
 
         private void DrawProfiles()
@@ -238,6 +265,11 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
             }
 
             return count;
+        }
+
+        private static string FormatAvailable(bool available)
+        {
+            return available ? "可用" : "缺失";
         }
 
         private static bool DrawSectionHeader(ref bool expanded, string title, string summary, Color color)

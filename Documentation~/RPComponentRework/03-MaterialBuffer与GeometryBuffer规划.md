@@ -503,3 +503,12 @@ GeometryBuffer.TangentNormal
 - GeometryBuffer 自己的 `Coverage`、`LinearDepth`、`WorldNormal`、`NormalValidity` debug view 保持不变。
 
 完成后，MetadataBuffer 面板和 shader path 不再把 depth / normal / velocity 暴露成自身输出项。后续审查 `ScreenProcess` / `SSS` / `CharacterSpecialization` 时，应分别记录它们读取的是 MetadataBuffer 语义项还是 GeometryBuffer 几何项。
+
+### 2026-05-26：SSS 消费侧诊断
+
+已开始从消费者侧把 Buffer 依赖显式化。本步先处理 `Ho-SubsurfaceScattering`：
+
+- SSS RenderGraph source pass 实际需要 `activeColorTexture`、`HoMetadataBufferRenderGraphResources.HasRequiredTextures` 和 `HoGeometryBufferRenderGraphResources.HasRequiredTextures`。
+- MetadataBuffer 侧实际读取 `maskIdTexture`、`surfaceDataTexture`、`surfaceColorTexture`；GeometryBuffer 侧实际读取 `normalDepthTexture`。
+- 缺少 camera color、MetadataBuffer 或 GeometryBuffer 时，SSS 继续跳过该帧 pass，但会发布 `HoSubsurfaceScatteringRuntimeDiagnostics.CurrentSnapshot`，Inspector 运行区显示最近一帧缺失项。
+- 这一步没有让 SSS 拥有 MaterialBuffer / GeometryBuffer，也没有把 composite weight 写回 Buffer；它只暴露现有依赖和降级状态。

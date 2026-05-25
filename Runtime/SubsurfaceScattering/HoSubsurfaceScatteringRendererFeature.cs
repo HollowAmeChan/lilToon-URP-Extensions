@@ -152,6 +152,10 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         {
             if (!ShouldRender(in renderingData))
             {
+                HoSubsurfaceScatteringRuntimeDiagnostics.PublishSkipped(
+                    renderingData.cameraData.camera,
+                    "RendererFeature",
+                    GetSkipReason(in renderingData));
                 return;
             }
 
@@ -159,6 +163,10 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             EnsureMaterial();
             if (material == null)
             {
+                HoSubsurfaceScatteringRuntimeDiagnostics.PublishSkipped(
+                    renderingData.cameraData.camera,
+                    "RendererFeature",
+                    "材质不可用。");
                 return;
             }
 
@@ -224,6 +232,22 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             }
 
             return cameraType == CameraType.Game;
+        }
+
+        private string GetSkipReason(in RenderingData renderingData)
+        {
+            if (settings == null || !settings.enabled)
+            {
+                return "Feature 已关闭。";
+            }
+
+            CameraType cameraType = renderingData.cameraData.cameraType;
+            if (cameraType == CameraType.SceneView && !settings.renderInSceneView)
+            {
+                return "Scene View 渲染已关闭。";
+            }
+
+            return "当前 camera type 不支持。";
         }
 
         private void EnsureMaterial()
@@ -379,7 +403,16 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
             HoSubsurfaceScatteringRenderGraphResources sssResources = frameData.GetOrCreate<HoSubsurfaceScatteringRenderGraphResources>();
             TextureHandle cameraColor = resourceData.activeColorTexture;
-            if (!cameraColor.IsValid() || !metadataResources.HasRequiredTextures || !geometryResources.HasRequiredTextures)
+            bool hasCameraColor = cameraColor.IsValid();
+            bool hasMetadataBuffer = metadataResources.HasRequiredTextures;
+            bool hasGeometryBuffer = geometryResources.HasRequiredTextures;
+            HoSubsurfaceScatteringRuntimeDiagnostics.PublishBufferStatus(
+                cameraData.camera,
+                "Source",
+                hasCameraColor,
+                hasMetadataBuffer,
+                hasGeometryBuffer);
+            if (!hasCameraColor || !hasMetadataBuffer || !hasGeometryBuffer)
             {
                 return;
             }

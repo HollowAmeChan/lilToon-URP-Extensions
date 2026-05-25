@@ -233,7 +233,15 @@ ImageProcess UI：
 - `Editor/ShoostIcons` 迁为 `Editor/ImageProcessIcons`，ScreenProcess 与 ImageProcess 编辑器共用新路径。
 - 迁移不重新引入 AOV mask / semantic mask；ImageProcess 仍只处理 image chain。
 
-## 12. 验收清单
+## 12. 2026-05-26 执行记录：SSS 输入诊断边界
+
+SSS 不是 PostProcess/ImageProcess layer，也不通过旧 AOV 总输入工作。本次补齐了它作为 ScreenProcess 前置语义消费者的运行时诊断：
+
+- SSS RenderGraph source pass 只声明读取 MetadataBuffer 的 mask/surfaceData/surfaceColor 与 GeometryBuffer 的 normalDepth。
+- 缺少 MetadataBuffer 或 GeometryBuffer 时，SSS 不把降级伪装成 ImageProcess 问题，而是在自己的 RendererFeature Inspector 运行状态中显示缺失项。
+- ImageProcess 仍不得读取 SSS、MetadataBuffer 或 GeometryBuffer；需要语义输入的后续效果继续归 ScreenProcess。
+
+## 13. 验收清单
 
 - ScreenProcess 用户拖拽顺序就是执行顺序。
 - ImageProcess 用户拖拽顺序就是执行顺序。

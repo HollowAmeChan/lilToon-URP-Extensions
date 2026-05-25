@@ -121,6 +121,7 @@ MetadataBuffer debug 不再显示 depth / normal / velocity；这些几何观察
 - source / composite debug。
 
 SSS 不拥有 MaterialBuffer。它消费 `SurfaceColor/DiffuseColor`、thickness、curvature、profile、depth、normal。
+当前 RenderGraph source pass 的硬依赖是 camera color、MetadataBuffer 的 mask/surfaceData/surfaceColor，以及 GeometryBuffer 的 normalDepth。缺少 MetadataBuffer 或 GeometryBuffer 时，SSS 会跳过该帧并在 Feature Inspector 的运行状态里显示缺失项。
 
 Debug 重点看：
 
@@ -236,10 +237,11 @@ Debug 入口可以统一，但资源归属必须局部：
 
 ### SSS 不生效
 
-1. 看 `SurfaceColor/DiffuseColor` 是否有数据。
-2. 看 thickness / profile 是否写入。
-3. 看 depth / normal 是否有效。
-4. 打开 SSS source / diffusion / composite debug。
+1. 先看 SSS Feature Inspector 的运行状态，确认缺的是 MetadataBuffer、GeometryBuffer 还是 camera color。
+2. 看 `SurfaceColor/DiffuseColor` 是否有数据。
+3. 看 thickness / profile 是否写入。
+4. 看 depth / normal 是否有效。
+5. 打开 SSS source / diffusion / composite debug。
 
 ### ScreenProcess 效果命中错误
 
