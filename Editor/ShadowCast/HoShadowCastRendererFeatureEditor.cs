@@ -243,8 +243,16 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
                 HoShadowCastRuntimeDiagnosticLight light = lights[i];
                 EditorGUILayout.LabelField(
                     light.Name,
-                    light.Stage + " " + light.Type + " slices " + light.FirstSlice + "+" + light.SliceCount + " @ " + light.Resolution + "px");
+                    FormatAcceptedLight(light));
             }
+        }
+
+        private static string FormatAcceptedLight(HoShadowCastRuntimeDiagnosticLight light)
+        {
+            string summary = light.Stage + " " + light.Type + " slices " + light.FirstSlice + "+" + light.SliceCount + " @ " + light.Resolution + "px";
+            return light.BlockOffsetX >= 0 && light.BlockOffsetY >= 0 && light.BlockWidth > 0 && light.BlockHeight > 0
+                ? summary + ", block (" + light.BlockOffsetX + ", " + light.BlockOffsetY + ") " + light.BlockWidth + "x" + light.BlockHeight
+                : summary;
         }
 
         private static void DrawSkippedLights(HoShadowCastRuntimeDiagnosticSkip[] skippedLights, int skippedCandidateCount)

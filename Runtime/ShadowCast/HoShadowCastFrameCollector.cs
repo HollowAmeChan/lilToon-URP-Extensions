@@ -276,7 +276,17 @@ namespace lilToon.URP.Extensions.ShadowCast
                 int lightIndex = target.lightCount++;
                 target.sourceLights[lightIndex] = light;
                 target.lightData[lightIndex] = new Vector4(firstSlice, cascadeCount, shadowStrength, 0.0f);
-                diagnostics?.AddAccepted(light, "SecondDirectional", LightType.Directional, firstSlice, cascadeCount, resolution);
+                diagnostics?.AddAccepted(
+                    light,
+                    "SecondDirectional",
+                    LightType.Directional,
+                    firstSlice,
+                    cascadeCount,
+                    resolution,
+                    blockOffsetX,
+                    blockOffsetY,
+                    resolution * cascadeColumns,
+                    resolution * cascadeRows);
             }
 
             target.FillUnused();

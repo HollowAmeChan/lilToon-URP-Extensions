@@ -10,8 +10,22 @@ namespace lilToon.URP.Extensions.ShadowCast
         public readonly int FirstSlice;
         public readonly int SliceCount;
         public readonly int Resolution;
+        public readonly int BlockOffsetX;
+        public readonly int BlockOffsetY;
+        public readonly int BlockWidth;
+        public readonly int BlockHeight;
 
-        public HoShadowCastRuntimeDiagnosticLight(string name, string stage, LightType type, int firstSlice, int sliceCount, int resolution)
+        public HoShadowCastRuntimeDiagnosticLight(
+            string name,
+            string stage,
+            LightType type,
+            int firstSlice,
+            int sliceCount,
+            int resolution,
+            int blockOffsetX,
+            int blockOffsetY,
+            int blockWidth,
+            int blockHeight)
         {
             Name = name;
             Stage = stage;
@@ -19,6 +33,10 @@ namespace lilToon.URP.Extensions.ShadowCast
             FirstSlice = firstSlice;
             SliceCount = sliceCount;
             Resolution = resolution;
+            BlockOffsetX = blockOffsetX;
+            BlockOffsetY = blockOffsetY;
+            BlockWidth = blockWidth;
+            BlockHeight = blockHeight;
         }
     }
 
@@ -205,7 +223,17 @@ namespace lilToon.URP.Extensions.ShadowCast
                 reason);
         }
 
-        public void AddAccepted(Light light, string stage, LightType type, int firstSlice, int sliceCount, int resolution)
+        public void AddAccepted(
+            Light light,
+            string stage,
+            LightType type,
+            int firstSlice,
+            int sliceCount,
+            int resolution,
+            int blockOffsetX = -1,
+            int blockOffsetY = -1,
+            int blockWidth = 0,
+            int blockHeight = 0)
         {
             if (acceptedLightEntryCount >= acceptedLights.Length)
             {
@@ -218,7 +246,11 @@ namespace lilToon.URP.Extensions.ShadowCast
                 type,
                 firstSlice,
                 sliceCount,
-                resolution);
+                resolution,
+                blockOffsetX,
+                blockOffsetY,
+                blockWidth,
+                blockHeight);
         }
 
         public void Publish(bool hasFrame, HoShadowCastFrame frame, bool hasSecondDirectionalFrame, HoShadowCastSecondDirectionalFrame secondDirectionalFrame)

@@ -407,6 +407,19 @@ ShadowCast 与 ScreenProcess 的关系：
 - Runtime Inspector 仍只显示 accepted/skipped 列表，后续可补充 second directional block 起点与 block 尺寸的只读展示。
 - 继续细化 light layer 与 URP rendering layer / light layer 的关系。
 
+## 10.8 2026-05-25 执行记录
+
+已补齐 second directional atlas block 的运行时只读诊断：
+
+- `HoShadowCastRuntimeDiagnosticLight` 增加 atlas block 起点和尺寸字段，默认只作为诊断数据，不影响 receiver ABI。
+- `HoShadowCastFrameCollector.BuildSecondDirectionalFrameData()` 在整光源 block 分配成功后，把 block offset 与 block size 写入 accepted light 诊断。
+- `HoShadowCastRendererFeatureEditor` 的 Runtime / Accepted Lights 列表会在 second directional 记录上显示 block `(x, y)` 与 `width x height`，便于核对整光源 cascade block packing。
+- 本次只补充 Runtime Inspector 诊断展示，不改变 atlas 分配结果、渲染 pass、debug shader 按需加载、MaterialBuffer/GeometryBuffer 边界或 ImageProcess 禁止消费 ShadowCast 的规则。
+
+仍待处理：
+
+- 继续细化 light layer 与 URP rendering layer / light layer 的关系。
+
 ---
 
 ## 11. 验收清单
