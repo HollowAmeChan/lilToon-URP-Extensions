@@ -10,7 +10,6 @@
 
 ```text
 HoShadowCast
-HoShadowCastController
 HoShadowCastRendererFeature
 ```
 
@@ -43,7 +42,6 @@ ShadowCast 不负责：
 
 旧仓库已存在：
 
-- `HoShadowCastController`：场景级控制器，显式维护额外方向光、聚光、点光列表。
 - `HoShadowCastRendererFeature`：安装 atlas pass 与 debug pass。
 - `HoShadowCastSampling.hlsl`：材质 receiver 采样入口。
 - `Shaders/Debug/HoShadowCastDebug.shader`：atlas debug。
@@ -57,9 +55,6 @@ ShadowCast 不负责：
 - PCSS soft shadow。
 - atlas tile clamp。
 - receiver 侧 manual compare / PCSS。
-- controller 自动校验数组长度和参数范围。
-
-其中 controller 是旧实现事实，不是后续用户工作流目标。
 后续用户只需要在 Renderer Data 里添加 ShadowCast RendererFeature，Feature 根据 URP `visibleLights`、layer mask、light layer、shadow 参数和容量预算自动生成参与列表。
 
 ---
@@ -104,14 +99,14 @@ Runtime/ShadowCast/
         └── ShadowCastDebug.shader
 ```
 
-旧类名可以逐步迁移，不要求一次性重命名。`ShadowCastController` 如果保留，只能作为高级 override 或兼容桥，不再是普通使用必须添加的组件。
+旧类名可以逐步迁移，不要求一次性重命名。`ShadowCastController` 已从运行时删除，不再作为高级 override 或兼容桥保留。
 
 ---
 
 ## 4. 灯光收集
 
 ShadowCast 的主工作流应由 RendererFeature 自动收集灯光。
-旧 `HoShadowCastController` 的资产价值在于收集、排序、容量预算、参数 clamp 和调试报告思路，而不是“必须在场景里放一个控制器”。
+旧 `HoShadowCastController` 的资产价值已经吸收到 RendererFeature 自动收集、容量预算、参数 clamp 和运行时诊断中，不再保留场景组件入口。
 
 保留：
 
@@ -125,7 +120,6 @@ ShadowCast 的主工作流应由 RendererFeature 自动收集灯光。
 
 - RendererFeature 直接从当前 camera 的 URP `visibleLights` 收集候选灯光。
 - 默认只收集符合 ShadowCast 条件的可见 light，条件包括 enabled、类型、layer mask、light layer、shadow 开关、容量预算。
-- 手动灯光列表如保留，只放在 RendererFeature 的高级折叠区，作为补充入口，不作为主流程。
 - 把 `BuildFrameData` 从 RendererFeature 大文件拆成 `ShadowCastFrameCollector`。
 - 收集结果输出为 frame-local struct，不直接写全局 shader state。
 - 收集结果要能被 debug 输出为文本摘要。
@@ -290,7 +284,7 @@ ShadowCast 与 ScreenProcess 的关系：
 
 1. 文档和 UI 中把 HoShadowCast 归入 `ShadowCast` 组分。
 2. 把普通用户工作流改为 RendererFeature 自动收集 visible lights。
-3. 把旧 `HoShadowCastController` 降级为高级 override / legacy bridge，或逐步删除。
+3. 删除旧 `HoShadowCastController` 场景组件与 active controller override。
 4. 拆 `HoShadowCastRendererFeature.cs`：collector / atlas packer / publish / debug。
 5. 让 debug shader lazy-load，只在 debug 开启时查找。
 6. 明确普通 atlas 与第二方向光 atlas 的 RDG resource owner。
@@ -444,6 +438,16 @@ ShadowCast 与 ScreenProcess 的关系：
 - 新增 `HoShadowCastDebugMode.cs` 与 `HoShadowCastPcssQuality.cs`，让 RendererFeature、settings、collector、debug pass 和 controller 都引用独立枚举定义。
 - `HoShadowCastController.cs` 不再拥有 debug mode / PCSS quality 类型定义，保留为 legacy override / 高级手动列表入口。
 - 枚举命名空间、名称和值保持不变，不改变现有序列化 enum 值、RendererFeature Inspector、debug shader 按需加载、receiver ABI 或 atlas 行为。
+
+## 10.12 2026-05-25 执行记录
+
+已清理 ShadowCast 旧场景控制器实现：
+
+- 删除 `Runtime/ShadowCast/HoShadowCastController.cs` 与 `Editor/ShadowCast/HoShadowCastControllerEditor.cs`，不再提供场景级 active controller、手动方向光/点光/聚光列表或创建 controller 的 Inspector 入口。
+- `HoShadowCastSettings` 移除 `useActiveControllerOverride`，`HoShadowCastFrameConfig` 不再携带 controller 和手动灯光数组；RendererFeature 设置成为唯一运行时配置来源。
+- `HoShadowCastFrameCollector` 删除 manual light array 分支，punctual atlas 与 second directional atlas 都只从当前 camera 的 URP visible lights 收集候选灯光；`collectVisibleLights` 关闭时只禁用自动收集，不再回退到 controller。
+- Runtime diagnostics 与 RendererFeature Inspector 删除 Controller Override / Manual Lists 来源展示，只显示 visible-light 收集或 collection disabled 状态。
+- 本次不改变 receiver ABI、atlas shader 参数、debug shader 按需加载、MaterialBuffer/GeometryBuffer 边界或 ImageProcess 禁止消费 ShadowCast 的规则。
 
 仍待处理：
 - 后续如果需要按 renderer/material 侧声明更细的 receiver gate，应放到 receiver / material 语义里，不反向扩张 ShadowCast 为对象分类系统。

@@ -11,14 +11,12 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         private const float SectionHeaderHeight = 30.0f;
 
         private static readonly Color SettingsColor = new Color(0.45f, 0.64f, 0.96f);
-        private static readonly Color ControllerColor = new Color(0.38f, 0.76f, 0.55f);
 
         private static bool showSettings = true;
         private static bool showAtlas = true;
         private static bool showPcss = true;
         private static bool showSecondDirectional = true;
         private static bool showRuntime = true;
-        private static bool showController = true;
         private static GUIStyle sectionTitleStyle;
         private static GUIStyle sectionSummaryStyle;
 
@@ -70,7 +68,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             serializedObject.Update();
 
             EditorGUILayout.HelpBox(
-                "ShadowCast now collects eligible URP visible lights from this RendererFeature by default. HoShadowCastController is kept as an optional legacy override for manual light lists.",
+                "ShadowCast collects eligible URP visible lights from this RendererFeature. Scene controller overrides have been removed.",
                 MessageType.Info);
 
             if (settingsProperty == null)
@@ -85,7 +83,6 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             DrawPcss();
             DrawSecondDirectional();
             DrawRuntimeStatus();
-            DrawControllerStatus();
             serializedObject.ApplyModifiedProperties();
         }
 
@@ -94,7 +91,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             SerializedProperty enabled = settingsProperty.FindPropertyRelative("enabled");
             SerializedProperty collectVisibleLights = settingsProperty.FindPropertyRelative("collectVisibleLights");
             string summary = enabled != null && enabled.boolValue
-                ? collectVisibleLights != null && collectVisibleLights.boolValue ? "Auto visible lights" : "Manual override only"
+                ? collectVisibleLights != null && collectVisibleLights.boolValue ? "Visible lights" : "Collection disabled"
                 : "Disabled";
 
             if (!DrawSectionHeader(ref showSettings, "RendererFeature", summary, SettingsColor))
@@ -108,7 +105,6 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
                 SerializedProperty passEvent = settingsProperty.FindPropertyRelative("passEvent");
                 DrawProperty(passEvent, "Pass Event");
                 DrawProperty(collectVisibleLights, "Collect Visible Lights");
-                DrawProperty(settingsProperty.FindPropertyRelative("useActiveControllerOverride"), "Use Active Controller Override");
                 DrawProperty(settingsProperty.FindPropertyRelative("lightLayerMask"), "Light GameObject Layers");
                 DrawProperty(settingsProperty.FindPropertyRelative("lightRenderingLayerMask"), "Light Rendering Layers");
                 DrawProperty(settingsProperty.FindPropertyRelative("casterLayerMask"), "Caster GameObject Layers");
@@ -277,44 +273,6 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             {
                 EditorGUILayout.LabelField("More skipped", remaining.ToString());
             }
-        }
-
-        private void DrawControllerStatus()
-        {
-            HoShadowCastController controller = HoShadowCastController.ActiveController;
-            string summary = controller != null ? controller.name : "No active override";
-
-            if (!DrawSectionHeader(ref showController, "Legacy Controller", summary, ControllerColor))
-            {
-                return;
-            }
-
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                if (controller == null)
-                {
-                    EditorGUILayout.HelpBox("No active HoShadowCastController found. The RendererFeature will use automatic visible-light collection unless controller override is required for a legacy manual light list.", MessageType.Info);
-
-                    if (GUILayout.Button("Create HoShadowCastController"))
-                    {
-                        CreateController();
-                    }
-                }
-                else
-                {
-                    EditorGUILayout.ObjectField("Active Controller", controller, typeof(HoShadowCastController), true);
-                    EditorGUILayout.LabelField("Atlas Size", controller.atlasSize.ToString());
-                    EditorGUILayout.HelpBox("When Use Active Controller Override is enabled, this controller supplies the manual light list and legacy tuning values.", MessageType.Info);
-                }
-            }
-        }
-
-        private static void CreateController()
-        {
-            GameObject go = new GameObject("HoShadowCast Controller");
-            Undo.RegisterCreatedObjectUndo(go, "Create HoShadowCast Controller");
-            go.AddComponent<HoShadowCastController>();
-            Selection.activeGameObject = go;
         }
 
         private string GetIntSummary(string propertyName, string suffix)

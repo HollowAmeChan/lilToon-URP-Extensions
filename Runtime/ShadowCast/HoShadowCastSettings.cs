@@ -17,9 +17,6 @@ namespace lilToon.URP.Extensions.ShadowCast
         [InspectorName("Collect Visible Lights")]
         public bool collectVisibleLights = true;
 
-        [InspectorName("Use Active Controller Override")]
-        public bool useActiveControllerOverride = true;
-
         [InspectorName("Caster Layer Mask")]
         public LayerMask casterLayerMask = -1;
 
@@ -175,11 +172,6 @@ namespace lilToon.URP.Extensions.ShadowCast
     internal sealed class HoShadowCastFrameConfig
     {
         public bool collectVisibleLights;
-        public bool usingControllerOverride;
-        public HoShadowCastController controller;
-        public Light[] directionalLights;
-        public Light[] spotLights;
-        public Light[] pointLights;
         public LayerMask casterLayerMask;
         public LayerMask lightLayerMask;
         public uint lightRenderingLayerMask;
@@ -212,16 +204,8 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         public static HoShadowCastFrameConfig Resolve(HoShadowCastSettings settings)
         {
-            HoShadowCastController controller = settings != null && settings.useActiveControllerOverride
-                ? HoShadowCastController.ActiveController
-                : null;
             var config = new HoShadowCastFrameConfig();
             config.ApplySettings(settings);
-            if (controller != null)
-            {
-                config.ApplyController(controller);
-            }
-
             return config;
         }
 
@@ -234,11 +218,6 @@ namespace lilToon.URP.Extensions.ShadowCast
 
             settings.Validate();
             collectVisibleLights = settings.collectVisibleLights;
-            usingControllerOverride = false;
-            controller = null;
-            directionalLights = null;
-            spotLights = null;
-            pointLights = null;
             casterLayerMask = settings.casterLayerMask;
             lightLayerMask = settings.lightLayerMask;
             lightRenderingLayerMask = (uint)settings.lightRenderingLayerMask;
@@ -268,42 +247,6 @@ namespace lilToon.URP.Extensions.ShadowCast
             directionalShadowDepth = settings.directionalShadowDepth;
             directionalAnchorPosition = Vector3.zero;
             debugMode = settings.debugMode;
-        }
-
-        private void ApplyController(HoShadowCastController source)
-        {
-            usingControllerOverride = true;
-            controller = source;
-            collectVisibleLights = false;
-            directionalLights = source.directionalLights;
-            spotLights = source.spotLights;
-            pointLights = source.pointLights;
-            casterLayerMask = source.casterLayerMask;
-            shadowStrength = source.shadowStrength;
-            punctualShadowStrength = source.punctualShadowStrength;
-            punctualShadowFadeSpeed = source.punctualShadowFadeSpeed;
-            pcssEnabled = source.pcssEnabled;
-            pcssQuality = source.pcssQuality;
-            punctualPcssSoftness = source.punctualPcssSoftness;
-            secondDirectionalPcssSoftness = source.secondDirectionalPcssSoftness;
-            pcssBlockerSearchRadius = source.pcssBlockerSearchRadius;
-            pcssMaxPenumbraRadius = source.pcssMaxPenumbraRadius;
-            pcssDepthBias = source.pcssDepthBias;
-            secondDirectionalShadowStrength = source.secondDirectionalShadowStrength;
-            secondDirectionalAtlasSize = source.secondDirectionalAtlasSize;
-            secondDirectionalCascadeCount = source.secondDirectionalCascadeCount;
-            secondDirectionalMaxDistance = source.secondDirectionalMaxDistance;
-            secondDirectionalShadowDepth = source.secondDirectionalShadowDepth;
-            secondDirectionalCascadeSplits = source.secondDirectionalCascadeSplits;
-            atlasSize = source.atlasSize;
-            directionalResolution = source.directionalResolution;
-            spotResolution = source.spotResolution;
-            pointFaceResolution = source.pointFaceResolution;
-            directionalNearPlane = source.directionalNearPlane;
-            directionalShadowSize = source.directionalShadowSize;
-            directionalShadowDepth = source.directionalShadowDepth;
-            directionalAnchorPosition = source.transform.position;
-            debugMode = source.debugMode;
         }
     }
 }

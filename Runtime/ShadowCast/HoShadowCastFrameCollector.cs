@@ -107,11 +107,6 @@ namespace lilToon.URP.Extensions.ShadowCast
                 AddVisibleLights(LightType.Spot, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target, diagnostics);
                 AddVisibleLights(LightType.Point, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target, diagnostics);
             }
-            else
-            {
-                AddLightArray(config.spotLights, LightType.Spot, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target, diagnostics);
-                AddLightArray(config.pointLights, LightType.Point, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target, diagnostics);
-            }
 
             target.FillUnused();
             return target.lightCount > 0 && target.sliceCount > 0;
@@ -169,41 +164,25 @@ namespace lilToon.URP.Extensions.ShadowCast
             target.lightCount = 0;
             target.sliceCount = 0;
 
-            int directionalCandidateCount = config.collectVisibleLights && visibleLights.IsCreated
-                ? visibleLights.Length
-                : (config.directionalLights != null ? config.directionalLights.Length : 0);
+            int directionalCandidateCount = visibleLights.IsCreated ? visibleLights.Length : 0;
             for (int lightSlot = 0; lightSlot < directionalCandidateCount; lightSlot++)
             {
-                Light light;
-                if (config.collectVisibleLights)
-                {
-                    if (!visibleLights.IsCreated || lightSlot == mainLightIndex)
-                    {
-                        continue;
-                    }
-
-                    VisibleLight visibleLight = visibleLights[lightSlot];
-                    if (visibleLight.lightType != LightType.Directional)
-                    {
-                        continue;
-                    }
-
-                    light = visibleLight.light;
-                }
-                else
-                {
-                    light = config.directionalLights[lightSlot];
-                }
-
-                if (light == null && !config.collectVisibleLights)
+                if (lightSlot == mainLightIndex)
                 {
                     continue;
                 }
 
-                diagnostics?.AddCandidate();
-                if (!IsLightCollectable(light, config, LightType.Directional, config.collectVisibleLights))
+                VisibleLight visibleLight = visibleLights[lightSlot];
+                if (visibleLight.lightType != LightType.Directional)
                 {
-                    diagnostics?.AddSkipped(light, "SecondDirectional", LightType.Directional, GetCandidateSkipReason(light, config, LightType.Directional, config.collectVisibleLights));
+                    continue;
+                }
+
+                Light light = visibleLight.light;
+                diagnostics?.AddCandidate();
+                if (!IsLightCollectable(light, config, LightType.Directional, true))
+                {
+                    diagnostics?.AddSkipped(light, "SecondDirectional", LightType.Directional, GetCandidateSkipReason(light, config, LightType.Directional, true));
                     continue;
                 }
 
@@ -308,38 +287,16 @@ namespace lilToon.URP.Extensions.ShadowCast
                 return 0;
             }
 
-            int count = 0;
-            if (config.collectVisibleLights)
+            if (!config.collectVisibleLights || !visibleLights.IsCreated)
             {
-                if (!visibleLights.IsCreated)
-                {
-                    return 0;
-                }
-
-                for (int i = 0; i < visibleLights.Length; i++)
-                {
-                    if (GetVisibleLight(visibleLights, i, config, LightType.Directional, mainLightIndex) != null)
-                    {
-                        count++;
-                    }
-                }
+                return 0;
             }
-            else if (config.directionalLights != null)
+
+            int count = 0;
+            for (int i = 0; i < visibleLights.Length; i++)
             {
-                for (int i = 0; i < config.directionalLights.Length; i++)
+                if (GetVisibleLight(visibleLights, i, config, LightType.Directional, mainLightIndex) != null)
                 {
-                    Light light = config.directionalLights[i];
-                    if (!IsLightCollectable(light, config, LightType.Directional, false))
-                    {
-                        continue;
-                    }
-
-                    int visibleLightIndex = FindVisibleLightIndex(visibleLights, light, LightType.Directional);
-                    if (visibleLightIndex >= 0 && visibleLightIndex == mainLightIndex)
-                    {
-                        continue;
-                    }
-
                     count++;
                 }
             }
@@ -517,34 +474,6 @@ namespace lilToon.URP.Extensions.ShadowCast
             centerLightSpace.x = Mathf.Round(centerLightSpace.x / texelSize) * texelSize;
             centerLightSpace.y = Mathf.Round(centerLightSpace.y / texelSize) * texelSize;
             return lightViewAtOrigin.inverse.MultiplyPoint(centerLightSpace);
-        }
-
-        private static void AddLightArray(
-            Light[] lights,
-            LightType requiredType,
-            HoShadowCastFrameConfig config,
-            ref CullingResults cullResults,
-            NativeArray<VisibleLight> visibleLights,
-            int mainLightIndex,
-            int maxSliceResolution,
-            ref HoShadowCastAtlasPacker packer,
-            HoShadowCastFrame target,
-            HoShadowCastFrameDiagnostics diagnostics)
-        {
-            if (lights == null)
-            {
-                return;
-            }
-
-            for (int i = 0; i < lights.Length; i++)
-            {
-                if (lights[i] == null)
-                {
-                    continue;
-                }
-
-                AddLight(lights[i], requiredType, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target, diagnostics);
-            }
         }
 
         private static void AddVisibleLights(
@@ -917,16 +846,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             builder.Append("/");
             builder.Append(config.punctualShadowStrength.ToString("0.##"));
             builder.Append(", source=");
-            builder.Append(config.collectVisibleLights ? "visibleLights" : "controller");
-            if (!config.collectVisibleLights)
-            {
-                builder.Append(", assigned D/S/P=");
-                builder.Append(CountAssigned(config.directionalLights));
-                builder.Append('/');
-                builder.Append(CountAssigned(config.spotLights));
-                builder.Append('/');
-                builder.Append(CountAssigned(config.pointLights));
-            }
+            builder.Append(config.collectVisibleLights ? "visibleLights" : "disabled");
 
             if (frame.lightCount > 0)
             {
@@ -967,26 +887,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 builder.Append(slice.shadowSliceData.resolution);
             }
 
-            Debug.Log(builder.ToString(), config.controller);
-        }
-
-        private static int CountAssigned(Light[] lights)
-        {
-            if (lights == null)
-            {
-                return 0;
-            }
-
-            int count = 0;
-            for (int i = 0; i < lights.Length; i++)
-            {
-                if (lights[i] != null)
-                {
-                    count++;
-                }
-            }
-
-            return count;
+            Debug.Log(builder.ToString());
         }
 
         private static Matrix4x4 GetShadowTransform(Matrix4x4 projectionMatrix, Matrix4x4 viewMatrix)
@@ -1197,19 +1098,10 @@ namespace lilToon.URP.Extensions.ShadowCast
                 return 0;
             }
 
-            int count = 0;
-            if (config.collectVisibleLights)
-            {
-                count += CountRequestedVisibleSlices(config, LightType.Spot, visibleLights, mainLightIndex);
-                count += CountRequestedVisibleSlices(config, LightType.Point, visibleLights, mainLightIndex);
-            }
-            else
-            {
-                count += CountRequestedSlices(config.spotLights, config, LightType.Spot, visibleLights, mainLightIndex);
-                count += CountRequestedSlices(config.pointLights, config, LightType.Point, visibleLights, mainLightIndex);
-            }
-
-            return count;
+            return config.collectVisibleLights
+                ? CountRequestedVisibleSlices(config, LightType.Spot, visibleLights, mainLightIndex)
+                    + CountRequestedVisibleSlices(config, LightType.Point, visibleLights, mainLightIndex)
+                : 0;
         }
 
         private static int CountRequestedVisibleSlices(HoShadowCastFrameConfig config, LightType requiredType, NativeArray<VisibleLight> visibleLights, int mainLightIndex)
@@ -1226,34 +1118,6 @@ namespace lilToon.URP.Extensions.ShadowCast
                 {
                     count += requiredType == LightType.Point ? 6 : 1;
                 }
-            }
-
-            return count;
-        }
-
-        private static int CountRequestedSlices(Light[] lights, HoShadowCastFrameConfig config, LightType requiredType, NativeArray<VisibleLight> visibleLights, int mainLightIndex)
-        {
-            if (lights == null)
-            {
-                return 0;
-            }
-
-            int count = 0;
-            for (int i = 0; i < lights.Length; i++)
-            {
-                Light light = lights[i];
-                if (!IsLightCollectable(light, config, requiredType, false))
-                {
-                    continue;
-                }
-
-                int visibleLightIndex = FindVisibleLightIndex(visibleLights, light, requiredType);
-                if (visibleLightIndex >= 0 && visibleLightIndex == mainLightIndex)
-                {
-                    continue;
-                }
-
-                count += requiredType == LightType.Point ? 6 : 1;
             }
 
             return count;

@@ -67,10 +67,9 @@ Renderer Data 中推荐顺序：
 - PCSS 质量与强度。
 - debug view。
 
-默认不需要在场景里创建 `HoShadowCastController`。
 Feature 已从当前 camera 的 URP visible lights 自动生成参与列表。当前规则是：跳过 URP main light，只收集当前 camera 可见、类型匹配、启用、GameObject layer 命中、`Light.renderingLayerMask` 命中且 `Light.shadows != None` 的 directional / spot / point light。绘制每个 shadow slice 时再按该灯光 rendering layer 与 Feature 的 caster Rendering Layer 交集过滤 caster，并使用 Feature 上的 atlas、PCSS 和第二方向光设置。
 
-`HoShadowCastController` 现在是 legacy override / 高级手动列表入口。只有在 RendererFeature 打开 `Use Active Controller Override` 且场景里存在 active controller 时，才由 controller 的灯光列表和旧参数覆盖 Feature 设置。
+旧 `HoShadowCastController` 场景组件与 active controller override 已删除。手动灯光列表不再作为 ShadowCast 的普通或高级入口；需要参与 ShadowCast 的灯光必须进入当前 camera 的 URP visible lights，并通过 Feature 上的 GameObject layer 与 Rendering Layer 过滤。
 
 Debug 重点看：
 
@@ -267,7 +266,7 @@ Debug 入口可以统一，但资源归属必须局部：
 ## 6. 验收清单
 
 - 新用户只看本文能完成 Renderer Data 添加和顺序排列。
-- 没有 `HoShadowCastController` 的场景也能产生 ShadowCast 参与列表。
+- 不需要 `HoShadowCastController` 场景组件也能产生 ShadowCast 参与列表。
 - AOV/Buffer 对象语义主要从 `HoAovGroup` 这类局部对象 UI 编辑。
 - RendererFeature Inspector 不再变成全场景对象大列表。
 - Debug tile 能显示每个 feature 自己声明的短命名。

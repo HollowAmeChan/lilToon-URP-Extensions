@@ -189,17 +189,9 @@ namespace lilToon.URP.Extensions.ShadowCast
             {
                 source = "Unavailable";
             }
-            else if (config.collectVisibleLights)
-            {
-                source = "Visible Lights";
-            }
-            else if (config.usingControllerOverride)
-            {
-                source = "Controller Override";
-            }
             else
             {
-                source = "Manual Lists";
+                source = config.collectVisibleLights ? "Visible Lights" : "Collection Disabled";
             }
         }
 
