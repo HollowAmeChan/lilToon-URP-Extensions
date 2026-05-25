@@ -1,7 +1,6 @@
 using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
-using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -12,7 +11,7 @@ namespace lilToon.URP.Extensions.AOV
 {
     internal sealed class HoAovOutputPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-HoAOV Output");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("lilToon-MetadataBuffer Output");
         private static readonly List<ShaderTagId> FallbackShaderTagIds = new List<ShaderTagId>
         {
             new ShaderTagId("SRPDefaultUnlit"),
@@ -182,7 +181,6 @@ namespace lilToon.URP.Extensions.AOV
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
             HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
-            HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
 
             TextureHandle maskIdTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetMaskGraphicsFormat(), HoAovShaderConstants.MaskIdTextureName));
             TextureHandle normalDepthTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoAovRenderTargets.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.NormalDepthTextureName));
@@ -206,8 +204,6 @@ namespace lilToon.URP.Extensions.AOV
             metadataResources.objectCustom0Texture = objectCustom0Texture;
             metadataResources.objectCustom1Texture = objectCustom1Texture;
             metadataResources.sssTexture = sssTexture;
-            geometryResources.normalDepthTexture = normalDepthTexture;
-            geometryResources.depthTexture = depthTexture;
 
             bool drawFallback = settings.useFallbackMaterial && fallbackMaterial != null && fallbackFilteringEnabled;
             DrawingSettings fallbackDrawingSettings = RenderingUtils.CreateDrawingSettings(
@@ -258,7 +254,7 @@ namespace lilToon.URP.Extensions.AOV
 
             AddSssClearPass(renderGraph, sssTexture);
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoAOV Output", out PassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-MetadataBuffer Output", out PassData passData, ProfilingSampler))
             {
                 passData.drawFallback = drawFallback;
                 passData.fallbackRendererList = drawFallback ? renderGraph.CreateRendererList(fallbackRendererListParams) : default;
@@ -289,7 +285,6 @@ namespace lilToon.URP.Extensions.AOV
                 builder.SetRenderAttachment(objectCustom1Texture, HoAovAttachmentLayout.ObjectCustom1, AccessFlags.ReadWrite);
                 builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.ReadWrite);
                 builder.SetGlobalTextureAfterPass(maskIdTexture, HoAovShaderConstants.MaskIdTextureId);
-                builder.SetGlobalTextureAfterPass(normalDepthTexture, HoAovShaderConstants.NormalDepthTextureId);
                 builder.SetGlobalTextureAfterPass(surfaceDataTexture, HoAovShaderConstants.SurfaceDataTextureId);
                 builder.SetGlobalTextureAfterPass(custom0Texture, HoAovShaderConstants.Custom0TextureId);
                 builder.SetGlobalTextureAfterPass(objectCustom0Texture, HoAovShaderConstants.ObjectCustom0TextureId);

@@ -323,15 +323,15 @@ GeometryBuffer.TangentNormal
 
 - 新增 `Runtime/MetadataBuffer/HoMetadataBufferRenderGraphResources.cs`，承载 mask/id、surfaceData、material custom、object custom 与当前 SSS surface/source 纹理。
 - 新增 `Runtime/GeometryBuffer/HoGeometryBufferRenderGraphResources.cs`，承载 normalDepth 与独立 depth 纹理。
-- `HoAovOutputPass` 仍暂时用一次 MRT 绘制填充现有 attachments，但不再发布旧 `HoAovRenderGraphResources`；后续可直接把输出 pass 拆成 MetadataBuffer RendererFeature 与 GeometryBuffer RendererFeature。
+- `HoAovOutputPass` 仍暂时用一次 MRT 绘制填充现有 metadata attachments，但不再发布旧 `HoAovRenderGraphResources`；GeometryBuffer 输出已在独立 RendererFeature 中拆出。
 - `HoAovDebugPass`、HoPost/ScreenProcess、HoSSS、CharacterSpecialization 的 RenderGraph 路径已按真实输入改读 MetadataBuffer / GeometryBuffer 两个上下文。
 - compatibility path 的 `HoAovRenderTargets` 暂时保留在 AOV 目录，作为旧非 RenderGraph 路径的 RTHandle 管理；拆两个 RendererFeature 时再跟随对应 feature 移出。
 
 下一步优先级：
 
-1. 新建 `HoMetadataBufferRendererFeature` 与 `HoGeometryBufferRendererFeature` 壳，先复用现有 shader pass / attachment layout。
-2. 把 `HoAovSettings` 拆成 MetadataBuffer settings 与 GeometryBuffer settings，RendererFeature 面板只保留各自输出、pass event、debug。
-3. 把 AOV debug view 改名为 Metadata/Geometry buffer debug view，并按 feature-local debug shader 策略继续拆。
+1. 把 `HoAovSettings` 剩余字段继续拆成 MetadataBuffer settings，RendererFeature 面板只保留 metadata 输出、pass event、debug。
+2. 把 AOV debug view 改名为 Metadata/Geometry buffer debug view，并按 feature-local debug shader 策略继续拆。
+3. 为材质原生 pass 补 `HoGeometryBuffer` LightMode，避免后续只靠 fallback material 输出几何。
 
 ## 14. 2026-05-25 执行记录：MetadataBuffer RendererFeature 入口落地
 
@@ -341,6 +341,23 @@ GeometryBuffer.TangentNormal
 - 删除 `Runtime/AOV/HoAovRendererFeature.cs`，不再保留旧 HoAOV RendererFeature 类名。
 - 新增 `Editor/MetadataBuffer/HoMetadataBufferRendererFeatureEditor.cs`，旧 AOV RendererFeature editor 同步删除。
 - 当前 `HoMetadataBufferRendererFeature` 仍复用 `HoAovOutputPass` / `HoAovDebugPass` / `HoAovSettings`，因为 shader MRT layout 尚未拆成 Metadata-only 与 Geometry-only 两套 pass。
-- GeometryBuffer 目前已有独立 RenderGraph resource context 和目录；下一步再新增 `HoGeometryBufferRendererFeature` 并把 normal/depth 输出 pass 从 `HoAovOutputPass` 拆出。
+- GeometryBuffer 已有独立 RenderGraph resource context 和目录；下一步从独立 feature 补材质原生 `HoGeometryBuffer` LightMode，并继续瘦身 MetadataBuffer 的临时 MRT 输出。
 
 这一步会打断旧 Renderer Data 中直接引用 `HoAovRendererFeature` 的资产；快速开发阶段接受这种破坏性迁移。
+
+## 15. 2026-05-25 执行记录：GeometryBuffer RendererFeature 与输出 pass 落地
+
+已新增独立 GeometryBuffer 用户入口与公开资源发布：
+
+- 新增 `Runtime/GeometryBuffer/HoGeometryBufferRendererFeature.cs`，Renderer Data 中可单独添加 GeometryBuffer。
+- 新增 `HoGeometryBufferPass`、`HoGeometryBufferSettings`、`HoGeometryBufferRenderTargets` 与 `HoGeometryBufferShaderConstants`。
+- 新增 `Runtime/GeometryBuffer/Shaders/HoGeometryBufferFallback.shader`，fallback path 只输出 world normal + linear depth。
+- 新增 `Editor/GeometryBuffer/HoGeometryBufferRendererFeatureEditor.cs`。
+- `HoAovOutputPass` 不再发布 `HoGeometryBufferRenderGraphResources`；它仍临时绑定私有 normal/depth attachment 维持旧 metadata MRT shader target 索引，但消费者只能通过 GeometryBuffer feature 读取公开 normal/depth。
+- `HoMetadataBufferRendererFeatureEditor` 提示用户需要单独添加 GeometryBuffer 才能供应 normal/depth 消费者。
+
+后续仍要处理：
+
+- `HoAovOutputPass` 需要改名/迁入 MetadataBuffer，并把旧 MRT shader target 索引拆成 metadata-only shader。
+- 当前 GeometryBuffer 只对 fallback path 有专用 shader；未来材质原生输出应增加 `HoGeometryBuffer` LightMode。
+- Debug shader 仍使用旧 HoAOV 命名，后续按 MetadataBuffer / GeometryBuffer feature-local debug 分拆。

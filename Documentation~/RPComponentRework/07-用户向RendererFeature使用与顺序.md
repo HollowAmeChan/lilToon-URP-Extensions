@@ -11,7 +11,8 @@
 | 用户侧名称 | 旧实现名 | 作用 |
 | --- | --- | --- |
 | `ShadowCast` | `HoShadowCastRendererFeature` | 额外投影光源 atlas 与 receiver 数据 |
-| `MaterialBuffer / GeometryBuffer` | `HoAOV` | 材质、对象、几何输入缓存 |
+| `MetadataBuffer` | `HoMetadataBufferRendererFeature` | 材质、对象、mask、metadata 与当前 SSS source 输入 |
+| `GeometryBuffer` | `HoGeometryBufferRendererFeature` | normal/depth 几何输入缓存 |
 | `SSS` | `HoSubsurfaceScatteringRendererFeature` | 屏幕空间皮肤/材质散射 |
 | `OIT` | `WeightedOITRendererFeature` | 加权透明合成 |
 | `CharacterSpecialization` | `HoCharacterSpecializationRendererFeature` | 眼透、前发、角色局部合成 |
@@ -28,18 +29,20 @@ Renderer Data 中推荐顺序：
 
 ```text
 1. ShadowCast
-2. MaterialBuffer / GeometryBuffer
-3. SSS
-4. OIT
-5. CharacterSpecialization
-6. ScreenProcess
-7. ImageProcess
+2. MetadataBuffer
+3. GeometryBuffer
+4. SSS
+5. OIT
+6. CharacterSpecialization
+7. ScreenProcess
+8. ImageProcess
 ```
 
 对应执行意图：
 
 - `ShadowCast` 在 forward receiver 绘制前发布 shadow atlas 和采样参数。
-- `MaterialBuffer / GeometryBuffer` 在 opaque 后输出材质、对象和几何输入。
+- `MetadataBuffer` 在 opaque 后输出材质、对象、mask 和 surface metadata。
+- `GeometryBuffer` 在 opaque 后输出 normal/depth，供 SSS、CharacterSpecialization 和 ScreenProcess 等消费者读取。
 - `SSS` 读取 Buffer，完成 source / diffusion / composite。
 - `OIT` 处理透明对象，与材质 receiver 保持一致。
 - `CharacterSpecialization` 做眼透、前发和角色局部合成。

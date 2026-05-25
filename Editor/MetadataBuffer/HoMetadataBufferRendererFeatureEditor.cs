@@ -29,7 +29,7 @@ namespace lilToon.URP.Extensions.Editor.MetadataBuffer
             }
 
             EditorGUILayout.HelpBox(
-                "MetadataBuffer writes surface, material, object, and currently shared SSS source data. GeometryBuffer output is still produced by the same MRT pass until the geometry pass is split out.",
+                "MetadataBuffer writes surface, material, object, and currently shared SSS source data. Add GeometryBuffer separately for normal/depth consumers.",
                 MessageType.Info);
 
             DrawSettings();
