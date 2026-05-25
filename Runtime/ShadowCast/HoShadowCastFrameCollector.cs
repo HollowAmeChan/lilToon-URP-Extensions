@@ -148,14 +148,19 @@ namespace lilToon.URP.Extensions.ShadowCast
 
             int cascadeCount = Mathf.Clamp(config.secondDirectionalCascadeCount, 1, HoShadowCastShaderConstants.MaxSecondDirectionalCascades);
             int atlasSize = Mathf.Max(1, config.secondDirectionalAtlasSize);
-            int requestedSliceCount = CountRequestedSecondDirectionalSlices(config, visibleLights, mainLightIndex, cascadeCount);
-            if (requestedSliceCount <= 0)
+            int requestedLightCount = CountRequestedSecondDirectionalLights(config, visibleLights, mainLightIndex);
+            if (requestedLightCount <= 0)
             {
                 return false;
             }
 
-            int gridSize = Mathf.CeilToInt(Mathf.Sqrt(requestedSliceCount));
-            int resolution = Mathf.Max(64, atlasSize / Mathf.Max(1, gridSize));
+            GetSecondDirectionalCascadeBlock(cascadeCount, out int cascadeColumns, out int cascadeRows);
+            int lightGridColumns = Mathf.CeilToInt(Mathf.Sqrt(requestedLightCount));
+            int lightGridRows = Mathf.CeilToInt((float)requestedLightCount / Mathf.Max(1, lightGridColumns));
+            int resolutionByWidth = atlasSize / Mathf.Max(1, lightGridColumns * cascadeColumns);
+            int resolutionByHeight = atlasSize / Mathf.Max(1, lightGridRows * cascadeRows);
+            int resolution = Mathf.Max(64, Mathf.Min(resolutionByWidth, resolutionByHeight));
+            HoShadowCastAtlasPacker packer = new HoShadowCastAtlasPacker(atlasSize);
             float nearDistance = Mathf.Max(0.001f, camera.nearClipPlane);
             float farDistance = Mathf.Min(Mathf.Max(nearDistance + 0.01f, config.secondDirectionalMaxDistance), Mathf.Max(nearDistance + 0.01f, camera.farClipPlane));
 
@@ -216,10 +221,17 @@ namespace lilToon.URP.Extensions.ShadowCast
                 }
 
                 int firstSlice = target.sliceCount;
+                HoShadowCastAtlasPacker packerBeforeLight = packer;
+                if (!packer.TryAllocate(resolution * cascadeColumns, resolution * cascadeRows, out int blockOffsetX, out int blockOffsetY))
+                {
+                    diagnostics?.AddSkipped(light, "SecondDirectional", LightType.Directional, "atlas is full");
+                    continue;
+                }
+
                 float lightShadowStrength = light.shadows == LightShadows.None ? 1.0f : light.shadowStrength;
                 float shadowStrength = Mathf.Clamp01(config.secondDirectionalShadowStrength * lightShadowStrength);
-
                 float previousDistance = nearDistance;
+                bool completed = true;
                 for (int cascadeIndex = 0; cascadeIndex < cascadeCount; cascadeIndex++)
                 {
                     float splitRatio = GetSecondDirectionalCascadeSplit(config.secondDirectionalCascadeSplits, cascadeCount, cascadeIndex);
@@ -228,11 +240,8 @@ namespace lilToon.URP.Extensions.ShadowCast
                         : Mathf.Lerp(nearDistance, farDistance, splitRatio);
                     cascadeFarDistance = Mathf.Max(previousDistance + 0.01f, cascadeFarDistance);
 
-                    int tileIndex = target.sliceCount;
-                    int tileX = tileIndex % gridSize;
-                    int tileY = tileIndex / gridSize;
-                    int offsetX = tileX * resolution;
-                    int offsetY = tileY * resolution;
+                    int offsetX = blockOffsetX + (cascadeIndex % cascadeColumns) * resolution;
+                    int offsetY = blockOffsetY + (cascadeIndex / cascadeColumns) * resolution;
                     if (!TryBuildSecondDirectionalCascadeSlice(
                             light,
                             camera,
@@ -246,8 +255,8 @@ namespace lilToon.URP.Extensions.ShadowCast
                             out ShadowSliceInfo slice))
                     {
                         diagnostics?.AddSkipped(light, "SecondDirectional", LightType.Directional, "failed to build cascade slice");
-                        target.Clear();
-                        return false;
+                        completed = false;
+                        break;
                     }
 
                     target.slices[target.sliceCount] = slice;
@@ -255,6 +264,13 @@ namespace lilToon.URP.Extensions.ShadowCast
                     target.sliceData[target.sliceCount] = slice.sliceData;
                     target.sliceCount++;
                     previousDistance = cascadeFarDistance;
+                }
+
+                if (!completed)
+                {
+                    target.sliceCount = firstSlice;
+                    packer = packerBeforeLight;
+                    continue;
                 }
 
                 int lightIndex = target.lightCount++;
@@ -267,7 +283,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             return target.lightCount > 0 && target.sliceCount > 0;
         }
 
-        private static int CountRequestedSecondDirectionalSlices(HoShadowCastFrameConfig config, NativeArray<VisibleLight> visibleLights, int mainLightIndex, int cascadeCount)
+        private static int CountRequestedSecondDirectionalLights(HoShadowCastFrameConfig config, NativeArray<VisibleLight> visibleLights, int mainLightIndex)
         {
             if (config == null)
             {
@@ -286,7 +302,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 {
                     if (GetVisibleLight(visibleLights, i, config, LightType.Directional, mainLightIndex) != null)
                     {
-                        count += cascadeCount;
+                        count++;
                     }
                 }
             }
@@ -306,11 +322,31 @@ namespace lilToon.URP.Extensions.ShadowCast
                         continue;
                     }
 
-                    count += cascadeCount;
+                    count++;
                 }
             }
 
-            return Mathf.Min(count, HoShadowCastShaderConstants.MaxSecondDirectionalSlices);
+            return Mathf.Min(count, HoShadowCastShaderConstants.MaxDirectionalLights);
+        }
+
+        private static void GetSecondDirectionalCascadeBlock(int cascadeCount, out int columns, out int rows)
+        {
+            if (cascadeCount <= 1)
+            {
+                columns = 1;
+                rows = 1;
+                return;
+            }
+
+            if (cascadeCount == 2)
+            {
+                columns = 2;
+                rows = 1;
+                return;
+            }
+
+            columns = 2;
+            rows = 2;
         }
 
         private static float GetSecondDirectionalCascadeSplit(Vector3 splits, int cascadeCount, int cascadeIndex)

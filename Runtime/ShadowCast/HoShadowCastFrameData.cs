@@ -223,15 +223,21 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         public bool TryAllocate(int size, out int offsetX, out int offsetY)
         {
-            size = Mathf.Clamp(size, 1, atlasSize);
-            if (cursorX + size > atlasSize)
+            return TryAllocate(size, size, out offsetX, out offsetY);
+        }
+
+        public bool TryAllocate(int width, int height, out int offsetX, out int offsetY)
+        {
+            width = Mathf.Clamp(width, 1, atlasSize);
+            height = Mathf.Clamp(height, 1, atlasSize);
+            if (cursorX + width > atlasSize)
             {
                 cursorX = 0;
                 cursorY += rowHeight;
                 rowHeight = 0;
             }
 
-            if (cursorY + size > atlasSize)
+            if (cursorY + height > atlasSize)
             {
                 offsetX = 0;
                 offsetY = 0;
@@ -240,8 +246,8 @@ namespace lilToon.URP.Extensions.ShadowCast
 
             offsetX = cursorX;
             offsetY = cursorY;
-            cursorX += size;
-            rowHeight = Mathf.Max(rowHeight, size);
+            cursorX += width;
+            rowHeight = Mathf.Max(rowHeight, height);
             return true;
         }
     }

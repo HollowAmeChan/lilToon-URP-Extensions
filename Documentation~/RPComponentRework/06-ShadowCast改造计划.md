@@ -392,6 +392,21 @@ ShadowCast 与 ScreenProcess 的关系：
 - 继续对齐参考仓库的 second directional atlas block packing：一盏次方向光的 cascade 应作为整体 block 分配，避免写入半套 cascade。
 - 继续细化 light layer 与 URP rendering layer / light layer 的关系；当前第一批落地的是 Unity GameObject layer 过滤。
 
+## 10.7 2026-05-25 执行记录
+
+已继续对齐参考仓库的 second directional atlas 分配策略：
+
+- `HoShadowCastAtlasPacker` 增加矩形 block 分配重载，保留原有单 slice 正方形分配入口供 punctual atlas 使用。
+- second directional 收集从“按总 cascade slice 数均分 atlas 网格”改为“先按参与方向光数量估算每盏光的 cascade block 分辨率，再按整光源 block 进入 atlas packer”。
+- cascade block 规则与参考仓库保持一致：1 cascade 使用 `1x1`，2 cascades 使用 `2x1`，3/4 cascades 使用 `2x2`。
+- 如果一盏次方向光的 block 放不进 atlas，整盏光跳过并记录 `atlas is full`；如果任一 cascade 矩阵构建失败，会回滚该光已经写入的 slice，并继续处理后续灯光，不再清空整帧 second directional 结果。
+- 本次只改变 second directional atlas pack 策略，不改变 receiver ABI、debug shader 按需加载、MaterialBuffer/GeometryBuffer 边界或 ImageProcess 禁止消费 ShadowCast 的规则。
+
+仍待处理：
+
+- Runtime Inspector 仍只显示 accepted/skipped 列表，后续可补充 second directional block 起点与 block 尺寸的只读展示。
+- 继续细化 light layer 与 URP rendering layer / light layer 的关系。
+
 ---
 
 ## 11. 验收清单
