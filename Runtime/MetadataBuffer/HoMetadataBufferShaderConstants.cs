@@ -62,6 +62,5 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         public static readonly int ObjectCustomMaskId = Shader.PropertyToID(ObjectCustomMaskName);
 
         public static readonly int DebugModeId = Shader.PropertyToID("_HoMetadataBufferDebugMode");
-        public static readonly int DebugDepthParamsId = Shader.PropertyToID("_HoMetadataBufferDebugDepthParams");
     }
 }

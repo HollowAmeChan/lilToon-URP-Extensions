@@ -491,3 +491,15 @@ GeometryBuffer.TangentNormal
 - 材质属性、Inspector 分组和 PropertyBlock 从 `HoAov` / `_HoAovCustom*` 迁到 `MetadataBuffer` / `_HoMetadataBufferCustom*`。
 
 这一步完成后，Buffer 主线的旧 ABI 与材质原生 pass 基本切干净。后续大块不再是旧 AOV 兼容，而是继续审查 `ScreenProcess` / `SSS` / `CharacterSpecialization` 的语义消费是否只声明自己真实需要的 MetadataBuffer / GeometryBuffer 输入。
+
+## 27. 2026-05-26 执行记录：收窄 MetadataBuffer 几何残留
+
+已把 MetadataBuffer 设置和 debug 从几何输出语义中收回：
+
+- `HoMetadataBufferChannelMask` 删除 `LinearDepth`、`WorldNormal`、`Velocity`，`Default` 只保留 Mask / Id / Flags / Thickness / Curvature / Material / TransmittanceHint。
+- `HoMetadataBufferDebugMode` 删除 `LinearDepth`、`WorldNormal`、`Velocity`；MetadataBuffer debug shader 不再采样 `_HoGeometryBufferNormalDepthTexture`，也不再 include `HoGeometryBufferSampling.hlsl`。
+- `HoMetadataBufferDebugPass` 的 RenderGraph 路径不再要求 `HoGeometryBufferRenderGraphResources` 有效，避免打开 MetadataBuffer debug 时隐式制造 GeometryBuffer 依赖。
+- `HoMetadataBufferSettings` 和 Inspector 删除 `debugDepthNear` / `debugDepthFar`，因为 depth preview 已归 GeometryBuffer debug view。
+- GeometryBuffer 自己的 `Coverage`、`LinearDepth`、`WorldNormal`、`NormalValidity` debug view 保持不变。
+
+完成后，MetadataBuffer 面板和 shader path 不再把 depth / normal / velocity 暴露成自身输出项。后续审查 `ScreenProcess` / `SSS` / `CharacterSpecialization` 时，应分别记录它们读取的是 MetadataBuffer 语义项还是 GeometryBuffer 几何项。

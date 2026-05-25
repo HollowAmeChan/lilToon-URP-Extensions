@@ -83,14 +83,15 @@ Debug 重点看：
 - `ShadowAtlas` / `SecondDirectionalAtlas`。
 - receiver 是否在 feature 关闭后恢复正常。
 
-### MaterialBuffer / GeometryBuffer
+### MetadataBuffer / GeometryBuffer
 
-RendererFeature 只配置全局输出：
+RendererFeature 只配置各自的全局输出：
 
 - 是否启用。
 - layer / render queue 范围。
 - render scale。
-- 输出哪些 Buffer 项。
+- `MetadataBuffer` 输出哪些材质、对象、mask、metadata 项。
+- `GeometryBuffer` 输出哪些 depth / normal 等几何项。
 - debug view。
 - fallback / pass event 等高级兼容项。
 
@@ -106,6 +107,8 @@ Debug 重点看：
 - `MaterialBuffer.ObjectId / GroupId / CharacterPart`。
 - `MaterialBuffer.Thickness / Curvature / MaterialProfile`。
 - `GeometryBuffer.Depth / Normal`。
+
+MetadataBuffer debug 不再显示 depth / normal / velocity；这些几何观察入口在 GeometryBuffer debug 里。
 
 ### SSS
 

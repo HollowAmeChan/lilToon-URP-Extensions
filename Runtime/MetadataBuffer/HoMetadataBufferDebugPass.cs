@@ -1,6 +1,5 @@
 ﻿#pragma warning disable CS0618, CS0672
 
-using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -23,7 +22,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         {
             public TextureHandle source;
             public TextureHandle maskIdTexture;
-            public TextureHandle normalDepthTexture;
             public TextureHandle surfaceDataTexture;
             public TextureHandle custom0Texture;
             public TextureHandle objectCustom0Texture;
@@ -31,7 +29,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             public TextureHandle surfaceColorTexture;
             public Material debugMaterial;
             public HoMetadataBufferDebugMode debugMode;
-            public Vector4 debugDepthParams;
         }
 
         public void Setup(
@@ -110,11 +107,9 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
-            HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
             TextureHandle source = resourceData.activeColorTexture;
             if (!source.IsValid()
                 || !metadataResources.maskIdTexture.IsValid()
-                || !geometryResources.normalDepthTexture.IsValid()
                 || !metadataResources.surfaceDataTexture.IsValid()
                 || !metadataResources.custom0Texture.IsValid()
                 || !metadataResources.objectCustom0Texture.IsValid()
@@ -134,7 +129,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             {
                 passData.source = source;
                 passData.maskIdTexture = metadataResources.maskIdTexture;
-                passData.normalDepthTexture = geometryResources.normalDepthTexture;
                 passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
                 passData.custom0Texture = metadataResources.custom0Texture;
                 passData.objectCustom0Texture = metadataResources.objectCustom0Texture;
@@ -142,11 +136,9 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 passData.surfaceColorTexture = metadataResources.surfaceColorTexture;
                 passData.debugMaterial = debugMaterial;
                 passData.debugMode = settings.debugMode;
-                passData.debugDepthParams = GetDebugDepthParams(settings);
 
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.UseTexture(passData.maskIdTexture, AccessFlags.Read);
-                builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
                 builder.UseTexture(passData.surfaceDataTexture, AccessFlags.Read);
                 builder.UseTexture(passData.custom0Texture, AccessFlags.Read);
                 builder.UseTexture(passData.objectCustom0Texture, AccessFlags.Read);
@@ -158,10 +150,8 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
                     data.debugMaterial.SetFloat(HoMetadataBufferShaderConstants.DebugModeId, (float)data.debugMode);
-                    data.debugMaterial.SetVector(HoMetadataBufferShaderConstants.DebugDepthParamsId, data.debugDepthParams);
                     context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
-                    context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.custom0Texture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.objectCustom0Texture);
@@ -177,14 +167,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         private static void SetMaterialProperties(Material material, HoMetadataBufferSettings settings)
         {
             material.SetFloat(HoMetadataBufferShaderConstants.DebugModeId, (float)settings.debugMode);
-            material.SetVector(HoMetadataBufferShaderConstants.DebugDepthParamsId, GetDebugDepthParams(settings));
-        }
-
-        private static Vector4 GetDebugDepthParams(HoMetadataBufferSettings settings)
-        {
-            float near = Mathf.Max(0.0f, settings.debugDepthNear);
-            float far = Mathf.Max(near + 0.0001f, settings.debugDepthFar);
-            return new Vector4(near, far, 1.0f / (far - near), 0.0f);
         }
     }
 

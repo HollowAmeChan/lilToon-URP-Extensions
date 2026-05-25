@@ -14,12 +14,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         Id = 1 << 1,
         [InspectorName("Flags")]
         Flags = 1 << 2,
-        [InspectorName("Linear Depth")]
-        LinearDepth = 1 << 3,
-        [InspectorName("World Normal")]
-        WorldNormal = 1 << 4,
-        [InspectorName("Velocity")]
-        Velocity = 1 << 7,
         [InspectorName("Thickness")]
         Thickness = 1 << 8,
         [InspectorName("Curvature")]
@@ -29,7 +23,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         [InspectorName("Transmittance Hint")]
         TransmittanceHint = 1 << 11,
         [InspectorName("Default")]
-        Default = Mask | Id | Flags | LinearDepth | WorldNormal | Thickness | Curvature | Material | TransmittanceHint
+        Default = Mask | Id | Flags | Thickness | Curvature | Material | TransmittanceHint
     }
 
     public static class HoMetadataBufferCustomChannels

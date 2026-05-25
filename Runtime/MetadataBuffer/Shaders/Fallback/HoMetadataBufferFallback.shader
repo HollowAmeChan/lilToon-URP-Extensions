@@ -3,8 +3,8 @@
     Properties
     {
         [HideInInspector] _HoMetadataBufferMaskWeight ("MetadataBuffer Mask Weight", Float) = 1
-        [HideInInspector] _HoMetadataBufferSystemChannelMask ("MetadataBuffer Feature System Channel Mask", Float) = 4031
-        [HideInInspector] _HoMetadataBufferSystemWriteMask ("MetadataBuffer System Write Mask", Float) = 1055
+        [HideInInspector] _HoMetadataBufferSystemChannelMask ("MetadataBuffer Feature System Channel Mask", Float) = 3847
+        [HideInInspector] _HoMetadataBufferSystemWriteMask ("MetadataBuffer System Write Mask", Float) = 3847
         [HideInInspector] _HoMetadataBufferCustomWriteMask ("MetadataBuffer Custom Write Mask", Float) = 0
         [HideInInspector] _HoMetadataBufferGroupId ("MetadataBuffer Group Id", Float) = 0
         [HideInInspector] _HoMetadataBufferObjectId ("MetadataBuffer Object Id", Float) = 0

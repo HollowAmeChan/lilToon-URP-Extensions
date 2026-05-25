@@ -12,12 +12,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         Id,
         [InspectorName("Flags")]
         Flags,
-        [InspectorName("Linear Depth")]
-        LinearDepth,
-        [InspectorName("World Normal")]
-        WorldNormal,
-        [InspectorName("Velocity")]
-        Velocity,
         [InspectorName("Thickness")]
         Thickness,
         [InspectorName("Curvature")]

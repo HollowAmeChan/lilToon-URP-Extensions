@@ -50,8 +50,6 @@ namespace lilToon.URP.Extensions.Editor.MetadataBuffer
             DrawProperty("debugMode");
             DrawProperty("debugInSceneView");
             DrawProperty("debugInGameView");
-            DrawProperty("debugDepthNear");
-            DrawProperty("debugDepthFar");
             DrawDebugInteractionNotice();
 
             EditorGUILayout.Space(6);

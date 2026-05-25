@@ -223,6 +223,12 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 - `HoGeometryBufferRendererFeature` 只在 `debugMode != Off` 且当前 camera 类型允许 debug 显示时才查找或创建 debug material；缺失 debug shader 只 warning once，不影响 GeometryBuffer 输出。
 - `LilUrpDebugShaderCollectionGenerator` 显式收集 GeometryBuffer debug shader；普通用户不生成 collection 时不会因为启用 GeometryBuffer 主功能而主动查找该 debug shader。
 
+2026-05-26 继续收窄 MetadataBuffer debug 归属：
+
+- `HoMetadataBufferDebugMode` 删除 `LinearDepth`、`WorldNormal`、`Velocity`，MetadataBuffer debug 只显示自身 metadata、custom、RSUV 和 SurfaceColor。
+- `HoMetadataBufferDebugPass` 不再读取 `HoGeometryBufferRenderGraphResources`，也不再向 debug shader 绑定 `_HoGeometryBufferNormalDepthTexture`。
+- MetadataBuffer debug shader 删除 `HoGeometryBufferSampling.hlsl` include 与 `_HoMetadataBufferDebugDepthParams`，几何调试统一转到 GeometryBuffer debug view。
+
 ---
 
 ## 8. 验收清单

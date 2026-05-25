@@ -54,14 +54,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         [InspectorName("Debug In Game View")]
         public bool debugInGameView;
 
-        [InspectorName("Debug Depth Near")]
-        [Min(0.0f)]
-        public float debugDepthNear = 0.0f;
-
-        [InspectorName("Debug Depth Far")]
-        [Min(0.0001f)]
-        public float debugDepthFar = 25.0f;
-
         [InspectorName("Custom Channel Names")]
         public string[] customChannelNames = new string[HoMetadataBufferCustomChannels.DefaultCount];
 
