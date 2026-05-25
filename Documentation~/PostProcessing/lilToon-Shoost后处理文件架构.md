@@ -20,7 +20,7 @@ Shoost stack 使用 Volume profile 管理图层列表。用户面对的是一个
 - `Runtime/ShoostPostProcessing/ShoostPostProcessStackSettings.cs`：renderer feature 级设置。
 - `Runtime/ShoostPostProcessing/ShoostPostProcessStackVolume.cs`：Volume component，持有图层列表并判断 stack 是否 active。
 - `Runtime/ShoostPostProcessing/ShoostPostProcessShaderConstants.cs`：shader property id 与固定 shader 名常量。
-- `Runtime/ShoostPostProcessing/ShoostPostProcessEffectDescriptor.cs`：effect catalog，集中维护默认 shader、legacy 默认插入顺序、局部资源声明、removed slot 和执行类型。
+- `Runtime/ShoostPostProcessing/ShoostPostProcessEffectDescriptor.cs`：effect catalog，集中维护默认 shader、局部资源声明、removed slot 和执行类型。
 - `Runtime/ShoostPostProcessing/ShoostPostProcessEffectRegistry.cs`：兼容门面，只转发 descriptor 的默认 shader 名。
 
 ## Renderer
@@ -36,7 +36,6 @@ Shoost stack 使用 Volume profile 管理图层列表。用户面对的是一个
 
 - `Renderer/EffectPipeline/ShoostPostProcessPass.EffectDispatch.cs`：effect executor 注册表。每个 effect 注册 compatibility executor 与 RenderGraph executor，主循环只查表调用。
 - `Renderer/EffectPipeline/ShoostPostProcessPass.EffectProperties.cs`：通用 shader property 写入、`LayerPropertyBlock` 和 effect-specific defaults 分派入口。
-- `Renderer/EffectPipeline/ShoostPostProcessEffectOrder.cs`：兼容门面，转发 descriptor 的排序和 removed slot 判断。
 
 ## Effects
 
@@ -50,7 +49,7 @@ Shoost stack 使用 Volume profile 管理图层列表。用户面对的是一个
 
 ## Descriptor 规则
 
-`ShoostPostProcessEffectDescriptor` 是 effect metadata 的唯一事实来源。legacy 默认插入顺序、默认 shader、局部资源声明、removed slot 和执行类型都应从这里读取，不要在 runtime layer builder、editor 或 effect 文件中重新写一份 switch。
+`ShoostPostProcessEffectDescriptor` 是 effect metadata 的唯一事实来源。默认 shader、局部资源声明、removed slot 和执行类型都应从这里读取，不要在 runtime layer builder、editor 或 effect 文件中重新写一份 switch。
 
 Descriptor 的执行类型只描述 runtime 形态：
 
@@ -59,14 +58,14 @@ Descriptor 的执行类型只描述 runtime 形态：
 - `Stateful`：依赖 history、per-camera cache 或跨帧状态。
 - `Removed`：旧资源兼容占位，不参与运行。
 
-未知 effect 会回退为保留原始 enum 值的 single-pass descriptor，并使用默认 layer shader。这只是防御性 fallback，不是新增效果的注册方式。正式效果必须写入 `CreateCatalog()`，否则默认插入顺序、资源声明和执行分派都不具备明确语义。
+未知 effect 会回退为保留原始 enum 值的 single-pass descriptor，并使用默认 layer shader。这只是防御性 fallback，不是新增效果的注册方式。正式效果必须写入 `CreateCatalog()`，否则资源声明和执行分派都不具备明确语义。
 
 ## 新增 Shoost 效果流程
 
 1. 在 `ShoostPostProcessEffect` enum 末尾追加新效果。不要插入已有枚举中间，不要复用 removed slot，除非明确是在做旧资源兼容迁移。
 2. 评估图层数据。优先复用 `ShoostPostProcessLayer` 的 `color`、`texture`、`parameters0-12`、`blendMode`、`intensity`。只有语义长期稳定且通用字段确实不够时，才新增明确字段。
 3. 在 editor 侧增加 UI。路径按现有 Shoost stack editor 结构放置，显示名、图标、默认值、折叠状态和条件显示应与用户侧语义一致。
-4. 在 `ShoostPostProcessEffectDescriptor.CreateCatalog()` 注册 descriptor。普通 fullscreen blit 用 `SinglePass(effect, order)`；多 pass 用 `MultiPass(...)`；跨帧或持久状态用 `Stateful(...)`；旧资源空槽用 `Removed(...)`。默认 shader 不符合 `Hidden/lilToon-Shoost/URP/Shoost/<Effect>` 时，使用带 shader name 的重载。需要本地 ping-pong、history、original source 或 layer-supplied external texture 时，用 `ImageProcessResourceRequest` 声明；不要为 ImageProcess 新增 AOV / MaterialBuffer / GeometryBuffer / ShadowCast 输入。
+4. 在 `ShoostPostProcessEffectDescriptor.CreateCatalog()` 注册 descriptor。普通 fullscreen blit 用 `SinglePass(effect)`；多 pass 用 `MultiPass(...)`；跨帧或持久状态用 `Stateful(...)`；旧资源空槽用 `Removed(...)`。默认 shader 不符合 `Hidden/lilToon-Shoost/URP/Shoost/<Effect>` 时，使用带 shader name 的重载。需要本地 ping-pong、history、original source 或 layer-supplied external texture 时，用 `ImageProcessResourceRequest` 声明；不要为 ImageProcess 新增 AOV / MaterialBuffer / GeometryBuffer / ShadowCast 输入。
 5. 新增或更新 `Runtime/ShoostPostProcessing/Shaders/Shoost/<Effect>.shader`。shader 内部名称默认保持 `Hidden/lilToon-Shoost/URP/Shoost/<Effect>`。新增 property 时同时补 `ShoostPostProcessShaderConstants`，避免 magic string 散落在 effect 文件里。
 6. 在 `Renderer/Effects/` 新增 `ShoostPostProcessPass.<Effect>.cs`。普通 single-pass 效果实现 `Apply<Effect>Layer(...)` 与 `Record<Effect>Layer(...)`，内部调用共享 helper；多 pass/stateful 效果在该文件中实现专用 `Apply...`、`Record...` 和 helper。
 7. 在 `Renderer/EffectPipeline/ShoostPostProcessPass.EffectDispatch.cs` 注册 executor。普通 single-pass 使用 `RegisterSinglePassEffect`；多 pass 或 stateful 使用 `RegisterEffect`，同时提供 compatibility path 与 RenderGraph path。两条路径必须保持视觉行为一致。

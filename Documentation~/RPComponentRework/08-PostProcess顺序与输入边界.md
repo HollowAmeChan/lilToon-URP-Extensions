@@ -76,7 +76,7 @@ ImageProcess 是最终图像处理链。
 
 - ScreenProcess layer 按用户在 UI 中排列的顺序执行。
 - ImageProcess layer 按用户在 UI 中排列的顺序执行。
-- descriptor 只提供默认插入位置、显示分组、资源需求和迁移兼容信息。
+- descriptor 只提供显示分组、资源需求和迁移兼容信息。
 - descriptor 不应在运行时强制重排用户栈。
 - 只有依赖关系不可交换的复合效果，才允许在该 effect 内部固定自己的 sub-pass 顺序。
 
@@ -156,10 +156,8 @@ ImageProcess UI：
 ## 6. 执行迁移
 
 1. 保留旧序列化数据，不立刻破坏用户资源。
-2. 给 ScreenProcess / ImageProcess 增加 `executionOrderMode` 迁移字段：
-   - `LegacyFixedOrder`：只用于旧资源兼容。
-   - `UserOrder`：新资源默认。
-3. Editor UI 对新资源默认启用拖拽排序。
+2. 直接删除旧固定 effect order 的 runtime 元数据和重排门面，不再为旧排序模式保留额外迁移字段。
+3. Editor UI 对现有资源统一启用拖拽排序。
 4. 旧 Shoost 的 AOV mask 配置迁移到 ScreenProcess layer。
 5. ImageProcess runtime 删除 AOV composite、semantic image pass 和 NeedsAovInput 路径。
 6. Frame Debugger pass 名标出用户 layer index，方便对照 UI 顺序。
@@ -174,13 +172,14 @@ ImageProcess UI：
 - `ShoostPostProcessPass.RecordRenderGraph()` 使用 ImageChain 双工作纹理推进用户层顺序。
 - ImageProcess RenderGraph 路径不再读取 AOV / MaterialBuffer mask 资源，不再提供 AOV composite 或 AOV debug 输出。
 - 旧 `useAovMask` / `debugAovMask` 字段仍保留在序列化数据中，后续需要迁移到 ScreenProcess 或提供明确迁移提示。
+- `ShoostPostProcessEffectDescriptor` 不再保留 `RuntimeOrder`；旧 `ShoostPostProcessEffectOrder` 兼容门面已删除，用户 layer 顺序成为唯一外部顺序来源。
 
 已继续落地 Editor 侧顺序与迁移提示：
 
 - `ShoostPostProcessStackVolumeEditor` 的 layer list 开启拖拽排序。
 - Inspector 不再调用旧固定 effect order 自动重排，只保留废弃 effect slot / 重复 layer 清理。
 - 添加 layer 和应用 preset 后不再按旧 effect 顺序移动 layer，用户列表顺序即 ImageProcess 执行顺序。
-- Shoost/ImageProcess UI 不再显示 AOV mask 规则编辑器；旧 `useAovMask` / `debugAovMask` 为真时只显示迁移提示，指向 ScreenProcess。
+- Shoost/ImageProcess UI 不再显示 AOV mask 规则编辑器；旧 `useAovMask` / `debugAovMask` 为真时只显示迁移提示，指向 ScreenProcess，并提示迁移完成后清空旧标记。
 
 已继续收敛 runtime 输入边界：
 

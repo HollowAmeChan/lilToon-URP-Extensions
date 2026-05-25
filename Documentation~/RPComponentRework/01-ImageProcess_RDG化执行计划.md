@@ -86,7 +86,7 @@ End()
   Blit current -> cameraColor
 ```
 
-layer 顺序使用用户在 ImageProcess UI 中排列的顺序。descriptor 只提供默认插入位置、显示信息和资源声明，不在运行时强制重排用户栈。
+layer 顺序使用用户在 ImageProcess UI 中排列的顺序。descriptor 只提供显示信息、资源声明和迁移兼容信息，不在运行时强制重排用户栈。
 
 验收：
 
@@ -208,6 +208,7 @@ Runtime/ShoostPostProcessing/ShoostPostProcessEffectDescriptor.cs
 - RenderGraph 路径不再读取 `HoAovRenderGraphResources`，也不再记录 Shoost AOV composite pass。
 - RenderGraph 路径不再通过 `ShoostPostProcessAovCompositeCache.Ensure()` 查找或创建 `AovComposite.shader` material。
 - `ShoostPostProcessRuntimeLayerBuilder` 不再按 descriptor 的 `RuntimeOrder` 强制排序，当前执行顺序尊重 Volume layer 用户顺序。
+- `ShoostPostProcessEffectDescriptor` 已移除 `RuntimeOrder`，`ShoostPostProcessEffectOrder` 兼容门面随之删除，ImageProcess 不再保留“旧固定 effect order”元数据外壳。
 
 随后继续落地局部资源声明：
 
@@ -222,7 +223,7 @@ Runtime/ShoostPostProcessing/ShoostPostProcessEffectDescriptor.cs
 
 - `ShoostPostProcessStackVolumeEditor` 的 layer list 开启用户拖拽排序。
 - Inspector / preset 应用流程不再调用旧固定 effect order 自动重排。
-- 旧 Shoost AOV mask UI 不再作为 ImageProcess 可编辑能力显示；已有 `useAovMask` / `debugAovMask` 配置只显示迁移提示，要求迁到 ScreenProcess。
+- 旧 Shoost AOV mask UI 不再作为 ImageProcess 可编辑能力显示；已有 `useAovMask` / `debugAovMask` 配置只显示迁移提示，要求迁到 ScreenProcess，并在迁移完成后清空 legacy 标记。
 
 本批验证：
 

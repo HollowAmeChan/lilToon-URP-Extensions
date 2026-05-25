@@ -796,7 +796,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static int GetAovMigrationNoticeLineCount()
         {
-            return 3;
+            return 4;
         }
 
         private static bool HasLegacyShoostAovMask(SerializedProperty element)
@@ -1280,7 +1280,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Rect noticeRect = new Rect(x, y, width, height - LineSpacing);
             EditorGUI.HelpBox(
                 noticeRect,
-                "Legacy AOV mask settings are serialized here for migration only. ImageProcess RenderGraph does not read AOV, MaterialBuffer, GeometryBuffer, depth/normal, object ids, or ShadowCast resources. Recreate semantic masked effects in ScreenProcess.",
+                "Legacy AOV mask settings are serialized here for migration only.\nImageProcess does not read AOV, MaterialBuffer, GeometryBuffer, depth/normal, object ids, or ShadowCast resources.\nMove semantic masked effects to ScreenProcess and clear the legacy flags once migration is complete.",
                 MessageType.Warning);
             return y + height;
         }
