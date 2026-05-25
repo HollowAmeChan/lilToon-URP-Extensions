@@ -1,19 +1,18 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 
-namespace lilToon.URP.Extensions.AOV
+namespace lilToon.URP.Extensions.MetadataBuffer
 {
     [ExecuteAlways]
     [DisallowMultipleComponent]
-    public sealed class HoAovSubject : MonoBehaviour
+    public sealed class HoMetadataBufferSubject : MonoBehaviour
     {
         private const int CurrentSerializedVersion = 1;
         private static readonly List<Renderer> RendererCache = new List<Renderer>();
 
         [InspectorName("系统写入通道")]
-        [Tooltip("此对象允许写入的系统 AOV 通道。最终输出还会受 HoAOV RendererFeature 的系统通道过滤。")]
+        [Tooltip("此对象允许写入的 MetadataBuffer 系统通道。最终输出还会受 MetadataBuffer RendererFeature 的系统通道过滤。")]
         public HoMetadataBufferChannelMask systemWriteChannels = HoMetadataBufferChannelMask.Default;
 
         [InspectorName("Override Material Custom Channels")]
@@ -25,7 +24,7 @@ namespace lilToon.URP.Extensions.AOV
         public uint customWriteMask;
 
         [InspectorName("遮罩权重")]
-        [Tooltip("写入 HoAOV Mask 通道的权重。")]
+        [Tooltip("写入 MetadataBuffer Mask 通道的权重。")]
         [Range(0.0f, 1.0f)]
         public float maskWeight = 1.0f;
 
@@ -42,7 +41,7 @@ namespace lilToon.URP.Extensions.AOV
         public int materialClass;
 
         [InspectorName("标记")]
-        [Tooltip("给 AOV 消费者使用的自由标记值。")]
+        [Tooltip("给 MetadataBuffer 消费者使用的自由标记值。")]
         public uint flags;
 
         [InspectorName("厚度")]
@@ -158,37 +157,37 @@ namespace lilToon.URP.Extensions.AOV
 
         private void ApplyProperties(MaterialPropertyBlock block)
         {
-            block.SetFloat(HoAovShaderConstants.MaskWeightId, maskWeight);
-            block.SetFloat(HoAovShaderConstants.SystemWriteMaskId, (float)systemWriteChannels);
-            block.SetFloat(HoAovShaderConstants.GroupIdId, groupId);
-            block.SetFloat(HoAovShaderConstants.ObjectIdId, objectId);
-            block.SetFloat(HoAovShaderConstants.MaterialClassId, materialClass);
-            block.SetFloat(HoAovShaderConstants.FlagsId, flags);
-            block.SetFloat(HoAovShaderConstants.ThicknessId, thickness);
-            block.SetFloat(HoAovShaderConstants.CurvatureId, curvature);
-            block.SetFloat(HoAovShaderConstants.TransmittanceHintId, transmittanceHint);
-            block.SetColor(HoAovShaderConstants.DebugColorId, debugColor);
+            block.SetFloat(HoMetadataBufferShaderConstants.MaskWeightId, maskWeight);
+            block.SetFloat(HoMetadataBufferShaderConstants.SystemWriteMaskId, (float)systemWriteChannels);
+            block.SetFloat(HoMetadataBufferShaderConstants.GroupIdId, groupId);
+            block.SetFloat(HoMetadataBufferShaderConstants.ObjectIdId, objectId);
+            block.SetFloat(HoMetadataBufferShaderConstants.MaterialClassId, materialClass);
+            block.SetFloat(HoMetadataBufferShaderConstants.FlagsId, flags);
+            block.SetFloat(HoMetadataBufferShaderConstants.ThicknessId, thickness);
+            block.SetFloat(HoMetadataBufferShaderConstants.CurvatureId, curvature);
+            block.SetFloat(HoMetadataBufferShaderConstants.TransmittanceHintId, transmittanceHint);
+            block.SetColor(HoMetadataBufferShaderConstants.DebugColorId, debugColor);
             if (overrideMaterialCustomChannels)
             {
-                block.SetFloat(HoAovShaderConstants.CustomWriteMaskId, customWriteMask);
-                block.SetVector(HoAovShaderConstants.CustomValues0Id, GetCustomVector(0));
+                block.SetFloat(HoMetadataBufferShaderConstants.CustomWriteMaskId, customWriteMask);
+                block.SetVector(HoMetadataBufferShaderConstants.CustomValues0Id, GetCustomVector(0));
             }
         }
 
         internal static void ClearProperties(MaterialPropertyBlock block)
         {
-            block.SetFloat(HoAovShaderConstants.MaskWeightId, 1.0f);
-            block.SetFloat(HoAovShaderConstants.SystemWriteMaskId, (float)HoMetadataBufferChannelMask.Default);
-            block.SetFloat(HoAovShaderConstants.GroupIdId, 0.0f);
-            block.SetFloat(HoAovShaderConstants.ObjectIdId, 0.0f);
-            block.SetFloat(HoAovShaderConstants.MaterialClassId, 0.0f);
-            block.SetFloat(HoAovShaderConstants.FlagsId, 0.0f);
-            block.SetFloat(HoAovShaderConstants.ThicknessId, 0.0f);
-            block.SetFloat(HoAovShaderConstants.CurvatureId, 0.0f);
-            block.SetFloat(HoAovShaderConstants.TransmittanceHintId, 0.0f);
-            block.SetColor(HoAovShaderConstants.DebugColorId, Color.white);
-            block.SetFloat(HoAovShaderConstants.CustomWriteMaskId, 0.0f);
-            block.SetVector(HoAovShaderConstants.CustomValues0Id, Vector4.zero);
+            block.SetFloat(HoMetadataBufferShaderConstants.MaskWeightId, 1.0f);
+            block.SetFloat(HoMetadataBufferShaderConstants.SystemWriteMaskId, (float)HoMetadataBufferChannelMask.Default);
+            block.SetFloat(HoMetadataBufferShaderConstants.GroupIdId, 0.0f);
+            block.SetFloat(HoMetadataBufferShaderConstants.ObjectIdId, 0.0f);
+            block.SetFloat(HoMetadataBufferShaderConstants.MaterialClassId, 0.0f);
+            block.SetFloat(HoMetadataBufferShaderConstants.FlagsId, 0.0f);
+            block.SetFloat(HoMetadataBufferShaderConstants.ThicknessId, 0.0f);
+            block.SetFloat(HoMetadataBufferShaderConstants.CurvatureId, 0.0f);
+            block.SetFloat(HoMetadataBufferShaderConstants.TransmittanceHintId, 0.0f);
+            block.SetColor(HoMetadataBufferShaderConstants.DebugColorId, Color.white);
+            block.SetFloat(HoMetadataBufferShaderConstants.CustomWriteMaskId, 0.0f);
+            block.SetVector(HoMetadataBufferShaderConstants.CustomValues0Id, Vector4.zero);
         }
 
         private void MigrateSerializedDefaults()

@@ -1,8 +1,8 @@
-using UnityEngine;
+﻿using UnityEngine;
 
-namespace lilToon.URP.Extensions.AOV
+namespace lilToon.URP.Extensions.CharacterSpecialization
 {
-    public enum HoAovRenderScale
+    public enum HoCharacterRenderScale
     {
         [InspectorName("Full")]
         Full = 1,

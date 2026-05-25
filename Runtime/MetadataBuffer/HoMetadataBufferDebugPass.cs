@@ -1,7 +1,7 @@
-#pragma warning disable CS0618, CS0672
+﻿#pragma warning disable CS0618, CS0672
 
 using lilToon.URP.Extensions.GeometryBuffer;
-using lilToon.URP.Extensions.AOV;
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -72,7 +72,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             descriptor.depthBufferBits = 0;
             descriptor.depthStencilFormat = GraphicsFormat.None;
             descriptor.msaaSamples = 1;
-            RenderingUtils.ReAllocateIfNeeded(ref tempTexture, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilHoAovDebugSource");
+            RenderingUtils.ReAllocateIfNeeded(ref tempTexture, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilHoMetadataBufferDebugSource");
             ConfigureTarget(cameraColorTarget);
         }
 
@@ -87,13 +87,13 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             using (new ProfilingScope(cmd, ProfilingSampler))
             {
                 SetMaterialProperties(debugMaterial, settings);
-                cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, renderTargets.MaskIdTexture.nameID);
-                cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
-                cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, renderTargets.SurfaceDataTexture.nameID);
-                cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, renderTargets.Custom0Texture.nameID);
-                cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, renderTargets.ObjectCustom0Texture.nameID);
-                cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom1TextureId, renderTargets.ObjectCustom1Texture.nameID);
-                cmd.SetGlobalTexture(HoAovShaderConstants.SssTextureId, renderTargets.SssTexture.nameID);
+                cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, renderTargets.MaskIdTexture.nameID);
+                cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.NormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
+                cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, renderTargets.SurfaceDataTexture.nameID);
+                cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, renderTargets.Custom0Texture.nameID);
+                cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, renderTargets.ObjectCustom0Texture.nameID);
+                cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, renderTargets.ObjectCustom1Texture.nameID);
+                cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SssTextureId, renderTargets.SssTexture.nameID);
                 Blitter.BlitCameraTexture(cmd, cameraColorTarget, tempTexture, 0, true);
                 Blitter.BlitCameraTexture(cmd, tempTexture, cameraColorTarget, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, debugMaterial, 0);
             }
@@ -126,7 +126,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             }
 
             TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
-            destinationDesc.name = "_lilHoAovDebugColor";
+            destinationDesc.name = "_lilHoMetadataBufferDebugColor";
             destinationDesc.clearBuffer = false;
             destinationDesc.depthBufferBits = 0;
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
@@ -160,14 +160,14 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 {
                     data.debugMaterial.SetFloat(HoMetadataBufferShaderConstants.DebugModeId, (float)data.debugMode);
                     data.debugMaterial.SetVector(HoMetadataBufferShaderConstants.DebugDepthParamsId, data.debugDepthParams);
-                    context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 1.0f);
-                    context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.maskIdTexture);
-                    context.cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
-                    context.cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
-                    context.cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, data.custom0Texture);
-                    context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, data.objectCustom0Texture);
-                    context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom1TextureId, data.objectCustom1Texture);
-                    context.cmd.SetGlobalTexture(HoAovShaderConstants.SssTextureId, data.sssTexture);
+                    context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.custom0Texture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.objectCustom0Texture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.objectCustom1Texture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SssTextureId, data.sssTexture);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.debugMaterial, 0);
                 });
             }

@@ -1,9 +1,8 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
-using lilToon.URP.Extensions.AOV;
-using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.MetadataBuffer;
+using lilToon.URP.Extensions.GeometryBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -587,120 +586,120 @@ namespace lilToon.URP.Extensions.PostProcessing
                         if (data.isEdgeLight)
                         {
                             bool hasAov = data.useAovMaskTexture && data.useAovNormalDepth;
-                            context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, hasAov ? 1.0f : 0.0f);
+                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, hasAov ? 1.0f : 0.0f);
                             if (hasAov)
                             {
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, data.aovNormalDepthTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.NormalDepthTextureId, data.aovNormalDepthTexture);
                             }
 
                             if (data.layer.useAovMask || data.layer.debugAovMask)
                             {
                                 if (data.useAovSurfaceData)
                                 {
-                                    context.cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
+                                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
                                 }
 
                                 if (data.useAovCustom0)
                                 {
-                                    context.cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, data.aovCustom0Texture);
+                                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.aovCustom0Texture);
                                 }
 
                                 if (data.useAovObjectCustom0)
                                 {
-                                    context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
+                                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
                                 }
 
                                 if (data.useAovObjectCustom1)
                                 {
-                                    context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
+                                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
                                 }
                             }
                         }
                         else if (data.isPostLighting)
                         {
                             bool hasAov = data.useAovMaskTexture && data.useAovNormalDepth;
-                            context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, hasAov ? 1.0f : 0.0f);
+                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, hasAov ? 1.0f : 0.0f);
                             if (hasAov)
                             {
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, data.aovNormalDepthTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.NormalDepthTextureId, data.aovNormalDepthTexture);
                             }
 
                             if (data.useAovSurfaceData)
                             {
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
                             }
 
                             if (data.useAovCustom0)
                             {
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, data.aovCustom0Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.aovCustom0Texture);
                             }
 
                             if (data.useAovObjectCustom0)
                             {
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
                             }
 
                             if (data.useAovObjectCustom1)
                             {
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
                             }
                         }
                         else if (data.isDropShadow)
                         {
-                            context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, data.useAovMaskTexture ? 1.0f : 0.0f);
+                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, data.useAovMaskTexture ? 1.0f : 0.0f);
                             if (data.useAovMaskTexture)
                             {
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
                             }
 
                             if (data.useAovSurfaceData)
                             {
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
                             }
 
                             if (data.useAovCustom0)
                             {
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, data.aovCustom0Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.aovCustom0Texture);
                             }
 
                             if (data.useAovObjectCustom0)
                             {
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
                             }
 
                             if (data.useAovObjectCustom1)
                             {
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
                             }
                         }
                         else if (data.layer.useAovMask || data.layer.debugAovMask)
                         {
-                            context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, data.useAovMaskTexture ? 1.0f : 0.0f);
+                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, data.useAovMaskTexture ? 1.0f : 0.0f);
                             if (data.useAovMaskTexture)
                             {
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
                             }
 
                             if (data.useAovSurfaceData)
                             {
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.aovSurfaceDataTexture);
                             }
 
                             if (data.useAovCustom0)
                             {
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, data.aovCustom0Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.aovCustom0Texture);
                             }
 
                             if (data.useAovObjectCustom0)
                             {
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
                             }
 
                             if (data.useAovObjectCustom1)
                             {
-                                context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
                             }
                         }
 

@@ -1,7 +1,7 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
-using lilToon.URP.Extensions.AOV;
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
@@ -21,12 +21,12 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         private static readonly List<ShaderTagId> AovShaderTagIds = new List<ShaderTagId>
         {
-            HoAovShaderConstants.ShaderTagId
+            HoMetadataBufferShaderConstants.ShaderTagId
         };
 
         private static readonly List<ShaderTagId> SssShaderTagIds = new List<ShaderTagId>
         {
-            HoAovShaderConstants.SssShaderTagId
+            HoMetadataBufferShaderConstants.SssShaderTagId
         };
 
         private const int FallbackMaxRenderQueue = (int)RenderQueue.AlphaTest - 1;
@@ -132,8 +132,8 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             {
                 ClearAovTargets(cmd);
                 SetGlobalTextures(cmd);
-                cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 1.0f);
-                cmd.SetGlobalFloat(HoAovShaderConstants.SystemChannelMaskId, GetSystemChannelMask(settings));
+                cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
+                cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.SystemChannelMaskId, GetSystemChannelMask(settings));
                 SetDefaultSubjectProperties(cmd);
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
@@ -162,7 +162,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
                 DrawingSettings sssDrawingSettings = CreateDrawingSettings(SssShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
                 context.DrawRenderers(renderingData.cullResults, ref sssDrawingSettings, ref aovFilteringSettings, ref renderStateBlock);
-                cmd.SetGlobalTexture(HoAovShaderConstants.SssTextureId, renderTargets.SssTexture.nameID);
+                cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SssTextureId, renderTargets.SssTexture.nameID);
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -182,17 +182,17 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
             HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
 
-            TextureHandle maskIdTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetMaskGraphicsFormat(), HoAovShaderConstants.MaskIdTextureName));
-            TextureHandle normalDepthTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.NormalDepthTextureName));
-            TextureHandle surfaceDataTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.SurfaceDataTextureName));
-            TextureHandle custom0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.Custom0TextureName));
-            TextureHandle objectCustom0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.ObjectCustom0TextureName));
-            TextureHandle objectCustom1Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.ObjectCustom1TextureName));
-            TextureHandle sssTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoAovShaderConstants.SssTextureName));
+            TextureHandle maskIdTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetMaskGraphicsFormat(), HoMetadataBufferShaderConstants.MaskIdTextureName));
+            TextureHandle normalDepthTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoMetadataBufferShaderConstants.NormalDepthTextureName));
+            TextureHandle surfaceDataTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoMetadataBufferShaderConstants.SurfaceDataTextureName));
+            TextureHandle custom0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoMetadataBufferShaderConstants.Custom0TextureName));
+            TextureHandle objectCustom0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoMetadataBufferShaderConstants.ObjectCustom0TextureName));
+            TextureHandle objectCustom1Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoMetadataBufferShaderConstants.ObjectCustom1TextureName));
+            TextureHandle sssTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoMetadataBufferShaderConstants.SssTextureName));
             TextureHandle depthTexture = UniversalRenderer.CreateRenderGraphTexture(
                 renderGraph,
                 HoMetadataBufferRenderTargets.CreateDepthDescriptor(cameraData.cameraTargetDescriptor, settings),
-                HoAovShaderConstants.DepthTextureName,
+                HoMetadataBufferShaderConstants.DepthTextureName,
                 true,
                 FilterMode.Point,
                 TextureWrapMode.Clamp);
@@ -284,17 +284,17 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 builder.SetRenderAttachment(objectCustom0Texture, HoMetadataBufferAttachmentLayout.ObjectCustom0, AccessFlags.ReadWrite);
                 builder.SetRenderAttachment(objectCustom1Texture, HoMetadataBufferAttachmentLayout.ObjectCustom1, AccessFlags.ReadWrite);
                 builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.ReadWrite);
-                builder.SetGlobalTextureAfterPass(maskIdTexture, HoAovShaderConstants.MaskIdTextureId);
-                builder.SetGlobalTextureAfterPass(surfaceDataTexture, HoAovShaderConstants.SurfaceDataTextureId);
-                builder.SetGlobalTextureAfterPass(custom0Texture, HoAovShaderConstants.Custom0TextureId);
-                builder.SetGlobalTextureAfterPass(objectCustom0Texture, HoAovShaderConstants.ObjectCustom0TextureId);
-                builder.SetGlobalTextureAfterPass(objectCustom1Texture, HoAovShaderConstants.ObjectCustom1TextureId);
+                builder.SetGlobalTextureAfterPass(maskIdTexture, HoMetadataBufferShaderConstants.MaskIdTextureId);
+                builder.SetGlobalTextureAfterPass(surfaceDataTexture, HoMetadataBufferShaderConstants.SurfaceDataTextureId);
+                builder.SetGlobalTextureAfterPass(custom0Texture, HoMetadataBufferShaderConstants.Custom0TextureId);
+                builder.SetGlobalTextureAfterPass(objectCustom0Texture, HoMetadataBufferShaderConstants.ObjectCustom0TextureId);
+                builder.SetGlobalTextureAfterPass(objectCustom1Texture, HoMetadataBufferShaderConstants.ObjectCustom1TextureId);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
-                    context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 1.0f);
-                    context.cmd.SetGlobalFloat(HoAovShaderConstants.SystemChannelMaskId, data.systemChannelMask);
+                    context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
+                    context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.SystemChannelMaskId, data.systemChannelMask);
                     SetDefaultSubjectProperties(context.cmd);
                     if (data.drawFallback && data.fallbackRendererList.IsValid())
                     {
@@ -308,7 +308,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 });
             }
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-HoAOV SSS", out PassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("lilToon-MetadataBuffer Surface Color", out PassData passData, ProfilingSampler))
             {
                 passData.aovRendererList = renderGraph.CreateRendererList(sssRendererListParams);
                 passData.sssTexture = sssTexture;
@@ -321,13 +321,13 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
                 builder.SetRenderAttachment(sssTexture, 0, AccessFlags.ReadWrite);
                 builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.Read);
-                builder.SetGlobalTextureAfterPass(sssTexture, HoAovShaderConstants.SssTextureId);
+                builder.SetGlobalTextureAfterPass(sssTexture, HoMetadataBufferShaderConstants.SssTextureId);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
-                    context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 1.0f);
-                    context.cmd.SetGlobalFloat(HoAovShaderConstants.SystemChannelMaskId, data.systemChannelMask);
+                    context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
+                    context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.SystemChannelMaskId, data.systemChannelMask);
                     SetDefaultSubjectProperties(context.cmd);
                     if (data.aovRendererList.IsValid())
                     {
@@ -348,7 +348,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             TextureHandle depthTexture,
             Material clearMaterial)
         {
-            using (var builder = renderGraph.AddRasterRenderPass<ClearPassData>("lilToon-HoAOV Clear", out ClearPassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<ClearPassData>("lilToon-MetadataBuffer Clear", out ClearPassData passData, ProfilingSampler))
             {
                 passData.clearMaterial = clearMaterial;
                 builder.SetRenderAttachment(maskIdTexture, HoMetadataBufferAttachmentLayout.MaskId, AccessFlags.WriteAll);
@@ -368,7 +368,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         private static void AddSssClearPass(RenderGraph renderGraph, TextureHandle sssTexture)
         {
-            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("lilToon-HoAOV SSS Clear", out _, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("lilToon-MetadataBuffer Surface Color Clear", out _, ProfilingSampler))
             {
                 builder.SetRenderAttachment(sssTexture, 0, AccessFlags.WriteAll);
                 builder.AllowPassCulling(false);
@@ -406,20 +406,20 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         private void SetInactive(ScriptableRenderContext context)
         {
             CommandBuffer cmd = CommandBufferPool.Get();
-            cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 0.0f);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
 
         private static void AddResetPass(RenderGraph renderGraph)
         {
-            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("lilToon-HoAOV Reset", out _, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("lilToon-MetadataBuffer Reset", out _, ProfilingSampler))
             {
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (ResetPassData data, RasterGraphContext context) =>
                 {
-                    context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 0.0f);
+                    context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 0.0f);
                 });
             }
         }
@@ -460,13 +460,13 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         private void SetGlobalTextures(CommandBuffer cmd)
         {
-            cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, renderTargets.MaskIdTexture.nameID);
-            cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
-            cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, renderTargets.SurfaceDataTexture.nameID);
-            cmd.SetGlobalTexture(HoAovShaderConstants.Custom0TextureId, renderTargets.Custom0Texture.nameID);
-            cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, renderTargets.ObjectCustom0Texture.nameID);
-            cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom1TextureId, renderTargets.ObjectCustom1Texture.nameID);
-            cmd.SetGlobalTexture(HoAovShaderConstants.SssTextureId, renderTargets.SssTexture.nameID);
+            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, renderTargets.MaskIdTexture.nameID);
+            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.NormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
+            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, renderTargets.SurfaceDataTexture.nameID);
+            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, renderTargets.Custom0Texture.nameID);
+            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, renderTargets.ObjectCustom0Texture.nameID);
+            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, renderTargets.ObjectCustom1Texture.nameID);
+            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SssTextureId, renderTargets.SssTexture.nameID);
         }
 
         private void ApplyFallbackMaterialProperties()
@@ -476,41 +476,41 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 return;
             }
 
-            fallbackMaterial.SetFloat(HoAovShaderConstants.SystemChannelMaskId, GetSystemChannelMask(settings));
+            fallbackMaterial.SetFloat(HoMetadataBufferShaderConstants.SystemChannelMaskId, GetSystemChannelMask(settings));
         }
 
         private static void SetDefaultSubjectProperties(CommandBuffer cmd)
         {
-            cmd.SetGlobalFloat(HoAovShaderConstants.MaskWeightId, 1.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.SystemWriteMaskId, (float)HoMetadataBufferChannelMask.Default);
-            cmd.SetGlobalFloat(HoAovShaderConstants.CustomWriteMaskId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.GroupIdId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.ObjectIdId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.MaterialClassId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.FlagsId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.ThicknessId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.CurvatureId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.TransmittanceHintId, 0.0f);
-            cmd.SetGlobalVector(HoAovShaderConstants.DebugColorId, Vector4.one);
-            cmd.SetGlobalVector(HoAovShaderConstants.CustomValues0Id, Vector4.zero);
-            cmd.SetGlobalFloat(HoAovShaderConstants.ObjectCustomMaskId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.MaskWeightId, 1.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.SystemWriteMaskId, (float)HoMetadataBufferChannelMask.Default);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.CustomWriteMaskId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.GroupIdId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ObjectIdId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.MaterialClassId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.FlagsId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ThicknessId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.CurvatureId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.TransmittanceHintId, 0.0f);
+            cmd.SetGlobalVector(HoMetadataBufferShaderConstants.DebugColorId, Vector4.one);
+            cmd.SetGlobalVector(HoMetadataBufferShaderConstants.CustomValues0Id, Vector4.zero);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ObjectCustomMaskId, 0.0f);
         }
 
         private static void SetDefaultSubjectProperties(RasterCommandBuffer cmd)
         {
-            cmd.SetGlobalFloat(HoAovShaderConstants.MaskWeightId, 1.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.SystemWriteMaskId, (float)HoMetadataBufferChannelMask.Default);
-            cmd.SetGlobalFloat(HoAovShaderConstants.CustomWriteMaskId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.GroupIdId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.ObjectIdId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.MaterialClassId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.FlagsId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.ThicknessId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.CurvatureId, 0.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.TransmittanceHintId, 0.0f);
-            cmd.SetGlobalVector(HoAovShaderConstants.DebugColorId, Vector4.one);
-            cmd.SetGlobalVector(HoAovShaderConstants.CustomValues0Id, Vector4.zero);
-            cmd.SetGlobalFloat(HoAovShaderConstants.ObjectCustomMaskId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.MaskWeightId, 1.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.SystemWriteMaskId, (float)HoMetadataBufferChannelMask.Default);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.CustomWriteMaskId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.GroupIdId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ObjectIdId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.MaterialClassId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.FlagsId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ThicknessId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.CurvatureId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.TransmittanceHintId, 0.0f);
+            cmd.SetGlobalVector(HoMetadataBufferShaderConstants.DebugColorId, Vector4.one);
+            cmd.SetGlobalVector(HoMetadataBufferShaderConstants.CustomValues0Id, Vector4.zero);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ObjectCustomMaskId, 0.0f);
         }
 
         private void ConfigureFiltering()
@@ -531,7 +531,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             aovFilteringSettings = new FilteringSettings(renderQueueRange, layerMask);
 
             // The override fallback material cannot see the source material alpha/cutout data.
-            // Keep it away from alpha-test and transparent queues; native HoAOV passes cover those.
+            // Keep it away from alpha-test and transparent queues; native metadata passes cover those.
             int fallbackMaxQueue = Mathf.Min(maxQueue, FallbackMaxRenderQueue);
             fallbackFilteringEnabled = fallbackMaxQueue >= minQueue;
             RenderQueueRange fallbackRenderQueueRange = new RenderQueueRange

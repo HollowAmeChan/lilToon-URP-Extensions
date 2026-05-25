@@ -1,5 +1,5 @@
-using System;
-using lilToon.URP.Extensions.AOV;
+﻿using System;
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -35,14 +35,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
     }
 
     [Serializable]
-    public sealed class HoCharacterRenderScaleParameter : VolumeParameter<HoAovRenderScale>
+    public sealed class HoCharacterRenderScaleParameter : VolumeParameter<HoCharacterRenderScale>
     {
-        public HoCharacterRenderScaleParameter(HoAovRenderScale value, bool overrideState = false)
+        public HoCharacterRenderScaleParameter(HoCharacterRenderScale value, bool overrideState = false)
             : base(value, overrideState)
         {
         }
 
-        public override void Interp(HoAovRenderScale from, HoAovRenderScale to, float t)
+        public override void Interp(HoCharacterRenderScale from, HoCharacterRenderScale to, float t)
         {
             value = t > 0.0f ? to : from;
         }
@@ -124,7 +124,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public HoCharacterRenderPassEventParameter PassEvent = new HoCharacterRenderPassEventParameter(RenderPassEvent.AfterRenderingTransparents);
 
         [InspectorName("渲染缩放"), Tooltip("捕获 RT 的分辨率。降低分辨率会省带宽，但会影响边缘质量。")]
-        public HoCharacterRenderScaleParameter RenderScale = new HoCharacterRenderScaleParameter(HoAovRenderScale.Full);
+        public HoCharacterRenderScaleParameter RenderScale = new HoCharacterRenderScaleParameter(HoCharacterRenderScale.Full);
 
         [InspectorName("启用眼睛透过"), Tooltip("让被前发遮挡的眼睛按眼睛捕获结果透出。")]
         public BoolParameter EyeRevealEnabled = new BoolParameter(true);

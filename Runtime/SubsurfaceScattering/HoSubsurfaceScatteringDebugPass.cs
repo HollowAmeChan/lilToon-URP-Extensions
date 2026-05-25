@@ -1,13 +1,12 @@
-// Compatibility-mode hooks are kept for projects that still run URP's non-RenderGraph path.
+﻿// Compatibility-mode hooks are kept for projects that still run URP's non-RenderGraph path.
 #pragma warning disable CS0618, CS0672
 
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
-using lilToon.URP.Extensions.AOV;
-using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.MetadataBuffer;
+using lilToon.URP.Extensions.GeometryBuffer;
 
 namespace lilToon.URP.Extensions.SubsurfaceScattering
 {
@@ -154,9 +153,9 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                     data.material.SetVector(HoSubsurfaceScatteringShaderConstants.DebugParamsId, data.debugParams);
                     context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.SourceTextureId, data.sssTexture);
                     context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.TransmissionTextureId, data.transmissionTexture);
-                    context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.maskIdTexture);
-                    context.cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
-                    context.cmd.SetGlobalTexture(HoAovShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
                     Blitter.BlitTexture(context.cmd, data.cameraColor, new Vector4(1, 1, 0, 0), data.material, 0);
                 });
             }

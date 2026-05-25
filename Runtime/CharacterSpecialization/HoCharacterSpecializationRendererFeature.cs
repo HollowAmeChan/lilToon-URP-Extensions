@@ -1,9 +1,8 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
-using lilToon.URP.Extensions.AOV;
-using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.MetadataBuffer;
+using lilToon.URP.Extensions.GeometryBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -449,13 +448,13 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 builder.SetRenderFunc(static (CompositePassData data, RasterGraphContext context) =>
                 {
                     ApplyMaterialProperties(data.material, data.eyeRevealParams, data.hairShadowParams, data.hairShadowParams1, data.hairShadowParams2, data.hairShadowColor, data.options);
-                    context.cmd.SetGlobalTexture(HoAovShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
-                    context.cmd.SetGlobalTexture(HoAovShaderConstants.NormalDepthTextureId, data.aovNormalDepthTexture);
-                    context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
-                    context.cmd.SetGlobalTexture(HoAovShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.aovMaskIdTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.NormalDepthTextureId, data.aovNormalDepthTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.aovObjectCustom0Texture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.aovObjectCustom1Texture);
                     context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, data.eyeColorTexture);
                     context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeDataTextureId, data.eyeDataTexture);
-                    context.cmd.SetGlobalFloat(HoAovShaderConstants.ActiveId, 1.0f);
+                    context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                 });
             }

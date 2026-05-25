@@ -41,8 +41,8 @@ MaterialBuffer / GeometryBuffer 的用户 UI 不能继续做成“全局大集�
 用户面对的主入口应是当前对象或当前集合：
 
 - 选中一个角色、部件或 prefab 集合时，只展开这个对象/集合相关的 Buffer 标记。
-- `HoAovGroup` 这类集合组件是正确方向：按角色组、部件和已命名 object custom 位拖入对象。
-- `HoAovSubject` 只作为高级/兼容覆盖路径，用于 MaterialPropertyBlock 覆盖材质默认值或旧流程。
+- `HoMetadataBufferGroup` 这类集合组件是正确方向：按角色组、部件和已命名 object custom 位拖入对象。
+- `HoMetadataBufferSubject` 只作为高级覆盖路径，用于 MaterialPropertyBlock 覆盖材质默认值。
 - RendererFeature 面板只负责全局输出开关、render scale、pass event、debug view 和高级兼容项。
 - RendererFeature 面板不列出全场景所有对象，不承担对象语义编辑器职责。
 
@@ -266,7 +266,7 @@ GeometryBuffer.TangentNormal
 3. 删除或关闭 tangent normal 默认输出。
 4. 删除整体遮罩默认输出，改成消费者直接读具体语义。
 5. 删除未命名 reserved custom。
-6. 重做用户 UI：RendererFeature 只做全局输出和 debug，对象/集合标记回到 `HoAovGroup` 这类局部入口。
+6. 重做用户 UI：RendererFeature 只做全局输出和 debug，对象/集合标记回到 `HoMetadataBufferGroup` 这类局部入口。
 7. 更新 debug view，只显示仍存在的 Buffer 项。
 8. 再迁 ScreenProcess / ImageProcess 消费侧。
 9. 每次新增未来效果时，对照 HDRP/UE 参考文档复核它应该进入 Buffer、ScreenProcess、ImageProcess 还是 feature 私有资源。
@@ -429,3 +429,13 @@ GeometryBuffer.TangentNormal
 - `HoAovAttachmentLayout` 迁为 `HoMetadataBufferAttachmentLayout`，当前 MetadataBuffer MRT 索引仍保持不变，便于后续拆 metadata-only shader target。
 - 旧 `HoAovRenderScale` 暂时单独保留给 CharacterSpecialization 的现有 render scale 参数；本步不把 CharacterSpecialization 混入 MetadataBuffer 类型迁移。
 - 本步不改 `_lilHoAov*` shader texture/property ABI，也不改 `HoAOV` / `HoAOVSSS` LightMode；这些仍是当前材质 pass 与 ScreenProcess、SSS、CharacterSpecialization 的兼容层。
+
+## 22. 2026-05-25 执行记录：删除 AOV 代码目录
+
+已把旧 AOV 目录推进到删除状态：
+
+- `HoAovSubject` / `HoAovGroup` 迁为 `HoMetadataBufferSubject` / `HoMetadataBufferGroup`，运行时与 Editor 入口移动到 `Runtime/MetadataBuffer/` 和 `Editor/MetadataBuffer/`。
+- `HoAovShaderConstants` 合并进 `HoMetadataBufferShaderConstants`；MetadataBuffer、ScreenProcess、SSS 和 CharacterSpecialization 统一从 MetadataBuffer 命名空间读取当前共享 shader ABI 常量。
+- `HoAovRenderScale` 改为 CharacterSpecialization 局部的 `HoCharacterRenderScale`，不再为了一个捕获分辨率 enum 保留 AOV 命名空间。
+- 删除 `Runtime/AOV/`、`Editor/AOV/` 以及对应 `.meta` 文件，旧 AOV 不再作为代码目录或命名空间存在。
+- 当前仍保留 `_lilHoAov*` 纹理名、`HoAOV` / `HoAOVSSS` LightMode 和 ScreenProcess 里的 `AovMask` 字段名，作为材质 pass / shader ABI / ScreenProcess 语义遮罩的后续单独迁移项；它们不再由 AOV 目录承载。

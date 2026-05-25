@@ -95,8 +95,8 @@ RendererFeature 只配置全局输出：
 
 对象语义不在 RendererFeature 里批量管理。用户应在对象或集合上配置：
 
-- `HoAovGroup`：普通入口，用于角色、脸、前发、眼睛、配件等集合标记。
-- `HoAovSubject`：高级/兼容入口，用于 MPB 覆盖或旧流程。
+- `HoMetadataBufferGroup`：普通入口，用于角色、脸、前发、眼睛、配件等集合标记。
+- `HoMetadataBufferSubject`：高级入口，用于 MPB 覆盖材质默认 metadata。
 - Material Inspector：配置材质自己的 surface color、thickness、curvature、material class/profile 等默认语义。
 
 Debug 重点看：
@@ -137,7 +137,7 @@ Debug 重点看：
 
 ### CharacterSpecialization
 
-用户在对象侧用 `HoAovGroup` 标记 Face / FrontHair / Eye / EyeRevealArea 等集合。
+用户在对象侧用 `HoMetadataBufferGroup` 标记 Face / FrontHair / Eye / EyeRevealArea 等集合。
 Feature 或 Volume 只控制眼透、前发投影、局部合成参数。
 
 Debug 重点看：
@@ -224,11 +224,11 @@ Debug 入口可以统一，但资源归属必须局部：
 
 ### Buffer 没有对象标记
 
-1. 看对象是否被 `HoAovGroup` 命中。
+1. 看对象是否被 `HoMetadataBufferGroup` 命中。
 2. 看 group priority 是否被其它组覆盖。
 3. 看 RendererFeature layer / queue 是否包含该对象。
 4. 打开 `ObjectId / GroupId / CharacterPart` debug。
-5. 只有高级覆盖才检查 `HoAovSubject`。
+5. 只有高级覆盖才检查 `HoMetadataBufferSubject`。
 
 ### SSS 不生效
 
@@ -270,7 +270,7 @@ Debug 入口可以统一，但资源归属必须局部：
 
 - 新用户只看本文能完成 Renderer Data 添加和顺序排列。
 - 不需要 `HoShadowCastController` 场景组件也能产生 ShadowCast 参与列表。
-- AOV/Buffer 对象语义主要从 `HoAovGroup` 这类局部对象 UI 编辑。
+- MetadataBuffer/GeometryBuffer 对象语义主要从 `HoMetadataBufferGroup` 这类局部对象 UI 编辑。
 - RendererFeature Inspector 不再变成全场景对象大列表。
 - Debug tile 能显示每个 feature 自己声明的短命名。
 - ImageProcess 不读取 MaterialBuffer / GeometryBuffer / ShadowCast，也没有 AOV mask UI。

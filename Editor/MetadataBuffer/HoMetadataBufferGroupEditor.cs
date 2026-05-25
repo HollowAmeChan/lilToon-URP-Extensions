@@ -1,12 +1,12 @@
-using lilToon.URP.Extensions.AOV;
+﻿using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEditor;
 using UnityEngine;
 
-namespace lilToon.URP.Extensions.Editor.AOV
+namespace lilToon.URP.Extensions.Editor.MetadataBuffer
 {
-    [CustomEditor(typeof(HoAovGroup))]
+    [CustomEditor(typeof(HoMetadataBufferGroup))]
     [CanEditMultipleObjects]
-    internal sealed class HoAovGroupEditor : UnityEditor.Editor
+    internal sealed class HoMetadataBufferGroupEditor : UnityEditor.Editor
     {
         private const float Spacing = 6.0f;
         private const float ChannelHeaderHeight = 32.0f;
@@ -33,8 +33,8 @@ namespace lilToon.URP.Extensions.Editor.AOV
             new GUIContent("眼睛", "眼睛对象或 Renderer。"),
             new GUIContent("眼透区域", "允许眼睛透出的区域对象或 Renderer。"),
             new GUIContent("配件", "配件对象或 Renderer。"),
-            new GUIContent("预留 6", "预留给项目自定义 Object AOV。"),
-            new GUIContent("预留 7", "预留给项目自定义 Object AOV。")
+            new GUIContent("预留 6", "预留给项目自定义 Object metadata。"),
+            new GUIContent("预留 7", "预留给项目自定义 Object metadata。")
         };
 
         private static readonly Color[] ObjectCustomColors =
@@ -87,10 +87,10 @@ namespace lilToon.URP.Extensions.Editor.AOV
 
             if (refreshScene)
             {
-                HoAovGroup.RefreshLoadedScenes();
+                HoMetadataBufferGroup.RefreshLoadedScenes();
                 foreach (Object targetObject in targets)
                 {
-                    if (targetObject is HoAovGroup group)
+                    if (targetObject is HoMetadataBufferGroup group)
                     {
                         EditorUtility.SetDirty(group);
                     }
@@ -132,7 +132,7 @@ namespace lilToon.URP.Extensions.Editor.AOV
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty("includeChildrenForListedObjects", new GUIContent("展开预制件", "拖入 GameObject 或预制件实例时，包含它下面的子级 Renderer；关闭时只使用物体自身的 Renderer。"));
-                DrawProperty("priority", new GUIContent("优先级", "同一个 Renderer 被多个 HoAovGroup 命中时，优先级高者生效；相同时离 Renderer 最近的组生效。"));
+                DrawProperty("priority", new GUIContent("优先级", "同一个 Renderer 被多个 HoMetadataBufferGroup 命中时，优先级高者生效；相同时离 Renderer 最近的组生效。"));
             }
         }
 
@@ -447,7 +447,7 @@ namespace lilToon.URP.Extensions.Editor.AOV
         {
             foreach (Object targetObject in targets)
             {
-                if (targetObject is HoAovGroup group)
+                if (targetObject is HoMetadataBufferGroup group)
                 {
                     group.Apply();
                     EditorUtility.SetDirty(group);

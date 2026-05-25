@@ -1,4 +1,4 @@
-Shader "Hidden/lilToon/URP/MetadataBuffer/Fallback"
+﻿Shader "Hidden/lilToon/URP/MetadataBuffer/Fallback"
 {
     Properties
     {
@@ -6,7 +6,7 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/Fallback"
         [HideInInspector] _lilHoAovSystemChannelMask ("HoAOV Feature System Channel Mask", Float) = 4031
         [HideInInspector] _HoAovSystemWriteMask ("HoAOV System Write Mask", Float) = 1055
         [HideInInspector] _HoAovCustomWriteMask ("HoAOV Custom Write Mask", Float) = 0
-        [HideInInspector] _HoAovGroupId ("HoAOV Group Id", Float) = 0
+        [HideInInspector] _HoMetadataBufferGroupId ("HoAOV Group Id", Float) = 0
         [HideInInspector] _HoAovObjectId ("HoAOV Object Id", Float) = 0
         [HideInInspector] _HoAovMaterialClass ("HoAOV Material Class", Float) = 0
         [HideInInspector] _HoAovFlags ("HoAOV Flags", Float) = 0
@@ -46,7 +46,7 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/Fallback"
             float _lilHoAovSystemChannelMask;
             float _HoAovSystemWriteMask;
             float _HoAovCustomWriteMask;
-            float _HoAovGroupId;
+            float _HoMetadataBufferGroupId;
             float _HoAovObjectId;
             float _HoAovMaterialClass;
             float _HoAovFlags;
@@ -169,7 +169,7 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/Fallback"
                 uint rendererUserValue = unity_RendererUserValue;
                 bool hasRendererUserValue = rendererUserValue != 0u;
                 uint objectCustomMask = hasRendererUserValue ? (rendererUserValue & 255u) : (uint)round(saturate(_HoAovObjectCustomMask / 255.0) * 255.0);
-                float effectiveGroupId = hasRendererUserValue ? ByteToFloat(rendererUserValue, 8u) : _HoAovGroupId;
+                float effectiveGroupId = hasRendererUserValue ? ByteToFloat(rendererUserValue, 8u) : _HoMetadataBufferGroupId;
                 float effectiveObjectId = hasRendererUserValue ? ByteToFloat(rendererUserValue, 16u) : _HoAovObjectId;
                 float effectiveFlags = hasRendererUserValue ? ByteToFloat(rendererUserValue, 24u) : _HoAovFlags;
 

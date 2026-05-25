@@ -1,5 +1,5 @@
-using System;
-using lilToon.URP.Extensions.AOV;
+﻿using System;
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -53,7 +53,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         [InspectorName("渲染缩放")]
         [Tooltip("捕获 RT 的分辨率。降低分辨率会省带宽，但会影响边缘质量。")]
-        public HoAovRenderScale renderScale = HoAovRenderScale.Full;
+        public HoCharacterRenderScale renderScale = HoCharacterRenderScale.Full;
 
         [InspectorName("合成 Shader")]
         [Tooltip("为空时自动使用 Hidden/lilToon-HoCharacter/URP/Composite。一般不需要改。")]

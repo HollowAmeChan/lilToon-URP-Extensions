@@ -1,6 +1,6 @@
-#pragma warning disable CS0618, CS0672
+﻿#pragma warning disable CS0618, CS0672
 
-using lilToon.URP.Extensions.AOV;
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -118,7 +118,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         private static void ResetMetadataBufferState(ScriptableRenderContext context, Camera camera)
         {
-            Shader.SetGlobalFloat(HoAovShaderConstants.ActiveId, 0.0f);
+            Shader.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 0.0f);
         }
 
         private bool ShouldRender(in RenderingData renderingData)

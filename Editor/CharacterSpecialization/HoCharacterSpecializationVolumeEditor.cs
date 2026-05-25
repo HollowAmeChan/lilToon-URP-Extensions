@@ -1,4 +1,4 @@
-using lilToon.URP.Extensions.CharacterSpecialization;
+﻿using lilToon.URP.Extensions.CharacterSpecialization;
 using UnityEditor;
 using UnityEditor.Rendering;
 using UnityEngine;
@@ -73,7 +73,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             serializedObject.Update();
 
             EditorGUILayout.HelpBox(
-                "使用方式：Renderer Data 里先添加 HoCharacter Specialization RendererFeature；然后在全局或局部 Volume 里添加本组件并启用。Face、FrontHair、Eye、EyeRevealArea 需要由 HoAovGroup/RSUV 或材质 fallback 标记提供。",
+                "使用方式：Renderer Data 里先添加 HoCharacter Specialization RendererFeature；然后在全局或局部 Volume 里添加本组件并启用。Face、FrontHair、Eye、EyeRevealArea 需要由 HoMetadataBufferGroup/RSUV 或材质 fallback 标记提供。",
                 MessageType.Info);
             EditorGUILayout.HelpBox(
                 "眼睛透过：Eye 标记提供眼睛颜色/深度/Alpha；FrontHair 标记作为遮挡物；EyeRevealArea 标记可选，用来限制只在指定区域透出。这里的“透过强度、羽化、扩张、深度偏移、仅同角色”只影响眼睛透过。",

@@ -1,4 +1,4 @@
-#ifndef LIL_HO_CHARACTER_CAPTURE_COMMON_INCLUDED
+﻿#ifndef LIL_HO_CHARACTER_CAPTURE_COMMON_INCLUDED
 #define LIL_HO_CHARACTER_CAPTURE_COMMON_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
@@ -13,7 +13,7 @@ float _HoCharacterCaptureMode;
 
 #ifndef LIL_HO_CHARACTER_CAPTURE_HAS_AOV_PROPERTIES
 float _HoAovObjectCustomMask;
-float _HoAovGroupId;
+float _HoMetadataBufferGroupId;
 #endif
 
 struct LilHoCharacterCaptureOutput
@@ -51,7 +51,7 @@ float LilHoCharacterCaptureCharacterId()
         return (float)((rendererUserValue >> 8u) & 255u);
     }
 
-    return _HoAovGroupId;
+    return _HoMetadataBufferGroupId;
 }
 
 float LilHoCharacterCaptureShouldDraw()

@@ -1,6 +1,6 @@
-#pragma warning disable CS0618, CS0672
+﻿#pragma warning disable CS0618, CS0672
 
-using lilToon.URP.Extensions.AOV;
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -54,14 +54,14 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
             RenderTextureDescriptor depthDescriptor = CreateDepthDescriptor(cameraTextureDescriptor, settings);
 
-            RenderingUtils.ReAllocateIfNeeded(ref maskIdTexture, maskDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.MaskIdTextureName);
-            RenderingUtils.ReAllocateIfNeeded(ref normalDepthTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.NormalDepthTextureName);
-            RenderingUtils.ReAllocateIfNeeded(ref surfaceDataTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.SurfaceDataTextureName);
-            RenderingUtils.ReAllocateIfNeeded(ref custom0Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.Custom0TextureName);
-            RenderingUtils.ReAllocateIfNeeded(ref objectCustom0Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.ObjectCustom0TextureName);
-            RenderingUtils.ReAllocateIfNeeded(ref objectCustom1Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.ObjectCustom1TextureName);
-            RenderingUtils.ReAllocateIfNeeded(ref sssTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.SssTextureName);
-            RenderingUtils.ReAllocateIfNeeded(ref depthTexture, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoAovShaderConstants.DepthTextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref maskIdTexture, maskDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.MaskIdTextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref normalDepthTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.NormalDepthTextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref surfaceDataTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.SurfaceDataTextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref custom0Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.Custom0TextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref objectCustom0Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.ObjectCustom0TextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref objectCustom1Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.ObjectCustom1TextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref sssTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.SssTextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref depthTexture, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.DepthTextureName);
         }
 
         public void Release()

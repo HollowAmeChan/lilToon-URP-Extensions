@@ -1,24 +1,23 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
-using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 
-namespace lilToon.URP.Extensions.AOV
+namespace lilToon.URP.Extensions.MetadataBuffer
 {
     [ExecuteAlways]
     [DisallowMultipleComponent]
-    public sealed class HoAovGroup : MonoBehaviour
+    public sealed class HoMetadataBufferGroup : MonoBehaviour
     {
-        private static readonly List<HoAovGroup> ActiveGroups = new List<HoAovGroup>();
+        private static readonly List<HoMetadataBufferGroup> ActiveGroups = new List<HoMetadataBufferGroup>();
         private static readonly Dictionary<Renderer, Assignment> Assignments = new Dictionary<Renderer, Assignment>();
         private static readonly List<Renderer> AssignedRenderers = new List<Renderer>();
         private static readonly List<Renderer> RendererCache = new List<Renderer>();
-        private static readonly List<HoAovGroup> GroupCache = new List<HoAovGroup>();
-        private static readonly List<HoAovSubject> SubjectCache = new List<HoAovSubject>();
+        private static readonly List<HoMetadataBufferGroup> GroupCache = new List<HoMetadataBufferGroup>();
+        private static readonly List<HoMetadataBufferSubject> SubjectCache = new List<HoMetadataBufferSubject>();
         private static MaterialPropertyBlock clearPropertyBlock;
 
         [InspectorName("优先级")]
-        [Tooltip("同一个 Renderer 被多个 HoAovGroup 命中时，优先级高者写入角色组 ID、部件 ID 和标记。优先级相同时，离 Renderer 最近的组优先。")]
+        [Tooltip("同一个 Renderer 被多个 HoMetadataBufferGroup 命中时，优先级高者写入角色组 ID、部件 ID 和标记。优先级相同时，离 Renderer 最近的组优先。")]
         public int priority;
 
         [InspectorName("角色组 ID (CharacterId)")]
@@ -132,7 +131,7 @@ namespace lilToon.URP.Extensions.AOV
 
             for (int i = 0; i < ActiveGroups.Count; i++)
             {
-                HoAovGroup group = ActiveGroups[i];
+                HoMetadataBufferGroup group = ActiveGroups[i];
                 if (group == null || !group.isActiveAndEnabled)
                 {
                     continue;
@@ -168,10 +167,10 @@ namespace lilToon.URP.Extensions.AOV
                 TrySetRendererUserValue(targetRenderer, 0);
                 clearPropertyBlock ??= new MaterialPropertyBlock();
                 targetRenderer.GetPropertyBlock(clearPropertyBlock);
-                clearPropertyBlock.SetFloat(HoAovShaderConstants.ObjectCustomMaskId, 0.0f);
-                clearPropertyBlock.SetFloat(HoAovShaderConstants.GroupIdId, 0.0f);
-                clearPropertyBlock.SetFloat(HoAovShaderConstants.ObjectIdId, 0.0f);
-                clearPropertyBlock.SetFloat(HoAovShaderConstants.FlagsId, 0.0f);
+                clearPropertyBlock.SetFloat(HoMetadataBufferShaderConstants.ObjectCustomMaskId, 0.0f);
+                clearPropertyBlock.SetFloat(HoMetadataBufferShaderConstants.GroupIdId, 0.0f);
+                clearPropertyBlock.SetFloat(HoMetadataBufferShaderConstants.ObjectIdId, 0.0f);
+                clearPropertyBlock.SetFloat(HoMetadataBufferShaderConstants.FlagsId, 0.0f);
                 targetRenderer.SetPropertyBlock(clearPropertyBlock);
             }
 
@@ -194,8 +193,8 @@ namespace lilToon.URP.Extensions.AOV
 
                 TrySetRendererUserValue(targetRenderer, 0);
                 targetRenderer.GetPropertyBlock(clearPropertyBlock);
-                HoAovSubject.ClearProperties(clearPropertyBlock);
-                clearPropertyBlock.SetFloat(HoAovShaderConstants.ObjectCustomMaskId, 0.0f);
+                HoMetadataBufferSubject.ClearProperties(clearPropertyBlock);
+                clearPropertyBlock.SetFloat(HoMetadataBufferShaderConstants.ObjectCustomMaskId, 0.0f);
                 targetRenderer.SetPropertyBlock(clearPropertyBlock);
             }
 
@@ -206,10 +205,10 @@ namespace lilToon.URP.Extensions.AOV
         private static void ApplyActiveSubjects()
         {
             SubjectCache.Clear();
-            SubjectCache.AddRange(UnityEngine.Object.FindObjectsByType<HoAovSubject>(FindObjectsInactive.Exclude, FindObjectsSortMode.None));
+            SubjectCache.AddRange(UnityEngine.Object.FindObjectsByType<HoMetadataBufferSubject>(FindObjectsInactive.Exclude, FindObjectsSortMode.None));
             for (int i = 0; i < SubjectCache.Count; i++)
             {
-                HoAovSubject subject = SubjectCache[i];
+                HoMetadataBufferSubject subject = SubjectCache[i];
                 if (subject != null && subject.isActiveAndEnabled)
                 {
                     subject.ApplyToRenderers();
@@ -223,10 +222,10 @@ namespace lilToon.URP.Extensions.AOV
         {
             ActiveGroups.Clear();
             GroupCache.Clear();
-            GroupCache.AddRange(UnityEngine.Object.FindObjectsByType<HoAovGroup>(FindObjectsInactive.Exclude, FindObjectsSortMode.None));
+            GroupCache.AddRange(UnityEngine.Object.FindObjectsByType<HoMetadataBufferGroup>(FindObjectsInactive.Exclude, FindObjectsSortMode.None));
             for (int i = 0; i < GroupCache.Count; i++)
             {
-                HoAovGroup group = GroupCache[i];
+                HoMetadataBufferGroup group = GroupCache[i];
                 if (group != null && group.isActiveAndEnabled)
                 {
                     ActiveGroups.Add(group);
@@ -373,10 +372,10 @@ namespace lilToon.URP.Extensions.AOV
 
             propertyBlock ??= new MaterialPropertyBlock();
             targetRenderer.GetPropertyBlock(propertyBlock);
-            propertyBlock.SetFloat(HoAovShaderConstants.ObjectCustomMaskId, objectCustomMask);
-            propertyBlock.SetFloat(HoAovShaderConstants.GroupIdId, characterId);
-            propertyBlock.SetFloat(HoAovShaderConstants.ObjectIdId, partId);
-            propertyBlock.SetFloat(HoAovShaderConstants.FlagsId, flags);
+            propertyBlock.SetFloat(HoMetadataBufferShaderConstants.ObjectCustomMaskId, objectCustomMask);
+            propertyBlock.SetFloat(HoMetadataBufferShaderConstants.GroupIdId, characterId);
+            propertyBlock.SetFloat(HoMetadataBufferShaderConstants.ObjectIdId, partId);
+            propertyBlock.SetFloat(HoMetadataBufferShaderConstants.FlagsId, flags);
             targetRenderer.SetPropertyBlock(propertyBlock);
         }
 
@@ -399,12 +398,12 @@ namespace lilToon.URP.Extensions.AOV
 
         private readonly struct Assignment
         {
-            public readonly HoAovGroup group;
+            public readonly HoMetadataBufferGroup group;
             public readonly byte objectCustomMask;
             private readonly int priority;
             private readonly int distance;
 
-            public Assignment(HoAovGroup group, byte objectCustomMask, int priority, int distance)
+            public Assignment(HoMetadataBufferGroup group, byte objectCustomMask, int priority, int distance)
             {
                 this.group = group;
                 this.objectCustomMask = objectCustomMask;

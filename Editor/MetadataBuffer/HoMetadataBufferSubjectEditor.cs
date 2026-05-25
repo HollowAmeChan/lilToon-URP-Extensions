@@ -1,21 +1,21 @@
-using lilToon.URP.Extensions.AOV;
+﻿using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEditor;
 using UnityEngine;
 
-namespace lilToon.URP.Extensions.Editor.AOV
+namespace lilToon.URP.Extensions.Editor.MetadataBuffer
 {
-    [CustomEditor(typeof(HoAovSubject))]
-    internal sealed class HoAovSubjectEditor : UnityEditor.Editor
+    [CustomEditor(typeof(HoMetadataBufferSubject))]
+    internal sealed class HoMetadataBufferSubjectEditor : UnityEditor.Editor
     {
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
 
             EditorGUILayout.HelpBox(
-                "HoAovSubject 是高级/兼容覆盖组件。普通的角色、脸、前发、眼睛等 Object AOV 分组请使用 HoAovGroup。",
+                "HoMetadataBufferSubject 是高级覆盖组件。普通的角色、脸、前发、眼睛等对象分组请使用 HoMetadataBufferGroup。",
                 MessageType.Info);
             EditorGUILayout.HelpBox(
-                "这个组件会通过 MaterialPropertyBlock 覆盖系统 AOV、ID、厚度、曲率或材质 custom 值。MPB 可能影响 SRP Batcher；只在需要覆盖材质默认值或兼容旧流程时使用。",
+                "这个组件会通过 MaterialPropertyBlock 覆盖 MetadataBuffer 系统通道、ID、厚度、曲率或材质 custom 值。MPB 可能影响 SRP Batcher；只在需要覆盖材质默认值时使用。",
                 MessageType.Warning);
 
             DrawSystemSection();
@@ -33,7 +33,7 @@ namespace lilToon.URP.Extensions.Editor.AOV
             {
                 foreach (Object targetObject in targets)
                 {
-                    if (targetObject is HoAovSubject subject)
+                    if (targetObject is HoMetadataBufferSubject subject)
                     {
                         subject.ApplyToRenderers();
                         EditorUtility.SetDirty(subject);
@@ -45,7 +45,7 @@ namespace lilToon.URP.Extensions.Editor.AOV
         private void DrawSystemSection()
         {
             EditorGUILayout.Space(6.0f);
-            EditorGUILayout.LabelField("系统 AOV 覆盖", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("系统 Metadata 覆盖", EditorStyles.boldLabel);
             DrawProperty("systemWriteChannels");
             DrawProperty("maskWeight");
         }
@@ -55,7 +55,7 @@ namespace lilToon.URP.Extensions.Editor.AOV
             EditorGUILayout.Space(6.0f);
             EditorGUILayout.LabelField("旧式 ID / Flags 覆盖", EditorStyles.boldLabel);
             EditorGUILayout.HelpBox(
-                "Object AOV 的 CharacterId / PartId / Flags 优先由 HoAovGroup 写入 RSUV。这里的 ID 字段只作为旧 MPB 覆盖路径保留。",
+                "Object metadata 的 CharacterId / PartId / Flags 优先由 HoMetadataBufferGroup 写入 RSUV。这里的 ID 字段只作为 MPB 覆盖路径保留。",
                 MessageType.None);
             DrawProperty("groupId");
             DrawProperty("objectId");
@@ -82,7 +82,7 @@ namespace lilToon.URP.Extensions.Editor.AOV
             if (overrideCustom == null || !overrideCustom.boolValue)
             {
                 EditorGUILayout.HelpBox(
-                    "关闭时使用材质面板里的 HoCustomAOV / 材质自定义通道 0..3。打开后才会用下面的 MPB 值覆盖。",
+                    "关闭时使用材质面板里的材质自定义通道 0..3。打开后才会用下面的 MPB 值覆盖。",
                     MessageType.None);
                 return;
             }
