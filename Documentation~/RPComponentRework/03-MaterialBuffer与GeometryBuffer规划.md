@@ -512,3 +512,11 @@ GeometryBuffer.TangentNormal
 - MetadataBuffer 侧实际读取 `maskIdTexture`、`surfaceDataTexture`、`surfaceColorTexture`；GeometryBuffer 侧实际读取 `normalDepthTexture`。
 - 缺少 camera color、MetadataBuffer 或 GeometryBuffer 时，SSS 继续跳过该帧 pass，但会发布 `HoSubsurfaceScatteringRuntimeDiagnostics.CurrentSnapshot`，Inspector 运行区显示最近一帧缺失项。
 - 这一步没有让 SSS 拥有 MaterialBuffer / GeometryBuffer，也没有把 composite weight 写回 Buffer；它只暴露现有依赖和降级状态。
+
+### 2026-05-26：CharacterSpecialization 消费侧诊断
+
+继续把固定消费者的 Buffer 依赖显式化。本步处理 `Ho-CharacterSpecialization`：
+
+- RenderGraph composite pass 实际需要 camera color、MetadataBuffer 的 `maskIdTexture` / `objectCustom0Texture` / `objectCustom1Texture`，以及 GeometryBuffer 的 `normalDepthTexture`。
+- `objectCustom0/1` 承载 Face、FrontHair、Eye、EyeRevealArea 等对象侧集合标记；Feature/Volume 只控制合成参数，不拥有对象语义。
+- 缺少 MetadataBuffer 或 GeometryBuffer 时，角色特化继续跳过该帧 pass，但会发布 `HoCharacterSpecializationRuntimeDiagnostics.CurrentSnapshot`，Inspector 运行状态显示整体 Buffer 状态和具体缺失纹理。

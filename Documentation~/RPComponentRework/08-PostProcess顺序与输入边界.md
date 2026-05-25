@@ -241,7 +241,15 @@ SSS 不是 PostProcess/ImageProcess layer，也不通过旧 AOV 总输入工作�
 - 缺少 MetadataBuffer 或 GeometryBuffer 时，SSS 不把降级伪装成 ImageProcess 问题，而是在自己的 RendererFeature Inspector 运行状态中显示缺失项。
 - ImageProcess 仍不得读取 SSS、MetadataBuffer 或 GeometryBuffer；需要语义输入的后续效果继续归 ScreenProcess。
 
-## 13. 验收清单
+## 13. 2026-05-26 执行记录：CharacterSpecialization 输入诊断边界
+
+CharacterSpecialization 是 ScreenProcess 之前的角色局部合成，不属于 ImageProcess layer。本次补齐了它的运行时输入诊断：
+
+- CharacterSpecialization RenderGraph composite pass 只声明读取 MetadataBuffer 的 maskId/objectCustom0/objectCustom1 与 GeometryBuffer 的 normalDepth。
+- 缺少 MetadataBuffer 或 GeometryBuffer 时，角色特化在自己的 RendererFeature Inspector 运行状态中显示缺失项，不把问题转嫁给 ScreenProcess 或 ImageProcess。
+- ImageProcess 仍不得读取 CharacterSpecialization capture；需要对象语义的后续画面效果继续归 ScreenProcess。
+
+## 14. 验收清单
 
 - ScreenProcess 用户拖拽顺序就是执行顺序。
 - ImageProcess 用户拖拽顺序就是执行顺序。

@@ -58,12 +58,20 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             HoCharacterSpecializationSettings activeSettings = ResolveSettings(in renderingData);
             if (!ShouldRender(in renderingData, activeSettings))
             {
+                HoCharacterSpecializationRuntimeDiagnostics.PublishSkipped(
+                    renderingData.cameraData.camera,
+                    "RendererFeature",
+                    GetSkipReason(in renderingData, activeSettings));
                 return;
             }
 
             EnsureMaterial(activeSettings);
             if (compositeMaterial == null)
             {
+                HoCharacterSpecializationRuntimeDiagnostics.PublishSkipped(
+                    renderingData.cameraData.camera,
+                    "RendererFeature",
+                    "合成材质不可用。");
                 return;
             }
 
@@ -98,6 +106,29 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
             CameraType cameraType = renderingData.cameraData.cameraType;
             return cameraType == CameraType.Game || cameraType == CameraType.SceneView;
+        }
+
+        private string GetSkipReason(in RenderingData renderingData, HoCharacterSpecializationSettings activeSettings)
+        {
+            if (activeSettings == null)
+            {
+                return UseVolumes ? "Volume 未启用或当前相机未激活角色特化。" : "设置不可用。";
+            }
+
+            if (!activeSettings.enabled)
+            {
+                return "Feature 已关闭。";
+            }
+
+            if (!activeSettings.eyeRevealEnabled && !activeSettings.hairDropShadowEnabled && activeSettings.debugMode == HoCharacterSpecializationDebugMode.Off)
+            {
+                return "眼睛透过、前发投影和 debug 均未启用。";
+            }
+
+            CameraType cameraType = renderingData.cameraData.cameraType;
+            return cameraType == CameraType.Game || cameraType == CameraType.SceneView
+                ? "未入队。"
+                : "当前 camera type 不支持。";
         }
 
         private HoCharacterSpecializationSettings ResolveSettings(in RenderingData renderingData)
@@ -329,12 +360,28 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
             HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
 
-            if (resourceData.isActiveTargetBackBuffer
-                || !resourceData.activeColorTexture.IsValid()
-                || !metadataResources.maskIdTexture.IsValid()
-                || !geometryResources.normalDepthTexture.IsValid()
-                || !metadataResources.objectCustom0Texture.IsValid()
-                || !metadataResources.objectCustom1Texture.IsValid())
+            bool backBufferActive = resourceData.isActiveTargetBackBuffer;
+            bool hasCameraColor = resourceData.activeColorTexture.IsValid();
+            bool hasMetadataMaskId = metadataResources.maskIdTexture.IsValid();
+            bool hasGeometryNormalDepth = geometryResources.normalDepthTexture.IsValid();
+            bool hasMetadataObjectCustom0 = metadataResources.objectCustom0Texture.IsValid();
+            bool hasMetadataObjectCustom1 = metadataResources.objectCustom1Texture.IsValid();
+            HoCharacterSpecializationRuntimeDiagnostics.PublishRenderGraphInputs(
+                cameraData.camera,
+                "Composite",
+                backBufferActive,
+                hasCameraColor,
+                hasMetadataMaskId,
+                hasMetadataObjectCustom0,
+                hasMetadataObjectCustom1,
+                hasGeometryNormalDepth);
+
+            if (backBufferActive
+                || !hasCameraColor
+                || !hasMetadataMaskId
+                || !hasGeometryNormalDepth
+                || !hasMetadataObjectCustom0
+                || !hasMetadataObjectCustom1)
             {
                 return;
             }

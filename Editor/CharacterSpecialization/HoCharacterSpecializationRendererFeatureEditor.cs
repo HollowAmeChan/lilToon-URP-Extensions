@@ -7,6 +7,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
     [CustomEditor(typeof(HoCharacterSpecializationRendererFeature))]
     internal sealed class HoCharacterSpecializationRendererFeatureEditor : UnityEditor.Editor
     {
+        private static bool showRuntimeStatus = true;
         private static bool showFallbackSettings;
         private SerializedProperty useVolumesProperty;
         private SerializedProperty settingsProperty;
@@ -37,8 +38,46 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                     MessageType.None);
             }
 
+            DrawRuntimeStatus();
             DrawFallbackSettings();
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private static void DrawRuntimeStatus()
+        {
+            showRuntimeStatus = EditorGUILayout.Foldout(showRuntimeStatus, "运行状态", true);
+            if (!showRuntimeStatus)
+            {
+                return;
+            }
+
+            HoCharacterSpecializationRuntimeDiagnosticSnapshot snapshot = HoCharacterSpecializationRuntimeDiagnostics.CurrentSnapshot;
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                if (!snapshot.IsValid)
+                {
+                    EditorGUILayout.HelpBox("尚未记录 Ho-CharacterSpecialization 运行帧。进入 Play Mode，或让使用该 RendererFeature 的 Scene/Game camera 渲染一帧。", MessageType.Info);
+                    return;
+                }
+
+                EditorGUILayout.LabelField("帧", snapshot.FrameCount.ToString());
+                EditorGUILayout.LabelField("相机", snapshot.CameraName);
+                EditorGUILayout.LabelField("阶段", snapshot.Stage);
+                EditorGUILayout.LabelField("Active Back Buffer", snapshot.BackBufferActive ? "是" : "否");
+                EditorGUILayout.LabelField("Camera Color", FormatAvailable(snapshot.CameraColorAvailable));
+                EditorGUILayout.LabelField("MetadataBuffer", FormatAvailable(snapshot.MetadataBufferAvailable));
+                EditorGUILayout.LabelField("GeometryBuffer", FormatAvailable(snapshot.GeometryBufferAvailable));
+                EditorGUILayout.LabelField("MaskId", FormatAvailable(snapshot.MetadataMaskIdAvailable));
+                EditorGUILayout.LabelField("ObjectCustom0", FormatAvailable(snapshot.MetadataObjectCustom0Available));
+                EditorGUILayout.LabelField("ObjectCustom1", FormatAvailable(snapshot.MetadataObjectCustom1Available));
+                EditorGUILayout.LabelField("NormalDepth", FormatAvailable(snapshot.GeometryNormalDepthAvailable));
+
+                EditorGUILayout.HelpBox(
+                    snapshot.Ready
+                        ? "角色特化输入有效：MetadataBuffer 与 GeometryBuffer 均可用。"
+                        : "角色特化已跳过：" + snapshot.Reason,
+                    snapshot.Ready ? MessageType.Info : MessageType.Warning);
+            }
         }
 
         private void DrawFallbackSettings()
@@ -104,6 +143,11 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             {
                 EditorGUILayout.PropertyField(property);
             }
+        }
+
+        private static string FormatAvailable(bool available)
+        {
+            return available ? "可用" : "缺失";
         }
     }
 }

@@ -144,9 +144,11 @@ Debug 重点看：
 
 用户在对象侧用 `HoMetadataBufferGroup` 标记 Face / FrontHair / Eye / EyeRevealArea 等集合。
 Feature 或 Volume 只控制眼透、前发投影、局部合成参数。
+当前 RenderGraph composite pass 的硬依赖是 camera color、MetadataBuffer 的 maskId/objectCustom0/objectCustom1，以及 GeometryBuffer 的 normalDepth。缺少 MetadataBuffer 或 GeometryBuffer 时，角色特化会跳过该帧并在 Feature Inspector 的运行状态里显示缺失项。
 
 Debug 重点看：
 
+- Feature Inspector 的运行状态是否显示 MetadataBuffer / GeometryBuffer 可用。
 - Face、FrontHair、Eye 标记是否写入。
 - 捕获 pass 是否命中材质的 `HoCharacterCapture` pass。
 - composite 是否在 ScreenProcess 前后符合预期。
