@@ -520,3 +520,11 @@ GeometryBuffer.TangentNormal
 - RenderGraph composite pass 实际需要 camera color、MetadataBuffer 的 `maskIdTexture` / `objectCustom0Texture` / `objectCustom1Texture`，以及 GeometryBuffer 的 `normalDepthTexture`。
 - `objectCustom0/1` 承载 Face、FrontHair、Eye、EyeRevealArea 等对象侧集合标记；Feature/Volume 只控制合成参数，不拥有对象语义。
 - 缺少 MetadataBuffer 或 GeometryBuffer 时，角色特化继续跳过该帧 pass，但会发布 `HoCharacterSpecializationRuntimeDiagnostics.CurrentSnapshot`，Inspector 运行状态显示整体 Buffer 状态和具体缺失纹理。
+
+### 2026-05-26：ScreenProcess 消费侧诊断
+
+已把最后一个可变消费者的 Buffer 依赖显式化。本步处理 `Ho-ScreenProcess`：
+
+- RenderGraph stack pass 按实际 active layer 聚合需求，不把所有 MetadataBuffer / GeometryBuffer 项都当成必需项。
+- `EdgeLight` / `PostLighting` 需要 `maskIdTexture` 与 `normalDepthTexture`；`DropShadow`、`useRuleMask` 或 `debugRuleMask` 需要 `maskIdTexture`，并按 rule source 追加 `surfaceDataTexture`、`custom0Texture`、`objectCustom0Texture` 或 `objectCustom1Texture`。
+- 缺少当前 layer 真实需要的 Buffer 项时，ScreenProcess 继续以 shader 侧降级逻辑执行，但会发布 `ScreenProcessRuntimeDiagnostics.CurrentSnapshot`，Volume Inspector 运行状态显示“需要/可用/未使用”。

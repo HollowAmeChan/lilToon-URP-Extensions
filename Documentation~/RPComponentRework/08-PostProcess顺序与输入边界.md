@@ -249,7 +249,15 @@ CharacterSpecialization 是 ScreenProcess 之前的角色局部合成，不属�
 - 缺少 MetadataBuffer 或 GeometryBuffer 时，角色特化在自己的 RendererFeature Inspector 运行状态中显示缺失项，不把问题转嫁给 ScreenProcess 或 ImageProcess。
 - ImageProcess 仍不得读取 CharacterSpecialization capture；需要对象语义的后续画面效果继续归 ScreenProcess。
 
-## 14. 验收清单
+## 14. 2026-05-26 执行记录：ScreenProcess 输入诊断边界
+
+ScreenProcess 是唯一允许消费语义输入的 post stack。本次补齐它的运行时输入诊断：
+
+- ScreenProcess RenderGraph stack pass 按 active layer 聚合 MetadataBuffer / GeometryBuffer 需求，而不是固定读取所有 Buffer。
+- `EdgeLight` / `PostLighting` 需要 maskId + normalDepth；`DropShadow`、`useRuleMask`、`debugRuleMask` 按 rule source 追加 surfaceData、custom0、objectCustom0 或 objectCustom1。
+- 缺少当前 layer 需要的 Buffer 项时，问题显示在 ScreenProcess Volume Inspector 的运行状态中；ImageProcess 仍不承担任何语义输入诊断。
+
+## 15. 验收清单
 
 - ScreenProcess 用户拖拽顺序就是执行顺序。
 - ImageProcess 用户拖拽顺序就是执行顺序。

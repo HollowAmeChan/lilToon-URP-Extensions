@@ -42,6 +42,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static readonly Dictionary<ScreenProcessEffect, GUIContent> EffectIconContents = new Dictionary<ScreenProcessEffect, GUIContent>();
 
+        private static bool showRuntimeStatus = true;
         private SerializedDataParameter showInSceneView;
         private SerializedProperty layers;
         private SerializedProperty layerValues;
@@ -77,6 +78,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             PropertyField(showInSceneView, new GUIContent("Scene View"));
             EditorGUILayout.Space(4.0f);
+            DrawRuntimeStatus();
+            EditorGUILayout.Space(4.0f);
 
             DrawEffectIconToggles();
             EditorGUILayout.Space(4.0f);
@@ -84,6 +87,57 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             DrawLayerList();
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private static void DrawRuntimeStatus()
+        {
+            showRuntimeStatus = EditorGUILayout.Foldout(showRuntimeStatus, "运行状态", true);
+            if (!showRuntimeStatus)
+            {
+                return;
+            }
+
+            ScreenProcessRuntimeDiagnosticSnapshot snapshot = ScreenProcessRuntimeDiagnostics.CurrentSnapshot;
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                if (!snapshot.IsValid)
+                {
+                    EditorGUILayout.HelpBox("尚未记录 Ho-ScreenProcess 运行帧。进入 Play Mode，或让使用该 RendererFeature 的 Scene/Game camera 渲染一帧。", MessageType.Info);
+                    return;
+                }
+
+                EditorGUILayout.LabelField("帧", snapshot.FrameCount.ToString());
+                EditorGUILayout.LabelField("相机", snapshot.CameraName);
+                EditorGUILayout.LabelField("阶段", snapshot.Stage);
+                EditorGUILayout.LabelField("Active Layers", snapshot.ActiveLayerCount.ToString());
+                EditorGUILayout.LabelField("Written Layers", snapshot.WrittenLayerCount.ToString());
+                EditorGUILayout.LabelField("Active Back Buffer", snapshot.BackBufferActive ? "是" : "否");
+                EditorGUILayout.LabelField("Camera Color", FormatAvailable(snapshot.CameraColorAvailable));
+                DrawRequiredStatus("MetadataBuffer", snapshot.RequiresMetadataBuffer, snapshot.MetadataBufferAvailable);
+                DrawRequiredStatus("GeometryBuffer", snapshot.RequiresGeometryBuffer, snapshot.GeometryBufferAvailable);
+                DrawRequiredStatus("MaskId", snapshot.RequiresMaskId, snapshot.MaskIdAvailable);
+                DrawRequiredStatus("SurfaceData", snapshot.RequiresSurfaceData, snapshot.SurfaceDataAvailable);
+                DrawRequiredStatus("Custom0", snapshot.RequiresCustom0, snapshot.Custom0Available);
+                DrawRequiredStatus("ObjectCustom0", snapshot.RequiresObjectCustom0, snapshot.ObjectCustom0Available);
+                DrawRequiredStatus("ObjectCustom1", snapshot.RequiresObjectCustom1, snapshot.ObjectCustom1Available);
+                DrawRequiredStatus("NormalDepth", snapshot.RequiresNormalDepth, snapshot.NormalDepthAvailable);
+
+                EditorGUILayout.HelpBox(
+                    snapshot.Ready
+                        ? "ScreenProcess 输入有效：当前 layer 需要的 MetadataBuffer / GeometryBuffer 项均可用。"
+                        : "ScreenProcess 已降级：" + snapshot.Reason,
+                    snapshot.Ready ? MessageType.Info : MessageType.Warning);
+            }
+        }
+
+        private static void DrawRequiredStatus(string label, bool required, bool available)
+        {
+            EditorGUILayout.LabelField(label, required ? FormatAvailable(available) : "未使用");
+        }
+
+        private static string FormatAvailable(bool available)
+        {
+            return available ? "可用" : "缺失";
         }
 
         private void DrawLayerList()

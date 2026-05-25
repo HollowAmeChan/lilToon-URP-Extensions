@@ -57,11 +57,23 @@ namespace lilToon.URP.Extensions.PostProcessing
             ScreenProcessStackVolume volume = GetVolumeComponent();
             if (!ShouldRender(in renderingData, volume))
             {
+                ScreenProcessRuntimeDiagnostics.PublishSkipped(
+                    renderingData.cameraData.camera,
+                    "RendererFeature",
+                    GetSkipReason(in renderingData, volume));
                 pass?.ClearRuntimeLayers();
                 return;
             }
 
             BuildRuntimeLayers(volume);
+            if (runtimeLayers.Count == 0)
+            {
+                ScreenProcessRuntimeDiagnostics.PublishSkipped(
+                    renderingData.cameraData.camera,
+                    "RendererFeature",
+                    "没有可运行的 ScreenProcess layer。");
+            }
+
             EnqueueRenderGraphPass(renderer, pass, runtimeLayers);
         }
 
@@ -98,6 +110,39 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             return cameraType == CameraType.Game && volume != null && volume.IsActive();
+        }
+
+        private string GetSkipReason(in RenderingData renderingData, ScreenProcessStackVolume volume)
+        {
+            if (settings == null || !settings.enabled)
+            {
+                return "Feature 已关闭。";
+            }
+
+            if (!UseVolumes)
+            {
+                return "Volume 模式已关闭。";
+            }
+
+            if (volume == null)
+            {
+                return "未找到 ScreenProcess Volume。";
+            }
+
+            CameraType cameraType = renderingData.cameraData.cameraType;
+            if (cameraType == CameraType.SceneView && !volume.ShowInSceneView.value)
+            {
+                return "Scene View 渲染已关闭。";
+            }
+
+            if (!volume.IsActive())
+            {
+                return "ScreenProcess Volume 未激活。";
+            }
+
+            return cameraType == CameraType.Game || cameraType == CameraType.SceneView
+                ? "未入队。"
+                : "当前 camera type 不支持。";
         }
 
         private void BuildRuntimeLayers(ScreenProcessStackVolume volume)
@@ -484,21 +529,52 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             if (!HasActiveRuntimeLayers())
             {
+                ScreenProcessRuntimeDiagnostics.PublishSkipped(
+                    cameraData.camera,
+                    "RenderGraph",
+                    "没有可运行的 ScreenProcess layer。");
                 return;
             }
 
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
-            UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
+            ScreenProcessRuntimeResourceRequirements requirements = ScreenProcessRuntimeDiagnostics.AnalyzeRequirements(runtimeLayers);
             if (resourceData.isActiveTargetBackBuffer)
             {
+                ScreenProcessRuntimeDiagnostics.PublishRenderGraphInputs(
+                    cameraData.camera,
+                    "Stack",
+                    requirements,
+                    0,
+                    true,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false);
                 return;
             }
 
             TextureHandle source = resourceData.activeColorTexture;
             if (!source.IsValid())
             {
+                ScreenProcessRuntimeDiagnostics.PublishRenderGraphInputs(
+                    cameraData.camera,
+                    "Stack",
+                    requirements,
+                    0,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false,
+                    false);
                 return;
             }
 
@@ -715,6 +791,20 @@ namespace lilToon.URP.Extensions.PostProcessing
             {
                 resourceData.cameraColor = source;
             }
+
+            ScreenProcessRuntimeDiagnostics.PublishRenderGraphInputs(
+                cameraData.camera,
+                "Stack",
+                requirements,
+                writtenLayerCount,
+                false,
+                true,
+                metadataResources.maskIdTexture.IsValid(),
+                metadataResources.surfaceDataTexture.IsValid(),
+                metadataResources.custom0Texture.IsValid(),
+                metadataResources.objectCustom0Texture.IsValid(),
+                metadataResources.objectCustom1Texture.IsValid(),
+                geometryResources.normalDepthTexture.IsValid());
         }
 
         private void CopyLayers(List<ScreenProcessRuntimeLayer> layers)

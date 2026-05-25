@@ -158,6 +158,7 @@ Debug 重点看：
 ScreenProcess 是语义屏幕处理。
 用户在 Volume/Profile 里配置对象、材质、角色定向效果。
 ScreenProcess layer 按用户列表顺序执行，不再长期依赖固定内部排序。
+当前 RenderGraph stack pass 按 active layer 聚合 Buffer 需求：`EdgeLight` / `PostLighting` 需要 MetadataBuffer mask 与 GeometryBuffer normalDepth；`DropShadow`、`useRuleMask`、`debugRuleMask` 会按 rule source 追加 surfaceData、material custom 或 object custom。缺少某项时，ScreenProcess 在 Volume Inspector 的运行状态里显示该项缺失，并按 shader 侧 fallback 降级执行。
 
 允许读取：
 
@@ -169,6 +170,7 @@ ScreenProcess layer 按用户列表顺序执行，不再长期依赖固定内部
 
 Debug 重点看：
 
+- Volume Inspector 的运行状态是否显示当前 layer 需要的 Buffer 项可用。
 - 每个 layer 的输入 Buffer。
 - mask rule 实际命中值。
 - effect 是否误放到了 ImageProcess。
@@ -247,10 +249,11 @@ Debug 入口可以统一，但资源归属必须局部：
 
 ### ScreenProcess 效果命中错误
 
-1. 看 layer 是否启用。
-2. 看它读的是哪个 Buffer 项。
-3. 打开该 feature 自己的 mask/debug view。
-4. 检查是否把本该属于 ScreenProcess 的效果放进了 ImageProcess。
+1. 先看 ScreenProcess Volume Inspector 的运行状态，确认当前 layer 需要的 MetadataBuffer / GeometryBuffer 项是否可用。
+2. 看 layer 是否启用。
+3. 看它读的是哪个 Buffer 项。
+4. 打开该 feature 自己的 mask/debug view。
+5. 检查是否把本该属于 ScreenProcess 的效果放进了 ImageProcess。
 
 ### ImageProcess 画面异常
 
