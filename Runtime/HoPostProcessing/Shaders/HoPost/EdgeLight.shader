@@ -23,7 +23,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/EdgeLight"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AOV/Shaders/HoAOV/HoAovSampling.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl"
 
             float _Intensity;
@@ -65,7 +65,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/EdgeLight"
 
             float ResolveEdgeMask(float2 uv, half4 normalDepth)
             {
-                float depthCoverage = LilHoAovCoverage(normalDepth);
+                float depthCoverage = LilHoGeometryBufferCoverage(normalDepth);
                 if (_lilHoAovActive <= 0.5 || depthCoverage <= 0.0)
                 {
                     return 0.0;
@@ -274,7 +274,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/EdgeLight"
                     return half4(subjectMask, subjectMask, subjectMask, source.a);
                 }
 
-                float3 normalWS = LilHoAovWorldNormalOrZero(normalDepth);
+                float3 normalWS = LilHoGeometryBufferWorldNormalOrZero(normalDepth);
                 int mode = ResolveMode();
                 float4 tuning = ResolveRimTuning();
                 float surfaceRim = ResolveSurfaceRim(normalWS, mode, tuning.x, tuning.w) * subjectMask;

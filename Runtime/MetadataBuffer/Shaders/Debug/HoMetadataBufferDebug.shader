@@ -22,7 +22,7 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AOV/Shaders/HoAOV/HoAovSampling.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
 
             float _lilHoAovActive;
             float _HoMetadataBufferDebugMode;
@@ -127,13 +127,13 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
 
                 if (mode == 4)
                 {
-                    half depth = saturate((LilHoAovLinearDepthOrFar(normalDepth, _HoMetadataBufferDebugDepthParams.y) - _HoMetadataBufferDebugDepthParams.x) * _HoMetadataBufferDebugDepthParams.z);
+                    half depth = saturate((LilHoGeometryBufferLinearDepthOrFar(normalDepth, _HoMetadataBufferDebugDepthParams.y) - _HoMetadataBufferDebugDepthParams.x) * _HoMetadataBufferDebugDepthParams.z);
                     return half4(depth, depth, depth, 1.0);
                 }
 
                 if (mode == 5)
                 {
-                    return half4(LilHoAovEncodedNormalOrBlack(normalDepth), 1.0);
+                    return half4(LilHoGeometryBufferEncodedNormalOrBlack(normalDepth), 1.0);
                 }
 
                 if (mode == 6)

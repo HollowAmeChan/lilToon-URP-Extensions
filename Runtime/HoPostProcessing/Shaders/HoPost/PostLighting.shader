@@ -23,7 +23,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/PostLighting"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AOV/Shaders/HoAOV/HoAovSampling.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/HoPostProcessing/Shaders/HoPost/HoPostAovMask.hlsl"
 
             float _Intensity;
@@ -72,7 +72,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/PostLighting"
 
             float ResolveCoverage(float2 uv, half4 normalDepth)
             {
-                float coverage = LilHoAovCoverage(normalDepth);
+                float coverage = LilHoGeometryBufferCoverage(normalDepth);
                 if (_LayerAovMaskEnabled > 0.5)
                 {
                     return coverage * LilHoPostResolveRequiredAovMask(uv);
@@ -136,7 +136,7 @@ Shader "Hidden/lilToon-HoPost/URP/HoPost/PostLighting"
                     return half4(subjectMask, subjectMask, subjectMask, source.a);
                 }
 
-                float3 normalWS = LilHoAovWorldNormalOrZero(normalDepth);
+                float3 normalWS = LilHoGeometryBufferWorldNormalOrZero(normalDepth);
                 if (subjectMask <= 0.0001 || dot(normalWS, normalWS) <= 0.0001)
                 {
                     return source;

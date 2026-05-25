@@ -408,3 +408,14 @@ GeometryBuffer.TangentNormal
 - Debug mode 最后一项从旧 `SSS Source Color` 命名收敛为 `Surface Color`，继续读取当前兼容 ABI 的 `_lilHoAovSssTexture`，后续 shader target 拆分时再改资源名。
 
 这一步不改变主输出 MRT、`_lilHoAov*` 纹理/property ABI、`HoAOV` / `HoAOVSSS` 材质 LightMode，也不影响 ScreenProcess、SSS 或 CharacterSpecialization 的消费路径。
+
+## 20. 2026-05-25 执行记录：GeometryBuffer sampling helper 迁出 AOV
+
+已把只服务 normal/depth 解码的 shader helper 从旧 AOV 目录迁到 GeometryBuffer：
+
+- `Runtime/AOV/Shaders/HoAOV/HoAovSampling.hlsl` 迁为 `Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl`。
+- helper 函数改名为 `LilHoGeometryBufferCoverage`、`LilHoGeometryBufferLinearDepthOrFar`、`LilHoGeometryBufferEncodedNormalOrBlack`、`LilHoGeometryBufferWorldNormalOrZero` 等 GeometryBuffer 语义。
+- MetadataBuffer debug shader、ScreenProcess 的 `EdgeLight` / `PostLighting` 改 include 新路径并调用新函数名。
+- 删除空的 `Runtime/AOV/Shaders` 目录 meta；AOV 目录现在只剩对象/材质语义组件、旧材质 LightMode/纹理 ABI 常量和 attachment layout。
+
+这一步仍保留 `_lilHoAovNormalDepthTexture` 纹理名，避免同时改动 ScreenProcess、SSS、CharacterSpecialization 的运行时采样 ABI。
