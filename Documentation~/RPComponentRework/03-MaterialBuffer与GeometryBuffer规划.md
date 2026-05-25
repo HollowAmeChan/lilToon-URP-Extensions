@@ -419,3 +419,13 @@ GeometryBuffer.TangentNormal
 - 删除空的 `Runtime/AOV/Shaders` 目录 meta；AOV 目录现在只剩对象/材质语义组件、旧材质 LightMode/纹理 ABI 常量和 attachment layout。
 
 这一步仍保留 `_lilHoAovNormalDepthTexture` 纹理名，避免同时改动 ScreenProcess、SSS、CharacterSpecialization 的运行时采样 ABI。
+
+## 21. 2026-05-25 执行记录：MetadataBuffer 类型与 attachment layout 迁出 AOV
+
+已继续把只服务 MetadataBuffer 的类型边界从旧 AOV 类型层拆出：
+
+- 新增 `HoMetadataBufferChannelMask`、`HoMetadataBufferCustomChannels` 与 `HoMetadataBufferObjectChannels`，`HoMetadataBufferSettings` 和对象标记组件改读新的 MetadataBuffer 类型。
+- `HoAovChannelMask`、`HoAovCustomChannels`、`HoAovObjectChannels` 已从旧 `Runtime/AOV/HoAovBufferTypes.cs` 移除，避免后续继续把 MetadataBuffer 通道理解成 AOV 公共类型；该文件同步收窄并改名为 `HoAovRenderScale.cs`。
+- `HoAovAttachmentLayout` 迁为 `HoMetadataBufferAttachmentLayout`，当前 MetadataBuffer MRT 索引仍保持不变，便于后续拆 metadata-only shader target。
+- 旧 `HoAovRenderScale` 暂时单独保留给 CharacterSpecialization 的现有 render scale 参数；本步不把 CharacterSpecialization 混入 MetadataBuffer 类型迁移。
+- 本步不改 `_lilHoAov*` shader texture/property ABI，也不改 `HoAOV` / `HoAOVSSS` LightMode；这些仍是当前材质 pass 与 ScreenProcess、SSS、CharacterSpecialization 的兼容层。

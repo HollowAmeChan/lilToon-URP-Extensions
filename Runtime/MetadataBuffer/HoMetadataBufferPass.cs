@@ -31,7 +31,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         private const int FallbackMaxRenderQueue = (int)RenderQueue.AlphaTest - 1;
 
-        private readonly RTHandle[] colorTargets = new RTHandle[HoAovAttachmentLayout.ColorTargetCount];
+        private readonly RTHandle[] colorTargets = new RTHandle[HoMetadataBufferAttachmentLayout.ColorTargetCount];
         private HoMetadataBufferSettings settings;
         private HoMetadataBufferRenderTargets renderTargets;
         private Material clearMaterial;
@@ -108,12 +108,12 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             }
 
             renderTargets.ReAllocateIfNeeded(cameraTextureDescriptor, settings);
-            colorTargets[HoAovAttachmentLayout.MaskId] = renderTargets.MaskIdTexture;
-            colorTargets[HoAovAttachmentLayout.NormalDepth] = renderTargets.NormalDepthTexture;
-            colorTargets[HoAovAttachmentLayout.SurfaceData] = renderTargets.SurfaceDataTexture;
-            colorTargets[HoAovAttachmentLayout.Custom0] = renderTargets.Custom0Texture;
-            colorTargets[HoAovAttachmentLayout.ObjectCustom0] = renderTargets.ObjectCustom0Texture;
-            colorTargets[HoAovAttachmentLayout.ObjectCustom1] = renderTargets.ObjectCustom1Texture;
+            colorTargets[HoMetadataBufferAttachmentLayout.MaskId] = renderTargets.MaskIdTexture;
+            colorTargets[HoMetadataBufferAttachmentLayout.NormalDepth] = renderTargets.NormalDepthTexture;
+            colorTargets[HoMetadataBufferAttachmentLayout.SurfaceData] = renderTargets.SurfaceDataTexture;
+            colorTargets[HoMetadataBufferAttachmentLayout.Custom0] = renderTargets.Custom0Texture;
+            colorTargets[HoMetadataBufferAttachmentLayout.ObjectCustom0] = renderTargets.ObjectCustom0Texture;
+            colorTargets[HoMetadataBufferAttachmentLayout.ObjectCustom1] = renderTargets.ObjectCustom1Texture;
 
             ConfigureTarget(colorTargets, renderTargets.DepthTexture);
             ConfigureClear(ClearFlag.All, Color.clear);
@@ -277,12 +277,12 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                     builder.UseRendererList(passData.aovRendererList);
                 }
 
-                builder.SetRenderAttachment(maskIdTexture, HoAovAttachmentLayout.MaskId, AccessFlags.ReadWrite);
-                builder.SetRenderAttachment(normalDepthTexture, HoAovAttachmentLayout.NormalDepth, AccessFlags.ReadWrite);
-                builder.SetRenderAttachment(surfaceDataTexture, HoAovAttachmentLayout.SurfaceData, AccessFlags.ReadWrite);
-                builder.SetRenderAttachment(custom0Texture, HoAovAttachmentLayout.Custom0, AccessFlags.ReadWrite);
-                builder.SetRenderAttachment(objectCustom0Texture, HoAovAttachmentLayout.ObjectCustom0, AccessFlags.ReadWrite);
-                builder.SetRenderAttachment(objectCustom1Texture, HoAovAttachmentLayout.ObjectCustom1, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(maskIdTexture, HoMetadataBufferAttachmentLayout.MaskId, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(normalDepthTexture, HoMetadataBufferAttachmentLayout.NormalDepth, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(surfaceDataTexture, HoMetadataBufferAttachmentLayout.SurfaceData, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(custom0Texture, HoMetadataBufferAttachmentLayout.Custom0, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(objectCustom0Texture, HoMetadataBufferAttachmentLayout.ObjectCustom0, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(objectCustom1Texture, HoMetadataBufferAttachmentLayout.ObjectCustom1, AccessFlags.ReadWrite);
                 builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.ReadWrite);
                 builder.SetGlobalTextureAfterPass(maskIdTexture, HoAovShaderConstants.MaskIdTextureId);
                 builder.SetGlobalTextureAfterPass(surfaceDataTexture, HoAovShaderConstants.SurfaceDataTextureId);
@@ -351,12 +351,12 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             using (var builder = renderGraph.AddRasterRenderPass<ClearPassData>("lilToon-HoAOV Clear", out ClearPassData passData, ProfilingSampler))
             {
                 passData.clearMaterial = clearMaterial;
-                builder.SetRenderAttachment(maskIdTexture, HoAovAttachmentLayout.MaskId, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(normalDepthTexture, HoAovAttachmentLayout.NormalDepth, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(surfaceDataTexture, HoAovAttachmentLayout.SurfaceData, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(custom0Texture, HoAovAttachmentLayout.Custom0, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(objectCustom0Texture, HoAovAttachmentLayout.ObjectCustom0, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(objectCustom1Texture, HoAovAttachmentLayout.ObjectCustom1, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(maskIdTexture, HoMetadataBufferAttachmentLayout.MaskId, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(normalDepthTexture, HoMetadataBufferAttachmentLayout.NormalDepth, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(surfaceDataTexture, HoMetadataBufferAttachmentLayout.SurfaceData, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(custom0Texture, HoMetadataBufferAttachmentLayout.Custom0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(objectCustom0Texture, HoMetadataBufferAttachmentLayout.ObjectCustom0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(objectCustom1Texture, HoMetadataBufferAttachmentLayout.ObjectCustom1, AccessFlags.WriteAll);
                 builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.WriteAll);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (ClearPassData data, RasterGraphContext context) =>
@@ -455,7 +455,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         private static float GetSystemChannelMask(HoMetadataBufferSettings settings)
         {
-            return settings != null ? (float)settings.systemChannels : (float)HoAovChannelMask.Default;
+            return settings != null ? (float)settings.systemChannels : (float)HoMetadataBufferChannelMask.Default;
         }
 
         private void SetGlobalTextures(CommandBuffer cmd)
@@ -482,7 +482,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         private static void SetDefaultSubjectProperties(CommandBuffer cmd)
         {
             cmd.SetGlobalFloat(HoAovShaderConstants.MaskWeightId, 1.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.SystemWriteMaskId, (float)HoAovChannelMask.Default);
+            cmd.SetGlobalFloat(HoAovShaderConstants.SystemWriteMaskId, (float)HoMetadataBufferChannelMask.Default);
             cmd.SetGlobalFloat(HoAovShaderConstants.CustomWriteMaskId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.GroupIdId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.ObjectIdId, 0.0f);
@@ -499,7 +499,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         private static void SetDefaultSubjectProperties(RasterCommandBuffer cmd)
         {
             cmd.SetGlobalFloat(HoAovShaderConstants.MaskWeightId, 1.0f);
-            cmd.SetGlobalFloat(HoAovShaderConstants.SystemWriteMaskId, (float)HoAovChannelMask.Default);
+            cmd.SetGlobalFloat(HoAovShaderConstants.SystemWriteMaskId, (float)HoMetadataBufferChannelMask.Default);
             cmd.SetGlobalFloat(HoAovShaderConstants.CustomWriteMaskId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.GroupIdId, 0.0f);
             cmd.SetGlobalFloat(HoAovShaderConstants.ObjectIdId, 0.0f);

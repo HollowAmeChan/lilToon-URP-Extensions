@@ -1,5 +1,4 @@
 using System;
-using lilToon.URP.Extensions.AOV;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -31,11 +30,11 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         public HoMetadataBufferRenderScale renderScale = HoMetadataBufferRenderScale.Full;
 
         [InspectorName("Metadata Channels")]
-        public HoAovChannelMask systemChannels = HoAovChannelMask.Default;
+        public HoMetadataBufferChannelMask systemChannels = HoMetadataBufferChannelMask.Default;
 
         [InspectorName("Custom Channel Count")]
-        [Range(0, HoAovCustomChannels.MaxSupportedCount)]
-        public int customChannelCount = HoAovCustomChannels.DefaultCount;
+        [Range(0, HoMetadataBufferCustomChannels.MaxSupportedCount)]
+        public int customChannelCount = HoMetadataBufferCustomChannels.DefaultCount;
 
         [InspectorName("Use Fallback Material")]
         public bool useFallbackMaterial = true;
@@ -64,12 +63,12 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         public float debugDepthFar = 25.0f;
 
         [InspectorName("Custom Channel Names")]
-        public string[] customChannelNames = new string[HoAovCustomChannels.DefaultCount];
+        public string[] customChannelNames = new string[HoMetadataBufferCustomChannels.DefaultCount];
 
         [InspectorName("Custom Channel Colors")]
-        public Color[] customChannelColors = new Color[HoAovCustomChannels.DefaultCount];
+        public Color[] customChannelColors = new Color[HoMetadataBufferCustomChannels.DefaultCount];
 
-        public int ClampedCustomChannelCount => Mathf.Clamp(customChannelCount, 0, HoAovCustomChannels.MaxSupportedCount);
+        public int ClampedCustomChannelCount => Mathf.Clamp(customChannelCount, 0, HoMetadataBufferCustomChannels.MaxSupportedCount);
 
         public void ClampCustomChannels()
         {
@@ -82,13 +81,13 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         {
             if (values == null)
             {
-                values = new T[HoAovCustomChannels.DefaultCount];
+                values = new T[HoMetadataBufferCustomChannels.DefaultCount];
                 return;
             }
 
-            if (values.Length != HoAovCustomChannels.DefaultCount)
+            if (values.Length != HoMetadataBufferCustomChannels.DefaultCount)
             {
-                Array.Resize(ref values, HoAovCustomChannels.DefaultCount);
+                Array.Resize(ref values, HoMetadataBufferCustomChannels.DefaultCount);
             }
         }
     }

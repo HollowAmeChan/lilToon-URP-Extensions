@@ -1,6 +1,6 @@
-namespace lilToon.URP.Extensions.AOV
+namespace lilToon.URP.Extensions.MetadataBuffer
 {
-    internal static class HoAovAttachmentLayout
+    internal static class HoMetadataBufferAttachmentLayout
     {
         public const int ColorTargetCount = 6;
 

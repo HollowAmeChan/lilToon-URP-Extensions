@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 
 namespace lilToon.URP.Extensions.AOV
@@ -13,7 +14,7 @@ namespace lilToon.URP.Extensions.AOV
 
         [InspectorName("系统写入通道")]
         [Tooltip("此对象允许写入的系统 AOV 通道。最终输出还会受 HoAOV RendererFeature 的系统通道过滤。")]
-        public HoAovChannelMask systemWriteChannels = HoAovChannelMask.Default;
+        public HoMetadataBufferChannelMask systemWriteChannels = HoMetadataBufferChannelMask.Default;
 
         [InspectorName("Override Material Custom Channels")]
         [Tooltip("When enabled, this component writes Custom channel mask and values through MaterialPropertyBlock. When disabled, the material inspector values are used.")]
@@ -63,7 +64,7 @@ namespace lilToon.URP.Extensions.AOV
 
         [InspectorName("自定义通道值")]
         [Tooltip("用户自定义通道值。缺失的项按 0 处理。")]
-        public float[] customValues = new float[HoAovCustomChannels.DefaultCount];
+        public float[] customValues = new float[HoMetadataBufferCustomChannels.DefaultCount];
 
         [SerializeField]
         [HideInInspector]
@@ -177,7 +178,7 @@ namespace lilToon.URP.Extensions.AOV
         internal static void ClearProperties(MaterialPropertyBlock block)
         {
             block.SetFloat(HoAovShaderConstants.MaskWeightId, 1.0f);
-            block.SetFloat(HoAovShaderConstants.SystemWriteMaskId, (float)HoAovChannelMask.Default);
+            block.SetFloat(HoAovShaderConstants.SystemWriteMaskId, (float)HoMetadataBufferChannelMask.Default);
             block.SetFloat(HoAovShaderConstants.GroupIdId, 0.0f);
             block.SetFloat(HoAovShaderConstants.ObjectIdId, 0.0f);
             block.SetFloat(HoAovShaderConstants.MaterialClassId, 0.0f);
@@ -225,16 +226,16 @@ namespace lilToon.URP.Extensions.AOV
         {
             if (customValues == null)
             {
-                customValues = new float[HoAovCustomChannels.DefaultCount];
+                customValues = new float[HoMetadataBufferCustomChannels.DefaultCount];
                 return;
             }
 
-            if (customValues.Length == HoAovCustomChannels.DefaultCount)
+            if (customValues.Length == HoMetadataBufferCustomChannels.DefaultCount)
             {
                 return;
             }
 
-            Array.Resize(ref customValues, HoAovCustomChannels.DefaultCount);
+            Array.Resize(ref customValues, HoMetadataBufferCustomChannels.DefaultCount);
         }
     }
 }

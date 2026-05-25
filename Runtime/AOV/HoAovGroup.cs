@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 
 namespace lilToon.URP.Extensions.AOV
@@ -251,7 +252,7 @@ namespace lilToon.URP.Extensions.AOV
 
         private void AddMaskEntries(UnityEngine.Object[] entries, int bitIndex)
         {
-            if (entries == null || bitIndex < 0 || bitIndex >= HoAovObjectChannels.DefaultCount)
+            if (entries == null || bitIndex < 0 || bitIndex >= HoMetadataBufferObjectChannels.DefaultCount)
             {
                 return;
             }

@@ -1,10 +1,10 @@
 using System;
 using UnityEngine;
 
-namespace lilToon.URP.Extensions.AOV
+namespace lilToon.URP.Extensions.MetadataBuffer
 {
     [Flags]
-    public enum HoAovChannelMask
+    public enum HoMetadataBufferChannelMask
     {
         [InspectorName("None")]
         None = 0,
@@ -32,17 +32,7 @@ namespace lilToon.URP.Extensions.AOV
         Default = Mask | Id | Flags | LinearDepth | WorldNormal | Thickness | Curvature | Material | TransmittanceHint
     }
 
-    public enum HoAovRenderScale
-    {
-        [InspectorName("Full")]
-        Full = 1,
-        [InspectorName("Half")]
-        Half = 2,
-        [InspectorName("Quarter")]
-        Quarter = 4
-    }
-
-    public static class HoAovCustomChannels
+    public static class HoMetadataBufferCustomChannels
     {
         public const int DefaultCount = 4;
         public const int MaxSupportedCount = 4;
@@ -55,7 +45,7 @@ namespace lilToon.URP.Extensions.AOV
         }
     }
 
-    public static class HoAovObjectChannels
+    public static class HoMetadataBufferObjectChannels
     {
         public const int DefaultCount = 8;
         public const int MaxSupportedCount = 8;
