@@ -54,6 +54,13 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
         public void Dispose()
         {
+            ReleaseCompatibilityResources();
+        }
+
+        public void ReleaseCompatibilityResources()
+        {
+            renderTargets = null;
+            cameraColorTarget = null;
             tempTexture?.Release();
             tempTexture = null;
         }
@@ -90,6 +97,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            ReleaseCompatibilityResources();
             if (settings == null || debugMaterial == null)
             {
                 return;

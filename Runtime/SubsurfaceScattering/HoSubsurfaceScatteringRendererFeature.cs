@@ -117,6 +117,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         {
             if (!ShouldRender(in renderingData))
             {
+                renderTargets.Release();
                 return;
             }
 
@@ -124,6 +125,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             EnsureMaterial();
             if (material == null)
             {
+                renderTargets.Release();
                 return;
             }
 
@@ -144,6 +146,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             }
             else
             {
+                debugPass?.ReleaseCompatibilityResources();
                 ReleaseDebugMaterial();
             }
         }
@@ -152,6 +155,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         {
             if (!ShouldRender(in renderingData))
             {
+                renderTargets.Release();
                 HoSubsurfaceScatteringRuntimeDiagnostics.PublishSkipped(
                     renderingData.cameraData.camera,
                     "RendererFeature",
@@ -163,6 +167,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             EnsureMaterial();
             if (material == null)
             {
+                renderTargets.Release();
                 HoSubsurfaceScatteringRuntimeDiagnostics.PublishSkipped(
                     renderingData.cameraData.camera,
                     "RendererFeature",
@@ -197,6 +202,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             }
             else
             {
+                debugPass?.ReleaseCompatibilityResources();
                 ReleaseDebugMaterial();
             }
         }
@@ -392,6 +398,8 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            cameraColorTarget = null;
+            renderTargets?.Release();
             if (material == null)
             {
                 return;
@@ -602,6 +610,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            renderTargets?.Release();
             if (material == null)
             {
                 return;
@@ -774,6 +783,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            renderTargets?.Release();
             if (material == null)
             {
                 return;
@@ -956,6 +966,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            renderTargets?.Release();
             if (material == null)
             {
                 return;
@@ -1138,6 +1149,8 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            cameraColorTarget = null;
+            renderTargets?.Release();
             if (material == null)
             {
                 return;

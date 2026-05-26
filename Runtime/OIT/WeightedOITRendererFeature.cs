@@ -41,6 +41,7 @@ namespace lilToon.URP.Extensions.OIT
         {
             if (!ShouldRender(in renderingData))
             {
+                renderTargets.Release();
                 return;
             }
 
@@ -61,12 +62,14 @@ namespace lilToon.URP.Extensions.OIT
 
             if (!ShouldRender(in renderingData))
             {
+                renderTargets.Release();
                 return;
             }
 
             EnsureMaterial();
             if (compositeMaterial == null)
             {
+                renderTargets.Release();
                 return;
             }
 
@@ -237,6 +240,8 @@ namespace lilToon.URP.Extensions.OIT
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            cameraColorTarget = null;
+            renderTargets?.Release();
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             WeightedOITRenderGraphResources oitResources = frameData.GetOrCreate<WeightedOITRenderGraphResources>();
 
@@ -361,6 +366,12 @@ namespace lilToon.URP.Extensions.OIT
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            renderTargets?.Release();
+            for (int i = 0; i < colorTargets.Length; i++)
+            {
+                colorTargets[i] = null;
+            }
+
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             WeightedOITRenderGraphResources oitResources = frameData.GetOrCreate<WeightedOITRenderGraphResources>();
 
@@ -489,6 +500,13 @@ namespace lilToon.URP.Extensions.OIT
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            cameraDepthTarget = null;
+            renderTargets?.Release();
+            for (int i = 0; i < colorTargets.Length; i++)
+            {
+                colorTargets[i] = null;
+            }
+
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             UniversalRenderingData renderingData = frameData.Get<UniversalRenderingData>();
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
@@ -656,6 +674,8 @@ namespace lilToon.URP.Extensions.OIT
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            cameraColorTarget = null;
+            renderTargets?.Release();
             if (compositeMaterial == null)
             {
                 AddResetPass(renderGraph);

@@ -45,6 +45,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             if (!ShouldRender(in renderingData, volume))
             {
                 pass?.ClearRuntimeLayers();
+                pass?.ReleaseCompatibilityResources();
                 return;
             }
 
@@ -62,6 +63,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     "RendererFeature",
                     GetSkipReason(in renderingData, volume));
                 pass?.ClearRuntimeLayers();
+                pass?.ReleaseCompatibilityResources();
                 return;
             }
 
@@ -180,6 +182,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             if (pass == null || layers.Count == 0)
             {
                 pass?.ClearRuntimeLayers();
+                pass?.ReleaseCompatibilityResources();
                 return;
             }
 
@@ -194,6 +197,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             if (pass == null || layers.Count == 0)
             {
                 pass?.ClearRuntimeLayers();
+                pass?.ReleaseCompatibilityResources();
                 return;
             }
 
@@ -401,8 +405,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             List<ScreenProcessRuntimeLayer> layers,
             RenderPassEvent passEvent)
         {
-            this.cameraColorTarget = null;
-            this.cameraDepthTarget = null;
+            ReleaseCompatibilityResources();
             CopyLayers(layers);
             ConfigurePass(passEvent);
             requiresIntermediateTexture = true;
@@ -410,13 +413,20 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         public void Dispose()
         {
+            ReleaseCompatibilityResources();
+            runtimeLayers.Clear();
+        }
+
+        public void ReleaseCompatibilityResources()
+        {
             tempTextureA?.Release();
             tempTextureB?.Release();
             subjectMaskTexture?.Release();
+            cameraColorTarget = null;
+            cameraDepthTarget = null;
             tempTextureA = null;
             tempTextureB = null;
             subjectMaskTexture = null;
-            runtimeLayers.Clear();
         }
 
         public void ClearRuntimeLayers()
@@ -529,6 +539,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            ReleaseCompatibilityResources();
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             if (!HasActiveRuntimeLayers())
             {

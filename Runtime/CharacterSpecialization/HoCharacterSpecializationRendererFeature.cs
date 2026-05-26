@@ -46,6 +46,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             HoCharacterSpecializationSettings activeSettings = ResolveSettings(in renderingData);
             if (!ShouldRender(in renderingData, activeSettings))
             {
+                pass?.ReleaseCompatibilityResources();
+                renderTargets.Release();
                 return;
             }
 
@@ -58,6 +60,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             HoCharacterSpecializationSettings activeSettings = ResolveSettings(in renderingData);
             if (!ShouldRender(in renderingData, activeSettings))
             {
+                pass?.ReleaseCompatibilityResources();
+                renderTargets.Release();
                 HoCharacterSpecializationRuntimeDiagnostics.PublishSkipped(
                     renderingData.cameraData.camera,
                     "RendererFeature",
@@ -68,6 +72,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             EnsureMaterial(activeSettings);
             if (compositeMaterial == null)
             {
+                pass?.ReleaseCompatibilityResources();
+                renderTargets.Release();
                 HoCharacterSpecializationRuntimeDiagnostics.PublishSkipped(
                     renderingData.cameraData.camera,
                     "RendererFeature",
@@ -283,8 +289,20 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         public void Dispose()
         {
+            ReleaseCompatibilityResources();
+        }
+
+        public void ReleaseCompatibilityResources()
+        {
             tempTexture?.Release();
+            renderTargets?.Release();
+            cameraColorTarget = null;
             tempTexture = null;
+            renderTargets = null;
+            for (int i = 0; i < captureColorTargets.Length; i++)
+            {
+                captureColorTargets[i] = null;
+            }
         }
 
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
@@ -348,6 +366,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            ReleaseCompatibilityResources();
             if (settings == null || compositeMaterial == null)
             {
                 return;

@@ -60,6 +60,12 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             renderPassEvent = settings.GetDebugRenderPassEvent();
         }
 
+        public void ReleaseCompatibilityResources()
+        {
+            cameraColorTarget = null;
+            renderTargets?.Release();
+        }
+
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
             renderTargets.ReAllocateCompositeSource(renderingData.cameraData.cameraTargetDescriptor);
@@ -89,6 +95,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            ReleaseCompatibilityResources();
             if (material == null)
             {
                 return;

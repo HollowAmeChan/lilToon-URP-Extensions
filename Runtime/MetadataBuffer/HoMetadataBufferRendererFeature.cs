@@ -46,6 +46,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         {
             if (!ShouldRender(in renderingData))
             {
+                ReleaseCompatibilityResources(true);
                 return;
             }
 
@@ -58,6 +59,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         {
             if (!ShouldRender(in renderingData))
             {
+                ReleaseCompatibilityResources(true);
                 return;
             }
 
@@ -73,6 +75,10 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             {
                 debugPass.SetupRenderGraph(settings, renderTargets, debugMaterial);
                 renderer.EnqueuePass(debugPass);
+            }
+            else
+            {
+                debugPass?.ReleaseCompatibilityResources();
             }
         }
 
@@ -118,7 +124,14 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         private static void ResetMetadataBufferState(ScriptableRenderContext context, Camera camera)
         {
-            Shader.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 0.0f);
+            HoMetadataBufferPass.ResetGlobalState();
+        }
+
+        private void ReleaseCompatibilityResources(bool resetGlobalState = false)
+        {
+            outputPass?.ReleaseCompatibilityResources(resetGlobalState);
+            debugPass?.ReleaseCompatibilityResources();
+            renderTargets.Release();
         }
 
         private bool ShouldRender(in RenderingData renderingData)

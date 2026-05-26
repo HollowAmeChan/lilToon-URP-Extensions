@@ -19,6 +19,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         private Material debugMaterial;
         private Shader fallbackShader;
         private Shader debugShader;
+        private bool registeredCameraReset;
         private bool warnedMissingFallbackShader;
         private bool warnedMissingDebugShader;
 
@@ -26,6 +27,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
         public override void Create()
         {
+            RegisterCameraReset();
             outputPass = new HoGeometryBufferPass();
             debugPass = new HoGeometryBufferDebugPass();
         }
@@ -34,6 +36,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         {
             if (!ShouldRender(in renderingData))
             {
+                ReleaseCompatibilityResources(true);
                 return;
             }
 
@@ -46,6 +49,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         {
             if (!ShouldRender(in renderingData))
             {
+                ReleaseCompatibilityResources(true);
                 return;
             }
 
@@ -53,7 +57,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             EnsureMaterials(shouldDebug);
             if (outputPass != null)
             {
-                outputPass.Setup(settings, renderTargets, fallbackMaterial);
+                outputPass.SetupRenderGraph(settings, renderTargets, fallbackMaterial);
                 renderer.EnqueuePass(outputPass);
             }
 
@@ -62,10 +66,15 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 debugPass.SetupRenderGraph(settings, renderTargets, debugMaterial);
                 renderer.EnqueuePass(debugPass);
             }
+            else
+            {
+                debugPass?.ReleaseCompatibilityResources();
+            }
         }
 
         protected override void Dispose(bool disposing)
         {
+            UnregisterCameraReset();
             renderTargets.Release();
             outputPass = null;
             debugPass?.Dispose();
@@ -76,6 +85,40 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             debugMaterial = null;
             fallbackShader = null;
             debugShader = null;
+        }
+
+        private void RegisterCameraReset()
+        {
+            if (registeredCameraReset)
+            {
+                return;
+            }
+
+            RenderPipelineManager.beginCameraRendering += ResetGeometryBufferState;
+            registeredCameraReset = true;
+        }
+
+        private void UnregisterCameraReset()
+        {
+            if (!registeredCameraReset)
+            {
+                return;
+            }
+
+            RenderPipelineManager.beginCameraRendering -= ResetGeometryBufferState;
+            registeredCameraReset = false;
+        }
+
+        private static void ResetGeometryBufferState(ScriptableRenderContext context, Camera camera)
+        {
+            HoGeometryBufferPass.ResetGlobalState();
+        }
+
+        private void ReleaseCompatibilityResources(bool resetGlobalState = false)
+        {
+            outputPass?.ReleaseCompatibilityResources(resetGlobalState);
+            debugPass?.ReleaseCompatibilityResources();
+            renderTargets.Release();
         }
 
         private bool ShouldRender(in RenderingData renderingData)

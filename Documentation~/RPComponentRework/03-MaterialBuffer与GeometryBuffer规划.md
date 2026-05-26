@@ -528,3 +528,12 @@ GeometryBuffer.TangentNormal
 - RenderGraph stack pass 按实际 active layer 聚合需求，不把所有 MetadataBuffer / GeometryBuffer 项都当成必需项。
 - `EdgeLight` / `PostLighting` 需要 `maskIdTexture` 与 `normalDepthTexture`；`DropShadow`、`useRuleMask` 或 `debugRuleMask` 需要 `maskIdTexture`，并按 rule source 追加 `surfaceDataTexture`、`custom0Texture`、`objectCustom0Texture` 或 `objectCustom1Texture`。
 - 缺少当前 layer 真实需要的 Buffer 项时，ScreenProcess 继续以 shader 侧降级逻辑执行，但会发布 `ScreenProcessRuntimeDiagnostics.CurrentSnapshot`，Volume Inspector 运行状态显示“需要/可用/未使用”。
+### 2026-05-26：RenderGraph 主线完成收口
+
+已按完成验收口径把 Buffer 与固定消费者的 compatibility 资源从 RDG 主线剥离：
+- `MetadataBuffer` / `GeometryBuffer` 的 output pass 在 `RecordRenderGraph()` 开始释放 compatibility RTHandle；debug pass 在 RDG debug 记录或 debug 关闭时释放 camera color / temp RT 状态。
+- `GeometryBuffer` 补齐独立 `SetupRenderGraph()`，不再用 compatibility `Setup()` 表达 RDG 入队边界。
+- Buffer 禁用、无效或 camera reset 时会释放旧 RTHandle，并把公开 global texture / active 状态重置到空状态，避免旧 compatibility 纹理在下一帧被误读。
+- `ScreenProcess`、`CharacterSpecialization`、`SSS` 与 `OIT` 的 RDG 记录路径同步释放旧 compatibility RTHandle / camera target 引用；这些模块只读取 RenderGraph resource context，不接管 Buffer resource ownership。
+
+至此本轮 Buffer 侧不再保留“旧 HoAOV / compatibility RTHandle 影响 RDG 主线”的阻塞项。后续新增通道或 P2 能力必须先有真实消费者，再按 feature-local ownership 单独进入。

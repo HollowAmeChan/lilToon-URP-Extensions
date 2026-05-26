@@ -59,6 +59,19 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             ConfigureFiltering();
         }
 
+        public void SetupRenderGraph(
+            HoGeometryBufferSettings settings,
+            HoGeometryBufferRenderTargets renderTargets,
+            Material fallbackMaterial)
+        {
+            this.settings = settings;
+            this.renderTargets = renderTargets;
+            this.fallbackMaterial = fallbackMaterial;
+            renderPassEvent = settings != null ? settings.passEvent : RenderPassEvent.AfterRenderingOpaques;
+            ConfigureInput(ScriptableRenderPassInput.None);
+            ConfigureFiltering();
+        }
+
         public override void Configure(CommandBuffer cmd, RenderTextureDescriptor cameraTextureDescriptor)
         {
             if (settings == null || renderTargets == null)
@@ -113,6 +126,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            ReleaseCompatibilityResources();
             if (settings == null)
             {
                 return;
@@ -200,6 +214,21 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                     }
                 });
             }
+        }
+
+        public void ReleaseCompatibilityResources(bool resetGlobalState = false)
+        {
+            renderTargets?.Release();
+            if (resetGlobalState)
+            {
+                ResetGlobalState();
+            }
+        }
+
+        public static void ResetGlobalState()
+        {
+            Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, Texture2D.blackTexture);
+            Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, Texture2D.blackTexture);
         }
 
         private static TextureDesc CreateTextureDesc(

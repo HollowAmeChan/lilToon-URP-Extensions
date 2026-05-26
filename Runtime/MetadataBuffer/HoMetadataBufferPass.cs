@@ -170,6 +170,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            ReleaseCompatibilityResources();
             if (settings == null)
             {
                 AddResetPass(renderGraph);
@@ -330,6 +331,31 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                     }
                 });
             }
+        }
+
+        public void ReleaseCompatibilityResources(bool resetGlobalState = false)
+        {
+            renderTargets?.Release();
+            for (int i = 0; i < colorTargets.Length; i++)
+            {
+                colorTargets[i] = null;
+            }
+
+            if (resetGlobalState)
+            {
+                ResetGlobalState();
+            }
+        }
+
+        public static void ResetGlobalState()
+        {
+            Shader.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 0.0f);
+            Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, Texture2D.blackTexture);
+            Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, Texture2D.blackTexture);
+            Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, Texture2D.blackTexture);
+            Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, Texture2D.blackTexture);
+            Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, Texture2D.blackTexture);
+            Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, Texture2D.blackTexture);
         }
 
         private static void AddClearPass(
