@@ -41,6 +41,17 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
                 return saturate(half3(value * 2.0, 1.0 - abs(value - 0.5) * 2.0, (1.0 - value) * 2.0));
             }
 
+            half3 ShadowDepthRamp(float value)
+            {
+                value = saturate(value);
+                half3 farColor = half3(0.055h, 0.070h, 0.085h);
+                half3 midColor = half3(0.200h, 0.330h, 0.400h);
+                half3 nearColor = half3(0.780h, 0.620h, 0.340h);
+                half midWeight = smoothstep(0.05h, 0.70h, value);
+                half nearWeight = smoothstep(0.68h, 1.00h, value);
+                return lerp(lerp(farColor, midColor, midWeight), nearColor, nearWeight);
+            }
+
             float RectLine(float2 uv, float4 rect, float lineUv)
             {
                 float2 minUv = rect.xy;
@@ -113,7 +124,7 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
                     sliceLine = max(sliceLine, RectLine(uv, float4(slice.xy, slice.zz), lineUv));
                 }
 
-                return lerp(color, half3(0.0, 0.95, 1.0), saturate(sliceLine * 0.85));
+                return lerp(color, half3(0.34h, 0.78h, 0.86h), saturate(sliceLine * 0.72));
             }
 
             half3 ApplySecondDirectionalOverlay(float2 uv, half3 color)
@@ -151,8 +162,8 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
                     blockLine = max(blockLine, SecondDirectionalBlockLine(uv, firstSlice, perLightSliceCount, blockLineUv));
                 }
 
-                color = lerp(color, half3(1.0, 0.52, 0.12), saturate(cascadeLine * 0.7));
-                return lerp(color, half3(1.0, 0.95, 0.05), saturate(blockLine));
+                color = lerp(color, half3(0.72h, 0.50h, 0.25h), saturate(cascadeLine * 0.60));
+                return lerp(color, half3(0.92h, 0.80h, 0.34h), saturate(blockLine * 0.85));
             }
 
             half4 Frag(Varyings input) : SV_Target
@@ -181,9 +192,9 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
                     rawDepth = SAMPLE_TEXTURE2D(_HoShadowCastAtlas, sampler_PointClamp, uv);
                 }
                 half valid = rawDepth < 0.99999;
-                half3 depthColor = Heat(1.0 - rawDepth);
+                half3 depthColor = ShadowDepthRamp(1.0 - rawDepth);
 
-                half3 atlasColor = lerp(depthColor, half3(0.0, 0.0, 0.0), 1.0 - valid);
+                half3 atlasColor = lerp(depthColor, half3(0.015h, 0.018h, 0.022h), 1.0h - valid);
                 atlasColor = debugSecondDirectional
                     ? ApplySecondDirectionalOverlay(uv, atlasColor)
                     : ApplySliceOverlay(uv, atlasColor);
