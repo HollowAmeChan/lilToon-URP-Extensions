@@ -51,6 +51,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             }
             else
             {
+                debugPass?.ReleaseCompatibilityResources();
                 debugMaterialCache.Release();
             }
         }
@@ -81,6 +82,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             }
             else
             {
+                debugPass?.ReleaseCompatibilityResources();
                 debugMaterialCache.Release();
             }
         }

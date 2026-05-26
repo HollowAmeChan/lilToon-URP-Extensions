@@ -180,6 +180,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            ReleaseCompatibilityResources();
             if (settings == null || config == null)
             {
                 return;
@@ -333,6 +334,12 @@ namespace lilToon.URP.Extensions.ShadowCast
                     shadowCastResources.secondDirectionalAtlasTexture = secondDirectionalAtlasTexture;
                 }
             }
+        }
+
+        private void ReleaseCompatibilityResources()
+        {
+            renderTargets?.Release();
+            renderTargets = null;
         }
 
         private void ConfigurePass()

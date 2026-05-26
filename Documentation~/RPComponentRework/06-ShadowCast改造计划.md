@@ -478,6 +478,16 @@ ShadowCast 与 ScreenProcess 的关系：
 
 仍待处理：
 - 后续如果需要按 renderer/material 侧声明更细的 receiver gate，应放到 receiver / material 语义里，不反向扩张 ShadowCast 为对象分类系统。
+
+## 10.16 2026-05-26 执行记录
+
+已继续收口 ShadowCast compatibility path 对 RenderGraph 主线的影响：
+
+- `HoShadowCastPass.RecordRenderGraph()` 进入 RDG 记录时会释放旧 compatibility atlas RTHandle，并清空 pass 内的 compatibility target 引用；RDG atlas / second directional atlas 继续只由 `TextureHandle` 创建、发布和供 tile/debug 读取。
+- `HoShadowCastDebugPass.RecordRenderGraph()` 进入 RDG debug 记录时会释放 compatibility debug temp RT，并清空 compatibility camera color / render target 引用。
+- 当 debug mode 关闭或 debug material 不再需要时，RendererFeature 会同步释放 debug pass 的 compatibility 临时资源，避免旧 debug RT 仅在 feature Dispose 时释放。
+- 这次不改变 receiver ABI、publisher 全局参数、atlas pack、visible light 收集或 debug shader 按需加载策略；compatibility path 仍只作为非 RenderGraph fallback，不再保有 RDG 主线需要的资源 ownership。
+
 ---
 
 ## 11. 验收清单

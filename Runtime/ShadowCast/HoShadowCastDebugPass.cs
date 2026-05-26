@@ -46,6 +46,13 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         public void Dispose()
         {
+            ReleaseCompatibilityResources();
+        }
+
+        public void ReleaseCompatibilityResources()
+        {
+            renderTargets = null;
+            cameraColorTarget = null;
             tempTexture?.Release();
             tempTexture = null;
         }
@@ -98,6 +105,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            ReleaseCompatibilityResources();
             if (debugMaterial == null)
             {
                 return;
