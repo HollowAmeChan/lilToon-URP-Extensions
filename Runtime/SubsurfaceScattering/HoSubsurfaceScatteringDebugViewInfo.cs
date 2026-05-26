@@ -12,7 +12,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         public static readonly HoDebugViewInfo[] Views =
         {
             View("sss.mask", "Mask", HoSubsurfaceScatteringDebugMode.Mask),
-            View("sss.source", "Source", HoSubsurfaceScatteringDebugMode.Source),
+            View("sss.source", "Input", HoSubsurfaceScatteringDebugMode.Source),
             View("sss.diffusion", "Diff", HoSubsurfaceScatteringDebugMode.Diffusion),
             View("sss.transmission", "Trans", HoSubsurfaceScatteringDebugMode.Transmission),
             View("sss.transmission-gate", "Gate", HoSubsurfaceScatteringDebugMode.TransmissionGate),

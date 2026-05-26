@@ -76,7 +76,7 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
             }
 
             EditorGUILayout.HelpBox(
-                "HoSSS 以 MetadataBuffer 的 SSS 专用通道作为源色，常规调节优先使用材质配置 Profile；高级透射参数只作为边缘补偿。",
+                "HoSSS consumes MetadataBuffer Base Color as diffuse input. Material/profile settings control diffusion tint, radius, thickness, and transmission.",
                 MessageType.Info);
 
             DrawRuntime();

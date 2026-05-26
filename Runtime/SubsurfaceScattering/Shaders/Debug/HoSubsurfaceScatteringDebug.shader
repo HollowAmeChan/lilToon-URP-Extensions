@@ -26,6 +26,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView"
             TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
             TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture);
+            TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
             TEXTURE2D_X(_lilHoSSSSourceTexture);
             TEXTURE2D_X(_lilHoSSSTransmissionTexture);
 
@@ -236,6 +237,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView"
 
                 float2 uv = input.texcoord;
                 float4 cameraColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
+                float4 metadataSource = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_PointClamp, uv);
                 float4 sss = SAMPLE_TEXTURE2D_X(_lilHoSSSSourceTexture, sampler_LinearClamp, uv);
                 float4 normalDepth = HoSSSNormalDepth(uv);
                 float4 surfaceData = HoSSSSurfaceData(uv);
@@ -265,7 +267,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView"
                     thickness,
                     profileDiffusionParams.x,
                     transmissionDirection,
-                    sss,
+                    metadataSource,
                     tintedDiffusion,
                     transmission,
                     transmissionSample.a,

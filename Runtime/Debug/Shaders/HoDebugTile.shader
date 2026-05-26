@@ -343,13 +343,14 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 half4 maskId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv);
                 half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture, sampler_PointClamp, uv);
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
+                half4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_PointClamp, uv);
                 half4 source = SAMPLE_TEXTURE2D_X(_lilHoSSSSourceTexture, sampler_LinearClamp, uv);
                 half4 transmission = SAMPLE_TEXTURE2D_X(_lilHoSSSTransmissionTexture, sampler_LinearClamp, uv);
                 half coverage = saturate(maskId.r * surfaceData.r) * TileSssGeometryValid(normalDepth);
                 int mode = _HoDebugTileMode;
 
                 if (mode == 1) return half4(coverage.xxx, 1.0h);
-                if (mode == 2) return half4(source.rgb, 1.0h);
+                if (mode == 2) return half4(surfaceColor.rgb, 1.0h);
                 if (mode == 3) return half4(source.rgb * coverage, 1.0h);
                 if (mode == 4) return half4(transmission.rgb, 1.0h);
                 if (mode == 5) return half4(transmission.aaa, 1.0h);

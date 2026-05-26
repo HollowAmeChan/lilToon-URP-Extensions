@@ -20,7 +20,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         Off = 0,
         [InspectorName("参与遮罩")]
         Mask = 1,
-        [InspectorName("源颜色")]
+        [InspectorName("Diffuse Input")]
         Source = 2,
         [InspectorName("扩散结果")]
         Diffusion = 3,

@@ -99,6 +99,8 @@ Renderer Data 推荐顺序：
 - `TransmittanceHint`
 - `SurfaceColor`
 
+`SurfaceColor` 当前语义是基础表面色 / diffuse albedo：材质 pass 直接输出已解析的 albedo，alpha 表示有效 subject 覆盖。它和 Thickness / Curvature 一样属于基础 MetadataBuffer 语义；只要对象参与 MetadataBuffer subject 写入，就不依赖 `_UseSSS`、`_SSSColor`、`_SSSMainStrength` 或 profile tint。SSS 只把它作为扩散源颜色读取，扩散颜色和合成权重由 SSS profile 在 SSS pass 内处理。
+
 不负责 depth、normal、velocity / motion、ShadowCast attenuation、SSS composite weight、OIT accumulation / revealage 或 ImageProcess 临时图像结果。
 
 对象语义入口在 `HoMetadataBufferGroup`、`HoMetadataBufferSubject` 和 material inspector，不在 RendererFeature 面板批量管理全场景对象。
@@ -123,6 +125,10 @@ Renderer Data 推荐顺序：
 `ViewNormal` 可由 normal + view matrix 派生；`TangentNormal` 暂无真实 screen-space 消费者。
 
 ### SSS
+
+`surfaceColor` 输入按 base diffuse/albedo 解释；`surfaceData` 继续提供 thickness、curvature、profile/material id 和 transmittance hint。材质侧不再把 `_SSSColor` 预混入 `surfaceColor`，也不再只在 `_UseSSS` 开启时写入，避免把通用 diffuse buffer 变成 SSS 专用中间量。
+
+SSS debug 中的 `Diffuse Input` 直接显示 MetadataBuffer `SurfaceColor`；`_lilHoSSSSourceTexture` 只是 SSS 内部降采样、遮罩和扩散链路的工作纹理，不作为新的材质语义来源。
 
 `SSS` 消费 MetadataBuffer mask / surfaceData / surfaceColor 和 GeometryBuffer normalDepth。缺少依赖时跳过当前帧，并在 Feature Inspector runtime status 中暴露缺失项。
 

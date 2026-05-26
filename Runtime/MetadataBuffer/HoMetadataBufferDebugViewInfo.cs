@@ -35,7 +35,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             View("metadata.rsuv-part-id", "Part", HoMetadataBufferDebugMode.RsuvPartId),
             View("metadata.rsuv-flags", "RFlag", HoMetadataBufferDebugMode.RsuvFlags),
             View("metadata.rsuv-id-only", "RID", HoMetadataBufferDebugMode.RsuvIdOnly),
-            View("metadata.surface-color", "Surf", HoMetadataBufferDebugMode.SurfaceColor)
+            View("metadata.surface-color", "Base", HoMetadataBufferDebugMode.SurfaceColor)
         };
 
         private static HoDebugViewInfo View(string viewId, string shortName, HoMetadataBufferDebugMode mode)
