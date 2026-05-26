@@ -180,9 +180,9 @@ namespace lilToon.URP.Extensions.ShadowCast
 
                 Light light = visibleLight.light;
                 diagnostics?.AddCandidate();
-                if (!IsLightCollectable(light, config, LightType.Directional, true))
+                if (!IsLightCollectable(light, config, LightType.Directional))
                 {
-                    diagnostics?.AddSkipped(light, "SecondDirectional", LightType.Directional, GetCandidateSkipReason(light, config, LightType.Directional, true));
+                    diagnostics?.AddSkipped(light, "SecondDirectional", LightType.Directional, GetCandidateSkipReason(light, config, LightType.Directional));
                     continue;
                 }
 
@@ -214,8 +214,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     continue;
                 }
 
-                float lightShadowStrength = light.shadows == LightShadows.None ? 1.0f : light.shadowStrength;
-                float shadowStrength = Mathf.Clamp01(config.secondDirectionalShadowStrength * lightShadowStrength);
+                float shadowStrength = Mathf.Clamp01(config.secondDirectionalShadowStrength);
                 float previousDistance = nearDistance;
                 bool completed = true;
                 for (int cascadeIndex = 0; cascadeIndex < cascadeCount; cascadeIndex++)
@@ -506,10 +505,10 @@ namespace lilToon.URP.Extensions.ShadowCast
                 }
 
                 Light light = visibleLight.light;
-                if (!IsLightCollectable(light, config, requiredType, true))
+                if (!IsLightCollectable(light, config, requiredType))
                 {
                     diagnostics?.AddCandidate();
-                    diagnostics?.AddSkipped(light, "Punctual", requiredType, GetCandidateSkipReason(light, config, requiredType, true));
+                    diagnostics?.AddSkipped(light, "Punctual", requiredType, GetCandidateSkipReason(light, config, requiredType));
                     continue;
                 }
 
@@ -530,9 +529,9 @@ namespace lilToon.URP.Extensions.ShadowCast
             HoShadowCastFrameDiagnostics diagnostics)
         {
             diagnostics?.AddCandidate();
-            if (!IsLightCollectable(light, config, requiredType, false) || target.Contains(light))
+            if (!IsLightCollectable(light, config, requiredType) || target.Contains(light))
             {
-                diagnostics?.AddSkipped(light, "Punctual", requiredType, GetCandidateSkipReason(light, config, requiredType, false, target));
+                diagnostics?.AddSkipped(light, "Punctual", requiredType, GetCandidateSkipReason(light, config, requiredType, target));
                 return;
             }
 
@@ -610,9 +609,8 @@ namespace lilToon.URP.Extensions.ShadowCast
             Vector3 position = light.transform.position;
             Vector3 direction = light.transform.forward;
             Color finalColor = light.color * light.intensity;
-            float lightShadowStrength = light.shadows == LightShadows.None ? 1.0f : light.shadowStrength;
             float configuredStrength = requiredType == LightType.Directional ? config.shadowStrength : config.punctualShadowStrength;
-            target.lightData0[lightIndex] = new Vector4(GetLightTypeId(requiredType), firstSlice, writtenSlices, Mathf.Clamp01(configuredStrength * lightShadowStrength));
+            target.lightData0[lightIndex] = new Vector4(GetLightTypeId(requiredType), firstSlice, writtenSlices, Mathf.Clamp01(configuredStrength));
             target.lightData1[lightIndex] = new Vector4(position.x, position.y, position.z, light.range);
             target.lightData2[lightIndex] = new Vector4(direction.x, direction.y, direction.z, Mathf.Cos(light.spotAngle * 0.5f * Mathf.Deg2Rad));
             target.lightAttenuation[lightIndex] = ComputeLightAttenuation(light, requiredType, config.punctualShadowFadeSpeed);
@@ -969,7 +967,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 
             VisibleLight visibleLight = visibleLights[index];
             Light light = visibleLight.light;
-            if (light == null || visibleLight.lightType != requiredType || !IsLightCollectable(light, config, requiredType, true))
+            if (light == null || visibleLight.lightType != requiredType || !IsLightCollectable(light, config, requiredType))
             {
                 return null;
             }
@@ -977,7 +975,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             return light;
         }
 
-        private static bool IsLightCollectable(Light light, HoShadowCastFrameConfig config, LightType requiredType, bool requireShadows)
+        private static bool IsLightCollectable(Light light, HoShadowCastFrameConfig config, LightType requiredType)
         {
             if (light == null || light.type != requiredType || !light.isActiveAndEnabled)
             {
@@ -994,7 +992,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 return false;
             }
 
-            return !requireShadows || light.shadows != LightShadows.None;
+            return true;
         }
 
         private static bool IsLightLayerAllowed(Light light, HoShadowCastFrameConfig config)
@@ -1051,7 +1049,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             return (mask.value & (1 << layer)) != 0;
         }
 
-        private static string GetCandidateSkipReason(Light light, HoShadowCastFrameConfig config, LightType requiredType, bool requireShadows, HoShadowCastFrame target = null)
+        private static string GetCandidateSkipReason(Light light, HoShadowCastFrameConfig config, LightType requiredType, HoShadowCastFrame target = null)
         {
             if (light == null)
             {
@@ -1076,11 +1074,6 @@ namespace lilToon.URP.Extensions.ShadowCast
             if (!IsLightRenderingLayerAllowed(light, config))
             {
                 return "rendering layer excluded";
-            }
-
-            if (requireShadows && light.shadows == LightShadows.None)
-            {
-                return "shadows disabled";
             }
 
             if (target != null && target.Contains(light))

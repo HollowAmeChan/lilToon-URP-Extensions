@@ -68,7 +68,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             serializedObject.Update();
 
             EditorGUILayout.HelpBox(
-                "ShadowCast collects eligible URP visible lights from this RendererFeature. Scene controller overrides have been removed.",
+                "ShadowCast collects eligible URP visible lights from this RendererFeature. Additional lights do not need Unity Light shadows enabled; the URP main light is skipped and left to URP.",
                 MessageType.Info);
 
             if (settingsProperty == null)

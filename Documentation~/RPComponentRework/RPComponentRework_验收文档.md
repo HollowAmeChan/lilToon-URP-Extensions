@@ -68,7 +68,7 @@ Renderer Data 推荐顺序：
 
 ### ShadowCast
 
-`ShadowCast` 是 Lighting/Shadow 组件，从 URP `visibleLights` 自动收集额外投影灯。
+`ShadowCast` 是 Lighting/Shadow 组件，从 URP `visibleLights` 自动收集额外投影灯。它不把 Unity `Light` 组件的 shadow 开关作为收集条件；附加可见灯即使关闭 URP 内置阴影，也可由 `Ho-ShadowCast` 自己组织 shadow atlas。URP main light 仍跳过并交给 URP 内置主光阴影。
 
 它负责：
 
@@ -203,6 +203,7 @@ RenderGraph 是主线。
 
 - Renderer Data 能按本文顺序添加 9 个 RendererFeature。
 - 无 `HoShadowCastController` 场景组件也能从 URP visible lights 生成 ShadowCast 参与列表。
+- 附加灯关闭 Unity/URP 内置 shadow 开关时，仍能被 `Ho-ShadowCast` 按可见灯、layer、Rendering Layer 和容量上限收集；URP main light 仍由 URP 自己处理。
 - MetadataBuffer / GeometryBuffer 能输出对象语义和 normal / depth。
 - SSS 在缺 MetadataBuffer / GeometryBuffer 时能显示缺失状态，资源齐全时正常 source / diffusion / composite。
 - CharacterSpecialization 在缺 MetadataBuffer / GeometryBuffer 时能显示缺失状态，资源齐全时正常眼透、前发和局部合成。
