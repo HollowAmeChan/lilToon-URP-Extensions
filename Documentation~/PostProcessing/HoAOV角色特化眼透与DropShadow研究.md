@@ -1,6 +1,6 @@
 # HoAOV 角色特化眼透与 DropShadow 研究
 
-> 历史资料：本文记录旧 `HoAOV` 语境下的角色特化研究，不作为当前 `CharacterSpecialization` 或 `ScreenProcess` 使用说明。当前使用顺序与输入边界以 `../RPComponentRework/07-用户向RendererFeature使用与顺序.md`、`../RPComponentRework/08-PostProcess顺序与输入边界.md`、`../RPComponentRework/09-重构完成计划.md` 为准。
+> 历史资料：本文记录旧 `HoAOV` 语境下的角色特化研究，不作为当前 `CharacterSpecialization` 或 `ScreenProcess` 使用说明。当前边界、用户顺序和验收口径以 `../RPComponentRework/RPComponentRework_验收文档.md` 为准。
 
 本文研究如何用现有 HoAOV 系统平替传统 lilToon 的前发眼透与假投影阴影流程，并把它收敛成一个独立的角色特化 RendererFeature。目标不是继续让用户复制三份头发材质、手改 stencil 和队列，而是把“脸、前发、眼睛、眼透区域、同角色关系”交给 HoAOV / HoAovGroup，再由一个统一的角色特化小管线完成眼透、前发投影，以及未来的角色专属阴影、反射和局部光照扩展。
 

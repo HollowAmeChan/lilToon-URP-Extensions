@@ -1,6 +1,6 @@
 # HoShadowCast 可选升级：Per-Light 多光源染色
 
-> 历史资料：本文保留旧 `HoShadowCast` 可选升级设想，不作为当前 `Ho-ShadowCast` 使用说明。当前 ShadowCast 行为以 `../RPComponentRework/06-ShadowCast改造计划.md`、用户顺序以 `../RPComponentRework/07-用户向RendererFeature使用与顺序.md`、完成计划以 `../RPComponentRework/09-重构完成计划.md` 为准。
+> 历史资料：本文保留旧 `HoShadowCast` 可选升级设想，不作为当前 `Ho-ShadowCast` 使用说明。当前边界、用户顺序和验收口径以 `../RPComponentRework/RPComponentRework_验收文档.md` 为准。
 
 本文记录 HoShadowCast 后续可选升级方向。当前实现已经可用：所有 HoShadowCast 灯统一合成一个 receiver shadow field，混进材质主阴影入口，并用同一个 attenuation 约束 additional / HDR 补光，避免暗区被重新提亮。
 

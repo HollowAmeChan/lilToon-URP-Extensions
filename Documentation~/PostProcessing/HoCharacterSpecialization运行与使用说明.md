@@ -1,6 +1,6 @@
 # HoCharacterSpecialization 运行与使用说明
 
-> 历史资料：本文记录旧 `HoAOV` 语境下的角色特化接入说明，不作为当前 `Ho-CharacterSpecialization` 使用说明。当前用户入口、顺序和运行诊断以 `../RPComponentRework/07-用户向RendererFeature使用与顺序.md`、`../RPComponentRework/03-MaterialBuffer与GeometryBuffer规划.md`、`../RPComponentRework/09-重构完成计划.md` 为准。
+> 历史资料：本文记录旧 `HoAOV` 语境下的角色特化接入说明，不作为当前 `Ho-CharacterSpecialization` 使用说明。当前边界、用户顺序和验收口径以 `../RPComponentRework/RPComponentRework_验收文档.md` 为准。
 
 本文记录 `HoCharacterSpecializationRendererFeature` 的运行方式、接入顺序和当前使用方法。它是 HoAOV 之后的一层角色特化合成管线，第一版目标是解决：
 

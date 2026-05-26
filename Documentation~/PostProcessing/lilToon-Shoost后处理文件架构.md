@@ -1,6 +1,6 @@
 # lilToon-Shoost 后处理结构
 
-> 历史资料：本文记录旧 `ShoostStack` / `ShoostPostProcess` 阶段的结构，不作为当前 `ImageProcess` 使用说明。当前使用顺序与输入边界以 `../RPComponentRework/07-用户向RendererFeature使用与顺序.md`、`../RPComponentRework/08-PostProcess顺序与输入边界.md`、`../RPComponentRework/09-重构完成计划.md` 为准。
+> 历史资料：本文记录旧 `ShoostStack` / `ShoostPostProcess` 阶段的结构，不作为当前 `ImageProcess` 使用说明。当前边界、用户顺序和验收口径以 `../RPComponentRework/RPComponentRework_验收文档.md` 为准。
 
 本文只记录当前结构和后续新增效果的规则，不保留拆分过程记录。
 
