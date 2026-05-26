@@ -248,9 +248,10 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 
 2026-05-26 开始迁入 HoUrp 自动 tile 路线：
 
-- 新增 `HoDebugViewRenderKind`，由各 feature-local `DebugViewInfo` 标记自己是否能进入自动 tile；MetadataBuffer / GeometryBuffer 已接入，ShadowCast / SSS / ScreenProcess / ImageProcess 暂不进入自动 tile。
+- 新增 `HoDebugViewRenderKind`，由各 feature-local `DebugViewInfo` 标记自己是否能进入自动 tile；MetadataBuffer、GeometryBuffer、ShadowCast 与 SSS 已接入。ScreenProcess / ImageProcess 仍不进入自动 tile：ScreenProcess rule mask 本身已有 layer-local 直出入口，ImageProcess 只保留图像链观察入口。
 - 新增 `Ho-DebugTile` RendererFeature、`HoDebugTileRendererFeatureEditor` 与 `Runtime/Debug/Shaders/HoDebugTile.shader`，支持 `AllRegistered` 自动排布、短名 label、tile rect/grid 和单 view 选择。
-- 第一版 tile pass 读取 RenderGraph 中的 `HoMetadataBufferRenderGraphResources` 与 `HoGeometryBufferRenderGraphResources`，只编排 registry view，不接管各 feature 的独立 debug shader/material ownership。
+- tile pass 读取 RenderGraph 中的 `HoMetadataBufferRenderGraphResources`、`HoGeometryBufferRenderGraphResources`、`HoShadowCastRenderGraphResources` 与 `HoSubsurfaceScatteringRenderGraphResources`，只编排 registry view，不接管各 feature 的独立 debug shader/material ownership。
+- ShadowCast tile 复用 atlas / second directional atlas 资源和全局 slice 数据，显示 raw depth 与 slice/cascade 边框；SSS tile 读取 source / transmission / mask / surfaceData / normalDepth 资源，作为自动总览。SSS profile 颜色、半径等依赖 feature settings 的精确调试仍以 SSS 自带 debug view 为准。
 - `LilUrpDebugShaderCollectionGenerator` 同步收集 `HoDebugTile.shader`，使显式 debug shader collection 覆盖自动 tile 入口。
 
 ---

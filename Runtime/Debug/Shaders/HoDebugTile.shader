@@ -35,6 +35,19 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture);
             TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
+            TEXTURE2D_FLOAT(_HoShadowCastAtlas);
+            TEXTURE2D_FLOAT(_HoShadowCastSecondDirectionalAtlas);
+            TEXTURE2D_X(_lilHoSSSSourceTexture);
+            TEXTURE2D_X(_lilHoSSSTransmissionTexture);
+
+            float _HoShadowCastActive;
+            int _HoShadowCastSliceCount;
+            float4 _HoShadowCastAtlasSize;
+            float4 _HoShadowCastSliceData[32];
+            float4 _HoShadowCastSecondDirectionalParams;
+            float4 _HoShadowCastSecondDirectionalAtlasSize;
+            float4 _HoShadowCastSecondDirectionalLightData[4];
+            float4 _HoShadowCastSecondDirectionalSliceData[16];
 
             struct Attributes
             {
@@ -170,6 +183,184 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 return half4(0.0h, 0.0h, 0.0h, 1.0h);
             }
 
+            float RectLine(float2 uv, float4 rect, float lineUv)
+            {
+                float2 minUv = rect.xy;
+                float2 maxUv = rect.xy + rect.zw;
+                if (any(uv < minUv) || any(uv > maxUv))
+                {
+                    return 0.0;
+                }
+
+                float2 edgeDistance = min(uv - minUv, maxUv - uv);
+                return 1.0 - step(lineUv, min(edgeDistance.x, edgeDistance.y));
+            }
+
+            half3 ApplyShadowCastSliceOverlay(float2 uv, half3 color)
+            {
+                float lineUv = max(max(_HoShadowCastAtlasSize.z, _HoShadowCastAtlasSize.w) * 2.0, 0.001);
+                int sliceCount = min(_HoShadowCastSliceCount, 32);
+                float sliceLine = 0.0;
+
+                [unroll]
+                for (int i = 0; i < 32; i++)
+                {
+                    if (i >= sliceCount)
+                    {
+                        break;
+                    }
+
+                    float4 slice = _HoShadowCastSliceData[i];
+                    sliceLine = max(sliceLine, RectLine(uv, float4(slice.xy, slice.zz), lineUv));
+                }
+
+                return lerp(color, half3(0.0h, 0.95h, 1.0h), saturate(sliceLine * 0.85));
+            }
+
+            float SecondDirectionalBlockLine(float2 uv, int firstSlice, int sliceCount, float lineUv)
+            {
+                if (sliceCount <= 0)
+                {
+                    return 0.0;
+                }
+
+                float2 blockMin = float2(1.0, 1.0);
+                float2 blockMax = float2(0.0, 0.0);
+                [unroll]
+                for (int sliceOffset = 0; sliceOffset < 4; sliceOffset++)
+                {
+                    if (sliceOffset >= sliceCount)
+                    {
+                        break;
+                    }
+
+                    int sliceIndex = firstSlice + sliceOffset;
+                    if (sliceIndex < 0 || sliceIndex >= 16)
+                    {
+                        continue;
+                    }
+
+                    float4 slice = _HoShadowCastSecondDirectionalSliceData[sliceIndex];
+                    if (slice.z <= 0.0)
+                    {
+                        continue;
+                    }
+
+                    blockMin = min(blockMin, slice.xy);
+                    blockMax = max(blockMax, slice.xy + slice.zz);
+                }
+
+                if (any(blockMax <= blockMin))
+                {
+                    return 0.0;
+                }
+
+                return RectLine(uv, float4(blockMin, max(blockMax - blockMin, float2(0.0, 0.0))), lineUv);
+            }
+
+            half3 ApplyShadowCastSecondDirectionalOverlay(float2 uv, half3 color)
+            {
+                float atlasTexel = max(_HoShadowCastSecondDirectionalAtlasSize.z, _HoShadowCastSecondDirectionalAtlasSize.w);
+                float cascadeLineUv = max(atlasTexel * 2.0, 0.001);
+                float blockLineUv = max(atlasTexel * 4.0, 0.0015);
+                int sliceCount = min((int)round(_HoShadowCastSecondDirectionalParams.y) * (int)round(_HoShadowCastSecondDirectionalParams.z), 16);
+                int lightCount = min((int)round(_HoShadowCastSecondDirectionalParams.y), 4);
+                float cascadeLine = 0.0;
+                float blockLine = 0.0;
+
+                [unroll]
+                for (int i = 0; i < 16; i++)
+                {
+                    if (i >= sliceCount)
+                    {
+                        break;
+                    }
+
+                    float4 slice = _HoShadowCastSecondDirectionalSliceData[i];
+                    cascadeLine = max(cascadeLine, RectLine(uv, float4(slice.xy, slice.zz), cascadeLineUv));
+                }
+
+                [unroll]
+                for (int lightIndex = 0; lightIndex < 4; lightIndex++)
+                {
+                    if (lightIndex >= lightCount)
+                    {
+                        break;
+                    }
+
+                    int firstSlice = (int)round(_HoShadowCastSecondDirectionalLightData[lightIndex].x);
+                    int perLightSliceCount = min((int)round(_HoShadowCastSecondDirectionalLightData[lightIndex].y), 4);
+                    blockLine = max(blockLine, SecondDirectionalBlockLine(uv, firstSlice, perLightSliceCount, blockLineUv));
+                }
+
+                color = lerp(color, half3(1.0h, 0.52h, 0.12h), saturate(cascadeLine * 0.7));
+                return lerp(color, half3(1.0h, 0.95h, 0.05h), saturate(blockLine));
+            }
+
+            half4 ResolveShadowCastColor(float2 uv)
+            {
+                bool debugSecondDirectional = _HoDebugTileMode == 2;
+                float active = debugSecondDirectional ? _HoShadowCastSecondDirectionalParams.x : _HoShadowCastActive;
+                int sliceCount = debugSecondDirectional
+                    ? (int)round(_HoShadowCastSecondDirectionalParams.y) * (int)round(_HoShadowCastSecondDirectionalParams.z)
+                    : _HoShadowCastSliceCount;
+                if (active < 0.5 || sliceCount <= 0)
+                {
+                    return half4(0.0h, 0.0h, 0.0h, 1.0h);
+                }
+
+                float rawDepth = debugSecondDirectional
+                    ? SAMPLE_TEXTURE2D(_HoShadowCastSecondDirectionalAtlas, sampler_PointClamp, uv)
+                    : SAMPLE_TEXTURE2D(_HoShadowCastAtlas, sampler_PointClamp, uv);
+                half valid = rawDepth < 0.99999;
+                half3 atlasColor = lerp(Heat(1.0 - rawDepth), half3(0.0h, 0.0h, 0.0h), 1.0h - valid);
+                atlasColor = debugSecondDirectional
+                    ? ApplyShadowCastSecondDirectionalOverlay(uv, atlasColor)
+                    : ApplyShadowCastSliceOverlay(uv, atlasColor);
+                return half4(atlasColor, 1.0h);
+            }
+
+            half TileSssGeometryValid(half4 normalDepth)
+            {
+                half normalValid = step(1.0e-4h, dot(normalDepth.rgb, normalDepth.rgb));
+                half depthValid = step(1.0e-4h, normalDepth.a);
+                return normalValid * depthValid;
+            }
+
+            half4 ResolveSubsurfaceScatteringColor(float2 uv)
+            {
+                half4 maskId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv);
+                half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture, sampler_PointClamp, uv);
+                half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
+                half4 source = SAMPLE_TEXTURE2D_X(_lilHoSSSSourceTexture, sampler_LinearClamp, uv);
+                half4 transmission = SAMPLE_TEXTURE2D_X(_lilHoSSSTransmissionTexture, sampler_LinearClamp, uv);
+                half coverage = saturate(maskId.r * surfaceData.r) * TileSssGeometryValid(normalDepth);
+                int mode = _HoDebugTileMode;
+
+                if (mode == 1) return half4(coverage.xxx, 1.0h);
+                if (mode == 2) return half4(source.rgb, 1.0h);
+                if (mode == 3) return half4(source.rgb * coverage, 1.0h);
+                if (mode == 4) return half4(transmission.rgb, 1.0h);
+                if (mode == 5) return half4(transmission.aaa, 1.0h);
+                if (mode == 6) return half4(saturate(coverage * step(1.0e-4h, source.a)).xxx, 1.0h);
+                if (mode == 7) return half4(surfaceData.bbb, 1.0h);
+                if (mode == 8) return half4(surfaceData.rrr, 1.0h);
+                if (mode == 9) return half4(Heat(surfaceData.r), 1.0h);
+
+                half3 normal = normalize(normalDepth.rgb * 2.0h - 1.0h);
+                half3 normalView = TransformWorldToViewDir(normal, true);
+                if (mode == 10)
+                {
+                    half2 direction = dot(normalView.xy, normalView.xy) > 1.0e-4h
+                        ? normalize(-normalView.xy)
+                        : half2(1.0h, 0.0h);
+                    return half4(direction * 0.5h + 0.5h, 0.0h, 1.0h);
+                }
+
+                half rim = pow(saturate(1.0h - abs(normalView.z)), 1.75h);
+                return half4(rim.xxx, 1.0h);
+            }
+
             uint PickVectorChar(float4 chars, int index)
             {
                 if (index == 0) return (uint)round(chars.x);
@@ -280,9 +471,24 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-                half4 color = _HoDebugTileRenderKind == 2
-                    ? ResolveGeometryColor(input.uv)
-                    : ResolveMetadataColor(input.uv);
+                half4 color = half4(0.0h, 0.0h, 0.0h, 1.0h);
+                if (_HoDebugTileRenderKind == 2)
+                {
+                    color = ResolveGeometryColor(input.uv);
+                }
+                else if (_HoDebugTileRenderKind == 3)
+                {
+                    color = ResolveShadowCastColor(input.uv);
+                }
+                else if (_HoDebugTileRenderKind == 4)
+                {
+                    color = ResolveSubsurfaceScatteringColor(input.uv);
+                }
+                else
+                {
+                    color = ResolveMetadataColor(input.uv);
+                }
+
                 return ApplyOverlay(color, input.uv);
             }
             ENDHLSL

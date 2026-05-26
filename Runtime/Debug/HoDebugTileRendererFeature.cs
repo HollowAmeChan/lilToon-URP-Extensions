@@ -3,6 +3,8 @@
 using System.Collections.Generic;
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.MetadataBuffer;
+using lilToon.URP.Extensions.ShadowCast;
+using lilToon.URP.Extensions.SubsurfaceScattering;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
@@ -150,6 +152,8 @@ namespace lilToon.URP.Extensions.Debugging
                 UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
                 HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
                 HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
+                HoShadowCastRenderGraphResources shadowCastResources = frameData.GetOrCreate<HoShadowCastRenderGraphResources>();
+                HoSubsurfaceScatteringRenderGraphResources sssResources = frameData.GetOrCreate<HoSubsurfaceScatteringRenderGraphResources>();
 
                 bool hasMetadata = metadataResources.maskIdTexture.IsValid()
                     && metadataResources.surfaceDataTexture.IsValid()
@@ -158,8 +162,20 @@ namespace lilToon.URP.Extensions.Debugging
                     && metadataResources.objectCustom1Texture.IsValid()
                     && metadataResources.surfaceColorTexture.IsValid();
                 bool hasGeometry = geometryResources.normalDepthTexture.IsValid();
+                bool hasShadowCastAtlas = shadowCastResources.atlasTexture.IsValid();
+                bool hasShadowCastSecondDirectionalAtlas = shadowCastResources.secondDirectionalAtlasTexture.IsValid();
+                bool hasSubsurfaceScattering = sssResources.sourceTexture.IsValid()
+                    && sssResources.transmissionTexture.IsValid()
+                    && metadataResources.HasRequiredTextures
+                    && geometryResources.HasRequiredTextures;
 
-                List<DebugTile> tiles = BuildTiles(selectedDebugViewId, hasMetadata, hasGeometry);
+                List<DebugTile> tiles = BuildTiles(
+                    selectedDebugViewId,
+                    hasMetadata,
+                    hasGeometry,
+                    hasShadowCastAtlas,
+                    hasShadowCastSecondDirectionalAtlas,
+                    hasSubsurfaceScattering);
                 if (tiles.Count == 0)
                 {
                     return;
@@ -191,6 +207,9 @@ namespace lilToon.URP.Extensions.Debugging
                     passData.tileGrid = new Vector4(columns, rows, tiles.Count, 0.0f);
                     passData.hasMetadata = hasMetadata;
                     passData.hasGeometry = hasGeometry;
+                    passData.hasShadowCastAtlas = hasShadowCastAtlas;
+                    passData.hasShadowCastSecondDirectionalAtlas = hasShadowCastSecondDirectionalAtlas;
+                    passData.hasSubsurfaceScattering = hasSubsurfaceScattering;
                     passData.maskIdTexture = metadataResources.maskIdTexture;
                     passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
                     passData.custom0Texture = metadataResources.custom0Texture;
@@ -198,6 +217,10 @@ namespace lilToon.URP.Extensions.Debugging
                     passData.objectCustom1Texture = metadataResources.objectCustom1Texture;
                     passData.surfaceColorTexture = metadataResources.surfaceColorTexture;
                     passData.normalDepthTexture = geometryResources.normalDepthTexture;
+                    passData.shadowCastAtlasTexture = shadowCastResources.atlasTexture;
+                    passData.shadowCastSecondDirectionalAtlasTexture = shadowCastResources.secondDirectionalAtlasTexture;
+                    passData.sssSourceTexture = sssResources.sourceTexture;
+                    passData.sssTransmissionTexture = sssResources.transmissionTexture;
                     passData.geometryDepthParams = geometryDepthParams;
 
                     if (hasMetadata)
@@ -213,6 +236,32 @@ namespace lilToon.URP.Extensions.Debugging
                     if (hasGeometry)
                     {
                         builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
+                    }
+
+                    if (hasShadowCastAtlas)
+                    {
+                        builder.UseTexture(passData.shadowCastAtlasTexture, AccessFlags.Read);
+                    }
+
+                    if (hasShadowCastSecondDirectionalAtlas)
+                    {
+                        builder.UseTexture(passData.shadowCastSecondDirectionalAtlasTexture, AccessFlags.Read);
+                    }
+
+                    if (hasSubsurfaceScattering)
+                    {
+                        builder.UseTexture(passData.sssSourceTexture, AccessFlags.Read);
+                        builder.UseTexture(passData.sssTransmissionTexture, AccessFlags.Read);
+                        if (!hasMetadata)
+                        {
+                            builder.UseTexture(passData.maskIdTexture, AccessFlags.Read);
+                            builder.UseTexture(passData.surfaceDataTexture, AccessFlags.Read);
+                        }
+
+                        if (!hasGeometry)
+                        {
+                            builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
+                        }
                     }
 
                     builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
@@ -236,6 +285,25 @@ namespace lilToon.URP.Extensions.Debugging
                             context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
                         }
 
+                        if (data.hasShadowCastAtlas)
+                        {
+                            context.cmd.SetGlobalTexture(HoShadowCastShaderConstants.AtlasTextureId, data.shadowCastAtlasTexture);
+                        }
+
+                        if (data.hasShadowCastSecondDirectionalAtlas)
+                        {
+                            context.cmd.SetGlobalTexture(HoShadowCastShaderConstants.SecondDirectionalAtlasTextureId, data.shadowCastSecondDirectionalAtlasTexture);
+                        }
+
+                        if (data.hasSubsurfaceScattering)
+                        {
+                            context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
+                            context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
+                            context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
+                            context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.SourceTextureId, data.sssSourceTexture);
+                            context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.TransmissionTextureId, data.sssTransmissionTexture);
+                        }
+
                         for (int i = 0; i < data.tiles.Count; i++)
                         {
                             DebugTile tile = data.tiles[i];
@@ -255,7 +323,13 @@ namespace lilToon.URP.Extensions.Debugging
                 }
             }
 
-            private static List<DebugTile> BuildTiles(string selectedId, bool hasMetadata, bool hasGeometry)
+            private static List<DebugTile> BuildTiles(
+                string selectedId,
+                bool hasMetadata,
+                bool hasGeometry,
+                bool hasShadowCastAtlas,
+                bool hasShadowCastSecondDirectionalAtlas,
+                bool hasSubsurfaceScattering)
             {
                 List<DebugTile> tiles = new List<DebugTile>();
                 IReadOnlyList<HoDebugViewInfo> views = HoDebugViewRegistry.AllViews;
@@ -274,6 +348,18 @@ namespace lilToon.URP.Extensions.Debugging
                     }
 
                     if (view.RenderKind == HoDebugViewRenderKind.GeometryBuffer && !hasGeometry)
+                    {
+                        continue;
+                    }
+
+                    if (view.RenderKind == HoDebugViewRenderKind.ShadowCast
+                        && ((view.ModeValue == (int)HoShadowCastDebugMode.Atlas && !hasShadowCastAtlas)
+                            || (view.ModeValue == (int)HoShadowCastDebugMode.SecondDirectionalAtlas && !hasShadowCastSecondDirectionalAtlas)))
+                    {
+                        continue;
+                    }
+
+                    if (view.RenderKind == HoDebugViewRenderKind.SubsurfaceScattering && !hasSubsurfaceScattering)
                     {
                         continue;
                     }
@@ -392,6 +478,9 @@ namespace lilToon.URP.Extensions.Debugging
                 public Vector4 tileGrid;
                 public bool hasMetadata;
                 public bool hasGeometry;
+                public bool hasShadowCastAtlas;
+                public bool hasShadowCastSecondDirectionalAtlas;
+                public bool hasSubsurfaceScattering;
                 public TextureHandle maskIdTexture;
                 public TextureHandle surfaceDataTexture;
                 public TextureHandle custom0Texture;
@@ -399,6 +488,10 @@ namespace lilToon.URP.Extensions.Debugging
                 public TextureHandle objectCustom1Texture;
                 public TextureHandle surfaceColorTexture;
                 public TextureHandle normalDepthTexture;
+                public TextureHandle shadowCastAtlasTexture;
+                public TextureHandle shadowCastSecondDirectionalAtlasTexture;
+                public TextureHandle sssSourceTexture;
+                public TextureHandle sssTransmissionTexture;
                 public Vector4 geometryDepthParams;
             }
         }

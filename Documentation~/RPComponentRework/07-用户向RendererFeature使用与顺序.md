@@ -38,6 +38,7 @@ Renderer Data 中推荐顺序：
 6. CharacterSpecialization
 7. ScreenProcess
 8. ImageProcess
+9. DebugTile（可选，调试时放在最后覆盖画面）
 ```
 
 对应执行意图：
@@ -224,7 +225,7 @@ Debug 入口可以统一，但资源归属必须局部：
 重 debug shader 默认不编译，用户显式启用 debug profile / define / shader collection 后才进入收集。
 当前已登记的 view info 覆盖 MetadataBuffer、GeometryBuffer、ShadowCast、SSS、ScreenProcess rule mask 和 ImageProcess layer chain；ScreenProcess 与 ImageProcess 条目是轻量观察入口，不进入重 debug shader collection。ScreenProcess rule mask 的实际输出入口仍是 layer 自己的 `debugRuleMask`，不需要 RendererFeature 级 debug view。
 只读公共入口位于 `lilToon URP Extensions/Debug/Open Debug View Registry`。这个窗口只显示 feature-local view info、短名、shader collection 状态和缺失降级说明，不生成 collection，也不创建 shader、material 或 render target。它不是最终自动 tile view；真正 tile view 需要参考 `D:\Unity_Fork\HoUrp-Extensions` 的 `RenderCacheDebugRendererFeature` / `RenderCacheDebugTile`，由 registry 自动生成 tiled debug 画面。
-`Ho-DebugTile` 是第一版自动 tile RendererFeature：放在 MetadataBuffer / GeometryBuffer 之后、ImageProcess 之前，选择 `AllRegistered` 时会把当前可用的 MetadataBuffer / GeometryBuffer view 自动排成 tile。ShadowCast / SSS tile 还未接入，仍使用各自 RendererFeature debug view。
+`Ho-DebugTile` 是自动 tile RendererFeature：调试时通常放在最后覆盖当前画面，选择 `AllRegistered` 时会把当前可用的 MetadataBuffer、GeometryBuffer、ShadowCast 与 SSS view 自动排成 tile。它参考 HoUrp 的自动 tile 路线，只读取 RenderGraph 资源并绘制总览，不接管各 feature 自己的 debug shader/material。SSS profile 颜色、半径等依赖 feature settings 的精确模式仍以 `Ho-SubsurfaceScattering` 自带 debug view 为准。ScreenProcess rule mask 不进入 `Ho-DebugTile`，因为具体 layer 已有 `debugRuleMask` / `_LayerRuleDebugOutput` 直出选项。
 
 ---
 

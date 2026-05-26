@@ -26,7 +26,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
         private static HoDebugViewInfo View(string viewId, string shortName, HoSubsurfaceScatteringDebugMode mode)
         {
-            return new HoDebugViewInfo(FeatureName, viewId, shortName, (int)mode, HoDebugViewRenderKind.None, ShaderName, ShaderAssetPath, true, MissingFallback);
+            return new HoDebugViewInfo(FeatureName, viewId, shortName, (int)mode, HoDebugViewRenderKind.SubsurfaceScattering, ShaderName, ShaderAssetPath, true, MissingFallback);
         }
     }
 }
