@@ -149,7 +149,6 @@ namespace lilToon.URP.Extensions.Debugging
                 }
 
                 UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
-                UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
                 HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
                 HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
                 HoShadowCastRenderGraphResources shadowCastResources = frameData.GetOrCreate<HoShadowCastRenderGraphResources>();
@@ -187,17 +186,18 @@ namespace lilToon.URP.Extensions.Debugging
                     return;
                 }
 
-                int targetWidth = Mathf.Max(1, cameraData.cameraTargetDescriptor.width);
-                int targetHeight = Mathf.Max(1, cameraData.cameraTargetDescriptor.height);
-                float targetAspect = targetWidth / (float)targetHeight;
-                CalculateTileGrid(tiles.Count, targetAspect, out int columns, out int rows);
+                CalculateTileGrid(tiles.Count, out int columns, out int rows);
 
                 for (int i = 0; i < tiles.Count; i++)
                 {
                     DebugTile tile = tiles[i];
                     int column = i % columns;
                     int row = i / columns;
-                    tiles[i] = new DebugTile(tile.renderKind, tile.modeValue, new LabelData(tile.label0, tile.label1, tile.label2, tile.label3), CalculateTileRect(column, row, columns, rows));
+                    tiles[i] = new DebugTile(
+                        tile.renderKind,
+                        tile.modeValue,
+                        new LabelData(tile.label0, tile.label1, tile.label2, tile.label3),
+                        CalculateTileRect(column, row, columns, rows));
                 }
 
                 using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-DebugTile", out PassData passData, ProfilingSampler))
@@ -370,23 +370,23 @@ namespace lilToon.URP.Extensions.Debugging
                 return tiles;
             }
 
-            private static void CalculateTileGrid(int tileCount, float targetAspect, out int columns, out int rows)
+            private static void CalculateTileGrid(int tileCount, out int columns, out int rows)
             {
-                int preferredColumns = targetAspect >= 1.45f ? 5 : 4;
-                columns = Mathf.Clamp(preferredColumns, 1, Mathf.Max(1, tileCount));
-                rows = Mathf.CeilToInt(tileCount / (float)columns);
+                tileCount = Mathf.Max(1, tileCount);
+                int side = Mathf.CeilToInt(Mathf.Sqrt(tileCount));
+                columns = side;
+                rows = side;
             }
 
             private static Vector4 CalculateTileRect(int column, int row, int columns, int rows)
             {
                 float cellWidth = 1.0f / columns;
                 float cellHeight = 1.0f / rows;
-                float gutter = Mathf.Min(cellWidth, cellHeight) * 0.035f;
                 return new Vector4(
-                    column * cellWidth + gutter,
-                    row * cellHeight + gutter,
-                    Mathf.Max(0.0001f, cellWidth - gutter * 2.0f),
-                    Mathf.Max(0.0001f, cellHeight - gutter * 2.0f));
+                    column * cellWidth,
+                    row * cellHeight,
+                    Mathf.Max(0.0001f, cellWidth),
+                    Mathf.Max(0.0001f, cellHeight));
             }
 
             private static LabelData EncodeLabel(string label)
