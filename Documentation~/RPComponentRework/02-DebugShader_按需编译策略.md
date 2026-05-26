@@ -246,6 +246,13 @@ ImageProcess 不再提供 AOV mask debug 或 AOV composite debug。
 - 窗口不提供生成 collection 的按钮，不调用 `Shader.Find`，也不创建 shader、material、RenderTexture 或任何运行时调试资源。
 - 该窗口不是最终自动 tile view。真正的 tile view 目标是参考 `D:\Unity_Fork\HoUrp-Extensions` 的 `RenderCacheDebugRendererFeature` / `RenderCacheDebug.shader` 路线：支持 `AllRegistered` 自动排布、`RenderCacheDebugTile` pass、tile rect/grid/label 参数和从 registry 自动生成 tile 列表。
 
+2026-05-26 开始迁入 HoUrp 自动 tile 路线：
+
+- 新增 `HoDebugViewRenderKind`，由各 feature-local `DebugViewInfo` 标记自己是否能进入自动 tile；MetadataBuffer / GeometryBuffer 已接入，ShadowCast / SSS / ScreenProcess / ImageProcess 暂不进入自动 tile。
+- 新增 `Ho-DebugTile` RendererFeature、`HoDebugTileRendererFeatureEditor` 与 `Runtime/Debug/Shaders/HoDebugTile.shader`，支持 `AllRegistered` 自动排布、短名 label、tile rect/grid 和单 view 选择。
+- 第一版 tile pass 读取 RenderGraph 中的 `HoMetadataBufferRenderGraphResources` 与 `HoGeometryBufferRenderGraphResources`，只编排 registry view，不接管各 feature 的独立 debug shader/material ownership。
+- `LilUrpDebugShaderCollectionGenerator` 同步收集 `HoDebugTile.shader`，使显式 debug shader collection 覆盖自动 tile 入口。
+
 ---
 
 ## 8. 验收清单

@@ -17,7 +17,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         private static HoDebugViewInfo View(string viewId, string shortName, HoShadowCastDebugMode mode)
         {
-            return new HoDebugViewInfo(FeatureName, viewId, shortName, (int)mode, ShaderName, ShaderAssetPath, true, MissingFallback);
+            return new HoDebugViewInfo(FeatureName, viewId, shortName, (int)mode, HoDebugViewRenderKind.None, ShaderName, ShaderAssetPath, true, MissingFallback);
         }
     }
 }

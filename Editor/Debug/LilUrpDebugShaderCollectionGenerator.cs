@@ -63,6 +63,8 @@ namespace lilToon.URP.Extensions.Editor.Debugging
                 }
             }
 
+            AddDebugTileShader(collection, processedShaders, ref shaderCount, ref variantCount, ref missingCount);
+
             EditorUtility.SetDirty(collection);
             AssetDatabase.SaveAssets();
             AssetDatabase.Refresh();
@@ -86,6 +88,41 @@ namespace lilToon.URP.Extensions.Editor.Debugging
             }
 
             return count;
+        }
+
+        private static void AddDebugTileShader(
+            ShaderVariantCollection collection,
+            HashSet<string> processedShaders,
+            ref int shaderCount,
+            ref int variantCount,
+            ref int missingCount)
+        {
+            string shaderKey = HoDebugTileShaderConstants.ShaderName + "|" + HoDebugTileShaderConstants.ShaderAssetPath;
+            if (!processedShaders.Add(shaderKey))
+            {
+                return;
+            }
+
+            Shader shader = AssetDatabase.LoadAssetAtPath<Shader>(HoDebugTileShaderConstants.ShaderAssetPath);
+            if (shader == null)
+            {
+                shader = Shader.Find(HoDebugTileShaderConstants.ShaderName);
+            }
+
+            if (shader == null)
+            {
+                missingCount++;
+                Debug.LogWarning($"[lilToon URP Extensions] Debug tile shader not found: {HoDebugTileShaderConstants.ShaderName} ({HoDebugTileShaderConstants.ShaderAssetPath}). Automatic debug tile view will be unavailable in builds unless the shader is included by another path.");
+                return;
+            }
+
+            shaderCount++;
+            int addedVariants = AddVariants(collection, shader);
+            variantCount += addedVariants;
+            if (addedVariants == 0)
+            {
+                Debug.LogWarning($"[lilToon URP Extensions] Debug tile shader variant was not added: {HoDebugTileShaderConstants.ShaderName}");
+            }
         }
 
         private static void EnsureFolder(string folderPath)

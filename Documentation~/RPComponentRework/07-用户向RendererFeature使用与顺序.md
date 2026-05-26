@@ -18,6 +18,7 @@
 | `CharacterSpecialization` | `Ho-CharacterSpecialization` | `HoCharacterSpecializationRendererFeature` | 眼透、前发、角色局部合成 |
 | `ScreenProcess` | `Ho-ScreenProcess` | `ScreenProcessRendererFeature` | 读取 Buffer 的语义屏幕处理 |
 | `ImageProcess` | `Ho-ImageProcess` | `ImageProcessRendererFeature` | 最终图像处理链 |
+| `DebugTile` | `Ho-DebugTile` | `HoDebugTileRendererFeature` | registry 驱动的自动 debug tile 预览 |
 
 旧名只用于引用历史迁移记录。用户侧主描述不再把 `HoPost`、`ShoostStack` 当作概念名。
 RendererFeature 防重名显示、Frame Debugger pass 名、对应 Volume 菜单和缺 shader 日志统一使用 `Ho-<规范模块名>` 前缀，模块名本身不带空格；shader Hidden 名和包名不跟随这条用户显示名规则。
@@ -223,6 +224,7 @@ Debug 入口可以统一，但资源归属必须局部：
 重 debug shader 默认不编译，用户显式启用 debug profile / define / shader collection 后才进入收集。
 当前已登记的 view info 覆盖 MetadataBuffer、GeometryBuffer、ShadowCast、SSS、ScreenProcess rule mask 和 ImageProcess layer chain；ScreenProcess 与 ImageProcess 条目是轻量观察入口，不进入重 debug shader collection。ScreenProcess rule mask 的实际输出入口仍是 layer 自己的 `debugRuleMask`，不需要 RendererFeature 级 debug view。
 只读公共入口位于 `lilToon URP Extensions/Debug/Open Debug View Registry`。这个窗口只显示 feature-local view info、短名、shader collection 状态和缺失降级说明，不生成 collection，也不创建 shader、material 或 render target。它不是最终自动 tile view；真正 tile view 需要参考 `D:\Unity_Fork\HoUrp-Extensions` 的 `RenderCacheDebugRendererFeature` / `RenderCacheDebugTile`，由 registry 自动生成 tiled debug 画面。
+`Ho-DebugTile` 是第一版自动 tile RendererFeature：放在 MetadataBuffer / GeometryBuffer 之后、ImageProcess 之前，选择 `AllRegistered` 时会把当前可用的 MetadataBuffer / GeometryBuffer view 自动排成 tile。ShadowCast / SSS tile 还未接入，仍使用各自 RendererFeature debug view。
 
 ---
 

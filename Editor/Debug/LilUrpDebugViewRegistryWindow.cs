@@ -97,10 +97,13 @@ namespace lilToon.URP.Extensions.Editor.Debugging
             string collectionStatus = view.RequiresShaderCollection
                 ? "Shader collection: required"
                 : "Shader collection: not required";
+            string tileStatus = view.SupportsAutomaticTile
+                ? "Tile: " + view.RenderKind
+                : "Tile: not wired";
             string shaderStatus = view.HasShader
                 ? "Shader asset: " + GetShaderAssetStatus(view.ShaderAssetPath)
                 : "Shader asset: none";
-            return "Mode: " + view.ModeValue + "    " + collectionStatus + "    " + shaderStatus;
+            return "Mode: " + view.ModeValue + "    " + collectionStatus + "    " + tileStatus + "    " + shaderStatus;
         }
 
         private static string GetShaderAssetStatus(string assetPath)

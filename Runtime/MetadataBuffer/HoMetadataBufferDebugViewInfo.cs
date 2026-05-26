@@ -40,7 +40,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
         private static HoDebugViewInfo View(string viewId, string shortName, HoMetadataBufferDebugMode mode)
         {
-            return new HoDebugViewInfo(FeatureName, viewId, shortName, (int)mode, ShaderName, ShaderAssetPath, true, MissingFallback);
+            return new HoDebugViewInfo(FeatureName, viewId, shortName, (int)mode, HoDebugViewRenderKind.MetadataBuffer, ShaderName, ShaderAssetPath, true, MissingFallback);
         }
     }
 }
