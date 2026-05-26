@@ -1,292 +1,65 @@
-# ImageProcess RDG 化执行计划
+# ImageProcess RDG 化边界
 
-> 本文约束旧仓库从 `Runtime/ShoostPostProcessing` 迁入 `Runtime/ImageProcess` 后的后续改造。`Shoost` / `ShoostStack` 只作为历史实现名使用，新语义名统一为 `ImageProcess`。目标不是重写所有效果，而是把旧 ShoostStack 收敛成 RDG 管理的 ImageProcess 链。
+> 2026-05-26 收口版。本文记录 ImageProcess 当前职责、RenderGraph 资源边界和后续准入规则。
 
----
+## 0. 当前结论
 
-## 0. 命名结论
+`ImageProcess` 是最终图像链，不再承担旧 ShoostStack 或语义后处理职责。
 
-新文档、新规划和新增代码应使用：
+它只处理：
 
-```text
-ImageProcess
-ImageProcessStack
-ImageProcessLayer
-ImageProcessEffect
-ImageProcessPass
-ImageChain
-```
+- camera color
+- ImageChain 中的临时图像
+- image-domain layer 的顺序执行
+- 最终 blit / compose
 
-旧名只在引用历史实现或迁移记录时出现：
+它不读取：
 
-```text
-ShoostPostProcessing
-ShoostPostProcessRendererFeature
-ShoostPostProcessPass
-ShoostPostProcessLayer
-ShoostPostProcessEffect
-```
+- MetadataBuffer
+- GeometryBuffer
+- ShadowCast
+- SSS
+- OIT
+- CharacterSpecialization
+- ScreenProcess rule mask
 
-旧类名已迁出 Runtime / Editor 主路径；新增抽象、文档标题、review 清单和未来 API 不再使用 `ShoostStack` 作为概念名。
+需要语义输入的屏幕效果归 `ScreenProcess`。
 
----
+## 1. 用户侧模型
 
-## 1. 当前事实
+ImageProcess 的 Volume layer 顺序就是执行顺序。RendererFeature 只负责接入最终图像链，不再提供旧 ShoostStack 兼容入口。
 
-旧仓库 ImageProcess 现有实现已迁到 `Runtime/ImageProcess` 目录下，并已经有 RenderGraph 路径：
+常规使用：
 
-- `ImageProcessRendererFeature.EnqueueRenderGraphPass()`
-- `ImageProcessPass.RecordRenderGraph()`
-- 每个 effect 有 `Record*Layer()` 入口。
+1. 在 RendererFeature 顺序中把 `ImageProcess` 放在 `ScreenProcess` 之后。
+2. 在 Volume 中添加 image-domain layer。
+3. 只在 ImageProcess layer 内调整图像输入、临时图像、混合和输出。
 
-但现有长期风险是：
+## 2. RenderGraph 边界
 
-- 普通单 pass layer 会创建独立 destination。
-- 多 pass effect 各自创建临时 texture。
-- compatibility path 的 RTHandle 逻辑仍然影响代码结构。
-- AOV composite / mask 和 ImageProcess 混在同一 stack 中，这是需要删除的旧能力。
-- debug AOV mask 与常规 shader 逻辑耦合，应迁到 ScreenProcess 或对应 feature 的局部 debug。
+RenderGraph 是主线。
 
----
+- 进入 RDG record 前释放 compatibility-only RTHandle / camera target 状态。
+- 不把 live camera attachment 当作普通长期纹理读取。
+- layer 间通过 ImageChain 显式传递中间图像。
+- 禁用、无有效 layer 或 camera reset 时释放旧路径临时资源。
 
-## 2. 第一阶段：定义 ImageProcess 执行模型
+Compatibility path 只作为非 RenderGraph fallback，不允许影响 RDG 主线资源所有权。
 
-在旧仓库内建立轻量 ImageChain，不引入新仓库的大注册表。
+## 3. Debug 边界
 
-建议位置：
+ImageProcess debug 只观察 image-domain 输入和输出，不展示语义 mask、buffer channel 或 ScreenProcess rule mask。
 
-```text
-Runtime/ImageProcess/Renderer/ImageChain/
-```
+如果需要看 MetadataBuffer / GeometryBuffer / ShadowCast / SSS，使用对应 feature-local debug view 或 DebugTile。
 
-最小类型：
+## 4. 后续准入
 
-```text
-ImageProcessChain
-ImageProcessChainContext
-ImageProcessPassContext
-ImageProcessResourceRequest
-ImageProcessResourceKind
-```
+ImageProcess 后续新增能力必须保持 image-domain：
 
-核心模型：
+- 可以新增颜色空间、blur、tone、distortion、composite 等图像处理 layer。
+- 不新增依赖 MetadataBuffer / GeometryBuffer 的语义 layer。
+- 不恢复旧 `NeedsAovInput` 或 AOV mask 编辑入口。
 
-```text
-Begin(cameraColorCopy)
-  WorkA = source copy
-  WorkB = transient same-desc texture
+## 5. 最终摘要
 
-For each normal image layer:
-  Read  = current
-  Write = alternate
-  Record(Read -> Write)
-  Swap()
-
-End()
-  Blit current -> cameraColor
-```
-
-layer 顺序使用用户在 ImageProcess UI 中排列的顺序。descriptor 只提供显示信息、资源声明和迁移兼容信息，不在运行时强制重排用户栈。
-
-验收：
-
-- 10 个普通单 pass layer 不产生 10 张全分辨率独占 RT。
-- 所有 texture handle 来自当前 frame 的 RenderGraph。
-- WorkA / WorkB 不发布为长期全局纹理。
-- 用户拖拽顺序就是 ImageChain 记录 pass 的顺序。
-
----
-
-## 3. 第二阶段：单 pass effect 接入 ImageChain
-
-优先迁移最简单的 single-pass effect：
-
-- ColorGradingCustom
-- CRTEffects
-- Distortion
-- DitheringCustom
-- DownScaleResolution
-- Fisheye
-- GrainCustom
-- LevelAdjustment
-- Pixelize
-- RGBSplit
-- SharpenBefore / SharpenAfter
-- Tube
-- VignetteCustom
-- VHS
-
-要求：
-
-- `RecordSinglePassLayer()` 不再创建 `_lilImageProcessLayer{n}`。
-- 单 pass executor 接收 `ImageProcessPassContext`。
-- source/destination 由 ImageChain 提供。
-- effect 只设置材质参数和记录 pass。
-
----
-
-## 4. 第三阶段：多 pass effect 声明例外资源
-
-多 pass effect 仍可申请额外 RDG texture，但必须局部声明原因。
-
-第一批：
-
-- Glow：pyramid / blur chain。
-- IrisBlur：local ping-pong。
-- RGBBlurV2：local ping-pong。
-- ApertureBokeh：multi-pass blur / composite。
-- BokehZoomBlur：multi-pass 或 radial sample。
-- SkyGodRays：可能需要 mask / blur。
-- MotionTrail：history。
-
-每个 effect 增加局部资源声明：
-
-```text
-NeedsLocalPingPong
-NeedsPyramid
-NeedsHistory
-NeedsOriginalSource
-NeedsExternalTexture
-```
-
-这些声明不进入全局注册表，只用于 ImageProcess pass 内部 plan 和 debug 输出。
-`NeedsAovInput`、`NeedsMaterialBuffer`、`NeedsGeometryBuffer`、`NeedsShadowCast` 这类语义输入声明不属于 ImageProcess，也不再作为 ImageProcess resource kind 保留。出现这些需求时，effect 应迁到 ScreenProcess。
-
----
-
-## 5. 第四阶段：删除 AOV composite / mask 输入
-
-旧 Shoost 的 AOV composite、`useAovMask`、`debugAovMask` 不作为新 ImageProcess 能力保留。
-
-要求：
-
-- ImageProcess runtime 不读取 AOV / MaterialBuffer / GeometryBuffer / ShadowCast。
-- ImageProcess UI 不显示 AOV mask、semantic mask、object/material rule。
-- 快速开发阶段不再保留旧资源兼容；旧资源中的 `useAovMask` / `debugAovMask` 不再进入 ImageProcess 序列化数据。
-- AOV debug 输出归 MaterialBuffer/GeometryBuffer 或 ScreenProcess 的局部 debug，不归 ImageProcess。
-
-如果某个 effect 对 object/material/depth/normal/mask/ShadowCast 有任何依赖，应迁出到 ScreenProcess，而不是留在 ImageProcess。
-
----
-
-## 6. 第五阶段：移除 compatibility path 对主结构的影响
-
-旧 compatibility path 可以短期保留，但不能继续主导结构。
-
-规则：
-
-- 新增 effect 只要求 RDG 路径完整。
-- compatibility path 可以调用同一套参数构建逻辑，但不允许反向约束 RDG。
-- 如果某个 effect 的 compatibility path 阻碍 RDG 生命周期，应先冻结 compatibility 功能，再迁 RDG。
-
----
-
-## 7. 代码落点
-
-优先改：
-
-```text
-Runtime/ImageProcess/Renderer/ImageProcessPass.cs
-Runtime/ImageProcess/Renderer/EffectPipeline/ImageProcessPass.EffectDispatch.cs
-Runtime/ImageProcess/Renderer/EffectPipeline/ImageProcessPass.EffectProperties.cs
-Runtime/ImageProcess/Renderer/Effects/*.cs
-Runtime/ImageProcess/ImageProcessEffectDescriptor.cs
-```
-
-不要先改 editor UI。先让 runtime 资源生命周期正确，再整理 UI。
-
----
-
-## 8. 2026-05-24 执行记录
-
-已在旧仓库 `Runtime/ImageProcess` 落地第一批 RDG 主线改造：
-
-- 新增 `Runtime/ImageProcess/Renderer/ImageChain/`，包含轻量 `ImageProcessChain`、`ImageProcessPassContext`、`ImageProcessResourceRequest`、`ImageProcessResourceKind`。
-- `ImageProcessPass.RecordRenderGraph()` 改为通过 `ImageProcessChain` 统一推进 `Read -> Write -> Swap`。
-- 普通 `RecordSinglePassLayer()` 不再创建 `_lilImageProcessLayer{n}` 这类每层独占输出，而是写入 ImageChain 提供的 `WorkA/WorkB`。
-- `Glow`、`IrisBlur`、`RGBBlurV2`、`ApertureBokeh`、`ChangeFrameRate` 的内部临时 RT 仍为当前 frame 的 RDG 资源，但最终输出写回 ImageChain 目标。
-- RenderGraph 路径不再读取 `HoAovRenderGraphResources`，也不再记录旧 Shoost AOV composite pass。
-- RenderGraph 路径不再通过旧 `ShoostPostProcessAovCompositeCache.Ensure()` 查找或创建 `AovComposite.shader` material。
-- `ImageProcessRuntimeLayerBuilder` 不再按 descriptor 的 `RuntimeOrder` 强制排序，当前执行顺序尊重 Volume layer 用户顺序。
-- `ImageProcessEffectDescriptor` 已移除 `RuntimeOrder`，`ImageProcessEffectOrder` 兼容门面随之删除，ImageProcess 不再保留“旧固定 effect order”元数据外壳。
-
-随后继续落地局部资源声明：
-
-- `ImageProcessEffectDescriptor` 增加 `ResourceRequests`，用于记录 ImageProcess effect 的局部资源例外。
-- 第一批声明包括 `LocalPingPong`、`History`、`OriginalSource`、`ExternalTexture`。
-- `Glow`、`IrisBlur`、`RGBBlurV2`、`ApertureBokeh` 声明本地 ping-pong / composite 原图依赖。
-- `ChangeFrameRate`、`MotionTrail` 声明 image-domain history。
-- `Weather`、`Particle`、`LensFlare`、`LogoOverlay` 声明 layer-supplied external texture。
-- 过渡期曾在 `ImageProcessResourceKind` 预留 `AovInput`、`MaterialBuffer`、`GeometryBuffer`、`ShadowCast` 作为禁止语义输入类型；该过渡门面已在 2026-05-25 删除，后续 ImageProcess 不再定义这些 resource kind。
-
-随后开始整理 ImageProcess Editor 边界：
-
-- `ImageProcessStackVolumeEditor` 的 layer list 开启用户拖拽排序。
-- Inspector / preset 应用流程不再调用旧固定 effect order 自动重排。
-- 旧 Shoost AOV mask UI 不再作为 ImageProcess 可编辑能力显示；过渡期提示已在 2026-05-25 删除，后续直接要求在 ScreenProcess 侧实现语义 mask。
-
-本批验证：
-
-- `git diff --check` 通过，仅有 Git 换行提示。
-- 针对性扫描确认 ImageProcess RenderGraph 主路径没有 `GetOrCreate<HoAovRenderGraphResources>()`、没有 `RecordAovCompositeIfNeeded()` 调用。
-- 当前仓库是 UPM package，不是完整 Unity project，未找到直接引用该包的本地 Unity 工程，因此尚未跑 Unity batchmode 编译。
-
-继续推进后，旧 AOV composite 从 ImageProcess compatibility path 中冻结删除：
-
-- 删除 `ShoostPostProcessAovCompositeCache`、`ShoostPostProcessPass.Aov`、`ShoostPostProcessAovSupport` 和旧 `Shaders/Shoost/AovComposite.shader`。
-- `ImageProcessPass.Execute()` 不再为 `useAovMask` / `debugAovMask` 分配 `_lilImageProcessTempC`，也不再做 AOV composite 二次 blit。
-- `ImageProcessEffectDescriptor` 移除 `SupportsAovComposite` 标志，ImageProcess effect metadata 不再声明 semantic mask 支持。
-- 过渡期曾暂留旧序列化字段 `useAovMask` / `debugAovMask` 并在 runtime warning；该迁移外壳已在 2026-05-25 删除。
-- ImageProcess shader constants 移除 `_LayerAov*` 与 `_LayerResultTexture` id，普通 layer material 不再接收 AOV mask property。
-- 针对性扫描确认 `Runtime/ImageProcess` 没有 `HoAovRenderGraphResources`、`RecordAovCompositeIfNeeded`、`ImageProcessAovSupport`、`AovCompositeShaderName` 或 `SupportsAovComposite` 残留。
-
-继续推进后，ImageProcess Editor / 序列化边界进一步收窄：
-
-- 过渡期曾把 `ImageProcessLayer` 中旧 `useAovMask`、`debugAovMask`、AOV source / rule 等字段保留为隐藏序列化迁移数据；该兼容外壳已在 2026-05-25 删除。
-- 过渡期曾让 `ImageProcessStackVolumeEditor` 只在检测到旧 AOV flag 时显示迁移提示，并提供 `Clear legacy AOV mask settings` 按钮；该 UI 已在 2026-05-25 删除。
-- ImageProcess 不再 warning 或忽略 legacy AOV mask，因为运行时和序列化层都不再承载这类状态。
-
-继续推进后，ImageProcess 关闭时的短期资源生命周期收窄：
-
-- `ImageProcessPass` 增加 `ReleaseRuntimeResources()`，集中释放 compatibility path 的 Work RT、Iris/RGBBlur/Glow/ApertureBokeh 临时 RT 和 ChangeFrameRate image-domain history，并把 `_OriginalTex`、`_BlurredTex`、`_BloomTex`、`_FrozenFrameTex` global texture reset 到黑纹理。
-- `ImageProcessRendererFeature` 在全局关闭、Volume 不活跃或构建后没有 active layer 时释放这些运行时资源；SceneView 只是未启用显示时不主动释放，避免 GameView 仍在使用 ImageProcess 时反复重分配。
-- 本次不改变 RenderGraph 主路径的 ImageChain 行为，也不重新引入 AOV / MaterialBuffer / GeometryBuffer / ShadowCast 输入。
-
-继续推进 P1 RenderGraph 主线收口后，compatibility-only RT 与 image-domain history 的生命周期进一步拆开：
-
-- `ImageProcessPass.SetupRenderGraph()` 进入 RDG 主线时会释放 compatibility path 专用的 Work RT、Iris/RGBBlur/Glow/ApertureBokeh RTHandle，避免从旧路径切回 RDG 后仍保留持久 RT。
-- ChangeFrameRate 的 frozen frame 属于 image-domain history，RenderGraph 路径通过 imported texture 继续使用；它仍只在 `ReleaseRuntimeResources()`、descriptor 变化或状态失效时释放，不把它误归类为 compatibility-only RT。
-- `_OriginalTex`、`_BlurredTex`、`_BloomTex` 只在释放 compatibility RT 或全量释放时 reset；`_FrozenFrameTex` 只在全量释放 history 时 reset。
-
-## 9. 2026-05-25 执行记录
-
-在快速开发阶段明确不保留旧 Shoost AOV mask 资产兼容后，继续删除 ImageProcess 中的 legacy semantic 输入残留：
-
-- `ImageProcessLayer` 删除 `useAovMask`、`debugAovMask`、AOV source / mode / threshold / match / invert / rule 等隐藏迁移字段。
-- `ImageProcessPass` 删除 legacy AOV mask warning 分支；ImageProcess 运行时不再检查或承载旧 AOV mask 数据。
-- `ImageProcessResourceKind` 删除 `AovInput`、`MaterialBuffer`、`GeometryBuffer`、`ShadowCast`，`ImageProcessResourceRequest` 不再提供 semantic input 判定后门。
-- `ImageProcessStackVolumeEditor` 删除 legacy AOV mask 迁移提示、清理按钮和默认值重置中的旧字段处理。
-- 本次不改变 ScreenProcess / `Runtime/ScreenProcess` 的 rule mask 能力；mask/rule 仍归语义屏幕处理侧所有。
-
----
-
-## 10. 2026-05-25 执行记录：ShoostStack 命名迁移
-
-旧 ShoostStack 主路径已推进到删除旧名：
-
-- `Runtime/ShoostPostProcessing` 迁为 `Runtime/ImageProcess`，`Editor/PostProcessing/ShoostStack` 迁为 `Editor/PostProcessing/ImageProcess`。
-- `ShoostPostProcess*` 运行时类型迁为 `ImageProcess*`，RendererFeature 改为 `ImageProcessRendererFeature`，Volume 入口改为 `ImageProcessStackVolume`。
-- `Runtime/ImageProcess/Shaders/Shoost` 迁为 `Runtime/ImageProcess/Shaders/ImageProcess`，shader Hidden 名统一到 `Hidden/lilToon/URP/ImageProcess/...`。
-- `Editor/ShoostIcons` 迁为 `Editor/ImageProcessIcons`，ScreenProcess 与 ImageProcess 编辑器都改读新图标路径。
-- `Shoost*` 贴图资源文件名迁为 `ImageProcess*`，保留 Unity `.meta` GUID。
-- 针对性扫描确认 Runtime / Editor 主路径不再包含 `ShoostPostProcessing`、`ShoostPostProcess`、`ShoostStack`、`ShoostIcons` 或 `Shaders/Shoost`。
-
-## 11. 验收清单
-
-- 普通 single-pass stack 只使用 source copy + WorkA/WorkB。
-- 多 pass effect 的额外 RT 都是 RenderGraph transient。
-- camera color 不被同一 pass 同时读写。
-- ImageProcess 没有 AOV composite / semantic mask / NeedsAovInput 路径。
-- ImageProcess 不读取 MaterialBuffer / GeometryBuffer / ShadowCast。
-- ImageProcess layer 序列化数据不再包含旧 Shoost AOV mask 字段。
-- 关闭 ImageProcess 后不保留 stale RT / global texture / debug state。
+ImageProcess 已完成 RDG 主线收口：旧 ShoostStack 名称、AOV composite 入口、semantic mask 编辑和 compatibility-only RT 生命周期都不再作为当前设计入口。它现在只负责最终画面链。
