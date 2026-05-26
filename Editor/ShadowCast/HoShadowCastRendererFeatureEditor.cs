@@ -109,7 +109,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
                 DrawProperty(settingsProperty.FindPropertyRelative("lightRenderingLayerMask"), "Light Rendering Layers");
                 DrawProperty(settingsProperty.FindPropertyRelative("casterLayerMask"), "Caster GameObject Layers");
                 DrawProperty(settingsProperty.FindPropertyRelative("casterRenderingLayerMask"), "Caster Rendering Layers");
-                DrawProperty(settingsProperty.FindPropertyRelative("shadowStrength"), "Shadow Strength");
+                DrawProperty(settingsProperty.FindPropertyRelative("shadowStrength"), "Master Shadow Strength");
                 DrawProperty(settingsProperty.FindPropertyRelative("punctualShadowStrength"), "Punctual Shadow Strength");
                 DrawProperty(settingsProperty.FindPropertyRelative("punctualShadowFadeSpeed"), "Punctual Fade Speed");
                 DrawProperty(settingsProperty.FindPropertyRelative("debugMode"), "Debug Mode");

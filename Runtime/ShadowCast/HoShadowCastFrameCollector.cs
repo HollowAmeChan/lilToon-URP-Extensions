@@ -214,7 +214,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     continue;
                 }
 
-                float shadowStrength = Mathf.Clamp01(config.secondDirectionalShadowStrength);
+                float shadowStrength = Mathf.Clamp01(config.shadowStrength * config.secondDirectionalShadowStrength);
                 float previousDistance = nearDistance;
                 bool completed = true;
                 for (int cascadeIndex = 0; cascadeIndex < cascadeCount; cascadeIndex++)
@@ -609,7 +609,9 @@ namespace lilToon.URP.Extensions.ShadowCast
             Vector3 position = light.transform.position;
             Vector3 direction = light.transform.forward;
             Color finalColor = light.color * light.intensity;
-            float configuredStrength = requiredType == LightType.Directional ? config.shadowStrength : config.punctualShadowStrength;
+            float configuredStrength = requiredType == LightType.Directional
+                ? config.shadowStrength
+                : config.shadowStrength * config.punctualShadowStrength;
             target.lightData0[lightIndex] = new Vector4(GetLightTypeId(requiredType), firstSlice, writtenSlices, Mathf.Clamp01(configuredStrength));
             target.lightData1[lightIndex] = new Vector4(position.x, position.y, position.z, light.range);
             target.lightData2[lightIndex] = new Vector4(direction.x, direction.y, direction.z, Mathf.Cos(light.spotAngle * 0.5f * Mathf.Deg2Rad));
@@ -839,7 +841,9 @@ namespace lilToon.URP.Extensions.ShadowCast
             builder.Append(config.lightRenderingLayerMask.ToString("X8"));
             builder.Append(", casterRenderingMask=0x");
             builder.Append(config.casterRenderingLayerMask.ToString("X8"));
-            builder.Append(", strength second/punctual=");
+            builder.Append(", strength master/second/punctual=");
+            builder.Append(config.shadowStrength.ToString("0.##"));
+            builder.Append("/");
             builder.Append(config.secondDirectionalShadowStrength.ToString("0.##"));
             builder.Append("/");
             builder.Append(config.punctualShadowStrength.ToString("0.##"));

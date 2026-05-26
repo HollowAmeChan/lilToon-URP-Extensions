@@ -70,6 +70,8 @@ Renderer Data 推荐顺序：
 
 `ShadowCast` 是 Lighting/Shadow 组件，从 URP `visibleLights` 自动收集额外投影灯。它不把 Unity `Light` 组件的 shadow 开关作为收集条件；附加可见灯即使关闭 URP 内置阴影，也可由 `Ho-ShadowCast` 自己组织 shadow atlas。URP main light 仍跳过并交给 URP 内置主光阴影。
 
+`Master Shadow Strength` 是 `Ho-ShadowCast` 的总强度：punctual 与 second directional 会分别再乘自己的强度项。Unity `Light.shadowStrength` 不参与该组件强度计算。
+
 它负责：
 
 - visible light 收集
