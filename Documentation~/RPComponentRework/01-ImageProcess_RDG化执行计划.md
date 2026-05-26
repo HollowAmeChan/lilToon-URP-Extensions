@@ -252,6 +252,12 @@ Runtime/ImageProcess/ImageProcessEffectDescriptor.cs
 - `ImageProcessRendererFeature` 在全局关闭、Volume 不活跃或构建后没有 active layer 时释放这些运行时资源；SceneView 只是未启用显示时不主动释放，避免 GameView 仍在使用 ImageProcess 时反复重分配。
 - 本次不改变 RenderGraph 主路径的 ImageChain 行为，也不重新引入 AOV / MaterialBuffer / GeometryBuffer / ShadowCast 输入。
 
+继续推进 P1 RenderGraph 主线收口后，compatibility-only RT 与 image-domain history 的生命周期进一步拆开：
+
+- `ImageProcessPass.SetupRenderGraph()` 进入 RDG 主线时会释放 compatibility path 专用的 Work RT、Iris/RGBBlur/Glow/ApertureBokeh RTHandle，避免从旧路径切回 RDG 后仍保留持久 RT。
+- ChangeFrameRate 的 frozen frame 属于 image-domain history，RenderGraph 路径通过 imported texture 继续使用；它仍只在 `ReleaseRuntimeResources()`、descriptor 变化或状态失效时释放，不把它误归类为 compatibility-only RT。
+- `_OriginalTex`、`_BlurredTex`、`_BloomTex` 只在释放 compatibility RT 或全量释放时 reset；`_FrozenFrameTex` 只在全量释放 history 时 reset。
+
 ## 9. 2026-05-25 执行记录
 
 在快速开发阶段明确不保留旧 Shoost AOV mask 资产兼容后，继续删除 ImageProcess 中的 legacy semantic 输入残留：

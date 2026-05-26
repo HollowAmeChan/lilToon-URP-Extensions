@@ -259,7 +259,15 @@ ScreenProcess 是唯一允许消费语义输入的 post stack。本次补齐它�
 - `debugRuleMask` 是 layer-local 直出开关，不需要公共 Debug UI 或 RendererFeature 额外创建调试资源。
 - 缺少当前 layer 需要的 Buffer 项时，问题显示在 ScreenProcess Volume Inspector 的运行状态中；ImageProcess 仍不承担任何语义输入诊断。
 
-## 15. 验收清单
+## 15. 2026-05-26 执行记录：ImageProcess compatibility RT 收口
+
+ImageProcess 的 RenderGraph 主线继续保持只读当前 image chain，不读取语义资源。本次只收口旧路径资源生命周期：
+
+- `ImageProcessPass.SetupRenderGraph()` 会释放 compatibility path 专用 RTHandle，包括 Work RT、Iris/RGBBlur/Glow/ApertureBokeh 的中间 RT。
+- ChangeFrameRate 的 frozen frame 是图像域 history，RenderGraph 路径仍通过 imported texture 使用；它不随 compatibility-only RT 一起释放。
+- 关闭 ImageProcess 或 Volume 无 active layer 时，`ReleaseRuntimeResources()` 仍会释放 compatibility RT 与 ChangeFrameRate history，并 reset `_OriginalTex`、`_BlurredTex`、`_BloomTex`、`_FrozenFrameTex`。
+
+## 16. 验收清单
 
 - ScreenProcess 用户拖拽顺序就是执行顺序。
 - ImageProcess 用户拖拽顺序就是执行顺序。

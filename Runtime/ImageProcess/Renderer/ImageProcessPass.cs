@@ -51,6 +51,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             RenderPassEvent passEvent)
         {
             this.cameraColorTarget = null;
+            ReleaseCompatibilityResources();
             CopyLayers(layers);
             ConfigurePass(passEvent);
             requiresIntermediateTexture = true;
@@ -69,43 +70,58 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         public void ReleaseRuntimeResources()
         {
-            tempTextureA?.Release();
-            tempTextureB?.Release();
-            tempTextureA = null;
-            tempTextureB = null;
-            irisTextureA?.Release();
-            irisTextureB?.Release();
-            irisTextureA = null;
-            irisTextureB = null;
-            rgbBlurTextureA?.Release();
-            rgbBlurTextureB?.Release();
-            rgbBlurTextureA = null;
-            rgbBlurTextureB = null;
-            glowTextureA?.Release();
-            glowTextureB?.Release();
-            glowTextureA = null;
-            glowTextureB = null;
-            apertureBokehTextureA?.Release();
-            apertureBokehTextureB?.Release();
-            apertureBokehTextureA = null;
-            apertureBokehTextureB = null;
+            ReleaseCompatibilityResources(true);
             foreach (ChangeFrameRateState state in changeFrameRateStates.Values)
             {
                 state.Release();
             }
 
             changeFrameRateStates.Clear();
-            ResetGlobalTextures();
+            Shader.SetGlobalTexture(ImageProcessShaderConstants.FrozenFrameTexId, Texture2D.blackTexture);
             cameraColorTarget = null;
         }
 
-        private static void ResetGlobalTextures()
+        private static void ReleaseRTHandle(ref RTHandle handle)
+        {
+            handle?.Release();
+            handle = null;
+        }
+
+        private void ReleaseCompatibilityResources(bool forceResetGlobalTextures = false)
+        {
+            bool hadCompatibilityResources = tempTextureA != null
+                || tempTextureB != null
+                || irisTextureA != null
+                || irisTextureB != null
+                || rgbBlurTextureA != null
+                || rgbBlurTextureB != null
+                || glowTextureA != null
+                || glowTextureB != null
+                || apertureBokehTextureA != null
+                || apertureBokehTextureB != null;
+
+            ReleaseRTHandle(ref tempTextureA);
+            ReleaseRTHandle(ref tempTextureB);
+            ReleaseRTHandle(ref irisTextureA);
+            ReleaseRTHandle(ref irisTextureB);
+            ReleaseRTHandle(ref rgbBlurTextureA);
+            ReleaseRTHandle(ref rgbBlurTextureB);
+            ReleaseRTHandle(ref glowTextureA);
+            ReleaseRTHandle(ref glowTextureB);
+            ReleaseRTHandle(ref apertureBokehTextureA);
+            ReleaseRTHandle(ref apertureBokehTextureB);
+            if (forceResetGlobalTextures || hadCompatibilityResources)
+            {
+                ResetCompatibilityGlobalTextures();
+            }
+        }
+
+        private static void ResetCompatibilityGlobalTextures()
         {
             Texture fallback = Texture2D.blackTexture;
             Shader.SetGlobalTexture(ImageProcessShaderConstants.OriginalTexId, fallback);
             Shader.SetGlobalTexture(ImageProcessShaderConstants.BlurredTexId, fallback);
             Shader.SetGlobalTexture(ImageProcessShaderConstants.BloomTexId, fallback);
-            Shader.SetGlobalTexture(ImageProcessShaderConstants.FrozenFrameTexId, fallback);
         }
 
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
