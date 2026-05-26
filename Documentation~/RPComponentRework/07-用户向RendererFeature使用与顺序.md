@@ -41,6 +41,8 @@ Renderer Data 中推荐顺序：
 9. DebugTile（可选，调试时放在最后覆盖画面）
 ```
 
+2026-05-26 完成收口后，这个顺序就是当前用户侧最终说明，不再是迁移期建议。旧 `HoAOV`、`HoPost`、`ShoostStack` 不再作为 Runtime / Editor / shader 主路径入口存在；旧名只保留在历史资料或迁移记录中。普通用户按上表添加 RendererFeature，并把 `DebugTile` 只作为调试覆盖入口使用。
+
 对应执行意图：
 
 - `ShadowCast` 在 forward receiver 绘制前发布 shadow atlas 和采样参数。
