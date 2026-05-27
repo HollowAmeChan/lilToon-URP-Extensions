@@ -649,7 +649,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters2", new Vector4(0.55f, 0.35f, 1.0f, 0.75f));
                     SetVector4(element, "parameters3", new Vector4(0.65f, 0.0f, 1.0f, 1.0f));
                     SetVector4(element, "parameters4", new Vector4(0.0f, 1.0f, 90.0f, 1.0f));
-                    SetVector4(element, "parameters5", new Vector4(0.055f, 1.25f, 0.0f, 0.0f));
+                    SetVector4(element, "parameters5", new Vector4(0.055f, 1.25f, 0.0f, 0.65f));
                     break;
                 case ScreenProcessEffect.CustomMaterial:
                     SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Normal);

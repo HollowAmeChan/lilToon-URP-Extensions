@@ -12,12 +12,19 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "High"
         };
 
+        private static readonly string[] SkyTyndallDitherModes =
+        {
+            "Blue Noise",
+            "Halftone",
+            "Off"
+        };
+
         private static int GetSkyTyndallLineCount(SerializedProperty element)
         {
             SerializedProperty parameters4 = element.FindPropertyRelative("parameters4");
             Vector4 p4 = parameters4 != null ? parameters4.vector4Value : Vector4.zero;
             bool fixedDirection = p4 == Vector4.zero || p4.w > 0.5f;
-            return fixedDirection ? 17 : 18;
+            return fixedDirection ? 19 : 20;
         }
 
         private void DrawSkyTyndallProperties(Rect rect, ref float y, SerializedProperty element)
@@ -75,6 +82,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             y += LineHeight + LineSpacing;
             p5.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Sample Blur", p5.y, 0.0f, 3.0f);
             y += LineHeight + LineSpacing;
+            p5.z = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "Dither Mode", Mathf.Clamp(Mathf.RoundToInt(p5.z), 0, SkyTyndallDitherModes.Length - 1), SkyTyndallDitherModes);
+            y += LineHeight + LineSpacing;
+            p5.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Dither Amount", p5.w, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
 
             p2.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Foreground Suppress", p2.x, 0.0f, 1.0f);
             y += LineHeight + LineSpacing;
@@ -104,7 +115,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 p2 = new Vector4(0.55f, 0.35f, 1.0f, 0.75f);
                 p3 = new Vector4(0.65f, 0.0f, 1.0f, 1.0f);
                 p4 = BuildSkyTyndallDirection(90.0f, true);
-                p5 = new Vector4(0.055f, 1.25f, 0.0f, 0.0f);
+                p5 = new Vector4(0.055f, 1.25f, 0.0f, 0.65f);
                 return;
             }
 
@@ -125,7 +136,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             if (p5 == Vector4.zero)
             {
-                p5 = new Vector4(0.055f, 1.25f, 0.0f, 0.0f);
+                p5 = new Vector4(0.055f, 1.25f, 0.0f, 0.65f);
+            }
+            else if (p5.z < 1.5f && p5.w <= 0.0001f)
+            {
+                p5.w = 0.65f;
             }
         }
 

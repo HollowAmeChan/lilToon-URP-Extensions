@@ -36,7 +36,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
             float4 _LayerParams2; // x foreground suppress, y normal amount, z sky gain, w occlusion power
             float4 _LayerParams3; // x opacity, y show rays only, z sky alpha power, w jitter
             float4 _LayerParams4; // x fixed direction x, y fixed direction y, z direction angle degrees, w fixed direction enabled
-            float4 _LayerParams5; // x sample weight, y source blur px
+            float4 _LayerParams5; // x sample weight, y source blur px, z dither mode, w dither amount
             float _HoGeometryBufferSkyTextureValid;
 
             TEXTURE2D_X(_HoGeometryBufferSkyTexture);
@@ -52,6 +52,50 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
                 p = frac(p * float2(0.1031, 0.11369));
                 p += dot(p, p.yx + 19.19);
                 return frac((p.x + p.y) * p.x);
+            }
+
+            float InterleavedGradientNoise(float2 pixel)
+            {
+                return frac(52.9829189 * frac(dot(pixel, float2(0.06711056, 0.00583715))));
+            }
+
+            int ResolveDitherMode()
+            {
+                return min(max((int)round(_LayerParams5.z), 0), 2);
+            }
+
+            float ResolveDitherAmount()
+            {
+                return _LayerParams5.w > 0.0001 ? saturate(_LayerParams5.w) : 0.65;
+            }
+
+            float ResolveBlueNoiseLikeValue(float2 pixel)
+            {
+                float tile = Hash(floor(pixel * 0.125) + 17.0);
+                return frac(InterleavedGradientNoise(pixel) + tile * 0.61803398875);
+            }
+
+            float ResolveDitherValue(float2 pixel)
+            {
+                int mode = ResolveDitherMode();
+                if (mode == 2)
+                {
+                    return 0.5;
+                }
+
+                return ResolveBlueNoiseLikeValue(pixel);
+            }
+
+            float ResolveJitterStrength()
+            {
+                int mode = ResolveDitherMode();
+                if (mode == 2)
+                {
+                    return 0.0;
+                }
+
+                float amount = ResolveDitherAmount();
+                return mode == 1 ? lerp(0.15, 0.65, amount) : lerp(0.25, 0.85, amount);
             }
 
             float HighlightWeight(float3 color, float threshold, float softKnee, float exposure)
@@ -118,6 +162,42 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
                 }
 
                 return layerColor;
+            }
+
+            float3 ApplyDitherStyle(float2 uv, float3 rays)
+            {
+                if (ResolveDitherMode() != 1)
+                {
+                    return rays;
+                }
+
+                float amount = ResolveDitherAmount();
+                if (amount <= 0.0001)
+                {
+                    return rays;
+                }
+
+                float luma = Luma(max(rays, 0.0));
+                if (luma <= 0.0001)
+                {
+                    return rays;
+                }
+
+                float tone = saturate((luma / (1.0 + luma)) * 1.35);
+                float cellSize = lerp(9.0, 4.5, amount);
+                float angleSin = 0.38268343;
+                float angleCos = 0.92387953;
+                float2 pixel = uv * _ScreenParams.xy;
+                float2 rotatedPixel = float2(
+                    pixel.x * angleCos - pixel.y * angleSin,
+                    pixel.x * angleSin + pixel.y * angleCos);
+                float2 cell = frac(rotatedPixel / cellSize) - 0.5;
+                float radius = sqrt(max(tone, 0.0001)) * 0.58;
+                float distanceToCenter = length(cell);
+                float aa = max(fwidth(distanceToCenter), 0.015);
+                float dotMask = smoothstep(radius + aa, radius - aa, distanceToCenter);
+                float halftoneGain = lerp(0.35, 1.25, dotMask);
+                return rays * lerp(1.0, halftoneGain, amount);
             }
 
             float SampleSkySignal(float2 uv, float threshold, float softKnee, float exposure, float alphaPower)
@@ -267,7 +347,8 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
                 int sampleCount = quality == 0 ? 12 : (quality == 1 ? 24 : 40);
 
                 float2 direction = ResolveRayDirection(uv, center);
-                float jitter = (Hash(floor(uv * _ScreenParams.xy)) - 0.5) * jitterAmount;
+                float2 pixel = floor(uv * _ScreenParams.xy);
+                float jitter = (ResolveDitherValue(pixel) - 0.5) * jitterAmount * ResolveJitterStrength();
                 float2 sampleUV = uv;
                 float2 deltaUV = ResolveRayStep(uv, center, direction, radius, sampleCount);
                 float illuminationDecay = 1.0;
@@ -325,7 +406,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
                 float opacity = saturate(_LayerParams3.x);
                 float amount = saturate(_Intensity * opacity * foregroundMask * normalMask * ruleAmount);
 
-                float3 rays = AccumulateSkyRays(uv, center);
+                float3 rays = ApplyDitherStyle(uv, AccumulateSkyRays(uv, center));
                 if (_LayerParams3.y > 0.5)
                 {
                     return half4(rays * _Intensity, source.a);

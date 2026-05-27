@@ -301,7 +301,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetVector4(element, "parameters2", new Vector4(0.35f, 0.20f, 0.85f, 0.75f));
             SetVector4(element, "parameters3", new Vector4(0.45f, 0.0f, 1.0f, 1.0f));
             SetVector4(element, "parameters4", new Vector4(0.0f, 1.0f, 90.0f, 1.0f));
-            SetVector4(element, "parameters5", new Vector4(0.045f, 1.5f, 0.0f, 0.0f));
+            SetVector4(element, "parameters5", new Vector4(0.045f, 1.5f, 0.0f, 0.60f));
         }
 
         private static void ApplyScreenProcessForegroundSkyTyndallPreset(SerializedProperty element, ScreenProcessEffect effect)
@@ -314,7 +314,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetVector4(element, "parameters2", new Vector4(0.72f, 0.45f, 1.15f, 0.65f));
             SetVector4(element, "parameters3", new Vector4(0.68f, 0.0f, 1.0f, 1.0f));
             SetVector4(element, "parameters4", new Vector4(0.0f, 1.0f, 90.0f, 1.0f));
-            SetVector4(element, "parameters5", new Vector4(0.060f, 1.2f, 0.0f, 0.0f));
+            SetVector4(element, "parameters5", new Vector4(0.060f, 1.2f, 1.0f, 0.45f));
         }
 
         private readonly struct RuleMaskState
