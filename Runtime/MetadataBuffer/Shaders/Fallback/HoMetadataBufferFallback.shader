@@ -16,6 +16,7 @@
         [HideInInspector] _HoMetadataBufferDebugColor ("MetadataBuffer Debug Color", Color) = (1, 1, 1, 1)
         [HideInInspector] _HoMetadataBufferCustomValues0 ("MetadataBuffer Custom 0-3", Vector) = (0, 0, 0, 0)
         [HideInInspector] _HoMetadataBufferObjectCustomMask ("MetadataBuffer Object Custom Mask", Float) = 0
+        [HideInInspector] _HoMetadataBufferRsuvAssigned ("MetadataBuffer RSUV Assigned", Float) = 0
     }
 
     SubShader
@@ -205,6 +206,7 @@
             float _HoMetadataBufferObjectId;
             float _HoMetadataBufferFlags;
             float _HoMetadataBufferObjectCustomMask;
+            float _HoMetadataBufferRsuvAssigned;
 
             struct Attributes
             {
@@ -289,7 +291,7 @@
                 float effectiveFlags = hasRendererUserValue ? ByteToFloat(rendererUserValue, 24u) : _HoMetadataBufferFlags;
                 float subjectValid = step(0.0001, saturate(_HoMetadataBufferMaskWeight));
                 float hasId = step(0.5, max(max(effectiveGroupId, effectiveObjectId), effectiveFlags));
-                float hasRsuv = max((objectCustomMask != 0u) ? 1.0 : 0.0, hasId);
+                float hasRsuv = max(max((objectCustomMask != 0u) ? 1.0 : 0.0, hasId), step(0.5, _HoMetadataBufferRsuvAssigned));
                 clip((hasRsuv > 0.5 && subjectValid > 0.5) ? 1.0 : -1.0);
 
                 float maskEnabled = HasSystemChannel(1.0);

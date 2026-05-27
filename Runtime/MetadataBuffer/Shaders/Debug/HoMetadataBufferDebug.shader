@@ -76,15 +76,6 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
                 return 0.0;
             }
 
-            half GetObjectCustomAny(float2 uv)
-            {
-                half4 objectCustom0 = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv);
-                half4 objectCustom1 = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture, sampler_PointClamp, uv);
-                half sum = dot(step(0.0001, objectCustom0), half4(1.0, 1.0, 1.0, 1.0))
-                    + dot(step(0.0001, objectCustom1), half4(1.0, 1.0, 1.0, 1.0));
-                return saturate(sum);
-            }
-
             half3 HashScalar(half value)
             {
                 float id = ceil(saturate(value) * 255.0);
@@ -186,14 +177,6 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
 
                 if (mode == 24)
                 {
-                    half hasId = saturate(max(step(0.0001, maskId.g), step(0.0001, maskId.b)));
-                    half noObjectCustom = 1.0 - GetObjectCustomAny(uv);
-                    half selected = valid * hasId * noObjectCustom;
-                    return lerp(source, half4(0.15, 0.78, 1.0, 1.0), selected);
-                }
-
-                if (mode == 25)
-                {
                     half4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_PointClamp, uv);
                     half surfaceCoverage = saturate(surfaceColor.a);
                     half surfaceValid = step(0.0001, maskId.r) * step(0.0001, surfaceCoverage);
@@ -201,7 +184,7 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
                     return half4(lerp(source.rgb, compositedColor, surfaceValid), 1.0);
                 }
 
-                if (mode == 26)
+                if (mode == 25)
                 {
                     float rawDepth = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMBufferDepthTexture, sampler_PointClamp, uv).r;
                     half depthValid = step(0.0001h, abs(rawDepth - 1.0h));

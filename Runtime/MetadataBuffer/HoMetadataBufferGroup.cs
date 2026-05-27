@@ -171,6 +171,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 clearPropertyBlock.SetFloat(HoMetadataBufferShaderConstants.GroupIdId, 0.0f);
                 clearPropertyBlock.SetFloat(HoMetadataBufferShaderConstants.ObjectIdId, 0.0f);
                 clearPropertyBlock.SetFloat(HoMetadataBufferShaderConstants.FlagsId, 0.0f);
+                clearPropertyBlock.SetFloat(HoMetadataBufferShaderConstants.RsuvAssignedId, 0.0f);
                 targetRenderer.SetPropertyBlock(clearPropertyBlock);
             }
 
@@ -195,6 +196,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 targetRenderer.GetPropertyBlock(clearPropertyBlock);
                 HoMetadataBufferSubject.ClearProperties(clearPropertyBlock);
                 clearPropertyBlock.SetFloat(HoMetadataBufferShaderConstants.ObjectCustomMaskId, 0.0f);
+                clearPropertyBlock.SetFloat(HoMetadataBufferShaderConstants.RsuvAssignedId, 0.0f);
                 targetRenderer.SetPropertyBlock(clearPropertyBlock);
             }
 
@@ -365,10 +367,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         private void WriteRendererValue(Renderer targetRenderer, byte objectCustomMask)
         {
             uint packed = PackRendererUserValue(objectCustomMask, characterId, partId, flags);
-            if (TrySetRendererUserValue(targetRenderer, packed))
-            {
-                return;
-            }
+            TrySetRendererUserValue(targetRenderer, packed);
 
             propertyBlock ??= new MaterialPropertyBlock();
             targetRenderer.GetPropertyBlock(propertyBlock);
@@ -376,6 +375,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             propertyBlock.SetFloat(HoMetadataBufferShaderConstants.GroupIdId, characterId);
             propertyBlock.SetFloat(HoMetadataBufferShaderConstants.ObjectIdId, partId);
             propertyBlock.SetFloat(HoMetadataBufferShaderConstants.FlagsId, flags);
+            propertyBlock.SetFloat(HoMetadataBufferShaderConstants.RsuvAssignedId, 1.0f);
             targetRenderer.SetPropertyBlock(propertyBlock);
         }
 

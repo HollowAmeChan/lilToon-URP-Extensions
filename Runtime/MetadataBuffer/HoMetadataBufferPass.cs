@@ -722,6 +722,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             cmd.SetGlobalVector(HoMetadataBufferShaderConstants.DebugColorId, Vector4.one);
             cmd.SetGlobalVector(HoMetadataBufferShaderConstants.CustomValues0Id, Vector4.zero);
             cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ObjectCustomMaskId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.RsuvAssignedId, 0.0f);
         }
 
         private static void SetDefaultSubjectProperties(RasterCommandBuffer cmd)
@@ -739,6 +740,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             cmd.SetGlobalVector(HoMetadataBufferShaderConstants.DebugColorId, Vector4.one);
             cmd.SetGlobalVector(HoMetadataBufferShaderConstants.CustomValues0Id, Vector4.zero);
             cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ObjectCustomMaskId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.RsuvAssignedId, 0.0f);
         }
 
         private void ConfigureFiltering()

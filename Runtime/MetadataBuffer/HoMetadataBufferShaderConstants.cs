@@ -32,6 +32,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         public const string DebugColorName = "_HoMetadataBufferDebugColor";
         public const string CustomValues0Name = "_HoMetadataBufferCustomValues0";
         public const string ObjectCustomMaskName = "_HoMetadataBufferObjectCustomMask";
+        public const string RsuvAssignedName = "_HoMetadataBufferRsuvAssigned";
 
         public const string ClearShaderName = "Hidden/lilToon/URP/MetadataBuffer/Clear";
         public const string FallbackShaderName = "Hidden/lilToon/URP/MetadataBuffer/Fallback";
@@ -62,6 +63,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         public static readonly int DebugColorId = Shader.PropertyToID(DebugColorName);
         public static readonly int CustomValues0Id = Shader.PropertyToID(CustomValues0Name);
         public static readonly int ObjectCustomMaskId = Shader.PropertyToID(ObjectCustomMaskName);
+        public static readonly int RsuvAssignedId = Shader.PropertyToID(RsuvAssignedName);
 
         public static readonly int DebugModeId = Shader.PropertyToID("_HoMetadataBufferDebugMode");
     }
