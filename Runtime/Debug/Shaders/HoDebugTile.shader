@@ -193,7 +193,17 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 if (mode == 21) return half4(HashEncodedId(maskId.g) * valid, 1.0h);
                 if (mode == 22) return half4(HashEncodedId(maskId.b) * valid, 1.0h);
                 if (mode == 23) return half4(Heat(maskId.a), 1.0h);
-                if (mode == 24) return half4(0.15h, 0.78h, 1.0h, 1.0h) * valid;
+                if (mode == 24)
+                {
+                    half4 objectCustom0 = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv);
+                    half4 objectCustom1 = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture, sampler_PointClamp, uv);
+                    half hasId = saturate(max(step(0.0001h, maskId.g), step(0.0001h, maskId.b)));
+                    half objectCustomAny = saturate(
+                        dot(step(0.0001h, objectCustom0), half4(1.0h, 1.0h, 1.0h, 1.0h)) +
+                        dot(step(0.0001h, objectCustom1), half4(1.0h, 1.0h, 1.0h, 1.0h)));
+                    half selected = valid * hasId * (1.0h - objectCustomAny);
+                    return half4(0.15h, 0.78h, 1.0h, 1.0h) * selected;
+                }
                 if (mode == 25)
                 {
                     half4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_PointClamp, uv);
