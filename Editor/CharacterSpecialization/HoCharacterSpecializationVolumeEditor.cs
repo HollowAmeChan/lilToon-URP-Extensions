@@ -1,4 +1,4 @@
-﻿using lilToon.URP.Extensions.CharacterSpecialization;
+using lilToon.URP.Extensions.CharacterSpecialization;
 using UnityEditor;
 using UnityEditor.Rendering;
 using UnityEngine;
@@ -8,6 +8,14 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
     [CustomEditor(typeof(HoCharacterSpecializationVolume))]
     internal sealed class HoCharacterSpecializationVolumeEditor : VolumeComponentEditor
     {
+        private static readonly Color SettingsColor = new Color(0.45f, 0.64f, 0.96f);
+        private static readonly Color CaptureColor = new Color(0.42f, 0.72f, 0.58f);
+        private static readonly Color DebugColor = new Color(0.86f, 0.62f, 0.38f);
+
+        private static bool showSettings;
+        private static bool showCapture;
+        private static bool showDebug;
+
         private SerializedDataParameter enable;
         private SerializedDataParameter showInSceneView;
         private SerializedDataParameter layerMask;
@@ -73,56 +81,97 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             serializedObject.Update();
 
             EditorGUILayout.HelpBox(
-                "使用方式：Renderer Data 里先添加 HoCharacter Specialization RendererFeature；然后在全局或局部 Volume 里添加本组件并启用。Face、FrontHair、Eye、EyeRevealArea 需要由 HoMetadataBufferGroup/RSUV 或材质 fallback 标记提供。",
-                MessageType.Info);
-            EditorGUILayout.HelpBox(
-                "眼睛透过：Eye 标记提供眼睛颜色/深度/Alpha；FrontHair 标记作为遮挡物；EyeRevealArea 标记可选，用来限制只在指定区域透出。这里的“透过强度、羽化、扩张、深度偏移、仅同角色”只影响眼睛透过。",
-                MessageType.Info);
-            EditorGUILayout.HelpBox(
-                "前发投影：FrontHair 标记作为投影源，Face 标记作为接收面。这里的“投影颜色、不透明度、距离、角度、柔化、扩散、避开前发、混合模式”只影响 DropShadow。它和眼睛透过可以使用不同区域，不必完全一致。",
+                "Renderer Data 里先添加 HoCharacter Specialization RendererFeature；然后在全局或局部 Volume 里添加本组件并启用。Face、FrontHair、Eye、EyeRevealArea 需要由 HoMetadataBufferGroup/RSUV 或材质 fallback 标记提供。",
                 MessageType.Info);
 
-            PropertyField(enable, new GUIContent("启用"));
-            PropertyField(showInSceneView, new GUIContent("场景视图"));
-
-            EditorGUILayout.Space(4.0f);
-            EditorGUILayout.LabelField("捕获范围", EditorStyles.boldLabel);
-            PropertyField(layerMask, new GUIContent("图层遮罩"));
-            PropertyField(minRenderQueue, new GUIContent("最小渲染队列"));
-            PropertyField(maxRenderQueue, new GUIContent("最大渲染队列"));
-            PropertyField(passEvent, new GUIContent("渲染时机"));
-            PropertyField(renderScale, new GUIContent("渲染缩放"));
-
-            EditorGUILayout.Space(4.0f);
-            EditorGUILayout.LabelField("眼睛透过", EditorStyles.boldLabel);
-            PropertyField(eyeRevealEnabled, new GUIContent("启用眼睛透过"));
-            PropertyField(eyeRevealStrength, new GUIContent("透过强度"));
-            PropertyField(eyeRevealFeatherPixels, new GUIContent("羽化像素"));
-            PropertyField(eyeRevealDilationPixels, new GUIContent("扩张像素"));
-            PropertyField(eyeRevealDepthBias, new GUIContent("深度偏移"));
-            PropertyField(useEyeRevealArea, new GUIContent("使用眼透区域"));
-            PropertyField(sameCharacterOnly, new GUIContent("仅同角色"));
-
-            EditorGUILayout.Space(4.0f);
-            EditorGUILayout.LabelField("前发投影 DropShadow", EditorStyles.boldLabel);
-            PropertyField(hairDropShadowEnabled, new GUIContent("启用前发投影"));
-            PropertyField(hairShadowColor, new GUIContent("投影颜色"));
-            PropertyField(hairShadowOpacity, new GUIContent("投影不透明度"));
-            PropertyField(hairShadowDistancePixels, new GUIContent("投影距离像素"));
-            PropertyField(hairShadowDistancePerspectiveStrength, new GUIContent("投影距离透视衰减"));
-            PropertyField(hairShadowDistanceReferenceDepth, new GUIContent("投影距离参考深度"));
-            PropertyField(hairShadowDistanceMinScale, new GUIContent("投影距离最小倍率"));
-            PropertyField(hairShadowAngleDegrees, new GUIContent("投影角度"));
-            PropertyField(hairShadowSoftnessPixels, new GUIContent("柔化像素"));
-            PropertyField(hairShadowSpreadPixels, new GUIContent("扩散像素"));
-            PropertyField(hairShadowKeepOffHair, new GUIContent("避开前发"));
-            PropertyField(hairShadowBlendMode, new GUIContent("混合模式"));
-
-            EditorGUILayout.Space(4.0f);
-            EditorGUILayout.LabelField("调试", EditorStyles.boldLabel);
-            PropertyField(debugMode, new GUIContent("调试模式"));
+            DrawSettings();
+            DrawCapture();
+            HoCharacterEyeRevealEditorSection.DrawVolume(
+                eyeRevealEnabled,
+                eyeRevealStrength,
+                eyeRevealFeatherPixels,
+                eyeRevealDilationPixels,
+                eyeRevealDepthBias,
+                useEyeRevealArea,
+                sameCharacterOnly,
+                DrawDataParameter);
+            HoCharacterDropShadowEditorSection.DrawVolume(
+                hairDropShadowEnabled,
+                hairShadowColor,
+                hairShadowOpacity,
+                hairShadowDistancePixels,
+                hairShadowDistancePerspectiveStrength,
+                hairShadowDistanceReferenceDepth,
+                hairShadowDistanceMinScale,
+                hairShadowAngleDegrees,
+                hairShadowSoftnessPixels,
+                hairShadowSpreadPixels,
+                hairShadowKeepOffHair,
+                hairShadowBlendMode,
+                DrawDataParameter);
+            DrawDebug();
 
             serializedObject.ApplyModifiedProperties();
+        }
+
+        private void DrawSettings()
+        {
+            string summary = HoCharacterSpecializationEditorGui.BoolSummary(enable);
+            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showSettings, "Volume", summary, SettingsColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawParameter(enable, "启用");
+                DrawParameter(showInSceneView, "场景视图");
+            }
+        }
+
+        private void DrawCapture()
+        {
+            string summary = HoCharacterSpecializationEditorGui.IntSummary(minRenderQueue) + "-" + HoCharacterSpecializationEditorGui.IntSummary(maxRenderQueue);
+            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showCapture, "捕获范围", summary, CaptureColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawParameter(layerMask, "图层遮罩");
+                DrawParameter(minRenderQueue, "最小渲染队列");
+                DrawParameter(maxRenderQueue, "最大渲染队列");
+                DrawParameter(passEvent, "渲染时机");
+                DrawParameter(renderScale, "渲染缩放");
+            }
+        }
+
+        private void DrawDebug()
+        {
+            string summary = HoCharacterSpecializationEditorGui.EnumSummary(debugMode);
+            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showDebug, "调试", summary, DebugColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawParameter(debugMode, "调试模式");
+            }
+        }
+
+        private void DrawParameter(SerializedDataParameter parameter, string label)
+        {
+            if (parameter != null)
+            {
+                PropertyField(parameter, new GUIContent(label));
+            }
+        }
+
+        private void DrawDataParameter(SerializedDataParameter parameter, GUIContent label)
+        {
+            PropertyField(parameter, label);
         }
     }
 }

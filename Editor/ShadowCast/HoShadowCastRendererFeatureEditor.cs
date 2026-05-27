@@ -12,11 +12,11 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
 
         private static readonly Color SettingsColor = new Color(0.45f, 0.64f, 0.96f);
 
-        private static bool showSettings = true;
-        private static bool showAtlas = true;
-        private static bool showPcss = true;
-        private static bool showSecondDirectional = true;
-        private static bool showRuntime = true;
+        private static bool showSettings;
+        private static bool showAtlas;
+        private static bool showPcss;
+        private static bool showSecondDirectional;
+        private static bool showRuntime;
         private static GUIStyle sectionTitleStyle;
         private static GUIStyle sectionSummaryStyle;
 
@@ -91,8 +91,8 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             SerializedProperty enabled = settingsProperty.FindPropertyRelative("enabled");
             SerializedProperty collectVisibleLights = settingsProperty.FindPropertyRelative("collectVisibleLights");
             string summary = enabled != null && enabled.boolValue
-                ? collectVisibleLights != null && collectVisibleLights.boolValue ? "Visible lights" : "Collection disabled"
-                : "Disabled";
+                ? collectVisibleLights != null && collectVisibleLights.boolValue ? "On / Visible" : "On / No collect"
+                : "Off";
 
             if (!DrawSectionHeader(ref showSettings, "RendererFeature", summary, SettingsColor))
             {
@@ -143,7 +143,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         private void DrawPcss()
         {
             SerializedProperty enabled = settingsProperty.FindPropertyRelative("pcssEnabled");
-            string summary = enabled != null && enabled.boolValue ? "Enabled" : "Disabled";
+            string summary = enabled != null && enabled.boolValue ? "On" : "Off";
             if (!DrawSectionHeader(ref showPcss, "PCSS", summary, SettingsColor))
             {
                 return;
@@ -291,7 +291,6 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
 
         private static bool DrawSectionHeader(ref bool expanded, string title, string summary, Color color)
         {
-            EditorGUILayout.Space(5.0f);
             Rect rect = EditorGUILayout.GetControlRect(false, SectionHeaderHeight);
             Event evt = Event.current;
             bool hover = rect.Contains(evt.mousePosition);
@@ -301,13 +300,14 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             Rect foldoutRect = new Rect(rect.x + 6.0f, rect.y + 7.0f, 16.0f, EditorGUIUtility.singleLineHeight);
             expanded = EditorGUI.Foldout(foldoutRect, expanded, GUIContent.none, true);
 
-            Rect titleRect = new Rect(rect.x + 26.0f, rect.y + 6.0f, Mathf.Max(80.0f, rect.width * 0.45f), 20.0f);
-            GUI.Label(titleRect, title, SectionTitleStyle);
-
             Rect summaryRect = new Rect(rect.x + rect.width * 0.45f, rect.y + 7.0f, rect.width * 0.55f - 10.0f, 18.0f);
+            Rect titleRect = new Rect(rect.x + 26.0f, rect.y + 6.0f, Mathf.Max(80.0f, summaryRect.x - rect.x - 32.0f), 20.0f);
+            GUI.Label(titleRect, title, SectionTitleStyle);
             GUI.Label(summaryRect, summary, SectionSummaryStyle);
 
-            if (evt.type == EventType.MouseDown && rect.Contains(evt.mousePosition) && !foldoutRect.Contains(evt.mousePosition))
+            if (evt.type == EventType.MouseDown
+                && rect.Contains(evt.mousePosition)
+                && !foldoutRect.Contains(evt.mousePosition))
             {
                 expanded = !expanded;
                 evt.Use();

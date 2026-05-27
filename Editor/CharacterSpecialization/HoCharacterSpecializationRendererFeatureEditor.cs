@@ -7,8 +7,16 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
     [CustomEditor(typeof(HoCharacterSpecializationRendererFeature))]
     internal sealed class HoCharacterSpecializationRendererFeatureEditor : UnityEditor.Editor
     {
-        private static bool showRuntimeStatus = true;
-        private static bool showFallbackSettings;
+        private static readonly Color RuntimeColor = new Color(0.46f, 0.64f, 0.92f);
+        private static readonly Color SettingsColor = new Color(0.45f, 0.64f, 0.96f);
+        private static readonly Color CaptureColor = new Color(0.42f, 0.72f, 0.58f);
+        private static readonly Color DebugColor = new Color(0.86f, 0.62f, 0.38f);
+
+        private static bool showRuntime;
+        private static bool showRendererFeature;
+        private static bool showCapture;
+        private static bool showDebug;
+
         private SerializedProperty useVolumesProperty;
         private SerializedProperty settingsProperty;
 
@@ -23,35 +31,104 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             serializedObject.Update();
 
             EditorGUILayout.HelpBox(
-                "这个 RendererFeature 负责把 HoCharacter 捕获/合成 pass 安装进当前 Renderer。推荐勾选“使用 Volume 参数”，然后在场景或全局 Volume 里添加“Ho-CharacterSpecialization/角色特化”来调眼睛透过和前发投影。",
+                "这个 RendererFeature 负责把 HoCharacter 捕获/合成 pass 安装进当前 Renderer。推荐勾选“使用 Volume 参数”，然后在场景或全局 Volume 里添加“Ho-CharacterSpecialization/角色特化”调眼透和 DropShadow。",
                 MessageType.Info);
 
-            if (useVolumesProperty != null)
+            if (settingsProperty == null)
             {
-                EditorGUILayout.PropertyField(useVolumesProperty);
+                DrawDefaultInspector();
+                serializedObject.ApplyModifiedProperties();
+                return;
             }
 
-            if (useVolumesProperty == null || useVolumesProperty.boolValue)
-            {
-                EditorGUILayout.HelpBox(
-                    "Volume 模式下，这里只保留默认值/兜底资源。日常不要改 Render Asset；请到 Volume 里调参数。",
-                    MessageType.None);
-            }
+            DrawRendererFeature();
+            DrawCapture();
+            HoCharacterEyeRevealEditorSection.DrawSettings(settingsProperty);
+            HoCharacterDropShadowEditorSection.DrawSettings(settingsProperty);
+            DrawDebug();
+            DrawRuntime();
 
-            DrawRuntimeStatus();
-            DrawFallbackSettings();
             serializedObject.ApplyModifiedProperties();
         }
 
-        private static void DrawRuntimeStatus()
+        private void DrawRendererFeature()
         {
-            showRuntimeStatus = EditorGUILayout.Foldout(showRuntimeStatus, "运行状态", true);
-            if (!showRuntimeStatus)
+            SerializedProperty enabled = Find("enabled");
+            string summary = HoCharacterSpecializationEditorGui.BoolSummary(enabled)
+                + " / "
+                + (useVolumesProperty != null && useVolumesProperty.boolValue ? "Volume" : "默认");
+
+            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showRendererFeature, "RendererFeature", summary, SettingsColor))
             {
                 return;
             }
 
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                if (useVolumesProperty != null)
+                {
+                    EditorGUILayout.PropertyField(useVolumesProperty);
+                }
+
+                DrawProperty(enabled, "默认启用");
+                DrawProperty("passEvent", "默认渲染时机");
+                DrawProperty("renderScale", "默认渲染缩放");
+                DrawProperty("compositeShader", "合成 Shader");
+
+                if (useVolumesProperty == null || useVolumesProperty.boolValue)
+                {
+                    EditorGUILayout.HelpBox(
+                        "Volume 模式下，这里只作为默认值和兜底资源。日常调参请在 Volume 组件里完成。",
+                        MessageType.None);
+                }
+            }
+        }
+
+        private void DrawCapture()
+        {
+            string summary = GetIntSummary("minRenderQueue") + "-" + GetIntSummary("maxRenderQueue");
+            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showCapture, "捕获范围", summary, CaptureColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawProperty("layerMask", "图层遮罩");
+                DrawProperty("minRenderQueue", "最小渲染队列");
+                DrawProperty("maxRenderQueue", "最大渲染队列");
+            }
+        }
+
+        private void DrawDebug()
+        {
+            SerializedProperty debugMode = Find("debugMode");
+            string summary = HoCharacterSpecializationEditorGui.EnumName(debugMode);
+            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showDebug, "调试/预留", summary, DebugColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawProperty(debugMode, "调试模式");
+                DrawProperty("farPlaneShadowReserved", "远平面阴影预留");
+                DrawProperty("reflectionSpaceReserved", "反射空间预留");
+            }
+        }
+
+        private static void DrawRuntime()
+        {
             HoCharacterSpecializationRuntimeDiagnosticSnapshot snapshot = HoCharacterSpecializationRuntimeDiagnostics.CurrentSnapshot;
+            string summary = snapshot.IsValid
+                ? snapshot.CameraName + " / " + snapshot.Stage
+                : "尚无帧";
+
+            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showRuntime, "运行状态", summary, RuntimeColor))
+            {
+                return;
+            }
+
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 if (!snapshot.IsValid)
@@ -64,13 +141,13 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 EditorGUILayout.LabelField("相机", snapshot.CameraName);
                 EditorGUILayout.LabelField("阶段", snapshot.Stage);
                 EditorGUILayout.LabelField("Active Back Buffer", snapshot.BackBufferActive ? "是" : "否");
-                EditorGUILayout.LabelField("Camera Color", FormatAvailable(snapshot.CameraColorAvailable));
-                EditorGUILayout.LabelField("MetadataBuffer", FormatAvailable(snapshot.MetadataBufferAvailable));
-                EditorGUILayout.LabelField("GeometryBuffer", FormatAvailable(snapshot.GeometryBufferAvailable));
-                EditorGUILayout.LabelField("MaskId", FormatAvailable(snapshot.MetadataMaskIdAvailable));
-                EditorGUILayout.LabelField("ObjectCustom0", FormatAvailable(snapshot.MetadataObjectCustom0Available));
-                EditorGUILayout.LabelField("ObjectCustom1", FormatAvailable(snapshot.MetadataObjectCustom1Available));
-                EditorGUILayout.LabelField("NormalDepth", FormatAvailable(snapshot.GeometryNormalDepthAvailable));
+                EditorGUILayout.LabelField("Camera Color", HoCharacterSpecializationEditorGui.FormatAvailable(snapshot.CameraColorAvailable));
+                EditorGUILayout.LabelField("MetadataBuffer", HoCharacterSpecializationEditorGui.FormatAvailable(snapshot.MetadataBufferAvailable));
+                EditorGUILayout.LabelField("GeometryBuffer", HoCharacterSpecializationEditorGui.FormatAvailable(snapshot.GeometryBufferAvailable));
+                EditorGUILayout.LabelField("MaskId", HoCharacterSpecializationEditorGui.FormatAvailable(snapshot.MetadataMaskIdAvailable));
+                EditorGUILayout.LabelField("ObjectCustom0", HoCharacterSpecializationEditorGui.FormatAvailable(snapshot.MetadataObjectCustom0Available));
+                EditorGUILayout.LabelField("ObjectCustom1", HoCharacterSpecializationEditorGui.FormatAvailable(snapshot.MetadataObjectCustom1Available));
+                EditorGUILayout.LabelField("NormalDepth", HoCharacterSpecializationEditorGui.FormatAvailable(snapshot.GeometryNormalDepthAvailable));
 
                 EditorGUILayout.HelpBox(
                     snapshot.Ready
@@ -80,74 +157,28 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             }
         }
 
-        private void DrawFallbackSettings()
+        private void DrawProperty(string relativeName, string label)
         {
-            if (settingsProperty == null)
-            {
-                DrawDefaultInspector();
-                return;
-            }
-
-            showFallbackSettings = EditorGUILayout.Foldout(showFallbackSettings, "默认/兜底设置", true);
-            if (!showFallbackSettings)
-            {
-                return;
-            }
-
-            EditorGUI.indentLevel++;
-            DrawProperty("enabled");
-            DrawProperty("layerMask");
-            DrawProperty("minRenderQueue");
-            DrawProperty("maxRenderQueue");
-            DrawProperty("passEvent");
-            DrawProperty("renderScale");
-            DrawProperty("compositeShader");
-
-            EditorGUILayout.Space(4.0f);
-            EditorGUILayout.LabelField("眼睛透过默认值", EditorStyles.boldLabel);
-            DrawProperty("eyeRevealEnabled");
-            DrawProperty("eyeRevealStrength");
-            DrawProperty("eyeRevealFeatherPixels");
-            DrawProperty("eyeRevealDilationPixels");
-            DrawProperty("eyeRevealDepthBias");
-            DrawProperty("useEyeRevealArea");
-            DrawProperty("sameCharacterOnly");
-
-            EditorGUILayout.Space(4.0f);
-            EditorGUILayout.LabelField("前发投影默认值", EditorStyles.boldLabel);
-            DrawProperty("hairDropShadowEnabled");
-            DrawProperty("hairShadowColor");
-            DrawProperty("hairShadowOpacity");
-            DrawProperty("hairShadowDistancePixels");
-            DrawProperty("hairShadowDistancePerspectiveStrength");
-            DrawProperty("hairShadowDistanceReferenceDepth");
-            DrawProperty("hairShadowDistanceMinScale");
-            DrawProperty("hairShadowAngleDegrees");
-            DrawProperty("hairShadowSoftnessPixels");
-            DrawProperty("hairShadowSpreadPixels");
-            DrawProperty("hairShadowKeepOffHair");
-            DrawProperty("hairShadowBlendMode");
-
-            EditorGUILayout.Space(4.0f);
-            EditorGUILayout.LabelField("调试/预留", EditorStyles.boldLabel);
-            DrawProperty("debugMode");
-            DrawProperty("farPlaneShadowReserved");
-            DrawProperty("reflectionSpaceReserved");
-            EditorGUI.indentLevel--;
+            DrawProperty(Find(relativeName), label);
         }
 
-        private void DrawProperty(string relativeName)
+        private static void DrawProperty(SerializedProperty property, string label)
         {
-            SerializedProperty property = settingsProperty.FindPropertyRelative(relativeName);
             if (property != null)
             {
-                EditorGUILayout.PropertyField(property);
+                EditorGUILayout.PropertyField(property, new GUIContent(label));
             }
         }
 
-        private static string FormatAvailable(bool available)
+        private SerializedProperty Find(string relativeName)
         {
-            return available ? "可用" : "缺失";
+            return settingsProperty?.FindPropertyRelative(relativeName);
+        }
+
+        private string GetIntSummary(string relativeName)
+        {
+            SerializedProperty property = Find(relativeName);
+            return property != null ? property.intValue.ToString() : "-";
         }
     }
 }

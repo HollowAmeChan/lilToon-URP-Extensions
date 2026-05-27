@@ -14,8 +14,8 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
         private static readonly Color DebugColor = new Color(0.86f, 0.62f, 0.38f);
         private static readonly Color AdvancedColor = new Color(0.62f, 0.58f, 0.78f);
 
-        private static bool showRuntime = true;
-        private static bool showProfiles = true;
+        private static bool showRuntime;
+        private static bool showProfiles;
         private static bool showDebug;
         private static bool showAdvanced;
         private static GUIStyle sectionTitleStyle;
@@ -94,8 +94,8 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
             SerializedProperty quality = Find("quality");
             SerializedProperty strength = Find("strength");
             string summary = enabled != null && enabled.boolValue
-                ? $"强度 {FormatFloat(strength)} / {EnumName(renderScale)} / {EnumName(quality)}"
-                : "已关闭";
+                ? $"开 {FormatFloat(strength)} / {EnumName(renderScale)} / {EnumName(quality)}"
+                : "关";
 
             if (!DrawSectionHeader(ref showRuntime, "运行", summary, RuntimeColor))
             {
@@ -274,7 +274,6 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
 
         private static bool DrawSectionHeader(ref bool expanded, string title, string summary, Color color)
         {
-            EditorGUILayout.Space(5.0f);
             Rect rect = EditorGUILayout.GetControlRect(false, SectionHeaderHeight);
             Event evt = Event.current;
             bool hover = rect.Contains(evt.mousePosition);
@@ -284,13 +283,14 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
             Rect foldoutRect = new Rect(rect.x + 6.0f, rect.y + 7.0f, 16.0f, EditorGUIUtility.singleLineHeight);
             expanded = EditorGUI.Foldout(foldoutRect, expanded, GUIContent.none, true);
 
-            Rect titleRect = new Rect(rect.x + 26.0f, rect.y + 6.0f, Mathf.Max(90.0f, rect.width * 0.48f), 20.0f);
-            GUI.Label(titleRect, title, SectionTitleStyle);
-
             Rect summaryRect = new Rect(rect.x + rect.width * 0.48f, rect.y + 7.0f, rect.width * 0.52f - 10.0f, 18.0f);
+            Rect titleRect = new Rect(rect.x + 26.0f, rect.y + 6.0f, Mathf.Max(90.0f, summaryRect.x - rect.x - 32.0f), 20.0f);
+            GUI.Label(titleRect, title, SectionTitleStyle);
             GUI.Label(summaryRect, summary, SectionSummaryStyle);
 
-            if (evt.type == EventType.MouseDown && rect.Contains(evt.mousePosition) && !foldoutRect.Contains(evt.mousePosition))
+            if (evt.type == EventType.MouseDown
+                && rect.Contains(evt.mousePosition)
+                && !foldoutRect.Contains(evt.mousePosition))
             {
                 expanded = !expanded;
                 evt.Use();
