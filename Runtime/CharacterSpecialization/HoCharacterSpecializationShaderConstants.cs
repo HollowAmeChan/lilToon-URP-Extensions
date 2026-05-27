@@ -12,6 +12,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public const string EyeDataTextureName = "_lilHoCharacterEyeDataTexture";
         public const string CaptureDepthTextureName = "_lilHoCharacterCaptureDepthTexture";
         public const string TempTextureName = "_lilHoCharacterCompositeSource";
+        public const string FaceHairDiffuseSourceColorTextureName = "_lilHoCharacterFaceHairDiffuseSourceColorTexture";
+        public const string FaceHairDiffuseSourceDepthTextureName = "_lilHoCharacterFaceHairDiffuseSourceDepthTexture";
+        public const string FaceHairDiffuseTempColorTextureName = "_lilHoCharacterFaceHairDiffuseTempColorTexture";
+        public const string FaceHairDiffuseTempDepthTextureName = "_lilHoCharacterFaceHairDiffuseTempDepthTexture";
+        public const string FaceHairDiffuseColorTextureName = "_lilHoCharacterFaceHairDiffuseColorTexture";
+        public const string FaceHairDiffuseDepthTextureName = "_lilHoCharacterFaceHairDiffuseDepthTexture";
 
         public static readonly ShaderTagId CaptureShaderTagId = new ShaderTagId(CapturePassName);
         public static readonly int CaptureModeId = Shader.PropertyToID("_HoCharacterCaptureMode");
@@ -22,6 +28,15 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public static readonly int HairShadowParams1Id = Shader.PropertyToID("_HoCharacterHairShadowParams1");
         public static readonly int HairShadowParams2Id = Shader.PropertyToID("_HoCharacterHairShadowParams2");
         public static readonly int HairShadowColorId = Shader.PropertyToID("_HoCharacterHairShadowColor");
+        public static readonly int FaceHairDiffuseSourceColorTextureId = Shader.PropertyToID(FaceHairDiffuseSourceColorTextureName);
+        public static readonly int FaceHairDiffuseSourceDepthTextureId = Shader.PropertyToID(FaceHairDiffuseSourceDepthTextureName);
+        public static readonly int FaceHairDiffuseColorTextureId = Shader.PropertyToID(FaceHairDiffuseColorTextureName);
+        public static readonly int FaceHairDiffuseDepthTextureId = Shader.PropertyToID(FaceHairDiffuseDepthTextureName);
+        public static readonly int FaceHairDiffuseParamsId = Shader.PropertyToID("_HoCharacterFaceHairDiffuseParams");
+        public static readonly int FaceHairDiffuseLevelsId = Shader.PropertyToID("_HoCharacterFaceHairDiffuseLevels");
+        public static readonly int FaceHairDiffuseTintColorId = Shader.PropertyToID("_HoCharacterFaceHairDiffuseTintColor");
+        public static readonly int FaceHairDiffuseOptionsId = Shader.PropertyToID("_HoCharacterFaceHairDiffuseOptions");
+        public static readonly int FaceHairDiffuseBlurParamsId = Shader.PropertyToID("_HoCharacterFaceHairDiffuseBlurParams");
         public static readonly int OptionsId = Shader.PropertyToID("_HoCharacterOptions");
     }
 }

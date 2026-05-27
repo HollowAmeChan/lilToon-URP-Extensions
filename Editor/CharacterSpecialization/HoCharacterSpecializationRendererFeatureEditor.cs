@@ -46,6 +46,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             DrawCapture();
             HoCharacterEyeRevealEditorSection.DrawSettings(settingsProperty);
             HoCharacterDropShadowEditorSection.DrawSettings(settingsProperty);
+            HoCharacterFaceHairDiffuseEditorSection.DrawSettings(settingsProperty);
             DrawDebug();
             DrawRuntime();
 
@@ -148,6 +149,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 EditorGUILayout.LabelField("MaskId", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataMaskIdAvailable));
                 EditorGUILayout.LabelField("ObjectCustom0", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataObjectCustom0Available));
                 EditorGUILayout.LabelField("ObjectCustom1", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataObjectCustom1Available));
+                EditorGUILayout.LabelField("SurfaceColor", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataSurfaceColorAvailable));
+                EditorGUILayout.LabelField("SurfaceColor Required", snapshot.MetadataSurfaceColorRequired ? "Yes" : "No");
                 EditorGUILayout.LabelField("NormalDepth", LilUrpEditorSectionGui.FormatAvailable(snapshot.GeometryNormalDepthAvailable));
 
                 EditorGUILayout.HelpBox(

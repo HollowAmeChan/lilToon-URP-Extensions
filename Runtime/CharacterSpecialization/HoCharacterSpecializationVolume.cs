@@ -63,6 +63,20 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
     }
 
     [Serializable]
+    public sealed class HoCharacterFaceHairDiffuseBlendModeParameter : VolumeParameter<HoCharacterFaceHairDiffuseBlendMode>
+    {
+        public HoCharacterFaceHairDiffuseBlendModeParameter(HoCharacterFaceHairDiffuseBlendMode value, bool overrideState = false)
+            : base(value, overrideState)
+        {
+        }
+
+        public override void Interp(HoCharacterFaceHairDiffuseBlendMode from, HoCharacterFaceHairDiffuseBlendMode to, float t)
+        {
+            value = t > 0.0f ? to : from;
+        }
+    }
+
+    [Serializable]
     public sealed class HoCharacterDebugModeParameter : VolumeParameter<HoCharacterSpecializationDebugMode>
     {
         public HoCharacterDebugModeParameter(HoCharacterSpecializationDebugMode value, bool overrideState = false)
@@ -103,6 +117,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             HairShadowDistanceReferenceDepth.overrideState = true;
             HairShadowDistanceMinScale.overrideState = true;
             HairShadowAngleDegrees.overrideState = true;
+            FaceHairDiffuseEnabled.overrideState = true;
+            FaceHairDiffuseStrength.overrideState = true;
+            FaceHairDiffuseRadiusPixels.overrideState = true;
+            FaceHairDiffuseDepthTolerance.overrideState = true;
+            FaceHairDiffuseLevelBlack.overrideState = true;
+            FaceHairDiffuseLevelWhite.overrideState = true;
+            FaceHairDiffuseTintColor.overrideState = true;
+            FaceHairDiffuseBlendMode.overrideState = true;
         }
 
         [InspectorName("启用"), Tooltip("启用角色特化眼睛透过和前发投影。")]
@@ -183,6 +205,30 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("混合模式"), Tooltip("前发投影与画面的混合方式。")]
         public HoCharacterShadowBlendModeParameter HairShadowBlendMode = new HoCharacterShadowBlendModeParameter(HoCharacterShadowBlendMode.Multiply);
 
+        [InspectorName("启用脸色扩散"), Tooltip("把 Face 的 SurfaceColor 大范围模糊后叠到 FrontHair 上。")]
+        public BoolParameter FaceHairDiffuseEnabled = new BoolParameter(false);
+
+        [InspectorName("扩散强度"), Tooltip("脸色扩散叠到前发上的总强度。")]
+        public ClampedFloatParameter FaceHairDiffuseStrength = new ClampedFloatParameter(0.35f, 0.0f, 1.0f);
+
+        [InspectorName("模糊半径像素"), Tooltip("Face 颜色扩散的屏幕空间模糊半径。")]
+        public FloatParameter FaceHairDiffuseRadiusPixels = new FloatParameter(48.0f);
+
+        [InspectorName("深度容差"), Tooltip("当前 FrontHair 与模糊 Face 深度之间允许的线性深度差。")]
+        public FloatParameter FaceHairDiffuseDepthTolerance = new FloatParameter(0.25f);
+
+        [InspectorName("色阶黑场"), Tooltip("模糊遮罩低于该值时压到 0。")]
+        public ClampedFloatParameter FaceHairDiffuseLevelBlack = new ClampedFloatParameter(0.02f, 0.0f, 1.0f);
+
+        [InspectorName("色阶白场"), Tooltip("模糊遮罩高于该值时推到 1。")]
+        public ClampedFloatParameter FaceHairDiffuseLevelWhite = new ClampedFloatParameter(0.45f, 0.0f, 1.0f);
+
+        [InspectorName("颜色乘"), Tooltip("叠到前发前乘到 Face SurfaceColor 上的颜色。Alpha 也会乘到最终强度。")]
+        public ColorParameter FaceHairDiffuseTintColor = new ColorParameter(new Color(1.0f, 0.78f, 0.72f, 1.0f));
+
+        [InspectorName("混合模式"), Tooltip("脸色扩散与当前前发颜色的混合方式。")]
+        public HoCharacterFaceHairDiffuseBlendModeParameter FaceHairDiffuseBlendMode = new HoCharacterFaceHairDiffuseBlendModeParameter(HoCharacterFaceHairDiffuseBlendMode.Additive);
+
         [InspectorName("调试模式"), Tooltip("把角色特化的中间结果写回当前视图，便于检查眼睛透过和前发投影。")]
         public HoCharacterDebugModeParameter DebugMode = new HoCharacterDebugModeParameter(HoCharacterSpecializationDebugMode.Off);
 
@@ -190,7 +236,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         {
             return active
                 && Enable.value
-                && (EyeRevealEnabled.value || HairDropShadowEnabled.value || DebugMode.value != HoCharacterSpecializationDebugMode.Off);
+                && (EyeRevealEnabled.value || HairDropShadowEnabled.value || FaceHairDiffuseEnabled.value || DebugMode.value != HoCharacterSpecializationDebugMode.Off);
         }
 
         public bool IsActiveForCamera(CameraType cameraType)
@@ -245,6 +291,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             target.hairShadowSpreadPixels = HairShadowSpreadPixels.value;
             target.hairShadowKeepOffHair = HairShadowKeepOffHair.value;
             target.hairShadowBlendMode = HairShadowBlendMode.value;
+            target.faceHairDiffuseEnabled = FaceHairDiffuseEnabled.value;
+            target.faceHairDiffuseStrength = FaceHairDiffuseStrength.value;
+            target.faceHairDiffuseRadiusPixels = FaceHairDiffuseRadiusPixels.value;
+            target.faceHairDiffuseDepthTolerance = FaceHairDiffuseDepthTolerance.value;
+            target.faceHairDiffuseLevelBlack = FaceHairDiffuseLevelBlack.value;
+            target.faceHairDiffuseLevelWhite = FaceHairDiffuseLevelWhite.value;
+            target.faceHairDiffuseTintColor = FaceHairDiffuseTintColor.value;
+            target.faceHairDiffuseBlendMode = FaceHairDiffuseBlendMode.value;
             target.debugMode = DebugMode.value;
         }
     }

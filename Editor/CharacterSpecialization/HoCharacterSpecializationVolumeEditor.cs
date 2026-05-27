@@ -43,6 +43,14 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private SerializedDataParameter hairShadowSpreadPixels;
         private SerializedDataParameter hairShadowKeepOffHair;
         private SerializedDataParameter hairShadowBlendMode;
+        private SerializedDataParameter faceHairDiffuseEnabled;
+        private SerializedDataParameter faceHairDiffuseStrength;
+        private SerializedDataParameter faceHairDiffuseRadiusPixels;
+        private SerializedDataParameter faceHairDiffuseDepthTolerance;
+        private SerializedDataParameter faceHairDiffuseLevelBlack;
+        private SerializedDataParameter faceHairDiffuseLevelWhite;
+        private SerializedDataParameter faceHairDiffuseTintColor;
+        private SerializedDataParameter faceHairDiffuseBlendMode;
         private SerializedDataParameter debugMode;
 
         public override void OnEnable()
@@ -74,6 +82,14 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             hairShadowSpreadPixels = Unpack(fetcher.Find(x => x.HairShadowSpreadPixels));
             hairShadowKeepOffHair = Unpack(fetcher.Find(x => x.HairShadowKeepOffHair));
             hairShadowBlendMode = Unpack(fetcher.Find(x => x.HairShadowBlendMode));
+            faceHairDiffuseEnabled = Unpack(fetcher.Find(x => x.FaceHairDiffuseEnabled));
+            faceHairDiffuseStrength = Unpack(fetcher.Find(x => x.FaceHairDiffuseStrength));
+            faceHairDiffuseRadiusPixels = Unpack(fetcher.Find(x => x.FaceHairDiffuseRadiusPixels));
+            faceHairDiffuseDepthTolerance = Unpack(fetcher.Find(x => x.FaceHairDiffuseDepthTolerance));
+            faceHairDiffuseLevelBlack = Unpack(fetcher.Find(x => x.FaceHairDiffuseLevelBlack));
+            faceHairDiffuseLevelWhite = Unpack(fetcher.Find(x => x.FaceHairDiffuseLevelWhite));
+            faceHairDiffuseTintColor = Unpack(fetcher.Find(x => x.FaceHairDiffuseTintColor));
+            faceHairDiffuseBlendMode = Unpack(fetcher.Find(x => x.FaceHairDiffuseBlendMode));
             debugMode = Unpack(fetcher.Find(x => x.DebugMode));
         }
 
@@ -109,6 +125,16 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 hairShadowSpreadPixels,
                 hairShadowKeepOffHair,
                 hairShadowBlendMode,
+                DrawDataParameter);
+            HoCharacterFaceHairDiffuseEditorSection.DrawVolume(
+                faceHairDiffuseEnabled,
+                faceHairDiffuseStrength,
+                faceHairDiffuseRadiusPixels,
+                faceHairDiffuseDepthTolerance,
+                faceHairDiffuseLevelBlack,
+                faceHairDiffuseLevelWhite,
+                faceHairDiffuseTintColor,
+                faceHairDiffuseBlendMode,
                 DrawDataParameter);
             DrawDebug();
 

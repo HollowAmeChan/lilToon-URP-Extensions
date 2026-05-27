@@ -13,6 +13,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public readonly bool MetadataMaskIdAvailable;
         public readonly bool MetadataObjectCustom0Available;
         public readonly bool MetadataObjectCustom1Available;
+        public readonly bool MetadataSurfaceColorAvailable;
+        public readonly bool MetadataSurfaceColorRequired;
         public readonly bool GeometryNormalDepthAvailable;
         public readonly bool MetadataBufferAvailable;
         public readonly bool GeometryBufferAvailable;
@@ -29,6 +31,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             bool metadataMaskIdAvailable,
             bool metadataObjectCustom0Available,
             bool metadataObjectCustom1Available,
+            bool metadataSurfaceColorAvailable,
+            bool metadataSurfaceColorRequired,
             bool geometryNormalDepthAvailable,
             bool ready,
             string reason)
@@ -42,6 +46,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             MetadataMaskIdAvailable = metadataMaskIdAvailable;
             MetadataObjectCustom0Available = metadataObjectCustom0Available;
             MetadataObjectCustom1Available = metadataObjectCustom1Available;
+            MetadataSurfaceColorAvailable = metadataSurfaceColorAvailable;
+            MetadataSurfaceColorRequired = metadataSurfaceColorRequired;
             GeometryNormalDepthAvailable = geometryNormalDepthAvailable;
             MetadataBufferAvailable = metadataMaskIdAvailable && metadataObjectCustom0Available && metadataObjectCustom1Available;
             GeometryBufferAvailable = geometryNormalDepthAvailable;
@@ -58,6 +64,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 0,
                 string.Empty,
                 string.Empty,
+                false,
+                false,
                 false,
                 false,
                 false,
@@ -85,6 +93,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 false,
                 false,
                 false,
+                false,
+                false,
                 reason);
         }
 
@@ -96,13 +106,16 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             bool metadataMaskIdAvailable,
             bool metadataObjectCustom0Available,
             bool metadataObjectCustom1Available,
-            bool geometryNormalDepthAvailable)
+            bool metadataSurfaceColorAvailable,
+            bool geometryNormalDepthAvailable,
+            bool metadataSurfaceColorRequired)
         {
             bool ready = !backBufferActive
                 && cameraColorAvailable
                 && metadataMaskIdAvailable
                 && metadataObjectCustom0Available
                 && metadataObjectCustom1Available
+                && (!metadataSurfaceColorRequired || metadataSurfaceColorAvailable)
                 && geometryNormalDepthAvailable;
 
             currentSnapshot = new HoCharacterSpecializationRuntimeDiagnosticSnapshot(
@@ -115,14 +128,18 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 metadataMaskIdAvailable,
                 metadataObjectCustom0Available,
                 metadataObjectCustom1Available,
+                metadataSurfaceColorAvailable,
+                metadataSurfaceColorRequired,
                 geometryNormalDepthAvailable,
                 ready,
-                ready ? "输入有效。" : BuildMissingInputReason(
+                ready ? "Inputs are valid." : BuildMissingInputReason(
                     backBufferActive,
                     cameraColorAvailable,
                     metadataMaskIdAvailable,
                     metadataObjectCustom0Available,
                     metadataObjectCustom1Available,
+                    metadataSurfaceColorAvailable,
+                    metadataSurfaceColorRequired,
                     geometryNormalDepthAvailable));
         }
 
@@ -132,30 +149,37 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             bool metadataMaskIdAvailable,
             bool metadataObjectCustom0Available,
             bool metadataObjectCustom1Available,
+            bool metadataSurfaceColorAvailable,
+            bool metadataSurfaceColorRequired,
             bool geometryNormalDepthAvailable)
         {
             if (backBufferActive)
             {
-                return "当前 active target 是 back buffer。";
+                return "Current active target is back buffer.";
             }
 
             if (!cameraColorAvailable)
             {
-                return "camera color 不可用。";
+                return "Camera color is unavailable.";
             }
 
             bool metadataAvailable = metadataMaskIdAvailable && metadataObjectCustom0Available && metadataObjectCustom1Available;
             if (!metadataAvailable && !geometryNormalDepthAvailable)
             {
-                return "MetadataBuffer 与 GeometryBuffer 不可用。";
+                return "MetadataBuffer and GeometryBuffer are unavailable.";
             }
 
             if (!metadataAvailable)
             {
-                return "MetadataBuffer 的 maskId/object custom 输入不完整。";
+                return "MetadataBuffer maskId/object custom inputs are incomplete.";
             }
 
-            return "GeometryBuffer normalDepth 不可用。";
+            if (metadataSurfaceColorRequired && !metadataSurfaceColorAvailable)
+            {
+                return "MetadataBuffer SurfaceColor is unavailable.";
+            }
+
+            return "GeometryBuffer normalDepth is unavailable.";
         }
     }
 }
