@@ -5,18 +5,54 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.PlanarReflection
 {
+    internal readonly struct HoPlanarReflectionRenderSettings
+    {
+        public readonly bool Enabled;
+        public readonly bool RenderGameView;
+        public readonly bool RenderSceneView;
+        public readonly int MaxSurfacesPerCamera;
+
+        public HoPlanarReflectionRenderSettings(
+            bool enabled,
+            bool renderGameView,
+            bool renderSceneView,
+            int maxSurfacesPerCamera)
+        {
+            Enabled = enabled;
+            RenderGameView = renderGameView;
+            RenderSceneView = renderSceneView;
+            MaxSurfacesPerCamera = Mathf.Max(0, maxSurfacesPerCamera);
+        }
+    }
+
+    internal readonly struct HoPlanarReflectionRenderStats
+    {
+        public readonly int SurfaceCount;
+        public readonly int ActiveSurfaceCount;
+        public readonly string Reason;
+
+        public HoPlanarReflectionRenderStats(int surfaceCount, int activeSurfaceCount, string reason)
+        {
+            SurfaceCount = surfaceCount;
+            ActiveSurfaceCount = activeSurfaceCount;
+            Reason = reason ?? string.Empty;
+        }
+    }
+
     [ExecuteAlways]
     [DisallowMultipleComponent]
-    [AddComponentMenu("Rendering/lilToon URP/平面反射表面")]
-    public sealed class LILPlanarReflectionSurface : MonoBehaviour
+    [AddComponentMenu("Rendering/lilToon URP/Ho 平面反射表面")]
+    [UnityEngine.Scripting.APIUpdating.MovedFrom(true, "lilToon.URP.Extensions.PlanarReflection", null, "LILPlanarReflectionSurface")]
+    public sealed class HoPlanarReflectionSurface : MonoBehaviour
     {
-        private static readonly List<LILPlanarReflectionSurface> ActiveSurfaces = new List<LILPlanarReflectionSurface>();
+        private static readonly List<HoPlanarReflectionSurface> ActiveSurfaces = new List<HoPlanarReflectionSurface>();
         private static readonly int UsePlanarReflectionId = Shader.PropertyToID("_UsePlanarReflection");
         private static readonly int ReflectionTextureId = Shader.PropertyToID("_LILPBRPlanarReflectionTexture");
         private static readonly int ReflectionTextureMatrixId = Shader.PropertyToID("_LILPBRPlanarReflectionTextureMatrix");
         private static readonly int ReflectionParamsId = Shader.PropertyToID("_LILPBRPlanarReflectionParams");
-        private static bool registered;
         private static bool isRenderingReflection;
+
+        internal static int SurfaceCount => ActiveSurfaces.Count;
 
         [Header("目标")]
         [SerializeField, InspectorName("目标渲染器"), Tooltip("接收平面反射纹理和材质参数的 Renderer。留空时会自动使用当前物体上的 Renderer。")]
@@ -91,11 +127,6 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
         private void OnEnable()
         {
-            if (!ActiveSurfaces.Contains(this))
-            {
-                ActiveSurfaces.Add(this);
-            }
-
             Register();
             ApplyDisabledPropertyBlock();
         }
@@ -105,11 +136,6 @@ namespace lilToon.URP.Extensions.PlanarReflection
             ActiveSurfaces.Remove(this);
             ApplyDisabledPropertyBlock();
             ReleaseResources();
-
-            if (ActiveSurfaces.Count == 0)
-            {
-                Unregister();
-            }
         }
 
         private void OnDestroy()
@@ -131,44 +157,56 @@ namespace lilToon.URP.Extensions.PlanarReflection
             }
         }
 
-        private static void Register()
+        internal static HoPlanarReflectionRenderStats RenderAllSurfaces(
+            ScriptableRenderContext context,
+            Camera camera,
+            HoPlanarReflectionRenderSettings settings)
         {
-            if (registered)
+            if (!settings.Enabled)
             {
-                return;
+                DisableAllSurfaces();
+                return new HoPlanarReflectionRenderStats(ActiveSurfaces.Count, 0, "RendererFeature 已关闭。");
             }
 
-            RenderPipelineManager.beginCameraRendering += RenderAllSurfaces;
-            registered = true;
-        }
-
-        private static void Unregister()
-        {
-            if (!registered)
+            if (isRenderingReflection || camera == null)
             {
-                return;
+                return new HoPlanarReflectionRenderStats(ActiveSurfaces.Count, 0, "反射渲染递归或相机为空。");
             }
 
-            RenderPipelineManager.beginCameraRendering -= RenderAllSurfaces;
-            registered = false;
-        }
-
-        private static void RenderAllSurfaces(ScriptableRenderContext context, Camera camera)
-        {
-            if (isRenderingReflection || camera == null || camera.cameraType == CameraType.Reflection || camera.cameraType == CameraType.Preview)
+            if (camera.cameraType == CameraType.Reflection || camera.cameraType == CameraType.Preview)
             {
-                return;
+                return new HoPlanarReflectionRenderStats(ActiveSurfaces.Count, 0, "当前 camera type 不支持。");
+            }
+
+            if (camera.cameraType == CameraType.SceneView && !settings.RenderSceneView)
+            {
+                DisableAllSurfaces();
+                return new HoPlanarReflectionRenderStats(ActiveSurfaces.Count, 0, "Scene View 反射已关闭。");
+            }
+
+            if (camera.cameraType == CameraType.Game && !settings.RenderGameView)
+            {
+                DisableAllSurfaces();
+                return new HoPlanarReflectionRenderStats(ActiveSurfaces.Count, 0, "Game View 反射已关闭。");
             }
 
             isRenderingReflection = true;
+            int activeSurfaceCount = 0;
             try
             {
+                int maxSurfaces = settings.MaxSurfacesPerCamera;
                 for (int i = 0; i < ActiveSurfaces.Count; i++)
                 {
-                    LILPlanarReflectionSurface surface = ActiveSurfaces[i];
-                    if (surface != null)
+                    if (maxSurfaces > 0 && activeSurfaceCount >= maxSurfaces)
                     {
-                        surface.RenderReflection(context, camera);
+                        ActiveSurfaces[i]?.ApplyDisabledPropertyBlock();
+                        continue;
+                    }
+
+                    HoPlanarReflectionSurface surface = ActiveSurfaces[i];
+                    if (surface != null && surface.RenderReflection(context, camera))
+                    {
+                        activeSurfaceCount++;
                     }
                 }
             }
@@ -176,39 +214,60 @@ namespace lilToon.URP.Extensions.PlanarReflection
             {
                 isRenderingReflection = false;
             }
+
+            return new HoPlanarReflectionRenderStats(
+                ActiveSurfaces.Count,
+                activeSurfaceCount,
+                activeSurfaceCount > 0 ? "输入有效。" : "没有可渲染的平面反射表面。");
         }
 
-        private void RenderReflection(ScriptableRenderContext context, Camera sourceCamera)
+        private static void DisableAllSurfaces()
+        {
+            for (int i = 0; i < ActiveSurfaces.Count; i++)
+            {
+                ActiveSurfaces[i]?.ApplyDisabledPropertyBlock();
+            }
+        }
+
+        private void Register()
+        {
+            if (!ActiveSurfaces.Contains(this))
+            {
+                ActiveSurfaces.Add(this);
+            }
+        }
+
+        private bool RenderReflection(ScriptableRenderContext context, Camera sourceCamera)
         {
             if (!isActiveAndEnabled || sourceCamera == null)
             {
-                return;
+                return false;
             }
 
             if (sourceCamera.cameraType == CameraType.SceneView && !reflectSceneView)
             {
                 ApplyDisabledPropertyBlock();
-                return;
+                return false;
             }
 
             if (frameInterval > 1 && lastRenderedFrame >= 0 && Time.frameCount - lastRenderedFrame < frameInterval)
             {
                 ApplyEnabledPropertyBlock();
-                return;
+                return true;
             }
 
             Renderer surfaceRenderer = TargetRenderer;
             if (surfaceRenderer == null || !surfaceRenderer.enabled)
             {
                 ApplyDisabledPropertyBlock();
-                return;
+                return false;
             }
 
             EnsureResources(sourceCamera);
             if (reflectionCamera == null || reflectionTexture == null)
             {
                 ApplyDisabledPropertyBlock();
-                return;
+                return false;
             }
 
             Vector3 planePosition = GetPlanePosition(surfaceRenderer);
@@ -216,7 +275,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
             if (planeNormal.sqrMagnitude < 0.0001f)
             {
                 ApplyDisabledPropertyBlock();
-                return;
+                return false;
             }
 
             Matrix4x4 reflectionMatrix = CalculateReflectionMatrix(new Vector4(
@@ -254,6 +313,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
             }
 
             ApplyEnabledPropertyBlock();
+            return true;
         }
 
         private Vector3 GetPlanePosition(Renderer surfaceRenderer)
@@ -301,7 +361,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 return;
             }
 
-            GameObject cameraObject = new GameObject($"{nameof(LILPlanarReflectionSurface)} ({name})");
+            GameObject cameraObject = new GameObject($"{nameof(HoPlanarReflectionSurface)} ({name})");
             cameraObject.hideFlags = HideFlags.HideAndDontSave;
             reflectionCamera = cameraObject.AddComponent<Camera>();
             reflectionCamera.enabled = false;
@@ -327,7 +387,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
             reflectionTexture = new RenderTexture(width, height, 24, RenderTextureFormat.DefaultHDR)
             {
-                name = $"{nameof(LILPlanarReflectionSurface)} RT ({name})",
+                name = $"{nameof(HoPlanarReflectionSurface)} RT ({name})",
                 hideFlags = HideFlags.HideAndDontSave,
                 useMipMap = false,
                 autoGenerateMips = false,

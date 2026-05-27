@@ -1,13 +1,14 @@
 # 平面反射
 
-`LILPlanarReflectionSurface` 会为平面反射表面渲染一个镜像相机，并通过 `MaterialPropertyBlock` 把结果传给对应 renderer。
+`HoPlanarReflectionRendererFeature` 会统一调度场景中的 `HoPlanarReflectionSurface`，为平面反射表面渲染镜像相机，并通过 `MaterialPropertyBlock` 把结果传给对应 renderer。
 
 ## 设置
 
-1. 把 `LILPlanarReflectionSurface` 加到平面反射 mesh 上。
-2. 使用会采样 `_LILPBRPlanarReflectionTexture` 的材质，例如修改后的 lilPBR shader。
-3. 调整材质里的 `Planar Reflection` 强度、tint、smoothness threshold、edge fade 和 distance fade。
-4. 把组件上的 `Reflection Mask` 设置为需要出现在反射里的层。
+1. 把 `HoPlanarReflectionRendererFeature` 加到当前 URP Renderer Asset。
+2. 把 `HoPlanarReflectionSurface` 加到平面反射 mesh 上。
+3. 使用会采样 `_LILPBRPlanarReflectionTexture` 的材质，例如修改后的 lilPBR shader。
+4. 调整材质里的 `Planar Reflection` 强度、tint、smoothness threshold、edge fade 和 distance fade。
+5. 把组件上的 `Reflection Mask` 设置为需要出现在反射里的层。
 
 反射平面使用当前 GameObject 的 transform：
 

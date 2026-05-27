@@ -18,7 +18,7 @@
 - `Runtime/CharacterSpecialization`：角色捕获和角色定制后处理，包括头发/脸部等风格化处理路径。
 - `Runtime/ScreenProcess`：用户可控的语义屏幕处理图层栈，支持 MetadataBuffer rule mask，并有 RenderGraph/非 RenderGraph 路径。
 - `Runtime/ImageProcess`：最终图像处理链和具体效果移植。
-- `Runtime/PlanarReflection`：`LILPlanarReflectionSurface` 平面反射运行时，向材质提供 `_LILPBRPlanarReflectionTexture` 和相关 property block 数据。
+- `Runtime/PlanarReflection`：`HoPlanarReflectionRendererFeature` 统一调度 `HoPlanarReflectionSurface` 平面反射表面，向材质提供 `_LILPBRPlanarReflectionTexture` 和相关 property block 数据。
 - `Runtime/ShadowCast`：独立 HoShadowCast atlas 生成，用于指定的额外方向光、聚光和点光。
 
 ## Editor 模块
@@ -41,8 +41,9 @@
 - `ScreenProcessRendererFeature`
 - `ImageProcessRendererFeature`
 - `HoShadowCastRendererFeature`
+- `HoPlanarReflectionRendererFeature`
 
-平面反射不走 RendererFeature，而是由场景组件驱动：把 `LILPlanarReflectionSurface` 加到反射平面 mesh 上。
+平面反射由 `HoPlanarReflectionRendererFeature` 统一调度；把 `HoPlanarReflectionSurface` 加到反射平面 mesh 上作为表面描述组件。
 
 ## 安装
 

@@ -4,8 +4,8 @@ using UnityEngine;
 
 namespace lilToon.URP.Extensions.Editor.PlanarReflection
 {
-    [CustomEditor(typeof(LILPlanarReflectionSurface))]
-    internal sealed class LILPlanarReflectionSurfaceEditor : UnityEditor.Editor
+    [CustomEditor(typeof(HoPlanarReflectionSurface))]
+    internal sealed class HoPlanarReflectionSurfaceEditor : UnityEditor.Editor
     {
         private SerializedProperty targetRenderer;
         private SerializedProperty planeTransform;
@@ -65,7 +65,7 @@ namespace lilToon.URP.Extensions.Editor.PlanarReflection
         {
             serializedObject.Update();
 
-            EditorGUILayout.LabelField("平面反射表面", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("Ho 平面反射表面", EditorStyles.boldLabel);
             EditorGUILayout.PropertyField(targetRenderer, TargetRendererLabel);
 
             EditorGUILayout.Space();
