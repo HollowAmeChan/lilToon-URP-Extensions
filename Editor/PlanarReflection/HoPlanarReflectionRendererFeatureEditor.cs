@@ -89,7 +89,6 @@ namespace lilToon.URP.Extensions.Editor.PlanarReflection
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty(compositeEnabled, "启用后处理合成");
-                DrawProperty(Find("suppressMaterialReflectionWhenCompositing"), "合成时禁用材质侧反射");
                 DrawProperty(compositeStrength, "合成强度");
                 DrawProperty(distortion, "法线扰动");
                 DrawProperty(Find("edgeExtendDistance"), "屏幕边缘像素外扩");

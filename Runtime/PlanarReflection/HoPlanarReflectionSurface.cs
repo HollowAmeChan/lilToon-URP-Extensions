@@ -12,22 +12,19 @@ namespace lilToon.URP.Extensions.PlanarReflection
         public readonly bool RenderSceneView;
         public readonly int MaxSurfacesPerCamera;
         public readonly bool CompositeEnabled;
-        public readonly bool SuppressMaterialReflectionWhenCompositing;
 
         public HoPlanarReflectionRenderSettings(
             bool enabled,
             bool renderGameView,
             bool renderSceneView,
             int maxSurfacesPerCamera,
-            bool compositeEnabled,
-            bool suppressMaterialReflectionWhenCompositing)
+            bool compositeEnabled)
         {
             Enabled = enabled;
             RenderGameView = renderGameView;
             RenderSceneView = renderSceneView;
             MaxSurfacesPerCamera = Mathf.Max(0, maxSurfacesPerCamera);
             CompositeEnabled = compositeEnabled;
-            SuppressMaterialReflectionWhenCompositing = suppressMaterialReflectionWhenCompositing;
         }
     }
 
@@ -226,8 +223,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 isRenderingReflection = false;
             }
 
-            bool compositeReady = activeSurfaceCount > 0 && settings.CompositeEnabled;
-            SetCompositeGlobalState(compositeReady, compositeReady && settings.SuppressMaterialReflectionWhenCompositing);
+            SetCompositeGlobalState(activeSurfaceCount > 0 && settings.CompositeEnabled);
 
             return new HoPlanarReflectionRenderStats(
                 ActiveSurfaces.Count,
@@ -246,16 +242,14 @@ namespace lilToon.URP.Extensions.PlanarReflection
         internal static void ResetGlobalState()
         {
             Shader.SetGlobalFloat(HoPlanarReflectionShaderConstants.CompositeActiveId, 0.0f);
-            Shader.SetGlobalFloat(HoPlanarReflectionShaderConstants.SuppressMaterialSamplingId, 0.0f);
             Shader.SetGlobalTexture(ReflectionTextureId, Texture2D.blackTexture);
             Shader.SetGlobalMatrix(ReflectionTextureMatrixId, Matrix4x4.identity);
             Shader.SetGlobalVector(ReflectionParamsId, Vector4.zero);
         }
 
-        private static void SetCompositeGlobalState(bool compositeActive, bool suppressMaterialSampling)
+        private static void SetCompositeGlobalState(bool compositeActive)
         {
             Shader.SetGlobalFloat(HoPlanarReflectionShaderConstants.CompositeActiveId, compositeActive ? 1.0f : 0.0f);
-            Shader.SetGlobalFloat(HoPlanarReflectionShaderConstants.SuppressMaterialSamplingId, suppressMaterialSampling ? 1.0f : 0.0f);
         }
 
         private void Register()

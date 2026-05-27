@@ -37,9 +37,6 @@ namespace lilToon.URP.Extensions.PlanarReflection
             [Tooltip("Composite planar reflection after transparents by reading MetadataBuffer and GeometryBuffer.")]
             public bool compositeEnabled = true;
 
-            [Tooltip("When compositing is active, skip water material-side planar reflection to avoid blending reflection twice.")]
-            public bool suppressMaterialReflectionWhenCompositing = true;
-
             [Tooltip("Render pass event for the post composite. Run after water transparents and before post processing.")]
             public RenderPassEvent compositePassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
 
@@ -210,7 +207,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 HoPlanarReflectionRenderStats skippedStats = HoPlanarReflectionSurface.RenderAllSurfaces(
                     context,
                     camera,
-                    new HoPlanarReflectionRenderSettings(false, false, false, 0, false, false));
+                    new HoPlanarReflectionRenderSettings(false, false, false, 0, false));
                 HoPlanarReflectionRuntimeDiagnostics.Publish(camera, skippedStats);
                 return;
             }
@@ -263,8 +260,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 activeSettings.renderGameView,
                 activeSettings.renderSceneView,
                 activeSettings.maxSurfacesPerCamera,
-                compositeAvailable,
-                activeSettings.suppressMaterialReflectionWhenCompositing);
+                compositeAvailable);
         }
 
         private void PublishGlobalCompositeSettings()
@@ -340,7 +336,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
     {
         Off = 0,
         InputStatus = 1,
-        WaterMask = 2,
+        SurfaceMask = 2,
         Smoothness = 3,
         Wetness = 4,
         NormalStrength = 5,
@@ -364,7 +360,6 @@ namespace lilToon.URP.Extensions.PlanarReflection
         public const string ReflectionTextureMatrixName = "_LILPBRPlanarReflectionTextureMatrix";
         public const string ReflectionParamsName = "_LILPBRPlanarReflectionParams";
         public const string CompositeActiveName = "_HoPlanarReflectionCompositeActive";
-        public const string SuppressMaterialSamplingName = "_HoPlanarReflectionSuppressMaterialSampling";
         public const string CompositeParamsName = "_HoPlanarReflectionCompositeParams";
         public const string CompositeOptionsName = "_HoPlanarReflectionCompositeOptions";
         public const string CompositeTintName = "_HoPlanarReflectionCompositeTint";
@@ -376,7 +371,6 @@ namespace lilToon.URP.Extensions.PlanarReflection
         public static readonly int ReflectionTextureMatrixId = Shader.PropertyToID(ReflectionTextureMatrixName);
         public static readonly int ReflectionParamsId = Shader.PropertyToID(ReflectionParamsName);
         public static readonly int CompositeActiveId = Shader.PropertyToID(CompositeActiveName);
-        public static readonly int SuppressMaterialSamplingId = Shader.PropertyToID(SuppressMaterialSamplingName);
         public static readonly int CompositeParamsId = Shader.PropertyToID(CompositeParamsName);
         public static readonly int CompositeOptionsId = Shader.PropertyToID(CompositeOptionsName);
         public static readonly int CompositeTintId = Shader.PropertyToID(CompositeTintName);

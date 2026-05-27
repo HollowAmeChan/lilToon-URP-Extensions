@@ -5,7 +5,7 @@
 ## 在整套系统里的定位
 
 - `lilToon`：消费 OIT、MetadataBuffer、HoCharacterCapture、HoShadowCast 和后处理 mask 的角色/NPR shader。
-- `lilPBR`：消费平面反射和 MetadataBuffer 的场景/PBR shader。
+- `lilPBR`：为平面反射写入 MetadataBuffer / GeometryBuffer 参数的场景/PBR shader。
 - `HoUrp17.3.0`：本包面向的本地 URP 版本。
 - `HoUrpConfig17.0.3`：本地 URP shader 配置包。
 - `lilToon-UnityGLTF-Extensions`：保存导入阶段的材质契约，后续可映射到 lilToon/lilPBR。
@@ -18,7 +18,7 @@
 - `Runtime/CharacterSpecialization`：角色捕获和角色定制后处理，包括头发/脸部等风格化处理路径。
 - `Runtime/ScreenProcess`：用户可控的语义屏幕处理图层栈，支持 MetadataBuffer rule mask，并有 RenderGraph/非 RenderGraph 路径。
 - `Runtime/ImageProcess`：最终图像处理链和具体效果移植。
-- `Runtime/PlanarReflection`：`HoPlanarReflectionRendererFeature` 统一调度 `HoPlanarReflectionSurface` 平面反射表面，向材质提供 `_LILPBRPlanarReflectionTexture` 和相关 property block 数据。
+- `Runtime/PlanarReflection`：`HoPlanarReflectionRendererFeature` 统一调度 `HoPlanarReflectionSurface` 平面反射表面，发布反射纹理，并通过 fullscreen composite pass 统一混回 camera color。
 - `Runtime/ShadowCast`：独立 HoShadowCast atlas 生成，用于指定的额外方向光、聚光和点光。
 
 ## Editor 模块
@@ -60,7 +60,7 @@ Peer requirement：
 - Unity 6000.x
 - URP 17.x，推荐使用本地 `HoUrp17.3.0`
 - 本地 `lilToon` fork，用于 toon shader pass 集成
-- `lilPBR`，用于平面反射和 PBR 侧 MetadataBuffer 工作流
+- `lilPBR`，用于平面反射参数写入和 PBR 侧 MetadataBuffer 工作流
 
 ## 注意事项
 

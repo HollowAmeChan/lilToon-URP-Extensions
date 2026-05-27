@@ -451,7 +451,7 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 half4 custom0 = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture, sampler_PointClamp, uv);
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
 
-                half waterMask = saturate(maskId.r) * LilHoGeometryBufferCoverage(normalDepth);
+                half surfaceMask = saturate(maskId.r) * LilHoGeometryBufferCoverage(normalDepth);
                 half smoothness = saturate(custom0.r);
                 half wetness = saturate(custom0.g);
                 half normalStrength = saturate(custom0.b);
@@ -459,10 +459,10 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
 
                 half minSmoothness = saturate(_HoPlanarReflectionCompositeParams.z);
                 half smoothnessFade = saturate((smoothness - minSmoothness) / max(1.0h - minSmoothness, 0.0001h));
-                half centerWeight = waterMask * wetness * materialReflectionStrength * smoothnessFade;
+                half centerWeight = surfaceMask * wetness * materialReflectionStrength * smoothnessFade;
                 float3 normalWS = LilHoGeometryBufferWorldNormalOrZero(normalDepth);
 
-                if (mode == 2) return half4(waterMask.xxx, 1.0h);
+                if (mode == 2) return half4(surfaceMask.xxx, 1.0h);
                 if (mode == 3) return half4(smoothness.xxx, 1.0h);
                 if (mode == 4) return half4(wetness.xxx, 1.0h);
                 if (mode == 5) return half4(normalStrength.xxx, 1.0h);
@@ -531,7 +531,7 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                     return half4(edgeExtendDebug, edgeExtendDebug, edgeExtendDebug, 1.0h);
                 }
 
-                return half4(waterMask.xxx, 1.0h);
+                return half4(surfaceMask.xxx, 1.0h);
             }
 
             uint PickVectorChar(float4 chars, int index)

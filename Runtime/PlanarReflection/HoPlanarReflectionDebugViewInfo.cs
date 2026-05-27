@@ -11,7 +11,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
         public static readonly HoDebugViewInfo[] Views =
         {
             View("planar-reflection.inputs", "Inputs", HoPlanarReflectionDebugMode.InputStatus),
-            View("planar-reflection.water-mask", "Mask", HoPlanarReflectionDebugMode.WaterMask),
+            View("planar-reflection.surface-mask", "Mask", HoPlanarReflectionDebugMode.SurfaceMask),
             View("planar-reflection.smoothness", "Smooth", HoPlanarReflectionDebugMode.Smoothness),
             View("planar-reflection.wetness", "Wet", HoPlanarReflectionDebugMode.Wetness),
             View("planar-reflection.normal-strength", "NormS", HoPlanarReflectionDebugMode.NormalStrength),
