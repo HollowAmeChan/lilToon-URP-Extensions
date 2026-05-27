@@ -471,6 +471,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 reflectionCamera.projectionMatrix = reflectionCamera.CalculateObliqueMatrix(clipPlane);
             }
 
+            reflectionCamera.nonJitteredProjectionMatrix = reflectionCamera.projectionMatrix;
+            reflectionCamera.useJitteredProjectionMatrixForTransparentRendering = false;
             reflectionCamera.ResetCullingMatrix();
         }
 
