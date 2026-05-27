@@ -195,8 +195,9 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
                 if (mode == 25)
                 {
                     half4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_PointClamp, uv);
-                    half valid = step(0.0001, maskId.r) * step(0.0001, surfaceColor.a);
-                    return lerp(source, half4(surfaceColor.rgb, 1.0), valid);
+                    half coverage = saturate(surfaceColor.a);
+                    half valid = step(0.0001, maskId.r) * step(0.0001, coverage);
+                    return lerp(source, half4(surfaceColor.rgb, 1.0), valid * coverage);
                 }
 
                 return source;
