@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
@@ -114,8 +115,12 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
         private Camera reflectionCamera;
         private RenderTexture reflectionTexture;
+        private RTHandle reflectionTextureHandle;
         private MaterialPropertyBlock propertyBlock;
         private int lastRenderedFrame = -1;
+
+        internal static RenderTexture CurrentReflectionTexture { get; private set; }
+        internal static RTHandle CurrentReflectionTextureHandle { get; private set; }
 
         private Renderer TargetRenderer
         {
@@ -241,8 +246,11 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
         internal static void ResetGlobalState()
         {
+            CurrentReflectionTexture = null;
+            CurrentReflectionTextureHandle = null;
             Shader.SetGlobalFloat(HoPlanarReflectionShaderConstants.CompositeActiveId, 0.0f);
             Shader.SetGlobalTexture(ReflectionTextureId, Texture2D.blackTexture);
+            Shader.SetGlobalTexture(HoPlanarReflectionShaderConstants.ProcessedReflectionTextureId, Texture2D.blackTexture);
             Shader.SetGlobalMatrix(ReflectionTextureMatrixId, Matrix4x4.identity);
             Shader.SetGlobalVector(ReflectionParamsId, Vector4.zero);
         }
@@ -412,27 +420,52 @@ namespace lilToon.URP.Extensions.PlanarReflection
             int height = Mathf.Max(64, Mathf.RoundToInt(resolution / Mathf.Max(sourceCamera.aspect, 0.01f)));
             height = Mathf.Clamp(height, 64, 4096);
 
-            if (reflectionTexture != null && reflectionTexture.width == width && reflectionTexture.height == height)
+            if (reflectionTexture != null
+                && reflectionTexture.width == width
+                && reflectionTexture.height == height
+                && IsColorOnlyReflectionTexture(reflectionTexture))
             {
                 return;
             }
 
             if (reflectionTexture != null)
             {
+                ReleaseReflectionTextureHandle();
                 reflectionTexture.Release();
                 DestroyUnityObject(reflectionTexture);
             }
 
-            reflectionTexture = new RenderTexture(width, height, 24, RenderTextureFormat.DefaultHDR)
+            RenderTextureDescriptor descriptor = new RenderTextureDescriptor(width, height, RenderTextureFormat.DefaultHDR, 0)
+            {
+                depthBufferBits = 0,
+                depthStencilFormat = GraphicsFormat.None,
+                msaaSamples = 1,
+                useMipMap = false,
+                autoGenerateMips = false
+            };
+
+            reflectionTexture = new RenderTexture(descriptor)
             {
                 name = $"{nameof(HoPlanarReflectionSurface)} RT ({name})",
                 hideFlags = HideFlags.HideAndDontSave,
-                useMipMap = false,
-                autoGenerateMips = false,
                 wrapMode = TextureWrapMode.Clamp,
                 filterMode = FilterMode.Bilinear
             };
             reflectionTexture.Create();
+            reflectionTextureHandle = RTHandles.Alloc(reflectionTexture);
+        }
+
+        private static bool IsColorOnlyReflectionTexture(RenderTexture texture)
+        {
+            if (texture == null)
+            {
+                return false;
+            }
+
+            RenderTextureDescriptor descriptor = texture.descriptor;
+            return texture.depth == 0
+                && descriptor.depthBufferBits == 0
+                && descriptor.depthStencilFormat == GraphicsFormat.None;
         }
 
         private void ConfigureReflectionCamera(
@@ -540,7 +573,10 @@ namespace lilToon.URP.Extensions.PlanarReflection
         private void PublishGlobalReflectionState()
         {
             Matrix4x4 reflectionViewProjection = GetReflectionViewProjectionMatrix(reflectionCamera);
+            CurrentReflectionTexture = reflectionTexture;
+            CurrentReflectionTextureHandle = reflectionTextureHandle;
             Shader.SetGlobalTexture(ReflectionTextureId, reflectionTexture);
+            Shader.SetGlobalTexture(HoPlanarReflectionShaderConstants.ProcessedReflectionTextureId, reflectionTexture);
             Shader.SetGlobalMatrix(ReflectionTextureMatrixId, reflectionViewProjection);
             Shader.SetGlobalVector(ReflectionParamsId, new Vector4(1.0f, reflectionTexture.width, reflectionTexture.height, 0.0f));
         }
@@ -549,6 +585,13 @@ namespace lilToon.URP.Extensions.PlanarReflection
         {
             if (reflectionTexture != null)
             {
+                if (CurrentReflectionTexture == reflectionTexture)
+                {
+                    CurrentReflectionTexture = null;
+                    CurrentReflectionTextureHandle = null;
+                }
+
+                ReleaseReflectionTextureHandle();
                 reflectionTexture.Release();
                 DestroyUnityObject(reflectionTexture);
                 reflectionTexture = null;
@@ -559,6 +602,22 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 DestroyUnityObject(reflectionCamera.gameObject);
                 reflectionCamera = null;
             }
+        }
+
+        private void ReleaseReflectionTextureHandle()
+        {
+            if (reflectionTextureHandle == null)
+            {
+                return;
+            }
+
+            if (CurrentReflectionTextureHandle == reflectionTextureHandle)
+            {
+                CurrentReflectionTextureHandle = null;
+            }
+
+            reflectionTextureHandle.Release();
+            reflectionTextureHandle = null;
         }
 
         private static void DestroyUnityObject(Object target)

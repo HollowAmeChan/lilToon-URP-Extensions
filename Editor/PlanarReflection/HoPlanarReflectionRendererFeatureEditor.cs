@@ -37,7 +37,7 @@ namespace lilToon.URP.Extensions.Editor.PlanarReflection
             }
 
             EditorGUILayout.HelpBox(
-                "Ho-PlanarReflection 先渲染镜像相机，再由可选合成 pass 消费 MetadataBuffer 与 GeometryBuffer，对水面反射做扰动和混合。",
+                "Ho-PlanarReflection 先渲染镜像相机，再由合成 pass 消费 MetadataBuffer 与 GeometryBuffer，对反射表面做扰动、预处理和混合。",
                 MessageType.Info);
 
             DrawRuntime();
@@ -91,6 +91,8 @@ namespace lilToon.URP.Extensions.Editor.PlanarReflection
                 DrawProperty(compositeEnabled, "启用后处理合成");
                 DrawProperty(compositeStrength, "合成强度");
                 DrawProperty(distortion, "法线扰动");
+                DrawProperty(Find("reflectionExposure"), "反射曝光 EV");
+                DrawProperty(Find("reflectionBlurRadiusPixels"), "圆盘模糊半径");
                 DrawProperty(Find("edgeExtendDistance"), "屏幕边缘像素外扩");
                 DrawProperty(Find("minSmoothness"), "最小 Smoothness");
                 DrawProperty(Find("tint"), "反射 Tint");

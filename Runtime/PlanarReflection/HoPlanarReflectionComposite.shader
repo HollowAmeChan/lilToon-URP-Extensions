@@ -30,16 +30,17 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
             float4 _HoPlanarReflectionCompositeParams;
             float4 _HoPlanarReflectionCompositeOptions;
             float4 _HoPlanarReflectionCompositeTint;
+            float4 _HoPlanarReflectionPreprocessParams;
             float4 _HoPlanarReflectionDebugParams;
             float4 _HoPlanarReflectionDebugInputStatus;
             float4 _LILPBRPlanarReflectionParams;
-            float4 _LILPBRPlanarReflectionTexture_TexelSize;
+            float4 _HoPlanarReflectionProcessedTexture_TexelSize;
 
             TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
             TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture);
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
-            TEXTURE2D(_LILPBRPlanarReflectionTexture);
-            SAMPLER(sampler_LILPBRPlanarReflectionTexture);
+            TEXTURE2D(_HoPlanarReflectionProcessedTexture);
+            SAMPLER(sampler_HoPlanarReflectionProcessedTexture);
 
             half4 Frag(Varyings input) : SV_Target
             {
@@ -120,7 +121,7 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
                     return half4(saturate(distortedScreenUv).xy, 0.0h, 1.0h);
                 }
 
-                float2 reflectionTexel = max(abs(_LILPBRPlanarReflectionTexture_TexelSize.xy) * 0.5, float2(1.0e-5, 1.0e-5));
+                float2 reflectionTexel = max(abs(_HoPlanarReflectionProcessedTexture_TexelSize.xy) * 0.5, float2(1.0e-5, 1.0e-5));
                 float edgeExtendDistance = max(_HoPlanarReflectionCompositeOptions.z, 0.0);
                 float2 edgeInset = max(reflectionTexel, float2(edgeExtendDistance, edgeExtendDistance));
                 float2 extendedScreenUv = clamp(distortedScreenUv, edgeInset, 1.0 - edgeInset);
@@ -146,7 +147,7 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
                     reflectionUv.y = 1.0 - reflectionUv.y;
                 }
 
-                half3 reflection = SAMPLE_TEXTURE2D(_LILPBRPlanarReflectionTexture, sampler_LILPBRPlanarReflectionTexture, reflectionUv).rgb;
+                half3 reflection = SAMPLE_TEXTURE2D(_HoPlanarReflectionProcessedTexture, sampler_HoPlanarReflectionProcessedTexture, reflectionUv).rgb;
                 reflection *= _HoPlanarReflectionCompositeTint.rgb;
 
                 half compositeWeight = saturate(centerWeight * depthGate * _HoPlanarReflectionCompositeParams.x * _HoPlanarReflectionCompositeTint.a);
@@ -160,6 +161,61 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
 
                 cameraColor.rgb = lerp(cameraColor.rgb, reflection, compositeWeight);
                 return cameraColor;
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Planar Reflection Preprocess"
+
+            HLSLPROGRAM
+            #pragma target 4.5
+            #pragma vertex Vert
+            #pragma fragment FragPreprocess
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+
+            float4 _HoPlanarReflectionPreprocessParams;
+
+            half3 SampleReflectionSource(float2 uv)
+            {
+                return SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv).rgb;
+            }
+
+            half3 SampleReflectionDisk(float2 uv, float2 texelRadius)
+            {
+                half3 color = SampleReflectionSource(uv) * 2.0h;
+                color += SampleReflectionSource(uv + texelRadius * float2( 0.0000,  0.0000));
+                color += SampleReflectionSource(uv + texelRadius * float2( 0.3500,  0.0000));
+                color += SampleReflectionSource(uv + texelRadius * float2(-0.3500,  0.0000));
+                color += SampleReflectionSource(uv + texelRadius * float2( 0.0000,  0.3500));
+                color += SampleReflectionSource(uv + texelRadius * float2( 0.0000, -0.3500));
+                color += SampleReflectionSource(uv + texelRadius * float2( 0.4949,  0.4949));
+                color += SampleReflectionSource(uv + texelRadius * float2(-0.4949,  0.4949));
+                color += SampleReflectionSource(uv + texelRadius * float2( 0.4949, -0.4949));
+                color += SampleReflectionSource(uv + texelRadius * float2(-0.4949, -0.4949));
+                color += SampleReflectionSource(uv + texelRadius * float2( 0.9239,  0.3827));
+                color += SampleReflectionSource(uv + texelRadius * float2(-0.3827,  0.9239));
+                color += SampleReflectionSource(uv + texelRadius * float2(-0.9239, -0.3827));
+                color += SampleReflectionSource(uv + texelRadius * float2( 0.3827, -0.9239));
+                return color * (1.0h / 15.0h);
+            }
+
+            half4 FragPreprocess(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
+                float2 uv = input.texcoord;
+                float exposure = max(_HoPlanarReflectionPreprocessParams.x, 0.0);
+                float blurRadiusPixels = max(_HoPlanarReflectionPreprocessParams.y, 0.0);
+                float2 texelRadius = _BlitTexture_TexelSize.xy * blurRadiusPixels;
+                half3 color = blurRadiusPixels > 0.0001
+                    ? SampleReflectionDisk(uv, texelRadius)
+                    : SampleReflectionSource(uv);
+                color *= (half)exposure;
+                return half4(color, 1.0h);
             }
             ENDHLSL
         }

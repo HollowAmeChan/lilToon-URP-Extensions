@@ -2,7 +2,7 @@
 
 `HoPlanarReflectionRendererFeature` 负责在每个源相机渲染前调度场景里的 `HoPlanarReflectionSurface`。每个有效表面都会生成一台隐藏的镜像相机，把反射结果渲染到自己的 `RenderTexture`，再把这张反射纹理和状态参数发布成全局 shader 输入，最后由统一的 fullscreen composite pass 混回 camera color。
 
-当前正式链路只有一条：材质负责把“哪些像素需要反射、按什么强度和扰动混合”写进 MetadataBuffer / GeometryBuffer；`HoPlanarReflectionCompositePass` 在透明物体之后读取 camera color、MetadataBuffer、GeometryBuffer 和 `_LILPBRPlanarReflectionTexture`，统一做后处理合成。内置 `lilPBR` 和 `WaterFlowmap` 不再在 `ForwardLit` 里直接采样平面反射纹理。
+当前正式链路只有一条：材质负责把“哪些像素需要反射、按什么强度和扰动混合”写进 MetadataBuffer / GeometryBuffer；`HoPlanarReflectionCompositePass` 在透明物体之后读取 camera color、MetadataBuffer、GeometryBuffer 和反射纹理，统一做后处理合成。内置 `lilPBR` 和 `WaterFlowmap` 不再在 `ForwardLit` 里直接采样平面反射纹理。
 
 这意味着主材质绘制时不需要、也不应该读取自己写出的缓冲。MetadataBuffer / GeometryBuffer 是独立的辅助 pass；它们在 composite 之前已经画好，fullscreen pass 才是唯一消费这些缓冲并混合反射的地方。
 
@@ -15,6 +15,7 @@
 3. 添加并启用 `HoPlanarReflectionRendererFeature`。
 4. 在 `HoPlanarReflectionRendererFeature` 中开启 `启用后处理合成`。
 5. 保持 `合成 Pass Event` 为默认 `BeforeRenderingPostProcessing`，除非你明确调整了其他 buffer pass 的时机。它必须晚于 MetadataBuffer / GeometryBuffer，并且晚于透明物体主绘制。
+6. 如需让反射更亮，调高 `反射曝光 EV`；如需柔化反射，调高 `圆盘模糊半径`。
 
 如果关闭 `启用后处理合成`，运行时仍可以生成和发布反射纹理，但内置材质不会再把它混入画面；这个状态主要用于调试或给外部自定义管线接管。
 
@@ -63,7 +64,7 @@ MetadataBuffer / GeometryBuffer 的 `Layer Mask` 和 `Render Queue` 必须覆盖
 | `反射场景视图` | 控制单个 surface 是否响应 Scene View 相机。RendererFeature 也有全局 Scene View 开关，两者都要允许才会渲染。 |
 | `更新帧间隔` | 大于 `1` 时按帧复用上一张反射纹理，只刷新 property block 和全局状态。 |
 
-反射纹理使用 `RenderTextureFormat.DefaultHDR`、24-bit depth、`FilterMode.Bilinear`、`TextureWrapMode.Clamp`，不生成 mipmap。
+反射颜色纹理使用 `RenderTextureFormat.DefaultHDR`、color-only、`FilterMode.Bilinear`、`TextureWrapMode.Clamp`，不生成 mipmap。它必须保持不带 depth/stencil，才能作为普通颜色 RT import 到 RenderGraph。
 
 ### 裁剪与背景
 
@@ -88,6 +89,8 @@ MetadataBuffer / GeometryBuffer 的 `Layer Mask` 和 `Render Queue` 必须覆盖
 | `合成 Shader` | 可覆盖默认 `Hidden/lilToon/URP/PlanarReflection/Composite`。 |
 | `合成强度` | 写入 `_HoPlanarReflectionCompositeParams.x`。 |
 | `法线扰动` | 写入 `_HoPlanarReflectionCompositeParams.y`，用 GeometryBuffer 法线扰动采样 UV。普通平面通过 `normalStrength = 0` 关闭扰动。 |
+| `反射曝光 EV` | 写入 `_HoPlanarReflectionPreprocessParams.x` 的曝光倍率。`0` 表示原始亮度，`1` 表示乘 2。 |
+| `圆盘模糊半径` | 写入 `_HoPlanarReflectionPreprocessParams.y`，单位为反射纹理像素。`0` 关闭预处理模糊。 |
 | `屏幕边缘像素外扩` | 写入 `_HoPlanarReflectionCompositeOptions.z`，把越界扰动 UV clamp 到屏幕内侧采样。 |
 | `最小 Smoothness` | 写入 `_HoPlanarReflectionCompositeParams.z`，smoothness 低于该值时渐隐。 |
 | `反射 Tint` | 写入 `_HoPlanarReflectionCompositeTint`，RGB 乘到反射颜色，A 乘到合成权重。 |
@@ -128,6 +131,18 @@ MetadataBuffer 和 GeometryBuffer 是独立渲染阶段，不是主材质 `Forwa
 4. `WaterFlowmap` 的同名 pass 写水面参数和法线深度。
 5. 这些 buffer 在 `HoPlanarReflectionCompositePass` 执行前已经存在；composite pass 是唯一读取它们并采样反射纹理的位置。
 
+### 反射预处理
+
+RenderGraph 路径会把当前 surface 发布的 `RTHandle` import 成 graph 资源。默认情况下 composite 直接读取这份反射输入；当 `反射曝光 EV != 0` 或 `圆盘模糊半径 > 0` 时，会额外记录一个 `Ho-PlanarReflection Preprocess` raster pass：
+
+1. 读取 import 后的反射纹理。
+2. 按 `圆盘模糊半径` 做固定采样的 disk blur，半径单位是反射纹理像素。
+3. 按 `反射曝光 EV` 转换出的倍率乘到反射颜色。
+4. 写入 RDG 临时纹理 `_HoPlanarReflectionProcessedTexture`。
+5. 后续 composite pass 只采样 `_HoPlanarReflectionProcessedTexture`。
+
+非 RenderGraph 兼容路径也会在需要时分配同名临时 `RTHandle` 做同样预处理，但主路径按 RDG 资源所有权处理。
+
 ### 后处理合成
 
 合成 pass 的 RenderGraph 路径读取以下输入：
@@ -135,7 +150,8 @@ MetadataBuffer 和 GeometryBuffer 是独立渲染阶段，不是主材质 `Forwa
 | 输入 | 来源 |
 | --- | --- |
 | camera color | 当前 `UniversalResourceData.activeColorTexture`。 |
-| `_LILPBRPlanarReflectionTexture` | 最近一次成功发布的平面反射纹理。 |
+| 反射 RTHandle | 最近一次成功发布的平面反射纹理。RenderGraph 路径会先 import 它，再决定是否进入预处理 pass。 |
+| `_HoPlanarReflectionProcessedTexture` | composite shader 实际采样的反射纹理。没有开启曝光或模糊时指向 import 后的原始反射输入。 |
 | `_LILPBRPlanarReflectionParams` | 反射是否有效和纹理尺寸。 |
 | `_HoMetadataBufferMaskIdTexture` | MetadataBuffer 的 mask/id RT，`maskId.r` 作为反射表面 mask。 |
 | `_HoMetadataBufferMaterialCustom0_3Texture` | MetadataBuffer 的材质自定义通道，`Custom0.rgba` 提供合成参数。 |
@@ -162,7 +178,7 @@ fragment 处理逻辑：
 7. 用 `屏幕边缘像素外扩` 把扰动后的 UV clamp 到屏幕内，避免采到纹理外。
 8. 如果启用深度门控，采样扰动 UV 位置的 GeometryBuffer 深度，并按 `深度容差` 衰减跨物体采样。
 9. 根据 `反射纹理 Flip Y` 可选翻转反射 UV。
-10. 采样 `_LILPBRPlanarReflectionTexture`，乘 `反射 Tint.rgb`。
+10. 采样 `_HoPlanarReflectionProcessedTexture`，乘 `反射 Tint.rgb`。
 11. 计算 `compositeWeight = centerWeight * depthGate * 合成强度 * Tint.a`。
 12. `lerp(cameraColor.rgb, reflection, compositeWeight)` 写回新的 camera color。
 
@@ -177,7 +193,7 @@ fragment 处理逻辑：
 | 名称 | 类型 | 写入位置 | 消费者 |
 | --- | --- | --- | --- |
 | `_UsePlanarReflection` | float | 目标 renderer property block | 材质的 MetadataBuffer pass，用于决定 `Custom0.a` 是否写出反射强度。 |
-| `_LILPBRPlanarReflectionTexture` | texture | 目标 renderer property block 与全局 shader state | Composite shader 和 DebugTile。内置材质主 pass 不采样它。 |
+| `_LILPBRPlanarReflectionTexture` | texture | 目标 renderer property block 与全局 shader state | 保留给外部扩展、兼容入口和 DebugTile 原始反射预览；内置材质主 pass 不采样它，内置 composite 会把对应 `RTHandle` import 后统一走 `_HoPlanarReflectionProcessedTexture`。 |
 | `_LILPBRPlanarReflectionTextureMatrix` | matrix | 目标 renderer property block 与全局 shader state | 保留给外部自定义投影需求；内置 composite 当前不依赖它。 |
 | `_LILPBRPlanarReflectionParams` | float4 | 目标 renderer property block 与全局 shader state | `.x` 表示是否有效，`.y/.z` 是 RT 尺寸。Composite 用 `.x` 做有效性判断。 |
 
@@ -191,8 +207,10 @@ fragment 处理逻辑：
 | `_HoPlanarReflectionCompositeParams` | float4 | `(strength, distortion, minSmoothness, depthTolerance)`。 |
 | `_HoPlanarReflectionCompositeOptions` | float4 | `(flipY, enableDepthGate, edgeExtendDistance, 0)`。 |
 | `_HoPlanarReflectionCompositeTint` | float4 | `(tint.r, tint.g, tint.b, tint.a)`。 |
+| `_HoPlanarReflectionPreprocessParams` | float4 | `(exposureMultiplier, diskBlurRadiusPixels, 0, 0)`。 |
 | `_HoPlanarReflectionDebugParams` | float4 | `(debugMode, debugDepthFar, debugDistortionScale, 0)`。 |
-| `_HoPlanarReflectionDebugInputStatus` | float4 | `(source, maskId, normalDepth, custom0)`，RenderGraph 路径按实际资源有效性写入。 |
+| `_HoPlanarReflectionDebugInputStatus` | float4 | `(reflection, maskId, normalDepth, custom0)`，RenderGraph 路径按实际资源有效性写入。 |
+| `_HoPlanarReflectionProcessedTexture` | texture | Composite 实际采样的反射纹理。RDG 预处理开启时是临时 graph texture，否则是当前发布的原始反射 RT。 |
 | `_HoMetadataBufferMaskIdTexture` | texture | `r` 是 mask coverage，合成中作为反射表面 mask。 |
 | `_HoMetadataBufferMaterialCustom0_3Texture` | texture | `rgba` 是平面反射合成参数。 |
 | `_HoGeometryBufferNormalDepthTexture` | texture | `rgb` 是编码世界法线，`a` 是线性深度。 |
@@ -232,7 +250,7 @@ fragment 处理逻辑：
   - 绿色通道为 MetadataBuffer mask/custom0 是否有效。
   - 蓝色通道为 GeometryBuffer 是否有效。
 - 其他调试模式会显示 mask、smoothness、wetness、normal strength、reflection strength、world normal、linear depth、distortion、distorted UV、reflection color、composite weight、depth gate、custom0 或 edge extend。
-- 如果不想替换整屏颜色，可以添加 `Ho-DebugTile` 并选择 `PlanarReflection` 条目做小窗调试。
+- 如果不想替换整屏颜色，可以添加 `Ho-DebugTile` 并选择 `PlanarReflection` 条目做小窗调试。DebugTile 会在自己的 RDG pass 中 import 当前原始反射 RT，因此 `ReflectionColor` 小窗显示的是曝光/模糊预处理前的输入。
 
 ## 常见问题
 
@@ -244,6 +262,7 @@ fragment 处理逻辑：
 - 检查 surface 的目标 renderer 是否存在且 enabled。
 - 检查 `_LILPBRPlanarReflectionParams.x`。为 `0` 说明本帧 surface 没有成功发布反射。
 - 检查材质 `_UsePlanarReflection`、`_PlanarReflectionStrength` 和 RendererFeature 的 `最小 Smoothness`。
+- 如果权重已经为 1 但观感仍不明显，调高 `反射曝光 EV`，确认反射纹理本身不是接近 camera color 或黑色。
 
 ### 合成调试显示 Metadata 或 Geometry 缺失
 
@@ -269,6 +288,7 @@ fragment 处理逻辑：
 ### 合成过强或边缘拉伸明显
 
 - 降低 `合成强度`、材质 `_PlanarReflectionStrength`、水面 wetness 或 `Tint.a`。
+- 降低 `反射曝光 EV` 或 `圆盘模糊半径`。
 - 降低 `法线扰动` 或水面 normal strength。
 - 调小 `屏幕边缘像素外扩` 可以减少边缘复制，但可能露出越界断层。
 - 对局部水面可尝试开启 `启用深度门控`，并设置合适的 `深度容差`；大面积平水面通常保持关闭更稳定。

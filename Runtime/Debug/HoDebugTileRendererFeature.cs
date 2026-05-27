@@ -165,7 +165,10 @@ namespace lilToon.URP.Extensions.Debugging
                     && metadataResources.surfaceColorTexture.IsValid()
                     && metadataResources.mBufferDepthTexture.IsValid();
                 bool hasGeometry = geometryResources.normalDepthTexture.IsValid();
-                bool hasPlanarReflectionInputs = hasMaskId && hasCustom0 && hasGeometry;
+                RTHandle planarReflectionRtHandle = HoPlanarReflectionSurface.CurrentReflectionTextureHandle;
+                RenderTexture planarReflectionTextureResource = HoPlanarReflectionSurface.CurrentReflectionTexture;
+                bool hasPlanarReflectionTexture = planarReflectionRtHandle != null && planarReflectionTextureResource != null;
+                bool hasPlanarReflectionInputs = hasPlanarReflectionTexture && hasMaskId && hasCustom0 && hasGeometry;
                 bool hasShadowCastAtlas = shadowCastResources.atlasTexture.IsValid();
                 bool hasShadowCastSecondDirectionalAtlas = shadowCastResources.secondDirectionalAtlasTexture.IsValid();
                 bool hasSubsurfaceScattering = sssResources.sourceTexture.IsValid()
@@ -222,10 +225,12 @@ namespace lilToon.URP.Extensions.Debugging
                     passData.maskIdAvailable = hasMaskId;
                     passData.custom0Available = hasCustom0;
                     passData.normalDepthAvailable = hasGeometry;
+                    passData.planarReflectionAvailable = hasPlanarReflectionTexture;
                     passData.bindMetadata = resourceNeeds.fullMetadata && hasMetadata;
                     passData.bindMaskId = (passData.bindMetadata || resourceNeeds.planarReflectionBuffers || resourceNeeds.subsurfaceScattering) && hasMaskId;
                     passData.bindCustom0 = (passData.bindMetadata || resourceNeeds.planarReflectionBuffers) && hasCustom0;
                     passData.bindGeometry = (resourceNeeds.geometry || resourceNeeds.planarReflectionBuffers || resourceNeeds.subsurfaceScattering) && hasGeometry;
+                    passData.bindPlanarReflectionTexture = resourceNeeds.planarReflectionBuffers && hasPlanarReflectionTexture;
                     passData.bindShadowCastAtlas = resourceNeeds.shadowCastAtlas && hasShadowCastAtlas;
                     passData.bindShadowCastSecondDirectionalAtlas = resourceNeeds.shadowCastSecondDirectionalAtlas && hasShadowCastSecondDirectionalAtlas;
                     passData.bindSubsurfaceScattering = resourceNeeds.subsurfaceScattering && hasSubsurfaceScattering;
@@ -237,6 +242,9 @@ namespace lilToon.URP.Extensions.Debugging
                     passData.surfaceColorTexture = metadataResources.surfaceColorTexture;
                     passData.mBufferDepthTexture = metadataResources.mBufferDepthTexture;
                     passData.normalDepthTexture = geometryResources.normalDepthTexture;
+                    passData.planarReflectionTexture = passData.bindPlanarReflectionTexture
+                        ? renderGraph.ImportTexture(planarReflectionRtHandle)
+                        : TextureHandle.nullHandle;
                     passData.shadowCastAtlasTexture = shadowCastResources.atlasTexture;
                     passData.shadowCastSecondDirectionalAtlasTexture = shadowCastResources.secondDirectionalAtlasTexture;
                     passData.sssSourceTexture = sssResources.sourceTexture;
@@ -269,6 +277,11 @@ namespace lilToon.URP.Extensions.Debugging
                     if (passData.bindGeometry)
                     {
                         builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
+                    }
+
+                    if (passData.bindPlanarReflectionTexture)
+                    {
+                        builder.UseTexture(passData.planarReflectionTexture, AccessFlags.Read);
                     }
 
                     if (passData.bindShadowCastAtlas)
@@ -337,6 +350,11 @@ namespace lilToon.URP.Extensions.Debugging
                             context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
                         }
 
+                        if (data.bindPlanarReflectionTexture)
+                        {
+                            context.cmd.SetGlobalTexture(HoPlanarReflectionShaderConstants.ReflectionTextureId, data.planarReflectionTexture);
+                        }
+
                         if (data.bindShadowCastAtlas)
                         {
                             context.cmd.SetGlobalTexture(HoShadowCastShaderConstants.AtlasTextureId, data.shadowCastAtlasTexture);
@@ -372,7 +390,7 @@ namespace lilToon.URP.Extensions.Debugging
                             PropertyBlock.SetVector(HoDebugTileShaderConstants.GeometryDepthParamsId, data.geometryDepthParams);
                             PropertyBlock.SetVector(
                                 HoDebugTileShaderConstants.PlanarReflectionDebugInputStatusId,
-                                new Vector4(1.0f, data.maskIdAvailable ? 1.0f : 0.0f, data.normalDepthAvailable ? 1.0f : 0.0f, data.custom0Available ? 1.0f : 0.0f));
+                                new Vector4(data.planarReflectionAvailable ? 1.0f : 0.0f, data.maskIdAvailable ? 1.0f : 0.0f, data.normalDepthAvailable ? 1.0f : 0.0f, data.custom0Available ? 1.0f : 0.0f));
                             context.cmd.DrawProcedural(Matrix4x4.identity, data.material, 0, MeshTopology.Triangles, 6, 1, PropertyBlock);
                         }
                     });
@@ -621,10 +639,12 @@ namespace lilToon.URP.Extensions.Debugging
                 public bool maskIdAvailable;
                 public bool custom0Available;
                 public bool normalDepthAvailable;
+                public bool planarReflectionAvailable;
                 public bool bindMetadata;
                 public bool bindMaskId;
                 public bool bindCustom0;
                 public bool bindGeometry;
+                public bool bindPlanarReflectionTexture;
                 public bool bindShadowCastAtlas;
                 public bool bindShadowCastSecondDirectionalAtlas;
                 public bool bindSubsurfaceScattering;
@@ -636,6 +656,7 @@ namespace lilToon.URP.Extensions.Debugging
                 public TextureHandle surfaceColorTexture;
                 public TextureHandle mBufferDepthTexture;
                 public TextureHandle normalDepthTexture;
+                public TextureHandle planarReflectionTexture;
                 public TextureHandle shadowCastAtlasTexture;
                 public TextureHandle shadowCastSecondDirectionalAtlasTexture;
                 public TextureHandle sssSourceTexture;
