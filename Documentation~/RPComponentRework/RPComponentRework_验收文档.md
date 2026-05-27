@@ -82,6 +82,14 @@ Renderer Data 推荐顺序：
 
 它不写 MetadataBuffer / GeometryBuffer。未来若 ScreenProcess 需要 ShadowCast receiver 或 attenuation，必须作为 Lighting/Shadow 资源显式读取，不塞回 Buffer。
 
+### Buffer 分工口径
+
+`MetadataBuffer` 和 `GeometryBuffer` 是两套并列的语义输入，不是彼此的中间结果。可以把它们理解成角色/材质语义的 forward-style buffer 与屏幕几何的 deferred-style buffer：前者跟随材质 pass、render queue 和对象语义写入材质/对象/遮罩/基础色；后者提供可见几何表面的 normal/depth。
+
+材质、对象、layer 与 RendererFeature 过滤共同决定一个 renderer 写入哪些 buffer。常见分工是：opaque/cutout 角色主体同时写 MetadataBuffer 与 GeometryBuffer；transparent/半透材质主要写 MetadataBuffer 的 surface metadata / SurfaceColor；不参与语义效果的对象不写或只走 fallback 最小信息。
+
+生产阶段禁止交叉依赖：MetadataBuffer 不读取或反写 GeometryBuffer，GeometryBuffer 不读取或反写 MetadataBuffer。SSS、CharacterSpecialization、ScreenProcess 等后续 feature 可以同时消费两者，但结果不再塞回任何基础 Buffer。
+
 ### MetadataBuffer
 
 `MetadataBuffer` 只表达可跨系统复用的材质、对象、mask、surface metadata。
@@ -98,10 +106,14 @@ Renderer Data 推荐顺序：
 - `Curvature`
 - `TransmittanceHint`
 - `SurfaceColor`
+- `MBufferDepth`
 
-`SurfaceColor` 当前语义是基础表面色 / diffuse albedo：材质 pass 直接输出已解析的 albedo，alpha 表示有效 subject 覆盖。它和 Thickness / Curvature 一样属于基础 MetadataBuffer 语义；只要对象参与 MetadataBuffer subject 写入，就不依赖 `_UseSSS`、`_SSSColor`、`_SSSMainStrength` 或 profile tint。SSS 只把它作为扩散源颜色读取，扩散颜色和合成权重由 SSS profile 在 SSS pass 内处理。
+`SurfaceColor` 当前语义是基础表面色 / diffuse albedo：材质 pass 输出已解析的 albedo；opaque/cutout 先写入，transparent 再按普通后置 alpha blend 合成到同一张 `SurfaceColor` RT。alpha 表示有效 subject 覆盖。它和 Thickness / Curvature 一样属于基础 MetadataBuffer 语义；只要对象参与 MetadataBuffer subject 写入，就不依赖 `_UseSSS`、`_SSSColor`、`_SSSMainStrength` 或 profile tint。SSS 只把它作为扩散源颜色读取，扩散颜色和合成权重由 SSS profile 在 SSS pass 内处理。
 
-不负责 depth、normal、velocity / motion、ShadowCast attenuation、SSS composite weight、OIT accumulation / revealage 或 ImageProcess 临时图像结果。
+`MBufferDepth` 是 MetadataBuffer 自己的 depth 语义，用于 opaque/cutout 写 depth 后让 transparent 只做 ZTest 与 alpha blend。它与 `SurfaceColor` 的过滤、render scale、清除时机和 opaque 写入时机保持一致；它不是 GeometryBuffer depth，也不能由 GeometryBuffer depth 直接替代。当前 transparent 只贡献 `SurfaceColor` 的颜色与 coverage，不写入 `MBufferDepth`。
+`DebugTile` 和 MetadataBuffer feature-local debug 都必须暴露 `MBufferDepth`；统一 view id 为 `metadata.mbuffer-depth`，tile 短名为 `MDep`。
+
+不负责 normal、velocity / motion、ShadowCast attenuation、SSS composite weight、OIT accumulation / revealage 或 ImageProcess 临时图像结果。
 
 对象语义入口在 `HoMetadataBufferGroup`、`HoMetadataBufferSubject` 和 material inspector，不在 RendererFeature 面板批量管理全场景对象。
 
@@ -123,6 +135,8 @@ Renderer Data 推荐顺序：
 - `TangentNormal`
 
 `ViewNormal` 可由 normal + view matrix 派生；`TangentNormal` 暂无真实 screen-space 消费者。
+
+`GeometryBuffer` 的 depth 表达可见几何表面，更接近 deferred/GBuffer 的结果语义。它适合后续效果做遮挡、距离、normal/depth 判断，但不负责透明颜色合成，也不替代 MetadataBuffer 的 `MBufferDepth`。
 
 ### SSS
 

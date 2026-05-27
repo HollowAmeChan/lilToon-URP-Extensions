@@ -159,7 +159,8 @@ namespace lilToon.URP.Extensions.Debugging
                     && metadataResources.custom0Texture.IsValid()
                     && metadataResources.objectCustom0Texture.IsValid()
                     && metadataResources.objectCustom1Texture.IsValid()
-                    && metadataResources.surfaceColorTexture.IsValid();
+                    && metadataResources.surfaceColorTexture.IsValid()
+                    && metadataResources.mBufferDepthTexture.IsValid();
                 bool hasGeometry = geometryResources.normalDepthTexture.IsValid();
                 bool hasShadowCastAtlas = shadowCastResources.atlasTexture.IsValid();
                 bool hasShadowCastSecondDirectionalAtlas = shadowCastResources.secondDirectionalAtlasTexture.IsValid();
@@ -180,11 +181,17 @@ namespace lilToon.URP.Extensions.Debugging
                     return;
                 }
 
-                TextureHandle destination = resourceData.activeColorTexture;
-                if (!destination.IsValid())
+                TextureHandle source = resourceData.activeColorTexture;
+                if (!source.IsValid())
                 {
                     return;
                 }
+
+                TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
+                destinationDesc.name = "_lilHoDebugTileColor";
+                destinationDesc.clearBuffer = false;
+                destinationDesc.depthBufferBits = 0;
+                TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
                 CalculateTileGrid(tiles.Count, out int columns, out int rows);
 
@@ -203,6 +210,7 @@ namespace lilToon.URP.Extensions.Debugging
                 using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-DebugTile", out PassData passData, ProfilingSampler))
                 {
                     passData.material = material;
+                    passData.source = source;
                     passData.tiles = tiles;
                     passData.tileGrid = new Vector4(columns, rows, tiles.Count, 0.0f);
                     passData.hasMetadata = hasMetadata;
@@ -216,6 +224,7 @@ namespace lilToon.URP.Extensions.Debugging
                     passData.objectCustom0Texture = metadataResources.objectCustom0Texture;
                     passData.objectCustom1Texture = metadataResources.objectCustom1Texture;
                     passData.surfaceColorTexture = metadataResources.surfaceColorTexture;
+                    passData.mBufferDepthTexture = metadataResources.mBufferDepthTexture;
                     passData.normalDepthTexture = geometryResources.normalDepthTexture;
                     passData.shadowCastAtlasTexture = shadowCastResources.atlasTexture;
                     passData.shadowCastSecondDirectionalAtlasTexture = shadowCastResources.secondDirectionalAtlasTexture;
@@ -231,6 +240,7 @@ namespace lilToon.URP.Extensions.Debugging
                         builder.UseTexture(passData.objectCustom0Texture, AccessFlags.Read);
                         builder.UseTexture(passData.objectCustom1Texture, AccessFlags.Read);
                         builder.UseTexture(passData.surfaceColorTexture, AccessFlags.Read);
+                        builder.UseTexture(passData.mBufferDepthTexture, AccessFlags.Read);
                     }
 
                     if (hasGeometry)
@@ -264,12 +274,13 @@ namespace lilToon.URP.Extensions.Debugging
                         }
                     }
 
+                    builder.UseTexture(source, AccessFlags.Read);
                     builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
                     builder.AllowPassCulling(false);
                     builder.AllowGlobalStateModification(true);
                     builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                     {
-                        context.cmd.ClearRenderTarget(RTClearFlags.Color, Color.black, 1.0f, 0);
+                        Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), 0.0f, false);
                         if (data.hasMetadata)
                         {
                             context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
@@ -278,6 +289,7 @@ namespace lilToon.URP.Extensions.Debugging
                             context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.objectCustom0Texture);
                             context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.objectCustom1Texture);
                             context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, data.surfaceColorTexture);
+                            context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MBufferDepthTextureId, data.mBufferDepthTexture);
                         }
 
                         if (data.hasGeometry)
@@ -322,6 +334,8 @@ namespace lilToon.URP.Extensions.Debugging
                         }
                     });
                 }
+
+                resourceData.cameraColor = destination;
             }
 
             private static List<DebugTile> BuildTiles(
@@ -475,6 +489,7 @@ namespace lilToon.URP.Extensions.Debugging
             private sealed class PassData
             {
                 public Material material;
+                public TextureHandle source;
                 public List<DebugTile> tiles;
                 public Vector4 tileGrid;
                 public bool hasMetadata;
@@ -488,6 +503,7 @@ namespace lilToon.URP.Extensions.Debugging
                 public TextureHandle objectCustom0Texture;
                 public TextureHandle objectCustom1Texture;
                 public TextureHandle surfaceColorTexture;
+                public TextureHandle mBufferDepthTexture;
                 public TextureHandle normalDepthTexture;
                 public TextureHandle shadowCastAtlasTexture;
                 public TextureHandle shadowCastSecondDirectionalAtlasTexture;

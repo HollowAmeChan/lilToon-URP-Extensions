@@ -11,11 +11,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
     {
         private static readonly Color SettingsColor = new Color(0.45f, 0.64f, 0.96f);
         private static readonly Color CaptureColor = new Color(0.42f, 0.72f, 0.58f);
-        private static readonly Color DebugColor = new Color(0.86f, 0.62f, 0.38f);
 
         private static bool showSettings;
         private static bool showCapture;
-        private static bool showDebug;
 
         private SerializedDataParameter enable;
         private SerializedDataParameter showInSceneView;
@@ -51,7 +49,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private SerializedDataParameter faceHairDiffuseLevelWhite;
         private SerializedDataParameter faceHairDiffuseTintColor;
         private SerializedDataParameter faceHairDiffuseBlendMode;
-        private SerializedDataParameter debugMode;
 
         public override void OnEnable()
         {
@@ -90,7 +87,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             faceHairDiffuseLevelWhite = Unpack(fetcher.Find(x => x.FaceHairDiffuseLevelWhite));
             faceHairDiffuseTintColor = Unpack(fetcher.Find(x => x.FaceHairDiffuseTintColor));
             faceHairDiffuseBlendMode = Unpack(fetcher.Find(x => x.FaceHairDiffuseBlendMode));
-            debugMode = Unpack(fetcher.Find(x => x.DebugMode));
         }
 
         public override void OnInspectorGUI()
@@ -136,7 +132,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 faceHairDiffuseTintColor,
                 faceHairDiffuseBlendMode,
                 DrawDataParameter);
-            DrawDebug();
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -171,20 +166,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 DrawParameter(maxRenderQueue, "最大渲染队列");
                 DrawParameter(passEvent, "渲染时机");
                 DrawParameter(renderScale, "渲染缩放");
-            }
-        }
-
-        private void DrawDebug()
-        {
-            string summary = LilUrpEditorSectionGui.EnumSummary(debugMode);
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showDebug, "调试", summary, DebugColor))
-            {
-                return;
-            }
-
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                DrawParameter(debugMode, "调试模式");
             }
         }
 

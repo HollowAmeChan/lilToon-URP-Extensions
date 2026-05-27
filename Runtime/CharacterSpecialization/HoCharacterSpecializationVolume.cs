@@ -76,20 +76,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         }
     }
 
-    [Serializable]
-    public sealed class HoCharacterDebugModeParameter : VolumeParameter<HoCharacterSpecializationDebugMode>
-    {
-        public HoCharacterDebugModeParameter(HoCharacterSpecializationDebugMode value, bool overrideState = false)
-            : base(value, overrideState)
-        {
-        }
-
-        public override void Interp(HoCharacterSpecializationDebugMode from, HoCharacterSpecializationDebugMode to, float t)
-        {
-            value = t > 0.0f ? to : from;
-        }
-    }
-
 #if UNITY_2023_1_OR_NEWER
     [VolumeComponentMenu("Post-processing/Ho-CharacterSpecialization/角色特化"), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
 #else
@@ -229,14 +215,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("混合模式"), Tooltip("脸色扩散与当前前发颜色的混合方式。")]
         public HoCharacterFaceHairDiffuseBlendModeParameter FaceHairDiffuseBlendMode = new HoCharacterFaceHairDiffuseBlendModeParameter(HoCharacterFaceHairDiffuseBlendMode.Additive);
 
-        [InspectorName("调试模式"), Tooltip("把角色特化的中间结果写回当前视图，便于检查眼睛透过和前发投影。")]
-        public HoCharacterDebugModeParameter DebugMode = new HoCharacterDebugModeParameter(HoCharacterSpecializationDebugMode.Off);
-
         public bool IsActive()
         {
-            return active
-                && Enable.value
-                && (EyeRevealEnabled.value || HairDropShadowEnabled.value || FaceHairDiffuseEnabled.value || DebugMode.value != HoCharacterSpecializationDebugMode.Off);
+            return active && (!Enable.overrideState || Enable.value);
         }
 
         public bool IsActiveForCamera(CameraType cameraType)
@@ -266,40 +247,47 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 return;
             }
 
-            target.enabled = Enable.value;
-            target.layerMask = LayerMask.value;
-            target.minRenderQueue = MinRenderQueue.value;
-            target.maxRenderQueue = MaxRenderQueue.value;
-            target.passEvent = PassEvent.value;
-            target.renderScale = RenderScale.value;
-            target.eyeRevealEnabled = EyeRevealEnabled.value;
-            target.eyeRevealStrength = EyeRevealStrength.value;
-            target.eyeRevealFeatherPixels = EyeRevealFeatherPixels.value;
-            target.eyeRevealDilationPixels = EyeRevealDilationPixels.value;
-            target.eyeRevealDepthBias = EyeRevealDepthBias.value;
-            target.useEyeRevealArea = UseEyeRevealArea.value;
-            target.sameCharacterOnly = SameCharacterOnly.value;
-            target.hairDropShadowEnabled = HairDropShadowEnabled.value;
-            target.hairShadowColor = HairShadowColor.value;
-            target.hairShadowOpacity = HairShadowOpacity.value;
-            target.hairShadowDistancePixels = HairShadowDistancePixels.value;
-            target.hairShadowDistancePerspectiveStrength = HairShadowDistancePerspectiveStrength.value;
-            target.hairShadowDistanceReferenceDepth = HairShadowDistanceReferenceDepth.value;
-            target.hairShadowDistanceMinScale = HairShadowDistanceMinScale.value;
-            target.hairShadowAngleDegrees = HairShadowAngleDegrees.value;
-            target.hairShadowSoftnessPixels = HairShadowSoftnessPixels.value;
-            target.hairShadowSpreadPixels = HairShadowSpreadPixels.value;
-            target.hairShadowKeepOffHair = HairShadowKeepOffHair.value;
-            target.hairShadowBlendMode = HairShadowBlendMode.value;
-            target.faceHairDiffuseEnabled = FaceHairDiffuseEnabled.value;
-            target.faceHairDiffuseStrength = FaceHairDiffuseStrength.value;
-            target.faceHairDiffuseRadiusPixels = FaceHairDiffuseRadiusPixels.value;
-            target.faceHairDiffuseDepthTolerance = FaceHairDiffuseDepthTolerance.value;
-            target.faceHairDiffuseLevelBlack = FaceHairDiffuseLevelBlack.value;
-            target.faceHairDiffuseLevelWhite = FaceHairDiffuseLevelWhite.value;
-            target.faceHairDiffuseTintColor = FaceHairDiffuseTintColor.value;
-            target.faceHairDiffuseBlendMode = FaceHairDiffuseBlendMode.value;
-            target.debugMode = DebugMode.value;
+            ApplyIfOverridden(Enable, ref target.enabled);
+            ApplyIfOverridden(LayerMask, ref target.layerMask);
+            ApplyIfOverridden(MinRenderQueue, ref target.minRenderQueue);
+            ApplyIfOverridden(MaxRenderQueue, ref target.maxRenderQueue);
+            ApplyIfOverridden(PassEvent, ref target.passEvent);
+            ApplyIfOverridden(RenderScale, ref target.renderScale);
+            ApplyIfOverridden(EyeRevealEnabled, ref target.eyeRevealEnabled);
+            ApplyIfOverridden(EyeRevealStrength, ref target.eyeRevealStrength);
+            ApplyIfOverridden(EyeRevealFeatherPixels, ref target.eyeRevealFeatherPixels);
+            ApplyIfOverridden(EyeRevealDilationPixels, ref target.eyeRevealDilationPixels);
+            ApplyIfOverridden(EyeRevealDepthBias, ref target.eyeRevealDepthBias);
+            ApplyIfOverridden(UseEyeRevealArea, ref target.useEyeRevealArea);
+            ApplyIfOverridden(SameCharacterOnly, ref target.sameCharacterOnly);
+            ApplyIfOverridden(HairDropShadowEnabled, ref target.hairDropShadowEnabled);
+            ApplyIfOverridden(HairShadowColor, ref target.hairShadowColor);
+            ApplyIfOverridden(HairShadowOpacity, ref target.hairShadowOpacity);
+            ApplyIfOverridden(HairShadowDistancePixels, ref target.hairShadowDistancePixels);
+            ApplyIfOverridden(HairShadowDistancePerspectiveStrength, ref target.hairShadowDistancePerspectiveStrength);
+            ApplyIfOverridden(HairShadowDistanceReferenceDepth, ref target.hairShadowDistanceReferenceDepth);
+            ApplyIfOverridden(HairShadowDistanceMinScale, ref target.hairShadowDistanceMinScale);
+            ApplyIfOverridden(HairShadowAngleDegrees, ref target.hairShadowAngleDegrees);
+            ApplyIfOverridden(HairShadowSoftnessPixels, ref target.hairShadowSoftnessPixels);
+            ApplyIfOverridden(HairShadowSpreadPixels, ref target.hairShadowSpreadPixels);
+            ApplyIfOverridden(HairShadowKeepOffHair, ref target.hairShadowKeepOffHair);
+            ApplyIfOverridden(HairShadowBlendMode, ref target.hairShadowBlendMode);
+            ApplyIfOverridden(FaceHairDiffuseEnabled, ref target.faceHairDiffuseEnabled);
+            ApplyIfOverridden(FaceHairDiffuseStrength, ref target.faceHairDiffuseStrength);
+            ApplyIfOverridden(FaceHairDiffuseRadiusPixels, ref target.faceHairDiffuseRadiusPixels);
+            ApplyIfOverridden(FaceHairDiffuseDepthTolerance, ref target.faceHairDiffuseDepthTolerance);
+            ApplyIfOverridden(FaceHairDiffuseLevelBlack, ref target.faceHairDiffuseLevelBlack);
+            ApplyIfOverridden(FaceHairDiffuseLevelWhite, ref target.faceHairDiffuseLevelWhite);
+            ApplyIfOverridden(FaceHairDiffuseTintColor, ref target.faceHairDiffuseTintColor);
+            ApplyIfOverridden(FaceHairDiffuseBlendMode, ref target.faceHairDiffuseBlendMode);
+        }
+
+        private static void ApplyIfOverridden<T>(VolumeParameter<T> parameter, ref T target)
+        {
+            if (parameter != null && parameter.overrideState)
+            {
+                target = parameter.value;
+            }
         }
     }
 }

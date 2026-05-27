@@ -17,6 +17,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         public const string ObjectCustom1TextureName = "_HoMetadataBufferObjectCustom4_7Texture";
         public const string SurfaceColorTextureName = "_HoMetadataBufferSurfaceColorTexture";
         public const string DepthTextureName = "_HoMetadataBufferDepthTexture";
+        public const string MBufferDepthTextureName = "_HoMetadataBufferMBufferDepthTexture";
 
         public const string MaskWeightName = "_HoMetadataBufferMaskWeight";
         public const string SystemWriteMaskName = "_HoMetadataBufferSystemWriteMask";
@@ -47,6 +48,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         public static readonly int ObjectCustom0TextureId = Shader.PropertyToID(ObjectCustom0TextureName);
         public static readonly int ObjectCustom1TextureId = Shader.PropertyToID(ObjectCustom1TextureName);
         public static readonly int SurfaceColorTextureId = Shader.PropertyToID(SurfaceColorTextureName);
+        public static readonly int MBufferDepthTextureId = Shader.PropertyToID(MBufferDepthTextureName);
         public static readonly int MaskWeightId = Shader.PropertyToID(MaskWeightName);
         public static readonly int SystemWriteMaskId = Shader.PropertyToID(SystemWriteMaskName);
         public static readonly int CustomWriteMaskId = Shader.PropertyToID(CustomWriteMaskName);

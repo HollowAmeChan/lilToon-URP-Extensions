@@ -24,10 +24,11 @@
      - `a = faceMask`
 
 2. `FaceHair Blur`
-   - 横向 + 纵向 separable blur。
+   - 2 轮各向同性 fast Gaussian disk blur，使用同一组 RDG 临时 ping-pong 纹理。
    - 颜色和深度数据一起 ping-pong，全部使用 RDG 临时纹理。
-   - 第一版使用每轴固定 13 tap Gaussian，不引入 compute pass。
+   - 每轮使用 40 个 golden-angle disk taps，不引入 compute pass。
    - 半径按屏幕像素配置，并按 blur RT 尺寸换算到当前纹理像素。
+   - 不走横纵分离，避免极端半径下出现明显单向条带。
 
 3. `Composite`
    - 读取最终模糊后的颜色和深度数据：

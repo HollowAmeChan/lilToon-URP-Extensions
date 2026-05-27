@@ -443,8 +443,10 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            float4 _HoCharacterFaceHairDiffuseBlurParams; // x radius px in source texture, yz direction
+            float4 _HoCharacterFaceHairDiffuseBlurParams; // x radius px in source texture, y phase
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseDepthTexture);
+            static const float LIL_HOCHARACTER_GOLDEN_ANGLE = 2.39996323;
+            static const int LIL_HOCHARACTER_FACE_HAIR_FAST_GAUSSIAN_SAMPLES = 40;
 
             struct FaceHairBlurOutput
             {
@@ -458,19 +460,26 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
 
                 float2 uv = input.texcoord;
                 float radiusPx = max(_HoCharacterFaceHairDiffuseBlurParams.x, 0.0);
-                float2 direction = _HoCharacterFaceHairDiffuseBlurParams.yz;
-                float2 stepUv = _BlitTexture_TexelSize.xy * direction * radiusPx;
+                float phase = _HoCharacterFaceHairDiffuseBlurParams.y;
+                float2 radiusUv = _BlitTexture_TexelSize.xy * radiusPx;
 
-                float4 colorSum = 0.0;
-                float4 depthSum = 0.0;
-                float weightSum = 0.0;
+                float4 centerColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
+                float4 centerDepth = SAMPLE_TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseDepthTexture, sampler_LinearClamp, uv);
+                float4 colorSum = centerColor * 1.6;
+                float4 depthSum = centerDepth * 1.6;
+                float weightSum = 1.6;
 
                 [unroll]
-                for (int i = -6; i <= 6; i++)
+                for (int i = 0; i < LIL_HOCHARACTER_FACE_HAIR_FAST_GAUSSIAN_SAMPLES; i++)
                 {
-                    float distance01 = abs((float)i) / 6.0;
-                    float weight = exp2(-distance01 * distance01 * 4.5);
-                    float2 sampleUv = uv + stepUv * ((float)i / 6.0);
+                    float sample01 = ((float)i + 0.5) / (float)LIL_HOCHARACTER_FACE_HAIR_FAST_GAUSSIAN_SAMPLES;
+                    float radius01 = sqrt(sample01);
+                    float angle = (float)i * LIL_HOCHARACTER_GOLDEN_ANGLE + phase;
+                    float s;
+                    float c;
+                    sincos(angle, s, c);
+                    float weight = exp2(-radius01 * radius01 * 4.0);
+                    float2 sampleUv = uv + float2(c, s) * radiusUv * radius01;
                     colorSum += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUv) * weight;
                     depthSum += SAMPLE_TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseDepthTexture, sampler_LinearClamp, sampleUv) * weight;
                     weightSum += weight;

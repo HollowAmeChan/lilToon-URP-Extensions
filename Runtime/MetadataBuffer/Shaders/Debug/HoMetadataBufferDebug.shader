@@ -32,6 +32,7 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
             TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
             TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture);
             TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
+            TEXTURE2D_X_FLOAT(_HoMetadataBufferMBufferDepthTexture);
 
             half3 HashColor(float3 value)
             {
@@ -86,7 +87,13 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
 
             half3 HashScalar(half value)
             {
-                return HashColor(float3(value, value * 2.17, value * 4.31)) * step(0.0001, value);
+                float id = ceil(saturate(value) * 255.0);
+                return HashColor(float3(id, id * 2.17, id * 4.31)) * step(0.5, id);
+            }
+
+            half3 HashId(float3 value)
+            {
+                return HashColor(ceil(saturate(value) * 255.0));
             }
 
             half4 Frag(Varyings input) : SV_Target
@@ -103,6 +110,7 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
                 int mode = (int)round(_HoMetadataBufferDebugMode);
                 half4 maskId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv);
                 half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture, sampler_PointClamp, uv);
+                half valid = step(0.0001, maskId.r);
 
                 if (mode == 1)
                 {
@@ -111,9 +119,8 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
 
                 if (mode == 2)
                 {
-                    half valid = step(0.0001, maskId.r);
                     half hasValue = saturate(max(max(step(0.0001, maskId.g), step(0.0001, maskId.b)), step(0.0001, maskId.a)));
-                    return lerp(source, half4(HashColor(maskId.gba), 1.0), valid * hasValue);
+                    return lerp(source, half4(HashId(maskId.gba), 1.0), valid * hasValue);
                 }
 
                 if (mode == 3)
@@ -133,7 +140,7 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
 
                 if (mode == 6)
                 {
-                    return half4(HashColor(float3(surfaceData.b, surfaceData.b * 2.17, surfaceData.b * 4.31)) * step(0.0001, surfaceData.b), 1.0);
+                    return half4(HashScalar(surfaceData.b), 1.0);
                 }
 
                 if (mode == 7)
@@ -144,48 +151,41 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
                 if (mode >= 8 && mode <= 11)
                 {
                     half value = GetCustomValue(mode - 8, uv);
-                    half valid = step(0.0001, maskId.r);
-                    return lerp(source, half4(value, value, value, 1.0), valid);
+                    return half4(value, value, value, 1.0);
                 }
 
                 if (mode >= 12 && mode <= 19)
                 {
                     half value = GetObjectCustomValue(mode - 12, uv);
-                    half valid = step(0.0001, maskId.r);
-                    return lerp(source, half4(value, value, value, 1.0), valid);
+                    return half4(value, value, value, 1.0);
                 }
 
                 if (mode == 20)
                 {
-                    half valid = step(0.0001, maskId.r);
                     half hasRsuv = saturate(max(max(step(0.0001, maskId.g), step(0.0001, maskId.b)), step(0.0001, maskId.a)));
-                    return lerp(source, half4(maskId.gba, 1.0), valid * hasRsuv);
+                    return half4(maskId.gba * hasRsuv, 1.0);
                 }
 
                 if (mode == 21)
                 {
-                    half valid = step(0.0001, maskId.r);
                     half hasValue = step(0.0001, maskId.g);
                     return lerp(source, half4(HashScalar(maskId.g), 1.0), valid * hasValue);
                 }
 
                 if (mode == 22)
                 {
-                    half valid = step(0.0001, maskId.r);
                     half hasValue = step(0.0001, maskId.b);
                     return lerp(source, half4(HashScalar(maskId.b), 1.0), valid * hasValue);
                 }
 
                 if (mode == 23)
                 {
-                    half valid = step(0.0001, maskId.r);
                     half hasValue = step(0.0001, maskId.a);
-                    return lerp(source, half4(Heat(maskId.a), 1.0), valid * hasValue);
+                    return half4(Heat(maskId.a) * hasValue, 1.0);
                 }
 
                 if (mode == 24)
                 {
-                    half valid = step(0.0001, maskId.r);
                     half hasId = saturate(max(step(0.0001, maskId.g), step(0.0001, maskId.b)));
                     half noObjectCustom = 1.0 - GetObjectCustomAny(uv);
                     half selected = valid * hasId * noObjectCustom;
@@ -195,9 +195,18 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
                 if (mode == 25)
                 {
                     half4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_PointClamp, uv);
-                    half coverage = saturate(surfaceColor.a);
-                    half valid = step(0.0001, maskId.r) * step(0.0001, coverage);
-                    return lerp(source, half4(surfaceColor.rgb, 1.0), valid * coverage);
+                    half surfaceCoverage = saturate(surfaceColor.a);
+                    half surfaceValid = step(0.0001, maskId.r) * step(0.0001, surfaceCoverage);
+                    half3 compositedColor = source.rgb * (1.0h - surfaceCoverage) + surfaceColor.rgb;
+                    return half4(lerp(source.rgb, compositedColor, surfaceValid), 1.0);
+                }
+
+                if (mode == 26)
+                {
+                    float rawDepth = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMBufferDepthTexture, sampler_PointClamp, uv).r;
+                    half depthValid = step(0.0001h, abs(rawDepth - 1.0h));
+                    half depth = saturate(Linear01Depth(rawDepth, _ZBufferParams));
+                    return lerp(source, half4(depth, depth, depth, 1.0), depthValid);
                 }
 
                 return source;

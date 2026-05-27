@@ -214,6 +214,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
     internal sealed class HoCharacterSpecializationPass : ScriptableRenderPass
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-CharacterSpecialization");
+        private const int FaceHairDiffuseBlurIterationCount = 2;
         private static readonly List<ShaderTagId> CaptureShaderTagIds = new List<ShaderTagId>
         {
             HoCharacterSpecializationShaderConstants.CaptureShaderTagId
@@ -571,52 +572,32 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     });
                 }
 
-                Vector4 horizontalBlurParams = CreateFaceHairDiffuseBlurParams(settings, cameraData.cameraTargetDescriptor, faceHairDiffuseSourceColorTexture.GetDescriptor(renderGraph), new Vector2(1.0f, 0.0f));
-                using (var builder = renderGraph.AddRasterRenderPass<FaceHairDiffuseBlurPassData>("Ho-CharacterSpecialization FaceHair Blur H", out FaceHairDiffuseBlurPassData passData, ProfilingSampler))
+                TextureHandle blurSourceColor = faceHairDiffuseSourceColorTexture;
+                TextureHandle blurSourceDepth = faceHairDiffuseSourceDepthTexture;
+                float iterationRadiusScale = 1.0f / Mathf.Sqrt(FaceHairDiffuseBlurIterationCount);
+                for (int i = 0; i < FaceHairDiffuseBlurIterationCount; i++)
                 {
-                    passData.sourceColor = faceHairDiffuseSourceColorTexture;
-                    passData.sourceDepth = faceHairDiffuseSourceDepthTexture;
-                    passData.destinationColor = faceHairDiffuseTempColorTexture;
-                    passData.destinationDepth = faceHairDiffuseTempDepthTexture;
-                    passData.material = compositeMaterial;
-                    passData.blurParams = horizontalBlurParams;
+                    bool writeFinal = i == FaceHairDiffuseBlurIterationCount - 1;
+                    TextureHandle blurDestinationColor = writeFinal ? faceHairDiffuseColorTexture : faceHairDiffuseTempColorTexture;
+                    TextureHandle blurDestinationDepth = writeFinal ? faceHairDiffuseDepthTexture : faceHairDiffuseTempDepthTexture;
+                    Vector4 blurParams = CreateFaceHairDiffuseBlurParams(
+                        settings,
+                        cameraData.cameraTargetDescriptor,
+                        blurSourceColor.GetDescriptor(renderGraph),
+                        iterationRadiusScale,
+                        i);
+                    AddFaceHairDiffuseBlurPass(
+                        renderGraph,
+                        $"Ho-CharacterSpecialization FaceHair FastGaussian {i + 1}",
+                        compositeMaterial,
+                        blurSourceColor,
+                        blurSourceDepth,
+                        blurDestinationColor,
+                        blurDestinationDepth,
+                        blurParams);
 
-                    builder.UseTexture(passData.sourceColor, AccessFlags.Read);
-                    builder.UseTexture(passData.sourceDepth, AccessFlags.Read);
-                    builder.SetRenderAttachment(passData.destinationColor, 0, AccessFlags.WriteAll);
-                    builder.SetRenderAttachment(passData.destinationDepth, 1, AccessFlags.WriteAll);
-                    builder.AllowGlobalStateModification(true);
-                    builder.AllowPassCulling(false);
-                    builder.SetRenderFunc(static (FaceHairDiffuseBlurPassData data, RasterGraphContext context) =>
-                    {
-                        data.material.SetVector(HoCharacterSpecializationShaderConstants.FaceHairDiffuseBlurParamsId, data.blurParams);
-                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.FaceHairDiffuseDepthTextureId, data.sourceDepth);
-                        Blitter.BlitTexture(context.cmd, data.sourceColor, new Vector4(1, 1, 0, 0), data.material, 2);
-                    });
-                }
-
-                Vector4 verticalBlurParams = CreateFaceHairDiffuseBlurParams(settings, cameraData.cameraTargetDescriptor, faceHairDiffuseTempColorTexture.GetDescriptor(renderGraph), new Vector2(0.0f, 1.0f));
-                using (var builder = renderGraph.AddRasterRenderPass<FaceHairDiffuseBlurPassData>("Ho-CharacterSpecialization FaceHair Blur V", out FaceHairDiffuseBlurPassData passData, ProfilingSampler))
-                {
-                    passData.sourceColor = faceHairDiffuseTempColorTexture;
-                    passData.sourceDepth = faceHairDiffuseTempDepthTexture;
-                    passData.destinationColor = faceHairDiffuseColorTexture;
-                    passData.destinationDepth = faceHairDiffuseDepthTexture;
-                    passData.material = compositeMaterial;
-                    passData.blurParams = verticalBlurParams;
-
-                    builder.UseTexture(passData.sourceColor, AccessFlags.Read);
-                    builder.UseTexture(passData.sourceDepth, AccessFlags.Read);
-                    builder.SetRenderAttachment(passData.destinationColor, 0, AccessFlags.WriteAll);
-                    builder.SetRenderAttachment(passData.destinationDepth, 1, AccessFlags.WriteAll);
-                    builder.AllowGlobalStateModification(true);
-                    builder.AllowPassCulling(false);
-                    builder.SetRenderFunc(static (FaceHairDiffuseBlurPassData data, RasterGraphContext context) =>
-                    {
-                        data.material.SetVector(HoCharacterSpecializationShaderConstants.FaceHairDiffuseBlurParamsId, data.blurParams);
-                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.FaceHairDiffuseDepthTextureId, data.sourceDepth);
-                        Blitter.BlitTexture(context.cmd, data.sourceColor, new Vector4(1, 1, 0, 0), data.material, 2);
-                    });
+                    blurSourceColor = blurDestinationColor;
+                    blurSourceDepth = blurDestinationDepth;
                 }
             }
 
@@ -914,16 +895,51 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             HoCharacterSpecializationSettings settings,
             RenderTextureDescriptor cameraTextureDescriptor,
             TextureDesc blurTextureDesc,
-            Vector2 direction)
+            float radiusScale,
+            int iterationIndex)
         {
             float scale = blurTextureDesc.width > 0
                 ? blurTextureDesc.width / (float)Mathf.Max(1, cameraTextureDescriptor.width)
                 : 1.0f;
             return new Vector4(
-                Mathf.Max(0.0f, settings.faceHairDiffuseRadiusPixels) * Mathf.Max(scale, 0.0001f),
-                direction.x,
-                direction.y,
+                Mathf.Max(0.0f, settings.faceHairDiffuseRadiusPixels) * Mathf.Max(scale, 0.0001f) * Mathf.Max(radiusScale, 0.0001f),
+                iterationIndex * 1.61803399f,
+                FaceHairDiffuseBlurIterationCount,
                 0.0f);
+        }
+
+        private static void AddFaceHairDiffuseBlurPass(
+            RenderGraph renderGraph,
+            string passName,
+            Material material,
+            TextureHandle sourceColor,
+            TextureHandle sourceDepth,
+            TextureHandle destinationColor,
+            TextureHandle destinationDepth,
+            Vector4 blurParams)
+        {
+            using (var builder = renderGraph.AddRasterRenderPass<FaceHairDiffuseBlurPassData>(passName, out FaceHairDiffuseBlurPassData passData, ProfilingSampler))
+            {
+                passData.sourceColor = sourceColor;
+                passData.sourceDepth = sourceDepth;
+                passData.destinationColor = destinationColor;
+                passData.destinationDepth = destinationDepth;
+                passData.material = material;
+                passData.blurParams = blurParams;
+
+                builder.UseTexture(passData.sourceColor, AccessFlags.Read);
+                builder.UseTexture(passData.sourceDepth, AccessFlags.Read);
+                builder.SetRenderAttachment(passData.destinationColor, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(passData.destinationDepth, 1, AccessFlags.WriteAll);
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (FaceHairDiffuseBlurPassData data, RasterGraphContext context) =>
+                {
+                    data.material.SetVector(HoCharacterSpecializationShaderConstants.FaceHairDiffuseBlurParamsId, data.blurParams);
+                    context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.FaceHairDiffuseDepthTextureId, data.sourceDepth);
+                    Blitter.BlitTexture(context.cmd, data.sourceColor, new Vector4(1, 1, 0, 0), data.material, 2);
+                });
+            }
         }
 
         private static TextureDesc CreateFaceHairDiffuseTextureDesc(

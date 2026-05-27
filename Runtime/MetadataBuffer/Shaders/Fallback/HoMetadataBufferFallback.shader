@@ -184,6 +184,91 @@
             ENDHLSL
         }
 
+        Pass
+        {
+            Name "MetadataBuffer ObjectCustom Solid"
+            ZWrite On
+            ZTest LEqual
+            Cull Off
+
+            HLSLPROGRAM
+            #pragma target 4.5
+            #pragma vertex Vert
+            #pragma fragment FragObjectCustom
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+
+            float _HoMetadataBufferMaskWeight;
+            float _HoMetadataBufferObjectCustomMask;
+
+            struct Attributes
+            {
+                float4 positionOS : POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
+            };
+
+            struct Varyings
+            {
+                float4 positionCS : SV_POSITION;
+                UNITY_VERTEX_OUTPUT_STEREO
+            };
+
+            struct ObjectCustomOutput
+            {
+                half4 objectCustom0 : SV_Target0;
+                half4 objectCustom1 : SV_Target1;
+            };
+
+            float HasObjectCustomBit(uint mask, uint bitIndex)
+            {
+                return (float)((mask >> bitIndex) & 1u);
+            }
+
+            float4 DecodeObjectCustom0(uint mask)
+            {
+                return float4(
+                    HasObjectCustomBit(mask, 0u),
+                    HasObjectCustomBit(mask, 1u),
+                    HasObjectCustomBit(mask, 2u),
+                    HasObjectCustomBit(mask, 3u));
+            }
+
+            float4 DecodeObjectCustom1(uint mask)
+            {
+                return float4(
+                    HasObjectCustomBit(mask, 4u),
+                    HasObjectCustomBit(mask, 5u),
+                    HasObjectCustomBit(mask, 6u),
+                    HasObjectCustomBit(mask, 7u));
+            }
+
+            Varyings Vert(Attributes input)
+            {
+                Varyings output;
+                UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
+                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
+                return output;
+            }
+
+            ObjectCustomOutput FragObjectCustom(Varyings input)
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
+                uint rendererUserValue = unity_RendererUserValue;
+                bool hasRendererUserValue = rendererUserValue != 0u;
+                uint objectCustomMask = hasRendererUserValue ? (rendererUserValue & 255u) : (uint)round(saturate(_HoMetadataBufferObjectCustomMask / 255.0) * 255.0);
+                float subjectValid = step(0.0001, saturate(_HoMetadataBufferMaskWeight));
+                clip((objectCustomMask != 0u && subjectValid > 0.5) ? 1.0 : -1.0);
+
+                ObjectCustomOutput output;
+                output.objectCustom0 = half4(DecodeObjectCustom0(objectCustomMask));
+                output.objectCustom1 = half4(DecodeObjectCustom1(objectCustomMask));
+                return output;
+            }
+            ENDHLSL
+        }
+
     }
 
     Fallback Off

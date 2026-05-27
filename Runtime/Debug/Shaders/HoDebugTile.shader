@@ -10,6 +10,7 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             ZWrite Off
             ZTest Always
             Cull Off
+            Blend One OneMinusSrcAlpha
 
             HLSLPROGRAM
             #pragma vertex Vert
@@ -34,6 +35,7 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
             TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture);
             TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
+            TEXTURE2D_X_FLOAT(_HoMetadataBufferMBufferDepthTexture);
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
             TEXTURE2D_FLOAT(_HoShadowCastAtlas);
             TEXTURE2D_FLOAT(_HoShadowCastSecondDirectionalAtlas);
@@ -115,6 +117,40 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 return half4(value, value, value, 1.0h);
             }
 
+            float3 QuantizeEncodedId(float3 value)
+            {
+                return ceil(saturate(value) * 255.0);
+            }
+
+            float QuantizeEncodedId(float value)
+            {
+                return ceil(saturate(value) * 255.0);
+            }
+
+            half3 HashEncodedId(float3 value)
+            {
+                return HashColor(QuantizeEncodedId(value));
+            }
+
+            half3 HashEncodedId(float value)
+            {
+                float id = QuantizeEncodedId(value);
+                return HashColor(float3(id, id * 2.17, id * 4.31)) * step(0.5, id);
+            }
+
+            half4 DebugSurfaceColor(half4 surfaceColor, float2 uv)
+            {
+                half coverage = saturate(surfaceColor.a);
+                return half4(surfaceColor.rgb, coverage);
+            }
+
+            half4 DebugMBufferDepth(float rawDepth)
+            {
+                half valid = step(0.0001h, abs(rawDepth - 1.0h));
+                half depth = saturate((LinearEyeDepth(rawDepth, _ZBufferParams) - _HoDebugTileGeometryDepthParams.x) * _HoDebugTileGeometryDepthParams.z);
+                return half4(half3(depth, depth, depth) * valid, 1.0h);
+            }
+
             half GetObjectCustomValue(int customIndex, float2 uv)
             {
                 if (customIndex < 4)
@@ -131,14 +167,15 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             {
                 half4 maskId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv);
                 half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture, sampler_PointClamp, uv);
+                half valid = step(0.0001h, maskId.r);
                 int mode = _HoDebugTileMode;
 
                 if (mode == 1) return half4(maskId.rrr, 1.0h);
-                if (mode == 2) return half4(HashColor(maskId.gba) * step(0.0001h, maskId.r), 1.0h);
+                if (mode == 2) return half4(HashEncodedId(maskId.gba) * valid * step(0.0001h, max(max(maskId.g, maskId.b), maskId.a)), 1.0h);
                 if (mode == 3) return half4(Heat(maskId.a) * step(0.0001h, maskId.a), 1.0h);
                 if (mode == 4) return half4(surfaceData.rrr, 1.0h);
                 if (mode == 5) return half4(Heat(surfaceData.g) * step(0.0001h, surfaceData.g), 1.0h);
-                if (mode == 6) return half4(HashColor(float3(surfaceData.b, surfaceData.b * 2.17, surfaceData.b * 4.31)) * step(0.0001h, surfaceData.b), 1.0h);
+                if (mode == 6) return half4(HashEncodedId(surfaceData.b), 1.0h);
                 if (mode == 7) return half4(surfaceData.aaa, 1.0h);
 
                 if (mode >= 8 && mode <= 11)
@@ -153,14 +190,19 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 }
 
                 if (mode == 20) return half4(maskId.gba, 1.0h);
-                if (mode == 21) return half4(HashColor(float3(maskId.g, maskId.g * 2.17, maskId.g * 4.31)) * step(0.0001h, maskId.g), 1.0h);
-                if (mode == 22) return half4(HashColor(float3(maskId.b, maskId.b * 2.17, maskId.b * 4.31)) * step(0.0001h, maskId.b), 1.0h);
+                if (mode == 21) return half4(HashEncodedId(maskId.g) * valid, 1.0h);
+                if (mode == 22) return half4(HashEncodedId(maskId.b) * valid, 1.0h);
                 if (mode == 23) return half4(Heat(maskId.a), 1.0h);
-                if (mode == 24) return half4(0.15h, 0.78h, 1.0h, 1.0h) * step(0.0001h, maskId.r);
+                if (mode == 24) return half4(0.15h, 0.78h, 1.0h, 1.0h) * valid;
                 if (mode == 25)
                 {
                     half4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_PointClamp, uv);
-                    return half4(surfaceColor.rgb, 1.0h);
+                    return DebugSurfaceColor(surfaceColor, uv);
+                }
+                if (mode == 26)
+                {
+                    float rawDepth = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMBufferDepthTexture, sampler_PointClamp, uv).r;
+                    return DebugMBufferDepth(rawDepth);
                 }
 
                 return DebugScalar(maskId.r);
@@ -350,7 +392,7 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 int mode = _HoDebugTileMode;
 
                 if (mode == 1) return half4(coverage.xxx, 1.0h);
-                if (mode == 2) return half4(surfaceColor.rgb, 1.0h);
+                if (mode == 2) return DebugSurfaceColor(surfaceColor, uv);
                 if (mode == 3) return half4(source.rgb * coverage, 1.0h);
                 if (mode == 4) return half4(transmission.rgb, 1.0h);
                 if (mode == 5) return half4(transmission.aaa, 1.0h);
@@ -476,7 +518,7 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 half label = DrawLabel(uv);
                 color.rgb = lerp(color.rgb, color.rgb * 0.2h, labelBackground);
                 color.rgb = lerp(color.rgb, half3(1.0h, 1.0h, 1.0h), label);
-                color.a = 1.0h;
+                color.a = max(color.a, saturate(labelBackground + label));
                 return color;
             }
 
