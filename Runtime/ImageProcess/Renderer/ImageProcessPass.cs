@@ -144,6 +144,13 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             if (runtimeLayers.Count == 0 || cameraColorTarget == null || tempTextureA == null || tempTextureB == null)
             {
+                ImageProcessRuntimeDiagnostics.PublishInputs(
+                    renderingData.cameraData.camera,
+                    "Compatibility",
+                    runtimeLayers.Count,
+                    0,
+                    false,
+                    cameraColorTarget != null);
                 return;
             }
 
@@ -175,12 +182,24 @@ namespace lilToon.URP.Extensions.PostProcessing
 
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
+            ImageProcessRuntimeDiagnostics.PublishInputs(
+                renderingData.cameraData.camera,
+                "Compatibility",
+                runtimeLayers.Count,
+                runtimeLayers.Count,
+                false,
+                true);
         }
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
+            UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             if (runtimeLayers.Count == 0)
             {
+                ImageProcessRuntimeDiagnostics.PublishSkipped(
+                    cameraData.camera,
+                    "RenderGraph",
+                    "没有可运行的 ImageProcess layer。");
                 return;
             }
 
@@ -192,12 +211,26 @@ namespace lilToon.URP.Extensions.PostProcessing
                     Debug.LogWarning($"{_passName} skipped because the active color target is the backbuffer. The ImageProcess post process stack requires an intermediate color texture.");
                     warnedBackBuffer = true;
                 }
+                ImageProcessRuntimeDiagnostics.PublishInputs(
+                    cameraData.camera,
+                    "Stack",
+                    runtimeLayers.Count,
+                    0,
+                    true,
+                    false);
                 return;
             }
 
             TextureHandle source = resourceData.activeColorTexture;
             if (!source.IsValid())
             {
+                ImageProcessRuntimeDiagnostics.PublishInputs(
+                    cameraData.camera,
+                    "Stack",
+                    runtimeLayers.Count,
+                    0,
+                    false,
+                    false);
                 return;
             }
 
@@ -218,6 +251,13 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             resourceData.cameraColor = imageChain.Current;
+            ImageProcessRuntimeDiagnostics.PublishInputs(
+                cameraData.camera,
+                "Stack",
+                runtimeLayers.Count,
+                runtimeLayers.Count,
+                false,
+                true);
         }
 
         private void CopyLayers(List<ImageProcessRuntimeLayer> layers)

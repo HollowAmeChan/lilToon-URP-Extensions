@@ -37,6 +37,10 @@ namespace lilToon.URP.Extensions.PostProcessing
             ImageProcessStackVolume volume = GetVolumeComponent();
             if (!ShouldRender(in renderingData, volume))
             {
+                ImageProcessRuntimeDiagnostics.PublishSkipped(
+                    renderingData.cameraData.camera,
+                    "RendererFeature",
+                    GetSkipReason(in renderingData, volume));
                 afterPostProcessPass?.ClearRuntimeLayers();
                 if (ShouldReleaseRuntimeResources(in renderingData, volume))
                 {
@@ -65,6 +69,14 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             BuildRuntimeLayers(volume);
+            if (afterPostProcessLayers.Count == 0)
+            {
+                ImageProcessRuntimeDiagnostics.PublishSkipped(
+                    renderingData.cameraData.camera,
+                    "RendererFeature",
+                    "没有可运行的 ImageProcess layer。");
+            }
+
             EnqueueRenderGraphPass(renderer, afterPostProcessPass, afterPostProcessLayers, ScreenProcessRenderPassEvents.ImageProcessFinalStack);
         }
 
@@ -91,6 +103,39 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             return cameraType == CameraType.Game && volume != null && volume.IsActive();
+        }
+
+        private string GetSkipReason(in RenderingData renderingData, ImageProcessStackVolume volume)
+        {
+            if (settings == null || !settings.enabled)
+            {
+                return "Feature 已关闭。";
+            }
+
+            if (!UseVolumes)
+            {
+                return "Volume 模式已关闭。";
+            }
+
+            if (volume == null)
+            {
+                return "未找到 ImageProcess Volume。";
+            }
+
+            CameraType cameraType = renderingData.cameraData.cameraType;
+            if (cameraType == CameraType.SceneView && !volume.ShowInSceneView.value)
+            {
+                return "Scene View 渲染已关闭。";
+            }
+
+            if (!volume.IsActive())
+            {
+                return "ImageProcess Volume 未激活。";
+            }
+
+            return cameraType == CameraType.Game || cameraType == CameraType.SceneView
+                ? "未入队。"
+                : "当前 camera type 不支持。";
         }
 
         private bool ShouldReleaseRuntimeResources(in RenderingData renderingData, ImageProcessStackVolume volume)
