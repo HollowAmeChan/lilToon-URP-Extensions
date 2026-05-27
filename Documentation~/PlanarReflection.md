@@ -1,6 +1,6 @@
 # 平面反射
 
-`HoPlanarReflectionRendererFeature` 负责在每个源相机渲染前调度场景里的 `HoPlanarReflectionSurface`。每个有效表面都会生成一台隐藏的镜像相机，把反射结果渲染到自己的 `RenderTexture`，再把这张反射纹理和状态参数发布成全局 shader 输入，最后由统一的 fullscreen composite pass 混回 camera color。
+`HoPlanarReflectionRendererFeature` 负责在每个源相机渲染前调度场景里的 `HoPlanarReflectionSurface`。每个有效表面都会生成一台隐藏的镜像相机，先把反射结果渲染到带 depth/stencil 的相机输出 RT，再拷贝到 color-only 的反射纹理，把这张 color-only 纹理和状态参数发布成全局 shader 输入，最后由统一的 fullscreen composite pass 混回 camera color。
 
 当前正式链路只有一条：材质负责把“哪些像素需要反射、按什么强度和扰动混合”写进 MetadataBuffer / GeometryBuffer；`HoPlanarReflectionCompositePass` 在透明物体之后读取 camera color、MetadataBuffer、GeometryBuffer 和反射纹理，统一做后处理合成。内置 `lilPBR` 和 `WaterFlowmap` 不再在 `ForwardLit` 里直接采样平面反射纹理。
 
@@ -64,7 +64,7 @@ MetadataBuffer / GeometryBuffer 的 `Layer Mask` 和 `Render Queue` 必须覆盖
 | `反射场景视图` | 控制单个 surface 是否响应 Scene View 相机。RendererFeature 也有全局 Scene View 开关，两者都要允许才会渲染。 |
 | `更新帧间隔` | 大于 `1` 时按帧复用上一张反射纹理，只刷新 property block 和全局状态。 |
 
-反射颜色纹理使用 `RenderTextureFormat.DefaultHDR`、color-only、`FilterMode.Bilinear`、`TextureWrapMode.Clamp`，不生成 mipmap。它必须保持不带 depth/stencil，才能作为普通颜色 RT import 到 RenderGraph。
+反射相机的 `targetTexture` 使用 `RenderTextureFormat.DefaultHDR` 并带 depth/stencil，因为 URP RenderGraph 的相机输出要求 Output Texture 的 Depth Stencil Format 不能为 `None`。渲染结束后会把它 Blit 到另一张 color-only 反射颜色纹理；这张发布给 composite 的颜色纹理使用 `RenderTextureFormat.DefaultHDR`、`FilterMode.Bilinear`、`TextureWrapMode.Clamp`，不生成 mipmap，并且必须保持不带 depth/stencil，才能作为普通颜色 RT import 到 RenderGraph。
 
 ### 裁剪与背景
 
@@ -116,7 +116,8 @@ MetadataBuffer / GeometryBuffer 的 `Layer Mask` 和 `Render Queue` 必须覆盖
    - 从源相机复制投影、FOV、clear flags 等相机设置。
    - 把反射相机移动到源相机的镜像位置，并写入 `worldToCameraMatrix = sourceWorldToCamera * reflectionMatrix`。
    - 如果开启平面裁剪，使用反射平面计算 oblique projection。
-   - 临时翻转 `GL.invertCulling`，再调用 `UniversalRenderPipeline.RenderSingleCamera(context, reflectionCamera)`。
+   - 临时翻转 `GL.invertCulling`，再调用 `UniversalRenderPipeline.RenderSingleCamera(context, reflectionCamera)`，渲染目标是带 depth/stencil 的反射相机 RT。
+   - 恢复 culling 后，把反射相机 RT 拷贝到 color-only 反射纹理；后续全局状态和 RDG import 只使用这张 color-only 纹理。
    - 结束后恢复 `GL.invertCulling` 和目标 renderer 的 `forceRenderingOff`。
 6. 成功渲染后，surface 通过 property block 写入目标 renderer，并同时发布一份全局反射输入给 composite pass。
 7. 当本帧至少有一个 surface 成功，并且 `启用后处理合成` 打开时，运行时发布 `_HoPlanarReflectionCompositeActive = 1`。
@@ -133,7 +134,7 @@ MetadataBuffer 和 GeometryBuffer 是独立渲染阶段，不是主材质 `Forwa
 
 ### 反射预处理
 
-RenderGraph 路径会把当前 surface 发布的 `RTHandle` import 成 graph 资源。默认情况下 composite 直接读取这份反射输入；当 `反射曝光 EV != 0` 或 `圆盘模糊半径 > 0` 时，会额外记录一个 `Ho-PlanarReflection Preprocess` raster pass：
+RenderGraph 路径会把当前 surface 发布的 color-only `RTHandle` import 成 graph 资源。默认情况下 composite 直接读取这份反射输入；当 `反射曝光 EV != 0` 或 `圆盘模糊半径 > 0` 时，会额外记录一个 `Ho-PlanarReflection Preprocess` raster pass：
 
 1. 读取 import 后的反射纹理。
 2. 按 `圆盘模糊半径` 做固定采样的 disk blur，半径单位是反射纹理像素。
@@ -150,7 +151,7 @@ RenderGraph 路径会把当前 surface 发布的 `RTHandle` import 成 graph 资
 | 输入 | 来源 |
 | --- | --- |
 | camera color | 当前 `UniversalResourceData.activeColorTexture`。 |
-| 反射 RTHandle | 最近一次成功发布的平面反射纹理。RenderGraph 路径会先 import 它，再决定是否进入预处理 pass。 |
+| 反射 RTHandle | 最近一次成功发布的 color-only 平面反射纹理。RenderGraph 路径会先 import 它，再决定是否进入预处理 pass。 |
 | `_HoPlanarReflectionProcessedTexture` | composite shader 实际采样的反射纹理。没有开启曝光或模糊时指向 import 后的原始反射输入。 |
 | `_LILPBRPlanarReflectionParams` | 反射是否有效和纹理尺寸。 |
 | `_HoMetadataBufferMaskIdTexture` | MetadataBuffer 的 mask/id RT，`maskId.r` 作为反射表面 mask。 |
