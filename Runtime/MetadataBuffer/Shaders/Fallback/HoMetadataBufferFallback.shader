@@ -186,7 +186,7 @@
 
         Pass
         {
-            Name "MetadataBuffer ObjectCustom Solid"
+            Name "MetadataBuffer RSUV Solid"
             ZWrite On
             ZTest LEqual
             Cull Off
@@ -194,11 +194,16 @@
             HLSLPROGRAM
             #pragma target 4.5
             #pragma vertex Vert
-            #pragma fragment FragObjectCustom
+            #pragma fragment FragRsuvSolid
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
             float _HoMetadataBufferMaskWeight;
+            float _HoMetadataBufferSystemChannelMask;
+            float _HoMetadataBufferSystemWriteMask;
+            float _HoMetadataBufferGroupId;
+            float _HoMetadataBufferObjectId;
+            float _HoMetadataBufferFlags;
             float _HoMetadataBufferObjectCustomMask;
 
             struct Attributes
@@ -213,11 +218,32 @@
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
-            struct ObjectCustomOutput
+            struct RsuvSolidOutput
             {
-                half4 objectCustom0 : SV_Target0;
-                half4 objectCustom1 : SV_Target1;
+                half4 maskId : SV_Target0;
+                half4 objectCustom0 : SV_Target1;
+                half4 objectCustom1 : SV_Target2;
             };
+
+            float HasBit(float value, float bitValue)
+            {
+                return step(0.5, fmod(floor(value / bitValue), 2.0));
+            }
+
+            float HasSystemChannel(float bitValue)
+            {
+                return HasBit(_HoMetadataBufferSystemWriteMask, bitValue);
+            }
+
+            float EncodeByte(float value)
+            {
+                return saturate(round(clamp(value, 0.0, 255.0)) / 255.0);
+            }
+
+            float ByteToFloat(uint value, uint shift)
+            {
+                return (float)((value >> shift) & 255u);
+            }
 
             float HasObjectCustomBit(uint mask, uint bitIndex)
             {
@@ -251,19 +277,33 @@
                 return output;
             }
 
-            ObjectCustomOutput FragObjectCustom(Varyings input)
+            RsuvSolidOutput FragRsuvSolid(Varyings input)
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 uint rendererUserValue = unity_RendererUserValue;
                 bool hasRendererUserValue = rendererUserValue != 0u;
                 uint objectCustomMask = hasRendererUserValue ? (rendererUserValue & 255u) : (uint)round(saturate(_HoMetadataBufferObjectCustomMask / 255.0) * 255.0);
+                float effectiveGroupId = hasRendererUserValue ? ByteToFloat(rendererUserValue, 8u) : _HoMetadataBufferGroupId;
+                float effectiveObjectId = hasRendererUserValue ? ByteToFloat(rendererUserValue, 16u) : _HoMetadataBufferObjectId;
+                float effectiveFlags = hasRendererUserValue ? ByteToFloat(rendererUserValue, 24u) : _HoMetadataBufferFlags;
                 float subjectValid = step(0.0001, saturate(_HoMetadataBufferMaskWeight));
-                clip((objectCustomMask != 0u && subjectValid > 0.5) ? 1.0 : -1.0);
+                float hasId = step(0.5, max(max(effectiveGroupId, effectiveObjectId), effectiveFlags));
+                float hasRsuv = max((objectCustomMask != 0u) ? 1.0 : 0.0, hasId);
+                clip((hasRsuv > 0.5 && subjectValid > 0.5) ? 1.0 : -1.0);
 
-                ObjectCustomOutput output;
-                output.objectCustom0 = half4(DecodeObjectCustom0(objectCustomMask));
-                output.objectCustom1 = half4(DecodeObjectCustom1(objectCustomMask));
+                float maskEnabled = HasSystemChannel(1.0);
+                float idEnabled = HasSystemChannel(2.0);
+                float flagsEnabled = HasSystemChannel(4.0);
+
+                RsuvSolidOutput output;
+                output.maskId = half4(
+                    subjectValid * maskEnabled,
+                    EncodeByte(effectiveGroupId) * idEnabled * subjectValid,
+                    EncodeByte(effectiveObjectId) * idEnabled * subjectValid,
+                    EncodeByte(effectiveFlags) * flagsEnabled * subjectValid);
+                output.objectCustom0 = half4(DecodeObjectCustom0(objectCustomMask) * subjectValid);
+                output.objectCustom1 = half4(DecodeObjectCustom1(objectCustomMask) * subjectValid);
                 return output;
             }
             ENDHLSL

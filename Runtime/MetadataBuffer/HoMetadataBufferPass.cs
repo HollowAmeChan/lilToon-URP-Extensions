@@ -31,10 +31,21 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             HoMetadataBufferShaderConstants.SurfaceColorShaderTagId
         };
 
+        private static readonly List<ShaderTagId> RsuvSolidShaderTagIds = new List<ShaderTagId>
+        {
+            HoMetadataBufferShaderConstants.ShaderTagId,
+            new ShaderTagId("SRPDefaultUnlit"),
+            new ShaderTagId("UniversalForward"),
+            new ShaderTagId("UniversalForwardOnly")
+        };
+
+        private const int FallbackMaterialPassIndex = 0;
+        private const int RsuvSolidMaterialPassIndex = 1;
         private const int FallbackMaxRenderQueue = (int)RenderQueue.AlphaTest - 1;
         private const int SurfaceColorOpaqueMaxRenderQueue = (int)RenderQueue.GeometryLast;
 
         private readonly RTHandle[] colorTargets = new RTHandle[HoMetadataBufferAttachmentLayout.ColorTargetCount];
+        private readonly RenderTargetIdentifier[] rsuvSolidIdentifiers = new RenderTargetIdentifier[3];
         private HoMetadataBufferSettings settings;
         private HoMetadataBufferRenderTargets renderTargets;
         private Material clearMaterial;
@@ -53,6 +64,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         {
             public RendererListHandle fallbackRendererList;
             public RendererListHandle metadataRendererList;
+            public RendererListHandle rsuvSolidRendererList;
             public RendererListHandle surfaceColorOpaqueRendererList;
             public RendererListHandle surfaceColorTransparentRendererList;
             public bool drawFallback;
@@ -155,12 +167,27 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 {
                     DrawingSettings fallbackDrawingSettings = CreateDrawingSettings(FallbackShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
                     fallbackDrawingSettings.overrideMaterial = fallbackMaterial;
-                    fallbackDrawingSettings.overrideMaterialPassIndex = 0;
+                    fallbackDrawingSettings.overrideMaterialPassIndex = FallbackMaterialPassIndex;
                     context.DrawRenderers(renderingData.cullResults, ref fallbackDrawingSettings, ref fallbackFilteringSettings, ref renderStateBlock);
                 }
 
                 DrawingSettings metadataDrawingSettings = CreateDrawingSettings(MetadataShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
                 context.DrawRenderers(renderingData.cullResults, ref metadataDrawingSettings, ref metadataFilteringSettings, ref renderStateBlock);
+
+                if (CanDrawRsuvSolid())
+                {
+                    rsuvSolidIdentifiers[0] = renderTargets.MaskIdTexture.nameID;
+                    rsuvSolidIdentifiers[1] = renderTargets.ObjectCustom0Texture.nameID;
+                    rsuvSolidIdentifiers[2] = renderTargets.ObjectCustom1Texture.nameID;
+                    cmd.SetRenderTarget(rsuvSolidIdentifiers, renderTargets.DepthTexture.nameID);
+                    context.ExecuteCommandBuffer(cmd);
+                    cmd.Clear();
+
+                    DrawingSettings rsuvSolidDrawingSettings = CreateDrawingSettings(RsuvSolidShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
+                    rsuvSolidDrawingSettings.overrideMaterial = fallbackMaterial;
+                    rsuvSolidDrawingSettings.overrideMaterialPassIndex = RsuvSolidMaterialPassIndex;
+                    context.DrawRenderers(renderingData.cullResults, ref rsuvSolidDrawingSettings, ref metadataFilteringSettings, ref renderStateBlock);
+                }
 
                 cmd.SetRenderTarget(
                     renderTargets.SurfaceColorTexture,
@@ -248,6 +275,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             metadataResources.mBufferDepthTexture = mBufferDepthTexture;
 
             bool drawFallback = settings.useFallbackMaterial && fallbackMaterial != null && fallbackFilteringEnabled;
+            bool drawRsuvSolid = CanDrawRsuvSolid();
             DrawingSettings fallbackDrawingSettings = RenderingUtils.CreateDrawingSettings(
                 FallbackShaderTagIds,
                 renderingData,
@@ -255,7 +283,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 lightData,
                 SortingCriteria.CommonTransparent);
             fallbackDrawingSettings.overrideMaterial = fallbackMaterial;
-            fallbackDrawingSettings.overrideMaterialPassIndex = 0;
+            fallbackDrawingSettings.overrideMaterialPassIndex = FallbackMaterialPassIndex;
 
             DrawingSettings metadataDrawingSettings = RenderingUtils.CreateDrawingSettings(
                 MetadataShaderTagIds,
@@ -264,6 +292,15 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 lightData,
                 SortingCriteria.CommonTransparent);
 
+            DrawingSettings rsuvSolidDrawingSettings = RenderingUtils.CreateDrawingSettings(
+                RsuvSolidShaderTagIds,
+                renderingData,
+                cameraData,
+                lightData,
+                SortingCriteria.CommonTransparent);
+            rsuvSolidDrawingSettings.overrideMaterial = fallbackMaterial;
+            rsuvSolidDrawingSettings.overrideMaterialPassIndex = RsuvSolidMaterialPassIndex;
+
             RendererListParams fallbackRendererListParams = new RendererListParams(
                 renderingData.cullResults,
                 fallbackDrawingSettings,
@@ -271,6 +308,10 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             RendererListParams metadataRendererListParams = new RendererListParams(
                 renderingData.cullResults,
                 metadataDrawingSettings,
+                metadataFilteringSettings);
+            RendererListParams rsuvSolidRendererListParams = new RendererListParams(
+                renderingData.cullResults,
+                rsuvSolidDrawingSettings,
                 metadataFilteringSettings);
             DrawingSettings surfaceColorOpaqueDrawingSettings = RenderingUtils.CreateDrawingSettings(
                 SurfaceColorShaderTagIds,
@@ -351,6 +392,44 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                         context.cmd.DrawRendererList(data.metadataRendererList);
                     }
                 });
+            }
+
+            // RSUV ID and object-custom bits are renderer-level metadata; keep them independent from material alpha/cutout.
+            if (drawRsuvSolid)
+            {
+                using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-MetadataBuffer RSUV Solid", out PassData passData, ProfilingSampler))
+                {
+                    passData.rsuvSolidRendererList = renderGraph.CreateRendererList(rsuvSolidRendererListParams);
+                    passData.maskIdTexture = maskIdTexture;
+                    passData.objectCustom0Texture = objectCustom0Texture;
+                    passData.objectCustom1Texture = objectCustom1Texture;
+                    passData.systemChannelMask = GetSystemChannelMask(settings);
+
+                    if (passData.rsuvSolidRendererList.IsValid())
+                    {
+                        builder.UseRendererList(passData.rsuvSolidRendererList);
+                    }
+
+                    builder.SetRenderAttachment(maskIdTexture, 0, AccessFlags.ReadWrite);
+                    builder.SetRenderAttachment(objectCustom0Texture, 1, AccessFlags.ReadWrite);
+                    builder.SetRenderAttachment(objectCustom1Texture, 2, AccessFlags.ReadWrite);
+                    builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.ReadWrite);
+                    builder.SetGlobalTextureAfterPass(maskIdTexture, HoMetadataBufferShaderConstants.MaskIdTextureId);
+                    builder.SetGlobalTextureAfterPass(objectCustom0Texture, HoMetadataBufferShaderConstants.ObjectCustom0TextureId);
+                    builder.SetGlobalTextureAfterPass(objectCustom1Texture, HoMetadataBufferShaderConstants.ObjectCustom1TextureId);
+                    builder.AllowGlobalStateModification(true);
+                    builder.AllowPassCulling(false);
+                    builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                    {
+                        context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
+                        context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.SystemChannelMaskId, data.systemChannelMask);
+                        SetDefaultSubjectProperties(context.cmd);
+                        if (data.rsuvSolidRendererList.IsValid())
+                        {
+                            context.cmd.DrawRendererList(data.rsuvSolidRendererList);
+                        }
+                    });
+                }
             }
 
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-MetadataBuffer SurfaceColor Opaque", out PassData passData, ProfilingSampler))
@@ -620,6 +699,12 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             }
 
             fallbackMaterial.SetFloat(HoMetadataBufferShaderConstants.SystemChannelMaskId, GetSystemChannelMask(settings));
+        }
+
+        private bool CanDrawRsuvSolid()
+        {
+            return fallbackMaterial != null
+                && fallbackMaterial.passCount > RsuvSolidMaterialPassIndex;
         }
 
         private static void SetDefaultSubjectProperties(CommandBuffer cmd)
