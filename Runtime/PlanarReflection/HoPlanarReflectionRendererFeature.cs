@@ -69,6 +69,18 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
             [Tooltip("Tint multiplied onto the reflection texture before compositing.")]
             public Color tint = Color.white;
+
+            [Header("Debug")]
+            [Tooltip("Debug view rendered by the composite pass. Off renders the normal composite result.")]
+            public HoPlanarReflectionDebugMode debugMode = HoPlanarReflectionDebugMode.Off;
+
+            [Tooltip("Far depth used to normalize GeometryBuffer linear depth in debug views.")]
+            [Min(0.0001f)]
+            public float debugDepthFar = 100.0f;
+
+            [Tooltip("Scale applied when visualizing screen-space distortion vectors.")]
+            [Min(0.0001f)]
+            public float debugDistortionScale = 32.0f;
         }
 
         private static readonly List<HoPlanarReflectionRendererFeature> ActiveFeatures =
@@ -299,7 +311,28 @@ namespace lilToon.URP.Extensions.PlanarReflection
             activeSettings.distortion = Mathf.Clamp(activeSettings.distortion, 0.0f, 0.1f);
             activeSettings.minSmoothness = Mathf.Clamp01(activeSettings.minSmoothness);
             activeSettings.depthTolerance = Mathf.Max(0.0f, activeSettings.depthTolerance);
+            activeSettings.debugDepthFar = Mathf.Max(0.0001f, activeSettings.debugDepthFar);
+            activeSettings.debugDistortionScale = Mathf.Max(0.0001f, activeSettings.debugDistortionScale);
         }
+    }
+
+    public enum HoPlanarReflectionDebugMode
+    {
+        Off = 0,
+        InputStatus = 1,
+        WaterMask = 2,
+        Smoothness = 3,
+        Wetness = 4,
+        NormalStrength = 5,
+        ReflectionStrength = 6,
+        WorldNormal = 7,
+        LinearDepth = 8,
+        Distortion = 9,
+        DistortedUv = 10,
+        ReflectionColor = 11,
+        CompositeWeight = 12,
+        DepthGate = 13,
+        Custom0 = 14
     }
 
     internal static class HoPlanarReflectionShaderConstants
@@ -314,6 +347,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
         public const string CompositeParamsName = "_HoPlanarReflectionCompositeParams";
         public const string CompositeOptionsName = "_HoPlanarReflectionCompositeOptions";
         public const string CompositeTintName = "_HoPlanarReflectionCompositeTint";
+        public const string DebugParamsName = "_HoPlanarReflectionDebugParams";
+        public const string DebugInputStatusName = "_HoPlanarReflectionDebugInputStatus";
 
         public static readonly int UsePlanarReflectionId = Shader.PropertyToID(UsePlanarReflectionName);
         public static readonly int ReflectionTextureId = Shader.PropertyToID(ReflectionTextureName);
@@ -324,6 +359,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
         public static readonly int CompositeParamsId = Shader.PropertyToID(CompositeParamsName);
         public static readonly int CompositeOptionsId = Shader.PropertyToID(CompositeOptionsName);
         public static readonly int CompositeTintId = Shader.PropertyToID(CompositeTintName);
+        public static readonly int DebugParamsId = Shader.PropertyToID(DebugParamsName);
+        public static readonly int DebugInputStatusId = Shader.PropertyToID(DebugInputStatusName);
     }
 
     internal sealed class HoPlanarReflectionCompositePass : ScriptableRenderPass
@@ -345,6 +382,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
             public Vector4 compositeParams;
             public Vector4 compositeOptions;
             public Vector4 tint;
+            public Vector4 debugParams;
+            public Vector4 debugInputStatus;
         }
 
         public void Setup(
@@ -424,7 +463,12 @@ namespace lilToon.URP.Extensions.PlanarReflection
             TextureHandle maskIdTexture = metadataResources.maskIdTexture;
             TextureHandle custom0Texture = metadataResources.custom0Texture;
             TextureHandle normalDepthTexture = geometryResources.normalDepthTexture;
-            if (!source.IsValid() || !maskIdTexture.IsValid() || !custom0Texture.IsValid() || !normalDepthTexture.IsValid())
+            bool hasSource = source.IsValid();
+            bool hasMaskId = maskIdTexture.IsValid();
+            bool hasCustom0 = custom0Texture.IsValid();
+            bool hasNormalDepth = normalDepthTexture.IsValid();
+            bool inputStatusDebug = settings.debugMode == HoPlanarReflectionDebugMode.InputStatus;
+            if (!hasSource || (!inputStatusDebug && (!hasMaskId || !hasCustom0 || !hasNormalDepth)))
             {
                 return;
             }
@@ -445,11 +489,25 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 passData.compositeParams = CreateCompositeParams(settings);
                 passData.compositeOptions = CreateCompositeOptions(settings);
                 passData.tint = settings.tint;
+                passData.debugParams = CreateDebugParams(settings);
+                passData.debugInputStatus = new Vector4(1.0f, hasMaskId ? 1.0f : 0.0f, hasNormalDepth ? 1.0f : 0.0f, hasCustom0 ? 1.0f : 0.0f);
 
                 builder.UseTexture(source, AccessFlags.Read);
-                builder.UseTexture(maskIdTexture, AccessFlags.Read);
-                builder.UseTexture(custom0Texture, AccessFlags.Read);
-                builder.UseTexture(normalDepthTexture, AccessFlags.Read);
+                if (hasMaskId)
+                {
+                    builder.UseTexture(maskIdTexture, AccessFlags.Read);
+                }
+
+                if (hasCustom0)
+                {
+                    builder.UseTexture(custom0Texture, AccessFlags.Read);
+                }
+
+                if (hasNormalDepth)
+                {
+                    builder.UseTexture(normalDepthTexture, AccessFlags.Read);
+                }
+
                 builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
@@ -457,9 +515,23 @@ namespace lilToon.URP.Extensions.PlanarReflection
                     data.material.SetVector(HoPlanarReflectionShaderConstants.CompositeParamsId, data.compositeParams);
                     data.material.SetVector(HoPlanarReflectionShaderConstants.CompositeOptionsId, data.compositeOptions);
                     data.material.SetVector(HoPlanarReflectionShaderConstants.CompositeTintId, data.tint);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.custom0Texture);
-                    context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
+                    data.material.SetVector(HoPlanarReflectionShaderConstants.DebugParamsId, data.debugParams);
+                    data.material.SetVector(HoPlanarReflectionShaderConstants.DebugInputStatusId, data.debugInputStatus);
+                    if (data.maskIdTexture.IsValid())
+                    {
+                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
+                    }
+
+                    if (data.custom0Texture.IsValid())
+                    {
+                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.custom0Texture);
+                    }
+
+                    if (data.normalDepthTexture.IsValid())
+                    {
+                        context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
+                    }
+
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                 });
             }
@@ -497,6 +569,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
             material.SetVector(HoPlanarReflectionShaderConstants.CompositeParamsId, CreateCompositeParams(settings));
             material.SetVector(HoPlanarReflectionShaderConstants.CompositeOptionsId, CreateCompositeOptions(settings));
             material.SetVector(HoPlanarReflectionShaderConstants.CompositeTintId, settings.tint);
+            material.SetVector(HoPlanarReflectionShaderConstants.DebugParamsId, CreateDebugParams(settings));
+            material.SetVector(HoPlanarReflectionShaderConstants.DebugInputStatusId, Vector4.one);
         }
 
         private static Vector4 CreateCompositeParams(HoPlanarReflectionRendererFeature.Settings settings)
@@ -514,6 +588,15 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 settings.compositeFlipY ? 1.0f : 0.0f,
                 settings.enableDepthGate ? 1.0f : 0.0f,
                 0.0f,
+                0.0f);
+        }
+
+        private static Vector4 CreateDebugParams(HoPlanarReflectionRendererFeature.Settings settings)
+        {
+            return new Vector4(
+                (float)settings.debugMode,
+                Mathf.Max(0.0001f, settings.debugDepthFar),
+                Mathf.Max(0.0001f, settings.debugDistortionScale),
                 0.0f);
         }
     }
