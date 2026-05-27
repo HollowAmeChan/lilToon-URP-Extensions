@@ -11,17 +11,23 @@ namespace lilToon.URP.Extensions.PlanarReflection
         public readonly bool RenderGameView;
         public readonly bool RenderSceneView;
         public readonly int MaxSurfacesPerCamera;
+        public readonly bool CompositeEnabled;
+        public readonly bool SuppressMaterialReflectionWhenCompositing;
 
         public HoPlanarReflectionRenderSettings(
             bool enabled,
             bool renderGameView,
             bool renderSceneView,
-            int maxSurfacesPerCamera)
+            int maxSurfacesPerCamera,
+            bool compositeEnabled,
+            bool suppressMaterialReflectionWhenCompositing)
         {
             Enabled = enabled;
             RenderGameView = renderGameView;
             RenderSceneView = renderSceneView;
             MaxSurfacesPerCamera = Mathf.Max(0, maxSurfacesPerCamera);
+            CompositeEnabled = compositeEnabled;
+            SuppressMaterialReflectionWhenCompositing = suppressMaterialReflectionWhenCompositing;
         }
     }
 
@@ -46,10 +52,10 @@ namespace lilToon.URP.Extensions.PlanarReflection
     public sealed class HoPlanarReflectionSurface : MonoBehaviour
     {
         private static readonly List<HoPlanarReflectionSurface> ActiveSurfaces = new List<HoPlanarReflectionSurface>();
-        private static readonly int UsePlanarReflectionId = Shader.PropertyToID("_UsePlanarReflection");
-        private static readonly int ReflectionTextureId = Shader.PropertyToID("_LILPBRPlanarReflectionTexture");
-        private static readonly int ReflectionTextureMatrixId = Shader.PropertyToID("_LILPBRPlanarReflectionTextureMatrix");
-        private static readonly int ReflectionParamsId = Shader.PropertyToID("_LILPBRPlanarReflectionParams");
+        private static readonly int UsePlanarReflectionId = HoPlanarReflectionShaderConstants.UsePlanarReflectionId;
+        private static readonly int ReflectionTextureId = HoPlanarReflectionShaderConstants.ReflectionTextureId;
+        private static readonly int ReflectionTextureMatrixId = HoPlanarReflectionShaderConstants.ReflectionTextureMatrixId;
+        private static readonly int ReflectionParamsId = HoPlanarReflectionShaderConstants.ReflectionParamsId;
         private const float DegeneratePlaneDistance = 0.0001f;
         private static readonly Rect FullViewportRect = new Rect(0.0f, 0.0f, 1.0f, 1.0f);
         private static bool isRenderingReflection;
@@ -137,6 +143,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
         {
             ActiveSurfaces.Remove(this);
             ApplyDisabledPropertyBlock();
+            ResetGlobalState();
             ReleaseResources();
         }
 
@@ -164,6 +171,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
             Camera camera,
             HoPlanarReflectionRenderSettings settings)
         {
+            ResetGlobalState();
+
             if (!settings.Enabled)
             {
                 DisableAllSurfaces();
@@ -217,6 +226,9 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 isRenderingReflection = false;
             }
 
+            bool compositeReady = activeSurfaceCount > 0 && settings.CompositeEnabled;
+            SetCompositeGlobalState(compositeReady, compositeReady && settings.SuppressMaterialReflectionWhenCompositing);
+
             return new HoPlanarReflectionRenderStats(
                 ActiveSurfaces.Count,
                 activeSurfaceCount,
@@ -229,6 +241,21 @@ namespace lilToon.URP.Extensions.PlanarReflection
             {
                 ActiveSurfaces[i]?.ApplyDisabledPropertyBlock();
             }
+        }
+
+        internal static void ResetGlobalState()
+        {
+            Shader.SetGlobalFloat(HoPlanarReflectionShaderConstants.CompositeActiveId, 0.0f);
+            Shader.SetGlobalFloat(HoPlanarReflectionShaderConstants.SuppressMaterialSamplingId, 0.0f);
+            Shader.SetGlobalTexture(ReflectionTextureId, Texture2D.blackTexture);
+            Shader.SetGlobalMatrix(ReflectionTextureMatrixId, Matrix4x4.identity);
+            Shader.SetGlobalVector(ReflectionParamsId, Vector4.zero);
+        }
+
+        private static void SetCompositeGlobalState(bool compositeActive, bool suppressMaterialSampling)
+        {
+            Shader.SetGlobalFloat(HoPlanarReflectionShaderConstants.CompositeActiveId, compositeActive ? 1.0f : 0.0f);
+            Shader.SetGlobalFloat(HoPlanarReflectionShaderConstants.SuppressMaterialSamplingId, suppressMaterialSampling ? 1.0f : 0.0f);
         }
 
         private void Register()
@@ -495,6 +522,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
             propertyBlock.SetMatrix(ReflectionTextureMatrixId, GetReflectionViewProjectionMatrix(reflectionCamera));
             propertyBlock.SetVector(ReflectionParamsId, new Vector4(1.0f, reflectionTexture.width, reflectionTexture.height, 0.0f));
             surfaceRenderer.SetPropertyBlock(propertyBlock);
+            PublishGlobalReflectionState();
         }
 
         private void ApplyDisabledPropertyBlock()
@@ -513,6 +541,14 @@ namespace lilToon.URP.Extensions.PlanarReflection
             }
             propertyBlock.SetVector(ReflectionParamsId, Vector4.zero);
             surfaceRenderer.SetPropertyBlock(propertyBlock);
+        }
+
+        private void PublishGlobalReflectionState()
+        {
+            Matrix4x4 reflectionViewProjection = GetReflectionViewProjectionMatrix(reflectionCamera);
+            Shader.SetGlobalTexture(ReflectionTextureId, reflectionTexture);
+            Shader.SetGlobalMatrix(ReflectionTextureMatrixId, reflectionViewProjection);
+            Shader.SetGlobalVector(ReflectionParamsId, new Vector4(1.0f, reflectionTexture.width, reflectionTexture.height, 0.0f));
         }
 
         private void ReleaseResources()

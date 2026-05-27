@@ -1,7 +1,14 @@
 using System;
 using System.Collections.Generic;
+// Compatibility-mode hooks are kept for projects that still run URP's non-RenderGraph path.
+#pragma warning disable CS0618, CS0672
+
+using lilToon.URP.Extensions.GeometryBuffer;
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
+using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.PlanarReflection
@@ -25,6 +32,43 @@ namespace lilToon.URP.Extensions.PlanarReflection
             [Tooltip("Maximum surfaces rendered for one source camera. 0 means unlimited.")]
             [Min(0)]
             public int maxSurfacesPerCamera;
+
+            [Tooltip("Composite planar reflection after transparents by reading MetadataBuffer and GeometryBuffer.")]
+            public bool compositeEnabled = true;
+
+            [Tooltip("When compositing is active, skip water material-side planar reflection to avoid blending reflection twice.")]
+            public bool suppressMaterialReflectionWhenCompositing = true;
+
+            [Tooltip("Render pass event for the post composite. Run after water transparents and before post processing.")]
+            public RenderPassEvent compositePassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
+
+            [Tooltip("Optional override shader for the composite pass.")]
+            public Shader compositeShader;
+
+            [Tooltip("Overall composite strength multiplied with per-material planar reflection strength.")]
+            [Range(0.0f, 1.0f)]
+            public float compositeStrength = 1.0f;
+
+            [Tooltip("Screen-space reflection UV distortion driven by GeometryBuffer water normal.")]
+            [Range(0.0f, 0.1f)]
+            public float distortion = 0.018f;
+
+            [Tooltip("Flip the reflection texture vertically during post composite.")]
+            public bool compositeFlipY;
+
+            [Tooltip("Minimum smoothness required before the composite reflection fades in.")]
+            [Range(0.0f, 1.0f)]
+            public float minSmoothness = 0.65f;
+
+            [Tooltip("Enable GeometryBuffer depth rejection for distorted samples. Keep this off for large flat water surfaces.")]
+            public bool enableDepthGate;
+
+            [Tooltip("Reject distorted samples whose GeometryBuffer depth differs too much from the center water pixel. 0 disables the check.")]
+            [Min(0.0f)]
+            public float depthTolerance = 0.0f;
+
+            [Tooltip("Tint multiplied onto the reflection texture before compositing.")]
+            public Color tint = Color.white;
         }
 
         private static readonly List<HoPlanarReflectionRendererFeature> ActiveFeatures =
@@ -35,21 +79,70 @@ namespace lilToon.URP.Extensions.PlanarReflection
         [SerializeField]
         private Settings settings = new Settings();
 
+        private HoPlanarReflectionCompositePass compositePass;
+        private Material compositeMaterial;
+        private Shader compositeShader;
+        private bool warnedMissingCompositeShader;
+
         public Settings FeatureSettings => settings;
 
         public override void Create()
         {
             RegisterFeature(this);
+            compositePass = new HoPlanarReflectionCompositePass();
+        }
+
+        private void OnValidate()
+        {
+            ClampSettings(settings);
+        }
+
+        public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
+        {
+            if (!ShouldCompositeRender(in renderingData))
+            {
+                compositePass?.ReleaseCompatibilityResources();
+                return;
+            }
+
+            EnsureCompositeMaterial();
+            if (compositeMaterial == null)
+            {
+                compositePass?.ReleaseCompatibilityResources();
+                return;
+            }
+
+            compositePass?.Setup(settings, renderer.cameraColorTargetHandle, compositeMaterial);
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
             // Reflection rendering is driven from beginCameraRendering so the mirror camera renders before the source camera.
+            if (!ShouldCompositeRender(in renderingData))
+            {
+                compositePass?.ReleaseCompatibilityResources();
+                return;
+            }
+
+            EnsureCompositeMaterial();
+            if (compositeMaterial == null)
+            {
+                compositePass?.ReleaseCompatibilityResources();
+                return;
+            }
+
+            compositePass?.SetupRenderGraph(settings, compositeMaterial);
+            renderer.EnqueuePass(compositePass);
         }
 
         protected override void Dispose(bool disposing)
         {
             UnregisterFeature(this);
+            compositePass?.ReleaseCompatibilityResources();
+            compositePass = null;
+            CoreUtils.Destroy(compositeMaterial);
+            compositeMaterial = null;
+            compositeShader = null;
         }
 
         private static void RegisterFeature(HoPlanarReflectionRendererFeature feature)
@@ -82,8 +175,14 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
         private static void RenderPlanarReflections(ScriptableRenderContext context, Camera camera)
         {
-            if (camera == null || camera.cameraType == CameraType.Reflection || camera.cameraType == CameraType.Preview)
+            if (camera == null)
             {
+                return;
+            }
+
+            if (camera.cameraType == CameraType.Reflection || camera.cameraType == CameraType.Preview)
+            {
+                HoPlanarReflectionSurface.ResetGlobalState();
                 return;
             }
 
@@ -93,9 +192,14 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 HoPlanarReflectionRenderStats skippedStats = HoPlanarReflectionSurface.RenderAllSurfaces(
                     context,
                     camera,
-                    new HoPlanarReflectionRenderSettings(false, false, false, 0));
+                    new HoPlanarReflectionRenderSettings(false, false, false, 0, false, false));
                 HoPlanarReflectionRuntimeDiagnostics.Publish(camera, skippedStats);
                 return;
+            }
+
+            if (feature.settings != null && feature.settings.enabled && feature.settings.compositeEnabled)
+            {
+                feature.EnsureCompositeMaterial();
             }
 
             HoPlanarReflectionRenderStats stats = HoPlanarReflectionSurface.RenderAllSurfaces(
@@ -132,11 +236,285 @@ namespace lilToon.URP.Extensions.PlanarReflection
         private HoPlanarReflectionRenderSettings CreateRenderSettings()
         {
             Settings activeSettings = settings ?? new Settings();
+            ClampSettings(activeSettings);
+            bool compositeAvailable = activeSettings.compositeEnabled && compositeMaterial != null;
             return new HoPlanarReflectionRenderSettings(
                 activeSettings.enabled,
                 activeSettings.renderGameView,
                 activeSettings.renderSceneView,
-                activeSettings.maxSurfacesPerCamera);
+                activeSettings.maxSurfacesPerCamera,
+                compositeAvailable,
+                activeSettings.suppressMaterialReflectionWhenCompositing);
+        }
+
+        private bool ShouldCompositeRender(in RenderingData renderingData)
+        {
+            if (settings == null || !settings.enabled || !settings.compositeEnabled)
+            {
+                return false;
+            }
+
+            CameraType cameraType = renderingData.cameraData.cameraType;
+            return (cameraType == CameraType.Game && settings.renderGameView)
+                || (cameraType == CameraType.SceneView && settings.renderSceneView);
+        }
+
+        private void EnsureCompositeMaterial()
+        {
+            Shader shader = settings != null && settings.compositeShader != null
+                ? settings.compositeShader
+                : Shader.Find(HoPlanarReflectionShaderConstants.CompositeShaderName);
+
+            if (compositeMaterial != null && compositeShader == shader)
+            {
+                return;
+            }
+
+            CoreUtils.Destroy(compositeMaterial);
+            compositeMaterial = null;
+            compositeShader = shader;
+            if (shader == null)
+            {
+                if (!warnedMissingCompositeShader)
+                {
+                    warnedMissingCompositeShader = true;
+                    Debug.LogWarning($"Ho-PlanarReflection composite is unavailable because shader '{HoPlanarReflectionShaderConstants.CompositeShaderName}' could not be found.");
+                }
+
+                return;
+            }
+
+            compositeMaterial = CoreUtils.CreateEngineMaterial(shader);
+        }
+
+        private static void ClampSettings(Settings activeSettings)
+        {
+            if (activeSettings == null)
+            {
+                return;
+            }
+
+            activeSettings.maxSurfacesPerCamera = Mathf.Max(0, activeSettings.maxSurfacesPerCamera);
+            activeSettings.compositeStrength = Mathf.Clamp01(activeSettings.compositeStrength);
+            activeSettings.distortion = Mathf.Clamp(activeSettings.distortion, 0.0f, 0.1f);
+            activeSettings.minSmoothness = Mathf.Clamp01(activeSettings.minSmoothness);
+            activeSettings.depthTolerance = Mathf.Max(0.0f, activeSettings.depthTolerance);
+        }
+    }
+
+    internal static class HoPlanarReflectionShaderConstants
+    {
+        public const string CompositeShaderName = "Hidden/lilToon/URP/PlanarReflection/Composite";
+        public const string UsePlanarReflectionName = "_UsePlanarReflection";
+        public const string ReflectionTextureName = "_LILPBRPlanarReflectionTexture";
+        public const string ReflectionTextureMatrixName = "_LILPBRPlanarReflectionTextureMatrix";
+        public const string ReflectionParamsName = "_LILPBRPlanarReflectionParams";
+        public const string CompositeActiveName = "_HoPlanarReflectionCompositeActive";
+        public const string SuppressMaterialSamplingName = "_HoPlanarReflectionSuppressMaterialSampling";
+        public const string CompositeParamsName = "_HoPlanarReflectionCompositeParams";
+        public const string CompositeOptionsName = "_HoPlanarReflectionCompositeOptions";
+        public const string CompositeTintName = "_HoPlanarReflectionCompositeTint";
+
+        public static readonly int UsePlanarReflectionId = Shader.PropertyToID(UsePlanarReflectionName);
+        public static readonly int ReflectionTextureId = Shader.PropertyToID(ReflectionTextureName);
+        public static readonly int ReflectionTextureMatrixId = Shader.PropertyToID(ReflectionTextureMatrixName);
+        public static readonly int ReflectionParamsId = Shader.PropertyToID(ReflectionParamsName);
+        public static readonly int CompositeActiveId = Shader.PropertyToID(CompositeActiveName);
+        public static readonly int SuppressMaterialSamplingId = Shader.PropertyToID(SuppressMaterialSamplingName);
+        public static readonly int CompositeParamsId = Shader.PropertyToID(CompositeParamsName);
+        public static readonly int CompositeOptionsId = Shader.PropertyToID(CompositeOptionsName);
+        public static readonly int CompositeTintId = Shader.PropertyToID(CompositeTintName);
+    }
+
+    internal sealed class HoPlanarReflectionCompositePass : ScriptableRenderPass
+    {
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-PlanarReflection Composite");
+
+        private HoPlanarReflectionRendererFeature.Settings settings;
+        private RTHandle cameraColorTarget;
+        private RTHandle compositeSourceTexture;
+        private Material compositeMaterial;
+
+        private sealed class PassData
+        {
+            public TextureHandle source;
+            public TextureHandle maskIdTexture;
+            public TextureHandle custom0Texture;
+            public TextureHandle normalDepthTexture;
+            public Material material;
+            public Vector4 compositeParams;
+            public Vector4 compositeOptions;
+            public Vector4 tint;
+        }
+
+        public void Setup(
+            HoPlanarReflectionRendererFeature.Settings settings,
+            RTHandle cameraColorTarget,
+            Material compositeMaterial)
+        {
+            this.settings = settings;
+            this.cameraColorTarget = cameraColorTarget;
+            this.compositeMaterial = compositeMaterial;
+            ConfigurePass();
+        }
+
+        public void SetupRenderGraph(
+            HoPlanarReflectionRendererFeature.Settings settings,
+            Material compositeMaterial)
+        {
+            this.settings = settings;
+            this.cameraColorTarget = null;
+            this.compositeMaterial = compositeMaterial;
+            ConfigurePass();
+        }
+
+        public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
+        {
+            if (cameraColorTarget != null)
+            {
+                ConfigureTarget(cameraColorTarget);
+            }
+        }
+
+        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+        {
+            if (settings == null || compositeMaterial == null || cameraColorTarget == null)
+            {
+                return;
+            }
+
+            CommandBuffer cmd = CommandBufferPool.Get();
+            using (new ProfilingScope(cmd, ProfilingSampler))
+            {
+                ReAllocateCompositeSource(renderingData.cameraData.cameraTargetDescriptor);
+                ApplyMaterialProperties(compositeMaterial, settings);
+                Blitter.BlitCameraTexture(cmd, cameraColorTarget, compositeSourceTexture, 0, true);
+                Blitter.BlitCameraTexture(
+                    cmd,
+                    compositeSourceTexture,
+                    cameraColorTarget,
+                    RenderBufferLoadAction.DontCare,
+                    RenderBufferStoreAction.Store,
+                    compositeMaterial,
+                    0);
+            }
+
+            context.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
+        }
+
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+        {
+            ReleaseCompatibilityResources();
+            if (settings == null || compositeMaterial == null)
+            {
+                return;
+            }
+
+            UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
+            if (resourceData.isActiveTargetBackBuffer)
+            {
+                return;
+            }
+
+            HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
+            HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
+
+            TextureHandle source = resourceData.activeColorTexture;
+            TextureHandle maskIdTexture = metadataResources.maskIdTexture;
+            TextureHandle custom0Texture = metadataResources.custom0Texture;
+            TextureHandle normalDepthTexture = geometryResources.normalDepthTexture;
+            if (!source.IsValid() || !maskIdTexture.IsValid() || !custom0Texture.IsValid() || !normalDepthTexture.IsValid())
+            {
+                return;
+            }
+
+            TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
+            destinationDesc.name = "_HoPlanarReflectionCompositeColor";
+            destinationDesc.clearBuffer = false;
+            destinationDesc.depthBufferBits = 0;
+            TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
+
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-PlanarReflection Composite", out PassData passData, ProfilingSampler))
+            {
+                passData.source = source;
+                passData.maskIdTexture = maskIdTexture;
+                passData.custom0Texture = custom0Texture;
+                passData.normalDepthTexture = normalDepthTexture;
+                passData.material = compositeMaterial;
+                passData.compositeParams = CreateCompositeParams(settings);
+                passData.compositeOptions = CreateCompositeOptions(settings);
+                passData.tint = settings.tint;
+
+                builder.UseTexture(source, AccessFlags.Read);
+                builder.UseTexture(maskIdTexture, AccessFlags.Read);
+                builder.UseTexture(custom0Texture, AccessFlags.Read);
+                builder.UseTexture(normalDepthTexture, AccessFlags.Read);
+                builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
+                builder.AllowGlobalStateModification(true);
+                builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                {
+                    data.material.SetVector(HoPlanarReflectionShaderConstants.CompositeParamsId, data.compositeParams);
+                    data.material.SetVector(HoPlanarReflectionShaderConstants.CompositeOptionsId, data.compositeOptions);
+                    data.material.SetVector(HoPlanarReflectionShaderConstants.CompositeTintId, data.tint);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.custom0Texture);
+                    context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
+                    Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
+                });
+            }
+
+            resourceData.cameraColor = destination;
+        }
+
+        public void ReleaseCompatibilityResources()
+        {
+            compositeSourceTexture?.Release();
+            compositeSourceTexture = null;
+        }
+
+        private void ConfigurePass()
+        {
+            renderPassEvent = settings != null ? settings.compositePassEvent : RenderPassEvent.BeforeRenderingPostProcessing;
+            ConfigureInput(ScriptableRenderPassInput.Color);
+        }
+
+        private void ReAllocateCompositeSource(RenderTextureDescriptor cameraTargetDescriptor)
+        {
+            cameraTargetDescriptor.depthBufferBits = 0;
+            cameraTargetDescriptor.depthStencilFormat = GraphicsFormat.None;
+            cameraTargetDescriptor.msaaSamples = 1;
+            RenderingUtils.ReAllocateIfNeeded(
+                ref compositeSourceTexture,
+                cameraTargetDescriptor,
+                FilterMode.Bilinear,
+                TextureWrapMode.Clamp,
+                name: "_HoPlanarReflectionCompositeSource");
+        }
+
+        private static void ApplyMaterialProperties(Material material, HoPlanarReflectionRendererFeature.Settings settings)
+        {
+            material.SetVector(HoPlanarReflectionShaderConstants.CompositeParamsId, CreateCompositeParams(settings));
+            material.SetVector(HoPlanarReflectionShaderConstants.CompositeOptionsId, CreateCompositeOptions(settings));
+            material.SetVector(HoPlanarReflectionShaderConstants.CompositeTintId, settings.tint);
+        }
+
+        private static Vector4 CreateCompositeParams(HoPlanarReflectionRendererFeature.Settings settings)
+        {
+            return new Vector4(
+                Mathf.Clamp01(settings.compositeStrength),
+                Mathf.Clamp(settings.distortion, 0.0f, 0.1f),
+                Mathf.Clamp01(settings.minSmoothness),
+                Mathf.Max(0.0f, settings.depthTolerance));
+        }
+
+        private static Vector4 CreateCompositeOptions(HoPlanarReflectionRendererFeature.Settings settings)
+        {
+            return new Vector4(
+                settings.compositeFlipY ? 1.0f : 0.0f,
+                settings.enableDepthGate ? 1.0f : 0.0f,
+                0.0f,
+                0.0f);
         }
     }
 }
