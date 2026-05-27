@@ -26,15 +26,17 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
 
-            static const int MaxSkyTyndallSamples = 32;
+            static const int MaxSkyTyndallSamples = 48;
 
             float _Intensity;
             float _LayerBlendMode;
             float4 _LayerColor;
             float4 _LayerParams0; // x radius, y threshold, z soft knee, w exposure
             float4 _LayerParams1; // x center x, y center y, z decay, w quality
-            float4 _LayerParams2; // x foreground amount, y normal amount, z sky gain, w occlusion power
+            float4 _LayerParams2; // x foreground suppress, y normal amount, z sky gain, w occlusion power
             float4 _LayerParams3; // x opacity, y show rays only, z sky alpha power, w jitter
+            float4 _LayerParams4; // x fixed direction x, y fixed direction y, z direction angle degrees, w fixed direction enabled
+            float4 _LayerParams5; // x sample weight, y source blur px
             float _HoGeometryBufferSkyTextureValid;
 
             TEXTURE2D_X(_HoGeometryBufferSkyTexture);
@@ -63,6 +65,38 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
                 return smoothstep(max(threshold - softKnee, 0.0), threshold + softKnee, luma);
             }
 
+            float ResolvePositiveDefault(float value, float fallback)
+            {
+                return value > 0.0001 ? value : fallback;
+            }
+
+            float ResolveDecay(float value)
+            {
+                if (value <= 0.0001)
+                {
+                    return 0.94;
+                }
+
+                return value <= 1.0 ? saturate(value) : saturate(exp(-value * 0.03));
+            }
+
+            bool HasFixedDirection()
+            {
+                return _LayerParams4.w > 0.5;
+            }
+
+            float2 ResolveCenter()
+            {
+                return saturate(_LayerParams1.xy);
+            }
+
+            float ViewportGate(float2 uv)
+            {
+                float2 lower = step(0.0, uv);
+                float2 upper = step(uv, 1.0);
+                return lower.x * lower.y * upper.x * upper.y;
+            }
+
             float3 ApplyBlend(float3 baseColor, float3 layerColor, float blendMode)
             {
                 int mode = (int)round(blendMode);
@@ -84,6 +118,53 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
                 }
 
                 return layerColor;
+            }
+
+            float SampleSkySignal(float2 uv, float threshold, float softKnee, float exposure, float alphaPower)
+            {
+                float viewportGate = ViewportGate(uv);
+                if (viewportGate <= 0.0001)
+                {
+                    return 0.0;
+                }
+
+                half4 sky = SAMPLE_TEXTURE2D_X(_HoGeometryBufferSkyTexture, sampler_LinearClamp, uv);
+                float contribution = pow(saturate(sky.a), alphaPower);
+                float litLuma = Luma(max(sky.rgb * max(exposure, 0.0), 0.0));
+                float highlight = HighlightWeight(sky.rgb, threshold, softKnee, exposure);
+                float compressedLuma = litLuma / (1.0 + litLuma * 0.045);
+                float floorSignal = compressedLuma * 0.04;
+                float brightSignal = compressedLuma * highlight;
+                return contribution * max(brightSignal, floorSignal) * viewportGate;
+            }
+
+            float SampleFilteredSkySignal(
+                float2 uv,
+                float2 rayDir,
+                float threshold,
+                float softKnee,
+                float exposure,
+                float alphaPower,
+                float blurPixels)
+            {
+                float centerSignal = SampleSkySignal(uv, threshold, softKnee, exposure, alphaPower);
+                if (blurPixels <= 0.001)
+                {
+                    return centerSignal;
+                }
+
+                float2 safeRayDir = normalize(rayDir + 0.0001);
+                float2 tangentDir = float2(-safeRayDir.y, safeRayDir.x);
+                float2 texel = rcp(_ScreenParams.xy);
+                float2 rayOffset = safeRayDir * texel * blurPixels;
+                float2 tangentOffset = tangentDir * texel * blurPixels;
+
+                float filtered = centerSignal * 0.40;
+                filtered += SampleSkySignal(uv + rayOffset, threshold, softKnee, exposure, alphaPower) * 0.15;
+                filtered += SampleSkySignal(uv - rayOffset, threshold, softKnee, exposure, alphaPower) * 0.15;
+                filtered += SampleSkySignal(uv + tangentOffset, threshold, softKnee, exposure, alphaPower) * 0.15;
+                filtered += SampleSkySignal(uv - tangentOffset, threshold, softKnee, exposure, alphaPower) * 0.15;
+                return filtered;
             }
 
             float ResolveRuleAmount(float2 uv, float geometryCoverage)
@@ -124,23 +205,74 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
                 return lerp(1.0, ndl, normalAmount);
             }
 
+            float2 ResolveRayDirection(float2 uv, float2 center)
+            {
+                if (HasFixedDirection())
+                {
+                    float2 directionToLight = _LayerParams4.xy;
+                    float lenSq = dot(directionToLight, directionToLight);
+                    if (lenSq <= 0.000001)
+                    {
+                        return float2(0.0, -1.0);
+                    }
+
+                    return -directionToLight * rsqrt(lenSq);
+                }
+
+                float2 ray = uv - center;
+                float lenSq = dot(ray, ray);
+                if (lenSq <= 0.000001)
+                {
+                    return float2(0.0, 1.0);
+                }
+
+                return ray * rsqrt(lenSq);
+            }
+
+            float2 ResolveRayStep(float2 uv, float2 center, float2 rayDirection, float radius, int sampleCount)
+            {
+                if (HasFixedDirection())
+                {
+                    return rayDirection * radius / max(sampleCount, 1);
+                }
+
+                return (uv - center) * radius / max(sampleCount, 1);
+            }
+
+            float ResolveCenterCoreFade(float2 uv, float2 center)
+            {
+                if (HasFixedDirection())
+                {
+                    return 1.0;
+                }
+
+                float centerDistance = length(uv - center);
+                return smoothstep(0.015, 0.065, centerDistance);
+            }
+
             float3 AccumulateSkyRays(float2 uv, float2 center)
             {
                 float radius = saturate(_LayerParams0.x);
                 float threshold = max(_LayerParams0.y, 0.0);
                 float softKnee = max(_LayerParams0.z, 0.0);
                 float exposure = max(_LayerParams0.w, 0.0);
-                float decay = max(_LayerParams1.z, 0.0);
+                float decay = ResolveDecay(_LayerParams1.z);
                 float skyGain = max(_LayerParams2.z, 0.0);
                 float alphaPower = max(_LayerParams3.z, 0.001);
                 float jitterAmount = saturate(_LayerParams3.w);
+                bool missingFilterDefaults = abs(_LayerParams5.x) <= 0.0001 && abs(_LayerParams5.y) <= 0.0001;
+                float sampleWeight = ResolvePositiveDefault(_LayerParams5.x, 0.055);
+                float blurPixels = missingFilterDefaults ? 1.25 : max(_LayerParams5.y, 0.0);
                 int quality = clamp((int)round(_LayerParams1.w), 0, 2);
-                int sampleCount = quality == 0 ? 8 : (quality == 1 ? 16 : 32);
+                int sampleCount = quality == 0 ? 12 : (quality == 1 ? 24 : 40);
 
-                float2 direction = uv - center;
-                float jitter = (Hash(floor(uv * _ScreenParams.xy)) - 0.5) * jitterAmount / max(sampleCount, 1);
-                float3 sum = 0.0;
-                float totalWeight = 0.0;
+                float2 direction = ResolveRayDirection(uv, center);
+                float jitter = (Hash(floor(uv * _ScreenParams.xy)) - 0.5) * jitterAmount;
+                float2 sampleUV = uv;
+                float2 deltaUV = ResolveRayStep(uv, center, direction, radius, sampleCount);
+                float illuminationDecay = 1.0;
+                float sum = 0.0;
+                float centerCoreFade = ResolveCenterCoreFade(uv, center);
 
                 [loop]
                 for (int i = 0; i < MaxSkyTyndallSamples; i++)
@@ -150,18 +282,14 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
                         break;
                     }
 
-                    float t = saturate(((float)i + 0.5 + jitter) / max(sampleCount, 1));
-                    float2 sampleUV = uv - direction * radius * t;
-                    half4 sky = SAMPLE_TEXTURE2D_X(_HoGeometryBufferSkyTexture, sampler_LinearClamp, sampleUV);
-                    float contribution = pow(saturate(sky.a), alphaPower);
-                    float highlight = HighlightWeight(sky.rgb, threshold, softKnee, exposure);
-                    float distanceWeight = pow(saturate(1.0 - t), decay);
-                    float weight = contribution * highlight * distanceWeight;
-                    sum += sky.rgb * exposure * weight;
-                    totalWeight += weight;
+                    sampleUV -= deltaUV * (i == 0 ? 0.5 : 1.0);
+                    float2 jitterUV = sampleUV - deltaUV * jitter;
+                    float signal = SampleFilteredSkySignal(jitterUV, direction, threshold, softKnee, exposure, alphaPower, blurPixels);
+                    sum += signal * illuminationDecay * sampleWeight;
+                    illuminationDecay *= decay;
                 }
 
-                return totalWeight > 0.0001 ? (sum / totalWeight) * skyGain * _LayerColor.rgb : 0.0;
+                return sum * skyGain * centerCoreFade * _LayerColor.rgb;
             }
 
             half4 Frag(Varyings input) : SV_Target
@@ -188,11 +316,11 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
                     return half4(ruleAmount, ruleAmount, ruleAmount, source.a);
                 }
 
-                float2 center = saturate(_LayerParams1.xy);
-                float2 rayToCenter = center - uv;
-                float foregroundAmount = saturate(_LayerParams2.x);
+                float2 center = ResolveCenter();
+                float2 rayToCenter = HasFixedDirection() ? _LayerParams4.xy : center - uv;
+                float foregroundSuppress = saturate(_LayerParams2.x);
                 float occlusionPower = max(_LayerParams2.w, 0.001);
-                float foregroundMask = lerp(1.0, pow(saturate(geometryCoverage), occlusionPower), foregroundAmount);
+                float foregroundMask = lerp(1.0, pow(saturate(1.0 - geometryCoverage), occlusionPower), foregroundSuppress);
                 float normalMask = ResolveNormalAmount(uv, geometryCoverage, rayToCenter);
                 float opacity = saturate(_LayerParams3.x);
                 float amount = saturate(_Intensity * opacity * foregroundMask * normalMask * ruleAmount);
@@ -200,7 +328,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
                 float3 rays = AccumulateSkyRays(uv, center);
                 if (_LayerParams3.y > 0.5)
                 {
-                    return half4(rays * amount, source.a);
+                    return half4(rays * _Intensity, source.a);
                 }
 
                 float3 blended = ApplyBlend(source.rgb, rays, _LayerBlendMode);

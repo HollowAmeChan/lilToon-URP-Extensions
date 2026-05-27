@@ -196,7 +196,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ScreenProcessEffect.PostLighting:
                     return GetPostLightingLineCount(element) + GetRuleLineCount(element);
                 case ScreenProcessEffect.SkyTyndall:
-                    return 16 + GetRuleLineCount(element);
+                    return GetSkyTyndallLineCount(element) + GetRuleLineCount(element);
                 case ScreenProcessEffect.CustomMaterial:
                     return 7 + GetRuleLineCount(element);
                 case ScreenProcessEffect.DropShadow:
@@ -644,10 +644,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ScreenProcessEffect.SkyTyndall:
                     SetColor(element, "color", new Color(1.0f, 0.88f, 0.68f, 1.0f));
                     SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Add);
-                    SetVector4(element, "parameters0", new Vector4(0.62f, 1.0f, 0.45f, 1.0f));
-                    SetVector4(element, "parameters1", new Vector4(0.5f, 0.18f, 1.6f, 1.0f));
-                    SetVector4(element, "parameters2", new Vector4(0.35f, 0.45f, 1.15f, 0.75f));
+                    SetVector4(element, "parameters0", new Vector4(0.70f, 1.0f, 0.55f, 1.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.5f, 0.18f, 0.94f, 1.0f));
+                    SetVector4(element, "parameters2", new Vector4(0.55f, 0.35f, 1.0f, 0.75f));
                     SetVector4(element, "parameters3", new Vector4(0.65f, 0.0f, 1.0f, 1.0f));
+                    SetVector4(element, "parameters4", new Vector4(0.0f, 1.0f, 90.0f, 1.0f));
+                    SetVector4(element, "parameters5", new Vector4(0.055f, 1.25f, 0.0f, 0.0f));
                     break;
                 case ScreenProcessEffect.CustomMaterial:
                     SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Normal);
