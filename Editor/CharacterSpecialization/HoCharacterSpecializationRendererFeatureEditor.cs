@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.Editor;
 using lilToon.URP.Extensions.CharacterSpecialization;
 using UnityEditor;
 using UnityEngine;
@@ -54,11 +55,11 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private void DrawRendererFeature()
         {
             SerializedProperty enabled = Find("enabled");
-            string summary = HoCharacterSpecializationEditorGui.BoolSummary(enabled)
+            string summary = LilUrpEditorSectionGui.BoolSummary(enabled)
                 + " / "
                 + (useVolumesProperty != null && useVolumesProperty.boolValue ? "Volume" : "默认");
 
-            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showRendererFeature, "RendererFeature", summary, SettingsColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRendererFeature, "RendererFeature", summary, SettingsColor))
             {
                 return;
             }
@@ -87,7 +88,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private void DrawCapture()
         {
             string summary = GetIntSummary("minRenderQueue") + "-" + GetIntSummary("maxRenderQueue");
-            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showCapture, "捕获范围", summary, CaptureColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showCapture, "捕获范围", summary, CaptureColor))
             {
                 return;
             }
@@ -103,8 +104,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private void DrawDebug()
         {
             SerializedProperty debugMode = Find("debugMode");
-            string summary = HoCharacterSpecializationEditorGui.EnumName(debugMode);
-            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showDebug, "调试/预留", summary, DebugColor))
+            string summary = LilUrpEditorSectionGui.EnumName(debugMode);
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showDebug, "调试/预留", summary, DebugColor))
             {
                 return;
             }
@@ -124,7 +125,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 ? snapshot.CameraName + " / " + snapshot.Stage
                 : "尚无帧";
 
-            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showRuntime, "运行状态", summary, RuntimeColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行状态", summary, RuntimeColor))
             {
                 return;
             }
@@ -141,13 +142,13 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 EditorGUILayout.LabelField("相机", snapshot.CameraName);
                 EditorGUILayout.LabelField("阶段", snapshot.Stage);
                 EditorGUILayout.LabelField("Active Back Buffer", snapshot.BackBufferActive ? "是" : "否");
-                EditorGUILayout.LabelField("Camera Color", HoCharacterSpecializationEditorGui.FormatAvailable(snapshot.CameraColorAvailable));
-                EditorGUILayout.LabelField("MetadataBuffer", HoCharacterSpecializationEditorGui.FormatAvailable(snapshot.MetadataBufferAvailable));
-                EditorGUILayout.LabelField("GeometryBuffer", HoCharacterSpecializationEditorGui.FormatAvailable(snapshot.GeometryBufferAvailable));
-                EditorGUILayout.LabelField("MaskId", HoCharacterSpecializationEditorGui.FormatAvailable(snapshot.MetadataMaskIdAvailable));
-                EditorGUILayout.LabelField("ObjectCustom0", HoCharacterSpecializationEditorGui.FormatAvailable(snapshot.MetadataObjectCustom0Available));
-                EditorGUILayout.LabelField("ObjectCustom1", HoCharacterSpecializationEditorGui.FormatAvailable(snapshot.MetadataObjectCustom1Available));
-                EditorGUILayout.LabelField("NormalDepth", HoCharacterSpecializationEditorGui.FormatAvailable(snapshot.GeometryNormalDepthAvailable));
+                EditorGUILayout.LabelField("Camera Color", LilUrpEditorSectionGui.FormatAvailable(snapshot.CameraColorAvailable));
+                EditorGUILayout.LabelField("MetadataBuffer", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataBufferAvailable));
+                EditorGUILayout.LabelField("GeometryBuffer", LilUrpEditorSectionGui.FormatAvailable(snapshot.GeometryBufferAvailable));
+                EditorGUILayout.LabelField("MaskId", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataMaskIdAvailable));
+                EditorGUILayout.LabelField("ObjectCustom0", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataObjectCustom0Available));
+                EditorGUILayout.LabelField("ObjectCustom1", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataObjectCustom1Available));
+                EditorGUILayout.LabelField("NormalDepth", LilUrpEditorSectionGui.FormatAvailable(snapshot.GeometryNormalDepthAvailable));
 
                 EditorGUILayout.HelpBox(
                     snapshot.Ready

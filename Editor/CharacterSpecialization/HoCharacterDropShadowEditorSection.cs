@@ -1,4 +1,5 @@
 using System;
+using lilToon.URP.Extensions.Editor;
 using UnityEditor;
 using UnityEditor.Rendering;
 using UnityEngine;
@@ -17,10 +18,10 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             SerializedProperty enabled = Find(settingsProperty, "hairDropShadowEnabled");
             SerializedProperty opacity = Find(settingsProperty, "hairShadowOpacity");
             string summary = enabled != null && enabled.boolValue
-                ? "开 " + HoCharacterSpecializationEditorGui.FloatSummary(opacity)
+                ? "开 " + LilUrpEditorSectionGui.FloatSummary(opacity)
                 : "关";
 
-            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showSettings, "DropShadow", summary, DropShadowColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSettings, "DropShadow", summary, DropShadowColor))
             {
                 return;
             }
@@ -59,10 +60,10 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             Action<SerializedDataParameter, GUIContent> drawParameter)
         {
             string summary = enabled?.value != null && enabled.value.boolValue
-                ? "开 " + HoCharacterSpecializationEditorGui.FloatSummary(opacity)
+                ? "开 " + LilUrpEditorSectionGui.FloatSummary(opacity)
                 : "关";
 
-            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showVolume, "DropShadow", summary, DropShadowColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showVolume, "DropShadow", summary, DropShadowColor))
             {
                 return;
             }

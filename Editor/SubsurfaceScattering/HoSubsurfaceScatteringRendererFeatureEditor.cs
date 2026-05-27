@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.Editor;
 using lilToon.URP.Extensions.SubsurfaceScattering;
 using UnityEditor;
 using UnityEngine;
@@ -7,8 +8,6 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
     [CustomEditor(typeof(HoSubsurfaceScatteringRendererFeature))]
     internal sealed class HoSubsurfaceScatteringRendererFeatureEditor : UnityEditor.Editor
     {
-        private const float SectionHeaderHeight = 30.0f;
-
         private static readonly Color RuntimeColor = new Color(0.46f, 0.64f, 0.92f);
         private static readonly Color ProfileColor = new Color(0.42f, 0.72f, 0.58f);
         private static readonly Color DebugColor = new Color(0.86f, 0.62f, 0.38f);
@@ -18,46 +17,8 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
         private static bool showProfiles;
         private static bool showDebug;
         private static bool showAdvanced;
-        private static GUIStyle sectionTitleStyle;
-        private static GUIStyle sectionSummaryStyle;
 
         private SerializedProperty settingsProperty;
-
-        private static GUIStyle SectionTitleStyle
-        {
-            get
-            {
-                if (sectionTitleStyle == null)
-                {
-                    sectionTitleStyle = new GUIStyle(EditorStyles.boldLabel)
-                    {
-                        alignment = TextAnchor.MiddleLeft,
-                        clipping = TextClipping.Clip
-                    };
-                }
-
-                sectionTitleStyle.normal.textColor = EditorGUIUtility.isProSkin ? Color.white : new Color(0.12f, 0.12f, 0.12f);
-                return sectionTitleStyle;
-            }
-        }
-
-        private static GUIStyle SectionSummaryStyle
-        {
-            get
-            {
-                if (sectionSummaryStyle == null)
-                {
-                    sectionSummaryStyle = new GUIStyle(EditorStyles.miniLabel)
-                    {
-                        alignment = TextAnchor.MiddleRight,
-                        clipping = TextClipping.Clip
-                    };
-                }
-
-                sectionSummaryStyle.normal.textColor = EditorGUIUtility.isProSkin ? new Color(0.86f, 0.88f, 0.90f) : new Color(0.22f, 0.22f, 0.22f);
-                return sectionSummaryStyle;
-            }
-        }
 
         private void OnEnable()
         {
@@ -94,10 +55,10 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
             SerializedProperty quality = Find("quality");
             SerializedProperty strength = Find("strength");
             string summary = enabled != null && enabled.boolValue
-                ? $"开 {FormatFloat(strength)} / {EnumName(renderScale)} / {EnumName(quality)}"
+                ? $"开 {FormatFloat(strength)} / {LilUrpEditorSectionGui.EnumName(renderScale)} / {LilUrpEditorSectionGui.EnumName(quality)}"
                 : "关";
 
-            if (!DrawSectionHeader(ref showRuntime, "运行", summary, RuntimeColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行", summary, RuntimeColor))
             {
                 return;
             }
@@ -143,7 +104,7 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
             SerializedProperty profiles = Find("profiles");
             string summary = $"{CountEnabledProfiles(profiles)} 个启用";
 
-            if (!DrawSectionHeader(ref showProfiles, "Diffusion Profiles", summary, ProfileColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showProfiles, "Diffusion Profiles", summary, ProfileColor))
             {
                 return;
             }
@@ -158,9 +119,9 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
         private void DrawDebug()
         {
             SerializedProperty debugMode = Find("debugMode");
-            string summary = EnumName(debugMode);
+            string summary = LilUrpEditorSectionGui.EnumName(debugMode);
 
-            if (!DrawSectionHeader(ref showDebug, "调试", summary, DebugColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showDebug, "调试", summary, DebugColor))
             {
                 return;
             }
@@ -175,7 +136,7 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
 
         private void DrawAdvanced()
         {
-            if (!DrawSectionHeader(ref showAdvanced, "高级/兼容", "时机、fallback、透射补偿", AdvancedColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showAdvanced, "高级/兼容", "时机、fallback、透射补偿", AdvancedColor))
             {
                 return;
             }
@@ -235,17 +196,6 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
             return property != null ? property.floatValue.ToString("0.##") : "-";
         }
 
-        private static string EnumName(SerializedProperty property)
-        {
-            if (property == null || property.propertyType != SerializedPropertyType.Enum)
-            {
-                return "-";
-            }
-
-            int index = Mathf.Clamp(property.enumValueIndex, 0, property.enumDisplayNames.Length - 1);
-            return property.enumDisplayNames[index];
-        }
-
         private static int CountEnabledProfiles(SerializedProperty profiles)
         {
             if (profiles == null || !profiles.isArray)
@@ -270,47 +220,6 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
         private static string FormatAvailable(bool available)
         {
             return available ? "可用" : "缺失";
-        }
-
-        private static bool DrawSectionHeader(ref bool expanded, string title, string summary, Color color)
-        {
-            Rect rect = EditorGUILayout.GetControlRect(false, SectionHeaderHeight);
-            Event evt = Event.current;
-            bool hover = rect.Contains(evt.mousePosition);
-
-            EditorGUI.DrawRect(rect, GetSectionColor(color, hover));
-
-            Rect foldoutRect = new Rect(rect.x + 6.0f, rect.y + 7.0f, 16.0f, EditorGUIUtility.singleLineHeight);
-            expanded = EditorGUI.Foldout(foldoutRect, expanded, GUIContent.none, true);
-
-            Rect summaryRect = new Rect(rect.x + rect.width * 0.48f, rect.y + 7.0f, rect.width * 0.52f - 10.0f, 18.0f);
-            Rect titleRect = new Rect(rect.x + 26.0f, rect.y + 6.0f, Mathf.Max(90.0f, summaryRect.x - rect.x - 32.0f), 20.0f);
-            GUI.Label(titleRect, title, SectionTitleStyle);
-            GUI.Label(summaryRect, summary, SectionSummaryStyle);
-
-            if (evt.type == EventType.MouseDown
-                && rect.Contains(evt.mousePosition)
-                && !foldoutRect.Contains(evt.mousePosition))
-            {
-                expanded = !expanded;
-                evt.Use();
-            }
-
-            return expanded;
-        }
-
-        private static Color GetSectionColor(Color baseColor, bool hover)
-        {
-            Color neutral = EditorGUIUtility.isProSkin
-                ? new Color(0.20f, 0.21f, 0.23f)
-                : new Color(0.78f, 0.80f, 0.83f);
-            Color color = Color.Lerp(neutral, baseColor, EditorGUIUtility.isProSkin ? 0.42f : 0.35f);
-            if (hover)
-            {
-                color = Color.Lerp(color, Color.white, EditorGUIUtility.isProSkin ? 0.10f : 0.18f);
-            }
-
-            return color;
         }
 
     }

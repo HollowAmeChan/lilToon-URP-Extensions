@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.Editor;
 using lilToon.URP.Extensions.CharacterSpecialization;
 using UnityEditor;
 using UnityEditor.Rendering;
@@ -116,8 +117,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
 
         private void DrawSettings()
         {
-            string summary = HoCharacterSpecializationEditorGui.BoolSummary(enable);
-            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showSettings, "Volume", summary, SettingsColor))
+            string summary = LilUrpEditorSectionGui.BoolSummary(enable);
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSettings, "Volume", summary, SettingsColor))
             {
                 return;
             }
@@ -131,8 +132,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
 
         private void DrawCapture()
         {
-            string summary = HoCharacterSpecializationEditorGui.IntSummary(minRenderQueue) + "-" + HoCharacterSpecializationEditorGui.IntSummary(maxRenderQueue);
-            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showCapture, "捕获范围", summary, CaptureColor))
+            string summary = LilUrpEditorSectionGui.IntSummary(minRenderQueue) + "-" + LilUrpEditorSectionGui.IntSummary(maxRenderQueue);
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showCapture, "捕获范围", summary, CaptureColor))
             {
                 return;
             }
@@ -149,8 +150,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
 
         private void DrawDebug()
         {
-            string summary = HoCharacterSpecializationEditorGui.EnumSummary(debugMode);
-            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showDebug, "调试", summary, DebugColor))
+            string summary = LilUrpEditorSectionGui.EnumSummary(debugMode);
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showDebug, "调试", summary, DebugColor))
             {
                 return;
             }

@@ -1,3 +1,4 @@
+using lilToon.URP.Extensions.Editor;
 using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEditor;
 using UnityEngine;
@@ -7,6 +8,13 @@ namespace lilToon.URP.Extensions.Editor.MetadataBuffer
     [CustomEditor(typeof(HoMetadataBufferRendererFeature))]
     internal sealed class HoMetadataBufferRendererFeatureEditor : UnityEditor.Editor
     {
+        private static readonly Color RuntimeColor = new Color(0.46f, 0.64f, 0.92f);
+        private static readonly Color DebugColor = new Color(0.86f, 0.62f, 0.38f);
+        private static readonly Color ChannelColor = new Color(0.42f, 0.72f, 0.58f);
+        private static readonly Color AdvancedColor = new Color(0.62f, 0.58f, 0.78f);
+
+        private static bool showRuntime;
+        private static bool showDebug;
         private static bool showAdvancedSettings;
         private static bool showCustomChannels;
         private SerializedProperty settingsProperty;
@@ -37,42 +45,86 @@ namespace lilToon.URP.Extensions.Editor.MetadataBuffer
 
         private void DrawSettings()
         {
-            DrawProperty("enabled");
-            DrawProperty("layerMask");
-            DrawProperty("minRenderQueue");
-            DrawProperty("maxRenderQueue");
-            DrawProperty("renderScale");
-            DrawProperty("systemChannels");
-            DrawProperty("customChannelCount");
+            DrawRuntime();
+            DrawDebug();
+            DrawCustomChannels();
+            DrawAdvanced();
+        }
 
-            EditorGUILayout.Space(6);
-            EditorGUILayout.LabelField("Debug Preview", EditorStyles.boldLabel);
-            DrawProperty("debugMode");
-            DrawProperty("debugInSceneView");
-            DrawProperty("debugInGameView");
-            DrawDebugInteractionNotice();
+        private void DrawRuntime()
+        {
+            SerializedProperty enabled = Find("enabled");
+            SerializedProperty renderScale = Find("renderScale");
+            SerializedProperty customChannelCount = Find("customChannelCount");
+            string summary = LilUrpEditorSectionGui.BoolSummary(enabled) + " / " + LilUrpEditorSectionGui.EnumName(renderScale) + " / C" + LilUrpEditorSectionGui.IntSummary(customChannelCount);
 
-            EditorGUILayout.Space(6);
-            showCustomChannels = EditorGUILayout.Foldout(showCustomChannels, "Custom Channel Names / Colors", true);
-            if (showCustomChannels)
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行", summary, RuntimeColor))
             {
-                EditorGUI.indentLevel++;
-                DrawProperty("customChannelNames", true);
-                DrawProperty("customChannelColors", true);
-                EditorGUI.indentLevel--;
+                return;
             }
 
-            EditorGUILayout.Space(6);
-            showAdvancedSettings = EditorGUILayout.Foldout(showAdvancedSettings, "Advanced Settings", true);
-            if (showAdvancedSettings)
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUI.indentLevel++;
+                DrawProperty("enabled");
+                DrawProperty("layerMask");
+                DrawProperty("minRenderQueue");
+                DrawProperty("maxRenderQueue");
+                DrawProperty("renderScale");
+                DrawProperty("systemChannels");
+                DrawProperty("customChannelCount");
+            }
+        }
+
+        private void DrawDebug()
+        {
+            SerializedProperty debugMode = Find("debugMode");
+            string summary = LilUrpEditorSectionGui.EnumName(debugMode);
+
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showDebug, "调试", summary, DebugColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawProperty("debugMode");
+                DrawProperty("debugInSceneView");
+                DrawProperty("debugInGameView");
+                DrawDebugInteractionNotice();
+            }
+        }
+
+        private void DrawCustomChannels()
+        {
+            SerializedProperty customChannelCount = Find("customChannelCount");
+            string summary = "C" + LilUrpEditorSectionGui.IntSummary(customChannelCount);
+
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showCustomChannels, "Custom Channels", summary, ChannelColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawProperty("customChannelNames", true);
+                DrawProperty("customChannelColors", true);
+            }
+        }
+
+        private void DrawAdvanced()
+        {
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showAdvancedSettings, "高级", "时机 / Shader", AdvancedColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
                 DrawProperty("passEvent");
                 DrawProperty("debugPassEvent");
                 DrawProperty("useFallbackMaterial");
                 DrawProperty("fallbackShader");
                 DrawProperty("debugShader");
-                EditorGUI.indentLevel--;
             }
         }
 
@@ -83,6 +135,11 @@ namespace lilToon.URP.Extensions.Editor.MetadataBuffer
             {
                 EditorGUILayout.PropertyField(property, includeChildren);
             }
+        }
+
+        private SerializedProperty Find(string relativeName)
+        {
+            return settingsProperty?.FindPropertyRelative(relativeName);
         }
 
         private void DrawDebugInteractionNotice()

@@ -1,4 +1,5 @@
 using System;
+using lilToon.URP.Extensions.Editor;
 using UnityEditor;
 using UnityEditor.Rendering;
 using UnityEngine;
@@ -17,10 +18,10 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             SerializedProperty enabled = Find(settingsProperty, "eyeRevealEnabled");
             SerializedProperty strength = Find(settingsProperty, "eyeRevealStrength");
             string summary = enabled != null && enabled.boolValue
-                ? "开 " + HoCharacterSpecializationEditorGui.FloatSummary(strength)
+                ? "开 " + LilUrpEditorSectionGui.FloatSummary(strength)
                 : "关";
 
-            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showSettings, "眼透 Eye Reveal", summary, EyeRevealColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSettings, "眼透 Eye Reveal", summary, EyeRevealColor))
             {
                 return;
             }
@@ -49,10 +50,10 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             Action<SerializedDataParameter, GUIContent> drawParameter)
         {
             string summary = enabled?.value != null && enabled.value.boolValue
-                ? "开 " + HoCharacterSpecializationEditorGui.FloatSummary(strength)
+                ? "开 " + LilUrpEditorSectionGui.FloatSummary(strength)
                 : "关";
 
-            if (!HoCharacterSpecializationEditorGui.DrawSectionHeader(ref showVolume, "眼透 Eye Reveal", summary, EyeRevealColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showVolume, "眼透 Eye Reveal", summary, EyeRevealColor))
             {
                 return;
             }

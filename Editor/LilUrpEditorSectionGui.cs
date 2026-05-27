@@ -2,9 +2,9 @@ using UnityEditor;
 using UnityEditor.Rendering;
 using UnityEngine;
 
-namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
+namespace lilToon.URP.Extensions.Editor
 {
-    internal static class HoCharacterSpecializationEditorGui
+    internal static class LilUrpEditorSectionGui
     {
         private const float SectionHeaderHeight = 30.0f;
 
@@ -63,9 +63,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             GUI.Label(titleRect, title, SectionTitleStyle);
             GUI.Label(summaryRect, summary, SectionSummaryStyle);
 
-            if (evt.type == EventType.MouseDown
-                && rect.Contains(evt.mousePosition)
-                && !foldoutRect.Contains(evt.mousePosition))
+            if (evt.type == EventType.MouseDown && rect.Contains(evt.mousePosition) && !foldoutRect.Contains(evt.mousePosition))
             {
                 expanded = !expanded;
                 evt.Use();
@@ -84,9 +82,25 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             return BoolSummary(parameter?.value);
         }
 
-        public static string IntSummary(SerializedDataParameter parameter)
+        public static string EnumName(SerializedProperty property)
         {
-            return parameter?.value != null ? parameter.value.intValue.ToString() : "-";
+            if (property == null || property.propertyType != SerializedPropertyType.Enum)
+            {
+                return "-";
+            }
+
+            int index = Mathf.Clamp(property.enumValueIndex, 0, property.enumDisplayNames.Length - 1);
+            return property.enumDisplayNames[index];
+        }
+
+        public static string IntSummary(SerializedProperty property, string suffix = "")
+        {
+            return property != null ? property.intValue + suffix : "-";
+        }
+
+        public static string IntSummary(SerializedDataParameter parameter, string suffix = "")
+        {
+            return IntSummary(parameter?.value, suffix);
         }
 
         public static string FloatSummary(SerializedProperty property)
@@ -97,17 +111,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         public static string FloatSummary(SerializedDataParameter parameter)
         {
             return FloatSummary(parameter?.value);
-        }
-
-        public static string EnumName(SerializedProperty property)
-        {
-            if (property == null || property.propertyType != SerializedPropertyType.Enum)
-            {
-                return "-";
-            }
-
-            int index = Mathf.Clamp(property.enumValueIndex, 0, property.enumDisplayNames.Length - 1);
-            return property.enumDisplayNames[index];
         }
 
         public static string EnumSummary(SerializedDataParameter parameter)

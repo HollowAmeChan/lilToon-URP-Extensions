@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using lilToon.URP.Extensions.Debugging;
 using UnityEditor;
@@ -6,31 +7,38 @@ using UnityEngine.Rendering;
 
 namespace lilToon.URP.Extensions.Editor.Debugging
 {
-    internal static class LilUrpDebugShaderCollectionGenerator
+    internal static class LilUrpDebugShaderValidator
     {
-        private const string MenuPath = "lilToon URP Extensions/Debug/Generate Debug Shader Collection";
-        private const string OutputDirectory = "Assets/lilToon URP Extensions/Debug";
-        private const string OutputPath = OutputDirectory + "/LilUrpDebugShaders.shadervariants";
-
-        [MenuItem(MenuPath, false, 2200)]
-        private static void Generate()
+        public readonly struct Result
         {
-            EnsureFolder(OutputDirectory);
-
-            ShaderVariantCollection collection = AssetDatabase.LoadAssetAtPath<ShaderVariantCollection>(OutputPath);
-            if (collection == null)
+            public Result(int shaderCount, int variantCount, int missingCount, int skippedVariantCount)
             {
-                collection = new ShaderVariantCollection();
-                AssetDatabase.CreateAsset(collection, OutputPath);
-            }
-            else
-            {
-                collection.Clear();
+                ShaderCount = shaderCount;
+                VariantCount = variantCount;
+                MissingCount = missingCount;
+                SkippedVariantCount = skippedVariantCount;
             }
 
+            public readonly int ShaderCount;
+            public readonly int VariantCount;
+            public readonly int MissingCount;
+            public readonly int SkippedVariantCount;
+
+            public bool HasWarnings => MissingCount > 0 || SkippedVariantCount > 0;
+
+            public string ToSummary()
+            {
+                return $"Checked debug shaders. Shaders: {ShaderCount}, supported pass variants: {VariantCount}, missing: {MissingCount}, unsupported pass types: {SkippedVariantCount}.";
+            }
+        }
+
+        internal static Result Validate()
+        {
+            ShaderVariantCollection collection = new ShaderVariantCollection();
             int shaderCount = 0;
             int variantCount = 0;
             int missingCount = 0;
+            int skippedVariantCount = 0;
             HashSet<string> processedShaders = new HashSet<string>();
 
             foreach (HoDebugViewInfo entry in HoDebugViewRegistry.ShaderCollectionViews)
@@ -55,7 +63,7 @@ namespace lilToon.URP.Extensions.Editor.Debugging
                 }
 
                 shaderCount++;
-                int addedVariants = AddVariants(collection, shader);
+                int addedVariants = AddVariants(collection, shader, ref skippedVariantCount);
                 variantCount += addedVariants;
                 if (addedVariants == 0)
                 {
@@ -63,26 +71,22 @@ namespace lilToon.URP.Extensions.Editor.Debugging
                 }
             }
 
-            AddDebugTileShader(collection, processedShaders, ref shaderCount, ref variantCount, ref missingCount);
+            AddDebugTileShader(collection, processedShaders, ref shaderCount, ref variantCount, ref missingCount, ref skippedVariantCount);
 
-            EditorUtility.SetDirty(collection);
-            AssetDatabase.SaveAssets();
-            AssetDatabase.Refresh();
-
-            Selection.activeObject = collection;
-            EditorGUIUtility.PingObject(collection);
-            Debug.Log($"[lilToon URP Extensions] Generated debug shader collection at {OutputPath}. Shaders: {shaderCount}, variants: {variantCount}, missing: {missingCount}.");
+            Result result = new Result(shaderCount, variantCount, missingCount, skippedVariantCount);
+            Debug.Log("[lilToon URP Extensions] " + result.ToSummary());
+            return result;
         }
 
-        private static int AddVariants(ShaderVariantCollection collection, Shader shader)
+        private static int AddVariants(ShaderVariantCollection collection, Shader shader, ref int skippedVariantCount)
         {
             int count = 0;
-            if (collection.Add(new ShaderVariantCollection.ShaderVariant(shader, PassType.ScriptableRenderPipelineDefaultUnlit)))
+            if (TryAddVariant(collection, shader, PassType.ScriptableRenderPipelineDefaultUnlit, ref skippedVariantCount))
             {
                 count++;
             }
 
-            if (collection.Add(new ShaderVariantCollection.ShaderVariant(shader, PassType.Normal)))
+            if (TryAddVariant(collection, shader, PassType.Normal, ref skippedVariantCount))
             {
                 count++;
             }
@@ -90,12 +94,26 @@ namespace lilToon.URP.Extensions.Editor.Debugging
             return count;
         }
 
+        private static bool TryAddVariant(ShaderVariantCollection collection, Shader shader, PassType passType, ref int skippedVariantCount)
+        {
+            try
+            {
+                return collection.Add(new ShaderVariantCollection.ShaderVariant(shader, passType));
+            }
+            catch (ArgumentException)
+            {
+                skippedVariantCount++;
+                return false;
+            }
+        }
+
         private static void AddDebugTileShader(
             ShaderVariantCollection collection,
             HashSet<string> processedShaders,
             ref int shaderCount,
             ref int variantCount,
-            ref int missingCount)
+            ref int missingCount,
+            ref int skippedVariantCount)
         {
             string shaderKey = HoDebugTileShaderConstants.ShaderName + "|" + HoDebugTileShaderConstants.ShaderAssetPath;
             if (!processedShaders.Add(shaderKey))
@@ -117,32 +135,11 @@ namespace lilToon.URP.Extensions.Editor.Debugging
             }
 
             shaderCount++;
-            int addedVariants = AddVariants(collection, shader);
+            int addedVariants = AddVariants(collection, shader, ref skippedVariantCount);
             variantCount += addedVariants;
             if (addedVariants == 0)
             {
                 Debug.LogWarning($"[lilToon URP Extensions] Debug tile shader variant was not added: {HoDebugTileShaderConstants.ShaderName}");
-            }
-        }
-
-        private static void EnsureFolder(string folderPath)
-        {
-            string[] parts = folderPath.Split('/');
-            if (parts.Length == 0)
-            {
-                return;
-            }
-
-            string current = parts[0];
-            for (int i = 1; i < parts.Length; i++)
-            {
-                string next = current + "/" + parts[i];
-                if (!AssetDatabase.IsValidFolder(next))
-                {
-                    AssetDatabase.CreateFolder(current, parts[i]);
-                }
-
-                current = next;
             }
         }
 
