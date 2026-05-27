@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.ImageProcess;
 using lilToon.URP.Extensions.MetadataBuffer;
+using lilToon.URP.Extensions.PlanarReflection;
 using lilToon.URP.Extensions.ScreenProcess;
 using lilToon.URP.Extensions.ShadowCast;
 using lilToon.URP.Extensions.SubsurfaceScattering;
@@ -19,6 +20,7 @@ namespace lilToon.URP.Extensions.Debugging
                 AddRange(views, HoGeometryBufferDebugViewInfo.Views);
                 AddRange(views, HoShadowCastDebugViewInfo.Views);
                 AddRange(views, HoSubsurfaceScatteringDebugViewInfo.Views);
+                AddRange(views, HoPlanarReflectionDebugViewInfo.Views);
                 AddRange(views, ScreenProcessDebugViewInfo.Views);
                 AddRange(views, ImageProcessDebugViewInfo.Views);
                 return views;

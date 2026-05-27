@@ -41,6 +41,8 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             TEXTURE2D_FLOAT(_HoShadowCastSecondDirectionalAtlas);
             TEXTURE2D_X(_lilHoSSSSourceTexture);
             TEXTURE2D_X(_lilHoSSSTransmissionTexture);
+            TEXTURE2D(_LILPBRPlanarReflectionTexture);
+            SAMPLER(sampler_LILPBRPlanarReflectionTexture);
 
             float _HoShadowCastActive;
             int _HoShadowCastSliceCount;
@@ -50,6 +52,15 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             float4 _HoShadowCastSecondDirectionalAtlasSize;
             float4 _HoShadowCastSecondDirectionalLightData[4];
             float4 _HoShadowCastSecondDirectionalSliceData[16];
+            float _HoMetadataBufferActive;
+            float _HoPlanarReflectionCompositeActive;
+            float4 _HoPlanarReflectionCompositeParams;
+            float4 _HoPlanarReflectionCompositeOptions;
+            float4 _HoPlanarReflectionCompositeTint;
+            float4 _HoPlanarReflectionDebugParams;
+            float4 _HoPlanarReflectionDebugInputStatus;
+            float4 _LILPBRPlanarReflectionParams;
+            float4 _LILPBRPlanarReflectionTexture_TexelSize;
 
             struct Attributes
             {
@@ -414,6 +425,115 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 return half4(rim.xxx, 1.0h);
             }
 
+            half4 ResolvePlanarReflectionColor(float2 uv)
+            {
+                int mode = _HoDebugTileMode;
+                half metadataReady = saturate(_HoMetadataBufferActive * _HoPlanarReflectionDebugInputStatus.y * _HoPlanarReflectionDebugInputStatus.w);
+                half geometryReady = saturate(_HoPlanarReflectionDebugInputStatus.z);
+                if (mode == 1)
+                {
+                    return half4(
+                        saturate(_HoPlanarReflectionCompositeActive * _LILPBRPlanarReflectionParams.x * _HoPlanarReflectionDebugInputStatus.x),
+                        metadataReady,
+                        geometryReady,
+                        1.0h);
+                }
+
+                if (_HoPlanarReflectionCompositeActive < 0.5 ||
+                    _LILPBRPlanarReflectionParams.x < 0.5 ||
+                    metadataReady < 0.5h ||
+                    geometryReady < 0.5h)
+                {
+                    return half4(1.0h, 0.0h, 1.0h, 1.0h);
+                }
+
+                half4 maskId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv);
+                half4 custom0 = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture, sampler_PointClamp, uv);
+                half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
+
+                half waterMask = saturate(maskId.r) * LilHoGeometryBufferCoverage(normalDepth);
+                half smoothness = saturate(custom0.r);
+                half wetness = saturate(custom0.g);
+                half normalStrength = saturate(custom0.b);
+                half materialReflectionStrength = saturate(custom0.a);
+
+                half minSmoothness = saturate(_HoPlanarReflectionCompositeParams.z);
+                half smoothnessFade = saturate((smoothness - minSmoothness) / max(1.0h - minSmoothness, 0.0001h));
+                half centerWeight = waterMask * wetness * materialReflectionStrength * smoothnessFade;
+                float3 normalWS = LilHoGeometryBufferWorldNormalOrZero(normalDepth);
+
+                if (mode == 2) return half4(waterMask.xxx, 1.0h);
+                if (mode == 3) return half4(smoothness.xxx, 1.0h);
+                if (mode == 4) return half4(wetness.xxx, 1.0h);
+                if (mode == 5) return half4(normalStrength.xxx, 1.0h);
+                if (mode == 6) return half4(materialReflectionStrength.xxx, 1.0h);
+                if (mode == 7) return half4(normalWS * 0.5 + 0.5, 1.0h);
+                if (mode == 8)
+                {
+                    half depth = saturate(normalDepth.a / max(_HoDebugTileGeometryDepthParams.y, 0.0001));
+                    return half4(depth.xxx, 1.0h);
+                }
+                if (mode == 14) return custom0;
+
+                if (centerWeight <= 0.0001h)
+                {
+                    return half4(0.0h, 0.0h, 0.0h, 1.0h);
+                }
+
+                float3 normalVS = mul((float3x3)UNITY_MATRIX_V, normalWS);
+                float2 distortion = normalVS.xy * _HoPlanarReflectionCompositeParams.y * normalStrength * wetness;
+                float2 distortedScreenUv = uv + distortion;
+                if (mode == 9)
+                {
+                    return half4(saturate(distortion * max(_HoPlanarReflectionDebugParams.z, 0.0001) + 0.5).xy, 0.0h, 1.0h);
+                }
+
+                if (mode == 10)
+                {
+                    return half4(saturate(distortedScreenUv).xy, 0.0h, 1.0h);
+                }
+
+                float2 reflectionTexel = max(abs(_LILPBRPlanarReflectionTexture_TexelSize.xy) * 0.5, float2(1.0e-5, 1.0e-5));
+                float edgeExtendDistance = max(_HoPlanarReflectionCompositeOptions.z, 0.0);
+                float2 edgeInset = max(reflectionTexel, float2(edgeExtendDistance, edgeExtendDistance));
+                float2 extendedScreenUv = clamp(distortedScreenUv, edgeInset, 1.0 - edgeInset);
+                float2 overflow = abs(distortedScreenUv - extendedScreenUv);
+                float edgeExtend = max(overflow.x, overflow.y);
+
+                half depthGate = 1.0h;
+                float depthTolerance = _HoPlanarReflectionCompositeParams.w;
+                if (_HoPlanarReflectionCompositeOptions.y > 0.5 && depthTolerance > 0.0001)
+                {
+                    half4 distortedNormalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, extendedScreenUv);
+                    depthGate = saturate(1.0h - (half)(abs((float)distortedNormalDepth.a - (float)normalDepth.a) / depthTolerance));
+                }
+
+                if (mode == 13)
+                {
+                    return half4(depthGate.xxx, 1.0h);
+                }
+
+                float2 reflectionUv = extendedScreenUv;
+                if (_HoPlanarReflectionCompositeOptions.x > 0.5)
+                {
+                    reflectionUv.y = 1.0 - reflectionUv.y;
+                }
+
+                half3 reflection = SAMPLE_TEXTURE2D(_LILPBRPlanarReflectionTexture, sampler_LILPBRPlanarReflectionTexture, reflectionUv).rgb;
+                reflection *= _HoPlanarReflectionCompositeTint.rgb;
+                half compositeWeight = saturate(centerWeight * depthGate * _HoPlanarReflectionCompositeParams.x * _HoPlanarReflectionCompositeTint.a);
+
+                if (mode == 11) return half4(reflection, 1.0h);
+                if (mode == 12) return half4(compositeWeight.xxx, 1.0h);
+                if (mode == 15)
+                {
+                    half edgeExtendDebug = saturate(edgeExtend / max(edgeExtendDistance, max(reflectionTexel.x, reflectionTexel.y)));
+                    return half4(edgeExtendDebug, edgeExtendDebug, edgeExtendDebug, 1.0h);
+                }
+
+                return half4(waterMask.xxx, 1.0h);
+            }
+
             uint PickVectorChar(float4 chars, int index)
             {
                 if (index == 0) return (uint)round(chars.x);
@@ -536,6 +656,10 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 else if (_HoDebugTileRenderKind == 4)
                 {
                     color = ResolveSubsurfaceScatteringColor(input.uv);
+                }
+                else if (_HoDebugTileRenderKind == 5)
+                {
+                    color = ResolvePlanarReflectionColor(input.uv);
                 }
                 else
                 {

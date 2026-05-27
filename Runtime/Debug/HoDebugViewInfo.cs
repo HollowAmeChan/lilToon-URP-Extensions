@@ -6,7 +6,8 @@ namespace lilToon.URP.Extensions.Debugging
         MetadataBuffer = 1,
         GeometryBuffer = 2,
         ShadowCast = 3,
-        SubsurfaceScattering = 4
+        SubsurfaceScattering = 4,
+        PlanarReflection = 5
     }
 
     public readonly struct HoDebugViewInfo

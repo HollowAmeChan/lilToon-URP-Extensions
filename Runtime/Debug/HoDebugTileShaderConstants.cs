@@ -16,5 +16,6 @@ namespace lilToon.URP.Extensions.Debugging
         public static readonly int Label2Id = Shader.PropertyToID("_HoDebugTileLabel2");
         public static readonly int Label3Id = Shader.PropertyToID("_HoDebugTileLabel3");
         public static readonly int GeometryDepthParamsId = Shader.PropertyToID("_HoDebugTileGeometryDepthParams");
+        public static readonly int PlanarReflectionDebugInputStatusId = Shader.PropertyToID("_HoPlanarReflectionDebugInputStatus");
     }
 }

@@ -98,6 +98,8 @@ RendererFeature 只安装渲染 Pass，实际层配置来自 Volume。相机类�
 
 `ScreenProcessRuntimeDiagnostics.CurrentSnapshot` 会记录 active layer 数、写入 layer 数、back buffer 状态、camera color 状态、MetadataBuffer/GeometryBuffer/SkyTexture 是否满足等信息。调试面板应该优先读这个 snapshot，而不是猜测缺哪个 RendererFeature。
 
+RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendererFeature` 在 ScreenProcess stack 后立即入队 `Ho-ScreenProcess Release Semantic Buffers`。它用 `SetGlobalTextureAfterPass` 把 MetadataBuffer、GeometryBuffer 和 Sky buffer 的 shader global 改回 RenderGraph black texture，并把 active / valid flag 清为 0。这样 ImageProcess 仍然只看到 camera color，不会因为上一阶段的全局绑定在 RenderDoc 里表现为继续持有 G/MBuffer。这个 pass 只解绑 global，不代表提前销毁资源；如果 DebugTile 或其他后续 pass 显式 `UseTexture` 读取这些 RenderGraph 资源，资源生命周期仍会延长到真实最后消费者。
+
 ## ImageProcess
 
 `ImageProcess` 是最终图像域后处理栈，入口文件为：

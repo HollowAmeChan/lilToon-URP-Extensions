@@ -25,6 +25,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         private Shader subjectMaskShader;
         private bool warnedMissingSubjectMaskShader;
         private ScreenProcessPass pass;
+        private ScreenProcessSemanticBufferReleasePass semanticBufferReleasePass;
 
         [Tooltip("The renderer feature installs the pass, and Volume profiles provide the active ScreenProcess stack.")]
         public bool UseVolumes = true;
@@ -37,6 +38,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             IsUseVolumes = UseVolumes;
             pass = new ScreenProcessPass("Ho-ScreenProcess AfterURP BeforeImageProcess");
+            semanticBufferReleasePass = new ScreenProcessSemanticBufferReleasePass();
         }
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
@@ -83,6 +85,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             pass?.Dispose();
             pass = null;
+            semanticBufferReleasePass = null;
 
             foreach (Material material in materialCache.Values)
             {
@@ -198,11 +201,22 @@ namespace lilToon.URP.Extensions.PostProcessing
             {
                 pass?.ClearRuntimeLayers();
                 pass?.ReleaseCompatibilityResources();
+                EnqueueSemanticBufferReleasePass(renderer);
                 return;
             }
 
             pass.SetupRenderGraph(layers, ScreenProcessRenderPassEvents.ScreenProcessStack);
             renderer.EnqueuePass(pass);
+            EnqueueSemanticBufferReleasePass(renderer);
+        }
+
+        private void EnqueueSemanticBufferReleasePass(ScriptableRenderer renderer)
+        {
+            semanticBufferReleasePass?.Setup(ScreenProcessRenderPassEvents.ScreenProcessStack);
+            if (semanticBufferReleasePass != null)
+            {
+                renderer.EnqueuePass(semanticBufferReleasePass);
+            }
         }
 
         private static ScreenProcessStackVolume GetVolumeComponent()
@@ -327,6 +341,104 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             this.settings = settings;
             this.material = material;
+        }
+    }
+
+    internal sealed class ScreenProcessSemanticBufferReleasePass : ScriptableRenderPass
+    {
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-ScreenProcess Release Semantic Buffers");
+
+        private sealed class PassData
+        {
+            public TextureHandle blackTexture;
+        }
+
+        public ScreenProcessSemanticBufferReleasePass()
+        {
+            ConfigureInput(ScriptableRenderPassInput.None);
+        }
+
+        public void Setup(RenderPassEvent passEvent)
+        {
+            renderPassEvent = passEvent;
+            ConfigureInput(ScriptableRenderPassInput.None);
+        }
+
+        public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+        {
+            CommandBuffer cmd = CommandBufferPool.Get();
+            using (new ProfilingScope(cmd, ProfilingSampler))
+            {
+                ResetSemanticBufferGlobals(cmd);
+            }
+
+            context.ExecuteCommandBuffer(cmd);
+            CommandBufferPool.Release(cmd);
+        }
+
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+        {
+            TextureHandle blackTexture = renderGraph.defaultResources.blackTexture;
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-ScreenProcess Release Semantic Buffers", out PassData passData, ProfilingSampler))
+            {
+                passData.blackTexture = blackTexture;
+                builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.MaskIdTextureId);
+                builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.SurfaceDataTextureId);
+                builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.Custom0TextureId);
+                builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.ObjectCustom0TextureId);
+                builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.ObjectCustom1TextureId);
+                builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.SurfaceColorTextureId);
+                builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.MBufferDepthTextureId);
+                builder.SetGlobalTextureAfterPass(blackTexture, HoGeometryBufferShaderConstants.NormalDepthTextureId);
+                builder.SetGlobalTextureAfterPass(blackTexture, HoGeometryBufferShaderConstants.DepthTextureId);
+                builder.SetGlobalTextureAfterPass(blackTexture, HoGeometryBufferShaderConstants.SkyTextureId);
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                {
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.blackTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.blackTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.blackTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.blackTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.blackTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, data.blackTexture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MBufferDepthTextureId, data.blackTexture);
+                    context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.blackTexture);
+                    context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, data.blackTexture);
+                    context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, data.blackTexture);
+                    ResetSemanticBufferFlags(context.cmd);
+                });
+            }
+        }
+
+        private static void ResetSemanticBufferGlobals(CommandBuffer cmd)
+        {
+            Texture fallback = Texture2D.blackTexture;
+            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, fallback);
+            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, fallback);
+            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, fallback);
+            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, fallback);
+            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, fallback);
+            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, fallback);
+            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MBufferDepthTextureId, fallback);
+            cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, fallback);
+            cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, fallback);
+            cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, fallback);
+            ResetSemanticBufferFlags(cmd);
+        }
+
+        private static void ResetSemanticBufferFlags(CommandBuffer cmd)
+        {
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.SystemChannelMaskId, 0.0f);
+            cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 0.0f);
+        }
+
+        private static void ResetSemanticBufferFlags(RasterCommandBuffer cmd)
+        {
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 0.0f);
+            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.SystemChannelMaskId, 0.0f);
+            cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 0.0f);
         }
     }
 

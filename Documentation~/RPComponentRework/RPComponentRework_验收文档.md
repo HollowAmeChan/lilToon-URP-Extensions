@@ -206,6 +206,7 @@ RenderGraph 是主线。
 - ImageProcess、ShadowCast、MetadataBuffer、GeometryBuffer、ScreenProcess、CharacterSpecialization、SSS、OIT 进入 RDG 记录时释放 compatibility-only RTHandle / camera target 状态。
 - 非 RG compatibility path 只作为 fallback，不影响 RDG 主线资源所有权。
 - ImageProcess 不把 live camera attachment 当作普通长期纹理读取；layer 间通过 ImageChain 显式传递中间图像。
+- ScreenProcess 在自身 stack 之后入队一个轻量 global reset pass，把 MetadataBuffer / GeometryBuffer / Sky buffer 的 shader global 重新绑定到 RenderGraph black texture，并清掉 active / valid flag。这个 pass 的目的不是销毁 RenderGraph 资源，而是截断全局纹理绑定，避免 ImageProcess、FinalBlit 或后续无语义消费者在 RenderDoc 中继续持有 G/MBuffer。
 - Buffer 禁用或 camera reset 时公开 global texture / active 状态回到空状态。
 - DebugTile 只读取 registry 声明的 feature-local RenderGraph 资源。
 

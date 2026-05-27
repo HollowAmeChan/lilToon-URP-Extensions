@@ -33,6 +33,7 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
             float4 _HoPlanarReflectionDebugParams;
             float4 _HoPlanarReflectionDebugInputStatus;
             float4 _LILPBRPlanarReflectionParams;
+            float4 _LILPBRPlanarReflectionTexture_TexelSize;
 
             TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
             TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture);
@@ -119,21 +120,18 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
                     return half4(saturate(distortedScreenUv).xy, 0.0h, 1.0h);
                 }
 
-                if (any(distortedScreenUv < 0.0) || any(distortedScreenUv > 1.0))
-                {
-                    if (debugMode > 0)
-                    {
-                        return half4(1.0h, 0.0h, 0.0h, 1.0h);
-                    }
-
-                    return cameraColor;
-                }
+                float2 reflectionTexel = max(abs(_LILPBRPlanarReflectionTexture_TexelSize.xy) * 0.5, float2(1.0e-5, 1.0e-5));
+                float edgeExtendDistance = max(_HoPlanarReflectionCompositeOptions.z, 0.0);
+                float2 edgeInset = max(reflectionTexel, float2(edgeExtendDistance, edgeExtendDistance));
+                float2 extendedScreenUv = clamp(distortedScreenUv, edgeInset, 1.0 - edgeInset);
+                float2 overflow = abs(distortedScreenUv - extendedScreenUv);
+                float edgeExtend = max(overflow.x, overflow.y);
 
                 half depthGate = 1.0h;
                 float depthTolerance = _HoPlanarReflectionCompositeParams.w;
                 if (_HoPlanarReflectionCompositeOptions.y > 0.5 && depthTolerance > 0.0001)
                 {
-                    half4 distortedNormalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, distortedScreenUv);
+                    half4 distortedNormalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, extendedScreenUv);
                     depthGate = saturate(1.0h - (half)(abs((float)distortedNormalDepth.a - (float)normalDepth.a) / depthTolerance));
                 }
 
@@ -142,7 +140,7 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
                     return half4(depthGate, depthGate, depthGate, 1.0h);
                 }
 
-                float2 reflectionUv = distortedScreenUv;
+                float2 reflectionUv = extendedScreenUv;
                 if (_HoPlanarReflectionCompositeOptions.x > 0.5)
                 {
                     reflectionUv.y = 1.0 - reflectionUv.y;
@@ -154,6 +152,11 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
                 half compositeWeight = saturate(centerWeight * depthGate * _HoPlanarReflectionCompositeParams.x * _HoPlanarReflectionCompositeTint.a);
                 if (debugMode == 11) return half4(reflection, 1.0h);
                 if (debugMode == 12) return half4(compositeWeight, compositeWeight, compositeWeight, 1.0h);
+                if (debugMode == 15)
+                {
+                    half edgeExtendDebug = saturate(edgeExtend / max(edgeExtendDistance, max(reflectionTexel.x, reflectionTexel.y)));
+                    return half4(edgeExtendDebug, edgeExtendDebug, edgeExtendDebug, 1.0h);
+                }
 
                 cameraColor.rgb = lerp(cameraColor.rgb, reflection, compositeWeight);
                 return cameraColor;
