@@ -14,106 +14,89 @@ Shader "Hidden/lilToon/URP/ImageProcess/BlueNoise"
 
         Pass
         {
-            Name "ImageProcess Blue Noise"
+            Name "ImageProcess Blue Noise Mosaic"
 
             HLSLPROGRAM
             #pragma vertex Vert
-            #pragma fragment FragBlueNoise
+            #pragma fragment FragBlueNoiseMosaic
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
             float _Intensity;
             float4 _LayerColor;
-            float _LayerTextureEnabled;
-            float4 _LayerParams0; // x mode, y local amount, z noise scale, w animation speed
-            float4 _LayerParams1; // x contrast, y mode value, z mode value, w mode value
-            TEXTURE2D_X(_LayerTexture);
+            float4 _LayerParams0; // x mode, y blend amount, z cell size px, w point jitter
+            float4 _LayerParams1; // x color averaging, y edge width px, z edge opacity, w poster steps
 
-            static const float3 ImageProcessBlueNoiseLuma = float3(0.2126729, 0.7151522, 0.0721750);
-
-            float ImageProcessBlueNoiseHash12(float2 value)
+            float2 ImageProcessBlueNoiseHash22(float2 value)
             {
-                float3 p3 = frac(float3(value.xyx) * 0.1031);
+                float3 p3 = frac(float3(value.xyx) * float3(0.1031, 0.1030, 0.0973));
                 p3 += dot(p3, p3.yzx + 33.33);
-                return frac((p3.x + p3.y) * p3.z);
+                return frac((p3.xx + p3.yz) * p3.zy);
             }
 
-            float ImageProcessBlueNoiseDecode(float4 sampleValue)
+            float2 ImageProcessBlueNoiseSeed(float2 cell, float jitter)
             {
-                float rgbSum = sampleValue.r + sampleValue.g + sampleValue.b;
-                return rgbSum > 0.0001 ? dot(sampleValue.rgb, ImageProcessBlueNoiseLuma) : sampleValue.a;
+                float2 randomOffset = ImageProcessBlueNoiseHash22(cell) - 0.5;
+                return cell + 0.5 + randomOffset * saturate(jitter);
             }
 
-            float ImageProcessBlueNoiseProcedural(float2 cell)
+            void ImageProcessBlueNoiseNearest(
+                float2 mosaicUv,
+                float jitter,
+                out float2 nearestSeed,
+                out float nearestDistance,
+                out float secondDistance)
             {
-                float center = ImageProcessBlueNoiseHash12(cell);
-                float axial =
-                    ImageProcessBlueNoiseHash12(cell + float2(1.0, 0.0)) +
-                    ImageProcessBlueNoiseHash12(cell + float2(-1.0, 0.0)) +
-                    ImageProcessBlueNoiseHash12(cell + float2(0.0, 1.0)) +
-                    ImageProcessBlueNoiseHash12(cell + float2(0.0, -1.0));
-                float diagonal =
-                    ImageProcessBlueNoiseHash12(cell + float2(1.0, 1.0)) +
-                    ImageProcessBlueNoiseHash12(cell + float2(-1.0, 1.0)) +
-                    ImageProcessBlueNoiseHash12(cell + float2(1.0, -1.0)) +
-                    ImageProcessBlueNoiseHash12(cell + float2(-1.0, -1.0));
-                float localAverage = axial * 0.18 + diagonal * 0.07;
-                return saturate((center - localAverage) * 1.65 + 0.5);
-            }
+                float2 baseCell = floor(mosaicUv);
+                nearestSeed = 0.0;
+                nearestDistance = 1.0e20;
+                secondDistance = 1.0e20;
 
-            float ImageProcessBlueNoiseValue(float2 uv, float2 pixel, float scale, float contrast, float speed, float channelOffset)
-            {
-                float frame = floor(_Time.y * max(speed, 0.0));
-                float2 phase = frame * float2(17.0, 43.0) + channelOffset;
-                float2 cell = floor(pixel / max(scale, 0.5)) + phase;
-                float noise;
-
-                if (_LayerTextureEnabled > 0.5)
+                [unroll]
+                for (int y = -2; y <= 2; y++)
                 {
-                    float2 tileUv = uv * _ScreenParams.xy / (128.0 * max(scale, 0.5));
-                    tileUv += frac(phase * 0.011);
-                    noise = ImageProcessBlueNoiseDecode(SAMPLE_TEXTURE2D_X(_LayerTexture, sampler_PointRepeat, tileUv));
-                }
-                else
-                {
-                    noise = ImageProcessBlueNoiseProcedural(cell);
+                    [unroll]
+                    for (int x = -2; x <= 2; x++)
+                    {
+                        float2 cell = baseCell + float2(x, y);
+                        float2 seed = ImageProcessBlueNoiseSeed(cell, jitter);
+                        float distanceSquared = dot(mosaicUv - seed, mosaicUv - seed);
+                        if (distanceSquared < nearestDistance)
+                        {
+                            secondDistance = nearestDistance;
+                            nearestDistance = distanceSquared;
+                            nearestSeed = seed;
+                        }
+                        else if (distanceSquared < secondDistance)
+                        {
+                            secondDistance = distanceSquared;
+                        }
+                    }
                 }
 
-                return saturate((noise - 0.5) * max(contrast, 0.01) + 0.5);
+                nearestDistance = sqrt(nearestDistance);
+                secondDistance = sqrt(secondDistance);
             }
 
-            float3 ImageProcessBlueNoise3(float2 uv, float2 pixel, float scale, float contrast, float speed)
+            float3 ImageProcessBlueNoiseSampleCellColor(float2 seedUv, float2 texel, float averageRadius)
             {
-                return float3(
-                    ImageProcessBlueNoiseValue(uv, pixel, scale, contrast, speed, 0.0),
-                    ImageProcessBlueNoiseValue(uv, pixel, scale, contrast, speed, 19.19),
-                    ImageProcessBlueNoiseValue(uv, pixel, scale, contrast, speed, 47.47));
+                float2 radius = texel * averageRadius;
+                float3 color = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, seedUv).rgb * 0.36;
+                color += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, seedUv + radius * float2(1.7, 0.2)).rgb * 0.16;
+                color += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, seedUv + radius * float2(-1.1, 1.3)).rgb * 0.16;
+                color += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, seedUv + radius * float2(0.4, -1.6)).rgb * 0.16;
+                color += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, seedUv + radius * float2(-1.6, -0.7)).rgb * 0.16;
+                return color;
             }
 
-            float ImageProcessBlueNoiseQuantize(float value, float steps, float threshold)
+            float3 ImageProcessBlueNoisePosterize(float3 color, float steps)
             {
                 steps = max(round(steps), 2.0);
-                float scaled = saturate(value) * (steps - 1.0);
-                float whole = floor(scaled);
-                float fraction = frac(scaled);
-                return saturate((whole + step(threshold, fraction)) / (steps - 1.0));
+                return floor(saturate(color) * steps) / max(steps - 1.0, 1.0);
             }
 
-            float ImageProcessBlueNoiseEdge(float2 uv)
-            {
-                float2 texel = 1.0 / max(_ScreenParams.xy, 1.0);
-                float center = dot(SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv).rgb, ImageProcessBlueNoiseLuma);
-                float left = dot(SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv - float2(texel.x, 0.0)).rgb, ImageProcessBlueNoiseLuma);
-                float right = dot(SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + float2(texel.x, 0.0)).rgb, ImageProcessBlueNoiseLuma);
-                float up = dot(SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + float2(0.0, texel.y)).rgb, ImageProcessBlueNoiseLuma);
-                float down = dot(SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv - float2(0.0, texel.y)).rgb, ImageProcessBlueNoiseLuma);
-                float cross = abs(left - right) + abs(up - down);
-                float local = abs(center - (left + right + up + down) * 0.25);
-                return saturate(cross + local * 2.0);
-            }
-
-            half4 FragBlueNoise(Varyings input) : SV_Target
+            half4 FragBlueNoiseMosaic(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
@@ -122,74 +105,61 @@ Shader "Hidden/lilToon/URP/ImageProcess/BlueNoise"
                 float p1Default = 1.0 - step(0.0001, dot(abs(_LayerParams1), float4(1.0, 1.0, 1.0, 1.0)));
 
                 float mode = round(_LayerParams0.x);
-                float localAmount = lerp(_LayerParams0.y, 0.45, p0Default);
-                float scale = lerp(_LayerParams0.z, 1.0, p0Default);
-                float speed = lerp(_LayerParams0.w, 0.0, p0Default);
-                float contrast = lerp(_LayerParams1.x, 1.0, p1Default);
-                float defaultModeValue0 = mode < 0.5 ? 0.85 : mode < 1.5 ? 8.0 : mode < 2.5 ? 1.0 : 5.5;
-                float defaultModeValue1 = mode < 0.5 ? 0.25 : mode < 1.5 ? 1.0 : mode < 2.5 ? 0.78 : 0.45;
-                float defaultModeValue2 = mode < 0.5 ? 0.75 : mode < 1.5 ? 0.8 : mode < 2.5 ? 0.35 : 0.72;
-                float modeValue0 = lerp(_LayerParams1.y, defaultModeValue0, p1Default);
-                float modeValue1 = lerp(_LayerParams1.z, defaultModeValue1, p1Default);
-                float modeValue2 = lerp(_LayerParams1.w, defaultModeValue2, p1Default);
-                float amount = saturate(_Intensity) * saturate(localAmount);
+                float blendAmount = saturate(lerp(_LayerParams0.y, 1.0, p0Default)) * saturate(_Intensity);
+                float cellSize = max(lerp(_LayerParams0.z, 18.0, p0Default), 2.0);
+                float jitter = saturate(lerp(_LayerParams0.w, 0.78, p0Default));
+                float averageRadius = max(lerp(_LayerParams1.x, 0.35, p1Default), 0.0) * cellSize;
+                float edgeWidth = max(lerp(_LayerParams1.y, 0.75, p1Default), 0.0);
+                float edgeOpacity = saturate(lerp(_LayerParams1.z, 0.18, p1Default));
+                float posterSteps = max(lerp(_LayerParams1.w, 12.0, p1Default), 2.0);
 
-                if (amount <= 0.0001)
+                if (blendAmount <= 0.0001)
                 {
                     return source;
                 }
 
                 float2 pixel = input.texcoord * _ScreenParams.xy;
-                float noise = ImageProcessBlueNoiseValue(input.texcoord, pixel, scale, contrast, speed, 0.0);
-                float3 noise3 = ImageProcessBlueNoise3(input.texcoord, pixel, scale, contrast, speed);
-                float luma = dot(saturate(source.rgb), ImageProcessBlueNoiseLuma);
-                float3 result = source.rgb;
+                float2 mosaicUv = pixel / cellSize;
+                float2 seed;
+                float nearestDistance;
+                float secondDistance;
+                ImageProcessBlueNoiseNearest(mosaicUv, jitter, seed, nearestDistance, secondDistance);
+
+                float2 seedUv = saturate(seed * cellSize / max(_ScreenParams.xy, 1.0));
+                float2 texel = 1.0 / max(_ScreenParams.xy, 1.0);
+                float3 cellColor = ImageProcessBlueNoiseSampleCellColor(seedUv, texel, averageRadius);
+                float edgeWidthInCells = edgeWidth / cellSize;
+                float rawEdge = 1.0 - smoothstep(edgeWidthInCells, edgeWidthInCells + 0.035, secondDistance - nearestDistance);
+                float edge = edgeWidth > 0.0001 ? rawEdge : 0.0;
+                float3 result = cellColor;
 
                 if (mode < 0.5)
                 {
-                    float3 signedNoise = noise3 * 2.0 - 1.0;
-                    float colored = saturate(modeValue1);
-                    float highlightProtect = saturate(modeValue2);
-                    float lumaMask = lerp(1.0, 1.0 - sqrt(saturate(luma)), highlightProtect);
-                    result = source.rgb + lerp(signedNoise.rrr, signedNoise, colored) * modeValue0 * 0.08 * lumaMask;
+                    result = cellColor;
                 }
                 else if (mode < 1.5)
                 {
-                    float steps = max(modeValue0, 2.0);
-                    float colorAmount = saturate(modeValue1);
-                    float3 quantized = float3(
-                        ImageProcessBlueNoiseQuantize(source.r, steps, noise3.r),
-                        ImageProcessBlueNoiseQuantize(source.g, steps, noise3.g),
-                        ImageProcessBlueNoiseQuantize(source.b, steps, noise3.b));
-                    float mono = ImageProcessBlueNoiseQuantize(luma, steps, noise);
-                    result = lerp(float3(mono, mono, mono), quantized, colorAmount);
+                    float2 centerOffset = (seed - floor(seed)) - 0.5;
+                    float shade = 1.0 - dot(centerOffset, centerOffset) * 0.22;
+                    result = cellColor * shade;
                 }
                 else if (mode < 2.5)
                 {
-                    float densityScale = max(modeValue0, 0.05);
-                    float inkOpacity = saturate(modeValue1);
-                    float paperPreserve = saturate(modeValue2);
-                    float density = saturate(pow(saturate(1.0 - luma), 1.0 / max(contrast, 0.01)) * densityScale);
-                    float dotMask = step(noise, density);
-                    float3 paper = lerp(float3(1.0, 1.0, 1.0), source.rgb, paperPreserve);
-                    result = lerp(paper, saturate(_LayerColor.rgb), dotMask * inkOpacity);
+                    float3 glassColor = lerp(cellColor, saturate(cellColor * 1.08 + 0.04), 0.45);
+                    result = lerp(glassColor, saturate(_LayerColor.rgb), edge * max(edgeOpacity, 0.35));
                 }
                 else
                 {
-                    float edgeStrength = max(modeValue0, 0.0);
-                    float edgeTint = saturate(modeValue1);
-                    float colorPreserve = saturate(modeValue2);
-                    float edge = saturate(ImageProcessBlueNoiseEdge(input.texcoord) * edgeStrength);
-                    float edgeMask = step(noise, edge);
-                    float3 rough = source.rgb + (noise3 * 2.0 - 1.0) * edge * 0.35;
-                    float3 tinted = lerp(rough, saturate(_LayerColor.rgb), edgeMask * edgeTint * (1.0 - colorPreserve));
-                    result = lerp(source.rgb, tinted, edge);
+                    float3 poster = ImageProcessBlueNoisePosterize(cellColor, posterSteps);
+                    result = lerp(poster, saturate(_LayerColor.rgb), edge * edgeOpacity);
                 }
 
-                float hdrPreserve = mode >= 0.5 && mode < 1.5 ? saturate(modeValue2) : 0.0;
-                float3 hdrResidual = max(source.rgb - saturate(source.rgb), 0.0) * hdrPreserve;
-                result = lerp(source.rgb, max(result, 0.0) + hdrResidual, amount);
-                return half4(max(result, 0.0), source.a);
+                if (mode < 2.5)
+                {
+                    result = lerp(result, saturate(_LayerColor.rgb), edge * edgeOpacity);
+                }
+
+                return half4(lerp(source.rgb, max(result, 0.0), blendAmount), source.a);
             }
             ENDHLSL
         }

@@ -70,7 +70,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ImageProcessEffect.VHS, "VHS", "icon_VHS_v1"),
             new EffectToggleEntry(ImageProcessEffect.CRTEffects, "显示器", "icon_Monitor_v1"),
             new EffectToggleEntry(ImageProcessEffect.DitheringCustom, "视频游戏", "icon_GameBoy_v1"),
-            new EffectToggleEntry(ImageProcessEffect.BlueNoise, "蓝噪声", "icon_Grain_v1"),
+            new EffectToggleEntry(ImageProcessEffect.BlueNoise, "蓝噪色块", "icon_Grain_v1"),
             new EffectToggleEntry(ImageProcessEffect.IrisBlur, "光圈模糊", "icon_IrisBlur_v1"),
             new EffectToggleEntry(ImageProcessEffect.RGBBlurV2, "通道模糊", "icon_RGBBlur_v2"),
             new EffectToggleEntry(ImageProcessEffect.RGBSplit, "RGB 分离", "icon_RGBSplit_v1"),
@@ -148,7 +148,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "集中线",
             "天空神光",
             "图标显示",
-            "蓝噪声"
+            "蓝噪色块"
         };
 
         private static readonly GUIContent[] BlendModeDisplayNames =
@@ -1529,8 +1529,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ImageProcessEffect.BlueNoise:
                     SetFloat(element, "intensity", 1.0f);
                     SetColor(element, "color", Color.black);
-                    SetVector4(element, "parameters0", new Vector4(0.0f, 0.45f, 1.0f, 0.0f));
-                    SetVector4(element, "parameters1", new Vector4(1.0f, 0.85f, 0.25f, 0.75f));
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 1.0f, 18.0f, 0.78f));
+                    SetVector4(element, "parameters1", new Vector4(0.35f, 0.75f, 0.18f, 12.0f));
                     break;
                 case ImageProcessEffect.CRTEffects:
                     SetFloat(element, "intensity", 1.0f);
