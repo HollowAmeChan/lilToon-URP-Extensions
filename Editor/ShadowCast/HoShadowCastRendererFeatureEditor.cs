@@ -30,7 +30,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             serializedObject.Update();
 
             EditorGUILayout.HelpBox(
-                "ShadowCast collects eligible URP visible lights from this RendererFeature. Additional lights do not need Unity Light shadows enabled; the URP main light is skipped and left to URP.",
+                "ShadowCast 会从当前 RendererFeature 收集可用的 URP 可见灯光。额外灯光不需要开启 Unity Light 自带阴影；URP 主光会跳过并交给 URP 原生阴影处理。",
                 MessageType.Info);
 
             if (settingsProperty == null)
@@ -63,42 +63,42 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                DrawProperty(enabled, "Enabled");
+                DrawProperty(enabled, "启用");
                 SerializedProperty passEvent = settingsProperty.FindPropertyRelative("passEvent");
-                DrawProperty(passEvent, "Pass Event");
-                DrawProperty(collectVisibleLights, "Collect Visible Lights");
-                DrawProperty(settingsProperty.FindPropertyRelative("lightLayerMask"), "Light GameObject Layers");
-                DrawProperty(settingsProperty.FindPropertyRelative("lightRenderingLayerMask"), "Light Rendering Layers");
-                DrawProperty(settingsProperty.FindPropertyRelative("casterLayerMask"), "Caster GameObject Layers");
-                DrawProperty(settingsProperty.FindPropertyRelative("casterRenderingLayerMask"), "Caster Rendering Layers");
-                DrawProperty(settingsProperty.FindPropertyRelative("shadowStrength"), "Master Shadow Strength");
-                DrawProperty(settingsProperty.FindPropertyRelative("punctualShadowStrength"), "Punctual Shadow Strength");
-                DrawProperty(settingsProperty.FindPropertyRelative("punctualShadowFadeSpeed"), "Punctual Fade Speed");
-                DrawProperty(settingsProperty.FindPropertyRelative("debugMode"), "Debug Mode");
+                DrawProperty(passEvent, "渲染时机");
+                DrawProperty(collectVisibleLights, "收集可见灯光");
+                DrawProperty(settingsProperty.FindPropertyRelative("lightLayerMask"), "灯光对象图层");
+                DrawProperty(settingsProperty.FindPropertyRelative("lightRenderingLayerMask"), "灯光渲染层");
+                DrawProperty(settingsProperty.FindPropertyRelative("casterLayerMask"), "投影物对象图层");
+                DrawProperty(settingsProperty.FindPropertyRelative("casterRenderingLayerMask"), "投影物渲染层");
+                DrawProperty(settingsProperty.FindPropertyRelative("shadowStrength"), "全局阴影强度");
+                DrawProperty(settingsProperty.FindPropertyRelative("punctualShadowStrength"), "点/聚光阴影强度");
+                DrawProperty(settingsProperty.FindPropertyRelative("punctualShadowFadeSpeed"), "点/聚光淡出速度");
+                DrawProperty(settingsProperty.FindPropertyRelative("debugMode"), "调试模式");
 
                 if (passEvent != null && passEvent.intValue < BeforeRenderingPrePassesValue)
                 {
-                    EditorGUILayout.HelpBox("ShadowCast should not run before URP's built-in shadow stage. Runtime clamps this to BeforeRenderingPrePasses.", MessageType.Info);
+                    EditorGUILayout.HelpBox("ShadowCast 不应早于 URP 内置阴影阶段执行。运行时会自动钳制到 BeforeRenderingPrePasses。", MessageType.Info);
                 }
             }
         }
 
         private void DrawAtlas()
         {
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showAtlas, "Atlas", GetIntSummary("atlasSize", "px"), SettingsColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showAtlas, "图集", GetIntSummary("atlasSize", "px"), SettingsColor))
             {
                 return;
             }
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                DrawProperty(settingsProperty.FindPropertyRelative("atlasSize"), "Atlas Size");
-                DrawProperty(settingsProperty.FindPropertyRelative("spotResolution"), "Spot Resolution");
-                DrawProperty(settingsProperty.FindPropertyRelative("pointFaceResolution"), "Point Face Resolution");
-                DrawProperty(settingsProperty.FindPropertyRelative("directionalResolution"), "Directional Resolution");
-                DrawProperty(settingsProperty.FindPropertyRelative("directionalNearPlane"), "Directional Near Plane");
-                DrawProperty(settingsProperty.FindPropertyRelative("directionalShadowSize"), "Directional Shadow Size");
-                DrawProperty(settingsProperty.FindPropertyRelative("directionalShadowDepth"), "Directional Shadow Depth");
+                DrawProperty(settingsProperty.FindPropertyRelative("atlasSize"), "图集尺寸");
+                DrawProperty(settingsProperty.FindPropertyRelative("spotResolution"), "聚光灯分辨率");
+                DrawProperty(settingsProperty.FindPropertyRelative("pointFaceResolution"), "点光单面分辨率");
+                DrawProperty(settingsProperty.FindPropertyRelative("directionalResolution"), "方向光分辨率");
+                DrawProperty(settingsProperty.FindPropertyRelative("directionalNearPlane"), "方向光近裁面");
+                DrawProperty(settingsProperty.FindPropertyRelative("directionalShadowSize"), "方向光阴影尺寸");
+                DrawProperty(settingsProperty.FindPropertyRelative("directionalShadowDepth"), "方向光阴影深度");
             }
         }
 
@@ -113,31 +113,31 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                DrawProperty(enabled, "Enable PCSS");
-                DrawProperty(settingsProperty.FindPropertyRelative("pcssQuality"), "Quality");
-                DrawProperty(settingsProperty.FindPropertyRelative("punctualPcssSoftness"), "Punctual Softness");
-                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalPcssSoftness"), "Second Directional Softness");
-                DrawProperty(settingsProperty.FindPropertyRelative("pcssBlockerSearchRadius"), "Blocker Search Radius");
-                DrawProperty(settingsProperty.FindPropertyRelative("pcssMaxPenumbraRadius"), "Max Penumbra Radius");
-                DrawProperty(settingsProperty.FindPropertyRelative("pcssDepthBias"), "Depth Bias");
+                DrawProperty(enabled, "启用 PCSS");
+                DrawProperty(settingsProperty.FindPropertyRelative("pcssQuality"), "质量");
+                DrawProperty(settingsProperty.FindPropertyRelative("punctualPcssSoftness"), "点/聚光柔化");
+                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalPcssSoftness"), "第二方向光柔化");
+                DrawProperty(settingsProperty.FindPropertyRelative("pcssBlockerSearchRadius"), "遮挡搜索半径");
+                DrawProperty(settingsProperty.FindPropertyRelative("pcssMaxPenumbraRadius"), "最大半影半径");
+                DrawProperty(settingsProperty.FindPropertyRelative("pcssDepthBias"), "深度偏移");
             }
         }
 
         private void DrawSecondDirectional()
         {
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSecondDirectional, "Second Directional", GetIntSummary("secondDirectionalAtlasSize", "px"), SettingsColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSecondDirectional, "第二方向光", GetIntSummary("secondDirectionalAtlasSize", "px"), SettingsColor))
             {
                 return;
             }
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalShadowStrength"), "Strength");
-                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalAtlasSize"), "Atlas Size");
-                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalCascadeCount"), "Cascade Count");
-                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalMaxDistance"), "Max Distance");
-                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalShadowDepth"), "Shadow Depth");
-                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalCascadeSplits"), "Cascade Splits");
+                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalShadowStrength"), "强度");
+                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalAtlasSize"), "图集尺寸");
+                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalCascadeCount"), "级联数量");
+                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalMaxDistance"), "最大距离");
+                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalShadowDepth"), "阴影深度");
+                DrawProperty(settingsProperty.FindPropertyRelative("secondDirectionalCascadeSplits"), "级联切分");
             }
         }
 
@@ -145,10 +145,10 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         {
             HoShadowCastRuntimeDiagnosticSnapshot snapshot = HoShadowCastRuntimeDiagnostics.CurrentSnapshot;
             string summary = snapshot.IsValid
-                ? snapshot.LightCount + " lights / " + snapshot.SliceCount + " slices"
-                : "No frame yet";
+                ? snapshot.LightCount + " 灯 / " + snapshot.SliceCount + " 片"
+                : "暂无帧";
 
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "Runtime", summary, SettingsColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行状态", summary, SettingsColor))
             {
                 return;
             }
@@ -157,18 +157,18 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             {
                 if (!snapshot.IsValid)
                 {
-                    EditorGUILayout.HelpBox("No ShadowCast frame has been recorded yet. Enter Play Mode or render a Scene/Game camera that uses this RendererFeature.", MessageType.Info);
+                    EditorGUILayout.HelpBox("尚未记录 ShadowCast 运行帧。进入 Play Mode，或让使用该 RendererFeature 的 Scene/Game camera 渲染一帧。", MessageType.Info);
                     return;
                 }
 
-                EditorGUILayout.LabelField("Frame", snapshot.FrameCount.ToString());
-                EditorGUILayout.LabelField("Path", snapshot.Path);
-                EditorGUILayout.LabelField("Camera", snapshot.CameraName);
-                EditorGUILayout.LabelField("Source", snapshot.Source);
-                EditorGUILayout.LabelField("Visible Lights", snapshot.VisibleLightCount.ToString());
-                EditorGUILayout.LabelField("Candidates", snapshot.CandidateCount + " checked, " + snapshot.SkippedCandidateCount + " skipped");
-                EditorGUILayout.LabelField("Punctual Atlas", FormatAtlas(snapshot.HasFrame, snapshot.LightCount, snapshot.SliceCount, snapshot.AtlasSize));
-                EditorGUILayout.LabelField("Second Directional", FormatSecondDirectional(snapshot));
+                EditorGUILayout.LabelField("帧", snapshot.FrameCount.ToString());
+                EditorGUILayout.LabelField("路径", snapshot.Path);
+                EditorGUILayout.LabelField("相机", snapshot.CameraName);
+                EditorGUILayout.LabelField("来源", snapshot.Source);
+                EditorGUILayout.LabelField("可见灯光", snapshot.VisibleLightCount.ToString());
+                EditorGUILayout.LabelField("候选灯光", snapshot.CandidateCount + " 检查, " + snapshot.SkippedCandidateCount + " 跳过");
+                EditorGUILayout.LabelField("点/聚光图集", FormatAtlas(snapshot.HasFrame, snapshot.LightCount, snapshot.SliceCount, snapshot.AtlasSize));
+                EditorGUILayout.LabelField("第二方向光", FormatSecondDirectional(snapshot));
 
                 DrawAcceptedLights(snapshot.AcceptedLights);
                 DrawSkippedLights(snapshot.SkippedLights, snapshot.SkippedCandidateCount);
@@ -178,15 +178,15 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         private static string FormatAtlas(bool active, int lightCount, int sliceCount, int atlasSize)
         {
             return active
-                ? lightCount + " lights, " + sliceCount + " slices, " + atlasSize + "px"
-                : "Inactive";
+                ? lightCount + " 灯, " + sliceCount + " 片, " + atlasSize + "px"
+                : "未激活";
         }
 
         private static string FormatSecondDirectional(HoShadowCastRuntimeDiagnosticSnapshot snapshot)
         {
             return snapshot.HasSecondDirectionalFrame
-                ? snapshot.SecondDirectionalLightCount + " lights, " + snapshot.SecondDirectionalSliceCount + " slices, " + snapshot.SecondDirectionalCascadeCount + " cascades, " + snapshot.SecondDirectionalAtlasSize + "px"
-                : "Inactive";
+                ? snapshot.SecondDirectionalLightCount + " 灯, " + snapshot.SecondDirectionalSliceCount + " 片, " + snapshot.SecondDirectionalCascadeCount + " 级联, " + snapshot.SecondDirectionalAtlasSize + "px"
+                : "未激活";
         }
 
         private static void DrawAcceptedLights(HoShadowCastRuntimeDiagnosticLight[] lights)
@@ -197,7 +197,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             }
 
             EditorGUILayout.Space(3.0f);
-            EditorGUILayout.LabelField("Accepted Lights", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("已接收灯光", EditorStyles.boldLabel);
             for (int i = 0; i < lights.Length; i++)
             {
                 HoShadowCastRuntimeDiagnosticLight light = lights[i];
@@ -209,9 +209,9 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
 
         private static string FormatAcceptedLight(HoShadowCastRuntimeDiagnosticLight light)
         {
-            string summary = light.Stage + " " + light.Type + " slices " + light.FirstSlice + "+" + light.SliceCount + " @ " + light.Resolution + "px";
+            string summary = light.Stage + " " + light.Type + " 片 " + light.FirstSlice + "+" + light.SliceCount + " @ " + light.Resolution + "px";
             return light.BlockOffsetX >= 0 && light.BlockOffsetY >= 0 && light.BlockWidth > 0 && light.BlockHeight > 0
-                ? summary + ", block (" + light.BlockOffsetX + ", " + light.BlockOffsetY + ") " + light.BlockWidth + "x" + light.BlockHeight
+                ? summary + ", 块 (" + light.BlockOffsetX + ", " + light.BlockOffsetY + ") " + light.BlockWidth + "x" + light.BlockHeight
                 : summary;
         }
 
@@ -223,7 +223,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             }
 
             EditorGUILayout.Space(3.0f);
-            EditorGUILayout.LabelField("Skipped Lights", EditorStyles.boldLabel);
+            EditorGUILayout.LabelField("已跳过灯光", EditorStyles.boldLabel);
             for (int i = 0; i < skippedLights.Length; i++)
             {
                 HoShadowCastRuntimeDiagnosticSkip skipped = skippedLights[i];
@@ -233,7 +233,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             int remaining = skippedCandidateCount - skippedLights.Length;
             if (remaining > 0)
             {
-                EditorGUILayout.LabelField("More skipped", remaining.ToString());
+                EditorGUILayout.LabelField("更多跳过", remaining.ToString());
             }
         }
 
