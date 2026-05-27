@@ -7,7 +7,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         Outline = 2,
         DropShadow = 3,
         DepthOfField = 4,
-        PostLighting = 5
+        PostLighting = 5,
+        SkyTyndall = 6
     }
 
     public enum ScreenProcessBlendMode

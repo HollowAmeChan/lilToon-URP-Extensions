@@ -21,9 +21,11 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         {
             public TextureHandle source;
             public TextureHandle normalDepthTexture;
+            public TextureHandle skyTexture;
             public Material debugMaterial;
             public HoGeometryBufferDebugMode debugMode;
             public Vector4 debugDepthParams;
+            public bool useSkyTexture;
         }
 
         public void Setup(
@@ -87,6 +89,11 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             {
                 SetMaterialProperties(debugMaterial, settings);
                 cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
+                if (renderTargets.SkyTexture != null)
+                {
+                    cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, renderTargets.SkyTexture.nameID);
+                }
+
                 Blitter.BlitCameraTexture(cmd, cameraColorTarget, tempTexture, 0, true);
                 Blitter.BlitCameraTexture(cmd, tempTexture, cameraColorTarget, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, debugMaterial, 0);
             }
@@ -121,12 +128,19 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             {
                 passData.source = source;
                 passData.normalDepthTexture = geometryResources.normalDepthTexture;
+                passData.skyTexture = geometryResources.skyTexture;
                 passData.debugMaterial = debugMaterial;
                 passData.debugMode = settings.debugMode;
                 passData.debugDepthParams = GetDebugDepthParams(settings);
+                passData.useSkyTexture = geometryResources.skyTexture.IsValid();
 
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
+                if (passData.useSkyTexture)
+                {
+                    builder.UseTexture(passData.skyTexture, AccessFlags.Read);
+                }
+
                 builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
@@ -135,6 +149,11 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                     data.debugMaterial.SetFloat(HoGeometryBufferShaderConstants.DebugModeId, (float)data.debugMode);
                     data.debugMaterial.SetVector(HoGeometryBufferShaderConstants.DebugDepthParamsId, data.debugDepthParams);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
+                    if (data.useSkyTexture)
+                    {
+                        context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, data.skyTexture);
+                    }
+
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.debugMaterial, 0);
                 });
             }

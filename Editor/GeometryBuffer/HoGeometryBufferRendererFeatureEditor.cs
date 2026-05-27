@@ -62,6 +62,8 @@ namespace lilToon.URP.Extensions.Editor.GeometryBuffer
                 DrawProperty("minRenderQueue");
                 DrawProperty("maxRenderQueue");
                 DrawProperty("renderScale");
+                DrawProperty("enableSkyBuffer");
+                DrawProperty("skyRenderScale");
             }
         }
 
@@ -96,8 +98,10 @@ namespace lilToon.URP.Extensions.Editor.GeometryBuffer
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty("passEvent");
+                DrawProperty("skyPassEvent");
                 DrawProperty("debugPassEvent");
                 DrawProperty("fallbackShader");
+                DrawProperty("skyCaptureShader");
                 DrawProperty("debugShader");
             }
         }

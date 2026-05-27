@@ -229,6 +229,8 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         {
             Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, Texture2D.blackTexture);
+            Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, Texture2D.blackTexture);
+            Shader.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 0.0f);
         }
 
         private static TextureDesc CreateTextureDesc(

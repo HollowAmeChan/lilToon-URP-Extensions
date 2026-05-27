@@ -35,6 +35,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ScreenProcessEffect.EdgeLight, "边缘光", "icon_RimLight_v1"),
             new EffectToggleEntry(ScreenProcessEffect.Outline, "轮廓", "icon_OutLine_v1"),
             new EffectToggleEntry(ScreenProcessEffect.PostLighting, "后期打光", "icon_RimLight_v1"),
+            new EffectToggleEntry(ScreenProcessEffect.SkyTyndall, "Sky Tyndall", "icon_Flare_Ray_v1"),
             new EffectToggleEntry(ScreenProcessEffect.DropShadow, "投影", "icon_DropShadow_v1"),
             new EffectToggleEntry(ScreenProcessEffect.DepthOfField, "景深", "icon_Effects_v1"),
             new EffectToggleEntry(ScreenProcessEffect.CustomMaterial, "自定义", "icon_Effects_v1")
@@ -174,6 +175,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ScreenProcessEffect.PostLighting:
                     DrawPostLightingProperties(rect, ref y, element);
                     break;
+                case ScreenProcessEffect.SkyTyndall:
+                    DrawSkyTyndallProperties(rect, ref y, element);
+                    break;
             }
 
             EditorGUI.indentLevel--;
@@ -191,6 +195,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     return GetDepthOfFieldLineCount(element) + GetRuleLineCount(element);
                 case ScreenProcessEffect.PostLighting:
                     return GetPostLightingLineCount(element) + GetRuleLineCount(element);
+                case ScreenProcessEffect.SkyTyndall:
+                    return 16 + GetRuleLineCount(element);
                 case ScreenProcessEffect.CustomMaterial:
                     return 7 + GetRuleLineCount(element);
                 case ScreenProcessEffect.DropShadow:
@@ -473,6 +479,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     return 20;
                 case ScreenProcessEffect.PostLighting:
                     return 30;
+                case ScreenProcessEffect.SkyTyndall:
+                    return 35;
                 case ScreenProcessEffect.DropShadow:
                     return 40;
                 case ScreenProcessEffect.DepthOfField:
@@ -538,7 +546,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             SerializedProperty effect = element.FindPropertyRelative("effect");
             int value = effect != null ? effect.enumValueIndex : 0;
-            return (ScreenProcessEffect)Mathf.Clamp(value, 0, 5);
+            return (ScreenProcessEffect)Mathf.Clamp(value, 0, 6);
         }
 
         private static string GetEffectDisplayName(ScreenProcessEffect effect)
@@ -547,6 +555,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             {
                 case ScreenProcessEffect.PostLighting:
                     return "后期打光";
+                case ScreenProcessEffect.SkyTyndall:
+                    return "Sky Tyndall";
                 case ScreenProcessEffect.EdgeLight:
                     return "边缘光";
                 case ScreenProcessEffect.Outline:
@@ -630,6 +640,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters3", new Vector4(1.0f, 0.84f, 0.62f, 1.0f));
                     SetVector4(element, "parameters4", new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
                     SetVector4(element, "parameters5", new Vector4(0.35f, 0.28f, 0.0f, 0.45f));
+                    break;
+                case ScreenProcessEffect.SkyTyndall:
+                    SetColor(element, "color", new Color(1.0f, 0.88f, 0.68f, 1.0f));
+                    SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Add);
+                    SetVector4(element, "parameters0", new Vector4(0.62f, 1.0f, 0.45f, 1.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.5f, 0.18f, 1.6f, 1.0f));
+                    SetVector4(element, "parameters2", new Vector4(0.35f, 0.45f, 1.15f, 0.75f));
+                    SetVector4(element, "parameters3", new Vector4(0.65f, 0.0f, 1.0f, 1.0f));
                     break;
                 case ScreenProcessEffect.CustomMaterial:
                     SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Normal);

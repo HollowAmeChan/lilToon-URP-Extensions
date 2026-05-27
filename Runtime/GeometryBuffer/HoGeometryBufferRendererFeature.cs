@@ -14,13 +14,17 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
         private readonly HoGeometryBufferRenderTargets renderTargets = new HoGeometryBufferRenderTargets();
         private HoGeometryBufferPass outputPass;
+        private HoGeometryBufferSkyPass skyPass;
         private HoGeometryBufferDebugPass debugPass;
         private Material fallbackMaterial;
+        private Material skyCaptureMaterial;
         private Material debugMaterial;
         private Shader fallbackShader;
+        private Shader skyCaptureShader;
         private Shader debugShader;
         private bool registeredCameraReset;
         private bool warnedMissingFallbackShader;
+        private bool warnedMissingSkyCaptureShader;
         private bool warnedMissingDebugShader;
 
         public HoGeometryBufferSettings Settings => settings;
@@ -29,6 +33,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         {
             RegisterCameraReset();
             outputPass = new HoGeometryBufferPass();
+            skyPass = new HoGeometryBufferSkyPass();
             debugPass = new HoGeometryBufferDebugPass();
         }
 
@@ -42,6 +47,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
             EnsureMaterials(ShouldDebug(in renderingData));
             outputPass?.Setup(settings, renderTargets, fallbackMaterial);
+            skyPass?.Setup(settings, renderTargets, renderer.cameraColorTargetHandle, skyCaptureMaterial);
             debugPass?.Setup(settings, renderTargets, renderer.cameraColorTargetHandle, debugMaterial);
         }
 
@@ -61,6 +67,16 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 renderer.EnqueuePass(outputPass);
             }
 
+            if (skyPass != null && settings.enableSkyBuffer && skyCaptureMaterial != null)
+            {
+                skyPass.SetupRenderGraph(settings, renderTargets, skyCaptureMaterial);
+                renderer.EnqueuePass(skyPass);
+            }
+            else
+            {
+                skyPass?.ReleaseCompatibilityResources();
+            }
+
             if (debugPass != null && shouldDebug)
             {
                 debugPass.SetupRenderGraph(settings, renderTargets, debugMaterial);
@@ -77,13 +93,18 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             UnregisterCameraReset();
             renderTargets.Release();
             outputPass = null;
+            skyPass?.ReleaseCompatibilityResources();
+            skyPass = null;
             debugPass?.Dispose();
             debugPass = null;
             CoreUtils.Destroy(fallbackMaterial);
+            CoreUtils.Destroy(skyCaptureMaterial);
             CoreUtils.Destroy(debugMaterial);
             fallbackMaterial = null;
+            skyCaptureMaterial = null;
             debugMaterial = null;
             fallbackShader = null;
+            skyCaptureShader = null;
             debugShader = null;
         }
 
@@ -117,6 +138,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         private void ReleaseCompatibilityResources(bool resetGlobalState = false)
         {
             outputPass?.ReleaseCompatibilityResources(resetGlobalState);
+            skyPass?.ReleaseCompatibilityResources();
             debugPass?.ReleaseCompatibilityResources();
             renderTargets.Release();
         }
@@ -147,6 +169,11 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         private void EnsureMaterials(bool includeDebug)
         {
             EnsureFallbackMaterial();
+            if (settings != null && settings.enableSkyBuffer)
+            {
+                EnsureSkyCaptureMaterial();
+            }
+
             if (includeDebug)
             {
                 EnsureDebugMaterial();
@@ -179,6 +206,34 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             }
 
             fallbackMaterial = CoreUtils.CreateEngineMaterial(shader);
+        }
+
+        private void EnsureSkyCaptureMaterial()
+        {
+            Shader shader = settings != null && settings.skyCaptureShader != null
+                ? settings.skyCaptureShader
+                : Shader.Find(HoGeometryBufferShaderConstants.SkyCaptureShaderName);
+
+            if (skyCaptureMaterial != null && skyCaptureShader == shader)
+            {
+                return;
+            }
+
+            CoreUtils.Destroy(skyCaptureMaterial);
+            skyCaptureMaterial = null;
+            skyCaptureShader = shader;
+            if (shader == null)
+            {
+                if (!warnedMissingSkyCaptureShader)
+                {
+                    warnedMissingSkyCaptureShader = true;
+                    Debug.LogWarning($"GeometryBuffer sky capture is unavailable because shader '{HoGeometryBufferShaderConstants.SkyCaptureShaderName}' could not be found.");
+                }
+
+                return;
+            }
+
+            skyCaptureMaterial = CoreUtils.CreateEngineMaterial(shader);
         }
 
         private void EnsureDebugMaterial()

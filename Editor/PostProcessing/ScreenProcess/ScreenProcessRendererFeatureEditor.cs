@@ -112,6 +112,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 DrawRequiredStatus("ObjectCustom0", snapshot.RequiresObjectCustom0, snapshot.ObjectCustom0Available);
                 DrawRequiredStatus("ObjectCustom1", snapshot.RequiresObjectCustom1, snapshot.ObjectCustom1Available);
                 DrawRequiredStatus("NormalDepth", snapshot.RequiresNormalDepth, snapshot.NormalDepthAvailable);
+                DrawRequiredStatus("SkyTexture", snapshot.RequiresSkyTexture, snapshot.SkyTextureAvailable);
 
                 EditorGUILayout.HelpBox(
                     snapshot.Ready

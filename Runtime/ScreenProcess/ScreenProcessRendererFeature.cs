@@ -357,6 +357,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             public TextureHandle source;
             public TextureHandle ruleMaskIdTexture;
             public TextureHandle ruleNormalDepthTexture;
+            public TextureHandle skyTexture;
             public TextureHandle ruleSurfaceDataTexture;
             public TextureHandle ruleCustom0Texture;
             public TextureHandle ruleObjectCustom0Texture;
@@ -368,8 +369,10 @@ namespace lilToon.URP.Extensions.PostProcessing
             public bool isEdgeLight;
             public bool isDropShadow;
             public bool isPostLighting;
+            public bool isSkyTyndall;
             public bool useRuleMaskTexture;
             public bool useRuleNormalDepth;
+            public bool useSkyTexture;
             public bool useRuleSurfaceData;
             public bool useRuleCustom0;
             public bool useRuleObjectCustom0;
@@ -566,6 +569,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     false,
                     false,
                     false,
+                    false,
                     false);
                 return;
             }
@@ -578,6 +582,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     "Stack",
                     requirements,
                     0,
+                    false,
                     false,
                     false,
                     false,
@@ -613,6 +618,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     passData.source = source;
                     passData.ruleMaskIdTexture = metadataResources.maskIdTexture;
                     passData.ruleNormalDepthTexture = geometryResources.normalDepthTexture;
+                    passData.skyTexture = geometryResources.skyTexture;
                     passData.ruleSurfaceDataTexture = metadataResources.surfaceDataTexture;
                     passData.ruleCustom0Texture = metadataResources.custom0Texture;
                     passData.ruleObjectCustom0Texture = metadataResources.objectCustom0Texture;
@@ -624,10 +630,12 @@ namespace lilToon.URP.Extensions.PostProcessing
                     passData.isEdgeLight = runtimeLayer.settings.effect == ScreenProcessEffect.EdgeLight;
                     passData.isDropShadow = runtimeLayer.settings.effect == ScreenProcessEffect.DropShadow;
                     passData.isPostLighting = runtimeLayer.settings.effect == ScreenProcessEffect.PostLighting;
+                    passData.isSkyTyndall = runtimeLayer.settings.effect == ScreenProcessEffect.SkyTyndall;
                     bool needsRule = passData.isEdgeLight || passData.isDropShadow || passData.isPostLighting || runtimeLayer.settings.useRuleMask || runtimeLayer.settings.debugRuleMask;
                     bool needsRuleMaskResolve = passData.isDropShadow || runtimeLayer.settings.useRuleMask || runtimeLayer.settings.debugRuleMask;
                     passData.useRuleMaskTexture = needsRule && metadataResources.maskIdTexture.IsValid();
-                    passData.useRuleNormalDepth = (passData.isEdgeLight || passData.isPostLighting) && geometryResources.normalDepthTexture.IsValid();
+                    passData.useRuleNormalDepth = (passData.isEdgeLight || passData.isPostLighting || passData.isSkyTyndall) && geometryResources.normalDepthTexture.IsValid();
+                    passData.useSkyTexture = passData.isSkyTyndall && geometryResources.skyTexture.IsValid();
                     passData.useRuleSurfaceData = needsRuleMaskResolve && metadataResources.surfaceDataTexture.IsValid();
                     passData.useRuleCustom0 = needsRuleMaskResolve && metadataResources.custom0Texture.IsValid();
                     passData.useRuleObjectCustom0 = needsRuleMaskResolve && metadataResources.objectCustom0Texture.IsValid();
@@ -642,6 +650,11 @@ namespace lilToon.URP.Extensions.PostProcessing
                     if (passData.useRuleNormalDepth)
                     {
                         builder.UseTexture(geometryResources.normalDepthTexture, AccessFlags.Read);
+                    }
+
+                    if (passData.useSkyTexture)
+                    {
+                        builder.UseTexture(geometryResources.skyTexture, AccessFlags.Read);
                     }
 
                     if (passData.useRuleSurfaceData)
@@ -711,6 +724,45 @@ namespace lilToon.URP.Extensions.PostProcessing
                             {
                                 context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.ruleMaskIdTexture);
                                 context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.ruleNormalDepthTexture);
+                            }
+
+                            if (data.useRuleSurfaceData)
+                            {
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.ruleSurfaceDataTexture);
+                            }
+
+                            if (data.useRuleCustom0)
+                            {
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.ruleCustom0Texture);
+                            }
+
+                            if (data.useRuleObjectCustom0)
+                            {
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.ruleObjectCustom0Texture);
+                            }
+
+                            if (data.useRuleObjectCustom1)
+                            {
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.ruleObjectCustom1Texture);
+                            }
+                        }
+                        else if (data.isSkyTyndall)
+                        {
+                            context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, data.useSkyTexture ? 1.0f : 0.0f);
+                            if (data.useSkyTexture)
+                            {
+                                context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, data.skyTexture);
+                            }
+
+                            if (data.useRuleNormalDepth)
+                            {
+                                context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.ruleNormalDepthTexture);
+                            }
+
+                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, data.useRuleMaskTexture ? 1.0f : 0.0f);
+                            if (data.useRuleMaskTexture)
+                            {
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.ruleMaskIdTexture);
                             }
 
                             if (data.useRuleSurfaceData)
@@ -815,7 +867,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                 metadataResources.custom0Texture.IsValid(),
                 metadataResources.objectCustom0Texture.IsValid(),
                 metadataResources.objectCustom1Texture.IsValid(),
-                geometryResources.normalDepthTexture.IsValid());
+                geometryResources.normalDepthTexture.IsValid(),
+                geometryResources.skyTexture.IsValid());
         }
 
         private void CopyLayers(List<ScreenProcessRuntimeLayer> layers)

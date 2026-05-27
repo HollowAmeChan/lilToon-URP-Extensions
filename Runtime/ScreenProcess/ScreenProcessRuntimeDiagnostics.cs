@@ -12,6 +12,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public readonly bool RequiresCustom0;
         public readonly bool RequiresObjectCustom0;
         public readonly bool RequiresObjectCustom1;
+        public readonly bool RequiresSkyTexture;
 
         public ScreenProcessRuntimeResourceRequirements(
             int activeLayerCount,
@@ -20,7 +21,8 @@ namespace lilToon.URP.Extensions.PostProcessing
             bool requiresSurfaceData,
             bool requiresCustom0,
             bool requiresObjectCustom0,
-            bool requiresObjectCustom1)
+            bool requiresObjectCustom1,
+            bool requiresSkyTexture)
         {
             ActiveLayerCount = activeLayerCount;
             RequiresMaskId = requiresMaskId;
@@ -29,6 +31,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             RequiresCustom0 = requiresCustom0;
             RequiresObjectCustom0 = requiresObjectCustom0;
             RequiresObjectCustom1 = requiresObjectCustom1;
+            RequiresSkyTexture = requiresSkyTexture;
         }
     }
 
@@ -58,6 +61,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         public readonly bool ObjectCustom1Available;
         public readonly bool RequiresNormalDepth;
         public readonly bool NormalDepthAvailable;
+        public readonly bool RequiresSkyTexture;
+        public readonly bool SkyTextureAvailable;
         public readonly bool Ready;
         public readonly string Reason;
 
@@ -77,6 +82,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             bool objectCustom0Available,
             bool objectCustom1Available,
             bool normalDepthAvailable,
+            bool skyTextureAvailable,
             bool ready,
             string reason)
         {
@@ -94,12 +100,14 @@ namespace lilToon.URP.Extensions.PostProcessing
             RequiresObjectCustom0 = requirements.RequiresObjectCustom0;
             RequiresObjectCustom1 = requirements.RequiresObjectCustom1;
             RequiresNormalDepth = requirements.RequiresNormalDepth;
+            RequiresSkyTexture = requirements.RequiresSkyTexture;
             MaskIdAvailable = maskIdAvailable;
             SurfaceDataAvailable = surfaceDataAvailable;
             Custom0Available = custom0Available;
             ObjectCustom0Available = objectCustom0Available;
             ObjectCustom1Available = objectCustom1Available;
             NormalDepthAvailable = normalDepthAvailable;
+            SkyTextureAvailable = skyTextureAvailable;
             RequiresMetadataBuffer = RequiresMaskId
                 || RequiresSurfaceData
                 || RequiresCustom0
@@ -110,8 +118,9 @@ namespace lilToon.URP.Extensions.PostProcessing
                 && (!RequiresCustom0 || Custom0Available)
                 && (!RequiresObjectCustom0 || ObjectCustom0Available)
                 && (!RequiresObjectCustom1 || ObjectCustom1Available);
-            RequiresGeometryBuffer = RequiresNormalDepth;
-            GeometryBufferAvailable = !RequiresNormalDepth || NormalDepthAvailable;
+            RequiresGeometryBuffer = RequiresNormalDepth || RequiresSkyTexture;
+            GeometryBufferAvailable = (!RequiresNormalDepth || NormalDepthAvailable)
+                && (!RequiresSkyTexture || SkyTextureAvailable);
             Ready = ready;
             Reason = reason ?? string.Empty;
         }
@@ -120,7 +129,7 @@ namespace lilToon.URP.Extensions.PostProcessing
     public static class ScreenProcessRuntimeDiagnostics
     {
         private static readonly ScreenProcessRuntimeResourceRequirements EmptyRequirements =
-            new ScreenProcessRuntimeResourceRequirements(0, false, false, false, false, false, false);
+            new ScreenProcessRuntimeResourceRequirements(0, false, false, false, false, false, false, false);
 
         private static readonly ScreenProcessRuntimeDiagnosticSnapshot EmptySnapshot =
             new ScreenProcessRuntimeDiagnosticSnapshot(
@@ -133,6 +142,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 false,
                 false,
                 EmptyRequirements,
+                false,
                 false,
                 false,
                 false,
@@ -155,6 +165,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             bool requiresCustom0 = false;
             bool requiresObjectCustom0 = false;
             bool requiresObjectCustom1 = false;
+            bool requiresSkyTexture = false;
 
             if (layers != null)
             {
@@ -171,15 +182,21 @@ namespace lilToon.URP.Extensions.PostProcessing
                     bool isEdgeLight = layer.effect == ScreenProcessEffect.EdgeLight;
                     bool isDropShadow = layer.effect == ScreenProcessEffect.DropShadow;
                     bool isPostLighting = layer.effect == ScreenProcessEffect.PostLighting;
+                    bool isSkyTyndall = layer.effect == ScreenProcessEffect.SkyTyndall;
                     bool needsRule = isEdgeLight || isDropShadow || isPostLighting || layer.useRuleMask || layer.debugRuleMask;
                     if (needsRule)
                     {
                         requiresMaskId = true;
                     }
 
-                    if (isEdgeLight || isPostLighting)
+                    if (isEdgeLight || isPostLighting || isSkyTyndall)
                     {
                         requiresNormalDepth = true;
+                    }
+
+                    if (isSkyTyndall)
+                    {
+                        requiresSkyTexture = true;
                     }
 
                     if (isDropShadow || layer.useRuleMask || layer.debugRuleMask)
@@ -201,7 +218,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                 requiresSurfaceData,
                 requiresCustom0,
                 requiresObjectCustom0,
-                requiresObjectCustom1);
+                requiresObjectCustom1,
+                requiresSkyTexture);
         }
 
         internal static void PublishSkipped(Camera camera, string stage, string reason)
@@ -216,6 +234,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 false,
                 false,
                 EmptyRequirements,
+                false,
                 false,
                 false,
                 false,
@@ -238,7 +257,8 @@ namespace lilToon.URP.Extensions.PostProcessing
             bool custom0Available,
             bool objectCustom0Available,
             bool objectCustom1Available,
-            bool normalDepthAvailable)
+            bool normalDepthAvailable,
+            bool skyTextureAvailable)
         {
             bool ready = !backBufferActive
                 && cameraColorAvailable
@@ -247,7 +267,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                 && (!requirements.RequiresCustom0 || custom0Available)
                 && (!requirements.RequiresObjectCustom0 || objectCustom0Available)
                 && (!requirements.RequiresObjectCustom1 || objectCustom1Available)
-                && (!requirements.RequiresNormalDepth || normalDepthAvailable);
+                && (!requirements.RequiresNormalDepth || normalDepthAvailable)
+                && (!requirements.RequiresSkyTexture || skyTextureAvailable);
 
             currentSnapshot = new ScreenProcessRuntimeDiagnosticSnapshot(
                 true,
@@ -265,6 +286,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 objectCustom0Available,
                 objectCustom1Available,
                 normalDepthAvailable,
+                skyTextureAvailable,
                 ready,
                 ready ? "输入有效。" : BuildMissingInputReason(
                     requirements,
@@ -275,7 +297,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                     custom0Available,
                     objectCustom0Available,
                     objectCustom1Available,
-                    normalDepthAvailable));
+                    normalDepthAvailable,
+                    skyTextureAvailable));
         }
 
         private static void AccumulateRuleSourceRequirements(
@@ -348,7 +371,8 @@ namespace lilToon.URP.Extensions.PostProcessing
             bool custom0Available,
             bool objectCustom0Available,
             bool objectCustom1Available,
-            bool normalDepthAvailable)
+            bool normalDepthAvailable,
+            bool skyTextureAvailable)
         {
             if (backBufferActive)
             {
@@ -365,7 +389,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                 && (!requirements.RequiresCustom0 || custom0Available)
                 && (!requirements.RequiresObjectCustom0 || objectCustom0Available)
                 && (!requirements.RequiresObjectCustom1 || objectCustom1Available);
-            bool geometryAvailable = !requirements.RequiresNormalDepth || normalDepthAvailable;
+            bool geometryAvailable = (!requirements.RequiresNormalDepth || normalDepthAvailable)
+                && (!requirements.RequiresSkyTexture || skyTextureAvailable);
             if (!metadataAvailable && !geometryAvailable)
             {
                 return "MetadataBuffer 与 GeometryBuffer 不可用或不完整。";
@@ -374,6 +399,11 @@ namespace lilToon.URP.Extensions.PostProcessing
             if (!metadataAvailable)
             {
                 return "MetadataBuffer 输入不完整。";
+            }
+
+            if (requirements.RequiresSkyTexture && !skyTextureAvailable)
+            {
+                return "GeometryBuffer sky texture is unavailable.";
             }
 
             return "GeometryBuffer normalDepth 不可用。";

@@ -28,6 +28,7 @@ Shader "Hidden/lilToon/URP/GeometryBuffer/DebugView"
             float4 _HoGeometryBufferDebugDepthParams; // x near, y far, z inv range
 
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
+            TEXTURE2D_X(_HoGeometryBufferSkyTexture);
 
             half3 Heat(float value)
             {
@@ -65,6 +66,19 @@ Shader "Hidden/lilToon/URP/GeometryBuffer/DebugView"
                 {
                     half validity = LilHoGeometryBufferNormalValid(normalDepth);
                     return half4(Heat(validity), 1.0);
+                }
+
+                if (mode == 5)
+                {
+                    half4 sky = SAMPLE_TEXTURE2D_X(_HoGeometryBufferSkyTexture, sampler_LinearClamp, uv);
+                    half3 mapped = sky.rgb / (sky.rgb + 1.0h);
+                    return half4(mapped, 1.0);
+                }
+
+                if (mode == 6)
+                {
+                    half contribution = SAMPLE_TEXTURE2D_X(_HoGeometryBufferSkyTexture, sampler_LinearClamp, uv).a;
+                    return half4(contribution, contribution, contribution, 1.0);
                 }
 
                 return source;

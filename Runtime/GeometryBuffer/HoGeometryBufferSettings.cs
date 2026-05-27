@@ -29,8 +29,20 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         [InspectorName("Render Scale")]
         public HoGeometryBufferRenderScale renderScale = HoGeometryBufferRenderScale.Full;
 
+        [InspectorName("Enable Sky Buffer")]
+        public bool enableSkyBuffer;
+
+        [InspectorName("Sky Render Scale")]
+        public HoGeometryBufferRenderScale skyRenderScale = HoGeometryBufferRenderScale.Half;
+
+        [InspectorName("Sky Pass Event")]
+        public RenderPassEvent skyPassEvent = RenderPassEvent.AfterRenderingSkybox;
+
         [InspectorName("Fallback Shader")]
         public Shader fallbackShader;
+
+        [InspectorName("Sky Capture Shader")]
+        public Shader skyCaptureShader;
 
         [InspectorName("Debug Shader")]
         public Shader debugShader;

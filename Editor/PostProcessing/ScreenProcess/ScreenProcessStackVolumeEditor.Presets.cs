@@ -106,6 +106,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "中心聚光", ApplyScreenProcessCenterPostLightingPreset);
                     AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "冷暖 MatCap", ApplyScreenProcessMatcapPostLightingPreset);
                     break;
+                case ScreenProcessEffect.SkyTyndall:
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "Soft Sky Shafts", ApplyScreenProcessSoftSkyTyndallPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "Foreground Rays", ApplyScreenProcessForegroundSkyTyndallPreset);
+                    break;
                 case ScreenProcessEffect.EdgeLight:
                     AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "柔和边缘光", ApplyScreenProcessSoftEdgeLightPreset);
                     AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "锐利轮廓光", ApplyScreenProcessSharpEdgeLightPreset);
@@ -285,6 +289,28 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetVector4(element, "parameters3", new Vector4(0.72f, 0.86f, 1.0f, 1.0f));
             SetVector4(element, "parameters4", new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
             SetVector4(element, "parameters5", new Vector4(0.45f, 0.24f, 1.0f, 1.25f));
+        }
+
+        private static void ApplyScreenProcessSoftSkyTyndallPreset(SerializedProperty element, ScreenProcessEffect effect)
+        {
+            ApplyScreenProcessDefaultPreset(element, effect);
+            SetColor(element, "color", new Color(1.0f, 0.88f, 0.68f, 1.0f));
+            SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Add);
+            SetVector4(element, "parameters0", new Vector4(0.58f, 0.85f, 0.55f, 1.15f));
+            SetVector4(element, "parameters1", new Vector4(0.5f, 0.14f, 1.8f, 1.0f));
+            SetVector4(element, "parameters2", new Vector4(0.20f, 0.25f, 1.0f, 0.75f));
+            SetVector4(element, "parameters3", new Vector4(0.45f, 0.0f, 1.0f, 1.0f));
+        }
+
+        private static void ApplyScreenProcessForegroundSkyTyndallPreset(SerializedProperty element, ScreenProcessEffect effect)
+        {
+            ApplyScreenProcessDefaultPreset(element, effect);
+            SetColor(element, "color", new Color(1.0f, 0.78f, 0.48f, 1.0f));
+            SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Screen);
+            SetVector4(element, "parameters0", new Vector4(0.74f, 1.1f, 0.38f, 1.35f));
+            SetVector4(element, "parameters1", new Vector4(0.48f, 0.12f, 1.35f, 2.0f));
+            SetVector4(element, "parameters2", new Vector4(0.68f, 0.70f, 1.6f, 0.55f));
+            SetVector4(element, "parameters3", new Vector4(0.72f, 0.0f, 1.0f, 1.0f));
         }
 
         private readonly struct RuleMaskState

@@ -11,9 +11,11 @@ namespace lilToon.URP.Extensions.GeometryBuffer
     {
         private RTHandle normalDepthTexture;
         private RTHandle depthTexture;
+        private RTHandle skyTexture;
 
         public RTHandle NormalDepthTexture => normalDepthTexture;
         public RTHandle DepthTexture => depthTexture;
+        public RTHandle SkyTexture => skyTexture;
 
         public void ReAllocateIfNeeded(RenderTextureDescriptor cameraTextureDescriptor, HoGeometryBufferSettings settings)
         {
@@ -28,12 +30,19 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             RenderingUtils.ReAllocateIfNeeded(ref depthTexture, CreateDepthDescriptor(cameraTextureDescriptor, settings), FilterMode.Point, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.DepthTextureName);
         }
 
+        public void ReAllocateSkyIfNeeded(RenderTextureDescriptor cameraTextureDescriptor, HoGeometryBufferSettings settings)
+        {
+            RenderingUtils.ReAllocateIfNeeded(ref skyTexture, CreateSkyDescriptor(cameraTextureDescriptor, settings), FilterMode.Bilinear, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.SkyTextureName);
+        }
+
         public void Release()
         {
             normalDepthTexture?.Release();
             depthTexture?.Release();
+            skyTexture?.Release();
             normalDepthTexture = null;
             depthTexture = null;
+            skyTexture = null;
         }
 
         internal static RenderTextureDescriptor CreateColorDescriptor(RenderTextureDescriptor cameraTextureDescriptor, HoGeometryBufferSettings settings)
@@ -45,6 +54,25 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             descriptor.msaaSamples = divisor == 1 ? Mathf.Max(1, descriptor.msaaSamples) : 1;
             descriptor.width = Mathf.Max(1, descriptor.width / divisor);
             descriptor.height = Mathf.Max(1, descriptor.height / divisor);
+            return descriptor;
+        }
+
+        internal static RenderTextureDescriptor CreateSkyDescriptor(RenderTextureDescriptor cameraTextureDescriptor, HoGeometryBufferSettings settings)
+        {
+            int divisor = Mathf.Max(1, (int)settings.skyRenderScale);
+            RenderTextureDescriptor descriptor = cameraTextureDescriptor;
+            descriptor.depthBufferBits = 0;
+            descriptor.depthStencilFormat = GraphicsFormat.None;
+            descriptor.msaaSamples = 1;
+            descriptor.bindMS = false;
+            descriptor.width = Mathf.Max(1, descriptor.width / divisor);
+            descriptor.height = Mathf.Max(1, descriptor.height / divisor);
+            GraphicsFormat format = HoGeometryBufferFormatUtility.GetHighPrecisionGraphicsFormat();
+            if (format != GraphicsFormat.None)
+            {
+                descriptor.graphicsFormat = format;
+            }
+
             return descriptor;
         }
 

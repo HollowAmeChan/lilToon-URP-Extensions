@@ -50,6 +50,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
         private static readonly int ReflectionTextureId = Shader.PropertyToID("_LILPBRPlanarReflectionTexture");
         private static readonly int ReflectionTextureMatrixId = Shader.PropertyToID("_LILPBRPlanarReflectionTextureMatrix");
         private static readonly int ReflectionParamsId = Shader.PropertyToID("_LILPBRPlanarReflectionParams");
+        private const float DegeneratePlaneDistance = 0.0001f;
+        private static readonly Rect FullViewportRect = new Rect(0.0f, 0.0f, 1.0f, 1.0f);
         private static bool isRenderingReflection;
 
         internal static int SurfaceCount => ActiveSurfaces.Count;
@@ -284,9 +286,24 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 planeNormal.z,
                 -Vector3.Dot(planeNormal, planePosition)));
 
-            float cameraPlaneDistance = Vector3.Dot(sourceCamera.transform.position - planePosition, planeNormal);
+            Vector3 sourcePosition = sourceCamera.transform.position;
+            float cameraPlaneDistance = Vector3.Dot(sourcePosition - planePosition, planeNormal);
             Vector3 clipNormal = cameraPlaneDistance >= 0.0f ? planeNormal : -planeNormal;
-            ConfigureReflectionCamera(sourceCamera, reflectionMatrix, planePosition, clipNormal, Mathf.Abs(cameraPlaneDistance));
+            float absCameraPlaneDistance = Mathf.Abs(cameraPlaneDistance);
+            Vector3 adjustedSourcePosition = sourcePosition;
+            if (absCameraPlaneDistance < DegeneratePlaneDistance)
+            {
+                adjustedSourcePosition += clipNormal * (DegeneratePlaneDistance - absCameraPlaneDistance);
+                absCameraPlaneDistance = DegeneratePlaneDistance;
+            }
+
+            ConfigureReflectionCamera(
+                sourceCamera,
+                reflectionMatrix,
+                adjustedSourcePosition,
+                planePosition,
+                clipNormal,
+                absCameraPlaneDistance);
 
             bool previousInvertCulling = GL.invertCulling;
             bool previousForceRenderingOff = surfaceRenderer.forceRenderingOff;
@@ -397,16 +414,29 @@ namespace lilToon.URP.Extensions.PlanarReflection
             reflectionTexture.Create();
         }
 
-        private void ConfigureReflectionCamera(Camera sourceCamera, Matrix4x4 reflectionMatrix, Vector3 planePosition, Vector3 clipNormal, float cameraPlaneDistance)
+        private void ConfigureReflectionCamera(
+            Camera sourceCamera,
+            Matrix4x4 reflectionMatrix,
+            Vector3 sourcePosition,
+            Vector3 planePosition,
+            Vector3 clipNormal,
+            float cameraPlaneDistance)
         {
             reflectionCamera.CopyFrom(sourceCamera);
             reflectionCamera.enabled = false;
             reflectionCamera.cameraType = CameraType.Reflection;
             reflectionCamera.targetTexture = reflectionTexture;
+            reflectionCamera.rect = FullViewportRect;
+            reflectionCamera.pixelRect = new Rect(0.0f, 0.0f, reflectionTexture.width, reflectionTexture.height);
+            reflectionCamera.aspect = reflectionTexture.width / (float)Mathf.Max(1, reflectionTexture.height);
             reflectionCamera.cullingMask = reflectionMask;
             reflectionCamera.allowMSAA = false;
             reflectionCamera.useOcclusionCulling = false;
             reflectionCamera.nearClipPlane = Mathf.Max(0.001f, reflectionNearClipPlane);
+            if (reflectionCamera.farClipPlane <= reflectionCamera.nearClipPlane)
+            {
+                reflectionCamera.farClipPlane = reflectionCamera.nearClipPlane + 0.001f;
+            }
 
             if (!copyCameraClearFlags)
             {
@@ -414,12 +444,19 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 reflectionCamera.backgroundColor = fallbackBackgroundColor;
             }
 
-            Vector3 reflectedPosition = reflectionMatrix.MultiplyPoint(sourceCamera.transform.position);
+            Vector3 reflectedPosition = reflectionMatrix.MultiplyPoint(sourcePosition);
             Vector3 reflectedForward = reflectionMatrix.MultiplyVector(sourceCamera.transform.forward);
             Vector3 reflectedUp = reflectionMatrix.MultiplyVector(sourceCamera.transform.up);
             reflectionCamera.transform.SetPositionAndRotation(reflectedPosition, Quaternion.LookRotation(reflectedForward, reflectedUp));
 
-            Matrix4x4 worldToCamera = sourceCamera.worldToCameraMatrix * reflectionMatrix;
+            Vector3 sourceOffset = sourcePosition - sourceCamera.transform.position;
+            Matrix4x4 sourceWorldToCamera = sourceCamera.worldToCameraMatrix;
+            if (sourceOffset.sqrMagnitude > 0.0f)
+            {
+                sourceWorldToCamera *= Matrix4x4.Translate(-sourceOffset);
+            }
+
+            Matrix4x4 worldToCamera = sourceWorldToCamera * reflectionMatrix;
             reflectionCamera.worldToCameraMatrix = worldToCamera;
 
             if (useObliqueClipPlane)
@@ -433,6 +470,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 Vector4 clipPlane = CameraSpacePlane(reflectionCamera, clipPlanePosition, clipNormal, 1.0f);
                 reflectionCamera.projectionMatrix = reflectionCamera.CalculateObliqueMatrix(clipPlane);
             }
+
+            reflectionCamera.ResetCullingMatrix();
         }
 
         private void ApplyEnabledPropertyBlock()
