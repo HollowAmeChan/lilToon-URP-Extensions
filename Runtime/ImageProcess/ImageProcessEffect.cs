@@ -56,7 +56,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         PrismFracture,
         SpeedLines,
         SkyGodRays,
-        LogoOverlay
+        LogoOverlay,
+        BlueNoise
     }
 
     public enum ImageProcessBlendMode

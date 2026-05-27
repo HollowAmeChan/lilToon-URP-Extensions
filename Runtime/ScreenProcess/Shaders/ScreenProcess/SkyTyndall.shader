@@ -66,7 +66,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
 
             float ResolveDitherAmount()
             {
-                return _LayerParams5.w > 0.0001 ? saturate(_LayerParams5.w) : 0.65;
+                return _LayerParams5.w > 0.0001 ? saturate(_LayerParams5.w) : 0.99;
             }
 
             float ResolveBlueNoiseLikeValue(float2 pixel)

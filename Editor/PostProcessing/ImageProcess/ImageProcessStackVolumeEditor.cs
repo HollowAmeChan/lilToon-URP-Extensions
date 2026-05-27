@@ -70,6 +70,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ImageProcessEffect.VHS, "VHS", "icon_VHS_v1"),
             new EffectToggleEntry(ImageProcessEffect.CRTEffects, "显示器", "icon_Monitor_v1"),
             new EffectToggleEntry(ImageProcessEffect.DitheringCustom, "视频游戏", "icon_GameBoy_v1"),
+            new EffectToggleEntry(ImageProcessEffect.BlueNoise, "蓝噪声", "icon_Grain_v1"),
             new EffectToggleEntry(ImageProcessEffect.IrisBlur, "光圈模糊", "icon_IrisBlur_v1"),
             new EffectToggleEntry(ImageProcessEffect.RGBBlurV2, "通道模糊", "icon_RGBBlur_v2"),
             new EffectToggleEntry(ImageProcessEffect.RGBSplit, "RGB 分离", "icon_RGBSplit_v1"),
@@ -146,7 +147,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "棱镜破碎",
             "集中线",
             "天空神光",
-            "图标显示"
+            "图标显示",
+            "蓝噪声"
         };
 
         private static readonly GUIContent[] BlendModeDisplayNames =
@@ -426,6 +428,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ImageProcessEffect.BlueNoise)
+            {
+                DrawBlueNoiseElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ImageProcessEffect.CRTEffects)
             {
                 DrawCrtEffectsElement(rect, element);
@@ -632,6 +640,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ImageProcessEffect.DitheringCustom:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
                     lineCount += GetDitheringCustomUsesColorMode(element) ? 8 : 8;
+                    break;
+                case ImageProcessEffect.BlueNoise:
+                    lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
+                    lineCount += 8;
                     break;
                 case ImageProcessEffect.CRTEffects:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
@@ -1513,6 +1525,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters3", new Vector4(0.1254902f, 0.2f, 0.1764706f, 1.0f));
                     SetVector4(element, "parameters4", new Vector4(0.3372549f, 0.4980392f, 0.3803922f, 1.0f));
                     SetVector4(element, "parameters5", new Vector4(0.8627451f, 0.8862745f, 0.3882353f, 1.0f));
+                    break;
+                case ImageProcessEffect.BlueNoise:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetColor(element, "color", Color.black);
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 0.45f, 1.0f, 0.0f));
+                    SetVector4(element, "parameters1", new Vector4(1.0f, 0.85f, 0.25f, 0.75f));
                     break;
                 case ImageProcessEffect.CRTEffects:
                     SetFloat(element, "intensity", 1.0f);

@@ -107,8 +107,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "冷暖 MatCap", ApplyScreenProcessMatcapPostLightingPreset);
                     break;
                 case ScreenProcessEffect.SkyTyndall:
-                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "Soft Sky Shafts", ApplyScreenProcessSoftSkyTyndallPreset);
-                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "Foreground Rays", ApplyScreenProcessForegroundSkyTyndallPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "图例默认", ApplyScreenProcessReferenceSkyTyndallPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "柔和蓝噪", ApplyScreenProcessSoftSkyTyndallPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "半调前景", ApplyScreenProcessForegroundSkyTyndallPreset);
                     break;
                 case ScreenProcessEffect.EdgeLight:
                     AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "柔和边缘光", ApplyScreenProcessSoftEdgeLightPreset);
@@ -291,30 +292,35 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetVector4(element, "parameters5", new Vector4(0.45f, 0.24f, 1.0f, 1.25f));
         }
 
+        private static void ApplyScreenProcessReferenceSkyTyndallPreset(SerializedProperty element, ScreenProcessEffect effect)
+        {
+            ApplyScreenProcessDefaultPreset(element, effect);
+        }
+
         private static void ApplyScreenProcessSoftSkyTyndallPreset(SerializedProperty element, ScreenProcessEffect effect)
         {
             ApplyScreenProcessDefaultPreset(element, effect);
-            SetColor(element, "color", new Color(1.0f, 0.88f, 0.68f, 1.0f));
-            SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Add);
-            SetVector4(element, "parameters0", new Vector4(0.72f, 0.85f, 0.55f, 1.05f));
-            SetVector4(element, "parameters1", new Vector4(0.5f, 0.14f, 0.94f, 1.0f));
-            SetVector4(element, "parameters2", new Vector4(0.35f, 0.20f, 0.85f, 0.75f));
+            SetColor(element, "color", new Color(1.0f, 0.86f, 0.62f, 1.0f));
+            SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Screen);
+            SetVector4(element, "parameters0", new Vector4(0.82f, 6.0f, 1.8f, 1.0f));
+            SetVector4(element, "parameters1", new Vector4(0.62f, 1.0f, 0.78f, 2.0f));
+            SetVector4(element, "parameters2", new Vector4(0.55f, 0.25f, 0.85f, 0.75f));
             SetVector4(element, "parameters3", new Vector4(0.45f, 0.0f, 1.0f, 1.0f));
-            SetVector4(element, "parameters4", new Vector4(0.0f, 1.0f, 90.0f, 1.0f));
-            SetVector4(element, "parameters5", new Vector4(0.045f, 1.5f, 0.0f, 0.60f));
+            SetVector4(element, "parameters4", new Vector4(0.0f, 1.0f, 90.0f, 0.0f));
+            SetVector4(element, "parameters5", new Vector4(0.04f, 1.6f, 0.0f, 0.85f));
         }
 
         private static void ApplyScreenProcessForegroundSkyTyndallPreset(SerializedProperty element, ScreenProcessEffect effect)
         {
             ApplyScreenProcessDefaultPreset(element, effect);
-            SetColor(element, "color", new Color(1.0f, 0.78f, 0.48f, 1.0f));
+            SetColor(element, "color", new Color(1.0f, 0.74f, 0.42f, 1.0f));
             SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Screen);
-            SetVector4(element, "parameters0", new Vector4(0.86f, 1.1f, 0.42f, 1.15f));
-            SetVector4(element, "parameters1", new Vector4(0.48f, 0.12f, 0.91f, 2.0f));
-            SetVector4(element, "parameters2", new Vector4(0.72f, 0.45f, 1.15f, 0.65f));
-            SetVector4(element, "parameters3", new Vector4(0.68f, 0.0f, 1.0f, 1.0f));
+            SetVector4(element, "parameters0", new Vector4(0.95f, 7.0f, 1.2f, 1.15f));
+            SetVector4(element, "parameters1", new Vector4(0.65f, 1.0f, 0.72f, 2.0f));
+            SetVector4(element, "parameters2", new Vector4(0.65f, 0.55f, 1.1f, 0.65f));
+            SetVector4(element, "parameters3", new Vector4(0.62f, 0.0f, 1.0f, 1.0f));
             SetVector4(element, "parameters4", new Vector4(0.0f, 1.0f, 90.0f, 1.0f));
-            SetVector4(element, "parameters5", new Vector4(0.060f, 1.2f, 1.0f, 0.45f));
+            SetVector4(element, "parameters5", new Vector4(0.06f, 1.1f, 1.0f, 0.55f));
         }
 
         private readonly struct RuleMaskState

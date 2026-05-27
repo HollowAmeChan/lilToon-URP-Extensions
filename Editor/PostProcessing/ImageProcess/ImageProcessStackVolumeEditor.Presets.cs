@@ -186,6 +186,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "复古单色", ApplyImageProcessMonoDitherPreset);
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "低色彩", ApplyImageProcessColorDitherPreset);
                     break;
+                case ImageProcessEffect.BlueNoise:
+                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "细蓝噪颗粒", ApplyImageProcessFineBlueNoisePreset);
+                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "蓝噪色阶", ApplyImageProcessBlueNoiseDitherPreset);
+                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "网点阴影", ApplyImageProcessBlueNoiseStipplePreset);
+                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "边缘蓝噪", ApplyImageProcessBlueNoiseEdgePreset);
+                    break;
                 case ImageProcessEffect.IrisBlur:
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "轻光圈模糊", ApplyImageProcessSoftIrisBlurPreset);
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "强光圈模糊", ApplyImageProcessStrongIrisBlurPreset);
@@ -740,6 +746,38 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             ApplyImageProcessDefaultPreset(element, effect);
             SetVector4(element, "parameters0", new Vector4(0.68f, 2.8f, 0.95f, 0.0f));
+        }
+
+        private static void ApplyImageProcessFineBlueNoisePreset(SerializedProperty element, ImageProcessEffect effect)
+        {
+            ApplyImageProcessDefaultPreset(element, effect);
+            SetColor(element, "color", Color.black);
+            SetVector4(element, "parameters0", new Vector4(0.0f, 0.35f, 1.0f, 0.0f));
+            SetVector4(element, "parameters1", new Vector4(1.2f, 0.55f, 0.2f, 0.85f));
+        }
+
+        private static void ApplyImageProcessBlueNoiseDitherPreset(SerializedProperty element, ImageProcessEffect effect)
+        {
+            ApplyImageProcessDefaultPreset(element, effect);
+            SetColor(element, "color", Color.black);
+            SetVector4(element, "parameters0", new Vector4(1.0f, 0.75f, 1.0f, 0.0f));
+            SetVector4(element, "parameters1", new Vector4(1.35f, 8.0f, 1.0f, 0.8f));
+        }
+
+        private static void ApplyImageProcessBlueNoiseStipplePreset(SerializedProperty element, ImageProcessEffect effect)
+        {
+            ApplyImageProcessDefaultPreset(element, effect);
+            SetColor(element, "color", Color.black);
+            SetVector4(element, "parameters0", new Vector4(2.0f, 0.85f, 1.25f, 0.0f));
+            SetVector4(element, "parameters1", new Vector4(1.1f, 1.0f, 0.78f, 0.35f));
+        }
+
+        private static void ApplyImageProcessBlueNoiseEdgePreset(SerializedProperty element, ImageProcessEffect effect)
+        {
+            ApplyImageProcessDefaultPreset(element, effect);
+            SetColor(element, "color", new Color(0.1f, 0.45f, 1.0f, 1.0f));
+            SetVector4(element, "parameters0", new Vector4(3.0f, 0.65f, 0.85f, 0.0f));
+            SetVector4(element, "parameters1", new Vector4(1.8f, 5.5f, 0.45f, 0.72f));
         }
 
         private static void ApplyImageProcessSoftVignettePreset(SerializedProperty element, ImageProcessEffect effect)

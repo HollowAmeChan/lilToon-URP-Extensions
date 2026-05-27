@@ -35,7 +35,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ScreenProcessEffect.EdgeLight, "边缘光", "icon_RimLight_v1"),
             new EffectToggleEntry(ScreenProcessEffect.Outline, "轮廓", "icon_OutLine_v1"),
             new EffectToggleEntry(ScreenProcessEffect.PostLighting, "后期打光", "icon_RimLight_v1"),
-            new EffectToggleEntry(ScreenProcessEffect.SkyTyndall, "Sky Tyndall", "icon_Flare_Ray_v1"),
+            new EffectToggleEntry(ScreenProcessEffect.SkyTyndall, "天光丁达尔", "icon_Flare_Ray_v1"),
             new EffectToggleEntry(ScreenProcessEffect.DropShadow, "投影", "icon_DropShadow_v1"),
             new EffectToggleEntry(ScreenProcessEffect.DepthOfField, "景深", "icon_Effects_v1"),
             new EffectToggleEntry(ScreenProcessEffect.CustomMaterial, "自定义", "icon_Effects_v1")
@@ -556,7 +556,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ScreenProcessEffect.PostLighting:
                     return "后期打光";
                 case ScreenProcessEffect.SkyTyndall:
-                    return "Sky Tyndall";
+                    return "天光丁达尔";
                 case ScreenProcessEffect.EdgeLight:
                     return "边缘光";
                 case ScreenProcessEffect.Outline:
@@ -642,14 +642,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters5", new Vector4(0.35f, 0.28f, 0.0f, 0.45f));
                     break;
                 case ScreenProcessEffect.SkyTyndall:
-                    SetColor(element, "color", new Color(1.0f, 0.88f, 0.68f, 1.0f));
-                    SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Add);
-                    SetVector4(element, "parameters0", new Vector4(0.70f, 1.0f, 0.55f, 1.0f));
-                    SetVector4(element, "parameters1", new Vector4(0.5f, 0.18f, 0.94f, 1.0f));
-                    SetVector4(element, "parameters2", new Vector4(0.55f, 0.35f, 1.0f, 0.75f));
-                    SetVector4(element, "parameters3", new Vector4(0.65f, 0.0f, 1.0f, 1.0f));
-                    SetVector4(element, "parameters4", new Vector4(0.0f, 1.0f, 90.0f, 1.0f));
-                    SetVector4(element, "parameters5", new Vector4(0.055f, 1.25f, 0.0f, 0.65f));
+                    SetColor(element, "color", new Color(1.0f, 0.72f, 0.42f, 1.0f));
+                    SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Screen);
+                    SetVector4(element, "parameters0", new Vector4(1.0f, 8.0f, 1.52f, 1.15f));
+                    SetVector4(element, "parameters1", new Vector4(0.65f, 1.0f, 0.70f, 2.0f));
+                    SetVector4(element, "parameters2", new Vector4(0.72f, 0.45f, 1.15f, 0.75f));
+                    SetVector4(element, "parameters3", new Vector4(0.68f, 0.0f, 1.0f, 1.0f));
+                    SetVector4(element, "parameters4", new Vector4(0.0f, 1.0f, 90.0f, 0.0f));
+                    SetVector4(element, "parameters5", new Vector4(0.06f, 1.2f, 0.0f, 0.99f));
                     break;
                 case ScreenProcessEffect.CustomMaterial:
                     SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Normal);

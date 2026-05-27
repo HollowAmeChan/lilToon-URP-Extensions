@@ -7,23 +7,23 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
     {
         private static readonly string[] SkyTyndallQualities =
         {
-            "Low",
-            "Medium",
-            "High"
+            "低",
+            "中",
+            "高"
         };
 
         private static readonly string[] SkyTyndallDitherModes =
         {
-            "Blue Noise",
-            "Halftone",
-            "Off"
+            "蓝噪声",
+            "半调",
+            "关闭"
         };
 
         private static int GetSkyTyndallLineCount(SerializedProperty element)
         {
             SerializedProperty parameters4 = element.FindPropertyRelative("parameters4");
             Vector4 p4 = parameters4 != null ? parameters4.vector4Value : Vector4.zero;
-            bool fixedDirection = p4 == Vector4.zero || p4.w > 0.5f;
+            bool fixedDirection = p4.w > 0.5f;
             return fixedDirection ? 19 : 20;
         }
 
@@ -48,54 +48,54 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Vector4 p5 = parameters5.vector4Value;
             EnsureSkyTyndallDefaults(ref p0, ref p1, ref p2, ref p3, ref p4, ref p5);
 
-            p0.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Radius", p0.x, 0.0f, 1.0f);
+            p0.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "半径", p0.x, 0.0f, 1.0f);
             y += LineHeight + LineSpacing;
-            p0.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Sky Threshold", p0.y, 0.0f, 8.0f);
+            p0.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "天空阈值", p0.y, 0.0f, 8.0f);
             y += LineHeight + LineSpacing;
-            p0.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Soft Knee", p0.z, 0.0f, 4.0f);
+            p0.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "柔和过渡", p0.z, 0.0f, 4.0f);
             y += LineHeight + LineSpacing;
-            p0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Sky Exposure", p0.w, 0.0f, 8.0f);
+            p0.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "天空曝光", p0.w, 0.0f, 8.0f);
             y += LineHeight + LineSpacing;
 
-            p4.w = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "Fixed Direction", p4.w > 0.5f) ? 1.0f : 0.0f;
+            p4.w = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "固定方向", p4.w > 0.5f) ? 1.0f : 0.0f;
             y += LineHeight + LineSpacing;
             if (p4.w > 0.5f)
             {
-                p4.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Direction Angle", p4.z, -180.0f, 180.0f);
+                p4.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "方向角度", p4.z, -180.0f, 180.0f);
                 p4 = BuildSkyTyndallDirection(p4.z, true);
                 y += LineHeight + LineSpacing;
             }
             else
             {
-                p1.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Center X", p1.x, 0.0f, 1.0f);
+                p1.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "中心 X", p1.x, 0.0f, 1.0f);
                 y += LineHeight + LineSpacing;
-                p1.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Center Y", p1.y, 0.0f, 1.0f);
+                p1.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "中心 Y", p1.y, 0.0f, 1.0f);
                 y += LineHeight + LineSpacing;
             }
 
-            p1.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Decay", p1.z, 0.70f, 0.99f);
+            p1.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "衰减", p1.z, 0.70f, 0.99f);
             y += LineHeight + LineSpacing;
-            p1.w = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "Quality", Mathf.Clamp(Mathf.RoundToInt(p1.w), 0, SkyTyndallQualities.Length - 1), SkyTyndallQualities);
-            y += LineHeight + LineSpacing;
-
-            p5.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Weight", p5.x, 0.001f, 0.15f);
-            y += LineHeight + LineSpacing;
-            p5.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Sample Blur", p5.y, 0.0f, 3.0f);
-            y += LineHeight + LineSpacing;
-            p5.z = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "Dither Mode", Mathf.Clamp(Mathf.RoundToInt(p5.z), 0, SkyTyndallDitherModes.Length - 1), SkyTyndallDitherModes);
-            y += LineHeight + LineSpacing;
-            p5.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Dither Amount", p5.w, 0.0f, 1.0f);
+            p1.w = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "质量", Mathf.Clamp(Mathf.RoundToInt(p1.w), 0, SkyTyndallQualities.Length - 1), SkyTyndallQualities);
             y += LineHeight + LineSpacing;
 
-            p2.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Foreground Suppress", p2.x, 0.0f, 1.0f);
+            p5.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "权重", p5.x, 0.001f, 0.15f);
             y += LineHeight + LineSpacing;
-            p2.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Normal Angle", p2.y, 0.0f, 1.0f);
+            p5.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "采样模糊", p5.y, 0.0f, 3.0f);
             y += LineHeight + LineSpacing;
-            p2.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Sky Gain", p2.z, 0.0f, 8.0f);
+            p5.z = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "抖动模式", Mathf.Clamp(Mathf.RoundToInt(p5.z), 0, SkyTyndallDitherModes.Length - 1), SkyTyndallDitherModes);
             y += LineHeight + LineSpacing;
-            p3.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "Opacity", p3.x, 0.0f, 1.0f);
+            p5.w = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "抖动强度", p5.w, 0.0f, 1.0f);
             y += LineHeight + LineSpacing;
-            p3.y = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "Show Rays Only", p3.y > 0.5f) ? 1.0f : 0.0f;
+
+            p2.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "前景压制", p2.x, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            p2.y = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "法线角度", p2.y, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            p2.z = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "天空增益", p2.z, 0.0f, 8.0f);
+            y += LineHeight + LineSpacing;
+            p3.x = EditorGUI.Slider(new Rect(rect.x, y, rect.width, LineHeight), "不透明度", p3.x, 0.0f, 1.0f);
+            y += LineHeight + LineSpacing;
+            p3.y = EditorGUI.Toggle(new Rect(rect.x, y, rect.width, LineHeight), "仅显示光束", p3.y > 0.5f) ? 1.0f : 0.0f;
             y += LineHeight + LineSpacing;
 
             parameters0.vector4Value = p0;
@@ -110,12 +110,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             if (p0 == Vector4.zero && p1 == Vector4.zero && p2 == Vector4.zero && p3 == Vector4.zero && p4 == Vector4.zero && p5 == Vector4.zero)
             {
-                p0 = new Vector4(0.70f, 1.0f, 0.55f, 1.0f);
-                p1 = new Vector4(0.5f, 0.18f, 0.94f, 1.0f);
-                p2 = new Vector4(0.55f, 0.35f, 1.0f, 0.75f);
-                p3 = new Vector4(0.65f, 0.0f, 1.0f, 1.0f);
-                p4 = BuildSkyTyndallDirection(90.0f, true);
-                p5 = new Vector4(0.055f, 1.25f, 0.0f, 0.65f);
+                p0 = new Vector4(1.0f, 8.0f, 1.52f, 1.15f);
+                p1 = new Vector4(0.65f, 1.0f, 0.70f, 2.0f);
+                p2 = new Vector4(0.72f, 0.45f, 1.15f, 0.75f);
+                p3 = new Vector4(0.68f, 0.0f, 1.0f, 1.0f);
+                p4 = BuildSkyTyndallDirection(90.0f, false);
+                p5 = new Vector4(0.06f, 1.2f, 0.0f, 0.99f);
                 return;
             }
 
@@ -126,7 +126,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             if (p4 == Vector4.zero)
             {
-                p4 = BuildSkyTyndallDirection(90.0f, true);
+                p4 = BuildSkyTyndallDirection(90.0f, false);
             }
             else if (p4.w > 0.5f && p4.x * p4.x + p4.y * p4.y <= 0.0001f)
             {
@@ -136,11 +136,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             if (p5 == Vector4.zero)
             {
-                p5 = new Vector4(0.055f, 1.25f, 0.0f, 0.65f);
+                p5 = new Vector4(0.06f, 1.2f, 0.0f, 0.99f);
             }
             else if (p5.z < 1.5f && p5.w <= 0.0001f)
             {
-                p5.w = 0.65f;
+                p5.w = 0.99f;
             }
         }
 
