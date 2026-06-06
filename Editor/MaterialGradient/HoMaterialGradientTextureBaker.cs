@@ -8,6 +8,7 @@ namespace lilToon.URP.Extensions.Editor.MaterialGradient
 {
     internal static class HoMaterialGradientTextureBaker
     {
+        private const int MaxUnityGradientKeys = 8;
         internal const int Resolution = 256;
 
         public static Gradient CreateDefaultGradient()
@@ -266,9 +267,45 @@ namespace lilToon.URP.Extensions.Editor.MaterialGradient
                 }
 
                 gradient.mode = mode;
-                gradient.colorKeys = colorKeys.Select(key => key.ToGradientKey()).ToArray();
-                gradient.alphaKeys = alphaKeys.Select(key => key.ToGradientKey()).ToArray();
+                gradient.colorKeys = LimitColorKeys(colorKeys).Select(key => key.ToGradientKey()).ToArray();
+                gradient.alphaKeys = LimitAlphaKeys(alphaKeys).Select(key => key.ToGradientKey()).ToArray();
                 return gradient;
+            }
+
+            private static ColorKey[] LimitColorKeys(ColorKey[] keys)
+            {
+                ColorKey[] orderedKeys = keys.OrderBy(key => key.time).ToArray();
+                if (orderedKeys.Length <= MaxUnityGradientKeys)
+                {
+                    return orderedKeys;
+                }
+
+                ColorKey[] limitedKeys = new ColorKey[MaxUnityGradientKeys];
+                for (int i = 0; i < MaxUnityGradientKeys; i++)
+                {
+                    int sourceIndex = Mathf.RoundToInt(i * (orderedKeys.Length - 1) / (float)(MaxUnityGradientKeys - 1));
+                    limitedKeys[i] = orderedKeys[sourceIndex];
+                }
+
+                return limitedKeys;
+            }
+
+            private static AlphaKey[] LimitAlphaKeys(AlphaKey[] keys)
+            {
+                AlphaKey[] orderedKeys = keys.OrderBy(key => key.time).ToArray();
+                if (orderedKeys.Length <= MaxUnityGradientKeys)
+                {
+                    return orderedKeys;
+                }
+
+                AlphaKey[] limitedKeys = new AlphaKey[MaxUnityGradientKeys];
+                for (int i = 0; i < MaxUnityGradientKeys; i++)
+                {
+                    int sourceIndex = Mathf.RoundToInt(i * (orderedKeys.Length - 1) / (float)(MaxUnityGradientKeys - 1));
+                    limitedKeys[i] = orderedKeys[sourceIndex];
+                }
+
+                return limitedKeys;
             }
         }
 
