@@ -21,7 +21,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 ? "开 " + LilUrpEditorSectionGui.FloatSummary(strength)
                 : "关";
 
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSettings, "眼透 Eye Reveal", summary, EyeRevealColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSettings, "眼透", summary, EyeRevealColor))
             {
                 return;
             }
@@ -53,7 +53,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 ? "开 " + LilUrpEditorSectionGui.FloatSummary(strength)
                 : "关";
 
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showVolume, "眼透 Eye Reveal", summary, EyeRevealColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showVolume, "眼透", summary, EyeRevealColor))
             {
                 return;
             }

@@ -139,7 +139,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private void DrawSettings()
         {
             string summary = LilUrpEditorSectionGui.BoolSummary(enable);
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSettings, "Volume", summary, SettingsColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSettings, "体积设置", summary, SettingsColor))
             {
                 return;
             }

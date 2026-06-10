@@ -21,7 +21,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 ? "开 " + LilUrpEditorSectionGui.FloatSummary(opacity)
                 : "关";
 
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSettings, "DropShadow", summary, DropShadowColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSettings, "前发投影", summary, DropShadowColor))
             {
                 return;
             }
@@ -63,7 +63,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 ? "开 " + LilUrpEditorSectionGui.FloatSummary(opacity)
                 : "关";
 
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showVolume, "DropShadow", summary, DropShadowColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showVolume, "前发投影", summary, DropShadowColor))
             {
                 return;
             }

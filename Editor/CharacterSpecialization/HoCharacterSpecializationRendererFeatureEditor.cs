@@ -60,7 +60,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 + " / "
                 + (useVolumesProperty != null && useVolumesProperty.boolValue ? "Volume" : "默认");
 
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRendererFeature, "RendererFeature", summary, SettingsColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRendererFeature, "渲染器功能", summary, SettingsColor))
             {
                 return;
             }
