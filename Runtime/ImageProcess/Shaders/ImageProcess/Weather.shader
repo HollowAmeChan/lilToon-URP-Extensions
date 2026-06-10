@@ -149,12 +149,12 @@ Shader "Hidden/lilToon/URP/ImageProcess/Weather"
                 float r = saturate(rate);
                 float vertical = lerp(1.0, lerp(0.82, 1.16, smoothstep(0.08, 0.94, uv.y)), saturate(verticalAmount));
                 float a = 0.0;
-                a += ImageProcessWeatherRainDepthLayer(uv, r, focusDistance, blurAmount, blurSoftness, blurCurve, 0.22, 18.0, -2.8, lerp(0.03, 0.16, r), 0.40, 0.020, 0.22, 3.0, speedMul, countMul, sizeMul, randomness, depthSpread, driftAmount) * 0.55; // Storm
-                a += ImageProcessWeatherRainDepthLayer(uv, r, focusDistance, blurAmount, blurSoftness, blurCurve, 0.36, 34.0, -4.8, lerp(0.06, 0.30, r), 0.24, 0.012, 0.18, 23.0, speedMul, countMul, sizeMul, randomness, depthSpread, driftAmount) * 0.70; // S/M
-                a += ImageProcessWeatherRainDepthLayer(uv, r, focusDistance, blurAmount, blurSoftness, blurCurve, 0.66, 48.0, -6.0, lerp(0.05, 0.24, r), 0.20, 0.010, 0.15, 73.0, speedMul, countMul, sizeMul, randomness, depthSpread, driftAmount) * 0.80; // L
-                a += ImageProcessWeatherRainDepthLayer(uv, r, focusDistance, blurAmount, blurSoftness, blurCurve, 0.18, 14.0, -2.2, lerp(0.02, 0.10, r), 0.34, 0.030, 0.20, 119.0, speedMul, countMul, sizeMul, randomness, depthSpread, driftAmount) * 0.40; // Storm_L
+                a += ImageProcessWeatherRainDepthLayer(uv, r, focusDistance, blurAmount, blurSoftness, blurCurve, 0.22, 18.0, 2.8, lerp(0.03, 0.16, r), 0.40, 0.020, 0.22, 3.0, speedMul, countMul, sizeMul, randomness, depthSpread, driftAmount) * 0.55; // Storm
+                a += ImageProcessWeatherRainDepthLayer(uv, r, focusDistance, blurAmount, blurSoftness, blurCurve, 0.36, 34.0, 4.8, lerp(0.06, 0.30, r), 0.24, 0.012, 0.18, 23.0, speedMul, countMul, sizeMul, randomness, depthSpread, driftAmount) * 0.70; // S/M
+                a += ImageProcessWeatherRainDepthLayer(uv, r, focusDistance, blurAmount, blurSoftness, blurCurve, 0.66, 48.0, 6.0, lerp(0.05, 0.24, r), 0.20, 0.010, 0.15, 73.0, speedMul, countMul, sizeMul, randomness, depthSpread, driftAmount) * 0.80; // L
+                a += ImageProcessWeatherRainDepthLayer(uv, r, focusDistance, blurAmount, blurSoftness, blurCurve, 0.18, 14.0, 2.2, lerp(0.02, 0.10, r), 0.34, 0.030, 0.20, 119.0, speedMul, countMul, sizeMul, randomness, depthSpread, driftAmount) * 0.40; // Storm_L
                 float shimmer = lerp(1.0, lerp(0.82, 1.18, ImageProcessWeatherFbm(uv * 9.0 + _Time.y * speedMul * 0.12)), saturate(shimmerAmount));
-                return saturate((a + pow(ImageProcessWeatherFbm(uv * 6.0 + _Time.y * float2(0.05, -0.22) * speedMul), 3.0) * r * 0.05) * vertical * shimmer);
+                return saturate((a + pow(ImageProcessWeatherFbm(uv * 6.0 + _Time.y * float2(0.05, 0.22) * speedMul), 3.0) * r * 0.05) * vertical * shimmer);
             }
 
             float ImageProcessWeatherSnowLayer(float2 uv, float scale, float speed, float density, float size, float drift, float seed)
