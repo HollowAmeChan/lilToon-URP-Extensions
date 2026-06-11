@@ -37,7 +37,10 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             float4 _HoCharacterSubjectOutlineParams; // x strength, y radius px, z rotation rad, w flow rad/sec
             float4 _HoCharacterSubjectOutlineLevels; // x black, y white, z inverse range
             float4 _HoCharacterSubjectOutlineColor;
-            float4 _HoCharacterSubjectOutlineOptions; // x final enabled, y textures ready, z fill mode
+            float4 _HoCharacterSubjectOutlineFogColor;
+            float4 _HoCharacterSubjectOutlineFogParams; // x hue shift turns, y saturation, z value, w softness exponent
+            float4 _HoCharacterSubjectOutlineHeightFadeParams; // x mode, y ground world y, z fade start distance, w inverse fade distance
+            float4 _HoCharacterSubjectOutlineOptions; // x final enabled, y textures ready, z fill mode, w height fade hardness
             float4 _HoCharacterOptions; // x eye enabled, y shadow enabled, z same character only, w debug mode
 
             TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
@@ -303,6 +306,11 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             float RemapSubjectOutlineMask(float value)
             {
                 float blackPoint = saturate(_HoCharacterSubjectOutlineLevels.x);
+                if (_HoCharacterSubjectOutlineLevels.w > 0.5)
+                {
+                    return step(blackPoint, value);
+                }
+
                 float invRange = max(_HoCharacterSubjectOutlineLevels.z, 0.0001);
                 float mask = saturate((value - blackPoint) * invRange);
                 return mask * mask * (3.0 - 2.0 * mask);
@@ -318,19 +326,55 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 return SAMPLE_TEXTURE2D_X(_lilHoCharacterSubjectOutlineSourceTexture, sampler_PointClamp, uv).r;
             }
 
-            float SampleSubjectOutlineBlurMask(float2 uv)
+            float4 SampleSubjectOutlineBlurData(float2 uv)
             {
                 if (_HoCharacterSubjectOutlineOptions.y <= 0.5)
                 {
-                    return 0.0;
+                    return float4(0.0, 0.0, 0.0, 0.0);
                 }
 
-                return SAMPLE_TEXTURE2D_X(_lilHoCharacterSubjectOutlineTexture, sampler_LinearClamp, uv).r;
+                return SAMPLE_TEXTURE2D_X(_lilHoCharacterSubjectOutlineTexture, sampler_LinearClamp, uv);
             }
 
-            float ResolveSubjectOutlineMask(float sourceMask, float blurMask)
+            float ResolveSubjectOutlineEdgeSdf(float sourceMask, float blurMask)
             {
-                return RemapSubjectOutlineMask(max(blurMask - sourceMask, 0.0));
+                return max(blurMask - sourceMask, 0.0);
+            }
+
+            float ResolveSubjectOutlineMask(float edgeSdf)
+            {
+                return RemapSubjectOutlineMask(edgeSdf);
+            }
+
+            float ResolveSubjectOutlineFogMask(float edgeSdf)
+            {
+                return pow(saturate(edgeSdf), max(_HoCharacterSubjectOutlineFogParams.w, 0.0001));
+            }
+
+            float ApplySubjectOutlineHeightFadeHardness(float value)
+            {
+                float hardness = max(_HoCharacterSubjectOutlineOptions.w, 0.0001);
+                float a = pow(saturate(value), hardness);
+                float b = pow(saturate(1.0 - value), hardness);
+                return a / max(a + b, 0.0001);
+            }
+
+            float ResolveSubjectOutlineHeightFade(float heightWeight, float weightedWorldY)
+            {
+                float fadeMode = round(_HoCharacterSubjectOutlineHeightFadeParams.x);
+                if (fadeMode < 0.5)
+                {
+                    return 1.0;
+                }
+
+                float hasHeight = step(0.0001, heightWeight);
+                float worldY = weightedWorldY / max(heightWeight, 0.0001);
+                float groundDistance = abs(worldY - _HoCharacterSubjectOutlineHeightFadeParams.y);
+                float fadeT = saturate((groundDistance - _HoCharacterSubjectOutlineHeightFadeParams.z) * _HoCharacterSubjectOutlineHeightFadeParams.w);
+                fadeT = fadeT * fadeT * (3.0 - 2.0 * fadeT);
+                fadeT = ApplySubjectOutlineHeightFadeHardness(fadeT);
+                float fade = fadeMode < 1.5 ? fadeT : 1.0 - fadeT;
+                return lerp(1.0, fade, hasHeight);
             }
 
             float2 ResolveSubjectOutlineNormal(float blurMask)
@@ -351,6 +395,16 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 float3 rgb = saturate(abs(frac(hsv.x + float3(0.0, 2.0 / 3.0, 1.0 / 3.0)) * 6.0 - 3.0) - 1.0);
                 rgb = rgb * rgb * (3.0 - 2.0 * rgb);
                 return (half3)(hsv.z * lerp(float3(1.0, 1.0, 1.0), rgb, hsv.y));
+            }
+
+            float3 HoCharacterSubjectOutlineRgbToHsv(float3 rgb)
+            {
+                float4 k = float4(0.0, -1.0 / 3.0, 2.0 / 3.0, -1.0);
+                float4 p = lerp(float4(rgb.bg, k.wz), float4(rgb.gb, k.xy), step(rgb.b, rgb.g));
+                float4 q = lerp(float4(p.xyw, rgb.r), float4(rgb.r, p.yzx), step(p.x, rgb.r));
+                float d = q.x - min(q.w, q.y);
+                float e = 1.0e-10;
+                return float3(abs(q.z + (q.w - q.y) / (6.0 * d + e)), d / (q.x + e), q.x);
             }
 
             half3 ResolveSubjectOutlineHueColor(float2 normal)
@@ -377,6 +431,16 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 return ResolveSubjectOutlineHueColor(normal);
             }
 
+            half3 ResolveSubjectOutlineFogColor(half3 sourceColor)
+            {
+                float3 tintedColor = max((float3)sourceColor * _HoCharacterSubjectOutlineFogColor.rgb, 0.0);
+                float3 hsv = HoCharacterSubjectOutlineRgbToHsv(tintedColor);
+                hsv.x = frac(hsv.x + _HoCharacterSubjectOutlineFogParams.x);
+                hsv.y = saturate(hsv.y * max(_HoCharacterSubjectOutlineFogParams.y, 0.0));
+                hsv.z = max(hsv.z * max(_HoCharacterSubjectOutlineFogParams.z, 0.0), 0.0);
+                return HoCharacterSubjectOutlineHsvToRgb(hsv);
+            }
+
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -393,9 +457,12 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 float shadowMask = ResolveHairShadowMask(uv, revealMask);
                 float faceHairDiffuseMask = ResolveFaceHairDiffuseMask(uv);
                 float subjectOutlineSourceMask = SampleSubjectOutlineSourceMask(uv);
-                float subjectOutlineBlurMask = SampleSubjectOutlineBlurMask(uv);
-                float subjectOutlineMask = ResolveSubjectOutlineMask(subjectOutlineSourceMask, subjectOutlineBlurMask);
+                float4 subjectOutlineBlurData = SampleSubjectOutlineBlurData(uv);
+                float subjectOutlineBlurMask = subjectOutlineBlurData.r;
+                float subjectOutlineEdgeSdf = ResolveSubjectOutlineEdgeSdf(subjectOutlineSourceMask, subjectOutlineBlurMask);
+                float subjectOutlineMask = ResolveSubjectOutlineMask(subjectOutlineEdgeSdf);
                 float2 subjectOutlineNormal = ResolveSubjectOutlineNormal(subjectOutlineBlurMask);
+                float subjectOutlineHeightFade = ResolveSubjectOutlineHeightFade(subjectOutlineBlurData.b, subjectOutlineBlurData.g);
                 int debugMode = (int)round(_HoCharacterOptions.w);
                 if (debugMode == 1)
                 {
@@ -512,11 +579,26 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                     color = BlendFaceHairDiffuse(color, faceHairDiffuseColor, faceHairDiffuseAmount);
                 }
 
-                float subjectOutlineAmount = subjectOutlineMask * saturate(_HoCharacterSubjectOutlineParams.x) * saturate(_HoCharacterSubjectOutlineColor.a) * saturate(_HoCharacterSubjectOutlineOptions.x);
-                if (subjectOutlineAmount > 0.0001)
+                float subjectOutlineStyle = round(_HoCharacterSubjectOutlineOptions.z);
+                if (subjectOutlineStyle > 1.5)
                 {
-                    half3 outlineColor = ResolveSubjectOutlineColor(subjectOutlineNormal);
-                    color = lerp(color, outlineColor, subjectOutlineAmount);
+                    float subjectOutlineFogMask = ResolveSubjectOutlineFogMask(subjectOutlineEdgeSdf);
+                    float subjectOutlineFogAmount = subjectOutlineFogMask * subjectOutlineHeightFade * saturate(_HoCharacterSubjectOutlineParams.x) * saturate(_HoCharacterSubjectOutlineFogColor.a) * saturate(_HoCharacterSubjectOutlineOptions.x);
+                    if (subjectOutlineFogAmount > 0.0001)
+                    {
+                        half3 fogColor = ResolveSubjectOutlineFogColor(source.rgb);
+                        color += fogColor * subjectOutlineFogAmount;
+                    }
+                }
+                else
+                {
+                    float subjectOutlineStyleAlpha = subjectOutlineStyle < 0.5 ? saturate(_HoCharacterSubjectOutlineColor.a) : 1.0;
+                    float subjectOutlineAmount = subjectOutlineMask * subjectOutlineHeightFade * saturate(_HoCharacterSubjectOutlineParams.x) * subjectOutlineStyleAlpha * saturate(_HoCharacterSubjectOutlineOptions.x);
+                    if (subjectOutlineAmount > 0.0001)
+                    {
+                        half3 outlineColor = ResolveSubjectOutlineColor(subjectOutlineNormal);
+                        color = lerp(color, outlineColor, subjectOutlineAmount);
+                    }
                 }
 
                 return half4(color, source.a);

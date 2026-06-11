@@ -32,6 +32,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public Vector4 subjectOutlineParams;
             public Vector4 subjectOutlineLevels;
             public Color subjectOutlineColor;
+            public Color subjectOutlineFogColor;
+            public Vector4 subjectOutlineFogParams;
+            public Vector4 subjectOutlineHeightFadeParams;
             public Vector4 subjectOutlineOptions;
             public Vector4 options;
             public bool faceHairDiffuseReady;
@@ -61,6 +64,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         {
             public TextureHandle source;
             public TextureHandle metadataObjectCustom0Texture;
+            public TextureHandle geometryDepthTexture;
             public Material material;
         }
 

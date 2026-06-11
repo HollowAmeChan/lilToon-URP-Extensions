@@ -90,6 +90,20 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         }
     }
 
+    [Serializable]
+    public sealed class HoCharacterSubjectOutlineHeightFadeModeParameter : VolumeParameter<HoCharacterSubjectOutlineHeightFadeMode>
+    {
+        public HoCharacterSubjectOutlineHeightFadeModeParameter(HoCharacterSubjectOutlineHeightFadeMode value, bool overrideState = false)
+            : base(value, overrideState)
+        {
+        }
+
+        public override void Interp(HoCharacterSubjectOutlineHeightFadeMode from, HoCharacterSubjectOutlineHeightFadeMode to, float t)
+        {
+            value = t > 0.0f ? to : from;
+        }
+    }
+
 #if UNITY_2023_1_OR_NEWER
     [VolumeComponentMenu("Post-processing/Ho-CharacterSpecialization/角色特化"), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
 #else
@@ -134,6 +148,16 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             SubjectOutlineFillMode.overrideState = true;
             SubjectOutlineNormalRotationDegrees.overrideState = true;
             SubjectOutlineNormalFlowDegreesPerSecond.overrideState = true;
+            SubjectOutlineFogColor.overrideState = true;
+            SubjectOutlineFogHueShiftDegrees.overrideState = true;
+            SubjectOutlineFogSaturation.overrideState = true;
+            SubjectOutlineFogValue.overrideState = true;
+            SubjectOutlineFogSoftness.overrideState = true;
+            SubjectOutlineHeightFadeMode.overrideState = true;
+            SubjectOutlineHeightFadeGroundY.overrideState = true;
+            SubjectOutlineHeightFadeStart.overrideState = true;
+            SubjectOutlineHeightFadeEnd.overrideState = true;
+            SubjectOutlineHeightFadeHardness.overrideState = true;
         }
 
         [InspectorName("启用"), Tooltip("启用角色特化眼睛透过和前发投影。")]
@@ -256,14 +280,44 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("轮廓颜色"), Tooltip("主体外扩轮廓颜色。Alpha 也会乘到最终强度。")]
         public ColorParameter SubjectOutlineColor = new ColorParameter(Color.white);
 
-        [InspectorName("填充模式"), Tooltip("固定颜色使用轮廓颜色；法线彩色会把卷积场外扩方向映射为彩色轮廓。")]
+        [InspectorName("风格模式"), Tooltip("纯色描边使用轮廓颜色；彩色流光描边会把边缘梯度方向映射为 HSV 色相；柔化雾气会把原图底色乘雾气颜色后做 HSV 变换并加色叠加。")]
         public HoCharacterSubjectOutlineFillModeParameter SubjectOutlineFillMode = new HoCharacterSubjectOutlineFillModeParameter(HoCharacterSubjectOutlineFillMode.SolidColor);
 
-        [InspectorName("法线旋转"), Tooltip("法线彩色模式下，对整圈外扩方向做统一旋转。")]
+        [InspectorName("法线旋转"), Tooltip("彩色流光描边模式下，对整圈外扩方向做统一旋转。")]
         public FloatParameter SubjectOutlineNormalRotationDegrees = new FloatParameter(0.0f);
 
-        [InspectorName("法线流动速度"), Tooltip("法线彩色模式下，方向随时间旋转的速度，单位为度/秒。")]
+        [InspectorName("法线流动速度"), Tooltip("彩色流光描边模式下，方向随时间旋转的速度，单位为度/秒。")]
         public FloatParameter SubjectOutlineNormalFlowDegreesPerSecond = new FloatParameter(0.0f);
+
+        [InspectorName("雾气颜色"), Tooltip("柔化雾气模式下，先乘到原图底色上的颜色。Alpha 也会乘到最终雾气强度。")]
+        public ColorParameter SubjectOutlineFogColor = new ColorParameter(new Color(1.0f, 0.85f, 0.65f, 1.0f));
+
+        [InspectorName("雾气色相偏移"), Tooltip("柔化雾气模式下，对乘色后的 HSV 色相做偏移，单位为度。")]
+        public FloatParameter SubjectOutlineFogHueShiftDegrees = new FloatParameter(0.0f);
+
+        [InspectorName("雾气饱和度"), Tooltip("柔化雾气模式下，对乘色后的 HSV 饱和度做倍率调整。")]
+        public ClampedFloatParameter SubjectOutlineFogSaturation = new ClampedFloatParameter(1.0f, 0.0f, 4.0f);
+
+        [InspectorName("雾气亮度"), Tooltip("柔化雾气模式下，对乘色后的 HSV 明度做倍率调整。")]
+        public ClampedFloatParameter SubjectOutlineFogValue = new ClampedFloatParameter(1.0f, 0.0f, 4.0f);
+
+        [InspectorName("雾气柔化"), Tooltip("柔化雾气模式下，控制外扩 SDF 边缘的软硬。低值更雾化，高值更锐。")]
+        public ClampedFloatParameter SubjectOutlineFogSoftness = new ClampedFloatParameter(0.55f, 0.05f, 4.0f);
+
+        [InspectorName("高度渐隐"), Tooltip("按主体轮廓来源点的世界高度减弱轮廓。")]
+        public HoCharacterSubjectOutlineHeightFadeModeParameter SubjectOutlineHeightFadeMode = new HoCharacterSubjectOutlineHeightFadeModeParameter(HoCharacterSubjectOutlineHeightFadeMode.Off);
+
+        [InspectorName("地面高度"), Tooltip("高度渐隐的地面世界 Y。")]
+        public FloatParameter SubjectOutlineHeightFadeGroundY = new FloatParameter(0.0f);
+
+        [InspectorName("渐隐开始距离"), Tooltip("距离地面小于等于该值时进入渐隐区间。")]
+        public FloatParameter SubjectOutlineHeightFadeStart = new FloatParameter(0.0f);
+
+        [InspectorName("渐隐结束距离"), Tooltip("距离地面大于等于该值时结束渐隐区间。")]
+        public FloatParameter SubjectOutlineHeightFadeEnd = new FloatParameter(1.0f);
+
+        [InspectorName("渐隐硬度"), Tooltip("高度渐隐过渡曲线的硬度。1 为标准平滑过渡，数值越大越硬，越小越柔。")]
+        public ClampedFloatParameter SubjectOutlineHeightFadeHardness = new ClampedFloatParameter(1.0f, 0.1f, 8.0f);
 
         public bool IsActive()
         {
@@ -333,6 +387,16 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             target.subjectOutlineFillMode = SubjectOutlineFillMode.value;
             target.subjectOutlineNormalRotationDegrees = SubjectOutlineNormalRotationDegrees.value;
             target.subjectOutlineNormalFlowDegreesPerSecond = SubjectOutlineNormalFlowDegreesPerSecond.value;
+            target.subjectOutlineFogColor = SubjectOutlineFogColor.value;
+            target.subjectOutlineFogHueShiftDegrees = SubjectOutlineFogHueShiftDegrees.value;
+            target.subjectOutlineFogSaturation = SubjectOutlineFogSaturation.value;
+            target.subjectOutlineFogValue = SubjectOutlineFogValue.value;
+            target.subjectOutlineFogSoftness = SubjectOutlineFogSoftness.value;
+            target.subjectOutlineHeightFadeMode = SubjectOutlineHeightFadeMode.value;
+            target.subjectOutlineHeightFadeGroundY = SubjectOutlineHeightFadeGroundY.value;
+            target.subjectOutlineHeightFadeStart = SubjectOutlineHeightFadeStart.value;
+            target.subjectOutlineHeightFadeEnd = SubjectOutlineHeightFadeEnd.value;
+            target.subjectOutlineHeightFadeHardness = SubjectOutlineHeightFadeHardness.value;
         }
     }
 }

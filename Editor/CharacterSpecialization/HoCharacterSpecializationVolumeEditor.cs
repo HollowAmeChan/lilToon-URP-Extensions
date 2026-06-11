@@ -45,6 +45,16 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private SerializedDataParameter subjectOutlineFillMode;
         private SerializedDataParameter subjectOutlineNormalRotationDegrees;
         private SerializedDataParameter subjectOutlineNormalFlowDegreesPerSecond;
+        private SerializedDataParameter subjectOutlineFogColor;
+        private SerializedDataParameter subjectOutlineFogHueShiftDegrees;
+        private SerializedDataParameter subjectOutlineFogSaturation;
+        private SerializedDataParameter subjectOutlineFogValue;
+        private SerializedDataParameter subjectOutlineFogSoftness;
+        private SerializedDataParameter subjectOutlineHeightFadeMode;
+        private SerializedDataParameter subjectOutlineHeightFadeGroundY;
+        private SerializedDataParameter subjectOutlineHeightFadeStart;
+        private SerializedDataParameter subjectOutlineHeightFadeEnd;
+        private SerializedDataParameter subjectOutlineHeightFadeHardness;
 
         public override void OnEnable()
         {
@@ -85,6 +95,16 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             subjectOutlineFillMode = Unpack(fetcher.Find(x => x.SubjectOutlineFillMode));
             subjectOutlineNormalRotationDegrees = Unpack(fetcher.Find(x => x.SubjectOutlineNormalRotationDegrees));
             subjectOutlineNormalFlowDegreesPerSecond = Unpack(fetcher.Find(x => x.SubjectOutlineNormalFlowDegreesPerSecond));
+            subjectOutlineFogColor = Unpack(fetcher.Find(x => x.SubjectOutlineFogColor));
+            subjectOutlineFogHueShiftDegrees = Unpack(fetcher.Find(x => x.SubjectOutlineFogHueShiftDegrees));
+            subjectOutlineFogSaturation = Unpack(fetcher.Find(x => x.SubjectOutlineFogSaturation));
+            subjectOutlineFogValue = Unpack(fetcher.Find(x => x.SubjectOutlineFogValue));
+            subjectOutlineFogSoftness = Unpack(fetcher.Find(x => x.SubjectOutlineFogSoftness));
+            subjectOutlineHeightFadeMode = Unpack(fetcher.Find(x => x.SubjectOutlineHeightFadeMode));
+            subjectOutlineHeightFadeGroundY = Unpack(fetcher.Find(x => x.SubjectOutlineHeightFadeGroundY));
+            subjectOutlineHeightFadeStart = Unpack(fetcher.Find(x => x.SubjectOutlineHeightFadeStart));
+            subjectOutlineHeightFadeEnd = Unpack(fetcher.Find(x => x.SubjectOutlineHeightFadeEnd));
+            subjectOutlineHeightFadeHardness = Unpack(fetcher.Find(x => x.SubjectOutlineHeightFadeHardness));
         }
 
         public override void OnInspectorGUI()
@@ -138,6 +158,16 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 subjectOutlineFillMode,
                 subjectOutlineNormalRotationDegrees,
                 subjectOutlineNormalFlowDegreesPerSecond,
+                subjectOutlineFogColor,
+                subjectOutlineFogHueShiftDegrees,
+                subjectOutlineFogSaturation,
+                subjectOutlineFogValue,
+                subjectOutlineFogSoftness,
+                subjectOutlineHeightFadeMode,
+                subjectOutlineHeightFadeGroundY,
+                subjectOutlineHeightFadeStart,
+                subjectOutlineHeightFadeEnd,
+                subjectOutlineHeightFadeHardness,
                 DrawDataParameter);
 
             serializedObject.ApplyModifiedProperties();

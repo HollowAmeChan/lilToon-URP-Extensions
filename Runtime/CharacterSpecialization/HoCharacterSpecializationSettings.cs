@@ -26,10 +26,22 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
     public enum HoCharacterSubjectOutlineFillMode
     {
-        [InspectorName("固定颜色")]
+        [InspectorName("纯色描边")]
         SolidColor = 0,
-        [InspectorName("法线彩色")]
-        NormalColor = 1
+        [InspectorName("彩色流光描边")]
+        NormalColor = 1,
+        [InspectorName("柔化雾气")]
+        SoftFog = 2
+    }
+
+    public enum HoCharacterSubjectOutlineHeightFadeMode
+    {
+        [InspectorName("关闭")]
+        Off = 0,
+        [InspectorName("靠近地面变浅")]
+        FadeNearGround = 1,
+        [InspectorName("远离地面变浅")]
+        FadeFarFromGround = 2
     }
 
     public enum HoCharacterSpecializationDebugMode
@@ -258,17 +270,63 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [Tooltip("主体外扩轮廓颜色。Alpha 也会乘到最终强度。")]
         public Color subjectOutlineColor = Color.white;
 
-        [InspectorName("填充模式")]
-        [Tooltip("固定颜色使用轮廓颜色；法线彩色会把卷积场的外扩方向映射为彩色轮廓。")]
+        [InspectorName("风格模式")]
+        [Tooltip("纯色描边使用轮廓颜色；彩色流光描边会把边缘梯度方向映射为 HSV 色相；柔化雾气会把原图底色乘雾气颜色后做 HSV 变换并加色叠加。")]
         public HoCharacterSubjectOutlineFillMode subjectOutlineFillMode = HoCharacterSubjectOutlineFillMode.SolidColor;
 
         [InspectorName("法线旋转")]
-        [Tooltip("法线彩色模式下，对整圈外扩方向做统一旋转。")]
+        [Tooltip("彩色流光描边模式下，对整圈外扩方向做统一旋转。")]
         public float subjectOutlineNormalRotationDegrees = 0.0f;
 
         [InspectorName("法线流动速度")]
-        [Tooltip("法线彩色模式下，方向随时间旋转的速度，单位为度/秒。")]
+        [Tooltip("彩色流光描边模式下，方向随时间旋转的速度，单位为度/秒。")]
         public float subjectOutlineNormalFlowDegreesPerSecond = 0.0f;
+
+        [InspectorName("雾气颜色")]
+        [Tooltip("柔化雾气模式下，先乘到原图底色上的颜色。Alpha 也会乘到最终雾气强度。")]
+        public Color subjectOutlineFogColor = new Color(1.0f, 0.85f, 0.65f, 1.0f);
+
+        [InspectorName("雾气色相偏移")]
+        [Tooltip("柔化雾气模式下，对乘色后的 HSV 色相做偏移，单位为度。")]
+        public float subjectOutlineFogHueShiftDegrees = 0.0f;
+
+        [InspectorName("雾气饱和度")]
+        [Tooltip("柔化雾气模式下，对乘色后的 HSV 饱和度做倍率调整。")]
+        [Range(0.0f, 4.0f)]
+        public float subjectOutlineFogSaturation = 1.0f;
+
+        [InspectorName("雾气亮度")]
+        [Tooltip("柔化雾气模式下，对乘色后的 HSV 明度做倍率调整。")]
+        [Range(0.0f, 4.0f)]
+        public float subjectOutlineFogValue = 1.0f;
+
+        [InspectorName("雾气柔化")]
+        [Tooltip("柔化雾气模式下，控制外扩 SDF 边缘的软硬。低值更雾化，高值更锐。")]
+        [Range(0.05f, 4.0f)]
+        public float subjectOutlineFogSoftness = 0.55f;
+
+        [InspectorName("高度渐隐")]
+        [Tooltip("按主体轮廓来源点的世界高度减弱轮廓。")]
+        public HoCharacterSubjectOutlineHeightFadeMode subjectOutlineHeightFadeMode = HoCharacterSubjectOutlineHeightFadeMode.Off;
+
+        [InspectorName("地面高度")]
+        [Tooltip("高度渐隐的地面世界 Y。")]
+        public float subjectOutlineHeightFadeGroundY = 0.0f;
+
+        [InspectorName("渐隐开始距离")]
+        [Tooltip("距离地面小于等于该值时进入渐隐区间。")]
+        [Min(0.0f)]
+        public float subjectOutlineHeightFadeStart = 0.0f;
+
+        [InspectorName("渐隐结束距离")]
+        [Tooltip("距离地面大于等于该值时结束渐隐区间。")]
+        [Min(0.0f)]
+        public float subjectOutlineHeightFadeEnd = 1.0f;
+
+        [InspectorName("渐隐硬度")]
+        [Tooltip("高度渐隐过渡曲线的硬度。1 为标准平滑过渡，数值越大越硬，越小越柔。")]
+        [Range(0.1f, 8.0f)]
+        public float subjectOutlineHeightFadeHardness = 1.0f;
 
         [Header("未来模块")]
         [InspectorName("远平面阴影预留")]
@@ -333,6 +391,16 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             subjectOutlineFillMode = source.subjectOutlineFillMode;
             subjectOutlineNormalRotationDegrees = source.subjectOutlineNormalRotationDegrees;
             subjectOutlineNormalFlowDegreesPerSecond = source.subjectOutlineNormalFlowDegreesPerSecond;
+            subjectOutlineFogColor = source.subjectOutlineFogColor;
+            subjectOutlineFogHueShiftDegrees = source.subjectOutlineFogHueShiftDegrees;
+            subjectOutlineFogSaturation = source.subjectOutlineFogSaturation;
+            subjectOutlineFogValue = source.subjectOutlineFogValue;
+            subjectOutlineFogSoftness = source.subjectOutlineFogSoftness;
+            subjectOutlineHeightFadeMode = source.subjectOutlineHeightFadeMode;
+            subjectOutlineHeightFadeGroundY = source.subjectOutlineHeightFadeGroundY;
+            subjectOutlineHeightFadeStart = source.subjectOutlineHeightFadeStart;
+            subjectOutlineHeightFadeEnd = source.subjectOutlineHeightFadeEnd;
+            subjectOutlineHeightFadeHardness = source.subjectOutlineHeightFadeHardness;
             farPlaneShadowReserved = source.farPlaneShadowReserved;
             reflectionSpaceReserved = source.reflectionSpaceReserved;
             debugMode = source.debugMode;

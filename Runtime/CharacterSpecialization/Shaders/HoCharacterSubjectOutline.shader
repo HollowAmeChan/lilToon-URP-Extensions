@@ -26,14 +26,28 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/SubjectOutline"
 
             float _HoMetadataBufferActive;
             TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
+            TEXTURE2D_X_FLOAT(_HoGeometryBufferDepthTexture);
 
-            half4 Frag(Varyings input) : SV_Target
+            float4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 float subject = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, input.texcoord).r;
                 float mask = step(0.5, _HoMetadataBufferActive) * saturate(subject);
-                return half4(mask, 0.0, 0.0, 1.0);
+                float weightedWorldY = 0.0;
+                float heightWeight = 0.0;
+                if (mask > 0.0001)
+                {
+                    float depth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferDepthTexture, sampler_PointClamp, input.texcoord).r;
+                    heightWeight = step(0.0001, abs(depth - 1.0)) * mask;
+                    if (heightWeight > 0.0001)
+                    {
+                        float3 positionWS = ComputeWorldSpacePosition(input.texcoord, depth, UNITY_MATRIX_I_VP);
+                        weightedWorldY = positionWS.y * heightWeight;
+                    }
+                }
+
+                return float4(mask, weightedWorldY, heightWeight, 1.0);
             }
             ENDHLSL
         }
@@ -54,7 +68,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/SubjectOutline"
             static const float LIL_HOCHARACTER_GOLDEN_ANGLE = 2.39996323;
             static const int LIL_HOCHARACTER_SUBJECT_OUTLINE_SAMPLES = 64;
 
-            half4 Frag(Varyings input) : SV_Target
+            float4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
@@ -63,8 +77,8 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/SubjectOutline"
                 float phase = _HoCharacterSubjectOutlineBlurParams.y;
                 float2 radiusUv = _BlitTexture_TexelSize.xy * radiusPx;
 
-                float center = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv).r;
-                float maskSum = center * 1.8;
+                float3 center = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv).rgb;
+                float3 sum = center * 1.8;
                 float weightSum = 1.8;
 
                 [unroll]
@@ -78,12 +92,12 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/SubjectOutline"
                     sincos(angle, s, c);
                     float weight = exp2(-radius01 * radius01 * 4.6);
                     float2 sampleUv = uv + float2(c, s) * radiusUv * radius01;
-                    maskSum += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUv).r * weight;
+                    sum += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUv).rgb * weight;
                     weightSum += weight;
                 }
 
-                float mask = maskSum / max(weightSum, 0.0001);
-                return half4(mask, 0.0, 0.0, 1.0);
+                float3 data = sum / max(weightSum, 0.0001);
+                return float4(data, 1.0);
             }
             ENDHLSL
         }

@@ -425,6 +425,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             bool hasCameraColor = resourceData.activeColorTexture.IsValid();
             bool hasMetadataMaskId = metadataResources.maskIdTexture.IsValid();
             bool hasGeometryNormalDepth = geometryResources.normalDepthTexture.IsValid();
+            bool hasGeometryDepth = geometryResources.depthTexture.IsValid();
             bool hasMetadataObjectCustom0 = metadataResources.objectCustom0Texture.IsValid();
             bool hasMetadataObjectCustom1 = metadataResources.objectCustom1Texture.IsValid();
             bool hasMetadataSurfaceColor = metadataResources.surfaceColorTexture.IsValid();
@@ -446,6 +447,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 || !hasCameraColor
                 || !hasMetadataMaskId
                 || !hasGeometryNormalDepth
+                || (requiresSubjectOutlineTextures && !hasGeometryDepth)
                 || !hasMetadataObjectCustom0
                 || !hasMetadataObjectCustom1)
             {
@@ -619,7 +621,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             TextureHandle subjectOutlineSourceTexture = TextureHandle.nullHandle;
             TextureHandle subjectOutlineTempTexture = TextureHandle.nullHandle;
             TextureHandle subjectOutlineTexture = TextureHandle.nullHandle;
-            bool subjectOutlineReady = requiresSubjectOutlineTextures && subjectOutlineMaterial != null;
+            bool subjectOutlineReady = requiresSubjectOutlineTextures && hasGeometryDepth && subjectOutlineMaterial != null;
             if (subjectOutlineReady)
             {
                 TextureDesc subjectOutlineDesc = CreateSubjectOutlineTextureDesc(
@@ -637,16 +639,19 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 {
                     passData.source = source;
                     passData.metadataObjectCustom0Texture = metadataResources.objectCustom0Texture;
+                    passData.geometryDepthTexture = geometryResources.depthTexture;
                     passData.material = subjectOutlineMaterial;
 
                     builder.UseTexture(source, AccessFlags.Read);
                     builder.UseTexture(passData.metadataObjectCustom0Texture, AccessFlags.Read);
+                    builder.UseTexture(passData.geometryDepthTexture, AccessFlags.Read);
                     builder.SetRenderAttachment(subjectOutlineSourceTexture, 0, AccessFlags.WriteAll);
                     builder.AllowGlobalStateModification(true);
                     builder.AllowPassCulling(false);
                     builder.SetRenderFunc(static (SubjectOutlineSourcePassData data, RasterGraphContext context) =>
                     {
                         context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.metadataObjectCustom0Texture);
+                        context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, data.geometryDepthTexture);
                         context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
                         Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                     });
@@ -716,6 +721,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     out passData.subjectOutlineParams,
                     out passData.subjectOutlineLevels,
                     out passData.subjectOutlineColor,
+                    out passData.subjectOutlineFogColor,
+                    out passData.subjectOutlineFogParams,
+                    out passData.subjectOutlineHeightFadeParams,
                     out passData.subjectOutlineOptions,
                     out passData.options);
 
@@ -757,6 +765,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                         data.subjectOutlineParams,
                         data.subjectOutlineLevels,
                         data.subjectOutlineColor,
+                        data.subjectOutlineFogColor,
+                        data.subjectOutlineFogParams,
+                        data.subjectOutlineHeightFadeParams,
                         data.subjectOutlineOptions,
                         data.options);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.metadataMaskIdTexture);

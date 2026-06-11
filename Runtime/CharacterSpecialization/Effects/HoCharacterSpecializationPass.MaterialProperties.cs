@@ -22,6 +22,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 out Vector4 subjectOutlineParams,
                 out Vector4 subjectOutlineLevels,
                 out Color subjectOutlineColor,
+                out Color subjectOutlineFogColor,
+                out Vector4 subjectOutlineFogParams,
+                out Vector4 subjectOutlineHeightFadeParams,
                 out Vector4 subjectOutlineOptions,
                 out Vector4 options);
             ApplyMaterialProperties(
@@ -38,6 +41,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 subjectOutlineParams,
                 subjectOutlineLevels,
                 subjectOutlineColor,
+                subjectOutlineFogColor,
+                subjectOutlineFogParams,
+                subjectOutlineHeightFadeParams,
                 subjectOutlineOptions,
                 options);
         }
@@ -56,6 +62,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             Vector4 subjectOutlineParams,
             Vector4 subjectOutlineLevels,
             Color subjectOutlineColor,
+            Color subjectOutlineFogColor,
+            Vector4 subjectOutlineFogParams,
+            Vector4 subjectOutlineHeightFadeParams,
             Vector4 subjectOutlineOptions,
             Vector4 options)
         {
@@ -71,6 +80,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineParamsId, subjectOutlineParams);
             material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineLevelsId, subjectOutlineLevels);
             material.SetColor(HoCharacterSpecializationShaderConstants.SubjectOutlineColorId, subjectOutlineColor);
+            material.SetColor(HoCharacterSpecializationShaderConstants.SubjectOutlineFogColorId, subjectOutlineFogColor);
+            material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineFogParamsId, subjectOutlineFogParams);
+            material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineHeightFadeParamsId, subjectOutlineHeightFadeParams);
             material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineOptionsId, subjectOutlineOptions);
             material.SetVector(HoCharacterSpecializationShaderConstants.OptionsId, options);
         }
@@ -91,6 +103,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             out Vector4 subjectOutlineParams,
             out Vector4 subjectOutlineLevels,
             out Color subjectOutlineColor,
+            out Color subjectOutlineFogColor,
+            out Vector4 subjectOutlineFogParams,
+            out Vector4 subjectOutlineHeightFadeParams,
             out Vector4 subjectOutlineOptions,
             out Vector4 options)
         {
@@ -108,6 +123,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 subjectOutlineParams = Vector4.zero;
                 subjectOutlineLevels = Vector4.zero;
                 subjectOutlineColor = Color.white;
+                subjectOutlineFogColor = Color.white;
+                subjectOutlineFogParams = Vector4.zero;
+                subjectOutlineHeightFadeParams = Vector4.zero;
                 subjectOutlineOptions = Vector4.zero;
                 options = Vector4.zero;
                 return;
@@ -148,6 +166,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 out subjectOutlineParams,
                 out subjectOutlineLevels,
                 out subjectOutlineColor,
+                out subjectOutlineFogColor,
+                out subjectOutlineFogParams,
+                out subjectOutlineHeightFadeParams,
                 out subjectOutlineOptions);
 
             options = new Vector4(

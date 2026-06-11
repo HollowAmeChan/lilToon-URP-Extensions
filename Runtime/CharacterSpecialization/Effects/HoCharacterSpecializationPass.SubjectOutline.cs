@@ -8,6 +8,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 {
     internal sealed partial class HoCharacterSpecializationPass
     {
+        private const float SubjectOutlineMinHardThreshold = 0.003921569f;
+        private const float SubjectOutlineMinLevelRange = 0.0001f;
+
         private static bool RequiresSubjectOutlineTextures(HoCharacterSpecializationSettings settings)
         {
             if (settings == null)
@@ -38,13 +41,18 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             out Vector4 subjectOutlineParams,
             out Vector4 subjectOutlineLevels,
             out Color subjectOutlineColor,
+            out Color subjectOutlineFogColor,
+            out Vector4 subjectOutlineFogParams,
+            out Vector4 subjectOutlineHeightFadeParams,
             out Vector4 subjectOutlineOptions)
         {
             float levelBlack = Mathf.Clamp01(settings.subjectOutlineLevelBlack);
             float levelWhite = Mathf.Clamp01(settings.subjectOutlineLevelWhite);
-            if (levelWhite < levelBlack + 0.0001f)
+            bool hardLevelThreshold = levelWhite <= levelBlack + SubjectOutlineMinLevelRange;
+            if (hardLevelThreshold)
             {
-                levelWhite = levelBlack + 0.0001f;
+                levelBlack = Mathf.Max(levelBlack, SubjectOutlineMinHardThreshold);
+                levelWhite = levelBlack;
             }
 
             subjectOutlineParams = new Vector4(
@@ -55,14 +63,27 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             subjectOutlineLevels = new Vector4(
                 levelBlack,
                 levelWhite,
-                1.0f / Mathf.Max(0.0001f, levelWhite - levelBlack),
-                0.0f);
+                hardLevelThreshold ? 0.0f : 1.0f / Mathf.Max(SubjectOutlineMinLevelRange, levelWhite - levelBlack),
+                hardLevelThreshold ? 1.0f : 0.0f);
             subjectOutlineColor = settings.subjectOutlineColor;
+            subjectOutlineFogColor = settings.subjectOutlineFogColor;
+            subjectOutlineFogParams = new Vector4(
+                settings.subjectOutlineFogHueShiftDegrees / 360.0f,
+                Mathf.Max(0.0f, settings.subjectOutlineFogSaturation),
+                Mathf.Max(0.0f, settings.subjectOutlineFogValue),
+                Mathf.Clamp(settings.subjectOutlineFogSoftness, 0.05f, 4.0f));
+            float heightFadeStart = Mathf.Max(0.0f, settings.subjectOutlineHeightFadeStart);
+            float heightFadeEnd = Mathf.Max(heightFadeStart + 0.0001f, settings.subjectOutlineHeightFadeEnd);
+            subjectOutlineHeightFadeParams = new Vector4(
+                (float)settings.subjectOutlineHeightFadeMode,
+                settings.subjectOutlineHeightFadeGroundY,
+                heightFadeStart,
+                1.0f / (heightFadeEnd - heightFadeStart));
             subjectOutlineOptions = new Vector4(
                 settings.subjectOutlineEnabled && texturesReady ? 1.0f : 0.0f,
                 texturesReady ? 1.0f : 0.0f,
                 (float)settings.subjectOutlineFillMode,
-                0.0f);
+                Mathf.Clamp(settings.subjectOutlineHeightFadeHardness, 0.1f, 8.0f));
         }
 
         private static Vector4 CreateSubjectOutlineBlurParams(
