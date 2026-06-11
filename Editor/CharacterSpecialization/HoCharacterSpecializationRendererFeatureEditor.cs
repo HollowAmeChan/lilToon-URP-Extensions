@@ -18,12 +18,10 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private static bool showCapture;
         private static bool showDebug;
 
-        private SerializedProperty useVolumesProperty;
         private SerializedProperty settingsProperty;
 
         private void OnEnable()
         {
-            useVolumesProperty = serializedObject.FindProperty("UseVolumes");
             settingsProperty = serializedObject.FindProperty("settings");
         }
 
@@ -32,7 +30,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             serializedObject.Update();
 
             EditorGUILayout.HelpBox(
-                "这个 RendererFeature 负责把 HoCharacter 捕获/合成 pass 安装进当前 Renderer。推荐勾选“使用 Volume 参数”，然后在场景或全局 Volume 里添加“Ho-CharacterSpecialization/角色特化”调眼透和 DropShadow。",
+                "这个 RendererFeature 负责把 HoCharacter 捕获/合成 pass 安装进当前 Renderer。效果参数只从场景或全局 Volume 的“Ho-CharacterSpecialization/角色特化”读取；这里仅保留捕获、高级资源和调试设置。",
                 MessageType.Info);
 
             if (settingsProperty == null)
@@ -44,10 +42,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
 
             DrawRendererFeature();
             DrawCapture();
-            HoCharacterEyeRevealEditorSection.DrawSettings(settingsProperty);
-            HoCharacterDropShadowEditorSection.DrawSettings(settingsProperty);
-            HoCharacterFaceHairDiffuseEditorSection.DrawSettings(settingsProperty);
-            HoCharacterSubjectOutlineEditorSection.DrawSettings(settingsProperty);
             DrawDebug();
             DrawRuntime();
 
@@ -57,9 +51,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private void DrawRendererFeature()
         {
             SerializedProperty enabled = Find("enabled");
-            string summary = LilUrpEditorSectionGui.BoolSummary(enabled)
-                + " / "
-                + (useVolumesProperty != null && useVolumesProperty.boolValue ? "Volume" : "默认");
+            string summary = LilUrpEditorSectionGui.BoolSummary(enabled);
 
             if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRendererFeature, "渲染器功能", summary, SettingsColor))
             {
@@ -68,22 +60,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                if (useVolumesProperty != null)
-                {
-                    EditorGUILayout.PropertyField(useVolumesProperty);
-                }
-
-                DrawProperty(enabled, "默认启用");
-                DrawProperty("passEvent", "默认渲染时机");
-                DrawProperty("renderScale", "默认渲染缩放");
-                DrawProperty("compositeShader", "合成 Shader");
-
-                if (useVolumesProperty == null || useVolumesProperty.boolValue)
-                {
-                    EditorGUILayout.HelpBox(
-                        "Volume 模式下，这里只作为默认值和兜底资源。日常调参请在 Volume 组件里完成。",
-                        MessageType.None);
-                }
+                DrawProperty(enabled, "启用");
+                DrawProperty("passEvent", "渲染时机");
+                DrawProperty("renderScale", "渲染缩放");
             }
         }
 
@@ -115,6 +94,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty(debugMode, "调试模式");
+                DrawProperty("compositeShader", "合成 Shader");
+                DrawProperty("faceHairDiffuseShader", "脸色扩散 Shader");
+                DrawProperty("subjectOutlineShader", "主体轮廓 Shader");
                 DrawProperty("farPlaneShadowReserved", "远平面阴影预留");
                 DrawProperty("reflectionSpaceReserved", "反射空间预留");
             }

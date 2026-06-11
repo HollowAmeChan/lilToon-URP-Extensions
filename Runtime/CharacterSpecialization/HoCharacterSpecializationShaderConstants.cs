@@ -7,6 +7,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
     {
         public const string CompositeShaderName = "Hidden/lilToon-HoCharacterSpecialization/URP/Composite";
         public const string CaptureClearShaderName = "Hidden/lilToon-HoCharacterSpecialization/URP/CaptureClear";
+        public const string FaceHairDiffuseShaderName = "Hidden/lilToon-HoCharacterSpecialization/URP/FaceHairDiffuse";
+        public const string SubjectOutlineShaderName = "Hidden/lilToon-HoCharacterSpecialization/URP/SubjectOutline";
         public const string CapturePassName = "HoCharacterCapture";
         public const string EyeColorTextureName = "_lilHoCharacterEyeColorTexture";
         public const string EyeDataTextureName = "_lilHoCharacterEyeDataTexture";

@@ -90,8 +90,16 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public HoCharacterRenderScale renderScale = HoCharacterRenderScale.Full;
 
         [InspectorName("合成 Shader")]
-        [Tooltip("为空时自动使用 Hidden/lilToon-HoCharacter/URP/Composite。一般不需要改。")]
+        [Tooltip("为空时自动使用 Hidden/lilToon-HoCharacterSpecialization/URP/Composite。一般不需要改。")]
         public Shader compositeShader;
+
+        [InspectorName("脸色扩散 Shader")]
+        [Tooltip("为空时自动使用 Hidden/lilToon-HoCharacterSpecialization/URP/FaceHairDiffuse。一般不需要改。")]
+        public Shader faceHairDiffuseShader;
+
+        [InspectorName("主体轮廓 Shader")]
+        [Tooltip("为空时自动使用 Hidden/lilToon-HoCharacterSpecialization/URP/SubjectOutline。一般不需要改。")]
+        public Shader subjectOutlineShader;
 
         [Header("眼睛透过")]
         [InspectorName("启用眼睛透过")]
@@ -287,6 +295,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             passEvent = source.passEvent;
             renderScale = source.renderScale;
             compositeShader = source.compositeShader;
+            faceHairDiffuseShader = source.faceHairDiffuseShader;
+            subjectOutlineShader = source.subjectOutlineShader;
             eyeRevealEnabled = source.eyeRevealEnabled;
             eyeRevealStrength = source.eyeRevealStrength;
             eyeRevealFeatherPixels = source.eyeRevealFeatherPixels;

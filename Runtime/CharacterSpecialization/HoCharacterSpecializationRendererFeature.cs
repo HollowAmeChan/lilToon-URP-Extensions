@@ -22,22 +22,21 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private HoCharacterSpecializationPass pass;
         private Material compositeMaterial;
         private Material captureClearMaterial;
+        private Material faceHairDiffuseMaterial;
+        private Material subjectOutlineMaterial;
         private Shader compositeShader;
         private Shader captureClearShader;
+        private Shader faceHairDiffuseShader;
+        private Shader subjectOutlineShader;
         private bool warnedMissingCompositeShader;
         private bool warnedMissingCaptureClearShader;
-
-        [InspectorName("使用 Volume 参数")]
-        [Tooltip("开启后，RendererFeature 只负责安装 pass，实际参数从 Volume 里的 Ho-CharacterSpecialization/角色特化 读取。")]
-        public bool UseVolumes = true;
-
-        public static bool IsUseVolumes { get; private set; } = true;
+        private bool warnedMissingFaceHairDiffuseShader;
+        private bool warnedMissingSubjectOutlineShader;
 
         public HoCharacterSpecializationSettings Settings => settings;
 
         public override void Create()
         {
-            IsUseVolumes = UseVolumes;
             pass = new HoCharacterSpecializationPass();
         }
 
@@ -52,7 +51,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             }
 
             EnsureMaterial(activeSettings);
-            pass?.Setup(activeSettings, renderTargets, renderer.cameraColorTargetHandle, compositeMaterial, captureClearMaterial);
+            pass?.Setup(
+                activeSettings,
+                renderTargets,
+                renderer.cameraColorTargetHandle,
+                compositeMaterial,
+                captureClearMaterial,
+                faceHairDiffuseMaterial,
+                subjectOutlineMaterial);
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -81,7 +87,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 return;
             }
 
-            pass?.SetupRenderGraph(activeSettings, compositeMaterial, captureClearMaterial);
+            pass?.SetupRenderGraph(
+                activeSettings,
+                compositeMaterial,
+                captureClearMaterial,
+                faceHairDiffuseMaterial,
+                subjectOutlineMaterial);
             renderer.EnqueuePass(pass);
         }
 
@@ -92,10 +103,16 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             renderTargets.Release();
             CoreUtils.Destroy(compositeMaterial);
             CoreUtils.Destroy(captureClearMaterial);
+            CoreUtils.Destroy(faceHairDiffuseMaterial);
+            CoreUtils.Destroy(subjectOutlineMaterial);
             compositeMaterial = null;
             captureClearMaterial = null;
+            faceHairDiffuseMaterial = null;
+            subjectOutlineMaterial = null;
             compositeShader = null;
             captureClearShader = null;
+            faceHairDiffuseShader = null;
+            subjectOutlineShader = null;
         }
 
         private bool ShouldRender(in RenderingData renderingData, HoCharacterSpecializationSettings activeSettings)
@@ -122,7 +139,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         {
             if (activeSettings == null)
             {
-                return UseVolumes ? "Volume 未启用或当前相机未激活角色特化。" : "设置不可用。";
+                return "Volume 未启用或当前相机未激活角色特化。";
             }
 
             if (!activeSettings.enabled)
@@ -147,12 +164,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         private HoCharacterSpecializationSettings ResolveSettings(in RenderingData renderingData)
         {
-            IsUseVolumes = UseVolumes;
-            if (!UseVolumes)
-            {
-                return settings;
-            }
-
             HoCharacterSpecializationVolume volume = GetVolumeComponent();
             if (volume == null || !volume.IsActiveForCamera(renderingData.cameraData.cameraType))
             {
@@ -176,50 +187,76 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 ? activeSettings.compositeShader
                 : Shader.Find(HoCharacterSpecializationShaderConstants.CompositeShaderName);
 
-            if (compositeMaterial == null || compositeShader != shader)
-            {
-                CoreUtils.Destroy(compositeMaterial);
-                compositeMaterial = null;
-                compositeShader = shader;
-                if (shader == null)
-                {
-                    if (!warnedMissingCompositeShader)
-                    {
-                        warnedMissingCompositeShader = true;
-                        Debug.LogWarning($"HoCharacterSpecialization is unavailable because shader '{HoCharacterSpecializationShaderConstants.CompositeShaderName}' could not be found.");
-                    }
-                }
-                else
-                {
-                    compositeMaterial = CoreUtils.CreateEngineMaterial(shader);
-                }
-            }
+            EnsureMaterial(
+                ref compositeMaterial,
+                ref compositeShader,
+                shader,
+                HoCharacterSpecializationShaderConstants.CompositeShaderName,
+                ref warnedMissingCompositeShader,
+                "HoCharacterSpecialization is unavailable because shader '{0}' could not be found.");
+
+            EnsureMaterial(
+                ref faceHairDiffuseMaterial,
+                ref faceHairDiffuseShader,
+                activeSettings != null && activeSettings.faceHairDiffuseShader != null
+                    ? activeSettings.faceHairDiffuseShader
+                    : Shader.Find(HoCharacterSpecializationShaderConstants.FaceHairDiffuseShaderName),
+                HoCharacterSpecializationShaderConstants.FaceHairDiffuseShaderName,
+                ref warnedMissingFaceHairDiffuseShader,
+                "HoCharacterSpecialization face hair diffuse is unavailable because shader '{0}' could not be found.");
+
+            EnsureMaterial(
+                ref subjectOutlineMaterial,
+                ref subjectOutlineShader,
+                activeSettings != null && activeSettings.subjectOutlineShader != null
+                    ? activeSettings.subjectOutlineShader
+                    : Shader.Find(HoCharacterSpecializationShaderConstants.SubjectOutlineShaderName),
+                HoCharacterSpecializationShaderConstants.SubjectOutlineShaderName,
+                ref warnedMissingSubjectOutlineShader,
+                "HoCharacterSpecialization subject outline is unavailable because shader '{0}' could not be found.");
 
             Shader clearShader = Shader.Find(HoCharacterSpecializationShaderConstants.CaptureClearShaderName);
-            if (captureClearMaterial != null && captureClearShader == clearShader)
+            EnsureMaterial(
+                ref captureClearMaterial,
+                ref captureClearShader,
+                clearShader,
+                HoCharacterSpecializationShaderConstants.CaptureClearShaderName,
+                ref warnedMissingCaptureClearShader,
+                "HoCharacterSpecialization capture clear falls back to CommandBuffer clear because shader '{0}' could not be found.");
+        }
+
+        private static void EnsureMaterial(
+            ref Material material,
+            ref Shader cachedShader,
+            Shader shader,
+            string shaderName,
+            ref bool warnedMissingShader,
+            string warningFormat)
+        {
+            if (material != null && cachedShader == shader)
             {
                 return;
             }
 
-            CoreUtils.Destroy(captureClearMaterial);
-            captureClearMaterial = null;
-            captureClearShader = clearShader;
-            if (clearShader == null)
+            CoreUtils.Destroy(material);
+            material = null;
+            cachedShader = shader;
+            if (shader == null)
             {
-                if (!warnedMissingCaptureClearShader)
+                if (!warnedMissingShader)
                 {
-                    warnedMissingCaptureClearShader = true;
-                    Debug.LogWarning($"HoCharacterSpecialization capture clear falls back to CommandBuffer clear because shader '{HoCharacterSpecializationShaderConstants.CaptureClearShaderName}' could not be found.");
+                    warnedMissingShader = true;
+                    Debug.LogWarning(string.Format(warningFormat, shaderName));
                 }
 
                 return;
             }
 
-            captureClearMaterial = CoreUtils.CreateEngineMaterial(clearShader);
+            material = CoreUtils.CreateEngineMaterial(shader);
         }
     }
 
-    internal sealed class HoCharacterSpecializationPass : ScriptableRenderPass
+    internal sealed partial class HoCharacterSpecializationPass : ScriptableRenderPass
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-CharacterSpecialization");
         private const int FaceHairDiffuseBlurIterationCount = 2;
@@ -237,6 +274,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private RTHandle tempTexture;
         private Material compositeMaterial;
         private Material captureClearMaterial;
+        private Material faceHairDiffuseMaterial;
+        private Material subjectOutlineMaterial;
         private FilteringSettings filteringSettings;
         private RenderStateBlock renderStateBlock;
 
@@ -251,73 +290,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public bool clearTargets;
         }
 
-        private sealed class CompositePassData
-        {
-            public TextureHandle source;
-            public TextureHandle metadataMaskIdTexture;
-            public TextureHandle geometryNormalDepthTexture;
-            public TextureHandle metadataObjectCustom0Texture;
-            public TextureHandle metadataObjectCustom1Texture;
-            public TextureHandle faceHairDiffuseSourceColorTexture;
-            public TextureHandle faceHairDiffuseColorTexture;
-            public TextureHandle faceHairDiffuseDepthTexture;
-            public TextureHandle subjectOutlineSourceTexture;
-            public TextureHandle subjectOutlineTexture;
-            public TextureHandle eyeColorTexture;
-            public TextureHandle eyeDataTexture;
-            public Material material;
-            public Vector4 eyeRevealParams;
-            public Vector4 hairShadowParams;
-            public Vector4 hairShadowParams1;
-            public Vector4 hairShadowParams2;
-            public Color hairShadowColor;
-            public Vector4 faceHairDiffuseParams;
-            public Vector4 faceHairDiffuseLevels;
-            public Color faceHairDiffuseTintColor;
-            public Vector4 faceHairDiffuseOptions;
-            public Vector4 subjectOutlineParams;
-            public Vector4 subjectOutlineLevels;
-            public Color subjectOutlineColor;
-            public Vector4 subjectOutlineOptions;
-            public Vector4 options;
-            public bool faceHairDiffuseReady;
-            public bool subjectOutlineReady;
-        }
-
-        private sealed class FaceHairDiffuseSourcePassData
-        {
-            public TextureHandle source;
-            public TextureHandle metadataObjectCustom0Texture;
-            public TextureHandle metadataSurfaceColorTexture;
-            public TextureHandle geometryNormalDepthTexture;
-            public Material material;
-        }
-
-        private sealed class FaceHairDiffuseBlurPassData
-        {
-            public TextureHandle sourceColor;
-            public TextureHandle sourceDepth;
-            public TextureHandle destinationColor;
-            public TextureHandle destinationDepth;
-            public Material material;
-            public Vector4 blurParams;
-        }
-
-        private sealed class SubjectOutlineSourcePassData
-        {
-            public TextureHandle source;
-            public TextureHandle metadataObjectCustom0Texture;
-            public Material material;
-        }
-
-        private sealed class SubjectOutlineBlurPassData
-        {
-            public TextureHandle source;
-            public TextureHandle destination;
-            public Material material;
-            public Vector4 blurParams;
-        }
-
         public HoCharacterSpecializationPass()
         {
             renderStateBlock = new RenderStateBlock(RenderStateMask.Nothing);
@@ -328,21 +300,32 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             HoCharacterSpecializationRenderTargets renderTargets,
             RTHandle cameraColorTarget,
             Material compositeMaterial,
-            Material captureClearMaterial)
+            Material captureClearMaterial,
+            Material faceHairDiffuseMaterial,
+            Material subjectOutlineMaterial)
         {
             this.settings = settings;
             this.renderTargets = renderTargets;
             this.cameraColorTarget = cameraColorTarget;
             this.compositeMaterial = compositeMaterial;
             this.captureClearMaterial = captureClearMaterial;
+            this.faceHairDiffuseMaterial = faceHairDiffuseMaterial;
+            this.subjectOutlineMaterial = subjectOutlineMaterial;
             ConfigurePass();
         }
 
-        public void SetupRenderGraph(HoCharacterSpecializationSettings settings, Material compositeMaterial, Material captureClearMaterial)
+        public void SetupRenderGraph(
+            HoCharacterSpecializationSettings settings,
+            Material compositeMaterial,
+            Material captureClearMaterial,
+            Material faceHairDiffuseMaterial,
+            Material subjectOutlineMaterial)
         {
             this.settings = settings;
             this.compositeMaterial = compositeMaterial;
             this.captureClearMaterial = captureClearMaterial;
+            this.faceHairDiffuseMaterial = faceHairDiffuseMaterial;
+            this.subjectOutlineMaterial = subjectOutlineMaterial;
             ConfigurePass();
         }
 
@@ -552,7 +535,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             TextureHandle faceHairDiffuseTempDepthTexture = TextureHandle.nullHandle;
             TextureHandle faceHairDiffuseColorTexture = TextureHandle.nullHandle;
             TextureHandle faceHairDiffuseDepthTexture = TextureHandle.nullHandle;
-            bool faceHairDiffuseReady = requiresFaceHairDiffuseTextures && hasMetadataSurfaceColor;
+            bool faceHairDiffuseReady = requiresFaceHairDiffuseTextures && hasMetadataSurfaceColor && faceHairDiffuseMaterial != null;
             if (faceHairDiffuseReady)
             {
                 TextureDesc faceHairColorDesc = CreateFaceHairDiffuseTextureDesc(
@@ -584,7 +567,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     passData.metadataObjectCustom0Texture = metadataResources.objectCustom0Texture;
                     passData.metadataSurfaceColorTexture = metadataResources.surfaceColorTexture;
                     passData.geometryNormalDepthTexture = geometryResources.normalDepthTexture;
-                    passData.material = compositeMaterial;
+                    passData.material = faceHairDiffuseMaterial;
 
                     builder.UseTexture(source, AccessFlags.Read);
                     builder.UseTexture(passData.metadataObjectCustom0Texture, AccessFlags.Read);
@@ -600,7 +583,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                         context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, data.metadataSurfaceColorTexture);
                         context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.geometryNormalDepthTexture);
                         context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
-                        Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 1);
+                        Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                     });
                 }
 
@@ -621,7 +604,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     AddFaceHairDiffuseBlurPass(
                         renderGraph,
                         $"Ho-CharacterSpecialization FaceHair FastGaussian {i + 1}",
-                        compositeMaterial,
+                        faceHairDiffuseMaterial,
                         blurSourceColor,
                         blurSourceDepth,
                         blurDestinationColor,
@@ -636,7 +619,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             TextureHandle subjectOutlineSourceTexture = TextureHandle.nullHandle;
             TextureHandle subjectOutlineTempTexture = TextureHandle.nullHandle;
             TextureHandle subjectOutlineTexture = TextureHandle.nullHandle;
-            bool subjectOutlineReady = requiresSubjectOutlineTextures;
+            bool subjectOutlineReady = requiresSubjectOutlineTextures && subjectOutlineMaterial != null;
             if (subjectOutlineReady)
             {
                 TextureDesc subjectOutlineDesc = CreateSubjectOutlineTextureDesc(
@@ -654,7 +637,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 {
                     passData.source = source;
                     passData.metadataObjectCustom0Texture = metadataResources.objectCustom0Texture;
-                    passData.material = compositeMaterial;
+                    passData.material = subjectOutlineMaterial;
 
                     builder.UseTexture(source, AccessFlags.Read);
                     builder.UseTexture(passData.metadataObjectCustom0Texture, AccessFlags.Read);
@@ -665,7 +648,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     {
                         context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.metadataObjectCustom0Texture);
                         context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
-                        Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 3);
+                        Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                     });
                 }
 
@@ -684,7 +667,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     AddSubjectOutlineBlurPass(
                         renderGraph,
                         $"Ho-CharacterSpecialization SubjectOutline FastGaussian {i + 1}",
-                        compositeMaterial,
+                        subjectOutlineMaterial,
                         blurSource,
                         blurDestination,
                         blurParams);
@@ -845,358 +828,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             filteringSettings = new FilteringSettings(
                 new RenderQueueRange { lowerBound = minQueue, upperBound = maxQueue },
                 settings != null ? settings.layerMask.value : -1);
-        }
-
-        private static void ApplyMaterialProperties(Material material, HoCharacterSpecializationSettings settings)
-        {
-            FillMaterialVectors(
-                settings,
-                false,
-                false,
-                out Vector4 eyeRevealParams,
-                out Vector4 hairShadowParams,
-                out Vector4 hairShadowParams1,
-                out Vector4 hairShadowParams2,
-                out Color hairShadowColor,
-                out Vector4 faceHairDiffuseParams,
-                out Vector4 faceHairDiffuseLevels,
-                out Color faceHairDiffuseTintColor,
-                out Vector4 faceHairDiffuseOptions,
-                out Vector4 subjectOutlineParams,
-                out Vector4 subjectOutlineLevels,
-                out Color subjectOutlineColor,
-                out Vector4 subjectOutlineOptions,
-                out Vector4 options);
-            ApplyMaterialProperties(
-                material,
-                eyeRevealParams,
-                hairShadowParams,
-                hairShadowParams1,
-                hairShadowParams2,
-                hairShadowColor,
-                faceHairDiffuseParams,
-                faceHairDiffuseLevels,
-                faceHairDiffuseTintColor,
-                faceHairDiffuseOptions,
-                subjectOutlineParams,
-                subjectOutlineLevels,
-                subjectOutlineColor,
-                subjectOutlineOptions,
-                options);
-        }
-
-        private static void ApplyMaterialProperties(
-            Material material,
-            Vector4 eyeRevealParams,
-            Vector4 hairShadowParams,
-            Vector4 hairShadowParams1,
-            Vector4 hairShadowParams2,
-            Color hairShadowColor,
-            Vector4 faceHairDiffuseParams,
-            Vector4 faceHairDiffuseLevels,
-            Color faceHairDiffuseTintColor,
-            Vector4 faceHairDiffuseOptions,
-            Vector4 subjectOutlineParams,
-            Vector4 subjectOutlineLevels,
-            Color subjectOutlineColor,
-            Vector4 subjectOutlineOptions,
-            Vector4 options)
-        {
-            material.SetVector(HoCharacterSpecializationShaderConstants.EyeRevealParamsId, eyeRevealParams);
-            material.SetVector(HoCharacterSpecializationShaderConstants.HairShadowParamsId, hairShadowParams);
-            material.SetVector(HoCharacterSpecializationShaderConstants.HairShadowParams1Id, hairShadowParams1);
-            material.SetVector(HoCharacterSpecializationShaderConstants.HairShadowParams2Id, hairShadowParams2);
-            material.SetColor(HoCharacterSpecializationShaderConstants.HairShadowColorId, hairShadowColor);
-            material.SetVector(HoCharacterSpecializationShaderConstants.FaceHairDiffuseParamsId, faceHairDiffuseParams);
-            material.SetVector(HoCharacterSpecializationShaderConstants.FaceHairDiffuseLevelsId, faceHairDiffuseLevels);
-            material.SetColor(HoCharacterSpecializationShaderConstants.FaceHairDiffuseTintColorId, faceHairDiffuseTintColor);
-            material.SetVector(HoCharacterSpecializationShaderConstants.FaceHairDiffuseOptionsId, faceHairDiffuseOptions);
-            material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineParamsId, subjectOutlineParams);
-            material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineLevelsId, subjectOutlineLevels);
-            material.SetColor(HoCharacterSpecializationShaderConstants.SubjectOutlineColorId, subjectOutlineColor);
-            material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineOptionsId, subjectOutlineOptions);
-            material.SetVector(HoCharacterSpecializationShaderConstants.OptionsId, options);
-        }
-
-        private static void FillMaterialVectors(
-            HoCharacterSpecializationSettings settings,
-            bool faceHairDiffuseTexturesReady,
-            bool subjectOutlineTexturesReady,
-            out Vector4 eyeRevealParams,
-            out Vector4 hairShadowParams,
-            out Vector4 hairShadowParams1,
-            out Vector4 hairShadowParams2,
-            out Color hairShadowColor,
-            out Vector4 faceHairDiffuseParams,
-            out Vector4 faceHairDiffuseLevels,
-            out Color faceHairDiffuseTintColor,
-            out Vector4 faceHairDiffuseOptions,
-            out Vector4 subjectOutlineParams,
-            out Vector4 subjectOutlineLevels,
-            out Color subjectOutlineColor,
-            out Vector4 subjectOutlineOptions,
-            out Vector4 options)
-        {
-            if (settings == null)
-            {
-                eyeRevealParams = Vector4.zero;
-                hairShadowParams = Vector4.zero;
-                hairShadowParams1 = Vector4.zero;
-                hairShadowParams2 = Vector4.zero;
-                hairShadowColor = Color.white;
-                faceHairDiffuseParams = Vector4.zero;
-                faceHairDiffuseLevels = Vector4.zero;
-                faceHairDiffuseTintColor = Color.white;
-                faceHairDiffuseOptions = Vector4.zero;
-                subjectOutlineParams = Vector4.zero;
-                subjectOutlineLevels = Vector4.zero;
-                subjectOutlineColor = Color.white;
-                subjectOutlineOptions = Vector4.zero;
-                options = Vector4.zero;
-                return;
-            }
-
-            eyeRevealParams = new Vector4(
-                Mathf.Clamp01(settings.eyeRevealStrength),
-                Mathf.Max(0.0f, settings.eyeRevealFeatherPixels),
-                Mathf.Max(0.0f, settings.eyeRevealDilationPixels),
-                Mathf.Max(0.0f, settings.eyeRevealDepthBias));
-            hairShadowParams = new Vector4(
-                Mathf.Clamp01(settings.hairShadowOpacity),
-                Mathf.Max(0.0f, settings.hairShadowDistancePixels),
-                settings.hairShadowAngleDegrees,
-                Mathf.Max(0.0f, settings.hairShadowSoftnessPixels));
-            hairShadowParams1 = new Vector4(
-                Mathf.Max(0.0f, settings.hairShadowSpreadPixels),
-                Mathf.Clamp01(settings.hairShadowKeepOffHair),
-                (float)settings.hairShadowBlendMode,
-                settings.useEyeRevealArea ? 1.0f : 0.0f);
-            hairShadowParams2 = new Vector4(
-                Mathf.Clamp01(settings.hairShadowDistancePerspectiveStrength),
-                Mathf.Max(0.0f, settings.hairShadowDistanceReferenceDepth),
-                Mathf.Clamp01(settings.hairShadowDistanceMinScale),
-                0.0f);
-            hairShadowColor = settings.hairShadowColor;
-            float levelBlack = Mathf.Clamp01(settings.faceHairDiffuseLevelBlack);
-            float levelWhite = Mathf.Clamp01(settings.faceHairDiffuseLevelWhite);
-            if (levelWhite < levelBlack + 0.0001f)
-            {
-                levelWhite = levelBlack + 0.0001f;
-            }
-
-            faceHairDiffuseParams = new Vector4(
-                Mathf.Clamp01(settings.faceHairDiffuseStrength),
-                Mathf.Max(0.0f, settings.faceHairDiffuseRadiusPixels),
-                Mathf.Max(0.0f, settings.faceHairDiffuseDepthTolerance),
-                (float)settings.faceHairDiffuseBlendMode);
-            faceHairDiffuseLevels = new Vector4(
-                levelBlack,
-                levelWhite,
-                1.0f / Mathf.Max(0.0001f, levelWhite - levelBlack),
-                0.0f);
-            faceHairDiffuseTintColor = settings.faceHairDiffuseTintColor;
-            faceHairDiffuseOptions = new Vector4(
-                settings.faceHairDiffuseEnabled && faceHairDiffuseTexturesReady ? 1.0f : 0.0f,
-                faceHairDiffuseTexturesReady ? 1.0f : 0.0f,
-                0.0f,
-                0.0f);
-
-            float outlineLevelBlack = Mathf.Clamp01(settings.subjectOutlineLevelBlack);
-            float outlineLevelWhite = Mathf.Clamp01(settings.subjectOutlineLevelWhite);
-            if (outlineLevelWhite < outlineLevelBlack + 0.0001f)
-            {
-                outlineLevelWhite = outlineLevelBlack + 0.0001f;
-            }
-
-            subjectOutlineParams = new Vector4(
-                Mathf.Clamp01(settings.subjectOutlineStrength),
-                Mathf.Max(0.0f, settings.subjectOutlineRadiusPixels),
-                settings.subjectOutlineNormalRotationDegrees * Mathf.Deg2Rad,
-                settings.subjectOutlineNormalFlowDegreesPerSecond * Mathf.Deg2Rad);
-            subjectOutlineLevels = new Vector4(
-                outlineLevelBlack,
-                outlineLevelWhite,
-                1.0f / Mathf.Max(0.0001f, outlineLevelWhite - outlineLevelBlack),
-                0.0f);
-            subjectOutlineColor = settings.subjectOutlineColor;
-            subjectOutlineOptions = new Vector4(
-                settings.subjectOutlineEnabled && subjectOutlineTexturesReady ? 1.0f : 0.0f,
-                subjectOutlineTexturesReady ? 1.0f : 0.0f,
-                (float)settings.subjectOutlineFillMode,
-                0.0f);
-            options = new Vector4(
-                settings.eyeRevealEnabled ? 1.0f : 0.0f,
-                settings.hairDropShadowEnabled ? 1.0f : 0.0f,
-                settings.sameCharacterOnly ? 1.0f : 0.0f,
-                (float)settings.debugMode);
-        }
-
-        private static bool RequiresFaceHairDiffuseTextures(HoCharacterSpecializationSettings settings)
-        {
-            if (settings == null)
-            {
-                return false;
-            }
-
-            if (settings.faceHairDiffuseEnabled)
-            {
-                return true;
-            }
-
-            switch (settings.debugMode)
-            {
-                case HoCharacterSpecializationDebugMode.FaceHairDiffuseSourceMask:
-                case HoCharacterSpecializationDebugMode.FaceHairDiffuseBlurMask:
-                case HoCharacterSpecializationDebugMode.FaceHairDiffuseBlurColor:
-                case HoCharacterSpecializationDebugMode.FaceHairDiffuseMask:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        private static bool RequiresSubjectOutlineTextures(HoCharacterSpecializationSettings settings)
-        {
-            if (settings == null)
-            {
-                return false;
-            }
-
-            if (settings.subjectOutlineEnabled)
-            {
-                return true;
-            }
-
-            switch (settings.debugMode)
-            {
-                case HoCharacterSpecializationDebugMode.SubjectOutlineSourceMask:
-                case HoCharacterSpecializationDebugMode.SubjectOutlineBlurMask:
-                case HoCharacterSpecializationDebugMode.SubjectOutlineMask:
-                case HoCharacterSpecializationDebugMode.SubjectOutlineNormal:
-                    return true;
-                default:
-                    return false;
-            }
-        }
-
-        private static Vector4 CreateFaceHairDiffuseBlurParams(
-            HoCharacterSpecializationSettings settings,
-            RenderTextureDescriptor cameraTextureDescriptor,
-            TextureDesc blurTextureDesc,
-            float radiusScale,
-            int iterationIndex)
-        {
-            float scale = blurTextureDesc.width > 0
-                ? blurTextureDesc.width / (float)Mathf.Max(1, cameraTextureDescriptor.width)
-                : 1.0f;
-            return new Vector4(
-                Mathf.Max(0.0f, settings.faceHairDiffuseRadiusPixels) * Mathf.Max(scale, 0.0001f) * Mathf.Max(radiusScale, 0.0001f),
-                iterationIndex * 1.61803399f,
-                FaceHairDiffuseBlurIterationCount,
-                0.0f);
-        }
-
-        private static void AddFaceHairDiffuseBlurPass(
-            RenderGraph renderGraph,
-            string passName,
-            Material material,
-            TextureHandle sourceColor,
-            TextureHandle sourceDepth,
-            TextureHandle destinationColor,
-            TextureHandle destinationDepth,
-            Vector4 blurParams)
-        {
-            using (var builder = renderGraph.AddRasterRenderPass<FaceHairDiffuseBlurPassData>(passName, out FaceHairDiffuseBlurPassData passData, ProfilingSampler))
-            {
-                passData.sourceColor = sourceColor;
-                passData.sourceDepth = sourceDepth;
-                passData.destinationColor = destinationColor;
-                passData.destinationDepth = destinationDepth;
-                passData.material = material;
-                passData.blurParams = blurParams;
-
-                builder.UseTexture(passData.sourceColor, AccessFlags.Read);
-                builder.UseTexture(passData.sourceDepth, AccessFlags.Read);
-                builder.SetRenderAttachment(passData.destinationColor, 0, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(passData.destinationDepth, 1, AccessFlags.WriteAll);
-                builder.AllowGlobalStateModification(true);
-                builder.AllowPassCulling(false);
-                builder.SetRenderFunc(static (FaceHairDiffuseBlurPassData data, RasterGraphContext context) =>
-                {
-                    data.material.SetVector(HoCharacterSpecializationShaderConstants.FaceHairDiffuseBlurParamsId, data.blurParams);
-                    context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.FaceHairDiffuseDepthTextureId, data.sourceDepth);
-                    Blitter.BlitTexture(context.cmd, data.sourceColor, new Vector4(1, 1, 0, 0), data.material, 2);
-                });
-            }
-        }
-
-        private static TextureDesc CreateFaceHairDiffuseTextureDesc(
-            RenderTextureDescriptor cameraTextureDescriptor,
-            HoCharacterSpecializationSettings settings,
-            GraphicsFormat format,
-            string name)
-        {
-            TextureDesc descriptor = CreateTextureDesc(cameraTextureDescriptor, settings, format, name);
-            descriptor.msaaSamples = MSAASamples.None;
-            descriptor.bindTextureMS = false;
-            return descriptor;
-        }
-
-        private static Vector4 CreateSubjectOutlineBlurParams(
-            HoCharacterSpecializationSettings settings,
-            RenderTextureDescriptor cameraTextureDescriptor,
-            TextureDesc blurTextureDesc,
-            float radiusScale,
-            int iterationIndex)
-        {
-            float scale = blurTextureDesc.width > 0
-                ? blurTextureDesc.width / (float)Mathf.Max(1, cameraTextureDescriptor.width)
-                : 1.0f;
-            return new Vector4(
-                Mathf.Max(0.0f, settings.subjectOutlineRadiusPixels) * Mathf.Max(scale, 0.0001f) * Mathf.Max(radiusScale, 0.0001f),
-                iterationIndex * 1.61803399f,
-                SubjectOutlineBlurIterationCount,
-                0.0f);
-        }
-
-        private static void AddSubjectOutlineBlurPass(
-            RenderGraph renderGraph,
-            string passName,
-            Material material,
-            TextureHandle source,
-            TextureHandle destination,
-            Vector4 blurParams)
-        {
-            using (var builder = renderGraph.AddRasterRenderPass<SubjectOutlineBlurPassData>(passName, out SubjectOutlineBlurPassData passData, ProfilingSampler))
-            {
-                passData.source = source;
-                passData.destination = destination;
-                passData.material = material;
-                passData.blurParams = blurParams;
-
-                builder.UseTexture(passData.source, AccessFlags.Read);
-                builder.SetRenderAttachment(passData.destination, 0, AccessFlags.WriteAll);
-                builder.AllowGlobalStateModification(true);
-                builder.AllowPassCulling(false);
-                builder.SetRenderFunc(static (SubjectOutlineBlurPassData data, RasterGraphContext context) =>
-                {
-                    data.material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineBlurParamsId, data.blurParams);
-                    Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 4);
-                });
-            }
-        }
-
-        private static TextureDesc CreateSubjectOutlineTextureDesc(
-            RenderTextureDescriptor cameraTextureDescriptor,
-            HoCharacterSpecializationSettings settings,
-            GraphicsFormat format,
-            string name)
-        {
-            TextureDesc descriptor = CreateTextureDesc(cameraTextureDescriptor, settings, format, name);
-            descriptor.msaaSamples = MSAASamples.None;
-            descriptor.bindTextureMS = false;
-            descriptor.filterMode = FilterMode.Bilinear;
-            return descriptor;
         }
 
         private static TextureDesc CreateTextureDesc(

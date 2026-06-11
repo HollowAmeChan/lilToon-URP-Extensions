@@ -267,7 +267,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         public bool IsActive()
         {
-            return active && (!Enable.overrideState || Enable.value);
+            return active;
         }
 
         public bool IsActiveForCamera(CameraType cameraType)
@@ -279,7 +279,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
             if (cameraType == CameraType.SceneView)
             {
-                return ShowInSceneView.value;
+                return true;
             }
 
             return cameraType == CameraType.Game;
@@ -297,56 +297,42 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 return;
             }
 
-            ApplyIfOverridden(Enable, ref target.enabled);
-            ApplyIfOverridden(LayerMask, ref target.layerMask);
-            ApplyIfOverridden(MinRenderQueue, ref target.minRenderQueue);
-            ApplyIfOverridden(MaxRenderQueue, ref target.maxRenderQueue);
-            ApplyIfOverridden(PassEvent, ref target.passEvent);
-            ApplyIfOverridden(RenderScale, ref target.renderScale);
-            ApplyIfOverridden(EyeRevealEnabled, ref target.eyeRevealEnabled);
-            ApplyIfOverridden(EyeRevealStrength, ref target.eyeRevealStrength);
-            ApplyIfOverridden(EyeRevealFeatherPixels, ref target.eyeRevealFeatherPixels);
-            ApplyIfOverridden(EyeRevealDilationPixels, ref target.eyeRevealDilationPixels);
-            ApplyIfOverridden(EyeRevealDepthBias, ref target.eyeRevealDepthBias);
-            ApplyIfOverridden(UseEyeRevealArea, ref target.useEyeRevealArea);
-            ApplyIfOverridden(SameCharacterOnly, ref target.sameCharacterOnly);
-            ApplyIfOverridden(HairDropShadowEnabled, ref target.hairDropShadowEnabled);
-            ApplyIfOverridden(HairShadowColor, ref target.hairShadowColor);
-            ApplyIfOverridden(HairShadowOpacity, ref target.hairShadowOpacity);
-            ApplyIfOverridden(HairShadowDistancePixels, ref target.hairShadowDistancePixels);
-            ApplyIfOverridden(HairShadowDistancePerspectiveStrength, ref target.hairShadowDistancePerspectiveStrength);
-            ApplyIfOverridden(HairShadowDistanceReferenceDepth, ref target.hairShadowDistanceReferenceDepth);
-            ApplyIfOverridden(HairShadowDistanceMinScale, ref target.hairShadowDistanceMinScale);
-            ApplyIfOverridden(HairShadowAngleDegrees, ref target.hairShadowAngleDegrees);
-            ApplyIfOverridden(HairShadowSoftnessPixels, ref target.hairShadowSoftnessPixels);
-            ApplyIfOverridden(HairShadowSpreadPixels, ref target.hairShadowSpreadPixels);
-            ApplyIfOverridden(HairShadowKeepOffHair, ref target.hairShadowKeepOffHair);
-            ApplyIfOverridden(HairShadowBlendMode, ref target.hairShadowBlendMode);
-            ApplyIfOverridden(FaceHairDiffuseEnabled, ref target.faceHairDiffuseEnabled);
-            ApplyIfOverridden(FaceHairDiffuseStrength, ref target.faceHairDiffuseStrength);
-            ApplyIfOverridden(FaceHairDiffuseRadiusPixels, ref target.faceHairDiffuseRadiusPixels);
-            ApplyIfOverridden(FaceHairDiffuseDepthTolerance, ref target.faceHairDiffuseDepthTolerance);
-            ApplyIfOverridden(FaceHairDiffuseLevelBlack, ref target.faceHairDiffuseLevelBlack);
-            ApplyIfOverridden(FaceHairDiffuseLevelWhite, ref target.faceHairDiffuseLevelWhite);
-            ApplyIfOverridden(FaceHairDiffuseTintColor, ref target.faceHairDiffuseTintColor);
-            ApplyIfOverridden(FaceHairDiffuseBlendMode, ref target.faceHairDiffuseBlendMode);
-            ApplyIfOverridden(SubjectOutlineEnabled, ref target.subjectOutlineEnabled);
-            ApplyIfOverridden(SubjectOutlineStrength, ref target.subjectOutlineStrength);
-            ApplyIfOverridden(SubjectOutlineRadiusPixels, ref target.subjectOutlineRadiusPixels);
-            ApplyIfOverridden(SubjectOutlineLevelBlack, ref target.subjectOutlineLevelBlack);
-            ApplyIfOverridden(SubjectOutlineLevelWhite, ref target.subjectOutlineLevelWhite);
-            ApplyIfOverridden(SubjectOutlineColor, ref target.subjectOutlineColor);
-            ApplyIfOverridden(SubjectOutlineFillMode, ref target.subjectOutlineFillMode);
-            ApplyIfOverridden(SubjectOutlineNormalRotationDegrees, ref target.subjectOutlineNormalRotationDegrees);
-            ApplyIfOverridden(SubjectOutlineNormalFlowDegreesPerSecond, ref target.subjectOutlineNormalFlowDegreesPerSecond);
-        }
-
-        private static void ApplyIfOverridden<T>(VolumeParameter<T> parameter, ref T target)
-        {
-            if (parameter != null && parameter.overrideState)
-            {
-                target = parameter.value;
-            }
+            target.eyeRevealEnabled = EyeRevealEnabled.value;
+            target.eyeRevealStrength = EyeRevealStrength.value;
+            target.eyeRevealFeatherPixels = EyeRevealFeatherPixels.value;
+            target.eyeRevealDilationPixels = EyeRevealDilationPixels.value;
+            target.eyeRevealDepthBias = EyeRevealDepthBias.value;
+            target.useEyeRevealArea = UseEyeRevealArea.value;
+            target.sameCharacterOnly = SameCharacterOnly.value;
+            target.hairDropShadowEnabled = HairDropShadowEnabled.value;
+            target.hairShadowColor = HairShadowColor.value;
+            target.hairShadowOpacity = HairShadowOpacity.value;
+            target.hairShadowDistancePixels = HairShadowDistancePixels.value;
+            target.hairShadowDistancePerspectiveStrength = HairShadowDistancePerspectiveStrength.value;
+            target.hairShadowDistanceReferenceDepth = HairShadowDistanceReferenceDepth.value;
+            target.hairShadowDistanceMinScale = HairShadowDistanceMinScale.value;
+            target.hairShadowAngleDegrees = HairShadowAngleDegrees.value;
+            target.hairShadowSoftnessPixels = HairShadowSoftnessPixels.value;
+            target.hairShadowSpreadPixels = HairShadowSpreadPixels.value;
+            target.hairShadowKeepOffHair = HairShadowKeepOffHair.value;
+            target.hairShadowBlendMode = HairShadowBlendMode.value;
+            target.faceHairDiffuseEnabled = FaceHairDiffuseEnabled.value;
+            target.faceHairDiffuseStrength = FaceHairDiffuseStrength.value;
+            target.faceHairDiffuseRadiusPixels = FaceHairDiffuseRadiusPixels.value;
+            target.faceHairDiffuseDepthTolerance = FaceHairDiffuseDepthTolerance.value;
+            target.faceHairDiffuseLevelBlack = FaceHairDiffuseLevelBlack.value;
+            target.faceHairDiffuseLevelWhite = FaceHairDiffuseLevelWhite.value;
+            target.faceHairDiffuseTintColor = FaceHairDiffuseTintColor.value;
+            target.faceHairDiffuseBlendMode = FaceHairDiffuseBlendMode.value;
+            target.subjectOutlineEnabled = SubjectOutlineEnabled.value;
+            target.subjectOutlineStrength = SubjectOutlineStrength.value;
+            target.subjectOutlineRadiusPixels = SubjectOutlineRadiusPixels.value;
+            target.subjectOutlineLevelBlack = SubjectOutlineLevelBlack.value;
+            target.subjectOutlineLevelWhite = SubjectOutlineLevelWhite.value;
+            target.subjectOutlineColor = SubjectOutlineColor.value;
+            target.subjectOutlineFillMode = SubjectOutlineFillMode.value;
+            target.subjectOutlineNormalRotationDegrees = SubjectOutlineNormalRotationDegrees.value;
+            target.subjectOutlineNormalFlowDegreesPerSecond = SubjectOutlineNormalFlowDegreesPerSecond.value;
         }
     }
 }

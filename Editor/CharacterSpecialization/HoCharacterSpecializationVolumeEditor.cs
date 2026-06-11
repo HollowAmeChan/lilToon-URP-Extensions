@@ -9,19 +9,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
     [CustomEditor(typeof(HoCharacterSpecializationVolume))]
     internal sealed class HoCharacterSpecializationVolumeEditor : VolumeComponentEditor
     {
-        private static readonly Color SettingsColor = new Color(0.45f, 0.64f, 0.96f);
-        private static readonly Color CaptureColor = new Color(0.42f, 0.72f, 0.58f);
-
-        private static bool showSettings;
-        private static bool showCapture;
-
-        private SerializedDataParameter enable;
-        private SerializedDataParameter showInSceneView;
-        private SerializedDataParameter layerMask;
-        private SerializedDataParameter minRenderQueue;
-        private SerializedDataParameter maxRenderQueue;
-        private SerializedDataParameter passEvent;
-        private SerializedDataParameter renderScale;
         private SerializedDataParameter eyeRevealEnabled;
         private SerializedDataParameter eyeRevealStrength;
         private SerializedDataParameter eyeRevealFeatherPixels;
@@ -62,13 +49,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         public override void OnEnable()
         {
             PropertyFetcher<HoCharacterSpecializationVolume> fetcher = new PropertyFetcher<HoCharacterSpecializationVolume>(serializedObject);
-            enable = Unpack(fetcher.Find(x => x.Enable));
-            showInSceneView = Unpack(fetcher.Find(x => x.ShowInSceneView));
-            layerMask = Unpack(fetcher.Find(x => x.LayerMask));
-            minRenderQueue = Unpack(fetcher.Find(x => x.MinRenderQueue));
-            maxRenderQueue = Unpack(fetcher.Find(x => x.MaxRenderQueue));
-            passEvent = Unpack(fetcher.Find(x => x.PassEvent));
-            renderScale = Unpack(fetcher.Find(x => x.RenderScale));
             eyeRevealEnabled = Unpack(fetcher.Find(x => x.EyeRevealEnabled));
             eyeRevealStrength = Unpack(fetcher.Find(x => x.EyeRevealStrength));
             eyeRevealFeatherPixels = Unpack(fetcher.Find(x => x.EyeRevealFeatherPixels));
@@ -115,8 +95,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 "Renderer Data 里先添加 HoCharacter Specialization RendererFeature；然后在全局或局部 Volume 里添加本组件并启用。Face、FrontHair、Eye、EyeRevealArea 需要由 HoMetadataBufferGroup/RSUV 或材质 fallback 标记提供。",
                 MessageType.Info);
 
-            DrawSettings();
-            DrawCapture();
             HoCharacterEyeRevealEditorSection.DrawVolume(
                 eyeRevealEnabled,
                 eyeRevealStrength,
@@ -163,47 +141,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 DrawDataParameter);
 
             serializedObject.ApplyModifiedProperties();
-        }
-
-        private void DrawSettings()
-        {
-            string summary = LilUrpEditorSectionGui.BoolSummary(enable);
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSettings, "体积设置", summary, SettingsColor))
-            {
-                return;
-            }
-
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                DrawParameter(enable, "启用");
-                DrawParameter(showInSceneView, "场景视图");
-            }
-        }
-
-        private void DrawCapture()
-        {
-            string summary = LilUrpEditorSectionGui.IntSummary(minRenderQueue) + "-" + LilUrpEditorSectionGui.IntSummary(maxRenderQueue);
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showCapture, "捕获范围", summary, CaptureColor))
-            {
-                return;
-            }
-
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                DrawParameter(layerMask, "图层遮罩");
-                DrawParameter(minRenderQueue, "最小渲染队列");
-                DrawParameter(maxRenderQueue, "最大渲染队列");
-                DrawParameter(passEvent, "渲染时机");
-                DrawParameter(renderScale, "渲染缩放");
-            }
-        }
-
-        private void DrawParameter(SerializedDataParameter parameter, string label)
-        {
-            if (parameter != null)
-            {
-                PropertyField(parameter, new GUIContent(label));
-            }
         }
 
         private void DrawDataParameter(SerializedDataParameter parameter, GUIContent label)
