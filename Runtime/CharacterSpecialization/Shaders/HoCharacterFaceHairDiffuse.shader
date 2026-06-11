@@ -43,10 +43,12 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/FaceHairDiffuse"
                 float face = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv).g;
                 float4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_LinearClamp, uv);
                 float4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
-                float mask = step(0.5, _HoMetadataBufferActive) * saturate(face * surfaceColor.a) * step(0.0001, normalDepth.a);
+                float surfaceCoverage = saturate(surfaceColor.a);
+                float semanticMask = step(0.5, _HoMetadataBufferActive) * saturate(face) * step(0.0001, surfaceCoverage) * step(0.0001, normalDepth.a);
+                float mask = semanticMask * surfaceCoverage;
 
                 FaceHairSourceOutput output;
-                output.color = half4(surfaceColor.rgb * mask, mask);
+                output.color = half4(surfaceColor.rgb * semanticMask, mask);
                 output.depth = half4(normalDepth.a * mask, 0.0, 0.0, mask);
                 return output;
             }

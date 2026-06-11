@@ -597,7 +597,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
                 float4 cameraColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
                 float4 sssSource = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_LinearClamp, uv);
                 float sourceWeight = saturate(sssSource.a);
-                float3 sourceColor = lerp(cameraColor.rgb, sssSource.rgb, sourceWeight);
+                float3 sourceColor = cameraColor.rgb * (1.0 - sourceWeight) + sssSource.rgb;
 
                 return float4(sourceColor * active, mask);
             }
