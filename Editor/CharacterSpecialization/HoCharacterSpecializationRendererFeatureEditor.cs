@@ -47,6 +47,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             HoCharacterEyeRevealEditorSection.DrawSettings(settingsProperty);
             HoCharacterDropShadowEditorSection.DrawSettings(settingsProperty);
             HoCharacterFaceHairDiffuseEditorSection.DrawSettings(settingsProperty);
+            HoCharacterSubjectOutlineEditorSection.DrawSettings(settingsProperty);
             DrawDebug();
             DrawRuntime();
 

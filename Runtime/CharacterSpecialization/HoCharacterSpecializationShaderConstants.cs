@@ -18,6 +18,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public const string FaceHairDiffuseTempDepthTextureName = "_lilHoCharacterFaceHairDiffuseTempDepthTexture";
         public const string FaceHairDiffuseColorTextureName = "_lilHoCharacterFaceHairDiffuseColorTexture";
         public const string FaceHairDiffuseDepthTextureName = "_lilHoCharacterFaceHairDiffuseDepthTexture";
+        public const string SubjectOutlineSourceTextureName = "_lilHoCharacterSubjectOutlineSourceTexture";
+        public const string SubjectOutlineTempTextureName = "_lilHoCharacterSubjectOutlineTempTexture";
+        public const string SubjectOutlineTextureName = "_lilHoCharacterSubjectOutlineTexture";
 
         public static readonly ShaderTagId CaptureShaderTagId = new ShaderTagId(CapturePassName);
         public static readonly int CaptureModeId = Shader.PropertyToID("_HoCharacterCaptureMode");
@@ -37,6 +40,13 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public static readonly int FaceHairDiffuseTintColorId = Shader.PropertyToID("_HoCharacterFaceHairDiffuseTintColor");
         public static readonly int FaceHairDiffuseOptionsId = Shader.PropertyToID("_HoCharacterFaceHairDiffuseOptions");
         public static readonly int FaceHairDiffuseBlurParamsId = Shader.PropertyToID("_HoCharacterFaceHairDiffuseBlurParams");
+        public static readonly int SubjectOutlineSourceTextureId = Shader.PropertyToID(SubjectOutlineSourceTextureName);
+        public static readonly int SubjectOutlineTextureId = Shader.PropertyToID(SubjectOutlineTextureName);
+        public static readonly int SubjectOutlineParamsId = Shader.PropertyToID("_HoCharacterSubjectOutlineParams");
+        public static readonly int SubjectOutlineLevelsId = Shader.PropertyToID("_HoCharacterSubjectOutlineLevels");
+        public static readonly int SubjectOutlineColorId = Shader.PropertyToID("_HoCharacterSubjectOutlineColor");
+        public static readonly int SubjectOutlineOptionsId = Shader.PropertyToID("_HoCharacterSubjectOutlineOptions");
+        public static readonly int SubjectOutlineBlurParamsId = Shader.PropertyToID("_HoCharacterSubjectOutlineBlurParams");
         public static readonly int OptionsId = Shader.PropertyToID("_HoCharacterOptions");
     }
 }

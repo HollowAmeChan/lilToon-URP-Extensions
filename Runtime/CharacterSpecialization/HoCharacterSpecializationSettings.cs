@@ -24,6 +24,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         Screen = 2
     }
 
+    public enum HoCharacterSubjectOutlineFillMode
+    {
+        [InspectorName("固定颜色")]
+        SolidColor = 0,
+        [InspectorName("法线彩色")]
+        NormalColor = 1
+    }
+
     public enum HoCharacterSpecializationDebugMode
     {
         [InspectorName("关闭")]
@@ -43,7 +51,15 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("脸色扩散模糊颜色")]
         FaceHairDiffuseBlurColor = 7,
         [InspectorName("脸色扩散最终遮罩")]
-        FaceHairDiffuseMask = 8
+        FaceHairDiffuseMask = 8,
+        [InspectorName("主体轮廓源遮罩")]
+        SubjectOutlineSourceMask = 9,
+        [InspectorName("主体轮廓模糊遮罩")]
+        SubjectOutlineBlurMask = 10,
+        [InspectorName("主体轮廓最终遮罩")]
+        SubjectOutlineMask = 11,
+        [InspectorName("主体轮廓方向")]
+        SubjectOutlineNormal = 12
     }
 
     [Serializable]
@@ -205,6 +221,47 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [Tooltip("脸色扩散与当前前发颜色的混合方式。")]
         public HoCharacterFaceHairDiffuseBlendMode faceHairDiffuseBlendMode = HoCharacterFaceHairDiffuseBlendMode.Additive;
 
+        [Header("主体轮廓")]
+        [InspectorName("启用主体轮廓")]
+        [Tooltip("读取 ObjectCustom0.r 的主体遮罩，生成高精度外扩轮廓。")]
+        public bool subjectOutlineEnabled = false;
+
+        [InspectorName("轮廓强度")]
+        [Tooltip("主体轮廓叠到画面上的总强度。")]
+        [Range(0.0f, 1.0f)]
+        public float subjectOutlineStrength = 1.0f;
+
+        [InspectorName("外扩半径像素")]
+        [Tooltip("主体轮廓向外扩张和圆润化的屏幕空间半径。")]
+        [Min(0.0f)]
+        public float subjectOutlineRadiusPixels = 6.0f;
+
+        [InspectorName("边缘黑场")]
+        [Tooltip("模糊遮罩低于该值时压到 0。")]
+        [Range(0.0f, 1.0f)]
+        public float subjectOutlineLevelBlack = 0.02f;
+
+        [InspectorName("边缘白场")]
+        [Tooltip("模糊遮罩高于该值时推到 1。")]
+        [Range(0.0f, 1.0f)]
+        public float subjectOutlineLevelWhite = 0.35f;
+
+        [InspectorName("轮廓颜色")]
+        [Tooltip("主体外扩轮廓颜色。Alpha 也会乘到最终强度。")]
+        public Color subjectOutlineColor = Color.white;
+
+        [InspectorName("填充模式")]
+        [Tooltip("固定颜色使用轮廓颜色；法线彩色会把卷积场的外扩方向映射为彩色轮廓。")]
+        public HoCharacterSubjectOutlineFillMode subjectOutlineFillMode = HoCharacterSubjectOutlineFillMode.SolidColor;
+
+        [InspectorName("法线旋转")]
+        [Tooltip("法线彩色模式下，对整圈外扩方向做统一旋转。")]
+        public float subjectOutlineNormalRotationDegrees = 0.0f;
+
+        [InspectorName("法线流动速度")]
+        [Tooltip("法线彩色模式下，方向随时间旋转的速度，单位为度/秒。")]
+        public float subjectOutlineNormalFlowDegreesPerSecond = 0.0f;
+
         [Header("未来模块")]
         [InspectorName("远平面阴影预留")]
         public bool farPlaneShadowReserved;
@@ -257,6 +314,15 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             faceHairDiffuseLevelWhite = source.faceHairDiffuseLevelWhite;
             faceHairDiffuseTintColor = source.faceHairDiffuseTintColor;
             faceHairDiffuseBlendMode = source.faceHairDiffuseBlendMode;
+            subjectOutlineEnabled = source.subjectOutlineEnabled;
+            subjectOutlineStrength = source.subjectOutlineStrength;
+            subjectOutlineRadiusPixels = source.subjectOutlineRadiusPixels;
+            subjectOutlineLevelBlack = source.subjectOutlineLevelBlack;
+            subjectOutlineLevelWhite = source.subjectOutlineLevelWhite;
+            subjectOutlineColor = source.subjectOutlineColor;
+            subjectOutlineFillMode = source.subjectOutlineFillMode;
+            subjectOutlineNormalRotationDegrees = source.subjectOutlineNormalRotationDegrees;
+            subjectOutlineNormalFlowDegreesPerSecond = source.subjectOutlineNormalFlowDegreesPerSecond;
             farPlaneShadowReserved = source.farPlaneShadowReserved;
             reflectionSpaceReserved = source.reflectionSpaceReserved;
             debugMode = source.debugMode;

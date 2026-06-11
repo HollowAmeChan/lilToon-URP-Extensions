@@ -34,6 +34,10 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             float4 _HoCharacterFaceHairDiffuseLevels; // x black, y white, z inverse range
             float4 _HoCharacterFaceHairDiffuseTintColor;
             float4 _HoCharacterFaceHairDiffuseOptions; // x final enabled, y textures ready
+            float4 _HoCharacterSubjectOutlineParams; // x strength, y radius px, z rotation rad, w flow rad/sec
+            float4 _HoCharacterSubjectOutlineLevels; // x black, y white, z inverse range
+            float4 _HoCharacterSubjectOutlineColor;
+            float4 _HoCharacterSubjectOutlineOptions; // x final enabled, y textures ready, z fill mode
             float4 _HoCharacterOptions; // x eye enabled, y shadow enabled, z same character only, w debug mode
 
             TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
@@ -45,6 +49,8 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseSourceColorTexture);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseColorTexture);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseDepthTexture);
+            TEXTURE2D_X(_lilHoCharacterSubjectOutlineSourceTexture);
+            TEXTURE2D_X(_lilHoCharacterSubjectOutlineTexture);
             float4 _HoMetadataBufferMaskIdTexture_TexelSize;
 
             float2 MetadataTexelSize()
@@ -61,6 +67,11 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             float SampleFrontHair(float2 uv)
             {
                 return SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv).b;
+            }
+
+            float SampleSubject(float2 uv)
+            {
+                return SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv).r;
             }
 
             float SampleFace(float2 uv)
@@ -289,6 +300,83 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 return (half3)(blurredColor.rgb / blurMask);
             }
 
+            float RemapSubjectOutlineMask(float value)
+            {
+                float blackPoint = saturate(_HoCharacterSubjectOutlineLevels.x);
+                float invRange = max(_HoCharacterSubjectOutlineLevels.z, 0.0001);
+                float mask = saturate((value - blackPoint) * invRange);
+                return mask * mask * (3.0 - 2.0 * mask);
+            }
+
+            float SampleSubjectOutlineSourceMask(float2 uv)
+            {
+                if (_HoCharacterSubjectOutlineOptions.y <= 0.5)
+                {
+                    return 0.0;
+                }
+
+                return SAMPLE_TEXTURE2D_X(_lilHoCharacterSubjectOutlineSourceTexture, sampler_PointClamp, uv).r;
+            }
+
+            float SampleSubjectOutlineBlurMask(float2 uv)
+            {
+                if (_HoCharacterSubjectOutlineOptions.y <= 0.5)
+                {
+                    return 0.0;
+                }
+
+                return SAMPLE_TEXTURE2D_X(_lilHoCharacterSubjectOutlineTexture, sampler_LinearClamp, uv).r;
+            }
+
+            float ResolveSubjectOutlineMask(float sourceMask, float blurMask)
+            {
+                return RemapSubjectOutlineMask(max(blurMask - sourceMask, 0.0));
+            }
+
+            float2 ResolveSubjectOutlineNormal(float blurMask)
+            {
+                float2 gradient = float2(ddx(blurMask), ddy(blurMask));
+                float gradientLength = length(gradient);
+                if (gradientLength <= 0.000001)
+                {
+                    return float2(0.0, 1.0);
+                }
+
+                // The blurred subject field falls off outward, so invert the gradient to get the outward direction.
+                return -gradient / gradientLength;
+            }
+
+            half3 HoCharacterSubjectOutlineHsvToRgb(float3 hsv)
+            {
+                float3 rgb = saturate(abs(frac(hsv.x + float3(0.0, 2.0 / 3.0, 1.0 / 3.0)) * 6.0 - 3.0) - 1.0);
+                rgb = rgb * rgb * (3.0 - 2.0 * rgb);
+                return (half3)(hsv.z * lerp(float3(1.0, 1.0, 1.0), rgb, hsv.y));
+            }
+
+            half3 ResolveSubjectOutlineHueColor(float2 normal)
+            {
+                float rotation = _HoCharacterSubjectOutlineParams.z + _Time.y * _HoCharacterSubjectOutlineParams.w;
+                float s;
+                float c;
+                sincos(rotation, s, c);
+                float2 rotated = float2(
+                    normal.x * c - normal.y * s,
+                    normal.x * s + normal.y * c);
+                float hue = frac(atan2(rotated.y, rotated.x) * 0.159154943 + 0.5);
+                return HoCharacterSubjectOutlineHsvToRgb(float3(hue, 1.0, 1.0));
+            }
+
+            half3 ResolveSubjectOutlineColor(float2 normal)
+            {
+                float fillMode = round(_HoCharacterSubjectOutlineOptions.z);
+                if (fillMode < 0.5)
+                {
+                    return (half3)_HoCharacterSubjectOutlineColor.rgb;
+                }
+
+                return ResolveSubjectOutlineHueColor(normal);
+            }
+
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -304,6 +392,10 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 float revealMask = ResolveEyeRevealMask(uv);
                 float shadowMask = ResolveHairShadowMask(uv, revealMask);
                 float faceHairDiffuseMask = ResolveFaceHairDiffuseMask(uv);
+                float subjectOutlineSourceMask = SampleSubjectOutlineSourceMask(uv);
+                float subjectOutlineBlurMask = SampleSubjectOutlineBlurMask(uv);
+                float subjectOutlineMask = ResolveSubjectOutlineMask(subjectOutlineSourceMask, subjectOutlineBlurMask);
+                float2 subjectOutlineNormal = ResolveSubjectOutlineNormal(subjectOutlineBlurMask);
                 int debugMode = (int)round(_HoCharacterOptions.w);
                 if (debugMode == 1)
                 {
@@ -363,6 +455,41 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                     return half4(faceHairDiffuseMask, faceHairDiffuseMask, faceHairDiffuseMask, source.a);
                 }
 
+                if (debugMode == 9)
+                {
+                    if (_HoCharacterSubjectOutlineOptions.y <= 0.5)
+                    {
+                        return half4(0.0, 0.0, 0.0, source.a);
+                    }
+
+                    return half4(subjectOutlineSourceMask, subjectOutlineSourceMask, subjectOutlineSourceMask, source.a);
+                }
+
+                if (debugMode == 10)
+                {
+                    if (_HoCharacterSubjectOutlineOptions.y <= 0.5)
+                    {
+                        return half4(0.0, 0.0, 0.0, source.a);
+                    }
+
+                    return half4(subjectOutlineBlurMask, subjectOutlineBlurMask, subjectOutlineBlurMask, source.a);
+                }
+
+                if (debugMode == 11)
+                {
+                    return half4(subjectOutlineMask, subjectOutlineMask, subjectOutlineMask, source.a);
+                }
+
+                if (debugMode == 12)
+                {
+                    if (_HoCharacterSubjectOutlineOptions.y <= 0.5)
+                    {
+                        return half4(0.0, 0.0, 0.0, source.a);
+                    }
+
+                    return half4(ResolveSubjectOutlineHueColor(subjectOutlineNormal), source.a);
+                }
+
                 half3 color = lerp(source.rgb, eyeColor.rgb, revealMask);
                 float shadowAmount = shadowMask * saturate(_HoCharacterHairShadowParams.x);
                 if (shadowAmount > 0.0001)
@@ -383,6 +510,13 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 {
                     half3 faceHairDiffuseColor = ResolveFaceHairDiffuseColor(uv) * (half3)_HoCharacterFaceHairDiffuseTintColor.rgb;
                     color = BlendFaceHairDiffuse(color, faceHairDiffuseColor, faceHairDiffuseAmount);
+                }
+
+                float subjectOutlineAmount = subjectOutlineMask * saturate(_HoCharacterSubjectOutlineParams.x) * saturate(_HoCharacterSubjectOutlineColor.a) * saturate(_HoCharacterSubjectOutlineOptions.x);
+                if (subjectOutlineAmount > 0.0001)
+                {
+                    half3 outlineColor = ResolveSubjectOutlineColor(subjectOutlineNormal);
+                    color = lerp(color, outlineColor, subjectOutlineAmount);
                 }
 
                 return half4(color, source.a);
@@ -489,6 +623,82 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 output.color = half4(colorSum / max(weightSum, 0.0001));
                 output.depth = half4(depthSum / max(weightSum, 0.0001));
                 return output;
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "HoCharacter SubjectOutline Source"
+
+            HLSLPROGRAM
+            #pragma target 4.5
+            #pragma vertex Vert
+            #pragma fragment Frag
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+
+            float _HoMetadataBufferActive;
+            TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
+
+            half4 Frag(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
+                float subject = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, input.texcoord).r;
+                float mask = step(0.5, _HoMetadataBufferActive) * saturate(subject);
+                return half4(mask, 0.0, 0.0, 1.0);
+            }
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "HoCharacter SubjectOutline Blur"
+
+            HLSLPROGRAM
+            #pragma target 4.5
+            #pragma vertex Vert
+            #pragma fragment Frag
+
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+
+            float4 _HoCharacterSubjectOutlineBlurParams; // x radius px in source texture, y phase
+            static const float LIL_HOCHARACTER_GOLDEN_ANGLE = 2.39996323;
+            static const int LIL_HOCHARACTER_SUBJECT_OUTLINE_SAMPLES = 64;
+
+            half4 Frag(Varyings input) : SV_Target
+            {
+                UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+
+                float2 uv = input.texcoord;
+                float radiusPx = max(_HoCharacterSubjectOutlineBlurParams.x, 0.0);
+                float phase = _HoCharacterSubjectOutlineBlurParams.y;
+                float2 radiusUv = _BlitTexture_TexelSize.xy * radiusPx;
+
+                float center = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv).r;
+                float maskSum = center * 1.8;
+                float weightSum = 1.8;
+
+                [unroll]
+                for (int i = 0; i < LIL_HOCHARACTER_SUBJECT_OUTLINE_SAMPLES; i++)
+                {
+                    float sample01 = ((float)i + 0.5) / (float)LIL_HOCHARACTER_SUBJECT_OUTLINE_SAMPLES;
+                    float radius01 = sqrt(sample01);
+                    float angle = (float)i * LIL_HOCHARACTER_GOLDEN_ANGLE + phase;
+                    float s;
+                    float c;
+                    sincos(angle, s, c);
+                    float weight = exp2(-radius01 * radius01 * 4.6);
+                    float2 sampleUv = uv + float2(c, s) * radiusUv * radius01;
+                    maskSum += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUv).r * weight;
+                    weightSum += weight;
+                }
+
+                float mask = maskSum / max(weightSum, 0.0001);
+                return half4(mask, 0.0, 0.0, 1.0);
             }
             ENDHLSL
         }

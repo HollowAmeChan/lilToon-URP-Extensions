@@ -49,6 +49,15 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private SerializedDataParameter faceHairDiffuseLevelWhite;
         private SerializedDataParameter faceHairDiffuseTintColor;
         private SerializedDataParameter faceHairDiffuseBlendMode;
+        private SerializedDataParameter subjectOutlineEnabled;
+        private SerializedDataParameter subjectOutlineStrength;
+        private SerializedDataParameter subjectOutlineRadiusPixels;
+        private SerializedDataParameter subjectOutlineLevelBlack;
+        private SerializedDataParameter subjectOutlineLevelWhite;
+        private SerializedDataParameter subjectOutlineColor;
+        private SerializedDataParameter subjectOutlineFillMode;
+        private SerializedDataParameter subjectOutlineNormalRotationDegrees;
+        private SerializedDataParameter subjectOutlineNormalFlowDegreesPerSecond;
 
         public override void OnEnable()
         {
@@ -87,6 +96,15 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             faceHairDiffuseLevelWhite = Unpack(fetcher.Find(x => x.FaceHairDiffuseLevelWhite));
             faceHairDiffuseTintColor = Unpack(fetcher.Find(x => x.FaceHairDiffuseTintColor));
             faceHairDiffuseBlendMode = Unpack(fetcher.Find(x => x.FaceHairDiffuseBlendMode));
+            subjectOutlineEnabled = Unpack(fetcher.Find(x => x.SubjectOutlineEnabled));
+            subjectOutlineStrength = Unpack(fetcher.Find(x => x.SubjectOutlineStrength));
+            subjectOutlineRadiusPixels = Unpack(fetcher.Find(x => x.SubjectOutlineRadiusPixels));
+            subjectOutlineLevelBlack = Unpack(fetcher.Find(x => x.SubjectOutlineLevelBlack));
+            subjectOutlineLevelWhite = Unpack(fetcher.Find(x => x.SubjectOutlineLevelWhite));
+            subjectOutlineColor = Unpack(fetcher.Find(x => x.SubjectOutlineColor));
+            subjectOutlineFillMode = Unpack(fetcher.Find(x => x.SubjectOutlineFillMode));
+            subjectOutlineNormalRotationDegrees = Unpack(fetcher.Find(x => x.SubjectOutlineNormalRotationDegrees));
+            subjectOutlineNormalFlowDegreesPerSecond = Unpack(fetcher.Find(x => x.SubjectOutlineNormalFlowDegreesPerSecond));
         }
 
         public override void OnInspectorGUI()
@@ -131,6 +149,17 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 faceHairDiffuseLevelWhite,
                 faceHairDiffuseTintColor,
                 faceHairDiffuseBlendMode,
+                DrawDataParameter);
+            HoCharacterSubjectOutlineEditorSection.DrawVolume(
+                subjectOutlineEnabled,
+                subjectOutlineStrength,
+                subjectOutlineRadiusPixels,
+                subjectOutlineLevelBlack,
+                subjectOutlineLevelWhite,
+                subjectOutlineColor,
+                subjectOutlineFillMode,
+                subjectOutlineNormalRotationDegrees,
+                subjectOutlineNormalFlowDegreesPerSecond,
                 DrawDataParameter);
 
             serializedObject.ApplyModifiedProperties();

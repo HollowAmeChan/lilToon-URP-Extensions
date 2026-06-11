@@ -76,6 +76,20 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         }
     }
 
+    [Serializable]
+    public sealed class HoCharacterSubjectOutlineFillModeParameter : VolumeParameter<HoCharacterSubjectOutlineFillMode>
+    {
+        public HoCharacterSubjectOutlineFillModeParameter(HoCharacterSubjectOutlineFillMode value, bool overrideState = false)
+            : base(value, overrideState)
+        {
+        }
+
+        public override void Interp(HoCharacterSubjectOutlineFillMode from, HoCharacterSubjectOutlineFillMode to, float t)
+        {
+            value = t > 0.0f ? to : from;
+        }
+    }
+
 #if UNITY_2023_1_OR_NEWER
     [VolumeComponentMenu("Post-processing/Ho-CharacterSpecialization/角色特化"), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
 #else
@@ -111,6 +125,15 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             FaceHairDiffuseLevelWhite.overrideState = true;
             FaceHairDiffuseTintColor.overrideState = true;
             FaceHairDiffuseBlendMode.overrideState = true;
+            SubjectOutlineEnabled.overrideState = true;
+            SubjectOutlineStrength.overrideState = true;
+            SubjectOutlineRadiusPixels.overrideState = true;
+            SubjectOutlineLevelBlack.overrideState = true;
+            SubjectOutlineLevelWhite.overrideState = true;
+            SubjectOutlineColor.overrideState = true;
+            SubjectOutlineFillMode.overrideState = true;
+            SubjectOutlineNormalRotationDegrees.overrideState = true;
+            SubjectOutlineNormalFlowDegreesPerSecond.overrideState = true;
         }
 
         [InspectorName("启用"), Tooltip("启用角色特化眼睛透过和前发投影。")]
@@ -215,6 +238,33 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("混合模式"), Tooltip("脸色扩散与当前前发颜色的混合方式。")]
         public HoCharacterFaceHairDiffuseBlendModeParameter FaceHairDiffuseBlendMode = new HoCharacterFaceHairDiffuseBlendModeParameter(HoCharacterFaceHairDiffuseBlendMode.Additive);
 
+        [InspectorName("启用主体轮廓"), Tooltip("读取 ObjectCustom0.r 的主体遮罩，生成高精度外扩轮廓。")]
+        public BoolParameter SubjectOutlineEnabled = new BoolParameter(false);
+
+        [InspectorName("轮廓强度"), Tooltip("主体轮廓叠到画面上的总强度。")]
+        public ClampedFloatParameter SubjectOutlineStrength = new ClampedFloatParameter(1.0f, 0.0f, 1.0f);
+
+        [InspectorName("外扩半径像素"), Tooltip("主体轮廓向外扩张和圆润化的屏幕空间半径。")]
+        public FloatParameter SubjectOutlineRadiusPixels = new FloatParameter(6.0f);
+
+        [InspectorName("边缘黑场"), Tooltip("模糊遮罩低于该值时压到 0。")]
+        public ClampedFloatParameter SubjectOutlineLevelBlack = new ClampedFloatParameter(0.02f, 0.0f, 1.0f);
+
+        [InspectorName("边缘白场"), Tooltip("模糊遮罩高于该值时推到 1。")]
+        public ClampedFloatParameter SubjectOutlineLevelWhite = new ClampedFloatParameter(0.35f, 0.0f, 1.0f);
+
+        [InspectorName("轮廓颜色"), Tooltip("主体外扩轮廓颜色。Alpha 也会乘到最终强度。")]
+        public ColorParameter SubjectOutlineColor = new ColorParameter(Color.white);
+
+        [InspectorName("填充模式"), Tooltip("固定颜色使用轮廓颜色；法线彩色会把卷积场外扩方向映射为彩色轮廓。")]
+        public HoCharacterSubjectOutlineFillModeParameter SubjectOutlineFillMode = new HoCharacterSubjectOutlineFillModeParameter(HoCharacterSubjectOutlineFillMode.SolidColor);
+
+        [InspectorName("法线旋转"), Tooltip("法线彩色模式下，对整圈外扩方向做统一旋转。")]
+        public FloatParameter SubjectOutlineNormalRotationDegrees = new FloatParameter(0.0f);
+
+        [InspectorName("法线流动速度"), Tooltip("法线彩色模式下，方向随时间旋转的速度，单位为度/秒。")]
+        public FloatParameter SubjectOutlineNormalFlowDegreesPerSecond = new FloatParameter(0.0f);
+
         public bool IsActive()
         {
             return active && (!Enable.overrideState || Enable.value);
@@ -280,6 +330,15 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             ApplyIfOverridden(FaceHairDiffuseLevelWhite, ref target.faceHairDiffuseLevelWhite);
             ApplyIfOverridden(FaceHairDiffuseTintColor, ref target.faceHairDiffuseTintColor);
             ApplyIfOverridden(FaceHairDiffuseBlendMode, ref target.faceHairDiffuseBlendMode);
+            ApplyIfOverridden(SubjectOutlineEnabled, ref target.subjectOutlineEnabled);
+            ApplyIfOverridden(SubjectOutlineStrength, ref target.subjectOutlineStrength);
+            ApplyIfOverridden(SubjectOutlineRadiusPixels, ref target.subjectOutlineRadiusPixels);
+            ApplyIfOverridden(SubjectOutlineLevelBlack, ref target.subjectOutlineLevelBlack);
+            ApplyIfOverridden(SubjectOutlineLevelWhite, ref target.subjectOutlineLevelWhite);
+            ApplyIfOverridden(SubjectOutlineColor, ref target.subjectOutlineColor);
+            ApplyIfOverridden(SubjectOutlineFillMode, ref target.subjectOutlineFillMode);
+            ApplyIfOverridden(SubjectOutlineNormalRotationDegrees, ref target.subjectOutlineNormalRotationDegrees);
+            ApplyIfOverridden(SubjectOutlineNormalFlowDegreesPerSecond, ref target.subjectOutlineNormalFlowDegreesPerSecond);
         }
 
         private static void ApplyIfOverridden<T>(VolumeParameter<T> parameter, ref T target)

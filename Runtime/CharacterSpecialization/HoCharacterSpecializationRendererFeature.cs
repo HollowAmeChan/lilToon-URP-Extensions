@@ -105,7 +105,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 return false;
             }
 
-            if (!activeSettings.eyeRevealEnabled && !activeSettings.hairDropShadowEnabled && !activeSettings.faceHairDiffuseEnabled && activeSettings.debugMode == HoCharacterSpecializationDebugMode.Off)
+            if (!activeSettings.eyeRevealEnabled
+                && !activeSettings.hairDropShadowEnabled
+                && !activeSettings.faceHairDiffuseEnabled
+                && !activeSettings.subjectOutlineEnabled
+                && activeSettings.debugMode == HoCharacterSpecializationDebugMode.Off)
             {
                 return false;
             }
@@ -126,9 +130,13 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 return "Feature 已关闭。";
             }
 
-            if (!activeSettings.eyeRevealEnabled && !activeSettings.hairDropShadowEnabled && !activeSettings.faceHairDiffuseEnabled && activeSettings.debugMode == HoCharacterSpecializationDebugMode.Off)
+            if (!activeSettings.eyeRevealEnabled
+                && !activeSettings.hairDropShadowEnabled
+                && !activeSettings.faceHairDiffuseEnabled
+                && !activeSettings.subjectOutlineEnabled
+                && activeSettings.debugMode == HoCharacterSpecializationDebugMode.Off)
             {
-                return "眼睛透过、前发投影、脸色扩散和 debug 均未启用。";
+                return "眼睛透过、前发投影、脸色扩散、主体轮廓和 debug 均未启用。";
             }
 
             CameraType cameraType = renderingData.cameraData.cameraType;
@@ -215,6 +223,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-CharacterSpecialization");
         private const int FaceHairDiffuseBlurIterationCount = 2;
+        private const int SubjectOutlineBlurIterationCount = 2;
         private static readonly List<ShaderTagId> CaptureShaderTagIds = new List<ShaderTagId>
         {
             HoCharacterSpecializationShaderConstants.CaptureShaderTagId
@@ -252,6 +261,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public TextureHandle faceHairDiffuseSourceColorTexture;
             public TextureHandle faceHairDiffuseColorTexture;
             public TextureHandle faceHairDiffuseDepthTexture;
+            public TextureHandle subjectOutlineSourceTexture;
+            public TextureHandle subjectOutlineTexture;
             public TextureHandle eyeColorTexture;
             public TextureHandle eyeDataTexture;
             public Material material;
@@ -264,8 +275,13 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public Vector4 faceHairDiffuseLevels;
             public Color faceHairDiffuseTintColor;
             public Vector4 faceHairDiffuseOptions;
+            public Vector4 subjectOutlineParams;
+            public Vector4 subjectOutlineLevels;
+            public Color subjectOutlineColor;
+            public Vector4 subjectOutlineOptions;
             public Vector4 options;
             public bool faceHairDiffuseReady;
+            public bool subjectOutlineReady;
         }
 
         private sealed class FaceHairDiffuseSourcePassData
@@ -283,6 +299,21 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public TextureHandle sourceDepth;
             public TextureHandle destinationColor;
             public TextureHandle destinationDepth;
+            public Material material;
+            public Vector4 blurParams;
+        }
+
+        private sealed class SubjectOutlineSourcePassData
+        {
+            public TextureHandle source;
+            public TextureHandle metadataObjectCustom0Texture;
+            public Material material;
+        }
+
+        private sealed class SubjectOutlineBlurPassData
+        {
+            public TextureHandle source;
+            public TextureHandle destination;
             public Material material;
             public Vector4 blurParams;
         }
@@ -415,6 +446,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             bool hasMetadataObjectCustom1 = metadataResources.objectCustom1Texture.IsValid();
             bool hasMetadataSurfaceColor = metadataResources.surfaceColorTexture.IsValid();
             bool requiresFaceHairDiffuseTextures = RequiresFaceHairDiffuseTextures(settings);
+            bool requiresSubjectOutlineTextures = RequiresSubjectOutlineTextures(settings);
             HoCharacterSpecializationRuntimeDiagnostics.PublishRenderGraphInputs(
                 cameraData.camera,
                 "Composite",
@@ -601,6 +633,66 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 }
             }
 
+            TextureHandle subjectOutlineSourceTexture = TextureHandle.nullHandle;
+            TextureHandle subjectOutlineTempTexture = TextureHandle.nullHandle;
+            TextureHandle subjectOutlineTexture = TextureHandle.nullHandle;
+            bool subjectOutlineReady = requiresSubjectOutlineTextures;
+            if (subjectOutlineReady)
+            {
+                TextureDesc subjectOutlineDesc = CreateSubjectOutlineTextureDesc(
+                    cameraData.cameraTargetDescriptor,
+                    settings,
+                    GetDataGraphicsFormat(),
+                    HoCharacterSpecializationShaderConstants.SubjectOutlineSourceTextureName);
+                subjectOutlineSourceTexture = renderGraph.CreateTexture(subjectOutlineDesc);
+                subjectOutlineDesc.name = HoCharacterSpecializationShaderConstants.SubjectOutlineTempTextureName;
+                subjectOutlineTempTexture = renderGraph.CreateTexture(subjectOutlineDesc);
+                subjectOutlineDesc.name = HoCharacterSpecializationShaderConstants.SubjectOutlineTextureName;
+                subjectOutlineTexture = renderGraph.CreateTexture(subjectOutlineDesc);
+
+                using (var builder = renderGraph.AddRasterRenderPass<SubjectOutlineSourcePassData>("Ho-CharacterSpecialization SubjectOutline Source", out SubjectOutlineSourcePassData passData, ProfilingSampler))
+                {
+                    passData.source = source;
+                    passData.metadataObjectCustom0Texture = metadataResources.objectCustom0Texture;
+                    passData.material = compositeMaterial;
+
+                    builder.UseTexture(source, AccessFlags.Read);
+                    builder.UseTexture(passData.metadataObjectCustom0Texture, AccessFlags.Read);
+                    builder.SetRenderAttachment(subjectOutlineSourceTexture, 0, AccessFlags.WriteAll);
+                    builder.AllowGlobalStateModification(true);
+                    builder.AllowPassCulling(false);
+                    builder.SetRenderFunc(static (SubjectOutlineSourcePassData data, RasterGraphContext context) =>
+                    {
+                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.metadataObjectCustom0Texture);
+                        context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
+                        Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 3);
+                    });
+                }
+
+                TextureHandle blurSource = subjectOutlineSourceTexture;
+                float iterationRadiusScale = 1.0f / Mathf.Sqrt(SubjectOutlineBlurIterationCount);
+                for (int i = 0; i < SubjectOutlineBlurIterationCount; i++)
+                {
+                    bool writeFinal = i == SubjectOutlineBlurIterationCount - 1;
+                    TextureHandle blurDestination = writeFinal ? subjectOutlineTexture : subjectOutlineTempTexture;
+                    Vector4 blurParams = CreateSubjectOutlineBlurParams(
+                        settings,
+                        cameraData.cameraTargetDescriptor,
+                        blurSource.GetDescriptor(renderGraph),
+                        iterationRadiusScale,
+                        i);
+                    AddSubjectOutlineBlurPass(
+                        renderGraph,
+                        $"Ho-CharacterSpecialization SubjectOutline FastGaussian {i + 1}",
+                        compositeMaterial,
+                        blurSource,
+                        blurDestination,
+                        blurParams);
+
+                    blurSource = blurDestination;
+                }
+            }
+
             TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
             destinationDesc.name = "_lilHoCharacterCompositeColor";
             destinationDesc.clearBuffer = false;
@@ -618,13 +710,17 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 passData.faceHairDiffuseSourceColorTexture = faceHairDiffuseSourceColorTexture;
                 passData.faceHairDiffuseColorTexture = faceHairDiffuseColorTexture;
                 passData.faceHairDiffuseDepthTexture = faceHairDiffuseDepthTexture;
+                passData.subjectOutlineSourceTexture = subjectOutlineSourceTexture;
+                passData.subjectOutlineTexture = subjectOutlineTexture;
                 passData.eyeColorTexture = eyeColorTexture;
                 passData.eyeDataTexture = eyeDataTexture;
                 passData.material = compositeMaterial;
                 passData.faceHairDiffuseReady = faceHairDiffuseReady;
+                passData.subjectOutlineReady = subjectOutlineReady;
                 FillMaterialVectors(
                     settings,
                     faceHairDiffuseReady,
+                    subjectOutlineReady,
                     out passData.eyeRevealParams,
                     out passData.hairShadowParams,
                     out passData.hairShadowParams1,
@@ -634,6 +730,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     out passData.faceHairDiffuseLevels,
                     out passData.faceHairDiffuseTintColor,
                     out passData.faceHairDiffuseOptions,
+                    out passData.subjectOutlineParams,
+                    out passData.subjectOutlineLevels,
+                    out passData.subjectOutlineColor,
+                    out passData.subjectOutlineOptions,
                     out passData.options);
 
                 builder.UseTexture(source, AccessFlags.Read);
@@ -648,6 +748,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     builder.UseTexture(faceHairDiffuseSourceColorTexture, AccessFlags.Read);
                     builder.UseTexture(faceHairDiffuseColorTexture, AccessFlags.Read);
                     builder.UseTexture(faceHairDiffuseDepthTexture, AccessFlags.Read);
+                }
+                if (subjectOutlineReady)
+                {
+                    builder.UseTexture(subjectOutlineSourceTexture, AccessFlags.Read);
+                    builder.UseTexture(subjectOutlineTexture, AccessFlags.Read);
                 }
 
                 builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
@@ -666,6 +771,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                         data.faceHairDiffuseLevels,
                         data.faceHairDiffuseTintColor,
                         data.faceHairDiffuseOptions,
+                        data.subjectOutlineParams,
+                        data.subjectOutlineLevels,
+                        data.subjectOutlineColor,
+                        data.subjectOutlineOptions,
                         data.options);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.metadataMaskIdTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.geometryNormalDepthTexture);
@@ -676,6 +785,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                         context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.FaceHairDiffuseSourceColorTextureId, data.faceHairDiffuseSourceColorTexture);
                         context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.FaceHairDiffuseColorTextureId, data.faceHairDiffuseColorTexture);
                         context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.FaceHairDiffuseDepthTextureId, data.faceHairDiffuseDepthTexture);
+                    }
+                    if (data.subjectOutlineReady)
+                    {
+                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.SubjectOutlineSourceTextureId, data.subjectOutlineSourceTexture);
+                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.SubjectOutlineTextureId, data.subjectOutlineTexture);
                     }
 
                     context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, data.eyeColorTexture);
@@ -738,6 +852,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             FillMaterialVectors(
                 settings,
                 false,
+                false,
                 out Vector4 eyeRevealParams,
                 out Vector4 hairShadowParams,
                 out Vector4 hairShadowParams1,
@@ -747,6 +862,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 out Vector4 faceHairDiffuseLevels,
                 out Color faceHairDiffuseTintColor,
                 out Vector4 faceHairDiffuseOptions,
+                out Vector4 subjectOutlineParams,
+                out Vector4 subjectOutlineLevels,
+                out Color subjectOutlineColor,
+                out Vector4 subjectOutlineOptions,
                 out Vector4 options);
             ApplyMaterialProperties(
                 material,
@@ -759,6 +878,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 faceHairDiffuseLevels,
                 faceHairDiffuseTintColor,
                 faceHairDiffuseOptions,
+                subjectOutlineParams,
+                subjectOutlineLevels,
+                subjectOutlineColor,
+                subjectOutlineOptions,
                 options);
         }
 
@@ -773,6 +896,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             Vector4 faceHairDiffuseLevels,
             Color faceHairDiffuseTintColor,
             Vector4 faceHairDiffuseOptions,
+            Vector4 subjectOutlineParams,
+            Vector4 subjectOutlineLevels,
+            Color subjectOutlineColor,
+            Vector4 subjectOutlineOptions,
             Vector4 options)
         {
             material.SetVector(HoCharacterSpecializationShaderConstants.EyeRevealParamsId, eyeRevealParams);
@@ -784,12 +911,17 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             material.SetVector(HoCharacterSpecializationShaderConstants.FaceHairDiffuseLevelsId, faceHairDiffuseLevels);
             material.SetColor(HoCharacterSpecializationShaderConstants.FaceHairDiffuseTintColorId, faceHairDiffuseTintColor);
             material.SetVector(HoCharacterSpecializationShaderConstants.FaceHairDiffuseOptionsId, faceHairDiffuseOptions);
+            material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineParamsId, subjectOutlineParams);
+            material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineLevelsId, subjectOutlineLevels);
+            material.SetColor(HoCharacterSpecializationShaderConstants.SubjectOutlineColorId, subjectOutlineColor);
+            material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineOptionsId, subjectOutlineOptions);
             material.SetVector(HoCharacterSpecializationShaderConstants.OptionsId, options);
         }
 
         private static void FillMaterialVectors(
             HoCharacterSpecializationSettings settings,
             bool faceHairDiffuseTexturesReady,
+            bool subjectOutlineTexturesReady,
             out Vector4 eyeRevealParams,
             out Vector4 hairShadowParams,
             out Vector4 hairShadowParams1,
@@ -799,6 +931,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             out Vector4 faceHairDiffuseLevels,
             out Color faceHairDiffuseTintColor,
             out Vector4 faceHairDiffuseOptions,
+            out Vector4 subjectOutlineParams,
+            out Vector4 subjectOutlineLevels,
+            out Color subjectOutlineColor,
+            out Vector4 subjectOutlineOptions,
             out Vector4 options)
         {
             if (settings == null)
@@ -812,6 +948,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 faceHairDiffuseLevels = Vector4.zero;
                 faceHairDiffuseTintColor = Color.white;
                 faceHairDiffuseOptions = Vector4.zero;
+                subjectOutlineParams = Vector4.zero;
+                subjectOutlineLevels = Vector4.zero;
+                subjectOutlineColor = Color.white;
+                subjectOutlineOptions = Vector4.zero;
                 options = Vector4.zero;
                 return;
             }
@@ -860,6 +1000,30 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 faceHairDiffuseTexturesReady ? 1.0f : 0.0f,
                 0.0f,
                 0.0f);
+
+            float outlineLevelBlack = Mathf.Clamp01(settings.subjectOutlineLevelBlack);
+            float outlineLevelWhite = Mathf.Clamp01(settings.subjectOutlineLevelWhite);
+            if (outlineLevelWhite < outlineLevelBlack + 0.0001f)
+            {
+                outlineLevelWhite = outlineLevelBlack + 0.0001f;
+            }
+
+            subjectOutlineParams = new Vector4(
+                Mathf.Clamp01(settings.subjectOutlineStrength),
+                Mathf.Max(0.0f, settings.subjectOutlineRadiusPixels),
+                settings.subjectOutlineNormalRotationDegrees * Mathf.Deg2Rad,
+                settings.subjectOutlineNormalFlowDegreesPerSecond * Mathf.Deg2Rad);
+            subjectOutlineLevels = new Vector4(
+                outlineLevelBlack,
+                outlineLevelWhite,
+                1.0f / Mathf.Max(0.0001f, outlineLevelWhite - outlineLevelBlack),
+                0.0f);
+            subjectOutlineColor = settings.subjectOutlineColor;
+            subjectOutlineOptions = new Vector4(
+                settings.subjectOutlineEnabled && subjectOutlineTexturesReady ? 1.0f : 0.0f,
+                subjectOutlineTexturesReady ? 1.0f : 0.0f,
+                (float)settings.subjectOutlineFillMode,
+                0.0f);
             options = new Vector4(
                 settings.eyeRevealEnabled ? 1.0f : 0.0f,
                 settings.hairDropShadowEnabled ? 1.0f : 0.0f,
@@ -885,6 +1049,30 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 case HoCharacterSpecializationDebugMode.FaceHairDiffuseBlurMask:
                 case HoCharacterSpecializationDebugMode.FaceHairDiffuseBlurColor:
                 case HoCharacterSpecializationDebugMode.FaceHairDiffuseMask:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        private static bool RequiresSubjectOutlineTextures(HoCharacterSpecializationSettings settings)
+        {
+            if (settings == null)
+            {
+                return false;
+            }
+
+            if (settings.subjectOutlineEnabled)
+            {
+                return true;
+            }
+
+            switch (settings.debugMode)
+            {
+                case HoCharacterSpecializationDebugMode.SubjectOutlineSourceMask:
+                case HoCharacterSpecializationDebugMode.SubjectOutlineBlurMask:
+                case HoCharacterSpecializationDebugMode.SubjectOutlineMask:
+                case HoCharacterSpecializationDebugMode.SubjectOutlineNormal:
                     return true;
                 default:
                     return false;
@@ -951,6 +1139,63 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             TextureDesc descriptor = CreateTextureDesc(cameraTextureDescriptor, settings, format, name);
             descriptor.msaaSamples = MSAASamples.None;
             descriptor.bindTextureMS = false;
+            return descriptor;
+        }
+
+        private static Vector4 CreateSubjectOutlineBlurParams(
+            HoCharacterSpecializationSettings settings,
+            RenderTextureDescriptor cameraTextureDescriptor,
+            TextureDesc blurTextureDesc,
+            float radiusScale,
+            int iterationIndex)
+        {
+            float scale = blurTextureDesc.width > 0
+                ? blurTextureDesc.width / (float)Mathf.Max(1, cameraTextureDescriptor.width)
+                : 1.0f;
+            return new Vector4(
+                Mathf.Max(0.0f, settings.subjectOutlineRadiusPixels) * Mathf.Max(scale, 0.0001f) * Mathf.Max(radiusScale, 0.0001f),
+                iterationIndex * 1.61803399f,
+                SubjectOutlineBlurIterationCount,
+                0.0f);
+        }
+
+        private static void AddSubjectOutlineBlurPass(
+            RenderGraph renderGraph,
+            string passName,
+            Material material,
+            TextureHandle source,
+            TextureHandle destination,
+            Vector4 blurParams)
+        {
+            using (var builder = renderGraph.AddRasterRenderPass<SubjectOutlineBlurPassData>(passName, out SubjectOutlineBlurPassData passData, ProfilingSampler))
+            {
+                passData.source = source;
+                passData.destination = destination;
+                passData.material = material;
+                passData.blurParams = blurParams;
+
+                builder.UseTexture(passData.source, AccessFlags.Read);
+                builder.SetRenderAttachment(passData.destination, 0, AccessFlags.WriteAll);
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (SubjectOutlineBlurPassData data, RasterGraphContext context) =>
+                {
+                    data.material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineBlurParamsId, data.blurParams);
+                    Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 4);
+                });
+            }
+        }
+
+        private static TextureDesc CreateSubjectOutlineTextureDesc(
+            RenderTextureDescriptor cameraTextureDescriptor,
+            HoCharacterSpecializationSettings settings,
+            GraphicsFormat format,
+            string name)
+        {
+            TextureDesc descriptor = CreateTextureDesc(cameraTextureDescriptor, settings, format, name);
+            descriptor.msaaSamples = MSAASamples.None;
+            descriptor.bindTextureMS = false;
+            descriptor.filterMode = FilterMode.Bilinear;
             return descriptor;
         }
 
