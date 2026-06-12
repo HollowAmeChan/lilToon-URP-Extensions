@@ -167,6 +167,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             block.SetFloat(HoMetadataBufferShaderConstants.CurvatureId, curvature);
             block.SetFloat(HoMetadataBufferShaderConstants.TransmittanceHintId, transmittanceHint);
             block.SetColor(HoMetadataBufferShaderConstants.DebugColorId, debugColor);
+            block.SetFloat(HoMetadataBufferShaderConstants.RsuvAssignedId, 1.0f);
             if (overrideMaterialCustomChannels)
             {
                 block.SetFloat(HoMetadataBufferShaderConstants.CustomWriteMaskId, customWriteMask);
@@ -188,6 +189,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             block.SetColor(HoMetadataBufferShaderConstants.DebugColorId, Color.white);
             block.SetFloat(HoMetadataBufferShaderConstants.CustomWriteMaskId, 0.0f);
             block.SetVector(HoMetadataBufferShaderConstants.CustomValues0Id, Vector4.zero);
+            block.SetFloat(HoMetadataBufferShaderConstants.RsuvAssignedId, 0.0f);
         }
 
         private void MigrateSerializedDefaults()
