@@ -16,6 +16,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public readonly bool MetadataSurfaceColorAvailable;
         public readonly bool MetadataSurfaceColorRequired;
         public readonly bool GeometryNormalDepthAvailable;
+        public readonly bool GeometryDepthAvailable;
+        public readonly bool GeometryDepthRequired;
         public readonly bool MetadataBufferAvailable;
         public readonly bool GeometryBufferAvailable;
         public readonly bool Ready;
@@ -34,6 +36,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             bool metadataSurfaceColorAvailable,
             bool metadataSurfaceColorRequired,
             bool geometryNormalDepthAvailable,
+            bool geometryDepthAvailable,
+            bool geometryDepthRequired,
             bool ready,
             string reason)
         {
@@ -49,8 +53,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             MetadataSurfaceColorAvailable = metadataSurfaceColorAvailable;
             MetadataSurfaceColorRequired = metadataSurfaceColorRequired;
             GeometryNormalDepthAvailable = geometryNormalDepthAvailable;
+            GeometryDepthAvailable = geometryDepthAvailable;
+            GeometryDepthRequired = geometryDepthRequired;
             MetadataBufferAvailable = metadataMaskIdAvailable && metadataObjectCustom0Available && metadataObjectCustom1Available;
-            GeometryBufferAvailable = geometryNormalDepthAvailable;
+            GeometryBufferAvailable = geometryNormalDepthAvailable && (!geometryDepthRequired || geometryDepthAvailable);
             Ready = ready;
             Reason = reason ?? string.Empty;
         }
@@ -64,6 +70,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 0,
                 string.Empty,
                 string.Empty,
+                false,
+                false,
                 false,
                 false,
                 false,
@@ -95,6 +103,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 false,
                 false,
                 false,
+                false,
+                false,
                 reason);
         }
 
@@ -108,6 +118,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             bool metadataObjectCustom1Available,
             bool metadataSurfaceColorAvailable,
             bool geometryNormalDepthAvailable,
+            bool geometryDepthAvailable,
+            bool geometryDepthRequired,
             bool metadataSurfaceColorRequired)
         {
             bool ready = !backBufferActive
@@ -116,7 +128,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 && metadataObjectCustom0Available
                 && metadataObjectCustom1Available
                 && (!metadataSurfaceColorRequired || metadataSurfaceColorAvailable)
-                && geometryNormalDepthAvailable;
+                && geometryNormalDepthAvailable
+                && (!geometryDepthRequired || geometryDepthAvailable);
 
             currentSnapshot = new HoCharacterSpecializationRuntimeDiagnosticSnapshot(
                 true,
@@ -131,6 +144,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 metadataSurfaceColorAvailable,
                 metadataSurfaceColorRequired,
                 geometryNormalDepthAvailable,
+                geometryDepthAvailable,
+                geometryDepthRequired,
                 ready,
                 ready ? "Inputs are valid." : BuildMissingInputReason(
                     backBufferActive,
@@ -140,7 +155,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     metadataObjectCustom1Available,
                     metadataSurfaceColorAvailable,
                     metadataSurfaceColorRequired,
-                    geometryNormalDepthAvailable));
+                    geometryNormalDepthAvailable,
+                    geometryDepthAvailable,
+                    geometryDepthRequired));
         }
 
         private static string BuildMissingInputReason(
@@ -151,7 +168,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             bool metadataObjectCustom1Available,
             bool metadataSurfaceColorAvailable,
             bool metadataSurfaceColorRequired,
-            bool geometryNormalDepthAvailable)
+            bool geometryNormalDepthAvailable,
+            bool geometryDepthAvailable,
+            bool geometryDepthRequired)
         {
             if (backBufferActive)
             {
@@ -164,7 +183,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             }
 
             bool metadataAvailable = metadataMaskIdAvailable && metadataObjectCustom0Available && metadataObjectCustom1Available;
-            if (!metadataAvailable && !geometryNormalDepthAvailable)
+            bool geometryAvailable = geometryNormalDepthAvailable && (!geometryDepthRequired || geometryDepthAvailable);
+            if (!metadataAvailable && !geometryAvailable)
             {
                 return "MetadataBuffer and GeometryBuffer are unavailable.";
             }
@@ -179,7 +199,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 return "MetadataBuffer SurfaceColor is unavailable.";
             }
 
-            return "GeometryBuffer normalDepth is unavailable.";
+            if (!geometryNormalDepthAvailable)
+            {
+                return "GeometryBuffer normalDepth is unavailable.";
+            }
+
+            return "GeometryBuffer depth is unavailable.";
         }
     }
 }

@@ -134,9 +134,9 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 它支持 Volume 覆盖，执行内容包括：
 
 - 使用 `LightMode = HoCharacterCapture` 的材质 pass 捕获眼睛/脸部数据。
-- 读取 MetadataBuffer 的对象自定义位和角色 ID。
-- 读取 GeometryBuffer normal/depth 辅助前发投影距离、深度和遮罩判断。
-- 合成眼睛透过、前发投影，或输出调试视图。
+- 读取 MetadataBuffer 的对象自定义位和角色 ID。`ObjectCustom0` 约定为 `CharacterFull / 全角色`，`ObjectCustom6` 约定为 `CharacterBody / 人体`。
+- 读取 GeometryBuffer normal/depth 辅助前发投影距离、深度、轮廓高度渐隐和遮罩判断。
+- 合成眼睛透过、前发投影、脸色扩散、主体轮廓、增强轮廓，或输出调试视图。
 
 材质接入点保留在 shader include 中：角色捕获 pass 应调用 `LilHoCharacterBuildCaptureOutput`，并让材质自己的 alpha、cutout、dissolve 规则决定是否写入捕获 RT。
 
@@ -204,7 +204,7 @@ URP Renderer Asset 中建议按依赖加入这些 RendererFeature：
 - 必选：`Ho-MetadataBuffer`，当 ScreenProcess 规则遮罩、角色语义、DropShadow 或 PostLighting 需要对象语义时启用。
 - 必选：`Ho-GeometryBuffer`，当 EdgeLight、PostLighting、SkyTyndall 或 CharacterSpecialization 需要 normal/depth 时启用。
 - 可选：`Ho-GeometryBuffer` 的 Sky buffer，只有 SkyTyndall 或后续天空采样效果需要时启用。
-- 可选：`Ho-CharacterSpecialization`，角色眼透和前发投影需要时启用。
+- 可选：`Ho-CharacterSpecialization`，角色眼透、前发投影、脸色扩散或轮廓效果需要时启用。
 - 可选：`Ho-ShadowCast`，材质侧需要自定义阴影数据时启用。
 - 必选后处理：`Ho-ScreenProcess` 在语义屏幕效果需要时启用。
 - 必选后处理：`Ho-ImageProcess` 在最终图像风格栈需要时启用。

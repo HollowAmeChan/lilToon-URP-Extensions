@@ -10,6 +10,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 settings,
                 false,
                 false,
+                false,
                 out Vector4 eyeRevealParams,
                 out Vector4 hairShadowParams,
                 out Vector4 hairShadowParams1,
@@ -26,6 +27,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 out Vector4 subjectOutlineFogParams,
                 out Vector4 subjectOutlineHeightFadeParams,
                 out Vector4 subjectOutlineOptions,
+                out Vector4 enhancedOutlineParams,
+                out Color enhancedOutlineFogColor,
+                out Vector4 enhancedOutlineFogParams,
+                out Vector4 enhancedOutlineHeightFadeParams,
+                out Vector4 enhancedOutlineOptions,
                 out Vector4 options);
             ApplyMaterialProperties(
                 material,
@@ -45,6 +51,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 subjectOutlineFogParams,
                 subjectOutlineHeightFadeParams,
                 subjectOutlineOptions,
+                enhancedOutlineParams,
+                enhancedOutlineFogColor,
+                enhancedOutlineFogParams,
+                enhancedOutlineHeightFadeParams,
+                enhancedOutlineOptions,
                 options);
         }
 
@@ -66,6 +77,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             Vector4 subjectOutlineFogParams,
             Vector4 subjectOutlineHeightFadeParams,
             Vector4 subjectOutlineOptions,
+            Vector4 enhancedOutlineParams,
+            Color enhancedOutlineFogColor,
+            Vector4 enhancedOutlineFogParams,
+            Vector4 enhancedOutlineHeightFadeParams,
+            Vector4 enhancedOutlineOptions,
             Vector4 options)
         {
             material.SetVector(HoCharacterSpecializationShaderConstants.EyeRevealParamsId, eyeRevealParams);
@@ -84,6 +100,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineFogParamsId, subjectOutlineFogParams);
             material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineHeightFadeParamsId, subjectOutlineHeightFadeParams);
             material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineOptionsId, subjectOutlineOptions);
+            material.SetVector(HoCharacterSpecializationShaderConstants.EnhancedOutlineParamsId, enhancedOutlineParams);
+            material.SetColor(HoCharacterSpecializationShaderConstants.EnhancedOutlineFogColorId, enhancedOutlineFogColor);
+            material.SetVector(HoCharacterSpecializationShaderConstants.EnhancedOutlineFogParamsId, enhancedOutlineFogParams);
+            material.SetVector(HoCharacterSpecializationShaderConstants.EnhancedOutlineHeightFadeParamsId, enhancedOutlineHeightFadeParams);
+            material.SetVector(HoCharacterSpecializationShaderConstants.EnhancedOutlineOptionsId, enhancedOutlineOptions);
             material.SetVector(HoCharacterSpecializationShaderConstants.OptionsId, options);
         }
 
@@ -91,6 +112,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             HoCharacterSpecializationSettings settings,
             bool faceHairDiffuseTexturesReady,
             bool subjectOutlineTexturesReady,
+            bool enhancedOutlineTexturesReady,
             out Vector4 eyeRevealParams,
             out Vector4 hairShadowParams,
             out Vector4 hairShadowParams1,
@@ -107,6 +129,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             out Vector4 subjectOutlineFogParams,
             out Vector4 subjectOutlineHeightFadeParams,
             out Vector4 subjectOutlineOptions,
+            out Vector4 enhancedOutlineParams,
+            out Color enhancedOutlineFogColor,
+            out Vector4 enhancedOutlineFogParams,
+            out Vector4 enhancedOutlineHeightFadeParams,
+            out Vector4 enhancedOutlineOptions,
             out Vector4 options)
         {
             if (settings == null)
@@ -127,6 +154,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 subjectOutlineFogParams = Vector4.zero;
                 subjectOutlineHeightFadeParams = Vector4.zero;
                 subjectOutlineOptions = Vector4.zero;
+                enhancedOutlineParams = Vector4.zero;
+                enhancedOutlineFogColor = Color.white;
+                enhancedOutlineFogParams = Vector4.zero;
+                enhancedOutlineHeightFadeParams = Vector4.zero;
+                enhancedOutlineOptions = Vector4.zero;
                 options = Vector4.zero;
                 return;
             }
@@ -170,6 +202,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 out subjectOutlineFogParams,
                 out subjectOutlineHeightFadeParams,
                 out subjectOutlineOptions);
+            FillEnhancedOutlineMaterialVectors(
+                settings,
+                enhancedOutlineTexturesReady,
+                out enhancedOutlineParams,
+                out enhancedOutlineFogColor,
+                out enhancedOutlineFogParams,
+                out enhancedOutlineHeightFadeParams,
+                out enhancedOutlineOptions);
 
             options = new Vector4(
                 settings.eyeRevealEnabled ? 1.0f : 0.0f,

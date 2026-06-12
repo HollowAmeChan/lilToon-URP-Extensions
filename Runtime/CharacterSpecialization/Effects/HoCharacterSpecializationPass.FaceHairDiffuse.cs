@@ -109,7 +109,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (FaceHairDiffuseBlurPassData data, RasterGraphContext context) =>
                 {
-                    data.material.SetVector(HoCharacterSpecializationShaderConstants.FaceHairDiffuseBlurParamsId, data.blurParams);
+                    context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.FaceHairDiffuseBlurParamsId, data.blurParams);
                     context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.FaceHairDiffuseDepthTextureId, data.sourceDepth);
                     Blitter.BlitTexture(context.cmd, data.sourceColor, new Vector4(1, 1, 0, 0), data.material, 1);
                 });

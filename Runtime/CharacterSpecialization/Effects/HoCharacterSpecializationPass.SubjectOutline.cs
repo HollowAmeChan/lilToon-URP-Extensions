@@ -35,6 +35,29 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             }
         }
 
+        private static bool RequiresEnhancedOutlineTextures(HoCharacterSpecializationSettings settings)
+        {
+            if (settings == null)
+            {
+                return false;
+            }
+
+            if (settings.enhancedOutlineEnabled)
+            {
+                return true;
+            }
+
+            switch (settings.debugMode)
+            {
+                case HoCharacterSpecializationDebugMode.EnhancedOutlineSourceMask:
+                case HoCharacterSpecializationDebugMode.EnhancedOutlineBlurMask:
+                case HoCharacterSpecializationDebugMode.EnhancedOutlineFogMask:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
         private static void FillSubjectOutlineMaterialVectors(
             HoCharacterSpecializationSettings settings,
             bool texturesReady,
@@ -86,8 +109,72 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 Mathf.Clamp(settings.subjectOutlineHeightFadeHardness, 0.1f, 8.0f));
         }
 
+        private static void FillEnhancedOutlineMaterialVectors(
+            HoCharacterSpecializationSettings settings,
+            bool texturesReady,
+            out Vector4 enhancedOutlineParams,
+            out Color enhancedOutlineFogColor,
+            out Vector4 enhancedOutlineFogParams,
+            out Vector4 enhancedOutlineHeightFadeParams,
+            out Vector4 enhancedOutlineOptions)
+        {
+            enhancedOutlineParams = new Vector4(
+                Mathf.Clamp01(settings.enhancedOutlineStrength),
+                Mathf.Max(0.0f, settings.enhancedOutlineRadiusPixels),
+                0.0f,
+                0.0f);
+            enhancedOutlineFogColor = settings.enhancedOutlineFogColor;
+            enhancedOutlineFogParams = new Vector4(
+                settings.enhancedOutlineFogHueShiftDegrees / 360.0f,
+                Mathf.Max(0.0f, settings.enhancedOutlineFogSaturation),
+                Mathf.Max(0.0f, settings.enhancedOutlineFogValue),
+                Mathf.Clamp(settings.enhancedOutlineFogSoftness, 0.05f, 4.0f));
+            float heightFadeStart = Mathf.Max(0.0f, settings.enhancedOutlineHeightFadeStart);
+            float heightFadeEnd = Mathf.Max(heightFadeStart + 0.0001f, settings.enhancedOutlineHeightFadeEnd);
+            enhancedOutlineHeightFadeParams = new Vector4(
+                (float)settings.enhancedOutlineHeightFadeMode,
+                settings.enhancedOutlineHeightFadeGroundY,
+                heightFadeStart,
+                1.0f / (heightFadeEnd - heightFadeStart));
+            enhancedOutlineOptions = new Vector4(
+                settings.enhancedOutlineEnabled && texturesReady ? 1.0f : 0.0f,
+                texturesReady ? 1.0f : 0.0f,
+                Mathf.Clamp((int)settings.enhancedOutlineSourceChannel, 0, 7),
+                Mathf.Clamp(settings.enhancedOutlineHeightFadeHardness, 0.1f, 8.0f));
+        }
+
         private static Vector4 CreateSubjectOutlineBlurParams(
             HoCharacterSpecializationSettings settings,
+            RenderTextureDescriptor cameraTextureDescriptor,
+            TextureDesc blurTextureDesc,
+            float radiusScale,
+            int iterationIndex)
+        {
+            return CreateOutlineBlurParams(
+                settings.subjectOutlineRadiusPixels,
+                cameraTextureDescriptor,
+                blurTextureDesc,
+                radiusScale,
+                iterationIndex);
+        }
+
+        private static Vector4 CreateEnhancedOutlineBlurParams(
+            HoCharacterSpecializationSettings settings,
+            RenderTextureDescriptor cameraTextureDescriptor,
+            TextureDesc blurTextureDesc,
+            float radiusScale,
+            int iterationIndex)
+        {
+            return CreateOutlineBlurParams(
+                settings.enhancedOutlineRadiusPixels,
+                cameraTextureDescriptor,
+                blurTextureDesc,
+                radiusScale,
+                iterationIndex);
+        }
+
+        private static Vector4 CreateOutlineBlurParams(
+            float radiusPixels,
             RenderTextureDescriptor cameraTextureDescriptor,
             TextureDesc blurTextureDesc,
             float radiusScale,
@@ -97,7 +184,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 ? blurTextureDesc.width / (float)Mathf.Max(1, cameraTextureDescriptor.width)
                 : 1.0f;
             return new Vector4(
-                Mathf.Max(0.0f, settings.subjectOutlineRadiusPixels) * Mathf.Max(scale, 0.0001f) * Mathf.Max(radiusScale, 0.0001f),
+                Mathf.Max(0.0f, radiusPixels) * Mathf.Max(scale, 0.0001f) * Mathf.Max(radiusScale, 0.0001f),
                 iterationIndex * 1.61803399f,
                 SubjectOutlineBlurIterationCount,
                 0.0f);
@@ -124,7 +211,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (SubjectOutlineBlurPassData data, RasterGraphContext context) =>
                 {
-                    data.material.SetVector(HoCharacterSpecializationShaderConstants.SubjectOutlineBlurParamsId, data.blurParams);
+                    context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.SubjectOutlineBlurParamsId, data.blurParams);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 1);
                 });
             }

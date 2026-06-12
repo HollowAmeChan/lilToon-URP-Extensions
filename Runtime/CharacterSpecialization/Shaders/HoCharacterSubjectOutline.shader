@@ -25,14 +25,60 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/SubjectOutline"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
             float _HoMetadataBufferActive;
+            float4 _HoCharacterSubjectOutlineSourceParams; // x object custom channel index
             TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
+            TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture);
             TEXTURE2D_X_FLOAT(_HoGeometryBufferDepthTexture);
+
+            float SampleObjectCustomChannel(float2 uv, int channelIndex)
+            {
+                int clampedIndex = (int)clamp((float)channelIndex, 0.0, 7.0);
+                float4 lowValues = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv);
+                float4 highValues = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture, sampler_PointClamp, uv);
+                if (clampedIndex == 0)
+                {
+                    return lowValues.r;
+                }
+
+                if (clampedIndex == 1)
+                {
+                    return lowValues.g;
+                }
+
+                if (clampedIndex == 2)
+                {
+                    return lowValues.b;
+                }
+
+                if (clampedIndex == 3)
+                {
+                    return lowValues.a;
+                }
+
+                if (clampedIndex == 4)
+                {
+                    return highValues.r;
+                }
+
+                if (clampedIndex == 5)
+                {
+                    return highValues.g;
+                }
+
+                if (clampedIndex == 6)
+                {
+                    return highValues.b;
+                }
+
+                return highValues.a;
+            }
 
             float4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                float subject = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, input.texcoord).r;
+                int channelIndex = (int)round(_HoCharacterSubjectOutlineSourceParams.x);
+                float subject = SampleObjectCustomChannel(input.texcoord, channelIndex);
                 float mask = step(0.5, _HoMetadataBufferActive) * saturate(subject);
                 float weightedWorldY = 0.0;
                 float heightWeight = 0.0;

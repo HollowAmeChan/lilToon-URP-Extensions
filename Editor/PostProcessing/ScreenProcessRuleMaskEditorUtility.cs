@@ -23,13 +23,13 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "材质自定义通道 1",
             "材质自定义通道 2",
             "材质自定义通道 3",
-            "主体",
+            "CharacterFull / 全角色",
             "脸",
             "前发",
             "眼睛",
             "眼透区域",
             "配件",
-            "预留 6",
+            "CharacterBody / 人体",
             "预留 7"
         };
 

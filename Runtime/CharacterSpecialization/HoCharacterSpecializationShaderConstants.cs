@@ -23,6 +23,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public const string SubjectOutlineSourceTextureName = "_lilHoCharacterSubjectOutlineSourceTexture";
         public const string SubjectOutlineTempTextureName = "_lilHoCharacterSubjectOutlineTempTexture";
         public const string SubjectOutlineTextureName = "_lilHoCharacterSubjectOutlineTexture";
+        public const string EnhancedOutlineSourceTextureName = "_lilHoCharacterEnhancedOutlineSourceTexture";
+        public const string EnhancedOutlineTempTextureName = "_lilHoCharacterEnhancedOutlineTempTexture";
+        public const string EnhancedOutlineTextureName = "_lilHoCharacterEnhancedOutlineTexture";
 
         public static readonly ShaderTagId CaptureShaderTagId = new ShaderTagId(CapturePassName);
         public static readonly int CaptureModeId = Shader.PropertyToID("_HoCharacterCaptureMode");
@@ -44,6 +47,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public static readonly int FaceHairDiffuseBlurParamsId = Shader.PropertyToID("_HoCharacterFaceHairDiffuseBlurParams");
         public static readonly int SubjectOutlineSourceTextureId = Shader.PropertyToID(SubjectOutlineSourceTextureName);
         public static readonly int SubjectOutlineTextureId = Shader.PropertyToID(SubjectOutlineTextureName);
+        public static readonly int EnhancedOutlineSourceTextureId = Shader.PropertyToID(EnhancedOutlineSourceTextureName);
+        public static readonly int EnhancedOutlineTextureId = Shader.PropertyToID(EnhancedOutlineTextureName);
         public static readonly int SubjectOutlineParamsId = Shader.PropertyToID("_HoCharacterSubjectOutlineParams");
         public static readonly int SubjectOutlineLevelsId = Shader.PropertyToID("_HoCharacterSubjectOutlineLevels");
         public static readonly int SubjectOutlineColorId = Shader.PropertyToID("_HoCharacterSubjectOutlineColor");
@@ -51,6 +56,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public static readonly int SubjectOutlineFogParamsId = Shader.PropertyToID("_HoCharacterSubjectOutlineFogParams");
         public static readonly int SubjectOutlineHeightFadeParamsId = Shader.PropertyToID("_HoCharacterSubjectOutlineHeightFadeParams");
         public static readonly int SubjectOutlineOptionsId = Shader.PropertyToID("_HoCharacterSubjectOutlineOptions");
+        public static readonly int EnhancedOutlineParamsId = Shader.PropertyToID("_HoCharacterEnhancedOutlineParams");
+        public static readonly int EnhancedOutlineFogColorId = Shader.PropertyToID("_HoCharacterEnhancedOutlineFogColor");
+        public static readonly int EnhancedOutlineFogParamsId = Shader.PropertyToID("_HoCharacterEnhancedOutlineFogParams");
+        public static readonly int EnhancedOutlineHeightFadeParamsId = Shader.PropertyToID("_HoCharacterEnhancedOutlineHeightFadeParams");
+        public static readonly int EnhancedOutlineOptionsId = Shader.PropertyToID("_HoCharacterEnhancedOutlineOptions");
+        public static readonly int SubjectOutlineSourceParamsId = Shader.PropertyToID("_HoCharacterSubjectOutlineSourceParams");
         public static readonly int SubjectOutlineBlurParamsId = Shader.PropertyToID("_HoCharacterSubjectOutlineBlurParams");
         public static readonly int OptionsId = Shader.PropertyToID("_HoCharacterOptions");
     }

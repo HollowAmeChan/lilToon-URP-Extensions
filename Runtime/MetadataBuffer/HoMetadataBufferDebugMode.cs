@@ -28,7 +28,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         Custom2,
         [InspectorName("Material Custom 3")]
         Custom3,
-        [InspectorName("Body")]
+        [InspectorName("CharacterFull")]
         ObjectCustom0,
         [InspectorName("Face")]
         ObjectCustom1,
@@ -40,7 +40,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         ObjectCustom4,
         [InspectorName("Accessory")]
         ObjectCustom5,
-        [InspectorName("Reserved 6")]
+        [InspectorName("CharacterBody")]
         ObjectCustom6,
         [InspectorName("Reserved 7")]
         ObjectCustom7,

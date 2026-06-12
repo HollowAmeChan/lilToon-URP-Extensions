@@ -96,7 +96,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 DrawProperty(debugMode, "调试模式");
                 DrawProperty("compositeShader", "合成 Shader");
                 DrawProperty("faceHairDiffuseShader", "脸色扩散 Shader");
-                DrawProperty("subjectOutlineShader", "主体轮廓 Shader");
+                DrawProperty("subjectOutlineShader", "轮廓场 Shader");
                 DrawProperty("farPlaneShadowReserved", "远平面阴影预留");
                 DrawProperty("reflectionSpaceReserved", "反射空间预留");
             }
@@ -130,11 +130,13 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 EditorGUILayout.LabelField("MetadataBuffer", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataBufferAvailable));
                 EditorGUILayout.LabelField("GeometryBuffer", LilUrpEditorSectionGui.FormatAvailable(snapshot.GeometryBufferAvailable));
                 EditorGUILayout.LabelField("MaskId", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataMaskIdAvailable));
-                EditorGUILayout.LabelField("ObjectCustom0", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataObjectCustom0Available));
-                EditorGUILayout.LabelField("ObjectCustom1", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataObjectCustom1Available));
+                EditorGUILayout.LabelField("ObjectCustom0-3", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataObjectCustom0Available));
+                EditorGUILayout.LabelField("ObjectCustom4-7", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataObjectCustom1Available));
                 EditorGUILayout.LabelField("SurfaceColor", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataSurfaceColorAvailable));
                 EditorGUILayout.LabelField("SurfaceColor Required", snapshot.MetadataSurfaceColorRequired ? "Yes" : "No");
                 EditorGUILayout.LabelField("NormalDepth", LilUrpEditorSectionGui.FormatAvailable(snapshot.GeometryNormalDepthAvailable));
+                EditorGUILayout.LabelField("Depth", LilUrpEditorSectionGui.FormatAvailable(snapshot.GeometryDepthAvailable));
+                EditorGUILayout.LabelField("Depth Required", snapshot.GeometryDepthRequired ? "Yes" : "No");
 
                 EditorGUILayout.HelpBox(
                     snapshot.Ready

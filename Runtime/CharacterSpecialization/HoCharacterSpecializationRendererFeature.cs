@@ -126,6 +126,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 && !activeSettings.hairDropShadowEnabled
                 && !activeSettings.faceHairDiffuseEnabled
                 && !activeSettings.subjectOutlineEnabled
+                && !activeSettings.enhancedOutlineEnabled
                 && activeSettings.debugMode == HoCharacterSpecializationDebugMode.Off)
             {
                 return false;
@@ -151,9 +152,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 && !activeSettings.hairDropShadowEnabled
                 && !activeSettings.faceHairDiffuseEnabled
                 && !activeSettings.subjectOutlineEnabled
+                && !activeSettings.enhancedOutlineEnabled
                 && activeSettings.debugMode == HoCharacterSpecializationDebugMode.Off)
             {
-                return "眼睛透过、前发投影、脸色扩散、主体轮廓和 debug 均未启用。";
+                return "眼睛透过、前发投影、脸色扩散、主体轮廓、增强轮廓和 debug 均未启用。";
             }
 
             CameraType cameraType = renderingData.cameraData.cameraType;
@@ -213,7 +215,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     : Shader.Find(HoCharacterSpecializationShaderConstants.SubjectOutlineShaderName),
                 HoCharacterSpecializationShaderConstants.SubjectOutlineShaderName,
                 ref warnedMissingSubjectOutlineShader,
-                "HoCharacterSpecialization subject outline is unavailable because shader '{0}' could not be found.");
+                "HoCharacterSpecialization outline field is unavailable because shader '{0}' could not be found.");
 
             Shader clearShader = Shader.Find(HoCharacterSpecializationShaderConstants.CaptureClearShaderName);
             EnsureMaterial(
@@ -431,6 +433,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             bool hasMetadataSurfaceColor = metadataResources.surfaceColorTexture.IsValid();
             bool requiresFaceHairDiffuseTextures = RequiresFaceHairDiffuseTextures(settings);
             bool requiresSubjectOutlineTextures = RequiresSubjectOutlineTextures(settings);
+            bool requiresEnhancedOutlineTextures = RequiresEnhancedOutlineTextures(settings);
+            bool requiresGeometryDepth = requiresSubjectOutlineTextures || requiresEnhancedOutlineTextures;
             HoCharacterSpecializationRuntimeDiagnostics.PublishRenderGraphInputs(
                 cameraData.camera,
                 "Composite",
@@ -441,13 +445,15 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 hasMetadataObjectCustom1,
                 hasMetadataSurfaceColor,
                 hasGeometryNormalDepth,
+                hasGeometryDepth,
+                requiresGeometryDepth,
                 requiresFaceHairDiffuseTextures);
 
             if (backBufferActive
                 || !hasCameraColor
                 || !hasMetadataMaskId
                 || !hasGeometryNormalDepth
-                || (requiresSubjectOutlineTextures && !hasGeometryDepth)
+                || (requiresGeometryDepth && !hasGeometryDepth)
                 || !hasMetadataObjectCustom0
                 || !hasMetadataObjectCustom1)
             {
@@ -639,18 +645,23 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 {
                     passData.source = source;
                     passData.metadataObjectCustom0Texture = metadataResources.objectCustom0Texture;
+                    passData.metadataObjectCustom1Texture = metadataResources.objectCustom1Texture;
                     passData.geometryDepthTexture = geometryResources.depthTexture;
                     passData.material = subjectOutlineMaterial;
+                    passData.sourceParams = new Vector4((float)HoCharacterObjectCustomChannel.CharacterFull, 0.0f, 0.0f, 0.0f);
 
                     builder.UseTexture(source, AccessFlags.Read);
                     builder.UseTexture(passData.metadataObjectCustom0Texture, AccessFlags.Read);
+                    builder.UseTexture(passData.metadataObjectCustom1Texture, AccessFlags.Read);
                     builder.UseTexture(passData.geometryDepthTexture, AccessFlags.Read);
                     builder.SetRenderAttachment(subjectOutlineSourceTexture, 0, AccessFlags.WriteAll);
                     builder.AllowGlobalStateModification(true);
                     builder.AllowPassCulling(false);
                     builder.SetRenderFunc(static (SubjectOutlineSourcePassData data, RasterGraphContext context) =>
                     {
+                        context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.SubjectOutlineSourceParamsId, data.sourceParams);
                         context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.metadataObjectCustom0Texture);
+                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.metadataObjectCustom1Texture);
                         context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, data.geometryDepthTexture);
                         context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
                         Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
@@ -681,6 +692,74 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 }
             }
 
+            TextureHandle enhancedOutlineSourceTexture = TextureHandle.nullHandle;
+            TextureHandle enhancedOutlineTempTexture = TextureHandle.nullHandle;
+            TextureHandle enhancedOutlineTexture = TextureHandle.nullHandle;
+            bool enhancedOutlineReady = requiresEnhancedOutlineTextures && hasGeometryDepth && subjectOutlineMaterial != null;
+            if (enhancedOutlineReady)
+            {
+                TextureDesc enhancedOutlineDesc = CreateSubjectOutlineTextureDesc(
+                    cameraData.cameraTargetDescriptor,
+                    settings,
+                    GetDataGraphicsFormat(),
+                    HoCharacterSpecializationShaderConstants.EnhancedOutlineSourceTextureName);
+                enhancedOutlineSourceTexture = renderGraph.CreateTexture(enhancedOutlineDesc);
+                enhancedOutlineDesc.name = HoCharacterSpecializationShaderConstants.EnhancedOutlineTempTextureName;
+                enhancedOutlineTempTexture = renderGraph.CreateTexture(enhancedOutlineDesc);
+                enhancedOutlineDesc.name = HoCharacterSpecializationShaderConstants.EnhancedOutlineTextureName;
+                enhancedOutlineTexture = renderGraph.CreateTexture(enhancedOutlineDesc);
+
+                using (var builder = renderGraph.AddRasterRenderPass<SubjectOutlineSourcePassData>("Ho-CharacterSpecialization EnhancedOutline Source", out SubjectOutlineSourcePassData passData, ProfilingSampler))
+                {
+                    passData.source = source;
+                    passData.metadataObjectCustom0Texture = metadataResources.objectCustom0Texture;
+                    passData.metadataObjectCustom1Texture = metadataResources.objectCustom1Texture;
+                    passData.geometryDepthTexture = geometryResources.depthTexture;
+                    passData.material = subjectOutlineMaterial;
+                    passData.sourceParams = new Vector4(Mathf.Clamp((int)settings.enhancedOutlineSourceChannel, 0, 7), 0.0f, 0.0f, 0.0f);
+
+                    builder.UseTexture(source, AccessFlags.Read);
+                    builder.UseTexture(passData.metadataObjectCustom0Texture, AccessFlags.Read);
+                    builder.UseTexture(passData.metadataObjectCustom1Texture, AccessFlags.Read);
+                    builder.UseTexture(passData.geometryDepthTexture, AccessFlags.Read);
+                    builder.SetRenderAttachment(enhancedOutlineSourceTexture, 0, AccessFlags.WriteAll);
+                    builder.AllowGlobalStateModification(true);
+                    builder.AllowPassCulling(false);
+                    builder.SetRenderFunc(static (SubjectOutlineSourcePassData data, RasterGraphContext context) =>
+                    {
+                        context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.SubjectOutlineSourceParamsId, data.sourceParams);
+                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.metadataObjectCustom0Texture);
+                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.metadataObjectCustom1Texture);
+                        context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, data.geometryDepthTexture);
+                        context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
+                        Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
+                    });
+                }
+
+                TextureHandle blurSource = enhancedOutlineSourceTexture;
+                float iterationRadiusScale = 1.0f / Mathf.Sqrt(SubjectOutlineBlurIterationCount);
+                for (int i = 0; i < SubjectOutlineBlurIterationCount; i++)
+                {
+                    bool writeFinal = i == SubjectOutlineBlurIterationCount - 1;
+                    TextureHandle blurDestination = writeFinal ? enhancedOutlineTexture : enhancedOutlineTempTexture;
+                    Vector4 blurParams = CreateEnhancedOutlineBlurParams(
+                        settings,
+                        cameraData.cameraTargetDescriptor,
+                        blurSource.GetDescriptor(renderGraph),
+                        iterationRadiusScale,
+                        i);
+                    AddSubjectOutlineBlurPass(
+                        renderGraph,
+                        $"Ho-CharacterSpecialization EnhancedOutline FastGaussian {i + 1}",
+                        subjectOutlineMaterial,
+                        blurSource,
+                        blurDestination,
+                        blurParams);
+
+                    blurSource = blurDestination;
+                }
+            }
+
             TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
             destinationDesc.name = "_lilHoCharacterCompositeColor";
             destinationDesc.clearBuffer = false;
@@ -700,15 +779,19 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 passData.faceHairDiffuseDepthTexture = faceHairDiffuseDepthTexture;
                 passData.subjectOutlineSourceTexture = subjectOutlineSourceTexture;
                 passData.subjectOutlineTexture = subjectOutlineTexture;
+                passData.enhancedOutlineSourceTexture = enhancedOutlineSourceTexture;
+                passData.enhancedOutlineTexture = enhancedOutlineTexture;
                 passData.eyeColorTexture = eyeColorTexture;
                 passData.eyeDataTexture = eyeDataTexture;
                 passData.material = compositeMaterial;
                 passData.faceHairDiffuseReady = faceHairDiffuseReady;
                 passData.subjectOutlineReady = subjectOutlineReady;
+                passData.enhancedOutlineReady = enhancedOutlineReady;
                 FillMaterialVectors(
                     settings,
                     faceHairDiffuseReady,
                     subjectOutlineReady,
+                    enhancedOutlineReady,
                     out passData.eyeRevealParams,
                     out passData.hairShadowParams,
                     out passData.hairShadowParams1,
@@ -725,6 +808,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     out passData.subjectOutlineFogParams,
                     out passData.subjectOutlineHeightFadeParams,
                     out passData.subjectOutlineOptions,
+                    out passData.enhancedOutlineParams,
+                    out passData.enhancedOutlineFogColor,
+                    out passData.enhancedOutlineFogParams,
+                    out passData.enhancedOutlineHeightFadeParams,
+                    out passData.enhancedOutlineOptions,
                     out passData.options);
 
                 builder.UseTexture(source, AccessFlags.Read);
@@ -744,6 +832,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 {
                     builder.UseTexture(subjectOutlineSourceTexture, AccessFlags.Read);
                     builder.UseTexture(subjectOutlineTexture, AccessFlags.Read);
+                }
+                if (enhancedOutlineReady)
+                {
+                    builder.UseTexture(enhancedOutlineSourceTexture, AccessFlags.Read);
+                    builder.UseTexture(enhancedOutlineTexture, AccessFlags.Read);
                 }
 
                 builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
@@ -769,6 +862,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                         data.subjectOutlineFogParams,
                         data.subjectOutlineHeightFadeParams,
                         data.subjectOutlineOptions,
+                        data.enhancedOutlineParams,
+                        data.enhancedOutlineFogColor,
+                        data.enhancedOutlineFogParams,
+                        data.enhancedOutlineHeightFadeParams,
+                        data.enhancedOutlineOptions,
                         data.options);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.metadataMaskIdTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.geometryNormalDepthTexture);
@@ -784,6 +882,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     {
                         context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.SubjectOutlineSourceTextureId, data.subjectOutlineSourceTexture);
                         context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.SubjectOutlineTextureId, data.subjectOutlineTexture);
+                    }
+                    if (data.enhancedOutlineReady)
+                    {
+                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EnhancedOutlineSourceTextureId, data.enhancedOutlineSourceTexture);
+                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EnhancedOutlineTextureId, data.enhancedOutlineTexture);
                     }
 
                     context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, data.eyeColorTexture);

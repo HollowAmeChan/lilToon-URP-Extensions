@@ -36,7 +36,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         [Tooltip("拖入 GameObject 或预制件实例时，包含它下面的子级 Renderer。关闭时只使用物体自身的 Renderer。")]
         public bool includeChildrenForListedObjects = true;
 
-        [InspectorName("主体")]
+        [InspectorName("CharacterFull / 全角色")]
         public UnityEngine.Object[] objectCustom0;
 
         [InspectorName("脸")]
@@ -54,7 +54,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         [InspectorName("配件")]
         public UnityEngine.Object[] objectCustom5;
 
-        [InspectorName("预留 6")]
+        [InspectorName("CharacterBody / 人体")]
         public UnityEngine.Object[] objectCustom6;
 
         [InspectorName("预留 7")]

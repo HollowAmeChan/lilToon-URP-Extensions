@@ -104,6 +104,20 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         }
     }
 
+    [Serializable]
+    public sealed class HoCharacterObjectCustomChannelParameter : VolumeParameter<HoCharacterObjectCustomChannel>
+    {
+        public HoCharacterObjectCustomChannelParameter(HoCharacterObjectCustomChannel value, bool overrideState = false)
+            : base(value, overrideState)
+        {
+        }
+
+        public override void Interp(HoCharacterObjectCustomChannel from, HoCharacterObjectCustomChannel to, float t)
+        {
+            value = t > 0.0f ? to : from;
+        }
+    }
+
 #if UNITY_2023_1_OR_NEWER
     [VolumeComponentMenu("Post-processing/Ho-CharacterSpecialization/角色特化"), SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
 #else
@@ -158,6 +172,20 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             SubjectOutlineHeightFadeStart.overrideState = true;
             SubjectOutlineHeightFadeEnd.overrideState = true;
             SubjectOutlineHeightFadeHardness.overrideState = true;
+            EnhancedOutlineEnabled.overrideState = true;
+            EnhancedOutlineSourceChannel.overrideState = true;
+            EnhancedOutlineStrength.overrideState = true;
+            EnhancedOutlineRadiusPixels.overrideState = true;
+            EnhancedOutlineFogColor.overrideState = true;
+            EnhancedOutlineFogHueShiftDegrees.overrideState = true;
+            EnhancedOutlineFogSaturation.overrideState = true;
+            EnhancedOutlineFogValue.overrideState = true;
+            EnhancedOutlineFogSoftness.overrideState = true;
+            EnhancedOutlineHeightFadeMode.overrideState = true;
+            EnhancedOutlineHeightFadeGroundY.overrideState = true;
+            EnhancedOutlineHeightFadeStart.overrideState = true;
+            EnhancedOutlineHeightFadeEnd.overrideState = true;
+            EnhancedOutlineHeightFadeHardness.overrideState = true;
         }
 
         [InspectorName("启用"), Tooltip("启用角色特化眼睛透过和前发投影。")]
@@ -262,7 +290,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("混合模式"), Tooltip("脸色扩散与当前前发颜色的混合方式。")]
         public HoCharacterFaceHairDiffuseBlendModeParameter FaceHairDiffuseBlendMode = new HoCharacterFaceHairDiffuseBlendModeParameter(HoCharacterFaceHairDiffuseBlendMode.Additive);
 
-        [InspectorName("启用主体轮廓"), Tooltip("读取 ObjectCustom0.r 的主体遮罩，生成高精度外扩轮廓。")]
+        [InspectorName("启用主体轮廓"), Tooltip("读取 ObjectCustom0.r / CharacterFull 的遮罩，生成高精度外扩轮廓。")]
         public BoolParameter SubjectOutlineEnabled = new BoolParameter(false);
 
         [InspectorName("轮廓强度"), Tooltip("主体轮廓叠到画面上的总强度。")]
@@ -318,6 +346,48 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         [InspectorName("渐隐硬度"), Tooltip("高度渐隐过渡曲线的硬度。1 为标准平滑过渡，数值越大越硬，越小越柔。")]
         public ClampedFloatParameter SubjectOutlineHeightFadeHardness = new ClampedFloatParameter(1.0f, 0.1f, 8.0f);
+
+        [InspectorName("启用增强轮廓"), Tooltip("从指定 ObjectCustom 分量生成柔化外扩雾气。")]
+        public BoolParameter EnhancedOutlineEnabled = new BoolParameter(false);
+
+        [InspectorName("来源通道"), Tooltip("增强轮廓读取的 RSUV / ObjectCustom 分量。默认使用 CharacterBody / ObjectCustom6。")]
+        public HoCharacterObjectCustomChannelParameter EnhancedOutlineSourceChannel = new HoCharacterObjectCustomChannelParameter(HoCharacterObjectCustomChannel.CharacterBody);
+
+        [InspectorName("雾气强度"), Tooltip("增强轮廓雾气叠到画面上的总强度。")]
+        public ClampedFloatParameter EnhancedOutlineStrength = new ClampedFloatParameter(0.65f, 0.0f, 1.0f);
+
+        [InspectorName("外扩半径像素"), Tooltip("增强轮廓雾气向外扩散的屏幕空间半径。")]
+        public FloatParameter EnhancedOutlineRadiusPixels = new FloatParameter(18.0f);
+
+        [InspectorName("雾气颜色"), Tooltip("先乘到原图底色上的颜色。Alpha 也会乘到最终雾气强度。")]
+        public ColorParameter EnhancedOutlineFogColor = new ColorParameter(new Color(1.0f, 0.76f, 0.55f, 1.0f));
+
+        [InspectorName("雾气色相偏移"), Tooltip("对乘色后的 HSV 色相做偏移，单位为度。")]
+        public FloatParameter EnhancedOutlineFogHueShiftDegrees = new FloatParameter(0.0f);
+
+        [InspectorName("雾气饱和度"), Tooltip("对乘色后的 HSV 饱和度做倍率调整。")]
+        public ClampedFloatParameter EnhancedOutlineFogSaturation = new ClampedFloatParameter(1.0f, 0.0f, 4.0f);
+
+        [InspectorName("雾气亮度"), Tooltip("对乘色后的 HSV 明度做倍率调整。")]
+        public ClampedFloatParameter EnhancedOutlineFogValue = new ClampedFloatParameter(1.0f, 0.0f, 4.0f);
+
+        [InspectorName("雾气柔化"), Tooltip("控制外扩 SDF 边缘的软硬。低值更雾化，高值更锐。")]
+        public ClampedFloatParameter EnhancedOutlineFogSoftness = new ClampedFloatParameter(0.45f, 0.05f, 4.0f);
+
+        [InspectorName("高度渐隐"), Tooltip("按增强轮廓来源点的世界高度减弱雾气。")]
+        public HoCharacterSubjectOutlineHeightFadeModeParameter EnhancedOutlineHeightFadeMode = new HoCharacterSubjectOutlineHeightFadeModeParameter(HoCharacterSubjectOutlineHeightFadeMode.Off);
+
+        [InspectorName("地面高度"), Tooltip("高度渐隐的地面世界 Y。")]
+        public FloatParameter EnhancedOutlineHeightFadeGroundY = new FloatParameter(0.0f);
+
+        [InspectorName("渐隐开始距离"), Tooltip("距离地面小于等于该值时进入渐隐区间。")]
+        public FloatParameter EnhancedOutlineHeightFadeStart = new FloatParameter(0.0f);
+
+        [InspectorName("渐隐结束距离"), Tooltip("距离地面大于等于该值时结束渐隐区间。")]
+        public FloatParameter EnhancedOutlineHeightFadeEnd = new FloatParameter(1.0f);
+
+        [InspectorName("渐隐硬度"), Tooltip("高度渐隐过渡曲线的硬度。1 为标准平滑过渡，数值越大越硬，越小越柔。")]
+        public ClampedFloatParameter EnhancedOutlineHeightFadeHardness = new ClampedFloatParameter(1.0f, 0.1f, 8.0f);
 
         public bool IsActive()
         {
@@ -397,6 +467,20 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             target.subjectOutlineHeightFadeStart = SubjectOutlineHeightFadeStart.value;
             target.subjectOutlineHeightFadeEnd = SubjectOutlineHeightFadeEnd.value;
             target.subjectOutlineHeightFadeHardness = SubjectOutlineHeightFadeHardness.value;
+            target.enhancedOutlineEnabled = EnhancedOutlineEnabled.value;
+            target.enhancedOutlineSourceChannel = EnhancedOutlineSourceChannel.value;
+            target.enhancedOutlineStrength = EnhancedOutlineStrength.value;
+            target.enhancedOutlineRadiusPixels = EnhancedOutlineRadiusPixels.value;
+            target.enhancedOutlineFogColor = EnhancedOutlineFogColor.value;
+            target.enhancedOutlineFogHueShiftDegrees = EnhancedOutlineFogHueShiftDegrees.value;
+            target.enhancedOutlineFogSaturation = EnhancedOutlineFogSaturation.value;
+            target.enhancedOutlineFogValue = EnhancedOutlineFogValue.value;
+            target.enhancedOutlineFogSoftness = EnhancedOutlineFogSoftness.value;
+            target.enhancedOutlineHeightFadeMode = EnhancedOutlineHeightFadeMode.value;
+            target.enhancedOutlineHeightFadeGroundY = EnhancedOutlineHeightFadeGroundY.value;
+            target.enhancedOutlineHeightFadeStart = EnhancedOutlineHeightFadeStart.value;
+            target.enhancedOutlineHeightFadeEnd = EnhancedOutlineHeightFadeEnd.value;
+            target.enhancedOutlineHeightFadeHardness = EnhancedOutlineHeightFadeHardness.value;
         }
     }
 }

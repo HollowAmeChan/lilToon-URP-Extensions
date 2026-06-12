@@ -27,13 +27,13 @@ namespace lilToon.URP.Extensions.Editor.MetadataBuffer
 
         private static readonly GUIContent[] ObjectCustomLabels =
         {
-            new GUIContent("主体", "整套角色、身体、衣服，或任何需要作为主体参与后期的对象。"),
+            new GUIContent("CharacterFull / 全角色", "整套角色、衣服、背景道具和特效等需要作为完整对象参与后期的 Renderer。"),
             new GUIContent("脸", "脸部对象或 Renderer。"),
             new GUIContent("前发", "前发对象或 Renderer。眼透通常会用到这个通道。"),
             new GUIContent("眼睛", "眼睛对象或 Renderer。"),
             new GUIContent("眼透区域", "允许眼睛透出的区域对象或 Renderer。"),
             new GUIContent("配件", "配件对象或 Renderer。"),
-            new GUIContent("预留 6", "预留给项目自定义 Object metadata。"),
+            new GUIContent("CharacterBody / 人体", "人体或身体核心 Renderer。可用于在全角色轮廓之外继续强调身体局部分组。"),
             new GUIContent("预留 7", "预留给项目自定义 Object metadata。")
         };
 
@@ -45,7 +45,7 @@ namespace lilToon.URP.Extensions.Editor.MetadataBuffer
             new Color(0.96f, 0.70f, 0.33f),
             new Color(0.55f, 0.48f, 0.90f),
             new Color(0.30f, 0.72f, 0.78f),
-            new Color(0.70f, 0.70f, 0.70f),
+            new Color(0.78f, 0.64f, 0.42f),
             new Color(0.55f, 0.55f, 0.55f)
         };
 

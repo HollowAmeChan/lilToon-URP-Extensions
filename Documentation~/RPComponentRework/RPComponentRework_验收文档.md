@@ -154,7 +154,7 @@ SSS 不拥有 MaterialBuffer，也不把 composite weight 反写到 Buffer。
 
 ### CharacterSpecialization
 
-`CharacterSpecialization` 消费 MetadataBuffer maskId / objectCustom0 / objectCustom1 和 GeometryBuffer normalDepth。Face、FrontHair、Eye 等对象语义通过 `HoMetadataBufferGroup` 标记。
+`CharacterSpecialization` 消费 MetadataBuffer maskId / objectCustom0 / objectCustom1 和 GeometryBuffer normalDepth；主体/增强轮廓还会读取 GeometryBuffer depth 来恢复来源点世界高度。Face、FrontHair、Eye、CharacterFull、CharacterBody 等对象语义通过 `HoMetadataBufferGroup` 标记。
 
 缺少依赖时跳过当前帧，并在 Feature Inspector runtime status 中暴露缺失项。
 

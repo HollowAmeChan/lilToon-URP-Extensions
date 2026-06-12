@@ -55,6 +55,20 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private SerializedDataParameter subjectOutlineHeightFadeStart;
         private SerializedDataParameter subjectOutlineHeightFadeEnd;
         private SerializedDataParameter subjectOutlineHeightFadeHardness;
+        private SerializedDataParameter enhancedOutlineEnabled;
+        private SerializedDataParameter enhancedOutlineSourceChannel;
+        private SerializedDataParameter enhancedOutlineStrength;
+        private SerializedDataParameter enhancedOutlineRadiusPixels;
+        private SerializedDataParameter enhancedOutlineFogColor;
+        private SerializedDataParameter enhancedOutlineFogHueShiftDegrees;
+        private SerializedDataParameter enhancedOutlineFogSaturation;
+        private SerializedDataParameter enhancedOutlineFogValue;
+        private SerializedDataParameter enhancedOutlineFogSoftness;
+        private SerializedDataParameter enhancedOutlineHeightFadeMode;
+        private SerializedDataParameter enhancedOutlineHeightFadeGroundY;
+        private SerializedDataParameter enhancedOutlineHeightFadeStart;
+        private SerializedDataParameter enhancedOutlineHeightFadeEnd;
+        private SerializedDataParameter enhancedOutlineHeightFadeHardness;
 
         public override void OnEnable()
         {
@@ -105,6 +119,20 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             subjectOutlineHeightFadeStart = Unpack(fetcher.Find(x => x.SubjectOutlineHeightFadeStart));
             subjectOutlineHeightFadeEnd = Unpack(fetcher.Find(x => x.SubjectOutlineHeightFadeEnd));
             subjectOutlineHeightFadeHardness = Unpack(fetcher.Find(x => x.SubjectOutlineHeightFadeHardness));
+            enhancedOutlineEnabled = Unpack(fetcher.Find(x => x.EnhancedOutlineEnabled));
+            enhancedOutlineSourceChannel = Unpack(fetcher.Find(x => x.EnhancedOutlineSourceChannel));
+            enhancedOutlineStrength = Unpack(fetcher.Find(x => x.EnhancedOutlineStrength));
+            enhancedOutlineRadiusPixels = Unpack(fetcher.Find(x => x.EnhancedOutlineRadiusPixels));
+            enhancedOutlineFogColor = Unpack(fetcher.Find(x => x.EnhancedOutlineFogColor));
+            enhancedOutlineFogHueShiftDegrees = Unpack(fetcher.Find(x => x.EnhancedOutlineFogHueShiftDegrees));
+            enhancedOutlineFogSaturation = Unpack(fetcher.Find(x => x.EnhancedOutlineFogSaturation));
+            enhancedOutlineFogValue = Unpack(fetcher.Find(x => x.EnhancedOutlineFogValue));
+            enhancedOutlineFogSoftness = Unpack(fetcher.Find(x => x.EnhancedOutlineFogSoftness));
+            enhancedOutlineHeightFadeMode = Unpack(fetcher.Find(x => x.EnhancedOutlineHeightFadeMode));
+            enhancedOutlineHeightFadeGroundY = Unpack(fetcher.Find(x => x.EnhancedOutlineHeightFadeGroundY));
+            enhancedOutlineHeightFadeStart = Unpack(fetcher.Find(x => x.EnhancedOutlineHeightFadeStart));
+            enhancedOutlineHeightFadeEnd = Unpack(fetcher.Find(x => x.EnhancedOutlineHeightFadeEnd));
+            enhancedOutlineHeightFadeHardness = Unpack(fetcher.Find(x => x.EnhancedOutlineHeightFadeHardness));
         }
 
         public override void OnInspectorGUI()
@@ -168,6 +196,22 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 subjectOutlineHeightFadeStart,
                 subjectOutlineHeightFadeEnd,
                 subjectOutlineHeightFadeHardness,
+                DrawDataParameter);
+            HoCharacterEnhancedOutlineEditorSection.DrawVolume(
+                enhancedOutlineEnabled,
+                enhancedOutlineSourceChannel,
+                enhancedOutlineStrength,
+                enhancedOutlineRadiusPixels,
+                enhancedOutlineFogColor,
+                enhancedOutlineFogHueShiftDegrees,
+                enhancedOutlineFogSaturation,
+                enhancedOutlineFogValue,
+                enhancedOutlineFogSoftness,
+                enhancedOutlineHeightFadeMode,
+                enhancedOutlineHeightFadeGroundY,
+                enhancedOutlineHeightFadeStart,
+                enhancedOutlineHeightFadeEnd,
+                enhancedOutlineHeightFadeHardness,
                 DrawDataParameter);
 
             serializedObject.ApplyModifiedProperties();

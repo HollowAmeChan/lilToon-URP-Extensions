@@ -30,7 +30,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.HelpBox("读取 ObjectCustom0.r 的主体遮罩，使用临时 RenderGraph 纹理生成连续外扩场。", MessageType.None);
+                EditorGUILayout.HelpBox("读取 ObjectCustom0.r / CharacterFull，使用临时 RenderGraph 纹理生成连续外扩场。", MessageType.None);
                 DrawProperty(enabled, "启用主体轮廓");
                 DrawProperty(strength, "强度");
                 DrawProperty(Find(settingsProperty, "subjectOutlineRadiusPixels"), "外扩半径像素");
@@ -73,7 +73,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.HelpBox("读取 ObjectCustom0.r 的主体遮罩，使用临时 RenderGraph 纹理生成连续外扩场。", MessageType.None);
+                EditorGUILayout.HelpBox("读取 ObjectCustom0.r / CharacterFull，使用临时 RenderGraph 纹理生成连续外扩场。", MessageType.None);
                 DrawParameter(enabled, "启用主体轮廓", drawParameter);
                 DrawParameter(strength, "强度", drawParameter);
                 DrawParameter(radiusPixels, "外扩半径像素", drawParameter);

@@ -44,6 +44,26 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         FadeFarFromGround = 2
     }
 
+    public enum HoCharacterObjectCustomChannel
+    {
+        [InspectorName("CharacterFull / 全角色")]
+        CharacterFull = 0,
+        [InspectorName("Face / 脸")]
+        Face = 1,
+        [InspectorName("FrontHair / 前发")]
+        FrontHair = 2,
+        [InspectorName("Eye / 眼睛")]
+        Eye = 3,
+        [InspectorName("EyeRevealArea / 眼透区域")]
+        EyeRevealArea = 4,
+        [InspectorName("Accessory / 配件")]
+        Accessory = 5,
+        [InspectorName("CharacterBody / 人体")]
+        CharacterBody = 6,
+        [InspectorName("Reserved7 / 预留 7")]
+        Reserved7 = 7
+    }
+
     public enum HoCharacterSpecializationDebugMode
     {
         [InspectorName("关闭")]
@@ -71,7 +91,13 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("主体轮廓最终遮罩")]
         SubjectOutlineMask = 11,
         [InspectorName("主体轮廓方向")]
-        SubjectOutlineNormal = 12
+        SubjectOutlineNormal = 12,
+        [InspectorName("增强轮廓源遮罩")]
+        EnhancedOutlineSourceMask = 13,
+        [InspectorName("增强轮廓模糊遮罩")]
+        EnhancedOutlineBlurMask = 14,
+        [InspectorName("增强轮廓雾气遮罩")]
+        EnhancedOutlineFogMask = 15
     }
 
     [Serializable]
@@ -109,8 +135,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [Tooltip("为空时自动使用 Hidden/lilToon-HoCharacterSpecialization/URP/FaceHairDiffuse。一般不需要改。")]
         public Shader faceHairDiffuseShader;
 
-        [InspectorName("主体轮廓 Shader")]
-        [Tooltip("为空时自动使用 Hidden/lilToon-HoCharacterSpecialization/URP/SubjectOutline。一般不需要改。")]
+        [InspectorName("轮廓场 Shader")]
+        [Tooltip("为空时自动使用 Hidden/lilToon-HoCharacterSpecialization/URP/SubjectOutline。主体轮廓和增强轮廓共用它生成外扩场，一般不需要改。")]
         public Shader subjectOutlineShader;
 
         [Header("眼睛透过")]
@@ -243,7 +269,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         [Header("主体轮廓")]
         [InspectorName("启用主体轮廓")]
-        [Tooltip("读取 ObjectCustom0.r 的主体遮罩，生成高精度外扩轮廓。")]
+        [Tooltip("读取 ObjectCustom0.r / CharacterFull 的遮罩，生成高精度外扩轮廓。")]
         public bool subjectOutlineEnabled = false;
 
         [InspectorName("轮廓强度")]
@@ -328,6 +354,71 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [Range(0.1f, 8.0f)]
         public float subjectOutlineHeightFadeHardness = 1.0f;
 
+        [Header("增强轮廓")]
+        [InspectorName("启用增强轮廓")]
+        [Tooltip("从指定 ObjectCustom 分量生成柔化外扩雾气，用于在全角色主体轮廓之外继续强调人体等局部分组。")]
+        public bool enhancedOutlineEnabled = false;
+
+        [InspectorName("来源通道")]
+        [Tooltip("增强轮廓读取的 RSUV / ObjectCustom 分量。默认使用 CharacterBody / ObjectCustom6。")]
+        public HoCharacterObjectCustomChannel enhancedOutlineSourceChannel = HoCharacterObjectCustomChannel.CharacterBody;
+
+        [InspectorName("雾气强度")]
+        [Tooltip("增强轮廓雾气叠到画面上的总强度。")]
+        [Range(0.0f, 1.0f)]
+        public float enhancedOutlineStrength = 0.65f;
+
+        [InspectorName("外扩半径像素")]
+        [Tooltip("增强轮廓雾气向外扩散的屏幕空间半径。")]
+        [Min(0.0f)]
+        public float enhancedOutlineRadiusPixels = 18.0f;
+
+        [InspectorName("雾气颜色")]
+        [Tooltip("先乘到原图底色上的颜色。Alpha 也会乘到最终雾气强度。")]
+        public Color enhancedOutlineFogColor = new Color(1.0f, 0.76f, 0.55f, 1.0f);
+
+        [InspectorName("雾气色相偏移")]
+        [Tooltip("对乘色后的 HSV 色相做偏移，单位为度。")]
+        public float enhancedOutlineFogHueShiftDegrees = 0.0f;
+
+        [InspectorName("雾气饱和度")]
+        [Tooltip("对乘色后的 HSV 饱和度做倍率调整。")]
+        [Range(0.0f, 4.0f)]
+        public float enhancedOutlineFogSaturation = 1.0f;
+
+        [InspectorName("雾气亮度")]
+        [Tooltip("对乘色后的 HSV 明度做倍率调整。")]
+        [Range(0.0f, 4.0f)]
+        public float enhancedOutlineFogValue = 1.0f;
+
+        [InspectorName("雾气柔化")]
+        [Tooltip("控制外扩 SDF 边缘的软硬。低值更雾化，高值更锐。")]
+        [Range(0.05f, 4.0f)]
+        public float enhancedOutlineFogSoftness = 0.45f;
+
+        [InspectorName("高度渐隐")]
+        [Tooltip("按增强轮廓来源点的世界高度减弱雾气。")]
+        public HoCharacterSubjectOutlineHeightFadeMode enhancedOutlineHeightFadeMode = HoCharacterSubjectOutlineHeightFadeMode.Off;
+
+        [InspectorName("地面高度")]
+        [Tooltip("高度渐隐的地面世界 Y。")]
+        public float enhancedOutlineHeightFadeGroundY = 0.0f;
+
+        [InspectorName("渐隐开始距离")]
+        [Tooltip("距离地面小于等于该值时进入渐隐区间。")]
+        [Min(0.0f)]
+        public float enhancedOutlineHeightFadeStart = 0.0f;
+
+        [InspectorName("渐隐结束距离")]
+        [Tooltip("距离地面大于等于该值时结束渐隐区间。")]
+        [Min(0.0f)]
+        public float enhancedOutlineHeightFadeEnd = 1.0f;
+
+        [InspectorName("渐隐硬度")]
+        [Tooltip("高度渐隐过渡曲线的硬度。1 为标准平滑过渡，数值越大越硬，越小越柔。")]
+        [Range(0.1f, 8.0f)]
+        public float enhancedOutlineHeightFadeHardness = 1.0f;
+
         [Header("未来模块")]
         [InspectorName("远平面阴影预留")]
         public bool farPlaneShadowReserved;
@@ -401,6 +492,20 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             subjectOutlineHeightFadeStart = source.subjectOutlineHeightFadeStart;
             subjectOutlineHeightFadeEnd = source.subjectOutlineHeightFadeEnd;
             subjectOutlineHeightFadeHardness = source.subjectOutlineHeightFadeHardness;
+            enhancedOutlineEnabled = source.enhancedOutlineEnabled;
+            enhancedOutlineSourceChannel = source.enhancedOutlineSourceChannel;
+            enhancedOutlineStrength = source.enhancedOutlineStrength;
+            enhancedOutlineRadiusPixels = source.enhancedOutlineRadiusPixels;
+            enhancedOutlineFogColor = source.enhancedOutlineFogColor;
+            enhancedOutlineFogHueShiftDegrees = source.enhancedOutlineFogHueShiftDegrees;
+            enhancedOutlineFogSaturation = source.enhancedOutlineFogSaturation;
+            enhancedOutlineFogValue = source.enhancedOutlineFogValue;
+            enhancedOutlineFogSoftness = source.enhancedOutlineFogSoftness;
+            enhancedOutlineHeightFadeMode = source.enhancedOutlineHeightFadeMode;
+            enhancedOutlineHeightFadeGroundY = source.enhancedOutlineHeightFadeGroundY;
+            enhancedOutlineHeightFadeStart = source.enhancedOutlineHeightFadeStart;
+            enhancedOutlineHeightFadeEnd = source.enhancedOutlineHeightFadeEnd;
+            enhancedOutlineHeightFadeHardness = source.enhancedOutlineHeightFadeHardness;
             farPlaneShadowReserved = source.farPlaneShadowReserved;
             reflectionSpaceReserved = source.reflectionSpaceReserved;
             debugMode = source.debugMode;

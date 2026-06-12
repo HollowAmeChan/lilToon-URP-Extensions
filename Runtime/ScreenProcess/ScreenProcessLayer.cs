@@ -30,7 +30,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         Custom2 = 10,
         [InspectorName("材质自定义通道 3")]
         Custom3 = 11,
-        [InspectorName("主体")]
+        [InspectorName("CharacterFull / 全角色")]
         ObjectCustom0 = 12,
         [InspectorName("脸")]
         ObjectCustom1 = 13,
@@ -42,7 +42,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         ObjectCustom4 = 16,
         [InspectorName("配件")]
         ObjectCustom5 = 17,
-        [InspectorName("预留 6")]
+        [InspectorName("CharacterBody / 人体")]
         ObjectCustom6 = 18,
         [InspectorName("预留 7")]
         ObjectCustom7 = 19
