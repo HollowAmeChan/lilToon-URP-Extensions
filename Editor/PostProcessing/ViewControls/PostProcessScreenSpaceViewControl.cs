@@ -155,8 +155,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                         continue;
                     }
 
-                    DrawDashedLine(center, handle.Position, HandleBlack, handle.LineThickness + 2.0f, 8.0f, 5.0f);
-                    DrawDashedLine(center, handle.Position, HandleWhite, handle.LineThickness, 8.0f, 5.0f);
+                    float alpha = Mathf.Clamp01(handle.Color.a);
+                    Color shadow = new Color(HandleBlack.r, HandleBlack.g, HandleBlack.b, HandleBlack.a * alpha);
+                    Color line = new Color(handle.Color.r, handle.Color.g, handle.Color.b, HandleWhite.a * alpha);
+                    DrawDashedLine(center, handle.Position, shadow, handle.LineThickness + 2.0f, 8.0f, 5.0f);
+                    DrawDashedLine(center, handle.Position, line, handle.LineThickness, 8.0f, 5.0f);
                 }
 
                 for (int i = 0; i < handles.Length; i++)
@@ -244,52 +247,58 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             if (handle.Kind == PostProcessScreenSpaceHandleKind.Angle || handle.Kind == PostProcessScreenSpaceHandleKind.Direction)
             {
-                DrawRotationHandle(handle.Position, active);
+                DrawRotationHandle(handle.Position, handle.Color, active);
                 return;
             }
 
             if (handle.Kind == PostProcessScreenSpaceHandleKind.HorizontalScale || handle.Kind == PostProcessScreenSpaceHandleKind.VerticalScale)
             {
-                DrawScaleHandle(handle.Position, handle.Kind == PostProcessScreenSpaceHandleKind.HorizontalScale, active);
+                DrawScaleHandle(handle.Position, handle.Color, handle.Kind == PostProcessScreenSpaceHandleKind.HorizontalScale, active);
                 return;
             }
 
-            DrawBoxHandle(handle.Position, active);
+            DrawBoxHandle(handle.Position, handle.Color, active);
         }
 
         public static void DrawHandle(Vector2 center, string label, Color color, bool active = false)
         {
-            DrawBoxHandle(center, active);
+            DrawBoxHandle(center, color, active);
         }
 
-        private static void DrawBoxHandle(Vector2 center, bool active)
+        private static void DrawBoxHandle(Vector2 center, Color color, bool active)
         {
             if (Event.current.type != EventType.Repaint)
             {
                 return;
             }
 
+            color = ResolveHandleColor(color, active);
+            Color outlineColor = new Color(HandleBlack.r, HandleBlack.g, HandleBlack.b, HandleBlack.a * color.a);
+            Color shadowColor = new Color(HandleShadow.r, HandleShadow.g, HandleShadow.b, HandleShadow.a * color.a);
             float size = active ? 11.0f : 9.0f;
             Rect shadow = new Rect(center.x - size * 0.5f - 2.0f, center.y - size * 0.5f - 2.0f, size + 4.0f, size + 4.0f);
             Rect outline = new Rect(center.x - size * 0.5f - 1.0f, center.y - size * 0.5f - 1.0f, size + 2.0f, size + 2.0f);
             Rect fill = new Rect(center.x - size * 0.5f, center.y - size * 0.5f, size, size);
-            EditorGUI.DrawRect(shadow, HandleShadow);
-            EditorGUI.DrawRect(outline, HandleBlack);
-            EditorGUI.DrawRect(fill, HandleWhite);
+            EditorGUI.DrawRect(shadow, shadowColor);
+            EditorGUI.DrawRect(outline, outlineColor);
+            EditorGUI.DrawRect(fill, color);
             if (active)
             {
-                DrawLine(new Vector2(center.x - 7.0f, center.y), new Vector2(center.x + 7.0f, center.y), HandleBlack, 1.0f);
-                DrawLine(new Vector2(center.x, center.y - 7.0f), new Vector2(center.x, center.y + 7.0f), HandleBlack, 1.0f);
+                DrawLine(new Vector2(center.x - 7.0f, center.y), new Vector2(center.x + 7.0f, center.y), outlineColor, 1.0f);
+                DrawLine(new Vector2(center.x, center.y - 7.0f), new Vector2(center.x, center.y + 7.0f), outlineColor, 1.0f);
             }
         }
 
-        private static void DrawScaleHandle(Vector2 center, bool horizontal, bool active)
+        private static void DrawScaleHandle(Vector2 center, Color color, bool horizontal, bool active)
         {
             if (Event.current.type != EventType.Repaint)
             {
                 return;
             }
 
+            color = ResolveHandleColor(color, active);
+            Color outlineColor = new Color(HandleBlack.r, HandleBlack.g, HandleBlack.b, HandleBlack.a * color.a);
+            Color shadowColor = new Color(HandleShadow.r, HandleShadow.g, HandleShadow.b, HandleShadow.a * color.a);
             float width = horizontal ? 15.0f : 9.0f;
             float height = horizontal ? 9.0f : 15.0f;
             if (active)
@@ -301,38 +310,55 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Rect shadow = new Rect(center.x - width * 0.5f - 2.0f, center.y - height * 0.5f - 2.0f, width + 4.0f, height + 4.0f);
             Rect outline = new Rect(center.x - width * 0.5f - 1.0f, center.y - height * 0.5f - 1.0f, width + 2.0f, height + 2.0f);
             Rect fill = new Rect(center.x - width * 0.5f, center.y - height * 0.5f, width, height);
-            EditorGUI.DrawRect(shadow, HandleShadow);
-            EditorGUI.DrawRect(outline, HandleBlack);
-            EditorGUI.DrawRect(fill, HandleWhite);
+            EditorGUI.DrawRect(shadow, shadowColor);
+            EditorGUI.DrawRect(outline, outlineColor);
+            EditorGUI.DrawRect(fill, color);
             if (horizontal)
             {
-                DrawLine(new Vector2(center.x - 5.0f, center.y), new Vector2(center.x + 5.0f, center.y), HandleBlack, 1.0f);
+                DrawLine(new Vector2(center.x - 5.0f, center.y), new Vector2(center.x + 5.0f, center.y), outlineColor, 1.0f);
             }
             else
             {
-                DrawLine(new Vector2(center.x, center.y - 5.0f), new Vector2(center.x, center.y + 5.0f), HandleBlack, 1.0f);
+                DrawLine(new Vector2(center.x, center.y - 5.0f), new Vector2(center.x, center.y + 5.0f), outlineColor, 1.0f);
             }
         }
 
-        private static void DrawRotationHandle(Vector2 center, bool active)
+        private static void DrawRotationHandle(Vector2 center, Color color, bool active)
         {
             if (Event.current.type != EventType.Repaint)
             {
                 return;
             }
 
+            color = ResolveHandleColor(color, active);
+            Color outlineColor = new Color(HandleBlack.r, HandleBlack.g, HandleBlack.b, HandleBlack.a * color.a);
             float radius = active ? 12.0f : 10.0f;
-            DrawArc(center, radius, -210.0f, 130.0f, HandleBlack, 4.0f);
-            DrawArc(center, radius, -210.0f, 130.0f, HandleWhite, 2.0f);
+            DrawArc(center, radius, -210.0f, 130.0f, outlineColor, 4.0f);
+            DrawArc(center, radius, -210.0f, 130.0f, color, 2.0f);
 
             float endAngle = 130.0f * Mathf.Deg2Rad;
             Vector2 tip = center + new Vector2(Mathf.Cos(endAngle), Mathf.Sin(endAngle)) * radius;
             Vector2 tangent = new Vector2(-Mathf.Sin(endAngle), Mathf.Cos(endAngle));
             Vector2 normal = new Vector2(Mathf.Cos(endAngle), Mathf.Sin(endAngle));
-            DrawLine(tip, tip - tangent * 6.0f - normal * 3.0f, HandleBlack, 4.0f);
-            DrawLine(tip, tip + tangent * 1.0f - normal * 7.0f, HandleBlack, 4.0f);
-            DrawLine(tip, tip - tangent * 6.0f - normal * 3.0f, HandleWhite, 2.0f);
-            DrawLine(tip, tip + tangent * 1.0f - normal * 7.0f, HandleWhite, 2.0f);
+            DrawLine(tip, tip - tangent * 6.0f - normal * 3.0f, outlineColor, 4.0f);
+            DrawLine(tip, tip + tangent * 1.0f - normal * 7.0f, outlineColor, 4.0f);
+            DrawLine(tip, tip - tangent * 6.0f - normal * 3.0f, color, 2.0f);
+            DrawLine(tip, tip + tangent * 1.0f - normal * 7.0f, color, 2.0f);
+        }
+
+        private static Color ResolveHandleColor(Color color, bool active)
+        {
+            if (color.a <= 0.0001f)
+            {
+                color = HandleWhite;
+            }
+
+            if (active)
+            {
+                color.a = Mathf.Max(color.a, 0.72f);
+            }
+
+            return color;
         }
 
         private static void DrawArc(Vector2 center, float radius, float startDegrees, float endDegrees, Color color, float thickness)

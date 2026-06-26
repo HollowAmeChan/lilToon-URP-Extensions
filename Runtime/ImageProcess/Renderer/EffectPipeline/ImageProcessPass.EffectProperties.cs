@@ -68,6 +68,13 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             material.SetTexture(ImageProcessShaderConstants.LogoTextureIds[index], texture);
+            material.SetVector(
+                ImageProcessShaderConstants.LogoTextureTexelSizeIds[index],
+                new Vector4(
+                    1.0f / Mathf.Max(texture.width, 1),
+                    1.0f / Mathf.Max(texture.height, 1),
+                    texture.width,
+                    texture.height));
         }
 
         private static void ApplyEffectPropertyDefaults(ImageProcessEffect effect, ref LayerPropertyBlock properties)

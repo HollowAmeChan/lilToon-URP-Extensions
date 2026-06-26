@@ -100,7 +100,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 Request(ImageProcessResourceKind.ExternalTexture, "layer-supplied weather texture")));
             Add(catalog, SinglePass(
                 ImageProcessEffect.Particle,
-                Request(ImageProcessResourceKind.ExternalTexture, "layer-supplied particle texture")));
+                Request(ImageProcessResourceKind.ExternalTexture, "layer-supplied feather texture slots")));
             Add(catalog, SinglePass(ImageProcessEffect.CameraSwitcher));
             Add(catalog, SinglePass(ImageProcessEffect.TransparentBackground));
             Add(catalog, SinglePass(ImageProcessEffect.VHS));

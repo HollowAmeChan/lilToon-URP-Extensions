@@ -24,6 +24,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private const string TrackballShaderName = "Hidden/Universal Render Pipeline/Editor/Trackball";
         private const string DefaultDistortionTextureGuid = "f4c1f3c21e3ec4a479c69cffea26c6cd";
         private const string DefaultVhsEdgeNoiseTextureGuid = "014de9bcc7cd0a148929d7e58755ee44";
+        private const string DefaultFeatherParticleLargeTextureGuid = "b48fa69ab45f44318ad8b46afe34cfc7";
+        private const string DefaultFeatherParticleSmallTextureGuid = "77ce570fc573479190a9bc876c4fe1d3";
         private const string PackageAssetRoot = "Packages/jp.lilxyzw.liltoon.urp.extensions";
         private const bool showAdvancedSettings = false;
         private static Texture2D colorWheelTexture;
@@ -524,6 +526,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ImageProcessEffect.Particle)
+            {
+                DrawParticleElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ImageProcessEffect.CinematicBars)
             {
                 DrawCinematicBarsElement(rect, element);
@@ -702,6 +710,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ImageProcessEffect.Weather:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
                     lineCount += GetWeatherLineCount(element);
+                    break;
+                case ImageProcessEffect.Particle:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += GetParticleLineCount(element);
                     break;
                 case ImageProcessEffect.CinematicBars:
                     lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
@@ -1622,6 +1634,21 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters2", new Vector4(1.0f, 1.0f, 1.0f, 0.35f));
                     SetVector4(element, "parameters3", Vector4.one);
                     break;
+                case ImageProcessEffect.Particle:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetColor(element, "color", Color.white);
+                    SetDefaultFeatherParticleTextures(element);
+                    SetVector4(element, "parameters0", new Vector4(0.85f, 0.85f, 0.85f, 13.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.0f, -90.0f, 0.16f, 0.85f));
+                    SetVector4(element, "parameters2", new Vector4(0.5f, 0.58f, 0.0f, 0.0f));
+                    SetVector4(element, "parameters3", new Vector4(0.62f, 0.85f, 0.35f, 2.0f));
+                    SetVector4(element, "parameters4", new Vector4(0.16f, 0.0f, 0.55f, 0.34f));
+                    SetVector4(element, "parameters5", new Vector4(0.0f, 1.0f, 1.0f, 0.22f));
+                    SetVector4(element, "parameters6", new Vector4(0.13f, 2.4f, 0.65f, 0.58f));
+                    SetVector4(element, "parameters7", new Vector4(1.15f, 1.45f, 0.75f, 1.25f));
+                    SetVector4(element, "parameters8", new Vector4(2.0f, 0.0f, 1.0f, 3.0f));
+                    SetVector4(element, "parameters9", new Vector4(0.0f, -90.0f, 0.0f, 0.75f));
+                    break;
                 case ImageProcessEffect.CinematicBars:
                     SetFloat(element, "intensity", 1.0f);
                     SetColor(element, "color", Color.black);
@@ -1656,7 +1683,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ImageProcessEffect.Lighting:
                 case ImageProcessEffect.LED:
-                case ImageProcessEffect.Particle:
                 case ImageProcessEffect.CameraSwitcher:
                 case ImageProcessEffect.TransparentBackground:
                 case ImageProcessEffect.CameraFlash:

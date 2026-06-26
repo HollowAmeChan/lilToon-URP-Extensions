@@ -24,6 +24,17 @@ namespace lilToon.URP.Extensions.PostProcessing
             Shader.PropertyToID("_LogoTexture6"),
             Shader.PropertyToID("_LogoTexture7")
         };
+        public static readonly int[] LogoTextureTexelSizeIds =
+        {
+            Shader.PropertyToID("_LogoTexture0_TexelSize"),
+            Shader.PropertyToID("_LogoTexture1_TexelSize"),
+            Shader.PropertyToID("_LogoTexture2_TexelSize"),
+            Shader.PropertyToID("_LogoTexture3_TexelSize"),
+            Shader.PropertyToID("_LogoTexture4_TexelSize"),
+            Shader.PropertyToID("_LogoTexture5_TexelSize"),
+            Shader.PropertyToID("_LogoTexture6_TexelSize"),
+            Shader.PropertyToID("_LogoTexture7_TexelSize")
+        };
         public static readonly int LogoTextureEnabled0Id = Shader.PropertyToID("_LogoTextureEnabled0");
         public static readonly int LogoTextureEnabled1Id = Shader.PropertyToID("_LogoTextureEnabled1");
         public static readonly int LayerParams0Id = Shader.PropertyToID("_LayerParams0");

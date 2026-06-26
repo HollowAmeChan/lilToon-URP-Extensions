@@ -101,6 +101,15 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private void AddImageProcessSpecificPresetMenuItems(GenericMenu menu, string propertyPath, ImageProcessEffect effect)
         {
+            if (effect == ImageProcessEffect.Particle)
+            {
+                AddImageProcessPresetMenuItem(menu, propertyPath, effect, "缓降飘落羽毛", ApplyImageProcessSoftFeatherParticlePreset);
+                AddImageProcessPresetMenuItem(menu, propertyPath, effect, "透视放射羽毛", ApplyImageProcessRadialFeatherParticlePreset);
+                AddImageProcessPresetMenuItem(menu, propertyPath, effect, "铺满屏落羽毛", ApplyImageProcessFilledFeatherParticlePreset);
+                AddImageProcessPresetMenuItem(menu, propertyPath, effect, "乱流飞散羽毛", ApplyImageProcessChaoticFeatherParticlePreset);
+                return;
+            }
+
             switch (effect)
             {
                 case ImageProcessEffect.SharpenBefore:
@@ -147,6 +156,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "雪", ApplyImageProcessSnowWeatherPreset);
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "烟雾", ApplyImageProcessSmokeWeatherPreset);
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "灰尘", ApplyImageProcessDustWeatherPreset);
+                    break;
+                case ImageProcessEffect.Particle:
+                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "缓降羽毛", ApplyImageProcessSoftFeatherParticlePreset);
+                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "透视放射羽毛", ApplyImageProcessRadialFeatherParticlePreset);
                     break;
                 case ImageProcessEffect.GlitchArt:
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "赛博慢抖", ApplyImageProcessCyberGlitchArtPreset);
@@ -549,6 +562,70 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetVector4(element, "parameters1", new Vector4(0.9f, 0.35f, 1.0f, particle == 0 ? 1.0f : 2.0f));
             SetVector4(element, "parameters2", particleParams);
             SetVector4(element, "parameters3", variationParams);
+        }
+
+        private static void ApplyImageProcessSoftFeatherParticlePreset(SerializedProperty element, ImageProcessEffect effect)
+        {
+            ApplyImageProcessDefaultPreset(element, effect);
+            SetColor(element, "color", Color.white);
+            SetVector4(element, "parameters0", new Vector4(0.88f, 0.88f, 0.78f, 13.0f));
+            SetVector4(element, "parameters1", new Vector4(0.0f, -92.0f, 0.14f, 0.78f));
+            SetVector4(element, "parameters2", new Vector4(0.50f, 0.58f, 0.0f, 0.0f));
+            SetVector4(element, "parameters3", new Vector4(0.72f, 0.92f, 0.32f, 1.25f));
+            SetVector4(element, "parameters4", new Vector4(0.16f, 0.0f, 0.55f, 0.36f));
+            SetVector4(element, "parameters5", new Vector4(0.0f, 1.0f, 1.0f, 0.20f));
+            SetVector4(element, "parameters6", new Vector4(0.12f, 2.3f, 0.55f, 2.0f));
+            SetVector4(element, "parameters7", new Vector4(1.15f, 1.45f, 0.72f, 1.10f));
+            SetVector4(element, "parameters8", new Vector4(2.0f, 0.0f, 1.0f, 3.0f));
+            SetVector4(element, "parameters9", new Vector4(0.0f, -90.0f, 0.0f, 0.75f));
+        }
+
+        private static void ApplyImageProcessRadialFeatherParticlePreset(SerializedProperty element, ImageProcessEffect effect)
+        {
+            ApplyImageProcessDefaultPreset(element, effect);
+            SetColor(element, "color", Color.white);
+            SetVector4(element, "parameters0", new Vector4(0.82f, 0.82f, 0.72f, 16.0f));
+            SetVector4(element, "parameters1", new Vector4(1.0f, -90.0f, 0.18f, 0.95f));
+            SetVector4(element, "parameters2", new Vector4(0.50f, 0.48f, 0.0f, 0.0f));
+            SetVector4(element, "parameters3", new Vector4(0.62f, 1.08f, 0.48f, 1.55f));
+            SetVector4(element, "parameters4", new Vector4(0.15f, 0.0f, 0.65f, 0.55f));
+            SetVector4(element, "parameters5", new Vector4(0.0f, 0.95f, 1.08f, 0.28f));
+            SetVector4(element, "parameters6", new Vector4(0.18f, 2.8f, 0.92f, 2.0f));
+            SetVector4(element, "parameters7", new Vector4(1.45f, 1.85f, 0.92f, 1.35f));
+            SetVector4(element, "parameters8", new Vector4(2.0f, 0.0f, 1.0f, 3.0f));
+            SetVector4(element, "parameters9", new Vector4(1.0f, -90.0f, 0.0f, 0.75f));
+        }
+
+        private static void ApplyImageProcessFilledFeatherParticlePreset(SerializedProperty element, ImageProcessEffect effect)
+        {
+            ApplyImageProcessDefaultPreset(element, effect);
+            SetColor(element, "color", Color.white);
+            SetVector4(element, "parameters0", new Vector4(1.0f, 0.82f, 0.18f, 28.0f));
+            SetVector4(element, "parameters1", new Vector4(0.0f, -90.0f, 0.18f, 0.52f));
+            SetVector4(element, "parameters2", new Vector4(0.50f, 0.56f, 0.0f, 0.0f));
+            SetVector4(element, "parameters3", new Vector4(0.10f, 0.65f, 0.10f, 0.12f));
+            SetVector4(element, "parameters4", new Vector4(0.12f, 0.0f, 0.22f, 0.12f));
+            SetVector4(element, "parameters5", new Vector4(0.0f, 1.0f, 1.0f, 0.05f));
+            SetVector4(element, "parameters6", new Vector4(0.03f, 2.0f, 0.28f, 2.0f));
+            SetVector4(element, "parameters7", new Vector4(2.5f, 1.25f, 0.60f, 1.10f));
+            SetVector4(element, "parameters8", new Vector4(2.0f, 0.0f, 1.0f, 3.0f));
+            SetVector4(element, "parameters9", new Vector4(0.0f, -90.0f, 0.12f, 0.98f));
+        }
+
+        private static void ApplyImageProcessChaoticFeatherParticlePreset(SerializedProperty element, ImageProcessEffect effect)
+        {
+            ApplyImageProcessDefaultPreset(element, effect);
+            SetColor(element, "color", Color.white);
+            SetVector4(element, "parameters0", new Vector4(0.82f, 0.84f, 0.34f, 24.0f));
+            SetVector4(element, "parameters1", new Vector4(0.0f, -88.0f, 0.22f, 0.92f));
+            SetVector4(element, "parameters2", new Vector4(0.50f, 0.50f, 0.0f, 0.0f));
+            SetVector4(element, "parameters3", new Vector4(0.58f, 1.85f, 0.95f, 1.20f));
+            SetVector4(element, "parameters4", new Vector4(0.14f, 14.0f, 0.68f, 0.58f));
+            SetVector4(element, "parameters5", new Vector4(0.70f, 1.15f, 0.92f, 0.62f));
+            SetVector4(element, "parameters6", new Vector4(0.24f, 3.8f, 0.85f, 3.0f));
+            SetVector4(element, "parameters7", new Vector4(2.25f, 1.55f, 1.10f, 1.55f));
+            SetVector4(element, "parameters8", new Vector4(2.0f, 0.0f, 0.95f, 3.0f));
+            SetVector4(element, "parameters9", new Vector4(1.0f, -90.0f, 0.18f, 0.86f));
         }
 
         private static void ApplyImageProcessFilm60Preset(SerializedProperty element, ImageProcessEffect effect)

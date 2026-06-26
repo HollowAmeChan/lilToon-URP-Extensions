@@ -24,6 +24,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 else if (serializedObject?.targetObject != null)
                 {
                     ImageProcessDirectionDistanceViewControl.Stop();
+                    ImageProcessParticleViewControl.Stop();
                     ImageProcessCenterRadiusViewControl.Start(serializedObject.targetObject, element, OnImageProcessCenterRadiusGameViewGUI);
                 }
             }
@@ -43,6 +44,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 else if (serializedObject?.targetObject != null)
                 {
                     ImageProcessCenterRadiusViewControl.Stop();
+                    ImageProcessParticleViewControl.Stop();
                     ImageProcessDirectionDistanceViewControl.Start(serializedObject.targetObject, element, OnImageProcessDirectionDistanceGameViewGUI);
                 }
             }
@@ -69,6 +71,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             ImageProcessCenterRadiusViewControl.StopIfOwnedBy(serializedObject.targetObject);
             ImageProcessDirectionDistanceViewControl.StopIfOwnedBy(serializedObject.targetObject);
+            ImageProcessParticleViewControl.StopIfOwnedBy(serializedObject.targetObject);
         }
 
         private static void OnImageProcessCenterRadiusGameViewGUI(Rect viewRect, Event evt)
