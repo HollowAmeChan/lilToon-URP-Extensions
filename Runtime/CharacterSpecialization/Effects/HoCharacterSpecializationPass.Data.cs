@@ -23,6 +23,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public TextureHandle eyeDataTexture;
             public Material material;
             public Vector4 eyeRevealParams;
+            public Vector4 eyeAngleParams;
             public Vector4 hairShadowParams;
             public Vector4 hairShadowParams1;
             public Vector4 hairShadowParams2;

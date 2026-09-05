@@ -137,6 +137,7 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 - 读取 MetadataBuffer 的对象自定义位和角色 ID。`ObjectCustom0` 约定为 `CharacterFull / 全角色`，`ObjectCustom6` 约定为 `CharacterBody / 人体`。
 - 读取 GeometryBuffer normal/depth 辅助前发投影距离、深度、轮廓高度渐隐和遮罩判断。
 - 合成眼睛透过、前发投影、脸色扩散、主体轮廓、增强轮廓，或输出调试视图。
+- 眼睛透过支持相机角度修正：在 `HoMetadataBufferGroup` 上指定“面部朝向”（一个 Transform，骨骼或朝向正确的空物体均可；+Z 为脸前、+X 为角色右、+Y 为上，轴向可在组件上配置），CPU 每帧按相机与该朝向的平转/俯仰角写入 256×1 查询表，Composite 中按角色 ID 采样并衰减眼透不透明度。开关与平转/俯仰半角范围、柔化、强度由 Volume/Feature 全局控制（默认关闭）。
 
 材质接入点保留在 shader include 中：角色捕获 pass 应调用 `LilHoCharacterBuildCaptureOutput`，并让材质自己的 alpha、cutout、dissolve 规则决定是否写入捕获 RT。
 

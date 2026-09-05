@@ -16,6 +16,11 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private SerializedDataParameter eyeRevealDepthBias;
         private SerializedDataParameter useEyeRevealArea;
         private SerializedDataParameter sameCharacterOnly;
+        private SerializedDataParameter eyeRevealAngleEnabled;
+        private SerializedDataParameter eyeRevealAngleStrength;
+        private SerializedDataParameter eyeRevealAngleYawRangeDegrees;
+        private SerializedDataParameter eyeRevealAnglePitchRangeDegrees;
+        private SerializedDataParameter eyeRevealAngleSoftnessDegrees;
         private SerializedDataParameter hairDropShadowEnabled;
         private SerializedDataParameter hairShadowColor;
         private SerializedDataParameter hairShadowOpacity;
@@ -80,6 +85,11 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             eyeRevealDepthBias = Unpack(fetcher.Find(x => x.EyeRevealDepthBias));
             useEyeRevealArea = Unpack(fetcher.Find(x => x.UseEyeRevealArea));
             sameCharacterOnly = Unpack(fetcher.Find(x => x.SameCharacterOnly));
+            eyeRevealAngleEnabled = Unpack(fetcher.Find(x => x.EyeRevealAngleEnabled));
+            eyeRevealAngleStrength = Unpack(fetcher.Find(x => x.EyeRevealAngleStrength));
+            eyeRevealAngleYawRangeDegrees = Unpack(fetcher.Find(x => x.EyeRevealAngleYawRangeDegrees));
+            eyeRevealAnglePitchRangeDegrees = Unpack(fetcher.Find(x => x.EyeRevealAnglePitchRangeDegrees));
+            eyeRevealAngleSoftnessDegrees = Unpack(fetcher.Find(x => x.EyeRevealAngleSoftnessDegrees));
             hairDropShadowEnabled = Unpack(fetcher.Find(x => x.HairDropShadowEnabled));
             hairShadowColor = Unpack(fetcher.Find(x => x.HairShadowColor));
             hairShadowOpacity = Unpack(fetcher.Find(x => x.HairShadowOpacity));
@@ -151,6 +161,11 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 eyeRevealDepthBias,
                 useEyeRevealArea,
                 sameCharacterOnly,
+                eyeRevealAngleEnabled,
+                eyeRevealAngleStrength,
+                eyeRevealAngleYawRangeDegrees,
+                eyeRevealAnglePitchRangeDegrees,
+                eyeRevealAngleSoftnessDegrees,
                 DrawDataParameter);
             HoCharacterDropShadowEditorSection.DrawVolume(
                 hairDropShadowEnabled,

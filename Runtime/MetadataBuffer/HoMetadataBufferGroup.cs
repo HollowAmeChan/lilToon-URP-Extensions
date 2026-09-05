@@ -1,9 +1,28 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace lilToon.URP.Extensions.MetadataBuffer
 {
+    /// <summary>
+    /// 角色面部朝向参考的局部轴选择。三个轴向分别在 HoMetadataBufferGroup 上配置，
+    /// 常见约定：+Z 脸前、+X 角色右侧、+Y 角色上方。
+    /// </summary>
+    public enum HoFaceAxis
+    {
+        [InspectorName("+Y (Up)")]
+        Up = 0,
+        [InspectorName("-Y (Down)")]
+        Down = 1,
+        [InspectorName("+X (Right)")]
+        Right = 2,
+        [InspectorName("-X (Left)")]
+        Left = 3,
+        [InspectorName("+Z (Forward)")]
+        Forward = 4,
+        [InspectorName("-Z (Backward)")]
+        Backward = 5
+    }
     [ExecuteAlways]
     [DisallowMultipleComponent]
     public sealed class HoMetadataBufferGroup : MonoBehaviour
@@ -31,6 +50,22 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         [InspectorName("标记 (Flags)")]
         [Range(0, 255)]
         public int flags;
+
+        [InspectorName("面部朝向")]
+        [Tooltip("确定角色面部朝向的 Transform——可以是骨骼，也可以是一个朝向正确的空物体。仅供各消费者系统读取（眼透相机角度修正、未来的 SDF 等）；留空表示未提供。以 Transform 的局部轴配合下方三个轴向设置来定义脸前/右/上。")]
+        public Transform faceBone;
+
+        [InspectorName("脸前轴")]
+        [Tooltip("骨骼的哪个局部轴作为“脸前方”。默认 +Z（Unity 模型常见脸前约定）。")]
+        public HoFaceAxis faceForwardAxis = HoFaceAxis.Forward;
+
+        [InspectorName("右轴")]
+        [Tooltip("骨骼的哪个局部轴作为“角色右侧（画面左侧）”。默认 +X。")]
+        public HoFaceAxis faceRightAxis = HoFaceAxis.Right;
+
+        [InspectorName("上轴")]
+        [Tooltip("骨骼的哪个局部轴作为“角色上方”。默认 +Y。俯仰角按此轴分解，若俯视/仰视不生效请检查此项。")]
+        public HoFaceAxis faceUpAxis = HoFaceAxis.Up;
 
         [InspectorName("展开预制件")]
         [Tooltip("拖入 GameObject 或预制件实例时，包含它下面的子级 Renderer。关闭时只使用物体自身的 Renderer。")]
@@ -114,6 +149,57 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         public void Apply()
         {
             RebuildAll();
+        }
+
+        public static IReadOnlyList<HoMetadataBufferGroup> GetActiveGroups()
+        {
+            return ActiveGroups;
+        }
+
+        /// <summary>
+        /// 提供角色世界朝向（供眼透相机角度修正、SDF 等消费者系统读取）。
+        /// 以 <see cref="faceBone"/> 的局部轴按三个轴向配置换算成世界向量；
+        /// 未设置朝向时返回 false。不负责相机相关计算，仅输出朝向参考数据。
+        /// </summary>
+        public bool TryGetWorldFacing(
+            out Vector3 position,
+            out Vector3 forward,
+            out Vector3 right,
+            out Vector3 up)
+        {
+            if (faceBone == null)
+            {
+                position = Vector3.zero;
+                forward = Vector3.zero;
+                right = Vector3.zero;
+                up = Vector3.zero;
+                return false;
+            }
+
+            position = faceBone.position;
+            forward = GetLocalAxis(faceBone, faceForwardAxis).normalized;
+            right = GetLocalAxis(faceBone, faceRightAxis).normalized;
+            up = GetLocalAxis(faceBone, faceUpAxis).normalized;
+            return true;
+        }
+
+        private static Vector3 GetLocalAxis(Transform reference, HoFaceAxis axis)
+        {
+            switch (axis)
+            {
+                case HoFaceAxis.Up:
+                    return reference.up;
+                case HoFaceAxis.Down:
+                    return -reference.up;
+                case HoFaceAxis.Right:
+                    return reference.right;
+                case HoFaceAxis.Left:
+                    return -reference.right;
+                case HoFaceAxis.Forward:
+                    return reference.forward;
+                default:
+                    return -reference.forward;
+            }
         }
 
         public static void RefreshLoadedScenes()

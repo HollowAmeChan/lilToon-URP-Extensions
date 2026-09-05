@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -137,6 +137,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             Enable.overrideState = true;
             EyeRevealEnabled.overrideState = true;
             EyeRevealStrength.overrideState = true;
+            EyeRevealAngleEnabled.overrideState = true;
+            EyeRevealAngleStrength.overrideState = true;
+            EyeRevealAngleYawRangeDegrees.overrideState = true;
+            EyeRevealAnglePitchRangeDegrees.overrideState = true;
+            EyeRevealAngleSoftnessDegrees.overrideState = true;
             HairDropShadowEnabled.overrideState = true;
             HairShadowColor.overrideState = true;
             HairShadowOpacity.overrideState = true;
@@ -229,6 +234,21 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         [InspectorName("仅同角色"), Tooltip("启用后，只允许同 Character ID 的前发影响同角色的眼睛/脸。")]
         public BoolParameter SameCharacterOnly = new BoolParameter(true);
+
+        [InspectorName("启用相机角度修正"), Tooltip("开启后，眼睛透过会按相机与角色面部朝向的夹角衰减。角色面部朝向由 HoMetadataBufferGroup 上的“面部朝向”提供（Transform，骨骼或空物体均可）。")]
+        public BoolParameter EyeRevealAngleEnabled = new BoolParameter(false);
+
+        [InspectorName("角度修正强度"), Tooltip("相机偏离正脸时眼睛透过衰减的总强度。1 表示超出角度范围完全关闭眼睛透过。")]
+        public ClampedFloatParameter EyeRevealAngleStrength = new ClampedFloatParameter(1.0f, 0.0f, 1.0f);
+
+        [InspectorName("平转半角范围"), Tooltip("相机绕角色竖直轴的水平转动半角范围，单位为度。")]
+        public ClampedFloatParameter EyeRevealAngleYawRangeDegrees = new ClampedFloatParameter(90.0f, 0.0f, 360.0f);
+
+        [InspectorName("俯仰半角范围"), Tooltip("相机相对角色脸的俯仰半角范围，单位为度。")]
+        public ClampedFloatParameter EyeRevealAnglePitchRangeDegrees = new ClampedFloatParameter(60.0f, 0.0f, 360.0f);
+
+        [InspectorName("角度柔化"), Tooltip("角度衰减边缘的柔化范围，单位为度。")]
+        public ClampedFloatParameter EyeRevealAngleSoftnessDegrees = new ClampedFloatParameter(40.0f, 0.0f, 180.0f);
 
         [InspectorName("启用前发投影"), Tooltip("用 FrontHair 标记向 Face 标记投射屏幕空间阴影。")]
         public BoolParameter HairDropShadowEnabled = new BoolParameter(true);
@@ -428,6 +448,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             target.eyeRevealDepthBias = EyeRevealDepthBias.value;
             target.useEyeRevealArea = UseEyeRevealArea.value;
             target.sameCharacterOnly = SameCharacterOnly.value;
+            target.eyeRevealAngleEnabled = EyeRevealAngleEnabled.value;
+            target.eyeRevealAngleStrength = EyeRevealAngleStrength.value;
+            target.eyeRevealAngleYawRangeDegrees = EyeRevealAngleYawRangeDegrees.value;
+            target.eyeRevealAnglePitchRangeDegrees = EyeRevealAnglePitchRangeDegrees.value;
+            target.eyeRevealAngleSoftnessDegrees = EyeRevealAngleSoftnessDegrees.value;
             target.hairDropShadowEnabled = HairDropShadowEnabled.value;
             target.hairShadowColor = HairShadowColor.value;
             target.hairShadowOpacity = HairShadowOpacity.value;

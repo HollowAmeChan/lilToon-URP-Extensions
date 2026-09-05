@@ -1,4 +1,4 @@
-﻿using System.Collections.Generic;
+using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
 using lilToon.URP.Extensions.MetadataBuffer;
@@ -24,6 +24,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private Material captureClearMaterial;
         private Material faceHairDiffuseMaterial;
         private Material subjectOutlineMaterial;
+        private HoCharacterEyeAngleTable eyeAngleTable;
         private Shader compositeShader;
         private Shader captureClearShader;
         private Shader faceHairDiffuseShader;
@@ -38,6 +39,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public override void Create()
         {
             pass = new HoCharacterSpecializationPass();
+            eyeAngleTable = new HoCharacterEyeAngleTable();
         }
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
@@ -76,6 +78,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             }
 
             EnsureMaterial(activeSettings);
+            // 注意：UPR 17 fork 的 RenderGraph 主路径不调用 SetupRenderPasses，只在 AddRenderPasses 里能拿到每相机时机。
+            eyeAngleTable?.UpdateForCamera(renderingData.cameraData.camera, activeSettings);
             if (compositeMaterial == null)
             {
                 pass?.ReleaseCompatibilityResources();
@@ -101,6 +105,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             pass?.Dispose();
             pass = null;
             renderTargets.Release();
+            eyeAngleTable?.Dispose();
+            eyeAngleTable = null;
             CoreUtils.Destroy(compositeMaterial);
             CoreUtils.Destroy(captureClearMaterial);
             CoreUtils.Destroy(faceHairDiffuseMaterial);
@@ -400,6 +406,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 ApplyMaterialProperties(compositeMaterial, settings);
                 cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, renderTargets.EyeColorTexture.nameID);
                 cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeDataTextureId, renderTargets.EyeDataTexture.nameID);
+
                 Blitter.BlitCameraTexture(cmd, cameraColorTarget, tempTexture, 0, true);
                 Blitter.BlitCameraTexture(cmd, tempTexture, cameraColorTarget, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, compositeMaterial, 0);
             }
@@ -767,6 +774,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             EnsureHdrTextureDesc(ref destinationDesc);
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
+
             using (var builder = renderGraph.AddRasterRenderPass<CompositePassData>("Ho-CharacterSpecialization Composite", out CompositePassData passData, ProfilingSampler))
             {
                 passData.source = source;
@@ -793,6 +801,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     subjectOutlineReady,
                     enhancedOutlineReady,
                     out passData.eyeRevealParams,
+                    out passData.eyeAngleParams,
                     out passData.hairShadowParams,
                     out passData.hairShadowParams1,
                     out passData.hairShadowParams2,
@@ -847,6 +856,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     ApplyMaterialProperties(
                         data.material,
                         data.eyeRevealParams,
+                        data.eyeAngleParams,
                         data.hairShadowParams,
                         data.hairShadowParams1,
                         data.hairShadowParams2,
@@ -891,6 +901,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
                     context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, data.eyeColorTexture);
                     context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeDataTextureId, data.eyeDataTexture);
+
                     context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                 });

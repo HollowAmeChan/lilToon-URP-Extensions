@@ -12,6 +12,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 false,
                 false,
                 out Vector4 eyeRevealParams,
+                out Vector4 eyeAngleParams,
                 out Vector4 hairShadowParams,
                 out Vector4 hairShadowParams1,
                 out Vector4 hairShadowParams2,
@@ -36,6 +37,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             ApplyMaterialProperties(
                 material,
                 eyeRevealParams,
+                eyeAngleParams,
                 hairShadowParams,
                 hairShadowParams1,
                 hairShadowParams2,
@@ -62,6 +64,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private static void ApplyMaterialProperties(
             Material material,
             Vector4 eyeRevealParams,
+            Vector4 eyeAngleParams,
             Vector4 hairShadowParams,
             Vector4 hairShadowParams1,
             Vector4 hairShadowParams2,
@@ -85,6 +88,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             Vector4 options)
         {
             material.SetVector(HoCharacterSpecializationShaderConstants.EyeRevealParamsId, eyeRevealParams);
+            material.SetVector(HoCharacterSpecializationShaderConstants.EyeAngleParamsId, eyeAngleParams);
             material.SetVector(HoCharacterSpecializationShaderConstants.HairShadowParamsId, hairShadowParams);
             material.SetVector(HoCharacterSpecializationShaderConstants.HairShadowParams1Id, hairShadowParams1);
             material.SetVector(HoCharacterSpecializationShaderConstants.HairShadowParams2Id, hairShadowParams2);
@@ -114,6 +118,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             bool subjectOutlineTexturesReady,
             bool enhancedOutlineTexturesReady,
             out Vector4 eyeRevealParams,
+            out Vector4 eyeAngleParams,
             out Vector4 hairShadowParams,
             out Vector4 hairShadowParams1,
             out Vector4 hairShadowParams2,
@@ -139,6 +144,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             if (settings == null)
             {
                 eyeRevealParams = Vector4.zero;
+                eyeAngleParams = Vector4.zero;
                 hairShadowParams = Vector4.zero;
                 hairShadowParams1 = Vector4.zero;
                 hairShadowParams2 = Vector4.zero;
@@ -168,6 +174,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 Mathf.Max(0.0f, settings.eyeRevealFeatherPixels),
                 Mathf.Max(0.0f, settings.eyeRevealDilationPixels),
                 Mathf.Max(0.0f, settings.eyeRevealDepthBias));
+            eyeAngleParams = new Vector4(
+                settings.eyeRevealAngleEnabled ? Mathf.Clamp01(settings.eyeRevealAngleStrength) : 0.0f,
+                Mathf.Max(0.0001f, settings.eyeRevealAngleYawRangeDegrees),
+                Mathf.Max(0.0001f, settings.eyeRevealAnglePitchRangeDegrees),
+                Mathf.Max(0.0f, settings.eyeRevealAngleSoftnessDegrees));
             hairShadowParams = new Vector4(
                 Mathf.Clamp01(settings.hairShadowOpacity),
                 Mathf.Max(0.0f, settings.hairShadowDistancePixels),

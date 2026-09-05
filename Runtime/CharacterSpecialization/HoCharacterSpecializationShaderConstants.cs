@@ -26,6 +26,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public const string EnhancedOutlineSourceTextureName = "_lilHoCharacterEnhancedOutlineSourceTexture";
         public const string EnhancedOutlineTempTextureName = "_lilHoCharacterEnhancedOutlineTempTexture";
         public const string EnhancedOutlineTextureName = "_lilHoCharacterEnhancedOutlineTexture";
+        public const string EyeAngleTextureName = "_lilHoCharacterEyeAngleTable";
 
         public static readonly ShaderTagId CaptureShaderTagId = new ShaderTagId(CapturePassName);
         public static readonly int CaptureModeId = Shader.PropertyToID("_HoCharacterCaptureMode");
@@ -64,5 +65,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public static readonly int SubjectOutlineSourceParamsId = Shader.PropertyToID("_HoCharacterSubjectOutlineSourceParams");
         public static readonly int SubjectOutlineBlurParamsId = Shader.PropertyToID("_HoCharacterSubjectOutlineBlurParams");
         public static readonly int OptionsId = Shader.PropertyToID("_HoCharacterOptions");
+        public static readonly int EyeAngleTextureId = Shader.PropertyToID(EyeAngleTextureName);
+        public static readonly int EyeAngleParamsId = Shader.PropertyToID("_HoCharacterEyeAngleParams");
     }
 }

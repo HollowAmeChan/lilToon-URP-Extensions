@@ -26,6 +26,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
 
             float _HoMetadataBufferActive;
             float4 _HoCharacterEyeRevealParams; // x strength, y feather px, z dilation px, w depth bias
+            float4 _HoCharacterEyeAngleParams; // x strength, y yaw range deg, z pitch range deg, w softness deg
             float4 _HoCharacterHairShadowParams; // x opacity, y distance px, z angle deg, w softness px
             float4 _HoCharacterHairShadowParams1; // x spread px, y keep off hair, z blend mode, w use reveal area
             float4 _HoCharacterHairShadowParams2; // x perspective strength, y reference depth, z min scale
@@ -54,6 +55,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture);
             TEXTURE2D_X(_lilHoCharacterEyeColorTexture);
             TEXTURE2D_X(_lilHoCharacterEyeDataTexture);
+            TEXTURE2D(_lilHoCharacterEyeAngleTable);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseSourceColorTexture);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseColorTexture);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseDepthTexture);
@@ -164,6 +166,31 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 float hairInFront = step(0.0001, eyeDepth) * step(hairDepth, eyeDepth + depthBias);
                 float same = SameCharacter(maskId.g, eyeCharacterId);
                 return saturate(frontHair * eyeAlpha * revealArea * hairInFront * same * _HoCharacterEyeRevealParams.x);
+            }
+
+            float ResolveEyeAngleFactor(float2 uv)
+            {
+                float strength = saturate(_HoCharacterEyeAngleParams.x);
+                if (strength <= 0.0001)
+                {
+                    return 1.0;
+                }
+
+                // 与 RevealEyeMask 的 SameCharacter 同源：用眼睛捕获里的角色 ID（预乘取回）作为表的行号，
+                // 避免 maskId.g（前发像素的角色 ID）与设置骨骼的 Group 错位导致的空行。
+                float4 eyeData = SAMPLE_TEXTURE2D_X(_lilHoCharacterEyeDataTexture, sampler_PointClamp, uv);
+                float charId = round((eyeData.b / max(eyeData.r, 0.0001)) * 255.0);
+                float2 yawPitch = SAMPLE_TEXTURE2D(_lilHoCharacterEyeAngleTable, sampler_PointClamp, float2((charId + 0.5) / 256.0, 0.5)).xy;
+                // 某轴 range 为 0 表示该轴不参与衰减。
+                float2 activeAxis = step(0.001, abs(_HoCharacterEyeAngleParams.yz));
+                float2 range = max(abs(_HoCharacterEyeAngleParams.yz), 0.0001);
+                float2 normalizedAngle = abs(yawPitch) / range;
+                float2 softness = max(abs(_HoCharacterEyeAngleParams.w), 0.0001) / range;
+                // 超出范围的轴直接衰减到 0（视锥外眼透完全关闭），柔化带位于范围边缘内侧。
+                float2 axisFactor = 1.0 - smoothstep(max(float2(0.0, 0.0), float2(1.0, 1.0) - softness), float2(1.0, 1.0), normalizedAngle);
+                axisFactor = lerp(float2(1.0, 1.0), axisFactor, activeAxis);
+                // 视锥内 = 1（白），视锥外 = 0（黑）；柔化为 0 时是硬边二元。
+                return lerp(1.0, axisFactor.x * axisFactor.y, strength);
             }
 
             float SampleHairSpread(float2 uv, float radiusPx)
@@ -533,6 +560,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
 
                 half4 eyeColor = SAMPLE_TEXTURE2D_X(_lilHoCharacterEyeColorTexture, sampler_LinearClamp, uv);
                 float revealMask = ResolveEyeRevealMask(uv);
+                float eyeAngleFactor = saturate(ResolveEyeAngleFactor(uv));
                 float shadowMask = ResolveHairShadowMask(uv, revealMask);
                 float faceHairDiffuseMask = ResolveFaceHairDiffuseMask(uv);
                 float subjectOutlineSourceMask = SampleSubjectOutlineSourceMask(uv);
@@ -563,6 +591,21 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 if (debugMode == 3)
                 {
                     return half4(revealMask, revealMask, revealMask, source.a);
+                }
+
+                if (debugMode == 16)
+                {
+                    // 真实因子：正面接近白，绕角色转向侧面时渐暗 → 白=1，灰=0.3x，黑=0。
+                    return half4(eyeAngleFactor, eyeAngleFactor, eyeAngleFactor, source.a);
+                }
+
+                if (debugMode == 17)
+                {
+                    // 表原始信息：R = |平转角|/180，G = |俯仰角|/180，B = 强度（>0 表示修正参数已进入渲染）。
+                    float4 debugEyeData = SAMPLE_TEXTURE2D_X(_lilHoCharacterEyeDataTexture, sampler_PointClamp, uv);
+                    float debugCharId = round((debugEyeData.b / max(debugEyeData.r, 0.0001)) * 255.0);
+                    float2 debugYawPitch = SAMPLE_TEXTURE2D(_lilHoCharacterEyeAngleTable, sampler_PointClamp, float2((debugCharId + 0.5) / 256.0, 0.5)).xy;
+                    return half4(abs(debugYawPitch.x) / 180.0, abs(debugYawPitch.y) / 180.0, saturate(_HoCharacterEyeAngleParams.x), source.a);
                 }
 
                 if (debugMode == 4)
@@ -667,7 +710,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                     return half4(enhancedOutlineFogMask * enhancedOutlineHeightFade, enhancedOutlineFogMask * enhancedOutlineHeightFade, enhancedOutlineFogMask * enhancedOutlineHeightFade, source.a);
                 }
 
-                half3 color = lerp(source.rgb, eyeColor.rgb, revealMask);
+                half3 color = lerp(source.rgb, eyeColor.rgb, revealMask * eyeAngleFactor);
                 float shadowAmount = shadowMask * saturate(_HoCharacterHairShadowParams.x);
                 if (shadowAmount > 0.0001)
                 {

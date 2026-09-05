@@ -47,6 +47,11 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             SerializedDataParameter depthBias,
             SerializedDataParameter useRevealArea,
             SerializedDataParameter sameCharacterOnly,
+            SerializedDataParameter angleEnabled,
+            SerializedDataParameter angleStrength,
+            SerializedDataParameter angleYawRangeDegrees,
+            SerializedDataParameter anglePitchRangeDegrees,
+            SerializedDataParameter angleSoftnessDegrees,
             Action<SerializedDataParameter, GUIContent> drawParameter)
         {
             string summary = enabled?.value != null && enabled.value.boolValue
@@ -68,6 +73,14 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 DrawParameter(depthBias, "深度偏移", drawParameter);
                 DrawParameter(useRevealArea, "使用眼透区域", drawParameter);
                 DrawParameter(sameCharacterOnly, "仅同角色", drawParameter);
+
+                EditorGUILayout.Space(4.0f);
+                EditorGUILayout.HelpBox("相机角度修正：按相机相对角色面部朝向的平转/俯仰角控制眼睛透过。角色面部朝向在 HoMetadataBufferGroup 的“面部朝向”上设置（Transform，骨骼或空物体均可），并在“脸前轴/右轴/上轴”中指定局部轴向（+Z 脸前、+X 右、+Y 上常见）；留空时该角色不参与。", MessageType.None);
+                DrawParameter(angleEnabled, "启用相机角度修正", drawParameter);
+                DrawParameter(angleStrength, "角度修正强度", drawParameter);
+                DrawParameter(angleYawRangeDegrees, "平转半角范围", drawParameter);
+                DrawParameter(anglePitchRangeDegrees, "俯仰半角范围", drawParameter);
+                DrawParameter(angleSoftnessDegrees, "角度柔化", drawParameter);
             }
         }
 

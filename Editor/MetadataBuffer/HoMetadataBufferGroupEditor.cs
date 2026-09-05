@@ -1,4 +1,4 @@
-﻿using lilToon.URP.Extensions.MetadataBuffer;
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEditor;
 using UnityEngine;
 
@@ -109,6 +109,10 @@ namespace lilToon.URP.Extensions.Editor.MetadataBuffer
                 DrawProperty("characterId", new GUIContent("角色组 ID (CharacterId)"));
                 DrawProperty("partId", new GUIContent("部件 ID (PartId)"));
                 DrawProperty("flags", new GUIContent("标记 (Flags)"));
+                DrawProperty("faceBone", new GUIContent("面部朝向", "确定角色面部朝向的 Transform——可以是骨骼，也可以是一个朝向正确的空物体。仅供各消费者系统读取（眼透相机角度修正、未来的 SDF 等）；留空表示未提供。以 Transform 的局部轴配合下方三个轴向设置来定义脸前/右/上。"));
+                DrawProperty("faceForwardAxis", new GUIContent("脸前轴", "骨骼的哪个局部轴作为“脸前方”。默认 +Z。若正面/侧面的衰减方向反了，换成 +Z / -Z 试试。"));
+                DrawProperty("faceRightAxis", new GUIContent("右轴", "骨骼的哪个局部轴作为“角色右侧（画面左侧）”。默认 +X。"));
+                DrawProperty("faceUpAxis", new GUIContent("上轴", "骨骼的哪个局部轴作为“角色上方”。默认 +Y。俯仰角按此轴分解，若俯视/仰视不生效请检查此项。"));
                 EditorGUILayout.Space(2.0f);
                 DrawObjectList("explicitRenderers", IdOnlyLabel, IdOnlyColor, "仅写 ID");
             }
