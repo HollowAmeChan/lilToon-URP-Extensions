@@ -3,7 +3,7 @@
 > 状态：**规划定稿**（不动代码；实现按 §5 步骤推进）。
 > 实现进度：① lilToon 语义 ✅（7a652e5）② 骨架 ✅（4371c43）③ march ✅（e5b8a26）④ 滤波+上采样 ✅（9343e87）⑤ temporal ✅（b40d9aa）⑥ Volume+DebugTile+Editor ✅（d352e6e）→ ⑦ 算法校正（按本机 HTrace 源码复核视空间重建、slice rotation、连续 horizon 积分）；⑧ 收尾：Unity 侧（refresh shaders / GeometryBuffer passEvent→250 / PC_Renderer 挂 Ho-GTAO 并移除 HTrace AO feature）。
 >
-> **实现校正记录（2026-09）**：共享 GeometryBuffer 只有线性眼深逐点采样，没有 HTrace 的深度金字塔 footprint，因此当前实现保留 HTrace 的 32-bin VisibilityBitmask 数学，但固定在 LOD0 逐点采样；不再使用 1/2-bin 人工补偿。已接入 HTrace 的线性厚度、距离衰减、平方步进、噪声和逐帧 slice rotation；公共输出仍是 0..1 visibility（1=无遮挡）。深度金字塔/L​​OD footprint、完整 temporal rejection 和 HTrace spatial denoise 仍列为后续功能项。
+> **实现校正记录（2026-09）**：Ho-GTAO 已补 4 级独立深度金字塔（mip0..3，2x2 最近深度归约），march 按 HTrace 的 `log2(length(sampleOffset))-3` 选择 LOD；GeometryBuffer 仍是唯一法线/线性深度生产者。已接入 HTrace 的 32-bin VisibilityBitmask、线性厚度、距离衰减、平方步进、噪声和逐帧 slice rotation；Temporal 现在保存历史深度并按深度一致性拒绝历史，Spatial 使用 8 点深度/法线双边滤波；公共输出仍是 0..1 visibility（1=无遮挡）。逐物体 motion-vector rejection 和 checkerboard 寻址仍列为后续功能项。
 > 依据：契约 v1（`ao` 通道：R8f 0..1，生产端=自研 AO，消费端=材质采样 + AOV）；草案 §5 替换位。
 > 关联：`LILTOON_CHANNEL_CONTRACT_V1.md`（冻结）、`LILTOON_FORMAL_PIPELINE_DRAFT.md` §5/§2（帧序）。
 > 结论先行：**v1 用「材质采样模式」+ 公共 AO 语义**。lilToon 侧删除 `_ScreenSpaceAOSource` 0/1 分支与 URP 内置 fallback，**语义上直接采样公共纹理 `_HoAOTexture`**（与 `_HoGeometryBuffer*`/`_HoMetadataBuffer*` 公共资源命名一致，不含算法名）；自研 Ho-GTAO 只替换生产端。核心时序改动 = **GeometryBuffer 与 Ho-GTAO 同用 BeforeRenderingOpaques（250）**，并由 Renderer Feature 列表顺序显式保证 GeometryBuffer 在前。
@@ -88,7 +88,7 @@
 
 **算法实现（按本机 HTrace 源码对齐）：**
 
-1. **TracingMode = VisibilityBitmasks**：直接复用 HTrace `HRenderGTAO.compute` 的 32-bin `UpdateBitmask`、线性厚度、距离衰减、平方步进、噪声和逐帧 slice rotation；不再使用此前的 1/2-bin 人工扩宽。共享 GeometryBuffer 当前在 LOD0 逐点采样，质量取舍是明确的，不伪造 HTrace 的深度金字塔 footprint。
+1. **TracingMode = VisibilityBitmasks**：直接复用 HTrace `HRenderGTAO.compute` 的 32-bin `UpdateBitmask`、线性厚度、距离衰减、平方步进、噪声和逐帧 slice rotation；不再使用此前的 1/2-bin 人工扩宽。Ho-GTAO 已提供 4 级独立深度金字塔，并按步长选择 LOD；GeometryBuffer 仍是唯一法线/线性深度生产者。
    - 每片输出 `1 - countbits(mask)/26`，公共 AO 通道仍为 visibility（1=无遮挡）。
    - **v1.1 可选**：给 AO 建独立深度 mip/footprint，并逐项对齐 HTrace 的 LOD 选择，以恢复完整金字塔质量。
 2. **去噪 = SpatioTemporal**（Denoising 最高档；None/SpatialOnly/TemporalOnly 为降档）：
@@ -99,7 +99,7 @@
 **可降参数（性能→质量权衡项）：** 分辨率（Full/Half/Quarter；⚠️ HTrace 的 Half=(2,1)/Quarter=(2,2) 是**棋盘压缩寻址**——纹理仍全分辨率分配、只减 dispatch 线程+棋盘打包+上采样，不是缩小纹理；本实现用真半分辨率 RT 等价，:141-143）、SliceCount（1-4）、StepCount（8-32；步进**平方分布**近密远疏 + 蓝噪声抖动 + MinStep，:212-219）、TemporalFrameCount（**真实累积帧数上限**，HTrace 固定 12 帧；其 `SampleCountTemporal` 参数实际只门控自制 MV pass——见档案 §7）、BoxPassCount/DoubleSampleCount、FilterRadius/FilterAdaptivity。
 
 **fragment 版替代项**：
-- **无深度金字塔**：HTrace 的 march 按 offset 长度选金字塔 LOD（:218）省深度采样；我们的 march 直接用屏幕偏移 + `_HoGeometryBufferNormalDepthTexture.a` 线性深度逐点比较（采样仍是逐点，半分辨率下 fan-out 可接受；可选在 Unity 侧给 AO 计算纹理建 3 级 mip 实现同款 LOD——**登记为 v1.1 可选**）。
+- **深度金字塔**：Ho-GTAO 以 4 个 RDG 深度纹理复刻 HTrace mip0..3 的 2x2 归约；march 按 `log2(length(sampleOffset))-3` 选择 LOD。后续仅需补齐 HTrace 的动态物体符号标记和 checkerboard 寻址。
 - **temporal 的运动矢量**：URP 内置 motion vector pass 只在 TAA/MotionBlur 启用时渲染，**管线目前没有**（`motion` 通道是占坑 ◻）→ v1 High 档 temporal 用**相机运动矢量 + 深度/法线校验**重投影（重投影不一致即重置历史，等价 HTrace 简单 rejection 思想；渲染环境多为静态镜头+循环动画，运动物体 AO 短暂重置可接受）。**逐物体运动矢量的完整版（自建 motion vector 重画 pass）登记 v1.1 增强**。
 
 **质量档预设（我们 Ho-GTAO volume 提供 Quality 档，参数可再单调）：**
@@ -267,7 +267,7 @@ lilToon 侧改动（见 §2.3）：input+frag 两处 + 属性/分支/UI 删除�
 - `_SSAOColor*` 类未在本 fork 材质侧出现（`lil_common_frag.hlsl` 只用 `_SSAOStrength/_SSAODirectStrength/_SSAOIndirectStrength/_SSAORemap/_SSAOContrast/_SSAOMask/_UseScreenSpaceAO/_ScreenSpaceAOSource`）——契约/草案里若提过 `_SSAOColor*`，以实测为准，实现时核对 lilblock 属性清单。
 - 删除 `_ScreenSpaceAOSource` 属性后旧材质残留值不生效（Unity 忽略不存在属性）——无迁移成本；若担心，保留属性字段但不参与分支（二选一，推荐直接删，干净）。
 
-**不做（登记不实现）**：深度金字塔（fragment 版以屏幕空间步进替代）、bent normals、RTAO、意图模式（`aointent`）、`gisexclude` 接入 AO、描边排除位、**URP 内置 SSAO 路径（lilToon 已解耦，内置 pass 本身保留不动，见 §8）**。~~temporal denoise（v1）~~ **已撤除**：按"算法取 HTrace 最高档"（§2.2），temporal 去噪纳入 v1（质量档 High 默认，做历史纹理 + 运动矢量重投影；Deep 档可关）。
+**不做（登记不实现）**：bent normals、RTAO、意图模式（`aointent`）、`gisexclude` 接入 AO、描边排除位、**URP 内置 SSAO 路径（lilToon 已解耦，内置 pass 本身保留不动，见 §8）**。Temporal 深度拒绝与 Spatial 双边滤波已纳入 v1；逐物体 motion-vector rejection、checkerboard 寻址和动态深度符号标记列为后续增强。
 
 ---
 

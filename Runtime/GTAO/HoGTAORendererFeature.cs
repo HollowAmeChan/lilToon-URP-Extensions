@@ -148,10 +148,14 @@ namespace lilToon.URP.Extensions.GTAO
     {
         private RTHandle previous;
         private RTHandle next;
+        private RTHandle previousDepth;
+        private RTHandle nextDepth;
         private bool valid;
 
         public RTHandle Previous => previous;
         public RTHandle Next => next;
+        public RTHandle PreviousDepth => previousDepth;
+        public RTHandle NextDepth => nextDepth;
         public bool Valid => valid;
 
         public void Ensure(int width, int height)
@@ -168,6 +172,10 @@ namespace lilToon.URP.Extensions.GTAO
 
             RenderingUtils.ReAllocateIfNeeded(ref previous, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGTAOHistoryPrevTex");
             RenderingUtils.ReAllocateIfNeeded(ref next, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGTAOHistoryNextTex");
+            RenderTextureDescriptor depthDescriptor = descriptor;
+            depthDescriptor.graphicsFormat = GraphicsFormat.R16_SFloat;
+            RenderingUtils.ReAllocateIfNeeded(ref previousDepth, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGTAOHistoryPrevDepthTex");
+            RenderingUtils.ReAllocateIfNeeded(ref nextDepth, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGTAOHistoryNextDepthTex");
             valid = false;
         }
 
@@ -178,14 +186,21 @@ namespace lilToon.URP.Extensions.GTAO
             RTHandle temp = previous;
             previous = next;
             next = temp;
+            temp = previousDepth;
+            previousDepth = nextDepth;
+            nextDepth = temp;
         }
 
         public void Dispose()
         {
             previous?.Release();
             next?.Release();
+            previousDepth?.Release();
+            nextDepth?.Release();
             previous = null;
             next = null;
+            previousDepth = null;
+            nextDepth = null;
             valid = false;
         }
     }
@@ -268,6 +283,17 @@ namespace lilToon.URP.Extensions.GTAO
         private static readonly int ViewMatrixId = Shader.PropertyToID("_HoGTAOViewMatrix");
         private static readonly int ProjMatrixId = Shader.PropertyToID("_HoGTAOProjMatrix");
         private static readonly int InvProjMatrixId = Shader.PropertyToID("_HoGTAOInvProjMatrix");
+        private static readonly int GeometryInputId = Shader.PropertyToID("_HoGTAOGeometryInput");
+        private static readonly int SpatialRadiusId = Shader.PropertyToID("_HoGTAOSpatialRadius");
+        private static readonly int SpatialAdaptivityId = Shader.PropertyToID("_HoGTAOSpatialAdaptivity");
+        private static readonly int SpatialResolutionId = Shader.PropertyToID("_HoGTAOSpatialResolution");
+        private static readonly int HistoryDepthPrevId = Shader.PropertyToID("_HoGTAOHistoryPrevDepthTex");
+        private static readonly int DepthInputId = Shader.PropertyToID("_HoGTAODepthInput");
+        private static readonly int DepthInputTexelSizeId = Shader.PropertyToID("_HoGTAODepthInputTexelSize");
+        private static readonly int DepthMip0Id = Shader.PropertyToID("_HoGTAODepthMip0");
+        private static readonly int DepthMip1Id = Shader.PropertyToID("_HoGTAODepthMip1");
+        private static readonly int DepthMip2Id = Shader.PropertyToID("_HoGTAODepthMip2");
+        private static readonly int DepthMip3Id = Shader.PropertyToID("_HoGTAODepthMip3");
 
         private sealed class GenerateData
         {
@@ -286,6 +312,10 @@ namespace lilToon.URP.Extensions.GTAO
             public Matrix4x4 view;
             public Matrix4x4 proj;
             public Matrix4x4 invProj;
+            public TextureHandle depthMip0;
+            public TextureHandle depthMip1;
+            public TextureHandle depthMip2;
+            public TextureHandle depthMip3;
         }
 
         private sealed class TemporalData
@@ -293,6 +323,8 @@ namespace lilToon.URP.Extensions.GTAO
             public Material material;
             public TextureHandle current;
             public TextureHandle previous;
+            public TextureHandle geometry;
+            public TextureHandle previousDepth;
             public TextureHandle output;
             public bool useHistory;
         }
@@ -303,6 +335,35 @@ namespace lilToon.URP.Extensions.GTAO
             public TextureHandle source;
             public TextureHandle destination;
             public int passIndex;
+        }
+
+        private sealed class SpatialData
+        {
+            public Material material;
+            public TextureHandle source;
+            public TextureHandle geometry;
+            public TextureHandle destination;
+            public float radius;
+            public float adaptivity;
+            public float resolution;
+        }
+
+        private sealed class DepthHistoryData
+        {
+            public Material material;
+            public TextureHandle geometry;
+            public TextureHandle destination;
+        }
+
+        private sealed class DepthData
+        {
+            public Material material;
+            public TextureHandle source;
+            public TextureHandle destination;
+            public Vector4 sourceTexelSize;
+            public int passIndex;
+            public bool sourceIsGeometry;
+            public int outputId;
         }
 
         private HoGTAOSettings settings;
@@ -346,7 +407,7 @@ namespace lilToon.URP.Extensions.GTAO
             int width = Mathf.Max(1, cameraData.cameraTargetDescriptor.width / divisor);
             int height = Mathf.Max(1, cameraData.cameraTargetDescriptor.height / divisor);
             int cameraId = cameraData.camera != null ? cameraData.camera.GetInstanceID() : 0;
-            if (history.Previous == null || width != historyWidth || height != historyHeight || cameraId != historyCameraId || historyResolution != settings.resolution)
+            if (history.Previous == null || history.PreviousDepth == null || width != historyWidth || height != historyHeight || cameraId != historyCameraId || historyResolution != settings.resolution)
             {
                 history.Ensure(width, height);
                 historyWidth = width;
@@ -356,6 +417,7 @@ namespace lilToon.URP.Extensions.GTAO
             }
 
             HoGTAORenderGraphResources gtao = frameData.GetOrCreate<HoGTAORenderGraphResources>();
+            TextureHandle[] depthMips = CreateDepthPyramid(renderGraph, frameData, geometry.normalDepthTexture, width, height);
             TextureDesc currentDesc = new TextureDesc(width, height)
             {
                 name = "_HoGTAOCurrentTex",
@@ -383,7 +445,15 @@ namespace lilToon.URP.Extensions.GTAO
                 data.view = cameraData.GetViewMatrix();
                 data.proj = cameraData.GetProjectionMatrix();
                 data.invProj = data.proj.inverse;
+                data.depthMip0 = depthMips[0];
+                data.depthMip1 = depthMips[1];
+                data.depthMip2 = depthMips[2];
+                data.depthMip3 = depthMips[3];
                 builder.UseTexture(data.normalDepth, AccessFlags.Read);
+                builder.UseTexture(data.depthMip0, AccessFlags.Read);
+                builder.UseTexture(data.depthMip1, AccessFlags.Read);
+                builder.UseTexture(data.depthMip2, AccessFlags.Read);
+                builder.UseTexture(data.depthMip3, AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
@@ -401,7 +471,11 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.SetGlobalMatrix(ViewMatrixId, passData.view);
                     context.cmd.SetGlobalMatrix(ProjMatrixId, passData.proj);
                     context.cmd.SetGlobalMatrix(InvProjMatrixId, passData.invProj);
-                    Blitter.BlitTexture(context.cmd, passData.normalDepth, new Vector4(1, 1, 0, 0), passData.material, 0);
+                    context.cmd.SetGlobalTexture(DepthMip0Id, passData.depthMip0);
+                    context.cmd.SetGlobalTexture(DepthMip1Id, passData.depthMip1);
+                    context.cmd.SetGlobalTexture(DepthMip2Id, passData.depthMip2);
+                    context.cmd.SetGlobalTexture(DepthMip3Id, passData.depthMip3);
+                    Blitter.BlitTexture(context.cmd, passData.normalDepth, new Vector4(1, 1, 0, 0), passData.material, 2);
                 });
             }
 
@@ -416,15 +490,21 @@ namespace lilToon.URP.Extensions.GTAO
 
             TextureHandle previous = renderGraph.ImportTexture(history.Previous);
             TextureHandle next = renderGraph.ImportTexture(history.Next);
+            TextureHandle previousDepth = renderGraph.ImportTexture(history.PreviousDepth);
+            TextureHandle nextDepth = renderGraph.ImportTexture(history.NextDepth);
             using (var builder = renderGraph.AddRasterRenderPass<TemporalData>("Ho-GTAO Temporal", out TemporalData data, ProfilingSampler))
             {
                 data.material = material;
                 data.current = current;
                 data.previous = previous;
+                data.geometry = geometry.normalDepthTexture;
+                data.previousDepth = previousDepth;
                 data.output = next;
                 data.useHistory = history.Valid;
                 builder.UseTexture(data.current, AccessFlags.Read);
                 builder.UseTexture(data.previous, AccessFlags.Read);
+                builder.UseTexture(data.geometry, AccessFlags.Read);
+                builder.UseTexture(data.previousDepth, AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
@@ -433,13 +513,122 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.SetGlobalFloat(HistoryBlendId, passData.useHistory ? 0.5f : 0.0f);
                     context.cmd.SetGlobalTexture(HoGTAOShaderConstants.AoInputTexId, passData.current);
                     context.cmd.SetGlobalTexture(HoGTAOShaderConstants.HistoryPrevTexId, passData.previous);
-                    Blitter.BlitTexture(context.cmd, passData.current, new Vector4(1, 1, 0, 0), passData.material, 1);
+                    context.cmd.SetGlobalTexture(GeometryInputId, passData.geometry);
+                    context.cmd.SetGlobalTexture(HistoryDepthPrevId, passData.previousDepth);
+                    Blitter.BlitTexture(context.cmd, passData.current, new Vector4(1, 1, 0, 0), passData.material, 3);
+                });
+            }
+
+            using (var builder = renderGraph.AddRasterRenderPass<DepthHistoryData>("Ho-GTAO Depth History", out DepthHistoryData depthData, ProfilingSampler))
+            {
+                depthData.material = material;
+                depthData.geometry = geometry.normalDepthTexture;
+                depthData.destination = nextDepth;
+                builder.UseTexture(depthData.geometry, AccessFlags.Read);
+                builder.SetRenderAttachment(depthData.destination, 0, AccessFlags.WriteAll);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (DepthHistoryData data, RasterGraphContext context) =>
+                {
+                    Blitter.BlitTexture(context.cmd, data.geometry, new Vector4(1, 1, 0, 0), data.material, 6);
                 });
             }
 
             history.Swap();
             history.MarkValid();
-            gtao.aoTexture = RecordBlit(renderGraph, frameData, next, resourceData.activeColorTexture, material, "Ho-GTAO Output");
+            TextureDesc spatialDesc = new TextureDesc(width, height)
+            {
+                name = "_HoGTAOSpatialTex",
+                format = GraphicsFormat.R8G8B8A8_UNorm,
+                depthBufferBits = 0,
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp
+            };
+            TextureHandle spatial = renderGraph.CreateTexture(spatialDesc);
+            using (var builder = renderGraph.AddRasterRenderPass<SpatialData>("Ho-GTAO Spatial", out SpatialData data, ProfilingSampler))
+            {
+                data.material = material;
+                data.source = next;
+                data.geometry = geometry.normalDepthTexture;
+                data.destination = spatial;
+                data.radius = settings.filterRadius;
+                data.adaptivity = settings.filterAdaptivity;
+                data.resolution = settings.ResolutionDivisor;
+                builder.UseTexture(data.source, AccessFlags.Read);
+                builder.UseTexture(data.geometry, AccessFlags.Read);
+                builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (SpatialData passData, RasterGraphContext context) =>
+                {
+                    context.cmd.SetGlobalTexture(GeometryInputId, passData.geometry);
+                    context.cmd.SetGlobalFloat(SpatialRadiusId, passData.radius);
+                    context.cmd.SetGlobalFloat(SpatialAdaptivityId, passData.adaptivity);
+                    context.cmd.SetGlobalFloat(SpatialResolutionId, passData.resolution);
+                    Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 5);
+                });
+            }
+
+            gtao.aoTexture = RecordBlit(renderGraph, frameData, spatial, resourceData.activeColorTexture, material, "Ho-GTAO Output");
+        }
+
+        private TextureHandle[] CreateDepthPyramid(RenderGraph renderGraph, ContextContainer frameData, TextureHandle geometry, int width, int height)
+        {
+            TextureHandle[] mips = new TextureHandle[4];
+            TextureHandle source = geometry;
+            TextureDesc geometryDesc = renderGraph.GetTextureDesc(geometry);
+            int sourceWidth = Mathf.Max(1, geometryDesc.width);
+            int sourceHeight = Mathf.Max(1, geometryDesc.height);
+            int[] ids = { DepthMip0Id, DepthMip1Id, DepthMip2Id, DepthMip3Id };
+
+            for (int i = 0; i < mips.Length; i++)
+            {
+                int mipWidth = Mathf.Max(1, sourceWidth >> i);
+                int mipHeight = Mathf.Max(1, sourceHeight >> i);
+                TextureDesc desc = new TextureDesc(mipWidth, mipHeight)
+                {
+                    name = "_HoGTAODepthMip" + i,
+                    format = GraphicsFormat.R32_SFloat,
+                    depthBufferBits = 0,
+                    filterMode = FilterMode.Point,
+                    wrapMode = TextureWrapMode.Clamp
+                };
+                TextureHandle destination = renderGraph.CreateTexture(desc);
+                mips[i] = destination;
+
+                using (var builder = renderGraph.AddRasterRenderPass<DepthData>("Ho-GTAO Depth Pyramid " + i, out DepthData data, ProfilingSampler))
+                {
+                    data.material = material;
+                    data.source = source;
+                    data.destination = destination;
+                    int sourceMip = Mathf.Max(0, i - 1);
+                    data.sourceTexelSize = new Vector4(
+                        1.0f / Mathf.Max(1, sourceWidth >> sourceMip),
+                        1.0f / Mathf.Max(1, sourceHeight >> sourceMip),
+                        0,
+                        0);
+                    data.passIndex = i == 0 ? 0 : 1;
+                    data.sourceIsGeometry = i == 0;
+                    data.outputId = ids[i];
+                    builder.UseTexture(data.source, AccessFlags.Read);
+                    builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
+                    builder.SetGlobalTextureAfterPass(data.destination, data.outputId);
+                    builder.AllowGlobalStateModification(true);
+                    builder.AllowPassCulling(false);
+                    builder.SetRenderFunc(static (DepthData passData, RasterGraphContext context) =>
+                    {
+                        if (!passData.sourceIsGeometry)
+                        {
+                            context.cmd.SetGlobalTexture(DepthInputId, passData.source);
+                            context.cmd.SetGlobalVector(DepthInputTexelSizeId, passData.sourceTexelSize);
+                        }
+                        Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, passData.passIndex);
+                    });
+                }
+
+                source = destination;
+            }
+
+            return mips;
         }
 
         private TextureHandle RecordBlit(RenderGraph renderGraph, ContextContainer frameData, TextureHandle source, TextureHandle cameraColor, Material blitMaterial, string passName)
@@ -456,7 +645,7 @@ namespace lilToon.URP.Extensions.GTAO
                 data.material = blitMaterial;
                 data.source = source;
                 data.destination = destination;
-                data.passIndex = isDebug ? 0 : 2;
+                data.passIndex = isDebug ? 0 : 4;
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
                 if (!isDebug)
