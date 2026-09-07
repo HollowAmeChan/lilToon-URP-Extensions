@@ -213,10 +213,10 @@ namespace lilToon.URP.Extensions.GTAO
             this.material = material;
             this.debugMaterial = debugMaterial;
             this.history = history;
-            // GeometryBuffer is above Ho-GTAO at the same injection point.
-            // Keep this transport probe on that fixed event while the shared
-            // resource contract is being validated.
-            renderPassEvent = RenderPassEvent.AfterRenderingOpaques;
+            // GeometryBuffer must be above this feature when both use the same
+            // injection point. The renderer asset owns the actual event so the
+            // AO semantic can be published before opaque material shading.
+            renderPassEvent = settings != null ? settings.passEvent : RenderPassEvent.BeforeRenderingOpaques;
             ConfigureInput(ScriptableRenderPassInput.None);
         }
 
