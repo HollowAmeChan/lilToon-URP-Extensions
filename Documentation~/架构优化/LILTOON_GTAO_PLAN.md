@@ -6,7 +6,7 @@
 > **实现校正记录（2026-09）**：共享 GeometryBuffer 只有线性眼深逐点采样，没有 HTrace 的深度金字塔 footprint，因此不能把 VisibilityBitmasks 的 32-bin 量化和“最小 1/2 bin”补偿当作核心算法。当前实现采用 HTrace 同源的连续 horizon-search 分支（`max horizon -> HFastACos -> integrated arc`），并保留 HTrace 的线性厚度、距离衰减、平方步进和逐帧 slice rotation；公共输出仍是 0..1 visibility（1=无遮挡）。
 > 依据：契约 v1（`ao` 通道：R8f 0..1，生产端=自研 AO，消费端=材质采样 + AOV）；草案 §5 替换位。
 > 关联：`LILTOON_CHANNEL_CONTRACT_V1.md`（冻结）、`LILTOON_FORMAL_PIPELINE_DRAFT.md` §5/§2（帧序）。
-> 结论先行：**v1 用「材质采样模式」+ 公共 AO 语义**。lilToon 侧删除 `_ScreenSpaceAOSource` 0/1 分支与 URP 内置 fallback，**语义上直接采样公共纹理 `_HoAOTexture`**（与 `_HoGeometryBuffer*`/`_HoMetadataBuffer*` 公共资源命名一致，不含算法名）；自研 Ho-GTAO 只替换生产端。核心时序改动 = **GeometryBuffer 提前到 BeforeRenderingOpaques（250）**，Ho-GTAO 使用紧随其后的数值事件 **251**，不依赖 Renderer Feature 列表顺序即可在 opaque 材质绘制前读到 geometry。
+> 结论先行：**v1 用「材质采样模式」+ 公共 AO 语义**。lilToon 侧删除 `_ScreenSpaceAOSource` 0/1 分支与 URP 内置 fallback，**语义上直接采样公共纹理 `_HoAOTexture`**（与 `_HoGeometryBuffer*`/`_HoMetadataBuffer*` 公共资源命名一致，不含算法名）；自研 Ho-GTAO 只替换生产端。核心时序改动 = **GeometryBuffer 与 Ho-GTAO 同用 BeforeRenderingOpaques（250）**，并由 Renderer Feature 列表顺序显式保证 GeometryBuffer 在前。
 
 ---
 
@@ -260,7 +260,7 @@ lilToon 侧改动（见 §2.3）：input+frag 两处 + 属性/分支/UI 删除�
 ## 7. 风险与不做清单
 
 **风险**：
-- GeometryBuffer 提前（300→250）可能影响未预见的同帧消费方 → 步骤 2 的"直出调试"先验证时序；Ho-GTAO 通过 **250→251 数值事件偏移**固定排在 GeometryBuffer 之后；若回归，走 §2.1 备选（后处理乘模式，另开 v1.1 讨论 per-material 语义）。
+- GeometryBuffer 提前（300→250）可能影响未预见的同帧消费方 → 步骤 2 的"直出调试"先验证时序；同事件消费者按 Renderer Feature 列表显式排序；若回归，走 §2.1 备选（后处理乘模式，另开 v1.1 讨论 per-material 语义）。
 - **temporal 的工程点**：历史两帧纹理的帧间管理（相机尺寸变化/相机切换重置——参考 GeometryBuffer 的 `beginCameraRendering` Reset 模式）；RG 跨帧资源声明；**运动矢量**：不做逐物体 motion pass，用相机运动矢量 + 深度/法线一致性校验（运动物体历史自动重置，视觉可接受；完整 motion-vector pass 登记 v1.1）。
 - Bitmask+传统半分辨率下细几何（头发缝隙）仍可能渗漏 → 由 Radius/Thickness 调；半分辨率 checkerboard（HTrace Half=(2,1)）在静态镜头下可能有 checker 纹理残留 → 上采样 filter 用 HTrace Interpolation 同款（深度引导）。
 - 无 temporal（Low 档）时静态噪声/闪烁 → 蓝噪声 + Disk 滤波兜底（与 HTrace SpatialOnly 同级别）。

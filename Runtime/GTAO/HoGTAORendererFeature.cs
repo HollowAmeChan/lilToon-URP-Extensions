@@ -213,15 +213,10 @@ namespace lilToon.URP.Extensions.GTAO
             this.material = material;
             this.debugMaterial = debugMaterial;
             this.history = history;
-            // The AO pass consumes GeometryBuffer. Use a numeric slot immediately
-            // after the configured producer event so correctness does not depend
-            // on Renderer Feature list order. HoUrp sorts pass events by integer;
-            // 251 is intentionally between BeforeRenderingOpaques (250) and the
-            // next named event even though it is not an Inspector enum item.
-            int producerEvent = settings != null
-                ? (int)settings.passEvent
-                : (int)RenderPassEvent.BeforeRenderingOpaques;
-            renderPassEvent = (RenderPassEvent)Mathf.Min(producerEvent + 1, int.MaxValue);
+            // Same-event order is intentional: HoUrp's explicit enqueue-order
+            // tie-breaker follows the Renderer Feature list (GeometryBuffer must
+            // be listed above Ho-GTAO).
+            renderPassEvent = settings != null ? settings.passEvent : RenderPassEvent.BeforeRenderingOpaques;
             ConfigureInput(ScriptableRenderPassInput.None);
         }
 
