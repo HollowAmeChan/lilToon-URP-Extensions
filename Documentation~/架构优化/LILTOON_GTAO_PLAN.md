@@ -1,7 +1,9 @@
 # Ho-GTAO 独立规划（v1 定稿）
 
 > 状态：**规划定稿**（不动代码；实现按 §5 步骤推进）。
-> 实现进度：① lilToon 语义 ✅（7a652e5）② 骨架 ✅（4371c43）③ march ✅（e5b8a26）④ 滤波+上采样 ✅（9343e87）⑤ temporal ✅（b40d9aa）⑥ Volume+DebugTile+Editor ✅（d352e6e）→ ⑦ 收尾：Unity 侧（refresh shaders / GeometryBuffer passEvent→250 / PC_Renderer 挂 Ho-GTAO 并移除 HTrace AO feature）；代码侧 grep 已清零（lilToon + 扩展包 `_HTraceBufferAO`/HTraceAO 0 命中）。
+> 实现进度：① lilToon 语义 ✅（7a652e5）② 骨架 ✅（4371c43）③ march ✅（e5b8a26）④ 滤波+上采样 ✅（9343e87）⑤ temporal ✅（b40d9aa）⑥ Volume+DebugTile+Editor ✅（d352e6e）→ ⑦ 算法校正（按本机 HTrace 源码复核视空间重建、slice rotation、连续 horizon 积分）；⑧ 收尾：Unity 侧（refresh shaders / GeometryBuffer passEvent→250 / PC_Renderer 挂 Ho-GTAO 并移除 HTrace AO feature）。
+>
+> **实现校正记录（2026-09）**：共享 GeometryBuffer 只有线性眼深逐点采样，没有 HTrace 的深度金字塔 footprint，因此不能把 VisibilityBitmasks 的 32-bin 量化和“最小 1/2 bin”补偿当作核心算法。当前实现采用 HTrace 同源的连续 horizon-search 分支（`max horizon -> HFastACos -> integrated arc`），并保留 HTrace 的线性厚度、距离衰减、平方步进和逐帧 slice rotation；公共输出仍是 0..1 visibility（1=无遮挡）。
 > 依据：契约 v1（`ao` 通道：R8f 0..1，生产端=自研 AO，消费端=材质采样 + AOV）；草案 §5 替换位。
 > 关联：`LILTOON_CHANNEL_CONTRACT_V1.md`（冻结）、`LILTOON_FORMAL_PIPELINE_DRAFT.md` §5/§2（帧序）。
 > 结论先行：**v1 用「材质采样模式」+ 公共 AO 语义**。lilToon 侧删除 `_ScreenSpaceAOSource` 0/1 分支与 URP 内置 fallback，**语义上直接采样公共纹理 `_HoAOTexture`**（与 `_HoGeometryBuffer*`/`_HoMetadataBuffer*` 公共资源命名一致，不含算法名）；自研 Ho-GTAO 只替换生产端。核心时序改动 = **GeometryBuffer 提前到 BeforeRenderingOpaques（250）**，让 AO 纹理在 opaque 材质绘制前就绪（与 Ho-GTAO 同事件，靠列表顺序）。
@@ -84,12 +86,11 @@
 
 > 依据：HTrace GTAO 链路 = 深度金字塔 → HRenderGTAO（ray march）→ temporal（重投影+累积）→ spatial（Box/Disk）→ 上采样/合成。所有 kernel 均为**逐像素、无共享内存/粒子**——fragment 版 1:1 复刻可行，且免掉 compute 的 dispatch/历史绑定复杂度。**HTrace 原始档位档案（算法/去噪/分辨率逐档机制、参数生效点、最高档配方）→ `LILTOON_HTRACE_GTAO_QUALITY_REFERENCE.md`。**
 
-**算法三选最（不妥协项）：**
+**算法实现（按本机 HTrace 源码对齐）：**
 
-1. **TracingMode = VisibilityBitmasks**（HTrace 最高档；HorizonSearch 是"快而多数场景够用"的默认档，**保留为同 shader keyword 后备**——移动端/无 temporal 时可用，见档案 §2）：
-   - 机制（HRenderGTAO.compute:68-75/240-241/262）：每步采样把 horizon 角量化成 **32-bin**（`round(h*32)`），`OccludedBits = (0xFFFFFFFF<<min) & (0xFFFFFFFF>>(32-max))`，跨所有步进**按位或累加**成 uint；遮挡 = `1 - countbits/26`（26 = 有效 bin 归一）。
-   - 质量：**细几何（栅栏/铁丝/发丝/细柱）显著更准**（官方 tooltip 明说）——这正是 toon 角色日常（头发缝隙/眼睫毛/眼镜框）。
-   - fragment 代价：每步只多 2 次移位/与/或；**省掉** horizon 版的 acos 反解+积分（:268-275），反而更简。⚠️ `countbits` 需 **SM5**（移动端片段不支持）；32 档量化（≈5.6°/bin）噪声需 temporal 配合——本管线是 PC 渲染环境，无碍。
+1. **TracingMode = VisibilityBitmasks**：直接复用 HTrace `HRenderGTAO.compute` 的 32-bin `UpdateBitmask`、线性厚度、距离衰减、平方步进、噪声和逐帧 slice rotation；不再使用此前的 1/2-bin 人工扩宽。共享 GeometryBuffer 当前在 LOD0 逐点采样，质量取舍是明确的，不伪造 HTrace 的深度金字塔 footprint。
+   - 每片输出 `1 - countbits(mask)/26`，公共 AO 通道仍为 visibility（1=无遮挡）。
+   - **v1.1 可选**：给 AO 建独立深度 mip/footprint，并逐项对齐 HTrace 的 LOD 选择，以恢复完整金字塔质量。
 2. **去噪 = SpatioTemporal**（Denoising 最高档；None/SpatialOnly/TemporalOnly 为降档）：
    - **temporal**：运动矢量重投影（`ReprojectionCoord = px − motion`，:118）+ 分辨率/窗口变化校正（:119-120）+ 4 邻居双线性/双三次（Bicubic 档）+ **深度 gather 校验 + 法线校验**（`dot(histN, curN)` 阈值，:201-207）+ sampleCount 累积（截止 `count*2`，:323）+ rejection（**精确**=ray march 记录的 hit-velocity 指数衰减 / **简单**=常数 `1-TemporalRejection`，:330）。历史双纹理：RG16（AO+velocity）、RGBA8（samplecount/16 + normal）。
    - **spatial**：**Box**（Poisson 8 点固定偏移 × Plane/Normal/Gaussian 权重，pass 可叠，:101-150）或 **Disk**（动态半径：`Adaptivity = lerp(0.25, 1, pow(|1−ao|, _FilterAdaptivity*2))` 保边缘 / `Radius = dist·FilterRadius/RadiusScale` 深度缩放，:161-235）——两型皆双边式，Disk 边缘保护更好、略贵。
