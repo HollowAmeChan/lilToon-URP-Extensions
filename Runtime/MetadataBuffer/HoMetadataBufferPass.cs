@@ -95,7 +95,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             this.renderTargets = renderTargets;
             this.clearMaterial = clearMaterial;
             this.fallbackMaterial = fallbackMaterial;
-            renderPassEvent = settings != null ? settings.passEvent : RenderPassEvent.AfterRenderingOpaques;
+            renderPassEvent = settings != null ? settings.passEvent : RenderPassEvent.BeforeRenderingOpaques;
             ConfigureInput(ScriptableRenderPassInput.None);
             ConfigureFiltering();
         }
@@ -110,7 +110,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             this.renderTargets = renderTargets;
             this.clearMaterial = clearMaterial;
             this.fallbackMaterial = fallbackMaterial;
-            renderPassEvent = settings != null ? settings.passEvent : RenderPassEvent.AfterRenderingOpaques;
+            renderPassEvent = settings != null ? settings.passEvent : RenderPassEvent.BeforeRenderingOpaques;
             ConfigureInput(ScriptableRenderPassInput.None);
             ConfigureFiltering();
         }
