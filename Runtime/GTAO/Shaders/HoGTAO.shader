@@ -17,7 +17,7 @@ Shader "Hidden/lilToon/URP/HoGTAO"
         float _HoGTAODebugMode;
         float _HoGTAOHistoryBlend;
 
-        half4 Generate(Varyings input)
+        half4 Generate(Varyings input) : SV_Target
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             half4 normalDepth = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord);
@@ -40,7 +40,7 @@ Shader "Hidden/lilToon/URP/HoGTAO"
             return half4(coverage, coverage, coverage, 1.0h);
         }
 
-        half4 Temporal(Varyings input)
+        half4 Temporal(Varyings input) : SV_Target
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             half current = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord).r;
@@ -49,14 +49,14 @@ Shader "Hidden/lilToon/URP/HoGTAO"
             return half4(ao, ao, ao, 1.0h);
         }
 
-        half4 OutputAO(Varyings input)
+        half4 OutputAO(Varyings input) : SV_Target
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             half ao = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord).r;
             return half4(ao, ao, ao, 1.0h);
         }
 
-        half4 DebugOutput(Varyings input)
+        half4 DebugOutput(Varyings input) : SV_Target
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             return SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord);
