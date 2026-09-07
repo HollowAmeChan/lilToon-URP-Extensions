@@ -668,6 +668,268 @@ _REFLECTION_PROBE_BOX_PROJECTION
 
 这不是“Lite 完全没有反射”，而是“Lite 不保留完整的探针混合/盒投影质量”。反射关键资产应优先使用标准 Default 系列。
 
+### 3.5 朱木古堂测试环境的实证基线
+
+测试工程：
+
+```text
+D:\Unity_Project\BREAK_URP
+场景：Assets\mmd场景测试\朱木古堂\New Scene.unity
+URP：D:\Unity_Fork\HoUrp17.3.0
+lilToon：D:\Unity_Fork\lilToon\Assets\lilToon
+```
+
+#### 当前 Shader 输出
+
+场景材质的 Shader GUID 已和 lilToon 源文件对应：
+
+| 测试工程 Shader GUID | 源文件 | 用途 |
+|---|---|---|
+| `df12117ecd77c31469c224178886498e` | `Shader/lts.shader` | 标准 Opaque，Shader 名 `lilToon`，`LIL_RENDER=0` |
+| `85d6126cae43b6847aff4b13f4adb8ec` | `Shader/lts_cutout.shader` | 标准 Cutout，Shader 名 `Hidden/lilToonCutout`，`LIL_RENDER=1` |
+| `e66172d3b40f88d449a821efed862d2d` | `lilPBR/Shaders/lilPBR.shader` | lilPBR，不属于 lilToon 输出矩阵 |
+
+朱木古堂当前实际使用的是标准 `lts.shader` 和 `lts_cutout.shader`，没有使用 `ltsl` Lite、`ltsmulti` Multi、`lts_fur`、`lts_gem` 或 `lts_ref` Refraction Shader。因此，标准输出的编译能力是当前场景最直接的证据；其他 Shader 家族仍然需要独立验证。
+
+#### 当前场景/URP 资源状态
+
+从 `New Scene.unity`、`PC_RPAsset.asset` 和 `PC_Renderer.asset` 盘点到的状态：
+
+| 项目 | 当前状态 | 对 Shader 支持判断的影响 |
+|---|---|---|
+| 光照数据资产 | `m_LightingDataAsset` 为默认空引用 | 当前场景没有已绑定的烘焙 LightingDataAsset |
+| Lightmap Shader 变体 | lilToon 输出明确 skip | 即使 Renderer/材质存在 Lightmapping 标志，也不会进入 Lightmap 采样路径 |
+| Light Probe System | `m_LightProbeSystem: 0` | URP17 枚举中 `0 = LegacyLightProbes`；场景本身没有 APV 组件 |
+| APV 组件/数据 | 场景未发现 Adaptive Probe Volume/Probe Volume 组件 | 当前画面不构成 APV 实证 |
+| Reflection Probe | `New Scene.unity` 未发现 ReflectionProbe 组件 | 当前画面不构成局部 Reflection Probe 实证，只能验证 Shader 变体存在 |
+| URP depth | `PC_RPAsset.m_RequireDepthTexture: 1` | `_CameraDepthTexture`/Ho Geometry 相关消费有基础条件 |
+| URP opaque | `PC_RPAsset.m_RequireOpaqueTexture: 1` | lilToon Refraction/Camera Opaque 路径有基础条件 |
+| Ho Geometry/Metadata | Renderer 中均启用 | 标准 lilToon 输出带 `HoGeometryBuffer`、`HoMetadataBuffer` Pass |
+| Ho-GTAO/HTrace AO | Renderer 中配置，但 `m_Active: 0` | 当前基线不实际生产 AO；材质 AO 路径与未来 Feature 启用顺序仍需验收 |
+| HTrace SSGI | Renderer 中配置，但 `m_Active: 0` | 当前基线不实际生产 SSGI；它属于屏幕空间增强，不是 lilToon 原生 Shader 变体 |
+| Ho-ShadowCast | 一档 `m_Active: 1`，另一档 `m_Active: 0` | 启用档生产额外阴影 atlas，不等于主光 ShadowMap |
+
+`PC_RPAsset.asset` 的相关设置见 [PC_RPAsset.asset](D:/Unity_Project/BREAK_URP/Assets/Settings/PC_RPAsset.asset)，测试 Shader 设置见 [lilToonSetting.json](D:/Unity_Project/BREAK_URP/ProjectSettings/lilToonSetting.json)。
+
+#### 当前生成 Shader 的关键事实
+
+标准 `lts.shader` / `lts_cutout.shader` 的 HLSLINCLUDE 中定义了完整功能集合，包括：
+
+```text
+LIL_FEATURE_SHADOW / RECEIVE_SHADOW / SHADOW_3RD
+LIL_FEATURE_REFLECTION / MATCAP / RIMLIGHT / GLITTER / BACKLIGHT
+LIL_FEATURE_SSAO / SSS / PARALLAX / POM / DISTANCE_FADE / DISSOLVE
+LIL_FEATURE_NORMAL_1ST / NORMAL_2ND / ANISOTROPY
+LIL_FEATURE_EMISSION_1ST / EMISSION_2ND
+LIL_FEATURE_*Map / *Mask / *ColorTex
+```
+
+这说明当前生成器不是按每个材质只生成一份窄 Shader，而是按 Shader 家族将大量功能宏固定编入输出；材质属性和统一 Shader 代码再决定具体分支的实际行为。
+
+但这些宏存在不等于所有 URP 变体都存在。朱木古堂当前生成结果明确包含：
+
+```text
+#pragma skip_variants LIGHTMAP_ON DYNAMICLIGHTMAP_ON
+#pragma skip_variants LIGHTMAP_SHADOW_MIXING SHADOWS_SHADOWMASK
+#pragma skip_variants DIRLIGHTMAP_COMBINED _MIXED_LIGHTING_SUBTRACTIVE
+```
+
+所以当前工程的真实结论是：
+
+> 标准 lilToon 的 toon/反射/ShadowCaster/HoRP Pass 功能宏很完整，但当前项目编译设置主动裁掉了所有 Lightmap 变体；APV 变体也没有生成。
+
+### 3.6 52 个输出 Shader 家族的用途与宏环境
+
+当前 `D:\Unity_Fork\lilToon\Assets\lilToon\Shader` 有 52 个生成 Shader，按用途分为四个家族：
+
+| 家族 | 数量 | 文件前缀 | 主要用途 | 关键宏/限制 |
+|---|---:|---|---|---|
+| Standard | 25 | `lts*.shader` | 普通 Opaque/Cutout/Transparent、Outline、Fur、Gem、Refraction、FakeShadow、Overlay | 完整 `LIL_FEATURE_*`；标准场景使用 `lts.shader` / `lts_cutout.shader` |
+| Lite | 12 | `ltsl*.shader` | 低成本 Opaque/Transparent/Outline/Overlay | `LIL_LITE`；跳过主光/附加光阴影和 Reflection blending/box projection；HLSL 许多功能有 `!LIL_LITE` 门控 |
+| Multi | 5 | `ltsmulti*.shader` | 多材质输入/多段材质组合、Multi Fur/Gem/Refraction | `LIL_MULTI` + `LIL_MULTI_INPUTS_*`；当前输出跳过附加灯阴影 |
+| UsePass | 10 | `ltspass*.shader` | 给外部/旧材质通过 UsePass 复用 lilToon Pass | 可能重复包含 SubShader；Lite/普通分别有独立文件；应按 Pass 级别验证 |
+
+完整输出文件清单如下，后续新增或删除 Shader 文件时应同步更新这里：
+
+```text
+Standard (25)
+lts.shader
+lts_cutout.shader
+lts_cutout_o.shader
+lts_cutout_oo.shader
+lts_fakeshadow.shader
+lts_fur.shader
+lts_fur_cutout.shader
+lts_fur_two.shader
+lts_furonly.shader
+lts_furonly_cutout.shader
+lts_furonly_two.shader
+lts_gem.shader
+lts_o.shader
+lts_oo.shader
+lts_onetrans.shader
+lts_onetrans_o.shader
+lts_overlay.shader
+lts_overlay_one.shader
+lts_ref.shader
+lts_ref_blur.shader
+lts_trans.shader
+lts_trans_o.shader
+lts_trans_oo.shader
+lts_twotrans.shader
+lts_twotrans_o.shader
+
+Lite (12)
+ltsl.shader
+ltsl_cutout.shader
+ltsl_cutout_o.shader
+ltsl_o.shader
+ltsl_onetrans.shader
+ltsl_onetrans_o.shader
+ltsl_overlay.shader
+ltsl_overlay_one.shader
+ltsl_trans.shader
+ltsl_trans_o.shader
+ltsl_twotrans.shader
+ltsl_twotrans_o.shader
+
+Multi (5)
+ltsmulti.shader
+ltsmulti_fur.shader
+ltsmulti_gem.shader
+ltsmulti_o.shader
+ltsmulti_ref.shader
+
+UsePass (10)
+ltspass_baker.shader
+ltspass_bakeramp.shader
+ltspass_cutout.shader
+ltspass_dummy.shader
+ltspass_lite_cutout.shader
+ltspass_lite_opaque.shader
+ltspass_lite_transparent.shader
+ltspass_opaque.shader
+ltspass_proponly.shader
+ltspass_transparent.shader
+```
+
+#### Standard 家族
+
+| 输出文件 | 运行环境 | 额外宏/Pass |
+|---|---|---|
+| `lts.shader` | Opaque 标准材质 | `LIL_RENDER=0`；完整 Forward、ShadowCaster、DepthOnly、DepthNormals、HoMetadata、HoGeometry、HoCharacterCapture、GBuffer、MotionVectors、Meta |
+| `lts_cutout.shader` | Cutout 标准材质 | `LIL_RENDER=1`；与标准 Opaque 基本相同，Alpha Clip 在 alpha pass 中生效 |
+| `lts_trans.shader` / `lts_onetrans.shader` / `lts_twotrans.shader` | Transparent | `LIL_RENDER=2`；包含 `lilToonOIT` 的变体/Pass，按透明结构区分 |
+| `lts_o.shader` / `lts_cutout_o.shader` / `lts_trans_o.shader` | 带 Outline 的完整材质 | `LIL_OUTLINE`；额外 `FORWARD_OUTLINE`，通常 LightMode=`UniversalForward` |
+| `lts_oo.shader` / `lts_cutout_oo.shader` | 仅 Outline | 只保留 `FORWARD_OUTLINE`，不应当当作主体材质使用 |
+| `lts_fur*.shader` | Fur | `LIL_FUR`；可能有 `FORWARD_FUR_PRE`、`FORWARD_FUR`，并有重复 SubShader/Pass 结构 |
+| `lts_gem.shader` | Gem | `LIL_GEM`、`LIL_GEM_PRE`；先预处理/折射，再主体 Forward |
+| `lts_ref.shader` | Refraction | `LIL_REFRACTION`；Camera Opaque + 环境反射，跳过 Lightmap 和附加灯阴影变体 |
+| `lts_ref_blur.shader` | 模糊 Refraction | `LIL_REFRACTION` + `LIL_REFRACTION_BLUR2`；额外按粗糙度采样/模糊背景 |
+| `lts_fakeshadow.shader` | Fake Shadow | 主体用途是伪阴影投射；跳过 Lightmap、顶点灯、Light Probe、Reflection blending/box 等大量变体 |
+| `lts_overlay*.shader` | Overlay/OIT | 主要保留 Forward 与 `lilToonOIT`，不适合依赖完整静态 GI |
+
+#### Lite 家族
+
+Lite 输出在文件中定义 `LIL_LITE`。`lil_common_frag.hlsl` 中大量功能以 `!defined(LIL_LITE)` 保护，例如：
+
+```hlsl
+#if defined(LIL_FEATURE_SSS) && !defined(LIL_LITE) && !defined(LIL_GEM)
+#if defined(LIL_FEATURE_REFLECTION) && ... && !defined(LIL_LITE)
+#if defined(LIL_FEATURE_BACKLIGHT) && !defined(LIL_LITE) && !defined(LIL_GEM)
+```
+
+因此 Lite 不是“同一个 Shader 少几个关键词”，而是 HLSL 逻辑本身进入了低成本分支。当前生成结果还会跳过：
+
+```text
+主光阴影相关 variants
+Additional Light Shadow
+Reflection Probe blending
+Reflection Probe box projection
+```
+
+Lite 适合远景、简单道具、低成本透明层，不适合作为 HO 质量基线。
+
+#### Multi 家族
+
+Multi 输出定义 `LIL_MULTI` 和一组 `LIL_MULTI_INPUTS_*`，例如：
+
+```text
+LIL_MULTI_INPUTS_MAIN2ND
+LIL_MULTI_INPUTS_MAIN3RD
+LIL_MULTI_INPUTS_SHADOW
+LIL_MULTI_INPUTS_NORMAL
+LIL_MULTI_INPUTS_REFLECTION
+LIL_MULTI_INPUTS_MATCAP
+LIL_MULTI_INPUTS_EMISSION
+```
+
+它的意义是把多个材质/输入组装进同一 Shader 结构，而不是简单的性能 Lite 变体。`ltsmulti_gem` 和 `ltsmulti_ref` 还叠加 `LIL_GEM` 或 `LIL_REFRACTION`。
+
+当前 Multi 输出普遍包含：
+
+```text
+#pragma skip_variants _ADDITIONAL_LIGHT_SHADOWS
+```
+
+所以 Multi 材质的附加灯阴影不能按 Standard 结果推断。
+
+#### UsePass 家族
+
+UsePass 输出是兼容层，主要用于将 lilToon Pass 提供给其他材质/旧工作流。它们不是新算法，也不应被视为和 Standard 文件完全等价。对 HoRP 来说，必须逐 Pass 检查它是否包含：
+
+```text
+ShadowCaster
+DepthOnly
+DepthNormals
+HoGeometryBuffer
+HoMetadataBuffer
+MotionVectors
+```
+
+如果一个外部材质只 UsePass 了 Forward，而没有复用 Geometry/Metadata/Shadow Pass，它就不能自动参与 HoRP 的全部语义通道。
+
+### 3.7 当前项目的宏开关与真实功能状态
+
+`D:\Unity_Project\BREAK_URP\ProjectSettings\lilToonSetting.json` 是当前工程 Shader 输出的关键控制面。当前值及其实际后果如下：
+
+| 设置 | 当前值 | 输出结果 |
+|---|---:|---|
+| `LIL_FEATURE_*` 全局功能集合 | 大部分 `true` | Standard/Cutout 输出包含完整 lilToon 功能宏 |
+| `LIL_OPTIMIZE_APPLY_SHADOW_FA` | `true` | Shadow/FA 相关逻辑使用优化路径 |
+| `LIL_OPTIMIZE_USE_FORWARDADD` | `true` | 生成 Additional Light/ForwardAdd 相关逻辑 |
+| `LIL_OPTIMIZE_USE_FORWARDADD_SHADOW` | `false` | 不强制启用 ForwardAdd 全阴影替代路径 |
+| `LIL_OPTIMIZE_USE_VERTEXLIGHT` | `true` | 保留 Vertex Light 相关输入/分支 |
+| `LIL_OPTIMIZE_USE_LIGHTMAP` | `false` | 生成结果跳过 Lightmap、Dynamic Lightmap、Shadowmask、Directional Lightmap variants |
+| `LIL_OPTIMIZE_DEFFERED` | `false` | 不把当前主线当作 Deferred-only 输出 |
+| `m_LightProbeSystem` | `0` | 项目没有切到 APV 系统 |
+| `m_RequireDepthTexture` | `1` | Camera Depth / Ho Geometry 使用有基础条件 |
+| `m_RequireOpaqueTexture` | `1` | Refraction 使用 Camera Opaque 有基础条件 |
+
+一个非常关键的工程结论是：
+
+> “未来不会新增编译文件数量”并不等于“未来不增加变体”。当前架构已经把大量功能宏固定进 52 个 Shader 输出文件，真正控制编译规模的是 `lilToonSetting` 的 `skip_variants` 和每个家族的 Pass/宏组合。新增 HoRP 功能时，优先增加现有 Pass 的语义输入或全局资源，不要新增一套独立 Shader 家族。
+
+### 3.8 当前朱木古堂的真实支持结论
+
+| 功能 | 源码存在 | 当前 `lts/lts_cutout` 输出 | 朱木古堂实际使用情况 |
+|---|---:|---:|---|
+| 主光 toon | 是 | 是 | 正在使用 |
+| Main Light Shadow | 是 | 是 | 场景有 Directional Light，Renderer 也启用 ShadowCast |
+| Additional Lights | 是 | 是 | 场景有大量 Point Light，Standard 保留 Additional Light 变体 |
+| Additional Light Shadows | 是 | Standard 保留 | 是否有实际 atlas/灯光阴影取决于灯与 Renderer 设置 |
+| Lightmap | 是 | **否，variants 被 skip** | 当前不能作为该场景的 lilToon 光照来源 |
+| 传统 SH/Light Probe | 是 | Standard Shader 可用 SH 路径 | 场景没有明确的 Light Probe Group，不能称为已验证 |
+| APV | HLSL 存在 | **否，无 `PROBE_VOLUMES_L1/L2`** | 未启用 |
+| Reflection Probe | HLSL/URP variants 存在 | **是，含 blending/box/atlas** | 场景未放 ReflectionProbe，未实际验证 |
+| Refraction | 独立 `lts_ref` 输出 | 不属于当前标准场景 Shader | 工程有 opaque texture，但朱木古堂材质主要是 `lts/lts_cutout` |
+| Ho Geometry/Metadata | HoRP Pass 存在 | **是** | 当前场景 Renderer 已启用对应 Feature |
+| Ho-GTAO | 材质属性和 `_HoAOTexture` 存在 | **是** | 当前 Renderer 同时存在 HTrace AO 与 Ho-GTAO，需按顺序验收 |
+| Ho-GI/SSGI | 管线 Feature | 不是 lilToon 固有宏 | HTrace SSGI 已配置但当前 `m_Active: 0`，后续换 Ho-GI |
+| ShadowCaster | Pass 存在 | **是** | Standard/Cutout 都可被 ShadowMap/HoRP 重绘 |
+
+这张表比“lilToon 支持 Lightmap/Probe/Reflection”更接近当前工程真实情况：**支持能力必须同时通过源码、生成文本、ProjectSettings 和测试场景资产四层证据确认。** 当前朱木古堂的几个 Ho-GTAO/SSGI/Planar 组件是“已配置但未激活”，不能把它们的存在误认为当前画面已经消费了对应结果。
+
 ---
 
 ## 4. HO/NPR 的推荐工程基线
@@ -763,6 +1025,14 @@ _REFLECTION_PROBE_BOX_PROJECTION
 - [lilToon fragment lighting](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_frag.hlsl)
 - [lilToon ShadowCaster pass](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_pass_shadowcaster.hlsl)
 - [lilToon shader importer](D:/Unity_Fork/lilToon/Assets/lilToon/Editor/lilShaderContainerImporter.cs)
+- [lilToon shader settings](D:/Unity_Fork/lilToon/Assets/lilToon/Editor/lilToonSetting.cs)
+- [当前 Standard 生成输出 lts.shader](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/lts.shader)
+- [当前 Cutout 生成输出 lts_cutout.shader](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/lts_cutout.shader)
+- [朱木古堂测试场景](D:/Unity_Project/BREAK_URP/Assets/mmd场景测试/朱木古堂/New%20Scene.unity)
+- [朱木古堂 lilToon 编译设置](D:/Unity_Project/BREAK_URP/ProjectSettings/lilToonSetting.json)
+- [朱木古堂 URP Asset](D:/Unity_Project/BREAK_URP/Assets/Settings/PC_RPAsset.asset)
+- [朱木古堂 Renderer](D:/Unity_Project/BREAK_URP/Assets/Settings/PC_Renderer.asset)
+- [URP17 LightProbeSystem enum](D:/Unity_Fork/HoUrp17.3.0/Runtime/Data/UniversalRenderPipelineAsset.cs:398)
 - [HO pipeline review](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/架构优化/LILTOON_RENDER_PIPELINE_REVIEW_AND_PLAN.md)
 - [HO channel contract](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/架构优化/LILTOON_CHANNEL_CONTRACT_V1.md)
 - [HO GTAO plan](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/架构优化/LILTOON_GTAO_PLAN.md)
