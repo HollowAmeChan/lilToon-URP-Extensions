@@ -39,8 +39,10 @@ namespace lilToon.URP.Extensions.GTAO
         Off = 0,
         [InspectorName("AO"), Tooltip("传输诊断：暂时以线性深度灰阶确认输入和刷新链路；算法接入后恢复为 AO 因子。")]
         AO = 1,
-        [InspectorName("NormalDepth"), Tooltip("直出输入屏幕深度+法线（验证 GeometryBuffer 时序链路）。")]
-        NormalDepth = 2,
+        [InspectorName("Depth"), Tooltip("直出 GeometryBuffer 线性深度。")]
+        Depth = 2,
+        [InspectorName("Normal"), Tooltip("直出 GeometryBuffer 世界法线。")]
+        Normal = 3,
     }
 
     [Serializable]

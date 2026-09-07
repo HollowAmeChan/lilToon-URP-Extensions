@@ -139,6 +139,17 @@ namespace lilToon.URP.Extensions.GTAO
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-GTAO");
         private static readonly int DebugModeId = Shader.PropertyToID("_HoGTAODebugMode");
         private static readonly int HistoryBlendId = Shader.PropertyToID("_HoGTAOHistoryBlend");
+        private static readonly int WorldRadiusId = Shader.PropertyToID("_HoGTAOWorldSpaceRadius");
+        private static readonly int ScreenRadiusId = Shader.PropertyToID("_HoGTAOScreenSpaceRadius");
+        private static readonly int ThicknessId = Shader.PropertyToID("_HoGTAOThickness");
+        private static readonly int UseAttenuationId = Shader.PropertyToID("_HoGTAOUseAttenuation");
+        private static readonly int LinearThicknessId = Shader.PropertyToID("_HoGTAOUseLinearThickness");
+        private static readonly int SliceCountId = Shader.PropertyToID("_HoGTAOSliceCount");
+        private static readonly int StepCountId = Shader.PropertyToID("_HoGTAOStepCount");
+        private static readonly int FrameIndexId = Shader.PropertyToID("_HoGTAOFrameIndex");
+        private static readonly int ViewMatrixId = Shader.PropertyToID("_HoGTAOViewMatrix");
+        private static readonly int ProjMatrixId = Shader.PropertyToID("_HoGTAOProjMatrix");
+        private static readonly int InvProjMatrixId = Shader.PropertyToID("_HoGTAOInvProjMatrix");
 
         private sealed class GenerateData
         {
@@ -146,6 +157,17 @@ namespace lilToon.URP.Extensions.GTAO
             public TextureHandle normalDepth;
             public TextureHandle output;
             public int debugMode;
+            public float worldRadius;
+            public float screenRadius;
+            public float thickness;
+            public float useAttenuation;
+            public float linearThickness;
+            public int sliceCount;
+            public int stepCount;
+            public float frameIndex;
+            public Matrix4x4 view;
+            public Matrix4x4 proj;
+            public Matrix4x4 invProj;
         }
 
         private sealed class TemporalData
@@ -224,6 +246,17 @@ namespace lilToon.URP.Extensions.GTAO
                 data.normalDepth = geometry.normalDepthTexture;
                 data.output = current;
                 data.debugMode = (int)settings.debugMode;
+                data.worldRadius = settings.worldSpaceRadius;
+                data.screenRadius = settings.screenSpaceRadius;
+                data.thickness = settings.thickness;
+                data.useAttenuation = settings.useAttenuation ? 1.0f : 0.0f;
+                data.linearThickness = settings.useLinearThickness ? 1.0f : 0.0f;
+                data.sliceCount = settings.sliceCount;
+                data.stepCount = settings.stepCount;
+                data.frameIndex = Time.frameCount;
+                data.view = cameraData.GetViewMatrix();
+                data.proj = cameraData.GetProjectionMatrix();
+                data.invProj = data.proj.inverse;
                 builder.UseTexture(data.normalDepth, AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
@@ -231,6 +264,17 @@ namespace lilToon.URP.Extensions.GTAO
                 builder.SetRenderFunc(static (GenerateData passData, RasterGraphContext context) =>
                 {
                     context.cmd.SetGlobalFloat(DebugModeId, passData.debugMode);
+                    context.cmd.SetGlobalFloat(WorldRadiusId, passData.worldRadius);
+                    context.cmd.SetGlobalFloat(ScreenRadiusId, passData.screenRadius);
+                    context.cmd.SetGlobalFloat(ThicknessId, passData.thickness);
+                    context.cmd.SetGlobalFloat(UseAttenuationId, passData.useAttenuation);
+                    context.cmd.SetGlobalFloat(LinearThicknessId, passData.linearThickness);
+                    context.cmd.SetGlobalFloat(SliceCountId, passData.sliceCount);
+                    context.cmd.SetGlobalFloat(StepCountId, passData.stepCount);
+                    context.cmd.SetGlobalFloat(FrameIndexId, passData.frameIndex);
+                    context.cmd.SetGlobalMatrix(ViewMatrixId, passData.view);
+                    context.cmd.SetGlobalMatrix(ProjMatrixId, passData.proj);
+                    context.cmd.SetGlobalMatrix(InvProjMatrixId, passData.invProj);
                     Blitter.BlitTexture(context.cmd, passData.normalDepth, new Vector4(1, 1, 0, 0), passData.material, 0);
                 });
             }

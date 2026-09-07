@@ -3,7 +3,7 @@ namespace lilToon.URP.Extensions.GTAO
     internal static class HoGTAOShaderConstants
     {
         public const string FeatureName = "Ho-GTAO";
-        public const string ShaderName = "Hidden/lilToon/URP/HoGTAO";
+        public const string ShaderName = "Hidden/lilToon/URP/HoGTAOv4";
         public const string DebugShaderName = "Hidden/lilToon/URP/HoGTAO/DebugView";
 
         public const string ShaderAssetPath = "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GTAO/Shaders/HoGTAO.shader";
