@@ -61,6 +61,8 @@ camera color 不是干净的 GI source，因为它可能已经包含：
 
 这正是 HTrace 描边发白的根本原因。问题不是单纯的 ray length、brightness clamp 或 sample count。
 
+HTrace 的 `DirectLighting` debug 也不是一张独立的 direct-light RT。URP 中它显示的是间接光注入前的 camera color，所以会包含 opaque outline；透明物体尚未进入这个时机，因此会表现为没有透明内容或出现历史拖影。这解释了你现在看到的现象。
+
 ### 1.4 HTrace 已有设计盘点
 
 HTrace 的 URP 链路实际上是：
@@ -102,6 +104,55 @@ PrePass / motion vectors
 
 一个重要事实：`ExcludeCastingMask` 在 HTrace 的深度金字塔阶段是有效的，但 `ExcludeReceivingMask` 只能排除已经拥有正确 rendering layer 的接收像素。当前 lilToon outline 的基础 GBuffer/DepthNormals 不包含外扩壳，因此 HTrace 的 layer mask 不能单独解决 outline 白边。
 
+### 1.5 Ho 的排除真值：GeometryBuffer coverage
+
+Ho-GeometryBuffer 已经验证为：
+
+- normal/depth pass 不执行 outline extrusion；
+- outline 壳不写入 normal/depth；
+- 可用 coverage、normal validity 和 depth 作为物理表面判断。
+
+因此第一版不需要额外渲染一张“无描边完整 RT”，也不需要把主 shader 和 outline shader 拆成两个材质。SSGI 的 hit acceptance 统一使用：
+
+```text
+hitUV
+  -> sample HoGeometryBuffer normal/depth
+  -> coverage valid
+  -> normal valid
+  -> ray depth 与 geometry depth 一致
+  -> 才允许 sample source radiance
+```
+
+描边仍然存在于 camera/opaque color，但它对应的 GeometryBuffer coverage 为空，会在 source 采样前被拒绝。它也不会出现在 Ho-SSGI 的 depth pyramid 中，因此不会作为 caster 遮挡或反弹。
+
+当前过渡 source 优先使用 URP 的 opaque color，而不是最终 camera color：
+
+- opaque color 已经包含 lilToon 的直接 toon 光照；
+- 不包含透明/OIT 和最终后期；
+- 描边仍可能存在，但由 GeometryBuffer coverage 排除；
+- 朱木古堂的 URP asset 已经启用 opaque texture。
+
+透明/OIT 第一版不进入 GI caster/receiver 域，使用直接光照或 APV fallback。这样先消除 HTrace 的透明拖影问题，再单独研究透明 GI，不把透明路径混进主 SSGI 验证。
+
+### 1.6 现有双语义绘制就是干净 source 的基础
+
+主 forward pass 把主体和 outline 一起画进 camera color；`HoGeometryBuffer` 和 `HoMetadataBufferSurfaceColor` 则通过独立的 base geometry pass 再画一次主体：
+
+```text
+camera opaque color       = 已着色结果，可能包含 outline
+HoGeometryBuffer          = 无 outline 的 normal/depth/coverage
+HoMetadataBufferSurfaceColor = 无 outline 的纯色/coverage
+```
+
+这不是为了 GI 新增一张 no-outline RT，而是复用已经存在的语义绘制成本。Ho-SSGI 可以按以下方式使用它们：
+
+- GeometryBuffer 决定 hit/receiver 是否是真实几何；
+- SurfaceColor 提供干净 albedo 和覆盖率；
+- opaque color 或后续 direct-light source 提供已着色 radiance；
+- 三者在 hit UV 上做 coverage/depth 一致性校验后才进入 GI。
+
+SurfaceColor 本身是纯色，不等于间接光。它适合做 source 的 albedo/validity，不能单独替代 direct-light radiance。另一个限制是没有 `HoMetadataBufferSurfaceColor` pass 的材质不会自动获得这张颜色图，因此 fallback/非 lilToon 材质需要走 opaque color 或 APV fallback。
+
 ## 2. Ho-SSGI v1 的核心设计
 
 ### 2.1 复用输入
@@ -119,10 +170,10 @@ MetadataBuffer 不属于 GI 输入。它继续作为角色语义、CharacterSpec
 
 ### 2.2 新增一个干净的 GI source
 
-Ho-SSGI 不能继续无条件读取 camera color。需要一个 source 选择：
+Ho-SSGI 不能继续无条件读取最终 camera color。需要一个 source 选择：
 
 1. **首选**：lilToon 输出的不含 outline 的直接光照 source；
-2. **过渡**：读取 camera color，但对 outline、透明、后期和无效几何做排除；
+2. **过渡**：读取 opaque color，并用 GeometryBuffer coverage 排除 outline 和无效几何；
 3. **fallback**：APV/天空或上一帧有效 radiance。
 
 这个 source 要表达的是“命中点可以向外贡献的已经着色辐射”，不是单纯 albedo。对于 lilToon，最合理的形式是：
