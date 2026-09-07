@@ -1,206 +1,190 @@
-# lilToon / Ho-GI 实施规划
+# lilToon / Ho-SSGI 实施规划
 
-> 状态：Draft v0.1
+> 状态：Draft v0.2
 >
-> 目标：先完成可控、可调试的 Ho-SSGI，验证 lilToon 的 GI 接收契约；再在不改材质消费接口的前提下接入 Brixelizer GI。
+> 主线：先把 HTrace SSGI 改造成适合 lilToon 的 Ho-SSGI；Brixelizer GI 只作为后续 producer 替换，不提前展开完整实现。
 
 ## 0. 结论
 
-当前推荐路线：
+当前最实际的路线是：
 
 ```text
-Ho-SSGI v1
+Ho-SSGI（HTrace 改进）
     -> lilToon GI 接收与 NPR 风格化
     -> 朱木古堂验收
-    -> Ho-SSGI 作为 fallback
-    -> Brixelizer GI 世界空间增强
+    -> 保持同一 GI 输出契约
+    -> 后续可替换为 Brixelizer GI
 ```
 
-不把 Lumen、硬件 RTGI 或完整 ReSTIR GI 作为主线。DDGI 保留为后续可选研究，不作为当前实现的前置条件。
+不为低质量档另做一套算法。先确定一条高质量路径，用分辨率、ray count、history length 和 denoise 参数控制成本；Low/Medium 只改变参数，不改变算法结构。
 
-Brixelizer GI 值得作为第二阶段的原因：它使用稀疏 SDF、screen probes 和 radiance cache，能够覆盖屏幕外几何，官方提供 HLSL/SDK/样例，并以 MIT 许可发布；但它要求 DX12/Vulkan 和 HLSL CS 6.6，Unity 接入成本明显高于 SSGI。
+Brixelizer GI 只保留为后续方向。它是 compute/SDF/radiance-cache 路线，不是硬件 RTGI，但需要 DX12/Vulkan、HLSL CS 6.6 和较重的世界空间接入。[官方资料](https://gpuopen.com/fidelityfx-brixelizer/)
 
-参考：
+## 1. HTrace SSGI 的真实光照输入
 
-- [AMD FidelityFX Brixelizer/GI](https://gpuopen.com/fidelityfx-brixelizer/)
-- [Brixelizer GI 技术文档](https://gpuopen.com/manuals/fidelityfx_sdk/techniques/brixelizer-gi/)
-- [FidelityFX SDK 源码](https://github.com/GPUOpen-LibrariesAndSDKs/FidelityFX-SDK)
+### 1.1 当前 HTrace 怎么得到 hit radiance
 
-## 1. 当前边界
+HTrace 的 `HRenderSSGI.compute` 在屏幕空间 ray 命中后读取 `_Color`：
 
-### 1.1 GI 不依赖 MetadataBuffer
+```hlsl
+HitRadiance = UnpackColorHit(H_LOAD(_Color, HitData.xy).x, MovingHitPoint);
+```
 
-`HoMetadataBuffer` 已经定位为角色语义和后期 feature 的输入，不应成为 GI 的前置依赖。
+URP 路径里 `_Color` 绑定的是 camera color。也就是说，HTrace 的射线并没有在命中点重新计算灯光；它把命中像素已经得到的最终颜色当作 outgoing radiance，再做距离衰减、temporal accumulation 和 ReSTIR 重采样。
 
-GI 直接依赖：
+### 1.2 GBuffer 在 HTrace 中做什么
 
-- `HoGeometryBuffer`：屏幕法线、深度、天空信息；
-- 当前相机颜色或独立的 GI radiance source；
+HTrace 自己生成或读取 GBuffer、depth pyramid、rendering layer 和 motion/history 资源。GBuffer0/1 在 `ColorComposeURP.shader` 中主要用于：
+
+- GBuffer0：albedo；
+- GBuffer1：metallic/specular 相关信息和 AO；
+- 最终间接光合成：`GI * albedo * (1 - metallic) * AO`；
+- ambient override：从 camera color 中减去估计的环境间接光，避免重复叠加。
+
+它没有一张独立的“灯光属性 buffer”。直接光照已经被烘进 camera color，APV/天空只在 ray miss 时作为 fallback。
+
+相关本地源码：
+
+- `D:/Unity_Project/BREAK_URP/Assets/HTraceSSGI/Resources/HTraceSSGI/Computes/HRenderSSGI.compute`
+- `D:/Unity_Project/BREAK_URP/Assets/HTraceSSGI/Resources/HTraceSSGI/Shaders/URP/ColorComposeURP.shader`
+- `D:/Unity_Project/BREAK_URP/Assets/HTraceSSGI/Scripts/Passes/URP/GBufferPassURP.cs`
+
+### 1.3 对 lilToon 的问题
+
+camera color 不是干净的 GI source，因为它可能已经包含：
+
+- 外扩描边；
+- toon 最终合成；
+- 透明/OIT；
+- SSS、反射和后期处理；
+- 不属于真实表面的装饰效果。
+
+这正是 HTrace 描边发白的根本原因。问题不是单纯的 ray length、brightness clamp 或 sample count。
+
+## 2. Ho-SSGI v1 的核心设计
+
+### 2.1 复用输入
+
+Ho-SSGI 直接复用：
+
+- `HoGeometryBuffer` 的 normal/depth/sky；
+- URP camera motion vector，或深度/法线历史校验；
 - APV/天空 fallback；
-- 运动矢量或深度/法线/历史校验；
-- 后续 Brixelizer 的世界空间 SDF 与 radiance cache。
+- Ho 自己的 depth pyramid 和 temporal history。
 
-MetadataBuffer 可以继续提前到 `BeforeRenderingOpaques`，供 CharacterSpecialization、SSS、AOV 和 ScreenProcess 使用，但 GI 不读取它。当前 GeometryBuffer 和 MetadataBuffer 的 RenderGraph 资源分别位于：
+Ho-SSGI 不创建 HTrace 那套重复 GBuffer、重复 depth prepass 和独立 rendering-layer buffer。
 
-- `Runtime/GeometryBuffer/HoGeometryBufferRenderGraphResources.cs`
-- `Runtime/MetadataBuffer/HoMetadataBufferRenderGraphResources.cs`
+MetadataBuffer 不属于 GI 输入。它继续作为角色语义、CharacterSpecialization、SSS、AOV 和 ScreenProcess 的来源。当前它已经可以在 `BeforeRenderingOpaques` 生成，但 GI 不读取它。
 
-### 1.2 不把 SurfaceColor 当成最终 GI 辐射
+### 2.2 新增一个干净的 GI source
 
-MetadataBuffer 的 `SurfaceColor` 是材质颜色/反照率语义，不是经过直接光照后的 outgoing radiance。SSGI 如果只采它，会得到材质颜色扩散，而不是可靠的间接光。
+Ho-SSGI 不能继续无条件读取 camera color。需要一个 source 选择：
 
-因此 Ho-SSGI 至少需要以下一种 source：
+1. **首选**：lilToon 输出的不含 outline 的直接光照 source；
+2. **过渡**：读取 camera color，但对 outline、透明、后期和无效几何做排除；
+3. **fallback**：APV/天空或上一帧有效 radiance。
 
-1. 不含描边的直接光照 source；
-2. 当前帧相机颜色，但配合 metadata/coverage 排除非物理表面；
-3. 前一帧的 radiance history；
-4. APV/天空作为射线未命中 fallback。
+这个 source 要表达的是“命中点可以向外贡献的已经着色辐射”，不是单纯 albedo。对于 lilToon，最合理的形式是：
 
-首版可以使用经过明确遮罩的相机颜色验证链路，但不能把它作为最终架构。描边问题记录已经证明，直接读取包含外扩描边的 camera color 会产生白边和错误颜色反弹。
+```text
+GI source = toon direct diffuse + 可控环境/主光补光
+```
 
-## 2. Ho-SSGI v1
+不需要把每个 Light 对象的参数单独塞进 SSGI。灯光属性应该在 source pass 里完成直接光照计算，SSGI 只负责：
 
-### 2.1 目标
+```text
+source radiance
+    * ray visibility
+    * normal / cosine weighting
+    * distance falloff
+    * temporal / spatial filtering
+```
 
-- 复用 Ho-GeometryBuffer，不再创建 HTrace 的独立 normal/depth GBuffer；
-- 不创建 MetadataBuffer 专用输入；
-- 输出独立的 GI 语义纹理，不直接修改材质最终颜色；
-- 明确排除 outline、非物理壳和不参与 GI 的对象；
-- 先做单 bounce、屏幕空间增强，不追求多 bounce；
-- 保留 APV/天空 fallback，使屏幕外区域不变黑。
+这样主光、附加光、阴影、toon ramp 和材质颜色都已经在 source 中表达，SSGI 不需要重新实现一套 light loop。
 
-### 2.2 输出契约
+### 2.3 输出契约
 
-建议生产端发布：
+生产端发布算法无关的语义：
 
 - `_HoGITexture`：HDR 间接光颜色；
-- `_HoGIConfidenceTexture`：命中、fallback、历史有效性；
-- `_HoGIBentNormalTexture`：可选，用于环境补光和 debug；
-- `_HoGITexture` 未生成时回退为黑色，confidence 回退为 0。
+- `_HoGIConfidenceTexture`：命中、fallback、history 有效性；
+- 可选 `_HoGIBentNormalTexture`：环境补光和 debug 使用。
 
-材质或 ScreenProcess 只消费这些语义名，不读取 HTrace/Brixelizer 算法名。这样 Brixelizer 后续可以替换 Ho-SSGI producer，而不改 lilToon 接收端。
+关闭 Ho-SSGI 时，GI 颜色为黑色、confidence 为 0。lilToon 消费端只知道 GI 语义，不知道 HTrace 或其他实现。
 
-### 2.3 建议 pass 链
-
-第一版以 RenderGraph 为主：
+## 3. 一条高质量 Ho-SSGI 链
 
 ```text
 HoGeometryBuffer (250)
-    -> Ho-SSGI source / depth pyramid
-    -> ray march
-    -> temporal history
-    -> bilateral / spatial filter
-    -> APV / sky fallback
+    -> GI source（不含 outline）
+    -> Hi-Z depth pyramid
+    -> cosine hemisphere tracing
+    -> intersection refinement
+    -> temporal reprojection + history validation
+    -> firefly clamp / bilateral spatial filter
+    -> APV/sky fallback
     -> _HoGITexture + confidence
-    -> lilToon / ScreenProcess 接收
+    -> lilToon GI receiver
 ```
 
-Ho-SSGI 不应该复制 HTrace 的完整 GBuffer、独立深度、独立 rendering layer 和重复的 prepass。深度金字塔可以从 Ho-GeometryBuffer 的深度派生。
+第一版不拆出低质量算法。质量参数只控制：
 
-### 2.4 质量档
+- render scale；
+- ray count；
+- trace step count；
+- history length；
+- spatial radius；
+- source/indirect intensity。
 
-| 档位 | tracing | denoise | 用途 |
-|---|---|---|---|
-| Low | 半分辨率、4-8 rays | 单次 bilateral | 调试链路和低成本预览 |
-| Medium | 半分辨率、8-16 rays、Hi-Z | temporal + bilateral | 朱木古堂默认验收档 |
-| High | 全/半分辨率、16-32 rays | temporal validation + spatial | 静帧和作品集输出 |
+HTrace 已有的 ReSTIR、temporal validation、firefly suppression 和 recurrent blur 可以作为参考，但接入顺序应是：先让 source、trace、history 和 composite 正确，再逐项恢复这些质量机制。
 
-Temporal history 必须使用深度、法线、相机运动和材质/对象稳定性校验。第一版不需要完整逐物体 motion-vector pass，但动态角色必须有明确的 history rejection 策略。
+## 4. lilToon 接收顺序
 
-## 3. lilToon 接收
+先验证 producer，再验证材质接收：
 
-GI producer 和材质接收端分开验收。
+1. debug 直出 GI source；
+2. debug 直出未滤波 ray result；
+3. debug 直出 temporal/confidence；
+4. fullscreen composite 验证颜色反弹；
+5. 接入 lilToon indirect/toon shadow；
+6. 最后处理 SSS、OIT、平面反射和角色特化的 pass 顺序。
 
-### 3.1 接收顺序
+GI 的 NPR 合成规则：
 
-1. 先做全屏 composite，仅验证 `_HoGITexture` 的颜色、强度、遮罩和 confidence；
-2. 再接入 lilToon 的 indirect/toon shadow 逻辑；
-3. 最后决定是否增加 material-side GI intent；
-4. outline pass 不读取 GI，也不参与 GI source。
-
-### 3.2 NPR 风格化
-
-GI 不应直接按 PBR 方式叠加到 beauty：
-
-- 主要影响 toon 阴影侧和环境补光；
-- 支持 GI strength、color tint、luminance remap、contrast 和 clamp；
-- 对直接光照区域设置较低权重，避免平面色阶被洗掉；
+- 主要作用于 toon 阴影侧和环境补光；
+- 支持 GI strength、tint、luminance remap、contrast 和 clamp；
 - AO 只削弱 GI/ambient，不直接污染主光；
-- confidence 低时使用 APV/天空或保守 fallback。
+- confidence 低时使用 APV/天空或保守 fallback；
+- outline 不接收 GI，也不作为 source caster。
 
-## 4. 描边与非物理表面
+## 5. 描边排除
 
-Ho-SSGI 的 source、receiver、caster 都要有明确排除策略：
+以下规则必须在 Ho-SSGI 第一版就成立：
 
-- 不从含 outline 的 camera color 直接取 radiance；
+- 不把包含 outline 的 camera color 当作唯一 source；
 - outline 不写入 GI source；
 - outline 不接收 GI；
 - 深度/法线不一致时拒绝 screen hit；
-- 不命中 metadata 不能作为“有效物理表面”参与 GI。
+- 无有效几何覆盖的像素不参与历史累积；
+- camera color、source、GI、confidence 都要能单独 debug。
 
-这是 HTrace 白边问题的核心修复方向，而不是继续调整 ray length 或 brightness clamp。
+## 6. 朱木古堂验收顺序
 
-## 5. Brixelizer GI 过渡
+1. HoGeometryBuffer + source debug；
+2. 单帧 SSGI，不开 temporal；
+3. temporal + depth/normal rejection；
+4. spatial filter 和 firefly clamp；
+5. 红墙/白地面颜色反弹；
+6. 室内遮挡和近距离间接光；
+7. 角色移动、头发和外扩描边；
+8. SSS、OIT、平面反射和 CharacterSpecialization；
+9. 关闭 Ho-SSGI 后确认无 GI、无上一帧残留；
+10. 用 RenderDoc/Frame Debugger 对照 HTrace 的输入、输出和 GPU 成本。
 
-当 Ho-SSGI 链路和 lilToon 接收契约稳定后，再实现 Brixelizer backend：
+完成标准是：HTrace 的独立 GBuffer/prepass 不再是必需输入；Ho-SSGI 能稳定输出适合 lilToon 的 GI；关闭时安全回退；后续替换 Brixelizer 时不改 lilToon 消费契约。
 
-1. 建立动态/静态几何注册和稀疏 SDF 更新；
-2. 将 HoGeometryBuffer 作为 visible surface 输入；
-3. 将直接光照或前一帧 GI 写入 radiance cache；
-4. 使用 screen probes 生成世界空间 irradiance；
-5. 输出相同的 `_HoGITexture` 和 confidence；
-6. 保留 Ho-SSGI 作为平台/场景 fallback。
+## 7. Brixelizer 只保留为后续替换
 
-Brixelizer 不应先改 lilToon 材质接口。它只替换 GI producer。
+Ho-SSGI 接收契约稳定后，再评估 Brixelizer 的世界空间 SDF、screen probe 和 radiance cache。它只替换 GI producer，不改变 `_HoGITexture`、confidence 和 lilToon 接收接口。
 
-### 5.1 Brixelizer 的接入限制
-
-- 需要 DX12/Vulkan 和 HLSL CS 6.6；
-- 需要处理 Unity RenderGraph 与 native/compute resource 的桥接；
-- 动态 skinned mesh 的 SDF 更新成本要单独测量；
-- 需要 debug SDF、probe、radiance cache 和 leak/relocation 视图；
-- 不能把 Brixelizer SDK 当作普通 Unity C# 包直接拷贝进来。
-
-## 6. DDGI 的位置
-
-DDGI 保留为第三阶段候选：
-
-- 适合有硬件 RT 或专门 probe tracing 的平台；
-- 需要 probe placement、visibility、relocation、irradiance moments 和历史更新；
-- 源码和许可证要单独审核，尤其是 NVIDIA RTXGI 不能按 MIT 代码处理；
-- 如果 Brixelizer 已满足世界空间动态 GI，就没有必要再并行维护一套 DDGI。
-
-## 7. 朱木古堂验收矩阵
-
-Ho-SSGI v1 至少要通过：
-
-1. 红墙/白地面的颜色反弹；
-2. 室内遮挡和近距离 contact indirect；
-3. 镜头移动时的 temporal 稳定性；
-4. 角色移动、头发和描边不出现白边；
-5. 关闭 Ho-SSGI 后回退为无 GI，不读上一帧；
-6. APV/天空 fallback 与 screen hit 的交界不闪烁；
-7. 平面反射、SSS、OIT 和 CharacterSpecialization 不被 GI 改坏；
-8. 将 source、GI、confidence、最终 composite 分别 debug 输出。
-
-验收顺序固定为：
-
-```text
-APV only
-  -> Ho-SSGI source only
-  -> Ho-SSGI + temporal
-  -> Ho-SSGI + lilToon receiver
-  -> Ho-SSGI + outline/SSS/OIT
-  -> Brixelizer producer replacement
-```
-
-## 8. 完成标准
-
-Ho-SSGI 阶段完成的标准：
-
-- HTrace 的独立 GBuffer/prepass 不再是 Ho-GI 必需输入；
-- lilToon 只依赖 GI 语义输出，不依赖算法名；
-- 朱木古堂的描边、角色、透明和后期链路通过验收；
-- GI 关闭时所有纹理有确定 fallback；
-- RenderDoc/Frame Debugger 能定位 source、trace、history、denoise、composite；
-- Brixelizer 可以作为 producer 替换，而不修改材质消费契约。
+当前不展开 DDGI、Lumen 或硬件 RTGI 的实现规划。
