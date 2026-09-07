@@ -705,8 +705,9 @@ lilToon：D:\Unity_Fork\lilToon\Assets\lilToon
 | URP depth | `PC_RPAsset.m_RequireDepthTexture: 1` | `_CameraDepthTexture`/Ho Geometry 相关消费有基础条件 |
 | URP opaque | `PC_RPAsset.m_RequireOpaqueTexture: 1` | lilToon Refraction/Camera Opaque 路径有基础条件 |
 | Ho Geometry/Metadata | Renderer 中均启用 | 标准 lilToon 输出带 `HoGeometryBuffer`、`HoMetadataBuffer` Pass |
-| Ho-GTAO/HTrace AO | Renderer 中配置，但 `m_Active: 0` | 当前基线不实际生产 AO；材质 AO 路径与未来 Feature 启用顺序仍需验收 |
-| HTrace SSGI | Renderer 中配置，但 `m_Active: 0` | 当前基线不实际生产 SSGI；它属于屏幕空间增强，不是 lilToon 原生 Shader 变体 |
+| Ho-GTAO | Renderer 中配置，当前 `m_Active: 1` | 当前基线已启用 Ho-GTAO；材质 AO 路径与 GeometryBuffer/GTAO 时序需要验收 |
+| HTrace AO | Renderer 中配置，但 `m_Active: 0` | 当前基线未启用 HTrace AO |
+| HTrace SSGI | Renderer 中配置，当前 `m_Active: 1` | 当前基线已启用 HTrace SSGI；它属于屏幕空间增强，不是 lilToon 原生 Shader 变体 |
 | Ho-ShadowCast | 一档 `m_Active: 1`，另一档 `m_Active: 0` | 启用档生产额外阴影 atlas，不等于主光 ShadowMap |
 
 `PC_RPAsset.asset` 的相关设置见 [PC_RPAsset.asset](D:/Unity_Project/BREAK_URP/Assets/Settings/PC_RPAsset.asset)，测试 Shader 设置见 [lilToonSetting.json](D:/Unity_Project/BREAK_URP/ProjectSettings/lilToonSetting.json)。
@@ -737,6 +738,184 @@ LIL_FEATURE_*Map / *Mask / *ColorTex
 所以当前工程的真实结论是：
 
 > 标准 lilToon 的 toon/反射/ShadowCaster/HoRP Pass 功能宏很完整，但当前项目编译设置主动裁掉了所有 Lightmap 变体；APV 变体也没有生成。
+
+### 3.10 为什么 lilToon 默认关闭 Lightmap
+
+这不是一个单纯的“运行时性能开关”，而是 lilToon 的产品目标和编译规模选择。
+
+#### 产品目标：lilToon 首先面向 Avatar
+
+lilToon 官方 Shader Settings 文档明确把 Lightmap 描述为“用于所有材质的全局 Shader 设置”，并说明 Avatar 用途通常不需要 Lightmap，Lightmap 更偏向 World/场景用途。[lilToon Shader Settings](https://lilxyzw.github.io/lilToon/ja_JP/other/settings.html)
+
+Avatar 通常是：
+
+- 动态移动、没有稳定的 Lightmap UV。
+- 由 World 的 Light Probe/APV 接收环境间接光。
+- 需要实时主光和实时 ShadowMap。
+- 由上传容量、Shader 编译时间和变体数量约束。
+
+所以默认关闭 Lightmap 对 Avatar 是合理默认值；这不代表 Lightmap 在场景材质中没有价值。
+
+#### 编译成本：确实会增加变体与导入/构建时间
+
+`LIL_OPTIMIZE_USE_LIGHTMAP` 为 `false` 时，Importer 生成：
+
+```text
+#pragma skip_variants LIGHTMAP_ON
+#pragma skip_variants DYNAMICLIGHTMAP_ON
+#pragma skip_variants LIGHTMAP_SHADOW_MIXING
+#pragma skip_variants SHADOWS_SHADOWMASK
+#pragma skip_variants DIRLIGHTMAP_COMBINED
+#pragma skip_variants _MIXED_LIGHTING_SUBTRACTIVE
+```
+
+为 `true` 时，URP17 Forward 生成器会加入 Lightmap 相关的多组 `multi_compile`，包括 `LIGHTMAP_ON`、`DYNAMICLIGHTMAP_ON`、`SHADOWS_SHADOWMASK`、`DIRLIGHTMAP_COMBINED`、`LIGHTMAP_BICUBIC_SAMPLING`、`REFLECTION_PROBE_ROTATION` 和 `USE_LEGACY_LIGHTMAPS`。仅按二元组合计算，理论上最多会给相关 Pass 增加约 `2^8 = 256` 倍的组合空间；Unity 的材质/场景 Shader stripping 会删掉大量不需要的组合，实际数量会小很多，但导入和构建仍会变慢。
+
+因此要区分三种成本：
+
+| 成本 | Lightmap 开关的影响 |
+|---|---|
+| Shader 导入/编译时间 | 增加，尤其是全功能 Standard/Multi 输出 |
+| Player Shader 数据/变体数量 | 可能增加，取决于 URP stripping 和实际材质 |
+| 每像素运行时 | 使用 Lightmap 的变体会多一次 Lightmap 采样和解码；不使用的材质不会承担这条路径 |
+| Lightmap 纹理内存/烘焙时间 | 由场景静态 Renderer、Lightmap 分辨率和图集决定，不是 lilToon Shader Setting 单独决定 |
+
+对我们的 HO 渲染环境，编译/运行性能不是首要约束，因此可以把 Lightmap 变体打开；但应接受 Shader 导入时间和变体缓存变大的代价，并用实际 ShaderVariant 日志确认成本，而不是凭感觉判断。
+
+#### APV 的成本与 Lightmap 不同
+
+APV 不会通过 Lightmap UV 变体实现。它需要 `PROBE_VOLUMES_L1/L2` 变体，运行时按像素采样 APV 数据。打开 APV 变体主要增加：
+
+- Forward Shader 的 APV 关键词组合。
+- APV 数据资源和运行时采样成本。
+- 烘焙/加载 APV 的时间和内存。
+
+APV 与 Lightmap 可以并存：静态几何用 Lightmap，动态角色用 APV。它们不是互相排斥的全局模式。
+
+### 3.11 lilToon 的设置入口、持久化和交互方式
+
+#### 用户入口
+
+当前 lilToon 的入口是任意 lilToon 材质的 Inspector：
+
+```text
+选中任意 lilToon Material
+    -> Inspector 顶部模式栏
+    -> Advanced | Preset | Shader Setting
+    -> 选择 Shader Setting
+```
+
+对应代码：
+
+- `lilInspector.cs` 选择 `EditorMode.Settings`。
+- `lilGUIUtility.cs` 绘制三段模式 Toolbar。
+- `lilSettingAndPresetGUI.cs` 的 `DrawSettingsGUI()` 绘制全局设置。
+
+这不是“该材质自己的编译开关”。即使从某一个材质 Inspector 打开，它编辑的也是整个工程的 lilToon Shader Setting。
+
+#### 持久化位置
+
+```text
+ProjectSettings/lilToonSetting.json
+```
+
+路径由 `lilDirectoryManager.GetShaderSettingPath()` 返回。朱木古堂当前文件是：[lilToonSetting.json](D:/Unity_Project/BREAK_URP/ProjectSettings/lilToonSetting.json)
+
+#### 设置分层
+
+| 分层 | 代表字段 | 作用 | 是否写入单个材质 |
+|---|---|---|---:|
+| 全局功能编译开关 | `LIL_FEATURE_*` | 把某类 HLSL 功能宏编入/移出生成 Shader | 否 |
+| 全局构建/变体开关 | `LIL_OPTIMIZE_*` | ForwardAdd、VertexLight、Lightmap 等变体与路径选择 | 否 |
+| 全局优化行为 | `isDebugOptimize`、`isOptimizeInNDMF`、`isOptimizeInTestBuild` | 编辑器/NDMF/构建阶段是否进行优化；其中部分字段在当前 fork 中没有完整本地调用链 | 否 |
+| 全局默认值 | `defaultLightMinLimit`、`defaultLightMaxLimit` 等 | `[GameObject] Fix lighting` 和 Lighting Preset 的初始值 | 否，之后复制到材质属性 |
+| 材质运行时属性 | `_UseShadow`、`_ShadowBorder`、`_UseScreenSpaceAO`、`_ReflectionColor` 等 | 每个材质的艺术控制和运行时行为 | 是 |
+| Renderer/场景设置 | `ReceiveGI`、`LightProbeUsage`、`ReflectionProbeUsage`、APV/Lightmap | 对象如何接收 Unity 光照资源 | 否，属于 Renderer/场景 |
+
+#### 修改后发生什么
+
+1. GUI 修改 `lilToonSetting` 对象。
+2. `ApplyShaderSetting()` 先把设置写入 `ProjectSettings/lilToonSetting.json`。
+3. 它从 `BaseShaderResources` 找到 `.lilinternal`，调用 `lilShaderContainer.UnpackContainer()`。
+4. 重新写出 `Shader/*.shader`，重新导入 `.lilcontainer` 目录并刷新 AssetDatabase。
+5. 生成文本中的 `#define LIL_FEATURE_*`、`#pragma skip_variants` 和 Pass 由此改变。
+
+“Assets/lilToon/[Shader] Refresh shaders” 菜单会重新生成全部 Shader。这个菜单不是只刷新 Inspector，而是真正重写生成文件。[lilToonEditorUtils.cs](D:/Unity_Fork/lilToon/Assets/lilToon/Editor/lilToonEditorUtils.cs)
+
+#### 自动优化模式
+
+当 `isDebugOptimize` 或构建预处理触发优化时，lilToon 会：
+
+```text
+收集场景/项目中的 Material 和 AnimationClip
+    -> TurnOffAllShaderSetting()
+    -> SetupShaderSettingFromMaterial()
+    -> 检查实际材质属性、贴图、动画绑定
+    -> 只重新打开真正使用的 LIL_FEATURE_*
+    -> ApplyShaderSetting()
+```
+
+`SetupShaderSettingFromMaterial()` 会跳过 Lite 和 Multi Shader，说明这两类本来就不是按普通材质功能扫描的 Standard 优化路径。构建前还会记录需要临时优化的 Shader，构建后恢复设置。
+
+### 3.12 HO 开关应该放在哪里
+
+建议沿用 lilToon 的“全局编译设置 + 材质运行时属性”分层，但不要把 HoRP 的 RendererFeature 生命周期塞进材质编译开关。
+
+#### 适合放在 lilToon 全局 Shader Setting 的内容
+
+- 是否生成 APV `PROBE_VOLUMES_L1/L2` 变体。
+- 是否保留 Lightmap variants。
+- 是否保留 Reflection Probe blending/box projection variants。
+- 是否保留某个 HoRP 需要的轻量 Shader 输入宏。
+
+这些开关的共同特点是：**会改变生成 Shader 的结构或变体数量，应该工程统一，而不是每个材质各自决定。**
+
+建议未来增加：
+
+```text
+LIL_OPTIMIZE_USE_PROBEVOLUMES
+LIL_OPTIMIZE_USE_LIGHTMAP
+LIL_OPTIMIZE_USE_REFLECTION_PROBE_QUALITY
+```
+
+其中 `LIL_OPTIMIZE_USE_PROBEVOLUMES` 应该是“可条件启用”，默认值可保持关闭；当 URP Asset 使用 APV 时由项目设置打开。
+
+#### 适合放在材质界面的内容
+
+- `_UseScreenSpaceAO`、`_SSAOStrength`、`_SSAODirectStrength`、`_SSAOIndirectStrength`。
+- GI/Reflection/SSS 的强度、mask、颜色和 apply mode。
+- 是否让该材质写入/排除某个 HoRP 语义通道。
+- 反射 roughness、Fresnel、Cubemap override。
+
+这些是艺术意图或消费强度，不应改变整个 Shader 的编译结构。
+
+#### 不建议放在材质界面的内容
+
+- “本材质是否编译 APV”——会造成同一 Shader 家族的编译策略不一致，且当前 lilToon 生成器并非按材质生成独立 APV Shader。
+- “本材质是否打开 Lightmap variants”——Lightmap 是 Renderer/场景资源，材质只应决定是否消费，不应拥有全局变体开关。
+- “本材质是否生成 Ho-GTAO/Ho-GI”——生产端是 RendererFeature，不是材质属性。
+
+### 3.13 Lite 材质在当前工程中的实际使用
+
+扫描整个 `D:\Unity_Project\BREAK_URP\Assets` 中的 Material，并按 lilToon Shader GUID 与 `Shader/*.shader.meta` 对照：
+
+```text
+已识别 lilToon Material：238
+Lite（ltsl*.shader）：0
+Multi（ltsmulti*.shader）：0
+UsePass（ltspass*.shader 直接作为材质 Shader）：0
+Standard（lts*.shader）：238
+```
+
+朱木古堂目录中共有 55 个 `.mat`，其中 53 个是 lilToon Standard/Cutout，2 个是 lilPBR；Lite/Multi 均为 0。
+
+这意味着 Lite 当前不是 HO 场景的真实依赖。结合我们“性能不敏感、质量优先”的目标，建议：
+
+1. **HO 主线默认使用 Standard 家族。**
+2. 不为了理论上的远景性能保留 Lite 作为主工作流要求。
+3. Lite 继续作为上游兼容资产和低成本 fallback，但不参与 HO 质量验收基线。
+4. 只有出现明确的大规模远景、透明层或 Shader 编译瓶颈时，才重新评估 Lite。
+5. 如果未来需要 Lite，也应把它定义为明确的“质量降级 preset”，而不是和 Standard 混用后再猜测功能差异。
 
 ### 3.6 52 个输出 Shader 家族的用途与宏环境
 
@@ -925,10 +1104,105 @@ MotionVectors
 | Refraction | 独立 `lts_ref` 输出 | 不属于当前标准场景 Shader | 工程有 opaque texture，但朱木古堂材质主要是 `lts/lts_cutout` |
 | Ho Geometry/Metadata | HoRP Pass 存在 | **是** | 当前场景 Renderer 已启用对应 Feature |
 | Ho-GTAO | 材质属性和 `_HoAOTexture` 存在 | **是** | 当前 Renderer 同时存在 HTrace AO 与 Ho-GTAO，需按顺序验收 |
-| Ho-GI/SSGI | 管线 Feature | 不是 lilToon 固有宏 | HTrace SSGI 已配置但当前 `m_Active: 0`，后续换 Ho-GI |
+| Ho-GI/SSGI | 管线 Feature | 不是 lilToon 固有宏 | HTrace SSGI 当前 `m_Active: 1`，后续换 Ho-GI |
 | ShadowCaster | Pass 存在 | **是** | Standard/Cutout 都可被 ShadowMap/HoRP 重绘 |
 
-这张表比“lilToon 支持 Lightmap/Probe/Reflection”更接近当前工程真实情况：**支持能力必须同时通过源码、生成文本、ProjectSettings 和测试场景资产四层证据确认。** 当前朱木古堂的几个 Ho-GTAO/SSGI/Planar 组件是“已配置但未激活”，不能把它们的存在误认为当前画面已经消费了对应结果。
+这张表比“lilToon 支持 Lightmap/Probe/Reflection”更接近当前工程真实情况：**支持能力必须同时通过源码、生成文本、ProjectSettings 和测试场景资产四层证据确认。** 当前朱木古堂的 Ho-GTAO/SSGI 已激活，HTrace AO/Planar Reflection 仍未激活；Renderer 资产状态变化后必须重新核对这张表。
+
+### 3.9 P0 调查结果与决策
+
+#### P0-1：当前生成 Shader 是否包含 APV 变体
+
+**结论：不包含。**
+
+实证方法：扫描当前生成的 52 个 `*.shader` 文件，搜索：
+
+```text
+ProbeVolumeVariants.hlsl
+PROBE_VOLUMES_L1
+PROBE_VOLUMES_L2
+```
+
+结果为 0 个文件命中。源码链路仍然存在：
+
+```text
+lil_common_functions.hlsl
+    -> #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
+    -> SampleAPV(...)
+
+Default*.lilblock
+    -> #pragma lil_skip_variants_probevolumes
+    -> importer.skipProbeVolumes = true
+    -> 不加入 ProbeVolumeVariants.hlsl
+```
+
+因此 APV 当前是“源码已实现、输出未编译”。这不是朱木古堂场景没有 APV 组件导致的，而是 Shader 生成阶段已经把 APV 变体裁掉。
+
+#### P0-2：是否应该恢复 APV 变体
+
+**决策：恢复为可条件启用的变体，不新增 Shader 文件。**
+
+推荐方案：
+
+1. 增加一个编译设置，例如 `LIL_OPTIMIZE_USE_PROBEVOLUMES`，默认值跟随当前项目保持关闭。
+2. 当 URP Asset 使用 `LightProbeSystem.ProbeVolumes` 时，Standard/Lite/Multi/UsePass 对应 Forward Pass 不再插入 `lil_skip_variants_probevolumes`。
+3. 让 Unity 的 URP ShaderBuildPreprocessor 根据当前 URP Asset 再做最终 stripping。
+4. APV 项目构建后必须检查最终 ShaderVariantCollection/Player build 中存在 `PROBE_VOLUMES_L1/L2`。
+5. 先恢复 Standard 家族，确认角色、SSS 和 Ho-GI 基础光照正确后，再决定 Lite/Multi 是否需要 APV。
+
+这样不会增加 52 个 Shader 文件，只会增加“启用 APV 的 Shader 家族”的变体数量。当前朱木古堂 `m_LightProbeSystem: 0` 是 `LegacyLightProbes`，所以现在不应为当前场景强行打开 APV；应先保留条件编译能力。
+
+#### P0-3：`DIRLIGHTMAP_COMBINED` 是否需要恢复
+
+**当前场景：不需要；未来静态高质量 GI：需要专门验证后决定。**
+
+当前工程有两个独立限制：
+
+1. `lilToonSetting.json` 的 `LIL_OPTIMIZE_USE_LIGHTMAP=false` 让 Standard/Cutout 输出直接 skip 所有 Lightmap variants。
+2. `lil_common_macro.hlsl:173` 无条件 `#undef LIL_USE_DIRLIGHTMAP`，即使某个 Lite/Multi 输出保留了 `DIRLIGHTMAP_COMBINED` pragma，最终 toon 主光宏也不会进入方向性 Lightmap 分支。
+
+因此 P0 不建议立刻打开方向性 Lightmap，而是分两步：
+
+```text
+先打开 LIL_OPTIMIZE_USE_LIGHTMAP
+    -> 验证普通 Non-Directional Lightmap 对 toon 颜色/阴影的影响
+再单独移除 LIL_USE_DIRLIGHTMAP 的无条件 undef
+    -> 验证 Directional Lightmap 是否符合 HO/NPR 风格
+```
+
+验收必须比较：Lightmap color、direction、shadowmask、toon shadow threshold、`_ShadowEnvStrength`，不能只看场景整体亮度。
+
+#### P0-4：Lite 是否适合高质量 Reflection Probe
+
+**结论：不适合做高质量反射基线。**
+
+扫描结果：12 个 `ltsl*.shader` 全部包含：
+
+```text
+#pragma skip_variants _REFLECTION_PROBE_BLENDING _REFLECTION_PROBE_BOX_PROJECTION
+#pragma skip_variants ... _MAIN_LIGHT_SHADOWS ...
+#pragma skip_variants _ADDITIONAL_LIGHT_SHADOWS
+```
+
+Lite 仍保留 `_REFLECTION_PROBE_ATLAS`，因此不是完全没有 Reflection Probe；但它不能依赖两个探针的完整混合，也不能依赖 Box Projection 的局部正确性。对 HO 质量基线的规则应固定为：
+
+```text
+室内/湿面/金属/英雄道具 -> Standard lts 系列
+远景/低成本/简单透明    -> Lite ltsl 系列
+```
+
+如果未来希望 Lite 也支持局部正确反射，应恢复对应两个 variants，并重新评估 Lite 的性能定位；不建议偷偷把 Lite 当作 Standard 使用。
+
+#### P0 状态
+
+- [x] 扫描当前 52 个生成 Shader，确认 APV 变体缺失。
+- [x] 核对 `lts.shader`/`lts_cutout.shader` 的实际 Pass、关键词和 Lightmap skip。
+- [x] 核对 `lilToonSetting.json` 的编译优化开关。
+- [x] 核对 Lite 家族 12 个输出的 Reflection/Shadow variants 裁剪。
+- [x] 确认朱木古堂使用 Standard Opaque/Cutout，而不是 Lite/Multi/Refraction。
+- [x] 作出“不新增 Shader 文件、增加条件变体开关”的 APV 决策。
+- [ ] 在 Unity Editor 中生成 APV 开关打开后的真实 Shader，并运行 APV 对照场景。
+- [ ] 在打开 Lightmap variants 后重新烘焙朱木古堂，验证 Non-Directional/Directional 两条路径。
 
 ---
 
@@ -978,16 +1252,163 @@ MotionVectors
 6. GTAO 是否只增加接触感，没有把整个角色压黑。
 7. SSGI 是否排除描边和非物理表面。
 
+### 4.4 在朱木古堂中启用 Lightmap：最小操作路径
+
+这是“让静态物体接收烘焙光照”的路径，不需要 APV。
+
+#### A. 先让 lilToon 编译 Lightmap 变体
+
+1. 选中任意 lilToon 材质，进入 Inspector 的 `Shader Setting` 模式。
+2. 展开 `Build Size Optimization (for all materials)` / “优化构建大小（用于所有材质）”。
+3. 打开 `Use Lightmap` / “使用光照贴图”。
+4. 点击 `Assets/lilToon/[Shader] Refresh shaders`，或让 `ApplyShaderSetting()` 自动刷新。
+5. 检查 [lts.shader](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/lts.shader) 不再出现 `skip_variants LIGHTMAP_ON ...`，并出现 `LIGHTMAP_ON`、`DYNAMICLIGHTMAP_ON` 等 `multi_compile`。
+
+这一步只改变 Shader 编译能力，不会自动把场景变成已烘焙状态。
+
+#### B. 设置静态场景几何
+
+对朱木古堂的墙、地面、建筑和固定道具：
+
+1. 在 Hierarchy 选中对象，Inspector 顶部 `Static` 菜单勾选 `Contribute GI`。
+2. 在 Mesh Renderer 的 Lighting 区域确认 `Receive Global Illumination = Lightmaps`。
+3. 对模型资产检查 Model Importer 的 `Generate Lightmap UVs`，或者确保已有合格 UV2。
+4. 移动角色、布料、动态道具不要设为 Lightmap receiver；它们以后应使用 Light Probe/APV。
+
+Unity API 对应：`Renderer.receiveGI = ReceiveGI.Lightmaps`、`Renderer.lightmapIndex`、`Renderer.lightmapScaleOffset`。[ReceiveGI](https://docs.unity3d.com/cn/6000.0/ScriptReference/ReceiveGI.html)
+
+#### C. Lighting 窗口
+
+```text
+Window -> Rendering -> Lighting
+    -> Scene / Lighting Settings
+    -> 确认 Baked Global Illumination
+    -> 选择 Progressive CPU/GPU Lightmapper
+    -> 设置 Lightmap Resolution、Padding、Filtering、Bounces
+    -> Generate Lighting
+```
+
+朱木古堂当前场景已经保存了一组 Lightmapping 参数，但 `m_LightingDataAsset` 仍为空，因此不能视为已经有可消费的烘焙数据。生成后应确认场景出现有效 LightingDataAsset 和 Lightmap 纹理。
+
+#### D. 验收
+
+用一个静态地面材质和一个静态墙面材质观察 Lightmap 变化；再移动动态角色。正确结果应是：
+
+- 静态物体出现逐纹素烘焙变化。
+- 动态角色不会因为 Lightmap UV 缺失而变黑，而是继续使用实时主光/探针。
+- 如果角色需要与烘焙场景融合，应配置 Light Probe 或 APV，而不是把角色强行加入静态 Lightmap。
+
+### 4.5 在朱木古堂中启用传统 Light Probe：兼容基线
+
+如果暂时不修改 URP Asset 的 Light Probe System：
+
+1. `GameObject -> Light -> Light Probe Group` 创建探针组。
+2. 在 Scene 视图点击 `Edit Light Probes`。
+3. 沿角色活动区域布置至少两层高度的 3D 探针体积；门窗、灯光边界和室内角落加密。
+4. 选中动态角色的 MeshRenderer/SkinnedMeshRenderer：
+   - `Receive Global Illumination = Light Probes`。
+   - `Light Probes = Blend Probes`。
+   - 必要时设置统一的 `Probe Anchor`。
+5. 回到 `Window -> Rendering -> Lighting -> Generate Lighting`。
+
+运行时 Unity 会把插值后的 `unity_SH*` 自动绑定给 lilToon。可用 C# 调试：
+
+```csharp
+LightProbes.GetInterpolatedProbe(
+    renderer.bounds.center,
+    renderer,
+    out SphericalHarmonicsL2 probe);
+```
+
+如果角色身体各部分出现明显断层，先统一 `probeAnchor`，再考虑增加探针或改用 APV。
+
+### 4.6 在朱木古堂中启用 APV：推荐质量基线
+
+APV 是 Unity 6/URP17 的新探针系统。它和 Lightmap 不是互斥开关：建议静态建筑继续用 Lightmap，动态角色使用 APV。
+
+#### A. 切换 URP Asset
+
+```text
+Edit -> Project Settings -> Quality
+    -> Rendering -> 双击当前 Render Pipeline Asset（PC_RPAsset）
+    -> Lighting -> Light Probe System = Adaptive Probe Volumes
+```
+
+URP17 中：
+
+```text
+LightProbeSystem.LegacyLightProbes = 0
+LightProbeSystem.ProbeVolumes      = 1
+```
+
+朱木古堂当前 `PC_RPAsset.asset` 为 `m_LightProbeSystem: 0`，即 Legacy Light Probe。
+
+#### B. 场景中添加 APV
+
+```text
+GameObject -> Light -> Adaptive Probe Volumes -> Adaptive Probe Volume
+```
+
+第一次建议：
+
+- `Mode = Global`，覆盖整套朱木古堂场景。
+- 场景光照结构复杂处降低 Probe Spacing。
+- `Fill Empty Spaces` 保持开启，先获得连续覆盖。
+- 对描边、纯特效、不会参与 GI 的对象使用 Renderer Filter 排除。
+
+#### C. 设置光源与几何
+
+- 参与烘焙的灯使用 `Baked` 或 `Mixed` Light Mode；完全 `Realtime` 的灯不会被当作静态 APV 光照烘入。
+- 墙、地面、屋顶等几何勾选 `Contribute Global Illumination`。
+- 动态角色一般不需要 Contribute GI，但必须使用 APV 可用的 Shader 变体，并作为 APV 的接收者渲染。
+- 玻璃、描边壳、纯后处理代理几何应按需求从 APV 几何过滤中排除。
+
+#### D. Baking Set 与烘焙
+
+```text
+Window -> Rendering -> Lighting -> Adaptive Probe Volumes
+    -> Baking Mode = Single Scene
+    -> Probe Positions = Recalculate
+    -> 设置 Min Probe Spacing / Max Probe Spacing
+    -> Generate Lighting
+```
+
+如果未来需要多个场景一起烘焙，创建 Baking Set 并把相关场景加入；如果要在多个 Lighting Scenario 之间混合，保持 probe positions 不变。[APV panel reference](https://docs.unity.cn/6000.0/Documentation/Manual/urp/probevolumes-lighting-panel-reference)
+
+#### E. 修漏光和调试
+
+- 在问题区域添加 `Probe Adjustment Volume`。
+- 使用 `Window -> Analysis -> Rendering Debugger -> Probe Volume`。
+- 打开 `Display Probes`、`Display Bricks`、`Debug Probe Sampling`。
+- 先确认 APV 数据存在，再确认 lilToon Shader 的 `PROBE_VOLUMES_L1/L2` 变体存在。
+
+当前 lilToon 的 APV HLSL 已经存在，但生成器仍裁掉这些变体。因此 APV 场景在当前基线下即使烘焙成功，Standard lilToon 也不会真正采样 APV；必须先完成 P0 的条件编译改造。
+
+### 4.7 朱木古堂建议的第一次实验顺序
+
+为了避免一次打开太多变量，建议复制场景做四个版本：
+
+| 场景 | lilToon Lightmap variants | URP Light Probe System | 用途 |
+|---|---:|---|---|
+| `朱木古堂_LiveBaseline` | 关闭 | Legacy Light Probes | 当前画面基线 |
+| `朱木古堂_Lightmap` | 打开 | Legacy Light Probes | 验证静态表面 Lightmap |
+| `朱木古堂_Probe` | 可关闭 | Legacy Light Probes | 验证动态角色 SH/Light Probe |
+| `朱木古堂_APV` | 可关闭 | Adaptive Probe Volumes | 验证 APV；需先生成 APV Shader variants |
+
+每个场景再分别切换 Ho-GTAO/Ho-GI，记录同一镜头的 Beauty、ambient/gi、normal、depth、shadow 和 reflection 对照。
+
 ---
 
 ## 5. 后续任务清单
 
 ### P0：确认当前真实支持
 
-- [ ] 生成一个当前 lilToon URP Shader，确认 APV 变体确实缺失。
-- [ ] 决定是否恢复 APV variants。
-- [ ] 确认 `DIRLIGHTMAP_COMBINED` 是否需要在 lilToon 中真正生效。
-- [ ] 标记哪些 Lite 材质不能用于高质量 Reflection Probe 场景。
+- [x] 扫描当前生成的 `lts.shader`、`lts_cutout.shader` 和全部 52 个输出，确认 APV 变体缺失。
+- [x] 决定 APV 采用“条件启用变体、不新增 Shader 文件”的路线。
+- [x] 确认当前朱木古堂不需要 `DIRLIGHTMAP_COMBINED`；未来启用 Lightmap 后再单独验收方向性路径。
+- [x] 标记 Lite 家族不适合高质量 Reflection Probe blending/box projection 场景。
+- [ ] 在 Unity Editor 中生成 APV 开关打开后的真实 Shader，并运行 APV 对照场景。
+- [ ] 在打开 Lightmap variants 后重新烘焙朱木古堂，验证 Non-Directional/Directional 两条路径。
 
 ### P1：建立资产和场景规范
 
