@@ -311,6 +311,8 @@ namespace lilToon.URP.Extensions.GTAO
         private HoGTAOHistory history;
         private int historyWidth;
         private int historyHeight;
+        private int historyCameraId;
+        private HoGTAOResolution historyResolution;
 
         public void Setup(HoGTAOSettings settings, Material material, Material debugMaterial, HoGTAOHistory history)
         {
@@ -340,13 +342,17 @@ namespace lilToon.URP.Extensions.GTAO
             }
 
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
-            int width = Mathf.Max(1, cameraData.cameraTargetDescriptor.width);
-            int height = Mathf.Max(1, cameraData.cameraTargetDescriptor.height);
-            if (history.Previous == null || width != historyWidth || height != historyHeight)
+            int divisor = Mathf.Max(1, settings.ResolutionDivisor);
+            int width = Mathf.Max(1, cameraData.cameraTargetDescriptor.width / divisor);
+            int height = Mathf.Max(1, cameraData.cameraTargetDescriptor.height / divisor);
+            int cameraId = cameraData.camera != null ? cameraData.camera.GetInstanceID() : 0;
+            if (history.Previous == null || width != historyWidth || height != historyHeight || cameraId != historyCameraId || historyResolution != settings.resolution)
             {
                 history.Ensure(width, height);
                 historyWidth = width;
                 historyHeight = height;
+                historyCameraId = cameraId;
+                historyResolution = settings.resolution;
             }
 
             HoGTAORenderGraphResources gtao = frameData.GetOrCreate<HoGTAORenderGraphResources>();
@@ -450,7 +456,7 @@ namespace lilToon.URP.Extensions.GTAO
                 data.material = blitMaterial;
                 data.source = source;
                 data.destination = destination;
-                data.passIndex = 0;
+                data.passIndex = isDebug ? 0 : 2;
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
                 if (!isDebug)

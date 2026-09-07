@@ -123,7 +123,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 for (int step = 0; step < steps; step++)
                 {
                     float stride = pow((step + noiseY) / steps, 2.0) + minStep;
-                    float2 offset = round(stride * samplingDirection) * _ScreenParams.zw;
+            float2 offset = round(stride * samplingDirection) * _ScreenParams.zw;
                     float3 samplePosition;
                     float3 sampleNormal;
                     if (HoGTAOSample(uv - offset, samplePosition, sampleNormal))
