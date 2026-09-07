@@ -72,6 +72,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             ImageProcessCenterRadiusViewControl.StopIfOwnedBy(serializedObject.targetObject);
             ImageProcessDirectionDistanceViewControl.StopIfOwnedBy(serializedObject.targetObject);
             ImageProcessParticleViewControl.StopIfOwnedBy(serializedObject.targetObject);
+            ImageProcessGlassViewControl.StopIfOwnedBy(serializedObject.targetObject);
         }
 
         private static void OnImageProcessCenterRadiusGameViewGUI(Rect viewRect, Event evt)

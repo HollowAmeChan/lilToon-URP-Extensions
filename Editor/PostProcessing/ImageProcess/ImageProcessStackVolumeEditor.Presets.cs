@@ -171,6 +171,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "中心碎裂", ApplyImageProcessCenterPrismFracturePreset);
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "强彩虹折射", ApplyImageProcessRainbowPrismFracturePreset);
                     break;
+                case ImageProcessEffect.Glass:
+                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "圆角毛玻璃", ApplyImageProcessRoundedGlassPreset);
+                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "折射多边形", ApplyImageProcessPolygonGlassPreset);
+                    break;
                 case ImageProcessEffect.SpeedLines:
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "白色光晕", ApplyImageProcessWhiteSpeedLinesPreset);
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "黑色漫画", ApplyImageProcessBlackMangaSpeedLinesPreset);
@@ -562,6 +566,25 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetVector4(element, "parameters1", new Vector4(0.9f, 0.35f, 1.0f, particle == 0 ? 1.0f : 2.0f));
             SetVector4(element, "parameters2", particleParams);
             SetVector4(element, "parameters3", variationParams);
+        }
+
+        private static void ApplyImageProcessRoundedGlassPreset(SerializedProperty element, ImageProcessEffect effect)
+        {
+            ApplyImageProcessDefaultPreset(element, effect);
+            SetColor(element, "color", new Color(0.82f, 0.92f, 1.0f, 1.0f));
+            SetVector4(element, "parameters1", new Vector4(0.0f, 1.0f, 0.08f, 6.0f));
+            SetVector4(element, "parameters2", new Vector4(8.0f, 2.0f, 4.0f, 2.0f));
+            SetVector4(element, "parameters3", new Vector4(0.0f, 2.0f, 0.32f, 0.92f));
+        }
+
+        private static void ApplyImageProcessPolygonGlassPreset(SerializedProperty element, ImageProcessEffect effect)
+        {
+            ApplyImageProcessDefaultPreset(element, effect);
+            SetColor(element, "color", new Color(0.72f, 0.88f, 1.0f, 1.0f));
+            SetVector4(element, "parameters0", new Vector4(0.5f, 0.5f, 0.46f, 0.46f));
+            SetVector4(element, "parameters1", new Vector4(30.0f, 2.0f, 0.0f, 6.0f));
+            SetVector4(element, "parameters2", new Vector4(5.0f, 1.0f, 6.0f, 2.0f));
+            SetVector4(element, "parameters3", new Vector4(1.0f, 7.0f, 0.48f, 1.0f));
         }
 
         private static void ApplyImageProcessSoftFeatherParticlePreset(SerializedProperty element, ImageProcessEffect effect)

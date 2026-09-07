@@ -86,7 +86,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ImageProcessEffect.ChangeFrameRate, "帧率限制", "icon_FPS_v1"),
             new EffectToggleEntry(ImageProcessEffect.Distortion, "湍流置换", "icon_Distortion_v1"),
             new EffectToggleEntry(ImageProcessEffect.Fisheye, "镜头畸变", "icon_FishEye_v1"),
-            new EffectToggleEntry(ImageProcessEffect.CameraFlash, "摄像机闪光", "icon_CameraFlash_v1")
+            new EffectToggleEntry(ImageProcessEffect.CameraFlash, "摄像机闪光", "icon_CameraFlash_v1"),
+            new EffectToggleEntry(ImageProcessEffect.Glass, "玻璃", "icon_Distortion_v1")
         };
 
         private static readonly EffectToggleEntry[] LegacyEffectOrder =
@@ -150,7 +151,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "集中线",
             "天空神光",
             "图标显示",
-            "蓝噪色块"
+            "蓝噪色块",
+            "玻璃"
         };
 
         private static readonly GUIContent[] BlendModeDisplayNames =
@@ -550,6 +552,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ImageProcessEffect.Glass)
+            {
+                DrawGlassElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ImageProcessEffect.SpeedLines)
             {
                 DrawSpeedLinesElement(rect, element);
@@ -726,6 +734,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ImageProcessEffect.PrismFracture:
                     lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
                     lineCount += 11;
+                    break;
+                case ImageProcessEffect.Glass:
+                    lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
+                    lineCount += 17;
                     break;
                 case ImageProcessEffect.SpeedLines:
                     lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
@@ -1664,6 +1676,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters0", new Vector4(0.5f, 0.5f, 0.42f, 0.12f));
                     SetVector4(element, "parameters1", new Vector4(0.58f, 0.74f, 15.0f, 0.0f));
                     SetVector4(element, "parameters2", new Vector4(0.38f, 1.0f, 0.0f, 0.0f));
+                    break;
+                case ImageProcessEffect.Glass:
+                    SetFloat(element, "intensity", 1.0f);
+                    SetColor(element, "color", new Color(0.82f, 0.92f, 1.0f, 1.0f));
+                    SetVector4(element, "parameters0", new Vector4(0.5f, 0.5f, 0.55f, 0.35f));
+                    SetVector4(element, "parameters1", new Vector4(0.0f, 0.0f, 0.06f, 6.0f));
+                    SetVector4(element, "parameters2", new Vector4(6.0f, 1.0f, 3.0f, 2.0f));
+                    SetVector4(element, "parameters3", new Vector4(0.0f, 2.0f, 0.35f, 1.0f));
                     break;
                 case ImageProcessEffect.SpeedLines:
                     SetFloat(element, "intensity", 1.0f);

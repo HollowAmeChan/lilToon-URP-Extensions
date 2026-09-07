@@ -123,6 +123,8 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 
 `ImageProcessLayer` 的通用数据包括 `effect`、材质或 shader 覆盖、pass index、intensity、blend mode、color、主 texture、LogoOverlay 的 8 个纹理槽，以及 `parameters0` 到 `parameters12`。新增效果时优先复用这些参数槽，只有确实需要独立资源时再扩展 layer 数据结构。
 
+`Glass / 玻璃` 是 camera color 上的单 pass 毛玻璃效果。它以 SDF 描述矩形、圆角矩形和正多边形，支持中心位置、宽高和旋转；边缘带可选沿 SDF 法线与切线混合方向置换背景，并加入随边缘方向变化的柔和高光；边缘颜色从玻璃主色逐步调制到“玻璃主色乘以原图颜色”。模糊采用圆盘采样核，低/中/高质量分别为 9/17/25 tap，避免四向十字纹理。Inspector 提供 GameView 手柄，可拖动中心、宽度、高度和旋转。其参数槽约定为：`parameters0 = (中心 X, 中心 Y, 宽, 高)`，`parameters1 = (旋转角, 形状, 圆角半径, 多边形边数)`，`parameters2 = (模糊像素, 质量, 边缘宽度像素, 边缘柔化像素)`，`parameters3 = (边缘置换开关, 置换像素, 边缘主色混合, 玻璃不透明度)`。
+
 ## CharacterSpecialization
 
 `CharacterSpecialization` 已不再作为早期 HoAOV 的一部分维护，而是独立 RendererFeature：
