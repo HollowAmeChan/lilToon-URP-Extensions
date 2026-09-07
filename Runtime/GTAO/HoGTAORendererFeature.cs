@@ -16,6 +16,7 @@ namespace lilToon.URP.Extensions.GTAO
         private HoGTAOSettings settings = new HoGTAOSettings();
 
         private HoGTAOPass pass;
+        private HoGTAODebugPass debugPass;
         private Material material;
         private Shader shader;
         private Material debugMaterial;
@@ -28,6 +29,7 @@ namespace lilToon.URP.Extensions.GTAO
         public override void Create()
         {
             pass = new HoGTAOPass();
+            debugPass = new HoGTAODebugPass();
             history = new HoGTAOHistory();
             RenderPipelineManager.beginCameraRendering += ResetGlobalState;
             resetRegistered = true;
@@ -69,6 +71,11 @@ namespace lilToon.URP.Extensions.GTAO
 
             pass.Setup(settings, material, debugMaterial, history);
             renderer.EnqueuePass(pass);
+            if (settings.debugMode != HoGTAODebugMode.Off && debugMaterial != null)
+            {
+                debugPass.Setup(debugMaterial);
+                renderer.EnqueuePass(debugPass);
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -93,6 +100,7 @@ namespace lilToon.URP.Extensions.GTAO
             history?.Dispose();
             history = null;
             pass = null;
+            debugPass = null;
         }
 
         private static void ResetGlobalState(ScriptableRenderContext context, Camera camera)
@@ -144,6 +152,68 @@ namespace lilToon.URP.Extensions.GTAO
             previous = null;
             next = null;
             valid = false;
+        }
+    }
+
+    internal sealed class HoGTAODebugPass : ScriptableRenderPass
+    {
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-GTAO Debug Output");
+
+        private sealed class PassData
+        {
+            public Material material;
+            public TextureHandle source;
+            public TextureHandle cameraColor;
+            public TextureHandle destination;
+        }
+
+        private Material material;
+
+        public void Setup(Material material)
+        {
+            this.material = material;
+            renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
+            ConfigureInput(ScriptableRenderPassInput.Color);
+        }
+
+        public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
+        {
+            if (material == null)
+            {
+                return;
+            }
+
+            HoGTAORenderGraphResources gtao = frameData.GetOrCreate<HoGTAORenderGraphResources>();
+            UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
+            TextureHandle cameraColor = resourceData.activeColorTexture;
+            if (!gtao.HasAO || !cameraColor.IsValid())
+            {
+                return;
+            }
+
+            TextureDesc destinationDesc = renderGraph.GetTextureDesc(cameraColor);
+            destinationDesc.name = "_HoGTAODebugColor";
+            destinationDesc.clearBuffer = false;
+            destinationDesc.depthBufferBits = 0;
+            TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
+
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-GTAO Debug Output", out PassData data, ProfilingSampler))
+            {
+                data.material = material;
+                data.source = gtao.aoTexture;
+                data.cameraColor = cameraColor;
+                data.destination = destination;
+                builder.UseTexture(data.source, AccessFlags.Read);
+                builder.UseTexture(data.cameraColor, AccessFlags.Read);
+                builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
+                {
+                    Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 0);
+                });
+            }
+
+            resourceData.cameraColor = destination;
         }
     }
 
@@ -296,14 +366,10 @@ namespace lilToon.URP.Extensions.GTAO
 
             if (settings.debugMode != HoGTAODebugMode.Off)
             {
-                // Keep the semantic resource pointed at the generated AO. The
-                // debug camera-color copy is only a presentation surface; exposing
-                // that copy to DebugTile made it display a stale whole-frame image.
+                // Publish the generated AO for the later feature-local debug pass.
+                // The presentation pass must run after opaques/post-processing so
+                // opaque rendering cannot overwrite its camera-color output.
                 gtao.aoTexture = current;
-                if (debugMaterial != null)
-                {
-                    RecordBlit(renderGraph, frameData, current, resourceData.activeColorTexture, debugMaterial, "Ho-GTAO Debug Output");
-                }
                 return;
             }
 

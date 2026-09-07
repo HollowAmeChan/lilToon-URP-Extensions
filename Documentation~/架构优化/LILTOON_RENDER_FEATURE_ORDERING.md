@@ -31,6 +31,10 @@ HoUrp 的 `ScriptableRenderer` 在每帧开始清空 active pass queue，并给�
 
 如果消费者在生产者之前入队，资源句柄可能在 `RecordRenderGraph` 时无效；应修正 Renderer Feature 列表顺序，而不是把消费者改到下一个事件。
 
+### Feature-local Debug
+
+模块的调试显示不应和生产 pass 共用同一个注入事件。生产 pass 可以在 opaque 前生成语义资源；调试显示 pass 应放到 `AfterRenderingPostProcessing`，读取该资源并替换 `cameraColor`。否则 opaque 或后处理会覆盖调试结果，表现为“Frame Debugger 中 pass 有输出、画面却看不到”。
+
 ## 已核对的事实
 
 - HoUrp `SortStable` 使用插入排序，原本已经具有稳定性，但原实现仅比较 `RenderPassEvent`，同事件顺序依赖隐式稳定性。
