@@ -331,7 +331,7 @@ hoGIWeight
 
 初始化为零，只有启用 Ho-GI shader feature 时采样 `_HoGITexture` 和 confidence。outline、metadata、geometry 等 pass 不编译或不执行这个接收逻辑。
 
-GI 的 NPR 合成规则：
+### 4.5 GI 的 NPR 合成规则
 
 - 主要作用于 toon 阴影侧和环境补光；
 - 支持 GI strength、tint、luminance remap、contrast 和 clamp；
@@ -339,7 +339,120 @@ GI 的 NPR 合成规则：
 - confidence 低时使用 APV/天空或保守 fallback；
 - outline 不接收 GI，也不作为 source caster。
 
-## 5. 描边排除
+## 5. Producer-only vertical slice
+
+在接入 lilToon 之前，先只实现 Ho-SSGI producer 和 debug 输出。每一步都必须能独立观察，避免把 source、ray、history 和 toon 合成混在一起调。
+
+### 5.1 输入验证
+
+先验证三种已有输入：
+
+1. `HoGeometryBuffer` normal/depth/coverage；
+2. URP opaque color；
+3. 可选 `HoMetadataBufferSurfaceColor` 纯色/coverage。
+
+第一版不要求 SurfaceColor 覆盖所有材质。它只作为可用时的干净 albedo/coverage；没有这张图的材质继续使用 GeometryBuffer + opaque color + APV fallback。
+
+Source validity 建议编码为：
+
+```text
+sourceValid = geometryCoverage
+            * normalValid
+            * depthValid
+            * opaqueSourceValid
+```
+
+描边像素的 geometryCoverage 应为 0，即使 opaque color 中仍然能看到描边颜色，也不能进入 source 或 history。
+
+### 5.2 Depth pyramid
+
+沿用 HTrace 的 MIP0..4 结构，但输入改为 Ho-GeometryBuffer depth：
+
+- MIP0：GeometryBuffer depth；
+- MIP1..4：用于 Hi-Z ray traversal；
+- caster exclusion 在 MIP0 生效；
+- sky/invalid depth 保持明确的 invalid 标记。
+
+每个 MIP 都应有 debug view。先确认深度金字塔没有 outline、没有透明错误覆盖，再调 ray march。
+
+### 5.3 Raw ray result
+
+每个像素至少保留以下临时结果：
+
+- hit flag；
+- hit UV；
+- hit distance；
+- hit surface depth；
+- hit surface normal validity；
+- hit source color；
+- invalid reason（无 coverage、深度不一致、背面、超出屏幕）。
+
+高质量路径的初始设置：full-resolution depth、intersection refine、cosine hemisphere sampling、较高 ray/step 参数、关闭 checkerboard。这里不做另一套低质量算法。
+
+### 5.4 Temporal result
+
+沿用 HTrace 的 motion/depth/normal/history validation，但 history 只存 Ho-SSGI 的 source/GI 语义，不复制最终 camera color：
+
+- history sample count；
+- reprojected hit validity；
+- depth/normal rejection；
+- source luminance change；
+- moving object rejection；
+- confidence。
+
+需要分别 debug current raw、reprojected history 和 accumulated result，才能区分 ray 错误与 temporal 拖影。
+
+### 5.5 Denoise result
+
+先复用 HTrace 的高质量思路：
+
+- firefly suppression；
+- temporal accumulation；
+- 深度/法线引导的 spatial filter；
+- spatial occlusion guidance；
+- 可选 recurrent blur。
+
+第一版只保留一条主链，参数变化只影响 sample、history 和 filter 半径，不额外维护一套 Low 算法。
+
+### 5.6 Producer debug views
+
+Ho-SSGI 需要自己的 DebugTile 视图，至少包括：
+
+```text
+gi.source-opaque
+gi.source-valid
+gi.surface-color
+gi.geometry-coverage
+gi.depth-pyramid-mip0..4
+gi.ray-hit
+gi.ray-distance
+gi.raw-radiance
+gi.temporal-validity
+gi.sample-count
+gi.confidence
+gi.fallback
+gi.filtered-radiance
+```
+
+调试目标是能够回答：描边有没有进入 source、有没有进入 depth pyramid；ray 是否命中有效 geometry；颜色错误来自 source、ray、history 还是 composite；透明是否被错误写入 caster/receiver/history。
+
+## 6. Producer 验收顺序
+
+朱木古堂只按以下顺序验收：
+
+1. GeometryBuffer coverage/normal/depth；
+2. opaque source 与 source-validity；
+3. depth pyramid；
+4. 单帧 raw ray result；
+5. temporal reprojection；
+6. spatial/temporal denoise；
+7. APV/sky fallback；
+8. `_HoGITexture` 独立 fullscreen composite；
+9. 最后才进入 lilToon 内部接收。
+
+完成第 8 步之前，不调 `_HoGIStrength`、toon transition 或 material mask，否则无法判断问题来自 producer 还是材质合成。
+
+## 7. 描边排除
 
 以下规则必须在 Ho-SSGI 第一版就成立：
 
@@ -352,7 +465,7 @@ GI 的 NPR 合成规则：
 - 无有效几何覆盖的像素不参与历史累积；
 - camera color、source、GI、confidence 都要能单独 debug。
 
-## 6. 朱木古堂验收顺序
+## 8. 朱木古堂验收顺序
 
 1. HoGeometryBuffer + source debug；
 2. 单帧 SSGI，不开 temporal；
@@ -367,7 +480,7 @@ GI 的 NPR 合成规则：
 
 完成标准是：HTrace 的独立 GBuffer/prepass 不再是必需输入；Ho-SSGI 能稳定输出适合 lilToon 的 GI；关闭时安全回退；后续替换 Brixelizer 时不改 lilToon 消费契约。
 
-## 7. Brixelizer 只保留为后续替换
+## 9. Brixelizer 只保留为后续替换
 
 Ho-SSGI 接收契约稳定后，再评估 Brixelizer 的世界空间 SDF、screen probe 和 radiance cache。它只替换 GI producer，不改变 `_HoGITexture`、confidence 和 lilToon 接收接口。
 
