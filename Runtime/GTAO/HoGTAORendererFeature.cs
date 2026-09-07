@@ -18,6 +18,8 @@ namespace lilToon.URP.Extensions.GTAO
         private HoGTAOPass pass;
         private Material material;
         private Shader shader;
+        private Material debugMaterial;
+        private Shader debugShader;
         private HoGTAOHistory history;
         private bool resetRegistered;
 
@@ -57,7 +59,15 @@ namespace lilToon.URP.Extensions.GTAO
                 material = CoreUtils.CreateEngineMaterial(shader);
             }
 
-            pass.Setup(settings, material, history);
+            Shader currentDebugShader = Shader.Find(HoGTAOShaderConstants.DebugShaderName);
+            if (debugMaterial == null || debugShader != currentDebugShader)
+            {
+                CoreUtils.Destroy(debugMaterial);
+                debugShader = currentDebugShader;
+                debugMaterial = debugShader != null ? CoreUtils.CreateEngineMaterial(debugShader) : null;
+            }
+
+            pass.Setup(settings, material, debugMaterial, history);
             renderer.EnqueuePass(pass);
         }
 
@@ -75,8 +85,11 @@ namespace lilToon.URP.Extensions.GTAO
             }
 
             CoreUtils.Destroy(material);
+            CoreUtils.Destroy(debugMaterial);
             material = null;
             shader = null;
+            debugMaterial = null;
+            debugShader = null;
             history?.Dispose();
             history = null;
             pass = null;
@@ -189,14 +202,16 @@ namespace lilToon.URP.Extensions.GTAO
 
         private HoGTAOSettings settings;
         private Material material;
+        private Material debugMaterial;
         private HoGTAOHistory history;
         private int historyWidth;
         private int historyHeight;
 
-        public void Setup(HoGTAOSettings settings, Material material, HoGTAOHistory history)
+        public void Setup(HoGTAOSettings settings, Material material, Material debugMaterial, HoGTAOHistory history)
         {
             this.settings = settings;
             this.material = material;
+            this.debugMaterial = debugMaterial;
             this.history = history;
             // GeometryBuffer is above Ho-GTAO at the same injection point.
             // Keep this transport probe on that fixed event while the shared
@@ -285,7 +300,10 @@ namespace lilToon.URP.Extensions.GTAO
                 // debug camera-color copy is only a presentation surface; exposing
                 // that copy to DebugTile made it display a stale whole-frame image.
                 gtao.aoTexture = current;
-                RecordBlit(renderGraph, frameData, current, resourceData.activeColorTexture, 3, "Ho-GTAO Debug Output");
+                if (debugMaterial != null)
+                {
+                    RecordBlit(renderGraph, frameData, current, resourceData.activeColorTexture, debugMaterial, "Ho-GTAO Debug Output");
+                }
                 return;
             }
 
@@ -314,26 +332,27 @@ namespace lilToon.URP.Extensions.GTAO
 
             history.Swap();
             history.MarkValid();
-            gtao.aoTexture = RecordBlit(renderGraph, frameData, next, resourceData.activeColorTexture, 2, "Ho-GTAO Output");
+            gtao.aoTexture = RecordBlit(renderGraph, frameData, next, resourceData.activeColorTexture, material, "Ho-GTAO Output");
         }
 
-        private TextureHandle RecordBlit(RenderGraph renderGraph, ContextContainer frameData, TextureHandle source, TextureHandle cameraColor, int passIndex, string passName)
+        private TextureHandle RecordBlit(RenderGraph renderGraph, ContextContainer frameData, TextureHandle source, TextureHandle cameraColor, Material blitMaterial, string passName)
         {
             TextureDesc destinationDesc = renderGraph.GetTextureDesc(cameraColor);
-            destinationDesc.name = passName == "Ho-GTAO Output" ? "_HoAOTexture" : "_HoGTAODebugColor";
+            bool isDebug = passName == "Ho-GTAO Debug Output";
+            destinationDesc.name = isDebug ? "_HoGTAODebugColor" : "_HoAOTexture";
             destinationDesc.clearBuffer = false;
             destinationDesc.depthBufferBits = 0;
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
             using (var builder = renderGraph.AddRasterRenderPass<BlitData>(passName, out BlitData data, ProfilingSampler))
             {
-                data.material = material;
+                data.material = blitMaterial;
                 data.source = source;
                 data.destination = destination;
-                data.passIndex = passIndex;
+                data.passIndex = 0;
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
-                if (passIndex == 2)
+                if (!isDebug)
                 {
                     builder.SetGlobalTextureAfterPass(data.destination, HoGTAOShaderConstants.AOTextureId);
                 }
@@ -344,7 +363,7 @@ namespace lilToon.URP.Extensions.GTAO
                 });
             }
 
-            if (passIndex != 2)
+            if (isDebug)
             {
                 frameData.Get<UniversalResourceData>().cameraColor = destination;
             }
