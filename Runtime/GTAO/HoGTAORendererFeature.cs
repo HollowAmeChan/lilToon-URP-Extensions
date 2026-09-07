@@ -22,6 +22,7 @@ namespace lilToon.URP.Extensions.GTAO
         private Material debugMaterial;
         private Shader debugShader;
         private HoGTAOHistory history;
+        private HoGTAOQuality lastAppliedQuality = (HoGTAOQuality)(-1);
         private bool resetRegistered;
 
         public HoGTAOSettings Settings => settings;
@@ -46,6 +47,13 @@ namespace lilToon.URP.Extensions.GTAO
             if (cameraType != CameraType.Game && cameraType != CameraType.SceneView)
             {
                 return;
+            }
+
+            ResolveVolume();
+            if (settings.quality != lastAppliedQuality)
+            {
+                HoGTAOQualityPresets.Apply(settings.quality, settings);
+                lastAppliedQuality = settings.quality;
             }
 
             Shader currentShader = settings.shader != null ? settings.shader : Shader.Find(HoGTAOShaderConstants.ShaderName);
@@ -106,6 +114,33 @@ namespace lilToon.URP.Extensions.GTAO
         private static void ResetGlobalState(ScriptableRenderContext context, Camera camera)
         {
             Shader.SetGlobalTexture(HoGTAOShaderConstants.AOTextureId, Texture2D.whiteTexture);
+        }
+
+        private void ResolveVolume()
+        {
+            VolumeStack stack = VolumeManager.instance != null ? VolumeManager.instance.stack : null;
+            HoGTAOVolume volume = stack != null ? stack.GetComponent<HoGTAOVolume>() : null;
+            if (volume == null || settings == null)
+            {
+                return;
+            }
+
+            settings.quality = volume.quality.value;
+            HoGTAOQualityPresets.Apply(volume.quality.value, settings);
+            lastAppliedQuality = volume.quality.value;
+            settings.resolution = volume.resolution.value;
+            settings.worldSpaceRadius = volume.worldSpaceRadius.value;
+            settings.screenSpaceRadius = volume.screenSpaceRadius.value;
+            settings.thickness = volume.thickness.value;
+            settings.sliceCount = volume.sliceCount.value;
+            settings.stepCount = volume.stepCount.value;
+            settings.useAttenuation = volume.useAttenuation.value;
+            settings.temporalFrameCount = volume.temporalFrameCount.value;
+            settings.temporalRejection = volume.temporalRejection.value;
+            settings.spatialFilter = volume.spatialFilter.value;
+            settings.filterRadius = volume.filterRadius.value;
+            settings.filterAdaptivity = volume.filterAdaptivity.value;
+            settings.boxPassCount = volume.boxPassCount.value;
         }
     }
 
