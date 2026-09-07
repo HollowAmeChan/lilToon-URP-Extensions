@@ -241,6 +241,96 @@ Ho-SSGI v1 应尽量沿用 HTrace 已验证的 ReSTIR、temporal validation、fi
 5. 接入 lilToon indirect/toon shadow；
 6. 最后处理 SSS、OIT、平面反射和角色特化的 pass 顺序。
 
+### 4.1 GI 在 lilToon 中的语义
+
+Ho-SSGI 输出的是一项可控的间接光贡献，不直接改写 `fd.lightColor`，也不强行伪装成 `fd.indLightColor`。后者是现有 SH/APV 的环境方向因子，不是完整的 GI 颜色。
+
+片元阶段只采样一次：
+
+```text
+hoGIColor
+hoGIConfidence
+hoGIWeight = hoGIConfidence * materialMask * volumeStrength
+```
+
+之后由 lilToon 决定它进入 direct、indirect 还是最终颜色。
+
+### 4.2 最小材质控制面
+
+第一版只需要以下控制，不把 HTrace 的几十个参数暴露到材质：
+
+- `HoGI Enabled`；
+- `HoGI Strength`：抑制或放大 GI；
+- `HoGI Color`：颜色乘法/色调控制；
+- `HoGI Apply Mode`：`IndirectTint`、`IndirectAdd`、`LightColorMultiply`；
+- `HoGI Shadow Weight`：限制 GI 只进入 toon 阴影侧；
+- `HoGI Transition`：基于 `fd.shadowmix` 的平滑过渡起止；
+- `HoGI Mask`：材质纹理遮罩；
+- `HoGI Clamp`：限制颜色反弹峰值。
+
+全局 Volume 只控制 producer：ray length、step、temporal、denoise、source、fallback 和全局强度。材质只表达“我怎样接收这项 GI”。
+
+### 4.3 三个接入点
+
+#### A. `BEFORE_SHADOW`：LightColorMultiply
+
+在 `OVERRIDE_SHADOW` 之前，可选地把 GI 色调作为灯光颜色调制：
+
+```hlsl
+fd.lightColor = lerp(fd.lightColor,
+                     fd.lightColor * hoGIColor,
+                     hoGIWeight * lightColorMultiplyStrength);
+```
+
+这个模式改变 direct 和 shadow 的共同光色，必须显式开启，默认关闭。它适合整体色调、魔法光或场景色污染，不应作为默认物理解释。
+
+#### B. `lilGetShading` 内部：IndirectTint / ShadowColorBlend
+
+`lilGetShading` 已经把 toon 阴影拆成 `directCol` 和 `indirectCol`：
+
+```hlsl
+directCol = fd.albedo * fd.lightColor;
+indirectCol = ...;
+fd.col.rgb = lerp(indirectCol, directCol, lns.x);
+```
+
+Ho-GI 最适合在 `indirectCol` 完成颜色构造、`min(indirectCol, directCol)` 和最终 mix 之前注入：
+
+```hlsl
+float shadowWeight = 1.0 - fd.shadowmix;
+float transition = smoothstep(_HoGITransition.x,
+                              _HoGITransition.y,
+                              shadowWeight);
+float weight = hoGIWeight * transition;
+indirectCol = lerp(indirectCol,
+                   indirectCol * hoGIColor,
+                   weight);
+```
+
+这样 direct lit 明面默认不被污染，GI 主要影响阴影侧、环境补光和色阶过渡。`IndirectAdd` 可在同一位置增加一条受 clamp 的 contribution，但必须避免再次无条件乘 albedo。
+
+#### C. `BEFORE_SSAO`：FinalContribution
+
+这是低耦合的第一版接入点。它位于追加光合并之后、SSAO/SSS 之前，适合验证：
+
+```hlsl
+fd.col.rgb += hoGIColor * hoGIWeight * finalContributionStrength;
+```
+
+它不需要改动 `lilGetShading`，但不具备完整的 direct/indirect 分离能力。验证成功后，默认切到 B 模式，C 只保留为兼容/调试模式。
+
+### 4.4 `fd` 内部缓存
+
+为了避免在多个接入点重复采样 GI，建议给 `lilFragData` 增加一次性缓存：
+
+```text
+hoGIColor
+hoGIConfidence
+hoGIWeight
+```
+
+初始化为零，只有启用 Ho-GI shader feature 时采样 `_HoGITexture` 和 confidence。outline、metadata、geometry 等 pass 不编译或不执行这个接收逻辑。
+
 GI 的 NPR 合成规则：
 
 - 主要作用于 toon 阴影侧和环境补光；
