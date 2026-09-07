@@ -21,7 +21,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         public int maxRenderQueue = (int)RenderQueue.Overlay - 1;
 
         [InspectorName("Pass Event")]
-        public RenderPassEvent passEvent = RenderPassEvent.AfterRenderingOpaques;
+        public RenderPassEvent passEvent = RenderPassEvent.BeforeRenderingOpaques;
 
         [InspectorName("Debug Pass Event")]
         public RenderPassEvent debugPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
