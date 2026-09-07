@@ -61,6 +61,47 @@ camera color 不是干净的 GI source，因为它可能已经包含：
 
 这正是 HTrace 描边发白的根本原因。问题不是单纯的 ray length、brightness clamp 或 sample count。
 
+### 1.4 HTrace 已有设计盘点
+
+HTrace 的 URP 链路实际上是：
+
+```text
+PrePass / motion vectors
+    -> GBuffer 或 ForwardGBuffer0..3
+    -> rendering layer mask
+    -> depth pyramid MIP0..4
+    -> temporal reprojection
+    -> checkerboard（可选）
+    -> ray tracing
+    -> ReSTIR temporal / firefly / spatial
+    -> temporal + spatial denoise
+    -> interpolation（低 render scale 时）
+    -> camera color composite
+```
+
+以下设计应先研究后再删减：
+
+| HTrace 设计 | 当前机制 | Ho-SSGI 处理 |
+|---|---|---|
+| `ExcludeCastingMask` | 在深度金字塔 MIP0 把 caster 深度置为无效，再生成更高 MIP | 保留；改用 Ho 的几何/对象排除语义 |
+| `ExcludeReceivingMask` | 最终合成时把 receiver 的 GI 替换为 APV/天空 fallback | 保留；改成 GI output 层的 receiver mask |
+| `MaskExclude` kernel | HTrace shader 中存在，但当前 URP 链没有调用，主要是 HDRP 路径 | 不照搬 kernel，先修正 URP 路径 |
+| `AmbientOverride` | 从 camera color 减去 APV/天空估计的环境光，避免双重 GI | 不直接照搬；Ho 输出独立 GI，避免 PBR albedo/metallic 假设 |
+| `Multibounce` | 把 camera color/上一帧颜色写入 radiance history | 保留 history 思路，但 history 必须是干净 source/GI，不包含 outline/post |
+| `FallbackType` | None、Sky、APV；ray miss 时补环境光 | 保留 APV/sky fallback |
+| `NormalBias` / `ViewBias` / `SamplingNoise` | APV fallback 采样偏移与噪声 | 保留，作为 fallback 参数 |
+| `BackfaceLighting` | 命中表面背面法线时限制或拒绝 hit radiance | 保留，按 lilToon 双面/背面语义重新验收 |
+| `ThicknessMode` / `Thickness` | 线性或 uniform thickness，控制屏幕相交容差 | 保留；这是薄片、头发和描边附近稳定性的关键 |
+| `RefineIntersection` | 命中后用更细的中间点确认相交 | 高质量路径默认开启 |
+| `FullResolutionDepth` | 低分辨率 tracing 时仍使用全分辨率深度 | 高质量路径默认开启 |
+| `Checkerboard` | 交错像素分类和间接 dispatch | 先关闭，确认高质量主链正确后再作为参数优化 |
+| `BrightnessClamp` | 按最大值或邻域偏差限制亮点 | 保留，避免颜色反弹 firefly |
+| ReSTIR validation | temporal lighting/occlusion validation、half-step validation | 保留已有设计，先验证 source 替换后的有效性 |
+| spatial reservoir | 依据深度、法线、AO guidance 做空间重采样 | 保留，不另写一套低质量 blur |
+| recurrent blur | 使用 spatial output 作为后续 temporal history | 先作为可选质量参数，不能污染 source history |
+
+一个重要事实：`ExcludeCastingMask` 在 HTrace 的深度金字塔阶段是有效的，但 `ExcludeReceivingMask` 只能排除已经拥有正确 rendering layer 的接收像素。当前 lilToon outline 的基础 GBuffer/DepthNormals 不包含外扩壳，因此 HTrace 的 layer mask 不能单独解决 outline 白边。
+
 ## 2. Ho-SSGI v1 的核心设计
 
 ### 2.1 复用输入
@@ -136,7 +177,7 @@ HoGeometryBuffer (250)
 - spatial radius；
 - source/indirect intensity。
 
-HTrace 已有的 ReSTIR、temporal validation、firefly suppression 和 recurrent blur 可以作为参考，但接入顺序应是：先让 source、trace、history 和 composite 正确，再逐项恢复这些质量机制。
+Ho-SSGI v1 应尽量沿用 HTrace 已验证的 ReSTIR、temporal validation、firefly suppression、depth pyramid 和 recurrent history 结构。接入顺序是：先替换 source 并保持 HTrace 链路行为，再逐项检查每个阶段在 lilToon 上的语义，而不是重新发明一套简化算法。
 
 ## 4. lilToon 接收顺序
 
@@ -164,6 +205,8 @@ GI 的 NPR 合成规则：
 - 不把包含 outline 的 camera color 当作唯一 source；
 - outline 不写入 GI source；
 - outline 不接收 GI；
+- caster 排除应在 depth pyramid 生成前生效，等价于 HTrace 的 `ExcludeCastingMask`；
+- receiver 排除应在 GI output/composite 阶段生效，等价于 HTrace 的 `ExcludeReceivingMask`；
 - 深度/法线不一致时拒绝 screen hit；
 - 无有效几何覆盖的像素不参与历史累积；
 - camera color、source、GI、confidence 都要能单独 debug。
