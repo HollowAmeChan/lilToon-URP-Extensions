@@ -3,7 +3,7 @@
 > 状态：**规划定稿**（不动代码；实现按 §5 步骤推进）。
 > 实现进度：① lilToon 语义 ✅（7a652e5）② 骨架 ✅（4371c43）③ march ✅（e5b8a26）④ 滤波+上采样 ✅（9343e87）⑤ temporal ✅（b40d9aa）⑥ Volume+DebugTile+Editor ✅（d352e6e）→ ⑦ 算法校正（按本机 HTrace 源码复核视空间重建、slice rotation、连续 horizon 积分）；⑧ 收尾：Unity 侧（refresh shaders / GeometryBuffer passEvent→250 / PC_Renderer 挂 Ho-GTAO 并移除 HTrace AO feature）。
 >
-> **实现校正记录（2026-09）**：Ho-GTAO 已补 4 级独立深度金字塔（mip0..3，2x2 最近深度归约），march 按 HTrace 的 `log2(length(sampleOffset))-3` 选择 LOD；GeometryBuffer 仍是唯一法线/线性深度生产者。已接入 HTrace 的 32-bin VisibilityBitmask、线性厚度、距离衰减、平方步进、噪声和逐帧 slice rotation；Temporal 现在保存历史深度并按深度一致性拒绝历史，Spatial 使用 8 点深度/法线双边滤波；公共输出仍是 0..1 visibility（1=无遮挡）。逐物体 motion-vector rejection 和 checkerboard 寻址仍列为后续功能项。
+> **实现校正记录（2026-09）**：Ho-GTAO 已补 4 级独立深度金字塔（mip0..3，2x2 最近深度归约），march 按 HTrace 的 `log2(length(sampleOffset))-3` 选择 LOD；GeometryBuffer 仍是唯一法线/线性深度生产者。已接入 HTrace 的 32-bin VisibilityBitmask、线性厚度、距离衰减、平方步进、噪声和逐帧 slice rotation；Temporal 现在保存历史深度并按深度一致性拒绝历史，并消费 HoUrp 内置 MotionVectorRenderPass 的前向 UV motion 做历史重投影；Spatial 使用 8 点深度/法线双边滤波；公共输出仍是 0..1 visibility（1=无遮挡）。逐命中 motion rejection 和 checkerboard 寻址仍列为后续功能项。
 > 依据：契约 v1（`ao` 通道：R8f 0..1，生产端=自研 AO，消费端=材质采样 + AOV）；草案 §5 替换位。
 > 关联：`LILTOON_CHANNEL_CONTRACT_V1.md`（冻结）、`LILTOON_FORMAL_PIPELINE_DRAFT.md` §5/§2（帧序）。
 > 结论先行：**v1 用「材质采样模式」+ 公共 AO 语义**。lilToon 侧删除 `_ScreenSpaceAOSource` 0/1 分支与 URP 内置 fallback，**语义上直接采样公共纹理 `_HoAOTexture`**（与 `_HoGeometryBuffer*`/`_HoMetadataBuffer*` 公共资源命名一致，不含算法名）；自研 Ho-GTAO 只替换生产端。核心时序改动 = **GeometryBuffer 与 Ho-GTAO 同用 BeforeRenderingOpaques（250）**，并由 Renderer Feature 列表顺序显式保证 GeometryBuffer 在前。
@@ -100,7 +100,7 @@
 
 **fragment 版替代项**：
 - **深度金字塔**：Ho-GTAO 以 4 个 RDG 深度纹理复刻 HTrace mip0..3 的 2x2 归约；march 按 `log2(length(sampleOffset))-3` 选择 LOD。后续仅需补齐 HTrace 的动态物体符号标记和 checkerboard 寻址。
-- **temporal 的运动矢量**：URP 内置 motion vector pass 只在 TAA/MotionBlur 启用时渲染，**管线目前没有**（`motion` 通道是占坑 ◻）→ v1 High 档 temporal 用**相机运动矢量 + 深度/法线校验**重投影（重投影不一致即重置历史，等价 HTrace 简单 rejection 思想；渲染环境多为静态镜头+循环动画，运动物体 AO 短暂重置可接受）。**逐物体运动矢量的完整版（自建 motion vector 重画 pass）登记 v1.1 增强**。
+- **temporal 的运动矢量**：HoUrp 已有内置 MotionVectorRenderPass，Ho-GTAO 通过 `ConfigureInput(Depth | Motion)` 声明依赖，使 URP 在前置深度预通过后生产 `_MotionVectorTexture`；v1 High 档直接消费该前向 UV motion，并配合深度校验重投影。逐命中速度拒绝、motion mask 和更复杂的动态物体策略登记为后续增强。
 
 **质量档预设（我们 Ho-GTAO volume 提供 Quality 档，参数可再单调）：**
 
@@ -261,7 +261,7 @@ lilToon 侧改动（见 §2.3）：input+frag 两处 + 属性/分支/UI 删除�
 
 **风险**：
 - GeometryBuffer 提前（300→250）可能影响未预见的同帧消费方 → 步骤 2 的"直出调试"先验证时序；同事件消费者按 Renderer Feature 列表显式排序；若回归，走 §2.1 备选（后处理乘模式，另开 v1.1 讨论 per-material 语义）。
-- **temporal 的工程点**：历史两帧纹理的帧间管理（相机尺寸变化/相机切换重置——参考 GeometryBuffer 的 `beginCameraRendering` Reset 模式）；RG 跨帧资源声明；**运动矢量**：不做逐物体 motion pass，用相机运动矢量 + 深度/法线一致性校验（运动物体历史自动重置，视觉可接受；完整 motion-vector pass 登记 v1.1）。
+- **temporal 的工程点**：历史两帧纹理的帧间管理（相机尺寸变化/相机切换重置——参考 GeometryBuffer 的 `beginCameraRendering` Reset 模式）；RG 跨帧资源声明；**运动矢量**：消费 HoUrp 内置 motion-vector pass，并用深度/法线一致性校验拒绝错误历史；逐命中速度 rejection 仍登记后续增强。
 - Bitmask+传统半分辨率下细几何（头发缝隙）仍可能渗漏 → 由 Radius/Thickness 调；半分辨率 checkerboard（HTrace Half=(2,1)）在静态镜头下可能有 checker 纹理残留 → 上采样 filter 用 HTrace Interpolation 同款（深度引导）。
 - 无 temporal（Low 档）时静态噪声/闪烁 → 蓝噪声 + Disk 滤波兜底（与 HTrace SpatialOnly 同级别）。
 - `_SSAOColor*` 类未在本 fork 材质侧出现（`lil_common_frag.hlsl` 只用 `_SSAOStrength/_SSAODirectStrength/_SSAOIndirectStrength/_SSAORemap/_SSAOContrast/_SSAOMask/_UseScreenSpaceAO/_ScreenSpaceAOSource`）——契约/草案里若提过 `_SSAOColor*`，以实测为准，实现时核对 lilblock 属性清单。

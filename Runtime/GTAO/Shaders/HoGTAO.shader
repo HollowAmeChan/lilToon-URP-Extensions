@@ -14,6 +14,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
 
         TEXTURE2D_X(_HoGTAOHistoryPrevTex);
         TEXTURE2D_X_FLOAT(_HoGTAOHistoryPrevDepthTex);
+        TEXTURE2D_X(_MotionVectorTexture);
         TEXTURE2D_X_FLOAT(_HoGTAODepthMip0);
         TEXTURE2D_X_FLOAT(_HoGTAODepthMip1);
         TEXTURE2D_X_FLOAT(_HoGTAODepthMip2);
@@ -26,6 +27,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         float4x4 _HoGTAOViewMatrix;
         float _HoGTAODebugMode;
         float _HoGTAOHistoryBlend;
+        float _HoGTAOUseMotionVectors;
         float _HoGTAOWorldSpaceRadius;
         float _HoGTAOScreenSpaceRadius;
         float _HoGTAOThickness;
@@ -215,9 +217,17 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 half depth = saturate(nd.a / 50.0h);
                 return half4(depth, depth, depth, 1.0h);
             }
-            if (_HoGTAODebugMode > 2.5)
+            if (_HoGTAODebugMode > 2.5 && _HoGTAODebugMode < 3.5)
             {
                 return half4(nd.rgb, 1.0h);
+            }
+            if (_HoGTAODebugMode > 3.5 && _HoGTAODebugMode < 4.5)
+            {
+                float2 motion = _HoGTAOUseMotionVectors > 0.5
+                    ? SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, input.texcoord).xy
+                    : float2(0.0, 0.0);
+                // Signed direction in RG, speed/magnitude in B.
+                return half4(motion * 0.5 + 0.5, saturate(length(motion) * 32.0), 1.0h);
             }
             if (nd.a < 0.0001h)
             {
@@ -231,9 +241,15 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             half current = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord).r;
-            half previous = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevTex, sampler_PointClamp, input.texcoord).r;
             half4 geometry = SAMPLE_TEXTURE2D_X(_HoGTAOGeometryInput, sampler_PointClamp, input.texcoord);
-            half previousDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_PointClamp, input.texcoord).r;
+            float2 motion = _HoGTAOUseMotionVectors > 0.5
+                ? SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, input.texcoord).xy
+                : float2(0.0, 0.0);
+            // URP stores forward motion in screen-UV space. Reproject the current
+            // pixel backwards to locate its previous-frame history sample.
+            float2 previousUV = saturate(input.texcoord - motion);
+            half previous = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevTex, sampler_LinearClamp, previousUV).r;
+            half previousDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_LinearClamp, previousUV).r;
             half depthValid = step(0.0001h, geometry.a) * step(0.0001h, previousDepth);
             half depthAgreement = step(abs(geometry.a - previousDepth), max(0.05h * geometry.a, 0.05h));
             half historyWeight = saturate(_HoGTAOHistoryBlend) * depthValid * depthAgreement;

@@ -43,6 +43,10 @@ namespace lilToon.URP.Extensions.GTAO
         Depth = 2,
         [InspectorName("Normal"), Tooltip("直出 GeometryBuffer 世界法线。")]
         Normal = 3,
+        [InspectorName("Motion"), Tooltip("输出 URP 内置 MotionVectorRenderPass 的屏幕空间运动（RG：方向，B：幅度）。")]
+        Motion = 4,
+        [InspectorName("Temporal"), Tooltip("输出完成历史重投影与深度拒绝后的时间累积 AO。")]
+        Temporal = 5,
     }
 
     [Serializable]
