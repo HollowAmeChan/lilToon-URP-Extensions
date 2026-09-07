@@ -37,7 +37,7 @@ namespace lilToon.URP.Extensions.GTAO
     {
         [InspectorName("Off")]
         Off = 0,
-        [InspectorName("AO"), Tooltip("传输诊断：暂时以线性深度灰阶确认输入和刷新链路；算法接入后恢复为 AO 因子。")]
+        [InspectorName("GTAO"), Tooltip("输出 HTrace 对照的 GTAO visibility（1=无遮挡）。")]
         AO = 1,
         [InspectorName("Depth"), Tooltip("直出 GeometryBuffer 线性深度。")]
         Depth = 2,

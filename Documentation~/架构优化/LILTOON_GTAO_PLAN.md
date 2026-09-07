@@ -3,7 +3,7 @@
 > 状态：**规划定稿**（不动代码；实现按 §5 步骤推进）。
 > 实现进度：① lilToon 语义 ✅（7a652e5）② 骨架 ✅（4371c43）③ march ✅（e5b8a26）④ 滤波+上采样 ✅（9343e87）⑤ temporal ✅（b40d9aa）⑥ Volume+DebugTile+Editor ✅（d352e6e）→ ⑦ 算法校正（按本机 HTrace 源码复核视空间重建、slice rotation、连续 horizon 积分）；⑧ 收尾：Unity 侧（refresh shaders / GeometryBuffer passEvent→250 / PC_Renderer 挂 Ho-GTAO 并移除 HTrace AO feature）。
 >
-> **实现校正记录（2026-09）**：共享 GeometryBuffer 只有线性眼深逐点采样，没有 HTrace 的深度金字塔 footprint，因此不能把 VisibilityBitmasks 的 32-bin 量化和“最小 1/2 bin”补偿当作核心算法。当前实现采用 HTrace 同源的连续 horizon-search 分支（`max horizon -> HFastACos -> integrated arc`），并保留 HTrace 的线性厚度、距离衰减、平方步进和逐帧 slice rotation；公共输出仍是 0..1 visibility（1=无遮挡）。
+> **实现校正记录（2026-09）**：共享 GeometryBuffer 只有线性眼深逐点采样，没有 HTrace 的深度金字塔 footprint，因此当前实现保留 HTrace 的 32-bin VisibilityBitmask 数学，但固定在 LOD0 逐点采样；不再使用 1/2-bin 人工补偿。已接入 HTrace 的线性厚度、距离衰减、平方步进、噪声和逐帧 slice rotation；公共输出仍是 0..1 visibility（1=无遮挡）。深度金字塔/L​​OD footprint、完整 temporal rejection 和 HTrace spatial denoise 仍列为后续功能项。
 > 依据：契约 v1（`ao` 通道：R8f 0..1，生产端=自研 AO，消费端=材质采样 + AOV）；草案 §5 替换位。
 > 关联：`LILTOON_CHANNEL_CONTRACT_V1.md`（冻结）、`LILTOON_FORMAL_PIPELINE_DRAFT.md` §5/§2（帧序）。
 > 结论先行：**v1 用「材质采样模式」+ 公共 AO 语义**。lilToon 侧删除 `_ScreenSpaceAOSource` 0/1 分支与 URP 内置 fallback，**语义上直接采样公共纹理 `_HoAOTexture`**（与 `_HoGeometryBuffer*`/`_HoMetadataBuffer*` 公共资源命名一致，不含算法名）；自研 Ho-GTAO 只替换生产端。核心时序改动 = **GeometryBuffer 与 Ho-GTAO 同用 BeforeRenderingOpaques（250）**，并由 Renderer Feature 列表顺序显式保证 GeometryBuffer 在前。
