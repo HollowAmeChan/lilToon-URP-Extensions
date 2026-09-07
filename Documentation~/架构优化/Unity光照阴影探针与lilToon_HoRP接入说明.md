@@ -1326,13 +1326,27 @@ LightProbes.GetInterpolatedProbe(
 
 APV 是 Unity 6/URP17 的新探针系统。它和 Lightmap 不是互斥开关：建议静态建筑继续用 Lightmap，动态角色使用 APV。
 
-#### A. 切换 URP Asset
+#### A. 从 PC_RPAsset 切换探针系统
+
+主入口是当前质量等级正在使用的 URP Asset，而不是先在场景里随便创建探针：
 
 ```text
-Edit -> Project Settings -> Quality
-    -> Rendering -> 双击当前 Render Pipeline Asset（PC_RPAsset）
-    -> Lighting -> Light Probe System = Adaptive Probe Volumes
+选中 Assets/Settings/PC_RPAsset.asset
+    -> Inspector
+    -> Lighting
+    -> Light Probe System
+    -> 将 Light Probe Groups 切换为 Adaptive Probe Volumes
 ```
+
+也可以从：
+
+```text
+Window -> Rendering -> Lighting
+    -> Adaptive Probe Volumes 标签
+    -> 进入/提示切换当前 URP Asset 的 Light Probe System
+```
+
+两条路径修改的是同一个 URP Asset 字段；切换完成后，APV 的详细设置应继续在 Lighting 窗口的 `Adaptive Probe Volumes` 面板中完成，而不是回到每个材质上设置。
 
 URP17 中：
 
@@ -1341,7 +1355,7 @@ LightProbeSystem.LegacyLightProbes = 0
 LightProbeSystem.ProbeVolumes      = 1
 ```
 
-朱木古堂当前 `PC_RPAsset.asset` 为 `m_LightProbeSystem: 0`，即 Legacy Light Probe。
+朱木古堂当前 `PC_RPAsset.asset` 为 `m_LightProbeSystem: 0`，即 Legacy Light Probe；切换 APV 后该字段应变为 `1`。项目文件中的数字不是建议直接手改的入口，优先使用 Inspector，避免漏掉 URP Asset 关联资源和编辑器缓存。
 
 #### B. 场景中添加 APV
 
