@@ -373,7 +373,7 @@ sourceValid = geometryCoverage
 - caster exclusion 在 MIP0 生效；
 - sky/invalid depth 保持明确的 invalid 标记。
 
-每个 MIP 都应有 debug view。先确认深度金字塔没有 outline、没有透明错误覆盖，再调 ray march。
+每个 MIP 都应有 debug 模式。首版由 Ho-SSGI RendererFeature 的 feature-local debug pass 直接显示，不要求接入 DebugTile。
 
 ### 5.3 Raw ray result
 
@@ -416,7 +416,7 @@ sourceValid = geometryCoverage
 
 ### 5.6 Producer debug views
 
-Ho-SSGI 需要自己的 DebugTile 视图，至少包括：
+Ho-SSGI 首版只需要 feature-local debug pass 和一个 `DebugMode` 枚举，至少包括：
 
 ```text
 gi.source-opaque
@@ -435,6 +435,8 @@ gi.filtered-radiance
 ```
 
 调试目标是能够回答：描边有没有进入 source、有没有进入 depth pyramid；ray 是否命中有效 geometry；颜色错误来自 source、ray、history 还是 composite；透明是否被错误写入 caster/receiver/history。
+
+DebugTile/`HoDebugViewRegistry` 只作为后续统一调试入口，不作为 Ho-SSGI producer v1 的依赖。
 
 ## 6. Producer 验收顺序
 
