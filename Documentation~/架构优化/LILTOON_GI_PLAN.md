@@ -1,6 +1,6 @@
 # lilToon / Ho-SSGI 实施规划
 
-> 状态：Draft v0.2
+> 状态：Draft v0.3
 >
 > 主线：先把 HTrace SSGI 改造成适合 lilToon 的 Ho-SSGI；Brixelizer GI 只作为后续 producer 替换，不提前展开完整实现。
 
@@ -155,6 +155,34 @@ HoGeometryBuffer          = 无 outline 的 normal/depth/coverage
 
 `HoMetadataBufferSurfaceColor` 不再是 Ho-SSGI 的输入。MetadataBuffer 继续服务角色语义、AOV 和其他后期 feature。
 
+### 1.7 SSGI 真正需要的光照输入
+
+SSGI 不消费 `Light` 对象列表，也不需要一张把所有灯光颜色简单相加的 RT。它需要的是命中表面的出射辐射 `L_o`，也就是 direct lighting、toon ramp 和可反弹 emissive 已经在表面上完成后的颜色。
+
+```text
+SSGI 输入
+  = Geometry（depth / normal / coverage）
+  + Screen visibility（Hi-Z depth ray march）
+  + Hit radiance（source RGB）
+  + Receiver response（diffuse / metallic / AO，可选）
+  + Motion / history / fallback
+```
+
+各输入的职责和 ShadowCast 边界如下：
+
+| 输入 | 用途 | 是否直接依赖 ShadowCast |
+|---|---|---|
+| Depth、normal、coverage | 重建位置和法线，判断 screen hit | 否 |
+| Hi-Z depth pyramid | 加速屏幕空间 ray march、caster 排除 | 否 |
+| Source radiance RGB | 命中点向外贡献的 direct/toon/emissive 辐射 | 阴影已间接烘入 source |
+| Diffuse、metallic、AO | 接收面的间接光响应和合成 | 否 |
+| Motion、history | temporal/reprojection 和灯光变化检测 | 否 |
+| Light 列表 | 不由 SSGI 核心读取 | 只有 source pass 需要 |
+
+SSGI 的屏幕空间遮挡来自 camera depth/GeometryBuffer，不是 ShadowCast atlas。ShadowCast 只有在生成独立的 lit source 时才参与：source pass 必须使用和主 forward 一致的 Unity shadow 或 Ho-ShadowCast 衰减，否则会把主画面中处于阴影的表面错误地当成受光 source。
+
+HTrace 的 `DirectLighting` debug 只是间接光注入前的 camera color，并不是独立的 direct-light RT。HTrace 的 AO 也不是单独的灯光 pass：`HRenderSSGI.compute` 在 SSGI tracing 中顺便输出 near-hit AO，最终合成还会读取 URP 的 `_ScreenSpaceOcclusionTexture`。因此“自己渲了一遍 GTAO”不能推导出它有独立的灯光输入。
+
 ## 2. Ho-SSGI v1 的核心设计
 
 ### 2.1 复用输入
@@ -188,9 +216,24 @@ source radiance
     * temporal / spatial filtering
 ```
 
+### 2.3 后续的 lilToon Lit Source Pass
+
+当 opaque camera color 中的 outline、透明、反射或后期污染已经成为主要误差来源时，再增加专用的 `HoGI Lit Source` 输出。它不是原始灯光缓存，而是 lilToon 在真实灯光模型下输出的干净表面辐射：
+
+```text
+RGB = direct diffuse / toon lighting + emissive
+A   = valid opaque surface coverage
+```
+
+source pass 必须排除 outline、specular/reflection、透明/OIT 和 post effect；接收面的 diffuse、metallic、AO 仍然是独立语义。最理想的实现是让 lilToon opaque forward pass 通过 MRT 同时写入正常 camera color 和 `HoGI Lit Source`，避免完整重复一次几何和灯光计算。若 MRT 改动过大，再使用独立的 `LightMode = HoGI` lit pass，但它必须复用主 shader 的灯光、toon ramp、cookie、light layer 和 shadow attenuation 规则。
+
+这个 source pass 可以在 After Opaques、Before Post Processing 之间生成，仍然适用于当前纯后处理 Ho-SSGI；只有要让 GI 在当帧 forward 材质内生效时，才需要把 source 和 GI producer 提前到 opaque shading 之前。
+
+专用 screen source 只解决 SSGI 的可见表面辐射。它不能直接充当 Brixelizer/DDGI 的世界空间 radiance cache，后者仍需要 probe/SDF 采样和世界空间更新路径。
+
 这样主光、附加光、阴影、toon ramp 和材质颜色都已经在 source 中表达，SSGI 不需要重新实现一套 light loop。
 
-### 2.3 输出契约
+### 2.4 输出契约
 
 生产端发布算法无关的语义：
 
@@ -205,7 +248,7 @@ source radiance
 ```text
 HoGeometryBuffer (250)
     -> opaque forward lighting
-    -> GI source（opaque camera color）
+    -> GI source（opaque camera color；后续可替换为 HoGI Lit Source）
     -> Ho-SSGI raw trace
     -> cosine hemisphere tracing
     -> intersection refinement
@@ -402,7 +445,7 @@ DebugTile/`HoDebugViewRegistry` 只作为后续统一调试入口，不作为 Ho
 9. 关闭 Ho-SSGI 后确认无 GI、无上一帧残留；
 10. 用 RenderDoc/Frame Debugger 对照 HTrace 的输入、输出和 GPU 成本。
 
-完成标准是：HTrace 的独立 GBuffer/prepass 不再是必需输入；Ho-SSGI 能稳定输出适合 lilToon 画面的 GI；关闭时安全回退；后续替换 Brixelizer 时不改 `_HoGITexture` 契约。
+完成标准是：HTrace 的独立 GBuffer/prepass 不再是必需输入；Ho-SSGI 能稳定输出适合 lilToon 画面的 GI；source 可以从 opaque camera color 平滑替换为 `HoGI Lit Source`；关闭时安全回退；后续替换 Brixelizer 时不改 `_HoGITexture` 契约。
 
 ## 9. Brixelizer 只保留为后续替换
 
