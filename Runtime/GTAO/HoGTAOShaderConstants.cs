@@ -19,5 +19,6 @@ namespace lilToon.URP.Extensions.GTAO
         public static readonly int AoInputTexId = UnityEngine.Shader.PropertyToID("_HoGTAOAoInputTex");
         public static readonly int AoFilteredTexId = UnityEngine.Shader.PropertyToID("_HoGTAOAoFilteredTex");
         public static readonly int HistoryPrevTexId = UnityEngine.Shader.PropertyToID("_HoGTAOHistoryPrevTex");
+        public static readonly int DebugIntensityId = UnityEngine.Shader.PropertyToID("_HoGTAODebugIntensity");
     }
 }

@@ -81,7 +81,7 @@ namespace lilToon.URP.Extensions.GTAO
             renderer.EnqueuePass(pass);
             if (settings.debugMode != HoGTAODebugMode.Off && debugMaterial != null)
             {
-                debugPass.Setup(debugMaterial);
+                debugPass.Setup(debugMaterial, settings.debugMode);
                 renderer.EnqueuePass(debugPass);
             }
         }
@@ -215,13 +215,16 @@ namespace lilToon.URP.Extensions.GTAO
             public TextureHandle source;
             public TextureHandle cameraColor;
             public TextureHandle destination;
+            public float displayIntensity;
         }
 
         private Material material;
+        private HoGTAODebugMode debugMode;
 
-        public void Setup(Material material)
+        public void Setup(Material material, HoGTAODebugMode debugMode)
         {
             this.material = material;
+            this.debugMode = debugMode;
             renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
             ConfigureInput(ScriptableRenderPassInput.Color);
         }
@@ -253,12 +256,14 @@ namespace lilToon.URP.Extensions.GTAO
                 data.source = gtao.aoTexture;
                 data.cameraColor = cameraColor;
                 data.destination = destination;
+                data.displayIntensity = debugMode == HoGTAODebugMode.AO ? 2.4f : 1.0f;
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.cameraColor, AccessFlags.Read);
                 builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
                 {
+                    context.cmd.SetGlobalFloat(HoGTAOShaderConstants.DebugIntensityId, passData.displayIntensity);
                     Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 0);
                 });
             }
