@@ -307,6 +307,7 @@ namespace lilToon.URP.Extensions.GTAO
         private static readonly int SpatialResolutionId = Shader.PropertyToID("_HoGTAOSpatialResolution");
         private static readonly int SpatialFilterId = Shader.PropertyToID("_HoGTAOSpatialFilter");
         private static readonly int SpatialStepId = Shader.PropertyToID("_HoGTAOSpatialStep");
+        private static readonly int PixelSpreadMultiplierId = Shader.PropertyToID("_HoGTAOPixelSpreadMultiplier");
         private static readonly int HistoryDepthPrevId = Shader.PropertyToID("_HoGTAOHistoryPrevDepthTex");
         private static readonly int DepthInputId = Shader.PropertyToID("_HoGTAODepthInput");
         private static readonly int DepthInputTexelSizeId = Shader.PropertyToID("_HoGTAODepthInputTexelSize");
@@ -378,6 +379,7 @@ namespace lilToon.URP.Extensions.GTAO
             public float resolution;
             public int filterType;
             public float step;
+            public float pixelSpreadMultiplier;
         }
 
         private sealed class DepthHistoryData
@@ -644,9 +646,13 @@ namespace lilToon.URP.Extensions.GTAO
                     data.adaptivity = settings.filterAdaptivity;
                     data.resolution = 1.0f;
                     data.filterType = (int)settings.spatialFilter;
-                    data.step = settings.spatialFilter == HoGTAOSpatialFilter.Box
+                data.step = settings.spatialFilter == HoGTAOSpatialFilter.Box
                         ? (spatialPass == 0 ? (settings.boxPassCount >= 3 ? 4.0f : settings.boxPassCount == 2 ? 2.0f : 1.0f) : spatialPass == 1 ? 2.0f : 1.0f)
                         : 1.0f;
+                float baselineSpread = 2.0f * Mathf.Tan(60.0f * Mathf.Deg2Rad * 0.5f) / 1080.0f;
+                float actualSpread = 2.0f * Mathf.Tan(cameraData.camera.fieldOfView * Mathf.Deg2Rad * 0.5f)
+                    / Mathf.Max(1.0f, cameraData.cameraTargetDescriptor.height);
+                data.pixelSpreadMultiplier = actualSpread / Mathf.Max(baselineSpread, 1.0e-6f);
                     builder.UseTexture(data.source, AccessFlags.Read);
                     builder.UseTexture(data.geometry, AccessFlags.Read);
                     builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
@@ -659,7 +665,8 @@ namespace lilToon.URP.Extensions.GTAO
                         context.cmd.SetGlobalFloat(SpatialAdaptivityId, passData.adaptivity);
                         context.cmd.SetGlobalFloat(SpatialResolutionId, passData.resolution);
                         context.cmd.SetGlobalFloat(SpatialFilterId, passData.filterType);
-                        context.cmd.SetGlobalFloat(SpatialStepId, passData.step);
+                    context.cmd.SetGlobalFloat(SpatialStepId, passData.step);
+                    context.cmd.SetGlobalFloat(PixelSpreadMultiplierId, passData.pixelSpreadMultiplier);
                         Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 5);
                     });
                 }
