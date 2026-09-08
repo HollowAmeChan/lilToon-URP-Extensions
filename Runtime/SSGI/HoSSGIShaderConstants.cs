@@ -43,6 +43,7 @@ namespace lilToon.URP.Extensions.SSGI
         public static readonly int HistoryDepthId = Shader.PropertyToID("_HoSSGIHistoryDepth");
         public static readonly int MotionVectorId = Shader.PropertyToID("_HoSSGIMotionVectors");
         public static readonly int MotionValidId = Shader.PropertyToID("_HoSSGIUseMotion");
+        public static readonly int ReservoirReuseId = Shader.PropertyToID("_HoSSGIReservoirReuse");
         public static readonly int ReservoirValidationId = Shader.PropertyToID("_HoSSGIReservoirValidation");
         public static readonly int FireflyEnabledId = Shader.PropertyToID("_HoSSGIFireflyEnabled");
         public static readonly int RawGIInputId = Shader.PropertyToID("_HoSSGIRawGIInput");

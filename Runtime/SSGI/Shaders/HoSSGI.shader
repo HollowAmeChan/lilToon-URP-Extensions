@@ -61,6 +61,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         float _HoSSGISpatialRadius;
         float _HoSSGIHistoryValid;
         float _HoSSGIUseMotion;
+        float _HoSSGIReservoirReuse;
         float _HoSSGIReservoirValidation;
         float _HoSSGIFireflyEnabled;
 
@@ -513,7 +514,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float2 previousUVUnclamped = uv - motion;
             bool historyUVValid = previousUVUnclamped.x >= 0.0 && previousUVUnclamped.x <= 1.0
                 && previousUVUnclamped.y >= 0.0 && previousUVUnclamped.y <= 1.0;
-            if (_HoSSGIHistoryValid > 0.5 && historyUVValid)
+            if (_HoSSGIReservoirReuse > 0.5 && _HoSSGIHistoryValid > 0.5 && historyUVValid)
             {
                 float2 historyTexel = rcp(max(_ScreenParams.xy, 1.0));
                 float2 previousPixel = previousUVUnclamped * _ScreenParams.xy - 0.5;
@@ -679,6 +680,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             [unroll]
             for (int i = 0; i < 8; i++)
             {
+                if (_HoSSGIReservoirReuse <= 0.5) break;
                 float2 offset = offsets[i];
                 float2 tapUV = uv + offset * texel;
                 bool tapInside = tapUV.x >= 0.0 && tapUV.x <= 1.0 && tapUV.y >= 0.0 && tapUV.y <= 1.0;

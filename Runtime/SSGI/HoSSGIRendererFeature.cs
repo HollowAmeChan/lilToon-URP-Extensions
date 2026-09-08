@@ -130,6 +130,8 @@ namespace lilToon.URP.Extensions.SSGI
             settings.thickness = volume.thickness.value;
             settings.temporalBlend = volume.temporalBlend.value;
             settings.spatialRadius = volume.spatialRadius.value;
+            settings.temporalReservoirReuse = volume.temporalReservoirReuse.value;
+            settings.spatialReservoirReuse = volume.spatialReservoirReuse.value;
             settings.temporalReservoirValidation = volume.temporalReservoirValidation.value;
             settings.spatialReservoirValidation = volume.spatialReservoirValidation.value;
             settings.fireflySuppression = volume.fireflySuppression.value;
@@ -288,6 +290,7 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle reservoirOutputRay;
             public float blend;
             public bool historyValid;
+            public bool reservoirReuse;
             public bool reservoirValidation;
         }
 
@@ -308,6 +311,7 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle geometry;
             public TextureHandle output;
             public float radius;
+            public bool reservoirReuse;
             public bool reservoirValidation;
         }
 
@@ -450,6 +454,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.reservoirOutputRay = nextReservoirRay;
                 data.blend = Mathf.Clamp01(settings.temporalBlend);
                 data.historyValid = history.Valid;
+                data.reservoirReuse = settings.temporalReservoirReuse;
                 data.reservoirValidation = settings.temporalReservoirValidation;
                 builder.UseTexture(data.current, AccessFlags.Read);
                 builder.UseTexture(data.previous, AccessFlags.Read);
@@ -473,6 +478,7 @@ namespace lilToon.URP.Extensions.SSGI
                     passData.material.SetFloat(HoSSGIShaderConstants.TemporalBlendId, passData.blend);
                     passData.material.SetFloat(HoSSGIShaderConstants.HistoryValidId, passData.historyValid ? 1.0f : 0.0f);
                     passData.material.SetFloat(HoSSGIShaderConstants.MotionValidId, passData.motion.IsValid() ? 1.0f : 0.0f);
+                    passData.material.SetFloat(HoSSGIShaderConstants.ReservoirReuseId, passData.reservoirReuse ? 1.0f : 0.0f);
                     passData.material.SetFloat(HoSSGIShaderConstants.ReservoirValidationId, passData.reservoirValidation ? 1.0f : 0.0f);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.current);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.HistoryTextureId, passData.previous);
@@ -558,6 +564,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.geometry = geometry.normalDepthTexture;
                 data.output = filtered;
                 data.radius = Mathf.Clamp(settings.spatialRadius, 0.5f, 8.0f);
+                data.reservoirReuse = settings.spatialReservoirReuse;
                 data.reservoirValidation = settings.spatialReservoirValidation;
                 builder.UseTexture(data.reservoirColor, AccessFlags.Read);
                 builder.UseTexture(data.reservoirAux, AccessFlags.Read);
@@ -571,6 +578,7 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.SetRenderFunc(static (SpatialPassData passData, RasterGraphContext context) =>
                 {
                     passData.material.SetFloat(HoSSGIShaderConstants.SpatialRadiusId, passData.radius);
+                    passData.material.SetFloat(HoSSGIShaderConstants.ReservoirReuseId, passData.reservoirReuse ? 1.0f : 0.0f);
                     passData.material.SetFloat(HoSSGIShaderConstants.ReservoirValidationId, passData.reservoirValidation ? 1.0f : 0.0f);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirColorId, passData.reservoirColor);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirAuxId, passData.reservoirAux);

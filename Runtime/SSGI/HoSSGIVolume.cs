@@ -47,6 +47,12 @@ namespace lilToon.URP.Extensions.SSGI
         public ClampedFloatParameter spatialRadius = new ClampedFloatParameter(2.0f, 0.5f, 8.0f);
 
         [Header("ReSTIR")]
+        [InspectorName("时域 Reservoir 重用")]
+        public BoolParameter temporalReservoirReuse = new BoolParameter(true);
+
+        [InspectorName("空间 Reservoir 重用")]
+        public BoolParameter spatialReservoirReuse = new BoolParameter(true);
+
         [InspectorName("时域射线验证")]
         public BoolParameter temporalReservoirValidation = new BoolParameter(true);
 

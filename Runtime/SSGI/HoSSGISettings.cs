@@ -41,6 +41,8 @@ namespace lilToon.URP.Extensions.SSGI
         [Range(0.0f, 4.0f)] public float thickness = 0.08f;
         [Range(0.0f, 1.0f)] public float temporalBlend = 0.9f;
         [Range(0.5f, 8.0f)] public float spatialRadius = 2.0f;
+        public bool temporalReservoirReuse = true;
+        public bool spatialReservoirReuse = true;
         public bool temporalReservoirValidation = true;
         public bool spatialReservoirValidation = true;
         public bool fireflySuppression = true;
