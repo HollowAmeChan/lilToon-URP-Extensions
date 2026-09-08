@@ -467,7 +467,6 @@ namespace lilToon.URP.Extensions.GTAO
             // Quarter modes use checkerboard addressing into full-resolution
             // geometry; a plain smaller RT with unchanged UVs is not equivalent
             // and produces visibly wrong AO silhouettes.
-            int divisor = 1;
             int width = Mathf.Max(1, cameraData.cameraTargetDescriptor.width);
             int height = Mathf.Max(1, cameraData.cameraTargetDescriptor.height);
             int cameraId = cameraData.camera != null ? cameraData.camera.GetInstanceID() : 0;
