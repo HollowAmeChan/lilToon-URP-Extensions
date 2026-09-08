@@ -156,6 +156,10 @@ namespace lilToon.URP.Extensions.GTAO
         private RTHandle previousNormal;
         private RTHandle nextNormal;
         private bool valid;
+        private Matrix4x4 previousView = Matrix4x4.identity;
+        private Vector4 previousDepthToViewParams;
+        private bool previousOrthographic;
+        private bool cameraStateValid;
 
         public RTHandle Previous => previous;
         public RTHandle Next => next;
@@ -164,6 +168,10 @@ namespace lilToon.URP.Extensions.GTAO
         public RTHandle PreviousNormal => previousNormal;
         public RTHandle NextNormal => nextNormal;
         public bool Valid => valid;
+        public bool CameraStateValid => cameraStateValid;
+        public Matrix4x4 PreviousView => previousView;
+        public Vector4 PreviousDepthToViewParams => previousDepthToViewParams;
+        public bool PreviousOrthographic => previousOrthographic;
 
         public void Ensure(int width, int height)
         {
@@ -195,9 +203,18 @@ namespace lilToon.URP.Extensions.GTAO
             RenderingUtils.ReAllocateIfNeeded(ref previousNormal, normalDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGTAOHistoryPrevNormalTex");
             RenderingUtils.ReAllocateIfNeeded(ref nextNormal, normalDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGTAOHistoryNextNormalTex");
             valid = false;
+            cameraStateValid = false;
         }
 
         public void MarkValid() => valid = true;
+
+        public void SetCameraState(Matrix4x4 view, Vector4 depthToViewParams, bool orthographic)
+        {
+            previousView = view;
+            previousDepthToViewParams = depthToViewParams;
+            previousOrthographic = orthographic;
+            cameraStateValid = true;
+        }
 
         public void Swap()
         {
@@ -227,6 +244,10 @@ namespace lilToon.URP.Extensions.GTAO
             previousNormal = null;
             nextNormal = null;
             valid = false;
+            previousView = Matrix4x4.identity;
+            previousDepthToViewParams = Vector4.zero;
+            previousOrthographic = false;
+            cameraStateValid = false;
         }
     }
 
@@ -326,10 +347,14 @@ namespace lilToon.URP.Extensions.GTAO
         private static readonly int StepCountId = Shader.PropertyToID("_HoGTAOStepCount");
         private static readonly int FrameIndexId = Shader.PropertyToID("_HoGTAOFrameIndex");
         private static readonly int ViewMatrixId = Shader.PropertyToID("_HoGTAOViewMatrix");
+        private static readonly int InvViewMatrixId = Shader.PropertyToID("_HoGTAOInvViewMatrix");
+        private static readonly int PreviousViewMatrixId = Shader.PropertyToID("_HoGTAOPreviousViewMatrix");
         private static readonly int ProjMatrixId = Shader.PropertyToID("_HoGTAOProjMatrix");
         private static readonly int InvProjMatrixId = Shader.PropertyToID("_HoGTAOInvProjMatrix");
         private static readonly int DepthToViewParamsId = Shader.PropertyToID("_HoGTAODepthToViewParams");
         private static readonly int OrthographicId = Shader.PropertyToID("_HoGTAOOrthographic");
+        private static readonly int PreviousOrthographicId = Shader.PropertyToID("_HoGTAOPreviousOrthographic");
+        private static readonly int PreviousDepthToViewParamsId = Shader.PropertyToID("_HoGTAOPreviousDepthToViewParams");
         private static readonly int GeometryInputId = Shader.PropertyToID("_HoGTAOGeometryInput");
         private static readonly int GeometryDepthInputId = HoGeometryBufferShaderConstants.DepthTextureId;
         private static readonly int SpatialDepthInputId = Shader.PropertyToID("_HoGTAOSpatialDepthTexture");
@@ -394,6 +419,13 @@ namespace lilToon.URP.Extensions.GTAO
             public float rejection;
             public float pixelSpreadMultiplier;
             public Vector4 historyTexelSize;
+            public Matrix4x4 currentView;
+            public Matrix4x4 inverseCurrentView;
+            public Matrix4x4 previousView;
+            public Vector4 currentDepthToViewParams;
+            public Vector4 previousDepthToViewParams;
+            public bool currentOrthographic;
+            public bool previousOrthographic;
         }
 
         private sealed class BlitData
@@ -489,6 +521,20 @@ namespace lilToon.URP.Extensions.GTAO
             int width = Mathf.Max(1, cameraData.cameraTargetDescriptor.width);
             int height = Mathf.Max(1, cameraData.cameraTargetDescriptor.height);
             int cameraId = cameraData.camera != null ? cameraData.camera.GetInstanceID() : 0;
+            Matrix4x4 currentView = cameraData.GetViewMatrix();
+            bool currentOrthographic = cameraData.camera.orthographic;
+            float fovRadians = cameraData.camera.fieldOfView * Mathf.Deg2Rad;
+            float halfHeight = currentOrthographic
+                ? cameraData.camera.orthographicSize
+                : Mathf.Tan(fovRadians * 0.5f);
+            float renderAspect = (float)cameraData.cameraTargetDescriptor.width / Mathf.Max(1, cameraData.cameraTargetDescriptor.height);
+            float halfWidth = halfHeight * renderAspect;
+            Vector4 currentDepthToViewParams = new Vector4(2.0f * halfWidth, 2.0f * halfHeight, -halfWidth, -halfHeight);
+            Matrix4x4 previousView = history.CameraStateValid ? history.PreviousView : currentView;
+            Vector4 previousDepthToViewParams = history.CameraStateValid
+                ? history.PreviousDepthToViewParams
+                : currentDepthToViewParams;
+            bool previousOrthographic = history.CameraStateValid && history.PreviousOrthographic;
             if (history.Previous == null || history.PreviousDepth == null || history.PreviousNormal == null || width != historyWidth || height != historyHeight || cameraId != historyCameraId || historyResolution != settings.resolution)
             {
                 history.Ensure(width, height);
@@ -531,21 +577,15 @@ namespace lilToon.URP.Extensions.GTAO
                 data.sliceCount = settings.sliceCount;
                 data.stepCount = settings.stepCount;
                 data.frameIndex = Time.frameCount;
-                data.view = cameraData.GetViewMatrix();
+                data.view = currentView;
                 data.proj = cameraData.GetProjectionMatrix();
                 data.invProj = data.proj.inverse;
                 data.depthMip0 = depthMips[0];
                 data.depthMip1 = depthMips[1];
                 data.depthMip2 = depthMips[2];
                 data.depthMip3 = depthMips[3];
-                float fovRadians = cameraData.camera.fieldOfView * Mathf.Deg2Rad;
-                float halfHeight = cameraData.camera.orthographic
-                    ? cameraData.camera.orthographicSize
-                    : Mathf.Tan(fovRadians * 0.5f);
-                float renderAspect = (float)cameraData.cameraTargetDescriptor.width / Mathf.Max(1, cameraData.cameraTargetDescriptor.height);
-                float halfWidth = halfHeight * renderAspect;
-                data.depthToViewParams = new Vector4(2.0f * halfWidth, 2.0f * halfHeight, -halfWidth, -halfHeight);
-                data.orthographic = cameraData.camera.orthographic ? 1.0f : 0.0f;
+                data.depthToViewParams = currentDepthToViewParams;
+                data.orthographic = currentOrthographic ? 1.0f : 0.0f;
                 builder.UseTexture(data.normalDepth, AccessFlags.Read);
                 if (data.motionVectors.IsValid())
                 {
@@ -630,6 +670,13 @@ namespace lilToon.URP.Extensions.GTAO
                     / Mathf.Max(1.0f, cameraData.cameraTargetDescriptor.height);
                 data.pixelSpreadMultiplier = temporalActualSpread / Mathf.Max(temporalBaselineSpread, 1.0e-6f);
                 data.historyTexelSize = new Vector4(1.0f / Mathf.Max(1, historyWidth), 1.0f / Mathf.Max(1, historyHeight), historyWidth, historyHeight);
+                data.currentView = currentView;
+                data.inverseCurrentView = currentView.inverse;
+                data.previousView = previousView;
+                data.currentDepthToViewParams = currentDepthToViewParams;
+                data.previousDepthToViewParams = previousDepthToViewParams;
+                data.currentOrthographic = currentOrthographic;
+                data.previousOrthographic = previousOrthographic;
                 builder.UseTexture(data.current, AccessFlags.Read);
                 builder.UseTexture(data.previous, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
@@ -650,6 +697,13 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.SetGlobalFloat(TemporalMaxFramesId, passData.maxFrames);
                     context.cmd.SetGlobalFloat(TemporalRejectionId, passData.rejection);
                     context.cmd.SetGlobalFloat(PixelSpreadMultiplierId, passData.pixelSpreadMultiplier);
+                    context.cmd.SetGlobalMatrix(ViewMatrixId, passData.currentView);
+                    context.cmd.SetGlobalMatrix(InvViewMatrixId, passData.inverseCurrentView);
+                    context.cmd.SetGlobalMatrix(PreviousViewMatrixId, passData.previousView);
+                    context.cmd.SetGlobalVector(DepthToViewParamsId, passData.currentDepthToViewParams);
+                    context.cmd.SetGlobalVector(PreviousDepthToViewParamsId, passData.previousDepthToViewParams);
+                    context.cmd.SetGlobalFloat(OrthographicId, passData.currentOrthographic ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(PreviousOrthographicId, passData.previousOrthographic ? 1.0f : 0.0f);
                     context.cmd.SetGlobalVector(HistoryPrevTexelSizeId, passData.historyTexelSize);
                     context.cmd.SetGlobalTexture(HoGTAOShaderConstants.AoInputTexId, passData.current);
                     context.cmd.SetGlobalTexture(HoGTAOShaderConstants.HistoryPrevTexId, passData.previous);
@@ -684,6 +738,7 @@ namespace lilToon.URP.Extensions.GTAO
 
             history.Swap();
             history.MarkValid();
+            history.SetCameraState(currentView, currentDepthToViewParams, currentOrthographic);
 
             if (debugTemporal)
             {

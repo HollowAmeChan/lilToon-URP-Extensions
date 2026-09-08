@@ -31,8 +31,12 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         TEXTURE2D_X(_HoGTAOGeometryInput);
         float4 _HoGTAODepthInputTexelSize;
         float4x4 _HoGTAOInvProjMatrix;
+        float4x4 _HoGTAOInvViewMatrix;
+        float4x4 _HoGTAOPreviousViewMatrix;
         float4 _HoGTAODepthToViewParams;
+        float4 _HoGTAOPreviousDepthToViewParams;
         float _HoGTAOOrthographic;
+        float _HoGTAOPreviousOrthographic;
         float4x4 _HoGTAOProjMatrix;
         float4x4 _HoGTAOViewMatrix;
         float _HoGTAODebugMode;
@@ -121,6 +125,14 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             // dependent and was the source of the previous distorted AO).
             float2 viewXY = uv * _HoGTAODepthToViewParams.xy + _HoGTAODepthToViewParams.zw;
             if (_HoGTAOOrthographic > 0.5)
+                return float3(viewXY, -linearDepth) * float3(1.0, -1.0, -1.0);
+            return float3(viewXY * linearDepth, -linearDepth) * float3(1.0, -1.0, -1.0);
+        }
+
+        float3 HoGTAOPreviousViewPosition(float2 uv, float linearDepth)
+        {
+            float2 viewXY = uv * _HoGTAOPreviousDepthToViewParams.xy + _HoGTAOPreviousDepthToViewParams.zw;
+            if (_HoGTAOPreviousOrthographic > 0.5)
                 return float3(viewXY, -linearDepth) * float3(1.0, -1.0, -1.0);
             return float3(viewXY * linearDepth, -linearDepth) * float3(1.0, -1.0, -1.0);
         }
@@ -364,9 +376,20 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             currentNormalVS *= float3(1.0, -1.0, -1.0);
             float3 currentViewDirection = normalize(-currentPositionVS);
             float viewAlignment = 1.0 - abs(dot(currentNormalVS, currentViewDirection));
+            float3 currentWorldPosition = mul(
+                _HoGTAOInvViewMatrix,
+                float4(currentPositionVS * float3(1.0, -1.0, -1.0), 1.0)).xyz;
+            float3 currentPreviousUnityPosition = mul(
+                _HoGTAOPreviousViewMatrix,
+                float4(currentWorldPosition, 1.0)).xyz;
+            float3 currentPreviousPositionVS = currentPreviousUnityPosition * float3(1.0, -1.0, -1.0);
+            float currentPreviousDepth = abs(currentPreviousUnityPosition.z);
+            float3 previousNormalVS = normalize(mul(
+                (float3x3)_HoGTAOPreviousViewMatrix,
+                currentNormalWS)) * float3(1.0, -1.0, -1.0);
             float depthThreshold = lerp(0.005, 0.10, pow(saturate(viewAlignment), 8.0))
-                * currentLinearDepth * max(_HoGTAOPixelSpreadMultiplier, 1.0e-4);
-            float planeThreshold = 0.005 * currentLinearDepth * max(_HoGTAOPixelSpreadMultiplier, 1.0e-4);
+                * currentPreviousDepth * max(_HoGTAOPixelSpreadMultiplier, 1.0e-4);
+            float planeThreshold = 0.005 * currentPreviousDepth * max(_HoGTAOPixelSpreadMultiplier, 1.0e-4);
             float2 motion = _HoGTAOUseMotionVectors > 0.5
                 ? SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, input.texcoord).xy
                 : float2(0.0, 0.0);
@@ -411,14 +434,17 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                     ? 0.0
                     : LinearEyeDepth(historyRawDepth, _ZBufferParams);
                 float3 historyPositionVS = !HoGTAOIsFarClip(historyRawDepth)
-                    ? HoGTAOViewPosition(historyUV, historyLinearDepth)
+                    ? HoGTAOPreviousViewPosition(historyUV, historyLinearDepth)
                     : 0.0;
                 float3 historyNormalWS = normalize((float3)normalData.gba * 2.0 - 1.0);
-                float planeDistance = abs(dot(historyPositionVS - currentPositionVS, currentNormalVS));
+                float historyPlane = dot(previousNormalVS, historyPositionVS);
+                float planeDistance = abs(
+                    historyPlane / max(historyLinearDepth, 1.0e-4) * currentPreviousDepth
+                    - historyPlane);
                 float normalValid = step(0.5, dot(currentNormalWS, historyNormalWS));
                 float validDepth = currentSurfaceValid && !HoGTAOIsFarClip(historyRawDepth)
                     ? inside
-                        * step(abs(currentLinearDepth - historyLinearDepth), max(depthThreshold, 1.0e-4))
+                        * step(abs(currentPreviousDepth - historyLinearDepth), max(depthThreshold, 1.0e-4))
                         * step(planeDistance, max(planeThreshold, 1.0e-4))
                         * normalValid
                     : 0.0;
@@ -442,12 +468,13 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                     ? 0.0
                     : LinearEyeDepth(fallbackRawDepth, _ZBufferParams);
                 float3 fallbackPositionVS = !HoGTAOIsFarClip(fallbackRawDepth)
-                    ? HoGTAOViewPosition(fallbackUV, fallbackLinearDepth)
+                    ? HoGTAOPreviousViewPosition(fallbackUV, fallbackLinearDepth)
                     : 0.0;
                 half4 fallbackNormalData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevNormalTex, sampler_PointClamp, fallbackUV);
                 float fallbackValid = currentSurfaceValid && !HoGTAOIsFarClip(fallbackRawDepth)
-                    ? step(abs(currentLinearDepth - fallbackLinearDepth), max(depthThreshold, 1.0e-4))
-                        * step(abs(dot(fallbackPositionVS - currentPositionVS, currentNormalVS)), max(planeThreshold, 1.0e-4))
+                    ? step(abs(currentPreviousDepth - fallbackLinearDepth), max(depthThreshold, 1.0e-4))
+                        * step(abs(dot(previousNormalVS, fallbackPositionVS) / max(fallbackLinearDepth, 1.0e-4) * currentPreviousDepth
+                            - dot(previousNormalVS, fallbackPositionVS)), max(planeThreshold, 1.0e-4))
                         * step(0.5, dot(currentNormalWS, normalize((float3)fallbackNormalData.gba * 2.0 - 1.0)))
                     : 0.0;
                 previousAccumulated = fallbackData.r * fallbackValid;
