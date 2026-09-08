@@ -353,11 +353,20 @@ hoGIWeight
 
 第一版不要求 SurfaceColor 覆盖所有材质。它只作为可用时的干净 albedo/coverage；没有这张图的材质继续使用 GeometryBuffer + opaque color + APV fallback。
 
-Source validity 建议编码为：
+当前 producer vertical slice 的 source 组合是：
+
+```text
+opaque color                 = 已着色 radiance
+HoMetadataBufferSurfaceColor = 干净 base / coverage validity
+HoGeometryBuffer              = normal / depth validity
+```
+
+SurfaceColor 不是第二份灯光结果，而是对 opaque radiance 的物理表面约束。Source validity 建议编码为：
 
 ```text
 sourceValid = geometryCoverage
             * normalValid
+            * surfaceColorCoverage
             * depthValid
             * opaqueSourceValid
 ```
