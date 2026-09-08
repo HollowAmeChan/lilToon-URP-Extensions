@@ -676,8 +676,12 @@ namespace lilToon.URP.Extensions.GTAO
                     data.adaptivity = settings.filterAdaptivity;
                     data.resolution = 1.0f;
                     data.filterType = (int)settings.spatialFilter;
-                data.step = settings.spatialFilter == HoGTAOSpatialFilter.Box
-                        ? (spatialPass == 0 ? (settings.boxPassCount >= 3 ? 4.0f : settings.boxPassCount == 2 ? 2.0f : 1.0f) : spatialPass == 1 ? 2.0f : 1.0f)
+                    data.step = settings.spatialFilter == HoGTAOSpatialFilter.Box
+                        ? settings.boxPassCount >= 3
+                            ? (spatialPass == 0 ? 4.0f : spatialPass == 1 ? 2.0f : 1.0f)
+                            : settings.boxPassCount == 2
+                                ? (spatialPass == 0 ? 2.0f : 1.0f)
+                                : 1.0f
                         : 1.0f;
                 float baselineSpread = 2.0f * Mathf.Tan(60.0f * Mathf.Deg2Rad * 0.5f) / 1080.0f;
                 float actualSpread = 2.0f * Mathf.Tan(cameraData.camera.fieldOfView * Mathf.Deg2Rad * 0.5f)
