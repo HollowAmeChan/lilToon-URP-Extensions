@@ -11,6 +11,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
     internal sealed class HoGeometryBufferSkyPass : ScriptableRenderPass
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-GeometryBuffer Sky");
+        private static readonly int BlitTextureId = Shader.PropertyToID("_BlitTexture");
 
         private HoGeometryBufferSettings settings;
         private HoGeometryBufferRenderTargets renderTargets;
@@ -130,6 +131,12 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
                 builder.SetRenderAttachment(skyTexture, 0, AccessFlags.WriteAll);
                 builder.SetGlobalTextureAfterPass(skyTexture, HoGeometryBufferShaderConstants.SkyTextureId);
+                // Blitter.BlitTexture binds its source as _BlitTexture. The
+                // source is often the camera color attachment; leave the
+                // destination bound after this pass so URP's later
+                // UseAllGlobalTextures passes do not try to read the active
+                // color attachment while also writing it.
+                builder.SetGlobalTextureAfterPass(skyTexture, BlitTextureId);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
