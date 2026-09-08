@@ -20,7 +20,7 @@ namespace lilToon.URP.Extensions.SSGI
     public sealed class HoSSGISettings
     {
         public bool enabled = true;
-        public RenderPassEvent passEvent = RenderPassEvent.AfterRenderingOpaques;
+        public RenderPassEvent passEvent = RenderPassEvent.BeforeRenderingOpaques;
         [Range(1, 32)] public int rayCount = 8;
         [Range(4, 64)] public int stepCount = 24;
         [Min(0.01f)] public float rayLength = 4.0f;

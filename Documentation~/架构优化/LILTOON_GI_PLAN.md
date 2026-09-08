@@ -125,21 +125,16 @@ hitUV
 
 描边仍然存在于 camera/opaque color，但它对应的 GeometryBuffer coverage 为空，会在 source 采样前被拒绝。它也不会出现在 Ho-SSGI 的 depth pyramid 中，因此不会作为 caster 遮挡或反弹。
 
-当前过渡 source 优先使用 URP 的 opaque color，而不是最终 camera color：
+当前 producer vertical slice 在 `BeforeRenderingOpaques` 运行，因此 source 使用 `HoMetadataBufferSurfaceColor` 的 clean base。opaque/direct-light source 留到后续独立 source pass；不能在 Opaques 之前读取最终 opaque color。
 
-- opaque color 已经包含 lilToon 的直接 toon 光照；
-- 不包含透明/OIT 和最终后期；
-- 描边仍可能存在，但由 GeometryBuffer coverage 排除；
-- 朱木古堂的 URP asset 已经启用 opaque texture。
-
-透明/OIT 第一版不进入 GI caster/receiver 域，使用直接光照或 APV fallback。这样先消除 HTrace 的透明拖影问题，再单独研究透明 GI，不把透明路径混进主 SSGI 验证。
+透明/OIT 第一版不进入 GI caster/receiver 域，使用 APV fallback。这样先消除 HTrace 的透明拖影问题，再单独研究透明 GI，不把透明路径混进主 SSGI 验证。
 
 ### 1.6 现有双语义绘制就是干净 source 的基础
 
 主 forward pass 把主体和 outline 一起画进 camera color；`HoGeometryBuffer` 和 `HoMetadataBufferSurfaceColor` 则通过独立的 base geometry pass 再画一次主体：
 
 ```text
-camera opaque color       = 已着色结果，可能包含 outline
+camera opaque color       = 后续 direct-light source，可能包含 outline
 HoGeometryBuffer          = 无 outline 的 normal/depth/coverage
 HoMetadataBufferSurfaceColor = 无 outline 的纯色/coverage
 ```
@@ -148,7 +143,7 @@ HoMetadataBufferSurfaceColor = 无 outline 的纯色/coverage
 
 - GeometryBuffer 决定 hit/receiver 是否是真实几何；
 - SurfaceColor 提供干净 albedo 和覆盖率；
-- opaque color 或后续 direct-light source 提供已着色 radiance；
+- 后续 direct-light source 提供已着色 radiance；
 - 三者在 hit UV 上做 coverage/depth 一致性校验后才进入 GI。
 
 SurfaceColor 本身是纯色，不等于间接光。它适合做 source 的 albedo/validity，不能单独替代 direct-light radiance。另一个限制是没有 `HoMetadataBufferSurfaceColor` pass 的材质不会自动获得这张颜色图，因此 fallback/非 lilToon 材质需要走 opaque color 或 APV fallback。
@@ -208,7 +203,8 @@ source radiance
 
 ```text
 HoGeometryBuffer (250)
-    -> GI source（不含 outline）
+    -> HoMetadataBuffer (250)
+    -> GI source（clean base，无 outline）
     -> Hi-Z depth pyramid
     -> cosine hemisphere tracing
     -> intersection refinement
@@ -216,7 +212,7 @@ HoGeometryBuffer (250)
     -> firefly clamp / bilateral spatial filter
     -> APV/sky fallback
     -> _HoGITexture + confidence
-    -> lilToon GI receiver
+    -> lilToon forward opaque receiver
 ```
 
 第一版不拆出低质量算法。质量参数只控制：

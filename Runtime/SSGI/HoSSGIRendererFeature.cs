@@ -119,17 +119,16 @@ namespace lilToon.URP.Extensions.SSGI
         {
             this.settings = settings;
             this.material = material;
-            renderPassEvent = settings != null ? settings.passEvent : RenderPassEvent.AfterRenderingOpaques;
-            ConfigureInput(ScriptableRenderPassInput.Color);
+            renderPassEvent = settings != null ? settings.passEvent : RenderPassEvent.BeforeRenderingOpaques;
+            ConfigureInput(ScriptableRenderPassInput.None);
         }
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
             if (settings == null || material == null) return;
-            UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             HoGeometryBufferRenderGraphResources geometry = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
             HoMetadataBufferRenderGraphResources metadata = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
-            TextureHandle source = resourceData.activeColorTexture;
+            TextureHandle source = metadata.surfaceColorTexture;
             if (!source.IsValid() || !geometry.normalDepthTexture.IsValid() || !metadata.surfaceColorTexture.IsValid()) return;
 
             TextureDesc outputDesc = renderGraph.GetTextureDesc(source);

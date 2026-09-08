@@ -35,7 +35,7 @@ namespace lilToon.URP.Extensions.Editor.SSGI
             }
 
             EditorGUILayout.HelpBox(
-                "Ho-SSGI reads the opaque source after opaques and the shared Ho-GeometryBuffer before opaques. This producer-only build publishes _HoGITexture and keeps its debug preview local to the feature.",
+                "Ho-SSGI reads the clean MetadataBuffer base after GeometryBuffer/MetadataBuffer and publishes _HoGITexture before opaque shading. Keep GeometryBuffer and MetadataBuffer above this feature in the Renderer list.",
                 MessageType.Info);
 
             DrawRuntime();
@@ -58,7 +58,7 @@ namespace lilToon.URP.Extensions.Editor.SSGI
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty("enabled");
-                EditorGUILayout.HelpBox("GeometryBuffer should be before opaques; Ho-SSGI itself runs after opaques so the opaque source is valid.", MessageType.None);
+                EditorGUILayout.HelpBox("GeometryBuffer and MetadataBuffer must be listed before Ho-SSGI at BeforeRenderingOpaques. Ho-SSGI uses the clean MetadataBuffer base source so lilToon can consume the result during opaque shading.", MessageType.None);
                 DrawProperty("intensity");
                 DrawProperty("sourceSaturation");
             }
