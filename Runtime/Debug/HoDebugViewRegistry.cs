@@ -16,6 +16,7 @@ namespace lilToon.URP.Extensions.Debugging
             get
             {
                 List<HoDebugViewInfo> views = new List<HoDebugViewInfo>();
+                AddRange(views, HoAdaptiveProbeVolumeDebugViewInfo.Views);
                 AddRange(views, HoMetadataBufferDebugViewInfo.Views);
                 AddRange(views, HoGeometryBufferDebugViewInfo.Views);
                 AddRange(views, HoShadowCastDebugViewInfo.Views);

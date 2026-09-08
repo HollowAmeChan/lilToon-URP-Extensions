@@ -429,6 +429,11 @@ namespace lilToon.URP.Extensions.Debugging
                         continue;
                     }
 
+                    if (view.RenderKind == HoDebugViewRenderKind.AdaptiveProbeVolume && !hasGeometry)
+                    {
+                        continue;
+                    }
+
                     if (view.RenderKind == HoDebugViewRenderKind.ShadowCast
                         && ((view.ModeValue == (int)HoShadowCastDebugMode.Atlas && !hasShadowCastAtlas)
                             || (view.ModeValue == (int)HoShadowCastDebugMode.SecondDirectionalAtlas && !hasShadowCastSecondDirectionalAtlas)))
@@ -555,6 +560,9 @@ namespace lilToon.URP.Extensions.Debugging
                                 fullMetadata = true;
                                 break;
                             case HoDebugViewRenderKind.GeometryBuffer:
+                                geometry = true;
+                                break;
+                            case HoDebugViewRenderKind.AdaptiveProbeVolume:
                                 geometry = true;
                                 break;
                             case HoDebugViewRenderKind.ShadowCast:

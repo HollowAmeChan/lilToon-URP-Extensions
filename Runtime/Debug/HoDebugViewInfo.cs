@@ -7,7 +7,8 @@ namespace lilToon.URP.Extensions.Debugging
         GeometryBuffer = 2,
         ShadowCast = 3,
         SubsurfaceScattering = 4,
-        PlanarReflection = 5
+        PlanarReflection = 5,
+        AdaptiveProbeVolume = 6
     }
 
     public readonly struct HoDebugViewInfo
