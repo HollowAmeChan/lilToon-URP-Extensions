@@ -35,6 +35,7 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
 
         TEXTURE2D_X(_HoSSGIGeometry);
         TEXTURE2D_X(_HoSSGISource);
+        TEXTURE2D_X(_HoSSGIRawGI);
         TEXTURE2D_X(_HoGITexture);
         int _HoSSGIDebugMode;
         float4 Frag(Varyings input) : SV_Target
@@ -43,12 +44,14 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
             float2 uv = input.texcoord;
             half4 geometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, uv);
             float3 source = SAMPLE_TEXTURE2D_X(_HoSSGISource, sampler_LinearClamp, uv).rgb;
+            float4 rawGi = SAMPLE_TEXTURE2D_X(_HoSSGIRawGI, sampler_LinearClamp, uv);
             float4 gi = SAMPLE_TEXTURE2D_X(_HoGITexture, sampler_LinearClamp, uv);
             if (_HoSSGIDebugMode == 1) return float4(source, 1);
             if (_HoSSGIDebugMode == 2) return float4(step(0.0001, geometry.a).xxx, 1);
             if (_HoSSGIDebugMode == 3) return float4(geometry.rgb, 1);
             if (_HoSSGIDebugMode == 4) return float4(gi.rgb, 1);
             if (_HoSSGIDebugMode == 5) return float4(gi.a.xxx, 1);
+            if (_HoSSGIDebugMode == 6) return float4(rawGi.rgb, rawGi.a);
             return float4(source, 1);
         }
         ENDHLSL

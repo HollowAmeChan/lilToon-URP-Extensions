@@ -19,6 +19,8 @@ namespace lilToon.URP.Extensions.SSGI
         RawGI = 4,
         [InspectorName("Confidence")]
         Confidence = 5,
+        [InspectorName("Raw Trace")]
+        RawTrace = 6,
     }
 
     [Serializable]
@@ -31,6 +33,8 @@ namespace lilToon.URP.Extensions.SSGI
         [Range(4, 64)] public int stepCount = 24;
         [Min(0.01f)] public float rayLength = 4.0f;
         [Range(0.0f, 1.0f)] public float thickness = 0.08f;
+        [Range(0.0f, 1.0f)] public float temporalBlend = 0.9f;
+        [Range(0.5f, 4.0f)] public float spatialRadius = 2.0f;
         [Range(0.0f, 4.0f)] public float intensity = 1.0f;
         [Range(0.0f, 1.0f)] public float sourceSaturation = 1.0f;
         public HoSSGIDebugMode debugMode = HoSSGIDebugMode.Off;

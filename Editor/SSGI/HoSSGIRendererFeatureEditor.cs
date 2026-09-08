@@ -78,6 +78,8 @@ namespace lilToon.URP.Extensions.Editor.SSGI
                 DrawProperty("stepCount");
                 DrawProperty("rayLength");
                 DrawProperty("thickness");
+                DrawProperty("temporalBlend");
+                DrawProperty("spatialRadius");
             }
         }
 

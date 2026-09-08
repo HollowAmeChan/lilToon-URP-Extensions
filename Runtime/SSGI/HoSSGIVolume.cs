@@ -39,6 +39,13 @@ namespace lilToon.URP.Extensions.SSGI
         [InspectorName("厚度")]
         public ClampedFloatParameter thickness = new ClampedFloatParameter(0.08f, 0.0f, 1.0f);
 
+        [Header("去噪")]
+        [InspectorName("时域混合")]
+        public ClampedFloatParameter temporalBlend = new ClampedFloatParameter(0.9f, 0.0f, 1.0f);
+
+        [InspectorName("空间半径")]
+        public ClampedFloatParameter spatialRadius = new ClampedFloatParameter(2.0f, 0.5f, 4.0f);
+
         [Header("外观")]
         [InspectorName("GI 强度")]
         public ClampedFloatParameter intensity = new ClampedFloatParameter(1.0f, 0.0f, 4.0f);

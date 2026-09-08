@@ -13,6 +13,8 @@ namespace lilToon.URP.Extensions.Editor.SSGI
         private SerializedDataParameter stepCount;
         private SerializedDataParameter rayLength;
         private SerializedDataParameter thickness;
+        private SerializedDataParameter temporalBlend;
+        private SerializedDataParameter spatialRadius;
         private SerializedDataParameter intensity;
         private SerializedDataParameter sourceSaturation;
         private SerializedDataParameter debugMode;
@@ -25,6 +27,8 @@ namespace lilToon.URP.Extensions.Editor.SSGI
             stepCount = Unpack(fetcher.Find(x => x.stepCount));
             rayLength = Unpack(fetcher.Find(x => x.rayLength));
             thickness = Unpack(fetcher.Find(x => x.thickness));
+            temporalBlend = Unpack(fetcher.Find(x => x.temporalBlend));
+            spatialRadius = Unpack(fetcher.Find(x => x.spatialRadius));
             intensity = Unpack(fetcher.Find(x => x.intensity));
             sourceSaturation = Unpack(fetcher.Find(x => x.sourceSaturation));
             debugMode = Unpack(fetcher.Find(x => x.debugMode));
@@ -43,6 +47,10 @@ namespace lilToon.URP.Extensions.Editor.SSGI
             PropertyField(stepCount);
             PropertyField(rayLength);
             PropertyField(thickness);
+            EditorGUILayout.Space(4);
+            EditorGUILayout.LabelField("去噪", EditorStyles.boldLabel);
+            PropertyField(temporalBlend);
+            PropertyField(spatialRadius);
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField("外观", EditorStyles.boldLabel);
             PropertyField(intensity);

@@ -1,6 +1,6 @@
 # lilToon / Ho-SSGI 实施规划
 
-> 状态：Draft v0.3
+> 状态：Draft v0.5
 >
 > 主线：先把 HTrace SSGI 改造成适合 lilToon 的 Ho-SSGI；Brixelizer GI 只作为后续 producer 替换，不提前展开完整实现。
 
@@ -250,10 +250,11 @@ HoGeometryBuffer (250)
     -> opaque forward lighting
     -> GI source（opaque camera color；后续可替换为 HoGI Lit Source）
     -> Ho-SSGI raw trace
-    -> cosine hemisphere tracing
-    -> intersection refinement
-    -> temporal reprojection + history validation
-    -> firefly clamp / bilateral spatial filter
+    -> world-space cosine hemisphere tracing
+    -> GeometryBuffer depth intersection
+    -> temporal reprojection + motion/depth validation
+    -> local luminance firefly clamp
+    -> 5x5 depth/normal bilateral spatial filter
     -> APV/sky fallback
     -> _HoGITexture + confidence
     -> composite BeforeRenderingPostProcessing
@@ -296,7 +297,7 @@ cameraColor.rgb += hoGIColor * volumeStrength
 
 ### 4.2 当前参数边界
 
-当前 Ho-SSGI producer 的主要参数已放入 `HoSSGIVolume`：启用、ray count、step count、ray length、thickness、GI intensity、source saturation 和 feature-local debug mode。RendererFeature 上的同名字段只作为没有 Volume 时的兜底配置。材质控制、GI 颜色过渡和 confidence 驱动的 toon 阴影策略留到 producer 稳定后重新评估。
+当前 Ho-SSGI producer 的主要参数已放入 `HoSSGIVolume`：启用、ray count、step count、ray length、thickness、temporal blend、spatial radius、GI intensity、source saturation 和 feature-local debug mode。RendererFeature 上的同名字段只作为没有 Volume 时的兜底配置。材质控制、GI 颜色过渡和 confidence 驱动的 toon 阴影策略留到 producer 稳定后重新评估。
 
 ## 5. Producer-only vertical slice
 
@@ -353,11 +354,13 @@ sourceValid = geometryCoverage
 
 高质量路径的初始设置：full-resolution depth、intersection refine、cosine hemisphere sampling、较高 ray/step 参数、关闭 checkerboard。这里不做另一套低质量算法。
 
-当前 raw trace 已采用 view-space cosine hemisphere ray：从 GeometryBuffer 重建当前点和法线，生成世界一致的 ray end，再投影到 screen UV；沿投影轨迹用 GeometryBuffer 深度 crossing 判断相交，并使用接收面/命中面双 cosine、距离衰减和 opaque source 过滤。旧的固定二维偏移方案不再保留，因为它会让 screen trajectory 与 ray depth 不一致，产生明显错误命中。
+当前 raw trace 已改为 world-space cosine hemisphere ray：从 GeometryBuffer 的线性眼深重建世界位置和世界法线，沿世界空间射线生成端点，再投影到 screen UV；沿投影轨迹用 GeometryBuffer 线性深度 crossing 判断相交，并使用命中面 cosine、距离衰减和 opaque source 过滤。旧的额外视空间轴翻转路径不再保留，因为它会让上下方向和摄像机移动产生错位。
+
+当前 producer 已补上第一段 HTrace 风格的重建链：raw trace 保留为独立调试资源；Temporal 使用 motion vector、上一帧 GI 和上一帧深度做重投影，并根据深度和 source luminance 变化拒绝历史；Spatial 使用局部 luminance statistics 做 firefly clamp，再用 5x5 深度/法线双边权重重建连续 GI。`Raw GI` 调试显示重建后的 GI，`Raw Trace` 调试显示未滤波射线结果。当前这仍是 HTrace 的基础重建子集，还没有复制 HTrace 的完整 reservoir/ReSTIR 链，因此画面验证应先区分坐标/相交错误和残余噪声，再继续加 reservoir。
 
 ### 5.4 Temporal result
 
-沿用 HTrace 的 motion/depth/normal/history validation，但 history 只存 Ho-SSGI 的 source/GI 语义，不复制最终 camera color：
+沿用 HTrace 的 motion/depth/normal/history validation，但 history 只存 Ho-SSGI 的 source/GI 语义，不复制最终 camera color。当前实现使用上一帧 GI、上一帧线性深度、当前 motion vector 和 source luminance change 做首版拒绝；法线 history payload 和更完整的 ReSTIR reservoir 验证留作后续增强：
 
 - history sample count；
 - reprojected hit validity；
@@ -392,6 +395,7 @@ gi.depth-pyramid-mip0..4
 gi.ray-hit
 gi.ray-distance
 gi.raw-radiance
+gi.raw-trace
 gi.temporal-validity
 gi.sample-count
 gi.confidence
