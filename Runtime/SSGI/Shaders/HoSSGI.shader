@@ -421,7 +421,6 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.reservoirColor = 0;
             output.reservoirAux = 0;
             output.reservoirRay = 0;
-            output.guidance = 0;
             if (center.a < 0.0001) return output;
 
             float3 centerNormalWS = normalize((float3)center.rgb * 2.0 - 1.0);
@@ -669,7 +668,6 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.reservoirColor = float4(max(merged.color, 0.0), max(merged.wsum, 0.0));
             output.reservoirAux = float4(max(merged.m, 0.0), max(merged.target, 0.0), saturate(merged.hit), max(merged.distance, 0.0));
             output.reservoirRay = HoSSGIPackReservoirRay(merged);
-            output.guidance = float4(saturate(confidenceSum / max(confidenceWeight, 1.0e-5)), saturate(confidenceWeight / 9.0), 0.0, 1.0);
             return output;
         }
 
@@ -744,6 +742,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.reservoirColor = 0;
             output.reservoirAux = 0;
             output.reservoirRay = 0;
+            output.guidance = 0;
             if (centerGeometry.a < 0.0001h) return output;
 
             float3 centerNormal = normalize((float3)centerGeometry.rgb * 2.0 - 1.0);
@@ -802,6 +801,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.reservoirColor = float4(max(merged.color, 0.0), max(merged.wsum, 0.0));
             output.reservoirAux = float4(max(merged.m, 0.0), max(merged.target, 0.0), saturate(merged.hit), max(merged.distance, 0.0));
             output.reservoirRay = HoSSGIPackReservoirRay(merged);
+            output.guidance = float4(saturate(confidenceSum / max(confidenceWeight, 1.0e-5)), saturate(confidenceWeight / 9.0), 0.0, 1.0);
             return output;
         }
 
