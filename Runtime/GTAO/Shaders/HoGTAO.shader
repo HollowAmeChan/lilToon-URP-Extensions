@@ -418,8 +418,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             {
                 return half4(1.0h, 1.0h, 1.0h, 1.0h);
             }
-            half depthValid = step(0.0001h, geometry.a) * step(historyWeightSum, 1.0e-5);
-            half depthAgreement = step(historyWeightSum, 1.0e-5);
+            half depthValid = step(0.0001h, geometry.a) * step(1.0e-5, historyWeightSum);
+            half depthAgreement = step(1.0e-5, historyWeightSum);
             // Depth is the authoritative disocclusion test for this baseline.
             // The history normal payload remains reserved for a later validated
             // normal-rejection pass.
