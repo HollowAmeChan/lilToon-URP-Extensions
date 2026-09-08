@@ -10,18 +10,24 @@ namespace lilToon.URP.Extensions.SSGI
         public const string RawGITextureName = "_HoSSGIRawGI";
         public const string ReservoirColorName = "_HoSSGIReservoirColor";
         public const string ReservoirAuxName = "_HoSSGIReservoirAux";
+        public const string ReservoirRayName = "_HoSSGIReservoirRay";
         public const string ReservoirHistoryColorName = "_HoSSGIReservoirHistoryColor";
         public const string ReservoirHistoryAuxName = "_HoSSGIReservoirHistoryAux";
+        public const string ReservoirHistoryRayName = "_HoSSGIReservoirHistoryRay";
         public const string ReservoirOutputColorName = "_HoSSGIReservoirOutputColor";
         public const string ReservoirOutputAuxName = "_HoSSGIReservoirOutputAux";
+        public const string ReservoirOutputRayName = "_HoSSGIReservoirOutputRay";
         public static readonly int GITextureId = Shader.PropertyToID(GITextureName);
         public static readonly int RawGIId = Shader.PropertyToID(RawGITextureName);
         public static readonly int ReservoirColorId = Shader.PropertyToID(ReservoirColorName);
         public static readonly int ReservoirAuxId = Shader.PropertyToID(ReservoirAuxName);
+        public static readonly int ReservoirRayId = Shader.PropertyToID(ReservoirRayName);
         public static readonly int ReservoirHistoryColorId = Shader.PropertyToID(ReservoirHistoryColorName);
         public static readonly int ReservoirHistoryAuxId = Shader.PropertyToID(ReservoirHistoryAuxName);
+        public static readonly int ReservoirHistoryRayId = Shader.PropertyToID(ReservoirHistoryRayName);
         public static readonly int ReservoirOutputColorId = Shader.PropertyToID(ReservoirOutputColorName);
         public static readonly int ReservoirOutputAuxId = Shader.PropertyToID(ReservoirOutputAuxName);
+        public static readonly int ReservoirOutputRayId = Shader.PropertyToID(ReservoirOutputRayName);
         public static readonly int GeometryId = Shader.PropertyToID("_HoSSGIGeometry");
         public static readonly int SourceId = Shader.PropertyToID("_HoSSGISource");
         public static readonly int RayCountId = Shader.PropertyToID("_HoSSGIRayCount");
@@ -37,6 +43,8 @@ namespace lilToon.URP.Extensions.SSGI
         public static readonly int HistoryDepthId = Shader.PropertyToID("_HoSSGIHistoryDepth");
         public static readonly int MotionVectorId = Shader.PropertyToID("_HoSSGIMotionVectors");
         public static readonly int MotionValidId = Shader.PropertyToID("_HoSSGIUseMotion");
+        public static readonly int ReservoirValidationId = Shader.PropertyToID("_HoSSGIReservoirValidation");
+        public static readonly int FireflyEnabledId = Shader.PropertyToID("_HoSSGIFireflyEnabled");
         public static readonly int RawGIInputId = Shader.PropertyToID("_HoSSGIRawGIInput");
         public static readonly int DebugModeId = Shader.PropertyToID("_HoSSGIDebugMode");
     }

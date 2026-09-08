@@ -46,6 +46,16 @@ namespace lilToon.URP.Extensions.SSGI
         [InspectorName("空间半径")]
         public ClampedFloatParameter spatialRadius = new ClampedFloatParameter(2.0f, 0.5f, 8.0f);
 
+        [Header("ReSTIR")]
+        [InspectorName("时域射线验证")]
+        public BoolParameter temporalReservoirValidation = new BoolParameter(true);
+
+        [InspectorName("空间射线验证")]
+        public BoolParameter spatialReservoirValidation = new BoolParameter(true);
+
+        [InspectorName("Firefly 抑制")]
+        public BoolParameter fireflySuppression = new BoolParameter(true);
+
         [Header("外观")]
         [InspectorName("GI 强度")]
         public ClampedFloatParameter intensity = new ClampedFloatParameter(1.0f, 0.0f, 8.0f);

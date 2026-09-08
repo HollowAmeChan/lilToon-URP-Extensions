@@ -46,8 +46,10 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         TEXTURE2D_X(_HoSSGIMotionVectors);
         TEXTURE2D_X(_HoSSGIReservoirColor);
         TEXTURE2D_X(_HoSSGIReservoirAux);
+        TEXTURE2D_X(_HoSSGIReservoirRay);
         TEXTURE2D_X(_HoSSGIReservoirHistoryColor);
         TEXTURE2D_X(_HoSSGIReservoirHistoryAux);
+        TEXTURE2D_X(_HoSSGIReservoirHistoryRay);
         TEXTURE2D_X(_BlitTexture);
         int _HoSSGIRayCount;
         int _HoSSGIStepCount;
@@ -59,6 +61,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         float _HoSSGISpatialRadius;
         float _HoSSGIHistoryValid;
         float _HoSSGIUseMotion;
+        float _HoSSGIReservoirValidation;
+        float _HoSSGIFireflyEnabled;
 
         struct HoSSGIReservoir
         {
@@ -68,6 +72,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float target;
             float hit;
             float distance;
+            float3 direction;
+            float3 originNormal;
         };
 
         struct HoSSGITraceOutput
@@ -75,6 +81,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float4 gi : SV_Target0;
             float4 reservoirColor : SV_Target1;
             float4 reservoirAux : SV_Target2;
+            float4 reservoirRay : SV_Target3;
         };
 
         struct HoSSGITemporalOutput
@@ -82,12 +89,14 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float4 gi : SV_Target0;
             float4 reservoirColor : SV_Target1;
             float4 reservoirAux : SV_Target2;
+            float4 reservoirRay : SV_Target3;
         };
 
         struct HoSSGIFireflyOutput
         {
             float4 reservoirColor : SV_Target0;
             float4 reservoirAux : SV_Target1;
+            float4 reservoirRay : SV_Target2;
         };
 
         float HoSSGILuminance(float3 value)
@@ -105,6 +114,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float sampleTarget,
             float sampleHit,
             float sampleDistance,
+            float3 sampleDirection,
+            float3 sampleOriginNormal,
             float sampleM,
             inout HoSSGIReservoir reservoir,
             float randomValue)
@@ -119,6 +130,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 reservoir.target = sampleTarget;
                 reservoir.hit = sampleHit;
                 reservoir.distance = sampleDistance;
+                reservoir.direction = sampleDirection;
+                reservoir.originNormal = sampleOriginNormal;
             }
         }
 
@@ -134,6 +147,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 reservoir.target = candidate.target;
                 reservoir.hit = candidate.hit;
                 reservoir.distance = candidate.distance;
+                reservoir.direction = candidate.direction;
+                reservoir.originNormal = candidate.originNormal;
             }
         }
 
@@ -141,6 +156,38 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         {
             float denominator = max(reservoir.m * reservoir.target, 1.0e-6);
             return max(reservoir.color * (reservoir.wsum / denominator), 0.0);
+        }
+
+        float2 HoSSGIEncodeOcta(float3 normal)
+        {
+            normal = normalize(normal);
+            normal /= max(abs(normal.x) + abs(normal.y) + abs(normal.z), 1.0e-6);
+            if (normal.z < 0.0)
+            {
+                normal.xy = (1.0 - abs(normal.yx)) * (normal.xy >= 0.0 ? 1.0 : -1.0);
+            }
+            return normal.xy * 0.5 + 0.5;
+        }
+
+        float3 HoSSGIDecodeOcta(float2 encoded)
+        {
+            float3 normal = float3(encoded * 2.0 - 1.0, 1.0 - abs(encoded.x * 2.0 - 1.0) - abs(encoded.y * 2.0 - 1.0));
+            if (normal.z < 0.0)
+            {
+                normal.xy = (1.0 - abs(normal.yx)) * (normal.xy >= 0.0 ? 1.0 : -1.0);
+            }
+            return normalize(normal);
+        }
+
+        float4 HoSSGIPackReservoirRay(HoSSGIReservoir reservoir)
+        {
+            return float4(HoSSGIEncodeOcta(reservoir.direction), HoSSGIEncodeOcta(reservoir.originNormal));
+        }
+
+        void HoSSGIUnpackReservoirRay(float4 packed, inout HoSSGIReservoir reservoir)
+        {
+            reservoir.direction = HoSSGIDecodeOcta(packed.xy);
+            reservoir.originNormal = HoSSGIDecodeOcta(packed.zw);
         }
 
         HoSSGIReservoir HoSSGILoadReservoir(float2 uv)
@@ -154,6 +201,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             reservoir.target = max(packedAux.y, 0.0);
             reservoir.hit = packedAux.z;
             reservoir.distance = max(packedAux.w, 0.0);
+            HoSSGIUnpackReservoirRay(SAMPLE_TEXTURE2D_X(_HoSSGIReservoirRay, sampler_PointClamp, uv), reservoir);
             return reservoir;
         }
 
@@ -168,6 +216,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             reservoir.target = max(packedAux.y, 0.0);
             reservoir.hit = packedAux.z;
             reservoir.distance = max(packedAux.w, 0.0);
+            HoSSGIUnpackReservoirRay(SAMPLE_TEXTURE2D_X(_HoSSGIReservoirHistoryRay, sampler_PointClamp, uv), reservoir);
             return reservoir;
         }
 
@@ -212,6 +261,92 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return maxT;
         }
 
+        float HoSSGIValidateReservoirRay(
+            float3 originPositionWS,
+            float3 receiverNormalWS,
+            HoSSGIReservoir reservoir)
+        {
+            if (reservoir.hit < 0.5 || reservoir.distance <= 0.001)
+                return 1.0;
+
+            float3 directionWS = normalize(reservoir.direction);
+            if (dot(directionWS, directionWS) < 0.25)
+                return 0.0;
+
+            float3 expectedHitWS = originPositionWS + directionWS * reservoir.distance;
+            float3 hitNDC = ComputeNormalizedDeviceCoordinatesWithZ(expectedHitWS, UNITY_MATRIX_VP);
+            if (hitNDC.z < 0.0 || hitNDC.z > 1.0 || any(hitNDC.xy < 0.0) || any(hitNDC.xy > 1.0))
+                return 0.0;
+
+            float2 hitUV = hitNDC.xy;
+            float expectedDepth = HoSSGILinearDepth(expectedHitWS);
+            float2 texel = rcp(max(_ScreenParams.xy, 1.0));
+            float depthTolerance = max(_HoSSGIThickness * 2.0, expectedDepth * 0.05);
+            float bestAgreement = 0.0;
+            [unroll]
+            for (int y = -1; y <= 1; y++)
+            {
+                [unroll]
+                for (int x = -1; x <= 1; x++)
+                {
+                    float2 sampleUV = hitUV + float2(x, y) * texel;
+                    if (any(sampleUV < 0.0) || any(sampleUV > 1.0)) continue;
+                    half4 sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
+                    if (sampleGeometry.a < 0.0001h) continue;
+                    float depthAgreement = exp2(-abs(sampleGeometry.a - expectedDepth) / max(depthTolerance, 0.01));
+                    float3 sampleNormal = normalize((float3)sampleGeometry.rgb * 2.0 - 1.0);
+                    float normalAgreement = saturate((dot(sampleNormal, -directionWS) - 0.1) / 0.9);
+                    float receiverAgreement = saturate((dot(receiverNormalWS, reservoir.originNormal) - 0.25) / 0.75);
+                    bestAgreement = max(bestAgreement, depthAgreement * normalAgreement * receiverAgreement);
+                }
+            }
+            return saturate(bestAgreement);
+        }
+
+        float HoSSGIValidateReservoirLighting(float3 originPositionWS, HoSSGIReservoir reservoir)
+        {
+            if (reservoir.hit < 0.5 || reservoir.distance <= 0.001)
+                return 1.0;
+
+            float3 directionWS = normalize(reservoir.direction);
+            float3 expectedHitWS = originPositionWS + directionWS * reservoir.distance;
+            float3 hitNDC = ComputeNormalizedDeviceCoordinatesWithZ(expectedHitWS, UNITY_MATRIX_VP);
+            if (hitNDC.z < 0.0 || hitNDC.z > 1.0 || any(hitNDC.xy < 0.0) || any(hitNDC.xy > 1.0))
+                return 0.0;
+
+            float storedLuminance = HoSSGILuminance(reservoir.color);
+            float2 texel = rcp(max(_ScreenParams.xy, 1.0));
+            float currentLuminance = 0.0;
+            float weightSum = 0.0;
+            float t = saturate(reservoir.distance / max(_HoSSGIRayLength, 0.01));
+            float distanceWeight = exp2(-2.0 * t) * rcp(1.0 + t * t);
+            [unroll]
+            for (int y = -1; y <= 1; y++)
+            {
+                [unroll]
+                for (int x = -1; x <= 1; x++)
+                {
+                    float2 sampleUV = hitNDC.xy + float2(x, y) * texel;
+                    if (any(sampleUV < 0.0) || any(sampleUV > 1.0)) continue;
+                    half4 sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
+                    if (sampleGeometry.a < 0.0001h) continue;
+                    float3 samplePositionWS = HoSSGIWorldPosition(sampleUV, sampleGeometry.a);
+                    float3 sampleNormalWS = normalize((float3)sampleGeometry.rgb * 2.0 - 1.0);
+                    float3 lightDirection = normalize(samplePositionWS - originPositionWS);
+                    float sourceCosine = saturate(dot(sampleNormalWS, -lightDirection));
+                    float3 source = SAMPLE_TEXTURE2D_X(_HoSSGISource, sampler_PointClamp, sampleUV).rgb;
+                    float3 candidate = HoSSGIColor(source) * (3.14159265 * sourceCosine * distanceWeight);
+                    float tapWeight = exp2(-0.75 * (x * x + y * y));
+                    currentLuminance += HoSSGILuminance(candidate) * tapWeight;
+                    weightSum += tapWeight;
+                }
+            }
+            currentLuminance /= max(weightSum, 1.0e-5);
+            float lightingChange = abs(storedLuminance - currentLuminance)
+                / max(storedLuminance + currentLuminance, 0.001);
+            return saturate(1.0 - lightingChange * 2.0);
+        }
+
         HoSSGITraceOutput Trace(Varyings input)
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -221,6 +356,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.gi = 0;
             output.reservoirColor = 0;
             output.reservoirAux = 0;
+            output.reservoirRay = 0;
             if (center.a < 0.0001) return output;
 
             float3 centerNormalWS = normalize((float3)center.rgb * 2.0 - 1.0);
@@ -330,6 +466,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     candidateTarget,
                     candidateHit,
                     candidateDistance,
+                    rayDirWS,
+                    centerNormalWS,
                     1.0,
                     reservoir,
                     HoSSGIReservoirRandom(pixel, (float)(ray + 1) * 0.37 + (float)steps * 0.013));
@@ -342,6 +480,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.gi = float4(max(reservoirRadiance, 0.0), confidence);
             output.reservoirColor = float4(max(reservoir.color, 0.0), max(reservoir.wsum, 0.0));
             output.reservoirAux = float4(max(reservoir.m, 0.0), max(reservoir.target, 0.0), saturate(reservoir.hit), max(reservoir.distance, 0.0));
+            output.reservoirRay = HoSSGIPackReservoirRay(reservoir);
             return output;
         }
 
@@ -355,6 +494,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.gi = 0;
             output.reservoirColor = 0;
             output.reservoirAux = 0;
+            output.reservoirRay = 0;
             if (geometry.a < 0.0001h) return output;
 
             float2 motion = _HoSSGIUseMotion > 0.5
@@ -400,6 +540,14 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 }
             }
 
+            if (_HoSSGIReservoirValidation > 0.5)
+            {
+                float3 originPositionWS = HoSSGIWorldPosition(uv, geometry.a);
+                float geometryValidation = HoSSGIValidateReservoirRay(originPositionWS, currentNormal, merged);
+                float lightingValidation = HoSSGIValidateReservoirLighting(originPositionWS, merged);
+                merged.wsum *= geometryValidation * lightingValidation;
+            }
+
             float totalM = max(merged.m, 1.0e-6);
             float confidence = saturate((currentConfidence * max(currentReservoir.m, 0.0)
                 + historyConfidence * historyM) / totalM);
@@ -407,6 +555,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.gi = float4(resolved, confidence);
             output.reservoirColor = float4(max(merged.color, 0.0), max(merged.wsum, 0.0));
             output.reservoirAux = float4(max(merged.m, 0.0), max(merged.target, 0.0), saturate(merged.hit), max(merged.distance, 0.0));
+            output.reservoirRay = HoSSGIPackReservoirRay(merged);
             return output;
         }
 
@@ -419,6 +568,10 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             half4 packedAux = SAMPLE_TEXTURE2D_X(_HoSSGIReservoirAux, sampler_PointClamp, uv);
             output.reservoirColor = packedColor;
             output.reservoirAux = packedAux;
+            output.reservoirRay = SAMPLE_TEXTURE2D_X(_HoSSGIReservoirRay, sampler_PointClamp, uv);
+
+            if (_HoSSGIFireflyEnabled < 0.5)
+                return output;
 
             half4 centerGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, uv);
             if (centerGeometry.a < 0.0001h || packedAux.y <= 1.0e-5h)
@@ -511,6 +664,12 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 half4 tapTemporal = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_PointClamp, tapUV);
                 confidenceSum += tapTemporal.a * reuseWeight;
                 confidenceWeight += reuseWeight;
+            }
+
+            if (_HoSSGIReservoirValidation > 0.5)
+            {
+                float3 centerPositionWS = HoSSGIWorldPosition(uv, centerDepth);
+                merged.wsum *= HoSSGIValidateReservoirRay(centerPositionWS, centerNormal, merged);
             }
 
             float3 resolved = HoSSGIResolveReservoir(merged);
