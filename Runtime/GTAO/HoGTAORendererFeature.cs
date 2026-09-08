@@ -287,6 +287,7 @@ namespace lilToon.URP.Extensions.GTAO
         private static readonly int HistoryValidId = Shader.PropertyToID("_HoGTAOHistoryValid");
         private static readonly int TemporalMaxFramesId = Shader.PropertyToID("_HoGTAOTemporalMaxFrames");
         private static readonly int TemporalRejectionId = Shader.PropertyToID("_HoGTAOTemporalRejection");
+        private static readonly int HistoryPrevTexelSizeId = Shader.PropertyToID("_HoGTAOHistoryPrevTex_TexelSize");
         private static readonly int WorldRadiusId = Shader.PropertyToID("_HoGTAOWorldSpaceRadius");
         private static readonly int ScreenRadiusId = Shader.PropertyToID("_HoGTAOScreenSpaceRadius");
         private static readonly int ThicknessId = Shader.PropertyToID("_HoGTAOThickness");
@@ -355,6 +356,7 @@ namespace lilToon.URP.Extensions.GTAO
             public bool debugDisocclusion;
             public int maxFrames;
             public float rejection;
+            public Vector4 historyTexelSize;
         }
 
         private sealed class BlitData
@@ -561,6 +563,7 @@ namespace lilToon.URP.Extensions.GTAO
                 // accumulates up to g_HTemporalSamplecountAO*2 = 12 frames.
                 data.maxFrames = settings.temporalFrameCount > 0 ? 12 : 1;
                 data.rejection = settings.temporalRejection;
+                data.historyTexelSize = new Vector4(1.0f / Mathf.Max(1, historyWidth), 1.0f / Mathf.Max(1, historyHeight), historyWidth, historyHeight);
                 builder.UseTexture(data.current, AccessFlags.Read);
                 builder.UseTexture(data.previous, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
@@ -577,6 +580,7 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.SetGlobalFloat(HistoryValidId, passData.useHistory ? 1.0f : 0.0f);
                     context.cmd.SetGlobalFloat(TemporalMaxFramesId, passData.maxFrames);
                     context.cmd.SetGlobalFloat(TemporalRejectionId, passData.rejection);
+                    context.cmd.SetGlobalVector(HistoryPrevTexelSizeId, passData.historyTexelSize);
                     context.cmd.SetGlobalTexture(HoGTAOShaderConstants.AoInputTexId, passData.current);
                     context.cmd.SetGlobalTexture(HoGTAOShaderConstants.HistoryPrevTexId, passData.previous);
                     context.cmd.SetGlobalTexture(GeometryInputId, passData.geometry);

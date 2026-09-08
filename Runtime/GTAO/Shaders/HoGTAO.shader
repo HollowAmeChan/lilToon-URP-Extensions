@@ -411,6 +411,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             }
             half previous = historyWeightSum > 1.0e-5 ? previousAccumulated / historyWeightSum : 0.0h;
             half previousCount = historyWeightSum > 1.0e-5 ? previousCountAccumulated / historyWeightSum : 0.0h;
+            float3 currentNormal = normalize((float3)geometry.rgb * 2.0 - 1.0);
+            float3 previousNormal = HoGTAOUnpackNormal(SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevTex, sampler_PointClamp, previousUV).ba);
             // Sky/uncovered pixels have no surface history to validate. Keep
             // them white in the diagnostic instead of falsely marking them as
             // temporal disocclusions.
@@ -420,10 +422,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             }
             half depthValid = step(0.0001h, geometry.a) * step(1.0e-5, historyWeightSum);
             half depthAgreement = step(1.0e-5, historyWeightSum);
-            // Depth is the authoritative disocclusion test for this baseline.
-            // The history normal payload remains reserved for a later validated
-            // normal-rejection pass.
-            half accepted = saturate(_HoGTAOHistoryValid) * depthValid * depthAgreement;
+            half normalAgreement = step(0.5h, dot(currentNormal, previousNormal));
+            half accepted = saturate(_HoGTAOHistoryValid) * depthValid * depthAgreement * normalAgreement;
             half sampleCount = min(previousCount + 1.0h, max(_HoGTAOTemporalMaxFrames, 1.0));
             sampleCount = lerp(1.0h, sampleCount, accepted);
 
@@ -466,7 +466,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                     : half4(1.0h, 0.0h, 0.0h, 1.0h);
             }
             half ao = lerp(current, previous, historyWeight);
-            return half4(ao, sampleCount / max(_HoGTAOTemporalMaxFrames, 1.0h), 0.5h, 0.5h);
+            float2 packedNormal = HoGTAOPackNormal(currentNormal);
+            return half4(ao, sampleCount / max(_HoGTAOTemporalMaxFrames, 1.0h), packedNormal.x, packedNormal.y);
         }
 
         half4 OutputAO(Varyings input) : SV_Target
