@@ -38,11 +38,11 @@
 | G1 | raw depth | `HDepthPyramidAO.compute:53-125` | `HoGeometryBuffer.depthTexture` 直接进入 Ho 金字塔 | `已对齐` | 已消除 fp16 线性深度反解造成的远处波纹；天空由 coverage 屏蔽 | 保留 raw depth，不回退 alpha 反解 |
 | G2 | depth pyramid | `HDepthPyramidAO.compute`，raw max 归约 | 4 张 RDG mip 纹理，2x2 max | `部分对齐` | mip 数据正确，但当前是独立纹理 + 手动 LOD blend，非 HTrace 单纹理 `SAMPLE_LOD` | 先用 Frame Debugger 对比 mip/LOD；必要时改为 point nearest LOD |
 | T0 | 时域重投影 | `HTemporalFilterGTAO.compute:64-295` | 单个 Ho Temporal pass 内四 tap history | `部分对齐` | 有四 tap，但缺少 reprojected AO/velocity 独立阶段和 render-scale/相机矩阵补偿 | 拆出 HTrace 风格 depth/plane/normal 有效性与 reprojected data |
-| T1 | 深度拒绝 | HTrace view-alignment + linear depth threshold | 当前 raw depth 线性化后固定 `5%/0.05` 阈值 | `部分对齐` | 过宽会串历史，过窄会噪声回流；直接影响稳定性 | 按 HTrace 的 view alignment、pixel spread、plane threshold 实现 |
-| T2 | 平面/法线拒绝 | HTrace `PLANE_DISOCCLUSION` + normal threshold 0.5 | 只有 history normal dot 0.5，未做 plane reject | `部分对齐` | 接触边缘容易出现拖影或拒绝抖动 | 引入 previous view-space plane test |
+| T1 | 深度拒绝 | HTrace view-alignment + linear depth threshold | raw depth 线性化 + view-alignment + pixel-spread 阈值 | `部分对齐` | 阈值公式已对齐；仍缺 HTrace 的 motion-mask relax | 引入 motion mask/delta 后补齐动态物体分支 |
+| T2 | 平面/法线拒绝 | HTrace `PLANE_DISOCCLUSION` + normal threshold 0.5 | 每个 history tap 做 view-space plane + normal reject | `部分对齐` | 静态边缘已更稳定；previous-camera plane 仍是当前视空间近似 | 保存 previous view/matrix，替换为 HTrace previous-plane 公式 |
 | T3 | motion/命中速度 | HTrace motion mask/delta + per-hit velocity | 仅消费 URP `_MotionVectorTexture` | `仅 Ho 实现` | 相机/物体运动时无法区分 origin 与 hit，收敛和 disocclusion 不稳定 | Geometry/Metadata 提供 motion mask/delta，或明确记录降级语义 |
 | T4 | history accumulation | HTrace 12 帧 + 5x5 clamp | Ho 12 帧 + 5x5 clamp | `部分对齐` | 累积公式接近，但输入拒绝和 sample count 语义尚未完全一致 | 对齐 `TemporalWeight`、velocity 混合和 count 更新 |
-| R0 | Bitmask tracing | `HRenderGTAO.compute:134-304` | `HoGTAOCompute` 32-bin bitmask | `部分对齐` | 公式、厚度、衰减基本一致；需确认 LOD 取整和中心 raw depth | 与 HTrace 逐行做数值样本对照 |
+| R0 | Bitmask tracing | `HRenderGTAO.compute:134-304` | `HoGTAOCompute` 32-bin bitmask | `部分对齐` | 公式、厚度、衰减和整数 LOD 已对齐；仍需数值样本确认 | 与 HTrace 逐行做数值样本对照 |
 | R0H | HorizonSearch tracing | `HRenderGTAO.compute:243-275` | Ho 暂未启用连续 arc 分支 | `未开始` | 若 HTrace 画面对比用默认 HorizonSearch，Bitmask 量化会被误判为 Ho 算法错误 | 先做 HTrace mode A/B；必要时把连续 arc 作为 Ho 可选后备 |
 | R1 | horizon/切片方向 | HTrace rotations/noise `HRenderGTAO.compute:160-220` | 4 slices + interleaved gradient noise | `部分对齐` | 方向感重，可能来自切片量化、LOD 选择或 Box 轴向结构 | A/B：固定 frame/noise，分别禁用 bitmask、禁用 spatial |
 | S0 | Box spatial | `HSpatialFilterGTAO.compute:101-151` | 3 趟 `4/2/1`，plane/normal 权重 | `部分对齐` | 步长已对齐；需确认 final visibility 极性和 raw depth history 使用 | 对比每一趟输出，确认最后一趟才转换 visibility |
@@ -105,9 +105,10 @@
 | 2026-09-09 | Ho 改为直接消费 GeometryBuffer raw depth，history 改 R32 raw | `df01fad`；Unity GTAO 编译通过 | 解决远处深度量化波纹；需继续验证时域/空间链 |
 | 2026-09-09 | 建立本工作表 | 本文件 | 后续按阶段矩阵推进 |
 | 2026-09-09 | 修正退化 slice 处理 | `HoGTAO.shader`：不再直接丢弃 projected normal 过小的 slice | 消除极端视角下的方向性归一化偏置 |
+| 2026-09-09 | 对齐 Temporal 拒绝 | `HoGTAO.shader`：view-alignment、plane、normal、屏内 tap 有效性 | 减少跨平面历史串入，下一步补 motion velocity |
 
 ## 当前下一步
 
 1. 先用 `pow=1` 对比 Generate/Temporal/Spatial 三层，确认方向性来自追踪还是滤波。
-2. 实现 HTrace 风格 temporal plane rejection 和 motion 语义，优先解决收敛/拖影。
-3. 再数值对齐 depth LOD 与 bitmask horizon，最后才调接地感曲线。
+2. 补齐 HTrace motion mask/delta、hit velocity 和 previous-camera plane 语义，优先解决收敛/拖影。
+3. 做 HTrace HorizonSearch/Bitmask 与整数 LOD A/B，再调接地感曲线。
