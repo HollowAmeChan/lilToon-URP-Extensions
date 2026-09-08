@@ -102,6 +102,12 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             return x >= 0.0 ? result : PI - result;
         }
 
+        float HoGTAOInterleavedGradientNoise(float2 pixelCoord, int frame)
+        {
+            pixelCoord += frame * (float2(47.0, 17.0) * 0.695);
+            return frac(52.9829189 * frac(dot(pixelCoord, float2(0.06711056, 0.00583715))));
+        }
+
         void HoGTAOUpdateBitmask(inout uint bitmask, float2 horizonSamples)
         {
             uint2 horizonInt = uint2(round(saturate(horizonSamples) * 32.0));
@@ -142,8 +148,12 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             float falloff = rcp(worldRadius);
             falloff *= falloff;
             float minStep = 1.3 / max(screenRadius, 1.0);
-            float noiseX = frac(52.9829189 * frac(dot(uv * _ScreenParams.xy, float2(0.06711056, 0.00583715))));
-            float noiseY = frac(52.9829189 * frac(dot((_ScreenParams.xy - uv * _ScreenParams.xy).yx, float2(0.06711056, 0.00583715))) * 0.5 + 0.25);
+            int frameIndex = (int)_HoGTAOFrameIndex;
+            float2 pixelCoord = floor(uv * _ScreenParams.xy);
+            float noiseX = HoGTAOInterleavedGradientNoise(pixelCoord, 0);
+            static const float NoiseOffsets[4] = { 0.0, 0.5, 0.25, 0.75 };
+            float noiseY = frac(HoGTAOInterleavedGradientNoise((_ScreenParams.xy - pixelCoord.yx), 6 - (frameIndex % 6))
+                + NoiseOffsets[(frameIndex / 3) % 4]);
             float thickness = _HoGTAOUseLinearThickness > 0.5
                 ? max(_HoGTAOThickness * 0.1 * linearDepth, _HoGTAOThickness)
                 : _HoGTAOThickness;
@@ -152,7 +162,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             float weightTotal = 0.0;
             int slices = max(1, (int)_HoGTAOSliceCount);
             int steps = max(1, (int)_HoGTAOStepCount);
-            int rotationIndex = ((int)_HoGTAOFrameIndex) % 6;
+            int rotationIndex = frameIndex % 6;
 
             [loop]
             for (int slice = 0; slice < slices; slice++)
