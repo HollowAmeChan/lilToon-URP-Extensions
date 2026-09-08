@@ -21,7 +21,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         {
             public TextureHandle source;
             public TextureHandle normalDepthTexture;
-            public TextureHandle outlineCoverageTexture;
+            public TextureHandle outlineNormalDepthTexture;
             public TextureHandle skyTexture;
             public Material debugMaterial;
             public HoGeometryBufferDebugMode debugMode;
@@ -90,7 +90,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             {
                 SetMaterialProperties(debugMaterial, settings);
                 cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
-                cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineCoverageTextureId, renderTargets.OutlineCoverageTexture.nameID);
+                cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineNormalDepthTextureId, renderTargets.OutlineNormalDepthTexture.nameID);
                 if (renderTargets.SkyTexture != null)
                 {
                     cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, renderTargets.SkyTexture.nameID);
@@ -130,7 +130,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             {
                 passData.source = source;
                 passData.normalDepthTexture = geometryResources.normalDepthTexture;
-                passData.outlineCoverageTexture = geometryResources.outlineCoverageTexture;
+                passData.outlineNormalDepthTexture = geometryResources.outlineNormalDepthTexture;
                 passData.skyTexture = geometryResources.skyTexture;
                 passData.debugMaterial = debugMaterial;
                 passData.debugMode = settings.debugMode;
@@ -139,9 +139,9 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
-                if (passData.outlineCoverageTexture.IsValid())
+                if (passData.outlineNormalDepthTexture.IsValid())
                 {
-                    builder.UseTexture(passData.outlineCoverageTexture, AccessFlags.Read);
+                    builder.UseTexture(passData.outlineNormalDepthTexture, AccessFlags.Read);
                 }
                 if (passData.useSkyTexture)
                 {
@@ -156,9 +156,9 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                     data.debugMaterial.SetFloat(HoGeometryBufferShaderConstants.DebugModeId, (float)data.debugMode);
                     data.debugMaterial.SetVector(HoGeometryBufferShaderConstants.DebugDepthParamsId, data.debugDepthParams);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
-                    if (data.outlineCoverageTexture.IsValid())
+                    if (data.outlineNormalDepthTexture.IsValid())
                     {
-                        context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineCoverageTextureId, data.outlineCoverageTexture);
+                        context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineNormalDepthTextureId, data.outlineNormalDepthTexture);
                     }
                     if (data.useSkyTexture)
                     {

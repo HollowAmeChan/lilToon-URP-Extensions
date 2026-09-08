@@ -242,7 +242,7 @@ namespace lilToon.URP.Extensions.Debugging
                     passData.surfaceColorTexture = metadataResources.surfaceColorTexture;
                     passData.mBufferDepthTexture = metadataResources.mBufferDepthTexture;
                     passData.normalDepthTexture = geometryResources.normalDepthTexture;
-                    passData.outlineCoverageTexture = geometryResources.outlineCoverageTexture;
+                    passData.outlineNormalDepthTexture = geometryResources.outlineNormalDepthTexture;
                     passData.planarReflectionTexture = passData.bindPlanarReflectionTexture
                         ? renderGraph.ImportTexture(planarReflectionRtHandle)
                         : TextureHandle.nullHandle;
@@ -278,9 +278,9 @@ namespace lilToon.URP.Extensions.Debugging
                     if (passData.bindGeometry)
                     {
                         builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
-                        if (passData.outlineCoverageTexture.IsValid())
+                        if (passData.outlineNormalDepthTexture.IsValid())
                         {
-                            builder.UseTexture(passData.outlineCoverageTexture, AccessFlags.Read);
+                            builder.UseTexture(passData.outlineNormalDepthTexture, AccessFlags.Read);
                         }
                     }
 
@@ -353,9 +353,9 @@ namespace lilToon.URP.Extensions.Debugging
                         if (data.bindGeometry)
                         {
                             context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
-                            if (data.outlineCoverageTexture.IsValid())
+                            if (data.outlineNormalDepthTexture.IsValid())
                             {
-                                context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineCoverageTextureId, data.outlineCoverageTexture);
+                                context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineNormalDepthTextureId, data.outlineNormalDepthTexture);
                             }
                         }
 
@@ -673,7 +673,7 @@ namespace lilToon.URP.Extensions.Debugging
                 public TextureHandle surfaceColorTexture;
                 public TextureHandle mBufferDepthTexture;
                 public TextureHandle normalDepthTexture;
-                public TextureHandle outlineCoverageTexture;
+                public TextureHandle outlineNormalDepthTexture;
                 public TextureHandle planarReflectionTexture;
                 public TextureHandle shadowCastAtlasTexture;
                 public TextureHandle shadowCastSecondDirectionalAtlasTexture;

@@ -22,6 +22,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
             #pragma fragment Frag
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
@@ -33,12 +34,12 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
             float4 _LayerParams3; // x coc gain, y foreground boost, z background boost, w coc curve
 
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
-            TEXTURE2D_X(_HoGeometryBufferOutlineCoverageTexture);
+            TEXTURE2D_X(_HoGeometryBufferOutlineNormalDepthTexture);
             float _HoGeometryBufferValid;
 
-            float SampleOutlineCoverage(float2 uv)
+            half4 SampleOutlineNormalDepth(float2 uv)
             {
-                return SAMPLE_TEXTURE2D_X(_HoGeometryBufferOutlineCoverageTexture, sampler_PointClamp, uv).r;
+                return SAMPLE_TEXTURE2D_X(_HoGeometryBufferOutlineNormalDepthTexture, sampler_PointClamp, uv);
             }
 
             static const int ScreenProcessDofKernelLqCount = 12;
@@ -93,8 +94,26 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
 
             float SampleEyeDepth(float2 uv)
             {
+                if (_HoGeometryBufferValid <= 0.5)
+                {
+                    return LinearEyeDepth(SampleSceneDepth(uv), _ZBufferParams);
+                }
+
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
                 return LilHoGeometryBufferLinearDepthOrFar(normalDepth, _ProjectionParams.z);
+            }
+
+            float SampleVisualEyeDepth(float2 uv)
+            {
+                if (_HoGeometryBufferValid <= 0.5)
+                {
+                    return SampleEyeDepth(uv);
+                }
+
+                half4 outlineNormalDepth = SampleOutlineNormalDepth(uv);
+                return LilHoGeometryBufferCoverage(outlineNormalDepth) > 0.5
+                    ? outlineNormalDepth.a
+                    : SampleEyeDepth(uv);
             }
 
             float ResolvePositiveDefault(float value, float fallback)
@@ -163,12 +182,8 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                 #define ADD_DOF_SAMPLE(dir, sampleWeight) \
                     { \
                         float2 sampleUv = uv + ResolveBokehOffset(dir) * texelRadius; \
-                        float outlineCoverage = SampleOutlineCoverage(sampleUv); \
-                        if (outlineCoverage <= 0.5) \
-                        { \
-                            color += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUv) * sampleWeight; \
-                            weight += sampleWeight; \
-                        } \
+                        color += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUv) * sampleWeight; \
+                        weight += sampleWeight; \
                     }
 
                 if (highQuality > 0.5)
@@ -204,17 +219,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                     return LilScreenProcessRuleDebugColor(uv, false, source.a);
                 }
 
-                if (_HoGeometryBufferValid <= 0.5)
-                {
-                    return source;
-                }
-
-                if (SampleOutlineCoverage(uv) > 0.5)
-                {
-                    return source;
-                }
-
-                float depth = SampleEyeDepth(uv);
+                float depth = SampleVisualEyeDepth(uv);
                 float coc = ResolveCoc(depth);
                 float radiusPx = coc * max(_LayerParams1.z, 0.0);
                 float amount = saturate(coc * _Intensity) * LilScreenProcessResolveRuleLayerMask(uv);

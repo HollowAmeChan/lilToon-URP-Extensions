@@ -14,11 +14,13 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         WorldNormal,
         [InspectorName("Normal Validity")]
         NormalValidity,
-        [InspectorName("Outline Coverage")]
-        OutlineCoverage,
         [InspectorName("Sky Radiance")]
         SkyRadiance,
         [InspectorName("Sky Contribution")]
-        SkyContribution
+        SkyContribution,
+        [InspectorName("Outline Normal")]
+        OutlineNormal,
+        [InspectorName("Outline Linear Depth")]
+        OutlineLinearDepth
     }
 }

@@ -271,14 +271,14 @@ GeometryBuffer coverage/normal/depth 契约
 
 所以后续如果把自有 RT 设为优先，诊断结构也应从“Metadata/Geometry 是否存在”升级为“每个 effect 实际选用了哪一个 resource provider”。
 
-## 12. OutlineCoverage 独立通道
+## 12. OutlineNormalDepth 独立通道
 
-本次后续修复采用独立的 `_HoGeometryBufferOutlineCoverageTexture`，而不是把描边塞进现有 `NormalDepth.a`：
+本次后续修复采用独立的 `_HoGeometryBufferOutlineNormalDepthTexture`，而不是把描边塞进现有 `NormalDepth.a`：
 
 - `NormalDepth.a` 继续表示真实几何的线性深度/physical coverage，描边仍保持无效；
-- lilToon outline 的 `.lilblock` 模板直接声明 `HoGeometryBufferOutlineCoverage` pass，只写外扩描边的 R8 mask；
-- GeometryBuffer 额外输出 outline coverage，ScreenProcess DOF 用它保护描边中心像素，并拒绝描边颜色样本参与主体模糊；
-- DebugTile/GeometryBuffer Debug 增加 `geometry.outline-coverage` 视图，用来直接确认描边 pass 是否命中；
-- SSGI/GTAO 不消费该视觉 mask，因此不会把描边重新解释为物理表面。
+- lilToon outline 的 `.lilblock` 模板直接声明 `HoGeometryBufferOutlineNormalDepth` pass，写入外扩描边编码法线和线性深度；
+- GeometryBuffer 额外输出 outline normal/depth，ScreenProcess DOF 可用它选择描边的视觉深度；
+- DebugTile/GeometryBuffer Debug 增加独立的 `geometry.outline-normal` 与 `geometry.outline-linear-depth` 视图，用来分别确认描边法线和深度 pass 是否命中；
+- SSGI/GTAO 不消费该视觉资源，因此不会把描边重新解释为物理表面。
 
-这把“描边是否可见”和“描边是否是真实几何”拆成了两个独立问题：前者由 OutlineCoverage 处理，后者继续由 GeometryBuffer coverage 约束。
+这把“描边是否可见”和“描边是否是真实几何”拆成了两个独立问题：前者由 OutlineNormalDepth 处理，后者继续由 GeometryBuffer coverage 约束。

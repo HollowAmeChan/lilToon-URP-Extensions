@@ -44,7 +44,7 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
             TEXTURE2D_X_FLOAT(_HoMetadataBufferMBufferDepthTexture);
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
-            TEXTURE2D_X(_HoGeometryBufferOutlineCoverageTexture);
+            TEXTURE2D_X(_HoGeometryBufferOutlineNormalDepthTexture);
             TEXTURE2D_FLOAT(_HoShadowCastAtlas);
             TEXTURE2D_FLOAT(_HoShadowCastSecondDirectionalAtlas);
             TEXTURE2D_X(_lilHoSSSSourceTexture);
@@ -251,9 +251,17 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                     return half4(Heat(LilHoGeometryBufferNormalValid(normalDepth)), 1.0h);
                 }
 
-                if (mode == 5)
+                if (mode == 7)
                 {
-                    return DebugScalar(SAMPLE_TEXTURE2D_X(_HoGeometryBufferOutlineCoverageTexture, sampler_PointClamp, uv).r);
+                    half4 outlineNormalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferOutlineNormalDepthTexture, sampler_PointClamp, uv);
+                    return half4(outlineNormalDepth.rgb, 1.0h);
+                }
+
+                if (mode == 8)
+                {
+                    half outlineDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferOutlineNormalDepthTexture, sampler_PointClamp, uv).a;
+                    half depth = saturate((outlineDepth - _HoDebugTileGeometryDepthParams.x) * _HoDebugTileGeometryDepthParams.z);
+                    return DebugScalar(depth);
                 }
 
                 return half4(0.0h, 0.0h, 0.0h, 1.0h);

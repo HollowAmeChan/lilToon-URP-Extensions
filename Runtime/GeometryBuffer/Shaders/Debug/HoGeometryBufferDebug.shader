@@ -28,7 +28,7 @@ Shader "Hidden/lilToon/URP/GeometryBuffer/DebugView"
             float4 _HoGeometryBufferDebugDepthParams; // x near, y far, z inv range
 
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
-            TEXTURE2D_X(_HoGeometryBufferOutlineCoverageTexture);
+            TEXTURE2D_X(_HoGeometryBufferOutlineNormalDepthTexture);
             TEXTURE2D_X(_HoGeometryBufferSkyTexture);
 
             half3 Heat(float value)
@@ -71,21 +71,28 @@ Shader "Hidden/lilToon/URP/GeometryBuffer/DebugView"
 
                 if (mode == 5)
                 {
-                    half outlineCoverage = SAMPLE_TEXTURE2D_X(_HoGeometryBufferOutlineCoverageTexture, sampler_PointClamp, uv).r;
-                    return half4(outlineCoverage, outlineCoverage, outlineCoverage, 1.0);
-                }
-
-                if (mode == 6)
-                {
                     half4 sky = SAMPLE_TEXTURE2D_X(_HoGeometryBufferSkyTexture, sampler_LinearClamp, uv);
                     half3 mapped = sky.rgb / (sky.rgb + 1.0h);
                     return half4(mapped, 1.0);
                 }
 
-                if (mode == 7)
+                if (mode == 6)
                 {
                     half contribution = SAMPLE_TEXTURE2D_X(_HoGeometryBufferSkyTexture, sampler_LinearClamp, uv).a;
                     return half4(contribution, contribution, contribution, 1.0);
+                }
+
+                if (mode == 7)
+                {
+                    half4 outlineNormalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferOutlineNormalDepthTexture, sampler_PointClamp, uv);
+                    return half4(outlineNormalDepth.rgb, 1.0);
+                }
+
+                if (mode == 8)
+                {
+                    half outlineDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferOutlineNormalDepthTexture, sampler_PointClamp, uv).a;
+                    half depth = saturate((outlineDepth - _HoGeometryBufferDebugDepthParams.x) * _HoGeometryBufferDebugDepthParams.z);
+                    return half4(depth, depth, depth, 1.0);
                 }
 
                 return source;
