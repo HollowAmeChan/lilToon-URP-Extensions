@@ -46,6 +46,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         float _HoGTAOSpatialResolution;
 
         static const float HoGTAOSliceRotations[6] = { 60.0, 300.0, 180.0, 240.0, 120.0, 0.0 };
+        static const float HoGTAONoiseOffsets[4] = { 0.0, 0.5, 0.25, 0.75 };
 
         float4 DepthCopy(Varyings input) : SV_Target
         {
@@ -168,9 +169,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             int frameIndex = (int)_HoGTAOFrameIndex;
             float2 pixelCoord = floor(uv * _ScreenParams.xy);
             float noiseX = HoGTAOInterleavedGradientNoise(pixelCoord, 0);
-            static const float NoiseOffsets[4] = { 0.0, 0.5, 0.25, 0.75 };
             float noiseY = frac(HoGTAOInterleavedGradientNoise((_ScreenParams.xy - pixelCoord.yx), 6 - (frameIndex % 6))
-                + NoiseOffsets[(frameIndex / 3) % 4]);
+                + HoGTAONoiseOffsets[(frameIndex / 3) % 4]);
             float thickness = _HoGTAOUseLinearThickness > 0.5
                 ? max(_HoGTAOThickness * 0.1 * linearDepth, _HoGTAOThickness)
                 : _HoGTAOThickness;
