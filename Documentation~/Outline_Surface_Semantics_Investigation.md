@@ -276,7 +276,7 @@ GeometryBuffer coverage/normal/depth 契约
 本次后续修复采用独立的 `_HoGeometryBufferOutlineCoverageTexture`，而不是把描边塞进现有 `NormalDepth.a`：
 
 - `NormalDepth.a` 继续表示真实几何的线性深度/physical coverage，描边仍保持无效；
-- lilToon outline shader 自动注入 `HoGeometryBufferOutlineCoverage` pass，只写外扩描边的 R8 mask；
+- lilToon outline 的 `.lilblock` 模板直接声明 `HoGeometryBufferOutlineCoverage` pass，只写外扩描边的 R8 mask；
 - GeometryBuffer 额外输出 outline coverage，ScreenProcess DOF 用它保护描边中心像素，并拒绝描边颜色样本参与主体模糊；
 - DebugTile/GeometryBuffer Debug 增加 `geometry.outline-coverage` 视图，用来直接确认描边 pass 是否命中；
 - SSGI/GTAO 不消费该视觉 mask，因此不会把描边重新解释为物理表面。
