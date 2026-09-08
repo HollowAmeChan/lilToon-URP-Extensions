@@ -108,6 +108,23 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             return frac(52.9829189 * frac(dot(pixelCoord, float2(0.06711056, 0.00583715))));
         }
 
+        float2 HoGTAOPackNormal(float3 normalWS)
+        {
+            normalWS *= rcp(max(dot(abs(normalWS), 1.0), 1.0e-6));
+            float fold = saturate(-normalWS.z);
+            normalWS.xy += float2(normalWS.x >= 0.0 ? fold : -fold, normalWS.y >= 0.0 ? fold : -fold);
+            return normalWS.xy * 0.5 + 0.5;
+        }
+
+        float3 HoGTAOUnpackNormal(float2 encoded)
+        {
+            float3 normalWS = float3(encoded * 2.0 - 1.0, 0.0);
+            normalWS.z = 1.0 - abs(normalWS.x) - abs(normalWS.y);
+            float fold = max(-normalWS.z, 0.0);
+            normalWS.xy += float2(normalWS.x >= 0.0 ? -fold : fold, normalWS.y >= 0.0 ? -fold : fold);
+            return normalize(normalWS);
+        }
+
         void HoGTAOUpdateBitmask(inout uint bitmask, float2 horizonSamples)
         {
             uint2 horizonInt = uint2(round(saturate(horizonSamples) * 32.0));
@@ -264,6 +281,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             half4 previousData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevTex, sampler_LinearClamp, previousUV);
             half previous = previousData.r;
             half previousCount = previousData.g * max(_HoGTAOTemporalMaxFrames, 1.0);
+            float3 currentNormal = normalize((float3)geometry.rgb * 2.0 - 1.0);
+            float3 previousNormal = HoGTAOUnpackNormal(previousData.ba);
             half previousDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_LinearClamp, previousUV).r;
             // Sky/uncovered pixels have no surface history to validate. Keep
             // them white in the diagnostic instead of falsely marking them as
@@ -274,7 +293,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             }
             half depthValid = step(0.0001h, geometry.a) * step(0.0001h, previousDepth);
             half depthAgreement = step(abs(geometry.a - previousDepth), max(0.05h * geometry.a, 0.05h));
-            half accepted = saturate(_HoGTAOHistoryValid) * depthValid * depthAgreement;
+            half normalAgreement = step(0.5h, dot(currentNormal, previousNormal));
+            half accepted = saturate(_HoGTAOHistoryValid) * depthValid * depthAgreement * normalAgreement;
             half sampleCount = min(previousCount + 1.0h, max(_HoGTAOTemporalMaxFrames, 1.0));
             sampleCount = lerp(1.0h, sampleCount, accepted);
             half historyWeight = accepted * (1.0h - rcp(max(sampleCount, 1.0h)));
@@ -286,7 +306,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 return half4(1.0h, accepted, accepted, 1.0h);
             }
             half ao = lerp(current, previous, historyWeight);
-            return half4(ao, sampleCount / max(_HoGTAOTemporalMaxFrames, 1.0h), ao, 1.0h);
+            float2 packedNormal = HoGTAOPackNormal(currentNormal);
+            return half4(ao, sampleCount / max(_HoGTAOTemporalMaxFrames, 1.0h), packedNormal.x, packedNormal.y);
         }
 
         half4 OutputAO(Varyings input) : SV_Target
