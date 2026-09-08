@@ -336,7 +336,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             // HTrace keeps AO amount in the temporal/spatial chain: 0 means
             // no occlusion. Final output/debug presentation converts it to
             // visibility with 1 - AO.
-            return saturate(occlusion / max(totalWeight, 1.0e-5));
+            return 1.0 - saturate(occlusion / max(totalWeight, 1.0e-5));
         }
 
         half4 Generate(Varyings input) : SV_Target
