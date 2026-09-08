@@ -50,9 +50,9 @@
 | G0 | 几何法线/覆盖 | `HMain.hlsl`、HTrace GBuffer | `HoGeometryBuffer.normalDepthTexture`，真实法线 + coverage | `部分对齐` | 法线语义一致；GeometryBuffer 与 GTAO 同事件时需保持列表顺序 | 固定 GeometryBuffer 为唯一几何真值 |
 | G1 | raw depth | `HDepthPyramidAO.compute:53-125` | `HoGeometryBuffer.depthTexture` 直接进入 Ho 金字塔 | `已对齐` | 已消除 fp16 线性深度反解造成的远处波纹；天空由 coverage 屏蔽 | 保留 raw depth，不回退 alpha 反解 |
 | G2 | depth pyramid | `HDepthPyramidAO.compute`，raw max 归约 | 4 张 RDG mip 纹理，2x2 max | `部分对齐` | mip 数据正确，但当前是独立纹理 + 手动 LOD blend，非 HTrace 单纹理 `SAMPLE_LOD` | 先用 Frame Debugger 对比 mip/LOD；必要时改为 point nearest LOD |
-| T0 | 时域重投影 | `HTemporalFilterGTAO.compute:64-295` | 单个 Ho Temporal pass 内四 tap history | `部分对齐` | 四 tap 已有；仍缺独立 reprojected data 和 render-scale/相机矩阵补偿 | 保存 previous view/scale，替换为 HTrace 的世界/前一帧视空间校验 |
+| T0 | 时域重投影 | `HTemporalFilterGTAO.compute:64-295` | 单个 Ho Temporal pass 内四 tap history，保存 previous view 与 depth-to-view 参数 | `部分对齐` | 四 tap、屏内有效性和 previous-view 重建已有；仍缺独立 reprojected data 与 render-scale 补偿 | 保存 previous scale/VP，拆出 HTrace reprojected data |
 | T1 | 深度拒绝 | HTrace view-alignment + linear depth threshold | raw depth 线性化 + view-alignment + pixel-spread 阈值 | `部分对齐` | 阈值公式已对齐；仍缺 HTrace 的 motion-mask relax | 引入 motion mask/delta 后补齐动态物体分支 |
-| T2 | 平面/法线拒绝 | HTrace `PLANE_DISOCCLUSION` + normal threshold 0.5 | 每个 history tap 做 view-space plane + normal reject | `部分对齐` | 静态边缘已更稳定；previous-camera plane 仍是当前视空间近似 | 保存 previous view/matrix，替换为 HTrace previous-plane 公式 |
+| T2 | 平面/法线拒绝 | HTrace `PLANE_DISOCCLUSION` + normal threshold 0.5 | 每个 history tap 使用 previous-view plane + normal reject | `部分对齐` | previous-camera plane 已接入；previous ZBuffer 参数和 motion relax 仍缺 | 保存 previous projection/ZBuffer 参数，补动态物体 relax |
 | T3 | motion/命中速度 | HTrace motion mask/delta + per-hit velocity | Ho 从 URP motion texture 比较 origin/hit magnitude + direction，写入 history | `部分对齐` | 已有 per-hit 速度近似；仍缺 GeometryBuffer 生产的 motion mask/delta | 若 GeometryBuffer 暴露 motion 语义，替换近似并补动态层标记 |
 | T4 | history accumulation | HTrace 12 帧 + 5x5 clamp | Ho 12 帧 + `AO/velocity/count` history + velocity-driven clamp | `部分对齐` | 通道语义已接近；仍缺 HTrace 的 reprojected velocity 与 count 独立缓冲 | 对齐 `TemporalWeight`、velocity 融合和动态对象 relax |
 | R0 | Bitmask tracing | `HRenderGTAO.compute:134-304` | `HoGTAOCompute` 32-bin bitmask | `部分对齐` | 公式、厚度、衰减和整数 LOD 已对齐；仍需数值样本确认 | 与 HTrace 逐行做数值样本对照 |
@@ -120,6 +120,7 @@
 | 2026-09-09 | 修正退化 slice 处理 | `HoGTAO.shader`：不再直接丢弃 projected normal 过小的 slice | 消除极端视角下的方向性归一化偏置 |
 | 2026-09-09 | 对齐 Temporal 拒绝 | `HoGTAO.shader`：view-alignment、plane、normal、屏内 tap 有效性 | 减少跨平面历史串入，下一步补 motion velocity |
 | 2026-09-09 | 接入 HTrace 风格命中速度 | `HoGTAO.shader`：origin/hit motion divergence，history `AO/velocity/count`，velocity-driven clamp | 收敛链路开始具备运动自适应；GeometryBuffer motion mask/delta 仍待接入 |
+| 2026-09-09 | 对齐 previous-view rejection | `HoGTAORendererFeature.cs` 保存上一帧 view/depth-to-view；`HoGTAO.shader` 做 previous-view plane | 相机旋转时历史深度比较更接近 HTrace；render-scale/previous-Z 参数仍登记 |
 
 ## 当前下一步
 
