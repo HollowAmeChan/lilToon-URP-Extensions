@@ -318,8 +318,6 @@ namespace lilToon.URP.Extensions.GTAO
             public TextureHandle depthMip1;
             public TextureHandle depthMip2;
             public TextureHandle depthMip3;
-            public TextureHandle motionVectors;
-            public bool useMotionVectors;
         }
 
         private sealed class TemporalData
@@ -461,15 +459,11 @@ namespace lilToon.URP.Extensions.GTAO
                 data.depthMip1 = depthMips[1];
                 data.depthMip2 = depthMips[2];
                 data.depthMip3 = depthMips[3];
-                data.motionVectors = resourceData.motionVectorColor;
-                data.useMotionVectors = data.motionVectors.IsValid();
                 builder.UseTexture(data.normalDepth, AccessFlags.Read);
                 builder.UseTexture(data.depthMip0, AccessFlags.Read);
                 builder.UseTexture(data.depthMip1, AccessFlags.Read);
                 builder.UseTexture(data.depthMip2, AccessFlags.Read);
                 builder.UseTexture(data.depthMip3, AccessFlags.Read);
-                if (data.motionVectors.IsValid())
-                    builder.UseTexture(data.motionVectors, AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
@@ -487,9 +481,6 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.SetGlobalMatrix(ViewMatrixId, passData.view);
                     context.cmd.SetGlobalMatrix(ProjMatrixId, passData.proj);
                     context.cmd.SetGlobalMatrix(InvProjMatrixId, passData.invProj);
-                    context.cmd.SetGlobalFloat(UseMotionVectorsId, passData.useMotionVectors ? 1.0f : 0.0f);
-                    if (passData.motionVectors.IsValid())
-                        context.cmd.SetGlobalTexture(MotionVectorTextureId, passData.motionVectors);
                     context.cmd.SetGlobalTexture(DepthMip0Id, passData.depthMip0);
                     context.cmd.SetGlobalTexture(DepthMip1Id, passData.depthMip1);
                     context.cmd.SetGlobalTexture(DepthMip2Id, passData.depthMip2);

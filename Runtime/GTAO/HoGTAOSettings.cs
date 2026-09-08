@@ -43,8 +43,8 @@ namespace lilToon.URP.Extensions.GTAO
         Depth = 2,
         [InspectorName("Normal"), Tooltip("直出 GeometryBuffer 世界法线。")]
         Normal = 3,
-        [InspectorName("Motion"), Tooltip("输出 URP 内置 MotionVectorRenderPass 的屏幕空间运动（RG：方向，B：幅度）。")]
-        Motion = 4,
+        // Keep the serialized value 5 for compatibility with scenes/assets that
+        // already selected the previously-added Temporal mode.
         [InspectorName("Temporal Disocclusion"), Tooltip("输出历史重投影后的 disocclusion/rejection 掩码：稳定历史为白色，拒绝区域为红色。")]
         Temporal = 5,
     }

@@ -221,16 +221,6 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             {
                 return half4(nd.rgb, 1.0h);
             }
-            if (_HoGTAODebugMode > 3.5 && _HoGTAODebugMode < 4.5)
-            {
-                float2 motion = _HoGTAOUseMotionVectors > 0.5
-                    ? SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, input.texcoord).xy
-                    : float2(0.0, 0.0);
-                // Signed direction in RG, speed/magnitude in B. Keep a neutral
-                // gray baseline for zero motion; this makes an unproduced/cleared
-                // motion texture immediately distinguishable from real motion.
-                return half4(motion * 0.5 + 0.5, 0.5 + 0.5 * saturate(length(motion) * 32.0), 1.0h);
-            }
             if (nd.a < 0.0001h)
             {
                 return half4(1.0h, 1.0h, 1.0h, 1.0h);
