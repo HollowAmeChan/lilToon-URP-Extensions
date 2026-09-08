@@ -20,6 +20,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         TEXTURE2D_X_FLOAT(_HoGTAODepthMip2);
         TEXTURE2D_X_FLOAT(_HoGTAODepthMip3);
         TEXTURE2D_X_FLOAT(_HoGTAODepthInput);
+        TEXTURE2D_X_FLOAT(_HoGTAOCameraDepthInput);
         TEXTURE2D_X(_HoGTAOGeometryInput);
         float4 _HoGTAODepthInputTexelSize;
         float4x4 _HoGTAOInvProjMatrix;
@@ -58,6 +59,17 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             // convention so pyramid reduction can ignore invalid samples.
             float depth = max((float)nd.a, 0.0);
             return float4(depth, depth, depth, depth);
+        }
+
+        half4 ComposeCameraDepth(Varyings input) : SV_Target
+        {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+            half4 normalDepth = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord);
+            float rawDepth = SAMPLE_TEXTURE2D_X(_HoGTAOCameraDepthInput, sampler_PointClamp, input.texcoord).r;
+            float linearDepth = LinearEyeDepth(rawDepth, _ZBufferParams);
+            if (rawDepth <= UNITY_RAW_FAR_CLIP_VALUE + 1.0e-5)
+                linearDepth = 0.0;
+            return half4(normalDepth.rgb, linearDepth);
         }
 
         float4 DepthDownsample(Varyings input) : SV_Target
@@ -575,6 +587,15 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment DebugOutput
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Ho-GTAO Compose Camera Depth"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment ComposeCameraDepth
             ENDHLSL
         }
     }
