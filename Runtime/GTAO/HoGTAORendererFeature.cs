@@ -388,6 +388,7 @@ namespace lilToon.URP.Extensions.GTAO
             public bool debugDisocclusion;
             public int maxFrames;
             public float rejection;
+            public float pixelSpreadMultiplier;
             public Vector4 historyTexelSize;
         }
 
@@ -610,6 +611,10 @@ namespace lilToon.URP.Extensions.GTAO
                 // accumulates up to g_HTemporalSamplecountAO*2 = 12 frames.
                 data.maxFrames = settings.temporalFrameCount > 0 ? 12 : 1;
                 data.rejection = settings.temporalRejection;
+                float temporalBaselineSpread = 2.0f * Mathf.Tan(60.0f * Mathf.Deg2Rad * 0.5f) / 1080.0f;
+                float temporalActualSpread = 2.0f * Mathf.Tan(cameraData.camera.fieldOfView * Mathf.Deg2Rad * 0.5f)
+                    / Mathf.Max(1.0f, cameraData.cameraTargetDescriptor.height);
+                data.pixelSpreadMultiplier = temporalActualSpread / Mathf.Max(temporalBaselineSpread, 1.0e-6f);
                 data.historyTexelSize = new Vector4(1.0f / Mathf.Max(1, historyWidth), 1.0f / Mathf.Max(1, historyHeight), historyWidth, historyHeight);
                 builder.UseTexture(data.current, AccessFlags.Read);
                 builder.UseTexture(data.previous, AccessFlags.Read);
@@ -630,6 +635,7 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.SetGlobalFloat(HistoryValidId, passData.useHistory ? 1.0f : 0.0f);
                     context.cmd.SetGlobalFloat(TemporalMaxFramesId, passData.maxFrames);
                     context.cmd.SetGlobalFloat(TemporalRejectionId, passData.rejection);
+                    context.cmd.SetGlobalFloat(PixelSpreadMultiplierId, passData.pixelSpreadMultiplier);
                     context.cmd.SetGlobalVector(HistoryPrevTexelSizeId, passData.historyTexelSize);
                     context.cmd.SetGlobalTexture(HoGTAOShaderConstants.AoInputTexId, passData.current);
                     context.cmd.SetGlobalTexture(HoGTAOShaderConstants.HistoryPrevTexId, passData.previous);

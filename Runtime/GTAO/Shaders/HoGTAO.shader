@@ -90,22 +90,18 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
 
         float HoGTAOSampleDepth(float2 uv, float lod)
         {
-            float clampedLod = clamp(lod, 0.0, 3.0);
-            if (clampedLod < 1.0)
-            {
-                float d0 = SAMPLE_TEXTURE2D_X(_HoGTAODepthMip0, sampler_PointClamp, uv).r;
-                float d1 = SAMPLE_TEXTURE2D_X(_HoGTAODepthMip1, sampler_PointClamp, uv).r;
-                return lerp(d0, d1, clampedLod);
-            }
-            if (clampedLod < 2.0)
-            {
-                float d1 = SAMPLE_TEXTURE2D_X(_HoGTAODepthMip1, sampler_PointClamp, uv).r;
-                float d2 = SAMPLE_TEXTURE2D_X(_HoGTAODepthMip2, sampler_PointClamp, uv).r;
-                return lerp(d1, d2, clampedLod - 1.0);
-            }
-            float d2Final = SAMPLE_TEXTURE2D_X(_HoGTAODepthMip2, sampler_PointClamp, uv).r;
-            float d3Final = SAMPLE_TEXTURE2D_X(_HoGTAODepthMip3, sampler_PointClamp, uv).r;
-            return lerp(d2Final, d3Final, clampedLod - 2.0);
+            // HTrace stores SampleData.LOD as uint.  The assignment from the
+            // logarithmic footprint therefore truncates to an integer, and
+            // the point sampler selects one mip rather than blending adjacent
+            // levels. Keep the same discrete footprint semantics here.
+            int mip = clamp((int)lod, 0, 3);
+            if (mip == 0)
+                return SAMPLE_TEXTURE2D_X(_HoGTAODepthMip0, sampler_PointClamp, uv).r;
+            if (mip == 1)
+                return SAMPLE_TEXTURE2D_X(_HoGTAODepthMip1, sampler_PointClamp, uv).r;
+            if (mip == 2)
+                return SAMPLE_TEXTURE2D_X(_HoGTAODepthMip2, sampler_PointClamp, uv).r;
+            return SAMPLE_TEXTURE2D_X(_HoGTAODepthMip3, sampler_PointClamp, uv).r;
         }
 
         bool HoGTAOIsFarClip(float rawDepth)
@@ -320,6 +316,17 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             float currentLinearDepth = currentSurfaceValid
                 ? LinearEyeDepth(currentRawDepth, _ZBufferParams)
                 : 0.0;
+            float3 currentPositionVS = currentSurfaceValid
+                ? HoGTAOViewPosition(input.texcoord, currentLinearDepth)
+                : 0.0;
+            float3 currentNormalWS = normalize((float3)geometry.rgb * 2.0 - 1.0);
+            float3 currentNormalVS = normalize(mul((float3x3)_HoGTAOViewMatrix, currentNormalWS));
+            currentNormalVS *= float3(1.0, -1.0, -1.0);
+            float3 currentViewDirection = normalize(-currentPositionVS);
+            float viewAlignment = 1.0 - abs(dot(currentNormalVS, currentViewDirection));
+            float depthThreshold = lerp(0.005, 0.10, pow(saturate(viewAlignment), 8.0))
+                * currentLinearDepth * max(_HoGTAOPixelSpreadMultiplier, 1.0e-4);
+            float planeThreshold = 0.005 * currentLinearDepth * max(_HoGTAOPixelSpreadMultiplier, 1.0e-4);
             float2 motion = _HoGTAOUseMotionVectors > 0.5
                 ? SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, input.texcoord).xy
                 : float2(0.0, 0.0);
@@ -350,15 +357,29 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             [unroll]
             for (int historyTap = 0; historyTap < 4; historyTap++)
             {
-                float2 historyUV = saturate((historyBase + historyOffsets[historyTap] + 0.5) * historyTexel);
+                float2 historyCoordTap = historyBase + historyOffsets[historyTap] + 0.5;
+                float inside = step(0.0, historyCoordTap.x)
+                    * step(historyCoordTap.x, historySize.x - 1.0)
+                    * step(0.0, historyCoordTap.y)
+                    * step(historyCoordTap.y, historySize.y - 1.0);
+                float2 historyUV = saturate(historyCoordTap * historyTexel);
                 half4 historyData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevTex, sampler_PointClamp, historyUV);
                 half4 normalData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevNormalTex, sampler_PointClamp, historyUV);
                 float historyRawDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_PointClamp, historyUV).r;
                 float historyLinearDepth = HoGTAOIsFarClip(historyRawDepth)
                     ? 0.0
                     : LinearEyeDepth(historyRawDepth, _ZBufferParams);
+                float3 historyPositionVS = !HoGTAOIsFarClip(historyRawDepth)
+                    ? HoGTAOViewPosition(historyUV, historyLinearDepth)
+                    : 0.0;
+                float3 historyNormalWS = normalize((float3)normalData.gba * 2.0 - 1.0);
+                float planeDistance = abs(dot(historyPositionVS - currentPositionVS, currentNormalVS));
+                float normalValid = step(0.5, dot(currentNormalWS, historyNormalWS));
                 float validDepth = currentSurfaceValid && !HoGTAOIsFarClip(historyRawDepth)
-                    ? step(abs(currentLinearDepth - historyLinearDepth), max(0.05 * currentLinearDepth, 0.05))
+                    ? inside
+                        * step(abs(currentLinearDepth - historyLinearDepth), max(depthThreshold, 1.0e-4))
+                        * step(planeDistance, max(planeThreshold, 1.0e-4))
+                        * normalValid
                     : 0.0;
                 float tapWeight = historyWeights[historyTap] * validDepth;
                 previousAccumulated += historyData.r * tapWeight;
@@ -378,12 +399,17 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 float fallbackLinearDepth = HoGTAOIsFarClip(fallbackRawDepth)
                     ? 0.0
                     : LinearEyeDepth(fallbackRawDepth, _ZBufferParams);
+                float3 fallbackPositionVS = !HoGTAOIsFarClip(fallbackRawDepth)
+                    ? HoGTAOViewPosition(fallbackUV, fallbackLinearDepth)
+                    : 0.0;
+                half4 fallbackNormalData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevNormalTex, sampler_PointClamp, fallbackUV);
                 float fallbackValid = currentSurfaceValid && !HoGTAOIsFarClip(fallbackRawDepth)
-                    ? step(abs(currentLinearDepth - fallbackLinearDepth), max(0.05 * currentLinearDepth, 0.05))
+                    ? step(abs(currentLinearDepth - fallbackLinearDepth), max(depthThreshold, 1.0e-4))
+                        * step(abs(dot(fallbackPositionVS - currentPositionVS, currentNormalVS)), max(planeThreshold, 1.0e-4))
+                        * step(0.5, dot(currentNormalWS, normalize((float3)fallbackNormalData.gba * 2.0 - 1.0)))
                     : 0.0;
                 previousAccumulated = fallbackData.r * fallbackValid;
                 previousCountAccumulated = fallbackData.g * max(_HoGTAOTemporalMaxFrames, 1.0) * fallbackValid;
-                half4 fallbackNormalData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevNormalTex, sampler_PointClamp, fallbackUV);
                 previousNormalAccumulated = ((float3)fallbackNormalData.gba * 2.0 - 1.0) * fallbackValid;
                 historyWeightSum = fallbackValid;
             }
