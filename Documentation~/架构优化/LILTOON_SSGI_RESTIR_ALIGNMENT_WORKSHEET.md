@@ -45,6 +45,7 @@ HoGeometryBuffer + opaque camera source
   -> firefly W clamp
   -> world-plane Poisson spatial reservoir reuse
   -> selected-ray re-march validation
+  -> temporal radiance accumulation + RGB AABB clamp
   -> HDR bilateral denoise
   -> _HoGITexture composite
 ```
@@ -66,7 +67,7 @@ HoGeometryBuffer + opaque camera source
 | R4 | Firefly | `HRestirSSGI.compute:272-334` | 7x7 luminance moments，限制 reservoir W，可单独关闭 | `部分对齐` | Firefly 开/关；亮点应减少但不应整体变暗 | 复核 first frames 权重和 moment 边界采样 |
 | R5 | Spatial candidate reuse | `HRestirSSGI.compute:338-440` | world-plane Poisson 8 邻居；plane/normal/depth/Gaussian 权重；reuse 可单独关闭 | `部分对齐` | Spatial reuse 开/关；边缘不能跨平面串光 | 使用稳定 Poisson buffer，替换当前 shader 常量表 |
 | R6 | Spatial validation | `HRestirSSGI.compute:445-498` | selected-ray 8-step re-march；失败回退中心 reservoir | `部分对齐` | 空间 validation 开/关；失败时不能黑屏 | 保存 spatial guidance/occlusion，支持第二轮独立 validation |
-| D0 | Temporal denoiser | `HDenoiserSSGI.compute:98-177` | 当前没有独立的 post-ReSTIR temporal radiance accumulation | `未开始` | 比较 Spatial resolve 与最终输出的样本稳定性 | 以 GI local RGB AABB/history sample count 为目标实现 |
+| D0 | Temporal denoiser | `HDenoiserSSGI.compute:98-177` | Ho 新增独立 denoised history、3x3 当前帧 RGB AABB clamp、motion/depth/normal rejection，位于 spatial reservoir resolve 之后 | `部分对齐` | Frame Debugger 对比 Spatial resolve、Temporal Accumulation、最终输出；静止 20 帧 | 加入 sample-count/temporal-invalidity，并调整 clamp 与 HTrace DirectClipToAABB 一致 |
 | D1 | Spatial denoiser | `HDenoiserSSGI.compute:244-343` | 一次 5x5 HDR bilateral，depth/normal/Gaussian，tone map | `部分对齐` | Raw GI 与最终 Off 对比；边缘与亮点不能扩散 | 对齐 HTrace 两轮 filter、plane/AO guidance |
 | D2 | Interpolation | `HInterpolationSSGI.compute`、`SSGIPassURP.cs:616-637` | 不适用：当前 Ho 固定 full-resolution 质量路径 | `不适用` | 不打开 checkerboard/半分辨率 | 只有引入 render scale 后再排期 |
 | O0 | Output | `ColorComposeURP.shader` | `_HoGITexture`，Before Post Processing composite | `部分对齐` | 关闭 Ho-SSGI 后无残留；Geometry coverage 控 receiver | 后续再接 lilToon 材质，不改 producer 契约 |
