@@ -289,6 +289,7 @@ namespace lilToon.URP.Extensions.SSGI
             public Material material;
             public TextureHandle geometry;
             public TextureHandle source;
+            public TextureHandle sky;
             public TextureHandle output;
             public TextureHandle reservoirColor;
             public TextureHandle reservoirAux;
@@ -500,6 +501,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.material = material;
                 data.geometry = geometry.normalDepthTexture;
                 data.source = sourceReprojected;
+                data.sky = geometry.skyTexture;
                 data.output = raw;
                 data.reservoirColor = rawReservoirColor;
                 data.reservoirAux = rawReservoirAux;
@@ -511,6 +513,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.sourceSaturation = Mathf.Clamp01(settings.sourceSaturation);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.UseTexture(data.source, AccessFlags.Read);
+                if (data.sky.IsValid()) builder.UseTexture(data.sky, AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(data.reservoirColor, 1, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(data.reservoirAux, 2, AccessFlags.WriteAll);
@@ -528,6 +531,8 @@ namespace lilToon.URP.Extensions.SSGI
                     passData.material.SetFloat(HoSSGIShaderConstants.SourceSaturationId, passData.sourceSaturation);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceId, passData.source);
+                    context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, passData.sky.IsValid() ? 1.0f : 0.0f);
+                    if (passData.sky.IsValid()) context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, passData.sky);
                     Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 0);
                 });
             }

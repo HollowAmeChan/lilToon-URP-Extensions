@@ -39,6 +39,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         TEXTURE2D_X(_HoSSGIGeometry);
         TEXTURE2D_X(_HoSSGISource);
         TEXTURE2D_X(_HoSSGISourceHistory);
+        TEXTURE2D_X(_HoGeometryBufferSkyTexture);
         TEXTURE2D_X(_HoGITexture);
         TEXTURE2D_X(_HoSSGIRawGI);
         TEXTURE2D_X(_HoSSGIRawGIInput);
@@ -66,6 +67,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         float _HoSSGIReservoirReuse;
         float _HoSSGIReservoirValidation;
         float _HoSSGIFireflyEnabled;
+        float _HoGeometryBufferSkyTextureValid;
 
         struct HoSSGIReservoir
         {
@@ -509,6 +511,18 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                         radiance += candidateColor;
                         hits += 1.0;
                         break;
+                    }
+                }
+
+                if (candidateHit < 0.5 && _HoGeometryBufferSkyTextureValid > 0.5)
+                {
+                    float3 skyNDC = ComputeNormalizedDeviceCoordinatesWithZ(rayEndWS, UNITY_MATRIX_VP);
+                    if (skyNDC.z >= 0.0 && skyNDC.z <= 1.0 && all(skyNDC.xy >= 0.0) && all(skyNDC.xy <= 1.0))
+                    {
+                        float3 fallbackSky = SAMPLE_TEXTURE2D_X(_HoGeometryBufferSkyTexture, sampler_LinearClamp, skyNDC.xy).rgb;
+                        float fallbackDistanceWeight = exp2(-2.0 * saturate(clippedRay)) * rcp(1.0 + clippedRay * clippedRay);
+                        candidateColor = HoSSGIColor(fallbackSky) * (3.14159265 * fallbackDistanceWeight * 0.5);
+                        candidateDistance = _HoSSGIRayLength;
                     }
                 }
 
