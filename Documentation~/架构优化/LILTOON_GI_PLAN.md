@@ -426,9 +426,8 @@ sourceValid = geometryCoverage
 Ho-SSGI 首版只需要 feature-local debug pass 和一个 `DebugMode` 枚举，至少包括：
 
 ```text
-gi.source-opaque
+gi.clean-base-source
 gi.source-valid
-gi.surface-color
 gi.geometry-coverage
 gi.depth-pyramid-mip0..4
 gi.ray-hit

@@ -49,7 +49,6 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
             if (_HoSSGIDebugMode == 3) return float4(geometry.rgb, 1);
             if (_HoSSGIDebugMode == 4) return float4(gi.rgb, 1);
             if (_HoSSGIDebugMode == 5) return float4(gi.a.xxx, 1);
-            if (_HoSSGIDebugMode == 6) return surfaceColor;
             return float4(source, 1);
         }
         ENDHLSL

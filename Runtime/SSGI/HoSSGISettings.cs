@@ -18,9 +18,7 @@ namespace lilToon.URP.Extensions.SSGI
         [InspectorName("Raw GI")]
         RawGI = 4,
         [InspectorName("Confidence")]
-        Confidence = 5,
-        [InspectorName("Surface Color")]
-        SurfaceColor = 6
+        Confidence = 5
     }
 
     [Serializable]
