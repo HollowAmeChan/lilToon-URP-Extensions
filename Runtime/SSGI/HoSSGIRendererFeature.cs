@@ -316,6 +316,7 @@ namespace lilToon.URP.Extensions.SSGI
             public Material material;
             public TextureHandle reservoirColor;
             public TextureHandle reservoirAux;
+            public TextureHandle reservoirRay;
             public TextureHandle geometry;
             public TextureHandle outputColor;
             public TextureHandle outputAux;
