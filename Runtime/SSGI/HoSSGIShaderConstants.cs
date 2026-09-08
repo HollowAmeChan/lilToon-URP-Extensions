@@ -9,7 +9,6 @@ namespace lilToon.URP.Extensions.SSGI
         public const string GITextureName = "_HoGITexture";
         public static readonly int GITextureId = Shader.PropertyToID(GITextureName);
         public static readonly int GeometryId = Shader.PropertyToID("_HoSSGIGeometry");
-        public static readonly int SourceId = Shader.PropertyToID("_HoSSGISource");
         public static readonly int SurfaceColorId = Shader.PropertyToID("_HoSSGISurfaceColor");
         public static readonly int RayCountId = Shader.PropertyToID("_HoSSGIRayCount");
         public static readonly int StepCountId = Shader.PropertyToID("_HoSSGIStepCount");

@@ -125,7 +125,6 @@ namespace lilToon.URP.Extensions.SSGI
         private sealed class PassData
         {
             public Material material;
-            public TextureHandle source;
             public TextureHandle geometry;
             public TextureHandle surfaceColor;
             public TextureHandle output;
@@ -153,10 +152,10 @@ namespace lilToon.URP.Extensions.SSGI
             if (settings == null || material == null) return;
             HoGeometryBufferRenderGraphResources geometry = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
             HoMetadataBufferRenderGraphResources metadata = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
-            TextureHandle source = metadata.surfaceColorTexture;
-            if (!source.IsValid() || !geometry.normalDepthTexture.IsValid() || !metadata.surfaceColorTexture.IsValid()) return;
+            TextureHandle surfaceColor = metadata.surfaceColorTexture;
+            if (!surfaceColor.IsValid() || !geometry.normalDepthTexture.IsValid()) return;
 
-            TextureDesc outputDesc = renderGraph.GetTextureDesc(source);
+            TextureDesc outputDesc = renderGraph.GetTextureDesc(surfaceColor);
             outputDesc.name = HoSSGIShaderConstants.GITextureName;
             outputDesc.format = GraphicsFormat.R16G16B16A16_SFloat;
             outputDesc.depthBufferBits = 0;
@@ -169,9 +168,8 @@ namespace lilToon.URP.Extensions.SSGI
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-SSGI Raw Trace", out PassData data, new ProfilingSampler("Ho-SSGI Raw Trace")))
             {
                 data.material = material;
-                data.source = source;
                 data.geometry = geometry.normalDepthTexture;
-                data.surfaceColor = metadata.surfaceColorTexture;
+                data.surfaceColor = surfaceColor;
                 data.output = output;
                 data.rayCount = Mathf.Clamp(settings.rayCount, 1, 32);
                 data.stepCount = Mathf.Clamp(settings.stepCount, 4, 64);
@@ -179,7 +177,6 @@ namespace lilToon.URP.Extensions.SSGI
                 data.thickness = Mathf.Clamp01(settings.thickness);
                 data.intensity = Mathf.Max(settings.intensity, 0.0f);
                 data.sourceSaturation = Mathf.Clamp01(settings.sourceSaturation);
-                builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.UseTexture(data.surfaceColor, AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
@@ -194,10 +191,9 @@ namespace lilToon.URP.Extensions.SSGI
                     passData.material.SetFloat(HoSSGIShaderConstants.ThicknessId, passData.thickness);
                     passData.material.SetFloat(HoSSGIShaderConstants.IntensityId, passData.intensity);
                     passData.material.SetFloat(HoSSGIShaderConstants.SourceSaturationId, passData.sourceSaturation);
-                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceId, passData.source);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SurfaceColorId, passData.surfaceColor);
-                    Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 0);
+                    Blitter.BlitTexture(context.cmd, passData.surfaceColor, new Vector4(1, 1, 0, 0), passData.material, 0);
                 });
             }
         }
@@ -259,7 +255,6 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
                 {
                     passData.material.SetInt(HoSSGIShaderConstants.DebugModeId, passData.debugMode);
-                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceId, passData.source);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SurfaceColorId, passData.surfaceColor);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GITextureId, passData.gi);

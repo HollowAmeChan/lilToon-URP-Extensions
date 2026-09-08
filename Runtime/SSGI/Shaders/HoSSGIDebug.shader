@@ -32,7 +32,6 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
             output.texcoord = GetFullScreenTriangleTexCoord(input.vertexID);
             return output;
         }
-        TEXTURE2D_X(_HoSSGISource);
         TEXTURE2D_X(_HoSSGIGeometry);
         TEXTURE2D_X(_HoSSGISurfaceColor);
         TEXTURE2D_X(_HoGITexture);
@@ -42,11 +41,11 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             float2 uv = input.texcoord;
             half4 geometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, uv);
-            float3 source = SAMPLE_TEXTURE2D_X(_HoSSGISource, sampler_LinearClamp, uv).rgb;
             float4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoSSGISurfaceColor, sampler_LinearClamp, uv);
+            float3 source = surfaceColor.rgb;
             float4 gi = SAMPLE_TEXTURE2D_X(_HoGITexture, sampler_LinearClamp, uv);
             if (_HoSSGIDebugMode == 1) return float4(source, 1);
-            if (_HoSSGIDebugMode == 2) return float4(step(0.0001, geometry.a).xxx, 1);
+            if (_HoSSGIDebugMode == 2) return float4((step(0.0001, geometry.a) * step(0.0001, surfaceColor.a)).xxx, 1);
             if (_HoSSGIDebugMode == 3) return float4(geometry.rgb, 1);
             if (_HoSSGIDebugMode == 4) return float4(gi.rgb, 1);
             if (_HoSSGIDebugMode == 5) return float4(gi.a.xxx, 1);

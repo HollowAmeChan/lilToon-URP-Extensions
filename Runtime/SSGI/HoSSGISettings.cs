@@ -7,12 +7,19 @@ namespace lilToon.URP.Extensions.SSGI
 {
     public enum HoSSGIDebugMode
     {
+        [InspectorName("关闭")]
         Off = 0,
+        [InspectorName("Clean Base Source")]
         Source = 1,
+        [InspectorName("Source Validity")]
         SourceValidity = 2,
+        [InspectorName("Geometry")]
         Geometry = 3,
+        [InspectorName("Raw GI")]
         RawGI = 4,
+        [InspectorName("Confidence")]
         Confidence = 5,
+        [InspectorName("Surface Color")]
         SurfaceColor = 6
     }
 

@@ -34,7 +34,6 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return output;
         }
 
-        TEXTURE2D_X(_HoSSGISource);
         TEXTURE2D_X(_HoSSGIGeometry);
         TEXTURE2D_X(_HoSSGISurfaceColor);
         int _HoSSGIRayCount;
@@ -110,8 +109,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     float rayDepth = centerPositionVS.z + rayDirVS.z * t * _HoSSGIRayLength;
                     if (abs(rayDepth - samplePositionVS.z) < max(_HoSSGIThickness, 0.01) && depthDelta > 0.0)
                     {
-                        float3 source = SAMPLE_TEXTURE2D_X(_HoSSGISource, sampler_LinearClamp, sampleUV).rgb;
-                        source *= lerp(1.0, sampleBase.rgb, 0.25);
+                        float3 source = sampleBase.rgb;
                         float cosine = saturate(dot(centerNormalWS, normalize((float3)sampleGeometry.rgb * 2.0 - 1.0)));
                         float distanceWeight = rcp(1.0 + t * t * 4.0);
                         radiance += HoSSGIColor(source) * cosine * distanceWeight;

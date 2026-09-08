@@ -97,7 +97,7 @@ namespace lilToon.URP.Extensions.Editor.SSGI
                 DrawProperty("debugInGameView");
                 if (debugMode != null && debugMode.enumValueIndex != (int)HoSSGIDebugMode.Off)
                 {
-                    EditorGUILayout.HelpBox("Debug preview replaces the current camera color after post-processing. It does not feed lilToon or DebugTile.", MessageType.Info);
+                    EditorGUILayout.HelpBox("The Volume debugMode overrides this Feature setting when its override checkbox is enabled. The preview replaces the current camera color after post-processing and does not feed lilToon or DebugTile.", MessageType.Info);
                 }
             }
         }
