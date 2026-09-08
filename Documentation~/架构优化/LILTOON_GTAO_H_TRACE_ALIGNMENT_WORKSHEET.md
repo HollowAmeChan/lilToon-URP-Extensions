@@ -18,6 +18,16 @@
 | 深度输入 | Ho-GeometryBuffer raw depth attachment；不使用 URP `CameraDepthTexture` |
 | AO Debug | 两边都先用 `pow=1` 看原始灰阶，再恢复 HTrace 对照指数 |
 
+### 当前工程资产快照
+
+| 资产 | 实际字段快照 | 结论 |
+|---|---|---|
+| HTrace `Global Volume Profile.asset` | `GTAOWorldSpaceRadius=5` 为局部 override；TracingMode、Slice/Step、Box 等多数字段未 override | 不能仅凭 Inspector 当前值判断 HTrace 实际 tracing mode，需记录 VolumeStack/Frame Debugger |
+| 工程 `DefaultVolumeProfile.asset` | `TracingMode=1`、Full、Slice4、Step32、TemporalRejection=0.8、Box2 | 可作为 Bitmask 高质量基线 |
+| Ho `Global Volume Profile.asset` | High、Full、World=3.46、Screen=15、Thickness=.202、Slice4/Step32、12 帧、Rejection=1、Box3 | 与 HTrace 场景快照并非同一组参数，截图不能直接得出算法结论 |
+
+> 第一轮必须复制一组“完全相同的数值”到双方；第二轮才比较各自默认/最高档。尤其是 `TracingMode`、`World/Screen Radius`、`TemporalRejection` 和 `BoxPassCount`，任何一项不同都可能改变接地感和噪声形状。
+
 > 必须区分两种比较：**同算法对比**把 HTrace 也锁为 Bitmasks，用来验证 Ho 的数值实现；**画面观感对比**保留 HTrace 默认 HorizonSearch，用来判断连续积分是否是方向感差异的来源。不能把两条基线的截图混成一个“质量档”结论。
 
 ## 状态定义
