@@ -739,8 +739,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             for (int i = 0; i < 8; i++)
             {
                 if (_HoSSGIReservoirReuse <= 0.5) break;
-                float2 point = mul(rotation, poisson[i] * worldRadius);
-                float3 samplePositionWS = centerPositionWS + tangent * point.x + bitangent * point.y;
+                float2 offsetWS = mul(rotation, poisson[i] * worldRadius);
+                float3 samplePositionWS = centerPositionWS + tangent * offsetWS.x + bitangent * offsetWS.y;
                 float3 sampleNDC = ComputeNormalizedDeviceCoordinatesWithZ(samplePositionWS, UNITY_MATRIX_VP);
                 float2 tapUV = sampleNDC.xy;
                 if (sampleNDC.z < 0.0 || sampleNDC.z > 1.0 || any(tapUV < 0.0) || any(tapUV > 1.0)) continue;
@@ -753,7 +753,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 float planeWeight = exp2(-100.0 * planeDistanceNormalized * planeDistanceNormalized);
                 float normalWeight = saturate(dot(centerNormal, sampleNormal));
                 float depthWeight = exp2(-32.0 * depthDelta * depthDelta);
-                float gaussianWeight = exp2(-dot(point, point) / max(2.0 * sigma * sigma, 1.0e-5));
+                float gaussianWeight = exp2(-dot(offsetWS, offsetWS) / max(2.0 * sigma * sigma, 1.0e-5));
                 float reuseWeight = planeWeight * normalWeight * depthWeight * gaussianWeight;
                 if (reuseWeight <= 0.001) continue;
 
