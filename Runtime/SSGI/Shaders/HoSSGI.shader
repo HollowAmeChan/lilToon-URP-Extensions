@@ -84,6 +84,19 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return lerp(luminance.xxx, value, _HoSSGISourceSaturation);
         }
 
+        float HoSSGIClipRayToScreen(float2 startUV, float2 endUV, out float2 clippedEndUV)
+        {
+            float2 direction = endUV - startUV;
+            float maxT = 1.0;
+            if (direction.x < 0.0) maxT = min(maxT, (0.001 - startUV.x) / direction.x);
+            if (direction.x > 0.0) maxT = min(maxT, (0.999 - startUV.x) / direction.x);
+            if (direction.y < 0.0) maxT = min(maxT, (0.001 - startUV.y) / direction.y);
+            if (direction.y > 0.0) maxT = min(maxT, (0.999 - startUV.y) / direction.y);
+            maxT = saturate(maxT);
+            clippedEndUV = startUV + direction * maxT;
+            return maxT;
+        }
+
         float4 Trace(Varyings input)
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -116,12 +129,22 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     + bitangent * (sin(phi) * sinTheta)
                     + centerNormalWS * cosTheta);
 
-                float3 rayStartWS = centerPositionWS + rayDirWS * 0.02;
+                // Match HTrace's footprint-aware normal bias to avoid self hits
+                // without requiring an excessively large thickness value.
+                float2 screenTexel = rcp(max(_ScreenParams.xy, 1.0));
+                float3 cornerPositionWS = HoSSGIWorldPosition(uv + screenTexel * 0.5, center.a);
+                float normalBias = abs(dot(cornerPositionWS - centerPositionWS, centerNormalWS)) * 2.0;
+                float3 normalForBias = dot(centerNormalWS, rayDirWS) < 0.0 ? -centerNormalWS : centerNormalWS;
+                float3 rayStartWS = centerPositionWS + normalForBias * max(normalBias, 0.01) + rayDirWS * 0.01;
                 float3 rayEndWS = centerPositionWS + rayDirWS * _HoSSGIRayLength;
                 float3 startNDC = ComputeNormalizedDeviceCoordinatesWithZ(rayStartWS, UNITY_MATRIX_VP);
                 float3 endNDC = ComputeNormalizedDeviceCoordinatesWithZ(rayEndWS, UNITY_MATRIX_VP);
                 float2 screenDelta = endNDC.xy - startNDC.xy;
                 if (dot(screenDelta, screenDelta) < 1.0e-8 || startNDC.z < 0.0 || startNDC.z > 1.0) continue;
+                float2 clippedEndUV;
+                float clippedRay = HoSSGIClipRayToScreen(startNDC.xy, endNDC.xy, clippedEndUV);
+                if (clippedRay <= 0.001) continue;
+                rayEndWS = lerp(rayStartWS, rayEndWS, clippedRay);
                 float thickness = max(_HoSSGIThickness, 0.01);
                 float previousDelta = -2.0 * thickness;
                 bool hasPrevious = true;
@@ -129,7 +152,9 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 [loop]
                 for (int stepIndex = 1; stepIndex <= steps; stepIndex++)
                 {
-                    float t = (stepIndex + noise.y) / steps;
+                    // HTrace marches quadratically, concentrating samples near
+                    // the receiver where screen-space intersections are stable.
+                    float t = pow(saturate((stepIndex + noise.y) / steps), 2.0);
                     float3 rayPositionWS = lerp(rayStartWS, rayEndWS, t);
                     float3 rayNDC = ComputeNormalizedDeviceCoordinatesWithZ(rayPositionWS, UNITY_MATRIX_VP);
                     float2 sampleUV = rayNDC.xy;

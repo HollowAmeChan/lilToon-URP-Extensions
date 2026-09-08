@@ -306,10 +306,10 @@ namespace lilToon.URP.Extensions.SSGI
                 data.geometry = geometry.normalDepthTexture;
                 data.source = source;
                 data.output = raw;
-                data.rayCount = Mathf.Clamp(settings.rayCount, 1, 32);
-                data.stepCount = Mathf.Clamp(settings.stepCount, 4, 64);
-                data.rayLength = Mathf.Max(settings.rayLength, 0.01f);
-                data.thickness = Mathf.Clamp01(settings.thickness);
+                data.rayCount = Mathf.Clamp(settings.rayCount, 1, 128);
+                data.stepCount = Mathf.Clamp(settings.stepCount, 4, 256);
+                data.rayLength = Mathf.Clamp(settings.rayLength, 0.01f, 32.0f);
+                data.thickness = Mathf.Clamp(settings.thickness, 0.0f, 4.0f);
                 data.sourceSaturation = Mathf.Clamp01(settings.sourceSaturation);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.UseTexture(data.source, AccessFlags.Read);
@@ -398,7 +398,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.source = temporal;
                 data.geometry = geometry.normalDepthTexture;
                 data.output = filtered;
-                data.radius = Mathf.Clamp(settings.spatialRadius, 0.5f, 4.0f);
+                data.radius = Mathf.Clamp(settings.spatialRadius, 0.5f, 8.0f);
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
