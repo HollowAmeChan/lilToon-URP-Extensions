@@ -20,6 +20,17 @@ Ho-SSGI（HTrace 改进）
 
 Brixelizer GI 只保留为后续方向。它是 compute/SDF/radiance-cache 路线，不是硬件 RTGI，但需要 DX12/Vulkan、HLSL CS 6.6 和较重的世界空间接入。[官方资料](https://gpuopen.com/fidelityfx-brixelizer/)
 
+### 0.1 SSGI 插入时机的取舍
+
+`BeforeRenderingOpaques` 和 `AfterRenderingOpaques` 不能同时得到同一种 source：
+
+- **After Opaques** 能读取当前帧已经完成 direct lighting 的 opaque/camera color，这是 HTrace 在 URP 中使用的 source；因此最容易得到有灯光存在感的 SSGI，但结果只能在 forward 材质之后做 composite。
+- **Before Opaques** 能让 lilToon 在当前帧 forward shading 中采样 GI，但当前帧 direct-light radiance 尚未生成。只读取 `SurfaceColor` 时，结果只是 base-color transfer/SSDO 风格的增强，不是完整 GI；要正确包含 Point Light、阴影、toon ramp、light cookie 和 HoShadowCast，必须另做 direct-source 评估或 source pass。
+
+因此 Ho-SSGI 的算法基线应先放在 **After Opaques**，用 clean GeometryBuffer/SurfaceColor 做 hit validity 和 outline 排除，再验证 HTrace 的 temporal/ReSTIR/denoise 链。等这条高质量 producer 稳定后，再决定是否为了“当帧喂给 lilToon”增加 direct source；不能把 clean base-only 的 pre-opaque 输出直接当作最终 GI。
+
+当前仓库里的 `BeforeRenderingOpaques` raw trace 先视为 source/几何排除实验，不代表最终 source 方案。
+
 ## 1. HTrace SSGI 的真实光照输入
 
 ### 1.1 当前 HTrace 怎么得到 hit radiance
