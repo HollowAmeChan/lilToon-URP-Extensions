@@ -59,9 +59,9 @@ namespace lilToon.URP.Extensions.GTAO
         public RenderPassEvent passEvent = RenderPassEvent.AfterRenderingOpaques;
 
         public HoGTAOQuality quality = HoGTAOQuality.High;
-        public HoGTAOResolution resolution = HoGTAOResolution.Half;
+        public HoGTAOResolution resolution = HoGTAOResolution.Full;
 
-        public int sliceCount = 2;
+        public int sliceCount = 4;
         public int stepCount = 32;
 
         // 追踪参数

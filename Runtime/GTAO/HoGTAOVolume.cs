@@ -57,7 +57,7 @@ namespace lilToon.URP.Extensions.GTAO
         public HoGTAOQualityParameter quality = new HoGTAOQualityParameter(HoGTAOQuality.High);
 
         [InspectorName("计算分辨率"), Tooltip("AO 计算分辨率。Half 输出后按深度/法线引导上采样。")]
-        public HoGTAOResolutionParameter resolution = new HoGTAOResolutionParameter(HoGTAOResolution.Half);
+        public HoGTAOResolutionParameter resolution = new HoGTAOResolutionParameter(HoGTAOResolution.Full);
 
         [Header("追踪")]
 
@@ -71,10 +71,10 @@ namespace lilToon.URP.Extensions.GTAO
         public ClampedFloatParameter thickness = new ClampedFloatParameter(0.2f, 0.05f, 1.0f);
 
         [InspectorName("切片数"), Tooltip("正交切片数量（每片按不同角度扫描）。2 是常规值，4 更全面。")]
-        public ClampedIntParameter sliceCount = new ClampedIntParameter(2, 1, 4);
+        public ClampedIntParameter sliceCount = new ClampedIntParameter(4, 1, 4);
 
         [InspectorName("每切片步数"), Tooltip("每切片 march 步数。步进按平方分布（近密远疏）。")]
-        public ClampedIntParameter stepCount = new ClampedIntParameter(16, 8, 32);
+        public ClampedIntParameter stepCount = new ClampedIntParameter(32, 8, 32);
 
         [InspectorName("距离衰减"), Tooltip("开启后，地平线样本按距离衰减混合，远处遮挡影响更柔和。")]
         public BoolParameter useAttenuation = new BoolParameter(true);
@@ -97,7 +97,7 @@ namespace lilToon.URP.Extensions.GTAO
         public ClampedFloatParameter filterAdaptivity = new ClampedFloatParameter(0.1f, 0.0f, 1.0f);
 
         [InspectorName("Box 趟数"), Tooltip("Box 滤波趟数（1-3）。每趟步长扩大，覆盖更大范围。")]
-        public ClampedIntParameter boxPassCount = new ClampedIntParameter(2, 1, 3);
+        public ClampedIntParameter boxPassCount = new ClampedIntParameter(3, 1, 3);
 
         public bool IsActive()
         {

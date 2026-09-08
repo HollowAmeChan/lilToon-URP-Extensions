@@ -30,13 +30,13 @@ namespace lilToon.URP.Extensions.GTAO
                     break;
 
                 default:
-                    settings.resolution = HoGTAOResolution.Half;
-                    settings.sliceCount = 2;
-                    settings.stepCount = 16;
-                    settings.temporalFrameCount = 8;
+                    settings.resolution = HoGTAOResolution.Full;
+                    settings.sliceCount = 4;
+                    settings.stepCount = 32;
+                    settings.temporalFrameCount = 12;
                     // HTrace's default high profile is SpatioTemporal + Box x2.
                     settings.spatialFilter = HoGTAOSpatialFilter.Box;
-                    settings.boxPassCount = 2;
+                    settings.boxPassCount = 3;
                     break;
             }
         }
