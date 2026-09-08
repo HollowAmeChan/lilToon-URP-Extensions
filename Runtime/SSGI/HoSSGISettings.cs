@@ -27,6 +27,14 @@ namespace lilToon.URP.Extensions.SSGI
         ReservoirM = 8,
         [InspectorName("Reservoir Hit")]
         ReservoirHit = 9,
+        [InspectorName("Reprojected Source")]
+        ReprojectedSource = 10,
+        [InspectorName("Spatial Guidance")]
+        SpatialGuidance = 11,
+        [InspectorName("Sample Count")]
+        SampleCount = 12,
+        [InspectorName("Temporal Invalidity")]
+        TemporalInvalidity = 13,
     }
 
     [Serializable]

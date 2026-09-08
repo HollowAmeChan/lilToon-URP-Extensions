@@ -17,6 +17,7 @@ namespace lilToon.URP.Extensions.SSGI
         public const string ReservoirOutputColorName = "_HoSSGIReservoirOutputColor";
         public const string ReservoirOutputAuxName = "_HoSSGIReservoirOutputAux";
         public const string ReservoirOutputRayName = "_HoSSGIReservoirOutputRay";
+        public const string CameraSourceName = "_HoSSGICameraSource";
         public const string SampleCountHistoryName = "_HoSSGISampleCountHistory";
         public const string InvalidityHistoryName = "_HoSSGIInvalidityHistory";
         public static readonly int GITextureId = Shader.PropertyToID(GITextureName);
@@ -30,8 +31,10 @@ namespace lilToon.URP.Extensions.SSGI
         public static readonly int ReservoirOutputColorId = Shader.PropertyToID(ReservoirOutputColorName);
         public static readonly int ReservoirOutputAuxId = Shader.PropertyToID(ReservoirOutputAuxName);
         public static readonly int ReservoirOutputRayId = Shader.PropertyToID(ReservoirOutputRayName);
+        public static readonly int CameraSourceId = Shader.PropertyToID(CameraSourceName);
         public static readonly int SampleCountHistoryId = Shader.PropertyToID(SampleCountHistoryName);
         public static readonly int InvalidityHistoryId = Shader.PropertyToID(InvalidityHistoryName);
+        public static readonly int CurrentInvalidityId = Shader.PropertyToID("_HoSSGICurrentInvalidity");
         public static readonly int GeometryId = Shader.PropertyToID("_HoSSGIGeometry");
         public static readonly int SourceId = Shader.PropertyToID("_HoSSGISource");
         public static readonly int SourceHistoryId = Shader.PropertyToID("_HoSSGISourceHistory");

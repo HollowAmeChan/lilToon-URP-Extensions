@@ -46,7 +46,8 @@ HoGeometryBuffer + opaque camera source
   -> world-plane Poisson spatial reservoir reuse
   -> selected-ray re-march validation
   -> temporal radiance accumulation + RGB AABB clamp
-  -> HDR bilateral denoise
+  -> spatial filter 1 (tone mapped bilateral)
+  -> spatial filter 2 (tone mapped bilateral)
   -> _HoGITexture composite
 ```
 
@@ -56,10 +57,10 @@ HoGeometryBuffer + opaque camera source
 |---|---|---|---|---|---|---|
 | G0 | 几何输入 | `GBufferPassURP.cs`、`HMain.hlsl` | `HoGeometryBuffer.normalDepthTexture`，RGB 法线、A 线性深度/coverage | `部分对齐` | Geometry、Source Validity；描边 coverage 必须为无效 | 保持 GeometryBuffer 为唯一几何真值 |
 | G1 | Motion | `PrePassURP.cs`、`HBUFFER_MOTION_VECTOR` | URP `motionVectorColor` | `部分对齐` | 运动物体重投影是否方向正确 | 记录 motion UV/Y 翻转与 render scale 契约 |
-| G2 | Camera history | `CameraHistorySystem`、`SSGIPassURP.SetupShared` | `HoSSGIHistory`，cameraId/尺寸变化失效，GI/depth/reservoir/source/denoised/metadata ping-pong；保存 previous inverse VP | `部分对齐` | 切换相机、改分辨率、重载场景后不能读旧历史 | 增加 camera cut/render-scale 显式 reset；保持 metadata 与 denoised history 同步 |
+| G2 | Camera history | `CameraHistorySystem`、`SSGIPassURP.SetupShared` | `HoSSGIHistory`，cameraId/尺寸变化失效，GI/depth/reservoir/source/denoised/metadata ping-pong；Temporal GI、source、denoised 都有 producer；保存 previous inverse VP | `部分对齐` | 切换相机、改分辨率、重载场景后不能读旧历史；首帧不应读 denoised history | 增加 camera cut/render-scale 显式 reset；保持 metadata 与 denoised history 同步 |
 | G3 | Depth/Hi-Z | `HDepthPyramid`、`GBufferPassURP` | 当前 Ho-SSGI 仍直接采 GeometryBuffer crossing；GTAO 有独立 pyramid | `未开始` | Frame Debugger 中暂时没有 Ho-SSGI Hi-Z 阶段 | 先完成 ReSTIR，再单独评估 Hi-Z，不和 reservoir 混改 |
 | T-Source | 光照源时域重投影 | `HTemporalReprojectionSSGI.compute:79-206`，先生成 `ColorReprojected` | Ho 新增 source history ping-pong，motion/depth/normal/previous-plane 四 tap 重投影，并把结果喂给 raw trace | `部分对齐` | Frame Debugger 对比 Source Reprojection/Raw Trace；灯光变化后看旧亮度残留 | 补 render-scale source history 坐标和亮度 moments |
-| T0 | Temporal color reprojection | `HTemporalReprojectionSSGI.compute:230-365` | Ho Temporal 使用 motion、四 tap history、depth/normal、source luminance | `部分对齐` | Temporal reuse 开/关；看历史拖影和上下边缘错位 | 补 render-scale/history UV 契约和 local source clamp |
+| T0 | Temporal color reprojection | `HTemporalReprojectionSSGI.compute:230-365` | Ho Temporal 使用 motion、四 tap history、depth/normal、source luminance；Temporal GI resolve 写入独立 GI history | `部分对齐` | Temporal reuse 开/关；看历史拖影和上下边缘错位；确认 GI history 在下一帧有效 | 补 render-scale/history UV 契约和 local source clamp |
 | R0 | Ray candidate | `HRenderSSGI.compute:71-145` | world-space cosine ray；稳定 16 帧低差异序列；命中 source；candidate target=luminance(candidate)；M 包含 miss；可选 GeometryBuffer sky fallback；命中增加 depth/front-face validation | `部分对齐` | Raw Trace 看原始噪声；开启 sky buffer 后看低命中区域是否有稳定 fallback；固定帧序列检查噪声是否可积累 | 接入 Hi-Z hit validation、AO/occlusion guidance，确认 candidate 能量归一化 |
 | R1 | Reservoir payload | `HReservoirSSGI.hlsl:28-122` | Color/Wsum/M/target/hit/distance + direction/originNormal，RGBAHalf MRT | `部分对齐` | Reservoir Weight/M/Hit；检查 target、M、W 是否合理 | 评估整数 packed layout；目前不急于复制 HTrace bit packing |
 | R2 | Temporal reservoir | `HRestirSSGI.compute:81-123` | 四 tap history reservoir merge，history M cap=100，reuse 可单独关闭 | `部分对齐` | Temporal reuse 开/关；静止画面噪声下降且灯光变化能响应 | 增加 HTrace 风格 reprojected hit validity 和 selected target 重评估 |
@@ -67,8 +68,8 @@ HoGeometryBuffer + opaque camera source
 | R4 | Firefly | `HRestirSSGI.compute:272-334` | 7x7 luminance moments，按 metadata sample count 调整阈值，限制 reservoir W，可单独关闭 | `部分对齐` | Firefly 开/关；亮点应减少但不应整体变暗 | 复核 first frames 权重和 moment 边界采样 |
 | R5 | Spatial candidate reuse | `HRestirSSGI.compute:338-440` | 独立 `Ho-SSGI Spatial Resampling` pass；world-plane Poisson 8 邻居；plane/normal/depth/Gaussian 权重；输出 spatial reservoir 和 confidence/coverage guidance MRT | `部分对齐` | Frame Debugger 单独看 Spatial Resampling；Spatial reuse 开/关；边缘不能跨平面串光 | 使用共享稳定 Poisson buffer，补 AO scale 和 adaptive radius |
 | R6 | Spatial validation | `HRestirSSGI.compute:445-498` | 独立 `Ho-SSGI Spatial Validation` pass；读取 guidance，selected-ray 8-step re-march；失败回退 temporal GI | `部分对齐` | Frame Debugger 单独看 Spatial Validation；失败时不能黑屏 | 保存 spatial occlusion/invalidity，补 HTrace 第二轮反馈 |
-| D0 | Temporal denoiser | `HDenoiserSSGI.compute:98-177` | 独立 denoised history、3x3 当前帧 RGB AABB clamp、motion/depth/normal/previous-plane rejection；独立 sample-count/invalidity metadata history | `部分对齐` | Frame Debugger 对比 Spatial resolve、Temporal Metadata、Temporal Accumulation、最终输出；静止 20 帧 | 调整 clamp 与 HTrace DirectClipToAABB 一致，并把 invalidity 反馈给 spatial |
-| D1 | Spatial denoiser | `HDenoiserSSGI.compute:244-343` | 一次 5x5 HDR bilateral，depth/normal/Gaussian，tone map | `部分对齐` | Raw GI 与最终 Off 对比；边缘与亮点不能扩散 | 对齐 HTrace 两轮 filter、plane/AO guidance |
+| D0 | Temporal denoiser | `HDenoiserSSGI.compute:98-177` | 独立 denoised history；3x3 moments、DirectClipToAABB、历史 sample count 的 `1-1/N` 权重、motion/depth/normal/previous-plane rejection；独立 sample-count/invalidity metadata history；首帧使用本帧开始时的 history validity | `部分对齐` | Frame Debugger 对比 Spatial resolve、Temporal Metadata、Temporal Accumulation、最终输出；静止 20 帧；首帧/相机切换不应有随机残留 | 让 invalidity 传播语义与 HTrace 的历史有效率一致，并补曝光变化重置 |
+| D1 | Spatial denoiser | `HDenoiserSSGI.compute:244-343` | 两轮 spatial filter；HTrace 风格 maximum-channel tone map/inverse；normal/depth/world-plane/Gaussian/spatial-guidance 权重 | `部分对齐` | Raw GI 与最终 Off 对比；边缘与亮点不能扩散；两轮 pass 都应出现在 Frame Debugger | 用 AO adaptive scale 和 HTrace bit guidance 替换当前 confidence/coverage guidance |
 | D2 | Interpolation | `HInterpolationSSGI.compute`、`SSGIPassURP.cs:616-637` | 不适用：当前 Ho 固定 full-resolution 质量路径 | `不适用` | 不打开 checkerboard/半分辨率 | 只有引入 render scale 后再排期 |
 | O0 | Output | `ColorComposeURP.shader` | `_HoGITexture`，Before Post Processing composite | `部分对齐` | 关闭 Ho-SSGI 后无残留；Geometry coverage 控 receiver | 后续再接 lilToon 材质，不改 producer 契约 |
 
@@ -128,7 +129,7 @@ Confidence      = producer confidence，不等于 reservoir M
 1. 先用 `Raw Trace` 确认 candidate、深度 crossing 和 source 正确；
 2. 开 temporal reuse，验证四 tap history、M cap 和 lighting validation；
 3. 开 spatial reuse，验证 world-plane Poisson 与 selected-ray re-march；
-4. 开 Firefly 与 bilateral denoise，比较 Raw GI/最终 Off；
+4. 开 Firefly 与两轮 spatial filter，比较 Raw GI/最终 Off；
 5. 只有上述四步稳定后，才考虑 Hi-Z、AO guidance、recurrent blur 或 lilToon 内部接收。
 
 ## 暂不做

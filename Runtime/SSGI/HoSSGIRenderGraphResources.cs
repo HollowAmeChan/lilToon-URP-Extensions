@@ -10,8 +10,12 @@ namespace lilToon.URP.Extensions.SSGI
         public TextureHandle giTexture = TextureHandle.nullHandle;
         public TextureHandle rawGiTexture = TextureHandle.nullHandle;
         public TextureHandle sourceTexture = TextureHandle.nullHandle;
+        public TextureHandle cameraSourceTexture = TextureHandle.nullHandle;
         public TextureHandle reservoirColorTexture = TextureHandle.nullHandle;
         public TextureHandle reservoirAuxTexture = TextureHandle.nullHandle;
+        public TextureHandle spatialGuidanceTexture = TextureHandle.nullHandle;
+        public TextureHandle sampleCountTexture = TextureHandle.nullHandle;
+        public TextureHandle invalidityTexture = TextureHandle.nullHandle;
 
         public bool HasGI => giTexture.IsValid();
 
@@ -20,8 +24,12 @@ namespace lilToon.URP.Extensions.SSGI
             giTexture = TextureHandle.nullHandle;
             rawGiTexture = TextureHandle.nullHandle;
             sourceTexture = TextureHandle.nullHandle;
+            cameraSourceTexture = TextureHandle.nullHandle;
             reservoirColorTexture = TextureHandle.nullHandle;
             reservoirAuxTexture = TextureHandle.nullHandle;
+            spatialGuidanceTexture = TextureHandle.nullHandle;
+            sampleCountTexture = TextureHandle.nullHandle;
+            invalidityTexture = TextureHandle.nullHandle;
         }
     }
 }

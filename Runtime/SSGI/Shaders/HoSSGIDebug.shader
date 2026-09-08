@@ -35,10 +35,14 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
 
         TEXTURE2D_X(_HoSSGIGeometry);
         TEXTURE2D_X(_HoSSGISource);
+        TEXTURE2D_X(_HoSSGICameraSource);
         TEXTURE2D_X(_HoSSGIRawGI);
         TEXTURE2D_X(_HoGITexture);
         TEXTURE2D_X(_HoSSGIReservoirColor);
         TEXTURE2D_X(_HoSSGIReservoirAux);
+        TEXTURE2D_X(_HoSSGISpatialGuidance);
+        TEXTURE2D_X(_HoSSGISampleCountHistory);
+        TEXTURE2D_X(_HoSSGIInvalidityHistory);
         int _HoSSGIDebugMode;
         float4 Frag(Varyings input) : SV_Target
         {
@@ -46,6 +50,7 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
             float2 uv = input.texcoord;
             half4 geometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, uv);
             float3 source = SAMPLE_TEXTURE2D_X(_HoSSGISource, sampler_LinearClamp, uv).rgb;
+            float3 cameraSource = SAMPLE_TEXTURE2D_X(_HoSSGICameraSource, sampler_LinearClamp, uv).rgb;
             float4 rawGi = SAMPLE_TEXTURE2D_X(_HoSSGIRawGI, sampler_LinearClamp, uv);
             float4 gi = SAMPLE_TEXTURE2D_X(_HoGITexture, sampler_LinearClamp, uv);
             half4 reservoirColor = SAMPLE_TEXTURE2D_X(_HoSSGIReservoirColor, sampler_PointClamp, uv);
@@ -67,6 +72,15 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
                 return float4((1.0 - exp(-max(reservoirAux.x, 0.0) / 8.0)).xxx, 1.0);
             if (_HoSSGIDebugMode == 9)
                 return float4(saturate(reservoirAux.z).xxx, 1.0);
+            if (_HoSSGIDebugMode == 10) return float4(cameraSource, 1.0);
+            if (_HoSSGIDebugMode == 11) return SAMPLE_TEXTURE2D_X(_HoSSGISpatialGuidance, sampler_LinearClamp, uv);
+            if (_HoSSGIDebugMode == 12)
+            {
+                float count = SAMPLE_TEXTURE2D_X(_HoSSGISampleCountHistory, sampler_PointClamp, uv).r;
+                return float4((1.0 - exp(-count / 8.0)).xxx, 1.0);
+            }
+            if (_HoSSGIDebugMode == 13)
+                return SAMPLE_TEXTURE2D_X(_HoSSGIInvalidityHistory, sampler_LinearClamp, uv);
             return float4(source, 1);
         }
         ENDHLSL
