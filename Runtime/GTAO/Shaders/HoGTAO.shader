@@ -368,15 +368,10 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             }
             half depthValid = step(0.0001h, geometry.a) * step(1.0e-5, historyWeightSum);
             half depthAgreement = step(1.0e-5, historyWeightSum);
-            // Keep normal agreement observable through the stored history, but
-            // do not let a stale/legacy history payload invalidate the entire
-            // frame. HTrace's primary reprojection validity is depth/footprint
-            // coverage; normal rejection is applied only after that history is
-            // established and version-compatible.
             half normalAgreement = previousCount > 0.5h
                 ? step(0.5h, dot(currentNormal, previousNormal))
                 : 1.0h;
-            half accepted = saturate(_HoGTAOHistoryValid) * depthValid * depthAgreement;
+            half accepted = saturate(_HoGTAOHistoryValid) * depthValid * depthAgreement * normalAgreement;
             half sampleCount = min(previousCount + 1.0h, max(_HoGTAOTemporalMaxFrames, 1.0));
             sampleCount = lerp(1.0h, sampleCount, accepted);
 

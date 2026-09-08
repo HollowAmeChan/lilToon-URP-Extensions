@@ -164,7 +164,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             normal /= max(abs(normal.x) + abs(normal.y) + abs(normal.z), 1.0e-6);
             if (normal.z < 0.0)
             {
-                normal.xy = (1.0 - abs(normal.yx)) * (normal.xy >= 0.0 ? 1.0 : -1.0);
+                float2 signXY = float2(normal.x >= 0.0 ? 1.0 : -1.0, normal.y >= 0.0 ? 1.0 : -1.0);
+                normal.xy = (1.0 - abs(normal.yx)) * signXY;
             }
             return normal.xy * 0.5 + 0.5;
         }
@@ -174,7 +175,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float3 normal = float3(encoded * 2.0 - 1.0, 1.0 - abs(encoded.x * 2.0 - 1.0) - abs(encoded.y * 2.0 - 1.0));
             if (normal.z < 0.0)
             {
-                normal.xy = (1.0 - abs(normal.yx)) * (normal.xy >= 0.0 ? 1.0 : -1.0);
+                float2 signXY = float2(normal.x >= 0.0 ? 1.0 : -1.0, normal.y >= 0.0 ? 1.0 : -1.0);
+                normal.xy = (1.0 - abs(normal.yx)) * signXY;
             }
             return normalize(normal);
         }
