@@ -10,7 +10,6 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         HLSLINCLUDE
         #pragma target 4.5
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
         struct Attributes
         {
@@ -36,7 +35,9 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         }
 
         TEXTURE2D_X(_HoSSGIGeometry);
-        TEXTURE2D_X(_HoSSGISurfaceColor);
+        TEXTURE2D_X(_HoSSGISource);
+        TEXTURE2D_X(_HoGITexture);
+        TEXTURE2D_X(_BlitTexture);
         int _HoSSGIRayCount;
         int _HoSSGIStepCount;
         float _HoSSGIRayLength;
@@ -72,41 +73,12 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return lerp(luminance.xxx, value, _HoSSGISourceSaturation);
         }
 
-        float3 HoSSGIGetDirectLighting(float3 positionWS, float3 normalWS)
-        {
-            Light mainLight = GetMainLight(TransformWorldToShadowCoord(positionWS));
-            float3 lighting = mainLight.color
-                * (mainLight.distanceAttenuation * mainLight.shadowAttenuation)
-                * saturate(dot(normalWS, mainLight.direction));
-
-            #if defined(_ADDITIONAL_LIGHTS) || defined(_CLUSTER_LIGHT_LOOP)
-                InputData inputData = (InputData)0;
-                inputData.positionWS = positionWS;
-                inputData.normalizedScreenSpaceUV = ComputeNormalizedDeviceCoordinatesWithZ(positionWS, UNITY_MATRIX_VP).xy;
-                uint additionalLightCount = GetAdditionalLightsCount();
-                #if USE_CLUSTER_LIGHT_LOOP
-                    additionalLightCount = 1u;
-                #endif
-                LIGHT_LOOP_BEGIN(additionalLightCount)
-                {
-                    Light light = GetAdditionalLight(lightIndex, positionWS);
-                    lighting += light.color
-                        * (light.distanceAttenuation * light.shadowAttenuation)
-                        * saturate(dot(normalWS, light.direction));
-                }
-                LIGHT_LOOP_END
-            #endif
-
-            return max(lighting, 0.0);
-        }
-
         float4 Trace(Varyings input)
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             float2 uv = input.texcoord;
             half4 center = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, uv);
-            half4 centerBase = SAMPLE_TEXTURE2D_X(_HoSSGISurfaceColor, sampler_PointClamp, uv);
-            if (center.a < 0.0001 || centerBase.a < 0.0001) return 0;
+            if (center.a < 0.0001) return 0;
 
             float3 centerNormalWS = normalize((float3)center.rgb * 2.0 - 1.0);
             float3 centerNormalVS = HoSSGIViewNormal(centerNormalWS);
@@ -119,8 +91,6 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             int steps = max(4, _HoSSGIStepCount);
             float3 tangent = HoSSGIBuildTangent(centerNormalVS);
             float3 bitangent = normalize(cross(centerNormalVS, tangent));
-            float3 centerPositionWS = mul(UNITY_MATRIX_I_V, float4(centerPositionVS, 1.0)).xyz;
-
             [loop]
             for (int ray = 0; ray < rays; ray++)
             {
@@ -155,28 +125,32 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     if (any(sampleUV <= 0.001) || any(sampleUV >= 0.999)) break;
                     if (distance(sampleUV * _ScreenParams.xy, pixel) < 1.5) continue;
                     half4 sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
-                    half4 sampleBase = SAMPLE_TEXTURE2D_X(_HoSSGISurfaceColor, sampler_PointClamp, sampleUV);
-                    if (sampleGeometry.a < 0.0001 || sampleBase.a < 0.0001) continue;
+                    float thickness = max(_HoSSGIThickness, 0.01);
+                    if (sampleGeometry.a < 0.0001)
+                    {
+                        // Invalid coverage is an empty segment. Resetting the
+                        // previous sign lets the first valid surface after a
+                        // gap register as a hit instead of being skipped.
+                        previousDelta = -2.0 * thickness;
+                        hasPrevious = true;
+                        continue;
+                    }
                     float3 samplePositionVS = HoSSGIViewPosition(sampleUV, sampleGeometry.a);
                     float rayDepth = -rayPositionVS.z;
                     float sampleDepth = -samplePositionVS.z;
                     float depthDelta = rayDepth - sampleDepth;
-                    float thickness = max(_HoSSGIThickness, 0.01);
                     bool crossedSurface = hasPrevious && depthDelta >= -thickness && previousDelta < -thickness;
                     previousDelta = depthDelta;
                     hasPrevious = true;
                     if (crossedSurface)
                     {
-                        float3 source = sampleBase.rgb;
+                        float3 source = SAMPLE_TEXTURE2D_X(_HoSSGISource, sampler_PointClamp, sampleUV).rgb;
                         float3 sampleNormalWS = normalize((float3)sampleGeometry.rgb * 2.0 - 1.0);
                         float3 sampleNormalVS = HoSSGIViewNormal(sampleNormalWS);
                         float3 lightDirection = normalize(samplePositionVS - centerPositionVS);
-                        float receiverCosine = saturate(dot(centerNormalVS, lightDirection));
                         float sourceCosine = saturate(dot(sampleNormalVS, -lightDirection));
-                        float distanceWeight = exp2(-3.0 * t) * rcp(1.0 + t * t * 2.0);
-                        float3 samplePositionWS = mul(UNITY_MATRIX_I_V, float4(samplePositionVS, 1.0)).xyz;
-                        float3 directLighting = HoSSGIGetDirectLighting(samplePositionWS, sampleNormalWS);
-                        radiance += HoSSGIColor(source * directLighting) * receiverCosine * sourceCosine * distanceWeight;
+                        float distanceWeight = exp2(-2.0 * t) * rcp(1.0 + t * t);
+                        radiance += HoSSGIColor(source) * (3.14159265 * sourceCosine * distanceWeight);
                         hits += 1.0;
                         break;
                     }
@@ -187,7 +161,17 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return float4(radiance / max(rays, 1), confidence);
         }
 
-        float4 Frag(Varyings input) : SV_Target { return Trace(input) * float4(_HoSSGIIntensity.xxx, 1); }
+        float4 Frag(Varyings input) : SV_Target { return Trace(input); }
+
+        float4 Composite(Varyings input) : SV_Target
+        {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+            half4 color = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord);
+            half4 gi = SAMPLE_TEXTURE2D_X(_HoGITexture, sampler_LinearClamp, input.texcoord);
+            half4 geometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, input.texcoord);
+            half receiverValid = step(0.0001h, geometry.a);
+            return half4(color.rgb + gi.rgb * (_HoSSGIIntensity * receiverValid), color.a);
+        }
         ENDHLSL
 
         Pass
@@ -196,8 +180,15 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Frag
-            #pragma multi_compile _ _ADDITIONAL_LIGHTS
-            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Ho-SSGI Composite"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment Composite
             ENDHLSL
         }
     }

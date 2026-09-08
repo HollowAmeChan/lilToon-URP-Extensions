@@ -9,7 +9,7 @@ namespace lilToon.URP.Extensions.SSGI
     {
         [InspectorName("关闭")]
         Off = 0,
-        [InspectorName("Clean Base Source")]
+        [InspectorName("Opaque Camera Source")]
         Source = 1,
         [InspectorName("Source Validity")]
         SourceValidity = 2,
@@ -19,15 +19,14 @@ namespace lilToon.URP.Extensions.SSGI
         RawGI = 4,
         [InspectorName("Confidence")]
         Confidence = 5,
-        [InspectorName("Direct Source")]
-        DirectSource = 6
     }
 
     [Serializable]
     public sealed class HoSSGISettings
     {
         public bool enabled = true;
-        public RenderPassEvent passEvent = RenderPassEvent.BeforeRenderingOpaques;
+        public RenderPassEvent passEvent = RenderPassEvent.AfterRenderingOpaques;
+        public RenderPassEvent compositePassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
         [Range(1, 32)] public int rayCount = 8;
         [Range(4, 64)] public int stepCount = 24;
         [Min(0.01f)] public float rayLength = 4.0f;

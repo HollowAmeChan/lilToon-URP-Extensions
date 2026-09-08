@@ -35,7 +35,7 @@ namespace lilToon.URP.Extensions.Editor.SSGI
             }
 
             EditorGUILayout.HelpBox(
-                "Ho-SSGI reads the clean MetadataBuffer base after GeometryBuffer/MetadataBuffer and publishes _HoGITexture before opaque shading. Keep GeometryBuffer and MetadataBuffer above this feature in the Renderer list.",
+                "Ho-SSGI reads the opaque camera color after opaques and the shared Ho-GeometryBuffer. It composites _HoGITexture as a pure post-process; MetadataBuffer is not required.",
                 MessageType.Info);
 
             DrawRuntime();
@@ -58,7 +58,7 @@ namespace lilToon.URP.Extensions.Editor.SSGI
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty("enabled");
-                EditorGUILayout.HelpBox("GeometryBuffer and MetadataBuffer must be listed before Ho-SSGI at BeforeRenderingOpaques. Ho-SSGI uses the clean MetadataBuffer base source so lilToon can consume the result during opaque shading.", MessageType.None);
+                EditorGUILayout.HelpBox("Ho-SSGI runs after opaques so it can sample the lit opaque camera color. GeometryBuffer must run before it to provide the no-outline geometry test.", MessageType.None);
                 DrawProperty("intensity");
                 DrawProperty("sourceSaturation");
             }
@@ -112,6 +112,8 @@ namespace lilToon.URP.Extensions.Editor.SSGI
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty("passEvent");
+                DrawProperty("compositePassEvent");
+                EditorGUILayout.HelpBox("The trace event is clamped between AfterRenderingOpaques and BeforeRenderingPostProcessing; the composite event is clamped before post-processing.", MessageType.None);
                 DrawProperty("shader");
                 DrawProperty("debugShader");
             }

@@ -10,7 +10,7 @@
 
 ```text
 Ho-SSGI（HTrace 改进）
-    -> lilToon GI 接收与 NPR 风格化
+    -> BeforeRenderingPostProcessing 合成
     -> 朱木古堂验收
     -> 保持同一 GI 输出契约
     -> 后续可替换为 Brixelizer GI
@@ -27,9 +27,7 @@ Brixelizer GI 只保留为后续方向。它是 compute/SDF/radiance-cache 路�
 - **After Opaques** 能读取当前帧已经完成 direct lighting 的 opaque/camera color，这是 HTrace 在 URP 中使用的 source；因此最容易得到有灯光存在感的 SSGI，但结果只能在 forward 材质之后做 composite。
 - **Before Opaques** 能让 lilToon 在当前帧 forward shading 中采样 GI，但当前帧 direct-light radiance 尚未生成。只读取 `SurfaceColor` 时，结果只是 base-color transfer/SSDO 风格的增强，不是完整 GI；要正确包含 Point Light、阴影、toon ramp、light cookie 和 HoShadowCast，必须另做 direct-source 评估或 source pass。
 
-因此 Ho-SSGI 的算法基线应先放在 **After Opaques**，用 clean GeometryBuffer/SurfaceColor 做 hit validity 和 outline 排除，再验证 HTrace 的 temporal/ReSTIR/denoise 链。等这条高质量 producer 稳定后，再决定是否为了“当帧喂给 lilToon”增加 direct source；不能把 clean base-only 的 pre-opaque 输出直接当作最终 GI。
-
-当前仓库里的 `BeforeRenderingOpaques` raw trace 先视为 source/几何排除实验，不代表最终 source 方案。
+因此 Ho-SSGI 的算法基线放在 **After Opaques**：用 GeometryBuffer 做 hit validity 和 outline 排除，读取已经完成 direct lighting 的 opaque camera color，再验证 HTrace 的 temporal/ReSTIR/denoise 链。Ho-SSGI 作为纯后处理 producer，不向当帧 lilToon forward 材质提供 GI。
 
 ## 1. HTrace SSGI 的真实光照输入
 
@@ -136,28 +134,26 @@ hitUV
 
 描边仍然存在于 camera/opaque color，但它对应的 GeometryBuffer coverage 为空，会在 source 采样前被拒绝。它也不会出现在 Ho-SSGI 的 depth pyramid 中，因此不会作为 caster 遮挡或反弹。
 
-当前 producer vertical slice 在 `BeforeRenderingOpaques` 运行，因此 source 使用 `HoMetadataBufferSurfaceColor` 的 clean base。opaque/direct-light source 留到后续独立 source pass；不能在 Opaques 之前读取最终 opaque color。
+当前 producer vertical slice 在 `AfterRenderingOpaques` 运行，source 是已经完成 direct lighting 的 opaque camera color。GeometryBuffer 仍然在更早的时机生成，用来拒绝描边壳和其他没有真实几何覆盖的像素。
 
 透明/OIT 第一版不进入 GI caster/receiver 域，使用 APV fallback。这样先消除 HTrace 的透明拖影问题，再单独研究透明 GI，不把透明路径混进主 SSGI 验证。
 
 ### 1.6 现有双语义绘制就是干净 source 的基础
 
-主 forward pass 把主体和 outline 一起画进 camera color；`HoGeometryBuffer` 和 `HoMetadataBufferSurfaceColor` 则通过独立的 base geometry pass 再画一次主体：
+主 forward pass 把主体和 outline 一起画进 camera color；`HoGeometryBuffer` 则通过独立的 base geometry pass 再画一次主体：
 
 ```text
 camera opaque color       = 后续 direct-light source，可能包含 outline
 HoGeometryBuffer          = 无 outline 的 normal/depth/coverage
-HoMetadataBufferSurfaceColor = 无 outline 的纯色/coverage
 ```
 
-这不是为了 GI 新增一张 no-outline RT，而是复用已经存在的语义绘制成本。Ho-SSGI 可以按以下方式使用它们：
+这不是为了 GI 新增一张 no-outline RT，而是复用已经存在的几何绘制成本。Ho-SSGI 使用它们的方式是：
 
 - GeometryBuffer 决定 hit/receiver 是否是真实几何；
-- SurfaceColor 提供干净 albedo 和覆盖率；
-- 后续 direct-light source 提供已着色 radiance；
-- 三者在 hit UV 上做 coverage/depth 一致性校验后才进入 GI。
+- opaque camera color 提供已经着色的 radiance；
+- 两者在 hit UV 上做 coverage/depth 一致性校验后才进入 GI。
 
-SurfaceColor 本身是纯色，不等于间接光。它适合做 source 的 albedo/validity，不能单独替代 direct-light radiance。另一个限制是没有 `HoMetadataBufferSurfaceColor` pass 的材质不会自动获得这张颜色图，因此 fallback/非 lilToon 材质需要走 opaque color 或 APV fallback。
+`HoMetadataBufferSurfaceColor` 不再是 Ho-SSGI 的输入。MetadataBuffer 继续服务角色语义、AOV 和其他后期 feature。
 
 ## 2. Ho-SSGI v1 的核心设计
 
@@ -174,21 +170,15 @@ Ho-SSGI 不创建 HTrace 那套重复 GBuffer、重复 depth prepass 和独立 r
 
 MetadataBuffer 不属于 GI 输入。它继续作为角色语义、CharacterSpecialization、SSS、AOV 和 ScreenProcess 的来源。当前它已经可以在 `BeforeRenderingOpaques` 生成，但 GI 不读取它。
 
-### 2.2 新增一个干净的 GI source
+### 2.2 GI source
 
-Ho-SSGI 不能继续无条件读取最终 camera color。需要一个 source 选择：
-
-1. **首选**：lilToon 输出的不含 outline 的直接光照 source；
-2. **过渡**：读取 opaque color，并用 GeometryBuffer coverage 排除 outline 和无效几何；
-3. **fallback**：APV/天空或上一帧有效 radiance。
-
-这个 source 要表达的是“命中点可以向外贡献的已经着色辐射”，不是单纯 albedo。对于 lilToon，最合理的形式是：
+Ho-SSGI 读取 After Opaques 时的 opaque camera color，并用 GeometryBuffer coverage、法线和深度一致性排除描边与无效几何。这个 source 表达的是“命中点可以向外贡献的已经着色辐射”，不是单纯 albedo：
 
 ```text
-GI source = toon direct diffuse + 可控环境/主光补光
+GI source = opaque camera color（包含 toon direct lighting）
 ```
 
-不需要把每个 Light 对象的参数单独塞进 SSGI。灯光属性应该在 source pass 里完成直接光照计算，SSGI 只负责：
+不需要把每个 Light 对象的参数单独塞进 SSGI。灯光属性已经由 opaque forward pass 完成，SSGI 只负责：
 
 ```text
 source radiance
@@ -214,16 +204,16 @@ source radiance
 
 ```text
 HoGeometryBuffer (250)
-    -> HoMetadataBuffer (250)
-    -> GI source（clean base，无 outline）
-    -> Hi-Z depth pyramid
+    -> opaque forward lighting
+    -> GI source（opaque camera color）
+    -> Ho-SSGI raw trace
     -> cosine hemisphere tracing
     -> intersection refinement
     -> temporal reprojection + history validation
     -> firefly clamp / bilateral spatial filter
     -> APV/sky fallback
     -> _HoGITexture + confidence
-    -> lilToon forward opaque receiver
+    -> composite BeforeRenderingPostProcessing
 ```
 
 第一版不拆出低质量算法。质量参数只控制：
@@ -237,116 +227,33 @@ HoGeometryBuffer (250)
 
 Ho-SSGI v1 应尽量沿用 HTrace 已验证的 ReSTIR、temporal validation、firefly suppression、depth pyramid 和 recurrent history 结构。接入顺序是：先替换 source 并保持 HTrace 链路行为，再逐项检查每个阶段在 lilToon 上的语义，而不是重新发明一套简化算法。
 
-## 4. lilToon 接收顺序
+## 4. 纯后处理合成
 
-先验证 producer，再验证材质接收：
+先验证 producer，再验证纯后处理合成：
 
 1. debug 直出 GI source；
 2. debug 直出未滤波 ray result；
 3. debug 直出 temporal/confidence；
 4. fullscreen composite 验证颜色反弹；
-5. 接入 lilToon indirect/toon shadow；
-6. 最后处理 SSS、OIT、平面反射和角色特化的 pass 顺序。
+5. 最后处理 SSS、OIT、平面反射和角色特化的 pass 顺序。
 
-### 4.1 GI 在 lilToon 中的语义
+### 4.1 当前合成语义
 
-Ho-SSGI 输出的是一项可控的间接光贡献，不直接改写 `fd.lightColor`，也不强行伪装成 `fd.indLightColor`。后者是现有 SH/APV 的环境方向因子，不是完整的 GI 颜色。
+Ho-SSGI 输出一张独立的 HDR `_HoGITexture`，在 `BeforeRenderingPostProcessing` 读取当前 camera color 后叠加。它不改写 `fd.lightColor`、`fd.indLightColor`，也不增加 lilToon 材质采样。
 
-片元阶段只采样一次：
-
-```text
-hoGIColor
-hoGIConfidence
-hoGIWeight = hoGIConfidence * materialMask * volumeStrength
-```
-
-之后由 lilToon 决定它进入 direct、indirect 还是最终颜色。
-
-### 4.2 最小材质控制面
-
-第一版只需要以下控制，不把 HTrace 的几十个参数暴露到材质：
-
-- `HoGI Enabled`；
-- `HoGI Strength`：抑制或放大 GI；
-- `HoGI Color`：颜色乘法/色调控制；
-- `HoGI Apply Mode`：`IndirectTint`、`IndirectAdd`、`LightColorMultiply`；
-- `HoGI Shadow Weight`：限制 GI 只进入 toon 阴影侧；
-- `HoGI Transition`：基于 `fd.shadowmix` 的平滑过渡起止；
-- `HoGI Mask`：材质纹理遮罩；
-- `HoGI Clamp`：限制颜色反弹峰值。
-
-全局 Volume 只控制 producer：ray length、step、temporal、denoise、source、fallback 和全局强度。材质只表达“我怎样接收这项 GI”。
-
-当前 Ho-SSGI producer 的主要参数已放入 `HoSSGIVolume`：启用、ray count、step count、ray length、thickness、GI intensity、source saturation 和 feature-local debug mode。RendererFeature 上的同名字段只作为没有 Volume 时的兜底配置。
-
-### 4.3 三个接入点
-
-#### A. `BEFORE_SHADOW`：LightColorMultiply
-
-在 `OVERRIDE_SHADOW` 之前，可选地把 GI 色调作为灯光颜色调制：
-
-```hlsl
-fd.lightColor = lerp(fd.lightColor,
-                     fd.lightColor * hoGIColor,
-                     hoGIWeight * lightColorMultiplyStrength);
-```
-
-这个模式改变 direct 和 shadow 的共同光色，必须显式开启，默认关闭。它适合整体色调、魔法光或场景色污染，不应作为默认物理解释。
-
-#### B. `lilGetShading` 内部：IndirectTint / ShadowColorBlend
-
-`lilGetShading` 已经把 toon 阴影拆成 `directCol` 和 `indirectCol`：
-
-```hlsl
-directCol = fd.albedo * fd.lightColor;
-indirectCol = ...;
-fd.col.rgb = lerp(indirectCol, directCol, lns.x);
-```
-
-Ho-GI 最适合在 `indirectCol` 完成颜色构造、`min(indirectCol, directCol)` 和最终 mix 之前注入：
-
-```hlsl
-float shadowWeight = 1.0 - fd.shadowmix;
-float transition = smoothstep(_HoGITransition.x,
-                              _HoGITransition.y,
-                              shadowWeight);
-float weight = hoGIWeight * transition;
-indirectCol = lerp(indirectCol,
-                   indirectCol * hoGIColor,
-                   weight);
-```
-
-这样 direct lit 明面默认不被污染，GI 主要影响阴影侧、环境补光和色阶过渡。`IndirectAdd` 可在同一位置增加一条受 clamp 的 contribution，但必须避免再次无条件乘 albedo。
-
-#### C. `BEFORE_SSAO`：FinalContribution
-
-这是低耦合的第一版接入点。它位于追加光合并之后、SSAO/SSS 之前，适合验证：
-
-```hlsl
-fd.col.rgb += hoGIColor * hoGIWeight * finalContributionStrength;
-```
-
-它不需要改动 `lilGetShading`，但不具备完整的 direct/indirect 分离能力。验证成功后，默认切到 B 模式，C 只保留为兼容/调试模式。
-
-### 4.4 `fd` 内部缓存
-
-为了避免在多个接入点重复采样 GI，建议给 `lilFragData` 增加一次性缓存：
+当前合成只保留一个全局强度：
 
 ```text
-hoGIColor
-hoGIConfidence
-hoGIWeight
+cameraColor.rgb += hoGIColor * volumeStrength
 ```
 
-初始化为零，只有启用 Ho-GI shader feature 时采样 `_HoGITexture` 和 confidence。outline、metadata、geometry 等 pass 不编译或不执行这个接收逻辑。
+`HoSSGIVolume` 是用户主要调节面；`sourceSaturation` 只影响命中点 radiance 的色彩，`intensity` 只影响最终 composite。
 
-### 4.5 GI 的 NPR 合成规则
+材质内 GI 接收和 NPR 阴影过渡暂不纳入当前实现。这样可以先在朱木古堂中判断 SSGI 的 source、相交、confidence、时域稳定性和整体画面收益，避免把 producer 与 lilToon shading 修改混在一起。
 
-- 主要作用于 toon 阴影侧和环境补光；
-- 支持 GI strength、tint、luminance remap、contrast 和 clamp；
-- AO 只削弱 GI/ambient，不直接污染主光；
-- confidence 低时使用 APV/天空或保守 fallback；
-- outline 不接收 GI，也不作为 source caster。
+### 4.2 当前参数边界
+
+当前 Ho-SSGI producer 的主要参数已放入 `HoSSGIVolume`：启用、ray count、step count、ray length、thickness、GI intensity、source saturation 和 feature-local debug mode。RendererFeature 上的同名字段只作为没有 Volume 时的兜底配置。材质控制、GI 颜色过渡和 confidence 驱动的 toon 阴影策略留到 producer 稳定后重新评估。
 
 ## 5. Producer-only vertical slice
 
@@ -354,30 +261,26 @@ hoGIWeight
 
 ### 5.1 输入验证
 
-先验证三种已有输入：
+先验证两种已有输入：
 
 1. `HoGeometryBuffer` normal/depth/coverage；
-2. URP opaque color；
-3. 可选 `HoMetadataBufferSurfaceColor` 纯色/coverage。
+2. URP opaque color。
 
-第一版不要求 SurfaceColor 覆盖所有材质。它只作为可用时的干净 albedo/coverage；没有这张图的材质继续使用 GeometryBuffer + opaque color + APV fallback。
+MetadataBuffer 不参与 GI source，也不需要为 SSGI 增加材质 pass。
 
 当前 producer vertical slice 的 source 组合是：
 
 ```text
-opaque color                 = 已着色 radiance
-HoMetadataBufferSurfaceColor = 干净 base / coverage validity
-HoGeometryBuffer              = normal / depth validity
+opaque color        = 已着色 radiance
+HoGeometryBuffer    = normal / depth / coverage validity
 ```
 
-SurfaceColor 不是第二份灯光结果，而是对 opaque radiance 的物理表面约束。Source validity 建议编码为：
+Source validity 编码为：
 
 ```text
 sourceValid = geometryCoverage
             * normalValid
-            * surfaceColorCoverage
             * depthValid
-            * opaqueSourceValid
 ```
 
 描边像素的 geometryCoverage 应为 0，即使 opaque color 中仍然能看到描边颜色，也不能进入 source 或 history。
@@ -407,7 +310,7 @@ sourceValid = geometryCoverage
 
 高质量路径的初始设置：full-resolution depth、intersection refine、cosine hemisphere sampling、较高 ray/step 参数、关闭 checkerboard。这里不做另一套低质量算法。
 
-当前 raw trace 已采用 view-space cosine hemisphere ray：从 GeometryBuffer 重建当前点和法线，生成世界一致的 ray end，再投影到 screen UV；沿投影轨迹用 GeometryBuffer 深度 crossing 判断相交，并使用接收面/命中面双 cosine、距离衰减和 SurfaceColor coverage 过滤。旧的固定二维偏移方案不再保留，因为它会让 screen trajectory 与 ray depth 不一致，产生明显错误命中。
+当前 raw trace 已采用 view-space cosine hemisphere ray：从 GeometryBuffer 重建当前点和法线，生成世界一致的 ray end，再投影到 screen UV；沿投影轨迹用 GeometryBuffer 深度 crossing 判断相交，并使用接收面/命中面双 cosine、距离衰减和 opaque source 过滤。旧的固定二维偏移方案不再保留，因为它会让 screen trajectory 与 ray depth 不一致，产生明显错误命中。
 
 ### 5.4 Temporal result
 
@@ -469,16 +372,16 @@ DebugTile/`HoDebugViewRegistry` 只作为后续统一调试入口，不作为 Ho
 6. spatial/temporal denoise；
 7. APV/sky fallback；
 8. `_HoGITexture` 独立 fullscreen composite；
-9. 最后才进入 lilToon 内部接收。
+9. 暂不进入 lilToon 内部接收，先完成纯后处理验收。
 
-完成第 8 步之前，不调 `_HoGIStrength`、toon transition 或 material mask，否则无法判断问题来自 producer 还是材质合成。
+完成第 8 步之前，不调材质内的 toon transition 或 material mask；当前只调 Volume 的 producer 参数和 fullscreen composite。
 
 ## 7. 描边排除
 
 以下规则必须在 Ho-SSGI 第一版就成立：
 
-- 不把包含 outline 的 camera color 当作唯一 source；
-- outline 不写入 GI source；
+- opaque camera color 可以作为 radiance source，但 outline 必须被 GeometryBuffer coverage 拒绝；
+- outline 不进入 GI source 的 hit sample；
 - outline 不接收 GI；
 - caster 排除应在 depth pyramid 生成前生效，等价于 HTrace 的 `ExcludeCastingMask`；
 - receiver 排除应在 GI output/composite 阶段生效，等价于 HTrace 的 `ExcludeReceivingMask`；
@@ -499,10 +402,10 @@ DebugTile/`HoDebugViewRegistry` 只作为后续统一调试入口，不作为 Ho
 9. 关闭 Ho-SSGI 后确认无 GI、无上一帧残留；
 10. 用 RenderDoc/Frame Debugger 对照 HTrace 的输入、输出和 GPU 成本。
 
-完成标准是：HTrace 的独立 GBuffer/prepass 不再是必需输入；Ho-SSGI 能稳定输出适合 lilToon 的 GI；关闭时安全回退；后续替换 Brixelizer 时不改 lilToon 消费契约。
+完成标准是：HTrace 的独立 GBuffer/prepass 不再是必需输入；Ho-SSGI 能稳定输出适合 lilToon 画面的 GI；关闭时安全回退；后续替换 Brixelizer 时不改 `_HoGITexture` 契约。
 
 ## 9. Brixelizer 只保留为后续替换
 
-Ho-SSGI 接收契约稳定后，再评估 Brixelizer 的世界空间 SDF、screen probe 和 radiance cache。它只替换 GI producer，不改变 `_HoGITexture`、confidence 和 lilToon 接收接口。
+Ho-SSGI 输出契约稳定后，再评估 Brixelizer 的世界空间 SDF、screen probe 和 radiance cache。它只替换 GI producer，不改变 `_HoGITexture` 和 confidence。
 
 当前不展开 DDGI、Lumen 或硬件 RTGI 的实现规划。

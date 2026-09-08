@@ -8,12 +8,14 @@ namespace lilToon.URP.Extensions.SSGI
     internal sealed class HoSSGIRenderGraphResources : ContextItem
     {
         public TextureHandle giTexture = TextureHandle.nullHandle;
+        public TextureHandle sourceTexture = TextureHandle.nullHandle;
 
         public bool HasGI => giTexture.IsValid();
 
         public override void Reset()
         {
             giTexture = TextureHandle.nullHandle;
+            sourceTexture = TextureHandle.nullHandle;
         }
     }
 }

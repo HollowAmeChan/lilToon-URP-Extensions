@@ -33,7 +33,7 @@ namespace lilToon.URP.Extensions.Editor.SSGI
         public override void OnInspectorGUI()
         {
             EditorGUILayout.HelpBox(
-                "Ho-SSGI runs after GeometryBuffer and MetadataBuffer at BeforeRenderingOpaques. The Volume is the main tuning surface; the RendererFeature only owns resource and shader fallback settings.",
+                "Ho-SSGI reads the lit opaque camera color after GeometryBuffer and composites the result before post-processing. MetadataBuffer is not required. The Volume is the main tuning surface.",
                 MessageType.Info);
 
             PropertyField(enable);
