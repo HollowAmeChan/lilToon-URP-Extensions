@@ -235,6 +235,7 @@ namespace lilToon.URP.Extensions.GTAO
             public TextureHandle destination;
             public float displayIntensity;
             public float displayInvert;
+            public float displayMode;
         }
 
         private Material material;
@@ -280,6 +281,7 @@ namespace lilToon.URP.Extensions.GTAO
                 // HTrace profile: Intensity=3.06, output exponent=Intensity*1.2.
                 data.displayIntensity = debugMode == HoGTAODebugMode.AO ? debugIntensity : 1.0f;
                 data.displayInvert = debugMode == HoGTAODebugMode.AO ? 1.0f : 0.0f;
+                data.displayMode = (float)debugMode;
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.cameraColor, AccessFlags.Read);
                 builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
@@ -289,6 +291,7 @@ namespace lilToon.URP.Extensions.GTAO
                 {
                     context.cmd.SetGlobalFloat(HoGTAOShaderConstants.DebugIntensityId, passData.displayIntensity);
                     context.cmd.SetGlobalFloat(HoGTAOShaderConstants.DebugInvertId, passData.displayInvert);
+                    context.cmd.SetGlobalFloat(HoGTAOShaderConstants.DebugViewModeId, passData.displayMode);
                     Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 0);
                 });
             }

@@ -21,5 +21,6 @@ namespace lilToon.URP.Extensions.GTAO
         public static readonly int HistoryPrevTexId = UnityEngine.Shader.PropertyToID("_HoGTAOHistoryPrevTex");
         public static readonly int DebugIntensityId = UnityEngine.Shader.PropertyToID("_HoGTAODebugIntensity");
         public static readonly int DebugInvertId = UnityEngine.Shader.PropertyToID("_HoGTAODebugInvert");
+        public static readonly int DebugViewModeId = UnityEngine.Shader.PropertyToID("_HoGTAODebugViewMode");
     }
 }
