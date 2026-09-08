@@ -606,6 +606,16 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     float tapM = historyReservoir.m * historyScale;
                     historyReservoir.wsum *= historyScale;
                     historyReservoir.m = tapM;
+                    if (_HoSSGIReservoirValidation > 0.5)
+                    {
+                        float3 originPositionWS = HoSSGIWorldPosition(uv, geometry.a);
+                        float geometryValidation = HoSSGIValidateReservoirRay(originPositionWS, currentNormal, historyReservoir);
+                        float lightingValidation = HoSSGIValidateReservoirLighting(originPositionWS, historyReservoir);
+                        float validation = geometryValidation * lightingValidation;
+                        historyReservoir.wsum *= validation;
+                        historyReservoir.m *= validation;
+                        tapM = historyReservoir.m;
+                    }
                     historyM += tapM;
                     historyConfidenceSum += saturate(history.a) * tapM;
                     HoSSGIReservoirMerge(merged, historyReservoir,
@@ -622,14 +632,6 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 float historyScale = maxHistoryM / max(merged.m, 1.0e-5);
                 merged.m = maxHistoryM;
                 merged.wsum *= historyScale;
-            }
-
-            if (_HoSSGIReservoirValidation > 0.5)
-            {
-                float3 originPositionWS = HoSSGIWorldPosition(uv, geometry.a);
-                float geometryValidation = HoSSGIValidateReservoirRay(originPositionWS, currentNormal, merged);
-                float lightingValidation = HoSSGIValidateReservoirLighting(originPositionWS, merged);
-                merged.wsum *= geometryValidation * lightingValidation;
             }
 
             float totalM = max(merged.m, 1.0e-6);
@@ -715,7 +717,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float2 texel = rcp(max(_ScreenParams.xy, 1.0)) * max(_HoSSGISpatialRadius, 0.5);
             float3 centerNormal = normalize((float3)centerGeometry.rgb * 2.0 - 1.0);
             float centerDepth = centerGeometry.a;
-            HoSSGIReservoir merged = HoSSGILoadReservoir(uv);
+            HoSSGIReservoir centerReservoir = HoSSGILoadReservoir(uv);
+            HoSSGIReservoir merged = centerReservoir;
             half4 centerTemporal = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_PointClamp, uv);
             float confidenceSum = centerTemporal.a;
             float confidenceWeight = 1.0;
@@ -754,7 +757,15 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             if (_HoSSGIReservoirValidation > 0.5)
             {
                 float3 centerPositionWS = HoSSGIWorldPosition(uv, centerDepth);
-                merged.wsum *= HoSSGIValidateReservoirRay(centerPositionWS, centerNormal, merged);
+                float validation = HoSSGIValidateReservoirRay(centerPositionWS, centerNormal, merged);
+                if (validation < 0.15)
+                {
+                    merged = centerReservoir;
+                }
+                else
+                {
+                    merged.wsum *= validation;
+                }
             }
 
             float3 resolved = HoSSGIResolveReservoir(merged);
