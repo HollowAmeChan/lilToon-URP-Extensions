@@ -266,6 +266,8 @@ hoGIWeight = hoGIConfidence * materialMask * volumeStrength
 
 全局 Volume 只控制 producer：ray length、step、temporal、denoise、source、fallback 和全局强度。材质只表达“我怎样接收这项 GI”。
 
+当前 Ho-SSGI producer 的主要参数已放入 `HoSSGIVolume`：启用、ray count、step count、ray length、thickness、GI intensity、source saturation 和 feature-local debug mode。RendererFeature 上的同名字段只作为没有 Volume 时的兜底配置。
+
 ### 4.3 三个接入点
 
 #### A. `BEFORE_SHADOW`：LightColorMultiply

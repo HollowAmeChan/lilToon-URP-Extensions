@@ -32,13 +32,19 @@ namespace lilToon.URP.Extensions.SSGI
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            if (settings == null || !settings.enabled)
+            if (settings == null)
             {
                 return;
             }
 
             CameraType cameraType = renderingData.cameraData.cameraType;
             if (cameraType != CameraType.Game && cameraType != CameraType.SceneView)
+            {
+                return;
+            }
+
+            ResolveVolume();
+            if (!settings.enabled)
             {
                 return;
             }
@@ -92,6 +98,25 @@ namespace lilToon.URP.Extensions.SSGI
         private static void ResetGlobalState(ScriptableRenderContext context, Camera camera)
         {
             Shader.SetGlobalTexture(HoSSGIShaderConstants.GITextureId, Texture2D.blackTexture);
+        }
+
+        private void ResolveVolume()
+        {
+            VolumeStack stack = VolumeManager.instance != null ? VolumeManager.instance.stack : null;
+            HoSSGIVolume volume = stack != null ? stack.GetComponent<HoSSGIVolume>() : null;
+            if (volume == null || settings == null)
+            {
+                return;
+            }
+
+            settings.enabled = volume.enable.value;
+            settings.rayCount = volume.rayCount.value;
+            settings.stepCount = volume.stepCount.value;
+            settings.rayLength = volume.rayLength.value;
+            settings.thickness = volume.thickness.value;
+            settings.intensity = volume.intensity.value;
+            settings.sourceSaturation = volume.sourceSaturation.value;
+            settings.debugMode = volume.debugMode.value;
         }
     }
 
