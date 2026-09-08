@@ -14,6 +14,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
 
         TEXTURE2D_X(_HoGTAOHistoryPrevTex);
         TEXTURE2D_X_FLOAT(_HoGTAOHistoryPrevDepthTex);
+        float4 _HoGTAOHistoryPrevTex_TexelSize;
         TEXTURE2D_X(_MotionVectorTexture);
         TEXTURE2D_X_FLOAT(_HoGTAODepthMip0);
         TEXTURE2D_X_FLOAT(_HoGTAODepthMip1);
@@ -375,10 +376,41 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             // URP stores forward motion in screen-UV space. Reproject the current
             // pixel backwards to locate its previous-frame history sample.
             float2 previousUV = saturate(input.texcoord - motion);
-            half4 previousData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevTex, sampler_LinearClamp, previousUV);
-            half previous = previousData.r;
-            half previousCount = previousData.g * max(_HoGTAOTemporalMaxFrames, 1.0);
-            half previousDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_LinearClamp, previousUV).r;
+            // HTrace uses four bilinear history taps and rejects each tap by
+            // depth before accumulating it. A single filtered history sample
+            // lets an edge bleed across the reprojection footprint.
+            float2 historyTexel = _HoGTAOHistoryPrevTex_TexelSize.xy;
+            float2 historySize = _HoGTAOHistoryPrevTex_TexelSize.zw;
+            float2 historyCoord = previousUV * historySize - 0.5;
+            float2 historyBase = floor(historyCoord);
+            float2 historyFrac = frac(historyCoord);
+            float4 historyWeights = float4(
+                (1.0 - historyFrac.x) * (1.0 - historyFrac.y),
+                historyFrac.x * (1.0 - historyFrac.y),
+                (1.0 - historyFrac.x) * historyFrac.y,
+                historyFrac.x * historyFrac.y);
+            static const float2 historyOffsets[4] =
+            {
+                float2(0.0, 0.0), float2(1.0, 0.0), float2(0.0, 1.0), float2(1.0, 1.0)
+            };
+            float previousAccumulated = 0.0;
+            float previousCountAccumulated = 0.0;
+            float historyWeightSum = 0.0;
+            [unroll]
+            for (int historyTap = 0; historyTap < 4; historyTap++)
+            {
+                float2 historyUV = saturate((historyBase + historyOffsets[historyTap] + 0.5) * historyTexel);
+                half4 historyData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevTex, sampler_PointClamp, historyUV);
+                half historyDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_PointClamp, historyUV).r;
+                float validDepth = step(0.0001, historyDepth)
+                    * step(abs((float)geometry.a - historyDepth), max(0.05 * geometry.a, 0.05));
+                float tapWeight = historyWeights[historyTap] * validDepth;
+                previousAccumulated += historyData.r * tapWeight;
+                previousCountAccumulated += historyData.g * max(_HoGTAOTemporalMaxFrames, 1.0) * tapWeight;
+                historyWeightSum += tapWeight;
+            }
+            half previous = historyWeightSum > 1.0e-5 ? previousAccumulated / historyWeightSum : 0.0h;
+            half previousCount = historyWeightSum > 1.0e-5 ? previousCountAccumulated / historyWeightSum : 0.0h;
             // Sky/uncovered pixels have no surface history to validate. Keep
             // them white in the diagnostic instead of falsely marking them as
             // temporal disocclusions.
@@ -386,8 +418,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             {
                 return half4(1.0h, 1.0h, 1.0h, 1.0h);
             }
-            half depthValid = step(0.0001h, geometry.a) * step(0.0001h, previousDepth);
-            half depthAgreement = step(abs(geometry.a - previousDepth), max(0.05h * geometry.a, 0.05h));
+            half depthValid = step(0.0001h, geometry.a) * step(historyWeightSum, 1.0e-5);
+            half depthAgreement = step(historyWeightSum, 1.0e-5);
             // Depth is the authoritative disocclusion test for this baseline.
             // The history normal payload remains reserved for a later validated
             // normal-rejection pass.
