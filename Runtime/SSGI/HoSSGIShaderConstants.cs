@@ -20,6 +20,11 @@ namespace lilToon.URP.Extensions.SSGI
         public const string CameraSourceName = "_HoSSGICameraSource";
         public const string SampleCountHistoryName = "_HoSSGISampleCountHistory";
         public const string InvalidityHistoryName = "_HoSSGIInvalidityHistory";
+        public const string DepthPyramidMip0Name = "_HoSSGIDepthPyramidMip0";
+        public const string DepthPyramidMip1Name = "_HoSSGIDepthPyramidMip1";
+        public const string DepthPyramidMip2Name = "_HoSSGIDepthPyramidMip2";
+        public const string DepthPyramidMip3Name = "_HoSSGIDepthPyramidMip3";
+        public const string DepthPyramidMip4Name = "_HoSSGIDepthPyramidMip4";
         public static readonly int GITextureId = Shader.PropertyToID(GITextureName);
         public static readonly int RawGIId = Shader.PropertyToID(RawGITextureName);
         public static readonly int ReservoirColorId = Shader.PropertyToID(ReservoirColorName);
@@ -35,6 +40,20 @@ namespace lilToon.URP.Extensions.SSGI
         public static readonly int SampleCountHistoryId = Shader.PropertyToID(SampleCountHistoryName);
         public static readonly int InvalidityHistoryId = Shader.PropertyToID(InvalidityHistoryName);
         public static readonly int CurrentInvalidityId = Shader.PropertyToID("_HoSSGICurrentInvalidity");
+        public static readonly int DepthPyramidMip0Id = Shader.PropertyToID(DepthPyramidMip0Name);
+        public static readonly int DepthPyramidMip1Id = Shader.PropertyToID(DepthPyramidMip1Name);
+        public static readonly int DepthPyramidMip2Id = Shader.PropertyToID(DepthPyramidMip2Name);
+        public static readonly int DepthPyramidMip3Id = Shader.PropertyToID(DepthPyramidMip3Name);
+        public static readonly int DepthPyramidMip4Id = Shader.PropertyToID(DepthPyramidMip4Name);
+        public static readonly int DepthPyramidTexelSizeId = Shader.PropertyToID("_HoSSGIDepthPyramidTexelSize");
+        public static readonly int[] DepthPyramidIds =
+        {
+            DepthPyramidMip0Id,
+            DepthPyramidMip1Id,
+            DepthPyramidMip2Id,
+            DepthPyramidMip3Id,
+            DepthPyramidMip4Id
+        };
         public static readonly int GeometryId = Shader.PropertyToID("_HoSSGIGeometry");
         public static readonly int SourceId = Shader.PropertyToID("_HoSSGISource");
         public static readonly int SourceHistoryId = Shader.PropertyToID("_HoSSGISourceHistory");

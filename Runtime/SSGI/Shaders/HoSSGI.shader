@@ -57,6 +57,11 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         TEXTURE2D_X(_HoSSGISampleCountHistory);
         TEXTURE2D_X(_HoSSGIInvalidityHistory);
         TEXTURE2D_X(_HoSSGICurrentInvalidity);
+        TEXTURE2D_X_FLOAT(_HoSSGIDepthPyramidMip0);
+        TEXTURE2D_X_FLOAT(_HoSSGIDepthPyramidMip1);
+        TEXTURE2D_X_FLOAT(_HoSSGIDepthPyramidMip2);
+        TEXTURE2D_X_FLOAT(_HoSSGIDepthPyramidMip3);
+        TEXTURE2D_X_FLOAT(_HoSSGIDepthPyramidMip4);
         TEXTURE2D_X(_BlitTexture);
         int _HoSSGIRayCount;
         int _HoSSGIStepCount;
@@ -75,6 +80,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         float _HoSSGIReservoirValidation;
         float _HoSSGIFireflyEnabled;
         float _HoGeometryBufferSkyTextureValid;
+        float4 _HoSSGIDepthPyramidTexelSize;
 
         struct HoSSGIReservoir
         {
@@ -152,6 +158,47 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float3 unitOffset = (history - center) / extents;
             float maxUnit = max(max(abs(unitOffset.x), abs(unitOffset.y)), abs(unitOffset.z));
             return maxUnit > 1.0 ? center + (history - center) / maxUnit : history;
+        }
+
+        float HoSSGISampleDepthPyramid(float2 uv, int mip)
+        {
+            float depth;
+            if (mip <= 0)
+                depth = SAMPLE_TEXTURE2D_X(_HoSSGIDepthPyramidMip0, sampler_PointClamp, uv).r;
+            else if (mip == 1)
+                depth = SAMPLE_TEXTURE2D_X(_HoSSGIDepthPyramidMip1, sampler_PointClamp, uv).r;
+            else if (mip == 2)
+                depth = SAMPLE_TEXTURE2D_X(_HoSSGIDepthPyramidMip2, sampler_PointClamp, uv).r;
+            else if (mip == 3)
+                depth = SAMPLE_TEXTURE2D_X(_HoSSGIDepthPyramidMip3, sampler_PointClamp, uv).r;
+            else
+                depth = SAMPLE_TEXTURE2D_X(_HoSSGIDepthPyramidMip4, sampler_PointClamp, uv).r;
+            return depth > 0.0001 ? depth : 0.0;
+        }
+
+        float4 DepthPyramidBase(Varyings input) : SV_Target
+        {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+            float depth = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord).a;
+            return float4(max(depth, 0.0), 0.0, 0.0, 1.0);
+        }
+
+        float4 DepthPyramidDownsample(Varyings input) : SV_Target
+        {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+            float2 texel = _HoSSGIDepthPyramidTexelSize.xy;
+            float2 uv = input.texcoord;
+            float4 depths = float4(
+                SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv + texel * float2(-0.5, -0.5)).r,
+                SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv + texel * float2( 0.5, -0.5)).r,
+                SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv + texel * float2(-0.5,  0.5)).r,
+                SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv + texel * float2( 0.5,  0.5)).r);
+            float reducedDepth = 1.0e20;
+            reducedDepth = depths.x > 0.0001 ? min(reducedDepth, depths.x) : reducedDepth;
+            reducedDepth = depths.y > 0.0001 ? min(reducedDepth, depths.y) : reducedDepth;
+            reducedDepth = depths.z > 0.0001 ? min(reducedDepth, depths.z) : reducedDepth;
+            reducedDepth = depths.w > 0.0001 ? min(reducedDepth, depths.w) : reducedDepth;
+            return float4(reducedDepth < 1.0e19 ? reducedDepth : 0.0, 0.0, 0.0, 1.0);
         }
 
         float HoSSGIReservoirRandom(float2 pixel, float salt)
@@ -392,18 +439,30 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 float3 rayNDC = ComputeNormalizedDeviceCoordinatesWithZ(rayPositionWS, UNITY_MATRIX_VP);
                 float2 sampleUV = rayNDC.xy;
                 if (any(sampleUV <= 0.001) || any(sampleUV >= 0.999)) break;
-                half4 sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
-                if (sampleGeometry.a < 0.0001h)
+                int depthMip = clamp((int)floor(t * 4.0), 0, 4);
+                float surfaceDepth = HoSSGISampleDepthPyramid(sampleUV, depthMip);
+                if (surfaceDepth <= 0.0001)
                 {
                     previousDelta = -2.0 * max(_HoSSGIThickness, 0.01);
                     continue;
                 }
-                float depthDelta = HoSSGILinearDepth(rayPositionWS) - sampleGeometry.a;
+                float rayDepth = HoSSGILinearDepth(rayPositionWS);
+                float depthDelta = rayDepth - surfaceDepth;
+                float previousSampleDelta = previousDelta;
                 bool crossedSurface = depthDelta >= -max(_HoSSGIThickness, 0.01)
                     && previousDelta < -max(_HoSSGIThickness, 0.01);
                 previousDelta = depthDelta;
                 if (crossedSurface)
                 {
+                    half4 sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
+                    if (sampleGeometry.a < 0.0001h)
+                        continue;
+                    float exactDelta = rayDepth - sampleGeometry.a;
+                    bool exactCrossedSurface = exactDelta >= -max(_HoSSGIThickness, 0.01)
+                        && previousSampleDelta < -max(_HoSSGIThickness, 0.01);
+                    previousDelta = exactDelta;
+                    if (!exactCrossedSurface)
+                        continue;
                     float3 samplePositionWS = HoSSGIWorldPosition(sampleUV, sampleGeometry.a);
                     remarchedDistance = distance(originPositionWS, samplePositionWS);
                     remarchedHit = true;
@@ -549,8 +608,9 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     float2 sampleUV = rayNDC.xy;
                     if (any(sampleUV <= 0.001) || any(sampleUV >= 0.999)) break;
                     if (distance(sampleUV * _ScreenParams.xy, pixel) < 1.5) continue;
-                    half4 sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
-                    if (sampleGeometry.a < 0.0001)
+                    int depthMip = clamp((int)floor(t * 4.0), 0, 4);
+                    float surfaceDepth = HoSSGISampleDepthPyramid(sampleUV, depthMip);
+                    if (surfaceDepth <= 0.0001)
                     {
                         // Invalid coverage is an empty segment. Resetting the
                         // previous sign lets the first valid surface after a
@@ -560,14 +620,26 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                         continue;
                     }
                     float rayDepth = HoSSGILinearDepth(rayPositionWS);
-                    float3 samplePositionWS = HoSSGIWorldPosition(sampleUV, sampleGeometry.a);
-                    float sampleDepth = sampleGeometry.a;
-                    float depthDelta = rayDepth - sampleDepth;
+                    float depthDelta = rayDepth - surfaceDepth;
+                    float previousSampleDelta = previousDelta;
                     bool crossedSurface = hasPrevious && depthDelta >= -thickness && previousDelta < -thickness;
                     previousDelta = depthDelta;
                     hasPrevious = true;
                     if (crossedSurface)
                     {
+                        // Coarse mips only find a possible crossing. Re-read
+                        // mip 0 so a nearby surface in the pyramid footprint
+                        // cannot become a false hit for this pixel.
+                        half4 sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
+                        if (sampleGeometry.a < 0.0001)
+                            continue;
+                        float exactDelta = rayDepth - sampleGeometry.a;
+                        bool exactCrossedSurface = exactDelta >= -thickness && previousSampleDelta < -thickness;
+                        previousDelta = exactDelta;
+                        if (!exactCrossedSurface)
+                            continue;
+                        float3 samplePositionWS = HoSSGIWorldPosition(sampleUV, sampleGeometry.a);
+                        float sampleDepth = sampleGeometry.a;
                         float3 source = SAMPLE_TEXTURE2D_X(_HoSSGISource, sampler_PointClamp, sampleUV).rgb;
                         float3 sampleNormalWS = normalize((float3)sampleGeometry.rgb * 2.0 - 1.0);
                         float hitTolerance = max(thickness, max(sampleDepth * 0.02, 0.01));
@@ -583,7 +655,10 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                         float distanceWeight = exp2(-2.0 * t) * rcp(1.0 + t * t);
                         candidateColor = HoSSGIColor(source) * (3.14159265 * sourceCosine * distanceWeight);
                         candidateDistance = distance(centerPositionWS, samplePositionWS);
-                        candidateHit = step(1.0e-5, HoSSGILuminance(candidateColor));
+                        // HitFound is geometric validity, not radiance
+                        // brightness. A black or fully saturated surface must
+                        // still participate in reservoir validation.
+                        candidateHit = 1.0;
                         radiance += candidateColor;
                         hits += 1.0;
                         break;
@@ -1284,6 +1359,24 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment TemporalMetadata
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Ho-SSGI Depth Pyramid Base"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment DepthPyramidBase
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Ho-SSGI Depth Pyramid Downsample"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment DepthPyramidDownsample
             ENDHLSL
         }
     }

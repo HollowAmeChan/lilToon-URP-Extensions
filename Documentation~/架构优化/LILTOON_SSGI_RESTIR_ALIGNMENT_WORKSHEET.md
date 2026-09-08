@@ -58,10 +58,10 @@ HoGeometryBuffer + opaque camera source
 | G0 | 几何输入 | `GBufferPassURP.cs`、`HMain.hlsl` | `HoGeometryBuffer.normalDepthTexture`，RGB 法线、A 线性深度/coverage | `部分对齐` | Geometry、Source Validity；描边 coverage 必须为无效 | 保持 GeometryBuffer 为唯一几何真值 |
 | G1 | Motion | `PrePassURP.cs`、`HBUFFER_MOTION_VECTOR` | URP `motionVectorColor` | `部分对齐` | 运动物体重投影是否方向正确 | 记录 motion UV/Y 翻转与 render scale 契约 |
 | G2 | Camera history | `CameraHistorySystem`、`SSGIPassURP.SetupShared` | `HoSSGIHistory`，cameraId/尺寸变化失效，GI/depth/reservoir/source/denoised/metadata ping-pong；Temporal GI、source、denoised 都有 producer；保存 previous inverse VP | `部分对齐` | 切换相机、改分辨率、重载场景后不能读旧历史；首帧不应读 denoised history | 增加 camera cut/render-scale 显式 reset；保持 metadata 与 denoised history 同步 |
-| G3 | Depth/Hi-Z | `HDepthPyramid`、`GBufferPassURP` | 当前 Ho-SSGI 仍直接采 GeometryBuffer crossing；GTAO 有独立 pyramid | `未开始` | Frame Debugger 中暂时没有 Ho-SSGI Hi-Z 阶段 | 先完成 ReSTIR，再单独评估 Hi-Z，不和 reservoir 混改 |
+| G3 | Depth/Hi-Z | `HDepthPyramid`、`GBufferPassURP` | Ho-SSGI 自有 5 级 R32 线性深度 pyramid；trace 远段采粗层，候选 crossing 回读 mip0 GeometryBuffer 精确确认；selected-ray validation 仍用精确深度 | `部分对齐` | Frame Debugger 应出现 `Ho-SSGI Depth Pyramid 0..4`；远距离墙面/薄物体不能因粗层产生假命中 | 对齐 HTrace raw-device-depth reduction、LOD 随 march footprint 变化、refine intersection/half-step validation |
 | T-Source | 光照源时域重投影 | `HTemporalReprojectionSSGI.compute:79-206`，先生成 `ColorReprojected` | Ho 新增 source history ping-pong，motion/depth/normal/previous-plane 四 tap 重投影，并把结果喂给 raw trace | `部分对齐` | Frame Debugger 对比 Source Reprojection/Raw Trace；灯光变化后看旧亮度残留 | 补 render-scale source history 坐标和亮度 moments |
 | T0 | Temporal color reprojection | `HTemporalReprojectionSSGI.compute:230-365` | Ho Temporal 使用 motion、四 tap history、depth/normal、source luminance；Temporal GI resolve 写入独立 GI history | `部分对齐` | Temporal reuse 开/关；看历史拖影和上下边缘错位；确认 GI history 在下一帧有效 | 补 render-scale/history UV 契约和 local source clamp |
-| R0 | Ray candidate | `HRenderSSGI.compute:71-145` | world-space cosine ray；稳定 16 帧低差异序列；命中 source；candidate target=luminance(candidate)；M 包含 miss；可选 GeometryBuffer sky fallback；命中增加 depth/front-face validation | `部分对齐` | Raw Trace 看原始噪声；开启 sky buffer 后看低命中区域是否有稳定 fallback；固定帧序列检查噪声是否可积累 | 接入 Hi-Z hit validation、AO/occlusion guidance，确认 candidate 能量归一化 |
+| R0 | Ray candidate | `HRenderSSGI.compute:71-145` | world-space cosine ray；稳定 16 帧低差异序列；命中 source；candidate target=luminance(candidate)；M 包含 miss；可选 GeometryBuffer sky fallback；几何命中与 radiance brightness 分离；命中使用 Hi-Z 粗层 + mip0 精确深度/front-face validation | `部分对齐` | Raw Trace 看原始噪声；开启 sky buffer 后看低命中区域是否有稳定 fallback；固定帧序列检查噪声是否可积累；远段命中不能跨薄物体 | 对齐 HTrace refine intersection/half-step，并接入 AO/occlusion guidance，确认 candidate 能量归一化 |
 | R1 | Reservoir payload | `HReservoirSSGI.hlsl:28-122` | Color/Wsum/M/target/hit/distance + direction/originNormal，RGBAHalf MRT | `部分对齐` | Reservoir Weight/M/Hit；检查 target、M、W 是否合理 | 评估整数 packed layout；目前不急于复制 HTrace bit packing |
 | R2 | Temporal reservoir | `HRestirSSGI.compute:81-123` | 四 tap history reservoir merge，history M cap=100，reuse 可单独关闭 | `部分对齐` | Temporal reuse 开/关；静止画面噪声下降且灯光变化能响应 | 增加 HTrace 风格 reprojected hit validity 和 selected target 重评估 |
 | R3 | Temporal validation | `HRestirSSGI.compute:125-245` | selected-ray 几何 re-march + source lighting validation；只限制 history；使用 previous inverse VP 做 plane agreement | `部分对齐` | Validation 开/关；不能把当前 candidate 压黑 | 对 moving hit、off-screen、曝光变化分别做测试 |
@@ -130,7 +130,7 @@ Confidence      = producer confidence，不等于 reservoir M
 2. 开 temporal reuse，验证四 tap history、M cap 和 lighting validation；
 3. 开 spatial reuse，验证 world-plane Poisson 与 selected-ray re-march；
 4. 开 Firefly 与两轮 spatial filter，比较 Raw GI/最终 Off；
-5. 只有上述四步稳定后，才考虑 Hi-Z、AO guidance、recurrent blur 或 lilToon 内部接收。
+5. Hi-Z 已纳入当前质量路径；下一步再做 AO guidance、recurrent blur 或 lilToon 内部接收。
 
 ## 暂不做
 

@@ -331,10 +331,20 @@ namespace lilToon.URP.Extensions.SSGI
 
     internal sealed class HoSSGIPass : ScriptableRenderPass
     {
+        private sealed class DepthPyramidPassData
+        {
+            public Material material;
+            public TextureHandle source;
+            public TextureHandle output;
+            public Vector4 sourceTexelSize;
+            public int passIndex;
+        }
+
         private sealed class PassData
         {
             public Material material;
             public TextureHandle geometry;
+            public TextureHandle[] depthPyramid;
             public TextureHandle source;
             public TextureHandle sky;
             public TextureHandle output;
@@ -374,6 +384,7 @@ namespace lilToon.URP.Extensions.SSGI
         {
             public Material material;
             public TextureHandle current;
+            public TextureHandle currentSource;
             public TextureHandle previous;
             public TextureHandle previousDepth;
             public TextureHandle currentReservoirColor;
@@ -383,6 +394,7 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle previousReservoirAux;
             public TextureHandle previousReservoirRay;
             public TextureHandle geometry;
+            public TextureHandle[] depthPyramid;
             public TextureHandle motion;
             public TextureHandle output;
             public TextureHandle reservoirOutputColor;
@@ -458,6 +470,7 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle guidance;
             public TextureHandle temporal;
             public TextureHandle geometry;
+            public TextureHandle[] depthPyramid;
             public TextureHandle output;
             public bool reservoirValidation;
         }
@@ -526,6 +539,18 @@ namespace lilToon.URP.Extensions.SSGI
             ConfigureInput(ScriptableRenderPassInput.Motion);
         }
 
+        private static void BindDepthPyramid(RasterCommandBuffer cmd, TextureHandle[] depthPyramid)
+        {
+            if (depthPyramid == null || depthPyramid.Length < HoSSGIShaderConstants.DepthPyramidIds.Length)
+                return;
+
+            for (int i = 0; i < HoSSGIShaderConstants.DepthPyramidIds.Length; i++)
+            {
+                if (depthPyramid[i].IsValid())
+                    cmd.SetGlobalTexture(HoSSGIShaderConstants.DepthPyramidIds[i], depthPyramid[i]);
+            }
+        }
+
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
             if (settings == null || material == null || history == null) return;
@@ -549,6 +574,7 @@ namespace lilToon.URP.Extensions.SSGI
             Matrix4x4 currentInverseViewProjection = currentViewProjection.inverse;
             Matrix4x4 previousInverseViewProjection = history.PreviousInverseViewProjection;
             bool previousMatrixValid = history.PreviousMatrixValid;
+            TextureHandle[] depthPyramid = CreateDepthPyramid(renderGraph, geometry.normalDepthTexture);
 
             TextureHandle previousSource = renderGraph.ImportTexture(history.PreviousSource);
             TextureHandle nextSource = renderGraph.ImportTexture(history.NextSource);
@@ -613,6 +639,7 @@ namespace lilToon.URP.Extensions.SSGI
             {
                 data.material = material;
                 data.geometry = geometry.normalDepthTexture;
+                data.depthPyramid = depthPyramid;
                 data.source = sourceReprojected;
                 data.sky = geometry.skyTexture;
                 data.output = raw;
@@ -627,6 +654,8 @@ namespace lilToon.URP.Extensions.SSGI
                 data.frameIndex = Time.frameCount;
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.UseTexture(data.source, AccessFlags.Read);
+                for (int i = 0; i < data.depthPyramid.Length; i++)
+                    builder.UseTexture(data.depthPyramid[i], AccessFlags.Read);
                 if (data.sky.IsValid()) builder.UseTexture(data.sky, AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(data.reservoirColor, 1, AccessFlags.WriteAll);
@@ -645,6 +674,7 @@ namespace lilToon.URP.Extensions.SSGI
                     passData.material.SetFloat(HoSSGIShaderConstants.SourceSaturationId, passData.sourceSaturation);
                     passData.material.SetInt(HoSSGIShaderConstants.FrameIndexId, passData.frameIndex);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
+                    HoSSGIPass.BindDepthPyramid(context.cmd, passData.depthPyramid);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceId, passData.source);
                     context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, passData.sky.IsValid() ? 1.0f : 0.0f);
                     if (passData.sky.IsValid()) context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, passData.sky);
@@ -675,6 +705,7 @@ namespace lilToon.URP.Extensions.SSGI
             {
                 data.material = material;
                 data.current = raw;
+                data.currentSource = source;
                 data.previous = previous;
                 data.previousDepth = previousDepth;
                 data.currentReservoirColor = rawReservoirColor;
@@ -684,6 +715,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.previousReservoirAux = previousReservoirAux;
                 data.previousReservoirRay = previousReservoirRay;
                 data.geometry = geometry.normalDepthTexture;
+                data.depthPyramid = depthPyramid;
                 data.motion = motion;
                 data.output = temporal;
                 data.reservoirOutputColor = nextReservoirColor;
@@ -696,6 +728,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.reservoirReuse = settings.temporalReservoirReuse;
                 data.reservoirValidation = settings.temporalReservoirValidation;
                 builder.UseTexture(data.current, AccessFlags.Read);
+                builder.UseTexture(data.currentSource, AccessFlags.Read);
                 builder.UseTexture(data.previous, AccessFlags.Read);
                 builder.UseTexture(data.previousDepth, AccessFlags.Read);
                 builder.UseTexture(data.currentReservoirColor, AccessFlags.Read);
@@ -705,6 +738,8 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.UseTexture(data.previousReservoirAux, AccessFlags.Read);
                 builder.UseTexture(data.previousReservoirRay, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
+                for (int i = 0; i < data.depthPyramid.Length; i++)
+                    builder.UseTexture(data.depthPyramid[i], AccessFlags.Read);
                 if (data.motion.IsValid()) builder.UseTexture(data.motion, AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(data.reservoirOutputColor, 1, AccessFlags.WriteAll);
@@ -722,6 +757,7 @@ namespace lilToon.URP.Extensions.SSGI
                     passData.material.SetFloat(HoSSGIShaderConstants.ReservoirReuseId, passData.reservoirReuse ? 1.0f : 0.0f);
                     passData.material.SetFloat(HoSSGIShaderConstants.ReservoirValidationId, passData.reservoirValidation ? 1.0f : 0.0f);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.current);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceId, passData.currentSource);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.HistoryTextureId, passData.previous);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.HistoryDepthId, passData.previousDepth);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirColorId, passData.currentReservoirColor);
@@ -731,6 +767,7 @@ namespace lilToon.URP.Extensions.SSGI
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirHistoryAuxId, passData.previousReservoirAux);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirHistoryRayId, passData.previousReservoirRay);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
+                    HoSSGIPass.BindDepthPyramid(context.cmd, passData.depthPyramid);
                     if (passData.motion.IsValid())
                     {
                         context.cmd.SetGlobalTexture(HoSSGIShaderConstants.MotionVectorId, passData.motion);
@@ -922,6 +959,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.guidance = spatialGuidance;
                 data.temporal = temporal;
                 data.geometry = geometry.normalDepthTexture;
+                data.depthPyramid = depthPyramid;
                 data.output = filtered;
                 data.reservoirValidation = settings.spatialReservoirValidation;
                 builder.UseTexture(data.reservoirColor, AccessFlags.Read);
@@ -930,6 +968,8 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.UseTexture(data.guidance, AccessFlags.Read);
                 builder.UseTexture(data.temporal, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
+                for (int i = 0; i < data.depthPyramid.Length; i++)
+                    builder.UseTexture(data.depthPyramid[i], AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
@@ -943,6 +983,7 @@ namespace lilToon.URP.Extensions.SSGI
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SpatialGuidanceId, passData.guidance);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.temporal);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
+                    HoSSGIPass.BindDepthPyramid(context.cmd, passData.depthPyramid);
                     Blitter.BlitTexture(context.cmd, passData.reservoirColor, new Vector4(1, 1, 0, 0), passData.material, 11);
                 });
             }
@@ -1066,6 +1107,69 @@ namespace lilToon.URP.Extensions.SSGI
             history.Swap();
             history.SwapMetadata();
             history.MarkValid();
+        }
+
+        private TextureHandle[] CreateDepthPyramid(RenderGraph renderGraph, TextureHandle geometry)
+        {
+            // Keep the pyramid local to Ho-SSGI until the shared screen-space
+            // context has a stable depth reduction contract.
+            TextureHandle[] mips = new TextureHandle[HoSSGIShaderConstants.DepthPyramidIds.Length];
+            TextureDesc geometryDesc = renderGraph.GetTextureDesc(geometry);
+            int sourceWidth = Mathf.Max(1, geometryDesc.width);
+            int sourceHeight = Mathf.Max(1, geometryDesc.height);
+            TextureHandle source = geometry;
+
+            for (int mip = 0; mip < mips.Length; mip++)
+            {
+                int width = Mathf.Max(1, sourceWidth >> mip);
+                int height = Mathf.Max(1, sourceHeight >> mip);
+                TextureDesc desc = geometryDesc;
+                desc.name = "_HoSSGIDepthPyramidMip" + mip;
+                desc.width = width;
+                desc.height = height;
+                desc.format = GraphicsFormat.R32_SFloat;
+                desc.depthBufferBits = 0;
+                desc.msaaSamples = MSAASamples.None;
+                desc.clearBuffer = true;
+                desc.clearColor = Color.clear;
+                desc.filterMode = FilterMode.Point;
+                desc.wrapMode = TextureWrapMode.Clamp;
+                TextureHandle destination = renderGraph.CreateTexture(desc);
+                mips[mip] = destination;
+
+                using (var builder = renderGraph.AddRasterRenderPass<DepthPyramidPassData>(
+                    "Ho-SSGI Depth Pyramid " + mip,
+                    out DepthPyramidPassData data,
+                    new ProfilingSampler("Ho-SSGI Depth Pyramid " + mip)))
+                {
+                    data.material = material;
+                    data.source = source;
+                    data.output = destination;
+                    data.sourceTexelSize = mip == 0
+                        ? Vector4.zero
+                        : new Vector4(
+                            1.0f / Mathf.Max(1, sourceWidth >> (mip - 1)),
+                            1.0f / Mathf.Max(1, sourceHeight >> (mip - 1)),
+                            0.0f,
+                            0.0f);
+                    data.passIndex = mip == 0 ? 13 : 14;
+                    builder.UseTexture(data.source, AccessFlags.Read);
+                    builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
+                    builder.SetGlobalTextureAfterPass(data.output, HoSSGIShaderConstants.DepthPyramidIds[mip]);
+                    builder.AllowGlobalStateModification(true);
+                    builder.AllowPassCulling(false);
+                    builder.SetRenderFunc(static (DepthPyramidPassData passData, RasterGraphContext context) =>
+                    {
+                        if (passData.passIndex == 14)
+                            passData.material.SetVector(HoSSGIShaderConstants.DepthPyramidTexelSizeId, passData.sourceTexelSize);
+                        Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, passData.passIndex);
+                    });
+                }
+
+                source = destination;
+            }
+
+            return mips;
         }
     }
 
