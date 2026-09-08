@@ -272,6 +272,9 @@ namespace lilToon.URP.Extensions.GTAO
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-GTAO");
         private static readonly int DebugModeId = Shader.PropertyToID("_HoGTAODebugMode");
         private static readonly int HistoryBlendId = Shader.PropertyToID("_HoGTAOHistoryBlend");
+        private static readonly int HistoryValidId = Shader.PropertyToID("_HoGTAOHistoryValid");
+        private static readonly int TemporalMaxFramesId = Shader.PropertyToID("_HoGTAOTemporalMaxFrames");
+        private static readonly int TemporalRejectionId = Shader.PropertyToID("_HoGTAOTemporalRejection");
         private static readonly int WorldRadiusId = Shader.PropertyToID("_HoGTAOWorldSpaceRadius");
         private static readonly int ScreenRadiusId = Shader.PropertyToID("_HoGTAOScreenSpaceRadius");
         private static readonly int ThicknessId = Shader.PropertyToID("_HoGTAOThickness");
@@ -336,6 +339,8 @@ namespace lilToon.URP.Extensions.GTAO
             public bool useHistory;
             public bool useMotionVectors;
             public bool debugDisocclusion;
+            public int maxFrames;
+            public float rejection;
         }
 
         private sealed class BlitData
@@ -534,6 +539,8 @@ namespace lilToon.URP.Extensions.GTAO
                 data.useHistory = history.Valid;
                 data.useMotionVectors = motionVectors.IsValid();
                 data.debugDisocclusion = debugTemporal;
+                data.maxFrames = Mathf.Max(1, settings.temporalFrameCount);
+                data.rejection = settings.temporalRejection;
                 builder.UseTexture(data.current, AccessFlags.Read);
                 builder.UseTexture(data.previous, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
@@ -546,7 +553,10 @@ namespace lilToon.URP.Extensions.GTAO
                 builder.SetRenderFunc(static (TemporalData passData, RasterGraphContext context) =>
                 {
                     context.cmd.SetGlobalFloat(DebugModeId, passData.debugDisocclusion ? 5.0f : 0.0f);
-                    context.cmd.SetGlobalFloat(HistoryBlendId, passData.useHistory ? 0.5f : 0.0f);
+                    context.cmd.SetGlobalFloat(HistoryBlendId, passData.useHistory ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(HistoryValidId, passData.useHistory ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(TemporalMaxFramesId, passData.maxFrames);
+                    context.cmd.SetGlobalFloat(TemporalRejectionId, passData.rejection);
                     context.cmd.SetGlobalTexture(HoGTAOShaderConstants.AoInputTexId, passData.current);
                     context.cmd.SetGlobalTexture(HoGTAOShaderConstants.HistoryPrevTexId, passData.previous);
                     context.cmd.SetGlobalTexture(GeometryInputId, passData.geometry);

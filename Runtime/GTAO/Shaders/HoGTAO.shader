@@ -29,6 +29,9 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         float4x4 _HoGTAOViewMatrix;
         float _HoGTAODebugMode;
         float _HoGTAOHistoryBlend;
+        float _HoGTAOHistoryValid;
+        float _HoGTAOTemporalMaxFrames;
+        float _HoGTAOTemporalRejection;
         float _HoGTAOUseMotionVectors;
         float _HoGTAOWorldSpaceRadius;
         float _HoGTAOScreenSpaceRadius;
@@ -248,7 +251,9 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             // URP stores forward motion in screen-UV space. Reproject the current
             // pixel backwards to locate its previous-frame history sample.
             float2 previousUV = saturate(input.texcoord - motion);
-            half previous = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevTex, sampler_LinearClamp, previousUV).r;
+            half4 previousData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevTex, sampler_LinearClamp, previousUV);
+            half previous = previousData.r;
+            half previousCount = previousData.g * max(_HoGTAOTemporalMaxFrames, 1.0);
             half previousDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_LinearClamp, previousUV).r;
             // Sky/uncovered pixels have no surface history to validate. Keep
             // them white in the diagnostic instead of falsely marking them as
@@ -259,17 +264,19 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             }
             half depthValid = step(0.0001h, geometry.a) * step(0.0001h, previousDepth);
             half depthAgreement = step(abs(geometry.a - previousDepth), max(0.05h * geometry.a, 0.05h));
-            half historyWeight = saturate(_HoGTAOHistoryBlend) * depthValid * depthAgreement;
+            half accepted = saturate(_HoGTAOHistoryValid) * depthValid * depthAgreement;
+            half sampleCount = min(previousCount + 1.0h, max(_HoGTAOTemporalMaxFrames, 1.0));
+            sampleCount = lerp(1.0h, sampleCount, accepted);
+            half historyWeight = accepted * (1.0h - rcp(max(sampleCount, 1.0h)));
             if (_HoGTAODebugMode > 4.5)
             {
                 // HTrace's Temporal Disocclusion view is a rejection mask, not
                 // another AO view: stable history is white, rejected/disoccluded
                 // pixels are red and change as the camera moves.
-                half accepted = depthValid * depthAgreement;
                 return half4(1.0h, accepted, accepted, 1.0h);
             }
             half ao = lerp(current, previous, historyWeight);
-            return half4(ao, ao, ao, 1.0h);
+            return half4(ao, sampleCount / max(_HoGTAOTemporalMaxFrames, 1.0h), ao, 1.0h);
         }
 
         half4 OutputAO(Varyings input) : SV_Target
