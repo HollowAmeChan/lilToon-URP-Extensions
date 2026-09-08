@@ -153,12 +153,16 @@ namespace lilToon.URP.Extensions.GTAO
         private RTHandle next;
         private RTHandle previousDepth;
         private RTHandle nextDepth;
+        private RTHandle previousNormal;
+        private RTHandle nextNormal;
         private bool valid;
 
         public RTHandle Previous => previous;
         public RTHandle Next => next;
         public RTHandle PreviousDepth => previousDepth;
         public RTHandle NextDepth => nextDepth;
+        public RTHandle PreviousNormal => previousNormal;
+        public RTHandle NextNormal => nextNormal;
         public bool Valid => valid;
 
         public void Ensure(int width, int height)
@@ -179,6 +183,10 @@ namespace lilToon.URP.Extensions.GTAO
             depthDescriptor.graphicsFormat = GraphicsFormat.R16_SFloat;
             RenderingUtils.ReAllocateIfNeeded(ref previousDepth, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGTAOHistoryPrevDepthTex");
             RenderingUtils.ReAllocateIfNeeded(ref nextDepth, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGTAOHistoryNextDepthTex");
+            RenderTextureDescriptor normalDescriptor = descriptor;
+            normalDescriptor.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
+            RenderingUtils.ReAllocateIfNeeded(ref previousNormal, normalDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGTAOHistoryPrevNormalTex");
+            RenderingUtils.ReAllocateIfNeeded(ref nextNormal, normalDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGTAOHistoryNextNormalTex");
             valid = false;
         }
 
@@ -192,6 +200,9 @@ namespace lilToon.URP.Extensions.GTAO
             temp = previousDepth;
             previousDepth = nextDepth;
             nextDepth = temp;
+            temp = previousNormal;
+            previousNormal = nextNormal;
+            nextNormal = temp;
         }
 
         public void Dispose()
@@ -200,10 +211,14 @@ namespace lilToon.URP.Extensions.GTAO
             next?.Release();
             previousDepth?.Release();
             nextDepth?.Release();
+            previousNormal?.Release();
+            nextNormal?.Release();
             previous = null;
             next = null;
             previousDepth = null;
             nextDepth = null;
+            previousNormal = null;
+            nextNormal = null;
             valid = false;
         }
     }
@@ -291,6 +306,7 @@ namespace lilToon.URP.Extensions.GTAO
         private static readonly int TemporalMaxFramesId = Shader.PropertyToID("_HoGTAOTemporalMaxFrames");
         private static readonly int TemporalRejectionId = Shader.PropertyToID("_HoGTAOTemporalRejection");
         private static readonly int HistoryPrevTexelSizeId = Shader.PropertyToID("_HoGTAOHistoryPrevTex_TexelSize");
+        private static readonly int HistoryPrevNormalTexId = Shader.PropertyToID("_HoGTAOHistoryPrevNormalTex");
         private static readonly int WorldRadiusId = Shader.PropertyToID("_HoGTAOWorldSpaceRadius");
         private static readonly int ScreenRadiusId = Shader.PropertyToID("_HoGTAOScreenSpaceRadius");
         private static readonly int ThicknessId = Shader.PropertyToID("_HoGTAOThickness");
@@ -353,8 +369,10 @@ namespace lilToon.URP.Extensions.GTAO
             public TextureHandle previous;
             public TextureHandle geometry;
             public TextureHandle previousDepth;
+            public TextureHandle previousNormal;
             public TextureHandle motionVectors;
             public TextureHandle output;
+            public TextureHandle normalOutput;
             public bool useHistory;
             public bool useMotionVectors;
             public bool debugDisocclusion;
@@ -453,7 +471,7 @@ namespace lilToon.URP.Extensions.GTAO
             int width = Mathf.Max(1, cameraData.cameraTargetDescriptor.width);
             int height = Mathf.Max(1, cameraData.cameraTargetDescriptor.height);
             int cameraId = cameraData.camera != null ? cameraData.camera.GetInstanceID() : 0;
-            if (history.Previous == null || history.PreviousDepth == null || width != historyWidth || height != historyHeight || cameraId != historyCameraId || historyResolution != settings.resolution)
+            if (history.Previous == null || history.PreviousDepth == null || history.PreviousNormal == null || width != historyWidth || height != historyHeight || cameraId != historyCameraId || historyResolution != settings.resolution)
             {
                 history.Ensure(width, height);
                 historyWidth = width;
@@ -551,6 +569,8 @@ namespace lilToon.URP.Extensions.GTAO
             TextureHandle next = renderGraph.ImportTexture(history.Next);
             TextureHandle previousDepth = renderGraph.ImportTexture(history.PreviousDepth);
             TextureHandle nextDepth = renderGraph.ImportTexture(history.NextDepth);
+            TextureHandle previousNormal = renderGraph.ImportTexture(history.PreviousNormal);
+            TextureHandle nextNormal = renderGraph.ImportTexture(history.NextNormal);
             TextureHandle motionVectors = resourceData.motionVectorColor;
             using (var builder = renderGraph.AddRasterRenderPass<TemporalData>("Ho-GTAO Temporal", out TemporalData data, ProfilingSampler))
             {
@@ -559,8 +579,10 @@ namespace lilToon.URP.Extensions.GTAO
                 data.previous = previous;
                 data.geometry = geometry.normalDepthTexture;
                 data.previousDepth = previousDepth;
+                data.previousNormal = previousNormal;
                 data.motionVectors = motionVectors;
                 data.output = next;
+                data.normalOutput = nextNormal;
                 data.useHistory = history.Valid;
                 data.useMotionVectors = motionVectors.IsValid();
                 data.debugDisocclusion = debugTemporal;
@@ -573,9 +595,11 @@ namespace lilToon.URP.Extensions.GTAO
                 builder.UseTexture(data.previous, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.UseTexture(data.previousDepth, AccessFlags.Read);
+                builder.UseTexture(data.previousNormal, AccessFlags.Read);
                 if (data.motionVectors.IsValid())
                     builder.UseTexture(data.motionVectors, AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(data.normalOutput, 1, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (TemporalData passData, RasterGraphContext context) =>
@@ -588,6 +612,7 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.SetGlobalVector(HistoryPrevTexelSizeId, passData.historyTexelSize);
                     context.cmd.SetGlobalTexture(HoGTAOShaderConstants.AoInputTexId, passData.current);
                     context.cmd.SetGlobalTexture(HoGTAOShaderConstants.HistoryPrevTexId, passData.previous);
+                    context.cmd.SetGlobalTexture(HistoryPrevNormalTexId, passData.previousNormal);
                     context.cmd.SetGlobalTexture(GeometryInputId, passData.geometry);
                     context.cmd.SetGlobalTexture(HistoryDepthPrevId, passData.previousDepth);
                     context.cmd.SetGlobalFloat(UseMotionVectorsId, passData.useMotionVectors ? 1.0f : 0.0f);
@@ -619,14 +644,14 @@ namespace lilToon.URP.Extensions.GTAO
                 // Temporal debug intentionally stops before spatial denoising and
                 // final composition so the inspector shows the actual history
                 // reprojection/rejection result.
-                gtao.aoTexture = next;
+                gtao.aoTexture = nextNormal;
                 return;
             }
 
             int spatialPassCount = settings.spatialFilter == HoGTAOSpatialFilter.Box
                 ? Mathf.Clamp(settings.boxPassCount, 1, 3)
                 : 1;
-            TextureHandle spatialSource = next;
+            TextureHandle spatialSource = nextNormal;
             TextureHandle spatial = TextureHandle.nullHandle;
             for (int spatialPass = 0; spatialPass < spatialPassCount; spatialPass++)
             {

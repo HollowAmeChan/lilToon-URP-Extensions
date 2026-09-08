@@ -14,6 +14,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
 
         TEXTURE2D_X(_HoGTAOHistoryPrevTex);
         TEXTURE2D_X_FLOAT(_HoGTAOHistoryPrevDepthTex);
+        TEXTURE2D_X(_HoGTAOHistoryPrevNormalTex);
         float4 _HoGTAOHistoryPrevTex_TexelSize;
         TEXTURE2D_X(_MotionVectorTexture);
         TEXTURE2D_X_FLOAT(_HoGTAODepthMip0);
@@ -133,16 +134,6 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             return frac(52.9829189 * frac(dot(pixelCoord, float2(0.06711056, 0.00583715))));
         }
 
-        float2 HoGTAOPackNormal(float3 normalWS)
-        {
-            return PackNormalOctQuadEncode(normalize(normalWS)) * 0.5 + 0.5;
-        }
-
-        float3 HoGTAOUnpackNormal(float2 encoded)
-        {
-            return normalize(UnpackNormalOctQuadEncode(encoded * 2.0 - 1.0));
-        }
-
         void HoGTAOUpdateBitmask(inout uint bitmask, float2 horizonSamples)
         {
             uint2 horizonInt = uint2(round(saturate(horizonSamples) * 32.0));
@@ -229,7 +220,10 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                     float2 offset = round(stride * samplingDirection) * rcp(_ScreenParams.xy);
                     float3 samplePosition;
                     float3 sampleNormal;
-                    float lod = clamp(floor(log2(max(length(stride * samplingDirection), 1.0)) - 3.0), 0.0, 3.0);
+                    // HTrace passes a fractional LOD; hard flooring here
+                    // creates visible distance bands as the march crosses
+                    // each depth-pyramid level.
+                    float lod = clamp(log2(max(length(stride * samplingDirection), 1.0)) - 3.0, 0.0, 3.0);
                     if (HoGTAOSample(uv - offset, lod, samplePosition, sampleNormal))
                     {
                         float3 delta = samplePosition - positionVS;
@@ -292,7 +286,10 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             return half4(ao, ao, ao, 1.0h);
         }
 
-        half4 Temporal(Varyings input) : SV_Target
+        void Temporal(
+            Varyings input,
+            out half4 historyOutput : SV_Target0,
+            out half4 normalOutput : SV_Target1)
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             half current = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord).r;
@@ -322,18 +319,21 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             };
             float previousAccumulated = 0.0;
             float previousCountAccumulated = 0.0;
+            float3 previousNormalAccumulated = 0.0;
             float historyWeightSum = 0.0;
             [unroll]
             for (int historyTap = 0; historyTap < 4; historyTap++)
             {
                 float2 historyUV = saturate((historyBase + historyOffsets[historyTap] + 0.5) * historyTexel);
                 half4 historyData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevTex, sampler_PointClamp, historyUV);
+                half4 normalData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevNormalTex, sampler_PointClamp, historyUV);
                 half historyDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_PointClamp, historyUV).r;
                 float validDepth = step(0.0001, historyDepth)
                     * step(abs((float)geometry.a - historyDepth), max(0.05 * geometry.a, 0.05));
                 float tapWeight = historyWeights[historyTap] * validDepth;
                 previousAccumulated += historyData.r * tapWeight;
                 previousCountAccumulated += historyData.g * max(_HoGTAOTemporalMaxFrames, 1.0) * tapWeight;
+                previousNormalAccumulated += ((float3)normalData.gba * 2.0 - 1.0) * tapWeight;
                 historyWeightSum += tapWeight;
             }
             // SceneView and the first valid motion-vector frame can expose a
@@ -349,18 +349,24 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                     * step(abs((float)geometry.a - fallbackDepth), max(0.05 * geometry.a, 0.05));
                 previousAccumulated = fallbackData.r * fallbackValid;
                 previousCountAccumulated = fallbackData.g * max(_HoGTAOTemporalMaxFrames, 1.0) * fallbackValid;
+                half4 fallbackNormalData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevNormalTex, sampler_PointClamp, fallbackUV);
+                previousNormalAccumulated = ((float3)fallbackNormalData.gba * 2.0 - 1.0) * fallbackValid;
                 historyWeightSum = fallbackValid;
             }
             half previous = historyWeightSum > 1.0e-5 ? previousAccumulated / historyWeightSum : 0.0h;
             half previousCount = historyWeightSum > 1.0e-5 ? previousCountAccumulated / historyWeightSum : 0.0h;
             float3 currentNormal = normalize((float3)geometry.rgb * 2.0 - 1.0);
-            float3 previousNormal = HoGTAOUnpackNormal(SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevTex, sampler_PointClamp, previousUV).ba);
+            float3 previousNormal = historyWeightSum > 1.0e-5
+                ? normalize(previousNormalAccumulated / historyWeightSum)
+                : currentNormal;
             // Sky/uncovered pixels have no surface history to validate. Keep
             // them white in the diagnostic instead of falsely marking them as
             // temporal disocclusions.
             if (geometry.a < 0.0001h && _HoGTAODebugMode > 4.5)
             {
-                return half4(1.0h, 1.0h, 1.0h, 1.0h);
+                historyOutput = half4(1.0h, 1.0h, 1.0h, 1.0h);
+                normalOutput = historyOutput;
+                return;
             }
             half depthValid = step(0.0001h, geometry.a) * step(1.0e-5, historyWeightSum);
             half depthAgreement = step(1.0e-5, historyWeightSum);
@@ -410,13 +416,15 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 // Stable history is a grayscale sample-age signal; rejected
                 // history is red, matching HTrace's disocclusion diagnostic.
                 half historyAge = saturate(sampleCount / max(_HoGTAOTemporalMaxFrames, 1.0h));
-                return accepted > 0.5h
+                historyOutput = accepted > 0.5h
                     ? half4(historyAge, historyAge, historyAge, 1.0h)
                     : half4(1.0h, 0.0h, 0.0h, 1.0h);
+                normalOutput = historyOutput;
+                return;
             }
             half ao = lerp(current, previous, historyWeight);
-            float2 packedNormal = HoGTAOPackNormal(currentNormal);
-            return half4(ao, sampleCount / max(_HoGTAOTemporalMaxFrames, 1.0h), packedNormal.x, packedNormal.y);
+            historyOutput = half4(ao, sampleCount / max(_HoGTAOTemporalMaxFrames, 1.0h), 0.0h, 0.0h);
+            normalOutput = half4(ao, currentNormal * 0.5h + 0.5h);
         }
 
         half4 OutputAO(Varyings input) : SV_Target
@@ -432,7 +440,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             float2 uv = input.texcoord;
             half4 centerND = SAMPLE_TEXTURE2D_X(_HoGTAOGeometryInput, sampler_PointClamp, uv);
-            half centerAO = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv).r;
+            half4 centerAOData = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv);
+            half centerAO = centerAOData.r;
             if (centerND.a < 0.0001h)
             {
                 return half4(0.0h, 0.0h, 0.0h, 1.0h);
@@ -440,7 +449,9 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
 
             float2 texel = rcp(_ScreenParams.xy) * max(_HoGTAOSpatialResolution, 1.0)
                 * (_HoGTAOSpatialFilter > 0.5 ? max(_HoGTAOSpatialStep, 1.0) : max(_HoGTAOSpatialRadius, 0.5));
-            float3 centerNormal = normalize((float3)centerND.rgb * 2.0 - 1.0);
+            // Spatial ping-pong stores AO amount in R and the filtered world
+            // normal in GBA, matching HTrace's OcclusionNormal buffer.
+            float3 centerNormal = normalize((float3)centerAOData.gba * 2.0 - 1.0);
             float centerDepth = centerND.a;
             float3 centerPositionVS = HoGTAOViewPosition(uv, centerDepth);
             float3 centerNormalVS = normalize(mul((float3x3)_HoGTAOViewMatrix, centerNormal));
@@ -465,7 +476,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 }
 
                 float depthDelta = abs(sampleND.a - centerDepth) / max(centerDepth, 0.05);
-                float3 sampleNormal = normalize((float3)sampleND.rgb * 2.0 - 1.0);
+                half4 sampleAOData = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, sampleUV);
+                float3 sampleNormal = normalize((float3)sampleAOData.gba * 2.0 - 1.0);
                 float3 samplePositionVS = HoGTAOViewPosition(sampleUV, sampleND.a);
                 float planeDistance = abs(dot(samplePositionVS - centerPositionVS, centerNormalVS)) / max(centerDepth, 0.05);
                 float normalWeight = _HoGTAOSpatialFilter > 0.5
@@ -486,7 +498,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             }
 
             half filtered = (half)saturate(sum / max(weightSum, 1.0e-5));
-            return half4(filtered, filtered, filtered, 1.0h);
+            return half4(filtered, centerNormal * 0.5h + 0.5h);
         }
 
         half4 DebugOutput(Varyings input) : SV_Target
