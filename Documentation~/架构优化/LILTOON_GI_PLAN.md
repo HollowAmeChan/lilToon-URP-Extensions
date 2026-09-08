@@ -234,9 +234,9 @@ GeometryBuffer（Before Opaques）
 
 GeometryBuffer 可以提前准备输入和分配资源，但 GI candidate 必须等 source radiance 可用，DI candidate 必须等 light list 和材质/几何响应可用。这样既保留统一中控，也不会让 GeometryBuffer feature 承担 GI、DI、AO 的算法职责。
 
-### 1.9 是否需要独立的 Ho-RTBuffer RendererFeature
+### 1.9 是否需要独立的共享屏幕空间资源层
 
-需要保留这个架构方向，但不应现在就把所有临时 RT 搬进去。`Ho-RTBuffer` 的 `RT` 指屏幕空间和 RenderGraph 工作资源，不表示硬件 ray tracing，也不表示它要负责一遍独立灯光渲染。
+需要保留这个架构方向，但不应现在就把所有临时 RT 搬进去。早先讨论的 `Ho-RTBuffer` 名称不作为最终命名，因为它容易被理解成硬件 RT buffer，也没有说明它是否拥有 Hi-Z、history 或 reservoir。
 
 建议把职责分成三层：
 
@@ -244,22 +244,24 @@ GeometryBuffer 可以提前准备输入和分配资源，但 GI candidate 必须
 HoGeometryBuffer RendererFeature
   -> normal / depth / coverage，以及几何有效性
 
-Ho-RTBuffer RendererFeature（第二阶段抽取）
+HoScreenSpaceContext（第二阶段抽取）
   -> 共享 Hi-Z、motion/blue-noise、尺寸与相机 reset、ping-pong 生命周期、资源格式
 
 Ho-SSGI / Ho-GTAO / Ho-DI
   -> 各自 candidate、typed reservoir、validation、denoise 和输出
 ```
 
-因此 `Ho-RTBuffer` 可以成为 GeometryBuffer 之后的共享资源中控，但不能成为 GeometryBuffer 的算法附属物，也不能把 GI reservoir、AO history 和 DI light reservoir 合成一套“万能 RT”。这些数据的 payload、权重和历史失效条件不同。
+因此 `HoScreenSpaceContext` 可以成为 GeometryBuffer 之后的共享资源中控，但不能成为 GeometryBuffer 的算法附属物，也不能把 GI reservoir、AO history 和 DI light reservoir 合成一套“万能 RT”。这些数据的 payload、权重和历史失效条件不同。
 
-当前先不立即新增空的 Feature，原因是 ReSTIR reservoir 目前只有 Ho-SSGI 一个消费者；过早拆分会增加 Renderer Feature 列表顺序、RenderGraph 依赖和资源回收路径，却没有共享收益。第一段 ReSTIR 先在 HoSSGI 内闭环。满足以下任一条件时再创建 `Ho-RTBufferRendererFeature`：
+当前先不立即新增空的 Feature，原因是 ReSTIR reservoir 目前只有 Ho-SSGI 一个消费者；过早拆分会增加 Renderer Feature 列表顺序、RenderGraph 依赖和资源回收路径，却没有共享收益。第一段 ReSTIR 先在 HoSSGI 内闭环。满足以下任一条件时再创建实际的共享资源 producer：
 
 1. Ho-GTAO 和 Ho-SSGI 都需要同一套 Hi-Z，且重复生成已经成为可测量的 GPU 成本；
 2. Ho-DI 开始使用同一套 motion、neighbor offset、blue-noise 或相机 history reset；
 3. 需要跨多个 producer 统一暴露 RenderGraph 资源，而不是只共享一组 C# 工具函数。
 
-首个迁移目标应是把 GTAO 当前的 `CreateDepthPyramid` 抽成共享 Hi-Z producer，再让 SSGI、GTAO 和后续 DI 通过 `HoRTBufferRenderGraphResources` 读取；reservoir 的具体纹理仍由对应 producer 创建和写入。
+首个迁移目标应是把 GTAO 当前的 `CreateDepthPyramid` 抽成共享 Hi-Z producer，再让 SSGI、GTAO 和后续 DI 通过 `HoScreenSpaceContextResources` 读取；reservoir 的具体纹理仍由对应 producer 创建和写入。如果它确实负责创建共享 Hi-Z 和 ray-query 工作资源，RendererFeature 才使用 `HoScreenSpaceRayQueryRendererFeature` 这个名称。
+
+当前源码审计补充见 [Ho-GTAO / Ho-SSGI ReSTIR 共享层评估](LILTOON_RESTIR_SHARED_LAYER_REPORT.md)。需要特别区分：当前 Ho-GTAO 只有 temporal AO history 和 spatial bilateral filter，没有 ReSTIR reservoir；第一阶段只继续完善 Ho-SSGI 的 GI reservoir，不为 GTAO 增加抽象层。
 
 ## 2. Ho-SSGI v1 的核心设计
 
