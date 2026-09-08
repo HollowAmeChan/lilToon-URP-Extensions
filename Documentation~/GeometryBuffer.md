@@ -23,6 +23,8 @@ GeometryBuffer 不是 URP `_CameraDepthTexture` 的别名，也不是完整 defe
 
 这套分离解决两个相反的问题：SSGI/GTAO 不会把描边当真实表面，DOF 等视觉后处理又可以识别并保护描边。
 
+GeometryBuffer 的长期扩展模型是：**PhysicalGeometryBuffer 保持稳定，VisualSurfaceBuffer 按需增加**。后续增加描边深度、视觉法线或颜色时，不应覆盖物理通道，而应作为视觉表面扩展供特定消费者选择。
+
 ## 2. 生产顺序
 
 入口：`Runtime/GeometryBuffer/HoGeometryBufferRendererFeature.cs`
@@ -255,3 +257,63 @@ CameraColor = rendered color source
 - lilToon outline 模板：`D:\Unity_Fork\lilToon\Assets\lilToon\CustomShaderResources\URP\Default*Outline.lilblock`
 - lilToon UsePass 模板：`D:\Unity_Fork\lilToon\Assets\lilToon\CustomShaderResources\URP\DefaultUsePassOutline*.lilblock`
 - coverage fragment：`D:\Unity_Fork\lilToon\Assets\lilToon\Shader\Includes\lil_pass_outline_coverage.hlsl`
+
+## 10. VisualSurfaceBuffer 扩展与 RT 成本
+
+### 10.1 推荐的数据分层
+
+```text
+PhysicalGeometryBuffer
+  NormalDepth / physical coverage / DepthTexture
+  -> AO / GI / SSS / 物理遮挡
+
+VisualSurfaceBuffer
+  OutlineCoverage / OutlineDepth / OutlineNormal / OutlineColor / KindFlags
+  -> DOF / motion blur / visual occlusion / 后续视觉合成
+```
+
+消费者按需求选择：
+
+| 模式 | 深度选择 | 适用消费者 |
+| --- | --- | --- |
+| `PhysicalOnly` | `NormalDepth.a` | GTAO、SSGI、SSS、物理遮挡 |
+| `PhysicalPlusVisualDepth` | 描边 coverage 命中时使用 OutlineDepth，否则使用 NormalDepth | DOF、motion blur、视觉景深 |
+| `VisualOcclusionOnly` | VisualSurface 只参与 ray blocking，不参与 radiance/normal/energy | 需要避免屏幕空间射线穿过描边的 GI/AO 变体 |
+| `VisualComposite` | 读取 OutlineColor/coverage，在后处理后重新合成 | 描边、特殊视觉壳层、风格化后处理 |
+
+### 10.2 为什么不能直接合并进 NormalDepth
+
+把 OutlineDepth 写入 `NormalDepth.a` 会让所有现有消费者自动看到描边：
+
+- SSGI 可能把描边当 caster、receiver 或 source；
+- GTAO 会在描边壳上计算遮蔽；
+- SSS/反射/角色特化会把描边误判成真实表面；
+- 但这些效果仍然没有对应的物理法线、albedo、厚度和材质语义。
+
+因此“补进主 GBuffer”应理解为建立一个可解析的 visual surface view，而不是改写 PhysicalGeometryBuffer。
+
+### 10.3 RT 数量和带宽取舍
+
+当前资源规模（全分辨率、无 MSAA 乘数）：
+
+| 资源 | 常见格式 | 约每像素字节 | 1920×1080 近似显存 |
+| --- | --- | ---: | ---: |
+| `NormalDepth` | `R16G16B16A16_SFloat` | 8 | 15.8 MiB |
+| `DepthTexture` | D24/D32 | 3-4 | 6.0-7.9 MiB |
+| `OutlineCoverage` | `R8_UNorm` | 1 | 2.0 MiB |
+| `SkyTexture` | `R16G16B16A16_SFloat` | 8 | 15.8 MiB |
+| 未来 `OutlineDepth` | `R16_SFloat` | 2 | 4.0 MiB |
+
+实际成本还会受到 render scale、MSAA、XR slice、RT 对齐和 RenderGraph 生命周期影响。当前 OutlineCoverage 是一张额外 R8 RT，成本相对可控；真正需要关注的是未来继续增加独立 RT 后的带宽和 pass attachment 切换。
+
+### 10.4 推荐的优化路线
+
+1. `OutlineCoverage` 保持独立 R8，作为廉价、易调试的视觉 mask。
+2. 需要深度时优先新增一个 `OutlineSurface` 打包 RT，例如 `RG16_SFloat`：
+   - `R = outline coverage`
+   - `G = outline linear eye depth`
+3. 需要法线/颜色时继续扩展同一个 visual surface contract，避免每个效果各自创建一套 RT。
+4. 只有存在 Outline、DOF、motion blur 或明确的 visual surface 消费者时，才分配 VisualSurfaceBuffer；纯 AO/GI 场景不应为它付出成本。
+5. DebugTile 必须为每个新增 visual channel 提供视图，否则 RT 成本无法在 Frame Debugger 之外被验证。
+
+当前实现处于第 1 阶段：已经有独立 `OutlineCoverageTexture`。它目前随 GeometryBuffer 主资源一起创建，后续可以根据项目中的视觉消费者登记做懒分配。下一步的 `OutlineDepth` 应优先评估与 coverage 打包，而不是继续增加多张独立 attachment。
