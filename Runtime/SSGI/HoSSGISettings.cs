@@ -18,7 +18,9 @@ namespace lilToon.URP.Extensions.SSGI
         [InspectorName("Raw GI")]
         RawGI = 4,
         [InspectorName("Confidence")]
-        Confidence = 5
+        Confidence = 5,
+        [InspectorName("Direct Source")]
+        DirectSource = 6
     }
 
     [Serializable]

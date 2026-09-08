@@ -9,6 +9,7 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
         HLSLINCLUDE
         #pragma target 4.5
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Lighting.hlsl"
 
         struct Attributes
         {
@@ -32,6 +33,40 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
             output.texcoord = GetFullScreenTriangleTexCoord(input.vertexID);
             return output;
         }
+
+        float3 HoSSGIViewPosition(float2 uv, float linearDepth)
+        {
+            float deviceDepth = (rcp(max(linearDepth, 1.0e-5)) - _ZBufferParams.w) / max(_ZBufferParams.z, 1.0e-6);
+            return ComputeViewSpacePosition(uv, deviceDepth, UNITY_MATRIX_I_P) * float3(1.0, -1.0, -1.0);
+        }
+
+        float3 HoSSGIGetDirectLighting(float3 positionWS, float3 normalWS)
+        {
+            Light mainLight = GetMainLight(TransformWorldToShadowCoord(positionWS));
+            float3 lighting = mainLight.color
+                * (mainLight.distanceAttenuation * mainLight.shadowAttenuation)
+                * saturate(dot(normalWS, mainLight.direction));
+
+            #if defined(_ADDITIONAL_LIGHTS) || defined(_CLUSTER_LIGHT_LOOP)
+                InputData inputData = (InputData)0;
+                inputData.positionWS = positionWS;
+                inputData.normalizedScreenSpaceUV = ComputeNormalizedDeviceCoordinatesWithZ(positionWS, UNITY_MATRIX_VP).xy;
+                uint additionalLightCount = GetAdditionalLightsCount();
+                #if USE_CLUSTER_LIGHT_LOOP
+                    additionalLightCount = 1u;
+                #endif
+                LIGHT_LOOP_BEGIN(additionalLightCount)
+                {
+                    Light light = GetAdditionalLight(lightIndex, positionWS);
+                    lighting += light.color
+                        * (light.distanceAttenuation * light.shadowAttenuation)
+                        * saturate(dot(normalWS, light.direction));
+                }
+                LIGHT_LOOP_END
+            #endif
+
+            return max(lighting, 0.0);
+        }
         TEXTURE2D_X(_HoSSGIGeometry);
         TEXTURE2D_X(_HoSSGISurfaceColor);
         TEXTURE2D_X(_HoGITexture);
@@ -49,6 +84,14 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
             if (_HoSSGIDebugMode == 3) return float4(geometry.rgb, 1);
             if (_HoSSGIDebugMode == 4) return float4(gi.rgb, 1);
             if (_HoSSGIDebugMode == 5) return float4(gi.a.xxx, 1);
+            if (_HoSSGIDebugMode == 6)
+            {
+                if (geometry.a < 0.0001 || surfaceColor.a < 0.0001) return 0;
+                float3 positionVS = HoSSGIViewPosition(uv, geometry.a);
+                float3 positionWS = mul(UNITY_MATRIX_I_V, float4(positionVS, 1.0)).xyz;
+                float3 normalWS = normalize((float3)geometry.rgb * 2.0 - 1.0);
+                return float4(surfaceColor.rgb * HoSSGIGetDirectLighting(positionWS, normalWS), 1);
+            }
             return float4(source, 1);
         }
         ENDHLSL
@@ -58,6 +101,8 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Frag
+            #pragma multi_compile _ _ADDITIONAL_LIGHTS
+            #pragma multi_compile _ _CLUSTER_LIGHT_LOOP
             ENDHLSL
         }
     }
