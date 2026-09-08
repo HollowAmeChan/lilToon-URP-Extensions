@@ -21,6 +21,12 @@ namespace lilToon.URP.Extensions.SSGI
         Confidence = 5,
         [InspectorName("Raw Trace")]
         RawTrace = 6,
+        [InspectorName("Reservoir Weight")]
+        ReservoirWeight = 7,
+        [InspectorName("Reservoir M")]
+        ReservoirM = 8,
+        [InspectorName("Reservoir Hit")]
+        ReservoirHit = 9,
     }
 
     [Serializable]

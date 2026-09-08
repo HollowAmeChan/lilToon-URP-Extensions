@@ -37,6 +37,8 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
         TEXTURE2D_X(_HoSSGISource);
         TEXTURE2D_X(_HoSSGIRawGI);
         TEXTURE2D_X(_HoGITexture);
+        TEXTURE2D_X(_HoSSGIReservoirColor);
+        TEXTURE2D_X(_HoSSGIReservoirAux);
         int _HoSSGIDebugMode;
         float4 Frag(Varyings input) : SV_Target
         {
@@ -46,12 +48,25 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
             float3 source = SAMPLE_TEXTURE2D_X(_HoSSGISource, sampler_LinearClamp, uv).rgb;
             float4 rawGi = SAMPLE_TEXTURE2D_X(_HoSSGIRawGI, sampler_LinearClamp, uv);
             float4 gi = SAMPLE_TEXTURE2D_X(_HoGITexture, sampler_LinearClamp, uv);
+            half4 reservoirColor = SAMPLE_TEXTURE2D_X(_HoSSGIReservoirColor, sampler_PointClamp, uv);
+            half4 reservoirAux = SAMPLE_TEXTURE2D_X(_HoSSGIReservoirAux, sampler_PointClamp, uv);
             if (_HoSSGIDebugMode == 1) return float4(source, 1);
             if (_HoSSGIDebugMode == 2) return float4(step(0.0001, geometry.a).xxx, 1);
             if (_HoSSGIDebugMode == 3) return float4(geometry.rgb, 1);
             if (_HoSSGIDebugMode == 4) return float4(gi.rgb, 1);
             if (_HoSSGIDebugMode == 5) return float4(gi.a.xxx, 1);
             if (_HoSSGIDebugMode == 6) return float4(rawGi.rgb, rawGi.a);
+            if (_HoSSGIDebugMode == 7)
+            {
+                float weight = reservoirAux.y > 1.0e-5
+                    ? reservoirColor.a / max(reservoirAux.x * reservoirAux.y, 1.0e-5)
+                    : 0.0;
+                return float4((1.0 - exp(-max(weight, 0.0))).xxx, 1.0);
+            }
+            if (_HoSSGIDebugMode == 8)
+                return float4((1.0 - exp(-max(reservoirAux.x, 0.0) / 8.0)).xxx, 1.0);
+            if (_HoSSGIDebugMode == 9)
+                return float4(saturate(reservoirAux.z).xxx, 1.0);
             return float4(source, 1);
         }
         ENDHLSL

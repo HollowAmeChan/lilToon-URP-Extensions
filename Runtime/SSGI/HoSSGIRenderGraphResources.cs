@@ -10,6 +10,8 @@ namespace lilToon.URP.Extensions.SSGI
         public TextureHandle giTexture = TextureHandle.nullHandle;
         public TextureHandle rawGiTexture = TextureHandle.nullHandle;
         public TextureHandle sourceTexture = TextureHandle.nullHandle;
+        public TextureHandle reservoirColorTexture = TextureHandle.nullHandle;
+        public TextureHandle reservoirAuxTexture = TextureHandle.nullHandle;
 
         public bool HasGI => giTexture.IsValid();
 
@@ -18,6 +20,8 @@ namespace lilToon.URP.Extensions.SSGI
             giTexture = TextureHandle.nullHandle;
             rawGiTexture = TextureHandle.nullHandle;
             sourceTexture = TextureHandle.nullHandle;
+            reservoirColorTexture = TextureHandle.nullHandle;
+            reservoirAuxTexture = TextureHandle.nullHandle;
         }
     }
 }

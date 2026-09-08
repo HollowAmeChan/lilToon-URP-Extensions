@@ -1,6 +1,6 @@
 # lilToon / Ho-SSGI 实施规划
 
-> 状态：Draft v0.5
+> 状态：Draft v0.6
 >
 > 主线：先把 HTrace SSGI 改造成适合 lilToon 的 Ho-SSGI；Brixelizer GI 只作为后续 producer 替换，不提前展开完整实现。
 
@@ -183,6 +183,84 @@ SSGI 的屏幕空间遮挡来自 camera depth/GeometryBuffer，不是 ShadowCast
 
 HTrace 的 `DirectLighting` debug 只是间接光注入前的 camera color，并不是独立的 direct-light RT。HTrace 的 AO 也不是单独的灯光 pass：`HRenderSSGI.compute` 在 SSGI tracing 中顺便输出 near-hit AO，最终合成还会读取 URP 的 `_ScreenSpaceOcclusionTexture`。因此“自己渲了一遍 GTAO”不能推导出它有独立的灯光输入。
 
+### 1.8 ReSTIR 的资源和所有权
+
+ReSTIR 不是一张可以被所有 feature 直接共用的颜色图，而是一组带有算法语义的 reservoir/history 资源。HTrace 的 GI reservoir 至少保存：
+
+```text
+selected radiance / Color
+Wsum、M、W
+selected ray direction / distance
+HitFound、OriginNormal
+```
+
+其中 `M` 是候选样本或历史长度，`Wsum` 是候选权重总和，`W` 是最终估计器归一化权重。最终 GI 不是简单平均，而是 `selectedColor * W`。ReSTIR temporal 会把当前 reservoir 和 motion 重投影后的历史 reservoir 合并；spatial 会把邻居 reservoir 按平面、法线、距离和空间权重合并；firefly suppression 主要修改选中 reservoir 的 `W`，保留样本本身。
+
+HTrace 自己持有这些 RT，是因为它要跨 URP/HDRP、Forward/Deferred、不同材质和不同版本自行保证 GBuffer、motion、depth、history、render scale 和 shader binding。我们的中控可以消除这类兼容性重复，但不能把不同算法的 reservoir layout 强行合并。
+
+Ho 的所有权边界应为：
+
+```text
+HoGeometryBuffer / 共享屏幕空间基础层
+  = normal + depth + coverage + 可复用 Hi-Z + 几何有效性
+
+HoScreenSpaceLightingContext / 共享资源中控
+  = 每相机生命周期、尺寸变化、ping-pong、history reset、neighbor offsets、blue noise
+
+Ho-SSGI
+  = GI candidate、GI reservoir、GI temporal/spatial resampling、GI denoise
+
+Ho-GTAO
+  = AO candidate、AO history、AO temporal/spatial filter
+
+Ho-DI（后续）
+  = light candidate/RIS、DI reservoir、visibility validation、DI denoise
+```
+
+因此可以把 ReSTIR 的**资源管理基础设施**提前规划为 GeometryBuffer 之后的共享中控，也可以让 GeometryBuffer 发布 Hi-Z 和几何句柄供 AO/GI/DI 共同使用；但实际的 GI/DI reservoir 不应塞进 GeometryBuffer feature。GI reservoir 代表二次表面样本，DI reservoir 代表灯光样本，AO history 代表遮挡统计，三者的候选权重、验证条件、打包字段和 reset 条件都不同。
+
+ReSTIR 的执行时机也不能全部提前到 GeometryBuffer：
+
+```text
+GeometryBuffer（Before Opaques）
+  -> shared geometry / Hi-Z preparation
+  -> opaque lighting 或 HoGI Lit Source
+  -> GI/DI candidate generation
+  -> temporal reservoir reuse
+  -> spatial reservoir reuse
+  -> algorithm-specific denoise
+  -> composite
+```
+
+GeometryBuffer 可以提前准备输入和分配资源，但 GI candidate 必须等 source radiance 可用，DI candidate 必须等 light list 和材质/几何响应可用。这样既保留统一中控，也不会让 GeometryBuffer feature 承担 GI、DI、AO 的算法职责。
+
+### 1.9 是否需要独立的 Ho-RTBuffer RendererFeature
+
+需要保留这个架构方向，但不应现在就把所有临时 RT 搬进去。`Ho-RTBuffer` 的 `RT` 指屏幕空间和 RenderGraph 工作资源，不表示硬件 ray tracing，也不表示它要负责一遍独立灯光渲染。
+
+建议把职责分成三层：
+
+```text
+HoGeometryBuffer RendererFeature
+  -> normal / depth / coverage，以及几何有效性
+
+Ho-RTBuffer RendererFeature（第二阶段抽取）
+  -> 共享 Hi-Z、motion/blue-noise、尺寸与相机 reset、ping-pong 生命周期、资源格式
+
+Ho-SSGI / Ho-GTAO / Ho-DI
+  -> 各自 candidate、typed reservoir、validation、denoise 和输出
+```
+
+因此 `Ho-RTBuffer` 可以成为 GeometryBuffer 之后的共享资源中控，但不能成为 GeometryBuffer 的算法附属物，也不能把 GI reservoir、AO history 和 DI light reservoir 合成一套“万能 RT”。这些数据的 payload、权重和历史失效条件不同。
+
+当前先不立即新增空的 Feature，原因是 ReSTIR reservoir 目前只有 Ho-SSGI 一个消费者；过早拆分会增加 Renderer Feature 列表顺序、RenderGraph 依赖和资源回收路径，却没有共享收益。第一段 ReSTIR 先在 HoSSGI 内闭环。满足以下任一条件时再创建 `Ho-RTBufferRendererFeature`：
+
+1. Ho-GTAO 和 Ho-SSGI 都需要同一套 Hi-Z，且重复生成已经成为可测量的 GPU 成本；
+2. Ho-DI 开始使用同一套 motion、neighbor offset、blue-noise 或相机 history reset；
+3. 需要跨多个 producer 统一暴露 RenderGraph 资源，而不是只共享一组 C# 工具函数。
+
+首个迁移目标应是把 GTAO 当前的 `CreateDepthPyramid` 抽成共享 Hi-Z producer，再让 SSGI、GTAO 和后续 DI 通过 `HoRTBufferRenderGraphResources` 读取；reservoir 的具体纹理仍由对应 producer 创建和写入。
+
 ## 2. Ho-SSGI v1 的核心设计
 
 ### 2.1 复用输入
@@ -252,9 +330,11 @@ HoGeometryBuffer (250)
     -> Ho-SSGI raw trace
     -> world-space cosine hemisphere tracing
     -> GeometryBuffer depth intersection
-    -> temporal reprojection + motion/depth validation
-    -> local luminance firefly clamp
-    -> 5x5 depth/normal bilateral spatial filter
+    -> GI candidate reservoir
+    -> temporal reservoir reuse + motion/depth validation
+    -> firefly reservoir clamp
+    -> spatial reservoir reuse + depth/normal/Gaussian guidance
+    -> temporal/spatial GI reconstruction
     -> APV/sky fallback
     -> _HoGITexture + confidence
     -> composite BeforeRenderingPostProcessing
@@ -356,18 +436,20 @@ sourceValid = geometryCoverage
 
 当前 raw trace 已改为 world-space cosine hemisphere ray：从 GeometryBuffer 的线性眼深重建世界位置和世界法线，沿世界空间射线生成端点，再投影到 screen UV；沿投影轨迹用 GeometryBuffer 线性深度 crossing 判断相交，并使用命中面 cosine、距离衰减和 opaque source 过滤。旧的额外视空间轴翻转路径不再保留，因为它会让上下方向和摄像机移动产生错位。
 
-当前 producer 已补上第一段 HTrace 风格的重建链：raw trace 保留为独立调试资源；Temporal 使用 motion vector、上一帧 GI 和上一帧深度做重投影，并根据深度和 source luminance 变化拒绝历史；Spatial 使用局部 luminance statistics 做 firefly clamp，再用 5x5 深度/法线双边权重重建连续 GI。`Raw GI` 调试显示重建后的 GI，`Raw Trace` 调试显示未滤波射线结果。当前这仍是 HTrace 的基础重建子集，还没有复制 HTrace 的完整 reservoir/ReSTIR 链，因此画面验证应先区分坐标/相交错误和残余噪声，再继续加 reservoir。
+当前 producer 已补上第一段 HTrace 风格的 reservoir 链：raw trace 为每条射线建立候选 reservoir，Temporal 使用 motion vector、上一帧 GI/深度和 reservoir 做重投影合并，Firefly 阶段按局部 luminance statistics 限制异常的 `W`，Spatial 阶段再按 GeometryBuffer 深度/法线和屏幕 Gaussian 权重复用邻居 reservoir，最后 resolve 为 `selectedColor * W`。`Raw GI` 调试显示 temporal/spatial 前的 raw reservoir resolve，`Raw Trace` 调试显示当前未滤波射线结果。当前仍缺少 HTrace 的完整 selected-ray visibility validation、四 tap history 和多轮 spatial validation，画面验证要继续区分坐标/相交错误、reservoir 偏差和残余噪声。
 
 ### 5.4 Temporal result
 
-沿用 HTrace 的 motion/depth/normal/history validation，但 history 只存 Ho-SSGI 的 source/GI 语义，不复制最终 camera color。当前实现使用上一帧 GI、上一帧法线/线性深度、当前 motion vector和 source luminance change 做首版拒绝；更完整的 ReSTIR reservoir 验证留作后续增强：
+沿用 HTrace 的 motion/depth/normal/history validation，但 history 只存 Ho-SSGI 的 source/GI 语义和 GI reservoir，不复制最终 camera color。当前实现使用上一帧 GI、上一帧法线/线性深度、当前 motion vector、source luminance change 和 reservoir `Wsum/M` 做首版拒绝与合并；更完整的验证仍需补齐：
 
 - history sample count；
 - reprojected hit validity；
 - depth/normal rejection；
 - source luminance change；
 - moving object rejection；
-- confidence。
+- confidence；
+- selected-ray visibility 和 receiver target 重评估；
+- 多 tap history 与 history sample cap。
 
 需要分别 debug current raw、reprojected history 和 accumulated result，才能区分 ray 错误与 temporal 拖影。
 
@@ -401,6 +483,9 @@ gi.sample-count
 gi.confidence
 gi.fallback
 gi.filtered-radiance
+gi.reservoir-weight
+gi.reservoir-M
+gi.reservoir-hit
 ```
 
 调试目标是能够回答：描边有没有进入 source、有没有进入 depth pyramid；ray 是否命中有效 geometry；颜色错误来自 source、ray、history 还是 composite；透明是否被错误写入 caster/receiver/history。
