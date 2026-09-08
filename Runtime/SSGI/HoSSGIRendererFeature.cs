@@ -366,6 +366,33 @@ namespace lilToon.URP.Extensions.SSGI
             public bool reservoirValidation;
         }
 
+        private sealed class SpatialResamplingPassData
+        {
+            public Material material;
+            public TextureHandle reservoirColor;
+            public TextureHandle reservoirAux;
+            public TextureHandle reservoirRay;
+            public TextureHandle temporal;
+            public TextureHandle geometry;
+            public TextureHandle outputColor;
+            public TextureHandle outputAux;
+            public TextureHandle outputRay;
+            public float radius;
+            public bool reservoirReuse;
+        }
+
+        private sealed class SpatialValidationPassData
+        {
+            public Material material;
+            public TextureHandle reservoirColor;
+            public TextureHandle reservoirAux;
+            public TextureHandle reservoirRay;
+            public TextureHandle temporal;
+            public TextureHandle geometry;
+            public TextureHandle output;
+            public bool reservoirValidation;
+        }
+
         private sealed class FireflyPassData
         {
             public Material material;
@@ -688,8 +715,10 @@ namespace lilToon.URP.Extensions.SSGI
                 });
             }
 
-            TextureHandle filtered = renderGraph.CreateTexture(outputDesc);
-            using (var builder = renderGraph.AddRasterRenderPass<SpatialPassData>("Ho-SSGI Spatial Denoise", out SpatialPassData data, new ProfilingSampler("Ho-SSGI Spatial Denoise")))
+            TextureHandle spatialReservoirColor = renderGraph.CreateTexture(reservoirDesc);
+            TextureHandle spatialReservoirAux = renderGraph.CreateTexture(reservoirDesc);
+            TextureHandle spatialReservoirRay = renderGraph.CreateTexture(reservoirDesc);
+            using (var builder = renderGraph.AddRasterRenderPass<SpatialResamplingPassData>("Ho-SSGI Spatial Resampling", out SpatialResamplingPassData data, new ProfilingSampler("Ho-SSGI Spatial Resampling")))
             {
                 data.material = material;
                 data.reservoirColor = fireflyReservoirColor;
@@ -697,9 +726,45 @@ namespace lilToon.URP.Extensions.SSGI
                 data.reservoirRay = fireflyReservoirRay;
                 data.temporal = temporal;
                 data.geometry = geometry.normalDepthTexture;
-                data.output = filtered;
+                data.outputColor = spatialReservoirColor;
+                data.outputAux = spatialReservoirAux;
+                data.outputRay = spatialReservoirRay;
                 data.radius = Mathf.Clamp(settings.spatialRadius, 0.5f, 8.0f);
                 data.reservoirReuse = settings.spatialReservoirReuse;
+                builder.UseTexture(data.reservoirColor, AccessFlags.Read);
+                builder.UseTexture(data.reservoirAux, AccessFlags.Read);
+                builder.UseTexture(data.reservoirRay, AccessFlags.Read);
+                builder.UseTexture(data.temporal, AccessFlags.Read);
+                builder.UseTexture(data.geometry, AccessFlags.Read);
+                builder.SetRenderAttachment(data.outputColor, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(data.outputAux, 1, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(data.outputRay, 2, AccessFlags.WriteAll);
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (SpatialResamplingPassData passData, RasterGraphContext context) =>
+                {
+                    passData.material.SetFloat(HoSSGIShaderConstants.SpatialRadiusId, passData.radius);
+                    passData.material.SetFloat(HoSSGIShaderConstants.ReservoirReuseId, passData.reservoirReuse ? 1.0f : 0.0f);
+                    passData.material.SetFloat(HoSSGIShaderConstants.ReservoirValidationId, 0.0f);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirColorId, passData.reservoirColor);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirAuxId, passData.reservoirAux);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirRayId, passData.reservoirRay);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.temporal);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
+                    Blitter.BlitTexture(context.cmd, passData.reservoirColor, new Vector4(1, 1, 0, 0), passData.material, 4);
+                });
+            }
+
+            TextureHandle filtered = renderGraph.CreateTexture(outputDesc);
+            using (var builder = renderGraph.AddRasterRenderPass<SpatialValidationPassData>("Ho-SSGI Spatial Validation", out SpatialValidationPassData data, new ProfilingSampler("Ho-SSGI Spatial Validation")))
+            {
+                data.material = material;
+                data.reservoirColor = spatialReservoirColor;
+                data.reservoirAux = spatialReservoirAux;
+                data.reservoirRay = spatialReservoirRay;
+                data.temporal = temporal;
+                data.geometry = geometry.normalDepthTexture;
+                data.output = filtered;
                 data.reservoirValidation = settings.spatialReservoirValidation;
                 builder.UseTexture(data.reservoirColor, AccessFlags.Read);
                 builder.UseTexture(data.reservoirAux, AccessFlags.Read);
@@ -707,20 +772,18 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.UseTexture(data.temporal, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
-                builder.SetGlobalTextureAfterPass(data.output, HoSSGIShaderConstants.GITextureId);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
-                builder.SetRenderFunc(static (SpatialPassData passData, RasterGraphContext context) =>
+                builder.SetRenderFunc(static (SpatialValidationPassData passData, RasterGraphContext context) =>
                 {
-                    passData.material.SetFloat(HoSSGIShaderConstants.SpatialRadiusId, passData.radius);
-                    passData.material.SetFloat(HoSSGIShaderConstants.ReservoirReuseId, passData.reservoirReuse ? 1.0f : 0.0f);
+                    passData.material.SetFloat(HoSSGIShaderConstants.ReservoirReuseId, 1.0f);
                     passData.material.SetFloat(HoSSGIShaderConstants.ReservoirValidationId, passData.reservoirValidation ? 1.0f : 0.0f);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirColorId, passData.reservoirColor);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirAuxId, passData.reservoirAux);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirRayId, passData.reservoirRay);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.temporal);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
-                    Blitter.BlitTexture(context.cmd, passData.reservoirColor, new Vector4(1, 1, 0, 0), passData.material, 4);
+                    Blitter.BlitTexture(context.cmd, passData.reservoirColor, new Vector4(1, 1, 0, 0), passData.material, 11);
                 });
             }
             TextureHandle temporallyDenoised = renderGraph.CreateTexture(outputDesc);

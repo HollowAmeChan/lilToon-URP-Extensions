@@ -105,6 +105,13 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float4 reservoirRay : SV_Target2;
         };
 
+        struct HoSSGISpatialOutput
+        {
+            float4 reservoirColor : SV_Target0;
+            float4 reservoirAux : SV_Target1;
+            float4 reservoirRay : SV_Target2;
+        };
+
         float HoSSGILuminance(float3 value)
         {
             return dot(max(value, 0.0), float3(0.2126, 0.7152, 0.0722));
@@ -724,12 +731,16 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord);
         }
 
-        float4 SpatialDenoise(Varyings input) : SV_Target
+        HoSSGISpatialOutput SpatialResampling(Varyings input)
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             float2 uv = input.texcoord;
             half4 centerGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, uv);
-            if (centerGeometry.a < 0.0001h) return 0;
+            HoSSGISpatialOutput output;
+            output.reservoirColor = 0;
+            output.reservoirAux = 0;
+            output.reservoirRay = 0;
+            if (centerGeometry.a < 0.0001h) return output;
 
             float3 centerNormal = normalize((float3)centerGeometry.rgb * 2.0 - 1.0);
             float centerDepth = centerGeometry.a;
@@ -784,23 +795,32 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 confidenceWeight += reuseWeight;
             }
 
+            output.reservoirColor = float4(max(merged.color, 0.0), max(merged.wsum, 0.0));
+            output.reservoirAux = float4(max(merged.m, 0.0), max(merged.target, 0.0), saturate(merged.hit), max(merged.distance, 0.0));
+            output.reservoirRay = HoSSGIPackReservoirRay(merged);
+            return output;
+        }
+
+        float4 SpatialValidation(Varyings input) : SV_Target
+        {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+            float2 uv = input.texcoord;
+            half4 geometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, uv);
+            half4 temporal = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_PointClamp, uv);
+            if (geometry.a < 0.0001h) return 0;
+
+            HoSSGIReservoir reservoir = HoSSGILoadReservoir(uv);
+            float validation = 1.0;
             if (_HoSSGIReservoirValidation > 0.5)
             {
-                float3 centerPositionWS = HoSSGIWorldPosition(uv, centerDepth);
-                float validation = HoSSGIValidateReservoirRay(centerPositionWS, centerNormal, merged);
-                if (validation < 0.15)
-                {
-                    merged = centerReservoir;
-                }
-                else
-                {
-                    merged.wsum *= validation;
-                }
+                float3 originPositionWS = HoSSGIWorldPosition(uv, geometry.a);
+                validation = HoSSGIValidateReservoirRay(originPositionWS, normalize((float3)geometry.rgb * 2.0 - 1.0), reservoir);
             }
+            if (validation < 0.15)
+                return temporal;
 
-            float3 resolved = HoSSGIResolveReservoir(merged);
-            float confidence = saturate(confidenceSum / max(confidenceWeight, 1.0e-5));
-            return float4(resolved, confidence);
+            float3 resolved = HoSSGIResolveReservoir(reservoir) * validation;
+            return float4(max(resolved, 0.0), saturate(temporal.a * validation));
         }
 
         float4 BilateralDenoise(Varyings input) : SV_Target
@@ -1023,10 +1043,10 @@ Shader "Hidden/lilToon/URP/HoSSGI"
 
         Pass
         {
-            Name "Ho-SSGI Spatial Denoise"
+            Name "Ho-SSGI Spatial Resampling"
             HLSLPROGRAM
             #pragma vertex Vert
-            #pragma fragment SpatialDenoise
+            #pragma fragment SpatialResampling
             ENDHLSL
         }
 
@@ -1081,6 +1101,15 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment SourceHistoryCopy
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Ho-SSGI Spatial Validation"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment SpatialValidation
             ENDHLSL
         }
     }
