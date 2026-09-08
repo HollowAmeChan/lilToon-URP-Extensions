@@ -242,6 +242,13 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             float2 previousUV = saturate(input.texcoord - motion);
             half previous = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevTex, sampler_LinearClamp, previousUV).r;
             half previousDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_LinearClamp, previousUV).r;
+            // Sky/uncovered pixels have no surface history to validate. Keep
+            // them white in the diagnostic instead of falsely marking them as
+            // temporal disocclusions.
+            if (geometry.a < 0.0001h && _HoGTAODebugMode > 4.5)
+            {
+                return half4(1.0h, 1.0h, 1.0h, 1.0h);
+            }
             half depthValid = step(0.0001h, geometry.a) * step(0.0001h, previousDepth);
             half depthAgreement = step(abs(geometry.a - previousDepth), max(0.05h * geometry.a, 0.05h));
             half historyWeight = saturate(_HoGTAOHistoryBlend) * depthValid * depthAgreement;
