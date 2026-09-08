@@ -260,6 +260,7 @@ namespace lilToon.URP.Extensions.GTAO
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.cameraColor, AccessFlags.Read);
                 builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
+                builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
                 {
