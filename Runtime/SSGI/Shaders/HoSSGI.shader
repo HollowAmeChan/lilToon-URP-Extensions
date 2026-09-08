@@ -518,7 +518,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return float4(resolved, confidence);
         }
 
-        float4 Frag(Varyings input) : SV_Target { return Trace(input); }
+        HoSSGITraceOutput Frag(Varyings input) { return Trace(input); }
 
         float4 Composite(Varyings input) : SV_Target
         {
