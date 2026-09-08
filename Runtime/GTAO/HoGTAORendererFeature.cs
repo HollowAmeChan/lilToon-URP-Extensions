@@ -180,7 +180,11 @@ namespace lilToon.URP.Extensions.GTAO
             RenderingUtils.ReAllocateIfNeeded(ref previous, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGTAOHistoryPrevTex");
             RenderingUtils.ReAllocateIfNeeded(ref next, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGTAOHistoryNextTex");
             RenderTextureDescriptor depthDescriptor = descriptor;
-            depthDescriptor.graphicsFormat = GraphicsFormat.R16_SFloat;
+            // Keep the same raw device-depth representation as HTrace.  The
+            // geometry buffer alpha is fp16 linear eye depth, which loses
+            // precision at the far end of the frustum when converted back to
+            // raw depth for temporal rejection.
+            depthDescriptor.graphicsFormat = GraphicsFormat.R32_SFloat;
             RenderingUtils.ReAllocateIfNeeded(ref previousDepth, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGTAOHistoryPrevDepthTex");
             RenderingUtils.ReAllocateIfNeeded(ref nextDepth, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGTAOHistoryNextDepthTex");
             RenderTextureDescriptor normalDescriptor = descriptor;
@@ -324,6 +328,8 @@ namespace lilToon.URP.Extensions.GTAO
         private static readonly int DepthToViewParamsId = Shader.PropertyToID("_HoGTAODepthToViewParams");
         private static readonly int OrthographicId = Shader.PropertyToID("_HoGTAOOrthographic");
         private static readonly int GeometryInputId = Shader.PropertyToID("_HoGTAOGeometryInput");
+        private static readonly int GeometryDepthInputId = HoGeometryBufferShaderConstants.DepthTextureId;
+        private static readonly int SpatialDepthInputId = Shader.PropertyToID("_HoGTAOSpatialDepthTexture");
         private static readonly int SpatialRadiusId = Shader.PropertyToID("_HoGTAOSpatialRadius");
         private static readonly int SpatialAdaptivityId = Shader.PropertyToID("_HoGTAOSpatialAdaptivity");
         private static readonly int SpatialResolutionId = Shader.PropertyToID("_HoGTAOSpatialResolution");
@@ -371,6 +377,7 @@ namespace lilToon.URP.Extensions.GTAO
             public TextureHandle current;
             public TextureHandle previous;
             public TextureHandle geometry;
+            public TextureHandle geometryDepth;
             public TextureHandle previousDepth;
             public TextureHandle previousNormal;
             public TextureHandle motionVectors;
@@ -397,6 +404,8 @@ namespace lilToon.URP.Extensions.GTAO
             public Material material;
             public TextureHandle source;
             public TextureHandle geometry;
+            public TextureHandle geometryDepth;
+            public TextureHandle depth;
             public TextureHandle destination;
             public float radius;
             public float adaptivity;
@@ -409,7 +418,8 @@ namespace lilToon.URP.Extensions.GTAO
         private sealed class DepthHistoryData
         {
             public Material material;
-            public TextureHandle geometry;
+            public TextureHandle geometryDepth;
+            public TextureHandle geometryNormalDepth;
             public TextureHandle destination;
         }
 
@@ -417,6 +427,7 @@ namespace lilToon.URP.Extensions.GTAO
         {
             public Material material;
             public TextureHandle source;
+            public TextureHandle coverage;
             public TextureHandle destination;
             public Vector4 sourceTexelSize;
             public int passIndex;
@@ -444,11 +455,9 @@ namespace lilToon.URP.Extensions.GTAO
             // be listed above Ho-GTAO).
             renderPassEvent = settings != null ? settings.passEvent : RenderPassEvent.BeforeRenderingOpaques;
             // Motion vectors are produced by URP's built-in MotionVectorRenderPass.
-            // Request depth as well: Ho-GTAO runs before opaques, so URP must build
-            // a full prepass and schedule motion-vector production immediately after
-            // it. Without the Depth bit, URP defers the motion pass until after the
-            // skybox and this pass would only ever see the cleared texture.
-            ConfigureInput(ScriptableRenderPassInput.Depth | ScriptableRenderPassInput.Motion);
+            // GTAO consumes the raw depth attachment published by Ho-GeometryBuffer,
+            // so do not request URP's CameraDepthTexture here.
+            ConfigureInput(ScriptableRenderPassInput.Motion);
         }
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -460,7 +469,9 @@ namespace lilToon.URP.Extensions.GTAO
 
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             HoGeometryBufferRenderGraphResources geometry = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
-            if (!resourceData.activeColorTexture.IsValid() || !geometry.normalDepthTexture.IsValid())
+            if (!resourceData.activeColorTexture.IsValid()
+                || !geometry.normalDepthTexture.IsValid()
+                || !geometry.depthTexture.IsValid())
             {
                 return;
             }
@@ -483,7 +494,13 @@ namespace lilToon.URP.Extensions.GTAO
             }
 
             HoGTAORenderGraphResources gtao = frameData.GetOrCreate<HoGTAORenderGraphResources>();
-            TextureHandle[] depthMips = CreateDepthPyramid(renderGraph, frameData, geometry.normalDepthTexture, width, height);
+            TextureHandle[] depthMips = CreateDepthPyramid(
+                renderGraph,
+                frameData,
+                geometry.depthTexture,
+                geometry.normalDepthTexture,
+                width,
+                height);
             TextureDesc currentDesc = new TextureDesc(width, height)
             {
                 name = "_HoGTAOCurrentTex",
@@ -580,6 +597,7 @@ namespace lilToon.URP.Extensions.GTAO
                 data.current = current;
                 data.previous = previous;
                 data.geometry = geometry.normalDepthTexture;
+                data.geometryDepth = geometry.depthTexture;
                 data.previousDepth = previousDepth;
                 data.previousNormal = previousNormal;
                 data.motionVectors = motionVectors;
@@ -596,6 +614,7 @@ namespace lilToon.URP.Extensions.GTAO
                 builder.UseTexture(data.current, AccessFlags.Read);
                 builder.UseTexture(data.previous, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
+                builder.UseTexture(data.geometryDepth, AccessFlags.Read);
                 builder.UseTexture(data.previousDepth, AccessFlags.Read);
                 builder.UseTexture(data.previousNormal, AccessFlags.Read);
                 if (data.motionVectors.IsValid())
@@ -616,6 +635,7 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.SetGlobalTexture(HoGTAOShaderConstants.HistoryPrevTexId, passData.previous);
                     context.cmd.SetGlobalTexture(HistoryPrevNormalTexId, passData.previousNormal);
                     context.cmd.SetGlobalTexture(GeometryInputId, passData.geometry);
+                    context.cmd.SetGlobalTexture(GeometryDepthInputId, passData.geometryDepth);
                     context.cmd.SetGlobalTexture(HistoryDepthPrevId, passData.previousDepth);
                     context.cmd.SetGlobalFloat(UseMotionVectorsId, passData.useMotionVectors ? 1.0f : 0.0f);
                     if (passData.motionVectors.IsValid())
@@ -627,14 +647,18 @@ namespace lilToon.URP.Extensions.GTAO
             using (var builder = renderGraph.AddRasterRenderPass<DepthHistoryData>("Ho-GTAO Depth History", out DepthHistoryData depthData, ProfilingSampler))
             {
                 depthData.material = material;
-                depthData.geometry = geometry.normalDepthTexture;
+                depthData.geometryDepth = geometry.depthTexture;
+                depthData.geometryNormalDepth = geometry.normalDepthTexture;
                 depthData.destination = nextDepth;
-                builder.UseTexture(depthData.geometry, AccessFlags.Read);
+                builder.UseTexture(depthData.geometryDepth, AccessFlags.Read);
+                builder.UseTexture(depthData.geometryNormalDepth, AccessFlags.Read);
                 builder.SetRenderAttachment(depthData.destination, 0, AccessFlags.WriteAll);
+                // Blitter binds its source through global _BlitTexture.
+                builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (DepthHistoryData data, RasterGraphContext context) =>
                 {
-                    Blitter.BlitTexture(context.cmd, data.geometry, new Vector4(1, 1, 0, 0), data.material, 6);
+                    Blitter.BlitTexture(context.cmd, data.geometryDepth, new Vector4(1, 1, 0, 0), data.material, 6);
                 });
             }
 
@@ -671,6 +695,8 @@ namespace lilToon.URP.Extensions.GTAO
                     data.material = material;
                     data.source = spatialSource;
                     data.geometry = geometry.normalDepthTexture;
+                    data.geometryDepth = geometry.depthTexture;
+                    data.depth = nextDepth;
                     data.destination = spatial;
                     data.radius = settings.filterRadius;
                     data.adaptivity = settings.filterAdaptivity;
@@ -689,12 +715,16 @@ namespace lilToon.URP.Extensions.GTAO
                 data.pixelSpreadMultiplier = actualSpread / Mathf.Max(baselineSpread, 1.0e-6f);
                     builder.UseTexture(data.source, AccessFlags.Read);
                     builder.UseTexture(data.geometry, AccessFlags.Read);
+                    builder.UseTexture(data.geometryDepth, AccessFlags.Read);
+                    builder.UseTexture(data.depth, AccessFlags.Read);
                     builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
                     builder.AllowGlobalStateModification(true);
                     builder.AllowPassCulling(false);
                     builder.SetRenderFunc(static (SpatialData passData, RasterGraphContext context) =>
                     {
                         context.cmd.SetGlobalTexture(GeometryInputId, passData.geometry);
+                        context.cmd.SetGlobalTexture(GeometryDepthInputId, passData.geometryDepth);
+                        context.cmd.SetGlobalTexture(SpatialDepthInputId, passData.depth);
                         context.cmd.SetGlobalFloat(SpatialRadiusId, passData.radius);
                         context.cmd.SetGlobalFloat(SpatialAdaptivityId, passData.adaptivity);
                         context.cmd.SetGlobalFloat(SpatialResolutionId, passData.resolution);
@@ -719,11 +749,17 @@ namespace lilToon.URP.Extensions.GTAO
             gtao.aoTexture = RecordBlit(renderGraph, frameData, spatial, resourceData.activeColorTexture, material, "Ho-GTAO Output");
         }
 
-        private TextureHandle[] CreateDepthPyramid(RenderGraph renderGraph, ContextContainer frameData, TextureHandle geometry, int width, int height)
+        private TextureHandle[] CreateDepthPyramid(
+            RenderGraph renderGraph,
+            ContextContainer frameData,
+            TextureHandle geometryDepth,
+            TextureHandle geometryNormalDepth,
+            int width,
+            int height)
         {
             TextureHandle[] mips = new TextureHandle[4];
-            TextureHandle source = geometry;
-            TextureDesc geometryDesc = renderGraph.GetTextureDesc(geometry);
+            TextureHandle source = geometryDepth;
+            TextureDesc geometryDesc = renderGraph.GetTextureDesc(geometryDepth);
             int sourceWidth = Mathf.Max(1, geometryDesc.width);
             int sourceHeight = Mathf.Max(1, geometryDesc.height);
             int[] ids = { DepthMip0Id, DepthMip1Id, DepthMip2Id, DepthMip3Id };
@@ -747,6 +783,7 @@ namespace lilToon.URP.Extensions.GTAO
                 {
                     data.material = material;
                     data.source = source;
+                    data.coverage = i == 0 ? geometryNormalDepth : TextureHandle.nullHandle;
                     data.destination = destination;
                     int sourceMip = Mathf.Max(0, i - 1);
                     data.sourceTexelSize = new Vector4(
@@ -758,6 +795,10 @@ namespace lilToon.URP.Extensions.GTAO
                     data.sourceIsGeometry = i == 0;
                     data.outputId = ids[i];
                     builder.UseTexture(data.source, AccessFlags.Read);
+                    if (data.coverage.IsValid())
+                    {
+                        builder.UseTexture(data.coverage, AccessFlags.Read);
+                    }
                     builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
                     builder.SetGlobalTextureAfterPass(data.destination, data.outputId);
                     builder.AllowGlobalStateModification(true);

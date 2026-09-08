@@ -22,6 +22,12 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         TEXTURE2D_X_FLOAT(_HoGTAODepthMip2);
         TEXTURE2D_X_FLOAT(_HoGTAODepthMip3);
         TEXTURE2D_X_FLOAT(_HoGTAODepthInput);
+        // Raw device depth produced by Ho-GeometryBuffer.  Do not rebuild
+        // raw depth from the fp16 linear-depth channel: that round trip loses
+        // far-plane precision and produces visible contour bands.
+        TEXTURE2D_X_FLOAT(_HoGeometryBufferDepthTexture);
+        TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
+        TEXTURE2D_X_FLOAT(_HoGTAOSpatialDepthTexture);
         TEXTURE2D_X(_HoGTAOGeometryInput);
         float4 _HoGTAODepthInputTexelSize;
         float4x4 _HoGTAOInvProjMatrix;
@@ -56,18 +62,16 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         float4 DepthCopy(Varyings input) : SV_Target
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-            half4 nd = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord);
-            // GeometryBuffer uses zero alpha for sky/uncovered pixels. Keep that
-            // convention so pyramid reduction can ignore invalid samples.
-            float linearDepth = max((float)nd.a, 0.0);
-            if (linearDepth < 1.0e-5)
-                return 0.0;
-            // Match HTrace: the ray-marching pyramid stores raw device depth,
-            // then linearizes each hit after selecting its mip.
-            float depthParamZ = abs(_ZBufferParams.z) > 1.0e-6
-                ? _ZBufferParams.z
-                : (_ZBufferParams.z < 0.0 ? -1.0e-6 : 1.0e-6);
-            float rawDepth = saturate((rcp(linearDepth) - _ZBufferParams.w) / depthParamZ);
+            float rawDepth = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord).r;
+            half coverage = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, input.texcoord).a;
+            rawDepth = coverage > 0.0001h ? rawDepth : 0.0;
+            // The pyramid uses zero for uncovered pixels on the reversed-Z
+            // desktop path, matching HTrace's depth-pyramid convention.
+            #if UNITY_REVERSED_Z
+                rawDepth = rawDepth <= UNITY_RAW_FAR_CLIP_VALUE + 1.0e-5 ? 0.0 : rawDepth;
+            #else
+                rawDepth = rawDepth >= UNITY_RAW_FAR_CLIP_VALUE - 1.0e-5 ? 0.0 : rawDepth;
+            #endif
             return float4(rawDepth, rawDepth, rawDepth, rawDepth);
         }
 
@@ -102,6 +106,15 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             float d2Final = SAMPLE_TEXTURE2D_X(_HoGTAODepthMip2, sampler_PointClamp, uv).r;
             float d3Final = SAMPLE_TEXTURE2D_X(_HoGTAODepthMip3, sampler_PointClamp, uv).r;
             return lerp(d2Final, d3Final, clampedLod - 2.0);
+        }
+
+        bool HoGTAOIsFarClip(float rawDepth)
+        {
+            #if UNITY_REVERSED_Z
+                return rawDepth <= UNITY_RAW_FAR_CLIP_VALUE + 1.0e-5;
+            #else
+                return rawDepth >= UNITY_RAW_FAR_CLIP_VALUE - 1.0e-5;
+            #endif
         }
 
         float3 HoGTAOViewPosition(float2 uv, float linearDepth)
@@ -145,7 +158,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         bool HoGTAOSample(float2 uv, float lod, out float3 positionVS, out float3 normalWS)
         {
             float sampledRawDepth = HoGTAOSampleDepth(saturate(uv), lod);
-            if (sampledRawDepth <= UNITY_RAW_FAR_CLIP_VALUE + 1.0e-5)
+            if (HoGTAOIsFarClip(sampledRawDepth))
             {
                 positionVS = 0.0;
                 normalWS = 0.0;
@@ -161,7 +174,10 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
 
         float HoGTAOCompute(float2 uv, half4 centerND)
         {
-            float linearDepth = centerND.a;
+            float centerRawDepth = HoGTAOSampleDepth(saturate(uv), 0.0);
+            if (HoGTAOIsFarClip(centerRawDepth))
+                return 0.0;
+            float linearDepth = LinearEyeDepth(centerRawDepth, _ZBufferParams);
             float3 positionVS = HoGTAOViewPosition(uv, linearDepth);
             float3 normalWS = normalize((float3)centerND.rgb * 2.0 - 1.0);
             float3 normalVS = normalize(mul((float3x3)_HoGTAOViewMatrix, normalWS));
@@ -264,14 +280,18 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             half4 nd = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord);
             if (_HoGTAODebugMode > 1.5 && _HoGTAODebugMode < 2.5)
             {
-                half depth = saturate(nd.a / 50.0h);
+                float rawDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferDepthTexture, sampler_PointClamp, input.texcoord).r;
+                float depth = HoGTAOIsFarClip(rawDepth)
+                    ? 0.0
+                    : saturate(LinearEyeDepth(rawDepth, _ZBufferParams) / 50.0);
                 return half4(depth, depth, depth, 1.0h);
             }
             if (_HoGTAODebugMode > 2.5 && _HoGTAODebugMode < 3.5)
             {
                 return half4(nd.rgb, 1.0h);
             }
-            if (nd.a < 0.0001h)
+            float centerRawDepth = HoGTAOSampleDepth(saturate(input.texcoord), 0.0);
+            if (HoGTAOIsFarClip(centerRawDepth))
             {
                 // Internal history/filter buffers store AO amount (0 = no
                 // occlusion). Final composition turns this into visibility.
@@ -292,6 +312,11 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             half current = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord).r;
             half4 geometry = SAMPLE_TEXTURE2D_X(_HoGTAOGeometryInput, sampler_PointClamp, input.texcoord);
+            float currentRawDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferDepthTexture, sampler_PointClamp, input.texcoord).r;
+            bool currentSurfaceValid = !HoGTAOIsFarClip(currentRawDepth);
+            float currentLinearDepth = currentSurfaceValid
+                ? LinearEyeDepth(currentRawDepth, _ZBufferParams)
+                : 0.0;
             float2 motion = _HoGTAOUseMotionVectors > 0.5
                 ? SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, input.texcoord).xy
                 : float2(0.0, 0.0);
@@ -325,9 +350,13 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 float2 historyUV = saturate((historyBase + historyOffsets[historyTap] + 0.5) * historyTexel);
                 half4 historyData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevTex, sampler_PointClamp, historyUV);
                 half4 normalData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevNormalTex, sampler_PointClamp, historyUV);
-                half historyDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_PointClamp, historyUV).r;
-                float validDepth = step(0.0001, historyDepth)
-                    * step(abs((float)geometry.a - historyDepth), max(0.05 * geometry.a, 0.05));
+                float historyRawDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_PointClamp, historyUV).r;
+                float historyLinearDepth = HoGTAOIsFarClip(historyRawDepth)
+                    ? 0.0
+                    : LinearEyeDepth(historyRawDepth, _ZBufferParams);
+                float validDepth = currentSurfaceValid && !HoGTAOIsFarClip(historyRawDepth)
+                    ? step(abs(currentLinearDepth - historyLinearDepth), max(0.05 * currentLinearDepth, 0.05))
+                    : 0.0;
                 float tapWeight = historyWeights[historyTap] * validDepth;
                 previousAccumulated += historyData.r * tapWeight;
                 previousCountAccumulated += historyData.g * max(_HoGTAOTemporalMaxFrames, 1.0) * tapWeight;
@@ -342,9 +371,13 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             {
                 float2 fallbackUV = input.texcoord;
                 half4 fallbackData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevTex, sampler_PointClamp, fallbackUV);
-                half fallbackDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_PointClamp, fallbackUV).r;
-                float fallbackValid = step(0.0001, fallbackDepth)
-                    * step(abs((float)geometry.a - fallbackDepth), max(0.05 * geometry.a, 0.05));
+                float fallbackRawDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_PointClamp, fallbackUV).r;
+                float fallbackLinearDepth = HoGTAOIsFarClip(fallbackRawDepth)
+                    ? 0.0
+                    : LinearEyeDepth(fallbackRawDepth, _ZBufferParams);
+                float fallbackValid = currentSurfaceValid && !HoGTAOIsFarClip(fallbackRawDepth)
+                    ? step(abs(currentLinearDepth - fallbackLinearDepth), max(0.05 * currentLinearDepth, 0.05))
+                    : 0.0;
                 previousAccumulated = fallbackData.r * fallbackValid;
                 previousCountAccumulated = fallbackData.g * max(_HoGTAOTemporalMaxFrames, 1.0) * fallbackValid;
                 half4 fallbackNormalData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevNormalTex, sampler_PointClamp, fallbackUV);
@@ -360,13 +393,13 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             // Sky/uncovered pixels have no surface history to validate. Keep
             // them white in the diagnostic instead of falsely marking them as
             // temporal disocclusions.
-            if (geometry.a < 0.0001h && _HoGTAODebugMode > 4.5)
+            if (!currentSurfaceValid && _HoGTAODebugMode > 4.5)
             {
                 historyOutput = half4(1.0h, 1.0h, 1.0h, 1.0h);
                 normalOutput = historyOutput;
                 return;
             }
-            half depthValid = step(0.0001h, geometry.a) * step(1.0e-5, historyWeightSum);
+            half depthValid = (currentSurfaceValid ? 1.0h : 0.0h) * step(1.0e-5, historyWeightSum);
             half depthAgreement = step(1.0e-5, historyWeightSum);
             half normalAgreement = previousCount > 0.5h
                 ? step(0.5h, dot(currentNormal, previousNormal))
@@ -435,7 +468,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             half4 centerND = SAMPLE_TEXTURE2D_X(_HoGTAOGeometryInput, sampler_PointClamp, uv);
             half4 centerAOData = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv);
             half centerAO = centerAOData.r;
-            if (centerND.a < 0.0001h)
+            float centerRawDepth = SAMPLE_TEXTURE2D_X(_HoGTAOSpatialDepthTexture, sampler_PointClamp, uv).r;
+            if (HoGTAOIsFarClip(centerRawDepth))
             {
                 return half4(0.0h, 0.0h, 0.0h, 1.0h);
             }
@@ -445,7 +479,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             // Spatial ping-pong stores AO amount in R and the filtered world
             // normal in GBA, matching HTrace's OcclusionNormal buffer.
             float3 centerNormal = normalize((float3)centerAOData.gba * 2.0 - 1.0);
-            float centerDepth = centerND.a;
+            float centerDepth = LinearEyeDepth(centerRawDepth, _ZBufferParams);
             float3 centerPositionVS = HoGTAOViewPosition(uv, centerDepth);
             float3 centerNormalVS = normalize(mul((float3x3)_HoGTAOViewMatrix, centerNormal));
             centerNormalVS *= float3(1.0, -1.0, -1.0);
@@ -463,15 +497,17 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             {
                 float2 sampleUV = uv + taps[i] * texel;
                 half4 sampleND = SAMPLE_TEXTURE2D_X(_HoGTAOGeometryInput, sampler_PointClamp, sampleUV);
-                if (sampleND.a < 0.0001h)
+                float sampleRawDepth = SAMPLE_TEXTURE2D_X(_HoGTAOSpatialDepthTexture, sampler_PointClamp, sampleUV).r;
+                if (HoGTAOIsFarClip(sampleRawDepth))
                 {
                     continue;
                 }
 
-                float depthDelta = abs(sampleND.a - centerDepth) / max(centerDepth, 0.05);
+                float sampleDepth = LinearEyeDepth(sampleRawDepth, _ZBufferParams);
+                float depthDelta = abs(sampleDepth - centerDepth) / max(centerDepth, 0.05);
                 half4 sampleAOData = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, sampleUV);
                 float3 sampleNormal = normalize((float3)sampleAOData.gba * 2.0 - 1.0);
-                float3 samplePositionVS = HoGTAOViewPosition(sampleUV, sampleND.a);
+                float3 samplePositionVS = HoGTAOViewPosition(sampleUV, sampleDepth);
                 float planeDistance = abs(dot(samplePositionVS - centerPositionVS, centerNormalVS)) / max(centerDepth, 0.05);
                 float normalWeight = _HoGTAOSpatialFilter > 0.5
                     ? step(0.85, dot(centerNormal, sampleNormal))
@@ -503,7 +539,10 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         half4 DepthHistory(Varyings input) : SV_Target
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-            return SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord).aaaa;
+            float rawDepth = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord).r;
+            half coverage = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, input.texcoord).a;
+            rawDepth = coverage > 0.0001h ? rawDepth : 0.0;
+            return float4(rawDepth, rawDepth, rawDepth, rawDepth);
         }
         ENDHLSL
 
