@@ -1414,6 +1414,184 @@ Window -> Rendering -> Lighting -> Adaptive Probe Volumes
 
 每个场景再分别切换 Ho-GTAO/Ho-GI，记录同一镜头的 Beauty、ambient/gi、normal、depth、shadow 和 reflection 对照。
 
+### 4.8 APV 烘焙后“看不出变化”的诊断流程
+
+#### 先看朱木古堂当前事实
+
+当前场景已经存在 APV 运行数据：
+
+```text
+New Scene/LightingData-0.asset
+New Scene Baking Set.asset
+New Scene Baking Set-Default.CellData.bytes
+New Scene Baking Set.CellSharedData.bytes
+New Scene Baking Set.CellSupportData.bytes
+```
+
+`New Scene Baking Set.asset` 中有：
+
+```text
+hasProbeVolume: 1
+bakeScene: 1
+bounds extent: 81, 81, 81
+scenario: Default
+```
+
+所以第一判断不是“有没有烘焙”，而是“烘进 APV 的光是否有明显间接贡献，以及当前 lilToon Draw Call 是否真的使用了 APV variant”。
+
+更关键的是，场景里的灯光序列化值主要是：
+
+```text
+m_Lightmapping: 1
+```
+
+Unity 的 `LightmapBakeType` 中 `Realtime = 4`、`Baked = 2`、`Mixed = 1`。[Unity GraphicsEnums](https://github.com/Unity-Technologies/UnityCsReference/blob/master/Runtime/Export/Graphics/GraphicsEnums.cs) 当前统计结果是 40 个灯光记录中 39 个为 `Mixed (1)`，只有方向光为 `Realtime (4)`；场景的 `m_EnableBakedLightmaps: 1` 与 `m_MixedBakeMode: 2` 也表明 Baked GI/Shadowmask 已启用。
+
+因此，不能再用“灯光全是 Realtime，所以间接光没有进入 APV”解释当前现象。Mixed 灯的直接部分仍然是实时的，间接部分是否有效取决于 Baked GI、场景几何的 GI 贡献和最终采样位置。APV 也不是屏幕上的“颜色滤镜”，而是动态物体采样的低频间接光；如果直接光很强，APV 的视觉差异仍然可能很小。
+
+当前场景还存在一个需要在 Unity 编辑器里确认的输入问题：`New Scene.unity` 中可见的场景对象记录有 50 个 `m_StaticEditorFlags: 0`，也没有单独序列化的 `Contribute GI` 字段；主体房屋/地面来自外部 glTF 预制体，不能只靠这个场景 YAML 判断其导入后的 GI 标记。应在模型实例或导入后的 Renderer 上确认固定墙、地面、屋顶和大型室内道具开启 `Contribute Global Illumination`；角色、动画物体、描边壳和不应参与反弹的特效不要开启。
+
+#### 第一步：用 Rendering Debugger 看 APV 本身
+
+```text
+Window -> Analysis -> Rendering Debugger
+    -> Probe Volume
+```
+
+依次打开：
+
+1. `Display Probes`：确认场景中真的有探针，并观察探针颜色。
+2. `Display Bricks`：确认砖块覆盖角色和场景，而不是只有一小块区域。
+3. `Display Cells`：确认当前 Baking Set 的 cell 已加载。
+4. `Debug Probe Sampling`：在角色表面点选一个位置，查看实际采样的邻近探针和权重。
+
+如果 `Display Probes` 为空、`Display Bricks` 不覆盖角色，问题在 APV 体积/数据加载；如果采样调试能显示探针，但角色画面不变，问题转到 Shader variant 或光照源。
+
+截图里右侧的 APV 面板是 Baking Set 设置，不是实际采样调试视图；白色圆点也不能直接当成 APV probe 结果，必须用 Rendering Debugger 的 Probe Volume 可视化确认。
+
+#### 第二步：用 Frame Debugger 确认 lilToon 真的选中 APV variant
+
+```text
+Window -> Analysis -> Frame Debugger
+    -> 进入角色的 Forward Draw Call
+    -> 查看 Shader Keywords / Global Keywords
+```
+
+当前 URP Asset 使用：
+
+```text
+m_LightProbeSystem: 1
+m_ProbeVolumeSHBands: 1
+```
+
+因此目标 Draw Call 至少应看到：
+
+```text
+PROBE_VOLUMES_L1
+```
+
+如果只看到普通 Forward variant，没有 `PROBE_VOLUMES_L1`，按以下顺序处理：
+
+1. 确认 [lts.shader](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/lts.shader) 有 `ProbeVolumeVariants.hlsl` include。
+2. 确认 `ProjectSettings/lilToonSetting.json` 中 `LIL_OPTIMIZE_USE_PROBEVOLUMES=true`。
+3. 执行 `Assets/lilToon/[Shader] Refresh shaders`。
+4. 等待 ShaderImporter 和 ShaderCompiler 完成。
+5. 必要时清理当前工程的 ShaderCache 后重新打开工程，确认 Frame Debugger 不再使用旧 artifact。
+
+当前源码生成链已经满足第 1、2 项；重新生成后的 Standard `lts.shader`/`lts_cutout.shader` 已包含 APV include。Unity 工程仍有其他 Ho-GTAO/Ho-SSGI 编译错误时，不能把那些错误误判成 lilToon APV 错误。
+
+#### 第三步：做一个“必然看得见”的 APV 试验
+
+朱木古堂本身有很多实时点灯，直接看全场景很难判断 APV。建议临时复制一个小测试场景或在场景角落做最小实验：
+
+```text
+静态墙/地面
+一个动态角色或动态球
+两个相邻空间
+一个红色 Baked/Mixed Point/Area Light
+一个蓝色 Baked/Mixed Point/Area Light
+```
+
+操作：
+
+1. 暂时关闭大部分 Realtime Point Lights，避免直接光覆盖间接差异。
+2. 将红灯/蓝灯设置为 `Baked` 或 `Mixed`，不要设置为 `Realtime`。
+3. 静态墙、地面、屋顶勾选 `Contribute Global Illumination`；确认它们不是全部 `StaticEditorFlags=0`。
+4. 动态角色保持非静态，让它接收 APV。
+5. `Generate Lighting`。
+6. 用 Frame Debugger 确认角色的 `PROBE_VOLUMES_L1`。
+7. 移动角色从红色区域到蓝色区域。
+
+正确结果不是角色获得一个明显的“APV 特效”，而是角色阴影面、衣服和背光环境色随着空间位置发生连续的红/蓝间接光变化。lilToon 的 APV 分支最终会影响：
+
+```text
+lilGetFixedLightDirectionAPV()
+lilGetLightColorDoubleAPV()
+fd.lightColor
+fd.indLightColor
+toon shadow 的 Environment Light
+```
+
+#### 第四步：检查材质是否把差异压平
+
+在验证 APV 时，先对测试材质临时确认：
+
+- `_AsUnlit = 0`。
+- 不要把 `_LightMinLimit` 设得过高。
+- `_LightMaxLimit` 不要过低。
+- `_MonochromeLighting` 不要设为 1。
+- `_ShadowEnvStrength` 不要设为 0。
+- 不要让强烈的 Emission、MatCap 或后处理颜色覆盖环境光差异。
+- 先关闭 Ho-GTAO、Ho-GI、Color Grading，避免把低频 APV 变化埋掉。
+
+对 lilToon，最容易观察 APV 的位置通常是 toon 阴影面，而不是直射面：直射面由主光主导，APV 只提供间接补充；阴影面才会更依赖 `indLightColor`。
+
+#### lilToon 当前 APV 路径为什么容易“看不出来”
+
+当前生成的 Standard/ Cutout shader 已经包含 `ProbeVolumeVariants.hlsl`，Frame Debugger 中出现 `PROBE_VOLUMES_L1` 说明变体选择正确；但这只证明代码路径被编译和选中，不代表 `SampleAPV` 返回了有效样本，也不代表 APV 颜色一定会压过其它光照。
+
+源码路径如下：
+
+```text
+lil_common_vert.hlsl
+    LIL_CALC_MAINLIGHT(vertexInput, lightdataInput)
+        -> lilGetLightColorDoubleAPV(positionWS, normalWS, ...)
+            -> SampleAPV(positionWS, normalWS, renderingLayer, viewDirection)
+        -> lightColor/lightDirection/indLightColor 写入 V2F
+
+lil_common_frag.hlsl
+    toon shadow 的 Environment Light 使用 fd.indLightColor * _ShadowEnvStrength
+```
+
+也就是说，当前 APV 的实际采样在顶点阶段完成，然后插值到片元；大三角形或稀疏网格上的空间变化会被平滑掉。`PROBE_VOLUMES_L1` 又只使用 APV 的 L0/L1 低频系数，不会表现为明显的局部贴图或硬阴影。若要验证高频方向差异，可以在 PC_RPAsset 中暂时切换到 L2 并重新烘焙；这会增加数据和采样成本，但不改变“APV 是间接光”的性质。
+
+当前 lilToon/HoRP 调试面板没有直接显示以下中间量的 debug view：
+
+```text
+SampleAPV.status              是否命中有效 APV 数据
+APV L0                        采样到的环境辐照度
+APV L1 / Toon shMax、shMin    最终参与 lilToon 主光和阴影环境的量
+```
+
+因此验收时仍应把 Unity Rendering Debugger（探针/砖块/Debug Probe Sampling）和 Frame Debugger（`PROBE_VOLUMES_L1`）作为资源层检查；HoRP DebugTile 现在另外提供 `apv.validity`、`apv.irradiance`、`apv.toon-indirect` 三个视图，直接使用 URP 的 `SampleAPV`/`EvaluateAdaptiveProbeVolume`。这样可以分别观察采样有效性、表面 APV 辐照度和接近 lilToon `indLightColor` 的 toon 间接量。
+
+在 Ho-DebugTile 的 `Debug View` 下选择这三个 ID；它们依赖 GeometryBuffer。洋红表示没有有效几何输入，红色表示 APV 变体没有启用或 `SampleAPV` 返回无效，绿色表示采样命中了 APV 数据。`APV GI` 是经过 URP `EvaluateAdaptiveProbeVolume` 的表面辐照度，`APV Toon` 则复刻 lilToon 的 SH 方向和 `shMin` 计算，用于和角色最终 toon 阴影环境对照。
+
+#### 当前朱木古堂的直接结论
+
+```text
+APV Asset/Lighting data       已存在
+APV Baking Set/cells          已存在
+URP Asset APV                 已开启
+lilToon APV variants          已生成
+当前灯光模式                  39 个 Mixed，1 个 Realtime；Baked GI/Shadowmask 已开启
+静态 GI 几何                  主体来自外部 glTF 预制体，需在导入后 Renderer 确认 Contribute GI
+最终 APV debug view            HoRP DebugTile 已提供 3 个视图
+当前全场景视觉差异            可能很小，不能据此判定 APV 失效
+```
+
+下一次验收应优先做“固定环境开启 Contribute GI + 关闭实时灯 + 开启红/蓝 Baked/Mixed 灯 + 动态角色移动”的最小实验，再回到朱木古堂整体画面。
+
 ---
 
 ## 5. 后续任务清单
