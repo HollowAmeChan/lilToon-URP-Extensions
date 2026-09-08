@@ -35,7 +35,7 @@ namespace lilToon.URP.Extensions.Editor.SSGI
             }
 
             EditorGUILayout.HelpBox(
-                "Ho-SSGI reads the opaque camera color after opaques and the shared Ho-GeometryBuffer. It composites _HoGITexture as a pure post-process; MetadataBuffer is not required.",
+                "Ho-SSGI reads the opaque camera color after opaques and the shared Ho-GeometryBuffer. Its runtime parameters are controlled by the Ho-SSGI Volume; this feature keeps resource and shader fallback settings.",
                 MessageType.Info);
 
             DrawRuntime();
@@ -48,8 +48,7 @@ namespace lilToon.URP.Extensions.Editor.SSGI
 
         private void DrawRuntime()
         {
-            SerializedProperty enabled = Find("enabled");
-            string summary = LilUrpEditorSectionGui.BoolSummary(enabled) + " / Opaque source";
+            string summary = "Volume controlled / Opaque source";
             if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行", summary, RuntimeColor))
             {
                 return;
@@ -57,16 +56,19 @@ namespace lilToon.URP.Extensions.Editor.SSGI
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                DrawProperty("enabled");
+                using (new EditorGUI.DisabledScope(true))
+                {
+                    DrawProperty("enabled");
+                    DrawProperty("intensity");
+                    DrawProperty("sourceSaturation");
+                }
                 EditorGUILayout.HelpBox("Ho-SSGI runs after opaques so it can sample the lit opaque camera color. GeometryBuffer must run before it to provide the no-outline geometry test.", MessageType.None);
-                DrawProperty("intensity");
-                DrawProperty("sourceSaturation");
             }
         }
 
         private void DrawTracing()
         {
-            string summary = Find("rayCount").intValue + " rays / " + Find("stepCount").intValue + " steps";
+            string summary = "Volume controlled";
             if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showTracing, "追踪", summary, AdvancedColor))
             {
                 return;
@@ -74,19 +76,21 @@ namespace lilToon.URP.Extensions.Editor.SSGI
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                DrawProperty("rayCount");
-                DrawProperty("stepCount");
-                DrawProperty("rayLength");
-                DrawProperty("thickness");
-                DrawProperty("temporalBlend");
-                DrawProperty("spatialRadius");
+                using (new EditorGUI.DisabledScope(true))
+                {
+                    DrawProperty("rayCount");
+                    DrawProperty("stepCount");
+                    DrawProperty("rayLength");
+                    DrawProperty("thickness");
+                    DrawProperty("temporalBlend");
+                    DrawProperty("spatialRadius");
+                }
             }
         }
 
         private void DrawDebug()
         {
-            SerializedProperty debugMode = Find("debugMode");
-            string summary = LilUrpEditorSectionGui.EnumName(debugMode);
+            string summary = "Volume controlled";
             if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showDebug, "调试", summary, DebugColor))
             {
                 return;
@@ -94,13 +98,13 @@ namespace lilToon.URP.Extensions.Editor.SSGI
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                DrawProperty("debugMode");
-                DrawProperty("debugInSceneView");
-                DrawProperty("debugInGameView");
-                if (debugMode != null && debugMode.enumValueIndex != (int)HoSSGIDebugMode.Off)
+                using (new EditorGUI.DisabledScope(true))
                 {
-                    EditorGUILayout.HelpBox("The Volume debugMode overrides this Feature setting when its override checkbox is enabled. The preview replaces the current camera color after post-processing and does not feed lilToon or DebugTile.", MessageType.Info);
+                    DrawProperty("debugMode");
+                    DrawProperty("debugInSceneView");
+                    DrawProperty("debugInGameView");
                 }
+                EditorGUILayout.HelpBox("Set debugMode in the Ho-SSGI Volume. The preview replaces the current camera color after post-processing and does not feed lilToon or DebugTile.", MessageType.Info);
             }
         }
 
