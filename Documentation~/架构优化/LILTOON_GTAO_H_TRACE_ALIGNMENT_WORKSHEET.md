@@ -22,11 +22,14 @@
 
 | 资产 | 实际字段快照 | 结论 |
 |---|---|---|
-| HTrace `Global Volume Profile.asset` | `GTAOWorldSpaceRadius=5` 为局部 override；TracingMode、Slice/Step、Box 等多数字段未 override | 不能仅凭 Inspector 当前值判断 HTrace 实际 tracing mode，需记录 VolumeStack/Frame Debugger |
+| HTrace `Global Volume Profile.asset`（本轮已更新） | GTAO 相关字段全部 `m_OverrideState=1`；GTAO、Full、Bitmask、World=5、Screen=64、Thickness=.2、Slice4/Step32、SpatioTemporal、12 帧、Rejection=.8、Linear、Box3、Double Sample | 作为 Ho-GTAO 最高质量对照基线；Intensity=3.06、DirectLightingOcclusion=1 保持场景观感基线 |
 | 工程 `DefaultVolumeProfile.asset` | `TracingMode=1`、Full、Slice4、Step32、TemporalRejection=0.8、Box2 | 可作为 Bitmask 高质量基线 |
-| Ho `Global Volume Profile.asset` | High、Full、World=3.46、Screen=15、Thickness=.202、Slice4/Step32、12 帧、Rejection=1、Box3 | 与 HTrace 场景快照并非同一组参数，截图不能直接得出算法结论 |
+| Ho `Global Volume Profile.asset` | High、Full、World=3.46、Screen=15、Thickness=.202、Slice4/Step32、12 帧、Rejection=1、Box3 | 仍是独立 Ho 参数；对比时先固定同值，再单独看算法差异 |
 
-> 第一轮必须复制一组“完全相同的数值”到双方；第二轮才比较各自默认/最高档。尤其是 `TracingMode`、`World/Screen Radius`、`TemporalRejection` 和 `BoxPassCount`，任何一项不同都可能改变接地感和噪声形状。
+| 对照顺序 | 规则 |
+|---|---|
+| 第一轮 | 把 `TracingMode`、`World/Screen Radius`、`Thickness`、`Slice/Step`、`TemporalRejection`、滤波类型/趟数全部复制为同值，比较 Generate/Temporal/Spatial |
+| 第二轮 | 使用本表记录的双方最高质量配置，比较最终观感；不要把配置差异归因于算法 |
 
 > 必须区分两种比较：**同算法对比**把 HTrace 也锁为 Bitmasks，用来验证 Ho 的数值实现；**画面观感对比**保留 HTrace 默认 HorizonSearch，用来判断连续积分是否是方向感差异的来源。不能把两条基线的截图混成一个“质量档”结论。
 
