@@ -60,6 +60,11 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return frac(sin(q) * 43758.5453);
         }
 
+        float3 HoSSGIBuildTangent(float3 normal)
+        {
+            return normalize(abs(normal.y) < 0.95 ? cross(normal, float3(0, 1, 0)) : cross(normal, float3(1, 0, 0)));
+        }
+
         float3 HoSSGIColor(float3 value)
         {
             float luminance = dot(value, float3(0.2126, 0.7152, 0.0722));
@@ -78,41 +83,64 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float3 centerNormalVS = HoSSGIViewNormal(centerNormalWS);
             float3 centerPositionVS = HoSSGIViewPosition(uv, center.a);
             float2 pixel = uv * _ScreenParams.xy;
-            float2 noise = HoSSGIHash2(pixel + _Time.y);
-            float2 texel = _ScreenParams.zw;
+            float2 noise = HoSSGIHash2(pixel + floor(_Time.y * 60.0));
             float3 radiance = 0;
             float hits = 0;
             int rays = max(1, _HoSSGIRayCount);
             int steps = max(4, _HoSSGIStepCount);
+            float3 tangent = HoSSGIBuildTangent(centerNormalVS);
+            float3 bitangent = normalize(cross(centerNormalVS, tangent));
 
             [loop]
             for (int ray = 0; ray < rays; ray++)
             {
-                float angle = (ray + noise.x) * 6.2831853 / rays;
-                float2 direction = float2(cos(angle), sin(angle));
-                float2 marchDir = direction * lerp(0.003, 0.04, noise.y);
-                float3 tangent = normalize(abs(centerNormalVS.y) < 0.99 ? cross(centerNormalVS, float3(0, 1, 0)) : cross(centerNormalVS, float3(1, 0, 0)));
-                float3 bitangent = normalize(cross(centerNormalVS, tangent));
-                float3 rayDirVS = normalize(tangent * direction.x + bitangent * direction.y + centerNormalVS * (0.25 + 0.5 * noise.x));
+                // Cosine-weighted hemisphere sample. The ray is generated in view
+                // space and projected to screen space, keeping the depth test and
+                // the screen trajectory on the same geometry.
+                float u = (ray + 0.5) / rays;
+                float v = frac(noise.x + ray * 0.61803398875);
+                float phi = 6.2831853 * u + noise.y * 6.2831853;
+                float cosTheta = sqrt(saturate(v));
+                float sinTheta = sqrt(saturate(1.0 - v));
+                float3 rayDirVS = normalize(
+                    tangent * (cos(phi) * sinTheta)
+                    + bitangent * (sin(phi) * sinTheta)
+                    + centerNormalVS * cosTheta);
+
+                float3 rayEndVS = centerPositionVS + rayDirVS * _HoSSGIRayLength;
+                float3 startNDC = ComputeNormalizedDeviceCoordinatesWithZ(centerPositionVS + rayDirVS * 0.02, UNITY_MATRIX_P);
+                float3 endNDC = ComputeNormalizedDeviceCoordinatesWithZ(rayEndVS, UNITY_MATRIX_P);
+                float2 screenDelta = endNDC.xy - startNDC.xy;
+                if (dot(screenDelta, screenDelta) < 1.0e-8) continue;
+                float previousDelta = -1.0e9;
 
                 [loop]
                 for (int stepIndex = 1; stepIndex <= steps; stepIndex++)
                 {
                     float t = (stepIndex + noise.y) / steps;
-                    float2 sampleUV = uv + marchDir * (t * _HoSSGIRayLength * 0.18);
+                    float3 rayPositionVS = lerp(centerPositionVS + rayDirVS * 0.02, rayEndVS, t);
+                    float3 rayNDC = ComputeNormalizedDeviceCoordinatesWithZ(rayPositionVS, UNITY_MATRIX_P);
+                    float2 sampleUV = rayNDC.xy;
                     if (any(sampleUV <= 0.001) || any(sampleUV >= 0.999)) break;
                     half4 sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
                     half4 sampleBase = SAMPLE_TEXTURE2D_X(_HoSSGISurfaceColor, sampler_PointClamp, sampleUV);
                     if (sampleGeometry.a < 0.0001 || sampleBase.a < 0.0001) continue;
                     float3 samplePositionVS = HoSSGIViewPosition(sampleUV, sampleGeometry.a);
-                    float depthDelta = centerPositionVS.z - samplePositionVS.z;
-                    float rayDepth = centerPositionVS.z + rayDirVS.z * t * _HoSSGIRayLength;
-                    if (abs(rayDepth - samplePositionVS.z) < max(_HoSSGIThickness, 0.01) && depthDelta > 0.0)
+                    float rayDepth = -rayPositionVS.z;
+                    float sampleDepth = -samplePositionVS.z;
+                    float depthDelta = rayDepth - sampleDepth;
+                    float thickness = max(_HoSSGIThickness, 0.01);
+                    bool crossedSurface = depthDelta >= -thickness && previousDelta < -thickness;
+                    previousDelta = depthDelta;
+                    if (crossedSurface)
                     {
                         float3 source = sampleBase.rgb;
-                        float cosine = saturate(dot(centerNormalWS, normalize((float3)sampleGeometry.rgb * 2.0 - 1.0)));
-                        float distanceWeight = rcp(1.0 + t * t * 4.0);
-                        radiance += HoSSGIColor(source) * cosine * distanceWeight;
+                        float3 sampleNormalVS = HoSSGIViewNormal(normalize((float3)sampleGeometry.rgb * 2.0 - 1.0));
+                        float3 lightDirection = normalize(samplePositionVS - centerPositionVS);
+                        float receiverCosine = saturate(dot(centerNormalVS, lightDirection));
+                        float sourceCosine = saturate(dot(sampleNormalVS, -lightDirection));
+                        float distanceWeight = exp2(-3.0 * t) * rcp(1.0 + t * t * 2.0);
+                        radiance += HoSSGIColor(source) * receiverCosine * sourceCosine * distanceWeight;
                         hits += 1.0;
                         break;
                     }

@@ -396,6 +396,8 @@ sourceValid = geometryCoverage
 
 高质量路径的初始设置：full-resolution depth、intersection refine、cosine hemisphere sampling、较高 ray/step 参数、关闭 checkerboard。这里不做另一套低质量算法。
 
+当前 raw trace 已采用 view-space cosine hemisphere ray：从 GeometryBuffer 重建当前点和法线，生成世界一致的 ray end，再投影到 screen UV；沿投影轨迹用 GeometryBuffer 深度 crossing 判断相交，并使用接收面/命中面双 cosine、距离衰减和 SurfaceColor coverage 过滤。旧的固定二维偏移方案不再保留，因为它会让 screen trajectory 与 ray depth 不一致，产生明显错误命中。
+
 ### 5.4 Temporal result
 
 沿用 HTrace 的 motion/depth/normal/history validation，但 history 只存 Ho-SSGI 的 source/GI 语义，不复制最终 camera color：
