@@ -216,10 +216,13 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 float3 axis = normalize(cross(ortho, viewDirection));
                 float3 projectedNormal = normalVS - axis * dot(normalVS, axis);
                 float projectedLength = length(projectedNormal);
-                if (projectedLength < 1.0e-4)
-                {
-                    continue;
-                }
+                // Keep every slice in the normalization, including the
+                // measure-zero case where the projected normal collapses.
+                // Dropping that slice makes the result depend on the view
+                // direction and can leave weightTotal at zero, producing a
+                // strong directional dark bias. HTrace keeps the slice in the
+                // integral; use a tiny stable weight here to avoid NaNs.
+                projectedLength = max(projectedLength, 1.0e-4);
 
                 float normalSign = sign(dot(ortho, projectedNormal));
                 float cosN = saturate(dot(projectedNormal, viewDirection) / projectedLength);

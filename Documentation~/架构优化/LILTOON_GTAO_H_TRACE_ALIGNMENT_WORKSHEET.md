@@ -9,7 +9,7 @@
 | 对照场景 | `D:\\Unity_Project\\BREAK_URP\\Assets\\mmd场景测试\\朱木古堂\\New Scene` |
 | HTrace 源码 | `D:\\Unity_Project\\BREAK_URP\\Assets\\HTraceAO` |
 | Ho 源码 | `D:\\Unity_Fork\\lilToon-URP-Extensions\\Runtime\\GTAO` |
-| 追踪模式 | Visibility Bitmasks (`GTAOTracingMode=1`) |
+| 追踪模式 | 基线 A：Visibility Bitmasks (`GTAOTracingMode=1`)；基线 B：HorizonSearch (`GTAOTracingMode=0`) |
 | 去噪 | SpatioTemporal |
 | 分辨率 | Full |
 | 密度基线 | Slice 4 / Step 32 |
@@ -17,6 +17,8 @@
 | 空间滤波 | Box，按 HTrace 步长 `4 -> 2 -> 1` |
 | 深度输入 | Ho-GeometryBuffer raw depth attachment；不使用 URP `CameraDepthTexture` |
 | AO Debug | 两边都先用 `pow=1` 看原始灰阶，再恢复 HTrace 对照指数 |
+
+> 必须区分两种比较：**同算法对比**把 HTrace 也锁为 Bitmasks，用来验证 Ho 的数值实现；**画面观感对比**保留 HTrace 默认 HorizonSearch，用来判断连续积分是否是方向感差异的来源。不能把两条基线的截图混成一个“质量档”结论。
 
 ## 状态定义
 
@@ -41,6 +43,7 @@
 | T3 | motion/命中速度 | HTrace motion mask/delta + per-hit velocity | 仅消费 URP `_MotionVectorTexture` | `仅 Ho 实现` | 相机/物体运动时无法区分 origin 与 hit，收敛和 disocclusion 不稳定 | Geometry/Metadata 提供 motion mask/delta，或明确记录降级语义 |
 | T4 | history accumulation | HTrace 12 帧 + 5x5 clamp | Ho 12 帧 + 5x5 clamp | `部分对齐` | 累积公式接近，但输入拒绝和 sample count 语义尚未完全一致 | 对齐 `TemporalWeight`、velocity 混合和 count 更新 |
 | R0 | Bitmask tracing | `HRenderGTAO.compute:134-304` | `HoGTAOCompute` 32-bin bitmask | `部分对齐` | 公式、厚度、衰减基本一致；需确认 LOD 取整和中心 raw depth | 与 HTrace 逐行做数值样本对照 |
+| R0H | HorizonSearch tracing | `HRenderGTAO.compute:243-275` | Ho 暂未启用连续 arc 分支 | `未开始` | 若 HTrace 画面对比用默认 HorizonSearch，Bitmask 量化会被误判为 Ho 算法错误 | 先做 HTrace mode A/B；必要时把连续 arc 作为 Ho 可选后备 |
 | R1 | horizon/切片方向 | HTrace rotations/noise `HRenderGTAO.compute:160-220` | 4 slices + interleaved gradient noise | `部分对齐` | 方向感重，可能来自切片量化、LOD 选择或 Box 轴向结构 | A/B：固定 frame/noise，分别禁用 bitmask、禁用 spatial |
 | S0 | Box spatial | `HSpatialFilterGTAO.compute:101-151` | 3 趟 `4/2/1`，plane/normal 权重 | `部分对齐` | 步长已对齐；需确认 final visibility 极性和 raw depth history 使用 | 对比每一趟输出，确认最后一趟才转换 visibility |
 | S1 | plane weighting | HTrace `PlaneWeighting` | Ho 使用等价指数，但当前自行重建位置 | `部分对齐` | 平面边缘/远处仍可能有不一致 | 用同一 raw depth + 同一 view-space plane 做数值对照 |
@@ -55,10 +58,11 @@
 
 优先怀疑顺序：
 
-1. Bitmask 的 32-bin 角度量化与 4 slice 组合；
-2. Box 的 cardinal/diagonal 轴向结构；
-3. depth pyramid 的 LOD 选择/独立 mip 手动混合；
-4. Debug pow 放大了原本连续输出中的低幅差异。
+1. 当前基线是否把 HTrace 和 Ho 锁在同一个 tracing mode；
+2. Bitmask 的 32-bin 角度量化与 4 slice 组合；
+3. Box 的 cardinal/diagonal 轴向结构；
+4. depth pyramid 的 LOD 选择/独立 mip 手动混合；
+5. Debug pow 放大了原本连续输出中的低幅差异。
 
 验证时必须先看 `Generate` 原始 AO，再看 Temporal，再看每一趟 Spatial；不要只看最终 Debug。
 
@@ -100,10 +104,10 @@
 |---|---|---|---|
 | 2026-09-09 | Ho 改为直接消费 GeometryBuffer raw depth，history 改 R32 raw | `df01fad`；Unity GTAO 编译通过 | 解决远处深度量化波纹；需继续验证时域/空间链 |
 | 2026-09-09 | 建立本工作表 | 本文件 | 后续按阶段矩阵推进 |
+| 2026-09-09 | 修正退化 slice 处理 | `HoGTAO.shader`：不再直接丢弃 projected normal 过小的 slice | 消除极端视角下的方向性归一化偏置 |
 
 ## 当前下一步
 
 1. 先用 `pow=1` 对比 Generate/Temporal/Spatial 三层，确认方向性来自追踪还是滤波。
 2. 实现 HTrace 风格 temporal plane rejection 和 motion 语义，优先解决收敛/拖影。
 3. 再数值对齐 depth LOD 与 bitmask horizon，最后才调接地感曲线。
-
