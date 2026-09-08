@@ -15,6 +15,11 @@ namespace lilToon.URP.Extensions.Editor.SSGI
         private SerializedDataParameter thickness;
         private SerializedDataParameter temporalBlend;
         private SerializedDataParameter spatialRadius;
+        private SerializedDataParameter temporalReservoirReuse;
+        private SerializedDataParameter spatialReservoirReuse;
+        private SerializedDataParameter temporalReservoirValidation;
+        private SerializedDataParameter spatialReservoirValidation;
+        private SerializedDataParameter fireflySuppression;
         private SerializedDataParameter intensity;
         private SerializedDataParameter sourceSaturation;
         private SerializedDataParameter debugMode;
@@ -29,6 +34,11 @@ namespace lilToon.URP.Extensions.Editor.SSGI
             thickness = Unpack(fetcher.Find(x => x.thickness));
             temporalBlend = Unpack(fetcher.Find(x => x.temporalBlend));
             spatialRadius = Unpack(fetcher.Find(x => x.spatialRadius));
+            temporalReservoirReuse = Unpack(fetcher.Find(x => x.temporalReservoirReuse));
+            spatialReservoirReuse = Unpack(fetcher.Find(x => x.spatialReservoirReuse));
+            temporalReservoirValidation = Unpack(fetcher.Find(x => x.temporalReservoirValidation));
+            spatialReservoirValidation = Unpack(fetcher.Find(x => x.spatialReservoirValidation));
+            fireflySuppression = Unpack(fetcher.Find(x => x.fireflySuppression));
             intensity = Unpack(fetcher.Find(x => x.intensity));
             sourceSaturation = Unpack(fetcher.Find(x => x.sourceSaturation));
             debugMode = Unpack(fetcher.Find(x => x.debugMode));
@@ -51,6 +61,13 @@ namespace lilToon.URP.Extensions.Editor.SSGI
             EditorGUILayout.LabelField("去噪", EditorStyles.boldLabel);
             PropertyField(temporalBlend);
             PropertyField(spatialRadius);
+            EditorGUILayout.Space(4);
+            EditorGUILayout.LabelField("ReSTIR", EditorStyles.boldLabel);
+            PropertyField(temporalReservoirReuse);
+            PropertyField(spatialReservoirReuse);
+            PropertyField(temporalReservoirValidation);
+            PropertyField(spatialReservoirValidation);
+            PropertyField(fireflySuppression);
             EditorGUILayout.Space(4);
             EditorGUILayout.LabelField("外观", EditorStyles.boldLabel);
             PropertyField(intensity);
