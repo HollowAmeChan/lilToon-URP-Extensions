@@ -142,12 +142,14 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         bool HoGTAOSample(float2 uv, float lod, out float3 positionVS, out float3 normalWS)
         {
             float sampledRawDepth = HoGTAOSampleDepth(saturate(uv), lod);
+#if !defined(UNITY_REVERSED_Z)
             if (sampledRawDepth < 0.0001)
             {
                 positionVS = 0.0;
                 normalWS = 0.0;
                 return false;
             }
+#endif
 
             float sampledLinearDepth = LinearEyeDepth(sampledRawDepth, _ZBufferParams);
             positionVS = HoGTAOViewPosition(saturate(uv), sampledLinearDepth);
