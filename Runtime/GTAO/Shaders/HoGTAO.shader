@@ -260,8 +260,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 // HTrace's Temporal Disocclusion view is a rejection mask, not
                 // another AO view: stable history is white, rejected/disoccluded
                 // pixels are red and change as the camera moves.
-                half rejection = saturate(1.0h - historyWeight);
-                return half4(1.0h, 1.0h - rejection, 1.0h - rejection, 1.0h);
+                half accepted = depthValid * depthAgreement;
+                return half4(1.0h, accepted, accepted, 1.0h);
             }
             half ao = lerp(current, previous, historyWeight);
             return half4(ao, ao, ao, 1.0h);
