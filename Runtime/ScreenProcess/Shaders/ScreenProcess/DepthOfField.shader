@@ -22,8 +22,8 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
             #pragma fragment Frag
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
 
             float _Intensity;
@@ -31,6 +31,9 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
             float4 _LayerParams1; // x gaussian start, y gaussian end, z max radius px, w high quality
             float4 _LayerParams2; // x blade count, y blade curvature, z blade rotation
             float4 _LayerParams3; // x coc gain, y foreground boost, z background boost, w coc curve
+
+            TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
+            float _HoGeometryBufferValid;
 
             static const int ScreenProcessDofKernelLqCount = 12;
             static const float2 ScreenProcessDofKernelLq[ScreenProcessDofKernelLqCount] =
@@ -84,7 +87,8 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
 
             float SampleEyeDepth(float2 uv)
             {
-                return LinearEyeDepth(SampleSceneDepth(uv), _ZBufferParams);
+                half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
+                return LilHoGeometryBufferLinearDepthOrFar(normalDepth, _ProjectionParams.z);
             }
 
             float ResolvePositiveDefault(float value, float fallback)
@@ -185,6 +189,11 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                 if (LilScreenProcessShouldOutputRuleDebug())
                 {
                     return LilScreenProcessRuleDebugColor(uv, false, source.a);
+                }
+
+                if (_HoGeometryBufferValid <= 0.5)
+                {
+                    return source;
                 }
 
                 float depth = SampleEyeDepth(uv);

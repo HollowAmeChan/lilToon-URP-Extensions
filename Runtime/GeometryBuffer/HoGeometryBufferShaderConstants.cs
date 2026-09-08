@@ -16,6 +16,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         public static readonly int NormalDepthTextureId = Shader.PropertyToID(NormalDepthTextureName);
         public static readonly int DepthTextureId = Shader.PropertyToID(DepthTextureName);
         public static readonly int SkyTextureId = Shader.PropertyToID(SkyTextureName);
+        public static readonly int ValidId = Shader.PropertyToID("_HoGeometryBufferValid");
         public static readonly int SkyTextureValidId = Shader.PropertyToID("_HoGeometryBufferSkyTextureValid");
         public static readonly int DebugModeId = Shader.PropertyToID("_HoGeometryBufferDebugMode");
         public static readonly int DebugDepthParamsId = Shader.PropertyToID("_HoGeometryBufferDebugDepthParams");

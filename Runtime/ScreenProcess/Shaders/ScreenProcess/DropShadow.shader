@@ -31,9 +31,22 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DropShadow"
             float4 _LayerParams0; // x distance 0-1, y angle degrees, z opacity, w softness px
             float4 _LayerParams1; // x spread px, y reserved, z reserved, w keep off subject
 
+            TEXTURE2D_X(_lilScreenProcessSubjectMaskTexture);
+            float _SubjectMaskValid;
+
             float SampleSubjectMask(float2 uv)
             {
-                return LilScreenProcessResolveRequiredRuleMask(uv);
+                if (_HoMetadataBufferActive > 0.5)
+                {
+                    return LilScreenProcessResolveRequiredRuleMask(uv);
+                }
+
+                if (_SubjectMaskValid > 0.5)
+                {
+                    return SAMPLE_TEXTURE2D_X(_lilScreenProcessSubjectMaskTexture, sampler_LinearClamp, uv).r;
+                }
+
+                return 0.0;
             }
 
             float SampleSpreadMask(float2 uv, float radiusPx)
@@ -100,7 +113,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DropShadow"
                 }
 
                 float opacity = saturate(_Intensity) * saturate(_LayerParams0.z);
-                if (_HoMetadataBufferActive <= 0.5 || opacity <= 0.0001)
+                if ((_HoMetadataBufferActive <= 0.5 && _SubjectMaskValid <= 0.5) || opacity <= 0.0001)
                 {
                     return source;
                 }

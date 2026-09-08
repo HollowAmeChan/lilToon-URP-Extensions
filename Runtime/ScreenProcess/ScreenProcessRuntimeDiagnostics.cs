@@ -181,6 +181,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                     activeLayerCount++;
                     bool isEdgeLight = layer.effect == ScreenProcessEffect.EdgeLight;
                     bool isDropShadow = layer.effect == ScreenProcessEffect.DropShadow;
+                    bool isOutline = layer.effect == ScreenProcessEffect.Outline;
+                    bool isDepthOfField = layer.effect == ScreenProcessEffect.DepthOfField;
                     bool isPostLighting = layer.effect == ScreenProcessEffect.PostLighting;
                     bool isSkyTyndall = layer.effect == ScreenProcessEffect.SkyTyndall;
                     bool needsRule = isEdgeLight || isDropShadow || isPostLighting || layer.useRuleMask || layer.debugRuleMask;
@@ -189,7 +191,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                         requiresMaskId = true;
                     }
 
-                    if (isEdgeLight || isPostLighting || isSkyTyndall)
+                    if (isEdgeLight || isOutline || isDepthOfField || isPostLighting || isSkyTyndall)
                     {
                         requiresNormalDepth = true;
                     }

@@ -20,11 +20,8 @@ Shader "Hidden/lilToon/URP/ScreenProcess/Outline"
             #pragma target 4.5
             #pragma vertex Vert
             #pragma fragment Frag
-            #pragma multi_compile_fragment _ _GBUFFER_NORMALS_OCT
-
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
 
@@ -34,15 +31,20 @@ Shader "Hidden/lilToon/URP/ScreenProcess/Outline"
             float4 _LayerParams0; // x thickness px, y depth weight, z normal weight, w threshold
             float4 _LayerParams1; // x softness, y depth scale, z normal scale, w opacity
 
+            TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
+            float _HoGeometryBufferValid;
+
             float SampleLinearDepth01(float2 uv)
             {
-                return Linear01Depth(SampleSceneDepth(uv), _ZBufferParams);
+                half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
+                float farDepth = max(_ProjectionParams.z, 0.0001);
+                return saturate(LilHoGeometryBufferLinearDepthOrFar(normalDepth, farDepth) / farDepth);
             }
 
             float3 SampleNormalSafe(float2 uv)
             {
-                float3 normalWS = SampleSceneNormals(uv);
-                return dot(normalWS, normalWS) > 0.0001 ? normalize(normalWS) : float3(0.0, 0.0, 0.0);
+                half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
+                return LilHoGeometryBufferWorldNormalOrZero(normalDepth);
             }
 
             float SobelDepth(float2 uv, float2 texel)
@@ -109,6 +111,11 @@ Shader "Hidden/lilToon/URP/ScreenProcess/Outline"
                 if (LilScreenProcessShouldOutputRuleDebug())
                 {
                     return LilScreenProcessRuleDebugColor(uv, false, source.a);
+                }
+
+                if (_HoGeometryBufferValid <= 0.5)
+                {
+                    return source;
                 }
 
                 float thickness = max(_LayerParams0.x, 0.0);

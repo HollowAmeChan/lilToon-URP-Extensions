@@ -38,8 +38,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static readonly int LayerRuleMaskData1Id = Shader.PropertyToID("_LayerRuleMaskData1");
         public static readonly int LayerRuleMaskData2Id = Shader.PropertyToID("_LayerRuleMaskData2");
         public static readonly int LayerRuleMaskColorId = Shader.PropertyToID("_LayerRuleMaskColor");
-        public static readonly int CameraDepthTextureId = Shader.PropertyToID("_CameraDepthTexture");
-        public static readonly int CameraNormalsTextureId = Shader.PropertyToID("_CameraNormalsTexture");
         public static readonly int SubjectMaskTextureId = Shader.PropertyToID(SubjectMaskTextureName);
         public static readonly int SubjectMaskValidId = Shader.PropertyToID("_SubjectMaskValid");
     }

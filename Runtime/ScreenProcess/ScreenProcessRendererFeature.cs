@@ -189,7 +189,13 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            pass.Setup(cameraColorTarget, cameraDepthTarget, layers, ScreenProcessRenderPassEvents.ScreenProcessStack, settings, null);
+            pass.Setup(
+                cameraColorTarget,
+                cameraDepthTarget,
+                layers,
+                ScreenProcessRenderPassEvents.ScreenProcessStack,
+                settings,
+                EnsureSubjectMaskMaterial());
         }
 
         private void EnqueueRenderGraphPass(
@@ -205,7 +211,11 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            pass.SetupRenderGraph(layers, ScreenProcessRenderPassEvents.ScreenProcessStack);
+            pass.SetupRenderGraph(
+                layers,
+                ScreenProcessRenderPassEvents.ScreenProcessStack,
+                settings,
+                EnsureSubjectMaskMaterial());
             renderer.EnqueuePass(pass);
             EnqueueSemanticBufferReleasePass(renderer);
         }
@@ -392,6 +402,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 builder.SetGlobalTextureAfterPass(blackTexture, HoGeometryBufferShaderConstants.NormalDepthTextureId);
                 builder.SetGlobalTextureAfterPass(blackTexture, HoGeometryBufferShaderConstants.DepthTextureId);
                 builder.SetGlobalTextureAfterPass(blackTexture, HoGeometryBufferShaderConstants.SkyTextureId);
+                builder.SetGlobalTextureAfterPass(blackTexture, ScreenProcessShaderConstants.SubjectMaskTextureId);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
@@ -406,6 +417,9 @@ namespace lilToon.URP.Extensions.PostProcessing
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.blackTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, data.blackTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, data.blackTexture);
+                    context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, 0.0f);
+                    context.cmd.SetGlobalTexture(ScreenProcessShaderConstants.SubjectMaskTextureId, data.blackTexture);
+                    context.cmd.SetGlobalFloat(ScreenProcessShaderConstants.SubjectMaskValidId, 0.0f);
                     ResetSemanticBufferFlags(context.cmd);
                 });
             }
@@ -424,7 +438,10 @@ namespace lilToon.URP.Extensions.PostProcessing
             cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, fallback);
             cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, fallback);
             cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, fallback);
+            cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, 0.0f);
+            cmd.SetGlobalTexture(ScreenProcessShaderConstants.SubjectMaskTextureId, fallback);
             ResetSemanticBufferFlags(cmd);
+            cmd.SetGlobalFloat(ScreenProcessShaderConstants.SubjectMaskValidId, 0.0f);
         }
 
         private static void ResetSemanticBufferFlags(CommandBuffer cmd)
@@ -432,6 +449,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 0.0f);
             cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.SystemChannelMaskId, 0.0f);
             cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 0.0f);
+            cmd.SetGlobalFloat(ScreenProcessShaderConstants.SubjectMaskValidId, 0.0f);
         }
 
         private static void ResetSemanticBufferFlags(RasterCommandBuffer cmd)
@@ -439,6 +457,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 0.0f);
             cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.SystemChannelMaskId, 0.0f);
             cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 0.0f);
+            cmd.SetGlobalFloat(ScreenProcessShaderConstants.SubjectMaskValidId, 0.0f);
         }
     }
 
@@ -467,6 +486,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         private sealed class PassData
         {
             public TextureHandle source;
+            public TextureHandle subjectMaskTexture;
             public TextureHandle ruleMaskIdTexture;
             public TextureHandle ruleNormalDepthTexture;
             public TextureHandle skyTexture;
@@ -480,6 +500,8 @@ namespace lilToon.URP.Extensions.PostProcessing
             public float dynamicFocusDistance;
             public bool isEdgeLight;
             public bool isDropShadow;
+            public bool isOutline;
+            public bool isDepthOfField;
             public bool isPostLighting;
             public bool isSkyTyndall;
             public bool useRuleMaskTexture;
@@ -489,6 +511,12 @@ namespace lilToon.URP.Extensions.PostProcessing
             public bool useRuleCustom0;
             public bool useRuleObjectCustom0;
             public bool useRuleObjectCustom1;
+            public bool useSubjectMask;
+        }
+
+        private sealed class SubjectMaskPassData
+        {
+            public RendererListHandle rendererList;
         }
 
         public ScreenProcessPass(string passName)
@@ -518,10 +546,15 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         public void SetupRenderGraph(
             List<ScreenProcessRuntimeLayer> layers,
-            RenderPassEvent passEvent)
+            RenderPassEvent passEvent,
+            ScreenProcessStackSettings settings,
+            Material subjectMaskMaterial)
         {
             ReleaseCompatibilityResources();
+            this.settings = settings;
+            this.subjectMaskMaterial = subjectMaskMaterial;
             CopyLayers(layers);
+            ConfigureSubjectMaskFiltering();
             ConfigurePass(passEvent);
             requiresIntermediateTexture = true;
         }
@@ -709,6 +742,63 @@ namespace lilToon.URP.Extensions.PostProcessing
             HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
             HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
 
+            bool useSubjectMask = RequiresSubjectMask() && subjectMaskMaterial != null;
+            TextureHandle subjectMaskTexture = default;
+            if (useSubjectMask)
+            {
+                TextureDesc subjectMaskDesc = renderGraph.GetTextureDesc(source);
+                subjectMaskDesc.name = ScreenProcessShaderConstants.SubjectMaskTextureName;
+                subjectMaskDesc.depthBufferBits = 0;
+                subjectMaskDesc.clearBuffer = true;
+                subjectMaskDesc.clearColor = Color.clear;
+                GraphicsFormat subjectMaskFormat = GetSubjectMaskGraphicsFormat();
+                if (subjectMaskFormat != GraphicsFormat.None)
+                {
+                    subjectMaskDesc.format = subjectMaskFormat;
+                }
+
+                subjectMaskTexture = renderGraph.CreateTexture(subjectMaskDesc);
+                DrawingSettings subjectMaskDrawingSettings = RenderingUtils.CreateDrawingSettings(
+                    SubjectMaskShaderTagIds,
+                    frameData.Get<UniversalRenderingData>(),
+                    cameraData,
+                    frameData.Get<UniversalLightData>(),
+                    SortingCriteria.CommonOpaque);
+                subjectMaskDrawingSettings.overrideMaterial = subjectMaskMaterial;
+                subjectMaskDrawingSettings.overrideMaterialPassIndex = 0;
+                RendererListParams subjectMaskRendererListParams = new RendererListParams(
+                    frameData.Get<UniversalRenderingData>().cullResults,
+                    subjectMaskDrawingSettings,
+                    subjectMaskFilteringSettings);
+
+                using (var builder = renderGraph.AddRasterRenderPass<SubjectMaskPassData>(
+                    "Ho-ScreenProcess Subject Mask",
+                    out SubjectMaskPassData subjectMaskPassData,
+                    screenProcessProfilingSampler))
+                {
+                    subjectMaskPassData.rendererList = renderGraph.CreateRendererList(subjectMaskRendererListParams);
+                    if (subjectMaskPassData.rendererList.IsValid())
+                    {
+                        builder.UseRendererList(subjectMaskPassData.rendererList);
+                    }
+                    builder.SetRenderAttachment(subjectMaskTexture, 0, AccessFlags.WriteAll);
+                    if (resourceData.activeDepthTexture.IsValid())
+                    {
+                        builder.SetRenderAttachmentDepth(resourceData.activeDepthTexture, AccessFlags.Read);
+                    }
+
+                    builder.AllowPassCulling(false);
+                    builder.SetRenderFunc(static (SubjectMaskPassData data, RasterGraphContext context) =>
+                    {
+                        context.cmd.ClearRenderTarget(RTClearFlags.Color, Color.clear, 1.0f, 0);
+                        if (data.rendererList.IsValid())
+                        {
+                            context.cmd.DrawRendererList(data.rendererList);
+                        }
+                    });
+                }
+            }
+
             int writtenLayerCount = 0;
             for (int i = 0; i < runtimeLayers.Count; i++)
             {
@@ -728,6 +818,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{screenProcessPassName} Layer {writtenLayerCount}", out PassData passData, screenProcessProfilingSampler))
                 {
                     passData.source = source;
+                    passData.subjectMaskTexture = subjectMaskTexture;
                     passData.ruleMaskIdTexture = metadataResources.maskIdTexture;
                     passData.ruleNormalDepthTexture = geometryResources.normalDepthTexture;
                     passData.skyTexture = geometryResources.skyTexture;
@@ -741,17 +832,20 @@ namespace lilToon.URP.Extensions.PostProcessing
                     passData.dynamicFocusDistance = ResolveDepthOfFieldFocusDistance(runtimeLayer.settings, cameraData.camera);
                     passData.isEdgeLight = runtimeLayer.settings.effect == ScreenProcessEffect.EdgeLight;
                     passData.isDropShadow = runtimeLayer.settings.effect == ScreenProcessEffect.DropShadow;
+                    passData.isOutline = runtimeLayer.settings.effect == ScreenProcessEffect.Outline;
+                    passData.isDepthOfField = runtimeLayer.settings.effect == ScreenProcessEffect.DepthOfField;
                     passData.isPostLighting = runtimeLayer.settings.effect == ScreenProcessEffect.PostLighting;
                     passData.isSkyTyndall = runtimeLayer.settings.effect == ScreenProcessEffect.SkyTyndall;
                     bool needsRule = passData.isEdgeLight || passData.isDropShadow || passData.isPostLighting || runtimeLayer.settings.useRuleMask || runtimeLayer.settings.debugRuleMask;
                     bool needsRuleMaskResolve = passData.isDropShadow || runtimeLayer.settings.useRuleMask || runtimeLayer.settings.debugRuleMask;
                     passData.useRuleMaskTexture = needsRule && metadataResources.maskIdTexture.IsValid();
-                    passData.useRuleNormalDepth = (passData.isEdgeLight || passData.isPostLighting || passData.isSkyTyndall) && geometryResources.normalDepthTexture.IsValid();
+                    passData.useRuleNormalDepth = (passData.isEdgeLight || passData.isPostLighting || passData.isSkyTyndall || passData.isOutline || passData.isDepthOfField) && geometryResources.normalDepthTexture.IsValid();
                     passData.useSkyTexture = passData.isSkyTyndall && geometryResources.skyTexture.IsValid();
                     passData.useRuleSurfaceData = needsRuleMaskResolve && metadataResources.surfaceDataTexture.IsValid();
                     passData.useRuleCustom0 = needsRuleMaskResolve && metadataResources.custom0Texture.IsValid();
                     passData.useRuleObjectCustom0 = needsRuleMaskResolve && metadataResources.objectCustom0Texture.IsValid();
                     passData.useRuleObjectCustom1 = needsRuleMaskResolve && metadataResources.objectCustom1Texture.IsValid();
+                    passData.useSubjectMask = passData.isDropShadow && useSubjectMask;
 
                     builder.UseTexture(source, AccessFlags.Read);
                     if (passData.useRuleMaskTexture)
@@ -789,12 +883,30 @@ namespace lilToon.URP.Extensions.PostProcessing
                         builder.UseTexture(metadataResources.objectCustom1Texture, AccessFlags.Read);
                     }
 
+                    if (passData.useSubjectMask)
+                    {
+                        builder.UseTexture(subjectMaskTexture, AccessFlags.Read);
+                    }
+
                     builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
                     builder.AllowGlobalStateModification(true);
                     builder.AllowPassCulling(false);
                     builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                     {
                         ApplyLayerProperties(data.layer, data.material, data.dynamicFocusDistance);
+                        context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 0.0f);
+                        context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 0.0f);
+                        context.cmd.SetGlobalFloat(ScreenProcessShaderConstants.SubjectMaskValidId, data.useSubjectMask ? 1.0f : 0.0f);
+                        if (data.useSubjectMask)
+                        {
+                            context.cmd.SetGlobalTexture(ScreenProcessShaderConstants.SubjectMaskTextureId, data.subjectMaskTexture);
+                        }
+
+                        if (data.useRuleNormalDepth)
+                        {
+                            context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.ruleNormalDepthTexture);
+                        }
+
                         if (data.isEdgeLight)
                         {
                             bool hasRule = data.useRuleMaskTexture && data.useRuleNormalDepth;
@@ -1003,11 +1115,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                 input |= ScriptableRenderPassInput.Depth;
             }
 
-            if (RequiresNormals())
-            {
-                input |= ScriptableRenderPassInput.Normal;
-            }
-
             ConfigureInput(input);
         }
 
@@ -1030,20 +1137,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             subjectMaskFilteringSettings = new FilteringSettings(renderQueueRange, layerMask);
         }
 
-        private bool RequiresNormals()
-        {
-            for (int i = 0; i < runtimeLayers.Count; i++)
-            {
-                ScreenProcessRuntimeLayer runtimeLayer = runtimeLayers[i];
-                if (IsRuntimeLayerActive(runtimeLayer) && RequiresCameraNormals(runtimeLayer.settings.effect))
-                {
-                    return true;
-                }
-            }
-
-            return false;
-        }
-
         private bool RequiresDepth()
         {
             for (int i = 0; i < runtimeLayers.Count; i++)
@@ -1055,7 +1148,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 }
 
                 ScreenProcessEffect effect = runtimeLayer.settings.effect;
-                if (effect == ScreenProcessEffect.Outline || effect == ScreenProcessEffect.DepthOfField || EffectRequiresSubjectMask(effect))
+                if (EffectRequiresSubjectMask(effect))
                 {
                     return true;
                 }
@@ -1095,11 +1188,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         private static bool EffectRequiresSubjectMask(ScreenProcessEffect effect)
         {
             return effect == ScreenProcessEffect.DropShadow;
-        }
-
-        private static bool RequiresCameraNormals(ScreenProcessEffect effect)
-        {
-            return effect == ScreenProcessEffect.Outline;
         }
 
         private static bool IsRuntimeLayerActive(ScreenProcessRuntimeLayer runtimeLayer)

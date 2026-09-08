@@ -118,6 +118,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
                 cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
                 cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, renderTargets.DepthTexture.nameID);
+                cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, 1.0f);
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -212,6 +213,8 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                     {
                         context.cmd.DrawRendererList(data.geometryRendererList);
                     }
+
+                    context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, 1.0f);
                 });
             }
         }
@@ -230,6 +233,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, Texture2D.blackTexture);
+            Shader.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, 0.0f);
             Shader.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 0.0f);
         }
 

@@ -89,9 +89,9 @@ RendererFeature 只安装渲染 Pass，实际层配置来自 Volume。相机类�
 当前资源依赖：
 
 - `EdgeLight`：需要 MetadataBuffer MaskId 和 GeometryBuffer normal/depth。
-- `Outline`：需要 URP camera normals/depth。
-- `DropShadow`：需要 MetadataBuffer MaskId，并可按规则读取 SurfaceData、Custom0、ObjectCustom0/1；兼容路径还会生成内部 SubjectMask。
-- `DepthOfField`：需要 camera depth；支持固定焦距和 Transform 目标焦点。
+- `Outline`：优先需要 GeometryBuffer normal/depth；GeometryBuffer coverage 为 0 的像素不参与边缘检测。
+- `DropShadow`：优先需要 MetadataBuffer MaskId，并可按规则读取 SurfaceData、Custom0、ObjectCustom0/1；Metadata 不可用时兼容路径和 RenderGraph 使用内部 SubjectMask fallback。
+- `DepthOfField`：需要 GeometryBuffer 线性深度；coverage 无效时按远裁剪面处理，支持固定焦距和 Transform 目标焦点。
 - `PostLighting`：需要 MetadataBuffer MaskId 和 GeometryBuffer normal/depth。
 - `SkyTyndall`：需要 GeometryBuffer normal/depth 和 Sky buffer；启用规则遮罩时还需要对应 MetadataBuffer 输入。
 - `CustomMaterial`：默认只做 layer blit，按用户材质或 shader 扩展。
