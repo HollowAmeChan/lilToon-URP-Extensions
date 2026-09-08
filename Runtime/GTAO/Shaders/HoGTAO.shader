@@ -58,8 +58,16 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             half4 nd = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord);
             // GeometryBuffer uses zero alpha for sky/uncovered pixels. Keep that
             // convention so pyramid reduction can ignore invalid samples.
-            float depth = max((float)nd.a, 0.0);
-            return float4(depth, depth, depth, depth);
+            float linearDepth = max((float)nd.a, 0.0);
+            if (linearDepth < 1.0e-5)
+                return 0.0;
+            // Match HTrace: the ray-marching pyramid stores raw device depth,
+            // then linearizes each hit after selecting its mip.
+            float depthParamZ = abs(_ZBufferParams.z) > 1.0e-6
+                ? _ZBufferParams.z
+                : (_ZBufferParams.z < 0.0 ? -1.0e-6 : 1.0e-6);
+            float rawDepth = saturate((rcp(linearDepth) - _ZBufferParams.w) / depthParamZ);
+            return float4(rawDepth, rawDepth, rawDepth, rawDepth);
         }
 
         float4 DepthDownsample(Varyings input) : SV_Target
@@ -133,15 +141,16 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
 
         bool HoGTAOSample(float2 uv, float lod, out float3 positionVS, out float3 normalWS)
         {
-            float sampledDepth = HoGTAOSampleDepth(saturate(uv), lod);
-            if (sampledDepth < 0.0001)
+            float sampledRawDepth = HoGTAOSampleDepth(saturate(uv), lod);
+            if (sampledRawDepth < 0.0001)
             {
                 positionVS = 0.0;
                 normalWS = 0.0;
                 return false;
             }
 
-            positionVS = HoGTAOViewPosition(saturate(uv), sampledDepth);
+            float sampledLinearDepth = LinearEyeDepth(sampledRawDepth, _ZBufferParams);
+            positionVS = HoGTAOViewPosition(saturate(uv), sampledLinearDepth);
             half4 nd = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, saturate(uv));
             normalWS = normalize((float3)nd.rgb * 2.0 - 1.0);
             return true;
