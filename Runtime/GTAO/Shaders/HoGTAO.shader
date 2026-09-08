@@ -403,6 +403,21 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 previousCountAccumulated += historyData.g * max(_HoGTAOTemporalMaxFrames, 1.0) * tapWeight;
                 historyWeightSum += tapWeight;
             }
+            // SceneView and the first valid motion-vector frame can expose a
+            // cleared/unstable motion field. Preserve temporal accumulation by
+            // falling back to the current UV history footprint before declaring
+            // a full-frame disocclusion.
+            if (historyWeightSum < 1.0e-5 && _HoGTAOUseMotionVectors > 0.5)
+            {
+                float2 fallbackUV = input.texcoord;
+                half4 fallbackData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevTex, sampler_PointClamp, fallbackUV);
+                half fallbackDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_PointClamp, fallbackUV).r;
+                float fallbackValid = step(0.0001, fallbackDepth)
+                    * step(abs((float)geometry.a - fallbackDepth), max(0.05 * geometry.a, 0.05));
+                previousAccumulated = fallbackData.r * fallbackValid;
+                previousCountAccumulated = fallbackData.g * max(_HoGTAOTemporalMaxFrames, 1.0) * fallbackValid;
+                historyWeightSum = fallbackValid;
+            }
             half previous = historyWeightSum > 1.0e-5 ? previousAccumulated / historyWeightSum : 0.0h;
             half previousCount = historyWeightSum > 1.0e-5 ? previousCountAccumulated / historyWeightSum : 0.0h;
             float3 currentNormal = normalize((float3)geometry.rgb * 2.0 - 1.0);
