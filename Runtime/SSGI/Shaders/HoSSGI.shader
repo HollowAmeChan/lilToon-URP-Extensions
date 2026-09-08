@@ -542,6 +542,17 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 }
             }
 
+            // Keep recurrent history bounded like HTrace. Without this cap a
+            // stationary pixel can accumulate an unbounded M/Wsum and become
+            // slow to react when lighting or geometry changes.
+            float maxHistoryM = min(100.0, 32.0 * max((float)_HoSSGIRayCount / 4.0, 1.0));
+            if (merged.m > maxHistoryM)
+            {
+                float historyScale = maxHistoryM / max(merged.m, 1.0e-5);
+                merged.m = maxHistoryM;
+                merged.wsum *= historyScale;
+            }
+
             if (_HoSSGIReservoirValidation > 0.5)
             {
                 float3 originPositionWS = HoSSGIWorldPosition(uv, geometry.a);
