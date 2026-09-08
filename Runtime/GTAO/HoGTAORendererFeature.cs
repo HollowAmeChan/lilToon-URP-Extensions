@@ -333,6 +333,7 @@ namespace lilToon.URP.Extensions.GTAO
             public TextureHandle output;
             public bool useHistory;
             public bool useMotionVectors;
+            public bool debugDisocclusion;
         }
 
         private sealed class BlitData
@@ -523,6 +524,7 @@ namespace lilToon.URP.Extensions.GTAO
                 data.output = next;
                 data.useHistory = history.Valid;
                 data.useMotionVectors = motionVectors.IsValid();
+                data.debugDisocclusion = debugTemporal;
                 builder.UseTexture(data.current, AccessFlags.Read);
                 builder.UseTexture(data.previous, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
@@ -534,6 +536,7 @@ namespace lilToon.URP.Extensions.GTAO
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (TemporalData passData, RasterGraphContext context) =>
                 {
+                    context.cmd.SetGlobalFloat(DebugModeId, passData.debugDisocclusion ? 5.0f : 0.0f);
                     context.cmd.SetGlobalFloat(HistoryBlendId, passData.useHistory ? 0.5f : 0.0f);
                     context.cmd.SetGlobalTexture(HoGTAOShaderConstants.AoInputTexId, passData.current);
                     context.cmd.SetGlobalTexture(HoGTAOShaderConstants.HistoryPrevTexId, passData.previous);

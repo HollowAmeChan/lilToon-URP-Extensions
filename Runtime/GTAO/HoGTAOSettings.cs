@@ -45,7 +45,7 @@ namespace lilToon.URP.Extensions.GTAO
         Normal = 3,
         [InspectorName("Motion"), Tooltip("输出 URP 内置 MotionVectorRenderPass 的屏幕空间运动（RG：方向，B：幅度）。")]
         Motion = 4,
-        [InspectorName("Temporal"), Tooltip("输出完成历史重投影与深度拒绝后的时间累积 AO。")]
+        [InspectorName("Temporal Disocclusion"), Tooltip("输出历史重投影后的 disocclusion/rejection 掩码：稳定历史为白色，拒绝区域为红色。")]
         Temporal = 5,
     }
 

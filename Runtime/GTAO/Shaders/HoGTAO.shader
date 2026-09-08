@@ -226,8 +226,10 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 float2 motion = _HoGTAOUseMotionVectors > 0.5
                     ? SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, input.texcoord).xy
                     : float2(0.0, 0.0);
-                // Signed direction in RG, speed/magnitude in B.
-                return half4(motion * 0.5 + 0.5, saturate(length(motion) * 32.0), 1.0h);
+                // Signed direction in RG, speed/magnitude in B. Keep a neutral
+                // gray baseline for zero motion; this makes an unproduced/cleared
+                // motion texture immediately distinguishable from real motion.
+                return half4(motion * 0.5 + 0.5, 0.5 + 0.5 * saturate(length(motion) * 32.0), 1.0h);
             }
             if (nd.a < 0.0001h)
             {
@@ -253,6 +255,14 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             half depthValid = step(0.0001h, geometry.a) * step(0.0001h, previousDepth);
             half depthAgreement = step(abs(geometry.a - previousDepth), max(0.05h * geometry.a, 0.05h));
             half historyWeight = saturate(_HoGTAOHistoryBlend) * depthValid * depthAgreement;
+            if (_HoGTAODebugMode > 4.5)
+            {
+                // HTrace's Temporal Disocclusion view is a rejection mask, not
+                // another AO view: stable history is white, rejected/disoccluded
+                // pixels are red and change as the camera moves.
+                half rejection = saturate(1.0h - historyWeight);
+                return half4(1.0h, 1.0h - rejection, 1.0h - rejection, 1.0h);
+            }
             half ao = lerp(current, previous, historyWeight);
             return half4(ao, ao, ao, 1.0h);
         }
