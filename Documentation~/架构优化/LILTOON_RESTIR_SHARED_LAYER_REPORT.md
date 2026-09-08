@@ -224,3 +224,84 @@ SSGI 后续优先级：
 6. 以上稳定后，再评估是否把 Hi-Z producer 抽给 GTAO 共用。
 
 最终目标不是让 GTAO 和 SSGI 使用同一套 reservoir，而是让它们在需要时共享几何、可见性和相机上下文，同时保持 GI/AO/DI 的估计器语义独立。
+
+## 7. HTrace 是否真的启用了 ReSTIR
+
+结论：**正常 HTrace SSGI 路径确实一直使用 ReSTIR，而且没有公开的总开关。**
+
+### 7.1 代码证据
+
+HTrace 的 `Resources/HTraceSSGI/Includes/HCommonSSGI.hlsl` 直接定义：
+
+```hlsl
+#define ENABLE_SPATIAL_RESTIR 1
+#define ENABLE_TEMPORAL_RESTIR 1
+```
+
+Volume/Profile 的“ReSTIR Validation”区域只有这些参数：
+
+```text
+HalfStepValidation
+SpatialOcclusionValidation
+TemporalLightingValidation
+TemporalOcclusionValidation
+```
+
+它们只切换 validation 关键字，不会关闭 reservoir temporal/spatial resampling。`FireflySuppression` 也只是单独的权重抑制阶段。
+
+在 `Scripts/Passes/Shared/SSGI.cs` 中，以下调度每帧都会发生：
+
+```text
+HRenderSSGI.TraceSSGI
+HReSTIR.TemporalResampling
+HReSTIR.SpatialResampling
+HReSTIR.SpatialValidation
+HDenoiser.TemporalAccumulation
+HDenoiser.SpatialFilter1/2
+```
+
+Firefly kernel 只有在 `DenoisingSettings.FireflySuppression` 为 true 时才 dispatch，但这不影响 ReSTIR temporal/spatial 本身。
+
+### 7.2 关闭验证不等于关闭 ReSTIR
+
+把三个 validation 选项都关掉，只会减少：
+
+- temporal selected-ray occlusion validation；
+- temporal lighting change validation；
+- spatial occlusion guidance/validation。
+
+reservoir 仍然会合并当前候选、历史候选和空间邻居。这个配置可以用来观察“验证对稳定性和反应速度的影响”，不能作为“无 ReSTIR”基线。
+
+### 7.3 临时画面对比方法
+
+最快的实验是在外部 HTrace 包的 `HCommonSSGI.hlsl` 中临时改为：
+
+```hlsl
+#define ENABLE_SPATIAL_RESTIR 0
+#define ENABLE_TEMPORAL_RESTIR 0
+```
+
+同时关闭 Volume 中的三个 validation 和 Firefly。这样会让 temporal 不再合并历史 reservoir，spatial 不再把邻居 reservoir 加入候选；后面的 spatial validation 和普通 denoiser 仍会运行。因此它适合比较画面中 ReSTIR 对连续性、噪声和拖影的贡献，但**不能比较 GPU 成本**，因为 `HReSTIR` kernel 仍然会被 dispatch。
+
+这也不是一个完全干净的“纯 raw trace”模式：HRenderSSGI 产生的是 reservoir candidate，最终 radiance 仍由后续 spatial validation/denoiser 路径 resolve。HTrace 的 raw trace 输出并没有直接作为最终 camera radiance 写出，`HRenderSSGI.compute` 中的直接 radiance output 仍是注释状态。
+
+### 7.4 真正的无 ReSTIR baseline 需要什么
+
+如果要做严格对照，需要在 HTrace 分支里增加一个正式设置，而不只是改宏：
+
+1. Trace 阶段额外写出 `sumRadiance / rayCount` 或等价的 raw GI texture；
+2. 绕过 `HReSTIR.TemporalResampling`、Firefly、SpatialResampling/Validation；
+3. 让 denoiser 直接消费 raw GI 或只保留独立的普通 temporal/spatial denoise；
+4. 保持 camera color、GeometryBuffer/depth 和 composite 完全不变。
+
+这才是“同一 tracing 输入下，ReSTIR 开/关”的可解释 A/B 测试。当前 HTrace 包没有提供该模式，不能从 Volume Inspector 直接完成。
+
+对 Ho-SSGI 的意义是：在判断是否继续移植 ReSTIR 时，应比较三组结果，而不是只比较开关前后：
+
+```text
+A. raw candidate resolve
+B. temporal reservoir reuse
+C. temporal + spatial reservoir + validation + denoiser
+```
+
+当前 Ho-SSGI 已经有 A 的 reservoir resolve和 B/C 的第一段实现，但还没有 HTrace 那种严格的 A/B 调试模式。下一步应先给 Ho-SSGI 加可控的 `TemporalReuse`、`SpatialReuse` 和 `Validation` debug 开关，再决定是否继续补齐 HTrace 的完整 ReSTIR，而不是把所有阶段绑成一个不可拆的总开关。
