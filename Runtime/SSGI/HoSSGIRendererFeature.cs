@@ -299,6 +299,7 @@ namespace lilToon.URP.Extensions.SSGI
             public float rayLength;
             public float thickness;
             public float sourceSaturation;
+            public int frameIndex;
         }
 
         private sealed class SourceReprojectionPassData
@@ -511,6 +512,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.rayLength = Mathf.Clamp(settings.rayLength, 0.01f, 32.0f);
                 data.thickness = Mathf.Clamp(settings.thickness, 0.0f, 4.0f);
                 data.sourceSaturation = Mathf.Clamp01(settings.sourceSaturation);
+                data.frameIndex = Time.frameCount;
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.UseTexture(data.source, AccessFlags.Read);
                 if (data.sky.IsValid()) builder.UseTexture(data.sky, AccessFlags.Read);
@@ -529,6 +531,7 @@ namespace lilToon.URP.Extensions.SSGI
                     passData.material.SetFloat(HoSSGIShaderConstants.RayLengthId, passData.rayLength);
                     passData.material.SetFloat(HoSSGIShaderConstants.ThicknessId, passData.thickness);
                     passData.material.SetFloat(HoSSGIShaderConstants.SourceSaturationId, passData.sourceSaturation);
+                    passData.material.SetInt(HoSSGIShaderConstants.FrameIndexId, passData.frameIndex);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceId, passData.source);
                     context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, passData.sky.IsValid() ? 1.0f : 0.0f);

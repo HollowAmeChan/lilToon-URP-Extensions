@@ -60,6 +60,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         float _HoSSGIThickness;
         float _HoSSGIIntensity;
         float _HoSSGISourceSaturation;
+        int _HoSSGIFrameIndex;
         float _HoSSGITemporalBlend;
         float _HoSSGISpatialRadius;
         float _HoSSGIHistoryValid;
@@ -416,7 +417,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float3 centerNormalWS = normalize((float3)center.rgb * 2.0 - 1.0);
             float3 centerPositionWS = HoSSGIWorldPosition(uv, center.a);
             float2 pixel = uv * _ScreenParams.xy;
-            float2 noise = HoSSGIHash2(pixel + floor(_Time.y * 60.0));
+            float2 noise = HoSSGIHash2(pixel + (float)(_HoSSGIFrameIndex & 15));
             float3 radiance = 0;
             float hits = 0;
             HoSSGIReservoir reservoir = (HoSSGIReservoir)0;

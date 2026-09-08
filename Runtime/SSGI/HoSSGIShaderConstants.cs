@@ -37,6 +37,7 @@ namespace lilToon.URP.Extensions.SSGI
         public static readonly int ThicknessId = Shader.PropertyToID("_HoSSGIThickness");
         public static readonly int IntensityId = Shader.PropertyToID("_HoSSGIIntensity");
         public static readonly int SourceSaturationId = Shader.PropertyToID("_HoSSGISourceSaturation");
+        public static readonly int FrameIndexId = Shader.PropertyToID("_HoSSGIFrameIndex");
         public static readonly int TemporalBlendId = Shader.PropertyToID("_HoSSGITemporalBlend");
         public static readonly int SpatialRadiusId = Shader.PropertyToID("_HoSSGISpatialRadius");
         public static readonly int HistoryValidId = Shader.PropertyToID("_HoSSGIHistoryValid");
