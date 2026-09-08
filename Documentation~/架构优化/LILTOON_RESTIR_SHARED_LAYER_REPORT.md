@@ -218,9 +218,9 @@ Ho-GTAO 保持独立。它可以继续提供 AO output 作为将来 SSGI denoise
 
 后续优先级：
 
-1. temporal 改成 HTrace 风格的四 tap history，并补全 render-scale/history-depth disocclusion；
-2. spatial 改成稳定的 Poisson/world-plane 邻居，增加独立的第二阶段空间 validation；
-3. 保留 firefly 与 temporal/spatial denoise 的独立 debug，并加入 temporal/spatial A/B 开关；
+1. 完善当前四 tap history 的 render-scale/history-depth disocclusion 和 history source clamp；
+2. 优化 spatial 的 Poisson/world-plane 邻居分布与重采样权重；当前已经有独立的 selected-ray re-march validation 阶段；
+3. 保留 firefly 与 temporal/spatial denoise 的独立 debug，并用 Volume 的 temporal/spatial reuse 开关做 A/B；
 4. 朱木古堂中确认红墙反弹、灯光变化、摄像机上下移动和描边排除；
 5. 以上稳定后，再评估是否把 Hi-Z producer 抽给 GTAO 共用。
 
