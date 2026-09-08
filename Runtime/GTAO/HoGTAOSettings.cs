@@ -11,7 +11,7 @@ namespace lilToon.URP.Extensions.GTAO
         Low = 0,
         [InspectorName("Medium"), Tooltip("中档：Half 分辨率 + 12 步 + 简单时间累积（4 帧）+ 双层 Box。")]
         Medium = 1,
-        [InspectorName("High"), Tooltip("高档（默认）：Half 分辨率 + 16 步 + 时间累积（8 帧）+ Disk 双边滤波。最高质量档。")]
+        [InspectorName("High"), Tooltip("高档（默认）：HTrace HorizonSearch + 16 步 + 时间累积 + Box x2 双边滤波。最高质量档。")]
         High = 2,
     }
 

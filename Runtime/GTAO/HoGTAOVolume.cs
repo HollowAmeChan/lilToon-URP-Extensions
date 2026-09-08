@@ -53,7 +53,7 @@ namespace lilToon.URP.Extensions.GTAO
     {
         [Header("质量")]
 
-        [InspectorName("质量档"), Tooltip("Low/Medium/High 三档预设。算法固定为 Visibility Bitmasks（最高档），降档只降低密度与去噪。")]
+        [InspectorName("质量档"), Tooltip("Low/Medium/High 三档预设。High 使用 HTrace HorizonSearch + SpatioTemporal + Box x2。")]
         public HoGTAOQualityParameter quality = new HoGTAOQualityParameter(HoGTAOQuality.High);
 
         [InspectorName("计算分辨率"), Tooltip("AO 计算分辨率。Half 输出后按深度/法线引导上采样。")]
