@@ -108,6 +108,7 @@ namespace lilToon.URP.Extensions.Editor.GTAO
                 DrawProperty("debugMode");
                 DrawProperty("debugInSceneView");
                 DrawProperty("debugInGameView");
+                DrawProperty("debugIntensity");
             }
         }
 

@@ -81,7 +81,7 @@ namespace lilToon.URP.Extensions.GTAO
             renderer.EnqueuePass(pass);
             if (settings.debugMode != HoGTAODebugMode.Off && debugMaterial != null)
             {
-                debugPass.Setup(debugMaterial, settings.debugMode);
+                debugPass.Setup(debugMaterial, settings.debugMode, settings.debugIntensity);
                 renderer.EnqueuePass(debugPass);
             }
         }
@@ -224,11 +224,13 @@ namespace lilToon.URP.Extensions.GTAO
 
         private Material material;
         private HoGTAODebugMode debugMode;
+        private float debugIntensity = 3.672f;
 
-        public void Setup(Material material, HoGTAODebugMode debugMode)
+        public void Setup(Material material, HoGTAODebugMode debugMode, float debugIntensity)
         {
             this.material = material;
             this.debugMode = debugMode;
+            this.debugIntensity = Mathf.Clamp(debugIntensity, 0.1f, 8.0f);
             renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
             ConfigureInput(ScriptableRenderPassInput.Color);
         }
@@ -261,7 +263,7 @@ namespace lilToon.URP.Extensions.GTAO
                 data.cameraColor = cameraColor;
                 data.destination = destination;
                 // HTrace profile: Intensity=3.06, output exponent=Intensity*1.2.
-                data.displayIntensity = debugMode == HoGTAODebugMode.AO ? 3.672f : 1.0f;
+                data.displayIntensity = debugMode == HoGTAODebugMode.AO ? debugIntensity : 1.0f;
                 data.displayInvert = debugMode == HoGTAODebugMode.AO ? 1.0f : 0.0f;
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.cameraColor, AccessFlags.Read);

@@ -83,6 +83,9 @@ namespace lilToon.URP.Extensions.GTAO
         public HoGTAODebugMode debugMode = HoGTAODebugMode.Off;
         public bool debugInSceneView = true;
         public bool debugInGameView;
+        [InspectorName("AO Debug Pow"), Tooltip("AO 调试显示的 pow 指数。仅影响调试画面，不改变公共 AO 输出；HTrace 对照值为 3.672。")]
+        [Range(0.1f, 8.0f)]
+        public float debugIntensity = 3.672f;
 
         // Shader 引用（留空自动 Shader.Find）
         public Shader shader;
