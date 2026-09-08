@@ -54,6 +54,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         TEXTURE2D_X(_HoSSGIReservoirHistoryAux);
         TEXTURE2D_X(_HoSSGIReservoirHistoryRay);
         TEXTURE2D_X(_HoSSGISpatialGuidance);
+        TEXTURE2D_X(_HoSSGISampleCountHistory);
+        TEXTURE2D_X(_HoSSGIInvalidityHistory);
         TEXTURE2D_X(_BlitTexture);
         int _HoSSGIRayCount;
         int _HoSSGIStepCount;
@@ -114,6 +116,12 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float4 reservoirAux : SV_Target1;
             float4 reservoirRay : SV_Target2;
             float4 guidance : SV_Target3;
+        };
+
+        struct HoSSGIMetadataOutput
+        {
+            float4 sampleCount : SV_Target0;
+            float4 invalidity : SV_Target1;
         };
 
         float HoSSGILuminance(float3 value)
@@ -711,6 +719,48 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return output;
         }
 
+        HoSSGIMetadataOutput TemporalMetadata(Varyings input)
+        {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+            float2 uv = input.texcoord;
+            half4 geometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, uv);
+            HoSSGIMetadataOutput output;
+            output.sampleCount = 0;
+            output.invalidity = float4(0.0, 1.0, 0.0, 1.0);
+            if (geometry.a < 0.0001h)
+                return output;
+
+            float previousCount = SAMPLE_TEXTURE2D_X(_HoSSGISampleCountHistory, sampler_PointClamp, uv).r;
+            float2 previousInvalidity = SAMPLE_TEXTURE2D_X(_HoSSGIInvalidityHistory, sampler_PointClamp, uv).rg;
+            float2 motion = _HoSSGIUseMotion > 0.5
+                ? SAMPLE_TEXTURE2D_X(_HoSSGIMotionVectors, sampler_LinearClamp, uv).xy
+                : float2(0.0, 0.0);
+            float2 previousUV = uv - motion;
+            float accepted = 0.0;
+            if (_HoSSGIHistoryValid > 0.5 && all(previousUV >= 0.0) && all(previousUV <= 1.0))
+            {
+                half4 previousGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIHistoryDepth, sampler_PointClamp, previousUV);
+                float depthAgreement = step(abs(geometry.a - previousGeometry.a), max(0.08 * geometry.a, 0.05));
+                float3 normal = normalize((float3)geometry.rgb * 2.0 - 1.0);
+                float3 previousNormal = normalize((float3)previousGeometry.rgb * 2.0 - 1.0);
+                float normalAgreement = step(0.5, dot(normal, previousNormal));
+                float planeAgreement = 1.0;
+                if (_HoSSGIPreviousMatrixValid > 0.5)
+                {
+                    float3 currentPositionWS = HoSSGIWorldPosition(uv, geometry.a);
+                    float3 previousPositionWS = HoSSGIPreviousWorldPosition(previousUV, previousGeometry.a);
+                    planeAgreement = step(abs(dot(previousPositionWS - currentPositionWS, normal)), max(0.08 * geometry.a, 0.05));
+                }
+                accepted = depthAgreement * normalAgreement * planeAgreement * step(0.0001, previousGeometry.a);
+            }
+
+            float sampleCount = accepted > 0.5 ? min(previousCount + 1.0, 16.0) : 1.0;
+            float temporalInvalidity = accepted > 0.5 ? max(previousInvalidity.x, 0.0) : 0.0;
+            output.sampleCount = float4(sampleCount, 0.0, 0.0, 1.0);
+            output.invalidity = float4(temporalInvalidity, accepted, 0.0, 1.0);
+            return output;
+        }
+
         HoSSGIFireflyOutput Firefly(Varyings input)
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -760,7 +810,9 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             mean /= max(statisticsWeight, 1.0e-5);
             mean2 /= max(statisticsWeight, 1.0e-5);
             float variance = max(mean2 - mean * mean, 0.0);
-            float threshold = mean + 2.0 * sqrt(variance) + 0.001;
+            float sampleCount = SAMPLE_TEXTURE2D_X(_HoSSGISampleCountHistory, sampler_PointClamp, uv).r;
+            float sampleCountScale = clamp(4.0 - sampleCount, 1.0, 2.0);
+            float threshold = mean + sampleCountScale * sqrt(variance) + 0.001;
             float centerLuminance = HoSSGILuminance(HoSSGIResolveReservoir(HoSSGILoadReservoir(uv)));
             float scale = min(1.0, threshold / max(centerLuminance, 1.0e-5));
             output.reservoirColor.a = packedColor.a * scale;
@@ -1170,6 +1222,15 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment SpatialValidation
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Ho-SSGI Temporal Metadata"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment TemporalMetadata
             ENDHLSL
         }
     }

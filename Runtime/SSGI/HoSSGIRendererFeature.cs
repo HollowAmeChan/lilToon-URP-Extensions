@@ -149,6 +149,10 @@ namespace lilToon.URP.Extensions.SSGI
         private RTHandle nextSource;
         private RTHandle previousDenoised;
         private RTHandle nextDenoised;
+        private RTHandle previousSampleCount;
+        private RTHandle nextSampleCount;
+        private RTHandle previousInvalidity;
+        private RTHandle nextInvalidity;
         private RTHandle previousDepth;
         private RTHandle nextDepth;
         private RTHandle previousReservoirColor;
@@ -170,6 +174,10 @@ namespace lilToon.URP.Extensions.SSGI
         public RTHandle NextSource => nextSource;
         public RTHandle PreviousDenoised => previousDenoised;
         public RTHandle NextDenoised => nextDenoised;
+        public RTHandle PreviousSampleCount => previousSampleCount;
+        public RTHandle NextSampleCount => nextSampleCount;
+        public RTHandle PreviousInvalidity => previousInvalidity;
+        public RTHandle NextInvalidity => nextInvalidity;
         public RTHandle PreviousDepth => previousDepth;
         public RTHandle NextDepth => nextDepth;
         public RTHandle PreviousReservoirColor => previousReservoirColor;
@@ -200,6 +208,14 @@ namespace lilToon.URP.Extensions.SSGI
             RenderingUtils.ReAllocateIfNeeded(ref nextSource, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_HoSSGISourceHistoryNextTex");
             RenderingUtils.ReAllocateIfNeeded(ref previousDenoised, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_HoSSGIHistoryPrevDenoisedTex");
             RenderingUtils.ReAllocateIfNeeded(ref nextDenoised, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_HoSSGIHistoryNextDenoisedTex");
+            RenderTextureDescriptor sampleCountDescriptor = descriptor;
+            sampleCountDescriptor.graphicsFormat = GraphicsFormat.R16_SFloat;
+            RenderingUtils.ReAllocateIfNeeded(ref previousSampleCount, sampleCountDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSSGIHistoryPrevSampleCountTex");
+            RenderingUtils.ReAllocateIfNeeded(ref nextSampleCount, sampleCountDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSSGIHistoryNextSampleCountTex");
+            RenderTextureDescriptor invalidityDescriptor = descriptor;
+            invalidityDescriptor.graphicsFormat = GraphicsFormat.R16G16_SFloat;
+            RenderingUtils.ReAllocateIfNeeded(ref previousInvalidity, invalidityDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSSGIHistoryPrevInvalidityTex");
+            RenderingUtils.ReAllocateIfNeeded(ref nextInvalidity, invalidityDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSSGIHistoryNextInvalidityTex");
             RenderTextureDescriptor depthDescriptor = descriptor;
             depthDescriptor.graphicsFormat = GraphicsFormat.R16G16B16A16_SFloat;
             RenderingUtils.ReAllocateIfNeeded(ref previousDepth, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSSGIHistoryPrevDepthTex");
@@ -255,6 +271,16 @@ namespace lilToon.URP.Extensions.SSGI
             nextDenoised = texture;
         }
 
+        public void SwapMetadata()
+        {
+            RTHandle texture = previousSampleCount;
+            previousSampleCount = nextSampleCount;
+            nextSampleCount = texture;
+            texture = previousInvalidity;
+            previousInvalidity = nextInvalidity;
+            nextInvalidity = texture;
+        }
+
         public void MarkValid() => valid = true;
 
         public void Invalidate() => valid = false;
@@ -267,6 +293,10 @@ namespace lilToon.URP.Extensions.SSGI
             nextSource?.Release();
             previousDenoised?.Release();
             nextDenoised?.Release();
+            previousSampleCount?.Release();
+            nextSampleCount?.Release();
+            previousInvalidity?.Release();
+            nextInvalidity?.Release();
             previousDepth?.Release();
             nextDepth?.Release();
             previousReservoirColor?.Release();
@@ -281,6 +311,10 @@ namespace lilToon.URP.Extensions.SSGI
             nextSource = null;
             previousDenoised = null;
             nextDenoised = null;
+            previousSampleCount = null;
+            nextSampleCount = null;
+            previousInvalidity = null;
+            nextInvalidity = null;
             previousDepth = null;
             nextDepth = null;
             previousReservoirColor = null;
@@ -369,6 +403,22 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle output;
         }
 
+        private sealed class TemporalMetadataPassData
+        {
+            public Material material;
+            public TextureHandle temporal;
+            public TextureHandle previousSampleCount;
+            public TextureHandle previousInvalidity;
+            public TextureHandle previousDepth;
+            public TextureHandle geometry;
+            public TextureHandle motion;
+            public TextureHandle outputSampleCount;
+            public TextureHandle outputInvalidity;
+            public Matrix4x4 previousInverseViewProjection;
+            public bool previousMatrixValid;
+            public bool historyValid;
+        }
+
         private sealed class SpatialPassData
         {
             public Material material;
@@ -422,6 +472,7 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle outputColor;
             public TextureHandle outputAux;
             public TextureHandle outputRay;
+            public TextureHandle sampleCount;
             public bool enabled;
         }
 
@@ -445,6 +496,8 @@ namespace lilToon.URP.Extensions.SSGI
             public bool historyValid;
             public Matrix4x4 previousInverseViewProjection;
             public bool previousMatrixValid;
+            public TextureHandle sampleCount;
+            public TextureHandle invalidity;
         }
 
         private sealed class DenoisedHistoryPassData
@@ -600,6 +653,10 @@ namespace lilToon.URP.Extensions.SSGI
             TextureHandle next = renderGraph.ImportTexture(history.Next);
             TextureHandle previousDenoised = renderGraph.ImportTexture(history.PreviousDenoised);
             TextureHandle nextDenoised = renderGraph.ImportTexture(history.NextDenoised);
+            TextureHandle previousSampleCount = renderGraph.ImportTexture(history.PreviousSampleCount);
+            TextureHandle nextSampleCount = renderGraph.ImportTexture(history.NextSampleCount);
+            TextureHandle previousInvalidity = renderGraph.ImportTexture(history.PreviousInvalidity);
+            TextureHandle nextInvalidity = renderGraph.ImportTexture(history.NextInvalidity);
             TextureHandle previousDepth = renderGraph.ImportTexture(history.PreviousDepth);
             TextureHandle nextDepth = renderGraph.ImportTexture(history.NextDepth);
             TextureHandle previousReservoirColor = renderGraph.ImportTexture(history.PreviousReservoirColor);
@@ -693,6 +750,48 @@ namespace lilToon.URP.Extensions.SSGI
                 });
             }
 
+            TextureHandle sampleCountOutput = nextSampleCount;
+            TextureHandle invalidityOutput = nextInvalidity;
+            using (var builder = renderGraph.AddRasterRenderPass<TemporalMetadataPassData>("Ho-SSGI Temporal Metadata", out TemporalMetadataPassData data, new ProfilingSampler("Ho-SSGI Temporal Metadata")))
+            {
+                data.material = material;
+                data.temporal = temporal;
+                data.previousSampleCount = previousSampleCount;
+                data.previousInvalidity = previousInvalidity;
+                data.previousDepth = previousDepth;
+                data.geometry = geometry.normalDepthTexture;
+                data.motion = motion;
+                data.outputSampleCount = sampleCountOutput;
+                data.outputInvalidity = invalidityOutput;
+                data.previousInverseViewProjection = previousInverseViewProjection;
+                data.previousMatrixValid = previousMatrixValid;
+                data.historyValid = history.Valid;
+                builder.UseTexture(data.temporal, AccessFlags.Read);
+                builder.UseTexture(data.previousSampleCount, AccessFlags.Read);
+                builder.UseTexture(data.previousInvalidity, AccessFlags.Read);
+                builder.UseTexture(data.previousDepth, AccessFlags.Read);
+                builder.UseTexture(data.geometry, AccessFlags.Read);
+                if (data.motion.IsValid()) builder.UseTexture(data.motion, AccessFlags.Read);
+                builder.SetRenderAttachment(data.outputSampleCount, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(data.outputInvalidity, 1, AccessFlags.WriteAll);
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (TemporalMetadataPassData passData, RasterGraphContext context) =>
+                {
+                    passData.material.SetFloat(HoSSGIShaderConstants.HistoryValidId, passData.historyValid ? 1.0f : 0.0f);
+                    passData.material.SetFloat(HoSSGIShaderConstants.MotionValidId, passData.motion.IsValid() ? 1.0f : 0.0f);
+                    passData.material.SetMatrix(HoSSGIShaderConstants.PreviousInverseViewProjectionId, passData.previousInverseViewProjection);
+                    passData.material.SetFloat(HoSSGIShaderConstants.PreviousMatrixValidId, passData.previousMatrixValid ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.temporal);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SampleCountHistoryId, passData.previousSampleCount);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.InvalidityHistoryId, passData.previousInvalidity);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.HistoryDepthId, passData.previousDepth);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
+                    if (passData.motion.IsValid()) context.cmd.SetGlobalTexture(HoSSGIShaderConstants.MotionVectorId, passData.motion);
+                    Blitter.BlitTexture(context.cmd, passData.temporal, new Vector4(1, 1, 0, 0), passData.material, 12);
+                });
+            }
+
             using (var builder = renderGraph.AddRasterRenderPass<SourceHistoryPassData>("Ho-SSGI Source History", out SourceHistoryPassData data, new ProfilingSampler("Ho-SSGI Source History")))
             {
                 data.material = material;
@@ -708,6 +807,7 @@ namespace lilToon.URP.Extensions.SSGI
             }
 
             history.Swap();
+            history.SwapMetadata();
             history.MarkValid();
 
             TextureDesc fireflyDesc = reservoirDesc;
@@ -727,10 +827,12 @@ namespace lilToon.URP.Extensions.SSGI
                 data.outputColor = fireflyReservoirColor;
                 data.outputAux = fireflyReservoirAux;
                 data.outputRay = fireflyReservoirRay;
+                data.sampleCount = nextSampleCount;
                 data.enabled = settings.fireflySuppression;
                 builder.UseTexture(data.reservoirColor, AccessFlags.Read);
                 builder.UseTexture(data.reservoirAux, AccessFlags.Read);
                 builder.UseTexture(data.reservoirRay, AccessFlags.Read);
+                builder.UseTexture(data.sampleCount, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.SetRenderAttachment(data.outputColor, 0, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(data.outputAux, 1, AccessFlags.WriteAll);
@@ -742,6 +844,7 @@ namespace lilToon.URP.Extensions.SSGI
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirColorId, passData.reservoirColor);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirAuxId, passData.reservoirAux);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirRayId, passData.reservoirRay);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SampleCountHistoryId, passData.sampleCount);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     passData.material.SetFloat(HoSSGIShaderConstants.FireflyEnabledId, passData.enabled ? 1.0f : 0.0f);
                     Blitter.BlitTexture(context.cmd, passData.reservoirColor, new Vector4(1, 1, 0, 0), passData.material, 5);
@@ -839,9 +942,13 @@ namespace lilToon.URP.Extensions.SSGI
                 data.historyValid = history.Valid;
                 data.previousInverseViewProjection = previousInverseViewProjection;
                 data.previousMatrixValid = previousMatrixValid;
+                data.sampleCount = nextSampleCount;
+                data.invalidity = nextInvalidity;
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.history, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
+                builder.UseTexture(data.sampleCount, AccessFlags.Read);
+                builder.UseTexture(data.invalidity, AccessFlags.Read);
                 if (data.motion.IsValid()) builder.UseTexture(data.motion, AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
@@ -854,6 +961,8 @@ namespace lilToon.URP.Extensions.SSGI
                     passData.material.SetFloat(HoSSGIShaderConstants.PreviousMatrixValidId, passData.previousMatrixValid ? 1.0f : 0.0f);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.source);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.DenoisedHistoryId, passData.history);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SampleCountHistoryId, passData.sampleCount);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.InvalidityHistoryId, passData.invalidity);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     if (passData.motion.IsValid()) context.cmd.SetGlobalTexture(HoSSGIShaderConstants.MotionVectorId, passData.motion);
                     Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 9);
