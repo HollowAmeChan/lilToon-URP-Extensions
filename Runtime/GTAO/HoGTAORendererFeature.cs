@@ -260,7 +260,8 @@ namespace lilToon.URP.Extensions.GTAO
                 data.source = gtao.aoTexture;
                 data.cameraColor = cameraColor;
                 data.destination = destination;
-                data.displayIntensity = debugMode == HoGTAODebugMode.AO ? 2.4f : 1.0f;
+                // HTrace profile: Intensity=3.06, output exponent=Intensity*1.2.
+                data.displayIntensity = debugMode == HoGTAODebugMode.AO ? 3.672f : 1.0f;
                 data.displayInvert = debugMode == HoGTAODebugMode.AO ? 1.0f : 0.0f;
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.cameraColor, AccessFlags.Read);
