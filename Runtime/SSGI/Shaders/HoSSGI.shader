@@ -38,6 +38,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
 
         TEXTURE2D_X(_HoSSGIGeometry);
         TEXTURE2D_X(_HoSSGISource);
+        TEXTURE2D_X(_HoSSGISourceHistory);
         TEXTURE2D_X(_HoGITexture);
         TEXTURE2D_X(_HoSSGIRawGI);
         TEXTURE2D_X(_HoSSGIRawGIInput);
@@ -834,6 +835,70 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return float4(max(filtered, 0.0), saturate(confidence / max(weightSum, 1.0e-5)));
         }
 
+        float4 SourceReprojection(Varyings input) : SV_Target
+        {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+            float2 uv = input.texcoord;
+            half4 current = SAMPLE_TEXTURE2D_X(_HoSSGISource, sampler_LinearClamp, uv);
+            half4 geometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, uv);
+            if (geometry.a < 0.0001h || _HoSSGIHistoryValid < 0.5 || _HoSSGIUseMotion < 0.5)
+                return current;
+
+            float2 motion = SAMPLE_TEXTURE2D_X(_HoSSGIMotionVectors, sampler_LinearClamp, uv).xy;
+            float2 previousUV = uv - motion;
+            if (any(previousUV < 0.0) || any(previousUV > 1.0))
+                return current;
+
+            float2 previousPixel = previousUV * _ScreenParams.xy - 0.5;
+            float2 basePixel = floor(previousPixel);
+            float2 fraction = frac(previousPixel);
+            const float2 offsets[4] =
+            {
+                float2(0.0, 0.0), float2(1.0, 0.0),
+                float2(0.0, 1.0), float2(1.0, 1.0)
+            };
+            float4 weights = float4(
+                (1.0 - fraction.x) * (1.0 - fraction.y),
+                fraction.x * (1.0 - fraction.y),
+                (1.0 - fraction.x) * fraction.y,
+                fraction.x * fraction.y);
+            float3 historyColor = 0.0;
+            float weightSum = 0.0;
+            float3 currentNormal = normalize((float3)geometry.rgb * 2.0 - 1.0);
+            [unroll]
+            for (int i = 0; i < 4; i++)
+            {
+                float2 tapUV = (basePixel + offsets[i] + 0.5) / max(_ScreenParams.xy, 1.0);
+                if (any(tapUV < 0.0) || any(tapUV > 1.0)) continue;
+                half4 previousGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIHistoryDepth, sampler_PointClamp, tapUV);
+                if (previousGeometry.a < 0.0001h) continue;
+                float depthAgreement = step(abs(geometry.a - previousGeometry.a), max(0.08 * geometry.a, 0.05));
+                float3 previousNormal = normalize((float3)previousGeometry.rgb * 2.0 - 1.0);
+                float normalAgreement = step(0.5, dot(currentNormal, previousNormal));
+                float tapWeight = weights[i] * depthAgreement * normalAgreement;
+                if (tapWeight <= 1.0e-4) continue;
+                historyColor += SAMPLE_TEXTURE2D_X(_HoSSGISourceHistory, sampler_LinearClamp, tapUV).rgb * tapWeight;
+                weightSum += tapWeight;
+            }
+
+            if (weightSum <= 0.15)
+                return current;
+            historyColor /= weightSum;
+            float currentLuminance = HoSSGILuminance(current.rgb);
+            float historyLuminance = HoSSGILuminance(historyColor);
+            float maxHistoryLuminance = max(currentLuminance * 4.0, 0.25);
+            if (historyLuminance > maxHistoryLuminance)
+                historyColor *= maxHistoryLuminance / max(historyLuminance, 1.0e-5);
+            float historyWeight = saturate(_HoSSGITemporalBlend * weightSum);
+            return float4(lerp(current.rgb, historyColor, historyWeight), current.a);
+        }
+
+        float4 SourceHistoryCopy(Varyings input) : SV_Target
+        {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+            return SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord);
+        }
+
         HoSSGITraceOutput Frag(Varyings input) { return Trace(input); }
 
         float4 Composite(Varyings input) : SV_Target
@@ -907,6 +972,24 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment BilateralDenoise
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Ho-SSGI Source Reprojection"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment SourceReprojection
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Ho-SSGI Source History"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment SourceHistoryCopy
             ENDHLSL
         }
     }

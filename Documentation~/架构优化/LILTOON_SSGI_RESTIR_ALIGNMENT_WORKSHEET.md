@@ -39,6 +39,7 @@ PrePass / motion / geometry
 
 ```text
 HoGeometryBuffer + opaque camera source
+  -> source color history/reprojection
   -> Ho-SSGI raw trace candidate reservoir
   -> four-tap temporal reservoir merge
   -> firefly W clamp
@@ -56,6 +57,7 @@ HoGeometryBuffer + opaque camera source
 | G1 | Motion | `PrePassURP.cs`、`HBUFFER_MOTION_VECTOR` | URP `motionVectorColor` | `部分对齐` | 运动物体重投影是否方向正确 | 记录 motion UV/Y 翻转与 render scale 契约 |
 | G2 | Camera history | `CameraHistorySystem`、`SSGIPassURP.SetupShared` | `HoSSGIHistory`，cameraId/尺寸变化失效，GI/depth/reservoir ping-pong | `部分对齐` | 切换相机、改分辨率、重载场景后不能读旧历史 | 增加 camera cut/render-scale 显式 reset |
 | G3 | Depth/Hi-Z | `HDepthPyramid`、`GBufferPassURP` | 当前 Ho-SSGI 仍直接采 GeometryBuffer crossing；GTAO 有独立 pyramid | `未开始` | Frame Debugger 中暂时没有 Ho-SSGI Hi-Z 阶段 | 先完成 ReSTIR，再单独评估 Hi-Z，不和 reservoir 混改 |
+| T-Source | 光照源时域重投影 | `HTemporalReprojectionSSGI.compute:79-206`，先生成 `ColorReprojected` | Ho 新增 source history ping-pong，motion/depth/normal 四 tap 重投影，并把结果喂给 raw trace | `部分对齐` | Frame Debugger 对比 Source Reprojection/Raw Trace；灯光变化后看旧亮度残留 | 补 render-scale previous VP/world-plane disocclusion 和亮度 moments |
 | T0 | Temporal color reprojection | `HTemporalReprojectionSSGI.compute:230-365` | Ho Temporal 使用 motion、四 tap history、depth/normal、source luminance | `部分对齐` | Temporal reuse 开/关；看历史拖影和上下边缘错位 | 补 render-scale/history UV 契约和 local source clamp |
 | R0 | Ray candidate | `HRenderSSGI.compute:71-145` | world-space cosine ray；命中 source；candidate target=luminance(candidate)；M 包含 miss | `部分对齐` | Raw Trace 看原始噪声；Raw GI 看 candidate resolve | 改用稳定低差异/blue-noise 序列，确认 candidate 能量归一化 |
 | R1 | Reservoir payload | `HReservoirSSGI.hlsl:28-122` | Color/Wsum/M/target/hit/distance + direction/originNormal，RGBAHalf MRT | `部分对齐` | Reservoir Weight/M/Hit；检查 target、M、W 是否合理 | 评估整数 packed layout；目前不急于复制 HTrace bit packing |

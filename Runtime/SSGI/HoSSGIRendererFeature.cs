@@ -145,6 +145,8 @@ namespace lilToon.URP.Extensions.SSGI
     {
         private RTHandle previous;
         private RTHandle next;
+        private RTHandle previousSource;
+        private RTHandle nextSource;
         private RTHandle previousDepth;
         private RTHandle nextDepth;
         private RTHandle previousReservoirColor;
@@ -160,6 +162,8 @@ namespace lilToon.URP.Extensions.SSGI
 
         public RTHandle Previous => previous;
         public RTHandle Next => next;
+        public RTHandle PreviousSource => previousSource;
+        public RTHandle NextSource => nextSource;
         public RTHandle PreviousDepth => previousDepth;
         public RTHandle NextDepth => nextDepth;
         public RTHandle PreviousReservoirColor => previousReservoirColor;
@@ -184,6 +188,8 @@ namespace lilToon.URP.Extensions.SSGI
             };
             RenderingUtils.ReAllocateIfNeeded(ref previous, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_HoSSGIHistoryPrevTex");
             RenderingUtils.ReAllocateIfNeeded(ref next, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_HoSSGIHistoryNextTex");
+            RenderingUtils.ReAllocateIfNeeded(ref previousSource, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_HoSSGISourceHistoryPrevTex");
+            RenderingUtils.ReAllocateIfNeeded(ref nextSource, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_HoSSGISourceHistoryNextTex");
             RenderTextureDescriptor depthDescriptor = descriptor;
             depthDescriptor.graphicsFormat = GraphicsFormat.R16G16B16A16_SFloat;
             RenderingUtils.ReAllocateIfNeeded(ref previousDepth, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSSGIHistoryPrevDepthTex");
@@ -208,6 +214,9 @@ namespace lilToon.URP.Extensions.SSGI
             RTHandle texture = previous;
             previous = next;
             next = texture;
+            texture = previousSource;
+            previousSource = nextSource;
+            nextSource = texture;
             texture = previousDepth;
             previousDepth = nextDepth;
             nextDepth = texture;
@@ -230,6 +239,8 @@ namespace lilToon.URP.Extensions.SSGI
         {
             previous?.Release();
             next?.Release();
+            previousSource?.Release();
+            nextSource?.Release();
             previousDepth?.Release();
             nextDepth?.Release();
             previousReservoirColor?.Release();
@@ -240,6 +251,8 @@ namespace lilToon.URP.Extensions.SSGI
             nextReservoirRay?.Release();
             previous = null;
             next = null;
+            previousSource = null;
+            nextSource = null;
             previousDepth = null;
             nextDepth = null;
             previousReservoirColor = null;
@@ -268,6 +281,25 @@ namespace lilToon.URP.Extensions.SSGI
             public float rayLength;
             public float thickness;
             public float sourceSaturation;
+        }
+
+        private sealed class SourceReprojectionPassData
+        {
+            public Material material;
+            public TextureHandle currentSource;
+            public TextureHandle previousSource;
+            public TextureHandle previousDepth;
+            public TextureHandle geometry;
+            public TextureHandle motion;
+            public TextureHandle output;
+            public bool historyValid;
+        }
+
+        private sealed class SourceHistoryPassData
+        {
+            public Material material;
+            public TextureHandle source;
+            public TextureHandle output;
         }
 
         private sealed class TemporalPassData
@@ -373,6 +405,41 @@ namespace lilToon.URP.Extensions.SSGI
             int cameraId = cameraData.camera != null ? cameraData.camera.GetInstanceID() : 0;
             history.Ensure(width, height, cameraId);
 
+            TextureHandle previousSource = renderGraph.ImportTexture(history.PreviousSource);
+            TextureHandle nextSource = renderGraph.ImportTexture(history.NextSource);
+            TextureHandle previousDepthForSource = renderGraph.ImportTexture(history.PreviousDepth);
+            TextureHandle sourceReprojected = renderGraph.CreateTexture(sourceDesc);
+            using (var builder = renderGraph.AddRasterRenderPass<SourceReprojectionPassData>("Ho-SSGI Source Reprojection", out SourceReprojectionPassData data, new ProfilingSampler("Ho-SSGI Source Reprojection")))
+            {
+                data.material = material;
+                data.currentSource = source;
+                data.previousSource = previousSource;
+                data.previousDepth = previousDepthForSource;
+                data.geometry = geometry.normalDepthTexture;
+                data.motion = resourceData.motionVectorColor;
+                data.output = sourceReprojected;
+                data.historyValid = history.Valid;
+                builder.UseTexture(data.currentSource, AccessFlags.Read);
+                builder.UseTexture(data.previousSource, AccessFlags.Read);
+                builder.UseTexture(data.previousDepth, AccessFlags.Read);
+                builder.UseTexture(data.geometry, AccessFlags.Read);
+                if (data.motion.IsValid()) builder.UseTexture(data.motion, AccessFlags.Read);
+                builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (SourceReprojectionPassData passData, RasterGraphContext context) =>
+                {
+                    passData.material.SetFloat(HoSSGIShaderConstants.HistoryValidId, passData.historyValid ? 1.0f : 0.0f);
+                    passData.material.SetFloat(HoSSGIShaderConstants.MotionValidId, passData.motion.IsValid() ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceId, passData.currentSource);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceHistoryId, passData.previousSource);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.HistoryDepthId, passData.previousDepth);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
+                    if (passData.motion.IsValid()) context.cmd.SetGlobalTexture(HoSSGIShaderConstants.MotionVectorId, passData.motion);
+                    Blitter.BlitTexture(context.cmd, passData.currentSource, new Vector4(1, 1, 0, 0), passData.material, 7);
+                });
+            }
+
             TextureDesc outputDesc = sourceDesc;
             outputDesc.name = HoSSGIShaderConstants.RawGITextureName;
             outputDesc.format = GraphicsFormat.R16G16B16A16_SFloat;
@@ -391,13 +458,13 @@ namespace lilToon.URP.Extensions.SSGI
             TextureHandle rawReservoirRay = renderGraph.CreateTexture(reservoirDesc);
             HoSSGIRenderGraphResources resources = frameData.GetOrCreate<HoSSGIRenderGraphResources>();
             resources.rawGiTexture = raw;
-            resources.sourceTexture = source;
+            resources.sourceTexture = sourceReprojected;
 
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-SSGI Raw Trace", out PassData data, new ProfilingSampler("Ho-SSGI Raw Trace")))
             {
                 data.material = material;
                 data.geometry = geometry.normalDepthTexture;
-                data.source = source;
+                data.source = sourceReprojected;
                 data.output = raw;
                 data.reservoirColor = rawReservoirColor;
                 data.reservoirAux = rawReservoirAux;
@@ -518,6 +585,20 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.SetRenderFunc(static (DepthHistoryPassData passData, RasterGraphContext context) =>
                 {
                     Blitter.BlitTexture(context.cmd, passData.geometry, new Vector4(1, 1, 0, 0), passData.material, 3);
+                });
+            }
+
+            using (var builder = renderGraph.AddRasterRenderPass<SourceHistoryPassData>("Ho-SSGI Source History", out SourceHistoryPassData data, new ProfilingSampler("Ho-SSGI Source History")))
+            {
+                data.material = material;
+                data.source = source;
+                data.output = nextSource;
+                builder.UseTexture(data.source, AccessFlags.Read);
+                builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (SourceHistoryPassData passData, RasterGraphContext context) =>
+                {
+                    Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 8);
                 });
             }
 

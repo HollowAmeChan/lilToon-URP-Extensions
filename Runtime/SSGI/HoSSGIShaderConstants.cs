@@ -30,6 +30,7 @@ namespace lilToon.URP.Extensions.SSGI
         public static readonly int ReservoirOutputRayId = Shader.PropertyToID(ReservoirOutputRayName);
         public static readonly int GeometryId = Shader.PropertyToID("_HoSSGIGeometry");
         public static readonly int SourceId = Shader.PropertyToID("_HoSSGISource");
+        public static readonly int SourceHistoryId = Shader.PropertyToID("_HoSSGISourceHistory");
         public static readonly int RayCountId = Shader.PropertyToID("_HoSSGIRayCount");
         public static readonly int StepCountId = Shader.PropertyToID("_HoSSGIStepCount");
         public static readonly int RayLengthId = Shader.PropertyToID("_HoSSGIRayLength");
