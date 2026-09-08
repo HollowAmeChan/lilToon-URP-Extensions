@@ -82,13 +82,13 @@ namespace lilToon.URP.Extensions.GTAO
         [Header("去噪")]
 
         [InspectorName("时间累积帧数"), Tooltip("历史累积上限帧数（0 = 关闭时间累积）。帧数越高噪声越低，运动时越迟钝。")]
-        public ClampedIntParameter temporalFrameCount = new ClampedIntParameter(8, 0, 12);
+        public ClampedIntParameter temporalFrameCount = new ClampedIntParameter(12, 0, 12);
 
         [InspectorName("时间拒绝强度"), Tooltip("历史重投影不一致时拒绝历史的强度。越高越抗鬼影。")]
         public ClampedFloatParameter temporalRejection = new ClampedFloatParameter(0.7f, 0.0f, 1.0f);
 
         [InspectorName("空间滤波类型"), Tooltip("Disk：动态半径双边（边缘更好）。Box：固定步长多趟（便宜稳定）。")]
-        public HoGTAOSpatialFilterParameter spatialFilter = new HoGTAOSpatialFilterParameter(HoGTAOSpatialFilter.Disk);
+        public HoGTAOSpatialFilterParameter spatialFilter = new HoGTAOSpatialFilterParameter(HoGTAOSpatialFilter.Box);
 
         [InspectorName("滤波半径"), Tooltip("Disk 滤波的世界空间半径。")]
         public ClampedFloatParameter filterRadius = new ClampedFloatParameter(0.4f, 0.0f, 1.0f);
