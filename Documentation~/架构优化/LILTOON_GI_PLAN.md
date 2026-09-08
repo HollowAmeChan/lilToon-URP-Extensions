@@ -438,7 +438,7 @@ sourceValid = geometryCoverage
 
 当前 raw trace 已改为 world-space cosine hemisphere ray：从 GeometryBuffer 的线性眼深重建世界位置和世界法线，沿世界空间射线生成端点，再投影到 screen UV；沿投影轨迹用 GeometryBuffer 线性深度 crossing 判断相交，并使用命中面 cosine、距离衰减和 opaque source 过滤。旧的额外视空间轴翻转路径不再保留，因为它会让上下方向和摄像机移动产生错位。
 
-当前 producer 已补上第一段 HTrace 风格的 reservoir 链：raw trace 为每条射线建立候选 reservoir，保存代表方向和 origin normal；Temporal 使用 motion vector、上一帧 GI/深度和 reservoir 做四 tap 重投影合并，并对选中射线做几何与 source lighting validation；Firefly 阶段按局部 luminance statistics 限制异常的 `W`；Spatial 阶段按 GeometryBuffer 深度/法线和屏幕 Gaussian 权重复用邻居 reservoir，再做 selected-ray re-march validation，最后 resolve 为 `selectedColor * W`。`Raw GI` 调试显示 temporal/spatial 前的 raw reservoir resolve，`Raw Trace` 调试显示当前未滤波射线结果。后续继续优化 render-scale disocclusion、Poisson/world-plane 权重和 denoiser，画面验证要继续区分坐标/相交错误、reservoir 偏差和残余噪声。
+当前 producer 已补上第一段 HTrace 风格的 reservoir 链：raw trace 为每条射线建立候选 reservoir，保存代表方向和 origin normal；Temporal 使用 motion vector、上一帧 GI/深度和 reservoir 做四 tap 重投影合并，并对选中射线做几何与 source lighting validation；Firefly 阶段按局部 luminance statistics 限制异常的 `W`；Spatial 阶段使用稳定的 world-plane Poisson 邻居、平面/法线/深度/Gaussian 权重复用 reservoir，再做 selected-ray re-march validation；最后通过 HDR bilateral denoise 输出 `selectedColor * W`。`Raw Trace` 只显示当前未滤波射线结果，`Raw GI` 显示重采样后的去噪结果，验收时要分开判断坐标/相交错误、reservoir 偏差、去噪效果和残余噪声。
 
 ### 5.4 Temporal result
 

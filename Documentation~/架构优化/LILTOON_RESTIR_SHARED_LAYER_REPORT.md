@@ -214,7 +214,7 @@ HoGeometryBuffer
 
 Ho-GTAO 保持独立。它可以继续提供 AO output 作为将来 SSGI denoiser 的 guidance，但这属于“读取 AO 语义输出”，不代表共享 AO reservoir，也不应让 SSGI 反向接管 GTAO 的 history。
 
-当前 Ho-SSGI 已经完成第一批验证增强：reservoir 保存 Color、Wsum/M/target、Direction、Distance、OriginNormal、HitFound；history 有 HTrace 风格的 M 上限；temporal 会做 selected-ray 的几何和 source lighting validation，spatial 会做 selected-ray 几何 validation。Volume 已经能分别控制时域验证、空间验证和 Firefly。
+当前 Ho-SSGI 已经完成第一批验证增强：reservoir 保存 Color、Wsum/M/target、Direction、Distance、OriginNormal、HitFound；history 有 HTrace 风格的 M 上限；temporal 会做 selected-ray 的几何和 source lighting validation，spatial 使用 world-plane Poisson 邻居并做 selected-ray re-march validation，之后还有一层 HDR bilateral denoise。Volume 已经能分别控制时域/空间 reservoir 重用、时域/空间验证和 Firefly。
 
 后续优先级：
 
