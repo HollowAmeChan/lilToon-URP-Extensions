@@ -356,7 +356,9 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             }
             if (nd.a < 0.0001h)
             {
-                return half4(1.0h, 1.0h, 1.0h, 1.0h);
+                // Internal history/filter buffers store AO amount (0 = no
+                // occlusion). Final composition turns this into visibility.
+                return half4(0.0h, 0.0h, 0.0h, 1.0h);
             }
             half ao = HoGTAOComputeHorizonSearch(input.texcoord, nd);
             return half4(ao, ao, ao, 1.0h);
