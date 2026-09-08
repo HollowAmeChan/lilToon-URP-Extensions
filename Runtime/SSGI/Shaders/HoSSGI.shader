@@ -507,38 +507,61 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             HoSSGIReservoir currentReservoir = HoSSGILoadReservoir(uv);
             HoSSGIReservoir merged = currentReservoir;
             float currentConfidence = saturate(current.a);
-            float historyConfidence = 0.0;
+            float historyConfidenceSum = 0.0;
             float historyM = 0.0;
-            float historyScale = 0.0;
 
             float2 previousUVUnclamped = uv - motion;
             bool historyUVValid = previousUVUnclamped.x >= 0.0 && previousUVUnclamped.x <= 1.0
                 && previousUVUnclamped.y >= 0.0 && previousUVUnclamped.y <= 1.0;
             if (_HoSSGIHistoryValid > 0.5 && historyUVValid)
             {
-                float2 previousUV = clamp(previousUVUnclamped, 0.0, 1.0);
-                half4 history = SAMPLE_TEXTURE2D_X(_HoSSGIHistory, sampler_LinearClamp, previousUV);
-                half4 previousGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIHistoryDepth, sampler_PointClamp, previousUV);
-                half previousDepth = previousGeometry.a;
-                half depthAgreement = step(abs(geometry.a - previousDepth), max(0.08h * geometry.a, 0.05h));
-                half3 previousNormal = normalize((float3)previousGeometry.rgb * 2.0 - 1.0);
-                half normalAgreement = step(0.5h, dot(currentNormal, previousNormal));
-                half previousNormalValid = step(0.0001h, dot(previousGeometry.rgb, previousGeometry.rgb));
-                half accepted = depthAgreement * normalAgreement * currentNormalValid * previousNormalValid
-                    * step(0.0001h, previousDepth);
-                float currentLum = HoSSGILuminance(current.rgb);
-                float historyLum = HoSSGILuminance(history.rgb);
-                float lightingChange = abs(currentLum - historyLum) / max(currentLum + historyLum, 0.001);
-                historyScale = _HoSSGITemporalBlend * accepted * saturate(1.0 - lightingChange * 2.0);
-                historyScale *= saturate(history.a);
-                if (historyScale > 0.0)
+                float2 historyTexel = rcp(max(_ScreenParams.xy, 1.0));
+                float2 previousPixel = previousUVUnclamped * _ScreenParams.xy - 0.5;
+                float2 previousBasePixel = floor(previousPixel);
+                float2 previousFraction = frac(previousPixel);
+                const float2 historyOffsets[4] =
                 {
-                    HoSSGIReservoir historyReservoir = HoSSGILoadHistoryReservoir(previousUV);
-                    historyM = historyReservoir.m * historyScale;
-                    historyConfidence = saturate(history.a);
+                    float2(0.0, 0.0), float2(1.0, 0.0),
+                    float2(0.0, 1.0), float2(1.0, 1.0)
+                };
+                float4 historyWeights = float4(
+                    (1.0 - previousFraction.x) * (1.0 - previousFraction.y),
+                    previousFraction.x * (1.0 - previousFraction.y),
+                    (1.0 - previousFraction.x) * previousFraction.y,
+                    previousFraction.x * previousFraction.y);
+
+                [unroll]
+                for (int historyTap = 0; historyTap < 4; historyTap++)
+                {
+                    float2 tapPixel = previousBasePixel + historyOffsets[historyTap];
+                    float2 tapUV = (tapPixel + 0.5) * historyTexel;
+                    float tapWeight = historyWeights[historyTap];
+                    if (tapWeight <= 1.0e-4 || any(tapUV < 0.0) || any(tapUV > 1.0)) continue;
+
+                    half4 history = SAMPLE_TEXTURE2D_X(_HoSSGIHistory, sampler_PointClamp, tapUV);
+                    half4 previousGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIHistoryDepth, sampler_PointClamp, tapUV);
+                    half previousDepth = previousGeometry.a;
+                    half depthAgreement = step(abs(geometry.a - previousDepth), max(0.08h * geometry.a, 0.05h));
+                    half3 previousNormal = normalize((float3)previousGeometry.rgb * 2.0 - 1.0);
+                    half normalAgreement = step(0.5h, dot(currentNormal, previousNormal));
+                    half previousNormalValid = step(0.0001h, dot(previousGeometry.rgb, previousGeometry.rgb));
+                    half accepted = depthAgreement * normalAgreement * currentNormalValid * previousNormalValid
+                        * step(0.0001h, previousDepth);
+                    float currentLum = HoSSGILuminance(current.rgb);
+                    float historyLum = HoSSGILuminance(history.rgb);
+                    float lightingChange = abs(currentLum - historyLum) / max(currentLum + historyLum, 0.001);
+                    float historyScale = _HoSSGITemporalBlend * tapWeight * accepted
+                        * saturate(1.0 - lightingChange * 2.0) * saturate(history.a);
+                    if (historyScale <= 0.0) continue;
+
+                    HoSSGIReservoir historyReservoir = HoSSGILoadHistoryReservoir(tapUV);
+                    float tapM = historyReservoir.m * historyScale;
                     historyReservoir.wsum *= historyScale;
-                    historyReservoir.m = historyM;
-                    HoSSGIReservoirMerge(merged, historyReservoir, HoSSGIReservoirRandom(uv * _ScreenParams.xy, 17.0));
+                    historyReservoir.m = tapM;
+                    historyM += tapM;
+                    historyConfidenceSum += saturate(history.a) * tapM;
+                    HoSSGIReservoirMerge(merged, historyReservoir,
+                        HoSSGIReservoirRandom(uv * _ScreenParams.xy, (float)(historyTap + 17)));
                 }
             }
 
@@ -563,7 +586,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
 
             float totalM = max(merged.m, 1.0e-6);
             float confidence = saturate((currentConfidence * max(currentReservoir.m, 0.0)
-                + historyConfidence * historyM) / totalM);
+                + historyConfidenceSum) / totalM);
             float3 resolved = HoSSGIResolveReservoir(merged);
             output.gi = float4(resolved, confidence);
             output.reservoirColor = float4(max(merged.color, 0.0), max(merged.wsum, 0.0));
