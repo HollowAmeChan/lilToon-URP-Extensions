@@ -377,6 +377,7 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle outputColor;
             public TextureHandle outputAux;
             public TextureHandle outputRay;
+            public TextureHandle outputGuidance;
             public float radius;
             public bool reservoirReuse;
         }
@@ -387,6 +388,7 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle reservoirColor;
             public TextureHandle reservoirAux;
             public TextureHandle reservoirRay;
+            public TextureHandle guidance;
             public TextureHandle temporal;
             public TextureHandle geometry;
             public TextureHandle output;
@@ -718,6 +720,9 @@ namespace lilToon.URP.Extensions.SSGI
             TextureHandle spatialReservoirColor = renderGraph.CreateTexture(reservoirDesc);
             TextureHandle spatialReservoirAux = renderGraph.CreateTexture(reservoirDesc);
             TextureHandle spatialReservoirRay = renderGraph.CreateTexture(reservoirDesc);
+            TextureDesc guidanceDesc = reservoirDesc;
+            guidanceDesc.name = "_HoSSGISpatialGuidance";
+            TextureHandle spatialGuidance = renderGraph.CreateTexture(guidanceDesc);
             using (var builder = renderGraph.AddRasterRenderPass<SpatialResamplingPassData>("Ho-SSGI Spatial Resampling", out SpatialResamplingPassData data, new ProfilingSampler("Ho-SSGI Spatial Resampling")))
             {
                 data.material = material;
@@ -729,6 +734,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.outputColor = spatialReservoirColor;
                 data.outputAux = spatialReservoirAux;
                 data.outputRay = spatialReservoirRay;
+                data.outputGuidance = spatialGuidance;
                 data.radius = Mathf.Clamp(settings.spatialRadius, 0.5f, 8.0f);
                 data.reservoirReuse = settings.spatialReservoirReuse;
                 builder.UseTexture(data.reservoirColor, AccessFlags.Read);
@@ -739,6 +745,7 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.SetRenderAttachment(data.outputColor, 0, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(data.outputAux, 1, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(data.outputRay, 2, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(data.outputGuidance, 3, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (SpatialResamplingPassData passData, RasterGraphContext context) =>
@@ -762,6 +769,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.reservoirColor = spatialReservoirColor;
                 data.reservoirAux = spatialReservoirAux;
                 data.reservoirRay = spatialReservoirRay;
+                data.guidance = spatialGuidance;
                 data.temporal = temporal;
                 data.geometry = geometry.normalDepthTexture;
                 data.output = filtered;
@@ -769,6 +777,7 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.UseTexture(data.reservoirColor, AccessFlags.Read);
                 builder.UseTexture(data.reservoirAux, AccessFlags.Read);
                 builder.UseTexture(data.reservoirRay, AccessFlags.Read);
+                builder.UseTexture(data.guidance, AccessFlags.Read);
                 builder.UseTexture(data.temporal, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
@@ -781,6 +790,7 @@ namespace lilToon.URP.Extensions.SSGI
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirColorId, passData.reservoirColor);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirAuxId, passData.reservoirAux);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirRayId, passData.reservoirRay);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SpatialGuidanceId, passData.guidance);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.temporal);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     Blitter.BlitTexture(context.cmd, passData.reservoirColor, new Vector4(1, 1, 0, 0), passData.material, 11);

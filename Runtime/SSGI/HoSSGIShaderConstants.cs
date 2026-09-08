@@ -40,6 +40,7 @@ namespace lilToon.URP.Extensions.SSGI
         public static readonly int FrameIndexId = Shader.PropertyToID("_HoSSGIFrameIndex");
         public static readonly int TemporalBlendId = Shader.PropertyToID("_HoSSGITemporalBlend");
         public static readonly int SpatialRadiusId = Shader.PropertyToID("_HoSSGISpatialRadius");
+        public static readonly int SpatialGuidanceId = Shader.PropertyToID("_HoSSGISpatialGuidance");
         public static readonly int HistoryValidId = Shader.PropertyToID("_HoSSGIHistoryValid");
         public static readonly int HistoryTextureId = Shader.PropertyToID("_HoSSGIHistory");
         public static readonly int HistoryDepthId = Shader.PropertyToID("_HoSSGIHistoryDepth");

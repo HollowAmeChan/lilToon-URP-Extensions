@@ -53,6 +53,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         TEXTURE2D_X(_HoSSGIReservoirHistoryColor);
         TEXTURE2D_X(_HoSSGIReservoirHistoryAux);
         TEXTURE2D_X(_HoSSGIReservoirHistoryRay);
+        TEXTURE2D_X(_HoSSGISpatialGuidance);
         TEXTURE2D_X(_BlitTexture);
         int _HoSSGIRayCount;
         int _HoSSGIStepCount;
@@ -110,6 +111,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float4 reservoirColor : SV_Target0;
             float4 reservoirAux : SV_Target1;
             float4 reservoirRay : SV_Target2;
+            float4 guidance : SV_Target3;
         };
 
         float HoSSGILuminance(float3 value)
@@ -419,6 +421,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.reservoirColor = 0;
             output.reservoirAux = 0;
             output.reservoirRay = 0;
+            output.guidance = 0;
             if (center.a < 0.0001) return output;
 
             float3 centerNormalWS = normalize((float3)center.rgb * 2.0 - 1.0);
@@ -666,6 +669,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.reservoirColor = float4(max(merged.color, 0.0), max(merged.wsum, 0.0));
             output.reservoirAux = float4(max(merged.m, 0.0), max(merged.target, 0.0), saturate(merged.hit), max(merged.distance, 0.0));
             output.reservoirRay = HoSSGIPackReservoirRay(merged);
+            output.guidance = float4(saturate(confidenceSum / max(confidenceWeight, 1.0e-5)), saturate(confidenceWeight / 9.0), 0.0, 1.0);
             return output;
         }
 
@@ -816,6 +820,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 float3 originPositionWS = HoSSGIWorldPosition(uv, geometry.a);
                 validation = HoSSGIValidateReservoirRay(originPositionWS, normalize((float3)geometry.rgb * 2.0 - 1.0), reservoir);
             }
+            float2 guidance = SAMPLE_TEXTURE2D_X(_HoSSGISpatialGuidance, sampler_PointClamp, uv).xy;
+            validation *= lerp(0.5, 1.0, saturate(guidance.x));
             if (validation < 0.15)
                 return temporal;
 
