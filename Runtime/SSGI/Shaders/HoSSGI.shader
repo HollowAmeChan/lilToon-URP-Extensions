@@ -44,6 +44,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         TEXTURE2D_X(_HoSSGIRawGIInput);
         TEXTURE2D_X(_HoSSGIHistory);
         TEXTURE2D_X(_HoSSGIHistoryDepth);
+        TEXTURE2D_X(_HoSSGIDenoisedHistory);
         TEXTURE2D_X(_HoSSGIMotionVectors);
         TEXTURE2D_X(_HoSSGIReservoirColor);
         TEXTURE2D_X(_HoSSGIReservoirAux);
@@ -899,6 +900,63 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord);
         }
 
+        float4 TemporalDenoise(Varyings input) : SV_Target
+        {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+            float2 uv = input.texcoord;
+            half4 geometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, uv);
+            half4 current = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_LinearClamp, uv);
+            if (geometry.a < 0.0001h)
+                return 0;
+
+            float3 minimum = current.rgb;
+            float3 maximum = current.rgb;
+            float currentConfidence = saturate(current.a);
+            float2 texel = rcp(max(_ScreenParams.xy, 1.0));
+            float3 centerNormal = normalize((float3)geometry.rgb * 2.0 - 1.0);
+            float centerDepth = geometry.a;
+            [unroll]
+            for (int y = -1; y <= 1; y++)
+            {
+                [unroll]
+                for (int x = -1; x <= 1; x++)
+                {
+                    float2 tapUV = uv + float2(x, y) * texel;
+                    if (any(tapUV < 0.0) || any(tapUV > 1.0)) continue;
+                    half4 tapGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, tapUV);
+                    if (tapGeometry.a < 0.0001h) continue;
+                    float depthDelta = abs(tapGeometry.a - centerDepth) / max(centerDepth, 0.05);
+                    float normalWeight = saturate(dot(centerNormal, normalize((float3)tapGeometry.rgb * 2.0 - 1.0)));
+                    if (normalWeight < 0.35 || depthDelta > 0.08) continue;
+                    float3 tap = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_LinearClamp, tapUV).rgb;
+                    minimum = min(minimum, tap);
+                    maximum = max(maximum, tap);
+                }
+            }
+
+            float3 history = 0.0;
+            float historyConfidence = 0.0;
+            float historyWeight = 0.0;
+            if (_HoSSGIHistoryValid > 0.5 && _HoSSGIUseMotion > 0.5)
+            {
+                float2 previousUV = uv - SAMPLE_TEXTURE2D_X(_HoSSGIMotionVectors, sampler_LinearClamp, uv).xy;
+                if (all(previousUV >= 0.0) && all(previousUV <= 1.0))
+                {
+                    half4 previousGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIHistoryDepth, sampler_PointClamp, previousUV);
+                    float depthAgreement = step(abs(geometry.a - previousGeometry.a), max(0.08 * geometry.a, 0.05));
+                    float normalAgreement = step(0.5, dot(centerNormal, normalize((float3)previousGeometry.rgb * 2.0 - 1.0)));
+                    half4 historySample = SAMPLE_TEXTURE2D_X(_HoSSGIDenoisedHistory, sampler_LinearClamp, previousUV);
+                    history = clamp(historySample.rgb, minimum, maximum);
+                    historyConfidence = saturate(historySample.a);
+                    historyWeight = _HoSSGITemporalBlend * depthAgreement * normalAgreement * historyConfidence;
+                }
+            }
+
+            float3 outputColor = lerp(current.rgb, history, saturate(historyWeight));
+            float outputConfidence = saturate(lerp(currentConfidence, max(currentConfidence, historyConfidence), saturate(historyWeight)));
+            return float4(max(outputColor, 0.0), outputConfidence);
+        }
+
         HoSSGITraceOutput Frag(Varyings input) { return Trace(input); }
 
         float4 Composite(Varyings input) : SV_Target
@@ -987,6 +1045,24 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         Pass
         {
             Name "Ho-SSGI Source History"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment SourceHistoryCopy
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Ho-SSGI Temporal Accumulation"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment TemporalDenoise
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Ho-SSGI Denoised History"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment SourceHistoryCopy

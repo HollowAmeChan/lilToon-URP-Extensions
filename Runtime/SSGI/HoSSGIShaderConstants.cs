@@ -42,6 +42,7 @@ namespace lilToon.URP.Extensions.SSGI
         public static readonly int HistoryValidId = Shader.PropertyToID("_HoSSGIHistoryValid");
         public static readonly int HistoryTextureId = Shader.PropertyToID("_HoSSGIHistory");
         public static readonly int HistoryDepthId = Shader.PropertyToID("_HoSSGIHistoryDepth");
+        public static readonly int DenoisedHistoryId = Shader.PropertyToID("_HoSSGIDenoisedHistory");
         public static readonly int MotionVectorId = Shader.PropertyToID("_HoSSGIMotionVectors");
         public static readonly int MotionValidId = Shader.PropertyToID("_HoSSGIUseMotion");
         public static readonly int ReservoirReuseId = Shader.PropertyToID("_HoSSGIReservoirReuse");

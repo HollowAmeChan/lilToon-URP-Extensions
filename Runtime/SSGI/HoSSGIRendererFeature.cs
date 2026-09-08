@@ -147,6 +147,8 @@ namespace lilToon.URP.Extensions.SSGI
         private RTHandle next;
         private RTHandle previousSource;
         private RTHandle nextSource;
+        private RTHandle previousDenoised;
+        private RTHandle nextDenoised;
         private RTHandle previousDepth;
         private RTHandle nextDepth;
         private RTHandle previousReservoirColor;
@@ -164,6 +166,8 @@ namespace lilToon.URP.Extensions.SSGI
         public RTHandle Next => next;
         public RTHandle PreviousSource => previousSource;
         public RTHandle NextSource => nextSource;
+        public RTHandle PreviousDenoised => previousDenoised;
+        public RTHandle NextDenoised => nextDenoised;
         public RTHandle PreviousDepth => previousDepth;
         public RTHandle NextDepth => nextDepth;
         public RTHandle PreviousReservoirColor => previousReservoirColor;
@@ -190,6 +194,8 @@ namespace lilToon.URP.Extensions.SSGI
             RenderingUtils.ReAllocateIfNeeded(ref next, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_HoSSGIHistoryNextTex");
             RenderingUtils.ReAllocateIfNeeded(ref previousSource, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_HoSSGISourceHistoryPrevTex");
             RenderingUtils.ReAllocateIfNeeded(ref nextSource, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_HoSSGISourceHistoryNextTex");
+            RenderingUtils.ReAllocateIfNeeded(ref previousDenoised, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_HoSSGIHistoryPrevDenoisedTex");
+            RenderingUtils.ReAllocateIfNeeded(ref nextDenoised, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_HoSSGIHistoryNextDenoisedTex");
             RenderTextureDescriptor depthDescriptor = descriptor;
             depthDescriptor.graphicsFormat = GraphicsFormat.R16G16B16A16_SFloat;
             RenderingUtils.ReAllocateIfNeeded(ref previousDepth, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSSGIHistoryPrevDepthTex");
@@ -231,6 +237,13 @@ namespace lilToon.URP.Extensions.SSGI
             nextReservoirRay = texture;
         }
 
+        public void SwapDenoised()
+        {
+            RTHandle texture = previousDenoised;
+            previousDenoised = nextDenoised;
+            nextDenoised = texture;
+        }
+
         public void MarkValid() => valid = true;
 
         public void Invalidate() => valid = false;
@@ -241,6 +254,8 @@ namespace lilToon.URP.Extensions.SSGI
             next?.Release();
             previousSource?.Release();
             nextSource?.Release();
+            previousDenoised?.Release();
+            nextDenoised?.Release();
             previousDepth?.Release();
             nextDepth?.Release();
             previousReservoirColor?.Release();
@@ -253,6 +268,8 @@ namespace lilToon.URP.Extensions.SSGI
             next = null;
             previousSource = null;
             nextSource = null;
+            previousDenoised = null;
+            nextDenoised = null;
             previousDepth = null;
             nextDepth = null;
             previousReservoirColor = null;
@@ -367,6 +384,24 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle geometry;
             public TextureHandle output;
             public float radius;
+        }
+
+        private sealed class DenoisedTemporalPassData
+        {
+            public Material material;
+            public TextureHandle source;
+            public TextureHandle history;
+            public TextureHandle geometry;
+            public TextureHandle motion;
+            public TextureHandle output;
+            public bool historyValid;
+        }
+
+        private sealed class DenoisedHistoryPassData
+        {
+            public Material material;
+            public TextureHandle source;
+            public TextureHandle output;
         }
 
         private HoSSGISettings settings;
@@ -499,6 +534,8 @@ namespace lilToon.URP.Extensions.SSGI
 
             TextureHandle previous = renderGraph.ImportTexture(history.Previous);
             TextureHandle next = renderGraph.ImportTexture(history.Next);
+            TextureHandle previousDenoised = renderGraph.ImportTexture(history.PreviousDenoised);
+            TextureHandle nextDenoised = renderGraph.ImportTexture(history.NextDenoised);
             TextureHandle previousDepth = renderGraph.ImportTexture(history.PreviousDepth);
             TextureHandle nextDepth = renderGraph.ImportTexture(history.NextDepth);
             TextureHandle previousReservoirColor = renderGraph.ImportTexture(history.PreviousReservoirColor);
@@ -678,13 +715,57 @@ namespace lilToon.URP.Extensions.SSGI
                     Blitter.BlitTexture(context.cmd, passData.reservoirColor, new Vector4(1, 1, 0, 0), passData.material, 4);
                 });
             }
+            TextureHandle temporallyDenoised = renderGraph.CreateTexture(outputDesc);
+            using (var builder = renderGraph.AddRasterRenderPass<DenoisedTemporalPassData>("Ho-SSGI Temporal Accumulation", out DenoisedTemporalPassData data, new ProfilingSampler("Ho-SSGI Temporal Accumulation")))
+            {
+                data.material = material;
+                data.source = filtered;
+                data.history = previousDenoised;
+                data.geometry = geometry.normalDepthTexture;
+                data.motion = motion;
+                data.output = temporallyDenoised;
+                data.historyValid = history.Valid;
+                builder.UseTexture(data.source, AccessFlags.Read);
+                builder.UseTexture(data.history, AccessFlags.Read);
+                builder.UseTexture(data.geometry, AccessFlags.Read);
+                if (data.motion.IsValid()) builder.UseTexture(data.motion, AccessFlags.Read);
+                builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (DenoisedTemporalPassData passData, RasterGraphContext context) =>
+                {
+                    passData.material.SetFloat(HoSSGIShaderConstants.HistoryValidId, passData.historyValid ? 1.0f : 0.0f);
+                    passData.material.SetFloat(HoSSGIShaderConstants.MotionValidId, passData.motion.IsValid() ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.source);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.DenoisedHistoryId, passData.history);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
+                    if (passData.motion.IsValid()) context.cmd.SetGlobalTexture(HoSSGIShaderConstants.MotionVectorId, passData.motion);
+                    Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 9);
+                });
+            }
+
+            using (var builder = renderGraph.AddRasterRenderPass<DenoisedHistoryPassData>("Ho-SSGI Denoised History", out DenoisedHistoryPassData data, new ProfilingSampler("Ho-SSGI Denoised History")))
+            {
+                data.material = material;
+                data.source = temporallyDenoised;
+                data.output = nextDenoised;
+                builder.UseTexture(data.source, AccessFlags.Read);
+                builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (DenoisedHistoryPassData passData, RasterGraphContext context) =>
+                {
+                    Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 10);
+                });
+            }
+            history.SwapDenoised();
+
             TextureDesc bilateralDesc = outputDesc;
             bilateralDesc.name = "_HoSSGIBilateralDenoise";
             TextureHandle denoised = renderGraph.CreateTexture(bilateralDesc);
             using (var builder = renderGraph.AddRasterRenderPass<BilateralPassData>("Ho-SSGI Bilateral Denoise", out BilateralPassData data, new ProfilingSampler("Ho-SSGI Bilateral Denoise")))
             {
                 data.material = material;
-                data.source = filtered;
+                data.source = temporallyDenoised;
                 data.geometry = geometry.normalDepthTexture;
                 data.output = denoised;
                 data.radius = Mathf.Clamp(settings.spatialRadius, 0.5f, 8.0f);
