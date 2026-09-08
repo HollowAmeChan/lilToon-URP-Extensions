@@ -246,6 +246,99 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             return saturate(visibility / max(weightTotal, 1.0e-5));
         }
 
+        // HTrace's default profile uses HorizonSearch (TracingMode=0), not
+        // VisibilityBitmasks. Keep this continuous estimator as the production
+        // path so the result has the same smooth gray-scale response as HTrace;
+        // the bitmask estimator above remains available for later high-density
+        // comparison once the baseline is validated.
+        float HoGTAOComputeHorizonSearch(float2 uv, half4 centerND)
+        {
+            float linearDepth = centerND.a;
+            float3 positionVS = HoGTAOViewPosition(uv, linearDepth);
+            float3 normalWS = normalize((float3)centerND.rgb * 2.0 - 1.0);
+            float3 normalVS = normalize(mul((float3x3)_HoGTAOViewMatrix, normalWS));
+            normalVS *= float3(1.0, -1.0, -1.0);
+            float3 viewDirection = normalize(-positionVS);
+            positionVS *= lerp(0.996, 1.0, abs(dot(normalVS, viewDirection)));
+
+            float radiusScale = 2.0 / max(abs(_HoGTAOProjMatrix[0][0]), 1.0e-5) / max(_ScreenParams.x, 1.0);
+            float screenRadius = max(_HoGTAOWorldSpaceRadius / max(linearDepth * radiusScale, 1.0e-5), _HoGTAOScreenSpaceRadius);
+            float worldRadius = max(screenRadius * linearDepth * radiusScale, 1.0e-4);
+            float falloff = rcp(worldRadius);
+            falloff *= falloff;
+            float minStep = 1.3 / max(screenRadius, 1.0);
+            int frameIndex = (int)_HoGTAOFrameIndex;
+            float2 pixelCoord = floor(uv * _ScreenParams.xy);
+            float noiseX = HoGTAOInterleavedGradientNoise(pixelCoord, 0);
+            float noiseY = frac(HoGTAOInterleavedGradientNoise((_ScreenParams.xy - pixelCoord.yx), 6 - (frameIndex % 6))
+                + HoGTAONoiseOffsets[(frameIndex / 3) % 4]);
+
+            float occlusion = 0.0;
+            float totalWeight = 0.0;
+            int slices = max(1, (int)_HoGTAOSliceCount);
+            int steps = max(1, (int)_HoGTAOStepCount);
+            int rotationIndex = frameIndex % 6;
+
+            [loop]
+            for (int slice = 0; slice < slices; slice++)
+            {
+                float phi = (slice + noiseX + HoGTAOSliceRotations[rotationIndex] / 360.0) * (PI / slices);
+                float3 sliceDirection = float3(cos(phi), sin(phi), 0.0);
+                float2 samplingDirection = float2(sliceDirection.x, -sliceDirection.y) * screenRadius;
+                float3 ortho = sliceDirection - dot(sliceDirection, viewDirection) * viewDirection;
+                float3 axis = normalize(cross(ortho, viewDirection));
+                float3 projectedNormal = normalVS - axis * dot(normalVS, axis);
+                float projectedLength = length(projectedNormal);
+                if (projectedLength < 1.0e-4)
+                    continue;
+
+                float normalSign = sign(dot(ortho, projectedNormal));
+                float cosN = saturate(dot(projectedNormal, viewDirection) / projectedLength);
+                float nAngle = normalSign * acos(cosN);
+                float2 maxHorizon = float2(cos(nAngle - PI * 0.5), cos(nAngle + PI * 0.5));
+
+                [loop]
+                for (int step = 0; step < steps; step++)
+                {
+                    float stride = pow((step + noiseY) / steps, 2.0) + minStep;
+                    float2 offset = round(stride * samplingDirection) * _ScreenParams.zw;
+
+                    float3 samplePosition;
+                    float3 sampleNormal;
+                    float lod = clamp(log2(max(length(stride * samplingDirection), 1.0)) - 3.0, 0.0, 3.0);
+                    if (HoGTAOSample(uv - offset, lod, samplePosition, sampleNormal))
+                    {
+                        float3 delta = samplePosition - positionVS;
+                        float d2 = max(dot(delta, delta), 1.0e-6);
+                        float sampleHorizon = dot(delta, viewDirection) * rsqrt(d2);
+                        float sampleWeight = rcp(0.95 + d2 * 2.0 * falloff);
+                        sampleHorizon = lerp(maxHorizon.x, sampleHorizon, sampleWeight);
+                        maxHorizon.x = max(maxHorizon.x, sampleHorizon);
+                    }
+
+                    if (HoGTAOSample(uv + offset, lod, samplePosition, sampleNormal))
+                    {
+                        float3 delta = samplePosition - positionVS;
+                        float d2 = max(dot(delta, delta), 1.0e-6);
+                        float sampleHorizon = dot(delta, viewDirection) * rsqrt(d2);
+                        float sampleWeight = rcp(0.95 + d2 * 2.0 * falloff);
+                        sampleHorizon = lerp(maxHorizon.y, sampleHorizon, sampleWeight);
+                        maxHorizon.y = max(maxHorizon.y, sampleHorizon);
+                    }
+                }
+
+                maxHorizon = float2(HoGTAOFastACos(clamp(maxHorizon.x, -1.0, 1.0)), HoGTAOFastACos(clamp(maxHorizon.y, -1.0, 1.0)));
+                maxHorizon.x = nAngle + max(-maxHorizon.x - nAngle, -PI * 0.5);
+                maxHorizon.y = nAngle + min(+maxHorizon.y - nAngle, +PI * 0.5);
+                float sinN = sin(nAngle);
+                float2 integratedArc = -cos(2.0 * maxHorizon - nAngle) + cosN + 2.0 * maxHorizon * sinN;
+                occlusion += 0.25 * (integratedArc.x + integratedArc.y) * projectedLength;
+                totalWeight += projectedLength * (nAngle * sinN + cosN);
+            }
+
+            return 1.0 - saturate(occlusion / max(totalWeight, 1.0e-5));
+        }
+
         half4 Generate(Varyings input) : SV_Target
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -263,7 +356,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             {
                 return half4(1.0h, 1.0h, 1.0h, 1.0h);
             }
-            half ao = HoGTAOCompute(input.texcoord, nd);
+            half ao = HoGTAOComputeHorizonSearch(input.texcoord, nd);
             return half4(ao, ao, ao, 1.0h);
         }
 
@@ -281,8 +374,6 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             half4 previousData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevTex, sampler_LinearClamp, previousUV);
             half previous = previousData.r;
             half previousCount = previousData.g * max(_HoGTAOTemporalMaxFrames, 1.0);
-            float3 currentNormal = normalize((float3)geometry.rgb * 2.0 - 1.0);
-            float3 previousNormal = HoGTAOUnpackNormal(previousData.ba);
             half previousDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_LinearClamp, previousUV).r;
             // Sky/uncovered pixels have no surface history to validate. Keep
             // them white in the diagnostic instead of falsely marking them as
@@ -293,21 +384,24 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             }
             half depthValid = step(0.0001h, geometry.a) * step(0.0001h, previousDepth);
             half depthAgreement = step(abs(geometry.a - previousDepth), max(0.05h * geometry.a, 0.05h));
-            half normalAgreement = step(0.5h, dot(currentNormal, previousNormal));
-            half accepted = saturate(_HoGTAOHistoryValid) * depthValid * depthAgreement * normalAgreement;
+            // Depth is the authoritative disocclusion test for this baseline.
+            // The history normal payload remains reserved for a later validated
+            // normal-rejection pass.
+            half accepted = saturate(_HoGTAOHistoryValid) * depthValid * depthAgreement;
             half sampleCount = min(previousCount + 1.0h, max(_HoGTAOTemporalMaxFrames, 1.0));
             sampleCount = lerp(1.0h, sampleCount, accepted);
             half historyWeight = accepted * (1.0h - rcp(max(sampleCount, 1.0h)));
             if (_HoGTAODebugMode > 4.5)
             {
-                // HTrace's Temporal Disocclusion view is a rejection mask, not
-                // another AO view: stable history is white, rejected/disoccluded
-                // pixels are red and change as the camera moves.
-                return half4(1.0h, accepted, accepted, 1.0h);
+                // Stable history is a grayscale sample-age signal; rejected
+                // history is red, matching HTrace's disocclusion diagnostic.
+                half historyAge = saturate(sampleCount / max(_HoGTAOTemporalMaxFrames, 1.0h));
+                return accepted > 0.5h
+                    ? half4(historyAge, historyAge, historyAge, 1.0h)
+                    : half4(1.0h, 0.0h, 0.0h, 1.0h);
             }
             half ao = lerp(current, previous, historyWeight);
-            float2 packedNormal = HoGTAOPackNormal(currentNormal);
-            return half4(ao, sampleCount / max(_HoGTAOTemporalMaxFrames, 1.0h), packedNormal.x, packedNormal.y);
+            return half4(ao, sampleCount / max(_HoGTAOTemporalMaxFrames, 1.0h), 0.5h, 0.5h);
         }
 
         half4 OutputAO(Varyings input) : SV_Target
