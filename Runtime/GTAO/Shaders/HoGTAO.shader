@@ -85,10 +85,22 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
 
         float HoGTAOSampleDepth(float2 uv, float lod)
         {
-            if (lod < 0.5) return SAMPLE_TEXTURE2D_X(_HoGTAODepthMip0, sampler_PointClamp, uv).r;
-            if (lod < 1.5) return SAMPLE_TEXTURE2D_X(_HoGTAODepthMip1, sampler_PointClamp, uv).r;
-            if (lod < 2.5) return SAMPLE_TEXTURE2D_X(_HoGTAODepthMip2, sampler_PointClamp, uv).r;
-            return SAMPLE_TEXTURE2D_X(_HoGTAODepthMip3, sampler_PointClamp, uv).r;
+            float clampedLod = clamp(lod, 0.0, 3.0);
+            if (clampedLod < 1.0)
+            {
+                float d0 = SAMPLE_TEXTURE2D_X(_HoGTAODepthMip0, sampler_PointClamp, uv).r;
+                float d1 = SAMPLE_TEXTURE2D_X(_HoGTAODepthMip1, sampler_PointClamp, uv).r;
+                return lerp(d0, d1, clampedLod);
+            }
+            if (clampedLod < 2.0)
+            {
+                float d1 = SAMPLE_TEXTURE2D_X(_HoGTAODepthMip1, sampler_PointClamp, uv).r;
+                float d2 = SAMPLE_TEXTURE2D_X(_HoGTAODepthMip2, sampler_PointClamp, uv).r;
+                return lerp(d1, d2, clampedLod - 1.0);
+            }
+            float d2Final = SAMPLE_TEXTURE2D_X(_HoGTAODepthMip2, sampler_PointClamp, uv).r;
+            float d3Final = SAMPLE_TEXTURE2D_X(_HoGTAODepthMip3, sampler_PointClamp, uv).r;
+            return lerp(d2Final, d3Final, clampedLod - 2.0);
         }
 
         float3 HoGTAOViewPosition(float2 uv, float linearDepth)
