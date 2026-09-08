@@ -89,8 +89,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             // dependent and was the source of the previous distorted AO).
             float2 viewXY = uv * _HoGTAODepthToViewParams.xy + _HoGTAODepthToViewParams.zw;
             if (_HoGTAOOrthographic > 0.5)
-                return float3(viewXY, -linearDepth);
-            return float3(viewXY * linearDepth, -linearDepth);
+                return float3(viewXY, -linearDepth) * float3(1.0, -1.0, -1.0);
+            return float3(viewXY * linearDepth, -linearDepth) * float3(1.0, -1.0, -1.0);
         }
 
         float HoGTAOFastSqrt(float x)
@@ -208,7 +208,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 for (int step = 0; step < steps; step++)
                 {
                     float stride = pow((step + noiseY) / steps, 2.0) + minStep;
-            float2 offset = round(stride * samplingDirection) * _ScreenParams.zw;
+                    float2 offset = round(stride * samplingDirection) * rcp(_ScreenParams.xy);
                     float3 samplePosition;
                     float3 sampleNormal;
                     float lod = clamp(floor(log2(max(length(stride * samplingDirection), 1.0)) - 3.0), 0.0, 3.0);
@@ -303,7 +303,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 for (int step = 0; step < steps; step++)
                 {
                     float stride = pow((step + noiseY) / steps, 2.0) + minStep;
-                    float2 offset = round(stride * samplingDirection) * _ScreenParams.zw;
+                    float2 offset = round(stride * samplingDirection) * rcp(_ScreenParams.xy);
 
                     float3 samplePosition;
                     float3 sampleNormal;
@@ -456,7 +456,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 return half4(0.0h, 0.0h, 0.0h, 1.0h);
             }
 
-            float2 texel = _ScreenParams.zw * max(_HoGTAOSpatialResolution, 1.0)
+            float2 texel = rcp(_ScreenParams.xy) * max(_HoGTAOSpatialResolution, 1.0)
                 * (_HoGTAOSpatialFilter > 0.5 ? max(_HoGTAOSpatialStep, 1.0) : max(_HoGTAOSpatialRadius, 0.5));
             float3 centerNormal = normalize((float3)centerND.rgb * 2.0 - 1.0);
             float centerDepth = centerND.a;
