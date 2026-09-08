@@ -115,19 +115,12 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
 
         float2 HoGTAOPackNormal(float3 normalWS)
         {
-            normalWS *= rcp(max(dot(abs(normalWS), 1.0), 1.0e-6));
-            float fold = saturate(-normalWS.z);
-            normalWS.xy += float2(normalWS.x >= 0.0 ? fold : -fold, normalWS.y >= 0.0 ? fold : -fold);
-            return normalWS.xy * 0.5 + 0.5;
+            return PackNormalOctQuadEncode(normalize(normalWS)) * 0.5 + 0.5;
         }
 
         float3 HoGTAOUnpackNormal(float2 encoded)
         {
-            float3 normalWS = float3(encoded * 2.0 - 1.0, 0.0);
-            normalWS.z = 1.0 - abs(normalWS.x) - abs(normalWS.y);
-            float fold = max(-normalWS.z, 0.0);
-            normalWS.xy += float2(normalWS.x >= 0.0 ? -fold : fold, normalWS.y >= 0.0 ? -fold : fold);
-            return normalize(normalWS);
+            return normalize(UnpackNormalOctQuadEncode(encoded * 2.0 - 1.0));
         }
 
         void HoGTAOUpdateBitmask(inout uint bitmask, float2 horizonSamples)
@@ -423,7 +416,9 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             }
             half depthValid = step(0.0001h, geometry.a) * step(1.0e-5, historyWeightSum);
             half depthAgreement = step(1.0e-5, historyWeightSum);
-            half normalAgreement = step(0.5h, dot(currentNormal, previousNormal));
+            half normalAgreement = previousCount > 0.5h
+                ? step(0.5h, dot(currentNormal, previousNormal))
+                : 0.0h;
             half accepted = saturate(_HoGTAOHistoryValid) * depthValid * depthAgreement * normalAgreement;
             half sampleCount = min(previousCount + 1.0h, max(_HoGTAOTemporalMaxFrames, 1.0));
             sampleCount = lerp(1.0h, sampleCount, accepted);
