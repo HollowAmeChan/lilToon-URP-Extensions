@@ -541,7 +541,9 @@ namespace lilToon.URP.Extensions.GTAO
                 data.useHistory = history.Valid;
                 data.useMotionVectors = motionVectors.IsValid();
                 data.debugDisocclusion = debugTemporal;
-                data.maxFrames = Mathf.Max(1, settings.temporalFrameCount);
+                // HTrace's SampleCountTemporal=8 gates motion-vector work but
+                // accumulates up to g_HTemporalSamplecountAO*2 = 12 frames.
+                data.maxFrames = settings.temporalFrameCount > 0 ? 12 : 1;
                 data.rejection = settings.temporalRejection;
                 builder.UseTexture(data.current, AccessFlags.Read);
                 builder.UseTexture(data.previous, AccessFlags.Read);

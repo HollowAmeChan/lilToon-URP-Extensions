@@ -390,6 +390,35 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             half accepted = saturate(_HoGTAOHistoryValid) * depthValid * depthAgreement;
             half sampleCount = min(previousCount + 1.0h, max(_HoGTAOTemporalMaxFrames, 1.0));
             sampleCount = lerp(1.0h, sampleCount, accepted);
+
+            // HTrace history clamp: use a small Gaussian neighborhood of the
+            // current trace to reject stale reprojected values before blending.
+            float2 temporalTexel = _BlitTexture_TexelSize.xy;
+            float moment = 0.0;
+            float moment2 = 0.0;
+            float momentWeight = 0.0;
+            [unroll]
+            for (int y = -2; y <= 2; y++)
+            {
+                [unroll]
+                for (int x = -2; x <= 2; x++)
+                {
+                    float2 tapUV = saturate(input.texcoord + float2(x, y) * temporalTexel);
+                    float tap = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, tapUV).r;
+                    float tapWeight = exp(-3.0 * (float)(x * x + y * y) / 9.0);
+                    moment += tap * tapWeight;
+                    moment2 += tap * tap * tapWeight;
+                    momentWeight += tapWeight;
+                }
+            }
+            float mean = moment / max(momentWeight, 1.0e-5);
+            float variance = max(0.0, moment2 / max(momentWeight, 1.0e-5) - mean * mean);
+            float stdDev = sqrt(variance);
+            float clampWeight = saturate(1.0 - _HoGTAOTemporalRejection);
+            float clampMultiplier = lerp(2.0, 5.0, clampWeight);
+            float clampMin = current - stdDev * 0.5 * clampMultiplier;
+            float clampMax = current + stdDev * 0.5 * clampMultiplier;
+            previous = clamp(previous, clampMin, clampMax);
             half historyWeight = accepted * (1.0h - rcp(max(sampleCount, 1.0h)));
             if (_HoGTAODebugMode > 4.5)
             {
