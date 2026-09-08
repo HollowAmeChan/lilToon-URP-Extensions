@@ -34,7 +34,8 @@ namespace lilToon.URP.Extensions.GTAO
                     settings.sliceCount = 2;
                     settings.stepCount = 16;
                     settings.temporalFrameCount = 8;
-                    settings.spatialFilter = HoGTAOSpatialFilter.Disk;
+                    // HTrace's default high profile is SpatioTemporal + Box x2.
+                    settings.spatialFilter = HoGTAOSpatialFilter.Box;
                     settings.boxPassCount = 2;
                     break;
             }

@@ -44,6 +44,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         float _HoGTAOSpatialRadius;
         float _HoGTAOSpatialAdaptivity;
         float _HoGTAOSpatialResolution;
+        float _HoGTAOSpatialFilter;
+        float _HoGTAOSpatialStep;
 
         static const float HoGTAOSliceRotations[6] = { 60.0, 300.0, 180.0, 240.0, 120.0, 0.0 };
         static const float HoGTAONoiseOffsets[4] = { 0.0, 0.5, 0.25, 0.75 };
@@ -451,7 +453,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 return half4(1.0h, 1.0h, 1.0h, 1.0h);
             }
 
-            float2 texel = _ScreenParams.zw * max(_HoGTAOSpatialResolution, 1.0) * max(_HoGTAOSpatialRadius, 0.5);
+            float2 texel = _ScreenParams.zw * max(_HoGTAOSpatialResolution, 1.0)
+                * (_HoGTAOSpatialFilter > 0.5 ? max(_HoGTAOSpatialStep, 1.0) : max(_HoGTAOSpatialRadius, 0.5));
             float3 centerNormal = normalize((float3)centerND.rgb * 2.0 - 1.0);
             float centerDepth = centerND.a;
             float depthScale = lerp(0.35, 1.0, saturate(1.0 - centerAO) * saturate(_HoGTAOSpatialAdaptivity));
@@ -476,7 +479,10 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 float depthDelta = abs(sampleND.a - centerDepth) / max(centerDepth, 0.05);
                 float normalWeight = saturate((dot(centerNormal, normalize((float3)sampleND.rgb * 2.0 - 1.0)) - 0.5) * 2.0);
                 float depthWeight = exp2(-48.0 * depthDelta * depthDelta / max(depthScale, 0.05));
-                float spatialWeight = exp2(-0.75 * dot(taps[i], taps[i]));
+                float tapDistance = dot(taps[i], taps[i]);
+                float spatialWeight = _HoGTAOSpatialFilter > 0.5
+                    ? (tapDistance <= 1.01 ? 1.0 : 0.5)
+                    : exp2(-0.75 * tapDistance);
                 float weight = normalWeight * depthWeight * spatialWeight;
                 sum += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, sampleUV).r * weight;
                 weightSum += weight;

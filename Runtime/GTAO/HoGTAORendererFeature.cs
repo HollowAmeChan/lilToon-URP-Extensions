@@ -297,6 +297,8 @@ namespace lilToon.URP.Extensions.GTAO
         private static readonly int SpatialRadiusId = Shader.PropertyToID("_HoGTAOSpatialRadius");
         private static readonly int SpatialAdaptivityId = Shader.PropertyToID("_HoGTAOSpatialAdaptivity");
         private static readonly int SpatialResolutionId = Shader.PropertyToID("_HoGTAOSpatialResolution");
+        private static readonly int SpatialFilterId = Shader.PropertyToID("_HoGTAOSpatialFilter");
+        private static readonly int SpatialStepId = Shader.PropertyToID("_HoGTAOSpatialStep");
         private static readonly int HistoryDepthPrevId = Shader.PropertyToID("_HoGTAOHistoryPrevDepthTex");
         private static readonly int DepthInputId = Shader.PropertyToID("_HoGTAODepthInput");
         private static readonly int DepthInputTexelSizeId = Shader.PropertyToID("_HoGTAODepthInputTexelSize");
@@ -365,6 +367,8 @@ namespace lilToon.URP.Extensions.GTAO
             public float radius;
             public float adaptivity;
             public float resolution;
+            public int filterType;
+            public float step;
         }
 
         private sealed class DepthHistoryData
@@ -621,6 +625,10 @@ namespace lilToon.URP.Extensions.GTAO
                 data.radius = settings.filterRadius;
                 data.adaptivity = settings.filterAdaptivity;
                 data.resolution = 1.0f;
+                data.filterType = (int)settings.spatialFilter;
+                data.step = settings.spatialFilter == HoGTAOSpatialFilter.Box
+                    ? (settings.boxPassCount >= 3 ? 4.0f : settings.boxPassCount == 2 ? 2.0f : 1.0f)
+                    : 1.0f;
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
@@ -632,6 +640,8 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.SetGlobalFloat(SpatialRadiusId, passData.radius);
                     context.cmd.SetGlobalFloat(SpatialAdaptivityId, passData.adaptivity);
                     context.cmd.SetGlobalFloat(SpatialResolutionId, passData.resolution);
+                    context.cmd.SetGlobalFloat(SpatialFilterId, passData.filterType);
+                    context.cmd.SetGlobalFloat(SpatialStepId, passData.step);
                     Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 5);
                 });
             }
