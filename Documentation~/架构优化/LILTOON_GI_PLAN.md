@@ -438,11 +438,11 @@ sourceValid = geometryCoverage
 
 当前 raw trace 已改为 world-space cosine hemisphere ray：从 GeometryBuffer 的线性眼深重建世界位置和世界法线，沿世界空间射线生成端点，再投影到 screen UV；沿投影轨迹用 GeometryBuffer 线性深度 crossing 判断相交，并使用命中面 cosine、距离衰减和 opaque source 过滤。旧的额外视空间轴翻转路径不再保留，因为它会让上下方向和摄像机移动产生错位。
 
-当前 producer 已补上第一段 HTrace 风格的 reservoir 链：raw trace 为每条射线建立候选 reservoir，Temporal 使用 motion vector、上一帧 GI/深度和 reservoir 做重投影合并，Firefly 阶段按局部 luminance statistics 限制异常的 `W`，Spatial 阶段再按 GeometryBuffer 深度/法线和屏幕 Gaussian 权重复用邻居 reservoir，最后 resolve 为 `selectedColor * W`。`Raw GI` 调试显示 temporal/spatial 前的 raw reservoir resolve，`Raw Trace` 调试显示当前未滤波射线结果。当前仍缺少 HTrace 的完整 selected-ray visibility validation、四 tap history 和多轮 spatial validation，画面验证要继续区分坐标/相交错误、reservoir 偏差和残余噪声。
+当前 producer 已补上第一段 HTrace 风格的 reservoir 链：raw trace 为每条射线建立候选 reservoir，保存代表方向和 origin normal；Temporal 使用 motion vector、上一帧 GI/深度和 reservoir 做重投影合并，并对选中射线做几何与 source lighting validation；Firefly 阶段按局部 luminance statistics 限制异常的 `W`；Spatial 阶段按 GeometryBuffer 深度/法线和屏幕 Gaussian 权重复用邻居 reservoir，再做 selected-ray 几何 validation，最后 resolve 为 `selectedColor * W`。`Raw GI` 调试显示 temporal/spatial 前的 raw reservoir resolve，`Raw Trace` 调试显示当前未滤波射线结果。当前仍缺少 HTrace 的四 tap history 和独立的第二轮 spatial validation，画面验证要继续区分坐标/相交错误、reservoir 偏差和残余噪声。
 
 ### 5.4 Temporal result
 
-沿用 HTrace 的 motion/depth/normal/history validation，但 history 只存 Ho-SSGI 的 source/GI 语义和 GI reservoir，不复制最终 camera color。当前实现使用上一帧 GI、上一帧法线/线性深度、当前 motion vector、source luminance change 和 reservoir `Wsum/M` 做首版拒绝与合并；更完整的验证仍需补齐：
+沿用 HTrace 的 motion/depth/normal/history validation，但 history 只存 Ho-SSGI 的 source/GI 语义和 GI reservoir，不复制最终 camera color。当前实现使用上一帧 GI、上一帧法线/线性深度、当前 motion vector、source luminance change、代表射线几何/lighting validation 和 reservoir `Wsum/M` 上限做首版拒绝与合并；仍需补齐：
 
 - history sample count；
 - reprojected hit validity；
@@ -450,8 +450,9 @@ sourceValid = geometryCoverage
 - source luminance change；
 - moving object rejection；
 - confidence；
-- selected-ray visibility 和 receiver target 重评估；
-- 多 tap history 与 history sample cap。
+- receiver target 重评估；
+- 多 tap history 和 render-scale history 坐标转换；
+- 第二轮 spatial selected-ray visibility validation。
 
 需要分别 debug current raw、reprojected history 和 accumulated result，才能区分 ray 错误与 temporal 拖影。
 

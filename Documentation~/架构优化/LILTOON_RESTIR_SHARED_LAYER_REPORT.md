@@ -214,14 +214,15 @@ HoGeometryBuffer
 
 Ho-GTAO 保持独立。它可以继续提供 AO output 作为将来 SSGI denoiser 的 guidance，但这属于“读取 AO 语义输出”，不代表共享 AO reservoir，也不应让 SSGI 反向接管 GTAO 的 history。
 
-SSGI 后续优先级：
+当前 Ho-SSGI 已经完成第一批验证增强：reservoir 保存 Color、Wsum/M/target、Direction、Distance、OriginNormal、HitFound；history 有 HTrace 风格的 M 上限；temporal 会做 selected-ray 的几何和 source lighting validation，spatial 会做 selected-ray 几何 validation。Volume 已经能分别控制时域验证、空间验证和 Firefly。
 
-1. 将当前 float reservoir 改成更接近 HTrace 的可验证布局，至少保存 Color、Wsum/M/W、Direction、Distance、OriginNormal、HitFound；
-2. temporal 改成多 tap、严格 off-screen/depth/normal/lighting validation，并限制历史长度；
-3. spatial 使用稳定 Poisson/world-plane 邻居，增加第二阶段 selected-ray visibility validation；
-4. 保留 firefly 与 temporal/spatial denoise 的独立 debug；
-5. 朱木古堂中确认红墙反弹、灯光变化、摄像机上下移动和描边排除；
-6. 以上稳定后，再评估是否把 Hi-Z producer 抽给 GTAO 共用。
+后续优先级：
+
+1. temporal 改成 HTrace 风格的四 tap history，并补全 render-scale/history-depth disocclusion；
+2. spatial 改成稳定的 Poisson/world-plane 邻居，增加独立的第二阶段空间 validation；
+3. 保留 firefly 与 temporal/spatial denoise 的独立 debug，并加入 temporal/spatial A/B 开关；
+4. 朱木古堂中确认红墙反弹、灯光变化、摄像机上下移动和描边排除；
+5. 以上稳定后，再评估是否把 Hi-Z producer 抽给 GTAO 共用。
 
 最终目标不是让 GTAO 和 SSGI 使用同一套 reservoir，而是让它们在需要时共享几何、可见性和相机上下文，同时保持 GI/AO/DI 的估计器语义独立。
 
