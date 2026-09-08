@@ -714,34 +714,47 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             half4 centerGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, uv);
             if (centerGeometry.a < 0.0001h) return 0;
 
-            float2 texel = rcp(max(_ScreenParams.xy, 1.0)) * max(_HoSSGISpatialRadius, 0.5);
             float3 centerNormal = normalize((float3)centerGeometry.rgb * 2.0 - 1.0);
             float centerDepth = centerGeometry.a;
+            float3 centerPositionWS = HoSSGIWorldPosition(uv, centerDepth);
+            float3 tangent = HoSSGIBuildTangent(centerNormal);
+            float3 bitangent = normalize(cross(centerNormal, tangent));
+            float worldRadius = max(centerDepth * max(_HoSSGISpatialRadius, 0.5) * 0.0025, 0.002);
+            float sigma = max(worldRadius * 0.8, 0.001);
+            float randomAngle = HoSSGIHash2(uv * _ScreenParams.xy).x * 6.2831853;
+            float2x2 rotation = float2x2(cos(randomAngle), -sin(randomAngle), sin(randomAngle), cos(randomAngle));
             HoSSGIReservoir centerReservoir = HoSSGILoadReservoir(uv);
             HoSSGIReservoir merged = centerReservoir;
             half4 centerTemporal = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_PointClamp, uv);
             float confidenceSum = centerTemporal.a;
             float confidenceWeight = 1.0;
-            const int2 offsets[8] =
+            const float2 poisson[8] =
             {
-                int2(1, 0), int2(-1, 0), int2(0, 1), int2(0, -1),
-                int2(1, 1), int2(-1, 1), int2(1, -1), int2(-1, -1)
+                float2(-0.326, -0.406), float2(0.695, -0.113),
+                float2(-0.842, 0.684), float2(0.451, 0.553),
+                float2(-0.758, 0.143), float2(0.103, -0.887),
+                float2(0.912, 0.517), float2(-0.601, -0.712)
             };
             [unroll]
             for (int i = 0; i < 8; i++)
             {
                 if (_HoSSGIReservoirReuse <= 0.5) break;
-                float2 offset = offsets[i];
-                float2 tapUV = uv + offset * texel;
-                bool tapInside = tapUV.x >= 0.0 && tapUV.x <= 1.0 && tapUV.y >= 0.0 && tapUV.y <= 1.0;
-                if (!tapInside) continue;
+                float2 point = mul(rotation, poisson[i] * worldRadius);
+                float3 samplePositionWS = centerPositionWS + tangent * point.x + bitangent * point.y;
+                float3 sampleNDC = ComputeNormalizedDeviceCoordinatesWithZ(samplePositionWS, UNITY_MATRIX_VP);
+                float2 tapUV = sampleNDC.xy;
+                if (sampleNDC.z < 0.0 || sampleNDC.z > 1.0 || any(tapUV < 0.0) || any(tapUV > 1.0)) continue;
                 half4 tapGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, tapUV);
                 if (tapGeometry.a < 0.0001h) continue;
                 float depthDelta = abs(tapGeometry.a - centerDepth) / max(centerDepth, 0.05);
-                float normalWeight = saturate((dot(centerNormal, normalize((float3)tapGeometry.rgb * 2.0 - 1.0)) - 0.35) * 1.54);
+                float3 sampleNormal = normalize((float3)tapGeometry.rgb * 2.0 - 1.0);
+                float planeDistance = abs(dot(samplePositionWS - centerPositionWS, centerNormal));
+                float planeDistanceNormalized = planeDistance / max(centerDepth, 0.05);
+                float planeWeight = exp2(-100.0 * planeDistanceNormalized * planeDistanceNormalized);
+                float normalWeight = saturate(dot(centerNormal, sampleNormal));
                 float depthWeight = exp2(-32.0 * depthDelta * depthDelta);
-                float spatialWeight = exp2(-0.75 * dot(offset, offset));
-                float reuseWeight = normalWeight * depthWeight * spatialWeight;
+                float gaussianWeight = exp2(-dot(point, point) / max(2.0 * sigma * sigma, 1.0e-5));
+                float reuseWeight = planeWeight * normalWeight * depthWeight * gaussianWeight;
                 if (reuseWeight <= 0.001) continue;
 
                 HoSSGIReservoir tapReservoir = HoSSGILoadReservoir(tapUV);
