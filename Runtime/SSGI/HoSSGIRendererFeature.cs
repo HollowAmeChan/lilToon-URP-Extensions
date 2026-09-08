@@ -161,6 +161,8 @@ namespace lilToon.URP.Extensions.SSGI
         private int height;
         private int cameraId;
         private bool valid;
+        private Matrix4x4 previousInverseViewProjection = Matrix4x4.identity;
+        private bool previousMatrixValid;
 
         public RTHandle Previous => previous;
         public RTHandle Next => next;
@@ -176,6 +178,8 @@ namespace lilToon.URP.Extensions.SSGI
         public RTHandle NextReservoirAux => nextReservoirAux;
         public RTHandle PreviousReservoirRay => previousReservoirRay;
         public RTHandle NextReservoirRay => nextReservoirRay;
+        public Matrix4x4 PreviousInverseViewProjection => previousInverseViewProjection;
+        public bool PreviousMatrixValid => previousMatrixValid;
         public bool Valid => valid;
 
         public void Ensure(int requestedWidth, int requestedHeight, int requestedCameraId)
@@ -212,7 +216,14 @@ namespace lilToon.URP.Extensions.SSGI
                 height = requestedHeight;
                 cameraId = requestedCameraId;
                 valid = false;
+                previousMatrixValid = false;
             }
+        }
+
+        public void CommitCameraMatrix(Matrix4x4 inverseViewProjection)
+        {
+            previousInverseViewProjection = inverseViewProjection;
+            previousMatrixValid = true;
         }
 
         public void Swap()
@@ -279,6 +290,8 @@ namespace lilToon.URP.Extensions.SSGI
             previousReservoirRay = null;
             nextReservoirRay = null;
             valid = false;
+            previousInverseViewProjection = Matrix4x4.identity;
+            previousMatrixValid = false;
         }
     }
 
@@ -312,6 +325,8 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle motion;
             public TextureHandle output;
             public bool historyValid;
+            public Matrix4x4 previousInverseViewProjection;
+            public bool previousMatrixValid;
         }
 
         private sealed class SourceHistoryPassData
@@ -341,6 +356,8 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle reservoirOutputRay;
             public float blend;
             public bool historyValid;
+            public Matrix4x4 previousInverseViewProjection;
+            public bool previousMatrixValid;
             public bool reservoirReuse;
             public bool reservoirValidation;
         }
@@ -426,6 +443,8 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle motion;
             public TextureHandle output;
             public bool historyValid;
+            public Matrix4x4 previousInverseViewProjection;
+            public bool previousMatrixValid;
         }
 
         private sealed class DenoisedHistoryPassData
@@ -470,6 +489,10 @@ namespace lilToon.URP.Extensions.SSGI
             int height = Mathf.Max(1, sourceDesc.height);
             int cameraId = cameraData.camera != null ? cameraData.camera.GetInstanceID() : 0;
             history.Ensure(width, height, cameraId);
+            Matrix4x4 currentViewProjection = cameraData.GetProjectionMatrix() * cameraData.GetViewMatrix();
+            Matrix4x4 currentInverseViewProjection = currentViewProjection.inverse;
+            Matrix4x4 previousInverseViewProjection = history.PreviousInverseViewProjection;
+            bool previousMatrixValid = history.PreviousMatrixValid;
 
             TextureHandle previousSource = renderGraph.ImportTexture(history.PreviousSource);
             TextureHandle nextSource = renderGraph.ImportTexture(history.NextSource);
@@ -485,6 +508,8 @@ namespace lilToon.URP.Extensions.SSGI
                 data.motion = resourceData.motionVectorColor;
                 data.output = sourceReprojected;
                 data.historyValid = history.Valid;
+                data.previousInverseViewProjection = previousInverseViewProjection;
+                data.previousMatrixValid = previousMatrixValid;
                 builder.UseTexture(data.currentSource, AccessFlags.Read);
                 builder.UseTexture(data.previousSource, AccessFlags.Read);
                 builder.UseTexture(data.previousDepth, AccessFlags.Read);
@@ -497,6 +522,8 @@ namespace lilToon.URP.Extensions.SSGI
                 {
                     passData.material.SetFloat(HoSSGIShaderConstants.HistoryValidId, passData.historyValid ? 1.0f : 0.0f);
                     passData.material.SetFloat(HoSSGIShaderConstants.MotionValidId, passData.motion.IsValid() ? 1.0f : 0.0f);
+                    passData.material.SetMatrix(HoSSGIShaderConstants.PreviousInverseViewProjectionId, passData.previousInverseViewProjection);
+                    passData.material.SetFloat(HoSSGIShaderConstants.PreviousMatrixValidId, passData.previousMatrixValid ? 1.0f : 0.0f);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceId, passData.currentSource);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceHistoryId, passData.previousSource);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.HistoryDepthId, passData.previousDepth);
@@ -604,6 +631,8 @@ namespace lilToon.URP.Extensions.SSGI
                 data.reservoirOutputRay = nextReservoirRay;
                 data.blend = Mathf.Clamp01(settings.temporalBlend);
                 data.historyValid = history.Valid;
+                data.previousInverseViewProjection = previousInverseViewProjection;
+                data.previousMatrixValid = previousMatrixValid;
                 data.reservoirReuse = settings.temporalReservoirReuse;
                 data.reservoirValidation = settings.temporalReservoirValidation;
                 builder.UseTexture(data.current, AccessFlags.Read);
@@ -628,6 +657,8 @@ namespace lilToon.URP.Extensions.SSGI
                     passData.material.SetFloat(HoSSGIShaderConstants.TemporalBlendId, passData.blend);
                     passData.material.SetFloat(HoSSGIShaderConstants.HistoryValidId, passData.historyValid ? 1.0f : 0.0f);
                     passData.material.SetFloat(HoSSGIShaderConstants.MotionValidId, passData.motion.IsValid() ? 1.0f : 0.0f);
+                    passData.material.SetMatrix(HoSSGIShaderConstants.PreviousInverseViewProjectionId, passData.previousInverseViewProjection);
+                    passData.material.SetFloat(HoSSGIShaderConstants.PreviousMatrixValidId, passData.previousMatrixValid ? 1.0f : 0.0f);
                     passData.material.SetFloat(HoSSGIShaderConstants.ReservoirReuseId, passData.reservoirReuse ? 1.0f : 0.0f);
                     passData.material.SetFloat(HoSSGIShaderConstants.ReservoirValidationId, passData.reservoirValidation ? 1.0f : 0.0f);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.current);
@@ -806,6 +837,8 @@ namespace lilToon.URP.Extensions.SSGI
                 data.motion = motion;
                 data.output = temporallyDenoised;
                 data.historyValid = history.Valid;
+                data.previousInverseViewProjection = previousInverseViewProjection;
+                data.previousMatrixValid = previousMatrixValid;
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.history, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
@@ -817,6 +850,8 @@ namespace lilToon.URP.Extensions.SSGI
                 {
                     passData.material.SetFloat(HoSSGIShaderConstants.HistoryValidId, passData.historyValid ? 1.0f : 0.0f);
                     passData.material.SetFloat(HoSSGIShaderConstants.MotionValidId, passData.motion.IsValid() ? 1.0f : 0.0f);
+                    passData.material.SetMatrix(HoSSGIShaderConstants.PreviousInverseViewProjectionId, passData.previousInverseViewProjection);
+                    passData.material.SetFloat(HoSSGIShaderConstants.PreviousMatrixValidId, passData.previousMatrixValid ? 1.0f : 0.0f);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.source);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.DenoisedHistoryId, passData.history);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
@@ -867,6 +902,7 @@ namespace lilToon.URP.Extensions.SSGI
             resources.giTexture = denoised;
             resources.reservoirColorTexture = fireflyReservoirColor;
             resources.reservoirAuxTexture = fireflyReservoirAux;
+            history.CommitCameraMatrix(currentInverseViewProjection);
         }
     }
 

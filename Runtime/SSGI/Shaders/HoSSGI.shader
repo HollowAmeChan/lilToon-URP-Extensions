@@ -62,6 +62,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         float _HoSSGIIntensity;
         float _HoSSGISourceSaturation;
         int _HoSSGIFrameIndex;
+        float4x4 _HoSSGIPreviousInverseViewProjection;
+        float _HoSSGIPreviousMatrixValid;
         float _HoSSGITemporalBlend;
         float _HoSSGISpatialRadius;
         float _HoSSGIHistoryValid;
@@ -241,6 +243,12 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         {
             float deviceDepth = (rcp(max(linearDepth, 1.0e-5)) - _ZBufferParams.w) / max(_ZBufferParams.z, 1.0e-6);
             return ComputeWorldSpacePosition(uv, deviceDepth, UNITY_MATRIX_I_VP);
+        }
+
+        float3 HoSSGIPreviousWorldPosition(float2 uv, float linearDepth)
+        {
+            float deviceDepth = (rcp(max(linearDepth, 1.0e-5)) - _ZBufferParams.w) / max(_ZBufferParams.z, 1.0e-6);
+            return ComputeWorldSpacePosition(uv, deviceDepth, _HoSSGIPreviousInverseViewProjection);
         }
 
         float HoSSGILinearDepth(float3 positionWS)
@@ -644,7 +652,14 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     half3 previousNormal = normalize((float3)previousGeometry.rgb * 2.0 - 1.0);
                     half normalAgreement = step(0.5h, dot(currentNormal, previousNormal));
                     half previousNormalValid = step(0.0001h, dot(previousGeometry.rgb, previousGeometry.rgb));
-                    half accepted = depthAgreement * normalAgreement * currentNormalValid * previousNormalValid
+                    half planeAgreement = 1.0h;
+                    if (_HoSSGIPreviousMatrixValid > 0.5)
+                    {
+                        float3 currentPositionWS = HoSSGIWorldPosition(uv, geometry.a);
+                        float3 previousPositionWS = HoSSGIPreviousWorldPosition(tapUV, previousDepth);
+                        planeAgreement = step(abs(dot(previousPositionWS - currentPositionWS, currentNormal)), max(0.08h * geometry.a, 0.05h));
+                    }
+                    half accepted = depthAgreement * normalAgreement * planeAgreement * currentNormalValid * previousNormalValid
                         * step(0.0001h, previousDepth);
                     float currentLum = HoSSGILuminance(current.rgb);
                     float historyLum = HoSSGILuminance(history.rgb);
@@ -939,10 +954,17 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 if (any(tapUV < 0.0) || any(tapUV > 1.0)) continue;
                 half4 previousGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIHistoryDepth, sampler_PointClamp, tapUV);
                 if (previousGeometry.a < 0.0001h) continue;
-                float depthAgreement = step(abs(geometry.a - previousGeometry.a), max(0.08 * geometry.a, 0.05));
-                float3 previousNormal = normalize((float3)previousGeometry.rgb * 2.0 - 1.0);
-                float normalAgreement = step(0.5, dot(currentNormal, previousNormal));
-                float tapWeight = weights[i] * depthAgreement * normalAgreement;
+                    float depthAgreement = step(abs(geometry.a - previousGeometry.a), max(0.08 * geometry.a, 0.05));
+                    float3 previousNormal = normalize((float3)previousGeometry.rgb * 2.0 - 1.0);
+                    float normalAgreement = step(0.5, dot(currentNormal, previousNormal));
+                    float planeAgreement = 1.0;
+                    if (_HoSSGIPreviousMatrixValid > 0.5)
+                    {
+                        float3 currentPositionWS = HoSSGIWorldPosition(uv, geometry.a);
+                        float3 previousPositionWS = HoSSGIPreviousWorldPosition(tapUV, previousGeometry.a);
+                        planeAgreement = step(abs(dot(previousPositionWS - currentPositionWS, currentNormal)), max(0.08 * geometry.a, 0.05));
+                    }
+                    float tapWeight = weights[i] * depthAgreement * normalAgreement * planeAgreement;
                 if (tapWeight <= 1.0e-4) continue;
                 historyColor += SAMPLE_TEXTURE2D_X(_HoSSGISourceHistory, sampler_LinearClamp, tapUV).rgb * tapWeight;
                 weightSum += tapWeight;
@@ -1011,10 +1033,17 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     half4 previousGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIHistoryDepth, sampler_PointClamp, previousUV);
                     float depthAgreement = step(abs(geometry.a - previousGeometry.a), max(0.08 * geometry.a, 0.05));
                     float normalAgreement = step(0.5, dot(centerNormal, normalize((float3)previousGeometry.rgb * 2.0 - 1.0)));
+                    float planeAgreement = 1.0;
+                    if (_HoSSGIPreviousMatrixValid > 0.5)
+                    {
+                        float3 currentPositionWS = HoSSGIWorldPosition(uv, geometry.a);
+                        float3 previousPositionWS = HoSSGIPreviousWorldPosition(previousUV, previousGeometry.a);
+                        planeAgreement = step(abs(dot(previousPositionWS - currentPositionWS, centerNormal)), max(0.08 * geometry.a, 0.05));
+                    }
                     half4 historySample = SAMPLE_TEXTURE2D_X(_HoSSGIDenoisedHistory, sampler_LinearClamp, previousUV);
                     history = clamp(historySample.rgb, minimum, maximum);
                     historyConfidence = saturate(historySample.a);
-                    historyWeight = _HoSSGITemporalBlend * depthAgreement * normalAgreement * historyConfidence;
+                    historyWeight = _HoSSGITemporalBlend * depthAgreement * normalAgreement * planeAgreement * historyConfidence;
                 }
             }
 
