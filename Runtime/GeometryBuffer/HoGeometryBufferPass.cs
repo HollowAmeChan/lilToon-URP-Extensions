@@ -333,12 +333,10 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             RenderTextureDescriptor cameraTextureDescriptor,
             HoGeometryBufferSettings settings)
         {
-            GraphicsFormat format = GraphicsFormat.R8_UNorm;
-            if (!SystemInfo.IsFormatSupported(format, GraphicsFormatUsage.Render))
-            {
-                format = GraphicsFormat.R8G8B8A8_UNorm;
-            }
-
+            // Outline normal/depth is sampled as the same packed RGBA contract as
+            // the physical NormalDepth buffer. Keep the RenderGraph path in sync
+            // with the compatibility RT allocation so alpha depth is preserved.
+            GraphicsFormat format = HoGeometryBufferFormatUtility.GetHighPrecisionGraphicsFormat();
             return CreateTextureDesc(
                 cameraTextureDescriptor,
                 settings,
