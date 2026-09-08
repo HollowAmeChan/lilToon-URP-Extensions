@@ -216,6 +216,7 @@ namespace lilToon.URP.Extensions.GTAO
             public TextureHandle cameraColor;
             public TextureHandle destination;
             public float displayIntensity;
+            public float displayInvert;
         }
 
         private Material material;
@@ -257,6 +258,7 @@ namespace lilToon.URP.Extensions.GTAO
                 data.cameraColor = cameraColor;
                 data.destination = destination;
                 data.displayIntensity = debugMode == HoGTAODebugMode.AO ? 2.4f : 1.0f;
+                data.displayInvert = debugMode == HoGTAODebugMode.AO ? 1.0f : 0.0f;
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.cameraColor, AccessFlags.Read);
                 builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
@@ -265,6 +267,7 @@ namespace lilToon.URP.Extensions.GTAO
                 builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
                 {
                     context.cmd.SetGlobalFloat(HoGTAOShaderConstants.DebugIntensityId, passData.displayIntensity);
+                    context.cmd.SetGlobalFloat(DebugInvertId, passData.displayInvert);
                     Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 0);
                 });
             }
@@ -281,6 +284,7 @@ namespace lilToon.URP.Extensions.GTAO
         private static readonly int HistoryValidId = Shader.PropertyToID("_HoGTAOHistoryValid");
         private static readonly int TemporalMaxFramesId = Shader.PropertyToID("_HoGTAOTemporalMaxFrames");
         private static readonly int TemporalRejectionId = Shader.PropertyToID("_HoGTAOTemporalRejection");
+        private static readonly int DebugInvertId = Shader.PropertyToID("_HoGTAODebugInvert");
         private static readonly int WorldRadiusId = Shader.PropertyToID("_HoGTAOWorldSpaceRadius");
         private static readonly int ScreenRadiusId = Shader.PropertyToID("_HoGTAOScreenSpaceRadius");
         private static readonly int ThicknessId = Shader.PropertyToID("_HoGTAOThickness");

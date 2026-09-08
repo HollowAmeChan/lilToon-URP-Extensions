@@ -245,7 +245,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 weightTotal += projectedLength;
             }
 
-            return saturate(visibility / max(weightTotal, 1.0e-5));
+            return 1.0 - saturate(visibility / max(weightTotal, 1.0e-5));
         }
 
         // HTrace's default profile uses HorizonSearch (TracingMode=0), not
@@ -439,7 +439,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             half ao = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord).r;
-            return half4(ao, ao, ao, 1.0h);
+            half visibility = 1.0h - ao;
+            return half4(visibility, visibility, visibility, 1.0h);
         }
 
         half4 Spatial(Varyings input) : SV_Target
@@ -450,7 +451,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             half centerAO = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv).r;
             if (centerND.a < 0.0001h)
             {
-                return half4(1.0h, 1.0h, 1.0h, 1.0h);
+                return half4(0.0h, 0.0h, 0.0h, 1.0h);
             }
 
             float2 texel = _ScreenParams.zw * max(_HoGTAOSpatialResolution, 1.0)

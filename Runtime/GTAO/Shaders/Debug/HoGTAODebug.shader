@@ -18,11 +18,13 @@ Shader "Hidden/lilToon/URP/HoGTAO/DebugView"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             float _HoGTAODebugIntensity;
+            float _HoGTAODebugInvert;
 
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 half4 value = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord);
+                value.rgb = lerp(value.rgb, 1.0h - value.rgb, _HoGTAODebugInvert);
                 value.rgb = pow(saturate(value.rgb), _HoGTAODebugIntensity);
                 return value;
             }
