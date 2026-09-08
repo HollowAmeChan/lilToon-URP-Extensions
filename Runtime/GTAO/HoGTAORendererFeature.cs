@@ -267,7 +267,7 @@ namespace lilToon.URP.Extensions.GTAO
                 builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
                 {
                     context.cmd.SetGlobalFloat(HoGTAOShaderConstants.DebugIntensityId, passData.displayIntensity);
-                    context.cmd.SetGlobalFloat(DebugInvertId, passData.displayInvert);
+                    context.cmd.SetGlobalFloat(HoGTAOShaderConstants.DebugInvertId, passData.displayInvert);
                     Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 0);
                 });
             }
