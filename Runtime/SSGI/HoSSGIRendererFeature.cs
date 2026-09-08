@@ -168,7 +168,7 @@ namespace lilToon.URP.Extensions.SSGI
             RenderingUtils.ReAllocateIfNeeded(ref previous, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_HoSSGIHistoryPrevTex");
             RenderingUtils.ReAllocateIfNeeded(ref next, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_HoSSGIHistoryNextTex");
             RenderTextureDescriptor depthDescriptor = descriptor;
-            depthDescriptor.graphicsFormat = GraphicsFormat.R16_SFloat;
+            depthDescriptor.graphicsFormat = GraphicsFormat.R16G16B16A16_SFloat;
             RenderingUtils.ReAllocateIfNeeded(ref previousDepth, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSSGIHistoryPrevDepthTex");
             RenderingUtils.ReAllocateIfNeeded(ref nextDepth, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSSGIHistoryNextDepthTex");
             if (changed)
@@ -361,6 +361,7 @@ namespace lilToon.URP.Extensions.SSGI
                 {
                     passData.material.SetFloat(HoSSGIShaderConstants.TemporalBlendId, passData.blend);
                     passData.material.SetFloat(HoSSGIShaderConstants.HistoryValidId, passData.historyValid ? 1.0f : 0.0f);
+                    passData.material.SetFloat(HoSSGIShaderConstants.MotionValidId, passData.motion.IsValid() ? 1.0f : 0.0f);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.current);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.HistoryTextureId, passData.previous);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.HistoryDepthId, passData.previousDepth);
@@ -368,10 +369,6 @@ namespace lilToon.URP.Extensions.SSGI
                     if (passData.motion.IsValid())
                     {
                         context.cmd.SetGlobalTexture(HoSSGIShaderConstants.MotionVectorId, passData.motion);
-                    }
-                    else
-                    {
-                        context.cmd.SetGlobalTexture(HoSSGIShaderConstants.MotionVectorId, Texture2D.blackTexture);
                     }
                     Blitter.BlitTexture(context.cmd, passData.current, new Vector4(1, 1, 0, 0), passData.material, 2);
                 });

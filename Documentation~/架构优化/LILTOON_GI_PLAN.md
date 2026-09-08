@@ -360,7 +360,7 @@ sourceValid = geometryCoverage
 
 ### 5.4 Temporal result
 
-沿用 HTrace 的 motion/depth/normal/history validation，但 history 只存 Ho-SSGI 的 source/GI 语义，不复制最终 camera color。当前实现使用上一帧 GI、上一帧线性深度、当前 motion vector 和 source luminance change 做首版拒绝；法线 history payload 和更完整的 ReSTIR reservoir 验证留作后续增强：
+沿用 HTrace 的 motion/depth/normal/history validation，但 history 只存 Ho-SSGI 的 source/GI 语义，不复制最终 camera color。当前实现使用上一帧 GI、上一帧法线/线性深度、当前 motion vector和 source luminance change 做首版拒绝；更完整的 ReSTIR reservoir 验证留作后续增强：
 
 - history sample count；
 - reprojected hit validity；

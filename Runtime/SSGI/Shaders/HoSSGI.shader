@@ -42,7 +42,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         TEXTURE2D_X(_HoSSGIRawGI);
         TEXTURE2D_X(_HoSSGIRawGIInput);
         TEXTURE2D_X(_HoSSGIHistory);
-        TEXTURE2D_X_FLOAT(_HoSSGIHistoryDepth);
+        TEXTURE2D_X(_HoSSGIHistoryDepth);
         TEXTURE2D_X(_HoSSGIMotionVectors);
         TEXTURE2D_X(_BlitTexture);
         int _HoSSGIRayCount;
@@ -54,6 +54,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         float _HoSSGITemporalBlend;
         float _HoSSGISpatialRadius;
         float _HoSSGIHistoryValid;
+        float _HoSSGIUseMotion;
 
         float3 HoSSGIWorldPosition(float2 uv, float linearDepth)
         {
@@ -177,13 +178,20 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             half4 geometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, uv);
             if (geometry.a < 0.0001h) return 0;
 
-            float2 motion = SAMPLE_TEXTURE2D_X(_HoSSGIMotionVectors, sampler_LinearClamp, uv).xy;
+            float2 motion = _HoSSGIUseMotion > 0.5
+                ? SAMPLE_TEXTURE2D_X(_HoSSGIMotionVectors, sampler_LinearClamp, uv).xy
+                : float2(0.0, 0.0);
             float2 previousUV = saturate(uv - motion);
             half4 history = SAMPLE_TEXTURE2D_X(_HoSSGIHistory, sampler_LinearClamp, previousUV);
-            half previousDepth = SAMPLE_TEXTURE2D_X(_HoSSGIHistoryDepth, sampler_PointClamp, previousUV).r;
+            half4 previousGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIHistoryDepth, sampler_PointClamp, previousUV);
+            half previousDepth = previousGeometry.a;
             half depthAgreement = step(abs(geometry.a - previousDepth), max(0.08h * geometry.a, 0.05h));
+            half3 currentNormal = normalize((float3)geometry.rgb * 2.0 - 1.0);
+            half3 previousNormal = normalize((float3)previousGeometry.rgb * 2.0 - 1.0);
+            half normalAgreement = step(0.5h, dot(currentNormal, previousNormal));
             half currentNormalValid = step(0.0001h, dot(geometry.rgb, geometry.rgb));
-            half accepted = _HoSSGIHistoryValid * depthAgreement * currentNormalValid;
+            half previousNormalValid = step(0.0001h, dot(previousGeometry.rgb, previousGeometry.rgb));
+            half accepted = _HoSSGIHistoryValid * depthAgreement * normalAgreement * currentNormalValid * previousNormalValid;
             float currentLum = dot(current.rgb, float3(0.2126, 0.7152, 0.0722));
             float historyLum = dot(history.rgb, float3(0.2126, 0.7152, 0.0722));
             float lightingChange = abs(currentLum - historyLum) / max(currentLum + historyLum, 0.001);
@@ -195,7 +203,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         float4 DepthHistory(Varyings input) : SV_Target
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-            return SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord).aaaa;
+            return SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord);
         }
 
         float4 SpatialDenoise(Varyings input) : SV_Target
