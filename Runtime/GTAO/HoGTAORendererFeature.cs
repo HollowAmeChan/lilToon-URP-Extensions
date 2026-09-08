@@ -283,6 +283,8 @@ namespace lilToon.URP.Extensions.GTAO
         private static readonly int ViewMatrixId = Shader.PropertyToID("_HoGTAOViewMatrix");
         private static readonly int ProjMatrixId = Shader.PropertyToID("_HoGTAOProjMatrix");
         private static readonly int InvProjMatrixId = Shader.PropertyToID("_HoGTAOInvProjMatrix");
+        private static readonly int DepthToViewParamsId = Shader.PropertyToID("_HoGTAODepthToViewParams");
+        private static readonly int OrthographicId = Shader.PropertyToID("_HoGTAOOrthographic");
         private static readonly int GeometryInputId = Shader.PropertyToID("_HoGTAOGeometryInput");
         private static readonly int SpatialRadiusId = Shader.PropertyToID("_HoGTAOSpatialRadius");
         private static readonly int SpatialAdaptivityId = Shader.PropertyToID("_HoGTAOSpatialAdaptivity");
@@ -314,6 +316,8 @@ namespace lilToon.URP.Extensions.GTAO
             public Matrix4x4 view;
             public Matrix4x4 proj;
             public Matrix4x4 invProj;
+            public Vector4 depthToViewParams;
+            public float orthographic;
             public TextureHandle depthMip0;
             public TextureHandle depthMip1;
             public TextureHandle depthMip2;
@@ -413,9 +417,13 @@ namespace lilToon.URP.Extensions.GTAO
             }
 
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
-            int divisor = Mathf.Max(1, settings.ResolutionDivisor);
-            int width = Mathf.Max(1, cameraData.cameraTargetDescriptor.width / divisor);
-            int height = Mathf.Max(1, cameraData.cameraTargetDescriptor.height / divisor);
+            // Keep the first quality baseline full-resolution. HTrace's Half and
+            // Quarter modes use checkerboard addressing into full-resolution
+            // geometry; a plain smaller RT with unchanged UVs is not equivalent
+            // and produces visibly wrong AO silhouettes.
+            int divisor = 1;
+            int width = Mathf.Max(1, cameraData.cameraTargetDescriptor.width);
+            int height = Mathf.Max(1, cameraData.cameraTargetDescriptor.height);
             int cameraId = cameraData.camera != null ? cameraData.camera.GetInstanceID() : 0;
             if (history.Previous == null || history.PreviousDepth == null || width != historyWidth || height != historyHeight || cameraId != historyCameraId || historyResolution != settings.resolution)
             {
@@ -459,6 +467,14 @@ namespace lilToon.URP.Extensions.GTAO
                 data.depthMip1 = depthMips[1];
                 data.depthMip2 = depthMips[2];
                 data.depthMip3 = depthMips[3];
+                float fovRadians = cameraData.camera.fieldOfView * Mathf.Deg2Rad;
+                float halfHeight = cameraData.camera.orthographic
+                    ? cameraData.camera.orthographicSize
+                    : Mathf.Tan(fovRadians * 0.5f);
+                float renderAspect = (float)cameraData.cameraTargetDescriptor.width / Mathf.Max(1, cameraData.cameraTargetDescriptor.height);
+                float halfWidth = halfHeight * renderAspect;
+                data.depthToViewParams = new Vector4(2.0f * halfWidth, 2.0f * halfHeight, -halfWidth, -halfHeight);
+                data.orthographic = cameraData.camera.orthographic ? 1.0f : 0.0f;
                 builder.UseTexture(data.normalDepth, AccessFlags.Read);
                 builder.UseTexture(data.depthMip0, AccessFlags.Read);
                 builder.UseTexture(data.depthMip1, AccessFlags.Read);
@@ -481,6 +497,8 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.SetGlobalMatrix(ViewMatrixId, passData.view);
                     context.cmd.SetGlobalMatrix(ProjMatrixId, passData.proj);
                     context.cmd.SetGlobalMatrix(InvProjMatrixId, passData.invProj);
+                    context.cmd.SetGlobalVector(DepthToViewParamsId, passData.depthToViewParams);
+                    context.cmd.SetGlobalFloat(OrthographicId, passData.orthographic);
                     context.cmd.SetGlobalTexture(DepthMip0Id, passData.depthMip0);
                     context.cmd.SetGlobalTexture(DepthMip1Id, passData.depthMip1);
                     context.cmd.SetGlobalTexture(DepthMip2Id, passData.depthMip2);
@@ -583,7 +601,7 @@ namespace lilToon.URP.Extensions.GTAO
                 data.destination = spatial;
                 data.radius = settings.filterRadius;
                 data.adaptivity = settings.filterAdaptivity;
-                data.resolution = settings.ResolutionDivisor;
+                data.resolution = 1.0f;
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);

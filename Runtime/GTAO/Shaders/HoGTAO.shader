@@ -23,6 +23,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         TEXTURE2D_X(_HoGTAOGeometryInput);
         float4 _HoGTAODepthInputTexelSize;
         float4x4 _HoGTAOInvProjMatrix;
+        float4 _HoGTAODepthToViewParams;
+        float _HoGTAOOrthographic;
         float4x4 _HoGTAOProjMatrix;
         float4x4 _HoGTAOViewMatrix;
         float _HoGTAODebugMode;
@@ -75,8 +77,14 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
 
         float3 HoGTAOViewPosition(float2 uv, float linearDepth)
         {
-            float deviceDepth = (rcp(max(linearDepth, 1.0e-5)) - _ZBufferParams.w) / max(_ZBufferParams.z, 1.0e-6);
-            return ComputeViewSpacePosition(uv, deviceDepth, _HoGTAOInvProjMatrix) * float3(1.0, -1.0, -1.0);
+            // GeometryBuffer stores linear eye depth. Match HTrace's direct
+            // reconstruction from linear depth instead of attempting to reverse
+            // the device-depth transform (which is projection/reversed-Z
+            // dependent and was the source of the previous distorted AO).
+            float2 viewXY = uv * _HoGTAODepthToViewParams.xy + _HoGTAODepthToViewParams.zw;
+            if (_HoGTAOOrthographic > 0.5)
+                return float3(viewXY, -linearDepth);
+            return float3(viewXY * linearDepth, -linearDepth);
         }
 
         float HoGTAOFastSqrt(float x)
