@@ -381,7 +381,10 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 // occlusion). Final composition turns this into visibility.
                 return half4(0.0h, 0.0h, 0.0h, 1.0h);
             }
-            half ao = HoGTAOComputeHorizonSearch(input.texcoord, nd);
+            // Highest-quality HTrace profile: Visibility Bitmasks. This is the
+            // only tracing path that consumes Thickness and preserves thin
+            // geometric occlusion bands.
+            half ao = HoGTAOCompute(input.texcoord, nd);
             return half4(ao, ao, ao, 1.0h);
         }
 
