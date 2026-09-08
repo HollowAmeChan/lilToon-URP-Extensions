@@ -490,7 +490,9 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                     ? step(0.85, dot(centerNormal, sampleNormal))
                     : saturate((dot(centerNormal, sampleNormal) - 0.5) * 2.0);
                 float depthWeight = _HoGTAOSpatialFilter > 0.5
-                    ? exp2(-100.0 * planeDistance * planeDistance)
+                    // HTrace Box filter: PlaneFilterWeight=50000 and
+                    // PlaneWeighting uses exp2(-100 * weight * delta^2).
+                    ? exp2(-5000000.0 * planeDistance * planeDistance)
                     : exp2(-48.0 * depthDelta * depthDelta / max(depthScale, 0.05));
                 float tapDistance = dot(taps[i], taps[i]);
                 float spatialWeight = _HoGTAOSpatialFilter > 0.5
