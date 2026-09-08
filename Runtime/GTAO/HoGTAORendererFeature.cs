@@ -125,22 +125,25 @@ namespace lilToon.URP.Extensions.GTAO
                 return;
             }
 
-            settings.quality = volume.quality.value;
-            HoGTAOQualityPresets.Apply(volume.quality.value, settings);
-            lastAppliedQuality = volume.quality.value;
-            settings.resolution = volume.resolution.value;
-            settings.worldSpaceRadius = volume.worldSpaceRadius.value;
-            settings.screenSpaceRadius = volume.screenSpaceRadius.value;
-            settings.thickness = volume.thickness.value;
-            settings.sliceCount = volume.sliceCount.value;
-            settings.stepCount = volume.stepCount.value;
-            settings.useAttenuation = volume.useAttenuation.value;
-            settings.temporalFrameCount = volume.temporalFrameCount.value;
-            settings.temporalRejection = volume.temporalRejection.value;
-            settings.spatialFilter = volume.spatialFilter.value;
-            settings.filterRadius = volume.filterRadius.value;
-            settings.filterAdaptivity = volume.filterAdaptivity.value;
-            settings.boxPassCount = volume.boxPassCount.value;
+            if (volume.quality.overrideState)
+            {
+                settings.quality = volume.quality.value;
+                HoGTAOQualityPresets.Apply(volume.quality.value, settings);
+                lastAppliedQuality = volume.quality.value;
+            }
+            if (volume.resolution.overrideState) settings.resolution = volume.resolution.value;
+            if (volume.worldSpaceRadius.overrideState) settings.worldSpaceRadius = volume.worldSpaceRadius.value;
+            if (volume.screenSpaceRadius.overrideState) settings.screenSpaceRadius = volume.screenSpaceRadius.value;
+            if (volume.thickness.overrideState) settings.thickness = volume.thickness.value;
+            if (volume.sliceCount.overrideState) settings.sliceCount = volume.sliceCount.value;
+            if (volume.stepCount.overrideState) settings.stepCount = volume.stepCount.value;
+            if (volume.useAttenuation.overrideState) settings.useAttenuation = volume.useAttenuation.value;
+            if (volume.temporalFrameCount.overrideState) settings.temporalFrameCount = volume.temporalFrameCount.value;
+            if (volume.temporalRejection.overrideState) settings.temporalRejection = volume.temporalRejection.value;
+            if (volume.spatialFilter.overrideState) settings.spatialFilter = volume.spatialFilter.value;
+            if (volume.filterRadius.overrideState) settings.filterRadius = volume.filterRadius.value;
+            if (volume.filterAdaptivity.overrideState) settings.filterAdaptivity = volume.filterAdaptivity.value;
+            if (volume.boxPassCount.overrideState) settings.boxPassCount = volume.boxPassCount.value;
         }
     }
 
