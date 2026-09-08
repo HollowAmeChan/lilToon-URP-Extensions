@@ -513,7 +513,9 @@ namespace lilToon.URP.Extensions.GTAO
             }
 
             bool debugTemporal = settings.debugMode == HoGTAODebugMode.Temporal;
-            if (settings.debugMode != HoGTAODebugMode.Off && !debugTemporal)
+            bool debugRawGeometry = settings.debugMode == HoGTAODebugMode.Depth
+                || settings.debugMode == HoGTAODebugMode.Normal;
+            if (debugRawGeometry)
             {
                 // Publish the generated AO for the later feature-local debug pass.
                 // The presentation pass must run after opaques/post-processing so
@@ -625,6 +627,15 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.SetGlobalFloat(SpatialResolutionId, passData.resolution);
                     Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 5);
                 });
+            }
+
+            if (settings.debugMode == HoGTAODebugMode.AO)
+            {
+                // HTrace's AO debug view is taken after temporal and spatial
+                // denoising. Keep those passes active so the debug image
+                // converges instead of showing the raw animated march noise.
+                gtao.aoTexture = spatial;
+                return;
             }
 
             gtao.aoTexture = RecordBlit(renderGraph, frameData, spatial, resourceData.activeColorTexture, material, "Ho-GTAO Output");
