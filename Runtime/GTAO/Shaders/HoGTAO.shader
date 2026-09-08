@@ -168,8 +168,42 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             return true;
         }
 
-        float HoGTAOCompute(float2 uv, half4 centerND)
+        float HoGTAOHitVelocity(float2 originUV, float2 hitUV)
         {
+            if (_HoGTAOUseMotionVectors < 0.5)
+            {
+                return 0.0;
+            }
+
+            float2 originMotion = SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, saturate(originUV)).xy;
+            float2 hitMotion = SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, saturate(hitUV)).xy;
+            float originMagnitude = length(originMotion);
+            float hitMagnitude = length(hitMotion);
+            float maximumMagnitude = max(originMagnitude, hitMagnitude);
+            if (maximumMagnitude < 1.0e-6)
+            {
+                return 0.0;
+            }
+
+            float directionAgreement = dot(
+                originMotion / max(originMagnitude, 1.0e-6),
+                hitMotion / max(hitMagnitude, 1.0e-6));
+            float magnitudeDivergence = abs(hitMagnitude - originMagnitude)
+                / max(maximumMagnitude, 1.0e-6);
+            // Match HTrace's UpdateHitVelocity: a hit is unstable when its
+            // motion differs materially from the origin, changes direction,
+            // or has no velocity while the origin is moving.
+            if (magnitudeDivergence > 0.4 || directionAgreement < 0.5 || hitMagnitude < 1.0e-6)
+            {
+                return saturate(maximumMagnitude * 10.0);
+            }
+
+            return 0.0;
+        }
+
+        float HoGTAOCompute(float2 uv, half4 centerND, out float hitVelocity)
+        {
+            hitVelocity = 0.0;
             float centerRawDepth = HoGTAOSampleDepth(saturate(uv), 0.0);
             if (HoGTAOIsFarClip(centerRawDepth))
                 return 0.0;
@@ -239,6 +273,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                     float lod = clamp(log2(max(length(stride * samplingDirection), 1.0)) - 3.0, 0.0, 3.0);
                     if (HoGTAOSample(uv - offset, lod, samplePosition, sampleNormal))
                     {
+                        hitVelocity = max(hitVelocity, HoGTAOHitVelocity(uv, uv - offset));
                         float3 delta = samplePosition - positionVS;
                         float h = dot(delta, viewDirection);
                         float d2 = max(dot(delta, delta), 1.0e-6);
@@ -253,6 +288,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
 
                     if (HoGTAOSample(uv + offset, lod, samplePosition, sampleNormal))
                     {
+                        hitVelocity = max(hitVelocity, HoGTAOHitVelocity(uv, uv + offset));
                         float3 delta = samplePosition - positionVS;
                         float h = dot(delta, viewDirection);
                         float d2 = max(dot(delta, delta), 1.0e-6);
@@ -270,6 +306,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 weightTotal += projectedLength;
             }
 
+            hitVelocity = saturate(hitVelocity) * saturate(_HoGTAOTemporalRejection);
             return 1.0 - saturate(visibility / max(weightTotal, 1.0e-5));
         }
 
@@ -299,8 +336,9 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             // Highest-quality HTrace profile: Visibility Bitmasks. This is the
             // only tracing path that consumes Thickness and preserves thin
             // geometric occlusion bands.
-            half ao = HoGTAOCompute(input.texcoord, nd);
-            return half4(ao, ao, ao, 1.0h);
+            float hitVelocity;
+            half ao = HoGTAOCompute(input.texcoord, nd, hitVelocity);
+            return half4(ao, hitVelocity, 0.0h, 1.0h);
         }
 
         void Temporal(
@@ -309,7 +347,9 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             out half4 normalOutput : SV_Target1)
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
-            half current = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord).r;
+            half4 currentData = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord);
+            half current = currentData.r;
+            float currentVelocity = currentData.g;
             half4 geometry = SAMPLE_TEXTURE2D_X(_HoGTAOGeometryInput, sampler_PointClamp, input.texcoord);
             float currentRawDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferDepthTexture, sampler_PointClamp, input.texcoord).r;
             bool currentSurfaceValid = !HoGTAOIsFarClip(currentRawDepth);
@@ -351,6 +391,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 float2(0.0, 0.0), float2(1.0, 0.0), float2(0.0, 1.0), float2(1.0, 1.0)
             };
             float previousAccumulated = 0.0;
+            float previousVelocityAccumulated = 0.0;
             float previousCountAccumulated = 0.0;
             float3 previousNormalAccumulated = 0.0;
             float historyWeightSum = 0.0;
@@ -383,7 +424,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                     : 0.0;
                 float tapWeight = historyWeights[historyTap] * validDepth;
                 previousAccumulated += historyData.r * tapWeight;
-                previousCountAccumulated += historyData.g * max(_HoGTAOTemporalMaxFrames, 1.0) * tapWeight;
+                previousVelocityAccumulated += historyData.g * tapWeight;
+                previousCountAccumulated += historyData.b * max(_HoGTAOTemporalMaxFrames, 1.0) * tapWeight;
                 previousNormalAccumulated += ((float3)normalData.gba * 2.0 - 1.0) * tapWeight;
                 historyWeightSum += tapWeight;
             }
@@ -409,11 +451,15 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                         * step(0.5, dot(currentNormalWS, normalize((float3)fallbackNormalData.gba * 2.0 - 1.0)))
                     : 0.0;
                 previousAccumulated = fallbackData.r * fallbackValid;
-                previousCountAccumulated = fallbackData.g * max(_HoGTAOTemporalMaxFrames, 1.0) * fallbackValid;
+                previousVelocityAccumulated = fallbackData.g * fallbackValid;
+                previousCountAccumulated = fallbackData.b * max(_HoGTAOTemporalMaxFrames, 1.0) * fallbackValid;
                 previousNormalAccumulated = ((float3)fallbackNormalData.gba * 2.0 - 1.0) * fallbackValid;
                 historyWeightSum = fallbackValid;
             }
             half previous = historyWeightSum > 1.0e-5 ? previousAccumulated / historyWeightSum : 0.0h;
+            half previousVelocity = historyWeightSum > 1.0e-5
+                ? previousVelocityAccumulated / historyWeightSum
+                : 0.0h;
             half previousCount = historyWeightSum > 1.0e-5 ? previousCountAccumulated / historyWeightSum : 0.0h;
             float3 currentNormal = normalize((float3)geometry.rgb * 2.0 - 1.0);
             float3 previousNormal = historyWeightSum > 1.0e-5
@@ -436,6 +482,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             half accepted = saturate(_HoGTAOHistoryValid) * depthValid * depthAgreement * normalAgreement;
             half sampleCount = min(previousCount + 1.0h, max(_HoGTAOTemporalMaxFrames, 1.0));
             sampleCount = lerp(1.0h, sampleCount, accepted);
+            float temporalWeight = 1.0 - rcp(max((float)sampleCount, 1.0));
+            float velocityAccumulated = lerp(currentVelocity, previousVelocity, temporalWeight * 0.5);
 
             // HTrace history clamp: use a small Gaussian neighborhood of the
             // current trace to reject stale reprojected values before blending.
@@ -460,12 +508,14 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             float mean = moment / max(momentWeight, 1.0e-5);
             float variance = max(0.0, moment2 / max(momentWeight, 1.0e-5) - mean * mean);
             float stdDev = sqrt(variance);
-            float clampWeight = saturate(1.0 - _HoGTAOTemporalRejection);
+            float clampWeight = _HoGTAOUseMotionVectors > 0.5
+                ? saturate(pow(max(1.0 - velocityAccumulated, 1.0e-6), 10.0))
+                : saturate(1.0 - _HoGTAOTemporalRejection);
             float clampMultiplier = lerp(2.0, 5.0, clampWeight);
             float clampMin = current - stdDev * 0.5 * clampMultiplier;
             float clampMax = current + stdDev * 0.5 * clampMultiplier;
             previous = clamp(previous, clampMin, clampMax);
-            half historyWeight = accepted * (1.0h - rcp(max(sampleCount, 1.0h)));
+            half historyWeight = accepted * (half)temporalWeight;
             if (_HoGTAODebugMode > 4.5)
             {
                 // Stable history is a grayscale sample-age signal; rejected
@@ -478,7 +528,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 return;
             }
             half ao = lerp(current, previous, historyWeight);
-            historyOutput = half4(ao, sampleCount / max(_HoGTAOTemporalMaxFrames, 1.0h), 0.0h, 0.0h);
+            historyOutput = half4(ao, velocityAccumulated, sampleCount / max(_HoGTAOTemporalMaxFrames, 1.0h), 0.0h);
             normalOutput = half4(ao, currentNormal * 0.5h + 0.5h);
         }
 

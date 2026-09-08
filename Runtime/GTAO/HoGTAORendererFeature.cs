@@ -169,7 +169,10 @@ namespace lilToon.URP.Extensions.GTAO
         {
             RenderTextureDescriptor descriptor = new RenderTextureDescriptor(width, height)
             {
-                graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm,
+                // HTrace keeps AO and hit velocity in a floating-point history
+                // buffer. The sample count is normalized into B; normals are
+                // carried by the separate normal history below.
+                graphicsFormat = GraphicsFormat.R16G16B16A16_SFloat,
                 depthBufferBits = 0,
                 msaaSamples = 1,
                 useMipMap = false,
@@ -350,6 +353,7 @@ namespace lilToon.URP.Extensions.GTAO
         {
             public Material material;
             public TextureHandle normalDepth;
+            public TextureHandle motionVectors;
             public TextureHandle output;
             public int debugMode;
             public float worldRadius;
@@ -516,6 +520,7 @@ namespace lilToon.URP.Extensions.GTAO
             {
                 data.material = material;
                 data.normalDepth = geometry.normalDepthTexture;
+                data.motionVectors = resourceData.motionVectorColor;
                 data.output = current;
                 data.debugMode = (int)settings.debugMode;
                 data.worldRadius = settings.worldSpaceRadius;
@@ -542,6 +547,10 @@ namespace lilToon.URP.Extensions.GTAO
                 data.depthToViewParams = new Vector4(2.0f * halfWidth, 2.0f * halfHeight, -halfWidth, -halfHeight);
                 data.orthographic = cameraData.camera.orthographic ? 1.0f : 0.0f;
                 builder.UseTexture(data.normalDepth, AccessFlags.Read);
+                if (data.motionVectors.IsValid())
+                {
+                    builder.UseTexture(data.motionVectors, AccessFlags.Read);
+                }
                 builder.UseTexture(data.depthMip0, AccessFlags.Read);
                 builder.UseTexture(data.depthMip1, AccessFlags.Read);
                 builder.UseTexture(data.depthMip2, AccessFlags.Read);
@@ -565,6 +574,11 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.SetGlobalMatrix(InvProjMatrixId, passData.invProj);
                     context.cmd.SetGlobalVector(DepthToViewParamsId, passData.depthToViewParams);
                     context.cmd.SetGlobalFloat(OrthographicId, passData.orthographic);
+                    context.cmd.SetGlobalFloat(UseMotionVectorsId, passData.motionVectors.IsValid() ? 1.0f : 0.0f);
+                    if (passData.motionVectors.IsValid())
+                    {
+                        context.cmd.SetGlobalTexture(MotionVectorTextureId, passData.motionVectors);
+                    }
                     context.cmd.SetGlobalTexture(DepthMip0Id, passData.depthMip0);
                     context.cmd.SetGlobalTexture(DepthMip1Id, passData.depthMip1);
                     context.cmd.SetGlobalTexture(DepthMip2Id, passData.depthMip2);
