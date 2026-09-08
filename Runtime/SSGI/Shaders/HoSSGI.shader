@@ -786,6 +786,54 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return float4(resolved, confidence);
         }
 
+        float4 BilateralDenoise(Varyings input) : SV_Target
+        {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+            float2 uv = input.texcoord;
+            half4 centerGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, uv);
+            half4 center = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_LinearClamp, uv);
+            if (centerGeometry.a < 0.0001h)
+                return 0;
+
+            float3 centerNormal = normalize((float3)centerGeometry.rgb * 2.0 - 1.0);
+            float centerDepth = centerGeometry.a;
+            float2 texel = rcp(max(_ScreenParams.xy, 1.0)) * max(_HoSSGISpatialRadius * 0.5, 0.5);
+            float3 centerToneMapped = center.rgb / (1.0 + HoSSGILuminance(center.rgb));
+            float3 sum = centerToneMapped;
+            float confidence = center.a;
+            float weightSum = 1.0;
+
+            [unroll]
+            for (int y = -2; y <= 2; y++)
+            {
+                [unroll]
+                for (int x = -2; x <= 2; x++)
+                {
+                    if (x == 0 && y == 0) continue;
+                    float2 offset = float2(x, y);
+                    float2 tapUV = uv + offset * texel;
+                    if (any(tapUV < 0.0) || any(tapUV > 1.0)) continue;
+                    half4 tapGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, tapUV);
+                    if (tapGeometry.a < 0.0001h) continue;
+                    float depthDelta = abs(tapGeometry.a - centerDepth) / max(centerDepth, 0.05);
+                    float normalWeight = saturate((dot(centerNormal, normalize((float3)tapGeometry.rgb * 2.0 - 1.0)) - 0.25) * 1.3333);
+                    float depthWeight = exp2(-28.0 * depthDelta * depthDelta);
+                    float gaussianWeight = exp2(-0.55 * dot(offset, offset));
+                    float tapWeight = normalWeight * depthWeight * gaussianWeight;
+                    if (tapWeight <= 0.001) continue;
+                    half4 tap = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_LinearClamp, tapUV);
+                    sum += (tap.rgb / (1.0 + HoSSGILuminance(tap.rgb))) * tapWeight;
+                    confidence += tap.a * tapWeight;
+                    weightSum += tapWeight;
+                }
+            }
+
+            float3 filteredToneMapped = sum / max(weightSum, 1.0e-5);
+            float filteredLuminance = HoSSGILuminance(filteredToneMapped);
+            float3 filtered = filteredToneMapped / max(1.0 - filteredLuminance, 0.05);
+            return float4(max(filtered, 0.0), saturate(confidence / max(weightSum, 1.0e-5)));
+        }
+
         HoSSGITraceOutput Frag(Varyings input) { return Trace(input); }
 
         float4 Composite(Varyings input) : SV_Target
@@ -850,6 +898,15 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Firefly
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Ho-SSGI Bilateral Denoise"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment BilateralDenoise
             ENDHLSL
         }
     }

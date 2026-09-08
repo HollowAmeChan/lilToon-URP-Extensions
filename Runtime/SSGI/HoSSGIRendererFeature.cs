@@ -328,6 +328,15 @@ namespace lilToon.URP.Extensions.SSGI
             public bool enabled;
         }
 
+        private sealed class BilateralPassData
+        {
+            public Material material;
+            public TextureHandle source;
+            public TextureHandle geometry;
+            public TextureHandle output;
+            public float radius;
+        }
+
         private HoSSGISettings settings;
         private Material material;
         private HoSSGIHistory history;
@@ -588,7 +597,31 @@ namespace lilToon.URP.Extensions.SSGI
                     Blitter.BlitTexture(context.cmd, passData.reservoirColor, new Vector4(1, 1, 0, 0), passData.material, 4);
                 });
             }
-            resources.giTexture = filtered;
+            TextureDesc bilateralDesc = outputDesc;
+            bilateralDesc.name = "_HoSSGIBilateralDenoise";
+            TextureHandle denoised = renderGraph.CreateTexture(bilateralDesc);
+            using (var builder = renderGraph.AddRasterRenderPass<BilateralPassData>("Ho-SSGI Bilateral Denoise", out BilateralPassData data, new ProfilingSampler("Ho-SSGI Bilateral Denoise")))
+            {
+                data.material = material;
+                data.source = filtered;
+                data.geometry = geometry.normalDepthTexture;
+                data.output = denoised;
+                data.radius = Mathf.Clamp(settings.spatialRadius, 0.5f, 8.0f);
+                builder.UseTexture(data.source, AccessFlags.Read);
+                builder.UseTexture(data.geometry, AccessFlags.Read);
+                builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
+                builder.SetGlobalTextureAfterPass(data.output, HoSSGIShaderConstants.GITextureId);
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (BilateralPassData passData, RasterGraphContext context) =>
+                {
+                    passData.material.SetFloat(HoSSGIShaderConstants.SpatialRadiusId, passData.radius);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.source);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
+                    Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 6);
+                });
+            }
+            resources.giTexture = denoised;
             resources.reservoirColorTexture = fireflyReservoirColor;
             resources.reservoirAuxTexture = fireflyReservoirAux;
         }
