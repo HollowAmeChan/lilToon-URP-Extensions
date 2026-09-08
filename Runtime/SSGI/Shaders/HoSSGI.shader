@@ -193,12 +193,15 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv + texel * float2( 0.5, -0.5)).r,
                 SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv + texel * float2(-0.5,  0.5)).r,
                 SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv + texel * float2( 0.5,  0.5)).r);
-            float reducedDepth = 1.0e20;
-            reducedDepth = depths.x > 0.0001 ? min(reducedDepth, depths.x) : reducedDepth;
-            reducedDepth = depths.y > 0.0001 ? min(reducedDepth, depths.y) : reducedDepth;
-            reducedDepth = depths.z > 0.0001 ? min(reducedDepth, depths.z) : reducedDepth;
-            reducedDepth = depths.w > 0.0001 ? min(reducedDepth, depths.w) : reducedDepth;
-            return float4(reducedDepth < 1.0e19 ? reducedDepth : 0.0, 0.0, 0.0, 1.0);
+            // Linear eye depth has the opposite ordering of HTrace's reversed-Z
+            // pyramid. Keep the farthest valid surface in the footprint so a
+            // coarse sample cannot report a nearer surface as an early hit.
+            float reducedDepth = 0.0;
+            if (depths.x > 0.0001) reducedDepth = max(reducedDepth, depths.x);
+            if (depths.y > 0.0001) reducedDepth = max(reducedDepth, depths.y);
+            if (depths.z > 0.0001) reducedDepth = max(reducedDepth, depths.z);
+            if (depths.w > 0.0001) reducedDepth = max(reducedDepth, depths.w);
+            return float4(reducedDepth, 0.0, 0.0, 1.0);
         }
 
         float HoSSGIReservoirRandom(float2 pixel, float salt)
@@ -569,18 +572,17 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 // Match HTrace's footprint-aware normal bias to avoid self hits
                 // without requiring an excessively large thickness value.
                 float2 screenTexel = rcp(max(_ScreenParams.xy, 1.0));
-                float3 cornerPositionWS = HoSSGIWorldPosition(uv + screenTexel * 0.5, center.a);
+                float3 cornerPositionWS = HoSSGIWorldPosition(saturate(uv + screenTexel * 0.5), center.a);
                 float normalBias = abs(dot(cornerPositionWS - centerPositionWS, centerNormalWS)) * 2.0;
                 float3 normalForBias = dot(centerNormalWS, rayDirWS) < 0.0 ? -centerNormalWS : centerNormalWS;
                 float3 rayStartWS = centerPositionWS + normalForBias * max(normalBias, 0.01) + rayDirWS * 0.01;
                 float3 rayEndWS = centerPositionWS + rayDirWS * _HoSSGIRayLength;
                 float3 startNDC = ComputeNormalizedDeviceCoordinatesWithZ(rayStartWS, UNITY_MATRIX_VP);
                 float3 endNDC = ComputeNormalizedDeviceCoordinatesWithZ(rayEndWS, UNITY_MATRIX_VP);
-                float2 screenDelta = endNDC.xy - startNDC.xy;
                 float3 candidateColor = 0.0;
                 float candidateDistance = 0.0;
                 float candidateHit = 0.0;
-                if (dot(screenDelta, screenDelta) < 1.0e-8 || startNDC.z < 0.0 || startNDC.z > 1.0)
+                if (startNDC.z < 0.0 || startNDC.z > 1.0)
                 {
                     reservoir.m += 1.0;
                     continue;
@@ -643,7 +645,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                         float3 source = SAMPLE_TEXTURE2D_X(_HoSSGISource, sampler_PointClamp, sampleUV).rgb;
                         float3 sampleNormalWS = normalize((float3)sampleGeometry.rgb * 2.0 - 1.0);
                         float hitTolerance = max(thickness, max(sampleDepth * 0.02, 0.01));
-                        bool depthValid = abs(depthDelta) <= hitTolerance * 2.0;
+                        bool depthValid = abs(exactDelta) <= hitTolerance * 2.0;
                         bool frontFace = dot(sampleNormalWS, rayDirWS) <= 0.0;
                         if (!depthValid || !frontFace)
                         {
@@ -723,7 +725,6 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             HoSSGIReservoir merged = currentReservoir;
             float currentConfidence = saturate(current.a);
             float historyConfidenceSum = 0.0;
-            float historyM = 0.0;
 
             float2 previousUVUnclamped = uv - motion;
             bool historyUVValid = previousUVUnclamped.x >= 0.0 && previousUVUnclamped.x <= 1.0
@@ -769,11 +770,12 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     }
                     half accepted = depthAgreement * normalAgreement * planeAgreement * currentNormalValid * previousNormalValid
                         * step(0.0001h, previousDepth);
-                    float currentLum = HoSSGILuminance(current.rgb);
-                    float historyLum = HoSSGILuminance(history.rgb);
-                    float lightingChange = abs(currentLum - historyLum) / max(currentLum + historyLum, 0.001);
-                    float historyScale = _HoSSGITemporalBlend * tapWeight * accepted
-                        * saturate(1.0 - lightingChange * 2.0) * saturate(history.a);
+                    // Reservoir history is accepted by geometry and selected
+                    // ray/light validation below. Confidence is a producer
+                    // diagnostic (hit ratio), not a history validity weight;
+                    // using it here prevents low-hit surfaces from ever
+                    // accumulating toward a stable estimate.
+                    float historyScale = _HoSSGITemporalBlend * tapWeight * accepted;
                     if (historyScale <= 0.0) continue;
 
                     HoSSGIReservoir historyReservoir = HoSSGILoadHistoryReservoir(tapUV);
@@ -790,7 +792,6 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                         historyReservoir.m *= validation;
                         tapM = historyReservoir.m;
                     }
-                    historyM += tapM;
                     historyConfidenceSum += saturate(history.a) * tapM;
                     HoSSGIReservoirMerge(merged, historyReservoir,
                         HoSSGIReservoirRandom(uv * _ScreenParams.xy, (float)(historyTap + 17)));
@@ -830,32 +831,65 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             if (geometry.a < 0.0001h)
                 return output;
 
-            float previousCount = SAMPLE_TEXTURE2D_X(_HoSSGISampleCountHistory, sampler_PointClamp, uv).r;
-            float2 previousInvalidity = SAMPLE_TEXTURE2D_X(_HoSSGIInvalidityHistory, sampler_PointClamp, uv).rg;
             float2 motion = _HoSSGIUseMotion > 0.5
                 ? SAMPLE_TEXTURE2D_X(_HoSSGIMotionVectors, sampler_LinearClamp, uv).xy
                 : float2(0.0, 0.0);
             float2 previousUV = uv - motion;
             float accepted = 0.0;
+            float previousCount = 0.0;
+            float2 previousInvalidity = 0.0;
+            float metadataWeight = 0.0;
             if (_HoSSGIHistoryValid > 0.5 && all(previousUV >= 0.0) && all(previousUV <= 1.0))
             {
-                half4 previousGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIHistoryDepth, sampler_PointClamp, previousUV);
-                float depthAgreement = step(abs(geometry.a - previousGeometry.a), max(0.08 * geometry.a, 0.05));
-                float3 normal = normalize((float3)geometry.rgb * 2.0 - 1.0);
-                float3 previousNormal = normalize((float3)previousGeometry.rgb * 2.0 - 1.0);
-                float normalAgreement = step(0.5, dot(normal, previousNormal));
-                float planeAgreement = 1.0;
-                if (_HoSSGIPreviousMatrixValid > 0.5)
+                float2 previousPixel = previousUV * _ScreenParams.xy - 0.5;
+                float2 previousBasePixel = floor(previousPixel);
+                float2 previousFraction = frac(previousPixel);
+                const float2 metadataOffsets[4] =
                 {
-                    float3 currentPositionWS = HoSSGIWorldPosition(uv, geometry.a);
-                    float3 previousPositionWS = HoSSGIPreviousWorldPosition(previousUV, previousGeometry.a);
-                    planeAgreement = step(abs(dot(previousPositionWS - currentPositionWS, normal)), max(0.08 * geometry.a, 0.05));
+                    float2(0.0, 0.0), float2(1.0, 0.0),
+                    float2(0.0, 1.0), float2(1.0, 1.0)
+                };
+                float4 metadataWeights = float4(
+                    (1.0 - previousFraction.x) * (1.0 - previousFraction.y),
+                    previousFraction.x * (1.0 - previousFraction.y),
+                    (1.0 - previousFraction.x) * previousFraction.y,
+                    previousFraction.x * previousFraction.y);
+                float3 normal = normalize((float3)geometry.rgb * 2.0 - 1.0);
+                float3 currentPositionWS = HoSSGIWorldPosition(uv, geometry.a);
+                [unroll]
+                for (int metadataTap = 0; metadataTap < 4; metadataTap++)
+                {
+                    float2 tapUV = (previousBasePixel + metadataOffsets[metadataTap] + 0.5)
+                        / max(_ScreenParams.xy, 1.0);
+                    float tapWeight = metadataWeights[metadataTap];
+                    if (tapWeight <= 1.0e-4 || any(tapUV < 0.0) || any(tapUV > 1.0)) continue;
+                    half4 previousGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIHistoryDepth, sampler_PointClamp, tapUV);
+                    float depthAgreement = step(abs(geometry.a - previousGeometry.a), max(0.08 * geometry.a, 0.05));
+                    float3 previousNormal = normalize((float3)previousGeometry.rgb * 2.0 - 1.0);
+                    float normalAgreement = step(0.5, dot(normal, previousNormal));
+                    float planeAgreement = 1.0;
+                    if (_HoSSGIPreviousMatrixValid > 0.5)
+                    {
+                        float3 previousPositionWS = HoSSGIPreviousWorldPosition(tapUV, previousGeometry.a);
+                        planeAgreement = step(abs(dot(previousPositionWS - currentPositionWS, normal)), max(0.08 * geometry.a, 0.05));
+                    }
+                    float tapAccepted = tapWeight * depthAgreement * normalAgreement * planeAgreement
+                        * step(0.0001, previousGeometry.a);
+                    if (tapAccepted <= 0.0) continue;
+                    previousCount += SAMPLE_TEXTURE2D_X(_HoSSGISampleCountHistory, sampler_PointClamp, tapUV).r * tapAccepted;
+                    previousInvalidity += SAMPLE_TEXTURE2D_X(_HoSSGIInvalidityHistory, sampler_PointClamp, tapUV).rg * tapAccepted;
+                    metadataWeight += tapAccepted;
                 }
-                accepted = depthAgreement * normalAgreement * planeAgreement * step(0.0001, previousGeometry.a);
+                if (metadataWeight > 1.0e-4)
+                {
+                    previousCount /= metadataWeight;
+                    previousInvalidity /= metadataWeight;
+                    accepted = saturate(metadataWeight);
+                }
             }
 
             float sampleCount = accepted > 0.5 ? min(previousCount + 1.0, 16.0) : 1.0;
-            float temporalInvalidity = accepted > 0.5 ? max(previousInvalidity.x, 0.0) : 0.0;
+            float temporalInvalidity = accepted > 0.5 ? saturate(previousInvalidity.x) : 0.0;
             output.sampleCount = float4(sampleCount, 0.0, 0.0, 1.0);
             output.invalidity = float4(temporalInvalidity, accepted, 0.0, 1.0);
             return output;
@@ -969,9 +1003,10 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 if (sampleNDC.z < 0.0 || sampleNDC.z > 1.0 || any(tapUV < 0.0) || any(tapUV > 1.0)) continue;
                 half4 tapGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, tapUV);
                 if (tapGeometry.a < 0.0001h) continue;
+                float3 tapPositionWS = HoSSGIWorldPosition(tapUV, tapGeometry.a);
                 float depthDelta = abs(tapGeometry.a - centerDepth) / max(centerDepth, 0.05);
                 float3 sampleNormal = normalize((float3)tapGeometry.rgb * 2.0 - 1.0);
-                float planeDistance = abs(dot(samplePositionWS - centerPositionWS, centerNormal));
+                float planeDistance = abs(dot(tapPositionWS - centerPositionWS, centerNormal));
                 float planeDistanceNormalized = planeDistance / max(centerDepth, 0.05);
                 float planeWeight = exp2(-100.0 * planeDistanceNormalized * planeDistanceNormalized);
                 float normalWeight = saturate(dot(centerNormal, sampleNormal));
