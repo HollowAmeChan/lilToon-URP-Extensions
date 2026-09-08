@@ -263,6 +263,8 @@ Ho-SSGI / Ho-GTAO / Ho-DI
 
 当前源码审计补充见 [Ho-GTAO / Ho-SSGI ReSTIR 共享层评估](LILTOON_RESTIR_SHARED_LAYER_REPORT.md)。需要特别区分：当前 Ho-GTAO 只有 temporal AO history 和 spatial bilateral filter，没有 ReSTIR reservoir；第一阶段只继续完善 Ho-SSGI 的 GI reservoir，不为 GTAO 增加抽象层。
 
+具体阶段对齐、验收用例和 A/B 开关记录在 [Ho-SSGI / HTrace ReSTIR 对齐工作表](LILTOON_SSGI_RESTIR_ALIGNMENT_WORKSHEET.md)。后续 ReSTIR 改动先更新工作表，再进入实现。
+
 ## 2. Ho-SSGI v1 的核心设计
 
 ### 2.1 复用输入
