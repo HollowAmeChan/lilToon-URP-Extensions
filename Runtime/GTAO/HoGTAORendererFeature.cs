@@ -611,43 +611,52 @@ namespace lilToon.URP.Extensions.GTAO
                 return;
             }
 
-            TextureDesc spatialDesc = new TextureDesc(width, height)
+            int spatialPassCount = settings.spatialFilter == HoGTAOSpatialFilter.Box
+                ? Mathf.Clamp(settings.boxPassCount, 1, 3)
+                : 1;
+            TextureHandle spatialSource = next;
+            TextureHandle spatial = TextureHandle.nullHandle;
+            for (int spatialPass = 0; spatialPass < spatialPassCount; spatialPass++)
             {
-                name = "_HoGTAOSpatialTex",
-                format = GraphicsFormat.R8G8B8A8_UNorm,
-                depthBufferBits = 0,
-                filterMode = FilterMode.Point,
-                wrapMode = TextureWrapMode.Clamp
-            };
-            TextureHandle spatial = renderGraph.CreateTexture(spatialDesc);
-            using (var builder = renderGraph.AddRasterRenderPass<SpatialData>("Ho-GTAO Spatial", out SpatialData data, ProfilingSampler))
-            {
-                data.material = material;
-                data.source = next;
-                data.geometry = geometry.normalDepthTexture;
-                data.destination = spatial;
-                data.radius = settings.filterRadius;
-                data.adaptivity = settings.filterAdaptivity;
-                data.resolution = 1.0f;
-                data.filterType = (int)settings.spatialFilter;
-                data.step = settings.spatialFilter == HoGTAOSpatialFilter.Box
-                    ? (settings.boxPassCount >= 3 ? 4.0f : settings.boxPassCount == 2 ? 2.0f : 1.0f)
-                    : 1.0f;
-                builder.UseTexture(data.source, AccessFlags.Read);
-                builder.UseTexture(data.geometry, AccessFlags.Read);
-                builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
-                builder.AllowGlobalStateModification(true);
-                builder.AllowPassCulling(false);
-                builder.SetRenderFunc(static (SpatialData passData, RasterGraphContext context) =>
+                TextureDesc spatialDesc = new TextureDesc(width, height)
                 {
-                    context.cmd.SetGlobalTexture(GeometryInputId, passData.geometry);
-                    context.cmd.SetGlobalFloat(SpatialRadiusId, passData.radius);
-                    context.cmd.SetGlobalFloat(SpatialAdaptivityId, passData.adaptivity);
-                    context.cmd.SetGlobalFloat(SpatialResolutionId, passData.resolution);
-                    context.cmd.SetGlobalFloat(SpatialFilterId, passData.filterType);
-                    context.cmd.SetGlobalFloat(SpatialStepId, passData.step);
-                    Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 5);
-                });
+                    name = "_HoGTAOSpatialTex" + spatialPass,
+                    format = GraphicsFormat.R8G8B8A8_UNorm,
+                    depthBufferBits = 0,
+                    filterMode = FilterMode.Point,
+                    wrapMode = TextureWrapMode.Clamp
+                };
+                spatial = renderGraph.CreateTexture(spatialDesc);
+                using (var builder = renderGraph.AddRasterRenderPass<SpatialData>("Ho-GTAO Spatial " + spatialPass, out SpatialData data, ProfilingSampler))
+                {
+                    data.material = material;
+                    data.source = spatialSource;
+                    data.geometry = geometry.normalDepthTexture;
+                    data.destination = spatial;
+                    data.radius = settings.filterRadius;
+                    data.adaptivity = settings.filterAdaptivity;
+                    data.resolution = 1.0f;
+                    data.filterType = (int)settings.spatialFilter;
+                    data.step = settings.spatialFilter == HoGTAOSpatialFilter.Box
+                        ? (spatialPass == 0 ? (settings.boxPassCount >= 3 ? 4.0f : settings.boxPassCount == 2 ? 2.0f : 1.0f) : spatialPass == 1 ? 2.0f : 1.0f)
+                        : 1.0f;
+                    builder.UseTexture(data.source, AccessFlags.Read);
+                    builder.UseTexture(data.geometry, AccessFlags.Read);
+                    builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
+                    builder.AllowGlobalStateModification(true);
+                    builder.AllowPassCulling(false);
+                    builder.SetRenderFunc(static (SpatialData passData, RasterGraphContext context) =>
+                    {
+                        context.cmd.SetGlobalTexture(GeometryInputId, passData.geometry);
+                        context.cmd.SetGlobalFloat(SpatialRadiusId, passData.radius);
+                        context.cmd.SetGlobalFloat(SpatialAdaptivityId, passData.adaptivity);
+                        context.cmd.SetGlobalFloat(SpatialResolutionId, passData.resolution);
+                        context.cmd.SetGlobalFloat(SpatialFilterId, passData.filterType);
+                        context.cmd.SetGlobalFloat(SpatialStepId, passData.step);
+                        Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 5);
+                    });
+                }
+                spatialSource = spatial;
             }
 
             if (settings.debugMode == HoGTAODebugMode.AO)

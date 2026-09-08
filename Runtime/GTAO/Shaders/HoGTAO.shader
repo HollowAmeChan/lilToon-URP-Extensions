@@ -460,6 +460,9 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 * (_HoGTAOSpatialFilter > 0.5 ? max(_HoGTAOSpatialStep, 1.0) : max(_HoGTAOSpatialRadius, 0.5));
             float3 centerNormal = normalize((float3)centerND.rgb * 2.0 - 1.0);
             float centerDepth = centerND.a;
+            float3 centerPositionVS = HoGTAOViewPosition(uv, centerDepth);
+            float3 centerNormalVS = normalize(mul((float3x3)_HoGTAOViewMatrix, centerNormal));
+            centerNormalVS *= float3(1.0, -1.0, -1.0);
             float depthScale = lerp(0.35, 1.0, saturate(1.0 - centerAO) * saturate(_HoGTAOSpatialAdaptivity));
             float sum = centerAO;
             float weightSum = 1.0;
@@ -480,8 +483,15 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 }
 
                 float depthDelta = abs(sampleND.a - centerDepth) / max(centerDepth, 0.05);
-                float normalWeight = saturate((dot(centerNormal, normalize((float3)sampleND.rgb * 2.0 - 1.0)) - 0.5) * 2.0);
-                float depthWeight = exp2(-48.0 * depthDelta * depthDelta / max(depthScale, 0.05));
+                float3 sampleNormal = normalize((float3)sampleND.rgb * 2.0 - 1.0);
+                float3 samplePositionVS = HoGTAOViewPosition(sampleUV, sampleND.a);
+                float planeDistance = abs(dot(samplePositionVS - centerPositionVS, centerNormalVS)) / max(centerDepth, 0.05);
+                float normalWeight = _HoGTAOSpatialFilter > 0.5
+                    ? step(0.85, dot(centerNormal, sampleNormal))
+                    : saturate((dot(centerNormal, sampleNormal) - 0.5) * 2.0);
+                float depthWeight = _HoGTAOSpatialFilter > 0.5
+                    ? exp2(-100.0 * planeDistance * planeDistance)
+                    : exp2(-48.0 * depthDelta * depthDelta / max(depthScale, 0.05));
                 float tapDistance = dot(taps[i], taps[i]);
                 float spatialWeight = _HoGTAOSpatialFilter > 0.5
                     ? (tapDistance <= 1.01 ? 1.0 : 0.5)
