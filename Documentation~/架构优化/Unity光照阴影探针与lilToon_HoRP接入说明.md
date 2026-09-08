@@ -615,7 +615,7 @@ Ho-ShadowCast 通过 RenderGraph 创建 atlas，再调用 `SetGlobalTextureAfter
 | Directional Lightmap | 有 `lilGetLightMapDirection` 函数 | 后续 `#undef LIL_USE_DIRLIGHTMAP` | **源码存在，最终路径可疑/默认关闭** | 明确是否要恢复方向性烘焙 |
 | 传统 Light Probe / SH | `lilShadeSH9`、`unity_SH*` | 标准 forward 使用 SH | **实际支持** | 绑定动态角色并检查 `indLightColor` |
 | LPPV | `lilShadeSH9LPPV`、`LIL_USE_LPPV` | `LIL_LPPV_MODE` 默认 0 | **源码支持，默认不启用** | 只作为旧方案保留，不作为 Unity 6 主方案 |
-| APV L1/L2 | `SampleAPV`、`PROBE_VOLUMES_L1/L2` | 所有 URP `.lilblock` 都有 `lil_skip_variants_probevolumes`；Importer 因此不加入 `ProbeVolumeVariants.hlsl` | **当前生成材质默认不支持 APV 变体** | 移除/条件化 skip，重新生成 Shader 并验收 |
+| APV L1/L2 | `SampleAPV`、`PROBE_VOLUMES_L1/L2` | `LIL_OPTIMIZE_USE_PROBEVOLUMES=true` 时，Importer 绕过模板 skip 并加入 `ProbeVolumeVariants.hlsl` | **已支持，可由全局 Shader Setting 控制；朱木古堂当前已打开** | 仍需完成 APV 组件、Baking Set、烘焙和画面验收 |
 | 单 Reflection Probe | `UnityGI_IndirectSpecular` / `GlossyEnvironmentReflection` | 标准 Default 生成 Reflection Probe 相关路径 | **实际支持** | 检查 Renderer Reflection Probes 设置 |
 | Reflection Probe blending | `UNITY_SPECCUBE_BLENDING` 路径 | Default 保留；Lite 显式 skip reflections | **Default 支持，Lite 不支持完整混合** | 反射关键材质不要使用 Lite，或恢复变体 |
 | Reflection Probe box projection | `UNITY_SPECCUBE_BOX_PROJECTION` 路径 | Default 保留；Lite 显式 skip reflections | **Default 支持，Lite 关闭** | 室内反射优先使用 Default + Box Projection |
@@ -699,7 +699,7 @@ lilToon：D:\Unity_Fork\lilToon\Assets\lilToon
 |---|---|---|
 | 光照数据资产 | `m_LightingDataAsset` 为默认空引用 | 当前场景没有已绑定的烘焙 LightingDataAsset |
 | Lightmap Shader 变体 | lilToon 输出明确 skip | 即使 Renderer/材质存在 Lightmapping 标志，也不会进入 Lightmap 采样路径 |
-| Light Probe System | `m_LightProbeSystem: 0` | URP17 枚举中 `0 = LegacyLightProbes`；场景本身没有 APV 组件 |
+| Light Probe System | `m_LightProbeSystem: 1` | URP17 枚举中 `1 = Adaptive Probe Volumes`；场景仍需有效 APV 组件/烘焙数据 |
 | APV 组件/数据 | 场景未发现 Adaptive Probe Volume/Probe Volume 组件 | 当前画面不构成 APV 实证 |
 | Reflection Probe | `New Scene.unity` 未发现 ReflectionProbe 组件 | 当前画面不构成局部 Reflection Probe 实证，只能验证 Shader 变体存在 |
 | URP depth | `PC_RPAsset.m_RequireDepthTexture: 1` | `_CameraDepthTexture`/Ho Geometry 相关消费有基础条件 |
@@ -737,7 +737,7 @@ LIL_FEATURE_*Map / *Mask / *ColorTex
 
 所以当前工程的真实结论是：
 
-> 标准 lilToon 的 toon/反射/ShadowCaster/HoRP Pass 功能宏很完整，但当前项目编译设置主动裁掉了所有 Lightmap 变体；APV 变体也没有生成。
+> 标准 lilToon 的 toon/反射/ShadowCaster/HoRP Pass 功能宏很完整；当前项目仍主动裁掉 Lightmap 变体，但已通过 `LIL_OPTIMIZE_USE_PROBEVOLUMES=true` 生成 APV 变体。
 
 ### 3.10 为什么 lilToon 默认关闭 Lightmap
 
@@ -1081,7 +1081,7 @@ MotionVectors
 | `LIL_OPTIMIZE_USE_VERTEXLIGHT` | `true` | 保留 Vertex Light 相关输入/分支 |
 | `LIL_OPTIMIZE_USE_LIGHTMAP` | `false` | 生成结果跳过 Lightmap、Dynamic Lightmap、Shadowmask、Directional Lightmap variants |
 | `LIL_OPTIMIZE_DEFFERED` | `false` | 不把当前主线当作 Deferred-only 输出 |
-| `m_LightProbeSystem` | `0` | 项目没有切到 APV 系统 |
+| `m_LightProbeSystem` | `1` | 项目已切到 APV 系统；仍需 APV 组件和烘焙数据 |
 | `m_RequireDepthTexture` | `1` | Camera Depth / Ho Geometry 使用有基础条件 |
 | `m_RequireOpaqueTexture` | `1` | Refraction 使用 Camera Opaque 有基础条件 |
 
@@ -1099,7 +1099,7 @@ MotionVectors
 | Additional Light Shadows | 是 | Standard 保留 | 是否有实际 atlas/灯光阴影取决于灯与 Renderer 设置 |
 | Lightmap | 是 | **否，variants 被 skip** | 当前不能作为该场景的 lilToon 光照来源 |
 | 传统 SH/Light Probe | 是 | Standard Shader 可用 SH 路径 | 场景没有明确的 Light Probe Group，不能称为已验证 |
-| APV | HLSL 存在 | **否，无 `PROBE_VOLUMES_L1/L2`** | 未启用 |
+| APV | HLSL 存在 | **是，适用输出含 `ProbeVolumeVariants.hlsl`** | URP Asset 已启用 APV，场景数据待烘焙 |
 | Reflection Probe | HLSL/URP variants 存在 | **是，含 blending/box/atlas** | 场景未放 ReflectionProbe，未实际验证 |
 | Refraction | 独立 `lts_ref` 输出 | 不属于当前标准场景 Shader | 工程有 opaque texture，但朱木古堂材质主要是 `lts/lts_cutout` |
 | Ho Geometry/Metadata | HoRP Pass 存在 | **是** | 当前场景 Renderer 已启用对应 Feature |
@@ -1111,9 +1111,9 @@ MotionVectors
 
 ### 3.9 P0 调查结果与决策
 
-#### P0-1：当前生成 Shader 是否包含 APV 变体
+#### P0-1：当前生成 Shader 是否包含 APV 变体（修复前后）
 
-**结论：不包含。**
+**修复前结论：不包含；修复后结论：包含。**
 
 实证方法：扫描当前生成的 52 个 `*.shader` 文件，搜索：
 
@@ -1123,7 +1123,9 @@ PROBE_VOLUMES_L1
 PROBE_VOLUMES_L2
 ```
 
-结果为 0 个文件命中。源码链路仍然存在：
+修复前扫描结果为 0 个文件命中。加入全局开关并重新导入后，当前 52 个输出中有 47 个文件命中 `ProbeVolumeVariants.hlsl`；剩余 5 个是 FakeShadow/Baker/Dummy 等不应采样场景光照的专用输出。
+
+源码链路现在是：
 
 ```text
 lil_common_functions.hlsl
@@ -1133,14 +1135,15 @@ lil_common_functions.hlsl
 Default*.lilblock
     -> #pragma lil_skip_variants_probevolumes
     -> importer.skipProbeVolumes = true
-    -> 不加入 ProbeVolumeVariants.hlsl
+    -> LIL_OPTIMIZE_USE_PROBEVOLUMES=false 时不加入 ProbeVolumeVariants.hlsl
+    -> LIL_OPTIMIZE_USE_PROBEVOLUMES=true 时保留 include，并生成 PROBE_VOLUMES_L1/L2 变体
 ```
 
-因此 APV 当前是“源码已实现、输出未编译”。这不是朱木古堂场景没有 APV 组件导致的，而是 Shader 生成阶段已经把 APV 变体裁掉。
+因此 APV 当前是“源码已实现、输出已可选编译”。如果画面仍无 APV 效果，下一步应检查 APV 组件、Baking Set、Lighting 数据和材质/Renderer 是否真正使用 APV，而不是再修改 lilToon HLSL。
 
 #### P0-2：是否应该恢复 APV 变体
 
-**决策：恢复为可条件启用的变体，不新增 Shader 文件。**
+**决策已实现：恢复为可条件启用的变体，不新增 Shader 文件。**
 
 推荐方案：
 
@@ -1150,7 +1153,7 @@ Default*.lilblock
 4. APV 项目构建后必须检查最终 ShaderVariantCollection/Player build 中存在 `PROBE_VOLUMES_L1/L2`。
 5. 先恢复 Standard 家族，确认角色、SSS 和 Ho-GI 基础光照正确后，再决定 Lite/Multi 是否需要 APV。
 
-这样不会增加 52 个 Shader 文件，只会增加“启用 APV 的 Shader 家族”的变体数量。当前朱木古堂 `m_LightProbeSystem: 0` 是 `LegacyLightProbes`，所以现在不应为当前场景强行打开 APV；应先保留条件编译能力。
+这样不会增加 52 个 Shader 文件，只会增加“启用 APV 的 Shader 家族”的变体数量。当前朱木古堂 `m_LightProbeSystem: 1` 已切到 `Adaptive Probe Volumes`，并且测试工程的 `lilToonSetting.json` 已将 `LIL_OPTIMIZE_USE_PROBEVOLUMES` 设为 `true`；仍需在场景中完成 APV 组件和烘焙。
 
 #### P0-3：`DIRLIGHTMAP_COMBINED` 是否需要恢复
 
@@ -1355,7 +1358,7 @@ LightProbeSystem.LegacyLightProbes = 0
 LightProbeSystem.ProbeVolumes      = 1
 ```
 
-朱木古堂当前 `PC_RPAsset.asset` 为 `m_LightProbeSystem: 0`，即 Legacy Light Probe；切换 APV 后该字段应变为 `1`。项目文件中的数字不是建议直接手改的入口，优先使用 Inspector，避免漏掉 URP Asset 关联资源和编辑器缓存。
+朱木古堂当前 `PC_RPAsset.asset` 为 `m_LightProbeSystem: 1`，即 Adaptive Probe Volumes。项目文件中的数字不是建议直接手改的入口，优先使用 Inspector，避免漏掉 URP Asset 关联资源和编辑器缓存。
 
 #### B. 场景中添加 APV
 
@@ -1407,7 +1410,7 @@ Window -> Rendering -> Lighting -> Adaptive Probe Volumes
 | `朱木古堂_LiveBaseline` | 关闭 | Legacy Light Probes | 当前画面基线 |
 | `朱木古堂_Lightmap` | 打开 | Legacy Light Probes | 验证静态表面 Lightmap |
 | `朱木古堂_Probe` | 可关闭 | Legacy Light Probes | 验证动态角色 SH/Light Probe |
-| `朱木古堂_APV` | 可关闭 | Adaptive Probe Volumes | 验证 APV；需先生成 APV Shader variants |
+| `朱木古堂_APV` | 可关闭 | Adaptive Probe Volumes | 验证 APV；Shader variants 已生成，仍需 APV 组件和烘焙数据 |
 
 每个场景再分别切换 Ho-GTAO/Ho-GI，记录同一镜头的 Beauty、ambient/gi、normal、depth、shadow 和 reflection 对照。
 
@@ -1417,11 +1420,13 @@ Window -> Rendering -> Lighting -> Adaptive Probe Volumes
 
 ### P0：确认当前真实支持
 
-- [x] 扫描当前生成的 `lts.shader`、`lts_cutout.shader` 和全部 52 个输出，确认 APV 变体缺失。
-- [x] 决定 APV 采用“条件启用变体、不新增 Shader 文件”的路线。
+- [x] 扫描修复前的 `lts.shader`、`lts_cutout.shader` 和全部 52 个输出，确认 APV 变体缺失。
+- [x] 实现并启用“条件启用 APV 变体、不新增 Shader 文件”的路线。
+- [x] 重新生成并确认 47/52 个适用输出包含 `ProbeVolumeVariants.hlsl`。
 - [x] 确认当前朱木古堂不需要 `DIRLIGHTMAP_COMBINED`；未来启用 Lightmap 后再单独验收方向性路径。
 - [x] 标记 Lite 家族不适合高质量 Reflection Probe blending/box projection 场景。
-- [ ] 在 Unity Editor 中生成 APV 开关打开后的真实 Shader，并运行 APV 对照场景。
+- [x] 在 Unity Editor 中生成 APV 开关打开后的真实 Shader。
+- [ ] 在 APV 组件和数据烘焙完成后运行 APV 对照场景。
 - [ ] 在打开 Lightmap variants 后重新烘焙朱木古堂，验证 Non-Directional/Directional 两条路径。
 
 ### P1：建立资产和场景规范
