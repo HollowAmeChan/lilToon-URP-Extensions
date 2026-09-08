@@ -15,6 +15,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             View("geometry.linear-depth", "Depth", HoGeometryBufferDebugMode.LinearDepth),
             View("geometry.world-normal", "Normal", HoGeometryBufferDebugMode.WorldNormal),
             View("geometry.normal-validity", "NValid", HoGeometryBufferDebugMode.NormalValidity),
+            View("geometry.outline-coverage", "OLCover", HoGeometryBufferDebugMode.OutlineCoverage),
             View("geometry.sky-radiance", "Sky", HoGeometryBufferDebugMode.SkyRadiance),
             View("geometry.sky-contribution", "SkyA", HoGeometryBufferDebugMode.SkyContribution)
         };

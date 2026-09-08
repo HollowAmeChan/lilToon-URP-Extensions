@@ -17,6 +17,11 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             new ShaderTagId(HoGeometryBufferShaderConstants.ShaderPassName)
         };
 
+        private static readonly List<ShaderTagId> OutlineCoverageShaderTagIds = new List<ShaderTagId>
+        {
+            new ShaderTagId(HoGeometryBufferShaderConstants.OutlineCoverageShaderPassName)
+        };
+
         private static readonly List<ShaderTagId> FallbackShaderTagIds = new List<ShaderTagId>
         {
             new ShaderTagId("SRPDefaultUnlit"),
@@ -37,6 +42,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         private sealed class PassData
         {
             public RendererListHandle geometryRendererList;
+            public RendererListHandle outlineCoverageRendererList;
             public RendererListHandle fallbackRendererList;
             public bool drawFallback;
         }
@@ -116,8 +122,23 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 DrawingSettings geometryDrawingSettings = CreateDrawingSettings(GeometryShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
                 context.DrawRenderers(renderingData.cullResults, ref geometryDrawingSettings, ref geometryFilteringSettings, ref renderStateBlock);
 
+                cmd.SetRenderTarget(
+                    renderTargets.OutlineCoverageTexture,
+                    RenderBufferLoadAction.DontCare,
+                    RenderBufferStoreAction.Store,
+                    renderTargets.DepthTexture,
+                    RenderBufferLoadAction.Load,
+                    RenderBufferStoreAction.Store);
+                cmd.ClearRenderTarget(RTClearFlags.Color, Color.clear, 1.0f, 0);
+                context.ExecuteCommandBuffer(cmd);
+                cmd.Clear();
+
+                DrawingSettings outlineCoverageDrawingSettings = CreateDrawingSettings(OutlineCoverageShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
+                context.DrawRenderers(renderingData.cullResults, ref outlineCoverageDrawingSettings, ref geometryFilteringSettings, ref renderStateBlock);
+
                 cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
                 cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, renderTargets.DepthTexture.nameID);
+                cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineCoverageTextureId, renderTargets.OutlineCoverageTexture.nameID);
                 cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, 1.0f);
             }
 
@@ -150,13 +171,23 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 true,
                 FilterMode.Point,
                 TextureWrapMode.Clamp);
+            TextureHandle outlineCoverageTexture = renderGraph.CreateTexture(CreateOutlineCoverageDesc(
+                cameraData.cameraTargetDescriptor,
+                settings));
 
             geometryResources.normalDepthTexture = normalDepthTexture;
             geometryResources.depthTexture = depthTexture;
+            geometryResources.outlineCoverageTexture = outlineCoverageTexture;
 
             bool drawFallback = fallbackMaterial != null && fallbackFilteringEnabled;
             DrawingSettings geometryDrawingSettings = RenderingUtils.CreateDrawingSettings(
                 GeometryShaderTagIds,
+                renderingData,
+                cameraData,
+                lightData,
+                SortingCriteria.CommonTransparent);
+            DrawingSettings outlineCoverageDrawingSettings = RenderingUtils.CreateDrawingSettings(
+                OutlineCoverageShaderTagIds,
                 renderingData,
                 cameraData,
                 lightData,
@@ -174,6 +205,10 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 renderingData.cullResults,
                 geometryDrawingSettings,
                 geometryFilteringSettings);
+            RendererListParams outlineCoverageRendererListParams = new RendererListParams(
+                renderingData.cullResults,
+                outlineCoverageDrawingSettings,
+                geometryFilteringSettings);
             RendererListParams fallbackRendererListParams = new RendererListParams(
                 renderingData.cullResults,
                 fallbackDrawingSettings,
@@ -182,6 +217,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-GeometryBuffer Output", out PassData passData, ProfilingSampler))
             {
                 passData.geometryRendererList = renderGraph.CreateRendererList(geometryRendererListParams);
+                passData.outlineCoverageRendererList = renderGraph.CreateRendererList(outlineCoverageRendererListParams);
                 passData.drawFallback = drawFallback;
                 passData.fallbackRendererList = drawFallback ? renderGraph.CreateRendererList(fallbackRendererListParams) : default;
 
@@ -217,6 +253,29 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                     context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, 1.0f);
                 });
             }
+
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-GeometryBuffer Outline Coverage", out PassData outlinePassData, ProfilingSampler))
+            {
+                outlinePassData.outlineCoverageRendererList = renderGraph.CreateRendererList(outlineCoverageRendererListParams);
+                if (outlinePassData.outlineCoverageRendererList.IsValid())
+                {
+                    builder.UseRendererList(outlinePassData.outlineCoverageRendererList);
+                }
+
+                builder.SetRenderAttachment(outlineCoverageTexture, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.Read);
+                builder.SetGlobalTextureAfterPass(outlineCoverageTexture, HoGeometryBufferShaderConstants.OutlineCoverageTextureId);
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
+                {
+                    context.cmd.ClearRenderTarget(RTClearFlags.Color, Color.clear, 1.0f, 0);
+                    if (data.outlineCoverageRendererList.IsValid())
+                    {
+                        context.cmd.DrawRendererList(data.outlineCoverageRendererList);
+                    }
+                });
+            }
         }
 
         public void ReleaseCompatibilityResources(bool resetGlobalState = false)
@@ -232,6 +291,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         {
             Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, Texture2D.blackTexture);
+            Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineCoverageTextureId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, Texture2D.blackTexture);
             Shader.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, 0.0f);
             Shader.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 0.0f);
@@ -264,6 +324,23 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             descriptor.useDynamicScaleExplicit = cameraTextureDescriptor.useDynamicScaleExplicit;
             descriptor.vrUsage = cameraTextureDescriptor.vrUsage;
             return descriptor;
+        }
+
+        private static TextureDesc CreateOutlineCoverageDesc(
+            RenderTextureDescriptor cameraTextureDescriptor,
+            HoGeometryBufferSettings settings)
+        {
+            GraphicsFormat format = GraphicsFormat.R8_UNorm;
+            if (!SystemInfo.IsFormatSupported(format, GraphicsFormatUsage.Render))
+            {
+                format = GraphicsFormat.R8G8B8A8_UNorm;
+            }
+
+            return CreateTextureDesc(
+                cameraTextureDescriptor,
+                settings,
+                format,
+                HoGeometryBufferShaderConstants.OutlineCoverageTextureName);
         }
 
         private void ConfigureFiltering()

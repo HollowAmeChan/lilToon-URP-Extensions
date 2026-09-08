@@ -33,7 +33,13 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
             float4 _LayerParams3; // x coc gain, y foreground boost, z background boost, w coc curve
 
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
+            TEXTURE2D_X(_HoGeometryBufferOutlineCoverageTexture);
             float _HoGeometryBufferValid;
+
+            float SampleOutlineCoverage(float2 uv)
+            {
+                return SAMPLE_TEXTURE2D_X(_HoGeometryBufferOutlineCoverageTexture, sampler_PointClamp, uv).r;
+            }
 
             static const int ScreenProcessDofKernelLqCount = 12;
             static const float2 ScreenProcessDofKernelLq[ScreenProcessDofKernelLqCount] =
@@ -155,8 +161,15 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                 float highQuality = step(0.5, _LayerParams1.w);
 
                 #define ADD_DOF_SAMPLE(dir, sampleWeight) \
-                    color += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv + ResolveBokehOffset(dir) * texelRadius) * sampleWeight; \
-                    weight += sampleWeight;
+                    { \
+                        float2 sampleUv = uv + ResolveBokehOffset(dir) * texelRadius; \
+                        float outlineCoverage = SampleOutlineCoverage(sampleUv); \
+                        if (outlineCoverage <= 0.5) \
+                        { \
+                            color += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUv) * sampleWeight; \
+                            weight += sampleWeight; \
+                        } \
+                    }
 
                 if (highQuality > 0.5)
                 {
@@ -192,6 +205,11 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                 }
 
                 if (_HoGeometryBufferValid <= 0.5)
+                {
+                    return source;
+                }
+
+                if (SampleOutlineCoverage(uv) > 0.5)
                 {
                     return source;
                 }

@@ -401,6 +401,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.MBufferDepthTextureId);
                 builder.SetGlobalTextureAfterPass(blackTexture, HoGeometryBufferShaderConstants.NormalDepthTextureId);
                 builder.SetGlobalTextureAfterPass(blackTexture, HoGeometryBufferShaderConstants.DepthTextureId);
+                builder.SetGlobalTextureAfterPass(blackTexture, HoGeometryBufferShaderConstants.OutlineCoverageTextureId);
                 builder.SetGlobalTextureAfterPass(blackTexture, HoGeometryBufferShaderConstants.SkyTextureId);
                 builder.SetGlobalTextureAfterPass(blackTexture, ScreenProcessShaderConstants.SubjectMaskTextureId);
                 builder.AllowGlobalStateModification(true);
@@ -416,6 +417,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MBufferDepthTextureId, data.blackTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.blackTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, data.blackTexture);
+                    context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineCoverageTextureId, data.blackTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, data.blackTexture);
                     context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, 0.0f);
                     context.cmd.SetGlobalTexture(ScreenProcessShaderConstants.SubjectMaskTextureId, data.blackTexture);
@@ -437,6 +439,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MBufferDepthTextureId, fallback);
             cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, fallback);
             cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, fallback);
+            cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineCoverageTextureId, fallback);
             cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, fallback);
             cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, 0.0f);
             cmd.SetGlobalTexture(ScreenProcessShaderConstants.SubjectMaskTextureId, fallback);
@@ -487,6 +490,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             public TextureHandle source;
             public TextureHandle subjectMaskTexture;
+            public TextureHandle outlineCoverageTexture;
             public TextureHandle ruleMaskIdTexture;
             public TextureHandle ruleNormalDepthTexture;
             public TextureHandle skyTexture;
@@ -512,6 +516,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             public bool useRuleObjectCustom0;
             public bool useRuleObjectCustom1;
             public bool useSubjectMask;
+            public bool useOutlineCoverage;
         }
 
         private sealed class SubjectMaskPassData
@@ -819,6 +824,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 {
                     passData.source = source;
                     passData.subjectMaskTexture = subjectMaskTexture;
+                    passData.outlineCoverageTexture = geometryResources.outlineCoverageTexture;
                     passData.ruleMaskIdTexture = metadataResources.maskIdTexture;
                     passData.ruleNormalDepthTexture = geometryResources.normalDepthTexture;
                     passData.skyTexture = geometryResources.skyTexture;
@@ -846,6 +852,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     passData.useRuleObjectCustom0 = needsRuleMaskResolve && metadataResources.objectCustom0Texture.IsValid();
                     passData.useRuleObjectCustom1 = needsRuleMaskResolve && metadataResources.objectCustom1Texture.IsValid();
                     passData.useSubjectMask = passData.isDropShadow && useSubjectMask;
+                    passData.useOutlineCoverage = passData.isDepthOfField && geometryResources.outlineCoverageTexture.IsValid();
 
                     builder.UseTexture(source, AccessFlags.Read);
                     if (passData.useRuleMaskTexture)
@@ -888,6 +895,11 @@ namespace lilToon.URP.Extensions.PostProcessing
                         builder.UseTexture(subjectMaskTexture, AccessFlags.Read);
                     }
 
+                    if (passData.useOutlineCoverage)
+                    {
+                        builder.UseTexture(geometryResources.outlineCoverageTexture, AccessFlags.Read);
+                    }
+
                     builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
                     builder.AllowGlobalStateModification(true);
                     builder.AllowPassCulling(false);
@@ -905,6 +917,11 @@ namespace lilToon.URP.Extensions.PostProcessing
                         if (data.useRuleNormalDepth)
                         {
                             context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.ruleNormalDepthTexture);
+                        }
+
+                        if (data.useOutlineCoverage)
+                        {
+                            context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineCoverageTextureId, data.outlineCoverageTexture);
                         }
 
                         if (data.isEdgeLight)

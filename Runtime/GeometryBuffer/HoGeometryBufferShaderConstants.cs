@@ -8,13 +8,16 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         public const string SkyCaptureShaderName = "Hidden/lilToon/URP/GeometryBuffer/SkyCapture";
         public const string DebugShaderName = "Hidden/lilToon/URP/GeometryBuffer/DebugView";
         public const string ShaderPassName = "HoGeometryBuffer";
+        public const string OutlineCoverageShaderPassName = "HoGeometryBufferOutlineCoverage";
 
         public const string NormalDepthTextureName = "_HoGeometryBufferNormalDepthTexture";
         public const string DepthTextureName = "_HoGeometryBufferDepthTexture";
+        public const string OutlineCoverageTextureName = "_HoGeometryBufferOutlineCoverageTexture";
         public const string SkyTextureName = "_HoGeometryBufferSkyTexture";
 
         public static readonly int NormalDepthTextureId = Shader.PropertyToID(NormalDepthTextureName);
         public static readonly int DepthTextureId = Shader.PropertyToID(DepthTextureName);
+        public static readonly int OutlineCoverageTextureId = Shader.PropertyToID(OutlineCoverageTextureName);
         public static readonly int SkyTextureId = Shader.PropertyToID(SkyTextureName);
         public static readonly int ValidId = Shader.PropertyToID("_HoGeometryBufferValid");
         public static readonly int SkyTextureValidId = Shader.PropertyToID("_HoGeometryBufferSkyTextureValid");

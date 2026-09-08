@@ -242,6 +242,7 @@ namespace lilToon.URP.Extensions.Debugging
                     passData.surfaceColorTexture = metadataResources.surfaceColorTexture;
                     passData.mBufferDepthTexture = metadataResources.mBufferDepthTexture;
                     passData.normalDepthTexture = geometryResources.normalDepthTexture;
+                    passData.outlineCoverageTexture = geometryResources.outlineCoverageTexture;
                     passData.planarReflectionTexture = passData.bindPlanarReflectionTexture
                         ? renderGraph.ImportTexture(planarReflectionRtHandle)
                         : TextureHandle.nullHandle;
@@ -277,6 +278,10 @@ namespace lilToon.URP.Extensions.Debugging
                     if (passData.bindGeometry)
                     {
                         builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
+                        if (passData.outlineCoverageTexture.IsValid())
+                        {
+                            builder.UseTexture(passData.outlineCoverageTexture, AccessFlags.Read);
+                        }
                     }
 
                     if (passData.bindPlanarReflectionTexture)
@@ -348,6 +353,10 @@ namespace lilToon.URP.Extensions.Debugging
                         if (data.bindGeometry)
                         {
                             context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
+                            if (data.outlineCoverageTexture.IsValid())
+                            {
+                                context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineCoverageTextureId, data.outlineCoverageTexture);
+                            }
                         }
 
                         if (data.bindPlanarReflectionTexture)
@@ -664,6 +673,7 @@ namespace lilToon.URP.Extensions.Debugging
                 public TextureHandle surfaceColorTexture;
                 public TextureHandle mBufferDepthTexture;
                 public TextureHandle normalDepthTexture;
+                public TextureHandle outlineCoverageTexture;
                 public TextureHandle planarReflectionTexture;
                 public TextureHandle shadowCastAtlasTexture;
                 public TextureHandle shadowCastSecondDirectionalAtlasTexture;

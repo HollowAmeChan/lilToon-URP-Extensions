@@ -44,6 +44,7 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
             TEXTURE2D_X_FLOAT(_HoMetadataBufferMBufferDepthTexture);
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
+            TEXTURE2D_X(_HoGeometryBufferOutlineCoverageTexture);
             TEXTURE2D_FLOAT(_HoShadowCastAtlas);
             TEXTURE2D_FLOAT(_HoShadowCastSecondDirectionalAtlas);
             TEXTURE2D_X(_lilHoSSSSourceTexture);
@@ -248,6 +249,11 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 if (mode == 4)
                 {
                     return half4(Heat(LilHoGeometryBufferNormalValid(normalDepth)), 1.0h);
+                }
+
+                if (mode == 5)
+                {
+                    return DebugScalar(SAMPLE_TEXTURE2D_X(_HoGeometryBufferOutlineCoverageTexture, sampler_PointClamp, uv).r);
                 }
 
                 return half4(0.0h, 0.0h, 0.0h, 1.0h);

@@ -11,10 +11,12 @@ namespace lilToon.URP.Extensions.GeometryBuffer
     {
         private RTHandle normalDepthTexture;
         private RTHandle depthTexture;
+        private RTHandle outlineCoverageTexture;
         private RTHandle skyTexture;
 
         public RTHandle NormalDepthTexture => normalDepthTexture;
         public RTHandle DepthTexture => depthTexture;
+        public RTHandle OutlineCoverageTexture => outlineCoverageTexture;
         public RTHandle SkyTexture => skyTexture;
 
         public void ReAllocateIfNeeded(RenderTextureDescriptor cameraTextureDescriptor, HoGeometryBufferSettings settings)
@@ -28,6 +30,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
             RenderingUtils.ReAllocateIfNeeded(ref normalDepthTexture, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.NormalDepthTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref depthTexture, CreateDepthDescriptor(cameraTextureDescriptor, settings), FilterMode.Point, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.DepthTextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref outlineCoverageTexture, CreateOutlineCoverageDescriptor(cameraTextureDescriptor, settings), FilterMode.Point, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.OutlineCoverageTextureName);
         }
 
         public void ReAllocateSkyIfNeeded(RenderTextureDescriptor cameraTextureDescriptor, HoGeometryBufferSettings settings)
@@ -39,9 +42,11 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         {
             normalDepthTexture?.Release();
             depthTexture?.Release();
+            outlineCoverageTexture?.Release();
             skyTexture?.Release();
             normalDepthTexture = null;
             depthTexture = null;
+            outlineCoverageTexture = null;
             skyTexture = null;
         }
 
@@ -91,6 +96,19 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             descriptor.autoGenerateMips = false;
             descriptor.useDynamicScale = cameraTextureDescriptor.useDynamicScale;
             descriptor.vrUsage = cameraTextureDescriptor.vrUsage;
+            return descriptor;
+        }
+
+        internal static RenderTextureDescriptor CreateOutlineCoverageDescriptor(RenderTextureDescriptor cameraTextureDescriptor, HoGeometryBufferSettings settings)
+        {
+            RenderTextureDescriptor descriptor = CreateColorDescriptor(cameraTextureDescriptor, settings);
+            GraphicsFormat format = GraphicsFormat.R8_UNorm;
+            if (!SystemInfo.IsFormatSupported(format, GraphicsFormatUsage.Render))
+            {
+                format = GraphicsFormat.R8G8B8A8_UNorm;
+            }
+
+            descriptor.graphicsFormat = format;
             return descriptor;
         }
     }
