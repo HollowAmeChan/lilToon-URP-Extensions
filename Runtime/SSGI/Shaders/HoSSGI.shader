@@ -303,7 +303,54 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     bestAgreement = max(bestAgreement, depthAgreement * normalAgreement * receiverAgreement);
                 }
             }
-            return saturate(bestAgreement);
+
+            float3 rayStartWS = originPositionWS + receiverNormalWS * 0.01 + directionWS * 0.01;
+            float3 rayEndWS = originPositionWS + directionWS * min(
+                max(reservoir.distance + _HoSSGIThickness * 2.0, 0.01),
+                max(_HoSSGIRayLength, reservoir.distance));
+            float3 startNDC = ComputeNormalizedDeviceCoordinatesWithZ(rayStartWS, UNITY_MATRIX_VP);
+            float3 endNDC = ComputeNormalizedDeviceCoordinatesWithZ(rayEndWS, UNITY_MATRIX_VP);
+            float2 clippedEndUV;
+            float clippedRay = HoSSGIClipRayToScreen(startNDC.xy, endNDC.xy, clippedEndUV);
+            if (clippedRay <= 0.001)
+                return saturate(bestAgreement * 0.25);
+
+            rayEndWS = lerp(rayStartWS, rayEndWS, clippedRay);
+            float previousDelta = -2.0 * max(_HoSSGIThickness, 0.01);
+            float remarchedDistance = 0.0;
+            bool remarchedHit = false;
+            [loop]
+            for (int stepIndex = 1; stepIndex <= 8; stepIndex++)
+            {
+                float t = (stepIndex + 0.5) / 8.0;
+                float3 rayPositionWS = lerp(rayStartWS, rayEndWS, t);
+                float3 rayNDC = ComputeNormalizedDeviceCoordinatesWithZ(rayPositionWS, UNITY_MATRIX_VP);
+                float2 sampleUV = rayNDC.xy;
+                if (any(sampleUV <= 0.001) || any(sampleUV >= 0.999)) break;
+                half4 sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
+                if (sampleGeometry.a < 0.0001h)
+                {
+                    previousDelta = -2.0 * max(_HoSSGIThickness, 0.01);
+                    continue;
+                }
+                float depthDelta = HoSSGILinearDepth(rayPositionWS) - sampleGeometry.a;
+                bool crossedSurface = depthDelta >= -max(_HoSSGIThickness, 0.01)
+                    && previousDelta < -max(_HoSSGIThickness, 0.01);
+                previousDelta = depthDelta;
+                if (crossedSurface)
+                {
+                    float3 samplePositionWS = HoSSGIWorldPosition(sampleUV, sampleGeometry.a);
+                    remarchedDistance = distance(originPositionWS, samplePositionWS);
+                    remarchedHit = true;
+                    break;
+                }
+            }
+
+            if (!remarchedHit)
+                return 0.0;
+            float distanceAgreement = exp2(-abs(remarchedDistance - reservoir.distance)
+                / max(reservoir.distance * 0.2, max(_HoSSGIThickness, 0.01)));
+            return saturate(bestAgreement * distanceAgreement);
         }
 
         float HoSSGIValidateReservoirLighting(float3 originPositionWS, HoSSGIReservoir reservoir)
