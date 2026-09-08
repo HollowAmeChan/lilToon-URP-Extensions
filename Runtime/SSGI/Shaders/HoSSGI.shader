@@ -254,6 +254,16 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return frac(sin(q) * 43758.5453);
         }
 
+        float HoSSGIRadicalInverse(uint bits)
+        {
+            bits = (bits << 16) | (bits >> 16);
+            bits = ((bits & 0x55555555u) << 1) | ((bits & 0xAAAAAAAAu) >> 1);
+            bits = ((bits & 0x33333333u) << 2) | ((bits & 0xCCCCCCCCu) >> 2);
+            bits = ((bits & 0x0F0F0F0Fu) << 4) | ((bits & 0xF0F0F0F0u) >> 4);
+            bits = ((bits & 0x00FF00FFu) << 8) | ((bits & 0xFF00FF00u) >> 8);
+            return (float)bits * 2.3283064365386963e-10;
+        }
+
         float3 HoSSGIBuildTangent(float3 normal)
         {
             return normalize(abs(normal.y) < 0.95 ? cross(normal, float3(0, 1, 0)) : cross(normal, float3(1, 0, 0)));
@@ -427,6 +437,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float3 centerPositionWS = HoSSGIWorldPosition(uv, center.a);
             float2 pixel = uv * _ScreenParams.xy;
             float2 noise = HoSSGIHash2(pixel + (float)(_HoSSGIFrameIndex & 15));
+            int frameCycle = _HoSSGIFrameIndex - (_HoSSGIFrameIndex / 16) * 16;
+            float frameOffset = (float)frameCycle;
             float3 radiance = 0;
             float hits = 0;
             HoSSGIReservoir reservoir = (HoSSGIReservoir)0;
@@ -439,9 +451,14 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             {
                 // Cosine-weighted hemisphere sampling follows HTrace's world-space
                 // ray path. Screen UV is only used for visibility traversal.
-                float u = (ray + 0.5) / rays;
-                float v = frac(noise.x + ray * 0.61803398875);
-                float phi = 6.2831853 * u + noise.y * 6.2831853;
+                // HTrace uses a frame-indexed low-discrepancy/BND sequence.
+                // Keep the same property here without a runtime blue-noise
+                // texture: the pixel hash only rotates the sequence, while the
+                // 16-frame phase advances samples deterministically.
+                uint sampleIndex = (uint)ray + 1u + (uint)frameCycle * 131u;
+                float u = frac((ray + 0.5) / rays + noise.x + frameOffset * 0.61803398875);
+                float v = frac(HoSSGIRadicalInverse(sampleIndex) + noise.y + frameOffset * 0.754877666);
+                float phi = 6.2831853 * u;
                 float cosTheta = sqrt(saturate(v));
                 float sinTheta = sqrt(saturate(1.0 - v));
                 float3 rayDirWS = normalize(
@@ -512,6 +529,14 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     {
                         float3 source = SAMPLE_TEXTURE2D_X(_HoSSGISource, sampler_PointClamp, sampleUV).rgb;
                         float3 sampleNormalWS = normalize((float3)sampleGeometry.rgb * 2.0 - 1.0);
+                        float hitTolerance = max(thickness, max(sampleDepth * 0.02, 0.01));
+                        bool depthValid = abs(depthDelta) <= hitTolerance * 2.0;
+                        bool frontFace = dot(sampleNormalWS, rayDirWS) <= 0.0;
+                        if (!depthValid || !frontFace)
+                        {
+                            previousDelta = 2.0 * thickness;
+                            continue;
+                        }
                         float3 lightDirection = normalize(samplePositionWS - centerPositionWS);
                         float sourceCosine = saturate(dot(sampleNormalWS, -lightDirection));
                         float distanceWeight = exp2(-2.0 * t) * rcp(1.0 + t * t);
