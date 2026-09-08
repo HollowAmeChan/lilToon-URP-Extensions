@@ -284,7 +284,6 @@ namespace lilToon.URP.Extensions.GTAO
         private static readonly int HistoryValidId = Shader.PropertyToID("_HoGTAOHistoryValid");
         private static readonly int TemporalMaxFramesId = Shader.PropertyToID("_HoGTAOTemporalMaxFrames");
         private static readonly int TemporalRejectionId = Shader.PropertyToID("_HoGTAOTemporalRejection");
-        private static readonly int DebugInvertId = Shader.PropertyToID("_HoGTAODebugInvert");
         private static readonly int WorldRadiusId = Shader.PropertyToID("_HoGTAOWorldSpaceRadius");
         private static readonly int ScreenRadiusId = Shader.PropertyToID("_HoGTAOScreenSpaceRadius");
         private static readonly int ThicknessId = Shader.PropertyToID("_HoGTAOThickness");
