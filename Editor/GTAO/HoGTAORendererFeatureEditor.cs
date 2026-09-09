@@ -9,11 +9,9 @@ namespace lilToon.URP.Extensions.Editor.GTAO
     internal sealed class HoGTAORendererFeatureEditor : UnityEditor.Editor
     {
         private static readonly Color RuntimeColor = new Color(0.46f, 0.64f, 0.92f);
-        private static readonly Color DebugColor = new Color(0.86f, 0.62f, 0.38f);
         private static readonly Color AdvancedColor = new Color(0.62f, 0.58f, 0.78f);
 
         private static bool showRuntime;
-        private static bool showDebug;
         private static bool showAdvancedSettings;
         private SerializedProperty settingsProperty;
 
@@ -39,7 +37,7 @@ namespace lilToon.URP.Extensions.Editor.GTAO
 
             DrawRuntime();
             DrawAdvanced();
-            DrawDebug();
+            EditorGUILayout.HelpBox("调试模式、Scene/Game View 开关和 AO Debug Pow 已移至 Ho-GTAO Volume 的“调试”分组。", MessageType.None);
 
             serializedObject.ApplyModifiedProperties();
         }
@@ -90,25 +88,6 @@ namespace lilToon.URP.Extensions.Editor.GTAO
                 DrawProperty("boxPassCount");
                 DrawProperty("passEvent");
                 DrawProperty("shader");
-            }
-        }
-
-        private void DrawDebug()
-        {
-            SerializedProperty debugMode = Find("debugMode");
-            string summary = LilUrpEditorSectionGui.EnumName(debugMode);
-
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showDebug, "调试", summary, DebugColor))
-            {
-                return;
-            }
-
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                DrawProperty("debugMode");
-                DrawProperty("debugInSceneView");
-                DrawProperty("debugInGameView");
-                DrawProperty("debugIntensity");
             }
         }
 

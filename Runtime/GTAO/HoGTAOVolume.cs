@@ -47,10 +47,33 @@ namespace lilToon.URP.Extensions.GTAO
         }
     }
 
+    [Serializable]
+    public sealed class HoGTAODebugModeParameter : VolumeParameter<HoGTAODebugMode>
+    {
+        public HoGTAODebugModeParameter(HoGTAODebugMode value, bool overrideState = false)
+            : base(value, overrideState)
+        {
+        }
+
+        public override void Interp(HoGTAODebugMode from, HoGTAODebugMode to, float t)
+        {
+            value = t > 0.0f ? to : from;
+        }
+    }
+
     [VolumeComponentMenu("Post-processing/Ho-GTAO/屏幕空间 AO")]
     [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
     public sealed class HoGTAOVolume : VolumeComponent, IPostProcessComponent
     {
+        [InspectorName("启用"), Tooltip("启用 Ho-GTAO，并将结果发布给材质和调试输出。")]
+        public BoolParameter enable = new BoolParameter(true);
+
+        [InspectorName("场景视图"), Tooltip("是否在 Scene View 中显示 GTAO 调试结果。")]
+        public BoolParameter debugInSceneView = new BoolParameter(true);
+
+        [InspectorName("游戏视图"), Tooltip("是否在 Game View 中显示 GTAO 调试结果。")]
+        public BoolParameter debugInGameView = new BoolParameter(false);
+
         [Header("质量")]
 
         [InspectorName("质量档"), Tooltip("Low/Medium/High 三档预设。High 使用 Visibility Bitmasks + Full + 4x32 + 12 帧 + Box x3。")]
@@ -79,6 +102,9 @@ namespace lilToon.URP.Extensions.GTAO
         [InspectorName("距离衰减"), Tooltip("开启后，地平线样本按距离衰减混合，远处遮挡影响更柔和。")]
         public BoolParameter useAttenuation = new BoolParameter(true);
 
+        [InspectorName("线性厚度"), Tooltip("按线性眼深度放大厚度，保持近处接触和远处遮挡的尺度一致。")]
+        public BoolParameter useLinearThickness = new BoolParameter(true);
+
         [Header("去噪")]
 
         [InspectorName("时间累积帧数"), Tooltip("历史累积上限帧数（0 = 关闭时间累积）。帧数越高噪声越低，运动时越迟钝。")]
@@ -99,12 +125,17 @@ namespace lilToon.URP.Extensions.GTAO
         [InspectorName("Box 趟数"), Tooltip("Box 滤波趟数（1-3）。每趟步长扩大，覆盖更大范围。")]
         public ClampedIntParameter boxPassCount = new ClampedIntParameter(3, 1, 3);
 
+        [Header("调试")]
+
+        [InspectorName("调试模式"), Tooltip("输出 GTAO、GeometryBuffer 深度/法线、Motion 或 Temporal Disocclusion。")]
+        public HoGTAODebugModeParameter debugMode = new HoGTAODebugModeParameter(HoGTAODebugMode.Off);
+
+        [InspectorName("AO Debug Pow"), Tooltip("只影响 AO 调试画面的显示曲线，不改变公共 AO 输出。")]
+        public ClampedFloatParameter debugIntensity = new ClampedFloatParameter(3.672f, 0.1f, 8.0f);
+
         public bool IsActive()
         {
-            return quality.value != HoGTAOQuality.Low
-                || resolution.value != HoGTAOResolution.Half
-                || sliceCount.value != 2
-                || stepCount.value != 16;
+            return enable.value;
         }
 
         public bool IsTileCompatible()

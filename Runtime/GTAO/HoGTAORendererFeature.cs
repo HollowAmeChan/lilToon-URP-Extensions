@@ -40,7 +40,13 @@ namespace lilToon.URP.Extensions.GTAO
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            if (settings == null || !settings.enabled)
+            if (settings == null)
+            {
+                return;
+            }
+
+            ResolveVolume();
+            if (!settings.enabled)
             {
                 return;
             }
@@ -51,7 +57,6 @@ namespace lilToon.URP.Extensions.GTAO
                 return;
             }
 
-            ResolveVolume();
             if (settings.quality != lastAppliedQuality)
             {
                 HoGTAOQualityPresets.Apply(settings.quality, settings);
@@ -98,7 +103,10 @@ namespace lilToon.URP.Extensions.GTAO
 
             pass.Setup(settings, material, motionMaterial, debugMaterial, cameraHistory);
             renderer.EnqueuePass(pass);
-            if (settings.debugMode != HoGTAODebugMode.Off && debugMaterial != null)
+            bool debugEnabledForCamera = settings.debugMode != HoGTAODebugMode.Off
+                && ((cameraType == CameraType.SceneView && settings.debugInSceneView)
+                    || (cameraType == CameraType.Game && settings.debugInGameView));
+            if (debugEnabledForCamera && debugMaterial != null)
             {
                 debugPass.Setup(debugMaterial, settings.debugMode, settings.debugIntensity);
                 renderer.EnqueuePass(debugPass);
@@ -150,6 +158,7 @@ namespace lilToon.URP.Extensions.GTAO
                 return;
             }
 
+            if (volume.enable.overrideState) settings.enabled = volume.enable.value;
             if (volume.quality.overrideState)
             {
                 settings.quality = volume.quality.value;
@@ -163,12 +172,17 @@ namespace lilToon.URP.Extensions.GTAO
             if (volume.sliceCount.overrideState) settings.sliceCount = volume.sliceCount.value;
             if (volume.stepCount.overrideState) settings.stepCount = volume.stepCount.value;
             if (volume.useAttenuation.overrideState) settings.useAttenuation = volume.useAttenuation.value;
+            if (volume.useLinearThickness.overrideState) settings.useLinearThickness = volume.useLinearThickness.value;
             if (volume.temporalFrameCount.overrideState) settings.temporalFrameCount = volume.temporalFrameCount.value;
             if (volume.temporalRejection.overrideState) settings.temporalRejection = volume.temporalRejection.value;
             if (volume.spatialFilter.overrideState) settings.spatialFilter = volume.spatialFilter.value;
             if (volume.filterRadius.overrideState) settings.filterRadius = volume.filterRadius.value;
             if (volume.filterAdaptivity.overrideState) settings.filterAdaptivity = volume.filterAdaptivity.value;
             if (volume.boxPassCount.overrideState) settings.boxPassCount = volume.boxPassCount.value;
+            if (volume.debugMode.overrideState) settings.debugMode = volume.debugMode.value;
+            if (volume.debugInSceneView.overrideState) settings.debugInSceneView = volume.debugInSceneView.value;
+            if (volume.debugInGameView.overrideState) settings.debugInGameView = volume.debugInGameView.value;
+            if (volume.debugIntensity.overrideState) settings.debugIntensity = volume.debugIntensity.value;
         }
     }
 
