@@ -25,7 +25,9 @@ Shader "Hidden/lilToon/URP/HoGTAO/DebugView"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 half4 value = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord);
-                if (_HoGTAODebugViewMode < 1.5 || _HoGTAODebugViewMode > 4.5)
+                // AO/Off are scalar views. Depth, Normal, Motion and
+                // Temporal intentionally carry RGB diagnostic semantics.
+                if (_HoGTAODebugViewMode < 1.5)
                     value.rgb = value.rrr;
                 value.rgb = lerp(value.rgb, 1.0h - value.rgb, _HoGTAODebugInvert);
                 value.rgb = pow(saturate(value.rgb), _HoGTAODebugIntensity);

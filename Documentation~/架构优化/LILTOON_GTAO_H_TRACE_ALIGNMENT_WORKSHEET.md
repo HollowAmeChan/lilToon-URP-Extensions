@@ -126,6 +126,7 @@
 | 2026-09-09 | 移除额外整像素 normal vote | `HoGTAO.shader` Temporal 只保留逐 tap normal reject | 避免 silhouette 上重复拒绝历史，缩短静止收敛时间并与 HTrace 宏路径一致 |
 | 2026-09-09 | 稳定 SceneView 时域输入与调试显示 | SceneView Temporal 禁用不稳定的 URP 原生 MV；Motion/Temporal debug 改为 HTrace 的组合语义 | 静止编辑器视图不应因旧 MV 每帧流动；Motion 黑屏与 Temporal 常态流动问题转为可诊断输出 |
 | 2026-09-09 | 复用 lilToon MotionVectors pass | Motion Mask renderer list 不再覆盖自定义材质，仅 Motion Delta 使用 Ho override | 保留 lilToon 自身写入的运动向量，避免自定义 mask pass 清成纯黑 |
+| 2026-09-09 | 修正 Motion/Temporal debug 颜色语义 | Debug shader 仅对 AO/Off 取 R 灰阶，保留 Motion/Temporal 的 RGB | Temporal 拒绝红色不再被显示层变成纯白，Motion 组合颜色可直接观察 |
 
 ## 当前下一步
 
