@@ -894,7 +894,14 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             }
 
             float sampleCount = accepted > 0.5 ? min(previousCount + 1.0, 16.0) : 1.0;
-            float temporalInvalidity = accepted > 0.5 ? saturate(previousInvalidity.x) : 0.0;
+            // HTrace uses this channel as a history-confidence scale for its
+            // adaptive clamp (despite the historical name "invalidity"). Keep
+            // it driven by the same four-tap acceptance used for sample count;
+            // leaving it at zero permanently makes the denoiser clamp every
+            // frame to its narrowest box and prevents convergence.
+            float temporalInvalidity = accepted > 0.5
+                ? saturate(max(previousInvalidity.x, accepted))
+                : 0.0;
             output.sampleCount = float4(sampleCount, 0.0, 0.0, 1.0);
             output.invalidity = float4(temporalInvalidity, accepted, 0.0, 1.0);
             return output;
@@ -1033,7 +1040,17 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.reservoirColor = float4(max(merged.color, 0.0), max(merged.wsum, 0.0));
             output.reservoirAux = float4(max(merged.m, 0.0), max(merged.target, 0.0), saturate(merged.hit), max(merged.distance, 0.0));
             output.reservoirRay = HoSSGIPackReservoirRay(merged);
-            output.guidance = float4(saturate(confidenceSum / max(confidenceWeight, 1.0e-5)), saturate(confidenceWeight / 9.0), 0.0, 1.0);
+            float mergedOcclusion = (merged.distance > 0.0 && merged.distance < 1.0)
+                ? saturate(merged.distance / 3.0)
+                : 1.0;
+            // Guidance.z carries the selected near-occlusion estimate. It is
+            // deliberately kept alongside confidence/coverage so the denoiser
+            // can reject neighbors with a different local visibility state.
+            output.guidance = float4(
+                saturate(confidenceSum / max(confidenceWeight, 1.0e-5)),
+                saturate(confidenceWeight / 9.0),
+                mergedOcclusion,
+                1.0);
             return output;
         }
 
@@ -1075,7 +1092,9 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float3 centerPositionWS = HoSSGIWorldPosition(uv, centerDepth);
             float2 texel = rcp(max(_ScreenParams.xy, 1.0)) * max(_HoSSGISpatialRadius, 0.5);
             float3 centerTone = HoSSGISpatialDenoisingTonemap(center.rgb);
-            float centerGuidance = SAMPLE_TEXTURE2D_X(_HoSSGISpatialGuidance, sampler_PointClamp, uv).x;
+            float4 centerGuidanceData = SAMPLE_TEXTURE2D_X(_HoSSGISpatialGuidance, sampler_PointClamp, uv);
+            float centerGuidance = centerGuidanceData.x;
+            float centerOcclusion = centerGuidanceData.z;
             float3 sum = centerTone;
             float confidence = center.a;
             float weightSum = 1.0;
@@ -1100,9 +1119,14 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     float planeDistanceNormalized = planeDistance / max(centerDepth, 0.05);
                     float planeWeight = exp2(-100.0 * planeDistanceNormalized * planeDistanceNormalized);
                     float gaussianWeight = exp2(-0.55 * dot(offset, offset));
-                    float tapGuidance = SAMPLE_TEXTURE2D_X(_HoSSGISpatialGuidance, sampler_PointClamp, tapUV).x;
+                    float4 tapGuidanceData = SAMPLE_TEXTURE2D_X(_HoSSGISpatialGuidance, sampler_PointClamp, tapUV);
+                    float tapGuidance = tapGuidanceData.x;
                     float guidanceWeight = exp2(-4.0 * abs(tapGuidance - centerGuidance));
-                    float tapWeight = normalWeight * depthWeight * planeWeight * guidanceWeight * gaussianWeight;
+                    float tapOcclusion = tapGuidanceData.z;
+                    float occlusionWeight = exp2(-max(5.0, 10.0 * (1.0 - centerOcclusion))
+                        * abs(centerOcclusion - tapOcclusion));
+                    float tapWeight = normalWeight * depthWeight * planeWeight * guidanceWeight
+                        * occlusionWeight * gaussianWeight;
                     if (tapWeight <= 0.001) continue;
                     half4 tap = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_LinearClamp, tapUV);
                     sum += HoSSGISpatialDenoisingTonemap(tap.rgb) * tapWeight;
