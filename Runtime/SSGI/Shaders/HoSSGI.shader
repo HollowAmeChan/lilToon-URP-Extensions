@@ -1208,6 +1208,33 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float3 historyColor = 0.0;
             float weightSum = 0.0;
             float3 currentNormal = normalize((float3)geometry.rgb * 2.0 - 1.0);
+            float2 screenTexel = rcp(max(_ScreenParams.xy, 1.0));
+            float currentSourceLuminance = HoSSGILuminance(current.rgb);
+            float sourceMoment1 = currentSourceLuminance;
+            float sourceMoment2 = currentSourceLuminance * currentSourceLuminance;
+            float sourceMomentWeight = 1.0;
+            [unroll]
+            for (int momentY = -1; momentY <= 1; momentY++)
+            {
+                [unroll]
+                for (int momentX = -1; momentX <= 1; momentX++)
+                {
+                    if (momentX == 0 && momentY == 0) continue;
+                    float2 momentUV = uv + float2(momentX, momentY) * screenTexel;
+                    if (any(momentUV < 0.0) || any(momentUV > 1.0)) continue;
+                    half4 momentGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, momentUV);
+                    if (momentGeometry.a < 0.0001h) continue;
+                    float momentWeight = exp2(-0.75 * (momentX * momentX + momentY * momentY));
+                    float momentLuminance = HoSSGILuminance(SAMPLE_TEXTURE2D_X(_HoSSGISource, sampler_LinearClamp, momentUV).rgb);
+                    sourceMoment1 += momentLuminance * momentWeight;
+                    sourceMoment2 += momentLuminance * momentLuminance * momentWeight;
+                    sourceMomentWeight += momentWeight;
+                }
+            }
+            sourceMoment1 /= max(sourceMomentWeight, 1.0e-5);
+            sourceMoment2 /= max(sourceMomentWeight, 1.0e-5);
+            float sourceThreshold = sourceMoment1 + 2.0 * sqrt(max(sourceMoment2 - sourceMoment1 * sourceMoment1, 0.0));
+            sourceThreshold = max(sourceThreshold, max(currentSourceLuminance * 4.0, 0.25));
             [unroll]
             for (int i = 0; i < 4; i++)
             {
@@ -1234,11 +1261,9 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             if (weightSum <= 0.15)
                 return current;
             historyColor /= weightSum;
-            float currentLuminance = HoSSGILuminance(current.rgb);
             float historyLuminance = HoSSGILuminance(historyColor);
-            float maxHistoryLuminance = max(currentLuminance * 4.0, 0.25);
-            if (historyLuminance > maxHistoryLuminance)
-                historyColor *= maxHistoryLuminance / max(historyLuminance, 1.0e-5);
+            if (historyLuminance > sourceThreshold)
+                historyColor *= sourceThreshold / max(historyLuminance, 1.0e-5);
             float historyWeight = saturate(_HoSSGITemporalBlend * weightSum);
             return float4(lerp(current.rgb, historyColor, historyWeight), current.a);
         }
