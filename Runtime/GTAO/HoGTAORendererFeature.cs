@@ -1026,6 +1026,10 @@ namespace lilToon.URP.Extensions.GTAO
                 // HTrace's AO debug view is taken after temporal and spatial
                 // denoising. Keep those passes active so the debug image
                 // converges instead of showing the raw animated march noise.
+                // Publish the visibility form as well, so lilToon materials
+                // continue to consume AO while the feature-local debug view
+                // is active.
+                RecordBlit(renderGraph, frameData, spatial, resourceData.activeColorTexture, material, "Ho-GTAO Output");
                 gtao.aoTexture = spatial;
                 return;
             }
@@ -1276,6 +1280,7 @@ namespace lilToon.URP.Extensions.GTAO
                 {
                     builder.SetGlobalTextureAfterPass(data.destination, HoGTAOShaderConstants.AOTextureId);
                 }
+                builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (BlitData passData, RasterGraphContext context) =>
                 {

@@ -63,7 +63,7 @@
 | O0 | 输出语义 | HTrace AO 0..1 visibility | `_HoAOTexture` 0..1 visibility | `已对齐` | Debug 可见度指数会放大对比，不代表 producer 数值 | producer/debug 分离验证，pow=1 优先 |
 | D0 | GTAO Debug | `HDebugAO.compute` AO 输出 | Ho feature-local debug pass | `部分对齐` | 能输出，但展示曲线和天空策略需保持可比 | 增加 raw AO/visibility 选项，记录 pow |
 | D1 | Temporal Debug | HTrace sample count × velocity | Ho accepted/rejected + age；Motion 模式显示 HTrace 组合语义 | `部分对齐` | SceneView 使用独立 camera-motion producer；静止零运动保持黑，移动时区分相机/对象 mask/delta | 用 Frame Debugger 和 Motion 模式共同重验 velocity |
-| P0 | 公共材质接收 | HTrace BeforeOpaque / `_HTraceBufferAO` | Ho BeforeOpaque / `_HoAOTexture` | `部分对齐` | 受 Renderer Feature 列表顺序约束 | 保持 GeometryBuffer 在 Ho-GTAO 前；Frame Debugger 固定验收 |
+| P0 | 公共材质接收 | HTrace BeforeOpaque / `_HTraceBufferAO` | Ho BeforeOpaque / `_HoAOTexture` | `部分对齐` | lilToon 材质已确认 `_UseScreenSpaceAO=1`；最终 AO 发布 pass 需显式声明全局状态 | Frame Debugger 验证 `Ho-GTAO Output` 后 DrawOpaqueObjects 采样当帧纹理 |
 
 ## 问题归因记录
 
