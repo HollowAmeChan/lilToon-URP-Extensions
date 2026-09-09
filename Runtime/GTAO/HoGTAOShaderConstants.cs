@@ -4,6 +4,7 @@ namespace lilToon.URP.Extensions.GTAO
     {
         public const string FeatureName = "Ho-GTAO";
         public const string ShaderName = "Hidden/lilToon/URP/HoGTAOv4";
+        public const string MotionShaderName = "Hidden/lilToon/URP/HoGTAOMotion";
         public const string DebugShaderName = "Hidden/lilToon/URP/HoGTAO/DebugView";
 
         public const string ShaderAssetPath = "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GTAO/Shaders/HoGTAO.shader";
@@ -22,5 +23,7 @@ namespace lilToon.URP.Extensions.GTAO
         public static readonly int DebugIntensityId = UnityEngine.Shader.PropertyToID("_HoGTAODebugIntensity");
         public static readonly int DebugInvertId = UnityEngine.Shader.PropertyToID("_HoGTAODebugInvert");
         public static readonly int DebugViewModeId = UnityEngine.Shader.PropertyToID("_HoGTAODebugViewMode");
+        public static readonly int MotionMaskId = UnityEngine.Shader.PropertyToID("_HoGTAOMotionMask");
+        public static readonly int MotionDeltaId = UnityEngine.Shader.PropertyToID("_HoGTAOMotionDelta");
     }
 }

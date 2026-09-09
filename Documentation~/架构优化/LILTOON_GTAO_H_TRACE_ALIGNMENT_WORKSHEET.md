@@ -53,16 +53,16 @@
 | T0 | 时域重投影 | `HTemporalFilterGTAO.compute:64-295` | 单个 Ho Temporal pass 内四 tap history，保存 previous view 与 depth-to-view 参数 | `部分对齐` | 四 tap、屏内有效性和 previous-view 重建已有；仍缺独立 reprojected data 与 render-scale 补偿 | 保存 previous scale/VP，拆出 HTrace reprojected data |
 | T1 | 深度拒绝 | HTrace view-alignment + linear depth threshold | raw depth 线性化 + view-alignment + pixel-spread 阈值 | `部分对齐` | 阈值公式已对齐；仍缺 HTrace 的 motion-mask relax | 引入 motion mask/delta 后补齐动态物体分支 |
 | T2 | 平面/法线拒绝 | HTrace `PLANE_DISOCCLUSION` + normal threshold 0.5 | 每个 history tap 使用 previous-view plane + normal reject | `部分对齐` | previous-camera plane 已接入；previous ZBuffer 参数和 motion relax 仍缺 | 保存 previous projection/ZBuffer 参数，补动态物体 relax |
-| T3 | motion/命中速度 | HTrace motion mask/delta + per-hit velocity | Ho 从 URP motion texture 比较 origin/hit magnitude + direction，写入 history | `部分对齐` | 已有 per-hit 速度近似；仍缺 GeometryBuffer 生产的 motion mask/delta | 若 GeometryBuffer 暴露 motion 语义，替换近似并补动态层标记 |
-| T4 | history accumulation | HTrace 12 帧 + 5x5 clamp | Ho 12 帧 + `AO/velocity/count` history + velocity-driven clamp | `部分对齐` | 通道语义已接近；仍缺 HTrace 的 reprojected velocity 与 count 独立缓冲 | 对齐 `TemporalWeight`、velocity 融合和动态对象 relax |
-| R0 | Bitmask tracing | `HRenderGTAO.compute:134-304` | `HoGTAOCompute` 32-bin bitmask | `部分对齐` | 公式、厚度、衰减和整数 LOD 已对齐；仍需数值样本确认 | 与 HTrace 逐行做数值样本对照 |
+| T3 | motion/命中速度 | HTrace motion mask/delta + per-hit velocity | Ho 在 GeometryBuffer 深度上生产对象 Motion Mask/Delta，并在命中处比较对象位移方向/幅度；仍保留 URP 相机 MV | `部分对齐` | HTrace 的独立 motion 语义已接入；尚未用 Frame Debugger 验证 skinned/刚体两类对象的数值 | 验证 moving hit 的符号深度与命中速度，确认静止表面不被误标 |
+| T4 | history accumulation | HTrace 12 帧 + 5x5 clamp | Ho 12 帧 + `AO/velocity/count` history + velocity-driven clamp；加入 object depth-delta 与无 delta 放宽 | `部分对齐` | Temporal 拒绝链已覆盖对象运动；仍是单 pass 合并实现，未拆出 HTrace 独立 reprojected buffer | 只测静止/相机旋转/移动物体三种收敛曲线，不调整质量参数 |
+| R0 | Bitmask tracing | `HRenderGTAO.compute:134-304` | `HoGTAOCompute` 32-bin bitmask | `部分对齐` | 已修正 signed horizon cosine 与 HTrace 的差异；仍需数值样本确认 | 对比 Generate 原始 AO，再验证接地感/方向性 |
 | R0H | HorizonSearch tracing | `HRenderGTAO.compute:243-275` | Ho 暂未启用连续 arc 分支 | `未开始` | 若 HTrace 画面对比用默认 HorizonSearch，Bitmask 量化会被误判为 Ho 算法错误 | 先做 HTrace mode A/B；必要时把连续 arc 作为 Ho 可选后备 |
 | R1 | horizon/切片方向 | HTrace rotations/noise `HRenderGTAO.compute:160-220` | 4 slices + interleaved gradient noise | `部分对齐` | 方向感重，可能来自切片量化、LOD 选择或 Box 轴向结构 | A/B：固定 frame/noise，分别禁用 bitmask、禁用 spatial |
 | S0 | Box spatial | `HSpatialFilterGTAO.compute:101-151` | 3 趟 `4/2/1`，plane/normal 权重 | `部分对齐` | 步长已对齐；需确认 final visibility 极性和 raw depth history 使用 | 对比每一趟输出，确认最后一趟才转换 visibility |
 | S1 | plane weighting | HTrace `PlaneWeighting` | Ho 使用等价指数，但当前自行重建位置 | `部分对齐` | 平面边缘/远处仍可能有不一致 | 用同一 raw depth + 同一 view-space plane 做数值对照 |
 | O0 | 输出语义 | HTrace AO 0..1 visibility | `_HoAOTexture` 0..1 visibility | `已对齐` | Debug 可见度指数会放大对比，不代表 producer 数值 | producer/debug 分离验证，pow=1 优先 |
 | D0 | GTAO Debug | `HDebugAO.compute` AO 输出 | Ho feature-local debug pass | `部分对齐` | 能输出，但展示曲线和天空策略需保持可比 | 增加 raw AO/visibility 选项，记录 pow |
-| D1 | Temporal Debug | HTrace sample count × velocity | Ho accepted/rejected + age | `部分对齐` | 能看红色拒绝，但不代表 HTrace velocity 语义 | 在 UI 标明“Ho fallback/validated”并补 velocity 后重验 |
+| D1 | Temporal Debug | HTrace sample count × velocity | Ho accepted/rejected + age；另增 Motion 模式显示对象 mask/delta | `部分对齐` | Temporal 可看红色拒绝，Motion 可直接确认对象语义是否写入 | 用 Frame Debugger 和 Motion 模式共同重验 velocity |
 | P0 | 公共材质接收 | HTrace BeforeOpaque / `_HTraceBufferAO` | Ho BeforeOpaque / `_HoAOTexture` | `部分对齐` | 受 Renderer Feature 列表顺序约束 | 保持 GeometryBuffer 在 Ho-GTAO 前；Frame Debugger 固定验收 |
 
 ## 问题归因记录
@@ -121,9 +121,12 @@
 | 2026-09-09 | 对齐 Temporal 拒绝 | `HoGTAO.shader`：view-alignment、plane、normal、屏内 tap 有效性 | 减少跨平面历史串入，下一步补 motion velocity |
 | 2026-09-09 | 接入 HTrace 风格命中速度 | `HoGTAO.shader`：origin/hit motion divergence，history `AO/velocity/count`，velocity-driven clamp | 收敛链路开始具备运动自适应；GeometryBuffer motion mask/delta 仍待接入 |
 | 2026-09-09 | 对齐 previous-view rejection | `HoGTAORendererFeature.cs` 保存上一帧 view/depth-to-view；`HoGTAO.shader` 做 previous-view plane | 相机旋转时历史深度比较更接近 HTrace；render-scale/previous-Z 参数仍登记 |
+| 2026-09-09 | 修正 Bitmask horizon 积分 | `HoGTAO.shader` 保留 signed horizon cosine（仅 clamp 到 [-1,1]），并恢复 HTrace 的 reciprocal screen-radius min step | 消除 `saturate` 折叠负半球造成的相机方向偏置；下一轮只验证算法观感，不调参数 |
+| 2026-09-09 | 接入对象 Motion Mask/Delta | `HoGTAOMotion.shader` + `HoGTAORendererFeature.RecordObjectMotionPasses`；以 GeometryBuffer depth 作 Equal 深度测试 | 补齐 HTrace 对象运动语义，Temporal 使用 signed depth delta，命中速度使用方向/幅度拒绝 |
+| 2026-09-09 | 移除额外整像素 normal vote | `HoGTAO.shader` Temporal 只保留逐 tap normal reject | 避免 silhouette 上重复拒绝历史，缩短静止收敛时间并与 HTrace 宏路径一致 |
 
 ## 当前下一步
 
-1. 先用 `pow=1` 对比 Generate/Temporal/Spatial 三层，确认方向性来自追踪还是滤波。
-2. 补齐 HTrace motion mask/delta、hit velocity 和 previous-camera plane 语义，优先解决收敛/拖影。
-3. 做 HTrace HorizonSearch/Bitmask 与整数 LOD A/B，再调接地感曲线。
+1. 用 `pow=1` 对比静止场景的 Generate/Temporal/Spatial 三层，确认 signed horizon 修正后的原始 AO。
+2. 用 Frame Debugger 检查 `Ho-GTAO Object Motion Mask/Delta` 是否只在移动对象写入，并观察 Temporal 是否稳定收敛。
+3. 只在 motion 链通过后继续处理剩余的历史重投影差异；不再用质量参数替代算法验证。

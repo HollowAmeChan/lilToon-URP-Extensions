@@ -17,6 +17,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         TEXTURE2D_X(_HoGTAOHistoryPrevNormalTex);
         float4 _HoGTAOHistoryPrevTex_TexelSize;
         TEXTURE2D_X(_MotionVectorTexture);
+        TEXTURE2D_X(_HoGTAOMotionMask);
+        TEXTURE2D_X(_HoGTAOMotionDelta);
         TEXTURE2D_X_FLOAT(_HoGTAODepthMip0);
         TEXTURE2D_X_FLOAT(_HoGTAODepthMip1);
         TEXTURE2D_X_FLOAT(_HoGTAODepthMip2);
@@ -35,6 +37,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         float4x4 _HoGTAOPreviousViewMatrix;
         float4 _HoGTAODepthToViewParams;
         float4 _HoGTAOPreviousDepthToViewParams;
+        float4 _HoGTAOPreviousZBufferParams;
         float _HoGTAOOrthographic;
         float _HoGTAOPreviousOrthographic;
         float4x4 _HoGTAOProjMatrix;
@@ -45,6 +48,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         float _HoGTAOTemporalMaxFrames;
         float _HoGTAOTemporalRejection;
         float _HoGTAOUseMotionVectors;
+        float _HoGTAOUseObjectMotion;
         float _HoGTAOWorldSpaceRadius;
         float _HoGTAOScreenSpaceRadius;
         float _HoGTAOThickness;
@@ -182,10 +186,37 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
 
         float HoGTAOHitVelocity(float2 originUV, float2 hitUV)
         {
-            if (_HoGTAOUseMotionVectors < 0.5)
+            float originObjectMask = _HoGTAOUseObjectMotion > 0.5
+                ? step(1.0e-6, SAMPLE_TEXTURE2D_X(_HoGTAOMotionMask, sampler_PointClamp, saturate(originUV)).r)
+                : 0.0;
+            float hitObjectMask = _HoGTAOUseObjectMotion > 0.5
+                ? step(1.0e-6, SAMPLE_TEXTURE2D_X(_HoGTAOMotionMask, sampler_PointClamp, saturate(hitUV)).r)
+                : 0.0;
+            if (_HoGTAOUseObjectMotion > 0.5 && (originObjectMask > 0.5 || hitObjectMask > 0.5))
             {
+                float4 originDelta = SAMPLE_TEXTURE2D_X(_HoGTAOMotionDelta, sampler_PointClamp, saturate(originUV));
+                float4 hitDelta = SAMPLE_TEXTURE2D_X(_HoGTAOMotionDelta, sampler_PointClamp, saturate(hitUV));
+                float originMagnitude = originObjectMask > 0.5 ? abs(originDelta.g) : 0.0;
+                float hitMagnitude = hitObjectMask > 0.5 ? abs(hitDelta.g) : 0.0;
+                float maximumMagnitude = max(originMagnitude, hitMagnitude);
+                float2 originDirectionOct = originDelta.ba * 2.0 - 1.0;
+                float2 hitDirectionOct = hitDelta.ba * 2.0 - 1.0;
+                float3 originDirection = UnpackNormalOctQuadEncode(originDirectionOct);
+                float3 hitDirection = UnpackNormalOctQuadEncode(hitDirectionOct);
+                float directionAgreement = dot(originDirection, hitDirection);
+                float magnitudeDivergence = abs(hitMagnitude - originMagnitude)
+                    / max(maximumMagnitude, 1.0e-6);
+                if (magnitudeDivergence > 0.4 || directionAgreement < 0.5 || hitMagnitude < 1.0e-6)
+                {
+                    // HTrace deliberately gives a zero-motion hit a full
+                    // rejection impulse when the origin is moving.
+                    return maximumMagnitude > 1.0e-6 ? saturate(maximumMagnitude * 10.0) : 1.0;
+                }
                 return 0.0;
             }
+
+            if (_HoGTAOUseMotionVectors < 0.5)
+                return 0.0;
 
             float2 originMotion = SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, saturate(originUV)).xy;
             float2 hitMotion = SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, saturate(hitUV)).xy;
@@ -232,7 +263,10 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             float worldRadius = max(screenRadius * linearDepth * radiusScale, 1.0e-4);
             float falloff = rcp(worldRadius);
             falloff *= falloff;
-            float minStep = 1.3 / max(screenRadius, 1.0);
+            // HTrace keeps the reciprocal screen radius unconditionally.  A
+            // second clamp at one pixel changes the near/far balance and
+            // makes distant slices disproportionately camera-facing.
+            float minStep = 1.3 / max(screenRadius, 1.0e-4);
             int frameIndex = (int)_HoGTAOFrameIndex;
             float2 pixelCoord = floor(uv * _ScreenParams.xy);
             float noiseX = HoGTAOInterleavedGradientNoise(pixelCoord, 0);
@@ -292,7 +326,12 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                         float2 horizon = rsqrt(float2(d2, max(d2 + thickness * thickness - h * thickness * 2.0, 1.0e-6))) * float2(h, h - thickness);
                         float sampleWeight = rcp(1.0 + d2 * falloff);
                         horizon = _HoGTAOUseAttenuation > 0.5 ? lerp(minHorizon.xx, horizon, sampleWeight) : horizon;
-                        horizon = float2(HoGTAOFastACos(saturate(horizon.x)), HoGTAOFastACos(saturate(horizon.y)));
+                        // Horizon cosine is signed.  Saturating here folds the
+                        // back half of the arc onto pi/2, which is not HTrace's
+                        // bitmask integration and produces strong view
+                        // direction bias.  Keep the signed domain and only
+                        // protect the fast acos approximation's input range.
+                        horizon = float2(HoGTAOFastACos(clamp(horizon.x, -1.0, 1.0)), HoGTAOFastACos(clamp(horizon.y, -1.0, 1.0)));
                         float2 normalized = saturate((nAngle + horizon + PI * 0.5) / PI);
                         normalized *= normalized * (3.0 - 2.0 * normalized);
                         HoGTAOUpdateBitmask(bitmask, normalized);
@@ -307,7 +346,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                         float2 horizon = rsqrt(float2(d2, max(d2 + thickness * thickness - h * thickness * 2.0, 1.0e-6))) * float2(h, h - thickness);
                         float sampleWeight = rcp(1.0 + d2 * falloff);
                         horizon = _HoGTAOUseAttenuation > 0.5 ? lerp(minHorizon.yy, horizon, sampleWeight) : horizon;
-                        horizon = float2(HoGTAOFastACos(saturate(horizon.x)), HoGTAOFastACos(saturate(horizon.y)));
+                        horizon = float2(HoGTAOFastACos(clamp(horizon.x, -1.0, 1.0)), HoGTAOFastACos(clamp(horizon.y, -1.0, 1.0)));
                         float2 normalized = saturate((nAngle - horizon + PI * 0.5) / PI);
                         normalized *= normalized * (3.0 - 2.0 * normalized);
                         HoGTAOUpdateBitmask(bitmask, normalized.yx);
@@ -337,6 +376,16 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             if (_HoGTAODebugMode > 2.5 && _HoGTAODebugMode < 3.5)
             {
                 return half4(nd.rgb, 1.0h);
+            }
+            if (_HoGTAODebugMode > 3.5 && _HoGTAODebugMode < 4.5)
+            {
+                float motionMask = _HoGTAOUseObjectMotion > 0.5
+                    ? SAMPLE_TEXTURE2D_X(_HoGTAOMotionMask, sampler_PointClamp, input.texcoord).r
+                    : 0.0;
+                float4 motionDelta = _HoGTAOUseObjectMotion > 0.5
+                    ? SAMPLE_TEXTURE2D_X(_HoGTAOMotionDelta, sampler_PointClamp, input.texcoord)
+                    : 0.0;
+                return half4(motionMask, saturate(abs(motionDelta.g) * 10.0), saturate(abs(motionDelta.r)), 1.0h);
             }
             float centerRawDepth = HoGTAOSampleDepth(saturate(input.texcoord), 0.0);
             if (HoGTAOIsFarClip(centerRawDepth))
@@ -384,12 +433,20 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 float4(currentWorldPosition, 1.0)).xyz;
             float3 currentPreviousPositionVS = currentPreviousUnityPosition * float3(1.0, -1.0, -1.0);
             float currentPreviousDepth = abs(currentPreviousUnityPosition.z);
-            float3 previousNormalVS = normalize(mul(
-                (float3x3)_HoGTAOPreviousViewMatrix,
-                currentNormalWS)) * float3(1.0, -1.0, -1.0);
+            float objectMotionMask = _HoGTAOUseObjectMotion > 0.5
+                ? step(1.0e-6, SAMPLE_TEXTURE2D_X(_HoGTAOMotionMask, sampler_PointClamp, input.texcoord).r)
+                : 0.0;
+            float objectMotionDepthDelta = _HoGTAOUseObjectMotion > 0.5
+                ? SAMPLE_TEXTURE2D_X(_HoGTAOMotionDelta, sampler_PointClamp, input.texcoord).r
+                : 0.0;
+            currentPreviousDepth += objectMotionDepthDelta;
             float depthThreshold = lerp(0.005, 0.10, pow(saturate(viewAlignment), 8.0))
                 * currentPreviousDepth * max(_HoGTAOPixelSpreadMultiplier, 1.0e-4);
-            float planeThreshold = 0.005 * currentPreviousDepth * max(_HoGTAOPixelSpreadMultiplier, 1.0e-4);
+            if (objectMotionMask > 0.5 && abs(objectMotionDepthDelta) < 1.0e-6)
+            {
+                float relaxMultiplier = max(50.0 / max(currentPreviousDepth, 1.0e-4), 1.0);
+                depthThreshold *= relaxMultiplier;
+            }
             float2 motion = _HoGTAOUseMotionVectors > 0.5
                 ? SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, input.texcoord).xy
                 : float2(0.0, 0.0);
@@ -416,7 +473,6 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             float previousAccumulated = 0.0;
             float previousVelocityAccumulated = 0.0;
             float previousCountAccumulated = 0.0;
-            float3 previousNormalAccumulated = 0.0;
             float historyWeightSum = 0.0;
             [unroll]
             for (int historyTap = 0; historyTap < 4; historyTap++)
@@ -432,27 +488,18 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 float historyRawDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_PointClamp, historyUV).r;
                 float historyLinearDepth = HoGTAOIsFarClip(historyRawDepth)
                     ? 0.0
-                    : LinearEyeDepth(historyRawDepth, _ZBufferParams);
-                float3 historyPositionVS = !HoGTAOIsFarClip(historyRawDepth)
-                    ? HoGTAOPreviousViewPosition(historyUV, historyLinearDepth)
-                    : 0.0;
+                    : LinearEyeDepth(historyRawDepth, _HoGTAOPreviousZBufferParams);
                 float3 historyNormalWS = normalize((float3)normalData.gba * 2.0 - 1.0);
-                float historyPlane = dot(previousNormalVS, historyPositionVS);
-                float planeDistance = abs(
-                    historyPlane / max(historyLinearDepth, 1.0e-4) * currentPreviousDepth
-                    - historyPlane);
                 float normalValid = step(0.5, dot(currentNormalWS, historyNormalWS));
                 float validDepth = currentSurfaceValid && !HoGTAOIsFarClip(historyRawDepth)
                     ? inside
                         * step(abs(currentPreviousDepth - historyLinearDepth), max(depthThreshold, 1.0e-4))
-                        * step(planeDistance, max(planeThreshold, 1.0e-4))
                         * normalValid
                     : 0.0;
                 float tapWeight = historyWeights[historyTap] * validDepth;
                 previousAccumulated += historyData.r * tapWeight;
                 previousVelocityAccumulated += historyData.g * tapWeight;
                 previousCountAccumulated += historyData.b * max(_HoGTAOTemporalMaxFrames, 1.0) * tapWeight;
-                previousNormalAccumulated += ((float3)normalData.gba * 2.0 - 1.0) * tapWeight;
                 historyWeightSum += tapWeight;
             }
             // SceneView and the first valid motion-vector frame can expose a
@@ -466,21 +513,15 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 float fallbackRawDepth = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevDepthTex, sampler_PointClamp, fallbackUV).r;
                 float fallbackLinearDepth = HoGTAOIsFarClip(fallbackRawDepth)
                     ? 0.0
-                    : LinearEyeDepth(fallbackRawDepth, _ZBufferParams);
-                float3 fallbackPositionVS = !HoGTAOIsFarClip(fallbackRawDepth)
-                    ? HoGTAOPreviousViewPosition(fallbackUV, fallbackLinearDepth)
-                    : 0.0;
+                    : LinearEyeDepth(fallbackRawDepth, _HoGTAOPreviousZBufferParams);
                 half4 fallbackNormalData = SAMPLE_TEXTURE2D_X(_HoGTAOHistoryPrevNormalTex, sampler_PointClamp, fallbackUV);
                 float fallbackValid = currentSurfaceValid && !HoGTAOIsFarClip(fallbackRawDepth)
                     ? step(abs(currentPreviousDepth - fallbackLinearDepth), max(depthThreshold, 1.0e-4))
-                        * step(abs(dot(previousNormalVS, fallbackPositionVS) / max(fallbackLinearDepth, 1.0e-4) * currentPreviousDepth
-                            - dot(previousNormalVS, fallbackPositionVS)), max(planeThreshold, 1.0e-4))
                         * step(0.5, dot(currentNormalWS, normalize((float3)fallbackNormalData.gba * 2.0 - 1.0)))
                     : 0.0;
                 previousAccumulated = fallbackData.r * fallbackValid;
                 previousVelocityAccumulated = fallbackData.g * fallbackValid;
                 previousCountAccumulated = fallbackData.b * max(_HoGTAOTemporalMaxFrames, 1.0) * fallbackValid;
-                previousNormalAccumulated = ((float3)fallbackNormalData.gba * 2.0 - 1.0) * fallbackValid;
                 historyWeightSum = fallbackValid;
             }
             half previous = historyWeightSum > 1.0e-5 ? previousAccumulated / historyWeightSum : 0.0h;
@@ -489,9 +530,6 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 : 0.0h;
             half previousCount = historyWeightSum > 1.0e-5 ? previousCountAccumulated / historyWeightSum : 0.0h;
             float3 currentNormal = normalize((float3)geometry.rgb * 2.0 - 1.0);
-            float3 previousNormal = historyWeightSum > 1.0e-5
-                ? normalize(previousNormalAccumulated / historyWeightSum)
-                : currentNormal;
             // Sky/uncovered pixels have no surface history to validate. Keep
             // them white in the diagnostic instead of falsely marking them as
             // temporal disocclusions.
@@ -503,10 +541,10 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             }
             half depthValid = (currentSurfaceValid ? 1.0h : 0.0h) * step(1.0e-5, historyWeightSum);
             half depthAgreement = step(1.0e-5, historyWeightSum);
-            half normalAgreement = previousCount > 0.5h
-                ? step(0.5h, dot(currentNormal, previousNormal))
-                : 1.0h;
-            half accepted = saturate(_HoGTAOHistoryValid) * depthValid * depthAgreement * normalAgreement;
+            // HTrace applies normal rejection per bilinear history tap.  A
+            // second whole-pixel normal vote would reject otherwise valid
+            // history at silhouette edges and noticeably slow convergence.
+            half accepted = saturate(_HoGTAOHistoryValid) * depthValid * depthAgreement;
             half sampleCount = min(previousCount + 1.0h, max(_HoGTAOTemporalMaxFrames, 1.0));
             sampleCount = lerp(1.0h, sampleCount, accepted);
             float temporalWeight = 1.0 - rcp(max((float)sampleCount, 1.0));
