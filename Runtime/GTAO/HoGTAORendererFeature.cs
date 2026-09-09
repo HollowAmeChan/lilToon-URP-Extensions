@@ -612,7 +612,13 @@ namespace lilToon.URP.Extensions.GTAO
             TextureHandle temporalMotionVectors = gameCameraMotion
                 ? resourceData.motionVectorColor
                 : TextureHandle.nullHandle;
-            TextureHandle generateMotionVectors = temporalMotionVectors;
+            // Motion debug is explicitly allowed to inspect URP's camera
+            // vector field. Temporal accumulation stays on the conservative
+            // SceneView path below so a stale editor field cannot destabilize
+            // history.
+            TextureHandle generateMotionVectors = settings.debugMode == HoGTAODebugMode.Motion
+                ? resourceData.motionVectorColor
+                : temporalMotionVectors;
             TextureHandle motionMask = TextureHandle.nullHandle;
             TextureHandle motionDelta = TextureHandle.nullHandle;
             if (motionMaterial != null)
