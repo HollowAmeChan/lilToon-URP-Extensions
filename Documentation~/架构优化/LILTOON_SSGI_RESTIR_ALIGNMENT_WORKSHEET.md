@@ -61,15 +61,15 @@ HoGeometryBuffer + opaque camera source
 | G3 | Depth/Hi-Z | `HDepthPyramid`、`GBufferPassURP` | Ho-SSGI 自有 5 级 R32 线性深度 pyramid；trace 远段采粗层，候选 crossing 回读 mip0 GeometryBuffer 精确确认；selected-ray validation 仍用精确深度 | `部分对齐` | Frame Debugger 应出现 `Ho-SSGI Depth Pyramid 0..4`；远距离墙面/薄物体不能因粗层产生假命中 | 对齐 HTrace raw-device-depth reduction、LOD 随 march footprint 变化、refine intersection/half-step validation |
 | T-Source | 光照源时域重投影 | `HTemporalReprojectionSSGI.compute:79-206`，先生成 `ColorReprojected` | Ho 新增 source history ping-pong，motion/depth/normal/previous-plane 四 tap 重投影；3x3 source luminance moments clamp；结果喂给 raw trace | `部分对齐` | Frame Debugger 对比 Source Reprojection/Raw Trace；灯光变化后看旧亮度残留 | 补 render-scale source history 坐标和 HTrace best-tap/曝光语义 |
 | T0 | Temporal color reprojection | `HTemporalReprojectionSSGI.compute:230-365` | Ho Temporal 使用 motion、四 tap history、depth/normal、source luminance；Temporal GI resolve 写入独立 GI history | `部分对齐` | Temporal reuse 开/关；看历史拖影和上下边缘错位；确认 GI history 在下一帧有效 | 补 render-scale/history UV 契约和 local source clamp |
-| R0 | Ray candidate | `HRenderSSGI.compute:71-145` | world-space cosine ray；稳定 16 帧低差异序列；命中 source；HTrace 风格 35% 距离阈值后指数衰减；candidate target=luminance(candidate)；M 包含 miss；可选 GeometryBuffer sky fallback；几何命中与 radiance brightness 分离；命中使用 Hi-Z 粗层 + mip0 精确深度/front-face validation | `部分对齐` | Raw Trace 看原始噪声和能量；开启 sky buffer 后看低命中区域是否有稳定 fallback；固定帧序列检查噪声是否可积累；远段命中不能跨薄物体 | 对齐 HTrace refine intersection/half-step，并接入独立 AO/occlusion reservoir，确认 candidate 能量归一化 |
-| R1 | Reservoir payload | `HReservoirSSGI.hlsl:28-122` | Color/Wsum/M/target/hit/distance + direction/originNormal，RGBAHalf MRT | `部分对齐` | Reservoir Weight/M/Hit；检查 target、M、W 是否合理 | 评估整数 packed layout；目前不急于复制 HTrace bit packing |
-| R2 | Temporal reservoir | `HRestirSSGI.compute:81-123` | 四 tap history reservoir merge，history M cap=100，reuse 可单独关闭；reservoir replacement 随帧重新播种 | `部分对齐` | Temporal reuse 开/关；静止画面噪声下降且灯光变化能响应；同一像素不能固定选择同一历史候选 | 增加 HTrace 风格 reprojected hit validity 和 selected target 重评估 |
+| R0 | Ray candidate | `HRenderSSGI.compute:71-145` | world-space cosine ray；稳定 16 帧低差异序列；命中 source；HTrace 风格 35% 距离阈值后指数衰减；candidate target=luminance(candidate)；M 包含 miss；可选 GeometryBuffer sky fallback；几何命中与 radiance brightness 分离；命中使用 Hi-Z 粗层 + mip0 精确深度/front-face validation；同时产生独立 near-occlusion candidate | `部分对齐` | Raw Trace、Near Occlusion；低命中区域的 occlusion 不应被误当成 GI；固定帧序列检查噪声是否可积累 | 对齐 HTrace refine intersection/half-step，并确认 near-occlusion 的距离/移动点语义 |
+| R1 | Reservoir payload | `HReservoirSSGI.hlsl:28-122` | Radiance: Color/W/M/target/hit/distance + direction/originNormal；Near occlusion: selected occlusion/M/W/distance + direction；RGBAHalf MRT | `部分对齐` | Reservoir Weight/M/Hit、Near Occlusion；检查 target、M、W 是否合理 | 评估整数 packed layout；目前不急于复制 HTrace bit packing |
+| R2 | Temporal reservoir | `HRestirSSGI.compute:81-123` | 四 tap history radiance reservoir merge；near-occlusion reservoir 同步重投影/验证；history M cap=100，reuse 可单独关闭；reservoir replacement 随帧重新播种 | `部分对齐` | Temporal reuse 开/关；静止画面噪声下降且灯光变化能响应；Near Occlusion 不应随 GI 亮度闪烁 | 增加 HTrace 风格 reprojected hit validity 和 selected target 重评估 |
 | R3 | Temporal validation | `HRestirSSGI.compute:125-245` | selected-ray 几何 re-march + source lighting validation；只限制 history；使用 previous inverse VP 做 plane agreement | `部分对齐` | Validation 开/关；不能把当前 candidate 压黑 | 对 moving hit、off-screen、曝光变化分别做测试 |
 | R4 | Firefly | `HRestirSSGI.compute:272-334` | 7x7 luminance moments，按 metadata sample count 调整阈值，限制 reservoir W，可单独关闭 | `部分对齐` | Firefly 开/关；亮点应减少但不应整体变暗 | 复核 first frames 权重和 moment 边界采样 |
-| R5 | Spatial candidate reuse | `HRestirSSGI.compute:338-440` | 独立 `Ho-SSGI Spatial Resampling` pass；world-plane Poisson 8 邻居；使用 tapGeometry 重建实际世界位置计算 plane/normal/depth/Gaussian 权重；可读取已发布 `_HoAOTexture` 作为 AO 状态差异权重；输出 spatial reservoir 和 confidence/coverage/provisional visibility guidance MRT | `部分对齐` | Frame Debugger 单独看 Spatial Resampling；Spatial reuse 开/关；边缘不能跨平面串光；Ho-GTAO 已启用时检查 AO 边界 | 使用共享稳定 Poisson buffer，补 AO adaptive scale 和独立 occlusion history |
-| R6 | Spatial validation | `HRestirSSGI.compute:445-498` | 独立 `Ho-SSGI Spatial Validation` pass；读取 provisional guidance，selected-ray 8-step re-march；失败回退 temporal GI；第二 MRT 输出 authoritative spatial visibility | `部分对齐` | Frame Debugger 单独看 Spatial Validation；失败时不能黑屏；guidance.z 应反映重走射线可见性 | 保存 spatial occlusion/invalidity，补 HTrace 第二轮反馈 |
+| R5 | Spatial candidate reuse | `HRestirSSGI.compute:338-440` | 独立 `Ho-SSGI Spatial Resampling` pass；world-plane Poisson 8 邻居；使用 tapGeometry 重建实际世界位置计算 plane/normal/depth/Gaussian 权重；`_HoAOTexture` 只作为 AO 状态差异权重；独立 near-occlusion reservoir 参与邻居一致性；输出 spatial reservoir 和 guidance MRT | `部分对齐` | Frame Debugger 单独看 Spatial Resampling、Near Occlusion；Spatial reuse 开/关；边缘不能跨平面串光；Ho-GTAO 已启用时检查 AO 边界 | 使用共享稳定 Poisson buffer，补 HTrace AO adaptive scale 与 spatial occlusion history |
+| R6 | Spatial validation | `HRestirSSGI.compute:445-498` | 独立 `Ho-SSGI Spatial Validation` pass；读取 near-occlusion guidance，按配置步数重走 selected GI ray；失败回退 temporal GI；第二 MRT 的 `guidance.w` 保留 selected-ray visibility，`guidance.z` 保留独立 near occlusion | `部分对齐` | Frame Debugger 单独看 Spatial Validation、Near Occlusion；失败时不能黑屏；z/w 两个信号不能互换 | 保存 spatial occlusion/invalidity，补 HTrace 第二轮反馈 |
 | D0 | Temporal denoiser | `HDenoiserSSGI.compute:98-177` | 独立 denoised history；3x3 moments、DirectClipToAABB、历史 sample count 的 `1-1/N` 权重、motion/depth/normal/previous-plane rejection；独立 sample-count/invalidity metadata history；首帧使用本帧开始时的 history validity | `部分对齐` | Frame Debugger 对比 Spatial resolve、Temporal Metadata、Temporal Accumulation、最终输出；静止 20 帧；首帧/相机切换不应有随机残留 | 让 invalidity 传播语义与 HTrace 的历史有效率一致，并补曝光变化重置 |
-| D1 | Spatial denoiser | `HDenoiserSSGI.compute:244-343` | 两轮 spatial filter；HTrace 风格 maximum-channel tone map/inverse；normal/depth/world-plane/Gaussian/spatial-guidance、spatial visibility 与已发布 `_HoAOTexture` 差异权重 | `部分对齐` | Raw GI 与最终 Off 对比；边缘与亮点不能扩散；两轮 pass 都应出现在 Frame Debugger | 用 AO adaptive scale 和 HTrace bit guidance 替换当前 confidence/coverage guidance，并把 near-occlusion 做成时域历史 |
+| D1 | Spatial denoiser | `HDenoiserSSGI.compute:244-343` | 两轮 spatial filter；HTrace 风格 maximum-channel tone map/inverse；normal/depth/world-plane/Gaussian/spatial-guidance、独立 near-occlusion 与已发布 `_HoAOTexture` 差异权重；selected-ray visibility 保留在 guidance.w 供诊断 | `部分对齐` | Raw GI、Near Occlusion 与最终 Off 对比；边缘与亮点不能扩散；两轮 pass 都应出现在 Frame Debugger | 用 AO adaptive scale 和 HTrace bit guidance 替换当前 confidence/coverage guidance，并把空间遮挡反馈做成独立历史 |
 | D2 | Interpolation | `HInterpolationSSGI.compute`、`SSGIPassURP.cs:616-637` | 不适用：当前 Ho 固定 full-resolution 质量路径 | `不适用` | 不打开 checkerboard/半分辨率 | 只有引入 render scale 后再排期 |
 | O0 | Output | `ColorComposeURP.shader` | `_HoGITexture`，Before Post Processing composite | `部分对齐` | 关闭 Ho-SSGI 后无残留；Geometry coverage 控 receiver | 后续再接 lilToon 材质，不改 producer 契约 |
 
@@ -79,7 +79,7 @@ HoGeometryBuffer + opaque camera source
 
 ```text
 ReservoirColor.rgb = selected radiance
-ReservoirColor.a   = Wsum
+ReservoirColor.a   = W = Wsum / (M * target)
 ReservoirAux.x     = M
 ReservoirAux.y     = selected target
 ReservoirAux.z     = HitFound
@@ -87,6 +87,18 @@ ReservoirAux.w     = distance
 ReservoirRay.xy    = oct(direction)
 ReservoirRay.zw    = oct(origin normal)
 ```
+
+### Ho near-occlusion reservoir
+
+```text
+OcclusionAux.x = selected near-occlusion [0,1]
+OcclusionAux.y = M
+OcclusionAux.z = W = Wsum / (M * selected near-occlusion)
+OcclusionAux.w = selected distance
+OcclusionRay.xy = oct(selected direction)
+```
+
+near-occlusion 是独立的空间指导信号，不是 GI 能量，也不替代已发布的 `_HoAOTexture`。HoAO 只参与 AO 状态差异权重；GI 的 radiance reservoir 不乘 AO。
 
 当前格式是 RGBAHalf，优先保证可调试性；没有直接复制 HTrace 的 `uint4` packed layout。改变布局前必须先完成 R1/R2/R3 的画面对齐，否则只是换存储格式，不能解决噪声。
 

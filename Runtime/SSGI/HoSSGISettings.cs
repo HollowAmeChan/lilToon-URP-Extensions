@@ -43,6 +43,8 @@ namespace lilToon.URP.Extensions.SSGI
         TemporalDenoised = 16,
         [InspectorName("Spatial Filter 1")]
         SpatialFilter1 = 17,
+        [InspectorName("Near Occlusion")]
+        NearOcclusion = 18,
     }
 
     [Serializable]

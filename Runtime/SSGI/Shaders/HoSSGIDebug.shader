@@ -40,6 +40,7 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
         TEXTURE2D_X(_HoGITexture);
         TEXTURE2D_X(_HoSSGIReservoirColor);
         TEXTURE2D_X(_HoSSGIReservoirAux);
+        TEXTURE2D_X(_HoSSGIOcclusionAux);
         TEXTURE2D_X(_HoSSGISpatialGuidance);
         TEXTURE2D_X(_HoSSGISampleCountHistory);
         TEXTURE2D_X(_HoSSGIInvalidityHistory);
@@ -59,6 +60,7 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
             float4 gi = SAMPLE_TEXTURE2D_X(_HoGITexture, sampler_LinearClamp, uv);
             half4 reservoirColor = SAMPLE_TEXTURE2D_X(_HoSSGIReservoirColor, sampler_PointClamp, uv);
             half4 reservoirAux = SAMPLE_TEXTURE2D_X(_HoSSGIReservoirAux, sampler_PointClamp, uv);
+            half4 occlusionAux = SAMPLE_TEXTURE2D_X(_HoSSGIOcclusionAux, sampler_PointClamp, uv);
             if (_HoSSGIDebugMode == 1) return float4(source, 1);
             if (_HoSSGIDebugMode == 2) return float4(step(0.0001, geometry.a).xxx, 1);
             if (_HoSSGIDebugMode == 3) return float4(geometry.rgb, 1);
@@ -93,6 +95,14 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
                 return SAMPLE_TEXTURE2D_X(_HoSSGITemporalDenoisedDebug, sampler_LinearClamp, uv);
             if (_HoSSGIDebugMode == 17)
                 return SAMPLE_TEXTURE2D_X(_HoSSGIBilateralFirstDebug, sampler_LinearClamp, uv);
+            if (_HoSSGIDebugMode == 18)
+            {
+                // The normalized occlusion reservoir stores selected
+                // occlusion in x and W in z; W*x reconstructs the mean near
+                // occlusion used by spatial guidance.
+                float occlusion = saturate(occlusionAux.x * occlusionAux.z);
+                return float4(occlusion.xxx, 1.0);
+            }
             return float4(source, 1);
         }
         ENDHLSL

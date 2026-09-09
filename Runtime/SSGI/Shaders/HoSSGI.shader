@@ -53,6 +53,10 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         TEXTURE2D_X(_HoSSGIReservoirHistoryColor);
         TEXTURE2D_X(_HoSSGIReservoirHistoryAux);
         TEXTURE2D_X(_HoSSGIReservoirHistoryRay);
+        TEXTURE2D_X(_HoSSGIOcclusionAux);
+        TEXTURE2D_X(_HoSSGIOcclusionRay);
+        TEXTURE2D_X(_HoSSGIOcclusionHistoryAux);
+        TEXTURE2D_X(_HoSSGIOcclusionHistoryRay);
         TEXTURE2D_X(_HoSSGISpatialGuidance);
         TEXTURE2D_X(_HoSSGISampleCountHistory);
         TEXTURE2D_X(_HoSSGIInvalidityHistory);
@@ -96,12 +100,23 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float3 originNormal;
         };
 
+        struct HoSSGIOcclusionReservoir
+        {
+            float occlusion;
+            float wsum;
+            float m;
+            float distance;
+            float3 direction;
+        };
+
         struct HoSSGITraceOutput
         {
             float4 gi : SV_Target0;
             float4 reservoirColor : SV_Target1;
             float4 reservoirAux : SV_Target2;
             float4 reservoirRay : SV_Target3;
+            float4 occlusionAux : SV_Target4;
+            float4 occlusionRay : SV_Target5;
         };
 
         struct HoSSGITemporalOutput
@@ -110,6 +125,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float4 reservoirColor : SV_Target1;
             float4 reservoirAux : SV_Target2;
             float4 reservoirRay : SV_Target3;
+            float4 occlusionAux : SV_Target4;
+            float4 occlusionRay : SV_Target5;
         };
 
         struct HoSSGIFireflyOutput
@@ -279,6 +296,57 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return reservoir.wsum / max(reservoir.m * reservoir.target, 1.0e-6);
         }
 
+        void HoSSGIOcclusionUpdate(
+            float sampleOcclusion,
+            float sampleDistance,
+            float3 sampleDirection,
+            float sampleM,
+            inout HoSSGIOcclusionReservoir reservoir,
+            float randomValue)
+        {
+            sampleOcclusion = saturate(sampleOcclusion);
+            float sampleWeight = sampleOcclusion;
+            reservoir.wsum += sampleWeight;
+            reservoir.m += max(sampleM, 0.0);
+            float selectionProbability = sampleWeight / max(reservoir.wsum, 1.0e-6);
+            if (sampleWeight > 0.0 && randomValue < selectionProbability)
+            {
+                reservoir.occlusion = sampleOcclusion;
+                reservoir.distance = max(sampleDistance, 0.0);
+                reservoir.direction = sampleDirection;
+            }
+        }
+
+        void HoSSGIOcclusionMerge(
+            inout HoSSGIOcclusionReservoir reservoir,
+            HoSSGIOcclusionReservoir candidate,
+            float reuseWeight,
+            float randomValue)
+        {
+            candidate.wsum *= max(reuseWeight, 0.0);
+            candidate.m *= max(reuseWeight, 0.0);
+            float candidateWeight = max(candidate.wsum, 0.0);
+            reservoir.wsum += candidateWeight;
+            reservoir.m += max(candidate.m, 0.0);
+            float selectionProbability = candidateWeight / max(reservoir.wsum, 1.0e-6);
+            if (candidateWeight > 0.0 && randomValue < selectionProbability)
+            {
+                reservoir.occlusion = candidate.occlusion;
+                reservoir.distance = candidate.distance;
+                reservoir.direction = candidate.direction;
+            }
+        }
+
+        float HoSSGIResolveOcclusion(HoSSGIOcclusionReservoir reservoir)
+        {
+            return saturate(reservoir.wsum / max(reservoir.m, 1.0e-6));
+        }
+
+        float HoSSGIOcclusionWeight(HoSSGIOcclusionReservoir reservoir)
+        {
+            return reservoir.wsum / max(reservoir.m * max(reservoir.occlusion, 1.0e-6), 1.0e-6);
+        }
+
         float2 HoSSGIEncodeOcta(float3 normal)
         {
             normal = normalize(normal);
@@ -300,6 +368,49 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 normal.xy = (1.0 - abs(normal.yx)) * signXY;
             }
             return normalize(normal);
+        }
+
+        float4 HoSSGIPackOcclusionRay(HoSSGIOcclusionReservoir reservoir)
+        {
+            return float4(HoSSGIEncodeOcta(reservoir.direction), 0.0, 1.0);
+        }
+
+        void HoSSGIUnpackOcclusionRay(float4 packed, inout HoSSGIOcclusionReservoir reservoir)
+        {
+            reservoir.direction = HoSSGIDecodeOcta(packed.xy);
+        }
+
+        HoSSGIOcclusionReservoir HoSSGILoadOcclusionCurrent(float2 uv)
+        {
+            float4 packedAux = SAMPLE_TEXTURE2D_X(_HoSSGIOcclusionAux, sampler_PointClamp, uv);
+            HoSSGIOcclusionReservoir reservoir;
+            reservoir.occlusion = saturate(packedAux.x);
+            reservoir.m = max(packedAux.y, 0.0);
+            reservoir.wsum = max(packedAux.z, 0.0) * reservoir.m * max(reservoir.occlusion, 1.0e-6);
+            reservoir.distance = max(packedAux.w, 0.0);
+            HoSSGIUnpackOcclusionRay(SAMPLE_TEXTURE2D_X(_HoSSGIOcclusionRay, sampler_PointClamp, uv), reservoir);
+            return reservoir;
+        }
+
+        HoSSGIOcclusionReservoir HoSSGILoadOcclusionHistory(float2 uv)
+        {
+            float4 packedAux = SAMPLE_TEXTURE2D_X(_HoSSGIOcclusionHistoryAux, sampler_PointClamp, uv);
+            HoSSGIOcclusionReservoir reservoir;
+            reservoir.occlusion = saturate(packedAux.x);
+            reservoir.m = max(packedAux.y, 0.0);
+            reservoir.wsum = max(packedAux.z, 0.0) * reservoir.m * max(reservoir.occlusion, 1.0e-6);
+            reservoir.distance = max(packedAux.w, 0.0);
+            HoSSGIUnpackOcclusionRay(SAMPLE_TEXTURE2D_X(_HoSSGIOcclusionHistoryRay, sampler_PointClamp, uv), reservoir);
+            return reservoir;
+        }
+
+        float4 HoSSGIPackOcclusionAux(HoSSGIOcclusionReservoir reservoir)
+        {
+            return float4(
+                saturate(reservoir.occlusion),
+                max(reservoir.m, 0.0),
+                HoSSGIOcclusionWeight(reservoir),
+                max(reservoir.distance, 0.0));
         }
 
         float4 HoSSGIPackReservoirRay(HoSSGIReservoir reservoir)
@@ -358,6 +469,43 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         float HoSSGILinearDepth(float3 positionWS)
         {
             return max(-mul(UNITY_MATRIX_V, float4(positionWS, 1.0)).z, 0.0);
+        }
+
+        float HoSSGIValidateOcclusionRay(
+            float3 originPositionWS,
+            HoSSGIOcclusionReservoir reservoir)
+        {
+            if (reservoir.occlusion <= 0.001 || reservoir.distance <= 0.001)
+                return 1.0;
+
+            float3 directionWS = normalize(reservoir.direction);
+            float3 expectedHitWS = originPositionWS + directionWS * reservoir.distance;
+            float3 hitNDC = ComputeNormalizedDeviceCoordinatesWithZ(expectedHitWS, UNITY_MATRIX_VP);
+            if (hitNDC.z < 0.0 || hitNDC.z > 1.0 || any(hitNDC.xy < 0.0) || any(hitNDC.xy > 1.0))
+                return 0.0;
+
+            float expectedDepth = HoSSGILinearDepth(expectedHitWS);
+            float2 texel = rcp(max(_ScreenParams.xy, 1.0));
+            float depthTolerance = max(_HoSSGIThickness * 2.0, expectedDepth * 0.05);
+            float bestAgreement = 0.0;
+            [unroll]
+            for (int y = -1; y <= 1; y++)
+            {
+                [unroll]
+                for (int x = -1; x <= 1; x++)
+                {
+                    float2 sampleUV = hitNDC.xy + float2(x, y) * texel;
+                    if (any(sampleUV < 0.0) || any(sampleUV > 1.0)) continue;
+                    half4 sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
+                    if (sampleGeometry.a < 0.0001h) continue;
+                    float depthAgreement = exp2(-abs(sampleGeometry.a - expectedDepth)
+                        / max(depthTolerance, 0.01));
+                    float3 sampleNormal = normalize((float3)sampleGeometry.rgb * 2.0 - 1.0);
+                    float normalAgreement = saturate((dot(sampleNormal, -directionWS) - 0.1) / 0.9);
+                    bestAgreement = max(bestAgreement, depthAgreement * normalAgreement);
+                }
+            }
+            return saturate(bestAgreement);
         }
 
         float2 HoSSGIHash2(float2 p)
@@ -602,6 +750,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.reservoirColor = 0;
             output.reservoirAux = 0;
             output.reservoirRay = 0;
+            output.occlusionAux = 0;
+            output.occlusionRay = 0;
             if (center.a < 0.0001) return output;
 
             float3 centerNormalWS = normalize((float3)center.rgb * 2.0 - 1.0);
@@ -613,6 +763,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float3 radiance = 0;
             float hits = 0;
             HoSSGIReservoir reservoir = (HoSSGIReservoir)0;
+            HoSSGIOcclusionReservoir occlusionReservoir = (HoSSGIOcclusionReservoir)0;
             int rays = max(1, _HoSSGIRayCount);
             int steps = max(4, _HoSSGIStepCount);
             float3 tangent = HoSSGIBuildTangent(centerNormalWS);
@@ -653,6 +804,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 if (startNDC.z < 0.0 || startNDC.z > 1.0)
                 {
                     reservoir.m += 1.0;
+                    occlusionReservoir.m += 1.0;
                     continue;
                 }
                 float2 clippedEndUV;
@@ -660,6 +812,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 if (clippedRay <= 0.001)
                 {
                     reservoir.m += 1.0;
+                    occlusionReservoir.m += 1.0;
                     continue;
                 }
                 rayEndWS = lerp(rayStartWS, rayEndWS, clippedRay);
@@ -756,6 +909,20 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     1.0,
                     reservoir,
                     HoSSGIReservoirRandom(pixel, (float)(ray + 1) * 0.37 + (float)steps * 0.013));
+
+                // Keep near occlusion as an independent reservoir. It is a
+                // visibility signal for reuse and denoising, not GI energy.
+                float nearRange = min(1.0, max(_HoSSGIRayLength, 0.01));
+                float nearOcclusion = candidateHit > 0.5 && candidateDistance > 0.001
+                    ? saturate(1.0 - candidateDistance / nearRange)
+                    : 0.0;
+                HoSSGIOcclusionUpdate(
+                    nearOcclusion,
+                    candidateDistance,
+                    rayDirWS,
+                    1.0,
+                    occlusionReservoir,
+                    HoSSGIReservoirRandom(pixel, (float)(ray + 1) * 0.71 + (float)steps * 0.017));
             }
 
             float confidence = saturate(hits / rays);
@@ -766,6 +933,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.reservoirColor = float4(max(reservoir.color, 0.0), HoSSGIReservoirWeight(reservoir));
             output.reservoirAux = float4(max(reservoir.m, 0.0), max(reservoir.target, 0.0), saturate(reservoir.hit), max(reservoir.distance, 0.0));
             output.reservoirRay = HoSSGIPackReservoirRay(reservoir);
+            output.occlusionAux = HoSSGIPackOcclusionAux(occlusionReservoir);
+            output.occlusionRay = HoSSGIPackOcclusionRay(occlusionReservoir);
             return output;
         }
 
@@ -780,6 +949,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.reservoirColor = 0;
             output.reservoirAux = 0;
             output.reservoirRay = 0;
+            output.occlusionAux = 0;
+            output.occlusionRay = 0;
             if (geometry.a < 0.0001h) return output;
 
             float2 motion = _HoSSGIUseMotion > 0.5
@@ -790,6 +961,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float3 originPositionWS = HoSSGIWorldPosition(uv, geometry.a);
             HoSSGIReservoir currentReservoir = HoSSGILoadReservoir(uv);
             HoSSGIReservoir merged = currentReservoir;
+            HoSSGIOcclusionReservoir currentOcclusion = HoSSGILoadOcclusionCurrent(uv);
+            HoSSGIOcclusionReservoir mergedOcclusion = currentOcclusion;
             float currentConfidence = saturate(current.a);
             float historyConfidenceSum = 0.0;
 
@@ -872,6 +1045,20 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     historyConfidenceSum += saturate(history.a) * tapM;
                     HoSSGIReservoirMerge(merged, historyReservoir,
                         HoSSGIReservoirRandom(uv * _ScreenParams.xy, (float)(historyTap + 17)));
+
+                    HoSSGIOcclusionReservoir historyOcclusion = HoSSGILoadOcclusionHistory(tapUV);
+                    if (_HoSSGIReservoirValidation > 0.5)
+                    {
+                        float occlusionValidation = HoSSGIValidateOcclusionRay(
+                            originPositionWS, historyOcclusion);
+                        historyOcclusion.wsum *= occlusionValidation;
+                        historyOcclusion.m *= occlusionValidation;
+                    }
+                    HoSSGIOcclusionMerge(
+                        mergedOcclusion,
+                        historyOcclusion,
+                        historyScale,
+                        HoSSGIReservoirRandom(uv * _ScreenParams.xy, (float)(historyTap + 53)));
                 }
             }
 
@@ -885,6 +1072,12 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 merged.m = maxHistoryM;
                 merged.wsum *= historyScale;
             }
+            if (mergedOcclusion.m > maxHistoryM)
+            {
+                float occlusionHistoryScale = maxHistoryM / max(mergedOcclusion.m, 1.0e-5);
+                mergedOcclusion.m = maxHistoryM;
+                mergedOcclusion.wsum *= occlusionHistoryScale;
+            }
 
             float totalM = max(merged.m, 1.0e-6);
             float confidence = saturate((currentConfidence * max(currentReservoir.m, 0.0)
@@ -894,6 +1087,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.reservoirColor = float4(max(merged.color, 0.0), HoSSGIReservoirWeight(merged));
             output.reservoirAux = float4(max(merged.m, 0.0), max(merged.target, 0.0), saturate(merged.hit), max(merged.distance, 0.0));
             output.reservoirRay = HoSSGIPackReservoirRay(merged);
+            output.occlusionAux = HoSSGIPackOcclusionAux(mergedOcclusion);
+            output.occlusionRay = HoSSGIPackOcclusionRay(mergedOcclusion);
             return output;
         }
 
@@ -1070,6 +1265,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float2x2 rotation = float2x2(cos(randomAngle), -sin(randomAngle), sin(randomAngle), cos(randomAngle));
             HoSSGIReservoir centerReservoir = HoSSGILoadReservoir(uv);
             HoSSGIReservoir merged = centerReservoir;
+            HoSSGIOcclusionReservoir centerOcclusion = HoSSGILoadOcclusionCurrent(uv);
+            HoSSGIOcclusionReservoir mergedOcclusion = centerOcclusion;
             half4 centerTemporal = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_PointClamp, uv);
             float confidenceSum = centerTemporal.a;
             float confidenceWeight = 1.0;
@@ -1107,13 +1304,22 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     ? SAMPLE_TEXTURE2D_X(_HoAOTexture, sampler_LinearClamp, tapUV).r
                     : 1.0;
                 float aoWeight = exp2(-max(5.0, 10.0 * (1.0 - centerAO)) * abs(centerAO - tapAO));
-                float reuseWeight = planeWeight * normalWeight * depthWeight * aoWeight * gaussianWeight;
+                HoSSGIOcclusionReservoir tapOcclusion = HoSSGILoadOcclusionCurrent(tapUV);
+                float occlusionWeight = exp2(-10.0 * abs(
+                    HoSSGIResolveOcclusion(centerOcclusion) - HoSSGIResolveOcclusion(tapOcclusion)));
+                float reuseWeight = planeWeight * normalWeight * depthWeight * aoWeight
+                    * occlusionWeight * gaussianWeight;
                 if (reuseWeight <= 0.001) continue;
 
                 HoSSGIReservoir tapReservoir = HoSSGILoadReservoir(tapUV);
                 tapReservoir.wsum *= reuseWeight;
                 tapReservoir.m *= reuseWeight;
                 HoSSGIReservoirMerge(merged, tapReservoir, HoSSGIReservoirRandom(uv * _ScreenParams.xy, (float)(i + 31)));
+                HoSSGIOcclusionMerge(
+                    mergedOcclusion,
+                    tapOcclusion,
+                    reuseWeight,
+                    HoSSGIReservoirRandom(uv * _ScreenParams.xy, (float)(i + 67)));
 
                 half4 tapTemporal = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_PointClamp, tapUV);
                 confidenceSum += tapTemporal.a * reuseWeight;
@@ -1123,14 +1329,13 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.reservoirColor = float4(max(merged.color, 0.0), HoSSGIReservoirWeight(merged));
             output.reservoirAux = float4(max(merged.m, 0.0), max(merged.target, 0.0), saturate(merged.hit), max(merged.distance, 0.0));
             output.reservoirRay = HoSSGIPackReservoirRay(merged);
-            // Spatial visibility is not known until the selected ray is
-            // re-marched in SpatialValidation. Keep z open here as a
-            // provisional value; the validation pass publishes the
-            // authoritative visibility to its second MRT.
+            // z is an independent near-occlusion estimate. The selected GI
+            // ray visibility is still published by SpatialValidation in the
+            // validated guidance texture and remains separate from this signal.
             output.guidance = float4(
                 saturate(confidenceSum / max(confidenceWeight, 1.0e-5)),
                 saturate(confidenceWeight / 9.0),
-                1.0,
+                HoSSGIResolveOcclusion(mergedOcclusion),
                 1.0);
             return output;
         }
@@ -1155,17 +1360,21 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 spatialVisibility = HoSSGIValidateReservoirRay(originPositionWS, normalize((float3)geometry.rgb * 2.0 - 1.0), reservoir);
                 validation = spatialVisibility;
             }
-            float2 guidance = SAMPLE_TEXTURE2D_X(_HoSSGISpatialGuidance, sampler_PointClamp, uv).xy;
+            float4 guidanceData = SAMPLE_TEXTURE2D_X(_HoSSGISpatialGuidance, sampler_PointClamp, uv);
+            float2 guidance = guidanceData.xy;
             if (validation < 0.15)
             {
                 output.gi = temporal;
-                output.guidance = float4(guidance, spatialVisibility, 0.0);
+                // Keep the independent near-occlusion guidance in z. The
+                // validation result is retained in w for diagnostics without
+                // replacing the occlusion signal used by the denoiser.
+                output.guidance = float4(guidance.x, guidance.y, guidanceData.z, spatialVisibility);
                 return output;
             }
 
             float3 resolved = HoSSGIResolveReservoir(reservoir) * validation;
             output.gi = float4(max(resolved, 0.0), saturate(temporal.a * validation));
-            output.guidance = float4(guidance, spatialVisibility, 1.0);
+            output.guidance = float4(guidance.x, guidance.y, guidanceData.z, spatialVisibility);
             return output;
         }
 

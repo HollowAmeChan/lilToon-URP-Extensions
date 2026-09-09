@@ -11,6 +11,10 @@ namespace lilToon.URP.Extensions.SSGI
         public const string ReservoirColorName = "_HoSSGIReservoirColor";
         public const string ReservoirAuxName = "_HoSSGIReservoirAux";
         public const string ReservoirRayName = "_HoSSGIReservoirRay";
+        public const string OcclusionAuxName = "_HoSSGIOcclusionAux";
+        public const string OcclusionRayName = "_HoSSGIOcclusionRay";
+        public const string OcclusionHistoryAuxName = "_HoSSGIOcclusionHistoryAux";
+        public const string OcclusionHistoryRayName = "_HoSSGIOcclusionHistoryRay";
         public const string ReservoirHistoryColorName = "_HoSSGIReservoirHistoryColor";
         public const string ReservoirHistoryAuxName = "_HoSSGIReservoirHistoryAux";
         public const string ReservoirHistoryRayName = "_HoSSGIReservoirHistoryRay";
@@ -30,6 +34,10 @@ namespace lilToon.URP.Extensions.SSGI
         public static readonly int ReservoirColorId = Shader.PropertyToID(ReservoirColorName);
         public static readonly int ReservoirAuxId = Shader.PropertyToID(ReservoirAuxName);
         public static readonly int ReservoirRayId = Shader.PropertyToID(ReservoirRayName);
+        public static readonly int OcclusionAuxId = Shader.PropertyToID(OcclusionAuxName);
+        public static readonly int OcclusionRayId = Shader.PropertyToID(OcclusionRayName);
+        public static readonly int OcclusionHistoryAuxId = Shader.PropertyToID(OcclusionHistoryAuxName);
+        public static readonly int OcclusionHistoryRayId = Shader.PropertyToID(OcclusionHistoryRayName);
         public static readonly int ReservoirHistoryColorId = Shader.PropertyToID(ReservoirHistoryColorName);
         public static readonly int ReservoirHistoryAuxId = Shader.PropertyToID(ReservoirHistoryAuxName);
         public static readonly int ReservoirHistoryRayId = Shader.PropertyToID(ReservoirHistoryRayName);

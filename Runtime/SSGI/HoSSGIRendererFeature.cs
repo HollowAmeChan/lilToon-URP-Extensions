@@ -230,6 +230,10 @@ namespace lilToon.URP.Extensions.SSGI
         private RTHandle nextReservoirAux;
         private RTHandle previousReservoirRay;
         private RTHandle nextReservoirRay;
+        private RTHandle previousOcclusionAux;
+        private RTHandle nextOcclusionAux;
+        private RTHandle previousOcclusionRay;
+        private RTHandle nextOcclusionRay;
         private int width;
         private int height;
         private int cameraId;
@@ -255,6 +259,10 @@ namespace lilToon.URP.Extensions.SSGI
         public RTHandle NextReservoirAux => nextReservoirAux;
         public RTHandle PreviousReservoirRay => previousReservoirRay;
         public RTHandle NextReservoirRay => nextReservoirRay;
+        public RTHandle PreviousOcclusionAux => previousOcclusionAux;
+        public RTHandle NextOcclusionAux => nextOcclusionAux;
+        public RTHandle PreviousOcclusionRay => previousOcclusionRay;
+        public RTHandle NextOcclusionRay => nextOcclusionRay;
         public Matrix4x4 PreviousInverseViewProjection => previousInverseViewProjection;
         public bool PreviousMatrixValid => previousMatrixValid;
         public bool Valid => valid;
@@ -295,6 +303,10 @@ namespace lilToon.URP.Extensions.SSGI
             RenderingUtils.ReAllocateIfNeeded(ref nextReservoirAux, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSSGIHistoryNextReservoirAuxTex");
             RenderingUtils.ReAllocateIfNeeded(ref previousReservoirRay, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSSGIHistoryPrevReservoirRayTex");
             RenderingUtils.ReAllocateIfNeeded(ref nextReservoirRay, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSSGIHistoryNextReservoirRayTex");
+            RenderingUtils.ReAllocateIfNeeded(ref previousOcclusionAux, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSSGIHistoryPrevOcclusionAuxTex");
+            RenderingUtils.ReAllocateIfNeeded(ref nextOcclusionAux, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSSGIHistoryNextOcclusionAuxTex");
+            RenderingUtils.ReAllocateIfNeeded(ref previousOcclusionRay, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSSGIHistoryPrevOcclusionRayTex");
+            RenderingUtils.ReAllocateIfNeeded(ref nextOcclusionRay, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSSGIHistoryNextOcclusionRayTex");
             if (changed)
             {
                 width = requestedWidth;
@@ -331,6 +343,12 @@ namespace lilToon.URP.Extensions.SSGI
             texture = previousReservoirRay;
             previousReservoirRay = nextReservoirRay;
             nextReservoirRay = texture;
+            texture = previousOcclusionAux;
+            previousOcclusionAux = nextOcclusionAux;
+            nextOcclusionAux = texture;
+            texture = previousOcclusionRay;
+            previousOcclusionRay = nextOcclusionRay;
+            nextOcclusionRay = texture;
         }
 
         public void SwapDenoised()
@@ -374,6 +392,10 @@ namespace lilToon.URP.Extensions.SSGI
             nextReservoirAux?.Release();
             previousReservoirRay?.Release();
             nextReservoirRay?.Release();
+            previousOcclusionAux?.Release();
+            nextOcclusionAux?.Release();
+            previousOcclusionRay?.Release();
+            nextOcclusionRay?.Release();
             previous = null;
             next = null;
             previousSource = null;
@@ -392,6 +414,10 @@ namespace lilToon.URP.Extensions.SSGI
             nextReservoirAux = null;
             previousReservoirRay = null;
             nextReservoirRay = null;
+            previousOcclusionAux = null;
+            nextOcclusionAux = null;
+            previousOcclusionRay = null;
+            nextOcclusionRay = null;
             valid = false;
             previousInverseViewProjection = Matrix4x4.identity;
             previousMatrixValid = false;
@@ -420,6 +446,8 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle reservoirColor;
             public TextureHandle reservoirAux;
             public TextureHandle reservoirRay;
+            public TextureHandle occlusionAux;
+            public TextureHandle occlusionRay;
             public int rayCount;
             public int stepCount;
             public float rayLength;
@@ -462,6 +490,10 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle previousReservoirColor;
             public TextureHandle previousReservoirAux;
             public TextureHandle previousReservoirRay;
+            public TextureHandle currentOcclusionAux;
+            public TextureHandle currentOcclusionRay;
+            public TextureHandle previousOcclusionAux;
+            public TextureHandle previousOcclusionRay;
             public TextureHandle geometry;
             public TextureHandle[] depthPyramid;
             public TextureHandle motion;
@@ -521,6 +553,8 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle reservoirColor;
             public TextureHandle reservoirAux;
             public TextureHandle reservoirRay;
+            public TextureHandle occlusionAux;
+            public TextureHandle occlusionRay;
             public TextureHandle temporal;
             public TextureHandle geometry;
             public TextureHandle ao;
@@ -707,6 +741,10 @@ namespace lilToon.URP.Extensions.SSGI
             TextureHandle rawReservoirAux = renderGraph.CreateTexture(reservoirDesc);
             reservoirDesc.name = HoSSGIShaderConstants.ReservoirRayName;
             TextureHandle rawReservoirRay = renderGraph.CreateTexture(reservoirDesc);
+            reservoirDesc.name = HoSSGIShaderConstants.OcclusionAuxName;
+            TextureHandle rawOcclusionAux = renderGraph.CreateTexture(reservoirDesc);
+            reservoirDesc.name = HoSSGIShaderConstants.OcclusionRayName;
+            TextureHandle rawOcclusionRay = renderGraph.CreateTexture(reservoirDesc);
             HoSSGIRenderGraphResources resources = frameData.GetOrCreate<HoSSGIRenderGraphResources>();
             resources.rawGiTexture = raw;
             resources.sourceTexture = sourceReprojected;
@@ -722,6 +760,8 @@ namespace lilToon.URP.Extensions.SSGI
                 data.reservoirColor = rawReservoirColor;
                 data.reservoirAux = rawReservoirAux;
                 data.reservoirRay = rawReservoirRay;
+                data.occlusionAux = rawOcclusionAux;
+                data.occlusionRay = rawOcclusionRay;
                 data.rayCount = Mathf.Clamp(settings.rayCount, 1, 128);
                 data.stepCount = Mathf.Clamp(settings.stepCount, 4, 256);
                 data.rayLength = Mathf.Clamp(settings.rayLength, 0.01f, 32.0f);
@@ -737,6 +777,8 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.SetRenderAttachment(data.reservoirColor, 1, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(data.reservoirAux, 2, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(data.reservoirRay, 3, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(data.occlusionAux, 4, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(data.occlusionRay, 5, AccessFlags.WriteAll);
                 builder.SetGlobalTextureAfterPass(data.output, HoSSGIShaderConstants.RawGIId);
                 builder.SetGlobalTextureAfterPass(data.source, HoSSGIShaderConstants.SourceId);
                 builder.AllowGlobalStateModification(true);
@@ -774,6 +816,10 @@ namespace lilToon.URP.Extensions.SSGI
             TextureHandle nextReservoirAux = renderGraph.ImportTexture(history.NextReservoirAux);
             TextureHandle previousReservoirRay = renderGraph.ImportTexture(history.PreviousReservoirRay);
             TextureHandle nextReservoirRay = renderGraph.ImportTexture(history.NextReservoirRay);
+            TextureHandle previousOcclusionAux = renderGraph.ImportTexture(history.PreviousOcclusionAux);
+            TextureHandle nextOcclusionAux = renderGraph.ImportTexture(history.NextOcclusionAux);
+            TextureHandle previousOcclusionRay = renderGraph.ImportTexture(history.PreviousOcclusionRay);
+            TextureHandle nextOcclusionRay = renderGraph.ImportTexture(history.NextOcclusionRay);
             TextureHandle motion = resourceData.motionVectorColor;
             TextureHandle temporal = renderGraph.CreateTexture(outputDesc);
 
@@ -792,6 +838,10 @@ namespace lilToon.URP.Extensions.SSGI
                 data.previousReservoirColor = previousReservoirColor;
                 data.previousReservoirAux = previousReservoirAux;
                 data.previousReservoirRay = previousReservoirRay;
+                data.currentOcclusionAux = rawOcclusionAux;
+                data.currentOcclusionRay = rawOcclusionRay;
+                data.previousOcclusionAux = previousOcclusionAux;
+                data.previousOcclusionRay = previousOcclusionRay;
                 data.geometry = geometry.normalDepthTexture;
                 data.depthPyramid = depthPyramid;
                 data.motion = motion;
@@ -816,6 +866,10 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.UseTexture(data.previousReservoirColor, AccessFlags.Read);
                 builder.UseTexture(data.previousReservoirAux, AccessFlags.Read);
                 builder.UseTexture(data.previousReservoirRay, AccessFlags.Read);
+                builder.UseTexture(data.currentOcclusionAux, AccessFlags.Read);
+                builder.UseTexture(data.currentOcclusionRay, AccessFlags.Read);
+                builder.UseTexture(data.previousOcclusionAux, AccessFlags.Read);
+                builder.UseTexture(data.previousOcclusionRay, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 for (int i = 0; i < data.depthPyramid.Length; i++)
                     builder.UseTexture(data.depthPyramid[i], AccessFlags.Read);
@@ -824,6 +878,8 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.SetRenderAttachment(data.reservoirOutputColor, 1, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(data.reservoirOutputAux, 2, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(data.reservoirOutputRay, 3, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(nextOcclusionAux, 4, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(nextOcclusionRay, 5, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (TemporalPassData passData, RasterGraphContext context) =>
@@ -846,6 +902,10 @@ namespace lilToon.URP.Extensions.SSGI
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirHistoryColorId, passData.previousReservoirColor);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirHistoryAuxId, passData.previousReservoirAux);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirHistoryRayId, passData.previousReservoirRay);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.OcclusionAuxId, passData.currentOcclusionAux);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.OcclusionRayId, passData.currentOcclusionRay);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.OcclusionHistoryAuxId, passData.previousOcclusionAux);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.OcclusionHistoryRayId, passData.previousOcclusionRay);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     HoSSGIPass.BindDepthPyramid(context.cmd, passData.depthPyramid);
                     if (passData.motion.IsValid())
@@ -999,6 +1059,8 @@ namespace lilToon.URP.Extensions.SSGI
                 data.temporal = temporal;
                 data.geometry = geometry.normalDepthTexture;
                 data.ao = aoTexture;
+                data.occlusionAux = nextOcclusionAux;
+                data.occlusionRay = nextOcclusionRay;
                 data.outputColor = spatialReservoirColor;
                 data.outputAux = spatialReservoirAux;
                 data.outputRay = spatialReservoirRay;
@@ -1011,6 +1073,8 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.UseTexture(data.reservoirRay, AccessFlags.Read);
                 builder.UseTexture(data.temporal, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
+                builder.UseTexture(data.occlusionAux, AccessFlags.Read);
+                builder.UseTexture(data.occlusionRay, AccessFlags.Read);
                 if (data.ao.IsValid()) builder.UseTexture(data.ao, AccessFlags.Read);
                 builder.SetRenderAttachment(data.outputColor, 0, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(data.outputAux, 1, AccessFlags.WriteAll);
@@ -1027,6 +1091,8 @@ namespace lilToon.URP.Extensions.SSGI
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirColorId, passData.reservoirColor);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirAuxId, passData.reservoirAux);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirRayId, passData.reservoirRay);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.OcclusionAuxId, passData.occlusionAux);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.OcclusionRayId, passData.occlusionRay);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.temporal);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     passData.material.SetFloat(HoSSGIShaderConstants.UseAOId, passData.ao.IsValid() ? 1.0f : 0.0f);
@@ -1196,6 +1262,7 @@ namespace lilToon.URP.Extensions.SSGI
             resources.giTexture = denoised;
             resources.reservoirColorTexture = fireflyReservoirColor;
             resources.reservoirAuxTexture = fireflyReservoirAux;
+            resources.occlusionTexture = nextOcclusionAux;
             resources.cameraSourceTexture = source;
             resources.spatialGuidanceTexture = validatedGuidance;
             resources.sampleCountTexture = nextSampleCount;
@@ -1354,6 +1421,7 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle gi;
             public TextureHandle reservoirColor;
             public TextureHandle reservoirAux;
+            public TextureHandle occlusion;
             public TextureHandle spatialGuidance;
             public TextureHandle sampleCount;
             public TextureHandle invalidity;
@@ -1387,6 +1455,7 @@ namespace lilToon.URP.Extensions.SSGI
             TextureHandle rawGi = ssgi.rawGiTexture;
             if (!cameraColor.IsValid() || !source.IsValid() || !ssgi.cameraSourceTexture.IsValid() || !rawGi.IsValid() || !ssgi.giTexture.IsValid()
                 || !ssgi.reservoirColorTexture.IsValid() || !ssgi.reservoirAuxTexture.IsValid()
+                || !ssgi.occlusionTexture.IsValid()
                 || !ssgi.spatialGuidanceTexture.IsValid() || !ssgi.sampleCountTexture.IsValid() || !ssgi.invalidityTexture.IsValid()
                 || !ssgi.temporalTexture.IsValid() || !ssgi.spatialResolveTexture.IsValid()
                 || !ssgi.temporalDenoisedTexture.IsValid() || !ssgi.bilateralFirstTexture.IsValid()
@@ -1406,6 +1475,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.gi = ssgi.giTexture;
                 data.reservoirColor = ssgi.reservoirColorTexture;
                 data.reservoirAux = ssgi.reservoirAuxTexture;
+                data.occlusion = ssgi.occlusionTexture;
                 data.spatialGuidance = ssgi.spatialGuidanceTexture;
                 data.sampleCount = ssgi.sampleCountTexture;
                 data.invalidity = ssgi.invalidityTexture;
@@ -1423,6 +1493,7 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.UseTexture(data.gi, AccessFlags.Read);
                 builder.UseTexture(data.reservoirColor, AccessFlags.Read);
                 builder.UseTexture(data.reservoirAux, AccessFlags.Read);
+                builder.UseTexture(data.occlusion, AccessFlags.Read);
                 builder.UseTexture(data.spatialGuidance, AccessFlags.Read);
                 builder.UseTexture(data.sampleCount, AccessFlags.Read);
                 builder.UseTexture(data.invalidity, AccessFlags.Read);
@@ -1443,6 +1514,7 @@ namespace lilToon.URP.Extensions.SSGI
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GITextureId, passData.gi);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirColorId, passData.reservoirColor);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirAuxId, passData.reservoirAux);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.OcclusionAuxId, passData.occlusion);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SpatialGuidanceId, passData.spatialGuidance);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SampleCountHistoryId, passData.sampleCount);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.InvalidityHistoryId, passData.invalidity);
