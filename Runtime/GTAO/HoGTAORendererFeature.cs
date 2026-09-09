@@ -1,5 +1,6 @@
 #pragma warning disable CS0618, CS0672
 
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -23,7 +24,7 @@ namespace lilToon.URP.Extensions.GTAO
         private Shader motionShader;
         private Material debugMaterial;
         private Shader debugShader;
-        private HoGTAOHistory history;
+        private readonly Dictionary<int, HoGTAOHistory> cameraHistories = new Dictionary<int, HoGTAOHistory>();
         private HoGTAOQuality lastAppliedQuality = (HoGTAOQuality)(-1);
         private bool resetRegistered;
 
@@ -33,7 +34,6 @@ namespace lilToon.URP.Extensions.GTAO
         {
             pass = new HoGTAOPass();
             debugPass = new HoGTAODebugPass();
-            history = new HoGTAOHistory();
             RenderPipelineManager.beginCameraRendering += ResetGlobalState;
             resetRegistered = true;
         }
@@ -87,7 +87,16 @@ namespace lilToon.URP.Extensions.GTAO
                 debugMaterial = debugShader != null ? CoreUtils.CreateEngineMaterial(debugShader) : null;
             }
 
-            pass.Setup(settings, material, motionMaterial, debugMaterial, history);
+            int cameraId = renderingData.cameraData.camera != null
+                ? renderingData.cameraData.camera.GetInstanceID()
+                : 0;
+            if (!cameraHistories.TryGetValue(cameraId, out HoGTAOHistory cameraHistory))
+            {
+                cameraHistory = new HoGTAOHistory();
+                cameraHistories.Add(cameraId, cameraHistory);
+            }
+
+            pass.Setup(settings, material, motionMaterial, debugMaterial, cameraHistory);
             renderer.EnqueuePass(pass);
             if (settings.debugMode != HoGTAODebugMode.Off && debugMaterial != null)
             {
@@ -118,8 +127,11 @@ namespace lilToon.URP.Extensions.GTAO
             motionShader = null;
             debugMaterial = null;
             debugShader = null;
-            history?.Dispose();
-            history = null;
+            foreach (HoGTAOHistory cameraHistory in cameraHistories.Values)
+            {
+                cameraHistory.Dispose();
+            }
+            cameraHistories.Clear();
             pass = null;
             debugPass = null;
         }
@@ -174,6 +186,9 @@ namespace lilToon.URP.Extensions.GTAO
         private Vector4 previousZBufferParams;
         private bool previousOrthographic;
         private bool cameraStateValid;
+        private int allocatedWidth;
+        private int allocatedHeight;
+        private HoGTAOResolution allocatedResolution = (HoGTAOResolution)(-1);
 
         public RTHandle Previous => previous;
         public RTHandle Next => next;
@@ -188,7 +203,17 @@ namespace lilToon.URP.Extensions.GTAO
         public Vector4 PreviousZBufferParams => previousZBufferParams;
         public bool PreviousOrthographic => previousOrthographic;
 
-        public void Ensure(int width, int height)
+        public bool NeedsEnsure(int width, int height, HoGTAOResolution resolution)
+        {
+            return previous == null
+                || previousDepth == null
+                || previousNormal == null
+                || allocatedWidth != width
+                || allocatedHeight != height
+                || allocatedResolution != resolution;
+        }
+
+        public void Ensure(int width, int height, HoGTAOResolution resolution)
         {
             RenderTextureDescriptor descriptor = new RenderTextureDescriptor(width, height)
             {
@@ -217,6 +242,9 @@ namespace lilToon.URP.Extensions.GTAO
             normalDescriptor.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
             RenderingUtils.ReAllocateIfNeeded(ref previousNormal, normalDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGTAOHistoryPrevNormalTex");
             RenderingUtils.ReAllocateIfNeeded(ref nextNormal, normalDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGTAOHistoryNextNormalTex");
+            allocatedWidth = width;
+            allocatedHeight = height;
+            allocatedResolution = resolution;
             valid = false;
             cameraStateValid = false;
         }
@@ -269,6 +297,9 @@ namespace lilToon.URP.Extensions.GTAO
             previousZBufferParams = Vector4.zero;
             previousOrthographic = false;
             cameraStateValid = false;
+            allocatedWidth = 0;
+            allocatedHeight = 0;
+            allocatedResolution = (HoGTAOResolution)(-1);
         }
     }
 
@@ -514,10 +545,6 @@ namespace lilToon.URP.Extensions.GTAO
         private Material motionMaterial;
         private Material debugMaterial;
         private HoGTAOHistory history;
-        private int historyWidth;
-        private int historyHeight;
-        private int historyCameraId;
-        private HoGTAOResolution historyResolution;
 
         private static Vector4 GetCameraZBufferParams(Camera camera)
         {
@@ -579,7 +606,6 @@ namespace lilToon.URP.Extensions.GTAO
             // and produces visibly wrong AO silhouettes.
             int width = Mathf.Max(1, cameraData.cameraTargetDescriptor.width);
             int height = Mathf.Max(1, cameraData.cameraTargetDescriptor.height);
-            int cameraId = cameraData.camera != null ? cameraData.camera.GetInstanceID() : 0;
             Matrix4x4 currentView = cameraData.GetViewMatrix();
             bool currentOrthographic = cameraData.camera.orthographic;
             float fovRadians = cameraData.camera.fieldOfView * Mathf.Deg2Rad;
@@ -590,13 +616,9 @@ namespace lilToon.URP.Extensions.GTAO
             float halfWidth = halfHeight * renderAspect;
             Vector4 currentDepthToViewParams = new Vector4(2.0f * halfWidth, 2.0f * halfHeight, -halfWidth, -halfHeight);
             Vector4 currentZBufferParams = GetCameraZBufferParams(cameraData.camera);
-            if (history.Previous == null || history.PreviousDepth == null || history.PreviousNormal == null || width != historyWidth || height != historyHeight || cameraId != historyCameraId || historyResolution != settings.resolution)
+            if (history.NeedsEnsure(width, height, settings.resolution))
             {
-                history.Ensure(width, height);
-                historyWidth = width;
-                historyHeight = height;
-                historyCameraId = cameraId;
-                historyResolution = settings.resolution;
+                history.Ensure(width, height, settings.resolution);
             }
             Matrix4x4 previousView = history.CameraStateValid ? history.PreviousView : currentView;
             Vector4 previousDepthToViewParams = history.CameraStateValid
@@ -775,7 +797,7 @@ namespace lilToon.URP.Extensions.GTAO
                 float temporalActualSpread = 2.0f * Mathf.Tan(cameraData.camera.fieldOfView * Mathf.Deg2Rad * 0.5f)
                     / Mathf.Max(1.0f, cameraData.cameraTargetDescriptor.height);
                 data.pixelSpreadMultiplier = temporalActualSpread / Mathf.Max(temporalBaselineSpread, 1.0e-6f);
-                data.historyTexelSize = new Vector4(1.0f / Mathf.Max(1, historyWidth), 1.0f / Mathf.Max(1, historyHeight), historyWidth, historyHeight);
+                data.historyTexelSize = new Vector4(1.0f / Mathf.Max(1, width), 1.0f / Mathf.Max(1, height), width, height);
                 data.currentView = currentView;
                 data.inverseCurrentView = currentView.inverse;
                 data.previousView = previousView;
