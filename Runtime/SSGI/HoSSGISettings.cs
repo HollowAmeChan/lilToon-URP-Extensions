@@ -35,6 +35,14 @@ namespace lilToon.URP.Extensions.SSGI
         SampleCount = 12,
         [InspectorName("Temporal Invalidity")]
         TemporalInvalidity = 13,
+        [InspectorName("Temporal Resolve")]
+        TemporalResolve = 14,
+        [InspectorName("Spatial Resolve")]
+        SpatialResolve = 15,
+        [InspectorName("Temporal Denoised")]
+        TemporalDenoised = 16,
+        [InspectorName("Spatial Filter 1")]
+        SpatialFilter1 = 17,
     }
 
     [Serializable]

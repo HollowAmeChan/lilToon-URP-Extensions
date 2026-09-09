@@ -43,6 +43,10 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
         TEXTURE2D_X(_HoSSGISpatialGuidance);
         TEXTURE2D_X(_HoSSGISampleCountHistory);
         TEXTURE2D_X(_HoSSGIInvalidityHistory);
+        TEXTURE2D_X(_HoSSGITemporalDebug);
+        TEXTURE2D_X(_HoSSGISpatialResolveDebug);
+        TEXTURE2D_X(_HoSSGITemporalDenoisedDebug);
+        TEXTURE2D_X(_HoSSGIBilateralFirstDebug);
         int _HoSSGIDebugMode;
         float4 Frag(Varyings input) : SV_Target
         {
@@ -81,6 +85,14 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
             }
             if (_HoSSGIDebugMode == 13)
                 return SAMPLE_TEXTURE2D_X(_HoSSGIInvalidityHistory, sampler_LinearClamp, uv);
+            if (_HoSSGIDebugMode == 14)
+                return SAMPLE_TEXTURE2D_X(_HoSSGITemporalDebug, sampler_LinearClamp, uv);
+            if (_HoSSGIDebugMode == 15)
+                return SAMPLE_TEXTURE2D_X(_HoSSGISpatialResolveDebug, sampler_LinearClamp, uv);
+            if (_HoSSGIDebugMode == 16)
+                return SAMPLE_TEXTURE2D_X(_HoSSGITemporalDenoisedDebug, sampler_LinearClamp, uv);
+            if (_HoSSGIDebugMode == 17)
+                return SAMPLE_TEXTURE2D_X(_HoSSGIBilateralFirstDebug, sampler_LinearClamp, uv);
             return float4(source, 1);
         }
         ENDHLSL

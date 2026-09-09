@@ -406,6 +406,7 @@ namespace lilToon.URP.Extensions.SSGI
             public bool previousMatrixValid;
             public bool reservoirReuse;
             public bool reservoirValidation;
+            public int frameIndex;
         }
 
         private sealed class DepthHistoryPassData
@@ -473,6 +474,7 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle geometry;
             public TextureHandle[] depthPyramid;
             public TextureHandle output;
+            public TextureHandle outputGuidance;
             public bool reservoirValidation;
         }
 
@@ -728,6 +730,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.previousMatrixValid = previousMatrixValid;
                 data.reservoirReuse = settings.temporalReservoirReuse;
                 data.reservoirValidation = settings.temporalReservoirValidation;
+                data.frameIndex = Time.frameCount;
                 builder.UseTexture(data.current, AccessFlags.Read);
                 builder.UseTexture(data.currentSource, AccessFlags.Read);
                 builder.UseTexture(data.previous, AccessFlags.Read);
@@ -757,6 +760,7 @@ namespace lilToon.URP.Extensions.SSGI
                     passData.material.SetFloat(HoSSGIShaderConstants.PreviousMatrixValidId, passData.previousMatrixValid ? 1.0f : 0.0f);
                     passData.material.SetFloat(HoSSGIShaderConstants.ReservoirReuseId, passData.reservoirReuse ? 1.0f : 0.0f);
                     passData.material.SetFloat(HoSSGIShaderConstants.ReservoirValidationId, passData.reservoirValidation ? 1.0f : 0.0f);
+                    passData.material.SetInt(HoSSGIShaderConstants.FrameIndexId, passData.frameIndex);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.current);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceId, passData.currentSource);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.HistoryTextureId, passData.previous);
@@ -953,6 +957,9 @@ namespace lilToon.URP.Extensions.SSGI
             }
 
             TextureHandle filtered = renderGraph.CreateTexture(outputDesc);
+            TextureDesc validatedGuidanceDesc = guidanceDesc;
+            validatedGuidanceDesc.name = "_HoSSGISpatialGuidanceValidated";
+            TextureHandle validatedGuidance = renderGraph.CreateTexture(validatedGuidanceDesc);
             using (var builder = renderGraph.AddRasterRenderPass<SpatialValidationPassData>("Ho-SSGI Spatial Validation", out SpatialValidationPassData data, new ProfilingSampler("Ho-SSGI Spatial Validation")))
             {
                 data.material = material;
@@ -964,6 +971,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.geometry = geometry.normalDepthTexture;
                 data.depthPyramid = depthPyramid;
                 data.output = filtered;
+                data.outputGuidance = validatedGuidance;
                 data.reservoirValidation = settings.spatialReservoirValidation;
                 builder.UseTexture(data.reservoirColor, AccessFlags.Read);
                 builder.UseTexture(data.reservoirAux, AccessFlags.Read);
@@ -974,6 +982,7 @@ namespace lilToon.URP.Extensions.SSGI
                 for (int i = 0; i < data.depthPyramid.Length; i++)
                     builder.UseTexture(data.depthPyramid[i], AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(data.outputGuidance, 1, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (SpatialValidationPassData passData, RasterGraphContext context) =>
@@ -1045,8 +1054,6 @@ namespace lilToon.URP.Extensions.SSGI
                     Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 10);
                 });
             }
-            history.SwapDenoised();
-
             TextureDesc bilateralDesc = outputDesc;
             bilateralDesc.name = "_HoSSGIBilateralDenoise1";
             TextureHandle bilateralFirst = renderGraph.CreateTexture(bilateralDesc);
@@ -1055,7 +1062,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.material = material;
                 data.source = temporallyDenoised;
                 data.geometry = geometry.normalDepthTexture;
-                data.guidance = spatialGuidance;
+                data.guidance = validatedGuidance;
                 data.output = bilateralFirst;
                 data.radius = Mathf.Clamp(settings.spatialRadius * 0.5f, 0.5f, 8.0f);
                 builder.UseTexture(data.source, AccessFlags.Read);
@@ -1080,7 +1087,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.material = material;
                 data.source = bilateralFirst;
                 data.geometry = geometry.normalDepthTexture;
-                data.guidance = spatialGuidance;
+                data.guidance = validatedGuidance;
                 data.output = denoised;
                 data.radius = Mathf.Clamp(settings.spatialRadius, 0.5f, 8.0f);
                 builder.UseTexture(data.source, AccessFlags.Read);
@@ -1103,10 +1110,15 @@ namespace lilToon.URP.Extensions.SSGI
             resources.reservoirColorTexture = fireflyReservoirColor;
             resources.reservoirAuxTexture = fireflyReservoirAux;
             resources.cameraSourceTexture = source;
-            resources.spatialGuidanceTexture = spatialGuidance;
+            resources.spatialGuidanceTexture = validatedGuidance;
             resources.sampleCountTexture = nextSampleCount;
             resources.invalidityTexture = nextInvalidity;
+            resources.temporalTexture = temporal;
+            resources.spatialResolveTexture = filtered;
+            resources.temporalDenoisedTexture = temporallyDenoised;
+            resources.bilateralFirstTexture = bilateralFirst;
             history.CommitCameraMatrix(currentInverseViewProjection);
+            history.SwapDenoised();
             history.Swap();
             history.SwapMetadata();
             history.MarkValid();
@@ -1258,6 +1270,10 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle spatialGuidance;
             public TextureHandle sampleCount;
             public TextureHandle invalidity;
+            public TextureHandle temporal;
+            public TextureHandle spatialResolve;
+            public TextureHandle temporalDenoised;
+            public TextureHandle bilateralFirst;
             public TextureHandle destination;
             public int debugMode;
         }
@@ -1285,6 +1301,8 @@ namespace lilToon.URP.Extensions.SSGI
             if (!cameraColor.IsValid() || !source.IsValid() || !ssgi.cameraSourceTexture.IsValid() || !rawGi.IsValid() || !ssgi.giTexture.IsValid()
                 || !ssgi.reservoirColorTexture.IsValid() || !ssgi.reservoirAuxTexture.IsValid()
                 || !ssgi.spatialGuidanceTexture.IsValid() || !ssgi.sampleCountTexture.IsValid() || !ssgi.invalidityTexture.IsValid()
+                || !ssgi.temporalTexture.IsValid() || !ssgi.spatialResolveTexture.IsValid()
+                || !ssgi.temporalDenoisedTexture.IsValid() || !ssgi.bilateralFirstTexture.IsValid()
                 || !geometry.normalDepthTexture.IsValid()) return;
             TextureDesc desc = renderGraph.GetTextureDesc(cameraColor);
             desc.name = "_HoSSGIDebugColor";
@@ -1304,6 +1322,10 @@ namespace lilToon.URP.Extensions.SSGI
                 data.spatialGuidance = ssgi.spatialGuidanceTexture;
                 data.sampleCount = ssgi.sampleCountTexture;
                 data.invalidity = ssgi.invalidityTexture;
+                data.temporal = ssgi.temporalTexture;
+                data.spatialResolve = ssgi.spatialResolveTexture;
+                data.temporalDenoised = ssgi.temporalDenoisedTexture;
+                data.bilateralFirst = ssgi.bilateralFirstTexture;
                 data.destination = destination;
                 data.debugMode = (int)settings.debugMode;
                 builder.UseTexture(data.cameraColor, AccessFlags.Read);
@@ -1317,6 +1339,10 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.UseTexture(data.spatialGuidance, AccessFlags.Read);
                 builder.UseTexture(data.sampleCount, AccessFlags.Read);
                 builder.UseTexture(data.invalidity, AccessFlags.Read);
+                builder.UseTexture(data.temporal, AccessFlags.Read);
+                builder.UseTexture(data.spatialResolve, AccessFlags.Read);
+                builder.UseTexture(data.temporalDenoised, AccessFlags.Read);
+                builder.UseTexture(data.bilateralFirst, AccessFlags.Read);
                 builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
@@ -1333,6 +1359,10 @@ namespace lilToon.URP.Extensions.SSGI
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SpatialGuidanceId, passData.spatialGuidance);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SampleCountHistoryId, passData.sampleCount);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.InvalidityHistoryId, passData.invalidity);
+                    context.cmd.SetGlobalTexture(Shader.PropertyToID("_HoSSGITemporalDebug"), passData.temporal);
+                    context.cmd.SetGlobalTexture(Shader.PropertyToID("_HoSSGISpatialResolveDebug"), passData.spatialResolve);
+                    context.cmd.SetGlobalTexture(Shader.PropertyToID("_HoSSGITemporalDenoisedDebug"), passData.temporalDenoised);
+                    context.cmd.SetGlobalTexture(Shader.PropertyToID("_HoSSGIBilateralFirstDebug"), passData.bilateralFirst);
                     Blitter.BlitTexture(context.cmd, passData.cameraColor, new Vector4(1, 1, 0, 0), passData.material, 0);
                 });
             }

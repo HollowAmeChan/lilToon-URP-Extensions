@@ -125,6 +125,12 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float4 guidance : SV_Target3;
         };
 
+        struct HoSSGISpatialValidationOutput
+        {
+            float4 gi : SV_Target0;
+            float4 guidance : SV_Target1;
+        };
+
         struct HoSSGIMetadataOutput
         {
             float4 sampleCount : SV_Target0;
@@ -371,6 +377,17 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return lerp(luminance.xxx, value, _HoSSGISourceSaturation);
         }
 
+        float HoSSGIExponentialFalloff(float hitDistance, float maxDistance)
+        {
+            maxDistance = max(maxDistance, 1.0e-4);
+            float threshold = 0.35 * maxDistance;
+            if (hitDistance <= threshold)
+                return 1.0;
+            float normalizedDistance = saturate((hitDistance - threshold)
+                / max(maxDistance - threshold, 1.0e-4));
+            return exp2(-3.0 * normalizedDistance);
+        }
+
         float HoSSGIClipRayToScreen(float2 startUV, float2 endUV, out float2 clippedEndUV)
         {
             float2 direction = endUV - startUV;
@@ -500,8 +517,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float2 texel = rcp(max(_ScreenParams.xy, 1.0));
             float currentLuminance = 0.0;
             float weightSum = 0.0;
-            float t = saturate(reservoir.distance / max(_HoSSGIRayLength, 0.01));
-            float distanceWeight = exp2(-2.0 * t) * rcp(1.0 + t * t);
+            float distanceWeight = HoSSGIExponentialFalloff(reservoir.distance, _HoSSGIRayLength);
             [unroll]
             for (int y = -1; y <= 1; y++)
             {
@@ -512,12 +528,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     if (any(sampleUV < 0.0) || any(sampleUV > 1.0)) continue;
                     half4 sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
                     if (sampleGeometry.a < 0.0001h) continue;
-                    float3 samplePositionWS = HoSSGIWorldPosition(sampleUV, sampleGeometry.a);
-                    float3 sampleNormalWS = normalize((float3)sampleGeometry.rgb * 2.0 - 1.0);
-                    float3 lightDirection = normalize(samplePositionWS - originPositionWS);
-                    float sourceCosine = saturate(dot(sampleNormalWS, -lightDirection));
                     float3 source = SAMPLE_TEXTURE2D_X(_HoSSGISource, sampler_PointClamp, sampleUV).rgb;
-                    float3 candidate = HoSSGIColor(source) * (3.14159265 * sourceCosine * distanceWeight);
+                    float3 candidate = HoSSGIColor(source) * distanceWeight;
                     float tapWeight = exp2(-0.75 * (x * x + y * y));
                     currentLuminance += HoSSGILuminance(candidate) * tapWeight;
                     weightSum += tapWeight;
@@ -657,11 +669,9 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                             previousDelta = 2.0 * thickness;
                             continue;
                         }
-                        float3 lightDirection = normalize(samplePositionWS - centerPositionWS);
-                        float sourceCosine = saturate(dot(sampleNormalWS, -lightDirection));
-                        float distanceWeight = exp2(-2.0 * t) * rcp(1.0 + t * t);
-                        candidateColor = HoSSGIColor(source) * (3.14159265 * sourceCosine * distanceWeight);
                         candidateDistance = distance(centerPositionWS, samplePositionWS);
+                        float distanceWeight = HoSSGIExponentialFalloff(candidateDistance, _HoSSGIRayLength);
+                        candidateColor = HoSSGIColor(source) * distanceWeight;
                         // HitFound is geometric validity, not radiance
                         // brightness. A black or fully saturated surface must
                         // still participate in reservoir validation.
@@ -889,7 +899,10 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 {
                     previousCount /= metadataWeight;
                     previousInvalidity /= metadataWeight;
-                    accepted = saturate(metadataWeight);
+                    // Match HTrace's four-tap acceptance threshold: a partial
+                    // footprint above 0.15 is a valid history, even when only
+                    // one tap survives disocclusion.
+                    accepted = metadataWeight > 0.15 ? 1.0 : 0.0;
                 }
             }
 
@@ -1041,42 +1054,50 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             output.reservoirColor = float4(max(merged.color, 0.0), max(merged.wsum, 0.0));
             output.reservoirAux = float4(max(merged.m, 0.0), max(merged.target, 0.0), saturate(merged.hit), max(merged.distance, 0.0));
             output.reservoirRay = HoSSGIPackReservoirRay(merged);
-            float mergedOcclusion = (merged.distance > 0.0 && merged.distance < 1.0)
-                ? saturate(merged.distance / 3.0)
-                : 1.0;
-            // Guidance.z carries the selected near-occlusion estimate. It is
-            // deliberately kept alongside confidence/coverage so the denoiser
-            // can reject neighbors with a different local visibility state.
+            // Spatial visibility is not known until the selected ray is
+            // re-marched in SpatialValidation. Keep z open here as a
+            // provisional value; the validation pass publishes the
+            // authoritative visibility to its second MRT.
             output.guidance = float4(
                 saturate(confidenceSum / max(confidenceWeight, 1.0e-5)),
                 saturate(confidenceWeight / 9.0),
-                mergedOcclusion,
+                1.0,
                 1.0);
             return output;
         }
 
-        float4 SpatialValidation(Varyings input) : SV_Target
+        HoSSGISpatialValidationOutput SpatialValidation(Varyings input)
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
             float2 uv = input.texcoord;
             half4 geometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, uv);
             half4 temporal = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_PointClamp, uv);
-            if (geometry.a < 0.0001h) return 0;
+            HoSSGISpatialValidationOutput output;
+            output.gi = 0;
+            output.guidance = float4(0.0, 0.0, 1.0, 0.0);
+            if (geometry.a < 0.0001h) return output;
 
             HoSSGIReservoir reservoir = HoSSGILoadReservoir(uv);
             float validation = 1.0;
+            float spatialVisibility = 1.0;
             if (_HoSSGIReservoirValidation > 0.5)
             {
                 float3 originPositionWS = HoSSGIWorldPosition(uv, geometry.a);
-                validation = HoSSGIValidateReservoirRay(originPositionWS, normalize((float3)geometry.rgb * 2.0 - 1.0), reservoir);
+                spatialVisibility = HoSSGIValidateReservoirRay(originPositionWS, normalize((float3)geometry.rgb * 2.0 - 1.0), reservoir);
+                validation = spatialVisibility;
             }
             float2 guidance = SAMPLE_TEXTURE2D_X(_HoSSGISpatialGuidance, sampler_PointClamp, uv).xy;
-            validation *= lerp(0.5, 1.0, saturate(guidance.x));
             if (validation < 0.15)
-                return temporal;
+            {
+                output.gi = temporal;
+                output.guidance = float4(guidance, spatialVisibility, 0.0);
+                return output;
+            }
 
             float3 resolved = HoSSGIResolveReservoir(reservoir) * validation;
-            return float4(max(resolved, 0.0), saturate(temporal.a * validation));
+            output.gi = float4(max(resolved, 0.0), saturate(temporal.a * validation));
+            output.guidance = float4(guidance, spatialVisibility, 1.0);
+            return output;
         }
 
         float4 BilateralDenoise(Varyings input) : SV_Target
@@ -1264,36 +1285,73 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float historyConfidence = 0.0;
             float historyWeight = 0.0;
             float historySampleCount = 1.0;
+            float2 historyInvalidity = 0.0;
             if (_HoSSGIHistoryValid > 0.5 && _HoSSGIUseMotion > 0.5)
             {
                 float2 previousUV = uv - SAMPLE_TEXTURE2D_X(_HoSSGIMotionVectors, sampler_LinearClamp, uv).xy;
                 if (all(previousUV >= 0.0) && all(previousUV <= 1.0))
                 {
-                    half4 previousGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIHistoryDepth, sampler_PointClamp, previousUV);
-                    float previousGeometryValid = step(0.0001, previousGeometry.a);
-                    float depthAgreement = step(abs(geometry.a - previousGeometry.a), max(0.08 * geometry.a, 0.05));
-                    float normalAgreement = step(0.5, dot(centerNormal, normalize((float3)previousGeometry.rgb * 2.0 - 1.0)));
-                    float planeAgreement = 1.0;
-                    if (_HoSSGIPreviousMatrixValid > 0.5)
+                    float2 previousPixel = previousUV * _ScreenParams.xy - 0.5;
+                    float2 previousBasePixel = floor(previousPixel);
+                    float2 previousFraction = frac(previousPixel);
+                    const float2 denoiseOffsets[4] =
                     {
-                        float3 currentPositionWS = HoSSGIWorldPosition(uv, geometry.a);
-                        float3 previousPositionWS = HoSSGIPreviousWorldPosition(previousUV, previousGeometry.a);
-                        planeAgreement = step(abs(dot(previousPositionWS - currentPositionWS, centerNormal)), max(0.08 * geometry.a, 0.05));
+                        float2(0.0, 0.0), float2(1.0, 0.0),
+                        float2(0.0, 1.0), float2(1.0, 1.0)
+                    };
+                    float4 denoiseWeights = float4(
+                        (1.0 - previousFraction.x) * (1.0 - previousFraction.y),
+                        previousFraction.x * (1.0 - previousFraction.y),
+                        (1.0 - previousFraction.x) * previousFraction.y,
+                        previousFraction.x * previousFraction.y);
+                    float3 historyAccum = 0.0;
+                    float historyConfidenceAccum = 0.0;
+                    float sampleCountAccum = 0.0;
+                    float2 invalidityAccum = 0.0;
+                    float acceptedWeight = 0.0;
+                    float3 currentPositionWS = HoSSGIWorldPosition(uv, geometry.a);
+                    [unroll]
+                    for (int denoiseTap = 0; denoiseTap < 4; denoiseTap++)
+                    {
+                        float2 tapUV = (previousBasePixel + denoiseOffsets[denoiseTap] + 0.5)
+                            / max(_ScreenParams.xy, 1.0);
+                        float tapWeight = denoiseWeights[denoiseTap];
+                        if (tapWeight <= 1.0e-4 || any(tapUV < 0.0) || any(tapUV > 1.0)) continue;
+                        half4 previousGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIHistoryDepth, sampler_PointClamp, tapUV);
+                        float previousGeometryValid = step(0.0001, previousGeometry.a);
+                        float depthAgreement = step(abs(geometry.a - previousGeometry.a), max(0.08 * geometry.a, 0.05));
+                        float normalAgreement = step(0.5, dot(centerNormal, normalize((float3)previousGeometry.rgb * 2.0 - 1.0)));
+                        float planeAgreement = 1.0;
+                        if (_HoSSGIPreviousMatrixValid > 0.5)
+                        {
+                            float3 previousPositionWS = HoSSGIPreviousWorldPosition(tapUV, previousGeometry.a);
+                            planeAgreement = step(abs(dot(previousPositionWS - currentPositionWS, centerNormal)), max(0.08 * geometry.a, 0.05));
+                        }
+                        float acceptedTap = tapWeight * previousGeometryValid * depthAgreement * normalAgreement * planeAgreement;
+                        if (acceptedTap <= 1.0e-4) continue;
+                        half4 historySample = SAMPLE_TEXTURE2D_X(_HoSSGIDenoisedHistory, sampler_LinearClamp, tapUV);
+                        historyAccum += historySample.rgb * acceptedTap;
+                        historyConfidenceAccum += saturate(historySample.a) * acceptedTap;
+                        sampleCountAccum += SAMPLE_TEXTURE2D_X(_HoSSGISampleCountHistory, sampler_PointClamp, tapUV).r * acceptedTap;
+                        invalidityAccum += SAMPLE_TEXTURE2D_X(_HoSSGIInvalidityHistory, sampler_PointClamp, tapUV).rg * acceptedTap;
+                        acceptedWeight += acceptedTap;
                     }
-                    half4 historySample = SAMPLE_TEXTURE2D_X(_HoSSGIDenoisedHistory, sampler_LinearClamp, previousUV);
-                    history = HoSSGIDirectClipToAABB(historySample.rgb, minimum, maximum);
-                    historyConfidence = saturate(historySample.a);
-                    historySampleCount = min(16.0, SAMPLE_TEXTURE2D_X(_HoSSGISampleCountHistory, sampler_PointClamp, previousUV).r + 1.0);
-                    float temporalWeight = 1.0 - rcp(max(historySampleCount, 1.0));
-                    float previousInvalidity = SAMPLE_TEXTURE2D_X(_HoSSGIInvalidityHistory, sampler_PointClamp, previousUV).y;
-                    float currentValidity = step(0.95, currentInvalidity.y);
-                    // Confidence is the current-frame hit ratio and is not a
-                    // history validity test. Multiplying by it makes sparse
-                    // indirect-light regions permanently noisy. Geometry,
-                    // temporal validity and the sample-count weight are the
-                    // actual rejection terms, matching HTrace's denoiser.
-                    historyWeight = _HoSSGITemporalBlend * temporalWeight * depthAgreement * normalAgreement * planeAgreement
-                        * previousGeometryValid * previousInvalidity * currentValidity;
+
+                    if (acceptedWeight > 0.15)
+                    {
+                        history = historyAccum / acceptedWeight;
+                        historyConfidence = saturate(historyConfidenceAccum / acceptedWeight);
+                        historySampleCount = min(16.0, sampleCountAccum / acceptedWeight + 1.0);
+                        historyInvalidity = invalidityAccum / acceptedWeight;
+                        history = HoSSGIDirectClipToAABB(history, minimum, maximum);
+                        float temporalWeight = 1.0 - rcp(max(historySampleCount, 1.0));
+                        float currentValidity = step(0.95, currentInvalidity.y);
+                        // Confidence is a diagnostic hit ratio; the history
+                        // validity channels and geometric acceptance control
+                        // accumulation.
+                        historyWeight = _HoSSGITemporalBlend * temporalWeight
+                            * saturate(historyInvalidity.y) * currentValidity;
+                    }
                 }
             }
 

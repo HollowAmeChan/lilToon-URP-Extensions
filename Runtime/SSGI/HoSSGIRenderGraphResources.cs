@@ -16,6 +16,10 @@ namespace lilToon.URP.Extensions.SSGI
         public TextureHandle spatialGuidanceTexture = TextureHandle.nullHandle;
         public TextureHandle sampleCountTexture = TextureHandle.nullHandle;
         public TextureHandle invalidityTexture = TextureHandle.nullHandle;
+        public TextureHandle temporalTexture = TextureHandle.nullHandle;
+        public TextureHandle spatialResolveTexture = TextureHandle.nullHandle;
+        public TextureHandle temporalDenoisedTexture = TextureHandle.nullHandle;
+        public TextureHandle bilateralFirstTexture = TextureHandle.nullHandle;
 
         public bool HasGI => giTexture.IsValid();
 
@@ -30,6 +34,10 @@ namespace lilToon.URP.Extensions.SSGI
             spatialGuidanceTexture = TextureHandle.nullHandle;
             sampleCountTexture = TextureHandle.nullHandle;
             invalidityTexture = TextureHandle.nullHandle;
+            temporalTexture = TextureHandle.nullHandle;
+            spatialResolveTexture = TextureHandle.nullHandle;
+            temporalDenoisedTexture = TextureHandle.nullHandle;
+            bilateralFirstTexture = TextureHandle.nullHandle;
         }
     }
 }
