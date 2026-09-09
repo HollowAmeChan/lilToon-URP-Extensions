@@ -410,6 +410,7 @@ namespace lilToon.URP.Extensions.GTAO
         private static readonly int OrthographicId = Shader.PropertyToID("_HoGTAOOrthographic");
         private static readonly int PreviousOrthographicId = Shader.PropertyToID("_HoGTAOPreviousOrthographic");
         private static readonly int PreviousDepthToViewParamsId = Shader.PropertyToID("_HoGTAOPreviousDepthToViewParams");
+        private static readonly int ZBufferParamsId = Shader.PropertyToID("_ZBufferParams");
         private static readonly int PreviousZBufferParamsId = Shader.PropertyToID("_HoGTAOPreviousZBufferParams");
         private static readonly int GeometryInputId = Shader.PropertyToID("_HoGTAOGeometryInput");
         private static readonly int GeometryDepthInputId = HoGeometryBufferShaderConstants.DepthTextureId;
@@ -557,7 +558,9 @@ namespace lilToon.URP.Extensions.GTAO
             public Matrix4x4 currentView;
             public Matrix4x4 inverseCurrentView;
             public Matrix4x4 previousView;
+            public Vector4 currentDepthToViewParams;
             public Vector4 previousDepthToViewParams;
+            public Vector4 currentZBufferParams;
             public bool currentOrthographic;
             public bool previousOrthographic;
         }
@@ -661,7 +664,9 @@ namespace lilToon.URP.Extensions.GTAO
                     currentView,
                     currentView.inverse,
                     previousView,
+                    currentDepthToViewParams,
                     previousDepthToViewParams,
+                    currentZBufferParams,
                     currentOrthographic,
                     previousOrthographic);
             TextureHandle generateMotionVectors = temporalMotionVectors;
@@ -1111,7 +1116,9 @@ namespace lilToon.URP.Extensions.GTAO
             Matrix4x4 currentView,
             Matrix4x4 inverseCurrentView,
             Matrix4x4 previousView,
+            Vector4 currentDepthToViewParams,
             Vector4 previousDepthToViewParams,
+            Vector4 currentZBufferParams,
             bool currentOrthographic,
             bool previousOrthographic)
         {
@@ -1136,7 +1143,9 @@ namespace lilToon.URP.Extensions.GTAO
                 data.currentView = currentView;
                 data.inverseCurrentView = inverseCurrentView;
                 data.previousView = previousView;
+                data.currentDepthToViewParams = currentDepthToViewParams;
                 data.previousDepthToViewParams = previousDepthToViewParams;
+                data.currentZBufferParams = currentZBufferParams;
                 data.currentOrthographic = currentOrthographic;
                 data.previousOrthographic = previousOrthographic;
                 builder.UseTexture(data.geometryDepth, AccessFlags.Read);
@@ -1149,7 +1158,9 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.SetGlobalMatrix(ViewMatrixId, passData.currentView);
                     context.cmd.SetGlobalMatrix(InvViewMatrixId, passData.inverseCurrentView);
                     context.cmd.SetGlobalMatrix(PreviousViewMatrixId, passData.previousView);
+                    context.cmd.SetGlobalVector(DepthToViewParamsId, passData.currentDepthToViewParams);
                     context.cmd.SetGlobalVector(PreviousDepthToViewParamsId, passData.previousDepthToViewParams);
+                    context.cmd.SetGlobalVector(ZBufferParamsId, passData.currentZBufferParams);
                     context.cmd.SetGlobalFloat(OrthographicId, passData.currentOrthographic ? 1.0f : 0.0f);
                     context.cmd.SetGlobalFloat(PreviousOrthographicId, passData.previousOrthographic ? 1.0f : 0.0f);
                     Blitter.BlitTexture(context.cmd, passData.geometryDepth, new Vector4(1, 1, 0, 0), passData.material, 8);

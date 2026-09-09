@@ -425,7 +425,10 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                     : (_HoGTAOUseCameraMotion > 0.5 ? HoGTAOCameraMotion(input.texcoord) : 0.0);
                 float objectMoved = step(2.0e-4, abs(motionDelta.g));
                 float objectMask = step(1.0e-6, length(motionMask));
-                float3 combinedMotion = float3(nativeMotion * 0.5 + 0.5, saturate(length(nativeMotion) * 32.0));
+                // HTrace's Motion debug keeps zero motion black and visualizes
+                // the signed camera vector directly; object motion uses the
+                // same blue/cyan overrides as its main-buffer view.
+                float3 combinedMotion = float3(nativeMotion * 10.0, 0.0);
                 if (objectMoved > 0.5)
                     combinedMotion = float3(0.0, 1.0, 1.0);
                 else if (objectMask > 0.5)

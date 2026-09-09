@@ -62,7 +62,7 @@
 | S1 | plane weighting | HTrace `PlaneWeighting` | Ho 使用等价指数，但当前自行重建位置 | `部分对齐` | 平面边缘/远处仍可能有不一致 | 用同一 raw depth + 同一 view-space plane 做数值对照 |
 | O0 | 输出语义 | HTrace AO 0..1 visibility | `_HoAOTexture` 0..1 visibility | `已对齐` | Debug 可见度指数会放大对比，不代表 producer 数值 | producer/debug 分离验证，pow=1 优先 |
 | D0 | GTAO Debug | `HDebugAO.compute` AO 输出 | Ho feature-local debug pass | `部分对齐` | 能输出，但展示曲线和天空策略需保持可比 | 增加 raw AO/visibility 选项，记录 pow |
-| D1 | Temporal Debug | HTrace sample count × velocity | Ho accepted/rejected + age；Motion 模式显示 HTrace 组合语义 | `部分对齐` | SceneView 使用独立 camera-motion producer；Motion 可区分相机运动、对象 mask/delta | 用 Frame Debugger 和 Motion 模式共同重验 velocity |
+| D1 | Temporal Debug | HTrace sample count × velocity | Ho accepted/rejected + age；Motion 模式显示 HTrace 组合语义 | `部分对齐` | SceneView 使用独立 camera-motion producer；静止零运动保持黑，移动时区分相机/对象 mask/delta | 用 Frame Debugger 和 Motion 模式共同重验 velocity |
 | P0 | 公共材质接收 | HTrace BeforeOpaque / `_HTraceBufferAO` | Ho BeforeOpaque / `_HoAOTexture` | `部分对齐` | 受 Renderer Feature 列表顺序约束 | 保持 GeometryBuffer 在 Ho-GTAO 前；Frame Debugger 固定验收 |
 
 ## 问题归因记录
@@ -129,7 +129,8 @@
 | 2026-09-09 | 修正 Motion/Temporal debug 颜色语义 | Debug shader 仅对 AO/Off 取 R 灰阶，保留 Motion/Temporal 的 RGB | Temporal 拒绝红色不再被显示层变成纯白，Motion 组合颜色可直接观察 |
 | 2026-09-09 | 按 Camera 隔离 GTAO history | Renderer Feature 为每个 camera 实例持有独立 history，并在 history 内保存尺寸/分辨率配置 | SceneView/GameView 交替渲染不再反复清空 history，Temporal 不应再长期停留在全红首帧 |
 | 2026-09-09 | 分离 Temporal debug 输出与 history 写入 | Temporal 增加独立 debug attachment；诊断颜色不再污染 AO/normal history | 红色拒绝只表示诊断结果，不会让下一帧法线/深度验证永久失败 |
-| 2026-09-09 | 补齐 SceneView camera motion producer | `Ho-GTAORendererFeature.RecordCameraMotionPass` 使用 GeometryBuffer raw depth + previous/current view 重建相机 MV | 对齐 HTrace `MotionVectorsPassURP` 的 SceneView 分支；静止表面为中性灰，镜头移动时显示实际向量 |
+| 2026-09-09 | 补齐 SceneView camera motion producer | `Ho-GTAORendererFeature.RecordCameraMotionPass` 使用 GeometryBuffer raw depth + current/previous depth-to-view 参数重建相机 MV | 对齐 HTrace `MotionVectorsPassURP` 的 SceneView 分支；静止表面零向量保持黑，镜头移动时显示实际向量 |
+| 2026-09-09 | 对齐 Motion Debug 零运动语义 | `HoGTAO.shader` 直接显示 signed camera vector，保留对象移动蓝/青覆盖 | 静止场景纯黑是 HTrace 预期；必须在移动镜头/物体时验证 producer |
 
 ## 当前下一步
 
