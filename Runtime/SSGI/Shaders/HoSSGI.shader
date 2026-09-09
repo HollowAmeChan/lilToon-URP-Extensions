@@ -545,6 +545,41 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return saturate(1.0 - lightingChange * 2.0);
         }
 
+        float HoSSGIEvaluateReservoirTarget(float3 originPositionWS, HoSSGIReservoir reservoir)
+        {
+            if (reservoir.hit < 0.5 || reservoir.distance <= 0.001)
+                return 0.0;
+
+            float3 directionWS = normalize(reservoir.direction);
+            float3 expectedHitWS = originPositionWS + directionWS * reservoir.distance;
+            float3 hitNDC = ComputeNormalizedDeviceCoordinatesWithZ(expectedHitWS, UNITY_MATRIX_VP);
+            if (hitNDC.z < 0.0 || hitNDC.z > 1.0 || any(hitNDC.xy < 0.0) || any(hitNDC.xy > 1.0))
+                return 0.0;
+
+            float3 sourceAccum = 0.0;
+            float weightAccum = 0.0;
+            float2 texel = rcp(max(_ScreenParams.xy, 1.0));
+            [unroll]
+            for (int y = -1; y <= 1; y++)
+            {
+                [unroll]
+                for (int x = -1; x <= 1; x++)
+                {
+                    float2 sampleUV = hitNDC.xy + float2(x, y) * texel;
+                    if (any(sampleUV < 0.0) || any(sampleUV > 1.0)) continue;
+                    half4 sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
+                    if (sampleGeometry.a < 0.0001h) continue;
+                    float tapWeight = exp2(-0.75 * (x * x + y * y));
+                    sourceAccum += HoSSGIColor(SAMPLE_TEXTURE2D_X(_HoSSGISource, sampler_PointClamp, sampleUV).rgb) * tapWeight;
+                    weightAccum += tapWeight;
+                }
+            }
+            if (weightAccum <= 1.0e-5)
+                return 0.0;
+            float3 source = sourceAccum / weightAccum;
+            return HoSSGILuminance(source) * HoSSGIExponentialFalloff(reservoir.distance, _HoSSGIRayLength);
+        }
+
         HoSSGITraceOutput Trace(Varyings input)
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -740,6 +775,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 : float2(0.0, 0.0);
             half3 currentNormal = normalize((float3)geometry.rgb * 2.0 - 1.0);
             half currentNormalValid = step(0.0001h, dot(geometry.rgb, geometry.rgb));
+            float3 originPositionWS = HoSSGIWorldPosition(uv, geometry.a);
             HoSSGIReservoir currentReservoir = HoSSGILoadReservoir(uv);
             HoSSGIReservoir merged = currentReservoir;
             float currentConfidence = saturate(current.a);
@@ -801,9 +837,19 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     float tapM = historyReservoir.m * historyScale;
                     historyReservoir.wsum *= historyScale;
                     historyReservoir.m = tapM;
+                    float previousTarget = historyReservoir.target;
+                    float currentTarget = HoSSGIEvaluateReservoirTarget(originPositionWS, historyReservoir);
+                    if (historyReservoir.hit > 0.5 && currentTarget > 1.0e-5 && previousTarget > 1.0e-5)
+                    {
+                        // Reweight the representative history sample to the
+                        // current frame's target function before merging. This
+                        // is the continuous equivalent of HTrace's unpacked
+                        // W = Wsum/(M*target) reconstruction.
+                        historyReservoir.wsum *= currentTarget / previousTarget;
+                        historyReservoir.target = currentTarget;
+                    }
                     if (_HoSSGIReservoirValidation > 0.5)
                     {
-                        float3 originPositionWS = HoSSGIWorldPosition(uv, geometry.a);
                         float geometryValidation = HoSSGIValidateReservoirRay(originPositionWS, currentNormal, historyReservoir);
                         float lightingValidation = HoSSGIValidateReservoirLighting(originPositionWS, historyReservoir);
                         float validation = geometryValidation * lightingValidation;
