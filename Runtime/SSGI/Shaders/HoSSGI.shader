@@ -990,7 +990,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float3 bitangent = normalize(cross(centerNormal, tangent));
             float worldRadius = max(centerDepth * max(_HoSSGISpatialRadius, 0.5) * 0.0025, 0.002);
             float sigma = max(worldRadius * 0.8, 0.001);
-            float randomAngle = HoSSGIHash2(uv * _ScreenParams.xy).x * 6.2831853;
+            float randomAngle = HoSSGIHash2(uv * _ScreenParams.xy
+                + (float)(_HoSSGIFrameIndex & 1023) * float2(0.37, 0.61)).x * 6.2831853;
             float2x2 rotation = float2x2(cos(randomAngle), -sin(randomAngle), sin(randomAngle), cos(randomAngle));
             HoSSGIReservoir centerReservoir = HoSSGILoadReservoir(uv);
             HoSSGIReservoir merged = centerReservoir;
@@ -1286,8 +1287,13 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     float temporalWeight = 1.0 - rcp(max(historySampleCount, 1.0));
                     float previousInvalidity = SAMPLE_TEXTURE2D_X(_HoSSGIInvalidityHistory, sampler_PointClamp, previousUV).y;
                     float currentValidity = step(0.95, currentInvalidity.y);
+                    // Confidence is the current-frame hit ratio and is not a
+                    // history validity test. Multiplying by it makes sparse
+                    // indirect-light regions permanently noisy. Geometry,
+                    // temporal validity and the sample-count weight are the
+                    // actual rejection terms, matching HTrace's denoiser.
                     historyWeight = _HoSSGITemporalBlend * temporalWeight * depthAgreement * normalAgreement * planeAgreement
-                        * previousGeometryValid * historyConfidence * previousInvalidity * currentValidity;
+                        * previousGeometryValid * previousInvalidity * currentValidity;
                 }
             }
 

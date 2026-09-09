@@ -459,6 +459,7 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle outputGuidance;
             public float radius;
             public bool reservoirReuse;
+            public int frameIndex;
         }
 
         private sealed class SpatialValidationPassData
@@ -924,6 +925,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.outputGuidance = spatialGuidance;
                 data.radius = Mathf.Clamp(settings.spatialRadius, 0.5f, 8.0f);
                 data.reservoirReuse = settings.spatialReservoirReuse;
+                data.frameIndex = Time.frameCount;
                 builder.UseTexture(data.reservoirColor, AccessFlags.Read);
                 builder.UseTexture(data.reservoirAux, AccessFlags.Read);
                 builder.UseTexture(data.reservoirRay, AccessFlags.Read);
@@ -939,6 +941,7 @@ namespace lilToon.URP.Extensions.SSGI
                 {
                     passData.material.SetFloat(HoSSGIShaderConstants.SpatialRadiusId, passData.radius);
                     passData.material.SetFloat(HoSSGIShaderConstants.ReservoirReuseId, passData.reservoirReuse ? 1.0f : 0.0f);
+                    passData.material.SetInt(HoSSGIShaderConstants.FrameIndexId, passData.frameIndex);
                     passData.material.SetFloat(HoSSGIShaderConstants.ReservoirValidationId, 0.0f);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirColorId, passData.reservoirColor);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirAuxId, passData.reservoirAux);
