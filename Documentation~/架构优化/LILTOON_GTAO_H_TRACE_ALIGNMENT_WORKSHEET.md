@@ -62,7 +62,7 @@
 | S1 | plane weighting | HTrace `PlaneWeighting` | Ho 使用等价指数，但当前自行重建位置 | `部分对齐` | 平面边缘/远处仍可能有不一致 | 用同一 raw depth + 同一 view-space plane 做数值对照 |
 | O0 | 输出语义 | HTrace AO 0..1 visibility | `_HoAOTexture` 0..1 visibility | `已对齐` | Debug 可见度指数会放大对比，不代表 producer 数值 | producer/debug 分离验证，pow=1 优先 |
 | D0 | GTAO Debug | `HDebugAO.compute` AO 输出 | Ho feature-local debug pass | `部分对齐` | 能输出，但展示曲线和天空策略需保持可比 | 增加 raw AO/visibility 选项，记录 pow |
-| D1 | Temporal Debug | HTrace sample count × velocity | Ho accepted/rejected + age；另增 Motion 模式显示对象 mask/delta | `部分对齐` | Temporal 可看红色拒绝，Motion 可直接确认对象语义是否写入 | 用 Frame Debugger 和 Motion 模式共同重验 velocity |
+| D1 | Temporal Debug | HTrace sample count × velocity | Ho accepted/rejected + age；Motion 模式显示 HTrace 组合语义 | `部分对齐` | SceneView 不再消费不稳定的 URP 原生 MV；Motion 可直接确认对象 mask/delta | 用 Frame Debugger 和 Motion 模式共同重验 velocity |
 | P0 | 公共材质接收 | HTrace BeforeOpaque / `_HTraceBufferAO` | Ho BeforeOpaque / `_HoAOTexture` | `部分对齐` | 受 Renderer Feature 列表顺序约束 | 保持 GeometryBuffer 在 Ho-GTAO 前；Frame Debugger 固定验收 |
 
 ## 问题归因记录
@@ -124,6 +124,8 @@
 | 2026-09-09 | 修正 Bitmask horizon 积分 | `HoGTAO.shader` 保留 signed horizon cosine（仅 clamp 到 [-1,1]），并恢复 HTrace 的 reciprocal screen-radius min step | 消除 `saturate` 折叠负半球造成的相机方向偏置；下一轮只验证算法观感，不调参数 |
 | 2026-09-09 | 接入对象 Motion Mask/Delta | `HoGTAOMotion.shader` + `HoGTAORendererFeature.RecordObjectMotionPasses`；以 GeometryBuffer depth 作 Equal 深度测试 | 补齐 HTrace 对象运动语义，Temporal 使用 signed depth delta，命中速度使用方向/幅度拒绝 |
 | 2026-09-09 | 移除额外整像素 normal vote | `HoGTAO.shader` Temporal 只保留逐 tap normal reject | 避免 silhouette 上重复拒绝历史，缩短静止收敛时间并与 HTrace 宏路径一致 |
+| 2026-09-09 | 稳定 SceneView 时域输入与调试显示 | SceneView Temporal 禁用不稳定的 URP 原生 MV；Motion/Temporal debug 改为 HTrace 的组合语义 | 静止编辑器视图不应因旧 MV 每帧流动；Motion 黑屏与 Temporal 常态流动问题转为可诊断输出 |
+| 2026-09-09 | 复用 lilToon MotionVectors pass | Motion Mask renderer list 不再覆盖自定义材质，仅 Motion Delta 使用 Ho override | 保留 lilToon 自身写入的运动向量，避免自定义 mask pass 清成纯黑 |
 
 ## 当前下一步
 

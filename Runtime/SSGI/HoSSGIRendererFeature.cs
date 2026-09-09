@@ -1,5 +1,6 @@
 #pragma warning disable CS0618, CS0672
 
+using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -17,7 +18,9 @@ namespace lilToon.URP.Extensions.SSGI
         private HoSSGIPass pass;
         private HoSSGICompositePass compositePass;
         private HoSSGIDebugPass debugPass;
-        private HoSSGIHistory history;
+        private readonly Dictionary<int, HoSSGIHistory> histories = new Dictionary<int, HoSSGIHistory>();
+        private readonly Dictionary<int, int> historyLastUsedFrames = new Dictionary<int, int>();
+        private const int MaxCameraHistorySlots = 4;
         private Material material;
         private Material debugMaterial;
         private Shader shader;
@@ -30,7 +33,6 @@ namespace lilToon.URP.Extensions.SSGI
             pass = new HoSSGIPass();
             compositePass = new HoSSGICompositePass();
             debugPass = new HoSSGIDebugPass();
-            history = new HoSSGIHistory();
             RenderPipelineManager.beginCameraRendering += ResetGlobalState;
         }
 
@@ -50,7 +52,7 @@ namespace lilToon.URP.Extensions.SSGI
             ResolveVolume();
             if (!settings.enabled)
             {
-                history?.Invalidate();
+                InvalidateCameraHistory(renderingData.cameraData.camera);
                 return;
             }
 
@@ -75,7 +77,13 @@ namespace lilToon.URP.Extensions.SSGI
                 debugMaterial = debugShader != null ? CoreUtils.CreateEngineMaterial(debugShader) : null;
             }
 
-            pass.Setup(settings, material, history);
+            HoSSGIHistory cameraHistory = GetOrCreateCameraHistory(renderingData.cameraData.camera);
+            if (cameraHistory == null)
+            {
+                return;
+            }
+
+            pass.Setup(settings, material, cameraHistory);
             renderer.EnqueuePass(pass);
             if (settings.debugMode == HoSSGIDebugMode.Off)
             {
@@ -104,8 +112,12 @@ namespace lilToon.URP.Extensions.SSGI
             pass = null;
             compositePass = null;
             debugPass = null;
-            history?.Dispose();
-            history = null;
+            foreach (HoSSGIHistory cameraHistory in histories.Values)
+            {
+                cameraHistory?.Dispose();
+            }
+            histories.Clear();
+            historyLastUsedFrames.Clear();
         }
 
         private static void ResetGlobalState(ScriptableRenderContext context, Camera camera)
@@ -113,6 +125,62 @@ namespace lilToon.URP.Extensions.SSGI
             Shader.SetGlobalTexture(HoSSGIShaderConstants.GITextureId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoSSGIShaderConstants.RawGIId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoSSGIShaderConstants.SourceId, Texture2D.blackTexture);
+        }
+
+        private HoSSGIHistory GetOrCreateCameraHistory(Camera camera)
+        {
+            if (camera == null)
+            {
+                return null;
+            }
+
+            int cameraId = camera.GetInstanceID();
+            if (histories.TryGetValue(cameraId, out HoSSGIHistory cameraHistory))
+            {
+                historyLastUsedFrames[cameraId] = Time.frameCount;
+                return cameraHistory;
+            }
+
+            if (histories.Count >= MaxCameraHistorySlots)
+            {
+                int oldestCameraId = 0;
+                int oldestFrame = int.MaxValue;
+                foreach (KeyValuePair<int, int> pair in historyLastUsedFrames)
+                {
+                    if (pair.Value < oldestFrame)
+                    {
+                        oldestFrame = pair.Value;
+                        oldestCameraId = pair.Key;
+                    }
+                }
+
+                if (histories.TryGetValue(oldestCameraId, out HoSSGIHistory oldestHistory))
+                {
+                    oldestHistory.Dispose();
+                    histories.Remove(oldestCameraId);
+                    historyLastUsedFrames.Remove(oldestCameraId);
+                }
+            }
+
+            cameraHistory = new HoSSGIHistory();
+            histories[cameraId] = cameraHistory;
+            historyLastUsedFrames[cameraId] = Time.frameCount;
+            return cameraHistory;
+        }
+
+        private void InvalidateCameraHistory(Camera camera)
+        {
+            if (camera == null)
+            {
+                return;
+            }
+
+            int cameraId = camera.GetInstanceID();
+            if (histories.TryGetValue(cameraId, out HoSSGIHistory cameraHistory))
+            {
+                cameraHistory.Invalidate();
+                historyLastUsedFrames[cameraId] = Time.frameCount;
+            }
         }
 
         private void ResolveVolume()

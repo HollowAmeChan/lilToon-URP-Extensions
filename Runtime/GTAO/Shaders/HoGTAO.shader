@@ -187,10 +187,10 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         float HoGTAOHitVelocity(float2 originUV, float2 hitUV)
         {
             float originObjectMask = _HoGTAOUseObjectMotion > 0.5
-                ? step(1.0e-6, SAMPLE_TEXTURE2D_X(_HoGTAOMotionMask, sampler_PointClamp, saturate(originUV)).r)
+                ? step(1.0e-6, length(SAMPLE_TEXTURE2D_X(_HoGTAOMotionMask, sampler_PointClamp, saturate(originUV)).rg))
                 : 0.0;
             float hitObjectMask = _HoGTAOUseObjectMotion > 0.5
-                ? step(1.0e-6, SAMPLE_TEXTURE2D_X(_HoGTAOMotionMask, sampler_PointClamp, saturate(hitUV)).r)
+                ? step(1.0e-6, length(SAMPLE_TEXTURE2D_X(_HoGTAOMotionMask, sampler_PointClamp, saturate(hitUV)).rg))
                 : 0.0;
             if (_HoGTAOUseObjectMotion > 0.5 && (originObjectMask > 0.5 || hitObjectMask > 0.5))
             {
@@ -379,13 +379,23 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             }
             if (_HoGTAODebugMode > 3.5 && _HoGTAODebugMode < 4.5)
             {
-                float motionMask = _HoGTAOUseObjectMotion > 0.5
-                    ? SAMPLE_TEXTURE2D_X(_HoGTAOMotionMask, sampler_PointClamp, input.texcoord).r
+                float2 motionMask = _HoGTAOUseObjectMotion > 0.5
+                    ? SAMPLE_TEXTURE2D_X(_HoGTAOMotionMask, sampler_PointClamp, input.texcoord).rg
                     : 0.0;
                 float4 motionDelta = _HoGTAOUseObjectMotion > 0.5
                     ? SAMPLE_TEXTURE2D_X(_HoGTAOMotionDelta, sampler_PointClamp, input.texcoord)
                     : 0.0;
-                return half4(motionMask, saturate(abs(motionDelta.g) * 10.0), saturate(abs(motionDelta.r)), 1.0h);
+                float2 nativeMotion = _HoGTAOUseMotionVectors > 0.5
+                    ? SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, input.texcoord).xy
+                    : 0.0;
+                float objectMoved = step(2.0e-4, abs(motionDelta.g));
+                float objectMask = step(1.0e-6, length(motionMask));
+                float3 combinedMotion = float3(nativeMotion * 10.0, 0.0);
+                if (objectMoved > 0.5)
+                    combinedMotion = float3(0.0, 1.0, 1.0);
+                else if (objectMask > 0.5)
+                    combinedMotion = float3(0.0, 0.0, 1.0);
+                return half4(combinedMotion, 1.0h);
             }
             float centerRawDepth = HoGTAOSampleDepth(saturate(input.texcoord), 0.0);
             if (HoGTAOIsFarClip(centerRawDepth))
@@ -434,7 +444,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             float3 currentPreviousPositionVS = currentPreviousUnityPosition * float3(1.0, -1.0, -1.0);
             float currentPreviousDepth = abs(currentPreviousUnityPosition.z);
             float objectMotionMask = _HoGTAOUseObjectMotion > 0.5
-                ? step(1.0e-6, SAMPLE_TEXTURE2D_X(_HoGTAOMotionMask, sampler_PointClamp, input.texcoord).r)
+                ? step(1.0e-6, length(SAMPLE_TEXTURE2D_X(_HoGTAOMotionMask, sampler_PointClamp, input.texcoord).rg))
                 : 0.0;
             float objectMotionDepthDelta = _HoGTAOUseObjectMotion > 0.5
                 ? SAMPLE_TEXTURE2D_X(_HoGTAOMotionDelta, sampler_PointClamp, input.texcoord).r
@@ -583,10 +593,14 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             half historyWeight = accepted * (half)temporalWeight;
             if (_HoGTAODebugMode > 4.5)
             {
-                // Stable history is a grayscale sample-age signal; rejected
-                // history is red, matching HTrace's disocclusion diagnostic.
-                half historyAge = saturate(sampleCount / max(_HoGTAOTemporalMaxFrames, 1.0h));
-                historyOutput = accepted > 0.5h
+                // Match HTrace's Temporal Disocclusion view: inspect the
+                // reprojected history count before adding this frame, and
+                // attenuate it with the same velocity rejection exponent.
+                float reprojectedAge = saturate(previousCount / max(_HoGTAOTemporalMaxFrames, 1.0));
+                float reprojectedVelocity = saturate(previousVelocity);
+                float velocityAge = saturate(pow(max(1.0 - reprojectedVelocity, 1.0e-6), 10.0));
+                half historyAge = (half)saturate(reprojectedAge * velocityAge);
+                historyOutput = previousCount >= 1.0h && historyWeightSum > 1.0e-5
                     ? half4(historyAge, historyAge, historyAge, 1.0h)
                     : half4(1.0h, 0.0h, 0.0h, 1.0h);
                 normalOutput = historyOutput;

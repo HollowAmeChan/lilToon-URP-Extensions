@@ -608,6 +608,11 @@ namespace lilToon.URP.Extensions.GTAO
             bool previousOrthographic = history.CameraStateValid && history.PreviousOrthographic;
 
             HoGTAORenderGraphResources gtao = frameData.GetOrCreate<HoGTAORenderGraphResources>();
+            bool gameCameraMotion = cameraData.cameraType == CameraType.Game;
+            TextureHandle temporalMotionVectors = gameCameraMotion
+                ? resourceData.motionVectorColor
+                : TextureHandle.nullHandle;
+            TextureHandle generateMotionVectors = temporalMotionVectors;
             TextureHandle motionMask = TextureHandle.nullHandle;
             TextureHandle motionDelta = TextureHandle.nullHandle;
             if (motionMaterial != null)
@@ -642,7 +647,7 @@ namespace lilToon.URP.Extensions.GTAO
             {
                 data.material = material;
                 data.normalDepth = geometry.normalDepthTexture;
-                data.motionVectors = resourceData.motionVectorColor;
+                data.motionVectors = generateMotionVectors;
                 data.motionMask = motionMask;
                 data.motionDelta = motionDelta;
                 data.output = current;
@@ -735,7 +740,10 @@ namespace lilToon.URP.Extensions.GTAO
             TextureHandle nextDepth = renderGraph.ImportTexture(history.NextDepth);
             TextureHandle previousNormal = renderGraph.ImportTexture(history.PreviousNormal);
             TextureHandle nextNormal = renderGraph.ImportTexture(history.NextNormal);
-            TextureHandle motionVectors = resourceData.motionVectorColor;
+            // SceneView does not provide HTrace's stable camera-motion pass;
+            // using the built-in texture there makes a stationary editor view
+            // reproject through stale values every frame.
+            TextureHandle motionVectors = temporalMotionVectors;
             using (var builder = renderGraph.AddRasterRenderPass<TemporalData>("Ho-GTAO Temporal", out TemporalData data, ProfilingSampler))
             {
                 data.material = material;
@@ -975,13 +983,15 @@ namespace lilToon.URP.Extensions.GTAO
                     sortingCriteria = SortingCriteria.CommonOpaque,
                     stateBlock = motionState,
                     layerMask = cameraData.camera.cullingMask,
-                    overrideMaterial = motionMaterial
+                    overrideMaterial = null
                 };
 
             using (var builder = renderGraph.AddRasterRenderPass<ObjectMotionData>(
                 "Ho-GTAO Object Motion Mask", out ObjectMotionData data, MotionMaskProfilingSampler))
             {
-                rendererListDesc.overrideMaterialPassIndex = 0;
+                // lilToon's own MotionVectors pass already emits the object
+                // velocity target used as HTrace's motion mask.
+                rendererListDesc.overrideMaterial = null;
                 data.rendererList = renderGraph.CreateRendererList(rendererListDesc);
                 data.destination = motionMask;
                 builder.UseRendererList(data.rendererList);
@@ -1000,6 +1010,7 @@ namespace lilToon.URP.Extensions.GTAO
             using (var builder = renderGraph.AddRasterRenderPass<ObjectMotionData>(
                 "Ho-GTAO Object Motion Delta", out ObjectMotionData data, MotionDeltaProfilingSampler))
             {
+                rendererListDesc.overrideMaterial = motionMaterial;
                 rendererListDesc.overrideMaterialPassIndex = 1;
                 data.rendererList = renderGraph.CreateRendererList(rendererListDesc);
                 data.destination = motionDelta;
