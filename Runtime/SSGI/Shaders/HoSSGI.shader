@@ -466,8 +466,10 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 float3 rayNDC = ComputeNormalizedDeviceCoordinatesWithZ(rayPositionWS, UNITY_MATRIX_VP);
                 float2 sampleUV = rayNDC.xy;
                 if (any(sampleUV <= 0.001) || any(sampleUV >= 0.999)) break;
-                int depthMip = clamp((int)floor(t * 4.0), 0, 4);
-                float surfaceDepth = HoSSGISampleDepthPyramid(sampleUV, depthMip);
+                // Validation must use the exact mip0 surface. The coarse linear
+                // depth pyramid is intentionally conservative and can otherwise
+                // reject a valid historical hit before the distance check.
+                float surfaceDepth = HoSSGISampleDepthPyramid(sampleUV, 0);
                 if (surfaceDepth <= 0.0001)
                 {
                     previousDelta = -2.0 * max(_HoSSGIThickness, 0.01);
@@ -1208,7 +1210,6 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float3 historyColor = 0.0;
             float weightSum = 0.0;
             float3 currentNormal = normalize((float3)geometry.rgb * 2.0 - 1.0);
-            float2 screenTexel = rcp(max(_ScreenParams.xy, 1.0));
             float currentSourceLuminance = HoSSGILuminance(current.rgb);
             float sourceMoment1 = currentSourceLuminance;
             float sourceMoment2 = currentSourceLuminance * currentSourceLuminance;
@@ -1220,7 +1221,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 for (int momentX = -1; momentX <= 1; momentX++)
                 {
                     if (momentX == 0 && momentY == 0) continue;
-                    float2 momentUV = uv + float2(momentX, momentY) * screenTexel;
+                    float2 momentUV = uv + float2(momentX, momentY) * rcp(max(_ScreenParams.xy, 1.0));
                     if (any(momentUV < 0.0) || any(momentUV > 1.0)) continue;
                     half4 momentGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, momentUV);
                     if (momentGeometry.a < 0.0001h) continue;
