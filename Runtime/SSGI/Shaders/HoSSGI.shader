@@ -1312,6 +1312,26 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 if (reuseWeight <= 0.001) continue;
 
                 HoSSGIReservoir tapReservoir = HoSSGILoadReservoir(tapUV);
+                if (tapReservoir.hit > 0.5 && tapReservoir.target > 1.0e-5)
+                {
+                    // A spatial candidate was generated at the neighbour's
+                    // receiver. Re-evaluate its representative hit against
+                    // the current receiver before exchanging Wsum/M, just as
+                    // temporal reuse does for a reprojected history sample.
+                    float previousTapTarget = tapReservoir.target;
+                    float currentTapTarget = HoSSGIEvaluateReservoirTarget(
+                        centerPositionWS, tapReservoir);
+                    if (currentTapTarget > 1.0e-5)
+                    {
+                        tapReservoir.wsum *= currentTapTarget / previousTapTarget;
+                        tapReservoir.target = currentTapTarget;
+                    }
+                    else
+                    {
+                        tapReservoir.wsum = 0.0;
+                        tapReservoir.m = 0.0;
+                    }
+                }
                 tapReservoir.wsum *= reuseWeight;
                 tapReservoir.m *= reuseWeight;
                 HoSSGIReservoirMerge(merged, tapReservoir, HoSSGIReservoirRandom(uv * _ScreenParams.xy, (float)(i + 31)));
