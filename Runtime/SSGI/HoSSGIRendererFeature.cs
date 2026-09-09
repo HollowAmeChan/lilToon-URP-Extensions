@@ -6,6 +6,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 using lilToon.URP.Extensions.GeometryBuffer;
+using lilToon.URP.Extensions.GTAO;
 
 namespace lilToon.URP.Extensions.SSGI
 {
@@ -454,6 +455,7 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle reservoirRay;
             public TextureHandle temporal;
             public TextureHandle geometry;
+            public TextureHandle ao;
             public TextureHandle outputColor;
             public TextureHandle outputAux;
             public TextureHandle outputRay;
@@ -498,6 +500,7 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle source;
             public TextureHandle geometry;
             public TextureHandle guidance;
+            public TextureHandle ao;
             public TextureHandle output;
             public float radius;
         }
@@ -558,6 +561,8 @@ namespace lilToon.URP.Extensions.SSGI
         {
             if (settings == null || material == null || history == null) return;
             HoGeometryBufferRenderGraphResources geometry = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
+            HoGTAORenderGraphResources gtao = frameData.GetOrCreate<HoGTAORenderGraphResources>();
+            TextureHandle aoTexture = gtao.aoTexture;
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             TextureHandle source = resourceData.activeColorTexture;
@@ -923,6 +928,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.reservoirRay = fireflyReservoirRay;
                 data.temporal = temporal;
                 data.geometry = geometry.normalDepthTexture;
+                data.ao = aoTexture;
                 data.outputColor = spatialReservoirColor;
                 data.outputAux = spatialReservoirAux;
                 data.outputRay = spatialReservoirRay;
@@ -935,6 +941,7 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.UseTexture(data.reservoirRay, AccessFlags.Read);
                 builder.UseTexture(data.temporal, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
+                if (data.ao.IsValid()) builder.UseTexture(data.ao, AccessFlags.Read);
                 builder.SetRenderAttachment(data.outputColor, 0, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(data.outputAux, 1, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(data.outputRay, 2, AccessFlags.WriteAll);
@@ -952,6 +959,8 @@ namespace lilToon.URP.Extensions.SSGI
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirRayId, passData.reservoirRay);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.temporal);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
+                    passData.material.SetFloat(HoSSGIShaderConstants.UseAOId, passData.ao.IsValid() ? 1.0f : 0.0f);
+                    if (passData.ao.IsValid()) context.cmd.SetGlobalTexture(HoSSGIShaderConstants.AOTextureId, passData.ao);
                     Blitter.BlitTexture(context.cmd, passData.reservoirColor, new Vector4(1, 1, 0, 0), passData.material, 4);
                 });
             }
@@ -1063,11 +1072,13 @@ namespace lilToon.URP.Extensions.SSGI
                 data.source = temporallyDenoised;
                 data.geometry = geometry.normalDepthTexture;
                 data.guidance = validatedGuidance;
+                data.ao = aoTexture;
                 data.output = bilateralFirst;
                 data.radius = Mathf.Clamp(settings.spatialRadius * 0.5f, 0.5f, 8.0f);
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.UseTexture(data.guidance, AccessFlags.Read);
+                if (data.ao.IsValid()) builder.UseTexture(data.ao, AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
@@ -1077,6 +1088,8 @@ namespace lilToon.URP.Extensions.SSGI
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.source);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SpatialGuidanceId, passData.guidance);
+                    passData.material.SetFloat(HoSSGIShaderConstants.UseAOId, passData.ao.IsValid() ? 1.0f : 0.0f);
+                    if (passData.ao.IsValid()) context.cmd.SetGlobalTexture(HoSSGIShaderConstants.AOTextureId, passData.ao);
                     Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 6);
                 });
             }
@@ -1088,11 +1101,13 @@ namespace lilToon.URP.Extensions.SSGI
                 data.source = bilateralFirst;
                 data.geometry = geometry.normalDepthTexture;
                 data.guidance = validatedGuidance;
+                data.ao = aoTexture;
                 data.output = denoised;
                 data.radius = Mathf.Clamp(settings.spatialRadius, 0.5f, 8.0f);
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.UseTexture(data.guidance, AccessFlags.Read);
+                if (data.ao.IsValid()) builder.UseTexture(data.ao, AccessFlags.Read);
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
                 builder.SetGlobalTextureAfterPass(data.output, HoSSGIShaderConstants.GITextureId);
                 builder.AllowGlobalStateModification(true);
@@ -1103,6 +1118,8 @@ namespace lilToon.URP.Extensions.SSGI
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.source);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SpatialGuidanceId, passData.guidance);
+                    passData.material.SetFloat(HoSSGIShaderConstants.UseAOId, passData.ao.IsValid() ? 1.0f : 0.0f);
+                    if (passData.ao.IsValid()) context.cmd.SetGlobalTexture(HoSSGIShaderConstants.AOTextureId, passData.ao);
                     Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 6);
                 });
             }

@@ -40,6 +40,8 @@ namespace lilToon.URP.Extensions.SSGI
         public static readonly int SampleCountHistoryId = Shader.PropertyToID(SampleCountHistoryName);
         public static readonly int InvalidityHistoryId = Shader.PropertyToID(InvalidityHistoryName);
         public static readonly int CurrentInvalidityId = Shader.PropertyToID("_HoSSGICurrentInvalidity");
+        public static readonly int AOTextureId = Shader.PropertyToID("_HoAOTexture");
+        public static readonly int UseAOId = Shader.PropertyToID("_HoSSGIUseAO");
         public static readonly int DepthPyramidMip0Id = Shader.PropertyToID(DepthPyramidMip0Name);
         public static readonly int DepthPyramidMip1Id = Shader.PropertyToID(DepthPyramidMip1Name);
         public static readonly int DepthPyramidMip2Id = Shader.PropertyToID(DepthPyramidMip2Name);

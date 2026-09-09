@@ -57,6 +57,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         TEXTURE2D_X(_HoSSGISampleCountHistory);
         TEXTURE2D_X(_HoSSGIInvalidityHistory);
         TEXTURE2D_X(_HoSSGICurrentInvalidity);
+        TEXTURE2D_X(_HoAOTexture);
         TEXTURE2D_X_FLOAT(_HoSSGIDepthPyramidMip0);
         TEXTURE2D_X_FLOAT(_HoSSGIDepthPyramidMip1);
         TEXTURE2D_X_FLOAT(_HoSSGIDepthPyramidMip2);
@@ -79,6 +80,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         float _HoSSGIReservoirReuse;
         float _HoSSGIReservoirValidation;
         float _HoSSGIFireflyEnabled;
+        float _HoSSGIUseAO;
         float _HoGeometryBufferSkyTextureValid;
         float4 _HoSSGIDepthPyramidTexelSize;
 
@@ -1011,6 +1013,9 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             half4 centerTemporal = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_PointClamp, uv);
             float confidenceSum = centerTemporal.a;
             float confidenceWeight = 1.0;
+            float centerAO = _HoSSGIUseAO > 0.5
+                ? SAMPLE_TEXTURE2D_X(_HoAOTexture, sampler_LinearClamp, uv).r
+                : 1.0;
             const float2 poisson[8] =
             {
                 float2(-0.326, -0.406), float2(0.695, -0.113),
@@ -1038,7 +1043,11 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 float normalWeight = saturate(dot(centerNormal, sampleNormal));
                 float depthWeight = exp2(-32.0 * depthDelta * depthDelta);
                 float gaussianWeight = exp2(-dot(offsetWS, offsetWS) / max(2.0 * sigma * sigma, 1.0e-5));
-                float reuseWeight = planeWeight * normalWeight * depthWeight * gaussianWeight;
+                float tapAO = _HoSSGIUseAO > 0.5
+                    ? SAMPLE_TEXTURE2D_X(_HoAOTexture, sampler_LinearClamp, tapUV).r
+                    : 1.0;
+                float aoWeight = exp2(-max(5.0, 10.0 * (1.0 - centerAO)) * abs(centerAO - tapAO));
+                float reuseWeight = planeWeight * normalWeight * depthWeight * aoWeight * gaussianWeight;
                 if (reuseWeight <= 0.001) continue;
 
                 HoSSGIReservoir tapReservoir = HoSSGILoadReservoir(tapUV);
@@ -1117,6 +1126,9 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float4 centerGuidanceData = SAMPLE_TEXTURE2D_X(_HoSSGISpatialGuidance, sampler_PointClamp, uv);
             float centerGuidance = centerGuidanceData.x;
             float centerOcclusion = centerGuidanceData.z;
+            float centerAO = _HoSSGIUseAO > 0.5
+                ? SAMPLE_TEXTURE2D_X(_HoAOTexture, sampler_LinearClamp, uv).r
+                : 1.0;
             float3 sum = centerTone;
             float confidence = center.a;
             float weightSum = 1.0;
@@ -1147,8 +1159,12 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     float tapOcclusion = tapGuidanceData.z;
                     float occlusionWeight = exp2(-max(5.0, 10.0 * (1.0 - centerOcclusion))
                         * abs(centerOcclusion - tapOcclusion));
+                    float tapAO = _HoSSGIUseAO > 0.5
+                        ? SAMPLE_TEXTURE2D_X(_HoAOTexture, sampler_LinearClamp, tapUV).r
+                        : 1.0;
+                    float aoWeight = exp2(-max(5.0, 10.0 * (1.0 - centerAO)) * abs(centerAO - tapAO));
                     float tapWeight = normalWeight * depthWeight * planeWeight * guidanceWeight
-                        * occlusionWeight * gaussianWeight;
+                        * occlusionWeight * aoWeight * gaussianWeight;
                     if (tapWeight <= 0.001) continue;
                     half4 tap = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_LinearClamp, tapUV);
                     sum += HoSSGISpatialDenoisingTonemap(tap.rgb) * tapWeight;
