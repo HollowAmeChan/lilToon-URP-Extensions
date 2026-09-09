@@ -128,6 +128,7 @@
 | 2026-09-09 | 复用 lilToon MotionVectors pass | Motion Mask renderer list 不再覆盖自定义材质，仅 Motion Delta 使用 Ho override | 保留 lilToon 自身写入的运动向量，避免自定义 mask pass 清成纯黑 |
 | 2026-09-09 | 修正 Motion/Temporal debug 颜色语义 | Debug shader 仅对 AO/Off 取 R 灰阶，保留 Motion/Temporal 的 RGB | Temporal 拒绝红色不再被显示层变成纯白，Motion 组合颜色可直接观察 |
 | 2026-09-09 | 按 Camera 隔离 GTAO history | Renderer Feature 为每个 camera 实例持有独立 history，并在 history 内保存尺寸/分辨率配置 | SceneView/GameView 交替渲染不再反复清空 history，Temporal 不应再长期停留在全红首帧 |
+| 2026-09-09 | 分离 Temporal debug 输出与 history 写入 | Temporal 增加独立 debug attachment；诊断颜色不再污染 AO/normal history | 红色拒绝只表示诊断结果，不会让下一帧法线/深度验证永久失败 |
 
 ## 当前下一步
 

@@ -473,6 +473,7 @@ namespace lilToon.URP.Extensions.GTAO
             public TextureHandle motionDelta;
             public TextureHandle output;
             public TextureHandle normalOutput;
+            public TextureHandle debugOutput;
             public bool useHistory;
             public bool useMotionVectors;
             public bool debugDisocclusion;
@@ -768,6 +769,15 @@ namespace lilToon.URP.Extensions.GTAO
             TextureHandle nextDepth = renderGraph.ImportTexture(history.NextDepth);
             TextureHandle previousNormal = renderGraph.ImportTexture(history.PreviousNormal);
             TextureHandle nextNormal = renderGraph.ImportTexture(history.NextNormal);
+            TextureDesc temporalDebugDesc = new TextureDesc(width, height)
+            {
+                name = "_HoGTAOTemporalDebug",
+                format = GraphicsFormat.R8G8B8A8_UNorm,
+                depthBufferBits = 0,
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp
+            };
+            TextureHandle temporalDebug = renderGraph.CreateTexture(temporalDebugDesc);
             // SceneView does not provide HTrace's stable camera-motion pass;
             // using the built-in texture there makes a stationary editor view
             // reproject through stale values every frame.
@@ -786,6 +796,7 @@ namespace lilToon.URP.Extensions.GTAO
                 data.motionDelta = motionDelta;
                 data.output = next;
                 data.normalOutput = nextNormal;
+                data.debugOutput = temporalDebug;
                 data.useHistory = history.Valid;
                 data.useMotionVectors = motionVectors.IsValid();
                 data.debugDisocclusion = debugTemporal;
@@ -821,6 +832,7 @@ namespace lilToon.URP.Extensions.GTAO
                 }
                 builder.SetRenderAttachment(data.output, 0, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(data.normalOutput, 1, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(data.debugOutput, 2, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (TemporalData passData, RasterGraphContext context) =>
@@ -886,7 +898,7 @@ namespace lilToon.URP.Extensions.GTAO
                 // Temporal debug intentionally stops before spatial denoising and
                 // final composition so the inspector shows the actual history
                 // reprojection/rejection result.
-                gtao.aoTexture = nextNormal;
+                gtao.aoTexture = temporalDebug;
                 return;
             }
 

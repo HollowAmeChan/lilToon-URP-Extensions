@@ -415,9 +415,11 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         void Temporal(
             Varyings input,
             out half4 historyOutput : SV_Target0,
-            out half4 normalOutput : SV_Target1)
+            out half4 normalOutput : SV_Target1,
+            out half4 debugOutput : SV_Target2)
         {
             UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+            debugOutput = 0.0h;
             half4 currentData = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, input.texcoord);
             half current = currentData.r;
             float currentVelocity = currentData.g;
@@ -545,8 +547,9 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             // temporal disocclusions.
             if (!currentSurfaceValid && _HoGTAODebugMode > 4.5)
             {
-                historyOutput = half4(1.0h, 1.0h, 1.0h, 1.0h);
+                historyOutput = half4(0.0h, 0.0h, 0.0h, 1.0h);
                 normalOutput = historyOutput;
+                debugOutput = half4(1.0h, 1.0h, 1.0h, 1.0h);
                 return;
             }
             half depthValid = (currentSurfaceValid ? 1.0h : 0.0h) * step(1.0e-5, historyWeightSum);
@@ -600,10 +603,12 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 float reprojectedVelocity = saturate(previousVelocity);
                 float velocityAge = saturate(pow(max(1.0 - reprojectedVelocity, 1.0e-6), 10.0));
                 half historyAge = (half)saturate(reprojectedAge * velocityAge);
-                historyOutput = previousCount >= 1.0h && historyWeightSum > 1.0e-5
+                debugOutput = previousCount >= 1.0h && historyWeightSum > 1.0e-5
                     ? half4(historyAge, historyAge, historyAge, 1.0h)
                     : half4(1.0h, 0.0h, 0.0h, 1.0h);
-                normalOutput = historyOutput;
+                half debugAo = lerp(current, previous, historyWeight);
+                historyOutput = half4(debugAo, velocityAccumulated, sampleCount / max(_HoGTAOTemporalMaxFrames, 1.0h), 0.0h);
+                normalOutput = half4(debugAo, currentNormal * 0.5h + 0.5h);
                 return;
             }
             half ao = lerp(current, previous, historyWeight);
