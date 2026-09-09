@@ -1,0 +1,28 @@
+# Local Codex research, upstream clones, and validation projects.
+.codex-research/
+
+# Unity generated project data.
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+
+# IDE and local tooling state.
+.vs/
+.idea/
+*.csproj
+*.sln
+*.slnx
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+
+# Crash reports and generated diagnostics.
+sysinfo.txt
+*.stacktrace
