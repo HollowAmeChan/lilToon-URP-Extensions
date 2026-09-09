@@ -385,6 +385,7 @@ namespace lilToon.URP.Extensions.GTAO
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-GTAO");
         private static readonly ProfilingSampler MotionMaskProfilingSampler = new ProfilingSampler("Ho-GTAO Motion Mask");
         private static readonly ProfilingSampler MotionDeltaProfilingSampler = new ProfilingSampler("Ho-GTAO Motion Delta");
+        private static readonly ProfilingSampler CameraMotionProfilingSampler = new ProfilingSampler("Ho-GTAO Camera Motion");
         private static readonly int DebugModeId = Shader.PropertyToID("_HoGTAODebugMode");
         private static readonly int HistoryBlendId = Shader.PropertyToID("_HoGTAOHistoryBlend");
         private static readonly int HistoryValidId = Shader.PropertyToID("_HoGTAOHistoryValid");
@@ -428,6 +429,7 @@ namespace lilToon.URP.Extensions.GTAO
         private static readonly int DepthMip3Id = Shader.PropertyToID("_HoGTAODepthMip3");
         private static readonly int MotionVectorTextureId = Shader.PropertyToID("_MotionVectorTexture");
         private static readonly int UseMotionVectorsId = Shader.PropertyToID("_HoGTAOUseMotionVectors");
+        private static readonly int UseCameraMotionId = Shader.PropertyToID("_HoGTAOUseCameraMotion");
         private static readonly int UseObjectMotionId = Shader.PropertyToID("_HoGTAOUseObjectMotion");
         private static readonly ShaderTagId MotionVectorsShaderTagId = new ShaderTagId("MotionVectors");
 
@@ -435,6 +437,7 @@ namespace lilToon.URP.Extensions.GTAO
         {
             public Material material;
             public TextureHandle normalDepth;
+            public TextureHandle geometryDepth;
             public TextureHandle motionVectors;
             public TextureHandle motionMask;
             public TextureHandle motionDelta;
@@ -449,10 +452,14 @@ namespace lilToon.URP.Extensions.GTAO
             public int stepCount;
             public float frameIndex;
             public Matrix4x4 view;
+            public Matrix4x4 inverseView;
+            public Matrix4x4 previousView;
             public Matrix4x4 proj;
             public Matrix4x4 invProj;
             public Vector4 depthToViewParams;
+            public Vector4 previousDepthToViewParams;
             public float orthographic;
+            public float previousOrthographic;
             public TextureHandle depthMip0;
             public TextureHandle depthMip1;
             public TextureHandle depthMip2;
@@ -476,6 +483,7 @@ namespace lilToon.URP.Extensions.GTAO
             public TextureHandle debugOutput;
             public bool useHistory;
             public bool useMotionVectors;
+            public bool useCameraMotion;
             public bool debugDisocclusion;
             public int maxFrames;
             public float rejection;
@@ -539,6 +547,19 @@ namespace lilToon.URP.Extensions.GTAO
         {
             public RendererListHandle rendererList;
             public TextureHandle destination;
+        }
+
+        private sealed class CameraMotionData
+        {
+            public Material material;
+            public TextureHandle geometryDepth;
+            public TextureHandle destination;
+            public Matrix4x4 currentView;
+            public Matrix4x4 inverseCurrentView;
+            public Matrix4x4 previousView;
+            public Vector4 previousDepthToViewParams;
+            public bool currentOrthographic;
+            public bool previousOrthographic;
         }
 
         private HoGTAOSettings settings;
@@ -634,14 +655,16 @@ namespace lilToon.URP.Extensions.GTAO
             bool gameCameraMotion = cameraData.cameraType == CameraType.Game;
             TextureHandle temporalMotionVectors = gameCameraMotion
                 ? resourceData.motionVectorColor
-                : TextureHandle.nullHandle;
-            // Motion debug is explicitly allowed to inspect URP's camera
-            // vector field. Temporal accumulation stays on the conservative
-            // SceneView path below so a stale editor field cannot destabilize
-            // history.
-            TextureHandle generateMotionVectors = settings.debugMode == HoGTAODebugMode.Motion
-                ? resourceData.motionVectorColor
-                : temporalMotionVectors;
+                : RecordCameraMotionPass(
+                    renderGraph,
+                    geometry.depthTexture,
+                    currentView,
+                    currentView.inverse,
+                    previousView,
+                    previousDepthToViewParams,
+                    currentOrthographic,
+                    previousOrthographic);
+            TextureHandle generateMotionVectors = temporalMotionVectors;
             TextureHandle motionMask = TextureHandle.nullHandle;
             TextureHandle motionDelta = TextureHandle.nullHandle;
             if (motionMaterial != null)
@@ -676,6 +699,7 @@ namespace lilToon.URP.Extensions.GTAO
             {
                 data.material = material;
                 data.normalDepth = geometry.normalDepthTexture;
+                data.geometryDepth = geometry.depthTexture;
                 data.motionVectors = generateMotionVectors;
                 data.motionMask = motionMask;
                 data.motionDelta = motionDelta;
@@ -690,6 +714,8 @@ namespace lilToon.URP.Extensions.GTAO
                 data.stepCount = settings.stepCount;
                 data.frameIndex = Time.frameCount;
                 data.view = currentView;
+                data.inverseView = currentView.inverse;
+                data.previousView = previousView;
                 data.proj = cameraData.GetProjectionMatrix();
                 data.invProj = data.proj.inverse;
                 data.depthMip0 = depthMips[0];
@@ -697,8 +723,11 @@ namespace lilToon.URP.Extensions.GTAO
                 data.depthMip2 = depthMips[2];
                 data.depthMip3 = depthMips[3];
                 data.depthToViewParams = currentDepthToViewParams;
+                data.previousDepthToViewParams = previousDepthToViewParams;
                 data.orthographic = currentOrthographic ? 1.0f : 0.0f;
+                data.previousOrthographic = previousOrthographic ? 1.0f : 0.0f;
                 builder.UseTexture(data.normalDepth, AccessFlags.Read);
+                builder.UseTexture(data.geometryDepth, AccessFlags.Read);
                 if (data.motionVectors.IsValid())
                 {
                     builder.UseTexture(data.motionVectors, AccessFlags.Read);
@@ -727,12 +756,18 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.SetGlobalFloat(StepCountId, passData.stepCount);
                     context.cmd.SetGlobalFloat(FrameIndexId, passData.frameIndex);
                     context.cmd.SetGlobalMatrix(ViewMatrixId, passData.view);
+                    context.cmd.SetGlobalMatrix(InvViewMatrixId, passData.inverseView);
+                    context.cmd.SetGlobalMatrix(PreviousViewMatrixId, passData.previousView);
                     context.cmd.SetGlobalMatrix(ProjMatrixId, passData.proj);
                     context.cmd.SetGlobalMatrix(InvProjMatrixId, passData.invProj);
                     context.cmd.SetGlobalVector(DepthToViewParamsId, passData.depthToViewParams);
+                    context.cmd.SetGlobalVector(PreviousDepthToViewParamsId, passData.previousDepthToViewParams);
                     context.cmd.SetGlobalFloat(OrthographicId, passData.orthographic);
+                    context.cmd.SetGlobalFloat(PreviousOrthographicId, passData.previousOrthographic);
                     context.cmd.SetGlobalFloat(UseMotionVectorsId, passData.motionVectors.IsValid() ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(UseCameraMotionId, passData.motionVectors.IsValid() ? 0.0f : 1.0f);
                     context.cmd.SetGlobalFloat(UseObjectMotionId, passData.motionMask.IsValid() ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalTexture(GeometryDepthInputId, passData.geometryDepth);
                     if (passData.motionVectors.IsValid())
                     {
                         context.cmd.SetGlobalTexture(MotionVectorTextureId, passData.motionVectors);
@@ -799,6 +834,7 @@ namespace lilToon.URP.Extensions.GTAO
                 data.debugOutput = temporalDebug;
                 data.useHistory = history.Valid;
                 data.useMotionVectors = motionVectors.IsValid();
+                data.useCameraMotion = !data.useMotionVectors && cameraData.cameraType == CameraType.SceneView;
                 data.debugDisocclusion = debugTemporal;
                 // HTrace's SampleCountTemporal=8 gates motion-vector work but
                 // accumulates up to g_HTemporalSamplecountAO*2 = 12 frames.
@@ -859,6 +895,7 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.SetGlobalTexture(GeometryDepthInputId, passData.geometryDepth);
                     context.cmd.SetGlobalTexture(HistoryDepthPrevId, passData.previousDepth);
                     context.cmd.SetGlobalFloat(UseMotionVectorsId, passData.useMotionVectors ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(UseCameraMotionId, passData.useCameraMotion ? 1.0f : 0.0f);
                     context.cmd.SetGlobalFloat(UseObjectMotionId, passData.motionMask.IsValid() ? 1.0f : 0.0f);
                     if (passData.motionVectors.IsValid())
                         context.cmd.SetGlobalTexture(MotionVectorTextureId, passData.motionVectors);
@@ -1066,6 +1103,60 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.DrawRendererList(passData.rendererList);
                 });
             }
+        }
+
+        private TextureHandle RecordCameraMotionPass(
+            RenderGraph renderGraph,
+            TextureHandle geometryDepth,
+            Matrix4x4 currentView,
+            Matrix4x4 inverseCurrentView,
+            Matrix4x4 previousView,
+            Vector4 previousDepthToViewParams,
+            bool currentOrthographic,
+            bool previousOrthographic)
+        {
+            TextureDesc descriptor = renderGraph.GetTextureDesc(geometryDepth);
+            descriptor.name = "_HoGTAOCameraMotion";
+            descriptor.format = GraphicsFormat.R16G16_SFloat;
+            descriptor.depthBufferBits = 0;
+            descriptor.msaaSamples = MSAASamples.None;
+            descriptor.bindTextureMS = false;
+            descriptor.clearBuffer = true;
+            descriptor.clearColor = Color.black;
+            descriptor.filterMode = FilterMode.Point;
+            descriptor.wrapMode = TextureWrapMode.Clamp;
+            TextureHandle destination = renderGraph.CreateTexture(descriptor);
+
+            using (var builder = renderGraph.AddRasterRenderPass<CameraMotionData>(
+                "Ho-GTAO Camera Motion", out CameraMotionData data, CameraMotionProfilingSampler))
+            {
+                data.material = material;
+                data.geometryDepth = geometryDepth;
+                data.destination = destination;
+                data.currentView = currentView;
+                data.inverseCurrentView = inverseCurrentView;
+                data.previousView = previousView;
+                data.previousDepthToViewParams = previousDepthToViewParams;
+                data.currentOrthographic = currentOrthographic;
+                data.previousOrthographic = previousOrthographic;
+                builder.UseTexture(data.geometryDepth, AccessFlags.Read);
+                builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (CameraMotionData passData, RasterGraphContext context) =>
+                {
+                    context.cmd.SetGlobalTexture(GeometryDepthInputId, passData.geometryDepth);
+                    context.cmd.SetGlobalMatrix(ViewMatrixId, passData.currentView);
+                    context.cmd.SetGlobalMatrix(InvViewMatrixId, passData.inverseCurrentView);
+                    context.cmd.SetGlobalMatrix(PreviousViewMatrixId, passData.previousView);
+                    context.cmd.SetGlobalVector(PreviousDepthToViewParamsId, passData.previousDepthToViewParams);
+                    context.cmd.SetGlobalFloat(OrthographicId, passData.currentOrthographic ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(PreviousOrthographicId, passData.previousOrthographic ? 1.0f : 0.0f);
+                    Blitter.BlitTexture(context.cmd, passData.geometryDepth, new Vector4(1, 1, 0, 0), passData.material, 8);
+                });
+            }
+
+            return destination;
         }
 
         private TextureHandle[] CreateDepthPyramid(

@@ -9,6 +9,10 @@ Shader "Hidden/lilToon/URP/HoGTAOMotion"
         #pragma multi_compile_instancing
         #pragma multi_compile _ DOTS_INSTANCING_ON
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+        #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/UnityInput.hlsl"
+
+        // Unity's motion-vector globals expose the previous camera VP through
+        // _PrevViewProjMatrix; there is no UNITY_PREV_MATRIX_VP macro in URP.
 
         struct Attributes
         {

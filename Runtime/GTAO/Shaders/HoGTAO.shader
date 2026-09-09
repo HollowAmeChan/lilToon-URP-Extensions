@@ -48,6 +48,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         float _HoGTAOTemporalMaxFrames;
         float _HoGTAOTemporalRejection;
         float _HoGTAOUseMotionVectors;
+        float _HoGTAOUseCameraMotion;
         float _HoGTAOUseObjectMotion;
         float _HoGTAOWorldSpaceRadius;
         float _HoGTAOScreenSpaceRadius;
@@ -184,6 +185,39 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             return true;
         }
 
+        float2 HoGTAOCameraMotion(float2 uv)
+        {
+            float rawDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferDepthTexture, sampler_PointClamp, saturate(uv)).r;
+            if (HoGTAOIsFarClip(rawDepth))
+                return 0.0;
+
+            float linearDepth = LinearEyeDepth(rawDepth, _ZBufferParams);
+            float3 currentPositionVS = HoGTAOViewPosition(saturate(uv), linearDepth);
+            float3 worldPosition = mul(
+                _HoGTAOInvViewMatrix,
+                float4(currentPositionVS * float3(1.0, -1.0, -1.0), 1.0)).xyz;
+            float3 previousUnityPosition = mul(
+                _HoGTAOPreviousViewMatrix,
+                float4(worldPosition, 1.0)).xyz;
+            float3 previousPositionVS = previousUnityPosition * float3(1.0, -1.0, -1.0);
+            float previousDepth = abs(previousUnityPosition.z);
+            if (previousDepth <= 1.0e-5)
+                return 0.0;
+
+            float2 previousViewXY = _HoGTAOPreviousOrthographic > 0.5
+                ? previousPositionVS.xy
+                : previousPositionVS.xy / previousDepth;
+            float2 previousUV = (previousViewXY - _HoGTAOPreviousDepthToViewParams.zw)
+                / max(_HoGTAOPreviousDepthToViewParams.xy, 1.0e-5);
+            return uv - previousUV;
+        }
+
+        half4 CameraMotion(Varyings input) : SV_Target
+        {
+            UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+            return half4(HoGTAOCameraMotion(input.texcoord), 0.0h, 1.0h);
+        }
+
         float HoGTAOHitVelocity(float2 originUV, float2 hitUV)
         {
             float originObjectMask = _HoGTAOUseObjectMotion > 0.5
@@ -215,11 +249,12 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                 return 0.0;
             }
 
-            if (_HoGTAOUseMotionVectors < 0.5)
-                return 0.0;
-
-            float2 originMotion = SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, saturate(originUV)).xy;
-            float2 hitMotion = SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, saturate(hitUV)).xy;
+            float2 originMotion = _HoGTAOUseMotionVectors > 0.5
+                ? SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, saturate(originUV)).xy
+                : (_HoGTAOUseCameraMotion > 0.5 ? HoGTAOCameraMotion(originUV) : 0.0);
+            float2 hitMotion = _HoGTAOUseMotionVectors > 0.5
+                ? SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, saturate(hitUV)).xy
+                : (_HoGTAOUseCameraMotion > 0.5 ? HoGTAOCameraMotion(hitUV) : 0.0);
             float originMagnitude = length(originMotion);
             float hitMagnitude = length(hitMotion);
             float maximumMagnitude = max(originMagnitude, hitMagnitude);
@@ -387,10 +422,10 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
                     : 0.0;
                 float2 nativeMotion = _HoGTAOUseMotionVectors > 0.5
                     ? SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, input.texcoord).xy
-                    : 0.0;
+                    : (_HoGTAOUseCameraMotion > 0.5 ? HoGTAOCameraMotion(input.texcoord) : 0.0);
                 float objectMoved = step(2.0e-4, abs(motionDelta.g));
                 float objectMask = step(1.0e-6, length(motionMask));
-                float3 combinedMotion = float3(nativeMotion * 10.0, 0.0);
+                float3 combinedMotion = float3(nativeMotion * 0.5 + 0.5, saturate(length(nativeMotion) * 32.0));
                 if (objectMoved > 0.5)
                     combinedMotion = float3(0.0, 1.0, 1.0);
                 else if (objectMask > 0.5)
@@ -461,7 +496,7 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             }
             float2 motion = _HoGTAOUseMotionVectors > 0.5
                 ? SAMPLE_TEXTURE2D_X(_MotionVectorTexture, sampler_LinearClamp, input.texcoord).xy
-                : float2(0.0, 0.0);
+                : (_HoGTAOUseCameraMotion > 0.5 ? HoGTAOCameraMotion(input.texcoord) : float2(0.0, 0.0));
             // URP stores forward motion in screen-UV space. Reproject the current
             // pixel backwards to locate its previous-frame history sample.
             float2 previousUV = saturate(input.texcoord - motion);
@@ -779,6 +814,15 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment DebugOutput
+            ENDHLSL
+        }
+
+        Pass
+        {
+            Name "Ho-GTAO Camera Motion"
+            HLSLPROGRAM
+            #pragma vertex Vert
+            #pragma fragment CameraMotion
             ENDHLSL
         }
 
