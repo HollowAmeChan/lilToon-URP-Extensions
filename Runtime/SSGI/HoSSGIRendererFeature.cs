@@ -781,7 +781,9 @@ namespace lilToon.URP.Extensions.SSGI
             {
                 data.material = material;
                 data.current = raw;
-                data.currentSource = source;
+                // Temporal target re-evaluation must sample the same
+                // reprojected lighting source used by Raw Trace.
+                data.currentSource = sourceReprojected;
                 data.previous = previous;
                 data.previousDepth = previousDepth;
                 data.currentReservoirColor = rawReservoirColor;

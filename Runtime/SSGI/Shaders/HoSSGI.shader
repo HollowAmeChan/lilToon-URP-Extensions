@@ -201,15 +201,15 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv + texel * float2( 0.5, -0.5)).r,
                 SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv + texel * float2(-0.5,  0.5)).r,
                 SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv + texel * float2( 0.5,  0.5)).r);
-            // Linear eye depth has the opposite ordering of HTrace's reversed-Z
-            // pyramid. Keep the farthest valid surface in the footprint so a
-            // coarse sample cannot report a nearer surface as an early hit.
-            float reducedDepth = 0.0;
-            if (depths.x > 0.0001) reducedDepth = max(reducedDepth, depths.x);
-            if (depths.y > 0.0001) reducedDepth = max(reducedDepth, depths.y);
-            if (depths.z > 0.0001) reducedDepth = max(reducedDepth, depths.z);
-            if (depths.w > 0.0001) reducedDepth = max(reducedDepth, depths.w);
-            return float4(reducedDepth, 0.0, 0.0, 1.0);
+            // Linear eye depth increases away from the camera. Keep the
+            // nearest valid surface in the footprint so coarse traversal does
+            // not step through a foreground surface and miss its hit.
+            float reducedDepth = 1.0e30;
+            if (depths.x > 0.0001) reducedDepth = min(reducedDepth, depths.x);
+            if (depths.y > 0.0001) reducedDepth = min(reducedDepth, depths.y);
+            if (depths.z > 0.0001) reducedDepth = min(reducedDepth, depths.z);
+            if (depths.w > 0.0001) reducedDepth = min(reducedDepth, depths.w);
+            return float4(reducedDepth < 1.0e29 ? reducedDepth : 0.0, 0.0, 0.0, 1.0);
         }
 
         float HoSSGIReservoirRandom(float2 pixel, float salt)
@@ -271,6 +271,14 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return max(reservoir.color * (reservoir.wsum / denominator), 0.0);
         }
 
+        float HoSSGIReservoirWeight(HoSSGIReservoir reservoir)
+        {
+            // Persist the normalized ReSTIR weight like HTrace. Keeping Wsum
+            // only in the live estimate avoids overflowing half precision when
+            // a stationary pixel has accumulated many candidates.
+            return reservoir.wsum / max(reservoir.m * reservoir.target, 1.0e-6);
+        }
+
         float2 HoSSGIEncodeOcta(float3 normal)
         {
             normal = normalize(normal);
@@ -311,9 +319,9 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             half4 packedAux = SAMPLE_TEXTURE2D_X(_HoSSGIReservoirAux, sampler_PointClamp, uv);
             HoSSGIReservoir reservoir;
             reservoir.color = packedColor.rgb;
-            reservoir.wsum = max(packedColor.a, 0.0);
             reservoir.m = max(packedAux.x, 0.0);
             reservoir.target = max(packedAux.y, 0.0);
+            reservoir.wsum = max(packedColor.a, 0.0) * reservoir.m * reservoir.target;
             reservoir.hit = packedAux.z;
             reservoir.distance = max(packedAux.w, 0.0);
             HoSSGIUnpackReservoirRay(SAMPLE_TEXTURE2D_X(_HoSSGIReservoirRay, sampler_PointClamp, uv), reservoir);
@@ -326,9 +334,9 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             half4 packedAux = SAMPLE_TEXTURE2D_X(_HoSSGIReservoirHistoryAux, sampler_PointClamp, uv);
             HoSSGIReservoir reservoir;
             reservoir.color = packedColor.rgb;
-            reservoir.wsum = max(packedColor.a, 0.0);
             reservoir.m = max(packedAux.x, 0.0);
             reservoir.target = max(packedAux.y, 0.0);
+            reservoir.wsum = max(packedColor.a, 0.0) * reservoir.m * reservoir.target;
             reservoir.hit = packedAux.z;
             reservoir.distance = max(packedAux.w, 0.0);
             HoSSGIUnpackReservoirRay(SAMPLE_TEXTURE2D_X(_HoSSGIReservoirHistoryRay, sampler_PointClamp, uv), reservoir);
@@ -458,10 +466,14 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float previousDelta = -2.0 * max(_HoSSGIThickness, 0.01);
             float remarchedDistance = 0.0;
             bool remarchedHit = false;
+            // HTrace validates with the configured march budget. A fixed eight
+            // samples rejects long historical rays at the endpoint and turns
+            // temporal/spatial reuse into moving noise when StepCount is high.
+            int validationSteps = max(8, min(_HoSSGIStepCount, 128));
             [loop]
-            for (int stepIndex = 1; stepIndex <= 8; stepIndex++)
+            for (int stepIndex = 1; stepIndex <= validationSteps; stepIndex++)
             {
-                float t = (stepIndex + 0.5) / 8.0;
+                float t = (stepIndex - 0.5) / validationSteps;
                 float3 rayPositionWS = lerp(rayStartWS, rayEndWS, t);
                 float3 rayNDC = ComputeNormalizedDeviceCoordinatesWithZ(rayPositionWS, UNITY_MATRIX_VP);
                 float2 sampleUV = rayNDC.xy;
@@ -751,7 +763,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             // Keep the raw average available to compare estimator behavior while
             // using the reservoir estimate as the producer result.
             output.gi = float4(max(reservoirRadiance, 0.0), confidence);
-            output.reservoirColor = float4(max(reservoir.color, 0.0), max(reservoir.wsum, 0.0));
+            output.reservoirColor = float4(max(reservoir.color, 0.0), HoSSGIReservoirWeight(reservoir));
             output.reservoirAux = float4(max(reservoir.m, 0.0), max(reservoir.target, 0.0), saturate(reservoir.hit), max(reservoir.distance, 0.0));
             output.reservoirRay = HoSSGIPackReservoirRay(reservoir);
             return output;
@@ -879,7 +891,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 + historyConfidenceSum) / totalM);
             float3 resolved = HoSSGIResolveReservoir(merged);
             output.gi = float4(resolved, confidence);
-            output.reservoirColor = float4(max(merged.color, 0.0), max(merged.wsum, 0.0));
+            output.reservoirColor = float4(max(merged.color, 0.0), HoSSGIReservoirWeight(merged));
             output.reservoirAux = float4(max(merged.m, 0.0), max(merged.target, 0.0), saturate(merged.hit), max(merged.distance, 0.0));
             output.reservoirRay = HoSSGIPackReservoirRay(merged);
             return output;
@@ -1108,7 +1120,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 confidenceWeight += reuseWeight;
             }
 
-            output.reservoirColor = float4(max(merged.color, 0.0), max(merged.wsum, 0.0));
+            output.reservoirColor = float4(max(merged.color, 0.0), HoSSGIReservoirWeight(merged));
             output.reservoirAux = float4(max(merged.m, 0.0), max(merged.target, 0.0), saturate(merged.hit), max(merged.distance, 0.0));
             output.reservoirRay = HoSSGIPackReservoirRay(merged);
             // Spatial visibility is not known until the selected ray is

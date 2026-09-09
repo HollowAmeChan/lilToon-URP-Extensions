@@ -67,9 +67,9 @@ Shader "Hidden/lilToon/URP/HoSSGI/Debug"
             if (_HoSSGIDebugMode == 6) return float4(rawGi.rgb, rawGi.a);
             if (_HoSSGIDebugMode == 7)
             {
-                float weight = reservoirAux.y > 1.0e-5
-                    ? reservoirColor.a / max(reservoirAux.x * reservoirAux.y, 1.0e-5)
-                    : 0.0;
+                // Reservoir alpha stores normalized W (Wsum / (M * target)),
+                // matching the persisted HTrace reservoir representation.
+                float weight = max(reservoirColor.a, 0.0);
                 return float4((1.0 - exp(-max(weight, 0.0))).xxx, 1.0);
             }
             if (_HoSSGIDebugMode == 8)
