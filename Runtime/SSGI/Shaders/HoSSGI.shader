@@ -206,7 +206,12 @@ Shader "Hidden/lilToon/URP/HoSSGI"
 
         float HoSSGIReservoirRandom(float2 pixel, float salt)
         {
-            return frac(sin(dot(pixel + salt, float2(12.9898, 78.233))) * 43758.5453);
+            // Reservoir replacement must be re-seeded every frame. A fixed
+            // per-pixel value repeats the same accept/reject decisions and
+            // leaves a stationary noise pattern even when candidates change.
+            float frame = (float)(_HoSSGIFrameIndex & 1023);
+            float2 seed = pixel + salt + frame * float2(17.0, 29.0);
+            return frac(sin(dot(seed, float2(12.9898, 78.233))) * 43758.5453);
         }
 
         void HoSSGIReservoirUpdate(
