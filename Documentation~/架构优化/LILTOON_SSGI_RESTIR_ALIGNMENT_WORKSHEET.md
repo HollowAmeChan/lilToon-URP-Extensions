@@ -66,10 +66,10 @@ HoGeometryBuffer + opaque camera source
 | R2 | Temporal reservoir | `HRestirSSGI.compute:81-123` | 四 tap history reservoir merge，history M cap=100，reuse 可单独关闭；reservoir replacement 随帧重新播种 | `部分对齐` | Temporal reuse 开/关；静止画面噪声下降且灯光变化能响应；同一像素不能固定选择同一历史候选 | 增加 HTrace 风格 reprojected hit validity 和 selected target 重评估 |
 | R3 | Temporal validation | `HRestirSSGI.compute:125-245` | selected-ray 几何 re-march + source lighting validation；只限制 history；使用 previous inverse VP 做 plane agreement | `部分对齐` | Validation 开/关；不能把当前 candidate 压黑 | 对 moving hit、off-screen、曝光变化分别做测试 |
 | R4 | Firefly | `HRestirSSGI.compute:272-334` | 7x7 luminance moments，按 metadata sample count 调整阈值，限制 reservoir W，可单独关闭 | `部分对齐` | Firefly 开/关；亮点应减少但不应整体变暗 | 复核 first frames 权重和 moment 边界采样 |
-| R5 | Spatial candidate reuse | `HRestirSSGI.compute:338-440` | 独立 `Ho-SSGI Spatial Resampling` pass；world-plane Poisson 8 邻居；使用 tapGeometry 重建实际世界位置计算 plane/normal/depth/Gaussian 权重；输出 spatial reservoir 和 confidence/coverage/near-occlusion guidance MRT | `部分对齐` | Frame Debugger 单独看 Spatial Resampling；Spatial reuse 开/关；边缘不能跨平面串光 | 使用共享稳定 Poisson buffer，补 AO scale、adaptive radius 和独立 occlusion history |
-| R6 | Spatial validation | `HRestirSSGI.compute:445-498` | 独立 `Ho-SSGI Spatial Validation` pass；读取 guidance，selected-ray 8-step re-march；失败回退 temporal GI | `部分对齐` | Frame Debugger 单独看 Spatial Validation；失败时不能黑屏 | 保存 spatial occlusion/invalidity，补 HTrace 第二轮反馈 |
+| R5 | Spatial candidate reuse | `HRestirSSGI.compute:338-440` | 独立 `Ho-SSGI Spatial Resampling` pass；world-plane Poisson 8 邻居；使用 tapGeometry 重建实际世界位置计算 plane/normal/depth/Gaussian 权重；输出 spatial reservoir 和 confidence/coverage/provisional visibility guidance MRT | `部分对齐` | Frame Debugger 单独看 Spatial Resampling；Spatial reuse 开/关；边缘不能跨平面串光 | 使用共享稳定 Poisson buffer，补 AO scale、adaptive radius 和独立 occlusion history |
+| R6 | Spatial validation | `HRestirSSGI.compute:445-498` | 独立 `Ho-SSGI Spatial Validation` pass；读取 provisional guidance，selected-ray 8-step re-march；失败回退 temporal GI；第二 MRT 输出 authoritative spatial visibility | `部分对齐` | Frame Debugger 单独看 Spatial Validation；失败时不能黑屏；guidance.z 应反映重走射线可见性 | 保存 spatial occlusion/invalidity，补 HTrace 第二轮反馈 |
 | D0 | Temporal denoiser | `HDenoiserSSGI.compute:98-177` | 独立 denoised history；3x3 moments、DirectClipToAABB、历史 sample count 的 `1-1/N` 权重、motion/depth/normal/previous-plane rejection；独立 sample-count/invalidity metadata history；首帧使用本帧开始时的 history validity | `部分对齐` | Frame Debugger 对比 Spatial resolve、Temporal Metadata、Temporal Accumulation、最终输出；静止 20 帧；首帧/相机切换不应有随机残留 | 让 invalidity 传播语义与 HTrace 的历史有效率一致，并补曝光变化重置 |
-| D1 | Spatial denoiser | `HDenoiserSSGI.compute:244-343` | 两轮 spatial filter；HTrace 风格 maximum-channel tone map/inverse；normal/depth/world-plane/Gaussian/spatial-guidance 与 near-occlusion 差异权重 | `部分对齐` | Raw GI 与最终 Off 对比；边缘与亮点不能扩散；两轮 pass 都应出现在 Frame Debugger | 用 AO adaptive scale 和 HTrace bit guidance 替换当前 confidence/coverage guidance，并把 near-occlusion 做成时域历史 |
+| D1 | Spatial denoiser | `HDenoiserSSGI.compute:244-343` | 两轮 spatial filter；HTrace 风格 maximum-channel tone map/inverse；normal/depth/world-plane/Gaussian/spatial-guidance 与 spatial visibility 差异权重 | `部分对齐` | Raw GI 与最终 Off 对比；边缘与亮点不能扩散；两轮 pass 都应出现在 Frame Debugger | 用 AO adaptive scale 和 HTrace bit guidance 替换当前 confidence/coverage guidance，并把 near-occlusion 做成时域历史 |
 | D2 | Interpolation | `HInterpolationSSGI.compute`、`SSGIPassURP.cs:616-637` | 不适用：当前 Ho 固定 full-resolution 质量路径 | `不适用` | 不打开 checkerboard/半分辨率 | 只有引入 render scale 后再排期 |
 | O0 | Output | `ColorComposeURP.shader` | `_HoGITexture`，Before Post Processing composite | `部分对齐` | 关闭 Ho-SSGI 后无残留；Geometry coverage 控 receiver | 后续再接 lilToon 材质，不改 producer 契约 |
 
@@ -109,6 +109,10 @@ Reservoir Weight= selected W 诊断
 Reservoir M     = 历史/候选数量诊断
 Reservoir Hit   = selected candidate 命中诊断
 Confidence      = producer confidence，不等于 reservoir M
+Temporal Resolve = Temporal ReSTIR 输出（未经过空间重用）
+Spatial Resolve  = Spatial Validation 输出（未经过 temporal denoise）
+Temporal Denoised= Temporal radiance accumulation 输出
+Spatial Filter 1 = 第一轮 bilateral 输出
 ```
 
 ## 朱木古堂验收表
