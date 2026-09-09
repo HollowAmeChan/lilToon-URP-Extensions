@@ -125,6 +125,7 @@ Temporal Resolve = Temporal ReSTIR 输出（未经过空间重用）
 Spatial Resolve  = Spatial Validation 输出（未经过 temporal denoise）
 Temporal Denoised= Temporal radiance accumulation 输出
 Spatial Filter 1 = 第一轮 bilateral 输出
+Near Occlusion  = 独立 near-occlusion reservoir 的均值诊断
 ```
 
 ## 朱木古堂验收表
