@@ -882,7 +882,7 @@ LIL_OPTIMIZE_USE_REFLECTION_PROBE_QUALITY
 
 #### 适合放在材质界面的内容
 
-- `_UseScreenSpaceAO`、`_SSAOStrength`、`_SSAODirectStrength`、`_SSAOIndirectStrength`。
+- `_UseScreenSpaceAO`、`_SSAOStrength`、`_SSAORemap`、`_SSAOContrast`、`_SSAOMask`。
 - GI/Reflection/SSS 的强度、mask、颜色和 apply mode。
 - 是否让该材质写入/排除某个 HoRP 语义通道。
 - 反射 roughness、Fresnel、Cubemap override。

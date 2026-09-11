@@ -111,7 +111,7 @@ ShoostPostProcessRendererFeature -> Ho-ImageProcess
 
 ## 5. HTrace → 自研替换位（唯一占位区）
 
-1. **AO**：生产端可插拔。材质侧意图参数（`_UseScreenSpaceAO`/`_SSAOStrength`/`_SSAODirectStrength`/`_SSAOIndirectStrength`/`_SSAORemap`/`_SSAOContrast`/`_SSAOMask`/`_SSAOColor*`）**保持不变**；只换生产端输出来源（HTrace `_HTraceBufferAO` → 自研）。这是"材质不碰生成逻辑"的实证。
+1. **AO**：生产端可插拔。当前 lilToon 材质侧意图参数收敛为 `_UseScreenSpaceAO`/`_SSAOStrength`/`_SSAORemap`/`_SSAOContrast`/`_SSAOMask`；只消费公共 `_HoAOTexture`，生产端由 Ho-GTAO 提供。
 2. **GI**：自研 SSGI **必须**读 `gisexclude`（描边/非物理表面 → 排除 receiver/caster）——描边白边已知 bug 的**正式解决方案位**；材质侧只加 `giStrength/mask` 意图，生产端换 HTrace。
 3. **验收口径**：替换后材质/场景零改动（除开关）；Frame Debugger 可见输入/输出；debug tile 直接可见。
 
@@ -152,7 +152,7 @@ ShoostPostProcessRendererFeature -> Ho-ImageProcess
 | Shadow | 附加灯收集/PCSS/atlas、主光阴影 | toon 门控现有项（border/blur/ramp，本就属于材质） |
 | 反射 | 反射来源（cube/planar/SSR）+ 是否接收 | 强度/扰动/平滑/遮罩 |
 | 透射/折射 | camera color/透明资源契约、折射路径 | 厚度/吸收/强度/菲涅尔（收成预设） |
-| AO | AO 生产端（HTrace→自研）、toon remap 档 | `_SSAOStrength/Direct/Indirect/Remap/Contrast/Mask/Color` |
+| AO | Ho-GTAO 生产端、toon remap 档 | `_SSAOStrength/Remap/Contrast/Mask`，`_UseScreenSpaceAO` 为材质开关 |
 | SSS | profile 列表、扩散/透射 kernel、quality | sss strength/mask/tint（收进 profile preset） |
 
 > 注：AO/SSS 意图参数在材质里**已存在**（`_SSAO*`、`_UseSSS`/`_SSS*`）——系统做完后，lilToon 收敛 = 保留这 7 组轻量参数，其余 VRC 式开关收进 presets/隐藏，**是收敛不是重写**。
