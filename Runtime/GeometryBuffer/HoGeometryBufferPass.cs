@@ -315,14 +315,15 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             descriptor.dimension = cameraTextureDescriptor.dimension;
             descriptor.slices = cameraTextureDescriptor.volumeDepth;
             descriptor.depthBufferBits = 0;
-            descriptor.msaaSamples = divisor == 1
-                ? (MSAASamples)cameraTextureDescriptor.msaaSamples
-                : MSAASamples.None;
+            // This is an auxiliary sampled buffer, not the camera color
+            // target. Keep it single-sample so it does not require a native
+            // render-pass resolve surface.
+            descriptor.msaaSamples = MSAASamples.None;
             descriptor.clearBuffer = true;
             descriptor.clearColor = Color.clear;
             descriptor.filterMode = FilterMode.Point;
             descriptor.wrapMode = TextureWrapMode.Clamp;
-            descriptor.bindTextureMS = cameraTextureDescriptor.bindMS && divisor == 1;
+            descriptor.bindTextureMS = false;
             descriptor.useDynamicScale = cameraTextureDescriptor.useDynamicScale;
             descriptor.useDynamicScaleExplicit = cameraTextureDescriptor.useDynamicScaleExplicit;
             descriptor.vrUsage = cameraTextureDescriptor.vrUsage;

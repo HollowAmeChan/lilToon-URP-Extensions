@@ -583,14 +583,14 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             descriptor.dimension = cameraTextureDescriptor.dimension;
             descriptor.slices = cameraTextureDescriptor.volumeDepth;
             descriptor.depthBufferBits = 0;
-            descriptor.msaaSamples = divisor == 1
-                ? (MSAASamples)cameraTextureDescriptor.msaaSamples
-                : MSAASamples.None;
+            // Metadata is an auxiliary sampled buffer and does not need the
+            // camera's MSAA sample count.
+            descriptor.msaaSamples = MSAASamples.None;
             descriptor.clearBuffer = true;
             descriptor.clearColor = Color.clear;
             descriptor.filterMode = FilterMode.Point;
             descriptor.wrapMode = TextureWrapMode.Clamp;
-            descriptor.bindTextureMS = cameraTextureDescriptor.bindMS && divisor == 1;
+            descriptor.bindTextureMS = false;
             descriptor.useDynamicScale = cameraTextureDescriptor.useDynamicScale;
             descriptor.useDynamicScaleExplicit = cameraTextureDescriptor.useDynamicScaleExplicit;
             descriptor.vrUsage = cameraTextureDescriptor.vrUsage;

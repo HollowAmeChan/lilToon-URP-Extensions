@@ -56,7 +56,9 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             RenderTextureDescriptor descriptor = cameraTextureDescriptor;
             descriptor.depthBufferBits = 0;
             descriptor.depthStencilFormat = GraphicsFormat.None;
-            descriptor.msaaSamples = divisor == 1 ? Mathf.Max(1, descriptor.msaaSamples) : 1;
+            // Auxiliary geometry data is sampled as a regular texture.
+            descriptor.msaaSamples = 1;
+            descriptor.bindMS = false;
             descriptor.width = Mathf.Max(1, descriptor.width / divisor);
             descriptor.height = Mathf.Max(1, descriptor.height / divisor);
             return descriptor;
@@ -90,7 +92,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             RenderTextureDescriptor descriptor = new RenderTextureDescriptor(width, height, GraphicsFormat.None, depthFormat);
             descriptor.dimension = cameraTextureDescriptor.dimension;
             descriptor.volumeDepth = cameraTextureDescriptor.volumeDepth;
-            descriptor.msaaSamples = divisor == 1 ? Mathf.Max(1, cameraTextureDescriptor.msaaSamples) : 1;
+            descriptor.msaaSamples = 1;
             descriptor.bindMS = false;
             descriptor.useMipMap = false;
             descriptor.autoGenerateMips = false;

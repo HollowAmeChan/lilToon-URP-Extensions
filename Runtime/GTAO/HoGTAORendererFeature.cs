@@ -1055,7 +1055,10 @@ namespace lilToon.URP.Extensions.GTAO
             TextureDesc motionDesc = renderGraph.GetTextureDesc(depthTexture);
             motionDesc.format = UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16_SFloat;
             motionDesc.depthBufferBits = 0;
-            motionDesc.msaaSamples = MSAASamples.None;
+            // Native raster passes require every attachment to use the same
+            // sample count as the depth attachment. Keep this descriptor
+            // aligned with the geometry depth; RenderGraph resolves it when
+            // the motion texture is later sampled.
             motionDesc.bindTextureMS = false;
             motionDesc.clearBuffer = true;
             motionDesc.clearColor = Color.clear;

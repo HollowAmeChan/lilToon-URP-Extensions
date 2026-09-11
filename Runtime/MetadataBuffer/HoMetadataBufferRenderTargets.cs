@@ -34,7 +34,10 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             RenderTextureDescriptor descriptor = cameraTextureDescriptor;
             descriptor.depthBufferBits = 0;
             descriptor.depthStencilFormat = GraphicsFormat.None;
-            descriptor.msaaSamples = divisor == 1 ? Mathf.Max(1, descriptor.msaaSamples) : 1;
+            // Metadata is sampled as a regular texture, so keep the
+            // compatibility-path buffers single-sample as well.
+            descriptor.msaaSamples = 1;
+            descriptor.bindMS = false;
             descriptor.width = Mathf.Max(1, descriptor.width / divisor);
             descriptor.height = Mathf.Max(1, descriptor.height / divisor);
 
@@ -93,7 +96,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             RenderTextureDescriptor descriptor = new RenderTextureDescriptor(width, height, GraphicsFormat.None, depthFormat);
             descriptor.dimension = cameraTextureDescriptor.dimension;
             descriptor.volumeDepth = cameraTextureDescriptor.volumeDepth;
-            descriptor.msaaSamples = divisor == 1 ? Mathf.Max(1, cameraTextureDescriptor.msaaSamples) : 1;
+            descriptor.msaaSamples = 1;
             descriptor.bindMS = false;
             descriptor.useMipMap = false;
             descriptor.autoGenerateMips = false;
