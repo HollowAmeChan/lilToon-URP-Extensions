@@ -615,7 +615,12 @@ namespace lilToon.URP.Extensions.GTAO
             // Same-event order is intentional: HoUrp's explicit enqueue-order
             // tie-breaker follows the Renderer Feature list (GeometryBuffer must
             // be listed above Ho-GTAO).
-            renderPassEvent = settings != null ? settings.passEvent : RenderPassEvent.BeforeRenderingOpaques;
+            // AO is sampled by opaque lilToon materials, so legacy assets that
+            // still serialize AfterRenderingOpaques must not move this pass
+            // behind the consumer draw.
+            renderPassEvent = settings != null && settings.passEvent == RenderPassEvent.BeforeRenderingOpaques
+                ? settings.passEvent
+                : RenderPassEvent.BeforeRenderingOpaques;
             // Motion vectors are produced by URP's built-in MotionVectorRenderPass.
             // GTAO consumes the raw depth attachment published by Ho-GeometryBuffer,
             // so do not request URP's CameraDepthTexture here.

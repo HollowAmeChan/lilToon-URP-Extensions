@@ -12,7 +12,7 @@
 
 ## 0. 目标
 
-- 用独立 `Ho-GTAO` RendererFeature 替换 HTrace AO 生产端；材质（`_UseScreenSpaceAO`/`_SSAO*`）与场景零改动。
+- 用独立 `Ho-GTAO` RendererFeature 替换 HTrace AO 生产端；材质（`_UseRealtimeAO`/`_SSAO*`）与场景零改动。
 - 输出全局纹理 **`_HoAOTexture`**（R8，0..1 visibility），lilToon 材质 shade-time 采样、AOV `ao` 通道导出、DebugTile 直出。
 - 产出可回退：关闭 feature = 无 AO 且不崩；任何时候可切回 HTrace 直至替换验收通过。
 
@@ -25,9 +25,9 @@
 - `Assets/lilToon/Shader/Includes/lil_common_frag.hlsl` **1189-1214** `lilSampleScreenSpaceAO`：
   - `_ScreenSpaceAOSource == 1` → 采 `_HTraceBufferAO`（`lil_sampler_linear_clamp`，值=0..1 可见度因子，1=无遮挡）；`directAO = lerp(1,h, _SSAODirectStrength)`、`indirectAO = lerp(1,h, _SSAOIndirectStrength)`，`ao = min(...)`。
   - **1200-1207 else 分支 = URP 内置 fallback**：`#if defined(_SCREEN_SPACE_OCCLUSION)` → `GetScreenSpaceAmbientOcclusion(screenUV)`（读 `_ScreenSpaceOcclusionTexture`，配合 `_AmbientOcclusionParam`）——**本规划要删除的分支**。
-  - `_SSAORemap`（min/max 归一）→ `_SSAOContrast`（幂曲线）→ 0..1 因子。
-- **1216-1228** `lilScreenSpaceAO`：`_UseScreenSpaceAO` 门控 → `fd.col.rgb *= lerp(1.0, ao, _SSAOStrength * aoMask)`（`aoMask` 来自 `_SSAOMask` 纹理，`LIL_FEATURE_SSAOMask`）。
-- **调用位置**：`lil_pass_forward_normal.hlsl` 439-442，主光+2nd/3rd 层贴图混合**之后**、SSS **之前**（`BEFORE_SSAO`/`OVERRIDE_SSAO`）。
+  - `_RealtimeAORemap`（min/max 归一）→ `_RealtimeAOContrast`（幂曲线）→ 0..1 因子。
+- **1216-1228** `lilRealtimeAO`：`_UseRealtimeAO` 门控 → `fd.col.rgb *= lerp(1.0, ao, _RealtimeAOStrength * aoMask)`（`aoMask` 来自 `_RealtimeAOMask` 纹理，`LIL_FEATURE_RealtimeAOMask`）。
+- **调用位置**：`lil_pass_forward_normal.hlsl` 439-442，主光+2nd/3rd 层贴图混合**之后**、SSS **之前**（`BEFORE_REALTIMEAO`/`OVERRIDE_REALTIMEAO`）。
 - 结论①：AO 是**光照后**对最终色的单因子乘法，**不是逐光遮挡**——生产端只输出单张 0..1 因子即可。
 - 结论②：lilToon **不消费** `_AmbientOcclusionParam`（`_ScreenSpaceAOSource==1` 分支只用 `_HTraceBufferAO`）——HTrace 喂给 URP 的那套全局只影响 URP 内置 shader，与本栈无关。
 - 声明：`lil_common_input.hlsl` 830 行 `TEXTURE2D(_HTraceBufferAO)`（**无条件声明**，在 LIL_INPUT_BASE 保护块之外；全 lilToon 仅此一处）。**`lil_common_input_opt.hlsl` / `_base` 文件只替换 CBUFFER 标量段，无纹理声明；且 opt 文件在整个仓库无 include 引用（剥离遗留）**——改动只需 input + frag 两处，无需第三处。
@@ -80,7 +80,7 @@
 - 改动点：**Ho-GeometryBuffer settings.passEvent: 300 → BeforeRenderingOpaques（250）**；Ho-GTAO settings.passEvent 默认 **BeforeRenderingOpaques（250）**——⚠️ `passEvent` 是枚举，**无 251/252**（Inspector 无法选非枚举值），先后**由 Renderer 特性列表顺序保证**：PC_Renderer 里 GeometryBuffer 在前、Ho-GTAO 紧随（现有列表已是该顺序）。
 - **架构立场（强硬版）**：GeometryBuffer 是**屏幕几何的唯一生产者**（保持全分辨率、不动 renderScale——SSS/GI/反射等消费方拿到的都是全屏一致数据）；GTAO 是它的**消费者**，半分辨率只是消费者自己的计算分辨率（shader 内 2x2 步进），不是 GeometryBuffer 降档。这与 HTrace"自画 PrePass + 自建金字塔"的隔离路线相反：**我们只用一个屏幕几何，谁用谁降采样。**
 - 其余消费方（SSS/AO/GI/反射/角色特化）**只读全局纹理，不受事件提前影响**（同帧内数据一致；反而消除了"用到上一帧/未就绪"风险）。SSS 的 250 档与 GeometryBuffer 250 的先后由**列表顺序 + 事件值**共同保证（SSS 源档=250 与 GeometryBuffer 同事件——顺序上 GeometryBuffer 在 feature 列表 #1、SSS 在 #7，同事件按列表序执行，安全）。
-- 备选（若实机发现提前有问题）：Ho-GTAO 退到 300 档做 **后处理乘模式**（读 camera color 乘 AO），但该模式失去 per-material `_SSAOStrength/Remap/Mask` 语义，只作降级预案。
+- 备选（若实机发现提前有问题）：Ho-GTAO 退到 300 档做 **后处理乘模式**（读 camera color 乘 AO），但该模式失去 per-material `_RealtimeAOStrength/Remap/Mask` 语义，只作降级预案。
 
 ### 2.2 算法（v1 = HTrace 最高档配方，参数可降；已逐行验证 compute 源码）
 
@@ -126,14 +126,14 @@
   1. `lil_common_frag.hlsl` 1189-1214：删 `_ScreenSpaceAOSource` if/else 分支与 **else 的 URP fallback**（`GetScreenSpaceAmbientOcclusion`/`_SCREEN_SPACE_OCCLUSION`）——只留直接采样 `_HoAOTexture`。
   2. `lil_common_input.hlsl` 830：`TEXTURE2D(_HTraceBufferAO)` → `TEXTURE2D(_HoAOTexture)`。
   3. CBUFFER 三处 `uint _ScreenSpaceAOSource`：`lil_common_input.hlsl`(:404) / `lil_common_input_base.hlsl`(:280) / `lil_common_input_opt.hlsl`(:280，尽管 opt 无 include 引用，保持一致删)。
-  4. lilblock 属性：`CustomShaderResources/Properties/Default.lilblock:33` 与 `DefaultAll.lilblock:33` 的 `_ScreenSpaceAOSource ("AO RT", Int) = 0`：删。`_UseScreenSpaceAO` 保留（就是 AO 开关，轻量调参项）。
+  4. lilblock 属性：`CustomShaderResources/Properties/Default.lilblock:33` 与 `DefaultAll.lilblock:33` 的 `_ScreenSpaceAOSource ("AO RT", Int) = 0`：删。`_UseRealtimeAO` 保留（就是 AO 开关，轻量调参项）。
   5. Inspector：`lilPropertyGroupDrawerBaseSetting.cs:500-501`（HTraceAO HelpBox + "AO RT" 下拉）删；`lilMaterialProperties.cs:167`(定义)+`:746`(属性遍历数组) 删。
 - **从此 lilToon 不再依赖**：`_ScreenSpaceOcclusionTexture` / `_SCREEN_SPACE_OCCLUSION` / `_AmbientOcclusionParam` / `GetScreenSpaceAmbientOcclusion`（URP 内置 SSAO 三条全局全解耦，见 §8）。旧材质资产上的 `_ScreenSpaceAOSource` 值残留无影响（属性不存在即忽略）。
 - 回退/兜底：`HoGTAORendererFeature` 在 `beginCameraRendering` 设 `_HoAOTexture = white`（未启用/相机不渲染时材质采样安全）；GeometryBuffer 同款 `ResetGlobalState` 模式。
 
 ### 2.4 契约与意图参数
 
-- `ao` 通道：R8f 0..1 ✅ 生产端=Ho-GTAO；**生产端不烘焙强度**（强度归属材质 `_SSAOStrength`，契约 0..1 干净）。HTrace 的 `Intensity=3.06` 属"生产端折叠强度"，移植时改由材质 `_SSAOStrength` 对齐视觉（在验收里做对照）。
+- `ao` 通道：R8f 0..1 ✅ 生产端=Ho-GTAO；**生产端不烘焙强度**（强度归属材质 `_RealtimeAOStrength`，契约 0..1 干净）。HTrace 的 `Intensity=3.06` 属"生产端折叠强度"，移植时改由材质 `_RealtimeAOStrength` 对齐视觉（在验收里做对照）。
 - `aointent`（意图模式）：**v1 不做**（契约已占位 ◻，保持）。
 - 无新通道、不改契约。
 - `gisexclude`：与 AO 无关（GI 用）；描边不写 GeometryBuffer（此前 outline extrude 实验已回退），AO 天然不受描边壳影响——验收时再目视确认一次。
@@ -226,8 +226,8 @@ lilToon 侧改动（见 §2.3）：input+frag 两处 + 属性/分支/UI 删除�
 - `UseSimpleRejection`（我们 temporal 即"简单拒绝"，精确 hit-velocity 拒绝是 v1.1 增强，对应 HTrace `UseSimpleRejection=false` 路径）。
 - `UseNormalWeightingTemporal`、`ReprojectionFilter=Bicubic`：**保留为 v1.1 可选**（temporal 法线加权/双三次在渲染环境收益小）。
 - `DebugModeGTAO`（MainBuffers/AmbientOcclusion/TemporalDisocclusion）：我们用 DebugTile 直出 `ao` + 模式参数替代，不逐档复刻。
-- `ExcludedIntensity`：排除表面 AO 强度——用材质 `_SSAOMask`（已有）替代，不引入新通道。
-- `Intensity`：**不带**（契约 0..1，强度归材质 `_SSAOStrength`，见 §2.4）。
+- `ExcludedIntensity`：排除表面 AO 强度——用材质 `_RealtimeAOMask`（已有）替代，不引入新通道。
+- `Intensity`：**不带**（契约 0..1，强度归材质 `_RealtimeAOStrength`，见 §2.4）。
 - `g_HIntensityAO = Intensity*1.2`（OutputComposition 的 pow）与 `OutputDithering`（全包无消费点，遗留参数）：不带。
 
 ---
@@ -264,7 +264,7 @@ lilToon 侧改动（见 §2.3）：input+frag 两处 + 属性/分支/UI 删除�
 - **temporal 的工程点**：历史两帧纹理的帧间管理（相机尺寸变化/相机切换重置——参考 GeometryBuffer 的 `beginCameraRendering` Reset 模式）；RG 跨帧资源声明；**运动矢量**：消费 HoUrp 内置 motion-vector pass，并用深度/法线一致性校验拒绝错误历史；逐命中速度 rejection 仍登记后续增强。
 - Bitmask+传统半分辨率下细几何（头发缝隙）仍可能渗漏 → 由 Radius/Thickness 调；半分辨率 checkerboard（HTrace Half=(2,1)）在静态镜头下可能有 checker 纹理残留 → 上采样 filter 用 HTrace Interpolation 同款（深度引导）。
 - 无 temporal（Low 档）时静态噪声/闪烁 → 蓝噪声 + Disk 滤波兜底（与 HTrace SpatialOnly 同级别）。
-- `_SSAOColor*` 类未在本 fork 材质侧出现（`lil_common_frag.hlsl` 只用 `_SSAOStrength/_SSAODirectStrength/_SSAOIndirectStrength/_SSAORemap/_SSAOContrast/_SSAOMask/_UseScreenSpaceAO/_ScreenSpaceAOSource`）——契约/草案里若提过 `_SSAOColor*`，以实测为准，实现时核对 lilblock 属性清单。
+- RealtimeAO 颜色已落地为 `_RealtimeAOColor`、`_RealtimeAOColorTex` 和 `_RealtimeAOColorFromMain`；颜色贴图与颜色直接相乘，颜色 alpha 参与 AO 颜色混合强度。
 - 删除 `_ScreenSpaceAOSource` 属性后旧材质残留值不生效（Unity 忽略不存在属性）——无迁移成本；若担心，保留属性字段但不参与分支（二选一，推荐直接删，干净）。
 
 **不做（登记不实现）**：bent normals、RTAO、意图模式（`aointent`）、`gisexclude` 接入 AO、描边排除位、**URP 内置 SSAO 路径（lilToon 已解耦，内置 pass 本身保留不动，见 §8）**。Temporal 深度拒绝与 Spatial 双边滤波已纳入 v1；逐物体 motion-vector rejection、checkerboard 寻址和动态深度符号标记列为后续增强。

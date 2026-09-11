@@ -86,6 +86,7 @@ namespace lilToon.URP.Extensions.Editor.GTAO
                 DrawProperty("filterRadius");
                 DrawProperty("filterAdaptivity");
                 DrawProperty("boxPassCount");
+                EditorGUILayout.HelpBox("HoAO 必须在不透明物体绘制前生成；旧资产的 AfterRenderingOpaques 会在运行时自动改为 BeforeRenderingOpaques。", MessageType.Warning);
                 DrawProperty("passEvent");
                 DrawProperty("shader");
             }

@@ -59,7 +59,7 @@ namespace lilToon.URP.Extensions.GTAO
         // 当前 Renderer Feature 资产配置为 BeforeRenderingOpaques（250）。
         // 与 Ho-GeometryBuffer 同事件，先后由 Renderer 特性列表顺序保证
         // （GeometryBuffer 在前、Ho-GTAO 紧随其后）；序列化默认值仅用于兼容旧资产。
-        public RenderPassEvent passEvent = RenderPassEvent.AfterRenderingOpaques;
+        public RenderPassEvent passEvent = RenderPassEvent.BeforeRenderingOpaques;
 
         public HoGTAOQuality quality = HoGTAOQuality.High;
         public HoGTAOResolution resolution = HoGTAOResolution.Full;
