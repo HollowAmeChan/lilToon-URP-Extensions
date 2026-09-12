@@ -15,6 +15,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         private RTHandle custom0Texture;
         private RTHandle objectCustom0Texture;
         private RTHandle objectCustom1Texture;
+        private RTHandle reflectionMaterialTexture;
         private RTHandle surfaceColorTexture;
         private RTHandle depthTexture;
         private RTHandle mBufferDepthTexture;
@@ -24,6 +25,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         public RTHandle Custom0Texture => custom0Texture;
         public RTHandle ObjectCustom0Texture => objectCustom0Texture;
         public RTHandle ObjectCustom1Texture => objectCustom1Texture;
+        public RTHandle ReflectionMaterialTexture => reflectionMaterialTexture;
         public RTHandle SurfaceColorTexture => surfaceColorTexture;
         public RTHandle DepthTexture => depthTexture;
         public RTHandle MBufferDepthTexture => mBufferDepthTexture;
@@ -62,6 +64,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             RenderingUtils.ReAllocateIfNeeded(ref custom0Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.Custom0TextureName);
             RenderingUtils.ReAllocateIfNeeded(ref objectCustom0Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.ObjectCustom0TextureName);
             RenderingUtils.ReAllocateIfNeeded(ref objectCustom1Texture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.ObjectCustom1TextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref reflectionMaterialTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.ReflectionMaterialTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref surfaceColorTexture, highPrecisionDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.SurfaceColorTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref depthTexture, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.DepthTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref mBufferDepthTexture, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoMetadataBufferShaderConstants.MBufferDepthTextureName);
@@ -74,6 +77,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             custom0Texture?.Release();
             objectCustom0Texture?.Release();
             objectCustom1Texture?.Release();
+            reflectionMaterialTexture?.Release();
             surfaceColorTexture?.Release();
             depthTexture?.Release();
             mBufferDepthTexture?.Release();
@@ -82,6 +86,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             custom0Texture = null;
             objectCustom0Texture = null;
             objectCustom1Texture = null;
+            reflectionMaterialTexture = null;
             surfaceColorTexture = null;
             depthTexture = null;
             mBufferDepthTexture = null;

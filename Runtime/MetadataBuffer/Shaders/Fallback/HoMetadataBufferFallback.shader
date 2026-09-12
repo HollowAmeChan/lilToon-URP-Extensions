@@ -77,6 +77,7 @@
                 half4 custom0 : SV_Target2;
                 half4 objectCustom0 : SV_Target3;
                 half4 objectCustom1 : SV_Target4;
+                half4 reflectionMaterial : SV_Target5;
             };
 
             float HasBit(float value, float bitValue)
@@ -180,6 +181,7 @@
                 output.custom0 = half4(ApplyCustomWriteMask(_HoMetadataBufferCustomValues0, 0.0) * subjectValid);
                 output.objectCustom0 = half4(DecodeObjectCustom0(objectCustomMask) * subjectValid);
                 output.objectCustom1 = half4(DecodeObjectCustom1(objectCustomMask) * subjectValid);
+                output.reflectionMaterial = 0;
                 return output;
             }
             ENDHLSL

@@ -33,7 +33,7 @@ Shader "Hidden/lilToon/URP/GeometryBuffer/SkyCapture"
                 float2 uv = input.texcoord;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
-                half skyContribution = 1.0h - LilHoGeometryBufferCoverage(normalDepth);
+                half skyContribution = 1.0h - LilHoGeometryBufferCoverageAt(uv, normalDepth);
                 return half4(source.rgb * skyContribution, skyContribution);
             }
             ENDHLSL

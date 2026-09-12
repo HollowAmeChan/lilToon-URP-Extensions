@@ -12,6 +12,21 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             return IsColorFormatUsable(preferredFormat) ? preferredFormat : GetFallbackColorFormat();
         }
 
+        public static GraphicsFormat GetCoverageGraphicsFormat()
+        {
+            if (IsColorFormatUsable(GraphicsFormat.R8_UNorm))
+            {
+                return GraphicsFormat.R8_UNorm;
+            }
+
+            if (IsColorFormatUsable(GraphicsFormat.R16_SFloat))
+            {
+                return GraphicsFormat.R16_SFloat;
+            }
+
+            return GetFallbackColorFormat();
+        }
+
         public static GraphicsFormat GetDepthStencilFormat(RenderTextureDescriptor cameraTextureDescriptor)
         {
             GraphicsFormat format = cameraTextureDescriptor.depthStencilFormat;

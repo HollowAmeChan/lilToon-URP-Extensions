@@ -19,13 +19,16 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         private Material fallbackMaterial;
         private Material skyCaptureMaterial;
         private Material debugMaterial;
+        private Material resolveMaterial;
         private Shader fallbackShader;
         private Shader skyCaptureShader;
         private Shader debugShader;
+        private Shader resolveShader;
         private bool registeredCameraReset;
         private bool warnedMissingFallbackShader;
         private bool warnedMissingSkyCaptureShader;
         private bool warnedMissingDebugShader;
+        private bool warnedMissingResolveShader;
 
         public HoGeometryBufferSettings Settings => settings;
 
@@ -46,7 +49,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             }
 
             EnsureMaterials(ShouldDebug(in renderingData));
-            outputPass?.Setup(settings, renderTargets, fallbackMaterial);
+            outputPass?.Setup(settings, renderTargets, fallbackMaterial, resolveMaterial);
             skyPass?.Setup(settings, renderTargets, renderer.cameraColorTargetHandle, skyCaptureMaterial);
             debugPass?.Setup(settings, renderTargets, renderer.cameraColorTargetHandle, debugMaterial);
         }
@@ -63,7 +66,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             EnsureMaterials(shouldDebug);
             if (outputPass != null)
             {
-                outputPass.SetupRenderGraph(settings, renderTargets, fallbackMaterial);
+                outputPass.SetupRenderGraph(settings, renderTargets, fallbackMaterial, resolveMaterial);
                 renderer.EnqueuePass(outputPass);
             }
 
@@ -100,12 +103,15 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             CoreUtils.Destroy(fallbackMaterial);
             CoreUtils.Destroy(skyCaptureMaterial);
             CoreUtils.Destroy(debugMaterial);
+            CoreUtils.Destroy(resolveMaterial);
             fallbackMaterial = null;
             skyCaptureMaterial = null;
             debugMaterial = null;
+            resolveMaterial = null;
             fallbackShader = null;
             skyCaptureShader = null;
             debugShader = null;
+            resolveShader = null;
         }
 
         private void RegisterCameraReset()
@@ -169,6 +175,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         private void EnsureMaterials(bool includeDebug)
         {
             EnsureFallbackMaterial();
+            EnsureResolveMaterial();
             if (settings != null && settings.enableSkyBuffer)
             {
                 EnsureSkyCaptureMaterial();
@@ -262,6 +269,32 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             }
 
             debugMaterial = CoreUtils.CreateEngineMaterial(shader);
+        }
+
+        private void EnsureResolveMaterial()
+        {
+            Shader shader = Shader.Find(HoGeometryBufferShaderConstants.ResolveShaderName);
+
+            if (resolveMaterial != null && resolveShader == shader)
+            {
+                return;
+            }
+
+            CoreUtils.Destroy(resolveMaterial);
+            resolveMaterial = null;
+            resolveShader = shader;
+            if (shader == null)
+            {
+                if (!warnedMissingResolveShader)
+                {
+                    warnedMissingResolveShader = true;
+                    Debug.LogWarning($"GeometryBuffer MSAA resolve is unavailable because shader '{HoGeometryBufferShaderConstants.ResolveShaderName}' could not be found.");
+                }
+
+                return;
+            }
+
+            resolveMaterial = CoreUtils.CreateEngineMaterial(shader);
         }
     }
 }

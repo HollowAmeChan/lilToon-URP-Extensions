@@ -26,6 +26,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             public TextureHandle custom0Texture;
             public TextureHandle objectCustom0Texture;
             public TextureHandle objectCustom1Texture;
+            public TextureHandle reflectionMaterialTexture;
             public TextureHandle surfaceColorTexture;
             public TextureHandle mBufferDepthTexture;
             public Material debugMaterial;
@@ -97,6 +98,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, renderTargets.Custom0Texture.nameID);
                 cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, renderTargets.ObjectCustom0Texture.nameID);
                 cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, renderTargets.ObjectCustom1Texture.nameID);
+                cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ReflectionMaterialTextureId, renderTargets.ReflectionMaterialTexture.nameID);
                 cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, renderTargets.SurfaceColorTexture.nameID);
                 cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MBufferDepthTextureId, renderTargets.MBufferDepthTexture.nameID);
                 Blitter.BlitCameraTexture(cmd, cameraColorTarget, tempTexture, 0, true);
@@ -124,6 +126,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 || !metadataResources.custom0Texture.IsValid()
                 || !metadataResources.objectCustom0Texture.IsValid()
                 || !metadataResources.objectCustom1Texture.IsValid()
+                || !metadataResources.reflectionMaterialTexture.IsValid()
                 || !metadataResources.surfaceColorTexture.IsValid()
                 || !metadataResources.mBufferDepthTexture.IsValid())
             {
@@ -144,6 +147,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 passData.custom0Texture = metadataResources.custom0Texture;
                 passData.objectCustom0Texture = metadataResources.objectCustom0Texture;
                 passData.objectCustom1Texture = metadataResources.objectCustom1Texture;
+                passData.reflectionMaterialTexture = metadataResources.reflectionMaterialTexture;
                 passData.surfaceColorTexture = metadataResources.surfaceColorTexture;
                 passData.mBufferDepthTexture = metadataResources.mBufferDepthTexture;
                 passData.debugMaterial = debugMaterial;
@@ -155,6 +159,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 builder.UseTexture(passData.custom0Texture, AccessFlags.Read);
                 builder.UseTexture(passData.objectCustom0Texture, AccessFlags.Read);
                 builder.UseTexture(passData.objectCustom1Texture, AccessFlags.Read);
+                builder.UseTexture(passData.reflectionMaterialTexture, AccessFlags.Read);
                 builder.UseTexture(passData.surfaceColorTexture, AccessFlags.Read);
                 builder.UseTexture(passData.mBufferDepthTexture, AccessFlags.Read);
                 builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
@@ -169,6 +174,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.custom0Texture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.objectCustom0Texture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.objectCustom1Texture);
+                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ReflectionMaterialTextureId, data.reflectionMaterialTexture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, data.surfaceColorTexture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MBufferDepthTextureId, data.mBufferDepthTexture);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.debugMaterial, 0);

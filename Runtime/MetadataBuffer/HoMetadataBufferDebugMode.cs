@@ -55,6 +55,8 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         [InspectorName("Base Color")]
         SurfaceColor,
         [InspectorName("MBuffer Depth")]
-        MBufferDepth
+        MBufferDepth,
+        [InspectorName("Reflection Material")]
+        ReflectionMaterial
     }
 }

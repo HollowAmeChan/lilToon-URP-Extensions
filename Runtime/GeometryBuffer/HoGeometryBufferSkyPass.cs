@@ -22,7 +22,9 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         {
             public TextureHandle source;
             public TextureHandle normalDepthTexture;
+            public TextureHandle coverageTexture;
             public Material skyCaptureMaterial;
+            public bool useCoverageTexture;
         }
 
         public void Setup(
@@ -84,6 +86,12 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             using (new ProfilingScope(cmd, ProfilingSampler))
             {
                 cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
+                if (renderTargets.CoverageTexture != null)
+                {
+                    cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.CoverageTextureId, renderTargets.CoverageTexture.nameID);
+                }
+
+                cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.CoverageTextureValidId, renderTargets.CoverageTexture != null ? 1.0f : 0.0f);
                 Blitter.BlitCameraTexture(cmd, cameraColorTarget, renderTargets.SkyTexture, skyCaptureMaterial, 0);
                 cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, renderTargets.SkyTexture.nameID);
                 cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 1.0f);
@@ -125,10 +133,17 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             {
                 passData.source = source;
                 passData.normalDepthTexture = geometryResources.normalDepthTexture;
+                passData.coverageTexture = geometryResources.coverageTexture;
                 passData.skyCaptureMaterial = skyCaptureMaterial;
+                passData.useCoverageTexture = geometryResources.coverageTexture.IsValid();
 
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
+                if (passData.useCoverageTexture)
+                {
+                    builder.UseTexture(passData.coverageTexture, AccessFlags.Read);
+                }
+
                 builder.SetRenderAttachment(skyTexture, 0, AccessFlags.WriteAll);
                 builder.SetGlobalTextureAfterPass(skyTexture, HoGeometryBufferShaderConstants.SkyTextureId);
                 // Blitter.BlitTexture binds its source as _BlitTexture. The
@@ -142,6 +157,12 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
+                    if (data.useCoverageTexture)
+                    {
+                        context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.CoverageTextureId, data.coverageTexture);
+                    }
+
+                    context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.CoverageTextureValidId, data.useCoverageTexture ? 1.0f : 0.0f);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.skyCaptureMaterial, 0);
                     context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 1.0f);
                 });

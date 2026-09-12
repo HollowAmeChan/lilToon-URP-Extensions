@@ -4,9 +4,34 @@
 #define LIL_HO_GEOMETRY_BUFFER_DEPTH_EPSILON 0.0001
 #define LIL_HO_GEOMETRY_BUFFER_NORMAL_EPSILON 0.0001
 
+float _HoGeometryBufferCoverageTextureValid;
+float _HoGeometryBufferOutlineCoverageTextureValid;
+TEXTURE2D_X(_HoGeometryBufferCoverageTexture);
+TEXTURE2D_X(_HoGeometryBufferOutlineCoverageTexture);
+
 half LilHoGeometryBufferCoverage(half4 normalDepth)
 {
     return step(LIL_HO_GEOMETRY_BUFFER_DEPTH_EPSILON, normalDepth.a);
+}
+
+half LilHoGeometryBufferCoverageAt(float2 uv, half4 normalDepth)
+{
+    if (_HoGeometryBufferCoverageTextureValid > 0.5)
+    {
+        return SAMPLE_TEXTURE2D_X(_HoGeometryBufferCoverageTexture, sampler_PointClamp, uv).r;
+    }
+
+    return LilHoGeometryBufferCoverage(normalDepth);
+}
+
+half LilHoGeometryBufferOutlineCoverageAt(float2 uv, half4 outlineNormalDepth)
+{
+    if (_HoGeometryBufferOutlineCoverageTextureValid > 0.5)
+    {
+        return SAMPLE_TEXTURE2D_X(_HoGeometryBufferOutlineCoverageTexture, sampler_PointClamp, uv).r;
+    }
+
+    return LilHoGeometryBufferCoverage(outlineNormalDepth);
 }
 
 half LilHoGeometryBufferNormalValid(half4 normalDepth)

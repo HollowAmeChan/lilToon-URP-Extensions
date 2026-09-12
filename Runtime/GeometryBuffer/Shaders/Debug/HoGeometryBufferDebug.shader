@@ -48,7 +48,7 @@ Shader "Hidden/lilToon/URP/GeometryBuffer/DebugView"
 
                 if (mode == 1)
                 {
-                    half coverage = LilHoGeometryBufferCoverage(normalDepth);
+                    half coverage = LilHoGeometryBufferCoverageAt(uv, normalDepth);
                     return lerp(source, half4(1.0, 1.0, 1.0, 1.0), coverage);
                 }
 

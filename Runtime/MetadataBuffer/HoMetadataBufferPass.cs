@@ -128,6 +128,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             colorTargets[HoMetadataBufferAttachmentLayout.Custom0] = renderTargets.Custom0Texture;
             colorTargets[HoMetadataBufferAttachmentLayout.ObjectCustom0] = renderTargets.ObjectCustom0Texture;
             colorTargets[HoMetadataBufferAttachmentLayout.ObjectCustom1] = renderTargets.ObjectCustom1Texture;
+            colorTargets[HoMetadataBufferAttachmentLayout.ReflectionMaterial] = renderTargets.ReflectionMaterialTexture;
 
             ConfigureTarget(colorTargets, renderTargets.DepthTexture);
             ConfigureClear(ClearFlag.All, Color.clear);
@@ -223,6 +224,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             TextureHandle custom0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoMetadataBufferShaderConstants.Custom0TextureName));
             TextureHandle objectCustom0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoMetadataBufferShaderConstants.ObjectCustom0TextureName));
             TextureHandle objectCustom1Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoMetadataBufferShaderConstants.ObjectCustom1TextureName));
+            TextureHandle reflectionMaterialTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoMetadataBufferShaderConstants.ReflectionMaterialTextureName));
             TextureHandle surfaceColorTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoMetadataBufferShaderConstants.SurfaceColorTextureName));
             TextureHandle depthTexture = UniversalRenderer.CreateRenderGraphTexture(
                 renderGraph,
@@ -245,6 +247,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             metadataResources.custom0Texture = custom0Texture;
             metadataResources.objectCustom0Texture = objectCustom0Texture;
             metadataResources.objectCustom1Texture = objectCustom1Texture;
+            metadataResources.reflectionMaterialTexture = reflectionMaterialTexture;
             metadataResources.surfaceColorTexture = surfaceColorTexture;
             metadataResources.mBufferDepthTexture = mBufferDepthTexture;
 
@@ -297,6 +300,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 custom0Texture,
                 objectCustom0Texture,
                 objectCustom1Texture,
+                reflectionMaterialTexture,
                 depthTexture,
                 clearMaterial);
 
@@ -329,12 +333,14 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 builder.SetRenderAttachment(custom0Texture, HoMetadataBufferAttachmentLayout.Custom0, AccessFlags.ReadWrite);
                 builder.SetRenderAttachment(objectCustom0Texture, HoMetadataBufferAttachmentLayout.ObjectCustom0, AccessFlags.ReadWrite);
                 builder.SetRenderAttachment(objectCustom1Texture, HoMetadataBufferAttachmentLayout.ObjectCustom1, AccessFlags.ReadWrite);
+                builder.SetRenderAttachment(reflectionMaterialTexture, HoMetadataBufferAttachmentLayout.ReflectionMaterial, AccessFlags.ReadWrite);
                 builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.ReadWrite);
                 builder.SetGlobalTextureAfterPass(maskIdTexture, HoMetadataBufferShaderConstants.MaskIdTextureId);
                 builder.SetGlobalTextureAfterPass(surfaceDataTexture, HoMetadataBufferShaderConstants.SurfaceDataTextureId);
                 builder.SetGlobalTextureAfterPass(custom0Texture, HoMetadataBufferShaderConstants.Custom0TextureId);
                 builder.SetGlobalTextureAfterPass(objectCustom0Texture, HoMetadataBufferShaderConstants.ObjectCustom0TextureId);
                 builder.SetGlobalTextureAfterPass(objectCustom1Texture, HoMetadataBufferShaderConstants.ObjectCustom1TextureId);
+                builder.SetGlobalTextureAfterPass(reflectionMaterialTexture, HoMetadataBufferShaderConstants.ReflectionMaterialTextureId);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
@@ -447,6 +453,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, Texture2D.blackTexture);
+            Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.ReflectionMaterialTextureId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.MBufferDepthTextureId, Texture2D.blackTexture);
         }
@@ -458,6 +465,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             TextureHandle custom0Texture,
             TextureHandle objectCustom0Texture,
             TextureHandle objectCustom1Texture,
+            TextureHandle reflectionMaterialTexture,
             TextureHandle depthTexture,
             Material clearMaterial)
         {
@@ -469,6 +477,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 builder.SetRenderAttachment(custom0Texture, HoMetadataBufferAttachmentLayout.Custom0, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(objectCustom0Texture, HoMetadataBufferAttachmentLayout.ObjectCustom0, AccessFlags.WriteAll);
                 builder.SetRenderAttachment(objectCustom1Texture, HoMetadataBufferAttachmentLayout.ObjectCustom1, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(reflectionMaterialTexture, HoMetadataBufferAttachmentLayout.ReflectionMaterial, AccessFlags.WriteAll);
                 builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.WriteAll);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (ClearPassData data, RasterGraphContext context) =>
@@ -609,6 +618,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, renderTargets.Custom0Texture.nameID);
             cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, renderTargets.ObjectCustom0Texture.nameID);
             cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, renderTargets.ObjectCustom1Texture.nameID);
+            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ReflectionMaterialTextureId, renderTargets.ReflectionMaterialTexture.nameID);
             cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, renderTargets.SurfaceColorTexture.nameID);
             cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MBufferDepthTextureId, renderTargets.MBufferDepthTexture.nameID);
         }

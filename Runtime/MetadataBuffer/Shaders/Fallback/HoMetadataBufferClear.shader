@@ -42,6 +42,7 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/Clear"
                 half4 custom0 : SV_Target2;
                 half4 objectCustom0 : SV_Target3;
                 half4 objectCustom1 : SV_Target4;
+                half4 reflectionMaterial : SV_Target5;
             };
 
             Varyings Vert(Attributes input)
@@ -61,6 +62,7 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/Clear"
                 output.custom0 = 0;
                 output.objectCustom0 = 0;
                 output.objectCustom1 = 0;
+                output.reflectionMaterial = 0;
                 return output;
             }
             ENDHLSL

@@ -31,6 +31,7 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
             TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture);
             TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
             TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture);
+            TEXTURE2D_X(_HoMetadataBufferReflectionMaterialTexture);
             TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
             TEXTURE2D_X_FLOAT(_HoMetadataBufferMBufferDepthTexture);
 
@@ -190,6 +191,12 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
                     half depthValid = step(0.0001h, abs(rawDepth - 1.0h));
                     half depth = saturate(Linear01Depth(rawDepth, _ZBufferParams));
                     return lerp(source, half4(depth, depth, depth, 1.0), depthValid);
+                }
+
+                if (mode == 26)
+                {
+                    half4 reflectionMaterial = SAMPLE_TEXTURE2D_X(_HoMetadataBufferReflectionMaterialTexture, sampler_PointClamp, uv);
+                    return half4(reflectionMaterial.rgb, 1.0);
                 }
 
                 return source;
