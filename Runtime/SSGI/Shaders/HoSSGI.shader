@@ -563,7 +563,6 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float3 previousPositionWS,
             float3 currentPositionWS,
             float previousDelta,
-            float currentDelta,
             float thickness,
             out float3 refinedPositionWS,
             out float refinedDelta)
@@ -571,16 +570,20 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             // HTrace's refine path samples a quarter step back from the
             // crossing. This reduces hit-position quantization without adding
             // a second full march.
-            float3 middlePositionWS = lerp(currentPositionWS, previousPositionWS, 0.25);
+            float3 middlePositionWS = lerp(previousPositionWS, currentPositionWS, 0.75);
             float3 middleNDC = ComputeNormalizedDeviceCoordinatesWithZ(middlePositionWS, UNITY_MATRIX_VP);
             if (middleNDC.z < 0.0 || middleNDC.z > 1.0 || any(middleNDC.xy < 0.0) || any(middleNDC.xy > 1.0))
                 return false;
-            float middleSurfaceDepth = HoSSGISampleDepthPyramid(middleNDC.xy, 0);
-            if (middleSurfaceDepth <= 0.0001)
+            float2 middleUV = middleNDC.xy;
+            // Recheck the refined crossing against the exact pixel surface so a
+            // neighboring geometry sample cannot turn the refinement into a
+            // false hit.
+            half4 middleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, middleUV);
+            if (middleGeometry.a < 0.0001h)
                 return false;
             float middleRayDepth = HoSSGILinearDepth(middlePositionWS);
             refinedPositionWS = middlePositionWS;
-            refinedDelta = middleRayDepth - middleSurfaceDepth;
+            refinedDelta = middleRayDepth - middleGeometry.a;
             return refinedDelta >= -thickness && previousDelta < -thickness;
         }
 
@@ -637,6 +640,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
 
             rayEndWS = lerp(rayStartWS, rayEndWS, clippedRay);
             float previousDelta = -2.0 * max(_HoSSGIThickness, 0.01);
+            float3 previousValidationPositionWS = rayStartWS;
             float remarchedDistance = 0.0;
             bool remarchedHit = false;
             // HTrace validates with the configured march budget. A fixed eight
@@ -658,6 +662,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 if (surfaceDepth <= 0.0001)
                 {
                     previousDelta = -2.0 * max(_HoSSGIThickness, 0.01);
+                    previousValidationPositionWS = rayPositionWS;
                     continue;
                 }
                 float rayDepth = HoSSGILinearDepth(rayPositionWS);
@@ -670,18 +675,46 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 {
                     half4 sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
                     if (sampleGeometry.a < 0.0001h)
+                    {
+                        previousValidationPositionWS = rayPositionWS;
                         continue;
+                    }
                     float exactDelta = rayDepth - sampleGeometry.a;
                     bool exactCrossedSurface = exactDelta >= -max(_HoSSGIThickness, 0.01)
                         && previousSampleDelta < -max(_HoSSGIThickness, 0.01);
                     previousDelta = exactDelta;
                     if (!exactCrossedSurface)
+                    {
+                        previousValidationPositionWS = rayPositionWS;
                         continue;
+                    }
+                    float3 refinedPositionWS;
+                    float refinedDelta;
+                    if (HoSSGIRefineCrossing(
+                        previousValidationPositionWS,
+                        rayPositionWS,
+                        previousSampleDelta,
+                        max(_HoSSGIThickness, 0.01),
+                        refinedPositionWS,
+                        refinedDelta))
+                    {
+                        sampleUV = ComputeNormalizedDeviceCoordinatesWithZ(refinedPositionWS, UNITY_MATRIX_VP).xy;
+                        sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
+                        if (sampleGeometry.a < 0.0001h)
+                        {
+                            previousValidationPositionWS = rayPositionWS;
+                            continue;
+                        }
+                        rayPositionWS = refinedPositionWS;
+                        exactDelta = refinedDelta;
+                        previousDelta = refinedDelta;
+                    }
                     float3 samplePositionWS = HoSSGIWorldPosition(sampleUV, sampleGeometry.a);
                     remarchedDistance = distance(originPositionWS, samplePositionWS);
                     remarchedHit = true;
                     break;
                 }
+                previousValidationPositionWS = rayPositionWS;
             }
 
             if (!remarchedHit)
@@ -843,6 +876,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 rayEndWS = lerp(rayStartWS, rayEndWS, clippedRay);
                 float thickness = max(_HoSSGIThickness, 0.01);
                 float previousDelta = -2.0 * thickness;
+                float3 previousRayPositionWS = rayStartWS;
                 bool hasPrevious = true;
 
                 [loop]
@@ -864,6 +898,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                         // previous sign lets the first valid surface after a
                         // gap register as a hit instead of being skipped.
                         previousDelta = -2.0 * thickness;
+                        previousRayPositionWS = rayPositionWS;
                         hasPrevious = true;
                         continue;
                     }
@@ -880,19 +915,24 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                         // cannot become a false hit for this pixel.
                         half4 sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
                         if (sampleGeometry.a < 0.0001)
+                        {
+                            previousRayPositionWS = rayPositionWS;
                             continue;
+                        }
                         float exactDelta = rayDepth - sampleGeometry.a;
                         bool exactCrossedSurface = exactDelta >= -thickness && previousSampleDelta < -thickness;
                         previousDelta = exactDelta;
                         if (!exactCrossedSurface)
+                        {
+                            previousRayPositionWS = rayPositionWS;
                             continue;
+                        }
                         float3 refinedPositionWS;
                         float refinedDelta;
                         if (HoSSGIRefineCrossing(
-                            rayPositionWS - (rayEndWS - rayStartWS) * (1.0 / steps),
+                            previousRayPositionWS,
                             rayPositionWS,
                             previousSampleDelta,
-                            exactDelta,
                             thickness,
                             refinedPositionWS,
                             refinedDelta))
@@ -900,7 +940,10 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                             sampleUV = ComputeNormalizedDeviceCoordinatesWithZ(refinedPositionWS, UNITY_MATRIX_VP).xy;
                             sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
                             if (sampleGeometry.a < 0.0001)
+                            {
+                                previousRayPositionWS = rayPositionWS;
                                 continue;
+                            }
                             exactDelta = refinedDelta;
                             previousDelta = refinedDelta;
                         }
@@ -914,6 +957,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                         if (!depthValid || !frontFace)
                         {
                             previousDelta = 2.0 * thickness;
+                            previousRayPositionWS = rayPositionWS;
                             continue;
                         }
                         candidateDistance = distance(centerPositionWS, samplePositionWS);
@@ -927,6 +971,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                         hits += 1.0;
                         break;
                     }
+                    previousRayPositionWS = rayPositionWS;
                 }
 
                 if (candidateHit < 0.5 && _HoGeometryBufferSkyTextureValid > 0.5)
