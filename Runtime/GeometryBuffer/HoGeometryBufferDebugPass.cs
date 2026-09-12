@@ -74,6 +74,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             descriptor.depthBufferBits = 0;
             descriptor.depthStencilFormat = GraphicsFormat.None;
             descriptor.msaaSamples = 1;
+            descriptor.bindMS = false;
             RenderingUtils.ReAllocateIfNeeded(ref tempTexture, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilHoGeometryBufferDebugSource");
             ConfigureTarget(cameraColorTarget);
         }

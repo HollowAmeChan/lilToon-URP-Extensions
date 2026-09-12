@@ -970,12 +970,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             descriptor.dimension = cameraTextureDescriptor.dimension;
             descriptor.slices = cameraTextureDescriptor.volumeDepth;
             descriptor.depthBufferBits = 0;
-            descriptor.msaaSamples = divisor == 1 ? (MSAASamples)cameraTextureDescriptor.msaaSamples : MSAASamples.None;
+            // Capture textures are sampled later as screen-space data. Keep them single-sampled
+            // so camera MSAA coverage is not resolved into the captured eye color.
+            descriptor.msaaSamples = MSAASamples.None;
             descriptor.clearBuffer = true;
             descriptor.clearColor = Color.clear;
             descriptor.filterMode = FilterMode.Bilinear;
             descriptor.wrapMode = TextureWrapMode.Clamp;
-            descriptor.bindTextureMS = cameraTextureDescriptor.bindMS && divisor == 1;
+            descriptor.bindTextureMS = false;
             descriptor.useDynamicScale = cameraTextureDescriptor.useDynamicScale;
             descriptor.useDynamicScaleExplicit = cameraTextureDescriptor.useDynamicScaleExplicit;
             descriptor.vrUsage = cameraTextureDescriptor.vrUsage;
@@ -1067,7 +1069,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             RenderTextureDescriptor descriptor = cameraTextureDescriptor;
             descriptor.depthBufferBits = 0;
             descriptor.depthStencilFormat = GraphicsFormat.None;
-            descriptor.msaaSamples = divisor == 1 ? Mathf.Max(1, descriptor.msaaSamples) : 1;
+            descriptor.msaaSamples = 1;
+            descriptor.bindMS = false;
             descriptor.width = Mathf.Max(1, descriptor.width / divisor);
             descriptor.height = Mathf.Max(1, descriptor.height / divisor);
             GraphicsFormat colorFormat = GetHdrGraphicsFormat();
@@ -1101,7 +1104,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 GetDepthStencilFormat(cameraTextureDescriptor));
             descriptor.dimension = cameraTextureDescriptor.dimension;
             descriptor.volumeDepth = cameraTextureDescriptor.volumeDepth;
-            descriptor.msaaSamples = divisor == 1 ? Mathf.Max(1, cameraTextureDescriptor.msaaSamples) : 1;
+            descriptor.msaaSamples = 1;
             descriptor.bindMS = false;
             descriptor.useMipMap = false;
             descriptor.autoGenerateMips = false;

@@ -171,6 +171,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             descriptor.slices = cameraTextureDescriptor.volumeDepth;
             descriptor.depthBufferBits = 0;
             descriptor.msaaSamples = MSAASamples.None;
+            descriptor.bindTextureMS = false;
             descriptor.clearBuffer = true;
             descriptor.clearColor = Color.clear;
             descriptor.filterMode = FilterMode.Bilinear;
