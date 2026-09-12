@@ -559,6 +559,31 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return maxT;
         }
 
+        bool HoSSGIRefineCrossing(
+            float3 previousPositionWS,
+            float3 currentPositionWS,
+            float previousDelta,
+            float currentDelta,
+            float thickness,
+            out float3 refinedPositionWS,
+            out float refinedDelta)
+        {
+            // HTrace's refine path samples a quarter step back from the
+            // crossing. This reduces hit-position quantization without adding
+            // a second full march.
+            float3 middlePositionWS = lerp(currentPositionWS, previousPositionWS, 0.25);
+            float3 middleNDC = ComputeNormalizedDeviceCoordinatesWithZ(middlePositionWS, UNITY_MATRIX_VP);
+            if (middleNDC.z < 0.0 || middleNDC.z > 1.0 || any(middleNDC.xy < 0.0) || any(middleNDC.xy > 1.0))
+                return false;
+            float middleSurfaceDepth = HoSSGISampleDepthPyramid(middleNDC.xy, 0);
+            if (middleSurfaceDepth <= 0.0001)
+                return false;
+            float middleRayDepth = HoSSGILinearDepth(middlePositionWS);
+            refinedPositionWS = middlePositionWS;
+            refinedDelta = middleRayDepth - middleSurfaceDepth;
+            return refinedDelta >= -thickness && previousDelta < -thickness;
+        }
+
         float HoSSGIValidateReservoirRay(
             float3 originPositionWS,
             float3 receiverNormalWS,
@@ -861,6 +886,24 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                         previousDelta = exactDelta;
                         if (!exactCrossedSurface)
                             continue;
+                        float3 refinedPositionWS;
+                        float refinedDelta;
+                        if (HoSSGIRefineCrossing(
+                            rayPositionWS - (rayEndWS - rayStartWS) * (1.0 / steps),
+                            rayPositionWS,
+                            previousSampleDelta,
+                            exactDelta,
+                            thickness,
+                            refinedPositionWS,
+                            refinedDelta))
+                        {
+                            sampleUV = ComputeNormalizedDeviceCoordinatesWithZ(refinedPositionWS, UNITY_MATRIX_VP).xy;
+                            sampleGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, sampleUV);
+                            if (sampleGeometry.a < 0.0001)
+                                continue;
+                            exactDelta = refinedDelta;
+                            previousDelta = refinedDelta;
+                        }
                         float3 samplePositionWS = HoSSGIWorldPosition(sampleUV, sampleGeometry.a);
                         float sampleDepth = sampleGeometry.a;
                         float3 source = SAMPLE_TEXTURE2D_X(_HoSSGISource, sampler_PointClamp, sampleUV).rgb;
