@@ -14,11 +14,12 @@
 | 通道 | 生产端 | 消费端 | 编码 | AOV | 状态 |
 | --- | --- | --- | --- | --- | --- |
 | `beauty` | ImageProcess 终链 | 相机输出 | RGBA hdr | （主图） | ✅ |
-| `surfaceColor` | 材质 → MetadataBuffer | SSS / 反射 / AOV | RGBA（a=subject 覆盖） | `diffuse_albedo` | ✅ |
+| `surfaceColor` | 材质 → MetadataBuffer SurfaceColor pass | SSS / 角色特化 / 反射 / AOV | RGBA16F（RGB=线性 HDR 表面色，不钳制；A=coverage 0..1） | `diffuse_albedo` | ✅ |
 | `normal` | GeometryBuffer | SSS / AO / GI / 反射 / AOV | RGBA(oct) + depth.a | `normal` | ✅ |
 | `depth` | GeometryBuffer | AO / GI / SSS / 反射 | R16f | `depth` | ✅ |
 | `maskId` | 材质 / 对象 | 角色特化 / AOV | R8G8B8A8(byte) | `id_object`, `id_group` | ✅ |
 | `surfaceData` | 材质 | SSS | RGBA（thickness/curvature/material/transmittance） | — | ✅ |
+| `reflectionMaterial` | 材质 → MetadataBuffer Target5 | PLR / SSR / Probe | RGBA16F（R=perceptualRoughness，G=metallic，B=reflectance，A=PLR strength） | — | ✅ |
 | `objectCustom0/1` | 材质 / 对象（Group/Subject） | 角色特化 / AOV matte | RGBA(bits) | `matte_*` | ✅ |
 | `shadow.main` | URP 主光阴影 | 材质 toon 门控 / AOV | R8f | `shadow_main` | ✅ |
 | `shadow.add0..N` | ShadowCast cast 组（每组一张 atlas；N≤8，组≠灯） | 材质 / ScreenProcess / AOV | R8f | `shadow_add0..N` | ◻ |
@@ -28,8 +29,7 @@
 | `gisexclude` | 材质（outline/非物理表面） | GI / AO 生产端 | 单 bit R8（1=排除） | — | ◻ |
 | `sss` | Ho-SubsurfaceScattering | ScreenProcess 合成 | RGBA | `sss` | ✅ |
 | `sssprofile` | 材质 / profile | SSS / AOV | R8 | `sssprofile` | ✅ |
-| `reflection` | Ho-PlanarReflection composite | ScreenProcess | RGBA | `reflection` | ✅ |
-| `reflectionintent` | 材质（写 MetadataBuffer） | PlanarReflection 合成 | RGBA | — | ✅ |
+| `reflection` | PLR / SSR resolve | ScreenProcess / AOV | RGBA HDR | `reflection` | ◻ |
 | `eyecolor` / `eyedata` | Ho-CharacterCapture | 角色特化 | RGBA | — | ✅ |
 | `emission` | 材质（全部发光，HDR 强度） | AOV | RGB hdr | `emission` | ◻ |
 | `motion` | （占坑） | AOV / temporal | RG | `motion` | ◻ |
@@ -90,8 +90,10 @@ debug:  <debug tile 名 / 直出分支>
 1. **matte bits**：沿用 `HoMetadataBufferGroup/Subject` 组件语义；位含义以组件 Inspector 为准。
 2. **motion**：转正占坑（RG → AOV `motion`）；先登记不实现。
 3. **编码**：`ao`/`aointent` = R8f(0..1)；`gi` = RGB hdr + `gi.gamma` R8f；`gisexclude` = 单 bit R8(1=排除)。
-4. **emission**：所有发光材质（HDR 强度），选区在 AOV 端。
-5. **shadow 拆分**：`shadow.main`（URP 主光）+ `shadow.add0..N`（ShadowCast cast 组，N≤8，N 指组非灯；每组一张 atlas）；专用组（脸/远平面）只规划不占 AOV。
+4. **SurfaceColor**：producer 不钳制 RGB；需要 `[0,1]` 的消费者自行显式钳制，A 始终为 coverage。
+5. **ReflectionMaterial**：MetadataBuffer Target5 语义冻结为 perceptualRoughness / metallic / reflectance / PLR strength，不再从通用 Custom0 猜测反射参数。
+6. **emission**：所有发光材质（HDR 强度），选区在 AOV 端。
+7. **shadow 拆分**：`shadow.main`（URP 主光）+ `shadow.add0..N`（ShadowCast cast 组，N≤8，N 指组非灯；每组一张 atlas）；专用组（脸/远平面）只规划不占 AOV。
 
 ---
 

@@ -81,7 +81,7 @@ half coverage = LilHoGeometryBufferCoverage(normalDepth);
 
 #### NormalDepth 的消费者规则
 
-- AO/GI/SSS/PlanarReflection/CharacterSpecialization：必须以 coverage 作为几何有效性 gate。
+- AO/GI/SSS/PLR/CharacterSpecialization：必须以 coverage 作为几何有效性 gate。
 - coverage 为 0 的像素不能进入 GI source、history、depth pyramid、AO 表面采样或物理遮挡判断。
 - 不能把 `NormalDepth.a == 0` 直接当普通深度 0；需要使用 `LilHoGeometryBufferLinearDepthOrFar()` 或显式跳过。
 - 描边像素即使在 CameraColor 中有黑色/彩色，也应保持 `NormalDepth` coverage 为 0。
@@ -225,7 +225,7 @@ GeometryBuffer DebugView 和 DebugTile 已注册：
 | GTAO | NormalDepth normal/depth/coverage | OutlineNormalDepth 当作物理几何 |
 | Ho-SSGI | NormalDepth coverage、normal、depth | OutlineNormalDepth 作为 caster/receiver |
 | SSS | NormalDepth 几何 + MetadataBuffer 语义 | 用描边 coverage 伪造物理表面 |
-| PlanarReflection | NormalDepth 深度/法线与 MetadataBuffer mask | 把 outline mask 当反射平面 |
+| PLR | NormalDepth 深度/法线与 MetadataBuffer mask/ReflectionMaterial | 把 outline mask 当反射平面 |
 | CharacterSpecialization | NormalDepth + MetadataBuffer | 用 outline coverage 推断角色几何 |
 | ScreenProcess DOF | NormalDepth 深度 + OutlineNormalDepth visual depth | 把描边写入主 NormalDepth |
 | ScreenProcess Outline/EdgeLight | NormalDepth 几何；必要时 MetadataBuffer | 把 OutlineNormalDepth 当真实法线/深度 |
@@ -239,7 +239,13 @@ MetadataBuffer = object/material semantic truth
 CameraColor = rendered color source
 ```
 
-## 8. 常见错误
+## 8. 反射专用边界
+
+GeometryBuffer 只提供 PLR/SSR 所需的物理法线、线性深度和 coverage；材质 roughness、metallic、reflectance 与 PLR strength 固定放在 MetadataBuffer Target5 `ReflectionMaterial`，SurfaceColor 仅作为线性 baseColor 提示。
+
+当前实现没有 GeometryBuffer `Custom0` producer 或消费者。若未来需要逐像素 PLR receiver 数据，应新增并命名为 PLR 专用 RT，先冻结 RGBA 语义后再接入；不得把它重新定义为跨功能的泛用 Custom0，也不得覆盖 `NormalDepth` 的物理几何语义。
+
+## 9. 常见错误
 
 - 只打开 GeometryBuffer，但没有刷新 lilToon shader：NormalDepth 有数据，OutlineNormalDepth 全黑。
 - 把 `_HoGeometryBufferDepthTexture` 当线性深度采样；应该使用 `NormalDepth.a`。
@@ -247,7 +253,7 @@ CameraColor = rendered color source
 - GeometryBuffer layer mask 或 render queue 没覆盖角色，导致基础几何和 outline coverage 都缺失。
 - 只看 `geometry.coverage` 就判断描边是否输出；描边的正确检查是同时看 physical coverage 和 outline coverage。
 
-## 9. 相关源码
+## 10. 相关源码
 
 - Producer：`Runtime/GeometryBuffer/HoGeometryBufferRendererFeature.cs`
 - 主 pass：`Runtime/GeometryBuffer/HoGeometryBufferPass.cs`
@@ -260,9 +266,9 @@ CameraColor = rendered color source
 - lilToon UsePass 模板（仅当隐藏 pass shader 提供对应 pass 时适用）：`D:\Unity_Fork\lilToon\Assets\lilToon\CustomShaderResources\URP\DefaultUsePassOutline*.lilblock`
 - outline normal/depth fragment：`D:\Unity_Fork\lilToon\Assets\lilToon\Shader\Includes\lil_pass_outline_normal_depth.hlsl`
 
-## 10. VisualSurfaceBuffer 扩展与 RT 成本
+## 11. VisualSurfaceBuffer 扩展与 RT 成本
 
-### 10.1 推荐的数据分层
+### 11.1 推荐的数据分层
 
 ```text
 PhysicalGeometryBuffer
@@ -283,7 +289,7 @@ VisualSurfaceBuffer
 | `VisualOcclusionOnly` | VisualSurface 只参与 ray blocking，不参与 radiance/normal/energy | 需要避免屏幕空间射线穿过描边的 GI/AO 变体 |
 | `VisualComposite` | 读取 OutlineColor/coverage，在后处理后重新合成 | 描边、特殊视觉壳层、风格化后处理 |
 
-### 10.2 为什么不能直接合并进 NormalDepth
+### 11.2 为什么不能直接合并进 NormalDepth
 
 把 OutlineNormalDepth 写入 `NormalDepth.a` 会让所有现有消费者自动看到描边：
 
@@ -294,7 +300,7 @@ VisualSurfaceBuffer
 
 因此“补进主 GBuffer”应理解为建立一个可解析的 visual surface view，而不是改写 PhysicalGeometryBuffer。
 
-### 10.3 RT 数量和带宽取舍
+### 11.3 RT 数量和带宽取舍
 
 当前资源规模（全分辨率、无 MSAA 乘数）：
 
@@ -307,7 +313,7 @@ VisualSurfaceBuffer
 
 实际成本还会受到 render scale、MSAA、XR slice、RT 对齐和 RenderGraph 生命周期影响。当前 OutlineNormalDepth 与主 NormalDepth 同构，便于复用采样协议，但会比原先 R8 coverage 占用更多带宽；真正需要关注的是它是否按视觉消费者需求懒分配。
 
-### 10.4 推荐的优化路线
+### 11.4 推荐的优化路线
 
 1. `OutlineNormalDepth` 与主 `NormalDepth` 使用同构格式，避免消费者维护另一套采样协议。
 2. 需要颜色或种类标记时继续扩展同一个 visual surface contract，避免每个效果各自创建一套 RT。
