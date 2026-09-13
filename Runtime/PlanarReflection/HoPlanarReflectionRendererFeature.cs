@@ -14,7 +14,7 @@ using UnityEngine.Serialization;
 
 namespace lilToon.URP.Extensions.PlanarReflection
 {
-    [DisallowMultipleRendererFeature("Ho-PlanarReflection")]
+    [DisallowMultipleRendererFeature("Ho-PLR")]
     [ExecuteAlways]
     public sealed class HoPlanarReflectionRendererFeature : ScriptableRendererFeature
     {
@@ -34,8 +34,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
             [Min(0)]
             public int maxSurfacesPerCamera;
 
-            [Tooltip("Composite planar reflection after transparents by reading MetadataBuffer and GeometryBuffer.")]
-            public bool compositeEnabled = true;
+            [Tooltip("Legacy/special-surface fullscreen composite. Keep disabled for opaque materials that consume PLR in ForwardLit.")]
+            public bool compositeEnabled;
 
             [Tooltip("Render pass event for the post composite. Run after water transparents and before post processing.")]
             public RenderPassEvent compositePassEvent = RenderPassEvent.BeforeRenderingPostProcessing;
@@ -348,9 +348,9 @@ namespace lilToon.URP.Extensions.PlanarReflection
         Off = 0,
         InputStatus = 1,
         SurfaceMask = 2,
-        Smoothness = 3,
-        Wetness = 4,
-        NormalStrength = 5,
+        PerceptualRoughness = 3,
+        Metallic = 4,
+        Reflectance = 5,
         ReflectionStrength = 6,
         WorldNormal = 7,
         LinearDepth = 8,
@@ -359,7 +359,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
         ReflectionColor = 11,
         CompositeWeight = 12,
         DepthGate = 13,
-        Custom0 = 14,
+        ReflectionMaterial = 14,
         EdgeExtend = 15
     }
 
@@ -503,8 +503,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
     internal sealed class HoPlanarReflectionCompositePass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-PlanarReflection Composite");
-        private static readonly ProfilingSampler PreprocessProfilingSampler = new ProfilingSampler("Ho-PlanarReflection Preprocess");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-PLR Composite");
+        private static readonly ProfilingSampler PreprocessProfilingSampler = new ProfilingSampler("Ho-PLR Preprocess");
 
         private HoPlanarReflectionRendererFeature.Settings settings;
         private RTHandle cameraColorTarget;
@@ -524,7 +524,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
             public TextureHandle source;
             public TextureHandle reflectionTexture;
             public TextureHandle maskIdTexture;
-            public TextureHandle custom0Texture;
+            public TextureHandle reflectionMaterialTexture;
+            public TextureHandle surfaceColorTexture;
             public TextureHandle normalDepthTexture;
             public Material material;
             public Vector4 compositeParams;
@@ -642,17 +643,19 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
             TextureHandle source = resourceData.activeColorTexture;
             TextureHandle maskIdTexture = metadataResources.maskIdTexture;
-            TextureHandle custom0Texture = metadataResources.custom0Texture;
+            TextureHandle reflectionMaterialTexture = metadataResources.reflectionMaterialTexture;
+            TextureHandle surfaceColorTexture = metadataResources.surfaceColorTexture;
             TextureHandle normalDepthTexture = geometryResources.normalDepthTexture;
             RTHandle reflectionRtHandle = HoPlanarReflectionSurface.CurrentReflectionTextureHandle;
             RenderTexture reflectionTextureResource = HoPlanarReflectionSurface.CurrentReflectionTexture;
             bool hasSource = source.IsValid();
             bool hasReflectionTexture = reflectionRtHandle != null && reflectionTextureResource != null;
             bool hasMaskId = maskIdTexture.IsValid();
-            bool hasCustom0 = custom0Texture.IsValid();
+            bool hasReflectionMaterial = reflectionMaterialTexture.IsValid();
+            bool hasSurfaceColor = surfaceColorTexture.IsValid();
             bool hasNormalDepth = normalDepthTexture.IsValid();
             bool inputStatusDebug = settings.debugMode == HoPlanarReflectionDebugMode.InputStatus;
-            if (!hasSource || (!inputStatusDebug && (!hasReflectionTexture || !hasMaskId || !hasCustom0 || !hasNormalDepth)))
+            if (!hasSource || (!inputStatusDebug && (!hasReflectionTexture || !hasMaskId || !hasReflectionMaterial || !hasSurfaceColor || !hasNormalDepth)))
             {
                 return;
             }
@@ -668,7 +671,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 TextureHandle processedReflectionTexture = renderGraph.CreateTexture(preprocessDesc);
                 AddReflectionPreprocessPass(
                     renderGraph,
-                    "Ho-PlanarReflection Preprocess",
+                    "Ho-PLR Preprocess",
                     compositeMaterial,
                     reflectionTexture,
                     processedReflectionTexture,
@@ -682,12 +685,13 @@ namespace lilToon.URP.Extensions.PlanarReflection
             destinationDesc.depthBufferBits = 0;
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-PlanarReflection Composite", out PassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-PLR Composite", out PassData passData, ProfilingSampler))
             {
                 passData.source = source;
                 passData.reflectionTexture = compositeReflectionTexture;
                 passData.maskIdTexture = maskIdTexture;
-                passData.custom0Texture = custom0Texture;
+                passData.reflectionMaterialTexture = reflectionMaterialTexture;
+                passData.surfaceColorTexture = surfaceColorTexture;
                 passData.normalDepthTexture = normalDepthTexture;
                 passData.material = compositeMaterial;
                 passData.compositeParams = HoPlanarReflectionShaderParams.CreateCompositeParams(settings);
@@ -695,7 +699,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 passData.tint = HoPlanarReflectionShaderParams.CreateTint(settings);
                 passData.preprocessParams = preprocessParams;
                 passData.debugParams = HoPlanarReflectionShaderParams.CreateDebugParams(settings);
-                passData.debugInputStatus = new Vector4(hasReflectionTexture ? 1.0f : 0.0f, hasMaskId ? 1.0f : 0.0f, hasNormalDepth ? 1.0f : 0.0f, hasCustom0 ? 1.0f : 0.0f);
+                passData.debugInputStatus = new Vector4(hasReflectionTexture ? 1.0f : 0.0f, hasMaskId && hasSurfaceColor ? 1.0f : 0.0f, hasNormalDepth ? 1.0f : 0.0f, hasReflectionMaterial ? 1.0f : 0.0f);
 
                 builder.UseTexture(source, AccessFlags.Read);
                 if (compositeReflectionTexture.IsValid())
@@ -708,9 +712,14 @@ namespace lilToon.URP.Extensions.PlanarReflection
                     builder.UseTexture(maskIdTexture, AccessFlags.Read);
                 }
 
-                if (hasCustom0)
+                if (hasReflectionMaterial)
                 {
-                    builder.UseTexture(custom0Texture, AccessFlags.Read);
+                    builder.UseTexture(reflectionMaterialTexture, AccessFlags.Read);
+                }
+
+                if (hasSurfaceColor)
+                {
+                    builder.UseTexture(surfaceColorTexture, AccessFlags.Read);
                 }
 
                 if (hasNormalDepth)
@@ -748,9 +757,14 @@ namespace lilToon.URP.Extensions.PlanarReflection
                         context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
                     }
 
-                    if (data.custom0Texture.IsValid())
+                    if (data.reflectionMaterialTexture.IsValid())
                     {
-                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.custom0Texture);
+                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ReflectionMaterialTextureId, data.reflectionMaterialTexture);
+                    }
+
+                    if (data.surfaceColorTexture.IsValid())
+                    {
+                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, data.surfaceColorTexture);
                     }
 
                     if (data.normalDepthTexture.IsValid())

@@ -18,7 +18,7 @@
 - `Runtime/CharacterSpecialization`：角色捕获和角色定制后处理，包括头发/脸部等风格化处理路径。
 - `Runtime/ScreenProcess`：用户可控的语义屏幕处理图层栈，支持 MetadataBuffer rule mask，并有 RenderGraph/非 RenderGraph 路径。
 - `Runtime/ImageProcess`：最终图像处理链和具体效果移植。
-- `Runtime/PlanarReflection`：`HoPlanarReflectionRendererFeature` 统一调度 `HoPlanarReflectionSurface` 平面反射表面，发布反射纹理，并通过 fullscreen composite pass 统一混回 camera color。
+- `Runtime/PlanarReflection`：`HoPlanarReflectionRendererFeature` 调度 PLR surface 并发布带 mip 的 HDR 反射 source；opaque lilToon 在 ForwardLit 中按 PBR 响应消费，fullscreen composite 仅保留给水面/OIT/调试等特殊路径。
 - `Runtime/ShadowCast`：独立 HoShadowCast atlas 生成，用于指定的额外方向光、聚光和点光。
 
 ## Editor 模块

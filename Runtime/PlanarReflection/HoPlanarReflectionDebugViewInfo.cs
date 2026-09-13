@@ -4,7 +4,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
 {
     public static class HoPlanarReflectionDebugViewInfo
     {
-        private const string FeatureName = "Planar Reflection";
+        private const string FeatureName = "PLR";
         private const string ShaderAssetPath = "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/PlanarReflection/HoPlanarReflectionComposite.shader";
         private const string MissingFallback = "PlanarReflection debug view is skipped when the composite shader is missing.";
 
@@ -12,9 +12,9 @@ namespace lilToon.URP.Extensions.PlanarReflection
         {
             View("planar-reflection.inputs", "Inputs", HoPlanarReflectionDebugMode.InputStatus),
             View("planar-reflection.surface-mask", "Mask", HoPlanarReflectionDebugMode.SurfaceMask),
-            View("planar-reflection.smoothness", "Smooth", HoPlanarReflectionDebugMode.Smoothness),
-            View("planar-reflection.wetness", "Wet", HoPlanarReflectionDebugMode.Wetness),
-            View("planar-reflection.normal-strength", "NormS", HoPlanarReflectionDebugMode.NormalStrength),
+            View("planar-reflection.perceptual-roughness", "PRough", HoPlanarReflectionDebugMode.PerceptualRoughness),
+            View("planar-reflection.metallic", "Metal", HoPlanarReflectionDebugMode.Metallic),
+            View("planar-reflection.reflectance", "F0", HoPlanarReflectionDebugMode.Reflectance),
             View("planar-reflection.reflection-strength", "ReflS", HoPlanarReflectionDebugMode.ReflectionStrength),
             View("planar-reflection.world-normal", "Normal", HoPlanarReflectionDebugMode.WorldNormal),
             View("planar-reflection.linear-depth", "Depth", HoPlanarReflectionDebugMode.LinearDepth),
@@ -23,7 +23,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
             View("planar-reflection.reflection-color", "Refl", HoPlanarReflectionDebugMode.ReflectionColor),
             View("planar-reflection.composite-weight", "Weight", HoPlanarReflectionDebugMode.CompositeWeight),
             View("planar-reflection.depth-gate", "DGate", HoPlanarReflectionDebugMode.DepthGate),
-            View("planar-reflection.custom0", "Custom0", HoPlanarReflectionDebugMode.Custom0),
+            View("planar-reflection.reflection-material", "ReflMat", HoPlanarReflectionDebugMode.ReflectionMaterial),
             View("planar-reflection.edge-extend", "Extend", HoPlanarReflectionDebugMode.EdgeExtend)
         };
 

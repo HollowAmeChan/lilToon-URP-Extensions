@@ -2,15 +2,17 @@
 
 PLR 为水面、光滑地面、玻璃和镜子生成镜像相机反射源。它只生产 radiance source，不决定材质最终反射强度；最终消费必须结合 roughness、metallic、reflectance/F0、Fresnel 和接收 mask。
 
-当前实现仍包含 fullscreen composite 过渡路径。修复 PLR 时，正式目标是让 opaque lilToon ForwardLit 直接消费 source；fullscreen composite 只保留给水面/OIT、调试或明确声明的特殊材质。
+当前 opaque lilToon ForwardLit 已直接消费 source；fullscreen composite 只保留给水面/OIT、调试或明确声明的特殊材质，并且默认关闭。
+
+PLR 的 PBR 材质路径只支持完整 lilToon Forward，不接入 lilToonLite/Gem；本管线不为低质量材质变体维护另一套反射模型。
 
 ## 快速设置
 
 1. 启用 `HoMetadataBufferRendererFeature` 和 `HoGeometryBufferRendererFeature`。
-2. 启用 `HoPlanarReflectionRendererFeature`，在需要透明/OIT 合成时才打开 `启用后处理合成`。
+2. 启用 `HoPlanarReflectionRendererFeature`，在需要透明/OIT 合成时才打开 `启用特殊表面后处理合成`。
 3. 在水面、镜面或光滑地面 renderer 上添加 `HoPlanarReflectionSurface`。
 4. 设置反射层遮罩，通常排除接收平面自身；按需要设置分辨率、更新帧间隔、裁剪和 Scene View 开关。
-5. 确认材质拥有 `HoMetadataBuffer` 与 `HoGeometryBuffer` pass。`_UsePlanarReflection` 只表示本帧是否允许写出 PLR 接收强度，不表示材质直接采样反射纹理。
+5. opaque ForwardLit 只依赖 surface 写入的 source 与 `_UsePlanarReflection`；特殊 fullscreen 路径还要求材质拥有 `HoMetadataBuffer` 与 `HoGeometryBuffer` pass。
 
 ## Surface 参数
 
@@ -25,7 +27,7 @@ PLR 为水面、光滑地面、玻璃和镜子生成镜像相机反射源。它�
 | `使用平面裁剪` / `裁剪平面偏移` | oblique clip plane 及其偏移 |
 | `复制相机清屏设置` | 是否复制源相机 clear flags 和背景色 |
 
-镜像相机仍使用带 depth/stencil 的 HDR target；渲染后复制到不带 depth/stencil 的 color-only RT，后者才是对外发布的 PLR source。
+镜像相机仍使用带 depth/stencil 的 HDR target；渲染后复制到不带 depth/stencil 的 color-only RT，并生成完整 mip chain。后者才是对外发布的 PLR source，ForwardLit 用 perceptual roughness 选择 mip。
 
 ## 运行时边界
 
@@ -42,7 +44,7 @@ beginCameraRendering
 
 ## 反射输入契约
 
-PLR 消费两个公共 buffer：
+下面的公共 buffer 供特殊 fullscreen resolve、SSR 和后续统一反射消费；opaque ForwardLit 使用同一套材质语义直接计算：
 
 | 输入 | 读取内容 |
 | --- | --- |
@@ -50,6 +52,8 @@ PLR 消费两个公共 buffer：
 | `_HoMetadataBufferSurfaceColorTexture` | 线性 baseColor 提示；RGB 不钳制，A 为 coverage |
 | `_HoMetadataBufferMaskIdTexture` | 接收面 mask/id |
 | `_HoGeometryBufferNormalDepthTexture` | RGB 世界法线编码，A 线性深度/coverage |
+
+`_LILPBRPlanarReflectionParams` 的冻结语义为 `(valid, width, height, maxMipLevel)`；`maxMipLevel` 用于 roughness-aware source 采样。
 
 规范化响应：
 
@@ -67,13 +71,13 @@ GeometryBuffer 当前没有 `Custom0` producer。若需要 per-pixel PLR receive
 ```text
 PLR source update         -> beginCameraRendering
 Metadata/Geometry output  -> BeforeRenderingOpaques（或更早）
-Opaque ForwardLit         -> 直接消费 PLR（修复目标）
+Opaque ForwardLit         -> 直接消费 PLR（已实现）
 Transparent/OIT           -> PLR 专用 composite（过渡路径）
 SSR                       -> AfterRenderingOpaques，作为屏幕内补充
 Probe/Sky                 -> PLR/SSR miss fallback
 ```
 
-同一相机不能同时把 PLR source 送入材质响应和 fullscreen `lerp`。如果启用过渡 composite，必须关闭对应材质内 PLR 响应，避免双重反射。
+同一表面不能同时启用 ForwardLit PLR 与特殊 fullscreen PLR resolve，否则会重复累计间接高光。
 
 ## 调试与排查
 
@@ -85,9 +89,8 @@ Probe/Sky                 -> PLR/SSR miss fallback
 
 ## 后续实现顺序
 
-1. 修复 opaque ForwardLit 的 PBR 消费（最高优先级）。
-2. 为 source 增加 roughness-aware mip/blur，并拆分 sharp source 与材质响应。
-3. 完成多平面 source 选择和 PLR 专用 receiver RT。
-4. 再接入 SSR、Probe/Sky fallback 与玻璃/水面的透明扩展。
+1. 完成多平面 source 选择和 PLR 专用 receiver RT。
+2. 用 GGX/Dual-Kawase 预过滤替换当前自动 mip 的基础 box filter。
+3. 再接入 SSR、Probe/Sky fallback 与玻璃/水面的透明扩展。
 
 PLR 不再维护 lilToon 卡通反射模式；材质统一使用 glTF/PBR 风格的 smoothness、metallic、baseColor 和 reflectance 输入。

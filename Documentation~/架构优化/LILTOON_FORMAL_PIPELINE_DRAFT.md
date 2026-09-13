@@ -5,6 +5,7 @@
 > 角色材质域参考 = `Hollow\Hiro\Hiro_M_*.mat`（14 个）。
 > 关联文档：`LILTOON_RENDER_PIPELINE_REVIEW_AND_PLAN.md`（评审与边界）、`lilToon-URP-Extensions/Documentation~/RPComponentRework/RPComponentRework_验收文档.md`（组件边界）。
 > 定位：**按需纸面契约**（非 HDRP 式固定 GBuffer 编码）。通道随需求登记、无消费者不输出、AOV 命名冻结。
+> 反射章节已被 `Documentation~/ReflectionPipelineDesign.md` 取代；本文只保留总体帧序，不再作为 PLR/SSR 输入契约。
 
 ---
 
@@ -24,7 +25,7 @@
 | 1 | Ho-GeometryBuffer | `Ho-GeometryBuffer` | ✅ | normal/depth |
 | 2 | Ho-MetadataBuffer | `Ho-MetadataBuffer` | ✅ | 语义通道 |
 | 3 | HTrace AO | **占位（自研 AO）** | ✅ | asset 值 `Downsample=0, Intensity=3, Direct=0.25, Radius=0.035, Samples=1, BlurQuality=0`（参考；最终以场景 profile 为准） |
-| 4 | Ho-PlanarReflection | `Ho-PlanarReflection` | ✅ | 意图模式合成（`compositeEnabled=1`） |
+| 4 | Ho-PlanarReflection | `Ho-PlanarReflection` | ✅ | PLR source；opaque ForwardLit PBR 消费，特殊 composite 默认关闭 |
 | 5 | Ho-WeightedOIT | `Ho-WeightedOIT` | ✅ | |
 | 6 | Ho-ShadowCast | `Ho-ShadowCast` | ✅ | PCSS 档见 §8 |
 | 7 | Ho-SubsurfaceScattering | `Ho-SubsurfaceScattering` | ✅ | `radius=24` |
@@ -66,7 +67,7 @@
 ```text
 [L0 灯光/阴影]   ShadowCast（附加灯 atlas + URP 主光阴影）
 [L1 语义输入]    CharacterBuffer(Metadata)（对象/mask/surface）+ ScreenGeometryBuffer（normal/depth）
-[L2 屏幕效果]    ScreenProcess：AO / GI / SSS / 反射合成 / 角色特化 / OIT
+[L2 屏幕效果]    ScreenProcess：AO / GI / SSS / SSR/特殊反射 resolve / 角色特化 / OIT
 [L3 图像链]      ImageProcess（只读 camera color）
 [L4 输出/调试]   AOV 导出层（多通道 EXR） + DebugTile
 ```
@@ -82,7 +83,7 @@
 [6]  Ho-SSGI（独立 feature；读 gisexclude）          → gi
 [7]  Ho-SubsurfaceScattering                        → sss
 [8]  Ho-WeightedOIT（透明合成，最难搞）              → 见 §8
-[9]  Ho-PlanarReflection（意图模式 composite）       → reflection
+[9]  Ho-PlanarReflection（PLR source；特殊 composite 可选） → reflection
 [10] Ho-CharacterSpecialization（眼透/发影/脸色）    → eyecolor/eyedata
 [11] Ho-ScreenProcess（其余语义效果）
 [12] Ho-ImageProcess（最终图像链）
@@ -90,7 +91,7 @@
 [14] DebugTile（调试时最后）
 ```
 
-> 次序依据：AO/GI 需要 depth/normal 与 opaque 后颜色 → 透明前"靠前"；SSS 合成须早于透明/OIT；OIT 属透明阶段放最后；反射合成在透明后；角色特化在后。精确 pass event（AfterRenderingOpaques 内顺序）以实机 Frame Debugger 为准；契约上 AO/GI 只占 `ao`/`gi` 通道，不独占 RT。
+> 次序依据：PLR source 在主相机渲染前更新并由 opaque ForwardLit 消费；AO/GI/SSR 需要 depth/normal 与 opaque 后颜色；SSS 合成须早于透明/OIT；特殊透明反射 resolve 才放在透明阶段。精确 pass event 以实机 Frame Debugger 为准。
 
 ### 3.3 旧→新映射（一次性资产迁移）
 

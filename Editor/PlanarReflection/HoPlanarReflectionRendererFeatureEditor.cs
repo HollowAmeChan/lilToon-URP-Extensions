@@ -81,14 +81,17 @@ namespace lilToon.URP.Extensions.Editor.PlanarReflection
                 ? "开 " + FormatFloat(compositeStrength) + " / 扰动 " + FormatFloat(distortion)
                 : "关";
 
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showComposite, "反射合成", summary, CompositeColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showComposite, "PLR 特殊合成", summary, CompositeColor))
             {
                 return;
             }
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                DrawProperty(compositeEnabled, "启用后处理合成");
+                EditorGUILayout.HelpBox(
+                    "Opaque lilToon 已在 ForwardLit 中按 PBR 响应消费 PLR。这里只用于水面/OIT/调试等特殊全屏路径；同一材质不要同时启用两条路径。",
+                    MessageType.Info);
+                DrawProperty(compositeEnabled, "启用特殊表面后处理合成");
                 DrawProperty(compositeStrength, "合成强度");
                 DrawProperty(distortion, "法线扰动");
                 DrawProperty(Find("reflectionExposure"), "反射曝光 EV");

@@ -37,7 +37,8 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
             float4 _HoPlanarReflectionProcessedTexture_TexelSize;
 
             TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
-            TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture);
+            TEXTURE2D_X(_HoMetadataBufferReflectionMaterialTexture);
+            TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
             TEXTURE2D(_HoPlanarReflectionProcessedTexture);
             SAMPLER(sampler_HoPlanarReflectionProcessedTexture);
@@ -71,24 +72,26 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
                 }
 
                 half4 maskId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv);
-                half4 custom0 = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture, sampler_PointClamp, uv);
+                half4 reflectionMaterial = SAMPLE_TEXTURE2D_X(_HoMetadataBufferReflectionMaterialTexture, sampler_PointClamp, uv);
+                half4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_PointClamp, uv);
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
 
-                half surfaceMask = saturate(maskId.r) * LilHoGeometryBufferCoverage(normalDepth);
-                half smoothness = saturate(custom0.r);
-                half wetness = saturate(custom0.g);
-                half normalStrength = saturate(custom0.b);
-                half materialReflectionStrength = saturate(custom0.a);
+                half surfaceMask = saturate(maskId.r) * saturate(surfaceColor.a) * LilHoGeometryBufferCoverage(normalDepth);
+                half perceptualRoughness = saturate(reflectionMaterial.r);
+                half smoothness = 1.0h - perceptualRoughness;
+                half metallic = saturate(reflectionMaterial.g);
+                half reflectance = saturate(reflectionMaterial.b);
+                half materialReflectionStrength = saturate(reflectionMaterial.a);
 
                 half minSmoothness = saturate(_HoPlanarReflectionCompositeParams.z);
                 half smoothnessFade = saturate((smoothness - minSmoothness) / max(1.0h - minSmoothness, 0.0001h));
-                half centerWeight = surfaceMask * wetness * materialReflectionStrength * smoothnessFade;
+                half centerWeight = surfaceMask * materialReflectionStrength * smoothnessFade;
 
                 float3 normalWS = LilHoGeometryBufferWorldNormalOrZero(normalDepth);
                 if (debugMode == 2) return half4(surfaceMask, surfaceMask, surfaceMask, 1.0h);
-                if (debugMode == 3) return half4(smoothness, smoothness, smoothness, 1.0h);
-                if (debugMode == 4) return half4(wetness, wetness, wetness, 1.0h);
-                if (debugMode == 5) return half4(normalStrength, normalStrength, normalStrength, 1.0h);
+                if (debugMode == 3) return half4(perceptualRoughness, perceptualRoughness, perceptualRoughness, 1.0h);
+                if (debugMode == 4) return half4(metallic, metallic, metallic, 1.0h);
+                if (debugMode == 5) return half4(reflectance, reflectance, reflectance, 1.0h);
                 if (debugMode == 6) return half4(materialReflectionStrength, materialReflectionStrength, materialReflectionStrength, 1.0h);
                 if (debugMode == 7) return half4(normalWS * 0.5 + 0.5, 1.0h);
                 if (debugMode == 8)
@@ -96,7 +99,7 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
                     half depthDebug = saturate(normalDepth.a / max(_HoPlanarReflectionDebugParams.y, 0.0001));
                     return half4(depthDebug, depthDebug, depthDebug, 1.0h);
                 }
-                if (debugMode == 14) return custom0;
+                if (debugMode == 14) return reflectionMaterial;
 
                 if (centerWeight <= 0.0001h)
                 {
@@ -109,7 +112,7 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
                 }
 
                 float3 normalVS = mul((float3x3)UNITY_MATRIX_V, normalWS);
-                float2 distortion = normalVS.xy * _HoPlanarReflectionCompositeParams.y * normalStrength * wetness;
+                float2 distortion = normalVS.xy * _HoPlanarReflectionCompositeParams.y;
                 float2 distortedScreenUv = uv + distortion;
                 if (debugMode == 9)
                 {
@@ -150,7 +153,21 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
                 half3 reflection = SAMPLE_TEXTURE2D(_HoPlanarReflectionProcessedTexture, sampler_HoPlanarReflectionProcessedTexture, reflectionUv).rgb;
                 reflection *= _HoPlanarReflectionCompositeTint.rgb;
 
+                half roughness = perceptualRoughness * perceptualRoughness;
+                half3 baseColor = saturate(surfaceColor.rgb / max(surfaceColor.a, 0.0001h));
+                half3 specular = lerp(reflectance.xxx, baseColor, metallic);
+                half oneMinusReflectivity = (1.0h - reflectance) * (1.0h - metallic);
+                half grazingTerm = saturate(smoothness + (1.0h - oneMinusReflectivity));
+                half nv = saturate(abs(normalVS.z));
+                half fresnelFactor = pow(1.0h - nv, 5.0h);
+                half3 fresnel = lerp(specular, grazingTerm.xxx, fresnelFactor);
+                #ifdef UNITY_COLORSPACE_GAMMA
+                    half surfaceReduction = 1.0h - 0.28h * roughness * perceptualRoughness;
+                #else
+                    half surfaceReduction = rcp(roughness * roughness + 1.0h);
+                #endif
                 half compositeWeight = saturate(centerWeight * depthGate * _HoPlanarReflectionCompositeParams.x * _HoPlanarReflectionCompositeTint.a);
+                half3 reflectionContribution = reflection * surfaceReduction * fresnel * compositeWeight;
                 if (debugMode == 11) return half4(reflection, 1.0h);
                 if (debugMode == 12) return half4(compositeWeight, compositeWeight, compositeWeight, 1.0h);
                 if (debugMode == 15)
@@ -159,7 +176,7 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
                     return half4(edgeExtendDebug, edgeExtendDebug, edgeExtendDebug, 1.0h);
                 }
 
-                cameraColor.rgb = lerp(cameraColor.rgb, reflection, compositeWeight);
+                cameraColor.rgb += reflectionContribution;
                 return cameraColor;
             }
             ENDHLSL

@@ -448,13 +448,17 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 depthBufferBits = 0,
                 depthStencilFormat = GraphicsFormat.None,
                 msaaSamples = 1,
-                useMipMap = false,
-                autoGenerateMips = false
+                useMipMap = true,
+                autoGenerateMips = false,
+                mipCount = Texture.GenerateAllMips
             };
 
             RenderTextureDescriptor cameraDescriptor = colorDescriptor;
             cameraDescriptor.depthBufferBits = 24;
             cameraDescriptor.depthStencilFormat = GetReflectionDepthStencilFormat();
+            cameraDescriptor.useMipMap = false;
+            cameraDescriptor.autoGenerateMips = false;
+            cameraDescriptor.mipCount = 1;
 
             reflectionCameraTexture = new RenderTexture(cameraDescriptor)
             {
@@ -506,7 +510,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
             RenderTextureDescriptor descriptor = texture.descriptor;
             return texture.depth == 0
                 && descriptor.depthBufferBits == 0
-                && descriptor.depthStencilFormat == GraphicsFormat.None;
+                && descriptor.depthStencilFormat == GraphicsFormat.None
+                && descriptor.useMipMap;
         }
 
         private void ConfigureReflectionCamera(
@@ -578,8 +583,9 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 return;
             }
 
-            CommandBuffer cmd = CommandBufferPool.Get("Ho-PlanarReflection Copy");
+            CommandBuffer cmd = CommandBufferPool.Get("Ho-PLR Copy");
             Blitter.BlitCameraTexture(cmd, reflectionCameraTextureHandle, reflectionTextureHandle);
+            cmd.GenerateMips(reflectionTexture);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
@@ -601,7 +607,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
             }
             propertyBlock.SetTexture(ReflectionTextureId, reflectionTexture);
             propertyBlock.SetMatrix(ReflectionTextureMatrixId, GetReflectionViewProjectionMatrix(reflectionCamera));
-            propertyBlock.SetVector(ReflectionParamsId, new Vector4(1.0f, reflectionTexture.width, reflectionTexture.height, 0.0f));
+            propertyBlock.SetVector(ReflectionParamsId, CreateReflectionParams(reflectionTexture));
             surfaceRenderer.SetPropertyBlock(propertyBlock);
             PublishGlobalReflectionState();
         }
@@ -632,7 +638,14 @@ namespace lilToon.URP.Extensions.PlanarReflection
             Shader.SetGlobalTexture(ReflectionTextureId, reflectionTexture);
             Shader.SetGlobalTexture(HoPlanarReflectionShaderConstants.ProcessedReflectionTextureId, reflectionTexture);
             Shader.SetGlobalMatrix(ReflectionTextureMatrixId, reflectionViewProjection);
-            Shader.SetGlobalVector(ReflectionParamsId, new Vector4(1.0f, reflectionTexture.width, reflectionTexture.height, 0.0f));
+            Shader.SetGlobalVector(ReflectionParamsId, CreateReflectionParams(reflectionTexture));
+        }
+
+        private static Vector4 CreateReflectionParams(RenderTexture texture)
+        {
+            return texture == null
+                ? Vector4.zero
+                : new Vector4(1.0f, texture.width, texture.height, Mathf.Max(0, texture.mipmapCount - 1));
         }
 
         private void ReleaseResources()

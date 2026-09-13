@@ -109,15 +109,16 @@ BeforeRenderingPostProcessing -> 必要的 fullscreen resolve / debug
 
 ## 7. 实施顺序
 
-1. **Phase 0：冻结输入（当前阶段）**
+1. **Phase 0：冻结输入（已完成）**
    - 保持 MetadataBuffer Target0-5 语义不变。
    - 保持 GeometryBuffer 的物理/描边分离；未来 `Custom0` 只允许登记为 PLR 专用 RT。
    - 保持 SurfaceColor RGB 不钳制、A 为 coverage。
    - 为 ReflectionMaterial、SurfaceColor、NormalDepth 提供 debug view。
-2. **Phase 1：修复 PLR（最高实现优先级）**
+2. **Phase 1：修复 PLR（进行中，最高实现优先级）**
    - PLR source 生成保持现有镜像相机流程。
-   - ForwardLit 使用 ReflectionMaterial + SurfaceColor baseColor 计算 PBR 反射响应。
-   - sharp source 与 roughness-aware mip/blur 分离；关闭默认的重复 fullscreen 合成。
+   - ForwardLit 已按与 ReflectionMaterial 相同的 smoothness/metallic/reflectance 规则计算 PBR 反射响应。
+   - source 已生成 mip chain 并按 perceptual roughness 采样；默认 fullscreen composite 已关闭。
+   - 后续把 box mip 升级为 GGX/高质量预过滤，并完成水面法线扰动的专用输入。
    - 多平面选择机制在 source id/PLR 专用 RT 契约冻结后实现。
 3. **Phase 2：SSR**
    - 输出颜色和 confidence，使用 GeometryBuffer 与 ReflectionMaterial。
