@@ -79,6 +79,8 @@ Probe/Sky                 -> PLR/SSR miss fallback
 
 同一表面不能同时启用 ForwardLit PLR 与特殊 fullscreen PLR resolve，否则会重复累计间接高光。
 
+当 PLR source 暂时无效、但材质声明了 PLR 接收且没有启用 lilToon 环境反射时，ForwardLit 会直接采样 Reflection Probe/Sky 作为 fallback；如果环境反射已经由 `lilReflection` 处理，则不会重复添加。
+
 ## 调试与排查
 
 - `metadata.reflection-material`：检查 roughness、metallic、reflectance、PLR strength。

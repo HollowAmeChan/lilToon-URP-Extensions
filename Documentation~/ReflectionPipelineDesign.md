@@ -92,7 +92,7 @@ PLR 的镜像相机、oblique clip、`GL.invertCulling` 和 color-only RT 继续
 
 SSR 需要 GeometryBuffer normal/depth、ReflectionMaterial roughness 和 camera color/depth pyramid，输出 `ReflectionColor.rgb + Confidence.a`；先做高质量 linear tracing，再做 Hi-Z、temporal 和 denoise。SSR 只支持 opaque 起步。
 
-探针消费先做纯采样图片的 fallback（roughness mip、probe blend、sky fallback）；探针如何布置、绑定和在 Inspector 中配置不属于本阶段的生产契约。
+探针消费先做纯采样图片的 fallback（roughness mip、probe blend、sky fallback）；当前 PLR source 不可用且材质未启用 lilToon 环境反射时，ForwardLit 会走该 fallback。探针如何布置、绑定和在 Inspector 中配置不属于本阶段的生产契约。
 
 ## 6. 时序冻结
 
