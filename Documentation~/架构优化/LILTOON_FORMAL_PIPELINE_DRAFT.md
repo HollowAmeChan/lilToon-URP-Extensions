@@ -180,11 +180,12 @@ ShoostPostProcessRendererFeature -> Ho-ImageProcess
 - 40 盏算少的，未来可能上百/上千；URP Forward 附加光每盏实时阴影默认关闭；toon 材质对"哪盏灯、多强、有没有阴影"没有统一门控；AOV 无法按灯分开。
 - **URP17 无内置 PCSS**（源码 0 命中，只有 PCF `_SHADOWS_SOFT_LOW/MEDIUM/HIGH`）→ 自研，本轮不做（占位文档）。
 - **ShadowCast 现状 = 两张 atlas**：`AtlasTexture`（附加灯/punctual，灯按 slice/block 排布）+ `SecondDirectionalAtlasTexture`（第二方向光）——**这就是"cast 分组"模型，不是每灯一张**。
+- **容量现状（已实现）**：`Light Capacity` 档位（Low/Medium/High = 12/24/48 盏）只约束"同时采样的附加灯数"，也就是逐像素采样循环上限；切片数**不按档位写死**，而是由图集尺寸与分辨率算出（`floor(atlasSize / resolution)^2`，混合光型由装箱器决定），硬上限是固定数组长度 `HO_SHADOW_CAST_ARRAY_SLICES` = 128 片。数组长度固定是 Unity 的硬约束（全局数组槽位长度在会话内被缓存且只允许变小，调大需重启编辑器）。数值契约：`Runtime/ShadowCast/HoShadowCastShaderContract.cs` + `Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl`，一致性由 `Editor/ShadowCast/HoShadowCastShaderContractValidator.cs` 守住。
 
 ### 8.2 收集策略（cast 分组，非每灯一槽）
 
 1. **主光 cast 单独一路**：URP 主光阴影（PCF 软档）一路；ShadowCast 的路**永不与主光合并**。
-2. **ShadowCast = cast 组列表**：每组 = 一张 atlas，组内灯按 slice/block 排布（现有实现即是）。组字段：`id/用途（main-additional|second-directional|character-face|tilted-far|custom）｜光源类型｜分辨率/过滤/层掩码/强度｜组内容量（slice 上限）`。
+2. **ShadowCast = cast 组列表**：每组 = 一张 atlas，组内灯按 slice/block 排布（现有实现即是）。组字段：`id/用途（main-additional|second-directional|character-face|tilted-far|custom）｜光源类型｜分辨率/过滤/层掩码/强度｜组内容量（slice 上限，按组内 atlas 几何算出，见 §8.1 容量现状）`。
 3. **首版 2 组**（现状维持）；**组上限 N = 8**。
 4. **专用组（只规划）**：① 角色脸部高精度 cast 组；② 灯光特倾斜的远平面 cast 组——"新分组蓝图"（占位文档），加组≠改框架。
 5. **灯数变态策略**：组内容量有限 → 超出按距离/强度/重要性留最近/最强 N 盏投影，其余仅光照；组固定、灯可替换。

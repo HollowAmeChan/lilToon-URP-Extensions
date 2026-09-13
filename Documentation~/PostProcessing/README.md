@@ -151,6 +151,7 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 - `Runtime/ShadowCast/HoShadowCastPass.cs`
 - `Runtime/ShadowCast/HoShadowCastFrameCollector.cs`
 - `Runtime/ShadowCast/HoShadowCastPublisher.cs`
+- `Runtime/ShadowCast/HoShadowCastShaderContract.cs` + `Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl`（C#/HLSL 数值契约）
 
 核心流程：
 
@@ -159,6 +160,33 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 - 第二方向光使用独立 atlas 和级联参数。
 - PCSS 参数按 punctual 和 second directional 分开发布。
 - `HoShadowCastPublisher` 在每个 camera 开始时 reset，在 pass 结束后发布全局阴影贴图、矩阵、灯光数据和调试数据。
+
+### 容量档（Light Capacity）
+
+容量分成两个互相独立的量：**档位决定"同时采样多少盏附加灯"**（逐像素代价），**图集几何决定"能放下多少片切片"**（进而决定能投影多少盏点光）。
+
+| 档位 | 附加灯上限（采样/循环） |
+| --- | --- |
+| Low（默认） | 12 |
+| Medium | 24 |
+| High | 48 |
+
+切片数不按档位写死，而是由图集尺寸与分辨率算出来：
+
+- 切片是正方形，按行装箱，所以单一光类型的容量就是 `floor(atlasSize / resolution)^2`，并被固定数组上限 `HO_SHADOW_CAST_ARRAY_SLICES`（128 片）截断；混合聚光/点光的场景由 `HoShadowCastAtlasPacker` 在实际装箱时决定。
+- 分辨率是权威值：收集端不再为了让"某个切片预算"塞进去而下调分辨率；想容纳更多灯就下调 `Spot/Point Face Resolution`，想更清晰就上调，切片数会自动跟着变。容量不足时诊断里区分两种原因：`atlas is full at Npx`（几何放不下）与 `slice array limit reached (128 …)`（硬数组上限）。
+- 编辑器"容量"面板会按当前 `Atlas Size` / `Spot Resolution` / `Point Face Resolution` 实时显示算出的切片数与约合点光灯数。
+- 被拒绝的灯会归还它是试装箱占用的图集空间，不会留下空洞。
+
+其他约束：
+
+- 聚光 1 片/盏、点光 6 片/盏；第二方向光是独立配额（4 灯 × 4 级联 = 16 片）。
+- 档位通过全局 keyword（`HO_SHADOW_CAST_CAPACITY_MEDIUM` / `HO_SHADOW_CAST_CAPACITY_HIGH`，Low 不带 keyword）选择材质侧变体；keyword 声明在 `HoShadowCastSampling.hlsl`。`HoShadowCastPublisher.ApplyCapacityKeywords` 与收集逻辑读同一份 config，保证"收集上限"和"shader 循环上限"始终一致。
+- **全局数组长度固定**（`HO_SHADOW_CAST_ARRAY_LIGHTS`/`_SLICES` = 48/128），publisher 每次上传固定长度数组。原因：Unity 会在会话内缓存全局数组槽位的长度，且之后只允许变小（`Property (_HoShadowCastLightData0) exceeds previous array size (48 vs 12). Cap to previous size. Restart Unity to recreate the arrays.`）。因此档位只约束收集与采样循环，不改变数组布局——这也让运行时切换档位变得安全（不需要重启、不会被静默截断）。注意：**调大**数组长度需要重启一次 Unity 编辑器（已分配的槽位无法变大），调小不需要；改动时 `HoShadowCastShaderContract.cs` 与 hlsl 必须同步，校验器会检查每个档位不超过数组长度。
+- 固定数组的代价是常驻全局常量缓冲：约 15KB（48 灯 × 5 + 128 切片 × 5 个 float4，外加第二方向光）。若要面向 GLES3 等 UBO 上限 16KB 的平台，应同时下调 `HO_SHADOW_CAST_ARRAY_*` 与对应档位值（两侧一起改，校验器会守住一致性）。
+- `HoShadowCastShaderContract.hlsl` 是 C#/HLSL 的唯一数值契约（数组长度、档位、第二方向光容量、PCSS 采样上限、灯光类型 id）。`Editor/ShadowCast/HoShadowCastShaderContractValidator.cs` 在编辑器加载时（以及 `Tools/lilToon URP Extensions/Validate ShadowCast Shader Contract` 菜单）解析该文件并与 C# 侧比对，出现漂移会报错；它还覆盖两个调试 shader（`HoShadowCastDebug.shader`、`HoDebugTile.shader`），要求它们引用契约、不得写死数组长度、不得依赖档位宏。
+- 档位 keyword 由两处应用：`HoShadowCastRendererFeature.AddRenderPasses`（immediate，保证 pass 未入队时状态也正确）和 pass 自己的命令缓冲（与 atlas 发布同序，多相机/多档位时每个相机都用自己的档位）。
+- 调试视图不依赖档位：按运行时计数和固定数组长度绘制，因此不需要 tier keyword。
 
 ## 调试与诊断
 
