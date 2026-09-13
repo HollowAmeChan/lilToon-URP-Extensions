@@ -27,7 +27,7 @@ PLR 的 PBR 材质路径只支持完整 lilToon Forward，不接入 lilToonLite/
 | `使用平面裁剪` / `裁剪平面偏移` | oblique clip plane 及其偏移 |
 | `复制相机清屏设置` | 是否复制源相机 clear flags 和背景色 |
 
-镜像相机仍使用带 depth/stencil 的 HDR target；渲染后复制到不带 depth/stencil 的 color-only RT，并生成完整 mip chain。后者才是对外发布的 PLR source，ForwardLit 用 perceptual roughness 选择 mip。
+镜像相机仍使用带 depth/stencil 的 HDR target；渲染后复制到不带 depth/stencil 的 color-only RT，并通过逐级 13-tap tent downsample 生成完整 HDR 预过滤 mip chain。后者才是对外发布的 PLR source，ForwardLit 用 perceptual roughness 选择 mip；预过滤 shader 缺失时才回退到 Unity `GenerateMips`。
 
 ## 运行时边界
 
@@ -90,7 +90,7 @@ Probe/Sky                 -> PLR/SSR miss fallback
 ## 后续实现顺序
 
 1. 完成多平面 source 选择和 PLR 专用 receiver RT。
-2. 用 GGX/Dual-Kawase 预过滤替换当前自动 mip 的基础 box filter。
+2. 评估用 GGX importance sampling 进一步替换当前能量保持的 tent 预过滤。
 3. 再接入 SSR、Probe/Sky fallback 与玻璃/水面的透明扩展。
 
 PLR 不再维护 lilToon 卡通反射模式；材质统一使用 glTF/PBR 风格的 smoothness、metallic、baseColor 和 reflectance 输入。

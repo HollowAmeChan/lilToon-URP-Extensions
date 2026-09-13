@@ -54,6 +54,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
         private static readonly int ReflectionTextureId = HoPlanarReflectionShaderConstants.ReflectionTextureId;
         private static readonly int ReflectionTextureMatrixId = HoPlanarReflectionShaderConstants.ReflectionTextureMatrixId;
         private static readonly int ReflectionParamsId = HoPlanarReflectionShaderConstants.ReflectionParamsId;
+        private static readonly int PrefilterRadiusId = Shader.PropertyToID("_HoPLRPrefilterRadius");
+        private const string PrefilterShaderName = "Hidden/lilToon/URP/PLR/Prefilter";
         private const float DegeneratePlaneDistance = 0.0001f;
         private static readonly Rect FullViewportRect = new Rect(0.0f, 0.0f, 1.0f, 1.0f);
         private static bool isRenderingReflection;
@@ -118,6 +120,9 @@ namespace lilToon.URP.Extensions.PlanarReflection
         private RTHandle reflectionCameraTextureHandle;
         private RenderTexture reflectionTexture;
         private RTHandle reflectionTextureHandle;
+        private RenderTexture[] reflectionPrefilterTextures;
+        private RTHandle[] reflectionPrefilterTextureHandles;
+        private Material reflectionPrefilterMaterial;
         private MaterialPropertyBlock propertyBlock;
         private int lastRenderedFrame = -1;
 
@@ -406,7 +411,22 @@ namespace lilToon.URP.Extensions.PlanarReflection
         private void EnsureResources(Camera sourceCamera)
         {
             EnsureReflectionCamera();
+            EnsurePrefilterMaterial();
             EnsureReflectionTexture(sourceCamera);
+        }
+
+        private void EnsurePrefilterMaterial()
+        {
+            if (reflectionPrefilterMaterial != null)
+            {
+                return;
+            }
+
+            Shader shader = Shader.Find(PrefilterShaderName);
+            if (shader != null)
+            {
+                reflectionPrefilterMaterial = CoreUtils.CreateEngineMaterial(shader);
+            }
         }
 
         private void EnsureReflectionCamera()
@@ -479,6 +499,36 @@ namespace lilToon.URP.Extensions.PlanarReflection
             };
             reflectionTexture.Create();
             reflectionTextureHandle = RTHandles.Alloc(reflectionTexture);
+            AllocatePrefilterTextures(colorDescriptor, reflectionTexture.mipmapCount);
+        }
+
+        private void AllocatePrefilterTextures(RenderTextureDescriptor baseDescriptor, int mipCount)
+        {
+            int levelCount = Mathf.Max(0, mipCount - 1);
+            reflectionPrefilterTextures = new RenderTexture[levelCount];
+            reflectionPrefilterTextureHandles = new RTHandle[levelCount];
+
+            for (int index = 0; index < levelCount; index++)
+            {
+                int mipLevel = index + 1;
+                RenderTextureDescriptor descriptor = baseDescriptor;
+                descriptor.width = Mathf.Max(1, baseDescriptor.width >> mipLevel);
+                descriptor.height = Mathf.Max(1, baseDescriptor.height >> mipLevel);
+                descriptor.useMipMap = false;
+                descriptor.autoGenerateMips = false;
+                descriptor.mipCount = 1;
+
+                RenderTexture texture = new RenderTexture(descriptor)
+                {
+                    name = $"{nameof(HoPlanarReflectionSurface)} Prefilter Mip {mipLevel} ({name})",
+                    hideFlags = HideFlags.HideAndDontSave,
+                    wrapMode = TextureWrapMode.Clamp,
+                    filterMode = FilterMode.Bilinear
+                };
+                texture.Create();
+                reflectionPrefilterTextures[index] = texture;
+                reflectionPrefilterTextureHandles[index] = RTHandles.Alloc(texture);
+            }
         }
 
         private static GraphicsFormat GetReflectionDepthStencilFormat()
@@ -585,9 +635,38 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
             CommandBuffer cmd = CommandBufferPool.Get("Ho-PLR Copy");
             Blitter.BlitCameraTexture(cmd, reflectionCameraTextureHandle, reflectionTextureHandle);
-            cmd.GenerateMips(reflectionTexture);
+            BuildReflectionPrefilter(cmd);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
+        }
+
+        private void BuildReflectionPrefilter(CommandBuffer cmd)
+        {
+            int expectedLevelCount = reflectionTexture != null ? Mathf.Max(0, reflectionTexture.mipmapCount - 1) : 0;
+            bool prefilterReady = reflectionPrefilterMaterial != null
+                && reflectionPrefilterTextures != null
+                && reflectionPrefilterTextureHandles != null
+                && reflectionPrefilterTextures.Length == expectedLevelCount
+                && reflectionPrefilterTextureHandles.Length == expectedLevelCount;
+
+            if (!prefilterReady)
+            {
+                cmd.GenerateMips(reflectionTexture);
+                return;
+            }
+
+            RTHandle source = reflectionTextureHandle;
+            for (int index = 0; index < expectedLevelCount; index++)
+            {
+                int mipLevel = index + 1;
+                RTHandle destination = reflectionPrefilterTextureHandles[index];
+                cmd.SetGlobalFloat(PrefilterRadiusId, 1.0f + mipLevel * 0.25f);
+                Blitter.BlitCameraTexture(cmd, source, destination, reflectionPrefilterMaterial, 0);
+                cmd.CopyTexture(reflectionPrefilterTextures[index], 0, 0, reflectionTexture, 0, mipLevel);
+                source = destination;
+            }
+
+            cmd.SetGlobalFloat(PrefilterRadiusId, 1.0f);
         }
 
         private void ApplyEnabledPropertyBlock()
@@ -652,6 +731,12 @@ namespace lilToon.URP.Extensions.PlanarReflection
         {
             ReleaseReflectionTextures();
 
+            if (reflectionPrefilterMaterial != null)
+            {
+                CoreUtils.Destroy(reflectionPrefilterMaterial);
+                reflectionPrefilterMaterial = null;
+            }
+
             if (reflectionCamera != null)
             {
                 DestroyUnityObject(reflectionCamera.gameObject);
@@ -667,6 +752,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 CurrentReflectionTextureHandle = null;
             }
 
+            ReleasePrefilterTextures();
             ReleaseReflectionTextureHandle();
             if (reflectionTexture != null)
             {
@@ -682,6 +768,35 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 DestroyUnityObject(reflectionCameraTexture);
                 reflectionCameraTexture = null;
             }
+        }
+
+        private void ReleasePrefilterTextures()
+        {
+            if (reflectionPrefilterTextureHandles != null)
+            {
+                for (int i = 0; i < reflectionPrefilterTextureHandles.Length; i++)
+                {
+                    reflectionPrefilterTextureHandles[i]?.Release();
+                }
+            }
+
+            if (reflectionPrefilterTextures != null)
+            {
+                for (int i = 0; i < reflectionPrefilterTextures.Length; i++)
+                {
+                    RenderTexture texture = reflectionPrefilterTextures[i];
+                    if (texture == null)
+                    {
+                        continue;
+                    }
+
+                    texture.Release();
+                    DestroyUnityObject(texture);
+                }
+            }
+
+            reflectionPrefilterTextureHandles = null;
+            reflectionPrefilterTextures = null;
         }
 
         private void ReleaseReflectionTextureHandle()
