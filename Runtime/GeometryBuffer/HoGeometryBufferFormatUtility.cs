@@ -14,14 +14,22 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
         public static GraphicsFormat GetCoverageGraphicsFormat()
         {
-            if (IsColorFormatUsable(GraphicsFormat.R8_UNorm))
+            // R = fraction of covered MSAA samples, whichever surface wrote them.
+            //     This stays the public coverage contract.
+            // G = share of the pixel owned by the surface the resolve selected
+            //     (the nearest sample). The two differ at a silhouette shared
+            //     with a farther surface: R is 1 while G is < 1. An occlusion
+            //     consumer needs G to know that such a pixel's colour is partly
+            //     the background's, and therefore that the resolved surface's
+            //     occlusion must not be presented for the whole pixel.
+            if (IsColorFormatUsable(GraphicsFormat.R8G8_UNorm))
             {
-                return GraphicsFormat.R8_UNorm;
+                return GraphicsFormat.R8G8_UNorm;
             }
 
-            if (IsColorFormatUsable(GraphicsFormat.R16_SFloat))
+            if (IsColorFormatUsable(GraphicsFormat.R16G16_SFloat))
             {
-                return GraphicsFormat.R16_SFloat;
+                return GraphicsFormat.R16G16_SFloat;
             }
 
             return GetFallbackColorFormat();

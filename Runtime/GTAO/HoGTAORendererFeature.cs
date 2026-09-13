@@ -236,6 +236,9 @@ namespace lilToon.URP.Extensions.GTAO
                 // carried by the separate normal history below.
                 graphicsFormat = GraphicsFormat.R16G16B16A16_SFloat,
                 depthBufferBits = 0,
+                // Single sample on purpose: history is reprojected and filtered
+                // bilinearly every frame, and multisampled resources support
+                // neither. See Documentation~/架构边界/MSAA.md.
                 msaaSamples = 1,
                 useMipMap = false,
                 autoGenerateMips = false,
@@ -1274,6 +1277,24 @@ namespace lilToon.URP.Extensions.GTAO
             destinationDesc.name = isDebug ? "_HoGTAODebugColor" : "_HoAOTexture";
             destinationDesc.clearBuffer = false;
             destinationDesc.depthBufferBits = 0;
+            if (!isDebug)
+            {
+                // _HoAOTexture is a screen-space semantic that opaque materials
+                // sample as a plain texture at the pixel centre
+                // (lilToon: TEXTURE2D_SCREEN(_HoAOTexture) + LIL_SAMPLE_SCREEN).
+                // It must therefore not inherit the camera color attachment's
+                // MSAA sample count or be bound as Texture2DMS: sampling a
+                // multisampled resource through a Texture2D declaration is not
+                // defined by the API and behaves differently per platform.
+                // Every other auxiliary texture in this feature already opts out
+                // of MSAA explicitly; this one was missing it.
+                destinationDesc.msaaSamples = MSAASamples.None;
+                destinationDesc.bindTextureMS = false;
+                // The consumer samples with a linear sampler, so match it here
+                // instead of inheriting the camera color's filter mode.
+                destinationDesc.filterMode = FilterMode.Bilinear;
+            }
+
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
             using (var builder = renderGraph.AddRasterRenderPass<BlitData>(passName, out BlitData data, ProfilingSampler))

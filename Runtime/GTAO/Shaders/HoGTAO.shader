@@ -29,6 +29,8 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
         // far-plane precision and produces visible contour bands.
         TEXTURE2D_X_FLOAT(_HoGeometryBufferDepthTexture);
         TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
+        TEXTURE2D_X(_HoGeometryBufferCoverageTexture);
+        float _HoGeometryBufferCoverageTextureValid;
         TEXTURE2D_X_FLOAT(_HoGTAOSpatialDepthTexture);
         TEXTURE2D_X(_HoGTAOGeometryInput);
         float4 _HoGTAODepthInputTexelSize;
@@ -67,6 +69,40 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
 
         static const float HoGTAOSliceRotations[6] = { 60.0, 300.0, 180.0, 240.0, 120.0, 0.0 };
         static const float HoGTAONoiseOffsets[4] = { 0.0, 0.5, 0.25, 0.75 };
+
+        // R of the GeometryBuffer coverage texture: fraction of the pixel that
+        // carries geometry at all. Without MSAA this degrades to "is there
+        // geometry here", which is what the depth-normal alpha already says.
+        half HoGTAOGeometryCoverageAt(float2 uv, half4 normalDepth)
+        {
+            if (_HoGeometryBufferCoverageTextureValid > 0.5)
+            {
+                return saturate(SAMPLE_TEXTURE2D_X(
+                    _HoGeometryBufferCoverageTexture,
+                    sampler_PointClamp,
+                    saturate(uv)).r);
+            }
+
+            return step(0.0001h, normalDepth.a);
+        }
+
+        // G of the same texture: share of the pixel owned by the surface the
+        // MSAA resolve selected. It equals the total coverage on a single
+        // surface pixel and is smaller at a silhouette shared with a farther
+        // surface - the only pixels where a per pixel occlusion value cannot
+        // represent what the pixel's colour actually is.
+        half HoGTAOGeometrySelectedCoverageAt(float2 uv, half4 normalDepth)
+        {
+            if (_HoGeometryBufferCoverageTextureValid > 0.5)
+            {
+                return saturate(SAMPLE_TEXTURE2D_X(
+                    _HoGeometryBufferCoverageTexture,
+                    sampler_PointClamp,
+                    saturate(uv)).g);
+            }
+
+            return step(0.0001h, normalDepth.a);
+        }
 
         float4 DepthCopy(Varyings input) : SV_Target
         {
@@ -728,6 +764,98 @@ Shader "Hidden/lilToon/URP/HoGTAOv4"
             }
 
             half filtered = (half)saturate(sum / max(weightSum, 1.0e-5));
+
+            // MSAA silhouette composite.
+            // Everything above produced one occlusion value for this pixel,
+            // traced from the surface the MSAA resolve selected (the nearest
+            // sample). At a silhouette the pixel's colour is a coverage
+            // weighted mixture, so a pixel that is partly the background must
+            // not present the resolved surface's occlusion for all of it: the
+            // foreground surface at its own silhouette is unoccluded by
+            // construction (nothing lies nearer along the view direction),
+            // which is the hard bright line this replaces.
+            // The background surface's occlusion cannot be traced here - this
+            // pixel's depth belongs to the foreground - so it is taken from the
+            // neighbouring pixels where it is the resolved surface, and mixed in
+            // by the share of the pixel the foreground owns. Compositing after
+            // the denoiser keeps the filter from averaging the result back
+            // toward the foreground.
+            if (_HoGeometryBufferCoverageTextureValid > 0.5)
+            {
+                half centerCoverage = HoGTAOGeometryCoverageAt(uv, centerND);
+                half centerSelectedCoverage = HoGTAOGeometrySelectedCoverageAt(uv, centerND);
+                if (centerSelectedCoverage < centerCoverage - 0.001h)
+                {
+                    float2 oneTexel = rcp(_ScreenParams.xy);
+                    float backgroundOcclusion = 0.0;
+                    float backgroundWeight = 0.0;
+                    // Two rings. The second is walked only when the first found
+                    // no background pixel at all, which is what happens at sharp
+                    // features: a converging hair tip can carry silhouette
+                    // pixels on every side of its first ring, so the nearest
+                    // solid background pixel sits two texels away. The guard
+                    // keeps the common case at eight taps.
+                    [unroll]
+                    for (int ring = 1; ring <= 2; ring++)
+                    {
+                        // Ring 2 is only walked when ring 1 found nothing at
+                        // all; the guard is evaluated once per ring so ring 1
+                        // still averages all of its taps.
+                        if (backgroundWeight > 0.5)
+                        {
+                            continue;
+                        }
+
+                        [unroll]
+                        for (int behindTap = 0; behindTap < 8; behindTap++)
+                        {
+                            float2 behindUV = uv + taps[behindTap] * oneTexel * ring;
+                            half4 behindND = SAMPLE_TEXTURE2D_X(_HoGTAOGeometryInput, sampler_PointClamp, behindUV);
+                            if (HoGTAOGeometryCoverageAt(behindUV, behindND) <= 0.0001h)
+                            {
+                                continue;
+                            }
+
+                            // Only a pixel whose resolved surface owns most of
+                            // itself can stand in for the background: another
+                            // silhouette pixel holds the foreground's occlusion,
+                            // not the background's.
+                            if (HoGTAOGeometrySelectedCoverageAt(behindUV, behindND) < 0.5h)
+                            {
+                                continue;
+                            }
+
+                            float behindRawDepth = SAMPLE_TEXTURE2D_X(_HoGTAOSpatialDepthTexture, sampler_PointClamp, behindUV).r;
+                            if (HoGTAOIsFarClip(behindRawDepth))
+                            {
+                                continue;
+                            }
+
+                            float behindDepth = LinearEyeDepth(behindRawDepth, _ZBufferParams);
+                            if (behindDepth <= centerDepth + max(1.0e-4, centerDepth * 1.0e-3))
+                            {
+                                // Same surface or in front of it: not the
+                                // background.
+                                continue;
+                            }
+
+                            backgroundOcclusion += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, behindUV).r;
+                            backgroundWeight += 1.0;
+                        }
+                    }
+
+                    if (backgroundWeight > 0.5)
+                    {
+                        float backgroundShare = saturate(
+                            1.0 - (float)centerSelectedCoverage / max((float)centerCoverage, 1.0e-5));
+                        filtered = (half)lerp(
+                            (float)filtered,
+                            backgroundOcclusion / backgroundWeight,
+                            backgroundShare);
+                    }
+                }
+            }
+
             return half4(filtered, centerNormal * 0.5h + 0.5h);
         }
 
