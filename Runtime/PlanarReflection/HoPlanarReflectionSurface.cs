@@ -478,14 +478,16 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
             ReleaseReflectionTextures();
 
+            bool enableMipMap = SupportsReflectionMipmaps(width, height);
+
             RenderTextureDescriptor colorDescriptor = new RenderTextureDescriptor(width, height, RenderTextureFormat.DefaultHDR, 0)
             {
                 depthBufferBits = 0,
                 depthStencilFormat = GraphicsFormat.None,
                 msaaSamples = 1,
-                useMipMap = true,
+                useMipMap = enableMipMap,
                 autoGenerateMips = false,
-                mipCount = Texture.GenerateAllMips
+                mipCount = enableMipMap ? Texture.GenerateAllMips : 1
             };
 
             RenderTextureDescriptor cameraDescriptor = colorDescriptor;
@@ -575,8 +577,18 @@ namespace lilToon.URP.Extensions.PlanarReflection
             RenderTextureDescriptor descriptor = texture.descriptor;
             return texture.depth == 0
                 && descriptor.depthBufferBits == 0
-                && descriptor.depthStencilFormat == GraphicsFormat.None
-                && descriptor.useMipMap;
+                && descriptor.depthStencilFormat == GraphicsFormat.None;
+        }
+
+        private static bool SupportsReflectionMipmaps(int width, int height)
+        {
+            return SystemInfo.npotSupport == NPOTSupport.Full
+                || (IsPowerOfTwo(width) && IsPowerOfTwo(height));
+        }
+
+        private static bool IsPowerOfTwo(int value)
+        {
+            return value > 0 && (value & (value - 1)) == 0;
         }
 
         private void ConfigureReflectionCamera(
