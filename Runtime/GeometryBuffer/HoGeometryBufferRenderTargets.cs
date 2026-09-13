@@ -29,6 +29,12 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         public RTHandle DepthMsaaTexture => depthMsaaTexture;
         public RTHandle OutlineNormalDepthMsaaTexture => outlineNormalDepthMsaaTexture;
         public RTHandle SkyTexture => skyTexture;
+        // The GeometryBuffer is the single place where camera MSAA is allowed to
+        // exist: the camera's depth/normal data is drawn into these MSAA targets
+        // and then resolved into single sample textures plus a coverage texture.
+        // Everything downstream (screen space and temporal features) consumes the
+        // resolved result, so this resolve is what keeps MSAA merely "unusable for
+        // extra quality" instead of "broken". See Documentation~/架构边界/MSAA.md.
         public bool UseMsaaResolve => msaaSamples > 1 &&
             normalDepthMsaaTexture != null &&
             depthMsaaTexture != null &&

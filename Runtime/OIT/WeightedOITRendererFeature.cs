@@ -766,6 +766,11 @@ namespace lilToon.URP.Extensions.OIT
             descriptor.dimension = cameraTextureDescriptor.dimension;
             descriptor.slices = cameraTextureDescriptor.volumeDepth;
             descriptor.depthBufferBits = 0;
+            // Intentional, do not "unify" this with the single sample buffers the
+            // screen space features use: at full resolution these targets are the
+            // camera's own multi-sample attachments and must carry the same sample
+            // count as the camera colour. The reduced-resolution branch cannot, so
+            // it opts out. See Documentation~/架构边界/MSAA.md.
             descriptor.msaaSamples = divisor == 1
                 ? (MSAASamples)cameraTextureDescriptor.msaaSamples
                 : MSAASamples.None;

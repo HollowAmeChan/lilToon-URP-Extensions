@@ -217,6 +217,11 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
             HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
+            // Camera MSAA is drawn here and resolved right below, so every
+            // consumer downstream sees single sample geometry plus coverage.
+            // Dropping this resolve degrades the MSAA case to "nearest sample"
+            // geometry and puts a hard bright line along every silhouette.
+            // See Documentation~/架构边界/MSAA.md.
             int msaaSamples = resolveMaterial != null
                 ? HoGeometryBufferRenderTargets.GetSupportedMsaaSampleCount(cameraData.cameraTargetDescriptor, settings)
                 : 1;
