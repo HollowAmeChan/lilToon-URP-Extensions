@@ -8,22 +8,56 @@ namespace lilToon.URP.Extensions.ShadowCast
 {
     internal static class HoShadowCastPublisher
     {
-        private static readonly Vector4[] WorldToShadowRow0 = new Vector4[HoShadowCastShaderConstants.MaxShadowSlices];
-        private static readonly Vector4[] WorldToShadowRow1 = new Vector4[HoShadowCastShaderConstants.MaxShadowSlices];
-        private static readonly Vector4[] WorldToShadowRow2 = new Vector4[HoShadowCastShaderConstants.MaxShadowSlices];
-        private static readonly Vector4[] WorldToShadowRow3 = new Vector4[HoShadowCastShaderConstants.MaxShadowSlices];
-        private static readonly Vector4[] LightData0 = new Vector4[HoShadowCastShaderConstants.MaxLights];
-        private static readonly Vector4[] LightData1 = new Vector4[HoShadowCastShaderConstants.MaxLights];
-        private static readonly Vector4[] LightData2 = new Vector4[HoShadowCastShaderConstants.MaxLights];
-        private static readonly Vector4[] LightAttenuation = new Vector4[HoShadowCastShaderConstants.MaxLights];
-        private static readonly Vector4[] LightColor = new Vector4[HoShadowCastShaderConstants.MaxLights];
-        private static readonly Vector4[] SliceData = new Vector4[HoShadowCastShaderConstants.MaxShadowSlices];
-        private static readonly Vector4[] SecondDirectionalWorldToShadowRow0 = new Vector4[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
-        private static readonly Vector4[] SecondDirectionalWorldToShadowRow1 = new Vector4[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
-        private static readonly Vector4[] SecondDirectionalWorldToShadowRow2 = new Vector4[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
-        private static readonly Vector4[] SecondDirectionalWorldToShadowRow3 = new Vector4[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
-        private static readonly Vector4[] SecondDirectionalLightData = new Vector4[HoShadowCastShaderConstants.MaxDirectionalLights];
-        private static readonly Vector4[] SecondDirectionalSliceData = new Vector4[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
+        // Punctual arrays are uploaded at the fixed contract lengths for every tier. Unity caches the
+        // length of a global array property for the session, so uploading a tier sized array (and
+        // growing it later) triggers "exceeds previous array size ... Restart Unity to recreate the
+        // arrays" and silently caps the data; the tier only bounds the collection and the shader loops.
+        private static readonly Vector4[] WorldToShadowRow0 = new Vector4[HoShadowCastShaderContract.ArraySlices];
+        private static readonly Vector4[] WorldToShadowRow1 = new Vector4[HoShadowCastShaderContract.ArraySlices];
+        private static readonly Vector4[] WorldToShadowRow2 = new Vector4[HoShadowCastShaderContract.ArraySlices];
+        private static readonly Vector4[] WorldToShadowRow3 = new Vector4[HoShadowCastShaderContract.ArraySlices];
+        private static readonly Vector4[] LightData0 = new Vector4[HoShadowCastShaderContract.ArrayLights];
+        private static readonly Vector4[] LightData1 = new Vector4[HoShadowCastShaderContract.ArrayLights];
+        private static readonly Vector4[] LightData2 = new Vector4[HoShadowCastShaderContract.ArrayLights];
+        private static readonly Vector4[] LightAttenuation = new Vector4[HoShadowCastShaderContract.ArrayLights];
+        private static readonly Vector4[] LightColor = new Vector4[HoShadowCastShaderContract.ArrayLights];
+        private static readonly Vector4[] SliceData = new Vector4[HoShadowCastShaderContract.ArraySlices];
+
+        // Second directional arrays are not tiered.
+        private static readonly Vector4[] SecondDirectionalWorldToShadowRow0 = new Vector4[HoShadowCastShaderContract.SecondDirectionalSlices];
+        private static readonly Vector4[] SecondDirectionalWorldToShadowRow1 = new Vector4[HoShadowCastShaderContract.SecondDirectionalSlices];
+        private static readonly Vector4[] SecondDirectionalWorldToShadowRow2 = new Vector4[HoShadowCastShaderContract.SecondDirectionalSlices];
+        private static readonly Vector4[] SecondDirectionalWorldToShadowRow3 = new Vector4[HoShadowCastShaderContract.SecondDirectionalSlices];
+        private static readonly Vector4[] SecondDirectionalLightData = new Vector4[HoShadowCastShaderContract.SecondDirectionalLights];
+        private static readonly Vector4[] SecondDirectionalSliceData = new Vector4[HoShadowCastShaderContract.SecondDirectionalSlices];
+
+        /// <summary>
+        /// Selects the material side capacity tier. It bounds the collected light/slice count and the
+        /// shader sampling loops; the uploaded array layout stays constant, so this is safe to change
+        /// at runtime (no domain reload or editor restart needed).
+        /// </summary>
+        public static void ApplyCapacityKeywords(HoShadowCastLightCapacity capacity)
+        {
+            Shader.SetKeyword(HoShadowCastShaderConstants.CapacityMediumKeyword, capacity == HoShadowCastLightCapacity.Medium);
+            Shader.SetKeyword(HoShadowCastShaderConstants.CapacityHighKeyword, capacity == HoShadowCastLightCapacity.High);
+        }
+
+        /// <summary>
+        /// Same as <see cref="ApplyCapacityKeywords(HoShadowCastLightCapacity)"/>, but recorded in the
+        /// pass command buffer so the keyword is applied in camera order together with the atlas data.
+        /// </summary>
+        public static void ApplyCapacityKeywords(CommandBuffer cmd, HoShadowCastLightCapacity capacity)
+        {
+            cmd.SetKeyword(HoShadowCastShaderConstants.CapacityMediumKeyword, capacity == HoShadowCastLightCapacity.Medium);
+            cmd.SetKeyword(HoShadowCastShaderConstants.CapacityHighKeyword, capacity == HoShadowCastLightCapacity.High);
+        }
+
+        /// <summary>RenderGraph variant of <see cref="ApplyCapacityKeywords(CommandBuffer, HoShadowCastLightCapacity)"/>.</summary>
+        public static void ApplyCapacityKeywords(RasterCommandBuffer cmd, HoShadowCastLightCapacity capacity)
+        {
+            cmd.SetKeyword(HoShadowCastShaderConstants.CapacityMediumKeyword, capacity == HoShadowCastLightCapacity.Medium);
+            cmd.SetKeyword(HoShadowCastShaderConstants.CapacityHighKeyword, capacity == HoShadowCastLightCapacity.High);
+        }
 
         public static void ResetAllImmediate()
         {
@@ -139,16 +173,17 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         private static void CopyFrameArrays(HoShadowCastFrame frame)
         {
-            for (int i = 0; i < HoShadowCastShaderConstants.MaxShadowSlices; i++)
+            for (int i = 0; i < HoShadowCastShaderContract.ArraySlices; i++)
             {
-                WorldToShadowRow0[i] = frame.worldToShadow[i].GetRow(0);
-                WorldToShadowRow1[i] = frame.worldToShadow[i].GetRow(1);
-                WorldToShadowRow2[i] = frame.worldToShadow[i].GetRow(2);
-                WorldToShadowRow3[i] = frame.worldToShadow[i].GetRow(3);
+                Matrix4x4 worldToShadow = frame.worldToShadow[i];
+                WorldToShadowRow0[i] = worldToShadow.GetRow(0);
+                WorldToShadowRow1[i] = worldToShadow.GetRow(1);
+                WorldToShadowRow2[i] = worldToShadow.GetRow(2);
+                WorldToShadowRow3[i] = worldToShadow.GetRow(3);
                 SliceData[i] = frame.sliceData[i];
             }
 
-            for (int i = 0; i < HoShadowCastShaderConstants.MaxLights; i++)
+            for (int i = 0; i < HoShadowCastShaderContract.ArrayLights; i++)
             {
                 LightData0[i] = frame.lightData0[i];
                 LightData1[i] = frame.lightData1[i];
@@ -160,7 +195,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 
         private static void CopySecondDirectionalFrameArrays(HoShadowCastSecondDirectionalFrame frame)
         {
-            for (int i = 0; i < HoShadowCastShaderConstants.MaxSecondDirectionalSlices; i++)
+            for (int i = 0; i < HoShadowCastShaderContract.SecondDirectionalSlices; i++)
             {
                 SecondDirectionalWorldToShadowRow0[i] = frame.worldToShadow[i].GetRow(0);
                 SecondDirectionalWorldToShadowRow1[i] = frame.worldToShadow[i].GetRow(1);
@@ -169,7 +204,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 SecondDirectionalSliceData[i] = frame.sliceData[i];
             }
 
-            for (int i = 0; i < HoShadowCastShaderConstants.MaxDirectionalLights; i++)
+            for (int i = 0; i < HoShadowCastShaderContract.SecondDirectionalLights; i++)
             {
                 SecondDirectionalLightData[i] = frame.lightData[i];
             }

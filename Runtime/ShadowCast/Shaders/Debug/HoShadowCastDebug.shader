@@ -22,16 +22,17 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl"
 
             int _HoShadowCastDebugMode;
             float _HoShadowCastActive;
             int _HoShadowCastSliceCount;
             float4 _HoShadowCastAtlasSize;
-            float4 _HoShadowCastSliceData[32];
+            float4 _HoShadowCastSliceData[HO_SHADOW_CAST_ARRAY_SLICES];
             float4 _HoShadowCastSecondDirectionalParams;
             float4 _HoShadowCastSecondDirectionalAtlasSize;
-            float4 _HoShadowCastSecondDirectionalLightData[4];
-            float4 _HoShadowCastSecondDirectionalSliceData[16];
+            float4 _HoShadowCastSecondDirectionalLightData[HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_LIGHTS];
+            float4 _HoShadowCastSecondDirectionalSliceData[HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_SLICES];
             TEXTURE2D_FLOAT(_HoShadowCastAtlas);
             TEXTURE2D_FLOAT(_HoShadowCastSecondDirectionalAtlas);
 
@@ -75,7 +76,7 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
                 float2 blockMin = float2(1.0, 1.0);
                 float2 blockMax = float2(0.0, 0.0);
                 [unroll]
-                for (int sliceOffset = 0; sliceOffset < 4; sliceOffset++)
+                for (int sliceOffset = 0; sliceOffset < HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_CASCADES; sliceOffset++)
                 {
                     if (sliceOffset >= sliceCount)
                     {
@@ -83,7 +84,7 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
                     }
 
                     int sliceIndex = firstSlice + sliceOffset;
-                    if (sliceIndex < 0 || sliceIndex >= 16)
+                    if (sliceIndex < 0 || sliceIndex >= HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_SLICES)
                     {
                         continue;
                     }
@@ -109,17 +110,12 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
             half3 ApplySliceOverlay(float2 uv, half3 color)
             {
                 float lineUv = max(max(_HoShadowCastAtlasSize.z, _HoShadowCastAtlasSize.w) * 2.0, 0.001);
-                int sliceCount = min(_HoShadowCastSliceCount, 32);
+                int sliceCount = min(_HoShadowCastSliceCount, HO_SHADOW_CAST_ARRAY_SLICES);
                 float sliceLine = 0.0;
 
-                [unroll]
-                for (int i = 0; i < 32; i++)
+                [loop]
+                for (int i = 0; i < sliceCount; i++)
                 {
-                    if (i >= sliceCount)
-                    {
-                        break;
-                    }
-
                     float4 slice = _HoShadowCastSliceData[i];
                     sliceLine = max(sliceLine, RectLine(uv, float4(slice.xy, slice.zz), lineUv));
                 }
@@ -132,13 +128,13 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
                 float atlasTexel = max(_HoShadowCastSecondDirectionalAtlasSize.z, _HoShadowCastSecondDirectionalAtlasSize.w);
                 float cascadeLineUv = max(atlasTexel * 2.0, 0.001);
                 float blockLineUv = max(atlasTexel * 4.0, 0.0015);
-                int sliceCount = min((int)round(_HoShadowCastSecondDirectionalParams.y) * (int)round(_HoShadowCastSecondDirectionalParams.z), 16);
-                int lightCount = min((int)round(_HoShadowCastSecondDirectionalParams.y), 4);
+                int sliceCount = min((int)round(_HoShadowCastSecondDirectionalParams.y) * (int)round(_HoShadowCastSecondDirectionalParams.z), HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_SLICES);
+                int lightCount = min((int)round(_HoShadowCastSecondDirectionalParams.y), HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_LIGHTS);
                 float cascadeLine = 0.0;
                 float blockLine = 0.0;
 
                 [unroll]
-                for (int i = 0; i < 16; i++)
+                for (int i = 0; i < HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_SLICES; i++)
                 {
                     if (i >= sliceCount)
                     {
@@ -150,7 +146,7 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
                 }
 
                 [unroll]
-                for (int lightIndex = 0; lightIndex < 4; lightIndex++)
+                for (int lightIndex = 0; lightIndex < HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_LIGHTS; lightIndex++)
                 {
                     if (lightIndex >= lightCount)
                     {
@@ -158,7 +154,7 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
                     }
 
                     int firstSlice = (int)round(_HoShadowCastSecondDirectionalLightData[lightIndex].x);
-                    int perLightSliceCount = min((int)round(_HoShadowCastSecondDirectionalLightData[lightIndex].y), 4);
+                    int perLightSliceCount = min((int)round(_HoShadowCastSecondDirectionalLightData[lightIndex].y), HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_CASCADES);
                     blockLine = max(blockLine, SecondDirectionalBlockLine(uv, firstSlice, perLightSliceCount, blockLineUv));
                 }
 

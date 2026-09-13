@@ -70,15 +70,15 @@ namespace lilToon.URP.Extensions.ShadowCast
         public Matrix4x4 cameraProjectionMatrix;
         public Vector4 pcssParams;
         public Vector4 pcssParams2;
-        public readonly Light[] sourceLights = new Light[HoShadowCastShaderConstants.MaxLights];
-        public readonly ShadowSliceInfo[] slices = new ShadowSliceInfo[HoShadowCastShaderConstants.MaxShadowSlices];
-        public readonly Matrix4x4[] worldToShadow = new Matrix4x4[HoShadowCastShaderConstants.MaxShadowSlices];
-        public readonly Vector4[] lightData0 = new Vector4[HoShadowCastShaderConstants.MaxLights];
-        public readonly Vector4[] lightData1 = new Vector4[HoShadowCastShaderConstants.MaxLights];
-        public readonly Vector4[] lightData2 = new Vector4[HoShadowCastShaderConstants.MaxLights];
-        public readonly Vector4[] lightAttenuation = new Vector4[HoShadowCastShaderConstants.MaxLights];
-        public readonly Vector4[] lightColor = new Vector4[HoShadowCastShaderConstants.MaxLights];
-        public readonly Vector4[] sliceData = new Vector4[HoShadowCastShaderConstants.MaxShadowSlices];
+        public readonly Light[] sourceLights = new Light[HoShadowCastShaderContract.ArrayLights];
+        public readonly ShadowSliceInfo[] slices = new ShadowSliceInfo[HoShadowCastShaderContract.ArraySlices];
+        public readonly Matrix4x4[] worldToShadow = new Matrix4x4[HoShadowCastShaderContract.ArraySlices];
+        public readonly Vector4[] lightData0 = new Vector4[HoShadowCastShaderContract.ArrayLights];
+        public readonly Vector4[] lightData1 = new Vector4[HoShadowCastShaderContract.ArrayLights];
+        public readonly Vector4[] lightData2 = new Vector4[HoShadowCastShaderContract.ArrayLights];
+        public readonly Vector4[] lightAttenuation = new Vector4[HoShadowCastShaderContract.ArrayLights];
+        public readonly Vector4[] lightColor = new Vector4[HoShadowCastShaderContract.ArrayLights];
+        public readonly Vector4[] sliceData = new Vector4[HoShadowCastShaderContract.ArraySlices];
 
         public void Clear()
         {
@@ -149,11 +149,11 @@ namespace lilToon.URP.Extensions.ShadowCast
         public Matrix4x4 cameraProjectionMatrix;
         public Vector4 pcssParams;
         public Vector4 pcssParams2;
-        public readonly Light[] sourceLights = new Light[HoShadowCastShaderConstants.MaxDirectionalLights];
-        public readonly Vector4[] lightData = new Vector4[HoShadowCastShaderConstants.MaxDirectionalLights];
-        public readonly ShadowSliceInfo[] slices = new ShadowSliceInfo[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
-        public readonly Matrix4x4[] worldToShadow = new Matrix4x4[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
-        public readonly Vector4[] sliceData = new Vector4[HoShadowCastShaderConstants.MaxSecondDirectionalSlices];
+        public readonly Light[] sourceLights = new Light[HoShadowCastShaderContract.SecondDirectionalLights];
+        public readonly Vector4[] lightData = new Vector4[HoShadowCastShaderContract.SecondDirectionalLights];
+        public readonly ShadowSliceInfo[] slices = new ShadowSliceInfo[HoShadowCastShaderContract.SecondDirectionalSlices];
+        public readonly Matrix4x4[] worldToShadow = new Matrix4x4[HoShadowCastShaderContract.SecondDirectionalSlices];
+        public readonly Vector4[] sliceData = new Vector4[HoShadowCastShaderContract.SecondDirectionalSlices];
 
         public void Clear()
         {

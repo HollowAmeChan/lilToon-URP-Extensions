@@ -41,6 +41,11 @@ namespace lilToon.URP.Extensions.ShadowCast
         [Range(0.1f, 4.0f)]
         public float punctualShadowFadeSpeed = 1.0f;
 
+        [Header("Capacity")]
+        [InspectorName("Light Capacity")]
+        [Tooltip("同时参与投影的附加光源容量档。档位决定收集上限，并选择材质侧 shader 变体。")]
+        public HoShadowCastLightCapacity lightCapacity = HoShadowCastLightCapacity.Low;
+
         [Header("PCSS")]
         [InspectorName("Enable PCSS")]
         public bool pcssEnabled = true;
@@ -78,7 +83,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         public int secondDirectionalAtlasSize = 4096;
 
         [InspectorName("Second Directional Cascades")]
-        [Range(1, HoShadowCastShaderConstants.MaxSecondDirectionalCascades)]
+        [Range(1, HoShadowCastShaderContract.SecondDirectionalCascades)]
         public int secondDirectionalCascadeCount = 4;
 
         [InspectorName("Second Directional Max Distance")]
@@ -139,6 +144,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             shadowStrength = Mathf.Clamp01(shadowStrength);
             punctualShadowStrength = Mathf.Clamp01(punctualShadowStrength);
             punctualShadowFadeSpeed = punctualShadowFadeSpeed <= 0.0f ? 1.0f : Mathf.Clamp(punctualShadowFadeSpeed, 0.1f, 4.0f);
+            lightCapacity = HoShadowCastShaderContract.ClampCapacity((int)lightCapacity);
             pcssQuality = (HoShadowCastPcssQuality)Mathf.Clamp((int)pcssQuality, 0, 3);
             punctualPcssSoftness = Mathf.Clamp(punctualPcssSoftness, 0.0f, 4.0f);
             secondDirectionalPcssSoftness = Mathf.Clamp(secondDirectionalPcssSoftness, 0.0f, 4.0f);
@@ -147,7 +153,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             pcssDepthBias = Mathf.Clamp(pcssDepthBias, 0.0f, 0.01f);
             secondDirectionalShadowStrength = Mathf.Clamp01(secondDirectionalShadowStrength);
             secondDirectionalAtlasSize = Mathf.Max(256, secondDirectionalAtlasSize);
-            secondDirectionalCascadeCount = Mathf.Clamp(secondDirectionalCascadeCount, 1, HoShadowCastShaderConstants.MaxSecondDirectionalCascades);
+            secondDirectionalCascadeCount = Mathf.Clamp(secondDirectionalCascadeCount, 1, HoShadowCastShaderContract.SecondDirectionalCascades);
             secondDirectionalMaxDistance = Mathf.Max(0.01f, secondDirectionalMaxDistance);
             secondDirectionalShadowDepth = Mathf.Max(0.01f, secondDirectionalShadowDepth);
             secondDirectionalCascadeSplits = ClampCascadeSplits(secondDirectionalCascadeSplits);
@@ -179,6 +185,7 @@ namespace lilToon.URP.Extensions.ShadowCast
         public float shadowStrength;
         public float punctualShadowStrength;
         public float punctualShadowFadeSpeed;
+        public HoShadowCastLightCapacity lightCapacity;
         public bool pcssEnabled;
         public HoShadowCastPcssQuality pcssQuality;
         public float punctualPcssSoftness;
@@ -225,6 +232,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             shadowStrength = settings.shadowStrength;
             punctualShadowStrength = settings.punctualShadowStrength;
             punctualShadowFadeSpeed = settings.punctualShadowFadeSpeed;
+            lightCapacity = settings.lightCapacity;
             pcssEnabled = settings.pcssEnabled;
             pcssQuality = settings.pcssQuality;
             punctualPcssSoftness = settings.punctualPcssSoftness;

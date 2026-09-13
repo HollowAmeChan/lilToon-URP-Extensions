@@ -22,6 +22,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             public TextureHandle atlasTexture;
             public HoShadowCastFrame frame;
             public RendererListHandle[] rendererLists;
+            public HoShadowCastLightCapacity lightCapacity;
         }
 
         private sealed class SecondDirectionalPassData
@@ -29,6 +30,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             public TextureHandle atlasTexture;
             public HoShadowCastSecondDirectionalFrame frame;
             public RendererListHandle[] rendererLists;
+            public HoShadowCastLightCapacity lightCapacity;
         }
 
         public HoShadowCastPass()
@@ -113,6 +115,10 @@ namespace lilToon.URP.Extensions.ShadowCast
             CommandBuffer cmd = CommandBufferPool.Get();
             using (new ProfilingScope(cmd, ProfilingSampler))
             {
+                // Recorded in camera order together with the atlas, so cameras using different tiers
+                // cannot leave the wrong variant active for the shading of another camera.
+                HoShadowCastPublisher.ApplyCapacityKeywords(cmd, config.lightCapacity);
+
                 if (hasFrame)
                 {
                     cmd.SetRenderTarget(renderTargets.AtlasTexture.nameID);
@@ -244,6 +250,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     passData.atlasTexture = atlasTexture;
                     passData.frame = renderGraphFrame;
                     passData.rendererLists = new RendererListHandle[renderGraphFrame.sliceCount];
+                    passData.lightCapacity = config.lightCapacity;
 
                     for (int i = 0; i < renderGraphFrame.sliceCount; i++)
                     {
@@ -264,6 +271,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                         RasterCommandBuffer cmd = context.cmd;
                         HoShadowCastFrame frame = data.frame;
                         cmd.ClearRenderTarget(RTClearFlags.Depth, Color.clear, 1.0f, 0);
+                        HoShadowCastPublisher.ApplyCapacityKeywords(cmd, data.lightCapacity);
                         HoShadowCastPublisher.ApplyGlobalData(cmd, frame);
 
                         for (int i = 0; i < frame.sliceCount; i++)
@@ -297,6 +305,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     passData.atlasTexture = secondDirectionalAtlasTexture;
                     passData.frame = renderGraphSecondDirectionalFrame;
                     passData.rendererLists = new RendererListHandle[renderGraphSecondDirectionalFrame.sliceCount];
+                    passData.lightCapacity = config.lightCapacity;
 
                     for (int i = 0; i < renderGraphSecondDirectionalFrame.sliceCount; i++)
                     {
@@ -317,6 +326,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                         RasterCommandBuffer cmd = context.cmd;
                         HoShadowCastSecondDirectionalFrame frame = data.frame;
                         cmd.ClearRenderTarget(RTClearFlags.Depth, Color.clear, 1.0f, 0);
+                        HoShadowCastPublisher.ApplyCapacityKeywords(cmd, data.lightCapacity);
                         HoShadowCastPublisher.ApplySecondDirectionalGlobalData(cmd, frame);
 
                         for (int i = 0; i < frame.sliceCount; i++)

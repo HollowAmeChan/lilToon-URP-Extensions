@@ -5,13 +5,11 @@ namespace lilToon.URP.Extensions.ShadowCast
 {
     internal static class HoShadowCastShaderConstants
     {
-        public const int MaxDirectionalLights = 4;
-        public const int MaxSpotLights = 4;
-        public const int MaxPointLights = 4;
-        public const int MaxLights = MaxDirectionalLights + MaxSpotLights + MaxPointLights;
-        public const int MaxShadowSlices = MaxDirectionalLights + MaxSpotLights + MaxPointLights * 6;
-        public const int MaxSecondDirectionalCascades = 4;
-        public const int MaxSecondDirectionalSlices = MaxDirectionalLights * MaxSecondDirectionalCascades;
+        // Capacity tiers, array sizes and sample ceilings live in HoShadowCastShaderContract.cs,
+        // which mirrors Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl.
+
+        public const string CapacityMediumKeywordName = HoShadowCastShaderContract.MediumKeywordName;
+        public const string CapacityHighKeywordName = HoShadowCastShaderContract.HighKeywordName;
 
         public const string AtlasTextureName = "_HoShadowCastAtlas";
         public const string SecondDirectionalAtlasTextureName = "_HoShadowCastSecondDirectionalAtlas";
@@ -56,5 +54,11 @@ namespace lilToon.URP.Extensions.ShadowCast
         public static readonly int CameraToWorldMatrixId = Shader.PropertyToID("unity_CameraToWorld");
 
         public static readonly GlobalKeyword CastingPunctualLightShadowKeyword = GlobalKeyword.Create(CastingPunctualKeywordName);
+
+        // Capacity tier keywords. Low is the untouched state and declares no keyword, so only the
+        // non-default tiers need a GlobalKeyword. The matching #pragma multi_compile lives in
+        // Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl.
+        public static readonly GlobalKeyword CapacityMediumKeyword = GlobalKeyword.Create(CapacityMediumKeywordName);
+        public static readonly GlobalKeyword CapacityHighKeyword = GlobalKeyword.Create(CapacityHighKeywordName);
     }
 }

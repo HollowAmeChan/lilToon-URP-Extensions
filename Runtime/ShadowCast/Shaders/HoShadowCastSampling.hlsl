@@ -1,33 +1,31 @@
 #ifndef LILTOON_HO_SHADOW_CAST_SAMPLING_INCLUDED
 #define LILTOON_HO_SHADOW_CAST_SAMPLING_INCLUDED
 
-#define HO_SHADOW_CAST_MAX_LIGHTS 12
-#define HO_SHADOW_CAST_MAX_SLICES 32
-#define HO_SHADOW_CAST_LIGHT_DIRECTIONAL 0.0
-#define HO_SHADOW_CAST_LIGHT_SPOT 1.0
-#define HO_SHADOW_CAST_LIGHT_POINT 2.0
+// Capacity tiers, array sizes, light type ids and PCSS sample ceilings all come from the shared
+// C#/HLSL contract.
+#include "HoShadowCastShaderContract.hlsl"
+
+// Exactly one of these keywords is enabled globally by the feature; no keyword means the Low tier.
+// They only bound the collection and the sampling loops, the array layout is tier independent.
+#pragma multi_compile _ HO_SHADOW_CAST_CAPACITY_MEDIUM HO_SHADOW_CAST_CAPACITY_HIGH
+
 #define HO_SHADOW_CAST_MIN_ATTENUATION 0.35
 #define HO_SHADOW_CAST_MIN_RECEIVER_ATTENUATION 0.15
-#define HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_LIGHTS 4
-#define HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_CASCADES 4
-#define HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_SLICES 16
-#define HO_SHADOW_CAST_MAX_PCSS_BLOCKER_SAMPLES 32
-#define HO_SHADOW_CAST_MAX_PCSS_FILTER_SAMPLES 64
 
 float _HoShadowCastActive;
 int _HoShadowCastLightCount;
 int _HoShadowCastSliceCount;
 float4 _HoShadowCastAtlasSize;
-float4 _HoShadowCastWorldToShadowRow0[HO_SHADOW_CAST_MAX_SLICES];
-float4 _HoShadowCastWorldToShadowRow1[HO_SHADOW_CAST_MAX_SLICES];
-float4 _HoShadowCastWorldToShadowRow2[HO_SHADOW_CAST_MAX_SLICES];
-float4 _HoShadowCastWorldToShadowRow3[HO_SHADOW_CAST_MAX_SLICES];
-float4 _HoShadowCastLightData0[HO_SHADOW_CAST_MAX_LIGHTS];
-float4 _HoShadowCastLightData1[HO_SHADOW_CAST_MAX_LIGHTS];
-float4 _HoShadowCastLightData2[HO_SHADOW_CAST_MAX_LIGHTS];
-float4 _HoShadowCastLightAttenuation[HO_SHADOW_CAST_MAX_LIGHTS];
-float4 _HoShadowCastLightColor[HO_SHADOW_CAST_MAX_LIGHTS];
-float4 _HoShadowCastSliceData[HO_SHADOW_CAST_MAX_SLICES];
+float4 _HoShadowCastWorldToShadowRow0[HO_SHADOW_CAST_ARRAY_SLICES];
+float4 _HoShadowCastWorldToShadowRow1[HO_SHADOW_CAST_ARRAY_SLICES];
+float4 _HoShadowCastWorldToShadowRow2[HO_SHADOW_CAST_ARRAY_SLICES];
+float4 _HoShadowCastWorldToShadowRow3[HO_SHADOW_CAST_ARRAY_SLICES];
+float4 _HoShadowCastLightData0[HO_SHADOW_CAST_ARRAY_LIGHTS];
+float4 _HoShadowCastLightData1[HO_SHADOW_CAST_ARRAY_LIGHTS];
+float4 _HoShadowCastLightData2[HO_SHADOW_CAST_ARRAY_LIGHTS];
+float4 _HoShadowCastLightAttenuation[HO_SHADOW_CAST_ARRAY_LIGHTS];
+float4 _HoShadowCastLightColor[HO_SHADOW_CAST_ARRAY_LIGHTS];
+float4 _HoShadowCastSliceData[HO_SHADOW_CAST_ARRAY_SLICES];
 float4 _HoShadowCastPcssParams;
 float4 _HoShadowCastPcssParams2;
 float4 _HoShadowCastSecondDirectionalParams;
@@ -293,7 +291,7 @@ float HoShadowCastSampleSecondDirectionalAtlas(float3 sliceCoord, float4 sliceDa
 
 float HoShadowCastSampleSliceScaled(int sliceIndex, float3 positionWS, float radiusScale)
 {
-    if (sliceIndex < 0 || sliceIndex >= _HoShadowCastSliceCount || sliceIndex >= HO_SHADOW_CAST_MAX_SLICES)
+    if (sliceIndex < 0 || sliceIndex >= _HoShadowCastSliceCount || sliceIndex >= HO_SHADOW_CAST_ARRAY_SLICES)
     {
         return 1.0;
     }
@@ -440,7 +438,7 @@ float HoShadowCastDirectionalAttenuation(float3 positionWS)
     }
 
     float attenuation = 1.0;
-    int lightCount = min(_HoShadowCastLightCount, HO_SHADOW_CAST_MAX_LIGHTS);
+    int lightCount = min(_HoShadowCastLightCount, HO_SHADOW_CAST_CAPACITY_LIGHTS);
     [loop]
     for (int lightIndex = 0; lightIndex < lightCount; lightIndex++)
     {
@@ -463,7 +461,7 @@ float HoShadowCastPunctualAttenuation(float3 positionWS)
     }
 
     float attenuation = 1.0;
-    int lightCount = min(_HoShadowCastLightCount, HO_SHADOW_CAST_MAX_LIGHTS);
+    int lightCount = min(_HoShadowCastLightCount, HO_SHADOW_CAST_CAPACITY_LIGHTS);
     [loop]
     for (int lightIndex = 0; lightIndex < lightCount; lightIndex++)
     {

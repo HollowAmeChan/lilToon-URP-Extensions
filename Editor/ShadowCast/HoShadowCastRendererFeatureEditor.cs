@@ -13,6 +13,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         private static readonly Color SettingsColor = new Color(0.45f, 0.64f, 0.96f);
 
         private static bool showSettings;
+        private static bool showCapacity;
         private static bool showAtlas;
         private static bool showPcss;
         private static bool showSecondDirectional;
@@ -41,6 +42,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             }
 
             DrawSettings();
+            DrawCapacity();
             DrawAtlas();
             DrawPcss();
             DrawSecondDirectional();
@@ -79,6 +81,50 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
                 if (passEvent != null && passEvent.intValue < BeforeRenderingPrePassesValue)
                 {
                     EditorGUILayout.HelpBox("ShadowCast 不应早于 URP 内置阴影阶段执行。运行时会自动钳制到 BeforeRenderingPrePasses。", MessageType.Info);
+                }
+            }
+        }
+
+        private void DrawCapacity()
+        {
+            SerializedProperty lightCapacity = settingsProperty.FindPropertyRelative("lightCapacity");
+            HoShadowCastLightCapacity capacity = HoShadowCastShaderContract.ClampCapacity(lightCapacity != null ? lightCapacity.intValue : 0);
+            HoShadowCastCapacityLimits limits = HoShadowCastShaderContract.GetLimits(capacity);
+            int atlasSize = GetIntSummaryValue("atlasSize", 4096);
+            int spotResolution = GetIntSummaryValue("spotResolution", 512);
+            int pointFaceResolution = GetIntSummaryValue("pointFaceResolution", 512);
+            int spotSlices = HoShadowCastShaderContract.GetSliceCapacity(atlasSize, spotResolution);
+            int pointSlices = HoShadowCastShaderContract.GetSliceCapacity(atlasSize, pointFaceResolution);
+            int pointLights = HoShadowCastShaderContract.GetPointLightCapacity(capacity, atlasSize, pointFaceResolution);
+            string summary = limits.LightCount + " 灯 / ≤" + Mathf.Max(spotSlices, pointSlices) + " 片";
+
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showCapacity, "容量", summary, SettingsColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawProperty(lightCapacity, "多光容量档");
+                EditorGUILayout.LabelField("附加灯上限", limits.LightCount + " 盏（逐像素采样与循环上限）");
+                EditorGUILayout.LabelField("全局数组长度", HoShadowCastShaderContract.ArrayLights + " 灯 / " + HoShadowCastShaderContract.ArraySlices + " 片（固定，与档位无关）");
+                EditorGUILayout.LabelField("聚光切片", spotResolution + "px → 约 " + spotSlices + " 片（≈ " + Mathf.Min(spotSlices, limits.LightCount) + " 盏）");
+                EditorGUILayout.LabelField("点光切片", pointFaceResolution + "px → 约 " + pointSlices + " 片（≈ " + pointLights + " 盏点光）");
+                EditorGUILayout.LabelField("图集", atlasSize + "px（切片数按图集尺寸与分辨率动态计算，硬上限 " + HoShadowCastShaderContract.ArraySlices + " 片）");
+
+                EditorGUILayout.HelpBox(
+                    "档位只决定可同时采样的附加灯数上限；切片数由图集尺寸与聚光/点光分辨率动态决定——降低分辨率就能容纳更多灯，不需要改档位。",
+                    MessageType.Info);
+
+                EditorGUILayout.HelpBox(
+                    "Unity 会缓存全局数组槽位的长度，且同一会话内只允许变小。如果改动过契约里的数组长度（或从旧版本升级）后控制台出现 \"exceeds previous array size ... Restart Unity to recreate the arrays\"，重启一次 Unity 编辑器即可恢复；该提示与切换档位无关。",
+                    MessageType.Warning);
+
+                if (capacity != HoShadowCastLightCapacity.Low)
+                {
+                    EditorGUILayout.HelpBox(
+                        "更高容量档会为所有使用 lilToon 的材质增加 shader 变体。",
+                        MessageType.Info);
                 }
             }
         }
@@ -241,6 +287,12 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         {
             SerializedProperty property = settingsProperty.FindPropertyRelative(propertyName);
             return property != null ? property.intValue + suffix : string.Empty;
+        }
+
+        private int GetIntSummaryValue(string propertyName, int fallback)
+        {
+            SerializedProperty property = settingsProperty.FindPropertyRelative(propertyName);
+            return property != null ? property.intValue : fallback;
         }
 
         private static void DrawProperty(SerializedProperty property, string label)

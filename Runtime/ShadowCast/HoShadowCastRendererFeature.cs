@@ -64,6 +64,10 @@ namespace lilToon.URP.Extensions.ShadowCast
                 return;
             }
 
+            // The collected light/slice budget and the material side array sizes are the same tier, so
+            // the keyword has to be applied before the camera renders with this frame's data.
+            HoShadowCastPublisher.ApplyCapacityKeywords(config.lightCapacity);
+
             if (pass == null)
             {
                 return;

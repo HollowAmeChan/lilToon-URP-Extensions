@@ -1,4 +1,4 @@
-﻿#pragma warning disable CS0618
+#pragma warning disable CS0618
 
 using System.Text;
 using Unity.Collections;
@@ -99,13 +99,12 @@ namespace lilToon.URP.Extensions.ShadowCast
             target.pcssParams = CreatePcssParams(config, config.punctualPcssSoftness);
             target.pcssParams2 = CreatePcssParams2(config);
 
-            int requestedSliceCount = CountRequestedSlices(config, visibleLights, mainLightIndex);
-            int maxSliceResolution = GetMaxResolutionForSliceCount(target.atlasSize, requestedSliceCount);
+            HoShadowCastCapacityLimits limits = HoShadowCastShaderContract.GetLimits(config.lightCapacity);
             HoShadowCastAtlasPacker packer = new HoShadowCastAtlasPacker(target.atlasSize);
             if (config.collectVisibleLights)
             {
-                AddVisibleLights(LightType.Spot, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target, diagnostics);
-                AddVisibleLights(LightType.Point, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target, diagnostics);
+                AddVisibleLights(LightType.Spot, config, ref cullResults, visibleLights, mainLightIndex, ref packer, target, diagnostics, limits);
+                AddVisibleLights(LightType.Point, config, ref cullResults, visibleLights, mainLightIndex, ref packer, target, diagnostics, limits);
             }
 
             target.FillUnused();
@@ -141,7 +140,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 return false;
             }
 
-            int cascadeCount = Mathf.Clamp(config.secondDirectionalCascadeCount, 1, HoShadowCastShaderConstants.MaxSecondDirectionalCascades);
+            int cascadeCount = Mathf.Clamp(config.secondDirectionalCascadeCount, 1, HoShadowCastShaderContract.SecondDirectionalCascades);
             int atlasSize = Mathf.Max(1, config.secondDirectionalAtlasSize);
             int requestedLightCount = CountRequestedSecondDirectionalLights(config, visibleLights, mainLightIndex);
             if (requestedLightCount <= 0)
@@ -193,9 +192,9 @@ namespace lilToon.URP.Extensions.ShadowCast
                     continue;
                 }
 
-                if (target.lightCount >= HoShadowCastShaderConstants.MaxDirectionalLights || target.sliceCount + cascadeCount > HoShadowCastShaderConstants.MaxSecondDirectionalSlices)
+                if (target.lightCount >= HoShadowCastShaderContract.SecondDirectionalLights || target.sliceCount + cascadeCount > HoShadowCastShaderContract.SecondDirectionalSlices)
                 {
-                    diagnostics?.AddSkipped(light, "SecondDirectional", LightType.Directional, "capacity limit reached");
+                    diagnostics?.AddSkipped(light, "SecondDirectional", LightType.Directional, "capacity limit reached (" + HoShadowCastShaderContract.SecondDirectionalLights + " lights / " + HoShadowCastShaderContract.SecondDirectionalSlices + " slices)");
                     break;
                 }
 
@@ -300,7 +299,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 }
             }
 
-            return Mathf.Min(count, HoShadowCastShaderConstants.MaxDirectionalLights);
+            return Mathf.Min(count, HoShadowCastShaderContract.SecondDirectionalLights);
         }
 
         private static void GetSecondDirectionalCascadeBlock(int cascadeCount, out int columns, out int rows)
@@ -481,10 +480,10 @@ namespace lilToon.URP.Extensions.ShadowCast
             ref CullingResults cullResults,
             NativeArray<VisibleLight> visibleLights,
             int mainLightIndex,
-            int maxSliceResolution,
             ref HoShadowCastAtlasPacker packer,
             HoShadowCastFrame target,
-            HoShadowCastFrameDiagnostics diagnostics)
+            HoShadowCastFrameDiagnostics diagnostics,
+            HoShadowCastCapacityLimits limits)
         {
             if (!visibleLights.IsCreated)
             {
@@ -512,7 +511,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                     continue;
                 }
 
-                AddLight(light, requiredType, config, ref cullResults, visibleLights, mainLightIndex, maxSliceResolution, ref packer, target, diagnostics);
+                AddLight(light, requiredType, config, ref cullResults, visibleLights, mainLightIndex, ref packer, target, diagnostics, limits);
             }
         }
 
@@ -523,10 +522,10 @@ namespace lilToon.URP.Extensions.ShadowCast
             ref CullingResults cullResults,
             NativeArray<VisibleLight> visibleLights,
             int mainLightIndex,
-            int maxSliceResolution,
             ref HoShadowCastAtlasPacker packer,
             HoShadowCastFrame target,
-            HoShadowCastFrameDiagnostics diagnostics)
+            HoShadowCastFrameDiagnostics diagnostics,
+            HoShadowCastCapacityLimits limits)
         {
             diagnostics?.AddCandidate();
             if (!IsLightCollectable(light, config, requiredType) || target.Contains(light))
@@ -535,9 +534,9 @@ namespace lilToon.URP.Extensions.ShadowCast
                 return;
             }
 
-            if (target.lightCount >= HoShadowCastShaderConstants.MaxLights)
+            if (target.lightCount >= limits.LightCount)
             {
-                diagnostics?.AddSkipped(light, "Punctual", requiredType, "light capacity limit reached");
+                diagnostics?.AddSkipped(light, "Punctual", requiredType, "light capacity limit reached (" + limits.LightCount + ")");
                 return;
             }
 
@@ -556,21 +555,28 @@ namespace lilToon.URP.Extensions.ShadowCast
             }
 
             int firstSlice = target.sliceCount;
-            int requestedSlices = requiredType == LightType.Point ? 6 : 1;
-            if (firstSlice + requestedSlices > HoShadowCastShaderConstants.MaxShadowSlices)
+            int requestedSlices = requiredType == LightType.Point ? HoShadowCastShaderContract.PointLightSlices : 1;
+            if (firstSlice + requestedSlices > limits.SliceCount)
             {
-                diagnostics?.AddSkipped(light, "Punctual", requiredType, "slice capacity limit reached");
+                diagnostics?.AddSkipped(
+                    light,
+                    "Punctual",
+                    requiredType,
+                    "slice array limit reached (" + limits.SliceCount + " slices, raise HoShadowCastShaderContract.ArraySlices and restart the editor)");
                 return;
             }
 
-            int resolution = GetResolution(config, requiredType, maxSliceResolution);
+            // The slice budget is the atlas geometry: the requested resolution is honoured and the
+            // packer decides how many slices still fit, so lowering a resolution buys more lights.
+            int resolution = GetResolution(config, requiredType, target.atlasSize);
+            HoShadowCastAtlasPacker packerBeforeLight = packer;
             int writtenSlices = 0;
             bool completed = true;
             for (int face = 0; face < requestedSlices; face++)
             {
                 if (!packer.TryAllocate(resolution, out int offsetX, out int offsetY))
                 {
-                    diagnostics?.AddSkipped(light, "Punctual", requiredType, "atlas is full");
+                    diagnostics?.AddSkipped(light, "Punctual", requiredType, "atlas is full at " + resolution + "px");
                     completed = false;
                     break;
                 }
@@ -600,7 +606,9 @@ namespace lilToon.URP.Extensions.ShadowCast
 
             if (!completed || writtenSlices != requestedSlices)
             {
+                // Give the partially reserved atlas space back so a rejected light cannot waste it.
                 target.sliceCount = firstSlice;
+                packer = packerBeforeLight;
                 return;
             }
 
@@ -1088,53 +1096,14 @@ namespace lilToon.URP.Extensions.ShadowCast
             return "not eligible";
         }
 
-        private static int CountRequestedSlices(HoShadowCastFrameConfig config, NativeArray<VisibleLight> visibleLights, int mainLightIndex)
+        /// <summary>
+        /// Configured slice resolution for a light type, clamped so it always fits inside the atlas.
+        /// There is no longer any downscaling to fit a slice budget: the atlas geometry decides how many
+        /// slices are accepted, so the resolution stays authoritative and predictable.
+        /// </summary>
+        private static int GetResolution(HoShadowCastFrameConfig config, LightType type, int atlasSize)
         {
-            if (config == null)
-            {
-                return 0;
-            }
-
-            return config.collectVisibleLights
-                ? CountRequestedVisibleSlices(config, LightType.Spot, visibleLights, mainLightIndex)
-                    + CountRequestedVisibleSlices(config, LightType.Point, visibleLights, mainLightIndex)
-                : 0;
-        }
-
-        private static int CountRequestedVisibleSlices(HoShadowCastFrameConfig config, LightType requiredType, NativeArray<VisibleLight> visibleLights, int mainLightIndex)
-        {
-            if (!visibleLights.IsCreated)
-            {
-                return 0;
-            }
-
-            int count = 0;
-            for (int i = 0; i < visibleLights.Length; i++)
-            {
-                if (GetVisibleLight(visibleLights, i, config, requiredType, mainLightIndex) != null)
-                {
-                    count += requiredType == LightType.Point ? 6 : 1;
-                }
-            }
-
-            return count;
-        }
-
-        private static int GetMaxResolutionForSliceCount(int atlasSize, int requestedSliceCount)
-        {
-            atlasSize = Mathf.Max(1, atlasSize);
-            if (requestedSliceCount <= 1)
-            {
-                return atlasSize;
-            }
-
-            int gridSize = Mathf.CeilToInt(Mathf.Sqrt(requestedSliceCount));
-            return Mathf.Max(64, atlasSize / Mathf.Max(1, gridSize));
-        }
-
-        private static int GetResolution(HoShadowCastFrameConfig config, LightType type, int maxSliceResolution)
-        {
-            int atlasSize = Mathf.Max(1, config.atlasSize);
+            atlasSize = Mathf.Max(64, atlasSize);
             int resolution = type switch
             {
                 LightType.Directional => config.directionalResolution,
@@ -1143,16 +1112,16 @@ namespace lilToon.URP.Extensions.ShadowCast
                 _ => 64
             };
 
-            return Mathf.Clamp(resolution, 64, Mathf.Min(atlasSize, maxSliceResolution));
+            return Mathf.Clamp(resolution, 64, atlasSize);
         }
 
         private static float GetLightTypeId(LightType type)
         {
             return type switch
             {
-                LightType.Directional => 0.0f,
-                LightType.Spot => 1.0f,
-                LightType.Point => 2.0f,
+                LightType.Directional => HoShadowCastShaderContract.LightTypeIdDirectional,
+                LightType.Spot => HoShadowCastShaderContract.LightTypeIdSpot,
+                LightType.Point => HoShadowCastShaderContract.LightTypeIdPoint,
                 _ => -1.0f
             };
         }
@@ -1205,35 +1174,12 @@ namespace lilToon.URP.Extensions.ShadowCast
                 return Vector4.zero;
             }
 
-            GetPcssSampleCounts(config.pcssQuality, out int blockerSamples, out int filterSamples);
+            HoShadowCastShaderContract.GetPcssSampleCounts(config.pcssQuality, out int blockerSamples, out int filterSamples);
             return new Vector4(
                 Mathf.Clamp(config.pcssDepthBias, 0.0f, 0.01f),
                 blockerSamples,
                 filterSamples,
                 0.0f);
-        }
-
-        private static void GetPcssSampleCounts(HoShadowCastPcssQuality quality, out int blockerSamples, out int filterSamples)
-        {
-            switch (quality)
-            {
-                case HoShadowCastPcssQuality.Low:
-                    blockerSamples = 8;
-                    filterSamples = 16;
-                    break;
-                case HoShadowCastPcssQuality.High:
-                    blockerSamples = 24;
-                    filterSamples = 48;
-                    break;
-                case HoShadowCastPcssQuality.Ultra:
-                    blockerSamples = 32;
-                    filterSamples = 64;
-                    break;
-                default:
-                    blockerSamples = 16;
-                    filterSamples = 32;
-                    break;
-            }
         }
 
     }

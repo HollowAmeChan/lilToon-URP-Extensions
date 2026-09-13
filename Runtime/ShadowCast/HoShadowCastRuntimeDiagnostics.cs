@@ -165,7 +165,7 @@ namespace lilToon.URP.Extensions.ShadowCast
 
     internal sealed class HoShadowCastFrameDiagnostics
     {
-        private const int MaxAcceptedLightEntries = 8;
+        private const int MaxAcceptedLightEntries = HoShadowCastShaderContract.ArrayLights;
         private const int MaxSkippedLightEntries = 12;
 
         private readonly HoShadowCastRuntimeDiagnosticLight[] acceptedLights = new HoShadowCastRuntimeDiagnosticLight[MaxAcceptedLightEntries];
