@@ -40,7 +40,7 @@ beginCameraRendering
   -> 发布 color-only source 与有效性参数
 ```
 
-递归相机、Reflection/Preview 相机、被禁用的 Game/Scene View 或超过 `每相机最大表面数` 时跳过 surface，并把 `_UsePlanarReflection` 清零。多 surface 的正式选择机制尚未冻结；在 source id/PLR 专用 receiver RT 落地前，不要依赖“最后一个全局 texture”同时代表多个平面。
+递归相机、Reflection/Preview 相机、被禁用的 Game/Scene View 或超过 `每相机最大表面数` 时跳过 surface，并把 `_UsePlanarReflection` 清零。ForwardLit 通过每个 Renderer 的 PropertyBlock 读取各自 source，因此支持多个 surface；特殊 fullscreen 路径仍只有一个全局 source，在 source id/PLR 专用 receiver RT 落地前，多于一个有效 surface 时会自动关闭特殊合成。
 
 ## 反射输入契约
 

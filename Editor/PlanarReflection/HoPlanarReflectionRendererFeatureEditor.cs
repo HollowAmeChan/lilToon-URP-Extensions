@@ -89,7 +89,7 @@ namespace lilToon.URP.Extensions.Editor.PlanarReflection
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUILayout.HelpBox(
-                    "Opaque lilToon 已在 ForwardLit 中按 PBR 响应消费 PLR。这里只用于水面/OIT/调试等特殊全屏路径；同一材质不要同时启用两条路径。",
+                    "Opaque lilToon 已在 ForwardLit 中按 PBR 响应消费 PLR。这里只用于水面/OIT/调试等特殊全屏路径；同一材质不要同时启用两条路径。特殊合成当前只允许一个有效 PLR surface，多平面时会自动关闭。",
                     MessageType.Info);
                 DrawProperty(compositeEnabled, "启用特殊表面后处理合成");
                 DrawProperty(compositeStrength, "合成强度");

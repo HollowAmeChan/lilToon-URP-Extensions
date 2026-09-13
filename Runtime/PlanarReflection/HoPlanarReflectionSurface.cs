@@ -235,12 +235,27 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 isRenderingReflection = false;
             }
 
-            SetCompositeGlobalState(activeSurfaceCount > 0 && settings.CompositeEnabled);
+            bool compositeReady = activeSurfaceCount == 1 && settings.CompositeEnabled;
+            SetCompositeGlobalState(compositeReady);
+
+            string reason;
+            if (activeSurfaceCount <= 0)
+            {
+                reason = "没有可渲染的 PLR 表面。";
+            }
+            else if (settings.CompositeEnabled && activeSurfaceCount > 1)
+            {
+                reason = "多平面 ForwardLit 输入有效；特殊 fullscreen 合成需要唯一 source，已自动关闭。";
+            }
+            else
+            {
+                reason = "PLR 输入有效。";
+            }
 
             return new HoPlanarReflectionRenderStats(
                 ActiveSurfaces.Count,
                 activeSurfaceCount,
-                activeSurfaceCount > 0 ? "输入有效。" : "没有可渲染的平面反射表面。");
+                reason);
         }
 
         private static void DisableAllSurfaces()
