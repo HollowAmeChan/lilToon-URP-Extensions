@@ -198,24 +198,27 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         internal static int GetSupportedMsaaSampleCount(RenderTextureDescriptor cameraTextureDescriptor, HoGeometryBufferSettings settings)
         {
             if (settings == null ||
-                settings.renderScale != HoGeometryBufferRenderScale.Full ||
                 cameraTextureDescriptor.msaaSamples <= 1 ||
                 SystemInfo.supportsMultisampledTextures == 0)
             {
                 return 1;
             }
 
-            RenderTextureDescriptor colorDescriptor = CreateMsaaColorDescriptor(cameraTextureDescriptor, settings, cameraTextureDescriptor.msaaSamples);
+            int requestedSamples = Mathf.Max(1, cameraTextureDescriptor.msaaSamples);
+            RenderTextureDescriptor colorDescriptor = CreateColorDescriptor(cameraTextureDescriptor, settings);
+            colorDescriptor.msaaSamples = requestedSamples;
+            colorDescriptor.bindMS = false;
             GraphicsFormat colorFormat = HoGeometryBufferFormatUtility.GetHighPrecisionGraphicsFormat();
             if (colorFormat != GraphicsFormat.None)
             {
                 colorDescriptor.graphicsFormat = colorFormat;
             }
 
-            RenderTextureDescriptor depthDescriptor = CreateDepthDescriptor(cameraTextureDescriptor, settings, cameraTextureDescriptor.msaaSamples, true);
+            RenderTextureDescriptor depthDescriptor = CreateDepthDescriptor(cameraTextureDescriptor, settings, requestedSamples, false);
             int colorSamples = SystemInfo.GetRenderTextureSupportedMSAASampleCount(colorDescriptor);
             int depthSamples = SystemInfo.GetRenderTextureSupportedMSAASampleCount(depthDescriptor);
-            return Mathf.Min(cameraTextureDescriptor.msaaSamples, colorSamples, depthSamples);
+            int supportedSamples = Mathf.Min(requestedSamples, colorSamples, depthSamples);
+            return supportedSamples > 1 ? supportedSamples : 1;
         }
     }
 }
