@@ -48,7 +48,7 @@ beginCameraRendering
 
 | 输入 | 读取内容 |
 | --- | --- |
-| `_HoMetadataBufferReflectionMaterialTexture` | `R=perceptualRoughness`、`G=metallic`、`B=reflectance`、`A=PLR 接收强度` |
+| `_HoMetadataBufferReflectionMaterialTexture` | `R=perceptualRoughness`、`G=metallic`、`B=reflectance`、`A=PLR 接收强度；由 _UseReflection 与 _UsePlanarReflection 共同门控` |
 | `_HoMetadataBufferSurfaceColorTexture` | 线性 baseColor 提示；RGB 不钳制，A 为 coverage |
 | `_HoMetadataBufferMaskIdTexture` | 接收面 mask/id |
 | `_HoGeometryBufferNormalDepthTexture` | RGB 世界法线编码，A 线性深度/coverage |
@@ -79,7 +79,7 @@ Probe/Sky                 -> PLR/SSR miss fallback
 
 同一表面不能同时启用 ForwardLit PLR 与特殊 fullscreen PLR resolve，否则会重复累计间接高光。
 
-当 PLR source 暂时无效、但材质声明了 PLR 接收且没有启用 lilToon 环境反射时，ForwardLit 会直接采样 Reflection Probe/Sky 作为 fallback；如果环境反射已经由 `lilReflection` 处理，则不会重复添加。
+PLR 始终服从 lilToon 的 `_UseReflection` 总开关。总开关关闭时，即使 `_UsePlanarReflection`、surface 和 source 都有效，也不会产生 ForwardLit 或特殊 fullscreen PLR；Probe/Sky fallback 同样关闭。
 
 ## 调试与排查
 

@@ -28,7 +28,7 @@ MetadataBuffer 的 MRT 槽位固定如下，新增反射输入不得挪用已有
 | Target4 | `_HoMetadataBufferObjectCustom4_7Texture` | 对象位语义 | 角色与 matte |
 | Target5 | `_HoMetadataBufferReflectionMaterialTexture` | 规范化反射材质输入 | PLR / SSR / Probe |
 
-Target5 当前编码为：`R = perceptualRoughness`、`G = metallic`、`B = reflectance`、`A = PLR 接收强度（由 _UsePlanarReflection 门控）`。生产端必须复用 lilToon 的 smoothness map、MetallicGlossMap 和 GSAA 规则；消费者再按需要计算 `roughness = perceptualRoughness²` 与 F0。
+Target5 当前编码为：`R = perceptualRoughness`、`G = metallic`、`B = reflectance`、`A = PLR 接收强度（由 _UseReflection 与 _UsePlanarReflection 共同门控）`。生产端必须复用 lilToon 的 smoothness map、MetallicGlossMap 和 GSAA 规则；消费者再按需要计算 `roughness = perceptualRoughness²` 与 F0。
 
 ### 2.2 GeometryBuffer：物理几何真值
 
@@ -92,7 +92,7 @@ PLR 的镜像相机、oblique clip、`GL.invertCulling` 和 color-only RT 继续
 
 SSR 需要 GeometryBuffer normal/depth、ReflectionMaterial roughness 和 camera color/depth pyramid，输出 `ReflectionColor.rgb + Confidence.a`；先做高质量 linear tracing，再做 Hi-Z、temporal 和 denoise。SSR 只支持 opaque 起步。
 
-探针消费先做纯采样图片的 fallback（roughness mip、probe blend、sky fallback）；当前 PLR source 不可用且材质未启用 lilToon 环境反射时，ForwardLit 会走该 fallback。探针如何布置、绑定和在 Inspector 中配置不属于本阶段的生产契约。
+探针消费沿用 lilToon/URP 的环境反射采样（roughness mip、probe blend、sky fallback）。PLR 不绕过反射总开关：`_UseReflection = 0` 时 PLR、Probe/Sky 和后续 SSR 都必须停止消费。探针如何布置、绑定和在 Inspector 中配置不属于本阶段的生产契约。
 
 ## 6. 时序冻结
 
