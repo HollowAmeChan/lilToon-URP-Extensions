@@ -88,6 +88,7 @@ PLR 始终服从 lilToon 的 `_UseReflection` 总开关。总开关关闭时，�
 - `geometry.world-normal` / `geometry.linear-depth`：检查物理几何输入；描边不得成为 coverage。
 - PLR source debug：检查镜像相机内容、Flip Y、source 有效性和分辨率。
 - 无反射时依次检查 Feature、surface renderer、反射层遮罩、`_UsePlanarReflection`、buffer layer mask/render queue，以及 source 是否被清成 black。
+- 回归检查：将材质 `_UseReflection = 0`、`_UsePlanarReflection = 1`；`ReflectionMaterial.a` 应为 0，ForwardLit 与特殊 composite 都必须保持原色。再打开 `_UseReflection` 后，才允许按 `_UsePlanarReflection` 和 source 有效性产生 PLR。
 
 ## 后续实现顺序
 
