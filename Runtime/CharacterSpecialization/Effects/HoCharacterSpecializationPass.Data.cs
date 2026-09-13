@@ -21,6 +21,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public TextureHandle enhancedOutlineTexture;
             public TextureHandle eyeColorTexture;
             public TextureHandle eyeDataTexture;
+            public TextureHandle semanticMaskBlurredLowTexture;
+            public TextureHandle semanticMaskBlurredHighTexture;
+            public Vector4 semanticMaskOptions;
             public Material material;
             public Vector4 eyeRevealParams;
             public Vector4 eyeAngleParams;
@@ -48,6 +51,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public bool faceHairDiffuseReady;
             public bool subjectOutlineReady;
             public bool enhancedOutlineReady;
+            public bool semanticMaskBlurReady;
         }
 
         private sealed class FaceHairDiffuseSourcePassData
@@ -74,9 +78,13 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public TextureHandle source;
             public TextureHandle metadataObjectCustom0Texture;
             public TextureHandle metadataObjectCustom1Texture;
+            public TextureHandle semanticMaskBlurredLowTexture;
+            public TextureHandle semanticMaskBlurredHighTexture;
             public TextureHandle geometryDepthTexture;
             public Material material;
             public Vector4 sourceParams;
+            public bool semanticMaskBlurReady;
+            public bool useSemanticMaskAntiAliasing;
         }
 
         private sealed class SubjectOutlineBlurPassData

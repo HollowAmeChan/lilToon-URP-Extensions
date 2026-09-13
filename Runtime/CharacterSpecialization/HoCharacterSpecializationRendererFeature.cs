@@ -24,15 +24,18 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private Material captureClearMaterial;
         private Material faceHairDiffuseMaterial;
         private Material subjectOutlineMaterial;
+        private Material semanticMaskBlurMaterial;
         private HoCharacterEyeAngleTable eyeAngleTable;
         private Shader compositeShader;
         private Shader captureClearShader;
         private Shader faceHairDiffuseShader;
         private Shader subjectOutlineShader;
+        private Shader semanticMaskBlurShader;
         private bool warnedMissingCompositeShader;
         private bool warnedMissingCaptureClearShader;
         private bool warnedMissingFaceHairDiffuseShader;
         private bool warnedMissingSubjectOutlineShader;
+        private bool warnedMissingSemanticMaskBlurShader;
 
         public HoCharacterSpecializationSettings Settings => settings;
 
@@ -60,7 +63,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 compositeMaterial,
                 captureClearMaterial,
                 faceHairDiffuseMaterial,
-                subjectOutlineMaterial);
+                subjectOutlineMaterial,
+                semanticMaskBlurMaterial);
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -96,7 +100,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 compositeMaterial,
                 captureClearMaterial,
                 faceHairDiffuseMaterial,
-                subjectOutlineMaterial);
+                subjectOutlineMaterial,
+                semanticMaskBlurMaterial);
             renderer.EnqueuePass(pass);
         }
 
@@ -111,14 +116,17 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             CoreUtils.Destroy(captureClearMaterial);
             CoreUtils.Destroy(faceHairDiffuseMaterial);
             CoreUtils.Destroy(subjectOutlineMaterial);
+            CoreUtils.Destroy(semanticMaskBlurMaterial);
             compositeMaterial = null;
             captureClearMaterial = null;
             faceHairDiffuseMaterial = null;
             subjectOutlineMaterial = null;
+            semanticMaskBlurMaterial = null;
             compositeShader = null;
             captureClearShader = null;
             faceHairDiffuseShader = null;
             subjectOutlineShader = null;
+            semanticMaskBlurShader = null;
         }
 
         private bool ShouldRender(in RenderingData renderingData, HoCharacterSpecializationSettings activeSettings)
@@ -223,6 +231,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 ref warnedMissingSubjectOutlineShader,
                 "HoCharacterSpecialization outline field is unavailable because shader '{0}' could not be found.");
 
+            EnsureMaterial(
+                ref semanticMaskBlurMaterial,
+                ref semanticMaskBlurShader,
+                Shader.Find(HoCharacterSpecializationShaderConstants.SemanticMaskBlurShaderName),
+                HoCharacterSpecializationShaderConstants.SemanticMaskBlurShaderName,
+                ref warnedMissingSemanticMaskBlurShader,
+                "HoCharacterSpecialization semantic mask anti-aliasing is unavailable because shader '{0}' could not be found.");
+
             Shader clearShader = Shader.Find(HoCharacterSpecializationShaderConstants.CaptureClearShaderName);
             EnsureMaterial(
                 ref captureClearMaterial,
@@ -284,8 +300,19 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private Material captureClearMaterial;
         private Material faceHairDiffuseMaterial;
         private Material subjectOutlineMaterial;
+        private Material semanticMaskBlurMaterial;
         private FilteringSettings filteringSettings;
         private RenderStateBlock renderStateBlock;
+
+        private sealed class SemanticMaskBlurPassData
+        {
+            public TextureHandle metadataObjectCustom0Texture;
+            public TextureHandle metadataObjectCustom1Texture;
+            public TextureHandle destinationLowTexture;
+            public TextureHandle destinationHighTexture;
+            public Material material;
+            public Vector4 blurParams;
+        }
 
         private sealed class CapturePassData
         {
@@ -310,7 +337,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             Material compositeMaterial,
             Material captureClearMaterial,
             Material faceHairDiffuseMaterial,
-            Material subjectOutlineMaterial)
+            Material subjectOutlineMaterial,
+            Material semanticMaskBlurMaterial)
         {
             this.settings = settings;
             this.renderTargets = renderTargets;
@@ -319,6 +347,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             this.captureClearMaterial = captureClearMaterial;
             this.faceHairDiffuseMaterial = faceHairDiffuseMaterial;
             this.subjectOutlineMaterial = subjectOutlineMaterial;
+            this.semanticMaskBlurMaterial = semanticMaskBlurMaterial;
             ConfigurePass();
         }
 
@@ -327,13 +356,15 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             Material compositeMaterial,
             Material captureClearMaterial,
             Material faceHairDiffuseMaterial,
-            Material subjectOutlineMaterial)
+            Material subjectOutlineMaterial,
+            Material semanticMaskBlurMaterial)
         {
             this.settings = settings;
             this.compositeMaterial = compositeMaterial;
             this.captureClearMaterial = captureClearMaterial;
             this.faceHairDiffuseMaterial = faceHairDiffuseMaterial;
             this.subjectOutlineMaterial = subjectOutlineMaterial;
+            this.semanticMaskBlurMaterial = semanticMaskBlurMaterial;
             ConfigurePass();
         }
 
@@ -362,7 +393,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 return;
             }
 
-            renderTargets.ReAllocateIfNeeded(renderingData.cameraData.cameraTargetDescriptor, settings);
+            renderTargets.ReAllocateIfNeeded(
+                renderingData.cameraData.cameraTargetDescriptor,
+                settings,
+                RequiresSemanticMaskBlurTextures(settings));
             captureColorTargets[0] = renderTargets.EyeColorTexture;
             captureColorTargets[1] = renderTargets.EyeDataTexture;
 
@@ -403,9 +437,40 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 context.DrawRenderers(renderingData.cullResults, ref drawingSettings, ref filteringSettings, ref renderStateBlock);
 
                 cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.CaptureModeId, 0.0f);
+
+                bool semanticMaskBlurReady = RequiresSemanticMaskBlurTextures(settings)
+                    && semanticMaskBlurMaterial != null
+                    && renderTargets.SemanticMaskBlurredLowTexture != null
+                    && renderTargets.SemanticMaskBlurredHighTexture != null;
+                if (semanticMaskBlurReady)
+                {
+                    captureColorIdentifiers[0] = renderTargets.SemanticMaskBlurredLowTexture.nameID;
+                    captureColorIdentifiers[1] = renderTargets.SemanticMaskBlurredHighTexture.nameID;
+                    cmd.SetRenderTarget(captureColorIdentifiers, renderTargets.CaptureDepthTexture.nameID);
+                    cmd.SetGlobalVector(
+                        HoCharacterSpecializationShaderConstants.SemanticMaskBlurParamsId,
+                        CreateSemanticMaskBlurParams(settings));
+                    Blitter.BlitTexture(cmd, tempTexture, new Vector4(1, 1, 0, 0), semanticMaskBlurMaterial, 0);
+                }
+
                 ApplyMaterialProperties(compositeMaterial, settings);
                 cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, renderTargets.EyeColorTexture.nameID);
                 cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeDataTextureId, renderTargets.EyeDataTexture.nameID);
+                cmd.SetGlobalFloat(
+                    HoCharacterSpecializationShaderConstants.SemanticMaskBlurValidId,
+                    semanticMaskBlurReady ? 1.0f : 0.0f);
+                cmd.SetGlobalVector(
+                    HoCharacterSpecializationShaderConstants.SemanticMaskOptionsId,
+                    CreateSemanticMaskOptions(settings, semanticMaskBlurReady));
+                if (semanticMaskBlurReady)
+                {
+                    cmd.SetGlobalTexture(
+                        HoCharacterSpecializationShaderConstants.SemanticMaskBlurredLowTextureId,
+                        renderTargets.SemanticMaskBlurredLowTexture.nameID);
+                    cmd.SetGlobalTexture(
+                        HoCharacterSpecializationShaderConstants.SemanticMaskBlurredHighTextureId,
+                        renderTargets.SemanticMaskBlurredHighTexture.nameID);
+                }
 
                 Blitter.BlitCameraTexture(cmd, cameraColorTarget, tempTexture, 0, true);
                 Blitter.BlitCameraTexture(cmd, tempTexture, cameraColorTarget, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, compositeMaterial, 0);
@@ -544,6 +609,36 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 });
             }
 
+            // Shared anti-aliased semantic masks: one pass, two MRTs, for every consumer of the
+            // MetadataBuffer semantic bits. The raw bits stay untouched.
+            TextureHandle semanticMaskBlurredLowTexture = TextureHandle.nullHandle;
+            TextureHandle semanticMaskBlurredHighTexture = TextureHandle.nullHandle;
+            bool semanticMaskBlurReady = RequiresSemanticMaskBlurTextures(settings)
+                && hasMetadataObjectCustom0
+                && hasMetadataObjectCustom1
+                && semanticMaskBlurMaterial != null;
+            if (semanticMaskBlurReady)
+            {
+                TextureDesc semanticMaskDesc = CreateTextureDesc(
+                    cameraData.cameraTargetDescriptor,
+                    settings,
+                    GetSemanticMaskGraphicsFormat(),
+                    HoCharacterSpecializationShaderConstants.SemanticMaskBlurredLowTextureName);
+                semanticMaskBlurredLowTexture = renderGraph.CreateTexture(semanticMaskDesc);
+                semanticMaskDesc.name = HoCharacterSpecializationShaderConstants.SemanticMaskBlurredHighTextureName;
+                semanticMaskBlurredHighTexture = renderGraph.CreateTexture(semanticMaskDesc);
+
+                AddSemanticMaskBlurPass(
+                    renderGraph,
+                    "Ho-CharacterSpecialization SemanticMask Blur",
+                    semanticMaskBlurMaterial,
+                    metadataResources.objectCustom0Texture,
+                    metadataResources.objectCustom1Texture,
+                    semanticMaskBlurredLowTexture,
+                    semanticMaskBlurredHighTexture,
+                    CreateSemanticMaskBlurParams(settings));
+            }
+
             TextureHandle faceHairDiffuseSourceColorTexture = TextureHandle.nullHandle;
             TextureHandle faceHairDiffuseSourceDepthTexture = TextureHandle.nullHandle;
             TextureHandle faceHairDiffuseTempColorTexture = TextureHandle.nullHandle;
@@ -653,6 +748,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     passData.source = source;
                     passData.metadataObjectCustom0Texture = metadataResources.objectCustom0Texture;
                     passData.metadataObjectCustom1Texture = metadataResources.objectCustom1Texture;
+                    passData.semanticMaskBlurredLowTexture = semanticMaskBlurredLowTexture;
+                    passData.semanticMaskBlurredHighTexture = semanticMaskBlurredHighTexture;
+                    passData.semanticMaskBlurReady = semanticMaskBlurReady;
+                    passData.useSemanticMaskAntiAliasing = settings.semanticMaskBlurSubjectOutline;
                     passData.geometryDepthTexture = geometryResources.depthTexture;
                     passData.material = subjectOutlineMaterial;
                     passData.sourceParams = new Vector4((float)HoCharacterObjectCustomChannel.CharacterFull, 0.0f, 0.0f, 0.0f);
@@ -661,6 +760,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     builder.UseTexture(passData.metadataObjectCustom0Texture, AccessFlags.Read);
                     builder.UseTexture(passData.metadataObjectCustom1Texture, AccessFlags.Read);
                     builder.UseTexture(passData.geometryDepthTexture, AccessFlags.Read);
+                    if (semanticMaskBlurReady)
+                    {
+                        builder.UseTexture(semanticMaskBlurredLowTexture, AccessFlags.Read);
+                        builder.UseTexture(semanticMaskBlurredHighTexture, AccessFlags.Read);
+                    }
+
                     builder.SetRenderAttachment(subjectOutlineSourceTexture, 0, AccessFlags.WriteAll);
                     builder.AllowGlobalStateModification(true);
                     builder.AllowPassCulling(false);
@@ -671,6 +776,15 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                         context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.metadataObjectCustom1Texture);
                         context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, data.geometryDepthTexture);
                         context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
+                        // The outline's own switch: it stays on the raw bits by default.
+                        bool useSemanticMaskAntiAliasing = data.semanticMaskBlurReady && data.useSemanticMaskAntiAliasing;
+                        context.cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.SemanticMaskBlurValidId, useSemanticMaskAntiAliasing ? 1.0f : 0.0f);
+                        if (useSemanticMaskAntiAliasing)
+                        {
+                            context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.SemanticMaskBlurredLowTextureId, data.semanticMaskBlurredLowTexture);
+                            context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.SemanticMaskBlurredHighTextureId, data.semanticMaskBlurredHighTexture);
+                        }
+
                         Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                     });
                 }
@@ -721,6 +835,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     passData.source = source;
                     passData.metadataObjectCustom0Texture = metadataResources.objectCustom0Texture;
                     passData.metadataObjectCustom1Texture = metadataResources.objectCustom1Texture;
+                    passData.semanticMaskBlurredLowTexture = semanticMaskBlurredLowTexture;
+                    passData.semanticMaskBlurredHighTexture = semanticMaskBlurredHighTexture;
+                    passData.semanticMaskBlurReady = semanticMaskBlurReady;
+                    passData.useSemanticMaskAntiAliasing = settings.semanticMaskBlurEnhancedOutline;
                     passData.geometryDepthTexture = geometryResources.depthTexture;
                     passData.material = subjectOutlineMaterial;
                     passData.sourceParams = new Vector4(Mathf.Clamp((int)settings.enhancedOutlineSourceChannel, 0, 7), 0.0f, 0.0f, 0.0f);
@@ -729,6 +847,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     builder.UseTexture(passData.metadataObjectCustom0Texture, AccessFlags.Read);
                     builder.UseTexture(passData.metadataObjectCustom1Texture, AccessFlags.Read);
                     builder.UseTexture(passData.geometryDepthTexture, AccessFlags.Read);
+                    if (semanticMaskBlurReady)
+                    {
+                        builder.UseTexture(semanticMaskBlurredLowTexture, AccessFlags.Read);
+                        builder.UseTexture(semanticMaskBlurredHighTexture, AccessFlags.Read);
+                    }
+
                     builder.SetRenderAttachment(enhancedOutlineSourceTexture, 0, AccessFlags.WriteAll);
                     builder.AllowGlobalStateModification(true);
                     builder.AllowPassCulling(false);
@@ -739,6 +863,15 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                         context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.metadataObjectCustom1Texture);
                         context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, data.geometryDepthTexture);
                         context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
+                        // The outline's own switch: it stays on the raw bits by default.
+                        bool useSemanticMaskAntiAliasing = data.semanticMaskBlurReady && data.useSemanticMaskAntiAliasing;
+                        context.cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.SemanticMaskBlurValidId, useSemanticMaskAntiAliasing ? 1.0f : 0.0f);
+                        if (useSemanticMaskAntiAliasing)
+                        {
+                            context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.SemanticMaskBlurredLowTextureId, data.semanticMaskBlurredLowTexture);
+                            context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.SemanticMaskBlurredHighTextureId, data.semanticMaskBlurredHighTexture);
+                        }
+
                         Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                     });
                 }
@@ -791,10 +924,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 passData.enhancedOutlineTexture = enhancedOutlineTexture;
                 passData.eyeColorTexture = eyeColorTexture;
                 passData.eyeDataTexture = eyeDataTexture;
+                passData.semanticMaskBlurredLowTexture = semanticMaskBlurredLowTexture;
+                passData.semanticMaskBlurredHighTexture = semanticMaskBlurredHighTexture;
                 passData.material = compositeMaterial;
                 passData.faceHairDiffuseReady = faceHairDiffuseReady;
                 passData.subjectOutlineReady = subjectOutlineReady;
                 passData.enhancedOutlineReady = enhancedOutlineReady;
+                passData.semanticMaskBlurReady = semanticMaskBlurReady;
+                passData.semanticMaskOptions = CreateSemanticMaskOptions(settings, semanticMaskBlurReady);
                 FillMaterialVectors(
                     settings,
                     faceHairDiffuseReady,
@@ -831,6 +968,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 builder.UseTexture(passData.metadataObjectCustom1Texture, AccessFlags.Read);
                 builder.UseTexture(eyeColorTexture, AccessFlags.Read);
                 builder.UseTexture(eyeDataTexture, AccessFlags.Read);
+                if (semanticMaskBlurReady)
+                {
+                    builder.UseTexture(semanticMaskBlurredLowTexture, AccessFlags.Read);
+                    builder.UseTexture(semanticMaskBlurredHighTexture, AccessFlags.Read);
+                }
                 if (faceHairDiffuseReady)
                 {
                     builder.UseTexture(faceHairDiffuseSourceColorTexture, AccessFlags.Read);
@@ -901,6 +1043,17 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
                     context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, data.eyeColorTexture);
                     context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeDataTextureId, data.eyeDataTexture);
+
+                    // The anti-aliased semantic masks are optional: when the shared pass did not run,
+                    // the consumers fall back to reading the raw bits. Which effect reads the copy is
+                    // the user's per-effect choice, carried in the options vector.
+                    context.cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.SemanticMaskBlurValidId, data.semanticMaskBlurReady ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.SemanticMaskOptionsId, data.semanticMaskOptions);
+                    if (data.semanticMaskBlurReady)
+                    {
+                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.SemanticMaskBlurredLowTextureId, data.semanticMaskBlurredLowTexture);
+                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.SemanticMaskBlurredHighTextureId, data.semanticMaskBlurredHighTexture);
+                    }
 
                     context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
@@ -1031,6 +1184,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             return IsColorFormatUsable(preferredFormat) ? preferredFormat : GetFallbackColorFormat();
         }
 
+        // The blurred semantic masks only carry 0..1 coverage, so 8 bits per channel is plenty and
+        // cheaper than the 16F metadata textures they are derived from.
+        private static GraphicsFormat GetSemanticMaskGraphicsFormat()
+        {
+            const GraphicsFormat preferredFormat = GraphicsFormat.R8G8B8A8_UNorm;
+            return IsColorFormatUsable(preferredFormat) ? preferredFormat : GetFallbackColorFormat();
+        }
+
         private static GraphicsFormat GetFallbackColorFormat()
         {
             GraphicsFormat format = SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
@@ -1058,12 +1219,16 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private RTHandle eyeColorTexture;
         private RTHandle eyeDataTexture;
         private RTHandle captureDepthTexture;
+        private RTHandle semanticMaskBlurredLowTexture;
+        private RTHandle semanticMaskBlurredHighTexture;
 
         public RTHandle EyeColorTexture => eyeColorTexture;
         public RTHandle EyeDataTexture => eyeDataTexture;
         public RTHandle CaptureDepthTexture => captureDepthTexture;
+        public RTHandle SemanticMaskBlurredLowTexture => semanticMaskBlurredLowTexture;
+        public RTHandle SemanticMaskBlurredHighTexture => semanticMaskBlurredHighTexture;
 
-        public void ReAllocateIfNeeded(RenderTextureDescriptor cameraTextureDescriptor, HoCharacterSpecializationSettings settings)
+        public void ReAllocateIfNeeded(RenderTextureDescriptor cameraTextureDescriptor, HoCharacterSpecializationSettings settings, bool allocateSemanticMaskBlur)
         {
             int divisor = Mathf.Max(1, (int)settings.renderScale);
             RenderTextureDescriptor descriptor = cameraTextureDescriptor;
@@ -1082,6 +1247,33 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             RenderingUtils.ReAllocateIfNeeded(ref eyeColorTexture, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.EyeColorTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref eyeDataTexture, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.EyeDataTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref captureDepthTexture, CreateDepthDescriptor(cameraTextureDescriptor, settings), FilterMode.Point, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.CaptureDepthTextureName);
+
+            RenderTextureDescriptor semanticMaskDescriptor = descriptor;
+            GraphicsFormat semanticMaskFormat = GetSemanticMaskGraphicsFormat();
+            if (semanticMaskFormat != GraphicsFormat.None)
+            {
+                semanticMaskDescriptor.graphicsFormat = semanticMaskFormat;
+            }
+
+            // Releasing instead of allocating keeps "every effect unchecked" at zero cost without
+            // reallocating the pair every frame.
+            if (allocateSemanticMaskBlur)
+            {
+                RenderingUtils.ReAllocateIfNeeded(ref semanticMaskBlurredLowTexture, semanticMaskDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.SemanticMaskBlurredLowTextureName);
+                RenderingUtils.ReAllocateIfNeeded(ref semanticMaskBlurredHighTexture, semanticMaskDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.SemanticMaskBlurredHighTextureName);
+            }
+            else
+            {
+                ReleaseSemanticMaskBlurTextures();
+            }
+        }
+
+        private void ReleaseSemanticMaskBlurTextures()
+        {
+            semanticMaskBlurredLowTexture?.Release();
+            semanticMaskBlurredHighTexture?.Release();
+            semanticMaskBlurredLowTexture = null;
+            semanticMaskBlurredHighTexture = null;
         }
 
         public void Release()
@@ -1089,9 +1281,13 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             eyeColorTexture?.Release();
             eyeDataTexture?.Release();
             captureDepthTexture?.Release();
+            semanticMaskBlurredLowTexture?.Release();
+            semanticMaskBlurredHighTexture?.Release();
             eyeColorTexture = null;
             eyeDataTexture = null;
             captureDepthTexture = null;
+            semanticMaskBlurredLowTexture = null;
+            semanticMaskBlurredHighTexture = null;
         }
 
         internal static RenderTextureDescriptor CreateDepthDescriptor(RenderTextureDescriptor cameraTextureDescriptor, HoCharacterSpecializationSettings settings)
@@ -1156,6 +1352,20 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             }
 
             format = SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
+            return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, GraphicsFormatUsage.Render)
+                ? format
+                : GraphicsFormat.B8G8R8A8_UNorm;
+        }
+
+        private static GraphicsFormat GetSemanticMaskGraphicsFormat()
+        {
+            const GraphicsFormat preferredFormat = GraphicsFormat.R8G8B8A8_UNorm;
+            if (SystemInfo.IsFormatSupported(preferredFormat, GraphicsFormatUsage.Render))
+            {
+                return preferredFormat;
+            }
+
+            GraphicsFormat format = SystemInfo.GetGraphicsFormat(DefaultFormat.LDR);
             return format != GraphicsFormat.None && SystemInfo.IsFormatSupported(format, GraphicsFormatUsage.Render)
                 ? format
                 : GraphicsFormat.B8G8R8A8_UNorm;

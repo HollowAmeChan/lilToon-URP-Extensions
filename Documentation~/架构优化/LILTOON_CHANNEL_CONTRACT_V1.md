@@ -21,6 +21,7 @@
 | `surfaceData` | 材质 | SSS | RGBA（thickness/curvature/material/transmittance） | — | ✅ |
 | `reflectionMaterial` | 材质 → MetadataBuffer Target5 | PLR / SSR / Probe | RGBA16F（R=perceptualRoughness，G=metallic，B=reflectance，A=PLR strength，由反射总开关与 PLR 开关共同门控） | — | ✅ |
 | `objectCustom0/1` | 材质 / 对象（Group/Subject） | 角色特化 / AOV matte | RGBA(bits) | `matte_*` | ✅ |
+| `maskcoverage.low/high` | Ho-CharacterSpecialization 掩码抗锯齿 pass（`HoCharacterSemanticMaskBlur.shader`，只要有一个效果勾选「掩码抗锯齿」块里的对应项就产出） | 角色特化（前发投影的接收面与眼透区域、脸色扩散、眼睛透过、主体/增强轮廓，逐效果可选） | R8G8B8A8_UNorm ×2（逐通道与 `objectCustom0_3` / `objectCustom4_7` 同索引；值为该语义的**覆盖率 0..1**，不是 bit） | 不导出 | ✅ |
 | `shadow.main` | URP 主光阴影 | 材质 toon 门控 / AOV | R8f | `shadow_main` | ✅ |
 | `shadow.add0..N` | ShadowCast cast 组（每组一张 atlas；N≤8，组≠灯） | 材质 / ScreenProcess / AOV | R8f | `shadow_add0..N` | ◻ |
 | `ao` | `Ho-GTAO`（自研，单 feature） | ScreenProcess.AO | R8f | `ao` | ⚠️ |
@@ -35,6 +36,8 @@
 | `motion` | （占坑） | AOV / temporal | RG | `motion` | ◻ |
 
 > 说明：`gisexclude` 为描边/非物理表面排除位（描边白边已知 bug 的正式解，见 `LILTOON_KNOWN_ISSUE_OUTLINE_SSGI_GLOW.md`）；`aointent`/`gi`/`gisexclude`/`emission`/`motion` 已登记，随对应系统落地实现。
+>
+> `maskcoverage.*` 是 `objectCustom` 的**抗锯齿副本**，用来解决"单采样 0/1 语义位当轮廓用时边缘只能是硬边"：两张 `objectCustom` 纹理整体过一次盒核滤波（逐通道独立，不串道），产出每语义的覆盖率。生产端不改动原位图，消费端按各自的勾选读覆盖率版或原始 bit；模糊宽度是 feature 级别的一个参数，五个勾选项全关时这趟 pass 不跑。**不要把这条规则套到 `maskId` / `surfaceData` / `custom0` / `eyeData` 上**（ID 与材质分类平均后无意义）。
 
 ---
 

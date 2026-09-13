@@ -39,8 +39,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 DrawProperty(Find(settingsProperty, "hairShadowAngleDegrees"), "投影角度");
                 DrawProperty(Find(settingsProperty, "hairShadowSoftnessPixels"), "柔化像素");
                 DrawProperty(Find(settingsProperty, "hairShadowSpreadPixels"), "扩散像素");
-                DrawProperty(Find(settingsProperty, "hairShadowKeepOffHair"), "避开前发");
                 DrawProperty(Find(settingsProperty, "hairShadowBlendMode"), "混合模式");
+                DrawProperty(Find(settingsProperty, "semanticMaskBlurHairShadow"), "读取抗锯齿掩码");
             }
         }
 
@@ -55,8 +55,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             SerializedDataParameter angleDegrees,
             SerializedDataParameter softnessPixels,
             SerializedDataParameter spreadPixels,
-            SerializedDataParameter keepOffHair,
             SerializedDataParameter blendMode,
+            SerializedDataParameter maskAntiAliasing,
             Action<SerializedDataParameter, GUIContent> drawParameter)
         {
             string summary = enabled?.value != null && enabled.value.boolValue
@@ -81,8 +81,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 DrawParameter(angleDegrees, "投影角度", drawParameter);
                 DrawParameter(softnessPixels, "柔化像素", drawParameter);
                 DrawParameter(spreadPixels, "扩散像素", drawParameter);
-                DrawParameter(keepOffHair, "避开前发", drawParameter);
                 DrawParameter(blendMode, "混合模式", drawParameter);
+                DrawParameter(maskAntiAliasing, "读取抗锯齿掩码", drawParameter);
             }
         }
 

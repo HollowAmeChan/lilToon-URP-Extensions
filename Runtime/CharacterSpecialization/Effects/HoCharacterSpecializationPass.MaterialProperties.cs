@@ -186,9 +186,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 Mathf.Max(0.0f, settings.hairShadowSoftnessPixels));
             hairShadowParams1 = new Vector4(
                 Mathf.Max(0.0f, settings.hairShadowSpreadPixels),
-                Mathf.Clamp01(settings.hairShadowKeepOffHair),
                 (float)settings.hairShadowBlendMode,
-                settings.useEyeRevealArea ? 1.0f : 0.0f);
+                settings.useEyeRevealArea ? 1.0f : 0.0f,
+                0.0f);
             hairShadowParams2 = new Vector4(
                 Mathf.Clamp01(settings.hairShadowDistancePerspectiveStrength),
                 Mathf.Max(0.0f, settings.hairShadowDistanceReferenceDepth),

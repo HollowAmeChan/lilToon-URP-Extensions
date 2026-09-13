@@ -36,6 +36,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 DrawProperty(Find(settingsProperty, "enhancedOutlineRadiusPixels"), "外扩半径像素");
                 DrawFogSettings(settingsProperty);
                 DrawHeightFadeSettings(settingsProperty);
+                DrawProperty(Find(settingsProperty, "semanticMaskBlurEnhancedOutline"), "读取抗锯齿掩码");
             }
         }
 
@@ -54,6 +55,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             SerializedDataParameter heightFadeStart,
             SerializedDataParameter heightFadeEnd,
             SerializedDataParameter heightFadeHardness,
+            SerializedDataParameter maskAntiAliasing,
             Action<SerializedDataParameter, GUIContent> drawParameter)
         {
             string summary = enabled?.value != null && enabled.value.boolValue
@@ -86,6 +88,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                     heightFadeEnd,
                     heightFadeHardness,
                     drawParameter);
+                DrawParameter(maskAntiAliasing, "读取抗锯齿掩码", drawParameter);
             }
         }
 

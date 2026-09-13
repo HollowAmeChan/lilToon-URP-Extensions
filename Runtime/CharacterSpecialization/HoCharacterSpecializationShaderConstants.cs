@@ -9,6 +9,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public const string CaptureClearShaderName = "Hidden/lilToon-HoCharacterSpecialization/URP/CaptureClear";
         public const string FaceHairDiffuseShaderName = "Hidden/lilToon-HoCharacterSpecialization/URP/FaceHairDiffuse";
         public const string SubjectOutlineShaderName = "Hidden/lilToon-HoCharacterSpecialization/URP/SubjectOutline";
+        public const string SemanticMaskBlurShaderName = "Hidden/lilToon-HoCharacterSpecialization/URP/SemanticMaskBlur";
         public const string CapturePassName = "HoCharacterCapture";
         public const string EyeColorTextureName = "_lilHoCharacterEyeColorTexture";
         public const string EyeDataTextureName = "_lilHoCharacterEyeDataTexture";
@@ -27,6 +28,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public const string EnhancedOutlineTempTextureName = "_lilHoCharacterEnhancedOutlineTempTexture";
         public const string EnhancedOutlineTextureName = "_lilHoCharacterEnhancedOutlineTexture";
         public const string EyeAngleTextureName = "_lilHoCharacterEyeAngleTable";
+        public const string SemanticMaskBlurredLowTextureName = "_lilHoCharacterSemanticMaskBlurred0_3Texture";
+        public const string SemanticMaskBlurredHighTextureName = "_lilHoCharacterSemanticMaskBlurred4_7Texture";
 
         public static readonly ShaderTagId CaptureShaderTagId = new ShaderTagId(CapturePassName);
         public static readonly int CaptureModeId = Shader.PropertyToID("_HoCharacterCaptureMode");
@@ -67,5 +70,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public static readonly int OptionsId = Shader.PropertyToID("_HoCharacterOptions");
         public static readonly int EyeAngleTextureId = Shader.PropertyToID(EyeAngleTextureName);
         public static readonly int EyeAngleParamsId = Shader.PropertyToID("_HoCharacterEyeAngleParams");
+        public static readonly int SemanticMaskBlurredLowTextureId = Shader.PropertyToID(SemanticMaskBlurredLowTextureName);
+        public static readonly int SemanticMaskBlurredHighTextureId = Shader.PropertyToID(SemanticMaskBlurredHighTextureName);
+        public static readonly int SemanticMaskBlurParamsId = Shader.PropertyToID("_HoCharacterSemanticMaskBlurParams");
+        public static readonly int SemanticMaskBlurValidId = Shader.PropertyToID("_HoCharacterSemanticMaskBlurValid");
+        public static readonly int SemanticMaskOptionsId = Shader.PropertyToID("_HoCharacterSemanticMaskOptions");
+        public const int SemanticMaskBlurMaxTapsPerAxis = 8;
     }
 }

@@ -42,6 +42,8 @@ MSAA 可以开。我们对它只有一条底线：**开着不能坏** —— 不
 
 另外要知道消费端的边界：材质侧没有逐 sample 能力（lilToon 全仓库检索 `Texture2DMS` / `Texture2DMSArray` / `EvaluateAttributeAtSample` / `SV_Coverage` 零命中），屏幕空间信号对材质而言永远是"每像素一个值"。
 
+单采样带来的另一类后果，见配套文档 `语义掩码.md`：MetadataBuffer 的语义位（`objectCustom` 的 8 个 0/1 通道）当轮廓用时必然是硬边，只能由消费端自己补低频，且不能指望上面这套 MSAA —— 那份文档同时记录了这轮踩过的坑。
+
 ## AA 怎么选
 
 TAA 最适合本管线 —— 它和后处理、时序链天然同源，只需要运动矢量。不想上时序就用 FXAA / SMAA，便宜但几何边缘质量弱。真正的质量提升来自内部高分辨率 + 上采样（DLSS / FSR 类），它同时改善几何与着色走样。alpha-to-coverage 只解决"裁剪出来的边"，和 AO、时序无关（lilToon 有 `_AlphaToMask` 属性）。至于"MSAA + 自己逐 sample 算 AO / 重投影"：技术上可行，但成本与平台分支都高，只在明确需要精确性时评估。

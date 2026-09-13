@@ -37,6 +37,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 DrawProperty(Find(settingsProperty, "faceHairDiffuseLevelWhite"), "白场阈值");
                 DrawProperty(Find(settingsProperty, "faceHairDiffuseTintColor"), "染色倍率");
                 DrawProperty(Find(settingsProperty, "faceHairDiffuseBlendMode"), "混合模式");
+                DrawProperty(Find(settingsProperty, "semanticMaskBlurFaceHairDiffuse"), "读取抗锯齿掩码");
             }
         }
 
@@ -49,6 +50,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             SerializedDataParameter levelWhite,
             SerializedDataParameter tintColor,
             SerializedDataParameter blendMode,
+            SerializedDataParameter maskAntiAliasing,
             Action<SerializedDataParameter, GUIContent> drawParameter)
         {
             string summary = enabled?.value != null && enabled.value.boolValue
@@ -71,6 +73,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 DrawParameter(levelWhite, "白场阈值", drawParameter);
                 DrawParameter(tintColor, "染色倍率", drawParameter);
                 DrawParameter(blendMode, "混合模式", drawParameter);
+                DrawParameter(maskAntiAliasing, "读取抗锯齿掩码", drawParameter);
             }
         }
 

@@ -214,6 +214,24 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("渲染缩放"), Tooltip("捕获 RT 的分辨率。降低分辨率会省带宽，但会影响边缘质量。")]
         public HoCharacterRenderScaleParameter RenderScale = new HoCharacterRenderScaleParameter(HoCharacterRenderScale.Full);
 
+        [InspectorName("抗锯齿宽度"), Tooltip("掩码抗锯齿的模糊半径，单位为 MetadataBuffer 的 texel。低于 1 像素没有抗锯齿收益（单采样 0/1 场必须摊到至少一个 texel），内部按 1 像素下限处理；越宽边缘越软、台阶越小。每个效果在自己分区里用「读取抗锯齿掩码」勾选是否读取，任一勾选就会产出这份副本，全不勾选则不跑。")]
+        public FloatParameter SemanticMaskBlurRadiusPixels = new FloatParameter(1.0f);
+
+        [InspectorName("读取抗锯齿掩码"), Tooltip("前发投影读取掩码抗锯齿版：接收面的裁剪边（发际线）与眼透区域，以及半影的取样源。不勾选则读原始 bit。")]
+        public BoolParameter SemanticMaskBlurHairShadow = new BoolParameter(true);
+
+        [InspectorName("读取抗锯齿掩码"), Tooltip("脸色扩散读取掩码抗锯齿版：前发接收区域的边界。不勾选则读原始 bit。")]
+        public BoolParameter SemanticMaskBlurFaceHairDiffuse = new BoolParameter(true);
+
+        [InspectorName("读取抗锯齿掩码"), Tooltip("眼睛透过读取掩码抗锯齿版：遮挡前发与眼透区域的边界。不勾选则读原始 bit。")]
+        public BoolParameter SemanticMaskBlurEyeReveal = new BoolParameter(true);
+
+        [InspectorName("读取抗锯齿掩码"), Tooltip("主体轮廓的语义源读取掩码抗锯齿版。默认不读（读原始 bit）。")]
+        public BoolParameter SemanticMaskBlurSubjectOutline = new BoolParameter(false);
+
+        [InspectorName("读取抗锯齿掩码"), Tooltip("增强轮廓的语义源读取掩码抗锯齿版。默认不读（读原始 bit）。")]
+        public BoolParameter SemanticMaskBlurEnhancedOutline = new BoolParameter(false);
+
         [InspectorName("启用眼睛透过"), Tooltip("让被前发遮挡的眼睛按眼睛捕获结果透出。")]
         public BoolParameter EyeRevealEnabled = new BoolParameter(true);
 
@@ -274,14 +292,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("投影角度"), Tooltip("投影方向，单位为角度。")]
         public FloatParameter HairShadowAngleDegrees = new FloatParameter(240.0f);
 
-        [InspectorName("柔化像素"), Tooltip("前发投影边缘柔化范围。")]
+        [InspectorName("柔化像素"), Tooltip("前发投影边缘柔化范围。掩码读入时始终保留 1 像素的抗锯齿模糊，这里是在此之上的额外柔化。")]
         public FloatParameter HairShadowSoftnessPixels = new FloatParameter(2.0f);
 
         [InspectorName("扩散像素"), Tooltip("前发投影遮罩扩张范围。")]
         public FloatParameter HairShadowSpreadPixels = new FloatParameter(0.0f);
-
-        [InspectorName("避开前发"), Tooltip("避免投影重新盖回前发自身的强度。")]
-        public ClampedFloatParameter HairShadowKeepOffHair = new ClampedFloatParameter(1.0f, 0.0f, 1.0f);
 
         [InspectorName("混合模式"), Tooltip("前发投影与画面的混合方式。")]
         public HoCharacterShadowBlendModeParameter HairShadowBlendMode = new HoCharacterShadowBlendModeParameter(HoCharacterShadowBlendMode.Multiply);
@@ -442,6 +457,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             }
 
             target.eyeRevealEnabled = EyeRevealEnabled.value;
+            target.semanticMaskBlurRadiusPixels = SemanticMaskBlurRadiusPixels.value;
+            target.semanticMaskBlurHairShadow = SemanticMaskBlurHairShadow.value;
+            target.semanticMaskBlurFaceHairDiffuse = SemanticMaskBlurFaceHairDiffuse.value;
+            target.semanticMaskBlurEyeReveal = SemanticMaskBlurEyeReveal.value;
+            target.semanticMaskBlurSubjectOutline = SemanticMaskBlurSubjectOutline.value;
+            target.semanticMaskBlurEnhancedOutline = SemanticMaskBlurEnhancedOutline.value;
             target.eyeRevealStrength = EyeRevealStrength.value;
             target.eyeRevealFeatherPixels = EyeRevealFeatherPixels.value;
             target.eyeRevealDilationPixels = EyeRevealDilationPixels.value;
@@ -463,7 +484,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             target.hairShadowAngleDegrees = HairShadowAngleDegrees.value;
             target.hairShadowSoftnessPixels = HairShadowSoftnessPixels.value;
             target.hairShadowSpreadPixels = HairShadowSpreadPixels.value;
-            target.hairShadowKeepOffHair = HairShadowKeepOffHair.value;
             target.hairShadowBlendMode = HairShadowBlendMode.value;
             target.faceHairDiffuseEnabled = FaceHairDiffuseEnabled.value;
             target.faceHairDiffuseStrength = FaceHairDiffuseStrength.value;

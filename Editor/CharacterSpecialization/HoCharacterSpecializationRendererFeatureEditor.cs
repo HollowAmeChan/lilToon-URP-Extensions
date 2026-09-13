@@ -40,6 +40,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 return;
             }
 
+            DrawProperty("semanticMaskBlurRadiusPixels", "抗锯齿宽度");
             DrawRendererFeature();
             DrawCapture();
             DrawDebug();

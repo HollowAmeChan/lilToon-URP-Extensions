@@ -28,13 +28,28 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/SubjectOutline"
             float4 _HoCharacterSubjectOutlineSourceParams; // x object custom channel index
             TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
             TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture);
+            // Shared anti-aliased semantic masks (Ho-CharacterSpecialization). The outline reads the
+            // same 8 semantic channels, so it follows the same switch: blurred when available.
+            TEXTURE2D_X(_lilHoCharacterSemanticMaskBlurred0_3Texture);
+            TEXTURE2D_X(_lilHoCharacterSemanticMaskBlurred4_7Texture);
+            float _HoCharacterSemanticMaskBlurValid;
             TEXTURE2D_X_FLOAT(_HoGeometryBufferDepthTexture);
 
             float SampleObjectCustomChannel(float2 uv, int channelIndex)
             {
                 int clampedIndex = (int)clamp((float)channelIndex, 0.0, 7.0);
-                float4 lowValues = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv);
-                float4 highValues = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture, sampler_PointClamp, uv);
+                float4 lowValues;
+                float4 highValues;
+                if (_HoCharacterSemanticMaskBlurValid > 0.5)
+                {
+                    lowValues = SAMPLE_TEXTURE2D_X(_lilHoCharacterSemanticMaskBlurred0_3Texture, sampler_LinearClamp, uv);
+                    highValues = SAMPLE_TEXTURE2D_X(_lilHoCharacterSemanticMaskBlurred4_7Texture, sampler_LinearClamp, uv);
+                }
+                else
+                {
+                    lowValues = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv);
+                    highValues = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture, sampler_PointClamp, uv);
+                }
                 if (clampedIndex == 0)
                 {
                     return lowValues.r;

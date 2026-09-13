@@ -28,7 +28,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             float4 _HoCharacterEyeRevealParams; // x strength, y feather px, z dilation px, w depth bias
             float4 _HoCharacterEyeAngleParams; // x strength, y yaw range deg, z pitch range deg, w softness deg
             float4 _HoCharacterHairShadowParams; // x opacity, y distance px, z angle deg, w softness px
-            float4 _HoCharacterHairShadowParams1; // x spread px, y keep off hair, z blend mode, w use reveal area
+            float4 _HoCharacterHairShadowParams1; // x spread px, y blend mode, z use reveal area
             float4 _HoCharacterHairShadowParams2; // x perspective strength, y reference depth, z min scale
             float4 _HoCharacterHairShadowColor;
             float4 _HoCharacterFaceHairDiffuseParams; // x strength, y radius px, z depth tolerance, w blend mode
@@ -53,6 +53,10 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
             TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
             TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture);
+            TEXTURE2D_X(_lilHoCharacterSemanticMaskBlurred0_3Texture);
+            TEXTURE2D_X(_lilHoCharacterSemanticMaskBlurred4_7Texture);
+            float _HoCharacterSemanticMaskBlurValid;
+            float4 _HoCharacterSemanticMaskOptions; // x copy exists, y hair shadow, z face hair diffuse, w eye reveal
             TEXTURE2D_X(_lilHoCharacterEyeColorTexture);
             TEXTURE2D_X(_lilHoCharacterEyeDataTexture);
             TEXTURE2D(_lilHoCharacterEyeAngleTable);
@@ -76,25 +80,114 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 return lerp(1.0, same, saturate(_HoCharacterOptions.z));
             }
 
-            float SampleFrontHair(float2 uv)
+            // The semantic channels are a single-sample 0/1 field (objectCustom is RGBA(bits) by
+            // contract). Reads resolve to the feature's shared anti-aliased copy when the user enabled
+            // it for this effect, and to the raw bit otherwise - one place decides the source, and the
+            // per-effect choice is a user-facing option rather than hidden code. The copy is produced
+            // by our own pass, independent of any camera MSAA / FXAA / TAA setting.
+            // channel: 0 = FrontHair (objectCustom0.b), 1 = Face (objectCustom0.g),
+            //          2 = EyeRevealArea (objectCustom4.r).
+            float SampleSemanticBit(float2 uv, int channel, float useAntiAliased)
             {
-                return SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv).b;
+                if (_HoCharacterSemanticMaskBlurValid > 0.5 && useAntiAliased > 0.5)
+                {
+                    if (channel == 2)
+                    {
+                        return SAMPLE_TEXTURE2D_X(_lilHoCharacterSemanticMaskBlurred4_7Texture, sampler_LinearClamp, uv).r;
+                    }
+
+                    float4 blurred = SAMPLE_TEXTURE2D_X(_lilHoCharacterSemanticMaskBlurred0_3Texture, sampler_LinearClamp, uv);
+                    return channel == 0 ? blurred.b : blurred.g;
+                }
+
+                if (channel == 2)
+                {
+                    return SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture, sampler_LinearClamp, uv).r;
+                }
+
+                float4 bits = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_LinearClamp, uv);
+                return channel == 0 ? bits.b : bits.g;
             }
 
-            float SampleSubject(float2 uv)
+            float SampleSemanticSpread(float2 uv, float radiusPx, int channel, float useAntiAliased)
             {
-                return SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv).r;
+                float mask = SampleSemanticBit(uv, channel, useAntiAliased);
+                if (radiusPx <= 0.0001)
+                {
+                    return mask;
+                }
+
+                float2 texel = MetadataTexelSize() * radiusPx;
+                mask = max(mask, SampleSemanticBit(uv + float2( texel.x, 0.0), channel, useAntiAliased));
+                mask = max(mask, SampleSemanticBit(uv + float2(-texel.x, 0.0), channel, useAntiAliased));
+                mask = max(mask, SampleSemanticBit(uv + float2(0.0,  texel.y), channel, useAntiAliased));
+                mask = max(mask, SampleSemanticBit(uv + float2(0.0, -texel.y), channel, useAntiAliased));
+                mask = max(mask, SampleSemanticBit(uv + float2( texel.x,  texel.y), channel, useAntiAliased));
+                mask = max(mask, SampleSemanticBit(uv + float2(-texel.x,  texel.y), channel, useAntiAliased));
+                mask = max(mask, SampleSemanticBit(uv + float2( texel.x, -texel.y), channel, useAntiAliased));
+                mask = max(mask, SampleSemanticBit(uv + float2(-texel.x, -texel.y), channel, useAntiAliased));
+                return mask;
             }
 
-            float SampleFace(float2 uv)
+            // A flat box, not a gaussian. The filter runs on a single-sample 0/1 mask, so the
+            // penumbra can only ever be a staircase, and its step height is set by the kernel's
+            // footprint. At the same width a gaussian concentrates its weight mid-ramp and steps
+            // ~2.2x harder than a box (measured per-texel step profiles across a vertical edge):
+            //   old 9 integer taps (2px) : 0.285 0.000 0.430 0.000 0.285 0.000  (plateaus, 0.43)
+            //   gaussian spiral (2px)    : 0.033 0.243 0.441 0.248 0.035          (max step 0.441)
+            //   this box (2px)           : 0.200 0.200 0.200 0.200 0.200          (max step 0.200)
+            // 1/width is the best a binary input allows at that width. A linear blur fills in the
+            // low-frequency part of the mask but can never move the edge *off* the metadata texel
+            // grid - the sub-texel phase was never written into the buffer - so 柔化像素 stays the
+            // only dial that trades edge tightness for smoothness.
+            static const int LIL_HOCHARACTER_HAIR_MASK_MAX_TAPS = 8;
+
+            float SampleSemanticBlur(float2 uv, float softnessPx, float spreadPx, int channel, float useAntiAliased)
             {
-                return SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv).g;
+                // Reading a single-sample 0/1 mask only stops being a hard edge once the filter
+                // spreads it over at least one texel, so the read always keeps a 1px floor -
+                // 柔化像素 softens from there (radius 0.5px still steps 0.84 inside one pixel).
+                float side = 2.0 * max(softnessPx, 1.0) + 1.0;
+                int taps = (int)clamp(round(side), 3.0, (float)LIL_HOCHARACTER_HAIR_MASK_MAX_TAPS);
+                // Keep the spacing near or under 2 texels: wider apart and the bilinear taps stop
+                // reaching every column, which is what turns a ramp back into flat plateaus.
+                float spacing = side / (float)taps;
+                float2 tapStep = MetadataTexelSize() * spacing;
+                float2 firstTap = MetadataTexelSize() * (spacing - side) * 0.5;
+                float sum = 0.0;
+                [loop]
+                for (int y = 0; y < taps; y++)
+                {
+                    [loop]
+                    for (int x = 0; x < taps; x++)
+                    {
+                        sum += SampleSemanticSpread(uv + firstTap + tapStep * float2((float)x, (float)y), spreadPx, channel, useAntiAliased);
+                    }
+                }
+
+                return saturate(sum / max((float)(taps * taps), 1.0));
             }
 
-            float SampleRevealArea(float2 uv)
+            // A silhouette *clip* is a different job from a penumbra: it only needs to be sub-texel,
+            // so it reads a fixed small linear blur and never the 柔化半径. Widening it here would
+            // fade the projection out before it reaches the source and hollow out the contact
+            // region. When the shared anti-aliased copy is being used that is already satisfied by a
+            // single read of it; the 1px box is the fallback otherwise.
+            static const float LIL_HOCHARACTER_SEMANTIC_EDGE_PX = 1.0;
+
+            float SampleSemanticEdge(float2 uv, int channel, float useAntiAliased)
             {
-                float area = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture, sampler_PointClamp, uv).r;
-                return lerp(1.0, area, saturate(_HoCharacterHairShadowParams1.w));
+                if (_HoCharacterSemanticMaskBlurValid > 0.5 && useAntiAliased > 0.5)
+                {
+                    return SampleSemanticBit(uv, channel, useAntiAliased);
+                }
+
+                return SampleSemanticBlur(uv, LIL_HOCHARACTER_SEMANTIC_EDGE_PX, 0.0, channel, useAntiAliased);
+            }
+
+            float SampleRevealArea(float2 uv, float useAntiAliased)
+            {
+                return lerp(1.0, SampleSemanticEdge(uv, 2, useAntiAliased), saturate(_HoCharacterHairShadowParams1.z));
             }
 
             float SampleEyeAlphaRaw(float2 uv)
@@ -155,9 +248,10 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 float4 maskId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv);
                 float4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
                 float4 eyeData = SAMPLE_TEXTURE2D_X(_lilHoCharacterEyeDataTexture, sampler_PointClamp, uv);
-                float frontHair = SampleFrontHair(uv);
+                // The eye reveal's own anti-aliasing choice (options.w).
+                float frontHair = SampleSemanticEdge(uv, 0, _HoCharacterSemanticMaskOptions.w);
                 float eyeAlpha = SampleEyeAlpha(uv);
-                float revealArea = SampleRevealArea(uv);
+                float revealArea = SampleRevealArea(uv, _HoCharacterSemanticMaskOptions.w);
                 float hairDepth = normalDepth.a;
                 float rawEyeAlpha = max(eyeData.r, 0.0001);
                 float eyeDepth = eyeData.g / rawEyeAlpha;
@@ -193,47 +287,6 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 return lerp(1.0, axisFactor.x * axisFactor.y, strength);
             }
 
-            float SampleHairSpread(float2 uv, float radiusPx)
-            {
-                float mask = SampleFrontHair(uv);
-                if (radiusPx <= 0.0001)
-                {
-                    return mask;
-                }
-
-                float2 texel = MetadataTexelSize() * radiusPx;
-                mask = max(mask, SampleFrontHair(uv + float2( texel.x, 0.0)));
-                mask = max(mask, SampleFrontHair(uv + float2(-texel.x, 0.0)));
-                mask = max(mask, SampleFrontHair(uv + float2(0.0,  texel.y)));
-                mask = max(mask, SampleFrontHair(uv + float2(0.0, -texel.y)));
-                mask = max(mask, SampleFrontHair(uv + float2( texel.x,  texel.y)));
-                mask = max(mask, SampleFrontHair(uv + float2(-texel.x,  texel.y)));
-                mask = max(mask, SampleFrontHair(uv + float2( texel.x, -texel.y)));
-                mask = max(mask, SampleFrontHair(uv + float2(-texel.x, -texel.y)));
-                return mask;
-            }
-
-            float SampleHairBlur(float2 uv, float softnessPx, float spreadPx)
-            {
-                float center = SampleHairSpread(uv, spreadPx);
-                if (softnessPx <= 0.0001)
-                {
-                    return center;
-                }
-
-                float2 texel = MetadataTexelSize() * softnessPx;
-                float mask = center * 0.24;
-                mask += SampleHairSpread(uv + float2( texel.x, 0.0), spreadPx) * 0.095;
-                mask += SampleHairSpread(uv + float2(-texel.x, 0.0), spreadPx) * 0.095;
-                mask += SampleHairSpread(uv + float2(0.0,  texel.y), spreadPx) * 0.095;
-                mask += SampleHairSpread(uv + float2(0.0, -texel.y), spreadPx) * 0.095;
-                mask += SampleHairSpread(uv + float2( texel.x,  texel.y), spreadPx) * 0.095;
-                mask += SampleHairSpread(uv + float2(-texel.x,  texel.y), spreadPx) * 0.095;
-                mask += SampleHairSpread(uv + float2( texel.x, -texel.y), spreadPx) * 0.095;
-                mask += SampleHairSpread(uv + float2(-texel.x, -texel.y), spreadPx) * 0.095;
-                return saturate(mask);
-            }
-
             float ResolveHairShadowDistanceScale(float2 uv)
             {
                 float strength = saturate(_HoCharacterHairShadowParams2.x);
@@ -265,15 +318,19 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
 
                 float spreadPx = max(_HoCharacterHairShadowParams1.x, 0.0);
                 float softnessPx = max(_HoCharacterHairShadowParams.w, 0.0);
-                float shiftedHair = SampleHairBlur(shiftedUv, softnessPx, spreadPx);
-                float originalHair = SampleFrontHair(uv);
-                float receiver = saturate(SampleFace(uv) + revealMask);
-                float keepOffHair = saturate(_HoCharacterHairShadowParams1.y);
+                // The hair shadow's own anti-aliasing choice (options.y) covers everything it reads:
+                // the penumbra source and the receiver gate.
+                float useAntiAliased = _HoCharacterSemanticMaskOptions.y;
+                float shiftedHair = SampleSemanticBlur(shiftedUv, softnessPx, spreadPx, 0, useAntiAliased);
+                // The receiver is what clips the projection at the hairline, so it needs the
+                // sub-texel read too - otherwise the band's upper boundary stays binary even though
+                // its lower (penumbra) boundary is smooth.
+                float receiver = saturate(SampleSemanticEdge(uv, 1, useAntiAliased) + revealMask);
 
                 float4 currentId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv);
                 float4 shiftedId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, shiftedUv);
                 float same = SameCharacter(currentId.g, shiftedId.g);
-                return saturate((shiftedHair - originalHair * keepOffHair) * receiver * same);
+                return saturate(shiftedHair * receiver * same);
             }
 
             float RemapFaceHairDiffuseMask(float value)
@@ -309,7 +366,8 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                     return 0.0;
                 }
 
-                float frontHair = SampleFrontHair(uv);
+                // The face hair diffuse's own anti-aliasing choice (options.z).
+                float frontHair = SampleSemanticEdge(uv, 0, _HoCharacterSemanticMaskOptions.z);
                 float4 blurredColor = SAMPLE_TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseColorTexture, sampler_LinearClamp, uv);
                 float blurMask = saturate(blurredColor.a);
                 float levelsMask = RemapFaceHairDiffuseMask(blurMask);
@@ -715,7 +773,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 if (shadowAmount > 0.0001)
                 {
                     half3 shadowColor = (half3)_HoCharacterHairShadowColor.rgb;
-                    if (round(_HoCharacterHairShadowParams1.z) < 0.5)
+                    if (round(_HoCharacterHairShadowParams1.y) < 0.5)
                     {
                         color *= lerp(half3(1.0, 1.0, 1.0), shadowColor, shadowAmount);
                     }

@@ -36,6 +36,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 DrawProperty(Find(settingsProperty, "eyeRevealDepthBias"), "深度偏移");
                 DrawProperty(Find(settingsProperty, "useEyeRevealArea"), "使用眼透区域");
                 DrawProperty(Find(settingsProperty, "sameCharacterOnly"), "仅同角色");
+                DrawProperty(Find(settingsProperty, "semanticMaskBlurEyeReveal"), "读取抗锯齿掩码");
             }
         }
 
@@ -52,6 +53,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             SerializedDataParameter angleYawRangeDegrees,
             SerializedDataParameter anglePitchRangeDegrees,
             SerializedDataParameter angleSoftnessDegrees,
+            SerializedDataParameter maskAntiAliasing,
             Action<SerializedDataParameter, GUIContent> drawParameter)
         {
             string summary = enabled?.value != null && enabled.value.boolValue
@@ -73,6 +75,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 DrawParameter(depthBias, "深度偏移", drawParameter);
                 DrawParameter(useRevealArea, "使用眼透区域", drawParameter);
                 DrawParameter(sameCharacterOnly, "仅同角色", drawParameter);
+                DrawParameter(maskAntiAliasing, "读取抗锯齿掩码", drawParameter);
 
                 EditorGUILayout.Space(4.0f);
                 EditorGUILayout.HelpBox("相机角度修正：按相机相对角色面部朝向的平转/俯仰角控制眼睛透过。角色面部朝向在 HoMetadataBufferGroup 的“面部朝向”上设置（Transform，骨骼或空物体均可），并在“脸前轴/右轴/上轴”中指定局部轴向（+Z 脸前、+X 右、+Y 上常见）；留空时该角色不参与。", MessageType.None);

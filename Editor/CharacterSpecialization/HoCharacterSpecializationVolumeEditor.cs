@@ -31,8 +31,13 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private SerializedDataParameter hairShadowAngleDegrees;
         private SerializedDataParameter hairShadowSoftnessPixels;
         private SerializedDataParameter hairShadowSpreadPixels;
-        private SerializedDataParameter hairShadowKeepOffHair;
         private SerializedDataParameter hairShadowBlendMode;
+        private SerializedDataParameter semanticMaskBlurRadiusPixels;
+        private SerializedDataParameter semanticMaskBlurHairShadow;
+        private SerializedDataParameter semanticMaskBlurFaceHairDiffuse;
+        private SerializedDataParameter semanticMaskBlurEyeReveal;
+        private SerializedDataParameter semanticMaskBlurSubjectOutline;
+        private SerializedDataParameter semanticMaskBlurEnhancedOutline;
         private SerializedDataParameter faceHairDiffuseEnabled;
         private SerializedDataParameter faceHairDiffuseStrength;
         private SerializedDataParameter faceHairDiffuseRadiusPixels;
@@ -100,8 +105,13 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             hairShadowAngleDegrees = Unpack(fetcher.Find(x => x.HairShadowAngleDegrees));
             hairShadowSoftnessPixels = Unpack(fetcher.Find(x => x.HairShadowSoftnessPixels));
             hairShadowSpreadPixels = Unpack(fetcher.Find(x => x.HairShadowSpreadPixels));
-            hairShadowKeepOffHair = Unpack(fetcher.Find(x => x.HairShadowKeepOffHair));
             hairShadowBlendMode = Unpack(fetcher.Find(x => x.HairShadowBlendMode));
+            semanticMaskBlurRadiusPixels = Unpack(fetcher.Find(x => x.SemanticMaskBlurRadiusPixels));
+            semanticMaskBlurHairShadow = Unpack(fetcher.Find(x => x.SemanticMaskBlurHairShadow));
+            semanticMaskBlurFaceHairDiffuse = Unpack(fetcher.Find(x => x.SemanticMaskBlurFaceHairDiffuse));
+            semanticMaskBlurEyeReveal = Unpack(fetcher.Find(x => x.SemanticMaskBlurEyeReveal));
+            semanticMaskBlurSubjectOutline = Unpack(fetcher.Find(x => x.SemanticMaskBlurSubjectOutline));
+            semanticMaskBlurEnhancedOutline = Unpack(fetcher.Find(x => x.SemanticMaskBlurEnhancedOutline));
             faceHairDiffuseEnabled = Unpack(fetcher.Find(x => x.FaceHairDiffuseEnabled));
             faceHairDiffuseStrength = Unpack(fetcher.Find(x => x.FaceHairDiffuseStrength));
             faceHairDiffuseRadiusPixels = Unpack(fetcher.Find(x => x.FaceHairDiffuseRadiusPixels));
@@ -153,6 +163,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 "Renderer Data 里先添加 HoCharacter Specialization RendererFeature；然后在全局或局部 Volume 里添加本组件并启用。Face、FrontHair、Eye、EyeRevealArea 需要由 HoMetadataBufferGroup/RSUV 或材质 fallback 标记提供。",
                 MessageType.Info);
 
+            DrawDataParameter(semanticMaskBlurRadiusPixels, new GUIContent("抗锯齿宽度"));
             HoCharacterEyeRevealEditorSection.DrawVolume(
                 eyeRevealEnabled,
                 eyeRevealStrength,
@@ -166,6 +177,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 eyeRevealAngleYawRangeDegrees,
                 eyeRevealAnglePitchRangeDegrees,
                 eyeRevealAngleSoftnessDegrees,
+                semanticMaskBlurEyeReveal,
                 DrawDataParameter);
             HoCharacterDropShadowEditorSection.DrawVolume(
                 hairDropShadowEnabled,
@@ -178,8 +190,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 hairShadowAngleDegrees,
                 hairShadowSoftnessPixels,
                 hairShadowSpreadPixels,
-                hairShadowKeepOffHair,
                 hairShadowBlendMode,
+                semanticMaskBlurHairShadow,
                 DrawDataParameter);
             HoCharacterFaceHairDiffuseEditorSection.DrawVolume(
                 faceHairDiffuseEnabled,
@@ -190,6 +202,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 faceHairDiffuseLevelWhite,
                 faceHairDiffuseTintColor,
                 faceHairDiffuseBlendMode,
+                semanticMaskBlurFaceHairDiffuse,
                 DrawDataParameter);
             HoCharacterSubjectOutlineEditorSection.DrawVolume(
                 subjectOutlineEnabled,
@@ -211,6 +224,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 subjectOutlineHeightFadeStart,
                 subjectOutlineHeightFadeEnd,
                 subjectOutlineHeightFadeHardness,
+                semanticMaskBlurSubjectOutline,
                 DrawDataParameter);
             HoCharacterEnhancedOutlineEditorSection.DrawVolume(
                 enhancedOutlineEnabled,
@@ -227,6 +241,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 enhancedOutlineHeightFadeStart,
                 enhancedOutlineHeightFadeEnd,
                 enhancedOutlineHeightFadeHardness,
+                semanticMaskBlurEnhancedOutline,
                 DrawDataParameter);
 
             serializedObject.ApplyModifiedProperties();

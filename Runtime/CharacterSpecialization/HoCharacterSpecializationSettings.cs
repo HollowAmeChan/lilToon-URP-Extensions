@@ -143,6 +143,31 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [Tooltip("为空时自动使用 Hidden/lilToon-HoCharacterSpecialization/URP/SubjectOutline。主体轮廓和增强轮廓共用它生成外扩场，一般不需要改。")]
         public Shader subjectOutlineShader;
 
+        [InspectorName("抗锯齿宽度")]
+        [Tooltip("掩码抗锯齿的模糊半径，单位为 MetadataBuffer 的 texel。低于 1 像素没有抗锯齿收益（单采样 0/1 场必须摊到至少一个 texel），内部按 1 像素下限处理；越宽边缘越软、台阶越小。每个效果在自己分区里用「读取抗锯齿掩码」勾选是否读取，任一勾选就会产出这份副本，全不勾选则不跑。")]
+        [Min(0.0f)]
+        public float semanticMaskBlurRadiusPixels = 1.0f;
+
+        [InspectorName("读取抗锯齿掩码")]
+        [Tooltip("前发投影读取掩码抗锯齿版：接收面的裁剪边（发际线）与眼透区域，以及半影的取样源。不勾选则读原始 bit。")]
+        public bool semanticMaskBlurHairShadow = true;
+
+        [InspectorName("读取抗锯齿掩码")]
+        [Tooltip("脸色扩散读取掩码抗锯齿版：前发接收区域的边界。不勾选则读原始 bit。")]
+        public bool semanticMaskBlurFaceHairDiffuse = true;
+
+        [InspectorName("读取抗锯齿掩码")]
+        [Tooltip("眼睛透过读取掩码抗锯齿版：遮挡前发与眼透区域的边界。不勾选则读原始 bit。")]
+        public bool semanticMaskBlurEyeReveal = true;
+
+        [InspectorName("读取抗锯齿掩码")]
+        [Tooltip("主体轮廓的语义源读取掩码抗锯齿版。默认不读（读原始 bit）。")]
+        public bool semanticMaskBlurSubjectOutline;
+
+        [InspectorName("读取抗锯齿掩码")]
+        [Tooltip("增强轮廓的语义源读取掩码抗锯齿版。默认不读（读原始 bit）。")]
+        public bool semanticMaskBlurEnhancedOutline;
+
         [Header("眼睛透过")]
         [InspectorName("启用眼睛透过")]
         [Tooltip("让被前发遮挡的眼睛按眼睛捕获结果透出。")]
@@ -240,7 +265,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public float hairShadowAngleDegrees = 240.0f;
 
         [InspectorName("柔化像素")]
-        [Tooltip("前发投影边缘柔化范围。")]
+        [Tooltip("前发投影边缘柔化范围。掩码读入时始终保留 1 像素的抗锯齿模糊，这里是在此之上的额外柔化。")]
         [Min(0.0f)]
         public float hairShadowSoftnessPixels = 2.0f;
 
@@ -248,11 +273,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [Tooltip("前发投影遮罩扩张范围。")]
         [Min(0.0f)]
         public float hairShadowSpreadPixels = 0.0f;
-
-        [InspectorName("避开前发")]
-        [Tooltip("避免投影重新盖回前发自身的强度。")]
-        [Range(0.0f, 1.0f)]
-        public float hairShadowKeepOffHair = 1.0f;
 
         [InspectorName("混合模式")]
         [Tooltip("前发投影与画面的混合方式。")]
@@ -475,6 +495,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             compositeShader = source.compositeShader;
             faceHairDiffuseShader = source.faceHairDiffuseShader;
             subjectOutlineShader = source.subjectOutlineShader;
+            semanticMaskBlurRadiusPixels = source.semanticMaskBlurRadiusPixels;
+            semanticMaskBlurHairShadow = source.semanticMaskBlurHairShadow;
+            semanticMaskBlurFaceHairDiffuse = source.semanticMaskBlurFaceHairDiffuse;
+            semanticMaskBlurEyeReveal = source.semanticMaskBlurEyeReveal;
+            semanticMaskBlurSubjectOutline = source.semanticMaskBlurSubjectOutline;
+            semanticMaskBlurEnhancedOutline = source.semanticMaskBlurEnhancedOutline;
             eyeRevealEnabled = source.eyeRevealEnabled;
             eyeRevealStrength = source.eyeRevealStrength;
             eyeRevealFeatherPixels = source.eyeRevealFeatherPixels;
@@ -497,7 +523,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             hairShadowAngleDegrees = source.hairShadowAngleDegrees;
             hairShadowSoftnessPixels = source.hairShadowSoftnessPixels;
             hairShadowSpreadPixels = source.hairShadowSpreadPixels;
-            hairShadowKeepOffHair = source.hairShadowKeepOffHair;
             hairShadowBlendMode = source.hairShadowBlendMode;
             faceHairDiffuseEnabled = source.faceHairDiffuseEnabled;
             faceHairDiffuseStrength = source.faceHairDiffuseStrength;
