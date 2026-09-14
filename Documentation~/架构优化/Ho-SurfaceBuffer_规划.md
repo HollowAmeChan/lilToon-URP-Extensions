@@ -66,7 +66,29 @@ _UsePlanarReflection             → 只在总开关打开时生效
 | --- | --- | --- |
 | 平滑度 / 金属度 | `_Smoothness` / `_Metallic`（及贴图） | 已有（反射文档 §4 冻结按 glTF/PBR 习惯解释） |
 | 反射总开关 / 平面反射开关 | `_UseReflection` / `_UsePlanarReflection` | 已有 |
-| 厚度 / 曲率 / 透射提示 / 材质分类 | 今天由 `HoMetadataBufferSubject` 或材质参数提供（`_HoMetadataBufferThickness` / `_HoMetadataBufferCurvature` / `_HoMetadataBufferTransmittanceHint` / `_HoMetadataBufferMaterialClass`） | **待冻结**：SB 需要自己的一套属性名（不能继续挂 `_HoMetadataBuffer*`） |
+| 厚度 `/` 曲率 `/` 透射提示 `/` 材质分类 | **今天不是材质参数**：四个都是 shader 全局量（`lil_pass_metadata_buffer.hlsl` 第 64/70/71/72 行声明），由 `HoMetadataBufferPass` 每趟置 0、再由 **`HoMetadataBufferSubject` 组件用 MPB 逐 renderer 覆盖** | ⏳ **SB 必须决定它们从哪来**（见下） |
+
+**这四类值的真实来源（已核对 lilToon + 本仓库）**：
+
+| 值 | 今天的算法 | 材质侧有没有源 |
+| --- | --- | --- |
+| `thickness` | `saturate(_HoMetadataBufferThickness)` 与 **SSS 厚度贴图链取 max**：`_SSSThicknessMap.r` → `_SSSThicknessInvert` → `pow(·, _SSSPower)` → `× _SSSStrength × _HoSSSThicknessScale` | ✅ **有**：`_SSSThicknessMap` / `_SSSThicknessInvert` / `_SSSPower` / `_SSSStrength` 都是 lilToon 材质参数 |
+| `curvature` | `saturate(abs(_HoMetadataBufferCurvature))` + 一个 boost（`lilHoMetadataBufferResolveCurvatureBoost()`） | ❌ 只有组件/MPB |
+| `transmittanceHint` | `saturate(_HoMetadataBufferTransmittanceHint)` | ❌ 只有组件/MPB |
+| `materialClass` | `lilHoMetadataBufferEncodeScalar(_HoMetadataBufferMaterialClass)`（编码标量） | ❌ 只有组件/MPB |
+
+另有两个必须一起处理的细节：
+
+1. **四者都被 `* subjectValid` 预乘**（第 453-456 行），与表面色同一个模式 ⇒ 迁移到 SB 时要一起去掉。
+2. **有一个"全 0 就不写"的 gate**（第 300 行）：四个值全为 0 时 `hasSurfaceMetadata = 0`，也就是**今天的 `surfaceData` 对没有元数据的对象是不写的**。SB 要么保留这个语义（用 valid 表达），要么改成"总是写"。
+
+**SB 的三条候选（要选一条）**：
+
+| 候选 | 含义 | 代价 |
+| --- | --- | --- |
+| **A. 材质参数**（推荐） | 给 lilToon 加材质参数（`thickness` 的源已经存在，只差 curvature / transmittance / class） | 跨仓加三个参数；但**彻底摆脱 MPB**，与决策 13（RSUV 只当索引、删 MPB）一致 |
+| **B. 进表** | 这三个值和 `materialClass` 一起进 palette 行，材质按 RSUV 索引查表 | 又要把"这是什么"放进表（你已定 materialClass 留 SB 的图）；且表由 CPU 维护，材质改值要重编译表 |
+| **C. 保留 MPB** | 继续用 MPB 逐 renderer 覆盖 | ❌ 与决策 13 冲突（MPB 会破坏 SRP Batcher） |
 | PLR 强度 | **`_PlanarReflectionStrength`**（lilToon 侧 `Range(0,1)`，默认 1）——已在 lilToon 仓库核对 | ✅ 冻结 |
 | PLR 其它材质参数 | `_PlanarReflectionMinSmoothness` / `_PlanarReflectionEdgeFade` / `_PlanarReflectionFadeStart` / `_PlanarReflectionFadeEnd` / `_PlanarReflectionTint` / `_PlanarReflectionFlipY` | ✅ 已有；**它们是材质轻量参数（shading 时用），不进 SB 的通道** |
 | 表面色 | **`fd.col`**——lilToon 的主色链（主色 × `_MainTex`，两/三层叠加也已在里面），**不是单独的 `_MainTex` 采样** | ✅ 已核对 `lil_pass_metadata_buffer.hlsl`：`lilHoMetadataBufferResolveSurfaceColor(fd.col)`（`.rgb` 不钳制、`.a` 走 coverage 解析），最后 `return half4(surfaceColor * subjectValid)` |
