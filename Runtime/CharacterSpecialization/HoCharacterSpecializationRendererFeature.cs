@@ -42,6 +42,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public override void Create()
         {
             pass = new HoCharacterSpecializationPass();
+            // Create 可能在同一 feature 实例上被重复调用（编辑器重载、资产重导入），
+            // 先释放旧表，避免上一批"每相机一张"的纹理成为永久泄漏。
+            eyeAngleTable?.Dispose();
             eyeAngleTable = new HoCharacterEyeAngleTable();
         }
 

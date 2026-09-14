@@ -63,7 +63,7 @@ HoCharacterEyeAngleTable（RendererFeature 持有）
   ├─ AddRenderPasses 时机（URP17 fork 主路径唯一保证被调用的时机）：
   │    CPU 按当前渲染相机算每角色 (平转角°, 俯仰角°)
   │    → 上传该相机的表 → SetGlobalTexture 绑定为全局 _lilHoCharacterEyeAngleTable
-  └─ 相机销毁自动清理
+  └─ 相机销毁自动清理（判活用 ReferenceEquals，见 §3.1）
         ▼
 Composite
   ├─ 按"眼睛捕获的角色 ID"（eyeData.b / eyeData.r）查表（与 SameCharacter 同源，避免错位）
@@ -80,6 +80,19 @@ Composite
 因此采用 **CPU 侧 `Texture2D`（唯一可靠的 SetPixelData 上传路径）+ 当前相机渲染前全局绑定**。
 每个相机的"写表 → 本相机 composite 读取"在同一渲染循环内顺序成对，**多窗口（Scene + Game）、多屏、录制相机各自正确，无需任何"活动相机"判定，也无需区分 Play/编辑模式**。
 ⚠️ 不要改成 Unsafe pass + `RenderTargetIdentifier(Texture2D)` 绑定——实测会把表读成全黑。
+
+### 3.1 表纹理的生命周期（切换场景黑屏的坑）
+
+曾经的表现是：**切换场景后新场景完全渲染不出来，必须重启编辑器/播放**，报
+`MissingReferenceException: The object of type 'UnityEngine.Texture2D' has been destroyed`
+且栈顶落在 `HoCharacterEyeAngleTable.Upload`。异常抛在 `AddRenderPasses` 内部，会中断该相机这一帧渲染录制的后续步骤，所以症状是"整屏渲染不出来"而不是"只有眼透不对"。
+
+两条规则必须同时守住：
+
+1. **判活只能用 `ReferenceEquals`。** 表以 `Camera` 为键，而 Unity 把 `UnityEngine.Object.==` 重载成"两边只要有一边是已销毁对象就返回 `true`"——对"已销毁相机 vs 存活相机"这种比较也返回 `true`。用 `camera == null` 判 stale，会把仍然健在的相机的表当成过期表销毁掉，同一帧紧接着的 `Upload` 就落到已销毁纹理上。
+2. **销毁纹理后条目要留"待重建"标记，不能直接当时就假定以后不会再被取用。** `Upload` 前统一走 `EnsureTexture` 校验，发现纹理为空或 `textureDestroyed` 就在原条目上重建。这样无论纹理是被 `Release()`、被场景卸载的资源回收、还是被上面那条误判销毁的，都不会再出现"访问已销毁对象"，且修复只发生在异常本来会发生的那一帧。
+
+配套约定：表纹理**不带相机名后缀**（统一为 `_lilHoCharacterEyeAngleTable`），避免逐场景切换时不断累积名字各异的泄漏纹理；纹理的创建与重建**只允许出现在 `Upload`/`EnsureTexture` 一处**，不要在 `GetOrCreateEntry` 或别处再建。
 
 ## 4. 配置
 

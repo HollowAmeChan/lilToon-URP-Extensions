@@ -11,6 +11,11 @@
   - **本条目尚未在 Unity 中编译与运行验证**（开发环境无编辑器）；P1 的已知留白：选择层只实现 2 个/像素（4 个配置告警后按 2 跑）、Sprite/SpriteShape/Tilemap 的 RSUV API 待核对命名空间、StructuredBuffer 不可用时只告警不降级、`Material0` 只分配不写入、lilToon 侧的 `HoCharacterBuffer` / `HoCharacterBufferSurface` pass 属跨仓（本仓库先用 fallback 材质验证链路，且 fallback 只覆盖不透明队列）。
   - 规划与参考：`Documentation~/架构优化/Ho-CharacterBuffer_规划.md`。
 
+- 修复：**切换场景后新场景渲染不出来（黑屏）、只能重启**，报 `MissingReferenceException: The object of type 'UnityEngine.Texture2D' has been destroyed`，栈顶为 `HoCharacterEyeAngleTable.Upload`。
+  - 根因：`HoCharacterEyeAngleTable` 以 `Camera` 为键缓存"每相机一张"的表纹理，而 `RemoveStaleTables` 用 `camera == null` 判活。Unity 的 `UnityEngine.Object.==` 被重载为"已销毁对象的任何比较都返回 true"，于是**重载 / 域重载后连存活相机也被判成 stale**，其表纹理被 `CoreUtils.Destroy` 销毁，同一帧紧接着的 `Upload` 又去访问这张纹理。异常落在 `AddRenderPasses` 内部，会中断整条相机渲染录制的后续步骤，表现就是新场景什么都渲染不出来。
+  - 修复（两层，任一层单独成立即可自愈）：① 判活改为 `ReferenceEquals(camera, null) || camera == null`；② 表纹理改为"上传前检查有效性，失效就在原条目上重建"（`EnsureTexture`），并在销毁纹理后给条目置 `textureDestroyed` 标记而不是摘掉条目，因此 `Release()` / 场景卸载触发的资源回收也不会再让后续 `Upload` 落到已销毁对象上。
+  - 顺带：表纹理名不再带相机名后缀（`_lilHoCharacterEyeAngleTable_<相机名>` → `_lilHoCharacterEyeAngleTable`），避免逐场景切换时不断累积名字各异的泄漏纹理；`GetOrCreateEntry` 不再在构造条目时创建纹理，创建与重建统一收敛到 `Upload` 一处。
+
 ## 0.2.0
 
 - 角色特化：眼透新增**相机角度修正**。

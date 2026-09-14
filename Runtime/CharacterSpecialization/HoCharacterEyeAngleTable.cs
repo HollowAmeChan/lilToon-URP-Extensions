@@ -28,6 +28,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public Texture2D texture;
             public float[] data;
             public bool cleared;
+            /// <summary>置位表示 texture 已被我们主动销毁，条目仍在字典中待重建。</summary>
+            public bool textureDestroyed;
         }
 
         private readonly Dictionary<Camera, TableEntry> tables = new Dictionary<Camera, TableEntry>();
@@ -88,10 +90,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         {
             foreach (KeyValuePair<Camera, TableEntry> pair in tables)
             {
-                if (pair.Value?.texture != null)
-                {
-                    CoreUtils.Destroy(pair.Value.texture);
-                }
+                DestroyEntryTexture(pair.Value);
             }
 
             tables.Clear();
@@ -104,15 +103,71 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         }
 
         /// <summary>
+        /// 销毁条目纹理并把条目标记为“待重建”，而不是把条目本身从字典里摘掉：
+        /// 销毁后条目仍可能被同一帧再次取用（例如切场景时相机对象已被销毁、
+        /// 而它的表仍以键的形式留在字典里），留标记才能让 Upload 正确地重建而不是访问已销毁对象。
+        /// </summary>
+        private static void DestroyEntryTexture(TableEntry entry)
+        {
+            if (entry.textureDestroyed)
+            {
+                return;
+            }
+
+            if (entry.texture != null)
+            {
+                CoreUtils.Destroy(entry.texture);
+            }
+
+            entry.texture = null;
+            entry.textureDestroyed = true;
+        }
+
+        /// <summary>
         /// 上传该相机表并立即绑定为全局纹理：AddRenderPasses 时机先于本相机所有 pass（含 RenderGraph composite）
         /// 记录与执行，本相机的 composite 采样到的就是本相机的表。已验证该路径下表内容可被读到，
         /// 不要改用 Unsafe pass / RenderTargetIdentifier(Texture2D) 绑定（实测会把表读成全黑）。
+        /// 上传前先自愈：条目里的 texture 若已被销毁（Release/场景卸载触发资源回收等），
+        /// 单帧内在原条目上重建，避免 MissingReferenceException 让整个相机渲染中断。
         /// </summary>
         private static void Upload(TableEntry entry)
         {
+            bool created = EnsureTexture(entry);
             entry.texture.SetPixelData(entry.data, 0);
             entry.texture.Apply(false, false);
             Shader.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeAngleTextureId, entry.texture);
+            if (created)
+            {
+                // 缓存纹理被销毁说明上一次写入已失效，下一个相机要重写一遍。
+                entry.cleared = false;
+            }
+        }
+
+        private static bool EnsureTexture(TableEntry entry)
+        {
+            if (entry.texture != null && !entry.textureDestroyed)
+            {
+                return false;
+            }
+
+            entry.texture = CreateTableTexture();
+            entry.textureDestroyed = false;
+            return true;
+        }
+
+        private static Texture2D CreateTableTexture()
+        {
+            return new Texture2D(
+                CharacterCount,
+                1,
+                TextureFormat.RGBAFloat,
+                false,
+                false)
+            {
+                name = HoCharacterSpecializationShaderConstants.EyeAngleTextureName,
+                filterMode = FilterMode.Point,
+                wrapMode = TextureWrapMode.Clamp
+            };
         }
 
         private TableEntry GetOrCreateEntry(Camera camera)
@@ -121,31 +176,28 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             {
                 entry = new TableEntry
                 {
-                    texture = new Texture2D(
-                        CharacterCount,
-                        1,
-                        TextureFormat.RGBAFloat,
-                        false,
-                        false)
-                    {
-                        name = HoCharacterSpecializationShaderConstants.EyeAngleTextureName + "_" + camera.name,
-                        filterMode = FilterMode.Point,
-                        wrapMode = TextureWrapMode.Clamp
-                    },
                     data = new float[CharacterCount * FloatCountPerCharacter]
                 };
                 tables.Add(camera, entry);
             }
 
+            // 纹理延迟到 Upload 内创建：条目可能是新建的，也可能是残留着已销毁纹理的旧条目
+            // （例如上一次 Upload 之后纹理被 Release/资源回收销毁），两种情况都在 Upload 里统一校验与重建。
             return entry;
         }
 
+        /// <summary>
+        /// 清理已销毁相机的表。判活必须用 ReferenceEquals 而不是裸的 <c>camera == null</c>：
+        /// Unity 的 <c>UnityEngine.Object.==</c> 被重载为"两边只要有一边是已销毁对象就返回 true"，
+        /// 对"已销毁相机 vs 存活相机"这种比较同样返回 true，会让仍然健在的相机的表被误判为 stale 销毁掉，
+        /// 紧接着的 Upload 就落到已销毁纹理上。ReferenceEquals 只认真正的托管空引用，不会误伤。
+        /// </summary>
         private void RemoveStaleTables()
         {
             staleCameras.Clear();
             foreach (Camera camera in tables.Keys)
             {
-                if (camera == null)
+                if (ReferenceEquals(camera, null) || camera == null)
                 {
                     staleCameras.Add(camera);
                 }
@@ -154,9 +206,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             for (int i = 0; i < staleCameras.Count; i++)
             {
                 Camera stale = staleCameras[i];
-                if (tables.TryGetValue(stale, out TableEntry entry) && entry?.texture != null)
+                if (tables.TryGetValue(stale, out TableEntry entry))
                 {
-                    CoreUtils.Destroy(entry.texture);
+                    DestroyEntryTexture(entry);
                 }
 
                 tables.Remove(stale);
