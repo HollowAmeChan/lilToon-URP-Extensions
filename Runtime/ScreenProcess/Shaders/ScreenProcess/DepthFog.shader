@@ -44,6 +44,8 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthFog"
             float4 _LayerParams5; // x height colour b, y sky mode (0 skip, 1 include, 2 tint), z sky strength, w output dither (8-bit LSB)
 
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
+            // Declared per shader (not by any include), exactly like DepthOfField/Outline do.
+            float _HoGeometryBufferValid;
 
             // ---- ScreenProcessFogMath mirrors -------------------------------------------------
 

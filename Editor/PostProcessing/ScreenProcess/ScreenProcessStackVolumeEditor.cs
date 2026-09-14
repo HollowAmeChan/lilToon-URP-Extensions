@@ -44,6 +44,17 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static readonly Dictionary<ScreenProcessEffect, GUIContent> EffectIconContents = new Dictionary<ScreenProcessEffect, GUIContent>();
 
+        // Every declared effect, ordered the way the enum declares them (= the order Unity's enum popup
+        // uses, and therefore the meaning of SerializedProperty.enumValueIndex).
+        private static readonly ScreenProcessEffect[] EffectValues = BuildEffectValues();
+
+        private static ScreenProcessEffect[] BuildEffectValues()
+        {
+            var values = (ScreenProcessEffect[])System.Enum.GetValues(typeof(ScreenProcessEffect));
+            System.Array.Sort(values);
+            return values;
+        }
+
         private SerializedDataParameter showInSceneView;
         private SerializedProperty layers;
         private SerializedProperty layerValues;
@@ -554,8 +565,23 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private static ScreenProcessEffect GetEffect(SerializedProperty element)
         {
             SerializedProperty effect = element.FindPropertyRelative("effect");
-            int value = effect != null ? effect.enumValueIndex : 0;
-            return (ScreenProcessEffect)Mathf.Clamp(value, 0, 6);
+            if (effect == null || EffectValues.Length == 0)
+            {
+                return ScreenProcessEffect.CustomMaterial;
+            }
+
+            // enumValueIndex is an index into the enum's name list, so the bound must come from the
+            // enum itself - not a literal. The old `Mathf.Clamp(value, 0, 6)` pinned the maximum at
+            // the then-last effect (SkyTyndall), so anything added after it read back as SkyTyndall:
+            // DepthFog's icon button never recognised its own layer, so every click added another copy
+            // (and the layer was labelled/drawn as 天光丁达尔). Same shape as ImageProcessStackVolumeEditor.
+            int index = effect.enumValueIndex;
+            if (index < 0 || index >= EffectValues.Length)
+            {
+                return ScreenProcessEffect.CustomMaterial;
+            }
+
+            return EffectValues[index];
         }
 
         private static string GetEffectDisplayName(ScreenProcessEffect effect)
@@ -574,6 +600,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     return "投影";
                 case ScreenProcessEffect.DepthOfField:
                     return "景深";
+                case ScreenProcessEffect.DepthFog:
+                    return "深度雾";
                 case ScreenProcessEffect.CustomMaterial:
                 default:
                     return "自定义";

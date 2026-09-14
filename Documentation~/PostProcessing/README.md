@@ -224,6 +224,8 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 4. 在 `Editor/PostProcessing/ScreenProcess/Filters` 添加参数 UI。
 5. 在 `ScreenProcessStackVolumeEditor` 和 presets 文件中加入图标、默认值和预设。
 6. 在 `Runtime/ScreenProcess/Shaders/ScreenProcess` 添加 shader。
+7. 不要在任何地方对效果下标写死上界（曾经 `GetEffect()` 里是 `Mathf.Clamp(value, 0, 6)`，`DepthFog = 7` 加进来后深度雾图层读回来变成 `SkyTyndall`，图标按钮每点一次就多加一层）。用 `Enum.GetValues(typeof(ScreenProcessEffect)).Length`，并跑 `.codex-research/effect_enum_check/check_effect_enum_coverage.js`（负对照会验证它确实能失败）：它检查图标面板、六个 `switch`、registry→shader 文件、以及"字面量夹枚举下标"这四类。
+8. shader 里自己声明的 uniform 必须真的声明：`.codex-research/shader-check/check_all.ps1` 只给"被丢掉的 URP/core include 本该提供的东西"打桩，shader 自己的 uniform（如 `_HoGeometryBufferValid`）不代劳，否则本地编译通过、Unity 才报 `error X3004`。
 
 新增 `ImageProcess` 效果时：
 
