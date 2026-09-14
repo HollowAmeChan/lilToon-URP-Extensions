@@ -30,13 +30,14 @@ MetadataBuffer 把 8 个语义压进 RSUV 低字节的 8 个 bit，语义因此�
 | 6 | **ZWrite 沿用 `ZWrite On`** | "透明材质也占满网格面积"保留；将来要改的是 ID pass 的 per-sample 写入（alpha-to-coverage / `SV_Coverage` / clip），不是 ZWrite。**注意官方约束**：MSAA 下"the runtime shares only one coverage for all RenderTargets"，一张覆盖掩码会同时切 ID 与覆盖率两张图；且 alpha-to-coverage 本身就是为 MSAA 设计的（"intended for use with MSAA… otherwise results can be unpredictable"） |
 | 7 | **覆盖率来源：自建 4x MSAA，与相机的 MSAA 开关解耦** | 结构照抄 `HoGeometryBuffer*`（`_HO_GEOMETRY_BUFFER_MSAA_2/4/8` 关键词分支 + `Texture2DMS` resolve + RG/兼容双路径），但**采样数由本 feature 自己决定（默认 4，可降到 2）**。GB 的采样数是"跟随相机"——`GetSupportedMsaaSampleCount()` 在 `cameraTextureDescriptor.msaaSamples <= 1` 时直接返回 1；CB 若照抄，"相机 AA 关掉"这个**原始 bug 场景**就会拿到二值覆盖率、等于没修。只按**平台能力**回退 4→2→1（`SystemInfo.supportsMultisampledTextures` / `GetRenderTextureSupportedMSAASampleCount`） |
 | 13 | **RSUV 只当 palette 索引**（不再塞语义位） | ID pass 一次画完、不干扰合批（Unity 官方推荐用法）；低 16 bit = 角色 8 + 槽位 8，高 16 bit 预留并登记；不支持 RSUV 的 renderer 才退回逐部件设全局绘制 |
-| 14 | **CB 不带任何 per-pixel 材质通道** | 原来的"用户自定义 0~3"由 §5.11 的 Cryptomatte 选择层承担；`Material0`（roughness / metallic / thickness）与 `_Surface`（线性表面色）**整族搬去 `Ho-SurfaceBuffer`（§5.12 / 决策 20）**。CB 的 per-pixel 输出只剩身份与覆盖率 |
+| 14 | **CB 不带任何 per-pixel 材质通道** | 原来的"用户自定义 0~3"**不再由 CB 承担**（Cryptomatte 选择层已移出，见决策 21）；`Material0`（roughness / metallic / thickness）与 `_Surface`（线性表面色）**整族搬去 `Ho-SurfaceBuffer`（§5.12 / 决策 20）**。CB 的 per-pixel 输出只剩身份与覆盖率 |
 | 15 | **`_Surface` 的两段式深度策略随它一起搬去 `Ho-SurfaceBuffer`**（决策 20） | opaque/cutout 先写深度确立归属、transparent 只 ZTest 后叠加——策略变了 `.rgb`（落到哪个面的颜色）会静默变味（§2.4）。**这条不再是 CB 的事**：SB 与 ID pass 的"全员 ZWrite On"（决策 6）本来就是互相冲突的深度策略，拆开之后各自干净。**`.a` 不再是覆盖率**——覆盖率只有一个来源（ID 层） |
 | 16 | **几何数据唯一来源 = GeometryBuffer** | 全管线的**深度 / 法线 / 几何覆盖率入口只有 GeometryBuffer**（`_HoGeometryBufferNormalDepthTexture` / `_HoGeometryBufferDepthTexture` / `_HoGeometryBufferCoverageTexture`）；CharacterBuffer **不发布任何几何通道**，其内部 depth-stencil 附件只服务于自身 draw 的占用判定——**永不发布、不被任何 shader 采样（debug 也不行）、永不跨来源比较** |
 | 17 | **ID 的 MSAA 目标 = 每样本一个 16 bit ID** | `R16_UInt` + 4x = **8 B/px 瞬态**（一个样本只属于一个部件，逐样本存 4 层格式是 6 倍浪费）；resolve 读 4 个样本数票写出 4 层。**整数 RT 天然不可滤波、不可混合**，正合身份语义；若平台不支持 `R16_UInt` 的 MSAA，退化成 `R16_UNorm` + 消费端 `round(v * 65535)` 还原整数（与 GB 用 UNORM8 存身份、`round(v*255)` 同法）；采样数一律先过 `SystemInfo.GetRenderTextureSupportedMSAASampleCount` |
 | 18 | **描边不写 ID** | 与 GeometryBuffer 的"物理几何 / 视觉壳层"分离一致；需要"连描边一起算角色"时用 GB 的 outline coverage 补，不往 CB 里混 |
-| 19 | **用户可选的"选择层"用 Cryptomatte 式 `(选择 ID, 覆盖率)` 表达，取代 `custom0~3` 这类匿名通道** | **每像素 2 个选择为默认**（一张 RGBA8，按 Cryptomatte 的 `R=id0, G=cov0, B=id1, A=cov1` 成对布局），可扩到 4 个（再加一张，+4 B/px）；选择 ID 是**独立的 8 bit 空间**（≤256 个具名选择），与部件的 16 bit ID 空间无关；选择**在 Extensions 侧注册、材质侧只引用名字**（§5.11 的跨仓协议） |
-| 20 | **表面/材质数值从 CB 拆出去，独立成第三个 feature `Ho-SurfaceBuffer`** | MetadataBuffer 原本不止承担角色语义，还捎带了 roughness / metallic / reflectance / thickness / curvature / materialClass / transmittance / 线性表面色——**这些是"表面是什么样"，不是"这是谁"**，塞进 CB 会重演"一个 buffer 承担多种语义"的老毛病。拆分后各管一段：**GB 管几何**（法线/深度/几何覆盖率）、**CB 管身份与覆盖率**（ID + 覆盖率 + Cryptomatte 选择）、**SB 管表面与材质数值**。附带解决两件事：①`_Surface`（线性表面色）也归 SB，CB 的独立单采样 pass 随之取消；②"材质数值的权威归属"这个 P2 闸门**直接有了答案**——谁的值谁写（材质侧逐像素写进 SB），palette 只放身份，不再需要覆盖协议 |
+| 19 | ~~**用户可选的"选择层"用 Cryptomatte 式 `(选择 ID, 覆盖率)` 表达，取代 `custom0~3`**~~ **【已作废·决策 21】** | Cryptomatte 选择层**整体移出 CB，也不再进 SB**，改由将来的独立 feature **`Ho-Cryptomatte`** 专门做遮罩（见 §5.13 与 `Ho-Cryptomatte_占位.md`）。理由：它与"身份 + 覆盖率"是两件事，塞在这两个 feature 里就会重演"一个 buffer 承担多种语义" |
+| 21 | **Cryptomatte 选择层移出这两个 feature，单独做 `Ho-Cryptomatte`** | CB 与 SB 都**不做**选择层：CB 只回答"这是谁、占多少"（身份 4 层 `(ID, 覆盖率)` + palette），SB 只回答"表面是什么样"。遮罩/抠像/具名选区由将来的 **`Ho-Cryptomatte`** 专门承担（占位文档：`Documentation~/架构优化/Ho-Cryptomatte_占位.md`）。**好处**：两个 feature 的边界各自只剩一句话；`custom0~3` 那种匿名通道彻底没有复活的口子；遮罩需求可以独立演进（层数、导出档位、Nuke 兼容）而不牵动 CB/SB 的契约 |
+| 20 | **表面/材质数值从 CB 拆出去，独立成第三个 feature `Ho-SurfaceBuffer`** | MetadataBuffer 原本不止承担角色语义，还捎带了 roughness / metallic / reflectance / thickness / curvature / materialClass / transmittance / 线性表面色——**这些是"表面是什么样"，不是"这是谁"**，塞进 CB 会重演"一个 buffer 承担多种语义"的老毛病。拆分后各管一段：**GB 管几何**（法线/深度/几何覆盖率）、**CB 管身份与覆盖率**（ID + 覆盖率）、**SB 管表面数值**（+ 未来的 PBR）。附带解决两件事：①`_Surface`（线性表面色）也归 SB，CB 的独立单采样 pass 随之取消；②"材质数值的权威归属"这个 P2 闸门**直接有了答案**——谁的值谁写（材质侧逐像素写进 SB），palette 只放身份，不再需要覆盖协议 |
 
 **工程默认**（编号 8~12 沿用历史顺序；按推荐值执行；改动成本低，随时可推翻）
 
@@ -44,7 +45,7 @@ MetadataBuffer 把 8 个语义压进 RSUV 低字节的 8 个 bit，语义因此�
 | --- | --- | --- |
 | 8 | **palette 传 StructuredBuffer，分两级**：`HoCharacterPartData`（≤4096 行）+ `HoCharacterData`（角色表，≤256 行、常驻）；后端不支持时退化为 float4 常量数组（按 256 行分块） | 最省、最灵活；两级是为了让稀疏的 `char<<8\|slot` 能索引到稠密行（§5.3）；不做 1D 纹理——材质有自己的 ID，不需要采样 palette |
 | 9 | **标签 32 位** | 一个 `uint` 与 palette 行对齐；旧 8 语义 + 24 个自定义位足够 |
-| 10 | **ScreenProcess 规则 source 改成 palette 字段枚举 + 选择** | 部件 ID / 角色 ID / 类别 / 标签 / materialClass / thickness / curvature / transmittance（**这几项是材质数值，读哪里见 §5.3 的 P2 闸门**）/ **选择（§5.11，命中 = 选择 ID 相等，权重 = 覆盖率）** / surfaceColor / coverage；运算符、容差、组合、反相结构不变。**凡涉及 coverage 的一律按"多表面加权"求值**：`Σ_i cov_i · f(id_i)`（§6 第 7 条），而不是只取层0 |
+| 10 | **ScreenProcess 规则 source 改成"只吃 `Ho-Cryptomatte`"** | 今天它有 **20 个 source**（maskId 四通道 + surfaceData 四通道 + custom0 四通道 + objectCustom 八位）；迁移后**只剩一族：Cryptomatte 具名选择 + 覆盖率**。它**不再做"通道 + 阈值"匹配**（`Custom2 > 0.5` 这类条件消失），也不再需要 `RequiresSurfaceData` / `RequiresCustom0` / `RequiresObjectCustom0` 那套可用性诊断。材质侧也不必再为它暴露那些通道——这是管线草案 §6.2/§6.3 收敛暴露面的一部分。详见 `Ho-Cryptomatte_占位.md` §2 |
 | 11 | **palette 按 4096 行 + 角色表 256 行容量设计，v1 全量上传**（部件行 64~128 B → ≈256~512 KB/帧，角色表另 ≈16~32 KB） | 接口预留分块 / 脏行，实测有压力再上 |
 | 12 | **ID pass 由 feature 自己绘制** | 只画部件表里的 renderer（可选再用 layerMask / renderQueue 附加过滤），不含描边、特效件；默认一次 `DrawRenderers` 画完（RSUV 携带索引），只有兜底路径才逐部件绘制 |
 
@@ -58,7 +59,7 @@ MetadataBuffer 把 8 个语义压进 RSUV 低字节的 8 个 bit，语义因此�
 | --- | --- | --- |
 | `maskId` | R8G8B8A8_UNorm | r = **coverage/权重**、g = 角色 ID、b = 部件 ID、a = flags |
 | `surfaceData` | R16G16B16A16_SFloat | thickness / curvature / material class / transmittance hint |
-| `custom0` | R16G16B16A16_SFloat | 材质自定义 0~3（可来自纹理，per-pixel）→ **新设计里由选择层取代（§5.11）** |
+| `custom0` | R16G16B16A16_SFloat | 材质自定义 0~3（可来自纹理，per-pixel）→ **不迁进 CB / SB**：这类"具名遮罩"需求由将来的 `Ho-Cryptomatte` 承担（决策 21） |
 | `objectCustom0/1` | R16G16B16A16_SFloat ×2 | 8 个语义**各 1 bit**：CharacterFull / Face / FrontHair / Eye / EyeRevealArea / Accessory / CharacterBody / Reserved7 |
 | `reflectionMaterial` | R16G16B16A16_SFloat | perceptualRoughness / metallic / reflectance / PLR strength |
 | `surfaceColor` | R16G16B16A16_SFloat | RGB = 线性 HDR 表面色、A = coverage |
@@ -348,7 +349,7 @@ ID pass 的 depth-stencil 附件只服务于两件事：**决出每个 sample �
 | 角色特化 脸色扩散 | 同上 + `_Surface.rgb`（**覆盖率读 `_Coverage`，不再用 `_Surface.a`**） |
 | 角色特化 轮廓场 | 类别 / 标签查询 + 覆盖率 |
 | 材质侧捕获 | 从 **RSUV** 解出索引 → 查 palette 取 slot / character / category / tags（不读 MPB） |
-| ScreenProcess 规则 | palette 字段枚举 + **选择**（决策 10 / 19，§5.11） |
+| ScreenProcess 规则 | **只吃 `Ho-Cryptomatte`**（决策 10 / 21）：具名遮罩 + 覆盖率。迁移前仍吃 MetadataBuffer 的老 source（不能断供），迁移归 `Ho-Cryptomatte` 的落地阶段 |
 | SSS | `_Coverage` + `_Surface` + **GeometryBuffer normalDepth**（几何门控不变）+ thickness / curvature / class / transmittance——**这几项读哪里取决于 §5.3 的 P2 闸门**（材质侧逐像素写，或 CPU 从材质读进 palette）；定下来之前不要迁 |
 | PlanarReflection | `_Coverage` + palette（反射参数）+ `_Surface` + **GeometryBuffer normalDepth/coverage**（几何门控不变） |
 | 调试 / AOV | ID / 覆盖率分层显示；palette `displayColor`；manifest JSON |
@@ -439,12 +440,20 @@ MSAA 阶段**每个样本只需要一个 ID**（一个样本只属于一个部�
 
 ### 5.10 契约与 AOV
 
-- 按 `Documentation~/架构优化/LILTOON_CHANNEL_CONTRACT_V1.md` §3 的流程登记（登记本行 → 生产端输出 → 消费端消费 → debug 可见 → 冻结）：**`character.idcoverage`**（含 `_Id0` / `_Id1` / `_Coverage` 三张；debug view 按张拆开命名）/ **`character.selection`**（Cryptomatte 选择层）/ **`character.palette`**。**`character.surface` / `character.material` 两条不再由 CB 登记**——表面色与材质数值归 `Ho-SurfaceBuffer`（§5.12 / 决策 20），契约名相应改为 `scene.surface` 等。**CB 不登记任何深度 / 法线通道**——几何入口是 GeometryBuffer（决策 16），含法线贴图的着色法线归 SB。
+- 按 `Documentation~/架构优化/LILTOON_CHANNEL_CONTRACT_V1.md` §3 的流程登记（登记本行 → 生产端输出 → 消费端消费 → debug 可见 → 冻结）：**只有 `character.idcoverage`**（含 `_Id0` / `_Id1` / `_Coverage` 三张；debug view 按张拆开命名）+ **`character.palette`**。**`character.selection` 不再登记**（Cryptomatte 移出，决策 21）；**`character.surface` / `character.material` 也不再由 CB 登记**——表面数值归 `Ho-SurfaceBuffer`（§5.12 / 决策 20）。**CB 不登记任何深度 / 法线通道**——几何入口是 GeometryBuffer（决策 16）。
 - **同时要改的既有行**（契约 v1 里那些 MetadataBuffer 时代的条目，现在就该在文档里标上"待 P4 替换"）：`surfaceColor`（**去掉 `A=coverage`**——`.a` 退役，覆盖率只有一个来源）、`maskId` / `objectCustom0/1` / `surfaceData` / `reflectionMaterial`（生产者与编码整体换成 CharacterBuffer 的对应图）、以及 `maskcoverage.low/high`（它是 `objectCustom` 的抗锯齿副本，随 `objectCustom` 一起退役）。另外记一个现成的教训：**`custom0` 这张图在契约里根本没有登记**——它只在 §1 的备注里被点了一次名（"不要把逐通道滤波套到 … `custom0` … 上"），因为匿名通道没人愿意为它写契约行。这正是 §5.11 要改掉的模式。
 - AOV 导出对齐 Nuke 习惯：**名字冻结不动**（契约 §2 的 `id_object` / `id_group` / `matte_*` / `diffuse_albedo` 只换生产端与编码，不改名）；`matte_*` = **`Σ_i cov_i · [cat(id_i) == X]`**（不是只取层0——与 §6 第 7 条同一条规则）；**ID 不过滤、coverage 放 alpha**，附 palette manifest（JSON）——**默认嵌进 EXR metadata，sidecar 只作兜底**（§4.2：OpenEXR 库不支持 sidecar，Blender 的 Cryptomatte 节点干脆不读），Nuke 端即可像 Cryptomatte 那样点选。**选择层另加 `matte_sel_<名字>`**（= `Σ_i selCov_i · [selId_i == S]`，§5.11）；**导出分两档**：① Deep IDs 风格的 UINT 通道；② **规范合规的 Cryptomatte `crypto_*` 层**（float 位重解释 + manifest + 32 bit）——只有第②档才在 AOV 里用 Cryptomatte 命名。manifest 里**同时列部件名与选择名**。
 - CB 落地后，`Documentation~/GeometryBuffer.md` §7 消费者契约表里仍写着 "MetadataBuffer" 的三行（CharacterSpecialization / PLR / SSS）要改成 CharacterBuffer，并在 GB 文档的公共原则里把 "MetadataBuffer = object/material semantic truth" 拆成 "CharacterBuffer = 部件身份 + 覆盖率真值 / MetadataBuffer 退役"。这一步记在 P4。
 
-### 5.11 选择层：Cryptomatte 式的"用户自定义"，取代 `custom0~3`（决策 19）
+### 5.11 （已作废）选择层：Cryptomatte 式的"用户自定义"
+
+> ⚠ **本节作废（决策 21）**：Cryptomatte 选择层**整体移出 CB，也不再进 SB**，改由将来的独立 feature **`Ho-Cryptomatte`** 承担——占位文档见 `Documentation~/架构优化/Ho-Cryptomatte_占位.md`，新安排见 **§5.13**。
+>
+> 保留本节只为两点：① 里面关于 Cryptomatte 布局（ID 与覆盖率成对、层数必须成偶数）、命名纪律（**UI 可以叫 Cryptomatte，内部编码不合规时不许冒用这个名字**）、导出两档（Deep IDs 的 UINT 通道 / 合规的 `crypto_*`）的结论**对 `Ho-Cryptomatte` 仍然有效**；② 下面"受影响之处"清单。
+>
+> **受影响之处**（这些地方的旧表述以本节作废为准）：决策 19、§5.1 布局表的 `_HoCharacterBufferSelection` 行、§5.3 的"与 palette 并列的选择表"、§5.6 上限表的"选择数量"行、§5.8 的 ScreenProcess 行、§5.9① 的 debug 行、§5.10 的登记行、§7 的 P2.5。
+
+**以下是作废前的原文（供 `Ho-Cryptomatte` 参考，不再是本 feature 的设计）**：
 
 **为什么改**：`custom0~3` 是四个**匿名**浮点通道。用它的艺术家三个月后不会记得 3 号通道是什么；消费端也只能写 `custom2 > 0.5` 这种没有信息量的条件。选择层把这件事变成**具名、可点选、有覆盖率**的对象——**名字本身就是文档**。
 
@@ -493,6 +502,26 @@ MSAA 阶段**每个样本只需要一个 ID**（一个样本只属于一个部�
 - **必须有溢出可见性**：resolve 时若有选择被丢掉，debug 视图要能标出来。否则就会重演 Cryptomatte 那条"选到被丢弃的对象时出噪声"的静默失败（§4.1）。
 
 **与旧资产的迁移**：不兼容（决策 4）。ScreenProcess 里读 `custom*` 的规则条目改成读"选择"（§5.8），契约里 `custom0` 那一行标成待替换（§5.10）。
+
+### 5.13 遮罩归 `Ho-Cryptomatte`（决策 21）
+
+**现在的分工**：
+
+| feature | 回答什么 | 输出 |
+| --- | --- | --- |
+| GB | 几何在哪、朝向、几何覆盖多少 | 几何法线 / depth / 几何覆盖率 / 描边 / sky |
+| **CB** | **这是谁、占多少** | `Id0` / `Id1` / `Coverage`（4 层 `(ID, 覆盖率)`）+ palette |
+| SB | 表面是什么样 | 线性表面色 / 着色法线 / roughness / metallic / thickness / … |
+| **`Ho-Cryptomatte`（将来）** | **我要把哪一块单独抠出来** | 遮罩 / 具名选区 / Nuke 可点选的导出 |
+
+**为什么这样最干净**：
+
+1. **CB 与 SB 各自只剩一句话**——"这是谁、占多少"和"表面是什么样"。选择层是第三种问题（"我想单独调哪一块"），它横跨多个物体、还要有自己的名字表与层数预算，塞进谁都会把那个 feature 变成杂物间。
+2. **`custom0~3` 那种匿名通道没有复活的口子**：它的替代品现在有了明确归属，不需要在 CB/SB 里先占位。
+3. **遮罩可以独立演进**：层数（2 / 4 / 8）、导出档位（Deep IDs 的 UINT vs 合规 `crypto_*`）、Nuke 兼容性、溢出可见性——这些都是 `Ho-Cryptomatte` 自己的事，**改它不再牵动 CB/SB 的契约**。
+4. **它天然是这两个 feature 的消费者**：`Ho-Cryptomatte` 要的"每像素多物体身份 + 覆盖率"正是 CB 已经产出的东西（`_Id0`/`_Id1`/`_Coverage`，K = N = 4 无损），所以它起步时**不必重造 ID pass**——这也回答了"为什么当初想过把它塞进 CB"。
+
+**CB 侧因此要做的清理**（P1.5 一并做）：去掉选择层的 RT、注册表条目、设置项、调试视图与 resolve 分支；§5.11 的跨仓协议（材质选择槽）**交给 `Ho-Cryptomatte`**，不在 CB 的跨仓依赖里。
 
 ### 5.12 `Ho-SurfaceBuffer`：表面/材质数值的新家（决策 20）
 
@@ -556,9 +585,9 @@ MSAA 阶段**每个样本只需要一个 ID**（一个样本只属于一个部�
 | **P1** | `HoCharacterBuffer*` feature（ID/coverage pass + palette 两级表 + 选择表 + 选择层 RT + 调试视图）；lilToon 侧新增 `HoCharacterBuffer` pass（写 ID/覆盖率），与 MetadataBuffer 并存，身份走 RSUV 索引 + palette 查询 | 无 AA / MSAA 开 / 后处理 AA 开三种情况下 ID 与覆盖率都正确（**特别验证：相机 MSAA 关时覆盖率仍是 4x，不是 0/1**）；部件与 palette ID 一一对应；ID pass 一次画完、不破坏合批 |
 | **P1.5**（本次架构调整的收尾） | 把 `_Surface` 与 `Material0` **从 CB 摘干净**（RT、pass、发布、调试视图、设置项、契约行），CB 只剩身份与覆盖率 | CB 的发布清单里没有表面色/材质数值；debug 视图里没有 `character.surface` / `character.material0`；`_Surface` 的空缺由 MetadataBuffer 暂时继续提供（P4 之前不能让现有消费端断供） |
 | **P2** | **`Ho-SurfaceBuffer`（§5.12 / 决策 20）**：新的 feature + 4 张按需通道 + 两段式深度策略；lilToon 侧对应 pass（跨仓，从今天的 `HoMetadataBufferSurfaceColor` / 材质写入端对应过来） | 表面数值由材质侧逐像素写；现有 consumer（SSS / PLR / 角色特化脸色扩散 / AOV）改读 SB 后行为不变；**与 CB 无交叉读取** |
-| **P2.5** | **Cryptomatte 选择层的跨仓落地**：Extensions 侧给出选择表的 UI / 校验 / debug 视图 / 溢出可见性；**lilToon 侧（跨仓）实现材质的选择槽 UI 与 shader 写入**（§5.11 的协议） | 一个选择能被 ScreenProcess 规则按名字引用；边界像素上"选择"与"部件"配对正确；没注册选择时那张图不分配、SHADER 不输出；溢出时有 debug 提示 |
+| **P2.5** | ~~Cryptomatte 选择层的跨仓落地~~ **已移出**：改由独立 feature `Ho-Cryptomatte` 承担（决策 21，占位文档 `Ho-Cryptomatte_占位.md`）。CB 这边的对应工作是**清理**：去掉选择层的 RT / 注册表条目 / 设置项 / 调试视图 / resolve 分支（并入 P1.5） | CB 的发布清单里没有选择层；debug 视图里没有 `character.selection`；跨仓依赖只剩"新增 ID/覆盖率 pass"一条 |
 | **P2** | 角色特化三效果 + 轮廓切新 buffer，`HoCharacterSemanticMaskBlur` 退化为可选 | 前发投影边界连续、发际线无硬裁、角色互不干扰；等价 debug 视图无台阶 |
-| **P3** | ScreenProcess 规则、SSS、PlanarReflection 切新 buffer | 屏幕效果行为不变或更好；SSS 不再双线性读 class |
+| **P3** | ScreenProcess 规则、SSS、PlanarReflection 切新 buffer —— **其中 ScreenProcess 改为只吃 `Ho-Cryptomatte`**（决策 10），所以它跟随 `Ho-Cryptomatte` 的落地节奏，不在这里单独迁；SSS / PLR 的表面数值切到 `Ho-SurfaceBuffer`（§5.12） | 屏幕效果行为不变或更好；SSS 不再双线性读 class |
 | **P4** | 删除 MetadataBuffer（大量 16F 附件、fallback/clear/debug shader、MPB 回退、契约条目）；**把 `HoFaceAxis` 的归属迁到 CharacterBuffer**（眼下 CB 是借用 MetadataBuffer 命名空间里的这个枚举；枚举按 int 序列化、成员顺序不变就不会丢已有场景的值）；同步更新 `Documentation~/GeometryBuffer.md` §7 消费者契约表与公共原则（MetadataBuffer → CharacterBuffer） | 全仓库无 `_HoMetadataBuffer` 引用、无 MPB 身份写入；RSUV 只剩"palette 索引"一种含义；契约出 v2 |
 
 跨仓库依赖（**两处，都要在 lilToon 包里做**）：① 新增/改 pass（`HoCharacterBuffer` / `HoCharacterBufferSurface`，只把 RSUV 当索引用，不再解析语义位）；② **选择槽的材质 UI + shader 写入**（§5.11 的协议：槽数、遮罩来源枚举、MRT 布局、启用关键字）。C# 侧 `HoCharacterBufferGroup` 为每个 renderer 分配 palette ID、写 RSUV、维护选择表，并登记 32 bit 的分区。
