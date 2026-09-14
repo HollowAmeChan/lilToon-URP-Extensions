@@ -15,6 +15,8 @@ namespace lilToon.URP.Extensions.PostProcessing
             public ImageProcessLayer layer;
             public Material material;
             public int passIndex;
+            /// <summary>Baked GradientMap ramp for this layer (null for other effects).</summary>
+            public Texture2D rampTexture;
             public float radius;
             public float screenRatio;
             public TextureHandle blurredTexture;

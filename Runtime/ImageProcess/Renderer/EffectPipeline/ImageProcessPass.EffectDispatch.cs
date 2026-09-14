@@ -211,6 +211,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             ApplyLayerProperties(runtimeLayer.settings, runtimeLayer.material);
+            ApplyLayerRamp(runtimeLayer, runtimeLayer.material);
             Blitter.BlitCameraTexture(cmd, source, destination, runtimeLayer.material, Mathf.Max(0, runtimeLayer.settings.passIndex));
         }
 
@@ -227,6 +228,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 passData.layer = runtimeLayer.settings;
                 passData.material = runtimeLayer.material;
                 passData.passIndex = Mathf.Max(0, runtimeLayer.settings.passIndex);
+                passData.rampTexture = runtimeLayer.rampTexture;
 
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
@@ -241,6 +243,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     }
 
                     ApplyLayerProperties(data.layer, data.material);
+                    ApplyLayerRamp(data.rampTexture, data.material);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, data.passIndex);
                 });
             }

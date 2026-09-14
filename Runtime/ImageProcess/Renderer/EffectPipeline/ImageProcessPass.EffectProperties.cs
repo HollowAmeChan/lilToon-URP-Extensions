@@ -60,6 +60,28 @@ namespace lilToon.URP.Extensions.PostProcessing
             SetLogoTexture(material, 7, layer.logoTexture7);
         }
 
+        private static void ApplyLayerRamp(ImageProcessRuntimeLayer runtimeLayer, Material material)
+        {
+            ApplyLayerRamp(runtimeLayer.rampTexture, material);
+        }
+
+        private static void ApplyLayerRamp(Texture2D ramp, Material material)
+        {
+            material.SetFloat(ImageProcessShaderConstants.LayerRampTextureEnabledId, ramp != null ? 1.0f : 0.0f);
+            if (ramp == null)
+            {
+                return;
+            }
+
+            material.SetTexture(ImageProcessShaderConstants.LayerRampTextureId, ramp);
+            // The shader stretches its ramp coordinate by half a texel (see GradientMap.shader), so
+            // it needs the texel size; passing it explicitly keeps the binding independent of
+            // whether Unity fills in _LayerRampTex_TexelSize for a runtime-created texture.
+            material.SetVector(
+                ImageProcessShaderConstants.LayerRampTexelSizeId,
+                new Vector4(1.0f / Mathf.Max(ramp.width, 1), 1.0f / Mathf.Max(ramp.height, 1), ramp.width, ramp.height));
+        }
+
         private static void SetLogoTexture(Material material, int index, Texture texture)
         {
             if (texture == null)

@@ -38,6 +38,10 @@ namespace lilToon.URP.Extensions.PostProcessing
         [Tooltip("可选纹理。会以 _LayerTexture 暴露给 Shader。")]
         public Texture texture;
 
+        [Tooltip("渐变映射（GradientMap）的色标。运行时会烘焙成 1x256 的 ramp 贴图并以 _LayerRampTex 交给 Shader；" +
+                 "支持 Unity 渐变的 8 个颜色键 + 8 个透明度键与 Blend/Fixed 模式。")]
+        public Gradient ramp = ImageProcessGradientRampCache.CreateDefaultGradient();
+
         [Tooltip("Logo overlay input texture 0.")]
         public Texture logoTexture0;
 
@@ -102,5 +106,64 @@ namespace lilToon.URP.Extensions.PostProcessing
         public Vector4 parameters12;
 
         public bool IsActive => enabled && intensity > 0.0f;
+
+        /// <summary>Width of the baked GradientMap ramp texture (1 x <see cref="RampResolution"/>).</summary>
+        public const int RampResolution = 256;
+
+        /// <summary>
+        /// Bakes <paramref name="source"/> into display-space RGBA ramp samples: the same ramp the
+        /// GradientMap effect samples on the GPU, exposed so tools (and the inspector preview) can
+        /// evaluate it without duplicating the interpolation maths.
+        /// </summary>
+        /// <param name="destination">Buffer of at least <c>RampResolution * 4</c> floats.</param>
+        /// <returns>False when there is nothing to bake (no gradient or a too-small buffer).</returns>
+        public static bool BakeRamp(Gradient source, int space, float[] destination, out bool fixedMode)
+        {
+            fixedMode = source != null && source.mode == GradientMode.Fixed;
+            if (source == null || destination == null || destination.Length < RampResolution * 4)
+            {
+                return false;
+            }
+
+            GradientColorKey[] sourceColors = source.colorKeys ?? Array.Empty<GradientColorKey>();
+            int colorCount = Math.Min(sourceColors.Length, ImageProcessGradientRampBaker.MaxKeys);
+            var colorKeys = new ImageProcessGradientRampBaker.ColorKey[ImageProcessGradientRampBaker.MaxKeys];
+            for (int i = 0; i < colorCount; i++)
+            {
+                GradientColorKey key = sourceColors[i];
+                colorKeys[i] = new ImageProcessGradientRampBaker.ColorKey(
+                    key.time, key.color.r, key.color.g, key.color.b);
+            }
+
+            GradientAlphaKey[] sourceAlphas = source.alphaKeys ?? Array.Empty<GradientAlphaKey>();
+            int alphaCount = Math.Min(sourceAlphas.Length, ImageProcessGradientRampBaker.MaxKeys);
+            var alphaKeys = new ImageProcessGradientRampBaker.AlphaKey[ImageProcessGradientRampBaker.MaxKeys];
+            for (int i = 0; i < alphaCount; i++)
+            {
+                GradientAlphaKey key = sourceAlphas[i];
+                alphaKeys[i] = new ImageProcessGradientRampBaker.AlphaKey(key.time, key.alpha);
+            }
+
+            ImageProcessGradientRampBaker.Bake(
+                colorKeys,
+                colorCount,
+                alphaKeys,
+                alphaCount,
+                fixedMode,
+                Mathf.Clamp(space, 0, ImageProcessGradientRampBaker.SpaceCount - 1),
+                RampResolution,
+                destination);
+            return true;
+        }
+
+        /// <summary>Bakes this layer's ramp using its own interpolation space.</summary>
+        public bool BakeRamp(float[] destination, out bool fixedMode)
+        {
+            return BakeRamp(
+                ramp,
+                Mathf.Clamp(Mathf.RoundToInt(parameters6.x), 0, ImageProcessGradientRampBaker.SpaceCount - 1),
+                destination,
+                out fixedMode);
+        }
     }
 }

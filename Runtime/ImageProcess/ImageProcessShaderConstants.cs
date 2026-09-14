@@ -13,6 +13,10 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static readonly int LayerColorId = Shader.PropertyToID("_LayerColor");
         public static readonly int LayerTextureId = Shader.PropertyToID("_LayerTexture");
         public static readonly int LayerTextureEnabledId = Shader.PropertyToID("_LayerTextureEnabled");
+        // GradientMap: a runtime-baked 1x256 ramp texture (see ImageProcessGradientRampCache).
+        public static readonly int LayerRampTextureId = Shader.PropertyToID("_LayerRampTex");
+        public static readonly int LayerRampTextureEnabledId = Shader.PropertyToID("_LayerRampTexEnabled");
+        public static readonly int LayerRampTexelSizeId = Shader.PropertyToID("_LayerRampTexelSize");
         public static readonly int[] LogoTextureIds =
         {
             Shader.PropertyToID("_LogoTexture0"),

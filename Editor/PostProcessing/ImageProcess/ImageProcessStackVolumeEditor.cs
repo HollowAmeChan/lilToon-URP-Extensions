@@ -1702,17 +1702,13 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ImageProcessEffect.GradientMap:
                     SetFloat(element, "intensity", 1.0f);
-                    // Normal + the linear black-to-white ramp: adding the effect turns the image
-                    // into its own luminance, which is the behaviour artists expect from a
-                    // gradient map with its default ramp.
+                    // Normal + the black-to-white ramp: adding the effect turns the image into its
+                    // own luminance, which is the behaviour artists expect from a gradient map with
+                    // its default ramp. The ramp itself is a Unity Gradient (see Filters/GradientMap.cs).
                     SetEnum(element, "blendMode", (int)ImageProcessBlendMode.Normal);
                     SetVector4(element, "parameters0", new Vector4(0.0f, 0.0f, 1.0f, 0.0f));
-                    SetVector4(element, "parameters1", new Vector4(0.0f, 1.0f / 3.0f, 2.0f / 3.0f, 1.0f));
-                    SetVector4(element, "parameters2", new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
-                    SetVector4(element, "parameters3", new Vector4(1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 3.0f, 1.0f));
-                    SetVector4(element, "parameters4", new Vector4(2.0f / 3.0f, 2.0f / 3.0f, 2.0f / 3.0f, 1.0f));
-                    SetVector4(element, "parameters5", new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
                     SetVector4(element, "parameters6", Vector4.zero);
+                    SetGradientMapRamp(element, CreateDefaultGradientMapRamp());
                     break;
                 case ImageProcessEffect.SpeedLines:
                     SetFloat(element, "intensity", 1.0f);

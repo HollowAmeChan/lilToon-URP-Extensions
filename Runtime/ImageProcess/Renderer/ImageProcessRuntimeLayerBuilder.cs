@@ -36,9 +36,15 @@ namespace lilToon.URP.Extensions.PostProcessing
                     continue;
                 }
 
-                runtimeLayers.Add(new ImageProcessRuntimeLayer(layer, material, descriptor));
+                Texture2D rampTexture = layer.effect == ImageProcessEffect.GradientMap
+                    ? ImageProcessGradientRampCache.GetRamp(layer)
+                    : null;
+                runtimeLayers.Add(new ImageProcessRuntimeLayer(layer, material, descriptor, rampTexture));
             }
 
+            // Ramp textures belong to the layers that asked for them; drop the ones no camera has
+            // rendered for a while so a deleted or re-typed layer cannot leak its texture.
+            ImageProcessGradientRampCache.PruneUnusedLayers(Time.frameCount);
         }
     }
 }

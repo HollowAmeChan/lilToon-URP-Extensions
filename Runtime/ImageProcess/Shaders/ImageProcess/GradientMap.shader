@@ -22,26 +22,26 @@ Shader "Hidden/lilToon/URP/ImageProcess/GradientMap"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            // HoSampleGradient*: the same ramp sampling the MaterialGradient module uses.
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/MaterialGradient/Shaders/HoMaterialGradientSampling.hlsl"
 
             float _Intensity;
             float _LayerBlendMode;
             // x input source (0 luma, 1 red, 2 green, 3 blue, 4 maximum, 5 average, 6 saturation),
             // y black point, z white point, w output dither (8-bit LSB)
             float4 _LayerParams0;
-            // stop positions, non-decreasing
-            float4 _LayerParams1;
-            // stop colours (rgba)
-            float4 _LayerParams2;
-            float4 _LayerParams3;
-            float4 _LayerParams4;
-            float4 _LayerParams5;
-            // x interpolation space (0 display, 1 linear light, 2 Oklab), y reverse,
+            // x interpolation space (bake-time only, kept in the layer for tooling), y reverse,
             // z posterise bands (0/1 = off, >=2 = band count), w reserved
             float4 _LayerParams6;
+            TEXTURE2D(_LayerRampTex);
+            SAMPLER(sampler_LayerRampTex);
+            float _LayerRampTexEnabled;
+            // (1 / width, 1 / height, width, height) of the baked ramp, bound by the renderer.
+            float4 _LayerRampTexelSize;
 
-            // Same 24 premultiplied-off Photoshop/PDF blend modes as LayerBlit.shader and
-            // Gradient.shader. Kept local on purpose: making it an include is a separate change
-            // that also touches those two shaders.
+            // Same 24 Photoshop/PDF blend modes as LayerBlit.shader and Gradient.shader. Kept local
+            // on purpose: making it an include is a separate change that also touches those two
+            // shaders.
             half3 ColorBurn(half3 baseColor, half3 layerColor)
             {
                 return max(1.0 - (1.0 - baseColor) / max(layerColor, 0.0001), 0.0);
@@ -174,135 +174,15 @@ Shader "Hidden/lilToon/URP/ImageProcess/GradientMap"
                 return dot(color, float3(0.2126, 0.7152, 0.0722));
             }
 
-            float3 GradientMapSrgbToLinear(float3 c)
-            {
-                // HLSL has no GLSL-style component-selection intrinsic. Use a component-wise step
-                // mask so this also compiles on the D3D11 backend used by the editor.
-                float3 low = c / 12.92;
-                float3 high = pow(max(c + 0.055, 0.0) / 1.055, 2.4);
-                float3 lowMask = 1.0 - step(float3(0.04045, 0.04045, 0.04045), c);
-                return lerp(high, low, lowMask);
-            }
-
-            float3 GradientMapLinearToSrgb(float3 c)
-            {
-                float3 low = c * 12.92;
-                float3 high = 1.055 * pow(max(c, 0.0), 1.0 / 2.4) - 0.055;
-                float3 lowMask = 1.0 - step(float3(0.0031308, 0.0031308, 0.0031308), c);
-                return lerp(high, low, lowMask);
-            }
-
-            // Oklab (Bjorn Ottosson 2020; the matrices below are the linear-sRGB form as
-            // recalculated in the CSS Color 4 sample conversions). Derivation and numeric checks:
-            // .codex-research/gradient_map_sim/oklab_check.py.
-            float3 GradientMapLinearSrgbToOklab(float3 c)
-            {
-                float l = 0.4122214695 * c.r + 0.5363325373 * c.g + 0.0514459933 * c.b;
-                float m = 0.2119034958 * c.r + 0.6806995506 * c.g + 0.1073969535 * c.b;
-                float s = 0.0883024592 * c.r + 0.2817188391 * c.g + 0.6299787017 * c.b;
-
-                // Sign-preserving cube root: HLSL pow() returns NaN for negative bases and the
-                // cone responses can go slightly negative for out-of-gamut input.
-                l = sign(l) * pow(abs(l), 1.0 / 3.0);
-                m = sign(m) * pow(abs(m), 1.0 / 3.0);
-                s = sign(s) * pow(abs(s), 1.0 / 3.0);
-
-                return float3(
-                    0.2104542683 * l + 0.7936177747 * m - 0.0040720430 * s,
-                    1.9779985324 * l - 2.4285922420 * m + 0.4505937096 * s,
-                    0.0259040425 * l + 0.7827717125 * m - 0.8086757549 * s);
-            }
-
-            float3 GradientMapOklabToLinearSrgb(float3 lab)
-            {
-                float l = lab.x + 0.3963377774 * lab.y + 0.2158037573 * lab.z;
-                float m = lab.x - 0.1055613458 * lab.y - 0.0638541728 * lab.z;
-                float s = lab.x - 0.0894841775 * lab.y - 1.2914855480 * lab.z;
-                l = l * l * l;
-                m = m * m * m;
-                s = s * s * s;
-
-                return float3(
-                    4.0767416361 * l - 3.3077115393 * m + 0.2309699032 * s,
-                    -1.2684379733 * l + 2.6097573493 * m - 0.3413193760 * s,
-                    -0.0041960761 * l - 0.7034186179 * m + 1.7076146941 * s);
-            }
-
-            float4 GradientMapLerp(float4 colorA, float4 colorB, float local, int space)
-            {
-                float4 result;
-                float3 rgb;
-
-                if (space == 1)
-                {
-                    // Interpolate in linear light, then return to display space. Neither space is
-                    // universally "right": display-space blending darkens and over-saturates the
-                    // middle of wide ramps, linear-light blending lifts the middle of dark ramps.
-                    rgb = GradientMapLinearToSrgb(lerp(GradientMapSrgbToLinear(colorA.rgb), GradientMapSrgbToLinear(colorB.rgb), local));
-                }
-                else if (space == 2)
-                {
-                    // Oklab: straight lines between two colours keep their perceived lightness and
-                    // hue, which is what stops wide ramps from turning muddy in the middle.
-                    float3 labA = GradientMapLinearSrgbToOklab(GradientMapSrgbToLinear(colorA.rgb));
-                    float3 labB = GradientMapLinearSrgbToOklab(GradientMapSrgbToLinear(colorB.rgb));
-                    rgb = GradientMapLinearToSrgb(GradientMapOklabToLinearSrgb(lerp(labA, labB, local)));
-                }
-                else
-                {
-                    rgb = lerp(colorA.rgb, colorB.rgb, local);
-                }
-
-                // Linear-light and Oklab interpolation can leave the display gamut in the middle of
-                // a segment. Clip to [0,1]: simple clipping, not a gamut-mapping algorithm.
-                result.rgb = saturate(rgb);
-                result.a = lerp(colorA.a, colorB.a, local);
-                return result;
-            }
-
-            // Ramp lookup. Stop positions are expected non-decreasing (the inspector clamps them);
-            // zero-width or inverted segments fall back to a hard step instead of dividing by zero.
-            float4 SampleGradientMapRamp(float t, int space)
-            {
-                float4 colorA = _LayerParams2;
-                float4 colorB = _LayerParams2;
-                float local = 0.0;
-
-                if (t >= _LayerParams1.w)
-                {
-                    colorA = _LayerParams5;
-                    colorB = _LayerParams5;
-                }
-                else if (t >= _LayerParams1.z)
-                {
-                    colorA = _LayerParams4;
-                    colorB = _LayerParams5;
-                    local = (t - _LayerParams1.z) / max(_LayerParams1.w - _LayerParams1.z, 0.000001);
-                }
-                else if (t >= _LayerParams1.y)
-                {
-                    colorA = _LayerParams3;
-                    colorB = _LayerParams4;
-                    local = (t - _LayerParams1.y) / max(_LayerParams1.z - _LayerParams1.y, 0.000001);
-                }
-                else if (t >= _LayerParams1.x)
-                {
-                    colorA = _LayerParams2;
-                    colorB = _LayerParams3;
-                    local = (t - _LayerParams1.x) / max(_LayerParams1.y - _LayerParams1.x, 0.000001);
-                }
-
-                return GradientMapLerp(colorA, colorB, saturate(local), space);
-            }
-
             half4 FragGradientMap(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord);
                 float amount = saturate(_Intensity);
-                if (amount <= 0.0001)
+                if (amount <= 0.0001 || _LayerRampTexEnabled < 0.5)
                 {
+                    // Without a baked ramp there is nothing to map with; pass the frame through.
                     return source;
                 }
 
@@ -321,7 +201,7 @@ Shader "Hidden/lilToon/URP/ImageProcess/GradientMap"
 
                 if (_LayerParams6.y > 0.5)
                 {
-                    // Reverse the ramp: black now indexes the last stop.
+                    // Reverse the ramp: black now indexes the last key.
                     normalized = 1.0 - normalized;
                 }
 
@@ -332,10 +212,18 @@ Shader "Hidden/lilToon/URP/ImageProcess/GradientMap"
                     normalized = saturate(floor(normalized * bands) / max(bands - 1.0, 1.0));
                 }
 
-                int space = (int)clamp(round(_LayerParams6.x), 0.0, 2.0);
-                float4 ramp = SampleGradientMapRamp(normalized, space);
+                // One fetch: the ramp texture already carries the gradient, the interpolation space
+                // it was baked in, its alpha keys, and the Blend/Fixed stepping.
+                //
+                // The bake puts sample i at t = i / (Resolution - 1), while a texture fetch assumes
+                // texel centres at (i + 0.5) / Resolution. Stretching the coordinate by that half
+                // texel makes the fetch reproduce the baked ramp exactly, endpoints included,
+                // instead of shifting it by up to half a texel.
+                float rampTexel = _LayerRampTexelSize.x;
+                float rampCoordinate = normalized * (1.0 - rampTexel) + rampTexel * 0.5;
+                half4 ramp = HoSampleGradient(TEXTURE2D_ARGS(_LayerRampTex, sampler_LayerRampTex), rampCoordinate);
 
-                half3 blended = ApplyLayerBlend(source.rgb, half3(ramp.rgb), _LayerBlendMode);
+                half3 blended = ApplyLayerBlend(source.rgb, ramp.rgb, _LayerBlendMode);
                 half alpha = amount * saturate(ramp.a);
                 half3 result = lerp(source.rgb, blended, alpha);
 
