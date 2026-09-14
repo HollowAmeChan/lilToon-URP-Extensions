@@ -1,3 +1,5 @@
+#pragma warning disable CS0618, CS0672
+
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
