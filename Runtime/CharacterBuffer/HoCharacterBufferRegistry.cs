@@ -14,8 +14,12 @@ namespace lilToon.URP.Extensions.CharacterBuffer
     /// 规则（规划 §5.3 / §5.11）：像素里只有索引、属性永远在表里；两级是为了让稀疏的
     /// <c>角色&lt;&lt;8 | 槽位</c> 能定位到稠密行；越界一律回 unknown 行而**不是 clamp 行号**
     /// （clamp 会落到别的角色的行上，读出来看着合法其实是错的）。
+    /// <para>
+    /// public：消费端（ScreenProcess 规则、AOV 导出、调试与编辑器）需要按名字查 ID、按 ID 查行，
+    /// 这是它们与本 feature 之间的只读接口。
+    /// </para>
     /// </summary>
-    internal static class HoCharacterBufferRegistry
+    public static class HoCharacterBufferRegistry
     {
         private static readonly List<HoCharacterBufferGroup> Groups = new List<HoCharacterBufferGroup>();
         private static readonly Dictionary<uint, int> PartRowByPartId = new Dictionary<uint, int>();

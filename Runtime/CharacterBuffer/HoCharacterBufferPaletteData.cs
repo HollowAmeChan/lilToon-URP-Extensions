@@ -76,7 +76,8 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         public const int Stride = 32;
     }
 
-    internal static class HoCharacterBufferPaletteLimits
+    /// <summary>palette 与选择表的容量上限（规划决策 2 / §5.11）。消费端与编辑器都要读，所以是 public。</summary>
+    public static class HoCharacterBufferPaletteLimits
     {
         /// <summary>部件行上限（注册校验预算，决策 2）。</summary>
         public const int MaxPartRows = 4096;

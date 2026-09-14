@@ -26,6 +26,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         public const string PartCountName = "_HoCharacterBufferPartCount";
         public const string SelectionCountName = "_HoCharacterBufferSelectionCount";
         public const string SelectionLayerCountName = "_HoCharacterBufferSelectionLayerCount";
+        public const string DebugModeName = "_HoCharacterBufferDebugMode";
 
         public const string ResolveIdTextureMsName = "_HoCharacterBufferResolveIdTextureMS";
         public const string ResolveSelectionTextureMsName = "_HoCharacterBufferResolveSelectionTextureMS";
@@ -48,6 +49,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         public static readonly int PartCountId = Shader.PropertyToID(PartCountName);
         public static readonly int SelectionCountId = Shader.PropertyToID(SelectionCountName);
         public static readonly int SelectionLayerCountId = Shader.PropertyToID(SelectionLayerCountName);
+        public static readonly int DebugModeId = Shader.PropertyToID(DebugModeName);
         public static readonly int ResolveIdTextureMsId = Shader.PropertyToID(ResolveIdTextureMsName);
         public static readonly int ResolveSelectionTextureMsId = Shader.PropertyToID(ResolveSelectionTextureMsName);
         public static readonly int ResolveDepthTextureMsId = Shader.PropertyToID(ResolveDepthTextureMsName);

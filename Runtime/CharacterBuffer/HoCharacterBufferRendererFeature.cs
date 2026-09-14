@@ -18,13 +18,17 @@ namespace lilToon.URP.Extensions.CharacterBuffer
 
         private readonly HoCharacterBufferRenderTargets renderTargets = new HoCharacterBufferRenderTargets();
         private HoCharacterBufferPass outputPass;
+        private HoCharacterBufferDebugPass debugPass;
         private Material fallbackMaterial;
         private Material resolveMaterial;
+        private Material debugMaterial;
         private Shader fallbackShader;
         private Shader resolveShader;
+        private Shader debugShader;
         private bool registeredCameraReset;
         private bool warnedMissingFallbackShader;
         private bool warnedMissingResolveShader;
+        private bool warnedMissingDebugShader;
         private bool warnedUnsupportedPlatform;
         private bool warnedSelectionLayers;
 
@@ -34,6 +38,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         {
             RegisterCameraReset();
             outputPass = new HoCharacterBufferPass();
+            debugPass = new HoCharacterBufferDebugPass();
         }
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
@@ -44,8 +49,10 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 return;
             }
 
-            EnsureMaterials();
+            bool shouldDebug = ShouldDebug(in renderingData);
+            EnsureMaterials(shouldDebug);
             outputPass?.Setup(settings, renderTargets, fallbackMaterial, resolveMaterial, settings.RequestedSampleCount, ShouldProduceSelections());
+            debugPass?.Setup(settings, renderTargets, renderer.cameraColorTargetHandle, debugMaterial);
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -56,7 +63,8 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 return;
             }
 
-            EnsureMaterials();
+            bool shouldDebug = ShouldDebug(in renderingData);
+            EnsureMaterials(shouldDebug);
             if (outputPass == null)
             {
                 return;
@@ -64,6 +72,12 @@ namespace lilToon.URP.Extensions.CharacterBuffer
 
             outputPass.Setup(settings, renderTargets, fallbackMaterial, resolveMaterial, settings.RequestedSampleCount, ShouldProduceSelections());
             renderer.EnqueuePass(outputPass);
+
+            if (debugPass != null && shouldDebug)
+            {
+                debugPass.Setup(settings, renderTargets, renderer.cameraColorTargetHandle, debugMaterial);
+                renderer.EnqueuePass(debugPass);
+            }
         }
 
         protected override void Dispose(bool disposing)
@@ -72,12 +86,17 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             renderTargets.Release();
             outputPass?.ReleaseCompatibilityResources();
             outputPass = null;
+            debugPass?.ReleaseCompatibilityResources();
+            debugPass = null;
             CoreUtils.Destroy(fallbackMaterial);
             CoreUtils.Destroy(resolveMaterial);
+            CoreUtils.Destroy(debugMaterial);
             fallbackMaterial = null;
             resolveMaterial = null;
+            debugMaterial = null;
             fallbackShader = null;
             resolveShader = null;
+            debugShader = null;
         }
 
         private void RegisterCameraReset()
@@ -154,10 +173,26 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 HoCharacterBufferRegistry.SelectionCount > 0;
         }
 
-        private void EnsureMaterials()
+        private bool ShouldDebug(in RenderingData renderingData)
+        {
+            if (settings == null || settings.debugMode == HoCharacterBufferDebugMode.Off)
+            {
+                return false;
+            }
+
+            CameraType cameraType = renderingData.cameraData.cameraType;
+            return (cameraType == CameraType.SceneView && settings.debugInSceneView)
+                || (cameraType == CameraType.Game && settings.debugInGameView);
+        }
+
+        private void EnsureMaterials(bool includeDebug)
         {
             EnsureFallbackMaterial();
             EnsureResolveMaterial();
+            if (includeDebug)
+            {
+                EnsureDebugMaterial();
+            }
         }
 
         private void EnsureFallbackMaterial()
@@ -213,6 +248,34 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             }
 
             resolveMaterial = CoreUtils.CreateEngineMaterial(shader);
+        }
+
+        private void EnsureDebugMaterial()
+        {
+            Shader shader = settings != null && settings.debugShader != null
+                ? settings.debugShader
+                : Shader.Find(HoCharacterBufferShaderConstants.DebugShaderName);
+
+            if (debugMaterial != null && debugShader == shader)
+            {
+                return;
+            }
+
+            CoreUtils.Destroy(debugMaterial);
+            debugMaterial = null;
+            debugShader = shader;
+            if (shader == null)
+            {
+                if (!warnedMissingDebugShader)
+                {
+                    warnedMissingDebugShader = true;
+                    Debug.LogWarning($"[Ho-CharacterBuffer] 找不到 debug shader '{HoCharacterBufferShaderConstants.DebugShaderName}'，调试视图不可用。");
+                }
+
+                return;
+            }
+
+            debugMaterial = CoreUtils.CreateEngineMaterial(shader);
         }
     }
 }
