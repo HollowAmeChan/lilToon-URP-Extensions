@@ -129,6 +129,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 Request(ImageProcessResourceKind.ExternalTexture, "layer-supplied logo texture")));
             Add(catalog, SinglePass(ImageProcessEffect.BlueNoise));
             Add(catalog, SinglePass(ImageProcessEffect.Glass));
+            Add(catalog, SinglePass(ImageProcessEffect.GradientMap));
 
             return catalog;
         }

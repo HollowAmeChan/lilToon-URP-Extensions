@@ -178,6 +178,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "圆角毛玻璃", ApplyImageProcessRoundedGlassPreset);
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "折射多边形", ApplyImageProcessPolygonGlassPreset);
                     break;
+                case ImageProcessEffect.GradientMap:
+                    AddImageProcessGradientMapLookMenuItems(menu, propertyPath, effect);
+                    break;
                 case ImageProcessEffect.SpeedLines:
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "白色光晕", ApplyImageProcessWhiteSpeedLinesPreset);
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "黑色漫画", ApplyImageProcessBlackMangaSpeedLinesPreset);

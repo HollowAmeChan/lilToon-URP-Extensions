@@ -258,11 +258,11 @@
 
 按你的划分，两者都**不是**改 Gradient，而是新效果：
 
-**B — 亮度驱动的 Gradient Map（新 ImageProcess 效果）**
-- 对标 Photoshop `Gradient Map` / AE `Colorama` / Affinity `Gradient Map`（"maps the equivalent greyscale range of an image to a specified colour gradient"），以及引擎侧的 URP `SplitToning` / `ShadowsMidtonesHighlights`（后者能定过渡范围，但只有 2–3 个颜色端）。
-- 参考实现：GPU Gems 1 第 22 章 `float grayscale = dot(float3(0.222,0.707,0.071), inColor); OutColor = tex1D(ColorCorrMap, grayscale);`（1×256 ramp）。
-- 数据路径建议：复用本包 `MaterialGradient` 的"Unity `Gradient` → ramp 贴图 + `HoSampleGradient*`"（运行时仍只见普通 `Texture2D`）。若要让 Volume profile 自包含，则用参数打包若干停靠点；两条路的取舍见 5.3（p4..p12 共 36 个 float 仍空闲，或 `_LayerTexture`）。
-- 要注意：**这是真正的"LUT 味"来源**，但它位置无关——和 Gradient 的用途不重叠。
+**B — 亮度驱动的 Gradient Map（新 ImageProcess 效果）——已落地**
+- 已实现为独立效果 `ImageProcessEffect.GradientMap`「渐变映射」：4 个参数打包色标、输入选择（亮度/红/绿/蓝/最大值/平均值/饱和度）、黑场白场窗口、反转、色阶数（平涂）、显示空间/线性光/Oklab 插值、输出抖动，另有 11 个 look。
+- 最终选择的路线是"参数打包若干停靠点"而不是 ramp 贴图：Volume profile 自包含、不占 `_LayerTexture`、预设可以直接写数值。代价是色标上限 4 个（详见 `GradientMap.md`）。
+- 对标：Photoshop `Gradient Map` / AE `Colorama`（**Adobe 正文抓不到，只作命名参考**）；可核实的一手来源是 GPU Gems 1 第 22 章的 1D colour-correction map（`float grayscale = dot(float3(0.222,0.707,0.071), inColor); OutColor = tex1D(ColorCorrMap, grayscale);`）与 Godot 的 `Color Correction` 1D 渐变（左端=黑、右端=白、线性黑白渐变不产生变化）。
+- 细节、参数表、来源可信度与验证结果见 `GradientMap.md`。
 
 **C — 深度/大气/天空遮罩驱动的染色（ScreenProcess 效果）**
 - 放在 ScreenProcess 是合理的：只有那里能读 MetadataBuffer / GeometryBuffer（天空、深度、语义遮罩），ImageProcess 按架构只读相机颜色。

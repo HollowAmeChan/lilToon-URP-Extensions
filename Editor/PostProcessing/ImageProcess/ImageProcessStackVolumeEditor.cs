@@ -87,7 +87,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ImageProcessEffect.Distortion, "湍流置换", "icon_Distortion_v1"),
             new EffectToggleEntry(ImageProcessEffect.Fisheye, "镜头畸变", "icon_FishEye_v1"),
             new EffectToggleEntry(ImageProcessEffect.CameraFlash, "摄像机闪光", "icon_CameraFlash_v1"),
-            new EffectToggleEntry(ImageProcessEffect.Glass, "玻璃", "icon_Distortion_v1")
+            new EffectToggleEntry(ImageProcessEffect.Glass, "玻璃", "icon_Distortion_v1"),
+            new EffectToggleEntry(ImageProcessEffect.GradientMap, "渐变映射", "icon_Filter_v1")
         };
 
         private static readonly EffectToggleEntry[] LegacyEffectOrder =
@@ -152,7 +153,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             "天空神光",
             "图标显示",
             "蓝噪色块",
-            "玻璃"
+            "玻璃",
+            "渐变映射"
         };
 
         private static readonly GUIContent[] BlendModeDisplayNames =
@@ -576,6 +578,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            if (GetEffect(element) == ImageProcessEffect.GradientMap)
+            {
+                DrawGradientMapElement(rect, element);
+                return;
+            }
+
             if (GetEffect(element) == ImageProcessEffect.ColorGradingCustom)
             {
                 DrawColorGradingCustomElement(rect, element);
@@ -738,6 +746,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ImageProcessEffect.Glass:
                     lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
                     lineCount += 17;
+                    break;
+                case ImageProcessEffect.GradientMap:
+                    lineCount += GetCoreLineCount(false, false, false, false, false, showAdvanced);
+                    lineCount += GetGradientMapLineCount(element);
                     break;
                 case ImageProcessEffect.SpeedLines:
                     lineCount += GetCoreLineCount(false, true, false, false, false, showAdvanced);
@@ -1687,6 +1699,20 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters1", new Vector4(0.0f, 0.0f, 0.06f, 6.0f));
                     SetVector4(element, "parameters2", new Vector4(6.0f, 1.0f, 3.0f, 2.0f));
                     SetVector4(element, "parameters3", new Vector4(0.0f, 2.0f, 0.35f, 1.0f));
+                    break;
+                case ImageProcessEffect.GradientMap:
+                    SetFloat(element, "intensity", 1.0f);
+                    // Normal + the linear black-to-white ramp: adding the effect turns the image
+                    // into its own luminance, which is the behaviour artists expect from a
+                    // gradient map with its default ramp.
+                    SetEnum(element, "blendMode", (int)ImageProcessBlendMode.Normal);
+                    SetVector4(element, "parameters0", new Vector4(0.0f, 0.0f, 1.0f, 0.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.0f, 1.0f / 3.0f, 2.0f / 3.0f, 1.0f));
+                    SetVector4(element, "parameters2", new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+                    SetVector4(element, "parameters3", new Vector4(1.0f / 3.0f, 1.0f / 3.0f, 1.0f / 3.0f, 1.0f));
+                    SetVector4(element, "parameters4", new Vector4(2.0f / 3.0f, 2.0f / 3.0f, 2.0f / 3.0f, 1.0f));
+                    SetVector4(element, "parameters5", new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+                    SetVector4(element, "parameters6", Vector4.zero);
                     break;
                 case ImageProcessEffect.SpeedLines:
                     SetFloat(element, "intensity", 1.0f);

@@ -18,6 +18,7 @@
 - `ImageProcessStackVolumeEditor` 和 `ScreenProcessStackVolumeEditor` 负责层列表、图标按钮、预设菜单、每个效果的参数 UI。
 - `调色`（`ColorGradingCustom`）的预设根级只有 `默认`（重置），其余 34 个 look 统一走 `基础/电影感/胶片/动画/风格` 五个子菜单，见 `ColorGradingPresets.md`。
 - `渐变`（`Gradient`）除原有 4 种形状外新增 4 个两点模式（线性/径向/椭圆/锥形，旋转靠拖 B 点）、过渡曲线、镜像（反向渐变）、线性光插值、分辨率量化与输出抖动的暴露，见 `GradientInvestigation.md`。
+- `渐变映射`（`GradientMap`，新增）是亮度/通道驱动的 4 色标颜色映射（Photoshop Gradient Map 那一类），带输入窗口、反转、色阶数（平涂）、线性光/Oklab 插值、输出抖动，以及 4 组 11 个 look，见 `GradientMap.md`。
 - `Editor/PostProcessing/ViewControls` 提供屏幕空间中心、半径、方向等 SceneView 操作控件。
 - `ScreenProcessRuleMaskEditorUtility` 提供基于 MetadataBuffer 的规则遮罩编辑 UI。
 
@@ -127,6 +128,8 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 
 `Glass / 玻璃` 是 camera color 上的单 pass 毛玻璃效果。它以 SDF 描述矩形、圆角矩形和正多边形，支持中心位置、宽高和旋转；边缘带可选沿 SDF 法线与切线混合方向置换背景，并加入随边缘方向变化的柔和高光；边缘颜色从玻璃主色逐步调制到“玻璃主色乘以原图颜色”。模糊采用圆盘采样核，低/中/高质量分别为 9/17/25 tap，避免四向十字纹理。Inspector 提供 GameView 手柄，可拖动中心、宽度、高度和旋转。其参数槽约定为：`parameters0 = (中心 X, 中心 Y, 宽, 高)`，`parameters1 = (旋转角, 形状, 圆角半径, 多边形边数)`，`parameters2 = (模糊像素, 质量, 边缘宽度像素, 边缘柔化像素)`，`parameters3 = (边缘置换开关, 置换像素, 边缘主色混合, 玻璃不透明度)`。
 
+`GradientMap / 渐变映射` 是单 pass 的亮度/通道驱动颜色映射：`parameters0 = (输入, 黑场, 白场, 抖动)`，`parameters1 = (色标 1–4 位置)`，`parameters2..parameters5 = 色标 1–4 的 RGBA`，`parameters6 = (插值空间, 反转, 色阶数, 预留)`，`parameters7..parameters12` 预留。默认是黑白线性色标 + `正常` 混合，所以新加的层等于"亮度转灰度"；预设根级只有 `默认`，其余 11 个 look 走 `双色调/胶片/风格` 三个子菜单。细节、来源与验证见 `GradientMap.md`。
+
 ## CharacterSpecialization
 
 `CharacterSpecialization` 已不再作为早期 HoAOV 的一部分维护，而是独立 RendererFeature：
@@ -227,8 +230,10 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 2. 在 `ImageProcessEffectDescriptor` 注册默认 shader、执行分类和资源请求。
 3. 在 `ImageProcessPass.EffectDispatch` 注册执行器。
 4. 在 `Runtime/ImageProcess/Renderer/Effects` 添加 partial 实现。
-5. 在 `Runtime/ImageProcess/Shaders/ImageProcess` 添加 shader。
-6. 在 `Editor/PostProcessing/ImageProcess/Filters`、Volume editor 和 presets 中补齐 UI。
+5. 在 `Runtime/ImageProcess/Shaders/ImageProcess` 添加 shader（文件名要与枚举名一致，`ImageProcessEffectDescriptor.ShaderName` 是按枚举名拼的）。
+6. 在 `Editor/PostProcessing/ImageProcess/Filters` 添加参数 UI，并在 `ImageProcessStackVolumeEditor.cs` 里补齐四处：`VisibleEffectOrder`（面板图标）、`EffectDisplayNames`（**按枚举顺序排列的数组，新值必须追加在末尾**）、绘制分发、`GetElementLineCount` 的行数分支（必须与 UI 实际绘制的行数一致），以及在 `ResetEffectDefaults` 里给新效果的默认参数。
+7. 在 `ImageProcessStackVolumeEditor.Presets.cs` 的预设分发里挂上入口（look 表建议像 `GradientMap` 那样单独放一个 partial 文件并由脚本生成）。
+8. 新增 `.cs` / shader 文件时记得手写 `.meta`：**UTF-8 无 BOM**、32 位十六进制唯一 GUID、与同类文件相同的字段结构（带 BOM 的 `.meta` 会让 Unity 解析失败，脚本根本不导入）。
 
 ## 当前推荐配置
 

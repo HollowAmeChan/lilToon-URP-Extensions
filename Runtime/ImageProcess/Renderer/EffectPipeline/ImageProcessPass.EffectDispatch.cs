@@ -169,6 +169,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             RegisterSinglePassEffect(executors, ImageProcessEffect.SkyGodRays, ApplySkyGodRaysLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordSkyGodRaysLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
             RegisterSinglePassEffect(executors, ImageProcessEffect.LogoOverlay, ApplyLogoOverlayLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordLogoOverlayLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
             RegisterSinglePassEffect(executors, ImageProcessEffect.Glass, ApplyGlassLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordGlassLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
+            RegisterSinglePassEffect(executors, ImageProcessEffect.GradientMap, ApplyGradientMapLayer, (pass, renderGraph, source, destination, runtimeLayer, layerIndex) => pass.RecordGradientMapLayer(renderGraph, source, destination, runtimeLayer, layerIndex));
 
             return executors;
         }
