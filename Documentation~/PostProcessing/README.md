@@ -7,7 +7,7 @@
 已落地的运行时模块：
 
 - `ImageProcess`：Volume 驱动的图像域后处理栈，支持 RenderGraph 和兼容路径，当前效果枚举覆盖 50 个以上图像效果，其中 `RemovedEffectSlot*` 只作为旧序列化槽位保留。
-- `ScreenProcess`：Volume 驱动的语义屏幕效果栈，当前效果为 `CustomMaterial`、`EdgeLight`、`Outline`、`DropShadow`、`DepthOfField`、`PostLighting`、`SkyTyndall`。它可以读取 MetadataBuffer、GeometryBuffer 和可选 Sky buffer。
+- `ScreenProcess`：Volume 驱动的语义屏幕效果栈，当前效果为 `CustomMaterial`、`EdgeLight`、`Outline`、`DropShadow`、`DepthOfField`、`PostLighting`、`SkyTyndall`。它可以读取 MetadataBuffer、GeometryBuffer 和可选 Sky buffer。下一步计划中的深度雾/高度雾（家族 C）见 `DepthFog.md`（设计规划，尚未实现）。
 - `MetadataBuffer`：输出 Mask/ID、SurfaceData、Material Custom0-3、Object Custom0-7 和 SurfaceColor 等语义缓冲，并提供 Subject/Group 组件写入对象级元数据。
 - `GeometryBuffer`：输出 normal/depth 缓冲，当前还增加了可选 Sky buffer 捕获，供 `SkyTyndall` 等 ScreenProcess 效果使用。
 - `CharacterSpecialization`：角色特化合成已迁移到独立 RendererFeature 和 Volume，包含眼睛透过、前发投影、角色捕获 RT 和调试输出。
