@@ -343,6 +343,19 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             selectionBuffer = null;
         }
 
+        /// <summary>
+        /// 进入播放模式时丢掉旧的 GPU 缓冲并标脏（关闭 Domain Reload 时静态字段会跨播放存活，
+        /// 缓冲区可能已经被释放）。**不清 Groups**：无 Domain Reload 时 OnEnable 不会重跑，
+        /// 清了就再也注册不回来了；保留列表可以靠 EnsureBuilt 重新上传并重写 RSUV。
+        /// </summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetRuntimeState()
+        {
+            Release();
+            warnedMissingGraphicsBufferSupport = false;
+            dirty = true;
+        }
+
         public static uint MakePartId(int characterId, int slot)
         {
             return ((uint)(characterId & 0xFF) << 8) | (uint)(slot & 0xFF);

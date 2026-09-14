@@ -84,6 +84,8 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Fallback"
         }
 
         // Pass 1：MSAA，整数 ID 目标（R16_UInt）。逐样本只写一个 16 bit ID。
+        // 注意：这一版把整数目标（target0）和 UNorm 选择目标（target1/2）放在同一个 MRT 里。
+        // 若某个平台/后端对"混合整型与非整型 RT"有意见，症状会是这个 pass 不产出——第一个该查的地方就是这里。
         Pass
         {
             Name "CharacterBuffer IdMsaaInt"

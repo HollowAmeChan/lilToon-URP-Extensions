@@ -1,6 +1,10 @@
 #ifndef LIL_HO_CHARACTER_BUFFER_IDPASS_INCLUDED
 #define LIL_HO_CHARACTER_BUFFER_IDPASS_INCLUDED
 
+// 打包要用到 HoCharacterBufferCharacterId / SlotId，所以这里把 palette 表一起带进来——
+// 否则每个用它的 shader 都得自己记得包含两次（漏一次就是 "undeclared identifier"）。
+#include "HoCharacterBufferPalette.hlsl"
+
 // ID pass 的写入约定（规划 §5.1 / §5.4）：
 //   非 MSAA：直接写 3 张 RGBA8 层图（层0/层1 装进 Id0、层2/层3 装进 Id1、覆盖率逐通道）；
 //   MSAA   ：逐样本只写一个 16 bit ID（一个样本只属于一个部件），由 resolve 数票产生 4 层。

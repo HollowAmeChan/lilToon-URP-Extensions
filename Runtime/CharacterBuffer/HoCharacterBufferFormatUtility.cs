@@ -93,7 +93,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 Mathf.Max(1, cameraTextureDescriptor.width),
                 Mathf.Max(1, cameraTextureDescriptor.height),
                 idFormat,
-                0)
+                GraphicsFormat.None)
             {
                 msaaSamples = samples,
                 bindMS = false
@@ -106,7 +106,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                     Mathf.Max(1, cameraTextureDescriptor.width),
                     Mathf.Max(1, cameraTextureDescriptor.height),
                     GetLayerGraphicsFormat(),
-                    0)
+                    GraphicsFormat.None)
                 {
                     msaaSamples = samples,
                     bindMS = false
@@ -153,8 +153,11 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         public static RenderTextureDescriptor CreateMsaaIdDescriptor(RenderTextureDescriptor cameraTextureDescriptor, int samples)
         {
             RenderTextureDescriptor descriptor = CreateLayerDescriptor(cameraTextureDescriptor);
-            TryGetIdGraphicsFormat(out GraphicsFormat format, out _);
-            descriptor.graphicsFormat = format;
+            if (TryGetIdGraphicsFormat(out GraphicsFormat format, out _))
+            {
+                descriptor.graphicsFormat = format;
+            }
+
             descriptor.msaaSamples = Mathf.Max(2, samples);
             descriptor.bindMS = true;
             return descriptor;

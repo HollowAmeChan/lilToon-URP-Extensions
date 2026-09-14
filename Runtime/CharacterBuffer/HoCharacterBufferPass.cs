@@ -68,8 +68,10 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         private bool surfaceTransparentFilteringEnabled;
         private int msaaSamples = 1;
         private bool selectionEnabled;
-        private readonly RenderStateBlock renderStateBlock = new RenderStateBlock(RenderStateMask.Nothing);
-        private readonly RenderStateBlock depthWriteStateBlock = new RenderStateBlock(RenderStateMask.Depth)
+        // 注意：这两个状态块**不能是 readonly**——DrawRenderers 要的是 ref，
+        // 而 readonly 字段不能当 ref 实参（CS0192）。
+        private RenderStateBlock renderStateBlock = new RenderStateBlock(RenderStateMask.Nothing);
+        private RenderStateBlock depthWriteStateBlock = new RenderStateBlock(RenderStateMask.Depth)
         {
             depthState = new DepthState(true, CompareFunction.LessEqual)
         };
@@ -246,7 +248,15 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             TextureHandle id1Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoCharacterBufferFormatUtility.GetLayerGraphicsFormat(), HoCharacterBufferShaderConstants.Id1TextureName));
             TextureHandle coverageTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoCharacterBufferFormatUtility.GetLayerGraphicsFormat(), HoCharacterBufferShaderConstants.CoverageTextureName));
             TextureHandle surfaceTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoCharacterBufferFormatUtility.GetSurfaceGraphicsFormat(), HoCharacterBufferShaderConstants.SurfaceTextureName));
-            TextureHandle depthTexture = renderGraph.CreateTexture(CreateDepthTextureDesc(cameraDescriptor, 1, false, HoCharacterBufferShaderConstants.Id0TextureName + "Depth"));
+            // depth 纹理走 UniversalRenderer 的辅助函数（与 GB / MetadataBuffer 同一路径）：
+            // 直接用 TextureDesc 造深度附件容易在 format/depthBufferBits 上写错。
+            TextureHandle depthTexture = UniversalRenderer.CreateRenderGraphTexture(
+                renderGraph,
+                HoCharacterBufferFormatUtility.CreateDepthDescriptor(cameraDescriptor, 1, false),
+                HoCharacterBufferShaderConstants.Id0TextureName + "Depth",
+                true,
+                FilterMode.Point,
+                TextureWrapMode.Clamp);
 
             TextureHandle material0Texture = TextureHandle.nullHandle;
             // P1 不分配 Material0：它的写入端在 lilToon 侧。没有写入端就发布一张纹理，
@@ -272,7 +282,14 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             if (useMsaa)
             {
                 HoCharacterBufferFormatUtility.TryGetIdGraphicsFormat(out GraphicsFormat idFormat, out _);
-                idMsaaTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, idFormat, HoCharacterBufferShaderConstants.Id0TextureName + "MSAA", msaaSamples));                depthMsaaTexture = renderGraph.CreateTexture(CreateDepthTextureDesc(cameraDescriptor, msaaSamples, true, HoCharacterBufferShaderConstants.Id0TextureName + "DepthMSAA"));
+                idMsaaTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, idFormat, HoCharacterBufferShaderConstants.Id0TextureName + "MSAA", msaaSamples));
+                depthMsaaTexture = UniversalRenderer.CreateRenderGraphTexture(
+                    renderGraph,
+                    HoCharacterBufferFormatUtility.CreateDepthDescriptor(cameraDescriptor, msaaSamples, true),
+                    HoCharacterBufferShaderConstants.Id0TextureName + "DepthMSAA",
+                    true,
+                    FilterMode.Point,
+                    TextureWrapMode.Clamp);
                 if (selection)
                 {
                     selectionMsaaTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoCharacterBufferFormatUtility.GetLayerGraphicsFormat(), HoCharacterBufferShaderConstants.SelectionTextureName + "MSAA", msaaSamples));
@@ -729,28 +746,6 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 filterMode = FilterMode.Point,
                 wrapMode = TextureWrapMode.Clamp,
                 bindTextureMS = samples > 1,
-                useDynamicScale = cameraTextureDescriptor.useDynamicScale,
-                useDynamicScaleExplicit = cameraTextureDescriptor.useDynamicScaleExplicit,
-                vrUsage = cameraTextureDescriptor.vrUsage
-            };
-            return descriptor;
-        }
-
-        private static TextureDesc CreateDepthTextureDesc(RenderTextureDescriptor cameraTextureDescriptor, int samples, bool bindMS, string name)
-        {
-            var descriptor = new TextureDesc(Mathf.Max(1, cameraTextureDescriptor.width), Mathf.Max(1, cameraTextureDescriptor.height))
-            {
-                name = name,
-                format = GraphicsFormat.None,
-                depthBufferBits = DepthBits.Depth32,
-                dimension = cameraTextureDescriptor.dimension,
-                slices = cameraTextureDescriptor.volumeDepth,
-                msaaSamples = samples > 1 ? (MSAASamples)samples : MSAASamples.None,
-                clearBuffer = true,
-                clearColor = Color.clear,
-                filterMode = FilterMode.Point,
-                wrapMode = TextureWrapMode.Clamp,
-                bindTextureMS = bindMS && samples > 1,
                 useDynamicScale = cameraTextureDescriptor.useDynamicScale,
                 useDynamicScaleExplicit = cameraTextureDescriptor.useDynamicScaleExplicit,
                 vrUsage = cameraTextureDescriptor.vrUsage
