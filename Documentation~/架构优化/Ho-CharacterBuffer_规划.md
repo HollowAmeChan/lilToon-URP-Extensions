@@ -1,5 +1,16 @@
 # Ho-CharacterBuffer 规划：用 ID + Coverage 取代 MetadataBuffer 的 bit 位掩码
 
+> ⛔ **本 feature 已取消（CB 不再作为一个 feature 存在）**：身份、覆盖率、palette、RSUV、自建 MSAA、resolve 这一整套机制**整体并入 `Ho-Cryptomatte`**（见 `Documentation~/架构优化/Ho-Cryptomatte_规划.md`）——角色特化后处理留着，但它吃的东西改成 `Ho-Cryptomatte`；所有需要遮罩的后处理统一走那一个 feature。
+>
+> **本文保留作参考资料**，因为下面这些内容仍然有效、且被新规划引用：
+> - **§4 业界依据**（Cryptomatte 的成对布局与排序、Deep IDs 的层数权衡、MSAA 的官方规则、RSUV 的官方定位）——逐条核对过链接；
+> - **§4.3 的 MSAA 规则**（逐样本覆盖是硬件行为、resolve 是求平均、`bindMS`、采样数协商 API）；
+> - **§5.5 覆盖率容量分析**（`K = N` ⇒ 无尾部丢失；（背景占名额；不归一化）；
+> - **§5.9 与 GeometryBuffer 的对齐** + **§5.9⑦ 的 GB 文档逐条复核**；
+> - **§6 非线性 AA 禁令**（这套纪律与具体 feature 无关，仍然要遵守）。
+>
+> 代码侧：`Runtime/CharacterBuffer/` 下的实现（注册表 / 组件 / RSUV / MSAA / resolve / 调试 / 编辑器）**就是 `Ho-Cryptomatte` 的骨架**，C1 阶段改名搬迁即可；**选择层从未删除**（上一轮只删了文档），它在新规划里是核心能力。
+
 > 状态：**设计已定，待开工 P1**（决策全部锁定见 §1，无开放问题）。
 > 前因：`Documentation~/架构边界/语义掩码.md`、`CHANGELOG.md` 0.2.0。
 > 目标：彻底解决掩码抗锯齿，并把"角色之间互不干扰"变成结构保证。
