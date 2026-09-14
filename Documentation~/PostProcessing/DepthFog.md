@@ -3,21 +3,31 @@
 > **状态：设计已定稿（§6.2 的分叉都已确认），尚未实现。** 本文只写"要做什么、为什么可行、怎么落地、怎么验证"，不含已落地代码。
 > 相关背景：家族 C（深度/大气/天空遮罩驱动的染色）的划分见 `GradientInvestigation.md` 第 6 节；本效果是那一支里最常用的一个。
 
+## 定位：这是**合成雾**，不是物理雾
+
+这条必须先说清楚，因为它决定了后面每一个取舍：
+
+- **ScreenProcess 的每个效果都是图像合成**，它和 ImageProcess 的差别不是"更物理"，而是**能读 buffer**（MetadataBuffer / GeometryBuffer / Sky）。所以本效果的本质是：**用深度（必要时加上高度、天空遮罩）生成一张雾层，然后合成到画面上**——和「渐变映射」是"亮度驱动的颜色合成"同一族，这里是"深度驱动的颜色合成"。
+- 因此**不追求**：能量守恒、散射积分、与光照/泛光的物理耦合、唯一正确的大气模型。也不为"更物理"去换注入点（tonemap 之前）：那是物理雾路线，明确不做（§6.2 第 6 条）。
+- **因此得到**（这些是定位带来的能力，不是妥协）：颜色按最终画面所见即所得；透明物体、粒子、天空能统一处理（只要深度/遮罩对）；能被规则遮罩按物体排除；**可以叠多层**（低空雾 + 远景空气感 + 天空染色各一层，各自混合模式与遮罩）——物理雾通常只能有一层。
+- **因此放弃**：雾不参与 bloom、不受 tonemap 压肩、没有光锥/体积自阴影（要体积感是另一个效果的事）。§6.1 把这张表列全，但那**是边界清单，不是缺陷清单**。
+- 参数语言也按合成来：密度曲线 = **深度→不透明度的 falloff**，"空气感" = **对像素做去饱和/蓝移/混色**，天空处理 = **雾层要不要盖到天空上**。
+
 ## 0. 结论速览
 
 | 问题 | 结论 | 依据 |
 | --- | --- | --- |
 | 深度雾能不能做 | 能，而且**不依赖 GeometryBuffer**：只用 URP 的相机深度纹理也能做 | `ScreenProcess/Shaders/ScreenProcess/DepthOfField.shader:95-104` 已经写了"GB 优先、否则 `LinearEyeDepth(SampleSceneDepth(uv), _ZBufferParams)`"的双路径 |
-| 高度雾要不要 position buffer | **不需要**。用"线性眼深 + 屏幕 UV + `unity_CameraInvProjection` / `unity_CameraToWorld`"反投影即可拿到世界坐标 | 深度已可拿到（上一行）；矩阵在 `HoUrp17.3.0/ShaderLibrary/UnityInput.hlsl:100`(`unity_CameraInvProjection`)、`:102`(`unity_CameraToWorld`)、`:234`(`unity_MatrixInvVP`) |
+| 高度雾要不要 position buffer | **不需要**。用"深度 + 屏幕 UV + 逆 VP 矩阵"反投影即可拿到世界坐标 | 深度已可拿到（上一行）；首选 `ComputeWorldSpacePosition`（core `Common.hlsl:1390-1401`，fork 内模板 `Shaders/Utils/ScreenSpaceShadows.shader:23-29`），矩阵见 `UnityInput.hlsl:102,234` |
 | 天空怎么分辨 | 有 GB 时用 coverage（天空 `a≈0`）得到干净遮罩；没有 GB 时用"深度≈远裁剪面"近似 | `Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl:12-15`、`SkyTyndall.shader:392-393` |
-| 做不了什么 | 真实体积散射（需要 raymarch + 光锥/阴影）、按物体高度着色（需要精确高度场或 position RT） | 体积雾需要逐像素积分光源可见性，本包 ScreenProcess 没有光源/阴影资源；position RT 见 §6 阶段 4 |
-| 和 URP 自带雾的关系 | 并存但会**双重上雾**：引擎雾是 per-object、tonemap 之前（`Lighting.hlsl:206-240`；延迟走全屏 `Utils/FogDeferred.hlsl`，正交下被禁用），距离量只有 view Z。用本效果时要把 Render Settings 的 Fog 关掉（或对齐它的 `max(viewZ - near, 0)` 约定）。**天空是它的盲区**，也是我们后置雾的增量 | §1.5 |
+| 不做（定位之外） | 体积散射（要 raymarch + 光源可见性）、按物体高度着色（要精确高度场或 position RT） | 本包 ScreenProcess 没有光源/阴影资源；position RT 见 §7 阶段 4，体积版另立方案 |
+| 和 URP 自带雾的关系 | 两者会**叠加**：引擎雾是 per-object、tonemap 之前（`Lighting.hlsl:206-240`；延迟走全屏 `Utils/FogDeferred.hlsl`，正交下被禁用），距离量只有 view Z。用本效果时要把 Render Settings 的 Fog 关掉（或对齐它的 `max(viewZ - near, 0)` 约定）。**天空是它的盲区**，正好是这层合成雾的增量 | §1.5 |
 
 ## 1. 现状调查（都是本仓库/本 fork 的一手证据）
 
 ### 1.1 ScreenProcess 的位置与预算
 
-- 注入点：`ScreenProcessRenderPassEvents.cs:7` `ScreenProcessStack = AfterRenderingPostProcessing`，ImageProcess 在 `+1`。**也就是说 ScreenProcess 的整个栈跑在 tonemap 之后**（显示空间）。→ 雾是"显示空间合成雾"：颜色按最终画面取，混合在显示空间做；代价是雾不会参与 bloom、也不会被 tonemap 压肩（见 §6 的取舍）。
+- 注入点：`ScreenProcessRenderPassEvents.cs:7` `ScreenProcessStack = AfterRenderingPostProcessing`，ImageProcess 在 `+1`。**也就是说 ScreenProcess 的整个栈跑在 tonemap 之后**（显示空间）。这不是妥协而是定位（见开头"合成雾"）：雾层的颜色按最终画面所见即所得，混合在显示空间做；换来的代价与能力都列在 §6.1。
 - 图层预算（`ScreenProcessLayer.cs:171-181, 218, 225`）：`color`（HDR Color）、`texture`（1 个槽）、`parameters0..parameters5`（**6 个 Vector4 = 24 float**）、`intensity`、`blendMode`（Normal/Add/Screen/Multiply），外加**规则遮罩**（最多 4 条，按 MetadataBuffer 通道）。规则遮罩是白送的：可以立刻得到"只对背景上雾""角色不受雾""只对某材质上雾"。
 - 效果注册点：`ScreenProcessEffect.cs:3-12`（枚举）、`ScreenProcessEffectRegistry.cs:5-25`（默认 shader）、`ScreenProcessShaderConstants.cs:7-13`（shader 名常量）。
 
@@ -111,44 +121,53 @@ float3 worldPos2 = mul(unity_CameraToWorld, float4(viewPos, 1.0)).xyz;
 
 ## 3. 效果设计草案
 
-### 3.1 形态：**一个效果 + 模式**（推荐），而不是"深度雾 / 高度雾"两个效果
+### 3.1 形态：**一个效果 + 模式**
 
-理由：两者共享颜色、距离模型、天空处理、混合与规则遮罩；分成两个效果会逼用户加两层、还要自己避免重复叠加。业界同族（Unreal `ExponentialHeightFog`、HDRP `Fog`）也都是"一个组件里带高度设置"。高度项做成**可关**的乘子，关掉就是纯深度雾。
+理由：深度项与高度项共享颜色、距离模型、天空处理、混合与遮罩；分成两个效果会逼用户加两层、还要自己避免重复叠加。高度项做成**可关**的乘子，关掉就是纯深度雾。（参数形状参考同类产品：Unreal `ExponentialHeightFog`、HDRP `Fog` 都是"一个组件里带高度设置"——只是我们做的是合成版。）
 
-- 枚举：`ScreenProcessEffect.DepthFog`，面板名「深度雾」。
-- 文档里说明它同时覆盖：大气透视（远色 + 去饱和）、高度雾（贴地/山谷）、以及"只对某类物体上雾"（规则遮罩）。
+- 枚举：`ScreenProcessEffect.DepthFog`，面板名「深度雾」（文档里说明它是**合成雾层**，不是物理雾）。
+- 一层能覆盖的用法：远景空气感（远色 + 去饱和）、贴地/山谷的高度雾、天空染色、"只对某类物体上雾"（规则遮罩）；要更复杂的效果就叠多层（§3.5）。
 
-### 3.2 密度模型
+### 3.2 不透明度模型（深度/高度 → 雾层 alpha 的 falloff）
+
+这里的"密度"只是**合成用的 falloff 曲线参数**，不是物理量：
 
 ```
 距离量（可选）：dist = viewZ        （默认，对齐引擎雾的 max(viewZ - near, 0)）
               或 dist = length(viewPos)（视线欧氏距离，GlobalFog 的 useRadialDistance）
-深度项（三选一）：
-  直线雾   dDepth = saturate((dist - start) / max(far - start, eps))
-  指数雾   dDepth = 1 - exp(-density * max(dist - start, 0))
-  指数平方 dDepth = 1 - exp(-pow(density * max(dist - start, 0), 2))     // 最"厚"的一种
+深度项（三选一，都是一条 0..1 的曲线）：
+  直线   dDepth = saturate((dist - start) / max(far - start, eps))
+  指数   dDepth = 1 - exp(-density * max(dist - start, 0))
+  指数平方 dDepth = 1 - exp(-pow(density * max(dist - start, 0), 2))     // 起步最慢、后段最厚
 高度项（可选乘子，参数形状对齐包内既有先例，见 §1.7）：
   窗模式   h = 1 - smoothstep(startY, endY, worldY)              // 世界 Y 上的高度窗 + hardness 重映射
   衰减模式 h = exp(-heightFalloff * max(baseHeight - worldY, 0))  // 地面之上不衰减、之下越深越浓
-  d        = saturate(dDepth * lerp(1.0, h, heightEnabled)) * maxOpacity
+  雾层 alpha d = saturate(dDepth * lerp(1.0, h, heightEnabled)) * maxOpacity
 ```
 
-- `start`（起始距离）让近处干净；`maxOpacity` 限制最大浓度（动画风常用 ~0.85，避免完全盖掉固有色）。
+- `start`（起始距离）让近处干净；`maxOpacity` 限制雾层最大不透明度（动画风常用 ~0.85，避免完全盖掉固有色）——这一条本身就是合成思路：雾是一层可以不满的图层。
 - 高度项提供**两种形态**：`窗模式`（start/end + hardness，和 `HoCharacterSpecializationComposite.shader:487-521` 的发梢高度渐隐同一套参数与数学，用户已经熟悉）与 `衰减模式`（groundY + falloff，更接近 Unreal 的指数高度雾）。两者共用同一份 world Y。
 - 高度项也要有"反向"（越往上越浓，云海/高空雾）与"只贴地一层"（窗模式的 start/end 天然就是带状）。
+- 可选**遮罩柔化**：对深度做几次抖动采样再算 alpha，能出画笔感的雾边（合成常用手法，也让半精度深度的台阶更不明显）。实现成本很低（3~5 tap），放在阶段 3 和抖动一起做。
 
-### 3.3 颜色与大气透视
+### 3.3 颜色与"空气感"
 
 - `color` = **近色**（雾最薄处的颜色）；`parameters` 里放 **远色**（rgba）。
 - 合成：`fogColor = lerp(nearColor, farColor, saturate(d * farColorMix))`，再 `outColor = lerp(src, fogColor, d)`。
-- 可选"大气透视"项：`src = lerp(src, saturate(luminance(src)), desaturate * d)`（远处去饱和）+ 轻微蓝移（用一个 0..1 的量把色相往远色偏）。这两项让"远山发灰发蓝"看起来比单纯加雾更像实拍。
-- 混合空间是显示空间（§1.1）；颜色按最终画面调，直观但不受 tonemap 影响，文档写清楚。
+- 可选"空气感"三件套（都是对**像素**的合成动作，不是散射计算）：远处去饱和 `src = lerp(src, saturate(luminance(src)), desaturate * d)`、轻微蓝移（把色相往远色偏）、以及远色混合强度。这三项让"远山发灰发蓝"看起来比单纯加一层纯色更像画面该有的样子。
+- 混合空间是显示空间（§1.1）；颜色按最终画面调，所见即所得，这正是合成雾的用法。
 
-### 3.4 天空处理（必须有，且要有默认值）
+### 3.4 天空处理（合成决策，必须有默认值）
 
-三种模式：**跳过天空**（推荐默认，动画风最常用；有 GB 用 coverage 判定，没有则用远裁剪面近似）、**一起上雾**（统一大气感）、**单独天空色/强度**（天空按自己的颜色和浓度上雾）。
+三种模式：**跳过天空**（推荐默认，动画风最常用；有 GB 用 coverage 判定，没有则用远裁剪面近似）、**一起上雾**（让天空也进同一条空气感曲线）、**单独天空色/强度**（天空用自己的颜色和浓度，相当于给天空单独加一层）。
 
-### 3.5 参数草案（24 float + color + texture 刚好够）
+### 3.5 合成语义：可叠多层、四选一混合、可被遮罩排除
+
+- **可以叠多层**：这是合成雾相对物理雾的额外自由度——低空贴地雾一层（窗模式 + Multiply）、远景空气感一层（远色偏蓝 + 低不透明度 + Screen）、天空染色一层（天空模式 + 自己的颜色）。每层各有强度/混合模式/规则遮罩。
+- **混合模式**：ScreenProcess 提供 `Normal/Add/Screen/Multiply` 四种，对雾来说刚好够用（Multiply 做暗雾/夜景、Screen/Add 做亮雾与热霾、Normal 做纯替换）。要更细的合成（按距离做 Color/Luminosity 之类）需要扩展 `ScreenProcessBlendMode`，那是横向改动，不在本效果范围内。
+- **规则遮罩**：图层自带（最多 4 条，按 MetadataBuffer 通道），免费得到"角色不受雾""只对背景上雾""只对某材质上雾"。
+
+### 3.6 参数草案（24 float + color + texture 刚好够）
 
 | 槽位 | 内容 |
 | --- | --- |
@@ -158,7 +177,7 @@ float3 worldPos2 = mul(unity_CameraToWorld, float4(viewPos, 1.0)).xyz;
 | `parameters2` | (高度项开关, 高度形态 0=窗/1=衰减, 高度参考 0=世界/1=相机相对, 高度反向) |
 | `parameters3` | (高度 startY 或 groundY, 高度 endY 或 1/falloff, 高度 hardness, 预留) |
 | `parameters4` | (远色混合强度, 去饱和强度, 蓝移强度, 抖动) |
-| `parameters5` | (天空模式 0/1/2, 天空强度, 深度来源覆盖 0=自动/1=强制相机深度, 预留) |
+| `parameters5` | (天空模式 0/1/2, 天空强度, 深度来源覆盖 0=自动/1=强制相机深度, 遮罩柔化) |
 | 远色 | 需要一个 rgba：可以放 `texture` 之外的空位，或与 `parameters3.w` 组合（实施时按实际占用再定） |
 | `texture` | 预留（例如以后放"按距离的色带"或用一张噪声做雾的扰动） |
 | 规则遮罩 | 复用图层字段（免费得到"角色不受雾""只对背景上雾"） |
@@ -167,12 +186,14 @@ float3 worldPos2 = mul(unity_CameraToWorld, float4(viewPos, 1.0)).xyz;
 
 抖动：半精度深度 + 大面积平滑渐变容易出现色带，沿用 ImageProcess 里的做法（±0.5/255 三角噪声，单位可调）。
 
-### 3.6 预设草案（每组 1-3 个）
+### 3.7 预设草案（每组 1-3 个）
 
-- 大气：`清晨薄雾`、`黄昏尘雾`、`远景空气感`（远色偏蓝 + 去饱和，几乎不改近处）
+预设就是"一层雾的配方"；需要多层的场景自己叠层（§3.5）。
+
+- 空气感：`远景空气感`（远色偏蓝 + 去饱和，几乎不改近处）、`清晨薄雾`、`黄昏尘雾`
 - 天气：`雨雾`、`浓雾`、`雪雾`
-- 风格：`深谷高度雾`（高度项为主）、`云海`（高度反向）、`夜景霓虹雾`（近色暗、远色偏紫，配合规则遮罩只对背景）
-- 极端：`沙漠热霾`（远处抖动大、近处几乎无雾）
+- 高度：`深谷高度雾`（窗模式为主）、`云海`（高度反向）、`贴地薄雾`（窗 + 低不透明度 + Multiply）
+- 风格：`夜景霓虹雾`（近色暗、远色偏紫，配规则遮罩只对背景）、`沙漠热霾`（远色偏黄 + 遮罩柔化 + 抖动拉高）、`天空染色`（天空模式 + 单独色，几乎不动地面）
 
 ## 4. 集成清单（改动点，逐条给位置）
 
@@ -210,24 +231,35 @@ float3 worldPos2 = mul(unity_CameraToWorld, float4(viewPos, 1.0)).xyz;
 3. **文档图**：在 JS/Python 里合成"地面 + 远山 + 天空"的深度图与颜色图，按 §3 的公式渲染几组预设 → `Images/DepthFog/`（和 GradientMap 的 sheet 同一套路）。
 4. **UI 行数检查**：把 `ui_rows_check.js` 泛化成"任意效果的常量/分支 == 实际绘制行数"，避免层列表高度错位的经典 bug。
 5. **Roslyn**：`check_compile.ps1` 保持 0 error。
-6. **实机清单**（写进文档）：深度来源两条路径的画面差异、天空三种模式、正交相机（URP 延迟雾自己都跳过正交，要把我们的行为测清楚）、规则遮罩把角色排除、**渲染设置里 URP 自带雾同时开启时的双重上雾**、半精度深度在远裁剪面下的台阶、`Fixed`/窗模式下高度阶跃是否可见。
+6. **实机清单**（写进文档）：深度来源两条路径的画面差异、天空三种模式、正交相机（URP 延迟雾自己都跳过正交，要把我们的行为测清楚）、规则遮罩把角色排除、**多层叠雾**（贴地 + 远景 + 天空三层）的观感与混合模式搭配、**渲染设置里 URP 自带雾同时开启时的双重上雾**、半精度深度在远裁剪面下的台阶、遮罩柔化与抖动的实际效果。
 
-## 6. 取舍、已定决策与风险
+## 6. 定位边界、已定决策与风险
 
-### 6.1 取舍
+### 6.1 定位带来的能力与边界（不是缺陷清单）
 
-- **tonemap 之后**（现状）：颜色直观、能统一处理透明/天空/粒子；但雾不参与 bloom，也不会被 tonemap 压肩，强光场景里"远处的太阳附近发白"这类效果做不出来。要做 tonemap 之前的雾，需要给 ScreenProcess 增加一个 `BeforeRenderingPostProcessing` 注入点（或单独 feature）——那是另一个决定，本文按"后置雾"设计。
-- **屏幕空间**：雾只按深度上色，不能做"光柱/上帝光"（那是 SkyTyndall 的职责），也不做体积自阴影。
-- **半精度 GB 深度**：极远距离有台阶；提供"强制相机深度"作为补救。
+**作为一层合成雾，它天生就能做的事**：
+
+- 颜色所见即所得（按最终画面挑色），混合在显示空间，符合"合成"的直觉；
+- 透明物体、粒子、天空都能统一处理——只要深度/遮罩对（引擎雾做不到统一，它只作用于带雾 keyword 的物体）；
+- 能被规则遮罩按物体/材质排除，能叠多层（§3.5），能只用 4 个混合模式里的 Multiply/Screen 做"暗雾/亮雾"；
+- 参数少、语义直白，预设就是"一层雾的配方"。
+
+**它不做的事（换来的简单与可控）**：
+
+- 不参与 bloom、不被 tonemap 压肩，也不做光散射——所以"逆光处发白""太阳附近体积感"这类**属于物理雾/体积雾**的效果不在本效果范围内（要光柱是 SkyTyndall 的事，要体积版另立方案）；
+- 只按深度/高度上色，不做体积自阴影、不做与光源的耦合；
+- 不做 pre-tonemap 注入点（§6.2 第 6 条）：那属于物理雾路线，会牵动整个 ScreenProcess 的注入时机。
+
+**精度上的务实处理**：GB 的线性眼深是半精度，极远处会台阶化——保留"强制相机深度"开关，并在阶段 3 加"遮罩柔化 + 输出抖动"两种合成手法把它压下去（这两种手法本身就是合成思路）。
 
 ### 6.2 已定决策
 
 1. **形态**：一个效果 `ScreenProcessEffect.DepthFog`「深度雾」+ 模式；高度项是可关的乘子（不做成两个效果）。
 2. **高度参考**：**世界绝对高度（默认）与相机相对高度都提供**，共用同一段反投影代码；世界模式配一个可调的「地面高度」。
-3. **合成时机**：接受**后置（tonemap 之后、显示空间）**合成，不新增 `BeforeRenderingPostProcessing` 注入点。
+3. **合成时机**：后置（tonemap 之后、显示空间）合成——这是定位，不是妥协；不新增 `BeforeRenderingPostProcessing` 注入点。
 4. **天空默认**：跳过天空（有 GB 用 coverage 判定，没有则用远裁剪面近似），另提供"一起上雾"和"天空单独色"两种模式。
-5. **远色 + 大气透视（去饱和/蓝移）**：做，参数预算够（`parameters3`/`parameters4`）；抖动一起做。
-6. **暂不做**：pre-tonemap 注入点、GeometryBuffer 的 position RT、体积 raymarch（见 §7 阶段 4）。
+5. **颜色与空气感**：近色 + 远色 + 去饱和/蓝移 + 抖动 + 遮罩柔化（阶段 3 一起做）。
+6. **明确不做**：pre-tonemap 注入点、GeometryBuffer 的 position RT、体积 raymarch（体积版见 §7 阶段 4，另立方案）。
 
 ### 6.3 仍然存在的风险与实现陷阱
 
@@ -242,9 +274,9 @@ float3 worldPos2 = mul(unity_CameraToWorld, float4(viewPos, 1.0)).xyz;
 
 | 阶段 | 内容 | 产出 |
 | --- | --- | --- |
-| 1 | 深度雾最小可用：深度项（三种模式）+ 近色 + 天空跳过 + 强度/混合/规则遮罩 | 可看画面的第一版 + 密度数学的 C# 检查 + HLSL 编译检查 |
-| 2 | 高度项：反投影 + 世界/相机参考 + 高度衰减/反向 + 往返测试 | 高度雾可用，含正交相机分支 |
-| 3 | 远色/大气透视 + 抖动 + 预设库 + 文档图 | 完整效果 + `DepthFog.md` |
-| 4（可选） | 需要精确世界坐标/体积感时：给 GeometryBuffer 增加可选 position RT，或做 raymarch 版体积雾 | 另立方案 |
+| 1 | 深度雾最小可用：深度项（三种 falloff）+ 近色 + 天空跳过 + 强度/混合/规则遮罩 | 可看画面的第一版 + falloff 数学的 C# 检查 + HLSL 编译检查 |
+| 2 | 高度项：反投影 + 世界/相机参考 + 窗/衰减两种形态 + 反向 | 高度雾可用，含正交相机；反投影往返测试 |
+| 3 | 远色与空气感（去饱和/蓝移）+ 抖动 + 遮罩柔化 + 预设库 + 文档图 | 完整效果 + `DepthFog.md` |
+| 4（可选） | 需要精确世界坐标时给 GeometryBuffer 增加可选 position RT；要体积感则另立体积雾方案 | 另立方案 |
 
-每个阶段都以"能失败的自检 + 文档 + 提交"收尾（和 Gradient、GradientMap 的做法一致）。
+每个阶段都以"能失败的自检 + 文档 + 提交"收尾（和 Gradient、GradientMap 的做法一致）。参数按 §3.6 的草案落地，实施时若 6 个 Vector4 不够，优先砍"遮罩柔化"或把远色压成 3 个分量，而不是动图层数据结构。
