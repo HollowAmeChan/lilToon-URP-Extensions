@@ -11,7 +11,12 @@
 
 MetadataBuffer 今天一个 buffer 里同时装着身份、覆盖率和表面数值。身份与覆盖率已经拆去 CB；**剩下这一堆表面属性没有家**：线性表面色、roughness / metallic、reflectance / PLR strength、thickness / curvature / materialClass / transmittance、以及 `custom0~3` 那四个匿名通道。
 
-`Ho-SurfaceBuffer`（SB）接住它们。它的边界只有一句话：**回答"表面是什么样"，不回答"这是谁"、也不回答"几何在哪"**。身份与覆盖率读 CB，几何读 GB；SB 自己**不发布深度、不带任何身份 ID**。
+`Ho-SurfaceBuffer`（SB）接住它们。它的边界是两句话：
+
+1. **回答"表面是什么样"**（PBR 与屏幕效果的输入），**不回答"几何在哪"**（GB）；
+2. **承担"场景侧的身份"**（`scene.*` 的 ID/覆盖率 + Cryptomatte），**与角色侧的身份（CB）平行且互斥**——场景物体因此也有可点选的 ID 遮罩，而两边数量各自独立增长。
+
+**"表面"与"身份"在 SB 里不混**：表面数据是全场景的、单采样、逐像素；身份是分域的、自建 MSAA、逐样本投票。两趟 pass、两套生命周期（决策 13）。
 
 ---
 
@@ -43,11 +48,15 @@ MetadataBuffer 今天一个 buffer 里同时装着身份、覆盖率和表面数
 
 | # | 决策 | 一句话后果 |
 | --- | --- | --- |
-| 1 | **只装表面数值**：线性表面色、粗糙度、金属度、反射率、PLR 强度、厚度、曲率、材质分类、透射提示、（可选的）SSS profile | 身份 → CB；几何/深度 → GB；SB **不发布深度、不发布 ID** |
+| 1 | **装表面数值 + 场景侧身份**：线性表面色、粗糙度、金属度、反射率、PLR 强度、厚度、曲率、材质分类、透射提示、（可选的）SSS profile；外加**场景对象的 ID/覆盖率与 Cryptomatte**（决策 10-13） | 身份分域：**角色的身份归 CB，场景的身份归 SB**；几何/深度仍归 GB；SB **不发布深度** |
 | 2 | **写入端 = 材质（逐像素）** | 谁的值谁写。不再有"组件覆盖材质"的协议，也没有第二份副本（决策 20 顺带解掉的题） |
 | 3 | **单采样 + 自己的深度附件，沿用两段式深度策略** | opaque/cutout 先写深度确立归属，transparent 只 ZTest 后叠加；与 ID pass 的"全员 ZWrite On"互不干扰（因为分属两个 feature） |
 | 4 | **按需分配，逐通道登记消费者** | 没有消费者的通道不分配（规划沿用 `LILTOON_CHANNEL_CONTRACT_V1.md` 的"无消费者不登记、不输出"） |
-| 5 | **`custom0~3` 不复存在** | 四个匿名通道由 CB 的 **Cryptomatte 选择层**取代（CB 规划 §5.11）——SB 不接这锅 |
+| 5 | **`custom0~3` 不复存在** | 四个匿名通道由 **Cryptomatte 选择层**取代（CB 规划 §5.11）——SB 不接这锅 |
+| 10 | **SB 也做身份与 Cryptomatte（`scene.*`），与 CB 平行** | 场景物体因此也有 ID 遮罩，且**与角色彻底分开**：两套注册表、两套 ID 空间、两个组件，**两边数量各自独立扩展**（角色受 256×256 槽位 / 4096 部件行约束，场景受它自己的表约束，互不挤占） |
+| 11 | **ID 归属互斥**：一个 renderer 只能进 CB 的部件表**或** SB 的对象表 | 否则同一个物体有两个身份 = 又一个"同义量两个来源"。两边都登记时要报出来（复用 CB 已有的冲突机制：裁决顺序固定 + Inspector 逐条列出）。**这条只约束身份**：表面数据是**全场景**的，SB 的表面 pass 画全场景（含角色），CB 的身份 pass 只画角色 |
+| 12 | **身份与覆盖率的机制共用实现，不各写一套** | MSAA 目标、关键词分支、逐样本投票、resolve、Cryptomatte 成对布局——这些在 CB 已经写过一遍。SB 复用同一套代码（各自持有注册表与 ID 空间），否则同一个东西两份实现，早晚跑偏。**对代码结构的要求：把"ID + 覆盖率 + Cryptomatte"抽成共用内核**，CB / SB 各自挂一份注册表 |
+| 13 | **SB 是"两趟 pass、两种采样"，不是一个 pass 塞两种数据** | 表面数值 = **单采样**（材质逐像素写、两段式深度）；身份/覆盖率 = **自建 MSAA + 逐样本投票**（与 CB 同机制）。两者分开两趟画、门控与生命周期各自独立——这样 SB 才不会在自己内部重演"一个 pass 塞多种语义" |
 
 **工程默认**（按推荐值执行，改动成本低）
 
@@ -117,26 +126,14 @@ MetadataBuffer 今天一个 buffer 里同时装着身份、覆盖率和表面数
 
 **三条必须现在就定的结论**
 
-**① 法线：不是"谁该升级"，而是"这是两个不同的量"（本次 review 最硬的一条）**
+**① 法线：分家（已定论）**
 
-先摆事实：
+结论先写：**材质里会吃法线贴图，所以后续 feature 尽量吃带法线贴图的着色法线；几何法线与着色法线是平行的两条，不互为来源。**
 
-- **HDRP** 的延迟 G-buffer 存的是 **pixel normal（着色法线）**，并且明说两者都合法但用途不同："Forward 用**几何法线**（vertex normal）做 shadow bias，所以伪影更少；**Deferred 用 pixel normal**，所以伪影更多"。
-- **我们的 GB**：文档 §4.1 写的是"`fragGeometryBuffer()` 输出**基础网格位置的世界法线**和线性深度"，本仓库 fallback 写的是 `TransformObjectToWorldNormal(input.normalOS)` —— **两处证据都指向几何法线**（lilToon 侧实际 shader 值得核对一次，确认没有例外）。
-
-**结论（我上一版写错了，这里更正）**：不该要求 GB 改成着色法线。因为**几何法线与着色法线回答的是两个不同的问题**：
-
-| | 几何法线（vertex normal） | 着色法线（pixel normal，含法线贴图） |
-| --- | --- | --- |
-| 属于谁的问题 | **"几何在哪、朝向如何"** → GB | **"表面是什么样"** → **SB** |
-| 谁该用 | SSAO / SSGI 的遮挡、shadow bias、物理遮挡、描边 | PBR 光照、SSR 反射方向、需要表面细节的效果 |
-| 为什么不能互换 | **AO 不该被法线贴图的细节驱动**（那是表面微观凹凸，不是几何遮蔽）；shadow bias 用几何法线伪影更少（HDRP 原话） | 用它做遮挡判断会把贴图噪声当几何 |
-
-所以：
-
-- **GB 不动**（继续保持几何法线），但**文档要把"几何法线"写明**——现在"基础网格位置的世界法线"这种措辞太含糊，下一个人很容易当成着色法线；
-- **SB 新增 `_HoSurfaceBufferNormal`**（着色法线，PBR / SSR 用）；
-- **禁令**：两者不得互相替代；debug 名要一眼区分（`geometry.*` vs `surface.shading-normal`）；**"让 SSAO 改用着色法线"是错的**，反之把几何法线喂给 PBR 光照也是错的。这条要写进 SB 的契约与 §5 的纪律里。
+- **GB 保持几何法线**——它回答"几何在哪、朝向如何"，服务于 SSAO/SSGI 的遮挡、shadow bias、物理遮挡、描边。HDRP 官方原话还给了它一个理由："Forward 用几何法线（vertex normal）做 shadow bias，所以伪影更少；Deferred 用 pixel normal，所以更多"。
+- **SB 新增 `_HoSurfaceBufferNormal`（着色法线，含法线贴图）**——它回答"表面是什么样"，服务于 PBR 光照、SSR 反射方向、以及**后续所有要吃法线贴图的 feature**。
+- **为什么不能互换**：AO 不该被法线贴图的微观凹凸驱动（那是表面细节，不是几何遮蔽）；反过来把几何法线喂给 PBR 光照，就等于丢掉法线贴图——材质白做了。
+- **待办**：核对 lilToon 侧 `fragGeometryBuffer` 实际写的是哪一种（本仓库两处证据都指向几何法线）；**`Documentation~/GeometryBuffer.md` 要把"几何法线"写明**（现在"世界法线编码"/"基础网格位置的世界法线"太容易被当成着色法线）。
 
 **② SB 不是"第二个杂物间"：效果提示与分类不进 SB**
 
@@ -196,13 +193,13 @@ UE 把**整个 G-buffer** 压在 16 B/px。我们现在：CB 12 B/px（+4 深度
         —— 真要上 PBR 延迟路线，CB + SB 一起重算预算（§2.5 ③）
 ```
 
-### 4.2 精度为什么这么分
+### 4.9 命名与三者定位（按管线草案 §10 的表格式给）
 
 | Buffer | 语义定位 | 内容 | 主服务对象 | 消费方 |
 | --- | --- | --- | --- | --- |
 | `CharacterBuffer`（已定名） | 对象/角色语义（forward-style，随材质 pass 写） | `Id0`/`Id1`/`Coverage`（4 层 `(ID, 覆盖率)`）+ Cryptomatte 选择 | **角色/对象身份** | 角色特化、ScreenProcess 规则、AOV、SSS/PLR 的门控 |
-| **`SurfaceBuffer`（本规划）** | **表面数值**（material-style，随材质 pass 写） | 线性表面色 + roughness/metallic/thickness/reflectance/PLR/class/curvature/transmittance | **"表面是什么样"** | SSS、PLR/SSR/Probe、角色特化脸色扩散、ScreenProcess 规则、AOV `diffuse_albedo` |
-| `ScreenGeometryBuffer`（已定名，现名 GeometryBuffer） | 屏幕可见几何（deferred-style） | normal / depth / 几何覆盖率 / 描边 / sky | **全屏几何** | AO/GI/SSS/反射/角色特化/AOV |
+| **`SurfaceBuffer`（本规划）** | **表面数值 + 场景侧身份**（material-style，随材质 pass 写） | 线性表面色 / 着色法线 / roughness / metallic / thickness / reflectance / PLR / class / curvature / transmittance（**+ `scene.*` 的 ID 与 Cryptomatte，决策 10-13**） | **"表面是什么样"**；**场景对象的身份** | SSS、PLR/SSR/Probe、角色特化脸色扩散、ScreenProcess 规则、AOV `diffuse_albedo`、场景抠像 |
+| `ScreenGeometryBuffer`（已定名，现名 GeometryBuffer） | 屏幕可见几何（deferred-style） | **几何法线** / depth / 几何覆盖率 / 描边 / sky | **全屏几何** | AO/GI/SSS/反射/角色特化/AOV |
 
 **结论**：
 
@@ -305,15 +302,72 @@ debug:  surface.classification
 
 > 走**契约 v2**：`LILTOON_CHANNEL_CONTRACT_V1.md` §4 的两条冻结决议要改（§0.1 的表），并在 §5 变更记录里留一行。**在这之前 SB 的通道只登记、不冻结。**
 
+身份/覆盖率那半（决策 10-13）按同一模板另登记三条，命名与 CB 并列（`character.*` ↔ `scene.*`）：
+
+```text
+通道名: scene.idcoverage
+生产端: SB 的 ID pass（自建 MSAA + resolve，与 CB 共用内核）
+消费端: 场景抠像、AOV id_object/id_group 的场景侧、ScreenProcess 的按场景对象规则
+编码:   Id0/Id1 R8G8B8A8（4 层 (ID, 覆盖率)）+ Coverage R8G8B8A8
+生命周期: 帧持久（按需分配）
+AOV:    id_object / id_group（场景侧）
+debug:  scene.id0..3 / scene.coverage.*
+冻结:   否
+```
+
+```text
+通道名: scene.selection
+生产端: 材质 → SB 的 ID pass（Cryptomatte 成对布局，与 CB 同构）
+消费端: 后期按名字点选、AOV matte_*
+编码:   R8G8B8A8（R=id0,G=cov0,B=id1,A=cov1）
+生命周期: 帧持久（按需分配）
+AOV:    matte_*（场景侧）
+debug:  scene.selection
+冻结:   否
+```
+
+```text
+通道名: scene.palette
+生产端: Extensions 侧（SB 的组件 → 注册表 → StructuredBuffer）
+消费端: 材质侧按 RSUV 索引查名字/标签；debug 与 AOV manifest
+编码:   StructuredBuffer（对象表；行宽与容量见 §7）
+生命周期: 帧持久
+AOV:    不导出（manifest 走 EXR metadata）
+debug:  不适用
+冻结:   否
+```
+
+### 4.10 场景侧身份与 Cryptomatte（SB 的第二半，决策 10-13）
+
+**为什么要做**：现在只有角色能出 ID 遮罩。场景物体（道具、环境、特效件）要单独抠出来，要么进角色表（污染角色的 ID 空间、还会被"同角色"判断误伤），要么没得用。SB 自己做一套之后：**场景与角色两套身份平行、互不挤占、各自扩展**。
+
+| | CB（角色） | SB（场景） |
+| --- | --- | --- |
+| 身份结构 | **层级化**：角色 → 部件（16 bit = 角色 8 + 槽位 8） | **扁平**：对象表（宽度待定，见 §7） |
+| 注册表 | `HoCharacterBufferGroup`（部件表 + 角色表 + 选择表） | **自己的组件**（决策 10）：对象表 + 选择表 |
+| 图 | `_HoCharacterBufferId0/Id1/Coverage/Selection` | `_HoSurfaceBufferId0/Id1/Coverage/Selection`（同构，复用同一套 shader 内核） |
+| 契约名 | `character.*` | **`scene.*`**（并列易读） |
+| 消费者 | 角色特化、同角色判断、眼透/发影 | 场景抠像、AOV、ScreenProcess 的"按场景对象"规则 |
+
+**规则（写死）**
+
+1. **ID 归属互斥**（决策 11）：一个 renderer 只能进 CB 的部件表或 SB 的对象表之一；两边都登记要报出来（复用 CB 的冲突机制）。
+2. **表面数据不受互斥约束**：SB 的表面 pass 画全场景（角色也有表面），CB 的身份 pass 只画角色。
+3. **机制共用实现**（决策 12）：MSAA 目标 / 关键词分支 / 逐样本投票 / resolve / Cryptomatte 成对布局抽成**共用内核**，CB 与 SB 各自挂一份注册表与 ID 空间。**不允许两份实现**。
+4. **两趟 pass 分开**（决策 13）：表面（单采样、两段式深度）与身份/覆盖率（自建 MSAA、逐样本投票）各自独立分配与发布；没有身份需求时可以只跑表面那趟。
+5. **覆盖率同样只来自自建 MSAA**：场景物体的遮罩也要抗锯齿——这正是当初角色那边踩过的坑（硬边掩码），不能因为"场景物体比较方"就退回单采样。
+
 ### 4.8 成本对照（1920×1080）
 
-| | 现状（MetadataBuffer 的相关部分） | SB |
+> 下表是**表面那半**的成本；身份/覆盖率那半与 CB 同构（3 张 RGBA8 = 12 B/px + MSAA 瞬态 + 按需的选择图），见 CB 规划 §5.9⑥。
+
+| | 现状（MetadataBuffer 的相关部分） | SB 表面 |
 | --- | --- | --- |
-| 常驻 | `surfaceData` 8 + `custom0` 8 + `reflectionMaterial` 8 + `surfaceColor` 8 = **32 B/px ≈ 63 MiB** | 按需：`Color` 8 + `Material` 4 + `Reflection` 4 + `Classification` 4 = **全开 20 B/px ≈ 39 MiB** |
-| 常见组合 | 4 张全在 | `Material` + `Classification` = **8 B/px ≈ 16 MiB** |
+| 常驻 | `surfaceData` 8 + `custom0` 8 + `reflectionMaterial` 8 + `surfaceColor` 8 = **32 B/px ≈ 63 MiB** | 按需：`Normal` 4 + `Color` 8 + `Material` 4 + `Reflection` 4 = **全开 20 B/px ≈ 39 MiB**（+ `Emission` 8 / `Lobes` 4 若开） |
+| 常见组合 | 4 张全在 | `Color` + `Material` = **12 B/px ≈ 24 MiB** |
 | 深度附件 | 2 张（`depth` + `mBufferDepth`） | **1 张自用、不发布** |
 
-即：**全开也只有现状的 62%，常见组合是 25%**；而且"只开需要的"这件事在 SB 里是结构保证（按需分配 + 无消费者不登记）。
+即：**表面那半开全也比现状省**；而且"只开需要的"在 SB 里是结构保证（按需分配 + 无消费者不登记）。**但加上身份那半之后总量要合起来算**（§2.5 ③ 的预算线）。
 
 ---
 
@@ -335,7 +389,9 @@ SB 里**全是线性量**（颜色、0~1 标量），所以：
 | --- | --- | --- |
 | **S0（本文件）** | 调查 + 布局草案 + 边界 + 与已冻结文档的修订清单（§0.1）+ **未来 PBR 的 review（§2.5）** | §7 的 7 项拍定（第 0 项尤其） |
 | **S1（文档先行）** | ① 修订 `LILTOON_FORMAL_PIPELINE_DRAFT.md` §3.1/§3.2（L1 拆"身份/覆盖率"与"表面数值"，帧序 [3] 拆两条），并按 §7 第 6 项补一条"buffer 边界"通则；② 提**契约 v2**（§0.1 的两条修订 + §4.7 的登记行）；③ 把本文 §4.2 的命名分析并入 §10 的批量改名计划；④ **把 `GeometryBuffer.md` 的"几何法线"写明**（§7 第 0 项） | 两份定稿文档里能查到 SB 与新通则；契约 §5 变更记录有 v2 一行；GB 文档明确写"几何法线" |
-| **S2** | `HoSurfaceBuffer*` feature：通道**按系统逐个开**（先 `Material` + `Classification` 给 SSS，再 `Reflection` 给反射），自用深度 + 两段式策略，RG/兼容两条路径，调试视图 + 编辑器抽屉（与 CB 同款式） | 开着的通道在 debug 里能看到；没开的**不分配、不输出**；消费端登记与通道一一对应 |
+| **S2** | **表面那半**：`HoSurfaceBuffer*` feature，通道**按系统逐个开**（先 `Color` + `Material` 给 SSS，再 `Reflection` 给反射，`Normal` 跟 PBR/SSR 一起），自用深度 + 两段式策略，RG/兼容两条路径，调试视图 + 编辑器抽屉（与 CB 同款式） | 开着的通道在 debug 里能看到；没开的**不分配、不输出**；消费端登记与通道一一对应 |
+| **S2.5** | **把 CB 的"ID + 覆盖率 + Cryptomatte"抽成共用内核**（决策 12），CB 改为使用它 | CB 行为不变（回归验证：相机 MSAA 关时覆盖率仍是 4x）；内核里没有 CB 专有的东西 |
+| **S3** | **身份那半**：SB 的对象表 + 自己的组件 + 复用内核的 ID/覆盖率 pass + `scene.selection`；**ID 归属互斥的冲突检测**（决策 11）与告警 | 场景物体能出抗锯齿的 ID 遮罩；同一个 renderer 同时进两边时能报出来；两侧数量各自增长互不挤占 |
 | **S3** | lilToon 侧 `HoSurfaceBuffer` pass（跨仓）：按材质开关写 MRT；`HoMetadataBufferSurfaceColor` 那一趟退役；**同步登记"材质接口脚印"**（§6.4 的三行：SSS / 透射折射 / 反射） | 表面色与材质值与原通道逐像素一致（可 A/B 对比）；脚印在契约里能查到 |
 | **S4** | 消费端迁移：SSS / PLR / 角色特化脸色扩散 / ScreenProcess 规则 / AOV `diffuse_albedo` | 行为不变或更好；`surfaceColor.a` 不再是覆盖率（v2 生效） |
 | **S5** | 与 CB 一起进 CB 规划的 P4：删 MetadataBuffer 的 surface 族通道与写入端 | 全仓库无 `_HoMetadataBuffer` surface 族引用 |
@@ -346,7 +402,8 @@ SB 里**全是线性量**（颜色、0~1 标量），所以：
 
 ## 7. 未定项（拍完才能开工）
 
-0. **【最硬的一条·已定一半】法线分家**（§2.5 ①）：GB 保持**几何法线**（AO/GI/shadow bias 用），SB 新增**着色法线**（PBR/SSR 用）——两者是不同的量，不互为来源。**剩下要核对**：lilToon 侧 `fragGeometryBuffer` 实际写的是哪一种（本仓库两处证据都指向几何法线，但值得确认没有例外）；以及 **`Documentation~/GeometryBuffer.md` §3.1/§4.1 要把"几何法线"三个字写明**（现在写"世界法线编码"/"基础网格位置的世界法线"，太容易被当成着色法线）。
+0. **【法线分家·已定论】**（§2.5 ①）GB 保**几何法线**、SB 加**着色法线**，两者平行；后续 feature 尽量吃着色法线。**剩下两件小事**：核对 lilToon 侧 `fragGeometryBuffer` 实际写的是哪一种（本仓库两处证据都指向几何法线）；**`Documentation~/GeometryBuffer.md` §3.1/§4.1 把"几何法线"写明**。
+0b. **【新增·场景侧身份】对象表的宽度与容量**（决策 10）：扁平对象表用 16 bit（65536 个对象，够用且与 CB 的部件 ID 同宽）还是 8 bit + 两级表？容量上限定多少（CB 那边是 4096 部件行 / 256 选择，场景通常更多）？以及 **SB 的组件叫什么**（`HoSurfaceBufferGroup`？还是与 CB 平行的 `HoSceneBufferGroup`）。
 1. **契约 v2 的两条修订，现在一起提还是往后放？**（§0.1）其中 `SurfaceColor` 的 `A=coverage` 是 v1 明写的冻结项，改它等于改"覆盖率有几个来源"——**这是本次整改的核心，我建议一起提**；`ReflectionMaterial` 的拆分可以晚一步（它只关乎带宽与命名，不关乎正确性）。
 2. **`materialClass` / curvature / transmittance 放图还是放表**：本文草案放 `Classification`（材质侧逐像素写）。但 `materialClass` 严格说是**分类不是数值**——按 CB 刚立的规矩（身份与分类归表、数值归图）它更该进 palette，那就要回答"谁写 palette"（我倾向材质侧写 + 跨仓属性名协议，与 CB 的选择槽协议一起冻结）。
 3. **PLR strength 的范围**：今天 `reflectionMaterial.a` 是 16F 且不限幅。约定 ≤1 就能塞进 8 bit（`Reflection.g`）；否则要单独一个 16F 通道或"归一 + 系数"（系数进 palette 或材质常量）。
