@@ -1,5 +1,16 @@
 # Changelog
 
+## Unreleased
+
+- 新增 **`Ho-CharacterBuffer`**（P1：本仓库侧）：用"per-pixel 只存 ID 与覆盖率、其余按 ID 查表"取代 MetadataBuffer 的位掩码。MetadataBuffer **暂时保留**，两者并存、互不依赖。
+  - **身份层**：`HoCharacterBufferGroup`（具名部件条目 + 具名选择条目）→ `HoCharacterBufferRegistry` 编成两级 palette（角色表 ≤256 行 / 部件表 ≤4096 行，行 0 = unknown）；分配 16 bit 部件 ID（角色 8 + 槽位 8）与独立的 8 bit 选择 ID。RSUV 只当索引，且**每次表重建后重写**（Unity 不序列化 RSUV，域重载后不重写会全场景索引变 0）。
+  - **覆盖率**：ID pass **自建 MSAA**（`R16_UInt`，回退 `R16_UNorm`），采样数来自 feature 设置、**与相机的 MSAA 开关解耦**（相机 AA 关掉时覆盖率照样是 4x——那正是这套东西要消灭的场景）；resolve 逐样本 `Load` 数票、票数降序取前 4、平票取更近的样本，**不做平均**。因 K = N = 4，实际配置下无尾部丢失：层里找不到某 ID 就等于它没覆盖该像素。
+  - **选择层**：Cryptomatte 式 `(选择 ID, 覆盖率)` 成对布局（一张 RGBA8 = 2 个选择），取代 `custom0~3` 这类匿名通道；只有 group 里注册了选择才分配那张图。
+  - **几何仍只有一个来源**：CB 不发布任何深度/法线通道，内部 depth-stencil 不发布、不被任何 shader 采样（含 debug）。
+  - 调试：11 个 `character.*` 视图（ID 按 palette 显示色上色，未注册为洋红；没产出时整屏暗红以区分"没跑"和"全背景"）+ feature/组件抽屉（抽屉会打印注册表实际分配的 ID）。
+  - **本条目尚未在 Unity 中编译与运行验证**（开发环境无编辑器）；P1 的已知留白：选择层只实现 2 个/像素（4 个配置告警后按 2 跑）、Sprite/SpriteShape/Tilemap 的 RSUV API 待核对命名空间、StructuredBuffer 不可用时只告警不降级、`Material0` 只分配不写入、lilToon 侧的 `HoCharacterBuffer` / `HoCharacterBufferSurface` pass 属跨仓（本仓库先用 fallback 材质验证链路，且 fallback 只覆盖不透明队列）。
+  - 规划与参考：`Documentation~/架构优化/Ho-CharacterBuffer_规划.md`。
+
 ## 0.2.0
 
 - 角色特化：眼透新增**相机角度修正**。
