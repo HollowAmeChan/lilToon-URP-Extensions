@@ -1,18 +1,23 @@
 # Ho-AttributeComposite（AC）规划：纯值 → object → surface 的递进覆盖与运行时合成层
 
 > 状态：**概念草案**（待细化）。与 `Ho-ObjectBuffer_规划.md` §1.6 配套。
-> **命名已按新管线冻结**（`LILTON_FORMAL_PIPELINE_DRAFT_V2.md` §0 第 3 条）：**运行时属性合成器叫 `Ho-AttributeComposite`（AC）**；**`Ho-Cryptomatte` 这个名字只用于 ID/manifest 导出（AOV 层）**——运行时合成不是标准 Cryptomatte 导出，两者不能混用一个名字。
-> 分工：**各 buffer 只提供可写通道，本 feature 决定"多来源怎么合成、谁覆盖谁"**。
+> **命名**：运行时合成器叫 **`Ho-AttributeComposite`（AC）**。**"Cryptomatte" 这个名字在这三个 feature 里一律不用**——它不是真正的 Cryptomatte（整数 ID、无 float 位重解释）。真正的 Cryptomatte 要么**以后单独规划一个 feature**，要么**由 AC 自己直出**（后者更好：**导出后外部处理与 Unity 内处理吃同一份数据**）。V2 §0 第 3 条把运行时名冻结为 AC，本文此前用的 "Ho-Cryptomatte" 作废。
+> **输入只有两轴：OB + SB**（不是三轴——**GB 不喂 AC**，几何门控由消费端自己读 GB）。**OB 与 SB 各自带自己的 selection**，都进 AC 叠。
+> **输出**：**下游真正消费的那一份 ID / 覆盖率 / 属性图**（叠完的结果，而不是各 buffer 的原始图）。
+> 分工：**各 buffer 只提供可写通道 + 自己的 selection，本 feature 决定"多来源怎么合成、谁覆盖谁"**。
 
 ## 0. 一句话
 
 **它不是一个 buffer，而是一层"属性解析器"**：读三轴的原始数据（含各 buffer 预留的可写通道），按 **纯值 → object → surface** 的递进顺序合成出每像素最终可用的属性，再据此产出遮罩、选区与导出。
 
-    GB（几何轴）             ─┐   ┌─ 纯值：艺术家/材质直接写的字面量（各 buffer 的可写通道）
+    GB（几何轴）             ─┐   ┌─ 纯值：全屏 fallback（只在代码里表示）
     ObjectBuffer（逐物体轴） ─┼─→ │  object：挂在物体 ID 上的属性（palette 表）
     SurfaceBuffer（表面轴）  ─┘   └─ surface：逐像素的表面数值（SB）
-                                      ↓ 递进覆盖（优先级见 §2）
-                                  合成属性 → 遮罩/选区 → 消费者 & AOV 导出
+                                      ↓ 递进覆盖：纯值 < object < surface
+                                  AC 合成 → **下游真正吃的 ID / 覆盖率 / 属性图** → 消费者（ScreenProcess / 角色特化 / SSS / PLR …）
+                                  （可选）AC 自己直出 → 与 Unity 内处理同一份数据
+
+> ⚠ 上图里 GB 只画出来表示"它也在 L1"，**它不是 AC 的输入**：AC 只吃 OB + SB。
 
 ## 1. 为什么要单独一层
 
