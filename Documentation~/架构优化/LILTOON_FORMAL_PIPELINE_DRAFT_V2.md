@@ -75,13 +75,26 @@
 
 > 每个 feature 的 `passEvent` 都是**设置项**（GB/OB 默认 `BeforeRenderingOpaques`、GTAO 也在此档、SSGI/CM 在 opaque 之后），所以上面是**默认意图 + 必须成立的偏序**；**精确 pass event 以实机 Frame Debugger 为准**（v0.1 已有此注）。
 
+**与 `ReflectionPipelineDesign.md` §6「时序冻结」的对齐**（那份是隔壁正在做的反射管线，它的时序**继续有效**，本文只是把 buffer 名字换掉）：
+
+| 反射文档的时序 | v2 里对应什么 | 状态 |
+| --- | --- | --- |
+| `beginCameraRendering` → **PLR source update** | **v2 漏了这一条**：PLR source 在**主相机渲染前**更新（镜像相机流程），因为 opaque ForwardLit 要消费它 | ✅ 补进偏序表：`PLR source → opaque` |
+| `BeforeRenderingOpaques` → MetadataBuffer + GeometryBuffer | → **OB + SB + GB**（+ GTAO 同档） | ✅ 名字替换 |
+| Opaque ForwardLit → 消费 PLR | 不变 | ✅ |
+| `AfterRenderingOpaques` → color pyramid + **SSR** | **v2 漏了这一条** | ✅ 补：`opaque → SSR` |
+| `BeforeRenderingTransparents` → 玻璃/水面/OIT 专用路径 | **v2 漏了这一条**：OIT 在**透明之前** | ✅ 补进偏序表 |
+| `BeforeRenderingPostProcessing` → fullscreen resolve / debug | 与 v2 的 [14]-[16] 一致 | ✅ |
+
+加上这三条后，v2 帧序的完整偏序是：`阴影 → {GB, OB, SB} → GTAO → opaque → {SSGI, CM, SSR} → SSS → OIT → PLR 合成 → 角色特化 → ScreenProcess → ImageProcess → AOV/Debug`，另有 `PLR source → opaque` 这一条独立约束。
+
 ---
 
 ## 3. 数据归属与"谁能读谁"
 
 | feature | 回答什么 | 输出 | 不许做 |
 | --- | --- | --- | --- |
-| **GB**（现 GeometryBuffer，将改名 ScreenGeometryBuffer） | 几何在哪、朝向如何、几何覆盖多少 | **几何法线** / depth / 几何覆盖率 / 描边视觉壳 / sky | 不发表面数值、不发身份、不发着色法线 |
+| **GB**（GeometryBuffer，**名字不改**） | 几何在哪、朝向如何、几何覆盖多少 | **几何法线** / depth / 几何覆盖率 / 描边视觉壳 / sky | 不发表面数值、不发身份、不发着色法线 |
 | **OB**（Ho-ObjectBuffer） | 这是谁、占多少 | ID0/ID1/Coverage（K=N=4 无损）+ 具名选择（8 层/像素，按需）+ **逐物体辅助量 ≤2 张**（朝向 forward+side） | 不发深度、不发表面数值、不定义属性语义 |
 | **SB**（Ho-SurfaceBuffer） | 表面是什么样 | 表面色 / **着色法线** / roughness / metallic / thickness / reflectance / PLR / …（**+ 未来 PBR**） | 不发深度、不发身份 |
 | **CM**（Ho-Cryptomatte） | 多来源怎么合成、抠哪一块 | 合成属性 + 具名遮罩 + manifest + 导出档位 | 不自己画几何/表面（它读三轴） |
@@ -118,16 +131,23 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 
 | 契约 v1 的条目 | v2 的动作 |
 | --- | --- |
-| `maskId` | → **OB 的 `object.idcoverage`**（名字待契约 v2 定） |
-| `objectCustom0/1`（8 位语义） | → **OB 的表（类别 / 标签）**；位含义条款作废 |
-| `custom0`（未登记） | → **不迁**：具名遮罩由 **CM** 提供 |
-| `surfaceData` | → **SB**（`Material.b` + `Classification`，待定） |
-| `reflectionMaterial` | → **SB**（`Material.rg` + `Reflection`）；**v1 冻结条款要改**（§4 第 5 条） |
-| `surfaceColor` | → **SB**（`Color`）；**`A=coverage` 的冻结条款要改**（§4 第 4 条） |
+| `maskId`（MetadataBuffer Target0） | → **OB** 的 ID/覆盖率 |
+| `objectCustom0/1`（Target3/4，8 位语义） | → **OB 的表**（类别 / 标签）；位含义条款作废 |
+| `custom0`（Target2，未登记） | → **不迁**：具名遮罩由 **CM** 提供 |
+| `surfaceData`（Target1） | → **SB**（`Material.b` + `Classification`，分类归属待定） |
+| `reflectionMaterial`（Target5） | → **SB**（`Material.rg` + `Reflection`）；**v1 冻结条款要改**（契约 §4 第 5 条） |
+| `surfaceColor` | → **SB**（`Color`）；**`A=coverage` 的冻结条款要改**（契约 §4 第 4 条）——注意 `ReflectionPipelineDesign.md` §3 也复述了这条，它同样要被 v2 取代 |
 | `sssprofile` | → 待定（进 SB 或 OB 的表） |
 | `motion` | 不变（占坑） |
 | 新增 | OB 的 `Selection` / `Facing`；SB 的 `Normal` / `Emission`（PBR 用）；CM 的合成输出（若导出） |
 | 导出档位 | 现状（UINT 通道）+ **合规 `crypto_*`**（float 位重解释 + manifest + 32 bit）两档 |
+
+**与 `ReflectionPipelineDesign.md` 的其余对齐点**：
+
+- 它的 **§2.1「已冻结的两个 Buffer」槽位表**正是要被取代的东西（Target0→OB、Target1/5→SB、Target2→删、Target3/4→OB 的表）；但其中一条**继续有效**：**"新增反射输入不得挪用已有 SSS 或角色语义"**——v2 的三轴划分是这条的更彻底版本。
+- 它的 **§2.2 有一处与代码不符**：写着 `DepthTexture` 是"内部附件，不是公共线性深度输入"，但 GTAO 实际在采样 `_HoGeometryBufferDepthTexture.r`（`GeometryBuffer.md` 已按代码更正）。反射侧的"**所有屏幕空间反射必须先用 `NormalDepth` coverage gate**"这条规则**继续有效**，请写进 SB/SSR 的实现。
+- 它的 **§7 实施顺序**（Phase 0 冻结输入 → Phase 1 PLR → Phase 2 SSR → Phase 3 Probe/Sky）**优先于 v2 的 R 序列**：反射是"进行中、最高实现优先级"，所以 **SB 的 `Reflection` 通道要跟着 Phase 1/2 走**（在它落地前，反射侧继续读 MetadataBuffer Target5）；v2 的 R1/R2/R4（OB 改名、朝向图、CM）与反射不冲突，可以并行。
+- 它的 **§8 明确删除的旧假设**（不做通用 Custom0 反射契约、不做卡通反射模式、不留降级设计）与 v2 无冲突。
 
 > 契约 v2 必须走 `LILTOON_CHANNEL_CONTRACT_V1.md` §3 的登记模板 + §5 变更记录；**AOV 名只增不改**（v1 §2 冻结）。
 

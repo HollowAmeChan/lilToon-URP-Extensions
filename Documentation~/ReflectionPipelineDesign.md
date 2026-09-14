@@ -1,5 +1,13 @@
 # HoRP 反射方案与输入契约
 
+> ⚠ **本文的 buffer 归属已被 `Documentation~/架构优化/LILTOON_FORMAL_PIPELINE_DRAFT_V2.md` 取代**（MetadataBuffer 拆成 **GB / ObjectBuffer / SurfaceBuffer** 三轴 + **Ho-Cryptomatte** 合成层）：
+> - **§2.1 的槽位表**：Target0 `maskId` → **OB**；Target1 `surfaceData` → **SB**；Target2 `custom0` → 删除（具名遮罩归 CM）；Target3/4 `objectCustom` → **OB 的表**；Target5 `reflectionMaterial` → **SB**（`Material.rg` + `Reflection`）。**"新增反射输入不得挪用已有 SSS 或角色语义"这条继续有效**，三轴划分是它的更彻底版本。
+> - **§3 `SurfaceColor` 决议**里 `A = 材质 coverage` 那条**要被 v2 改**（覆盖率只有 CM/OB 一个来源）；`RGB 不钳制` 继续有效。
+>
+> **继续有效且请照做的**：**§6 时序冻结**（v2 §2 已按它对齐，含 `PLR source → opaque`、`opaque → SSR`、`OIT → 透明`三条）、**§2.2 的"所有屏幕空间反射必须先用 `NormalDepth` coverage gate"**、**§7 实施顺序**（Phase 1 PLR / Phase 2 SSR 仍是最高实现优先级，SB 的 `Reflection` 通道跟着它走）、**§8 明确删除的旧假设**。
+>
+> 另注：**§2.2 有一处与代码不符**——`DepthTexture` 并非"不可采样"，GTAO 实际在采样 `_HoGeometryBufferDepthTexture.r`（见 `Documentation~/GeometryBuffer.md` 已按代码更正的那节）。
+
 > 状态：设计冻结稿（2026-09-13）
 > 目标：先冻结两个 buffer 的生产槽位，再修复 PLR，最后接入 SSR 与探针消费。
 > 约束：实验性管线；不做旧资产兼容，不为移动端低质量档牺牲算法质量。
