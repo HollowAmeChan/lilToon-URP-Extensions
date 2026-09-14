@@ -103,7 +103,7 @@ _UsePlanarReflection             → 只在总开关打开时生效
 1. `Material` 与 `Reflection` **不并**（各自一张 RT）。
 2. `Normal` **只存着色法线**（`octa`，含法线贴图）；几何法线留在 GB。
 3. `Emission` **登记为占位**：契约留名，不分配通道、不阻塞本轮。
-4. `Selection` 层数与 OB **一致**（8 层/像素 = 4 张 RGBA8，`R=id0,G=cov0,B=id1,A=cov1`），**名字表容量也与 OB 同量级（≤256 具名）**；**SB 按名覆盖 OB 的 ID 渠道**。
+4. `Selection` 层数与 OB **一致**（8 层/像素 = 4 张 RGBA8，`R=id0,G=cov0,B=id1,A=cov1`），**名字表容量也与 OB 同量级（≤256 具名）**；**SB 按名覆盖 OB 的 ID 渠道**。层数由**共享 registry 每帧统一算出**（两边声明所需的最大层数），OB / SB 同一个数、AC 按它遍历；**槽位号不承载语义，语义只由 ID 决定**——两边对齐规则见 `Ho-ObjectBuffer_规划.md` §1.3。
 5. `materialClass` **留在 SB 的 `Classification`**（不进 OB 的表）。
 6. `plrStrength` 材质侧是 `Range(0,1)` ⇒ **8 bit 足够**。
 7. 表面色来源 = **`fd.col`**（lilToon 主色链）。

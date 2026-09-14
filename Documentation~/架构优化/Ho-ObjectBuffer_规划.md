@@ -41,13 +41,31 @@
 - GPU 侧是 StructuredBuffer（`_HoObjectBufferGroups` / `_HoObjectBufferEntries`）；**RSUV 不序列化 ⇒ 每次重建都要重写**。
 - 平台不支持 StructuredBuffer（shader level < 4.5）⇒ **整条不跑并告警，不静默降级**。
 
+### 1.3 两边 `Selection` 怎么对齐（冻结）
+
+**槽位编号不承载语义**：池按覆盖率降序排，同一个 ID 在不同像素的槽位会变。所以对齐只有两个抓手：
+
+1. **语义靠 ID**——每对里的 ID 查**同一张共享名字表**（§1.2），还原成组 / 部件 / 标记 / 物体位 / 材质位；AC 的合成是 `Σ cov_i · [条目_i 命中 X]`，**与槽位顺序无关**。
+   - **SB 不得自造 ID 空间**：材质位 0~3 的 ID 由 OB 预先声明（§1.1），SB 只写这些 ID 的覆盖率。
+   - 同一个 ID 两边都写 ⇒ **取 surface**（递进链是覆盖，不是求和）。
+2. **数量靠一个数**——每帧层数由**共享 registry 统一算出**（= 两边声明所需的最大层数），OB 与 SB 都按这个 `SelectionLayerCount` 分配，AC 也按它遍历；**任何一边不得自行加层**。某一边本帧没有内容就不分配 RT，AC 遍历时该边视为全空（`cov = 0`）。
+   - 上限已冻结：**≤ 8 对 / 4 张 RGBA8**，两边一致。
+
+**空层 = 覆盖率 0**：背景不占层，`cov = 0` 即"无贡献"，与"没写过"在**合成结果**上等价 ⇒ 不需要额外的 valid 位。
+
+**失败必须可见（不静默错位）**：
+- 两边层数不一致 → debug 视图标出 + 告警；
+- 查表落到第 0 行（未知）= **未声明 ID** → 标出；
+- 一像素实际 ID 数 > 8（溢出）→ 标出；
+- SB 写了表里不存在的材质位 → 该值无效 + 诊断。
+
 ---
 
 ## 2. 每像素存储（冻结）
 
 | 纹理 | 格式 | 内容 | 分配 |
 | --- | --- | --- | --- |
-| `_HoObjectBufferSelectionTexture` | RGBA8 ×N（N ≤ 4） | ≤ **8 个 `(ID, 覆盖率)` 对**：每张 `R=id0, G=cov0, B=id1, A=cov1`；**与 SB 的 `Selection` 同构同数** | 按需（没有 ID 声明就不开；有声明按需开到够用，上限 4 张） |
+| `_HoObjectBufferSelectionTexture` | RGBA8 ×N（N ≤ 4） | ≤ **8 个 `(ID, 覆盖率)` 对**：每张 `R=id0, G=cov0, B=id1, A=cov1`；**与 SB 的 `Selection` 同构同数** | 层数由共享 registry 每帧统一算出（§1.3），OB / SB 同一个数；上限 4 张 |
 | `_HoObjectBufferFacingTexture` | RGBA8 | 逐物体辅助量，**两个方向**：`RG = octahedral(forward)`、`BA = octahedral(side)`；消费端叉乘得第三轴 | 按需（有物体提供 `faceBone` 才开） |
 | 组表 / 条目表 | StructuredBuffer | §1.2 | 常开（小） |
 | 内部 depth-stencil | 深度格式 | 两段式占用判定 + tie-break | **不发布** |
