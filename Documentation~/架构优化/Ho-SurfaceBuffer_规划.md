@@ -68,7 +68,7 @@ _UsePlanarReflection             → 只在总开关打开时生效
 | 厚度 / 曲率 / 透射提示 / 材质分类 | 今天由 `HoMetadataBufferSubject` 或材质参数提供（`_HoMetadataBufferThickness` / `_HoMetadataBufferCurvature` / `_HoMetadataBufferTransmittanceHint` / `_HoMetadataBufferMaterialClass`） | **待冻结**：SB 需要自己的一套属性名（不能继续挂 `_HoMetadataBuffer*`） |
 | PLR 强度 | **`_PlanarReflectionStrength`**（lilToon 侧 `Range(0,1)`，默认 1）——已在 lilToon 仓库核对 | ✅ 冻结 |
 | PLR 其它材质参数 | `_PlanarReflectionMinSmoothness` / `_PlanarReflectionEdgeFade` / `_PlanarReflectionFadeStart` / `_PlanarReflectionFadeEnd` / `_PlanarReflectionTint` / `_PlanarReflectionFlipY` | ✅ 已有；**它们是材质轻量参数（shading 时用），不进 SB 的通道** |
-| 表面色 | 材质自身的 base color 链 | **待查**（应与 SSS/脸色扩散今天读的同一个源） |
+| 表面色 | **`fd.col`**——lilToon 的主色链（主色 × `_MainTex`，两/三层叠加也已在里面），**不是单独的 `_MainTex` 采样** | ✅ 已核对 `lil_pass_metadata_buffer.hlsl`：`lilHoMetadataBufferResolveSurfaceColor(fd.col)`（`.rgb` 不钳制、`.a` 走 coverage 解析），最后 `return half4(surfaceColor * subjectValid)` |
 
 ### 2.3 本次 review 查出的错名
 
