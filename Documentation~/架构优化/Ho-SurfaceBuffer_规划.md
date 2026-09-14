@@ -49,7 +49,7 @@ _UsePlanarReflection             → 只在总开关打开时生效
 
 ## 2. 参数名冻结（本次 review）
 
-### 2.1 全局纹理名（待你点头后写进契约）
+### 2.1 全局纹理名（**已冻结**）
 
 | 提议 | 今天对应什么（桥接） |
 | --- | --- |
@@ -132,12 +132,12 @@ _UsePlanarReflection             → 只在总开关打开时生效
 
 1. `Material` 与 `Reflection` **不并**（各自一张 RT）。
 2. `Emission` **登记为占位**：契约留名，**lilToon 侧还没有 pass 写它 ⇒ 不分配通道、不阻塞本轮**。
-3. `Selection` 层数与 OB **一致**（8 层/像素）。
+3. `Selection` 层数与 OB **一致**（8 层/像素 = 4 张 RGBA8），**名字表容量也与 OB 同量级（≤256 具名）**。
 4. `materialClass` **留在 SB 的 `Classification`**（不进 OB 的表）。
-5. `plrStrength` 材质侧是 `Range(0,1)` ⇒ **8 bit 足够**（原先担心的 ">1" 不成立）。
-6. 表面色来源 = **`fd.col`**（lilToon 主色链）；**桥接期的 `* subjectValid` 预乘必须去掉**。
+5. `plrStrength` 材质侧是 `Range(0,1)` ⇒ **8 bit 足够**。
+6. 表面色来源 = **`fd.col`**（lilToon 主色链）；**去掉 `* subjectValid` 预乘**。
+7. **去掉"四值全 0 就不写"的 gate**（0 是合法值；"未指定"用显式位）。
+8. **六张纹理名已冻结**：`_HoSurfaceBuffer{Color,Normal,Material,Reflection,Classification,Selection}Texture`。
+9. 材质侧参数：`_HoSSSProfileId` / `_HoSSSThicknessScale` / `_HoSSSTransmissionStrength` 复用，**只新增 `_HoSurfaceCurvature`**；**不用 MPB**。
 
-**待定**：
-
-1. **厚度 / 曲率 / 透射提示 / 材质分类的材质侧属性名**：今天挂 `_HoMetadataBufferThickness` 这套 + Subject 组件，SB 要用自己的名字（并查清它们今天**从哪读**：材质参数 / 贴图 / Subject 写入）。
-2. **`Selection` 的名字表容量**（OB 侧是 ≤256 具名；SB 是否同量级）。
+**待定**：无（名字表已齐，可开工）。
