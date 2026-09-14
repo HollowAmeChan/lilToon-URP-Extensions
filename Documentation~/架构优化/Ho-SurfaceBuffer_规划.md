@@ -24,8 +24,9 @@
 | | `b` | `transmittanceHint` | | | SSS |
 | | `a` | 备用 | | | |
 | SB `Selection` | 成对 | `R=id0, G=cov0, B=id1, A=cov1`；**本 feature 自己的具名选择** | RGBA8 ×N | 材质 | 只进 AC，由 AC 叠出下游消费的图 |
+| SB `Emission` | — | **占位**：契约里登记了 `emission`，但 **lilToon 侧还没有 pass 写它** | — | 无 | 无 |
 
-（`Selection` 与 OB 的 selection 同构，**名字里不带 Cryptomatte**。）
+（`Selection` 与 OB 的 selection 同构，**名字里不带 Cryptomatte**。`Emission` 只是占坑：**没有生产端就不分配通道**，字段语义等 lilToon 侧有 pass 时再冻结。）
 
 ### 1.2 冻结的换算与开关
 
@@ -100,13 +101,13 @@ _UsePlanarReflection             → 只在总开关打开时生效
 **已定**：
 
 1. `Material` 与 `Reflection` **不并**（各自一张 RT）。
-2. `Emission` **登记**（字段语义仍待定，见下）。
+2. `Emission` **登记为占位**：契约留名，**lilToon 侧还没有 pass 写它 ⇒ 不分配通道、不阻塞本轮**。
 3. `Selection` 层数与 OB **一致**（8 层/像素）。
 4. `materialClass` **留在 SB 的 `Classification`**（不进 OB 的表）。
 5. `plrStrength` 材质侧是 `Range(0,1)` ⇒ **8 bit 足够**（原先担心的 ">1" 不成立）。
+6. 表面色来源 = **`fd.col`**（lilToon 主色链）；**桥接期的 `* subjectValid` 预乘必须去掉**。
 
 **待定**：
 
-1. **`Emission` 的字段语义**：`rgb` + 强度编码？是否与 `Color` 共用一份 base color 链。
-2. **表面色的材质侧来源**：lilToon 的哪条 base color 链（应与 SSS / 脸色扩散今天读的同一个）——**待查**。
-3. **`Selection` 的名字表容量**（OB 侧是 ≤256 具名；SB 是否同量级）。
+1. **厚度 / 曲率 / 透射提示 / 材质分类的材质侧属性名**：今天挂 `_HoMetadataBufferThickness` 这套 + Subject 组件，SB 要用自己的名字（并查清它们今天**从哪读**：材质参数 / 贴图 / Subject 写入）。
+2. **`Selection` 的名字表容量**（OB 侧是 ≤256 具名；SB 是否同量级）。
