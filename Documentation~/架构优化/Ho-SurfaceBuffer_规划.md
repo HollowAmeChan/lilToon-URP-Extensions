@@ -4,6 +4,10 @@
 > **SB 的现行边界（按决策 23）**：**表面数值**（`Color` / `Normal` / `Material` / `Reflection` / `Classification`，最小字段见 V2 §3.1）+ **它自己的 selection**（与 OB 的 selection 同构，**名字里不带 Cryptomatte**）。**OB 与 SB 的 selection 都进 `Ho-AttributeComposite`（AC）叠**，AC 输出下游真正消费的那份 ID / 覆盖率 / 属性图。**GB 不喂 AC**；ScreenProcess 与角色特化**只吃 AC**。
 > **这一族（OB / SB / AC）不与别的语义打包**（决策 14）。
 > 当前三轴划分与冻结字段见 `LILTOON_FORMAL_PIPELINE_DRAFT_V2.md`。
+>
+> ⚠ **通道布局以 V2 §3.1 冻结的五条字段为准，本文下面的"核心四张图"表只作历史**：
+> `Color.rgb`（linear HDR base color，**无 coverage 语义**）｜`Normal.rgba`（`octa(shadingNormal).rg`）｜`Material.rgba`（`perceptualRoughness / metallic / thickness / reserved`）｜`Reflection.rgba`（`reflectance / plrStrength / reserved / reserved`）｜`Classification.rgba`（`materialClass / curvature / transmittanceHint / reserved`）。
+> 另有两条冻结规则：`roughness = perceptualRoughness²`、`F0 = lerp(reflectance, saturate(baseColor), metallic)`；反射总开关 `_UseReflection = 0` 时所有 reflection strength 归零，`_UsePlanarReflection` 只在总开关打开时生效。**RT packing（`Material` 与 `Reflection` 是否并成一张 16F）仍是 V2 §7 的待确认项。**
 > 📁 `Ho-CharacterBuffer_规划.md` 已移入 `_归档/`（CB 已取消；其业界依据与覆盖率分析仍作参考）。
 
 > 状态：**设计草案待拍**（§7 有 5 项要定；定了才开工。**其中第 1 项会改动 v1 契约的冻结决议**，见 §0.1）。
