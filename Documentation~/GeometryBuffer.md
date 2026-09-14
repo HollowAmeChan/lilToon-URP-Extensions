@@ -340,7 +340,7 @@ VisualSurfaceBuffer
 | `DepthTexture` | D24/D32 | 3-4 | 6.0-7.9 MiB |
 | `OutlineNormalDepth` | `R16G16B16A16_SFloat` | 8 | 15.8 MiB |
 | `CoverageTexture` + `OutlineCoverageTexture`（仅 MSAA） | R8 ×2 | 2 | 4.0 MiB |
-| MSAA 阶段（仅 `msaaSamples > 1`，瞬态） | 2×`R16G16B16A16_SFloat`+depth，N 样本 | ≈ 8N + 4N | 例如 4x ≈ 49 MiB |
+| MSAA 阶段（仅 `msaaSamples > 1`，瞬态） | 两张 16F MSAA color + MSAA depth | (8+8+4)·N = 20N | 例如 4x = 80 B/px ≈ 158 MiB |
 | `SkyTexture`（仅 `enableSkyBuffer`，否则记 0） | `R16G16B16A16_SFloat` | 8 | 15.8 MiB |
 
 上表**不含** MSAA 阶段：它只在 output pass 期间存在，但通常是整个系统里最大的一笔带宽（已单列一行）。
