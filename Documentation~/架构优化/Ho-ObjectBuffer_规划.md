@@ -1,6 +1,8 @@
 # Ho-ObjectBuffer 规划：逐物体通道（身份 / 覆盖率 / 具名选择 / 逐物体辅助量）
 
 > **名字已定：`Ho-ObjectBuffer`**（决策 12）。`Cryptomatte` 留给**另一个 feature**——它做的是"**纯值 → object → surface 的递进覆盖 + 合成 + 选区/导出**"（见 §1.6 与 `Ho-Cryptomatte_规划.md`）。
+>
+> 📁 **参考资料的归档位置（2026-09-14 清理）**：`Ho-CharacterBuffer_规划.md` 已移入 **`_归档/`**（CB 取消，但它逐条核对过的业界依据 §4、MSAA 官方规则 §4.3、覆盖率容量分析 §5.5、GB 文档复核 §5.9⑦、非线性 AA 禁令 §6 仍然有效）。本文里凡是写"见 `Ho-CharacterBuffer_规划.md` §x"的地方，请到 `_归档/` 下找同名文件。
 
 > 状态：**设计草案待拍**（§6）。
 > 取代：`Ho-CharacterBuffer_规划.md` 的 feature 定位（CB 取消）、`Ho-Cryptomatte_占位.md`（其内容已并入本文与 Cryptomatte 规划）。
