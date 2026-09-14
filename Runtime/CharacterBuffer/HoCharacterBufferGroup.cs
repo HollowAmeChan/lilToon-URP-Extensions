@@ -203,23 +203,24 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         public HoCharacterPartData BuildPartRow(int slot, string partName)
         {
             HoCharacterBufferPartEntry entry = FindPart(partName);
-            var row = new HoCharacterPartData
+            return new HoCharacterPartData
             {
                 nameHash = HoCharacterBufferHash.ComputePart(characterId, partName),
                 category = (uint)(entry != null ? entry.category : HoCharacterBufferPartCategory.Unspecified),
                 tags = (uint)(entry != null ? entry.tags : HoCharacterBufferPartTags.None),
-                thickness = entry != null ? entry.thickness : 1f,
-                curvature = entry != null ? entry.curvature : 0f,
-                transmittance = entry != null ? entry.transmittance : 0f,
-                roughness = entry != null ? entry.roughness : 0.5f,
-                metallic = entry != null ? entry.metallic : 0f,
-                reflectance = entry != null ? entry.reflectance : 0.04f,
-                plrStrength = entry != null ? entry.plrStrength : 1f,
-                materialClass = (uint)Mathf.Max(0, entry != null ? entry.materialClass : 0),
+                // 材质数值（thickness / curvature / roughness / metallic / reflectance / plrStrength /
+                // materialClass / transmittance）**不由组件提供**：它们在材质里已经填过一遍，
+                // 权威归属与写入路径见规划 §5.3。定下来之前这里恒为 0，消费端不得依赖。
+                thickness = 0f,
+                curvature = 0f,
+                transmittance = 0f,
+                roughness = 0f,
+                metallic = 0f,
+                reflectance = 0f,
+                plrStrength = 0f,
+                materialClass = 0u,
                 displayColor = entry != null ? (Vector4)entry.displayColor : new Vector4(0.75f, 0.75f, 0.75f, 1f)
             };
-
-            return row;
         }
 
         public HoCharacterSelectionData BuildSelectionRow(int index, string selectionName)

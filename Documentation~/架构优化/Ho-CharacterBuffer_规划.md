@@ -43,7 +43,7 @@ MetadataBuffer 把 8 个语义压进 RSUV 低字节的 8 个 bit，语义因此�
 | --- | --- | --- |
 | 8 | **palette 传 StructuredBuffer，分两级**：`HoCharacterPartData`（≤4096 行）+ `HoCharacterData`（角色表，≤256 行、常驻）；后端不支持时退化为 float4 常量数组（按 256 行分块） | 最省、最灵活；两级是为了让稀疏的 `char<<8\|slot` 能索引到稠密行（§5.3）；不做 1D 纹理——材质有自己的 ID，不需要采样 palette |
 | 9 | **标签 32 位** | 一个 `uint` 与 palette 行对齐；旧 8 语义 + 24 个自定义位足够 |
-| 10 | **ScreenProcess 规则 source 改成 palette 字段枚举 + 选择** | 部件 ID / 角色 ID / 类别 / 标签 / materialClass / thickness / curvature / transmittance / **选择（§5.11，命中 = 选择 ID 相等，权重 = 覆盖率）** / surfaceColor / coverage；运算符、容差、组合、反相结构不变。**凡涉及 coverage 的一律按"多表面加权"求值**：`Σ_i cov_i · f(id_i)`（§6 第 7 条），而不是只取层0 |
+| 10 | **ScreenProcess 规则 source 改成 palette 字段枚举 + 选择** | 部件 ID / 角色 ID / 类别 / 标签 / materialClass / thickness / curvature / transmittance（**这几项是材质数值，读哪里见 §5.3 的 P2 闸门**）/ **选择（§5.11，命中 = 选择 ID 相等，权重 = 覆盖率）** / surfaceColor / coverage；运算符、容差、组合、反相结构不变。**凡涉及 coverage 的一律按"多表面加权"求值**：`Σ_i cov_i · f(id_i)`（§6 第 7 条），而不是只取层0 |
 | 11 | **palette 按 4096 行 + 角色表 256 行容量设计，v1 全量上传**（部件行 64~128 B → ≈256~512 KB/帧，角色表另 ≈16~32 KB） | 接口预留分块 / 脏行，实测有压力再上 |
 | 12 | **ID pass 由 feature 自己绘制** | 只画部件表里的 renderer（可选再用 layerMask / renderQueue 附加过滤），不含描边、特效件；默认一次 `DrawRenderers` 画完（RSUV 携带索引），只有兜底路径才逐部件绘制 |
 
@@ -270,7 +270,11 @@ ID + 覆盖率合计 **3 张 RGBA8 = 12 B/px**（常开部分）；`Material0` �
 - **载体**：**两级表**（决策 8）——`StructuredBuffer<HoCharacterPartData>`（全局 ≤4096 行）+ `StructuredBuffer<HoCharacterData>`（角色表，≤256 行、常驻）。后端不支持 StructuredBuffer 时退化为一组 float4 常量数组并按 256 行分块。**buffer 没有过滤概念，读到的永远是本像素解析出的那个索引对应的整数行。**
   - **为什么必须两级**：像素里的 ID 是 `角色 8 + 槽位 8`（**稀疏**，编码空间 65536），而 palette 行数是**注册预算** 4096（决策 2）。单张 4096 行表没法用 `char<<8|slot` 直接索引（那样只覆盖 16 个角色），而"反向映射表（char,slot → 行号）"又多一次依赖读取、还要与像素里的 ID 保持同步。
   - 做法：`row = characterTable[charId].rowBase + slotId` —— 两次点采样、无常驻反向表。**同角色判断仍然是像素 ID 的高字节比较**（§5.1），不需要查表；标签位（如 `CharacterFull` = 该角色任意部件）放角色表那一行，更省。
-- **每行字段**：部件行 = `characterId`、槽位号、**partCategory（枚举，取代 8 bit 语义）**、**标签位掩码（32 位，决策 9）**、`materialClass`、`thickness`、`curvature`、`transmittanceHint`、`roughness`、`metallic`、`reflectance`、`plrStrength`、**显示色**（Nuke "color picker ID" 的颜色）、名字 hash（AOV manifest）；角色行 = `rowBase`、角色级标签（`CharacterFull` 这类"整角色"语义放这里）。
+- **每行字段**：部件行 = `characterId`、槽位号、**partCategory（枚举，取代 8 bit 语义）**、**标签位掩码（32 位，决策 9）**、**显示色**（Nuke "color picker ID" 的颜色）、名字 hash（AOV manifest）；角色行 = `rowBase`、角色级标签（`CharacterFull` 这类"整角色"语义放这里）。
+- **材质数值（`materialClass` / `thickness` / `curvature` / `transmittance` / `roughness` / `metallic` / `reflectance` / `plrStrength`）是 P2 闸门，组件里不放**：这些数在 lilToon 材质上**已经填过一遍**，组件再存一份就是"同义量两个来源"（本项目明令禁止）。所以 `HoCharacterBufferGroup` 的部件条目**只有身份**（名字 / 类别 / 标签 / 显示色 / 渲染器），palette 行里那几栏在写入路径定下来之前**恒为 0，消费端不得依赖**。候选路径两条：
+  1. **材质侧逐像素写**（`Material0` + 未来的 `Material1`）：材质在哪就在哪写，palette 不带这些数；
+  2. **CPU 编译表时从 renderer 的材质读一次、缓存进 palette 行**：材质仍是唯一真值，palette 只是缓存（需要一条跨仓的属性名协议，多 renderer 数值不一致时要能报出来）。
+  定这条之前**不要动 P2 的 SSS / PLR 迁移**（否则会迁移到一个还没有写入端的通道上）。
 - **角色隔离不靠额外图**：ID 的高字节即角色；可视化 / 导出查 `displayColor` —— 即业界那套"用颜色表示 ID"，但颜色是**查表得到**而非把 hash 塞进像素（hash 进像素会让 ID 再也不能被任何滤波碰）。
 - **同义量只能有一个来源**：`roughness` / `metallic` / `thickness` 既在 palette（常量缺省）又在 `Material0`（贴图驱动的逐像素值）。规则：由部件行 `flags` 里的"贴图驱动"位决定——**置位 = 只读 `Material0`、palette 对应字段无效；未置位 = 只读 palette、`Material0` 对应通道未定义**。消费端只查这个位，不许"两边取一个"、更不许相乘。
 - **越界兜底**：`charId` 越界、或 `slot >= characterTable[charId].slotCount` → 返回 unknown 行。**不能简单 clamp 行号**——`rowBase + slot` 越界会落到**别的角色**的行上，读出来的属性看着合法、其实是错的（比崩溃更难查）。
@@ -328,8 +332,9 @@ ID pass 的 depth-stencil 附件只服务于两件事：**决出每个 sample �
 
 ### 5.7 组件（`HoCharacterBufferGroup`，形态沿用）
 
-- 区域从**固定 8 个 bit** 升级成**最多 4096 条命名条目**：名称（唯一，AOV manifest 用）、**类别**（枚举，单值表示"这是什么"）、**标签位掩码（32 位）**、材质侧属性（class / thickness / curvature / transmittance / roughness / metallic / reflectance / plrStrength）、**显示色**。
-- 渲染器归属到条目（与今天"给渲染器打勾"同一交互）；保留角色 ID 字段；`HoMetadataBufferSubject` 的高级覆盖并进同一条目。
+- 区域从**固定 8 个 bit** 升级成**最多 4096 条命名条目**：名称（唯一，AOV manifest 用）、**类别**（枚举，单值表示"这是什么"）、**标签位掩码（32 位）**、**显示色**。
+- 渲染器归属到条目（与今天"给渲染器打勾"同一交互）；保留角色 ID 字段；**面部朝向（`faceBone` + 三轴）与 `TryGetWorldFacing()` 一并沿用**（眼透相机角度修正、将来的 SDF 读它，调用方式与旧组件同形）。
+- **`HoMetadataBufferSubject` 的"高级覆盖并进同一条目"这条撤回**：那些字段是**材质数值**，组件再存一份就是两个来源（§5.3 的 P2 闸门）。Subject 的覆盖语义要么落回材质侧，要么等 §5.3 定下"CPU 从材质读一次进 palette"之后再作为**显式覆盖**引入——那时需要一条"本条目覆盖材质值"的标示，不能默认覆盖。
 - 组件同时是**运行时映射的所有者**：维护"渲染器 → 条目"并把条目索引写进 RSUV（不再写 MPB）；兜底路径所需的全局常量值也由它提供。
 - **标签保留的理由**：像 `CharacterFull`（= 该角色任意部件）这种"多归属"语义用标签最自然，消费端一次 `&` 即可查询；**"整角色"级语义放角色表那一行**（§5.3 的两级表），不必在每个部件行重复。
 - **校验**：一个 renderer 只属一个条目；名称唯一；palette ≤ 4096 且越界告警；renderer 类型是否支持 RSUV（不支持则走兜底路径并提示）；**ID 跨帧稳定**；**RSUV 未序列化 → 每次 OnEnable / 部件表变化都要重写**（§5.2），并保留 palette 第 0 行 = unknown。
@@ -343,7 +348,7 @@ ID pass 的 depth-stencil 附件只服务于两件事：**决出每个 sample �
 | 角色特化 轮廓场 | 类别 / 标签查询 + 覆盖率 |
 | 材质侧捕获 | 从 **RSUV** 解出索引 → 查 palette 取 slot / character / category / tags（不读 MPB） |
 | ScreenProcess 规则 | palette 字段枚举 + **选择**（决策 10 / 19，§5.11） |
-| SSS | `_Coverage` + palette（thickness / curvature / class / transmittance）+ `_Surface` + **GeometryBuffer normalDepth**（几何门控不变）；thickness 若被贴图驱动则改读 `Material0.b`（§5.3 唯一来源规则） |
+| SSS | `_Coverage` + `_Surface` + **GeometryBuffer normalDepth**（几何门控不变）+ thickness / curvature / class / transmittance——**这几项读哪里取决于 §5.3 的 P2 闸门**（材质侧逐像素写，或 CPU 从材质读进 palette）；定下来之前不要迁 |
 | PlanarReflection | `_Coverage` + palette（反射参数）+ `_Surface` + **GeometryBuffer normalDepth/coverage**（几何门控不变） |
 | 调试 / AOV | ID / 覆盖率分层显示；palette `displayColor`；manifest JSON |
 
