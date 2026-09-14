@@ -132,6 +132,25 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 new Vector4(0.7882353f, 0.5058824f, 0.2901961f, 1.0f), // #c9814a
                 new Vector4(0.96862745f, 0.8509804f, 0.65882355f, 1.0f) // #f7d9a8
             ),
+            // 【双色调】铜色：matplotlib copper 控制点的线性插值：黑→铜褐→浅铜。比棕褐更偏红铜的复古双色调。（色表：copper，matplotlib
+            // （BSD 风格））
+            new GradientMapLook(
+                "双色调",
+                "铜色",
+                1.0f,
+                0.0f,
+                new Vector2(0.0f, 1.0f),
+                0.0f,
+                0.0f,
+                0.0f,
+                0.5f,
+                ImageProcessBlendMode.Normal,
+                new Vector4(0.0f, 0.33333334f, 0.6666667f, 1.0f),
+                new Vector4(0.0f, 0.0f, 0.0f, 1.0f), // #000000
+                new Vector4(0.41176462f, 0.2604f, 0.16583334f, 1.0f), // #69422a
+                new Vector4(0.82352924f, 0.5208f, 0.33166668f, 1.0f), // #d28555
+                new Vector4(1.0f, 0.7812f, 0.4975f, 1.0f) // #ffc77f
+            ),
             // 【胶片】高对比黑白：印片曲线式的黑白：暗部压死、亮部抬肩，对比比线性黑白强得多。
             new GradientMapLook(
                 "胶片",
@@ -275,6 +294,82 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 new Vector4(0.24705882f, 0.3529412f, 0.16470589f, 1.0f), // #3f5a2a
                 new Vector4(0.78431374f, 0.26666668f, 0.23529412f, 1.0f), // #c8443c
                 new Vector4(0.9647059f, 0.84705883f, 0.76862746f, 1.0f) // #f6d8c4
+            ),
+            // 【数据可视化】红外热图：热像仪的 ironbow 色表：黑→紫→橙→近白。用于夜视/热成像风格，也可以当高对比的暖冷对撞用。（色表：ironbow，MIT（
+            // MickTheMechanic/FLIR-style-thermal-color-palettes））
+            new GradientMapLook(
+                "数据可视化",
+                "红外热图",
+                1.0f,
+                0.0f,
+                new Vector2(0.0f, 1.0f),
+                0.0f,
+                0.0f,
+                0.0f,
+                0.5f,
+                ImageProcessBlendMode.Normal,
+                new Vector4(0.0f, 0.33333334f, 0.6666667f, 1.0f),
+                new Vector4(0.0f, 0.0f, 0.039215688f, 1.0f), // #00000a
+                new Vector4(0.73333335f, 0.019607844f, 0.5764706f, 1.0f), // #bb0593
+                new Vector4(0.972549f, 0.54901963f, 0.0f, 1.0f), // #f88c00
+                new Vector4(1.0f, 1.0f, 0.9647059f, 1.0f) // #fffff6
+            ),
+            // 【数据可视化】光谱：Google turbo 伪彩：深蓝紫→青→黄→暗红。把亮度做成扫描/仪器感的彩色层次，适合科幻与科技界面。（色表：turbo，Apac
+            // he-2.0（Copyright 2019 Google LLC，作者 Anton Mikhailov））
+            new GradientMapLook(
+                "数据可视化",
+                "光谱",
+                1.0f,
+                0.0f,
+                new Vector2(0.0f, 1.0f),
+                0.0f,
+                0.0f,
+                0.0f,
+                0.5f,
+                ImageProcessBlendMode.Normal,
+                new Vector4(0.0f, 0.33333334f, 0.6666667f, 1.0f),
+                new Vector4(0.1882353f, 0.07058824f, 0.23137255f, 1.0f), // #30123b
+                new Vector4(0.101960786f, 0.89411765f, 0.7137255f, 1.0f), // #1ae4b6
+                new Vector4(0.98039216f, 0.7294118f, 0.22352941f, 1.0f), // #faba39
+                new Vector4(0.47843137f, 0.015686275f, 0.011764706f, 1.0f) // #7a0403
+            ),
+            // 【数据可视化】岩浆：matplotlib inferno：黑→紫红→橙→淡黄，感知均匀的暖色伪彩，暗部层次比普通冷暖渐变清楚。（色表：inferno，mat
+            // plotlib（BSD 风格））
+            new GradientMapLook(
+                "数据可视化",
+                "岩浆",
+                1.0f,
+                0.0f,
+                new Vector2(0.0f, 1.0f),
+                0.0f,
+                0.0f,
+                0.0f,
+                0.5f,
+                ImageProcessBlendMode.Normal,
+                new Vector4(0.0f, 0.33333334f, 0.6666667f, 1.0f),
+                new Vector4(0.001462f, 0.000466f, 0.013866f, 1.0f), // #000004
+                new Vector4(0.472328f, 0.110547f, 0.428334f, 1.0f), // #781c6d
+                new Vector4(0.929644f, 0.411479f, 0.145367f, 1.0f), // #ed6925
+                new Vector4(0.988362f, 0.998364f, 0.644924f, 1.0f) // #fcffa4
+            ),
+            // 【数据可视化】叶绿：matplotlib viridis：深紫→蓝绿→绿→黄，感知均匀且明度单调，暗部不会糊成一团。（色表：viridis，matplotl
+            // ib（BSD 风格））
+            new GradientMapLook(
+                "数据可视化",
+                "叶绿",
+                1.0f,
+                0.0f,
+                new Vector2(0.0f, 1.0f),
+                0.0f,
+                0.0f,
+                0.0f,
+                0.5f,
+                ImageProcessBlendMode.Normal,
+                new Vector4(0.0f, 0.33333334f, 0.6666667f, 1.0f),
+                new Vector4(0.267004f, 0.004874f, 0.329415f, 1.0f), // #440154
+                new Vector4(0.190631f, 0.407061f, 0.556089f, 1.0f), // #31688e
+                new Vector4(0.20803f, 0.718701f, 0.472873f, 1.0f), // #35b779
+                new Vector4(0.993248f, 0.906157f, 0.143936f, 1.0f) // #fde725
             ),
         };
 

@@ -259,7 +259,7 @@
 按你的划分，两者都**不是**改 Gradient，而是新效果：
 
 **B — 亮度驱动的 Gradient Map（新 ImageProcess 效果）——已落地**
-- 已实现为独立效果 `ImageProcessEffect.GradientMap`「渐变映射」：4 个参数打包色标、输入选择（亮度/红/绿/蓝/最大值/平均值/饱和度）、黑场白场窗口、反转、色阶数（平涂）、显示空间/线性光/Oklab 插值、输出抖动，另有 11 个 look。
+- 已实现为独立效果 `ImageProcessEffect.GradientMap`「渐变映射」：4 个参数打包色标、输入选择（亮度/红/绿/蓝/最大值/平均值/饱和度）、黑场白场窗口、反转、色阶数（平涂）、显示空间/线性光/Oklab 插值、输出抖动，另有 5 组 16 个 look（其中 5 个的颜色采样自已发布色表：matplotlib copper/inferno/viridis、Google turbo、FLIR 风格 ironbow）。
 - 最终选择的路线是"参数打包若干停靠点"而不是 ramp 贴图：Volume profile 自包含、不占 `_LayerTexture`、预设可以直接写数值。代价是色标上限 4 个（详见 `GradientMap.md`）。
 - 对标：Photoshop `Gradient Map` / AE `Colorama`（**Adobe 正文抓不到，只作命名参考**）；可核实的一手来源是 GPU Gems 1 第 22 章的 1D colour-correction map（`float grayscale = dot(float3(0.222,0.707,0.071), inColor); OutColor = tex1D(ColorCorrMap, grayscale);`）与 Godot 的 `Color Correction` 1D 渐变（左端=黑、右端=白、线性黑白渐变不产生变化）。
 - 细节、参数表、来源可信度与验证结果见 `GradientMap.md`。

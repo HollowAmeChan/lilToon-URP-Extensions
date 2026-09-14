@@ -18,7 +18,7 @@
 - `ImageProcessStackVolumeEditor` 和 `ScreenProcessStackVolumeEditor` 负责层列表、图标按钮、预设菜单、每个效果的参数 UI。
 - `调色`（`ColorGradingCustom`）的预设根级只有 `默认`（重置），其余 34 个 look 统一走 `基础/电影感/胶片/动画/风格` 五个子菜单，见 `ColorGradingPresets.md`。
 - `渐变`（`Gradient`）除原有 4 种形状外新增 4 个两点模式（线性/径向/椭圆/锥形，旋转靠拖 B 点）、过渡曲线、镜像（反向渐变）、线性光插值、分辨率量化与输出抖动的暴露，见 `GradientInvestigation.md`。
-- `渐变映射`（`GradientMap`，新增）是亮度/通道驱动的 4 色标颜色映射（Photoshop Gradient Map 那一类），带输入窗口、反转、色阶数（平涂）、线性光/Oklab 插值、输出抖动，以及 4 组 11 个 look，见 `GradientMap.md`。
+- `渐变映射`（`GradientMap`，新增）是亮度/通道驱动的 4 色标颜色映射（Photoshop Gradient Map 那一类），带输入窗口、反转、色阶数（平涂）、线性光/Oklab 插值、输出抖动，以及 5 组 16 个 look（含 matplotlib/Google turbo/FLIR 风格色表采样），见 `GradientMap.md`。
 - `Editor/PostProcessing/ViewControls` 提供屏幕空间中心、半径、方向等 SceneView 操作控件。
 - `ScreenProcessRuleMaskEditorUtility` 提供基于 MetadataBuffer 的规则遮罩编辑 UI。
 
@@ -128,7 +128,7 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 
 `Glass / 玻璃` 是 camera color 上的单 pass 毛玻璃效果。它以 SDF 描述矩形、圆角矩形和正多边形，支持中心位置、宽高和旋转；边缘带可选沿 SDF 法线与切线混合方向置换背景，并加入随边缘方向变化的柔和高光；边缘颜色从玻璃主色逐步调制到“玻璃主色乘以原图颜色”。模糊采用圆盘采样核，低/中/高质量分别为 9/17/25 tap，避免四向十字纹理。Inspector 提供 GameView 手柄，可拖动中心、宽度、高度和旋转。其参数槽约定为：`parameters0 = (中心 X, 中心 Y, 宽, 高)`，`parameters1 = (旋转角, 形状, 圆角半径, 多边形边数)`，`parameters2 = (模糊像素, 质量, 边缘宽度像素, 边缘柔化像素)`，`parameters3 = (边缘置换开关, 置换像素, 边缘主色混合, 玻璃不透明度)`。
 
-`GradientMap / 渐变映射` 是单 pass 的亮度/通道驱动颜色映射：`parameters0 = (输入, 黑场, 白场, 抖动)`，`parameters1 = (色标 1–4 位置)`，`parameters2..parameters5 = 色标 1–4 的 RGBA`，`parameters6 = (插值空间, 反转, 色阶数, 预留)`，`parameters7..parameters12` 预留。默认是黑白线性色标 + `正常` 混合，所以新加的层等于"亮度转灰度"；预设根级只有 `默认`，其余 11 个 look 走 `双色调/胶片/风格` 三个子菜单。细节、来源与验证见 `GradientMap.md`。
+`GradientMap / 渐变映射` 是单 pass 的亮度/通道驱动颜色映射：`parameters0 = (输入, 黑场, 白场, 抖动)`，`parameters1 = (色标 1–4 位置)`，`parameters2..parameters5 = 色标 1–4 的 RGBA`，`parameters6 = (插值空间, 反转, 色阶数, 预留)`，`parameters7..parameters12` 预留。默认是黑白线性色标 + `正常` 混合，所以新加的层等于"亮度转灰度"；预设根级只有 `默认`，其余 16 个 look 走 `双色调/胶片/风格/数据可视化` 四个子菜单。细节、来源与验证见 `GradientMap.md`。
 
 ## CharacterSpecialization
 
