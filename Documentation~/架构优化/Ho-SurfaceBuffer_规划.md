@@ -26,7 +26,7 @@
 | `Selection` | 成对 | `R=id0, G=cov0, B=id1, A=cov1`；**本 feature 自己的具名选择** | RGBA8 ×N | 材质 | 只进 AC，由 AC 叠出下游消费的图 |
 | `Emission` | — | **占位**：契约里登记名字，**lilToon 侧没有 pass 写它 ⇒ 不分配通道** | — | 无 | 无 |
 
-- `Selection` 与 OB 的 selection 同构，**名字里不带 Cryptomatte**。
+- `Selection` 与 OB 的 `Selection` **同构同数**，**名字里不带 Cryptomatte**。今天材质 custom0~3 = 这里的**材质位 0~3**，名字与类型由 OB 预先声明的共享名字表给出（见 `Ho-ObjectBuffer_规划.md` §1.1），**SB 只写值**；SB 按名覆盖 OB 的 ID 渠道，AC 按 object < surface 叠。
 - `Normal` 与 GB 的几何法线是**并列的两个量**：GB 出几何法线（遮挡、阴影偏移、描边），SB 出着色法线（PBR、SSR）。
 - `Emission` 的字段语义等 lilToon 侧有 pass 写它时再冻结。
 
@@ -103,7 +103,7 @@ _UsePlanarReflection             → 只在总开关打开时生效
 1. `Material` 与 `Reflection` **不并**（各自一张 RT）。
 2. `Normal` **只存着色法线**（`octa`，含法线贴图）；几何法线留在 GB。
 3. `Emission` **登记为占位**：契约留名，不分配通道、不阻塞本轮。
-4. `Selection` 层数与 OB **一致**（8 层/像素 = 4 张 RGBA8），**名字表容量也与 OB 同量级（≤256 具名）**。
+4. `Selection` 层数与 OB **一致**（8 层/像素 = 4 张 RGBA8，`R=id0,G=cov0,B=id1,A=cov1`），**名字表容量也与 OB 同量级（≤256 具名）**；**SB 按名覆盖 OB 的 ID 渠道**。
 5. `materialClass` **留在 SB 的 `Classification`**（不进 OB 的表）。
 6. `plrStrength` 材质侧是 `Range(0,1)` ⇒ **8 bit 足够**。
 7. 表面色来源 = **`fd.col`**（lilToon 主色链）。
