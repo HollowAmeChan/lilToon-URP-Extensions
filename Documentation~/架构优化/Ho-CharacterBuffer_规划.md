@@ -147,7 +147,7 @@ ID + 覆盖率合计 **3 张 RGBA8 = 12 B/px**（常开部分）；两张 `Mater
 
 **几何唯一来源的三条配套规则**（决策 16）：
 
-1. **要几何只有一个地址**：`_HoGeometryBufferNormalDepthTexture`（法线 + 线性深度）/ `_HoGeometryBufferDepthTexture` / `_HoGeometryBufferCoverageTexture`。CharacterBuffer 的消费者里凡涉及法线、线性深度、几何覆盖率的一律读这里——现有消费端（角色特化 composite、SSS、PLR、ScreenProcess 各效果、GTAO、DebugTile）本来就都是这么读的，迁移**不碰几何层**。
+1. **要几何只有一个地址**：`_HoGeometryBufferNormalDepthTexture`（法线 + 线性深度）/ `_HoGeometryBufferDepthTexture` / `_HoGeometryBufferCoverageTexture`。CharacterBuffer 的消费者里凡涉及法线、线性深度、几何覆盖率的一律读这里——现有消费端（角色特化 composite、SSS、PLR、ScreenProcess 各效果、GTAO、DebugTile）本来就都是这么读的，迁移**不碰几何层**。（覆盖率读法：MSAA 下 `_HoGeometryBufferCoverageTexture.r` = 总覆盖率，配 `_HoGeometryBufferCoverageTextureValid` 门控；否则 `LilHoGeometryBufferCoverage()` 从 `NormalDepth.a` 派生。**那张图的 `.g` 是"被解析面占有率"，由法线夹角 + 深度带的启发式分组算出，不能当成"某个部件的占比"**——那正是 CB 要精确回答的问题。）
 2. **内部附件允许存在、永不发布**：ID pass 必须有自己的 depth-stencil（占用判定 + tie-break），但它不出现在任何发布清单、不进契约、不被采样。
 3. **永不比较两个来源的深度**：这正是 `MSAA.md` 里那类"约一个采样间距错位"的来源。已知的**结构性例外**只有一个——眼透的 `hairInFront` 必须比较"捕获到的眼睛深度"（`HoCharacterCaptureCommon.hlsl` 里 pre-multiply 的线性深度）与 GeometryBuffer 深度：被前发遮住的眼睛在 GeometryBuffer 里根本不可见，所以这个跨来源比较无法消除，保留并在此记录。
 
@@ -252,7 +252,7 @@ ID pass 的 depth-stencil 附件只服务于两件事：**决出每个 sample �
 
 ### 5.9 与 GeometryBuffer 的对齐（同一类问题的两份实现）
 
-两者都是"**主动重绘一层屏幕空间事实 + MSAA resolve + 发布全局纹理**"，所以必须逐条对齐；`Documentation~/GeometryBuffer.md` 是 GB 的公共契约，CB 落地后应当有同体例的契约。
+两者都是"**主动重绘一层屏幕空间事实 + MSAA resolve + 发布全局纹理**"，所以必须逐条对齐；`Documentation~/GeometryBuffer.md` 是 GB 的公共契约，CB 落地后应当有同体例的契约。**本节的 GB 结论一律以代码为准**：该契约文档已复核出若干与代码不符之处，见 ⑦。
 
 **① 可以照抄的三件套**（决策 7 的细化清单）
 
@@ -262,7 +262,7 @@ ID pass 的 depth-stencil 附件只服务于两件事：**决出每个 sample �
 | resolve | `HoGeometryBufferResolve.shader` + `_HO_GEOMETRY_BUFFER_MSAA_2/4/8` 多关键帧 + `Texture2DMS` 逐样本读 | 同关键词模式，换归约逻辑 |
 | 两条路径 | RG：`UniversalRenderer.CreateRenderGraphTexture` + `SetRenderAttachmentDepth`；兼容：`RTHandle` + `ConfigureTarget`/`SetRenderTarget` | 同构 |
 | 发布与复位 | `SetGlobalTextureAfterPass` + `_HoGeometryBufferValid`；禁用/不支持/结束时复位为 black texture | 同（含 `_Valid`） |
-| 懒分配 | VisualSurfaceBuffer 只在有消费者时分配（GB 文档 §11.3/11.4） | 同：没有消费者时 ID pass 不跑，`Material*` 不分配 |
+| 分配策略 | **GB 实际是无条件分配**：`ReAllocateIfNeeded` 恒分配 `normalDepth + depth + outlineNormalDepth`；MSAA 额外件（两张 MSAA color、MSAA depth、两张 R8 coverage）只在 `samples > 1` 时分配、否则 `ReleaseMsaaResolveResources()`；真正按需的只有 sky（`enableSkyBuffer`）。GB 文档 §11.4 的"按视觉消费者懒分配"是**推荐路线、尚未实现** | **CB 不照抄，要比它干净**：没有消费者时 ID pass 不跑；`Material0/1` 只在真的有字段被读时分配；不为描边/天空这类共用语义各开一张图 |
 | Debug | DebugView + DebugTile 注册 view id（`geometry.*`），每个通道必须有视图 | 同：`character.id` / `character.coverage` / 各层 / palette 字段 |
 
 **② 必须一致的地方（否则产生跨来源错位）**
@@ -277,9 +277,9 @@ ID pass 的 depth-stencil 附件只服务于两件事：**决出每个 sample �
 | 维度 | GeometryBuffer | CharacterBuffer |
 | --- | --- | --- |
 | 画什么 | 全场景真实几何 + 描边壳 + sky | **只画角色部件**（layerMask / renderQueue 独立过滤），不含描边 |
-| 覆盖率语义 | `NormalDepth.a` 派生"有没有真实几何"；MSAA 下另有 R8G8 coverage（R=总覆盖、G=最近面占有率） | **每个 ID 的占比**（4 层），直接回答"我这个部件占多少" |
+| 覆盖率语义 | `NormalDepth.a` 派生"有没有真实几何"；MSAA 下另有 R8 coverage（resolve 的 `SV_Target1`：R=总覆盖、G=被解析面占有率）；**G 不按身份分组**——`HoGeometryBufferResolve.shader` 用"法线夹角小（`step(0.9, dot)`）+ 深度落在 0.2% 带内"判同组，作者注释明确"宽松方向的错误只会少报占比" | **每个 ID 的占比**（4 层），按 per-sample ID **精确分组**，直接回答"我这个部件占多少" |
 | resolve 运算 | 挑最近样本得到该像素几何 + 写覆盖率 | 逐样本数票 + 取前 4 个 ID 及占比 |
-| 深度 | 有独立 `DepthTexture`（自己 ZTest + 描边可见性）并**发布**它，但契约明确"不应被当线性深度语义采样" | 同样有内部 depth-stencil 附件，但**根本不发布**（更干净） |
+| 深度 | 有独立 `DepthTexture`（自己 ZTest + 描边可见性）并**发布**它，而且**真被采样**：GTAO 在 `HoGTAO.shader` 点采样它的 `.r`（原始设备深度 / reversed-Z），再 `LinearEyeDepth(raw, _ZBufferParams)` 转线性。GB 文档 §3.2"不应被当线性深度语义采样"只对了一半——实际存在**两套深度语义**（`DepthTexture.r` = 原始设备深度、`NormalDepth.a` = 线性 eye depth），混用即错 | 同样有内部 depth-stencil 附件，但**根本不发布**（更干净）：CB 不制造第二套深度语义 |
 | sky | 有 SkyTexture（背景 radiance/贡献） | 不需要：未写入的像素就是 ID 0 = 背景 |
 | 描边 | 独立 `OutlineNormalDepth`（物理/视觉分离，AO/GI 不得当真实表面） | **描边不写 ID**（决策 18），需要"连描边一起算角色"时用 GB 的 outline coverage 补 |
 
@@ -303,6 +303,20 @@ MSAA 阶段**每个样本只需要一个 ID**（一个样本只属于一个部�
 | CB 瞬态（ID 的 MSAA 颜色 8 + depth-stencil ≈16） | 24 | 47.4 MiB |
 
 即：**常驻降到约 38%，两张按需通道全开也仍不到现状的 2/3**；瞬态只在 ID pass 期间存在。
+
+**⑦ GB 文档逐条复核（读代码得出；冲突处以代码为准）**
+
+| `Documentation~/GeometryBuffer.md` 的说法 | 代码事实 |
+| --- | --- |
+| §3.1「Coverage 不是额外的第五通道，而是从 alpha 派生」，采样函数只列 4 个 | 有独立 coverage RT：`_HoGeometryBufferCoverageTexture` / `_HoGeometryBufferOutlineCoverageTexture`（R8，`CreateCoverageDescriptor` → `GetCoverageGraphicsFormat()`，**只在 MSAA resolve 时创建**），配 `_HoGeometryBufferCoverageTextureValid` / `...OutlineCoverageTextureValid` 门控。`HoGeometryBufferSampling.hlsl` 里还有三个没登记进文档的函数：`LilHoGeometryBufferCoverageAt(uv, nd)`（MSAA 下优先读 coverage RT 的 `.r`）、`LilHoGeometryBufferOutlineCoverageAt()`、`LilHoGeometryBufferEncodedNormalOrBlack()` |
+| §3.1 说 coverage = `step(0.0001, a)` | 对（alpha 路径），但 MSAA 下 `.a` 是"被选中的那个最近样本的深度"，与非 MSAA 的二值 alpha 不是同一种分布——这正是 `...CoverageAt()` 存在的理由 |
+| §3.2「DepthTexture 不应该被当作可以直接采样的线性深度语义」 | 方向对、表述错。GTAO **直接点采样** `_HoGeometryBufferDepthTexture.r`（原始设备深度）再 `LinearEyeDepth(raw, _ZBufferParams)`；C# 侧四处 `SetGlobalTexture(GeometryDepthInputId, …)`、两处当只读 depth attachment（`SetRenderAttachmentDepth(..., AccessFlags.Read)`）。真实风险是**两套深度语义并存**（raw vs 线性），不是"不能采样" |
+| §2 生产顺序 | 漏了三件事：output pass 内部的 MSAA resolve 子 pass（RG 是独立 `AddRasterRenderPass`："Ho-GeometryBuffer MSAA Resolve" / "Outline MSAA Resolve"；兼容路径是 `ResolveGeometryBuffer()` / `ResolveOutlineNormalDepth()`）、resolve 后的 coverage-valid 全局发布、以及默认 `AfterRenderingPostProcessing` 的 Debug pass |
+| §5「RenderGraph 每帧暴露 4 个 texture」 | `HoGeometryBufferRenderGraphResources` 实为 **6 个**：另有 `coverageTexture` / `outlineCoverageTexture`；且 `HasRequiredTextures` 只要求 `normalDepthTexture` —— "必需/可选"的分法与文档暗示的不同 |
+| §11.3 成本表 | 没量化 MSAA 阶段（两张 MSAA color + MSAA depth + 两张 R8 coverage），而 CB 的规划正依赖这部分；`SkyTexture` 一行也没标"仅 `enableSkyBuffer` 时分配" |
+| §11.4「后续可以根据视觉消费者登记做懒分配」 | 表述诚实（代码确实还没做），但**读的时候容易当成已实现**：除 sky 外全部无条件分配 |
+| §6 view 列表 / §7 消费者表 | §6 的 8 个 `geometry.*` view id 与 `HoGeometryBufferDebugViewInfo.cs` 完全一致 ✓。§7 两处不准：GTAO 一行没写它真正依赖的 `DepthTexture`；SSGI 一行没写它的实际机制——`HoSSGI.shader` 里**根本没有** `_HoGeometryBufferNormalDepthTexture`，SSGI 是在 C# 里取 `geometry.normalDepthTexture` 句柄后绑成自己的 `_HoSSGIGeometry`，并用它建 `_HoSSGIDepthPyramid0-4`（这就是"消费者取句柄、用自己名字绑定"的现成范式，CB 照这个走） |
+| §3.3 / §4 关于 `CustomShaderResources/URP/Default*Outline.lilblock` 的改动指引 | 本仓库内**不存在任何 `.lilblock`**：这个 workspace 只有 URP Extensions 包，lilToon 的模板/pass 生成在另一个仓库。凡"改 lilToon 模板"的步骤都不是本仓库能独立完成的（登记为跨仓库依赖） |
 
 ### 5.10 契约与 AOV
 

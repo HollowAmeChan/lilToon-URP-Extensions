@@ -38,10 +38,18 @@ beginCameraRendering
        -> fallback/base GeometryBuffer pass
        -> lilToon HoGeometryBuffer pass
        -> lilToon HoGeometryBufferOutlineNormalDepth pass
-  -> 可选 Ho-GeometryBuffer Sky（默认 AfterRenderingSkybox）
+       -> MSAA resolve（仅 msaaSamples > 1，见下）
+  -> 可选 Ho-GeometryBuffer Sky（默认 AfterRenderingSkybox，enableSkyBuffer 开启时才跑）
   -> 其他消费者读取全局 RT / RenderGraph TextureHandle
+  -> 可选 Debug（默认 AfterRenderingPostProcessing）
   -> 相机结束或 ScreenProcess 收尾时清理全局绑定
 ```
+
+MSAA resolve 不属于独立 pass 类，它挂在 `HoGeometryBufferPass` 内部：
+
+- RenderGraph 路径：`AddRasterRenderPass` 名为 `Ho-GeometryBuffer MSAA Resolve` 与 `Ho-GeometryBuffer Outline MSAA Resolve`，把 MSAA 附件归约进单采样目标并顺带产出覆盖率；
+- 兼容路径：`ResolveGeometryBuffer(cmd)` / `ResolveOutlineNormalDepth(cmd)`；
+- 两者都设置 `_HoGeometryBufferCoverageTextureValid` / `_HoGeometryBufferOutlineCoverageTextureValid`（非 MSAA 为 0）。
 
 `HoGeometryBufferPass` 同时生产真实几何和描边 visual normal/depth：
 
@@ -65,7 +73,7 @@ GeometryBuffer 的 `passEvent`、render queue、layer mask、render scale 都由
 | `RGB` | 世界法线编码：`normal * 0.5 + 0.5` | 未定义；必须先检查 coverage/normal validity |
 | `A` | 线性 eye depth，单位与相机空间深度一致 | `0` |
 
-Coverage 不是额外的第五通道，而是从 alpha 派生：
+Coverage 在非 MSAA 下不是额外的通道，而是从 alpha 派生（MSAA 下另有 resolve 出来的 R8 覆盖率图，见下）：
 
 ```hlsl
 half coverage = LilHoGeometryBufferCoverage(normalDepth);
@@ -75,9 +83,19 @@ half coverage = LilHoGeometryBufferCoverage(normalDepth);
 公共采样函数位于 `Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl`：
 
 - `LilHoGeometryBufferCoverage()`：判断真实几何是否覆盖像素；
+- `LilHoGeometryBufferCoverageAt(uv, normalDepth)`：**MSAA 下优先读 resolve 出来的覆盖率图**，否则回退到 `LilHoGeometryBufferCoverage()`；
+- `LilHoGeometryBufferOutlineCoverageAt(uv, outlineNormalDepth)`：同上，作用于描边覆盖率；
 - `LilHoGeometryBufferNormalValid()`：判断 coverage 和法线是否同时有效；
 - `LilHoGeometryBufferLinearDepthOrFar()`：无 coverage 时返回调用方指定的远裁剪面；
+- `LilHoGeometryBufferEncodedNormalOrBlack()`：无效法线返回黑色；
 - `LilHoGeometryBufferWorldNormalOrZero()`：无效法线返回零。
+
+MSAA 下覆盖率有独立来源，不能只看 alpha：
+
+- `_HoGeometryBufferCoverageTexture` / `_HoGeometryBufferOutlineCoverageTexture`：R8，`HoGeometryBufferResolve.shader` 的 `SV_Target1`，只在 `msaaSamples > 1` 时创建；
+- `.r` = 该像素被几何覆盖的样本占比（**总覆盖率**，公共契约）；
+- `.g` = **被解析面占有率**：resolve 选中的那个最近样本所代表的表面占了多少像素。它由"法线夹角小 + 深度落在同一条带内"的启发式分组算出（不是按对象身份分组的），所以只能当"最近面占多少"，**不能当成"某个部件占多少"**；
+- 有效性由 `_HoGeometryBufferCoverageTextureValid` / `_HoGeometryBufferOutlineCoverageTextureValid` 发布（非 MSAA 时为 0，此时 `...CoverageAt()` 回退到 alpha 路径）。
 
 #### NormalDepth 的消费者规则
 
@@ -94,9 +112,17 @@ half coverage = LilHoGeometryBufferCoverage(normalDepth);
 
 - GeometryBuffer 本身的深度测试；
 - OutlineNormalDepth pass 的可见性测试；
-- 需要硬 ZTest 的内部绘制流程。
+- 需要硬 ZTest 的内部绘制流程；
+- **GTAO 的深度输入**：`HoGTAO.shader` 点采样 `.r` 得到**原始设备深度**（reversed-Z，与 `_CameraDepthTexture` 同一值域），再用 `LinearEyeDepth(raw, _ZBufferParams)` 转成线性；C# 侧通过 `HoGeometryBufferShaderConstants.DepthTextureId` 发布它并当作只读 depth attachment 绑定。
 
-它不是 `_CameraDepthTexture` 的别名，也不应该被当作可以直接采样的线性深度语义。需要在 shader 中消费深度语义时，优先读取 `NormalDepth.a`。
+它不是 `_CameraDepthTexture` 的别名。**这里有两套深度语义，混用即错**：
+
+| 来源 | 内容 | 用法 |
+| --- | --- | --- |
+| `_HoGeometryBufferDepthTexture.r` | 原始设备深度（reversed-Z，非线性） | 必须 `LinearEyeDepth(raw, _ZBufferParams)` |
+| `NormalDepth.a` | 已经是线性 eye depth | 直接用，或 `LilHoGeometryBufferLinearDepthOrFar()` |
+
+需要在 shader 中消费深度语义时，**优先读 `NormalDepth.a`**（少一次转换、且带 coverage gate）；只有确实需要与相机深度缓冲同值域的原始深度时才读 DepthTexture。
 
 ### 3.3 OutlineNormalDepthTexture
 
@@ -182,7 +208,11 @@ define    LIL_OUTLINE
 - `normalDepthTexture`
 - `depthTexture`
 - `outlineNormalDepthTexture`
+- `coverageTexture`（仅 MSAA resolve 生产时有效）
+- `outlineCoverageTexture`（仅 MSAA resolve 生产时有效）
 - `skyTexture`
+
+`HasRequiredTextures` 只要求 `normalDepthTexture` 有效；其余按生产者条件可选。
 
 生产 pass 使用 `SetGlobalTextureAfterPass` 发布全局资源；消费者通过 `frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>()` 获取 TextureHandle，并在实际读取时 `builder.UseTexture(..., AccessFlags.Read)`。
 
@@ -309,7 +339,13 @@ VisualSurfaceBuffer
 | `NormalDepth` | `R16G16B16A16_SFloat` | 8 | 15.8 MiB |
 | `DepthTexture` | D24/D32 | 3-4 | 6.0-7.9 MiB |
 | `OutlineNormalDepth` | `R16G16B16A16_SFloat` | 8 | 15.8 MiB |
-| `SkyTexture` | `R16G16B16A16_SFloat` | 8 | 15.8 MiB |
+| `CoverageTexture` + `OutlineCoverageTexture`（仅 MSAA） | R8 ×2 | 2 | 4.0 MiB |
+| MSAA 阶段（仅 `msaaSamples > 1`，瞬态） | 2×`R16G16B16A16_SFloat`+depth，N 样本 | ≈ 8N + 4N | 例如 4x ≈ 49 MiB |
+| `SkyTexture`（仅 `enableSkyBuffer`，否则记 0） | `R16G16B16A16_SFloat` | 8 | 15.8 MiB |
+
+上表**不含** MSAA 阶段：它只在 output pass 期间存在，但通常是整个系统里最大的一笔带宽（已单列一行）。
+
+分配策略现状（读代码得出，别按"懒分配"假设）：`ReAllocateIfNeeded` **无条件**分配 `NormalDepth` / `DepthTexture` / `OutlineNormalDepth`；MSAA 额外件（两张 MSAA color、MSAA depth、两张 coverage）只在 `msaaSamples > 1` 时分配，否则 `ReleaseMsaaResolveResources()` 回收；只有 sky 是按需的。
 
 实际成本还会受到 render scale、MSAA、XR slice、RT 对齐和 RenderGraph 生命周期影响。当前 OutlineNormalDepth 与主 NormalDepth 同构，便于复用采样协议，但会比原先 R8 coverage 占用更多带宽；真正需要关注的是它是否按视觉消费者需求懒分配。
 
@@ -317,7 +353,7 @@ VisualSurfaceBuffer
 
 1. `OutlineNormalDepth` 与主 `NormalDepth` 使用同构格式，避免消费者维护另一套采样协议。
 2. 需要颜色或种类标记时继续扩展同一个 visual surface contract，避免每个效果各自创建一套 RT。
-3. 只有存在 Outline、DOF、motion blur 或明确的 visual surface 消费者时，才分配 VisualSurfaceBuffer；纯 AO/GI 场景不应为它付出成本。
+3. 只有存在 Outline、DOF、motion blur 或明确的 visual surface 消费者时，才分配 VisualSurfaceBuffer；纯 AO/GI 场景不应为它付出成本。**尚未实现**：当前除 sky 外没有按需分配，见 §11.3。
 4. DebugTile 必须为每个新增 visual channel 提供视图，否则 RT 成本无法在 Frame Debugger 之外被验证。
 
-当前实现处于第 1 阶段：已经有独立 `OutlineNormalDepthTexture`。它目前随 GeometryBuffer 主资源一起创建，后续可以根据项目中的视觉消费者登记做懒分配；normal/depth 已经在同一张视觉 RT 内打包，不再需要再增加独立 `OutlineDepth` attachment。
+当前实现处于第 1 阶段：已经有独立 `OutlineNormalDepthTexture`。它目前随 GeometryBuffer 主资源一起创建，后续可以根据项目中的视觉消费者登记做懒分配（目前并没有"消费者登记"这种机制，唯一的按需分配是 `enableSkyBuffer`）；normal/depth 已经在同一张视觉 RT 内打包，不再需要再增加独立 `OutlineDepth` attachment。
