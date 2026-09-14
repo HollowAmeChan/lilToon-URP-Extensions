@@ -126,6 +126,21 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "硬投影", ApplyScreenProcessHardDropShadowPreset);
                     AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "长投影", ApplyScreenProcessLongDropShadowPreset);
                     break;
+                case ScreenProcessEffect.DepthFog:
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "空气感/远景空气感", ApplyScreenProcessDistantAirDepthFogPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "空气感/清晨薄雾", ApplyScreenProcessMorningMistDepthFogPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "空气感/黄昏尘雾", ApplyScreenProcessDuskHazeDepthFogPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "天气/雨雾", ApplyScreenProcessRainFogDepthFogPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "天气/浓雾", ApplyScreenProcessHeavyFogDepthFogPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "天气/雪雾", ApplyScreenProcessSnowHazeDepthFogPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "高度/深谷高度雾", ApplyScreenProcessValleyFogDepthFogPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "高度/云海", ApplyScreenProcessCloudSeaDepthFogPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "高度/贴地薄雾", ApplyScreenProcessGroundMistDepthFogPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "组合/贴地雾 + 远景霾", ApplyScreenProcessHazeAndMistDepthFogPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "风格/夜景霓虹雾", ApplyScreenProcessNightNeonFogDepthFogPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "风格/沙漠热霾", ApplyScreenProcessDesertHeatHazeDepthFogPreset);
+                    AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "风格/天空染色", ApplyScreenProcessSkyTintDepthFogPreset);
+                    break;
                 case ScreenProcessEffect.DepthOfField:
                     AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "Gaussian 远景虚化", ApplyScreenProcessGaussianDepthOfFieldPreset);
                     AddScreenProcessPresetMenuItem(menu, propertyPath, effect, "Bokeh 人像虚化", ApplyScreenProcessBokehDepthOfFieldPreset);

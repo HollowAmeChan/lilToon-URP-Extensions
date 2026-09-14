@@ -38,6 +38,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ScreenProcessEffect.SkyTyndall, "天光丁达尔", "icon_Flare_Ray_v1"),
             new EffectToggleEntry(ScreenProcessEffect.DropShadow, "投影", "icon_DropShadow_v1"),
             new EffectToggleEntry(ScreenProcessEffect.DepthOfField, "景深", "icon_Effects_v1"),
+            new EffectToggleEntry(ScreenProcessEffect.DepthFog, "深度雾", "icon_Weather_v1"),
             new EffectToggleEntry(ScreenProcessEffect.CustomMaterial, "自定义", "icon_Effects_v1")
         };
 
@@ -178,6 +179,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 case ScreenProcessEffect.SkyTyndall:
                     DrawSkyTyndallProperties(rect, ref y, element);
                     break;
+                case ScreenProcessEffect.DepthFog:
+                    DrawDepthFogProperties(rect, ref y, element);
+                    break;
             }
 
             EditorGUI.indentLevel--;
@@ -197,6 +201,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     return GetPostLightingLineCount(element) + GetRuleLineCount(element);
                 case ScreenProcessEffect.SkyTyndall:
                     return GetSkyTyndallLineCount(element) + GetRuleLineCount(element);
+                case ScreenProcessEffect.DepthFog:
+                    // foldout + colour + blend mode + rule mask header, then the fog rows
+                    return 4 + GetDepthFogLineCount(element) + GetRuleLineCount(element);
                 case ScreenProcessEffect.CustomMaterial:
                     return 7 + GetRuleLineCount(element);
                 case ScreenProcessEffect.DropShadow:
@@ -483,6 +490,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     return 35;
                 case ScreenProcessEffect.DropShadow:
                     return 40;
+                case ScreenProcessEffect.DepthFog:
+                    return 45;
                 case ScreenProcessEffect.DepthOfField:
                     return 50;
                 case ScreenProcessEffect.CustomMaterial:
@@ -623,6 +632,19 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters0", new Vector4(0.35f, -45.0f, 0.85f, 6.0f));
                     SetVector4(element, "parameters1", new Vector4(1.0f, 0.0f, 0.0f, 1.0f));
                     SetBool(element, "useRuleMask", true);
+                    break;
+                case ScreenProcessEffect.DepthFog:
+                    SetColor(element, "color", new Color(0.66f, 0.71f, 0.76f, 1.0f));
+                    SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Normal);
+                    // Depth slot on (exponential, 5 m -> 400 m), height slot off: the usual "distance
+                    // haze" starting point. Both slots and their switches are documented in
+                    // Documentation~/PostProcessing/DepthFog.md.
+                    SetVector4(element, "parameters0", new Vector4(1.0f, (float)ScreenProcessFogDepthMode.Exponential, 5.0f, 400.0f));
+                    SetVector4(element, "parameters1", new Vector4(0.01f, 0.6f, 1.0f, 0.3f));
+                    SetVector4(element, "parameters2", new Vector4(0.49f, 0.58f, 0.71f, 0.0f));
+                    SetVector4(element, "parameters3", new Vector4((float)ScreenProcessFogHeightMode.WindowBelow, (float)ScreenProcessFogHeightReference.World, 0.0f, 12.0f));
+                    SetVector4(element, "parameters4", new Vector4(1.0f, 0.5f, 0.85f, 0.88f));
+                    SetVector4(element, "parameters5", new Vector4(0.92f, (float)ScreenProcessFogSkyMode.Skip, 0.4f, 0.5f));
                     break;
                 case ScreenProcessEffect.DepthOfField:
                     SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Normal);

@@ -18,6 +18,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                     return ScreenProcessShaderConstants.PostLightingShaderName;
                 case ScreenProcessEffect.SkyTyndall:
                     return ScreenProcessShaderConstants.SkyTyndallShaderName;
+                case ScreenProcessEffect.DepthFog:
+                    return ScreenProcessShaderConstants.DepthFogShaderName;
                 case ScreenProcessEffect.CustomMaterial:
                 default:
                     return ScreenProcessShaderConstants.DefaultLayerShaderName;

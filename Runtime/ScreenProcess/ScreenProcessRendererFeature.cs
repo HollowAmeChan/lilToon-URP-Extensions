@@ -511,6 +511,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             public bool isDepthOfField;
             public bool isPostLighting;
             public bool isSkyTyndall;
+            public bool isDepthFog;
             public bool useRuleMaskTexture;
             public bool useRuleNormalDepth;
             public bool useSkyTexture;
@@ -845,10 +846,11 @@ namespace lilToon.URP.Extensions.PostProcessing
                     passData.isDepthOfField = runtimeLayer.settings.effect == ScreenProcessEffect.DepthOfField;
                     passData.isPostLighting = runtimeLayer.settings.effect == ScreenProcessEffect.PostLighting;
                     passData.isSkyTyndall = runtimeLayer.settings.effect == ScreenProcessEffect.SkyTyndall;
+                    passData.isDepthFog = runtimeLayer.settings.effect == ScreenProcessEffect.DepthFog;
                     bool needsRule = passData.isEdgeLight || passData.isDropShadow || passData.isPostLighting || runtimeLayer.settings.useRuleMask || runtimeLayer.settings.debugRuleMask;
                     bool needsRuleMaskResolve = passData.isDropShadow || runtimeLayer.settings.useRuleMask || runtimeLayer.settings.debugRuleMask;
                     passData.useRuleMaskTexture = needsRule && metadataResources.maskIdTexture.IsValid();
-                    passData.useRuleNormalDepth = (passData.isEdgeLight || passData.isPostLighting || passData.isSkyTyndall || passData.isOutline || passData.isDepthOfField) && geometryResources.normalDepthTexture.IsValid();
+                    passData.useRuleNormalDepth = (passData.isEdgeLight || passData.isPostLighting || passData.isSkyTyndall || passData.isOutline || passData.isDepthOfField || passData.isDepthFog) && geometryResources.normalDepthTexture.IsValid();
                     passData.useSkyTexture = passData.isSkyTyndall && geometryResources.skyTexture.IsValid();
                     passData.useRuleSurfaceData = needsRuleMaskResolve && metadataResources.surfaceDataTexture.IsValid();
                     passData.useRuleCustom0 = needsRuleMaskResolve && metadataResources.custom0Texture.IsValid();
@@ -1174,7 +1176,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                 }
 
                 ScreenProcessEffect effect = runtimeLayer.settings.effect;
-                if (effect == ScreenProcessEffect.Outline || effect == ScreenProcessEffect.DepthOfField || EffectRequiresSubjectMask(effect))
+                if (effect == ScreenProcessEffect.Outline || effect == ScreenProcessEffect.DepthOfField ||
+                    effect == ScreenProcessEffect.DepthFog || EffectRequiresSubjectMask(effect))
                 {
                     return true;
                 }

@@ -7,7 +7,7 @@
 已落地的运行时模块：
 
 - `ImageProcess`：Volume 驱动的图像域后处理栈，支持 RenderGraph 和兼容路径，当前效果枚举覆盖 50 个以上图像效果，其中 `RemovedEffectSlot*` 只作为旧序列化槽位保留。
-- `ScreenProcess`：Volume 驱动的语义屏幕效果栈，当前效果为 `CustomMaterial`、`EdgeLight`、`Outline`、`DropShadow`、`DepthOfField`、`PostLighting`、`SkyTyndall`。它可以读取 MetadataBuffer、GeometryBuffer 和可选 Sky buffer。下一步计划中的深度雾/高度雾（家族 C）见 `DepthFog.md`（设计规划，尚未实现）。
+- `ScreenProcess`：Volume 驱动的语义屏幕效果栈，当前效果为 `CustomMaterial`、`EdgeLight`、`Outline`、`DropShadow`、`DepthOfField`、`PostLighting`、`SkyTyndall`、`DepthFog`。它可以读取 MetadataBuffer、GeometryBuffer 和可选 Sky buffer。`DepthFog`（深度雾/高度雾，家族 C）是**一个效果里的两个槽**（各带开关，可同时开），见 `DepthFog.md`。
 - `MetadataBuffer`：输出 Mask/ID、SurfaceData、Material Custom0-3、Object Custom0-7 和 SurfaceColor 等语义缓冲，并提供 Subject/Group 组件写入对象级元数据。
 - `GeometryBuffer`：输出 normal/depth 缓冲，当前还增加了可选 Sky buffer 捕获，供 `SkyTyndall` 等 ScreenProcess 效果使用。
 - `CharacterSpecialization`：角色特化合成已迁移到独立 RendererFeature 和 Volume，包含眼睛透过、前发投影、角色捕获 RT 和调试输出。
@@ -19,6 +19,7 @@
 - `调色`（`ColorGradingCustom`）的预设根级只有 `默认`（重置），其余 34 个 look 统一走 `基础/电影感/胶片/动画/风格` 五个子菜单，见 `ColorGradingPresets.md`。
 - `渐变`（`Gradient`）除原有 4 种形状外新增 4 个两点模式（线性/径向/椭圆/锥形，旋转靠拖 B 点）、过渡曲线、镜像（反向渐变）、线性光插值、分辨率量化与输出抖动的暴露，见 `GradientInvestigation.md`。
 - `渐变映射`（`GradientMap`，新增）是亮度/通道驱动的颜色映射（Photoshop Gradient Map 那一类）：色标用 **Unity 原生 `Gradient`**（≤8 颜色键 + ≤8 透明度键，Blend/Fixed），运行时烘焙成 1×256 的 ramp 贴图，shader 只做一次采样；另有输入窗口、反转、色阶数（平涂）、显示空间/线性光/Oklab 烘焙空间、输出抖动，以及 5 组 16 个 look（含 matplotlib/Google turbo/FLIR 风格色表采样）。见 `GradientMap.md`。
+- `深度雾`（`DepthFog`，新增）是 ScreenProcess 里的合成雾：一个效果带**深度雾**与**高度雾**两个槽（各带开关，可同时开，两层在同一趟 pass 内按顺序合成）。深度项支持直线/指数/指数平方三种距离曲线与远近双色 + 空气感去饱和；高度项支持"高度窗／指数衰减 × 下方浓／上方浓"四种形式，高度取世界 Y（可切相机相对）并用包内既有的 smoothness + hardness 习惯；天空可跳过／一起上雾／单独染色；不依赖 GeometryBuffer 也能工作（自动回落相机深度，正交也走这条路）。预设 5 组 13 个，见 `DepthFog.md`。
 - `Editor/PostProcessing/ViewControls` 提供屏幕空间中心、半径、方向等 SceneView 操作控件。
 - `ScreenProcessRuleMaskEditorUtility` 提供基于 MetadataBuffer 的规则遮罩编辑 UI。
 
