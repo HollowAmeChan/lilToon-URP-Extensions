@@ -27,7 +27,7 @@ MetadataBuffer 把 8 个语义压进 RSUV 低字节的 8 个 bit，语义因此�
 | 3 | **组件形态沿用** | 单组件 `HoCharacterBufferGroup` 挂角色/渲染器上；"8 个固定勾选"升级成最多 4096 条命名条目；不拆 Group + Part |
 | 4 | **旧资产不兼容** | 不做 `objectCustom` 位映射；ScreenProcess 规则资产直接重新设计 |
 | 5 | **命名** | feature `Ho-CharacterBuffer` / 组件 `HoCharacterBufferGroup`；调试沿用"颜色 = 部件显示色"的 picker 语义 |
-| 6 | **ZWrite 沿用 `ZWrite On`** | "透明材质也占满网格面积"保留；将来要改的是 ID pass 的 per-sample 写入（alpha-to-coverage / clip），不是 ZWrite |
+| 6 | **ZWrite 沿用 `ZWrite On`** | "透明材质也占满网格面积"保留；将来要改的是 ID pass 的 per-sample 写入（alpha-to-coverage / `SV_Coverage` / clip），不是 ZWrite。**注意官方约束**：MSAA 下"the runtime shares only one coverage for all RenderTargets"，一张覆盖掩码会同时切 ID 与覆盖率两张图；且 alpha-to-coverage 本身就是为 MSAA 设计的（"intended for use with MSAA… otherwise results can be unpredictable"） |
 | 7 | **覆盖率来源：自建 4x MSAA，与相机的 MSAA 开关解耦** | 结构照抄 `HoGeometryBuffer*`（`_HO_GEOMETRY_BUFFER_MSAA_2/4/8` 关键词分支 + `Texture2DMS` resolve + RG/兼容双路径），但**采样数由本 feature 自己决定（默认 4，可降到 2）**。GB 的采样数是"跟随相机"——`GetSupportedMsaaSampleCount()` 在 `cameraTextureDescriptor.msaaSamples <= 1` 时直接返回 1；CB 若照抄，"相机 AA 关掉"这个**原始 bug 场景**就会拿到二值覆盖率、等于没修。只按**平台能力**回退 4→2→1（`SystemInfo.supportsMultisampledTextures` / `GetRenderTextureSupportedMSAASampleCount`） |
 | 13 | **RSUV 只当 palette 索引**（不再塞语义位） | ID pass 一次画完、不干扰合批（Unity 官方推荐用法）；低 16 bit = 角色 8 + 槽位 8，高 16 bit 预留并登记；不支持 RSUV 的 renderer 才退回逐部件设全局绘制 |
 | 14 | **per-pixel 材质通道按"管线 + 用户"两族预留** | `Material0`(RGBA8,管线逐像素:roughness / metallic / thickness / 备用)+ `Material1`(RGBA16F,用户自定义 0~3);两者**按需分配**;旧 system/custom write mask 变成 palette 字段 |
@@ -116,13 +116,94 @@ MetadataBuffer 把 8 个语义压进 RSUV 低字节的 8 个 bit，语义因此�
 
 ---
 
-## 4. 业界标准做法（要抄的部分）
+## 4. 业界成熟方案与参考（每条都实际打开核对过；写的是"它证明了什么 / 我们抄哪一条"）
 
-- **Cryptomatte**（Foundry Nuke 原生节点，源自 Psyop gizmo，规范 v1.2.0）：渲染器输出 **ID matte**；Nuke 端用调色板式的 **manifest**（metadata 或 sidecar JSON）把名字解析回 ID；matte 与 alpha 的预乘关系显式处理（节点上有 **Unpremultiply**）。见 [Nuke Cryptomatte 节点文档](https://learn.foundry.com/nuke/content/reference_guide/keyer_nodes/cryptomatte.html)、[Cryptomatte Specification v1.2.0](https://raw.githubusercontent.com/Psyop/Cryptomatte/master/specification/cryptomatte_specification.pdf)、[Pixar PxrCryptomatte](https://rmanwiki.pixar.com/download/temp/pdfexport-20191207-071219-0835-8542/REN22-PxrCryptomatte-071219-0835-8543.pdf?contentType=application/pdf)。
+> **核对方式**：以下链接都实际抓取过页面正文再引用。少数站点对本环境拒爬（Cloudflare 挑战或只返回空 body），对应条目**已就地标注**：Blender 手册经镜像核对；RenderMan `Levels` 与 V-Ray `ObjectID` 标为二手来源、只作参照；Khronos 规范页拒爬时引的是规范文本的社区镜像并已注明。
+
+### 4.1 身份与覆盖率分离：离线合成的标准交付格式（Cryptomatte / 多层 ID matte）
+
+- **结构：一张 RGBA 装两个 `(ID, 覆盖率)` 对**。Psyop 参考实现（v1.4.0）的取用表达式就是 `(sub_channel.red == ID ? sub_channel.green : 0.0) + (sub_channel.blue == ID ? sub_channel.alpha : 0.0)`，通道对列表 `[(.red,.green), (.blue,.alpha)]`；多个"层（level）"就是多张这样的图（`Cryptomatte00/01/02…`）。→ **我们同构**：同样按 `(ID, 覆盖率)` 成对组织，但因为 ID 是 16 bit 整数，**一张 RGBA8 装 4 个 ID、另一张装对应的 4 个覆盖率**——比它更省，也不需要每层一张图。见 [Psyop 参考实现 `cryptomatte_utilities.py`](https://raw.githubusercontent.com/Psyop/Cryptomatte/master/nuke/cryptomatte_utilities.py)、[Fusion 模块](https://raw.githubusercontent.com/Psyop/Cryptomatte/master/fusion/Modules/Lua/cryptomatte_utilities.lua)。
+- **层按覆盖率降序排**（MoonRay / DreamWorks 官方文档）："The {id, weight} pairs are **sorted by max coverage**, so the geometry with the most pixel coverage will always be the first entry." → **这就是我们的排序规则**（按样本数 = 覆盖率降序；平票我们额外定义"取更近的样本"，Cryptomatte 没有这一维）。见 [MoonRay: Cryptomatte](https://docs.openmoonray.org/user-reference/how-to-guides/render-outputs/cryptomatte/)。
+- **层数不够 = 掉 ID，表现为噪声**（ASWF《Deep IDs Specification》）："Cryptomatte allocates a fixed size array for IDs, imposing a maximum number of IDs in one pixel. Setting this too large requires a lot of memory; setting it too small **can cause noise if an object is selected which has been discarded from some pixels**." → §5.5 的尾部丢失就是这条；我们的 `K = N = 4` 让它在实际配置里**不可能发生**。见 [OpenEXR Deep IDs Specification](https://openexr.com/en/latest/DeepIDsSpecification.html)。
+- **背景 = 全零**：Psyop 实现把背景定义为 RGBA=0000、matte 0.0 → 与我们"**ID 0 = 背景**、背景由残差表达"一致。
+- **manifest = 名字 → 十六进制 ID 的映射**（EXR metadata 或 sidecar JSON；**规范推荐嵌入，见 §4.2**），且规范要求 ID 存成 FLOAT 而非 HALF、并提醒"care must be taken **not to color manage or otherwise modify them**"。→ 我们的 palette 就是 manifest 的运行时版本；因为用整数 RT 存 ID，**"别做色彩管理"这类外部约定在我们这里不需要存在**。见 [Foundry Nuke: Keying with Cryptomatte](https://learn.foundry.com/nuke/content/comp_environment/cryptomatte/keying_with_cryptomatte.html)、[Nuke Cryptomatte 节点](https://learn.foundry.com/nuke/content/reference_guide/keyer_nodes/cryptomatte.html)、[Blender 实现 `cryptomatte.cc`](https://projects.blender.org/blender/blender/raw/branch/main/source/blender/blenkernel/intern/cryptomatte.cc)。
+- **我们刻意不抄的一个 trick**：Cryptomatte 把 32 bit hash **位重解释（bit-cast）成 float32**，还要修补指数位（`exp == 0x00 / 0xFF` 时 `hash ^= 1 << 23`，避开非规格化数与 NaN），并且只支持 `MurmurHash3_32` + `uint32_to_float32` 这一种转换（Nuke 文档原话："Only one hash type, MurmurHash3_32, and one conversion method, unit32_to_float32, are currently supported."）。CB 写整数 RT，**不需要位运算、不需要指数修补，也不会被任何滤波或色彩管理碰到**。
 - **ID pass + Coverage pass 分离**：Nuke 社区的标准做法是"用 ID 与 Coverage 一起生成 matte，**覆盖率放 alpha 通道**"，Coverage 单独一个 tab 调（它是软硬程度的唯一来源）。见 [Nukepedia: Color Picker ID](https://www.nukepedia.com/tools/gizmos/image/color-picker-id/)。
-- **引擎侧同构**：HDRP 的 **Rendering Layers** —— renderer 最多 32 层，但"使用 Rendering Layers 的 HDRP 效果只支持前 16 层"，并提供一张**可被效果逐像素采样的 Rendering Layer Mask buffer**。见 [HDRP: Use light rendering layers](https://docs.unity.cn/Packages/com.unity.render-pipelines.high-definition@17.3/manual/Rendering-Layers.html)、[在 Shader Graph 里采样该 buffer](https://discussions.unity.com/t/how-to-use-rendering-layer-mask-buffer-in-shader-graph/1663028/4)。UE 侧对应物是 **Custom Depth + Custom Stencil**（8 bit 分类 + **per-primitive custom data**），见 [stencil mask 可见性讨论](https://forums.unrealengine.com/t/stencil-mask-can-be-seen-thru-walls-is-there-a-fix/2401752/7)、[post-process material 侧用法](https://forums.unrealengine.com/t/my-dynamic-material-instances-for-my-post-process-material-are-created-but/2742871/2)。
-- **多物体像素**：Cryptomatte 用**多层（level）「ID + 覆盖率」对**表达一个像素里的多个对象 —— 这正是 §5.5 的容量模型，也是 GTAO 白圈 / 前发投影硬裁那类问题的根因所在。
-- **"表 + 索引"是标准形状**：UE 的 per-primitive custom data、Cryptomatte 的 manifest 都是"像素里只有索引，属性放在表里、由 CPU 维护"。新设计同形；区别只是我们把索引做成 16 bit，并且**索引的传输由我们自己的 draw 决定**（§5.2）。
+- **"选谁"由合成端决定，而不是渲染端**：Arnold 提供 `crypto_asset` / `crypto_material` / `crypto_object` 三种 AOV——**同一份 ID 数据的三种分组口径**（与我们的"类别 + 标签"同构）；Redshift 明说"**Multiple objects can share the same Redshift Object ID number if you want to group objects together into a single matte**"（这正是我们的标签/类别语义）；Blender 的 Cryptomatte 节点是"点一下画面就选中"（`Pick` 输出 + `Matte ID` 名字列表）。见 [Arnold: Cryptomatte](https://help.autodesk.com/cloudhelp/2024/ENU/AR-Maya/files/am-Arnold_for_Maya_User_Guide/render-settings/aovs/arnold_for_maya_aovs_am_Cryptomatte_html.html)、[Redshift: Cryptomatte](https://help.maxon.net/r3d/katana/en-us/Content/html/Cryptomatte.html)、[Blender: Cryptomatte 节点](https://docs.blender.org/manual/en/latest/compositing/types/mask/cryptomatte.html)（该站对本环境拒爬，内容经镜像核对）。
+- **层数是"一像素里能有几个东西"的预算，而我们只需要 N 个**。Redshift 把它定义成"how many objects can **intersect on a single pixel** and still be considered as separate mattes"。离线要更多层，是因为它表达的是**连续的面积占比**（还要覆盖运动模糊与景深的分布，对象数与层数都无上界）；而我们要表达的是 **MSAA 的逐样本归属**——一像素最多 N 个样本，所以 **K = N = 4 就已经无损**（§5.5）。**这就是不照抄"6~8 层"的理由**。
+- **离线渲染器同样区分"整数（不抗锯齿）"与"抗锯齿"两种导出**：V-Ray 的 ObjectID 有 integer (no AA) 模式——"Object IDs are exported … as an Integer value, one integer per pixel"（**二手来源**，官方站拒爬）。这与我们"ID 必须点采样、AA 只能来自覆盖率"是同一条纪律的两种表述。
+- **最清楚的一段散文定义**（OTOY Octane 文档）："Cryptomattes use an ID-coverage paring technique… The ID channel is one object per pixel. The coverage channel determines how much of the pixel is contributed to by the assigned object. These ID-coverage pairs are then **ranked** to add support for multiple objects per pixel… **That is why the Cryptomatte Channels are always in pairs of two**." → 我们的"ID 与覆盖率成对、按名次排层"就是它；**层数默认值业界不统一**：Octane `Bins` 默认 6（且必须偶数，"the ID channel and coverage channel must be kept together"）、Redshift `Cryptomatte Depth` 默认 8、Psyop 的 Nuke gizmo 暴露 12 个层槽、Blender legacy 节点默认 4 个层输入（可加）。见 [Octane: Cryptomatte](https://docs.otoy.com/cinema4d/Cryptomatte.html)、[Redshift Cryptomatte (Houdini)](https://help.maxon.net/r3d/houdini/en-us/Content/html/Cryptomatte.html)、[Blender legacy 节点 RST 源](https://projects.blender.org/blender/blender-manual/raw/branch/main/manual/compositing/types/mask/cryptomatte_legacy.rst)。
+- **排序口径业界并不统一**：MoonRay 说"**sorted by max coverage**… the geometry with the most pixel coverage will always be the first entry"，而 Octane 说名次表示"**front to back**"的前后关系。**我们明确选按覆盖率（= 样本数）降序、平票再取更近样本**——因为它直接对应 MSAA 的样本计数，且让"层0"有稳定含义（§5.5）。
+- **"ID 不能被邻居混合"是业界的原话纪律**（Psyop `docs/nuke.md`）："Cryptomatte relies on **exact values in channels**, and operations that **mix values with neighboring values will damage this information**, resulting in only being able to extract mattes on pixels containing only one object"；同页还提醒代理模式（降分辨率）"gives bad results for similar reasons"。→ **这两句直接支撑我们的两条硬规则**：ID 一律点采样（§6 第 1 条）、以及 **v1 不暴露 renderScale、固定 Full**（§5.9②）。
+- **业界没有"归一化/残差"的明文规定**：核对过的来源里**没有**一条要求 `Σcov = 1`，也没有"残差"这个术语；他们只用"背景 = ID 0"（Psyop Nuke/Fusion 代码里 `BACKGROUND_MATTE_NAME = "Background (value RGBA=0000)"`）与"层数不足会掉 ID"两条间接处理。**我们把残差显式化、并禁止把层覆盖率重标定到和为 1，是有意加强**，不是抄来的——厂商侧的对应物只有"层数取小了会在选中被丢弃的对象时产生噪声"（§4.1 上一条）。
+- **一个可选的未来扩展**：Nuke 的 **Encryptomatte** 能把"任意一张 alpha"转成一个可选中的 ID+覆盖率对（并可 over/under 合并进已有 cryptomatte 层）——对应到我们就是"把外部算出来的遮罩作为额外层注入"，属于 §5.6 的增长路径，不进 v1。见 [Keying with Cryptomatte](https://learn.foundry.com/nuke/content/comp_environment/cryptomatte/keying_with_cryptomatte.html)。
+
+### 4.2 逐样本身份的两极：离线 deep image 与实时 k 层缓冲
+
+**deep image 是这个模型的"无上界"版本**（OpenEXR ≥ 2.0）："each pixel in a deep image can store **an arbitrary number of values or samples** per channel. Each of those samples is associated with a depth"、"The number of samples varies from pixel to pixel, and **any non-negative number of samples, including zero, is allowed**"；而且**每个通道都必须有配对的 alpha**（"Every color or auxiliary channel in a deep image must have an associated alpha channel"）。对象标识在 deep 里是一等公民："Deep IDs are primarily used in compositing applications to select objects in images: The 3D renderer stores multiple ids per pixel … as well a scene manifest"、"**Each pixel can contain an arbitrary number of IDs (0 included), allowing for perfect mattes**"、"Deep IDs are combined with transparency data to support anti-aliasing, motion blur and depth of field"。
+
+→ **我们的 K = 4 就是这条曲线的有界版本**：层数封顶换来固定显存与可预测带宽；而"尾部身份会丢"这个代价，因为 **K = N** 在实际配置里并不成立（§5.5）。这也是我们不去追 6~8 层的原因——离线要的是连续面积占比，我们要的是逐样本归属。
+
+**"我的选择占多少"的正确算法规范里就有**（Deep IDs 规范的浅层 matte 伪代码，前到后累积）：
+
+```text
+foreach sample in sorted_pixel_front_to_back:
+    if id_is_in_selection(sample.id):
+        mask_alpha += sample.alpha * (1 - total_combined_alpha)
+    total_combined_alpha += sample.alpha * (1 - total_combined_alpha)
+return mask_alpha / total_combined_alpha
+```
+
+这是 §6 第 7 条 `result = Σ coverage_i × f(id_i)` 的**遮挡正确版**（我们那条是简写，落地时按这个形式写）；也提醒两件事：①**消费端为了出 matte 做 `/ total_combined_alpha` 是合法的**，与 §5.5 禁止的"把层覆盖率重标定到和为 1"不是同一件事；②规范同时承认"Edge contamination may be observed along transparent edges of a selected object, if an object behind it is not selected"——**选了一层就会沾上后面没选中的东西**，这是覆盖率模型的固有边界（与 §5.5 的"覆盖率说多少、不说形状"同源）。见 [OpenEXR: Deep IDs Specification](https://openexr.com/en/latest/DeepIDsSpecification.html)、[Interpreting Deep Pixels](https://openexr.com/en/latest/InterpretingDeepPixels.html)。
+
+- **身份数据天生不适合被排序/合并**：规范明说"making an image tidy loses information, and **some kinds of data cannot be represented with tidy images, for example, object identifiers**"。
+- **manifest 应当嵌进文件，而不是 sidecar**：Deep IDs 用 `idmanifest` 属性（OpenEXR 3.0+，可用 `exrmanifest` 打印），sidecar"not supported by the OpenEXR library, nor are they defined here"，且"it is **strongly recommended** that the embedded manifest is used"；Blender 的 Cryptomatte 节点更直接："Cryptomatte sidecars (metadata files) are not supported"。→ **§5.10 的 palette manifest 默认嵌 EXR metadata**，sidecar 只作兜底。见 [exrmanifest](https://openexr.com/en/latest/bin/exrmanifest.html)。
+- **ID 通道的命名与位宽先例**：`id` / `objectid` / `materialid` / `particleid` / `instanceid`；64 bit ID 用两个 uint32 通道加 `0`/`1` 后缀。我们是 16 bit（角色 8 + 槽位 8），AOV 沿用契约里已有的 `id_object` / `id_group` 命名（§5.10）。
+- **deep 的代价也写在规范里**：任意样本数意味着内存，"Cryptomatte allocates a fixed size array for IDs… Setting this too large requires a lot of memory; setting it too small can cause noise"——**这条权衡我们选了另一头**（固定 K、但保证 K ≥ N）。
+
+**实时一侧的同族做法**（都在做"把身份放进缓冲、把解释推迟到 resolve"）：
+
+| 参考 | 它存什么 | 对我们的意义 |
+| --- | --- | --- |
+| **The Visibility Buffer**（Burns & Hunt, JCGT 2(2), 2013） | 每像素只存**可见图元的 ID**（+ 深度），着色推迟到之后按 ID 取属性 | "身份进缓冲、属性延后"的实时版原型；我们的 ID pass + palette 是它的语义化版本 |
+| **Deferred Attribute Interpolation**（Schied & Dachsbacher, HPG 2015） | 为**边缘像素保留多层**图元 ID，resolve 时再插值属性 | 与"K 层 ID + resolve 归约"同形；**它保留多层的动机正是抗锯齿**，与决策 1 一致 |
+| **Deep G-Buffers**（Mara 等, HPG 2016） | 每像素 **k 层**深度/法线 | 专门为减少屏幕空间效果在**轮廓处**的抖动——正是"前发投影在发际线处需要多层信息"的理论依据 |
+
+引用状态：JCGT 文章页可访问（[jcgt.org/published/0002/02/04](https://jcgt.org/published/0002/02/04/)，PDF 在 `/paper.pdf`）；DAIS 与 Deep G-Buffers 的出版方站点（ACM DL / Eurographics diglib）在本环境被 Cloudflare 拦或 DNS 不可达，此处以稳定标识符给出——DAIS `10.1145/2790060.2790066`（HPG 2015）、Deep G-Buffers `10.2312/hpg.20161195`（HPG 2016），**标为未逐字核对**（标题、作者、会议年可查，具体页码/引文未核）。
+
+### 4.3 覆盖率从哪来、怎么被读：MSAA 的官方规则（决定我们能做什么、不能做什么）
+
+- **逐样本覆盖是硬件行为，像素着色器每像素只跑一次**：D3D 光栅化规则写得很直白——"a coverage test is performed for each sample location (not for a pixel center). If more than one sample location is covered, **a pixel shader runs once with attributes interpolated at the pixel center. The result is stored (replicated) for each covered sample location**"。这正是 §5.4"逐样本身份"能成立的前提：**身份必须在一次 draw 内是常量**（我们的 RSUV 部件身份正是），每个样本归谁由硬件的逐样本深度测试决出。也说明"把 ID 插值到逐样本"在定义上就是错的。见 [Rasterization Rules](https://learn.microsoft.com/en-us/windows/win32/direct3d11/d3d10-graphics-programming-guide-rasterizer-stage-rules)、[Getting Started with the Rasterizer Stage](https://learn.microsoft.com/en-us/windows/win32/direct3d11/d3d10-graphics-programming-guide-rasterizer-stage-getting-started)。
+- **resolve 就是求平均，且只对颜色成立**："The final value for the pixel is calculated as **the average of all samples**. This is known as the resolving step."（GPUOpen/Vulkan-Samples）；API 层 `ResolveSubresource` 的源"Must be multisampled"、目标"**must be single-sampled**"，即**逐样本信息不会被保留**。Vulkan 规范还补了一句更狠的：整数格式 resolve 时"a **single sample's value is selected** for each pixel"（不是平均，是**任选一个样本**——对 ID 来说等于随机丢身份；该页官方站拒爬，引的是规范文本的社区镜像）。所以身份**不可能**靠 resolve 得到，只能像我们这样逐样本 `Load` 再自己归约。见 [Vulkan-Samples: MSAA](https://gpuopen-librariesandsdks.github.io/Vulkan-Samples/samples/performance/msaa/)、[ResolveSubresource](https://learn.microsoft.com/en-us/windows/win32/api/d3d11/nf-d3d11-id3d11devicecontext-resolvesubresource)、[Rasterization Rules](https://learn.microsoft.com/en-us/windows/win32/direct3d11/d3d10-graphics-programming-guide-rasterizer-stage-rules)（"no resolve is required for individual samples accessed by the shader"）。
+- **逐样本读取的机制**：`Texture2DMS.Load(coord, sampleIndex)` / `GetSamplePosition` / `GetRenderTargetSampleCount`（SM4+），以及 `EvaluateAttributeAtSample`（SM5+，用于把某个属性求值到指定样本）。见 [Texture2DMS](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/sm5-object-texture2dms)、[Texture2DMS::Load](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/texture2dms-load)、[EvaluateAttributeAtSample](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/evaluateattributeatsample)。
+- **"不 resolve、直接绑成 MSAA 纹理"是官方支持的用法**：`RenderTextureDescriptor.bindMS` ——"If true and msaaSamples is greater than 1, the render texture will **not be resolved by default**. Use this if the render texture needs to be bound as a multisampled texture in a shader."（这正是 GB 与 CB 取逐样本数据的方式）。见 [RenderTextureDescriptor.bindMS](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/RenderTextureDescriptor-bindMS.html)。
+- **采样数协商 API 本身就是"给你一个平台支持的更低值"**：`SystemInfo.GetRenderTextureSupportedMSAASampleCount(desc)` ——"Returns the given MSAA samples count [if supported]. Otherwise returns a **lower fallback** MSAA samples count value that the target platform supports."。**所以 CB 只要直接要 4、拿回 2 或 1**，不需要（也不应该）去看相机的 MSAA 设置——这把决策 7 的"与相机解耦"变成了 API 层的自然做法。见 [GetRenderTextureSupportedMSAASampleCount](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/SystemInfo.GetRenderTextureSupportedMSAASampleCount.html)。
+- **per-sample 写入的后手（决策 6）有官方约束**：alpha-to-coverage 是"n-step coverage mask"，且"the runtime performs an **AND** operation of this mask with the typical sample coverage"，并且"**in multisampling, the runtime shares only one coverage for all RenderTargets**"——一张掩码同时切该 pass 的所有 MRT（ID 与覆盖率会一起被切）。Unity 侧 `AlphaToMask On` 官方也标注了 URP/HDRP 支持，并警告"This command is intended for use with MSAA… otherwise the results can be unpredictable"；UE 的 Forward 渲染器把"**Alpha-to-coverage for Masked Materials**"列为受支持特性，采样数由 `r.MSAACount` 控制（`1` = 关闭）。另：像素着色器一旦输出 `SV_Coverage`，alpha-to-coverage 会被关闭。见 [D3D Blending / Alpha-To-Coverage](https://learn.microsoft.com/en-us/windows/win32/direct3d11/d3d10-graphics-programming-guide-blend-state)、[Unity: AlphaToMask](https://docs.unity3d.com/Manual/SL-AlphaToMask.html)、[Unity: Reduce aliasing with AlphaToMask](https://docs.unity3d.com/6000.0/Documentation/Manual/writing-shader-alpha-to-mask.html)、[UE: Forward Shading Renderer](https://dev.epicgames.com/documentation/en-us/unreal-engine/forward-shading-renderer-in-unreal-engine)。
+- **对照：把语义压进位掩码/层掩码在引擎里是有已知代价的**：URP 文档明确"Performance impact increases more significantly when the number of Rendering Layers reaches 9, 17, 25, etc. This is because … URP adds an **extra texture channel** the GPU must access." —— 每加一个 8 bit 通道就多一次纹理访问，这是"位掩码当语义容器"的隐性账单；CB 的 per-pixel 成本只由 K 与通道族决定，**部件数量增长不进 per-pixel 成本**。见 [URP: Introduction to Rendering Layers](https://docs.unity3d.com/6000.0/Documentation/Manual/urp/features/rendering-layers-introduction.html)。
+
+### 4.4 引擎怎么把"身份 / 自定义数据"递给效果
+
+- **UE：Custom Depth + Custom Stencil**。官方文档说明 Custom Depth 是"masking of certain objects by rendering them into another depth buffer… fairly cheap as we only output depth"，Custom Stencil 是在其之上"a stencil, or cutout, of your rendered object"，取值范围 0–255（8 bit），由 **per-primitive** 设置（`SetCustomDepthStencilValue`："Sets the CustomDepth stencil value (0 - 255) and marks the render state dirty"），post-process 材质可读。**最有价值的是它写下的局限**：这类轮廓在 TAA 下得不到抗锯齿（TAA 每帧把整场景移动一个亚像素），把它挪到后处理链更前面能缓解，但"outside the object we would also need to adjust the depth buffer (not done yet, costs extra performance)"。**这就是我们这次要解决的那类问题的官方版**——掩码是硬的，AA 只能靠消费端猜。见 [Post Process Materials](https://dev.epicgames.com/documentation/en-us/unreal-engine/post-process-materials-in-unreal-engine)、[Set Custom Depth Stencil Value](https://dev.epicgames.com/documentation/en-us/unreal-engine/BlueprintAPI/Rendering/SetCustomDepthStencilValue?application_version=5.1)。
+- **UE：per-primitive / per-instance custom data 走 scene-wide buffer + 索引**。"Primitive Parameters … are placed in a scene-wide primitive data buffer called `GPUScene` and **indexed in the shader using `PrimitiveID`**"，材质侧用 `PerInstanceCustomData` 节点按下标取值，**每 primitive 上限 32 个 float**；官方给的收益理由与我们一致："storing data on the primitives themselves rather than with the Material Instance… **lowers the number of draw calls**"。这就是"表 + 索引"的引擎级同形物。见 [Mesh Drawing Pipeline](https://dev.epicgames.com/documentation/en-us/unreal-engine/mesh-drawing-pipeline-in-unreal-engine)、[Storing Custom Data in Materials Per-Primitive](https://dev.epicgames.com/documentation/en-us/unreal-engine/storing-custom-data-in-unreal-engine-materials-per-primitive)、[MaterialExpressionPerInstanceCustomData](https://dev.epicgames.com/documentation/en-us/unreal-engine/python-api/class/MaterialExpressionPerInstanceCustomData?application_version=4.27)。
+- **HDRP：Rendering Layers + 一张逐像素可采样的 mask buffer**。"A Renderer can support up to **32 rendering layers**, but all HDRP effects using Rendering Layers only support the **first 16 layers**"；在 HDRP Asset 里打开 **Rendering Layer Mask Buffer** 后，ShaderGraph 可用 `HD Sample Buffer` 节点以 `RenderingLayerMask` 为源**逐像素采样该 buffer**。它证明了两件事：①引擎确实会给效果一张"逐像素身份/掩码图"；②"层数越多，效果能支持得越少"是这类方案的常见天花板（所以我们要的是"ID + 覆盖率"而不是"更多层"）。见 [HDRP: Use light rendering layers](https://docs.unity3d.com/Packages/com.unity.render-pipelines.high-definition@17.0/manual/Rendering-Layers.html)、[Renderer.renderingLayerMask](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Renderer-renderingLayerMask.html)。
+- **Unity：RSUV 的官方定位就是"索引"**。"RSUV is a custom **32-bit integer** value…"；use case 表第三行原文——"Large amounts of custom data per renderer → **Use the RSUV as an index into a larger data structure stored in a global GraphicsBuffer**"；并且"This functionality **doesn't interfere with batching**"、"introduces **no additional CPU overhead**"、"significantly faster than using Material Property Block (MPB)"（MPB 在 SRP 下"isn't recommended… has low performance at runtime and might not work as expected"）。**两个必须记住的实现约束**：受支持的是五个具体类型的方法（`MeshRenderer` / `SkinnedMeshRenderer` / `SpriteRendererDataAccessExtensions` / `SpriteShapeRenderer` / `TilemapRenderer`，**不在 `Renderer` 基类上**）；以及"**The value is not serialized**, so it is not saved to the asset and **resets when the object is reloaded**"（§5.2 的纪律就来自这一句）。见 [Introduction to RSUV](https://docs.unity3d.com/6000.5/Documentation/Manual/renderer-shader-user-value-intro.html)、[Set and use the RSUV](https://docs.unity3d.com/Manual/renderer-shader-user-value-set-and-use.html)、[MeshRenderer.SetShaderUserValue](https://docs.unity3d.com/6000.4/Documentation/ScriptReference/MeshRenderer.SetShaderUserValue.html)。
+- **渲染 ID 图的传统做法（对照，不是我们要走的路）**：Built-in 的 `Camera.SetReplacementShader` / `RenderWithShader` 按 **RenderType 标签**整体替换 shader（"Any objects whose shader does not have a matching tag value … will not be rendered"），`CommandBuffer.DrawRenderer` 可以逐个画但"the rendered mesh will not have any lighting related shader data … the results are undefined"。前者只能按标签分类、拿不到逐部件身份与覆盖率；后者是逐 draw 的兜底路径（与决策 12 的兜底同形）。见 [Shader replacement](https://docs.unity3d.com/6000.7/Documentation/Manual/SL-ShaderReplacement.html)、[Camera.RenderWithShader](https://docs.unity3d.com/ScriptReference/Camera.RenderWithShader.html)、[CommandBuffer.DrawRenderer](https://docs.unity3d.com/ScriptReference/Rendering.CommandBuffer.DrawRenderer.html)。
+
+### 4.5 从参考直接推出的设计结论（对照表）
+
+| 参考的做法 | 我们的对应实现 | 落在哪条决策 / 小节 |
+| --- | --- | --- |
+| Cryptomatte 多层 `(ID, 覆盖率)` + manifest；层按覆盖率降序 | K = 4 层 `(ID, 覆盖率)` + palette（两级表）+ AOV manifest；按样本数 = 覆盖率降序，平票取更近样本 | 决策 1 / 2 / 8，§5.1、§5.3、§5.5、§5.10 |
+| 离线默认 6~8 层（表达连续面积占比，对象数无上界） | **K = N = 4**：只表达 MSAA 的逐样本归属，一像素最多 N 个样本，因此已经无损 | 决策 1 / 7 / 17，§5.5 |
+| 一个 ID 可覆盖多个对象（Redshift 共享 Object ID、Arnold 的 asset/material/object 三种口径） | 类别（单值）+ 标签位掩码（32 位，多归属）；"整角色"语义放角色表那一行 | 决策 9 / 10，§5.3、§5.7 |
+| Nuke：ID 不过滤、覆盖率放 alpha、分别可调 | ID 一律 `Point` + `round(v*255)` 还原；覆盖率线性、只能按 ID 匹配加权；AOV 里 coverage 进 alpha | §5.5、§6 第 1~3 条、§5.10 |
+| UE `GPUScene`：属性进 scene-wide buffer、shader 内按 ID 索引 | palette（`StructuredBuffer`）由 CPU 维护，像素里只有索引 | 决策 8 / 11，§5.2、§5.3 |
+| UE Custom Depth Stencil：8 bit、per-primitive、效果端硬边且 TAA 救不了 | 不再用"位/层分类"，改用 16 bit ID + 真实覆盖率；亚像素相位由自建 MSAA 给出 | 决策 2 / 7 / 17，§5.4、§5.5 |
+| HDRP：给效果一张逐像素 mask buffer；层数越多效果支持越少 | 给效果 ID + 覆盖率，而不是更多"层"；per-pixel 成本与部件数量无关 | §5.1、§5.6、§4.3 末条 |
+| RSUV 官方 use case = 索引进全局 buffer；不序列化 | RSUV 只当 palette 索引；OnEnable / 表变化时重写；palette 第 0 行 = unknown | 决策 13，§5.2、§5.7 |
+| MSAA：像素着色器输出被复制到所有通过深度测试的样本 | 逐样本身份靠"整次 draw 身份恒定 + 硬件逐样本深度测试"，不靠插值 | §5.4 |
+| resolve 只对颜色是平均、不保留逐样本信息（整数格式甚至只挑一个样本） | 自建 resolve：逐样本 `Load` → 数票 → 写 4 层；**不做平均** | 决策 17，§5.4、§5.9⑤ |
+| Alpha-to-coverage 是 MSAA 的官方配套；一张掩码作用于所有 MRT | 决策 6 的后手（per-sample 写入）留给将来，且知悉"ID 与覆盖率会一起被切" | 决策 6，§5.4 |
 
 ---
 
@@ -180,6 +261,7 @@ ID + 覆盖率合计 **3 张 RGBA8 = 12 B/px**（常开部分）；两张 `Mater
 - **兜底路径**：极少数拿不到 RSUV 的 renderer，退回"逐部件设全局常量再绘制"——只对这部分付出 draw call 代价。
 - **删除 MPB 回退**：官方在 SRP 下不推荐 MPB（性能差、可能不生效），而且它会让该 renderer 连**主 pass** 一起失去 SRP Batcher。
 - **材质侧**：从 RSUV 解出索引 → 查 palette 取 category / tags（就是官方"索引进全局 buffer"的用法），**不需要 CPU 逐 draw 设全局**。
+- **RSUV 不会被序列化**（官方原话："The value is not serialized, so it is not saved to the asset and resets when the object is reloaded"，且烘焙 lightmap/lightprobe 时 `unity_RendererUserValue` 恒为 0）。所以 `HoCharacterBufferGroup` 必须在 **OnEnable / 部件表变化 / 场景重载后重新写入**，不能只在编辑器里写一次——否则域重载后全场景的索引一起变 0。**配合一条纪律：palette 第 0 行永远留作 unknown**，索引 0 显示为"未注册部件"而不是静默变成某个真部件。
 - `HoCharacterBufferGroup` 只写 RSUV（索引）+ 维护部件表与校验。
 
 ### 5.3 调色板（palette）
@@ -200,6 +282,11 @@ ID + 覆盖率合计 **3 张 RGBA8 = 12 B/px**（常开部分）；两张 `Mater
 **唯一差异是 resolve 语义**：GeometryBuffer 是"挑最近样本得到该像素几何 + 写覆盖率"；这里是"**逐样本数票，取占比最高的 4 个 ID 及各自占比**"。共同点是**都不做平均**。
 
 ID pass 的 depth-stencil 附件只服务于两件事：**决出每个 sample 归属谁**，以及计数相同时**按更近的样本 tie-break**。它不发布给任何消费端（几何判断一律走 GeometryBuffer，见 §5.1）。
+
+**为什么"逐样本身份"能成立（这不是凑合，是 MSAA 的定义决定的）**：按 D3D 的光栅化规则，多边形的覆盖判定是**逐样本**做的，但**像素着色器每像素只跑一次**，其输出会被**复制到所有通过深度/模板测试的样本**上。所以：
+- 想逐样本得到**不同**的身份，唯一可行的办法就是**身份在这一次 draw 内是常量**——正是我们的做法（部件身份来自 RSUV，整次 draw 统一），于是"每个样本属于哪个部件"由**硬件的逐样本深度测试**决出，而不是靠我们算；
+- 反过来，任何"把 ID 插值到逐样本"的想法都是错的（插值出来的 ID 不是任何部件的 ID）。
+官方文档里"the runtime performs an AND operation of this mask with the typical sample coverage for the pixel in the primitive"与"in multisampling, the runtime shares only one coverage for all RenderTargets"也说明：若将来用 alpha-to-coverage / `SV_Coverage` 做 per-sample 写入（决策 6 的后手），**一张覆盖掩码会同时作用于该 pass 的所有 MRT**——ID pass 的 ID 与覆盖率两张图会一起被切，不能只切一张。
 
 有了真实覆盖率，消费端不再需要"猜"边界，也不再需要 `HoCharacterSemanticMaskBlur` 那类补偿。ID pass 的绘制范围见决策 12。
 
@@ -242,7 +329,7 @@ ID pass 的 depth-stencil 附件只服务于两件事：**决出每个 sample �
 - 渲染器归属到条目（与今天"给渲染器打勾"同一交互）；保留角色 ID 字段；`HoMetadataBufferSubject` 的高级覆盖并进同一条目。
 - 组件同时是**运行时映射的所有者**：维护"渲染器 → 条目"并把条目索引写进 RSUV（不再写 MPB）；兜底路径所需的全局常量值也由它提供。
 - **标签保留的理由**：像 `CharacterFull`（= 该角色任意部件）这种"多归属"语义用标签最自然，消费端一次 `&` 即可查询；**"整角色"级语义放角色表那一行**（§5.3 的两级表），不必在每个部件行重复。
-- **校验**：一个 renderer 只属一个条目；名称唯一；palette ≤ 4096 且越界告警；renderer 类型是否支持 RSUV（不支持则走兜底路径并提示）；**ID 跨帧稳定**。
+- **校验**：一个 renderer 只属一个条目；名称唯一；palette ≤ 4096 且越界告警；renderer 类型是否支持 RSUV（不支持则走兜底路径并提示）；**ID 跨帧稳定**；**RSUV 未序列化 → 每次 OnEnable / 部件表变化都要重写**（§5.2），并保留 palette 第 0 行 = unknown。
 
 ### 5.8 消费端迁移映射
 
@@ -345,7 +432,7 @@ MSAA 阶段**每个样本只需要一个 ID**（一个样本只属于一个部�
 
 - 按 `Documentation~/架构优化/LILTOON_CHANNEL_CONTRACT_V1.md` §3 的流程登记（登记本行 → 生产端输出 → 消费端消费 → debug 可见 → 冻结）：`character.idcoverage`（含 `_Id0` / `_Id1` / `_Coverage` 三张；debug view 按张拆开命名）/ `character.surface` / `character.material`（含用户自定义 0~3）/ `character.palette`。**不登记任何深度 / 法线通道**——全管线唯一的深度/法线入口是 GeometryBuffer（决策 16）。
 - **同时要改的既有行**（契约 v1 里那些 MetadataBuffer 时代的条目，现在就该在文档里标上"待 P4 替换"）：`surfaceColor`（**去掉 `A=coverage`**——`.a` 退役，覆盖率只有一个来源）、`maskId` / `objectCustom0/1` / `surfaceData` / `reflectionMaterial`（生产者与编码整体换成 CharacterBuffer 的对应图）、以及 `maskcoverage.low/high`（它是 `objectCustom` 的抗锯齿副本，随 `objectCustom` 一起退役）。
-- AOV 导出对齐 Nuke 习惯：**名字冻结不动**（契约 §2 的 `id_object` / `id_group` / `matte_*` / `diffuse_albedo` 只换生产端与编码，不改名）；`matte_*` = **`Σ_i cov_i · [cat(id_i) == X]`**（不是只取层0——与 §6 第 7 条同一条规则）；**ID 不过滤、coverage 放 alpha**，附 palette manifest（JSON），Nuke 端即可像 Cryptomatte 那样点选。
+- AOV 导出对齐 Nuke 习惯：**名字冻结不动**（契约 §2 的 `id_object` / `id_group` / `matte_*` / `diffuse_albedo` 只换生产端与编码，不改名）；`matte_*` = **`Σ_i cov_i · [cat(id_i) == X]`**（不是只取层0——与 §6 第 7 条同一条规则）；**ID 不过滤、coverage 放 alpha**，附 palette manifest（JSON）——**默认嵌进 EXR metadata，sidecar 只作兜底**（§4.2：OpenEXR 库不支持 sidecar，Blender 的 Cryptomatte 节点干脆不读），Nuke 端即可像 Cryptomatte 那样点选。
 - CB 落地后，`Documentation~/GeometryBuffer.md` §7 消费者契约表里仍写着 "MetadataBuffer" 的三行（CharacterSpecialization / PLR / SSS）要改成 CharacterBuffer，并在 GB 文档的公共原则里把 "MetadataBuffer = object/material semantic truth" 拆成 "CharacterBuffer = 部件身份 + 覆盖率真值 / MetadataBuffer 退役"。这一步记在 P4。
 
 ---
