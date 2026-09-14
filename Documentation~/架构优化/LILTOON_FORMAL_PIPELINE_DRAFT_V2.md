@@ -1,20 +1,16 @@
 # 正式管线草案 v2（重新串联）：三轴输入 + 属性合成 + 屏幕效果
 
-> 状态：**评审结论已冻结；实现路线待推进**。
-> 关系：本文取代 v0.1 的层模型、帧序、旧→新映射和命名决策；v0.1 的排序铁律、暴露面分类和材质接口原则只作为背景，不再定义反射/三轴契约。
-> `LILTOON_RENDER_PIPELINE_REVIEW_AND_PLAN.md` 仅保留功能域盘点和非反射背景；其反射章节已被本文与 `ReflectionPipelineDesign.md` 取代。
-> 为什么改：v0.1 把"对象/mask/**surface**"全塞在同一个 buffer 槽位里，从没注意 MetadataBuffer 本身就是**杂糅**的（身份 + 覆盖率 + 表面数值）。这轮把它拆成三轴 + 一层合成。
+> 状态：**已冻结，实现按 §6 的 R0-R6 推进**。
+> 取代：v0.1 的层模型 / 帧序 / 旧→新映射 / 命名决策。`LILTOON_RENDER_PIPELINE_REVIEW_AND_PLAN.md` 只保留功能域盘点与非反射背景。
 
-## 0. 评审结论
+## 0. 冻结的四条修正
 
-这份 v2 的三轴方向是正确的，应该作为后续实现的总边界；但原稿有四处必须先修正，否则实现时会再次产生隐式契约：
+1. **PLR source 与 PLR resolve 分开记**：镜像相机 source 在 opaque 之前；透明/特殊 fullscreen resolve 在 OIT 之后。
+2. **执行顺序 ≠ 读依赖**：GB / OB / SB 的 producer 互不读；跨轴 gate 必须显式登记，不写成默认偏序。
+3. **运行时合成器叫 `Ho-AttributeComposite`（AC）**；`Ho-Cryptomatte` 只用于 ID/manifest 导出。
+4. **SB 先冻结最小字段 packing**（Color / Normal / Material / Reflection / Classification），再迁移消费者；Target5 的 PLR strength 不兼任通用 reflection mask。
 
-1. **PLR source 与 PLR resolve 混在一个节点**：镜像相机 source 在 opaque 之前更新，透明/特殊 fullscreen resolve 才在 OIT 之后；两者必须拆开记。
-2. **GB→OB/SB 与“三者禁止互读”相互矛盾**：生产 buffer 不互读，只有消费者在同一 pass 同时读取多个轴；若某个实现确实需要跨轴 gate，必须显式登记依赖，不能写成默认偏序。
-3. **Ho-Cryptomatte 名称过载**：运行时属性合成不是标准 Cryptomatte 导出。运行时名称冻结为 `Ho-AttributeComposite`（AC）；`Ho-Cryptomatte` 只用于 ID/manifest 导出。
-4. **SurfaceBuffer 还缺最小字段 packing**：先冻结反射所需的 Color/Normal/Material/Reflection 四个字段，再迁移消费者；不能继续让 Target5 的 PLR strength 兼任通用 reflection mask。
-
-本次先冻结第 1、2、3、4 条，以及 coverage、反射总开关和 depth 编码；AC 用于运行时属性合成，Cryptomatte 仅用于导出。
+同时冻结：coverage、反射总开关、depth 编码。
 
 ---
 
@@ -39,13 +35,11 @@
 
 ---
 
-## 2. 帧序 v2（按"每趟的前置条件"排，不是凭直觉排）
+## 2. 帧序
 
-> ⚠ **上一版把 GTAO 排在 opaque 之后、AC 排在 opaque 之前，两处都错**。真正决定位置的是**前置条件**：
-
-| 位置 | 谁 | 前置条件（这就是理由） |
+| 位置 | 谁 | 前置条件 |
 | --- | --- | --- |
-| **opaque 之前** | 阴影 → GB → OB → SB → **GTAO** | **GTAO 必须在 opaque 之前**：材质在 forward 里就采样 `_HoAOTexture`（v0.1 §5 的意图参数）——AO 放到 opaque 之后，这一帧的材质就只能读到空图/上一帧。GB/OB/SB 也在这里（它们画自己的几何，不需要 opaque 的颜色） |
+| **opaque 之前** | 阴影 → GB → OB → SB → **GTAO** | 材质在 forward 里采样 `_HoAOTexture`，AO 必须在 opaque 之前；GB/OB/SB 画自己的几何，不需要 opaque 颜色 |
 | **opaque 之后** | **SSGI** → **AC** → SSS → OIT → PLR → 角色特化 → ScreenProcess | **SSGI 需要 opaque 之后的颜色**；**AC 必须等 opaque**——它合成的是"最终画面上每像素是谁、表面是什么样"，早于 opaque 就没有最终归属可言 |
 | **图像链** | ImageProcess | 只读 camera color |
 | **最后** | AOV 导出（可选） → DebugTile | 调试最后 |
