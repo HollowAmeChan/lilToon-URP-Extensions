@@ -55,7 +55,7 @@
 [6]  Ho-GTAO（独立 feature）                                 → ao / aointent   ★ 必须在 opaque 之前
         ── URP opaque / cutout / 透明 常规绘制 ───────────────────────
 [7]  Ho-SSGI（独立 feature，读 gisexclude）                   → gi              ★ 需要 opaque 后的颜色
-[8]  AC：Ho-AttributeComposite（属性合成 + 遮罩）              → 合成属性 / 具名遮罩  ★ 必须等 opaque
+[8]  AC：Ho-AttributeComposite（属性合成 + 遮罩）              → 合成属性图 + 查询 API  ★ 必须等 opaque
 [9]  Ho-SubsurfaceScattering                                 → sss
 [10] Ho-WeightedOIT（透明合成，最难搞）
 [11] PLR 透明/特殊 resolve（如启用）在 OIT 之后；opaque PLR 已在 ForwardLit 消费
@@ -112,7 +112,7 @@
 | **GB**（GeometryBuffer，**名字不改**） | 几何在哪、朝向如何、几何覆盖多少 | **几何法线** / depth / 几何覆盖率 / 描边视觉壳 / sky | 不发表面数值、不发身份、不发着色法线 |
 | **OB**（Ho-ObjectBuffer） | 这是谁、占多少、抠哪一块 | **两个池**：**身份池**（ranked）`Id0`=组 8 / `Id1`=槽位 8 / `Coverage`，各 4 层、常开、`K=N=4` 无损（**Cryptomatte 语义面**：导出 / 点选 / 任意 ID 按需生成遮罩都从它出）+ **固定语义槽** `Selection`（fixed，**槽号 = 语义**，每槽一对 `(ID, 覆盖率)`，OB 单方声明：默认 4 槽 = 今天的材质位 0~3、可配 8 / 16、每张 2 槽、上限 8 张；**运行时遮罩面**）+ **逐物体辅助量 ≤2 张**（朝向 forward+side） | 不发深度、不发表面数值、不定义属性语义、**不做合规导出档位** |
 | **SB**（Ho-SurfaceBuffer） | 表面是什么样 | 表面色 / **着色法线** / roughness / metallic / thickness / reflectance / PLR / …（**+ 未来 PBR**） | 不发深度、不发身份 |
-| **Ho-AttributeComposite（运行时，简称 AC）** | 多来源怎么合成、抠哪一块 | 合成属性 + 具名遮罩 | 不自己画几何/表面（它读三轴） |
+| **Ho-AttributeComposite（运行时，简称 AC）** | 多来源怎么合成、抠哪一块 | **合成属性图**（已 resolve 的逐像素答案，1~2 张）+ **查询 API**（`HoAC_*`，按 ID / 组 / 槽）+ manifest；身份池 / 语义槽 / 朝向是**引用**，不复制 | 不自己画几何/表面（**只读 OB + SB，GB 不喂它**）、**不为每个消费者烤遮罩图**、不写 EXR（导出层的事） |
 
 **三条读的规矩**：
 
@@ -193,7 +193,7 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 | **R1** | **OB 改名搬迁 + 新布局**（`Runtime/CharacterBuffer` → `Runtime/ObjectBuffer`；常量、feature、组件、调试、编辑器）；存储改成**身份池 ranked（常开）+ 固定语义槽 fixed（默认 4 槽 = 2 张，可配 8 / 16，上限 8 张）** | 代码已有 90%，改名的同时把"身份池 + 语义槽"两个池落实 |
 | **R2** | OB 的**朝向图**（forward+side，octahedral 打包进一张 RGBA8）+ 调试视图 | 它同时验证"逐物体辅助量"这条可写通道的机制 |
 | **R3** | **SB 落地**：先 `Color`+`Material`+`Reflection`，再 `Normal`；反射优先于其它消费者 | SB 是 PBR/PLR/SSR 的共同地基 |
-| **R4** | **AC 落地**：递进覆盖链（纯值 < object < surface）+ 具名遮罩 + 消费者统一入口 | 运行时属性合成与 Cryptomatte AOV 解耦 |
+| **R4** | **AC 落地**：递进覆盖链（纯值 < object < surface）+ 合成属性图 + 可查询 API + manifest + 消费者登记 | 运行时属性合成与 Cryptomatte 导出解耦；ScreenProcess 的 20 个 source 收成 1 族 |
 | **R5** | 消费者迁移：GTAO/SSGI 保持现状；**SSS/PLR → SB 数值 + AC 遮罩**；**角色特化 / ScreenProcess → AC**（角色特化吃的是身份池的组 / 物体位，不依赖固定槽） | 按依赖面从小到大迁移 |
 | **R6** | 删 MetadataBuffer；契约出 v2 | 全仓库无 `_HoMetadataBuffer` 引用 |
 
