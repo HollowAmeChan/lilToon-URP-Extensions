@@ -190,14 +190,35 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 | 阶段 | 内容 | 为什么在这个位置 |
 | --- | --- | --- |
 | **R0** | 本文 + 最小契约冻结 + 在 v0.1/反射文档上标注取代关系 | **已完成**；后续代码以本表为准 |
-| **R1** | **OB 改名搬迁 + 新布局**（`Runtime/CharacterBuffer` → `Runtime/ObjectBuffer`；常量、feature、组件、调试、编辑器）；存储改成**身份池 ranked（常开）+ 固定语义槽 fixed（默认 4 槽 = 2 张，可配 8 / 16，上限 8 张）** | 代码已有 90%，改名的同时把"身份池 + 语义槽"两个池落实 |
+| **R1** | **OB 改名搬迁 + 新布局**（`Runtime/CharacterBuffer` → `Runtime/ObjectBuffer`；常量、feature、组件、调试、编辑器）；存储改成**身份池 ranked（常开）+ 固定语义槽 fixed（默认 4 槽 = 2 张，可配 8 / 16，上限 8 张）**；**调试与登记按 §6.1** | 代码已有 90%，改名的同时把"身份池 + 语义槽"两个池落实 |
 | **R2** | OB 的**朝向图**（forward+side，octahedral 打包进一张 RGBA8）+ 调试视图 | 它同时验证"逐物体辅助量"这条可写通道的机制 |
-| **R3** | **SB 落地**：先 `Color`+`Material`+`Reflection`，再 `Normal`；反射优先于其它消费者 | SB 是 PBR/PLR/SSR 的共同地基 |
-| **R4** | **AC 落地**：递进覆盖链（纯值 < object < surface）+ 合成属性图 + 可查询 API + manifest + 消费者登记 | 运行时属性合成与 Cryptomatte 导出解耦；ScreenProcess 的 20 个 source 收成 1 族 |
-| **R5** | 消费者迁移：GTAO/SSGI 保持现状；**SSS/PLR → SB 数值 + AC 遮罩**；**角色特化 / ScreenProcess → AC**（角色特化吃的是身份池的组 / 物体位，不依赖固定槽） | 按依赖面从小到大迁移 |
+| **R3** | **SB 落地**：先 `Color`+`Material`+`Reflection`，再 `Normal`；反射优先于其它消费者；**调试与登记按 §6.1** | SB 是 PBR/PLR/SSR 的共同地基 |
+| **R4** | **AC 落地**：递进覆盖链（纯值 < object < surface）+ 合成属性图 + 可查询 API + manifest + 消费者登记；**调试与登记按 §6.1** | 运行时属性合成与 Cryptomatte 导出解耦；ScreenProcess 的 20 个 source 收成 1 族 |
+| **R5** | **消费者输入切换**（§6.2）：ScreenProcess 的 20 个 rule source → AC 具名条目；角色特化 `maskId` / `objectCustom0-1` / `surfaceColor` → AC（组 / 物体位）+ SB（表面色）；**它们自己的调试与登记也按 §6.1 改** | 按依赖面从小到大迁移 |
 | **R6** | 删 MetadataBuffer；契约出 v2 | 全仓库无 `_HoMetadataBuffer` 引用 |
 
 **与 v0.1 §11 推进顺序的关系**：v0.1 定的是 `GTAO → SSGI → 其余系统`。GTAO/SSGI 已经在做，**R1-R4 属于"其余系统"里的地基工程**，与它们并行不冲突（互不读对方的产物）。
+
+### 6.1 每个 feature 都要做的"调试与登记"（OB / SB / AC 各自）
+
+**不是可选项**：没有 debug 视图与登记，通道就等于没落地（契约 §3 模板本来就要求 debug 列）。
+
+| # | 事项 | 落点（仓库里现成的机制） |
+| --- | --- | --- |
+| 1 | **自己的 debug pass + debug 视图**：每个池 / 每张图一条，能单独看 | feature 自己的 `*DebugPass` + `Shaders/Debug/*.shader` |
+| 2 | **注册视图** | `HoDebugViewInfo` + 加进 `HoDebugViewRegistry.AllViews`。⚠ **今天 `HoCharacterBufferDebugViewInfo` 没进 registry**——OB 顺手补上 |
+| 3 | **新增 render kind** | `HoDebugViewRenderKind` 加枚举值（每个 feature 一个） |
+| 4 | **让 DebugTile 接得上** | `HoDebugTileRendererFeature`：可用性判定（`has*`）+ `BuildTiles` 过滤 + `ResourceNeeds.FromTiles` 分支；`HoDebugTile.shader` 加对应 slice；`LilUrpDebugShaderValidator` 的收集表 |
+| 5 | **契约登记的 debug 列** | `LILTOON_CHANNEL_CONTRACT_V1.md` §3 模板逐条填 |
+| 6 | **失败可见**（不静默） | 声明与已分配 RT 张数不一致 / 未声明 ID / 一像素 ID 溢出 / 非法槽 / 消费者声明的名字解析不到 → 视图里标出 + 告警 |
+
+### 6.2 消费者输入切换（R5 的具体清单）
+
+| 消费者 | 今天吃什么 | 切换后 | 要一起做掉的 |
+| --- | --- | --- | --- |
+| **ScreenProcess** | `ScreenProcessRuleSource` **20 个值**（maskId 四通道 / surfaceData 四通道 / custom0~3 / objectCustom0~7）+ "通道 + 阈值"匹配 | **AC 的具名条目**：规则声明名字，C# 侧解析成 ID，shader 走 `HoAC_*` | ① `ScreenProcessRuleSource` 收成"具名条目 + 组"；② `ScreenProcessRuntimeDiagnostics` 的 `Requires*` / `*Available` 家族换成 AC 的登记与解析诊断；③ **旧序列化配置的迁移**（旧 enum 值 → 名字，映射不了的显式失效提示，不静默）；④ 4 张缺省黑纹理 → AC 的缺省 |
+| **角色特化** | `maskId`（组 / 部件 / 标记 / 权重）+ `objectCustom0/1`（8 位）+ `SurfaceColor` | **AC**：组 / 物体位 / 覆盖率（`HoAC_Group` / `HoAC_Mask`）+ **SB**：表面色 | ① 输入改走 AC 的查询 API；② `_HoMetadataBufferActive` → AC 的 active；③ 遮罩模糊等 pass 的输入同样换掉；④ 自己的 debug 视图与登记（§6.1） |
+| **SSS / PLR** | MetadataBuffer 的 surface 族 + `custom0` | **SB 数值 + AC 遮罩** | 遮罩模糊与分类读法一起换；`surfaceData` 的老依赖删掉 |
 
 ---
 

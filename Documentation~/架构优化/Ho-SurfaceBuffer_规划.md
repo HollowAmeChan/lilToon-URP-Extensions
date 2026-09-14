@@ -95,6 +95,7 @@ _UsePlanarReflection             → 只在总开关打开时生效
 | **4** | 反射侧停止新增 Target5 消费者 → 桥接残留清干净 | `_HoMetadataBufferReflectionMaterialTexture` 无消费者 |
 | **5** | 迁 `Classification`（SSS 的 thickness/curvature/class/transmittance） | SSS 行为不变 |
 | **6** | 与 OB/AC 一起进 R6：删 MetadataBuffer 的 surface 族 | 无 `_HoMetadataBuffer` surface 族引用 |
+| **全程** | **调试与登记**（V2 §6.1）：六张图各一条 debug 视图 + 进 `HoDebugViewRegistry` + `HoDebugViewRenderKind` + DebugTile 的可用性 / 资源需求 / shader slice + 契约 debug 列 | 每张图都能单独看；没有 debug 视图就等于通道没落地 |
 
 ---
 
@@ -112,3 +113,4 @@ _UsePlanarReflection             → 只在总开关打开时生效
 10. **六张纹理名冻结**：`_HoSurfaceBuffer{Color,Normal,Material,Reflection,Classification,Selection}Texture`。
 11. **材质侧参数**：复用 `_HoSSSProfileId` / `_HoSSSThicknessScale` / `_HoSSSTransmissionStrength`，**只新增 `_HoSurfaceCurvature`**；**不用 MPB**。
 12. `target` 序与 `Target5` 这类 slot 号是**桥接期**叫法，落定后一律改用 SB 纹理名。
+13. **调试与登记是落地的一部分**（V2 §6.1）：六张图各有 debug 视图、进 `HoDebugViewRegistry`、DebugTile 接得上、契约 debug 列填齐；**没有 debug 视图就不算落地**。

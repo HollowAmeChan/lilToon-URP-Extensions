@@ -141,9 +141,10 @@
 | --- | --- | --- |
 | **R1** | 改名搬迁 + 新布局：`Runtime/CharacterBuffer/` → `Runtime/ObjectBuffer/`，常量 `_HoCharacterBuffer*` → `_HoObjectBuffer*`，feature / 组件 / 设置 / 调试 / 编辑器同步改名；**选择层保留**，存储改成 §2 的两个池（身份 ranked 常开 + 语义槽 fixed） | 编译通过；相机 AA 关掉时覆盖率仍是 4x；ID 视图与选择视图都在 |
 | **R2** | 朝向图：`faceBone` + 三轴（已有）→ 每帧写 `_HoObjectBufferFacingTexture` + debug 视图 | shader 里能按像素读到 forward / side；眼透相机角度修正改为读它 |
-| **R3/R4** | 消费者迁移：角色特化 → AC；ScreenProcess → 只吃具名遮罩 | 行为不变或更好；`Requires*` 诊断可删 |
+| **R3/R4** | 消费者迁移：角色特化 → AC（组 / 物体位 / 覆盖率）；ScreenProcess → 只吃具名遮罩（V2 §6.2） | 行为不变或更好；`Requires*` 诊断可删 |
 | **R5** | SSS / PLR 的**遮罩**切过来（数值走 SB） | 行为不变；无跨来源相乘 |
 | **R6** | 与 SB 一起删 MetadataBuffer | 全仓库无 `_HoMetadataBuffer` 引用 |
+| **全程** | **调试与登记**（V2 §6.1）：debug 视图 + 进 `HoDebugViewRegistry`（⚠ **CB 今天没注册，R1 顺手补**）+ `HoDebugViewRenderKind` + DebugTile 的可用性 / 资源需求 / shader slice + 契约 debug 列 + **失败可见**（声明与 RT 张数不一致 / 未声明 ID / 溢出 / 非法槽） | 每个池与每张图都能单独看；四种失败在视图里标出，不静默 |
 
 **与 `LILTOON_FORMAL_PIPELINE_DRAFT_V2.md` §3.1 的差异**：那两行桥接口径（`ID0.rgba = coverage/groupId/objectId/flags`、`ID1.rgba = object custom bits`）**已被本文 §2 取代**——身份走 ranked 池（多物体归属 + 真实覆盖率），具名遮罩走**固定语义槽**。
 
@@ -169,3 +170,4 @@
 14. **登记族 `object.*`**；`character.*` 与 `_HoCryptomatte*` 一律不用。
 15. **准入判据 + 类②上限两张图 + 没有消费者的不分配**（§5）。
 16. **两个面的定位写死**：**身份池 = Cryptomatte 语义面**（导出 / 点选 / 任意 ID 按需生成遮罩都从它出，**将来的合规导出只读它**）；**语义槽池 = 运行时遮罩面**（只服务"材质逐像素遮罩"与"不许丢"，不是选区模型）。**角色特化不依赖固定槽**（它吃的是身份池条目的物体位）。
+17. **调试与登记是落地的一部分**（V2 §6.1）：debug 视图 + 进 `HoDebugViewRegistry`（CB 今天没注册，R1 补）+ DebugTile 接得上 + 契约 debug 列 + 四种失败可见；**没有 debug 视图就不算落地**。
