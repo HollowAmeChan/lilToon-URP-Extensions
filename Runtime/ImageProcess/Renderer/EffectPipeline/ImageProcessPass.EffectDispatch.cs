@@ -201,6 +201,14 @@ namespace lilToon.URP.Extensions.PostProcessing
             RTHandle destination,
             ImageProcessRuntimeLayer runtimeLayer)
         {
+            // A broken/temporarily unavailable shader must not poison the ping-pong chain.
+            // Preserve the source image so later effects can continue to run.
+            if (!IsMaterialUsable(runtimeLayer.material))
+            {
+                Blitter.BlitCameraTexture(cmd, source, destination);
+                return;
+            }
+
             ApplyLayerProperties(runtimeLayer.settings, runtimeLayer.material);
             Blitter.BlitCameraTexture(cmd, source, destination, runtimeLayer.material, Mathf.Max(0, runtimeLayer.settings.passIndex));
         }
@@ -225,12 +233,23 @@ namespace lilToon.URP.Extensions.PostProcessing
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
+                    if (!IsMaterialUsable(data.material))
+                    {
+                        Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), 0.0f, false);
+                        return;
+                    }
+
                     ApplyLayerProperties(data.layer, data.material);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, data.passIndex);
                 });
             }
 
             return destination;
+        }
+
+        private static bool IsMaterialUsable(Material material)
+        {
+            return material != null && material.shader != null && material.shader.isSupported;
         }
     }
 }

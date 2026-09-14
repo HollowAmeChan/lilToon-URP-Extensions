@@ -5,6 +5,7 @@ using UnityEngine.UIElements;
 
 namespace lilToon.URP.Extensions.Editor.PostProcessing
 {
+    [InitializeOnLoad]
     internal static class PostProcessScreenSpaceViewControl
     {
         private const string OverlayName = "PostProcessScreenSpaceViewControlOverlay";
@@ -19,6 +20,27 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private static Action<Rect, Event> onGUI;
         private static string activeOwner;
         private static GUIStyle hintLabel;
+
+        static PostProcessScreenSpaceViewControl()
+        {
+            // Static view-control state can outlive an inspector when a Volume/GameObject is
+            // deleted, entering play mode, or Unity reloads assemblies. Always tear down the
+            // full-screen IMGUI overlay in those transitions so it cannot consume GameView input.
+            AssemblyReloadEvents.beforeAssemblyReload += () => Stop();
+            EditorApplication.quitting += () => Stop();
+            EditorApplication.playModeStateChanged += OnPlayModeStateChanged;
+        }
+
+        private static void OnPlayModeStateChanged(PlayModeStateChange state)
+        {
+            if (state == PlayModeStateChange.ExitingEditMode ||
+                state == PlayModeStateChange.EnteredPlayMode ||
+                state == PlayModeStateChange.ExitingPlayMode ||
+                state == PlayModeStateChange.EnteredEditMode)
+            {
+                Stop();
+            }
+        }
 
         public static bool IsActive(string owner)
         {

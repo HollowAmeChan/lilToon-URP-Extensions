@@ -77,9 +77,22 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return false;
             }
 
-            serialized = new SerializedObject(target);
-            serialized.Update();
-            element = serialized.FindProperty(propertyPath);
+            try
+            {
+                serialized = new SerializedObject(target);
+                serialized.Update();
+                element = serialized.FindProperty(propertyPath);
+            }
+            catch (System.Exception)
+            {
+                // Unity can invalidate an editor target between repaint events. Treat that as
+                // an ended session instead of allowing a stale overlay to keep throwing.
+                Stop();
+                target = null;
+                serialized = null;
+                element = null;
+                return false;
+            }
             if (element != null)
             {
                 return true;
