@@ -72,14 +72,14 @@
 
 ---
 
-## 1.6 与 `Ho-Cryptomatte` 的分工：本 buffer 只管"提供可写通道"
+## 1.6 与 `Ho-AttributeComposite`（AC）的分工：本 buffer 只管"提供可写通道"
 
-`Ho-Cryptomatte` **不是**本 feature 的一部分，而是一个**合成层**：把三个来源按"**纯值 → object → surface**"的递进顺序**合成出一个能用的属性**，并由此产出遮罩 / 选区 / 导出。架构因此是三轴 + 一层合成：
+`Ho-AttributeComposite`（**AC**，运行时属性合成器；**`Ho-Cryptomatte` 这个名字只用于 AOV 的 ID/manifest 导出**——见 `LILTON_FORMAL_PIPELINE_DRAFT_V2.md` §0 第 3 条）**不是**本 feature 的一部分，而是一个**合成层**：把三个来源按"**纯值 → object → surface**"的递进顺序**合成出一个能用的属性**，并由此产出遮罩 / 选区。架构因此是三轴 + 一层合成：
 
 ```text
 GB（几何轴）             ─┐
-ObjectBuffer（逐物体轴） ─┼─→ Ho-Cryptomatte（递进覆盖 + 合成 + 选区/导出） ─→ 消费者
-SurfaceBuffer（表面轴）  ─┘
+ObjectBuffer（逐物体轴） ─┼─→ Ho-AttributeComposite（递进覆盖 + 合成 + 具名遮罩） ─→ 消费者
+SurfaceBuffer（表面轴）  ─┘        （Cryptomatte 仅用于 AOV 导出）
 ```
 
 **分工原则（这就是"更解耦"的落点）**：

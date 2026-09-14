@@ -1,7 +1,8 @@
-# Ho-Cryptomatte 规划：纯值 → object → surface 的递进覆盖与合成层
+# Ho-AttributeComposite（AC）规划：纯值 → object → surface 的递进覆盖与运行时合成层
 
 > 状态：**概念草案**（待细化）。与 `Ho-ObjectBuffer_规划.md` §1.6 配套。
-> 分工：**各 buffer 只提供可写通道，本 feature 决定"多来源怎么合成、谁覆盖谁"**；`Cryptomatte` 这个名字从 ObjectBuffer 手里收回来，专指这一层。
+> **命名已按新管线冻结**（`LILTON_FORMAL_PIPELINE_DRAFT_V2.md` §0 第 3 条）：**运行时属性合成器叫 `Ho-AttributeComposite`（AC）**；**`Ho-Cryptomatte` 这个名字只用于 ID/manifest 导出（AOV 层）**——运行时合成不是标准 Cryptomatte 导出，两者不能混用一个名字。
+> 分工：**各 buffer 只提供可写通道，本 feature 决定"多来源怎么合成、谁覆盖谁"**。
 
 ## 0. 一句话
 
