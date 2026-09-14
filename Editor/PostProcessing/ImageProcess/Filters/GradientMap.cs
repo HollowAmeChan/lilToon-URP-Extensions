@@ -20,13 +20,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         /// <summary>
         /// Body lines after the foldout row, excluding the rows the gradient editor itself takes:
-        /// preview strip, input, black point, white point, interpolation space, posterise bands,
-        /// reverse, dither, blend mode.
+        /// input, black point, white point, interpolation space, posterise bands, reverse, dither,
+        /// blend mode. (The gradient editor draws its own ramp bar, so there is no preview row.)
         /// </summary>
-        private const int GradientMapFixedBodyLineCount = 9;
-
-        private const int GradientMapPreviewSamples = 64;
-        private static readonly float[] GradientMapPreviewRamp = new float[ImageProcessLayer.RampResolution * 4];
+        private const int GradientMapFixedBodyLineCount = 8;
 
         private static bool HasGradientMapParameters(SerializedProperty element)
         {
@@ -106,24 +103,21 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Vector4 p6 = parameters6.vector4Value;
             Gradient gradient = ramp.gradientValue ?? CreateDefaultGradientMapRamp();
 
-            // Unity's own gradient editor: up to 8 colour keys + 8 alpha keys, Blend or Fixed.
+            // Unity's own gradient editor: up to 8 colour keys + 8 alpha keys, Blend or Fixed. It
+            // already draws the ramp bar and the key handles, so this effect adds no second preview
+            // row, and the field needs no label of its own.
             float rampHeight = GetGradientMapRampHeight(ramp);
-            gradient = EditorGUI.GradientField(
-                new Rect(rect.x, y, rect.width, rampHeight),
-                new GUIContent("色标", "Unity 渐变：最多 8 个颜色键 + 8 个透明度键；Fixed 模式下每个键的颜色保持到下一个键。"),
-                gradient);
+            Rect rampRect = new Rect(rect.x, y, rect.width, rampHeight);
+            gradient = EditorGUI.GradientField(rampRect, gradient);
             ramp.gradientValue = gradient;
+            GUI.Label(
+                rampRect,
+                new GUIContent(string.Empty, "Unity 渐变：最多 8 个颜色键 + 8 个透明度键；Fixed 模式下每个键的颜色保持到下一个键。"),
+                GUIStyle.none);
             y += rampHeight + LineSpacing;
 
             int space = Mathf.Clamp(Mathf.RoundToInt(p6.x), 0, GradientMapInterpolationSpaceNames.Length - 1);
             int bands = Mathf.Clamp(Mathf.RoundToInt(p6.z), 0, 16);
-            DrawGradientMapPreview(
-                new Rect(rect.x, y, rect.width, LineHeight),
-                gradient,
-                space,
-                bands,
-                p6.y > 0.5f);
-            y += LineHeight + LineSpacing;
 
             int input = Mathf.Clamp(Mathf.RoundToInt(p0.x), 0, GradientMapInputNames.Length - 1);
             input = EditorGUI.Popup(
@@ -247,81 +241,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             {
                 ramp.gradientValue = gradient;
             }
-        }
-
-        /// <summary>
-        /// Draws the ramp strip preview: the baked ramp (so linear-light/Oklab interpolation and
-        /// Fixed stepping are shown as they will render), sampled the way the texture sampler does.
-        /// </summary>
-        private static void DrawGradientMapPreview(Rect rect, Gradient gradient, int space, int bands, bool reverse)
-        {
-            const int sampleCount = GradientMapPreviewSamples;
-            float sampleWidth = rect.width / sampleCount;
-
-            EditorGUI.DrawRect(rect, new Color(0.25f, 0.25f, 0.25f, 1.0f));
-
-            if (!ImageProcessLayer.BakeRamp(gradient, space, GradientMapPreviewRamp, out bool fixedMode))
-            {
-                return;
-            }
-
-            for (int i = 0; i < sampleCount; i++)
-            {
-                float t = (i + 0.5f) / sampleCount;
-                if (reverse)
-                {
-                    t = 1.0f - t;
-                }
-
-                if (bands >= 2)
-                {
-                    t = Mathf.Clamp01(Mathf.Floor(t * bands) / Mathf.Max(bands - 1, 1));
-                }
-
-                EditorGUI.DrawRect(
-                    new Rect(rect.x + i * sampleWidth, rect.y, sampleWidth + 0.5f, rect.height),
-                    SampleGradientMapPreviewRamp(t, fixedMode));
-            }
-
-            Color border = new Color(0.0f, 0.0f, 0.0f, 0.6f);
-            EditorGUI.DrawRect(new Rect(rect.x, rect.y, rect.width, 1.0f), border);
-            EditorGUI.DrawRect(new Rect(rect.x, rect.yMax - 1.0f, rect.width, 1.0f), border);
-
-            GUI.Label(
-                rect,
-                new GUIContent(string.Empty, "渐变条预览：与渲染用的是同一次烘焙（含插值空间、透明度键与 Fixed 台阶）。"),
-                GUIStyle.none);
-        }
-
-        /// <summary>Mirrors the GPU sampling of the baked ramp texture (bilinear, or point in Fixed mode).</summary>
-        private static Color SampleGradientMapPreviewRamp(float t, bool fixedMode)
-        {
-            int resolution = ImageProcessLayer.RampResolution;
-            float u = Mathf.Clamp01(t);
-
-            if (fixedMode)
-            {
-                int index = Mathf.Clamp(Mathf.FloorToInt(u * (resolution - 1)), 0, resolution - 1);
-                return ReadGradientMapPreviewSample(index);
-            }
-
-            // Same half-texel stretch the shader applies, so the strip shows what the GPU samples.
-            float coordinate = u * (resolution - 1);
-            float lower = Mathf.Floor(coordinate);
-            float fraction = coordinate - lower;
-            Color a = ReadGradientMapPreviewSample(Mathf.Clamp(Mathf.FloorToInt(lower), 0, resolution - 1));
-            Color b = ReadGradientMapPreviewSample(Mathf.Clamp(Mathf.FloorToInt(lower) + 1, 0, resolution - 1));
-            return Color.Lerp(a, b, fraction);
-        }
-
-        private static Color ReadGradientMapPreviewSample(int index)
-        {
-            int offset = index * 4;
-            return new Color(
-                GradientMapPreviewRamp[offset],
-                GradientMapPreviewRamp[offset + 1],
-                GradientMapPreviewRamp[offset + 2],
-                GradientMapPreviewRamp[offset + 3]);
         }
     }
 }
