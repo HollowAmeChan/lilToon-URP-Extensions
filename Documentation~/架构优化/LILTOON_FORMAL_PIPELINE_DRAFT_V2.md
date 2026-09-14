@@ -211,6 +211,7 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 | 4 | **让 DebugTile 接得上** | `HoDebugTileRendererFeature`：可用性判定（`has*`）+ `BuildTiles` 过滤 + `ResourceNeeds.FromTiles` 分支；`HoDebugTile.shader` 加对应 slice；`LilUrpDebugShaderValidator` 的收集表 |
 | 5 | **契约登记的 debug 列** | `LILTOON_CHANNEL_CONTRACT_V1.md` §3 模板逐条填 |
 | 6 | **失败可见**（不静默） | 声明与已分配 RT 张数不一致 / 未声明 ID / 一像素 ID 溢出 / 非法槽 / 消费者声明的名字解析不到 → 视图里标出 + 告警 |
+| 7 | **UI 按家规写** | `Ho-UI_风格规范.md`：**调试入口在 Volume**（`HoXxxVolume` 的「调试」分组），**feature 只放高级设置 + 兜底默认值**；分节走 `LilUrpEditorSectionGui`，色板与摘要格式照旧 |
 
 ### 6.2 消费者输入切换（R5 的具体清单）
 

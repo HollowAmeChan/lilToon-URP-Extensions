@@ -93,6 +93,7 @@
 | --- | --- |
 | feature / 代码目录 | `HoObjectBufferRendererFeature`；`Runtime/ObjectBuffer/`（R1 从 `Runtime/CharacterBuffer/` 改名搬迁；CB 那批文件就是骨架，选择层完好） |
 | 组件 | **`HoObjectBufferGroup`**（今天的 `HoMetadataBufferGroup`：组 ID / 部件 ID / 标记 / 物体位名单 / 朝向）、**`HoObjectBufferSubject`**（今天的 `HoMetadataBufferSubject`：逐物体覆盖） |
+| Volume | **`HoObjectBufferVolume`**（**调试入口**；`VolumeComponentMenu("Post-processing/Ho-ObjectBuffer/逐物体通道")`） |
 | 纹理 | `_HoObjectBufferId0Texture` / `_HoObjectBufferId1Texture` / `_HoObjectBufferCoverageTexture`（身份池）、`_HoObjectBufferSelectionTexture`（语义槽池）、`_HoObjectBufferFacingTexture` |
 | 表 | `_HoObjectBufferGroups`、`_HoObjectBufferEntries` |
 | 契约登记族 | **`object.*`**（`object.selection` / `object.facing` / `object.palette`）；CB 时代的 `character.*` 一律不用 |
@@ -171,3 +172,4 @@
 15. **准入判据 + 类②上限两张图 + 没有消费者的不分配**（§5）。
 16. **两个面的定位写死**：**身份池 = Cryptomatte 语义面**（导出 / 点选 / 任意 ID 按需生成遮罩都从它出，**将来的合规导出只读它**）；**语义槽池 = 运行时遮罩面**（只服务"材质逐像素遮罩"与"不许丢"，不是选区模型）。**角色特化不依赖固定槽**（它吃的是身份池条目的物体位）。
 17. **调试与登记是落地的一部分**（V2 §6.1）：debug 视图 + 进 `HoDebugViewRegistry`（CB 今天没注册，R1 补）+ DebugTile 接得上 + 契约 debug 列 + 四种失败可见；**没有 debug 视图就不算落地**。
+18. **UI 按 `Ho-UI_风格规范.md`**：**调试入口在 `HoObjectBufferVolume`**，feature 里只放高级设置 + 兜底默认值（槽数声明默认 4）；ID 的 UI 名就是 §1.1 那一套。

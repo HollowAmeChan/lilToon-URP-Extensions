@@ -82,6 +82,7 @@ _UsePlanarReflection             → 只在总开关打开时生效
 
 - SB 的材质参数一律用 **`_HoSSS*` / `_HoSurface*` 前缀**；**不再新增 `_HoMetadataBuffer*`**，那套随 MetadataBuffer 一起退役。
 - **不用 MPB**（决策 13：MPB 破坏 SRP Batcher）。曲率、`materialClass`、`transmittanceHint` 今天靠 `HoMetadataBufferSubject` 组件 MPB 逐 renderer 覆盖，全部改为材质参数。
+- Volume：**`HoSurfaceBufferVolume`**（调试入口）；UI 按 `Ho-UI_风格规范.md`——**调试在 Volume，feature 只放高级设置 + 兜底默认值**。
 
 ---
 
@@ -114,3 +115,4 @@ _UsePlanarReflection             → 只在总开关打开时生效
 11. **材质侧参数**：复用 `_HoSSSProfileId` / `_HoSSSThicknessScale` / `_HoSSSTransmissionStrength`，**只新增 `_HoSurfaceCurvature`**；**不用 MPB**。
 12. `target` 序与 `Target5` 这类 slot 号是**桥接期**叫法，落定后一律改用 SB 纹理名。
 13. **调试与登记是落地的一部分**（V2 §6.1）：六张图各有 debug 视图、进 `HoDebugViewRegistry`、DebugTile 接得上、契约 debug 列填齐；**没有 debug 视图就不算落地**。
+14. **UI 按 `Ho-UI_风格规范.md`**：调试入口在 **`HoSurfaceBufferVolume`**，feature 里只放高级设置 + 兜底默认值。
