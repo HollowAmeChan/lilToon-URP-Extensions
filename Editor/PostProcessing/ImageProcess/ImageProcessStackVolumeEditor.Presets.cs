@@ -126,8 +126,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "柔和褪色", ApplyImageProcessFadeLevelPreset);
                     break;
                 case ImageProcessEffect.ColorGradingCustom:
-                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "暖调", ApplyImageProcessWarmGradePreset);
-                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "冷调", ApplyImageProcessCoolGradePreset);
+                    AddImageProcessColorGradingLookMenuItems(menu, propertyPath, effect);
                     break;
                 case ImageProcessEffect.Gradient:
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "顶光", ApplyImageProcessTopLightGradientPreset);
@@ -313,20 +312,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetVector4(element, "parameters0", new Vector4(0.0f, 1.0f, 1.12f, 0.08f));
             SetVector4(element, "parameters1", new Vector4(0.9f, 0.0f, 0.0f, 0.0f));
             SetVector4(element, "parameters3", new Vector4(1.0f, 0.0f, 0.0f, LevelAdjustmentInitMarker));
-        }
-
-        private static void ApplyImageProcessWarmGradePreset(SerializedProperty element, ImageProcessEffect effect)
-        {
-            ApplyImageProcessDefaultPreset(element, effect);
-            SetVector4(element, "parameters1", new Vector4(1.0f, 0.95f, 0.88f, 0.03f));
-            SetVector4(element, "parameters2", new Vector4(1.08f, 1.02f, 0.92f, 0.04f));
-        }
-
-        private static void ApplyImageProcessCoolGradePreset(SerializedProperty element, ImageProcessEffect effect)
-        {
-            ApplyImageProcessDefaultPreset(element, effect);
-            SetVector4(element, "parameters1", new Vector4(0.9f, 0.96f, 1.08f, 0.02f));
-            SetVector4(element, "parameters2", new Vector4(0.92f, 1.0f, 1.12f, 0.03f));
         }
 
         private static void ApplyImageProcessTopLightGradientPreset(SerializedProperty element, ImageProcessEffect effect)

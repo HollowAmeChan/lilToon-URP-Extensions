@@ -1,0 +1,240 @@
+[
+  {
+    "index": 1,
+    "group": "基础",
+    "label": "暖调",
+    "ref": "原有预设（参数原样保留）：gamma 偏红、gain 偏红压蓝；纯白约 +5% 溢出",
+    "file": "01_暖调.png"
+  },
+  {
+    "index": 2,
+    "group": "基础",
+    "label": "冷调",
+    "ref": "原有预设（参数原样保留）：gamma 偏蓝、gain 偏蓝压红；纯白约 +6% 溢出",
+    "file": "02_冷调.png"
+  },
+  {
+    "index": 3,
+    "group": "电影感",
+    "label": "青橙大片",
+    "ref": "Teal & Orange（变形金刚 / 漫威）：青影 ~190°、橙在高光/中间调、不压黑",
+    "file": "03_青橙大片.png"
+  },
+  {
+    "index": 4,
+    "group": "电影感",
+    "label": "漂白旁路",
+    "ref": "Bleach Bypass：银盐保留，去饱和 ~40%、压中间调、略偏棕、深黑高白",
+    "file": "04_漂白旁路.png"
+  },
+  {
+    "index": 5,
+    "group": "电影感",
+    "label": "暗绿罪案",
+    "ref": "Se7en / 芬奇（七宗罪）：橄榄黄绿 ~75–100°、浓黑、去饱和",
+    "file": "05_暗绿罪案.png"
+  },
+  {
+    "index": 6,
+    "group": "电影感",
+    "label": "银翼琥珀",
+    "ref": "Blade Runner 2049：冷青蓝洛杉矶 + 琥珀拉斯维加斯、黑不死压",
+    "file": "06_银翼琥珀.png"
+  },
+  {
+    "index": 7,
+    "group": "电影感",
+    "label": "末世废土",
+    "ref": "末世废土（Dune / The Walking Dead 方向）：脏黄绿、低对比抬黑、蓝压得最狠、黄也去饱和",
+    "file": "07_末世废土.png"
+  },
+  {
+    "index": 8,
+    "group": "电影感",
+    "label": "黑客绿",
+    "ref": "The Matrix：阴影去饱和绿 ~120°、中间调偏黄、整体压暗",
+    "file": "08_黑客绿.png"
+  },
+  {
+    "index": 9,
+    "group": "电影感",
+    "label": "教父琥珀",
+    "ref": "The Godfather（教父）：琥珀暖调 + 染料转印的浓黑 + 欠曝",
+    "file": "09_教父琥珀.png"
+  },
+  {
+    "index": 10,
+    "group": "电影感",
+    "label": "月光夜戏",
+    "ref": "Day for Night（日拍夜）：淡紫蓝、越深越偏海军蓝、低对比低饱和、抬黑保留高光",
+    "file": "10_月光夜戏.png"
+  },
+  {
+    "index": 11,
+    "group": "电影感",
+    "label": "北欧冷调",
+    "ref": "Nordic Noir（谋杀 / 桥）：强去饱和 + 弱冷调（来源对偏蓝还是偏卡其有分歧）",
+    "file": "11_北欧冷调.png"
+  },
+  {
+    "index": 12,
+    "group": "电影感",
+    "label": "赛博霓虹",
+    "ref": "赛博霓虹（霓虹恶魔 / 碳变）：青影 + 洋红高光；实际影片靠自发光光源，属类型化处理",
+    "file": "12_赛博霓虹.png"
+  },
+  {
+    "index": 13,
+    "group": "电影感",
+    "label": "交叉冲洗",
+    "ref": "Cross Process（E-6 冲 C-41）：青绿阴影 + 洋红中性 + 金黄高光；蓝通道最陡（gamma.rgb 非中性）",
+    "file": "13_交叉冲洗.png"
+  },
+  {
+    "index": 14,
+    "group": "胶片",
+    "label": "柯达 Portra 400",
+    "ref": "Kodak Portra 400：低对比、白点 ~0.98、饱和 −2%；暖抬脚来自第三方实现而非柯达数据",
+    "file": "14_柯达_Portra_400.png"
+  },
+  {
+    "index": 15,
+    "group": "胶片",
+    "label": "富士 Eterna",
+    "ref": "Fujifilm Eterna 400/500：柔灰低对比、阴影偏青蓝（不是绿）",
+    "file": "15_富士_Eterna.png"
+  },
+  {
+    "index": 16,
+    "group": "胶片",
+    "label": "CineStill 800T",
+    "ref": "CineStill 800T：额定 3200K 下中性（日光/蓝调才偏蓝）、绿转青、红光晕高光",
+    "file": "16_CineStill_800T.png"
+  },
+  {
+    "index": 17,
+    "group": "胶片",
+    "label": "柯达 2383 印片",
+    "ref": "Kodak 2383 印片：陡中间调 + 略高于纯黑的弧形脚 + 中性高光 + 青橙分离",
+    "file": "17_柯达_2383_印片.png"
+  },
+  {
+    "index": 18,
+    "group": "胶片",
+    "label": "特艺三色",
+    "ref": "Technicolor 3-strip：染料层浓黑 + 极高对比 + 原色饱和",
+    "file": "18_特艺三色.png"
+  },
+  {
+    "index": 19,
+    "group": "胶片",
+    "label": "爱克发 Ultra 100",
+    "ref": "Agfa Ultra 100：饱和 +15%、黑压到 0、白点不压（对赛璐璐最友好）",
+    "file": "19_爱克发_Ultra_100.png"
+  },
+  {
+    "index": 20,
+    "group": "胶片",
+    "label": "富士 Velvia 50",
+    "ref": "Fujifilm Velvia 50：饱和 +25%、黑压到 0、风光反转片",
+    "file": "20_富士_Velvia_50.png"
+  },
+  {
+    "index": 21,
+    "group": "胶片",
+    "label": "柯达 Kodachrome",
+    "ref": "Kodachrome 25/64：阴影偏蓝、相对高对比、绿蓝红极饱和、黑不抬",
+    "file": "21_柯达_Kodachrome.png"
+  },
+  {
+    "index": 22,
+    "group": "胶片",
+    "label": "黑白胶片",
+    "ref": "中性黑白（负片扫描）；HSV 去饱和会用 V 而非亮度，见文档",
+    "file": "22_黑白胶片.png"
+  },
+  {
+    "index": 23,
+    "group": "胶片",
+    "label": "黑色电影",
+    "ref": "Film Noir（高反差黑白）：单光源、无中间调补光",
+    "file": "23_黑色电影.png"
+  },
+  {
+    "index": 24,
+    "group": "胶片",
+    "label": "复古棕褐",
+    "ref": "Sepia / 老照片",
+    "file": "24_复古棕褐.png"
+  },
+  {
+    "index": 25,
+    "group": "动画",
+    "label": "新海诚青空",
+    "ref": "新海誠：天空色相带 194–209°、低亮度对比 + 高彩度对比、白柔和滚降",
+    "file": "25_新海诚青空.png"
+  },
+  {
+    "index": 26,
+    "group": "动画",
+    "label": "京阿尼通透",
+    "ref": "京都アニメーション的合成方向（无公开数值，属本表插值）",
+    "file": "26_京阿尼通透.png"
+  },
+  {
+    "index": 27,
+    "group": "动画",
+    "label": "日系空气感",
+    "ref": "日系清新 / ハイキー：抬黑 + 低对比 + 高光偏青 188°、绿转青、蓝去饱和",
+    "file": "27_日系空气感.png"
+  },
+  {
+    "index": 28,
+    "group": "动画",
+    "label": "赛璐璐高饱和",
+    "ref": "TV 赛璐璐：黑不是纯黑（#3A3A3A 底 / #151313 线）、阴影色偏蓝紫、肤色阴影偏红",
+    "file": "28_赛璐璐高饱和.png"
+  },
+  {
+    "index": 29,
+    "group": "动画",
+    "label": "怀旧动画胶片",
+    "ref": "90 年代赛璐璐 + 印片：抬黑、温和对比、相对数字动画略去饱和",
+    "file": "29_怀旧动画胶片.png"
+  },
+  {
+    "index": 30,
+    "group": "风格",
+    "label": "韦斯粉彩",
+    "ref": "Wes Anderson：粉彩偏低彩度（来源只给「去饱和」，抬黑为本表插值）",
+    "file": "30_韦斯粉彩.png"
+  },
+  {
+    "index": 31,
+    "group": "风格",
+    "label": "艾米丽绿金",
+    "ref": "Amélie：金绿 + 大量红、蓝色被极度去饱和、绿偏黄绿",
+    "file": "31_艾米丽绿金.png"
+  },
+  {
+    "index": 32,
+    "group": "风格",
+    "label": "浪漫暖阳",
+    "ref": "Golden Hour（魔幻时刻）",
+    "file": "32_浪漫暖阳.png"
+  },
+  {
+    "index": 33,
+    "group": "风格",
+    "label": "寒冬冷冽",
+    "ref": "Winter / 冷调雪景",
+    "file": "33_寒冬冷冽.png"
+  },
+  {
+    "index": 34,
+    "group": "风格",
+    "label": "肤色保护",
+    "ref": "Skin Tone：橙去饱和 8–12% 并提亮（Qualifier 保护），清掉绿/洋红污染",
+    "file": "34_肤色保护.png"
+  }
+]
