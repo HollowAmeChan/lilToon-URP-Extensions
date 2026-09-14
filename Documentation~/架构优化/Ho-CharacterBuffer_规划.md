@@ -496,6 +496,8 @@ MSAA 阶段**每个样本只需要一个 ID**（一个样本只属于一个部�
 
 ### 5.12 `Ho-SurfaceBuffer`：表面/材质数值的新家（决策 20）
 
+> **详细规划已独立成文档：`Documentation~/架构优化/Ho-SurfaceBuffer_规划.md`**（含现状全量清单、通道布局草案、消费端迁移映射、成本对照与 4 项待拍）。本节只保留与 CB 交界处必须知道的部分。
+
 **为什么拆**：MetadataBuffer 原本一个 buffer 承担了三种语义——身份（哪些是角色/脸/前发）、覆盖率、以及**表面数值**（roughness / metallic / reflectance / thickness / curvature / materialClass / transmittance / 线性表面色）。这次只把前两者搬进 CB；后一组**不是"这是谁"，而是"表面是什么样"**，混在 CB 里会重演老毛病：加一个材质参数要动身份 buffer 的布局与契约，两边互相拖累。
 
 **三分边界（各管一段，互不越界）**
