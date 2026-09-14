@@ -32,8 +32,13 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         public HoCharacterBufferSampleCount sampleCount = HoCharacterBufferSampleCount.Four;
 
         [InspectorName("Selection Layers")]
-        [Tooltip("每像素的选择层数。2 = 一张 RGBA8（Cryptomatte 成对布局）；4 = 两张。")]
+        [Tooltip("每像素的选择层数。2 = 一张 RGBA8（Cryptomatte 成对布局）；4 = 两张（P1 暂按 2 跑并告警）。")]
         public HoCharacterBufferSelectionLayers selectionLayers = HoCharacterBufferSelectionLayers.Two;
+
+        [InspectorName("Material0 Target")]
+        [Tooltip("是否分配 Material0（管线逐像素材质值：roughness / metallic / thickness）。" +
+                 "写入端在 lilToon 侧，P1 只负责分配与发布。")]
+        public bool useMaterial0;
 
         [InspectorName("Use Fallback Material")]
         public bool useFallbackMaterial = true;

@@ -22,12 +22,13 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Resolve"
             #pragma target 4.5
             #pragma vertex Vert
             #pragma fragment Frag
-
             #pragma multi_compile_local_fragment _ _HO_CHARACTER_BUFFER_MSAA_2 _HO_CHARACTER_BUFFER_MSAA_4
             #pragma multi_compile_local_fragment _ _HO_CHARACTER_BUFFER_ID_UNORM
             #pragma multi_compile_local_fragment _ _HO_CHARACTER_BUFFER_HAS_SELECTION
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+            // 全屏三角形的 Vert / Varyings 由 Blit.hlsl 提供（与 GeometryBuffer 的 resolve 同一做法）。
+            #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterBuffer/Shaders/HoCharacterBufferIdPass.hlsl"
 
             #if defined(_HO_CHARACTER_BUFFER_MSAA_2)
@@ -65,18 +66,6 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Resolve"
                 HO_CB_TEXTURE_MS(float4, _HoCharacterBufferResolveSelectionTextureMS);
             #endif
 
-            struct Attributes
-            {
-                float4 positionOS : POSITION;
-                UNITY_VERTEX_INPUT_INSTANCE_ID
-            };
-
-            struct Varyings
-            {
-                float4 positionCS : SV_POSITION;
-                UNITY_VERTEX_OUTPUT_STEREO
-            };
-
             struct LayerOutput
             {
                 float4 id0 : SV_Target0;
@@ -85,15 +74,6 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Resolve"
                 float4 selection0 : SV_Target3;
                 float4 selection1 : SV_Target4;
             };
-
-            Varyings Vert(Attributes input)
-            {
-                Varyings output;
-                UNITY_SETUP_INSTANCE_ID(input);
-                UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
-                output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
-                return output;
-            }
 
             // 数票 → 排序（票数降序，平票取更近的样本）。
             void HoCharacterBufferResolveLayers(uint2 coord, out uint ids[4], out float coverages[4])

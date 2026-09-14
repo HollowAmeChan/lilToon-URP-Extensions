@@ -8,6 +8,10 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         public const string ShaderPassName = "HoCharacterBuffer";
         public const string SurfaceShaderPassName = "HoCharacterBufferSurface";
 
+        public const string FallbackShaderName = "Hidden/lilToon/URP/CharacterBuffer/Fallback";
+        public const string ResolveShaderName = "Hidden/lilToon/URP/CharacterBuffer/Resolve";
+        public const string DebugShaderName = "Hidden/lilToon/URP/CharacterBuffer/Debug";
+
         public const string ActiveName = "_HoCharacterBufferActive";
         public const string ValidName = "_HoCharacterBufferValid";
         public const string Id0TextureName = "_HoCharacterBufferId0Texture";
