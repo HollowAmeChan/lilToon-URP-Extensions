@@ -27,8 +27,6 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             public TextureHandle id0Texture;
             public TextureHandle id1Texture;
             public TextureHandle coverageTexture;
-            public TextureHandle surfaceTexture;
-            public TextureHandle material0Texture;
             public TextureHandle selectionTexture;
         }
 
@@ -67,12 +65,6 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                     cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.Id0TextureId, renderTargets.Id0Texture.nameID);
                     cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.Id1TextureId, renderTargets.Id1Texture.nameID);
                     cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.CoverageTextureId, renderTargets.CoverageTexture.nameID);
-                    cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.SurfaceTextureId, renderTargets.SurfaceTexture.nameID);
-                    if (renderTargets.Material0Texture != null)
-                    {
-                        cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.Material0TextureId, renderTargets.Material0Texture.nameID);
-                    }
-
                     if (renderTargets.SelectionTexture != null)
                     {
                         cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.SelectionTextureId, renderTargets.SelectionTexture.nameID);
@@ -109,23 +101,11 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 passData.id0Texture = resources.id0Texture;
                 passData.id1Texture = resources.id1Texture;
                 passData.coverageTexture = resources.coverageTexture;
-                passData.surfaceTexture = resources.surfaceTexture;
-                passData.material0Texture = resources.material0Texture;
                 passData.selectionTexture = resources.selectionTexture;
 
                 builder.UseTexture(resources.id0Texture, AccessFlags.Read);
                 builder.UseTexture(resources.id1Texture, AccessFlags.Read);
                 builder.UseTexture(resources.coverageTexture, AccessFlags.Read);
-                if (resources.surfaceTexture.IsValid())
-                {
-                    builder.UseTexture(resources.surfaceTexture, AccessFlags.Read);
-                }
-
-                if (resources.material0Texture.IsValid())
-                {
-                    builder.UseTexture(resources.material0Texture, AccessFlags.Read);
-                }
-
                 if (resources.selectionTexture.IsValid())
                 {
                     builder.UseTexture(resources.selectionTexture, AccessFlags.Read);
@@ -141,16 +121,6 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                     context.cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.Id0TextureId, data.id0Texture);
                     context.cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.Id1TextureId, data.id1Texture);
                     context.cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.CoverageTextureId, data.coverageTexture);
-                    if (data.surfaceTexture.IsValid())
-                    {
-                        context.cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.SurfaceTextureId, data.surfaceTexture);
-                    }
-
-                    if (data.material0Texture.IsValid())
-                    {
-                        context.cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.Material0TextureId, data.material0Texture);
-                    }
-
                     if (data.selectionTexture.IsValid())
                     {
                         context.cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.SelectionTextureId, data.selectionTexture);

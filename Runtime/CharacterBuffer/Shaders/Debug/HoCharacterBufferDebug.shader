@@ -30,8 +30,6 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/DebugView"
             TEXTURE2D_X(_HoCharacterBufferId0Texture);
             TEXTURE2D_X(_HoCharacterBufferId1Texture);
             TEXTURE2D_X(_HoCharacterBufferCoverageTexture);
-            TEXTURE2D_X(_HoCharacterBufferSurfaceTexture);
-            TEXTURE2D_X(_HoCharacterBufferMaterial0Texture);
             TEXTURE2D_X(_HoCharacterBufferSelectionTexture);
             float _HoCharacterBufferDebugMode;
             float _HoCharacterBufferValid;
@@ -126,18 +124,7 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/DebugView"
                     return float4(saturate(part.thickness), saturate(part.curvature), saturate((float)part.materialClass * 0.25), 1.0);
                 }
 
-                if (mode == 9)
-                {
-                    float4 surface = SAMPLE_TEXTURE2D_X(_HoCharacterBufferSurfaceTexture, sampler_PointClamp, uv);
-                    return float4(surface.rgb, 1.0);
-                }
-
-                if (mode == 10)
-                {
-                    float4 material0 = SAMPLE_TEXTURE2D_X(_HoCharacterBufferMaterial0Texture, sampler_PointClamp, uv);
-                    return float4(material0.rgb, 1.0);
-                }
-
+                // 9 = Valid：走到这里就说明一切正常（表在、图在、pass 跑了）。
                 return float4(0.0, 0.6, 0.0, 1.0);
             }
             ENDHLSL

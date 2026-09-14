@@ -116,7 +116,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
                 EditorGUILayout.HelpBox(
                     "Cryptomatte 选择层 = 具名选区（取代匿名通道）。只有 group 里注册了选择才会分配那张图；" +
                     "写入端在 lilToon 侧的材质里（跨仓协议见规划 §5.11）。P1 只实现 2 个选择/像素。\n" +
-                    "Material0（管线逐像素材质值）同样等 lilToon 侧的写入端就绪后再接线，现在不分配、不发布。",
+                    "表面色与材质数值（roughness / metallic / thickness / 反射 …）已拆到 Ho-SurfaceBuffer（规划 §5.12），本 feature 不再有这些通道。",
                     MessageType.None);
             }
         }

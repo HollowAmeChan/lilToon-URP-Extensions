@@ -23,8 +23,6 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             View("character.coverage-layers", "CovL", HoCharacterBufferDebugMode.CoverageLayers),
             View("character.selection", "Sel", HoCharacterBufferDebugMode.Selection),
             View("character.palette-row", "Pal", HoCharacterBufferDebugMode.PaletteRow),
-            View("character.surface", "Surf", HoCharacterBufferDebugMode.Surface),
-            View("character.material0", "Mat0", HoCharacterBufferDebugMode.Material0),
             View("character.valid", "Valid", HoCharacterBufferDebugMode.Valid)
         };
 

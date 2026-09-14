@@ -12,13 +12,13 @@ namespace lilToon.URP.Extensions.CharacterBuffer
     /// </summary>
     internal static class HoCharacterBufferFormatUtility
     {
-        /// <summary>层图（ID / 覆盖率 / 选择 / Material0）统一用 RGBA8。</summary>
+        /// <summary>层图（ID / 覆盖率 / Cryptomatte 选择）统一用 RGBA8。</summary>
         public static GraphicsFormat GetLayerGraphicsFormat()
         {
             return IsUsable(GraphicsFormat.R8G8B8A8_UNorm) ? GraphicsFormat.R8G8B8A8_UNorm : GraphicsFormat.B8G8R8A8_UNorm;
         }
 
-        /// <summary>表面色是线性 HDR，必须 16F。</summary>
+        /// <summary>线性 HDR 表面色要 16F。**CB 自己不用**（表面色归 Ho-SurfaceBuffer），留给它复用。</summary>
         public static GraphicsFormat GetSurfaceGraphicsFormat()
         {
             return IsUsable(GraphicsFormat.R16G16B16A16_SFloat) ? GraphicsFormat.R16G16B16A16_SFloat : GetLayerGraphicsFormat();

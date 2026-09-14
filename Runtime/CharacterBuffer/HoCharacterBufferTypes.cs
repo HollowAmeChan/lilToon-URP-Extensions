@@ -133,10 +133,6 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         Selection,
         [InspectorName("Palette Row (Layer 0)")]
         PaletteRow,
-        [InspectorName("Surface")]
-        Surface,
-        [InspectorName("Material 0")]
-        Material0,
         [InspectorName("Valid")]
         Valid
     }
