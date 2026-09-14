@@ -1,4 +1,8 @@
 using System.Collections.Generic;
+// HoFaceAxis 眼下还住在 MetadataBuffer 的命名空间里（面部朝向是那边的既有语义，直接复用同一个枚举，
+// 免得两套轴向定义各自漂移）。P4 删掉 MetadataBuffer 时把它搬过来即可：枚举按 int 序列化，
+// 只要成员顺序不变，迁移不会丢已有场景里的值。
+using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 
 namespace lilToon.URP.Extensions.CharacterBuffer
@@ -41,6 +45,22 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         [Tooltip("具名的选区（规划 §5.11）。名字全局唯一；材质侧只能引用这里的名字。")]
         public List<HoCharacterBufferSelectionEntry> selections = new List<HoCharacterBufferSelectionEntry>();
 
+        [InspectorName("面部朝向")]
+        [Tooltip("确定角色面部朝向的 Transform——可以是骨骼，也可以是一个朝向正确的空物体。仅供各消费者系统读取（眼透相机角度修正、未来的 SDF 等）；留空表示未提供。以 Transform 的局部轴配合下方三个轴向设置来定义脸前/右/上。")]
+        public Transform faceBone;
+
+        [InspectorName("脸前轴")]
+        [Tooltip("骨骼的哪个局部轴作为“脸前方”。默认 +Z（Unity 模型常见脸前约定）。若正面/侧面的衰减方向反了，换成 +Z / -Z 试试。")]
+        public HoFaceAxis faceForwardAxis = HoFaceAxis.Forward;
+
+        [InspectorName("右轴")]
+        [Tooltip("骨骼的哪个局部轴作为“角色右侧（画面左侧）”。默认 +X。")]
+        public HoFaceAxis faceRightAxis = HoFaceAxis.Right;
+
+        [InspectorName("上轴")]
+        [Tooltip("骨骼的哪个局部轴作为“角色上方”。默认 +Y。俯仰角按此轴分解，若俯视/仰视不生效请检查此项。")]
+        public HoFaceAxis faceUpAxis = HoFaceAxis.Up;
+
         private readonly Dictionary<Renderer, int> localSlotByRenderer = new Dictionary<Renderer, int>();
         private readonly List<string> partNameCache = new List<string>();
         private readonly List<string> selectionNameCache = new List<string>();
@@ -65,6 +85,76 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         {
             characterId = Mathf.Clamp(characterId, 1, HoCharacterBufferPaletteLimits.MaxCharacters - 1);
             HoCharacterBufferRegistry.MarkDirty();
+        }
+
+        /// <summary>活动 group 列表（消费者系统按需遍历）。</summary>
+        public static IReadOnlyList<HoCharacterBufferGroup> GetActiveGroups()
+        {
+            return ActiveGroups;
+        }
+
+        /// <summary>强制重编译表（编辑器改了条目之后用）。</summary>
+        public void Apply()
+        {
+            HoCharacterBufferRegistry.MarkDirty();
+            HoCharacterBufferRegistry.EnsureBuilt();
+        }
+
+        /// <summary>
+        /// 重新编译 palette 并把 RSUV 索引写回所有 renderer。
+        /// RSUV **不会被序列化**，所以场景重载 / 域重载之后必须能手动刷新一次。
+        /// </summary>
+        public static void RefreshLoadedScenes()
+        {
+            HoCharacterBufferRegistry.MarkDirty();
+            HoCharacterBufferRegistry.EnsureBuilt();
+        }
+
+        /// <summary>
+        /// 提供角色世界朝向（供眼透相机角度修正、SDF 等消费者系统读取）。
+        /// 以 <see cref="faceBone"/> 的局部轴按三个轴向配置换算成世界向量；
+        /// 未设置朝向时返回 false。不负责相机相关计算，仅输出朝向参考数据。
+        /// 与 <c>HoMetadataBufferGroup.TryGetWorldFacing</c> 同形——消费者从 MetadataBuffer 切过来时不用改调用方式。
+        /// </summary>
+        public bool TryGetWorldFacing(
+            out Vector3 position,
+            out Vector3 forward,
+            out Vector3 right,
+            out Vector3 up)
+        {
+            if (faceBone == null)
+            {
+                position = Vector3.zero;
+                forward = Vector3.zero;
+                right = Vector3.zero;
+                up = Vector3.zero;
+                return false;
+            }
+
+            position = faceBone.position;
+            forward = GetLocalAxis(faceBone, faceForwardAxis).normalized;
+            right = GetLocalAxis(faceBone, faceRightAxis).normalized;
+            up = GetLocalAxis(faceBone, faceUpAxis).normalized;
+            return true;
+        }
+
+        private static Vector3 GetLocalAxis(Transform reference, HoFaceAxis axis)
+        {
+            switch (axis)
+            {
+                case HoFaceAxis.Up:
+                    return reference.up;
+                case HoFaceAxis.Down:
+                    return -reference.up;
+                case HoFaceAxis.Right:
+                    return reference.right;
+                case HoFaceAxis.Left:
+                    return -reference.right;
+                case HoFaceAxis.Forward:
+                    return reference.forward;
+                default:
+                    return -reference.forward;
+            }
         }
 
         /// <summary>部件名列表（按槽位顺序）；注册表按这个顺序分配槽位号。</summary>

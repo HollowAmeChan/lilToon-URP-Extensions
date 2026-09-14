@@ -24,7 +24,7 @@ MetadataBuffer 把 8 个语义压进 RSUV 低字节的 8 个 bit，语义因此�
 | --- | --- | --- |
 | 1 | **K = 4**（层数固定 4；MSAA 采样数 N ≤ K，因此封顶 4x） | 逐位无损，不需要"该保留谁"的规则 |
 | 2 | **部件上限 4096** | ID = 16 bit/层（角色 8 + 槽位 8）；4096 是注册校验预算，编码上限 256 角色 × 256 槽位 |
-| 3 | **组件形态沿用** | 单组件 `HoCharacterBufferGroup` 挂角色/渲染器上；"8 个固定勾选"升级成最多 4096 条命名条目；不拆 Group + Part |
+| 3 | **组件形态沿用** | 单组件 `HoCharacterBufferGroup` 挂角色/渲染器上；"8 个固定勾选"升级成最多 4096 条命名条目；不拆 Group + Part；**面部朝向（`faceBone` + 脸前/右/上三轴）与 `TryGetWorldFacing()` 一并沿用**——眼透相机角度修正、将来的 SDF 都读它，且调用方式与 `HoMetadataBufferGroup` 同形，消费者切过来不用改代码 |
 | 4 | **旧资产不兼容** | 不做 `objectCustom` 位映射；ScreenProcess 规则资产直接重新设计 |
 | 5 | **命名** | feature `Ho-CharacterBuffer` / 组件 `HoCharacterBufferGroup`；调试沿用"颜色 = 部件显示色"的 picker 语义 |
 | 6 | **ZWrite 沿用 `ZWrite On`** | "透明材质也占满网格面积"保留；将来要改的是 ID pass 的 per-sample 写入（alpha-to-coverage / `SV_Coverage` / clip），不是 ZWrite。**注意官方约束**：MSAA 下"the runtime shares only one coverage for all RenderTargets"，一张覆盖掩码会同时切 ID 与覆盖率两张图；且 alpha-to-coverage 本身就是为 MSAA 设计的（"intended for use with MSAA… otherwise results can be unpredictable"） |
@@ -517,6 +517,6 @@ MSAA 阶段**每个样本只需要一个 ID**（一个样本只属于一个部�
 | **P2.5** | **选择层的跨仓落地**：Extensions 侧给出选择表的 UI / 校验 / debug 视图 / 溢出可见性；**lilToon 侧（跨仓）实现材质的选择槽 UI 与 shader 写入**（§5.11 的协议） | 一个选择能被 ScreenProcess 规则按名字引用；边界像素上"选择"与"部件"配对正确；没注册选择时那张图不分配、SHADER 不输出；溢出时有 debug 提示 |
 | **P2** | 角色特化三效果 + 轮廓切新 buffer，`HoCharacterSemanticMaskBlur` 退化为可选 | 前发投影边界连续、发际线无硬裁、角色互不干扰；等价 debug 视图无台阶 |
 | **P3** | ScreenProcess 规则、SSS、PlanarReflection 切新 buffer | 屏幕效果行为不变或更好；SSS 不再双线性读 class |
-| **P4** | 删除 MetadataBuffer（大量 16F 附件、fallback/clear/debug shader、MPB 回退、契约条目）；同步更新 `Documentation~/GeometryBuffer.md` §7 消费者契约表与公共原则（MetadataBuffer → CharacterBuffer） | 全仓库无 `_HoMetadataBuffer` 引用、无 MPB 身份写入；RSUV 只剩"palette 索引"一种含义；契约出 v2 |
+| **P4** | 删除 MetadataBuffer（大量 16F 附件、fallback/clear/debug shader、MPB 回退、契约条目）；**把 `HoFaceAxis` 的归属迁到 CharacterBuffer**（眼下 CB 是借用 MetadataBuffer 命名空间里的这个枚举；枚举按 int 序列化、成员顺序不变就不会丢已有场景的值）；同步更新 `Documentation~/GeometryBuffer.md` §7 消费者契约表与公共原则（MetadataBuffer → CharacterBuffer） | 全仓库无 `_HoMetadataBuffer` 引用、无 MPB 身份写入；RSUV 只剩"palette 索引"一种含义；契约出 v2 |
 
 跨仓库依赖（**两处，都要在 lilToon 包里做**）：① 新增/改 pass（`HoCharacterBuffer` / `HoCharacterBufferSurface`，只把 RSUV 当索引用，不再解析语义位）；② **选择槽的材质 UI + shader 写入**（§5.11 的协议：槽数、遮罩来源枚举、MRT 布局、启用关键字）。C# 侧 `HoCharacterBufferGroup` 为每个 renderer 分配 palette ID、写 RSUV、维护选择表，并登记 32 bit 的分区。
