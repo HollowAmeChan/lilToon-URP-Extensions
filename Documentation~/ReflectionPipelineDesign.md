@@ -35,9 +35,9 @@
 | 当前输入 | 当前语义 | 目标归属 |
 | --- | --- | --- |
 | GeometryBuffer `NormalDepth` | 几何法线、线性深度、物理 coverage | GB，保留 |
-| MetadataBuffer `SurfaceColor` | RGB 线性 HDR 表面色；A 暂作 coverage | SB `Color.rgb`；coverage 迁到 CM/OB |
+| MetadataBuffer `SurfaceColor` | RGB 线性 HDR 表面色；A 暂作 coverage | SB `Color.rgb`；coverage 迁到 AC/OB |
 | MetadataBuffer Target5 `ReflectionMaterial` | R perceptualRoughness、G metallic、B reflectance、A PLR strength | SB 的具名 Material/Reflection 通道 |
-| MetadataBuffer mask/id | 特殊 fullscreen 路径的接收面 mask | CM 合成遮罩 |
+| MetadataBuffer mask/id | 特殊 fullscreen 路径的接收面 mask | AC 合成遮罩 |
 
 Target5 只是迁移桥，不再作为长期冻结布局。A 当前由 `_UseReflection && _UsePlanarReflection` 门控；SurfaceBuffer 落地时必须把“通用反射接收”和“PLR 专用接收”分开命名，不能让 SSR 复用含混的 PLR strength。
 
@@ -133,7 +133,7 @@ GTAO/SSGI 现有 depth pyramid 不直接复用。只有在编码、coverage、re
 
 1. 冻结 SurfaceBuffer 的 `Color / Normal / Material / Reflection` packing。
 2. 实现 SurfaceBuffer producer 与 DebugTile。
-3. 让 PLR 特殊 composite 从 MetadataBuffer 迁到 SB + CM；opaque ForwardLit 不需要回读 SB。
+3. 让 PLR 特殊 composite 从 MetadataBuffer 迁到 SB + AC；opaque ForwardLit 不需要回读 SB。
 4. 所有反射开关做回归矩阵：总开关、PLR 开关、source 有效性、Probe 有无。
 
 验收：MetadataBuffer Target5 不再有新增消费者；关闭 `_UseReflection` 后所有反射输出为零。

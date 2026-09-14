@@ -104,7 +104,7 @@
 
 **结论（回答“要不要耦合”）**：
 - 允许**单向**依赖：管线 → 材质（全局纹理 + 材质开关）只在“低成本、立即见效、不与 AOV 冲突”时用（如 debug、快速开关）。
-- **主力约定 = 意图模式**。七个功能域的屏幕空间部分都走“材质写语义 → ScreenProcess/composite 施加”，AO 逐步从采样模式迁移（保留旧路径兼容）。
+- **主力约定 = 按功能域选择消费模式**。SSS/角色特化继续走“材质写语义 → composite 施加”，AO 保留采样模式；反射按 `ReflectionPipelineDesign.md` 走 source → 材质响应/专用 resolve，不再归入统一意图模式。
 - 好处：① 材质不再知道 AO/GI/反射来自哪个 RT、哪个算法；② AOV 层能拿到“施加前场景状态 + 施加后结果”；③ 未来替换 HTrace（自研 AO/GI）对材质零改动。
 
 ### 2.4 URP 官方扩展点（源码级确认，对齐 URP 17 / Unity 6）
@@ -240,7 +240,7 @@
    - **不要“预留剩 RT”**：URP17 RenderGraph 是 transient 声明、按需创建、用完即弃——需要什么语义就声明什么，不需要预分配槽位（比“留空 RT”更省）。
    - **AOV 命名冻结**：一旦某个通道被 AOV 导出（进 Nuke），它的命名与编码就冻结，后续只能新增、不能改（避免破坏已生产的通道资产）。
 2. **模块契约（RendererFeature 级）**：每个 feature 声明 `需要/产出/缺失降级/AOV 通道`——对齐收口文档；用 Feature 的 Inspector 只读状态 + 文档呈现，不引入注册框架。
-3. **意图模式约定**：屏幕空间效果走“材质写意图 → composite 施加”，禁止材质改生成逻辑；保留采样模式仅作兼容。
+3. **意图模式约定**：仅对 SSS/角色特化等确需 after-opaque 合成的效果使用“材质写意图 → composite 施加”；反射按独立 PBR source/response 契约执行。
 4. **材质契约层（已有）**：`principled/openpbr/toon/unity/extras` 为外部 DCC 数据；`unity.screenSpaceAO.*` 等 hint 已是“后处理参数进材质”的合法载体（不走耦合，走契约）。
 5. **资源契约（契约即文档）**：材质读 camera color/网格资源必须声明（一个文档级清单 + 命名约定即可，不必做代码级 contract 系统）；是 Refraction/GI 等的前置条件。
 6. **材质类型轻收敛**：功能结构收敛为“材质类型/变体”（沿用 lilToon 现有 shader 家族或新增预设文件）；新能力若改 pass/资源依赖则做新类型，不做 UI 开关。**不引入 DSL / 生成器 / 预置体系**。
@@ -254,7 +254,7 @@
 ### P0（先定架构，低成本高确定性）
 
 1. 通道登记表 v1（一份文档：把 MetadataBuffer/GeometryBuffer/SSS/ShadowCast 的现存通道登记 + 命名/编码/消费者/AOV 字段）。
-2. 意图模式约定成文 + 现有模块清单对齐（当前采样模式的 AO 先标注“兼容”，不迁移）。
+2. 按功能域约定消费模式 + 现有模块清单对齐（AO 采样、SSS/角色 composite、反射 PBR source/response）。
 3. AOV 导出层 v0：多通道 EXR 导出（先覆盖 `beauty/surfaceColor/normal/depth/id/matte` 现有通道）。
 4. 资源契约 v1（一份文档清单：材质读 camera color/transparent 资源必须声明；为 Refraction/GI 打底）。
 

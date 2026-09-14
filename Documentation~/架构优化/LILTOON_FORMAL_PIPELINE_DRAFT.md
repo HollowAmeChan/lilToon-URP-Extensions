@@ -4,7 +4,7 @@
 > **§3.1 层模型 / §3.2 帧序 / §3.3 旧→新映射 / §10 命名分析 / §11 决策落点** 请看 v2。
 > **继续有效**：**§6.2 排序铁律 / §6.3 暴露面三分类 / §6.4 材质接口脚印**（v2 §4 是它的续写——补了"数据载体"列）、§4（通道/AOV 走契约）、§5、§8、§9。
 >
-> 为什么改：v0.1 把"对象 / mask / **surface**"放在同一个 buffer 槽位里，没有意识到 MetadataBuffer 本身是**杂糅**的（身份 + 覆盖率 + 表面数值）。这轮拆成 **GB（几何）/ ObjectBuffer（逐物体）/ SurfaceBuffer（表面）三轴 + Ho-Cryptomatte（属性合成）**。
+> 为什么改：v0.1 把"对象 / mask / **surface**"放在同一个 buffer 槽位里，没有意识到 MetadataBuffer 本身是**杂糅**的（身份 + 覆盖率 + 表面数值）。这轮拆成 **GB（几何）/ ObjectBuffer（逐物体）/ SurfaceBuffer（表面）三轴 + Ho-AttributeComposite（运行时属性合成）**；Cryptomatte 仅用于导出 ID/manifest。
 
 > 状态：**方案定稿**（待实现推进）。通道契约冻结见 `LILTOON_CHANNEL_CONTRACT_V1.md`（v1，独立文档）。
 > 事实基线：**正式场景 = `D:\Unity_Project\BREAK_URP\Assets\mmd场景测试\朱木古堂\New Scene.unity`**；渲染器 = `Assets\Settings\PC_Renderer.asset`（12 项挂载）。

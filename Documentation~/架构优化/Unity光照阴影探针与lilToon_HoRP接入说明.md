@@ -7,6 +7,8 @@
 > 适用范围：Unity 6000.x、URP 17.x、本地 lilToon fork 2.3.x、lilToon-URP-Extensions、Ho-GTAO / Ho-GI 计划。
 >
 > 本文目的：建立一份工程认知文档，说明 Unity 中光照、阴影、Light Probe、Adaptive Probe Volume、Reflection Probe、Lightmap、GTAO、SSGI 等系统如何组合，以及它们当前如何被 lilToon 和 HoRP 消费。
+>
+> 反射方案、反射输入契约和后续实现路线不在本文维护；统一查看 `Documentation~/ReflectionPipelineDesign.md`、`Documentation~/PlanarReflection.md` 与 `Documentation~/架构优化/LILTOON_FORMAL_PIPELINE_DRAFT_V2.md`。本文只保留 Reflection Probe 的 Unity 背景和验证方法。
 
 ---
 
@@ -167,11 +169,7 @@ SSGI 必须排除描边壳、非物理表面和不应参与反弹的材质，否
 
 ### 1.8 Planar Reflection、SSR 与折射
 
-- **Planar Reflection**：适合水面、镜子和明确平面的高质量反射。
-- **SSR**：适合屏幕内的动态局部反射；必须有 probe fallback。
-- **Refraction**：通常读取 Camera Opaque Texture，再用法线偏移 UV；它不是 Reflection Probe 的替代品。
-
-当前 lilToon 折射在 URP 中读取 `_CameraOpaqueTexture`。[lil_common_frag.hlsl:1268](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/Includes/lil_common_frag.hlsl:1268)
+本节只记录 Unity 光照背景。PLR/SSR 的来源优先级、材质响应、buffer 归属和时序统一见反射权威文档；折射仍属于独立的 camera opaque/transparent 资源契约，不在这里重复展开。
 
 ### 1.9 资产探针怎么摆
 
@@ -1618,7 +1616,7 @@ lilToon APV variants          已生成
 
 - [ ] 将 Lightmap/SH/APV 统一视为 `ambient_base` 的候选生产端。
 - [ ] 将 Ho-GI 统一输出 `gi`，不要让材质绑定具体 SSGI 实现名。
-- [ ] 将 Reflection Probe、SSR、Planar Reflection 统一为可插拔 reflection source。
+- [ ] 按 `ReflectionPipelineDesign.md` 和 v2 三轴契约完成反射来源与消费者迁移。
 - [ ] 将 ShadowMap、Ho-ShadowCast atlas 和材质 toon 门控拆成明确的 shadow 语义。
 - [ ] 保持 GTAO 的 `ao`、SSGI 的 `gi`、反射的 `reflection` 通道独立可调试。
 

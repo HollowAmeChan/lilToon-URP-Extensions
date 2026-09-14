@@ -4,6 +4,8 @@
 > 冻结规则：`AOV=冻结` 的通道，命名与编码**只增不改**；修订须升 v2 并记录变更。
 > 基线：`mmd场景测试\朱木古堂\New Scene.unity`（40 灯 / GTAO / SSGI / ScreenProcess + ImageProcess 栈）；渲染器 `PC_Renderer.asset`（12 项）。
 > 原则：按需纸面契约（非固定编码）；无消费者不登记；RenderGraph transient 声明；AOV 命名冻结。
+>
+> v1 是当前 Runtime 的 bridge 契约，不是三轴长期归属。`LILTOON_FORMAL_PIPELINE_DRAFT_V2.md` 已冻结 GB / ObjectBuffer / SurfaceBuffer / AttributeComposite 的目标边界；反射字段迁移只在 `ReflectionPipelineDesign.md` 维护。
 
 ---
 
@@ -94,7 +96,7 @@ debug:  <debug tile 名 / 直出分支>
 2. **motion**：转正占坑（RG → AOV `motion`）；先登记不实现。
 3. **编码**：`ao`/`aointent` = R8f(0..1)；`gi` = RGB hdr + `gi.gamma` R8f；`gisexclude` = 单 bit R8(1=排除)。
 4. **SurfaceColor**：producer 不钳制 RGB；需要 `[0,1]` 的消费者自行显式钳制，A 始终为 coverage。
-5. **ReflectionMaterial**：MetadataBuffer Target5 语义冻结为 perceptualRoughness / metallic / reflectance / PLR strength；A 同时服从 `_UseReflection` 与 `_UsePlanarReflection`，不再从通用 Custom0 猜测反射参数。
+5. **ReflectionMaterial（bridge）**：当前 MetadataBuffer Target5 仅作为 SurfaceBuffer 迁移桥；R/G/B 保持 perceptualRoughness / metallic / reflectance，A 同时服从 `_UseReflection` 与 `_UsePlanarReflection`。长期 `Reflection` 字段按 v2 具名通道实现，不再从通用 Custom0 猜测参数。
 6. **emission**：所有发光材质（HDR 强度），选区在 AOV 端。
 7. **shadow 拆分**：`shadow.main`（URP 主光）+ `shadow.add0..N`（ShadowCast cast 组，N≤8，N 指组非灯；每组一张 atlas）；专用组（脸/远平面）只规划不占 AOV。
 
@@ -105,3 +107,4 @@ debug:  <debug tile 名 / 直出分支>
 | 版本 | 日期 | 变更 | 说明 |
 | --- | --- | --- | --- |
 | v1 | — | 冻结 | 初始契约 |
+| v1-bridge | 2026-09-14 | 反射字段标记为迁移桥 | 长期归属改由 v2 SurfaceBuffer/AttributeComposite 定义 |

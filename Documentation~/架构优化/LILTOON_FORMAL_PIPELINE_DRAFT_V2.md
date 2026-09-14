@@ -1,9 +1,20 @@
 # 正式管线草案 v2（重新串联）：三轴输入 + 属性合成 + 屏幕效果
 
-> 状态：**草案，供串联讨论**。
-> 关系：本文**取代** `LILTOON_FORMAL_PIPELINE_DRAFT.md`（v0.1）的 **§3.1 层模型 / §3.2 帧序 / §3.3 旧→新映射 / §10 命名分析 / §11 决策落点**；v0.1 的 **§6.2 排序铁律 / §6.3 暴露面三分类 / §6.4 材质接口脚印**继续有效（本文 §5 是它的续写）。
-> `LILTOON_RENDER_PIPELINE_REVIEW_AND_PLAN.md`（评审与规划）里的**功能域盘点、AOV 方案、§7 业界对照**仍然有效；但它的 **"MetadataBuffer 承担语义"这一前提已作废**——那正是这轮大改的起点。
+> 状态：**评审结论已冻结；实现路线待推进**。
+> 关系：本文取代 v0.1 的层模型、帧序、旧→新映射和命名决策；v0.1 的排序铁律、暴露面分类和材质接口原则只作为背景，不再定义反射/三轴契约。
+> `LILTOON_RENDER_PIPELINE_REVIEW_AND_PLAN.md` 仅保留功能域盘点和非反射背景；其反射章节已被本文与 `ReflectionPipelineDesign.md` 取代。
 > 为什么改：v0.1 把"对象/mask/**surface**"全塞在同一个 buffer 槽位里，从没注意 MetadataBuffer 本身就是**杂糅**的（身份 + 覆盖率 + 表面数值）。这轮把它拆成三轴 + 一层合成。
+
+## 0. 评审结论
+
+这份 v2 的三轴方向是正确的，应该作为后续实现的总边界；但原稿有四处必须先修正，否则实现时会再次产生隐式契约：
+
+1. **PLR source 与 PLR resolve 混在一个节点**：镜像相机 source 在 opaque 之前更新，透明/特殊 fullscreen resolve 才在 OIT 之后；两者必须拆开记。
+2. **GB→OB/SB 与“三者禁止互读”相互矛盾**：生产 buffer 不互读，只有消费者在同一 pass 同时读取多个轴；若某个实现确实需要跨轴 gate，必须显式登记依赖，不能写成默认偏序。
+3. **Ho-Cryptomatte 名称过载**：运行时属性合成不是标准 Cryptomatte 导出。运行时名称冻结为 `Ho-AttributeComposite`（AC）；`Ho-Cryptomatte` 只用于 ID/manifest 导出。
+4. **SurfaceBuffer 还缺最小字段 packing**：先冻结反射所需的 Color/Normal/Material/Reflection 四个字段，再迁移消费者；不能继续让 Target5 的 PLR strength 兼任通用 reflection mask。
+
+本次先冻结第 1、2、3、4 条，以及 coverage、反射总开关和 depth 编码；AC 用于运行时属性合成，Cryptomatte 仅用于导出。
 
 ---
 
@@ -12,7 +23,7 @@
 ```text
 [L0 灯光/阴影]   ShadowCast（附加灯 atlas + URP 主光阴影）                    → shadow.main / shadow.add0..N
 [L1 输入缓冲]    GB（几何轴） / ObjectBuffer（逐物体轴） / SurfaceBuffer（表面轴）→ 见 §3 的归属表
-[L2 属性合成]    Ho-Cryptomatte：纯值 → object → surface 递进覆盖 + 具名选区    → 合成属性 / 遮罩
+[L2 属性合成]    Ho-AttributeComposite（AC）：纯值 → object → surface 递进覆盖 + 具名选区 → 合成属性 / 遮罩
 [L3 屏幕效果]    GTAO / SSGI / SSS / PLR·SSR / 角色特化 / OIT                 → ao, gi, sss, reflection, eyecolor/eyedata …
 [L4 图像链]      ImageProcess（只读 camera color）
 [L5 输出/调试]   AOV 导出层（多通道 EXR）+ DebugTile
@@ -23,25 +34,26 @@
 | v0.1 | v2 | 理由 |
 | --- | --- | --- |
 | L1 只有 `CharacterBuffer(Metadata)` + `ScreenGeometryBuffer` | L1 是**三轴并列**：GB / ObjectBuffer / SurfaceBuffer | 一个 buffer 不能同时回答"这是谁"和"表面是什么样" |
-| 没有属性合成层 | **新增 L2 `Ho-Cryptomatte`** | 多来源（纯值/object/surface）需要一条明确的覆盖链；消费者不该各自解释 |
+| 没有属性合成层 | **新增 L2 `Ho-AttributeComposite`（AC）** | 多来源（纯值/object/surface）需要一条明确的覆盖链；Cryptomatte 只保留给 AOV ID/manifest 导出 |
 | 语义效果直接读 MetadataBuffer 的五张图 | 语义效果经 **L2** 拿遮罩 | 今天 ScreenProcess 有 20 个 rule source，就是"没有合成层"的代价 |
 
 ---
 
 ## 2. 帧序 v2（按"每趟的前置条件"排，不是凭直觉排）
 
-> ⚠ **上一版把 GTAO 排在 opaque 之后、CM 排在 opaque 之前，两处都错**。真正决定位置的是**前置条件**：
+> ⚠ **上一版把 GTAO 排在 opaque 之后、AC 排在 opaque 之前，两处都错**。真正决定位置的是**前置条件**：
 
 | 位置 | 谁 | 前置条件（这就是理由） |
 | --- | --- | --- |
 | **opaque 之前** | 阴影 → GB → OB → SB → **GTAO** | **GTAO 必须在 opaque 之前**：材质在 forward 里就采样 `_HoAOTexture`（v0.1 §5 的意图参数）——AO 放到 opaque 之后，这一帧的材质就只能读到空图/上一帧。GB/OB/SB 也在这里（它们画自己的几何，不需要 opaque 的颜色） |
-| **opaque 之后** | **SSGI** → **CM** → SSS → OIT → PLR → 角色特化 → ScreenProcess | **SSGI 需要 opaque 之后的颜色**；**CM 必须等 opaque**——它合成的是"最终画面上每像素是谁、表面是什么样"，早于 opaque 就没有最终归属可言 |
+| **opaque 之后** | **SSGI** → **AC** → SSS → OIT → PLR → 角色特化 → ScreenProcess | **SSGI 需要 opaque 之后的颜色**；**AC 必须等 opaque**——它合成的是"最终画面上每像素是谁、表面是什么样"，早于 opaque 就没有最终归属可言 |
 | **图像链** | ImageProcess | 只读 camera color |
 | **最后** | AOV 导出（可选） → DebugTile | 调试最后 |
 
 ```text
 [1]  URP 主光阴影
 [2]  Ho-ShadowCast（附加灯 cast 组）                        → shadow.main / shadow.add0..N
+[2.5] PLR source update（`beginCameraRendering`；不占用一个 raster pass）
         ── opaque 之前 ──────────────────────────────────────────────
 [3]  GB：Ho-ScreenGeometryBuffer（现名 GeometryBuffer）      → 几何法线 / depth / 几何覆盖率（+ 描边视觉壳 / sky 可选）
 [4]  OB：Ho-ObjectBuffer（原 CharacterBuffer）               → ID0/ID1/Coverage + 具名选择 + 朝向（逐物体辅助量）
@@ -49,10 +61,10 @@
 [6]  Ho-GTAO（独立 feature）                                 → ao / aointent   ★ 必须在 opaque 之前
         ── URP opaque / cutout / 透明 常规绘制 ───────────────────────
 [7]  Ho-SSGI（独立 feature，读 gisexclude）                   → gi              ★ 需要 opaque 后的颜色
-[8]  CM：Ho-Cryptomatte（属性合成 + 遮罩）                    → 合成属性 / 具名遮罩  ★ 必须等 opaque
+[8]  AC：Ho-AttributeComposite（属性合成 + 遮罩）              → 合成属性 / 具名遮罩  ★ 必须等 opaque
 [9]  Ho-SubsurfaceScattering                                 → sss
 [10] Ho-WeightedOIT（透明合成，最难搞）
-[11] Ho-PlanarReflection（PLR source / 特殊 composite）
+[11] PLR 透明/特殊 resolve（如启用）在 OIT 之后；opaque PLR 已在 ForwardLit 消费
 [12] Ho-CharacterSpecialization（眼透 / 发影 / 脸色）          → eyecolor / eyedata
 [13] Ho-ScreenProcess（其余语义效果）
 [14] Ho-ImageProcess（最终图像链）
@@ -65,13 +77,13 @@
 | 约束 | 为什么 |
 | --- | --- |
 | `Ho-ShadowCast → 所有效果`（**含 OIT**） | 实机确认 **OIT 在 `Ho-ShadowCast` 之后**，所以"材质/效果都要吃阴影"成立 |
-| `GB → OB`、`GB → SB` | OB/SB 绘制时可能要用 GB 的深度做门控 |
-| `OB ↮ SB`（互不依赖） | 谁先都行，但都必须在 **CM** 之前 |
+| `GB ↮ OB`、`GB ↮ SB` | 三个生产轴默认互不读取；跨轴 gate 只能由具体消费者显式声明 |
+| `OB ↮ SB`（互不依赖） | 谁先都行，但都必须在 **AC** 之前 |
 | **`GTAO → opaque`** | 材质 forward 里采样 AO |
 | **`opaque → SSGI`** | GI 要 opaque 后的颜色 |
-| **`opaque → CM`**、`{OB, SB, GB} → CM` | CM 合成的是"最终归属" |
-| `CM → SSS / OIT / PLR / 角色特化 / ScreenProcess` | 它们的遮罩只有一个来源 = CM |
-| **推论：GTAO 吃不到 CM 的遮罩** | 它在 CM 之前——所以 AO 的"谁参与"只能靠 layer mask / 材质意图，不能靠具名选择。这条要写进 GTAO 的文档，否则以后一定有人想给它接 CM |
+| **`opaque → AC`**、`{OB, SB, GB} → AC` | AC 合成的是"最终归属" |
+| `AC → SSS / OIT / PLR 特殊 resolve / 角色特化 / ScreenProcess` | 这些 after-opaque 消费者的具名遮罩只有一个来源 = AC；opaque ForwardLit 不能依赖 AC |
+| **推论：GTAO 吃不到 AC 的遮罩** | 它在 AC 之前——所以 AO 的"谁参与"只能靠 layer mask / 材质意图，不能靠具名选择 |
 
 **实机校准过的三条顺序**（以实机为准，与直觉/推导冲突的地方按这里）：
 
@@ -79,24 +91,23 @@
 | --- | --- |
 | **1. OIT 在 `Ho-ShadowCast` 之后** | 与 v0.1 的线性顺序一致（`[2] ShadowCast … [10] OIT`），因此**"阴影 → 所有效果"成立，含 OIT**。⚠ 此条我先按"OIT 在 ShadowCast **之前**"记过一次，已按实机更正——**OIT 可以吃附加灯 atlas** |
 | **2. SSGI 在角色特化之前** | 推翻 v0.1 §7 待确认里记的"SSGI 在 CharSpec **后**"——那条按实机为准应写成"之前"。也意味着**角色特化不能成为 SSGI 的输入**（GI 要用角色相关的排除，只能走 `gisexclude`） |
-| **3. GB 在 OB 之前** | 确认了推导（OB 绘制时用 GB 的深度做门控），不是巧合，可当硬约束写死 |
+| **3. GB 在 OB 之前** | 这是当前实机 pass 顺序事实，不代表 OB producer 读取 GB；三轴仍保持互不读取 |
 
-> 这三条是**实机 Frame Debugger 校准**的结果，优先于本文按前置条件推出来的线性列表；线性列表继续表示"默认意图"，冲突处以本表为准。**其余没校准的相邻关系（GB/OB 与 SB 的先后、SSR 与 CM 的先后）仍以实机为准，未核前不要写进契约。**
+> 这三条是**实机 Frame Debugger 校准**的结果，优先于本文按前置条件推出来的线性列表；线性列表继续表示"默认意图"，冲突处以本表为准。GB→OB 只冻结为当前执行顺序，不冻结跨 buffer 读依赖。
 
-> 每个 feature 的 `passEvent` 都是**设置项**（GB/OB 默认 `BeforeRenderingOpaques`、GTAO 也在此档、SSGI/CM 在 opaque 之后），所以上面是**默认意图 + 必须成立的偏序**；**精确 pass event 以实机 Frame Debugger 为准**（v0.1 已有此注）。
+> 每个 feature 的 `passEvent` 都是**设置项**（GB/OB 默认 `BeforeRenderingOpaques`、GTAO 也在此档、SSGI/AC 在 opaque 之后），所以上面是**默认意图 + 必须成立的偏序**；**精确 pass event 以实机 Frame Debugger 为准**（v0.1 已有此注）。
 
-**与 `ReflectionPipelineDesign.md` §6「时序冻结」的对齐**（那份是隔壁正在做的反射管线，它的时序**继续有效**，本文只是把 buffer 名字换掉）：
+**反射偏序（与本 v2 同时冻结）**：
 
 | 反射文档的时序 | v2 里对应什么 | 状态 |
 | --- | --- | --- |
-| `beginCameraRendering` → **PLR source update** | **v2 漏了这一条**：PLR source 在**主相机渲染前**更新（镜像相机流程），因为 opaque ForwardLit 要消费它 | ✅ 补进偏序表：`PLR source → opaque` |
-| `BeforeRenderingOpaques` → MetadataBuffer + GeometryBuffer | → **OB + SB + GB**（+ GTAO 同档） | ✅ 名字替换 |
-| Opaque ForwardLit → 消费 PLR | 不变 | ✅ |
-| `AfterRenderingOpaques` → color pyramid + **SSR** | **v2 漏了这一条** | ✅ 补：`opaque → SSR` |
-| `BeforeRenderingTransparents` → 玻璃/水面/OIT 专用路径 | **v2 漏了这一条**：OIT 在**透明之前** | ✅ 补进偏序表 |
-| `BeforeRenderingPostProcessing` → fullscreen resolve / debug | 与 v2 的 [14]-[16] 一致 | ✅ |
+| `beginCameraRendering` → **PLR source update** | 镜像相机必须早于 opaque | ✅ `PLR source → opaque` |
+| `BeforeRenderingOpaques` → **GB + OB + SB + GTAO** | 三轴输入和材质 AO 依赖 | ✅ |
+| Opaque ForwardLit → **SSR / AC / SSGI** | SSR/SSGI 需要 opaque color；AC 需要最终归属 | ✅ |
+| OIT → **PLR 透明/特殊 resolve** | 透明反射只能在 OIT 结果之后读取完整颜色 | ✅ |
+| `BeforeRenderingPostProcessing` → fullscreen resolve / debug | 只保留明确声明的特殊路径 | ✅ |
 
-加上这三条后，v2 帧序的完整偏序是：`阴影 → {GB, OB, SB} → GTAO → opaque → {SSGI, CM, SSR} → SSS → OIT → PLR 合成 → 角色特化 → ScreenProcess → ImageProcess → AOV/Debug`，另有 `PLR source → opaque` 这一条独立约束。
+因此 v2 的完整反射相关偏序是：`PLR source → opaque ForwardLit → {SSR, AC} → OIT → PLR 透明/特殊 resolve`；Probe/Sky 是 source miss 时的材质 fallback，不另占一个 fullscreen pass。
 
 ---
 
@@ -107,15 +118,37 @@
 | **GB**（GeometryBuffer，**名字不改**） | 几何在哪、朝向如何、几何覆盖多少 | **几何法线** / depth / 几何覆盖率 / 描边视觉壳 / sky | 不发表面数值、不发身份、不发着色法线 |
 | **OB**（Ho-ObjectBuffer） | 这是谁、占多少 | ID0/ID1/Coverage（K=N=4 无损）+ 具名选择（8 层/像素，按需）+ **逐物体辅助量 ≤2 张**（朝向 forward+side） | 不发深度、不发表面数值、不定义属性语义 |
 | **SB**（Ho-SurfaceBuffer） | 表面是什么样 | 表面色 / **着色法线** / roughness / metallic / thickness / reflectance / PLR / …（**+ 未来 PBR**） | 不发深度、不发身份 |
-| **CM**（Ho-Cryptomatte） | 多来源怎么合成、抠哪一块 | 合成属性 + 具名遮罩 + manifest + 导出档位 | 不自己画几何/表面（它读三轴） |
+| **Ho-AttributeComposite（运行时，简称 AC）** | 多来源怎么合成、抠哪一块 | 合成属性 + 具名遮罩 | 不自己画几何/表面（它读三轴） |
 
 **三条读的规矩**：
 
-1. **三者并列、禁止互读**（v0.1 §10 第 3 条延续）：GB / OB / SB 互不读对方的产物；需要跨轴的量由消费端**在一次读取里各取一份**。
-2. **遮罩只有一个来源 = CM**：任何屏幕效果都不许自己再攒一套语义图（这条让 ScreenProcess 的 20 个 source 收成 1 族）。
-3. **消费者读合成结果，不读原始通道**（CM 规划 §3.5）：否则会重新长回"各读各的"。
+1. **三者并列、禁止互读**：GB / OB / SB producer 互不读对方的产物；需要跨轴的量由消费端**在一次读取里各取一份**。只有登记过的具体 gate 才能形成额外依赖。
+2. **遮罩只有一个来源 = AC**：任何屏幕效果都不许自己再攒一套语义图。
+3. **消费者读合成结果，不读原始通道**；Cryptomatte ID/manifest 只属于 AOV 导出层，不是运行时属性合成器。
 
 **法线分家**（已定论）：**GB = 几何法线**（AO/GI 遮挡、shadow bias、物理遮挡、描边）；**SB = 着色法线**（PBR 光照、SSR 反射方向、以及后续一切吃法线贴图的 feature）。两者平行、不互为来源。
+
+### 3.1 本次冻结的最小契约
+
+这些是实现可以直接依赖的语义；格式可以在逐通道落地时选择，但不能改变通道含义：
+
+| 轴/字段 | 冻结语义 | 当前桥接 |
+| --- | --- | --- |
+| GB `NormalDepth.rgb` | world geometric normal，编码 `normal * 0.5 + 0.5` | `GeometryBuffer.NormalDepth.rgb` |
+| GB `NormalDepth.a` | linear eye depth；`a > 1e-4` 才算 physical coverage | 当前已有 |
+| GB `Depth.r` | raw/device depth；只供明确登记的 AO/Hi-Z consumer | `_HoGeometryBufferDepthTexture.r` |
+| OB `ID0.rgba` | `coverage / groupId / objectId / flags`，ID 统一 byte 编码 | `MetadataBuffer.maskId` |
+| OB `ID1.rgba` | object custom bits 0–3 与 4–7 | `objectCustom0/1` |
+| SB `Color.rgb` | linear HDR base color；producer 不钳制；无 coverage 语义 | `SurfaceColor.rgb`（当前透明桥接可能是 premultiplied） |
+| SB `Material.rgba` | `perceptualRoughness / metallic / thickness / reserved` | Target5 的 R/G；thickness 来自 `surfaceData.r` |
+| SB `Reflection.rgba` | `reflectance / plrStrength / reserved / reserved` | Target5 的 B/A；通用环境/SSR strength 暂不占槽 |
+| SB `Classification.rgba` | `materialClass / curvature / transmittanceHint / reserved` | `surfaceData.g/b/a`，暂未迁移 |
+| SB `Normal.rgba` | `octa(shadingNormal).rg / reserved / reserved` | 当前尚未生产；GB 仍是 geometric normal |
+| AC mask | 唯一的 runtime 具名遮罩与 coverage 来源 | 当前各消费者仍直接读 MetadataBuffer，迁移前不得假称已完成 |
+
+反射总开关规则冻结为：`_UseReflection = 0` 时，所有 reflection strength 归零；`_UsePlanarReflection` 只能在总开关打开时生效。`roughness = perceptualRoughness²`，`F0 = lerp(reflectance, saturate(baseColor), metallic)`。
+
+`SurfaceColor.a` 不进入 v2 的长期 coverage 契约；在桥接期只允许当前 SSS/角色特化消费者使用，迁移到 SB/AC 后删除该依赖。
 
 ---
 
@@ -125,15 +158,15 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 
 | 系统 | 它的数据载体 | 它的遮罩来源 |
 | --- | --- | --- |
-| OIT | 无（accumulation/revealage 结构在管线内） | CM（可选） |
-| GI | `gisexclude`（独立通道） | CM |
+| OIT | 无（accumulation/revealage 结构在管线内） | AC（可选） |
+| GI | `gisexclude`（独立通道） | AC |
 | Shadow | `shadow.main` / `shadow.add0..N` | — |
-| 反射 / PLR | **SB**（roughness / metallic / reflectance / PLR strength） | CM |
-| 透射 / 折射 | **SB**（thickness / 吸收 …） | CM |
-| AO | GTAO 的产物（屏幕空间）+ 材质意图 `_SSAO*` | CM |
-| SSS | **SB**（thickness / curvature / 表面色）+ profile（分类，倾向进 OB 的表） | CM |
-| 角色特化（眼透 / 发影 / 脸色 / 轮廓） | **OB**（ID / 覆盖率 / 朝向）+ GB（几何门控） | CM |
-| AOV / 导出 | CM（ID + 覆盖率 + manifest）+ SB（albedo） | — |
+| 反射 / PLR | **SB**（roughness / metallic / reflectance / PLR strength） | AC |
+| 透射 / 折射 | **SB**（thickness / 吸收 …） | AC |
+| AO | GTAO 的产物（屏幕空间）+ 材质意图 `_SSAO*` | AC |
+| SSS | **SB**（thickness / curvature / 表面色）+ profile（分类，倾向进 OB 的表） | AC |
+| 角色特化（眼透 / 发影 / 脸色 / 轮廓） | **OB**（ID / 覆盖率 / 朝向）+ GB（几何门控） | AC |
+| AOV / 导出 | AC（ID + 覆盖率）+ SB（albedo） | Cryptomatte export 可选 |
 
 ---
 
@@ -143,23 +176,18 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 | --- | --- |
 | `maskId`（MetadataBuffer Target0） | → **OB** 的 ID/覆盖率 |
 | `objectCustom0/1`（Target3/4，8 位语义） | → **OB 的表**（类别 / 标签）；位含义条款作废 |
-| `custom0`（Target2，未登记） | → **不迁**：具名遮罩由 **CM** 提供 |
+| `custom0`（Target2，未登记） | → **不迁**：具名遮罩由 **AC** 提供 |
 | `surfaceData`（Target1） | → **SB**（`Material.b` + `Classification`，分类归属待定） |
-| `reflectionMaterial`（Target5） | → **SB**（`Material.rg` + `Reflection`）；**v1 冻结条款要改**（契约 §4 第 5 条） |
-| `surfaceColor` | → **SB**（`Color`）；**`A=coverage` 的冻结条款要改**（契约 §4 第 4 条）——注意 `ReflectionPipelineDesign.md` §3 也复述了这条，它同样要被 v2 取代 |
+| `reflectionMaterial`（Target5） | → **SB**（具名 `Material` + `Reflection`）；当前 Target5 只作为 bridge |
+| `surfaceColor` | → **SB**（`Color`）；`A=coverage` 只作为当前 bridge，长期由 OB/AC 管理 |
 | `sssprofile` | → 待定（进 SB 或 OB 的表） |
 | `motion` | 不变（占坑） |
-| 新增 | OB 的 `Selection` / `Facing`；SB 的 `Normal` / `Emission`（PBR 用）；CM 的合成输出（若导出） |
+| 新增 | OB 的 `Selection` / `Facing`；SB 的 `Normal` / `Emission`（PBR 用）；AC 的合成输出 |
 | 导出档位 | 现状（UINT 通道）+ **合规 `crypto_*`**（float 位重解释 + manifest + 32 bit）两档 |
 
-**与 `ReflectionPipelineDesign.md` 的其余对齐点**：
+**当前桥接规则**：反射仍临时读取 MetadataBuffer Target5；SurfaceBuffer 的 Reflection 通道落地后，Target5 停止新增消费者，再删除桥接。`NormalDepth` coverage gate 继续是所有屏幕空间反射的硬规则；`DepthTexture.r` 的 raw/device depth 只允许在明确登记的 Hi-Z/AO 消费者中读取。
 
-- 它的 **§2.1「已冻结的两个 Buffer」槽位表**正是要被取代的东西（Target0→OB、Target1/5→SB、Target2→删、Target3/4→OB 的表）；但其中一条**继续有效**：**"新增反射输入不得挪用已有 SSS 或角色语义"**——v2 的三轴划分是这条的更彻底版本。
-- 它的 **§2.2 有一处与代码不符**：写着 `DepthTexture` 是"内部附件，不是公共线性深度输入"，但 GTAO 实际在采样 `_HoGeometryBufferDepthTexture.r`（`GeometryBuffer.md` 已按代码更正）。反射侧的"**所有屏幕空间反射必须先用 `NormalDepth` coverage gate**"这条规则**继续有效**，请写进 SB/SSR 的实现。
-- 它的 **§7 实施顺序**（Phase 0 冻结输入 → Phase 1 PLR → Phase 2 SSR → Phase 3 Probe/Sky）**优先于 v2 的 R 序列**：反射是"进行中、最高实现优先级"，所以 **SB 的 `Reflection` 通道要跟着 Phase 1/2 走**（在它落地前，反射侧继续读 MetadataBuffer Target5）；v2 的 R1/R2/R4（OB 改名、朝向图、CM）与反射不冲突，可以并行。
-- 它的 **§8 明确删除的旧假设**（不做通用 Custom0 反射契约、不做卡通反射模式、不留降级设计）与 v2 无冲突。
-
-> 契约 v2 必须走 `LILTOON_CHANNEL_CONTRACT_V1.md` §3 的登记模板 + §5 变更记录；**AOV 名只增不改**（v1 §2 冻结）。
+> 契约 v2 必须走 `LILTOON_CHANNEL_CONTRACT_V1.md` §3 的登记模板 + §5 变更记录；AOV 名只增不改，编码变更必须明确标为 bridge → v2。
 
 ---
 
@@ -167,12 +195,12 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 
 | 阶段 | 内容 | 为什么在这个位置 |
 | --- | --- | --- |
-| **R0** | 本文 + 契约 v2 提案（含两条冻结条款的修订）+ 在 v0.1 上标注取代关系 | 文档先行：三轴的边界先立住，代码才有依据 |
+| **R0** | 本文 + 最小契约冻结 + 在 v0.1/反射文档上标注取代关系 | **已完成**；后续代码以本表为准 |
 | **R1** | **OB 改名搬迁**（`Runtime/CharacterBuffer` → `Runtime/ObjectBuffer`；常量、feature、组件、调试、编辑器）；**选择层保留**并扩到 8 层 | 代码已有 90%，改名的同时把"选择层是核心"落实 |
 | **R2** | OB 的**朝向图**（forward+side，octahedral 打包进一张 RGBA8）+ 调试视图 | 它同时验证"逐物体辅助量"这条可写通道的机制 |
-| **R3** | **SB 落地**：按系统逐个开通道（先 `Color`+`Material` 给 SSS，再 `Reflection` 给反射，`Normal` 跟 PBR/SSR） | SB 是 PBR 的地基，也是 SSS/PLR 数值的新家 |
-| **R4** | **CM 落地**：递进覆盖链（纯值 < object < surface）+ 具名遮罩 + 消费者统一入口 | 它是"遮罩只有一个来源"的实现；没有它，消费端迁移无从谈起 |
-| **R5** | 消费者迁移：GTAO/SSGI 不变；**角色特化 → OB/CM**；**ScreenProcess → 只吃 CM**；**SSS/PLR → SB（数值）+ CM（遮罩）** | 迁移顺序按"依赖面从小到大" |
+| **R3** | **SB 落地**：先 `Color`+`Material`+`Reflection`，再 `Normal`；反射优先于其它消费者 | SB 是 PBR/PLR/SSR 的共同地基 |
+| **R4** | **AC 落地**：递进覆盖链（纯值 < object < surface）+ 具名遮罩 + 消费者统一入口 | 运行时属性合成与 Cryptomatte AOV 解耦 |
+| **R5** | 消费者迁移：GTAO/SSGI 保持现状；**SSS/PLR → SB 数值 + AC 遮罩**；角色特化/ScreenProcess → OB/AC | 按依赖面从小到大迁移 |
 | **R6** | 删 MetadataBuffer；契约出 v2 | 全仓库无 `_HoMetadataBuffer` 引用 |
 
 **与 v0.1 §11 推进顺序的关系**：v0.1 定的是 `GTAO → SSGI → 其余系统`。GTAO/SSGI 已经在做，**R1-R4 属于"其余系统"里的地基工程**，与它们并行不冲突（互不读对方的产物）。
@@ -181,10 +209,7 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 
 ## 7. 待确认
 
-1. **几何法线的措辞**：`Documentation~/GeometryBuffer.md` 要把"几何法线"写明；lilToon 侧 `fragGeometryBuffer` 实际写的是哪一种要核对（本仓库两处证据指向几何法线）。
-2. **契约 v2 的两条冻结条款**（`SurfaceColor.a`、`ReflectionMaterial`）何时提、一起提还是分开。
-3. **分类的归属**：`materialClass` / profile 进 OB 的表（"这是什么"）还是 SB 的图（逐像素）——倾向进表。
-4. **OB 与 SB 的表/表结构**（组表 + 条目表的命名与行宽）、组件命名。
-5. **CM 的合成粒度**（按属性 / 按遮罩）与"纯值"的载体。
-6. **是否现在就改 GB 的名字**（`GeometryBuffer` → `ScreenGeometryBuffer`）：v0.1 §10 说"改名并进 v1 冻结时批量做"，那一次要不要把 OB/SB/CM 一起并进去。
-7. **v0.1 / 评审文档的标注方式**：在原文加"本文 §x 已被 v2 取代"的注记，还是只在 v2 里声明（我倾向**两处都做**，因为别人可能先打开旧文档）。
+1. **SB 的具体 RT packing**：`Material` 与 `Reflection` 是否合并为一张 RGBA16F，还是拆成 feature-scoped RT；先以可调试和无损为优先。
+2. **AC 的纯值来源**：由材质声明的 surface payload 提供，还是由独立 Subject/Group 组件提供；必须先于消费者迁移冻结。
+3. **OB 的命名搬迁**：保留现有组件/文件名还是建立新目录别名；不影响 GB 名称。
+4. **透明 PLR 是否需要 receiver/source-id RT**：只有材质/OIT 直接消费无法满足多平面时才立项。
