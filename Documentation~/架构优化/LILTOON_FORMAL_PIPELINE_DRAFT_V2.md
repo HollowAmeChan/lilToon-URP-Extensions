@@ -7,7 +7,7 @@
 
 1. **PLR source 与 PLR resolve 分开记**：镜像相机 source 在 opaque 之前；透明/特殊 fullscreen resolve 在 OIT 之后。
 2. **执行顺序 ≠ 读依赖**：GB / OB / SB 的 producer 互不读；跨轴 gate 必须显式登记，不写成默认偏序。
-3. **运行时合成器叫 `Ho-AttributeComposite`（AC）**；`Ho-Cryptomatte` 只用于 ID/manifest 导出。
+3. **运行时合成器叫 `Ho-AttributeComposite`（AC）**；**"Cryptomatte" 在 GB / OB / SB / AC 里一个名字都不用**——合规的 `crypto_*` 导出（float 位重解释 + manifest + 32 bit）**不在 OB 的职责里**，要么由 AC 直出，要么以后单独一个 feature 做。
 4. **SB 先冻结最小字段 packing**（Color / Normal / Material / Reflection / Classification），再迁移消费者；Target5 的 PLR strength 不兼任通用 reflection mask。
 
 同时冻结：coverage、反射总开关、depth 编码。
@@ -19,7 +19,7 @@
 ```text
 [L0 灯光/阴影]   ShadowCast（附加灯 atlas + URP 主光阴影）                    → shadow.main / shadow.add0..N
 [L1 输入缓冲]    GB（几何轴） / ObjectBuffer（逐物体轴） / SurfaceBuffer（表面轴）→ 见 §3 的归属表
-[L2 属性合成]    Ho-AttributeComposite（AC）：纯值 → object → surface 递进覆盖 + 具名选区 → 合成属性 / 遮罩
+[L2 属性合成]    Ho-AttributeComposite（AC）：纯值 → object → surface 递进覆盖 + 具名遮罩 → 合成属性 / 遮罩
 [L3 屏幕效果]    GTAO / SSGI / SSS / PLR·SSR / 角色特化 / OIT                 → ao, gi, sss, reflection, eyecolor/eyedata …
 [L4 图像链]      ImageProcess（只读 camera color）
 [L5 输出/调试]   AOV 导出层（多通道 EXR）+ DebugTile
@@ -50,7 +50,7 @@
 [2.5] PLR source update（`beginCameraRendering`；不占用一个 raster pass）
         ── opaque 之前 ──────────────────────────────────────────────
 [3]  GB：Ho-ScreenGeometryBuffer（现名 GeometryBuffer）      → 几何法线 / depth / 几何覆盖率（+ 描边视觉壳 / sky 可选）
-[4]  OB：Ho-ObjectBuffer（原 CharacterBuffer）               → ID0/ID1/Coverage + 具名选择 + 朝向（逐物体辅助量）
+[4]  OB：Ho-ObjectBuffer（原 CharacterBuffer）               → 身份池 Id0/Id1/Coverage + 固定语义槽 Selection + 朝向
 [5]  SB：Ho-SurfaceBuffer                                    → 表面色 / 着色法线 / roughness / metallic / thickness / …
 [6]  Ho-GTAO（独立 feature）                                 → ao / aointent   ★ 必须在 opaque 之前
         ── URP opaque / cutout / 透明 常规绘制 ───────────────────────
@@ -77,7 +77,7 @@
 | **`opaque → SSGI`** | GI 要 opaque 后的颜色 |
 | **`opaque → AC`**、`{OB, SB, GB} → AC` | AC 合成的是"最终归属" |
 | `AC → SSS / OIT / PLR 特殊 resolve / 角色特化 / ScreenProcess` | 这些 after-opaque 消费者的具名遮罩只有一个来源 = AC；opaque ForwardLit 不能依赖 AC |
-| **推论：GTAO 吃不到 AC 的遮罩** | 它在 AC 之前——所以 AO 的"谁参与"只能靠 layer mask / 材质意图，不能靠具名选择 |
+| **推论：GTAO 吃不到 AC 的遮罩** | 它在 AC 之前——所以 AO 的"谁参与"只能靠 layer mask / 材质意图，不能靠具名遮罩 |
 
 **实机校准过的三条顺序**（以实机为准，与直觉/推导冲突的地方按这里）：
 
@@ -110,7 +110,7 @@
 | feature | 回答什么 | 输出 | 不许做 |
 | --- | --- | --- | --- |
 | **GB**（GeometryBuffer，**名字不改**） | 几何在哪、朝向如何、几何覆盖多少 | **几何法线** / depth / 几何覆盖率 / 描边视觉壳 / sky | 不发表面数值、不发身份、不发着色法线 |
-| **OB**（Ho-ObjectBuffer） | 这是谁、占多少 | ID0/ID1/Coverage（K=N=4 无损）+ 具名选择（8 层/像素，按需）+ **逐物体辅助量 ≤2 张**（朝向 forward+side） | 不发深度、不发表面数值、不定义属性语义 |
+| **OB**（Ho-ObjectBuffer） | 这是谁、占多少、抠哪一块 | **两个池**：**身份池**（ranked）`Id0`=组 8 / `Id1`=槽位 8 / `Coverage`，各 4 层、常开、`K=N=4` 无损（**Cryptomatte 语义面**：导出 / 点选 / 任意 ID 按需生成遮罩都从它出）+ **固定语义槽** `Selection`（fixed，**槽号 = 语义**，每槽一对 `(ID, 覆盖率)`，OB 单方声明：默认 4 槽 = 今天的材质位 0~3、可配 8 / 16、每张 2 槽、上限 8 张；**运行时遮罩面**）+ **逐物体辅助量 ≤2 张**（朝向 forward+side） | 不发深度、不发表面数值、不定义属性语义、**不做合规导出档位** |
 | **SB**（Ho-SurfaceBuffer） | 表面是什么样 | 表面色 / **着色法线** / roughness / metallic / thickness / reflectance / PLR / …（**+ 未来 PBR**） | 不发深度、不发身份 |
 | **Ho-AttributeComposite（运行时，简称 AC）** | 多来源怎么合成、抠哪一块 | 合成属性 + 具名遮罩 | 不自己画几何/表面（它读三轴） |
 
@@ -131,8 +131,8 @@
 | GB `NormalDepth.rgb` | world geometric normal，编码 `normal * 0.5 + 0.5` | `GeometryBuffer.NormalDepth.rgb` |
 | GB `NormalDepth.a` | linear eye depth；`a > 1e-4` 才算 physical coverage | 当前已有 |
 | GB `Depth.r` | raw/device depth；只供明确登记的 AO/Hi-Z consumer | `_HoGeometryBufferDepthTexture.r` |
-| OB `ID0.rgba` | `coverage / groupId / objectId / flags`，ID 统一 byte 编码 | `MetadataBuffer.maskId` |
-| OB `ID1.rgba` | object custom bits 0–3 与 4–7 | `objectCustom0/1` |
+| OB 身份池 `Id0` / `Id1` / `Coverage` | 4 层 ranked `(组 8 bit, 槽位 8 bit)` + 4 层覆盖率；**常开**；ID 点采样 + `round(v*255)`；覆盖率线性、**不归一化**（残差 = 背景占比）；`K = N = 4` 无损；ID 与覆盖率都不滤波 | `MetadataBuffer.maskId` |
+| OB 语义槽 `Selection` | **固定语义槽**：槽号 = 语义，由 OB 单方声明并帧间不变（默认 4、可配 8 / 16；每张 `R=id0,G=cov0,B=id1,A=cov1` = 2 槽，上限 8 张）；**OB 写物体归属、SB 写材质覆盖**，AC 按 `object < surface` 叠；**SB 不参与同步、不得自造槽或 ID** | `_HoMetadataBufferMaterialCustom0_3Texture`（今天的 `custom0~3` 就是默认那 4 槽） |
 | SB `Color.rgb` | linear HDR base color；producer 不钳制；无 coverage 语义 | `SurfaceColor.rgb`（当前透明桥接可能是 premultiplied） |
 | SB `Material.rgba` | `perceptualRoughness / metallic / thickness / reserved` | Target5 的 R/G；thickness 来自 `surfaceData.r` |
 | SB `Reflection.rgba` | `reflectance / plrStrength / reserved / reserved` | Target5 的 B/A；通用环境/SSR strength 暂不占槽 |
@@ -158,9 +158,9 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 | 反射 / PLR | **SB**（roughness / metallic / reflectance / PLR strength） | AC |
 | 透射 / 折射 | **SB**（thickness / 吸收 …） | AC |
 | AO | GTAO 的产物（屏幕空间）+ 材质意图 `_SSAO*` | AC |
-| SSS | **SB**（thickness / curvature / 表面色）+ profile（分类，倾向进 OB 的表） | AC |
-| 角色特化（眼透 / 发影 / 脸色 / 轮廓） | **OB**（ID / 覆盖率 / 朝向）+ GB（几何门控） | AC |
-| AOV / 导出 | AC（ID + 覆盖率）+ SB（albedo） | Cryptomatte export 可选 |
+| SSS | **SB**（thickness / curvature / 表面色）+ profile（分类，在 **SB 的 `Classification.materialClass`**） | AC |
+| 角色特化（眼透 / 发影 / 脸色 / 轮廓） | **OB**（身份池：组 / 部件 / 物体位 / 覆盖率；朝向）+ GB（几何门控） | AC |
+| AOV / 导出 | **OB 身份池**（Cryptomatte 语义面）+ SB（albedo） | 合规 `crypto_*` 导出归 AC 直出或以后的独立 feature |
 
 ---
 
@@ -168,16 +168,16 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 
 | 契约 v1 的条目 | v2 的动作 |
 | --- | --- |
-| `maskId`（MetadataBuffer Target0） | → **OB** 的 ID/覆盖率 |
-| `objectCustom0/1`（Target3/4，8 位语义） | → **OB 的表**（类别 / 标签）；位含义条款作废 |
-| `custom0`（Target2，未登记） | → **不迁**：具名遮罩由 **AC** 提供 |
+| `maskId`（MetadataBuffer Target0） | → **OB 的身份池**（`Id0` = 组 / `Id1` = 槽位 / `Coverage`，ranked、常开） |
+| `objectCustom0/1`（Target3/4，8 位语义） | → **OB 身份池条目的物体位属性**（组 / 部件 / 标记 / 物体位 0~7），**不再是两层图**；位含义条款作废 |
+| `custom0`（Target2，未登记） | → **OB 声明的固定语义槽**（默认 4 槽就是这 4 条），OB 写物体归属、**SB 写材质覆盖** |
 | `surfaceData`（Target1） | → **SB**（`Material.b` + `Classification`，分类归属待定） |
 | `reflectionMaterial`（Target5） | → **SB**（具名 `Material` + `Reflection`）；当前 Target5 只作为 bridge |
 | `surfaceColor` | → **SB**（`Color`）；`A=coverage` 只作为当前 bridge，长期由 OB/AC 管理 |
-| `sssprofile` | → 待定（进 SB 或 OB 的表） |
+| `sssprofile` | → **SB 的 `Classification.materialClass`**（`_HoSSSProfileId` 写） |
 | `motion` | 不变（占坑） |
-| 新增 | OB 的 `Selection` / `Facing`；SB 的 `Normal` / `Emission`（PBR 用）；AC 的合成输出 |
-| 导出档位 | 现状（UINT 通道）+ **合规 `crypto_*`**（float 位重解释 + manifest + 32 bit）两档 |
+| 新增 | OB 的身份池 `Id0`/`Id1`/`Coverage`、固定语义槽 `Selection`、`Facing`；SB 的 `Normal` / `Emission`（PBR 用）；AC 的合成输出 |
+| 导出档位 | 现状（UINT 通道）保留；**合规 `crypto_*`（float 位重解释 + manifest + 32 bit）不在 OB**——归 AC 直出或以后的独立 feature |
 
 **当前桥接规则**：反射仍临时读取 MetadataBuffer Target5；SurfaceBuffer 的 Reflection 通道落地后，Target5 停止新增消费者，再删除桥接。`NormalDepth` coverage gate 继续是所有屏幕空间反射的硬规则；`DepthTexture.r` 的 raw/device depth 只允许在明确登记的 Hi-Z/AO 消费者中读取。
 
@@ -190,11 +190,11 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 | 阶段 | 内容 | 为什么在这个位置 |
 | --- | --- | --- |
 | **R0** | 本文 + 最小契约冻结 + 在 v0.1/反射文档上标注取代关系 | **已完成**；后续代码以本表为准 |
-| **R1** | **OB 改名搬迁**（`Runtime/CharacterBuffer` → `Runtime/ObjectBuffer`；常量、feature、组件、调试、编辑器）；**选择层保留**并扩到 8 层 | 代码已有 90%，改名的同时把"选择层是核心"落实 |
+| **R1** | **OB 改名搬迁 + 新布局**（`Runtime/CharacterBuffer` → `Runtime/ObjectBuffer`；常量、feature、组件、调试、编辑器）；存储改成**身份池 ranked（常开）+ 固定语义槽 fixed（默认 4 槽 = 2 张，可配 8 / 16，上限 8 张）** | 代码已有 90%，改名的同时把"身份池 + 语义槽"两个池落实 |
 | **R2** | OB 的**朝向图**（forward+side，octahedral 打包进一张 RGBA8）+ 调试视图 | 它同时验证"逐物体辅助量"这条可写通道的机制 |
 | **R3** | **SB 落地**：先 `Color`+`Material`+`Reflection`，再 `Normal`；反射优先于其它消费者 | SB 是 PBR/PLR/SSR 的共同地基 |
 | **R4** | **AC 落地**：递进覆盖链（纯值 < object < surface）+ 具名遮罩 + 消费者统一入口 | 运行时属性合成与 Cryptomatte AOV 解耦 |
-| **R5** | 消费者迁移：GTAO/SSGI 保持现状；**SSS/PLR → SB 数值 + AC 遮罩**；角色特化/ScreenProcess → OB/AC | 按依赖面从小到大迁移 |
+| **R5** | 消费者迁移：GTAO/SSGI 保持现状；**SSS/PLR → SB 数值 + AC 遮罩**；**角色特化 / ScreenProcess → AC**（角色特化吃的是身份池的组 / 物体位，不依赖固定槽） | 按依赖面从小到大迁移 |
 | **R6** | 删 MetadataBuffer；契约出 v2 | 全仓库无 `_HoMetadataBuffer` 引用 |
 
 **与 v0.1 §11 推进顺序的关系**：v0.1 定的是 `GTAO → SSGI → 其余系统`。GTAO/SSGI 已经在做，**R1-R4 属于"其余系统"里的地基工程**，与它们并行不冲突（互不读对方的产物）。
@@ -203,7 +203,7 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 
 ## 7. 待确认
 
-1. **SB 的具体 RT packing**：`Material` 与 `Reflection` 是否合并为一张 RGBA16F，还是拆成 feature-scoped RT；先以可调试和无损为优先。
-2. **AC 的纯值来源**：由材质声明的 surface payload 提供，还是由独立 Subject/Group 组件提供；必须先于消费者迁移冻结。
-3. **OB 的命名搬迁**：保留现有组件/文件名还是建立新目录别名；不影响 GB 名称。
-4. **透明 PLR 是否需要 receiver/source-id RT**：只有材质/OIT 直接消费无法满足多平面时才立项。
+1. **AC 的纯值来源**：由材质声明的 surface payload 提供，还是由独立 Subject/Group 组件提供；必须先于消费者迁移冻结。
+2. **透明 PLR 是否需要 receiver/source-id RT**：只有材质/OIT 直接消费无法满足多平面时才立项。
+
+（已解决并移出：SB 的 RT packing → **`Material` 与 `Reflection` 不并**，各自一张；OB 的命名搬迁 → **`HoObjectBuffer*` / `_HoObjectBuffer*` / `object.*`**，见 `Ho-ObjectBuffer_规划.md` §3。）
