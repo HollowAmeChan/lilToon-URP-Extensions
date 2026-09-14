@@ -12,6 +12,8 @@ MetadataBuffer 把 8 个语义压进 RSUV 低字节的 8 个 bit，语义因此�
 
 新 feature `Ho-CharacterBuffer` 改用业界标准模型（§4）：**per-pixel 只存 ID 与覆盖率，其余一切按 ID 查表**。抗锯齿由真实覆盖率给出亚像素相位，角色隔离成为 ID 的天然属性，带宽同时下降。
 
+**这不是我们独有的问题**：UE 官方文档在讲 Custom Depth 做轮廓时明说那类轮廓在 TAA 下"得不到抗锯齿"，并把它归因于 TAA 每帧的亚像素抖动；HDRP 也只能给效果一张"逐像素可采样的 Rendering Layer Mask buffer"。业界的解法都是同一个方向——**把身份与覆盖率当成一等数据产出，而不是让消费端去猜边界**（§4.4）。
+
 ---
 
 ## 1. 决策（全部锁定）
@@ -31,7 +33,7 @@ MetadataBuffer 把 8 个语义压进 RSUV 低字节的 8 个 bit，语义因此�
 | 14 | **per-pixel 材质通道按"管线 + 用户"两族预留** | `Material0`(RGBA8,管线逐像素:roughness / metallic / thickness / 备用)+ `Material1`(RGBA16F,用户自定义 0~3);两者**按需分配**;旧 system/custom write mask 变成 palette 字段 |
 | 15 | **`_Surface` 沿用 SurfaceColor 的两段式深度策略，且不进 ID pass 的 MRT** | opaque/cutout 先写深度确立归属，transparent 只 ZTest 后叠加；策略变了 `.rgb`（落到哪个面的颜色）会静默变味（§2.4）。它与 ID pass 的"全员 ZWrite On"（决策 6）冲突、又必须单采样，所以保持**独立 pass**。**`.a` 不再是覆盖率**——覆盖率只有一个来源（ID 层） |
 | 16 | **几何数据唯一来源 = GeometryBuffer** | 全管线的**深度 / 法线 / 几何覆盖率入口只有 GeometryBuffer**（`_HoGeometryBufferNormalDepthTexture` / `_HoGeometryBufferDepthTexture` / `_HoGeometryBufferCoverageTexture`）；CharacterBuffer **不发布任何几何通道**，其内部 depth-stencil 附件只服务于自身 draw 的占用判定——**永不发布、不被任何 shader 采样（debug 也不行）、永不跨来源比较** |
-| 17 | **ID 的 MSAA 目标 = 每样本一个 16 bit ID** | `R16_UInt` + 4x = **8 B/px 瞬态**（一个样本只属于一个部件，逐样本存 4 层格式是 6 倍浪费）；resolve 读 4 个样本数票写出 4 层 |
+| 17 | **ID 的 MSAA 目标 = 每样本一个 16 bit ID** | `R16_UInt` + 4x = **8 B/px 瞬态**（一个样本只属于一个部件，逐样本存 4 层格式是 6 倍浪费）；resolve 读 4 个样本数票写出 4 层。**整数 RT 天然不可滤波、不可混合**，正合身份语义；若平台不支持 `R16_UInt` 的 MSAA，退化成 `R16_UNorm` + 消费端 `round(v * 65535)` 还原整数（与 GB 用 UNORM8 存身份、`round(v*255)` 同法）；采样数一律先过 `SystemInfo.GetRenderTextureSupportedMSAASampleCount` |
 | 18 | **描边不写 ID** | 与 GeometryBuffer 的"物理几何 / 视觉壳层"分离一致；需要"连描边一起算角色"时用 GB 的 outline coverage 补，不往 CB 里混 |
 
 **工程默认**（编号 8~12 沿用历史顺序；按推荐值执行；改动成本低，随时可推翻）
@@ -174,7 +176,7 @@ ID + 覆盖率合计 **3 张 RGBA8 = 12 B/px**（常开部分）；两张 `Mater
 **用 RSUV 携带 palette 索引。** 这是 Unity 对该需求给出的标准机制：官方文档明确它**不干扰合批**、**无额外 CPU 开销**、比复制材质略快而比 MPB 快得多，并且**配合 GPU Resident Drawer 收益最大**；官方 use case 表里"大量 per-renderer 自定义数据"一条推荐的正是"**RSUV 当索引，指向全局 GraphicsBuffer 里的数据结构**"（见 [Introduction to RSUV](https://docs.unity3d.com/6000.5/Documentation/Manual/renderer-shader-user-value-intro.html)、[Set and use the RSUV](https://docs.unity3d.com/Manual/renderer-shader-user-value-set-and-use.html)）。
 
 - **32 bit 的分配**：低 16 bit = palette 索引（角色 8 + 槽位 8）；高 16 bit 由本 feature 预留（例如将来的 per-part 排除位），**并把这块分配登记进 `LILTOON_CHANNEL_CONTRACT_V1.md`**——共享槽的隐患靠"登记分区"解决，而不是靠弃用机制。RSUV 只要当索引就永远够用，属性增长全在 palette 里。
-- **支持范围**：`MeshRenderer` / `SkinnedMeshRenderer` / `SpriteRenderer` / `SpriteShapeRenderer` / `TilemapRenderer` 各有自己的 `SetShaderUserValue`（不在 `Renderer` 基类上，所以现有 `TrySetRendererUserValue` 只处理两种属于**代码没写全**）。角色部件的实际类型都在列表内。
+- **支持范围**（官方页面逐个点名）：`MeshRenderer` / `SkinnedMeshRenderer` / `SpriteShapeRenderer` / `TilemapRenderer` 各自的 `SetShaderUserValue(uint)`，以及 `SpriteRenderer` 的扩展方法 `SpriteRendererDataAccessExtensions.SetShaderUserValue(uint)`——**都不在 `Renderer` 基类上**，所以现有 `TrySetRendererUserValue` 只处理两种属于**代码没写全**；shader 侧统一读 `unity_RendererUserValue`。角色部件的实际类型都在列表内。
 - **兜底路径**：极少数拿不到 RSUV 的 renderer，退回"逐部件设全局常量再绘制"——只对这部分付出 draw call 代价。
 - **删除 MPB 回退**：官方在 SRP 下不推荐 MPB（性能差、可能不生效），而且它会让该 renderer 连**主 pass** 一起失去 SRP Batcher。
 - **材质侧**：从 RSUV 解出索引 → 查 palette 取 category / tags（就是官方"索引进全局 buffer"的用法），**不需要 CPU 逐 draw 设全局**。
@@ -187,6 +189,7 @@ ID + 覆盖率合计 **3 张 RGBA8 = 12 B/px**（常开部分）；两张 `Mater
   - 做法：`row = characterTable[charId].rowBase + slotId` —— 两次点采样、无常驻反向表。**同角色判断仍然是像素 ID 的高字节比较**（§5.1），不需要查表；标签位（如 `CharacterFull` = 该角色任意部件）放角色表那一行，更省。
 - **每行字段**：部件行 = `characterId`、槽位号、**partCategory（枚举，取代 8 bit 语义）**、**标签位掩码（32 位，决策 9）**、`materialClass`、`thickness`、`curvature`、`transmittanceHint`、`roughness`、`metallic`、`reflectance`、`plrStrength`、**显示色**（Nuke "color picker ID" 的颜色）、名字 hash（AOV manifest）；角色行 = `rowBase`、角色级标签（`CharacterFull` 这类"整角色"语义放这里）。
 - **角色隔离不靠额外图**：ID 的高字节即角色；可视化 / 导出查 `displayColor` —— 即业界那套"用颜色表示 ID"，但颜色是**查表得到**而非把 hash 塞进像素（hash 进像素会让 ID 再也不能被任何滤波碰）。
+- **同义量只能有一个来源**：`roughness` / `metallic` / `thickness` 既在 palette（常量缺省）又在 `Material0`（贴图驱动的逐像素值）。规则：由部件行 `flags` 里的"贴图驱动"位决定——**置位 = 只读 `Material0`、palette 对应字段无效；未置位 = 只读 palette、`Material0` 对应通道未定义**。消费端只查这个位，不许"两边取一个"、更不许相乘。
 - **越界兜底**：`charId` 越界、或 `slot >= characterTable[charId].slotCount` → 返回 unknown 行。**不能简单 clamp 行号**——`rowBase + slot` 越界会落到**别的角色**的行上，读出来的属性看着合法、其实是错的（比崩溃更难查）。
 - 代价与收益：旧 **7 张**（`maskId` RGBA8 + `surfaceData` / `objectCustom0` / `objectCustom1` / `reflectionMaterial` 四张 16F 直接消失，常量进 palette、身份进 ID；`surfaceColor` → `_Surface`、`custom0` → 按需的 `Material1`）换成 **ID 三张 RGBA8 + `_Surface` 一张 16F + 两张按需 `Material*`**；上传策略见决策 11。
 
@@ -250,7 +253,7 @@ ID pass 的 depth-stencil 附件只服务于两件事：**决出每个 sample �
 | 角色特化 轮廓场 | 类别 / 标签查询 + 覆盖率 |
 | 材质侧捕获 | 从 **RSUV** 解出索引 → 查 palette 取 slot / character / category / tags（不读 MPB） |
 | ScreenProcess 规则 | palette 字段枚举（决策 10） |
-| SSS | `_Coverage` + palette（thickness / curvature / class / transmittance）+ `_Surface` + **GeometryBuffer normalDepth**（几何门控不变） |
+| SSS | `_Coverage` + palette（thickness / curvature / class / transmittance）+ `_Surface` + **GeometryBuffer normalDepth**（几何门控不变）；thickness 若被贴图驱动则改读 `Material0.b`（§5.3 唯一来源规则） |
 | PlanarReflection | `_Coverage` + palette（反射参数）+ `_Surface` + **GeometryBuffer normalDepth/coverage**（几何门控不变） |
 | 调试 / AOV | ID / 覆盖率分层显示；palette `displayColor`；manifest JSON |
 
@@ -271,7 +274,7 @@ ID pass 的 depth-stencil 附件只服务于两件事：**决出每个 sample �
 
 **② 必须一致的地方（否则产生跨来源错位）**
 
-- **renderScale 与 GeometryBuffer 一致**：消费者会把 CB 的覆盖率与 GB 的覆盖率相乘（例如 PLR 的 `surfaceMask` 链），分辨率不同就会在轮廓处错位。GB 默认 Full，CB 也按 Full 设计；若将来要降分辨率，两者必须一起降。
+- **renderScale 与 GeometryBuffer 一致**：消费者会把 CB 的覆盖率与 GB 的覆盖率相乘（例如 PLR 的 `surfaceMask` 链），分辨率不同就会在轮廓处错位。**v1 干脆不暴露 renderScale、固定 Full**——比"两处设置记得同步"可靠；将来真要为性能降分辨率，必须两者一起降并重新验证轮廓链路。
 - **发布/复位纪律一致**：camera begin 复位全局与 `_Valid`，生产后发布，禁用/不支持时回退 black——避免读到上一帧的陈旧资源。
 - **同一帧内都在消费者之前**：CB 与 GB、MetadataBuffer 同在 `BeforeRenderingOpaques` 槽位，彼此**无硬依赖**（CB 不读 GB 的产物，GB 不读 CB 的），只要求都先于消费者。
 - **DebugTile 每个通道都要有视图**（GB 文档明确把"没有视图"当作成本不可验证的风险）。
@@ -341,7 +344,8 @@ MSAA 阶段**每个样本只需要一个 ID**（一个样本只属于一个部�
 ### 5.10 契约与 AOV
 
 - 按 `Documentation~/架构优化/LILTOON_CHANNEL_CONTRACT_V1.md` §3 的流程登记（登记本行 → 生产端输出 → 消费端消费 → debug 可见 → 冻结）：`character.idcoverage`（含 `_Id0` / `_Id1` / `_Coverage` 三张；debug view 按张拆开命名）/ `character.surface` / `character.material`（含用户自定义 0~3）/ `character.palette`。**不登记任何深度 / 法线通道**——全管线唯一的深度/法线入口是 GeometryBuffer（决策 16）。
-- AOV 导出对齐 Nuke 习惯：`id_object`、`id_group`（从 palette 解出）、`matte_*`（`coverage × (category == X)`）；**ID 不过滤、coverage 放 alpha**，附 palette manifest（JSON），Nuke 端即可像 Cryptomatte 那样点选。
+- **同时要改的既有行**（契约 v1 里那些 MetadataBuffer 时代的条目，现在就该在文档里标上"待 P4 替换"）：`surfaceColor`（**去掉 `A=coverage`**——`.a` 退役，覆盖率只有一个来源）、`maskId` / `objectCustom0/1` / `surfaceData` / `reflectionMaterial`（生产者与编码整体换成 CharacterBuffer 的对应图）、以及 `maskcoverage.low/high`（它是 `objectCustom` 的抗锯齿副本，随 `objectCustom` 一起退役）。
+- AOV 导出对齐 Nuke 习惯：**名字冻结不动**（契约 §2 的 `id_object` / `id_group` / `matte_*` / `diffuse_albedo` 只换生产端与编码，不改名）；`matte_*` = **`Σ_i cov_i · [cat(id_i) == X]`**（不是只取层0——与 §6 第 7 条同一条规则）；**ID 不过滤、coverage 放 alpha**，附 palette manifest（JSON），Nuke 端即可像 Cryptomatte 那样点选。
 - CB 落地后，`Documentation~/GeometryBuffer.md` §7 消费者契约表里仍写着 "MetadataBuffer" 的三行（CharacterSpecialization / PLR / SSS）要改成 CharacterBuffer，并在 GB 文档的公共原则里把 "MetadataBuffer = object/material semantic truth" 拆成 "CharacterBuffer = 部件身份 + 覆盖率真值 / MetadataBuffer 退役"。这一步记在 P4。
 
 ---
@@ -369,7 +373,7 @@ MSAA 阶段**每个样本只需要一个 ID**（一个样本只属于一个部�
 | 阶段 | 内容 | 验收 |
 | --- | --- | --- |
 | **P0（本文件）** | 调查 + 设计 + 纪律 | 已完成 |
-| **P1** | `HoCharacterBuffer*` feature（ID/coverage pass + palette + 调试视图）；lilToon 侧新增 `HoCharacterBuffer` pass，与 `HoMetadataBuffer` 并存，身份走 RSUV 索引 + palette 查询 | 无 AA / MSAA 开 / 后处理 AA 开三种情况下 ID 与覆盖率都正确（**特别验证：相机 MSAA 关时覆盖率仍是 4x，不是 0/1**）；部件与 palette ID 一一对应；ID pass 一次画完、不破坏合批 |
+| **P1** | `HoCharacterBuffer*` feature（ID/coverage pass + palette + 调试视图 + `_Surface` 的 RT 与独立 pass）；lilToon 侧新增两个 pass（`HoCharacterBuffer` 写 ID/覆盖率、`HoCharacterBufferSurface` 写 `_Surface`，从今天的 `HoMetadataBuffer` / `HoMetadataBufferSurfaceColor` 对应过来），与 MetadataBuffer 并存，身份走 RSUV 索引 + palette 两级表查询 | 无 AA / MSAA 开 / 后处理 AA 开三种情况下 ID 与覆盖率都正确（**特别验证：相机 MSAA 关时覆盖率仍是 4x，不是 0/1**）；部件与 palette ID 一一对应；ID pass 一次画完、不破坏合批 |
 | **P2** | 角色特化三效果 + 轮廓切新 buffer，`HoCharacterSemanticMaskBlur` 退化为可选 | 前发投影边界连续、发际线无硬裁、角色互不干扰；等价 debug 视图无台阶 |
 | **P3** | ScreenProcess 规则、SSS、PlanarReflection 切新 buffer | 屏幕效果行为不变或更好；SSS 不再双线性读 class |
 | **P4** | 删除 MetadataBuffer（大量 16F 附件、fallback/clear/debug shader、MPB 回退、契约条目）；同步更新 `Documentation~/GeometryBuffer.md` §7 消费者契约表与公共原则（MetadataBuffer → CharacterBuffer） | 全仓库无 `_HoMetadataBuffer` 引用、无 MPB 身份写入；RSUV 只剩"palette 索引"一种含义；契约出 v2 |
