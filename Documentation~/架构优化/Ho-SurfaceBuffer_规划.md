@@ -23,10 +23,10 @@
 | | `g` | `curvature` | | | SSS |
 | | `b` | `transmittanceHint` | | | SSS |
 | | `a` | 备用 | | | |
-| `Selection` | 成对 | `R=id0, G=cov0, B=id1, A=cov1`；**本 feature 自己的具名选择** | RGBA8 ×N | 材质 | 只进 AC，由 AC 叠出下游消费的图 |
+| `Selection` | 成对 | **固定语义槽**（槽号由 OB 单方声明：默认 4 槽、可配 8 / 16）；每槽 `R=id0, G=cov0, B=id1, A=cov1`，**每张 2 槽**；**SB 写材质覆盖** | RGBA8 ×N（N ≤ 8） | 材质 | 只进 AC，由 AC 叠出下游消费的图 |
 | `Emission` | — | **占位**：契约里登记名字，**lilToon 侧没有 pass 写它 ⇒ 不分配通道** | — | 无 | 无 |
 
-- `Selection` 与 OB 的 `Selection` **同构同数**，**名字里不带 Cryptomatte**。今天材质 custom0~3 = 这里的**材质位 0~3**，名字与类型由 OB 预先声明的共享名字表给出（见 `Ho-ObjectBuffer_规划.md` §1.1），**SB 只写值**；SB 按名覆盖 OB 的 ID 渠道，AC 按 object < surface 叠。
+- `Selection` 与 OB 是**同一批固定语义槽**（**槽号 = 语义**，由 OB 单方声明、帧间不变：默认 4 槽 = 今天的材质位 0~3，可配 8 / 16），**名字里不带 Cryptomatte**。**SB 只写材质侧的覆盖率、按槽覆盖 OB**，AC 按 `object < surface` 叠；**布局固定 ⇒ 天然对齐，SB 不参与同步、不得自造槽或 ID**（见 `Ho-ObjectBuffer_规划.md` §1.3）。
 - `Normal` 与 GB 的几何法线是**并列的两个量**：GB 出几何法线（遮挡、阴影偏移、描边），SB 出着色法线（PBR、SSR）。
 - `Emission` 的字段语义等 lilToon 侧有 pass 写它时再冻结。
 
@@ -103,7 +103,7 @@ _UsePlanarReflection             → 只在总开关打开时生效
 1. `Material` 与 `Reflection` **不并**（各自一张 RT）。
 2. `Normal` **只存着色法线**（`octa`，含法线贴图）；几何法线留在 GB。
 3. `Emission` **登记为占位**：契约留名，不分配通道、不阻塞本轮。
-4. `Selection` 层数与 OB **一致**（8 层/像素 = 4 张 RGBA8，`R=id0,G=cov0,B=id1,A=cov1`），**名字表容量也与 OB 同量级（≤256 具名）**；**SB 按名覆盖 OB 的 ID 渠道**。层数由**共享 registry 每帧统一算出**（两边声明所需的最大层数），OB / SB 同一个数、AC 按它遍历；**槽位号不承载语义，语义只由 ID 决定**——两边对齐规则见 `Ho-ObjectBuffer_规划.md` §1.3。
+4. `Selection` = **与 OB 同一批固定语义槽**（`R=id0,G=cov0,B=id1,A=cov1`，每张 2 槽；**槽号 = 语义**，由 OB 单方声明，**默认 4 槽、可配 8 / 16、上限 8 张**）；**SB 写材质覆盖、按槽覆盖 OB**，AC 按 `object < surface` 叠；**布局固定 ⇒ 天然对齐，SB 不参与同步**。名字表容量与 OB 同量级（≤256 具名）。
 5. `materialClass` **留在 SB 的 `Classification`**（不进 OB 的表）。
 6. `plrStrength` 材质侧是 `Range(0,1)` ⇒ **8 bit 足够**。
 7. 表面色来源 = **`fd.col`**（lilToon 主色链）。

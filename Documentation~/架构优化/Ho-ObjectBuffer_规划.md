@@ -24,7 +24,7 @@
 | **部件**（Part） | `maskId.z` = `partId` | 「部件 ID (PartId)」 | OB（组件，逐物体） |
 | **标记**（Flags） | `maskId.w` = `flags` | 「标记 (Flags)」 | OB（组件，逐物体） |
 | **物体位 0~7**（ObjectFlag） | `objectCustom0~7` | 「全角色」「脸」「前发」「眼睛」「眼透区域」「配件」「人体」「预留 7」 | OB（组件，逐物体） |
-| **材质位 0~3**（MaterialFlag） | 材质 custom0~3 | Settings 里可自定义名字 | **SB**（材质，逐像素）——OB 只**预先声明**这批名字 |
+| **材质位 0~3**（MaterialFlag） | 材质 custom0~3 | Settings 里可自定义名字 | **SB**（材质，逐像素）——OB 只**预先声明**这批名字，**它们就是默认 4 槽** |
 
 - **覆盖率**（今天 `maskId.x` = `_HoMetadataBufferMaskWeight`）不是类型，它是每个 ID 对里的另一半。
 - **朝向**（今天 `faceBone` + 三轴）不是 ID，是**逐物体辅助量**（§2）。
@@ -41,23 +41,22 @@
 - GPU 侧是 StructuredBuffer（`_HoObjectBufferGroups` / `_HoObjectBufferEntries`）；**RSUV 不序列化 ⇒ 每次重建都要重写**。
 - 平台不支持 StructuredBuffer（shader level < 4.5）⇒ **整条不跑并告警，不静默降级**。
 
-### 1.3 两边 `Selection` 怎么对齐（冻结）
+### 1.3 两个池与对齐规则（冻结）
 
-**槽位编号不承载语义**：池按覆盖率降序排，同一个 ID 在不同像素的槽位会变。所以对齐只有两个抓手：
+**① 身份池（ranked，OB 独占，常开）**：4 层 `(组, 槽位)` + 4 层覆盖率。**按覆盖率降序排，槽号不承载语义**；一个像素可以同时属于多个物体（相机 AA 关掉也不丢覆盖率）。
 
-1. **语义靠 ID**——每对里的 ID 查**同一张共享名字表**（§1.2），还原成组 / 部件 / 标记 / 物体位 / 材质位；AC 的合成是 `Σ cov_i · [条目_i 命中 X]`，**与槽位顺序无关**。
-   - **SB 不得自造 ID 空间**：材质位 0~3 的 ID 由 OB 预先声明（§1.1），SB 只写这些 ID 的覆盖率。
-   - 同一个 ID 两边都写 ⇒ **取 surface**（递进链是覆盖，不是求和）。
-2. **数量靠一个数**——每帧层数由**共享 registry 统一算出**（= 两边声明所需的最大层数），OB 与 SB 都按这个 `SelectionLayerCount` 分配，AC 也按它遍历；**任何一边不得自行加层**。某一边本帧没有内容就不分配 RT，AC 遍历时该边视为全空（`cov = 0`）。
-   - 上限已冻结：**≤ 8 对 / 4 张 RGBA8**，两边一致。
+**② 语义槽池（fixed，OB 声明，OB 与 SB 都写）**：**槽号 = 语义**，由 OB **单方声明并固定**（一份声明，帧间不变）：
 
-**空层 = 覆盖率 0**：背景不占层，`cov = 0` 即"无贡献"，与"没写过"在**合成结果**上等价 ⇒ 不需要额外的 valid 位。
+- 默认 **4 槽**，可配 **8 / 16 槽**；每槽 = 一对 `(ID, 覆盖率)`；每张 RGBA8 装 2 槽 ⇒ 2 / 4 / 8 张，**上限 8 张**。
+- **默认 4 槽 = 今天的材质位 0~3**。
+- **OB 写物体归属，SB 写材质覆盖**；同一个槽两边都写 ⇒ **取 surface**（递进链是覆盖，不是求和）。
+- **天然对齐**：布局由声明固定，**不需要每帧协商、不需要同步**；SB 只读声明、按同一个槽号写，**不得自造槽或 ID**。
 
-**失败必须可见（不静默错位）**：
-- 两边层数不一致 → debug 视图标出 + 告警；
-- 查表落到第 0 行（未知）= **未声明 ID** → 标出；
-- 一像素实际 ID 数 > 8（溢出）→ 标出；
-- SB 写了表里不存在的材质位 → 该值无效 + 诊断。
+**AC 的合成**：身份池按覆盖率加权；语义槽按槽声明（名字 / 类型 / ID）合成——`matte_X = Σ cov_i · [条目_i 命中 X]`。
+
+**空 = 覆盖率 0**：背景不占身份池的层；语义槽没写就是 0。两处都不需要额外的 valid 位。
+
+**失败必须可见（不静默错位）**：声明的槽数与已分配的 RT 张数不一致 → 告警 + debug 标出；查表落到第 0 行（未声明 ID）→ 标出；身份池溢出（一像素 > 4 个物体）→ 标出；SB 写了未声明的槽 → 该值无效 + 诊断。
 
 ---
 
@@ -65,17 +64,19 @@
 
 | 纹理 | 格式 | 内容 | 分配 |
 | --- | --- | --- | --- |
-| `_HoObjectBufferSelectionTexture` | RGBA8 ×N（N ≤ 4） | ≤ **8 个 `(ID, 覆盖率)` 对**：每张 `R=id0, G=cov0, B=id1, A=cov1`；**与 SB 的 `Selection` 同构同数** | 层数由共享 registry 每帧统一算出（§1.3），OB / SB 同一个数；上限 4 张 |
+| `_HoObjectBufferId0Texture` / `Id1Texture` | RGBA8 ×2 | **身份池**（ranked）：各 4 层，`Id0 = 组 8 bit`、`Id1 = 槽位 8 bit` | 常开 |
+| `_HoObjectBufferCoverageTexture` | RGBA8 | **身份池覆盖率**：4 层，不归一化（残差 = 背景占比） | 常开 |
+| `_HoObjectBufferSelectionTexture` | RGBA8 ×N（N ≤ 8） | **语义槽池**（fixed）：每张 `R=id0, G=cov0, B=id1, A=cov1` = 2 槽；槽数 4 / 8 / 16（默认 4 ⇒ 2 张）；**与 SB 的 `Selection` 同构同槽** | 按声明的槽数分配，上限 8 张 |
 | `_HoObjectBufferFacingTexture` | RGBA8 | 逐物体辅助量，**两个方向**：`RG = octahedral(forward)`、`BA = octahedral(side)`；消费端叉乘得第三轴 | 按需（有物体提供 `faceBone` 才开） |
 | 组表 / 条目表 | StructuredBuffer | §1.2 | 常开（小） |
 | 内部 depth-stencil | 深度格式 | 两段式占用判定 + tie-break | **不发布** |
 
-**身份就在这个池里**：同一像素的身份 = 池中覆盖率最高的那几对 ID，ID 经名字表还原成组 / 部件 / 标记 / 物体位。**不分角色池与场景池**——混存，8 对是安全值。
+**两个池不混**：身份池 ranked（槽号无义、覆盖率为序），语义槽池 fixed（槽号即语义）。**不分角色池与场景池**——同一个 ID 空间混存。两个池都只进 AC，由 AC 合成后才给下游。
 
 **不变式（冻结）**：
 - ID **点采样** + `round(v*255)` 还原；**不滤波、不平均**。
-- **覆盖率线性，不归一化**（残差 = 背景占比）；**只能按 ID 匹配加权**；背景不占层。
-- **`K = 8 ≥ N = 4` ⇒ 无尾部丢失**（自建 MSAA 与相机 AA 解耦：相机把 AA 关掉也照跑，`N = 4`）。
+- **覆盖率线性，不归一化**（残差 = 背景占比）；**只能按 ID 匹配加权**；背景不占身份池的层。
+- 身份池 **`K = N = 4` ⇒ 无尾部丢失**（自建 MSAA 与相机 AA 解耦：相机把 AA 关掉也照跑，`N = 4`）。
 
 ---
 
@@ -85,7 +86,7 @@
 | --- | --- |
 | feature / 代码目录 | `HoObjectBufferRendererFeature`；`Runtime/ObjectBuffer/`（R1 从 `Runtime/CharacterBuffer/` 改名搬迁；CB 那批文件就是骨架，选择层完好） |
 | 组件 | **`HoObjectBufferGroup`**（今天的 `HoMetadataBufferGroup`：组 ID / 部件 ID / 标记 / 物体位名单 / 朝向）、**`HoObjectBufferSubject`**（今天的 `HoMetadataBufferSubject`：逐物体覆盖） |
-| 纹理 | `_HoObjectBufferSelectionTexture`、`_HoObjectBufferFacingTexture` |
+| 纹理 | `_HoObjectBufferId0Texture` / `_HoObjectBufferId1Texture` / `_HoObjectBufferCoverageTexture`（身份池）、`_HoObjectBufferSelectionTexture`（语义槽池）、`_HoObjectBufferFacingTexture` |
 | 表 | `_HoObjectBufferGroups`、`_HoObjectBufferEntries` |
 | 契约登记族 | **`object.*`**（`object.selection` / `object.facing` / `object.palette`）；CB 时代的 `character.*` 一律不用 |
 | 禁用名 | `Cryptomatte` / `crypto_*` / `_HoCryptomatte*` / `HoCryptomatteGroup` —— **本 feature 一个都不用** |
@@ -106,7 +107,7 @@
 
 **分工**：各 buffer 只产出自己那一轴的原始数据 + 预留可写通道；**AC** 定递进覆盖（**纯值 < object < surface**）、具名遮罩、给消费者的统一入口。**下游只吃 AC，不吃 OB/SB 的原始图。**
 
-**SB 覆盖 OB 的 ID 渠道**：两边 `Selection` 同构同数、共用同一批声明名（§1.1），OB 侧写物体归属、SB 侧写材质覆盖，AC 按"object < surface"叠。
+**SB 覆盖 OB 的 ID 渠道**：语义槽池由 **OB 单方声明**（槽号 = 语义、默认 4 槽、可配 8 / 16），OB 写物体归属、SB 写材质覆盖，AC 按 `object < surface` 叠；**布局是固定的 ⇒ 两边天然对齐，SB 不参与同步、不得自造槽或 ID**。
 
 ---
 
@@ -131,13 +132,13 @@
 
 | 阶段 | 内容 | 验收 |
 | --- | --- | --- |
-| **R1** | 改名搬迁 + 新布局：`Runtime/CharacterBuffer/` → `Runtime/ObjectBuffer/`，常量 `_HoCharacterBuffer*` → `_HoObjectBuffer*`，feature / 组件 / 设置 / 调试 / 编辑器同步改名；**选择层保留**，存储改成 §2 的 ≤8 对同构池 | 编译通过；相机 AA 关掉时覆盖率仍是 4x；ID 视图与选择视图都在 |
+| **R1** | 改名搬迁 + 新布局：`Runtime/CharacterBuffer/` → `Runtime/ObjectBuffer/`，常量 `_HoCharacterBuffer*` → `_HoObjectBuffer*`，feature / 组件 / 设置 / 调试 / 编辑器同步改名；**选择层保留**，存储改成 §2 的两个池（身份 ranked 常开 + 语义槽 fixed） | 编译通过；相机 AA 关掉时覆盖率仍是 4x；ID 视图与选择视图都在 |
 | **R2** | 朝向图：`faceBone` + 三轴（已有）→ 每帧写 `_HoObjectBufferFacingTexture` + debug 视图 | shader 里能按像素读到 forward / side；眼透相机角度修正改为读它 |
 | **R3/R4** | 消费者迁移：角色特化 → AC；ScreenProcess → 只吃具名遮罩 | 行为不变或更好；`Requires*` 诊断可删 |
 | **R5** | SSS / PLR 的**遮罩**切过来（数值走 SB） | 行为不变；无跨来源相乘 |
 | **R6** | 与 SB 一起删 MetadataBuffer | 全仓库无 `_HoMetadataBuffer` 引用 |
 
-**与 `LILTOON_FORMAL_PIPELINE_DRAFT_V2.md` §3.1 的差异**：那两行桥接口径（`ID0.rgba = coverage/groupId/objectId/flags`、`ID1.rgba = object custom bits`）**已被本文 §2 取代**——改成 §2 的 8 对同构池后，覆盖率与每像素多物体归属才成立。
+**与 `LILTOON_FORMAL_PIPELINE_DRAFT_V2.md` §3.1 的差异**：那两行桥接口径（`ID0.rgba = coverage/groupId/objectId/flags`、`ID1.rgba = object custom bits`）**已被本文 §2 取代**——身份走 ranked 池（多物体归属 + 真实覆盖率），具名遮罩走**固定语义槽**。
 
 **不在本文件冻结范围**：三张 StructuredBuffer 的行宽与字段排布（实现细节）。
 
@@ -150,12 +151,13 @@
 3. **ID 类型清单 = 今天 MetadataBuffer 的全部语义**：组 / 部件 / 标记 / 物体位 0~7 / 材质位 0~3（§1.1），**一条不丢**。
 4. **UI 名可读**：上面的类型名就是 Inspector 上填的时候看到的名字；物体位 8 条沿用今天的名字，**去掉"角色"字样**。
 5. **角色特化固定只吃**：组 + 物体位{全角色, 脸, 前发, 眼睛, 眼透区域, 配件, 人体} + 覆盖率；**预留 7 不是承诺**。
-6. **每像素 ≤8 个 `(ID, 覆盖率)` 对**（4×RGBA8，`R=id0,G=cov0,B=id1,A=cov1`），**与 SB 的 `Selection` 同构同数**——AC 要叠这两部分，所以 **OB 预先声明所有 ID 类型**。
-7. **SB 允许按名覆盖 OB 的 ID 渠道**（OB 写物体归属，SB 写材质覆盖，AC 按 object < surface 叠）。
-8. **遮罩 = 按条目属性加权求和**，不是取某一层。
-9. **朝向两张内容**：`RG = octa(forward)`、`BA = octa(side)`，一张 RGBA8（4 B/px）；不够用时升 16F，消费端不改。
-10. **名字表两级、≤256 具名、第 0 行 = 未知、越界回落未知不钳制**。
-11. **组件通用**：任何物体都能挂，不再是"角色专用"。
-12. **本 feature 不带 Cryptomatte 名字、不做合规导出档位**；`crypto_*` 归 AC 或以后的独立 feature。
-13. **登记族 `object.*`**；`character.*` 与 `_HoCryptomatte*` 一律不用。
-14. **准入判据 + 类②上限两张图 + 没有消费者的不分配**（§5）。
+6. **两个池**：① **身份池 ranked**（`Id0` = 组 8、`Id1` = 槽位 8、`Coverage`，各 4 层，**常开**，`K = N = 4` 无损）；② **语义槽池 fixed**（槽号 = 语义，每槽一对 `(ID, 覆盖率)`，每张 RGBA8 装 2 槽）。
+7. **固定语义由 OB 先一步持有**：**默认 4 槽**（= 今天的材质位 0~3），**可配 8 / 16 槽**，**上限 8 张**（16 槽）；布局帧间不变 ⇒ **天然对齐，SB 不参与同步**。
+8. **SB 写同一批槽并按槽覆盖 OB**（OB 写物体归属，SB 写材质覆盖，AC 按 `object < surface` 叠）；**SB 不得自造槽或 ID**。
+9. **遮罩 = 按条目属性加权求和**，不是取某一层。
+10. **朝向两张内容**：`RG = octa(forward)`、`BA = octa(side)`，一张 RGBA8（4 B/px）；不够用时升 16F，消费端不改。
+11. **名字表两级、≤256 具名、第 0 行 = 未知、越界回落未知不钳制**。
+12. **组件通用**：任何物体都能挂，不再是"角色专用"。
+13. **本 feature 不带 Cryptomatte 名字、不做合规导出档位**；`crypto_*` 归 AC 或以后的独立 feature。
+14. **登记族 `object.*`**；`character.*` 与 `_HoCryptomatte*` 一律不用。
+15. **准入判据 + 类②上限两张图 + 没有消费者的不分配**（§5）。
