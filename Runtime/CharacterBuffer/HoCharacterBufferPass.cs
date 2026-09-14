@@ -134,7 +134,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 cameraTextureDescriptor,
                 settings.RequestedSampleCount,
                 selectionEnabled);
-            renderTargets.ReAllocateIfNeeded(cameraTextureDescriptor, settings, msaaSamples, settings.useMaterial0, selectionEnabled);
+            renderTargets.ReAllocateIfNeeded(cameraTextureDescriptor, settings, msaaSamples, false, selectionEnabled);
 
             if (renderTargets.UseMsaaResolve)
             {
@@ -249,10 +249,8 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             TextureHandle depthTexture = renderGraph.CreateTexture(CreateDepthTextureDesc(cameraDescriptor, 1, false, HoCharacterBufferShaderConstants.Id0TextureName + "Depth"));
 
             TextureHandle material0Texture = TextureHandle.nullHandle;
-            if (settings.useMaterial0)
-            {
-                material0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoCharacterBufferFormatUtility.GetLayerGraphicsFormat(), HoCharacterBufferShaderConstants.Material0TextureName));
-            }
+            // P1 不分配 Material0：它的写入端在 lilToon 侧。没有写入端就发布一张纹理，
+            // 消费端会读到未定义内容——比"暂时没有这个通道"糟得多。
 
             TextureHandle selectionTexture = TextureHandle.nullHandle;
             if (selection)
@@ -356,13 +354,6 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                     {
                         builder.SetGlobalTextureAfterPass(selectionTexture, HoCharacterBufferShaderConstants.SelectionTextureId);
                     }
-                }
-
-                if (settings.useMaterial0 && material0Texture.IsValid())
-                {
-                    // Material0（管线逐像素材质值）由 lilToon 侧的 pass 写；P1 只分配、不在这里挂 MRT——
-                    // RG 的 attachment 索引必须从 0 连续，现在挂进去会在"有选择层/没选择层"两种布局下打架。
-                    builder.SetGlobalTextureAfterPass(material0Texture, HoCharacterBufferShaderConstants.Material0TextureId);
                 }
 
                 builder.AllowGlobalStateModification(true);
