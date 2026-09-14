@@ -17,7 +17,7 @@
 | | `b` | `thickness` | | | SSS / 透射 |
 | | `a` | 备用 | | | |
 | SB `Reflection` | `r` | `reflectance`（F0 的标量近似） | RGBA8 | 材质 | PLR / SSR / Probe |
-| | `g` | `plrStrength`（受 `_UseReflection` × `_UsePlanarReflection` 门控） | | | PLR |
+| | `g` | `plrStrength`（= `_PlanarReflectionStrength`，材质侧 0..1；受 `_UseReflection` × `_UsePlanarReflection` 门控） | | | PLR |
 | | `ba` | 备用 | | | |
 | SB `Classification` | `r` | `materialClass` | RGBA8 | 材质 | SSS / ScreenProcess（经 AC） |
 | | `g` | `curvature` | | | SSS |
@@ -66,7 +66,8 @@ _UsePlanarReflection             → 只在总开关打开时生效
 | 平滑度 / 金属度 | `_Smoothness` / `_Metallic`（及贴图） | 已有（反射文档 §4 冻结按 glTF/PBR 习惯解释） |
 | 反射总开关 / 平面反射开关 | `_UseReflection` / `_UsePlanarReflection` | 已有 |
 | 厚度 / 曲率 / 透射提示 / 材质分类 | 今天由 `HoMetadataBufferSubject` 或材质参数提供（`_HoMetadataBufferThickness` / `_HoMetadataBufferCurvature` / `_HoMetadataBufferTransmittanceHint` / `_HoMetadataBufferMaterialClass`） | **待冻结**：SB 需要自己的一套属性名（不能继续挂 `_HoMetadataBuffer*`） |
-| PLR 强度 | 今天的材质侧参数名**未确认** | **待查** |
+| PLR 强度 | **`_PlanarReflectionStrength`**（lilToon 侧 `Range(0,1)`，默认 1）——已在 lilToon 仓库核对 | ✅ 冻结 |
+| PLR 其它材质参数 | `_PlanarReflectionMinSmoothness` / `_PlanarReflectionEdgeFade` / `_PlanarReflectionFadeStart` / `_PlanarReflectionFadeEnd` / `_PlanarReflectionTint` / `_PlanarReflectionFlipY` | ✅ 已有；**它们是材质轻量参数（shading 时用），不进 SB 的通道** |
 | 表面色 | 材质自身的 base color 链 | **待查**（应与 SSS/脸色扩散今天读的同一个源） |
 
 ### 2.3 本次 review 查出的错名
@@ -94,9 +95,18 @@ _UsePlanarReflection             → 只在总开关打开时生效
 | **5** | 迁 `Classification`（SSS 的 thickness/curvature/class/transmittance） | SSS 行为不变 |
 | **6** | 与 OB/AC 一起进 R6：删 MetadataBuffer 的 surface 族 | 无 `_HoMetadataBuffer` surface 族引用 |
 
-## 4. 待定
+## 4. 已定 / 待定
 
-1. **RT packing**：`Material` 与 `Reflection` 是否并成一张 RGBA16F，还是各自 feature-scoped RT？（V2 §7 第 1 项）
-2. **`Emission` 是否本轮登记**：PBR 需要，字段语义未定。
-3. **`Selection` 的层数**：与 OB 同取 8 层，还是 SB 侧少一些？
-4. **分类的归属**：`materialClass` 留在 `Classification` 图，还是进 OB 的 palette（"这是什么"更像表的数据）？
+**已定**：
+
+1. `Material` 与 `Reflection` **不并**（各自一张 RT）。
+2. `Emission` **登记**（字段语义仍待定，见下）。
+3. `Selection` 层数与 OB **一致**（8 层/像素）。
+4. `materialClass` **留在 SB 的 `Classification`**（不进 OB 的表）。
+5. `plrStrength` 材质侧是 `Range(0,1)` ⇒ **8 bit 足够**（原先担心的 ">1" 不成立）。
+
+**待定**：
+
+1. **`Emission` 的字段语义**：`rgb` + 强度编码？是否与 `Color` 共用一份 base color 链。
+2. **表面色的材质侧来源**：lilToon 的哪条 base color 链（应与 SSS / 脸色扩散今天读的同一个）——**待查**。
+3. **`Selection` 的名字表容量**（OB 侧是 ≤256 具名；SB 是否同量级）。
