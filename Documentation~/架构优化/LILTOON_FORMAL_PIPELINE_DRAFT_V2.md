@@ -28,28 +28,52 @@
 
 ---
 
-## 2. 帧序 v2
+## 2. 帧序 v2（按"每趟的前置条件"排，不是凭直觉排）
+
+> ⚠ **上一版把 GTAO 排在 opaque 之后、CM 排在 opaque 之前，两处都错**。真正决定位置的是**前置条件**：
+
+| 位置 | 谁 | 前置条件（这就是理由） |
+| --- | --- | --- |
+| **opaque 之前** | 阴影 → GB → OB → SB → **GTAO** | **GTAO 必须在 opaque 之前**：材质在 forward 里就采样 `_HoAOTexture`（v0.1 §5 的意图参数）——AO 放到 opaque 之后，这一帧的材质就只能读到空图/上一帧。GB/OB/SB 也在这里（它们画自己的几何，不需要 opaque 的颜色） |
+| **opaque 之后** | **SSGI** → **CM** → SSS → OIT → PLR → 角色特化 → ScreenProcess | **SSGI 需要 opaque 之后的颜色**；**CM 必须等 opaque**——它合成的是"最终画面上每像素是谁、表面是什么样"，早于 opaque 就没有最终归属可言 |
+| **图像链** | ImageProcess | 只读 camera color |
+| **最后** | AOV 导出（可选） → DebugTile | 调试最后 |
 
 ```text
 [1]  URP 主光阴影
-[2]  Ho-ShadowCast（附加灯 cast 组）                              → shadow.main / shadow.add0..N
-[3]  GB：Ho-ScreenGeometryBuffer（现名 GeometryBuffer）           → 几何法线 / depth / 几何覆盖率（+ 描边视觉壳 / sky 可选）
-[4]  OB：Ho-ObjectBuffer（原 CharacterBuffer）                    → ID0/ID1/Coverage（4 层 (组,槽位) + 覆盖率）+ 具名选择 + 朝向
-[5]  SB：Ho-SurfaceBuffer                                         → 表面色 / 着色法线 / roughness / metallic / thickness / …
-[6]  CM：Ho-Cryptomatte（属性合成 + 遮罩）                        → 合成属性 / 具名遮罩（ScreenProcess、角色特化、SSS、PLR 的共同入口）
-[7]  Ho-GTAO（独立 feature）                                      → ao / aointent
-[8]  Ho-SSGI（独立 feature，读 gisexclude）                        → gi
-[9]  Ho-SubsurfaceScattering                                      → sss
+[2]  Ho-ShadowCast（附加灯 cast 组）                        → shadow.main / shadow.add0..N
+        ── opaque 之前 ──────────────────────────────────────────────
+[3]  GB：Ho-ScreenGeometryBuffer（现名 GeometryBuffer）      → 几何法线 / depth / 几何覆盖率（+ 描边视觉壳 / sky 可选）
+[4]  OB：Ho-ObjectBuffer（原 CharacterBuffer）               → ID0/ID1/Coverage + 具名选择 + 朝向（逐物体辅助量）
+[5]  SB：Ho-SurfaceBuffer                                    → 表面色 / 着色法线 / roughness / metallic / thickness / …
+[6]  Ho-GTAO（独立 feature）                                 → ao / aointent   ★ 必须在 opaque 之前
+        ── URP opaque / cutout / 透明 常规绘制 ───────────────────────
+[7]  Ho-SSGI（独立 feature，读 gisexclude）                   → gi              ★ 需要 opaque 后的颜色
+[8]  CM：Ho-Cryptomatte（属性合成 + 遮罩）                    → 合成属性 / 具名遮罩  ★ 必须等 opaque
+[9]  Ho-SubsurfaceScattering                                 → sss
 [10] Ho-WeightedOIT（透明合成，最难搞）
 [11] Ho-PlanarReflection（PLR source / 特殊 composite）
-[12] Ho-CharacterSpecialization（眼透 / 发影 / 脸色）               → eyecolor / eyedata
+[12] Ho-CharacterSpecialization（眼透 / 发影 / 脸色）          → eyecolor / eyedata
 [13] Ho-ScreenProcess（其余语义效果）
 [14] Ho-ImageProcess（最终图像链）
 [15] AOV 导出层（可选）
 [16] DebugTile（调试时最后）
 ```
 
-**[3][4][5] 的顺序原则**：GB 必须先于 OB/SB（OB/SB 绘制时要用它的深度做门控时）；OB / SB **互不依赖**，谁先都行；**[6] 必须晚于 [3][4][5]**（它读三轴的产物），且**早于所有消费者**。
+**必须成立的偏序关系**（比线性列表更重要，改 pass event 时照这个检查）：
+
+| 约束 | 为什么 |
+| --- | --- |
+| `阴影 → 所有效果` | 材质/效果都要吃阴影 |
+| `GB → OB`、`GB → SB` | OB/SB 绘制时可能要用 GB 的深度做门控 |
+| `OB ↮ SB`（互不依赖） | 谁先都行，但都必须在 **CM** 之前 |
+| **`GTAO → opaque`** | 材质 forward 里采样 AO |
+| **`opaque → SSGI`** | GI 要 opaque 后的颜色 |
+| **`opaque → CM`**、`{OB, SB, GB} → CM` | CM 合成的是"最终归属" |
+| `CM → SSS / OIT / PLR / 角色特化 / ScreenProcess` | 它们的遮罩只有一个来源 = CM |
+| **推论：GTAO 吃不到 CM 的遮罩** | 它在 CM 之前——所以 AO 的"谁参与"只能靠 layer mask / 材质意图，不能靠具名选择。这条要写进 GTAO 的文档，否则以后一定有人想给它接 CM |
+
+> 每个 feature 的 `passEvent` 都是**设置项**（GB/OB 默认 `BeforeRenderingOpaques`、GTAO 也在此档、SSGI/CM 在 opaque 之后），所以上面是**默认意图 + 必须成立的偏序**；**精确 pass event 以实机 Frame Debugger 为准**（v0.1 已有此注）。
 
 ---
 

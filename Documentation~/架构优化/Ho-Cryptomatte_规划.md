@@ -19,6 +19,10 @@
 2. **收敛**：今天每个消费端各自啃五张语义图、二十个 source（`ScreenProcessRuleSource` 就是活证据）；这一层之后，消费者只问它一次。
 3. **名字各归其位**：`ObjectBuffer` 说轴（逐物体），`Cryptomatte` 说"选区 + 合成 + 导出"，`SurfaceBuffer` 说表面数值——互不冒充。
 
+**帧序位置（已定）**：本层在 **opaque 之后**（`LILTOON_FORMAL_PIPELINE_DRAFT_V2.md` §2）——它合成的是"**最终画面上**每像素是谁、表面是什么样"，早于 opaque 就没有最终归属可言。它读 [OB / SB / GB] 三轴的产物，产出供 SSS / OIT / PLR / 角色特化 / ScreenProcess 使用。
+
+> **推论（很重要）**：**GTAO 在 opaque 之前，因此吃不到本层的遮罩**——AO 的"谁参与"只能靠 layer mask / 材质意图。这条已写进 v2 §2 的偏序表，免得以后有人给 GTAO 接上 CM。
+
 ## 2. 递进覆盖的语义（待定，建议）
 
 | 层 | 来源 | 例子 | 性质 |
