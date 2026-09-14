@@ -17,6 +17,7 @@
 
 - `ImageProcessStackVolumeEditor` 和 `ScreenProcessStackVolumeEditor` 负责层列表、图标按钮、预设菜单、每个效果的参数 UI。
 - `调色`（`ColorGradingCustom`）的预设根级只有 `默认`（重置），其余 34 个 look 统一走 `基础/电影感/胶片/动画/风格` 五个子菜单，见 `ColorGradingPresets.md`。
+- `渐变`（`Gradient`）除原有 4 种形状外新增 4 个两点模式（线性/径向/椭圆/锥形，旋转靠拖 B 点）、过渡曲线、镜像（反向渐变）、线性光插值、分辨率量化与输出抖动的暴露，见 `GradientInvestigation.md`。
 - `Editor/PostProcessing/ViewControls` 提供屏幕空间中心、半径、方向等 SceneView 操作控件。
 - `ScreenProcessRuleMaskEditorUtility` 提供基于 MetadataBuffer 的规则遮罩编辑 UI。
 

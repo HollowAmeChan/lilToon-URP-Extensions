@@ -136,6 +136,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "冷月夜", ApplyImageProcessMoonNightGradientPreset);
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "压暗圆形", ApplyImageProcessRadialShadeGradientPreset);
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "暖色叠光", ApplyImageProcessWarmOverlayGradientPreset);
+                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "天空 ND", ApplyImageProcessSkyNdGradientPreset);
+                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "反向渐变", ApplyImageProcessReverseGradientPreset);
+                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "旋转椭圆", ApplyImageProcessRotatedEllipseGradientPreset);
+                    AddImageProcessPresetMenuItem(menu, propertyPath, effect, "锥形扫光", ApplyImageProcessConicSweepGradientPreset);
                     break;
                 case ImageProcessEffect.Glow:
                     AddImageProcessPresetMenuItem(menu, propertyPath, effect, "柔和发光", ApplyImageProcessSoftGlowPreset);
@@ -381,6 +385,60 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetVector4(element, "parameters0", new Vector4(1.0f, 1.1f, 4.0f, 0.35f));
             SetVector4(element, "parameters1", new Vector4(0.0f, -0.15f, -35.0f, 0.0f));
             SetVector4(element, "parameters3", new Vector4(0.14f, 0.23f, 0.5f, 1.0f));
+        }
+
+        private static void ApplyImageProcessSkyNdGradientPreset(SerializedProperty element, ImageProcessEffect effect)
+        {
+            // Two-point linear, smooth falloff, multiply: the classic graduated-ND move.
+            ApplyImageProcessDefaultPreset(element, effect);
+            SetEnum(element, "blendMode", (int)ImageProcessBlendMode.Multiply);
+            SetColor(element, "color", new Color(0.58f, 0.68f, 0.86f, 1.0f));
+            SetVector4(element, "parameters0", new Vector4(4.0f, 1.0f, 5.0f, 0.85f));
+            SetVector4(element, "parameters1", new Vector4(0.0f, -0.05f, 0.0f, 0.0f));
+            SetVector4(element, "parameters3", new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            SetVector4(element, "parameters4", new Vector4(0.0f, 0.55f, 1.0f, 0.0f));
+            SetVector4(element, "parameters5", new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
+        }
+
+        private static void ApplyImageProcessReverseGradientPreset(SerializedProperty element, ImageProcessEffect effect)
+        {
+            // Mirrored two-point linear = reverse grad: the density sits in a band between A and B.
+            ApplyImageProcessDefaultPreset(element, effect);
+            SetEnum(element, "blendMode", (int)ImageProcessBlendMode.Multiply);
+            SetColor(element, "color", Color.white);
+            SetVector4(element, "parameters0", new Vector4(4.0f, 1.0f, 5.0f, 0.75f));
+            SetVector4(element, "parameters1", new Vector4(0.0f, -0.05f, 0.0f, 0.0f));
+            SetVector4(element, "parameters3", new Vector4(0.55f, 0.62f, 0.78f, 1.0f));
+            SetVector4(element, "parameters4", new Vector4(0.0f, 0.4f, 1.0f, 1.0f));
+            SetVector4(element, "parameters5", new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
+        }
+
+        private static void ApplyImageProcessRotatedEllipseGradientPreset(SerializedProperty element, ImageProcessEffect effect)
+        {
+            // Two-point ellipse: the ellipse's major axis points at B, so rotating the shape is
+            // just moving B (no rotation slider needed).
+            ApplyImageProcessDefaultPreset(element, effect);
+            SetEnum(element, "blendMode", (int)ImageProcessBlendMode.Multiply);
+            SetColor(element, "color", new Color(0.45f, 0.5f, 0.62f, 1.0f));
+            SetVector4(element, "parameters0", new Vector4(6.0f, 1.0f, 5.0f, 0.8f));
+            SetVector4(element, "parameters1", new Vector4(0.0f, -0.05f, 0.0f, 0.0f));
+            SetVector4(element, "parameters3", new Vector4(1.0f, 1.0f, 1.0f, 1.0f));
+            SetVector4(element, "parameters4", new Vector4(0.3f, 0.2f, 1.0f, 0.0f));
+            SetVector4(element, "parameters5", new Vector4(2.4f, 0.0f, 0.0f, 0.0f));
+        }
+
+        private static void ApplyImageProcessConicSweepGradientPreset(SerializedProperty element, ImageProcessEffect effect)
+        {
+            // Conical two-point: B sets the direction the sweep starts from, mirror makes it
+            // symmetric so the seam reads as the brightest line instead of a hard cut.
+            ApplyImageProcessDefaultPreset(element, effect);
+            SetEnum(element, "blendMode", (int)ImageProcessBlendMode.SoftLight);
+            SetColor(element, "color", new Color(1.0f, 0.92f, 0.78f, 1.0f));
+            SetVector4(element, "parameters0", new Vector4(7.0f, 1.0f, 5.0f, 0.5f));
+            SetVector4(element, "parameters1", Vector4.zero);
+            SetVector4(element, "parameters3", new Vector4(0.5f, 0.5f, 0.5f, 1.0f));
+            SetVector4(element, "parameters4", new Vector4(0.5f, 0.0f, 1.0f, 1.0f));
+            SetVector4(element, "parameters5", new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
         }
 
         private static void ApplyImageProcessSoftGlowPreset(SerializedProperty element, ImageProcessEffect effect)

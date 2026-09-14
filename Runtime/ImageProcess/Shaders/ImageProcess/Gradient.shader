@@ -26,10 +26,20 @@ Shader "Hidden/lilToon/URP/ImageProcess/Gradient"
             float _Intensity;
             float _LayerBlendMode;
             float4 _LayerColor;
-            float4 _LayerParams0; // x mode, y radius, z smoothness, w opacity
-            float4 _LayerParams1; // x center x, y center y, z angle degrees, w invert
-            float4 _LayerParams2; // x scale x, y scale y, z resolution scale, w dither strength
-            float4 _LayerParams3; // background color
+            // x mode, y radius (legacy), z smoothness (legacy) / curve, w opacity
+            float4 _LayerParams0;
+            // x offset X (point A), y offset Y (point A), z angle degrees (legacy), w invert
+            float4 _LayerParams1;
+            // x scale X (legacy ellipse), y scale Y (legacy ellipse), z resolution scale, w dither (8-bit LSB)
+            float4 _LayerParams2;
+            // background color (rgba)
+            float4 _LayerParams3;
+            // x point B offset X, y point B offset Y, z curve, w mirror
+            float4 _LayerParams4;
+            // x ellipse aspect ratio, y interpolation space, z legacy aspect fix, w unused
+            float4 _LayerParams5;
+
+            static const float GradientPi = 3.14159265359;
 
             half3 ColorBurn(half3 baseColor, half3 layerColor)
             {
@@ -60,6 +70,9 @@ Shader "Hidden/lilToon/URP/ImageProcess/Gradient"
                 return lerp(burn, dodge, step(0.5, layerColor));
             }
 
+            // Photoshop / PDF non-separable blend-mode luminance coefficients. The reference
+            // definitions of hue/saturation/color/luminosity use these weights, so they are kept
+            // as-is here rather than switched to Rec.709.
             half Lum(half3 color)
             {
                 return dot(color, half3(0.3, 0.59, 0.11));
@@ -152,21 +165,61 @@ Shader "Hidden/lilToon/URP/ImageProcess/Gradient"
                 return (floor(uv * targetResolution) + 0.5) / targetResolution;
             }
 
-            float ResolveGradientMask(float2 uv)
+            // Falloff curves, matching the vocabulary compositing ramps use:
+            // 0 linear, 1 smooth (both ends), 2 ease-in (point A end), 3 ease-out (point B end),
+            // 4 smootherstep.
+            float ApplyGradientCurve(float t, float curve)
             {
-                int mode = (int)clamp(round(_LayerParams0.x), 0.0, 3.0);
+                int index = (int)clamp(round(curve), 0.0, 4.0);
+                if (index == 1) return smoothstep(0.0, 1.0, t);
+                if (index == 2) return t * t;
+                if (index == 3) return 1.0 - (1.0 - t) * (1.0 - t);
+                if (index == 4) return t * t * t * (t * (t * 6.0 - 15.0) + 10.0);
+                return t;
+            }
+
+            float3 GradientSrgbToLinear(float3 c)
+            {
+                // HLSL has no GLSL-style component-selection intrinsic. Use a component-wise step
+                // mask so this also compiles on the D3D11 backend used by the editor.
+                float3 low = c / 12.92;
+                float3 high = pow(max(c + 0.055, 0.0) / 1.055, 2.4);
+                float3 lowMask = 1.0 - step(float3(0.04045, 0.04045, 0.04045), c);
+                return lerp(high, low, lowMask);
+            }
+
+            float3 GradientLinearToSrgb(float3 c)
+            {
+                float3 low = c * 12.92;
+                float3 high = 1.055 * pow(max(c, 0.0), 1.0 / 2.4) - 0.055;
+                float3 lowMask = 1.0 - step(float3(0.0031308, 0.0031308, 0.0031308), c);
+                return lerp(high, low, lowMask);
+            }
+
+            // Legacy geometry (modes 0..3), unchanged from the original implementation.
+            float ResolveLegacyGradientMask(float2 uv, int mode)
+            {
                 float2 center = 0.5 + _LayerParams1.xy;
                 float2 delta = uv - center;
                 float radius = max(_LayerParams0.y, 0.0001);
                 float smoothness = max(_LayerParams0.z, 0.0001);
+                float minSoftness = 1.5 / max(_ScreenParams.y, 1.0);
                 float mask = 1.0;
 
                 if (mode == 1)
                 {
                     float angleRadians = radians(_LayerParams1.z + 90.0);
                     float2 direction = float2(cos(angleRadians), sin(angleRadians));
+                    if (_LayerParams5.z > 0.5)
+                    {
+                        // Opt-in aspect correction: build the axis in aspect-corrected space so the
+                        // on-screen angle matches the requested angle on any frame shape.
+                        float aspect = _ScreenParams.x / max(_ScreenParams.y, 1.0);
+                        direction = normalize(float2(direction.x, direction.y / max(aspect, 0.0001)));
+                    }
+
                     float linearPosition = dot(delta, direction) / radius + 0.5;
-                    float softness = lerp(0.02, 1.0, saturate(smoothness / 10.0));
+                    float softness = max(lerp(0.02, 1.0, saturate(smoothness / 10.0)), minSoftness / radius);
                     mask = smoothstep(0.5 - softness, 0.5 + softness, linearPosition);
                 }
                 else if (mode == 2 || mode == 3)
@@ -177,16 +230,73 @@ Shader "Hidden/lilToon/URP/ImageProcess/Gradient"
                     delta /= scale;
 
                     float distanceValue = length(delta);
-                    float softness = radius * saturate(smoothness / 10.0);
+                    float softness = max(radius * saturate(smoothness / 10.0), minSoftness);
                     float edge0 = max(radius - softness, 0.0);
-                    float edge1 = max(radius, edge0 + 0.0001);
+                    float edge1 = max(radius, edge0 + minSoftness);
                     mask = 1.0 - smoothstep(edge0, edge1, distanceValue);
                 }
 
-                if (mode != 0 && _LayerParams2.w > 0.0001)
+                return mask;
+            }
+
+            // Two-point geometry (modes 4..7): point A = _LayerParams1.xy, point B = _LayerParams4.xy,
+            // both relative to the screen centre, measured in aspect-corrected space so the
+            // on-screen direction matches what the view control shows.
+            float ResolveTwoPointGradientMask(float2 uv, int mode)
+            {
+                float aspect = _ScreenParams.x / max(_ScreenParams.y, 1.0);
+                float height = max(_ScreenParams.y, 1.0);
+                float2 q = float2(uv.x * aspect, uv.y);
+                float2 qa = float2((0.5 + _LayerParams1.x) * aspect, 0.5 + _LayerParams1.y);
+                float2 qb = float2((0.5 + _LayerParams4.x) * aspect, 0.5 + _LayerParams4.y);
+                float2 axis = qb - qa;
+                float lengthAxis = max(length(axis), 2.0 / height);
+                float2 direction = axis / lengthAxis;
+                float2 relative = q - qa;
+                float t;
+
+                if (mode == 4)
                 {
-                    float2 pixel = floor(uv * _ScreenParams.xy);
-                    mask += (Hash12(pixel) - 0.5) * (_LayerParams2.w / 255.0);
+                    t = dot(relative, direction) / lengthAxis;
+                }
+                else if (mode == 6)
+                {
+                    float2 perpendicular = float2(-direction.y, direction.x);
+                    float ellipseAspect = clamp(_LayerParams5.x, 0.05, 20.0);
+                    float2 local = float2(dot(relative, direction), dot(relative, perpendicular) / max(ellipseAspect, 0.05));
+                    t = length(local) / lengthAxis;
+                }
+                else if (mode == 7)
+                {
+                    float angle = atan2(relative.y, relative.x) - atan2(direction.y, direction.x);
+                    t = frac(angle / (2.0 * GradientPi) + 1.0);
+                }
+                else
+                {
+                    t = length(relative) / lengthAxis;
+                }
+
+                t = saturate(t);
+                if (_LayerParams4.w > 0.5)
+                {
+                    t = abs(t * 2.0 - 1.0);
+                }
+
+                return ApplyGradientCurve(t, _LayerParams4.z);
+            }
+
+            float ResolveGradientMask(float2 uv)
+            {
+                int mode = (int)clamp(round(_LayerParams0.x), 0.0, 7.0);
+                float mask;
+
+                if (mode >= 4)
+                {
+                    mask = ResolveTwoPointGradientMask(uv, mode);
+                }
+                else
+                {
+                    mask = ResolveLegacyGradientMask(uv, mode);
                 }
 
                 if (_LayerParams1.w > 0.5)
@@ -212,10 +322,44 @@ Shader "Hidden/lilToon/URP/ImageProcess/Gradient"
                 float mask = ResolveGradientMask(uv);
                 half4 fromColor = (half4)_LayerParams3;
                 half4 toColor = (half4)_LayerColor;
-                half4 layer = lerp(fromColor, toColor, mask);
-                half3 blended = ApplyLayerBlend(source.rgb, layer.rgb, _LayerBlendMode);
-                half alpha = amount * layer.a;
-                return half4(lerp(source.rgb, blended, alpha), source.a);
+                half3 layerRgb;
+
+                if (_LayerParams5.y > 0.5)
+                {
+                    // Interpolate the two stops in linear light, then return to display space.
+                    // Neither space is universally "right": display-space blending darkens and
+                    // over-saturates the midpoint of wide ramps, while linear-light blending makes
+                    // light-to-dark ramps look too bright in the middle. This is the same
+                    // three-way choice engines and DCC tools expose (default here = display space,
+                    // matching the previous behaviour).
+                    layerRgb = GradientLinearToSrgb(lerp(GradientSrgbToLinear(fromColor.rgb), GradientSrgbToLinear(toColor.rgb), mask));
+                }
+                else
+                {
+                    layerRgb = lerp(fromColor.rgb, toColor.rgb, mask);
+                }
+
+                half layerAlpha = lerp(fromColor.a, toColor.a, mask);
+                half3 blended = ApplyLayerBlend(source.rgb, layerRgb, _LayerBlendMode);
+                half alpha = amount * layerAlpha;
+                half3 result = lerp(source.rgb, blended, alpha);
+
+                float ditherStrength = max(_LayerParams2.w, 0.0);
+                if (ditherStrength > 0.0001)
+                {
+                    // Output dither: symmetric triangular noise, +-0.5 LSB per unit of strength,
+                    // applied in display space (the space the 8-bit quantisation happens in).
+                    float2 pixel = floor(input.texcoord * _ScreenParams.xy);
+                    float3 noise = float3(
+                        Hash12(pixel + float2(0.5, 0.5)),
+                        Hash12(pixel + float2(37.7, 11.3)),
+                        Hash12(pixel + float2(91.3, 73.1)));
+                    noise = noise * 2.0 - 1.0;
+                    noise = sign(noise) * (1.0 - sqrt(max(1.0 - abs(noise), 0.0)));
+                    result += half3(noise * (ditherStrength * 0.5 / 255.0));
+                }
+
+                return half4(result, source.a);
             }
             ENDHLSL
         }

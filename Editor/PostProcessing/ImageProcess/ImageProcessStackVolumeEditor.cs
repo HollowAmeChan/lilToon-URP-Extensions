@@ -1590,6 +1590,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetVector4(element, "parameters1", new Vector4(0.0f, 0.0f, 0.0f, 0.0f));
                     SetVector4(element, "parameters2", new Vector4(1.0f, 0.5f, 1.0f, 0.0f));
                     SetVector4(element, "parameters3", new Vector4(0.0f, 0.0f, 0.0f, 1.0f));
+                    // Two-point geometry defaults: B just below the centre, smooth falloff, aspect 1.
+                    SetVector4(element, "parameters4", new Vector4(0.0f, -0.25f, 1.0f, 0.0f));
+                    SetVector4(element, "parameters5", new Vector4(1.0f, 0.0f, 0.0f, 0.0f));
                     break;
                 case ImageProcessEffect.Glow:
                     SetFloat(element, "intensity", 1.0f);
