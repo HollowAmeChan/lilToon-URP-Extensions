@@ -24,6 +24,16 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         private static readonly List<HoCharacterBufferGroup> ActiveGroups = new List<HoCharacterBufferGroup>();
         private static readonly Dictionary<Renderer, Assignment> Assignments = new Dictionary<Renderer, Assignment>();
         private static readonly HashSet<Renderer> WarnedRenderers = new HashSet<Renderer>();
+        private static readonly List<HoCharacterBufferConflict> Conflicts = new List<HoCharacterBufferConflict>();
+
+        /// <summary>
+        /// 上次 <see cref="ResolveAssignments"/> 发现的所有重复指定（一个 Renderer 被多个条目命中）。
+        /// 裁决是确定性的，但**必须让人看见**——拖父级展开子级时最容易撞上。
+        /// </summary>
+        public static IReadOnlyList<HoCharacterBufferConflict> GetConflicts()
+        {
+            return Conflicts;
+        }
 
         [InspectorName("优先级")]
         [Tooltip("同一个 Renderer 被多个 Group 命中时，优先级高者胜出；相同则离 Renderer 最近的组胜出。")]
@@ -272,16 +282,20 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         }
 
         /// <summary>
-        /// 跨组冲突解决：一个 renderer 只属于一个部件。优先级相同则取层级距离更近的组。
-        /// 由注册表在重建表之前调用一次。
+        /// 跨组冲突解决：一个 renderer 只属于一个部件。优先级相同则取层级距离更近的组；
+        /// 同组内两条目命中同一个 renderer 时按**条目顺序**取前者。
+        /// 由注册表在重建表之前调用一次；**所有重复都会记进 <see cref="Conflicts"/>**，不静默吞掉。
         /// </summary>
         public static void ResolveAssignments()
         {
             Assignments.Clear();
+            Conflicts.Clear();
             for (int groupIndex = 0; groupIndex < ActiveGroups.Count; groupIndex++)
             {
                 HoCharacterBufferGroup group = ActiveGroups[groupIndex];
-                IReadOnlyList<string> partNames = group.GetPartNames();
+                // GetPartNames() 返回的是复用的缓存列表，而冲突记录会再次调它——
+                // 这里先拷一份快照，避免"迭代中清空同一个 List"这类自己咬自己的 bug。
+                var partNames = new List<string>(group.GetPartNames());
                 for (int slot = 0; slot < partNames.Count; slot++)
                 {
                     HoCharacterBufferPartEntry entry = group.FindPart(partNames[slot]);
@@ -290,17 +304,61 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                         continue;
                     }
 
+                    int currentSlot = slot;
+                    string currentPartName = partNames[slot];
                     group.CollectRenderers(entry, renderer =>
                     {
                         int distance = group.GetHierarchyDistance(renderer.transform);
-                        var candidate = new Assignment(group, slot, group.priority, distance);
-                        if (!Assignments.TryGetValue(renderer, out Assignment existing) || candidate.IsHigherPriorityThan(existing))
+                        var candidate = new Assignment(group, currentSlot, group.priority, distance);
+                        if (!Assignments.TryGetValue(renderer, out Assignment existing))
                         {
                             Assignments[renderer] = candidate;
+                            return;
+                        }
+
+                        // 同一个部件自己命中两次（父级展开 + 显式子级）不算冲突。
+                        if (existing.group == candidate.group && existing.slot == candidate.slot)
+                        {
+                            return;
+                        }
+
+                        if (candidate.IsHigherPriorityThan(existing))
+                        {
+                            Conflicts.Add(MakeConflict(renderer, candidate, existing));
+                            Assignments[renderer] = candidate;
+                        }
+                        else
+                        {
+                            Conflicts.Add(MakeConflict(renderer, existing, candidate));
                         }
                     });
                 }
             }
+        }
+
+        private static HoCharacterBufferConflict MakeConflict(Renderer renderer, in Assignment winner, in Assignment loser)
+        {
+            string winnerName = GetPartNameAt(winner.group, winner.slot);
+            string loserName = GetPartNameAt(loser.group, loser.slot);
+            return new HoCharacterBufferConflict(
+                renderer,
+                winner.group,
+                winner.slot,
+                winnerName,
+                loser.group,
+                loser.slot,
+                loserName);
+        }
+
+        private static string GetPartNameAt(HoCharacterBufferGroup group, int slot)
+        {
+            if (group == null)
+            {
+                return "(已销毁)";
+            }
+
+            var names = new List<string>(group.GetPartNames());
+            return slot >= 0 && slot < names.Count ? names[slot] : $"(槽位 {slot})";
         }
 
         private void CollectRenderers(HoCharacterBufferPartEntry entry, System.Action<Renderer> visit)

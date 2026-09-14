@@ -105,7 +105,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
             SerializedProperty selectionLayers = Find("selectionLayers");
             string summary = LilUrpEditorSectionGui.EnumName(selectionLayers);
 
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSelections, "选择层（Cryptomatte 式）", summary, SelectionColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSelections, "Cryptomatte（选择层）", summary, SelectionColor))
             {
                 return;
             }
@@ -114,7 +114,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
             {
                 DrawProperty("selectionLayers");
                 EditorGUILayout.HelpBox(
-                    "选择层是具名的选区（取代匿名通道）。只有 group 里注册了选择才会分配那张图；" +
+                    "Cryptomatte 选择层 = 具名选区（取代匿名通道）。只有 group 里注册了选择才会分配那张图；" +
                     "写入端在 lilToon 侧的材质里（跨仓协议见规划 §5.11）。P1 只实现 2 个选择/像素。\n" +
                     "Material0（管线逐像素材质值）同样等 lilToon 侧的写入端就绪后再接线，现在不分配、不发布。",
                     MessageType.None);

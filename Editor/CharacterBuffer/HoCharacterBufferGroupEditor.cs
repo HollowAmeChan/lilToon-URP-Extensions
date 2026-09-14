@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using lilToon.URP.Extensions.CharacterBuffer;
 using UnityEditor;
 using UnityEngine;
@@ -86,6 +87,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
             if (changed)
             {
                 ApplyTargets();
+                // 冲突列表刚被重建，立即重画一次，别让人以为"拖进去没反应"。
+                Repaint();
             }
         }
 
@@ -157,7 +160,14 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
 
             Color color = EntryColors[index % EntryColors.Length];
             string title = string.IsNullOrEmpty(partName) ? $"（空名字 · 槽位 {index}）" : partName;
-            DrawEntryHeader(entry, partsProperty, index, title, BuildPartIdText(index, partName, categoryProperty), color, renderersProperty, true);
+            string subtitle = BuildPartIdText(index, partName, categoryProperty);
+            int conflictCount = CountPartConflicts(partName);
+            if (conflictCount > 0)
+            {
+                subtitle += $" · ⚠ 重复 {conflictCount}";
+            }
+
+            DrawEntryHeader(entry, partsProperty, index, title, subtitle, color, renderersProperty, true);
 
             if (!entry.isExpanded)
             {
@@ -197,10 +207,11 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.LabelField("选择（具名选区）", EditorStyles.boldLabel);
+                EditorGUILayout.LabelField("Cryptomatte（具名选区）", EditorStyles.boldLabel);
                 EditorGUILayout.HelpBox(
-                    "部件是“这是谁”；选择是“想单独调哪一块”——它可以横跨多个部件，也可以是某个部件里的一段遮罩。" +
-                    "名字全局唯一，材质侧只引用名字（所以在这里改名不破资产）。注册了选择才会产出那张选择图。",
+                    "部件是“这是谁”；Cryptomatte 选择是“想单独调哪一块”——它可以横跨多个部件，也可以是某个部件里的一段遮罩。" +
+                    "名字全局唯一，材质侧只引用名字（所以在这里改名不破资产）。注册了选择才会产出那张选择图；" +
+                    "导出时可选规范合规的 crypto_* 层，Nuke 里能直接点选。",
                     MessageType.None);
 
                 for (int i = 0; i < selectionsProperty.arraySize; i++)
@@ -209,7 +220,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
                 }
 
                 EditorGUILayout.Space(2.0f);
-                if (GUILayout.Button("+ 添加选择"))
+                if (GUILayout.Button("+ 添加 Cryptomatte 选择"))
                 {
                     int index = selectionsProperty.arraySize;
                     selectionsProperty.InsertArrayElementAtIndex(index);
@@ -232,7 +243,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
             string selectionName = nameProperty != null ? nameProperty.stringValue : string.Empty;
             uint selectionId = HoCharacterBufferRegistry.GetSelectionId(selectionName);
             string title = string.IsNullOrEmpty(selectionName) ? $"（空名字 · {index}）" : selectionName;
-            string subtitle = selectionId > 0 ? $"选择 ID {selectionId}" : "未注册";
+            string subtitle = selectionId > 0 ? $"Cryptomatte ID {selectionId}" : "未注册";
             DrawEntryHeader(entry, selectionsProperty, index, title, subtitle, SelectionColor, null, false);
 
             if (!entry.isExpanded)
@@ -276,6 +287,73 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
             {
                 EditorGUILayout.HelpBox(validationMessage, MessageType.Warning);
             }
+
+            DrawConflicts();
+        }
+
+        /// <summary>
+        /// 重复指定（一个 Renderer 被多个条目命中）。拖父级展开子级时最容易撞上：
+        /// 裁决是确定性的，但必须逐条列出来，否则"我明明拖进去了却没生效"没人查得动。
+        /// </summary>
+        private void DrawConflicts()
+        {
+            var group = target as HoCharacterBufferGroup;
+            if (group == null)
+            {
+                return;
+            }
+
+            IReadOnlyList<HoCharacterBufferConflict> conflicts = HoCharacterBufferGroup.GetConflicts();
+            int total = 0;
+            var lines = new List<string>();
+            for (int i = 0; i < conflicts.Count; i++)
+            {
+                HoCharacterBufferConflict conflict = conflicts[i];
+                if (!conflict.Involves(group))
+                {
+                    continue;
+                }
+
+                total++;
+                if (lines.Count < 6)
+                {
+                    lines.Add("· " + conflict.Describe());
+                }
+            }
+
+            if (total == 0)
+            {
+                return;
+            }
+
+            string message = $"重复指定 {total} 条（同一个 Renderer 被多个部件条目命中）：\n" + string.Join("\n", lines);
+            if (total > lines.Count)
+            {
+                message += $"\n…还有 {total - lines.Count} 条";
+            }
+
+            EditorGUILayout.HelpBox(message, MessageType.Warning);
+        }
+
+        private int CountPartConflicts(string partName)
+        {
+            var group = target as HoCharacterBufferGroup;
+            if (group == null || string.IsNullOrEmpty(partName))
+            {
+                return 0;
+            }
+
+            IReadOnlyList<HoCharacterBufferConflict> conflicts = HoCharacterBufferGroup.GetConflicts();
+            int count = 0;
+            for (int i = 0; i < conflicts.Count; i++)
+            {
+                if (conflicts[i].InvolvesPart(group, partName))
+                {
+                    count++;
+                }
+            }
+
+            return count;
         }
 
         /// <summary>条目条：一条 = 一个部件/选择。标题与副标题分行绘制，互不重叠。</summary>

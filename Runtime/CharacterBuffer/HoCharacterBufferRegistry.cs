@@ -217,7 +217,8 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 character.slotCount = 0;
                 character.tags = (uint)group.characterTags;
 
-                IReadOnlyList<string> partNames = group.GetPartNames();
+                // 快照：GetPartNames() 是复用缓存，循环体内又可能触发它被重填。
+                var partNames = new List<string>(group.GetPartNames());
                 for (int slot = 0; slot < partNames.Count; slot++)
                 {
                     string partName = partNames[slot];
@@ -313,10 +314,36 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             {
                 Groups[i].ApplyIdentity();
             }
+
+            WarnAboutConflicts();
         }
 
-        private static GraphicsBuffer EnsureBuffer<T>(GraphicsBuffer buffer, int count, int stride, T[] source)
+        private static int lastWarnedConflictCount = -1;
+
+        /// <summary>
+        /// 重复指定（一个 Renderer 被多个条目命中）**必须吵一次**：裁决本身是确定性的，
+        /// 但静默裁决会让人以为"我明明拖进去了却没生效"。只在数量变化时打印，避免每次重建刷屏。
+        /// </summary>
+        private static void WarnAboutConflicts()
         {
+            IReadOnlyList<HoCharacterBufferConflict> conflicts = HoCharacterBufferGroup.GetConflicts();
+            if (conflicts.Count == lastWarnedConflictCount)
+            {
+                return;
+            }
+
+            lastWarnedConflictCount = conflicts.Count;
+            if (conflicts.Count == 0)
+            {
+                return;
+            }
+
+            Debug.LogWarning($"[Ho-CharacterBuffer] {conflicts.Count} 个 Renderer 被多个部件条目同时命中" +
+                             "（最常见的原因：拖了父级、展开子级之后与别的条目重叠）。已按「优先级 → 层级距离 → 条目顺序」裁决；" +
+                             "逐条明细在各 HoCharacterBufferGroup 的 Inspector 里。");
+        }
+
+        private static GraphicsBuffer EnsureBuffer<T>(GraphicsBuffer buffer, int count, int stride, T[] source)        {
             // 容量按 2 的幂增长，避免每加一个部件就重建缓冲。
             int capacity = Mathf.NextPowerOfTwo(Mathf.Max(1, count));
             if (buffer == null || buffer.count < capacity)
@@ -353,6 +380,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         {
             Release();
             warnedMissingGraphicsBufferSupport = false;
+            lastWarnedConflictCount = -1;
             dirty = true;
         }
 

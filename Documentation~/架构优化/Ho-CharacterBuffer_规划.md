@@ -338,6 +338,7 @@ ID pass 的 depth-stencil 附件只服务于两件事：**决出每个 sample �
 - 组件同时是**运行时映射的所有者**：维护"渲染器 → 条目"并把条目索引写进 RSUV（不再写 MPB）；兜底路径所需的全局常量值也由它提供。
 - **标签保留的理由**：像 `CharacterFull`（= 该角色任意部件）这种"多归属"语义用标签最自然，消费端一次 `&` 即可查询；**"整角色"级语义放角色表那一行**（§5.3 的两级表），不必在每个部件行重复。
 - **校验**：一个 renderer 只属一个条目；名称唯一；palette ≤ 4096 且越界告警；renderer 类型是否支持 RSUV（不支持则走兜底路径并提示）；**ID 跨帧稳定**；**RSUV 未序列化 → 每次 OnEnable / 部件表变化都要重写**（§5.2），并保留 palette 第 0 行 = unknown。
+- **重复指定必须吵（不是静默取先到者）**：拖父级 + 展开子级之后，子树里某个 Renderer 很可能已经被别的条目（甚至别的角色的 group）显式指定过。裁决顺序固定为 **优先级 → 层级距离 → 条目顺序**，**每一处重复都记进 `HoCharacterBufferGroup.GetConflicts()`**：控制台按数量变化告警一次，组件 Inspector 里逐条列出（"xxx 同时属于「角色 2·头发」和「本组·前发」——对方优先级更高"），命中的部件条上还会带 `⚠ 重复 n`。
 
 ### 5.8 消费端迁移映射
 
@@ -451,8 +452,8 @@ MSAA 阶段**每个样本只需要一个 ID**（一个样本只属于一个部�
 
 | 场景 | 叫什么 | 理由 |
 | --- | --- | --- |
-| 内部 RT / 代码 | **选择层 / Selection**，`_HoCharacterBufferSelection` | 我们的编码**不是** Cryptomatte 规范格式（整数 ID、无 float 位重解释） |
-| lilToon UI（用户可见） | 可以就叫「**Cryptomatte 选择通道**」 | 用户一眼看懂它是干什么的 |
+| **UI（用户可见）** | 就叫「**Cryptomatte**」（组件里那一节标题、feature 那一节标题都用它） | 用户一眼看懂它是干什么的；"选择/Selection"这种自造词反而要解释半天 |
+| 内部 RT / 代码 | **选择层 / Selection**，`_HoCharacterBufferSelection` | 我们的编码**不是** Cryptomatte 规范格式（整数 ID、无 float 位重解释），代码里不冒用规范名 |
 | AOV 导出 | 提供**两档**：① 符合 Deep IDs 规范的 UINT 通道（`objectid` 等）；② **真正符合 Cryptomatte 规范的 `crypto_*` 层**（float 位重解释 ID + manifest + 32 bit） | Nuke 的原生 Cryptomatte 节点只认规范格式。**名字叫 Cryptomatte 但格式不符，比不给更糟**——所以导出档位要么合规、要么不叫这个名字 |
 
 **数据模型：一个选择 = 一个 `(选择 ID, 覆盖率)` 对**
