@@ -10,7 +10,7 @@
 
 1. **现状是“中间态”**：扩展侧已有很好的组件分层（`lilToon-URP-Extensions` 收口版），材质侧有完整 toon 功能面 + 材质契约。缺的是：**把现有材质 + 管线扩展对齐成一套“轻边界”，并给出 shadow / AO / GI / 反射 / 透射 / SSS / 多光 七个功能域的统一方案**。`HoNpr` 的重生成式架构已暂停，其教训（见 §2.1）是本评审的“边界第一课”。
 2. **边界问题最直接的答案来自你们自己的教训**：`HoNpr`（语义 DSL + FeatureBlock + Generator + Preset 的重生成式材质系统）**已经因“太重、扩展/调试困难”而暂停开发**。它是一次有价值的反例：证明了“结构越重，越难改、越难查、越难往前走”。本评审的态度：**采用它便宜的思考原则（语义优先、Feature Ownership、显式关系、材质语义优先于固定 AOV），坚决不采用它的重结构**。系统边界不是“更牛的框架”，而是“足够轻、可调试、可逐点失效回退”。
-3. **关键架构判断（本评审新增）**：代码库里已有**两种集成模式**且方向不一致——SSAO 走“**采样模式**”（材质直接采样全局 AO 纹理并混合），平面反射/SSS/角色特化走“**意图模式**”（材质把“想要什么 + 强/弱/遮罩”写进语义 Buffer，由全屏 composite 统一施加）。对本管线（Nuke 后期 + 弱耦合），**意图模式应成为主力约定**，AO 逐步迁移。这直接回答了“后处理结果要不要喂进材质”：**单向可控，但主力别让材质碰生成逻辑**。
+3. **关键架构判断（历史）**：本文曾把平面反射归入统一 fullscreen“意图模式”；该判断已被后续 PLR PBR 实现取代。反射以 `ReflectionPipelineDesign.md` 为准，SSS/角色特化仍可使用语义 Buffer + composite。
 4. **七个功能域的推荐层**：见 §3。总原则：**静态/风格化的放材质或预计算；屏幕空间的走“语义 Buffer → ScreenProcess 施加”；需要跨帧/跨模块复用的走通道注册表（文档级契约，非运行时框架）；AOV 输出独立成层**。
 5. **明确的“不做清单”**（不要把 URP 推成游戏引擎，也不要再造一个重框架）：deferred 全链路、完整 PBR GBR 重建、compute 级完整 SSGI（除非自研立项）、厚度/玻璃体积吸收、多 bounce 实时 GI、每光完整 GI、**以及任何“为将来可能需求”而上的 DSL/生成器/运行时注册框架（HoNpr 已因此暂停）**。
 
@@ -100,7 +100,7 @@
 | 模式 | 例子 | 机制 | 优点 | 缺点 |
 | --- | --- | --- | --- | --- |
 | **A 采样模式** | SSAO | 管线在 forward 前生成全局纹理，材质直接采样并自行混合 | 简单、材质完全可控、立即见效 | 材质知道纹理名（中度耦合）；AOV 里已混合难分离；`After Opaque` 不可用 |
-| **B 意图模式** | 平面反射 / SSS / 角色特化 | 材质把“想要什么+强度+遮罩”写进语义 Buffer；fullscreen composite 统一施加（其文档明确“主材质不应读取自己写出的缓冲”） | 材质与来源解耦（不知道 RT 名/算法）；**天然支持 AOV（改前/改后独立导出）**；`After Opaque` 效果也能工作 | 链路多一步；材质内调参要等 composite；需要通道契约 |
+| **B 意图模式** | SSS / 角色特化 | 材质把“想要什么+强度+遮罩”写进语义 Buffer；fullscreen composite 统一施加 | 材质与来源解耦；天然支持 AOV | 链路多一步；需要通道契约 |
 
 **结论（回答“要不要耦合”）**：
 - 允许**单向**依赖：管线 → 材质（全局纹理 + 材质开关）只在“低成本、立即见效、不与 AOV 冲突”时用（如 debug、快速开关）。
@@ -158,11 +158,7 @@
 
 ### 3.4 反射
 
-- 现状：lilToon cube/planar（意图模式已有范本——材质写 MetadataBuffer，composite 统一合成）；lilPBR SSR；`Unity-ScreenSpaceReflections-URP` 现成包可用。
-- 推荐：**统一走意图模式 + 来源可插拔**——材质写“反射强度/mask/粗糙度/扰动”进通道；反射来源（cube/planar/SSR/风格化）由管线决定；ScreenProcess 反射层统一施加。SSR 直接评估接入现成包（Linear/Hi-Z trace），或自建 half-res + temporal（复用 HoUrp/ScreenProcess 基础设施）。
-- 层：意图 = 材质；来源 = 管线（cube/planar/SSR 可插拔）；施加 = ScreenProcess。
-- 耦合：材质不知道反射来源。
-- AOV：`reflection`（反射分量）、`reflectionintent`、`beauty`。
+反射方案、输入槽位、时序和实施路线统一以 [`ReflectionPipelineDesign.md`](../ReflectionPipelineDesign.md) 为准。本文不再重复维护 PLR/SSR 的旧“意图模式 + fullscreen composite”设计。
 
 ### 3.5 透射 / 折射
 
@@ -268,7 +264,7 @@
 2. 阴影：ShadowCast “多光源衰减”通道化；材质 toon 门控统一。
 3. 多光源：光源合并语义 + AOV 分光（可选）。
 4. SSS：Burley 补完 + backface thickness prepass + 干净 diffuse source（按 `HoAOVTrueSSSDesign.md` 后续）。
-5. 反射：ScreenProcess 反射层（意图模式）接入；SSR 评估 `Unity-ScreenSpaceReflections-URP`。
+5. 反射：按 `ReflectionPipelineDesign.md` 的 PLR → SSR → Probe/Sky 路线推进。
 
 ### P2（按需立项，先证明需求）
 

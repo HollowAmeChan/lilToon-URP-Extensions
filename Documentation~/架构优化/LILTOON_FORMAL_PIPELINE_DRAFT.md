@@ -11,7 +11,7 @@
 > 角色材质域参考 = `Hollow\Hiro\Hiro_M_*.mat`（14 个）。
 > 关联文档：`LILTOON_RENDER_PIPELINE_REVIEW_AND_PLAN.md`（评审与边界）、`lilToon-URP-Extensions/Documentation~/RPComponentRework/RPComponentRework_验收文档.md`（组件边界）。
 > 定位：**按需纸面契约**（非 HDRP 式固定 GBuffer 编码）。通道随需求登记、无消费者不输出、AOV 命名冻结。
-> 反射章节已被 `Documentation~/ReflectionPipelineDesign.md` 取代；本文只保留总体帧序，不再作为 PLR/SSR 输入契约。
+> 反射章节已被 `Documentation~/ReflectionPipelineDesign.md` 取代；本文只保留总体帧序和跨系统背景，不再作为 PLR/SSR 输入契约。
 
 ---
 
@@ -157,7 +157,7 @@ ShoostPostProcessRendererFeature -> Ho-ImageProcess
 | OIT | 是否进 OIT、accumulation/revealage 结构 | 透明权重/响应（可并入预设） |
 | GI | 是否生成 GI、`gisexclude`（描边/非物理排除）、自研质量档 | `giStrength` / `giMask` |
 | Shadow | 附加灯收集/PCSS/atlas、主光阴影 | toon 门控现有项（border/blur/ramp，本就属于材质） |
-| 反射 | 反射来源（cube/planar/SSR）+ 是否接收 | 强度/扰动/平滑/遮罩 |
+| 反射 | PLR/SSR/Probe/Sky 来源与消费边界 | 见 `ReflectionPipelineDesign.md` |
 | 透射/折射 | camera color/透明资源契约、折射路径 | 厚度/吸收/强度/菲涅尔（收成预设） |
 | AO | Ho-GTAO 生产端、toon remap 档 | `_SSAOStrength/Remap/Contrast/Mask`，`_UseScreenSpaceAO` 为材质开关 |
 | SSS | profile 列表、扩散/透射 kernel、quality | sss strength/mask/tint（收进 profile preset） |
@@ -172,7 +172,7 @@ ShoostPostProcessRendererFeature -> Ho-ImageProcess
 2. **ShadowCast PCSS 档**：`pcssEnabled=1` 已知，其余参数待最终确认（PCSS 本体暂不做，见占位文档）。
 3. **灯光接管范围**：ShadowCast 是否接管全部 39 点光（其价值所在），或仅部分。
 4. **matte bits 分配**：objectCustom 0-7 位语义命名（frontHair/face/eye/body/…）——按 §9.4，位含义沿用 `HoMetadataBufferGroup/Subject` 组件语义，通道契约只登记"以组件 Inspector 为准"。
-5. **平面反射规格**：分辨率/更新帧间隔/层掩码是否写入契约默认值（当前按朱木古堂默认即可，不阻塞）。
+5. **反射后续**：只在 `ReflectionPipelineDesign.md` 维护，本文不重复登记参数默认值。
 6. **组内容量**（每 atlas slice 上限，应对灯数变态）默认值。
 
 ---
@@ -238,7 +238,6 @@ ShoostPostProcessRendererFeature -> Ho-ImageProcess
 - **GTAO**：第一版只做一个独立 `Ho-GTAO` RendererFeature；参数以自研后为准（HTrace 值仅供参考，不绑定契约）。
 - **SSGI**：第一版只做独立 `Ho-SSGI`（替换 HTrace；`gisexclude` 位必做）。
 - **motion**：✅ 转正占坑（通道 `motion` + AOV；动态模糊/Nuke 要用，先登记不实现）。
-- **平面反射规格**：按朱木古堂当前默认即可（长门场景问题另看，不阻塞）。
 - **PCSS**：暂不做（`LILTOON_SHADOW_PCSS_PLACEHOLDER.md`）。
 - **专用 cast 组（角色脸/远平面）**：只规划（`LILTOON_SPECIAL_CAST_PLACEHOLDER.md`），首版不做。
 - **ShadowCast 分组模型**：cast 分组（每组一张 atlas、灯按 slice 排布）；首版 2 组、上限 N=8；`shadow.add0..N` 的 N 指"组"不是"灯"。
