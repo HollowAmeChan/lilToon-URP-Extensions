@@ -23,10 +23,10 @@
 | | `g` | `curvature` | | | SSS |
 | | `b` | `transmittanceHint` | | | SSS |
 | | `a` | 备用 | | | |
-| `Selection` | 成对 | **固定语义槽**（槽号由 OB 单方声明：默认 4 槽、可配 8 / 16）；每槽 `R=id0, G=cov0, B=id1, A=cov1`，**每张 2 槽**；**SB 写材质覆盖** | RGBA8 ×N（N ≤ 8） | 材质 | 只进 AC，由 AC 叠出下游消费的图 |
+| `Selection` | 成对 | **固定语义槽**（槽号由 OB 单方声明：默认 4 槽、可配 8 / 16）；每槽 `R=id0, G=cov0, B=id1, A=cov1`，**每张 2 槽**；**SB 写材质覆盖**（**运行时遮罩面**，不做导出源） | RGBA8 ×N（N ≤ 8） | 材质 | 只进 AC，由 AC 叠出下游消费的图 |
 | `Emission` | — | **占位**：契约里登记名字，**lilToon 侧没有 pass 写它 ⇒ 不分配通道** | — | 无 | 无 |
 
-- `Selection` 与 OB 是**同一批固定语义槽**（**槽号 = 语义**，由 OB 单方声明、帧间不变：默认 4 槽 = 今天的材质位 0~3，可配 8 / 16），**名字里不带 Cryptomatte**。**SB 只写材质侧的覆盖率、按槽覆盖 OB**，AC 按 `object < surface` 叠；**布局固定 ⇒ 天然对齐，SB 不参与同步、不得自造槽或 ID**（见 `Ho-ObjectBuffer_规划.md` §1.3）。
+- `Selection` = **运行时遮罩面**（材质逐像素的具名遮罩 + 不许丢），不做导出源；导出/点选走 OB 的**身份池**（Cryptomatte 语义面）。OB 的 `Selection` 与 SB 是**同一批固定语义槽**（**槽号 = 语义**，由 OB 单方声明、帧间不变：默认 4 槽 = 今天的材质位 0~3，可配 8 / 16），**名字里不带 Cryptomatte**。**SB 只写材质侧的覆盖率、按槽覆盖 OB**，AC 按 `object < surface` 叠；**布局固定 ⇒ 天然对齐，SB 不参与同步、不得自造槽或 ID**（见 `Ho-ObjectBuffer_规划.md` §1.3）。
 - `Normal` 与 GB 的几何法线是**并列的两个量**：GB 出几何法线（遮挡、阴影偏移、描边），SB 出着色法线（PBR、SSR）。
 - `Emission` 的字段语义等 lilToon 侧有 pass 写它时再冻结。
 
