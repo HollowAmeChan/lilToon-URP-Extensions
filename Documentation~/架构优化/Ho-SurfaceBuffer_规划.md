@@ -106,6 +106,52 @@ MetadataBuffer 今天一个 buffer 里同时装着身份、覆盖率和表面数
 - **法线 / 深度 / 几何覆盖率 / 描边 / 天空** → GB。
 - **深度通道**：SB **不发布**。需要几何门控的消费者读 GB（与 CB 同一条纪律，见 CB 规划决策 16）。
 
+### 2.5 ⚠ 未来 PBR：本次 review 的主要结论
+
+**SB 不只是"MetadataBuffer 的剩余部分"，它是以后 PBR 的载体。** 那布局就不能照 lilToon 现在这几个量来定，得按"一个 PBR 表面到底需要什么"来定，并且**留出增长位**。
+
+**先看业界把 PBR 表面数据放哪儿、放多少**
+
+- **HDRP**（官方 17.0.4）："HDRP renders the **Material properties** of every GameObject visible on screen into a **GBuffer**"，并且它自己承认代价："**HDRP compresses Material properties, such as normals or tangents, in the GBuffer. This results in compression artifacts**"（即：压缩是常规做法，但要知道它会有 artifact）。见 [HDRP: Forward and Deferred rendering](https://docs.unity3d.com/Packages/com.unity.render-pipelines.high-definition@17.0/manual/Forward-And-Deferred-Rendering.html)。
+- **UE**（官方，移动端延迟）：几何 pass "handles **BaseColor, Metallic, and Roughness** parameters and stores them in a temporary buffer, usually called **GBuffer**"；硬上限写得很直白——"**16 bytes or 128-bit per-pixel in GBuffer**"、"只能 4 张 input attachment"、"光照阶段只能取 3 张颜色 + 1 张深度"，并且"**Deferred rendering can not support MSAA** due to the amount of space it would need in GBuffer"；法线用 octahedron 编码省地方。见 [UE: Mobile Deferred Shading Mode](https://dev.epicgames.com/documentation/en-us/unreal-engine/using-the-mobile-deferred-shading-mode-in-unreal-engine)。
+
+**三条必须现在就定的结论**
+
+**① 法线：不是"谁该升级"，而是"这是两个不同的量"（本次 review 最硬的一条）**
+
+先摆事实：
+
+- **HDRP** 的延迟 G-buffer 存的是 **pixel normal（着色法线）**，并且明说两者都合法但用途不同："Forward 用**几何法线**（vertex normal）做 shadow bias，所以伪影更少；**Deferred 用 pixel normal**，所以伪影更多"。
+- **我们的 GB**：文档 §4.1 写的是"`fragGeometryBuffer()` 输出**基础网格位置的世界法线**和线性深度"，本仓库 fallback 写的是 `TransformObjectToWorldNormal(input.normalOS)` —— **两处证据都指向几何法线**（lilToon 侧实际 shader 值得核对一次，确认没有例外）。
+
+**结论（我上一版写错了，这里更正）**：不该要求 GB 改成着色法线。因为**几何法线与着色法线回答的是两个不同的问题**：
+
+| | 几何法线（vertex normal） | 着色法线（pixel normal，含法线贴图） |
+| --- | --- | --- |
+| 属于谁的问题 | **"几何在哪、朝向如何"** → GB | **"表面是什么样"** → **SB** |
+| 谁该用 | SSAO / SSGI 的遮挡、shadow bias、物理遮挡、描边 | PBR 光照、SSR 反射方向、需要表面细节的效果 |
+| 为什么不能互换 | **AO 不该被法线贴图的细节驱动**（那是表面微观凹凸，不是几何遮蔽）；shadow bias 用几何法线伪影更少（HDRP 原话） | 用它做遮挡判断会把贴图噪声当几何 |
+
+所以：
+
+- **GB 不动**（继续保持几何法线），但**文档要把"几何法线"写明**——现在"基础网格位置的世界法线"这种措辞太含糊，下一个人很容易当成着色法线；
+- **SB 新增 `_HoSurfaceBufferNormal`**（着色法线，PBR / SSR 用）；
+- **禁令**：两者不得互相替代；debug 名要一眼区分（`geometry.*` vs `surface.shading-normal`）；**"让 SSAO 改用着色法线"是错的**，反之把几何法线喂给 PBR 光照也是错的。这条要写进 SB 的契约与 §5 的纪律里。
+
+**② SB 不是"第二个杂物间"：效果提示与分类不进 SB**
+
+PBR 表面数值（"表面**是**什么"）与效果提示（"效果**该**怎么用它"）是两件事。后者——`_SSAOStrength/Remap/Contrast/Mask`、`giStrength/giMask`、`gisexclude`、`sss strength/mask/tint`、`materialClass`/profile——在管线草案 **§6.3** 里被明确定义为"**材质轻量参数（用户可调）**"，且它们今天是**forward 阶段的材质状态**或**各自登记的通道**（`aointent` / `gisexclude` 已经是独立通道）。
+
+> **规则**：SB 只放"表面**是**什么"；"效果**该**怎么用它"走 §6.3 的材质轻量参数或它自己登记的通道。加了这一条，SB 才不会长成 MetadataBuffer 那样。
+
+**③ 位预算要写死（UE 那条 128-bit/px 是很好的清醒剂）**
+
+UE 把**整个 G-buffer** 压在 16 B/px。我们现在：CB 12 B/px（+4 深度）+ SB 全开 20 B/px —— **两者相加已经超过别人整个 G-buffer 的预算**。所以：
+
+- SB 的定位写清楚：它是**补充性表面 buffer**（给屏幕效果与 AOV 用），**不是**一个完整的延迟 G-buffer；
+- 真要走 PBR 延迟路线时，**CB + SB 要一起重新算预算**，而不是在 SB 上继续加图；
+- 增长规则：**每加一张图必须指回某个系统的脚印（§6.4）并登记进契约**，且优先"按需分配"而不是"常开"。
+
 ---
 
 ## 3. 现状的债（SB 要顺手还掉的）
@@ -120,17 +166,35 @@ MetadataBuffer 今天一个 buffer 里同时装着身份、覆盖率和表面数
 
 ## 4. 设计
 
-### 4.1 通道布局（草案）
+### 4.1 通道布局（草案，按"未来 PBR"重新排过）
 
-| 通道 | 格式 | 内容 | 分配 |
-| --- | --- | --- | --- |
-| `_HoSurfaceBufferColor` | RGBA16F | RGB = 线性 HDR 表面色（今天 `surfaceColor.rgb`）；**A 保留**（不承载覆盖率——覆盖率只有 CB 一个来源） | 按需（角色特化脸色扩散 / AOV） |
-| `_HoSurfaceBufferMaterial` | RGBA8 | r = roughness、g = metallic、b = thickness、a = 备用 | 按需（PLR / SSS） |
-| `_HoSurfaceBufferReflection` | RGBA8 | r = reflectance、g = PLR strength（归一后）、b/a 备用 | 按需（PLR / SSR / Probe） |
-| `_HoSurfaceBufferClassification` | RGBA8 | r = material class、g = curvature、b = transmittance hint、a = 备用 | 按需（SSS / ScreenProcess 规则） |
-| （SB 自己的 depth-stencil） | 深度格式 | 两段式深度策略用 | 常开、**内部附件**、不发布 |
+**核心三张**（PBR 的最小集合 + lilToon 现有消费者的需要）
 
-**合计**：全开 20 B/px；只开 `Material` + `Classification` 这些常见组合是 8 B/px。
+| 通道 | 格式 | 内容 | 分配 | 服务于 |
+| --- | --- | --- | --- | --- |
+| `_HoSurfaceBufferNormal` | RGBA8 | **r/g = 着色法线的 octahedral 编码**（含法线贴图；业界就用这种压缩，HDRP 官方也承认"compresses normals… results in compression artifacts"）、b = 备用（将来的切线/各向异性方向）、a = 备用 | 按需 | PBR 光照 / SSR 反射方向 |
+| `_HoSurfaceBufferColor` | RGBA16F | RGB = 线性 HDR 表面色（albedo，不钳制）；**A = 保留**（覆盖率只有 CB 一个来源） | 按需 | PBR / 角色特化脸色扩散 / AOV `diffuse_albedo` |
+| `_HoSurfaceBufferMaterial` | RGBA8 | r = roughness、g = metallic、b = thickness、a = 备用 | 按需 | PBR / SSS / PLR |
+| `_HoSurfaceBufferReflection` | RGBA8 | r = reflectance（F0 的标量近似）、g = PLR strength、b/a 备用 | 按需 | PBR / PLR / SSR / Probe |
+
+**PBR 还想要、但现在没有家的（本次 review 新增到议题里）**
+
+| 需要什么 | 今天在哪 | SB 的处置 |
+| --- | --- | --- |
+| **着色法线（含法线贴图）** | GB 发布的是**几何法线**（§2.5 ① 的两处证据） | **SB 新增 `_HoSurfaceBufferNormal`**：两者是两个不同的量（几何遮蔽 vs 表面微观朝向），不互为来源；GB 保持不动，但它的文档要写明"几何法线" |
+| **emissive（HDR 强度）** | 契约里已登记 `emission`（◻ 未实现，AOV 用） | **SB 是它的家**：新增 `_HoSurfaceBufferEmission`（RGBA16F，按需）——它就是"表面自己发光" |
+| **AO（环境光遮蔽）** | 屏幕空间的 GTAO 产物 + 材质的 `_SSAOMask` 意图 | **不给 SB**：AO 是屏幕空间产物，材质侧只是意图（§2.5 ②） |
+| **clearcoat / sheen / anisotropy / transmission-IOR** | 今天完全没有 | **预留**：`_HoSurfaceBufferLobes`（RGBA8，按需）——四个 0~1 的高级叶瓣参数。**开了才分配**，且必须指回某个系统的脚印 |
+| **分类（materialClass / profile）** | `surfaceData.b` + `sssprofile`（R8） | **倾向进表不进图**（§7 第 2 项）：分类是"这是什么"，按 CB 立的规矩归 palette |
+
+**预算线（写死，防止以后无限加图）**
+
+```text
+核心 4 张 = 4（法线）+ 8 + 4 + 4 = 20 B/px（按需）
++ Emission 8 / + Lobes 4 = 全开 32 B/px
+定位：补充性表面 buffer（给屏幕效果与 AOV），不是完整延迟 G-buffer
+        —— 真要上 PBR 延迟路线，CB + SB 一起重算预算（§2.5 ③）
+```
 
 ### 4.2 精度为什么这么分
 
@@ -269,8 +333,8 @@ SB 里**全是线性量**（颜色、0~1 标量），所以：
 
 | 阶段 | 内容 | 验收 |
 | --- | --- | --- |
-| **S0（本文件）** | 调查 + 布局草案 + 边界 + 与已冻结文档的修订清单（§0.1） | §7 的 5 项拍定 |
-| **S1（文档先行）** | ① 修订 `LILTOON_FORMAL_PIPELINE_DRAFT.md` §3.1/§3.2（L1 拆"身份/覆盖率"与"表面数值"，帧序 [3] 拆两条）；② 提**契约 v2**（§0.1 的两条修订 + §4.7 的登记行）；③ 把本文 §4.9 的命名分析并入 §10 的批量改名计划 | 两份定稿文档里能查到 SB；契约 §5 变更记录有 v2 一行 |
+| **S0（本文件）** | 调查 + 布局草案 + 边界 + 与已冻结文档的修订清单（§0.1）+ **未来 PBR 的 review（§2.5）** | §7 的 7 项拍定（第 0 项尤其） |
+| **S1（文档先行）** | ① 修订 `LILTOON_FORMAL_PIPELINE_DRAFT.md` §3.1/§3.2（L1 拆"身份/覆盖率"与"表面数值"，帧序 [3] 拆两条），并按 §7 第 6 项补一条"buffer 边界"通则；② 提**契约 v2**（§0.1 的两条修订 + §4.7 的登记行）；③ 把本文 §4.2 的命名分析并入 §10 的批量改名计划；④ **把 `GeometryBuffer.md` 的"几何法线"写明**（§7 第 0 项） | 两份定稿文档里能查到 SB 与新通则；契约 §5 变更记录有 v2 一行；GB 文档明确写"几何法线" |
 | **S2** | `HoSurfaceBuffer*` feature：通道**按系统逐个开**（先 `Material` + `Classification` 给 SSS，再 `Reflection` 给反射），自用深度 + 两段式策略，RG/兼容两条路径，调试视图 + 编辑器抽屉（与 CB 同款式） | 开着的通道在 debug 里能看到；没开的**不分配、不输出**；消费端登记与通道一一对应 |
 | **S3** | lilToon 侧 `HoSurfaceBuffer` pass（跨仓）：按材质开关写 MRT；`HoMetadataBufferSurfaceColor` 那一趟退役；**同步登记"材质接口脚印"**（§6.4 的三行：SSS / 透射折射 / 反射） | 表面色与材质值与原通道逐像素一致（可 A/B 对比）；脚印在契约里能查到 |
 | **S4** | 消费端迁移：SSS / PLR / 角色特化脸色扩散 / ScreenProcess 规则 / AOV `diffuse_albedo` | 行为不变或更好；`surfaceColor.a` 不再是覆盖率（v2 生效） |
@@ -282,8 +346,12 @@ SB 里**全是线性量**（颜色、0~1 标量），所以：
 
 ## 7. 未定项（拍完才能开工）
 
+0. **【最硬的一条·已定一半】法线分家**（§2.5 ①）：GB 保持**几何法线**（AO/GI/shadow bias 用），SB 新增**着色法线**（PBR/SSR 用）——两者是不同的量，不互为来源。**剩下要核对**：lilToon 侧 `fragGeometryBuffer` 实际写的是哪一种（本仓库两处证据都指向几何法线，但值得确认没有例外）；以及 **`Documentation~/GeometryBuffer.md` §3.1/§4.1 要把"几何法线"三个字写明**（现在写"世界法线编码"/"基础网格位置的世界法线"，太容易被当成着色法线）。
 1. **契约 v2 的两条修订，现在一起提还是往后放？**（§0.1）其中 `SurfaceColor` 的 `A=coverage` 是 v1 明写的冻结项，改它等于改"覆盖率有几个来源"——**这是本次整改的核心，我建议一起提**；`ReflectionMaterial` 的拆分可以晚一步（它只关乎带宽与命名，不关乎正确性）。
 2. **`materialClass` / curvature / transmittance 放图还是放表**：本文草案放 `Classification`（材质侧逐像素写）。但 `materialClass` 严格说是**分类不是数值**——按 CB 刚立的规矩（身份与分类归表、数值归图）它更该进 palette，那就要回答"谁写 palette"（我倾向材质侧写 + 跨仓属性名协议，与 CB 的选择槽协议一起冻结）。
 3. **PLR strength 的范围**：今天 `reflectionMaterial.a` 是 16F 且不限幅。约定 ≤1 就能塞进 8 bit（`Reflection.g`）；否则要单独一个 16F 通道或"归一 + 系数"（系数进 palette 或材质常量）。
 4. **SSS profile 是否并进来**：今天 `sssprofile` 是独立 R8 通道（材质/profile 写、SSS 与 AOV 读）。并进来能少一张图，但要先确认它算不算"分类"（若算，按第 2 项一起进表）。
 5. **管线草案的修订措辞**（§3.1 的 L1 两行怎么分、§3.2 帧序 [3] 是拆成 [3a]/[3b] 还是插一条 [3.5]）：我倾向**现在就写进那份定稿文档并标注"待实现后生效"**——理由是那份文档是别人读的入口，SB 只写在本文里等于没登记。
+6. **【新增】要不要给管线草案补一条"buffer 边界"通则**：那份文档之所以完全没预料到还要多一个 buffer，是因为它**没注意 MetadataBuffer 本身就是杂糅的**（身份 + 覆盖率 + 表面数值）。建议补一条写死进契约的通则：
+   > **buffer 的边界由它"回答哪个问题"定义，不由"它先存在"定义；新增 buffer 必须写明它*不*回答什么。**
+   顺带把 §3.3 旧→新映射与 §10 命名分析两张表各加一行 SB，§6.4 的脚印表加一列"**载体**"（哪个 buffer 承载这个系统的材质数据）——否则下一个人还是会在同一处踩空。
