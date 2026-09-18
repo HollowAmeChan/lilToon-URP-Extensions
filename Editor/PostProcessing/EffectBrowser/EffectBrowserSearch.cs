@@ -55,20 +55,50 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             return query.Trim().ToLowerInvariant();
         }
 
-        /// <summary>True when the entry matches the (already normalized) query.</summary>
-        public static bool Matches(EffectBrowserEntry entry, string normalizedQuery)
+        /// <summary>
+        /// True when the entry matches the query. Callers normally pass an already normalized query
+        /// (see <see cref="Normalize"/>) to keep the per-repaint loop allocation free, but a raw query
+        /// is handled too: whitespace-only means "match everything" and case is folded, so a new
+        /// caller cannot get a silently wrong answer by forgetting to normalize.
+        /// </summary>
+        public static bool Matches(EffectBrowserEntry entry, string query)
         {
-            if (string.IsNullOrEmpty(normalizedQuery))
+            if (string.IsNullOrEmpty(query))
             {
                 return true;
             }
 
-            if (entry.Label.Length > 0 && entry.Label.ToLowerInvariant().Contains(normalizedQuery))
+            string normalized = NeedsNormalizing(query) ? Normalize(query) : query;
+            if (normalized.Length == 0)
             {
                 return true;
             }
 
-            return entry.EnumName.Length > 0 && entry.EnumName.ToLowerInvariant().Contains(normalizedQuery);
+            if (entry.Label.Length > 0 && entry.Label.ToLowerInvariant().Contains(normalized))
+            {
+                return true;
+            }
+
+            return entry.EnumName.Length > 0 && entry.EnumName.ToLowerInvariant().Contains(normalized);
+        }
+
+        /// <summary>Cheap guard: only a padded or upper-case query pays for <see cref="Normalize"/>.</summary>
+        private static bool NeedsNormalizing(string query)
+        {
+            if (char.IsWhiteSpace(query[0]) || char.IsWhiteSpace(query[query.Length - 1]))
+            {
+                return true;
+            }
+
+            for (int i = 0; i < query.Length; i++)
+            {
+                if (char.IsUpper(query[i]))
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

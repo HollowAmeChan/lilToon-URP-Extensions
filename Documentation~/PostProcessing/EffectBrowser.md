@@ -40,6 +40,9 @@
 
 - **只匹配效果本身**：中文标签（`网点`）或枚举名（`Halftone`），子串匹配、大小写不敏感、忽略首尾空白；
   空查询 = 全部，并按目录顺序返回（不会因为查询而重排）。**不匹配预设名与拼音**（已拍板）。
+- `Matches` 对**原始查询**也是安全的：内部按需归一化（先做几个字符的廉价判断，正常路径不分配），
+  所以"只传空格"等于"全部匹配"、大小写会被折叠。这一点是 dotnet harness 先把"未归一化的查询会静默不匹配"
+  这个坑标出来之后补上的——现在忘了调用 `Normalize` 也不会得到错误答案。
 - **只过滤侧栏陈列**；右侧列表**不过滤、不重排**，命中效果的行加蓝底 + 左侧 2px 强调条。
 - 搜索栏右侧显示 `侧栏命中 n · 列表高亮 m`；m = 0 时写"列表里没有"——顺带回答"我到底加没加过它"。
 - 搜索时侧栏页码回到第 1 页并按命中集合重算；无命中显示"无匹配"。
@@ -99,7 +102,7 @@
 
 | 检查 | 内容 | 结果 |
 | --- | --- | --- |
-| `.codex-research/effect_browser_sim/browser_search_check`（dotnet，链接出货的 `EffectBrowserSearch.cs` + `EffectBrowserEntry.cs`） | 匹配（中文标签/枚举名/大小写/空白/无命中）、过滤顺序与复用缓冲区、每页 20/10、页数（0/20/21/41 → 1/1/2/3，样式 B → 5）、`ClampPage` 边界、最后一页的 `PageRange`、`FormatPageLabel`/`FormatCounts` | 见下 |
+| `.codex-research/effect_browser_sim/browser_search_check`（dotnet，链接出货的 `EffectBrowserSearch.cs` + `EffectBrowserEntry.cs`） | 100 项：匹配（中文标签/枚举名/大小写/空白/无命中/空条目）、过滤顺序与复用缓冲区（同一 destination 连续两次查询不会累加）、每页 20/10、页数（0/20/21/40/41 → 1/1/2/2/3，样式 B → 1/2/4/5）、`ClampPage` 边界、各页 `PageRange`（41 项纯图标第 3 页 → start 40 / count 1）、`FormatPageLabel`/`FormatCounts`、以及 ceil/分区/值域等性质扫描 | **100/100 通过**；`--negative-control` 让 4 项 FAIL（页数用 floor、页码用 1-based、标签用 0-based、`Normalize` 先 trim 再小写） |
 | `.codex-research/effect_browser_sim/check_browser_ui.js` | 两个编辑器的接线（`EnsureEffectBrowser` / `EffectBrowserView.Draw` / `DrawLayerHighlight` / `×`→`RemoveLayerAt`）、旧图标代码无残留、引用的图标文件都存在、`EffectBrowserSearch` 常量自洽（2×10=20、1×10=10）、`EffectBrowserView` 的搜索/清空/翻页/两档样式/右键菜单/窄宽度回退/`CurrentQuery` 都在、`Matches` 只查标签与枚举名 | 见下 |
 | 既有检查（必须继续通过） | `effect_enum_check/check_effect_enum_coverage.js`（面板覆盖全部枚举成员、六个 switch、registry→shader、无字面量夹枚举下标）、`halftone_sim/check_halftone_ui.js`（行数与 `EffectDisplayNames` 下标） | 见下 |
 | Roslyn 独立编译（Editor + Runtime） | 0 error，仅剩仓库原有 11 条 CS0649 警告 | 通过 |
