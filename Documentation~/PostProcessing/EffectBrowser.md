@@ -19,27 +19,31 @@
 ┌──────────────────────────────────────────────────────────────┐
 │ [⊞] 🔍 [搜索效果（中文名或枚举名）………………]              ×   │  搜索栏：样式开关在最左，输入框占满其余
 ├───────────────┬──────────────────────────────────────────────┤
-│ ◀    1/2    ▶ │  ┌ 图层列表（沿用原来的 ReorderableList）    │
+│ ◀    1/1    ▶ │  ┌ 图层列表（沿用原来的 ReorderableList）    │
 │ ┌──┐┌──┐┌──┐  │  │ [✓] 渐变映射   强度 ▓▓▓▓░   [预设] [×]    │
 │ │  ││  ││  │  │  │▌[✓] 网点       强度 ▓▓▓░░   [预设] [×]    │
 │ ├──┤├──┤├──┤  │  │ [✓] 调色       强度 ▓▓░░░   [预设] [×]    │
 │  …    …   …   │  └ …                                          │
-│ （3 列 × 10） │                                              │
+│ （3 列 × 20） │                                              │
 └───────────────┴──────────────────────────────────────────────┘
 ```
 
+- **全是无底按钮**：样式开关、清空 `×`、翻页箭头、图层行的移除 `×` 都走同一个
+  `DrawChromeLessButton`（纯 label + 悬停时一层很淡的底色 + 手型光标 + 点击），页面里没有一处
+  `EditorStyles.miniButton` / `GUI.Button`（结构检查会拦住回退）。
 - **宽度只有一套**：侧栏固定 `SidebarWidth = 104px`，两档样式、翻页那一行、下面的图标网格都用它，
   所以三者左右边缘对齐。
-- **搜索栏**：`⊞/≣` 样式开关（**一个布尔开关**，点击切换当前样式）在最左，中间输入框占满剩余宽度，
-  最右 `×` 清空。**没有常驻文字**：命中数放在页码的 tooltip 里，悬停 `1/2` 才显示
-  「侧栏命中 n · 列表高亮 m」。
-- **翻页**：`◀ 1/2 ▶`，箭头**不画按钮底**（`DrawPagingArrow` 用 label + 手型光标 + MouseDown 处理），
-  这样这一行的宽度正好等于侧栏宽度；到头的一侧自动置灰。
-- **样式 A（默认）**：纯图标 **3 列 × 10 行 = 30 个/页**（41 个效果 → **2 页**：第 1 页 30 项、第 2 页 11 项）。
-  **样式 B**：图标 + 名字 **1 列 × 10 行 = 10 个/页**（→ 5 页）。
+- **高度也只有一套**：两档样式都是 **20 行**、行高都取图标格的高度（28px），所以切换样式时侧栏总高不变；
+  图标+名字档里 18px 的小图标和文字在 28px 行里垂直居中。
+- **搜索栏**：`⊞/≣` 样式开关（**一个布尔开关**，点击切换）在最左，中间输入框占满剩余宽度，
+  最右 `×` 清空（搜索为空时置灰）。**没有常驻文字**：命中数放在页码的 tooltip 里。
+- **翻页**：`◀ 1/1 ▶`，箭头无底，到头的一侧置灰。
+- **样式 A（默认）**：纯图标 **3 列 × 20 行 = 60 格/页**（41 个效果 → **1 页**，剩下的 19 格就空着）。
+  **样式 B**：图标 + 名字 **1 列 × 20 行 = 20 格/页**（→ 3 页）。
+- **不够就填空、不缩**：表格永远是 `列 × 20` 格，命中少的时候剩下的格子留白；0 命中时"无匹配"直接写在
+  这块空表里，不额外加一行——所以搜索时布局不会跳动。
 - 已在列表里的效果图标画成绿色；名字过长截断，tooltip 给 `标签 (枚举名)`。
-- **可用宽度 < 320px 时侧栏折到列表上方**（`MinSplitWidth`），图标网格仍按 3 列、单元格宽度封顶，
-  不会被拉得很散。
+- **可用宽度 < 320px 时侧栏折到列表上方**（`MinSplitWidth`），这时单元格拉伸填满可用宽度。
 - 右侧列表仍是原来的 `ReorderableList`：行高（`GetElementLineCount`）、参数 UI、预设按钮、
   层级清理都没动，只是折叠行末尾多了一个 `×`。
 
@@ -101,8 +105,8 @@
 
 | 场景 | 结果 |
 | --- | --- |
-| ImageProcess 纯图标（3 列 × 10 = 30/页） | 41 项 → **2 页**（第 1 页 30 项、第 2 页 11 项） |
-| ImageProcess 图标+名字（10/页） | 41 项 → 5 页 |
+| ImageProcess 纯图标（3 列 × 20 = 60 格/页） | 41 项 → **1 页**（其余 19 格留白） |
+| ImageProcess 图标+名字（20 格/页） | 41 项 → 3 页（20 + 20 + 1） |
 | 搜「网点」（中文标签） | 1 项命中 |
 | 搜「halftone」（枚举名，全小写） | 1 项命中（枚举名匹配大小写不敏感） |
 | 搜「雾」在 ImageProcess | 0 项命中（深度雾属于 ScreenProcess，符合预期） |
@@ -110,8 +114,8 @@
 
 | 检查 | 内容 | 结果 |
 | --- | --- | --- |
-| `.codex-research/effect_browser_sim/browser_search_check`（dotnet，链接出货的 `EffectBrowserSearch.cs` + `EffectBrowserEntry.cs`） | 100 项：匹配（中文标签/枚举名/大小写/空白/无命中/空条目）、过滤顺序与复用缓冲区（同一 destination 连续两次查询不会累加）、每页 30/10、页数（0/21/40/41 → 1/1/2/2，样式 B → 1/2/4/5）、`ClampPage` 边界、各页 `PageRange`（41 项纯图标第 2 页 → start 30 / count 11）、`FormatPageLabel`/`FormatCounts`、以及 ceil/分区/值域等性质扫描 | **100/100 通过**；`--negative-control` 让 4 项 FAIL（页数用 floor、页码用 1-based、标签用 0-based、`Normalize` 先 trim 再小写） |
-| `.codex-research/effect_browser_sim/check_browser_ui.js` | 六个检查组：两个编辑器的接线（`EnsureEffectBrowser` / `EffectBrowserView.Draw` / `DrawLayerHighlight` / `×`→`RemoveLayerAt(GetLayerArrayIndex(element))` / 8 个 helper 都在）、被删图标代码无残留、**51 个图标引用（37 个不同名）全部在 `Editor/ImageProcessIcons/` 里存在**（精确大小写比对）、`EffectBrowserSearch` 常量自洽（读出常量重算 3×10=30 / 1×10=10，并与类注释、样式开关的两个 tooltip 交叉核对）、`EffectBrowserView` 的搜索/占位/清空/**无底翻页箭头**/页码 tooltip/**恰好一个布尔样式开关**/右键菜单/窄宽度回退/`CurrentQuery`/每帧 `Save`、`Matches` 只读 `Label`+`EnumName`（并断言两个纯 C# 文件不引 UnityEngine） | **PASS，8/8 负对照全部生效**：删掉高亮调用、放回本地 `LoadEffectIcon`、把行数常量改成 8（重算出 24≠30）、图标名写错、`Matches` 读 `PresetName`、加第二个样式开关、`×` 用错下标、清空按钮不清空 |
+| `.codex-research/effect_browser_sim/browser_search_check`（dotnet，链接出货的 `EffectBrowserSearch.cs` + `EffectBrowserEntry.cs`） | 100 项：匹配（中文标签/枚举名/大小写/空白/无命中/空条目）、过滤顺序与复用缓冲区（同一 destination 连续两次查询不会累加）、每页 60/20、页数（0/61/120/41 → 1/2/2/1，样式 B → 1/2/2/3）、`ClampPage` 边界、各页 `PageRange`（41 项纯图标 → start 0 / count 41，样式 B 末页 → start 40 / count 1）、`FormatPageLabel`/`FormatCounts`、以及 ceil/分区/值域等性质扫描 | **100/100 通过**；`--negative-control` 让 4 项 FAIL（页数用 floor、页码用 1-based、标签用 0-based、`Normalize` 先 trim 再小写） |
+| `.codex-research/effect_browser_sim/check_browser_ui.js` | 六个检查组：两个编辑器的接线（`EnsureEffectBrowser` / `EffectBrowserView.Draw` / `DrawLayerHighlight` / `×`→`RemoveLayerAt(GetLayerArrayIndex(element))` / 8 个 helper 都在）、被删图标代码无残留、**51 个图标引用（37 个不同名）全部在 `Editor/ImageProcessIcons/` 里存在**（精确大小写比对）、`EffectBrowserSearch` 常量自洽（读出常量重算 3×20=60 / 1×20=20，并与类注释、样式开关的两个 tooltip 交叉核对）、`EffectBrowserView` 的搜索/占位/清空/**无底翻页箭头**/页码 tooltip/**恰好一个布尔样式开关**/右键菜单/窄宽度回退/`CurrentQuery`/每帧 `Save`，以及**整个界面没有一处 `EditorStyles.miniButton`/`GUI.Button`**（无底按钮的回归会被拦住）、`Matches` 只读 `Label`+`EnumName`（并断言两个纯 C# 文件不引 UnityEngine） | **PASS，8/8 负对照全部生效**：删掉高亮调用、放回本地 `LoadEffectIcon`、把行数常量减 2（重算出 54≠60）、图标名写错、`Matches` 读 `PresetName`、加第二个样式开关、`×` 用错下标、清空按钮不清空 |
 | 既有检查（必须继续通过） | `effect_enum_check/check_effect_enum_coverage.js`（面板覆盖全部枚举成员、六个 switch、registry→shader、无字面量夹枚举下标）、`halftone_sim/check_halftone_ui.js`（行数与 `EffectDisplayNames` 下标） | 两个都 exit 0 全过（前者含 4 个负对照） |
 | Roslyn 独立编译（Editor + Runtime） | 0 error，仅剩仓库原有 11 条 CS0649 警告 | 通过 |
 

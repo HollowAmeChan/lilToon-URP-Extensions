@@ -402,7 +402,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             element.isExpanded = EditorGUI.Foldout(foldoutRect, element.isExpanded, GetLayerLabel(element), true);
 
             Rect removeRect = new Rect(lineRect.xMax - removeWidth, lineRect.y + 1.0f, removeWidth, lineRect.height - 2.0f);
-            if (GUI.Button(removeRect, new GUIContent("×", "移除这一层"), EditorStyles.miniButton))
+            if (EffectBrowserView.DrawChromeLessButton(removeRect, new GUIContent("×", "移除这一层")))
             {
                 RemoveLayerAt(GetLayerArrayIndex(element));
                 return y + LineHeight + LineSpacing;

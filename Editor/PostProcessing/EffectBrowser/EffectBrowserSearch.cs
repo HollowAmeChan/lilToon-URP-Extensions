@@ -15,19 +15,19 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
     /// names and pinyin deliberately do not participate;</item>
     /// <item>matching is substring, case insensitive, and ignores surrounding whitespace;</item>
     /// <item>an empty query matches everything, in catalog order;</item>
-    /// <item>the sidebar shows 3 columns x 10 rows in icon-only style (30 per page) and 1 column x 10
-    /// rows in the icon+name style (10 per page); both styles use the same sidebar width, which is
-    /// why the icon-only style fits three columns.</item>
+    /// <item>the sidebar shows 3 columns x 20 rows in icon-only style (60 per page - every current
+    /// effect fits on one page) and 1 column x 20 rows in the icon+name style (20 per page); both
+    /// styles use the same sidebar width, which is why the icon-only style fits three columns.</item>
     /// </list>
     /// </remarks>
     internal static class EffectBrowserSearch
     {
         public const int IconOnlyColumns = 3;
-        public const int IconOnlyRows = 10;
+        public const int IconOnlyRows = 20;
         public const int NamedColumns = 1;
-        public const int NamedRows = 10;
+        public const int NamedRows = 20;
 
-        /// <summary>Entries per page: 30 in icon-only style (3 x 10), 10 in the icon+name style.</summary>
+        /// <summary>Entries per page: 60 in icon-only style (3 x 20), 20 in the icon+name style.</summary>
         public static int PageSize(bool iconOnly)
         {
             return iconOnly ? IconOnlyColumns * IconOnlyRows : NamedColumns * NamedRows;

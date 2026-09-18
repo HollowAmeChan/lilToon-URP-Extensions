@@ -118,7 +118,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 }
             }
 
-            if (GUI.Button(clearRect, "×", EditorStyles.miniButton))
+            // The clear button is chromeless and only lights up when there is something to clear.
+            if (DrawChromeLessButton(clearRect, new GUIContent("×", "清空搜索"), !string.IsNullOrEmpty(state.Search)))
             {
                 state.ClearSearch();
                 GUI.FocusControl(null);
@@ -130,10 +131,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private static void DrawStyleToggle(EffectBrowserState state, Rect rect)
         {
             GUIContent content = state.IconOnly
-                ? new GUIContent("⊞", "纯图标（3 列 × 10 = 30/页）：点击切到「图标 + 名字」")
-                : new GUIContent("≣", "图标 + 名字（1 列 × 10 = 10/页）：点击切到「纯图标」");
+                ? new GUIContent("⊞", "纯图标（3 列 × 20 = 60/页）：点击切到「图标 + 名字」")
+                : new GUIContent("≣", "图标 + 名字（1 列 × 20 = 20/页）：点击切到「纯图标」");
 
-            if (GUI.Button(rect, content, EditorStyles.miniButton))
+            if (DrawChromeLessButton(rect, content))
             {
                 state.IconOnly = !state.IconOnly;
                 state.Page = 0;
@@ -155,11 +156,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             DrawSidebarToolbar(state, matchCount, page, highlightCount);
             DrawIconGrid(catalog, state, query, matches, page, EditorGUIUtility.currentViewWidth);
-
-            if (matchCount == 0)
-            {
-                EditorGUILayout.LabelField("无匹配", EditorStyles.miniLabel);
-            }
 
             if (string.IsNullOrEmpty(query) && catalog.LegacyEntries.Length > 0)
             {
@@ -197,25 +193,48 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 EditorStyles.centeredGreyMiniLabel);
         }
 
-        /// <summary>Paging arrow without button chrome, so the row can be aligned to the sidebar width.</summary>
-        private static void DrawPagingArrow(Rect rect, string glyph, bool enabled, System.Action onClick)
+        /// <summary>
+        /// Chromeless clickable glyph: no button background at all, just a faint hover highlight,
+        /// the link cursor and a click. Used by every control of the browser (style switch, clear,
+        /// paging arrows) and by the layer rows' remove button, so the whole surface looks flat.
+        /// </summary>
+        public static bool DrawChromeLessButton(Rect rect, GUIContent content, bool enabled = true)
         {
+            bool hovered = rect.Contains(Event.current.mousePosition);
+            if (enabled && hovered)
+            {
+                EditorGUI.DrawRect(
+                    rect,
+                    EditorGUIUtility.isProSkin ? new Color(1.0f, 1.0f, 1.0f, 0.10f) : new Color(0.0f, 0.0f, 0.0f, 0.07f));
+            }
+
             using (new EditorGUI.DisabledScope(!enabled))
             {
-                EditorGUI.LabelField(rect, glyph, EditorStyles.centeredGreyMiniLabel);
+                EditorGUI.LabelField(rect, content, EditorStyles.centeredGreyMiniLabel);
             }
 
             if (!enabled)
             {
-                return;
+                return false;
             }
 
             EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
             if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
             {
-                onClick?.Invoke();
                 Event.current.Use();
                 GUI.changed = true;
+                return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>Paging arrow without button chrome, so the row can be aligned to the sidebar width.</summary>
+        private static void DrawPagingArrow(Rect rect, string glyph, bool enabled, System.Action onClick)
+        {
+            if (DrawChromeLessButton(rect, new GUIContent(glyph), enabled))
+            {
+                onClick?.Invoke();
             }
         }
 
@@ -231,18 +250,22 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             int rows = EffectBrowserSearch.Rows(state.IconOnly);
             EffectBrowserSearch.PageRange(page, matches.Count, state.IconOnly, out int start, out int count);
 
-            float iconSize = state.IconOnly ? IconSize : NamedIconSize;
             float sidebarWidth = SidebarWidth;
-            // The named style may use the whole width when the sidebar is folded above the list; the
-            // icon grid keeps a sane cell size instead of flinging its columns apart.
-            float maxCellWidth = state.IconOnly ? 40.0f : SidebarWidth;
-            if (availableWidth < MinSplitWidth)
+            // The table is always columns x rows cells, whether or not the page is full: short pages
+            // leave the remaining cells blank instead of shrinking the block (so the layout never
+            // jumps when a search narrows the result set). Only in the split layout do icon cells
+            // keep a maximum width, so three columns are not flung apart inside the fixed sidebar.
+            bool folded = availableWidth < MinSplitWidth;
+            float maxCellWidth = folded ? float.MaxValue : (state.IconOnly ? 40.0f : SidebarWidth);
+            if (folded)
             {
                 sidebarWidth = Mathf.Max(sidebarWidth, availableWidth - 40.0f);
             }
 
             float cellWidth = Mathf.Min(sidebarWidth / columns, maxCellWidth);
-            float cellHeight = iconSize + IconSpacing;
+            // One row height for both styles (the icon cell), so switching the style never changes the
+            // sidebar's total height - the smaller named icon is centred in the same row instead.
+            float cellHeight = IconSize + IconSpacing;
             float gridWidth = cellWidth * columns;
             float gridHeight = rows * cellHeight;
 
@@ -253,6 +276,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 GUILayout.Height(gridHeight));
             EditorGUI.DrawRect(grid, EditorGUIUtility.isProSkin ? new Color(0.0f, 0.0f, 0.0f, 0.22f) : new Color(0.0f, 0.0f, 0.0f, 0.06f));
 
+            if (count == 0)
+            {
+                // The notice fills the blank table instead of adding a row below it.
+                EditorGUI.LabelField(grid, "无匹配", EditorStyles.centeredGreyMiniLabel);
+            }
+
             for (int i = 0; i < count; i++)
             {
                 EffectBrowserEntry entry = catalog.Entries[matches[start + i]];
@@ -260,7 +289,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 int rowIndex = columns == 1 ? i : i / columns;
                 float x = grid.x + (column * cellWidth) + 2.0f;
                 float y = grid.y + (rowIndex * cellHeight) + 2.0f;
-                Rect cell = new Rect(x, y, cellWidth - 4.0f, iconSize);
+                Rect cell = new Rect(x, y, cellWidth - 4.0f, cellHeight - 4.0f);
 
                 DrawEntryCell(catalog, state, query, entry, cell, state.IconOnly);
             }
@@ -282,7 +311,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             {
                 Rect iconRect = new Rect(
                     cell.x + ((cell.width - IconSize) * 0.5f),
-                    cell.y,
+                    cell.y + ((cell.height - IconSize) * 0.5f),
                     IconSize,
                     IconSize);
                 DrawIcon(iconRect, icon, present, entry.Tooltip);
@@ -290,8 +319,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
+            // Same row height as the icon-only style: the smaller icon and the label are centred in
+            // the row instead of shrinking it.
             float textWidth = Mathf.Max(0.0f, cell.width - NamedIconSize - 6.0f);
-            Rect namedIconRect = new Rect(cell.x, cell.y + 1.0f, NamedIconSize, NamedIconSize);
+            Rect namedIconRect = new Rect(cell.x, cell.y + ((cell.height - NamedIconSize) * 0.5f), NamedIconSize, NamedIconSize);
             Rect labelRect = new Rect(namedIconRect.xMax + 4.0f, cell.y, textWidth, cell.height);
             DrawIcon(namedIconRect, icon, present, entry.Tooltip);
             EditorGUI.LabelField(labelRect, new GUIContent(entry.Label, entry.Tooltip), EditorStyles.miniLabel);
