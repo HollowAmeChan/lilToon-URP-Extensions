@@ -17,9 +17,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private const float IconSize = 24.0f;
         private const float IconSpacing = 4.0f;
         private const float NamedIconSize = 18.0f;
+        private const float RowHeight = 18.0f;
         private const float SearchHeight = 18.0f;
-        private const float SidebarWidth = 64.0f;
-        private const float NamedSidebarWidth = 150.0f;
+        /// <summary>One width for both styles: the toolbar, the grid and the search row's toggle align to it.</summary>
+        private const float SidebarWidth = 104.0f;
+        private const float StyleToggleWidth = 26.0f;
         private const float MinSplitWidth = 320.0f;
         private const string SearchControlName = "lilToonEffectBrowserSearch";
 
@@ -39,28 +41,20 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return;
             }
 
-            // The search row is drawn first so a keystroke takes effect in the same frame; the counts
-            // label lives in a rect we only fill once the filtering below has run.
-            Rect countsRect = DrawSearchBar(state);
+            // The search row is drawn first so a keystroke takes effect in the same frame.
+            DrawSearchBar(state);
 
             string query = EffectBrowserSearch.Normalize(state.Search);
             CurrentQuery = query;
             EffectBrowserSearch.Filter(catalog.Entries, query, MatchBuffer);
             int highlightCount = catalog.CountHighlightedLayers(query);
 
-            GUI.Label(
-                countsRect,
-                string.IsNullOrEmpty(query)
-                    ? "共 " + MatchBuffer.Count.ToString() + " 个效果"
-                    : EffectBrowserSearch.FormatCounts(MatchBuffer.Count, highlightCount),
-                EditorStyles.miniLabel);
-
             bool split = EditorGUIUtility.currentViewWidth >= MinSplitWidth;
             if (split)
             {
                 EditorGUILayout.BeginHorizontal();
-                EditorGUILayout.BeginVertical(GUILayout.Width(state.IconOnly ? SidebarWidth : NamedSidebarWidth));
-                DrawSidebar(catalog, state, query, MatchBuffer);
+                EditorGUILayout.BeginVertical(GUILayout.Width(SidebarWidth));
+                DrawSidebar(catalog, state, query, MatchBuffer, highlightCount);
                 EditorGUILayout.EndVertical();
 
                 EditorGUILayout.BeginVertical();
@@ -72,7 +66,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             {
                 // Narrow inspector: the sidebar folds above the list and wraps to the available width.
                 EditorGUILayout.BeginVertical();
-                DrawSidebar(catalog, state, query, MatchBuffer);
+                DrawSidebar(catalog, state, query, MatchBuffer, highlightCount);
                 EditorGUILayout.EndVertical();
                 EditorGUILayout.Space(4.0f);
                 drawLayerList();
@@ -83,8 +77,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         // ------------------------------------------------------------------ search bar
 
-        /// <summary>Draws the field and the clear button; returns the rect the counts label goes into.</summary>
-        private static Rect DrawSearchBar(EffectBrowserState state)
+        /// <summary>
+        /// One row: the sidebar style toggle, then the search field taking all the remaining width,
+        /// then the clear button. No counts text - the numbers live in the page label's tooltip.
+        /// </summary>
+        private static void DrawSearchBar(EffectBrowserState state)
         {
             bool focused = GUI.GetNameOfFocusedControl() == SearchControlName;
             if (focused && Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
@@ -96,10 +93,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             Rect row = EditorGUILayout.GetControlRect(false, SearchHeight);
-            float countsWidth = 190.0f;
-            Rect fieldRect = new Rect(row.x, row.y, Mathf.Max(80.0f, row.width - countsWidth - 24.0f), SearchHeight);
-            Rect clearRect = new Rect(fieldRect.xMax + 2.0f, row.y, 20.0f, SearchHeight);
-            Rect countsRect = new Rect(clearRect.xMax + 4.0f, row.y, Mathf.Max(60.0f, row.xMax - clearRect.xMax - 4.0f), SearchHeight);
+            Rect styleRect = new Rect(row.x, row.y, StyleToggleWidth, SearchHeight);
+            Rect clearRect = new Rect(row.xMax - 20.0f, row.y, 20.0f, SearchHeight);
+            Rect fieldRect = new Rect(styleRect.xMax + 4.0f, row.y, Mathf.Max(60.0f, clearRect.x - styleRect.xMax - 6.0f), SearchHeight);
+
+            DrawStyleToggle(state, styleRect);
 
             GUI.SetNextControlName(SearchControlName);
             string typed = EditorGUI.TextField(fieldRect, state.Search ?? string.Empty);
@@ -126,8 +124,20 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 GUI.FocusControl(null);
                 GUI.changed = true;
             }
+        }
 
-            return countsRect;
+        /// <summary>The one boolean style switch: it shows the style in use and flips on click.</summary>
+        private static void DrawStyleToggle(EffectBrowserState state, Rect rect)
+        {
+            GUIContent content = state.IconOnly
+                ? new GUIContent("⊞", "纯图标（3 列 × 10 = 30/页）：点击切到「图标 + 名字」")
+                : new GUIContent("≣", "图标 + 名字（1 列 × 10 = 10/页）：点击切到「纯图标」");
+
+            if (GUI.Button(rect, content, EditorStyles.miniButton))
+            {
+                state.IconOnly = !state.IconOnly;
+                state.Page = 0;
+            }
         }
 
         // ------------------------------------------------------------------ sidebar
@@ -136,13 +146,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             EffectBrowserCatalog catalog,
             EffectBrowserState state,
             string query,
-            List<int> matches)
+            List<int> matches,
+            int highlightCount)
         {
             int matchCount = matches.Count;
             int page = EffectBrowserSearch.ClampPage(state.Page, matchCount, state.IconOnly);
             state.Page = page;
 
-            DrawSidebarToolbar(state, matchCount, page);
+            DrawSidebarToolbar(state, matchCount, page, highlightCount);
             DrawIconGrid(catalog, state, query, matches, page, EditorGUIUtility.currentViewWidth);
 
             if (matchCount == 0)
@@ -157,55 +168,55 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
         }
 
-        private static void DrawSidebarToolbar(EffectBrowserState state, int matchCount, int page)
+        /// <summary>
+        /// Exactly one sidebar width: the two chromeless arrows hug the edges and the page label
+        /// fills the middle, so this row lines up with the icon grid below it.
+        /// </summary>
+        private static void DrawSidebarToolbar(EffectBrowserState state, int matchCount, int page, int highlightCount)
         {
-            EditorGUILayout.BeginHorizontal();
-            bool previousEnabled = page > 0;
-            using (new EditorGUI.DisabledScope(!previousEnabled))
-            {
-                if (GUILayout.Button("◀", EditorStyles.miniButtonLeft, GUILayout.Width(22.0f)))
-                {
-                    state.Page = page - 1;
-                }
-            }
+            int pageCount = EffectBrowserSearch.PageCount(matchCount, state.IconOnly);
+            Rect row = GUILayoutUtility.GetRect(
+                SidebarWidth,
+                RowHeight,
+                GUILayout.Width(SidebarWidth),
+                GUILayout.Height(RowHeight));
 
-            EditorGUILayout.LabelField(
-                EffectBrowserSearch.FormatPageLabel(page, matchCount, state.IconOnly),
-                EditorStyles.centeredGreyMiniLabel,
-                GUILayout.Width(34.0f));
+            const float arrowWidth = 16.0f;
+            Rect previousRect = new Rect(row.x, row.y, arrowWidth, row.height);
+            Rect nextRect = new Rect(row.xMax - arrowWidth, row.y, arrowWidth, row.height);
+            Rect labelRect = new Rect(previousRect.xMax, row.y, Mathf.Max(0.0f, nextRect.x - previousRect.xMax), row.height);
 
-            bool nextEnabled = page + 1 < EffectBrowserSearch.PageCount(matchCount, state.IconOnly);
-            using (new EditorGUI.DisabledScope(!nextEnabled))
-            {
-                if (GUILayout.Button("▶", EditorStyles.miniButtonRight, GUILayout.Width(22.0f)))
-                {
-                    state.Page = page + 1;
-                }
-            }
+            DrawPagingArrow(previousRect, "◀", page > 0, () => state.Page = page - 1);
+            DrawPagingArrow(nextRect, "▶", page + 1 < pageCount, () => state.Page = page + 1);
 
-            GUILayout.FlexibleSpace();
-            DrawStyleButton(state, true, "⊞");
-            DrawStyleButton(state, false, "≣");
-            EditorGUILayout.EndHorizontal();
+            EditorGUI.LabelField(
+                labelRect,
+                new GUIContent(
+                    EffectBrowserSearch.FormatPageLabel(page, matchCount, state.IconOnly),
+                    EffectBrowserSearch.FormatCounts(matchCount, highlightCount)),
+                EditorStyles.centeredGreyMiniLabel);
         }
 
-        private static void DrawStyleButton(EffectBrowserState state, bool iconOnly, string label)
+        /// <summary>Paging arrow without button chrome, so the row can be aligned to the sidebar width.</summary>
+        private static void DrawPagingArrow(Rect rect, string glyph, bool enabled, System.Action onClick)
         {
-            Color oldColor = GUI.backgroundColor;
-            if (state.IconOnly == iconOnly)
+            using (new EditorGUI.DisabledScope(!enabled))
             {
-                GUI.backgroundColor = EditorGUIUtility.isProSkin
-                    ? new Color(0.35f, 0.6f, 1.0f, 1.0f)
-                    : new Color(0.6f, 0.75f, 1.0f, 1.0f);
+                EditorGUI.LabelField(rect, glyph, EditorStyles.centeredGreyMiniLabel);
             }
 
-            if (GUILayout.Button(new GUIContent(label, iconOnly ? "纯图标（2 列 × 10）" : "图标 + 名字（1 列 × 10）"), EditorStyles.miniButton, GUILayout.Width(22.0f)))
+            if (!enabled)
             {
-                state.IconOnly = iconOnly;
-                state.Page = 0;
+                return;
             }
 
-            GUI.backgroundColor = oldColor;
+            EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
+            if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
+            {
+                onClick?.Invoke();
+                Event.current.Use();
+                GUI.changed = true;
+            }
         }
 
         private static void DrawIconGrid(
@@ -221,12 +232,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             EffectBrowserSearch.PageRange(page, matches.Count, state.IconOnly, out int start, out int count);
 
             float iconSize = state.IconOnly ? IconSize : NamedIconSize;
-            float sidebarWidth = state.IconOnly ? SidebarWidth : NamedSidebarWidth;
-            float maxCellWidth = state.IconOnly ? 40.0f : 200.0f;
+            float sidebarWidth = SidebarWidth;
+            // The named style may use the whole width when the sidebar is folded above the list; the
+            // icon grid keeps a sane cell size instead of flinging its columns apart.
+            float maxCellWidth = state.IconOnly ? 40.0f : SidebarWidth;
             if (availableWidth < MinSplitWidth)
             {
-                // Folded above the list: the grid may use the full width, but the cells keep a sane
-                // size so a wide-but-short inspector does not fling the icons apart.
                 sidebarWidth = Mathf.Max(sidebarWidth, availableWidth - 40.0f);
             }
 
