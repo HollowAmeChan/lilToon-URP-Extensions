@@ -17,7 +17,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private const float IconSize = 24.0f;
         private const float IconSpacing = 4.0f;
         private const float NamedIconSize = 18.0f;
-        private const float ToolbarHeight = 18.0f;
         private const float SearchHeight = 18.0f;
         private const float SidebarWidth = 64.0f;
         private const float NamedSidebarWidth = 150.0f;

@@ -12,7 +12,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
     {
         private const float LineHeight = 18.0f;
         private const float LineSpacing = 2.0f;
-        private const string PackageAssetRoot = "Packages/jp.lilxyzw.liltoon.urp.extensions";
 
         private readonly struct EffectToggleEntry
         {

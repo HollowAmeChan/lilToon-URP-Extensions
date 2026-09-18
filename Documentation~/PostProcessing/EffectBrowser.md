@@ -7,7 +7,7 @@
 
 | 事实 | 数据 |
 | --- | --- |
-| 效果数量 | ImageProcess 面板 **41 项**（枚举 82 项，其余是 `RemovedEffectSlot*` 与遗留混合模式成员，不上面板）；ScreenProcess 8 项 |
+| 效果数量 | ImageProcess 面板 **41 项**；`ImageProcessEffect` 枚举共 59 项，其余 18 项不上面板（4 个 `RemovedEffectSlot*` 旧序列化槽位 + 14 个遗留效果：`CustomMaterial`、`DownScaleResolution`、`GateWeave`、`LensDistortionCustom`、`MotionTrail`、`RGBBlur`、`SharpenAfter`、`RetroLookPro*Custom` ×4、`LED`、`CameraSwitcher`、`TransparentBackground`）。混合模式是另一个枚举（`ImageProcessBlendMode` 24 项），从来没有面板图标。ScreenProcess 8 项 |
 | 图标 | 面板只用 **32 张**，5 张被多个效果共用：`icon_Flare_Ray_v1` 一张四个（集中线/天空神光/光斑变焦/镜头光晕）、`icon_ScreenEffects_v1` 三个、`icon_Distortion_v1` 三个、`icon_Grain_v1`、`icon_RGBSplit_v1` 各两个 |
 | 资源目录 | `Editor/ImageProcessIcons/` 有 135 张 png，但剩下多是相机/UI 图标（`icon_CameraSwitchButton_01..07` 等），当效果图标没意义 ⇒ **一人一图做不到** |
 | 旧交互 | 自动流式排布、无分组/分页/搜索；辨识只有 tooltip；移除的唯一手势是"再点一次同一个图标"，所以"关掉一个效果"必须先悬停找出它是哪一个 |
@@ -103,8 +103,8 @@
 | 检查 | 内容 | 结果 |
 | --- | --- | --- |
 | `.codex-research/effect_browser_sim/browser_search_check`（dotnet，链接出货的 `EffectBrowserSearch.cs` + `EffectBrowserEntry.cs`） | 100 项：匹配（中文标签/枚举名/大小写/空白/无命中/空条目）、过滤顺序与复用缓冲区（同一 destination 连续两次查询不会累加）、每页 20/10、页数（0/20/21/40/41 → 1/1/2/2/3，样式 B → 1/2/4/5）、`ClampPage` 边界、各页 `PageRange`（41 项纯图标第 3 页 → start 40 / count 1）、`FormatPageLabel`/`FormatCounts`、以及 ceil/分区/值域等性质扫描 | **100/100 通过**；`--negative-control` 让 4 项 FAIL（页数用 floor、页码用 1-based、标签用 0-based、`Normalize` 先 trim 再小写） |
-| `.codex-research/effect_browser_sim/check_browser_ui.js` | 两个编辑器的接线（`EnsureEffectBrowser` / `EffectBrowserView.Draw` / `DrawLayerHighlight` / `×`→`RemoveLayerAt`）、旧图标代码无残留、引用的图标文件都存在、`EffectBrowserSearch` 常量自洽（2×10=20、1×10=10）、`EffectBrowserView` 的搜索/清空/翻页/两档样式/右键菜单/窄宽度回退/`CurrentQuery` 都在、`Matches` 只查标签与枚举名 | 见下 |
-| 既有检查（必须继续通过） | `effect_enum_check/check_effect_enum_coverage.js`（面板覆盖全部枚举成员、六个 switch、registry→shader、无字面量夹枚举下标）、`halftone_sim/check_halftone_ui.js`（行数与 `EffectDisplayNames` 下标） | 见下 |
+| `.codex-research/effect_browser_sim/check_browser_ui.js` | 六个检查组：两个编辑器的接线（`EnsureEffectBrowser` / `EffectBrowserView.Draw` / `DrawLayerHighlight` / `×`→`RemoveLayerAt(GetLayerArrayIndex(element))` / 8 个 helper 都在）、被删图标代码无残留、**51 个图标引用（37 个不同名）全部在 `Editor/ImageProcessIcons/` 里存在**（精确大小写比对）、`EffectBrowserSearch` 常量自洽（读出常量重算 2×10=20 / 1×10=10，并与类注释和两个样式按钮的 tooltip 交叉核对）、`EffectBrowserView` 的搜索/占位/清空/翻页/两档样式/右键菜单/窄宽度回退/`CurrentQuery`/每帧 `Save`、`Matches` 只读 `Label`+`EnumName`（并断言两个纯 C# 文件不引 UnityEngine） | **PASS，8/8 负对照全部生效**：删掉高亮调用、放回本地 `LoadEffectIcon`、把行数常量改成 8（重算出 16≠20）、图标名写错、`Matches` 读 `PresetName`、加第三个样式按钮、`×` 用错下标、清空按钮不清空 |
+| 既有检查（必须继续通过） | `effect_enum_check/check_effect_enum_coverage.js`（面板覆盖全部枚举成员、六个 switch、registry→shader、无字面量夹枚举下标）、`halftone_sim/check_halftone_ui.js`（行数与 `EffectDisplayNames` 下标） | 两个都 exit 0 全过（前者含 4 个负对照） |
 | Roslyn 独立编译（Editor + Runtime） | 0 error，仅剩仓库原有 11 条 CS0649 警告 | 通过 |
 
 ## 6. 尚未验证（实机清单）
