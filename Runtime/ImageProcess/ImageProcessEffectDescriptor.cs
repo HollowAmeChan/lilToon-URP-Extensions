@@ -130,6 +130,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             Add(catalog, SinglePass(ImageProcessEffect.BlueNoise));
             Add(catalog, SinglePass(ImageProcessEffect.Glass));
             Add(catalog, SinglePass(ImageProcessEffect.GradientMap));
+            Add(catalog, SinglePass(ImageProcessEffect.Halftone));
 
             return catalog;
         }

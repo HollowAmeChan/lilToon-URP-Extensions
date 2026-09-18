@@ -20,12 +20,12 @@
 - `渐变`（`Gradient`）除原有 4 种形状外新增 4 个两点模式（线性/径向/椭圆/锥形，旋转靠拖 B 点）、过渡曲线、镜像（反向渐变）、线性光插值、分辨率量化与输出抖动的暴露，见 `GradientInvestigation.md`。
 - `渐变映射`（`GradientMap`，新增）是亮度/通道驱动的颜色映射（Photoshop Gradient Map 那一类）：色标用 **Unity 原生 `Gradient`**（≤8 颜色键 + ≤8 透明度键，Blend/Fixed），运行时烘焙成 1×256 的 ramp 贴图，shader 只做一次采样；另有输入窗口、反转、色阶数（平涂）、显示空间/线性光/Oklab 烘焙空间、输出抖动，以及 5 组 16 个 look（含 matplotlib/Google turbo/FLIR 风格色表采样）。见 `GradientMap.md`。
 - `深度雾`（`DepthFog`，新增）是 ScreenProcess 里的合成雾：一个效果带**深度雾**与**高度雾**两个槽（各带开关，可同时开，两层在同一趟 pass 内按顺序合成）。深度项支持直线/指数/指数平方三种距离曲线与远近双色 + 空气感去饱和；高度项支持"高度窗／指数衰减 × 下方浓／上方浓"四种形式，高度取世界 Y（可切相机相对）并用包内既有的 smoothness + hardness 习惯；天空可跳过／一起上雾／单独染色；不依赖 GeometryBuffer 也能工作（自动回落相机深度，正交也走这条路）。预设 5 组 13 个，见 `DepthFog.md`。
+- `网点`（`Halftone`，新增）是 ImageProcess 的半调网屏：模式有拜耳有序抖动（2/3/4/8 矩阵）与圆点/方点/菱形/线条四种面积调制网点，配色是「墨色（图层颜色）+ 纸色」两种颜色、四种合成（叠墨／双色／乘算／遮罩原色），另有输入窗口、暗部上墨、角度、柔化、网格抖动、浓度上限与输出抖动。设计上与 `渐变映射` 串联使用（ramp 管颜色、网点管墨量），也能单走。预设 5 组 15 个，见 `Halftone.md`。
 - `Editor/PostProcessing/ViewControls` 提供屏幕空间中心、半径、方向等 SceneView 操作控件。
 - `ScreenProcessRuleMaskEditorUtility` 提供基于 MetadataBuffer 的规则遮罩编辑 UI。
 
 当前仍需注意的状态：
 
-- 规划中（**尚未实现**）：`网点`（`Halftone`）——ImageProcess 的漫画/印刷半调效果，模式含拜耳有序抖动与圆点/方点/菱形/线条网屏；设计上排在 `渐变映射` 之后使用（ramp 管颜色、网点管墨量），也能单走。见 `Halftone.md`。
 - `Tests/Runtime` 目录为空，源码中也未检索到 `[Test]` 或 `[UnityTest]`。本次只能做源码结构和静态检查，不能替代 Unity Editor 编译和画面验证。
 - 包目录没有 `.sln`、`.csproj` 或 Unity `ProjectSettings/ProjectVersion.txt`，无法在当前包根直接跑 C# 编译。
 - 工作树里已有未提交改动，尤其是 `ScreenProcess`、`GeometryBuffer` 和 `SkyTyndall` 相关文件。本文档按这些改动后的源码状态描述。

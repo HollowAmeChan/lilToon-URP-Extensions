@@ -59,7 +59,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         LogoOverlay,
         BlueNoise,
         Glass,
-        GradientMap
+        GradientMap,
+        Halftone
     }
 
     public enum ImageProcessBlendMode
