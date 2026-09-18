@@ -108,12 +108,12 @@
 | UI 行数检查 | 照 `depth_fog_sim/check_screenprocess_fog_ui.js` 写一个 ImageProcess 版：`GetHalftoneLineCount` 的声明行数 == 绘制函数实际增量 + 收尾行，分支条件集合一致，负对照会 FAIL |
 | Roslyn 独立编译 | 0 error（仅剩仓库原有 11 条 CS0649 警告） |
 
-## 8. 需要你拍板的四件事
+## 8. 已拍板（2026-09-15）
 
-1. **名字**：`Halftone` + 「网点」（推荐）？还是「漫画网点」？
-2. **默认垫色行为**：默认「遮罩原色」（单走不换色）还是默认「双色」（一加上就是黑白漫画）？我倾向默认**遮罩原色**，因为单走时最不容易"吃坏"画面，双色留给预设。
-3. **v1 要不要分色**（RGB/CMYK 多角度网屏叠加）？做了更像真印刷，但参数和预设都会翻倍。
-4. **要不要顺手把 24 种混合模式抽成共享 include**？现在 `Gradient.shader` / `GradientMap.shader` / `LayerBlit.shader` 各有一份拷贝（`GradientMap.shader:42-153` 那段），新 shader 会变成第 4 份。抽的话用 `check_all.ps1` 前后各跑一遍四个 shader 就能证明等价；不抽就再抄一份并记 TODO。
+1. **名字**：`Halftone` + 「网点」。
+2. **默认垫色行为**：默认「遮罩原色」（单走不换色、最不容易吃坏画面），「双色替换」交给预设。
+3. **v1 不做分色**：只有五种单网屏模式（拜耳 / 圆点 / 方点 / 菱形 / 线条），RGB/CMYK 多角度网屏留到之后单独加。
+4. **先抽共享 include**：把 24 种混合模式从 `Gradient.shader` / `GradientMap.shader` / `LayerBlit.shader` 抽成 `ImageProcessBlend.hlsl`，新 shader 直接用，不再产生第 4 份拷贝；抽完用"文本块与 HEAD 版逐字节相同 + `check_all.ps1` 四个 shader 编译通过"作为等价证明。
 
 ## 9. 实现接入点清单（照 `Documentation~/PostProcessing/README.md` 的「新增效果接入规则」）
 
