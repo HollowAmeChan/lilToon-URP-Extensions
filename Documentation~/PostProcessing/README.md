@@ -25,6 +25,7 @@
 
 当前仍需注意的状态：
 
+- 规划中（**尚未实现**）：`网点`（`Halftone`）——ImageProcess 的漫画/印刷半调效果，模式含拜耳有序抖动与圆点/方点/菱形/线条网屏；设计上排在 `渐变映射` 之后使用（ramp 管颜色、网点管墨量），也能单走。见 `Halftone.md`。
 - `Tests/Runtime` 目录为空，源码中也未检索到 `[Test]` 或 `[UnityTest]`。本次只能做源码结构和静态检查，不能替代 Unity Editor 编译和画面验证。
 - 包目录没有 `.sln`、`.csproj` 或 Unity `ProjectSettings/ProjectVersion.txt`，无法在当前包根直接跑 C# 编译。
 - 工作树里已有未提交改动，尤其是 `ScreenProcess`、`GeometryBuffer` 和 `SkyTyndall` 相关文件。本文档按这些改动后的源码状态描述。
