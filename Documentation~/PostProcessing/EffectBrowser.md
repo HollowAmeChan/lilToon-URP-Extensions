@@ -1,144 +1,132 @@
-# 效果浏览器（下一代后处理 UI）— 规划稿（未实现）
+# 效果浏览器（后处理 UI 换代）
 
-> 目标：把 `ImageProcess` / `ScreenProcess` 两个 Volume 编辑器的"图标墙 + 图层列表"换成
-> **搜索栏 + 左侧图标侧栏 + 右侧图层列表** 的三段式布局，并让两个编辑器共用同一份实现。
-> 本文只规划，不动代码。
+`ImageProcess` / `ScreenProcess` 两个 Volume 编辑器的顶部 UI：**搜索栏 + 左侧可翻页图标侧栏 + 右侧原有图层列表**，
+两个编辑器共用同一份实现。旧的"图标墙"（按面板宽度自动流式换行、只能悬停认名、没有搜索）已经删掉。
 
-## 0. 现状（量出来的问题）
+## 0. 为什么换（现状量化）
 
 | 事实 | 数据 |
 | --- | --- |
-| 效果数量 | ImageProcess 面板 41 项（枚举 82 项，其余是 `RemovedEffectSlot*` 与遗留混合模式成员，不在面板里）；ScreenProcess 8 项 |
-| 图标数量 | `Editor/ImageProcessIcons/` 共 **135 张 png**，但面板只用到 **32 张**；其中 5 张被多个效果共用 |
-| 共用情况 | `icon_Flare_Ray_v1` ×4（集中线/天空神光/光斑变焦/镜头光晕）、`icon_ScreenEffects_v1` ×3（色调映射/电影黑边/网点）、`icon_Distortion_v1` ×3（故障艺术/湍流置换/玻璃）、`icon_Grain_v1` ×2、`icon_RGBSplit_v1` ×2；ScreenProcess 里 `icon_RimLight_v1` ×2、`icon_Effects_v1` ×2 |
-| 排布方式 | `DrawEffectIconRow`（ImageProcess `:841`，ScreenProcess `:326`）按 `EditorGUIUtility.currentViewWidth` **自动流式换行**：一行能放几个放几个，没有分组、没有分页、没有搜索 |
-| 辨识手段 | 只有 tooltip（悬停）。共用图标的效果在视觉上完全一样 |
-| 移除方式 | 唯一的移除手势是"再点一次同一个图标"（`ToggleEffect`）—— 也就是说"关掉一个效果"必须先悬停找出它是哪一个 |
-| 代码重复 | 两个编辑器各有一份 ~120 行的面板代码：`EffectToggleEntry` / `VisibleEffectOrder` / `LegacyEffectOrder` / `EffectIconContents` / `DrawEffectIconToggles·Row·Button` / `GetEffectIconContent` / `LoadEffectIcon`，**差别只有枚举类型** |
-| 图层行 | 折叠行 = 启用勾选 + 名称 + 预设按钮 + 强度条；`ReorderableList` 关掉了自带的增删按钮，所以**行内没有"移除"按钮**，也没有"复制图层" |
-
-结论：**不可能做到一人一图**（现有可用图标 32 张 vs 41 个效果，加 ScreenProcess 还会继续撞），
-所以下一代 UI 必须靠"搜索 + 名字"解决辨识，图标只作为辅助。
+| 效果数量 | ImageProcess 面板 **41 项**（枚举 82 项，其余是 `RemovedEffectSlot*` 与遗留混合模式成员，不上面板）；ScreenProcess 8 项 |
+| 图标 | 面板只用 **32 张**，5 张被多个效果共用：`icon_Flare_Ray_v1` 一张四个（集中线/天空神光/光斑变焦/镜头光晕）、`icon_ScreenEffects_v1` 三个、`icon_Distortion_v1` 三个、`icon_Grain_v1`、`icon_RGBSplit_v1` 各两个 |
+| 资源目录 | `Editor/ImageProcessIcons/` 有 135 张 png，但剩下多是相机/UI 图标（`icon_CameraSwitchButton_01..07` 等），当效果图标没意义 ⇒ **一人一图做不到** |
+| 旧交互 | 自动流式排布、无分组/分页/搜索；辨识只有 tooltip；移除的唯一手势是"再点一次同一个图标"，所以"关掉一个效果"必须先悬停找出它是哪一个 |
+| 代码 | 两个编辑器各复制了一份 ~120 行面板代码，差别只有枚举类型 |
 
 ## 1. 布局
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
-│  🔍 [搜索效果 …………………………………]   侧栏命中 7 · 列表高亮 2  × │  搜索栏（整宽）
+│  🔍 [搜索效果（中文名或枚举名）]      侧栏命中 7 · 列表高亮 2  × │  搜索栏（整宽）
 ├───────────────┬──────────────────────────────────────────────┤
-│ ◀  1/3  ▶     │  ┌ 图层列表（沿用现在的 ReorderableList，     │
-│ [⊞][≣]        │  │   不过滤、不重排，只给命中的行加高亮）     │
-│ ┌───┐┌───┐    │  │ [✓] 渐变映射   强度 ▓▓▓▓░   [预设] [×]    │
-│ │ 🌈││ 网│    │  │▌[✓] 网点       强度 ▓▓▓░░   [预设] [×]    │
-│ ├───┤├───┤    │  │ [✓] 调色       强度 ▓▓░░░   [预设] [×]    │
-│ │ 调││ 渐│    │  └ …                                          │
-│  …    …       │                                              │
+│ ◀  1/3  ▶     │  ┌ 图层列表（沿用原来的 ReorderableList）    │
+│ [⊞][≣]        │  │ [✓] 渐变映射   强度 ▓▓▓▓░   [预设] [×]    │
+│ ┌───┐┌───┐    │  │▌[✓] 网点       强度 ▓▓▓░░   [预设] [×]    │
+│ │ 🌈││ 网│    │  │ [✓] 调色       强度 ▓▓░░░   [预设] [×]    │
+│  …    …       │  └ …                                          │
 │ （2 列 × 10） │                                              │
 └───────────────┴──────────────────────────────────────────────┘
 ```
 
-- **搜索栏**：整宽，左侧放大镜，右侧两个计数（`侧栏命中 n` 与 `列表高亮 m`）与 `×`（清空）。
-- **侧栏**：顶部一行工具条 = `◀ 页码/总页数 ▶` + 两个样式按钮（纯图标 / 图标+名字）。
-  下面是图标绘制区（带浅色底板，和右侧列表视觉分离）。
-  - 样式 A（默认）：**纯图标，2 列 × 10 行 = 20 个/页**。41 个效果 → 3 页。
-  - 样式 B：**图标 + 名字，1 列 × 10 行 = 10 个/页**。41 个效果 → 5 页。
-  - 名字过长时截断，tooltip 显示全名；已在列表里的效果图标保持现在的绿色高亮。
-  - **搜索只改侧栏的陈列**（只显示命中的可添加效果），这是"找出想加/想关的那个效果"的主路径。
-- **右侧**：现在的列表**完全不动**（`ReorderableList` 原路径、`GetElementLineCount` 行高、每效果的
-  参数 UI、预设按钮、`CleanupLayersForUserOrder` 都不碰），搜索时**一行都不隐藏、顺序也不变**，
-  只给命中的行加底色 + 左侧 2px 强调条。拖拽排序在搜索时照常可用。
-- **窄面板回退**：Volume Inspector 常常只有 300~400px 宽。当可用宽度 < 320px 时，侧栏自动折到
-  列表上方变成横向两行（沿用现在的自动流式排布），避免右侧列表被挤到无法编辑。这个阈值和
-  回退形态在实现时做成常量，便于实机调。
-- 行内新增一个小按钮 `×`（移除该图层）。现在的强度条宽度是按面板宽度 clamp 的，侧栏占位后要
-  一并复核（避免折叠行被挤爆）。
+- 侧栏顶部工具条：`◀ 页码/总页数 ▶` + 两个样式按钮（`⊞` 纯图标 / `≣` 图标+名字），当前样式的按钮高亮。
+- 样式 A（默认）：**纯图标 2 列 × 10 行 = 20 个/页**（41 个效果 → 3 页）。
+  样式 B：**图标 + 名字 1 列 × 10 行 = 10 个/页**（→ 5 页）。
+- 已在列表里的效果图标画成绿色；名字过长截断，tooltip 给 `标签 (枚举名)`。
+- **可用宽度 < 320px 时侧栏折到列表上方**（`MinSplitWidth`），避免把右侧列表挤到没法用。
+- 右侧列表仍是原来的 `ReorderableList`：行高（`GetElementLineCount`）、参数 UI、预设按钮、
+  层级清理都没动，只是折叠行末尾多了一个 `×`。
 
 ## 2. 搜索
 
-- **匹配对象**（任一命中即可，大小写不敏感、忽略空白）：**只看效果本身**
-  1. 中文标签（`网点`、`后期打光`）；
-  2. 枚举名（`Halftone`、`PostLighting`）—— 方便对照代码/日志。
-- **不搜**预设名与拼音（已拍板）：搜到效果后，再从它的预设按钮/右键菜单里选预设。
-- **作用范围**：只过滤**侧栏陈列**；右侧图层列表**不过滤、不重排，只高亮**命中的行。
-- **行为**：搜索时按命中集合重算侧栏分页并回到第 1 页；无命中时侧栏显示"无匹配"而不是空白
-  （右侧照旧全部显示，只是没有高亮）；清空后回到原来的页码与陈列。
-- **快捷操作**：`Esc` 清空并失焦；`Ctrl/Cmd+F` 聚焦搜索框（Inspector 里能否抢到这个快捷键
-  需要实机试，列在 §6 待验证）。
-- 搜索文本框要注意 IMGUI 的老问题：`GUI.SetNextControlName` + 只在需要时 `FocusControl`，
-  否则每次 repaint 都会抢焦点导致没法输入。
+- **只匹配效果本身**：中文标签（`网点`）或枚举名（`Halftone`），子串匹配、大小写不敏感、忽略首尾空白；
+  空查询 = 全部，并按目录顺序返回（不会因为查询而重排）。**不匹配预设名与拼音**（已拍板）。
+- **只过滤侧栏陈列**；右侧列表**不过滤、不重排**，命中效果的行加蓝底 + 左侧 2px 强调条。
+- 搜索栏右侧显示 `侧栏命中 n · 列表高亮 m`；m = 0 时写"列表里没有"——顺带回答"我到底加没加过它"。
+- 搜索时侧栏页码回到第 1 页并按命中集合重算；无命中显示"无匹配"。
+- `Esc`（搜索框聚焦时）清空并失焦；`×` 按钮同样清空。`Ctrl/Cmd+F` 未做（见 §6）。
+- 输入框空且未聚焦时画一行灰色占位提示（`EditorGUI.DisabledScope` + miniLabel）。
 
-## 3. 图标辨识（已否决角标档）
-
-曾经建议加第三档"纯图标 + 汉字角标/区分色"，**已否决**：只保留两档样式。
-代价是纯图标模式下共用同一张图标的成员（`icon_Flare_Ray_v1` 四个、`icon_ScreenEffects_v1` 三个…）
-仍然只能靠 tooltip 分辨，所以**纯图标模式定位为"我已经知道它在哪一页"的快速点击区**，
-"找出某个效果"这件事交给搜索与"图标+名字"档。实现上不再需要角标绘制代码与区分色表。
-
-## 4. 关闭 / 移除效果（你提的第三点）
+## 3. 关闭 / 移除效果
 
 | 手势 | 行为 |
 | --- | --- |
-| 左键点图标 | 添加 / 移除该效果（保持现在的语义，绿色=已在列表里） |
-| **右键点图标** | 上下文菜单：第一行是**效果名**（不用悬停），下面是「添加为图层」「移除该图层（n 个）」「应用默认预设」 |
-| 图层行 `×` | 直接移除这一行（现在只能靠再点图标，容易误删别的效果） |
-| 图层行启用勾选 | 保持（临时关掉但保留参数） |
-| 搜索 | 输入名字即可定位并移除——这是"完全关掉一个功能"最直接的路径 |
+| 左键点侧栏图标 | 添加 / 移除该效果（绿色 = 已在列表里） |
+| 右键点侧栏图标 | 菜单：第一行是 `标签 (枚举名)`（不必悬停），然后「添加为图层」或「移除该图层（n 个）」、「重置为默认参数」，搜索中再加一条「清空搜索」 |
+| 图层行的 `×` | 只移除**这一行**（`RemoveLayerAt`），与 `RemoveLayer`（移除该效果的**全部**图层）区分开 |
+| 图层行的启用勾选 | 保持不变（临时关闭但留参数） |
+| 搜索 | 输入名字定位并移除，这是"完全关掉一个功能"最直接的路径 |
 
-## 5. 实现结构（两个编辑器共用一份）
+## 4. 实现
 
 新增 `Editor/PostProcessing/EffectBrowser/`：
 
-| 文件 | 内容 |
+| 文件 | 职责 |
 | --- | --- |
-| `EffectBrowserEntry.cs` | 纯数据：效果值（object/int）、中文标签、枚举名、图标名、别名（搜索用）、预设分组名 |
-| `EffectBrowserCatalog.cs` | 各自编辑器的目录（把现在的 `VisibleEffectOrder` / `LegacyEffectOrder` 搬过来），并提供 `IsPresent` / `Toggle` / `AddWithDefaults` 回调 |
-| `EffectBrowserSearch.cs` | **纯 C#、无 UnityEngine**：匹配 + 排序 + 分页计算（便于 dotnet 直接测） |
-| `EffectBrowserState.cs` | 搜索文本、样式、页码；用 `SessionState`（按编辑器类型）持久化，切换 Inspector / 重开 Unity 后保持 |
-| `EffectBrowserView.cs` | IMGUI 绘制：搜索栏、侧栏工具条、图标网格、翻页、右键菜单、窄宽度回退 |
+| `EffectBrowserEntry.cs` | 纯数据：`Effect`（int，枚举值）、`Label`、`EnumName`、`IconName`、`Tooltip` |
+| `EffectBrowserSearch.cs` | **纯 C#、无 UnityEngine**：`Normalize` / `Matches` / `Filter` / `PageSize(20,10)` / `Columns` / `Rows` / `PageCount` / `ClampPage` / `PageRange` / `FormatPageLabel` / `FormatCounts` |
+| `EffectBrowserState.cs` | 搜索文本 + 样式，按编辑器类型用 `SessionState` 持久化（`lilToon.EffectBrowser.<Key>.search` / `.iconOnly`）；页码只在会话内 |
+| `EffectBrowserCatalog.cs` | 目录（主表 + 旧实现表）与四个回调 `IsPresent` / `Toggle` / `ResetToDefaults` / `LayerCount`，另有 `CountHighlightedLayers` 与 `LayerEffectMatches`（侧栏与列表高亮共用同一份匹配） |
+| `EffectBrowserView.cs` | 画搜索栏、侧栏工具条、图标网格、翻页、右键菜单、窄宽度回退；`LoadIcon`（唯一图标入口，带缓存，先包路径后 `Assets/Editor/ImageProcessIcons`）；`CurrentQuery` 供列表高亮读取 |
 
-两个编辑器里那 ~120 行重复代码删掉，`OnInspectorGUI` 变成：
-`场景视图开关 → EffectBrowserView.Draw(...) → 图层列表`。
+两个编辑器的接入点（各约 130 行新代码，删掉约 120 行重复代码）：
 
-## 6. 验证计划
+- `EnsureEffectBrowser()`：惰性创建 state 与 catalog；
+- `BuildBrowserEntries(EffectToggleEntry[])`：把**原有的调色板表**（`VisibleEffectOrder` / `LegacyEffectOrder`）
+  转成浏览器条目，枚举名用 `System.Enum.GetName` 取——**永不手写，也就不会和枚举漂移**；
+- `CountLayersForEffect` / `ResetEffectToDefaults` / `RemoveLayerAt` / `GetLayerArrayIndex` / `DrawLayerHighlight`；
+- `OnInspectorGUI`：`场景视图开关 → EffectBrowserView.Draw(catalog, state, DrawLayerList)`；
+- `DrawElement` 开头 `DrawLayerHighlight(rect, element)`；
+- 折叠行末尾 `×` → `RemoveLayerAt(GetLayerArrayIndex(element))`（索引从 `propertyPath` 的 `Array.data[i]` 解析，避免改所有绘制函数的签名）。
 
-| 检查 | 内容 |
+保留 `EffectToggleEntry` 表本身：它是**作者手写的面板顺序与图标**，也是既有静态检查的锚点
+（`effect_enum_check` 检查面板是否覆盖全部枚举成员、`check_halftone_ui` 检查 `new EffectToggleEntry(…)`）。
+
+被删掉的重复代码（两个编辑器各一份）：`DrawEffectIconToggles`、`DrawEffectIconRow`、`DrawEffectIconButton`、
+`GetEffectIconContent`、`EffectIconContents`、`EffectIconSize`、`EffectIconSpacing`、`LoadEffectIcon`。
+
+## 5. 验证
+
+先把**真实面板数据**跑了一遍分页与匹配（脚本直接读两个编辑器的调色板表）：
+
+| 场景 | 结果 |
 | --- | --- |
-| `.codex-research/effect_browser_sim/`（dotnet，链接出货的 `EffectBrowserSearch.cs`） | 匹配：中文标签 / 枚举名、大小写与空格、空查询=全部、无命中；分页：0 命中 / 恰好 20 / 41 个 → 3 页 / 搜索后页码回 1；筛选结果顺序稳定（按面板目录顺序）；负对照让若干项 FAIL |
-| `.codex-research/effect_browser_sim/check_browser_ui.js`（照 `check_halftone_ui.js`） | 两个编辑器的目录必须覆盖**各自枚举的全部成员**（含被隐藏的遗留项如何在目录里标注）；图标名都存在于 `Editor/ImageProcessIcons/`；每页数量常量与绘制代码一致（20/10）；样式只有两档；搜索栏有清空按钮；右键菜单含"移除"；窄宽度回退分支存在；图层行有 `×` |
-| 既有检查同步（**必须改，否则会静默失效**） | `effect_enum_check/check_effect_enum_coverage.js` 现在检查 `VisibleEffectOrder` 与"六个 switch"；`halftone_sim/check_halftone_ui.js` 现在检查 `new EffectToggleEntry(ImageProcessEffect.…`。目录结构一改，这两处锚点都要跟着更新，并在本次改动里跑通 |
-| Roslyn 独立编译 | 0 error（仅剩仓库原有 11 条 CS0649 警告） |
-| 实机清单 | 窄/宽面板（含 320px 回退阈值）、长名字截断、翻页状态与样式持久化、搜索焦点与快捷键、Unity 亮/暗主题下的对比度（含**列表行高亮**与选中/拖拽底色是否打架）、右键菜单、`41 项 × 3 页`的实际手感 |
-| 待验证 | `Ctrl/Cmd+F` 在 Inspector 里能否抢到（抢不到就只保留 `Esc` 清空） |
+| ImageProcess 纯图标（20/页） | 41 项 → 3 页；第 3 页恰好 1 项（网点） |
+| ImageProcess 图标+名字（10/页） | 41 项 → 5 页 |
+| 搜「网点」（中文标签） | 1 项命中 |
+| 搜「halftone」（枚举名，全小写） | 1 项命中（枚举名匹配大小写不敏感） |
+| 搜「雾」在 ImageProcess | 0 项命中（深度雾属于 ScreenProcess，符合预期） |
+| ScreenProcess 搜「光」 | 3 项命中（边缘光 / 后期打光 / 天光丁达尔） |
 
-## 7. 已拍板（2026-09-15，第 2 条当日修订）
+| 检查 | 内容 | 结果 |
+| --- | --- | --- |
+| `.codex-research/effect_browser_sim/browser_search_check`（dotnet，链接出货的 `EffectBrowserSearch.cs` + `EffectBrowserEntry.cs`） | 匹配（中文标签/枚举名/大小写/空白/无命中）、过滤顺序与复用缓冲区、每页 20/10、页数（0/20/21/41 → 1/1/2/3，样式 B → 5）、`ClampPage` 边界、最后一页的 `PageRange`、`FormatPageLabel`/`FormatCounts` | 见下 |
+| `.codex-research/effect_browser_sim/check_browser_ui.js` | 两个编辑器的接线（`EnsureEffectBrowser` / `EffectBrowserView.Draw` / `DrawLayerHighlight` / `×`→`RemoveLayerAt`）、旧图标代码无残留、引用的图标文件都存在、`EffectBrowserSearch` 常量自洽（2×10=20、1×10=10）、`EffectBrowserView` 的搜索/清空/翻页/两档样式/右键菜单/窄宽度回退/`CurrentQuery` 都在、`Matches` 只查标签与枚举名 | 见下 |
+| 既有检查（必须继续通过） | `effect_enum_check/check_effect_enum_coverage.js`（面板覆盖全部枚举成员、六个 switch、registry→shader、无字面量夹枚举下标）、`halftone_sim/check_halftone_ui.js`（行数与 `EffectDisplayNames` 下标） | 见下 |
+| Roslyn 独立编译（Editor + Runtime） | 0 error，仅剩仓库原有 11 条 CS0649 警告 | 通过 |
 
-1. **搜索范围：只搜效果名**（中文标签 + 枚举名）。预设名与拼音都不参与匹配；搜到效果后再从它的
-   预设按钮/右键菜单里选预设。
-2. **搜索只作用于左侧陈列，右侧列表零过滤**（修订）：
-   - 侧栏只陈列命中的"可添加效果"（这是搜索的主要目的：找出想加/想关的那个效果）；
-   - 右侧图层列表**一行都不隐藏、顺序也不动**，命中效果的图层行**只加高亮**（浅色底 + 左侧 2px 强调条）；
-   - 因此列表照旧走 `ReorderableList` 原路径，**拖拽排序始终可用**，也不存在"拖到看不见的行之间"的歧义；
-   - 搜索栏右侧同时给出两个数：`侧栏命中 n` 与 `列表高亮 m`（m 为 0 时提示"列表里没有这个效果"，
-     这正好回答"我到底加没加过它"）；
-   - 行内的勾选、强度、参数、预设按钮完全照旧。
-3. **不做角标档**：只保留两档样式（纯图标 2×10 / 图标+名字 1×10）。共用图标在纯图标模式下的
-   辨识依赖 tooltip 与搜索。
+## 6. 尚未验证（实机清单）
+
+1. 真实 Inspector 宽度下的观感：320px 折叠阈值、两档侧栏宽度（64 / 150px）是否合适；
+2. 长标签截断与 tooltip；
+3. 搜索框焦点行为与 `Esc`；`Ctrl/Cmd+F` 聚焦**没有做**（Inspector 里能否抢到需要实机试）；
+4. 列表行高亮在 Unity **亮/暗主题**下与选中态、拖拽态底色是否打架；
+5. `SessionState` 持久化的实际手感（切换 Inspector / 重开 Unity 后样式与搜索是否保留）；
+6. 右键菜单在 Inspector 里的弹出位置；
+7. 折叠到上方时的排布（窄面板下侧栏 20 格是否太占地方）。
+
+## 7. 已拍板（2026-09-15）
+
+1. **搜索范围：只搜效果名**（中文标签 + 枚举名）；不搜预设名与拼音。
+2. **搜索只作用于左侧陈列，右侧列表零过滤**（当日修订）：列表一行不隐藏、顺序不动，命中行只加高亮；
+   因此列表照旧走 `ReorderableList` 原路径，拖拽排序始终可用，高亮不参与任何布局计算。
+3. **不做角标档**：只保留两档样式。代价是纯图标模式下共用图标的成员仍只能靠 tooltip 分辨，
+   所以纯图标档定位为"我已经知道它在哪一页"的快速点击区，"找效果"交给搜索与"图标+名字"档。
 4. **图层行只加 `×` 移除**，不加复制图层。
+5. 窄面板：侧栏折到列表上方，不引入横向滚动。
 
-### 7.1 由这些决定带来的实现要点
+## 8. 后续可做
 
-- **只需要一套列表绘制路径**：不做筛选视图，`layerList.DoLayoutList()` 与 `GetElementLineCount`
-  的行高体系原样保留；高亮只是在 `drawElementCallback` 里画行内容之前多画一层底色/强调条
-  （按"该行的效果是否命中搜索"判断），不参与任何布局计算。
-- 目录（`EffectBrowserCatalog`）提供 `MatchesSearch(effect, query)` 与"该效果当前有几层"两个查询，
-  **侧栏陈列与列表高亮共用同一份匹配结果**，避免两处判断不一致。
-- 搜索文本为空时侧栏陈列恢复为全部效果、列表无高亮，即新 UI 在不搜索时对列表是零影响。
-- 高亮配色要在 Unity 亮/暗主题下都可读（`EditorGUI.DrawRect` + 主题相关低透明度色，避开选中态
-  与拖拽态的既有底色），列在 §6 实机清单里。
-
-## 8. 决策记录
-
-四个问题在 §7 定稿（只搜效果名 / **只高亮不过滤** / 不做角标 / 只加 `×`）。另外两条按实现的默认取舍：
-
-- **窄面板**：可用宽度 < 320px 时侧栏折到列表上方（横向两行），不引入横向滚动；
-- **搜索框快捷键**：先做 `Esc` 清空 + 失焦；`Ctrl/Cmd+F` 能否在 Inspector 里抢到需要实机试（§6）。
+- `Ctrl/Cmd+F` 聚焦搜索框（若 Inspector 允许）；
+- 搜索命中高亮具体字符；
+- 侧栏"最近使用"分组或置顶常用效果；
+- 预设名参与搜索（本次明确不做）。

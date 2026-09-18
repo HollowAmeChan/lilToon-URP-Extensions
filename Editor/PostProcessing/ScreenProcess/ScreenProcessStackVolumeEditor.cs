@@ -12,8 +12,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
     {
         private const float LineHeight = 18.0f;
         private const float LineSpacing = 2.0f;
-        private const float EffectIconSize = 22.0f;
-        private const float EffectIconSpacing = 2.0f;
         private const string PackageAssetRoot = "Packages/jp.lilxyzw.liltoon.urp.extensions";
 
         private readonly struct EffectToggleEntry
@@ -42,7 +40,17 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             new EffectToggleEntry(ScreenProcessEffect.CustomMaterial, "自定义", "icon_Effects_v1")
         };
 
-        private static readonly Dictionary<ScreenProcessEffect, GUIContent> EffectIconContents = new Dictionary<ScreenProcessEffect, GUIContent>();
+        /// <summary>Search text + sidebar style, remembered per editor type (see EffectBrowserState).</summary>
+        private EffectBrowserState effectBrowserState;
+
+        /// <summary>The palette handed to the shared effect browser (see EffectBrowserView).</summary>
+        private EffectBrowserCatalog effectBrowserCatalog;
+
+        /// <summary>Row highlight tint for layers that match the current search.</summary>
+        private static readonly Color LayerHighlightColor = new Color(0.30f, 0.55f, 0.95f, 0.16f);
+
+        /// <summary>Accent bar drawn on the left edge of a highlighted row.</summary>
+        private static readonly Color LayerHighlightAccent = new Color(0.35f, 0.65f, 1.0f, 0.85f);
 
         // Every declared effect, ordered the way the enum declares them (= the order Unity's enum popup
         // uses, and therefore the meaning of SerializedProperty.enumValueIndex).
@@ -90,12 +98,153 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             PropertyField(showInSceneView, new GUIContent("Scene View"));
             EditorGUILayout.Space(4.0f);
-            DrawEffectIconToggles();
-            EditorGUILayout.Space(4.0f);
-
-            DrawLayerList();
-
+            EnsureEffectBrowser();
+            EffectBrowserView.Draw(effectBrowserCatalog, effectBrowserState, DrawLayerList);
             serializedObject.ApplyModifiedProperties();
+        }
+
+        // ------------------------------------------------------------------ effect browser
+
+        /// <summary>
+        /// Builds the browser state/catalog once: the palette table below plus three callbacks into
+        /// this editor (the browser itself is shared with the ImageProcess editor).
+        /// </summary>
+        private void EnsureEffectBrowser()
+        {
+            if (effectBrowserState == null)
+            {
+                effectBrowserState = EffectBrowserState.For("ScreenProcess");
+            }
+
+            if (effectBrowserCatalog != null)
+            {
+                return;
+            }
+
+            effectBrowserCatalog = new EffectBrowserCatalog(
+                "ScreenProcess",
+                BuildBrowserEntries(VisibleEffectOrder),
+                effect => HasLayer((ScreenProcessEffect)effect),
+                effect => ToggleEffect((ScreenProcessEffect)effect),
+                ResetEffectToDefaults,
+                CountLayersForEffect);
+        }
+
+        /// <summary>Turns the authored palette into browser entries; the enum name comes from the enum.</summary>
+        private static EffectBrowserEntry[] BuildBrowserEntries(EffectToggleEntry[] source)
+        {
+            if (source == null || source.Length == 0)
+            {
+                return System.Array.Empty<EffectBrowserEntry>();
+            }
+
+            var entries = new EffectBrowserEntry[source.Length];
+            for (int i = 0; i < source.Length; i++)
+            {
+                entries[i] = new EffectBrowserEntry(
+                    (int)source[i].Effect,
+                    source[i].Label,
+                    System.Enum.GetName(typeof(ScreenProcessEffect), source[i].Effect) ?? string.Empty,
+                    source[i].IconName);
+            }
+
+            return entries;
+        }
+
+        /// <summary>How many layers use that effect (right-click menu and the highlight count).</summary>
+        private int CountLayersForEffect(int effectValue)
+        {
+            if (layerValues == null || !layerValues.isArray)
+            {
+                return 0;
+            }
+
+            int count = 0;
+            for (int index = 0; index < layerValues.arraySize; index++)
+            {
+                if ((int)GetEffect(layerValues.GetArrayElementAtIndex(index)) == effectValue)
+                {
+                    count++;
+                }
+            }
+
+            return count;
+        }
+
+        /// <summary>Adds the effect when missing, otherwise puts its layer back to the effect defaults.</summary>
+        private void ResetEffectToDefaults(int effectValue)
+        {
+            ScreenProcessEffect effect = (ScreenProcessEffect)effectValue;
+            if (!HasLayer(effect))
+            {
+                AddLayer(effect);
+                ApplyLayerListChanges();
+                return;
+            }
+
+            Undo.RecordObject(serializedObject.targetObject, "Reset ScreenProcess Effect");
+            for (int index = 0; index < layerValues.arraySize; index++)
+            {
+                SerializedProperty element = layerValues.GetArrayElementAtIndex(index);
+                if ((int)GetEffect(element) != effectValue)
+                {
+                    continue;
+                }
+
+                ResetLayerDefaults(element, effect);
+            }
+
+            ApplyLayerListChanges();
+        }
+
+        /// <summary>Removes one specific row (the × button), unlike RemoveLayer which drops every match.</summary>
+        private void RemoveLayerAt(int index)
+        {
+            if (layerValues == null || !layerValues.isArray || index < 0 || index >= layerValues.arraySize)
+            {
+                return;
+            }
+
+            Undo.RecordObject(serializedObject.targetObject, "Remove ScreenProcess Layer");
+            layerValues.DeleteArrayElementAtIndex(index);
+            ApplyLayerListChanges();
+        }
+
+        /// <summary>Array index of a serialized layer element ("layers.m_Value.Array.data[3]").</summary>
+        private static int GetLayerArrayIndex(SerializedProperty element)
+        {
+            if (element == null)
+            {
+                return -1;
+            }
+
+            string path = element.propertyPath;
+            int open = path.LastIndexOf('[');
+            int close = path.LastIndexOf(']');
+            if (open < 0 || close <= open + 1)
+            {
+                return -1;
+            }
+
+            return int.TryParse(path.Substring(open + 1, close - open - 1), out int index) ? index : -1;
+        }
+
+        /// <summary>Background tint + accent bar for a layer whose effect matches the search.</summary>
+        private void DrawLayerHighlight(Rect rect, SerializedProperty element)
+        {
+            string query = EffectBrowserView.CurrentQuery;
+            if (string.IsNullOrEmpty(query) || effectBrowserCatalog == null)
+            {
+                return;
+            }
+
+            if (!effectBrowserCatalog.LayerEffectMatches((int)GetEffect(element), query))
+            {
+                return;
+            }
+
+            EditorGUI.DrawRect(rect, LayerHighlightColor);
+            EditorGUI.DrawRect(new Rect(rect.x, rect.y, 2.0f, rect.height), LayerHighlightAccent);
         }
 
         private void DrawLayerList()
@@ -141,6 +290,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
 
             rect.y += 2.0f;
+            DrawLayerHighlight(rect, element);
             SerializedProperty enabledProperty = element.FindPropertyRelative("enabled");
             float y = DrawFoldoutLine(rect, rect.y, element, enabledProperty);
             if (!element.isExpanded)
@@ -233,8 +383,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Rect lineRect = new Rect(rect.x, y, rect.width, LineHeight);
             float checkboxWidth = 18.0f;
             float presetWidth = LayerPresetButtonSize;
+            float removeWidth = 18.0f;
             float intensityWidth = Mathf.Clamp(rect.width * 0.34f, 140.0f, 220.0f);
-            float foldoutWidth = Mathf.Max(0.0f, rect.width - checkboxWidth - presetWidth - intensityWidth - 10.0f);
+            float foldoutWidth = Mathf.Max(0.0f, rect.width - checkboxWidth - presetWidth - intensityWidth - removeWidth - 12.0f);
 
             if (enabled != null && enabled.propertyType == SerializedPropertyType.Boolean)
             {
@@ -251,13 +402,20 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             Rect foldoutRect = new Rect(lineRect.x + checkboxWidth, lineRect.y, foldoutWidth, lineRect.height);
             element.isExpanded = EditorGUI.Foldout(foldoutRect, element.isExpanded, GetLayerLabel(element), true);
 
-            Rect presetRect = new Rect(lineRect.xMax - intensityWidth - presetWidth - 4.0f, lineRect.y, presetWidth, lineRect.height);
+            Rect removeRect = new Rect(lineRect.xMax - removeWidth, lineRect.y + 1.0f, removeWidth, lineRect.height - 2.0f);
+            if (GUI.Button(removeRect, new GUIContent("×", "移除这一层"), EditorStyles.miniButton))
+            {
+                RemoveLayerAt(GetLayerArrayIndex(element));
+                return y + LineHeight + LineSpacing;
+            }
+
+            Rect presetRect = new Rect(lineRect.xMax - removeWidth - intensityWidth - presetWidth - 6.0f, lineRect.y, presetWidth, lineRect.height);
             DrawLayerPresetButton(presetRect, element);
 
             SerializedProperty intensity = element.FindPropertyRelative("intensity");
             if (intensity != null && intensity.propertyType == SerializedPropertyType.Float)
             {
-                Rect intensityRect = new Rect(lineRect.xMax - intensityWidth, lineRect.y, intensityWidth, lineRect.height);
+                Rect intensityRect = new Rect(lineRect.xMax - removeWidth - intensityWidth - 2.0f, lineRect.y, intensityWidth, lineRect.height);
                 Rect sliderRect = new Rect(intensityRect.x, intensityRect.y + 2.0f, intensityRect.width, intensityRect.height - 4.0f);
                 EditorGUI.BeginChangeCheck();
                 float intensityValue = GUI.HorizontalSlider(sliderRect, intensity.floatValue, 0.0f, 1.0f);
@@ -311,113 +469,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             EditorGUI.PropertyField(new Rect(rect.x, y, rect.width, LineHeight), property, new GUIContent(label));
             y += LineHeight + LineSpacing;
-        }
-
-        private void DrawEffectIconToggles()
-        {
-            if (layerValues == null || !layerValues.isArray)
-            {
-                return;
-            }
-
-            DrawEffectIconRow(VisibleEffectOrder);
-        }
-
-        private void DrawEffectIconRow(EffectToggleEntry[] entries)
-        {
-            if (entries == null || entries.Length == 0)
-            {
-                return;
-            }
-
-            float width = Mathf.Max(160.0f, EditorGUIUtility.currentViewWidth - 40.0f);
-            int buttonsPerRow = Mathf.Max(1, Mathf.FloorToInt((width + EffectIconSpacing) / (EffectIconSize + EffectIconSpacing)));
-            int rowCount = Mathf.CeilToInt(entries.Length / (float)buttonsPerRow);
-            float height = rowCount * EffectIconSize + Mathf.Max(0, rowCount - 1) * EffectIconSpacing;
-
-            Rect rect = GUILayoutUtility.GetRect(0.0f, height, GUILayout.ExpandWidth(true));
-            float x = rect.x;
-            float y = rect.y;
-            int column = 0;
-
-            foreach (EffectToggleEntry entry in entries)
-            {
-                if (column >= buttonsPerRow)
-                {
-                    column = 0;
-                    x = rect.x;
-                    y += EffectIconSize + EffectIconSpacing;
-                }
-
-                DrawEffectIconButton(new Rect(x, y, EffectIconSize, EffectIconSize), entry);
-                x += EffectIconSize + EffectIconSpacing;
-                column++;
-            }
-        }
-
-        private void DrawEffectIconButton(Rect rect, EffectToggleEntry entry)
-        {
-            bool active = HasLayer(entry.Effect);
-            GUIContent content = GetEffectIconContent(entry);
-            Texture icon = content.image;
-
-            if (icon != null)
-            {
-                Color oldColor = GUI.color;
-                GUI.color = active ? new Color(0.35f, 1.0f, 0.35f, 1.0f) : Color.white;
-                GUI.DrawTexture(rect, icon, ScaleMode.ScaleToFit, true);
-                GUI.color = oldColor;
-            }
-            else
-            {
-                EditorGUI.LabelField(rect, content);
-            }
-
-            GUI.Label(rect, new GUIContent(string.Empty, content.tooltip), GUIStyle.none);
-            EditorGUIUtility.AddCursorRect(rect, MouseCursor.Link);
-            if (Event.current.type == EventType.MouseDown && rect.Contains(Event.current.mousePosition))
-            {
-                ToggleEffect(entry.Effect);
-                Event.current.Use();
-            }
-        }
-
-        private static GUIContent GetEffectIconContent(EffectToggleEntry entry)
-        {
-            if (EffectIconContents.TryGetValue(entry.Effect, out GUIContent cached))
-            {
-                return cached;
-            }
-
-            Texture2D icon = LoadEffectIcon(entry.IconName);
-            GUIContent content = icon != null ? new GUIContent(icon, entry.Label) : new GUIContent(entry.Label);
-            EffectIconContents[entry.Effect] = content;
-            return content;
-        }
-
-        private static Texture2D LoadEffectIcon(string iconName)
-        {
-            if (string.IsNullOrEmpty(iconName))
-            {
-                return null;
-            }
-
-            string[] candidatePaths =
-            {
-                $"{PackageAssetRoot}/Editor/ImageProcessIcons/{iconName}.png",
-                $"Assets/Editor/ImageProcessIcons/{iconName}.png"
-            };
-
-            foreach (string path in candidatePaths)
-            {
-                Texture2D texture = AssetDatabase.LoadAssetAtPath<Texture2D>(path);
-                if (texture != null)
-                {
-                    return texture;
-                }
-            }
-
-            return null;
         }
 
         private void ToggleEffect(ScreenProcessEffect effect)

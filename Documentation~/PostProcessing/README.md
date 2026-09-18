@@ -16,6 +16,7 @@
 已落地的编辑器侧能力：
 
 - `ImageProcessStackVolumeEditor` 和 `ScreenProcessStackVolumeEditor` 负责层列表、图标按钮、预设菜单、每个效果的参数 UI。
+- **效果浏览器**（两个编辑器共用）：顶栏搜索（只按中文标签与枚举名匹配）+ 左侧可翻页图标侧栏（默认纯图标 2×10，可切图标+名字 1×10）+ 右侧原有图层列表（搜索只高亮命中行，不过滤不重排）；图标右键有添加/移除/重置菜单，图层行有 `×` 移除。见 `EffectBrowser.md`。
 - `调色`（`ColorGradingCustom`）的预设根级只有 `默认`（重置），其余 34 个 look 统一走 `基础/电影感/胶片/动画/风格` 五个子菜单，见 `ColorGradingPresets.md`。
 - `渐变`（`Gradient`）除原有 4 种形状外新增 4 个两点模式（线性/径向/椭圆/锥形，旋转靠拖 B 点）、过渡曲线、镜像（反向渐变）、线性光插值、分辨率量化与输出抖动的暴露，见 `GradientInvestigation.md`。
 - `渐变映射`（`GradientMap`，新增）是亮度/通道驱动的颜色映射（Photoshop Gradient Map 那一类）：色标用 **Unity 原生 `Gradient`**（≤8 颜色键 + ≤8 透明度键，Blend/Fixed），运行时烘焙成 1×256 的 ramp 贴图，shader 只做一次采样；另有输入窗口、反转、色阶数（平涂）、显示空间/线性光/Oklab 烘焙空间、输出抖动，以及 5 组 16 个 look（含 matplotlib/Google turbo/FLIR 风格色表采样）。见 `GradientMap.md`。
@@ -26,9 +27,6 @@
 
 当前仍需注意的状态：
 
-- 规划中（**尚未实现**）：后处理 UI 换代 —— `效果浏览器`（搜索栏 + 左侧可翻页图标侧栏 + 右侧现有列表），
-  ImageProcess / ScreenProcess 两个编辑器共用一份实现；现状是 41 个效果共用 32 张图标、只能靠悬停辨认、
-  没有搜索、移除效果必须先找出图标。见 `EffectBrowser.md`。
 - `Tests/Runtime` 目录为空，源码中也未检索到 `[Test]` 或 `[UnityTest]`。本次只能做源码结构和静态检查，不能替代 Unity Editor 编译和画面验证。
 - 包目录没有 `.sln`、`.csproj` 或 Unity `ProjectSettings/ProjectVersion.txt`，无法在当前包根直接跑 C# 编译。
 - 工作树里已有未提交改动，尤其是 `ScreenProcess`、`GeometryBuffer` 和 `SkyTyndall` 相关文件。本文档按这些改动后的源码状态描述。

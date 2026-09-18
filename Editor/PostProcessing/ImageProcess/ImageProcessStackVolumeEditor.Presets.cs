@@ -45,7 +45,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 return layerPresetIconContent;
             }
 
-            Texture2D icon = LoadEffectIcon(LayerPresetIconName);
+            Texture2D icon = EffectBrowserView.LoadIcon(LayerPresetIconName);
             layerPresetIconContent = icon != null
                 ? new GUIContent(icon, "预设")
                 : new GUIContent("P", "预设");
