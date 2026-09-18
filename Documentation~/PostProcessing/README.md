@@ -26,6 +26,9 @@
 
 当前仍需注意的状态：
 
+- 规划中（**尚未实现**）：后处理 UI 换代 —— `效果浏览器`（搜索栏 + 左侧可翻页图标侧栏 + 右侧现有列表），
+  ImageProcess / ScreenProcess 两个编辑器共用一份实现；现状是 41 个效果共用 32 张图标、只能靠悬停辨认、
+  没有搜索、移除效果必须先找出图标。见 `EffectBrowser.md`。
 - `Tests/Runtime` 目录为空，源码中也未检索到 `[Test]` 或 `[UnityTest]`。本次只能做源码结构和静态检查，不能替代 Unity Editor 编译和画面验证。
 - 包目录没有 `.sln`、`.csproj` 或 Unity `ProjectSettings/ProjectVersion.txt`，无法在当前包根直接跑 C# 编译。
 - 工作树里已有未提交改动，尤其是 `ScreenProcess`、`GeometryBuffer` 和 `SkyTyndall` 相关文件。本文档按这些改动后的源码状态描述。
