@@ -84,6 +84,16 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private static void DrawSearchBar(EffectBrowserState state)
         {
             bool focused = GUI.GetNameOfFocusedControl() == SearchControlName;
+
+            // Ctrl/Cmd+F 聚焦搜索框（不用先点一下输入框），Escape 清空并失焦 —— 两边都是同一套 IMGUI 惯例。
+            if (Event.current.type == EventType.KeyDown
+                && (Event.current.control || Event.current.command)
+                && Event.current.keyCode == KeyCode.F)
+            {
+                GUI.FocusControl(SearchControlName);
+                Event.current.Use();
+            }
+
             if (focused && Event.current.type == EventType.KeyDown && Event.current.keyCode == KeyCode.Escape)
             {
                 state.ClearSearch();

@@ -26,7 +26,6 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DropShadow"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessMask.hlsl"
 
             float _Intensity;
-            float _LayerBlendMode;
             float4 _LayerColor;
             float4 _LayerParams0; // x distance 0-1, y angle degrees, z opacity, w softness px
             float4 _LayerParams1; // x spread px, y reserved, z reserved, w keep off subject

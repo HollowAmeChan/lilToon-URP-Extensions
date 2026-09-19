@@ -24,7 +24,6 @@ Shader "Hidden/lilToon/URP/ScreenProcess/LayerBlit"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
             float _Intensity;
-            float _LayerBlendMode;
             float4 _LayerColor;
             float _LayerTextureEnabled;
             float4 _LayerParams0;
