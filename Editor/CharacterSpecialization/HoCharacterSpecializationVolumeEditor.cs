@@ -85,10 +85,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         {
             serializedObject.Update();
 
-            EditorGUILayout.HelpBox(
-                "Renderer Data 里先添加 HoCharacter Specialization RendererFeature。效果参数由本 Volume 单一提供（没有兜底值，也没有逐参数覆盖）：要用就开、不用就关。Face、FrontHair、Eye、EyeRevealArea 需要由 HoMetadataBufferGroup/RSUV 或材质 fallback 标记提供。",
-                MessageType.Info);
-
             if (effects == null)
             {
                 DrawDefaultInspector();
