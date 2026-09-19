@@ -369,3 +369,28 @@ Assert(NotModeled.Contains("cache-reuse") && NotModeled.Contains("material-captu
 - 眼透的语义与角度修正见 `Documentation~/CharacterSpecialization_EyeReveal.md`（本文档只补 RDG 结构）。
 - 脸色扩散的设计与参数意图见 `Documentation~/CharacterSpecialization_FaceHairDiffuse.md`（本文档 §4-K4 只动存储通道数，不动它的核、半径与两趟结构）。
 - 本文档所有"事件数/MB"都是**按代码结构推出的估算**，不是实测 ms；任何性能结论都必须回到 §0 的测量口径。
+
+---
+
+## 补记：两条"未确认"已澄清（core 包可读后）
+
+core 包不在本仓库，但它是**注册表版本**，缓存在工程里：
+`D:\Unity_Project\BREAK_URP\Library\PackageCache\com.unity.render-pipelines.core@648b47f96bf1`。
+下面两条原来列在 §6 的"未确认"，现在有结论了：
+
+| 原编号 | 问题 | 结论 | 证据 |
+| --- | --- | --- | --- |
+| §6-2 | `AccessFlags` / 免清（load-store）语义能否支持 K8 | **能**。`AccessFlags` 里确实有 `Discard`："Previous data in the resource is not preserved. The resource will contain undefined data at the beginning of the pass."，以及"整张都会被本 pass 写完"的标志（`WriteAll`）。管线侧确实会把它翻成 `RenderBufferLoadAction.DontCare` | `Runtime/RenderGraph/RenderGraph.cs:30`（`enum AccessFlags`，含 `None=0/Read/Write/Discard/WriteAll`）；`Runtime/RenderGraph/NativePassCompiler.cs:1283`（`loadAction = RenderBufferLoadAction.DontCare`） |
+| §6-3 | `Blitter.BlitTexture(...)` 是否内部绑 `_BlitTexture` 并设 `_BlitScaleBias` | **是，两者都做**。所以 **K2 不能只删 `UseTexture(source, Read)`**：要么保留这条读声明，要么把 Source pass 换成 `DrawProcedural` 并**显式**设置 `_BlitScaleBias = (1,1,0,0)`（顶点 UV 依赖它，残留值会让采样错位） | `Runtime/Utilities/Blitter.cs:686-687`（`s_PropertyBlock.SetVector(_BlitScaleBias, scaleBias)` / `SetTexture(_BlitTexture, sourceColor)`）、同文件 `:714`；`RasterCommandBuffer` 重载转发到 `CommandBuffer` 版本（`:474` 起） |
+
+由此对 §4 的两处修正：
+
+- **K2 的实现路径确定**：把三个 Source pass 的 `Blitter.BlitTexture(cmd, data.source, new Vector4(1,1,0,0), data.material, 0)`
+  （`RendererFeature.cs:699` 等）换成 `DrawProcedural`，显式 `SetGlobalVector(_BlitScaleBias, new Vector4(1,1,0,0))`，
+  然后才能安全删掉 `:685`/`:762`/`:849` 的读声明。**这一刀从"待验证"变成"可实施"**。
+- **K8 可落地**：全覆写的中间纹理可以带 `AccessFlags.Discard`（或 `WriteAll`）声明，省掉 load 流量。
+  仍需实测确认省下来的是 ms 而不是零。
+
+另记一个测量侧的现成条件：`D:\Unity_Fork\renderdoc-mcp` 就在本机（RenderDoc 的 MCP 封装），
+§0 的逐趟抓帧可以直接走它，不必手工开 RenderDoc —— 但仍要注意 §0 的坑：13 趟共用同一个 `ProfilingSampler`
+（`RendererFeature.cs:288`），Profiler 侧同名。
