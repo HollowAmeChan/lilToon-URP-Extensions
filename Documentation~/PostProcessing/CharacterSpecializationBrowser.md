@@ -149,12 +149,21 @@ Volume 里的 `LayerMask`/`MinRenderQueue`/`MaxRenderQueue`/`PassEvent`/`RenderS
 
 ## 5. 验证
 
+| 检查 | 内容 | 结果 |
+| --- | --- | --- |
+| `.codex-research/cs_config_split/audit_migration.py`（一次性，对旧 Volume 的备份比对） | 70 个效果参数是否 1:1 迁到新的 Effects 类：字段名（PascalCase → lowerCamelCase）、类型映射、**默认值文本**、`ClampedFloatParameter` 的区间是否变成 `[Range]`、`[InspectorName]`/`[Tooltip]` 是否保留 | **70/70 通过**（不丢字段、不改默认值） |
+| `.codex-research/character_specialization_sim/check_cs_browser_ui.js`（新） | 目录 ↔ 字段一一对应（无孤儿/无重复覆盖）、图标文件存在、行内 `×` 只把启用字段置 false、折叠走 `SessionState` 而非 `static`、**不得再出现 `overrideState`/`ApplyTo`/7 个死字段**、Settings 的 70 个 `[NonSerialized]` 与"CopyFrom 只剩管线"、Feature 调 `CopyEffectsTo`、无底按钮规则、5 处 `DrawEffects` 各一次 | 见下 |
+| 既有检查（重构后复跑） | `effect_browser_sim/check_browser_ui.js --negative-control`（8/8 负对照）、`browser_search_check`（dotnet 100 项）、`effect_enum_check`、`halftone_sim/check_halftone_ui.js`、`shader-check`（11 个 shader） | **全过** |
+| Roslyn 独立编译（Editor + Runtime） | 0 error，仅剩仓库原有 11 条 CS0649 警告 | 通过 |
+
+（下面是重构前写的检查计划，保留备查。）
+
 | 检查 | 内容 |
 | --- | --- |
 | 新增 `.codex-research/character_specialization_sim/check_cs_browser_ui.js`（照 `check_browser_ui.js`） | 6 个条目与 6 组参数一一对应；图标文件存在（精确大小写）；目录声明 6 行并与绘制一致；标题行的「启用」写的是对应字段；`×` 只关效果、不碰其它参数；「恢复默认」清的是效果自己的字段；折叠状态不再是 `static`；搜索只过滤侧栏；不得出现 `miniButton`/`GUI.Button`；**不得再出现 `overrideState`**（这是本次的核心不变量）；负对照若干条全部生效 |
 | Runtime 侧检查 | `ApplyTo` / Settings 的 69 个效果字段 / `CopyFrom` 对应行都应消失（用 grep 断言 + 结构检查钉住）；`ResolveSettings` 只做 gating；`IsActive`/`IsActiveForCamera` 用普通字段实现 |
-| 既有检查必须继续通过 | `check_compile.ps1`（Roslyn 0 error）、`effect_browser_sim/check_browser_ui.js`（8/8 负对照）、`browser_search_check`（dotnet 100 项，共享代码加了可选 `Rows` 后要复跑） |
-| 实机清单 | Volume profile 里**已有数值是否保住**（字段名不变 ⇒ 应保住）；同一个场景两个 Volume 的表现（最近者整体生效）；关闭 Volume 组件后效果完全停（无残留 RT/无 pass）；侧栏开关与右侧「启用」双向同步；亮/暗主题 |
+| 既有检查必须继续通过 | `check_compile.ps1`（Roslyn 0 error）、`effect_browser_sim/check_browser_ui.js`（8/8 负对照）、`browser_search_check`（dotnet 100 项） |
+| 实机清单 | Volume profile 里**已有数值**（注意：序列化路径变了 ⇒ 会回默认值，见 §1 的实现说明）；同一个场景两个 Volume 的表现（最近者整体生效）；关闭 Volume 组件后效果完全停（无残留 RT/无 pass）；侧栏开关与右侧「启用」双向同步；亮/暗主题 |
 
 
 ## 6. 已定取舍
