@@ -153,7 +153,9 @@ Volume 里的 `LayerMask`/`MinRenderQueue`/`MaxRenderQueue`/`PassEvent`/`RenderS
 5. 共享代码只加 **一个可选 `Rows`**，其余一律不动；
 6. 死字段（§0.3）随本次一起删；
 7. RendererFeature 编辑器：效果区段挪走后只剩管线/捕获/调试，**这次不接浏览器**；
-8. **三块的能力对齐是共同待办**（§8）：现在连另外两块自己都没把逐效果能力全部启用，目标统一为一套能力 + 一套 UI。
+8. **三块的能力对齐是共同待办**（§8）：现在连另外两块自己都没把逐效果能力全部启用，目标统一为一套能力 + 一套 UI；
+9. **遮罩等 AC**（§10）：不在 AC 之前基于 MetadataBuffer 通道实现 IP 的遮罩，UI 文案也不许出现旧名；
+10. **遵守 `Ho-UI_风格规范.md`**，并记录三处有意偏离（§11）。
 
 **备选方案 B（记录用）**：效果参数只留在 Settings 资产（Feature 级），Volume 退化成纯开关。
 运行时最省事、也没有重复，但**同一个项目内无法按场景/角色分别调参**——与"跟后处理一样、用的时候才开"
@@ -203,12 +205,12 @@ Volume 里的 `LayerMask`/`MinRenderQueue`/`MaxRenderQueue`/`PassEvent`/`RenderS
 | 强度 `intensity` | ✓ | ✓ | ✗ | CS 链化后白拿 |
 | 颜色 `color` | ✓ | ✓ | ✗（各效果自带颜色参数） | 语义不同，保持各自参数 |
 | 混合模式 | **24 种** | **只有 4 种**（Normal/Add/Screen/Multiply） | ad-hoc 2 个（`hairShadowBlendMode`/`faceHairDiffuseBlendMode`） | **SP 补到 24**：共享 include `ImageProcessBlend.hlsl` 已抽好，SP 直接复用；CS 链化后白拿 |
-| 规则遮罩（MetadataBuffer） | **✗（0 处引用）** | ✓（52 处） | ✗ | **IP 与 CS 都要补**；CS 本来就在读 MetadataBuffer，代价小；IP 需要加"绑定 MetadataBuffer"的资源请求 |
+| 规则遮罩 | **✗（0 处引用）** | ✓（52 处 / 20 个 source） | ✗ | **AC 落地前不做**：遮罩的来源将来只有一个 = AC（见 §10）；SP 的 20 个 source 会在 R5 收成 AC 具名条目，IP/CS 届时直接用 `HoAC_*`，现在照 MetadataBuffer 通道再实现一套会白做 |
 | 预设菜单 | ✓ | ✓ | ✗ | CS 链化后按 IP/SP 的写法补（两段描边最需要） |
 | 行样式 / 无底控件 / 浏览器 | ✓ | ✓ | 本次对齐 | — |
 
 目标：三块都是 **[启用 + 强度 + 颜色 + 24 混合模式 + 规则遮罩 + 预设] + 同一套行样式与浏览器**。
-这张表就是"UI 与功能统一"的待办清单；其中 **SP 的混合模式** 与 **IP 的规则遮罩** 与 CS 无关，可独立排期。
+这张表就是"UI 与功能统一"的待办清单；其中 **SP 的混合模式** 与 CS 无关，可独立排期（复用已抽好的 `ImageProcessBlend.hlsl`）。
 
 ## 9. 执行顺序
 
@@ -217,3 +219,48 @@ Volume 里的 `LayerMask`/`MinRenderQueue`/`MaxRenderQueue`/`PassEvent`/`RenderS
 2. **能力补齐（可与 v1 并行/随后）**：SP 混合模式补到 24；IP 补规则遮罩；
 3. **v2**：CS 图像链化（捕获序幕保留 + 合成链化 + 固定顺序表），随后按 IP/SP 的写法补 CS 预设；
 4. 之后每加一个角色效果的成本 = 一个小 shader + 约 28 行 partial + 1 行注册（+ 预设条目）。
+
+## 10. 与 AC（Ho-AttributeComposite）的关系
+
+`Documentation~/架构优化/Ho-AttributeComposite_规划.md` 已经把 AC 的边界与接口**冻结**了，其中两条直接管到这块 UI：
+
+1. **遮罩只有一个来源 = AC**：消费者不许直接读 OB/SB 的原始图，也不许自己再攒一套语义图
+   （AC 文档 §1）；查询形状是 `HoAC_Mask(id)` / `HoAC_Group(groupId)` / `HoAC_Slot(slot)` /
+   `HoAC_Attribute(attr)` / `HoAC_Coverage()`，C# 侧由 feature **声明名字**、经 manifest 解析，解析不到要报诊断
+   （不许静默）。
+2. **只吃 AC 的消费者**里明确列了 **ScreenProcess 与角色特化**；排期上 R4 = AC 落地，
+   **R5 = 消费者输入切换**（SP 的 20 个 rule source 收成 AC 具名条目 + 旧序列化配置迁移；
+   角色特化 → AC（组 / 物体位 / 覆盖率）+ SB（表面色））。
+
+对本文档的影响：
+
+| 事项 | 结论 |
+| --- | --- |
+| IP 补规则遮罩 | **取消**（§8）：现在按 MetadataBuffer 通道做一套，AC 一到就全废；等 R5 直接吃 `HoAC_*` |
+| SP 现有遮罩 UI | 现在的 rule-source 下拉**不是定稿**；R5 会换成"具名条目 + 登记表 + 解析失败可见"，不要在此基础上加功能 |
+| CS v2 链化的资源绑定 | CS 现在直接读 `_HoMetadataBuffer*`（Composite shader `:52` 等）正是 AC 边界里**禁止**的最终形态 ⇒ 链化时按已冻结的 `HoAC_*` 形状设计（组 / 物体位 / 覆盖率 + SB 表面色），并与 R5 对齐排期 |
+| CS v1（本次） | **不依赖 AC**，可以先做：它只动配置模型与 UI 外壳，不碰语义读取 |
+| UI 文案 | 规范禁止在 UI 上出现 `_HoMetadataBuffer*`、`custom0` 这类旧名；侧栏/区段文案要按 AC 的用语（身份池 / 语义槽 / 组 ID / 部件 ID / 标记 / 物体位） |
+
+## 11. 与 `Ho-UI_风格规范.md` 的关系
+
+规范（`Documentation~/架构优化/Ho-UI_风格规范.md`）是 OB/SB/AC 及后续 feature 的硬约定，三条硬规矩是：
+调试入口在 Volume、分节一律走 `LilUrpEditorSectionGui.DrawSectionHeader` + `VerticalScope(helpBox)`、
+标签中文（英文原名放括号）。
+
+**本次遵行的部分**：
+
+- 中文标签 + 英文原名/缩写放括号（`EyeReveal`、`passEvent` 这类保留原样）；
+- 颜色常量集中在类顶、按规范的语义色板取（运行 / 高级 / 调试 / 内容 / RendererFeature 设置 / 名称）；
+- "可用性"不只靠颜色：侧栏图标之外还有 tooltip 与计数文案（`已启用 m 个效果`）；
+- 声明数据不进 Volume、结构项（`passEvent`/shader）留在 feature 的「高级」；
+- UI 文案不出现 `_HoMetadataBuffer*` / `custom0` 这类旧名，改用 AC 的用语；
+- 解析不到 / 数量不一致 / 溢出这类问题要在「调试」或「运行状态」里看得见。
+
+**有意偏离（三处，需要时可在规范里补一条"效果行"例外）**：
+
+| 偏离 | 为什么 |
+| --- | --- |
+| 效果行（`▶ 名字 摘要 [启用] [×]`）不用 `DrawSectionHeader`，而用浏览器统一的窄行样式 | 规范针对的是"运行 / 声明 / 调试 / 高级"这类**通道与设置分节**；效果行是另一种东西，且必须与 IP/SP 一致（三块统一是本次目标）。CS 的**设置/调试分节仍按规范**用 `DrawSectionHeader` |
+| 折叠状态用 `SessionState` 每实例，而不是规范里写的 `private static bool` | 静态 bool 会让同时打开的两个 Inspector/两个 Volume 互相串台；外观不变，只是状态归属改了 |
+| 逐效果参数用"一个 `VolumeParameter` 包一组普通字段"（IP/SP 的图层列表写法），而不是"每参数一个 `VolumeParameter<T>` + `Interp`" | 逐参数 override 在 CS 这层**本来就没生效**（§0.2），而且三块统一优先；参数仍是 per-camera（进 Volume），符合规范"per-camera 可覆盖的进 Volume"的判定 |
