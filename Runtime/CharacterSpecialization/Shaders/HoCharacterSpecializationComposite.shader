@@ -390,6 +390,8 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
 
             half3 ResolveFaceHairDiffuseColor(float2 uv)
             {
+                // 模糊后的受光脸颜色（乘颜色乘之前的那一层）：先除掉 alpha 的
+                // mask 权重，blurredColor.rgb 里带的就是"受光脸 × mask"的加权和。
                 float4 blurredColor = SAMPLE_TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseColorTexture, sampler_LinearClamp, uv);
                 float blurMask = max(blurredColor.a, 0.0001);
                 return (half3)(blurredColor.rgb / blurMask);
@@ -708,6 +710,56 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                     return half4(faceHairDiffuseMask, faceHairDiffuseMask, faceHairDiffuseMask, source.a);
                 }
 
+                if (debugMode == 18)
+                {
+                    if (_HoCharacterFaceHairDiffuseOptions.y <= 0.5)
+                    {
+                        return half4(0.0, 0.0, 0.0, source.a);
+                    }
+
+                    // ① 捕获到的受光脸（原始采样）：源趟在 debug 18 下把这次采样原样写进源色纹理的 rgb
+                    // （HoCharacterFaceHairDiffuse.shader pass 0），这里只是把它显示出来。
+                    return half4(SAMPLE_TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseSourceColorTexture, sampler_PointClamp, uv).rgb, source.a);
+                }
+
+                if (debugMode == 19)
+                {
+                    if (_HoCharacterFaceHairDiffuseOptions.y <= 0.5)
+                    {
+                        return half4(0.0, 0.0, 0.0, source.a);
+                    }
+
+                    // ② 模糊后（乘颜色乘之前）：blurredColor.rgb / blurredColor.a，与 debug 7 同内容，
+                    // 这里按"阶段顺序"再给一个入口。
+                    return half4(ResolveFaceHairDiffuseColor(uv), source.a);
+                }
+
+                if (debugMode == 20)
+                {
+                    if (_HoCharacterFaceHairDiffuseOptions.y <= 0.5)
+                    {
+                        return half4(0.0, 0.0, 0.0, source.a);
+                    }
+
+                    // ③ 乘颜色乘之后（正式合成用的那层颜色）。
+                    return half4(ResolveFaceHairDiffuseColor(uv) * (half3)_HoCharacterFaceHairDiffuseTintColor.rgb, source.a);
+                }
+
+                if (debugMode == 21)
+                {
+                    // ④ 最终合成：本支按正式合成的数学与顺序叠到当前画面上（不叠眼透/前发投影/轮廓，
+                    // 也不受它们影响），用来单独判断落色。要看整帧最终画面请用 关闭 +「启用脸色扩散」。
+                    half3 faceHairDiffuseOnly = source.rgb;
+                    float faceHairDiffuseDebugAmount = faceHairDiffuseMask * saturate(_HoCharacterFaceHairDiffuseParams.x) * saturate(_HoCharacterFaceHairDiffuseTintColor.a) * saturate(_HoCharacterFaceHairDiffuseOptions.x);
+                    if (faceHairDiffuseDebugAmount > 0.0001)
+                    {
+                        half3 faceHairDiffuseDebugColor = ResolveFaceHairDiffuseColor(uv) * (half3)_HoCharacterFaceHairDiffuseTintColor.rgb;
+                        faceHairDiffuseOnly = BlendFaceHairDiffuse(faceHairDiffuseOnly, faceHairDiffuseDebugColor, faceHairDiffuseDebugAmount);
+                    }
+
+                    return half4(faceHairDiffuseOnly, source.a);
+                }
+
                 if (debugMode == 9)
                 {
                     if (_HoCharacterSubjectOutlineOptions.y <= 0.5)
@@ -786,6 +838,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 float faceHairDiffuseAmount = faceHairDiffuseMask * saturate(_HoCharacterFaceHairDiffuseParams.x) * saturate(_HoCharacterFaceHairDiffuseTintColor.a) * saturate(_HoCharacterFaceHairDiffuseOptions.x);
                 if (faceHairDiffuseAmount > 0.0001)
                 {
+                    // 扩散的是**受光脸**（模糊后的），颜色乘只在这一步乘上去 —— 它是层色，不是被扩散的内容。
                     half3 faceHairDiffuseColor = ResolveFaceHairDiffuseColor(uv) * (half3)_HoCharacterFaceHairDiffuseTintColor.rgb;
                     color = BlendFaceHairDiffuse(color, faceHairDiffuseColor, faceHairDiffuseAmount);
                 }

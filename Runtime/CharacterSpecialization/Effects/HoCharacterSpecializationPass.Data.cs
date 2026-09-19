@@ -66,6 +66,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public TextureHandle metadataObjectCustom0Texture;
             public TextureHandle metadataSurfaceColorTexture;
             public TextureHandle geometryNormalDepthTexture;
+            // 受光脸：强制脸捕获的 MRT0（= 材质算完光照的 color）。这趟是它的"读"声明，
+            // 让 RDG 把捕获两趟排在它前面，并且自己把它绑成全局（不复用上一帧的残留绑定）。
+            public TextureHandle eyeColorTexture;
+            // 与合成趟同一个全局量 _HoCharacterOptions：这趟只用 .w（调试模式），
+            // 承载 ① 的阶段视图（源趟直出采样值）；x/y/z 与合成趟同源同值，写进去不改变语义。
+            public Vector4 options;
             public Material material;
         }
 

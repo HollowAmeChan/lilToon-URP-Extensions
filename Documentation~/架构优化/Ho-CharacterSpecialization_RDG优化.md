@@ -64,11 +64,11 @@
 
 | # | RDG pass 名 | 录制位置（file:line） | render func / shader 入口 | 读（面） | 写（面） | 进图条件 | 迭代 | tap/px |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 1 | `Ho-CharacterSpecialization CaptureFace` | `HoCharacterSpecializationRendererFeature.cs:557-584` | 内联 lambda `:573-583`；材质侧 `LightMode=HoCharacterCapture`（外部仓库） | 0（纯几何） | eyeColor + eyeData + captureDepth（`WriteAll`，`:568-570`）+ 清屏（`:577`→`ClearCaptureTargets` `:1088-1098`） | **无条件**（`:557` 不在任何 `if` 内）；只要整个 feature 记录就会进图 | 1（一次 `DrawRendererList`） | 材质侧，未确认（§6-1） |
-| 2 | `Ho-CharacterSpecialization CaptureEye` | `:586-613` | 内联 lambda `:602-612` | 0（纯几何） | 同上 3 面（`ReadWrite`，`:597-599`），无清屏 | **无条件**（`:586`） | 1 | 材质侧，未确认（§6-1） |
+| 1 | `Ho-CharacterSpecialization CaptureFace` | `HoCharacterSpecializationRendererFeature.cs:575-604` | 内联 lambda `:593-603`；材质侧 `LightMode=HoCharacterCapture`（外部仓库） | 0（纯几何） | eyeColor + eyeData + captureDepth（`WriteAll`，`:588-590`）+ 清屏（`:595`→`ClearCaptureTargets` `:1223-1233`） | `needsFaceCapture`（`:542`）= **`RequiresCharacterCapture(settings)` ∨ `requiresFaceHairDiffuseTextures`** —— 即眼透/角度修正/眼睛 debug ∈{1,2,3,16,17}，**或**脸色扩散效果开关/该链的 8 个 debug ∈{5,6,7,8,18,19,20,21} | 1（一次 `DrawRendererList`） | 材质侧，未确认（§6-1） |
+| 2 | `Ho-CharacterSpecialization CaptureEye` | `:607-636` | 内联 lambda `:625-635` | 0（纯几何） | 同上 3 面（`ReadWrite`，`:620-622`），无清屏 | `needsEyeCapture`（`:543`）= `RequiresCharacterCapture(settings)` —— **只有眼透那组条件**；脸色扩散只消费脸捕获，不拉起这一趟 | 1 | 材质侧，未确认（§6-1） |
 | 3 | `Ho-CharacterSpecialization SemanticMask Blur` | `:634-642` → `Effects/HoCharacterSpecializationPass.SemanticMaskBlur.cs:55-89` | `Shaders/HoCharacterSemanticMaskBlur.shader` pass 0（`Frag:43-76`） | objectCustom0_3、objectCustom4_7 | semanticLow、semanticHigh（MRT×2） | `RequiresSemanticMaskBlurTextures`（`SemanticMaskBlur.cs:17-25`：5 个"读取抗锯齿掩码"任一勾选，默认前 3 个为 true，`Effects.cs:21,24,27`）∧ `hasMetadataObjectCustom0/1` ∧ 材质非空（`:619-622`） | 1 | 2 × taps²；taps = `clamp(round(2·max(r,1)+1),3,8)`（`SemanticMaskBlur.shader:50-51`），默认 r=1（`Effects.cs:18`）→ **18** |
-| 4 | `Ho-CharacterSpecialization FaceHair Source` | `:677-701` | `Shaders/HoCharacterFaceHairDiffuse.shader` pass 0（`Frag:38-54`） | objectCustom0_3、surfaceColor、normalDepth（3；另有 1 条假读，§3.2-F1） | FaceHairDiffuseSourceColor + FaceHairDiffuseSourceDepth | `RequiresFaceHairDiffuseTextures`（`FaceHairDiffuse.cs:11-33`：`faceHairDiffuseEnabled`（默认 false，`Effects.cs:113`）或 debug∈{5,6,7,8}）∧ `hasMetadataSurfaceColor` ∧ 材质（`:651`） | 1 | **3**（`.g`:43、surfaceColor:44、normalDepth:45） |
-| 5 | `Ho-CharacterSpecialization FaceHair FastGaussian 1` | 循环 `:706-729`（i=0），写 temp | `Effects/…FaceHairDiffuse.cs:85-117` → shader pass 1（`Frag:81-116`） | FaceHairDiffuseSourceColor + SourceDepth（2） | TempColor + TempDepth | 同 #4 | 1 | **82**（中心 2 + 40 tap × 2 张纹理；`FaceHairDiffuse.shader:73,90-108`） |
+| 4 | `Ho-CharacterSpecialization FaceHair Source` | `:701-736` | `Shaders/HoCharacterFaceHairDiffuse.shader` pass 0（`Frag:43-71`） | objectCustom0_3、surfaceColor、normalDepth、**eyeColor（受光脸捕获）**（4） | FaceHairDiffuseSourceColor + FaceHairDiffuseSourceDepth | `RequiresFaceHairDiffuseTextures`（`FaceHairDiffuse.cs:11-40`：`faceHairDiffuseEnabled`（默认 false，`Effects.cs:113`）或 debug∈{5,6,7,8,18,19,20,21}）∧ `hasMetadataSurfaceColor` ∧ 材质（`:675`） | 1 | **4**（`.g`:48、surfaceColor:49、normalDepth:50、**eyeColor:52**；eyeColor 的读声明在 `:719`、全局绑定在 `:729`） |
+| 5 | `Ho-CharacterSpecialization FaceHair FastGaussian 1` | 循环 `:727-765`（i=0），写 temp | `Effects/…FaceHairDiffuse.cs:91-124` → shader pass 1（`Frag:98-133`） | FaceHairDiffuseSourceColor + SourceDepth（2） | TempColor + TempDepth | 同 #4 | 1 | **82**（中心 2 + 40 tap × 2 张纹理；`FaceHairDiffuse.shader:90,114-116`） |
 | 6 | `Ho-CharacterSpecialization FaceHair FastGaussian 2` | 同循环 i=1，写 final | 同上 | TempColor + TempDepth（2） | FaceHairDiffuseColor + FaceHairDiffuseDepth | 同 #4（`FaceHairDiffuseBlurIterationCount = 2`，`:289`） | 1 | **82** |
 | 7 | `Ho-CharacterSpecialization SubjectOutline Source` | `:749-793` | `Shaders/HoCharacterSubjectOutline.shader` pass 0（`Frag:91-112`） | objectCustom0_3、objectCustom4_7、GB depthTexture（3）＋ 模糊对（2，仅本效果自己勾了 AA 时才真采）＋ 1 条假读（§3.2-F2） | SubjectOutlineSource | `RequiresSubjectOutlineTextures`（`SubjectOutline.cs:14-36`：`subjectOutlineEnabled`（默认 false，`Effects.cs:140`）或 debug∈{9,10,11,12}）∧ `hasGeometryDepth` ∧ 材质（`:735`） | 1 | **2**（低/高两张对象通道各 1）+ 0..1（depth，仅 `mask>0.0001` 时采，`shader:100-109`） |
 | 8 | `Ho-CharacterSpecialization SubjectOutline FastGaussian 1` | 循环 `:797-816`（i=0） | `Effects/…SubjectOutline.cs:193-218` → shader pass 1（`Frag:132-162`） | SubjectOutlineSource（1） | SubjectOutlineTemp | 同 #7 | 1 | **65**（中心 1 + 64；`shader:130,141-158`） |
@@ -76,25 +76,26 @@
 | 10 | `Ho-CharacterSpecialization EnhancedOutline Source` | `:836-880` | 同 #7 的 shader pass 0（同材质、换 `sourceParams.x` 通道，`:847`） | objectCustom0_3、objectCustom4_7、GB depthTexture（3）＋ 模糊对（2，条件同 #7）＋ 1 条假读 | EnhancedOutlineSource | `RequiresEnhancedOutlineTextures`（`SubjectOutline.cs:38-59`：`enhancedOutlineEnabled`（默认 false，`Effects.cs:204`）或 debug∈{13,14,15}）∧ `hasGeometryDepth` ∧ `subjectOutlineMaterial`（`:822`） | 1 | **2** + 0..1（同 #7） |
 | 11 | `Ho-CharacterSpecialization EnhancedOutline FastGaussian 1` | 循环 `:884-903`（i=0） | 同 #8 | EnhancedOutlineSource（1） | EnhancedOutlineTemp | 同 #10 | 1 | **65** |
 | 12 | `Ho-CharacterSpecialization EnhancedOutline FastGaussian 2` | 同循环 i=1 | 同 #8 | Temp（1） | EnhancedOutlineTexture | 同 #10 | 1 | **65** |
-| 13 | `Ho-CharacterSpecialization Composite` | `:914-1064` | 内联 lambda `:999-1063` → `Shaders/HoCharacterSpecializationComposite.shader` pass 0（`Frag:608-823`） | 15 面（清单见 §1.3） | `_lilHoCharacterCompositeColor`（= 新相机颜色，`:1066`） | **无条件**（`:914`），但整条链前提是 `:489` 与 `:527-536` 全过且 `backBufferActive == false` | 1（内嵌多个运行期循环，见 §1.3） | 默认参数 ≈ **126**；随参数可变，上限 ~700+（§1.3） |
+| 13 | `Ho-CharacterSpecialization Composite` | `:972-1154` | 内联 lambda `:1077-1153` → `Shaders/HoCharacterSpecializationComposite.shader` pass 0（`Frag:610-825`） | 15 面（清单见 §1.3） | `_lilHoCharacterCompositeColor`（= 新相机颜色，`:1155`） | **无条件**（`:972`），但整条链前提是 `:489` 与 `:527-536` 全过且 `backBufferActive == false` | 1（内嵌多个运行期循环，见 §1.3） | 默认参数 ≈ **126**；随参数可变，上限 ~700+（§1.3） |
 
-**趟数结论**：全开 **13 趟**；默认参数（眼透 + 前发投影开、三支全关、语义抗锯齿前 3 项开）**只有 4 趟**：`CaptureFace` + `CaptureEye` + `SemanticMask Blur` + `Composite`。其中 **3 趟无条件进图**（#1、#2、#13），其余 10 趟分别由三个效果的开关或它们的 debug 模式拉起来。
+**趟数结论**：全开 **13 趟**；默认参数（眼透 + 前发投影开、三支全关、语义抗锯齿前 3 项开）**只有 4 趟**：`CaptureFace` + `CaptureEye` + `SemanticMask Blur` + `Composite`。其中 **#13 无条件进图**，#1/#2 由 `needsFaceCapture`/`needsEyeCapture` 拉起（眼透那组条件，**或**脸色扩散链的开关与 debug），其余 10 趟分别由三个效果的开关或它们的 debug 模式拉起来。
+> **本轮变化**：`needsFaceCapture` 现在 = `RequiresCharacterCapture(settings) || requiresFaceHairDiffuseTextures`（`:542`）——脸色扩散一开（或它的 8 个 debug 视图任一），**脸捕获就进图**，眼捕获仍然只在眼透那组条件下进图。这是本次改动在 pass 清单上的唯一变化。
 
 ### 1.2 目标纹理（分辨率 / 格式 / 创建处）
 
-`CreateTextureDesc`（`:1114-1141`）统一定义了 CS 全部非深度纹理：分辨率 = **相机目标 ÷ (int)renderScale**（`:1120-1123`），因此**只有 `renderScale = Full` 时才与相机目标同尺寸**；格式取传入的 `GraphicsFormat`，`MSAASamples.None`（`:1131`）、`clearBuffer = true`（`:1132`）、Bilinear/Clamp（`:1134-1135`）。
+`CreateTextureDesc`（`:1249-1276`）统一定义了 CS 全部非深度纹理：分辨率 = **相机目标 ÷ (int)renderScale**（`:1255-1258`），因此**只有 `renderScale = Full` 时才与相机目标同尺寸**；格式取传入的 `GraphicsFormat`，`MSAASamples.None`（`:1266`）、`clearBuffer = true`（`:1267`）、Bilinear/Clamp（`:1269-1270`）。
 
 | 纹理（常量名，`ShaderConstants.cs:14-32`） | 分辨率 | 格式 | 创建处 |
 | --- | --- | --- | --- |
-| eyeColor | 相机 ÷ renderScale | `GetHdrGraphicsFormat()` = `R16G16B16A16_SFloat`（`:1178-1182`；不支持时回落 `SystemInfo` LDR / `R8G8B8A8_UNorm` / `B8G8R8A8_UNorm`，`:1198-1212`） | `:539` |
-| eyeData | 同上 | `GetDataGraphicsFormat()` —— **与 HDR 版逐字相同的实现**，今天也是 `R16G16B16A16_SFloat`（`:1184-1188`） | `:540` |
-| captureDepth | 相机 ÷ renderScale（`CreateDepthDescriptor` `:1296-1313`，同 divisor） | 相机 `depthStencilFormat`（可用时）→ `CoreUtils.GetDefaultDepthStencilFormat()` → `GetDepthStencilFormat(24)` → `D32_SFloat`（`:1315-1336`） | `:541-547` |
-| semanticLow / semanticHigh | 相机 ÷ renderScale | `GetSemanticMaskGraphicsFormat()` = `R8G8B8A8_UNorm`（`:1192-1196`） | `:630-632` |
-| FaceHairDiffuse SourceColor / TempColor / Color | 相机 ÷ renderScale | `R16G16B16A16_SFloat` | `:654-673` |
-| FaceHairDiffuse SourceDepth / TempDepth / Depth | 同上 | `GetDataGraphicsFormat()` = `R16G16B16A16_SFloat`（`:659-675`） | 同上 |
-| SubjectOutline Source / Temp / 最终 三张 | 同上 | 同上（`:738-747`） | 同上 |
-| EnhancedOutline Source / Temp / 最终 三张 | 同上 | 同上（`:825-834`） | 同上 |
-| `_lilHoCharacterCompositeColor`（destination） | **相机目标尺寸**（desc 从 `source` 抄，`:906`） | `EnsureHdrTextureDesc` → 16F；`clearBuffer = false`（`:908`） | `:906-911` |
+| eyeColor | 相机 ÷ renderScale | `GetHdrGraphicsFormat()` = `R16G16B16A16_SFloat`（`:1313-1317`；不支持时回落 `SystemInfo` LDR / `R8G8B8A8_UNorm` / `B8G8R8A8_UNorm`，`:1333-1347`） | `:550` |
+| eyeData | 同上 | `GetDataGraphicsFormat()` —— **与 HDR 版逐字相同的实现**，今天也是 `R16G16B16A16_SFloat`（`:1319-1323`） | `:553-555` |
+| captureDepth | 相机 ÷ renderScale（`CreateDepthDescriptor` `:1431-1448`，同 divisor） | 相机 `depthStencilFormat`（可用时）→ `CoreUtils.GetDefaultDepthStencilFormat()` → `GetDepthStencilFormat(24)` → `D32_SFloat`（`:1450-1471`） | `:557-565` |
+| semanticLow / semanticHigh | 相机 ÷ renderScale | `GetSemanticMaskGraphicsFormat()` = `R8G8B8A8_UNorm`（`:1327-1331`） | `:648-656` |
+| FaceHairDiffuse SourceColor / TempColor / Color | 相机 ÷ renderScale | `R16G16B16A16_SFloat` | `:678-699` |
+| FaceHairDiffuse SourceDepth / TempDepth / Depth | 同上 | `GetDataGraphicsFormat()` = `R16G16B16A16_SFloat`（`:680-699`） | 同上 |
+| SubjectOutline Source / Temp / 最终 三张 | 同上 | 同上（`:779-783`） | 同上 |
+| EnhancedOutline Source / Temp / 最终 三张 | 同上 | 同上（`:872-876`） | 同上 |
+| `_lilHoCharacterCompositeColor`（destination） | **相机目标尺寸**（desc 从 `source` 抄，`:951`） | `EnsureHdrTextureDesc` → 16F；`clearBuffer = false`（`:953`） | `:951-956` |
 
 输入侧（CS 不创建，只读）：
 
@@ -105,30 +106,30 @@
 | GB normalDepth | 相机 ÷ **GB 自己的** renderScale（默认 Full） | `R16G16B16A16_SFloat` | `GeometryBuffer/HoGeometryBufferPass.cs:230-234`、`HoGeometryBufferFormatUtility.cs:9` |
 | GB depthTexture | 同上 | 深度格式 | `HoGeometryBufferPass.cs:235-241` |
 
-> **单位陷阱（代码事实，不是待验证）**：composite 里所有"像素半径"都用 `MetadataTexelSize()` = `_HoMetadataBufferMaskIdTexture_TexelSize`（`Composite.shader:72-75`），即 **MB 的 texel**；而三支的模糊半径用各自 `_BlitTexture_TexelSize`（`FaceHairDiffuse.shader:88`、`SubjectOutline.shader:139`），即 **CS 纹理的 texel**。两个 renderScale 是两个独立设置（`HoMetadataBufferSettings.cs:30`、`HoGeometryBufferSettings.cs:30`、CS 的 `Settings.cs:132`），默认都是 Full，所以默认下一致；一旦其中之一改成 Half，同一个"像素"数字会指向不同的物理尺寸，比对画面时不要误判成 bug。
+> **单位陷阱（代码事实，不是待验证）**：composite 里所有"像素半径"都用 `MetadataTexelSize()` = `_HoMetadataBufferMaskIdTexture_TexelSize`（`Composite.shader:72-75`），即 **MB 的 texel**；而三支的模糊半径用各自 `_BlitTexture_TexelSize`（`FaceHairDiffuse.shader:105`、`SubjectOutline.shader:139`），即 **CS 纹理的 texel**。两个 renderScale 是两个独立设置（`HoMetadataBufferSettings.cs:30`、`HoGeometryBufferSettings.cs:30`、CS 的 `Settings.cs:132`），默认都是 Full，所以默认下一致；一旦其中之一改成 Half，同一个"像素"数字会指向不同的物理尺寸，比对画面时不要误判成 bug。
 
 ### 1.3 composite 的采样构成（为什么它的 ms 必须连着参数一起记）
 
-`Composite.shader:608-823` 是唯一"一趟里塞了全部效果"的 pass，tap 数**随参数变化**：
+`Composite.shader:610-825` 是唯一"一趟里塞了全部效果"的 pass，tap 数**随参数变化**：
 
 | 项 | tap/px | 依据 |
 | --- | --- | --- |
-| 固定 | source 1 + eyeColor 1 = **2** | `:613`、`:619` |
+| 固定 | source 1 + eyeColor 1 = **2** | `:615`、`:621` |
 | 眼透（默认开） | maskId 1 + normalDepth 1 + eyeData 1 + frontHair 1 + revealArea 1 + `SampleEyeAlpha` **81** ≈ **86** | `:248-250,252,254`；81 = `SampleEyeAlpha` 的 9×9（扩张 8 邻域+中心 = 9，羽化对 9 个偏移各再算一次 9 → `:198-216,228-238`），默认扩张 2px / 羽化 1px（`Effects.cs:43,46`） |
 | 眼透角度修正（默认关） | +2（eyeData 1 + 角度表 1） | `:275-277`，仅在 `_HoCharacterEyeAngleParams.x > 0.0001` 时采 |
 | 前发投影（默认开） | 柔化 5 → taps=5 → **25** + receiver 1 + maskId 2 + normalDepth 1 ≈ **29** | `:324`（box 循环 `:158-166`）、`:328`、`:330-331`、`:299` |
 | 前发投影·扩散像素 > 0 | 每个 box tap 再 ×9（`SampleSemanticSpread` 的 3×3 max，`:112-130`）→ 25×9 = **225** | `:121-128,164` |
-| 脸色扩散 | **5** | 采样点 `:370-371`（frontHair、blurredColor）、`:379-380`（normalDepth、blurredDepth）＋ `:393`（取色，仅 amount>0 时） |
+| 脸色扩散 | **5** | 采样点 `:370-371`（frontHair、blurredColor）、`:379-380`（normalDepth、blurredDepth）＋ `:842`（取色，仅 amount>0 时）。**颜色来源换成受光脸不改这里的 tap 数**：受光脸是源趟（#4）多读一面，合成侧这条表达式没变 |
 | 主体轮廓 | **2**（源 mask 1 + 模糊 1） | `:418,428` |
 | 增强轮廓 | **2** | `:438,448` |
 | 理论最大值 | 柔化 8（taps=8 → 64）× 扩散>0（×9）= 576 + 眼透拉满 + 其余 ≈ **700+** | `:143,151,164`、`Effects.cs:104,107`（默认柔化 2 / 扩散 0） |
 
-**读写的 15 面清单（#13）**：source(camera color)、maskId、normalDepth、objectCustom0_3、objectCustom4_7、eyeColor、eyeData、semanticLow、semanticHigh、FaceHairDiffuseColor、FaceHairDiffuseDepth、SubjectOutlineSource、SubjectOutlineTexture、EnhancedOutlineSource、EnhancedOutlineTexture（+ debug 5 时 FaceHairDiffuseSourceColor，`:981` 声明、`:681` 采样）。
+**读写的 15 面清单（#13）**：source(camera color)、maskId、normalDepth、objectCustom0_3、objectCustom4_7、eyeColor、eyeData、semanticLow、semanticHigh、FaceHairDiffuseColor、FaceHairDiffuseDepth、SubjectOutlineSource、SubjectOutlineTexture、EnhancedOutlineSource、EnhancedOutlineTexture（+ debug 5/18 时 FaceHairDiffuseSourceColor，`:1057` 声明、`:683`/`:722` 采样）。
 
 ### 1.4 三个容易搞错的点
 
-1. **所有 13 趟共用同一个 ProfilingSampler**：`:288` 只 `new ProfilingSampler("Ho-CharacterSpecialization")` 一次，13 处 `AddRasterRenderPass` 全传它（`:557,586`、`SemanticMaskBlur.cs:65`、`:677,717`、`:749,807`、`:836,894`、`:914`）。→ **GPU Profiler 里你看到的是 N 个同名 marker**，只能按顺序数，或改用 RDG 视图 / RenderDoc 的 pass region 区分（§0.1 的测量口径必须建立在这点上）。
-2. **捕获两趟不是全屏 pass**：它们是 `DrawRendererList`（`:581,610`），片元里靠 `clip()` 按物体自己的 Face/Eye 位决定要不要画（`Shaders/HoCharacterCaptureCommon.hlsl:56-64,68-69`），所以**两趟都会对全部被捕获物体跑完整顶点链**，只是片元被裁掉。附加成本是明确的：`CaptureFace` 还额外画一次清屏（`:1091-1094`）。
+1. **所有 13 趟共用同一个 ProfilingSampler**：`:288` 只 `new ProfilingSampler("Ho-CharacterSpecialization")` 一次，13 处 `AddRasterRenderPass` 全传它（`:577,609`、`SemanticMaskBlur.cs:65`、`:701,741`、`:773,831`、`:860,918`、`:972`）。→ **GPU Profiler 里你看到的是 N 个同名 marker**，只能按顺序数，或改用 RDG 视图 / RenderDoc 的 pass region 区分（§0.1 的测量口径必须建立在这点上）。
+2. **捕获两趟不是全屏 pass**：它们是 `DrawRendererList`（`:601,633`），片元里靠 `clip()` 按物体自己的 Face/Eye 位决定要不要画（`Shaders/HoCharacterCaptureCommon.hlsl:56-64,68-69`），所以**两趟都会对全部被捕获物体跑完整顶点链**，只是片元被裁掉。附加成本是明确的：`CaptureFace` 还额外画一次清屏（`:597` → `ClearCaptureTargets:1223-1233`）。
 3. **`captureDepthTexture` 在本仓库里没有任何采样者**（全仓库 grep 只有创建/绑定，没有 `SAMPLE`）：它唯一的用途是捕获两趟自己的深度测试（材质侧 `ZWrite On / ZTest LEqual`，见 §3.1-T13 与 §3.3-V1 的外部证据）。
 
 ---
@@ -146,7 +147,7 @@
 | 1 | CaptureFace | 0 | 3 面（8+8+4 B/px）= **41.5** ＋ 清屏满屏 2 MRT = 额外 **33.2** |
 | 2 | CaptureEye | 0 | 3 面 = **41.5**（ReadWrite，几何覆盖面积） |
 | 3 | SemanticMask Blur | 2 × 8 B = **33.2** | 2 × 4 B = **16.6** |
-| 4 | FaceHair Source | 3 × 8 B = **49.8** | 2 × 8 B = **33.2** |
+| 4 | FaceHair Source | 4 × 8 B = **66.4**（多出的一面是 eyeColor 受光脸捕获，8 B/px） | 2 × 8 B = **33.2** |
 | 5 | FaceHair FastGaussian 1 | 2 × 8 B = **33.2** | 2 × 8 B = **33.2** |
 | 6 | FaceHair FastGaussian 2 | 2 × 8 B = **33.2** | 2 × 8 B = **33.2** |
 | 7 | SubjectOutline Source | 3 面 = **41.5**（＋自己勾 AA 时再 2 面 = **74.8**） | 1 × 8 B = **16.6** |
@@ -161,8 +162,8 @@
 
 | 配置 | 事件计数 | 字节数（1080p） |
 | --- | --- | --- |
-| **全开（13 趟，含双轮廓读模糊对）** | **36 读 + 21 写 = 57** | 读 ≈ **589 MB**，写 ≈ **315 MB**（含清屏 33 MB）→ 合计 ≈ **0.92 GB/帧** |
-| **默认（4 趟）** | **9 读 + 9 写 = 18** | 读 ≈ 124 MB，写 ≈ 149 MB → 合计 ≈ **0.27 GB/帧** |
+| **全开（13 趟，含双轮廓读模糊对）** | **37 读 + 21 写 = 58** | 读 ≈ **606 MB**（比上一轮 +1 面 = +16.6 MB，就是 #4 多读的 eyeColor），写 ≈ **315 MB**（含清屏 33 MB）→ 合计 ≈ **0.94 GB/帧** |
+| **默认（4 趟）** | **9 读 + 9 写 = 18** | 读 ≈ 124 MB，写 ≈ 149 MB → 合计 ≈ **0.27 GB/帧**（脸色扩散默认关，这条链不录，所以默认口径不变） |
 
 **这些数不能当 GPU 时间用**，差在三处（写清楚，避免误判）：① 逐趟只算 1 次面读，而实际 fetch 数是第 1 节的 tap（65 tap 的模糊 = 同一批纹素被取 65 次，绝大多数命中 L1/L2，不产生 65 倍 DRAM 流量）；② 捕获两趟的写只发生在角色覆盖面积上，但顶点/片元成本是几何+材质侧决定的；③ 相机颜色 `source` 的格式由 URP 决定（HDR 常见 4 B/px 打包格式，LDR 4 B/px），本表按 8 B/px 计，实际要按抓帧看到的格式换算。
 
@@ -177,40 +178,44 @@
 | # | 边（生产者 → 消费者） | 依据 | 少了它会怎样 |
 | --- | --- | --- | --- |
 | T1 | MB.objectCustom0_3/4_7 → #3 | `SemanticMaskBlur.cs:74-75`＋`SemanticMaskBlur.shader:66-67` | 语义抗锯齿副本变成清屏值，所有勾了"读取抗锯齿掩码"的效果边缘消失 |
-| T2 | MB.objectCustom0_3 → #4 / #7 / #10 | `FaceHairDiffuse.shader:43`、`SubjectOutline.shader:96`（`SampleObjectCustomChannel`） | 脸/轮廓的源遮罩全 0 |
+| T2 | MB.objectCustom0_3 → #4 / #7 / #10 | `FaceHairDiffuse.shader:48`、`SubjectOutline.shader:96`（`SampleObjectCustomChannel`） | 脸/轮廓的源遮罩全 0 |
 | T3 | MB.objectCustom4_7 → #7 / #10 | 同上（通道 4..7 走高纹理；主体轮廓在特性里写死 `CharacterFull=0`（`:760`），增强轮廓默认 `CharacterBody=6`（`Effects.cs:207`）） | 增强轮廓（默认通道 6）直接黑掉 |
-| T4 | MB.surfaceColor → #4 | `FaceHairDiffuse.shader:44,51` | 扩散颜色与 coverage 全 0 |
-| T5 | GB.normalDepth → #4 | `FaceHairDiffuse.shader:45,52`（线性深度进 depth 通道） | 深度门失效 |
+| T4 | MB.surfaceColor → #4 | `FaceHairDiffuse.shader:49,53,54`（**只供 coverage / 掩码**，不再当颜色来源） | coverage 与 mask 全 0（颜色本身来自 T16） |
+| T5 | GB.normalDepth → #4 | `FaceHairDiffuse.shader:50,69`（线性深度进 depth 通道） | 深度门失效 |
 | T6 | GB.depthTexture → #7 / #10 | `SubjectOutline.shader:102-107`（只有这里读几何深度，用来算高度渐隐的 worldY） | 高度渐隐退化成"无高度"（`ResolveSubjectOutlineHeightFade` 的 `hasHeight=0` → 返回 1，`Composite.shader:495-502`） |
-| T7 | #4 → #5 → #6 → #13 | `:721-724`（blur 输入接上一趟输出）、`:981-983` | 颜色/深度链断，脸色扩散与深度门同时失效 |
+| T7 | #4 → #5 → #6 → #13 | `:739-740`（blur 输入接上一趟输出）、`:1060-1061` | 颜色/深度链断，脸色扩散与深度门同时失效 |
 | T8 | #7 → #8 → #9 → #13 | `:811-812`、`:987-988` | 同上（外扩场断） |
 | T9 | #10 → #11 → #12 → #13 | `:898-899`、`:992-993` | 同上 |
-| T10 | GB/MB（全部上表输入）→ 每个 source pass | `:685-688`、`:762-765`、`:849-852` | 通不过 RDG 的输入校验 |
-| T11 | #1 的写 → #13 的 eyeColor/eyeData 读（眼透/角度/调试开时） | `:972-973`＋`Composite.shader:619,250,275,645` | 眼透读清屏值 |
+| T10 | GB/MB（全部上表输入）→ 每个 source pass | `:713-715`、`:762-765`、`:849-852` | 通不过 RDG 的输入校验 |
+| T11 | #1 的写 → #13 的 eyeColor/eyeData 读（眼透/角度/调试开时） | `:1037,1041`＋`Composite.shader:621,250,275,647` | 眼透读清屏值 |
 | T12 | MB.maskId → #13 | `Composite.shader:248`（眼透、前发投影的 sameCharacter）、`:330-331`（前发投影） | 同角色判定失效；另外它的 `_TexelSize` 还是所有语义半径的单位（`:72-75`）→ **不能简单不绑** |
-| T13 | 场景几何（材质侧 `HoCharacterCapture` pass）→ #1 / #2 | `:559,588` `CreateRendererList`＋`CaptureCommon.hlsl:56-64`；材质侧深度状态见 §3.3-V1 | 捕获为空 |
-| T14 | #13 → 下游（后处理/后续 pass） | `:1066` `resourceData.cameraColor = destination` | 整条链白做 |
-| T15 | eyeAngleTable（CPU 上传的 `_lilHoCharacterEyeAngleTable`）→ #13 | `HoCharacterSpecializationRendererFeature.cs:89`＋`Composite.shader:277,665` | 角度修正读到旧表/空表（见 `Documentation~/CharacterSpecialization_EyeReveal.md` §3.1 的坑） |
+| T13 | 场景几何（材质侧 `HoCharacterCapture` pass）→ #1 / #2 | `:579,601` `CreateRendererList`/`DrawRendererList`＋`CaptureCommon.hlsl:56-64`；材质侧深度状态见 §3.3-V1 | 捕获为空 |
+| T14 | #13 → 下游（后处理/后续 pass） | `:1155` `resourceData.cameraColor = destination` | 整条链白做 |
+| T15 | eyeAngleTable（CPU 上传的 `_lilHoCharacterEyeAngleTable`）→ #13 | `HoCharacterSpecializationRendererFeature.cs:89`＋`Composite.shader:277,667` | 角度修正读到旧表/空表（见 `Documentation~/CharacterSpecialization_EyeReveal.md` §3.1 的坑） |
+| T16 | **#1 的写（eyeColor = 受光脸）→ #4**（本轮新增） | 真依赖三件套：shader `FaceHairDiffuse.shader:52` 的 `SAMPLE_TEXTURE2D_X(_lilHoCharacterEyeColorTexture, …)`、读声明 `:719`、全局绑定 `:729`；而 #1 只在 `needsFaceCapture`（`:542`，含 `requiresFaceHairDiffuseTextures`）时录制 | 扩散颜色全 0（捕获是这张图的唯一写入者；无回退路径，见 `Documentation~/CharacterSpecialization_FaceHairDiffuse.md`） |
 
 ### 3.2 假依赖（声明了但没采样）
 
 | # | 边 | 依据（为什么是假的） | 什么时候是假的 |
 | --- | --- | --- | --- |
-| F1 | `source` → #4 | `:685` 声明读；`FaceHairDiffuse.shader:38-54` 的 Frag **从没采样 `_BlitTexture`**（全仓库 `_BlitTexture` 采样点只有 `SubjectOutline.shader:141,156`、`FaceHairDiffuse.shader:90,107`、`Composite.shader:613`，后两个是**各自的 blur pass**） | **恒假** |
+| F1 | `source` → #4 | `:713` 之前就没有这条读（K2 已断）；`FaceHairDiffuse.shader:43-71` 的 Frag **从没采样 `_BlitTexture`**（全仓库 `_BlitTexture` 采样点只有 `SubjectOutline.shader:141,156`、`FaceHairDiffuse.shader:107,124`、`Composite.shader:615`，后两个是**各自的 blur pass**） | **恒假** |
 | F2 | `source` → #7 | `:762` 声明；`SubjectOutline.shader:91-112` 的 Frag 只采对象通道 + 几何深度，不采 `_BlitTexture` | **恒假** |
 | F3 | `source` → #10 | `:849` 声明；同 #7 的 shader | **恒假** |
 | F4 | semanticLow/High → #7 | `:766-770` 只按"副本是否存在"声明；而该 pass 自己把 `_HoCharacterSemanticMaskBlurValid` 设成 `ready && settings.semanticMaskBlurSubjectOutline`（`:783-784`），shader 只有 `> 0.5` 才采（`SubjectOutline.shader:43-52`） | `semanticMaskBlurSubjectOutline == false`（默认就是 false，`Effects.cs:30`） |
 | F5 | semanticLow/High → #10 | `:853-857` ＋ `:870-871`；同 F4 | `semanticMaskBlurEnhancedOutline == false`（默认 false，`Effects.cs:33`） |
 | F6 | semanticLow/High → #13 | `:974-978` 只按 `ready` 声明；采样条件是 `_HoCharacterSemanticMaskOptions.y/z/w`（`Composite.shader:92`），而这三位只由 前发投影/脸色扩散/眼透 三个开关决定（`SemanticMaskBlur.cs:48-52`） | 三个开关全不勾、只有两个轮廓勾了（此时副本是给轮廓用的） |
-| F7 | FaceHairDiffuseSourceColor → #13 | `:981` 声明；shader 只有 debug 5 采它（`Composite.shader:681`，声明在 `:63`）——**这张纹理因为这条边要活到最后一趟**，挡住 RDG 别名 | `debugMode != FaceHairDiffuseSourceMask(5)` |
+| F7 | FaceHairDiffuseSourceColor → #13 | `:1057` 声明（条件收窄成 `faceHairDiffuseSourceColorSampled` = debug 5 **或 18**）；shader 只有 debug 5 采它的 `.a`（`Composite.shader:683`）、debug 18 采它的 `.rgb`（`:722`）——**这张纹理因为这两条边要活到最后一趟**，挡住 RDG 别名 | `debugMode ∉ {FaceHairDiffuseSourceMask(5), FaceHairDiffuseCapturedFaceLit(18)}` |
 | F8 | eyeColor/eyeData → #13 | `:972-973` **无条件**声明；采样全部有 gate：`_HoCharacterOptions.x <= 0.5` 时 `ResolveEyeRevealMask` 在采样前 return 0（`Composite.shader:241-246`），`ResolveEyeAngleFactor` 在 `strength<=0.0001` 时 return 1（`:268-271`） | `eyeRevealEnabled == false` ∧ 角度修正常数 0 ∧ debug ∉ {1,2,3,16,17} |
 
 > **F8 的更正（施工时核实，2026，见文末"施工状态"）**：这条边**只有 eyeData 的一半是假读**。
-> `eyeColor` 在 `Frag` 开头 `Composite.shader:619` 就被**无条件**采样（debug 1 在 `:640` 直接返回它、
-> `:771` 的 `lerp` 拿它当目标色），所以 `:972` 是**真读**，不能删；能门控的只有 `:973`（eyeData），
-> 它的 4 个采样点 `:250 / :275 / :645 / :663` 才全部落在 F8 的门内。原文"采样全部有 gate"一句对
+> `eyeColor` 在 `Frag` 开头 `Composite.shader:621` 就被**无条件**采样（debug 1 在 `:640-642` 直接返回它、
+> `:823` 的 `lerp` 拿它当目标色），所以合成侧那条读是**真读**，不能删；能门控的只有 eyeData 那条，
+> 它的 4 个采样点 `:250 / :275 / :647 / :665` 才全部落在 F8 的门内。原文"采样全部有 gate"一句对
 > eyeColor 不成立。
-| F9 | （不是边，是死 pass）#1 / #2 在眼透全关时仍在图里 | `:557,586` 无条件录制；`AllowPassCulling(false)`（`:572,601`）让 RDG **不能**按"输出没人用"剔掉它；输出唯一消费者 #13 又因为 F8 变成了假读 | 同 F8 |
+>
+> **本轮补充**：`eyeColor` 现在还有第二个真消费者 —— 脸色扩散源趟（T16）。它同样**必须在 `needsFaceCapture` 里**
+> （`:542` 已经带上 `requiresFaceHairDiffuseTextures`），否则这条链会读到一张没人写、只被清 0 的纹理。
+| F9 | （不是边，是死 pass）#1 / #2 在眼透全关时仍在图里 | `:575,607` 由 `needsFaceCapture`/`needsEyeCapture` 录制（K1 已落地）；`AllowPassCulling(false)`（`:592,624`）让 RDG **不能**按"输出没人用"剔掉它；#2 的消费者（eyeData）又因为 F8 变成了假读 | 眼透那组条件全不成立（但 #1 仍会被脸色扩散链拉起来，见 T16） |
 
 > **F9 的两点补充（施工时核实，2026）**：① `AllowPassCulling(false)` 其实是**冗余**的写法——
 > core 里 `AllowGlobalStateModification(true)` 内部就会调 `AllowPassCulling(false)`
@@ -419,6 +424,8 @@ core 包不在本仓库，但它是**注册表版本**，缓存在工程里：
 
 ## 施工状态（2026，safe 刀已落地；行号为本文件被改后的工作区行号）
 
+### 第一轮：safe 刀（K1 / K2 / K3 / K5 / K8）
+
 改动的文件只有三个（`git status --short` 只显示这三个）：
 `Runtime/CharacterSpecialization/HoCharacterSpecializationRendererFeature.cs`、
 `Runtime/CharacterSpecialization/Effects/HoCharacterSpecializationPass.Data.cs`、
@@ -430,8 +437,8 @@ core 包不在本仓库，但它是**注册表版本**，缓存在工程里：
 | **K2** | ✅ 已实施 | 三处 source pass：删 `UseTexture(source, Read)`（原 `:685/:762/:849`）；`Blitter.BlitTexture(cmd, data.source, …)` → `SetGlobalVector(BlitScaleBiasId, (1,1,0,0))` + `DrawProcedural(Matrix4x4.identity, material, 0, MeshTopology.Triangles, 3, 1)`；`FaceHairDiffuseSourcePassData`/`SubjectOutlineSourcePassData` 的 `source` 字段删除 | ① 三个 pass 的片元从不采 `_BlitTexture`（`HoCharacterFaceHairDiffuse.shader:38-54`、`HoCharacterSubjectOutline.shader:91-112`，全仓 `_BlitTexture` 采样点只有各自的 blur pass 与合成的 `:613`）；② 顶点阶段**确实**依赖 `_BlitScaleBias`：`Blit.hlsl:50` → `DYNAMIC_SCALING_APPLY_SCALEBIAS` → `DynamicScaling.hlsl:4`（`bias + uv * scale`），所以必须显式设 `(1,1,0,0)`；③ 新写法与 core `Blitter.DrawTriangle`（`Blitter.cs:325-331`，`DrawProcedural(..., 3, 1, propertyBlock)`）**同为 3 顶点全屏三角形**，只有"设进 MPB"与"设进全局量"之别，UV/覆盖完全一致；④ `_BlitScaleBias` 的 property id 与 core 私有 `BlitShaderIDs._BlitScaleBias` 同串（`Blitter.cs:54`） |
 | **K3 / F4 / F5** | ✅ 已实施 | 主体轮廓 source：`if (semanticMaskBlurReady)` → `if (semanticMaskBlurReady && settings.semanticMaskBlurSubjectOutline)`；增强轮廓同理用 `semanticMaskBlurEnhancedOutline` | shader 只在 `_HoCharacterSemanticMaskBlurValid > 0.5` 时读模糊对（`HoCharacterSubjectOutline.shader:43-52`），而这个全局量就是 render func 里的 `semanticMaskBlurReady && useSemanticMaskAntiAliasing`（同一表达式，同值）；开关关掉时连全局绑定都不写（原样保留） |
 | **K3 / F6** | ✅ 已实施 | 合成趟的模糊对读声明由 `if (semanticMaskBlurReady)` 改为 `compositeSamplesSemanticMaskBlur` = `ready && ((eyeRevealEnabled && semanticMaskBlurEyeReveal) \|\| (hairDropShadowEnabled && semanticMaskBlurHairShadow) \|\| (faceHairDiffuseReady && semanticMaskBlurFaceHairDiffuse))`；全局绑定同样跟着它（`_HoCharacterSemanticMaskBlurValid` 仍无条件写，那是"读原始 bit"分支的条件） | 合成里的三条采样路径全部要求 `_HoCharacterSemanticMaskBlurValid > 0.5 && useAntiAliased > 0.5`（`Composite.shader:92` 的 `SampleSemanticBit`），且各自有前置门：眼透 `:243-246`、前发投影 `:309-312`、脸色扩散 `:364-367`；`useAntiAliased` 三位由 `CreateSemanticMaskOptions`（`SemanticMaskBlur.cs:41-53`）给出，就是那三个开关 |
-| **K5 / F7** | ✅ 已实施 | 合成趟的 `UseTexture(faceHairDiffuseSourceColorTexture)` 由 `if (faceHairDiffuseReady)` 收窄为 `faceHairDiffuseReady && debugMode == FaceHairDiffuseSourceMask`；全局绑定同样收窄 | 该纹理在 shader 里只有 `:681` 一个采样点，位于 `debugMode == 5` 分支内，且外面还有 `_HoCharacterFaceHairDiffuseOptions.y > 0.5`（= `faceHairDiffuseReady`）；`_HoCharacterOptions.w = (float)settings.debugMode`（`MaterialProperties.cs:229`）→ C# 侧 `settings.debugMode` 就是那个值。debug ≠ 5 时源色只被 blur#1 读（`FaceHairDiffuse.cs:104`），提前死掉正是本刀要的别名收益 |
-| **K1 / F8 / F9** | ✅ 已实施（含一处更正） | `needsFaceCapture` / `needsEyeCapture` / `needsCharacterCapture` 三个具名局部量（扩展点注释写在录制处）；两趟捕获、`eyeData`、`captureDepth` 跟着门控；合成趟的 `UseTexture(eyeDataTexture)` 与 `SetGlobalTexture(EyeDataTextureId)` 跟着 `needsEyeCapture`；**`eyeColor` 的读声明与全局绑定保持不变** | 门 = `RequiresCharacterCapture(settings)` = `eyeRevealEnabled \|\| (eyeRevealAngleEnabled && eyeRevealAngleStrength > 0.0001) \|\| debug ∈ {1,2,3,16,17}`。关门的帧里 `revealMask` 恒 0（`Composite.shader:243-246`）→ `:771` 的 `lerp(source.rgb, eyeColor.rgb, 0)` 逐位等于 `source.rgb`；`eyeData` 的 4 个采样点（`:250/:275/:645/:663`）恰好就是门里那几项。**更正**：F8 说 eyeColor 也是假读是错的——`:619` 无条件采它，所以它必须留绑定；关门帧里那张纹理由 RDG 按 `clearBuffer` 清成 0（core `RenderGraphResourceRegistry.cs:1054` + `Compiler/NativePassCompiler.cs:1184`：首个用途是"被采样"而不是附件时走显式 clear），因此不引入 NaN/残留 |
+| **K5 / F7** | ✅ 已实施（第二轮收窄到两个 debug） | 合成趟的 `UseTexture(faceHairDiffuseSourceColorTexture)` 由 `if (faceHairDiffuseReady)` 收窄为 `faceHairDiffuseReady && faceHairDiffuseSourceColorSampled`，后者 = `debugMode ∈ {FaceHairDiffuseSourceMask(5), FaceHairDiffuseCapturedFaceLit(18)}`（`:968-970`、`:1055-1058`）；全局绑定同样收窄 | 该纹理在 shader 里只有 `:683`（debug 5，取 `.a`）与 `:722`（debug 18，取 `.rgb`）两个采样点，都在 `debugMode == N` 分支内，且外面还有 `_HoCharacterFaceHairDiffuseOptions.y > 0.5`（= `faceHairDiffuseReady`）；`_HoCharacterOptions.w = (float)settings.debugMode`（`MaterialProperties.cs` 的 `CreateCharacterOptions`）→ C# 侧 `settings.debugMode` 就是那个值。debug ∉ {5,18} 时源色只被 blur#1 读（`FaceHairDiffuse.cs:110`），提前死掉正是本刀要的别名收益 |
+| **K1 / F8 / F9** | ✅ 已实施（含一处更正） | `needsFaceCapture` / `needsEyeCapture` / `needsCharacterCapture` 三个具名局部量（扩展点注释写在录制处）；两趟捕获、`eyeData`、`captureDepth` 跟着门控；合成趟的 `UseTexture(eyeDataTexture)` 与 `SetGlobalTexture(EyeDataTextureId)` 跟着 `needsEyeCapture`；**`eyeColor` 的读声明与全局绑定保持不变** | 眼透那半的门 = `RequiresCharacterCapture(settings)` = `eyeRevealEnabled \|\| (eyeRevealAngleEnabled && eyeRevealAngleStrength > 0.0001) \|\| debug ∈ {1,2,3,16,17}`。关门的帧里 `revealMask` 恒 0（`Composite.shader:243-246`）→ `:823` 的 `lerp(source.rgb, eyeColor.rgb, 0)` 逐位等于 `source.rgb`；`eyeData` 的 4 个采样点（`:250/:275/:647/:665`）恰好就是门里那几项。**更正**：F8 说 eyeColor 也是假读是错的——`:621` 无条件采它，所以它必须留绑定；关门帧里那张纹理由 RDG 按 `clearBuffer` 清成 0（core `RenderGraphResourceRegistry.cs:1054` + `Compiler/NativePassCompiler.cs:1184`：首个用途是"被采样"而不是附件时走显式 clear），因此不引入 NaN/残留。**第二轮补充**：`needsFaceCapture` 另外或上 `requiresFaceHairDiffuseTextures`（`:542`），因为眼睛捕获之外又多了一个真消费者（T16） |
 | **K8** | ⏭ 刻意跳过 | 无改动 | `AccessFlags.WriteAll` 在 core 里**就是** `Write \| Discard`（`RenderGraph.cs:37`）→ 加 `Discard` 是空操作；本 feature 只有 CaptureEye 的 `ReadWrite` 不是 `WriteAll`，而它**不能** Discard（要保留 CaptureFace 的结果）。`clearBuffer = true` 也保留：门控掉捕获后 `eyeColor` 的 0 初值正是靠它。`CapturePassData` 的 3 个"死字段"仍在（它们只被写不被读，属于纯卫生，未动） |
 | **K4 / K6 / K7 / K9 / K10 / K11** | ⛔ 不在本任务范围 | 无改动 | K4 明确 out of scope；K6 需先做 §3.3-V1；K7/K9/K10/K11 见 §4.1 各自的"取决于哪个测量数" |
 
@@ -445,7 +452,7 @@ core 包不在本仓库，但它是**注册表版本**，缓存在工程里：
    它保持上一帧结束时的 0，所以材质侧的 `LilHoCharacterCaptureShouldDraw`（`HoCharacterCaptureCommon.hlsl:56-64`）
    在其它 pass 里看到的仍是 0。
 
-### 目视 A/B 清单（**必须由人在 Unity 里做；本次施工没有跑过 Unity，像素一律"未验证"**）
+### 第一轮的目视 A/B 清单（**必须由人在 Unity 里做；本次施工没有跑过 Unity，像素一律"未验证"**）
 
 做法：同一场景、同一相机、同一角色与参数，同一分辨率（CS/MB/GB 三个 renderScale 各测一遍），
 改动前后来回切两次抓同一帧（固定 Time 或暂停），逐像素 diff。**先关 TAA/动态分辨率**，否则噪声会淹没
@@ -462,3 +469,24 @@ core 包不在本仓库，但它是**注册表版本**，缓存在工程里：
 | F9 关键项 | 眼透**关**、前发投影**开**、`使用眼透区域`开，抓画面 | 前发投影的接收面裁剪（发际线）与改前一致——这是唯一"读了 revealMask"的旁路（`Composite.shader:328`），关门后它仍是 0 |
 | F9 眼透**开** | 眼透开、角度修正开+关各一次；debug 3/16/17 | 与改前一致（关门条件不成立，捕获照旧全录） |
 | 全局 | 13 趟全开的配置抓一次总图；RDG 视图对比资源存活区间 | 全开时画面一致；RDG 里 `_lilHoCharacterFaceHairDiffuseSourceColorTexture`、语义副本、`_lilHoCharacterEyeDataTexture`、`_lilHoCharacterCaptureDepthTexture` 的存活区间应当变短或消失（这是本任务唯一的"预期可见变化"） |
+
+### 第二轮：脸色扩散的扩散色改成"受光脸"（**本文档受影响的表行已按这一轮校准**）
+
+改动 8 个文件（`git diff --numstat`，本轮未提交、未暂存）：
+
+| 文件 | 行数（+/-） | 改了什么 |
+| --- | --- | --- |
+| `Runtime/CharacterSpecialization/HoCharacterSpecializationRendererFeature.cs` | +37/-17 | 捕获门加 `\|\| requiresFaceHairDiffuseTextures`（`:542`）；FaceHair Source 趟新增 eyeColor 的真读声明（`:719`）与全局绑定（`:729`），并把 `_HoCharacterOptions` 写进这趟（`:730`）；合成趟的源色采样条件收成 `debugMode ∈ {5,18}`（`:968-970`） |
+| `Runtime/CharacterSpecialization/Shaders/HoCharacterFaceHairDiffuse.shader` | +18/-1 | 源趟改采 `_lilHoCharacterEyeColorTexture`（`:52`）当扩散色；debug 18 直出原始采样（`:59-66`） |
+| `Runtime/CharacterSpecialization/Shaders/HoCharacterSpecializationComposite.shader` | +53/-0 | 新增 debug 18/19/20/21 四个阶段视图（`:713-761`）；两处注释（颜色乘在模糊之后、ResolveFaceHairDiffuseColor 的语义） |
+| `Runtime/CharacterSpecialization/HoCharacterSpecializationSettings.cs` | +12/-1 | debug 枚举新增 18-21（含中文 `[InspectorName]`） |
+| `Runtime/CharacterSpecialization/Effects/HoCharacterSpecializationPass.FaceHairDiffuse.cs` | +6/-0 | `RequiresFaceHairDiffuseTextures` 收纳 18-21 |
+| `Runtime/CharacterSpecialization/Effects/HoCharacterSpecializationPass.Data.cs` | +6/-0 | `FaceHairDiffuseSourcePassData` 增 `eyeColorTexture` / `options` |
+| `Runtime/CharacterSpecialization/Effects/HoCharacterSpecializationPass.MaterialProperties.cs` | +8/-1 | 新增 `CreateCharacterOptions(settings)`（`_HoCharacterOptions` 的唯一构造点，合成趟与源趟共用） |
+| `Runtime/CharacterSpecialization/HoCharacterSpecializationEffects.cs` | +2/-2 | 两条 tooltip 跟着改语义（启用脸色扩散 / 颜色乘） |
+
+**在 pass 清单上的唯一变化**：#4 多读一面 eyeColor（§1.1 第 4 行、§2.1/§2.2 已更新为 4 面 / 37 读 / ≈606 MB），并且 `needsFaceCapture` 或上了 `requiresFaceHairDiffuseTextures`（§1.1 第 1/2 行、§1.1 趟数结论、§3.1-T16、§3.2-F7/F9）。**没有改**分辨率、格式、模糊核、迭代数、合成趟的 tap 数、`AllowPassCulling` 语义，也没有新增 pass 或 RT。
+
+行号口径：`Composite.shader` 增 53 行、`RendererFeature.cs` 增 20 行、`HoCharacterFaceHairDiffuse.shader` 增 17 行、`Settings.cs` 增 11 行、`Data.cs`/`FaceHairDiffuse.cs` 各增 6 行、`MaterialProperties.cs` 增 7 行。本文档中受本轮影响的表行（§1.1 的 #1/#2/#4/#13 与趟数结论、§1.2 全部创建处、§1.3/§1.4、§2.1/§2.2、§3.1/§3.2、K5/K1 两行）已逐条校准；**§4 / §5 / §6 里的行号仍是第一轮的**（它们是"方案 / 未确认"性质，读的时候以工作区为准）。
+
+目视 A/B 清单见 `Documentation~/CharacterSpecialization_FaceHairDiffuse.md` 的"**A/B 目视清单**"一节（含四个新 debug 视图 18/19/20/21 的判读与"改前 = albedo / 改后 = 受光色"的对比口径）。本工作区没有跑过 Unity，**像素一律未验证**。

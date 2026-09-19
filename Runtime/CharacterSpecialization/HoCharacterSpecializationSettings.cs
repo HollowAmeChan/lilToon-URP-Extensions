@@ -101,7 +101,18 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("相机角度因子")]
         EyeAngleFactor = 16,
         [InspectorName("相机角度表")]
-        EyeAngleTable = 17
+        EyeAngleTable = 17,
+        // 脸色扩散链路的四个阶段视图（受光脸输入改造后新增）：
+        // ① 源趟采样到的受光脸（未乘语义遮罩）在 `HoCharacterFaceHairDiffuse.shader` pass 0 里写进源色纹理；
+        // ②③④ 都在合成趟的调试链里（② 与既有的 7 同内容，这里按"阶段"再给一个入口）。
+        [InspectorName("脸色扩散捕获受光脸")]
+        FaceHairDiffuseCapturedFaceLit = 18,
+        [InspectorName("脸色扩散模糊受光脸")]
+        FaceHairDiffuseBlurredFaceLit = 19,
+        [InspectorName("脸色扩散受光脸乘色")]
+        FaceHairDiffuseTintedFaceLit = 20,
+        [InspectorName("脸色扩散最终合成")]
+        FaceHairDiffuseComposite = 21
     }
 
     [Serializable]

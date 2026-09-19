@@ -26,6 +26,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 case HoCharacterSpecializationDebugMode.FaceHairDiffuseBlurMask:
                 case HoCharacterSpecializationDebugMode.FaceHairDiffuseBlurColor:
                 case HoCharacterSpecializationDebugMode.FaceHairDiffuseMask:
+                // 四个阶段视图都要看这条链（也就都要那张受光脸捕获）：
+                // ① 在源趟里直出采样值，②③④ 都读模糊后的颜色纹理。
+                case HoCharacterSpecializationDebugMode.FaceHairDiffuseCapturedFaceLit:
+                case HoCharacterSpecializationDebugMode.FaceHairDiffuseBlurredFaceLit:
+                case HoCharacterSpecializationDebugMode.FaceHairDiffuseTintedFaceLit:
+                case HoCharacterSpecializationDebugMode.FaceHairDiffuseComposite:
                     return true;
                 default:
                     return false;

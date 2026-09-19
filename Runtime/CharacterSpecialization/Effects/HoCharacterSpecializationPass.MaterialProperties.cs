@@ -222,7 +222,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 out enhancedOutlineHeightFadeParams,
                 out enhancedOutlineOptions);
 
-            options = new Vector4(
+            options = CreateCharacterOptions(settings);
+        }
+
+        // _HoCharacterOptions 的唯一构造点：合成趟与脸色扩散源趟都从这里取值，
+        // 源趟只读 .w（调试模式），但写的是同一个向量，避免两处各写一份而漂移。
+        private static Vector4 CreateCharacterOptions(HoCharacterSpecializationSettings settings)
+        {
+            return new Vector4(
                 settings.eyeRevealEnabled ? 1.0f : 0.0f,
                 settings.hairDropShadowEnabled ? 1.0f : 0.0f,
                 settings.sameCharacterOnly ? 1.0f : 0.0f,

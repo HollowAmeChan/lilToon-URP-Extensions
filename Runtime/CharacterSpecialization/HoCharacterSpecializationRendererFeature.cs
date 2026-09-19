@@ -536,14 +536,17 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             }
 
             // 捕获支的门控：眼透（或它的 debug 模式）需要这张脸/眼的捕获。
-            // 注意：脸色扩散的"底色"输入以后也会消费脸捕获 —— 到时候把条件加到这里，别散在录制点里。
-            bool needsFaceCapture = RequiresCharacterCapture(settings);
+            // 脸色扩散的底色输入就是同一次脸捕获的 MRT0（= 材质算完光照的 color），
+            // 所以这条链要跑（效果开关打开，或它的 8 个 debug 视图任一）就必须有脸捕获；
+            // 眼捕获仍然只服务眼透：脸捕获自己会把 MRT0 写成受光脸（ClearCaptureTargets 先清 0）。
+            bool needsFaceCapture = RequiresCharacterCapture(settings) || requiresFaceHairDiffuseTextures;
             bool needsEyeCapture = RequiresCharacterCapture(settings);
             bool needsCharacterCapture = needsFaceCapture || needsEyeCapture;
 
             TextureHandle source = resourceData.activeColorTexture;
-            // eyeColor 始终存在：合成 shader 在 :619 无条件采样它（见 RequiresCharacterCapture 的注释），
-            // 描述符带 clearBuffer，RDG 会在本帧首次使用（= 合成趟当采样输入）时把它显式清成 0。
+            // eyeColor 始终存在，有两个消费者：合成 shader 在 :621 无条件采样它（见 RequiresCharacterCapture
+            // 的注释），以及脸色扩散源趟的"受光脸"输入（只在 needsFaceCapture 时才是真数据）。
+            // 描述符带 clearBuffer，RDG 会在本帧首次使用（= 被谁当采样输入）时把它显式清成 0。
             TextureHandle eyeColorTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, GetHdrGraphicsFormat(), HoCharacterSpecializationShaderConstants.EyeColorTextureName));
             // eyeData 是 CaptureFace 清屏材质的第二个 MRT（HoCharacterCaptureClear.shader:41,57），
             // 所以只要有一趟捕获在录，它就得存在；但只有眼透路径会采样它。
@@ -700,14 +703,20 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     passData.metadataObjectCustom0Texture = metadataResources.objectCustom0Texture;
                     passData.metadataSurfaceColorTexture = metadataResources.surfaceColorTexture;
                     passData.geometryNormalDepthTexture = geometryResources.normalDepthTexture;
+                    passData.eyeColorTexture = eyeColorTexture;
+                    passData.options = CreateCharacterOptions(settings);
                     passData.material = faceHairDiffuseMaterial;
 
                     // 相机颜色在这趟里从来没有被采样（HoCharacterFaceHairDiffuse.shader pass 0 的
-                    // Frag:38-54 里没有 _BlitTexture），所以不再声明这条读；画面也不再用
+                    // Frag:43-71 里没有 _BlitTexture），所以不再声明这条读；画面也不再用
                     // Blitter.BlitTexture 去绑 _BlitTexture，改成 DrawProcedural + 显式 _BlitScaleBias。
                     builder.UseTexture(passData.metadataObjectCustom0Texture, AccessFlags.Read);
                     builder.UseTexture(passData.metadataSurfaceColorTexture, AccessFlags.Read);
                     builder.UseTexture(passData.geometryNormalDepthTexture, AccessFlags.Read);
+                    // 受光脸：这趟真的采它（Frag 里 SAMPLE _lilHoCharacterEyeColorTexture），
+                    // 所以这条读是真依赖 —— 它把 CaptureFace 排到本趟之前，同时下面自己绑全局，
+                    // 不复用上一帧合成趟留下的绑定。
+                    builder.UseTexture(passData.eyeColorTexture, AccessFlags.Read);
                     builder.SetRenderAttachment(faceHairDiffuseSourceColorTexture, 0, AccessFlags.WriteAll);
                     builder.SetRenderAttachment(faceHairDiffuseSourceDepthTexture, 1, AccessFlags.WriteAll);
                     builder.AllowGlobalStateModification(true);
@@ -717,6 +726,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                         context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.metadataObjectCustom0Texture);
                         context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, data.metadataSurfaceColorTexture);
                         context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.geometryNormalDepthTexture);
+                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, data.eyeColorTexture);
+                        context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.OptionsId, data.options);
                         context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
                         // Blit.hlsl 的 Vert:50 用 _BlitScaleBias 算 UV，这趟不再是 Blitter.BlitTexture
                         // （它会替我们设），所以要自己设成整张纹理：scale=1, bias=0。
@@ -952,6 +963,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 && ((settings.eyeRevealEnabled && settings.semanticMaskBlurEyeReveal)
                     || (settings.hairDropShadowEnabled && settings.semanticMaskBlurHairShadow)
                     || (faceHairDiffuseReady && settings.semanticMaskBlurFaceHairDiffuse));
+            // 源色纹理在合成趟里只有两个采样点：debug 5（源遮罩）与 debug 18（① 捕获受光脸的原始采样）。
+            // 别的时候不必让它活到最后一趟（RDG 的别名空间）。
+            bool faceHairDiffuseSourceColorSampled =
+                settings.debugMode == HoCharacterSpecializationDebugMode.FaceHairDiffuseSourceMask
+                || settings.debugMode == HoCharacterSpecializationDebugMode.FaceHairDiffuseCapturedFaceLit;
 
             using (var builder = renderGraph.AddRasterRenderPass<CompositePassData>("Ho-CharacterSpecialization Composite", out CompositePassData passData, ProfilingSampler))
             {
@@ -973,7 +989,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 passData.semanticMaskBlurredLowTexture = semanticMaskBlurredLowTexture;
                 passData.semanticMaskBlurredHighTexture = semanticMaskBlurredHighTexture;
                 passData.semanticMaskBlurSampled = compositeSamplesSemanticMaskBlur;
-                passData.faceHairDiffuseSourceColorSampled = settings.debugMode == HoCharacterSpecializationDebugMode.FaceHairDiffuseSourceMask;
+                passData.faceHairDiffuseSourceColorSampled = faceHairDiffuseSourceColorSampled;
                 passData.material = compositeMaterial;
                 passData.faceHairDiffuseReady = faceHairDiffuseReady;
                 passData.subjectOutlineReady = subjectOutlineReady;
@@ -1014,13 +1030,13 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 builder.UseTexture(passData.geometryNormalDepthTexture, AccessFlags.Read);
                 builder.UseTexture(passData.metadataObjectCustom0Texture, AccessFlags.Read);
                 builder.UseTexture(passData.metadataObjectCustom1Texture, AccessFlags.Read);
-                // eyeColor 是**真读**：Composite.shader:619 在 Frag 开头无条件采样它
-                // （debug 1 在 :640 直接返回它，:771 的 lerp 也拿它当目标色）。所以捕获支被门控掉时
+                // eyeColor 是**真读**：Composite.shader:621 在 Frag 开头无条件采样它
+                // （debug 1 在 :640-642 直接返回它，:823 的 lerp 也拿它当目标色）。所以捕获支被门控掉时
                 // 这条读和下面的全局绑定都保留 —— 那张纹理由 RDG 按描述符清成 0，而
-                // revealMask 恒为 0（:243-246）→ :771 的 lerp 结果逐位等于 source。
+                // revealMask 恒为 0（:243-246）→ :823 的 lerp 结果逐位等于 source。
                 builder.UseTexture(eyeColorTexture, AccessFlags.Read);
                 // eyeData 的 4 个采样点全部有门（:250 在 _HoCharacterOptions.x > 0.5 之后、
-                // :275 在角度强度 > 0.0001 之后、:645/:663 在 debug 2/17 分支里），
+                // :275 在角度强度 > 0.0001 之后、:647/:665 在 debug 2/17 分支里），
                 // 而 needsEyeCapture 就是这几个条件的并集，所以这里可以跟着门控。
                 if (needsEyeCapture)
                 {
@@ -1034,9 +1050,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 }
                 if (faceHairDiffuseReady)
                 {
-                    // 源色只在 debug 5 被采（Composite.shader:674-683，还要 options.y > 0.5），
+                    // 源色只在 debug 5 / 18 被采（Composite.shader:683 与 :722，都要 options.y > 0.5），
                     // 别的时候不必让它活到最后一趟（RDG 的别名空间）。
-                    if (settings.debugMode == HoCharacterSpecializationDebugMode.FaceHairDiffuseSourceMask)
+                    if (faceHairDiffuseSourceColorSampled)
                     {
                         builder.UseTexture(faceHairDiffuseSourceColorTexture, AccessFlags.Read);
                     }
@@ -1139,17 +1155,21 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             resourceData.cameraColor = destination;
         }
 
-        // 捕获支（CaptureFace / CaptureEye 两趟几何 pass + captureDepth + eyeData）的唯一消费者是
-        // 合成趟的眼睛透过路径。这把门复制的是"这个消费者到底会不会用到捕获"的 shader 侧条件：
+        // 捕获支（CaptureFace / CaptureEye 两趟几何 pass + captureDepth + eyeData）的消费者有两个：
+        //   · 合成趟的眼睛透过路径（返回 true 的那组条件就是它的 shader 侧门）；
+        //   · 脸色扩散源趟的"受光脸"输入（MRT0 = CaptureFace 写的材质受光 color）——
+        //     它的条件不在这里，而是录制处的 `needsFaceCapture = RequiresCharacterCapture(settings)
+        //     || requiresFaceHairDiffuseTextures`（那条链只消费脸捕获，不需要眼捕获）。
+        // 下面这把门复制的是"眼透这条消费者到底会不会用到捕获"的 shader 侧条件：
         //   · ResolveEyeRevealMask 在 _HoCharacterOptions.x <= 0.5 时**采样前** return 0
-        //     （Composite.shader:241-246），而 options.x = settings.eyeRevealEnabled（MaterialProperties.cs:226）；
+        //     （Composite.shader:241-246），而 options.x = settings.eyeRevealEnabled（MaterialProperties.cs:233）；
         //   · ResolveEyeAngleFactor 在角度强度 <= 0.0001 时**采样前** return 1（:265-271），
         //     角度强度 = eyeRevealAngleEnabled ? Clamp01(eyeRevealAngleStrength) : 0（:177-181）——
-        //     这一项不影响画面（revealMask=0 时 :771 的 lerp 权重恒为 0），但它会真的去采 eyeData，
+        //     这一项不影响画面（revealMask=0 时 :823 的 lerp 权重恒为 0），但它会真的去采 eyeData，
         //     所以门里必须带上它，否则会读到没绑定的纹理；
         //   · debug 1/2/3/16/17 分别是 eyeColor / eyeData / revealMask / 角度因子 / 角度表，
-        //     它们的采样点不受上面两个 gate 保护（:640、:645、:651、:657、:663），所以也要留在门内。
-        // 不在门里的情形，:771 的 lerp(source.rgb, eyeColor.rgb, revealMask * eyeAngleFactor) 权重恒为 0，
+        //     它们的采样点不受上面两个 gate 保护（:642、:647、:653、:659、:665），所以也要留在门内。
+        // 不在门里的情形，:823 的 lerp(source.rgb, eyeColor.rgb, revealMask * eyeAngleFactor) 权重恒为 0，
         // 输出逐位等于 source.rgb：eyeColor 即使在门控帧里也是被 RDG 清成 0 的合法纹理（见下面录制处）。
         private static bool RequiresCharacterCapture(HoCharacterSpecializationSettings settings)
         {

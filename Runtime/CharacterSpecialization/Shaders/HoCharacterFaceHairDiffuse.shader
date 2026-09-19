@@ -25,9 +25,14 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/FaceHairDiffuse"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
             float _HoMetadataBufferActive;
+            float4 _HoCharacterOptions; // x eye enabled, y shadow enabled, z same character only, w debug mode（源趟只读 w）
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
             TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
             TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
+            // 脸色扩散的底色来源：强制脸捕获的 MRT0 —— CaptureFace 的材质把**算完光照的 color**
+            // 写在这里（alpha=1），所以模糊的是"前发后面那张受光脸"，不再是不受光的 SurfaceColor。
+            // 眼透开着时这张图里会混进眼睛像素（两趟捕获共用 MRT0），已知并接受。
+            TEXTURE2D_X(_lilHoCharacterEyeColorTexture);
 
             struct FaceHairSourceOutput
             {
@@ -43,12 +48,24 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/FaceHairDiffuse"
                 float face = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv).g;
                 float4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_LinearClamp, uv);
                 float4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
+                // SurfaceColor 仍然只提供 coverage（掩码），颜色改成取捕获里的受光脸。
+                float3 faceLit = SAMPLE_TEXTURE2D_X(_lilHoCharacterEyeColorTexture, sampler_LinearClamp, uv).rgb;
                 float surfaceCoverage = saturate(surfaceColor.a);
                 float semanticMask = step(0.5, _HoMetadataBufferActive) * saturate(face) * step(0.0001, surfaceCoverage) * step(0.0001, normalDepth.a);
                 float mask = semanticMask * surfaceCoverage;
 
                 FaceHairSourceOutput output;
-                output.color = half4(surfaceColor.rgb * semanticMask, mask);
+                int debugMode = (int)round(_HoCharacterOptions.w);
+                if (debugMode == 18)
+                {
+                    // ① 捕获到的受光脸（原始采样）：不乘语义遮罩，整屏直出这趟真正采到的东西；
+                    // alpha 仍是同一个 mask，别的阶段（②③④）不受影响（它们看的是正常分支）。
+                    output.color = half4(faceLit, mask);
+                    output.depth = half4(normalDepth.a * mask, 0.0, 0.0, mask);
+                    return output;
+                }
+
+                output.color = half4(faceLit * semanticMask, mask);
                 output.depth = half4(normalDepth.a * mask, 0.0, 0.0, mask);
                 return output;
             }

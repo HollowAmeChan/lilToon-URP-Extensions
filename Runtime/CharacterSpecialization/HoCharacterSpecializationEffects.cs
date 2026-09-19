@@ -109,7 +109,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("混合模式"), Tooltip("前发投影与画面的混合方式。")]
         public HoCharacterShadowBlendMode hairShadowBlendMode = HoCharacterShadowBlendMode.Multiply;
 
-        [InspectorName("启用脸色扩散"), Tooltip("把 Face 的 SurfaceColor 大范围模糊后叠到 FrontHair 上。")]
+        [InspectorName("启用脸色扩散"), Tooltip("把前发后面的受光脸（强制脸捕获的颜色）大范围模糊后乘上「颜色乘」，叠到 FrontHair 上。")]
         public bool faceHairDiffuseEnabled = false;
 
         [InspectorName("扩散强度"), Tooltip("脸色扩散叠到前发上的总强度。")]
@@ -130,7 +130,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [Range(0.0f, 1.0f)]
         public float faceHairDiffuseLevelWhite = 0.45f;
 
-        [InspectorName("颜色乘"), Tooltip("叠到前发前乘到 Face SurfaceColor 上的颜色。Alpha 也会乘到最终强度。")]
+        [InspectorName("颜色乘"), Tooltip("乘到模糊后的受光脸上的颜色（在模糊之后相乘，不是替换成这个颜色）。Alpha 也会乘到最终强度。")]
         public Color faceHairDiffuseTintColor = new Color(1.0f, 0.78f, 0.72f, 1.0f);
 
         [InspectorName("混合模式"), Tooltip("脸色扩散与当前前发颜色的混合方式。")]
