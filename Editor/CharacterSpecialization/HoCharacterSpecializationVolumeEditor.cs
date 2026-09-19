@@ -39,14 +39,16 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             public readonly string Label;
             public readonly string IconName;
             public readonly string EnableField;
+            public readonly string SummaryField;
             public readonly string[] FieldPrefixes;
 
-            public EffectSection(string id, string label, string iconName, string enableField, string[] fieldPrefixes)
+            public EffectSection(string id, string label, string iconName, string enableField, string summaryField, string[] fieldPrefixes)
             {
                 Id = id;
                 Label = label;
                 IconName = iconName;
                 EnableField = enableField;
+                SummaryField = summaryField;
                 FieldPrefixes = fieldPrefixes;
             }
         }
@@ -54,15 +56,15 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         /// <summary>侧栏顺序 = 右侧区段顺序 = 执行顺序，写死（这块不做排序）。</summary>
         private static readonly EffectSection[] Sections =
         {
-            new EffectSection("EyeReveal", "眼透", "icon_Glow_SelectColor_v1", "eyeRevealEnabled",
+            new EffectSection("EyeReveal", "眼透", "icon_Glow_SelectColor_v1", "eyeRevealEnabled", "eyeRevealStrength",
                 new[] { "eyeReveal", "useEyeRevealArea", "sameCharacterOnly", "semanticMaskBlurEyeReveal" }),
-            new EffectSection("DropShadow", "前发投影", "icon_DropShadow_v1", "hairDropShadowEnabled",
+            new EffectSection("DropShadow", "前发投影", "icon_DropShadow_v1", "hairDropShadowEnabled", "hairShadowOpacity",
                 new[] { "hairDropShadow", "hairShadow", "semanticMaskBlurHairShadow" }),
-            new EffectSection("FaceHairDiffuse", "前发漫反射", "icon_Blur_v1", "faceHairDiffuseEnabled",
+            new EffectSection("FaceHairDiffuse", "前发漫反射", "icon_Blur_v1", "faceHairDiffuseEnabled", "faceHairDiffuseStrength",
                 new[] { "faceHairDiffuse", "semanticMaskBlurFaceHairDiffuse" }),
-            new EffectSection("SubjectOutline", "主体描边", "icon_OutLine_v1", "subjectOutlineEnabled",
+            new EffectSection("SubjectOutline", "主体描边", "icon_OutLine_v1", "subjectOutlineEnabled", "subjectOutlineStrength",
                 new[] { "subjectOutline", "semanticMaskBlurSubjectOutline" }),
-            new EffectSection("EnhancedOutline", "增强描边", "icon_RimLight_v1", "enhancedOutlineEnabled",
+            new EffectSection("EnhancedOutline", "增强描边", "icon_RimLight_v1", "enhancedOutlineEnabled", "enhancedOutlineStrength",
                 new[] { "enhancedOutline", "semanticMaskBlurEnhancedOutline" }),
         };
 
@@ -243,7 +245,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private void DrawSectionRow(int index, EffectSection section, string query)
         {
             SerializedProperty enabled = Find(section.EnableField);
-            SerializedProperty strength = Find(section.FieldPrefixes[0] + "Strength");
+            SerializedProperty summaryValue = Find(section.SummaryField);
             bool expanded = SessionState.GetBool(ExpandKeyPrefix + section.Id, false);
 
             Rect rect = EditorGUILayout.GetControlRect(false, LineHeight);
@@ -262,10 +264,10 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             }
 
             string summary = enabled != null && enabled.boolValue
-                ? "开" + (strength != null ? " " + strength.floatValue.ToString("0.###") : string.Empty)
+                ? "开" + (summaryValue != null ? " " + summaryValue.floatValue.ToString("0.###") : string.Empty)
                 : "关";
             Rect foldoutRect = new Rect(rect.x + CheckboxWidth, rect.y, foldoutWidth, rect.height);
-            string title = query.Length > 0 ? section.Label + "　" + summary : section.Label + "　" + summary;
+            string title = section.Label + "　" + summary;
             expanded = EditorGUI.Foldout(foldoutRect, expanded, title, true);
 
             Rect removeRect = new Rect(rect.xMax - RemoveWidth, rect.y + 1.0f, RemoveWidth, rect.height - 2.0f);

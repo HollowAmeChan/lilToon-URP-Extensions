@@ -1,4 +1,4 @@
-# 角色特化后处理 UI（与 ImageProcess / ScreenProcess 对齐）— 规划稿（未实现）
+# 角色特化后处理 UI（与 ImageProcess / ScreenProcess 对齐）— 规划稿 + v1 落地记录
 
 > 三块后处理语义相同，UI 与配置模型都应当一致：同一套 **搜索栏 + 左侧图标侧栏 + 右侧内容**、
 > 同一套无底控件与行样式、同样的"要用才开、不开就关"的配置方式。
@@ -89,6 +89,22 @@ Volume 里的 `LayerMask`/`MinRenderQueue`/`MaxRenderQueue`/`PassEvent`/`RenderS
 | Settings | 70 个效果字段标 `[NonSerialized]`（**不再进资产**），`CopyFrom` 只剩管线/捕获/调试 17 行 —— 它们现在只是**运行时载体**，不是第二份数据源 |
 | 编辑器 | 5 个区段新增 `DrawEffects(SerializedProperty effects)`（只画参数行，由现有 `DrawSettings` 生成）；Volume 编辑器改用共享的「效果浏览器」（顶栏搜索 + 左侧 6 条图标侧栏 + 右侧区段行 + 搜索高亮 + 每实例折叠） |
 
+### v1 复查修复（A/C，2026-09-15）
+
+v1 落地后跑行覆盖检查发现两类问题，都已修：
+
+- **A（功能回归）**：`DrawEffects` 是照着 `DrawSettings` 手写的，只抄了每个区段的一部分行 —— 眼透差 5 行、
+  主体描边差 15 行、增强轮廓差 10 行，共 **30 个字段在面板上没有入口**（只能靠 Volume profile 或脚本改）。
+  修法：把各区段的 `DrawVolume`（它本来就画全）**机械改造成 `DrawEffects`** —— 形参替换成
+  `Find(effects, "<字段>")`（字段名取自重构前编辑器的 `OnEnable` 映射 + 调用点实参顺序，不做顺序假设），
+  只去掉外壳（`summary`、`DrawSectionHeader` 折叠头、`HelpBox`、启用开关那一行、`VerticalScope`）；
+  按模式分支的参数组 helper 一并改成 `SerializedProperty` 版
+  （`DrawModeParameters→DrawModeProperties`、`DrawHeightFadeParameters→DrawHeightFadeProperties`、
+  `DrawFogParameters→DrawFogProperties`），模式判定复用文件里已有的 `GetFillMode/GetHeightFadeMode(SerializedProperty)`。
+  **结果 64 行 = 70 字段 − 5 个启用开关 − 1 个第六侧栏项**，检查里是硬断言（少一行就报错）。
+- **C（死代码）**：`DrawVolume`、`DrawSettings`、legacy `Draw*Settings`、`DrawParameter(SerializedDataParameter, …)`、
+  `showVolume/showSettings`、只给旧标题用的颜色常量，全部已无调用者 —— 删除（Roslyn 0 error）。
+
 **迁移代价（要记着）**：序列化路径从 69 个顶层参数变成 `Effects.m_Value.*`，所以**旧 Volume profile 里已调好的效果值会回到默认值**
 （Settings 资产里的旧值本来每帧都被覆盖，无所谓）。字段名保持不变，将来真要写迁移脚本也能一一对上。
 
@@ -152,7 +168,11 @@ Volume 里的 `LayerMask`/`MinRenderQueue`/`MaxRenderQueue`/`PassEvent`/`RenderS
 | 检查 | 内容 | 结果 |
 | --- | --- | --- |
 | `.codex-research/cs_config_split/audit_migration.py`（一次性，对旧 Volume 的备份比对） | 70 个效果参数是否 1:1 迁到新的 Effects 类：字段名（PascalCase → lowerCamelCase）、类型映射、**默认值文本**、`ClampedFloatParameter` 的区间是否变成 `[Range]`、`[InspectorName]`/`[Tooltip]` 是否保留 | **70/70 通过**（不丢字段、不改默认值） |
-| `.codex-research/character_specialization_sim/check_cs_browser_ui.js`（新） | 目录 ↔ 字段一一对应（无孤儿/无重复覆盖）、图标文件存在、行内 `×` 只把启用字段置 false、折叠走 `SessionState` 而非 `static`、**不得再出现 `overrideState`/`ApplyTo`/7 个死字段**、Settings 的 70 个 `[NonSerialized]` 与"CopyFrom 只剩管线"、Feature 调 `CopyEffectsTo`、无底按钮规则、5 处 `DrawEffects` 各一次 | 见下 |
+| `.codex-research/character_specialization_sim/check_cs_browser_ui.js`（新） | 目录 ↔ 字段一一对应（无孤儿/无重复覆盖）、图标文件存在、行内 `×` 只把启用字段置 false、折叠走 `SessionState` 而非 `static`、**不得再出现 `overrideState` 的用法**（只剩 `VolumeParameter<T>` 构造必需的装箱：18 处 = 2×9；`ApplyTo` 与 7 个死字段已删）、Settings 的 70 个 `[NonSerialized]` 与"CopyFrom 只剩管线"、Feature 调 `CopyEffectsTo`、无底按钮规则、5 处 `DrawEffects` 各一次 | 见下 |
+| 行覆盖（**已升级为 gated**，本次修 A） | 5 个区段的 `DrawEffects(effects)` 必须画出该区段目录里拥有的每一行；行允许由同文件的参数组 helper（`DrawModeProperties`/`DrawHeightFadeProperties`/`DrawFogProperties`，按模式分支）代画，所以统计沿调用关系递归 | **70 = 64 行 + 5 个启用开关 + 1 个第六侧栏项**；修前 30 个字段在面板上没有任何入口 |
+| 行覆盖 + 摘要字段的负对照（本次新增 4 条，共 **22/22**） | ①helper 里删掉一行 ②`DrawEffects` 不再调用某个 helper ③摘要字段改名成不存在的 ④摘要字段借用别的区段的 —— 四种改法都必须被抓住 | 全过 |
+| 摘要字段（本次修 D） | `EffectSection` 增加 `SummaryField`，折行摘要读它（原实现读 `"<prefix>Strength"`，对前发投影这类没有该字段的区段永远显示"开"）；检查断言该字段存在且属于本区段的 prefixes | 5/5 通过 |
+| 死代码清理（本次修 C） | 5 个区段文件里已无调用者的 `DrawVolume`/`DrawSettings`/`Draw*Settings`/`DrawParameter(SerializedDataParameter, …)`、`private static bool showVolume/showSettings`、只给旧标题用的 `SectionColor` 等颜色常量 | 已删；Roslyn 0 error |
 | 既有检查（重构后复跑） | `effect_browser_sim/check_browser_ui.js --negative-control`（8/8 负对照）、`browser_search_check`（dotnet 100 项）、`effect_enum_check`、`halftone_sim/check_halftone_ui.js`、`shader-check`（11 个 shader） | **全过** |
 | Roslyn 独立编译（Editor + Runtime） | 0 error，仅剩仓库原有 11 条 CS0649 警告 | 通过 |
 
@@ -160,7 +180,7 @@ Volume 里的 `LayerMask`/`MinRenderQueue`/`MaxRenderQueue`/`PassEvent`/`RenderS
 
 | 检查 | 内容 |
 | --- | --- |
-| 新增 `.codex-research/character_specialization_sim/check_cs_browser_ui.js`（照 `check_browser_ui.js`） | 6 个条目与 6 组参数一一对应；图标文件存在（精确大小写）；目录声明 6 行并与绘制一致；标题行的「启用」写的是对应字段；`×` 只关效果、不碰其它参数；「恢复默认」清的是效果自己的字段；折叠状态不再是 `static`；搜索只过滤侧栏；不得出现 `miniButton`/`GUI.Button`；**不得再出现 `overrideState`**（这是本次的核心不变量）；负对照若干条全部生效 |
+| 新增 `.codex-research/character_specialization_sim/check_cs_browser_ui.js`（照 `check_browser_ui.js`） | 6 个条目与 6 组参数一一对应；图标文件存在（精确大小写）；目录声明 6 行并与绘制一致；标题行的「启用」写的是对应字段；`×` 只关效果、不碰其它参数；「恢复默认」清的是效果自己的字段；折叠状态不再是 `static`；搜索只过滤侧栏；不得出现 `miniButton`/`GUI.Button`；**不得再出现 `overrideState` 的用法**（这是本次的核心不变量；构造必须的装箱不算用法，见 §5 上行）；负对照若干条全部生效 |
 | Runtime 侧检查 | `ApplyTo` / Settings 的 69 个效果字段 / `CopyFrom` 对应行都应消失（用 grep 断言 + 结构检查钉住）；`ResolveSettings` 只做 gating；`IsActive`/`IsActiveForCamera` 用普通字段实现 |
 | 既有检查必须继续通过 | `check_compile.ps1`（Roslyn 0 error）、`effect_browser_sim/check_browser_ui.js`（8/8 负对照）、`browser_search_check`（dotnet 100 项） |
 | 实机清单 | Volume profile 里**已有数值**（注意：序列化路径变了 ⇒ 会回默认值，见 §1 的实现说明）；同一个场景两个 Volume 的表现（最近者整体生效）；关闭 Volume 组件后效果完全停（无残留 RT/无 pass）；侧栏开关与右侧「启用」双向同步；亮/暗主题 |

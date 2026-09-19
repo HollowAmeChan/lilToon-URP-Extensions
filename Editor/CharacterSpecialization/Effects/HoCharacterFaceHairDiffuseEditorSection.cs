@@ -8,87 +8,18 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
 {
     internal static class HoCharacterFaceHairDiffuseEditorSection
     {
-        private static readonly Color SectionColor = new Color(0.86f, 0.58f, 0.56f);
 
-        private static bool showSettings;
-        private static bool showVolume;
-
-        public static void DrawSettings(SerializedProperty settingsProperty)
-        {
-            SerializedProperty enabled = Find(settingsProperty, "faceHairDiffuseEnabled");
-            SerializedProperty strength = Find(settingsProperty, "faceHairDiffuseStrength");
-            string summary = enabled != null && enabled.boolValue
-                ? "开 " + LilUrpEditorSectionGui.FloatSummary(strength)
-                : "关";
-
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSettings, "脸色扩散到前发", summary, SectionColor))
-            {
-                return;
-            }
-
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                EditorGUILayout.HelpBox("模糊 Face 的 SurfaceColor，并只对 FrontHair 接收物染色。模糊链作为临时 RenderGraph 纹理分配。", MessageType.None);
-                DrawProperty(enabled, "启用脸色扩散");
-                DrawProperty(strength, "强度");
-                DrawProperty(Find(settingsProperty, "faceHairDiffuseRadiusPixels"), "模糊半径像素");
-                DrawProperty(Find(settingsProperty, "faceHairDiffuseDepthTolerance"), "深度容差");
-                DrawProperty(Find(settingsProperty, "faceHairDiffuseLevelBlack"), "黑场阈值");
-                DrawProperty(Find(settingsProperty, "faceHairDiffuseLevelWhite"), "白场阈值");
-                DrawProperty(Find(settingsProperty, "faceHairDiffuseTintColor"), "染色倍率");
-                DrawProperty(Find(settingsProperty, "faceHairDiffuseBlendMode"), "混合模式");
-                DrawProperty(Find(settingsProperty, "semanticMaskBlurFaceHairDiffuse"), "读取抗锯齿掩码");
-            }
-        }
-        /// <summary>只画参数行；标题行与启用开关由 Volume 编辑器（效果浏览器）负责。</summary>
+        /// <summary>只画参数行：标题、启用开关、折叠状态由 Volume 编辑器（效果浏览器）负责。</summary>
         public static void DrawEffects(SerializedProperty effects)
         {
-        SerializedProperty enabled = Find(effects, "faceHairDiffuseEnabled");
-        SerializedProperty strength = Find(effects, "faceHairDiffuseStrength");
-        DrawProperty(strength, "强度");
-        DrawProperty(Find(effects, "faceHairDiffuseRadiusPixels"), "模糊半径像素");
-        DrawProperty(Find(effects, "faceHairDiffuseDepthTolerance"), "深度容差");
-        DrawProperty(Find(effects, "faceHairDiffuseLevelBlack"), "黑场阈值");
-        DrawProperty(Find(effects, "faceHairDiffuseLevelWhite"), "白场阈值");
-        DrawProperty(Find(effects, "faceHairDiffuseTintColor"), "染色倍率");
-        DrawProperty(Find(effects, "faceHairDiffuseBlendMode"), "混合模式");
-        DrawProperty(Find(effects, "semanticMaskBlurFaceHairDiffuse"), "读取抗锯齿掩码");
-        }
-
-        public static void DrawVolume(
-            SerializedDataParameter enabled,
-            SerializedDataParameter strength,
-            SerializedDataParameter radiusPixels,
-            SerializedDataParameter depthTolerance,
-            SerializedDataParameter levelBlack,
-            SerializedDataParameter levelWhite,
-            SerializedDataParameter tintColor,
-            SerializedDataParameter blendMode,
-            SerializedDataParameter maskAntiAliasing,
-            Action<SerializedDataParameter, GUIContent> drawParameter)
-        {
-            string summary = enabled?.value != null && enabled.value.boolValue
-                ? "开 " + LilUrpEditorSectionGui.FloatSummary(strength)
-                : "关";
-
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showVolume, "脸色扩散到前发", summary, SectionColor))
-            {
-                return;
-            }
-
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                EditorGUILayout.HelpBox("模糊 Face 的 SurfaceColor，并只对 FrontHair 接收物染色。模糊链作为临时 RenderGraph 纹理分配。", MessageType.None);
-                DrawParameter(enabled, "启用脸色扩散", drawParameter);
-                DrawParameter(strength, "强度", drawParameter);
-                DrawParameter(radiusPixels, "模糊半径像素", drawParameter);
-                DrawParameter(depthTolerance, "深度容差", drawParameter);
-                DrawParameter(levelBlack, "黑场阈值", drawParameter);
-                DrawParameter(levelWhite, "白场阈值", drawParameter);
-                DrawParameter(tintColor, "染色倍率", drawParameter);
-                DrawParameter(blendMode, "混合模式", drawParameter);
-                DrawParameter(maskAntiAliasing, "读取抗锯齿掩码", drawParameter);
-            }
+            DrawProperty(Find(effects, "faceHairDiffuseStrength"), "强度");
+            DrawProperty(Find(effects, "faceHairDiffuseRadiusPixels"), "模糊半径像素");
+            DrawProperty(Find(effects, "faceHairDiffuseDepthTolerance"), "深度容差");
+            DrawProperty(Find(effects, "faceHairDiffuseLevelBlack"), "黑场阈值");
+            DrawProperty(Find(effects, "faceHairDiffuseLevelWhite"), "白场阈值");
+            DrawProperty(Find(effects, "faceHairDiffuseTintColor"), "染色倍率");
+            DrawProperty(Find(effects, "faceHairDiffuseBlendMode"), "混合模式");
+            DrawProperty(Find(effects, "semanticMaskBlurFaceHairDiffuse"), "读取抗锯齿掩码");
         }
 
         private static SerializedProperty Find(SerializedProperty settingsProperty, string relativeName)
@@ -101,14 +32,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             if (property != null)
             {
                 EditorGUILayout.PropertyField(property, new GUIContent(label));
-            }
-        }
-
-        private static void DrawParameter(SerializedDataParameter parameter, string label, Action<SerializedDataParameter, GUIContent> drawParameter)
-        {
-            if (parameter != null)
-            {
-                drawParameter(parameter, new GUIContent(label));
             }
         }
     }

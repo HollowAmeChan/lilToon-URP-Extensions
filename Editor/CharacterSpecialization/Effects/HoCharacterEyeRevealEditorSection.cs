@@ -8,96 +8,23 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
 {
     internal static class HoCharacterEyeRevealEditorSection
     {
-        private static readonly Color EyeRevealColor = new Color(0.48f, 0.70f, 0.92f);
 
-        private static bool showSettings;
-        private static bool showVolume;
-
-        public static void DrawSettings(SerializedProperty settingsProperty)
-        {
-            SerializedProperty enabled = Find(settingsProperty, "eyeRevealEnabled");
-            SerializedProperty strength = Find(settingsProperty, "eyeRevealStrength");
-            string summary = enabled != null && enabled.boolValue
-                ? "开 " + LilUrpEditorSectionGui.FloatSummary(strength)
-                : "关";
-
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSettings, "眼透", summary, EyeRevealColor))
-            {
-                return;
-            }
-
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                EditorGUILayout.HelpBox("Eye 标记提供眼睛颜色、深度与 Alpha；FrontHair 标记作为遮挡物；EyeRevealArea 可选，用来限制透出区域。", MessageType.None);
-                DrawProperty(enabled, "启用眼睛透过");
-                DrawProperty(strength, "透过强度");
-                DrawProperty(Find(settingsProperty, "eyeRevealFeatherPixels"), "羽化像素");
-                DrawProperty(Find(settingsProperty, "eyeRevealDilationPixels"), "扩张像素");
-                DrawProperty(Find(settingsProperty, "eyeRevealDepthBias"), "深度偏移");
-                DrawProperty(Find(settingsProperty, "useEyeRevealArea"), "使用眼透区域");
-                DrawProperty(Find(settingsProperty, "sameCharacterOnly"), "仅同角色");
-                DrawProperty(Find(settingsProperty, "semanticMaskBlurEyeReveal"), "读取抗锯齿掩码");
-            }
-        }
-        /// <summary>只画参数行；标题行与启用开关由 Volume 编辑器（效果浏览器）负责。</summary>
+        /// <summary>只画参数行：标题、启用开关、折叠状态由 Volume 编辑器（效果浏览器）负责。</summary>
         public static void DrawEffects(SerializedProperty effects)
         {
-        SerializedProperty enabled = Find(effects, "eyeRevealEnabled");
-        SerializedProperty strength = Find(effects, "eyeRevealStrength");
-        DrawProperty(strength, "透过强度");
-        DrawProperty(Find(effects, "eyeRevealFeatherPixels"), "羽化像素");
-        DrawProperty(Find(effects, "eyeRevealDilationPixels"), "扩张像素");
-        DrawProperty(Find(effects, "eyeRevealDepthBias"), "深度偏移");
-        DrawProperty(Find(effects, "useEyeRevealArea"), "使用眼透区域");
-        DrawProperty(Find(effects, "sameCharacterOnly"), "仅同角色");
-        DrawProperty(Find(effects, "semanticMaskBlurEyeReveal"), "读取抗锯齿掩码");
-        }
-
-        public static void DrawVolume(
-            SerializedDataParameter enabled,
-            SerializedDataParameter strength,
-            SerializedDataParameter featherPixels,
-            SerializedDataParameter dilationPixels,
-            SerializedDataParameter depthBias,
-            SerializedDataParameter useRevealArea,
-            SerializedDataParameter sameCharacterOnly,
-            SerializedDataParameter angleEnabled,
-            SerializedDataParameter angleStrength,
-            SerializedDataParameter angleYawRangeDegrees,
-            SerializedDataParameter anglePitchRangeDegrees,
-            SerializedDataParameter angleSoftnessDegrees,
-            SerializedDataParameter maskAntiAliasing,
-            Action<SerializedDataParameter, GUIContent> drawParameter)
-        {
-            string summary = enabled?.value != null && enabled.value.boolValue
-                ? "开 " + LilUrpEditorSectionGui.FloatSummary(strength)
-                : "关";
-
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showVolume, "眼透", summary, EyeRevealColor))
-            {
-                return;
-            }
-
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                EditorGUILayout.HelpBox("Eye 标记提供眼睛颜色、深度与 Alpha；FrontHair 标记作为遮挡物；EyeRevealArea 可选，用来限制透出区域。", MessageType.None);
-                DrawParameter(enabled, "启用眼睛透过", drawParameter);
-                DrawParameter(strength, "透过强度", drawParameter);
-                DrawParameter(featherPixels, "羽化像素", drawParameter);
-                DrawParameter(dilationPixels, "扩张像素", drawParameter);
-                DrawParameter(depthBias, "深度偏移", drawParameter);
-                DrawParameter(useRevealArea, "使用眼透区域", drawParameter);
-                DrawParameter(sameCharacterOnly, "仅同角色", drawParameter);
-                DrawParameter(maskAntiAliasing, "读取抗锯齿掩码", drawParameter);
-
-                EditorGUILayout.Space(4.0f);
-                EditorGUILayout.HelpBox("相机角度修正：按相机相对角色面部朝向的平转/俯仰角控制眼睛透过。角色面部朝向在 HoMetadataBufferGroup 的“面部朝向”上设置（Transform，骨骼或空物体均可），并在“脸前轴/右轴/上轴”中指定局部轴向（+Z 脸前、+X 右、+Y 上常见）；留空时该角色不参与。", MessageType.None);
-                DrawParameter(angleEnabled, "启用相机角度修正", drawParameter);
-                DrawParameter(angleStrength, "角度修正强度", drawParameter);
-                DrawParameter(angleYawRangeDegrees, "平转半角范围", drawParameter);
-                DrawParameter(anglePitchRangeDegrees, "俯仰半角范围", drawParameter);
-                DrawParameter(angleSoftnessDegrees, "角度柔化", drawParameter);
-            }
+            DrawProperty(Find(effects, "eyeRevealStrength"), "透过强度");
+            DrawProperty(Find(effects, "eyeRevealFeatherPixels"), "羽化像素");
+            DrawProperty(Find(effects, "eyeRevealDilationPixels"), "扩张像素");
+            DrawProperty(Find(effects, "eyeRevealDepthBias"), "深度偏移");
+            DrawProperty(Find(effects, "useEyeRevealArea"), "使用眼透区域");
+            DrawProperty(Find(effects, "sameCharacterOnly"), "仅同角色");
+            DrawProperty(Find(effects, "semanticMaskBlurEyeReveal"), "读取抗锯齿掩码");
+            EditorGUILayout.Space(4.0f);
+            DrawProperty(Find(effects, "eyeRevealAngleEnabled"), "启用相机角度修正");
+            DrawProperty(Find(effects, "eyeRevealAngleStrength"), "角度修正强度");
+            DrawProperty(Find(effects, "eyeRevealAngleYawRangeDegrees"), "平转半角范围");
+            DrawProperty(Find(effects, "eyeRevealAnglePitchRangeDegrees"), "俯仰半角范围");
+            DrawProperty(Find(effects, "eyeRevealAngleSoftnessDegrees"), "角度柔化");
         }
 
         private static SerializedProperty Find(SerializedProperty settingsProperty, string relativeName)
@@ -110,14 +37,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             if (property != null)
             {
                 EditorGUILayout.PropertyField(property, new GUIContent(label));
-            }
-        }
-
-        private static void DrawParameter(SerializedDataParameter parameter, string label, Action<SerializedDataParameter, GUIContent> drawParameter)
-        {
-            if (parameter != null)
-            {
-                drawParameter(parameter, new GUIContent(label));
             }
         }
     }
