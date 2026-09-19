@@ -7,10 +7,18 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.CharacterSpecialization
 {
     /// <summary>把整块效果参数当成一个 Volume 参数承载（内含普通字段，Inspector 上是普通控件）。</summary>
+    /// <remarks>
+    /// 默认 <c>overrideState = true</c>，与仓里其它 <c>VolumeParameter&lt;T&gt;</c> 子类相反，原因是运行时的取数路径：
+    /// <c>HoCharacterSpecializationRendererFeature.ResolveSettings</c> 读的是
+    /// <c>VolumeManager.instance.stack.GetComponent&lt;HoCharacterSpecializationVolume&gt;()</c>，
+    /// 而 <c>VolumeParameter.Override</c> 只复制 <c>overrideState == true</c> 的源参数 —— 容器是 false 时
+    /// stack 里剩的是**默认构造**的那一份，profile 里调过的值（包括各个效果的开关）全部不生效。
+    /// 旧实现里 69 个参数各自 <c>overrideState = true</c> 就是为了这件事；换成单容器后必须保留这一个 override。
+    /// </remarks>
     [Serializable]
     public sealed class HoCharacterSpecializationEffectsParameter : VolumeParameter<HoCharacterSpecializationEffects>
     {
-        public HoCharacterSpecializationEffectsParameter(HoCharacterSpecializationEffects value, bool overrideState = false)
+        public HoCharacterSpecializationEffectsParameter(HoCharacterSpecializationEffects value, bool overrideState = true)
             : base(value, overrideState)
         {
         }
@@ -146,8 +154,16 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 #endif
         }
 
+        /// <remarks>
+        /// **overrideState 必须是 true**，这不是"保底覆盖"回来了，而是 Volume 的机制要求：
+        /// 运行时读的是 <c>VolumeManager.instance.stack.GetComponent&lt;HoCharacterSpecializationVolume&gt;()</c>，
+        /// 而 VolumeManager 只把 <c>overrideState == true</c> 的参数从 profile 复制进 stack。
+        /// 容器若为 false，stack 里永远是**默认构造**的那一份（于是默认开着的眼透/前发投影看起来正常，
+        /// 默认关着的脸色扩散/主体描边/增强描边怎么点都没反应）。逐参数的假 override 依然是删掉的：
+        /// 整块参数只有这一个 override。
+        /// </remarks>
         [Tooltip("效果参数。Volume 是唯一来源：没有 Settings 兜底值，也没有逐参数覆盖；要关掉某个效果就关它自己的开关。")]
-        public HoCharacterSpecializationEffectsParameter Effects = new HoCharacterSpecializationEffectsParameter(new HoCharacterSpecializationEffects());
+        public HoCharacterSpecializationEffectsParameter Effects = new HoCharacterSpecializationEffectsParameter(new HoCharacterSpecializationEffects(), true);
 
         public bool IsActive()
         {

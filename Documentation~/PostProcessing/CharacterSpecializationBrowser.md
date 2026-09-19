@@ -84,7 +84,7 @@ Volume 里的 `LayerMask`/`MinRenderQueue`/`MaxRenderQueue`/`PassEvent`/`RenderS
 | 改动 | 落点 |
 | --- | --- |
 | 新设置块 | `Runtime/CharacterSpecialization/HoCharacterSpecializationEffects.cs`：70 个**普通字段**（保留 `[InspectorName]`/`[Tooltip]`；`ClampedFloatParameter` 的区间变成 `[Range]`） |
-| Volume 单一来源 | `HoCharacterSpecializationVolume.Effects = new HoCharacterSpecializationEffectsParameter(...)`（`VolumeParameter<…>` 承载整块，Inspector 上是普通控件）；删掉构造里 58 行假的 `overrideState = true`、69 个参数、7 个死字段（`Enable`/`ShowInSceneView`/`LayerMask`/队列/`PassEvent`/`RenderScale`） |
+| Volume 单一来源 | `HoCharacterSpecializationVolume.Effects = new HoCharacterSpecializationEffectsParameter(new HoCharacterSpecializationEffects(), true)`（`VolumeParameter<…>` 承载整块，Inspector 上是普通控件）；删掉构造里 58 行**逐参数**的假 `overrideState = true`、69 个参数、7 个死字段（`Enable`/`ShowInSceneView`/`LayerMask`/队列/`PassEvent`/`RenderScale`）。容器自己那**一个** override 必须留着 —— 漏掉它是 v1 的回归，见下面 §1.1 |
 | 运行时 | `ApplyTo` → `CopyEffectsTo`（普通字段 → 运行时载体）；Feature 调用点同步改名 |
 | Settings | 70 个效果字段标 `[NonSerialized]`（**不再进资产**），`CopyFrom` 只剩管线/捕获/调试 17 行 —— 它们现在只是**运行时载体**，不是第二份数据源 |
 | 编辑器 | 5 个区段新增 `DrawEffects(SerializedProperty effects)`（只画参数行，由现有 `DrawSettings` 生成）；Volume 编辑器改用共享的「效果浏览器」（顶栏搜索 + 左侧 6 条图标侧栏 + 右侧区段行 + 搜索高亮 + 每实例折叠） |
@@ -111,6 +111,31 @@ v1 落地后跑行覆盖检查发现两类问题，都已修：
 **与规划的一处差异**：规划说"删掉 Settings 的 69 个效果字段"，实现改成标 `[NonSerialized]` 保留为运行时载体 ——
 因为 pass 代码有几百处 `activeSettings.eyeRevealXxx` 读取，删字段会把 1377 行的 Feature 全部翻一遍；
 `[NonSerialized]` 达到了同样目的（资产里不再有第二份数据），代价只是这些字段仍留在类里。
+
+### 1.1 v1 回归：容器 override 被一起删掉了（2026-09-19 修）
+
+**症状**：脸色扩散、主体描边、增强描边三个效果"失效"——在 Volume 里手动打开也没反应；
+眼透、前发投影看起来正常。
+
+**根因**：`HoCharacterSpecializationRendererFeature.ResolveSettings` 读的是
+`VolumeManager.instance.stack.GetComponent<HoCharacterSpecializationVolume>()`，而
+`VolumeParameter.Override` 只复制**源参数 `overrideState == true`** 的值。旧实现里 69 个参数各自
+`X.overrideState = true;`（那 58 行"假 override"），所以整块值都会被复制进 stack；
+换成单容器后我把这些 override 全删了，容器默认 `overrideState = false` ⇒ **stack 里永远是默认构造的那一份**。
+于是：默认 `true` 的眼透/前发投影看着"活着"（用的还是默认值，不是场景里调的值），
+默认 `false` 的脸色扩散/主体描边/增强描边怎么点都没反应 —— 而且改 profile 里的**值**也没用，
+因为 `overrideState` 始终是 0。
+
+**修复**：
+1. 代码：`HoCharacterSpecializationEffectsParameter` 的 `overrideState` 默认值改成 `true`，
+   `Effects` 字段初始化显式传 `true`；逐参数的假 override 依然是删掉的（整块只有这一个 override）。
+2. 数据：老 profile 里 `Effects.m_OverrideState` 是 0，且 `Effects.m_Value` 还不存在（序列化路径变了，
+   Unity 不认旧键）⇒ 用 `.codex-research/cs_config_split/migrate_volume_profiles.py` 把旧扁平键
+   （PascalCase，69 个）搬进 `Effects.m_Value`（lowerCamelCase）并顺手把容器 override 置 1。
+   实际执行：**9 个文件搬了 439 个值 + 10 个文件修了容器 override**，删掉 63 个死字段键；
+   写前逐文件备份到 `.codex-research/cs_config_split/backup/`，脚本幂等（重跑报告 0 个文件）。
+3. 检查：`check_cs_browser_ui.js` 新增两条 gated 不变量（容器默认值必须是 `true`、`Effects` 字段初始化必须显式传 `true`），
+   各带一条负对照；扫描时会忽略注释，所以文档可以解释这套机制。
 ## 2. UI：与另外两块一致
 
 ```
@@ -168,7 +193,7 @@ v1 落地后跑行覆盖检查发现两类问题，都已修：
 | 检查 | 内容 | 结果 |
 | --- | --- | --- |
 | `.codex-research/cs_config_split/audit_migration.py`（一次性，对旧 Volume 的备份比对） | 70 个效果参数是否 1:1 迁到新的 Effects 类：字段名（PascalCase → lowerCamelCase）、类型映射、**默认值文本**、`ClampedFloatParameter` 的区间是否变成 `[Range]`、`[InspectorName]`/`[Tooltip]` 是否保留 | **70/70 通过**（不丢字段、不改默认值） |
-| `.codex-research/character_specialization_sim/check_cs_browser_ui.js`（新） | 目录 ↔ 字段一一对应（无孤儿/无重复覆盖）、图标文件存在、行内 `×` 只把启用字段置 false、折叠走 `SessionState` 而非 `static`、**不得再出现 `overrideState` 的用法**（只剩 `VolumeParameter<T>` 构造必需的装箱：18 处 = 2×9；`ApplyTo` 与 7 个死字段已删）、Settings 的 70 个 `[NonSerialized]` 与"CopyFrom 只剩管线"、Feature 调 `CopyEffectsTo`、无底按钮规则、5 处 `DrawEffects` 各一次 | 见下 |
+| `.codex-research/character_specialization_sim/check_cs_browser_ui.js`（新） | 目录 ↔ 字段一一对应（无孤儿/无重复覆盖）、图标文件存在、行内 `×` 只把启用字段置 false、折叠走 `SessionState` 而非 `static`、**逐参数 `overrideState` 不得回来**（只剩 `VolumeParameter<T>` 构造必需的装箱）、**但容器那一个 override 必须是 true**（默认值 + 字段初始化两处都钉住，见 §1.1）、`ApplyTo` 与 7 个死字段已删、Settings 的 70 个 `[NonSerialized]` 与"CopyFrom 只剩管线"、Feature 调 `CopyEffectsTo`、无底按钮规则、5 处 `DrawEffects` 各一次、每行都必须画得出来（统计沿 `DrawXProperties(effects, …)` 递归） | 见下 |
 | 行覆盖（**已升级为 gated**，本次修 A） | 5 个区段的 `DrawEffects(effects)` 必须画出该区段目录里拥有的每一行；行允许由同文件的参数组 helper（`DrawModeProperties`/`DrawHeightFadeProperties`/`DrawFogProperties`，按模式分支）代画，所以统计沿调用关系递归 | **70 = 64 行 + 5 个启用开关 + 1 个第六侧栏项**；修前 30 个字段在面板上没有任何入口 |
 | 行覆盖 + 摘要字段的负对照（本次新增 4 条，共 **22/22**） | ①helper 里删掉一行 ②`DrawEffects` 不再调用某个 helper ③摘要字段改名成不存在的 ④摘要字段借用别的区段的 —— 四种改法都必须被抓住 | 全过 |
 | 摘要字段（本次修 D） | `EffectSection` 增加 `SummaryField`，折行摘要读它（原实现读 `"<prefix>Strength"`，对前发投影这类没有该字段的区段永远显示"开"）；检查断言该字段存在且属于本区段的 prefixes | 5/5 通过 |
@@ -180,7 +205,7 @@ v1 落地后跑行覆盖检查发现两类问题，都已修：
 
 | 检查 | 内容 |
 | --- | --- |
-| 新增 `.codex-research/character_specialization_sim/check_cs_browser_ui.js`（照 `check_browser_ui.js`） | 6 个条目与 6 组参数一一对应；图标文件存在（精确大小写）；目录声明 6 行并与绘制一致；标题行的「启用」写的是对应字段；`×` 只关效果、不碰其它参数；「恢复默认」清的是效果自己的字段；折叠状态不再是 `static`；搜索只过滤侧栏；不得出现 `miniButton`/`GUI.Button`；**不得再出现 `overrideState` 的用法**（这是本次的核心不变量；构造必须的装箱不算用法，见 §5 上行）；负对照若干条全部生效 |
+| 新增 `.codex-research/character_specialization_sim/check_cs_browser_ui.js`（照 `check_browser_ui.js`） | 6 个条目与 6 组参数一一对应；图标文件存在（精确大小写）；目录声明 6 行并与绘制一致；标题行的「启用」写的是对应字段；`×` 只关效果、不碰其它参数；「恢复默认」清的是效果自己的字段；折叠状态不再是 `static`；搜索只过滤侧栏；不得出现 `miniButton`/`GUI.Button`；**逐参数 `overrideState` 不得回来**（这是本次的核心不变量；构造必须的装箱不算用法，容器那一个 override 必须为 true，见 §1.1）；负对照若干条全部生效 |
 | Runtime 侧检查 | `ApplyTo` / Settings 的 69 个效果字段 / `CopyFrom` 对应行都应消失（用 grep 断言 + 结构检查钉住）；`ResolveSettings` 只做 gating；`IsActive`/`IsActiveForCamera` 用普通字段实现 |
 | 既有检查必须继续通过 | `check_compile.ps1`（Roslyn 0 error）、`effect_browser_sim/check_browser_ui.js`（8/8 负对照）、`browser_search_check`（dotnet 100 项） |
 | 实机清单 | Volume profile 里**已有数值**（注意：序列化路径变了 ⇒ 会回默认值，见 §1 的实现说明）；同一个场景两个 Volume 的表现（最近者整体生效）；关闭 Volume 组件后效果完全停（无残留 RT/无 pass）；侧栏开关与右侧「启用」双向同步；亮/暗主题 |
