@@ -26,6 +26,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthFog"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/ImageProcessBlend.hlsl"
 
             // A compositing fog layer with two independent slots: a depth (distance) fog and a height
             // fog. Either slot can be switched off, and both can run in one pass - the user stacks
@@ -111,32 +112,9 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthFog"
                 return (1.0 / linearDepth - zBufferParamW) / zBufferParamZ;
             }
 
-            float FogBlendChannel(int blendMode, float baseValue, float layerValue)
+            half3 FogComposite(half3 baseColor, half3 fogColor, float alpha, float blendMode)
             {
-                if (blendMode == 1)
-                {
-                    return max(baseValue + layerValue, 0.0);
-                }
-
-                if (blendMode == 2)
-                {
-                    return 1.0 - (1.0 - baseValue) * (1.0 - layerValue);
-                }
-
-                if (blendMode == 3)
-                {
-                    return baseValue * layerValue;
-                }
-
-                return layerValue;
-            }
-
-            half3 FogComposite(half3 baseColor, half3 fogColor, float alpha, int blendMode)
-            {
-                half3 blended = half3(
-                    FogBlendChannel(blendMode, baseColor.r, fogColor.r),
-                    FogBlendChannel(blendMode, baseColor.g, fogColor.g),
-                    FogBlendChannel(blendMode, baseColor.b, fogColor.b));
+                half3 blended = ApplyLayerBlend(baseColor, fogColor, blendMode);
                 return lerp(baseColor, blended, saturate(alpha));
             }
 
@@ -197,7 +175,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthFog"
                 }
 
                 float amount = intensity * layerMask;
-                int blendMode = (int)round(_LayerBlendMode);
+                float blendMode = _LayerBlendMode;
                 half3 result = source.rgb;
 
                 // ---- slot 1: depth (distance) fog -------------------------------------------------

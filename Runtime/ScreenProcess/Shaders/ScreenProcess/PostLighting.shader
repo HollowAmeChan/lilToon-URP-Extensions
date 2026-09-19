@@ -25,6 +25,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/PostLighting"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/ImageProcessBlend.hlsl"
 
             float _Intensity;
             float _LayerBlendMode;
@@ -41,27 +42,6 @@ Shader "Hidden/lilToon/URP/ScreenProcess/PostLighting"
             half4 SampleRuleNormalDepth(float2 uv)
             {
                 return SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
-            }
-
-            half3 ApplyBlend(half3 baseColor, half3 layerColor, float blendMode)
-            {
-                int mode = (int)round(blendMode);
-                if (mode == 1)
-                {
-                    return max(baseColor + layerColor, 0.0);
-                }
-
-                if (mode == 2)
-                {
-                    return 1.0 - (1.0 - baseColor) * (1.0 - layerColor);
-                }
-
-                if (mode == 3)
-                {
-                    return baseColor * layerColor;
-                }
-
-                return layerColor;
             }
 
             float ApplyContrast(float value, float contrast)
@@ -202,7 +182,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/PostLighting"
                 float amount = saturate(pow(subjectMask, maskPower) * opacity * saturate(_Intensity));
 
                 half3 layerColor = lightColor * brightness * shade;
-                half3 blended = ApplyBlend(source.rgb * shadow, layerColor, _LayerBlendMode);
+                half3 blended = ApplyLayerBlend(source.rgb * shadow, layerColor, _LayerBlendMode);
                 return half4(lerp(source.rgb, blended, amount), source.a);
             }
             ENDHLSL

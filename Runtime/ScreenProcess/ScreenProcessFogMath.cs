@@ -100,27 +100,41 @@ namespace lilToon.URP.Extensions.PostProcessing
         }
 
         /// <summary>
-        /// One channel of ScreenProcess's four blend modes: the same formulas the shader's
-        /// <c>ApplyBlend</c> uses. Kept here so the two-slot composite order can be verified.
+        /// One channel of ScreenProcess's blend mode: the same formulas the shared table
+        /// (<c>Runtime/ImageProcess/Shaders/ImageProcess/ImageProcessBlend.hlsl</c>, <c>ApplyLayerBlend</c>)
+        /// uses, with the same mode numbering. Kept here so the two-slot composite order can be verified.
         /// </summary>
+        /// <remarks>
+        /// 只镜像 20 个**可分离**模式（0..19）。20..23 是 Photoshop 的不可分离模式
+        /// （Hue / Saturation / Color / Luminosity），定义上就要跨通道运算，单通道镜像没有意义 ——
+        /// 这几个模式只在着色器里有实现，检查里也只在 HLSL 侧验证。
+        /// </remarks>
         internal static float BlendChannel(ScreenProcessBlendMode blendMode, float baseValue, float layerValue)
         {
-            if (blendMode == ScreenProcessBlendMode.Add)
+            switch ((int)blendMode)
             {
-                return Max(baseValue + layerValue, 0.0f);
+                case 0: return layerValue;
+                case 1: return Max(baseValue + layerValue, 0.0f);
+                case 2: return baseValue * layerValue;
+                case 3: return 1.0f - (1.0f - baseValue) * (1.0f - layerValue);
+                case 4: return Min(baseValue, layerValue);
+                case 5: return ColorBurn(baseValue, layerValue);
+                case 6: return Max(baseValue + layerValue - 1.0f, 0.0f);
+                case 7: return Max(baseValue, layerValue);
+                case 8: return ColorDodge(baseValue, layerValue);
+                case 9: return Overlay(baseValue, layerValue);
+                case 10: return SoftLight(baseValue, layerValue);
+                case 11: return Overlay(layerValue, baseValue);
+                case 12: return VividLight(baseValue, layerValue);
+                case 13: return Max(baseValue + 2.0f * layerValue - 1.0f, 0.0f);
+                case 14: return Lerp(Min(baseValue, 2.0f * layerValue), Max(baseValue, 2.0f * (layerValue - 0.5f)), Step(0.5f, layerValue));
+                case 15: return Step(0.5f, VividLight(baseValue, layerValue));
+                case 16: return Abs(baseValue - layerValue);
+                case 17: return baseValue + layerValue - 2.0f * baseValue * layerValue;
+                case 18: return Max(baseValue - layerValue, 0.0f);
+                case 19: return Max(baseValue / Max(layerValue, 0.0001f), 0.0f);
+                default: return layerValue;
             }
-
-            if (blendMode == ScreenProcessBlendMode.Screen)
-            {
-                return 1.0f - (1.0f - baseValue) * (1.0f - layerValue);
-            }
-
-            if (blendMode == ScreenProcessBlendMode.Multiply)
-            {
-                return baseValue * layerValue;
-            }
-
-            return layerValue;
         }
 
         /// <summary>
@@ -132,6 +146,43 @@ namespace lilToon.URP.Extensions.PostProcessing
             float blended = BlendChannel(blendMode, baseValue, fogValue);
             return baseValue + (blended - baseValue) * Saturate(alpha);
         }
+
+        // ---- 共享混合表里可分离模式的逐通道镜像（公式与 HLSL 一字不差）-----------------------------
+
+        private static float ColorBurn(float baseValue, float layerValue)
+        {
+            return Max(1.0f - (1.0f - baseValue) / Max(layerValue, 0.0001f), 0.0f);
+        }
+
+        private static float ColorDodge(float baseValue, float layerValue)
+        {
+            return Max(baseValue / Max(1.0f - layerValue, 0.0001f), 0.0f);
+        }
+
+        private static float Overlay(float baseValue, float layerValue)
+        {
+            return Lerp(2.0f * baseValue * layerValue, 1.0f - 2.0f * (1.0f - baseValue) * (1.0f - layerValue), Step(0.5f, baseValue));
+        }
+
+        private static float SoftLight(float baseValue, float layerValue)
+        {
+            float dark = baseValue - (1.0f - 2.0f * layerValue) * baseValue * (1.0f - baseValue);
+            float light = baseValue + (2.0f * layerValue - 1.0f) * (Sqrt(Saturate(baseValue)) - baseValue);
+            return Lerp(dark, light, Step(0.5f, layerValue));
+        }
+
+        private static float VividLight(float baseValue, float layerValue)
+        {
+            float burn = ColorBurn(baseValue, 2.0f * layerValue);
+            float dodge = ColorDodge(baseValue, 2.0f * (layerValue - 0.5f));
+            return Lerp(burn, dodge, Step(0.5f, layerValue));
+        }
+
+        private static float Lerp(float a, float b, float t) => a + (b - a) * t;
+
+        private static float Step(float edge, float value) => value >= edge ? 1.0f : 0.0f;
+
+        private static float Sqrt(float value) => (float)Math.Sqrt(value);
 
         /// <summary>The house height-fade hardness remap (same formula the outline height fade uses).</summary>
         internal static float ApplyHardness(float value, float hardness)

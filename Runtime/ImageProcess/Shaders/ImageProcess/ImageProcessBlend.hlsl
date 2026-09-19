@@ -1,8 +1,14 @@
 #ifndef LIL_IMAGE_PROCESS_BLEND_INCLUDED
 #define LIL_IMAGE_PROCESS_BLEND_INCLUDED
 
-// The 24 Photoshop / PDF blend modes used by every ImageProcess layer shader (Gradient,
-// GradientMap, LayerBlit, Halftone).
+// The 24 Photoshop / PDF blend modes shared by every layer-based post-processing block:
+// ImageProcess (Gradient, GradientMap, LayerBlit, Halftone) and ScreenProcess (Outline, EdgeLight,
+// PostLighting, SkyTyndall, DepthFog). The file name is historical - this is the single blend table
+// for the whole pipeline, and `.codex-research/shader-check/check_all.ps1` refuses to let any shader
+// carry a local copy of it again.
+//
+// Mode numbering is the canonical one (`ApplyLayerBlend` below); ScreenProcess used to number
+// Screen/Multiply the other way round (2/3), and was moved onto this table on purpose.
 //
 // The bodies below are the block those shaders used to carry individually, moved here verbatim
 // (only the indentation changed), so the move cannot change a pixel:
@@ -117,6 +123,25 @@ half3 ApplyLayerBlend(half3 baseColor, half3 layerColor, float blendMode)
     if (mode == 22) return SetLum(layerColor, Lum(baseColor));
     if (mode == 23) return SetLum(baseColor, Lum(layerColor));
     return layerColor;
+}
+
+// SkyTyndall 的 Screen 需要 HDR 版本：天空/神光的底色可能大于 1，普通 screen 会把这份能量压掉，
+// 所以只对 LDR 部分做 screen，再把底色超出 1 的部分加回去（其它 23 个模式与 ApplyLayerBlend 一致）。
+half3 ScreenHdr(half3 baseColor, half3 layerColor)
+{
+    half3 ldrBase = saturate(baseColor);
+    half3 ldrLayer = saturate(layerColor);
+    return 1.0 - (1.0 - ldrBase) * (1.0 - ldrLayer) + max(baseColor - 1.0, 0.0);
+}
+
+half3 ApplyLayerBlendHdr(half3 baseColor, half3 layerColor, float blendMode)
+{
+    if ((int)round(blendMode) == 3)
+    {
+        return ScreenHdr(baseColor, layerColor);
+    }
+
+    return ApplyLayerBlend(baseColor, layerColor, blendMode);
 }
 
 #endif

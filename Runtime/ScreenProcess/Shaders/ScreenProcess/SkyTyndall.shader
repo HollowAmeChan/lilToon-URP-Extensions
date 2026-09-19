@@ -25,6 +25,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/ImageProcessBlend.hlsl"
 
             static const int MaxSkyTyndallSamples = 48;
 
@@ -139,29 +140,6 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
                 float2 lower = step(0.0, uv);
                 float2 upper = step(uv, 1.0);
                 return lower.x * lower.y * upper.x * upper.y;
-            }
-
-            float3 ApplyBlend(float3 baseColor, float3 layerColor, float blendMode)
-            {
-                int mode = (int)round(blendMode);
-                if (mode == 1)
-                {
-                    return max(baseColor + layerColor, 0.0);
-                }
-
-                if (mode == 2)
-                {
-                    float3 ldrBase = saturate(baseColor);
-                    float3 ldrLayer = saturate(layerColor);
-                    return 1.0 - (1.0 - ldrBase) * (1.0 - ldrLayer) + max(baseColor - 1.0, 0.0);
-                }
-
-                if (mode == 3)
-                {
-                    return baseColor * layerColor;
-                }
-
-                return layerColor;
             }
 
             float3 ApplyDitherStyle(float2 uv, float3 rays)
@@ -412,7 +390,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
                     return half4(rays * _Intensity, source.a);
                 }
 
-                float3 blended = ApplyBlend(source.rgb, rays, _LayerBlendMode);
+                float3 blended = ApplyLayerBlendHdr(source.rgb, rays, _LayerBlendMode);
                 return half4(lerp(source.rgb, blended, amount), source.a);
             }
             ENDHLSL

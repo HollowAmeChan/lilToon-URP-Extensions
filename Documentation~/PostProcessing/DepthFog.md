@@ -53,7 +53,7 @@
 合成（一趟 pass，顺序固定）：
   1. 深度雾：先按 alphaA 的强度对像素做"空气感"去饱和，再把颜色从近色插值到远色，最后按图层混合模式合成
   2. 高度雾：按 alphaB 用高度雾自己的颜色合成
-  两次都用图层的混合模式（正常/相加/滤色/正片叠底）与 `_Intensity`，并乘以规则遮罩
+  两次都用图层的混合模式（与 ImageProcess 共用的 24 模式表，见 `README.md` 的「共享图层混合表」）与 `_Intensity`，并乘以规则遮罩
 ```
 
 - **天空**：`跳过天空`（默认，用 GB coverage 精确判定；没有 GB 时用远裁剪面近似）、`一起上雾`（天空也按远平面结果上雾，高度项在天空上自动失效）、`单独天空色`（天空用远色 × 天空强度，地面不受影响）。
@@ -103,9 +103,9 @@
 
 | 检查 | 内容 | 结果 |
 | --- | --- | --- |
-| `.codex-research/depth_fog_sim/fog_math_check`（dotnet，链接出货的 `ScreenProcessFogMath.cs`） | 11 项：三种距离曲线的解析值/单调性/边界、高度窗与衰减（含方向与硬度）、浓度合成、**眼深↔设备深度往返**（reversed-Z 与非 reversed 两组，最坏相对误差 6.6e-5；换算到世界空间的影响 < 0.0002）、**模式枚举数值契约**、两槽合成顺序与混合模式、两槽互不影响 | 全过；`-- --negative-control` 会让 3 项 FAIL（证明检查能失败） |
+| `.codex-research/depth_fog_sim/fog_math_check`（dotnet，链接出货的 `ScreenProcessFogMath.cs`） | 11 项：三种距离曲线的解析值/单调性/边界、高度窗与衰减（含方向与硬度）、浓度合成、**眼深↔设备深度往返**（reversed-Z 与非 reversed 两组，最坏相对误差 6.6e-5；换算到世界空间的影响 < 0.0002）、**模式枚举数值契约**、两槽合成顺序与混合模式（可分离的 20 个模式逐一镜像共享混合表）、两槽互不影响 | 全过；`-- --negative-control` 会让 3 项 FAIL（证明检查能失败） |
 | `.codex-research/depth_fog_sim/check_screenprocess_fog_ui.js` | Inspector 行数：`GetDepthFogLineCount` 声明 20 行 == 绘制函数实际 19 行增量 + 1 行收尾；两边的分支条件集合一致；元素行数加的是 4 行基础 | 全过（曾在这里抓到"属性缺失时多留 4 行"的 bug）；负对照会 FAIL |
-| `.codex-research/shader-check`（D3DCompiler，`ps_5_0`） | `check_all.ps1` 把全部 10 个 ImageProcess / ScreenProcess shader 抽成 standalone 再编译（包内 include 全部内联，只给"被丢掉的 include 本该提供的东西"打桩） | 10/10 通过；`-NegativeControl` 会拿掉 `_HoGeometryBufferValid` 的声明并要求检查失败 |
+| `.codex-research/shader-check`（D3DCompiler，`ps_5_0`） | `check_all.ps1` 把全部 11 个 ImageProcess / ScreenProcess shader 抽成 standalone 再编译（包内 include 全部内联，只给"被丢掉的 include 本该提供的东西"打桩）；`check_blend_include.js` 要求 IP/SP 两边都 include 同一张混合表、且不得再出现本地副本（6 条负对照每次运行都跑） | 11/11 通过；`-NegativeControl` 会拿掉 `_HoGeometryBufferValid` 的声明并要求检查失败 |
 | Roslyn 独立编译（Editor + Runtime） | 0 error（仅剩仓库原有 11 条 CS0649 警告） | 通过 |
 | `.codex-research/effect_enum_check/check_effect_enum_coverage.js` | 效果枚举完整性：图标面板覆盖每个成员且不重复、六个 `switch`（绘制/行数/排序/默认值/显示名/预设）都认识每个成员、`ScreenProcessEffectRegistry` 的每个成员都指向真实存在的 `.shader`、`Editor/PostProcessing` 里没有"用字面量夹住枚举下标"的写法 | 全过；4 个负对照全部生效（详见 §6.1） |
 

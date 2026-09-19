@@ -25,6 +25,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/EdgeLight"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/ImageProcessBlend.hlsl"
 
             float _Intensity;
             float _LayerBlendMode;
@@ -230,27 +231,6 @@ Shader "Hidden/lilToon/URP/ScreenProcess/EdgeLight"
                 return rim * surfaceWeight;
             }
 
-            half3 ApplyBlend(half3 baseColor, half3 layerColor, float blendMode)
-            {
-                int mode = (int)round(blendMode);
-                if (mode == 1)
-                {
-                    return max(baseColor + layerColor, 0.0);
-                }
-
-                if (mode == 2)
-                {
-                    return 1.0 - (1.0 - baseColor) * (1.0 - layerColor);
-                }
-
-                if (mode == 3)
-                {
-                    return baseColor * layerColor;
-                }
-
-                return layerColor;
-            }
-
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
@@ -296,7 +276,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/EdgeLight"
                 }
 
                 half3 lightColor = (half3)_LayerColor.rgb * max(_LayerParams0.y, 0.0);
-                half3 blended = ApplyBlend(source.rgb, lightColor, _LayerBlendMode);
+                half3 blended = ApplyLayerBlend(source.rgb, lightColor, _LayerBlendMode);
                 return half4(lerp(source.rgb, blended, amount), source.a);
             }
             ENDHLSL

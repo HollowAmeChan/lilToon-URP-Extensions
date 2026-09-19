@@ -27,13 +27,34 @@
 
 当前仍需注意的状态：
 
-- 规划中（**尚未实现**）：`角色特化`（`HoCharacterSpecialization`）的 Volume UI 与另外两块后处理对齐 ——
-  同样的搜索栏 + 左侧图标侧栏 + 统一的行样式；这块**没有图层也没有顺序**，5 个区段固定、只有启用开关，
-  两档侧栏各 6 行；共享代码只加一个可选 `Rows`。见 `CharacterSpecializationBrowser.md`。
+- 规划中（**尚未实现**）：`角色特化`（`HoCharacterSpecialization`）的**图像链化（v2）** —— capture 序留在 Feature、
+  效果变成固定顺序的链层、资源绑定按冻结的 `HoAC_*`，等到 AC（`Ho-AttributeComposite`）R5 一起做。
+  v1（配置模型 + 与另外两块对齐的 UI：搜索栏 + 左侧图标侧栏 + 统一行样式，这块**没有图层也没有顺序**，
+  5 个区段固定、只有启用开关）**已落地**，见 `CharacterSpecializationBrowser.md`。
 - `Tests/Runtime` 目录为空，源码中也未检索到 `[Test]` 或 `[UnityTest]`。本次只能做源码结构和静态检查，不能替代 Unity Editor 编译和画面验证。
 - 包目录没有 `.sln`、`.csproj` 或 Unity `ProjectSettings/ProjectVersion.txt`，无法在当前包根直接跑 C# 编译。
 - 工作树里已有未提交改动，尤其是 `ScreenProcess`、`GeometryBuffer` 和 `SkyTyndall` 相关文件。本文档按这些改动后的源码状态描述。
 - 部分 Inspector 文本在源码里已经出现编码乱码，这不影响架构判断，但会影响编辑器显示质量，后续应单独修复。
+
+## 共享图层混合表（IP / SP）
+
+`ImageProcess` 与 `ScreenProcess` 的图层混合模式现在是**同一张表、同一套编号**：
+
+- 实现：`Runtime/ImageProcess/Shaders/ImageProcess/ImageProcessBlend.hlsl`（文件名是历史遗留；includ 一律用包内绝对路径，
+  两边都 include 它）。24 个模式，0 正常 / 1 相加 / 2 正片叠底 / 3 滤色 / 4 变暗 / 5 颜色加深 / 6 线性加深 / 7 变亮 /
+  8 颜色减淡 / 9 叠加 / 10 柔光 / 11 强光 / 12 亮光 / 13 线性光 / 14 点光 / 15 实色混合 / 16 差值 / 17 排除 /
+  18 减去 / 19 划分 / 20 色相 / 21 饱和度 / 22 颜色 / 23 明度（Hue/Saturation/Color/Luminosity 是不可分离模式，
+  只有着色器实现；`ScreenProcessFogMath.BlendChannel` 的 CPU 镜像只覆盖可分离的 0..19）。
+- 用它的地方：IP 的 `Gradient`/`GradientMap`/`LayerBlit`/`Halftone`，SP 的 `Outline`/`EdgeLight`/`PostLighting`/
+  `SkyTyndall`/`DepthFog`。C# 侧是 `ScreenProcessBlendMode`（24 个成员，带 `[InspectorName]` 中文标签，
+  序号即 `_LayerBlendMode` 的值）。
+- `SkyTyndall` 的滤色需要 HDR 版本（云/神光的底色可能 > 1），走 `ApplyLayerBlendHdr`：只对 LDR 部分做 screen，
+  再把底色超出 1 的部分加回去；其余 23 个模式与 `ApplyLayerBlend` 相同。
+- **SP 的编号变过一次**：它以前只有 4 个模式，且 2/3 与 IP 相反（旧 2=滤色、旧 3=正片叠底）。统一时**没有做数据迁移**，
+  所以旧资产里值为 2/3 的 SP 图层语义会跟着新表变；代码里一律用枚举名，不受影响。
+- 检查：`.codex-research/shader-check/check_blend_include.js`（两边都必须 include、不得再有本地副本，
+  6 条负对照每次运行都跑）+ `.codex-research/sp_blend_sim/check_sp_blend_parity.js`（把 HLSL 文本解析出来逐模式求值，
+  验证重编号前后每个模式的数学没变、C# 镜像与着色器一致、枚举序号与中文标签跟 IP 面板逐项对齐）。
 
 ## 总体渲染顺序
 
