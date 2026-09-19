@@ -37,60 +37,96 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
             TEXTURE2D_X(_HoGeometryBufferOutlineNormalDepthTexture);
             float _HoGeometryBufferValid;
 
+            // Tap layout: golden-angle spiral, r = sqrt((i + 0.5) / N).
+            // sqrt() is what makes the taps uniform per unit AREA instead of per unit radius, so the
+            // disk has no inner ring gap and no empty outer ring; a golden-angle sequence keeps them
+            // from lining up into spokes. Regenerate with .codex-research/dof_sim/dof_bleed_check.py
+            // --print-kernels; that script also verifies these tables still match the formula.
+            static const int ScreenProcessDofKernelLqCount = 16;
+            static const float2 ScreenProcessDofKernelLq[ScreenProcessDofKernelLqCount] =
+            {
+                float2( 0.176777,  0.000000),
+                float2(-0.225772,  0.206826),
+                float2( 0.034558, -0.393771),
+                float2( 0.284571,  0.371173),
+                float2(-0.522223, -0.092374),
+                float2( 0.494695, -0.314685),
+                float2(-0.165466,  0.615525),
+                float2(-0.315561, -0.607594),
+                float2( 0.684642,  0.250030),
+                float2(-0.712256,  0.294009),
+                float2( 0.343354, -0.733729),
+                float2( 0.253730,  0.808932),
+                float2(-0.764746, -0.443186),
+                float2( 0.897134, -0.197232),
+                float2(-0.547507,  0.778772),
+                float2(-0.126487, -0.976090)
+            };
+
+            static const int ScreenProcessDofKernelHqCount = 48;
+            static const float2 ScreenProcessDofKernelHq[ScreenProcessDofKernelHqCount] =
+            {
+                float2( 0.102062,  0.000000),
+                float2(-0.130350,  0.119411),
+                float2( 0.019952, -0.227344),
+                float2( 0.164297,  0.214297),
+                float2(-0.301506, -0.053332),
+                float2( 0.285613, -0.181683),
+                float2(-0.095532,  0.355374),
+                float2(-0.182189, -0.350795),
+                float2( 0.395278,  0.144355),
+                float2(-0.411221,  0.169746),
+                float2( 0.198236, -0.423618),
+                float2( 0.146491,  0.467037),
+                float2(-0.441526, -0.255873),
+                float2( 0.517961, -0.113872),
+                float2(-0.316103,  0.449624),
+                float2(-0.073027, -0.563546),
+                float2( 0.448315,  0.377841),
+                float2(-0.603292,  0.024948),
+                float2( 0.440055, -0.437914),
+                float2(-0.029441,  0.636697),
+                float2(-0.418714, -0.501759),
+                float2( 0.663289,  0.089245),
+                float2(-0.562003,  0.391027),
+                float2( 0.153572, -0.682641),
+                float2( 0.355203,  0.619877),
+                float2(-0.694388, -0.221529),
+                float2( 0.674510, -0.311641),
+                float2(-0.292214,  0.698232),
+                float2(-0.260795, -0.725077),
+                float2( 0.693947,  0.364719),
+                float2(-0.770801,  0.203181),
+                float2( 0.438129, -0.681391),
+                float2( 0.139371,  0.810962),
+                float2(-0.660498, -0.511527),
+                float2( 0.844897, -0.069998),
+                float2(-0.584002,  0.631289),
+                float2( 0.004254, -0.872008),
+                float2( 0.593868,  0.654653),
+                float2(-0.891769, -0.082649),
+                float2( 0.722597, -0.548425),
+                float2(-0.164407,  0.903726),
+                float2(-0.495233, -0.786974),
+                float2( 0.907502,  0.248709),
+                float2(-0.846956,  0.434644),
+                float2( 0.334703, -0.902805),
+                float2( 0.367093,  0.901754),
+                float2(-0.889424, -0.421515),
+                float2( 0.950623, -0.293087)
+            };
+
+            // The centre tap is the pixel's own colour. It always participates, both because nothing
+            // should be able to erase a pixel's own value and because the reach test below would
+            // otherwise reject it whenever the pixel itself is in focus.
+            static const float ScreenProcessDofCenterWeight = 1.25;
+            static const float ScreenProcessDofReachMargin = 0.1;
+            static const float ScreenProcessDofReachMarginMinPx = 1.0;
+
             half4 SampleOutlineNormalDepth(float2 uv)
             {
                 return SAMPLE_TEXTURE2D_X(_HoGeometryBufferOutlineNormalDepthTexture, sampler_PointClamp, uv);
             }
-
-            static const int ScreenProcessDofKernelLqCount = 12;
-            static const float2 ScreenProcessDofKernelLq[ScreenProcessDofKernelLqCount] =
-            {
-                float2(-0.326212, -0.405810),
-                float2(-0.840144, -0.073580),
-                float2(-0.695914,  0.457137),
-                float2(-0.203345,  0.620716),
-                float2( 0.962340, -0.194983),
-                float2( 0.473434, -0.480026),
-                float2( 0.519456,  0.767022),
-                float2( 0.185461, -0.893124),
-                float2( 0.507431,  0.064425),
-                float2( 0.896420,  0.412458),
-                float2(-0.321940, -0.932615),
-                float2(-0.791559, -0.597710)
-            };
-
-            static const int ScreenProcessDofKernelHqCount = 28;
-            static const float3 ScreenProcessDofKernelHq[ScreenProcessDofKernelHqCount] =
-            {
-                float3( 0.62463,  0.54337, 0.82790),
-                float3(-0.13414, -0.94488, 0.95435),
-                float3( 0.38772, -0.43475, 0.58253),
-                float3( 0.12126, -0.19282, 0.22778),
-                float3(-0.20388,  0.11133, 0.23230),
-                float3( 0.83114, -0.29218, 0.88100),
-                float3( 0.10759, -0.57839, 0.58831),
-                float3( 0.28285,  0.79036, 0.83945),
-                float3(-0.36622,  0.39516, 0.53876),
-                float3( 0.75591,  0.21916, 0.78704),
-                float3(-0.52610,  0.02386, 0.52664),
-                float3(-0.88216, -0.24471, 0.91547),
-                float3(-0.48888, -0.29330, 0.57011),
-                float3( 0.44014, -0.08558, 0.44838),
-                float3( 0.21179,  0.51373, 0.55567),
-                float3( 0.05483,  0.95701, 0.95858),
-                float3(-0.59001, -0.70509, 0.91938),
-                float3(-0.80065,  0.24631, 0.83768),
-                float3(-0.19424, -0.18402, 0.26757),
-                float3(-0.43667,  0.76751, 0.88304),
-                float3( 0.21666,  0.11602, 0.24577),
-                float3( 0.15696, -0.85600, 0.87027),
-                float3(-0.75821,  0.58363, 0.95682),
-                float3( 0.99284, -0.02904, 0.99327),
-                float3(-0.22234, -0.57907, 0.62029),
-                float3( 0.55052, -0.66984, 0.86704),
-                float3( 0.46431,  0.28115, 0.54280),
-                float3(-0.07214,  0.60554, 0.60982)
-            };
 
             float SampleEyeDepth(float2 uv)
             {
@@ -103,6 +139,9 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                 return LilHoGeometryBufferLinearDepthOrFar(normalDepth, _ProjectionParams.z);
             }
 
+            // The outline shell has its own linear eye depth, so an outline pixel is focused and
+            // blurred like the surface it hugs instead of being force-kept sharp. It is used for the
+            // centre pixel AND for every tap, which is what keeps the outline consistent with itself.
             float SampleVisualEyeDepth(float2 uv)
             {
                 if (_HoGeometryBufferValid <= 0.5)
@@ -148,10 +187,18 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                 return pow(saturate(coc), curve);
             }
 
-            float ResolveCoc(float depth)
+            // Signed CoC: negative = nearer than the focus plane (foreground), positive = farther
+            // (background). Gaussian mode has no focus plane, so it only ever produces a far side.
+            float ResolveSignedCoc(float depth)
             {
                 int mode = (int)round(_LayerParams0.x);
-                return mode >= 1 ? ResolveBokehCoc(depth) : ResolveGaussianCoc(depth);
+                if (mode < 1)
+                {
+                    return ResolveGaussianCoc(depth);
+                }
+
+                float signedDelta = depth - max(_LayerParams0.y, 0.001);
+                return sign(signedDelta) * ResolveBokehCoc(depth);
             }
 
             float2 ResolveBokehOffset(float2 direction)
@@ -172,18 +219,28 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                 return direction * polygon;
             }
 
-            half4 SampleBlur(float2 uv, float radiusPx)
+            // Gather with CoC-consistent weights.
+            //
+            // A tap may only fill the part of the blur circle its OWN CoC can cover: if the tap is
+            // sharper than the distance it sits at, letting it in is what smears an in-focus subject
+            // over an out-of-focus background (and vice versa). The margin keeps that cut-off from
+            // being a hard edge in the weighting.
+            half4 SampleBlur(float2 uv, float radiusPx, float maxRadiusPx, float marginPx)
             {
-                float2 texelRadius = _BlitTexture_TexelSize.xy * radiusPx;
-                half4 color = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv) * 1.25;
-                float weight = 1.25;
+                float2 texel = _BlitTexture_TexelSize.xy;
+                half4 color = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv) * ScreenProcessDofCenterWeight;
+                float weight = ScreenProcessDofCenterWeight;
                 float highQuality = step(0.5, _LayerParams1.w);
 
-                #define ADD_DOF_SAMPLE(dir, sampleWeight) \
+                #define ADD_DOF_SAMPLE(dir) \
                     { \
-                        float2 sampleUv = uv + ResolveBokehOffset(dir) * texelRadius; \
-                        color += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUv) * sampleWeight; \
-                        weight += sampleWeight; \
+                        float2 offsetPx = ResolveBokehOffset(dir) * radiusPx; \
+                        float2 sampleUv = uv + offsetPx * texel; \
+                        float distPx = length(offsetPx); \
+                        float tapCoc = ResolveSignedCoc(SampleVisualEyeDepth(sampleUv)); \
+                        float tapWeight = saturate((abs(tapCoc) * maxRadiusPx - distPx + marginPx) / marginPx); \
+                        color += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUv) * tapWeight; \
+                        weight += tapWeight; \
                     }
 
                 if (highQuality > 0.5)
@@ -191,8 +248,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                     [unroll]
                     for (int i = 0; i < ScreenProcessDofKernelHqCount; i++)
                     {
-                        float3 kernel = ScreenProcessDofKernelHq[i];
-                        ADD_DOF_SAMPLE(kernel.xy, lerp(1.12, 0.9, saturate(kernel.z)))
+                        ADD_DOF_SAMPLE(ScreenProcessDofKernelHq[i])
                     }
                 }
                 else
@@ -200,7 +256,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                     [unroll]
                     for (int i = 0; i < ScreenProcessDofKernelLqCount; i++)
                     {
-                        ADD_DOF_SAMPLE(ScreenProcessDofKernelLq[i], 1.0)
+                        ADD_DOF_SAMPLE(ScreenProcessDofKernelLq[i])
                     }
                 }
 
@@ -220,15 +276,21 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                 }
 
                 float depth = SampleVisualEyeDepth(uv);
-                float coc = ResolveCoc(depth);
-                float radiusPx = coc * max(_LayerParams1.z, 0.0);
-                float amount = saturate(coc * _Intensity) * LilScreenProcessResolveRuleLayerMask(uv);
+                float coc = ResolveSignedCoc(depth);
+                float maxRadiusPx = max(_LayerParams1.z, 0.0);
+                float radiusPx = abs(coc) * maxRadiusPx;
+                // The blur strength lives in radiusPx: a pixel with a small CoC gets a small
+                // disk, which is what a lens does. _Intensity only fades the whole layer, so it
+                // must not scale with the CoC as well - doing that kept partially defocused
+                // pixels mostly sharp and turned them into a ghost of the sharp image.
+                float amount = saturate(_Intensity) * LilScreenProcessResolveRuleLayerMask(uv);
                 if (radiusPx <= 0.0001 || amount <= 0.0001)
                 {
                     return source;
                 }
 
-                half4 blurred = SampleBlur(uv, radiusPx);
+                float marginPx = max(radiusPx * ScreenProcessDofReachMargin, ScreenProcessDofReachMarginMinPx);
+                half4 blurred = SampleBlur(uv, radiusPx, maxRadiusPx, marginPx);
                 return half4(lerp(source.rgb, blurred.rgb, amount), source.a);
             }
             ENDHLSL
