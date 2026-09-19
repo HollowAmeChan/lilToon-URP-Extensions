@@ -33,6 +33,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         public static readonly ShaderTagId CaptureShaderTagId = new ShaderTagId(CapturePassName);
         public static readonly int CaptureModeId = Shader.PropertyToID("_HoCharacterCaptureMode");
+        // 同一份 property id 就是 core 里 Blitter 私有的 BlitShaderIDs._BlitScaleBias
+        // (Runtime/Utilities/Blitter.cs:54)。全屏三角形的顶点阶段用它算 UV（Blit.hlsl:50 ->
+        // DYNAMIC_SCALING_APPLY_SCALEBIAS -> DynamicScaling.hlsl:4），所以任何不用
+        // Blitter.BlitTexture（它会自己 SetVector）而直接 DrawProcedural 的画法都必须自己设它。
+        public static readonly int BlitScaleBiasId = Shader.PropertyToID("_BlitScaleBias");
         public static readonly int EyeColorTextureId = Shader.PropertyToID(EyeColorTextureName);
         public static readonly int EyeDataTextureId = Shader.PropertyToID(EyeDataTextureName);
         public static readonly int EyeRevealParamsId = Shader.PropertyToID("_HoCharacterEyeRevealParams");

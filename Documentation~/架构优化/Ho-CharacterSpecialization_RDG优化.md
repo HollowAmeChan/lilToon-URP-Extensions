@@ -204,7 +204,20 @@
 | F6 | semanticLow/High → #13 | `:974-978` 只按 `ready` 声明；采样条件是 `_HoCharacterSemanticMaskOptions.y/z/w`（`Composite.shader:92`），而这三位只由 前发投影/脸色扩散/眼透 三个开关决定（`SemanticMaskBlur.cs:48-52`） | 三个开关全不勾、只有两个轮廓勾了（此时副本是给轮廓用的） |
 | F7 | FaceHairDiffuseSourceColor → #13 | `:981` 声明；shader 只有 debug 5 采它（`Composite.shader:681`，声明在 `:63`）——**这张纹理因为这条边要活到最后一趟**，挡住 RDG 别名 | `debugMode != FaceHairDiffuseSourceMask(5)` |
 | F8 | eyeColor/eyeData → #13 | `:972-973` **无条件**声明；采样全部有 gate：`_HoCharacterOptions.x <= 0.5` 时 `ResolveEyeRevealMask` 在采样前 return 0（`Composite.shader:241-246`），`ResolveEyeAngleFactor` 在 `strength<=0.0001` 时 return 1（`:268-271`） | `eyeRevealEnabled == false` ∧ 角度修正常数 0 ∧ debug ∉ {1,2,3,16,17} |
+
+> **F8 的更正（施工时核实，2026，见文末"施工状态"）**：这条边**只有 eyeData 的一半是假读**。
+> `eyeColor` 在 `Frag` 开头 `Composite.shader:619` 就被**无条件**采样（debug 1 在 `:640` 直接返回它、
+> `:771` 的 `lerp` 拿它当目标色），所以 `:972` 是**真读**，不能删；能门控的只有 `:973`（eyeData），
+> 它的 4 个采样点 `:250 / :275 / :645 / :663` 才全部落在 F8 的门内。原文"采样全部有 gate"一句对
+> eyeColor 不成立。
 | F9 | （不是边，是死 pass）#1 / #2 在眼透全关时仍在图里 | `:557,586` 无条件录制；`AllowPassCulling(false)`（`:572,601`）让 RDG **不能**按"输出没人用"剔掉它；输出唯一消费者 #13 又因为 F8 变成了假读 | 同 F8 |
+
+> **F9 的两点补充（施工时核实，2026）**：① `AllowPassCulling(false)` 其实是**冗余**的写法——
+> core 里 `AllowGlobalStateModification(true)` 内部就会调 `AllowPassCulling(false)`
+> （`RenderGraphBuilders.cs:64-73`），而 `hasSideEffects = !allowPassCulling`
+> （`Compiler/PassesData.cs:167,219`）→ 本 feature 的 13 趟**永远不会被 RDG 自动剔除**。
+> ② 断掉假读**不会**让任何生产者被剔除（同理），只会缩短资源存活区间；RDG 也不重排 pass，
+> 执行顺序 = 录制顺序（`RenderGraph.cs` 的 `compiledPassInfos` 按 pass 序执行）。
 
 ### 3.3 待验证的边
 
@@ -244,10 +257,17 @@
 | **K5** | 合成趟的绑定收紧：`:981`（FaceHair 源色，只有 debug 5 用）改条件；`:972-973` 与 `eyeRevealEnabled` 对齐 | 生命周期/别名（F7/F8）；`FaceHairDiffuseSourceColor` 不再压住整个支链的存活区间 | **等价**：采样点由 `Composite.shader:681`（debug 5）与 `:241-246` 的 gate 决定 | 每个 debug 视图仍能正常显示（逐个数一遍 1..17） | 无 |
 | **K6** | **捕获两趟合一**：一次 `DrawRendererList` + 按物体自己的 object mask 位决定 mode（`CaptureCommon.hlsl:36-43,56-63` 里 objectMask 已经是逐物体数据），去掉第二个 pass 与 `:586-613` | 1 个 pass、1 次几何顶点链（现状两趟都对全部物体跑顶点链）、1 次附件写序列；不动片元总量 | **待验证**（§3.3-V1）：两趟共享 captureDepth 且材质侧 `ZWrite On / ZTest LEqual`，合一后 face/eye 的深度互测顺序会变成一次排序的结果 | 先做 V1 的换序实验；再做 debug 1/2/3/17 的 A/B（尤其眼睛被脸皮遮挡的像素） | capture 两趟的 ms：如果 capture 是帧内大头，这刀的收益最大 |
 | **K7** | 清屏方式：`ClearCaptureTargets`（`:1088-1098`）里的全屏三角形（`CaptureClear.shader:44-59`）换成 `RTClearFlags.All`（深度已经在 `:1090` 清过了） | 1 次满屏 2 MRT 写（33.2 MB）+ 1 次 draw | **等价**（两只都写 0；但**为什么当初用 shader 清未在代码里写明**，属于未确认，见 §6-9） | debug 1/2 无残留；旧内容不留 | 清屏在 capture 里的占比（通常极小，属"顺手做"） |
-| **K8** | 资源卫生：`CreateTextureDesc` 的 `clearBuffer = true`（`:1132`）与 captureDepth 的 `clear = true`（`:545`）在"第一趟就全屏覆写"的纹理上关掉；`AccessFlags.WriteAll` 与 load/discard 的用法统一；`CapturePassData` 里 3 个死字段（`:325-327`）删除 | 图的规模（少一批 clear 节点/多余 load）、语义清晰；**不省带宽**（fast clear 很便宜） | 需要先确认 `AccessFlags.WriteAll` 语义（§3.3-V4）；确认后是等价改法 | renderScale = Half/Quarter 时纹理比相机小，全屏覆写仍必须全覆盖（抓一次图确认无残留） | 无 |
-| **K9** | **scratch 池化**：把 ping-pong 的 temp/source/final 统一走一个 scratch 池 | **只省 handle / 峰值显存 / 图的规模；不省带宽，也不省 GPU 时间** | 等价（不动算法）。注意：RDG 自身就会对 transient 纹理做生命周期别名，池化能拿到的是"handle 数与名字数"和"图里资源条目数"，不是流量 | 无（不是视觉项） | RDG Resource List 里的 transient 峰值：池化前后对比；若峰值本来就被别名压到很小，这刀收益≈0 |
+| **K8** | 资源卫生：`CreateTextureDesc` 的 `clearBuffer = true`（`:1132`）与 captureDepth 的 `clear = true`（`:545`）在"第一趟就全屏覆写"的纹理上关掉；`AccessFlags.WriteAll` 与 load/discard 的用法统一；`CapturePassData` 里 3 个死字段（`:325-327`）删除 | 图的规模（少一批 clear 节点/多余 load）、语义清晰；**不省带宽**（fast clear 很便宜） | 需要先确认 `AccessFlags.WriteAll` 语义（§3.3-V4）；确认后是等价改法 | renderScale = Half/Quarter 时纹理比相机小，全屏覆写仍必须全覆盖（抓一次图确认无残留） | 无 || **K9** | **scratch 池化**：把 ping-pong 的 temp/source/final 统一走一个 scratch 池 | **只省 handle / 峰值显存 / 图的规模；不省带宽，也不省 GPU 时间** | 等价（不动算法）。注意：RDG 自身就会对 transient 纹理做生命周期别名，池化能拿到的是"handle 数与名字数"和"图里资源条目数"，不是流量 | 无（不是视觉项） | RDG Resource List 里的 transient 峰值：池化前后对比；若峰值本来就被别名压到很小，这刀收益≈0 |
 | **K10** | **composite 融进"排序最后的那一支"的最后一趟**（见 §4.0） | 1 读 + 1 写 + 1 个 pass + 该支 final 纹理 + destination 不再需要单独存在（可别名） | **只在 `renderScale = Full` 且只启用单支时严格等价**：合成趟与支链纹理同分辨率时，像素中心正落在纹素中心，双线性重建返回存下来的那个值，与在同一 uv 上重算磁盘卷积逐位一致；`renderScale = Half/Quarter` 时合成趟是满分辨率、支链是半分辨率，融合会把"双线性放大"换成"满分辨率重算"，**不等价**（半径与相位都会变） | 轮廓法线的 `ddx/ddy`（`Composite.shader:525`）融合后改由同一趟邻域求导，边缘是否一致；`resourceData.cameraColor`（`:1066`）指向的必须是下游拿到的那张 | 只有单支启用的场景占比 + 合成趟的 ms |
 | **K11** | 合成趟眼透的 81 tap：把"膨胀"落成一张预计算场（PointClamp，`Composite.shader:198-216` 的 `texel = MetadataTexelSize()*radiusPx` 改为先算 `D=max3x3(eyeData.r)` 再对 9 个偏移做加权和 `:228-238`） | tap 81 → 18，但**多 1 趟（1 读 + 1 写）** | **默认参数下逐位等价**：`max` 不引入舍入（8 个 16F 值的 max 仍是 16F 可表示值），权重与求和顺序不变（`:229-238`）；**非整数**羽化/扩张（默认 1.0 / 2.0，是整数）时膨胀支撑会因取整差最多 1 个 texel → 需目视确认 | 极低对比处的眼透边缘（`eyeRevealStrength` 默认 0.05，本来就很淡）：A/B 抓图逐像素差 | **composite 是不是采样瓶颈**：如果不是，多一趟不划算 |
+
+> **K8 的更正（施工时核实，2026）**：本 fork 的 core 里 **`AccessFlags.WriteAll` 的定义就是
+> `Write | Discard`**（`Runtime/RenderGraph/RenderGraph.cs:37`），所以"给全覆写的中间纹理再加
+> `Discard`"是**空操作**——本文档 §4.1-K8 与文末"补记"里那句"K8 可落地"只对了一半。
+> 本 feature 的附件声明里，除了 CaptureEye 的 `ReadWrite`（它必须保留 CaptureFace 写的内容，
+> 不能 Discard），其余全部已经是 `WriteAll`。`clearBuffer = true` 那一半也**不能**关：
+> 捕获支被门控掉之后，`eyeColor` 变成"没人写、只被合成趟无条件采样"的资源，正是描述符上的
+> `clearBuffer` 让 RDG 在首次使用（= 作为采样输入）时把它显式清成 0。详见文末"施工状态 · K8"。
 
 优先级建议：**K1（帧级最大结构性浪费，且可证等价）→ K4（可证等价的带宽刀，随参数常开）→ K3/K5/K2（假依赖与生命周期）→ K6/K10（收益大但要先做 V1/先测单支占比）→ K7/K8/K9（卫生与显存）。**
 
@@ -394,3 +414,51 @@ core 包不在本仓库，但它是**注册表版本**，缓存在工程里：
 另记一个测量侧的现成条件：`D:\Unity_Fork\renderdoc-mcp` 就在本机（RenderDoc 的 MCP 封装），
 §0 的逐趟抓帧可以直接走它，不必手工开 RenderDoc —— 但仍要注意 §0 的坑：13 趟共用同一个 `ProfilingSampler`
 （`RendererFeature.cs:288`），Profiler 侧同名。
+
+---
+
+## 施工状态（2026，safe 刀已落地；行号为本文件被改后的工作区行号）
+
+改动的文件只有三个（`git status --short` 只显示这三个）：
+`Runtime/CharacterSpecialization/HoCharacterSpecializationRendererFeature.cs`、
+`Runtime/CharacterSpecialization/Effects/HoCharacterSpecializationPass.Data.cs`、
+`Runtime/CharacterSpecialization/HoCharacterSpecializationShaderConstants.cs`。
+**没有改任何 shader、没有改分辨率/格式/模糊核/迭代数/雾气填充模式/AllowPassCulling 语义。**
+
+| 刀 | 状态 | 落点 | 等价性判据（施工时逐条对着 shader/core 复核过） |
+| --- | --- | --- | --- |
+| **K2** | ✅ 已实施 | 三处 source pass：删 `UseTexture(source, Read)`（原 `:685/:762/:849`）；`Blitter.BlitTexture(cmd, data.source, …)` → `SetGlobalVector(BlitScaleBiasId, (1,1,0,0))` + `DrawProcedural(Matrix4x4.identity, material, 0, MeshTopology.Triangles, 3, 1)`；`FaceHairDiffuseSourcePassData`/`SubjectOutlineSourcePassData` 的 `source` 字段删除 | ① 三个 pass 的片元从不采 `_BlitTexture`（`HoCharacterFaceHairDiffuse.shader:38-54`、`HoCharacterSubjectOutline.shader:91-112`，全仓 `_BlitTexture` 采样点只有各自的 blur pass 与合成的 `:613`）；② 顶点阶段**确实**依赖 `_BlitScaleBias`：`Blit.hlsl:50` → `DYNAMIC_SCALING_APPLY_SCALEBIAS` → `DynamicScaling.hlsl:4`（`bias + uv * scale`），所以必须显式设 `(1,1,0,0)`；③ 新写法与 core `Blitter.DrawTriangle`（`Blitter.cs:325-331`，`DrawProcedural(..., 3, 1, propertyBlock)`）**同为 3 顶点全屏三角形**，只有"设进 MPB"与"设进全局量"之别，UV/覆盖完全一致；④ `_BlitScaleBias` 的 property id 与 core 私有 `BlitShaderIDs._BlitScaleBias` 同串（`Blitter.cs:54`） |
+| **K3 / F4 / F5** | ✅ 已实施 | 主体轮廓 source：`if (semanticMaskBlurReady)` → `if (semanticMaskBlurReady && settings.semanticMaskBlurSubjectOutline)`；增强轮廓同理用 `semanticMaskBlurEnhancedOutline` | shader 只在 `_HoCharacterSemanticMaskBlurValid > 0.5` 时读模糊对（`HoCharacterSubjectOutline.shader:43-52`），而这个全局量就是 render func 里的 `semanticMaskBlurReady && useSemanticMaskAntiAliasing`（同一表达式，同值）；开关关掉时连全局绑定都不写（原样保留） |
+| **K3 / F6** | ✅ 已实施 | 合成趟的模糊对读声明由 `if (semanticMaskBlurReady)` 改为 `compositeSamplesSemanticMaskBlur` = `ready && ((eyeRevealEnabled && semanticMaskBlurEyeReveal) \|\| (hairDropShadowEnabled && semanticMaskBlurHairShadow) \|\| (faceHairDiffuseReady && semanticMaskBlurFaceHairDiffuse))`；全局绑定同样跟着它（`_HoCharacterSemanticMaskBlurValid` 仍无条件写，那是"读原始 bit"分支的条件） | 合成里的三条采样路径全部要求 `_HoCharacterSemanticMaskBlurValid > 0.5 && useAntiAliased > 0.5`（`Composite.shader:92` 的 `SampleSemanticBit`），且各自有前置门：眼透 `:243-246`、前发投影 `:309-312`、脸色扩散 `:364-367`；`useAntiAliased` 三位由 `CreateSemanticMaskOptions`（`SemanticMaskBlur.cs:41-53`）给出，就是那三个开关 |
+| **K5 / F7** | ✅ 已实施 | 合成趟的 `UseTexture(faceHairDiffuseSourceColorTexture)` 由 `if (faceHairDiffuseReady)` 收窄为 `faceHairDiffuseReady && debugMode == FaceHairDiffuseSourceMask`；全局绑定同样收窄 | 该纹理在 shader 里只有 `:681` 一个采样点，位于 `debugMode == 5` 分支内，且外面还有 `_HoCharacterFaceHairDiffuseOptions.y > 0.5`（= `faceHairDiffuseReady`）；`_HoCharacterOptions.w = (float)settings.debugMode`（`MaterialProperties.cs:229`）→ C# 侧 `settings.debugMode` 就是那个值。debug ≠ 5 时源色只被 blur#1 读（`FaceHairDiffuse.cs:104`），提前死掉正是本刀要的别名收益 |
+| **K1 / F8 / F9** | ✅ 已实施（含一处更正） | `needsFaceCapture` / `needsEyeCapture` / `needsCharacterCapture` 三个具名局部量（扩展点注释写在录制处）；两趟捕获、`eyeData`、`captureDepth` 跟着门控；合成趟的 `UseTexture(eyeDataTexture)` 与 `SetGlobalTexture(EyeDataTextureId)` 跟着 `needsEyeCapture`；**`eyeColor` 的读声明与全局绑定保持不变** | 门 = `RequiresCharacterCapture(settings)` = `eyeRevealEnabled \|\| (eyeRevealAngleEnabled && eyeRevealAngleStrength > 0.0001) \|\| debug ∈ {1,2,3,16,17}`。关门的帧里 `revealMask` 恒 0（`Composite.shader:243-246`）→ `:771` 的 `lerp(source.rgb, eyeColor.rgb, 0)` 逐位等于 `source.rgb`；`eyeData` 的 4 个采样点（`:250/:275/:645/:663`）恰好就是门里那几项。**更正**：F8 说 eyeColor 也是假读是错的——`:619` 无条件采它，所以它必须留绑定；关门帧里那张纹理由 RDG 按 `clearBuffer` 清成 0（core `RenderGraphResourceRegistry.cs:1054` + `Compiler/NativePassCompiler.cs:1184`：首个用途是"被采样"而不是附件时走显式 clear），因此不引入 NaN/残留 |
+| **K8** | ⏭ 刻意跳过 | 无改动 | `AccessFlags.WriteAll` 在 core 里**就是** `Write \| Discard`（`RenderGraph.cs:37`）→ 加 `Discard` 是空操作；本 feature 只有 CaptureEye 的 `ReadWrite` 不是 `WriteAll`，而它**不能** Discard（要保留 CaptureFace 的结果）。`clearBuffer = true` 也保留：门控掉捕获后 `eyeColor` 的 0 初值正是靠它。`CapturePassData` 的 3 个"死字段"仍在（它们只被写不被读，属于纯卫生，未动） |
+| **K4 / K6 / K7 / K9 / K10 / K11** | ⛔ 不在本任务范围 | 无改动 | K4 明确 out of scope；K6 需先做 §3.3-V1；K7/K9/K10/K11 见 §4.1 各自的"取决于哪个测量数" |
+
+施工时另外核实到的两条（对本文档的补充）：
+
+1. **`AllowPassCulling(false)` 是冗余写法**：core 里 `AllowGlobalStateModification(true)` 内部会调
+   `AllowPassCulling(false)`（`RenderGraphBuilders.cs:64-73`），而 `hasSideEffects = !allowPassCulling`
+   （`Compiler/PassesData.cs:167,219`）→ 本 feature 的所有 pass **永不**被 RDG 自动剔除。所以
+   "断假读会不会把生产者剔掉"这个担心不存在：**断假读只缩短存活区间，不减少 pass**。
+2. **`_HoCharacterCaptureMode` 的收尾值不变**：两趟捕获在 render func 末尾都把它设回 0；门控掉之后
+   它保持上一帧结束时的 0，所以材质侧的 `LilHoCharacterCaptureShouldDraw`（`HoCharacterCaptureCommon.hlsl:56-64`）
+   在其它 pass 里看到的仍是 0。
+
+### 目视 A/B 清单（**必须由人在 Unity 里做；本次施工没有跑过 Unity，像素一律"未验证"**）
+
+做法：同一场景、同一相机、同一角色与参数，同一分辨率（CS/MB/GB 三个 renderScale 各测一遍），
+改动前后来回切两次抓同一帧（固定 Time 或暂停），逐像素 diff。**先关 TAA/动态分辨率**，否则噪声会淹没
+本任务这种"应为 0 差"的改动。
+
+| 刀 | 要抓的视图/设置 | 比什么 |
+| --- | --- | --- |
+| K2（三支 source pass） | debug 5（脸色扩散源遮罩）、debug 9（主体轮廓源遮罩）、debug 13（增强轮廓源遮罩）；各效果开关打开、半径拉大 | 三张源遮罩必须**逐像素完全一致**（尤其画面边缘/角落：`_BlitScaleBias` 若没设对，UV 会整体缩放/偏移，遮罩会跟着错位） |
+| K2 反例检查 | 同上，但把 CS 的 renderScale 改成 Half 再改回来 | 确认没有"半分辨率残留 UV"——若顶点 UV 用了上一趟残留的 scale/bias，Half 与 Full 切换时遮罩形状会变 |
+| F4/F5（轮廓侧模糊对） | debug 9/13 + 勾/取消"读取抗锯齿掩码"里主体轮廓/增强轮廓那两项，各抓一次 | 四种组合（勾/不勾 × 轮廓开/关）都必须与改前一致；特别是"只有轮廓勾了、前发/脸色/眼透都没勾"时轮廓边缘的抗锯齿仍在 |
+| F6（合成侧模糊对） | 打开"读取抗锯齿掩码"的前 3 项（前发投影/脸色扩散/眼透），逐个关掉再开；以及"只有两个轮廓勾、其它都不勾" | 边缘抗锯齿的软硬不能有任何变化（关掉某项时读原始 bit 的硬边必须照旧） |
+| F7（脸色扩散源色） | debug 5 抓一次；debug 6/7/8 各抓一次；再把脸色扩散开到半径最大 | debug 5 必须与改前逐像素一致；debug 6/7/8 里**不能**出现源色纹理被别名后的花屏（它现在可以提前死掉） |
+| F9/K1（捕获门控） | debug 1/2/3/16/17 各抓一次（眼透开关都保持关）；再在眼透关的情况下抓正常画面 | 五个 debug 视图必须与改前一致（门把它们留在图里了）；正常画面**逐像素**等于改前（眼透关时 `revealMask=0`，`lerp` 权重为 0） |
+| F9 关键项 | 眼透**关**、前发投影**开**、`使用眼透区域`开，抓画面 | 前发投影的接收面裁剪（发际线）与改前一致——这是唯一"读了 revealMask"的旁路（`Composite.shader:328`），关门后它仍是 0 |
+| F9 眼透**开** | 眼透开、角度修正开+关各一次；debug 3/16/17 | 与改前一致（关门条件不成立，捕获照旧全录） |
+| 全局 | 13 趟全开的配置抓一次总图；RDG 视图对比资源存活区间 | 全开时画面一致；RDG 里 `_lilHoCharacterFaceHairDiffuseSourceColorTexture`、语义副本、`_lilHoCharacterEyeDataTexture`、`_lilHoCharacterCaptureDepthTexture` 的存活区间应当变短或消失（这是本任务唯一的"预期可见变化"） |

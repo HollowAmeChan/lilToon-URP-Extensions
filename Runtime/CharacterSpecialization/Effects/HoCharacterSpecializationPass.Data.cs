@@ -52,11 +52,17 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public bool subjectOutlineReady;
             public bool enhancedOutlineReady;
             public bool semanticMaskBlurReady;
+            // 以下三个 bool 就是对应的"合成趟到底会不会采它"的门（见录制处注释）：
+            // 它们只影响 UseTexture 声明与全局绑定，不影响任何 shader 常量。
+            public bool eyeDataSampled;
+            public bool semanticMaskBlurSampled;
+            public bool faceHairDiffuseSourceColorSampled;
         }
 
         private sealed class FaceHairDiffuseSourcePassData
         {
-            public TextureHandle source;
+            // 没有 source 字段：这趟从不用相机颜色（Frag 不采 _BlitTexture），
+            // 画面也不再走 Blitter.BlitTexture 去绑它。
             public TextureHandle metadataObjectCustom0Texture;
             public TextureHandle metadataSurfaceColorTexture;
             public TextureHandle geometryNormalDepthTexture;
@@ -75,7 +81,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         private sealed class SubjectOutlineSourcePassData
         {
-            public TextureHandle source;
+            // 没有 source 字段：主体/增强轮廓的 source pass 也从不用相机颜色（同 F1/F2/F3）。
             public TextureHandle metadataObjectCustom0Texture;
             public TextureHandle metadataObjectCustom1Texture;
             public TextureHandle semanticMaskBlurredLowTexture;
