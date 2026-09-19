@@ -1,5 +1,9 @@
 # Ho-UI 风格规范（OB / SB / AC 及后续 feature）
 
+> **适用范围**：OB / SB / AC 及后续**通道 / 声明型** feature。
+> **后处理三块**（`ImageProcess` / `ScreenProcess` / 角色特化）的效果行与"效果浏览器"是**自成一套**的特殊设计
+> （搜索栏 + 图标侧栏 + 窄行 + 无底控件），**不受本规范约束**，也不要照本规范去"统一"它们。
+>
 > 参照物：`HoGTAOVolumeEditor` / `HoGTAORendererFeatureEditor`（**调试在 Volume、feature 只留高级 + 兜底**）、`HoShadowCastRendererFeatureEditor`（分节最全）、`HoDebugTileRendererFeatureEditor`（Registry / 状态行）。**新 feature 一律照这份写，不要自造样式。**
 
 ## 0. 三条硬规矩

@@ -1,5 +1,9 @@
 # 效果浏览器（后处理 UI 换代）
 
+> **样式归属**：这套浏览器是三块纯后处理（`ImageProcess` / `ScreenProcess` / 角色特化）**自成一套**的界面，
+> 与 `Documentation~/架构优化/Ho-UI_风格规范.md`（OB / SB / AC 及后续通道型 feature 的规范）**互不约束**：
+> 效果行不用 `DrawSectionHeader`、控件无底 + 悬停高亮，都是有意为之，不要照那份规范来"统一"。
+
 `ImageProcess` / `ScreenProcess` 两个 Volume 编辑器的顶部 UI：**搜索栏 + 左侧可翻页图标侧栏 + 右侧原有图层列表**，
 两个编辑器共用同一份实现。旧的"图标墙"（按面板宽度自动流式换行、只能悬停认名、没有搜索）已经删掉。
 

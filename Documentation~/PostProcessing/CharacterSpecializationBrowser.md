@@ -244,23 +244,20 @@ Volume 里的 `LayerMask`/`MinRenderQueue`/`MaxRenderQueue`/`PassEvent`/`RenderS
 
 ## 11. 与 `Ho-UI_风格规范.md` 的关系
 
-规范（`Documentation~/架构优化/Ho-UI_风格规范.md`）是 OB/SB/AC 及后续 feature 的硬约定，三条硬规矩是：
-调试入口在 Volume、分节一律走 `LilUrpEditorSectionGui.DrawSectionHeader` + `VerticalScope(helpBox)`、
-标签中文（英文原名放括号）。
+**这套 UI 自成一套，不受那份规范约束**（已确认：IP/SP 的浏览器是有意特殊设计，不必与规范统一）。
+规范已在开头写明适用范围（OB / SB / AC 及后续通道型 feature），并指出后处理三块不要照它"统一"；
+`EffectBrowser.md` 顶部也加了同样的归属说明。
 
-**本次遵行的部分**：
+所以角色特化跟着 **IP/SP 那套**走，而不是跟着规范走：
 
-- 中文标签 + 英文原名/缩写放括号（`EyeReveal`、`passEvent` 这类保留原样）；
-- 颜色常量集中在类顶、按规范的语义色板取（运行 / 高级 / 调试 / 内容 / RendererFeature 设置 / 名称）；
-- "可用性"不只靠颜色：侧栏图标之外还有 tooltip 与计数文案（`已启用 m 个效果`）；
-- 声明数据不进 Volume、结构项（`passEvent`/shader）留在 feature 的「高级」；
-- UI 文案不出现 `_HoMetadataBuffer*` / `custom0` 这类旧名，改用 AC 的用语；
-- 解析不到 / 数量不一致 / 溢出这类问题要在「调试」或「运行状态」里看得见。
-
-**有意偏离（三处，需要时可在规范里补一条"效果行"例外）**：
-
-| 偏离 | 为什么 |
+| 项 | 做法 |
 | --- | --- |
-| 效果行（`▶ 名字 摘要 [启用] [×]`）不用 `DrawSectionHeader`，而用浏览器统一的窄行样式 | 规范针对的是"运行 / 声明 / 调试 / 高级"这类**通道与设置分节**；效果行是另一种东西，且必须与 IP/SP 一致（三块统一是本次目标）。CS 的**设置/调试分节仍按规范**用 `DrawSectionHeader` |
-| 折叠状态用 `SessionState` 每实例，而不是规范里写的 `private static bool` | 静态 bool 会让同时打开的两个 Inspector/两个 Volume 互相串台；外观不变，只是状态归属改了 |
-| 逐效果参数用"一个 `VolumeParameter` 包一组普通字段"（IP/SP 的图层列表写法），而不是"每参数一个 `VolumeParameter<T>` + `Interp`" | 逐参数 override 在 CS 这层**本来就没生效**（§0.2），而且三块统一优先；参数仍是 per-camera（进 Volume），符合规范"per-camera 可覆盖的进 Volume"的判定 |
+| 效果行 | 浏览器统一的窄行（`▶ 名字 摘要 [启用] [×]`、无底控件、悬停高亮），**不用** `DrawSectionHeader` |
+| 侧栏 | 与 IP/SP 同一套（搜索 + 图标 + 翻页 + 右键菜单） |
+| 折叠状态 | `SessionState` 每实例（**UI 状态不进资产**，也避免两个 Inspector 串台）；IP/SP 的展开状态是存在图层元素上的，这边没有"层"，所以用会话状态 |
+| 参数形态 | 一个 `VolumeParameter` 包一组普通字段（IP/SP 的图层列表写法），不是"每参数一个 `VolumeParameter<T>` + `Interp`" |
+| 仍然沿用规范里通用且合理的部分 | 中文标签 + 英文原名括号；颜色常量集中在类顶；可用性不只靠颜色；UI 不出现 `_HoMetadataBuffer*`/`custom0` 这类旧名（用 AC 的用语）；解析失败/不一致要可见 |
+
+CS 里若以后出现**通道/设置性质**的分节（例如捕获范围、渲染缩放这类不是"效果"的东西），
+那些分节仍按规范写（`DrawSectionHeader` + 语义色板）——两种样式在同一面板里共存，
+判据是"这是不是一个可开关的效果"。
