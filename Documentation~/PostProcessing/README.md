@@ -27,6 +27,9 @@
 
 当前仍需注意的状态：
 
+- 规划中（**尚未实现**）：`角色特化`（`HoCharacterSpecialization`）的 Volume UI 与另外两块后处理对齐 ——
+  同样的搜索栏 + 左侧图标侧栏 + 统一的行样式；这块**没有图层也没有顺序**，5 个区段固定、只有启用开关，
+  两档侧栏各 6 行；共享代码只加一个可选 `Rows`。见 `CharacterSpecializationBrowser.md`。
 - `Tests/Runtime` 目录为空，源码中也未检索到 `[Test]` 或 `[UnityTest]`。本次只能做源码结构和静态检查，不能替代 Unity Editor 编译和画面验证。
 - 包目录没有 `.sln`、`.csproj` 或 Unity `ProjectSettings/ProjectVersion.txt`，无法在当前包根直接跑 C# 编译。
 - 工作树里已有未提交改动，尤其是 `ScreenProcess`、`GeometryBuffer` 和 `SkyTyndall` 相关文件。本文档按这些改动后的源码状态描述。
