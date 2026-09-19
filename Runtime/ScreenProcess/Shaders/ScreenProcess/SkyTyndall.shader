@@ -24,7 +24,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessMask.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/ImageProcessBlend.hlsl"
 
             static const int MaxSkyTyndallSamples = 48;
@@ -225,20 +225,20 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
                 return filtered;
             }
 
-            float ResolveRuleAmount(float2 uv, float geometryCoverage)
+            float ResolveMaskAmount(float2 uv, float geometryCoverage)
             {
-                if (_LayerRuleMaskEnabled <= 0.5)
+                if (_LayerMaskEnabled <= 0.5)
                 {
-                    if (LilScreenProcessShouldOutputRuleDebug())
+                    if (LilScreenProcessShouldOutputMaskDebug())
                     {
-                        return LilScreenProcessResolveRequiredRuleMask(uv);
+                        return LilScreenProcessResolveCoverageMask(uv);
                     }
 
                     return 1.0;
                 }
 
-                float rule = LilScreenProcessResolveRequiredRuleMask(uv);
-                return lerp(1.0, rule, geometryCoverage);
+                float layerMask = LilScreenProcessResolveCoverageMask(uv);
+                return lerp(1.0, layerMask, geometryCoverage);
             }
 
             float ResolveNormalAmount(float2 uv, float geometryCoverage, float2 rayToCenter)
@@ -359,7 +359,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
                 if (_HoGeometryBufferSkyTextureValid <= 0.5 || _Intensity <= 0.0001)
                 {
-                    if (LilScreenProcessShouldOutputRuleDebug())
+                    if (LilScreenProcessShouldOutputMaskDebug())
                     {
                         return half4(0.0, 0.0, 0.0, source.a);
                     }
@@ -369,10 +369,10 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
 
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
                 float geometryCoverage = LilHoGeometryBufferCoverage(normalDepth);
-                float ruleAmount = ResolveRuleAmount(uv, geometryCoverage);
-                if (LilScreenProcessShouldOutputRuleDebug())
+                float maskAmount = ResolveMaskAmount(uv, geometryCoverage);
+                if (LilScreenProcessShouldOutputMaskDebug())
                 {
-                    return half4(ruleAmount, ruleAmount, ruleAmount, source.a);
+                    return half4(maskAmount, maskAmount, maskAmount, source.a);
                 }
 
                 float2 center = ResolveCenter();
@@ -382,7 +382,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
                 float foregroundMask = lerp(1.0, pow(saturate(1.0 - geometryCoverage), occlusionPower), foregroundSuppress);
                 float normalMask = ResolveNormalAmount(uv, geometryCoverage, rayToCenter);
                 float opacity = saturate(_LayerParams3.x);
-                float amount = saturate(_Intensity * opacity * foregroundMask * normalMask * ruleAmount);
+                float amount = saturate(_Intensity * opacity * foregroundMask * normalMask * maskAmount);
 
                 float3 rays = ApplyDitherStyle(uv, AccumulateSkyRays(uv, center));
                 if (_LayerParams3.y > 0.5)

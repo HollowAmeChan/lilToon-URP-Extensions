@@ -8,14 +8,14 @@ namespace lilToon.URP.Extensions.ScreenProcess
         {
             new HoDebugViewInfo(
                 "ScreenProcess",
-                "screen-process.rule-mask",
-                "Rule",
+                "screen-process.mask",
+                "Mask",
                 0,
                 HoDebugViewRenderKind.None,
                 string.Empty,
                 string.Empty,
                 false,
-                "Rule mask debug uses each active ScreenProcess layer shader through _LayerRuleDebugOutput; no standalone debug shader is owned by the public debug UI.")
+                "Mask debug uses each active ScreenProcess layer shader through _LayerMaskDebugOutput; no standalone debug shader is owned by the public debug UI.")
         };
     }
 }

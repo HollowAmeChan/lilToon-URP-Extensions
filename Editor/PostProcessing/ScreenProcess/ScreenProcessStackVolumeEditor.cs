@@ -317,7 +317,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 includeTexture: effect == ScreenProcessEffect.CustomMaterial,
                 includePassIndex: effect == ScreenProcessEffect.CustomMaterial,
                 includeMaterialOverride: effect == ScreenProcessEffect.CustomMaterial);
-            DrawRuleMaskProperties(rect, ref y, element);
+            DrawMaskProperties(rect, ref y, element);
 
             switch (effect)
             {
@@ -352,29 +352,24 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             switch (GetEffect(element))
             {
                 case ScreenProcessEffect.EdgeLight:
-                    return 16 + GetRuleLineCount(element);
+                    return 16;
                 case ScreenProcessEffect.Outline:
-                    return 11 + GetRuleLineCount(element);
+                    return 11;
                 case ScreenProcessEffect.DepthOfField:
-                    return GetDepthOfFieldLineCount(element) + GetRuleLineCount(element);
+                    return GetDepthOfFieldLineCount(element);
                 case ScreenProcessEffect.PostLighting:
-                    return GetPostLightingLineCount(element) + GetRuleLineCount(element);
+                    return GetPostLightingLineCount(element);
                 case ScreenProcessEffect.SkyTyndall:
-                    return GetSkyTyndallLineCount(element) + GetRuleLineCount(element);
+                    return GetSkyTyndallLineCount(element);
                 case ScreenProcessEffect.DepthFog:
-                    // foldout + colour + blend mode + rule mask header, then the fog rows
-                    return 4 + GetDepthFogLineCount(element) + GetRuleLineCount(element);
+                    // foldout + colour + blend mode + mask switch, then the fog rows
+                    return 4 + GetDepthFogLineCount(element);
                 case ScreenProcessEffect.CustomMaterial:
-                    return 7 + GetRuleLineCount(element);
+                    return 7;
                 case ScreenProcessEffect.DropShadow:
                 default:
-                    return 9 + GetRuleLineCount(element);
+                    return 9;
             }
-        }
-
-        private static int GetRuleLineCount(SerializedProperty element)
-        {
-            return ScreenProcessRuleMaskEditorUtility.GetLineCount(element);
         }
 
         private float DrawFoldoutLine(Rect rect, float y, SerializedProperty element, SerializedProperty enabled)
@@ -453,9 +448,35 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             }
         }
 
-        private static void DrawRuleMaskProperties(Rect rect, ref float y, SerializedProperty element)
+        private const float MaskToggleWidth = 62.0f;
+
+        /// <summary>
+        /// The per-layer mask row. The mask source is provided by AC (Ho-AttributeComposite) later;
+        /// today it samples the MetadataBuffer coverage, so the row only offers enable / invert / debug.
+        /// It must stay exactly one row: GetElementLineCount reserves one line for it.
+        /// </summary>
+        private static void DrawMaskProperties(Rect rect, ref float y, SerializedProperty element)
         {
-            ScreenProcessRuleMaskEditorUtility.Draw(rect, ref y, element, LineHeight, LineSpacing);
+            SerializedProperty useMask = element.FindPropertyRelative("useMask");
+            SerializedProperty invertMask = element.FindPropertyRelative("invertMask");
+            SerializedProperty debugMask = element.FindPropertyRelative("debugMask");
+            if (useMask == null || invertMask == null || debugMask == null)
+            {
+                return;
+            }
+
+            Rect row = new Rect(rect.x, y, rect.width, LineHeight);
+            Rect invertRect = new Rect(row.xMax - MaskToggleWidth, row.y, MaskToggleWidth, row.height);
+            Rect debugRect = new Rect(invertRect.x - MaskToggleWidth, row.y, MaskToggleWidth, row.height);
+            Rect enableRect = new Rect(debugRect.x - MaskToggleWidth, row.y, MaskToggleWidth, row.height);
+            float labelWidth = Mathf.Max(0.0f, enableRect.x - row.x - 4.0f);
+            EditorGUI.LabelField(
+                new Rect(row.x, row.y, labelWidth, row.height),
+                new GUIContent("遮罩", "遮罩来源以后由 AC（Ho-AttributeComposite）提供；今天采样 MetadataBuffer 覆盖率。"));
+            useMask.boolValue = EditorGUI.ToggleLeft(enableRect, "启用", useMask.boolValue);
+            invertMask.boolValue = EditorGUI.ToggleLeft(invertRect, "反转", invertMask.boolValue);
+            debugMask.boolValue = EditorGUI.ToggleLeft(debugRect, "调试", debugMask.boolValue);
+            y += LineHeight + LineSpacing;
         }
 
         private static void DrawPropertyLine(Rect rect, ref float y, SerializedProperty element, string propertyName, string label)
@@ -679,15 +700,9 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetObjectReference(element, "depthOfFieldFocusTarget", null);
             SetString(element, "depthOfFieldFocusTargetPath", string.Empty);
             SetFloat(element, "depthOfFieldFocusOffset", 0.0f);
-            SetBool(element, "useRuleMask", false);
-            SetEnum(element, "ruleSource", (int)ScreenProcessRuleSource.Mask);
-            SetEnum(element, "ruleMaskMode", (int)ScreenProcessRuleMaskMode.Direct);
-            SetFloat(element, "ruleThreshold", 0.5f);
-            SetFloat(element, "ruleMatchValue", 0.0f);
-            SetColor(element, "ruleMatchColor", Color.white);
-            SetBool(element, "invertRuleMask", false);
-            SetBool(element, "debugRuleMask", false);
-            ScreenProcessRuleMaskEditorUtility.ResetRules(element);
+            SetBool(element, "useMask", false);
+            SetBool(element, "invertMask", false);
+            SetBool(element, "debugMask", false);
 
             switch (effect)
             {
@@ -709,7 +724,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Multiply);
                     SetVector4(element, "parameters0", new Vector4(0.35f, -45.0f, 0.85f, 6.0f));
                     SetVector4(element, "parameters1", new Vector4(1.0f, 0.0f, 0.0f, 1.0f));
-                    SetBool(element, "useRuleMask", true);
+                    SetBool(element, "useMask", true);
                     break;
                 case ScreenProcessEffect.DepthFog:
                     SetColor(element, "color", new Color(0.66f, 0.71f, 0.76f, 1.0f));

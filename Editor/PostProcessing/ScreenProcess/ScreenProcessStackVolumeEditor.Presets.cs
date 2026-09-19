@@ -9,7 +9,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
     {
         private const float LayerPresetButtonSize = 18.0f;
         private const string LayerPresetIconName = "icon_Settings_v1";
-        private const int MaxRuleMaskCount = 4;
         private static GUIContent layerPresetIconContent;
 
         private void DrawLayerPresetButton(Rect rect, SerializedProperty element)
@@ -87,12 +86,12 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
             bool wasExpanded = element.isExpanded;
             bool wasEnabled = GetBoolValue(element, "enabled", true);
-            RuleMaskState ruleMaskState = CaptureRuleMaskState(element);
+            MaskState maskState = CaptureMaskState(element);
             Undo.RecordObject(serializedObject.targetObject, "Apply ScreenProcess Preset");
             apply(element, effect);
             SetEnum(element, "effect", (int)effect);
             SetBool(element, "enabled", wasEnabled);
-            RestoreRuleMaskState(element, ruleMaskState);
+            RestoreMaskState(element, maskState);
             element.isExpanded = wasExpanded;
             ApplyLayerListChanges();
         }
@@ -338,136 +337,30 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetVector4(element, "parameters5", new Vector4(0.06f, 1.1f, 1.0f, 0.55f));
         }
 
-        private readonly struct RuleMaskState
+        private readonly struct MaskState
         {
-            public readonly bool UseRuleMask;
-            public readonly bool UseRuleMaskExpanded;
-            public readonly int RuleSource;
-            public readonly int RuleMaskMode;
-            public readonly float RuleThreshold;
-            public readonly float RuleMatchValue;
-            public readonly Color RuleMatchColor;
-            public readonly bool InvertRuleMask;
-            public readonly bool DebugRuleMask;
-            public readonly RuleMaskRuleState[] Rules;
+            public readonly bool UseMask;
+            public readonly bool InvertMask;
+            public readonly bool DebugMask;
 
-            public RuleMaskState(SerializedProperty element)
+            public MaskState(SerializedProperty element)
             {
-                SerializedProperty useRuleMask = element.FindPropertyRelative("useRuleMask");
-                UseRuleMask = GetBoolValue(element, "useRuleMask", false);
-                UseRuleMaskExpanded = useRuleMask != null && useRuleMask.isExpanded;
-                RuleSource = GetEnumValue(element, "ruleSource", (int)ScreenProcessRuleSource.Mask);
-                RuleMaskMode = GetEnumValue(element, "ruleMaskMode", (int)ScreenProcessRuleMaskMode.Direct);
-                RuleThreshold = GetFloatValue(element, "ruleThreshold", 0.5f);
-                RuleMatchValue = GetFloatValue(element, "ruleMatchValue", 0.0f);
-                RuleMatchColor = GetColorValue(element, "ruleMatchColor", Color.white);
-                InvertRuleMask = GetBoolValue(element, "invertRuleMask", false);
-                DebugRuleMask = GetBoolValue(element, "debugRuleMask", false);
-                Rules = CaptureRuleMasks(element);
+                UseMask = GetBoolValue(element, "useMask", false);
+                InvertMask = GetBoolValue(element, "invertMask", false);
+                DebugMask = GetBoolValue(element, "debugMask", false);
             }
         }
 
-        private readonly struct RuleMaskRuleState
+        private static MaskState CaptureMaskState(SerializedProperty element)
         {
-            public readonly bool Enabled;
-            public readonly string Name;
-            public readonly int Source;
-            public readonly int MatchOperator;
-            public readonly float Value;
-            public readonly float MinValue;
-            public readonly float MaxValue;
-            public readonly float Tolerance;
-            public readonly Color MatchColor;
-            public readonly int Combine;
-            public readonly bool Invert;
-            public readonly bool Expanded;
-
-            public RuleMaskRuleState(SerializedProperty rule)
-            {
-                Enabled = GetBoolValue(rule, "enabled", true);
-                Name = GetStringValue(rule, "name", "ScreenProcess Rule");
-                Source = GetEnumValue(rule, "source", (int)ScreenProcessRuleSource.Mask);
-                MatchOperator = GetEnumValue(rule, "matchOperator", (int)ScreenProcessRuleMaskOperator.Direct);
-                Value = GetFloatValue(rule, "value", 0.5f);
-                MinValue = GetFloatValue(rule, "minValue", 0.0f);
-                MaxValue = GetFloatValue(rule, "maxValue", 1.0f);
-                Tolerance = GetFloatValue(rule, "tolerance", 0.02f);
-                MatchColor = GetColorValue(rule, "matchColor", Color.white);
-                Combine = GetEnumValue(rule, "combine", (int)ScreenProcessRuleMaskCombine.Replace);
-                Invert = GetBoolValue(rule, "invert", false);
-                Expanded = rule != null && rule.isExpanded;
-            }
+            return new MaskState(element);
         }
 
-        private static RuleMaskState CaptureRuleMaskState(SerializedProperty element)
+        private static void RestoreMaskState(SerializedProperty element, MaskState state)
         {
-            return new RuleMaskState(element);
-        }
-
-        private static void RestoreRuleMaskState(SerializedProperty element, RuleMaskState state)
-        {
-            SetBool(element, "useRuleMask", state.UseRuleMask);
-            SerializedProperty useRuleMask = element.FindPropertyRelative("useRuleMask");
-            if (useRuleMask != null)
-            {
-                useRuleMask.isExpanded = state.UseRuleMaskExpanded;
-            }
-
-            SetEnum(element, "ruleSource", state.RuleSource);
-            SetEnum(element, "ruleMaskMode", state.RuleMaskMode);
-            SetFloat(element, "ruleThreshold", state.RuleThreshold);
-            SetFloat(element, "ruleMatchValue", state.RuleMatchValue);
-            SetColor(element, "ruleMatchColor", state.RuleMatchColor);
-            SetBool(element, "invertRuleMask", state.InvertRuleMask);
-            SetBool(element, "debugRuleMask", state.DebugRuleMask);
-            RestoreRuleMasks(element, state.Rules);
-        }
-
-        private static RuleMaskRuleState[] CaptureRuleMasks(SerializedProperty element)
-        {
-            SerializedProperty rules = element.FindPropertyRelative("ruleMasks");
-            if (rules == null || !rules.isArray || rules.arraySize == 0)
-            {
-                return Array.Empty<RuleMaskRuleState>();
-            }
-
-            int ruleCount = Mathf.Min(rules.arraySize, MaxRuleMaskCount);
-            RuleMaskRuleState[] states = new RuleMaskRuleState[ruleCount];
-            for (int i = 0; i < ruleCount; i++)
-            {
-                states[i] = new RuleMaskRuleState(rules.GetArrayElementAtIndex(i));
-            }
-
-            return states;
-        }
-
-        private static void RestoreRuleMasks(SerializedProperty element, RuleMaskRuleState[] states)
-        {
-            SerializedProperty rules = element.FindPropertyRelative("ruleMasks");
-            if (rules == null || !rules.isArray || states == null)
-            {
-                return;
-            }
-
-            rules.ClearArray();
-            int ruleCount = Mathf.Min(states.Length, MaxRuleMaskCount);
-            for (int i = 0; i < ruleCount; i++)
-            {
-                rules.InsertArrayElementAtIndex(i);
-                SerializedProperty rule = rules.GetArrayElementAtIndex(i);
-                SetBool(rule, "enabled", states[i].Enabled);
-                SetString(rule, "name", states[i].Name);
-                SetEnum(rule, "source", states[i].Source);
-                SetEnum(rule, "matchOperator", states[i].MatchOperator);
-                SetFloat(rule, "value", states[i].Value);
-                SetFloat(rule, "minValue", states[i].MinValue);
-                SetFloat(rule, "maxValue", states[i].MaxValue);
-                SetFloat(rule, "tolerance", states[i].Tolerance);
-                SetColor(rule, "matchColor", states[i].MatchColor);
-                SetEnum(rule, "combine", states[i].Combine);
-                SetBool(rule, "invert", states[i].Invert);
-                rule.isExpanded = states[i].Expanded;
-            }
+            SetBool(element, "useMask", state.UseMask);
+            SetBool(element, "invertMask", state.InvertMask);
+            SetBool(element, "debugMask", state.DebugMask);
         }
 
         private static bool GetBoolValue(SerializedProperty element, string name, bool fallback)
@@ -475,38 +368,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SerializedProperty property = element.FindPropertyRelative(name);
             return property != null && property.propertyType == SerializedPropertyType.Boolean
                 ? property.boolValue
-                : fallback;
-        }
-
-        private static int GetEnumValue(SerializedProperty element, string name, int fallback)
-        {
-            SerializedProperty property = element.FindPropertyRelative(name);
-            return property != null && property.propertyType == SerializedPropertyType.Enum
-                ? property.enumValueIndex
-                : fallback;
-        }
-
-        private static float GetFloatValue(SerializedProperty element, string name, float fallback)
-        {
-            SerializedProperty property = element.FindPropertyRelative(name);
-            return property != null && property.propertyType == SerializedPropertyType.Float
-                ? property.floatValue
-                : fallback;
-        }
-
-        private static Color GetColorValue(SerializedProperty element, string name, Color fallback)
-        {
-            SerializedProperty property = element.FindPropertyRelative(name);
-            return property != null && property.propertyType == SerializedPropertyType.Color
-                ? property.colorValue
-                : fallback;
-        }
-
-        private static string GetStringValue(SerializedProperty element, string name, string fallback)
-        {
-            SerializedProperty property = element.FindPropertyRelative(name);
-            return property != null && property.propertyType == SerializedPropertyType.String
-                ? property.stringValue
                 : fallback;
         }
     }

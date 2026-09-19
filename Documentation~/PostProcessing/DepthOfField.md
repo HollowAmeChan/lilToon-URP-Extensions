@@ -111,7 +111,7 @@ float tapWeight = saturate((abs(tapCoc) * maxRadiusPx - distPx + marginPx) / mar
 
 ```hlsl
 float radiusPx = abs(coc) * maxRadiusPx;
-float amount = saturate(_Intensity) * LilScreenProcessResolveRuleLayerMask(uv);
+float amount = saturate(_Intensity) * LilScreenProcessResolveLayerMask(uv);
 ...
 return half4(lerp(source.rgb, blurred.rgb, amount), source.a);
 ```

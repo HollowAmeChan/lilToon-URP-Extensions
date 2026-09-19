@@ -191,13 +191,13 @@ Debug 系统采用 feature-local declaration + `HoDebugViewRegistry` + 自动 ti
 
 `Ho-DebugTile` 支持 `AllRegistered`，把当前可用的 MetadataBuffer、GeometryBuffer、ShadowCast 与 SSS view 自动排成 tile。它参考 `D:\Unity_Fork\HoUrp-Extensions` 的 `RenderCacheDebugRendererFeature` / `RenderCacheDebugTile` 路线，只读取 RenderGraph 资源并绘制总览，不接管各 feature 自己的 shader、material 或 render target。
 
-ScreenProcess rule mask 不进入 `Ho-DebugTile`。具体 layer 已有 `debugRuleMask` / `_LayerRuleDebugOutput` 直出选项。
+ScreenProcess mask 不进入 `Ho-DebugTile`。具体 layer 已有 `debugMask` / `_LayerMaskDebugOutput` 直出选项。
 
-## 4. ScreenProcess Rule Mask Debug
+## 4. ScreenProcess Mask Debug
 
-ScreenProcess rule mask debug 不做 RendererFeature 侧独立 debug pass。
+ScreenProcess mask debug 不做 RendererFeature 侧独立 debug pass。
 
-原因是 rule 本身已有直出选项：用户在具体 ScreenProcess layer 上开启规则遮罩调试后，由该 layer 的 shader 通过 `_LayerRuleDebugOutput` 输出命中结果。公共 debug UI 只把它作为 ScreenProcess 的轻量观察入口展示，不额外创建 shader、material 或 pass。
+原因是 mask 本身已有直出选项：用户在具体 ScreenProcess layer 上开启遮罩调试后，由该 layer 的 shader 通过 `_LayerMaskDebugOutput` 输出采样结果。公共 debug UI 只把它作为 ScreenProcess 的轻量观察入口展示，不额外创建 shader、material 或 pass。（SP 原来的 20 个 rule source 与规则列表作为未使用功能已删除，层遮罩保留。）
 
 ## 5. RenderGraph 边界
 
@@ -217,7 +217,7 @@ RenderGraph 是主线。
 - Runtime / Editor / shader / asmdef / json 扫描：`HoAOV`、`HoAov`、`HoPost`、`ShoostStack`、`NeedsAovInput`、`_lilHoAov`、`HoAOVSSS` 无命中。
 - 代码级 `TODO` / `FIXME` / `NotImplementedException` 未发现与本轮收口相关的阻塞项。
 - `HoDebugTileRendererFeature`、`HoDebugViewRegistry`、`AllRegistered` 自动 tile 已落地。
-- ScreenProcess rule mask debug 已按 layer-local `_LayerRuleDebugOutput` 路线落地。
+- ScreenProcess mask debug 已按 layer-local `_LayerMaskDebugOutput` 路线落地。
 - 当前仓库无 `.sln` / `.csproj`，未执行 C# 编译。
 
 ## 7. Unity 实机验收清单
@@ -231,7 +231,7 @@ RenderGraph 是主线。
 - SSS 在缺 MetadataBuffer / GeometryBuffer 时能显示缺失状态，资源齐全时正常 source / diffusion / composite。
 - CharacterSpecialization 在缺 MetadataBuffer / GeometryBuffer 时能显示缺失状态，资源齐全时正常眼透、前发和局部合成。
 - ScreenProcess Volume Inspector 能显示当前 layer 需要的 Buffer 项是否可用。
-- ScreenProcess rule mask 的 `debugRuleMask` 能通过 `_LayerRuleDebugOutput` 直出命中结果。
+- ScreenProcess 层遮罩的 `debugMask` 能通过 `_LayerMaskDebugOutput` 直出采样结果。
 - ImageProcess 不显示 AOV mask / semantic mask UI，也不读取 Buffer / ShadowCast 资源。
 - `Ho-DebugTile` 放在最后时，`AllRegistered` 能显示 MetadataBuffer、GeometryBuffer、ShadowCast 与 SSS tiles。
 - Frame Debugger / RenderDoc 中 pass 名称与本文组件顺序一致。

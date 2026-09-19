@@ -28,17 +28,9 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static readonly int LayerParams3Id = Shader.PropertyToID("_LayerParams3");
         public static readonly int LayerParams4Id = Shader.PropertyToID("_LayerParams4");
         public static readonly int LayerParams5Id = Shader.PropertyToID("_LayerParams5");
-        public static readonly int LayerRuleMaskEnabledId = Shader.PropertyToID("_LayerRuleMaskEnabled");
-        public static readonly int LayerRuleSourceId = Shader.PropertyToID("_LayerRuleSource");
-        public static readonly int LayerRuleModeId = Shader.PropertyToID("_LayerRuleMode");
-        public static readonly int LayerRuleParamsId = Shader.PropertyToID("_LayerRuleParams");
-        public static readonly int LayerRuleMatchColorId = Shader.PropertyToID("_LayerRuleMatchColor");
-        public static readonly int LayerRuleDebugOutputId = Shader.PropertyToID("_LayerRuleDebugOutput");
-        public static readonly int LayerRuleMaskCountId = Shader.PropertyToID("_LayerRuleMaskCount");
-        public static readonly int LayerRuleMaskData0Id = Shader.PropertyToID("_LayerRuleMaskData0");
-        public static readonly int LayerRuleMaskData1Id = Shader.PropertyToID("_LayerRuleMaskData1");
-        public static readonly int LayerRuleMaskData2Id = Shader.PropertyToID("_LayerRuleMaskData2");
-        public static readonly int LayerRuleMaskColorId = Shader.PropertyToID("_LayerRuleMaskColor");
+        public static readonly int LayerMaskEnabledId = Shader.PropertyToID("_LayerMaskEnabled");
+        public static readonly int LayerMaskInvertId = Shader.PropertyToID("_LayerMaskInvert");
+        public static readonly int LayerMaskDebugOutputId = Shader.PropertyToID("_LayerMaskDebugOutput");
         public static readonly int SubjectMaskTextureId = Shader.PropertyToID(SubjectMaskTextureName);
         public static readonly int SubjectMaskValidId = Shader.PropertyToID("_SubjectMaskValid");
     }

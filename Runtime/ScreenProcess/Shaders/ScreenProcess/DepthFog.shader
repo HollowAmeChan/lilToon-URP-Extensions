@@ -25,7 +25,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthFog"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessMask.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/ImageProcessBlend.hlsl"
 
             // A compositing fog layer with two independent slots: a depth (distance) fog and a height
@@ -169,9 +169,9 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthFog"
                 float3 positionVS = mul(UNITY_MATRIX_V, float4(positionWS, 1.0)).xyz;
 
                 float layerMask = 1.0;
-                if (_LayerRuleMaskEnabled > 0.5)
+                if (_LayerMaskEnabled > 0.5)
                 {
-                    layerMask = saturate(LilScreenProcessResolveRequiredRuleMask(uv));
+                    layerMask = saturate(LilScreenProcessResolveCoverageMask(uv));
                 }
 
                 float amount = intensity * layerMask;

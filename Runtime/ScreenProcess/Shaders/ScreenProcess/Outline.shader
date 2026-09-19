@@ -25,7 +25,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/Outline"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessMask.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/ImageProcessBlend.hlsl"
 
             float _Intensity;
@@ -101,9 +101,9 @@ Shader "Hidden/lilToon/URP/ScreenProcess/Outline"
 
                 float2 uv = input.texcoord;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
-                if (LilScreenProcessShouldOutputRuleDebug())
+                if (LilScreenProcessShouldOutputMaskDebug())
                 {
-                    return LilScreenProcessRuleDebugColor(uv, false, source.a);
+                    return LilScreenProcessMaskDebugColor(uv, false, source.a);
                 }
 
                 float thickness = max(_LayerParams0.x, 0.0);
@@ -120,7 +120,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/Outline"
                 float threshold = max(_LayerParams0.w, 0.0);
                 float softness = max(_LayerParams1.x, 0.0001);
                 float mask = smoothstep(threshold, threshold + softness, edge);
-                float amount = mask * saturate(_Intensity) * saturate(_LayerParams1.w) * _LayerColor.a * LilScreenProcessResolveRuleLayerMask(uv);
+                float amount = mask * saturate(_Intensity) * saturate(_LayerParams1.w) * _LayerColor.a * LilScreenProcessResolveLayerMask(uv);
                 if (amount <= 0.0001)
                 {
                     return source;

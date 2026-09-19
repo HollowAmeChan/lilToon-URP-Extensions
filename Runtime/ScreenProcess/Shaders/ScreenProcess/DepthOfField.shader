@@ -25,7 +25,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessMask.hlsl"
 
             float _Intensity;
             float4 _LayerParams0; // x mode 0 Gaussian 1 Bokeh 2 Target Bokeh, y focus distance, z focal length, w aperture
@@ -270,9 +270,9 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
 
                 float2 uv = input.texcoord;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
-                if (LilScreenProcessShouldOutputRuleDebug())
+                if (LilScreenProcessShouldOutputMaskDebug())
                 {
-                    return LilScreenProcessRuleDebugColor(uv, false, source.a);
+                    return LilScreenProcessMaskDebugColor(uv, false, source.a);
                 }
 
                 float depth = SampleVisualEyeDepth(uv);
@@ -283,7 +283,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                 // disk, which is what a lens does. _Intensity only fades the whole layer, so it
                 // must not scale with the CoC as well - doing that kept partially defocused
                 // pixels mostly sharp and turned them into a ghost of the sharp image.
-                float amount = saturate(_Intensity) * LilScreenProcessResolveRuleLayerMask(uv);
+                float amount = saturate(_Intensity) * LilScreenProcessResolveLayerMask(uv);
                 if (radiusPx <= 0.0001 || amount <= 0.0001)
                 {
                     return source;

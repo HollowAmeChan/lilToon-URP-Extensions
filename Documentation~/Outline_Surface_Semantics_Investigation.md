@@ -32,7 +32,7 @@
                            CoC / blur radius / blend amount
 ```
 
-`ScreenProcessRuleMask.hlsl` 只负责通用 rule/debug mask 支持。现在 DepthOfField 的几何输入来自 GeometryBuffer；只有 layer 开启 `useRuleMask` 或 `debugRuleMask` 时，RenderGraph 才会额外绑定 MetadataBuffer 规则输入。
+`ScreenProcessMask.hlsl` 只负责通用 mask/debug 支持。现在 DepthOfField 的几何输入来自 GeometryBuffer；只有 layer 开启 `useMask` 或 `debugMask` 时，RenderGraph 才会额外绑定 MetadataBuffer 遮罩输入。
 
 ## 3. ScreenProcess 如何请求和绑定深度
 
@@ -41,7 +41,7 @@
 - `ConfigurePass()` 在存在 DepthOfField layer 时，`RequiresDepth()` 返回 true，并调用 `ConfigureInput(ScriptableRenderPassInput.Depth)`（约第 997-1011 行）。
 - 因此 `_CameraDepthTexture` 的生产者不是 ScreenProcess 自己，而是 URP 内置的 depth prepass/copy-depth 基础设施。
 - ScreenProcess stack 的 render pass event 是 `AfterRenderingPostProcessing`；景深在这里对颜色层做后处理。
-- RenderGraph 路径虽然为每一层准备 `HoMetadataBufferRenderGraphResources` 和 `HoGeometryBufferRenderGraphResources`，但只有 EdgeLight/PostLighting/SkyTyndall/DropShadow/rule mask 等分支会设置相应的 `useRule*` 标志。DepthOfField 没有这些绑定。
+- RenderGraph 路径虽然为每一层准备 `HoMetadataBufferRenderGraphResources` 和 `HoGeometryBufferRenderGraphResources`，但只有 EdgeLight/PostLighting/SkyTyndall/DropShadow/mask 等分支会设置相应的 `useMask*` 标志。DepthOfField 没有这些绑定。
 
 ### URP 17.3 的生产分支
 
@@ -201,8 +201,8 @@ maskId / surfaceData / custom0 / objectCustom0 / objectCustom1
 文件：`Runtime/ScreenProcess/ScreenProcessRendererFeature.cs`、`Runtime/ScreenProcess/ScreenProcessRuntimeDiagnostics.cs`
 
 - `RequiresDepth()` 现在只为兼容 SubjectMask fallback 的 DropShadow 请求 URP depth；Outline/DOF 不再请求 URP camera depth/normals。
-- `AnalyzeRequirements()` 把 `EdgeLight`、`Outline`、`DepthOfField`、`PostLighting`、`SkyTyndall` 标为需要 GeometryBuffer normal/depth；把 `EdgeLight`、`DropShadow`、`PostLighting` 以及启用 layer rule 的效果标为需要 MetadataBuffer mask。
-- `RecordRenderGraph()` 中，Geometry/Metadata 的 `TextureHandle` 只有在对应 `useRule*` 标志为 true 时才会 `UseTexture()` 并绑定为 shader global。每个 layer 的绑定是按 effect 分支执行的，不是统一的“所有 layer 先绑定一套自有 RT”。
+- `AnalyzeRequirements()` 把 `EdgeLight`、`Outline`、`DepthOfField`、`PostLighting`、`SkyTyndall` 标为需要 GeometryBuffer normal/depth；把 `EdgeLight`、`DropShadow`、`PostLighting` 以及启用层遮罩的效果标为需要 MetadataBuffer mask。
+- `RecordRenderGraph()` 中，Geometry/Metadata 的 `TextureHandle` 只有在对应 `useMask*` 标志为 true 时才会 `UseTexture()` 并绑定为 shader global。每个 layer 的绑定是按 effect 分支执行的，不是统一的“所有 layer 先绑定一套自有 RT”。
 - `ScreenProcessRuntimeDiagnostics` 现在把 Outline/DOF 的 GeometryBuffer 依赖纳入 `RequiresGeometryBuffer`；SubjectMask fallback 仍属于 DropShadow 的内部兼容输入。
 
 ### 11.3 当前实现与目标设计的对齐程度

@@ -494,13 +494,9 @@ namespace lilToon.URP.Extensions.PostProcessing
             public TextureHandle source;
             public TextureHandle subjectMaskTexture;
             public TextureHandle outlineNormalDepthTexture;
-            public TextureHandle ruleMaskIdTexture;
-            public TextureHandle ruleNormalDepthTexture;
+            public TextureHandle maskIdTexture;
+            public TextureHandle normalDepthTexture;
             public TextureHandle skyTexture;
-            public TextureHandle ruleSurfaceDataTexture;
-            public TextureHandle ruleCustom0Texture;
-            public TextureHandle ruleObjectCustom0Texture;
-            public TextureHandle ruleObjectCustom1Texture;
             public ScreenProcessLayer layer;
             public Material material;
             public int passIndex;
@@ -512,13 +508,9 @@ namespace lilToon.URP.Extensions.PostProcessing
             public bool isPostLighting;
             public bool isSkyTyndall;
             public bool isDepthFog;
-            public bool useRuleMaskTexture;
-            public bool useRuleNormalDepth;
+            public bool useMaskTexture;
+            public bool useNormalDepth;
             public bool useSkyTexture;
-            public bool useRuleSurfaceData;
-            public bool useRuleCustom0;
-            public bool useRuleObjectCustom0;
-            public bool useRuleObjectCustom1;
             public bool useSubjectMask;
             public bool useOutlineNormalDepth;
         }
@@ -829,13 +821,9 @@ namespace lilToon.URP.Extensions.PostProcessing
                     passData.source = source;
                     passData.subjectMaskTexture = subjectMaskTexture;
                     passData.outlineNormalDepthTexture = geometryResources.outlineNormalDepthTexture;
-                    passData.ruleMaskIdTexture = metadataResources.maskIdTexture;
-                    passData.ruleNormalDepthTexture = geometryResources.normalDepthTexture;
+                    passData.maskIdTexture = metadataResources.maskIdTexture;
+                    passData.normalDepthTexture = geometryResources.normalDepthTexture;
                     passData.skyTexture = geometryResources.skyTexture;
-                    passData.ruleSurfaceDataTexture = metadataResources.surfaceDataTexture;
-                    passData.ruleCustom0Texture = metadataResources.custom0Texture;
-                    passData.ruleObjectCustom0Texture = metadataResources.objectCustom0Texture;
-                    passData.ruleObjectCustom1Texture = metadataResources.objectCustom1Texture;
                     passData.layer = runtimeLayer.settings;
                     passData.material = runtimeLayer.material;
                     passData.passIndex = Mathf.Max(0, runtimeLayer.settings.passIndex);
@@ -847,25 +835,20 @@ namespace lilToon.URP.Extensions.PostProcessing
                     passData.isPostLighting = runtimeLayer.settings.effect == ScreenProcessEffect.PostLighting;
                     passData.isSkyTyndall = runtimeLayer.settings.effect == ScreenProcessEffect.SkyTyndall;
                     passData.isDepthFog = runtimeLayer.settings.effect == ScreenProcessEffect.DepthFog;
-                    bool needsRule = passData.isEdgeLight || passData.isDropShadow || passData.isPostLighting || runtimeLayer.settings.useRuleMask || runtimeLayer.settings.debugRuleMask;
-                    bool needsRuleMaskResolve = passData.isDropShadow || runtimeLayer.settings.useRuleMask || runtimeLayer.settings.debugRuleMask;
-                    passData.useRuleMaskTexture = needsRule && metadataResources.maskIdTexture.IsValid();
-                    passData.useRuleNormalDepth = (passData.isEdgeLight || passData.isPostLighting || passData.isSkyTyndall || passData.isOutline || passData.isDepthOfField || passData.isDepthFog) && geometryResources.normalDepthTexture.IsValid();
+                    bool needsMask = passData.isEdgeLight || passData.isDropShadow || passData.isPostLighting || runtimeLayer.settings.useMask || runtimeLayer.settings.debugMask;
+                    passData.useMaskTexture = needsMask && metadataResources.maskIdTexture.IsValid();
+                    passData.useNormalDepth = (passData.isEdgeLight || passData.isPostLighting || passData.isSkyTyndall || passData.isOutline || passData.isDepthOfField || passData.isDepthFog) && geometryResources.normalDepthTexture.IsValid();
                     passData.useSkyTexture = passData.isSkyTyndall && geometryResources.skyTexture.IsValid();
-                    passData.useRuleSurfaceData = needsRuleMaskResolve && metadataResources.surfaceDataTexture.IsValid();
-                    passData.useRuleCustom0 = needsRuleMaskResolve && metadataResources.custom0Texture.IsValid();
-                    passData.useRuleObjectCustom0 = needsRuleMaskResolve && metadataResources.objectCustom0Texture.IsValid();
-                    passData.useRuleObjectCustom1 = needsRuleMaskResolve && metadataResources.objectCustom1Texture.IsValid();
                     passData.useSubjectMask = passData.isDropShadow && useSubjectMask;
                     passData.useOutlineNormalDepth = passData.isDepthOfField && geometryResources.outlineNormalDepthTexture.IsValid();
 
                     builder.UseTexture(source, AccessFlags.Read);
-                    if (passData.useRuleMaskTexture)
+                    if (passData.useMaskTexture)
                     {
                         builder.UseTexture(metadataResources.maskIdTexture, AccessFlags.Read);
                     }
 
-                    if (passData.useRuleNormalDepth)
+                    if (passData.useNormalDepth)
                     {
                         builder.UseTexture(geometryResources.normalDepthTexture, AccessFlags.Read);
                     }
@@ -873,26 +856,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                     if (passData.useSkyTexture)
                     {
                         builder.UseTexture(geometryResources.skyTexture, AccessFlags.Read);
-                    }
-
-                    if (passData.useRuleSurfaceData)
-                    {
-                        builder.UseTexture(metadataResources.surfaceDataTexture, AccessFlags.Read);
-                    }
-
-                    if (passData.useRuleCustom0)
-                    {
-                        builder.UseTexture(metadataResources.custom0Texture, AccessFlags.Read);
-                    }
-
-                    if (passData.useRuleObjectCustom0)
-                    {
-                        builder.UseTexture(metadataResources.objectCustom0Texture, AccessFlags.Read);
-                    }
-
-                    if (passData.useRuleObjectCustom1)
-                    {
-                        builder.UseTexture(metadataResources.objectCustom1Texture, AccessFlags.Read);
                     }
 
                     if (passData.useSubjectMask)
@@ -912,7 +875,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     {
                         ApplyLayerProperties(data.layer, data.material, data.dynamicFocusDistance);
                         context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 0.0f);
-                        context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, data.useRuleNormalDepth ? 1.0f : 0.0f);
+                        context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, data.useNormalDepth ? 1.0f : 0.0f);
                         context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 0.0f);
                         context.cmd.SetGlobalFloat(ScreenProcessShaderConstants.SubjectMaskValidId, data.useSubjectMask ? 1.0f : 0.0f);
                         if (data.useSubjectMask)
@@ -920,9 +883,9 @@ namespace lilToon.URP.Extensions.PostProcessing
                             context.cmd.SetGlobalTexture(ScreenProcessShaderConstants.SubjectMaskTextureId, data.subjectMaskTexture);
                         }
 
-                        if (data.useRuleNormalDepth)
+                        if (data.useNormalDepth)
                         {
-                            context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.ruleNormalDepthTexture);
+                            context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
                         }
 
                         if (data.useOutlineNormalDepth)
@@ -932,65 +895,22 @@ namespace lilToon.URP.Extensions.PostProcessing
 
                         if (data.isEdgeLight)
                         {
-                            bool hasRule = data.useRuleMaskTexture && data.useRuleNormalDepth;
-                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, hasRule ? 1.0f : 0.0f);
-                            if (hasRule)
+                            bool hasMask = data.useMaskTexture && data.useNormalDepth;
+                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, hasMask ? 1.0f : 0.0f);
+                            if (hasMask)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.ruleMaskIdTexture);
-                                context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.ruleNormalDepthTexture);
-                            }
-
-                            if (data.layer.useRuleMask || data.layer.debugRuleMask)
-                            {
-                                if (data.useRuleSurfaceData)
-                                {
-                                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.ruleSurfaceDataTexture);
-                                }
-
-                                if (data.useRuleCustom0)
-                                {
-                                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.ruleCustom0Texture);
-                                }
-
-                                if (data.useRuleObjectCustom0)
-                                {
-                                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.ruleObjectCustom0Texture);
-                                }
-
-                                if (data.useRuleObjectCustom1)
-                                {
-                                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.ruleObjectCustom1Texture);
-                                }
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
+                                context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
                             }
                         }
                         else if (data.isPostLighting)
                         {
-                            bool hasRule = data.useRuleMaskTexture && data.useRuleNormalDepth;
-                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, hasRule ? 1.0f : 0.0f);
-                            if (hasRule)
+                            bool hasMask = data.useMaskTexture && data.useNormalDepth;
+                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, hasMask ? 1.0f : 0.0f);
+                            if (hasMask)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.ruleMaskIdTexture);
-                                context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.ruleNormalDepthTexture);
-                            }
-
-                            if (data.useRuleSurfaceData)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.ruleSurfaceDataTexture);
-                            }
-
-                            if (data.useRuleCustom0)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.ruleCustom0Texture);
-                            }
-
-                            if (data.useRuleObjectCustom0)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.ruleObjectCustom0Texture);
-                            }
-
-                            if (data.useRuleObjectCustom1)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.ruleObjectCustom1Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
+                                context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
                             }
                         }
                         else if (data.isSkyTyndall)
@@ -1001,91 +921,31 @@ namespace lilToon.URP.Extensions.PostProcessing
                                 context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, data.skyTexture);
                             }
 
-                            if (data.useRuleNormalDepth)
+                            if (data.useNormalDepth)
                             {
-                                context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.ruleNormalDepthTexture);
+                                context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
                             }
 
-                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, data.useRuleMaskTexture ? 1.0f : 0.0f);
-                            if (data.useRuleMaskTexture)
+                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, data.useMaskTexture ? 1.0f : 0.0f);
+                            if (data.useMaskTexture)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.ruleMaskIdTexture);
-                            }
-
-                            if (data.useRuleSurfaceData)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.ruleSurfaceDataTexture);
-                            }
-
-                            if (data.useRuleCustom0)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.ruleCustom0Texture);
-                            }
-
-                            if (data.useRuleObjectCustom0)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.ruleObjectCustom0Texture);
-                            }
-
-                            if (data.useRuleObjectCustom1)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.ruleObjectCustom1Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
                             }
                         }
                         else if (data.isDropShadow)
                         {
-                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, data.useRuleMaskTexture ? 1.0f : 0.0f);
-                            if (data.useRuleMaskTexture)
+                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, data.useMaskTexture ? 1.0f : 0.0f);
+                            if (data.useMaskTexture)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.ruleMaskIdTexture);
-                            }
-
-                            if (data.useRuleSurfaceData)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.ruleSurfaceDataTexture);
-                            }
-
-                            if (data.useRuleCustom0)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.ruleCustom0Texture);
-                            }
-
-                            if (data.useRuleObjectCustom0)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.ruleObjectCustom0Texture);
-                            }
-
-                            if (data.useRuleObjectCustom1)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.ruleObjectCustom1Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
                             }
                         }
-                        else if (data.layer.useRuleMask || data.layer.debugRuleMask)
+                        else if (data.layer.useMask || data.layer.debugMask)
                         {
-                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, data.useRuleMaskTexture ? 1.0f : 0.0f);
-                            if (data.useRuleMaskTexture)
+                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, data.useMaskTexture ? 1.0f : 0.0f);
+                            if (data.useMaskTexture)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.ruleMaskIdTexture);
-                            }
-
-                            if (data.useRuleSurfaceData)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.ruleSurfaceDataTexture);
-                            }
-
-                            if (data.useRuleCustom0)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.ruleCustom0Texture);
-                            }
-
-                            if (data.useRuleObjectCustom0)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.ruleObjectCustom0Texture);
-                            }
-
-                            if (data.useRuleObjectCustom1)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.ruleObjectCustom1Texture);
+                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
                             }
                         }
 
@@ -1310,26 +1170,9 @@ namespace lilToon.URP.Extensions.PostProcessing
             material.SetVector(ScreenProcessShaderConstants.LayerParams3Id, layer.parameters3);
             material.SetVector(ScreenProcessShaderConstants.LayerParams4Id, layer.parameters4);
             material.SetVector(ScreenProcessShaderConstants.LayerParams5Id, layer.parameters5);
-            material.SetFloat(ScreenProcessShaderConstants.LayerRuleMaskEnabledId, layer.useRuleMask ? 1.0f : 0.0f);
-            material.SetFloat(ScreenProcessShaderConstants.LayerRuleSourceId, (float)layer.ruleSource);
-            material.SetFloat(ScreenProcessShaderConstants.LayerRuleModeId, (float)layer.ruleMaskMode);
-            material.SetVector(
-                ScreenProcessShaderConstants.LayerRuleParamsId,
-                new Vector4(
-                    Mathf.Max(0.0f, layer.ruleThreshold),
-                    0.0f,
-                    layer.ruleMatchValue,
-                    layer.invertRuleMask ? 1.0f : 0.0f));
-            material.SetColor(ScreenProcessShaderConstants.LayerRuleMatchColorId, layer.ruleMatchColor);
-            material.SetFloat(ScreenProcessShaderConstants.LayerRuleDebugOutputId, layer.debugRuleMask ? 1.0f : 0.0f);
-            ScreenProcessRuleMaskRuntime.ApplyToMaterial(
-                layer,
-                material,
-                ScreenProcessShaderConstants.LayerRuleMaskCountId,
-                ScreenProcessShaderConstants.LayerRuleMaskData0Id,
-                ScreenProcessShaderConstants.LayerRuleMaskData1Id,
-                ScreenProcessShaderConstants.LayerRuleMaskData2Id,
-                ScreenProcessShaderConstants.LayerRuleMaskColorId);
+            material.SetFloat(ScreenProcessShaderConstants.LayerMaskEnabledId, layer.useMask ? 1.0f : 0.0f);
+            material.SetFloat(ScreenProcessShaderConstants.LayerMaskInvertId, layer.invertMask ? 1.0f : 0.0f);
+            material.SetFloat(ScreenProcessShaderConstants.LayerMaskDebugOutputId, layer.debugMask ? 1.0f : 0.0f);
             material.SetFloat(ScreenProcessShaderConstants.SubjectMaskValidId, 0.0f);
             if (layer.texture != null)
             {

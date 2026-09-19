@@ -161,6 +161,8 @@ namespace lilToon.URP.Extensions.PostProcessing
             int activeLayerCount = 0;
             bool requiresMaskId = false;
             bool requiresNormalDepth = false;
+            // The deleted rule sources were the only ScreenProcess consumers of these MetadataBuffer
+            // channels, so they stay reported (availability) but are never required until AC lands.
             bool requiresSurfaceData = false;
             bool requiresCustom0 = false;
             bool requiresObjectCustom0 = false;
@@ -185,8 +187,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                     bool isDepthOfField = layer.effect == ScreenProcessEffect.DepthOfField;
                     bool isPostLighting = layer.effect == ScreenProcessEffect.PostLighting;
                     bool isSkyTyndall = layer.effect == ScreenProcessEffect.SkyTyndall;
-                    bool needsRule = isEdgeLight || isDropShadow || isPostLighting || layer.useRuleMask || layer.debugRuleMask;
-                    if (needsRule)
+                    bool needsMask = isEdgeLight || isDropShadow || isPostLighting || layer.useMask || layer.debugMask;
+                    if (needsMask)
                     {
                         requiresMaskId = true;
                     }
@@ -199,16 +201,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                     if (isSkyTyndall)
                     {
                         requiresSkyTexture = true;
-                    }
-
-                    if (isDropShadow || layer.useRuleMask || layer.debugRuleMask)
-                    {
-                        AccumulateRuleSourceRequirements(
-                            layer,
-                            ref requiresSurfaceData,
-                            ref requiresCustom0,
-                            ref requiresObjectCustom0,
-                            ref requiresObjectCustom1);
                     }
                 }
             }
@@ -301,67 +293,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                     objectCustom1Available,
                     normalDepthAvailable,
                     skyTextureAvailable));
-        }
-
-        private static void AccumulateRuleSourceRequirements(
-            ScreenProcessLayer layer,
-            ref bool requiresSurfaceData,
-            ref bool requiresCustom0,
-            ref bool requiresObjectCustom0,
-            ref bool requiresObjectCustom1)
-        {
-            List<ScreenProcessRuleMaskRule> rules = layer.ruleMasks;
-            if (rules == null || rules.Count == 0)
-            {
-                AccumulateRuleSource(layer.ruleSource, ref requiresSurfaceData, ref requiresCustom0, ref requiresObjectCustom0, ref requiresObjectCustom1);
-                return;
-            }
-
-            int ruleCount = Mathf.Min(rules.Count, ScreenProcessRuleMaskRuntime.MaxRuleCount);
-            for (int i = 0; i < ruleCount; i++)
-            {
-                ScreenProcessRuleMaskRule rule = rules[i];
-                if (rule != null && rule.enabled)
-                {
-                    AccumulateRuleSource(rule.source, ref requiresSurfaceData, ref requiresCustom0, ref requiresObjectCustom0, ref requiresObjectCustom1);
-                }
-            }
-        }
-
-        private static void AccumulateRuleSource(
-            ScreenProcessRuleSource source,
-            ref bool requiresSurfaceData,
-            ref bool requiresCustom0,
-            ref bool requiresObjectCustom0,
-            ref bool requiresObjectCustom1)
-        {
-            switch (source)
-            {
-                case ScreenProcessRuleSource.Thickness:
-                case ScreenProcessRuleSource.Curvature:
-                case ScreenProcessRuleSource.Material:
-                case ScreenProcessRuleSource.TransmittanceHint:
-                    requiresSurfaceData = true;
-                    break;
-                case ScreenProcessRuleSource.Custom0:
-                case ScreenProcessRuleSource.Custom1:
-                case ScreenProcessRuleSource.Custom2:
-                case ScreenProcessRuleSource.Custom3:
-                    requiresCustom0 = true;
-                    break;
-                case ScreenProcessRuleSource.ObjectCustom0:
-                case ScreenProcessRuleSource.ObjectCustom1:
-                case ScreenProcessRuleSource.ObjectCustom2:
-                case ScreenProcessRuleSource.ObjectCustom3:
-                    requiresObjectCustom0 = true;
-                    break;
-                case ScreenProcessRuleSource.ObjectCustom4:
-                case ScreenProcessRuleSource.ObjectCustom5:
-                case ScreenProcessRuleSource.ObjectCustom6:
-                case ScreenProcessRuleSource.ObjectCustom7:
-                    requiresObjectCustom1 = true;
-                    break;
-            }
         }
 
         private static string BuildMissingInputReason(

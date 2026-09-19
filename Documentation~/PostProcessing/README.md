@@ -23,7 +23,7 @@
 - `深度雾`（`DepthFog`，新增）是 ScreenProcess 里的合成雾：一个效果带**深度雾**与**高度雾**两个槽（各带开关，可同时开，两层在同一趟 pass 内按顺序合成）。深度项支持直线/指数/指数平方三种距离曲线与远近双色 + 空气感去饱和；高度项支持"高度窗／指数衰减 × 下方浓／上方浓"四种形式，高度取世界 Y（可切相机相对）并用包内既有的 smoothness + hardness 习惯；天空可跳过／一起上雾／单独染色；不依赖 GeometryBuffer 也能工作（自动回落相机深度，正交也走这条路）。预设 5 组 13 个，见 `DepthFog.md`。
 - `网点`（`Halftone`，新增）是 ImageProcess 的半调网屏：模式有拜耳有序抖动（2/3/4/8 矩阵）与圆点/方点/菱形/线条四种面积调制网点，配色是「墨色（图层颜色）+ 纸色」两种颜色、四种合成（叠墨／双色／乘算／遮罩原色），另有输入窗口、暗部上墨、角度、柔化、网格抖动、浓度上限与输出抖动。设计上与 `渐变映射` 串联使用（ramp 管颜色、网点管墨量），也能单走。预设 5 组 15 个，见 `Halftone.md`。
 - `Editor/PostProcessing/ViewControls` 提供屏幕空间中心、半径、方向等 SceneView 操作控件。
-- `ScreenProcessRuleMaskEditorUtility` 提供基于 MetadataBuffer 的规则遮罩编辑 UI。
+- `ScreenProcessRuleMaskEditorUtility`（规则遮罩编辑器）已删除：20 个 rule source 与 ≤4 条规则列表作为**无人使用**的功能移除。层遮罩保留——见下面的「层遮罩」。
 
 当前仍需注意的状态：
 
@@ -112,18 +112,24 @@ RendererFeature 只安装渲染 Pass，实际层配置来自 Volume。相机类�
 - `intensity`、`blendMode`、`color`、`texture`
 - `parameters0` 到 `parameters5`
 - DepthOfField 的场景焦点目标和路径回退
-- 单规则遮罩字段和最多 4 条 `ruleMasks`
+- 层遮罩开关/反转/调试：`useMask`、`invertMask`、`debugMask`
 
-规则遮罩从 MetadataBuffer 采样，可匹配 Mask、GroupId、ObjectId、Flags、Thickness、Curvature、Material、TransmittanceHint、Material Custom0-3、Object Custom0-7。组合方式支持 Replace、Or、And、Subtract、Add、Multiply。
+层遮罩今天只采样 MetadataBuffer 的 `maskId` 覆盖率（`_HoMetadataBufferMaskIdTexture.r`），配一个每层开关、一个反转和一个 debug 直出（`_LayerMaskDebugOutput`）；开关关闭时该层不做遮罩（乘 1），MetadataBuffer 不可用时乘 0。**规则来源（20 个 rule source、≤4 条规则列表）已作为未使用功能删除**，SP 图层将在 R5 作为**新工作**接入 AC（`Ho-AttributeComposite`）的具名遮罩——它们不是迁移关系。
+
+删除时顺带修掉两个意外（都发生在"没配任何规则"这条路径上）：旧实现即使没配规则也会合成一条 Direct/Mask 规则，
+于是覆盖率在规则级和出口各乘一次、被连乘三次（`coverage³`）；现在就是 `coverage`。
+另外强制路径（`ResolveCoverageMask`）在层开关关闭时会提前返回、跳过反转，现在会照常反转。
+二值遮罩（0/1）且不反转时与旧结果逐位一致；只有覆盖率处于中间值（抗锯齿边缘）时结果不同。
+本仓库当前没有任何 SP 图层开着遮罩（工程数据核对过），所以这次改动对现有画面不可见。
 
 当前资源依赖：
 
 - `EdgeLight`：需要 MetadataBuffer MaskId 和 GeometryBuffer normal/depth。
 - `Outline`：优先需要 GeometryBuffer normal/depth；GeometryBuffer coverage 为 0 的像素不参与边缘检测。
-- `DropShadow`：优先需要 MetadataBuffer MaskId，并可按规则读取 SurfaceData、Custom0、ObjectCustom0/1；Metadata 不可用时兼容路径和 RenderGraph 使用内部 SubjectMask fallback。
+- `DropShadow`：优先需要 MetadataBuffer MaskId；Metadata 不可用时兼容路径和 RenderGraph 使用内部 SubjectMask fallback。
 - `DepthOfField`：需要 GeometryBuffer 线性深度；coverage 无效时按远裁剪面处理，支持固定焦距和 Transform 目标焦点。
 - `PostLighting`：需要 MetadataBuffer MaskId 和 GeometryBuffer normal/depth。
-- `SkyTyndall`：需要 GeometryBuffer normal/depth 和 Sky buffer；启用规则遮罩时还需要对应 MetadataBuffer 输入。
+- `SkyTyndall`：需要 GeometryBuffer normal/depth 和 Sky buffer；启用层遮罩时还需要 MetadataBuffer MaskId。
 - `CustomMaterial`：默认只做 layer blit，按用户材质或 shader 扩展。
 
 `ScreenProcessRuntimeDiagnostics.CurrentSnapshot` 会记录 active layer 数、写入 layer 数、back buffer 状态、camera color 状态、MetadataBuffer/GeometryBuffer/SkyTexture 是否满足等信息。调试面板应该优先读这个 snapshot，而不是猜测缺哪个 RendererFeature。
@@ -269,7 +275,7 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 
 URP Renderer Asset 中建议按依赖加入这些 RendererFeature：
 
-- 必选：`Ho-MetadataBuffer`，当 ScreenProcess 规则遮罩、角色语义、DropShadow 或 PostLighting 需要对象语义时启用。
+- 必选：`Ho-MetadataBuffer`，当 ScreenProcess 层遮罩、角色语义、DropShadow 或 PostLighting 需要对象语义时启用。
 - 必选：`Ho-GeometryBuffer`，当 EdgeLight、PostLighting、SkyTyndall 或 CharacterSpecialization 需要 normal/depth 时启用。
 - 可选：`Ho-GeometryBuffer` 的 Sky buffer，只有 SkyTyndall 或后续天空采样效果需要时启用。
 - 可选：`Ho-CharacterSpecialization`，角色眼透、前发投影、脸色扩散或轮廓效果需要时启用。

@@ -24,7 +24,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/PostLighting"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessRuleMask.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessMask.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/ImageProcessBlend.hlsl"
 
             float _Intensity;
@@ -39,7 +39,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/PostLighting"
 
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
 
-            half4 SampleRuleNormalDepth(float2 uv)
+            half4 SampleMaskNormalDepth(float2 uv)
             {
                 return SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
             }
@@ -53,12 +53,12 @@ Shader "Hidden/lilToon/URP/ScreenProcess/PostLighting"
             float ResolveCoverage(float2 uv, half4 normalDepth)
             {
                 float coverage = LilHoGeometryBufferCoverage(normalDepth);
-                if (_LayerRuleMaskEnabled > 0.5)
+                if (_LayerMaskEnabled > 0.5)
                 {
-                    return coverage * LilScreenProcessResolveRequiredRuleMask(uv);
+                    return coverage * LilScreenProcessResolveCoverageMask(uv);
                 }
 
-                return coverage * LilScreenProcessRuleCoverage(uv);
+                return coverage * LilScreenProcessMaskCoverage(uv);
             }
 
             half3 ResolveLineGradient(float2 uv, float2 direction, float width, float offset, half3 colorA, half3 colorB, out float gradientMask)
@@ -101,7 +101,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/PostLighting"
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
                 if (_HoMetadataBufferActive <= 0.5)
                 {
-                    if (LilScreenProcessShouldOutputRuleDebug())
+                    if (LilScreenProcessShouldOutputMaskDebug())
                     {
                         return half4(0.0, 0.0, 0.0, source.a);
                     }
@@ -109,9 +109,9 @@ Shader "Hidden/lilToon/URP/ScreenProcess/PostLighting"
                     return source;
                 }
 
-                half4 normalDepth = SampleRuleNormalDepth(uv);
+                half4 normalDepth = SampleMaskNormalDepth(uv);
                 float subjectMask = ResolveCoverage(uv, normalDepth);
-                if (LilScreenProcessShouldOutputRuleDebug())
+                if (LilScreenProcessShouldOutputMaskDebug())
                 {
                     return half4(subjectMask, subjectMask, subjectMask, source.a);
                 }

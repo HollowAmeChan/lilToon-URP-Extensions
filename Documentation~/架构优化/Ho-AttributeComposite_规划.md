@@ -99,8 +99,8 @@ AC **不为每个消费者烤遮罩图**。它发布**一份可查询的合成�
 
 | 阶段 | 内容 | 验收 |
 | --- | --- | --- |
-| **R4** | AC 落地：合成属性图 + 查询 API + manifest + 消费者登记 / 诊断 + **调试与登记（V2 §6.1）** | ScreenProcess 的 20 个 source 收成 1 族；角色特化只读 AC |
-| **R5** | **消费者输入切换**（V2 §6.2）：ScreenProcess 的 20 个 rule source → AC 具名条目（含**旧序列化配置迁移**与 `Requires*` 诊断家族替换）；角色特化 → AC（组 / 物体位 / 覆盖率）+ SB（表面色）；**两者自己的 debug 视图与登记一起改** | 行为不变或更好；`Requires*` 家族消失；解析不到的名字在视图里报出来 |
+| **R4** | AC 落地：合成属性图 + 查询 API + manifest + 消费者登记 / 诊断 + **调试与登记（V2 §6.1）** | ScreenProcess 图层只留遮罩采样（今天吃 MetadataBuffer 覆盖率）；角色特化只读 AC |
+| **R5** | **消费者输入切换**（V2 §6.2）：ScreenProcess 图层**新接** AC 具名遮罩（原 20 个 rule source 已作为未使用功能删除，**没有旧序列化配置要迁移**，`Requires*` 诊断家族替换）；角色特化 → AC（组 / 物体位 / 覆盖率）+ SB（表面色）；**两者自己的 debug 视图与登记一起改** | 行为不变或更好；`Requires*` 家族消失；解析不到的名字在视图里报出来 |
 | **R4 之后** | 与 OB / SB 一起进 R6：删 MetadataBuffer | 全仓库无 `_HoMetadataBuffer` 引用 |
 | **R6 之后** | 导出 feature 立项（读 AC 的身份池 + manifest） | 外部处理与 Unity 内处理吃同一份数据 |
 

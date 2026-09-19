@@ -56,7 +56,7 @@ MetadataBuffer 把 8 个语义压进 RSUV 低字节的 8 个 bit，语义因此�
 | --- | --- | --- |
 | 8 | **palette 传 StructuredBuffer，分两级**：`HoCharacterPartData`（≤4096 行）+ `HoCharacterData`（角色表，≤256 行、常驻）；后端不支持时退化为 float4 常量数组（按 256 行分块） | 最省、最灵活；两级是为了让稀疏的 `char<<8\|slot` 能索引到稠密行（§5.3）；不做 1D 纹理——材质有自己的 ID，不需要采样 palette |
 | 9 | **标签 32 位** | 一个 `uint` 与 palette 行对齐；旧 8 语义 + 24 个自定义位足够 |
-| 10 | **ScreenProcess 规则 source 改成"只吃 `Ho-Cryptomatte`"** | 今天它有 **20 个 source**（maskId 四通道 + surfaceData 四通道 + custom0 四通道 + objectCustom 八位）；迁移后**只剩一族：Cryptomatte 具名选择 + 覆盖率**。它**不再做"通道 + 阈值"匹配**（`Custom2 > 0.5` 这类条件消失），也不再需要 `RequiresSurfaceData` / `RequiresCustom0` / `RequiresObjectCustom0` 那套可用性诊断。材质侧也不必再为它暴露那些通道——这是管线草案 §6.2/§6.3 收敛暴露面的一部分。详见 `Ho-Cryptomatte_占位.md` §2 |
+| 10 | **ScreenProcess 规则 source 改成"只吃 `Ho-Cryptomatte`"** | 今天它有 **20 个 source**（maskId 四通道 + surfaceData 四通道 + custom0 四通道 + objectCustom 八位）；迁移后**只剩一族：Cryptomatte 具名选择 + 覆盖率**。它**不再做"通道 + 阈值"匹配**（`Custom2 > 0.5` 这类条件消失），也不再需要 `RequiresSurfaceData` / `RequiresCustom0` / `RequiresObjectCustom0` 那套可用性诊断。材质侧也不必再为它暴露那些通道——这是管线草案 §6.2/§6.3 收敛暴露面的一部分。详见 `Ho-Cryptomatte_占位.md` §2。**后续更新：这 20 个 source 与规则列表已作为未使用功能删除（不是迁移），SP 图层只留遮罩采样，改吃 AC 遮罩是 R5 的新工作。** |
 | 11 | **palette 按 4096 行 + 角色表 256 行容量设计，v1 全量上传**（部件行 64~128 B → ≈256~512 KB/帧，角色表另 ≈16~32 KB） | 接口预留分块 / 脏行，实测有压力再上 |
 | 12 | **ID pass 由 feature 自己绘制** | 只画部件表里的 renderer（可选再用 layerMask / renderQueue 附加过滤），不含描边、特效件；默认一次 `DrawRenderers` 画完（RSUV 携带索引），只有兜底路径才逐部件绘制 |
 
@@ -92,7 +92,7 @@ MetadataBuffer 把 8 个语义压进 RSUV 低字节的 8 个 bit，语义因此�
 | 角色特化 脸色扩散 | `objectCustom0.g`、`surfaceColor` | 覆盖率 + 颜色 |
 | 角色特化 轮廓场 | `objectCustom0..7`（可选，默认 CharacterBody=6） | 覆盖率 |
 | 材质侧捕获 `HoCharacterCaptureCommon.hlsl` | `unity_RendererUserValue & 255` 的 Face/Eye 位 | 只要身份 |
-| ScreenProcess 规则掩码 | `maskId` 四通道、`surfaceData`、`custom0`、`objectCustom0/1`（20 source 槽） | coverage 线性（已正确）；ID 容差匹配（合法，因未被 AA） |
+| ScreenProcess 层遮罩（~~规则掩码~~） | ~~`maskId` 四通道、`surfaceData`、`custom0`、`objectCustom0/1`（20 source 槽）~~ **后续更新：只剩 `maskId.r` 覆盖率；那 20 个 source 槽已作为未使用功能删除** | coverage 线性（已正确） |
 | SSS | `maskId.r`、`surfaceData`、`surfaceColor` | 覆盖率；现存违规见 §6 |
 | PlanarReflection | `maskId.r`、`reflectionMaterial`、`surfaceColor` | 覆盖率 |
 | 调试 / AOV | 全部 | 点采样；ID 与 coverage 要能分开 |
@@ -360,7 +360,7 @@ ID pass 的 depth-stencil 附件只服务于两件事：**决出每个 sample �
 | 角色特化 脸色扩散 | 同上 + `_Surface.rgb`（**覆盖率读 `_Coverage`，不再用 `_Surface.a`**） |
 | 角色特化 轮廓场 | 类别 / 标签查询 + 覆盖率 |
 | 材质侧捕获 | 从 **RSUV** 解出索引 → 查 palette 取 slot / character / category / tags（不读 MPB） |
-| ScreenProcess 规则 | **只吃 `Ho-Cryptomatte`**（决策 10 / 21）：具名遮罩 + 覆盖率。迁移前仍吃 MetadataBuffer 的老 source（不能断供），迁移归 `Ho-Cryptomatte` 的落地阶段 |
+| ScreenProcess 规则 | **只吃 `Ho-Cryptomatte`**（决策 10 / 21）：具名遮罩 + 覆盖率。~~迁移前仍吃 MetadataBuffer 的老 source（不能断供）~~ **后续更新：这些老 source（20 个 rule source + 规则列表）已作为未使用功能删除，SP 图层只留"每层开关 + MetadataBuffer 覆盖率"的采样，改吃 AC 遮罩是 R5 的新工作（不是迁移）** |
 | SSS | `_Coverage` + `_Surface` + **GeometryBuffer normalDepth**（几何门控不变）+ thickness / curvature / class / transmittance——**这几项读哪里取决于 §5.3 的 P2 闸门**（材质侧逐像素写，或 CPU 从材质读进 palette）；定下来之前不要迁 |
 | PlanarReflection | `_Coverage` + palette（反射参数）+ `_Surface` + **GeometryBuffer normalDepth/coverage**（几何门控不变） |
 | 调试 / AOV | ID / 覆盖率分层显示；palette `displayColor`；manifest JSON |
@@ -500,7 +500,7 @@ MSAA 阶段**每个样本只需要一个 ID**（一个样本只属于一个部�
 
 | 侧 | 提供什么 | 约定 |
 | --- | --- | --- |
-| **本仓库（URP Extensions）** | ① `HoCharacterBufferGroup` 增加**选择表**：`{ 名字（唯一）, 选择 ID（自动分配 0~255）, 显示色, 可选类别/标签 }`；② 选择定义的**单一真值**（改名不破资产，因为材质只引用名字）；③ `_HoCharacterBufferSelection` 的分配 / clear / 发布 / debug 视图 / AOV+manifest 导出；④ ScreenProcess 规则 source 增加"选择"一族；⑤ 把"名字 → ID"解析好写进全局常量，材质侧**不需要查表**就能写 | 注册、校验（唯一名、≤256、越界告警）、ID 分配**只在本侧发生** |
+| **本仓库（URP Extensions）** | ① `HoCharacterBufferGroup` 增加**选择表**：`{ 名字（唯一）, 选择 ID（自动分配 0~255）, 显示色, 可选类别/标签 }`；② 选择定义的**单一真值**（改名不破资产，因为材质只引用名字）；③ `_HoCharacterBufferSelection` 的分配 / clear / 发布 / debug 视图 / AOV+manifest 导出；④ ~~ScreenProcess 规则 source 增加"选择"一族~~（**后续更新：SP 的规则来源已整体删除；改吃 AC 遮罩是 R5 的新工作**）；⑤ 把"名字 → ID"解析好写进全局常量，材质侧**不需要查表**就能写 | 注册、校验（唯一名、≤256、越界告警）、ID 分配**只在本侧发生** |
 | **lilToon 包（跨仓）** | ① 材质 UI 增加 N 个**选择槽**（N = 2 或 4，来自组设置），每槽 = `{ 启用, 选择（下拉引用组里的名字）, 遮罩来源, 强度 }`；② shader 在 `HoCharacterBuffer` pass 里按上面的成对布局写 MRT；③ 槽未启用时写 0（= 无选择） | **材质只引用名字、不定义名字**；MRT 数量由"是否存在选择"和"槽数"决定（见下） |
 | **遮罩来源枚举**（协议里必须冻结的部分） | `贴图 R/G/B/A`、`顶点色 R/G/B/A`、`自定义贴图1 R/G/B/A`、`常量 0~1`、`无` | 加来源 = 加枚举值，**不动通道布局、不动选择 ID 空间** |
 | **变体/关键字** | 每个选择槽一对启用关键字，或直接由"槽数"决定 `#pragma` 的 MRT 数量 | **MRT 数量必须按实际需要来**：没有选择时那张图根本不分配、也不输出（否则白付带宽） |
@@ -512,7 +512,7 @@ MSAA 阶段**每个样本只需要一个 ID**（一个样本只属于一个部�
 - 超过 4 个的正确解法是**换表达**：把这块拆成独立 renderer（用部件 + 标签表达，不占选择层），而不是继续加图。
 - **必须有溢出可见性**：resolve 时若有选择被丢掉，debug 视图要能标出来。否则就会重演 Cryptomatte 那条"选到被丢弃的对象时出噪声"的静默失败（§4.1）。
 
-**与旧资产的迁移**：不兼容（决策 4）。ScreenProcess 里读 `custom*` 的规则条目改成读"选择"（§5.8），契约里 `custom0` 那一行标成待替换（§5.10）。
+**与旧资产的迁移**：不兼容（决策 4）。~~ScreenProcess 里读 `custom*` 的规则条目改成读"选择"（§5.8）~~ **后续更新：读 `custom*` 的规则条目已作为未使用功能整体删除；SP 图层接 AC/"选择"是 R5 的新工作**，契约里 `custom0` 那一行标成待替换（§5.10）。
 
 ### 5.13 遮罩归 `Ho-Cryptomatte`（决策 21）
 
@@ -598,7 +598,7 @@ MSAA 阶段**每个样本只需要一个 ID**（一个样本只属于一个部�
 | **P2** | **`Ho-SurfaceBuffer`（§5.12 / 决策 20）**：新的 feature + 4 张按需通道 + 两段式深度策略；lilToon 侧对应 pass（跨仓，从今天的 `HoMetadataBufferSurfaceColor` / 材质写入端对应过来） | 表面数值由材质侧逐像素写；现有 consumer（SSS / PLR / 角色特化脸色扩散 / AOV）改读 SB 后行为不变；**与 CB 无交叉读取** |
 | **P2.5** | ~~Cryptomatte 选择层的跨仓落地~~ **已移出**：改由独立 feature `Ho-Cryptomatte` 承担（决策 21，占位文档 `Ho-Cryptomatte_占位.md`）。CB 这边的对应工作是**清理**：去掉选择层的 RT / 注册表条目 / 设置项 / 调试视图 / resolve 分支（并入 P1.5） | CB 的发布清单里没有选择层；debug 视图里没有 `character.selection`；跨仓依赖只剩"新增 ID/覆盖率 pass"一条 |
 | **P2** | 角色特化三效果 + 轮廓切新 buffer，`HoCharacterSemanticMaskBlur` 退化为可选 | 前发投影边界连续、发际线无硬裁、角色互不干扰；等价 debug 视图无台阶 |
-| **P3** | ScreenProcess 规则、SSS、PlanarReflection 切新 buffer —— **其中 ScreenProcess 改为只吃 `Ho-Cryptomatte`**（决策 10），所以它跟随 `Ho-Cryptomatte` 的落地节奏，不在这里单独迁；SSS / PLR 的表面数值切到 `Ho-SurfaceBuffer`（§5.12） | 屏幕效果行为不变或更好；SSS 不再双线性读 class |
+| **P3** | SSS、PlanarReflection 切新 buffer；**ScreenProcess 的规则来源已作为未使用功能删除**（原计划是"改为只吃 `Ho-Cryptomatte`"，现在是 R5 新接 AC 遮罩，没有旧配置要迁）；SSS / PLR 的表面数值切到 `Ho-SurfaceBuffer`（§5.12） | 屏幕效果行为不变或更好；SSS 不再双线性读 class |
 | **P4** | 删除 MetadataBuffer（大量 16F 附件、fallback/clear/debug shader、MPB 回退、契约条目）；**把 `HoFaceAxis` 的归属迁到 CharacterBuffer**（眼下 CB 是借用 MetadataBuffer 命名空间里的这个枚举；枚举按 int 序列化、成员顺序不变就不会丢已有场景的值）；同步更新 `Documentation~/GeometryBuffer.md` §7 消费者契约表与公共原则（MetadataBuffer → CharacterBuffer） | 全仓库无 `_HoMetadataBuffer` 引用、无 MPB 身份写入；RSUV 只剩"palette 索引"一种含义；契约出 v2 |
 
 跨仓库依赖（**两处，都要在 lilToon 包里做**）：① 新增/改 pass（`HoCharacterBuffer` / `HoCharacterBufferSurface`，只把 RSUV 当索引用，不再解析语义位）；② **选择槽的材质 UI + shader 写入**（§5.11 的协议：槽数、遮罩来源枚举、MRT 布局、启用关键字）。C# 侧 `HoCharacterBufferGroup` 为每个 renderer 分配 palette ID、写 RSUV、维护选择表，并登记 32 bit 的分区。
