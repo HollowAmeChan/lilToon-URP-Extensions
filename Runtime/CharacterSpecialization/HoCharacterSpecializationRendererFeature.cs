@@ -190,7 +190,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             }
 
             runtimeSettings.CopyFrom(settings);
-            volume.ApplyTo(runtimeSettings);
+            volume.CopyEffectsTo(runtimeSettings);
             return runtimeSettings;
         }
 

@@ -79,6 +79,22 @@ Volume 里的 `LayerMask`/`MinRenderQueue`/`MaxRenderQueue`/`PassEvent`/`RenderS
 - **会删掉的东西**：`ApplyTo`（69 行）、Settings 里 69 个效果字段、`CopyFrom` 里对应行、
   Feature 编辑器里 5 个效果区段（参数挪回 Volume 后它们没东西可画）、Volume 里 5 个死字段。
 
+### v1 实现说明（已落地，2026-09-15）
+
+| 改动 | 落点 |
+| --- | --- |
+| 新设置块 | `Runtime/CharacterSpecialization/HoCharacterSpecializationEffects.cs`：70 个**普通字段**（保留 `[InspectorName]`/`[Tooltip]`；`ClampedFloatParameter` 的区间变成 `[Range]`） |
+| Volume 单一来源 | `HoCharacterSpecializationVolume.Effects = new HoCharacterSpecializationEffectsParameter(...)`（`VolumeParameter<…>` 承载整块，Inspector 上是普通控件）；删掉构造里 58 行假的 `overrideState = true`、69 个参数、7 个死字段（`Enable`/`ShowInSceneView`/`LayerMask`/队列/`PassEvent`/`RenderScale`） |
+| 运行时 | `ApplyTo` → `CopyEffectsTo`（普通字段 → 运行时载体）；Feature 调用点同步改名 |
+| Settings | 70 个效果字段标 `[NonSerialized]`（**不再进资产**），`CopyFrom` 只剩管线/捕获/调试 17 行 —— 它们现在只是**运行时载体**，不是第二份数据源 |
+| 编辑器 | 5 个区段新增 `DrawEffects(SerializedProperty effects)`（只画参数行，由现有 `DrawSettings` 生成）；Volume 编辑器改用共享的「效果浏览器」（顶栏搜索 + 左侧 6 条图标侧栏 + 右侧区段行 + 搜索高亮 + 每实例折叠） |
+
+**迁移代价（要记着）**：序列化路径从 69 个顶层参数变成 `Effects.m_Value.*`，所以**旧 Volume profile 里已调好的效果值会回到默认值**
+（Settings 资产里的旧值本来每帧都被覆盖，无所谓）。字段名保持不变，将来真要写迁移脚本也能一一对上。
+
+**与规划的一处差异**：规划说"删掉 Settings 的 69 个效果字段"，实现改成标 `[NonSerialized]` 保留为运行时载体 ——
+因为 pass 代码有几百处 `activeSettings.eyeRevealXxx` 读取，删字段会把 1377 行的 Feature 全部翻一遍；
+`[NonSerialized]` 达到了同样目的（资产里不再有第二份数据），代价只是这些字段仍留在类里。
 ## 2. UI：与另外两块一致
 
 ```

@@ -39,6 +39,16 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 DrawProperty(Find(settingsProperty, "semanticMaskBlurEnhancedOutline"), "读取抗锯齿掩码");
             }
         }
+        /// <summary>只画参数行；标题行与启用开关由 Volume 编辑器（效果浏览器）负责。</summary>
+        public static void DrawEffects(SerializedProperty effects)
+        {
+        SerializedProperty enabled = Find(effects, "enhancedOutlineEnabled");
+        SerializedProperty strength = Find(effects, "enhancedOutlineStrength");
+        DrawProperty(Find(effects, "enhancedOutlineSourceChannel"), "来源通道");
+        DrawProperty(strength, "雾气强度");
+        DrawProperty(Find(effects, "enhancedOutlineRadiusPixels"), "外扩半径像素");
+        DrawProperty(Find(effects, "semanticMaskBlurEnhancedOutline"), "读取抗锯齿掩码");
+        }
 
         public static void DrawVolume(
             SerializedDataParameter enabled,

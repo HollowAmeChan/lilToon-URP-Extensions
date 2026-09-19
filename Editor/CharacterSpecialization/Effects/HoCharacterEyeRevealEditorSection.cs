@@ -39,6 +39,19 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 DrawProperty(Find(settingsProperty, "semanticMaskBlurEyeReveal"), "读取抗锯齿掩码");
             }
         }
+        /// <summary>只画参数行；标题行与启用开关由 Volume 编辑器（效果浏览器）负责。</summary>
+        public static void DrawEffects(SerializedProperty effects)
+        {
+        SerializedProperty enabled = Find(effects, "eyeRevealEnabled");
+        SerializedProperty strength = Find(effects, "eyeRevealStrength");
+        DrawProperty(strength, "透过强度");
+        DrawProperty(Find(effects, "eyeRevealFeatherPixels"), "羽化像素");
+        DrawProperty(Find(effects, "eyeRevealDilationPixels"), "扩张像素");
+        DrawProperty(Find(effects, "eyeRevealDepthBias"), "深度偏移");
+        DrawProperty(Find(effects, "useEyeRevealArea"), "使用眼透区域");
+        DrawProperty(Find(effects, "sameCharacterOnly"), "仅同角色");
+        DrawProperty(Find(effects, "semanticMaskBlurEyeReveal"), "读取抗锯齿掩码");
+        }
 
         public static void DrawVolume(
             SerializedDataParameter enabled,

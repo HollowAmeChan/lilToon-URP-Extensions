@@ -40,6 +40,20 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 DrawProperty(Find(settingsProperty, "semanticMaskBlurFaceHairDiffuse"), "读取抗锯齿掩码");
             }
         }
+        /// <summary>只画参数行；标题行与启用开关由 Volume 编辑器（效果浏览器）负责。</summary>
+        public static void DrawEffects(SerializedProperty effects)
+        {
+        SerializedProperty enabled = Find(effects, "faceHairDiffuseEnabled");
+        SerializedProperty strength = Find(effects, "faceHairDiffuseStrength");
+        DrawProperty(strength, "强度");
+        DrawProperty(Find(effects, "faceHairDiffuseRadiusPixels"), "模糊半径像素");
+        DrawProperty(Find(effects, "faceHairDiffuseDepthTolerance"), "深度容差");
+        DrawProperty(Find(effects, "faceHairDiffuseLevelBlack"), "黑场阈值");
+        DrawProperty(Find(effects, "faceHairDiffuseLevelWhite"), "白场阈值");
+        DrawProperty(Find(effects, "faceHairDiffuseTintColor"), "染色倍率");
+        DrawProperty(Find(effects, "faceHairDiffuseBlendMode"), "混合模式");
+        DrawProperty(Find(effects, "semanticMaskBlurFaceHairDiffuse"), "读取抗锯齿掩码");
+        }
 
         public static void DrawVolume(
             SerializedDataParameter enabled,
