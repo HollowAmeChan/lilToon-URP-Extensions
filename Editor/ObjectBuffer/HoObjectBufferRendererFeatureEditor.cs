@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using lilToon.URP.Extensions.ObjectBuffer;
 using lilToon.URP.Extensions.Editor;
 using UnityEditor;
@@ -14,11 +15,15 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private static readonly Color DebugColor = new Color(0.86f, 0.62f, 0.38f);
         private static readonly Color AdvancedColor = new Color(0.62f, 0.58f, 0.78f);
 
+        /// <summary>图例最多列这么多行：200 个部件的角色会把面板撑爆，剩下的用一行汇总。</summary>
+        private const int LegendRowLimit = 64;
+
         private static bool showRuntime;
         private static bool showCoverage;
         private static bool showSelections;
         private static bool showDebug;
         private static bool showAdvanced;
+        private static bool showIdentityLegend;
         private SerializedProperty settingsProperty;
 
         private void OnEnable()
@@ -76,7 +81,120 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 {
                     EditorGUILayout.HelpBox("平台不支持 StructuredBuffer（shader level < 4.5），feature 不会运行。", MessageType.Error);
                 }
+
+                DrawIdentityLegend();
             }
+        }
+
+        /// <summary>
+        /// 身份图例：调试视图是"按 palette 显示色上色"的，没有这份对照就只能靠猜颜色。
+        /// 槽位 = 部件在组里的顺序（也就是 ID 的低字节），所以这里按槽位顺序列。
+        /// </summary>
+        private static void DrawIdentityLegend()
+        {
+            HoObjectBufferRegistry.EnsureBuilt();
+            IReadOnlyList<HoObjectBufferGroup> groups = HoObjectBufferGroup.GetActiveGroups();
+            int partRows = Mathf.Max(0, HoObjectBufferRegistry.PartRowCount - 1);
+
+            showIdentityLegend = EditorGUILayout.Foldout(
+                showIdentityLegend,
+                $"身份图例（部件 {partRows} · 组 {groups.Count}）",
+                true);
+            if (!showIdentityLegend)
+            {
+                return;
+            }
+
+            using (new EditorGUI.IndentLevelScope())
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                if (groups.Count == 0)
+                {
+                    EditorGUILayout.LabelField("当前没有活动的 Ho-ObjectBuffer Group（组件被禁用时也不会注册）。", EditorStyles.miniLabel);
+                    return;
+                }
+
+                var buffer = new List<Renderer>();
+                int shown = 0;
+                int hidden = 0;
+                for (int g = 0; g < groups.Count; g++)
+                {
+                    HoObjectBufferGroup group = groups[g];
+                    if (group == null)
+                    {
+                        continue;
+                    }
+
+                    EditorGUILayout.LabelField($"组 {group.groupId} · {group.name}", EditorStyles.boldLabel);
+                    IReadOnlyList<string> names = group.GetPartNames();
+                    if (names.Count == 0)
+                    {
+                        EditorGUILayout.LabelField("   （没有部件 → 这一组不写 RSUV）", EditorStyles.miniLabel);
+                        continue;
+                    }
+
+                    for (int slot = 0; slot < names.Count; slot++)
+                    {
+                        if (shown >= LegendRowLimit)
+                        {
+                            hidden++;
+                            continue;
+                        }
+
+                        string partName = names[slot];
+                        HoObjectBufferPartEntry entry = FindEntry(group, partName);
+                        uint partId = HoObjectBufferRegistry.GetPartId(group.groupId, partName);
+                        buffer.Clear();
+                        if (entry != null)
+                        {
+                            HoObjectBufferGroup.CollectEntryRenderers(entry, buffer);
+                        }
+
+                        DrawLegendRow(
+                            partId,
+                            entry != null ? entry.displayColor : Color.gray,
+                            partName,
+                            entry != null ? entry.category : HoObjectBufferPartCategory.Unspecified,
+                            buffer.Count);
+                        shown++;
+                    }
+                }
+
+                if (hidden > 0)
+                {
+                    EditorGUILayout.LabelField($"…还有 {hidden} 个部件（图例只列前 {LegendRowLimit} 行）", EditorStyles.miniLabel);
+                }
+            }
+        }
+
+        private static HoObjectBufferPartEntry FindEntry(HoObjectBufferGroup group, string partName)
+        {
+            for (int i = 0; i < group.parts.Count; i++)
+            {
+                HoObjectBufferPartEntry entry = group.parts[i];
+                if (entry != null && entry.name == partName)
+                {
+                    return entry;
+                }
+            }
+
+            return null;
+        }
+
+        private static void DrawLegendRow(
+            uint partId,
+            Color displayColor,
+            string partName,
+            HoObjectBufferPartCategory category,
+            int rendererCount)
+        {
+            Rect rect = EditorGUILayout.GetControlRect(false, 16.0f);
+            Rect swatch = new Rect(rect.x, rect.y + 1.0f, 13.0f, 13.0f);
+            EditorGUI.DrawRect(swatch, displayColor);
+
+            Rect label = new Rect(swatch.xMax + 6.0f, rect.y, Mathf.Max(0.0f, rect.xMax - swatch.xMax - 6.0f), rect.height);
+            string idText = partId > 0u ? $"0x{partId:X4}" : "未注册";
+            EditorGUI.LabelField(label, $"{idText}   {partName}   （{category} · {rendererCount} Renderer）", EditorStyles.miniLabel);
         }
 
         private void DrawCoverage()
