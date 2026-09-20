@@ -55,6 +55,10 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private static GUIStyle switchActiveLabelStyle;
         private static bool stylesResolved;
 
+        /// <summary>标签位的值与显示名（显示名从枚举的 <see cref="InspectorNameAttribute"/> 上取，面板不另存一份名字）。</summary>
+        private static HoObjectBufferPartTags[] partTagValues;
+        private static GUIContent[] partTagLabels;
+
         private static readonly Color RowHighlight = new Color(0.30f, 0.55f, 0.95f, 0.16f);
         private static readonly Color RowHover = new Color(1.0f, 1.0f, 1.0f, 0.06f);
         private static readonly Color RowAccent = new Color(0.35f, 0.65f, 1.0f, 0.85f);
@@ -402,7 +406,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             SerializedProperty entry = list.GetArrayElementAtIndex(index);
 
             // 新条目要停在**类型的默认值**上：InsertArrayElementAtIndex 会复制上一条的字段，
-            // 不逐字段重置的话，类别/标签/展开子级这些会从上一条"继承"过来（看着像自动填的，其实是脏的）。
+            // 不逐字段重置的话，标签/展开子级这些会从上一条"继承"过来（看着像自动填的，其实是脏的）。
             SerializedProperty nameProperty = entry.FindPropertyRelative("name");
             if (nameProperty != null)
             {
@@ -412,7 +416,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             if (parts)
             {
                 var defaults = new HoObjectBufferPartEntry();
-                entry.FindPropertyRelative("category").enumValueIndex = (int)defaults.category;
                 entry.FindPropertyRelative("tags").intValue = (int)defaults.tags;
                 // 显示色是 debug 视图的上色依据：新建时先给一个"当前还没被用过"的随机色，
                 // 否则一串新部件全是同一个灰，层视图根本分不出谁是谁。不满意就在面板上改。
@@ -570,7 +573,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 HandleDrop(headerRect, renderersProperty);
 
                 DrawProperty(nameProperty, new GUIContent("名字", "组内唯一。它决定槽位号 = 像素里 ID 的低字节。"));
-                DrawProperty(entry.FindPropertyRelative("category"), new GUIContent("角色组分", "这个部件是角色的哪一块（单值、互斥）。只有角色特化读它：按「组 + 组分 + 覆盖率」取遮罩；组表达「整角色」，组分表达「脸 / 前发 / 眼睛 / 眼透区 / 配件 / 人体」。AC 上线也不改这套分类。"));
+                DrawTagsRow(entry.FindPropertyRelative("tags"));
                 DrawProperty(colorProperty, new GUIContent("显示色", "debug 视图与面板色块用的颜色；像素里不存颜色，只存 ID。"));
                 DrawProperty(entry.FindPropertyRelative("includeChildren"), new GUIContent("展开子级", "拖入 GameObject 或预制件实例时，包含它下面的子级 Renderer。"));
                 DrawProperty(entry.FindPropertyRelative("faceBone"), new GUIContent("朝向覆盖", "留空 = 用组上的「朝向参考系」。只有会相对身体转动的部件（头 / 脸 / 前发…）才需要填。"));
@@ -960,6 +963,86 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         }
 
         // ------------------------------------------------------------------ 小工具
+
+        /// <summary>标签位的显示名：从枚举自己的 <see cref="InspectorNameAttribute"/> 取，加一位只需要改枚举。</summary>
+        private static void EnsurePartTagLabels()
+        {
+            if (partTagLabels != null)
+            {
+                return;
+            }
+
+            var values = (HoObjectBufferPartTags[])System.Enum.GetValues(typeof(HoObjectBufferPartTags));
+            var keptValues = new List<HoObjectBufferPartTags>(values.Length);
+            var keptLabels = new List<GUIContent>(values.Length);
+            for (int i = 0; i < values.Length; i++)
+            {
+                // 预留位不进面板：现在没有任何消费端，勾了只会变成脏数据；等人认领时在枚举里改名即可自动出现。
+                if (values[i] == HoObjectBufferPartTags.None || values[i] == HoObjectBufferPartTags.Reserved)
+                {
+                    continue;
+                }
+
+                string name = values[i].ToString();
+                var field = typeof(HoObjectBufferPartTags).GetField(name);
+                var inspectorName = field != null
+                    ? (InspectorNameAttribute)System.Attribute.GetCustomAttribute(field, typeof(InspectorNameAttribute))
+                    : null;
+                keptValues.Add(values[i]);
+                keptLabels.Add(new GUIContent(inspectorName != null ? inspectorName.displayName : name));
+            }
+
+            partTagValues = keptValues.ToArray();
+            partTagLabels = keptLabels.ToArray();
+        }
+
+        /// <summary>
+        /// 标签行：位掩码 ⇒ 画成一排**可多选**的开关（沿用左列的扁平按钮），窄面板上自动折行。
+        /// 折行位置只由标签宽度决定，所以 Layout 与 Repaint 两次分配的行数一致。
+        /// </summary>
+        private static void DrawTagsRow(SerializedProperty property)
+        {
+            if (property == null)
+            {
+                return;
+            }
+
+            EnsureStyles();
+            EnsurePartTagLabels();
+
+            const float chipGap = 2.0f;
+            const float minChipWidth = 34.0f;
+            float labelWidth = EditorGUIUtility.labelWidth;
+            int mask = property.intValue;
+
+            Rect row = EditorGUILayout.GetControlRect(false, RowHeight);
+            float chipOrigin = row.x + labelWidth;
+            EditorGUI.LabelField(
+                new Rect(row.x, row.y, labelWidth, row.height),
+                new GUIContent("标签", "这个部件在角色语义上属于哪几类（位掩码，可多选）：可以同时是「全角色」和「脸」。\n" +
+                                        "只有角色特化读它，按「组 + 标签 + 覆盖率」取遮罩。\n" +
+                                        "这里只放角色语义——材质类的语义是表面语义，归 SB。"));
+
+            float cursor = chipOrigin;
+            for (int i = 0; i < partTagValues.Length; i++)
+            {
+                float width = Mathf.Max(minChipWidth, switchActiveLabelStyle.CalcSize(partTagLabels[i]).x + 4.0f);
+                if (cursor > chipOrigin && cursor + width > row.xMax)
+                {
+                    row = EditorGUILayout.GetControlRect(false, RowHeight);
+                    cursor = row.x + labelWidth;
+                }
+
+                var chip = new Rect(cursor, row.y, width, row.height);
+                if (DrawSwitchButton(chip, partTagLabels[i], (mask & (int)partTagValues[i]) != 0))
+                {
+                    property.intValue = mask ^ (int)partTagValues[i];
+                    mask = property.intValue;
+                }
+
+                cursor += width + chipGap;
+            }
+        }
 
         private static void DrawProperty(SerializedProperty property, GUIContent label, bool includeChildren = false)
         {

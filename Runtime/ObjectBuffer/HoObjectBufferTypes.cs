@@ -65,65 +65,42 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     }
 
     /// <summary>
-    /// **角色组分**：这个部件是角色的哪一块（单值，互斥）。
+    /// **角色标签**：这个部件在角色语义上属于哪几类（**位掩码，可多选**）。
     /// <list type="bullet">
-    /// <item>它本质上是**"角色的预置选区"**：角色一旦被当作角色来做，需要的语义就是固定那几条，所以预置成一张表，作者只做"归属"；场景那边多变，才用自由创建的**选区**（0.3.12）。</item>
-    /// <item>**目前只有角色特化读它**，按「组 + 组分 + 覆盖率」取遮罩；组那一级表达「整角色」，组分表达「脸 / 前发 / 眼睛 / 眼透区 / 配件 / 人体」——这七条用这两级就够了（规划里 SSS 也会读分类/profile）。</item>
-    /// <item>**AC 上线也不改这套分类**：AC 只是"怎么读、怎么合成"的通道，不改变"组分是什么"。</item>
-    /// <item>这里**不放材质类语义**（皮肤 / 半透明 / 不透明测试…）：那些是表面语义，归 SB。加一条 = 给**角色语义**加一条，不是因为某个 feature 缺一位。</item>
+    /// <item>它本质上是**"角色的预置标签表"**：角色一旦被当作角色来做，需要的词就是固定那几条，所以预置成一张表，作者只做"打标签"；场景那边多变，才用自由创建的**选区**（规划 0.3.12）。</item>
+    /// <item>**多选正是它存在的理由**："整角色 + 脸"这种同时成立的情况，单值枚举表达不了。它与 MetadataBuffer 的 `objectCustomMask` 完全对等；R3/R4 的 schema lane mask 只换机制、不换词表。</item>
+    /// <item>**目前只有角色特化读它**，按「组 + 标签 + 覆盖率」取遮罩（规划里 SSS 也会读它）。</item>
+    /// <item>**AC 上线也不改这套词表**：AC 只是"怎么读、怎么合成"的通道，不改变"标签是什么"。</item>
+    /// <item>这里**不放材质类语义**（皮肤 / 半透明 / 不透明测试…）：那些是表面语义，归 SB。加一位 = 给**角色语义**加一条，不是因为某个 feature 缺一位。</item>
+    /// <item>**这就是角色侧唯一的语义扩展点**：以后所有新的角色级开关都往这一张表里加（加一位 + 起个名字），
+    /// 不要再新开字段或新开枚举 —— 一张表才好被 schema 接管、也才好被消费端一次遍历。</item>
     /// </list>
-    /// </summary>
-    public enum HoObjectBufferPartCategory
-    {
-        [InspectorName("未指定")]
-        Unspecified = 0,
-        [InspectorName("人体")]
-        Body,
-        [InspectorName("脸")]
-        Face,
-        [InspectorName("前发")]
-        FrontHair,
-        [InspectorName("后发")]
-        BackHair,
-        [InspectorName("眼睛")]
-        Eye,
-        [InspectorName("眼透区")]
-        EyeRevealArea,
-        [InspectorName("眉")]
-        Eyebrow,
-        [InspectorName("配件")]
-        Accessory,
-        [InspectorName("服装")]
-        Cloth,
-        [InspectorName("特效")]
-        Effect,
-        [InspectorName("其他")]
-        Other
-    }
-
-    /// <summary>
-    /// 部件/选区的**保留位掩码**（面板上已撤掉输入）。
-    /// <para>
-    /// 现在没有任何消费端，而且这四位混了两种来源：「全角色」是**角色**语义（用组 ID 判定即可），
-    /// 「皮肤 / 不透明测试 / 半透明」是**表面**语义（归 SB）。部件语义的权威路径是 R3/R4 的
-    /// `HoSemanticSchema` + 每行 lane mask，所以**不要**为了新 feature 往这个枚举里加位。
-    /// 保留只是为了不动 palette 结构体与跨仓契约。
-    /// </para>
     /// </summary>
     [System.Flags]
     public enum HoObjectBufferPartTags
     {
         None = 0,
-        [InspectorName("Character Full")]
+        /// <summary>整角色：该组的任意部件都算。组匹配也能表达，但显式一位更省事。</summary>
+        [InspectorName("全角色")]
         CharacterFull = 1 << 0,
-        [InspectorName("Skin")]
-        Skin = 1 << 1,
-        [InspectorName("Opacity Tested")]
-        OpacityTested = 1 << 2,
-        [InspectorName("Transparent")]
-        Transparent = 1 << 3
+        [InspectorName("脸")]
+        Face = 1 << 1,
+        [InspectorName("前发")]
+        FrontHair = 1 << 2,
+        [InspectorName("眼睛")]
+        Eye = 1 << 3,
+        [InspectorName("眼透区")]
+        EyeRevealArea = 1 << 4,
+        [InspectorName("配件")]
+        Accessory = 1 << 5,
+        [InspectorName("人体")]
+        Body = 1 << 6,
+        /// <summary>预留：不是承诺，可被场景/后续语义拿走用。</summary>
+        [InspectorName("预留")]
+        Reserved = 1 << 7
     }
 
+    /// <summary>调试视图：与 shader 里的 mode 数值一一对应，加新视图只能往后加（不要插在中间）。</summary>
     public enum HoObjectBufferDebugMode
     {
         [InspectorName("Off")]

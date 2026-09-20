@@ -78,7 +78,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 group.parts.Add(new HoObjectBufferPartEntry
                 {
                     name = "Validation",
-                    category = HoObjectBufferPartCategory.Other,
+                    tags = HoObjectBufferPartTags.CharacterFull,
                     displayColor = Color.white,
                     includeChildren = false,
                     renderers = new Object[] { subjectRenderer }

@@ -17,11 +17,11 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         /// <summary>名字 hash（FNV-1a 32），供工具与 AOV manifest 对账用。</summary>
         public uint nameHash;
 
-        /// <summary><see cref="HoObjectBufferPartCategory"/>。</summary>
-        public uint category;
-
-        /// <summary><see cref="HoObjectBufferPartTags"/> 的位掩码。</summary>
+        /// <summary><see cref="HoObjectBufferPartTags"/> 的位掩码（角色语义，可多选）。</summary>
         public uint tags;
+
+        /// <summary>保留：R3/R4 的 schema lane mask 之类会落到这里，现在恒 0，消费端不得依赖。</summary>
+        public uint reserved;
 
         public float thickness;
         public float curvature;
@@ -52,7 +52,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         /// <summary>该组已注册的槽位数（越界判断用它，而不是 clamp 行号）。</summary>
         public uint slotCount;
 
-        /// <summary>组级标签（如 CharacterFull：该组任意部件）。</summary>
+        /// <summary>保留：组级标签已撤（"整角色"由部件行的 <see cref="HoObjectBufferPartTags.CharacterFull"/> 表达），恒 0。</summary>
         public uint tags;
 
         public uint reserved;

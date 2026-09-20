@@ -4,7 +4,7 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
-    /// 部件条目：<b>只回答身份问题</b>——"这是谁、属于哪个角色、能不能被单独选中、debug 长什么样"。
+    /// 部件条目：<b>只回答身份问题</b>——"这是谁、属于哪个角色、带哪些角色标签、能不能被单独选中、debug 长什么样"。
     /// 名字必须**在所属角色内唯一**（它决定 palette 的槽位号，也就是像素里的 ID）。
     /// <para>
     /// **这里刻意不放材质数值**（thickness / curvature / roughness / metallic / reflectance /
@@ -20,20 +20,11 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         [Tooltip("角色内唯一。它决定槽位号 = 像素里 ID 的低字节；改名会改变 ID（跨帧稳定性由组件保证）。")]
         public string name = "Part";
 
-        [InspectorName("角色组分")]
-        [Tooltip("这个部件是角色的哪一块（单值、互斥）。**只有角色特化读它**，按「组 + 组分 + 覆盖率」取遮罩；" +
-                 "组这一级表达「整角色」，组分表达「脸 / 前发 / 眼睛 / 眼透区 / 配件 / 人体」——" +
-                 "这七条用这两级就够了，不需要额外的开关位。材质类的语义（皮肤、半透明…）是表面语义，归 SB。")]
-        public HoObjectBufferPartCategory category = HoObjectBufferPartCategory.Unspecified;
-
-        /// <summary>
-        /// **保留位掩码，面板上已撤掉输入**：现在没有任何消费端（HLSL / C# 都不读），
-        /// 而且这里列的四位（全角色 / 皮肤 / 不透明测试 / 半透明）混了两种来源——"全角色"是角色语义，
-        /// 后三个是**表面**语义。部件语义的权威路径是 R3/R4 的 `HoSemanticSchema` + 每行 lane mask。
-        /// 字段留着只是为了不动 palette 结构体与跨仓契约，**不要**为了新 feature 往它里面加位。
-        /// </summary>
-        [HideInInspector]
-        [InspectorName("标签（保留）")]
+        [InspectorName("标签")]
+        [Tooltip("这个部件在角色语义上属于哪几类（**位掩码，可多选**）：可以同时是「全角色」和「脸」。\n" +
+                 "只有角色特化读它，按「组 + 标签 + 覆盖率」取遮罩。\n" +
+                 "这里只放**角色语义**——材质类的语义（皮肤、不透明测试、半透明…）是表面语义，归 SB。\n" +
+                 "新的角色级开关都往这张表里加一位，不要再新开字段。")]
         public HoObjectBufferPartTags tags = HoObjectBufferPartTags.None;
 
         [InspectorName("显示色")]
@@ -70,8 +61,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         public string name = "Selection";
 
         /// <summary>
-        /// **保留位掩码，面板上已撤掉输入**（同 <see cref="HoObjectBufferPartEntry.tags"/>）：选区的语义
-        /// 由它的**名字**承担，不用位掩码。字段留着只为不动 palette 结构体与跨仓契约。
+        /// **保留位掩码，面板上没有输入**：选区的语义由它的**名字**承担（名字还能横跨部件），
+        /// 位掩码只适合角色那种固定词表。字段留着只为不动 palette 结构体与跨仓契约。
         /// </summary>
         [HideInInspector]
         [InspectorName("标签（保留）")]

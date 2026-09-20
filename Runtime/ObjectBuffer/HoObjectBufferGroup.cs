@@ -253,7 +253,6 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             return new HoObjectPartData
             {
                 nameHash = HoObjectBufferHash.ComputePart(groupId, partName),
-                category = (uint)(entry != null ? entry.category : HoObjectBufferPartCategory.Unspecified),
                 tags = (uint)(entry != null ? entry.tags : HoObjectBufferPartTags.None),
                 // 材质数值（thickness / curvature / roughness / metallic / reflectance / plrStrength /
                 // materialClass / transmittance）**不由组件提供**：它们在材质里已经填过一遍，

@@ -9,8 +9,8 @@ struct HoObjectPartData
 {
     uint partId;            // 角色 8 + 槽位 8
     uint nameHash;
-    uint category;
-    uint tags;              // 位掩码
+    uint tags;              // HoObjectBufferPartTags 位掩码（角色语义）
+    uint reserved;          // 保留（恒 0），消费端不得依赖
     float thickness;
     float curvature;
     float transmittance;

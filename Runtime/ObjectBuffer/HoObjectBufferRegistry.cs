@@ -187,7 +187,6 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 {
                     partId = 0,
                     nameHash = 0,
-                    category = (uint)HoObjectBufferPartCategory.Unspecified,
                     tags = 0,
                     displayColor = new Vector4(1f, 0f, 1f, 1f)
                 }
