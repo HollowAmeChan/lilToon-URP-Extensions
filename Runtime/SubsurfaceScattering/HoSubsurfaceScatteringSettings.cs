@@ -167,7 +167,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         public float sourcePreserve = 0.25f;
 
         [InspectorName("材质配置")]
-        [Tooltip("按 MetadataBuffer surfaceData.b 中的 HoSSS Profile ID 选择材质级 SSS 参数。默认 1 号为皮肤。")]
+        [Tooltip("按 MetadataBuffer surfaceData.b 中的 Ho-SSS Profile ID 选择材质级 SSS 参数。默认 1 号为皮肤。")]
         public HoSubsurfaceScatteringProfileSettings[] profiles = CreateDefaultProfiles();
 
         [InspectorName("透射强度")]
@@ -220,7 +220,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         public Color transmissionColor = new Color(1.0f, 0.38f, 0.22f, 1.0f);
 
         [InspectorName("调试模式")]
-        [Tooltip("直接输出 HoSSS 中间结果到相机颜色，用于检查遮罩、扩散、透射和合成权重。")]
+        [Tooltip("直接输出 Ho-SSS 中间结果到相机颜色，用于检查遮罩、扩散、透射和合成权重。")]
         public HoSubsurfaceScatteringDebugMode debugMode = HoSubsurfaceScatteringDebugMode.Off;
 
         [InspectorName("场景视图")]

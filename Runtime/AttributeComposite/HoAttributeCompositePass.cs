@@ -162,7 +162,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 return;
             }
 
-            // SB 的语义 lane：有就逐 sample 合成（SurfaceOverride），没有就纯物体位（ObjectOnly）。
+            // SB 的语义 lane：有就按 catalog 的 sourceMode 合成（如 SurfaceOverride），没有就纯物体位（ObjectOnly）。
             HoSurfaceBufferRenderGraphResources surfaceResources = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
             bool surfaceEnabled = surfaceResources.HasSemanticLanes && HoSurfaceBufferSemanticPass.LastProduced;
 
@@ -199,7 +199,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 builder.UseTexture(passData.identityCoverageTexture, AccessFlags.Read);
                 if (surfaceEnabled)
                 {
-                    // 逐 sample 合成要真的读这几张：依赖显式声明，别靠全局名"看着像有"。
+                    // 合成真的要读这几张：依赖显式声明，别靠全局名"看着像有"。
                     builder.UseTexture(passData.surfaceOwnerTexture, AccessFlags.Read);
                     for (int i = 0; i < passData.surfaceLaneTextures.Length; i++)
                     {

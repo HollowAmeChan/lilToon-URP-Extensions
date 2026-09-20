@@ -14,7 +14,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView"
 
         Pass
         {
-            Name "HoSSS Debug"
+            Name "Ho-SSS Debug"
 
             HLSLPROGRAM
             #pragma vertex Vert

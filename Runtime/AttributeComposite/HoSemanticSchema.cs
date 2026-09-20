@@ -7,10 +7,10 @@ namespace lilToon.URP.Extensions.AttributeComposite
 {
     /// <summary>
     /// 一条 lane 的来源合成方式（规划 §0.4 / §0.3.6）。**五种都已经在 AC 的 resolve 里实现**
-    /// （`HoACSelectionResolve.shader` 的 `ComposeLane`）：surface 侧来自 SB 的 MSAA 语义 lane。
+    /// （`HoACSelectionResolve.shader` 的 `ComposeLane`）：surface 侧来自 SB 的单采样语义 lane。
     /// <para>
-    /// 公式里的 `o` 是物体侧（像素级：Σ 层覆盖率 · 该层带不带这一位），`s_i` / `written_i` 是 SB 的第 i 个 sample；
-    /// 五种模式都**先逐 sample 合成、再 resolve 成覆盖率**。
+    /// 公式里的 `o` 是物体侧（像素级：Σ 层覆盖率 · 该层带不带这一位），`s` / `written` 是 SB 在同一像素上写的 lane 值；
+    /// 五种模式都在**像素级**合成出覆盖率（SB 侧单采样，读端不做逐 sample resolve）。
     /// </para>
     /// </summary>
     public enum HoSemanticSourceMode
@@ -62,7 +62,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
     /// </para>
     /// <para>
     /// **SB 在这里不新增名字**（用户确认的设计）：材质**只能覆盖它自己 renderer 已经有的那几位**，
-    /// 值来自材质参数 `_HoSemanticWeight`（0..1，默认 1），由 SB 的材质 pass 逐 sample 写进对应 lane。
+    /// 值来自材质参数 `_HoSemanticWeight`（0..1，默认 1），由 SB 的材质 pass 逐像素写进对应 lane。
     /// 想加"子部件"语义（眼白 / 虹膜这种更细的名字）就往 `HoObjectBufferPartTags` **加一位**，
     /// 而不是在 SB 侧开第二套词表 —— 那样 OB 仍然是唯一的槽位持有者。
     /// </para>

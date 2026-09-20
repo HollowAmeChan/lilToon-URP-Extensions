@@ -160,7 +160,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
             var texture = new Texture2D(Resolution, 1, format, false)
             {
-                name = "Ho ImageProcess GradientMap Ramp",
+                name = "Ho-ImageProcess GradientMap Ramp",
                 wrapMode = TextureWrapMode.Clamp,
                 filterMode = fixedMode ? FilterMode.Point : FilterMode.Bilinear,
                 hideFlags = HideFlags.HideAndDontSave,

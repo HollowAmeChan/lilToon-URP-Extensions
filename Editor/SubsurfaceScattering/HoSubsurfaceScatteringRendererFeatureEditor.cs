@@ -37,7 +37,7 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
             }
 
             EditorGUILayout.HelpBox(
-                "HoSSS consumes MetadataBuffer Base Color as diffuse input. Material/profile settings control diffusion tint, radius, thickness, and transmission.",
+                "Ho-SSS consumes MetadataBuffer Base Color as diffuse input. Material/profile settings control diffusion tint, radius, thickness, and transmission.",
                 MessageType.Info);
 
             DrawRuntime();
@@ -81,7 +81,7 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
 
             if (!snapshot.IsValid)
             {
-                EditorGUILayout.HelpBox("尚未记录 HoSSS 运行帧。进入 Play Mode，或让使用该 RendererFeature 的 Scene/Game camera 渲染一帧。", MessageType.Info);
+                EditorGUILayout.HelpBox("尚未记录 Ho-SSS 运行帧。进入 Play Mode，或让使用该 RendererFeature 的 Scene/Game camera 渲染一帧。", MessageType.Info);
                 return;
             }
 
@@ -94,8 +94,8 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
 
             EditorGUILayout.HelpBox(
                 snapshot.Ready
-                    ? "HoSSS 输入有效：MetadataBuffer 与 GeometryBuffer 均可用。"
-                    : "HoSSS 已跳过：" + snapshot.Reason,
+                    ? "Ho-SSS 输入有效：MetadataBuffer 与 GeometryBuffer 均可用。"
+                    : "Ho-SSS 已跳过：" + snapshot.Reason,
                 snapshot.Ready ? MessageType.Info : MessageType.Warning);
         }
 

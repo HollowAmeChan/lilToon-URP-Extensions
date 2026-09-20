@@ -22,12 +22,12 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         public TextureHandle classificationTexture = TextureHandle.nullHandle;
         public TextureHandle ownerTexture = TextureHandle.nullHandle;
 
-        // ---------------------------------------------------------------- 语义 lane（MSAA；只给 AC）
+        // ---------------------------------------------------------------- 语义 lane（单采样；只给 AC）
 
-        /// <summary>逐 sample 的 owner（16-bit IdentityId；两个字节）。AC 用它跟 OB 层 0 逐 sample 对齐。</summary>
+        /// <summary>逐像素的 owner（16-bit IdentityId；两个字节）。AC 用它跟 OB 层 0 对齐。</summary>
         public TextureHandle semanticOwnerTexture = TextureHandle.nullHandle;
 
-        /// <summary>4 张 RGBA8MS，每张两条 `(SemanticId, value)`：lane 0/1、2/3、4/5、6/7。</summary>
+        /// <summary>4 张 RGBA8，每张两条 `(SemanticId, value)`：lane 0/1、2/3、4/5、6/7。</summary>
         public TextureHandle[] semanticLaneTextures =
         {
             TextureHandle.nullHandle, TextureHandle.nullHandle, TextureHandle.nullHandle, TextureHandle.nullHandle

@@ -62,45 +62,5 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
             return GraphicsFormat.D32_SFloat;
         }
-
-        /// <summary>
-        /// 语义 lane 的**自建 MSAA 采样数**：暂时没有调用方 —— 语义 lane 这一轮是单采样
-        /// （见 `HoSurfaceBufferSemanticPass.Setup`）。逐 sample 细分重新上时，形态是
-        /// "SB 按这个数渲染 + 自己 resolve 成单采样 lane 再发布"，那时这里会重新被用到。
-        /// </summary>
-        public static int GetSupportedSemanticSampleCount(RenderTextureDescriptor cameraTextureDescriptor, int requestedSamples)
-        {
-            if (SystemInfo.supportsMultisampledTextures == 0 || requestedSamples <= 1)
-            {
-                return 1;
-            }
-
-            int width = Mathf.Max(1, cameraTextureDescriptor.width);
-            int height = Mathf.Max(1, cameraTextureDescriptor.height);
-            int samples = Mathf.Max(2, requestedSamples);
-
-            var laneDescriptor = new RenderTextureDescriptor(width, height, GetUnormGraphicsFormat(), GraphicsFormat.None)
-            {
-                msaaSamples = samples,
-                bindMS = false
-            };
-            int supported = SystemInfo.GetRenderTextureSupportedMSAASampleCount(laneDescriptor);
-
-            var ownerDescriptor = new RenderTextureDescriptor(width, height, GetOwnerGraphicsFormat(), GraphicsFormat.None)
-            {
-                msaaSamples = samples,
-                bindMS = false
-            };
-            supported = Mathf.Min(supported, SystemInfo.GetRenderTextureSupportedMSAASampleCount(ownerDescriptor));
-
-            var depthDescriptor = new RenderTextureDescriptor(width, height, GraphicsFormat.None, GetDepthStencilFormat(cameraTextureDescriptor))
-            {
-                msaaSamples = samples,
-                bindMS = false
-            };
-            supported = Mathf.Min(supported, SystemInfo.GetRenderTextureSupportedMSAASampleCount(depthDescriptor));
-
-            return Mathf.Clamp(supported, 1, samples);
-        }
     }
 }

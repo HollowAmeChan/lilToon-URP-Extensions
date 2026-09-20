@@ -18,12 +18,12 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         public const string OwnerTextureName = "_HoSurfaceBufferOwnerTexture";
         public const string DebugModeName = "_HoSurfaceBufferDebugMode";
 
-        // ---------------------------------------------------------------- 语义 lane（MSAA，规划 §0.4 / §0.3.7）
+        // ---------------------------------------------------------------- 语义 lane（单采样，规划 §0.4 / §0.3.7）
 
-        /// <summary>语义 pass 的 LightMode：**与数值 pass 分开**（MSAA 附件不能和单采样数值图混用）。</summary>
+        /// <summary>语义 pass 的 LightMode：**与数值 pass 分开**（附件格式 / 数量都不同，一趟最多 8 个 MRT）。</summary>
         public const string SemanticShaderPassName = "HoSurfaceSemantic";
         public const string SemanticActiveName = "_HoSurfaceSemanticActive";
-        /// <summary>逐 sample 的 owner（16-bit IdentityId，两个字节；与数值 owner 同一个值）。</summary>
+        /// <summary>逐像素的 owner（16-bit IdentityId，两个字节；与数值 owner 同一个值）。</summary>
         public const string SemanticOwnerTextureName = "_HoSurfaceSemanticOwnerTexture";
         /// <summary>4 张 RGBA8，每张两条 `(SemanticId, value)`：lane 0/1、2/3、4/5、6/7。</summary>
         public const string SemanticLaneTextureNameFormat = "_HoSurfaceSemanticLane{0}Texture";
@@ -31,8 +31,6 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         public const string SemanticLaneIdsNameFormat = "_HoSemanticLaneIds{0}";
         /// <summary>lane j 的物体位掩码（0 = 这条 lane 没有物体位 ⇒ SB 不写它）。</summary>
         public const string SemanticLaneTagMaskNameFormat = "_HoSemanticLaneTagMasks{0}";
-        /// <summary>语义 lane 的实际（自建）MSAA 采样数：AC 逐 sample Load 时要按它循环。</summary>
-        public const string SemanticSampleCountName = "_HoSurfaceSemanticSampleCount";
 
         /// <summary>4 张 RGBA8 = 8 条 lane；词表变宽（&gt; 8 位）时再上 16-lane 分批。</summary>
         public const int SemanticLaneTextureCount = 4;
@@ -45,7 +43,6 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         public const int SemanticAttachmentCount = SemanticLaneAttachmentBase + SemanticLaneTextureCount;
 
         public static readonly int SemanticActiveId = Shader.PropertyToID(SemanticActiveName);
-        public static readonly int SemanticSampleCountId = Shader.PropertyToID(SemanticSampleCountName);
         public static readonly int SemanticOwnerTextureId = Shader.PropertyToID(SemanticOwnerTextureName);
         public static readonly int SemanticLaneIdsId0 = Shader.PropertyToID(string.Format(SemanticLaneIdsNameFormat, 0));
         public static readonly int SemanticLaneIdsId1 = Shader.PropertyToID(string.Format(SemanticLaneIdsNameFormat, 1));

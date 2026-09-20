@@ -76,7 +76,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
     [DisallowMultipleRendererFeature("Ho-SubsurfaceScattering")]
     public sealed class HoSubsurfaceScatteringRendererFeature : ScriptableRendererFeature
     {
-        [SerializeField, InspectorName("HoSSS 设置")]
+        [SerializeField, InspectorName("Ho-SSS 设置")]
         private HoSubsurfaceScatteringSettings settings = new HoSubsurfaceScatteringSettings();
 
         private readonly HoSubsurfaceScatteringRenderTargets renderTargets = new HoSubsurfaceScatteringRenderTargets();
@@ -277,7 +277,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 if (!warnedMissingShader)
                 {
                     warnedMissingShader = true;
-                    Debug.LogWarning($"HoSSS 不可用：找不到着色器 '{HoSubsurfaceScatteringShaderConstants.ShaderName}'。");
+                    Debug.LogWarning($"Ho-SSS 不可用：找不到着色器 '{HoSubsurfaceScatteringShaderConstants.ShaderName}'。");
                 }
 
                 return;
@@ -312,7 +312,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 if (!warnedMissingDebugShader)
                 {
                     warnedMissingDebugShader = true;
-                    Debug.LogWarning($"HoSSS debug 已跳过：找不到调试着色器 '{HoSubsurfaceScatteringShaderConstants.DebugShaderName}'。");
+                    Debug.LogWarning($"Ho-SSS debug 已跳过：找不到调试着色器 '{HoSubsurfaceScatteringShaderConstants.DebugShaderName}'。");
                 }
 
                 return;

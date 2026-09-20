@@ -103,7 +103,7 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
                 }
 
                 /// <summary>
-                /// 一条 lane 的 surface 侧：`(写了没有 0/1, value)`，**未除 N 的和**（本轮 N = 1）。
+                /// 一条 lane 的 surface 侧：`(写了没有 0/1, value)`。
                 /// `SemanticId = 0` 是未写；`SemanticId = 声明值` 才算写了（`value = 0` 也是"明确写 0"）。
                 /// </summary>
                 float2 ResolveSurfaceLane(uint laneIndex, uint declaredId, float2 uv)
@@ -126,20 +126,20 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
             #endif
 
             /// <summary>
-            /// 按 catalog 里的 `sourceMode` 合成一条 lane（规划 §0.3.6 的五种），**先逐 sample 合成、再 resolve**：
-            /// `o` = 物体侧（像素级：Σ 层覆盖率 · 该层带不带这一位），`s_i` / `written_i` = SB 第 i 个 sample。
+            /// 按 catalog 里的 `sourceMode` 合成一条 lane（规划 §0.3.6 的五种）：
+            /// `o` = 物体侧（像素级：Σ 层覆盖率 · 该层带不带这一位），`(written, s)` = SB 在**同一像素**写的 lane 值。
             /// <list type="bullet">
             /// <item>0 `ObjectOnly`：`o`（没有 SB 语义 lane 时也是这条路径）；</item>
-            /// <item>1 `SurfaceOnly`：`Σ (written ? s : 0) / N`；</item>
-            /// <item>2 `Union`：`max(o, 上面那个)`；</item>
-            /// <item>3 `SurfaceOverride`：`Σ (written ? s : o) / N` —— **材质写了就以材质为准，没写回落到物体位**；</item>
-            /// <item>4 `Intersection`：`o · Σ (written ? s : 0) / N`。</item>
+            /// <item>1 `SurfaceOnly`：`written ? s : 0`；</item>
+            /// <item>2 `Union`：`max(o, written ? s : 0)`；</item>
+            /// <item>3 `SurfaceOverride`：`written ? s : o` —— **材质写了就以材质为准，没写回落到物体位**；</item>
+            /// <item>4 `Intersection`：`o · (written ? s : 0)`。</item>
             /// </list>
             /// </summary>
-            float ComposeLane(uint mode, float objectCoverage, float2 surface, float samples)
+            float ComposeLane(uint mode, float objectCoverage, float2 surface)
             {
                 #if defined(_HO_SURFACE_SEMANTIC)
-                    float surfaceAll = saturate(surface.y / max(1.0, samples));
+                    float surfaceAll = saturate(surface.y);
                     if (mode == 1u)
                     {
                         return surfaceAll;
@@ -152,8 +152,7 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
 
                     if (mode == 3u)
                     {
-                        float writtenFraction = saturate(surface.x / max(1.0, samples));
-                        return saturate(surfaceAll + (1.0 - writtenFraction) * objectCoverage);
+                        return saturate(surfaceAll + (1.0 - saturate(surface.x)) * objectCoverage);
                     }
 
                     if (mode == 4u)
@@ -175,9 +174,8 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
             {
                 float objectCoverage = LaneCoverage(objectBit, tags0, tags1, tags2, tags3, coverage);
                 #if defined(_HO_SURFACE_SEMANTIC)
-                    // 单采样：N = 1，`ComposeLane` 里的 writtenFraction 就是 0/1。
                     float2 surface = ResolveSurfaceLane(laneIndex, declaredId, uv);
-                    return ComposeLane(mode, objectCoverage, surface, 1.0);
+                    return ComposeLane(mode, objectCoverage, surface);
                 #else
                     return objectCoverage;
                 #endif

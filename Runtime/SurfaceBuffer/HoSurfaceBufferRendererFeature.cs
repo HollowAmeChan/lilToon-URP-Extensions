@@ -12,7 +12,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
     /// <para>
     /// 本轮范围（数值面）：`Color / Normal / Material / Reflection / Classification` + owner，
     /// 由材质侧 `HoSurfaceBuffer` pass 一趟写全。**透明不生产**（队列上限压在不透明段末尾）。
-    /// 还没落地：SB 的 MSAA semantic lane pass（喂 AC 的 surface 来源），见规划 §0.4/§3。
+    /// 语义 lane（`enableSemanticLanes`）由 `HoSurfaceBufferSemanticPass` 单采样另跑一趟，
+    /// 只允许收窄 / 细化 OB 的物体位（规划 §0.4）。
     /// </para>
     /// </summary>
     [DisallowMultipleRendererFeature("Ho-SurfaceBuffer")]
@@ -30,7 +31,6 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         private bool warnedMissingDebugShader;
         private static bool warnedMrtCapacity;
         private static bool warnedSemanticMrtCapacity;
-        private static bool warnedConfiguration;
 
         public HoSurfaceBufferSettings Settings => settings;
 
@@ -72,8 +72,6 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 HoSurfaceBufferSemanticPass.ResetGlobalState();
                 return;
             }
-
-            WarnConfigurationOnce(minQueue, maxQueue);
 
             var filteringSettings = new FilteringSettings(
                 new RenderQueueRange { lowerBound = minQueue, upperBound = maxQueue },
@@ -154,27 +152,6 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             return stack != null ? stack.GetComponent<HoSurfaceBufferVolume>() : null;
         }
 
-
-        /// <summary>
-        /// 配置一次性汇总：排查"SB 什么都没写"时，先把"用的是什么格式、过滤的是哪段队列"写进 Console，
-        /// 省得靠猜（6 个 MRT + 混格式是本仓库第一次用的组合）。
-        /// </summary>
-        private static void WarnConfigurationOnce(int minQueue, int maxQueue)
-        {
-            if (warnedConfiguration)
-            {
-                return;
-            }
-
-            warnedConfiguration = true;
-            Debug.Log($"[Ho-SurfaceBuffer] 数值面已启用：MRT 上限 {SystemInfo.supportedRenderTargetCount}，" +
-                      $"队列 [{minQueue}, {maxQueue}]（透明段不生产），" +
-                      $"Color={HoSurfaceBufferFormatUtility.GetColorGraphicsFormat()}，" +
-                      $"Unorm={HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat()}，" +
-                      $"Owner={HoSurfaceBufferFormatUtility.GetOwnerGraphicsFormat()}（两个字节）；" +
-                      $"语义 lane：{HoSurfaceBufferShaderConstants.SemanticLaneCount} 条 / " +
-                      $"{HoSurfaceBufferShaderConstants.SemanticLaneTextureCount} 张 RGBA8（**单采样**）。");
-        }
         private static bool WantsDebugView(HoSurfaceBufferSettings activeSettings, CameraType cameraType)
         {
             if (activeSettings.debugMode == HoSurfaceBufferDebugMode.Off)
