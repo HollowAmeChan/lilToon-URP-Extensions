@@ -26,8 +26,14 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                  "这七条用这两级就够了，不需要额外的开关位。材质类的语义（皮肤、半透明…）是表面语义，归 SB。")]
         public HoObjectBufferPartCategory category = HoObjectBufferPartCategory.Unspecified;
 
-        [InspectorName("标签")]
-        [Tooltip("位掩码。像 CharacterFull 这种“一个部件同时属于多个语义”的情况用标签最自然，消费端一次 & 即可查询。")]
+        /// <summary>
+        /// **保留位掩码，面板上已撤掉输入**：现在没有任何消费端（HLSL / C# 都不读），
+        /// 而且这里列的四位（全角色 / 皮肤 / 不透明测试 / 半透明）混了两种来源——"全角色"是角色语义，
+        /// 后三个是**表面**语义。部件语义的权威路径是 R3/R4 的 `HoSemanticSchema` + 每行 lane mask。
+        /// 字段留着只是为了不动 palette 结构体与跨仓契约，**不要**为了新 feature 往它里面加位。
+        /// </summary>
+        [HideInInspector]
+        [InspectorName("标签（保留）")]
         public HoObjectBufferPartTags tags = HoObjectBufferPartTags.None;
 
         [InspectorName("显示色")]
@@ -63,7 +69,12 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         [Tooltip("全局唯一。材质里引用的是这个名字（例如“左袖口”）。")]
         public string name = "Selection";
 
-        [InspectorName("标签")]
+        /// <summary>
+        /// **保留位掩码，面板上已撤掉输入**（同 <see cref="HoObjectBufferPartEntry.tags"/>）：选区的语义
+        /// 由它的**名字**承担，不用位掩码。字段留着只为不动 palette 结构体与跨仓契约。
+        /// </summary>
+        [HideInInspector]
+        [InspectorName("标签（保留）")]
         public HoObjectBufferPartTags tags = HoObjectBufferPartTags.None;
 
         [InspectorName("显示色")]

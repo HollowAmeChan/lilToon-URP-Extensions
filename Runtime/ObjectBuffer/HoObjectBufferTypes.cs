@@ -102,7 +102,13 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     }
 
     /// <summary>
-    /// 部件标签位。多归属语义（例如"该组的任意部件"）走这里，消费端一次 `&` 即可查询。
+    /// 部件/选区的**保留位掩码**（面板上已撤掉输入）。
+    /// <para>
+    /// 现在没有任何消费端，而且这四位混了两种来源：「全角色」是**角色**语义（用组 ID 判定即可），
+    /// 「皮肤 / 不透明测试 / 半透明」是**表面**语义（归 SB）。部件语义的权威路径是 R3/R4 的
+    /// `HoSemanticSchema` + 每行 lane mask，所以**不要**为了新 feature 往这个枚举里加位。
+    /// 保留只是为了不动 palette 结构体与跨仓契约。
+    /// </para>
     /// </summary>
     [System.Flags]
     public enum HoObjectBufferPartTags
