@@ -39,6 +39,12 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
     {
         public bool enabled = true;
 
+        /// <summary>
+        /// 语义 lane pass（MSAA 逐 sample 的 `(SemanticId, value)` + owner）。**这是 AC 的 surface 来源**：
+        /// 关掉它，AC 的语义合成就只剩物体位（回落到 OB）。代价是每帧多一趟角色几何 + 5 张 MSAA 附件。
+        /// </summary>
+        public bool enableSemanticLanes = true;
+
         public LayerMask layerMask = -1;
 
         public int minRenderQueue;
@@ -72,6 +78,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             }
 
             enabled = source.enabled;
+            enableSemanticLanes = source.enableSemanticLanes;
             layerMask = source.layerMask;
             minRenderQueue = source.minRenderQueue;
             maxRenderQueue = source.maxRenderQueue;

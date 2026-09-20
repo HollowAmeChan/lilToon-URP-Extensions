@@ -23,11 +23,13 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         private readonly HoSurfaceBufferSettings runtimeSettings = new HoSurfaceBufferSettings();
         private HoSurfaceBufferPass pass;
+        private HoSurfaceBufferSemanticPass semanticPass;
         private HoSurfaceBufferDebugPass debugPass;
         private Material debugMaterial;
         private Shader debugShader;
         private bool warnedMissingDebugShader;
         private static bool warnedMrtCapacity;
+        private static bool warnedSemanticMrtCapacity;
         private static bool warnedConfiguration;
 
         public HoSurfaceBufferSettings Settings => settings;
@@ -35,6 +37,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         public override void Create()
         {
             pass = new HoSurfaceBufferPass();
+            semanticPass = new HoSurfaceBufferSemanticPass();
             debugPass = new HoSurfaceBufferDebugPass();
         }
 
@@ -44,8 +47,10 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             if (activeSettings == null || !activeSettings.enabled)
             {
                 pass?.ReleaseCompatibilityResources();
+                semanticPass?.ReleaseCompatibilityResources();
                 debugPass?.ReleaseCompatibilityResources();
                 HoSurfaceBufferPass.ResetGlobalState();
+                HoSurfaceBufferSemanticPass.ResetGlobalState();
                 return;
             }
 
@@ -64,15 +69,43 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 }
 
                 HoSurfaceBufferPass.ResetGlobalState();
+                HoSurfaceBufferSemanticPass.ResetGlobalState();
                 return;
             }
 
-            WarnConfigurationOnce(minQueue, maxQueue);            var filteringSettings = new FilteringSettings(
+            WarnConfigurationOnce(minQueue, maxQueue, renderingData.cameraData.cameraTargetDescriptor.msaaSamples);
+
+            var filteringSettings = new FilteringSettings(
                 new RenderQueueRange { lowerBound = minQueue, upperBound = maxQueue },
                 activeSettings.layerMask.value);
 
             pass?.Setup(activeSettings, filteringSettings);
             renderer.EnqueuePass(pass);
+
+            // 语义 lane：5 个 MRT（owner + 4 张 lane 图）。不够就只关这一趟，数值面照跑并报错
+            // ——AC 会因为没有 lane 而回落到物体位，不是静默错值。
+            if (activeSettings.enableSemanticLanes)
+            {
+                if (SystemInfo.supportedRenderTargetCount < HoSurfaceBufferShaderConstants.SemanticAttachmentCount)
+                {
+                    if (!warnedSemanticMrtCapacity)
+                    {
+                        warnedSemanticMrtCapacity = true;
+                        Debug.LogError($"[Ho-SurfaceBuffer] 本平台只支持 {SystemInfo.supportedRenderTargetCount} 个 MRT，" +
+                                       $"语义 lane 需要 {HoSurfaceBufferShaderConstants.SemanticAttachmentCount} 个（owner + 4 张 lane 图）：" +
+                                       $"这一趟不跑，AC 的 surface 语义会全部回落到 OB 的物体位。");
+                    }
+                }
+                else
+                {
+                    semanticPass?.Setup(activeSettings, filteringSettings);
+                    renderer.EnqueuePass(semanticPass);
+                }
+            }
+            else
+            {
+                HoSurfaceBufferSemanticPass.ResetGlobalState();
+            }
 
             if (WantsDebugView(activeSettings, renderingData.cameraData.cameraType))
             {
@@ -89,6 +122,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         {
             pass?.Dispose();
             pass = null;
+            semanticPass?.Dispose();
+            semanticPass = null;
             debugPass?.ReleaseCompatibilityResources();
             debugPass = null;
             CoreUtils.Destroy(debugMaterial);
@@ -122,7 +157,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         /// 配置一次性汇总：排查"SB 什么都没写"时，先把"用的是什么格式、过滤的是哪段队列"写进 Console，
         /// 省得靠猜（6 个 MRT + 混格式是本仓库第一次用的组合）。
         /// </summary>
-        private static void WarnConfigurationOnce(int minQueue, int maxQueue)
+        private static void WarnConfigurationOnce(int minQueue, int maxQueue, int msaaSamples)
         {
             if (warnedConfiguration)
             {
@@ -134,7 +169,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                       $"队列 [{minQueue}, {maxQueue}]（透明段不生产），" +
                       $"Color={HoSurfaceBufferFormatUtility.GetColorGraphicsFormat()}，" +
                       $"Unorm={HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat()}，" +
-                      $"Owner={HoSurfaceBufferFormatUtility.GetOwnerGraphicsFormat()}（两个字节）。");
+                      $"Owner={HoSurfaceBufferFormatUtility.GetOwnerGraphicsFormat()}（两个字节）；" +
+                      $"语义 lane：{HoSurfaceBufferShaderConstants.SemanticLaneCount} 条 / " +
+                      $"{HoSurfaceBufferShaderConstants.SemanticLaneTextureCount} 张 RGBA8MS，相机 MSAA x{Mathf.Max(1, msaaSamples)}。");
         }
         private static bool WantsDebugView(HoSurfaceBufferSettings activeSettings, CameraType cameraType)
         {

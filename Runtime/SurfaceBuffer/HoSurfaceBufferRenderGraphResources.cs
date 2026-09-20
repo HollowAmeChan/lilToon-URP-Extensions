@@ -22,6 +22,17 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         public TextureHandle classificationTexture = TextureHandle.nullHandle;
         public TextureHandle ownerTexture = TextureHandle.nullHandle;
 
+        // ---------------------------------------------------------------- 语义 lane（MSAA；只给 AC）
+
+        /// <summary>逐 sample 的 owner（16-bit IdentityId；两个字节）。AC 用它跟 OB 层 0 逐 sample 对齐。</summary>
+        public TextureHandle semanticOwnerTexture = TextureHandle.nullHandle;
+
+        /// <summary>4 张 RGBA8MS，每张两条 `(SemanticId, value)`：lane 0/1、2/3、4/5、6/7。</summary>
+        public TextureHandle[] semanticLaneTextures =
+        {
+            TextureHandle.nullHandle, TextureHandle.nullHandle, TextureHandle.nullHandle, TextureHandle.nullHandle
+        };
+
         public bool HasRequiredTextures =>
             colorTexture.IsValid()
             && normalTexture.IsValid()
@@ -29,6 +40,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             && reflectionTexture.IsValid()
             && classificationTexture.IsValid()
             && ownerTexture.IsValid();
+
+        /// <summary>语义 lane 是否本帧产出（关掉开关 / 平台不够时是 false；AC 必须据此回落）。</summary>
+        public bool HasSemanticLanes => semanticOwnerTexture.IsValid() && semanticLaneTextures[0].IsValid();
 
         public override void Reset()
         {
@@ -38,6 +52,11 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             reflectionTexture = TextureHandle.nullHandle;
             classificationTexture = TextureHandle.nullHandle;
             ownerTexture = TextureHandle.nullHandle;
+            semanticOwnerTexture = TextureHandle.nullHandle;
+            for (int i = 0; i < semanticLaneTextures.Length; i++)
+            {
+                semanticLaneTextures[i] = TextureHandle.nullHandle;
+            }
         }
     }
 }

@@ -4,11 +4,13 @@
 
 > **状态：五张数值 RT、SurfaceOwner validity、Classification 四通道、同 SemanticId 的 surface sample 协议与 4/8/16 lane batching 已冻结。**
 
-> **落地状态（R3-sb，数值面本轮）**：SB 的**数值面**已经可以跑：
-> - 已落地：`Runtime/SurfaceBuffer/`（feature + 数值 pass + 资源集 + 格式工具 + Volume/调试直出）、材质侧 `lil_pass_surface_buffer.hlsl` 与 22 个 URP lilblock 的 `LightMode=HoSurfaceBuffer` pass、4 个新材质属性（`_HoSurfaceThickness` / `_HoSurfaceCurvature` / `_HoSurfaceTransmittanceHint` / `_HoSurfaceMaterialClassId`）。
-> - **owner 用 `R16_UNorm` 承载 16-bit IdentityId**（规划写的是 `R16_UINT`，此处按可采样性改）：0..65535 在 UNorm16 上逐值精确，且消费端仍是普通浮点采样；`R16_UINT` 需要整数纹理通道，会污染所有消费端。
+> **落地状态（R3-sb，数值面 + 语义 lane 本轮）**：SB 的**数值面**已经可以跑：
+> - 已落地：`Runtime/SurfaceBuffer/`（feature + 数值 pass + 语义 lane pass + 资源集 + 格式工具 + Volume/调试直出）、材质侧 `lil_pass_surface_buffer.hlsl` / `lil_pass_surface_semantic.hlsl`（两者共用 `lil_pass_surface_common.hlsl` 的几何 + alpha clip 前半段）与 22 个 URP lilblock 的 `LightMode=HoSurfaceBuffer` / `HoSurfaceSemantic` 两个 pass、5 个新材质属性（`_HoSurfaceThickness` / `_HoSurfaceCurvature` / `_HoSurfaceTransmittanceHint` / `_HoSurfaceMaterialClassId` / `_HoSemanticWeight`）。
+> - **owner 用两个字节（RGBA8 的 R/G）承载 16-bit IdentityId**（规划写的是 `R16_UINT`，此处按可采样性改）：0..65535 逐值精确，且消费端仍是普通浮点采样；`R16_UINT` 需要整数纹理通道，会污染所有消费端。语义 lane 的 owner 同布局。
 > - **透明不生产**：队列上限压在上不透明段末尾（`GeometryLast`），对应 §0.5 的第三种策略（"对 transparent 不生产"）；其余两种策略等定了再放开。
-> - **还没落地**：SB 的 MSAA semantic lane pass（`_HoSurfaceSemanticOwnerMS` / `Lane{0..7}MS`）与 AC 的 surface sourceMode 合成、`Classification` 的消费者迁移（SSS 仍读 MB 的 `surfaceData`）、DebugTile 登记（需要给 Debug 轴加 `HoDebugViewRenderKind`，SB 自带整屏调试不受影响）。
+> - **语义 lane（§0.4 的 8-lane 档）已落地**：材质侧 `HoSurfaceSemantic` 逐 sample 写 `owner + 8 条 (SemanticId, value)`（4 张 RGBA8MS，5 MRT + 自用 MSAA 深度，采样数跟相机走）；**SB 只覆盖 OB 语义**——材质先按 palette 表读自己 renderer 的物体位，只写它真有的那几位，lane → SemanticId / 物体位掩码由 `HoSemanticSchema` 上传，材质侧只有一个 `_HoSemanticWeight`（0..1，默认 1）。16-lane 分批、材质侧遮罩贴图、语义 lane 的调试视图（MSAA 要 Load）都还没做。
+> - **还没落地**：AC 的 surface 合成（5 种 sourceMode 的逐 sample 合成 + `written ? s : o` 回退）、`Classification` 的消费者迁移（SSS 仍读 MB 的 `surfaceData`）、DebugTile 登记（需要给 Debug 轴加 `HoDebugViewRenderKind`，SB 自带整屏调试不受影响）。
+> - **已知待办**：SB / 语义 pass 的材质参数（`_HoSurface*` / `_HoSSS*` / `_HoSemanticWeight`）目前是**全局声明**、不在 `UnityPerMaterial` 里 ⇒ 生成的 lilToon shader 对 SRP Batcher 不兼容（`lil_common_input.hlsl` 的 CBUFFER 才是 SRP Batcher 认的那一份）。要单独做一次迁移把它们并进 CBUFFER。
 > - **验收口径**：五张图与桥接源（MB 的 `SurfaceColor` / `ReflectionMaterial` / `SurfaceData`）逐像素 A/B 一致；owner 视图（调试模式 6）绿 = 与 OB 层 0 对齐、红 = 不一致或没人写、洋红 = OB 没产出。
 
 ---
@@ -139,7 +141,7 @@ _UsePlanarReflection             → 只在总开关打开时生效
 | 步骤 | 内容 | 验收 |
 | --- | --- | --- |
 | **1**（部分） | 名字进契约 v2（§3 模板 + §5 变更记录） | 五张数值纹理 + internal SurfaceOwner 已按 §2.1 定名落地；semantic owner/lane MSAA 句柄待 semantic pass |
-| **2**（部分） | 建 feature 骨架：单采样数值 pass + 自用深度 + RG/兼容两条路径 | ✅ 数值 pass 已落地；独立 MSAA semantic pass/batches 未做 |
+| **2**（部分） | 建 feature 骨架：单采样数值 pass + 自用深度 + RG/兼容两条路径 | ✅ 数值 pass 已落地；语义 lane pass 已落地（§0.3.7 的 8-lane 档：owner + 4 张 RGBA8MS，采样数跟相机）；16-lane 分批未做 |
 | **3**（部分） | 落地 `Color` + `Material` + `Reflection` + `Normal` + `Classification`（一次写全，省得把同一个 pass 改三遍） | ✅ 五张一起写了；**A/B 一致待实机验证** |
 | **4** | 反射侧停止新增 Target5 消费者 → 桥接残留清干净 | `_HoMetadataBufferReflectionMaterialTexture` 无消费者 |
 | **5** | 迁 `Classification`（R=profile ID、G=curvatureHint、B=transmittanceHint、A=materialClass ID） | SSS profile 精确 byte 比较不变；通用 class 不再与 profile 混用 |
