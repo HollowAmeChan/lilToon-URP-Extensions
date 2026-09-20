@@ -124,8 +124,6 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 cameraTextureDescriptor,
                 settings.RequestedSampleCount,
                 selectionEnabled);
-            // 【临时探针】强制 msaaSamples = 1：二分"问题在 MSAA/归约"还是"在采集/身份写入"（验证完删除）。
-            msaaSamples = 1;
             renderTargets.ReAllocateIfNeeded(cameraTextureDescriptor, msaaSamples, selectionEnabled);
 
             if (renderTargets.UseMsaaResolve)

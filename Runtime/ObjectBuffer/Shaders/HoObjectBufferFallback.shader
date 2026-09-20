@@ -58,7 +58,11 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
             uint HoObjectBufferPartIdFromRsuv()
             {
                 // RSUV 只当索引用：低 16 bit = 角色 8 + 槽位 8（决策 13）。
-                return 0x0100u;   // PROBE: constant id (group 1, slot 0) = palette row 1 (red)
+                // 前置条件（少一个读到的就恒为 0，症状是"物体被 clip 干净、屏幕只剩背景"）：
+                //   #pragma multi_compile_instancing          —— 生成 instanced 变体
+                //   #pragma instancing_options renderinglayer —— 才会声明 unity_RendererUserValue
+                // 这个函数本来就是 uint（UnityInstancing.hlsl 里是 asuint(...)）。
+                return unity_RendererUserValue & 0xFFFFu;
             }
 
             Varyings Vert(Attributes input)
@@ -146,7 +150,7 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 MsaaOutput output;
-                output.sampleId = 0x0100u;   // PROBE
+                output.sampleId = unity_RendererUserValue & 0xFFFFu;
                 #if defined(_HO_OBJECT_BUFFER_SELECTION)
                 output.selection0 = float4(0.0, 0.0, 0.0, 0.0);
                 #endif
@@ -209,7 +213,7 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 MsaaOutput output;
-                output.sampleId = (float)0x0100u / 65535.0;   // PROBE
+                output.sampleId = (float)(unity_RendererUserValue & 0xFFFFu) / 65535.0;
                 #if defined(_HO_OBJECT_BUFFER_SELECTION)
                 output.selection0 = float4(0.0, 0.0, 0.0, 0.0);
                 #endif
