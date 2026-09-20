@@ -124,8 +124,10 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/DebugView"
                     return float4(saturate(part.thickness), saturate(part.curvature), saturate((float)part.materialClass * 0.25), 1.0);
                 }
 
-                // 9 = Valid：走到这里就说明一切正常（表在、图在、pass 跑了）。
-                return float4(0.0, 0.6, 0.0, 1.0);
+                // 【临时探针】9 = Valid 改成"原始 ID 字节放大 32 倍"，便于直接读出像素里的 ID：
+                // 组字节 G = round(id0.r*255)、槽位字节 S = round(id0.g*255)；显示色 = (G/255*32, S/255*32, 0)。
+                // 例：0x0100 → (0.125, 0, 0) 暗红；0x3501 → (1, 0.125, 0) 亮红橙；全 0 → 纯黑。
+                return float4(id0.r * 32.0, id0.g * 32.0, id0.b * 32.0, 1.0);
             }
             ENDHLSL
         }
