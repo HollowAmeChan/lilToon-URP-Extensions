@@ -6,8 +6,12 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.AttributeComposite
 {
     /// <summary>
-    /// 一条 lane 的来源合成方式（规划 §0.4）。**本轮只实现 `ObjectOnly`**：
-    /// surface 侧要等 Ho-SurfaceBuffer 落地（R4b）才有生产者，其余四种先声明、不消费。
+    /// 一条 lane 的来源合成方式（规划 §0.4 / §0.3.6）。**五种都已经在 AC 的 resolve 里实现**
+    /// （`HoACSelectionResolve.shader` 的 `ComposeLane`）：surface 侧来自 SB 的 MSAA 语义 lane。
+    /// <para>
+    /// 公式里的 `o` 是物体侧（像素级：Σ 层覆盖率 · 该层带不带这一位），`s_i` / `written_i` 是 SB 的第 i 个 sample；
+    /// 五种模式都**先逐 sample 合成、再 resolve 成覆盖率**。
+    /// </para>
     /// </summary>
     public enum HoSemanticSourceMode
     {
@@ -53,10 +57,14 @@ namespace lilToon.URP.Extensions.AttributeComposite
     /// <summary>
     /// OB / SB / AC 三方共用的一份语义声明（规划 §0.3.6：OB/SB 都只读该声明，不自造 ID）。
     /// <para>
-    /// **词表只有一份**：本轮所有 lane 都是"物体位"，所以直接由 <see cref="HoObjectBufferPartTags"/>
-    /// 生成 —— SemanticId = 位序 + 1、LaneIndex = 位序、objectTagBit = 位序。
-    /// 等 SB 落地、出现"材质可写"的语义时，再给这里加作者侧入口（那时 `name` 才是材质参数的键），
-    /// 在那之前不要为它造第二套名字。
+    /// **词表只有一份**：所有 lane 都是"物体位"，直接由 <see cref="HoObjectBufferPartTags"/> 生成 ——
+    /// SemanticId = 位序 + 1、LaneIndex = 位序、objectTagBit = 位序。
+    /// </para>
+    /// <para>
+    /// **SB 在这里不新增名字**（用户确认的设计）：材质**只能覆盖它自己 renderer 已经有的那几位**，
+    /// 值来自材质参数 `_HoSemanticWeight`（0..1，默认 1），由 SB 的材质 pass 逐 sample 写进对应 lane。
+    /// 想加"子部件"语义（眼白 / 虹膜这种更细的名字）就往 `HoObjectBufferPartTags` **加一位**，
+    /// 而不是在 SB 侧开第二套词表 —— 那样 OB 仍然是唯一的槽位持有者。
     /// </para>
     /// </summary>
     public static class HoSemanticSchema
@@ -176,7 +184,11 @@ namespace lilToon.URP.Extensions.AttributeComposite
                     displayName = DisplayNameOf(tag, memberName),
                     semanticId = bit + 1,
                     laneIndex = bit,
-                    sourceMode = HoSemanticSourceMode.ObjectOnly,
+                    // 物体位这 8 条默认 **表面覆盖物体**：SB（材质）写了就以材质为准（细化 / 收窄），
+                    // 没写就回落到 OB 的物体位 —— 于是"没有 SB 生产的物体 / 关掉语义趟"照样有语义。
+                    // 材质**只能覆盖它自己 renderer 已经有的位**：SB 的材质 pass 先按 palette 表读那份
+                    // 物体位掩码才写，那道门在数据上把住（规划 §0.3.6）。
+                    sourceMode = HoSemanticSourceMode.SurfaceOverride,
                     objectTagBit = bit,
                     debugColor = DebugColorOf(bit)
                 });

@@ -62,5 +62,45 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
             return GraphicsFormat.D32_SFloat;
         }
+
+        /// <summary>
+        /// 语义 lane 的**自建 MSAA 采样数**：只问平台，**与相机 MSAA 解耦**（与 OB 的决策同一条）。
+        /// 相机把 AA 关掉时采样数照样是 4 —— 语义 lane 的质量不该由相机 AA 决定。
+        /// 平台给不到就返回实际值（1 表示这趟没法跑），由 feature 报出来，不静默降级。
+        /// </summary>
+        public static int GetSupportedSemanticSampleCount(RenderTextureDescriptor cameraTextureDescriptor, int requestedSamples)
+        {
+            if (SystemInfo.supportsMultisampledTextures == 0 || requestedSamples <= 1)
+            {
+                return 1;
+            }
+
+            int width = Mathf.Max(1, cameraTextureDescriptor.width);
+            int height = Mathf.Max(1, cameraTextureDescriptor.height);
+            int samples = Mathf.Max(2, requestedSamples);
+
+            var laneDescriptor = new RenderTextureDescriptor(width, height, GetUnormGraphicsFormat(), GraphicsFormat.None)
+            {
+                msaaSamples = samples,
+                bindMS = false
+            };
+            int supported = SystemInfo.GetRenderTextureSupportedMSAASampleCount(laneDescriptor);
+
+            var ownerDescriptor = new RenderTextureDescriptor(width, height, GetOwnerGraphicsFormat(), GraphicsFormat.None)
+            {
+                msaaSamples = samples,
+                bindMS = false
+            };
+            supported = Mathf.Min(supported, SystemInfo.GetRenderTextureSupportedMSAASampleCount(ownerDescriptor));
+
+            var depthDescriptor = new RenderTextureDescriptor(width, height, GraphicsFormat.None, GetDepthStencilFormat(cameraTextureDescriptor))
+            {
+                msaaSamples = samples,
+                bindMS = false
+            };
+            supported = Mathf.Min(supported, SystemInfo.GetRenderTextureSupportedMSAASampleCount(depthDescriptor));
+
+            return Mathf.Clamp(supported, 1, samples);
+        }
     }
 }

@@ -17,6 +17,15 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
         public const int SelectionTexturesPerResolve = 4;
 
+        /// <summary>
+        /// 有 SB 语义 lane 时打开：Selection 池的每条 lane 走 `SurfaceOverride`（逐 sample 与 SB 合成）。
+        /// 两个都关就是纯物体位解压（`ObjectOnly`）——没有 SB / 平台不支持时 AC 不会假装有 surface 来源。
+        /// 与 OB 的 resolve 同一套：采样数由关键字给出（声明 `Texture2DMS&lt;T, N&gt;` 要用到它）。
+        /// </summary>
+        public const string SurfaceMsaa2Keyword = "_HO_SURFACE_SEMANTIC_MSAA_2";
+
+        public const string SurfaceMsaa4Keyword = "_HO_SURFACE_SEMANTIC_MSAA_4";
+
         public static readonly int ActiveId = Shader.PropertyToID(ActiveName);
         public static readonly int LaneCountId = Shader.PropertyToID(LaneCountName);
         public static readonly int LaneBufferId = Shader.PropertyToID(LaneBufferName);

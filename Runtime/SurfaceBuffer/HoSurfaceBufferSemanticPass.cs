@@ -31,6 +31,12 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         private HoSurfaceBufferSettings settings;
         private FilteringSettings filteringSettings;
         private RenderStateBlock renderStateBlock;
+        private int semanticSampleCount = 1;
+
+        /// <summary>本帧这趟有没有产出 + 实际采样数（AC 的兼容路径拿不到纹理句柄，只能问这里）。</summary>
+        internal static bool LastProduced { get; private set; }
+
+        internal static int LastActualSampleCount { get; private set; } = 1;
 
         // 兼容（非 RenderGraph）路径的常驻目标。
         private RTHandle ownerTexture;
@@ -51,6 +57,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             public Vector4 laneIds1;
             public Vector4 laneTagMasks0;
             public Vector4 laneTagMasks1;
+            public int sampleCount;
         }
 
         public HoSurfaceBufferSemanticPass()
@@ -58,10 +65,11 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             renderStateBlock = new RenderStateBlock(RenderStateMask.Nothing);
         }
 
-        public void Setup(HoSurfaceBufferSettings settings, in FilteringSettings filteringSettings)
+        public void Setup(HoSurfaceBufferSettings settings, in FilteringSettings filteringSettings, int semanticSampleCount)
         {
             this.settings = settings;
             this.filteringSettings = filteringSettings;
+            this.semanticSampleCount = Mathf.Max(1, semanticSampleCount);
             renderPassEvent = settings != null ? settings.passEvent : RenderPassEvent.BeforeRenderingOpaques;
             ConfigureInput(ScriptableRenderPassInput.None);
         }
@@ -87,6 +95,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         internal static void ResetGlobalState()
         {
+            LastProduced = false;
+            LastActualSampleCount = 1;
             Shader.SetGlobalFloat(HoSurfaceBufferShaderConstants.SemanticActiveId, 0.0f);
         }
 
@@ -118,13 +128,14 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             }
         }
 
-        private static void ApplyGlobalState(CommandBuffer cmd)
+        private static void ApplyGlobalState(CommandBuffer cmd, int sampleCount)
         {
             BuildLaneUniforms();
             cmd.SetGlobalVector(HoSurfaceBufferShaderConstants.SemanticLaneIdsId0, LaneIds[0]);
             cmd.SetGlobalVector(HoSurfaceBufferShaderConstants.SemanticLaneIdsId1, LaneIds[1]);
             cmd.SetGlobalVector(HoSurfaceBufferShaderConstants.SemanticLaneTagMasksId0, LaneTagMasks[0]);
             cmd.SetGlobalVector(HoSurfaceBufferShaderConstants.SemanticLaneTagMasksId1, LaneTagMasks[1]);
+            cmd.SetGlobalFloat(HoSurfaceBufferShaderConstants.SemanticSampleCountId, Mathf.Max(1, sampleCount));
             cmd.SetGlobalFloat(HoSurfaceBufferShaderConstants.SemanticActiveId, 1.0f);
         }
 
@@ -140,7 +151,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             RenderTextureDescriptor descriptor = renderingData.cameraData.cameraTargetDescriptor;
             descriptor.depthBufferBits = 0;
             descriptor.depthStencilFormat = GraphicsFormat.None;
-            // 语义 lane 保留相机的 MSAA sample：一个像素里可能有"眼白 + 虹膜"两个 sample（规划 §0.4）。
+            // **自建 MSAA，与相机 AA 解耦**：一个像素里可能有"眼白 + 虹膜"两个 sample（规划 §0.4）。
+            descriptor.msaaSamples = semanticSampleCount;
             descriptor.bindMS = false;
 
             AllocateIfNeeded(ref ownerTexture, descriptor, HoSurfaceBufferFormatUtility.GetOwnerGraphicsFormat(), HoSurfaceBufferShaderConstants.SemanticOwnerTextureName);
@@ -158,6 +170,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
+            LastProduced = false;
             if (settings == null || !settings.enabled || !settings.enableSemanticLanes || ownerTexture == null || depthTexture == null)
             {
                 return;
@@ -174,9 +187,18 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
                 cmd.SetRenderTarget(colorIdentifiers, depthTexture.nameID);
                 cmd.ClearRenderTarget(RTClearFlags.ColorDepth, Color.clear, 1.0f, 0);
-                ApplyGlobalState(cmd);
+                ApplyGlobalState(cmd, semanticSampleCount);
+                // 兼容路径的句柄是常驻 RTHandle，AC 那趟只认全局名 —— 在这里绑好。
+                cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.SemanticOwnerTextureId, ownerTexture.nameID);
+                for (int i = 0; i < laneTextures.Length; i++)
+                {
+                    cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.GetSemanticLaneTextureId(i), laneTextures[i].nameID);
+                }
+
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
+                LastProduced = true;
+                LastActualSampleCount = semanticSampleCount;
 
                 DrawingSettings drawingSettings = new DrawingSettings(HoSurfaceBufferShaderConstants.SemanticShaderTagId, new SortingSettings(renderingData.cameraData.camera) { criteria = SortingCriteria.CommonOpaque })
                 {
@@ -197,6 +219,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
             ReleaseCompatibilityResources();
+            LastProduced = false;
             if (settings == null || !settings.enabled || !settings.enableSemanticLanes)
             {
                 return;
@@ -206,8 +229,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
 
-            // 采样数跟相机走（相机没开 AA 时是 1，MSAASamples.None）。
-            MSAASamples msaaSamples = ToMSAASamples(cameraData.cameraTargetDescriptor.msaaSamples);
+            // **自建 MSAA，与相机 AA 解耦**：采样数来自设置（实际值由 feature 问过平台）。
+            MSAASamples msaaSamples = ToMSAASamples(semanticSampleCount);
 
             TextureHandle owner = CreateTexture(renderGraph, cameraData.cameraTargetDescriptor, HoSurfaceBufferFormatUtility.GetOwnerGraphicsFormat(), HoSurfaceBufferShaderConstants.SemanticOwnerTextureName, msaaSamples);
             TextureHandle[] lanes = new TextureHandle[HoSurfaceBufferShaderConstants.SemanticLaneTextureCount];
@@ -253,6 +276,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 passData.laneIds1 = LaneIds[1];
                 passData.laneTagMasks0 = LaneTagMasks[0];
                 passData.laneTagMasks1 = LaneTagMasks[1];
+                passData.sampleCount = semanticSampleCount;
 
                 builder.UseRendererList(passData.rendererList);
                 builder.SetRenderAttachment(owner, HoSurfaceBufferShaderConstants.SemanticOwnerAttachment, AccessFlags.WriteAll);
@@ -278,10 +302,14 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                     context.cmd.SetGlobalVector(HoSurfaceBufferShaderConstants.SemanticLaneIdsId1, data.laneIds1);
                     context.cmd.SetGlobalVector(HoSurfaceBufferShaderConstants.SemanticLaneTagMasksId0, data.laneTagMasks0);
                     context.cmd.SetGlobalVector(HoSurfaceBufferShaderConstants.SemanticLaneTagMasksId1, data.laneTagMasks1);
+                    context.cmd.SetGlobalFloat(HoSurfaceBufferShaderConstants.SemanticSampleCountId, (float)data.sampleCount);
                     context.cmd.SetGlobalFloat(HoSurfaceBufferShaderConstants.SemanticActiveId, 1.0f);
                     context.cmd.DrawRendererList(data.rendererList);
                 });
             }
+
+            LastProduced = true;
+            LastActualSampleCount = semanticSampleCount;
 
             HoSurfaceBufferRenderGraphResources resources = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
             resources.semanticOwnerTexture = owner;

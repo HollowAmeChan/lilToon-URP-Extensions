@@ -5,10 +5,11 @@
 > **状态：typed 查询、runtime catalog、sample 级 object/surface SemanticId 合成、Selection resolve 与属性 validity 已冻结。**
 > AC **不画几何、不画表面**：它只读 OB + SB，把"三个来源"压成"一个每像素答案"。
 
-> **落地状态（R3-obj，本轮）**：AC 已经存在并可跑，范围是 **object 来源的子集**：
-> - 已落地：`HoSemanticSchema`（由 `HoObjectBufferPartTags` 生成 8 条 object-only lane，SemanticId = 位序+1、Lane = 位序）、runtime catalog（按 LaneIndex 编译成 GPU 常量表，变脏重建）、`SemanticResolve`（一轮 4 张 RGBA8 = 8 条 lane 的 `(SemanticId, coverage)`）、资源集 `HoAttributeCompositeRenderGraphResources`、`HoAC_*` 查询（Identity / Group / Layer0Group / Predicate / TotalCoverage / Selection）、消费者登记与解析失败诊断、feature 面板（schema 与登记只读汇总）、Volume + 调试直出（lane 覆盖率 / lane ID / catalog）。
+> **落地状态（R4b，surface 来源本轮）**：AC 已经存在并可跑，范围是 **object + surface 两个来源**：
+> - 已落地：`HoSemanticSchema`（由 `HoObjectBufferPartTags` 生成 8 条 lane，SemanticId = 位序+1、Lane = 位序；**默认 `SurfaceOverride`**）、runtime catalog（按 LaneIndex 编译成 GPU 常量表，变脏重建）、`SemanticResolve`（一轮 4 张 RGBA8 = 8 条 lane 的 `(SemanticId, coverage)`）、资源集 `HoAttributeCompositeRenderGraphResources`、`HoAC_*` 查询（Identity / Group / Layer0Group / Predicate / TotalCoverage / Selection）、消费者登记与解析失败诊断、feature 面板（schema 与登记只读汇总）、Volume + 调试直出（lane 覆盖率 / lane ID / catalog）。
 > - 第一个消费者：**角色特化**已切过来 —— 它不再自己解码 OB 身份池与部件行表，改读 AC 的 Selection 池（转置成自己的位平面），并把 8 个物体位登记为消费者。
-> - **本轮刻意不做**：surface 来源与 `SurfaceOnly / Union / SurfaceOverride / Intersection`（等 SB，R4b）、`AttributeComposite` 数值属性（`constant < surface`，R4c，现在 `HoAC_Attribute` 恒 0）、Selection 池 16 lane 的 MRT 分批（现在固定 4 张 = 8 lane）、DebugTile 的 AC 九宫格（需要给 Debug 轴加一个 `HoDebugViewRenderKind`，AC 自带整屏调试不受影响）、**按消费者登记决定要不要产出 Selection 池**（现在只要 OB 有身份就恒产出 4 张，等消费者多起来再按登记裁剪）。
+> - **surface 来源（R4b）已落地**：SB 的 MSAA 语义 lane（`_HoSurfaceSemanticLane{0..3}Texture`，一张 RGBA8MS 装两条 `(SemanticId, value)`）在 `SemanticResolve` 里**逐 sample 合成再 resolve**；**五种 `sourceMode` 全部实现**（`HoACSelectionResolve.shader` 的 `ComposeLane`），采样数由关键字 `_HO_SURFACE_SEMANTIC_MSAA_2/_4` 给出（与 OB 的 resolve 同一套写法，MSAA 只能按像素 Load）。逐 sample 的 owner **不参与合成公式**：那道门由 SB 的材质 pass 按 palette 表在数据上把住（材质只能覆盖自己 renderer 已经有的位），owner 现在留给对齐诊断 / 调试视图。
+> - **仍然不做**：`AttributeComposite` 数值属性（`constant < surface`，R4c，现在 `HoAC_Attribute` 恒 0）、Selection 池 16 lane 的 MRT 分批（现在固定 4 张 = 8 lane，词表超过 8 位才需要）、DebugTile 的 AC 九宫格（需要给 Debug 轴加一个 `HoDebugViewRenderKind`，AC 自带整屏调试不受影响）、**按消费者登记决定要不要产出 Selection 池**（现在只要 OB 有身份就恒产出 4 张，等消费者多起来再按登记裁剪）。
 
 
 ---

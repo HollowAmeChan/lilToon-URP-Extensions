@@ -45,6 +45,13 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         /// </summary>
         public bool enableSemanticLanes = true;
 
+        /// <summary>
+        /// 语义 lane 的自建 MSAA 采样数（请求值，实际取平台支持的上限）：**与相机 AA 解耦**，
+        /// 相机把 AA 关掉时照样按这个数取 sample（与 OB 自建 MSAA 的同一条决策）。
+        /// </summary>
+        [Range(2, 8)]
+        public int requestedSemanticSampleCount = 4;
+
         public LayerMask layerMask = -1;
 
         public int minRenderQueue;
@@ -79,6 +86,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
             enabled = source.enabled;
             enableSemanticLanes = source.enableSemanticLanes;
+            requestedSemanticSampleCount = source.requestedSemanticSampleCount;
             layerMask = source.layerMask;
             minRenderQueue = source.minRenderQueue;
             maxRenderQueue = source.maxRenderQueue;

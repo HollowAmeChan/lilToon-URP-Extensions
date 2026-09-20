@@ -30,6 +30,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         private bool warnedMissingDebugShader;
         private static bool warnedMrtCapacity;
         private static bool warnedSemanticMrtCapacity;
+        private static bool warnedSemanticSamplesUnsupported;
+        private static int warnedSemanticSampleCount;
         private static bool warnedConfiguration;
 
         public HoSurfaceBufferSettings Settings => settings;
@@ -73,7 +75,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 return;
             }
 
-            WarnConfigurationOnce(minQueue, maxQueue, renderingData.cameraData.cameraTargetDescriptor.msaaSamples);
+            WarnConfigurationOnce(minQueue, maxQueue, activeSettings.requestedSemanticSampleCount);
 
             var filteringSettings = new FilteringSettings(
                 new RenderQueueRange { lowerBound = minQueue, upperBound = maxQueue },
@@ -86,6 +88,10 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             // ——AC 会因为没有 lane 而回落到物体位，不是静默错值。
             if (activeSettings.enableSemanticLanes)
             {
+                int semanticSamples = HoSurfaceBufferFormatUtility.GetSupportedSemanticSampleCount(
+                    renderingData.cameraData.cameraTargetDescriptor,
+                    activeSettings.requestedSemanticSampleCount);
+
                 if (SystemInfo.supportedRenderTargetCount < HoSurfaceBufferShaderConstants.SemanticAttachmentCount)
                 {
                     if (!warnedSemanticMrtCapacity)
@@ -95,10 +101,31 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                                        $"语义 lane 需要 {HoSurfaceBufferShaderConstants.SemanticAttachmentCount} 个（owner + 4 张 lane 图）：" +
                                        $"这一趟不跑，AC 的 surface 语义会全部回落到 OB 的物体位。");
                     }
+
+                    HoSurfaceBufferSemanticPass.ResetGlobalState();
+                }
+                else if (semanticSamples <= 1)
+                {
+                    // 自建 MSAA 是这个 pass 的前提（逐 sample 才是它的意义）：平台不支持就整趟不跑并报错。
+                    if (!warnedSemanticSamplesUnsupported)
+                    {
+                        warnedSemanticSamplesUnsupported = true;
+                        Debug.LogError($"[Ho-SurfaceBuffer] 本平台不支持多重采样纹理（或只支持 1x）：" +
+                                       $"语义 lane 的逐 sample 产出无法成立 —— 这一趟不跑，AC 的 surface 语义全部回落到 OB 的物体位。");
+                    }
+
+                    HoSurfaceBufferSemanticPass.ResetGlobalState();
                 }
                 else
                 {
-                    semanticPass?.Setup(activeSettings, filteringSettings);
+                    if (semanticSamples != activeSettings.requestedSemanticSampleCount && semanticSamples != warnedSemanticSampleCount)
+                    {
+                        warnedSemanticSampleCount = semanticSamples;
+                        Debug.LogWarning($"[Ho-SurfaceBuffer] 语义 lane 自建 MSAA 降级：请求 {activeSettings.requestedSemanticSampleCount}x，" +
+                                         $"平台给到 {semanticSamples}x。lane 与 owner 按 {semanticSamples}x 走，AC 会跟着改循环次数。");
+                    }
+
+                    semanticPass?.Setup(activeSettings, filteringSettings, semanticSamples);
                     renderer.EnqueuePass(semanticPass);
                 }
             }
@@ -157,7 +184,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         /// 配置一次性汇总：排查"SB 什么都没写"时，先把"用的是什么格式、过滤的是哪段队列"写进 Console，
         /// 省得靠猜（6 个 MRT + 混格式是本仓库第一次用的组合）。
         /// </summary>
-        private static void WarnConfigurationOnce(int minQueue, int maxQueue, int msaaSamples)
+        private static void WarnConfigurationOnce(int minQueue, int maxQueue, int requestedSemanticSamples)
         {
             if (warnedConfiguration)
             {
@@ -171,7 +198,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                       $"Unorm={HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat()}，" +
                       $"Owner={HoSurfaceBufferFormatUtility.GetOwnerGraphicsFormat()}（两个字节）；" +
                       $"语义 lane：{HoSurfaceBufferShaderConstants.SemanticLaneCount} 条 / " +
-                      $"{HoSurfaceBufferShaderConstants.SemanticLaneTextureCount} 张 RGBA8MS，相机 MSAA x{Mathf.Max(1, msaaSamples)}。");
+                      $"{HoSurfaceBufferShaderConstants.SemanticLaneTextureCount} 张 RGBA8MS，" +
+                      $"自建 MSAA 请求 {requestedSemanticSamples}x（**与相机 AA 解耦**）。");
         }
         private static bool WantsDebugView(HoSurfaceBufferSettings activeSettings, CameraType cameraType)
         {
