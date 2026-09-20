@@ -153,7 +153,10 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             descriptor.depthStencilFormat = GraphicsFormat.None;
             // **自建 MSAA，与相机 AA 解耦**：一个像素里可能有"眼白 + 虹膜"两个 sample（规划 §0.4）。
             descriptor.msaaSamples = semanticSampleCount;
-            descriptor.bindMS = false;
+            // **bindMS 必须为真**：这几张图在 AC 的 resolve 里是按 `Texture2DMS` 声明并逐 sample Load 的，
+            // 非 MSAA 绑定会让 Unity 直接把它从多重采样采样器上摘掉（"Disabling to avoid undefined behavior"）。
+            // 与 OB 的 MSAA 目标同一个写法。
+            descriptor.bindMS = semanticSampleCount > 1;
 
             AllocateIfNeeded(ref ownerTexture, descriptor, HoSurfaceBufferFormatUtility.GetOwnerGraphicsFormat(), HoSurfaceBufferShaderConstants.SemanticOwnerTextureName);
             for (int i = 0; i < laneTextures.Length; i++)
@@ -165,6 +168,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             RenderTextureDescriptor depthDescriptor = descriptor;
             depthDescriptor.graphicsFormat = GraphicsFormat.None;
             depthDescriptor.depthStencilFormat = HoSurfaceBufferFormatUtility.GetDepthStencilFormat(renderingData.cameraData.cameraTargetDescriptor);
+            // 自用深度只当附件、没人读它 ⇒ 不按多重采样纹理绑（颜色的那几张才需要 bindMS）。
+            depthDescriptor.bindMS = false;
             RenderingUtils.ReAllocateIfNeeded(ref depthTexture, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSurfaceSemanticDepth");
         }
 
@@ -348,7 +353,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 clearColor = Color.clear,
                 filterMode = FilterMode.Point,
                 wrapMode = TextureWrapMode.Clamp,
-                bindTextureMS = false,
+                // 这几张图要按 `Texture2DMS` 读（AC 的 resolve 逐 sample Load）：bindMS 必须跟采样数一致，
+                // 否则会被当成非多重采样纹理、从多重采样采样器上摘掉（与 OB 的 MSAA 目标同一个写法）。
+                bindTextureMS = msaaSamples != MSAASamples.None,
                 useDynamicScale = cameraTextureDescriptor.useDynamicScale,
                 useDynamicScaleExplicit = cameraTextureDescriptor.useDynamicScaleExplicit,
                 vrUsage = cameraTextureDescriptor.vrUsage
