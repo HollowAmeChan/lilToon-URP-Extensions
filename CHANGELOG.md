@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **Ho-SurfaceBuffer（SB）数值面落地**（规划 R3-sb，三轴里最后一条缺失的轴）：回答"表面是什么样"，几何在 GB、身份在 OB、合成在 AC。
+  - **新轴 `Runtime/SurfaceBuffer/`**：feature（高级设置 + 兜底默认值）+ **数值 pass**（一趟几何 pass 写五张图 + internal owner：`Color` RGBA16F / `Normal` octa RGBA8 / `Material`(perceptualRoughness·metallic·thickness) / `Reflection`(reflectance·plrStrength) / `Classification`(sssProfileId·curvatureHint·transmittanceHint·materialClassId) / `Owner` R16_UNorm）+ **自用深度** + RDG 与兼容两条路径 + 资源集 `HoSurfaceBufferRenderGraphResources` + Volume 调试直出（五张 + **owner 对齐视图**：绿 = 与 OB 层 0 一致、红 = 不一致或没人写、洋红 = OB 没产出）。
+  - **owner = pixel validity 的唯一判据**：数值图里的 0 是合法值，只有 owner 能区分"写了 0"和"没人写"（规划 §0.1 / §4.8）；owner 就是 RSUV 的低 16 bit（= OB 写的 `partId`），所以 AC 之后能用它跟 OB 层 0 的 IdentityId 逐像素对齐。规划里写的 `R16_UINT` 改成 `R16_UNorm`：0..65535 逐值精确，而且消费端不必换成整数纹理通道。
+  - **透明不生产**：队列上限压在上不透明段末尾（`GeometryLast`）—— 多层透明加不出唯一的前表面真值（规划 §0.5），先明确"不生产"，等策略定下来再放开。
+  - **材质侧（跨仓 lilToon）**：新增 `lil_pass_surface_buffer.hlsl`（由 metadata pass 的 surface 部分派生，**不用 MPB**）+ 22 个 URP lilblock 的 `LightMode=HoSurfaceBuffer` pass + 4 个新材质属性 `_HoSurfaceThickness` / `_HoSurfaceCurvature` / `_HoSurfaceTransmittanceHint` / `_HoSurfaceMaterialClassId`（**不再新增 `_HoMetadataBuffer*`**）。
+  - **本轮刻意不做**：SB 的 MSAA semantic lane pass（`_HoSurfaceSemanticOwnerMS` / `Lane{0..7}MS`）与 AC 的 surface sourceMode 合成、`Classification` 的消费者迁移（SSS 仍读 MB）、DebugTile 登记。
+  - 文档：SB 规划加「落地状态」并逐行标注执行表进度。
+
 - **Ho-AttributeComposite（AC）起步**（规划 R3-obj）：**语义遮罩的唯一逻辑入口**从纸面变成代码，范围是 object 来源的子集。
   - **`HoSemanticSchema`**：由 `HoObjectBufferPartTags` 生成 8 条 object-only lane（**SemanticId = 位序 + 1、LaneIndex = 位序、objectTagBit = 位序**）——词表只有一份，不为 AC 另造名字；带唯一性 / 范围 / lane 上限校验。runtime catalog 按 **LaneIndex**（不是声明顺序）编译成 GPU 常量表，变脏重建时上传。
   - **`SemanticResolve`**：一趟全屏 pass 读 OB 身份池（4 层 + 覆盖率）与部件行标签，按 lane 算 `Σ cov_i · 该层带不带这一位`，写 4 张 RGBA8（每张两条 `(SemanticId, coverage)`）= **AC Selection 池**。所有消费者共用这一份，不再各自解码 OB；兼容（非 RenderGraph）路径一并接线。

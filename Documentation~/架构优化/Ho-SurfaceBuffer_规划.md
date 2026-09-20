@@ -4,6 +4,13 @@
 
 > **状态：五张数值 RT、SurfaceOwner validity、Classification 四通道、同 SemanticId 的 surface sample 协议与 4/8/16 lane batching 已冻结。**
 
+> **落地状态（R3-sb，数值面本轮）**：SB 的**数值面**已经可以跑：
+> - 已落地：`Runtime/SurfaceBuffer/`（feature + 数值 pass + 资源集 + 格式工具 + Volume/调试直出）、材质侧 `lil_pass_surface_buffer.hlsl` 与 22 个 URP lilblock 的 `LightMode=HoSurfaceBuffer` pass、4 个新材质属性（`_HoSurfaceThickness` / `_HoSurfaceCurvature` / `_HoSurfaceTransmittanceHint` / `_HoSurfaceMaterialClassId`）。
+> - **owner 用 `R16_UNorm` 承载 16-bit IdentityId**（规划写的是 `R16_UINT`，此处按可采样性改）：0..65535 在 UNorm16 上逐值精确，且消费端仍是普通浮点采样；`R16_UINT` 需要整数纹理通道，会污染所有消费端。
+> - **透明不生产**：队列上限压在上不透明段末尾（`GeometryLast`），对应 §0.5 的第三种策略（"对 transparent 不生产"）；其余两种策略等定了再放开。
+> - **还没落地**：SB 的 MSAA semantic lane pass（`_HoSurfaceSemanticOwnerMS` / `Lane{0..7}MS`）与 AC 的 surface sourceMode 合成、`Classification` 的消费者迁移（SSS 仍读 MB 的 `surfaceData`）、DebugTile 登记（需要给 Debug 轴加 `HoDebugViewRenderKind`，SB 自带整屏调试不受影响）。
+> - **验收口径**：五张图与桥接源（MB 的 `SurfaceColor` / `ReflectionMaterial` / `SurfaceData`）逐像素 A/B 一致；owner 视图（调试模式 6）绿 = 与 OB 层 0 对齐、红 = 不一致或没人写、洋红 = OB 没产出。
+
 ---
 
 ## 0. 流水线复核与 P0 勘误（2026-09-20）
@@ -131,13 +138,13 @@ _UsePlanarReflection             → 只在总开关打开时生效
 
 | 步骤 | 内容 | 验收 |
 | --- | --- | --- |
-| **1** | 名字进契约 v2（§3 模板 + §5 变更记录） | 五张数值纹理 + internal SurfaceOwner + semantic owner/lane MSAA 句柄登记完毕 |
-| **2** | 建 feature 骨架：单采样数值 pass + 独立 MSAA semantic pass/batches + 自用深度 + RG/兼容两条路径 | 4/8/16 lane 分别是 1/1/2 趟 semantic 几何 pass；owner 与 OB sample ID 可校验 |
-| **3** | **先落地 `Color` + `Material` + `Reflection`**（反射优先），再 `Normal` | 与桥接源逐像素一致（可 A/B 对比）；PLR/SSR 切过去后行为不变 |
+| **1**（部分） | 名字进契约 v2（§3 模板 + §5 变更记录） | 五张数值纹理 + internal SurfaceOwner 已按 §2.1 定名落地；semantic owner/lane MSAA 句柄待 semantic pass |
+| **2**（部分） | 建 feature 骨架：单采样数值 pass + 自用深度 + RG/兼容两条路径 | ✅ 数值 pass 已落地；独立 MSAA semantic pass/batches 未做 |
+| **3**（部分） | 落地 `Color` + `Material` + `Reflection` + `Normal` + `Classification`（一次写全，省得把同一个 pass 改三遍） | ✅ 五张一起写了；**A/B 一致待实机验证** |
 | **4** | 反射侧停止新增 Target5 消费者 → 桥接残留清干净 | `_HoMetadataBufferReflectionMaterialTexture` 无消费者 |
 | **5** | 迁 `Classification`（R=profile ID、G=curvatureHint、B=transmittanceHint、A=materialClass ID） | SSS profile 精确 byte 比较不变；通用 class 不再与 profile 混用 |
 | **6** | 与 OB/AC 一起进 R6：删 MetadataBuffer 的 surface 族 | 无 `_HoMetadataBuffer` surface 族引用 |
-| **全程** | 五张数值图、SurfaceOwner/对齐错误、每个 semantic lane 的 ID/value/written 都进 `HoDebugViewRegistry` / DebugTile | 显式 0、未写、owner mismatch 和非法 SemanticId 都能区分 |
+| **全程** | 五张数值图、SurfaceOwner/对齐错误、每个 semantic lane 的 ID/value/written 都进 `HoDebugViewRegistry` / DebugTile | ✅ 五张 + owner 有整屏调试；DebugTile 登记待 Debug 轴加 RenderKind |
 
 ---
 
