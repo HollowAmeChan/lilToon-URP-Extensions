@@ -32,9 +32,15 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private const float RowHeight = 20.0f;
         private const float RowSpacing = 1.0f;
         private const float SwatchSize = 12.0f;
-        private const float ElementHeight = 22.0f;
-        private const float SectionSpacing = 6.0f;
+        private const float ElementHeight = 20.0f;
+        private const float SectionSpacing = 4.0f;
         private const float SwitchWidth = 42.0f;
+
+        /// <summary>
+        /// 右列字段的标签宽度。Unity 默认按面板宽度取比例，宽面板下标签会把字段挤到最右边、
+        /// 中间空一大片；这里钉成固定值，所有字段左对齐成一条线。
+        /// </summary>
+        private const float DetailLabelWidth = 84.0f;
 
         /// <summary>窄于这个宽度就不分列：清单折到上面，详情接在下面（跟着后处理那边的阈值习惯）。</summary>
         private const float MinSplitWidth = 300.0f;
@@ -182,8 +188,9 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 int count = list != null ? list.arraySize : 0;
 
                 float listHeight = Mathf.Max(RowHeight, count * (RowHeight + RowSpacing));
-                Rect area = EditorGUILayout.GetControlRect(
-                    false,
+                // 宽度必须显式钉住：只给 options 的话在横向布局里行会被拉宽，右列的字段就跟着变窄。
+                Rect area = GUILayoutUtility.GetRect(
+                    ListWidth,
                     listHeight,
                     GUILayout.Width(ListWidth),
                     GUILayout.Height(listHeight));
@@ -266,7 +273,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             Rect swatch = new Rect(row.x + 6.0f, row.y + (row.height - SwatchSize) * 0.5f, SwatchSize, SwatchSize);
             EditorGUI.DrawRect(swatch, color);
 
-            Rect rightRect = new Rect(row.xMax - 48.0f, row.y, 44.0f, row.height);
+            Rect rightRect = new Rect(row.xMax - 42.0f, row.y, 38.0f, row.height);
             Rect nameRect = new Rect(
                 swatch.xMax + 6.0f,
                 row.y,
@@ -432,19 +439,29 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         {
             ClampSelection();
 
-            if (listMode == ListMode.Parts)
+            // 标签宽度只在画右列时收紧，画完立刻还原（别影响面板里其他部分）。
+            float previousLabelWidth = EditorGUIUtility.labelWidth;
+            EditorGUIUtility.labelWidth = DetailLabelWidth;
+            try
             {
-                if (partsProperty != null && partsProperty.arraySize > 0)
+                if (listMode == ListMode.Parts)
                 {
-                    DrawSelectedPart();
+                    if (partsProperty != null && partsProperty.arraySize > 0)
+                    {
+                        DrawSelectedPart();
+                    }
                 }
-            }
-            else if (selectionsProperty != null && selectionsProperty.arraySize > 0)
-            {
-                DrawSelectedSelection();
-            }
+                else if (selectionsProperty != null && selectionsProperty.arraySize > 0)
+                {
+                    DrawSelectedSelection();
+                }
 
-            DrawGroupSettings();
+                DrawGroupSettings();
+            }
+            finally
+            {
+                EditorGUIUtility.labelWidth = previousLabelWidth;
+            }
         }
 
         private void DrawSelectedPart()
@@ -459,6 +476,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 DrawDetailHeader(
                     colorProperty != null ? colorProperty.colorValue : Color.gray,
                     string.IsNullOrEmpty(partName) ? "（空名字）" : partName,
+                    BuildRowIdText(partName),
                     "这一项的身份：名字决定槽位，槽位决定像素里 ID 的低字节。");
 
                 DrawProperty(nameProperty, new GUIContent("名字", "组内唯一。它决定槽位号 = 像素里 ID 的低字节。"));
@@ -467,7 +485,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 DrawProperty(colorProperty, new GUIContent("显示色", "debug 视图与面板色块用的颜色；像素里不存颜色，只存 ID。"));
                 DrawProperty(entry.FindPropertyRelative("includeChildren"), new GUIContent("展开子级", "拖入 GameObject 或预制件实例时，包含它下面的子级 Renderer。"));
 
-                EditorGUILayout.Space(4.0f);
+                EditorGUILayout.Space(2.0f);
                 DrawRendererList(entry.FindPropertyRelative("renderers"), colorProperty != null ? colorProperty.colorValue : Color.gray);
             }
 
@@ -487,28 +505,28 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 DrawDetailHeader(
                     colorProperty != null ? colorProperty.colorValue : Color.gray,
                     string.IsNullOrEmpty(selectionName) ? "（空名字）" : selectionName,
+                    selectionId > 0 ? selectionId.ToString() : "—",
                     "选区是跨部件的具名集合：它有自己的 8 bit ID 空间，材质侧引用的是名字。");
 
                 DrawProperty(nameProperty, new GUIContent("名字", "全局唯一。材质里引用的是这个名字。"));
                 DrawProperty(entry.FindPropertyRelative("tags"), new GUIContent("标签"));
                 DrawProperty(colorProperty, new GUIContent("显示色", "debug 与 AOV manifest 用的颜色。"));
-                EditorGUILayout.LabelField(
-                    selectionId > 0 ? $"Cryptomatte ID {selectionId}" : "未注册（没有消费者引用时不会分配）",
-                    EditorStyles.miniLabel);
             }
 
             EditorGUILayout.Space(SectionSpacing);
         }
 
-        private static void DrawDetailHeader(Color color, string title, string tooltip)
+        private static void DrawDetailHeader(Color color, string title, string rightText, string tooltip)
         {
             Rect header = EditorGUILayout.GetControlRect(false, RowHeight);
             Rect swatch = new Rect(header.x, header.y + (header.height - SwatchSize) * 0.5f, SwatchSize, SwatchSize);
             EditorGUI.DrawRect(swatch, color);
+            Rect rightRect = new Rect(header.xMax - 42.0f, header.y, 38.0f, header.height);
             GUI.Label(
-                new Rect(swatch.xMax + 6.0f, header.y, Mathf.Max(0.0f, header.width - SwatchSize - 8.0f), header.height),
+                new Rect(swatch.xMax + 6.0f, header.y, Mathf.Max(0.0f, rightRect.x - swatch.xMax - 8.0f), header.height),
                 new GUIContent(title, tooltip),
                 rowNameStyle);
+            EditorGUI.LabelField(rightRect, rightText, EditorStyles.centeredGreyMiniLabel);
         }
 
         private void DrawGroupSettings()
@@ -522,20 +540,28 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                DrawProperty(groupIdProperty, new GUIContent("组 ID", "1-255，它是 ID 的高字节。组 0 保留：0 表示「未注册」，也是 RSUV 被重置后的值。"));
+                // 组 ID 是 1-255 的索引，不是连续可调的参数：给个整数框，比一条 250px 的滑块省地方也更好对齐。
+                var groupIdLabel = new GUIContent("组 ID", "1-255，它是 ID 的高字节。组 0 保留：0 表示「未注册」，也是 RSUV 被重置后的值。");
+                int groupId = Mathf.Clamp(groupIdProperty != null ? groupIdProperty.intValue : 1, 1, HoObjectBufferPaletteLimits.MaxGroups - 1);
+                int editedGroupId = EditorGUILayout.DelayedIntField(groupIdLabel, groupId);
+                editedGroupId = Mathf.Clamp(editedGroupId, 1, HoObjectBufferPaletteLimits.MaxGroups - 1);
+                if (groupIdProperty != null && editedGroupId != groupIdProperty.intValue)
+                {
+                    groupIdProperty.intValue = editedGroupId;
+                    structureChanged = true;
+                }
+
+                if (groupIdProperty != null && groupIdProperty.intValue == 0)
+                {
+                    validationMessage = "组 ID 是 0（保留值）：这个组不会写进 palette。随便改成 1-255 即可。";
+                }
+
                 DrawProperty(groupTagsProperty, new GUIContent("组级标签", "放在组表那一行，用于「整组」语义（例如 CharacterFull），不必在每个部件行重复。"));
                 DrawProperty(priorityProperty, new GUIContent("优先级", "同一个 Renderer 被多个组命中时优先级高者生效；相同时离 Renderer 最近的组生效。"));
-                EditorGUILayout.Space(2.0f);
                 DrawProperty(faceBoneProperty, new GUIContent("面部朝向", "角色朝向的参考 Transform（骨骼或朝向正确的空物体）。逐像素朝向会与层 0 的获胜身份同步 resolve；留空表示不产出朝向图。"));
                 DrawProperty(faceForwardAxisProperty, new GUIContent("脸前轴", "骨骼的哪个局部轴作为「脸前方」。默认 +Z。"));
                 DrawProperty(faceRightAxisProperty, new GUIContent("右轴", "骨骼的哪个局部轴作为「角色右侧」。默认 +X。"));
                 DrawProperty(faceUpAxisProperty, new GUIContent("上轴", "骨骼的哪个局部轴作为「角色上方」。默认 +Y。"));
-
-                int groupId = Mathf.Clamp(groupIdProperty != null ? groupIdProperty.intValue : 0, 0, HoObjectBufferPaletteLimits.MaxGroups - 1);
-                if (groupId == 0)
-                {
-                    validationMessage = "组 ID 0 被保留，这个组不会写进 palette。请改成 1-255。";
-                }
             }
         }
 
