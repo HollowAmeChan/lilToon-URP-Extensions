@@ -140,6 +140,31 @@ _UsePlanarReflection             → 只在总开关打开时生效
 
 ## 3. 执行
 
+> **R6 checklist（删 MetadataBuffer 的 surface 族，按序做，每步都要两个检查器过）**
+>
+> **状态：零读者已确认**（两仓全域 grep）—— 采样 surface 族的 shader 只剩 `HoMetadataBufferDebug.shader`
+> （MB 自己的调试页），C# 引用只剩 MB 自己的文件（Pass / RenderTargets / ShaderConstants / DebugPass）。
+> 外部读者（SSS / PLR / DebugTile / ScreenProcess 兜底）已全部摘掉。
+>
+> 目前 MB 的附件布局（`HoMetadataBufferAttachmentLayout`）：`0 MaskId / 1 SurfaceData / 2 Custom0 /
+> 3 ObjectCustom0 / 4 ObjectCustom1 / 5 ReflectionMaterial`；另外 `SurfaceColor` 是**独立的一趟**
+> （自己的 ShaderTagId `HoMetadataBufferSurfaceColor` + 自己的 RT + 不透明/透明两条 draw list）。
+>
+> 1. **删 SurfaceColor 那一趟**（自包含）：22 个 lilblock 里的 `LightMode = "HoMetadataBufferSurfaceColor"`
+>    pass 块、`lil_pass_metadata_buffer.hlsl` 的 `fragMetadataBufferSurfaceColor` 与它的 resolve 函数、
+>    C# 的 ShaderTagId / RT / draw list / clear pass / 兼容绑定、`HoMetadataBufferShaderConstants` 里
+>    `SurfaceColor*` 三处、`HoMetadataBufferRenderTargets` 的字段与分配/释放、debug 模式与视图条目。
+> 2. **删主 pass 的 SurfaceData / ReflectionMaterial 两个槽**：lilToon 的输出结构体与写出、
+>    布局常量重编号为 `0 MaskId / 1 Custom0 / 2 ObjectCustom0 / 3 ObjectCustom1`（**6 → 4 MRT**，
+>    D3D 要求附件从 0 连续）、C# 的附件数与绑定、debug 模式与视图条目、`RenderGraphResources` 的三个字段。
+> 3. **重编号 debug 枚举**：`HoMetadataBufferDebugMode` 里 Thickness / Curvature / Material /
+>    TransmittanceHint / SurfaceColor / ReflectionMaterial 六项删除后，**枚举值与 shader 里的字面量
+>    mode 号必须同步改**（枚举、`HoMetadataBufferDebug.shader` 的 `mode == N`、视图登记表三处一致）。
+>    或者按"调试枚举只能往后加"的惯例保留数字、只把名字换成 retired —— 二选一，做之前定。
+> 4. 文档：删 §2.1 桥接表里 surface 那几行、§3 表里 step 4/5/6 收尾，并把"MB 只剩身份/自定义"写清楚。
+>
+> **不要跳步**：第 1、2 步各自是原子的（跨两仓同一提交），中间任何时刻树都应当是编译通过、观感正确的。
+
 | 步骤 | 内容 | 验收 |
 | --- | --- | --- |
 | **1**（部分） | 名字进契约 v2（§3 模板 + §5 变更记录） | 五张数值纹理 + internal SurfaceOwner 已按 §2.1 定名落地；semantic owner/lane MSAA 句柄待 semantic pass |
