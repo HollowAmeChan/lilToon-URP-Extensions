@@ -32,12 +32,12 @@
 
 ### 0.3 已闭合的 P0 与实现约束
 
-#### 0.3.1 Facing 必须和身份 resolve 绑定
+#### 0.3.1 Facing 改为"按身份查表"，不建逐像素朝向图
 
-- ID pass 的每个 MSAA sample 同时写 `sampleId + sampleFacing`。
-- 先完成 ID 数票/排序，再从 **ranked layer 0 获胜 ID** 所属 sample 取 Facing。同 ID 有多个 sample 时，以线性眼深最近、sample index 为次级平票得到确定结果。
-- `_HoObjectBufferFacingTexture` **只与 ranked layer 0 身份对齐**。查询 layer 1..3 时不得误用它。
-- 多角色同屏由每像素的获胜 ID 自然支持；**禁止跨 ID 平均方向**。
+- 朝向（`origin / forward / side / up`）是**每个角色一份的常量**（来自组上的参考朝向 + 三轴），不是逐像素几何量：现有唯一消费者（眼透相机角度修正）本来就是把它算成每角色一对 yaw/pitch 再按角色 ID 查表。
+- 所以消费端只需：拿像素里 **ranked layer 0 的获胜身份** → 取它的组 → 查该组的朝向。**禁止跨 ID 平均方向**这条由"按 ID 查表"天然满足——多角色同屏、遮挡、轮廓交界都自动正确。
+- 会**相对身体转动**的部件（头 / 脸 / 前发…）在部件条目上填「朝向覆盖」，查询时优先用它。这是"逐部件"，不是"逐像素"。
+- **什么时候才需要真做逐像素朝向图**（满足任一条）：① 同一部件内部朝向逐像素不同（例如蒙皮后每个像素跟随不同骨骼）；② 出现需要 sample 级朝向的消费者（例如逐 sample 的光照参考系）。到那时再加 `_HoObjectBufferFacingTexture`，并且仍然与层 0 身份同步 resolve。
 
 #### 0.3.2 `K=N=4 无损` 必须收紧
 
@@ -205,7 +205,7 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但 `D:\Unity_Fo
 | `_HoObjectBufferId0Texture` / `Id1Texture` | RGBA8 ×2 | **身份池**（ranked）：各 4 层，`Id0 = 组 8 bit`、`Id1 = 槽位 8 bit` | 常开 |
 | `_HoObjectBufferCoverageTexture` | RGBA8 | **身份池覆盖率**：4 层，不归一化（残差 = 背景占比） | 常开 |
 | `_HoACSelection0Texture` ... `_HoACSelection7Texture` | RGBA8 ×2/4/8 | AC 统一 resolve 后的固定 lane；每张 `R=id0,G=cov0,B=id1,A=cov1` | 按 schema 启用 4/8/16 lane；归 AC，**不是 OB 输出** |
-| `_HoObjectBufferFacingTexture` | RGBA8 | 逐像素辅助量，`RG = octahedral(forward)`、`BA = octahedral(side)`；**与 ranked identity layer 0 的获胜 ID 同步 resolve，禁止跨角色平均**；消费端重建第三轴并正交化 | 按需（有物体提供 `faceBone` 才开） |
+| `_HoObjectBufferFacingTexture` | RGBA8 | **暂不实现**（0.3.1：朝向是每角色常量，按身份查表即可）。留作"逐像素朝向"需求出现时的落点：`RG = octahedral(forward)`、`BA = octahedral(side)`，与层 0 获胜 ID 同步 resolve | 需求出现时才开 |
 | 组表 / 条目表 | StructuredBuffer | §1.2 | 常开（小） |
 | 内部 depth-stencil | 深度格式 | 两段式占用判定 + tie-break | **不发布** |
 
@@ -225,7 +225,7 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但 `D:\Unity_Fo
 | feature / 代码目录 | `HoObjectBufferRendererFeature`；`Runtime/ObjectBuffer/`（R1 从 `Runtime/CharacterBuffer/` 改名搬迁；CB 那批文件就是骨架，选择层完好） |
 | 组件 | **`HoObjectBufferGroup`**（今天的 `HoMetadataBufferGroup`：组 ID / 部件 ID / 标记 / 物体位名单 / 朝向）、**`HoObjectBufferSubject`**（今天的 `HoMetadataBufferSubject`：逐物体覆盖） |
 | Volume | **`HoObjectBufferVolume`**（**调试入口**；`VolumeComponentMenu("Post-processing/Ho-ObjectBuffer/逐物体通道")`） |
-| 纹理 | `_HoObjectBufferId0Texture` / `_HoObjectBufferId1Texture` / `_HoObjectBufferCoverageTexture`（身份池）、`_HoObjectBufferFacingTexture`；统一 Selection 输出名归 AC（`_HoACSelection{0..7}Texture`） |
+| 纹理 | `_HoObjectBufferId0Texture` / `_HoObjectBufferId1Texture` / `_HoObjectBufferCoverageTexture`（身份池）；统一 Selection 输出名归 AC（`_HoACSelection{0..7}Texture`）。朝向按身份查表，不建图（0.3.1） |
 | 表 | `_HoObjectBufferGroups`、`_HoObjectBufferEntries` |
 | 契约登记族 | **`object.*`**（`object.selection` / `object.facing` / `object.palette`）；CB 时代的 `character.*` 一律不用 |
 | 禁用名 | `Cryptomatte` / `crypto_*` / `_HoCryptomatte*` / `HoCryptomatteGroup` —— **本 feature 一个都不用** |
@@ -270,7 +270,7 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但 `D:\Unity_Fo
 | 阶段 | 内容 | 验收 |
 | --- | --- | --- |
 | **R1** | CharacterBuffer → ObjectBuffer 迁移；落实 IdentityMS/identity resolve/Facing、`HoSemanticSchema`、entry semantic mask、lilToon `HoObjectBuffer` pass、Reverse-Z 与 actual-N 诊断 | 编译通过；相机 AA 关掉仍请求 4x；ID/Facing/object semantic debug 可见 |
-| **R2** | 朝向图：`faceBone` + 三轴（已有）→ MSAA sample Facing 写入→跟随 layer 0 获胜 ID resolve 到 `_HoObjectBufferFacingTexture` + debug 视图 | 多角色同屏/遮挡/轮廓交界时 Facing 不跨 ID 平均；眼透相机角度修正读到与 layer 0 身份一致的 forward / side |
+| **R2** | 朝向消费：组级「朝向参考系」+ 部件级「朝向覆盖」→ 消费端按层 0 获胜身份取组查朝向（**不建逐像素朝向图**，理由与触发条件见 0.3.1）；眼透相机角度修正从 MetadataBuffer 版切到 OB 版 | 多角色同屏/遮挡/轮廓交界时朝向不跨 ID 平均；眼透相机角度修正读到与 layer 0 身份一致的 forward / side |
 | **R3/R4** | 消费者迁移：角色特化 → AC（组 / 物体位 / 覆盖率）；ScreenProcess → 只吃具名遮罩（V2 §6.2） | 行为不变或更好；`Requires*` 诊断可删 |
 | **R5** | SSS / PLR 的**遮罩**切过来（数值走 SB） | 行为不变；无跨来源相乘 |
 | **R6** | 与 SB 一起删 MetadataBuffer | 全仓库无 `_HoMetadataBuffer` 引用 |

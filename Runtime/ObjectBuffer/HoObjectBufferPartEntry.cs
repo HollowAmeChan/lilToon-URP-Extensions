@@ -36,6 +36,12 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         [Tooltip("拖入 GameObject 或预制件实例时，包含它下面的子级 Renderer；关闭时只使用物体自身的 Renderer。")]
         public bool includeChildren = true;
 
+        [InspectorName("朝向覆盖")]
+        [Tooltip("留空 = 用组上的「朝向参考系」。只有**会相对身体转动**的部件才需要填（头 / 脸 / 前发…）：" +
+                 "头转到侧面而身体没动时，组那一份朝向对脸就不准了。三个轴向沿用组的配置，这里只换参考骨骼。" +
+                 "它只影响朝向查询，不影响身份与覆盖率。")]
+        public Transform faceBone;
+
         [InspectorName("渲染器")]
         [Tooltip("这个部件包含哪些 Renderer（拖 GameObject 或 Renderer 进来）。")]
         public UnityEngine.Object[] renderers;

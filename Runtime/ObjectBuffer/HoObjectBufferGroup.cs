@@ -133,6 +133,10 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         /// 以 <see cref="faceBone"/> 的局部轴按三个轴向配置换算成世界向量；
         /// 未设置朝向时返回 false。不负责相机相关计算，仅输出朝向参考数据。
         /// 与 <c>HoMetadataBufferGroup.TryGetWorldFacing</c> 同形——消费者从 MetadataBuffer 切过来时不用改调用方式。
+        /// <para>
+        /// 朝向是**每个角色一份的常量**（不是逐像素几何量），所以它按"查表"消费：
+        /// 拿到像素里层 0 的获胜身份 → 取它的组 → 调这里。不需要逐像素的朝向纹理。
+        /// </para>
         /// </summary>
         public bool TryGetWorldFacing(
             out Vector3 position,
@@ -140,7 +144,32 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             out Vector3 right,
             out Vector3 up)
         {
-            if (faceBone == null)
+            return TryGetWorldFacing(faceBone, out position, out forward, out right, out up);
+        }
+
+        /// <summary>
+        /// 部件级朝向：条目上填了「朝向覆盖」就用它，留空则继承组。三个轴向沿用组的配置
+        /// （只有参考骨骼可能不同）——头/脸这类会相对身体转动的部件才需要它。
+        /// </summary>
+        public bool TryGetWorldFacing(
+            string partName,
+            out Vector3 position,
+            out Vector3 forward,
+            out Vector3 right,
+            out Vector3 up)
+        {
+            HoObjectBufferPartEntry entry = FindPart(partName);
+            return TryGetWorldFacing(entry != null ? entry.faceBone : null, out position, out forward, out right, out up);
+        }
+
+        private bool TryGetWorldFacing(
+            Transform reference,
+            out Vector3 position,
+            out Vector3 forward,
+            out Vector3 right,
+            out Vector3 up)
+        {
+            if (reference == null)
             {
                 position = Vector3.zero;
                 forward = Vector3.zero;
@@ -149,10 +178,10 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 return false;
             }
 
-            position = faceBone.position;
-            forward = GetLocalAxis(faceBone, faceForwardAxis).normalized;
-            right = GetLocalAxis(faceBone, faceRightAxis).normalized;
-            up = GetLocalAxis(faceBone, faceUpAxis).normalized;
+            position = reference.position;
+            forward = GetLocalAxis(reference, faceForwardAxis).normalized;
+            right = GetLocalAxis(reference, faceRightAxis).normalized;
+            up = GetLocalAxis(reference, faceUpAxis).normalized;
             return true;
         }
 
@@ -289,13 +318,10 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
             lastWrittenRenderers.Clear();
 
-            int written = 0;
-            int skippedOtherGroup = 0;
             foreach (KeyValuePair<Renderer, int> pair in localSlotByRenderer)
             {
                 if (IsOwnedByOtherGroup(pair.Key))
                 {
-                    skippedOtherGroup++;
                     continue;
                 }
 
@@ -307,18 +333,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 }
 
                 lastWrittenRenderers.Add(pair.Key);
-
-                // 诊断：把"写给了谁、写了什么 ID"打出来。画面是洋红（unknown 行）时，用它区分
-                // "CPU 写错了对象/写了表外的值" 与 "写对了但 shader 读到无效 RSUV"。
-                if (written < 5)
-                {
-                    Debug.Log($"[Ho-ObjectBuffer] RSUV 写入：组 {groupId} 槽 {pair.Value} => 0x{partId:X4} @ {pair.Key.name} ({pair.Key.GetType().Name})");
-                }
-
-                written++;
             }
-
-            Debug.Log($"[Ho-ObjectBuffer] RSUV 汇总（组 {groupId} / {name}）：收集 renderer={localSlotByRenderer.Count} 写入={written} 被别组接管={skippedOtherGroup}");
         }
 
         /// <summary>

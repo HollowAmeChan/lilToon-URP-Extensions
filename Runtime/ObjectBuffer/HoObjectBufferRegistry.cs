@@ -392,26 +392,6 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             }
 
             WarnAboutConflicts();
-
-            // 诊断（重建时一次）：把表的前几行与组行的内容直接打出来，用于核对"像素里的 ID → 表行"是否对得上。
-            // 洋红（unknown 行）有两种完全不同的原因：① 像素 ID 不在表里（残留 RSUV / 组没覆盖到）；
-            // ② 表本身是空的或组行 slotCount=0。两者的修法完全不同，所以这里把表内容摆出来。
-            var diag = new System.Text.StringBuilder();
-            diag.Append($"[Ho-ObjectBuffer] palette：部件行={partRows.Length} 组行={groupRows.Length} 选择行={selectionRows.Length}");
-            for (int i = 0; i < System.Math.Min(3, partRows.Length); i++)
-            {
-                diag.Append($" | 行{i} id=0x{partRows[i].partId:X4} color=({partRows[i].displayColor.x:0.##},{partRows[i].displayColor.y:0.##},{partRows[i].displayColor.z:0.##})");
-            }
-
-            for (int g = 0; g < groupRows.Length; g++)
-            {
-                if (groupRows[g].slotCount > 0u)
-                {
-                    diag.Append($" | 组{g} rowBase={groupRows[g].rowBase} slots={groupRows[g].slotCount} tags={groupRows[g].tags}");
-                }
-            }
-
-            Debug.Log(diag.ToString());
         }
 
         private static int lastWarnedConflictCount = -1;
@@ -435,7 +415,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             }
 
             Debug.LogWarning($"[Ho-ObjectBuffer] {conflicts.Count} 个 Renderer 被多个部件条目同时命中" +
-                             "（最常见的原因：拖了父级、展开子级之后与别的条目重叠）。已按「优先级 → 层级距离 → 条目顺序」裁决；" +
+                             "（最常见的原因：拖了父级、展开子级之后与别的条目重叠）。已按「层级距离 → 组 ID」裁决；" +
                              "逐条明细在各 HoObjectBufferGroup 的 Inspector 里。");
         }
 

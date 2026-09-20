@@ -80,7 +80,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private int selectedSelection;
         private int draggingIndex = -1;
         private bool structureChanged;
-        private bool showGroupSettings;
+        private bool showFacing;
 
         private void OnEnable()
         {
@@ -478,7 +478,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                     DrawSelectedSelection();
                 }
 
-                DrawGroupSettings();
+                DrawFacingSection();
             }
             finally
             {
@@ -506,6 +506,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 DrawProperty(entry.FindPropertyRelative("tags"), new GUIContent("标签", "位掩码：一个部件同时属于多个语义时用它（例如 CharacterFull = 该组任意部件）。"));
                 DrawProperty(colorProperty, new GUIContent("显示色", "debug 视图与面板色块用的颜色；像素里不存颜色，只存 ID。"));
                 DrawProperty(entry.FindPropertyRelative("includeChildren"), new GUIContent("展开子级", "拖入 GameObject 或预制件实例时，包含它下面的子级 Renderer。"));
+                DrawProperty(entry.FindPropertyRelative("faceBone"), new GUIContent("朝向覆盖", "留空 = 用组上的「朝向参考系」。只有会相对身体转动的部件（头 / 脸 / 前发…）才需要填。"));
 
                 EditorGUILayout.Space(2.0f);
                 DrawRendererList(entry.FindPropertyRelative("renderers"));
@@ -553,10 +554,10 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             EditorGUI.LabelField(rightRect, rightText, EditorStyles.centeredGreyMiniLabel);
         }
 
-        private void DrawGroupSettings()
+        private void DrawFacingSection()
         {
-            showGroupSettings = EditorGUILayout.Foldout(showGroupSettings, "组设置", true);
-            if (!showGroupSettings)
+            showFacing = EditorGUILayout.Foldout(showFacing, "朝向参考系", true);
+            if (!showFacing)
             {
                 return;
             }
@@ -564,17 +565,10 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                // 组 ID 只读：注册表认领已落盘的号，没号或撞车的补到最小可用号（编辑器期写回组件）。
-                // 手填它只会制造"两个组件抢同一个号"，所以这里只显示结果。
-                int assignedGroupId = GetAssignedGroupId();
-                EditorGUILayout.LabelField(
-                    new GUIContent("组 ID", "自动分配：像素里身份的高字节，也是组表下标（上限 255 个组）。注册表按最小可用号分配并写回组件，所以新建/删除别的组件不会让已有的组换号。"),
-                    new GUIContent(assignedGroupId > 0 ? $"0x{assignedGroupId:X2}（自动）" : "待分配（下一次重建时给号）"));
-
-                DrawProperty(faceBoneProperty, new GUIContent("面部朝向", "角色朝向的参考 Transform（骨骼或朝向正确的空物体）。逐像素朝向会与层 0 的获胜身份同步 resolve；留空表示不产出朝向图。"));
-                DrawProperty(faceForwardAxisProperty, new GUIContent("脸前轴", "骨骼的哪个局部轴作为「脸前方」。默认 +Z。"));
-                DrawProperty(faceRightAxisProperty, new GUIContent("右轴", "骨骼的哪个局部轴作为「角色右侧」。默认 +X。"));
-                DrawProperty(faceUpAxisProperty, new GUIContent("上轴", "骨骼的哪个局部轴作为「角色上方」。默认 +Y。"));
+                DrawProperty(faceBoneProperty, new GUIContent("参考朝向", "整个物件的朝向参考（骨骼或朝向正确的空物体）。留空表示不提供朝向。"));
+                DrawProperty(faceForwardAxisProperty, new GUIContent("脸前轴", "参考物体的哪个局部轴作为「脸前方」。默认 +Z。"));
+                DrawProperty(faceRightAxisProperty, new GUIContent("右轴", "参考物体的哪个局部轴作为「角色右侧」。默认 +X。"));
+                DrawProperty(faceUpAxisProperty, new GUIContent("上轴", "参考物体的哪个局部轴作为「角色上方」。默认 +Y。"));
             }
         }
 
