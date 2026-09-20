@@ -279,4 +279,34 @@ float4 HoAC_Attribute(float2 uv, uint attributeId)
     return float4(0.0, 0.0, 0.0, 0.0);
 }
 
+/// <summary>
+/// 与 <see cref="HoAC_Attribute"/> 同一份取值，但**用线性采样**：给"要在属性图上做模糊 / 扩散"的消费者用
+/// （SSS 的扩散就是这样 —— 点采样会把 profile / thickness 采成台阶）。
+/// 可用性判定（`HoAC_SurfaceValid`）仍是点采样：validity 是逐像素的 0/1，不该被插值。
+/// </summary>
+float4 HoAC_AttributeLinear(float2 uv, uint attributeId)
+{
+    if (!HoAC_SurfaceValid(uv))
+    {
+        return float4(0.0, 0.0, 0.0, 0.0);
+    }
+
+    if (attributeId == 0u)
+    {
+        return SAMPLE_TEXTURE2D_X(_HoSurfaceBufferClassificationTexture, sampler_LinearClamp, uv);
+    }
+
+    if (attributeId == 1u)
+    {
+        return SAMPLE_TEXTURE2D_X(_HoSurfaceBufferMaterialTexture, sampler_LinearClamp, uv);
+    }
+
+    if (attributeId == 2u)
+    {
+        return SAMPLE_TEXTURE2D_X(_HoSurfaceBufferReflectionTexture, sampler_LinearClamp, uv);
+    }
+
+    return float4(0.0, 0.0, 0.0, 0.0);
+}
+
 #endif
