@@ -1,22 +1,26 @@
 using System;
 using System.Collections.Generic;
-using lilToon.URP.Extensions.MetadataBuffer;
+using lilToon.URP.Extensions.ObjectBuffer;
 using UnityEngine;
 using UnityEngine.Rendering;
 
 namespace lilToon.URP.Extensions.CharacterSpecialization
 {
     /// <summary>
-    /// 每个 characterId 一行 (平转角, 俯仰角) 的相机角度查询表，每个渲染相机各持一份。
-    /// 眼睛透过在 Composite 中按眼睛捕获的角色 ID（预乘取回）采样本表，
+    /// 每个**角色组**一行 (平转角, 俯仰角) 的相机角度查询表，每个渲染相机各持一份。
+    /// 眼睛透过在 Composite 中按**该像素层 0 获胜身份所属的组 ID**（OB 身份池）采样本表，
     /// 得到相机相对该角色面部朝向的平转/俯仰角后做视锥内/外判定。
     /// 表内容由 CPU 在每条相机渲染前（AddRenderPasses，URP17 fork 主路径的唯一时机）
-    /// 按当前渲染相机与 HoMetadataBufferGroup 提供的世界朝向计算，
+    /// 按当前渲染相机与 <see cref="HoObjectBufferGroup"/> 提供的世界朝向（「朝向参考系」）计算，
     /// 并把“该相机的表”设为全局纹理 _lilHoCharacterEyeAngleTable。
     /// 因为“写表→本相机 composite 读取”在每条相机的渲染循环内顺序成对，
     /// 多相机（Scene 视图 + 游戏相机、多屏、录制相机）各自使用自己的表，互不干扰，无需任何“活动相机”判定。
-    /// 行号 = group.characterId (0-255)；同一 characterId 有多个组且都提供了朝向时，后写者覆盖。
-    /// 未提供朝向或未启用时行数据为 (0,0)，曲线因子恒为 1（等价于不修正）。
+    /// <para>
+    /// R2：数据源与查表键都从 MetadataBuffer 的 characterId 换成 **OB 的组 ID**（0.3.1）——
+    /// 两者是同一套 ID 才有意义：屏幕空间那边读的是身份池里层 0 的组字节。
+    /// 行号 = <c>group.groupId</c>（1-255，由注册表自动分配）；同一组 ID 不可能有第二个组。
+    /// 未提供朝向、或该组没有参与朝向时行数据为 (0,0)，曲线因子恒为 1（等价于不修正）。
+    /// </para>
     /// </summary>
     internal sealed class HoCharacterEyeAngleTable : IDisposable
     {
@@ -61,10 +65,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
             Array.Clear(entry.data, 0, entry.data.Length);
             Vector3 cameraPosition = camera.transform.position;
-            IReadOnlyList<HoMetadataBufferGroup> groups = HoMetadataBufferGroup.GetActiveGroups();
+            // R2：朝向数据源是 OB 的「朝向参考系」（组级默认 + 部件级覆盖，这里取组级——
+            // 眼透角度修正是每角色一个因子，逐像素那层留给屏幕空间消费端按身份查）。
+            IReadOnlyList<HoObjectBufferGroup> groups = HoObjectBufferGroup.GetActiveGroups();
             for (int i = 0; i < groups.Count; i++)
             {
-                HoMetadataBufferGroup group = groups[i];
+                HoObjectBufferGroup group = groups[i];
                 if (group == null || !group.isActiveAndEnabled)
                 {
                     continue;
@@ -77,8 +83,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 }
 
                 ComputeAngles(cameraPosition, origin, forward, right, up, out float yaw, out float pitch);
-                int charId = Mathf.Clamp(group.characterId, 0, CharacterCount - 1);
-                int index = charId * FloatCountPerCharacter;
+                // 行号 = OB 组 ID（注册表自动分配，唯一）。0 是保留值，跳过。
+                int groupId = Mathf.Clamp(group.groupId, 0, CharacterCount - 1);
+                if (groupId == 0)
+                {
+                    continue;
+                }
+
+                int index = groupId * FloatCountPerCharacter;
                 entry.data[index] = yaw;
                 entry.data[index + 1] = pitch;
             }

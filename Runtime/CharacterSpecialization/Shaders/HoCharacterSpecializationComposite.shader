@@ -60,6 +60,9 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             TEXTURE2D_X(_lilHoCharacterEyeColorTexture);
             TEXTURE2D_X(_lilHoCharacterEyeDataTexture);
             TEXTURE2D(_lilHoCharacterEyeAngleTable);
+            // R2：角度表的行号来自 OB 身份池层 0 的组字节（Id0.r）——与写表时用的 OB 组 ID 同一套。
+            TEXTURE2D_X(_HoObjectBufferId0Texture);
+            float _HoObjectBufferValid;
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseSourceColorTexture);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseColorTexture);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseDepthTexture);
@@ -262,6 +265,19 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 return saturate(frontHair * eyeAlpha * revealArea * hairInFront * same * _HoCharacterEyeRevealParams.x);
             }
 
+            /// <summary>本像素所属角色的行号：OB 身份池层 0 的组字节（R2 起统一用 OB 口径）。</summary>
+            float ResolveObjectBufferGroupId(float2 uv)
+            {
+                if (_HoObjectBufferValid < 0.5)
+                {
+                    return 0.0;
+                }
+
+                // Id0 的 R 通道 = 层 0 获胜身份的**组**字节（Id0 = (组0, 槽0, 组1, 槽1)）。
+                float4 id0 = SAMPLE_TEXTURE2D_X(_HoObjectBufferId0Texture, sampler_PointClamp, uv);
+                return round(saturate(id0.r) * 255.0);
+            }
+
             float ResolveEyeAngleFactor(float2 uv)
             {
                 float strength = saturate(_HoCharacterEyeAngleParams.x);
@@ -272,8 +288,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
 
                 // 与 RevealEyeMask 的 SameCharacter 同源：用眼睛捕获里的角色 ID（预乘取回）作为表的行号，
                 // 避免 maskId.g（前发像素的角色 ID）与设置骨骼的 Group 错位导致的空行。
-                float4 eyeData = SAMPLE_TEXTURE2D_X(_lilHoCharacterEyeDataTexture, sampler_PointClamp, uv);
-                float charId = round((eyeData.b / max(eyeData.r, 0.0001)) * 255.0);
+                float charId = ResolveObjectBufferGroupId(uv);
                 float2 yawPitch = SAMPLE_TEXTURE2D(_lilHoCharacterEyeAngleTable, sampler_PointClamp, float2((charId + 0.5) / 256.0, 0.5)).xy;
                 // 某轴 range 为 0 表示该轴不参与衰减。
                 float2 activeAxis = step(0.001, abs(_HoCharacterEyeAngleParams.yz));
@@ -662,8 +677,8 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 if (debugMode == 17)
                 {
                     // 表原始信息：R = |平转角|/180，G = |俯仰角|/180，B = 强度（>0 表示修正参数已进入渲染）。
-                    float4 debugEyeData = SAMPLE_TEXTURE2D_X(_lilHoCharacterEyeDataTexture, sampler_PointClamp, uv);
-                    float debugCharId = round((debugEyeData.b / max(debugEyeData.r, 0.0001)) * 255.0);
+                    // 行号与正式路径一致，都取 OB 身份池层 0 的组字节。
+                    float debugCharId = ResolveObjectBufferGroupId(uv);
                     float2 debugYawPitch = SAMPLE_TEXTURE2D(_lilHoCharacterEyeAngleTable, sampler_PointClamp, float2((debugCharId + 0.5) / 256.0, 0.5)).xy;
                     return half4(abs(debugYawPitch.x) / 180.0, abs(debugYawPitch.y) / 180.0, saturate(_HoCharacterEyeAngleParams.x), source.a);
                 }

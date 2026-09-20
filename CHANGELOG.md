@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `Ho-ObjectBuffer` **R2（第一步）**：眼透相机角度修正切到 OB 口径——角度表数据源改为 `HoObjectBufferGroup`（行号 = **OB 组 ID**，朝向取「朝向参考系」），屏幕空间查表键改为 **OB 身份池层 0 的组字节**（`Id0.r`，新增 `ResolveObjectBufferGroupId`，并加 `_HoObjectBufferValid` 兜底），于是多角色同屏不再跨 ID 平均、且不再依赖眼睛捕获缓冲里的预乘角色 ID。眼睛**遮罩**链路仍走 MetadataBuffer，随 R3/R4 的消费者迁移一起切。
+
 - `Ho-ObjectBuffer`：**R1 收口**（规划 0.3.11 的四项）——① 发布 `requested` / `actual` 采样数：全局 `_HoObjectBufferRequestedSamples` / `_HoObjectBufferActualSamples` + 「Sample Count」调试视图（绿 4x / 橙 2x / 红 1x）+ 降级时告警一次，C# 侧读 `HoObjectBufferPass.LastActualSamples`；② 部件行表的全局名改为 `_HoObjectBufferEntries`（与 §1.2 对齐）；③ 删掉选择层里没人读的溢出计数；④ 把"身份池溢出在 N ≤ 4 下结构性不可能"写成结论（0.3.2）。**回归验证器已实跑通过**（`Id0=(1,1,1,1)` / `CoverageTotal=(1,1,1,1)` / `Valid=(0,0.796,0,1)` 绿哨兵 / `Id3=(0.271,0.271,0.271,1)` 背景灰），调查期那个硬编码 PTP 场景路径的场景诊断已删除，验证器保留为整链自检。
 
 - `Ho-ObjectBuffer`：部件条目的「类别」正名为**「角色组分」**——它是"这个部件是角色的哪一块"（单值、互斥），本质是"角色的预置选区"（角色有固定语义，场景才用自由创建的选区，见规划 0.3.12）；枚举显示名同步中文，并写明 AC 上线也不改这套分类。顺带把**标签位撤出面板**（部件与选区两处）：它现在没有任何消费端、四位还混了角色语义与表面语义，字段保留不动契约，权威路径留给 R3/R4 的 schema + lane mask（规划 0.3.13）。
