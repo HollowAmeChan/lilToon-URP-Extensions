@@ -1,4 +1,4 @@
-﻿// Compatibility-mode hooks are kept for projects that still run URP's non-RenderGraph path.
+// Compatibility-mode hooks are kept for projects that still run URP's non-RenderGraph path.
 #pragma warning disable CS0618, CS0672
 
 using UnityEngine;
@@ -8,6 +8,8 @@ using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 using lilToon.URP.Extensions.MetadataBuffer;
 using lilToon.URP.Extensions.GeometryBuffer;
+// SSS 的表面数值来源已从 MB 的 surface 族切到 SB（经 AC 的门面）：
+using lilToon.URP.Extensions.SurfaceBuffer;
 
 namespace lilToon.URP.Extensions.SubsurfaceScattering
 {
@@ -437,8 +439,12 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 passData.source = cameraColor;
                 passData.maskIdTexture = metadataResources.maskIdTexture;
                 passData.normalDepthTexture = geometryResources.normalDepthTexture;
-                passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
-                passData.sssTexture = metadataResources.surfaceColorTexture;
+                HoSurfaceBufferRenderGraphResources surfaceResources = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
+                // 表面数值改从 SB 拿（AC 的门面读的就是这些全局名）：MB 的 surfaceData / surfaceColor 在
+                // SSS 这条链上退役。material / reflection / owner 的全局名由 SB 的 pass 自己绑好
+                // （RDG 用 SetGlobalTextureAfterPass），这里只需要**声明读依赖**，别让 RDG 以为没人读。
+                passData.surfaceDataTexture = surfaceResources.classificationTexture;
+                passData.sssTexture = surfaceResources.colorTexture;
                 passData.material = material;
                 passData.sssParams = CreateSssParams(settings, cameraData.cameraTargetDescriptor, source.GetDescriptor(renderGraph));
                 passData.gateParams = CreateGateParams(settings);
@@ -449,6 +455,9 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
                 builder.UseTexture(passData.surfaceDataTexture, AccessFlags.Read);
                 builder.UseTexture(passData.sssTexture, AccessFlags.Read);
+                builder.UseTexture(surfaceResources.materialTexture, AccessFlags.Read);
+                builder.UseTexture(surfaceResources.reflectionTexture, AccessFlags.Read);
+                builder.UseTexture(surfaceResources.ownerTexture, AccessFlags.Read);
                 builder.SetRenderAttachment(source, 0, AccessFlags.WriteAll);
                 builder.SetGlobalTextureAfterPass(source, HoSubsurfaceScatteringShaderConstants.SourceTextureId);
                 builder.AllowGlobalStateModification(true);
@@ -457,8 +466,8 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                     SetMaterialProperties(data.material, data.sssParams, data.gateParams, data.color);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, data.sssTexture);
+                    context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ClassificationTextureId, data.surfaceDataTexture);
+                    context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ColorTextureId, data.sssTexture);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                 });
             }

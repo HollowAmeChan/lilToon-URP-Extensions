@@ -18,8 +18,10 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
 
         TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
         TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
-        TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture);
-        TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
+        // 表面数值统一从 AC 的门面取（`HoAC_Attribute` / `HoAC_SurfaceValid`）：SB 的数值面 + owner 对齐，
+        // MB 的 surface 族在 SSS 这条链上退役。
+        #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACQuery.hlsl"
+        TEXTURE2D_X(_HoSurfaceBufferColorTexture);
         TEXTURE2D_X(_lilHoSSSSourceTexture);
         TEXTURE2D_X(_lilHoSSSTransmissionTexture);
 
@@ -63,14 +65,25 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
             return normalize(encodedNormal * 2.0 - 1.0);
         }
 
+        // **兼容行**：把 AC 的属性按老 `surfaceData` 的通道序拼出来 ——
+        //   r = thickness（SB 的 Material.b）
+        //   g = transmittanceHint（Classification.b）
+        //   b = sssProfileIdByte（Classification.r）
+        //   a = curvatureHint（Classification.g）
+        // 于是下面 20 多处调用点（profile 精确比较、thinness、两个 transmission multiplier…）**一行都不用改**，
+        // 迁移只发生在这两个 helper 里。"0 值与未写可区分"由 `HoAC_SurfaceValid` 负责（无效像素的整行是 0）。
         float4 HoSSSSurfaceData(float2 uv)
         {
-            return SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture, sampler_PointClamp, uv);
+            float4 classification = HoAC_Attribute(uv, 0);
+            float4 material = HoAC_Attribute(uv, 1);
+            return float4(material.b, classification.b, classification.r, classification.g);
         }
 
         float4 HoSSSSurfaceDataLinear(float2 uv)
         {
-            return SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture, sampler_LinearClamp, uv);
+            float4 classification = HoAC_AttributeLinear(uv, 0);
+            float4 material = HoAC_AttributeLinear(uv, 1);
+            return float4(material.b, classification.b, classification.r, classification.g);
         }
 
         float HoSSSInterleavedNoise(float2 uv)
@@ -160,7 +173,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
 
         float HoSSSSurfaceMask(float2 uv, float4 normalDepth, float4 surfaceData)
         {
-            return step(0.5, _HoMetadataBufferActive) * saturate(HoSSSCoverage(uv) * HoSSSThinness(surfaceData)) * HoSSSGeometryValid(normalDepth);
+            return (HoAC_SurfaceValid(uv) ? 1.0 : 0.0) * saturate(HoSSSCoverage(uv) * HoSSSThinness(surfaceData)) * HoSSSGeometryValid(normalDepth);
         }
 
         float HoSSSSurfaceMask(float2 uv, float4 normalDepth)
@@ -595,8 +608,10 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
                 float mask = HoSSSSurfaceMask(uv, normalDepth);
                 float active = step(1.0e-4, mask);
                 float4 cameraColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
-                float4 sssSource = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_LinearClamp, uv);
-                float sourceWeight = saturate(sssSource.a);
+                float4 sssSource = SAMPLE_TEXTURE2D_X(_HoSurfaceBufferColorTexture, sampler_LinearClamp, uv);
+                // SB 的 `Color.a` 恒 1（不承载覆盖率），所以"这个像素用不用表面色"改由 owner 对齐判定：
+                // SB 的前表面就是 OB 层 0 那个身份才用，否则保留相机色（等价于老 `SurfaceColor.a` 的覆盖率语义）。
+                float sourceWeight = HoAC_SurfaceValid(uv) ? 1.0 : 0.0;
                 float3 sourceColor = cameraColor.rgb * (1.0 - sourceWeight) + sssSource.rgb;
 
                 return float4(sourceColor * active, mask);
