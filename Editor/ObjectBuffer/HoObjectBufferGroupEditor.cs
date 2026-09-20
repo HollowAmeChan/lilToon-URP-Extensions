@@ -55,10 +55,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private static GUIStyle switchActiveLabelStyle;
         private static bool stylesResolved;
 
-        /// <summary>标签位的值与显示名（显示名从枚举的 <see cref="InspectorNameAttribute"/> 上取，面板不另存一份名字）。</summary>
-        private static HoObjectBufferPartTags[] partTagValues;
-        private static GUIContent[] partTagLabels;
-
         private static readonly Color RowHighlight = new Color(0.30f, 0.55f, 0.95f, 0.16f);
         private static readonly Color RowHover = new Color(1.0f, 1.0f, 1.0f, 0.06f);
         private static readonly Color RowAccent = new Color(0.35f, 0.65f, 1.0f, 0.85f);
@@ -573,7 +569,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 HandleDrop(headerRect, renderersProperty);
 
                 DrawProperty(nameProperty, new GUIContent("名字", "组内唯一。它决定槽位号 = 像素里 ID 的低字节。"));
-                DrawTagsRow(entry.FindPropertyRelative("tags"));
+                DrawProperty(entry.FindPropertyRelative("tags"), new GUIContent("标签", "这个部件在角色语义上属于哪几类（位掩码，可多选）：可以同时是「全角色」和「脸」。只有角色特化读它，按「组 + 标签 + 覆盖率」取遮罩。这里只放角色语义——材质类的语义是表面语义，归 SB。新的角色级开关都往这张表里加一位，不要再新开字段。"));
                 DrawProperty(colorProperty, new GUIContent("显示色", "debug 视图与面板色块用的颜色；像素里不存颜色，只存 ID。"));
                 DrawProperty(entry.FindPropertyRelative("includeChildren"), new GUIContent("展开子级", "拖入 GameObject 或预制件实例时，包含它下面的子级 Renderer。"));
                 DrawProperty(entry.FindPropertyRelative("faceBone"), new GUIContent("朝向覆盖", "留空 = 用组上的「朝向参考系」。只有会相对身体转动的部件（头 / 脸 / 前发…）才需要填。"));
@@ -963,86 +959,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         }
 
         // ------------------------------------------------------------------ 小工具
-
-        /// <summary>标签位的显示名：从枚举自己的 <see cref="InspectorNameAttribute"/> 取，加一位只需要改枚举。</summary>
-        private static void EnsurePartTagLabels()
-        {
-            if (partTagLabels != null)
-            {
-                return;
-            }
-
-            var values = (HoObjectBufferPartTags[])System.Enum.GetValues(typeof(HoObjectBufferPartTags));
-            var keptValues = new List<HoObjectBufferPartTags>(values.Length);
-            var keptLabels = new List<GUIContent>(values.Length);
-            for (int i = 0; i < values.Length; i++)
-            {
-                // 预留位不进面板：现在没有任何消费端，勾了只会变成脏数据；等人认领时在枚举里改名即可自动出现。
-                if (values[i] == HoObjectBufferPartTags.None || values[i] == HoObjectBufferPartTags.Reserved)
-                {
-                    continue;
-                }
-
-                string name = values[i].ToString();
-                var field = typeof(HoObjectBufferPartTags).GetField(name);
-                var inspectorName = field != null
-                    ? (InspectorNameAttribute)System.Attribute.GetCustomAttribute(field, typeof(InspectorNameAttribute))
-                    : null;
-                keptValues.Add(values[i]);
-                keptLabels.Add(new GUIContent(inspectorName != null ? inspectorName.displayName : name));
-            }
-
-            partTagValues = keptValues.ToArray();
-            partTagLabels = keptLabels.ToArray();
-        }
-
-        /// <summary>
-        /// 标签行：位掩码 ⇒ 画成一排**可多选**的开关（沿用左列的扁平按钮），窄面板上自动折行。
-        /// 折行位置只由标签宽度决定，所以 Layout 与 Repaint 两次分配的行数一致。
-        /// </summary>
-        private static void DrawTagsRow(SerializedProperty property)
-        {
-            if (property == null)
-            {
-                return;
-            }
-
-            EnsureStyles();
-            EnsurePartTagLabels();
-
-            const float chipGap = 2.0f;
-            const float minChipWidth = 34.0f;
-            float labelWidth = EditorGUIUtility.labelWidth;
-            int mask = property.intValue;
-
-            Rect row = EditorGUILayout.GetControlRect(false, RowHeight);
-            float chipOrigin = row.x + labelWidth;
-            EditorGUI.LabelField(
-                new Rect(row.x, row.y, labelWidth, row.height),
-                new GUIContent("标签", "这个部件在角色语义上属于哪几类（位掩码，可多选）：可以同时是「全角色」和「脸」。\n" +
-                                        "只有角色特化读它，按「组 + 标签 + 覆盖率」取遮罩。\n" +
-                                        "这里只放角色语义——材质类的语义是表面语义，归 SB。"));
-
-            float cursor = chipOrigin;
-            for (int i = 0; i < partTagValues.Length; i++)
-            {
-                float width = Mathf.Max(minChipWidth, switchActiveLabelStyle.CalcSize(partTagLabels[i]).x + 4.0f);
-                if (cursor > chipOrigin && cursor + width > row.xMax)
-                {
-                    row = EditorGUILayout.GetControlRect(false, RowHeight);
-                    cursor = row.x + labelWidth;
-                }
-
-                var chip = new Rect(cursor, row.y, width, row.height);
-                if (DrawSwitchButton(chip, partTagLabels[i], (mask & (int)partTagValues[i]) != 0))
-                {
-                    property.intValue = mask ^ (int)partTagValues[i];
-                    mask = property.intValue;
-                }
-
-                cursor += width + chipGap;
-            }
-        }
 
         private static void DrawProperty(SerializedProperty property, GUIContent label, bool includeChildren = false)
         {
