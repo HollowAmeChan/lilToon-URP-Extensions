@@ -145,6 +145,12 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 };
 
                 cmd.SetGlobalFloat(HoSurfaceBufferShaderConstants.ActiveId, 1.0f);
+                cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ColorTextureId, colorTexture.nameID);
+                cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.NormalTextureId, normalTexture.nameID);
+                cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.MaterialTextureId, materialTexture.nameID);
+                cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ReflectionTextureId, reflectionTexture.nameID);
+                cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ClassificationTextureId, classificationTexture.nameID);
+                cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.OwnerTextureId, ownerTexture.nameID);
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
                 context.DrawRenderers(renderingData.cullResults, ref drawingSettings, ref filteringSettings, ref renderStateBlock);

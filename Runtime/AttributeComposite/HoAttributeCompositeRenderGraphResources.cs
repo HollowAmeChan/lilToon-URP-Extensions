@@ -29,10 +29,24 @@ namespace lilToon.URP.Extensions.AttributeComposite
         public TextureHandle identityId1Texture = TextureHandle.nullHandle;
         public TextureHandle identityCoverageTexture = TextureHandle.nullHandle;
 
+        /// <summary>
+        /// 引用：SB 的**数值面**（Classification 四通道 + 逐像素 owner）——`HoAC_Attribute` 的 surface 来源。
+        /// AC 不复制这几张图：属性合成本轮是**读取时**做的（`valid ? surface : constant`），
+        /// 只有真需要"一张合成属性图"时才落成 RT（规划 §2 的 1~2 张）。
+        /// </summary>
+        public TextureHandle surfaceClassificationTexture = TextureHandle.nullHandle;
+        public TextureHandle surfaceOwnerTexture = TextureHandle.nullHandle;
+
+        /// <summary>SB 的数值面本帧有没有产出（没有的话 `HoAC_Attribute` 全是 constant 兜底）。</summary>
+        public bool surfaceValid;
+
         public bool HasSelectionPool => laneCount > 0 && selectionTextures[0].IsValid();
 
         public bool HasIdentityPool =>
             identityId0Texture.IsValid() && identityId1Texture.IsValid() && identityCoverageTexture.IsValid();
+
+        /// <summary>`HoAC_Attribute` 能不能拿到 surface 值（拿不到就是 constant 兜底，不是错值）。</summary>
+        public bool HasSurfaceAttributes => surfaceValid && surfaceClassificationTexture.IsValid() && surfaceOwnerTexture.IsValid();
 
         public override void Reset()
         {
@@ -45,6 +59,9 @@ namespace lilToon.URP.Extensions.AttributeComposite
             identityId0Texture = TextureHandle.nullHandle;
             identityId1Texture = TextureHandle.nullHandle;
             identityCoverageTexture = TextureHandle.nullHandle;
+            surfaceClassificationTexture = TextureHandle.nullHandle;
+            surfaceOwnerTexture = TextureHandle.nullHandle;
+            surfaceValid = false;
         }
     }
 }

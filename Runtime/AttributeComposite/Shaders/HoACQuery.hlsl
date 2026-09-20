@@ -4,8 +4,9 @@
 // Ho-AttributeComposite（AC）查询门面（规划 §3）。**消费端只经这里读语义与属性**：
 // 不自己解码 OB/SB 的 packing、也不自己攒语义图；RenderGraph 的物理读依赖仍要各自声明。
 //
-// 本轮（R3-obj）落地的：Identity / Group / Layer0Identity / Predicate / TotalCoverage / Selection。
-// `HoAC_Attribute` 是 composite 属性的入口，等 SB 落地（R4c）才有生产者，现在恒 0。
+// 本轮（R3-obj / R4b / R4c）落地的：Identity / Group / Layer0Identity / Predicate / TotalCoverage /
+// Selection / Attribute / SurfaceValid。`HoAC_Attribute` 现在有生产者了：surface 来自 SB 的
+// Classification + owner（`constant < surface`，读取时合成）。
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferIdPass.hlsl"
@@ -218,12 +219,44 @@ float HoAC_SelectionByName(float2 uv, uint laneIndex)
     return HoAC_Selection(uv, laneIndex);
 }
 
+// SB 的数值面（AC 只发布**引用**：属性合成是读取时做的，不落一张合成图）。
+TEXTURE2D_X(_HoSurfaceBufferClassificationTexture);
+TEXTURE2D_X(_HoSurfaceBufferOwnerTexture);
+float _HoSurfaceBufferActive;
+
 /// <summary>
-/// 合成数值属性（roughness / thickness / class …）。**本轮没有生产者**（SB 未落地，
-/// 覆盖链 `constant &lt; surface` 属 R4c），所以恒 0 —— 消费者现在不要依赖它。
+/// 这个像素的 surface 数值能不能用：SB 有产出 **且** SB 的前表面就是 OB 层 0 说的那个身份
+/// （规划 §0.1 的 owner 对齐）。不匹配时消费者拿到的是 constant 兜底，不是错值。
+/// </summary>
+bool HoAC_SurfaceValid(float2 uv)
+{
+    if (_HoSurfaceBufferActive <= 0.5)
+    {
+        return false;
+    }
+
+    float4 ownerTexel = SAMPLE_TEXTURE2D_X(_HoSurfaceBufferOwnerTexture, sampler_PointClamp, uv);
+    uint owner = (((uint)round(saturate(ownerTexel.r) * 255.0)) << 8) | (uint)round(saturate(ownerTexel.g) * 255.0);
+    return owner != 0u && owner == HoAC_Layer0Identity(uv);
+}
+
+/// <summary>
+/// 合成数值属性：覆盖链 `constant &lt; surface`（规划 §4）。本轮只有**一条**：
+/// `Classification` = `(sssProfileIdByte, curvatureHint, transmittanceHint, materialClassIdByte)`。
+/// <list type="bullet">
+/// <item>`attributeId`：0 = Classification；其它值本轮没有生产者，返回 0（消费者不要依赖）。</item>
+/// <item>byte 通道是**精确 ID**：`round(v * 255)` 还原；`0` 是合法值，"没写"要用
+/// <see cref="HoAC_SurfaceValid"/> 区分 —— 这正是"0 值与未写可区分"那条验收。</item>
+/// <item>constant 兜底本轮恒 0：等真有消费者要非 0 兜底，再加 AC 侧的常量表（feature 的声明节）。</item>
+/// </list>
 /// </summary>
 float4 HoAC_Attribute(float2 uv, uint attributeId)
 {
+    if (attributeId == 0u && HoAC_SurfaceValid(uv))
+    {
+        return SAMPLE_TEXTURE2D_X(_HoSurfaceBufferClassificationTexture, sampler_PointClamp, uv);
+    }
+
     return float4(0.0, 0.0, 0.0, 0.0);
 }
 

@@ -240,15 +240,16 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 });
             }
 
-            PublishResources(resources, selectionTextures, laneCount, objectBufferResources);
+            PublishResources(resources, selectionTextures, laneCount, objectBufferResources, surfaceResources);
         }
 
-        /// <summary>把 Selection 池与身份池引用一起发布（规划 §0.1：句柄是引用，依赖各自声明）。</summary>
+        /// <summary>把 Selection 池与身份池 / SB 数值面的引用一起发布（规划 §0.1：句柄是引用，依赖各自声明）。</summary>
         private static void PublishResources(
             HoAttributeCompositeRenderGraphResources resources,
             TextureHandle[] selectionTextures,
             int laneCount,
-            HoObjectBufferRenderGraphResources objectBufferResources)
+            HoObjectBufferRenderGraphResources objectBufferResources,
+            HoSurfaceBufferRenderGraphResources surfaceResources)
         {
             for (int i = 0; i < resources.selectionTextures.Length; i++)
             {
@@ -259,6 +260,11 @@ namespace lilToon.URP.Extensions.AttributeComposite
             resources.identityId0Texture = objectBufferResources.id0Texture;
             resources.identityId1Texture = objectBufferResources.id1Texture;
             resources.identityCoverageTexture = objectBufferResources.coverageTexture;
+            // `HoAC_Attribute` 的来源：SB 的数值面（Classification + owner）。语义 lane 关掉也照样发布 ——
+            // 属性合成与语义 lane 是两条独立的通路。
+            resources.surfaceClassificationTexture = surfaceResources.classificationTexture;
+            resources.surfaceOwnerTexture = surfaceResources.ownerTexture;
+            resources.surfaceValid = surfaceResources.HasRequiredTextures;
         }
 
         /// <summary>
