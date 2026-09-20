@@ -67,6 +67,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private static readonly GUIContent RemoveSelectionLabel = new GUIContent("-", "删除当前选中的选区");
         private static readonly GUIContent RefreshLabel = new GUIContent("刷新全场景 RSUV", "重新编译 palette 并把 RSUV 索引写回所有 renderer（RSUV 不会被序列化，场景/域重载后必须重写）。");
 
+        private SerializedProperty assignmentModeProperty;
         private SerializedProperty faceBoneProperty;
         private SerializedProperty faceForwardAxisProperty;
         private SerializedProperty faceRightAxisProperty;
@@ -84,6 +85,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
         private void OnEnable()
         {
+            assignmentModeProperty = serializedObject.FindProperty("assignmentMode");
             faceBoneProperty = serializedObject.FindProperty("faceBone");
             faceForwardAxisProperty = serializedObject.FindProperty("faceForwardAxis");
             faceRightAxisProperty = serializedObject.FindProperty("faceRightAxis");
@@ -528,6 +530,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             {
                 // 组 ID 常驻一行（只读）：它是自动分配的、平时不用动，但必须随时看得见。
                 DrawAssignedGroupIdRow();
+                DrawProperty(assignmentModeProperty, new GUIContent("赋值方式", "一个物体被多个部件条目命中时怎么裁决。\n指定（默认）：重叠算配置错误，面板底部逐条列出来，同组内取条目顺序在前的那个。\n覆盖：顺序即优先级，排在下面的条目接管上面条目里的同一个物体（顶上放一条“全体”，下面放各细分组），不再报冲突。\n覆盖不做标签继承：想让被接管的物体同时保住上面那条的位，就在覆盖条目的标签里一起勾上。"));
 
                 if (listMode == ListMode.Parts)
                 {

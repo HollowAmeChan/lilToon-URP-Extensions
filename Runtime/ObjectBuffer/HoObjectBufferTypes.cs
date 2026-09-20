@@ -100,6 +100,26 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         Reserved = 1 << 7
     }
 
+    /// <summary>
+    /// 同一个 renderer 被多个部件条目命中时怎么办。**默认「指定」**：重叠视为配置错误，逐条列出来让你改。
+    /// <list type="bullet">
+    /// <item>像素里的身份是 16 bit `组:8 | 槽位:8`，一个renderer 只可能有一个身份，所以"重叠"本身没法表达 ——
+    /// 这一项选的不是"要不要允许重叠"，而是**用哪种显式规则决定归谁**，以及要不要把它当错误报出来。</item>
+    /// <item><b>指定</b>：同一组内按条目顺序**取前**（列表从上到下就是身份与优先的顺序），重叠记进冲突列表。</item>
+    /// <item><b>覆盖</b>：同一组内按条目顺序**取后** —— 顶上放一条"全体"，下面放各细分组，后者接管前者的物体；
+    /// 这是显式选择的行为，不再报冲突。**覆盖是"这一块归我、标签我说了算"，不做标签继承**：
+    /// 想让被覆盖的物体同时保有上面那条的位，就在覆盖条目的标签里把它一起勾上（例如人体那条勾「全角色 + 人体」）。</item>
+    /// <item>跨组仍然是"离 Renderer 更近的组胜、距离相同用组 ID 定序"，与本项无关。</item>
+    /// </list>
+    /// </summary>
+    public enum HoObjectBufferAssignmentMode
+    {
+        [InspectorName("指定（重叠即冲突）")]
+        Specify = 0,
+        [InspectorName("覆盖（后项接管前项）")]
+        Override = 1
+    }
+
     /// <summary>调试视图：与 shader 里的 mode 数值一一对应，加新视图只能往后加（不要插在中间）。</summary>
     public enum HoObjectBufferDebugMode
     {

@@ -49,6 +49,10 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         [FormerlySerializedAs("characterId")]
         public int groupId;
 
+        [InspectorName("赋值方式")]
+        [Tooltip("一个物体被多个部件条目命中时怎么裁决。\n指定（默认）：重叠视为配置错误，冲突逐条列在面板底部，同组内取条目顺序在前的那个。\n覆盖：顺序即优先级，排在下面的条目接管上面条目里的同一个物体（顶上放一条“全体”，下面放各细分组）；这是显式选择的行为，不再报冲突。\n覆盖是“这块归我、标签我说了算”，不做标签继承——想让被覆盖的物体同时保住上面那条的位，就在覆盖条目的标签里一起勾上。")]
+        public HoObjectBufferAssignmentMode assignmentMode = HoObjectBufferAssignmentMode.Specify;
+
         [InspectorName("部件")]
         public List<HoObjectBufferPartEntry> parts = new List<HoObjectBufferPartEntry>();
 
@@ -295,7 +299,10 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
                 CollectRenderers(entry, renderer =>
                 {
-                    if (!localSlotByRenderer.ContainsKey(renderer))
+                    // 同组内的裁决规则与 ResolveAssignments 必须一致：指定 = 取条目顺序在前者，
+                    // 覆盖 = 后面的条目接管（于是"顶上一条全体 + 下面各细分组"能work）。
+                    if (assignmentMode == HoObjectBufferAssignmentMode.Override
+                        || !localSlotByRenderer.ContainsKey(renderer))
                     {
                         localSlotByRenderer[renderer] = slot;
                     }
@@ -377,9 +384,9 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         }
 
         /// <summary>
-        /// 跨组冲突解决：一个 renderer 只属于一个部件。优先级相同则取层级距离更近的组；
-        /// 同组内两条目命中同一个 renderer 时按**条目顺序**取前者。
-        /// 由注册表在重建表之前调用一次；**所有重复都会记进 <see cref="Conflicts"/>**，不静默吞掉。
+        /// 一个 renderer 只属于一个部件。**跨组**取层级距离更近的组（距离相同用组 ID 定序）；
+        /// **同组内按条目顺序**：指定模式取前者、覆盖模式取后者（见 <see cref="assignmentMode"/>）。
+        /// 由注册表在重建表之前调用一次；指定模式下的重复全部记进 <see cref="Conflicts"/>，不静默吞掉。
         /// </summary>
         public static void ResolveAssignments()
         {
@@ -392,6 +399,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 {
                     continue;
                 }
+
+                bool overridesLater = group.assignmentMode == HoObjectBufferAssignmentMode.Override;
                 // GetPartNames() 返回的是复用的缓存列表，而冲突记录会再次调它——
                 // 这里先拷一份快照，避免"迭代中清空同一个 List"这类自己咬自己的 bug。
                 var partNames = new List<string>(group.GetPartNames());
@@ -421,6 +430,23 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                             return;
                         }
 
+                        // 同组内：指定 = 前者胜（existing 必定是更早的条目），覆盖 = 后者胜。
+                        if (ReferenceEquals(existing.group, group) && ReferenceEquals(candidate.group, group))
+                        {
+                            if (overridesLater)
+                            {
+                                Assignments[renderer] = candidate;
+                            }
+                            else
+                            {
+                                Conflicts.Add(MakeConflict(renderer, existing, candidate));
+                            }
+
+                            return;
+                        }
+
+                        // 跨组：距离更近者胜、距离相同用组 ID 定序。两个组抢同一个 renderer
+                        // 属于真的配置冲突（不管哪一边是不是覆盖模式），一律报出来。
                         if (candidate.IsHigherPriorityThan(existing))
                         {
                             Conflicts.Add(MakeConflict(renderer, candidate, existing));
