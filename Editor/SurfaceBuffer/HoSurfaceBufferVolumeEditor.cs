@@ -63,6 +63,10 @@ namespace lilToon.URP.Extensions.Editor.SurfaceBuffer
                     return "绿 = 与 OB 层 0 一致，橙 = 写了但对不上，红 = 没人写（SB 没画到这个像素），洋红 = OB 没产出。";
                 case HoSurfaceBufferDebugMode.ClassId:
                     return "R = 材质类（÷32 显示）。";
+                case HoSurfaceBufferDebugMode.SemanticOwner:
+                    return "语义 lane 的 owner：绿 = 与 OB 层 0 一致，橙 = 对不上，红 = 没人写，洋红 = OB 没产出。";
+                case HoSurfaceBufferDebugMode.SemanticLanes:
+                    return "8 条语义 lane 铺成 4×2 网格（左到右 lane 0..3 / 4..7）：通道 = (SemanticId÷255, value, 写了没有)；未写是暗红。";
                 default:
                     // Off：没有要解释的东西就不画那一行。
                     return string.Empty;
