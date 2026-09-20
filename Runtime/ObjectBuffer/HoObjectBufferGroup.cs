@@ -50,8 +50,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         public int groupId;
 
         [InspectorName("赋值方式")]
-        [Tooltip("一个物体被多个部件条目命中时怎么裁决。\n指定（默认）：重叠视为配置错误，冲突逐条列在面板底部，同组内取条目顺序在前的那个。\n覆盖：顺序即优先级，排在下面的条目接管上面条目里的同一个物体（顶上放一条“全体”，下面放各细分组）；这是显式选择的行为，不再报冲突。\n覆盖是“这块归我、标签我说了算”，不做标签继承——想让被覆盖的物体同时保住上面那条的位，就在覆盖条目的标签里一起勾上。")]
-        public HoObjectBufferAssignmentMode assignmentMode = HoObjectBufferAssignmentMode.Specify;
+        [Tooltip("一个物体被多个部件条目命中时归谁。默认「覆盖」。\n覆盖：顺序即优先级，排在下面的条目接管上面条目里的同一个物体 —— “顶上一条『全体』（全角色），下面人体 / 脸 / 前发（各自的位）”直接可写，不用反选、不用逐部件重复勾。同组内不再报冲突。\n指定：重叠算配置错误，面板底部逐条列出来，同组内取条目顺序在前的那个（想审计哪些物体被谁接管时切回来）。\n两种模式都不做标签继承：条目的标签就是它拿到的那些物体的全部标签，想让被接管的物体同时保住上面那条的位，就在下面那条里一起勾。")]
+        public HoObjectBufferAssignmentMode assignmentMode = HoObjectBufferAssignmentMode.Override;
 
         [InspectorName("部件")]
         public List<HoObjectBufferPartEntry> parts = new List<HoObjectBufferPartEntry>();
@@ -299,8 +299,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
                 CollectRenderers(entry, renderer =>
                 {
-                    // 同组内的裁决规则与 ResolveAssignments 必须一致：指定 = 取条目顺序在前者，
-                    // 覆盖 = 后面的条目接管（于是"顶上一条全体 + 下面各细分组"能work）。
+                    // 同组内的裁决规则必须与 ResolveAssignments 一致：覆盖（默认）取后者、指定取前者。
                     if (assignmentMode == HoObjectBufferAssignmentMode.Override
                         || !localSlotByRenderer.ContainsKey(renderer))
                     {
@@ -385,8 +384,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         /// <summary>
         /// 一个 renderer 只属于一个部件。**跨组**取层级距离更近的组（距离相同用组 ID 定序）；
-        /// **同组内按条目顺序**：指定模式取前者、覆盖模式取后者（见 <see cref="assignmentMode"/>）。
-        /// 由注册表在重建表之前调用一次；指定模式下的重复全部记进 <see cref="Conflicts"/>，不静默吞掉。
+        /// **同组内按条目顺序**：覆盖（默认）取后者、指定取前者（见 <see cref="assignmentMode"/>）。
+        /// 由注册表在重建表之前调用一次；指定模式下的同类重复全部记进 <see cref="Conflicts"/>，不静默吞掉。
         /// </summary>
         public static void ResolveAssignments()
         {
@@ -430,7 +429,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                             return;
                         }
 
-                        // 同组内：指定 = 前者胜（existing 必定是更早的条目），覆盖 = 后者胜。
+                        // 同组内：覆盖 = 后者接管（预期行为，不报）；指定 = 前者胜并报出来。
                         if (ReferenceEquals(existing.group, group) && ReferenceEquals(candidate.group, group))
                         {
                             if (overridesLater)
@@ -446,7 +445,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                         }
 
                         // 跨组：距离更近者胜、距离相同用组 ID 定序。两个组抢同一个 renderer
-                        // 属于真的配置冲突（不管哪一边是不是覆盖模式），一律报出来。
+                        // 属于真的配置冲突，一律报出来。
                         if (candidate.IsHigherPriorityThan(existing))
                         {
                             Conflicts.Add(MakeConflict(renderer, candidate, existing));

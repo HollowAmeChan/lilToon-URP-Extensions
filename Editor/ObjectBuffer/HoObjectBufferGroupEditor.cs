@@ -530,7 +530,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             {
                 // 组 ID 常驻一行（只读）：它是自动分配的、平时不用动，但必须随时看得见。
                 DrawAssignedGroupIdRow();
-                DrawProperty(assignmentModeProperty, new GUIContent("赋值方式", "一个物体被多个部件条目命中时怎么裁决。\n指定（默认）：重叠算配置错误，面板底部逐条列出来，同组内取条目顺序在前的那个。\n覆盖：顺序即优先级，排在下面的条目接管上面条目里的同一个物体（顶上放一条“全体”，下面放各细分组），不再报冲突。\n覆盖不做标签继承：想让被接管的物体同时保住上面那条的位，就在覆盖条目的标签里一起勾上。"));
 
                 if (listMode == ListMode.Parts)
                 {
@@ -669,6 +668,14 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private void DrawFooter()
         {
             EditorGUILayout.Space(SectionSpacing);
+
+            // 赋值方式作用于整份部件列表（不是选中的那一项），所以它的位置是"整块面板的底部"，
+            // 而不是右列里跟条目字段混在一起——右列画的是"当前选中的这一项"。
+            float previousLabelWidth = EditorGUIUtility.labelWidth;
+            EditorGUIUtility.labelWidth = DetailLabelWidth;
+            DrawProperty(assignmentModeProperty, new GUIContent("赋值方式", "一个物体被多个部件条目命中时归谁（作用于整份列表，不是选中的那一项）。\n覆盖（默认）：条目顺序即优先级，排在下面的条目接管上面条目里的同一个物体——顶上一条「全体」（全角色），下面人体 / 脸 / 前发各自勾自己的位；同组内不再报冲突。\n指定：重叠算配置错误，底下逐条列出来，同组内取条目顺序在前的那个（想审计「谁接管了谁」时切回来）。\n两种模式都不继承标签：条目的标签就是它拿到的那些物体的全部标签，想让被接管的物体同时保住上面那条的位，就在下面那条里一起勾。"));
+            EditorGUIUtility.labelWidth = previousLabelWidth;
+
             using (new EditorGUILayout.HorizontalScope())
             {
                 int partRows = Mathf.Max(0, HoObjectBufferRegistry.PartRowCount - 1);
