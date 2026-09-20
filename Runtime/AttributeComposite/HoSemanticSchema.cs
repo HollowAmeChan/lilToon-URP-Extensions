@@ -184,11 +184,13 @@ namespace lilToon.URP.Extensions.AttributeComposite
                     displayName = DisplayNameOf(tag, memberName),
                     semanticId = bit + 1,
                     laneIndex = bit,
-                    // 物体位这 8 条默认 **表面覆盖物体**：SB（材质）写了就以材质为准（细化 / 收窄），
-                    // 没写就回落到 OB 的物体位 —— 于是"没有 SB 生产的物体 / 关掉语义趟"照样有语义。
-                    // 材质**只能覆盖它自己 renderer 已经有的位**：SB 的材质 pass 先按 palette 表读那份
-                    // 物体位掩码才写，那道门在数据上把住（规划 §0.3.6）。
-                    sourceMode = HoSemanticSourceMode.SurfaceOverride,
+                    // 物体位这 8 条默认 **交集**（`o × s`）：表面侧**只能收窄 / 细化，不能扩张**。
+                    // 这是用户确认过的语义（"SB 只允许覆盖" + "细化 / 收窄"）：
+                    // 原来用 SurfaceOverride（写了就用 s）会在"部分覆盖"的像素上把 1 补到物体侧只有 0.x 的地方，
+                    // 眼睛边缘（刘海/睫毛压着、眼白与虹膜交界）全是这种像素 —— 移动时逐帧在 1 与 o 之间摆，
+                    // 表现就是拖影。Intersection 从原理上消掉这种扩张：物体侧没有的地方，材质写多少都是 0。
+                    // 想让某个语义允许材质"扩张"（例如整块靠材质点亮）时，单独把它改成 SurfaceOverride。
+                    sourceMode = HoSemanticSourceMode.Intersection,
                     objectTagBit = bit,
                     debugColor = DebugColorOf(bit)
                 });
