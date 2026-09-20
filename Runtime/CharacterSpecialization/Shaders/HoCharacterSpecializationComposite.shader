@@ -23,6 +23,8 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            // 语义只经 AC 查询（规划 §3）：这里不再自己声明/解码 OB 的身份池与部件表。
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACQuery.hlsl"
 
             float4 _HoCharacterEyeRevealParams; // x strength, y feather px, z dilation px, w depth bias
             float4 _HoCharacterEyeAngleParams; // x strength, y yaw range deg, z pitch range deg, w softness deg
@@ -58,9 +60,6 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             TEXTURE2D_X(_lilHoCharacterEyeColorTexture);
             TEXTURE2D_X(_lilHoCharacterEyeDataTexture);
             TEXTURE2D(_lilHoCharacterEyeAngleTable);
-            // R2：组（角色）字节来自 OB 身份池层 0（Id0.r）—— 角度表行号与"同角色"判定都用它。
-            TEXTURE2D_X(_HoObjectBufferId0Texture);
-            float _HoObjectBufferValid;
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseSourceColorTexture);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseColorTexture);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseDepthTexture);
@@ -204,13 +203,10 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 return saturate(sum);
             }
 
-            /// <summary>本像素所属角色的**组字节**（0..255）：OB 身份池层 0 的组字节（R2 起统一用 OB 口径）。</summary>
+            /// <summary>本像素所属角色的**组字节**（0..255）：AC 查询身份池层 0 的组字节。</summary>
             float ResolveObjectBufferGroupId(float2 uv)
             {
-                // Id0 的 R 通道 = 层 0 获胜身份的**组**字节（Id0 = (组0, 槽0, 组1, 槽1)）。
-                // 无效时 Frag 开头已经整支返回，这里不再重复判。
-                float4 id0 = SAMPLE_TEXTURE2D_X(_HoObjectBufferId0Texture, sampler_PointClamp, uv);
-                return round(saturate(id0.r) * 255.0);
+                return HoAC_Layer0Group(uv);
             }
 
             float ResolveEyeRevealMask(float2 uv)
@@ -581,9 +577,9 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
 
                 float2 uv = input.texcoord;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
-                // 语义全部来自 OB：OB 没产出（feature 不在 renderer 里 / 本相机没录）时整支 no-op，
+                // 语义全部来自 AC：AC 没产出（feature 不在 renderer 里 / OB 没跑）时整支 no-op，
                 // 而不是拿一份来路不明的位掩码去猜。
-                if (_HoObjectBufferValid <= 0.5)
+                if (_HoACActive <= 0.5)
                 {
                     return source;
                 }

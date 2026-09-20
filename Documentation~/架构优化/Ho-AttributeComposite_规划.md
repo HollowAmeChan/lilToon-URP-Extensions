@@ -5,6 +5,12 @@
 > **状态：typed 查询、runtime catalog、sample 级 object/surface SemanticId 合成、Selection resolve 与属性 validity 已冻结。**
 > AC **不画几何、不画表面**：它只读 OB + SB，把"三个来源"压成"一个每像素答案"。
 
+> **落地状态（R3-obj，本轮）**：AC 已经存在并可跑，范围是 **object 来源的子集**：
+> - 已落地：`HoSemanticSchema`（由 `HoObjectBufferPartTags` 生成 8 条 object-only lane，SemanticId = 位序+1、Lane = 位序）、runtime catalog（按 LaneIndex 编译成 GPU 常量表，变脏重建）、`SemanticResolve`（一轮 4 张 RGBA8 = 8 条 lane 的 `(SemanticId, coverage)`）、资源集 `HoAttributeCompositeRenderGraphResources`、`HoAC_*` 查询（Identity / Group / Layer0Group / Predicate / TotalCoverage / Selection）、消费者登记与解析失败诊断、feature 面板（schema 与登记只读汇总）、Volume + 调试直出（lane 覆盖率 / lane ID / catalog）。
+> - 第一个消费者：**角色特化**已切过来 —— 它不再自己解码 OB 身份池与部件行表，改读 AC 的 Selection 池（转置成自己的位平面），并把 8 个物体位登记为消费者。
+> - **本轮刻意不做**：surface 来源与 `SurfaceOnly / Union / SurfaceOverride / Intersection`（等 SB，R4b）、`AttributeComposite` 数值属性（`constant < surface`，R4c，现在 `HoAC_Attribute` 恒 0）、Selection 池 16 lane 的 MRT 分批（现在固定 4 张 = 8 lane）、DebugTile 的 AC 九宫格（需要给 Debug 轴加一个 `HoDebugViewRenderKind`，AC 自带整屏调试不受影响）、**按消费者登记决定要不要产出 Selection 池**（现在只要 OB 有身份就恒产出 4 张，等消费者多起来再按登记裁剪）。
+
+
 ---
 
 ## 0. 流水线复核与 P0 勘误（2026-09-20）
@@ -144,7 +150,8 @@ AC **不为每个消费者烤遮罩图**。它发布**一份可查询的合成�
 
 | 阶段 | 内容 | 验收 |
 | --- | --- | --- |
-| **R4a** | `HoSemanticSchema` + runtime catalog + typed query API + 消费者登记 | IdentityId / SemanticId / LaneIndex 不混用；名字解析失败可见 |
+| **R3-obj**（已落地） | object 来源子集：schema + runtime catalog + typed query API + 消费者登记 + `SemanticResolve`（object-only）+ 资源集 + 调试 | AC 产出 8 条 lane 的 Selection 池；角色特化改读它且行为与迁移前逐位一致 |
+| **R4a** | `HoSemanticSchema` 的作者侧入口（surface-writable 语义）+ runtime catalog 变脏重建 + 消费者登记（已先行落地一半） | IdentityId / SemanticId / LaneIndex 不混用；名字解析失败可见 |
 | **R4b** | pre-opaque `SemanticResolve`：逐 sample owner 校验 + 五种 sourceMode + 4/8/16 lane MRT batching | 眼白等 SB 表面语义可与 OB 同 ID 粗分统一合成；边缘不出现 bit/coverage 误覆盖 |
 | **R4c** | pre-opaque `AttributeComposite`：`constant < surface`，SurfaceOwner 对齐 | Classification 四通道、0 值与未写可区分 |
 | **R5** | **消费者输入切换**（V2 §6.2）：ScreenProcess 图层**新接** AC 具名遮罩（原 20 个 rule source 已作为未使用功能删除，**没有旧序列化配置要迁移**，`Requires*` 诊断家族替换）；角色特化 → AC（组 / 物体位 / 覆盖率）+ SB（表面色）；**两者自己的 debug 视图与登记一起改** | 行为不变或更好；`Requires*` 家族消失；解析不到的名字在视图里报出来 |

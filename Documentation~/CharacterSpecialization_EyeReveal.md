@@ -5,7 +5,7 @@
 让**被前发遮挡的眼睛按"眼睛捕获结果"透出**，并支持**按相机相对角色面部朝向的视锥角度**对眼透做区域控制。
 效果为屏幕空间、Opaque 友好，复用现有角色语义输入，不依赖角色材质进入透明队列。
 
-配套语义输入（**R2 起全部走 OB**：身份池 → 部件标签 → 覆盖率）：
+配套语义输入（**R3 起全部经 AC**：OB 身份池 → 部件标签 → 覆盖率 → AC Selection 池）：
 
 | 语义 | 用途 |
 |---|---|
@@ -16,7 +16,7 @@
 | OB 身份池层 0 的**组字节** | 与眼睛捕获里的角色 ID 做同角色判定（两者都来自 RSUV 的组字节） |
 | `GeometryBuffer NormalDepth.a` | "前发在眼睛前方"的深度判断 |
 
-语义渠道 = `HoCharacterObjectSemantic.shader` 打出的两张位平面（`_lilHoCharacterObjectSemantic0_3Texture` / `4_7Texture`），
+语义渠道 = **AC 的 Selection 池**（`_HoACSelection{0..3}Texture`，`(SemanticId, coverage)` 固定 lane）；角色特化把池转置成自己的两张位平面（`_lilHoCharacterObjectSemantic0_3Texture` / `4_7Texture`，`HoCharacterObjectSemantic.shader`），
 通道布局与从前的 `objectCustom0_3` / `objectCustom4_7` 一致：`全角色 / 脸 / 前发 / 眼睛` + `眼透区 / 配件 / 人体 / 预留`。
 **不再有「读取抗锯齿掩码」开关**：位平面的值是覆盖率之和（MSAA resolve 的产物），本身就是连续场。
 

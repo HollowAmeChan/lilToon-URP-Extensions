@@ -4,7 +4,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 {
     /// <summary>
     /// 这支 feature 的输入自检快照。**语义全部来自 ObjectBuffer**（规划 §5.13：角色特化只吃
-    /// 「组 + 标签 + 覆盖率」），所以这里只查 OB 身份池、语义位平面和 GeometryBuffer 三件事。
+    /// 「组 + 标签 + 覆盖率」），所以这里只查 OB 身份池（经 AC 引用）、语义位平面和 GeometryBuffer 三件事。
     /// </summary>
     public readonly struct HoCharacterSpecializationRuntimeDiagnosticSnapshot
     {
@@ -14,7 +14,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public readonly string Stage;
         public readonly bool BackBufferActive;
         public readonly bool CameraColorAvailable;
-        /// <summary>OB 身份池（Id0 / Id1 / 覆盖率）在。</summary>
+        /// <summary>OB 身份池（经 AC 引用）（Id0 / Id1 / 覆盖率）在。</summary>
         public readonly bool ObjectBufferIdentityAvailable;
         /// <summary>语义位平面这帧能产出（OB 身份 + 打包材质都在）。</summary>
         public readonly bool ObjectSemanticAvailable;
@@ -150,12 +150,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
             if (!objectBufferIdentityAvailable)
             {
-                return "ObjectBuffer identity pool is unavailable (is the Ho-ObjectBuffer feature in this renderer?).";
+                return "AttributeComposite selection pool is unavailable (is Ho-AttributeComposite / Ho-ObjectBuffer in this renderer?).";
             }
 
             if (!objectSemanticAvailable)
             {
-                return "ObjectBuffer semantic plane could not be packed (missing shader or material).";
+                return "AttributeComposite selection pool was not produced this frame (OB identity or AC resolve missing).";
             }
 
             if (!geometryNormalDepthAvailable)

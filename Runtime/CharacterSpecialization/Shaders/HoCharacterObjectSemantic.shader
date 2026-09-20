@@ -23,41 +23,32 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/ObjectSemantic"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferIdPass.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACQuery.hlsl"
 
-            // 角色语义位平面：OB 身份池（最多 4 层）+ 覆盖率 → 两张 RGBA8，一位一个通道。
-            // 通道布局与从前的 objectCustom0_3 / 4_7 完全一致，所以消费端的"频道号"不用动：
+            // 角色语义位平面：**从 AC 的 Selection 池转置而来**，不再自己解码 OB 的身份池与部件表。
+            // AC 的池是 `(SemanticId, coverage)` 的固定 lane（每张 RGBA8 两条），这里是"每通道一个语义"的
+            // 位平面 —— 因为下游（前发投影的半影滤波、眼透的羽化）要在同一张图上按 texel 抽很多次，
+            // 位平面布局更便宜。这就是规划 §9.2 的"消费者自己用 API 烤一张、图记在自己名下"。
+            //
+            // 通道布局沿用历史上的 objectCustom 布局，消费端不用动：
             //   low  = (0 全角色, 1 脸, 2 前发, 3 眼睛)
             //   high = (4 眼透区, 5 配件, 6 人体, 7 预留)
-            // 值 = 该位在该像素上的覆盖率之和（一个像素可同时属于多层，
-            // "整角色 + 脸"这种多归属会直接累加）。**这已经是 MSAA 抗锯齿过的连续场**，
-            // 所以消费端不再需要给二值位伪造抗锯齿（规划 §0.3.x：不再把 bit 通道当 UNORM 过滤）。
-            TEXTURE2D_X(_HoObjectBufferId0Texture);
-            TEXTURE2D_X(_HoObjectBufferId1Texture);
-            TEXTURE2D_X(_HoObjectBufferCoverageTexture);
-
             struct ObjectSemanticOutput
             {
                 half4 low : SV_Target0;
                 half4 high : SV_Target1;
             };
 
-            float BitAt(uint tags, uint index)
+            // lane 号 = 物体位序（HAc schema 的默认保证）；图内 SemanticId 与声明不符时按"未写"处理。
+            float LaneCoverage(uint laneIndex, uint inImageId, float coverage)
             {
-                return (float)((tags >> index) & 1u);
-            }
-
-            // 一层：身份 → 标签位；这个像素在该层上占多少覆盖率，就给那几位加多少。
-            void AccumulateLayer(uint partId, float coverage, inout float4 low, inout float4 high)
-            {
-                if (partId == 0u || coverage <= 0.0)
+                uint laneCount = (uint)max(0.0, _HoACLaneCount);
+                if (laneIndex >= laneCount)
                 {
-                    return;
+                    return 0.0;
                 }
 
-                uint tags = HoObjectBufferLoadPart(partId).tags;
-                low += coverage * float4(BitAt(tags, 0u), BitAt(tags, 1u), BitAt(tags, 2u), BitAt(tags, 3u));
-                high += coverage * float4(BitAt(tags, 4u), BitAt(tags, 5u), BitAt(tags, 6u), BitAt(tags, 7u));
+                return inImageId == _HoACLanes[laneIndex].semanticId ? coverage : 0.0;
             }
 
             ObjectSemanticOutput Frag(Varyings input)
@@ -65,20 +56,43 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/ObjectSemantic"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 float2 uv = input.texcoord;
-                float4 id0 = SAMPLE_TEXTURE2D_X(_HoObjectBufferId0Texture, sampler_PointClamp, uv);
-                float4 id1 = SAMPLE_TEXTURE2D_X(_HoObjectBufferId1Texture, sampler_PointClamp, uv);
-                float4 coverage = SAMPLE_TEXTURE2D_X(_HoObjectBufferCoverageTexture, sampler_PointClamp, uv);
+                float4 packed01 = SAMPLE_TEXTURE2D_X(_HoACSelection0Texture, sampler_PointClamp, uv);
+                float4 packed23 = SAMPLE_TEXTURE2D_X(_HoACSelection1Texture, sampler_PointClamp, uv);
+                float4 packed45 = SAMPLE_TEXTURE2D_X(_HoACSelection2Texture, sampler_PointClamp, uv);
+                float4 packed67 = SAMPLE_TEXTURE2D_X(_HoACSelection3Texture, sampler_PointClamp, uv);
 
-                float4 low = 0.0;
-                float4 high = 0.0;
-                AccumulateLayer(HoObjectBufferDecodeIdExact(id0.xy), coverage.r, low, high);
-                AccumulateLayer(HoObjectBufferDecodeIdExact(id0.zw), coverage.g, low, high);
-                AccumulateLayer(HoObjectBufferDecodeIdExact(id1.xy), coverage.b, low, high);
-                AccumulateLayer(HoObjectBufferDecodeIdExact(id1.zw), coverage.a, low, high);
+                uint id0;
+                float cov0;
+                uint id1;
+                float cov1;
+                uint id2;
+                float cov2;
+                uint id3;
+                float cov3;
+                uint id4;
+                float cov4;
+                uint id5;
+                float cov5;
+                uint id6;
+                float cov6;
+                uint id7;
+                float cov7;
+                HoAC_UnpackSelection(packed01, id0, cov0, id1, cov1);
+                HoAC_UnpackSelection(packed23, id2, cov2, id3, cov3);
+                HoAC_UnpackSelection(packed45, id4, cov4, id5, cov5);
+                HoAC_UnpackSelection(packed67, id6, cov6, id7, cov7);
 
                 ObjectSemanticOutput output;
-                output.low = (half4)saturate(low);
-                output.high = (half4)saturate(high);
+                output.low = (half4)float4(
+                    LaneCoverage(0u, id0, cov0),
+                    LaneCoverage(1u, id1, cov1),
+                    LaneCoverage(2u, id2, cov2),
+                    LaneCoverage(3u, id3, cov3));
+                output.high = (half4)float4(
+                    LaneCoverage(4u, id4, cov4),
+                    LaneCoverage(5u, id5, cov5),
+                    LaneCoverage(6u, id6, cov6),
+                    LaneCoverage(7u, id7, cov7));
                 return output;
             }
             ENDHLSL

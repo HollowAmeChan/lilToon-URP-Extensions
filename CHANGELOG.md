@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- **Ho-AttributeComposite（AC）起步**（规划 R3-obj）：**语义遮罩的唯一逻辑入口**从纸面变成代码，范围是 object 来源的子集。
+  - **`HoSemanticSchema`**：由 `HoObjectBufferPartTags` 生成 8 条 object-only lane（**SemanticId = 位序 + 1、LaneIndex = 位序、objectTagBit = 位序**）——词表只有一份，不为 AC 另造名字；带唯一性 / 范围 / lane 上限校验。runtime catalog 按 **LaneIndex**（不是声明顺序）编译成 GPU 常量表，变脏重建时上传。
+  - **`SemanticResolve`**：一趟全屏 pass 读 OB 身份池（4 层 + 覆盖率）与部件行标签，按 lane 算 `Σ cov_i · 该层带不带这一位`，写 4 张 RGBA8（每张两条 `(SemanticId, coverage)`）= **AC Selection 池**。所有消费者共用这一份，不再各自解码 OB；兼容（非 RenderGraph）路径一并接线。
+  - **`HoAC_*` 查询门面**（`Runtime/AttributeComposite/Shaders/HoACQuery.hlsl`）：`Identity / Group / Layer0Group / Predicate / TotalCoverage / Selection`（按 lane 取覆盖率并**校验图内 SemanticId**）；`HoAC_Attribute` 本轮恒 0 并在注释里写明"等 SB/R4c"，不假装有。
+  - **资源集 + 消费者登记**：`HoAttributeCompositeRenderGraphResources`（Selection 池 + 身份池引用）；`HoAttributeCompositeConsumerRegistry` 记录谁读了哪些名字，解析不到在面板与诊断里报出来（规划 §3：登记是诊断，不是权限）。
+  - **面板**：feature 只放高级设置 + **只读**的 schema/catalog 汇总 + 消费者登记表；调试入口在 Volume（lane 覆盖率 / lane SemanticId / catalog 三个模式 + 整屏直出，没产出时暗红，与 OB 同一约定）。
+  - **第一个消费者：角色特化**已切过来 —— 删掉自己"读 OB 身份池 + 部件行表"的解码，改读 AC 的 Selection 池并转置成自己的位平面（图记在它自己名下，规划 §9.2）；同角色判定改用 `HoAC_Layer0Group`；输入自检改为「OB 身份池（经 AC 引用）/ AC 语义槽 / GeometryBuffer」。**行为与迁移前逐位一致**（debug 3/4/8/9–15/18–21 不变）。
+  - **本轮刻意不做**：surface 来源与 `SurfaceOnly / Union / SurfaceOverride / Intersection`（等 SB 落地）、`AttributeComposite` 数值属性（`constant < surface`）、16 lane 的 MRT 分批（现在固定 8 lane / 4 张）、DebugTile 的 AC 九宫格（需要给 Debug 轴加 `HoDebugViewRenderKind`，AC 自带整屏调试不受影响）。
+  - 文档：AC 规划加「落地状态」与 R3-obj 行；`语义掩码.md` v2 的"谁解压"改成 AC。
+
 - `Ho-ObjectBuffer`：组件新增**「赋值方式」**（面板底部，作用于整份部件列表；**默认覆盖**）——把"一个物体被多个部件条目命中"这件事显式化（规划 0.3.15）。
   - **覆盖**（默认）：条目顺序即优先级，**排在下面的条目接管上面条目里的同一个物体**，同组内不再报冲突 —— "顶上放一条『全体』（勾全角色），下面放人体 / 脸 / 前发…"这种用法不再需要反选没归属的物体、也不用给每个部件重复勾位。
   - **指定**：审计模式，重叠 = 配置错误并在面板底部逐条列出谁赢谁输，同组内**取条目顺序在前者**。顺带把两处裁决对齐了：RSUV 的写入（`ApplyIdentity`）此前只按条目顺序、冲突面板（`ResolveAssignments`）按距离，同组重叠且距离不同时两者会互相矛盾，现在统一为条目顺序。

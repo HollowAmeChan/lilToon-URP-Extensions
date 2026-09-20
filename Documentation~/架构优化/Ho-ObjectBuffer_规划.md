@@ -174,6 +174,12 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但 `D:\Unity_Fo
 - **顺带修掉一个静默失效**：屏幕空间的 texel size 以前读的是 `_HoMetadataBufferMaskIdTexture_TexelSize`（全局纹理并没有这一项，实际是 0），所有"按像素扩张 / 羽化"的半径都可能没生效；现在由 C# 显式发布 `_lilHoCharacterScreenTexelSize`。
 - **不在本轮**：朝向进 GPU 表仍只在出现屏幕空间消费端时才需要（眼透的朝向修正走 CPU 侧）；眼睛**遮罩**链路的其余部分（eye capture 的 MRT 布局）保持原样。
 
+#### 0.3.16 R3：AC 接手解压，角色特化成为第一个消费者
+
+- 语义不再由消费者各自解码：**AC（`Ho-AttributeComposite`）** 按 `HoSemanticSchema` 把 OB 身份池 + 部件行标签解压成**固定 lane 的 Selection 池**（`(SemanticId, coverage)`，8 条 lane / 4 张 RGBA8），消费者只经 `HoAC_*` 查询。落地范围（object 来源子集）与推迟项见 `Ho-AttributeComposite_规划.md` 顶部的「落地状态」。
+- **角色特化**随之改读 AC 的 Selection 池（自己只做一次布局转置，把池摊成"每通道一个语义"的位平面给下游的逐 texel 滤波用），同角色判定改用 `HoAC_Layer0Group`；它不再引用 OB 的身份池与部件行表，也不再用 `_HoObjectBufferValid` 当门（改 `_HoACActive`）。
+- 这一步也把"谁负责解压"这件事钉死了：**OB 只管身份与覆盖率，解压归 AC，烤图归消费者自己**（规划 §9.2）。后续 SB 落地后，同一张 Selection 池上再叠 surface 来源的五种 sourceMode，消费者不用改。
+
 #### 0.3.12 标签与选区的分工（为什么标签的词表是写死的）
 
 - **场景多变 ⇒ 用选区**：选区是"人自己命名的自由集合"（独立 8 bit ID 空间、材质只引用名字、可跨部件），场景里的临时需求、镜头特化、道具分组都走它。

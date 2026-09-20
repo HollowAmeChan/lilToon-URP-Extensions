@@ -2,6 +2,7 @@ using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
 using lilToon.URP.Extensions.GeometryBuffer;
+using lilToon.URP.Extensions.AttributeComposite;
 using lilToon.URP.Extensions.ObjectBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -85,6 +86,18 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             }
 
             EnsureMaterial(activeSettings);
+            // 消费者登记（AC 规划 §3）：声明本 feature 读了 schema 里哪些名字。
+            // 这里读的就是物体位那 8 条 lane；名字解析不到会在 AC 的 feature 面板里报出来。
+            HoAttributeCompositeConsumerRegistry.Declare(
+                "Ho-CharacterSpecialization",
+                "CharacterFull",
+                "Face",
+                "FrontHair",
+                "Eye",
+                "EyeRevealArea",
+                "Accessory",
+                "Body",
+                "Reserved");
             // 注意：UPR 17 fork 的 RenderGraph 主路径不调用 SetupRenderPasses，只在 AddRenderPasses 里能拿到每相机时机。
             eyeAngleTable?.UpdateForCamera(renderingData.cameraData.camera, activeSettings);
             if (compositeMaterial == null)
@@ -480,15 +493,15 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             UniversalRenderingData renderingData = frameData.Get<UniversalRenderingData>();
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
-            HoObjectBufferRenderGraphResources objectBufferResources = frameData.GetOrCreate<HoObjectBufferRenderGraphResources>();
+            HoAttributeCompositeRenderGraphResources acResources = frameData.GetOrCreate<HoAttributeCompositeRenderGraphResources>();
             HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
 
             bool backBufferActive = resourceData.isActiveTargetBackBuffer;
             bool hasCameraColor = resourceData.activeColorTexture.IsValid();
-            bool hasObjectBufferIdentity = objectBufferResources.HasRequiredTextures;
-            // 语义位平面这帧能不能产出：身份池在 + 打包材质在。它是合成与两条轮廓源的**共同输入**，
-            // 所以它不成立时整支 no-op（没有 OB 就没有角色语义，退化成"什么都不做"而不是猜）。
-            bool objectSemanticAvailable = hasObjectBufferIdentity && objectSemanticMaterial != null;
+            bool hasObjectBufferIdentity = acResources.HasIdentityPool;
+            // 语义位平面这帧能不能产出：AC 的 Selection 池在 + 打包材质在。它是合成与两条轮廓源的
+            // **共同输入**，所以它不成立时整支 no-op（没有 AC 就没有角色语义，退化成"什么都不做"而不是猜）。
+            bool objectSemanticAvailable = acResources.HasSelectionPool && objectSemanticMaterial != null;
             bool hasGeometryNormalDepth = geometryResources.normalDepthTexture.IsValid();
             bool hasGeometryDepth = geometryResources.depthTexture.IsValid();
             bool requiresFaceHairDiffuseTextures = RequiresFaceHairDiffuseTextures(settings);
@@ -633,9 +646,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     renderGraph,
                     "Ho-CharacterSpecialization ObjectSemantic",
                     objectSemanticMaterial,
-                    objectBufferResources.id0Texture,
-                    objectBufferResources.id1Texture,
-                    objectBufferResources.coverageTexture,
+                    acResources,
                     objectSemanticLowTexture,
                     objectSemanticHighTexture);
             }
@@ -894,7 +905,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             using (var builder = renderGraph.AddRasterRenderPass<CompositePassData>("Ho-CharacterSpecialization Composite", out CompositePassData passData, ProfilingSampler))
             {
                 passData.source = source;
-                passData.objectBufferId0Texture = objectBufferResources.id0Texture;
+                passData.identityId0Texture = acResources.identityId0Texture;
                 passData.geometryNormalDepthTexture = geometryResources.normalDepthTexture;
                 passData.objectSemanticLowTexture = objectSemanticLowTexture;
                 passData.objectSemanticHighTexture = objectSemanticHighTexture;
@@ -944,7 +955,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     out passData.options);
 
                 builder.UseTexture(source, AccessFlags.Read);
-                builder.UseTexture(passData.objectBufferId0Texture, AccessFlags.Read);
+                builder.UseTexture(passData.identityId0Texture, AccessFlags.Read);
                 builder.UseTexture(passData.geometryNormalDepthTexture, AccessFlags.Read);
                 // eyeColor 是**真读**：Composite.shader:621 在 Frag 开头无条件采样它
                 // （debug 1 在 :640-642 直接返回它，:823 的 lerp 也拿它当目标色）。所以捕获支被门控掉时
@@ -1047,7 +1058,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
                     context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.ObjectSemanticLowTextureId, data.objectSemanticLowTexture);
                     context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.ObjectSemanticHighTextureId, data.objectSemanticHighTexture);
-                    context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, data.objectBufferId0Texture);
+                    context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, data.identityId0Texture);
                     context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.ScreenTexelSizeId, data.screenTexelSize);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                 });

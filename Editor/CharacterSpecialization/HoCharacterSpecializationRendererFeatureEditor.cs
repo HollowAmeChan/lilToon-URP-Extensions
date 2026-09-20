@@ -129,8 +129,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 EditorGUILayout.LabelField("Camera Color", LilUrpEditorSectionGui.FormatAvailable(snapshot.CameraColorAvailable));
                 EditorGUILayout.LabelField("ObjectBuffer", LilUrpEditorSectionGui.FormatAvailable(snapshot.ObjectBufferAvailable));
                 EditorGUILayout.LabelField("GeometryBuffer", LilUrpEditorSectionGui.FormatAvailable(snapshot.GeometryBufferAvailable));
-                EditorGUILayout.LabelField("OB 身份池", LilUrpEditorSectionGui.FormatAvailable(snapshot.ObjectBufferIdentityAvailable));
-                EditorGUILayout.LabelField("OB 语义位平面", LilUrpEditorSectionGui.FormatAvailable(snapshot.ObjectSemanticAvailable));
+                EditorGUILayout.LabelField("OB 身份池（经 AC 引用）", LilUrpEditorSectionGui.FormatAvailable(snapshot.ObjectBufferIdentityAvailable));
+                EditorGUILayout.LabelField("AC 语义槽（Selection 池）", LilUrpEditorSectionGui.FormatAvailable(snapshot.ObjectSemanticAvailable));
                 EditorGUILayout.LabelField("NormalDepth", LilUrpEditorSectionGui.FormatAvailable(snapshot.GeometryNormalDepthAvailable));
                 EditorGUILayout.LabelField("Depth", LilUrpEditorSectionGui.FormatAvailable(snapshot.GeometryDepthAvailable));
                 EditorGUILayout.LabelField("Depth Required", snapshot.GeometryDepthRequired ? "Yes" : "No");

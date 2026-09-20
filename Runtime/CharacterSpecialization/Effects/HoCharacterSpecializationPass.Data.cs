@@ -7,9 +7,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
     {
         private sealed class ObjectSemanticPassData
         {
-            public TextureHandle objectBufferId0Texture;
-            public TextureHandle objectBufferId1Texture;
-            public TextureHandle objectBufferCoverageTexture;
+            // 语义源是 AC 的 Selection 池（每张 RGBA8 两条 lane），不再直接读 OB 的身份池。
+            public TextureHandle[] selectionTextures;
             public TextureHandle destinationLowTexture;
             public TextureHandle destinationHighTexture;
             public Material material;
@@ -18,7 +17,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private sealed class CompositePassData
         {
             public TextureHandle source;
-            public TextureHandle objectBufferId0Texture;
+            public TextureHandle identityId0Texture;
             public TextureHandle geometryNormalDepthTexture;
             public TextureHandle objectSemanticLowTexture;
             public TextureHandle objectSemanticHighTexture;

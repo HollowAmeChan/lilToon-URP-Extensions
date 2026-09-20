@@ -4,7 +4,7 @@
 
 新增一个近景角色效果：把**前发后面那张受光脸**扩散到前发上，让前发获得类似半透的脸色晕染，但不把头发材质改成透明队列。效果保持屏幕空间、Opaque 友好，并复用现有角色语义输入：
 
-- OB 标签 `脸`（Face）作为扩散源遮罩：**它的覆盖率**既是"这张脸在这个像素上占多少"（脸被前发遮住时它在身份池的层 1 上，照样能取到），也是捕获权重。
+- AC 的 `Face` lane 覆盖率（源头是 OB 标签 `脸`）作为扩散源遮罩：既是"这张脸在这个像素上占多少"（脸被前发遮住时它在身份池的层 1 上，照样能取到），也是捕获权重。
 - OB 标签 `前发`（FrontHair）作为接收区域。
 - **强制脸捕获的 MRT0（`_lilHoCharacterEyeColorTexture`）作为扩散颜色来源**：那上面写的是材质算完光照的 `color`（alpha = 1），所以扩散的是"受光脸"，不是不受光的 albedo。
 - `GeometryBuffer NormalDepth` 作为深度限制。
@@ -26,7 +26,7 @@
 
 1. `FaceHair Source`
    - 全屏 RDG raster pass（`HoCharacterSpecializationRendererPass.FaceHairDiffuse` 支）。
-   - 读取 **OB 语义位平面的 `脸` 通道**、`NormalDepth`、**`_lilHoCharacterEyeColorTexture`（捕获）**。
+   - 读取 **角色特化自己的位平面**（由 AC 的 `Face` lane 转置而来）、`NormalDepth`、**`_lilHoCharacterEyeColorTexture`（捕获）**。
    - 写一张临时 HDR 颜色纹理：
      - `rgb = faceLit.rgb * faceMask`（`faceLit` = 该像素 UV 处采到的受光脸；`HoCharacterFaceHairDiffuse.shader`）
      - `a = faceMask`，其中 `faceMask = 脸的覆盖率 * step(0.0001, NormalDepth.a)`
