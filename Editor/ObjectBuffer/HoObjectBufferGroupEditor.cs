@@ -241,6 +241,14 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 index == selectedPart);
 
             HandleRowInput(paint, partsProperty, index, ref selectedPart);
+
+            // 整条左列行也是拖放目标：把 Renderer 直接拖到"哪个部件"那一行上就加进它。
+            // （只留列表末尾那条看不见的空隙当目标等于"拖不进去"。）
+            SerializedProperty renderersProperty = entry.FindPropertyRelative("renderers");
+            if (HandleDrop(paint, renderersProperty))
+            {
+                selectedPart = index;
+            }
         }
 
         private void DrawSelectionRow(Rect row, float bleedLeft, int index)
@@ -547,15 +555,19 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             SerializedProperty entry = partsProperty.GetArrayElementAtIndex(selectedPart);
             SerializedProperty nameProperty = entry.FindPropertyRelative("name");
             SerializedProperty colorProperty = entry.FindPropertyRelative("displayColor");
+            SerializedProperty renderersProperty = entry.FindPropertyRelative("renderers");
             string partName = nameProperty != null ? nameProperty.stringValue : string.Empty;
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                DrawDetailHeader(
+                // 标题条本身也接拖拽：拖到"这个部件"的标题上就加进它——删除按钮旁边那条 8px 的空隙
+                // 既看不见也不好瞄，不能当成唯一入口。
+                Rect headerRect = DrawDetailHeader(
                     colorProperty != null ? colorProperty.colorValue : Color.gray,
                     string.IsNullOrEmpty(partName) ? "（空名字）" : partName,
                     BuildRowIdText(partName),
-                    "这一项的身份：名字决定槽位，槽位决定像素里 ID 的低字节。");
+                    "这一项的身份：名字决定槽位，槽位决定像素里 ID 的低字节。拖 GameObject / Renderer 到这里可加入本部件。");
+                HandleDrop(headerRect, renderersProperty);
 
                 DrawProperty(nameProperty, new GUIContent("名字", "组内唯一。它决定槽位号 = 像素里 ID 的低字节。"));
                 DrawProperty(entry.FindPropertyRelative("category"), new GUIContent("角色组分", "这个部件是角色的哪一块（单值、互斥）。只有角色特化读它：按「组 + 组分 + 覆盖率」取遮罩；组表达「整角色」，组分表达「脸 / 前发 / 眼睛 / 眼透区 / 配件 / 人体」。AC 上线也不改这套分类。"));
@@ -564,7 +576,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 DrawProperty(entry.FindPropertyRelative("faceBone"), new GUIContent("朝向覆盖", "留空 = 用组上的「朝向参考系」。只有会相对身体转动的部件（头 / 脸 / 前发…）才需要填。"));
 
                 EditorGUILayout.Space(2.0f);
-                DrawRendererList(entry.FindPropertyRelative("renderers"));
+                DrawRendererList(renderersProperty);
             }
 
             EditorGUILayout.Space(SectionSpacing);
@@ -593,7 +605,8 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             EditorGUILayout.Space(SectionSpacing);
         }
 
-        private static void DrawDetailHeader(Color color, string title, string rightText, string tooltip)
+        /// <summary>右列顶部那条染色标题（返回它的 rect，好让调用方把它也做成拖放目标）。</summary>
+        private static Rect DrawDetailHeader(Color color, string title, string rightText, string tooltip)
         {
             Rect header = EditorGUILayout.GetControlRect(false, RowHeight);
             // 与左列选中的那一行同一种染色，一眼能把"左列选的是谁"和"右列在编辑谁"连起来。
@@ -606,6 +619,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 new GUIContent(title, tooltip),
                 rowNameStyle);
             EditorGUI.LabelField(rightRect, rightText, EditorStyles.centeredGreyMiniLabel);
+            return header;
         }
 
         private void DrawFacingSection()
@@ -728,7 +742,14 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             }
 
             RemoveInvalidEntries(property);
-            EditorGUILayout.LabelField($"Renderer（{property.arraySize}）", EditorStyles.miniBoldLabel);
+
+            // 标题行也接拖拽：列表里已经有条目时，"再加一个"最自然的入口就是这一行。
+            Rect labelRect = EditorGUILayout.GetControlRect(false, 16.0f);
+            GUI.Label(labelRect, $"Renderer（{property.arraySize}）", EditorStyles.miniBoldLabel);
+            if (property.arraySize > 0)
+            {
+                HandleDrop(labelRect, property);
+            }
 
             if (property.arraySize == 0)
             {
@@ -790,13 +811,19 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             return false;
         }
 
-        private void HandleDrop(Rect rect, SerializedProperty property)
+        /// <summary>返回 true 表示这一帧真的接受了拖入（调用方可以据此顺手把该条目选中）。</summary>
+        private bool HandleDrop(Rect rect, SerializedProperty property)
         {
+            if (property == null)
+            {
+                return false;
+            }
+
             Event currentEvent = Event.current;
             if (!rect.Contains(currentEvent.mousePosition)
                 || (currentEvent.type != EventType.DragUpdated && currentEvent.type != EventType.DragPerform))
             {
-                return;
+                return false;
             }
 
             bool hasAllowedObject = false;
@@ -810,13 +837,16 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             }
 
             DragAndDrop.visualMode = hasAllowedObject ? DragAndDropVisualMode.Copy : DragAndDropVisualMode.Rejected;
+            bool accepted = false;
             if (currentEvent.type == EventType.DragPerform)
             {
                 DragAndDrop.AcceptDrag();
                 AddDroppedObjects(property, DragAndDrop.objectReferences);
+                accepted = hasAllowedObject;
             }
 
             currentEvent.Use();
+            return accepted;
         }
 
         private void AddDroppedObjects(SerializedProperty property, Object[] droppedObjects)
