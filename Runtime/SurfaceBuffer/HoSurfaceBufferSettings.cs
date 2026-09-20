@@ -6,6 +6,11 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.SurfaceBuffer
 {
     /// <summary>SB 调试视图：与 debug shader 的 mode 一一对应，只能往后加。</summary>
+    /// <remarks>
+    /// 约定：**每个视图都把"没人写"的像素（owner = 0）画成暗红** —— "整屏暗红"= SB 没产出，
+    /// "黑"= 有值但值是 0，两者必须能一眼分开（否则 0 和"没跑"长得一模一样）。
+    /// 两个 byte ID（profile / materialClass）按缩放显示（/8、/32）：字节原值直接铺到 0..1 基本是黑的。
+    /// </remarks>
     public enum HoSurfaceBufferDebugMode
     {
         [InspectorName("Off")]
@@ -14,14 +19,16 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         Color,
         [InspectorName("Normal（octa 还原）")]
         Normal,
-        [InspectorName("Material（roughness / metallic / thickness）")]
+        [InspectorName("Material（1-roughness / metallic / thickness）")]
         Material,
         [InspectorName("Reflection（reflectance / plrStrength）")]
         Reflection,
-        [InspectorName("Classification（profile / curvature / transmittance / class）")]
+        [InspectorName("Classification（profile/8, curvature, transmittance）")]
         Classification,
-        [InspectorName("Owner（前表面是不是 OB 层 0）")]
-        Owner
+        [InspectorName("Owner（绿=与 OB 层 0 一致 / 红=不一致或没人写）")]
+        Owner,
+        [InspectorName("Class Id（materialClass/32）")]
+        ClassId
     }
 
     [Serializable]
