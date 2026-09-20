@@ -41,9 +41,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
             public Material material;
             public int laneCount;
 
-            /// <summary>SB 的语义 lane（MSAA）：有的话每条 lane 走 `SurfaceOverride` 与它合成。</summary>
+            /// <summary>SB 的语义 lane（单采样）：有的话每条 lane 按 catalog 的 sourceMode 与它合成。</summary>
             public bool surfaceEnabled;
-            public int surfaceSampleCount;
             public TextureHandle surfaceOwnerTexture;
             public TextureHandle[] surfaceLaneTextures;
         }
@@ -121,7 +120,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 }
 
                 // 身份池的全局名由 OB 的兼容路径设好（它排在本趟之前）；SB 的语义 lane 同理。
-                SetSurfaceKeywords(resolveMaterial, HoSurfaceBufferSemanticPass.LastProduced, HoSurfaceBufferSemanticPass.LastActualSampleCount);
+                SetSurfaceKeywords(resolveMaterial, HoSurfaceBufferSemanticPass.LastProduced);
 
                 cmd.SetRenderTarget(selectionIdentifiers, selectionTargets[0].nameID);
                 cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.LaneCountId, laneCount);
@@ -166,7 +165,6 @@ namespace lilToon.URP.Extensions.AttributeComposite
             // SB 的语义 lane：有就逐 sample 合成（SurfaceOverride），没有就纯物体位（ObjectOnly）。
             HoSurfaceBufferRenderGraphResources surfaceResources = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
             bool surfaceEnabled = surfaceResources.HasSemanticLanes && HoSurfaceBufferSemanticPass.LastProduced;
-            int surfaceSampleCount = surfaceEnabled ? Mathf.Max(1, HoSurfaceBufferSemanticPass.LastActualSampleCount) : 1;
 
             int laneCount = Mathf.Min(HoSemanticSchema.LaneCount, HoSemanticSchema.ResolvedLaneCount);
             if (laneCount <= 0)
@@ -193,7 +191,6 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 passData.material = resolveMaterial;
                 passData.laneCount = laneCount;
                 passData.surfaceEnabled = surfaceEnabled;
-                passData.surfaceSampleCount = surfaceSampleCount;
                 passData.surfaceOwnerTexture = surfaceResources.semanticOwnerTexture;
                 passData.surfaceLaneTextures = surfaceResources.semanticLaneTextures;
 
@@ -224,7 +221,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
                     context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.CoverageTextureId, data.identityCoverageTexture);
                     context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.LaneCountId, data.laneCount);
                     context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.ActiveId, 1.0f);
-                    SetSurfaceKeywords(data.material, data.surfaceEnabled, data.surfaceSampleCount);
+                    SetSurfaceKeywords(data.material, data.surfaceEnabled);
                     if (data.surfaceEnabled)
                     {
                         context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.SemanticOwnerTextureId, data.surfaceOwnerTexture);
@@ -232,8 +229,6 @@ namespace lilToon.URP.Extensions.AttributeComposite
                         {
                             context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.GetSemanticLaneTextureId(i), data.surfaceLaneTextures[i]);
                         }
-
-                        context.cmd.SetGlobalFloat(HoSurfaceBufferShaderConstants.SemanticSampleCountId, data.surfaceSampleCount);
                     }
 
                     Blitter.BlitTexture(context.cmd, data.identityId0Texture, new Vector4(1, 1, 0, 0), data.material, 0);
@@ -270,26 +265,24 @@ namespace lilToon.URP.Extensions.AttributeComposite
         }
 
         /// <summary>
-        /// 语义合成的变体开关（与 OB 的 resolve 同一套）：两个都关 = **纯物体位**（没有 SB 语义 lane 时）。
-        /// 采样数由关键字给出，因为 shader 侧要用它声明 `Texture2DMS&lt;T, N&gt;`。
+        /// 语义合成的变体开关：关掉 = **纯物体位**（没有 SB 语义 lane 时）。
+        /// 单采样，所以只有一个关键字（采样数不再需要告诉 shader）。
         /// </summary>
-        private static void SetSurfaceKeywords(Material material, bool surfaceEnabled, int surfaceSampleCount)
+        private static void SetSurfaceKeywords(Material material, bool surfaceEnabled)
         {
             if (material == null)
             {
                 return;
             }
 
-            material.DisableKeyword(HoAttributeCompositeShaderConstants.SurfaceMsaa2Keyword);
-            material.DisableKeyword(HoAttributeCompositeShaderConstants.SurfaceMsaa4Keyword);
-            if (!surfaceEnabled)
+            if (surfaceEnabled)
             {
-                return;
+                material.EnableKeyword(HoAttributeCompositeShaderConstants.SurfaceKeyword);
             }
-
-            material.EnableKeyword(surfaceSampleCount <= 2
-                ? HoAttributeCompositeShaderConstants.SurfaceMsaa2Keyword
-                : HoAttributeCompositeShaderConstants.SurfaceMsaa4Keyword);
+            else
+            {
+                material.DisableKeyword(HoAttributeCompositeShaderConstants.SurfaceKeyword);
+            }
         }
 
         private static TextureDesc CreateSelectionTextureDesc(RenderTextureDescriptor cameraTextureDescriptor)

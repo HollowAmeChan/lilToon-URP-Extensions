@@ -64,9 +64,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         }
 
         /// <summary>
-        /// 语义 lane 的**自建 MSAA 采样数**：只问平台，**与相机 MSAA 解耦**（与 OB 的决策同一条）。
-        /// 相机把 AA 关掉时采样数照样是 4 —— 语义 lane 的质量不该由相机 AA 决定。
-        /// 平台给不到就返回实际值（1 表示这趟没法跑），由 feature 报出来，不静默降级。
+        /// 语义 lane 的**自建 MSAA 采样数**：暂时没有调用方 —— 语义 lane 这一轮是单采样
+        /// （见 `HoSurfaceBufferSemanticPass.Setup`）。逐 sample 细分重新上时，形态是
+        /// "SB 按这个数渲染 + 自己 resolve 成单采样 lane 再发布"，那时这里会重新被用到。
         /// </summary>
         public static int GetSupportedSemanticSampleCount(RenderTextureDescriptor cameraTextureDescriptor, int requestedSamples)
         {

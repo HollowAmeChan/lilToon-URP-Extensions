@@ -65,11 +65,15 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             renderStateBlock = new RenderStateBlock(RenderStateMask.Nothing);
         }
 
-        public void Setup(HoSurfaceBufferSettings settings, in FilteringSettings filteringSettings, int semanticSampleCount)
+        public void Setup(HoSurfaceBufferSettings settings, in FilteringSettings filteringSettings)
         {
             this.settings = settings;
             this.filteringSettings = filteringSettings;
-            this.semanticSampleCount = Mathf.Max(1, semanticSampleCount);
+            // **单采样**：语义 lane 这一轮按像素走。逐 sample 的细分（同一材质内部的眼白 / 虹膜）
+            // 等真有消费者要时再上，而且形态必须是"SB 自己 resolve 出单采样 lane 再发布"——
+            // 读端永远只读单采样：让消费者按 `Texture2DMS` + `Load` 读，坐标 / 采样数 / bindMS
+            // 任何一处对不上都会静默读出邻域或旧 sample（本轮踩过：池子整片均匀、无形状）。
+            semanticSampleCount = 1;
             renderPassEvent = settings != null ? settings.passEvent : RenderPassEvent.BeforeRenderingOpaques;
             ConfigureInput(ScriptableRenderPassInput.None);
         }
@@ -151,12 +155,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             RenderTextureDescriptor descriptor = renderingData.cameraData.cameraTargetDescriptor;
             descriptor.depthBufferBits = 0;
             descriptor.depthStencilFormat = GraphicsFormat.None;
-            // **自建 MSAA，与相机 AA 解耦**：一个像素里可能有"眼白 + 虹膜"两个 sample（规划 §0.4）。
-            descriptor.msaaSamples = semanticSampleCount;
-            // **bindMS 必须为真**：这几张图在 AC 的 resolve 里是按 `Texture2DMS` 声明并逐 sample Load 的，
-            // 非 MSAA 绑定会让 Unity 直接把它从多重采样采样器上摘掉（"Disabling to avoid undefined behavior"）。
-            // 与 OB 的 MSAA 目标同一个写法。
-            descriptor.bindMS = semanticSampleCount > 1;
+            // 单采样（见 Setup 的说明）：不再按多重采样纹理绑定。
+            descriptor.msaaSamples = 1;
+            descriptor.bindMS = false;
 
             AllocateIfNeeded(ref ownerTexture, descriptor, HoSurfaceBufferFormatUtility.GetOwnerGraphicsFormat(), HoSurfaceBufferShaderConstants.SemanticOwnerTextureName);
             for (int i = 0; i < laneTextures.Length; i++)
@@ -234,8 +235,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
 
-            // **自建 MSAA，与相机 AA 解耦**：采样数来自设置（实际值由 feature 问过平台）。
-            MSAASamples msaaSamples = ToMSAASamples(semanticSampleCount);
+            // 单采样（见 Setup 的说明）。
+            MSAASamples msaaSamples = MSAASamples.None;
 
             TextureHandle owner = CreateTexture(renderGraph, cameraData.cameraTargetDescriptor, HoSurfaceBufferFormatUtility.GetOwnerGraphicsFormat(), HoSurfaceBufferShaderConstants.SemanticOwnerTextureName, msaaSamples);
             TextureHandle[] lanes = new TextureHandle[HoSurfaceBufferShaderConstants.SemanticLaneTextureCount];

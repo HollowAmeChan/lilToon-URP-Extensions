@@ -20,29 +20,15 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
             #pragma target 4.5
             #pragma vertex Vert
             #pragma fragment Frag
-            // 有 SB 语义 lane 时用 `SurfaceOverride` 逐 sample 合成；两个关键字都关 = 纯物体位（ObjectOnly）。
-            // 与 OB 的 resolve 同一套写法：**声明的采样数由关键字给出**，逐 sample Load。
-            #pragma multi_compile_local_fragment _ _HO_SURFACE_SEMANTIC_MSAA_2 _HO_SURFACE_SEMANTIC_MSAA_4
+            // 有 SB 语义 lane 时按 catalog 的 sourceMode 与它合成；关掉 = 纯物体位（ObjectOnly）。
+            // **单采样**：lane 是逐像素的，普通采样即可 —— 不读 MSAA（读端按 Texture2DMS + Load 时，
+            // 坐标 / 采样数 / bindMS 任何一处对不上都会静默读出邻域或旧 sample）。
+            #pragma multi_compile_local_fragment _ _HO_SURFACE_SEMANTIC
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             // 全屏三角形的 Vert / Varyings 由 Blit.hlsl 提供（与 OB 的 resolve 同一做法）。
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferIdPass.hlsl"
-
-            #if defined(_HO_SURFACE_SEMANTIC_MSAA_2)
-                #define HO_AC_SURFACE_SAMPLES 2
-            #else
-                #define HO_AC_SURFACE_SAMPLES 4
-            #endif
-
-            // MSAA 纹理不能采样，只能按像素 Load；XR 下是 array（与 OB 的 resolve 同一对宏）。
-            #if defined(UNITY_STEREO_INSTANCING_ENABLED) || defined(UNITY_STEREO_MULTIVIEW_ENABLED)
-                #define HO_AC_SURFACE_TEXTURE_MS(type, name) Texture2DMSArray<type, HO_AC_SURFACE_SAMPLES> name
-                #define HO_AC_SURFACE_LOAD_MS(name, coord, sampleIndex) LOAD_TEXTURE2D_ARRAY_MSAA(name, coord, SLICE_ARRAY_INDEX, sampleIndex)
-            #else
-                #define HO_AC_SURFACE_TEXTURE_MS(type, name) Texture2DMS<type, HO_AC_SURFACE_SAMPLES> name
-                #define HO_AC_SURFACE_LOAD_MS(name, coord, sampleIndex) LOAD_TEXTURE2D_MSAA(name, coord, sampleIndex)
-            #endif
 
             // 输入：OB 身份池的 4 层 (组,槽位) + 逐层覆盖率。
             TEXTURE2D_X(_HoObjectBufferId0Texture);
@@ -61,18 +47,14 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
             StructuredBuffer<HoACLaneData> _HoACLanes;
             float _HoACLaneCount;
 
-            #if defined(_HO_SURFACE_SEMANTIC_MSAA_2) || defined(_HO_SURFACE_SEMANTIC_MSAA_4)
-                // SB 的语义 lane：MSAA 纹理**不能采样**，只能逐 sample Load。
-                // 配对与 SB 写出时同一套：一张 RGBA8MS 装两条 lane（R/G = A，B/A = B）。
-                // 逐 sample 的 owner（`_HoSurfaceSemanticOwnerTexture`）不参与合成公式 —— 那道门由 SB
-                // 的材质 pass 按 palette 表在**数据上**把住了；owner 现在是给对齐诊断/调试视图用的。
-                HO_AC_SURFACE_TEXTURE_MS(float4, _HoSurfaceSemanticLane0Texture);
-                HO_AC_SURFACE_TEXTURE_MS(float4, _HoSurfaceSemanticLane1Texture);
-                HO_AC_SURFACE_TEXTURE_MS(float4, _HoSurfaceSemanticLane2Texture);
-                HO_AC_SURFACE_TEXTURE_MS(float4, _HoSurfaceSemanticLane3Texture);
+            #if defined(_HO_SURFACE_SEMANTIC)
+                // SB 的语义 lane（**单采样、逐像素**）。配对与 SB 写出时同一套：
+                // 一张 RGBA8 装两条 lane（R/G = A，B/A = B）。
+                TEXTURE2D_X(_HoSurfaceSemanticLane0Texture);
+                TEXTURE2D_X(_HoSurfaceSemanticLane1Texture);
+                TEXTURE2D_X(_HoSurfaceSemanticLane2Texture);
+                TEXTURE2D_X(_HoSurfaceSemanticLane3Texture);
             #endif
-            /// <summary>SB 语义 lane 的实际（自建）采样数：由 SB 的 pass 设，与相机 AA 无关。</summary>
-            float _HoSurfaceSemanticSampleCount;
 
             // 输出：4 张 RGBA8，每张两条 lane 的 `(SemanticId, coverage)` ——
             // 布局与 OB 的 Selection 行一致（R=ID0, G=覆盖率0, B=ID1, A=覆盖率1）。
@@ -98,62 +80,48 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
                 return saturate(total);
             }
 
-            #if defined(_HO_SURFACE_SEMANTIC_MSAA_2) || defined(_HO_SURFACE_SEMANTIC_MSAA_4)
-                /// <summary>按 lane 号选到它所在的那张 lane 图，Load 指定 sample。</summary>
-                float4 LoadSurfaceLane(uint laneIndex, uint2 pixelCoord, uint sampleIndex)
+            #if defined(_HO_SURFACE_SEMANTIC)
+                /// <summary>按 lane 号选到它所在的那张 lane 图（单采样，普通采样）。</summary>
+                float4 SampleSurfaceLane(uint laneIndex, float2 uv)
                 {
                     if (laneIndex < 2u)
                     {
-                        return HO_AC_SURFACE_LOAD_MS(_HoSurfaceSemanticLane0Texture, pixelCoord, sampleIndex);
+                        return SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticLane0Texture, sampler_PointClamp, uv);
                     }
 
                     if (laneIndex < 4u)
                     {
-                        return HO_AC_SURFACE_LOAD_MS(_HoSurfaceSemanticLane1Texture, pixelCoord, sampleIndex);
+                        return SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticLane1Texture, sampler_PointClamp, uv);
                     }
 
                     if (laneIndex < 6u)
                     {
-                        return HO_AC_SURFACE_LOAD_MS(_HoSurfaceSemanticLane2Texture, pixelCoord, sampleIndex);
+                        return SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticLane2Texture, sampler_PointClamp, uv);
                     }
 
-                    return HO_AC_SURFACE_LOAD_MS(_HoSurfaceSemanticLane3Texture, pixelCoord, sampleIndex);
+                    return SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticLane3Texture, sampler_PointClamp, uv);
                 }
 
                 /// <summary>
-                /// 一条 lane 的 surface 侧：返回 `(写了几个 sample, 这些 sample 的 value 之和)`，
-                /// **都是未除 N 的和**（除 N 与回落放在调用处一起做，省得两边各除一次）。
-                /// `SemanticId = 0` 是未写；`SemanticId = 声明值` 才算写了（value = 0 也是"明确写 0"）。
+                /// 一条 lane 的 surface 侧：`(写了没有 0/1, value)`，**未除 N 的和**（本轮 N = 1）。
+                /// `SemanticId = 0` 是未写；`SemanticId = 声明值` 才算写了（`value = 0` 也是"明确写 0"）。
                 /// </summary>
-                float2 ResolveSurfaceLane(uint laneIndex, uint declaredId, uint2 pixelCoord)
+                float2 ResolveSurfaceLane(uint laneIndex, uint declaredId, float2 uv)
                 {
-                    float written = 0.0;
-                    float sum = 0.0;
                     if (declaredId == 0u)
                     {
                         return float2(0.0, 0.0);
                     }
 
-                    uint samples = (uint)max(1.0, _HoSurfaceSemanticSampleCount);
+                    uint idA;
+                    float valueA;
+                    uint idB;
+                    float valueB;
+                    HoObjectBufferUnpackSelection(SampleSurfaceLane(laneIndex, uv), idA, valueA, idB, valueB);
                     bool even = (laneIndex & 1u) == 0u;
-                    [loop]
-                    for (uint i = 0u; i < samples; i++)
-                    {
-                        uint idA;
-                        float valueA;
-                        uint idB;
-                        float valueB;
-                        HoObjectBufferUnpackSelection(LoadSurfaceLane(laneIndex, pixelCoord, i), idA, valueA, idB, valueB);
-                        uint inImageId = even ? idA : idB;
-                        float inImageValue = even ? valueA : valueB;
-                        if (inImageId == declaredId)
-                        {
-                            written += 1.0;
-                            sum += saturate(inImageValue);
-                        }
-                    }
-
-                    return float2(written, sum);
+                    uint inImageId = even ? idA : idB;
+                    float inImageValue = even ? valueA : valueB;
+                    return inImageId == declaredId ? float2(1.0, saturate(inImageValue)) : float2(0.0, 0.0);
                 }
             #endif
 
@@ -170,7 +138,7 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
             /// </summary>
             float ComposeLane(uint mode, float objectCoverage, float2 surface, float samples)
             {
-                #if defined(_HO_SURFACE_SEMANTIC_MSAA_2) || defined(_HO_SURFACE_SEMANTIC_MSAA_4)
+                #if defined(_HO_SURFACE_SEMANTIC)
                     float surfaceAll = saturate(surface.y / max(1.0, samples));
                     if (mode == 1u)
                     {
@@ -202,20 +170,20 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
             /// <summary>
             /// 一条 lane 的最终覆盖率：物体侧一律先算（`o` 是所有模式的输入），再按 `sourceMode` 与 SB 合成。
             /// </summary>
-            float LaneCoverageWithSurface(uint laneIndex, uint mode, uint objectBit, uint declaredId, uint2 pixelCoord,
+            float LaneCoverageWithSurface(uint laneIndex, uint mode, uint objectBit, uint declaredId, float2 uv,
                                           uint tags0, uint tags1, uint tags2, uint tags3, float4 coverage)
             {
                 float objectCoverage = LaneCoverage(objectBit, tags0, tags1, tags2, tags3, coverage);
-                #if defined(_HO_SURFACE_SEMANTIC_MSAA_2) || defined(_HO_SURFACE_SEMANTIC_MSAA_4)
-                    float samples = max(1.0, _HoSurfaceSemanticSampleCount);
-                    float2 surface = ResolveSurfaceLane(laneIndex, declaredId, pixelCoord);
-                    return ComposeLane(mode, objectCoverage, surface, samples);
+                #if defined(_HO_SURFACE_SEMANTIC)
+                    // 单采样：N = 1，`ComposeLane` 里的 writtenFraction 就是 0/1。
+                    float2 surface = ResolveSurfaceLane(laneIndex, declaredId, uv);
+                    return ComposeLane(mode, objectCoverage, surface, 1.0);
                 #else
                     return objectCoverage;
                 #endif
             }
 
-            float4 PackLanePair(uint laneA, uint laneB, uint laneCount, uint2 pixelCoord,
+            float4 PackLanePair(uint laneA, uint laneB, uint laneCount, float2 uv,
                                 uint tags0, uint tags1, uint tags2, uint tags3, float4 coverage)
             {
                 if (laneA >= laneCount)
@@ -224,7 +192,7 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
                 }
 
                 uint idA = _HoACLanes[laneA].semanticId;
-                float covA = LaneCoverageWithSurface(laneA, _HoACLanes[laneA].sourceMode, _HoACLanes[laneA].objectTagBit, idA, pixelCoord,
+                float covA = LaneCoverageWithSurface(laneA, _HoACLanes[laneA].sourceMode, _HoACLanes[laneA].objectTagBit, idA, uv,
                     tags0, tags1, tags2, tags3, coverage);
 
                 uint idB = 0u;
@@ -232,7 +200,7 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
                 if (laneB < laneCount)
                 {
                     idB = _HoACLanes[laneB].semanticId;
-                    covB = LaneCoverageWithSurface(laneB, _HoACLanes[laneB].sourceMode, _HoACLanes[laneB].objectTagBit, idB, pixelCoord,
+                    covB = LaneCoverageWithSurface(laneB, _HoACLanes[laneB].sourceMode, _HoACLanes[laneB].objectTagBit, idB, uv,
                         tags0, tags1, tags2, tags3, coverage);
                 }
 
@@ -244,8 +212,6 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 float2 uv = input.texcoord;
-                // MSAA 只能按像素 Load：SV_POSITION 就是渲染目标像素坐标（与 SB 的图同尺寸、同缩放假定）。
-                uint2 pixelCoord = (uint2)input.positionCS.xy;
 
                 float4 id0 = SAMPLE_TEXTURE2D_X(_HoObjectBufferId0Texture, sampler_PointClamp, uv);
                 float4 id1 = SAMPLE_TEXTURE2D_X(_HoObjectBufferId1Texture, sampler_PointClamp, uv);
@@ -269,10 +235,10 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
 
                 uint laneCount = (uint)max(0.0, _HoACLaneCount);
                 AcResolveOutput output;
-                output.lanes01 = (half4)PackLanePair(0u, 1u, laneCount, pixelCoord, tags[0], tags[1], tags[2], tags[3], coverage);
-                output.lanes23 = (half4)PackLanePair(2u, 3u, laneCount, pixelCoord, tags[0], tags[1], tags[2], tags[3], coverage);
-                output.lanes45 = (half4)PackLanePair(4u, 5u, laneCount, pixelCoord, tags[0], tags[1], tags[2], tags[3], coverage);
-                output.lanes67 = (half4)PackLanePair(6u, 7u, laneCount, pixelCoord, tags[0], tags[1], tags[2], tags[3], coverage);
+                output.lanes01 = (half4)PackLanePair(0u, 1u, laneCount, uv, tags[0], tags[1], tags[2], tags[3], coverage);
+                output.lanes23 = (half4)PackLanePair(2u, 3u, laneCount, uv, tags[0], tags[1], tags[2], tags[3], coverage);
+                output.lanes45 = (half4)PackLanePair(4u, 5u, laneCount, uv, tags[0], tags[1], tags[2], tags[3], coverage);
+                output.lanes67 = (half4)PackLanePair(6u, 7u, laneCount, uv, tags[0], tags[1], tags[2], tags[3], coverage);
                 return output;
             }
             ENDHLSL

@@ -18,13 +18,14 @@ namespace lilToon.URP.Extensions.AttributeComposite
         public const int SelectionTexturesPerResolve = 4;
 
         /// <summary>
-        /// 有 SB 语义 lane 时打开：Selection 池的每条 lane 走 `SurfaceOverride`（逐 sample 与 SB 合成）。
-        /// 两个都关就是纯物体位解压（`ObjectOnly`）——没有 SB / 平台不支持时 AC 不会假装有 surface 来源。
-        /// 与 OB 的 resolve 同一套：采样数由关键字给出（声明 `Texture2DMS&lt;T, N&gt;` 要用到它）。
+        /// 有 SB 语义 lane 时打开：Selection 池的每条 lane 按 catalog 的 `sourceMode` 与 SB 合成。
+        /// 关掉就是纯物体位（`ObjectOnly`）——没有 SB / 平台不支持时 AC 不会假装有 surface 来源。
+        /// <para>
+        /// 单采样：lane 是**逐像素**的（`SAMPLE_TEXTURE2D_X` 普通采样）。逐 sample 细分重新上时，
+        /// 由 SB 自己 resolve 出单采样 lane 再发布，这个关键字仍然只表示"有没有 surface 来源"。
+        /// </para>
         /// </summary>
-        public const string SurfaceMsaa2Keyword = "_HO_SURFACE_SEMANTIC_MSAA_2";
-
-        public const string SurfaceMsaa4Keyword = "_HO_SURFACE_SEMANTIC_MSAA_4";
+        public const string SurfaceKeyword = "_HO_SURFACE_SEMANTIC";
 
         public static readonly int ActiveId = Shader.PropertyToID(ActiveName);
         public static readonly int LaneCountId = Shader.PropertyToID(LaneCountName);
