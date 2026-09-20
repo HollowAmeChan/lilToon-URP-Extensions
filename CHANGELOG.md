@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- `Ho-ObjectBuffer`：**组 ID 改为自动分配**——注册表认领已落盘的值、把没号或撞车的补到最小可用号并在编辑器期写回组件（组数超过 255 时明确报错）；组件上不再手填，于是"两个组件抢同一个号"从硬错误变成不可能。顺带撤掉「组级标签」（没有任何消费端读它，"整组"语义用组 ID 判定即可）与「优先级」（裁决改为离 Renderer 更近者胜、距离相同用组 ID 定序）。详见规划 0.3.10。
+
 - 新增 **`Ho-ObjectBuffer` R1**：用“per-pixel 只存 IdentityId + coverage，其余按 ID 查表”替换 MetadataBuffer bit mask 身份路径。MetadataBuffer 暂时并存。
   - **组件**：`HoObjectBufferGroup`（Add Component: `Rendering/Ho-ObjectBuffer Group`）维护组/部件表并把 16-bit `group:8 | slot:8` 写入 RSUV；重复组 ID 使冲突组全部失效并报错。
   - **覆盖率**：自建 MSAA（R1 固定 `R16_UNorm`）与相机 AA 解耦，resolve 按整数 ID 数票取 4 层；深度平票改在 linear eye depth 上比较，修复 reversed-Z 方向错误。

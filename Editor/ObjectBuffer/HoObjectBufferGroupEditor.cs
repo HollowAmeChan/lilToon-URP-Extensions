@@ -67,9 +67,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private static readonly GUIContent RemoveSelectionLabel = new GUIContent("-", "删除当前选中的选区");
         private static readonly GUIContent RefreshLabel = new GUIContent("刷新全场景 RSUV", "重新编译 palette 并把 RSUV 索引写回所有 renderer（RSUV 不会被序列化，场景/域重载后必须重写）。");
 
-        private SerializedProperty priorityProperty;
-        private SerializedProperty groupIdProperty;
-        private SerializedProperty groupTagsProperty;
         private SerializedProperty faceBoneProperty;
         private SerializedProperty faceForwardAxisProperty;
         private SerializedProperty faceRightAxisProperty;
@@ -87,9 +84,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
         private void OnEnable()
         {
-            priorityProperty = serializedObject.FindProperty("priority");
-            groupIdProperty = serializedObject.FindProperty("groupId");
-            groupTagsProperty = serializedObject.FindProperty("groupTags");
             faceBoneProperty = serializedObject.FindProperty("faceBone");
             faceForwardAxisProperty = serializedObject.FindProperty("faceForwardAxis");
             faceRightAxisProperty = serializedObject.FindProperty("faceRightAxis");
@@ -451,11 +445,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
         private string BuildRowIdText(string partName)
         {
-            var group = target as HoObjectBufferGroup;
-            int groupId = Mathf.Clamp(
-                groupIdProperty != null ? groupIdProperty.intValue : (group != null ? group.groupId : 0),
-                0,
-                HoObjectBufferPaletteLimits.MaxGroups - 1);
+            int groupId = GetAssignedGroupId();
             if (groupId == 0 || string.IsNullOrEmpty(partName))
             {
                 return "未注册";
@@ -574,29 +564,24 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                // 组 ID 是 1-255 的索引，不是连续可调的参数：给个整数框，比一条 250px 的滑块省地方也更好对齐。
-                var groupIdLabel = new GUIContent("组 ID", "1-255，它是 ID 的高字节。组 0 保留：0 表示「未注册」，也是 RSUV 被重置后的值。");
-                int groupId = Mathf.Clamp(groupIdProperty != null ? groupIdProperty.intValue : 1, 1, HoObjectBufferPaletteLimits.MaxGroups - 1);
-                int editedGroupId = EditorGUILayout.DelayedIntField(groupIdLabel, groupId);
-                editedGroupId = Mathf.Clamp(editedGroupId, 1, HoObjectBufferPaletteLimits.MaxGroups - 1);
-                if (groupIdProperty != null && editedGroupId != groupIdProperty.intValue)
-                {
-                    groupIdProperty.intValue = editedGroupId;
-                    structureChanged = true;
-                }
+                // 组 ID 只读：注册表认领已落盘的号，没号或撞车的补到最小可用号（编辑器期写回组件）。
+                // 手填它只会制造"两个组件抢同一个号"，所以这里只显示结果。
+                int assignedGroupId = GetAssignedGroupId();
+                EditorGUILayout.LabelField(
+                    new GUIContent("组 ID", "自动分配：像素里身份的高字节，也是组表下标（上限 255 个组）。注册表按最小可用号分配并写回组件，所以新建/删除别的组件不会让已有的组换号。"),
+                    new GUIContent(assignedGroupId > 0 ? $"0x{assignedGroupId:X2}（自动）" : "待分配（下一次重建时给号）"));
 
-                if (groupIdProperty != null && groupIdProperty.intValue == 0)
-                {
-                    validationMessage = "组 ID 是 0（保留值）：这个组不会写进 palette。随便改成 1-255 即可。";
-                }
-
-                DrawProperty(groupTagsProperty, new GUIContent("组级标签", "放在组表那一行，用于「整组」语义（例如 CharacterFull），不必在每个部件行重复。"));
-                DrawProperty(priorityProperty, new GUIContent("优先级", "同一个 Renderer 被多个组命中时优先级高者生效；相同时离 Renderer 最近的组生效。"));
                 DrawProperty(faceBoneProperty, new GUIContent("面部朝向", "角色朝向的参考 Transform（骨骼或朝向正确的空物体）。逐像素朝向会与层 0 的获胜身份同步 resolve；留空表示不产出朝向图。"));
                 DrawProperty(faceForwardAxisProperty, new GUIContent("脸前轴", "骨骼的哪个局部轴作为「脸前方」。默认 +Z。"));
                 DrawProperty(faceRightAxisProperty, new GUIContent("右轴", "骨骼的哪个局部轴作为「角色右侧」。默认 +X。"));
                 DrawProperty(faceUpAxisProperty, new GUIContent("上轴", "骨骼的哪个局部轴作为「角色上方」。默认 +Y。"));
             }
+        }
+
+        private int GetAssignedGroupId()
+        {
+            var group = target as HoObjectBufferGroup;
+            return group != null ? Mathf.Clamp(group.groupId, 0, HoObjectBufferPaletteLimits.MaxGroups - 1) : 0;
         }
 
         // ------------------------------------------------------------------ 底部：状态与刷新
@@ -607,9 +592,9 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             using (new EditorGUILayout.HorizontalScope())
             {
                 int partRows = Mathf.Max(0, HoObjectBufferRegistry.PartRowCount - 1);
-                int groupId = Mathf.Clamp(groupIdProperty != null ? groupIdProperty.intValue : 0, 0, HoObjectBufferPaletteLimits.MaxGroups - 1);
+                int groupId = GetAssignedGroupId();
                 EditorGUILayout.LabelField(
-                    $"组 {groupId} · 已注册 部件 {partRows} / {HoObjectBufferPaletteLimits.MaxPartRows}，选择 {HoObjectBufferRegistry.SelectionCount} / {HoObjectBufferPaletteLimits.MaxSelections - 1}",
+                    $"组 {(groupId > 0 ? groupId.ToString() : "—")} · 已注册 部件 {partRows} / {HoObjectBufferPaletteLimits.MaxPartRows}，选择 {HoObjectBufferRegistry.SelectionCount} / {HoObjectBufferPaletteLimits.MaxSelections - 1}",
                     EditorStyles.miniLabel);
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button(RefreshLabel, GUILayout.Width(150.0f)))

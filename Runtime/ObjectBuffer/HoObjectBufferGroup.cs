@@ -39,20 +39,15 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             return Conflicts;
         }
 
-        [InspectorName("优先级")]
-        [Tooltip("同一个 Renderer 被多个 Group 命中时，优先级高者胜出；相同则离 Renderer 最近的组胜出。")]
-        public int priority;
-
-        [InspectorName("组 ID (1-255)")]
-        [Tooltip("组 0 保留：ID 0 表示“未注册/未知”，与 RSUV 被重置后的值重合。")]
-        [Range(1, 255)]
+        /// <summary>
+        /// 组 ID = 像素里身份的高字节，同时**直接是组表的下标**（256 行）。它由
+        /// <see cref="HoObjectBufferRegistry"/> **自动分配**并在编辑器期落盘：新组件默认 0（待分配），
+        /// 注册表认领已经写好的号（旧场景手填的值、以及上次分配的结果都保持不动），
+        /// 没号或撞车的补到最小可用号。手改它没有意义——两个组件抢同一个号时，注册表会给后来者换号。
+        /// </summary>
+        [HideInInspector]
         [FormerlySerializedAs("characterId")]
-        public int groupId = 1;
-
-        [InspectorName("组级标签")]
-        [Tooltip("放在组表那一行，用于“整组”语义（例如 CharacterFull），不必在每个部件行重复。")]
-        [FormerlySerializedAs("characterTags")]
-        public HoObjectBufferPartTags groupTags = HoObjectBufferPartTags.None;
+        public int groupId;
 
         [InspectorName("部件")]
         public List<HoObjectBufferPartEntry> parts = new List<HoObjectBufferPartEntry>();
@@ -105,7 +100,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         private void OnValidate()
         {
-            groupId = Mathf.Clamp(groupId, 1, HoObjectBufferPaletteLimits.MaxGroups - 1);
+            // 0 = 待分配（合法值：注册表下一帧给号并落盘）；上限是组表行数。
+            groupId = Mathf.Clamp(groupId, 0, HoObjectBufferPaletteLimits.MaxGroups - 1);
             HoObjectBufferRegistry.MarkDirty();
         }
 
@@ -398,7 +394,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                     group.CollectRenderers(entry, renderer =>
                     {
                         int distance = group.GetHierarchyDistance(renderer.transform);
-                        var candidate = new Assignment(group, currentSlot, group.priority, distance);
+                        var candidate = new Assignment(group, currentSlot, distance);
                         if (!Assignments.TryGetValue(renderer, out Assignment existing))
                         {
                             Assignments[renderer] = candidate;
@@ -595,25 +591,30 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         {
             public readonly HoObjectBufferGroup group;
             public readonly int slot;
-            private readonly int priority;
             private readonly int distance;
 
-            public Assignment(HoObjectBufferGroup group, int slot, int priority, int distance)
+            public Assignment(HoObjectBufferGroup group, int slot, int distance)
             {
                 this.group = group;
                 this.slot = slot;
-                this.priority = priority;
                 this.distance = distance;
             }
 
+            /// <summary>
+            /// 裁决只用"离 Renderer 更近者胜"，距离相同再用组 ID 决出确定性结果（组 ID 由注册表分配，
+            /// 所以这条比较是稳定的）。原来那套手填优先级已经撤掉：默认全 0 时它本来也没起作用，
+            /// 真需要"更上层的组强行接管"时再加回来也不迟。
+            /// </summary>
             public bool IsHigherPriorityThan(Assignment other)
             {
-                if (priority != other.priority)
+                if (distance != other.distance)
                 {
-                    return priority > other.priority;
+                    return distance < other.distance;
                 }
 
-                return distance < other.distance;
+                int groupCompare = group != null ? group.groupId : 0;
+                int otherCompare = other.group != null ? other.group.groupId : 0;
+                return groupCompare < otherCompare;
             }
         }
     }

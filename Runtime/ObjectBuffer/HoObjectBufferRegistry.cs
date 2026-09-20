@@ -204,11 +204,17 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 }
             };
 
-            // 确定性顺序：先按 groupId，再按实例 ID，保证跨帧/跨机 ID 稳定（规划 §5.6）。
+            // 确定性顺序：按场景层级路径，其次实例 ID（同一个场景每次都是同一个顺序）。
             var orderedGroups = new List<HoObjectBufferGroup>(Groups);
             orderedGroups.Sort(CompareGroups);
 
-            var groupIdCounts = new int[HoObjectBufferPaletteLimits.MaxGroups];
+            // 组 ID 由这里分配，于是"两个组件抢同一个号"从"硬错误"变成"根本不会发生"：
+            //   ① 先认领组件上已经写好的号——旧场景里手填的值、以及上次分配的结果，都保持不动；
+            //   ② 没号（0）或撞车的，按上面的稳定顺序补到最小可用号，并在编辑器期写回组件。
+            // ② 的"写回"是关键：不落盘的话，新建/删除别的组件会让已有组重新编号，
+            // 导出的 AOV 与名字的对应关系就跟着漂移了。
+            var takenGroupIds = new bool[HoObjectBufferPaletteLimits.MaxGroups];
+            var unassignedGroups = new List<HoObjectBufferGroup>();
             for (int i = 0; i < orderedGroups.Count; i++)
             {
                 HoObjectBufferGroup candidate = orderedGroups[i];
@@ -217,35 +223,45 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                     continue;
                 }
 
-                int candidateId = Mathf.Clamp(candidate.groupId, 0, HoObjectBufferPaletteLimits.MaxGroups - 1);
-                if (candidateId > 0)
+                int claimedId = Mathf.Clamp(candidate.groupId, 0, HoObjectBufferPaletteLimits.MaxGroups - 1);
+                if (claimedId > 0 && !takenGroupIds[claimedId])
                 {
-                    groupIdCounts[candidateId]++;
-                }
-            }
-
-            for (int i = 0; i < orderedGroups.Count; i++)
-            {
-                HoObjectBufferGroup candidate = orderedGroups[i];
-                if (candidate == null)
-                {
+                    takenGroupIds[claimedId] = true;
                     continue;
                 }
 
-                int candidateId = Mathf.Clamp(candidate.groupId, 0, HoObjectBufferPaletteLimits.MaxGroups - 1);
-                if (candidateId == 0 || groupIdCounts[candidateId] != 1)
-                {
-                    InvalidGroups.Add(candidate);
-                }
+                unassignedGroups.Add(candidate);
             }
 
-            for (int groupId = 1; groupId < groupIdCounts.Length; groupId++)
+            int nextGroupId = 1;
+            var overflowGroups = new List<HoObjectBufferGroup>();
+            for (int i = 0; i < unassignedGroups.Count; i++)
             {
-                if (groupIdCounts[groupId] > 1)
+                while (nextGroupId < takenGroupIds.Length && takenGroupIds[nextGroupId])
                 {
-                    Debug.LogError($"[Ho-ObjectBuffer] 组 ID {groupId} 被 {groupIdCounts[groupId]} 个 HoObjectBufferGroup 重复使用。" +
-                                   "冲突组已全部失效，请为每个组分配唯一 ID。");
+                    nextGroupId++;
                 }
+
+                if (nextGroupId >= takenGroupIds.Length)
+                {
+                    overflowGroups.Add(unassignedGroups[i]);
+                    continue;
+                }
+
+                takenGroupIds[nextGroupId] = true;
+                AssignGroupId(unassignedGroups[i], nextGroupId);
+            }
+
+            for (int i = 0; i < overflowGroups.Count; i++)
+            {
+                InvalidGroups.Add(overflowGroups[i]);
+            }
+
+            if (overflowGroups.Count > 0)
+            {
+                Debug.LogError(
+                    $"[Ho-ObjectBuffer] 组 ID 已用满（上限 {HoObjectBufferPaletteLimits.MaxGroups - 1} 个组），" +
+                    $"本帧没有身份的是：{DescribeGroups(overflowGroups)}。");
             }
 
             int selectionCount = 0;
@@ -266,7 +282,9 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 HoObjectGroupData groupData = groups[groupId];
                 groupData.rowBase = (uint)parts.Count;
                 groupData.slotCount = 0;
-                groupData.tags = (uint)group.groupTags;
+                // 组行的 tags 保留在结构里但目前恒 0：没有任何消费端读它，
+                // "整组"语义用组 ID 判定即可（规划 §1.2 的两级表里组行只有 组名 / 朝向来源）。
+                groupData.tags = 0;
 
                 // 快照：GetPartNames() 是复用缓存，循环体内又可能触发它被重填。
                 var partNames = new List<string>(group.GetPartNames());
@@ -482,15 +500,82 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             return groupId.ToString() + "/" + (partName ?? string.Empty);
         }
 
+        /// <summary>
+        /// 把分配结果写回组件。编辑器期（非播放）才落盘：运行期只改内存，免得播放时把场景标脏；
+        /// 打出来的包用的是编辑器期已经落盘的号。
+        /// <para>
+        /// 标脏推迟到 <c>delayCall</c>：分配可能发生在渲染回调里（pass 每帧 <c>EnsureBuilt</c>），
+        /// 在渲染过程中标脏不是个好时机。
+        /// </para>
+        /// </summary>
+        private static void AssignGroupId(HoObjectBufferGroup group, int groupId)
+        {
+            if (group == null || group.groupId == groupId)
+            {
+                return;
+            }
+
+            group.groupId = groupId;
+#if UNITY_EDITOR
+            if (!Application.isPlaying)
+            {
+                UnityEditor.EditorApplication.delayCall += () =>
+                {
+                    if (group != null)
+                    {
+                        UnityEditor.EditorUtility.SetDirty(group);
+                    }
+                };
+            }
+#endif
+        }
+
+        private static string DescribeGroups(List<HoObjectBufferGroup> groups)
+        {
+            var text = new System.Text.StringBuilder();
+            for (int i = 0; i < groups.Count; i++)
+            {
+                if (i > 0)
+                {
+                    text.Append('、');
+                }
+
+                text.Append(groups[i] != null ? groups[i].name : "(已销毁)");
+            }
+
+            return text.ToString();
+        }
+
         private static int CompareGroups(HoObjectBufferGroup a, HoObjectBufferGroup b)
         {
-            int characterCompare = a.groupId.CompareTo(b.groupId);
-            if (characterCompare != 0)
+            // 场景层级路径优先：同一个场景、同一份层级结构，分配的号就一致；
+            // 实例 ID 只是兜底（同名同路径的极端情况）。
+            int pathCompare = string.CompareOrdinal(GetHierarchyPath(a), GetHierarchyPath(b));
+            if (pathCompare != 0)
             {
-                return characterCompare;
+                return pathCompare;
             }
 
             return a.GetInstanceID().CompareTo(b.GetInstanceID());
+        }
+
+        private static string GetHierarchyPath(HoObjectBufferGroup group)
+        {
+            if (group == null)
+            {
+                return string.Empty;
+            }
+
+            Transform transform = group.transform;
+            var path = new System.Text.StringBuilder(transform.name);
+            Transform parent = transform.parent;
+            while (parent != null)
+            {
+                path.Insert(0, '/').Insert(0, parent.name);
+                parent = parent.parent;
+            }
+
+            return path.ToString();
         }
     }
 }
