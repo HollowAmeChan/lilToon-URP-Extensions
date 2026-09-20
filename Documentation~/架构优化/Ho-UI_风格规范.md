@@ -78,6 +78,7 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 - ID 相关名只用 OB §1.1 那一套：**组 ID / 部件 ID / 标记 / 物体位（全角色·脸·前发·眼睛·眼透区域·配件·人体·预留 7）/ 材质位 0~3**。
 - 槽位相关一律说“**语义 lane**”（AC Selection transport lane）；UI 同时显示 SemanticId/名字，不把 LaneIndex 冒充 ID。身份相关说“**身份池**”。
 - 纹理名与契约登记名**不在 UI 上出现**（`_HoObjectBuffer*` 这类只在文档与代码里）。
+- 枚举的 `InspectorName` **不许出现 `/`**：Unity 的下拉把斜杠当分组分隔符，那一项会变成一串子菜单而不是一个可选值（`[InspectorName("")]` 变分隔线是同一套规则）。并列关系写「·」「，」。摘要行里的 `" / "` 是普通字符串，不受影响。
 
 ## 6. 三个 feature 的具体分节
 

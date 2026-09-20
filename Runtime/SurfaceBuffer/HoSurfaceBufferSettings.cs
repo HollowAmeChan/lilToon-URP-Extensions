@@ -9,7 +9,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
     /// <remarks>
     /// 约定：**每个视图都把"没人写"的像素（owner = 0）画成暗红** —— "整屏暗红"= SB 没产出，
     /// "黑"= 有值但值是 0，两者必须能一眼分开（否则 0 和"没跑"长得一模一样）。
-    /// 两个 byte ID（profile / materialClass）按缩放显示（/8、/32）：字节原值直接铺到 0..1 基本是黑的。
+    /// 两个 byte ID（profile / materialClass）按缩放显示（÷8、÷32）：字节原值直接铺到 0..1 基本是黑的。
+    /// **显示名里不准出现 "/"**：Unity 的下拉把斜杠当分组分隔符，一项会变成一串子菜单而不是一个可选值
+    /// （`[InspectorName("")]` 变分隔线是同一套规则）。要表达"或/和"用「·」「，」。
     /// </remarks>
     public enum HoSurfaceBufferDebugMode
     {
@@ -19,15 +21,15 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         Color,
         [InspectorName("Normal（octa 还原）")]
         Normal,
-        [InspectorName("Material（1-roughness / metallic / thickness）")]
+        [InspectorName("Material（粗糙度·金属度·厚度）")]
         Material,
-        [InspectorName("Reflection（reflectance / plrStrength）")]
+        [InspectorName("Reflection（反射率·PLR 强度）")]
         Reflection,
-        [InspectorName("Classification（profile/8, curvature, transmittance）")]
+        [InspectorName("Classification（档位·曲率·透射）")]
         Classification,
-        [InspectorName("Owner（绿=与 OB 层 0 一致 / 红=不一致或没人写）")]
+        [InspectorName("Owner（绿=与 OB 一致，红=不一致或没人写）")]
         Owner,
-        [InspectorName("Class Id（materialClass/32）")]
+        [InspectorName("Class Id（材质类 ÷32）")]
         ClassId
     }
 
