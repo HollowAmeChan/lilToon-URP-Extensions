@@ -263,6 +263,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
             // `HoAC_Attribute` 的来源：SB 的数值面（Classification + owner）。语义 lane 关掉也照样发布 ——
             // 属性合成与语义 lane 是两条独立的通路。
             resources.surfaceClassificationTexture = surfaceResources.classificationTexture;
+            resources.surfaceMaterialTexture = surfaceResources.materialTexture;
+            resources.surfaceReflectionTexture = surfaceResources.reflectionTexture;
             resources.surfaceOwnerTexture = surfaceResources.ownerTexture;
             resources.surfaceValid = surfaceResources.HasRequiredTextures;
         }

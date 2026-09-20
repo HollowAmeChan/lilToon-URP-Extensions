@@ -35,6 +35,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
         /// 只有真需要"一张合成属性图"时才落成 RT（规划 §2 的 1~2 张）。
         /// </summary>
         public TextureHandle surfaceClassificationTexture = TextureHandle.nullHandle;
+        public TextureHandle surfaceMaterialTexture = TextureHandle.nullHandle;
+        public TextureHandle surfaceReflectionTexture = TextureHandle.nullHandle;
         public TextureHandle surfaceOwnerTexture = TextureHandle.nullHandle;
 
         /// <summary>SB 的数值面本帧有没有产出（没有的话 `HoAC_Attribute` 全是 constant 兜底）。</summary>
@@ -60,6 +62,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
             identityId1Texture = TextureHandle.nullHandle;
             identityCoverageTexture = TextureHandle.nullHandle;
             surfaceClassificationTexture = TextureHandle.nullHandle;
+            surfaceMaterialTexture = TextureHandle.nullHandle;
+            surfaceReflectionTexture = TextureHandle.nullHandle;
             surfaceOwnerTexture = TextureHandle.nullHandle;
             surfaceValid = false;
         }

@@ -221,6 +221,8 @@ float HoAC_SelectionByName(float2 uv, uint laneIndex)
 
 // SB 的数值面（AC 只发布**引用**：属性合成是读取时做的，不落一张合成图）。
 TEXTURE2D_X(_HoSurfaceBufferClassificationTexture);
+TEXTURE2D_X(_HoSurfaceBufferMaterialTexture);
+TEXTURE2D_X(_HoSurfaceBufferReflectionTexture);
 TEXTURE2D_X(_HoSurfaceBufferOwnerTexture);
 float _HoSurfaceBufferActive;
 
@@ -241,10 +243,12 @@ bool HoAC_SurfaceValid(float2 uv)
 }
 
 /// <summary>
-/// 合成数值属性：覆盖链 `constant &lt; surface`（规划 §4）。本轮只有**一条**：
-/// `Classification` = `(sssProfileIdByte, curvatureHint, transmittanceHint, materialClassIdByte)`。
+/// 合成数值属性：覆盖链 `constant &lt; surface`（规划 §4）。
 /// <list type="bullet">
-/// <item>`attributeId`：0 = Classification；其它值本轮没有生产者，返回 0（消费者不要依赖）。</item>
+/// <item><b>0 = Classification</b>：`(sssProfileIdByte, curvatureHint, transmittanceHint, materialClassIdByte)`。</item>
+/// <item><b>1 = Material</b>：`(perceptualRoughness, metallic, thickness, 0)` —— 消费端自己平方成 linear roughness。</item>
+/// <item><b>2 = Reflection</b>：`(reflectance, plrStrength, 0, 0)`。</item>
+/// <item>其它值本轮没有生产者，返回 0（消费者不要依赖）。</item>
 /// <item>byte 通道是**精确 ID**：`round(v * 255)` 还原；`0` 是合法值，"没写"要用
 /// <see cref="HoAC_SurfaceValid"/> 区分 —— 这正是"0 值与未写可区分"那条验收。</item>
 /// <item>constant 兜底本轮恒 0：等真有消费者要非 0 兜底，再加 AC 侧的常量表（feature 的声明节）。</item>
@@ -252,9 +256,24 @@ bool HoAC_SurfaceValid(float2 uv)
 /// </summary>
 float4 HoAC_Attribute(float2 uv, uint attributeId)
 {
-    if (attributeId == 0u && HoAC_SurfaceValid(uv))
+    if (!HoAC_SurfaceValid(uv))
+    {
+        return float4(0.0, 0.0, 0.0, 0.0);
+    }
+
+    if (attributeId == 0u)
     {
         return SAMPLE_TEXTURE2D_X(_HoSurfaceBufferClassificationTexture, sampler_PointClamp, uv);
+    }
+
+    if (attributeId == 1u)
+    {
+        return SAMPLE_TEXTURE2D_X(_HoSurfaceBufferMaterialTexture, sampler_PointClamp, uv);
+    }
+
+    if (attributeId == 2u)
+    {
+        return SAMPLE_TEXTURE2D_X(_HoSurfaceBufferReflectionTexture, sampler_PointClamp, uv);
     }
 
     return float4(0.0, 0.0, 0.0, 0.0);
