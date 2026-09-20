@@ -22,7 +22,9 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/AmbientProbe.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferPalette.hlsl"
+            // IdPass 里才有 HoObjectBufferUnpackSelection（它自己会 include palette 表），
+            // 只 include palette 会在用到选择解包时炸 "undeclared identifier"。
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferIdPass.hlsl"
 
             #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
             #include "Packages/com.unity.render-pipelines.core/Runtime/Lighting/ProbeVolume/ProbeVolume.hlsl"
