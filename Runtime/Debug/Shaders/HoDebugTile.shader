@@ -22,6 +22,7 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             #include "Packages/com.unity.render-pipelines.core/ShaderLibrary/AmbientProbe.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferPalette.hlsl"
 
             #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
             #include "Packages/com.unity.render-pipelines.core/Runtime/Lighting/ProbeVolume/ProbeVolume.hlsl"
@@ -248,6 +249,16 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 return layer == 0 ? coverage.r : (layer == 1 ? coverage.g : (layer == 2 ? coverage.b : coverage.a));
             }
 
+            // ObjectBuffer 的视图在**两个入口**都要能看：DebugTile 的九宫格，和 feature 自带的整屏视图。
+            // 两边必须逐模式同色，否则"同一份数据在两个入口看到两种颜色"，排查时会被这件事误导。
+            // 这里的规则与 Runtime/ObjectBuffer/Shaders/Debug/HoObjectBufferDebug.shader 一一对应：
+            // 层视图查 palette 的 displayColor（未注册 = unknown 行的洋红），覆盖率 0 = 0.06 灰底。
+            half3 HoObjectBufferLayerColor(uint partId, half coverage)
+            {
+                HoObjectPartData part = HoObjectBufferLoadPart(partId);
+                return part.displayColor.rgb * saturate(coverage) + 0.06;
+            }
+
             half4 ResolveObjectBufferColor(float2 uv)
             {
                 float4 id0 = SAMPLE_TEXTURE2D_X(_HoObjectBufferId0Texture, sampler_PointClamp, uv);
@@ -257,13 +268,11 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
 
                 if (mode >= 1 && mode <= 4)
                 {
+                    // 层1..3 在轮廓像素上会出现第二个身份（一个像素上有两个物体），那是设计结果，不是 bug。
                     int layer = mode - 1;
-                    uint id = HoObjectBufferDecodeLayerId(id0, id1, layer);
-                    uint groupId = id >> 8;
-                    uint slotId = id & 255u;
-                    half cov = HoObjectBufferLayerCoverage(coverage, layer);
-                    half3 color = HashColor(float3(groupId, slotId, id)) * (id != 0u ? 1.0h : 0.0h) * saturate(cov);
-                    return half4(color, 1.0h);
+                    return half4(HoObjectBufferLayerColor(
+                        HoObjectBufferDecodeLayerId(id0, id1, layer),
+                        HoObjectBufferLayerCoverage(coverage, layer)), 1.0h);
                 }
 
                 if (mode == 5)
@@ -279,15 +288,27 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 if (mode == 7)
                 {
                     half4 selection = SAMPLE_TEXTURE2D_X(_HoObjectBufferSelectionTexture, sampler_PointClamp, uv);
-                    return half4(HashEncodedId(selection.r) * selection.g, 1.0h);
+                    uint selectionIdA;
+                    float coverageA;
+                    uint selectionIdB;
+                    float coverageB;
+                    HoObjectBufferUnpackSelection(selection, selectionIdA, coverageA, selectionIdB, coverageB);
+                    if (selectionIdA == 0u)
+                    {
+                        return half4(0.0h, 0.0h, 0.0h, 1.0h);
+                    }
+
+                    HoObjectSelectionData selectionRow = HoObjectBufferLoadSelection(selectionIdA);
+                    return half4(selectionRow.displayColor.rgb * saturate(coverageA) + 0.06, 1.0h);
                 }
 
                 if (mode == 8)
                 {
-                    uint id = HoObjectBufferDecodeLayerId(id0, id1, 0);
-                    return half4(HashColor(float3(id >> 8, id & 255u, id)) * (id != 0u ? 1.0h : 0.0h), 1.0h);
+                    HoObjectPartData part = HoObjectBufferLoadPart(HoObjectBufferDecodeLayerId(id0, id1, 0));
+                    return half4(saturate(part.thickness), saturate(part.curvature), saturate((float)part.materialClass * 0.25), 1.0h);
                 }
 
+                // 9 = Valid：能走到这里就说明"表在、图在、pass 跑了"（没产出时 feature 视图会给暗红）。
                 return half4(0.0h, 0.6h, 0.0h, 1.0h);
             }
 

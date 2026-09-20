@@ -205,20 +205,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
-            // 回读诊断只在调试视图开着时工作：它要留一组不属于 RenderGraph 的持久 RT 当拷贝目标
-            // （RG 管理的纹理每帧会从池子里复用，回读它会读到别人的数据）。
-            bool readback = settings != null && settings.debugMode != HoObjectBufferDebugMode.Off;
-            HoObjectBufferReadback.Enabled = readback;
-            if (readback)
-            {
-                // 请求的是**上一帧**拷进去的内容：本帧的拷贝命令还没入队。
-                HoObjectBufferReadback.Request(renderTargets);
-            }
-            else
-            {
-                ReleaseCompatibilityResources();
-            }
-
+            ReleaseCompatibilityResources();
             if (settings == null)
             {
                 AddResetPass(renderGraph);
@@ -235,11 +222,6 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             HoObjectBufferRenderGraphResources resources = frameData.GetOrCreate<HoObjectBufferRenderGraphResources>();
 
             RenderTextureDescriptor cameraDescriptor = cameraData.cameraTargetDescriptor;
-            if (readback)
-            {
-                // 拷贝目标只要单采样 RGBA8 层图（与主路径的 MSAA 协商无关），复用兼容路径那组 RTHandle。
-                renderTargets.ReAllocateIfNeeded(cameraDescriptor, 1, false);
-            }
             // 采样数**只问平台**：相机把 MSAA 关掉时，覆盖率照样是 4x（决策 7，也是最初那个 bug 的场景）。
             msaaSamples = HoObjectBufferFormatUtility.GetSupportedSampleCount(
                 cameraDescriptor,
@@ -470,11 +452,6 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                         context.cmd.DrawProcedural(Matrix4x4.identity, data.resolveMaterial, 0, MeshTopology.Triangles, 3, 1);
                     });
                 }
-            }
-
-            if (readback && renderTargets.Id0Texture != null)
-            {
-                AddReadbackCopyPass(renderGraph, id0Texture, coverageTexture, renderTargets);
             }
 
             using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("Ho-Object-Buffer Valid", out _, ProfilingSampler))
@@ -710,150 +687,5 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 });
             }
         }
-
-        /// <summary>
-        /// 调试回读：把 resolve 之后的层图拷进**不属于 RenderGraph** 的持久 RT。
-        /// 只有放在独立 pass 里才安全：这时 RG 才知道源纹理处于"可读"状态，
-        /// 在写它的那个 pass 内部直接拷会让 D3D12 的屏障对不上。
-        /// </summary>
-        private static void AddReadbackCopyPass(
-            RenderGraph renderGraph,
-            TextureHandle id0Texture,
-            TextureHandle coverageTexture,
-            HoObjectBufferRenderTargets targets)
-        {
-            using (var builder = renderGraph.AddUnsafePass<ReadbackPassData>("Ho-Object-Buffer Readback Copy", out ReadbackPassData passData, ProfilingSampler))
-            {
-                passData.id0Texture = id0Texture;
-                passData.coverageTexture = coverageTexture;
-                passData.id0Destination = targets.Id0Texture.nameID;
-                passData.coverageDestination = targets.CoverageTexture.nameID;
-                builder.UseTexture(id0Texture, AccessFlags.Read);
-                builder.UseTexture(coverageTexture, AccessFlags.Read);
-                builder.AllowPassCulling(false);
-                builder.SetRenderFunc(static (ReadbackPassData data, UnsafeGraphContext context) =>
-                {
-                    CommandBuffer cmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
-                    cmd.CopyTexture(data.id0Texture, data.id0Destination);
-                    cmd.CopyTexture(data.coverageTexture, data.coverageDestination);
-                });
-            }
-        }
-
-        private sealed class ReadbackPassData
-        {
-            public TextureHandle id0Texture;
-            public TextureHandle coverageTexture;
-            public RenderTargetIdentifier id0Destination;
-            public RenderTargetIdentifier coverageDestination;
-        }
-    }
-
-    /// <summary>
-    /// 调试用的一次性回读：把**已经 resolve 完**的层图拷回 CPU，在 Console 里打一张"实际字节直方图"。
-    /// <para>
-    /// 为什么需要它：调试视图只能给出"看起来是什么颜色"，而"洋红 = 未注册行"和"洋红 = 拿到垃圾数据"
-    /// 是同一个颜色，靠肉眼分不开（这一轮就是被这件事拖住的）。这里直接给出
-    /// <c>0xRRGGBBAA × 像素数</c>，把"写没写进去 / 写进去的是什么"一次性钉死。
-    /// </para>
-    /// <para>
-    /// 只在 debug 视图打开时工作：这条路径给每帧加两次全屏 CopyTexture，正常渲染不该付这个成本。
-    /// （故意和 pass 放在同一个文件里：新加 .cs 文件在 Unity 里要等一次资源刷新才进编译，
-    /// 调这条链路时不想再被"类型不存在"绊一次。）
-    /// </para>
-    /// </summary>
-    internal static class HoObjectBufferReadback
-    {
-        private const float IntervalSeconds = 1.0f;
-        private static float nextRequestTime;
-        private static bool inFlight;
-        private static int logCount;
-
-        /// <summary>回读的开关：调用方按"调试视图是否开着"决定。</summary>
-        public static bool Enabled { get; set; }
-
-        /// <summary>请求上一帧拷进持久 RT 的内容（本帧的拷贝命令还没入队，所以拿到的就是上一帧的结果）。</summary>
-        public static void Request(HoObjectBufferRenderTargets targets)
-        {
-            if (!Enabled || inFlight || targets == null || targets.Id0Texture == null)
-            {
-                return;
-            }
-
-            if (Time.realtimeSinceStartup < nextRequestTime)
-            {
-                return;
-            }
-
-            RenderTexture id0 = targets.Id0Texture.rt;
-            RenderTexture coverage = targets.CoverageTexture != null ? targets.CoverageTexture.rt : null;
-            if (id0 == null || coverage == null || !SystemInfo.supportsAsyncGPUReadback)
-            {
-                return;
-            }
-
-            nextRequestTime = Time.realtimeSinceStartup + IntervalSeconds;
-            inFlight = true;
-            string size = $"{id0.width}x{id0.height} {id0.graphicsFormat}";
-            AsyncGPUReadback.Request(id0, 0, request =>
-            {
-                LogHistogram($"Id0(组0,槽0,组1,槽1) [{size}]", request);
-                AsyncGPUReadback.Request(coverage, 0, coverageRequest =>
-                {
-                    LogHistogram($"Coverage(层0..层3) [{size}]", coverageRequest);
-                    inFlight = false;
-                });
-            });
-        }
-
-        private static void LogHistogram(string label, AsyncGPUReadbackRequest request)
-        {
-            if (request.hasError)
-            {
-                Debug.LogWarning($"[Ho-ObjectBuffer][READBACK] {label}：回读失败（hasError）。");
-                return;
-            }
-
-            NativeArray<Color32> pixels = request.GetData<Color32>(0);
-            if (!pixels.IsCreated || pixels.Length == 0)
-            {
-                Debug.LogWarning($"[Ho-ObjectBuffer][READBACK] {label}：没有数据。");
-                return;
-            }
-
-            bool isId0 = label.StartsWith("Id0");
-            var counts = new Dictionary<uint, int>(16);
-            for (int i = 0; i < pixels.Length; i++)
-            {
-                Color32 p = pixels[i];
-                uint key = ((uint)p.r << 24) | ((uint)p.g << 16) | ((uint)p.b << 8) | p.a;
-                counts.TryGetValue(key, out int count);
-                counts[key] = count + 1;
-            }
-
-            var sorted = new List<KeyValuePair<uint, int>>(counts);
-            sorted.Sort((a, b) => b.Value.CompareTo(a.Value));
-
-            var text = new System.Text.StringBuilder();
-            text.Append($"[Ho-ObjectBuffer][READBACK #{++logCount}] {label}：像素={pixels.Length} 唯一值={sorted.Count}");
-            int shown = Mathf.Min(6, sorted.Count);
-            for (int i = 0; i < shown; i++)
-            {
-                uint key = sorted[i].Key;
-                int count = sorted[i].Value;
-                float percent = 100.0f * count / pixels.Length;
-                uint b0 = (key >> 24) & 0xFFu;
-                uint b1 = (key >> 16) & 0xFFu;
-                uint b2 = (key >> 8) & 0xFFu;
-                uint b3 = key & 0xFFu;
-                text.Append($"\n    {b0:X2}{b1:X2}{b2:X2}{b3:X2} × {count} ({percent:F2}%)");
-                text.Append(isId0
-                    ? $"  => 层0 (组={b0},槽={b1}) / 层1 (组={b2},槽={b3})"
-                    : $"  => 覆盖率 {b0 / 255.0f:F2} / {b1 / 255.0f:F2} / {b2 / 255.0f:F2} / {b3 / 255.0f:F2}");
-            }
-
-            Debug.Log(text.ToString());
-        }
     }
 }
-

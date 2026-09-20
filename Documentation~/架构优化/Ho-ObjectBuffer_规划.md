@@ -100,6 +100,17 @@ coverage 的准确定义是：通过该材质 `HoObjectBuffer` pass 的 clip/cul
 
 Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但 `D:\Unity_Fork\lilToon` 当前仍只有 `HoMetadataBuffer` / `HoMetadataBufferSurfaceColor` 材质 pass。R1 必须包含 Extensions 迁移、lilToon `HoObjectBuffer` 的 ID/Facing 写入、SB SurfaceSemantic 写入、cutout/dissolve/cull 对齐、RG/兼容路径和 MB/OB A/B debug。
 
+#### 0.3.9 R1 实测闭合的四条硬约束
+
+这四条都是"看起来像渲染玄学、实际是明确契约"的坑，各花掉过一轮以上排查，按可复现判据写死：
+
+1. **材质侧声明的 SV_Target 数必须 ≤ 实际绑定数。** 绑定数由运行期决定（N=1：Id0/Id1/Coverage(+Selection)；N>1：一张逐样本身份图(+Selection)），材质侧用两个全局关键字切布局：`_HO_OBJECT_BUFFER_MSAA`、`_HO_OBJECT_BUFFER_SELECTION`。声明超标时 D3D **丢弃整个 draw**，症状是"纹理一直是被清理后的 0"，看上去像"没画"。两个关键字必须在 22 个 URP lilblock 的 `HO_OBJECT_BUFFER` pass 里各自 `#pragma multi_compile`；少一条就等于那个布局永远开不起来（`_HO_OBJECT_BUFFER_SELECTION` 曾长期处于这种状态）。
+2. **自建附件必须自己清。** 附件用 `AccessFlags.WriteAll` 时原生 pass 的 load action 是 DontCare，RenderGraph 不会替你清，而 `0 = 背景` 是这条通道的硬契约。写法与 `Ho-GeometryBuffer` 对齐：`cmd.ClearRenderTarget(RTClearFlags.ColorDepth, Color.clear, 1, 0)`。ID pass 的 depth 必须一起清——池子里残留的深度会把几何整体拒掉，症状同样是"一个像素都没写进去"。
+3. **RSUV 的读取前置条件是 instancing，不是"CPU 写过就有"。** `unity_RendererUserValue` 由 `UnityInstancing.hlsl` 在 `UNITY_USE_RENDERINGLAYER_ARRAY`（来自 `#pragma instancing_options renderinglayer`）下声明，并要求 `#pragma multi_compile_instancing`。少任一条，片元里读出来恒为 0，而 `clip(identityId - 0.5)` 会把物体整片丢掉：**"屏幕只剩背景"是读数失败，不是采集失败**。另外 RSUV 不参与序列化，域重载/切场景后必须重写（组件面板的「刷新全场景 RSUV」）。
+4. **层 1..3 在轮廓像素上出现第二个身份是设计结果。** resolve 逐 sample 数票、按票数降序（平票取线性眼深更近者），所以两个物体的交界那圈像素会是"层0 = 主导身份、层1 = 另一个身份"，各占 0.5 覆盖率。消费端不得只看层0，必须按 ID 在 4 层里累加覆盖率。判据：`Coverage (Layers)` 在该像素约 50/50，且 `id0` 的 R/G 是层0 的组/槽、B/A 是层1 的组/槽。
+
+两条调试纪律：ID 视图按 palette 的 `displayColor` 上色（未注册 = unknown 行的洋红、覆盖率 0 = 0.06 灰底），DebugTile 九宫格与 feature 自带整屏视图**必须逐模式同色**（同一份数据两个入口两种颜色，排查时会被直接带偏）；遇到"整屏一个颜色"先怀疑纹理没被写（第 1、2 条），再怀疑颜色公式。
+
 ### 0.4 与当前 HoUrp 17.3 流水线的契约
 
 - HoUrp fork 的 pass 排序键是 `(renderPassEvent, renderPassEnqueueOrder)`；同事件下 Renderer Feature 列表顺序就是记录顺序。
