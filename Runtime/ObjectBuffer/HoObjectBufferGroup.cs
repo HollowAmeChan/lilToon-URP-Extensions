@@ -80,8 +80,6 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         private readonly Dictionary<Renderer, int> localSlotByRenderer = new Dictionary<Renderer, int>();
         private readonly List<string> partNameCache = new List<string>();
         private readonly List<string> selectionNameCache = new List<string>();
-        // 复用缓冲：CollectEntryRenderers 会被遍历式调用，每次新建 List 在 32+ 部件的角色上是纯浪费。
-        private static readonly List<Renderer> entryRendererScratch = new List<Renderer>();
 
         private void OnEnable()
         {
@@ -407,18 +405,9 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             return slot >= 0 && slot < names.Count ? names[slot] : $"(槽位 {slot})";
         }
 
-        /// <summary>
-        /// 一个部件条目**实际覆盖**的 Renderer 集合：
-        /// 直接拖进来的 Renderer、拖进来的 GameObject 自身的 Renderer（这条曾经漏掉，是"整片只剩 unknown"的根因），
-        /// 以及 <see cref="HoObjectBufferPartEntry.includeChildren"/> 打开时它的全部子级。
-        /// <para>
-        /// 编辑器（拆分部件、显示覆盖数）与运行期写 RSUV **共用这一份**：两边各写一套遍历规则必然漂移，
-        /// 而漂移的表现是"面板上说覆盖 3 个、实际只写了 2 个"这种没人查得动的事。
-        /// </para>
-        /// </summary>
-        public static void CollectEntryRenderers(HoObjectBufferPartEntry entry, List<Renderer> into)
+        private void CollectRenderers(HoObjectBufferPartEntry entry, System.Action<Renderer> visit)
         {
-            if (entry?.renderers == null || into == null)
+            if (entry?.renderers == null)
             {
                 return;
             }
@@ -433,10 +422,10 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
                 if (target is Renderer renderer)
                 {
-                    AddUniqueRenderer(into, renderer);
+                    visit(renderer);
                     if (entry.includeChildren)
                     {
-                        VisitChildren(renderer.transform, into);
+                        VisitChildren(renderer.transform, visit);
                     }
 
                     continue;
@@ -449,46 +438,28 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                     // 拖入的模型部件完全不写 RSUV，这就是场景调试只剩小块 unknown 的根因。
                     if (gameObject.TryGetComponent(out Renderer rootRenderer))
                     {
-                        AddUniqueRenderer(into, rootRenderer);
+                        visit(rootRenderer);
                     }
 
                     if (entry.includeChildren)
                     {
-                        VisitChildren(gameObject.transform, into);
+                        VisitChildren(gameObject.transform, visit);
                     }
                 }
             }
         }
 
-        private static void AddUniqueRenderer(List<Renderer> into, Renderer renderer)
-        {
-            if (renderer != null && !into.Contains(renderer))
-            {
-                into.Add(renderer);
-            }
-        }
-
-        private void CollectRenderers(HoObjectBufferPartEntry entry, System.Action<Renderer> visit)
-        {
-            entryRendererScratch.Clear();
-            CollectEntryRenderers(entry, entryRendererScratch);
-            for (int i = 0; i < entryRendererScratch.Count; i++)
-            {
-                visit(entryRendererScratch[i]);
-            }
-        }
-
-        private static void VisitChildren(Transform root, List<Renderer> into)
+        private static void VisitChildren(Transform root, System.Action<Renderer> visit)
         {
             for (int i = 0; i < root.childCount; i++)
             {
                 Transform child = root.GetChild(i);
                 if (child.TryGetComponent(out Renderer renderer))
                 {
-                    AddUniqueRenderer(into, renderer);
+                    visit(renderer);
                 }
 
-                VisitChildren(child, into);
+                VisitChildren(child, visit);
             }
         }
 

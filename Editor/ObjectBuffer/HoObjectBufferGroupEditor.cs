@@ -33,23 +33,10 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         };
 
         private static readonly Color SelectionColor = new Color(0.80f, 0.55f, 0.85f);
-
-        /// <summary>
-        /// 拆分出来的条目**不自作主张填语义值**：类别 / 标签 / 显示色一律停在"待分配"状态，
-        /// 由人自己定。这里只是条目类型的默认显示色（没分配之前面板上看到的就是它）。
-        /// </summary>
-        private static readonly Color UnassignedDisplayColor = new Color(0.75f, 0.75f, 0.75f, 1f);
         private static readonly GUIContent AddSlotLabel = new GUIContent("+", "添加一个空槽（也可以直接把 GameObject / Renderer 拖到这条上）");
         private static readonly GUIContent ClearLabel = new GUIContent("×", "清空本条的 Renderer 列表");
         private static readonly GUIContent RemoveSelectionLabel = new GUIContent("×", "删除这个选择");
         private static readonly GUIContent RefreshLabel = new GUIContent("刷新全场景 RSUV", "重新编译 palette 并把 RSUV 索引写回所有 renderer（RSUV 不会被序列化，场景/域重载后必须重写）。");
-        private static readonly GUIContent SplitPartsLabel = new GUIContent(
-            "按 Renderer 拆分部件",
-            "把覆盖了多个 Renderer（或开着「展开子级」）的条目拆成「一个 Renderer 一个部件」：\n" +
-            "· 名字取 Renderer 所在物体名，重名自动加序号；\n" +
-            "· 类别 / 标签 / 显示色**不猜也不继承**，全部停在待分配状态，由你自己填；\n" +
-            "· 只覆盖一个 Renderer 且没开子级的条目原样保留，手工调过的值不会被冲掉；\n" +
-            "· 拆完立即重建表并重写 RSUV，不需要再手点刷新。");
         private static GUIStyle entryNameStyle;
 
         private SerializedProperty priorityProperty;
@@ -62,7 +49,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private SerializedProperty partsProperty;
         private SerializedProperty selectionsProperty;
         private string validationMessage;
-        private string statusMessage;
 
         private void OnEnable()
         {
@@ -82,7 +68,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             EnsureStyles();
             serializedObject.Update();
             validationMessage = null;
-            statusMessage = null;
 
             // 让"已分配的 ID"显示的是最新表（只在标脏后才真正重建）。
             HoObjectBufferRegistry.EnsureBuilt();
@@ -162,84 +147,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
                     entry.isExpanded = true;
                 }
-
-                EditorGUILayout.Space(2.0f);
-                DrawGranularityRow();
             }
-        }
-
-        /// <summary>
-        /// 身份粒度：像素里的 ID 是"组 8 + 槽位 8"，**槽位 = 部件在列表里的序号**，
-        /// 所以"一个条目覆盖多少个 Renderer"直接决定层 0/1..3 能分辨到什么程度。
-        /// 只覆盖一个 Renderer 的条目就是最细粒度，不动它（手工调过的名字和显示色要保住）。
-        /// </summary>
-        private void DrawGranularityRow()
-        {
-            var group = target as HoObjectBufferGroup;
-            int covered = 0;
-            int coarsest = 0;
-            int splitCandidates = 0;
-            int emptyEntries = 0;
-            if (group != null)
-            {
-                var buffer = new List<Renderer>();
-                for (int i = 0; i < group.parts.Count; i++)
-                {
-                    HoObjectBufferPartEntry entry = group.parts[i];
-                    if (entry == null || string.IsNullOrEmpty(entry.name))
-                    {
-                        continue;
-                    }
-
-                    buffer.Clear();
-                    HoObjectBufferGroup.CollectEntryRenderers(entry, buffer);
-                    covered += buffer.Count;
-                    coarsest = Mathf.Max(coarsest, buffer.Count);
-                    if (buffer.Count == 0)
-                    {
-                        emptyEntries++;
-                    }
-                    else if (buffer.Count > 1 || entry.includeChildren)
-                    {
-                        splitCandidates++;
-                    }
-                }
-            }
-
-            if (partsProperty.arraySize > HoObjectBufferPaletteLimits.MaxSlotsPerGroup)
-            {
-                AppendValidation(
-                    $"部件数 {partsProperty.arraySize} 超过槽位上限 {HoObjectBufferPaletteLimits.MaxSlotsPerGroup}：" +
-                    "槽位是 ID 的低 8 bit，超出的部件不会被写进表。");
-            }
-
-            if (emptyEntries > 0)
-            {
-                AppendValidation($"{emptyEntries} 个条目没有覆盖任何 Renderer：它们不写 RSUV，但照样占一个槽位。");
-            }
-
-            using (new EditorGUILayout.HorizontalScope())
-            {
-                using (new EditorGUI.DisabledScope(splitCandidates == 0))
-                {
-                    if (GUILayout.Button(SplitPartsLabel, GUILayout.Width(190.0f)))
-                    {
-                        SplitPartsByRenderer();
-                    }
-                }
-
-                GUILayout.FlexibleSpace();
-                EditorGUILayout.LabelField(
-                    splitCandidates == 0
-                        ? $"覆盖 {covered} 个 Renderer · 已是最细粒度"
-                        : $"覆盖 {covered} 个 Renderer · 最粗的条目占 {coarsest} 个",
-                    EditorStyles.miniLabel);
-            }
-        }
-
-        private void AppendValidation(string message)
-        {
-            validationMessage = string.IsNullOrEmpty(validationMessage) ? message : validationMessage + "\n" + message;
         }
 
         private void DrawPartEntry(int index)
@@ -378,11 +286,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             if (!string.IsNullOrEmpty(validationMessage))
             {
                 EditorGUILayout.HelpBox(validationMessage, MessageType.Warning);
-            }
-
-            if (!string.IsNullOrEmpty(statusMessage))
-            {
-                EditorGUILayout.HelpBox(statusMessage, MessageType.Info);
             }
 
             DrawConflicts();
@@ -705,205 +608,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 DeleteArrayElement(property, i);
                 i--;
                 validationMessage = "已清理无效引用：这里只保存场景或 Prefab 模式里的 GameObject / Renderer。";
-            }
-        }
-
-        /// <summary>
-        /// 拆分计划的一项。先算完再一次性写回 SerializedProperty：边改边读必然算错。
-        /// <para>
-        /// 两个来源要分清楚：**新拆出来的**子条目由拆分决定（一个 Renderer + 未分配值）；
-        /// **原样保留的**条目必须逐字段照抄原件（含物体引用是 GameObject 还是 Renderer），
-        /// 否则"只拆别的条目"会顺手改掉人已经拖好的那份数据。
-        /// </para>
-        /// </summary>
-        private readonly struct PartPlan
-        {
-            private PartPlan(
-                string name,
-                HoObjectBufferPartCategory category,
-                HoObjectBufferPartTags tags,
-                Color displayColor,
-                Object[] sourceObjects,
-                Renderer[] renderers,
-                bool includeChildren)
-            {
-                this.name = name;
-                this.category = category;
-                this.tags = tags;
-                this.displayColor = displayColor;
-                this.sourceObjects = sourceObjects;
-                this.renderers = renderers;
-                this.includeChildren = includeChildren;
-            }
-
-            public readonly string name;
-            public readonly HoObjectBufferPartCategory category;
-            public readonly HoObjectBufferPartTags tags;
-            public readonly Color displayColor;
-            /// <summary>非 null 表示"照抄原件"（原样保留的条目），此时忽略 <see cref="renderers"/>。</summary>
-            public readonly Object[] sourceObjects;
-            public readonly Renderer[] renderers;
-            public readonly bool includeChildren;
-
-            /// <summary>原样保留：字段照抄，物体引用一个字节都不动。</summary>
-            public static PartPlan Keep(HoObjectBufferPartEntry entry)
-            {
-                return new PartPlan(
-                    entry.name,
-                    entry.category,
-                    entry.tags,
-                    entry.displayColor,
-                    entry.renderers,
-                    System.Array.Empty<Renderer>(),
-                    entry.includeChildren);
-            }
-
-            /// <summary>新拆出来的子条目：结构化结果由拆分决定，语义值留空待分配。</summary>
-            public static PartPlan SplitChild(string name, Renderer renderer, Color unassignedColor)
-            {
-                return new PartPlan(
-                    name,
-                    HoObjectBufferPartCategory.Unspecified,
-                    HoObjectBufferPartTags.None,
-                    unassignedColor,
-                    null,
-                    new[] { renderer },
-                    false);
-            }
-        }
-
-        /// <summary>
-        /// 把每个"覆盖多个 Renderer"的条目就地拆成"一个 Renderer 一个部件"。
-        /// 只覆盖一个 Renderer 且没开「展开子级」的条目原样保留——手工调过的名字与显示色不能被这次重构冲掉。
-        /// </summary>
-        private void SplitPartsByRenderer()
-        {
-            var group = target as HoObjectBufferGroup;
-            if (group == null || partsProperty == null)
-            {
-                return;
-            }
-
-            if (targets.Length > 1)
-            {
-                validationMessage = "拆分只支持单选：多选时各组的 Renderer 组成不同，请逐个组执行。";
-                return;
-            }
-
-            var plans = new List<PartPlan>();
-            var usedNames = new HashSet<string>(System.StringComparer.Ordinal);
-            var buffer = new List<Renderer>();
-            int splitEntries = 0;
-            int createdParts = 0;
-
-            // 第一遍：登记不动的条目的名字，避免拆出来的子条目跟它们撞名。
-            for (int i = 0; i < group.parts.Count; i++)
-            {
-                HoObjectBufferPartEntry entry = group.parts[i];
-                if (entry == null || string.IsNullOrEmpty(entry.name))
-                {
-                    continue;
-                }
-
-                buffer.Clear();
-                HoObjectBufferGroup.CollectEntryRenderers(entry, buffer);
-                if (IsFineGrained(entry, buffer))
-                {
-                    usedNames.Add(entry.name);
-                }
-            }
-
-            // 第二遍：按原顺序重建。拆出来的子条目占据父条目原来的位置，槽位序号跟着列表顺序走。
-            for (int i = 0; i < group.parts.Count; i++)
-            {
-                HoObjectBufferPartEntry entry = group.parts[i];
-                if (entry == null || string.IsNullOrEmpty(entry.name))
-                {
-                    continue;
-                }
-
-                buffer.Clear();
-                HoObjectBufferGroup.CollectEntryRenderers(entry, buffer);
-                if (IsFineGrained(entry, buffer) || buffer.Count == 0)
-                {
-                    plans.Add(PartPlan.Keep(entry));
-                    continue;
-                }
-
-                splitEntries++;
-                for (int r = 0; r < buffer.Count; r++)
-                {
-                    Renderer renderer = buffer[r];
-                    string objectName = renderer != null ? renderer.gameObject.name : "Part";
-                    plans.Add(PartPlan.SplitChild(MakeUniquePartName(objectName, usedNames), renderer, UnassignedDisplayColor));
-                    createdParts++;
-                }
-            }
-
-            if (splitEntries == 0)
-            {
-                validationMessage = "没有可拆的条目：每个部件都已经只覆盖一个 Renderer。";
-                return;
-            }
-
-            partsProperty.ClearArray();
-            for (int i = 0; i < plans.Count; i++)
-            {
-                WritePartPlan(partsProperty, i, plans[i]);
-            }
-
-            // 先把上面这一串数组改动落进对象，再重建表：ApplyTargets → ApplyIdentity 读的是组件上的
-            // List（运行期真值），不 Apply 的话它重建的还是拆分前那份表，等于白拆一次。
-            serializedObject.ApplyModifiedProperties();
-
-            statusMessage = $"已拆分 {splitEntries} 个条目 → 新建 {createdParts} 个部件，共 {plans.Count} 个槽位；类别 / 标签 / 显示色待你分配。";
-            ApplyTargets();
-            Repaint();
-        }
-
-        private static bool IsFineGrained(HoObjectBufferPartEntry entry, List<Renderer> covered)
-        {
-            return entry != null && !entry.includeChildren && covered.Count == 1;
-        }
-
-        private static void WritePartPlan(SerializedProperty partsProperty, int index, in PartPlan plan)
-        {
-            partsProperty.InsertArrayElementAtIndex(index);
-            SerializedProperty element = partsProperty.GetArrayElementAtIndex(index);
-            element.FindPropertyRelative("name").stringValue = plan.name;
-            // 枚举值从 0 起连续，enumValueIndex 即枚举值本身（与 HoObjectBufferPartCategory 的定义绑定）。
-            element.FindPropertyRelative("category").enumValueIndex = (int)plan.category;
-            element.FindPropertyRelative("tags").intValue = (int)plan.tags;
-            element.FindPropertyRelative("displayColor").colorValue = plan.displayColor;
-            element.FindPropertyRelative("includeChildren").boolValue = plan.includeChildren;
-
-            Object[] objects = plan.sourceObjects ?? plan.renderers;
-            SerializedProperty renderers = element.FindPropertyRelative("renderers");
-            renderers.arraySize = objects.Length;
-            for (int i = 0; i < objects.Length; i++)
-            {
-                renderers.GetArrayElementAtIndex(i).objectReferenceValue = objects[i];
-            }
-
-            element.isExpanded = false;
-        }
-
-        /// <summary>拆分出来的名字取物体名（重名加序号）。这是唯一一个不用人填的值：它是身份的唯一键。</summary>
-        private static string MakeUniquePartName(string baseName, HashSet<string> used)
-        {
-            string name = string.IsNullOrWhiteSpace(baseName) ? "Part" : baseName.Trim();
-            if (used.Add(name))
-            {
-                return name;
-            }
-
-            for (int suffix = 2; ; suffix++)
-            {
-                string candidate = $"{name} ({suffix})";
-                if (used.Add(candidate))
-                {
-                    return candidate;
-                }
             }
         }
 
