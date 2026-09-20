@@ -27,6 +27,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         private Material debugMaterial;
         private Shader debugShader;
         private bool warnedMissingDebugShader;
+        private static bool warnedMrtCapacity;
+        private static bool warnedConfiguration;
 
         public HoSurfaceBufferSettings Settings => settings;
 
@@ -49,7 +51,23 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
             int minQueue = activeSettings.minRenderQueue;
             int maxQueue = Mathf.Max(minQueue, activeSettings.maxRenderQueue);
-            var filteringSettings = new FilteringSettings(
+
+            // 6 个 MRT 是硬要求（五张数值图 + owner）。平台不够就**整条不跑并报错**，不静默降级
+            // （规划 §5 的同一条纪律）：少绑附件时 D3D 会直接丢掉整个 draw，表现正是"什么都没写"。
+            if (SystemInfo.supportedRenderTargetCount < HoSurfaceBufferShaderConstants.ValueAttachmentCount)
+            {
+                if (!warnedMrtCapacity)
+                {
+                    warnedMrtCapacity = true;
+                    Debug.LogError($"[Ho-SurfaceBuffer] 本平台只支持 {SystemInfo.supportedRenderTargetCount} 个 MRT，" +
+                                   $"数值面需要 {HoSurfaceBufferShaderConstants.ValueAttachmentCount} 个（五张数值图 + owner）：整条不跑。");
+                }
+
+                HoSurfaceBufferPass.ResetGlobalState();
+                return;
+            }
+
+            WarnConfigurationOnce(minQueue, maxQueue);            var filteringSettings = new FilteringSettings(
                 new RenderQueueRange { lowerBound = minQueue, upperBound = maxQueue },
                 activeSettings.layerMask.value);
 
@@ -99,6 +117,25 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             return stack != null ? stack.GetComponent<HoSurfaceBufferVolume>() : null;
         }
 
+
+        /// <summary>
+        /// 配置一次性汇总：排查"SB 什么都没写"时，先把"用的是什么格式、过滤的是哪段队列"写进 Console，
+        /// 省得靠猜（6 个 MRT + 混格式是本仓库第一次用的组合）。
+        /// </summary>
+        private static void WarnConfigurationOnce(int minQueue, int maxQueue)
+        {
+            if (warnedConfiguration)
+            {
+                return;
+            }
+
+            warnedConfiguration = true;
+            Debug.Log($"[Ho-SurfaceBuffer] 数值面已启用：MRT 上限 {SystemInfo.supportedRenderTargetCount}，" +
+                      $"队列 [{minQueue}, {maxQueue}]（透明段不生产），" +
+                      $"Color={HoSurfaceBufferFormatUtility.GetColorGraphicsFormat()}，" +
+                      $"Unorm={HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat()}，" +
+                      $"Owner={HoSurfaceBufferFormatUtility.GetOwnerGraphicsFormat()}（两个字节）。");
+        }
         private static bool WantsDebugView(HoSurfaceBufferSettings activeSettings, CameraType cameraType)
         {
             if (activeSettings.debugMode == HoSurfaceBufferDebugMode.Off)

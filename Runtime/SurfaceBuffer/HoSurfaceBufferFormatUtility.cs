@@ -20,13 +20,17 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         }
 
         /// <summary>
-        /// owner 用 `R16_UNorm` 承载 16-bit IdentityId：0..65535 在 UNorm16 上是**逐值精确**的
-        /// （65536 级），而且仍是普通可采样纹理 —— 规划里写的 `R16_UINT` 需要 `Texture2D&lt;uint&gt;` 与整数采样，
-        /// 消费端（AC 的 owner 对齐、各效果的 validity）都要跟着换成整数通道，不值当。
+        /// owner（16-bit IdentityId）用 **RGBA8 的两个字节**承载（R = 高字节、G = 低字节），
+        /// 与 OB 身份池 `Id0.r/.g` 同一套做法。
+        /// <para>
+        /// **不用 `R16_UINT` / `R16_UNorm` 单独扛**：本趟是 6 个 MRT，而 R16 作为 MRT 在本仓库从未验证过 ——
+        /// 附件组合非法时 D3D 会整趟丢 draw，表现就是"什么都没写进切图"（R1 已经踩过一次同类坑）。
+        /// RGBA8 是这里已经被 MB/OB 跑通的组合。
+        /// </para>
         /// </summary>
         public static GraphicsFormat GetOwnerGraphicsFormat()
         {
-            return IsUsable(GraphicsFormat.R16_UNorm) ? GraphicsFormat.R16_UNorm : GraphicsFormat.R8G8B8A8_UNorm;
+            return GetUnormGraphicsFormat();
         }
 
         public static bool IsUsable(GraphicsFormat format)
