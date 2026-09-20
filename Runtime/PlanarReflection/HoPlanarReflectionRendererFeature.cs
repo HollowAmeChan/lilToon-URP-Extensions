@@ -4,9 +4,8 @@ using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
 using lilToon.URP.Extensions.GeometryBuffer;
-using lilToon.URP.Extensions.MetadataBuffer;
 using lilToon.URP.Extensions.ObjectBuffer;
-// PLR 的材质数值来源已从 MB 的 surface 族切到 SB（经 AC 门面）：
+// PLR 的遮罩 = OB 的四层覆盖率，材质数值 = SB（经 AC 门面）：MB 在 PLR 这条链上已经没有任何输入。
 using lilToon.URP.Extensions.SurfaceBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -641,7 +640,6 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 return;
             }
 
-            HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
             HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
 
             TextureHandle source = resourceData.activeColorTexture;

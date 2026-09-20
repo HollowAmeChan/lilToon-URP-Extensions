@@ -16,16 +16,13 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
         #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
         #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-        TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
         TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
-        // 表面数值统一从 AC 的门面取（`HoAC_Attribute` / `HoAC_SurfaceValid`）：SB 的数值面 + owner 对齐，
-        // MB 的 surface 族在 SSS 这条链上退役。
+        // 表面数值统一从 AC 的门面取（`HoAC_Attribute` / `HoAC_SurfaceValid` / `HoAC_TotalCoverage`）：
+        // SB 的数值面 + OB 的覆盖率，MB 在 SSS 这条链上已经没有输入了。
         #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACQuery.hlsl"
         TEXTURE2D_X(_HoSurfaceBufferColorTexture);
         TEXTURE2D_X(_lilHoSSSSourceTexture);
         TEXTURE2D_X(_lilHoSSSTransmissionTexture);
-
-        float _HoMetadataBufferActive;
 
         float4 _lilHoSSSParams;     // x strength, y radius screen px, z Burley sample budget, w RT scale compensation
         float4 _lilHoSSSGateParams; // x depth tolerance, y normal tolerance, z fallback source preserve
@@ -45,9 +42,13 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering"
         static const float LIL_HOSSS_GOLDEN_ANGLE = 2.39996322973;
         static const float LIL_HOSSS_BURLEY_FILTER_RADIUS = 16.5585;
 
+        /// <summary>
+        /// 本像素"有多少属于角色"：AC 的四层身份覆盖率之和（OB 产出），原来读的是 MB 的 maskId.r ——
+        /// 同一份覆盖率，MB 删掉后这里只剩一个来源。
+        /// </summary>
         float HoSSSCoverage(float2 uv)
         {
-            return SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv).r;
+            return HoAC_TotalCoverage(uv);
         }
 
         float4 HoSSSNormalDepth(float2 uv)

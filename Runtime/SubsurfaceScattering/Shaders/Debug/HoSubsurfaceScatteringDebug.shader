@@ -23,15 +23,13 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
-            // 与主 shader 同源：表面数值从 AC 门面取，MB 的 surface 族在这条链上退役（调试页不能对着旧数据说话）。
+            // 与主 shader 同源：表面数值与覆盖率都从 AC 门面取（调试页不能对着旧数据说话）。
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACQuery.hlsl"
             TEXTURE2D_X(_HoSurfaceBufferColorTexture);
             TEXTURE2D_X(_lilHoSSSSourceTexture);
             TEXTURE2D_X(_lilHoSSSTransmissionTexture);
 
-            float _HoMetadataBufferActive;
             float4 _lilHoSSSParams;
             float4 _lilHoSSSGateParams;
             float4 _lilHoSSSColor;
@@ -46,7 +44,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView"
 
             float HoSSSCoverage(float2 uv)
             {
-                return SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv).r;
+                return HoAC_TotalCoverage(uv);
             }
 
             float4 HoSSSNormalDepth(float2 uv)

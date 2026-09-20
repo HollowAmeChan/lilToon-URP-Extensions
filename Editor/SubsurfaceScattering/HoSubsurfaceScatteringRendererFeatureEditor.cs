@@ -89,12 +89,12 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
             EditorGUILayout.LabelField("相机", snapshot.CameraName);
             EditorGUILayout.LabelField("阶段", snapshot.Stage);
             EditorGUILayout.LabelField("Camera Color", FormatAvailable(snapshot.CameraColorAvailable));
-            EditorGUILayout.LabelField("MetadataBuffer", FormatAvailable(snapshot.MetadataBufferAvailable));
+            EditorGUILayout.LabelField("Coverage (AC/OB)", FormatAvailable(snapshot.CoverageAvailable));
             EditorGUILayout.LabelField("GeometryBuffer", FormatAvailable(snapshot.GeometryBufferAvailable));
 
             EditorGUILayout.HelpBox(
                 snapshot.Ready
-                    ? "Ho-SSS 输入有效：MetadataBuffer 与 GeometryBuffer 均可用。"
+                    ? "Ho-SSS 输入有效：角色覆盖率与 GeometryBuffer 均可用。"
                     : "Ho-SSS 已跳过：" + snapshot.Reason,
                 snapshot.Ready ? MessageType.Info : MessageType.Warning);
         }

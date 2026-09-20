@@ -9,7 +9,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         public readonly string CameraName;
         public readonly string Stage;
         public readonly bool CameraColorAvailable;
-        public readonly bool MetadataBufferAvailable;
+        public readonly bool CoverageAvailable;
         public readonly bool GeometryBufferAvailable;
         public readonly bool Ready;
         public readonly string Reason;
@@ -20,7 +20,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             string cameraName,
             string stage,
             bool cameraColorAvailable,
-            bool metadataBufferAvailable,
+            bool coverageAvailable,
             bool geometryBufferAvailable,
             bool ready,
             string reason)
@@ -30,7 +30,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             CameraName = cameraName ?? string.Empty;
             Stage = stage ?? string.Empty;
             CameraColorAvailable = cameraColorAvailable;
-            MetadataBufferAvailable = metadataBufferAvailable;
+            CoverageAvailable = coverageAvailable;
             GeometryBufferAvailable = geometryBufferAvailable;
             Ready = ready;
             Reason = reason ?? string.Empty;
@@ -73,25 +73,25 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             Camera camera,
             string stage,
             bool cameraColorAvailable,
-            bool metadataBufferAvailable,
+            bool coverageAvailable,
             bool geometryBufferAvailable)
         {
-            bool ready = cameraColorAvailable && metadataBufferAvailable && geometryBufferAvailable;
+            bool ready = cameraColorAvailable && coverageAvailable && geometryBufferAvailable;
             currentSnapshot = new HoSubsurfaceScatteringRuntimeDiagnosticSnapshot(
                 true,
                 Time.frameCount,
                 camera != null ? camera.name : "<no camera>",
                 stage,
                 cameraColorAvailable,
-                metadataBufferAvailable,
+                coverageAvailable,
                 geometryBufferAvailable,
                 ready,
-                ready ? "输入有效。" : BuildMissingInputReason(cameraColorAvailable, metadataBufferAvailable, geometryBufferAvailable));
+                ready ? "输入有效。" : BuildMissingInputReason(cameraColorAvailable, coverageAvailable, geometryBufferAvailable));
         }
 
         private static string BuildMissingInputReason(
             bool cameraColorAvailable,
-            bool metadataBufferAvailable,
+            bool coverageAvailable,
             bool geometryBufferAvailable)
         {
             if (!cameraColorAvailable)
@@ -99,14 +99,14 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 return "camera color 不可用。";
             }
 
-            if (!metadataBufferAvailable && !geometryBufferAvailable)
+            if (!coverageAvailable && !geometryBufferAvailable)
             {
-                return "MetadataBuffer 与 GeometryBuffer 不可用。";
+                return "角色覆盖率（AC 身份池）与 GeometryBuffer 不可用。";
             }
 
-            if (!metadataBufferAvailable)
+            if (!coverageAvailable)
             {
-                return "MetadataBuffer 不可用。";
+                return "角色覆盖率不可用（AC 没产出 / OB 没进 renderer）。";
             }
 
             return "GeometryBuffer 不可用。";
