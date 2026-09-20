@@ -558,7 +558,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                     "这一项的身份：名字决定槽位，槽位决定像素里 ID 的低字节。");
 
                 DrawProperty(nameProperty, new GUIContent("名字", "组内唯一。它决定槽位号 = 像素里 ID 的低字节。"));
-                DrawProperty(entry.FindPropertyRelative("category"), new GUIContent("类别", "单值，回答「这是什么」。多归属语义请用标签位。"));
+                DrawProperty(entry.FindPropertyRelative("category"), new GUIContent("角色组分", "这个部件是角色的哪一块（单值、互斥）。只有角色特化读它：按「组 + 组分 + 覆盖率」取遮罩；组表达「整角色」，组分表达「脸 / 前发 / 眼睛 / 眼透区 / 配件 / 人体」。AC 上线也不改这套分类。"));
                 DrawProperty(entry.FindPropertyRelative("tags"), new GUIContent("标签", "位掩码：一个部件同时属于多个语义时用它（例如 CharacterFull = 该组任意部件）。"));
                 DrawProperty(colorProperty, new GUIContent("显示色", "debug 视图与面板色块用的颜色；像素里不存颜色，只存 ID。"));
                 DrawProperty(entry.FindPropertyRelative("includeChildren"), new GUIContent("展开子级", "拖入 GameObject 或预制件实例时，包含它下面的子级 Renderer。"));

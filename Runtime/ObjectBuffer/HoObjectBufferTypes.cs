@@ -65,34 +65,40 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     }
 
     /// <summary>
-    /// 部件类别。取代旧设计里"8 个语义各占 1 bit"的写法：类别是单值（这是什么），
-    /// 多归属语义用标签位表达（规划 §5.3 / 决策 9）。
+    /// **角色组分**：这个部件是角色的哪一块（单值，互斥）。
+    /// <list type="bullet">
+    /// <item>**只有角色特化读它**，按「组 + 组分 + 覆盖率」取遮罩；组这一级表达「整角色」，
+    /// 组分表达「脸 / 前发 / 眼睛 / 眼透区 / 配件 / 人体」——角色特化要的那七条用这两级就够了。</item>
+    /// <item>**AC 上线也不改这套分类**：AC 只是"怎么读、怎么合成"的通道，不改变"组分是什么"。</item>
+    /// <item>这里**不放材质类语义**（皮肤 / 半透明 / 不透明测试…）：那些是表面语义，归 SB，走它自己的通道。</item>
+    /// <item>不要把新 feature 的语义往这个枚举里加——组分是角色特化的分组口径，不是通用语义表。</item>
+    /// </list>
     /// </summary>
     public enum HoObjectBufferPartCategory
     {
-        [InspectorName("Unspecified")]
+        [InspectorName("未指定")]
         Unspecified = 0,
-        [InspectorName("Body")]
+        [InspectorName("人体")]
         Body,
-        [InspectorName("Face")]
+        [InspectorName("脸")]
         Face,
-        [InspectorName("Front Hair")]
+        [InspectorName("前发")]
         FrontHair,
-        [InspectorName("Back Hair")]
+        [InspectorName("后发")]
         BackHair,
-        [InspectorName("Eye")]
+        [InspectorName("眼睛")]
         Eye,
-        [InspectorName("Eye Reveal Area")]
+        [InspectorName("眼透区")]
         EyeRevealArea,
-        [InspectorName("Eyebrow")]
+        [InspectorName("眉")]
         Eyebrow,
-        [InspectorName("Accessory")]
+        [InspectorName("配件")]
         Accessory,
-        [InspectorName("Cloth")]
+        [InspectorName("服装")]
         Cloth,
-        [InspectorName("Effect")]
+        [InspectorName("特效")]
         Effect,
-        [InspectorName("Other")]
+        [InspectorName("其他")]
         Other
     }
 

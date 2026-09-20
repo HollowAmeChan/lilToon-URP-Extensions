@@ -20,8 +20,10 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         [Tooltip("角色内唯一。它决定槽位号 = 像素里 ID 的低字节；改名会改变 ID（跨帧稳定性由组件保证）。")]
         public string name = "Part";
 
-        [InspectorName("类别")]
-        [Tooltip("单值，回答“这是什么”（脸 / 前发 / 眼睛 …）。多归属语义（如整角色）请用标签位。")]
+        [InspectorName("角色组分")]
+        [Tooltip("这个部件是角色的哪一块（单值、互斥）。**只有角色特化读它**，按「组 + 组分 + 覆盖率」取遮罩；" +
+                 "组这一级表达「整角色」，组分表达「脸 / 前发 / 眼睛 / 眼透区 / 配件 / 人体」——" +
+                 "这七条用这两级就够了，不需要额外的开关位。材质类的语义（皮肤、半透明…）是表面语义，归 SB。")]
         public HoObjectBufferPartCategory category = HoObjectBufferPartCategory.Unspecified;
 
         [InspectorName("标签")]
