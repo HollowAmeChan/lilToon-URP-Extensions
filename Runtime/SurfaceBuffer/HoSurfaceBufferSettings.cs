@@ -42,8 +42,13 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         /// <summary>
         /// 语义 lane pass（MSAA 逐 sample 的 `(SemanticId, value)` + owner）。**这是 AC 的 surface 来源**：
         /// 关掉它，AC 的语义合成就只剩物体位（回落到 OB）。代价是每帧多一趟角色几何 + 5 张 MSAA 附件。
+        /// <para>
+        /// **默认关**：这条通路上 AC 的产出目前有拖影（正在查：AC 读 SB 的 MSAA lane 只有
+        /// `Load` 一条路，怀疑坐标/尺寸假设或 MSAA 读法本身）。开着会污染 CS 的语义位平面，
+        /// 所以在查清之前默认不产出 —— 不是静默降级，是明确地把已知有问题的通路关掉。
+        /// </para>
         /// </summary>
-        public bool enableSemanticLanes = true;
+        public bool enableSemanticLanes;
 
         /// <summary>
         /// 语义 lane 的自建 MSAA 采样数（请求值，实际取平台支持的上限）：**与相机 AA 解耦**，
