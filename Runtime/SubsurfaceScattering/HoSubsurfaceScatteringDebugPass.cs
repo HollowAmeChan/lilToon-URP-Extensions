@@ -1,4 +1,4 @@
-﻿// Compatibility-mode hooks are kept for projects that still run URP's non-RenderGraph path.
+// Compatibility-mode hooks are kept for projects that still run URP's non-RenderGraph path.
 #pragma warning disable CS0618, CS0672
 
 using UnityEngine;
@@ -165,8 +165,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                     context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.TransmissionTextureId, data.transmissionTexture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, data.surfaceColorTexture);
+                    // 表面数值不再绑 MB 的两张图：调试 shader 已改读 AC 门面（SB 的全局名由 SB 的 pass 绑）。
                     Blitter.BlitTexture(context.cmd, data.cameraColor, new Vector4(1, 1, 0, 0), data.material, 0);
                 });
             }
