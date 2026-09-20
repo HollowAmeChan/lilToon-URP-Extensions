@@ -1,4 +1,5 @@
 using System.Collections.Generic;
+using lilToon.URP.Extensions.Editor.PostProcessing;
 using lilToon.URP.Extensions.ObjectBuffer;
 using UnityEditor;
 using UnityEngine;
@@ -6,25 +7,43 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 {
     /// <summary>
-    /// 组件抽屉：沿用 MetadataBuffer group 的旧款式（一条彩色条 = 一个条目，条上是名字 + 计数 + `+` / `×`，
-    /// 展开后是它的内容和对象行），但信息按新模型收窄了——部件只回答身份，材质数值不在组件里。
-    /// 条上的副标题显示**注册表实际分配的 ID**：改名就会换 ID，所以这一栏必须当场看得见。
+    /// 组件抽屉：**左列 = 身份清单，右列 = 选中的那一项的设置**（与后处理图层栈同一套排版惯例：
+    /// 扁平无边框按钮、窄面板自动折成一列、颜色块就是 debug 颜色）。
+    /// <list type="bullet">
+    /// <item>左列每一行 = 一个部件：色块用它的 displayColor，右侧是它实际分到的 ID；</item>
+    /// <item>**列表顺序 = 槽位 = ID 的低字节**，所以左列支持拖动排序，改完立刻重建表并重写 RSUV；</item>
+    /// <item>右列只画当前选中项的字段：以后给部件加新的写入（物体位、SB 语义 lane…）直接往下排，不用挤宽度。</item>
+    /// </list>
     /// </summary>
     [CustomEditor(typeof(HoObjectBufferGroup))]
     [CanEditMultipleObjects]
     internal sealed class HoObjectBufferGroupEditor : UnityEditor.Editor
     {
-        private const float SectionSpacing = 6.0f;
-        private const float EntryHeaderHeight = 38.0f;
-        private const float ElementHeight = 22.0f;
-        private const float ButtonWidth = 22.0f;
-        private const float RightReserve = 100.0f;
+        /// <summary>左列宽度。够放下"色块 + 名字 + ID"，又不至于把右列的字段挤扁。</summary>
+        private const float ListWidth = 152.0f;
 
-        private static readonly GUIContent AddSlotLabel = new GUIContent("+", "添加一个空槽（也可以直接把 GameObject / Renderer 拖到这条上）");
-        private static readonly GUIContent ClearLabel = new GUIContent("×", "清空本条的 Renderer 列表");
-        private static readonly GUIContent RemoveSelectionLabel = new GUIContent("×", "删除这个选择");
+        private const float RowHeight = 20.0f;
+        private const float RowSpacing = 1.0f;
+        private const float SwatchSize = 12.0f;
+        private const float ElementHeight = 22.0f;
+        private const float SectionSpacing = 6.0f;
+
+        /// <summary>窄于这个宽度就不分列：清单折到上面，详情接在下面（跟着后处理那边的阈值习惯）。</summary>
+        private const float MinSplitWidth = 300.0f;
+
+        private static readonly Color ListBackground = EditorGUIUtility.isProSkin
+            ? new Color(0.0f, 0.0f, 0.0f, 0.22f)
+            : new Color(0.0f, 0.0f, 0.0f, 0.06f);
+        private static readonly Color RowHighlight = new Color(0.30f, 0.55f, 0.95f, 0.16f);
+        private static readonly Color RowHover = new Color(1.0f, 1.0f, 1.0f, 0.06f);
+        private static readonly Color RowAccent = new Color(0.35f, 0.65f, 1.0f, 0.85f);
+
+        private static readonly GUIContent AddPartLabel = new GUIContent("+", "添加一个部件（名字先给个占位，其余自己填）");
+        private static readonly GUIContent RemovePartLabel = new GUIContent("-", "删除当前选中的部件");
+        private static readonly GUIContent AddSelectionLabel = new GUIContent("+", "添加一个具名选区");
+        private static readonly GUIContent RemoveLabel = new GUIContent("-", "删除");
         private static readonly GUIContent RefreshLabel = new GUIContent("刷新全场景 RSUV", "重新编译 palette 并把 RSUV 索引写回所有 renderer（RSUV 不会被序列化，场景/域重载后必须重写）。");
-        private static GUIStyle entryNameStyle;
+        private static GUIStyle rowNameStyle;
 
         private SerializedProperty priorityProperty;
         private SerializedProperty groupIdProperty;
@@ -36,6 +55,13 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private SerializedProperty partsProperty;
         private SerializedProperty selectionsProperty;
         private string validationMessage;
+
+        private int selectedPart;
+        private int selectedSelection;
+        private int draggingPart = -1;
+        private bool partOrderChanged;
+        private bool showGroupSettings;
+        private bool showSelections;
 
         private void OnEnable()
         {
@@ -56,191 +82,383 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             serializedObject.Update();
             validationMessage = null;
 
-            // 让"已分配的 ID"显示的是最新表（只在标脏后才真正重建）。
+            // 让左列显示的 ID 是最新表（只在标脏后才真正重建）。
             HoObjectBufferRegistry.EnsureBuilt();
 
-            DrawIdentitySection();
-            DrawPartsSection();
-            DrawSelectionsSection();
+            bool structureChanged;
+            if (EditorGUIUtility.currentViewWidth >= MinSplitWidth)
+            {
+                EditorGUILayout.BeginHorizontal();
+                DrawPartList();
+                EditorGUILayout.BeginVertical();
+                DrawDetail();
+                EditorGUILayout.EndVertical();
+                EditorGUILayout.EndHorizontal();
+            }
+            else
+            {
+                DrawPartList();
+                EditorGUILayout.Space(4.0f);
+                DrawDetail();
+            }
+
             DrawFooter();
 
-            bool changed = serializedObject.ApplyModifiedProperties();
-            if (changed)
+            // 拖动排序只标记一次（松手时），否则每越过一行就重建一次表、刷一屏日志。
+            structureChanged = partOrderChanged;
+            partOrderChanged = false;
+
+            if (serializedObject.ApplyModifiedProperties() | structureChanged)
             {
                 ApplyTargets();
-                // 冲突列表刚被重建，立即重画一次，别让人以为"拖进去没反应"。
                 Repaint();
             }
         }
 
-        private void DrawIdentitySection()
+        // ------------------------------------------------------------------ 左列：身份清单
+
+        private void DrawPartList()
         {
+            int count = partsProperty != null ? partsProperty.arraySize : 0;
+            selectedPart = Mathf.Clamp(selectedPart, 0, Mathf.Max(0, count - 1));
+
+            using (new EditorGUILayout.VerticalScope(GUILayout.Width(ListWidth)))
+            {
+                Rect header = EditorGUILayout.GetControlRect(false, RowHeight, GUILayout.Width(ListWidth));
+                EditorGUI.LabelField(
+                    new Rect(header.x, header.y, header.width - 34.0f, header.height),
+                    $"部件（{count}）",
+                    EditorStyles.miniBoldLabel);
+
+                Rect addRect = new Rect(header.xMax - 32.0f, header.y, 16.0f, header.height);
+                Rect removeRect = new Rect(header.xMax - 16.0f, header.y, 16.0f, header.height);
+                if (EffectBrowserView.DrawChromeLessButton(addRect, AddPartLabel))
+                {
+                    AddPart();
+                }
+
+                using (new EditorGUI.DisabledScope(count == 0))
+                {
+                    if (EffectBrowserView.DrawChromeLessButton(removeRect, RemovePartLabel, count > 0))
+                    {
+                        DeleteArrayElement(partsProperty, selectedPart);
+                        selectedPart = Mathf.Max(0, selectedPart - 1);
+                        GUI.changed = true;
+                    }
+                }
+
+                float listHeight = Mathf.Max(RowHeight, count * (RowHeight + RowSpacing));
+                Rect list = EditorGUILayout.GetControlRect(
+                    false,
+                    listHeight,
+                    GUILayout.Width(ListWidth),
+                    GUILayout.Height(listHeight));
+                EditorGUI.DrawRect(list, ListBackground);
+
+                for (int i = 0; i < count; i++)
+                {
+                    Rect row = new Rect(list.x, list.y + i * (RowHeight + RowSpacing), list.width, RowHeight);
+                    DrawPartRow(row, i);
+                }
+
+                // 拖动排序：槽位就是列表顺序，所以排序是一次真正的身份改动（松手时统一重建一次表）。
+                if (Event.current.type == EventType.MouseUp && draggingPart >= 0)
+                {
+                    draggingPart = -1;
+                    partOrderChanged = true;
+                }
+            }
+        }
+
+        private void DrawPartRow(Rect row, int index)
+        {
+            SerializedProperty entry = partsProperty.GetArrayElementAtIndex(index);
+            SerializedProperty nameProperty = entry.FindPropertyRelative("name");
+            SerializedProperty colorProperty = entry.FindPropertyRelative("displayColor");
+            string partName = nameProperty != null ? nameProperty.stringValue : string.Empty;
+            string id = BuildRowIdText(partName);
+            bool selected = index == selectedPart;
+            bool hover = row.Contains(Event.current.mousePosition);
+
+            if (selected)
+            {
+                EditorGUI.DrawRect(row, RowHighlight);
+                EditorGUI.DrawRect(new Rect(row.x, row.y, 2.0f, row.height), RowAccent);
+            }
+            else if (hover)
+            {
+                EditorGUI.DrawRect(row, RowHover);
+            }
+
+            Rect swatch = new Rect(row.x + 6.0f, row.y + (row.height - SwatchSize) * 0.5f, SwatchSize, SwatchSize);
+            EditorGUI.DrawRect(swatch, colorProperty != null ? colorProperty.colorValue : Color.gray);
+
+            Rect idRect = new Rect(row.xMax - 48.0f, row.y, 44.0f, row.height);
+            Rect nameRect = new Rect(
+                swatch.xMax + 6.0f,
+                row.y,
+                Mathf.Max(0.0f, idRect.x - swatch.xMax - 8.0f),
+                row.height);
+
+            string title = string.IsNullOrEmpty(partName) ? "（空名字）" : partName;
+            GUI.Label(
+                nameRect,
+                new GUIContent(title, $"{title}\n槽位 {index} · {id}\n列表顺序 = 槽位 = ID 的低字节；拖动可排序"),
+                rowNameStyle);
+            EditorGUI.LabelField(idRect, id, EditorStyles.centeredGreyMiniLabel);
+
+            EditorGUIUtility.AddCursorRect(row, MouseCursor.Link);
+            HandlePartRowInput(row, index);
+        }
+
+        private void HandlePartRowInput(Rect row, int index)
+        {
+            Event currentEvent = Event.current;
+            if (!row.Contains(currentEvent.mousePosition))
+            {
+                return;
+            }
+
+            if (currentEvent.type == EventType.MouseDown && currentEvent.button == 0)
+            {
+                selectedPart = index;
+                draggingPart = index;
+                GUI.FocusControl(null);
+                currentEvent.Use();
+                Repaint();
+                return;
+            }
+
+            if (currentEvent.type == EventType.MouseDrag && draggingPart >= 0 && draggingPart != index)
+            {
+                // 只在 Editor 状态里换位（ApplyModifiedProperties 会写回去），表等松手后再重建：
+                // 拖动过程中每越过一行就重建一次表，是白刷日志。
+                partsProperty.MoveArrayElement(draggingPart, index);
+                selectedPart = index;
+                draggingPart = index;
+                currentEvent.Use();
+            }
+        }
+
+        private void AddPart()
+        {
+            int index = partsProperty.arraySize;
+            partsProperty.InsertArrayElementAtIndex(index);
+            SerializedProperty entry = partsProperty.GetArrayElementAtIndex(index);
+            SerializedProperty nameProperty = entry.FindPropertyRelative("name");
+            if (nameProperty != null)
+            {
+                nameProperty.stringValue = $"部件 {index}";
+            }
+
+            SerializedProperty renderers = entry.FindPropertyRelative("renderers");
+            if (renderers != null)
+            {
+                renderers.ClearArray();
+            }
+
+            SerializedProperty colorProperty = entry.FindPropertyRelative("displayColor");
+            if (colorProperty != null)
+            {
+                colorProperty.colorValue = new Color(0.75f, 0.75f, 0.75f, 1.0f);
+            }
+
+            selectedPart = index;
+            GUI.changed = true;
+        }
+
+        private string BuildRowIdText(string partName)
+        {
+            var group = target as HoObjectBufferGroup;
+            int groupId = Mathf.Clamp(
+                groupIdProperty != null ? groupIdProperty.intValue : (group != null ? group.groupId : 0),
+                0,
+                HoObjectBufferPaletteLimits.MaxGroups - 1);
+            if (groupId == 0 || string.IsNullOrEmpty(partName))
+            {
+                return "未注册";
+            }
+
+            uint partId = HoObjectBufferRegistry.GetPartId(groupId, partName);
+            return partId == 0u ? "未注册" : $"0x{partId:X4}";
+        }
+
+        // ------------------------------------------------------------------ 右列：设置
+
+        /// <summary>右列：选中部件的字段 + 两个折叠区（组设置 / 具名选区）。</summary>
+        private void DrawDetail()
+        {
+            int count = partsProperty != null ? partsProperty.arraySize : 0;
+            selectedPart = Mathf.Clamp(selectedPart, 0, Mathf.Max(0, count - 1));
+
+            if (count > 0)
+            {
+                DrawSelectedPart();
+            }
+
+            DrawGroupSettings();
+            DrawSelections();
+        }
+
+        private void DrawSelectedPart()
+        {
+            SerializedProperty entry = partsProperty.GetArrayElementAtIndex(selectedPart);
+            SerializedProperty nameProperty = entry.FindPropertyRelative("name");
+            string partName = nameProperty != null ? nameProperty.stringValue : string.Empty;
+
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                DrawProperty(priorityProperty, new GUIContent("优先级", "同一个 Renderer 被多个 Group 命中时，优先级高者生效；相同时离 Renderer 最近的组生效。"));
-                DrawProperty(groupIdProperty, new GUIContent("组 ID", "1-255。组 0 保留：ID 0 表示「未注册」，它也是 RSUV 被重置后的值。"));
+                SerializedProperty colorProperty = entry.FindPropertyRelative("displayColor");
+                Rect header = EditorGUILayout.GetControlRect(false, RowHeight);
+                Rect swatch = new Rect(header.x, header.y + (header.height - SwatchSize) * 0.5f, SwatchSize, SwatchSize);
+                EditorGUI.DrawRect(swatch, colorProperty != null ? colorProperty.colorValue : Color.gray);
+                GUI.Label(
+                    new Rect(swatch.xMax + 6.0f, header.y, header.width - SwatchSize - 8.0f, header.height),
+                    new GUIContent(
+                        string.IsNullOrEmpty(partName) ? "（空名字）" : partName,
+                        "这一项的身份：名字决定槽位，槽位决定像素里 ID 的低字节。"),
+                    rowNameStyle);
+
+                DrawProperty(nameProperty, new GUIContent("名字", "组内唯一。它决定槽位号 = 像素里 ID 的低字节。"));
+                DrawProperty(entry.FindPropertyRelative("category"), new GUIContent("类别", "单值，回答「这是什么」。多归属语义请用标签位。"));
+                DrawProperty(entry.FindPropertyRelative("tags"), new GUIContent("标签", "位掩码：一个部件同时属于多个语义时用它（例如 CharacterFull = 该组任意部件）。"));
+                DrawProperty(colorProperty, new GUIContent("显示色", "debug 视图与面板色块用的颜色；像素里不存颜色，只存 ID。"));
+                DrawProperty(entry.FindPropertyRelative("includeChildren"), new GUIContent("展开子级", "拖入 GameObject 或预制件实例时，包含它下面的子级 Renderer。"));
+
+                EditorGUILayout.Space(4.0f);
+                DrawRendererList(entry.FindPropertyRelative("renderers"), colorProperty != null ? colorProperty.colorValue : Color.gray);
+            }
+
+            EditorGUILayout.Space(SectionSpacing);
+        }
+
+        private void DrawGroupSettings()
+        {
+            showGroupSettings = EditorGUILayout.Foldout(showGroupSettings, "组设置", true);
+            if (!showGroupSettings)
+            {
+                return;
+            }
+
+            using (new EditorGUI.IndentLevelScope())
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawProperty(groupIdProperty, new GUIContent("组 ID", "1-255，它是 ID 的高字节。组 0 保留：0 表示「未注册」，也是 RSUV 被重置后的值。"));
                 DrawProperty(groupTagsProperty, new GUIContent("组级标签", "放在组表那一行，用于「整组」语义（例如 CharacterFull），不必在每个部件行重复。"));
+                DrawProperty(priorityProperty, new GUIContent("优先级", "同一个 Renderer 被多个组命中时优先级高者生效；相同时离 Renderer 最近的组生效。"));
                 EditorGUILayout.Space(2.0f);
-                DrawProperty(faceBoneProperty, new GUIContent("面部朝向", "确定角色面部朝向的 Transform——可以是骨骼，也可以是一个朝向正确的空物体。供眼透相机角度修正、将来的 SDF 等消费者读取；留空表示未提供。"));
-                DrawProperty(faceForwardAxisProperty, new GUIContent("脸前轴", "骨骼的哪个局部轴作为“脸前方”。默认 +Z。若正面/侧面的衰减方向反了，换成 +Z / -Z 试试。"));
-                DrawProperty(faceRightAxisProperty, new GUIContent("右轴", "骨骼的哪个局部轴作为“角色右侧（画面左侧）”。默认 +X。"));
-                DrawProperty(faceUpAxisProperty, new GUIContent("上轴", "骨骼的哪个局部轴作为“角色上方”。默认 +Y。俯仰角按此轴分解，若俯视/仰视不生效请检查此项。"));
+                DrawProperty(faceBoneProperty, new GUIContent("面部朝向", "角色朝向的参考 Transform（骨骼或朝向正确的空物体）。逐像素朝向会与层 0 的获胜身份同步 resolve；留空表示不产出朝向图。"));
+                DrawProperty(faceForwardAxisProperty, new GUIContent("脸前轴", "骨骼的哪个局部轴作为「脸前方」。默认 +Z。"));
+                DrawProperty(faceRightAxisProperty, new GUIContent("右轴", "骨骼的哪个局部轴作为「角色右侧」。默认 +X。"));
+                DrawProperty(faceUpAxisProperty, new GUIContent("上轴", "骨骼的哪个局部轴作为「角色上方」。默认 +Y。"));
 
                 int groupId = Mathf.Clamp(groupIdProperty != null ? groupIdProperty.intValue : 0, 0, HoObjectBufferPaletteLimits.MaxGroups - 1);
                 if (groupId == 0)
                 {
-                    validationMessage = "组 ID 0 被保留，这个 group 不会写进 palette。请改成 1-255。";
+                    validationMessage = "组 ID 0 被保留，这个组不会写进 palette。请改成 1-255。";
                 }
             }
         }
 
-        private void DrawPartsSection()
+        private void DrawSelections()
         {
-            EditorGUILayout.Space(SectionSpacing);
-            if (partsProperty == null)
+            int count = selectionsProperty != null ? selectionsProperty.arraySize : 0;
+            selectedSelection = Mathf.Clamp(selectedSelection, 0, Mathf.Max(0, count - 1));
+
+            Rect header = EditorGUILayout.GetControlRect(false, RowHeight);
+            showSelections = EditorGUI.Foldout(
+                new Rect(header.x, header.y, header.width - 34.0f, header.height),
+                showSelections,
+                $"具名选区（{count}）",
+                true);
+
+            Rect addRect = new Rect(header.xMax - 32.0f, header.y, 16.0f, header.height);
+            Rect removeRect = new Rect(header.xMax - 16.0f, header.y, 16.0f, header.height);
+            if (EffectBrowserView.DrawChromeLessButton(addRect, AddSelectionLabel))
+            {
+                int index = selectionsProperty.arraySize;
+                selectionsProperty.InsertArrayElementAtIndex(index);
+                SerializedProperty nameProperty = selectionsProperty.GetArrayElementAtIndex(index).FindPropertyRelative("name");
+                if (nameProperty != null)
+                {
+                    nameProperty.stringValue = $"选择 {index}";
+                }
+
+                selectedSelection = index;
+                GUI.changed = true;
+            }
+
+            using (new EditorGUI.DisabledScope(count == 0))
+            {
+                if (EffectBrowserView.DrawChromeLessButton(removeRect, RemoveLabel, count > 0))
+                {
+                    DeleteArrayElement(selectionsProperty, selectedSelection);
+                    selectedSelection = Mathf.Max(0, selectedSelection - 1);
+                    GUI.changed = true;
+                }
+            }
+
+            if (!showSelections || count == 0)
             {
                 return;
             }
 
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            using (new EditorGUI.IndentLevelScope())
             {
-                for (int i = 0; i < partsProperty.arraySize; i++)
+                for (int i = 0; i < count; i++)
                 {
-                    DrawPartEntry(i);
+                    DrawSelectionRow(i);
                 }
 
                 EditorGUILayout.Space(2.0f);
-                if (GUILayout.Button("+ 添加部件"))
-                {
-                    int index = partsProperty.arraySize;
-                    partsProperty.InsertArrayElementAtIndex(index);
-                    SerializedProperty entry = partsProperty.GetArrayElementAtIndex(index);
-                    SerializedProperty nameProperty = entry.FindPropertyRelative("name");
-                    if (nameProperty != null)
-                    {
-                        nameProperty.stringValue = $"部件 {index}";
-                    }
-
-                    entry.isExpanded = true;
-                }
-            }
-        }
-
-        private void DrawPartEntry(int index)
-        {
-            SerializedProperty entry = partsProperty.GetArrayElementAtIndex(index);
-            SerializedProperty nameProperty = entry.FindPropertyRelative("name");
-            SerializedProperty categoryProperty = entry.FindPropertyRelative("category");
-            SerializedProperty renderersProperty = entry.FindPropertyRelative("renderers");
-            string partName = nameProperty != null ? nameProperty.stringValue : string.Empty;
-
-            // 条的颜色**就是**这个部件的显示色：面板上看到的颜色与调试视图里的颜色是同一个，
-            // 不再另用一套"第 n 个条目配第 n 种颜色"的循环色板（那套颜色对不上任何人）。
-            SerializedProperty colorProperty = entry.FindPropertyRelative("displayColor");
-            Color color = colorProperty != null ? colorProperty.colorValue : Color.gray;
-            string title = string.IsNullOrEmpty(partName) ? $"（空名字 · 槽位 {index}）" : partName;
-            string subtitle = BuildPartIdText(index, partName, categoryProperty);
-            int conflictCount = CountPartConflicts(partName);
-            if (conflictCount > 0)
-            {
-                subtitle += $" · ⚠ 重复 {conflictCount}";
+                SerializedProperty entry = selectionsProperty.GetArrayElementAtIndex(selectedSelection);
+                DrawProperty(entry.FindPropertyRelative("name"), new GUIContent("名字", "全局唯一。材质里引用的是这个名字。"));
+                DrawProperty(entry.FindPropertyRelative("tags"), new GUIContent("标签"));
+                DrawProperty(entry.FindPropertyRelative("displayColor"), new GUIContent("显示色", "debug 与 AOV manifest 用的颜色。"));
             }
 
-            DrawEntryHeader(entry, partsProperty, index, title, subtitle, color, renderersProperty, true);
-
-            if (!entry.isExpanded)
-            {
-                EditorGUILayout.Space(SectionSpacing);
-                return;
-            }
-
-            EditorGUI.indentLevel++;
-            EditorGUILayout.Space(2.0f);
-            DrawProperty(nameProperty, new GUIContent("名字", "组内唯一。它决定槽位号 = 像素里 ID 的低字节。"));
-            DrawProperty(categoryProperty, new GUIContent("类别", "单值，回答「这是什么」。多归属语义请用标签位。"));
-            DrawProperty(entry.FindPropertyRelative("tags"), new GUIContent("标签", "位掩码：一个部件同时属于多个语义时用它（例如 CharacterFull = 该组任意部件）。"));
-            DrawProperty(entry.FindPropertyRelative("displayColor"), new GUIContent("显示色", "debug 与 Nuke color picker 用的颜色；像素里不存颜色，只存 ID。"));
-            DrawProperty(entry.FindPropertyRelative("includeChildren"), new GUIContent("展开子级", "拖入 GameObject 或预制件实例时，包含它下面的子级 Renderer。"));
-            EditorGUILayout.Space(4.0f);
-            DrawRendererList(renderersProperty, color);
-
-            EditorGUILayout.Space(4.0f);
-            if (GUILayout.Button("删除这个部件"))
-            {
-                DeleteArrayElement(partsProperty, index);
-                EditorGUI.indentLevel--;
-                return;
-            }
-
-            EditorGUI.indentLevel--;
             EditorGUILayout.Space(SectionSpacing);
         }
 
-        private void DrawSelectionsSection()
-        {
-            EditorGUILayout.Space(SectionSpacing);
-            if (selectionsProperty == null)
-            {
-                return;
-            }
-
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                EditorGUILayout.LabelField("Cryptomatte（具名选区）", EditorStyles.boldLabel);
-
-                for (int i = 0; i < selectionsProperty.arraySize; i++)
-                {
-                    DrawSelectionEntry(i);
-                }
-
-                EditorGUILayout.Space(2.0f);
-                if (GUILayout.Button("+ 添加 Cryptomatte 选择"))
-                {
-                    int index = selectionsProperty.arraySize;
-                    selectionsProperty.InsertArrayElementAtIndex(index);
-                    SerializedProperty entry = selectionsProperty.GetArrayElementAtIndex(index);
-                    SerializedProperty nameProperty = entry.FindPropertyRelative("name");
-                    if (nameProperty != null)
-                    {
-                        nameProperty.stringValue = $"选择 {index}";
-                    }
-
-                    entry.isExpanded = true;
-                }
-            }
-        }
-
-        private void DrawSelectionEntry(int index)
+        private void DrawSelectionRow(int index)
         {
             SerializedProperty entry = selectionsProperty.GetArrayElementAtIndex(index);
             SerializedProperty nameProperty = entry.FindPropertyRelative("name");
+            SerializedProperty colorProperty = entry.FindPropertyRelative("displayColor");
             string selectionName = nameProperty != null ? nameProperty.stringValue : string.Empty;
             uint selectionId = HoObjectBufferRegistry.GetSelectionId(selectionName);
-            string title = string.IsNullOrEmpty(selectionName) ? $"（空名字 · {index}）" : selectionName;
-            string subtitle = selectionId > 0 ? $"Cryptomatte ID {selectionId}" : "未注册";
-            SerializedProperty colorProperty = entry.FindPropertyRelative("displayColor");
-            DrawEntryHeader(entry, selectionsProperty, index, title, subtitle, colorProperty != null ? colorProperty.colorValue : Color.gray, null, false);
 
-            if (!entry.isExpanded)
+            Rect row = EditorGUILayout.GetControlRect(false, RowHeight);
+            bool selected = index == selectedSelection;
+            if (selected)
             {
-                EditorGUILayout.Space(SectionSpacing);
-                return;
+                EditorGUI.DrawRect(row, RowHighlight);
+                EditorGUI.DrawRect(new Rect(row.x, row.y, 2.0f, row.height), RowAccent);
             }
 
-            EditorGUI.indentLevel++;
-            EditorGUILayout.Space(2.0f);
-            DrawProperty(nameProperty, new GUIContent("名字", "全局唯一。材质里引用的是这个名字。"));
-            DrawProperty(entry.FindPropertyRelative("tags"), new GUIContent("标签"));
-            DrawProperty(entry.FindPropertyRelative("displayColor"), new GUIContent("显示色", "debug 与 AOV manifest 用的颜色。"));
-            EditorGUILayout.Space(4.0f);
-            if (GUILayout.Button(RemoveSelectionLabel.text + " 删除这个选择"))
-            {
-                DeleteArrayElement(selectionsProperty, index);
-            }
+            Rect swatch = new Rect(row.x + 6.0f, row.y + (row.height - SwatchSize) * 0.5f, SwatchSize, SwatchSize);
+            EditorGUI.DrawRect(swatch, colorProperty != null ? colorProperty.colorValue : Color.gray);
 
-            EditorGUI.indentLevel--;
-            EditorGUILayout.Space(SectionSpacing);
+            Rect idRect = new Rect(row.xMax - 34.0f, row.y, 30.0f, row.height);
+            Rect nameRect = new Rect(swatch.xMax + 6.0f, row.y, Mathf.Max(0.0f, idRect.x - swatch.xMax - 8.0f), row.height);
+            GUI.Label(
+                nameRect,
+                new GUIContent(
+                    string.IsNullOrEmpty(selectionName) ? "（空名字）" : selectionName,
+                    "选择是跨部件的具名集合：ID 是独立的 8 bit 空间，不与身份 ID 混用。"),
+                rowNameStyle);
+            EditorGUI.LabelField(idRect, selectionId > 0 ? selectionId.ToString() : "—", EditorStyles.centeredGreyMiniLabel);
+
+            EditorGUIUtility.AddCursorRect(row, MouseCursor.Link);
+            if (Event.current.type == EventType.MouseDown && Event.current.button == 0 && row.Contains(Event.current.mousePosition))
+            {
+                selectedSelection = index;
+                Event.current.Use();
+                Repaint();
+            }
         }
+
+        // ------------------------------------------------------------------ 底部：状态与刷新
 
         private void DrawFooter()
         {
@@ -248,8 +466,9 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             using (new EditorGUILayout.HorizontalScope())
             {
                 int partRows = Mathf.Max(0, HoObjectBufferRegistry.PartRowCount - 1);
+                int groupId = Mathf.Clamp(groupIdProperty != null ? groupIdProperty.intValue : 0, 0, HoObjectBufferPaletteLimits.MaxGroups - 1);
                 EditorGUILayout.LabelField(
-                    $"已注册：部件 {partRows} / {HoObjectBufferPaletteLimits.MaxPartRows}，选择 {HoObjectBufferRegistry.SelectionCount} / {HoObjectBufferPaletteLimits.MaxSelections - 1}",
+                    $"组 {groupId} · 已注册 部件 {partRows} / {HoObjectBufferPaletteLimits.MaxPartRows}，选择 {HoObjectBufferRegistry.SelectionCount} / {HoObjectBufferPaletteLimits.MaxSelections - 1}",
                     EditorStyles.miniLabel);
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button(RefreshLabel, GUILayout.Width(150.0f)))
@@ -310,97 +529,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             EditorGUILayout.HelpBox(message, MessageType.Warning);
         }
 
-        private int CountPartConflicts(string partName)
-        {
-            var group = target as HoObjectBufferGroup;
-            if (group == null || string.IsNullOrEmpty(partName))
-            {
-                return 0;
-            }
-
-            IReadOnlyList<HoObjectBufferConflict> conflicts = HoObjectBufferGroup.GetConflicts();
-            int count = 0;
-            for (int i = 0; i < conflicts.Count; i++)
-            {
-                if (conflicts[i].InvolvesPart(group, partName))
-                {
-                    count++;
-                }
-            }
-
-            return count;
-        }
-
-        /// <summary>条目条：一条 = 一个部件/选择。标题与副标题分行绘制，互不重叠。</summary>
-        private void DrawEntryHeader(
-            SerializedProperty entry,
-            SerializedProperty parentProperty,
-            int index,
-            string title,
-            string subtitle,
-            Color color,
-            SerializedProperty listProperty,
-            bool editableList)
-        {
-            Rect rect = EditorGUILayout.GetControlRect(false, EntryHeaderHeight);
-            Event currentEvent = Event.current;
-            bool hasList = listProperty != null && listProperty.isArray;
-            bool hover = rect.Contains(currentEvent.mousePosition);
-            bool dragging = hover && hasList && (currentEvent.type == EventType.DragUpdated || currentEvent.type == EventType.DragPerform);
-            EditorGUI.DrawRect(rect, GetEntryColor(color, hover, dragging));
-
-            float rightEdge = rect.xMax - 4.0f;
-            Rect clearRect = new Rect(rightEdge - ButtonWidth, rect.y + (EntryHeaderHeight - 20.0f) * 0.5f, ButtonWidth, 20.0f);
-            Rect addRect = new Rect(clearRect.x - ButtonWidth, clearRect.y, ButtonWidth, 20.0f);
-            Rect countRect = new Rect(addRect.x - 46.0f, clearRect.y + 2.0f, 44.0f, 16.0f);
-            float labelWidth = Mathf.Max(40.0f, countRect.x - (rect.x + 26.0f) - 4.0f);
-
-            Rect foldoutRect = new Rect(rect.x + 4.0f, rect.y + (EntryHeaderHeight - EditorGUIUtility.singleLineHeight) * 0.5f, 14.0f, EditorGUIUtility.singleLineHeight);
-            entry.isExpanded = EditorGUI.Foldout(foldoutRect, entry.isExpanded, GUIContent.none, true);
-
-            var titleRect = new Rect(rect.x + 24.0f, rect.y + 4.0f, labelWidth, 17.0f);
-            GUI.Label(titleRect, title, entryNameStyle);
-            var subtitleRect = new Rect(rect.x + 24.0f, rect.y + 20.0f, labelWidth, 14.0f);
-            GUI.Label(subtitleRect, subtitle, EditorStyles.miniLabel);
-
-            if (hasList)
-            {
-                GUI.Label(countRect, $"{listProperty.arraySize} 项", EditorStyles.miniLabel);
-            }
-
-            if (editableList && hasList)
-            {
-                if (GUI.Button(addRect, AddSlotLabel, EditorStyles.miniButtonLeft))
-                {
-                    InsertEmptySlot(listProperty);
-                }
-
-                using (new EditorGUI.DisabledScope(listProperty.arraySize == 0))
-                {
-                    if (GUI.Button(clearRect, ClearLabel, EditorStyles.miniButtonRight))
-                    {
-                        listProperty.ClearArray();
-                    }
-                }
-
-                HandleDrop(rect, listProperty);
-            }
-            else if (GUI.Button(clearRect, RemoveSelectionLabel, EditorStyles.miniButtonRight))
-            {
-                DeleteArrayElement(parentProperty, index);
-                return;
-            }
-
-            if (currentEvent.type == EventType.MouseDown
-                && rect.Contains(currentEvent.mousePosition)
-                && !foldoutRect.Contains(currentEvent.mousePosition)
-                && !addRect.Contains(currentEvent.mousePosition)
-                && !clearRect.Contains(currentEvent.mousePosition))
-            {
-                entry.isExpanded = !entry.isExpanded;
-                currentEvent.Use();
-            }
-        }
+        // ------------------------------------------------------------------ Renderer 列表（沿用原来的拖放行为）
 
         private void DrawRendererList(SerializedProperty property, Color color)
         {
@@ -471,36 +600,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             }
 
             return false;
-        }
-
-        private string BuildPartIdText(int slot, string partName, SerializedProperty categoryProperty)
-        {
-            var group = target as HoObjectBufferGroup;
-            int groupId = Mathf.Clamp(
-                groupIdProperty != null ? groupIdProperty.intValue : (group != null ? group.groupId : 0),
-                0,
-                HoObjectBufferPaletteLimits.MaxGroups - 1);
-            if (group == null || groupId == 0 || string.IsNullOrEmpty(partName))
-            {
-                return $"槽位 {slot} · 未注册";
-            }
-
-            uint partId = HoObjectBufferRegistry.GetPartId(groupId, partName);
-            if (partId == 0u)
-            {
-                return $"槽位 {slot} · 未注册";
-            }
-
-            string category = string.Empty;
-            if (categoryProperty != null && categoryProperty.enumDisplayNames != null
-                && categoryProperty.enumValueIndex >= 0 && categoryProperty.enumValueIndex < categoryProperty.enumDisplayNames.Length)
-            {
-                category = categoryProperty.enumDisplayNames[categoryProperty.enumValueIndex];
-            }
-
-            return string.IsNullOrEmpty(category)
-                ? $"0x{partId:X4} · 槽位 {slot}"
-                : $"0x{partId:X4} · 槽位 {slot} · {category}";
         }
 
         private void HandleDrop(Rect rect, SerializedProperty property)
@@ -586,6 +685,36 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             }
         }
 
+        private static Object NormalizeAllowedObject(Object candidate)
+        {
+            if (candidate is GameObject || candidate is Renderer)
+            {
+                return candidate;
+            }
+
+            return null;
+        }
+
+        private static bool ContainsReference(SerializedProperty property, Object candidate, int skipIndex)
+        {
+            for (int i = 0; i < property.arraySize; i++)
+            {
+                if (i == skipIndex)
+                {
+                    continue;
+                }
+
+                if (property.GetArrayElementAtIndex(i).objectReferenceValue == candidate)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        // ------------------------------------------------------------------ 表重建
+
         private void RefreshScene()
         {
             HoObjectBufferGroup.RefreshLoadedScenes();
@@ -601,7 +730,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
         private void ApplyTargets()
         {
-            // 条目改名会改变槽位/ID，改完必须重新编译表并把 RSUV 写回去。
+            // 条目改名/排序会改变槽位与 ID，改完必须重新编译表并把 RSUV 写回去。
             HoObjectBufferGroup.RefreshLoadedScenes();
             foreach (Object targetObject in targets)
             {
@@ -612,6 +741,8 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             }
         }
 
+        // ------------------------------------------------------------------ 小工具
+
         private static void DrawProperty(SerializedProperty property, GUIContent label, bool includeChildren = false)
         {
             if (property != null)
@@ -620,15 +751,13 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             }
         }
 
-        private static void InsertEmptySlot(SerializedProperty property)
-        {
-            int index = property.arraySize;
-            property.InsertArrayElementAtIndex(index);
-            property.GetArrayElementAtIndex(index).objectReferenceValue = null;
-        }
-
         private static void DeleteArrayElement(SerializedProperty property, int index)
         {
+            if (property == null || index < 0 || index >= property.arraySize)
+            {
+                return;
+            }
+
             int previousSize = property.arraySize;
             property.DeleteArrayElementAtIndex(index);
             if (property.arraySize == previousSize)
@@ -637,92 +766,27 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             }
         }
 
-        private static Color GetEntryColor(Color baseColor, bool hover, bool dragging)
-        {
-            Color neutral = EditorGUIUtility.isProSkin
-                ? new Color(0.16f, 0.17f, 0.18f)
-                : new Color(0.93f, 0.93f, 0.93f);
-            float strength = 0.34f;
-            if (hover)
-            {
-                strength += 0.08f;
-            }
-
-            if (dragging)
-            {
-                strength += 0.18f;
-            }
-
-            Color color = Color.Lerp(neutral, baseColor, Mathf.Clamp01(strength));
-            color.a = 1.0f;
-            return color;
-        }
-
         private static Color GetChildColor(Color baseColor, bool hover)
         {
             Color neutral = EditorGUIUtility.isProSkin
-                ? new Color(0.16f, 0.17f, 0.18f)
-                : new Color(0.93f, 0.93f, 0.93f);
-            Color color = Color.Lerp(neutral, baseColor, hover ? 0.26f : 0.18f);
+                ? new Color(0.16f, 0.17f, 0.18f, 1.0f)
+                : new Color(0.93f, 0.93f, 0.93f, 1.0f);
+            Color color = Color.Lerp(neutral, baseColor, hover ? 0.42f : 0.30f);
             color.a = 1.0f;
             return color;
-        }
-
-        private static Object NormalizeAllowedObject(Object value)
-        {
-            if (value is Renderer renderer && IsAllowedSceneObject(renderer.gameObject))
-            {
-                return renderer;
-            }
-
-            if (value is GameObject gameObject && IsAllowedSceneObject(gameObject))
-            {
-                return gameObject;
-            }
-
-            return null;
-        }
-
-        private static bool IsAllowedSceneObject(GameObject gameObject)
-        {
-            return gameObject != null && !EditorUtility.IsPersistent(gameObject) && gameObject.scene.IsValid();
-        }
-
-        private static bool ContainsReference(SerializedProperty property, Object value, int ignoredIndex)
-        {
-            if (value == null)
-            {
-                return false;
-            }
-
-            int instanceId = value.GetInstanceID();
-            for (int i = 0; i < property.arraySize; i++)
-            {
-                if (i == ignoredIndex)
-                {
-                    continue;
-                }
-
-                SerializedProperty element = property.GetArrayElementAtIndex(i);
-                if (element.objectReferenceValue != null && element.objectReferenceValue.GetInstanceID() == instanceId)
-                {
-                    return true;
-                }
-            }
-
-            return false;
         }
 
         private static void EnsureStyles()
         {
-            if (entryNameStyle != null)
+            if (rowNameStyle != null)
             {
                 return;
             }
 
-            entryNameStyle = new GUIStyle(EditorStyles.boldLabel)
+            rowNameStyle = new GUIStyle(EditorStyles.miniLabel)
             {
-                alignment = TextAnchor.MiddleLeft
+                alignment = TextAnchor.MiddleLeft,
+                clipping = TextClipping.Clip
             };
         }
     }
