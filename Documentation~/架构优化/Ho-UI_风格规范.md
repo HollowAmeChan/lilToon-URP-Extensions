@@ -50,6 +50,7 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 
 - 枚举参数要有自己的 `VolumeParameter<T>` 子类并实现 `Interp`（离散量取 `t > 0 ? to : from`），照 `HoGTAOVolume.cs` 顶部那批写。
 - **「调试」分组固定内容**：调试模式 → `Debug In Scene View` → `Debug In Game View` → 强度（`Debug Pow` 之类）。
+- 调试模式的下拉**只写视图名**（`Color` / `Owner` / `Lane Coverage`…），**当前模式的说明跟着字段单独画一行**（`EditorGUILayout.HelpBox(desc, MessageType.None)`）。说明写通道含义与取景范围，照对应 debug shader 写 —— 改 shader 就改这一行；`Off` 和名字已经自解释的视图不画那一行。
 - 调试模式**直出替换画面**；同一批视图**同时注册进 `HoDebugViewRegistry`**，这样 DebugTile 里还能按条目小窗看（两者不冲突）。
 - Volume 未覆盖 / volume 关掉时**用 feature 的兜底默认值**，UI 上要写明这件事。
 
@@ -78,7 +79,7 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 - ID 相关名只用 OB §1.1 那一套：**组 ID / 部件 ID / 标记 / 物体位（全角色·脸·前发·眼睛·眼透区域·配件·人体·预留 7）/ 材质位 0~3**。
 - 槽位相关一律说“**语义 lane**”（AC Selection transport lane）；UI 同时显示 SemanticId/名字，不把 LaneIndex 冒充 ID。身份相关说“**身份池**”。
 - 纹理名与契约登记名**不在 UI 上出现**（`_HoObjectBuffer*` 这类只在文档与代码里）。
-- 枚举的 `InspectorName` **不许出现 `/`**：Unity 的下拉把斜杠当分组分隔符，那一项会变成一串子菜单而不是一个可选值（`[InspectorName("")]` 变分隔线是同一套规则）。并列关系写「·」「，」。摘要行里的 `" / "` 是普通字符串，不受影响。
+- 枚举的 `InspectorName` **只写名字**：不写说明（下拉里一屏长句，选值反而看不见），更不许出现 `/`（Unity 的下拉把斜杠当分组分隔符，那一项会变成一串子菜单而不是一个可选值；`[InspectorName("")]` 变分隔线是同一套规则）。每个值的说明**在字段下面按当前值单独画一行**（见 §3）。摘要行里的 `" / "` 是普通字符串，不受影响。
 
 ## 6. 三个 feature 的具体分节
 

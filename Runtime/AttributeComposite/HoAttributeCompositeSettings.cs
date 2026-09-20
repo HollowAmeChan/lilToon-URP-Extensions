@@ -7,15 +7,17 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.AttributeComposite
 {
     /// <summary>AC 调试视图：与 debug shader 的 mode 数值一一对应，只能往后加。</summary>
+    /// <remarks>显示名只写视图名；每个模式的说明在 Volume 面板里跟着调试模式单独画一行
+    /// （`Editor/AttributeComposite/HoAttributeCompositeVolumeEditor.cs` 的 `DescribeDebugMode`）。</remarks>
     public enum HoAttributeCompositeDebugMode
     {
         [InspectorName("Off")]
         Off = 0,
-        [InspectorName("Lane 覆盖率（4 条一组）")]
+        [InspectorName("Lane Coverage")]
         LaneCoverage,
-        [InspectorName("Lane SemanticId（4 条一组）")]
+        [InspectorName("Lane SemanticId")]
         LaneSemanticId,
-        [InspectorName("候选 lane 的 object 位掩码")]
+        [InspectorName("Lane Object Mask")]
         LaneObjectMask
     }
 
