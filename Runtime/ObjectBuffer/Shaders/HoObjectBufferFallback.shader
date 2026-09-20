@@ -58,7 +58,7 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
             uint HoObjectBufferPartIdFromRsuv()
             {
                 // RSUV 只当索引用：低 16 bit = 角色 8 + 槽位 8（决策 13）。
-                return (uint)unity_RendererUserValue & 0xFFFFu;
+                return 0x0100u;   // PROBE: constant id (group 1, slot 0) = palette row 1 (red)
             }
 
             Varyings Vert(Attributes input)
@@ -146,7 +146,7 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 MsaaOutput output;
-                output.sampleId = (uint)unity_RendererUserValue & 0xFFFFu;
+                output.sampleId = 0x0100u;   // PROBE
                 #if defined(_HO_OBJECT_BUFFER_SELECTION)
                 output.selection0 = float4(0.0, 0.0, 0.0, 0.0);
                 #endif
@@ -209,7 +209,7 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 MsaaOutput output;
-                output.sampleId = (float)((uint)unity_RendererUserValue & 0xFFFFu) / 65535.0;
+                output.sampleId = (float)0x0100u / 65535.0;   // PROBE
                 #if defined(_HO_OBJECT_BUFFER_SELECTION)
                 output.selection0 = float4(0.0, 0.0, 0.0, 0.0);
                 #endif
