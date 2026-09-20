@@ -38,7 +38,7 @@
 - 所以消费端只需：拿像素里 **ranked layer 0 的获胜身份** → 取它的组 → 查该组的朝向。**禁止跨 ID 平均方向**这条由"按 ID 查表"天然满足——多角色同屏、遮挡、轮廓交界都自动正确。
 - 会**相对身体转动**的部件（头 / 脸 / 前发…）在部件条目上填「朝向覆盖」，查询时优先用它。这是"逐部件"，不是"逐像素"。
 - **什么时候才需要真做逐像素朝向图**（满足任一条）：① 同一部件内部朝向逐像素不同（例如蒙皮后每个像素跟随不同骨骼）；② 出现需要 sample 级朝向的消费者（例如逐 sample 的光照参考系）。到那时再加 `_HoObjectBufferFacingTexture`，并且仍然与层 0 身份同步 resolve。
-- **R2 落地（第一步，已完成）**：角度表的数据源改成 `HoObjectBufferGroup`（行号 = **OB 组 ID**，朝向取「朝向参考系」），屏幕空间查表键同步改成 **OB 身份池层 0 的组字节**（`ResolveObjectBufferGroupId`，即 `Id0.r`）——"多角色同屏不跨 ID 平均"由查表天然满足。眼睛**遮罩**那条路径（`maskId` / `SameCharacter`）仍走 MetadataBuffer，随 R3/R4 的消费者迁移一起切。
+- **R2 落地（第一步，已完成）**：角度表的数据源改成 `HoObjectBufferGroup`（行号 = **OB 组 ID**，朝向取「朝向参考系」），屏幕空间查表键同步改成 **OB 身份池层 0 的组字节**（`ResolveObjectBufferGroupId`，即 `Id0.r`）——"多角色同屏不跨 ID 平均"由查表天然满足。眼睛**遮罩**那条路径（`maskId` / `SameCharacter`）当时仍走 MetadataBuffer，随后续 R3/R4 的消费者迁移一起切掉了（MB 已整块删除）。
 
 #### 0.3.2 `K=N=4 无损` 必须收紧
 
@@ -103,7 +103,7 @@ coverage 的准确定义是：通过该材质 `HoObjectBuffer` pass 的 clip/cul
 
 #### 0.3.8 R1 是跨两仓库的协议迁移
 
-Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但 `D:\Unity_Fork\lilToon` 当前仍只有 `HoMetadataBuffer` / `HoMetadataBufferSurfaceColor` 材质 pass。R1 必须包含 Extensions 迁移、lilToon `HoObjectBuffer` 的 ID/Facing 写入、SB SurfaceSemantic 写入、cutout/dissolve/cull 对齐、RG/兼容路径和 MB/OB A/B debug。
+Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但当时 `D:\Unity_Fork\lilToon` 仍只有 `HoMetadataBuffer` / `HoMetadataBufferSurfaceColor` 材质 pass（这两个 pass 现已删除）。R1 必须包含 Extensions 迁移、lilToon `HoObjectBuffer` 的 ID/Facing 写入、SB SurfaceSemantic 写入、cutout/dissolve/cull 对齐、RG/兼容路径和 MB/OB A/B debug。
 
 #### 0.3.9 R1 实测闭合的四条硬约束
 
@@ -228,7 +228,7 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但 `D:\Unity_Fo
 
 ### 1.1 ID 类型清单（冻结）
 
-下表就是**今天 MetadataBuffer 的全部 ID 语义**，一条不丢；UI 上填的时候看到的就是这些名字。
+下表就是**原 MetadataBuffer 的全部 ID 语义**（MB 已删除，语义原样搬到 OB），一条不丢；UI 上填的时候看到的就是这些名字。
 
 | 类型 | 今天对应 | UI 名 | 谁写 |
 | --- | --- | --- | --- |
@@ -238,7 +238,7 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但 `D:\Unity_Fo
 | **物体位 0~7**（ObjectFlag） | `objectCustom0~7` | 「全角色」「脸」「前发」「眼睛」「眼透区域」「配件」「人体」「预留 7」 | OB（组件，逐物体） |
 | **材质位 0~3**（MaterialFlag） | 材质 custom0~3 | Settings 里可自定义名字 | **SB**（材质，逐像素）——OB/runtime catalog 预先声明默认 4 个 Selection ID；lane 映射待 §0.3.6 冻结 |
 
-- **覆盖率**（今天 `maskId.x` = `_HoMetadataBufferMaskWeight`）不是类型，它是每个 ID 对里的另一半。
+- **覆盖率**（原 `maskId.x` = `_HoMetadataBufferMaskWeight`，现在归 OB 的四层覆盖率）不是类型，它是每个 ID 对里的另一半。
 - **朝向**（今天 `faceBone` + 三轴）不是 ID，是**逐物体辅助量**（§2）。
 - **遮罩 = 按条目属性加权求和**：`matte_X = Σ_i cov_i · [条目_i 命中 X]`，**不是"取某一层"**。
 
@@ -299,7 +299,7 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但 `D:\Unity_Fo
 | 类别 | 冻结名 |
 | --- | --- |
 | feature / 代码目录 | `HoObjectBufferRendererFeature`；`Runtime/ObjectBuffer/`（R1 从 `Runtime/CharacterBuffer/` 改名搬迁；CB 那批文件就是骨架，选择层完好） |
-| 组件 | **`HoObjectBufferGroup`**（今天的 `HoMetadataBufferGroup`：组 ID / 部件 ID / 标记 / 物体位名单 / 朝向）、**`HoObjectBufferSubject`**（今天的 `HoMetadataBufferSubject`：逐物体覆盖） |
+| 组件 | **`HoObjectBufferGroup`**（接管了原 `HoMetadataBufferGroup` 的组 ID / 部件 ID / 标记 / 物体位名单 / 朝向）、**`HoObjectBufferSubject`**（接管原 `HoMetadataBufferSubject` 的逐物体覆盖） |
 | Volume | **`HoObjectBufferVolume`**（**调试入口**；`VolumeComponentMenu("Post-processing/Ho-ObjectBuffer/逐物体通道")`） |
 | 纹理 | `_HoObjectBufferId0Texture` / `_HoObjectBufferId1Texture` / `_HoObjectBufferCoverageTexture`（身份池）；统一 Selection 输出名归 AC（`_HoACSelection{0..7}Texture`）。朝向按身份查表，不建图（0.3.1） |
 | 表 | `_HoObjectBufferGroups`、`_HoObjectBufferEntries` |
@@ -316,7 +316,7 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但 `D:\Unity_Fo
 | --- | --- | --- |
 | **角色特化**（眼透 / 发影 / 脸色扩散 / 主体与增强轮廓） | **只吃 AC**：组 + 物体位那 7 条 + 覆盖率 | GB（几何门控） |
 | **SSS** | 遮罩（具名选择）+ 分类/profile | SB（thickness / curvature / 表面色）+ GB |
-| **ScreenProcess** | **只吃 AC**：具名遮罩 + 覆盖率（原来那 20 个 source 的"通道 + 阈值"规则已作为未使用功能删除，今天只采样 MetadataBuffer 覆盖率） | 材质意图仍在材质侧 |
+| **ScreenProcess** | **只吃 AC**：具名遮罩 + 覆盖率（原来那 20 个 source 的"通道 + 阈值"规则已作为未使用功能删除，今天只采样角色覆盖率（AC 总覆盖率 / OB 身份池）） | 材质意图仍在材质侧 |
 | **PLR** | 反射平面 / 参与物体的遮罩 | GB + SB |
 | **AOV / 导出** | ID + 覆盖率 + runtime catalog | **不做合规导出档位**（独立导出 feature 构建 Cryptomatte manifest） |
 
@@ -349,7 +349,7 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但 `D:\Unity_Fo
 | **R2** | 朝向消费：组级「朝向参考系」+ 部件级「朝向覆盖」→ 消费端按层 0 获胜身份取组查朝向（**不建逐像素朝向图**，理由与触发条件见 0.3.1）；眼透相机角度修正从 MetadataBuffer 版切到 OB 版 | 多角色同屏/遮挡/轮廓交界时朝向不跨 ID 平均；眼透相机角度修正读到与 layer 0 身份一致的 forward / side |
 | **R3/R4** | 消费者迁移：角色特化 → AC（组 / 物体位 / 覆盖率）；ScreenProcess → 只吃具名遮罩（V2 §6.2） | 行为不变或更好；`Requires*` 诊断可删 |
 | **R5** | SSS / PLR 的**遮罩**切过来（数值走 SB） | 行为不变；无跨来源相乘 |
-| **R6** | 与 SB 一起删 MetadataBuffer | 全仓库无 `_HoMetadataBuffer` 引用 |
+| **R6** ✅ | 与 SB 一起删 MetadataBuffer（R6-1/R6-2/R7-1…R7-5） | 全仓库无 `_HoMetadataBuffer` 引用 |
 | **全程** | **调试与登记**（V2 §6.1）：debug 视图 + 进 `HoDebugViewRegistry`（⚠ **CB 今天没注册，R1 顺手补**）+ `HoDebugViewRenderKind` + DebugTile 的可用性 / 资源需求 / shader slice + 契约 debug 列 + **失败可见**（声明与 RT 张数不一致 / 未声明 ID / 溢出 / 非法槽） | 每个池与每张图都能单独看；四种失败在视图里标出，不静默 |
 
 **与旧 bridge 的差异**：身份走 ranked ID+coverage 池，物体 bit 语义由 entry 表解压，材质具名遮罩由 SB 写 surface SemanticId/value，最终只由 AC 产生 Selection ID+coverage。
@@ -362,7 +362,7 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但 `D:\Unity_Fo
 
 1. **ID 不区分角色与场景**：一个空间、一套表、一个池；"组"是泛指的，组的边界由挂组件的人定。
 2. **ID = 组 8 + 槽位 8**；高字节只做"同一组"的廉价比较。
-3. **ID 类型清单 = 今天 MetadataBuffer 的全部语义**：组 / 部件 / 标记 / 物体位 0~7 / 材质位 0~3（§1.1），**一条不丢**。
+3. **ID 类型清单 = 原 MetadataBuffer 的全部语义**：组 / 部件 / 标记 / 物体位 0~7 / 材质位 0~3（§1.1），**一条不丢**。
 4. **UI 名可读**：上面的类型名就是 Inspector 上填的时候看到的名字；物体位 8 条沿用今天的名字，**去掉"角色"字样**。
 5. **角色特化固定只吃**：组 + 物体位{全角色, 脸, 前发, 眼睛, 眼透区域, 配件, 人体} + 覆盖率；**预留 7 不是承诺**。
 6. **两个池**：① OB 身份池 ranked（4 层 16-bit IdentityId + coverage，请求 N=4、实际 N=4/2/1）；② AC Selection 池 fixed-lane（4/8/16 个 8-bit SemanticId + coverage）。

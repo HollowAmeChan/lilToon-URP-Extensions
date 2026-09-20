@@ -1,3 +1,5 @@
+> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
+
 # Ho-CharacterBuffer 规划：用 ID + Coverage 取代 MetadataBuffer 的 bit 位掩码
 
 > ⛔ **本 feature 已取消（CB 不再作为一个 feature 存在）**：身份、覆盖率、palette、RSUV、自建 MSAA、resolve 这一整套机制**整体并入 `Ho-Cryptomatte`**（见 `Documentation~/架构优化/Ho-Cryptomatte_规划.md`）——角色特化后处理留着，但它吃的东西改成 `Ho-Cryptomatte`；所有需要遮罩的后处理统一走那一个 feature。

@@ -1,3 +1,5 @@
+> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
+
 # Ho-CharacterSpecialization（CS）RenderGraph 逐趟清单与优化方案
 
 对象：`Runtime/CharacterSpecialization/` 的 RDG 主路径（`HoCharacterSpecializationPass.RecordRenderGraph`，`Runtime/CharacterSpecialization/HoCharacterSpecializationRendererFeature.cs:486-1067`）。

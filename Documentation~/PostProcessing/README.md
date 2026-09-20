@@ -1,3 +1,5 @@
+> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
+
 # PostProcessing 当前架构
 
 本文档替代本目录原先的 HoAOV、HoPost、ShoostStack 和早期 ShadowCast 资料。以下内容基于 2026-05-27 对 `Runtime`、`Editor/PostProcessing` 和当前工作树状态的源码核对。

@@ -9,10 +9,11 @@
 > - **owner 用两个字节（RGBA8 的 R/G）承载 16-bit IdentityId**（规划写的是 `R16_UINT`，此处按可采样性改）：0..65535 逐值精确，且消费端仍是普通浮点采样；`R16_UINT` 需要整数纹理通道，会污染所有消费端。语义 lane 的 owner 同布局。
 > - **透明不生产**：队列上限压在上不透明段末尾（`GeometryLast`），对应 §0.5 的第三种策略（"对 transparent 不生产"）；其余两种策略等定了再放开。
 > - **语义 lane（§0.4 的 8-lane 档）已落地，但读端走单采样**：材质侧 `HoSurfaceSemantic` 逐像素写 `owner + 8 条 (SemanticId, value)`（4 张 RGBA8，5 MRT + 自用深度），AC 用**普通采样**读、按 catalog 的 `sourceMode` 合成（默认 `Intersection`：表面侧只能收窄 / 细化）。**SB 只覆盖 OB 语义**——材质先按 palette 表读自己 renderer 的物体位，只写它真有的那几位，lane → SemanticId / 物体位掩码由 `HoSemanticSchema` 上传，材质侧是 `_HoSemanticWeight`（0..1）× 可选的 `_HoSemanticWeightTex`（R 通道，**要显式打开 `_HO_SEMANTIC_MASK`** 才采样 —— 老材质没有这张图，无条件采样会读到未定义的绑定）。
->   **为什么读端是单采样**：让 AC 按 `Texture2DMS` + `Load` 读 SB 的 MSAA lane 时，坐标 / 采样数 / `bindMS` 任何一处对不上都会**静默**读出邻域或旧 sample（实测表现：池子整片均匀、无形状，角色移动时局部拖影）。逐 sample 的细分（同一材质内部的眼白 / 虹膜）等真有消费者要时再上，形态固定为"**SB 自己按 MSAA 渲染 → 自己 resolve 成单采样 lane → 再发布**"。16-lane 分批、语义 lane 的调试视图仍未做。
-> - **还没落地**：`Classification` 的消费者迁移（SSS 仍读 MB 的 `surfaceData`）、DebugTile 登记（需要给 Debug 轴加 `HoDebugViewRenderKind`，SB 自带整屏调试不受影响）、语义 lane 的调试视图（MSAA 要 Load）。**AC 的 surface 合成已落地**（逐 sample 的五种 sourceMode，见 AC 规划 §落地状态）。
-> - **已知待办**：SB / 语义 pass 的材质参数（`_HoSurface*` / `_HoSSS*` / `_HoSemanticWeight`）目前是**全局声明**、不在 `UnityPerMaterial` 里 ⇒ 生成的 lilToon shader 对 SRP Batcher 不兼容（`lil_common_input.hlsl` 的 CBUFFER 才是 SRP Batcher 认的那一份）。要单独做一次迁移把它们并进 CBUFFER。
-> - **验收口径**：五张图与桥接源（MB 的 `SurfaceColor` / `ReflectionMaterial` / `SurfaceData`）逐像素 A/B 一致；owner 视图（调试模式 6）绿 = 与 OB 层 0 对齐、红 = 不一致或没人写、洋红 = OB 没产出。
+>   **为什么读端是单采样**：让 AC 按 `Texture2DMS` + `Load` 读 SB 的 MSAA lane 时，坐标 / 采样数 / `bindMS` 任何一处对不上都会**静默**读出邻域或旧 sample（实测表现：池子整片均匀、无形状，角色移动时局部拖影）。逐 sample 的细分（同一材质内部的眼白 / 虹膜）等真有消费者要时再上，形态固定为"**SB 自己按 MSAA 渲染 → 自己 resolve 成单采样 lane → 再发布**"。
+> - **消费者与登记都已收口**：SSS 的覆盖率改吃 AC 总覆盖率、ScreenProcess 的图层遮罩改吃角色覆盖率、DebugTile 与 Volume 的五张图 / owner / 语义 lane 视图都在；MB 的 surface 族与 MB 本体已整块删除（§3）。
+> - **验收口径**：owner 视图（调试模式 6）绿 = 与 OB 层 0 对齐、红 = 不一致或没人写、洋红 = OB 没产出；五张图与 AC 门面（`HoAC_Attribute`）在同一像素上取值一致。
+> - **SRP Batcher**：`_HoSurface*` / `_HoSSS*` / `_HoSemanticWeight` 已按规划并进 `UnityPerMaterial`
+>   （写在各 pass 里的那份全局声明会破坏 SRP Batcher 兼容性 —— 这条坑已经填掉）。
 
 ---
 
@@ -23,7 +24,7 @@
 规划同时声明“0 是合法表面值”、“不写 `subjectValid`”、“valid 由 OB/AC 表达”，但 GB/OB/SB producer 又被定义为互不读。这要求必须冻结一条可验证的对齐契约：
 
 - OB 身份 layer 0 与 SB 表面值必须代表同一个前表面，使用同一 camera descriptor、layer/render-queue filter、clip/dissolve/cull 和深度胜出规则。
-- SB 数值 pass 与五张数值 RT 同时写一张 **internal `_HoSurfaceBufferOwnerTexture`**（R16_UINT），内容是该前表面的 16-bit IdentityId。0 = 无 writer；数值 RT 中的 0 始终是合法值。
+- SB 数值 pass 与五张数值 RT 同时写一张 **internal `_HoSurfaceBufferOwnerTexture`**（RGBA8 的两个字节），内容是该前表面的 16-bit IdentityId。0 = 无 writer；数值 RT 中的 0 始终是合法值。
 - AC 只在 `SurfaceOwner == OB ranked layer 0 IdentityId` 时接受 SB 数值；不匹配使用属性 fallback 并写 alignment diagnostic。
 - Texture-level valid（这张图本帧是否存在）与 pixel-level valid（这个像素是否有 writer）必须分开。
 
@@ -33,7 +34,7 @@
 
 冻结为：`R=sssProfileIdByte`、`G=curvatureHint`、`B=transmittanceHint`、`A=materialClassIdByte`。profile 与通用 class 都是精确 byte ID，采样后用 `round(v*255)` 还原；G/B 是连续 UNORM 值。
 
-### 0.3 “不用 MPB”与旧 `_HoMetadataBuffer*` 来源相互矛盾
+### 0.3 “不用 MPB”与当时的 `_HoMetadataBuffer*` 来源相互矛盾（历史记录）
 
 - thickness 规划仍与 `_HoMetadataBufferThickness` 取 max；curvature/transmittance/materialClass 的当前来源也是 `HoMetadataBufferSubject` MPB。
 - 如果 SB 禁止 MPB 并且不再新增 `_HoMetadataBuffer*`，就至少要冻结新的材质侧 `_HoSurfaceThickness`、`_HoSurfaceCurvature`、`_HoSurfaceTransmittanceHint`，以及 classification/profile 的最终名字。
@@ -43,9 +44,9 @@
 
 ### 0.4 SB surface semantic sample 与 batching
 
-- SB semantic pass 与数值 pass 分开，因为 semantic 保留 MSAA sample，不能与单采样数值 RT 混用附件。
-- 每个 lane 逐 sample 写 `(SemanticId,value)`；ID=0 是未写，ID=声明值且 value=0 是显式 0。一张 RGBA8MS 存两个 lane。
-- 每个 batch 同时写 `_HoSurfaceSemanticOwnerMS`（R16_UINT MSAA），AC 与 OB 的 per-sample IdentityId 校验后再合成。
+- SB 的语义 pass 与数值 pass 分开，因为附件集合不同（5 个 MRT vs 6 个），不能并成一趟。
+- 每个 lane 逐像素写 `(SemanticId,value)`；ID=0 是未写，ID=声明值且 value=0 是显式 0。一张 RGBA8 存两个 lane（单采样）。
+- 同时写 `_HoSurfaceSemanticOwnerTexture`（RGBA8 两个字节 = 16-bit IdentityId），AC 与 OB 层 0 的 IdentityId 校验后才接受语义值。
 - 4 lane = owner + 2 RT；8 lane = owner + 4 RT；16 lane = 两个 8-lane batch，每 batch 都重写 owner + 4 RT。每趟最多 5 MRT。
 - 中间图命名为 `_HoSurfaceSemanticOwnerMS`、`_HoSurfaceSemanticLane{0..7}MS`；都是 internal RenderGraph 句柄，不发布给业务消费者。
 
@@ -72,7 +73,7 @@
 | | `g` | `curvature` | | | SSS |
 | | `b` | `transmittanceHint` | | | SSS |
 | | `a` | `materialClassIdByte` | | | ScreenProcess / 其他分类消费者（经 AC） |
-| `SurfaceSemantic` | 成对 | 每 lane `(SemanticId,value)`，两 lane / RGBA8MS；另有 per-batch owner ID | RGBA8MS + R16_UINT MSAA | 材质 | 只给 AC semantic resolve |
+| `SurfaceSemantic` | 成对 | 每 lane `(SemanticId,value)`，两 lane / RGBA8；另有 owner（16-bit IdentityId 两字节） | RGBA8 ×4 + RGBA8 owner（单采样） | 材质 | 只给 AC semantic resolve |
 | `Emission` | — | **占位**：契约里登记名字，**lilToon 侧没有 pass 写它 ⇒ 不分配通道** | — | 无 | 无 |
 
 - SurfaceSemantic 承接材质逐像素的具名 SemanticId/value，不做导出源；SB 只使用 `HoSemanticSchema` 声明的 ID/lane。AC 在 sample 级合成后才产生对外 Selection coverage。
@@ -102,17 +103,19 @@ _UsePlanarReflection             → 只在总开关打开时生效
 
 ### 2.1 全局纹理名
 
-| 名字 | 桥接期对应什么 |
+| 名字 | 谁在写 |
 | --- | --- |
-| `_HoSurfaceBufferColorTexture` | `_HoMetadataBufferSurfaceColorTexture` |
-| `_HoSurfaceBufferNormalTexture` | 无（今天没有着色法线；GB 只有几何法线） |
-| `_HoSurfaceBufferMaterialTexture` | `_HoMetadataBufferReflectionMaterialTexture` 的 R/G（`perceptualRoughness` / `metallic`）+ `_HoMetadataBufferSurfaceDataTexture` 的 R（`thickness`） |
-| `_HoSurfaceBufferReflectionTexture` | `_HoMetadataBufferReflectionMaterialTexture` 的 B/A（`reflectance` / `plrStrength`） |
-| `_HoSurfaceBufferClassificationTexture` | `_HoMetadataBufferSurfaceDataTexture` 的 G/B/A |
-| `_HoSurfaceBufferOwnerTexture` | 无（新增；internal validity/alignment key） |
-| `_HoSurfaceSemanticOwnerMS` / `_HoSurfaceSemanticLane{0..7}MS` | 无（新增；internal MSAA semantic source） |
+| `_HoSurfaceBufferColorTexture` | SB 数值 pass：`fd.col`（线性 HDR 主色） |
+| `_HoSurfaceBufferNormalTexture` | 同上：着色法线 octa RG |
+| `_HoSurfaceBufferMaterialTexture` | 同上：`perceptualRoughness` / `metallic` / `thickness` |
+| `_HoSurfaceBufferReflectionTexture` | 同上：`reflectance` / `plrStrength` |
+| `_HoSurfaceBufferClassificationTexture` | 同上：`sssProfileId` / `curvatureHint` / `transmittanceHint` / `materialClassId` |
+| `_HoSurfaceBufferOwnerTexture` | 同上（internal）：pixel validity / 与 OB 层 0 对齐的键 |
+| `_HoSurfaceSemanticOwnerTexture` / `_HoSurfaceSemanticLane{0..3}Texture` | SB 语义 pass（单采样，逐像素） |
 
-契约通道名走契约 v2 的点分家族名，不在这里定；契约 v2 需按 §3 模板登记本表，并在 §5 变更记录里记下两条 v1 冻结条款的修订（`SurfaceColor.a = coverage` 与 `ReflectionMaterial` 的 Target5 拆分），标为桥接期。
+契约通道名走契约 v2 的点分家族名，不在这里定。**桥接期已经结束**：MB 的 `SurfaceColor` / `SurfaceData` /
+`ReflectionMaterial` 三个来源在 R6/R7 里随 MB 一起删除，五张图现在只有 SB 一个写者（当时的通道对照见
+`CHANGELOG.md` 的 R6/R7 条目）。
 
 ### 2.2 材质侧属性名
 
@@ -132,48 +135,46 @@ _UsePlanarReflection             → 只在总开关打开时生效
 
 ### 2.3 命名规则（冻结）
 
-- SB 的材质参数一律用 **`_HoSSS*` / `_HoSurface*` 前缀**；**不再新增 `_HoMetadataBuffer*`**，那套随 MetadataBuffer 一起退役。
-- **不用 MPB**（决策 13：MPB 破坏 SRP Batcher）。曲率、`materialClass`、`transmittanceHint` 今天靠 `HoMetadataBufferSubject` 组件 MPB 逐 renderer 覆盖，全部改为材质参数。
+- SB 的材质参数一律用 **`_HoSSS*` / `_HoSurface*` 前缀**；`_HoMetadataBuffer*` 那套已随 MetadataBuffer 删除。
+- **不用 MPB**（决策 13：MPB 破坏 SRP Batcher）。曲率、`materialClass`、`transmittanceHint` 靠材质参数
+  （`_HoSurfaceCurvature` / `_HoSurfaceMaterialClassId` / `_HoSurfaceTransmittanceHint`），不走逐 renderer 覆盖。
 - Volume：**`HoSurfaceBufferVolume`**（调试入口）；UI 按 `Ho-UI_风格规范.md`——**调试在 Volume，feature 只放高级设置 + 兜底默认值**。
 
 ---
 
 ## 3. 执行
 
-> **R6 checklist（删 MetadataBuffer 的 surface 族，按序做，每步都要两个检查器过）**
+> **R6 / R7 checklist：已完成（MB 已整块删除）**
 >
-> **状态：零读者已确认**（两仓全域 grep）—— 采样 surface 族的 shader 只剩 `HoMetadataBufferDebug.shader`
-> （MB 自己的调试页），C# 引用只剩 MB 自己的文件（Pass / RenderTargets / ShaderConstants / DebugPass）。
-> 外部读者（SSS / PLR / DebugTile / ScreenProcess 兜底）已全部摘掉。
+> 跨两仓按序走完，每一步都过了 `check_compile` / `check_shaders`（lilToon 侧另加
+> `check_compile_liltoon.ps1`），提交记录见 `CHANGELOG.md` 的 R6-1 / R6-2 / R7-1 … R7-5：
 >
-> 目前 MB 的附件布局（`HoMetadataBufferAttachmentLayout`）：`0 MaskId / 1 SurfaceData / 2 Custom0 /
-> 3 ObjectCustom0 / 4 ObjectCustom1 / 5 ReflectionMaterial`；另外 `SurfaceColor` 是**独立的一趟**
-> （自己的 ShaderTagId `HoMetadataBufferSurfaceColor` + 自己的 RT + 不透明/透明两条 draw list）。
+> 1. **删 SurfaceColor 那一趟**（含只为它而活的 `MBufferDepth`）：22 个 lilblock 的该 pass、
+>    `fragMetadataBufferSurfaceColor` 与它的 resolve 函数、C# 的 ShaderTagId / RT / draw list / clear pass /
+>    兼容绑定 / `SurfaceColor*` 常量 / debug 模式与视图条目。
+> 2. **删主 pass 的 SurfaceData / ReflectionMaterial 槽**：输出去掉两槽、布局重编号为
+>    `0 MaskId / 1 Custom0 / 2 ObjectCustom0 / 3 ObjectCustom1`（**6 → 4 MRT**，D3D 要求附件从 0 连续）。
+> 3. **重编号 debug 枚举**：去 surface 六项后重排成
+>    `1 Mask / 2 Id / 3 Flags / 4..7 Custom0-3 / 8..15 ObjectCustom0-7 / 16..19 RSUV`，
+>    枚举、`mode == N` 字面量、视图登记表三处同步改（DebugTile 的 `HoDebugViewRenderKind` 同时重排）。
+> 4. **消费者换源**（换完才敢删本体）：SSS 的覆盖率 → `HoAC_TotalCoverage`；ScreenProcess 的图层遮罩 →
+>    角色覆盖率（并顺手修好恒为 0 的 texel size）；DebugTile 的 MB 格退役、PLR 格改用 OB/SB。
+> 5. **删本体**：`Runtime/MetadataBuffer/` 与 `Editor/MetadataBuffer/` 整目录（含三个 shader）、lilToon 侧
+>    `HO_METADATA_BUFFER` pass 与 `_HoMetadataBuffer*` 材质属性 / inspector 分节；`HoFaceAxis` 搬到 OB。
 >
-> 1. **删 SurfaceColor 那一趟**（自包含）：22 个 lilblock 里的 `LightMode = "HoMetadataBufferSurfaceColor"`
->    pass 块、`lil_pass_metadata_buffer.hlsl` 的 `fragMetadataBufferSurfaceColor` 与它的 resolve 函数、
->    C# 的 ShaderTagId / RT / draw list / clear pass / 兼容绑定、`HoMetadataBufferShaderConstants` 里
->    `SurfaceColor*` 三处、`HoMetadataBufferRenderTargets` 的字段与分配/释放、debug 模式与视图条目。
-> 2. **删主 pass 的 SurfaceData / ReflectionMaterial 两个槽**：lilToon 的输出结构体与写出、
->    布局常量重编号为 `0 MaskId / 1 Custom0 / 2 ObjectCustom0 / 3 ObjectCustom1`（**6 → 4 MRT**，
->    D3D 要求附件从 0 连续）、C# 的附件数与绑定、debug 模式与视图条目、`RenderGraphResources` 的三个字段。
-> 3. **重编号 debug 枚举**：`HoMetadataBufferDebugMode` 里 Thickness / Curvature / Material /
->    TransmittanceHint / SurfaceColor / ReflectionMaterial 六项删除后，**枚举值与 shader 里的字面量
->    mode 号必须同步改**（枚举、`HoMetadataBufferDebug.shader` 的 `mode == N`、视图登记表三处一致）。
->    或者按"调试枚举只能往后加"的惯例保留数字、只把名字换成 retired —— 二选一，做之前定。
-> 4. 文档：删 §2.1 桥接表里 surface 那几行、§3 表里 step 4/5/6 收尾，并把"MB 只剩身份/自定义"写清楚。
->
-> **不要跳步**：第 1、2 步各自是原子的（跨两仓同一提交），中间任何时刻树都应当是编译通过、观感正确的。
+> **留下来给下一轮的**：lilPBR（第三仓）的 MB pass 与属性没动（MB 没了以后那趟永远不会被绘制）；
+> 资产里 5 个挂着 `HoMetadataBufferGroup` 的旧场景保留 Missing Script。
+
 
 | 步骤 | 内容 | 验收 |
 | --- | --- | --- |
-| **1**（部分） | 名字进契约 v2（§3 模板 + §5 变更记录） | 五张数值纹理 + internal SurfaceOwner 已按 §2.1 定名落地；semantic owner/lane MSAA 句柄待 semantic pass |
-| **2**（部分） | 建 feature 骨架：单采样数值 pass + 自用深度 + RG/兼容两条路径 | ✅ 数值 pass 已落地；语义 lane pass 已落地（§0.3.7 的 8-lane 档：owner + 4 张 RGBA8MS，采样数跟相机）；16-lane 分批未做 |
-| **3**（部分） | 落地 `Color` + `Material` + `Reflection` + `Normal` + `Classification`（一次写全，省得把同一个 pass 改三遍） | ✅ 五张一起写了；**A/B 一致待实机验证** |
-| **4** | 反射侧停止新增 Target5 消费者 → 桥接残留清干净 | `_HoMetadataBufferReflectionMaterialTexture` 无消费者 |
-| **5** | 迁 `Classification`（R=profile ID、G=curvatureHint、B=transmittanceHint、A=materialClass ID） | SSS profile 精确 byte 比较不变；通用 class 不再与 profile 混用 |
-| **6** | 与 OB/AC 一起进 R6：删 MetadataBuffer 的 surface 族 | 无 `_HoMetadataBuffer` surface 族引用 |
-| **全程** | 五张数值图、SurfaceOwner/对齐错误、每个 semantic lane 的 ID/value/written 都进 `HoDebugViewRegistry` / DebugTile | ✅ 五张 + owner 有整屏调试；DebugTile 登记待 Debug 轴加 RenderKind |
+| **1** | 名字进契约 v2（§3 模板 + §5 变更记录） | ✅ 五张数值纹理 + internal SurfaceOwner 按 §2.1 定名；语义 lane 是单采样 4 张 RGBA8（见 §0.4） |
+| **2** | feature 骨架：单采样数值 pass + 自用深度 + RG/兼容两条路径 | ✅ 数值 pass + 语义 lane pass 都已落地；16-lane 分批未做（词表只有 8 位，用不上） |
+| **3** | 落地 `Color` + `Material` + `Reflection` + `Normal` + `Classification` | ✅ 五张一次写全 |
+| **4** | 反射侧停止新增 Target5 消费者 | ✅ PLR 的 mask 已改读 OB 覆盖率、材质数值改读 SB（经 AC 门面） |
+| **5** | 迁 `Classification`（R=profile ID、G=curvatureHint、B=transmittanceHint、A=materialClass ID） | ✅ SSS 的 profile 精确 byte 比较不变；通用 class 不再与 profile 混用 |
+| **6** | 与 OB/AC 一起删 MetadataBuffer | ✅ R6-1/R6-2/R7-1…R7-5 走完，MB 代码整块删除 |
+| **全程** | 五张数值图、SurfaceOwner/对齐错误、每个 semantic lane 的 ID/value/written 都进 `HoDebugViewRegistry` / DebugTile | ✅ 五张 + owner + 语义 lane 都有整屏调试与 DebugTile 格子 |
 
 ---
 
@@ -182,14 +183,14 @@ _UsePlanarReflection             → 只在总开关打开时生效
 1. `Material` 与 `Reflection` **不并**（各自一张 RT）。
 2. `Normal` **只存着色法线**（`octa`，含法线贴图）；几何法线留在 GB。
 3. `Emission` **登记为占位**：契约留名，不分配通道、不阻塞本轮。
-4. SurfaceSemantic 逐 sample 写 `(SemanticId,value)` + owner IdentityId；AC 在 resolve 前与 object 语义合成。ID=0 是未写，ID!=0/value=0 是显式 0。
+4. SurfaceSemantic 逐像素写 `(SemanticId,value)` + owner IdentityId；AC 在 resolve 时与 object 语义合成。ID=0 是未写，ID!=0/value=0 是显式 0。
 5. Classification 冻结为 `sssProfileIdByte / curvatureHint / transmittanceHint / materialClassIdByte`。
 6. `plrStrength` 材质侧是 `Range(0,1)` ⇒ **8 bit 足够**。
 7. 表面色来源 = **`fd.col`**（lilToon 主色链）。
 8. 数值 RT 不预乘 `subjectValid`；用 `_HoSurfaceBufferOwnerTexture` 的 16-bit owner 校验 pixel validity 与 OB layer-0 对齐。
 9. 0 是合法值；数值 pass 用 owner=0 表示未写，semantic pass 用 SemanticId=0 表示未写。
-10. 对外只发布 `Color/Normal/Material/Reflection/Classification`；SurfaceOwner 与 semantic owner/lane MSAA 纹理是 AC 依赖的 internal ContextItem 句柄。
-11. **材质侧参数**：禁止新 `_HoMetadataBuffer*` 与 MPB 路径；新增 `_HoSurfaceThickness`、`_HoSurfaceCurvature`、`_HoSurfaceTransmittanceHint`、`_HoSurfaceMaterialClassId`，profile 复用 `_HoSSSProfileId`。
-12. `target` 序与 `Target5` 这类 slot 号是**桥接期**叫法，落定后一律改用 SB 纹理名。
+10. 对外只发布 `Color/Normal/Material/Reflection/Classification`；SurfaceOwner 与 semantic owner/lane 纹理是 AC 依赖的 internal ContextItem 句柄（单采样）。
+11. **材质侧参数**：新增 `_HoSurfaceThickness`、`_HoSurfaceCurvature`、`_HoSurfaceTransmittanceHint`、`_HoSurfaceMaterialClassId`，profile 复用 `_HoSSSProfileId`；**不用 MPB**（会破坏 SRP Batcher）。
+12. 通道一律用 SB 纹理名（`target` / `Target5` 这类 slot 号是桥接期叫法，随 MB 的删除一起作废）。
 13. **调试与登记是落地的一部分**：五张数值图、owner alignment 与每个 surface semantic lane 都有 debug 视图。
 14. **UI 按 `Ho-UI_风格规范.md`**：调试入口在 **`HoSurfaceBufferVolume`**，feature 里只放高级设置 + 兜底默认值。

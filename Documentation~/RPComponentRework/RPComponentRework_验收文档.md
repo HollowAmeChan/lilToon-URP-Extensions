@@ -1,3 +1,5 @@
+> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
+
 # RPComponentRework 验收文档
 
 > 2026-05-26 收口版。本文是本轮 RPComponentRework 的唯一当前文档；旧 00-09 分布文档已删除。历史 `Documentation~/PostProcessing/` 资料只作为迁移参考，不作为当前使用说明。

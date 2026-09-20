@@ -1,3 +1,5 @@
+> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
+
 # Ho-SSGI / HTrace ReSTIR 对齐工作表
 
 > 用途：Ho-SSGI ReSTIR 的唯一阶段进度表。每次改算法前先更新对应行的“状态、证据、下一步”，避免只凭最终画面判断问题。

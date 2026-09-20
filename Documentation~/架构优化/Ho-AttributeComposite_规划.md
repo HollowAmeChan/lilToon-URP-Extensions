@@ -1,6 +1,6 @@
 # Ho-AttributeComposite（AC）规划
 
-**所有语义遮罩与合成属性的唯一逻辑入口**：它屏蔽 OB/SB 的存储布局与 ID 解压规则，下游不再自行解码 MB/OB/SB。
+**所有语义遮罩与合成属性的唯一逻辑入口**：它屏蔽 OB/SB 的存储布局与 ID 解压规则，下游不再自行解码 OB/SB 的存储布局（MB 已整块删除）。
 
 > **状态：typed 查询、runtime catalog、sample 级 object/surface SemanticId 合成、Selection resolve 与属性 validity 已冻结。**
 > AC **不画几何、不画表面**：它只读 OB + SB，把"三个来源"压成"一个每像素答案"。
@@ -51,7 +51,7 @@
 
 ### 0.4.1 表面属性的 object tier 尚无合法生产者
 
-表面数值（roughness / metallic / thickness / curvature / class / profile）本轮冻结为 `constant < surface`，**取消 object tier**。OB entry 不重新塞入 MB 表面值。如果未来需要逐物体数值覆盖，新增 AC 自己的 object-default table，不改 OB 身份表。
+表面数值（roughness / metallic / thickness / curvature / class / profile）本轮冻结为 `constant < surface`，**取消 object tier**。OB entry 不重新塞入旧的 MB 表面值。如果未来需要逐物体数值覆盖，新增 AC 自己的 object-default table，不改 OB 身份表。
 
 ### 0.5 pass 数量与时序
 
@@ -157,7 +157,7 @@ AC **不为每个消费者烤遮罩图**。它发布**一份可查询的合成�
 | **R4b** | pre-opaque `SemanticResolve`：逐 sample owner 校验 + 五种 sourceMode + 4/8/16 lane MRT batching | 眼白等 SB 表面语义可与 OB 同 ID 粗分统一合成；边缘不出现 bit/coverage 误覆盖 |
 | **R4c** | pre-opaque `AttributeComposite`：`constant < surface`，SurfaceOwner 对齐 | Classification 四通道、0 值与未写可区分 |
 | **R5** | **消费者输入切换**（V2 §6.2）：ScreenProcess 图层**新接** AC 具名遮罩（原 20 个 rule source 已作为未使用功能删除，**没有旧序列化配置要迁移**，`Requires*` 诊断家族替换）；角色特化 → AC（组 / 物体位 / 覆盖率）+ SB（表面色）；**两者自己的 debug 视图与登记一起改** | 行为不变或更好；`Requires*` 家族消失；解析不到的名字在视图里报出来 |
-| **R4 之后** | 与 OB / SB 一起进 R6：删 MetadataBuffer | 全仓库无 `_HoMetadataBuffer` 引用 |
+| **R4 之后** ✅ | 与 OB / SB 一起进 R6：删 MetadataBuffer（已完成） | 全仓库无 `_HoMetadataBuffer` 引用 |
 | **R6 之后** | 导出 feature 立项（经 AC 资源集读 OB 身份池 + runtime catalog，再生成 Cryptomatte manifest） | 外部处理与 Unity 内处理使用同一份身份事实 |
 
 **AC 自己的 debug 视图要能看到**：合成属性图、每个 Selection lane 的 SemanticId/coverage/sourceMode、object sample 值、surface written/value、owner mismatch、**消费者登记表**、解析失败/非法 ID。

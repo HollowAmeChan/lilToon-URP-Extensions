@@ -2,6 +2,33 @@
 
 ## Unreleased
 
+- **MetadataBuffer（MB）整块删除**：maskId / 自定义通道由 OB + AC 接管，surface 族（表面色 / 厚度 / 曲率 /
+  材质 / 反射 / 分类）由 SB 接管。分两步走，每一步都保持树能跑：
+  - **R6-1**：删掉 MB 的 `HoMetadataBufferSurfaceColor` 独立 pass（22 个 lilblock + `fragMetadataBufferSurfaceColor`），
+    连带删掉只为它而活的 `MBufferDepth`（含调试视图与 ScreenProcess 的黑色兜底）。
+  - **R6-2**：主 pass 摘掉 `SurfaceData` / `ReflectionMaterial` 两个槽，附件 **6 → 4**
+    （`0 MaskId / 1 Custom0 / 2 ObjectCustom0 / 3 ObjectCustom1`），调试模式重排为
+    `1 Mask / 2 Id / 3 Flags / 4..7 Custom0-3 / 8..15 ObjectCustom0-7 / 16..19 RSUV`
+    （枚举、shader 的 `mode == N`、视图登记表三处同步改；旧场景里存的调试号会落到别的视图上，不做映射）。
+  - **R7-1**：SSS 的 `HoSSSCoverage` 从 MB 的 `maskId.r` 改成 AC 的 `HoAC_TotalCoverage`（同一个覆盖率）；
+    顺带删掉 PLR 里一行没人用的 MB 句柄。
+  - **R7-2**：ScreenProcess 的图层遮罩从 MB 覆盖率改成角色覆盖率（AC/OB），并**修好 texel size**：
+    以前读全局纹理的 `_TexelSize`（恒为 0），DropShadow 的"按像素扩张 / 羽化"半径一直没生效。
+  - **R7-3**：DebugTile 的 MB 格子与视图登记退役；PLR 那一格改用 OB 覆盖率 + SB 的 Material/Reflection，
+    并把它的 mode 3/4/5 对齐枚举（原先画的是 wetness / normalStrength，与 `HoPlanarReflectionDebugMode` 对不上）。
+  - **R7-4**（跨仓 lilToon）：删 22 个 lilblock 的 `HO_METADATA_BUFFER` pass 与 `_HoMetadataBuffer*` 材质属性 /
+    inspector 分节；`lil_pass_metadata_buffer.hlsl` 只剩 GB 的那一半，改名 `lil_pass_geometry_buffer.hlsl`；
+    `PropertyBlock` 里 SB（`HoSurface`）直接顶掉 MB 的枚举槽位（后面的块号不变）。
+  - **R7-5**：`Runtime/MetadataBuffer/` 与 `Editor/MetadataBuffer/` 整目录删除（含 Clear / Fallback / DebugView
+    三个 shader）；`HoFaceAxis` 搬到 `Runtime/ObjectBuffer/`（按 int 序列化，数值未动）。
+  - **踩过的坑（记住）**：① MB 的调试枚举重排会改旧场景里的调试显示，不是错误但会"换视图"；
+    ② `lil_pass_object_buffer.hlsl` 与 `lil_pass_outline_normal_depth.hlsl` 也在 include 那个文件
+    （前者靠调 MB 的 frag 拿 clip 副作用）—— 删 include 前先跑 `check_shaders.ps1`，它正好抓出这两处；
+    ③ `HoFaceAxis` 这类"住在待删命名空间里的公共枚举"要先搬再删。
+  - **未处理**：`D:\Unity_Fork\lilPBR` 的 MB pass 与 `_HoMetadataBuffer*` 属性仍留着（MB 删掉后那趟永远不会被绘制）；
+    资产里 5 个挂着 `HoMetadataBufferGroup` 的旧场景保留 Missing Script。
+- 新增 `.codex-research/check_compile_liltoon.ps1`：用同一套 Unity 参考程序集单独编译 `lilToon.Editor`
+  （lilToon 侧的 Editor 代码在这里是独立程序集，之前的检查器看不到它）。
 - 修复：**SB 的材质 pass 之前根本编译不过** —— `lil_pass_surface_buffer.hlsl` 里指向 `HoSurfaceBufferCommon.hlsl` 的 `#include` 在上一轮改注释时被误删，于是 22 个 lilblock 的 `HO_SURFACE_BUFFER` pass 全部报 `undeclared identifier 'HoSurfaceOwnerEncode'`：pass 不存在 ⇒ SB 画不到像素 ⇒ owner 恒 0（调试里 Owner 全红、五张数值图全是"没人写"色）。已补回 include。
 - 新增 `.codex-research/check_shaders.ps1`：**shader 侧的静态闸门**。只查本仓命名空间（`Ho*` / `lilHo*` / `LilHo*`）的调用可达性、先用后定义与 include 解析 —— C# 的 Roslyn 检查器看不到 HLSL，而这类错误的症状恰好是"整屏什么都不输出"，与原因离得很远（本次就是它漏掉的第二例）。已做负向测试（抽掉 include 立刻报出那两个调用）。
 - **Ho-SurfaceBuffer（SB）数值面落地**（规划 R3-sb，三轴里最后一条缺失的轴）：回答"表面是什么样"，几何在 GB、身份在 OB、合成在 AC。

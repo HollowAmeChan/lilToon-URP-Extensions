@@ -1,3 +1,5 @@
+> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
+
 # 正式管线草案 v0.1（定稿）
 
 > ⛔ **本文的部分章节已被 `LILTOON_FORMAL_PIPELINE_DRAFT_V2.md` 取代**（三轴输入 + 属性合成层的重新串联）：
