@@ -750,5 +750,112 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             public RenderTargetIdentifier coverageDestination;
         }
     }
+
+    /// <summary>
+    /// 调试用的一次性回读：把**已经 resolve 完**的层图拷回 CPU，在 Console 里打一张"实际字节直方图"。
+    /// <para>
+    /// 为什么需要它：调试视图只能给出"看起来是什么颜色"，而"洋红 = 未注册行"和"洋红 = 拿到垃圾数据"
+    /// 是同一个颜色，靠肉眼分不开（这一轮就是被这件事拖住的）。这里直接给出
+    /// <c>0xRRGGBBAA × 像素数</c>，把"写没写进去 / 写进去的是什么"一次性钉死。
+    /// </para>
+    /// <para>
+    /// 只在 debug 视图打开时工作：这条路径给每帧加两次全屏 CopyTexture，正常渲染不该付这个成本。
+    /// （故意和 pass 放在同一个文件里：新加 .cs 文件在 Unity 里要等一次资源刷新才进编译，
+    /// 调这条链路时不想再被"类型不存在"绊一次。）
+    /// </para>
+    /// </summary>
+    internal static class HoObjectBufferReadback
+    {
+        private const float IntervalSeconds = 1.0f;
+        private static float nextRequestTime;
+        private static bool inFlight;
+        private static int logCount;
+
+        /// <summary>回读的开关：调用方按"调试视图是否开着"决定。</summary>
+        public static bool Enabled { get; set; }
+
+        /// <summary>请求上一帧拷进持久 RT 的内容（本帧的拷贝命令还没入队，所以拿到的就是上一帧的结果）。</summary>
+        public static void Request(HoObjectBufferRenderTargets targets)
+        {
+            if (!Enabled || inFlight || targets == null || targets.Id0Texture == null)
+            {
+                return;
+            }
+
+            if (Time.realtimeSinceStartup < nextRequestTime)
+            {
+                return;
+            }
+
+            RenderTexture id0 = targets.Id0Texture.rt;
+            RenderTexture coverage = targets.CoverageTexture != null ? targets.CoverageTexture.rt : null;
+            if (id0 == null || coverage == null || !SystemInfo.supportsAsyncGPUReadback)
+            {
+                return;
+            }
+
+            nextRequestTime = Time.realtimeSinceStartup + IntervalSeconds;
+            inFlight = true;
+            string size = $"{id0.width}x{id0.height} {id0.graphicsFormat}";
+            AsyncGPUReadback.Request(id0, 0, request =>
+            {
+                LogHistogram($"Id0(组0,槽0,组1,槽1) [{size}]", request);
+                AsyncGPUReadback.Request(coverage, 0, coverageRequest =>
+                {
+                    LogHistogram($"Coverage(层0..层3) [{size}]", coverageRequest);
+                    inFlight = false;
+                });
+            });
+        }
+
+        private static void LogHistogram(string label, AsyncGPUReadbackRequest request)
+        {
+            if (request.hasError)
+            {
+                Debug.LogWarning($"[Ho-ObjectBuffer][READBACK] {label}：回读失败（hasError）。");
+                return;
+            }
+
+            NativeArray<Color32> pixels = request.GetData<Color32>(0);
+            if (!pixels.IsCreated || pixels.Length == 0)
+            {
+                Debug.LogWarning($"[Ho-ObjectBuffer][READBACK] {label}：没有数据。");
+                return;
+            }
+
+            bool isId0 = label.StartsWith("Id0");
+            var counts = new Dictionary<uint, int>(16);
+            for (int i = 0; i < pixels.Length; i++)
+            {
+                Color32 p = pixels[i];
+                uint key = ((uint)p.r << 24) | ((uint)p.g << 16) | ((uint)p.b << 8) | p.a;
+                counts.TryGetValue(key, out int count);
+                counts[key] = count + 1;
+            }
+
+            var sorted = new List<KeyValuePair<uint, int>>(counts);
+            sorted.Sort((a, b) => b.Value.CompareTo(a.Value));
+
+            var text = new System.Text.StringBuilder();
+            text.Append($"[Ho-ObjectBuffer][READBACK #{++logCount}] {label}：像素={pixels.Length} 唯一值={sorted.Count}");
+            int shown = Mathf.Min(6, sorted.Count);
+            for (int i = 0; i < shown; i++)
+            {
+                uint key = sorted[i].Key;
+                int count = sorted[i].Value;
+                float percent = 100.0f * count / pixels.Length;
+                uint b0 = (key >> 24) & 0xFFu;
+                uint b1 = (key >> 16) & 0xFFu;
+                uint b2 = (key >> 8) & 0xFFu;
+                uint b3 = key & 0xFFu;
+                text.Append($"\n    {b0:X2}{b1:X2}{b2:X2}{b3:X2} × {count} ({percent:F2}%)");
+                text.Append(isId0
+                    ? $"  => 层0 (组={b0},槽={b1}) / 层1 (组={b2},槽={b3})"
+                    : $"  => 覆盖率 {b0 / 255.0f:F2} / {b1 / 255.0f:F2} / {b2 / 255.0f:F2} / {b3 / 255.0f:F2}");
+            }
+
+            Debug.Log(text.ToString());
+        }
+    }
 }
 
