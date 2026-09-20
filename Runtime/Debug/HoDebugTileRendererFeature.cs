@@ -2,7 +2,6 @@
 
 using System.Collections.Generic;
 using lilToon.URP.Extensions.GeometryBuffer;
-using lilToon.URP.Extensions.MetadataBuffer;
 using lilToon.URP.Extensions.ObjectBuffer;
 using lilToon.URP.Extensions.PlanarReflection;
 using lilToon.URP.Extensions.ShadowCast;
@@ -152,19 +151,15 @@ namespace lilToon.URP.Extensions.Debugging
                 }
 
                 UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
-                HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
                 HoObjectBufferRenderGraphResources objectResources = frameData.GetOrCreate<HoObjectBufferRenderGraphResources>();
                 HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
                 HoShadowCastRenderGraphResources shadowCastResources = frameData.GetOrCreate<HoShadowCastRenderGraphResources>();
                 HoSubsurfaceScatteringRenderGraphResources sssResources = frameData.GetOrCreate<HoSubsurfaceScatteringRenderGraphResources>();
                 HoSurfaceBufferRenderGraphResources surfaceResources = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
 
-                bool hasMaskId = metadataResources.maskIdTexture.IsValid();
-                bool hasCustom0 = metadataResources.custom0Texture.IsValid();
-                bool hasMetadata = metadataResources.maskIdTexture.IsValid()
-                    && metadataResources.custom0Texture.IsValid()
-                    && metadataResources.objectCustom0Texture.IsValid()
-                    && metadataResources.objectCustom1Texture.IsValid();
+                // 遮罩/覆盖率来源与表面数值都归 OB / SB（MB 的格子在 R7-3 退役）。
+                bool hasCoverage = objectResources.coverageTexture.IsValid();
+                bool hasSurfaceValues = surfaceResources.HasRequiredTextures;
                 bool hasGeometry = geometryResources.normalDepthTexture.IsValid();
                 bool hasObjectBuffer = objectResources.HasRequiredTextures;
                 // SB 的平铺视图：五张数值图 + owner 就够；语义 lane 的视图在语义趟没跑时会各自画暗红。
@@ -172,17 +167,17 @@ namespace lilToon.URP.Extensions.Debugging
                 RTHandle planarReflectionRtHandle = HoPlanarReflectionSurface.CurrentReflectionTextureHandle;
                 RenderTexture planarReflectionTextureResource = HoPlanarReflectionSurface.CurrentReflectionTexture;
                 bool hasPlanarReflectionTexture = planarReflectionRtHandle != null && planarReflectionTextureResource != null;
-                bool hasPlanarReflectionInputs = hasPlanarReflectionTexture && hasMaskId && hasCustom0 && hasGeometry;
+                bool hasPlanarReflectionInputs = hasPlanarReflectionTexture && hasCoverage && hasSurfaceValues && hasGeometry;
                 bool hasShadowCastAtlas = shadowCastResources.atlasTexture.IsValid();
                 bool hasShadowCastSecondDirectionalAtlas = shadowCastResources.secondDirectionalAtlasTexture.IsValid();
                 bool hasSubsurfaceScattering = sssResources.sourceTexture.IsValid()
                     && sssResources.transmissionTexture.IsValid()
-                    && metadataResources.HasRequiredTextures
+                    && objectResources.coverageTexture.IsValid()
+            && surfaceResources.HasRequiredTextures
                     && geometryResources.HasRequiredTextures;
 
                 List<DebugTile> tiles = BuildTiles(
                     selectedDebugViewId,
-                    hasMetadata,
                     hasObjectBuffer,
                     hasGeometry,
                     hasShadowCastAtlas,
@@ -228,24 +223,22 @@ namespace lilToon.URP.Extensions.Debugging
                     passData.source = source;
                     passData.tiles = tiles;
                     passData.tileGrid = new Vector4(columns, rows, tiles.Count, 0.0f);
-                    passData.maskIdAvailable = hasMaskId;
-                    passData.custom0Available = hasCustom0;
+                    passData.coverageAvailable = hasCoverage;
+                    passData.surfaceValuesAvailable = hasSurfaceValues;
                     passData.normalDepthAvailable = hasGeometry;
                     passData.planarReflectionAvailable = hasPlanarReflectionTexture;
-                    passData.bindMetadata = resourceNeeds.fullMetadata && hasMetadata;
                     passData.bindObjectBuffer = resourceNeeds.objectBuffer && hasObjectBuffer;
-                    passData.bindMaskId = (passData.bindMetadata || resourceNeeds.planarReflectionBuffers || resourceNeeds.subsurfaceScattering) && hasMaskId;
-                    passData.bindCustom0 = (passData.bindMetadata || resourceNeeds.planarReflectionBuffers) && hasCustom0;
+                    passData.bindCoverage = (resourceNeeds.planarReflectionBuffers || resourceNeeds.subsurfaceScattering) && hasCoverage;
+                    passData.bindSurfaceValues = resourceNeeds.planarReflectionBuffers && hasSurfaceValues;
                     passData.bindGeometry = (resourceNeeds.geometry || resourceNeeds.planarReflectionBuffers || resourceNeeds.subsurfaceScattering) && hasGeometry;
                     passData.bindPlanarReflectionTexture = resourceNeeds.planarReflectionBuffers && hasPlanarReflectionTexture;
                     passData.bindShadowCastAtlas = resourceNeeds.shadowCastAtlas && hasShadowCastAtlas;
                     passData.bindShadowCastSecondDirectionalAtlas = resourceNeeds.shadowCastSecondDirectionalAtlas && hasShadowCastSecondDirectionalAtlas;
                     passData.bindSubsurfaceScattering = resourceNeeds.subsurfaceScattering && hasSubsurfaceScattering;
                     passData.bindSurfaceBuffer = resourceNeeds.surfaceBuffer && hasSurfaceBuffer;
-                    passData.maskIdTexture = metadataResources.maskIdTexture;
-                    passData.custom0Texture = metadataResources.custom0Texture;
-                    passData.objectCustom0Texture = metadataResources.objectCustom0Texture;
-                    passData.objectCustom1Texture = metadataResources.objectCustom1Texture;
+                    passData.coverageTexture = objectResources.coverageTexture;
+                    passData.surfaceMaterialTexture = surfaceResources.materialTexture;
+                    passData.surfaceReflectionTexture = surfaceResources.reflectionTexture;
                     passData.objectId0Texture = objectResources.id0Texture;
                     passData.objectId1Texture = objectResources.id1Texture;
                     passData.objectCoverageTexture = objectResources.coverageTexture;
@@ -261,12 +254,15 @@ namespace lilToon.URP.Extensions.Debugging
                     passData.sssTransmissionTexture = sssResources.transmissionTexture;
                     passData.geometryDepthParams = geometryDepthParams;
 
-                    if (passData.bindMetadata)
+                    if (passData.bindCoverage)
                     {
-                        builder.UseTexture(passData.maskIdTexture, AccessFlags.Read);
-                        builder.UseTexture(passData.custom0Texture, AccessFlags.Read);
-                        builder.UseTexture(passData.objectCustom0Texture, AccessFlags.Read);
-                        builder.UseTexture(passData.objectCustom1Texture, AccessFlags.Read);
+                        builder.UseTexture(passData.coverageTexture, AccessFlags.Read);
+                    }
+
+                    if (passData.bindSurfaceValues)
+                    {
+                        builder.UseTexture(passData.surfaceMaterialTexture, AccessFlags.Read);
+                        builder.UseTexture(passData.surfaceReflectionTexture, AccessFlags.Read);
                     }
 
                     if (passData.bindSurfaceBuffer)
@@ -289,17 +285,9 @@ namespace lilToon.URP.Extensions.Debugging
                         }
                     }
 
-                    else
+                    else if (passData.bindCoverage)
                     {
-                        if (passData.bindMaskId)
-                        {
-                            builder.UseTexture(passData.maskIdTexture, AccessFlags.Read);
-                        }
-
-                        if (passData.bindCustom0)
-                        {
-                            builder.UseTexture(passData.custom0Texture, AccessFlags.Read);
-                        }
+                        builder.UseTexture(passData.coverageTexture, AccessFlags.Read);
                     }
 
                     if (passData.bindObjectBuffer)
@@ -341,16 +329,13 @@ namespace lilToon.URP.Extensions.Debugging
                     {
                         builder.UseTexture(passData.sssSourceTexture, AccessFlags.Read);
                         builder.UseTexture(passData.sssTransmissionTexture, AccessFlags.Read);
-                        if (!passData.bindMetadata)
+                        if (!passData.bindCoverage)
                         {
-                            if (!passData.bindMaskId)
-                            {
-                                builder.UseTexture(passData.maskIdTexture, AccessFlags.Read);
-                            }
-
-                            builder.UseTexture(surfaceResources.materialTexture, AccessFlags.Read);
-                            builder.UseTexture(surfaceResources.colorTexture, AccessFlags.Read);
+                            builder.UseTexture(passData.coverageTexture, AccessFlags.Read);
                         }
+
+                        builder.UseTexture(surfaceResources.materialTexture, AccessFlags.Read);
+                        builder.UseTexture(surfaceResources.colorTexture, AccessFlags.Read);
 
                         if (!passData.bindGeometry)
                         {
@@ -365,25 +350,15 @@ namespace lilToon.URP.Extensions.Debugging
                     builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                     {
                         Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), 0.0f, false);
-                        if (data.bindMetadata)
+                        if (data.bindCoverage)
                         {
-                            context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
-                            context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.custom0Texture);
-                            context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.objectCustom0Texture);
-                            context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.objectCustom1Texture);
+                            context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.CoverageTextureId, data.coverageTexture);
                         }
 
-                        else
+                        if (data.bindSurfaceValues)
                         {
-                            if (data.bindMaskId)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
-                            }
-
-                            if (data.bindCustom0)
-                            {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.custom0Texture);
-                            }
+                            context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.MaterialTextureId, data.surfaceMaterialTexture);
+                            context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ReflectionTextureId, data.surfaceReflectionTexture);
                         }
 
                         if (data.bindObjectBuffer)
@@ -424,8 +399,9 @@ namespace lilToon.URP.Extensions.Debugging
 
                         if (data.bindSubsurfaceScattering)
                         {
-                            context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
+                            context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.CoverageTextureId, data.coverageTexture);
                             context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
+                            context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.MaterialTextureId, data.surfaceMaterialTexture);
                             context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.SourceTextureId, data.sssSourceTexture);
                             context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.TransmissionTextureId, data.sssTransmissionTexture);
                         }
@@ -445,7 +421,7 @@ namespace lilToon.URP.Extensions.Debugging
                             PropertyBlock.SetVector(HoDebugTileShaderConstants.GeometryDepthParamsId, data.geometryDepthParams);
                             PropertyBlock.SetVector(
                                 HoDebugTileShaderConstants.PlanarReflectionDebugInputStatusId,
-                                new Vector4(data.planarReflectionAvailable ? 1.0f : 0.0f, data.maskIdAvailable ? 1.0f : 0.0f, data.normalDepthAvailable ? 1.0f : 0.0f, data.custom0Available ? 1.0f : 0.0f));
+                                new Vector4(data.planarReflectionAvailable ? 1.0f : 0.0f, data.coverageAvailable ? 1.0f : 0.0f, data.normalDepthAvailable ? 1.0f : 0.0f, data.surfaceValuesAvailable ? 1.0f : 0.0f));
                             context.cmd.DrawProcedural(Matrix4x4.identity, data.material, 0, MeshTopology.Triangles, 6, 1, PropertyBlock);
                         }
                     });
@@ -456,7 +432,6 @@ namespace lilToon.URP.Extensions.Debugging
 
             private static List<DebugTile> BuildTiles(
                 string selectedId,
-                bool hasMetadata,
                 bool hasObjectBuffer,
                 bool hasGeometry,
                 bool hasShadowCastAtlas,
@@ -472,11 +447,6 @@ namespace lilToon.URP.Extensions.Debugging
                 {
                     HoDebugViewInfo view = views[i];
                     if (!view.SupportsAutomaticTile || (!all && view.ViewId != selectedId))
-                    {
-                        continue;
-                    }
-
-                    if (view.RenderKind == HoDebugViewRenderKind.MetadataBuffer && !hasMetadata)
                     {
                         continue;
                     }
@@ -587,7 +557,6 @@ namespace lilToon.URP.Extensions.Debugging
             private readonly struct ResourceNeeds
             {
                 private ResourceNeeds(
-                    bool fullMetadata,
                     bool objectBuffer,
                     bool geometry,
                     bool shadowCastAtlas,
@@ -596,7 +565,6 @@ namespace lilToon.URP.Extensions.Debugging
                     bool planarReflectionBuffers,
                     bool surfaceBuffer)
                 {
-                    this.fullMetadata = fullMetadata;
                     this.objectBuffer = objectBuffer;
                     this.geometry = geometry;
                     this.shadowCastAtlas = shadowCastAtlas;
@@ -606,7 +574,6 @@ namespace lilToon.URP.Extensions.Debugging
                     this.surfaceBuffer = surfaceBuffer;
                 }
 
-                public readonly bool fullMetadata;
                 public readonly bool objectBuffer;
                 public readonly bool geometry;
                 public readonly bool shadowCastAtlas;
@@ -617,7 +584,6 @@ namespace lilToon.URP.Extensions.Debugging
 
                 public static ResourceNeeds FromTiles(List<DebugTile> tiles)
                 {
-                    bool fullMetadata = false;
                     bool objectBuffer = false;
                     bool geometry = false;
                     bool shadowCastAtlas = false;
@@ -631,9 +597,6 @@ namespace lilToon.URP.Extensions.Debugging
                         DebugTile tile = tiles[i];
                         switch (tile.renderKind)
                         {
-                            case HoDebugViewRenderKind.MetadataBuffer:
-                                fullMetadata = true;
-                                break;
                             case HoDebugViewRenderKind.ObjectBuffer:
                                 objectBuffer = true;
                                 break;
@@ -667,7 +630,6 @@ namespace lilToon.URP.Extensions.Debugging
                     }
 
                     return new ResourceNeeds(
-                        fullMetadata,
                         objectBuffer,
                         geometry,
                         shadowCastAtlas,
@@ -727,24 +689,22 @@ namespace lilToon.URP.Extensions.Debugging
                 public TextureHandle source;
                 public List<DebugTile> tiles;
                 public Vector4 tileGrid;
-                public bool maskIdAvailable;
-                public bool custom0Available;
+                public bool coverageAvailable;
+                public bool surfaceValuesAvailable;
                 public bool normalDepthAvailable;
                 public bool planarReflectionAvailable;
-                public bool bindMetadata;
                 public bool bindObjectBuffer;
-                public bool bindMaskId;
-                public bool bindCustom0;
+                public bool bindCoverage;
+                public bool bindSurfaceValues;
                 public bool bindGeometry;
                 public bool bindPlanarReflectionTexture;
                 public bool bindShadowCastAtlas;
                 public bool bindShadowCastSecondDirectionalAtlas;
                 public bool bindSubsurfaceScattering;
-                public TextureHandle maskIdTexture;
                 public bool bindSurfaceBuffer;
-                public TextureHandle custom0Texture;
-                public TextureHandle objectCustom0Texture;
-                public TextureHandle objectCustom1Texture;
+                public TextureHandle coverageTexture;
+                public TextureHandle surfaceMaterialTexture;
+                public TextureHandle surfaceReflectionTexture;
                 public TextureHandle objectId0Texture;
                 public TextureHandle objectId1Texture;
                 public TextureHandle objectCoverageTexture;

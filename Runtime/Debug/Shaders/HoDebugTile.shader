@@ -42,10 +42,6 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             float4 _HoDebugTileLabel3;
             float4 _HoDebugTileGeometryDepthParams;
 
-            TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
-            TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture);
-            TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
-            TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture);
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
             TEXTURE2D_X(_HoGeometryBufferOutlineNormalDepthTexture);
             TEXTURE2D_FLOAT(_HoShadowCastAtlas);
@@ -83,7 +79,6 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             float4 _HoShadowCastSecondDirectionalAtlasSize;
             float4 _HoShadowCastSecondDirectionalLightData[HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_LIGHTS];
             float4 _HoShadowCastSecondDirectionalSliceData[HO_SHADOW_CAST_MAX_SECOND_DIRECTIONAL_SLICES];
-            float _HoMetadataBufferActive;
             float _HoPlanarReflectionCompositeActive;
             float4 _HoPlanarReflectionCompositeParams;
             float4 _HoPlanarReflectionCompositeOptions;
@@ -184,18 +179,6 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             {
                 half coverage = saturate(surfaceColor.a);
                 return half4(surfaceColor.rgb, coverage);
-            }
-
-            half GetObjectCustomValue(int customIndex, float2 uv)
-            {
-                if (customIndex < 4)
-                {
-                    half4 values = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv);
-                    return values[customIndex];
-                }
-
-                half4 values4 = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture, sampler_PointClamp, uv);
-                return values4[customIndex - 4];
             }
 
             /// <summary>
@@ -321,35 +304,6 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 }
 
                 return DebugScalar(0.0h);
-            }
-
-            half4 ResolveMetadataColor(float2 uv)
-            {
-                half4 maskId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv);
-                half valid = step(0.0001h, maskId.r);
-                int mode = _HoDebugTileMode;
-
-                if (mode == 1) return half4(maskId.rrr, 1.0h);
-                if (mode == 2) return half4(HashEncodedId(maskId.gba) * valid * step(0.0001h, max(max(maskId.g, maskId.b), maskId.a)), 1.0h);
-                if (mode == 3) return half4(Heat(maskId.a) * step(0.0001h, maskId.a), 1.0h);
-
-                if (mode >= 4 && mode <= 7)
-                {
-                    half4 values = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture, sampler_PointClamp, uv);
-                    return DebugScalar(values[mode - 4]);
-                }
-
-                if (mode >= 8 && mode <= 15)
-                {
-                    return DebugScalar(GetObjectCustomValue(mode - 8, uv));
-                }
-
-                if (mode == 16) return half4(maskId.gba, 1.0h);
-                if (mode == 17) return half4(HashEncodedId(maskId.g) * valid, 1.0h);
-                if (mode == 18) return half4(HashEncodedId(maskId.b) * valid, 1.0h);
-                if (mode == 19) return half4(Heat(maskId.a), 1.0h);
-
-                return DebugScalar(maskId.r);
             }
 
             uint HoObjectBufferDecodeByte(float encoded)
@@ -787,7 +741,7 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             half4 ResolvePlanarReflectionColor(float2 uv)
             {
                 int mode = _HoDebugTileMode;
-                half metadataReady = saturate(_HoMetadataBufferActive * _HoPlanarReflectionDebugInputStatus.y * _HoPlanarReflectionDebugInputStatus.w);
+                half metadataReady = saturate(_HoObjectBufferActive * _HoSurfaceBufferActive * _HoPlanarReflectionDebugInputStatus.y * _HoPlanarReflectionDebugInputStatus.w);
                 half geometryReady = saturate(_HoPlanarReflectionDebugInputStatus.z);
                 if (mode == 1)
                 {
@@ -806,25 +760,30 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                     return half4(1.0h, 0.0h, 1.0h, 1.0h);
                 }
 
-                half4 maskId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv);
-                half4 custom0 = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture, sampler_PointClamp, uv);
+                // 与 composite 同一套来源：覆盖率 = OB 四层之和，材质数值 = SB 的 Material / Reflection 两行。
+                half4 coveragePool = SAMPLE_TEXTURE2D_X(_HoObjectBufferCoverageTexture, sampler_PointClamp, uv);
+                half4 material = SAMPLE_TEXTURE2D_X(_HoSurfaceBufferMaterialTexture, sampler_PointClamp, uv);
+                half4 reflection = SAMPLE_TEXTURE2D_X(_HoSurfaceBufferReflectionTexture, sampler_PointClamp, uv);
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
 
-                half surfaceMask = saturate(maskId.r) * LilHoGeometryBufferCoverage(normalDepth);
-                half smoothness = saturate(custom0.r);
-                half wetness = saturate(custom0.g);
-                half normalStrength = saturate(custom0.b);
-                half materialReflectionStrength = saturate(custom0.a);
+                half totalCoverage = saturate(coveragePool.r + coveragePool.g + coveragePool.b + coveragePool.a);
+                half surfaceMask = totalCoverage * LilHoGeometryBufferCoverage(normalDepth);
+                half perceptualRoughness = saturate(material.r);
+                half smoothness = 1.0h - perceptualRoughness;
+                half metallic = saturate(material.g);
+                half reflectance = saturate(reflection.r);
+                half materialReflectionStrength = saturate(reflection.g);
+                half4 reflectionMaterial = half4(perceptualRoughness, metallic, reflectance, materialReflectionStrength);
 
                 half minSmoothness = saturate(_HoPlanarReflectionCompositeParams.z);
                 half smoothnessFade = saturate((smoothness - minSmoothness) / max(1.0h - minSmoothness, 0.0001h));
-                half centerWeight = surfaceMask * wetness * materialReflectionStrength * smoothnessFade;
+                half centerWeight = surfaceMask * materialReflectionStrength * smoothnessFade;
                 float3 normalWS = LilHoGeometryBufferWorldNormalOrZero(normalDepth);
 
                 if (mode == 2) return half4(surfaceMask.xxx, 1.0h);
-                if (mode == 3) return half4(smoothness.xxx, 1.0h);
-                if (mode == 4) return half4(wetness.xxx, 1.0h);
-                if (mode == 5) return half4(normalStrength.xxx, 1.0h);
+                if (mode == 3) return half4(perceptualRoughness.xxx, 1.0h);
+                if (mode == 4) return half4(metallic.xxx, 1.0h);
+                if (mode == 5) return half4(reflectance.xxx, 1.0h);
                 if (mode == 6) return half4(materialReflectionStrength.xxx, 1.0h);
                 if (mode == 7) return half4(normalWS * 0.5 + 0.5, 1.0h);
                 if (mode == 8)
@@ -832,7 +791,7 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                     half depth = saturate(normalDepth.a / max(_HoDebugTileGeometryDepthParams.y, 0.0001));
                     return half4(depth.xxx, 1.0h);
                 }
-                if (mode == 14) return custom0;
+                if (mode == 14) return reflectionMaterial;
 
                 if (centerWeight <= 0.0001h)
                 {
@@ -840,7 +799,7 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 }
 
                 float3 normalVS = mul((float3x3)UNITY_MATRIX_V, normalWS);
-                float2 distortion = normalVS.xy * _HoPlanarReflectionCompositeParams.y * normalStrength * wetness;
+                float2 distortion = normalVS.xy * _HoPlanarReflectionCompositeParams.y;
                 float2 distortedScreenUv = uv + distortion;
                 if (mode == 9)
                 {
@@ -1004,37 +963,37 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
                 half4 color = half4(0.0h, 0.0h, 0.0h, 1.0h);
-                if (_HoDebugTileRenderKind == 2)
+                if (_HoDebugTileRenderKind == 1)
                 {
                     color = ResolveGeometryColor(input.uv);
                 }
-                else if (_HoDebugTileRenderKind == 3)
+                else if (_HoDebugTileRenderKind == 2)
                 {
                     color = ResolveShadowCastColor(input.uv);
                 }
-                else if (_HoDebugTileRenderKind == 4)
+                else if (_HoDebugTileRenderKind == 3)
                 {
                     color = ResolveSubsurfaceScatteringColor(input.uv);
                 }
-                else if (_HoDebugTileRenderKind == 5)
+                else if (_HoDebugTileRenderKind == 4)
                 {
                     color = ResolvePlanarReflectionColor(input.uv);
                 }
-                else if (_HoDebugTileRenderKind == 6)
+                else if (_HoDebugTileRenderKind == 5)
                 {
                     color = ResolveAdaptiveProbeVolumeColor(input.uv);
                 }
-                else if (_HoDebugTileRenderKind == 7)
+                else if (_HoDebugTileRenderKind == 6)
                 {
                     color = ResolveObjectBufferColor(input.uv);
                 }
-                else if (_HoDebugTileRenderKind == 8)
+                else if (_HoDebugTileRenderKind == 7)
                 {
                     color = ResolveSurfaceBufferColor(input.uv);
                 }
                 else
                 {
-                    color = ResolveMetadataColor(input.uv);
+                    color = half4(0.0h, 0.0h, 0.0h, 1.0h);
                 }
 
                 return ApplyOverlay(color, input.uv);

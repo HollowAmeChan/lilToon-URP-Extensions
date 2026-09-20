@@ -12,7 +12,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         [Tooltip("Fallback shader used by ScreenProcess layers without an override.")]
         public Shader defaultLayerShader;
 
-        [Tooltip("Compatibility fallback subject mask for Drop Shadow. MetadataBuffer is preferred when available.")]
+        [Tooltip("Compatibility fallback subject mask for Drop Shadow. The character coverage (AC/OB) mask is preferred when available.")]
         public LayerMask subjectLayerMask = -1;
 
         [Tooltip("Lowest render queue included in the ScreenProcess subject mask.")]

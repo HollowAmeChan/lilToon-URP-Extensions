@@ -3,15 +3,14 @@ namespace lilToon.URP.Extensions.Debugging
     public enum HoDebugViewRenderKind
     {
         None = 0,
-        MetadataBuffer = 1,
-        GeometryBuffer = 2,
-        ShadowCast = 3,
-        SubsurfaceScattering = 4,
-        PlanarReflection = 5,
-        AdaptiveProbeVolume = 6,
-        ObjectBuffer = 7,
+        GeometryBuffer = 1,
+        ShadowCast = 2,
+        SubsurfaceScattering = 3,
+        PlanarReflection = 4,
+        AdaptiveProbeVolume = 5,
+        ObjectBuffer = 6,
         /// <summary>SB 的表面数值 + 语义 lane（DebugTile 里的平铺视图；与 §4.13 的"每个 lane 都要有视图"对应）。</summary>
-        SurfaceBuffer = 8
+        SurfaceBuffer = 7
     }
 
     public readonly struct HoDebugViewInfo
