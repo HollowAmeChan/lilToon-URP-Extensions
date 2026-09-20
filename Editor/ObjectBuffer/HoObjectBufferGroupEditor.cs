@@ -31,9 +31,11 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         /// <summary>窄于这个宽度就不分列：清单折到上面，详情接在下面（跟着后处理那边的阈值习惯）。</summary>
         private const float MinSplitWidth = 300.0f;
 
-        private static readonly Color ListBackground = EditorGUIUtility.isProSkin
-            ? new Color(0.0f, 0.0f, 0.0f, 0.22f)
-            : new Color(0.0f, 0.0f, 0.0f, 0.06f);
+        // 皮肤相关的东西**不能在静态初始化器里读**（Unity 明确禁止在 ScriptableObject 构造期调
+        // EditorGUIUtility，读了会抛 TypeInitializationException 把整个抽屉打死），所以在
+        // EnsureStyles() 里按需算一次。
+        private static Color listBackground;
+        private static bool themeResolved;
         private static readonly Color RowHighlight = new Color(0.30f, 0.55f, 0.95f, 0.16f);
         private static readonly Color RowHover = new Color(1.0f, 1.0f, 1.0f, 0.06f);
         private static readonly Color RowAccent = new Color(0.35f, 0.65f, 1.0f, 0.85f);
@@ -153,7 +155,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                     listHeight,
                     GUILayout.Width(ListWidth),
                     GUILayout.Height(listHeight));
-                EditorGUI.DrawRect(list, ListBackground);
+                EditorGUI.DrawRect(list, listBackground);
 
                 for (int i = 0; i < count; i++)
                 {
@@ -778,6 +780,14 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
         private static void EnsureStyles()
         {
+            if (!themeResolved)
+            {
+                themeResolved = true;
+                listBackground = EditorGUIUtility.isProSkin
+                    ? new Color(0.0f, 0.0f, 0.0f, 0.22f)
+                    : new Color(0.0f, 0.0f, 0.0f, 0.06f);
+            }
+
             if (rowNameStyle != null)
             {
                 return;
