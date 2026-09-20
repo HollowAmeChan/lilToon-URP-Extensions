@@ -73,6 +73,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             public bool selectionEnabled;
             public bool useMsaa;
             public float selectionLayerCount;
+            public float requestedSamples;
+            public float actualSamples;
         }
 
         private sealed class ResolvePassData
@@ -163,6 +165,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             {
                 cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ActiveId, 1.0f);
                 cmd.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionLayerCountId, selectionEnabled ? settings.RequestedSelectionLayerCount : 0);
+                cmd.SetGlobalFloat(HoObjectBufferShaderConstants.RequestedSamplesId, settings.RequestedSampleCount);
+                cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ActualSamplesId, msaaSamples);
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
 
@@ -229,6 +233,16 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 selectionEnabled);
             bool useMsaa = msaaSamples > 1;
             bool selection = selectionEnabled && HoObjectBufferRegistry.SelectionCount > 0;
+
+            // 0.3.2：协商结果低于请求值时**必须看得见**，不静默降级。只在值变化时打一次。
+            LastActualSamples = msaaSamples;
+            if (msaaSamples != settings.RequestedSampleCount && msaaSamples != warnedSampleCount)
+            {
+                warnedSampleCount = msaaSamples;
+                Debug.LogWarning(
+                    $"[Ho-ObjectBuffer] 自建 MSAA 降级：请求 {settings.RequestedSampleCount}x，平台给到 {msaaSamples}x " +
+                    "（覆盖率精度随之下调：1x 只有 0/1）。相机 AA 设置无关，这是平台/格式能力。");
+            }
 
             TextureHandle id0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoObjectBufferFormatUtility.GetLayerGraphicsFormat(), HoObjectBufferShaderConstants.Id0TextureName));
             TextureHandle id1Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoObjectBufferFormatUtility.GetLayerGraphicsFormat(), HoObjectBufferShaderConstants.Id1TextureName));
@@ -304,6 +318,10 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 passData.selectionEnabled = selection;
                 passData.selectionLayerCount = selection ? settings.RequestedSelectionLayerCount : 0;
                 passData.useMsaa = useMsaa;
+                // 0.3.2：请求值与实际协商值都要发布，降级必须看得见（这里进全局量，
+                // 「Sample Count」调试视图把它们画出来）。
+                passData.requestedSamples = settings.RequestedSampleCount;
+                passData.actualSamples = msaaSamples;
 
                 if (passData.fallbackRendererList.IsValid())
                 {
@@ -376,6 +394,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                     }
 
                     context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionLayerCountId, data.selectionLayerCount);
+                    context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.RequestedSamplesId, data.requestedSamples);
+                    context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ActualSamplesId, data.actualSamples);
                     if (data.drawFallback && data.fallbackRendererList.IsValid())
                     {
                         context.cmd.DrawRendererList(data.fallbackRendererList);
@@ -538,6 +558,11 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         }
 
         private static bool? idFormatIsIntegerCache;
+
+        /// <summary>本帧实际协商到的采样数（0.3.2 的 actual-N；降级可见的诊断/回归读它）。</summary>
+        public static int LastActualSamples { get; private set; }
+
+        private static int warnedSampleCount;
 
         /// <summary>逐样本 ID 目标是不是整数格式。格式支持在运行期不会变，缓存一次。</summary>
         private static bool IsIdFormatInteger()

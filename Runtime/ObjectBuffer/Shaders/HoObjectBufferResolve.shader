@@ -170,8 +170,9 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Resolve"
                 uint candidates[4] = { 0u, 0u, 0u, 0u };
                 float candidateCoverages[4] = { 0.0, 0.0, 0.0, 0.0 };
                 int candidateCount = 0;
-                // 每像素最多 4 个候选；被丢掉的候选目前只在 debug 视图里看得出来（规划 §5.11 的"溢出可见性"）。
-                int dropped = 0;
+                // 每像素最多 4 个候选，最终只发布前两名（P1 的选择层是迁移兼容层）。
+                // 之前这里有一个 `dropped` 计数，算了没人读——真需要"溢出可见"时再按规划 §5.11 发布，
+                // 现在不留死代码。
 
                 [unroll]
                 for (int sampleIndex = 0; sampleIndex < HO_CB_SAMPLES; sampleIndex++)
@@ -213,10 +214,6 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Resolve"
                             candidates[candidateCount] = selectionId;
                             candidateCoverages[candidateCount] = coverage;
                             candidateCount++;
-                        }
-                        else
-                        {
-                            dropped++;
                         }
                     }
                 }

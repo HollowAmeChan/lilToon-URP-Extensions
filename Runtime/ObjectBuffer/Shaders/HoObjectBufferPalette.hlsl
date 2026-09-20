@@ -39,7 +39,8 @@ struct HoObjectSelectionData
     float4 displayColor;
 };                          // 32 B
 
-StructuredBuffer<HoObjectPartData> _HoObjectBufferPalette;
+// 部件行表（规划里叫"条目表"）：名字与注册表上传时用的全局名保持一致。
+StructuredBuffer<HoObjectPartData> _HoObjectBufferEntries;
 StructuredBuffer<HoObjectGroupData> _HoObjectBufferGroups;
 StructuredBuffer<HoObjectSelectionData> _HoObjectBufferSelections;
 float _HoObjectBufferPartCount;
@@ -75,7 +76,7 @@ HoObjectPartData HoObjectBufferLoadPartByRow(uint row)
         row = 0u;   // unknown 行：显示色是洋红，让"未注册"看得见
     }
 
-    return _HoObjectBufferPalette[row];
+    return _HoObjectBufferEntries[row];
 }
 
 HoObjectPartData HoObjectBufferLoadPart(uint partId)

@@ -23,7 +23,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             View("object.coverage-layers", "CovL", HoObjectBufferDebugMode.CoverageLayers),
             View("object.selection", "Sel", HoObjectBufferDebugMode.Selection),
             View("object.palette-row", "Pal", HoObjectBufferDebugMode.PaletteRow),
-            View("object.valid", "Valid", HoObjectBufferDebugMode.Valid)
+            View("object.valid", "Valid", HoObjectBufferDebugMode.Valid),
+            View("object.sample-count", "N", HoObjectBufferDebugMode.SampleCount)
         };
 
         private static HoDebugViewInfo View(string viewId, string shortName, HoObjectBufferDebugMode mode)

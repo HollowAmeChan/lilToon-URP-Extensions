@@ -33,6 +33,8 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/DebugView"
             TEXTURE2D_X(_HoObjectBufferSelectionTexture);
             float _HoObjectBufferDebugMode;
             float _HoObjectBufferValid;
+            float _HoObjectBufferRequestedSamples;
+            float _HoObjectBufferActualSamples;
 
             float4 SampleId0(float2 uv) { return SAMPLE_TEXTURE2D_X(_HoObjectBufferId0Texture, sampler_PointClamp, uv); }
             float4 SampleId1(float2 uv) { return SAMPLE_TEXTURE2D_X(_HoObjectBufferId1Texture, sampler_PointClamp, uv); }
@@ -122,6 +124,16 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/DebugView"
                     uint partId = DecodeLayerId(id0, id1, 0);
                     HoObjectPartData part = HoObjectBufferLoadPart(partId);
                     return float4(saturate(part.thickness), saturate(part.curvature), saturate((float)part.materialClass * 0.25), 1.0);
+                }
+
+                // 10 = Sample Count：0.3.2 要求的"实际协商采样数必须看得见"。
+                // 绿 = 4x（请求值）、橙 = 2x、红 = 1x（覆盖率退化成 0/1）；请求值写在 alpha 里备用。
+                if (mode == 10)
+                {
+                    float actual = _HoObjectBufferActualSamples;
+                    float3 sampleColor = actual >= 3.5 ? float3(0.1, 0.8, 0.2)
+                        : (actual >= 1.5 ? float3(0.95, 0.6, 0.1) : float3(0.85, 0.15, 0.15));
+                    return float4(sampleColor, saturate(_HoObjectBufferRequestedSamples / 4.0));
                 }
 
                 // 9 = Valid：能走到这里就说明"表在、图在、pass 跑了"三件事都成立

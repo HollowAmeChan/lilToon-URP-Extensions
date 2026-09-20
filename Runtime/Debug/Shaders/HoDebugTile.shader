@@ -57,6 +57,7 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             TEXTURE2D_X(_HoObjectBufferId1Texture);
             TEXTURE2D_X(_HoObjectBufferCoverageTexture);
             TEXTURE2D_X(_HoObjectBufferSelectionTexture);
+            float _HoObjectBufferActualSamples;
 
             float _HoShadowCastActive;
             int _HoShadowCastSliceCount;
@@ -306,6 +307,16 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 {
                     HoObjectPartData part = HoObjectBufferLoadPart(HoObjectBufferDecodeLayerId(id0, id1, 0));
                     return half4(saturate(part.thickness), saturate(part.curvature), saturate((float)part.materialClass * 0.25), 1.0h);
+                }
+
+                if (mode == 10)
+                {
+                    // Sample Count：与 feature 自带视图一致（绿 4x / 橙 2x / 红 1x），0.3.2 的降级可见。
+                    float actual = _HoObjectBufferActualSamples;
+                    return half4(
+                        actual >= 3.5 ? half3(0.1h, 0.8h, 0.2h)
+                            : (actual >= 1.5 ? half3(0.95h, 0.6h, 0.1h) : half3(0.85h, 0.15h, 0.15h)),
+                        1.0h);
                 }
 
                 // 9 = Valid：能走到这里就说明"表在、图在、pass 跑了"（没产出时 feature 视图会给暗红）。

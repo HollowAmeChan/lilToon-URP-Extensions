@@ -18,12 +18,15 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         public const string Id1TextureName = "_HoObjectBufferId1Texture";
         public const string CoverageTextureName = "_HoObjectBufferCoverageTexture";
         public const string SelectionTextureName = "_HoObjectBufferSelectionTexture";
-        public const string PartBufferName = "_HoObjectBufferPalette";
+        /// <summary>部件行表（规划 §1.2 的"条目表"）：全局名与文档统一，别再写成 Palette。</summary>
+        public const string PartBufferName = "_HoObjectBufferEntries";
         public const string GroupBufferName = "_HoObjectBufferGroups";
         public const string SelectionBufferName = "_HoObjectBufferSelections";
         public const string PartCountName = "_HoObjectBufferPartCount";
         public const string SelectionCountName = "_HoObjectBufferSelectionCount";
         public const string SelectionLayerCountName = "_HoObjectBufferSelectionLayerCount";
+        public const string RequestedSamplesName = "_HoObjectBufferRequestedSamples";
+        public const string ActualSamplesName = "_HoObjectBufferActualSamples";
         public const string DebugModeName = "_HoObjectBufferDebugMode";
 
         public const string ResolveIdTextureMsName = "_HoObjectBufferResolveIdTextureMS";
@@ -45,6 +48,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         public static readonly int PartCountId = Shader.PropertyToID(PartCountName);
         public static readonly int SelectionCountId = Shader.PropertyToID(SelectionCountName);
         public static readonly int SelectionLayerCountId = Shader.PropertyToID(SelectionLayerCountName);
+        public static readonly int RequestedSamplesId = Shader.PropertyToID(RequestedSamplesName);
+        public static readonly int ActualSamplesId = Shader.PropertyToID(ActualSamplesName);
         public static readonly int DebugModeId = Shader.PropertyToID(DebugModeName);
         public static readonly int ResolveIdTextureMsId = Shader.PropertyToID(ResolveIdTextureMsName);
         public static readonly int ResolveSelectionTextureMsId = Shader.PropertyToID(ResolveSelectionTextureMsName);

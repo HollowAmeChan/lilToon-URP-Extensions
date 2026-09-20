@@ -145,6 +145,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         [InspectorName("Palette Row (Layer 0)")]
         PaletteRow,
         [InspectorName("Valid")]
-        Valid
+        Valid,
+        [InspectorName("Sample Count")]
+        SampleCount
     }
 }

@@ -43,6 +43,10 @@
 
 现有 `GetSupportedSampleCount` 会把 4x 降到 2x/1x。只能承诺：“请求 N=4，K=4 不丢当帧实际 N≤4 的**每 sample 唯一前表面 ID**”。1x 时 coverage 只有 0/1；必须发布 `requestedSampleCount` 与 `actualSampleCount`，降级可见。
 
+**R1 落地**：已发布全局 `_HoObjectBufferRequestedSamples` / `_HoObjectBufferActualSamples`，并加了「Sample Count」调试视图（绿 4x / 橙 2x / 红 1x）+ 降级时告警一次；C# 侧读 `HoObjectBufferPass.LastActualSamples`。
+
+**溢出结构性不可能**：N ≤ 4 时一像素最多 4 个不同 sample ID，正好等于 K，不存在尾部丢失——所以身份池**不需要**溢出信号（选择层同理，只是它只发布前两名）。这条是结论，不是留白。
+
 #### 0.3.3 coverage 不是半透明颜色贡献
 
 coverage 的准确定义是：通过该材质 `HoObjectBuffer` pass 的 clip/cull/depth 规则后，属于某 ID 的 MSAA sample 占比。它不是 alpha blend 透射贡献，也不是 Weighted OIT accumulation/revealage。普通透明要冻结为“默认不参与”或“显式 opt-in 前表面近似”之一，不得宣称为完整画面贡献。
@@ -133,19 +137,19 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但 `D:\Unity_Fo
 | 两级表（组 256 / 部件 ≤4096 / 选择 8bit）；越界回落 unknown 不钳制 | ✅ | `Build()` + `HoObjectBufferPalette.hlsl` |
 | 组 ID 唯一 | ✅ | 0.3.10 自动分配，重复不可能 |
 | 自建 MSAA 与相机 AA 解耦（请求 4x，平台可降级） | ✅ | `settings.RequestedSampleCount` → `GetSupportedSampleCount`，不看相机设置 |
-| **发布 requested / actual 采样数（降级可见）** | ❌ **缺口** | 只有 `RequestedSampleCount`；没有 actual，也没有全局量或调试视图（0.3.2 明确要求） |
-| 失败可见（未声明 ID / 非法槽 / 表满 / 溢出） | ⚠ 部分 | 未声明 ID → unknown 行洋红 ✅；槽位满 / 表满 / 组满 → 警告 ✅；**身份池溢出结构性不可能**（N ≤ 4 ⇒ 一像素最多 4 个不同 ID），应写成结论而不是留空；选择层 resolve 里的 `dropped` 算了但没人读 |
+| **发布 requested / actual 采样数（降级可见）** | ✅ 已清 | 全局量 `_HoObjectBufferRequestedSamples` / `_HoObjectBufferActualSamples` + 「Sample Count」调试视图（绿 4x / 橙 2x / 红 1x）+ 降级告警一次；`HoObjectBufferPass.LastActualSamples` 供诊断读 |
+| 失败可见（未声明 ID / 非法槽 / 表满 / 溢出） | ✅ | 未声明 ID → unknown 行洋红；槽位满 / 表满 / 组满 → 警告；**身份池溢出结构性不可能**（见 0.3.2）；选择层那个没人读的 `dropped` 已删 |
+| 最小闭环回归（`HoLil/Validation/Validate Ho-ObjectBuffer R1`） | ⚠ 待跑（一键） | 4 条断言已就绪，需要有人在 Unity 里点一次 |
+| 表名与计划一致 | ✅ 已清 | 部件行表的全局名改为 `_HoObjectBufferEntries`（HLSL + 常量同步），与 §1.2 一致 |
 | lilToon 跨仓 pass（22 lilblock + 布局关键字 + instancing） | ✅ | 重生成后的 `ltspass_opaque.shader` 已带 `_HO_OBJECT_BUFFER_MSAA` / `_HO_OBJECT_BUFFER_SELECTION`（1079/1080 行） |
 | RSUV 写入 / 收回 / 手动落盘刷新 | ✅ | `ApplyIdentity` / `ClearIdentity` / `lastWrittenRenderers` / 「刷新全场景 RSUV」 |
-| 调试视图 + DebugTile 一致性 + 契约登记 | ✅ | 9 个视图、kind 7 门控、两边同色；`object.facing` 随 0.3.1 撤掉（没有逐像素朝向可看） |
-| 最小闭环回归（`HoLil/Validation/Validate Ho-ObjectBuffer R1`） | ⚠ **待跑** | 已扩到 4 条断言，但还没在 Unity 里执行过 |
-| 表名与计划一致（计划写 `_HoObjectBufferEntries`） | ⚠ 小 | 实际全局名是 `_HoObjectBufferPalette`，改常量或改文档 |
+| 调试视图 + DebugTile 一致性 + 契约登记 | ✅ | 10 个视图（含 Sample Count）、kind 7 门控、两边同色；`object.facing` 随 0.3.1 撤掉（没有逐像素朝向可看） |
 | RSUV 类型覆盖 | ⚠ P1 留白 | 只支持 MeshRenderer / SkinnedMeshRenderer，其余告警；Sprite/SpriteShape/Tilemap 的 API 见 `TODO(P1)` |
 | Selection P1：2 层/像素（4 层配置告警后按 2 跑） | ✅ 已声明 | 选择层是迁移兼容层，正式语义归 SB + AC |
 | `HoSemanticSchema` / entry `objectSemanticLaneMask` | ➡ 不属 R1 | §6 的 R1 行把 SB/AC 的东西也写进去了；按实际划分属 R3/R4 |
-| 文档 / CHANGELOG / README 同步 | ✅ | 0.3.1 / 0.3.9 / 0.3.10 + README 第 4 步（刷新 RSUV） |
+| 文档 / CHANGELOG / README 同步 | ✅ | 0.3.1 / 0.3.9 / 0.3.10 / 0.3.12 / 0.3.13 + README 第 4 步（刷新 RSUV） |
 
-**R2 开工前建议先做**：① actual-N 诊断（唯一的功能缺口）；② 表名对齐；③ 跑一次回归验证器；④ 把"溢出不可能"写进 0.3.2 的措辞、把选择层那个没人读的 `dropped` 要么发布要么删。
+**R1 收口结果**：①②④ 已清（actual-N 诊断 + 表名对齐 + 溢出结论与死代码）；③ 回归验证器是**一键动作**，需要有人在 Unity 里点一次（`HoLil/Validation/Validate Ho-ObjectBuffer R1`）。
 
 **R2 的实际工作量**（比原来记的多一项）：① 眼透角度表的数据源从 `HoMetadataBufferGroup` 切到 `HoObjectBufferGroup`；② **屏幕空间里那个 `charId` 的来源**也要换——今天它来自眼睛捕获缓冲（`eyeData.b / eyeData.r`），切到 OB 后应当来自 OB 身份/组 ID；③ 朝向进 GPU 表（组行默认 + 部件行覆盖，每帧 O(组数) 更新）只在出现屏幕空间消费端时才需要，眼透修正是 CPU 侧、不阻塞。
 
