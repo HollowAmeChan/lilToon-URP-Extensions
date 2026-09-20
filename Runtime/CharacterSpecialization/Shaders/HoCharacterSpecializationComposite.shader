@@ -204,6 +204,15 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 return saturate(sum);
             }
 
+            /// <summary>本像素所属角色的**组字节**（0..255）：OB 身份池层 0 的组字节（R2 起统一用 OB 口径）。</summary>
+            float ResolveObjectBufferGroupId(float2 uv)
+            {
+                // Id0 的 R 通道 = 层 0 获胜身份的**组**字节（Id0 = (组0, 槽0, 组1, 槽1)）。
+                // 无效时 Frag 开头已经整支返回，这里不再重复判。
+                float4 id0 = SAMPLE_TEXTURE2D_X(_HoObjectBufferId0Texture, sampler_PointClamp, uv);
+                return round(saturate(id0.r) * 255.0);
+            }
+
             float ResolveEyeRevealMask(float2 uv)
             {
                 if (_HoCharacterOptions.x <= 0.5)
@@ -226,15 +235,6 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 float hairInFront = step(0.0001, eyeDepth) * step(hairDepth, eyeDepth + depthBias);
                 float same = SameCharacter(ResolveObjectBufferGroupId(uv), eyeCharacterId);
                 return saturate(frontHair * eyeAlpha * revealArea * hairInFront * same * _HoCharacterEyeRevealParams.x);
-            }
-
-            /// <summary>本像素所属角色的**组字节**（0..255）：OB 身份池层 0 的组字节（R2 起统一用 OB 口径）。</summary>
-            float ResolveObjectBufferGroupId(float2 uv)
-            {
-                // Id0 的 R 通道 = 层 0 获胜身份的**组**字节（Id0 = (组0, 槽0, 组1, 槽1)）。
-                // 无效时 Frag 开头已经整支返回，这里不再重复判。
-                float4 id0 = SAMPLE_TEXTURE2D_X(_HoObjectBufferId0Texture, sampler_PointClamp, uv);
-                return round(saturate(id0.r) * 255.0);
             }
 
             float ResolveEyeAngleFactor(float2 uv)
