@@ -272,10 +272,13 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 });
             }
 
+            int written = 0;
+            int skippedOtherGroup = 0;
             foreach (KeyValuePair<Renderer, int> pair in localSlotByRenderer)
             {
                 if (Assignments.TryGetValue(pair.Key, out Assignment assignment) && assignment.group != this)
                 {
+                    skippedOtherGroup++;
                     continue;
                 }
 
@@ -283,8 +286,20 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 if (!TrySetRendererUserValue(pair.Key, partId))
                 {
                     WarnUnsupportedRenderer(pair.Key);
+                    continue;
                 }
+
+                // 诊断：把"写给了谁、写了什么 ID"打出来。画面是洋红（unknown 行）时，用它区分
+                // "CPU 写错了对象/写了表外的值" 与 "写对了但 shader 读到无效 RSUV"。
+                if (written < 5)
+                {
+                    Debug.Log($"[Ho-ObjectBuffer] RSUV 写入：组 {groupId} 槽 {pair.Value} => 0x{partId:X4} @ {pair.Key.name} ({pair.Key.GetType().Name})");
+                }
+
+                written++;
             }
+
+            Debug.Log($"[Ho-ObjectBuffer] RSUV 汇总（组 {groupId} / {name}）：收集 renderer={localSlotByRenderer.Count} 写入={written} 被别组接管={skippedOtherGroup}");
         }
 
         internal void ClearIdentity()
