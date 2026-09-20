@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- 修复：**SB 的材质 pass 之前根本编译不过** —— `lil_pass_surface_buffer.hlsl` 里指向 `HoSurfaceBufferCommon.hlsl` 的 `#include` 在上一轮改注释时被误删，于是 22 个 lilblock 的 `HO_SURFACE_BUFFER` pass 全部报 `undeclared identifier 'HoSurfaceOwnerEncode'`：pass 不存在 ⇒ SB 画不到像素 ⇒ owner 恒 0（调试里 Owner 全红、五张数值图全是"没人写"色）。已补回 include。
+- 新增 `.codex-research/check_shaders.ps1`：**shader 侧的静态闸门**。只查本仓命名空间（`Ho*` / `lilHo*` / `LilHo*`）的调用可达性、先用后定义与 include 解析 —— C# 的 Roslyn 检查器看不到 HLSL，而这类错误的症状恰好是"整屏什么都不输出"，与原因离得很远（本次就是它漏掉的第二例）。已做负向测试（抽掉 include 立刻报出那两个调用）。
 - **Ho-SurfaceBuffer（SB）数值面落地**（规划 R3-sb，三轴里最后一条缺失的轴）：回答"表面是什么样"，几何在 GB、身份在 OB、合成在 AC。
   - **新轴 `Runtime/SurfaceBuffer/`**：feature（高级设置 + 兜底默认值）+ **数值 pass**（一趟几何 pass 写五张图 + internal owner：`Color` RGBA16F / `Normal` octa RGBA8 / `Material`(perceptualRoughness·metallic·thickness) / `Reflection`(reflectance·plrStrength) / `Classification`(sssProfileId·curvatureHint·transmittanceHint·materialClassId) / `Owner` R16_UNorm）+ **自用深度** + RDG 与兼容两条路径 + 资源集 `HoSurfaceBufferRenderGraphResources` + Volume 调试直出（五张 + **owner 对齐视图**：绿 = 与 OB 层 0 一致、红 = 不一致或没人写、洋红 = OB 没产出）。
   - **owner = pixel validity 的唯一判据**：数值图里的 0 是合法值，只有 owner 能区分"写了 0"和"没人写"（规划 §0.1 / §4.8）；owner 就是 RSUV 的低 16 bit（= OB 写的 `partId`），所以 AC 之后能用它跟 OB 层 0 的 IdentityId 逐像素对齐。规划里写的 `R16_UINT` 改成 `R16_UNorm`：0..65535 逐值精确，而且消费端不必换成整数纹理通道。
