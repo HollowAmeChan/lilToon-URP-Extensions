@@ -120,6 +120,35 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但 `D:\Unity_Fo
 - 组行的 `tags` 字段**保留恒 0**：没有任何消费端读它，"整组"语义用组 ID 判定即可；组件上的「组级标签」输入撤掉。
 - 于是"组设置"只剩**对整个物件成立的常量**：自动分配的组 ID（只读）+ 面部朝向参考系。
 
+#### 0.3.11 R1 验收状态（2026-09 实测审查）
+
+生产链、调试链、跨仓契约、文档四条都闭合；下表是逐项核对结果，**❌/⚠ 就是 R2 开工前要处理的**。
+
+| R1 要求 | 状态 | 证据 / 说明 |
+| --- | --- | --- |
+| CharacterBuffer → ObjectBuffer 迁移、`character.*` → `object.*` | ✅ | `Runtime/ObjectBuffer/`；9 个 `object.*` 视图；旧类型名靠 `[MovedFrom]` 兼容 |
+| 逐 sample 身份 + 数票 resolve 出 4 层 | ✅ | ID pass + `HoObjectBufferResolve.shader`（票数降序、平票用 `LinearEyeDepth`，reversed-Z 正确） |
+| 覆盖率线性、不归一化；1x 退化 0/1 | ✅ | `counts * rcp(samples)`；非 MSAA 分支写 0/1 |
+| Facing | ✅ | 按 0.3.1 改口径：`TryGetWorldFacing`（组级 + 部件级覆盖），不建逐像素图 |
+| 两级表（组 256 / 部件 ≤4096 / 选择 8bit）；越界回落 unknown 不钳制 | ✅ | `Build()` + `HoObjectBufferPalette.hlsl` |
+| 组 ID 唯一 | ✅ | 0.3.10 自动分配，重复不可能 |
+| 自建 MSAA 与相机 AA 解耦（请求 4x，平台可降级） | ✅ | `settings.RequestedSampleCount` → `GetSupportedSampleCount`，不看相机设置 |
+| **发布 requested / actual 采样数（降级可见）** | ❌ **缺口** | 只有 `RequestedSampleCount`；没有 actual，也没有全局量或调试视图（0.3.2 明确要求） |
+| 失败可见（未声明 ID / 非法槽 / 表满 / 溢出） | ⚠ 部分 | 未声明 ID → unknown 行洋红 ✅；槽位满 / 表满 / 组满 → 警告 ✅；**身份池溢出结构性不可能**（N ≤ 4 ⇒ 一像素最多 4 个不同 ID），应写成结论而不是留空；选择层 resolve 里的 `dropped` 算了但没人读 |
+| lilToon 跨仓 pass（22 lilblock + 布局关键字 + instancing） | ✅ | 重生成后的 `ltspass_opaque.shader` 已带 `_HO_OBJECT_BUFFER_MSAA` / `_HO_OBJECT_BUFFER_SELECTION`（1079/1080 行） |
+| RSUV 写入 / 收回 / 手动落盘刷新 | ✅ | `ApplyIdentity` / `ClearIdentity` / `lastWrittenRenderers` / 「刷新全场景 RSUV」 |
+| 调试视图 + DebugTile 一致性 + 契约登记 | ✅ | 9 个视图、kind 7 门控、两边同色；`object.facing` 随 0.3.1 撤掉（没有逐像素朝向可看） |
+| 最小闭环回归（`HoLil/Validation/Validate Ho-ObjectBuffer R1`） | ⚠ **待跑** | 已扩到 4 条断言，但还没在 Unity 里执行过 |
+| 表名与计划一致（计划写 `_HoObjectBufferEntries`） | ⚠ 小 | 实际全局名是 `_HoObjectBufferPalette`，改常量或改文档 |
+| RSUV 类型覆盖 | ⚠ P1 留白 | 只支持 MeshRenderer / SkinnedMeshRenderer，其余告警；Sprite/SpriteShape/Tilemap 的 API 见 `TODO(P1)` |
+| Selection P1：2 层/像素（4 层配置告警后按 2 跑） | ✅ 已声明 | 选择层是迁移兼容层，正式语义归 SB + AC |
+| `HoSemanticSchema` / entry `objectSemanticLaneMask` | ➡ 不属 R1 | §6 的 R1 行把 SB/AC 的东西也写进去了；按实际划分属 R3/R4 |
+| 文档 / CHANGELOG / README 同步 | ✅ | 0.3.1 / 0.3.9 / 0.3.10 + README 第 4 步（刷新 RSUV） |
+
+**R2 开工前建议先做**：① actual-N 诊断（唯一的功能缺口）；② 表名对齐；③ 跑一次回归验证器；④ 把"溢出不可能"写进 0.3.2 的措辞、把选择层那个没人读的 `dropped` 要么发布要么删。
+
+**R2 的实际工作量**（比原来记的多一项）：① 眼透角度表的数据源从 `HoMetadataBufferGroup` 切到 `HoObjectBufferGroup`；② **屏幕空间里那个 `charId` 的来源**也要换——今天它来自眼睛捕获缓冲（`eyeData.b / eyeData.r`），切到 OB 后应当来自 OB 身份/组 ID；③ 朝向进 GPU 表（组行默认 + 部件行覆盖，每帧 O(组数) 更新）只在出现屏幕空间消费端时才需要，眼透修正是 CPU 侧、不阻塞。
+
 ### 0.4 与当前 HoUrp 17.3 流水线的契约
 
 - HoUrp fork 的 pass 排序键是 `(renderPassEvent, renderPassEnqueueOrder)`；同事件下 Renderer Feature 列表顺序就是记录顺序。
