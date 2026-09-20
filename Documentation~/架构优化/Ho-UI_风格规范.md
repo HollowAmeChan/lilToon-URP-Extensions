@@ -123,4 +123,20 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 - ❌ 把声明数据塞进 Volume（它是 per-camera 覆盖）。
 - ❌ UI 上出现 `Cryptomatte`、`_HoMetadataBuffer*`、`Target5`、`custom0` 这类旧名。
 - ❌ 只在颜色上表达状态（缺可用性文字）。
+- ❌ 在材质面板里再开一节装"和 SB/AC 无关的调参"（Ho 的材质侧参数只有一节，见 §8）。
+
+## 8. 材质面板里的 Ho 参数（lilToon Inspector）
+
+- Ho 的**材质侧参数**统一归 `PropertyBlock.HoSurface`，在 lilToon 面板里显示成一节「Ho 表面语义」，
+  顺序固定：说明 → 表面数值（厚度 / 曲率 / 透射提示 / 材质类 ID）→ 分隔线 → 语义权重 + 语义遮罩 →
+  分隔线 → 角色捕获不透明度。
+- **标签归物体侧**：脸 / 前发 / 眼睛… 由 `HoObjectBufferGroup` 的「标签」决定，材质只说"权重多少"。
+  这一节顶部必须写明这件事 —— 作者第一反应会去材质里找标签。
+- 材质**只能覆盖它自己 renderer 已经有的那几位**（SB 的材质 pass 按 palette 表门控），UI 上也要这么说，
+  否则"为什么这个材质的语义没生效"会变成反复排查。
+- 显示名直接写中文进 `.lilblock` 的 Properties（不走 `GetLoc`）：这些参数只有我们在用，走本地化
+  要改十几个语言文件。**属性名（`_HoSurface*` / `_HoSemantic*`）不变**，仍是跨仓契约名。
+- `PropertyBlock` 枚举**只能往后加**：它进编辑器设置，插在中间会让已有设置错位。
+- **两个 UI 都要接**（`useNextInspector` 默认 true ⇒ Next UI 是主路径）：`lilNextInspectorGUI.cs` 的
+  `DrawNextSection(...)` 与 `lilMainInspectorGUI.cs` 的经典折叠块，两边参数与顺序保持一致。
 - ❌ 静默失败：解析不到的名字、层数不一致、溢出 —— 必须在「调试」或「运行状态」里看得见。

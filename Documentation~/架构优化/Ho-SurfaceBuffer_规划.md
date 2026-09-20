@@ -126,6 +126,7 @@ _UsePlanarReflection             → 只在总开关打开时生效
 | `Classification.b` = `transmittanceHint` | `_HoSurfaceTransmittanceHint`；是否由 `_HoSSSTransmissionStrength/Radius` 派生作为 bridge 需单独记录 | **新增** |
 | `Classification.g` = `curvatureHint` | `_HoSurfaceCurvature` | **新增** |
 | `Classification.a` = `materialClassIdByte` | `_HoSurfaceMaterialClassId` | **新增** |
+| 语义 lane 的值（权重） | `_HoSemanticWeight`（标量 0..1，默认 1）× `_HoSemanticWeightTex`（遮罩，R 通道；不填 = 白） | **新增**（规划 §2.3 的"材质可写语义"落点；**不新增语义名字**，lane 用物体位那 8 条） |
 | `Color.rgb` | `fd.col`——lilToon 主色链（主色 × `_MainTex`，两/三层叠加已在其中），**不是单独采样 `_MainTex`** | 已有 |
 
 ### 2.3 命名规则（冻结）
