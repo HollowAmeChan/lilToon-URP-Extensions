@@ -164,8 +164,7 @@ namespace lilToon.URP.Extensions.Debugging
                 bool hasMetadata = metadataResources.maskIdTexture.IsValid()
                     && metadataResources.custom0Texture.IsValid()
                     && metadataResources.objectCustom0Texture.IsValid()
-                    && metadataResources.objectCustom1Texture.IsValid()
-                    && metadataResources.mBufferDepthTexture.IsValid();
+                    && metadataResources.objectCustom1Texture.IsValid();
                 bool hasGeometry = geometryResources.normalDepthTexture.IsValid();
                 bool hasObjectBuffer = objectResources.HasRequiredTextures;
                 // SB 的平铺视图：五张数值图 + owner 就够；语义 lane 的视图在语义趟没跑时会各自画暗红。
@@ -247,7 +246,6 @@ namespace lilToon.URP.Extensions.Debugging
                     passData.custom0Texture = metadataResources.custom0Texture;
                     passData.objectCustom0Texture = metadataResources.objectCustom0Texture;
                     passData.objectCustom1Texture = metadataResources.objectCustom1Texture;
-                    passData.mBufferDepthTexture = metadataResources.mBufferDepthTexture;
                     passData.objectId0Texture = objectResources.id0Texture;
                     passData.objectId1Texture = objectResources.id1Texture;
                     passData.objectCoverageTexture = objectResources.coverageTexture;
@@ -269,7 +267,6 @@ namespace lilToon.URP.Extensions.Debugging
                         builder.UseTexture(passData.custom0Texture, AccessFlags.Read);
                         builder.UseTexture(passData.objectCustom0Texture, AccessFlags.Read);
                         builder.UseTexture(passData.objectCustom1Texture, AccessFlags.Read);
-                        builder.UseTexture(passData.mBufferDepthTexture, AccessFlags.Read);
                     }
 
                     if (passData.bindSurfaceBuffer)
@@ -374,7 +371,6 @@ namespace lilToon.URP.Extensions.Debugging
                             context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.custom0Texture);
                             context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.objectCustom0Texture);
                             context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.objectCustom1Texture);
-                            context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MBufferDepthTextureId, data.mBufferDepthTexture);
                         }
 
                         else
@@ -749,7 +745,6 @@ namespace lilToon.URP.Extensions.Debugging
                 public TextureHandle custom0Texture;
                 public TextureHandle objectCustom0Texture;
                 public TextureHandle objectCustom1Texture;
-                public TextureHandle mBufferDepthTexture;
                 public TextureHandle objectId0Texture;
                 public TextureHandle objectId1Texture;
                 public TextureHandle objectCoverageTexture;

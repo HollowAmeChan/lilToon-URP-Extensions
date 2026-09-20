@@ -52,10 +52,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         RsuvPartId,
         [InspectorName("RSUV Flags")]
         RsuvFlags,
-        [InspectorName("Base Color")]
-        SurfaceColor,
-        [InspectorName("MBuffer Depth")]
-        MBufferDepth,
         [InspectorName("Reflection Material")]
         ReflectionMaterial
     }

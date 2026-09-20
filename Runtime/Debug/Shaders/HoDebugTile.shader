@@ -46,7 +46,6 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture);
             TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
             TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture);
-            TEXTURE2D_X_FLOAT(_HoMetadataBufferMBufferDepthTexture);
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
             TEXTURE2D_X(_HoGeometryBufferOutlineNormalDepthTexture);
             TEXTURE2D_FLOAT(_HoShadowCastAtlas);
@@ -185,13 +184,6 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             {
                 half coverage = saturate(surfaceColor.a);
                 return half4(surfaceColor.rgb, coverage);
-            }
-
-            half4 DebugMBufferDepth(float rawDepth)
-            {
-                half valid = step(0.0001h, abs(rawDepth - 1.0h));
-                half depth = saturate((LinearEyeDepth(rawDepth, _ZBufferParams) - _HoDebugTileGeometryDepthParams.x) * _HoDebugTileGeometryDepthParams.z);
-                return half4(half3(depth, depth, depth) * valid, 1.0h);
             }
 
             half GetObjectCustomValue(int customIndex, float2 uv)
@@ -362,11 +354,6 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 {
                     // 老 MB 的 surfaceColor 视图已退役（表面色现在归 SB，见 RenderKind = SurfaceBuffer）。
                     return DebugScalar(maskId.r);
-                }
-                if (mode == 25)
-                {
-                    float rawDepth = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMBufferDepthTexture, sampler_PointClamp, uv).r;
-                    return DebugMBufferDepth(rawDepth);
                 }
 
                 return DebugScalar(maskId.r);

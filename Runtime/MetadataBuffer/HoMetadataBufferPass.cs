@@ -1,7 +1,6 @@
 ﻿using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
-using Unity.Collections;
 using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
@@ -26,14 +25,8 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             HoMetadataBufferShaderConstants.ShaderTagId
         };
 
-        private static readonly List<ShaderTagId> SurfaceColorShaderTagIds = new List<ShaderTagId>
-        {
-            HoMetadataBufferShaderConstants.SurfaceColorShaderTagId
-        };
-
         private const int FallbackMaterialPassIndex = 0;
         private const int FallbackMaxRenderQueue = (int)RenderQueue.AlphaTest - 1;
-        private const int SurfaceColorOpaqueMaxRenderQueue = (int)RenderQueue.GeometryLast;
 
         private readonly RTHandle[] colorTargets = new RTHandle[HoMetadataBufferAttachmentLayout.ColorTargetCount];
         private HoMetadataBufferSettings settings;
@@ -42,28 +35,19 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         private Material fallbackMaterial;
         private FilteringSettings metadataFilteringSettings;
         private FilteringSettings fallbackFilteringSettings;
-        private FilteringSettings surfaceColorOpaqueFilteringSettings;
-        private FilteringSettings surfaceColorTransparentFilteringSettings;
         private bool fallbackFilteringEnabled;
-        private bool surfaceColorOpaqueFilteringEnabled;
-        private bool surfaceColorTransparentFilteringEnabled;
         private RenderStateBlock renderStateBlock;
-        private RenderStateBlock mBufferDepthWriteStateBlock;
 
         private sealed class PassData
         {
             public RendererListHandle fallbackRendererList;
             public RendererListHandle metadataRendererList;
-            public RendererListHandle surfaceColorOpaqueRendererList;
-            public RendererListHandle surfaceColorTransparentRendererList;
             public bool drawFallback;
             public TextureHandle maskIdTexture;
             public TextureHandle surfaceDataTexture;
             public TextureHandle custom0Texture;
             public TextureHandle objectCustom0Texture;
             public TextureHandle objectCustom1Texture;
-            public TextureHandle surfaceColorTexture;
-            public TextureHandle mBufferDepthTexture;
             public float systemChannelMask;
         }
 
@@ -79,10 +63,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         public HoMetadataBufferPass()
         {
             renderStateBlock = new RenderStateBlock(RenderStateMask.Nothing);
-            mBufferDepthWriteStateBlock = new RenderStateBlock(RenderStateMask.Depth)
-            {
-                depthState = new DepthState(true, CompareFunction.LessEqual)
-            };
         }
 
         public void Setup(
@@ -163,42 +143,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
 
                 DrawingSettings metadataDrawingSettings = CreateDrawingSettings(MetadataShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
                 context.DrawRenderers(renderingData.cullResults, ref metadataDrawingSettings, ref metadataFilteringSettings, ref renderStateBlock);
-
-                cmd.SetRenderTarget(
-                    renderTargets.SurfaceColorTexture,
-                    RenderBufferLoadAction.DontCare,
-                    RenderBufferStoreAction.Store,
-                    renderTargets.MBufferDepthTexture,
-                    RenderBufferLoadAction.DontCare,
-                    RenderBufferStoreAction.Store);
-                cmd.ClearRenderTarget(RTClearFlags.ColorDepth, Color.clear, 1.0f, 0);
-                context.ExecuteCommandBuffer(cmd);
-                cmd.Clear();
-
-                if (surfaceColorOpaqueFilteringEnabled)
-                {
-                    DrawingSettings surfaceColorOpaqueDrawingSettings = CreateDrawingSettings(SurfaceColorShaderTagIds, ref renderingData, SortingCriteria.CommonOpaque);
-                    context.DrawRenderers(renderingData.cullResults, ref surfaceColorOpaqueDrawingSettings, ref surfaceColorOpaqueFilteringSettings, ref mBufferDepthWriteStateBlock);
-                }
-
-                if (surfaceColorTransparentFilteringEnabled)
-                {
-                    cmd.SetRenderTarget(
-                        renderTargets.SurfaceColorTexture,
-                        RenderBufferLoadAction.Load,
-                        RenderBufferStoreAction.Store,
-                        renderTargets.MBufferDepthTexture,
-                        RenderBufferLoadAction.Load,
-                        RenderBufferStoreAction.Store);
-                    context.ExecuteCommandBuffer(cmd);
-                    cmd.Clear();
-
-                    DrawingSettings surfaceColorTransparentDrawingSettings = CreateDrawingSettings(SurfaceColorShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
-                    context.DrawRenderers(renderingData.cullResults, ref surfaceColorTransparentDrawingSettings, ref surfaceColorTransparentFilteringSettings, ref renderStateBlock);
-                }
-
-                cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, renderTargets.SurfaceColorTexture.nameID);
-                cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MBufferDepthTextureId, renderTargets.MBufferDepthTexture.nameID);
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -225,18 +169,10 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             TextureHandle objectCustom0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoMetadataBufferShaderConstants.ObjectCustom0TextureName));
             TextureHandle objectCustom1Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoMetadataBufferShaderConstants.ObjectCustom1TextureName));
             TextureHandle reflectionMaterialTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoMetadataBufferShaderConstants.ReflectionMaterialTextureName));
-            TextureHandle surfaceColorTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor, settings, HoMetadataBufferFormatUtility.GetHighPrecisionGraphicsFormat(), HoMetadataBufferShaderConstants.SurfaceColorTextureName));
             TextureHandle depthTexture = UniversalRenderer.CreateRenderGraphTexture(
                 renderGraph,
                 HoMetadataBufferRenderTargets.CreateDepthDescriptor(cameraData.cameraTargetDescriptor, settings),
                 HoMetadataBufferShaderConstants.DepthTextureName,
-                true,
-                FilterMode.Point,
-                TextureWrapMode.Clamp);
-            TextureHandle mBufferDepthTexture = UniversalRenderer.CreateRenderGraphTexture(
-                renderGraph,
-                HoMetadataBufferRenderTargets.CreateDepthDescriptor(cameraData.cameraTargetDescriptor, settings),
-                HoMetadataBufferShaderConstants.MBufferDepthTextureName,
                 true,
                 FilterMode.Point,
                 TextureWrapMode.Clamp);
@@ -248,8 +184,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             metadataResources.objectCustom0Texture = objectCustom0Texture;
             metadataResources.objectCustom1Texture = objectCustom1Texture;
             metadataResources.reflectionMaterialTexture = reflectionMaterialTexture;
-            metadataResources.surfaceColorTexture = surfaceColorTexture;
-            metadataResources.mBufferDepthTexture = mBufferDepthTexture;
 
             bool drawFallback = settings.useFallbackMaterial && fallbackMaterial != null && fallbackFilteringEnabled;
             DrawingSettings fallbackDrawingSettings = RenderingUtils.CreateDrawingSettings(
@@ -276,23 +210,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 renderingData.cullResults,
                 metadataDrawingSettings,
                 metadataFilteringSettings);
-            DrawingSettings surfaceColorOpaqueDrawingSettings = RenderingUtils.CreateDrawingSettings(
-                SurfaceColorShaderTagIds,
-                renderingData,
-                cameraData,
-                lightData,
-                SortingCriteria.CommonOpaque);
-            DrawingSettings surfaceColorTransparentDrawingSettings = RenderingUtils.CreateDrawingSettings(
-                SurfaceColorShaderTagIds,
-                renderingData,
-                cameraData,
-                lightData,
-                SortingCriteria.CommonTransparent);
-            RendererListParams surfaceColorTransparentRendererListParams = new RendererListParams(
-                renderingData.cullResults,
-                surfaceColorTransparentDrawingSettings,
-                surfaceColorTransparentFilteringSettings);
-
             AddClearPass(
                 renderGraph,
                 maskIdTexture,
@@ -303,8 +220,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 reflectionMaterialTexture,
                 depthTexture,
                 clearMaterial);
-
-            AddSurfaceColorClearPass(renderGraph, surfaceColorTexture, mBufferDepthTexture);
 
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-MetadataBuffer Output", out PassData passData, ProfilingSampler))
             {
@@ -359,76 +274,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                     }
                 });
             }
-
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-MetadataBuffer SurfaceColor Opaque", out PassData passData, ProfilingSampler))
-            {
-                passData.surfaceColorOpaqueRendererList = surfaceColorOpaqueFilteringEnabled
-                    ? CreateRendererListWithRenderStateBlock(
-                        renderGraph,
-                        renderingData.cullResults,
-                        surfaceColorOpaqueDrawingSettings,
-                        surfaceColorOpaqueFilteringSettings,
-                        mBufferDepthWriteStateBlock)
-                    : default;
-                passData.surfaceColorTexture = surfaceColorTexture;
-                passData.mBufferDepthTexture = mBufferDepthTexture;
-                passData.systemChannelMask = GetSystemChannelMask(settings);
-
-                if (passData.surfaceColorOpaqueRendererList.IsValid())
-                {
-                    builder.UseRendererList(passData.surfaceColorOpaqueRendererList);
-                }
-
-                builder.SetRenderAttachment(surfaceColorTexture, 0, AccessFlags.ReadWrite);
-                builder.SetRenderAttachmentDepth(mBufferDepthTexture, AccessFlags.ReadWrite);
-                builder.SetGlobalTextureAfterPass(surfaceColorTexture, HoMetadataBufferShaderConstants.SurfaceColorTextureId);
-                builder.SetGlobalTextureAfterPass(mBufferDepthTexture, HoMetadataBufferShaderConstants.MBufferDepthTextureId);
-                builder.AllowGlobalStateModification(true);
-                builder.AllowPassCulling(false);
-                builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
-                {
-                    context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
-                    context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.SystemChannelMaskId, data.systemChannelMask);
-                    SetDefaultSubjectProperties(context.cmd);
-                    if (data.surfaceColorOpaqueRendererList.IsValid())
-                    {
-                        context.cmd.DrawRendererList(data.surfaceColorOpaqueRendererList);
-                    }
-                });
-            }
-
-            if (surfaceColorTransparentFilteringEnabled)
-            {
-                using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-MetadataBuffer SurfaceColor Transparent", out PassData passData, ProfilingSampler))
-                {
-                    passData.surfaceColorTransparentRendererList = renderGraph.CreateRendererList(surfaceColorTransparentRendererListParams);
-                    passData.surfaceColorTexture = surfaceColorTexture;
-                    passData.mBufferDepthTexture = mBufferDepthTexture;
-                    passData.systemChannelMask = GetSystemChannelMask(settings);
-
-                    if (passData.surfaceColorTransparentRendererList.IsValid())
-                    {
-                        builder.UseRendererList(passData.surfaceColorTransparentRendererList);
-                    }
-
-                    builder.SetRenderAttachment(surfaceColorTexture, 0, AccessFlags.ReadWrite);
-                    builder.SetRenderAttachmentDepth(mBufferDepthTexture, AccessFlags.Read);
-                    builder.SetGlobalTextureAfterPass(surfaceColorTexture, HoMetadataBufferShaderConstants.SurfaceColorTextureId);
-                    builder.SetGlobalTextureAfterPass(mBufferDepthTexture, HoMetadataBufferShaderConstants.MBufferDepthTextureId);
-                    builder.AllowGlobalStateModification(true);
-                    builder.AllowPassCulling(false);
-                    builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
-                    {
-                        context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
-                        context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.SystemChannelMaskId, data.systemChannelMask);
-                        SetDefaultSubjectProperties(context.cmd);
-                        if (data.surfaceColorTransparentRendererList.IsValid())
-                        {
-                            context.cmd.DrawRendererList(data.surfaceColorTransparentRendererList);
-                        }
-                    });
-                }
-            }
         }
 
         public void ReleaseCompatibilityResources(bool resetGlobalState = false)
@@ -454,8 +299,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.ReflectionMaterialTextureId, Texture2D.blackTexture);
-            Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, Texture2D.blackTexture);
-            Shader.SetGlobalTexture(HoMetadataBufferShaderConstants.MBufferDepthTextureId, Texture2D.blackTexture);
         }
 
         private static void AddClearPass(
@@ -483,23 +326,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 builder.SetRenderFunc(static (ClearPassData data, RasterGraphContext context) =>
                 {
                     ClearMetadataTargets(context.cmd, data.clearMaterial);
-                });
-            }
-        }
-
-        private static void AddSurfaceColorClearPass(RenderGraph renderGraph, TextureHandle surfaceColorTexture, TextureHandle mBufferDepthTexture)
-        {
-            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("Ho-MetadataBuffer SurfaceColorClear", out _, ProfilingSampler))
-            {
-                builder.SetRenderAttachment(surfaceColorTexture, 0, AccessFlags.WriteAll);
-                builder.SetRenderAttachmentDepth(mBufferDepthTexture, AccessFlags.WriteAll);
-                builder.SetGlobalTextureAfterPass(surfaceColorTexture, HoMetadataBufferShaderConstants.SurfaceColorTextureId);
-                builder.SetGlobalTextureAfterPass(mBufferDepthTexture, HoMetadataBufferShaderConstants.MBufferDepthTextureId);
-                builder.AllowGlobalStateModification(true);
-                builder.AllowPassCulling(false);
-                builder.SetRenderFunc(static (ResetPassData data, RasterGraphContext context) =>
-                {
-                    context.cmd.ClearRenderTarget(RTClearFlags.ColorDepth, Color.clear, 1.0f, 0);
                 });
             }
         }
@@ -549,34 +375,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             }
         }
 
-        private static RendererListHandle CreateRendererListWithRenderStateBlock(
-            RenderGraph renderGraph,
-            CullingResults cullingResults,
-            DrawingSettings drawingSettings,
-            FilteringSettings filteringSettings,
-            RenderStateBlock stateBlock)
-        {
-            NativeArray<ShaderTagId> tagValues = new NativeArray<ShaderTagId>(1, Allocator.Temp);
-            NativeArray<RenderStateBlock> stateBlocks = new NativeArray<RenderStateBlock>(1, Allocator.Temp);
-            try
-            {
-                tagValues[0] = ShaderTagId.none;
-                stateBlocks[0] = stateBlock;
-                RendererListParams rendererListParams = new RendererListParams(cullingResults, drawingSettings, filteringSettings)
-                {
-                    tagValues = tagValues,
-                    stateBlocks = stateBlocks,
-                    isPassTagName = false
-                };
-                return renderGraph.CreateRendererList(rendererListParams);
-            }
-            finally
-            {
-                tagValues.Dispose();
-                stateBlocks.Dispose();
-            }
-        }
-
         private static TextureDesc CreateTextureDesc(
             RenderTextureDescriptor cameraTextureDescriptor,
             HoMetadataBufferSettings settings,
@@ -619,8 +417,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, renderTargets.ObjectCustom0Texture.nameID);
             cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, renderTargets.ObjectCustom1Texture.nameID);
             cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ReflectionMaterialTextureId, renderTargets.ReflectionMaterialTexture.nameID);
-            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, renderTargets.SurfaceColorTexture.nameID);
-            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MBufferDepthTextureId, renderTargets.MBufferDepthTexture.nameID);
         }
 
         private void ApplyFallbackMaterialProperties()
@@ -696,24 +492,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                 upperBound = fallbackFilteringEnabled ? fallbackMaxQueue : minQueue
             };
             fallbackFilteringSettings = new FilteringSettings(fallbackRenderQueueRange, fallbackFilteringEnabled ? layerMask : 0);
-
-            int surfaceColorOpaqueMaxQueue = Mathf.Min(maxQueue, SurfaceColorOpaqueMaxRenderQueue);
-            surfaceColorOpaqueFilteringEnabled = surfaceColorOpaqueMaxQueue >= minQueue;
-            RenderQueueRange surfaceColorOpaqueRenderQueueRange = new RenderQueueRange
-            {
-                lowerBound = minQueue,
-                upperBound = surfaceColorOpaqueFilteringEnabled ? surfaceColorOpaqueMaxQueue : minQueue
-            };
-            surfaceColorOpaqueFilteringSettings = new FilteringSettings(surfaceColorOpaqueRenderQueueRange, surfaceColorOpaqueFilteringEnabled ? layerMask : 0);
-
-            int surfaceColorTransparentMinQueue = Mathf.Max(minQueue, SurfaceColorOpaqueMaxRenderQueue + 1);
-            surfaceColorTransparentFilteringEnabled = maxQueue >= surfaceColorTransparentMinQueue;
-            RenderQueueRange surfaceColorTransparentRenderQueueRange = new RenderQueueRange
-            {
-                lowerBound = surfaceColorTransparentMinQueue,
-                upperBound = surfaceColorTransparentFilteringEnabled ? maxQueue : surfaceColorTransparentMinQueue
-            };
-            surfaceColorTransparentFilteringSettings = new FilteringSettings(surfaceColorTransparentRenderQueueRange, surfaceColorTransparentFilteringEnabled ? layerMask : 0);
         }
 
     }

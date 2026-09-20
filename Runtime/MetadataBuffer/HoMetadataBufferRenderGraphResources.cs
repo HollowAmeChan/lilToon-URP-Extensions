@@ -13,13 +13,9 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         public TextureHandle objectCustom0Texture = TextureHandle.nullHandle;
         public TextureHandle objectCustom1Texture = TextureHandle.nullHandle;
         public TextureHandle reflectionMaterialTexture = TextureHandle.nullHandle;
-        public TextureHandle surfaceColorTexture = TextureHandle.nullHandle;
-        public TextureHandle mBufferDepthTexture = TextureHandle.nullHandle;
 
         public bool HasRequiredTextures => maskIdTexture.IsValid()
-            && surfaceDataTexture.IsValid()
-            && surfaceColorTexture.IsValid()
-            && mBufferDepthTexture.IsValid();
+            && surfaceDataTexture.IsValid();
 
         public override void Reset()
         {
@@ -29,8 +25,6 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             objectCustom0Texture = TextureHandle.nullHandle;
             objectCustom1Texture = TextureHandle.nullHandle;
             reflectionMaterialTexture = TextureHandle.nullHandle;
-            surfaceColorTexture = TextureHandle.nullHandle;
-            mBufferDepthTexture = TextureHandle.nullHandle;
         }
     }
 }

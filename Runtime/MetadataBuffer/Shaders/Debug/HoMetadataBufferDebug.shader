@@ -32,8 +32,6 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
             TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
             TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture);
             TEXTURE2D_X(_HoMetadataBufferReflectionMaterialTexture);
-            TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
-            TEXTURE2D_X_FLOAT(_HoMetadataBufferMBufferDepthTexture);
 
             half3 HashColor(float3 value)
             {
@@ -174,23 +172,6 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
                 {
                     half hasValue = step(0.0001, maskId.a);
                     return half4(Heat(maskId.a) * hasValue, 1.0);
-                }
-
-                if (mode == 24)
-                {
-                    half4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_PointClamp, uv);
-                    half surfaceCoverage = saturate(surfaceColor.a);
-                    half surfaceValid = step(0.0001, maskId.r) * step(0.0001, surfaceCoverage);
-                    half3 compositedColor = source.rgb * (1.0h - surfaceCoverage) + surfaceColor.rgb;
-                    return half4(lerp(source.rgb, compositedColor, surfaceValid), 1.0);
-                }
-
-                if (mode == 25)
-                {
-                    float rawDepth = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMBufferDepthTexture, sampler_PointClamp, uv).r;
-                    half depthValid = step(0.0001h, abs(rawDepth - 1.0h));
-                    half depth = saturate(Linear01Depth(rawDepth, _ZBufferParams));
-                    return lerp(source, half4(depth, depth, depth, 1.0), depthValid);
                 }
 
                 if (mode == 26)
