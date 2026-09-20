@@ -742,13 +742,11 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
             RemoveInvalidEntries(property);
 
-            // 标题行也接拖拽：列表里已经有条目时，"再加一个"最自然的入口就是这一行。
+            // 标题行也接拖拽：这是"再加一个"最自然的入口。**空列表时更要接**——
+            // 那时人第一反应就是往"Renderer（0）"上放，落空会显得整个列表都不收东西。
             Rect labelRect = EditorGUILayout.GetControlRect(false, 16.0f);
             GUI.Label(labelRect, $"Renderer（{property.arraySize}）", EditorStyles.miniBoldLabel);
-            if (property.arraySize > 0)
-            {
-                HandleDrop(labelRect, property);
-            }
+            HandleDrop(labelRect, property);
 
             if (property.arraySize == 0)
             {

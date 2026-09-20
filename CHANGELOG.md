@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- 修复 `Ho-ObjectBuffer` 抽屉：**Renderer 列表为空时表头不收拖拽**——「Renderer（0）」那一行原来只在列表非空时才是拖放目标，空列表下往它上面放没任何反应（只有下面那条 16px 提示条收东西），看着像整个列表都不收。现在表头恒定接拖拽。
+
 - `Ho-ObjectBuffer` **R2（第一步）**：眼透相机角度修正切到 OB 口径——角度表数据源改为 `HoObjectBufferGroup`（行号 = **OB 组 ID**，朝向取「朝向参考系」），屏幕空间查表键改为 **OB 身份池层 0 的组字节**（`Id0.r`，新增 `ResolveObjectBufferGroupId`，并加 `_HoObjectBufferValid` 兜底），于是多角色同屏不再跨 ID 平均、且不再依赖眼睛捕获缓冲里的预乘角色 ID。眼睛**遮罩**链路仍走 MetadataBuffer，随 R3/R4 的消费者迁移一起切。
 
 - `Ho-ObjectBuffer`：**R1 收口**（规划 0.3.11 的四项）——① 发布 `requested` / `actual` 采样数：全局 `_HoObjectBufferRequestedSamples` / `_HoObjectBufferActualSamples` + 「Sample Count」调试视图（绿 4x / 橙 2x / 红 1x）+ 降级时告警一次，C# 侧读 `HoObjectBufferPass.LastActualSamples`；② 部件行表的全局名改为 `_HoObjectBufferEntries`（与 §1.2 对齐）；③ 删掉选择层里没人读的溢出计数；④ 把"身份池溢出在 N ≤ 4 下结构性不可能"写成结论（0.3.2）。**回归验证器已实跑通过**（`Id0=(1,1,1,1)` / `CoverageTotal=(1,1,1,1)` / `Valid=(0,0.796,0,1)` 绿哨兵 / `Id3=(0.271,0.271,0.271,1)` 背景灰），调查期那个硬编码 PTP 场景路径的场景诊断已删除，验证器保留为整链自检。
