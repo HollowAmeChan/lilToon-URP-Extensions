@@ -406,7 +406,9 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 var defaults = new HoObjectBufferPartEntry();
                 entry.FindPropertyRelative("category").enumValueIndex = (int)defaults.category;
                 entry.FindPropertyRelative("tags").intValue = (int)defaults.tags;
-                entry.FindPropertyRelative("displayColor").colorValue = defaults.displayColor;
+                // 显示色是 debug 视图的上色依据：新建时先给一个"当前还没被用过"的随机色，
+                // 否则一串新部件全是同一个灰，层视图根本分不出谁是谁。不满意就在面板上改。
+                entry.FindPropertyRelative("displayColor").colorValue = CreateUnusedDisplayColor(partsProperty, index);
                 entry.FindPropertyRelative("includeChildren").boolValue = defaults.includeChildren;
                 SerializedProperty renderers = entry.FindPropertyRelative("renderers");
                 if (renderers != null)
@@ -420,17 +422,15 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             {
                 var defaults = new HoObjectBufferSelectionEntry();
                 entry.FindPropertyRelative("tags").intValue = (int)defaults.tags;
-                // 选区比部件多得多（袖子、配饰、眼白…），默认色全一样的话 debug 视图里根本分不开，
-                // 所以这里主动挑一个"当前还没被用过"的随机色；不喜欢就在面板上改。
-                entry.FindPropertyRelative("displayColor").colorValue = CreateUnusedSelectionColor(selectionsProperty, index);
+                entry.FindPropertyRelative("displayColor").colorValue = CreateUnusedDisplayColor(selectionsProperty, index);
                 selectedSelection = index;
             }
 
             structureChanged = true;
         }
 
-        /// <summary>新建选区时给一个还没被用过的随机显示色（与已有条目至少差一点距离，挑不到就用最后一个候选）。</summary>
-        private static Color CreateUnusedSelectionColor(SerializedProperty list, int skipIndex)
+        /// <summary>新建条目时给一个还没被用过的随机显示色（与同表已有条目至少差一点距离，挑不到就用最后一个候选）。</summary>
+        private static Color CreateUnusedDisplayColor(SerializedProperty list, int skipIndex)
         {
             const int maxAttempts = 16;
             const float minDistance = 0.35f;
