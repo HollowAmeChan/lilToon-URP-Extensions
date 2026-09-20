@@ -37,7 +37,7 @@ namespace lilToon.URP.Extensions.Editor.PlanarReflection
             }
 
             EditorGUILayout.HelpBox(
-                "Ho-PlanarReflection 先渲染镜像相机，再由合成 pass 消费 MetadataBuffer 与 GeometryBuffer，对反射表面做扰动、预处理和混合。",
+                "Ho-PlanarReflection 先渲染镜像相机，再由合成 pass 消费 GeometryBuffer 与 SB（经 AC 门面）的材质数值，对反射表面做扰动、预处理和混合。",
                 MessageType.Info);
 
             DrawRuntime();

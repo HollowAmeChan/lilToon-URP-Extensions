@@ -120,7 +120,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             RenderTextureDescriptor descriptor = cameraTextureDescriptor;
             descriptor.depthBufferBits = 0;
             descriptor.depthStencilFormat = GraphicsFormat.None;
-            // 辅助数据一律按普通纹理采样，因此单采样（与 GB / MetadataBuffer 同一约定）。
+            // 辅助数据一律按普通纹理采样，因此单采样（与 GB 同一约定）。
             descriptor.msaaSamples = 1;
             descriptor.bindMS = false;
             descriptor.graphicsFormat = GetLayerGraphicsFormat();

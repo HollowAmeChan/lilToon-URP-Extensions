@@ -7,8 +7,8 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
-    /// Ho-ObjectBuffer：用"ID + 覆盖率"取代 MetadataBuffer 的位掩码（规划 §5）。
-    /// 与 MetadataBuffer **并存**（暂时不删），两者互不依赖：CB 不读 MetadataBuffer 的任何产物。
+    /// Ho-ObjectBuffer：用"ID + 覆盖率"取代旧的位掩码方案（规划 §5）。
+    /// 旧的位掩码方案（MetadataBuffer）已整块删除：它的 maskId / 自定义通道由 OB 与 AC 接管。
     /// </summary>
     [DisallowMultipleRendererFeature("Ho-ObjectBuffer")]
     public sealed class HoObjectBufferRendererFeature : ScriptableRendererFeature

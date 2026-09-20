@@ -37,7 +37,7 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
             }
 
             EditorGUILayout.HelpBox(
-                "Ho-SSS consumes MetadataBuffer Base Color as diffuse input. Material/profile settings control diffusion tint, radius, thickness, and transmission.",
+                "Ho-SSS consumes the SurfaceBuffer color (via the AC facade) as diffuse input. Material/profile settings control diffusion tint, radius, thickness, and transmission.",
                 MessageType.Info);
 
             DrawRuntime();

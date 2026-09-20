@@ -1,8 +1,6 @@
 using System.Collections.Generic;
-// HoFaceAxis 眼下还住在 MetadataBuffer 的命名空间里（面部朝向是那边的既有语义，直接复用同一个枚举，
-// 免得两套轴向定义各自漂移）。P4 删掉 MetadataBuffer 时把它搬过来即可：枚举按 int 序列化，
-// 只要成员顺序不变，迁移不会丢已有场景里的值。
-using lilToon.URP.Extensions.MetadataBuffer;
+// `HoFaceAxis` 已随 MB 的删除搬到本命名空间（`Runtime/ObjectBuffer/HoFaceAxis.cs`）：
+// 枚举按 int 序列化、成员顺序没动，旧场景里的朝向配置照旧生效。
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.Scripting.APIUpdating;
@@ -136,7 +134,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         /// 提供角色世界朝向（供眼透相机角度修正、SDF 等消费者系统读取）。
         /// 以 <see cref="faceBone"/> 的局部轴按三个轴向配置换算成世界向量；
         /// 未设置朝向时返回 false。不负责相机相关计算，仅输出朝向参考数据。
-        /// 与 <c>HoMetadataBufferGroup.TryGetWorldFacing</c> 同形——消费者从 MetadataBuffer 切过来时不用改调用方式。
+        /// 朝向参考系的解析与旧组件同形：消费者换过来时不用改调用方式。
         /// <para>
         /// 朝向是**每个角色一份的常量**（不是逐像素几何量），所以它按"查表"消费：
         /// 拿到像素里层 0 的获胜身份 → 取它的组 → 调这里。不需要逐像素的朝向纹理。

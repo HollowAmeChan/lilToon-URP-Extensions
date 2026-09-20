@@ -41,7 +41,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         private const int FallbackPassMsaaInt = 1;
         private const int FallbackPassMsaaUnorm = 2;
 
-        /// <summary>override 材质看不到源材质的 alpha/cutout，所以 fallback 只碰不透明队列（与 MetadataBuffer 同一取舍）。</summary>
+        /// <summary>override 材质看不到源材质的 alpha/cutout，所以 fallback 只碰不透明队列（与其它 fallback 同一取舍）。</summary>
         private const int FallbackMaxRenderQueue = (int)RenderQueue.AlphaTest - 1;
 
         private readonly RTHandle[] idColorTargets = new RTHandle[3];
@@ -247,7 +247,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             TextureHandle id0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoObjectBufferFormatUtility.GetLayerGraphicsFormat(), HoObjectBufferShaderConstants.Id0TextureName));
             TextureHandle id1Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoObjectBufferFormatUtility.GetLayerGraphicsFormat(), HoObjectBufferShaderConstants.Id1TextureName));
             TextureHandle coverageTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoObjectBufferFormatUtility.GetLayerGraphicsFormat(), HoObjectBufferShaderConstants.CoverageTextureName));
-            // depth 纹理走 UniversalRenderer 的辅助函数（与 GB / MetadataBuffer 同一路径）：
+            // depth 纹理走 UniversalRenderer 的辅助函数（与 GB 同一路径）：
             // 直接用 TextureDesc 造深度附件容易在 format/depthBufferBits 上写错。
             TextureHandle depthTexture = UniversalRenderer.CreateRenderGraphTexture(
                 renderGraph,

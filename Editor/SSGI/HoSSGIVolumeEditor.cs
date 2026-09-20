@@ -47,7 +47,7 @@ namespace lilToon.URP.Extensions.Editor.SSGI
         public override void OnInspectorGUI()
         {
             EditorGUILayout.HelpBox(
-                "Ho-SSGI reads the lit opaque camera color after GeometryBuffer and composites the result before post-processing. MetadataBuffer is not required. This Volume is the only tuning surface for runtime parameters.",
+                "Ho-SSGI reads the lit opaque camera color after GeometryBuffer and composites the result before post-processing. GeometryBuffer is the only required input. This Volume is the only tuning surface for runtime parameters.",
                 MessageType.Info);
 
             PropertyField(enable);

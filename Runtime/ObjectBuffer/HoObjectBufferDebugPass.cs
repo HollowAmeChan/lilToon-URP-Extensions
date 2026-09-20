@@ -8,7 +8,7 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
-    /// 调试视图：把 CB 的通道画到相机颜色上（与 MetadataBuffer 的调试 pass 同形）。
+    /// 调试视图：把 CB 的通道画到相机颜色上（与其它 feature 的调试 pass 同形）。
     /// 没产出时 shader 会输出暗红，而不是静默黑屏——"没跑"和"全是背景"必须能分开。
     /// </summary>
     internal sealed class HoObjectBufferDebugPass : ScriptableRenderPass
