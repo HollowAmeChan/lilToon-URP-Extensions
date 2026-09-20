@@ -67,7 +67,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/EdgeLight"
             float ResolveEdgeMask(float2 uv, half4 normalDepth)
             {
                 float depthCoverage = LilHoGeometryBufferCoverage(normalDepth);
-                if (_HoMetadataBufferActive <= 0.5 || depthCoverage <= 0.0)
+                if (_lilHoSPMaskValid <= 0.5 || depthCoverage <= 0.0)
                 {
                     return 0.0;
                 }
@@ -237,7 +237,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/EdgeLight"
 
                 float2 uv = input.texcoord;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
-                if (_HoMetadataBufferActive <= 0.5)
+                if (_lilHoSPMaskValid <= 0.5)
                 {
                     if (LilScreenProcessShouldOutputMaskDebug())
                     {

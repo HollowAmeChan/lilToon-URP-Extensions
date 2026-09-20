@@ -451,8 +451,8 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private const float MaskToggleWidth = 62.0f;
 
         /// <summary>
-        /// The per-layer mask row. The mask source is provided by AC (Ho-AttributeComposite) later;
-        /// today it samples the MetadataBuffer coverage, so the row only offers enable / invert / debug.
+        /// The per-layer mask row. The mask source is the character coverage (AC total coverage,
+        /// produced by OB), so the row only offers enable / invert / debug.
         /// It must stay exactly one row: GetElementLineCount reserves one line for it.
         /// </summary>
         private static void DrawMaskProperties(Rect rect, ref float y, SerializedProperty element)
@@ -472,7 +472,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             float labelWidth = Mathf.Max(0.0f, enableRect.x - row.x - 4.0f);
             EditorGUI.LabelField(
                 new Rect(row.x, row.y, labelWidth, row.height),
-                new GUIContent("遮罩", "遮罩来源以后由 AC（Ho-AttributeComposite）提供；今天采样 MetadataBuffer 覆盖率。"));
+                new GUIContent("遮罩", "遮罩来源 = 角色覆盖率（AC 总覆盖率，由 OB 的身份池产出）。"));
             useMask.boolValue = EditorGUI.ToggleLeft(enableRect, "启用", useMask.boolValue);
             invertMask.boolValue = EditorGUI.ToggleLeft(invertRect, "反转", invertMask.boolValue);
             debugMask.boolValue = EditorGUI.ToggleLeft(debugRect, "调试", debugMask.boolValue);

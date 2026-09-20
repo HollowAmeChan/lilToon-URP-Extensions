@@ -35,7 +35,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DropShadow"
 
             float SampleSubjectMask(float2 uv)
             {
-                if (_HoMetadataBufferActive > 0.5)
+                if (_lilHoSPMaskValid > 0.5)
                 {
                     return LilScreenProcessResolveCoverageMask(uv);
                 }
@@ -112,7 +112,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DropShadow"
                 }
 
                 float opacity = saturate(_Intensity) * saturate(_LayerParams0.z);
-                if ((_HoMetadataBufferActive <= 0.5 && _SubjectMaskValid <= 0.5) || opacity <= 0.0001)
+                if ((_lilHoSPMaskValid <= 0.5 && _SubjectMaskValid <= 0.5) || opacity <= 0.0001)
                 {
                     return source;
                 }

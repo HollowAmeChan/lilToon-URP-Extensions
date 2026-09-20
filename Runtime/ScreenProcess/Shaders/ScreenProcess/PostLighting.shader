@@ -99,7 +99,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/PostLighting"
 
                 float2 uv = input.texcoord;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
-                if (_HoMetadataBufferActive <= 0.5)
+                if (_lilHoSPMaskValid <= 0.5)
                 {
                     if (LilScreenProcessShouldOutputMaskDebug())
                     {

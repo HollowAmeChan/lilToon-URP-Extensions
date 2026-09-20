@@ -104,18 +104,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 EditorGUILayout.LabelField("Written Layers", snapshot.WrittenLayerCount.ToString());
                 EditorGUILayout.LabelField("Active Back Buffer", snapshot.BackBufferActive ? "是" : "否");
                 EditorGUILayout.LabelField("Camera Color", LilUrpEditorSectionGui.FormatAvailable(snapshot.CameraColorAvailable));
-                DrawRequiredStatus("MetadataBuffer", snapshot.RequiresMetadataBuffer, snapshot.MetadataBufferAvailable);
+                DrawRequiredStatus("Coverage (AC/OB)", snapshot.RequiresCoverage, snapshot.CoverageAvailable);
                 DrawRequiredStatus("GeometryBuffer", snapshot.RequiresGeometryBuffer, snapshot.GeometryBufferAvailable);
-                DrawRequiredStatus("MaskId", snapshot.RequiresMaskId, snapshot.MaskIdAvailable);
-                DrawRequiredStatus("Custom0", snapshot.RequiresCustom0, snapshot.Custom0Available);
-                DrawRequiredStatus("ObjectCustom0", snapshot.RequiresObjectCustom0, snapshot.ObjectCustom0Available);
-                DrawRequiredStatus("ObjectCustom1", snapshot.RequiresObjectCustom1, snapshot.ObjectCustom1Available);
                 DrawRequiredStatus("NormalDepth", snapshot.RequiresNormalDepth, snapshot.NormalDepthAvailable);
                 DrawRequiredStatus("SkyTexture", snapshot.RequiresSkyTexture, snapshot.SkyTextureAvailable);
 
                 EditorGUILayout.HelpBox(
                     snapshot.Ready
-                        ? "ScreenProcess 输入有效：当前 layer 需要的 MetadataBuffer / GeometryBuffer 项均可用。"
+                        ? "ScreenProcess 输入有效：当前 layer 需要的角色覆盖率 / GeometryBuffer 项均可用。"
                         : "ScreenProcess 已降级：" + snapshot.Reason,
                     snapshot.Ready ? MessageType.Info : MessageType.Warning);
             }

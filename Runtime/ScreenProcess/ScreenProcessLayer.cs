@@ -54,13 +54,13 @@ namespace lilToon.URP.Extensions.PostProcessing
         [Tooltip("Additional camera-space distance offset added to the Depth Of Field focus target.")]
         public float depthOfFieldFocusOffset;
 
-        [Tooltip("Use the MetadataBuffer semantic mask (fed by AC later) as this layer mask.")]
+        [Tooltip("Use the character coverage mask (AC total coverage, from OB) as this layer mask.")]
         // The retired field name is split into literals on purpose: the serialized data still needs it,
         // but the old identifier must not reappear in a plain-text search of the tree.
         [UnityEngine.Serialization.FormerlySerializedAs("use" + "Rule" + "Mask")]
         public bool useMask;
 
-        [Tooltip("Invert the resolved ScreenProcess mask within covered MetadataBuffer pixels.")]
+        [Tooltip("Invert the resolved ScreenProcess mask within covered character pixels.")]
         [UnityEngine.Serialization.FormerlySerializedAs("invert" + "Rule" + "Mask")]
         public bool invertMask;
 

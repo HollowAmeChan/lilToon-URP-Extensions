@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
-using lilToon.URP.Extensions.MetadataBuffer;
 using lilToon.URP.Extensions.GeometryBuffer;
+using lilToon.URP.Extensions.ObjectBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -392,11 +392,8 @@ namespace lilToon.URP.Extensions.PostProcessing
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-ScreenProcess Release Semantic Buffers", out PassData passData, ProfilingSampler))
             {
                 passData.blackTexture = blackTexture;
-                builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.MaskIdTextureId);
-                // 表面数值（SurfaceData / ReflectionMaterial / SurfaceColor）的兜底已删：它们现在归 SB。
-                builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.Custom0TextureId);
-                    builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.ObjectCustom0TextureId);
-                    builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.ObjectCustom1TextureId);
+                // MB 的 maskId / custom0 / objectCustom 兜底已删：遮罩来源现在是 AC（OB 覆盖率），
+                // 由 OB 的 pass 自己发布，SP 只在每层明确置 _lilHoSPMaskValid。
                 builder.SetGlobalTextureAfterPass(blackTexture, HoGeometryBufferShaderConstants.NormalDepthTextureId);
                 builder.SetGlobalTextureAfterPass(blackTexture, HoGeometryBufferShaderConstants.DepthTextureId);
                 builder.SetGlobalTextureAfterPass(blackTexture, HoGeometryBufferShaderConstants.OutlineNormalDepthTextureId);
@@ -406,10 +403,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.blackTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.blackTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.blackTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.blackTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.blackTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, data.blackTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineNormalDepthTextureId, data.blackTexture);
@@ -425,10 +418,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         private static void ResetSemanticBufferGlobals(CommandBuffer cmd)
         {
             Texture fallback = Texture2D.blackTexture;
-            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, fallback);
-            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, fallback);
-            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, fallback);
-            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, fallback);
             cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, fallback);
             cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, fallback);
             cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineNormalDepthTextureId, fallback);
@@ -441,16 +430,14 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         private static void ResetSemanticBufferFlags(CommandBuffer cmd)
         {
-            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 0.0f);
-            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.SystemChannelMaskId, 0.0f);
+            cmd.SetGlobalFloat(ScreenProcessShaderConstants.MaskValidId, 0.0f);
             cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 0.0f);
             cmd.SetGlobalFloat(ScreenProcessShaderConstants.SubjectMaskValidId, 0.0f);
         }
 
         private static void ResetSemanticBufferFlags(RasterCommandBuffer cmd)
         {
-            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 0.0f);
-            cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.SystemChannelMaskId, 0.0f);
+            cmd.SetGlobalFloat(ScreenProcessShaderConstants.MaskValidId, 0.0f);
             cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 0.0f);
             cmd.SetGlobalFloat(ScreenProcessShaderConstants.SubjectMaskValidId, 0.0f);
         }
@@ -483,7 +470,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             public TextureHandle source;
             public TextureHandle subjectMaskTexture;
             public TextureHandle outlineNormalDepthTexture;
-            public TextureHandle maskIdTexture;
             public TextureHandle normalDepthTexture;
             public TextureHandle skyTexture;
             public ScreenProcessLayer layer;
@@ -502,6 +488,8 @@ namespace lilToon.URP.Extensions.PostProcessing
             public bool useSkyTexture;
             public bool useSubjectMask;
             public bool useOutlineNormalDepth;
+            /// <summary>遮罩来源的 texel / 尺寸（xy = texel、zw = 尺寸）：给"按像素扩张 / 羽化"用。</summary>
+            public Vector4 maskTexelSize;
         }
 
         private sealed class SubjectMaskPassData
@@ -701,9 +689,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                     false,
                     false,
                     false,
-                    false,
-                    false,
-                    false,
                     false);
                 return;
             }
@@ -720,14 +705,12 @@ namespace lilToon.URP.Extensions.PostProcessing
                     false,
                     false,
                     false,
-                    false,
-                    false,
-                    false,
                     false);
                 return;
             }
 
-            HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
+            // 遮罩来源 = OB 的四层身份覆盖率（AC 门面读的就是它）：MB 的 maskId 在 SP 这条链上退出。
+            TextureHandle maskSourceTexture = frameData.GetOrCreate<HoObjectBufferRenderGraphResources>().coverageTexture;
             HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
 
             bool useSubjectMask = RequiresSubjectMask() && subjectMaskMaterial != null;
@@ -808,7 +791,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                     passData.source = source;
                     passData.subjectMaskTexture = subjectMaskTexture;
                     passData.outlineNormalDepthTexture = geometryResources.outlineNormalDepthTexture;
-                    passData.maskIdTexture = metadataResources.maskIdTexture;
                     passData.normalDepthTexture = geometryResources.normalDepthTexture;
                     passData.skyTexture = geometryResources.skyTexture;
                     passData.layer = runtimeLayer.settings;
@@ -823,16 +805,17 @@ namespace lilToon.URP.Extensions.PostProcessing
                     passData.isSkyTyndall = runtimeLayer.settings.effect == ScreenProcessEffect.SkyTyndall;
                     passData.isDepthFog = runtimeLayer.settings.effect == ScreenProcessEffect.DepthFog;
                     bool needsMask = passData.isEdgeLight || passData.isDropShadow || passData.isPostLighting || runtimeLayer.settings.useMask || runtimeLayer.settings.debugMask;
-                    passData.useMaskTexture = needsMask && metadataResources.maskIdTexture.IsValid();
+                    passData.useMaskTexture = needsMask && maskSourceTexture.IsValid();
                     passData.useNormalDepth = (passData.isEdgeLight || passData.isPostLighting || passData.isSkyTyndall || passData.isOutline || passData.isDepthOfField || passData.isDepthFog) && geometryResources.normalDepthTexture.IsValid();
                     passData.useSkyTexture = passData.isSkyTyndall && geometryResources.skyTexture.IsValid();
                     passData.useSubjectMask = passData.isDropShadow && useSubjectMask;
                     passData.useOutlineNormalDepth = passData.isDepthOfField && geometryResources.outlineNormalDepthTexture.IsValid();
+                    passData.maskTexelSize = ResolveMaskTexelSize(renderGraph, maskSourceTexture);
 
                     builder.UseTexture(source, AccessFlags.Read);
                     if (passData.useMaskTexture)
                     {
-                        builder.UseTexture(metadataResources.maskIdTexture, AccessFlags.Read);
+                        builder.UseTexture(maskSourceTexture, AccessFlags.Read);
                     }
 
                     if (passData.useNormalDepth)
@@ -861,7 +844,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                     builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                     {
                         ApplyLayerProperties(data.layer, data.material, data.dynamicFocusDistance);
-                        context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 0.0f);
+                        context.cmd.SetGlobalFloat(ScreenProcessShaderConstants.MaskValidId, 0.0f);
+                        context.cmd.SetGlobalVector(ScreenProcessShaderConstants.MaskTexelSizeId, data.maskTexelSize);
                         context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, data.useNormalDepth ? 1.0f : 0.0f);
                         context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 0.0f);
                         context.cmd.SetGlobalFloat(ScreenProcessShaderConstants.SubjectMaskValidId, data.useSubjectMask ? 1.0f : 0.0f);
@@ -883,21 +867,19 @@ namespace lilToon.URP.Extensions.PostProcessing
                         if (data.isEdgeLight)
                         {
                             bool hasMask = data.useMaskTexture && data.useNormalDepth;
-                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, hasMask ? 1.0f : 0.0f);
+                            context.cmd.SetGlobalFloat(ScreenProcessShaderConstants.MaskValidId, hasMask ? 1.0f : 0.0f);
                             if (hasMask)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
-                                context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
+                                        context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
                             }
                         }
                         else if (data.isPostLighting)
                         {
                             bool hasMask = data.useMaskTexture && data.useNormalDepth;
-                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, hasMask ? 1.0f : 0.0f);
+                            context.cmd.SetGlobalFloat(ScreenProcessShaderConstants.MaskValidId, hasMask ? 1.0f : 0.0f);
                             if (hasMask)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
-                                context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
+                                        context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
                             }
                         }
                         else if (data.isSkyTyndall)
@@ -913,27 +895,24 @@ namespace lilToon.URP.Extensions.PostProcessing
                                 context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
                             }
 
-                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, data.useMaskTexture ? 1.0f : 0.0f);
+                            context.cmd.SetGlobalFloat(ScreenProcessShaderConstants.MaskValidId, data.useMaskTexture ? 1.0f : 0.0f);
                             if (data.useMaskTexture)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
-                            }
+                                    }
                         }
                         else if (data.isDropShadow)
                         {
-                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, data.useMaskTexture ? 1.0f : 0.0f);
+                            context.cmd.SetGlobalFloat(ScreenProcessShaderConstants.MaskValidId, data.useMaskTexture ? 1.0f : 0.0f);
                             if (data.useMaskTexture)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
-                            }
+                                    }
                         }
                         else if (data.layer.useMask || data.layer.debugMask)
                         {
-                            context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, data.useMaskTexture ? 1.0f : 0.0f);
+                            context.cmd.SetGlobalFloat(ScreenProcessShaderConstants.MaskValidId, data.useMaskTexture ? 1.0f : 0.0f);
                             if (data.useMaskTexture)
                             {
-                                context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
-                            }
+                                    }
                         }
 
                         Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, data.passIndex);
@@ -956,12 +935,22 @@ namespace lilToon.URP.Extensions.PostProcessing
                 writtenLayerCount,
                 false,
                 true,
-                metadataResources.maskIdTexture.IsValid(),
-                metadataResources.custom0Texture.IsValid(),
-                metadataResources.objectCustom0Texture.IsValid(),
-                metadataResources.objectCustom1Texture.IsValid(),
+                maskSourceTexture.IsValid(),
                 geometryResources.normalDepthTexture.IsValid(),
                 geometryResources.skyTexture.IsValid());
+        }
+
+        private static Vector4 ResolveMaskTexelSize(RenderGraph renderGraph, TextureHandle maskTexture)
+        {
+            if (!maskTexture.IsValid())
+            {
+                return Vector4.zero;
+            }
+
+            TextureDesc descriptor = renderGraph.GetTextureDesc(maskTexture);
+            float width = Mathf.Max(1, descriptor.width);
+            float height = Mathf.Max(1, descriptor.height);
+            return new Vector4(1.0f / width, 1.0f / height, width, height);
         }
 
         private void CopyLayers(List<ScreenProcessRuntimeLayer> layers)
