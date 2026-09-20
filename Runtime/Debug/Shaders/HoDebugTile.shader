@@ -43,11 +43,9 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             float4 _HoDebugTileGeometryDepthParams;
 
             TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
-            TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture);
             TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture);
             TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
             TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture);
-            TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
             TEXTURE2D_X_FLOAT(_HoMetadataBufferMBufferDepthTexture);
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
             TEXTURE2D_X(_HoGeometryBufferOutlineNormalDepthTexture);
@@ -336,17 +334,14 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             half4 ResolveMetadataColor(float2 uv)
             {
                 half4 maskId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv);
-                half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture, sampler_PointClamp, uv);
                 half valid = step(0.0001h, maskId.r);
                 int mode = _HoDebugTileMode;
 
                 if (mode == 1) return half4(maskId.rrr, 1.0h);
                 if (mode == 2) return half4(HashEncodedId(maskId.gba) * valid * step(0.0001h, max(max(maskId.g, maskId.b), maskId.a)), 1.0h);
                 if (mode == 3) return half4(Heat(maskId.a) * step(0.0001h, maskId.a), 1.0h);
-                if (mode == 4) return half4(surfaceData.rrr, 1.0h);
-                if (mode == 5) return half4(Heat(surfaceData.g) * step(0.0001h, surfaceData.g), 1.0h);
-                if (mode == 6) return half4(HashEncodedId(surfaceData.b), 1.0h);
-                if (mode == 7) return half4(surfaceData.aaa, 1.0h);
+                // mode 4..7 与 24（老 MB 的 surfaceData / surfaceColor 视图）已退役：
+                // 表面数值现在归 SB，DebugTile 里有 RenderKind = SurfaceBuffer 的对应视图。
 
                 if (mode >= 8 && mode <= 11)
                 {
@@ -365,8 +360,8 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 if (mode == 23) return half4(Heat(maskId.a), 1.0h);
                 if (mode == 24)
                 {
-                    half4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_PointClamp, uv);
-                    return DebugSurfaceColor(surfaceColor, uv);
+                    // 老 MB 的 surfaceColor 视图已退役（表面色现在归 SB，见 RenderKind = SurfaceBuffer）。
+                    return DebugScalar(maskId.r);
                 }
                 if (mode == 25)
                 {
@@ -772,24 +767,28 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
 
             half4 ResolveSubsurfaceScatteringColor(float2 uv)
             {
-                half4 maskId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv);
-                half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture, sampler_PointClamp, uv);
+                // 表面数值与遮罩都改从 SB / OB 取（SSS 主链已是这样）：MB 的 surfaceData / surfaceColor /
+                // maskId 在调试面上也退役。thickness = SB 的 Material.b（老 surfaceData.r 的位置）。
+                half4 coveragePool = SAMPLE_TEXTURE2D_X(_HoObjectBufferCoverageTexture, sampler_PointClamp, uv);
+                half thickness = (half)saturate(SAMPLE_TEXTURE2D_X(_HoSurfaceBufferMaterialTexture, sampler_PointClamp, uv).b);
+                half profileByte = (half)saturate(SAMPLE_TEXTURE2D_X(_HoSurfaceBufferClassificationTexture, sampler_PointClamp, uv).r);
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
-                half4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_PointClamp, uv);
+                half4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoSurfaceBufferColorTexture, sampler_PointClamp, uv);
                 half4 source = SAMPLE_TEXTURE2D_X(_lilHoSSSSourceTexture, sampler_LinearClamp, uv);
                 half4 transmission = SAMPLE_TEXTURE2D_X(_lilHoSSSTransmissionTexture, sampler_LinearClamp, uv);
-                half coverage = saturate(maskId.r * surfaceData.r) * TileSssGeometryValid(normalDepth);
+                half totalCoverage = saturate(coveragePool.r + coveragePool.g + coveragePool.b + coveragePool.a);
+                half coverageMask = saturate(totalCoverage * thickness) * TileSssGeometryValid(normalDepth);
                 int mode = _HoDebugTileMode;
 
-                if (mode == 1) return half4(coverage.xxx, 1.0h);
+                if (mode == 1) return half4(coverageMask.xxx, 1.0h);
                 if (mode == 2) return DebugSurfaceColor(surfaceColor, uv);
-                if (mode == 3) return half4(source.rgb * coverage, 1.0h);
+                if (mode == 3) return half4(source.rgb * coverageMask, 1.0h);
                 if (mode == 4) return half4(transmission.rgb, 1.0h);
                 if (mode == 5) return half4(transmission.aaa, 1.0h);
-                if (mode == 6) return half4(saturate(coverage * step(1.0e-4h, source.a)).xxx, 1.0h);
-                if (mode == 7) return half4(surfaceData.bbb, 1.0h);
-                if (mode == 8) return half4(surfaceData.rrr, 1.0h);
-                if (mode == 9) return half4(Heat(surfaceData.r), 1.0h);
+                if (mode == 6) return half4(saturate(coverageMask * step(1.0e-4h, source.a)).xxx, 1.0h);
+                if (mode == 7) return half4(profileByte.xxx, 1.0h);
+                if (mode == 8) return half4(thickness.xxx, 1.0h);
+                if (mode == 9) return half4(Heat(thickness), 1.0h);
 
                 half3 normal = normalize(normalDepth.rgb * 2.0h - 1.0h);
                 half3 normalView = TransformWorldToViewDir(normal, true);

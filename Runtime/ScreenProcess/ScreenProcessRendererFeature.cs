@@ -393,12 +393,10 @@ namespace lilToon.URP.Extensions.PostProcessing
             {
                 passData.blackTexture = blackTexture;
                 builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.MaskIdTextureId);
-                builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.SurfaceDataTextureId);
+                // 表面数值（SurfaceData / ReflectionMaterial / SurfaceColor）的兜底已删：它们现在归 SB。
                 builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.Custom0TextureId);
                     builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.ObjectCustom0TextureId);
                     builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.ObjectCustom1TextureId);
-                    builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.ReflectionMaterialTextureId);
-                    builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.SurfaceColorTextureId);
                 builder.SetGlobalTextureAfterPass(blackTexture, HoMetadataBufferShaderConstants.MBufferDepthTextureId);
                 builder.SetGlobalTextureAfterPass(blackTexture, HoGeometryBufferShaderConstants.NormalDepthTextureId);
                 builder.SetGlobalTextureAfterPass(blackTexture, HoGeometryBufferShaderConstants.DepthTextureId);
@@ -410,12 +408,9 @@ namespace lilToon.URP.Extensions.PostProcessing
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.blackTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.blackTexture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.blackTexture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.blackTexture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.blackTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ReflectionMaterialTextureId, data.blackTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, data.blackTexture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MBufferDepthTextureId, data.blackTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.blackTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, data.blackTexture);
@@ -433,12 +428,9 @@ namespace lilToon.URP.Extensions.PostProcessing
         {
             Texture fallback = Texture2D.blackTexture;
             cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, fallback);
-            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, fallback);
             cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, fallback);
             cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, fallback);
             cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, fallback);
-            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ReflectionMaterialTextureId, fallback);
-            cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, fallback);
             cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MBufferDepthTextureId, fallback);
             cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, fallback);
             cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, fallback);

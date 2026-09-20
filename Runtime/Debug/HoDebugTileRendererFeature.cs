@@ -162,11 +162,9 @@ namespace lilToon.URP.Extensions.Debugging
                 bool hasMaskId = metadataResources.maskIdTexture.IsValid();
                 bool hasCustom0 = metadataResources.custom0Texture.IsValid();
                 bool hasMetadata = metadataResources.maskIdTexture.IsValid()
-                    && metadataResources.surfaceDataTexture.IsValid()
                     && metadataResources.custom0Texture.IsValid()
                     && metadataResources.objectCustom0Texture.IsValid()
                     && metadataResources.objectCustom1Texture.IsValid()
-                    && metadataResources.surfaceColorTexture.IsValid()
                     && metadataResources.mBufferDepthTexture.IsValid();
                 bool hasGeometry = geometryResources.normalDepthTexture.IsValid();
                 bool hasObjectBuffer = objectResources.HasRequiredTextures;
@@ -246,11 +244,9 @@ namespace lilToon.URP.Extensions.Debugging
                     passData.bindSubsurfaceScattering = resourceNeeds.subsurfaceScattering && hasSubsurfaceScattering;
                     passData.bindSurfaceBuffer = resourceNeeds.surfaceBuffer && hasSurfaceBuffer;
                     passData.maskIdTexture = metadataResources.maskIdTexture;
-                    passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
                     passData.custom0Texture = metadataResources.custom0Texture;
                     passData.objectCustom0Texture = metadataResources.objectCustom0Texture;
                     passData.objectCustom1Texture = metadataResources.objectCustom1Texture;
-                    passData.surfaceColorTexture = metadataResources.surfaceColorTexture;
                     passData.mBufferDepthTexture = metadataResources.mBufferDepthTexture;
                     passData.objectId0Texture = objectResources.id0Texture;
                     passData.objectId1Texture = objectResources.id1Texture;
@@ -270,11 +266,9 @@ namespace lilToon.URP.Extensions.Debugging
                     if (passData.bindMetadata)
                     {
                         builder.UseTexture(passData.maskIdTexture, AccessFlags.Read);
-                        builder.UseTexture(passData.surfaceDataTexture, AccessFlags.Read);
                         builder.UseTexture(passData.custom0Texture, AccessFlags.Read);
                         builder.UseTexture(passData.objectCustom0Texture, AccessFlags.Read);
                         builder.UseTexture(passData.objectCustom1Texture, AccessFlags.Read);
-                        builder.UseTexture(passData.surfaceColorTexture, AccessFlags.Read);
                         builder.UseTexture(passData.mBufferDepthTexture, AccessFlags.Read);
                     }
 
@@ -357,8 +351,8 @@ namespace lilToon.URP.Extensions.Debugging
                                 builder.UseTexture(passData.maskIdTexture, AccessFlags.Read);
                             }
 
-                            builder.UseTexture(passData.surfaceDataTexture, AccessFlags.Read);
-                            builder.UseTexture(passData.surfaceColorTexture, AccessFlags.Read);
+                            builder.UseTexture(surfaceResources.materialTexture, AccessFlags.Read);
+                            builder.UseTexture(surfaceResources.colorTexture, AccessFlags.Read);
                         }
 
                         if (!passData.bindGeometry)
@@ -377,11 +371,9 @@ namespace lilToon.URP.Extensions.Debugging
                         if (data.bindMetadata)
                         {
                             context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
-                            context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
                             context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.custom0Texture);
                             context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.objectCustom0Texture);
                             context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.objectCustom1Texture);
-                            context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, data.surfaceColorTexture);
                             context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MBufferDepthTextureId, data.mBufferDepthTexture);
                         }
 
@@ -437,8 +429,6 @@ namespace lilToon.URP.Extensions.Debugging
                         if (data.bindSubsurfaceScattering)
                         {
                             context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
-                            context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
-                            context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, data.surfaceColorTexture);
                             context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
                             context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.SourceTextureId, data.sssSourceTexture);
                             context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.TransmissionTextureId, data.sssTransmissionTexture);
@@ -756,11 +746,9 @@ namespace lilToon.URP.Extensions.Debugging
                 public bool bindSubsurfaceScattering;
                 public TextureHandle maskIdTexture;
                 public bool bindSurfaceBuffer;
-                public TextureHandle surfaceDataTexture;
                 public TextureHandle custom0Texture;
                 public TextureHandle objectCustom0Texture;
                 public TextureHandle objectCustom1Texture;
-                public TextureHandle surfaceColorTexture;
                 public TextureHandle mBufferDepthTexture;
                 public TextureHandle objectId0Texture;
                 public TextureHandle objectId1Texture;

@@ -14,10 +14,8 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             View("metadata.mask", "Mask", HoMetadataBufferDebugMode.Mask),
             View("metadata.id", "ID", HoMetadataBufferDebugMode.Id),
             View("metadata.flags", "Flags", HoMetadataBufferDebugMode.Flags),
-            View("metadata.thickness", "Thick", HoMetadataBufferDebugMode.Thickness),
-            View("metadata.curvature", "Curve", HoMetadataBufferDebugMode.Curvature),
-            View("metadata.material", "Mat", HoMetadataBufferDebugMode.Material),
-            View("metadata.transmittance-hint", "Trans", HoMetadataBufferDebugMode.TransmittanceHint),
+            // 表面数值（thickness / curvature / material / transmittance / surfaceColor / reflectionMaterial）
+            // 的视图已退役：它们现在归 SB，DebugTile 里有 RenderKind = SurfaceBuffer 的对应视图。
             View("metadata.custom0", "MC0", HoMetadataBufferDebugMode.Custom0),
             View("metadata.custom1", "MC1", HoMetadataBufferDebugMode.Custom1),
             View("metadata.custom2", "MC2", HoMetadataBufferDebugMode.Custom2),
@@ -34,9 +32,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             View("metadata.rsuv-character-id", "Char", HoMetadataBufferDebugMode.RsuvCharacterId),
             View("metadata.rsuv-part-id", "Part", HoMetadataBufferDebugMode.RsuvPartId),
             View("metadata.rsuv-flags", "RFlag", HoMetadataBufferDebugMode.RsuvFlags),
-            View("metadata.surface-color", "Base", HoMetadataBufferDebugMode.SurfaceColor),
-            View("metadata.mbuffer-depth", "MDep", HoMetadataBufferDebugMode.MBufferDepth),
-            View("metadata.reflection-material", "ReflMat", HoMetadataBufferDebugMode.ReflectionMaterial)
+            View("metadata.mbuffer-depth", "MDep", HoMetadataBufferDebugMode.MBufferDepth)
         };
 
         private static HoDebugViewInfo View(string viewId, string shortName, HoMetadataBufferDebugMode mode)
