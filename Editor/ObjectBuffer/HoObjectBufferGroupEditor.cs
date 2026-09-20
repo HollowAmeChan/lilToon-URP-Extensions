@@ -420,11 +420,64 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             {
                 var defaults = new HoObjectBufferSelectionEntry();
                 entry.FindPropertyRelative("tags").intValue = (int)defaults.tags;
-                entry.FindPropertyRelative("displayColor").colorValue = defaults.displayColor;
+                // 选区比部件多得多（袖子、配饰、眼白…），默认色全一样的话 debug 视图里根本分不开，
+                // 所以这里主动挑一个"当前还没被用过"的随机色；不喜欢就在面板上改。
+                entry.FindPropertyRelative("displayColor").colorValue = CreateUnusedSelectionColor(selectionsProperty, index);
                 selectedSelection = index;
             }
 
             structureChanged = true;
+        }
+
+        /// <summary>新建选区时给一个还没被用过的随机显示色（与已有条目至少差一点距离，挑不到就用最后一个候选）。</summary>
+        private static Color CreateUnusedSelectionColor(SerializedProperty list, int skipIndex)
+        {
+            const int maxAttempts = 16;
+            const float minDistance = 0.35f;
+            Color candidate = Color.HSVToRGB(Random.value, 0.55f, 0.95f);
+            for (int attempt = 0; attempt < maxAttempts; attempt++)
+            {
+                candidate = Color.HSVToRGB(Random.value, 0.55f, 0.95f);
+                if (!IsColorUsed(list, candidate, skipIndex, minDistance))
+                {
+                    break;
+                }
+            }
+
+            return candidate;
+        }
+
+        private static bool IsColorUsed(SerializedProperty list, Color candidate, int skipIndex, float minDistance)
+        {
+            if (list == null)
+            {
+                return false;
+            }
+
+            for (int i = 0; i < list.arraySize; i++)
+            {
+                if (i == skipIndex)
+                {
+                    continue;
+                }
+
+                SerializedProperty colorProperty = list.GetArrayElementAtIndex(i).FindPropertyRelative("displayColor");
+                if (colorProperty == null)
+                {
+                    continue;
+                }
+
+                Color existing = colorProperty.colorValue;
+                float distance = Mathf.Abs(existing.r - candidate.r)
+                    + Mathf.Abs(existing.g - candidate.g)
+                    + Mathf.Abs(existing.b - candidate.b);
+                if (distance < minDistance)
+                {
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         private void RemoveSelectedEntry(bool parts)
@@ -466,6 +519,9 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             EditorGUIUtility.labelWidth = DetailLabelWidth;
             try
             {
+                // 组 ID 常驻一行（只读）：它是自动分配的、平时不用动，但必须随时看得见。
+                DrawAssignedGroupIdRow();
+
                 if (listMode == ListMode.Parts)
                 {
                     if (partsProperty != null && partsProperty.arraySize > 0)
@@ -578,6 +634,22 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             return group != null ? Mathf.Clamp(group.groupId, 0, HoObjectBufferPaletteLimits.MaxGroups - 1) : 0;
         }
 
+        /// <summary>
+        /// 组 ID 只读行：它是"像素里身份的高字节 + 组表下标"，由注册表自动分配并写回组件，
+        /// 手填只会制造"两个组件抢同一个号"，所以这里只显示结果。
+        /// </summary>
+        private void DrawAssignedGroupIdRow()
+        {
+            int groupId = GetAssignedGroupId();
+            EditorGUILayout.LabelField(
+                new GUIContent(
+                    "组 ID",
+                    "自动分配：像素里身份的高字节，也是组表下标（上限 255 个组）。注册表按最小可用号分配并写回组件，" +
+                    "所以新建或删除别的组件都不会让已有的组换号。"),
+                new GUIContent(groupId > 0 ? $"0x{groupId:X2}（自动）" : "待分配（下一次重建时给号）"),
+                EditorStyles.miniLabel);
+        }
+
         // ------------------------------------------------------------------ 底部：状态与刷新
 
         private void DrawFooter()
@@ -586,9 +658,8 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             using (new EditorGUILayout.HorizontalScope())
             {
                 int partRows = Mathf.Max(0, HoObjectBufferRegistry.PartRowCount - 1);
-                int groupId = GetAssignedGroupId();
                 EditorGUILayout.LabelField(
-                    $"组 {(groupId > 0 ? groupId.ToString() : "—")} · 已注册 部件 {partRows} / {HoObjectBufferPaletteLimits.MaxPartRows}，选择 {HoObjectBufferRegistry.SelectionCount} / {HoObjectBufferPaletteLimits.MaxSelections - 1}",
+                    $"已注册 部件 {partRows} / {HoObjectBufferPaletteLimits.MaxPartRows}，选择 {HoObjectBufferRegistry.SelectionCount} / {HoObjectBufferPaletteLimits.MaxSelections - 1}",
                     EditorStyles.miniLabel);
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button(RefreshLabel, GUILayout.Width(150.0f)))
