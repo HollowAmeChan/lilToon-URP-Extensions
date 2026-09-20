@@ -171,12 +171,6 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
             float ComposeLane(uint mode, float objectCoverage, float2 surface, float samples)
             {
                 #if defined(_HO_SURFACE_SEMANTIC_MSAA_2) || defined(_HO_SURFACE_SEMANTIC_MSAA_4)
-                    // ==== 临时诊断（查眼睛区拖影）：把合成强制成 SurfaceOnly ====
-                    // 这样 Selection 池里显示的就是"SB 到底写了什么"（未写 = 0），不掺任何物体位。
-                    // 眼睛/前发材质的「语义权重」设 0 时这里必须立刻变 0 —— 如果不变，说明权重根本没进到
-                    // 这个 pass（材质没这个属性 / palette 的物体位门控没过 / lane↔id 对不上）。
-                    // 定位完把下一行删掉即可恢复正常的逐 lane sourceMode。
-                    mode = 1u;
                     float surfaceAll = saturate(surface.y / max(1.0, samples));
                     if (mode == 1u)
                     {
