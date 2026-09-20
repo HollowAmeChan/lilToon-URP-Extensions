@@ -25,8 +25,9 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView"
 
             TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
-            TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture);
-            TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
+            // 与主 shader 同源：表面数值从 AC 门面取，MB 的 surface 族在这条链上退役（调试页不能对着旧数据说话）。
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACQuery.hlsl"
+            TEXTURE2D_X(_HoSurfaceBufferColorTexture);
             TEXTURE2D_X(_lilHoSSSSourceTexture);
             TEXTURE2D_X(_lilHoSSSTransmissionTexture);
 
@@ -53,9 +54,13 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView"
                 return SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
             }
 
+            // 兼容行：与主 shader 的 HoSSSSurfaceData 同一套通道序（r=thickness、g=transmittance、
+            // b=profile、a=curvature），所以下面的 profile 比较 / thinness 一行都不用改。
             float4 HoSSSSurfaceData(float2 uv)
             {
-                return SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture, sampler_PointClamp, uv);
+                float4 classification = HoAC_Attribute(uv, 0);
+                float4 material = HoAC_Attribute(uv, 1);
+                return float4(material.b, classification.b, classification.r, classification.g);
             }
 
             float3 HoSSSDecodeNormal(float3 encodedNormal)
@@ -129,7 +134,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView"
 
             float HoSSSSurfaceMask(float2 uv, float4 normalDepth, float4 surfaceData)
             {
-                return step(0.5, _HoMetadataBufferActive) * saturate(HoSSSCoverage(uv) * HoSSSThinness(surfaceData)) * HoSSSGeometryValid(normalDepth);
+                return (HoAC_SurfaceValid(uv) ? 1.0 : 0.0) * saturate(HoSSSCoverage(uv) * HoSSSThinness(surfaceData)) * HoSSSGeometryValid(normalDepth);
             }
 
             float2 HoSSSNormalizeDirection(float2 direction, float2 fallbackDirection)
@@ -237,7 +242,7 @@ Shader "Hidden/lilToon/URP/HoSubsurfaceScattering/DebugView"
 
                 float2 uv = input.texcoord;
                 float4 cameraColor = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
-                float4 metadataSource = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_PointClamp, uv);
+                float4 metadataSource = SAMPLE_TEXTURE2D_X(_HoSurfaceBufferColorTexture, sampler_PointClamp, uv);
                 float4 sss = SAMPLE_TEXTURE2D_X(_lilHoSSSSourceTexture, sampler_LinearClamp, uv);
                 float4 normalDepth = HoSSSNormalDepth(uv);
                 float4 surfaceData = HoSSSSurfaceData(uv);
