@@ -81,6 +81,11 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             public bool idFormatIsInteger;
             public bool selectionEnabled;
             public float selectionLayerCount;
+            // resolve 的**输入**（MSAA 目标）：RenderGraph 路径必须在 resolve 里把它们绑成全局，
+            // 否则 resolve shader 采样的是未绑定纹理 ⇒ 归约结果恒为 0 ⇒ 调试视图只剩背景灰。
+            public TextureHandle idMsaaTexture;
+            public TextureHandle depthMsaaTexture;
+            public TextureHandle selectionMsaaTexture;
         }
 
         private sealed class ResetPassData
@@ -375,6 +380,9 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                     passData.idFormatIsInteger = IsIdFormatInteger();
                     passData.selectionEnabled = selection;
                     passData.selectionLayerCount = selection ? settings.RequestedSelectionLayerCount : 0;
+                    passData.idMsaaTexture = idMsaaTexture;
+                    passData.depthMsaaTexture = depthMsaaTexture;
+                    passData.selectionMsaaTexture = selectionMsaaTexture;
 
                     builder.UseTexture(idMsaaTexture, AccessFlags.Read);
                     builder.UseTexture(depthMsaaTexture, AccessFlags.Read);
@@ -410,6 +418,15 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                         }
 
                         SetResolveKeywords(data.resolveMaterial, data.msaaSamples, data.idFormatIsInteger, data.selectionEnabled);
+                        // resolve 的输入必须在这里绑成全局：RenderGraph 路径不会自动把 UseTexture 的句柄
+                        // 暴露成全局名，少了这三行 resolve 就一直在采样未绑定纹理（归约出全 0）。
+                        context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.ResolveIdTextureMsId, data.idMsaaTexture);
+                        context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.ResolveDepthTextureMsId, data.depthMsaaTexture);
+                        if (data.selectionMsaaTexture.IsValid())
+                        {
+                            context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.ResolveSelectionTextureMsId, data.selectionMsaaTexture);
+                        }
+
                         context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ActiveId, 1.0f);
                         context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionLayerCountId, data.selectionLayerCount);
                         context.cmd.DrawProcedural(Matrix4x4.identity, data.resolveMaterial, 0, MeshTopology.Triangles, 3, 1);
