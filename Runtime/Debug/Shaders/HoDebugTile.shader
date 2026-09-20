@@ -25,6 +25,8 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             // IdPass 里才有 HoObjectBufferUnpackSelection（它自己会 include palette 表），
             // 只 include palette 会在用到选择解包时炸 "undeclared identifier"。
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferIdPass.hlsl"
+            // octa / owner 的编解码：SB 的平铺视图（RenderKind = SurfaceBuffer）要用，与生产者/消费端共用一份实现。
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SurfaceBuffer/Shaders/HoSurfaceBufferCommon.hlsl"
 
             #if defined(PROBE_VOLUMES_L1) || defined(PROBE_VOLUMES_L2)
             #include "Packages/com.unity.render-pipelines.core/Runtime/Lighting/ProbeVolume/ProbeVolume.hlsl"
@@ -55,6 +57,21 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             TEXTURE2D_X(_lilHoSSSTransmissionTexture);
             TEXTURE2D(_LILPBRPlanarReflectionTexture);
             SAMPLER(sampler_LILPBRPlanarReflectionTexture);
+            // SB 的平铺视图（RenderKind = SurfaceBuffer）：与 Volume 的整屏调试共用同一套 mode。
+            TEXTURE2D_X(_HoSurfaceBufferColorTexture);
+            TEXTURE2D_X(_HoSurfaceBufferNormalTexture);
+            TEXTURE2D_X(_HoSurfaceBufferMaterialTexture);
+            TEXTURE2D_X(_HoSurfaceBufferReflectionTexture);
+            TEXTURE2D_X(_HoSurfaceBufferClassificationTexture);
+            TEXTURE2D_X(_HoSurfaceBufferOwnerTexture);
+            TEXTURE2D_X(_HoSurfaceSemanticOwnerTexture);
+            TEXTURE2D_X(_HoSurfaceSemanticLane0Texture);
+            TEXTURE2D_X(_HoSurfaceSemanticLane1Texture);
+            TEXTURE2D_X(_HoSurfaceSemanticLane2Texture);
+            TEXTURE2D_X(_HoSurfaceSemanticLane3Texture);
+            float _HoSurfaceBufferActive;
+            float _HoSurfaceSemanticActive;
+            float _HoObjectBufferActive;
             TEXTURE2D_X(_HoObjectBufferId0Texture);
             TEXTURE2D_X(_HoObjectBufferId1Texture);
             TEXTURE2D_X(_HoObjectBufferCoverageTexture);
@@ -189,6 +206,131 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
 
                 half4 values4 = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture, sampler_PointClamp, uv);
                 return values4[customIndex - 4];
+            }
+
+            /// <summary>
+            /// SB 的平铺视图：与 Volume 的整屏调试**共用同一套 mode**（`HoSurfaceBufferDebugMode`）。
+            /// 未产出时整格暗红（`_HoSurfaceBufferActive`），"没跑"与"值是 0"一眼分开。
+            /// </summary>
+            half4 ResolveSurfaceBufferColor(float2 uv)
+            {
+                int mode = _HoDebugTileMode;
+                if (_HoSurfaceBufferActive <= 0.5)
+                {
+                    return half4(0.35, 0.0, 0.0, 1.0);
+                }
+
+                if (mode == 1)
+                {
+                    return half4(SAMPLE_TEXTURE2D_X(_HoSurfaceBufferColorTexture, sampler_PointClamp, uv).rgb, 1.0h);
+                }
+
+                if (mode == 2)
+                {
+                    float2 octa = SAMPLE_TEXTURE2D_X(_HoSurfaceBufferNormalTexture, sampler_PointClamp, uv).rg;
+                    return half4((half3)(HoSurfaceOctDecode(octa) * 0.5 + 0.5), 1.0h);
+                }
+
+                if (mode == 3)
+                {
+                    float4 material = SAMPLE_TEXTURE2D_X(_HoSurfaceBufferMaterialTexture, sampler_PointClamp, uv);
+                    return half4(1.0 - material.r, material.g, material.b, 1.0h);
+                }
+
+                if (mode == 4)
+                {
+                    float4 reflection = SAMPLE_TEXTURE2D_X(_HoSurfaceBufferReflectionTexture, sampler_PointClamp, uv);
+                    return half4(reflection.r, reflection.g, 0.0h, 1.0h);
+                }
+
+                if (mode == 5)
+                {
+                    float4 classification = SAMPLE_TEXTURE2D_X(_HoSurfaceBufferClassificationTexture, sampler_PointClamp, uv);
+                    return half4(saturate(classification.r * 8.0), classification.g, classification.b, 1.0h);
+                }
+
+                if (mode == 6)
+                {
+                    if (_HoObjectBufferActive <= 0.5)
+                    {
+                        return half4(1.0, 0.0, 1.0, 1.0);
+                    }
+
+                    float4 id0 = SAMPLE_TEXTURE2D_X(_HoObjectBufferId0Texture, sampler_PointClamp, uv);
+                    uint obLayer0 = (((uint)round(saturate(id0.r) * 255.0)) << 8) | (uint)round(saturate(id0.g) * 255.0);
+                    uint owner = HoSurfaceOwnerDecode(SAMPLE_TEXTURE2D_X(_HoSurfaceBufferOwnerTexture, sampler_PointClamp, uv).rg);
+                    if (owner == 0u)
+                    {
+                        return half4(0.8, 0.15, 0.15, 1.0);
+                    }
+
+                    return owner == obLayer0 ? half4(0.1, 0.8, 0.2, 1.0) : half4(0.95, 0.6, 0.1, 1.0);
+                }
+
+                if (mode == 7)
+                {
+                    float4 classification = SAMPLE_TEXTURE2D_X(_HoSurfaceBufferClassificationTexture, sampler_PointClamp, uv);
+                    return half4((half)saturate(classification.a * 32.0), 0.0h, 0.0h, 1.0h);
+                }
+
+                if (mode == 8)
+                {
+                    if (_HoSurfaceSemanticActive <= 0.5 || _HoObjectBufferActive <= 0.5)
+                    {
+                        return half4(_HoSurfaceSemanticActive <= 0.5 ? 0.35 : 1.0, 0.0, _HoSurfaceSemanticActive <= 0.5 ? 0.0 : 1.0, 1.0);
+                    }
+
+                    float4 id0 = SAMPLE_TEXTURE2D_X(_HoObjectBufferId0Texture, sampler_PointClamp, uv);
+                    uint obLayer0 = (((uint)round(saturate(id0.r) * 255.0)) << 8) | (uint)round(saturate(id0.g) * 255.0);
+                    uint owner = HoSurfaceOwnerDecode(SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticOwnerTexture, sampler_PointClamp, uv).rg);
+                    if (owner == 0u)
+                    {
+                        return half4(0.8, 0.15, 0.15, 1.0);
+                    }
+
+                    return owner == obLayer0 ? half4(0.1, 0.8, 0.2, 1.0) : half4(0.95, 0.6, 0.1, 1.0);
+                }
+
+                if (mode == 9)
+                {
+                    if (_HoSurfaceSemanticActive <= 0.5)
+                    {
+                        return half4(0.35, 0.0, 0.0, 1.0);
+                    }
+
+                    uint col = (uint)min(3.0, floor(uv.x * 4.0));
+                    uint row = (uint)min(1.0, floor(uv.y * 2.0));
+                    uint lane = row * 4u + col;
+                    float4 packed;
+                    if (lane < 2u)
+                    {
+                        packed = SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticLane0Texture, sampler_PointClamp, uv);
+                    }
+                    else if (lane < 4u)
+                    {
+                        packed = SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticLane1Texture, sampler_PointClamp, uv);
+                    }
+                    else if (lane < 6u)
+                    {
+                        packed = SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticLane2Texture, sampler_PointClamp, uv);
+                    }
+                    else
+                    {
+                        packed = SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticLane3Texture, sampler_PointClamp, uv);
+                    }
+
+                    bool even = (lane & 1u) == 0u;
+                    uint laneId = (uint)round(saturate(even ? packed.r : packed.b) * 255.0);
+                    float laneValue = saturate(even ? packed.g : packed.a);
+                    if (laneId == 0u)
+                    {
+                        return half4(0.35, 0.0, 0.0, 1.0);
+                    }
+
+                    return half4((half)((float)laneId / 255.0), (half)laneValue, 1.0h, 1.0h);
+                }
+
+                return DebugScalar(0.0h);
             }
 
             half4 ResolveMetadataColor(float2 uv)
@@ -906,6 +1048,10 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 else if (_HoDebugTileRenderKind == 7)
                 {
                     color = ResolveObjectBufferColor(input.uv);
+                }
+                else if (_HoDebugTileRenderKind == 8)
+                {
+                    color = ResolveSurfaceBufferColor(input.uv);
                 }
                 else
                 {

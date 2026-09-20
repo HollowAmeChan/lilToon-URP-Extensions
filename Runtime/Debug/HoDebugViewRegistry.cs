@@ -7,6 +7,7 @@ using lilToon.URP.Extensions.PlanarReflection;
 using lilToon.URP.Extensions.ScreenProcess;
 using lilToon.URP.Extensions.ShadowCast;
 using lilToon.URP.Extensions.SubsurfaceScattering;
+using lilToon.URP.Extensions.SurfaceBuffer;
 
 namespace lilToon.URP.Extensions.Debugging
 {
@@ -24,6 +25,7 @@ namespace lilToon.URP.Extensions.Debugging
                 AddRange(views, HoShadowCastDebugViewInfo.Views);
                 AddRange(views, HoSubsurfaceScatteringDebugViewInfo.Views);
                 AddRange(views, HoPlanarReflectionDebugViewInfo.Views);
+                AddRange(views, HoSurfaceBufferDebugViewInfo.Views);
                 AddRange(views, ScreenProcessDebugViewInfo.Views);
                 AddRange(views, ImageProcessDebugViewInfo.Views);
                 return views;

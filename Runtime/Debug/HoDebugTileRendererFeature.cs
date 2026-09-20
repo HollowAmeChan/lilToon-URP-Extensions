@@ -7,6 +7,7 @@ using lilToon.URP.Extensions.ObjectBuffer;
 using lilToon.URP.Extensions.PlanarReflection;
 using lilToon.URP.Extensions.ShadowCast;
 using lilToon.URP.Extensions.SubsurfaceScattering;
+using lilToon.URP.Extensions.SurfaceBuffer;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
@@ -156,6 +157,7 @@ namespace lilToon.URP.Extensions.Debugging
                 HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
                 HoShadowCastRenderGraphResources shadowCastResources = frameData.GetOrCreate<HoShadowCastRenderGraphResources>();
                 HoSubsurfaceScatteringRenderGraphResources sssResources = frameData.GetOrCreate<HoSubsurfaceScatteringRenderGraphResources>();
+                HoSurfaceBufferRenderGraphResources surfaceResources = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
 
                 bool hasMaskId = metadataResources.maskIdTexture.IsValid();
                 bool hasCustom0 = metadataResources.custom0Texture.IsValid();
@@ -168,6 +170,8 @@ namespace lilToon.URP.Extensions.Debugging
                     && metadataResources.mBufferDepthTexture.IsValid();
                 bool hasGeometry = geometryResources.normalDepthTexture.IsValid();
                 bool hasObjectBuffer = objectResources.HasRequiredTextures;
+                // SB 的平铺视图：五张数值图 + owner 就够；语义 lane 的视图在语义趟没跑时会各自画暗红。
+                bool hasSurfaceBuffer = surfaceResources.HasRequiredTextures;
                 RTHandle planarReflectionRtHandle = HoPlanarReflectionSurface.CurrentReflectionTextureHandle;
                 RenderTexture planarReflectionTextureResource = HoPlanarReflectionSurface.CurrentReflectionTexture;
                 bool hasPlanarReflectionTexture = planarReflectionRtHandle != null && planarReflectionTextureResource != null;
@@ -187,7 +191,8 @@ namespace lilToon.URP.Extensions.Debugging
                     hasShadowCastAtlas,
                     hasShadowCastSecondDirectionalAtlas,
                     hasSubsurfaceScattering,
-                    hasPlanarReflectionInputs);
+                    hasPlanarReflectionInputs,
+                    hasSurfaceBuffer);
                 if (tiles.Count == 0)
                 {
                     return;
@@ -239,6 +244,7 @@ namespace lilToon.URP.Extensions.Debugging
                     passData.bindShadowCastAtlas = resourceNeeds.shadowCastAtlas && hasShadowCastAtlas;
                     passData.bindShadowCastSecondDirectionalAtlas = resourceNeeds.shadowCastSecondDirectionalAtlas && hasShadowCastSecondDirectionalAtlas;
                     passData.bindSubsurfaceScattering = resourceNeeds.subsurfaceScattering && hasSubsurfaceScattering;
+                    passData.bindSurfaceBuffer = resourceNeeds.surfaceBuffer && hasSurfaceBuffer;
                     passData.maskIdTexture = metadataResources.maskIdTexture;
                     passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
                     passData.custom0Texture = metadataResources.custom0Texture;
@@ -270,6 +276,26 @@ namespace lilToon.URP.Extensions.Debugging
                         builder.UseTexture(passData.objectCustom1Texture, AccessFlags.Read);
                         builder.UseTexture(passData.surfaceColorTexture, AccessFlags.Read);
                         builder.UseTexture(passData.mBufferDepthTexture, AccessFlags.Read);
+                    }
+
+                    if (passData.bindSurfaceBuffer)
+                    {
+                        // SB 的平铺视图（RenderKind = SurfaceBuffer）：数值面 + owner 必读；语义 lane 有产出才读。
+                        // 全局名由 SB 的 pass 自己绑（它不会被裁），这里只声明 RDG 读依赖。
+                        builder.UseTexture(surfaceResources.colorTexture, AccessFlags.Read);
+                        builder.UseTexture(surfaceResources.normalTexture, AccessFlags.Read);
+                        builder.UseTexture(surfaceResources.materialTexture, AccessFlags.Read);
+                        builder.UseTexture(surfaceResources.reflectionTexture, AccessFlags.Read);
+                        builder.UseTexture(surfaceResources.classificationTexture, AccessFlags.Read);
+                        builder.UseTexture(surfaceResources.ownerTexture, AccessFlags.Read);
+                        if (surfaceResources.HasSemanticLanes)
+                        {
+                            builder.UseTexture(surfaceResources.semanticOwnerTexture, AccessFlags.Read);
+                            for (int i = 0; i < surfaceResources.semanticLaneTextures.Length; i++)
+                            {
+                                builder.UseTexture(surfaceResources.semanticLaneTextures[i], AccessFlags.Read);
+                            }
+                        }
                     }
 
                     else
@@ -450,6 +476,7 @@ namespace lilToon.URP.Extensions.Debugging
                 bool hasShadowCastAtlas,
                 bool hasShadowCastSecondDirectionalAtlas,
                 bool hasSubsurfaceScattering,
+            bool hasSurfaceBuffer,
                 bool hasPlanarReflectionInputs)
             {
                 List<DebugTile> tiles = new List<DebugTile>();
@@ -491,6 +518,11 @@ namespace lilToon.URP.Extensions.Debugging
                     }
 
                     if (view.RenderKind == HoDebugViewRenderKind.SubsurfaceScattering && !hasSubsurfaceScattering)
+                    {
+                        continue;
+                    }
+
+                    if (view.RenderKind == HoDebugViewRenderKind.SurfaceBuffer && !hasSurfaceBuffer)
                     {
                         continue;
                     }
@@ -575,7 +607,8 @@ namespace lilToon.URP.Extensions.Debugging
                     bool shadowCastAtlas,
                     bool shadowCastSecondDirectionalAtlas,
                     bool subsurfaceScattering,
-                    bool planarReflectionBuffers)
+                    bool planarReflectionBuffers,
+                    bool surfaceBuffer)
                 {
                     this.fullMetadata = fullMetadata;
                     this.objectBuffer = objectBuffer;
@@ -584,6 +617,7 @@ namespace lilToon.URP.Extensions.Debugging
                     this.shadowCastSecondDirectionalAtlas = shadowCastSecondDirectionalAtlas;
                     this.subsurfaceScattering = subsurfaceScattering;
                     this.planarReflectionBuffers = planarReflectionBuffers;
+                    this.surfaceBuffer = surfaceBuffer;
                 }
 
                 public readonly bool fullMetadata;
@@ -593,6 +627,7 @@ namespace lilToon.URP.Extensions.Debugging
                 public readonly bool shadowCastSecondDirectionalAtlas;
                 public readonly bool subsurfaceScattering;
                 public readonly bool planarReflectionBuffers;
+                public readonly bool surfaceBuffer;
 
                 public static ResourceNeeds FromTiles(List<DebugTile> tiles)
                 {
@@ -603,6 +638,7 @@ namespace lilToon.URP.Extensions.Debugging
                     bool shadowCastSecondDirectionalAtlas = false;
                     bool subsurfaceScattering = false;
                     bool planarReflectionBuffers = false;
+                    bool surfaceBuffer = false;
 
                     for (int i = 0; i < tiles.Count; i++)
                     {
@@ -638,6 +674,9 @@ namespace lilToon.URP.Extensions.Debugging
                             case HoDebugViewRenderKind.PlanarReflection:
                                 planarReflectionBuffers |= tile.modeValue != (int)HoPlanarReflectionDebugMode.InputStatus;
                                 break;
+                            case HoDebugViewRenderKind.SurfaceBuffer:
+                                surfaceBuffer = true;
+                                break;
                         }
                     }
 
@@ -648,7 +687,8 @@ namespace lilToon.URP.Extensions.Debugging
                         shadowCastAtlas,
                         shadowCastSecondDirectionalAtlas,
                         subsurfaceScattering,
-                        planarReflectionBuffers);
+                        planarReflectionBuffers,
+                        surfaceBuffer);
                 }
             }
 
@@ -715,6 +755,7 @@ namespace lilToon.URP.Extensions.Debugging
                 public bool bindShadowCastSecondDirectionalAtlas;
                 public bool bindSubsurfaceScattering;
                 public TextureHandle maskIdTexture;
+                public bool bindSurfaceBuffer;
                 public TextureHandle surfaceDataTexture;
                 public TextureHandle custom0Texture;
                 public TextureHandle objectCustom0Texture;

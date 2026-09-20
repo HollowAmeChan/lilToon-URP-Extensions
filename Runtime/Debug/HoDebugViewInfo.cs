@@ -9,7 +9,9 @@ namespace lilToon.URP.Extensions.Debugging
         SubsurfaceScattering = 4,
         PlanarReflection = 5,
         AdaptiveProbeVolume = 6,
-        ObjectBuffer = 7
+        ObjectBuffer = 7,
+        /// <summary>SB 的表面数值 + 语义 lane（DebugTile 里的平铺视图；与 §4.13 的"每个 lane 都要有视图"对应）。</summary>
+        SurfaceBuffer = 8
     }
 
     public readonly struct HoDebugViewInfo
