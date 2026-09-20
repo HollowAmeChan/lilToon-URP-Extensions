@@ -37,8 +37,11 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
             float4 _HoPlanarReflectionProcessedTexture_TexelSize;
 
             TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
-            TEXTURE2D_X(_HoMetadataBufferReflectionMaterialTexture);
-            TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
+            // 反射用的材质数值改从 AC 门面取（SB 的数值面 + owner 对齐）；MB 的 reflectionMaterial /
+            // surfaceColor 在这条链上退役。maskId（身份/遮罩）与 normalDepth（几何）还是 MB + GB 的，
+            // 那两条轴的迁移不在这一刀里。
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACQuery.hlsl"
+            TEXTURE2D_X(_HoSurfaceBufferColorTexture);
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
             TEXTURE2D(_HoPlanarReflectionProcessedTexture);
             SAMPLER(sampler_HoPlanarReflectionProcessedTexture);
@@ -72,11 +75,17 @@ Shader "Hidden/lilToon/URP/PlanarReflection/Composite"
                 }
 
                 half4 maskId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv);
-                half4 reflectionMaterial = SAMPLE_TEXTURE2D_X(_HoMetadataBufferReflectionMaterialTexture, sampler_PointClamp, uv);
-                half4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_PointClamp, uv);
+                // **兼容行**：老 `reflectionMaterial` = (perceptualRoughness, metallic, reflectance, plrStrength)，
+                // 现在由门面的两行拼出来（Material.r/.g + Reflection.r/.g）⇒ 下面的 smoothness / metallic /
+                // reflectance / strength 与调试视图一行都不用改。
+                half4 materialRow = (half4)HoAC_Attribute(uv, 1);
+                half4 reflectionRow = (half4)HoAC_Attribute(uv, 2);
+                half4 reflectionMaterial = half4(materialRow.r, materialRow.g, reflectionRow.r, reflectionRow.g);
+                half4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoSurfaceBufferColorTexture, sampler_PointClamp, uv);
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
 
-                half surfaceMask = saturate(maskId.r) * saturate(surfaceColor.a) * LilHoGeometryBufferCoverage(normalDepth);
+                // SB 的 `Color.a` 恒 1（不承载覆盖率）："有没有表面"改由 owner 对齐判定（与 SSS 同一套）。
+                half surfaceMask = saturate(maskId.r) * (HoAC_SurfaceValid(uv) ? 1.0h : 0.0h) * LilHoGeometryBufferCoverage(normalDepth);
                 half perceptualRoughness = saturate(reflectionMaterial.r);
                 half smoothness = 1.0h - perceptualRoughness;
                 half metallic = saturate(reflectionMaterial.g);
