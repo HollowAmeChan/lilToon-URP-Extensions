@@ -2,14 +2,13 @@
 
 ## Unreleased
 
-- 新增 **`Ho-CharacterBuffer`**（P1：本仓库侧）：用"per-pixel 只存 ID 与覆盖率、其余按 ID 查表"取代 MetadataBuffer 的位掩码。MetadataBuffer **暂时保留**，两者并存、互不依赖。
-  - **身份层**：`HoCharacterBufferGroup`（具名部件条目 + 具名选择条目）→ `HoCharacterBufferRegistry` 编成两级 palette（角色表 ≤256 行 / 部件表 ≤4096 行，行 0 = unknown）；分配 16 bit 部件 ID（角色 8 + 槽位 8）与独立的 8 bit 选择 ID。RSUV 只当索引，且**每次表重建后重写**（Unity 不序列化 RSUV，域重载后不重写会全场景索引变 0）。
-  - **覆盖率**：ID pass **自建 MSAA**（`R16_UInt`，回退 `R16_UNorm`），采样数来自 feature 设置、**与相机的 MSAA 开关解耦**（相机 AA 关掉时覆盖率照样是 4x——那正是这套东西要消灭的场景）；resolve 逐样本 `Load` 数票、票数降序取前 4、平票取更近的样本，**不做平均**。因 K = N = 4，实际配置下无尾部丢失：层里找不到某 ID 就等于它没覆盖该像素。
-  - **选择层**：Cryptomatte 式 `(选择 ID, 覆盖率)` 成对布局（一张 RGBA8 = 2 个选择），取代 `custom0~3` 这类匿名通道；只有 group 里注册了选择才分配那张图。
-  - **几何仍只有一个来源**：CB 不发布任何深度/法线通道，内部 depth-stencil 不发布、不被任何 shader 采样（含 debug）。
-  - 调试：11 个 `character.*` 视图（ID 按 palette 显示色上色，未注册为洋红；没产出时整屏暗红以区分"没跑"和"全背景"）+ feature/组件抽屉（抽屉会打印注册表实际分配的 ID）。
-  - **本条目尚未在 Unity 中编译与运行验证**（开发环境无编辑器）；P1 的已知留白：选择层只实现 2 个/像素（4 个配置告警后按 2 跑）、Sprite/SpriteShape/Tilemap 的 RSUV API 待核对命名空间、StructuredBuffer 不可用时只告警不降级、`Material0` 只分配不写入、lilToon 侧的 `HoCharacterBuffer` / `HoCharacterBufferSurface` pass 属跨仓（本仓库先用 fallback 材质验证链路，且 fallback 只覆盖不透明队列）。
-  - 规划与参考：`Documentation~/架构优化/Ho-CharacterBuffer_规划.md`。
+- 新增 **`Ho-ObjectBuffer` R1**：用“per-pixel 只存 IdentityId + coverage，其余按 ID 查表”替换 MetadataBuffer bit mask 身份路径。MetadataBuffer 暂时并存。
+  - **组件**：`HoObjectBufferGroup`（Add Component: `Rendering/Ho-ObjectBuffer Group`）维护组/部件表并把 16-bit `group:8 | slot:8` 写入 RSUV；重复组 ID 使冲突组全部失效并报错。
+  - **覆盖率**：自建 MSAA（R1 固定 `R16_UNorm`）与相机 AA 解耦，resolve 按整数 ID 数票取 4 层；深度平票改在 linear eye depth 上比较，修复 reversed-Z 方向错误。
+  - **lilToon 跨仓 pass**：22 个 URP `.lilblock` 模板新增 `LightMode=HoObjectBuffer`，复用 MetadataBuffer 已验证的 alpha-mask/dissolve/dither/cutout 逻辑；opaque fallback 仍作非 lilToon 兜底。
+  - **调试**：`HoObjectBufferVolume` 提供 ID0-3 / total coverage / layer coverage / valid 直出；`object.*` 视图已注册进 DebugTile。无产出时暗红，unknown palette 为洋红。
+  - **验证**：Unity 6000.3.15f1 实际编译 / Shader 导入通过；`RSUV → HoObjectBuffer pass → 自建 MSAA → resolve 数票 → palette → 调试视图` 整条链已在 PTP 场景实测闭合（组1 = `0x0100`、组2 = `0x0200`，层0 逐组上色，层1 在轮廓像素上给出第二个身份）。实测闭合的四条硬约束与"层1 边缘是设计结果"的判据见规划 0.3.9。
+  - 编辑器菜单 `HoLil/Validation/Validate Ho-ObjectBuffer R1` 是最小闭环回归：断言 Id0 亮且中性（身份没有被写死成常量）、覆盖率为 1、Valid 是绿哨兵、单物体层3 是背景灰；验证相机放在 y=1000，不受当前场景内容影响。
 
 - 修复：**切换场景后新场景渲染不出来（黑屏）、只能重启**，报 `MissingReferenceException: The object of type 'UnityEngine.Texture2D' has been destroyed`，栈顶为 `HoCharacterEyeAngleTable.Upload`。
   - 根因：`HoCharacterEyeAngleTable` 以 `Camera` 为键缓存"每相机一张"的表纹理，而 `RemoveStaleTables` 用 `camera == null` 判活。Unity 的 `UnityEngine.Object.==` 被重载为"已销毁对象的任何比较都返回 true"，于是**重载 / 域重载后连存活相机也被判成 stale**，其表纹理被 `CoreUtils.Destroy` 销毁，同一帧紧接着的 `Upload` 又去访问这张纹理。异常落在 `AddRenderPasses` 内部，会中断整条相机渲染录制的后续步骤，表现就是新场景什么都渲染不出来。

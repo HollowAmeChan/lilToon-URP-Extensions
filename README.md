@@ -14,6 +14,7 @@
 
 - `Runtime/OIT`：给 lilToon 透明 pass 使用的 Weighted Blended OIT。它会绘制 `LightMode = "lilToonOIT"`，写入 accumulation/revealage，再合成回 camera color。
 - `Runtime/MetadataBuffer`：材质、对象、mask、metadata 与当前 SSS source 输入缓冲。
+- `Runtime/ObjectBuffer`：R1 逐 sample IdentityId + coverage 底层；`HoObjectBufferGroup` 把组/部件 ID 写入 RSUV，Renderer Feature 用自建 MSAA resolve 成 4 层身份池。
 - `Runtime/GeometryBuffer`：normal/depth 几何输入缓冲。
 - `Runtime/CharacterSpecialization`：角色捕获和角色定制后处理，包括头发/脸部等风格化处理路径。
 - `Runtime/ScreenProcess`：用户可控的语义屏幕处理图层栈，支持 MetadataBuffer rule mask，并有 RenderGraph/非 RenderGraph 路径。
@@ -24,6 +25,7 @@
 ## Editor 模块
 
 - `Editor/MetadataBuffer`：MetadataBuffer Inspector 和工具。
+- `Editor/ObjectBuffer`：OB 组/部件 Inspector、Volume 调试 UI，以及 `HoLil/Validation/Validate Ho-ObjectBuffer R1` 最小闭环验证。
 - `Editor/CharacterSpecialization`：角色特化编辑器 UI。
 - `Editor/LilMatConvert`：材质转换工具。
 - `Editor/PostProcessing`：ScreenProcess/ImageProcess 图层栈编辑器。
@@ -36,6 +38,7 @@
 
 - `WeightedOITRendererFeature`
 - `HoMetadataBufferRendererFeature`
+- `HoObjectBufferRendererFeature`
 - `HoGeometryBufferRendererFeature`
 - `HoCharacterSpecializationRendererFeature`
 - `ScreenProcessRendererFeature`
@@ -44,6 +47,13 @@
 - `HoPlanarReflectionRendererFeature`
 
 平面反射由 `HoPlanarReflectionRendererFeature` 统一调度；把 `HoPlanarReflectionSurface` 加到反射平面 mesh 上作为表面描述组件。
+
+OB R1 最小使用：
+
+1. 在 Renderer Data 中启用 `HoObjectBufferRendererFeature`。
+2. 在角色/物体根节点添加 `Rendering/Ho-ObjectBuffer Group`，添加部件并拖入 Renderer。
+3. 在 Volume Profile 添加 `Ho-ObjectBuffer/逐物体通道`，选择 ID 或 Coverage 调试模式；同一批 `object.*` 视图也可在 Ho-DebugTile 中选择。
+4. 改完部件配置、或发生过域重载 / 切场景之后，点组件面板上的「刷新全场景 RSUV」——RSUV **不参与序列化**，不重写就等于全场景身份索引变 0（症状：物体整片消失，只剩背景）。
 
 ## 安装
 
