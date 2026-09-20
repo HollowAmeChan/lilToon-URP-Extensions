@@ -71,6 +71,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             public RendererListHandle idRendererList;
             public bool drawFallback;
             public bool selectionEnabled;
+            public bool useMsaa;
             public float selectionLayerCount;
         }
 
@@ -206,7 +207,20 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
         {
-            ReleaseCompatibilityResources();
+            // 回读诊断只在调试视图开着时工作：它要留一组不属于 RenderGraph 的持久 RT 当拷贝目标
+            // （RG 管理的纹理每帧会从池子里复用，回读它会读到别人的数据）。
+            bool readback = settings != null && settings.debugMode != HoObjectBufferDebugMode.Off;
+            HoObjectBufferReadback.Enabled = readback;
+            if (readback)
+            {
+                // 请求的是**上一帧**拷进去的内容：本帧的拷贝命令还没入队。
+                HoObjectBufferReadback.Request(renderTargets);
+            }
+            else
+            {
+                ReleaseCompatibilityResources();
+            }
+
             if (settings == null)
             {
                 AddResetPass(renderGraph);
@@ -223,6 +237,11 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             HoObjectBufferRenderGraphResources resources = frameData.GetOrCreate<HoObjectBufferRenderGraphResources>();
 
             RenderTextureDescriptor cameraDescriptor = cameraData.cameraTargetDescriptor;
+            if (readback)
+            {
+                // 拷贝目标只要单采样 RGBA8 层图（与主路径的 MSAA 协商无关），复用兼容路径那组 RTHandle。
+                renderTargets.ReAllocateIfNeeded(cameraDescriptor, 1, false);
+            }
             // 采样数**只问平台**：相机把 MSAA 关掉时，覆盖率照样是 4x（决策 7，也是最初那个 bug 的场景）。
             msaaSamples = HoObjectBufferFormatUtility.GetSupportedSampleCount(
                 cameraDescriptor,
@@ -304,6 +323,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                     : default;
                 passData.selectionEnabled = selection;
                 passData.selectionLayerCount = selection ? settings.RequestedSelectionLayerCount : 0;
+                passData.useMsaa = useMsaa;
 
                 if (passData.fallbackRendererList.IsValid())
                 {
@@ -317,25 +337,25 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
                 if (useMsaa)
                 {
-                    builder.SetRenderAttachment(idMsaaTexture, 0, AccessFlags.Write);
+                    builder.SetRenderAttachment(idMsaaTexture, 0, AccessFlags.WriteAll);
                     if (selection && selectionMsaaTexture.IsValid())
                     {
-                        builder.SetRenderAttachment(selectionMsaaTexture, 1, AccessFlags.Write);
+                        builder.SetRenderAttachment(selectionMsaaTexture, 1, AccessFlags.WriteAll);
                     }
 
-                    builder.SetRenderAttachmentDepth(depthMsaaTexture, AccessFlags.Write);
+                    builder.SetRenderAttachmentDepth(depthMsaaTexture, AccessFlags.WriteAll);
                 }
                 else
                 {
-                    builder.SetRenderAttachment(id0Texture, 0, AccessFlags.Write);
-                    builder.SetRenderAttachment(id1Texture, 1, AccessFlags.Write);
-                    builder.SetRenderAttachment(coverageTexture, 2, AccessFlags.Write);
+                    builder.SetRenderAttachment(id0Texture, 0, AccessFlags.WriteAll);
+                    builder.SetRenderAttachment(id1Texture, 1, AccessFlags.WriteAll);
+                    builder.SetRenderAttachment(coverageTexture, 2, AccessFlags.WriteAll);
                     if (selection && selectionTexture.IsValid())
                     {
-                        builder.SetRenderAttachment(selectionTexture, 3, AccessFlags.Write);
+                        builder.SetRenderAttachment(selectionTexture, 3, AccessFlags.WriteAll);
                     }
 
-                    builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.Write);
+                    builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.WriteAll);
                     builder.SetGlobalTextureAfterPass(id0Texture, HoObjectBufferShaderConstants.Id0TextureId);
                     builder.SetGlobalTextureAfterPass(id1Texture, HoObjectBufferShaderConstants.Id1TextureId);
                     builder.SetGlobalTextureAfterPass(coverageTexture, HoObjectBufferShaderConstants.CoverageTextureId);
@@ -349,9 +369,14 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (IdPassData data, RasterGraphContext context) =>
                 {
+                    // 自己清：附件用 WriteAll 时原生 pass 的 load action 是 DontCare（RG 不会替我们清），
+                    // 而"没被任何 draw 覆盖的像素必须是 0"是这条通道的硬契约（0 = 背景）。
+                    // GeometryBuffer 的输出 pass 也是这个写法，两边保持一致。
+                    context.cmd.ClearRenderTarget(RTClearFlags.ColorDepth, Color.clear, 1.0f, 0);
                     context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ActiveId, 1.0f);
                     // shader 只声明"实际绑定"的 target 数：绑定选择层时才声明 SV_Target3/1，
                     // 否则声明的 SV_Target 索引会超过绑定数，D3D 会**丢弃整个 draw**。
+                    // MSAA 下绑定的是逐样本身份图（1 个目标），材质侧的 pass 也要跟着换布局。
                     if (data.selectionEnabled)
                     {
                         Shader.EnableKeyword("_HO_OBJECT_BUFFER_SELECTION");
@@ -360,6 +385,16 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                     {
                         Shader.DisableKeyword("_HO_OBJECT_BUFFER_SELECTION");
                     }
+
+                    if (data.useMsaa)
+                    {
+                        Shader.EnableKeyword("_HO_OBJECT_BUFFER_MSAA");
+                    }
+                    else
+                    {
+                        Shader.DisableKeyword("_HO_OBJECT_BUFFER_MSAA");
+                    }
+
                     context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionLayerCountId, data.selectionLayerCount);
                     if (data.drawFallback && data.fallbackRendererList.IsValid())
                     {
@@ -393,15 +428,15 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                         builder.UseTexture(selectionMsaaTexture, AccessFlags.Read);
                     }
 
-                    builder.SetRenderAttachment(id0Texture, 0, AccessFlags.Write);
-                    builder.SetRenderAttachment(id1Texture, 1, AccessFlags.Write);
-                    builder.SetRenderAttachment(coverageTexture, 2, AccessFlags.Write);
+                    builder.SetRenderAttachment(id0Texture, 0, AccessFlags.WriteAll);
+                    builder.SetRenderAttachment(id1Texture, 1, AccessFlags.WriteAll);
+                    builder.SetRenderAttachment(coverageTexture, 2, AccessFlags.WriteAll);
                     if (selection && selectionTexture.IsValid())
                     {
-                        builder.SetRenderAttachment(selectionTexture, 3, AccessFlags.Write);
+                        builder.SetRenderAttachment(selectionTexture, 3, AccessFlags.WriteAll);
                     }
 
-                    builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.Write);
+                    builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.WriteAll);
                     builder.SetGlobalTextureAfterPass(id0Texture, HoObjectBufferShaderConstants.Id0TextureId);
                     builder.SetGlobalTextureAfterPass(id1Texture, HoObjectBufferShaderConstants.Id1TextureId);
                     builder.SetGlobalTextureAfterPass(coverageTexture, HoObjectBufferShaderConstants.CoverageTextureId);
@@ -431,9 +466,17 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
                         context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ActiveId, 1.0f);
                         context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionLayerCountId, data.selectionLayerCount);
+                        // 全屏三角形本来就铺满，但显式清一次把它和"只画了一半"的失败模式区分开：
+                        // 清理值就是契约里的"背景 = ID 0、覆盖率 0"。
+                        context.cmd.ClearRenderTarget(RTClearFlags.ColorDepth, Color.clear, 1.0f, 0);
                         context.cmd.DrawProcedural(Matrix4x4.identity, data.resolveMaterial, 0, MeshTopology.Triangles, 3, 1);
                     });
                 }
+            }
+
+            if (readback && renderTargets.Id0Texture != null)
+            {
+                AddReadbackCopyPass(renderGraph, id0Texture, coverageTexture, renderTargets);
             }
 
             using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("Ho-Object-Buffer Valid", out _, ProfilingSampler))
@@ -669,5 +712,43 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 });
             }
         }
+
+        /// <summary>
+        /// 调试回读：把 resolve 之后的层图拷进**不属于 RenderGraph** 的持久 RT。
+        /// 只有放在独立 pass 里才安全：这时 RG 才知道源纹理处于"可读"状态，
+        /// 在写它的那个 pass 内部直接拷会让 D3D12 的屏障对不上。
+        /// </summary>
+        private static void AddReadbackCopyPass(
+            RenderGraph renderGraph,
+            TextureHandle id0Texture,
+            TextureHandle coverageTexture,
+            HoObjectBufferRenderTargets targets)
+        {
+            using (var builder = renderGraph.AddUnsafePass<ReadbackPassData>("Ho-Object-Buffer Readback Copy", out ReadbackPassData passData, ProfilingSampler))
+            {
+                passData.id0Texture = id0Texture;
+                passData.coverageTexture = coverageTexture;
+                passData.id0Destination = targets.Id0Texture.nameID;
+                passData.coverageDestination = targets.CoverageTexture.nameID;
+                builder.UseTexture(id0Texture, AccessFlags.Read);
+                builder.UseTexture(coverageTexture, AccessFlags.Read);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (ReadbackPassData data, UnsafeGraphContext context) =>
+                {
+                    CommandBuffer cmd = CommandBufferHelpers.GetNativeCommandBuffer(context.cmd);
+                    cmd.CopyTexture(data.id0Texture, data.id0Destination);
+                    cmd.CopyTexture(data.coverageTexture, data.coverageDestination);
+                });
+            }
+        }
+
+        private sealed class ReadbackPassData
+        {
+            public TextureHandle id0Texture;
+            public TextureHandle coverageTexture;
+            public RenderTargetIdentifier id0Destination;
+            public RenderTargetIdentifier coverageDestination;
+        }
     }
 }
+
