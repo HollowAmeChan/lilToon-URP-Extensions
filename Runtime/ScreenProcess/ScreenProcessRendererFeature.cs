@@ -704,7 +704,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                     false,
                     false,
                     false,
-                    false,
                     false);
                 return;
             }
@@ -717,7 +716,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                     "Stack",
                     requirements,
                     0,
-                    false,
                     false,
                     false,
                     false,
@@ -959,7 +957,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                 false,
                 true,
                 metadataResources.maskIdTexture.IsValid(),
-                metadataResources.surfaceDataTexture.IsValid(),
                 metadataResources.custom0Texture.IsValid(),
                 metadataResources.objectCustom0Texture.IsValid(),
                 metadataResources.objectCustom1Texture.IsValid(),

@@ -22,11 +22,9 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         {
             public TextureHandle source;
             public TextureHandle maskIdTexture;
-            public TextureHandle surfaceDataTexture;
             public TextureHandle custom0Texture;
             public TextureHandle objectCustom0Texture;
             public TextureHandle objectCustom1Texture;
-            public TextureHandle reflectionMaterialTexture;
             public Material debugMaterial;
             public HoMetadataBufferDebugMode debugMode;
         }
@@ -92,11 +90,9 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             {
                 SetMaterialProperties(debugMaterial, settings);
                 cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, renderTargets.MaskIdTexture.nameID);
-                cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, renderTargets.SurfaceDataTexture.nameID);
                 cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, renderTargets.Custom0Texture.nameID);
                 cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, renderTargets.ObjectCustom0Texture.nameID);
                 cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, renderTargets.ObjectCustom1Texture.nameID);
-                cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ReflectionMaterialTextureId, renderTargets.ReflectionMaterialTexture.nameID);
                 Blitter.BlitCameraTexture(cmd, cameraColorTarget, tempTexture, 0, true);
                 Blitter.BlitCameraTexture(cmd, tempTexture, cameraColorTarget, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, debugMaterial, 0);
             }
@@ -117,12 +113,7 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
             TextureHandle source = resourceData.activeColorTexture;
             if (!source.IsValid()
-                || !metadataResources.maskIdTexture.IsValid()
-                || !metadataResources.surfaceDataTexture.IsValid()
-                || !metadataResources.custom0Texture.IsValid()
-                || !metadataResources.objectCustom0Texture.IsValid()
-                || !metadataResources.objectCustom1Texture.IsValid()
-                || !metadataResources.reflectionMaterialTexture.IsValid())
+                || !metadataResources.HasRequiredTextures)
             {
                 return;
             }
@@ -137,21 +128,17 @@ namespace lilToon.URP.Extensions.MetadataBuffer
             {
                 passData.source = source;
                 passData.maskIdTexture = metadataResources.maskIdTexture;
-                passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
                 passData.custom0Texture = metadataResources.custom0Texture;
                 passData.objectCustom0Texture = metadataResources.objectCustom0Texture;
                 passData.objectCustom1Texture = metadataResources.objectCustom1Texture;
-                passData.reflectionMaterialTexture = metadataResources.reflectionMaterialTexture;
                 passData.debugMaterial = debugMaterial;
                 passData.debugMode = settings.debugMode;
 
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.UseTexture(passData.maskIdTexture, AccessFlags.Read);
-                builder.UseTexture(passData.surfaceDataTexture, AccessFlags.Read);
                 builder.UseTexture(passData.custom0Texture, AccessFlags.Read);
                 builder.UseTexture(passData.objectCustom0Texture, AccessFlags.Read);
                 builder.UseTexture(passData.objectCustom1Texture, AccessFlags.Read);
-                builder.UseTexture(passData.reflectionMaterialTexture, AccessFlags.Read);
                 builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
@@ -160,11 +147,9 @@ namespace lilToon.URP.Extensions.MetadataBuffer
                     data.debugMaterial.SetFloat(HoMetadataBufferShaderConstants.DebugModeId, (float)data.debugMode);
                     context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.Custom0TextureId, data.custom0Texture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.objectCustom0Texture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.objectCustom1Texture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ReflectionMaterialTextureId, data.reflectionMaterialTexture);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.debugMaterial, 0);
                 });
             }

@@ -10,11 +10,9 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         public const string ActiveName = "_HoMetadataBufferActive";
         public const string SystemChannelMaskName = "_HoMetadataBufferSystemChannelMask";
         public const string MaskIdTextureName = "_HoMetadataBufferMaskIdTexture";
-        public const string SurfaceDataTextureName = "_HoMetadataBufferSurfaceDataTexture";
         public const string Custom0TextureName = "_HoMetadataBufferMaterialCustom0_3Texture";
         public const string ObjectCustom0TextureName = "_HoMetadataBufferObjectCustom0_3Texture";
         public const string ObjectCustom1TextureName = "_HoMetadataBufferObjectCustom4_7Texture";
-        public const string ReflectionMaterialTextureName = "_HoMetadataBufferReflectionMaterialTexture";
         public const string DepthTextureName = "_HoMetadataBufferDepthTexture";
 
         public const string MaskWeightName = "_HoMetadataBufferMaskWeight";
@@ -41,11 +39,9 @@ namespace lilToon.URP.Extensions.MetadataBuffer
         public static readonly int ActiveId = Shader.PropertyToID(ActiveName);
         public static readonly int SystemChannelMaskId = Shader.PropertyToID(SystemChannelMaskName);
         public static readonly int MaskIdTextureId = Shader.PropertyToID(MaskIdTextureName);
-        public static readonly int SurfaceDataTextureId = Shader.PropertyToID(SurfaceDataTextureName);
         public static readonly int Custom0TextureId = Shader.PropertyToID(Custom0TextureName);
         public static readonly int ObjectCustom0TextureId = Shader.PropertyToID(ObjectCustom0TextureName);
         public static readonly int ObjectCustom1TextureId = Shader.PropertyToID(ObjectCustom1TextureName);
-        public static readonly int ReflectionMaterialTextureId = Shader.PropertyToID(ReflectionMaterialTextureName);
         public static readonly int MaskWeightId = Shader.PropertyToID(MaskWeightName);
         public static readonly int SystemWriteMaskId = Shader.PropertyToID(SystemWriteMaskName);
         public static readonly int CustomWriteMaskId = Shader.PropertyToID(CustomWriteMaskName);

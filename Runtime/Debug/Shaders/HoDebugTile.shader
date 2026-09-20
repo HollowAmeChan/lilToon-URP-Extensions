@@ -332,29 +332,22 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 if (mode == 1) return half4(maskId.rrr, 1.0h);
                 if (mode == 2) return half4(HashEncodedId(maskId.gba) * valid * step(0.0001h, max(max(maskId.g, maskId.b), maskId.a)), 1.0h);
                 if (mode == 3) return half4(Heat(maskId.a) * step(0.0001h, maskId.a), 1.0h);
-                // mode 4..7 与 24（老 MB 的 surfaceData / surfaceColor 视图）已退役：
-                // 表面数值现在归 SB，DebugTile 里有 RenderKind = SurfaceBuffer 的对应视图。
 
-                if (mode >= 8 && mode <= 11)
+                if (mode >= 4 && mode <= 7)
                 {
                     half4 values = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture, sampler_PointClamp, uv);
-                    return DebugScalar(values[mode - 8]);
+                    return DebugScalar(values[mode - 4]);
                 }
 
-                if (mode >= 12 && mode <= 19)
+                if (mode >= 8 && mode <= 15)
                 {
-                    return DebugScalar(GetObjectCustomValue(mode - 12, uv));
+                    return DebugScalar(GetObjectCustomValue(mode - 8, uv));
                 }
 
-                if (mode == 20) return half4(maskId.gba, 1.0h);
-                if (mode == 21) return half4(HashEncodedId(maskId.g) * valid, 1.0h);
-                if (mode == 22) return half4(HashEncodedId(maskId.b) * valid, 1.0h);
-                if (mode == 23) return half4(Heat(maskId.a), 1.0h);
-                if (mode == 24)
-                {
-                    // 老 MB 的 surfaceColor 视图已退役（表面色现在归 SB，见 RenderKind = SurfaceBuffer）。
-                    return DebugScalar(maskId.r);
-                }
+                if (mode == 16) return half4(maskId.gba, 1.0h);
+                if (mode == 17) return half4(HashEncodedId(maskId.g) * valid, 1.0h);
+                if (mode == 18) return half4(HashEncodedId(maskId.b) * valid, 1.0h);
+                if (mode == 19) return half4(Heat(maskId.a), 1.0h);
 
                 return DebugScalar(maskId.r);
             }

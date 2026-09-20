@@ -8,7 +8,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         public readonly int ActiveLayerCount;
         public readonly bool RequiresMaskId;
         public readonly bool RequiresNormalDepth;
-        public readonly bool RequiresSurfaceData;
         public readonly bool RequiresCustom0;
         public readonly bool RequiresObjectCustom0;
         public readonly bool RequiresObjectCustom1;
@@ -18,7 +17,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             int activeLayerCount,
             bool requiresMaskId,
             bool requiresNormalDepth,
-            bool requiresSurfaceData,
             bool requiresCustom0,
             bool requiresObjectCustom0,
             bool requiresObjectCustom1,
@@ -27,7 +25,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             ActiveLayerCount = activeLayerCount;
             RequiresMaskId = requiresMaskId;
             RequiresNormalDepth = requiresNormalDepth;
-            RequiresSurfaceData = requiresSurfaceData;
             RequiresCustom0 = requiresCustom0;
             RequiresObjectCustom0 = requiresObjectCustom0;
             RequiresObjectCustom1 = requiresObjectCustom1;
@@ -51,8 +48,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         public readonly bool GeometryBufferAvailable;
         public readonly bool RequiresMaskId;
         public readonly bool MaskIdAvailable;
-        public readonly bool RequiresSurfaceData;
-        public readonly bool SurfaceDataAvailable;
         public readonly bool RequiresCustom0;
         public readonly bool Custom0Available;
         public readonly bool RequiresObjectCustom0;
@@ -77,7 +72,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             bool cameraColorAvailable,
             ScreenProcessRuntimeResourceRequirements requirements,
             bool maskIdAvailable,
-            bool surfaceDataAvailable,
             bool custom0Available,
             bool objectCustom0Available,
             bool objectCustom1Available,
@@ -95,26 +89,22 @@ namespace lilToon.URP.Extensions.PostProcessing
             BackBufferActive = backBufferActive;
             CameraColorAvailable = cameraColorAvailable;
             RequiresMaskId = requirements.RequiresMaskId;
-            RequiresSurfaceData = requirements.RequiresSurfaceData;
             RequiresCustom0 = requirements.RequiresCustom0;
             RequiresObjectCustom0 = requirements.RequiresObjectCustom0;
             RequiresObjectCustom1 = requirements.RequiresObjectCustom1;
             RequiresNormalDepth = requirements.RequiresNormalDepth;
             RequiresSkyTexture = requirements.RequiresSkyTexture;
             MaskIdAvailable = maskIdAvailable;
-            SurfaceDataAvailable = surfaceDataAvailable;
             Custom0Available = custom0Available;
             ObjectCustom0Available = objectCustom0Available;
             ObjectCustom1Available = objectCustom1Available;
             NormalDepthAvailable = normalDepthAvailable;
             SkyTextureAvailable = skyTextureAvailable;
             RequiresMetadataBuffer = RequiresMaskId
-                || RequiresSurfaceData
                 || RequiresCustom0
                 || RequiresObjectCustom0
                 || RequiresObjectCustom1;
             MetadataBufferAvailable = (!RequiresMaskId || MaskIdAvailable)
-                && (!RequiresSurfaceData || SurfaceDataAvailable)
                 && (!RequiresCustom0 || Custom0Available)
                 && (!RequiresObjectCustom0 || ObjectCustom0Available)
                 && (!RequiresObjectCustom1 || ObjectCustom1Available);
@@ -129,7 +119,7 @@ namespace lilToon.URP.Extensions.PostProcessing
     public static class ScreenProcessRuntimeDiagnostics
     {
         private static readonly ScreenProcessRuntimeResourceRequirements EmptyRequirements =
-            new ScreenProcessRuntimeResourceRequirements(0, false, false, false, false, false, false, false);
+            new ScreenProcessRuntimeResourceRequirements(0, false, false, false, false, false, false);
 
         private static readonly ScreenProcessRuntimeDiagnosticSnapshot EmptySnapshot =
             new ScreenProcessRuntimeDiagnosticSnapshot(
@@ -142,7 +132,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                 false,
                 false,
                 EmptyRequirements,
-                false,
                 false,
                 false,
                 false,
@@ -163,7 +152,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             bool requiresNormalDepth = false;
             // The deleted rule sources were the only ScreenProcess consumers of these MetadataBuffer
             // channels, so they stay reported (availability) but are never required until AC lands.
-            bool requiresSurfaceData = false;
             bool requiresCustom0 = false;
             bool requiresObjectCustom0 = false;
             bool requiresObjectCustom1 = false;
@@ -209,7 +197,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                 activeLayerCount,
                 requiresMaskId,
                 requiresNormalDepth,
-                requiresSurfaceData,
                 requiresCustom0,
                 requiresObjectCustom0,
                 requiresObjectCustom1,
@@ -235,7 +222,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                 false,
                 false,
                 false,
-                false,
                 reason);
         }
 
@@ -247,7 +233,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             bool backBufferActive,
             bool cameraColorAvailable,
             bool maskIdAvailable,
-            bool surfaceDataAvailable,
             bool custom0Available,
             bool objectCustom0Available,
             bool objectCustom1Available,
@@ -257,7 +242,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             bool ready = !backBufferActive
                 && cameraColorAvailable
                 && (!requirements.RequiresMaskId || maskIdAvailable)
-                && (!requirements.RequiresSurfaceData || surfaceDataAvailable)
                 && (!requirements.RequiresCustom0 || custom0Available)
                 && (!requirements.RequiresObjectCustom0 || objectCustom0Available)
                 && (!requirements.RequiresObjectCustom1 || objectCustom1Available)
@@ -275,7 +259,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                 cameraColorAvailable,
                 requirements,
                 maskIdAvailable,
-                surfaceDataAvailable,
                 custom0Available,
                 objectCustom0Available,
                 objectCustom1Available,
@@ -287,7 +270,6 @@ namespace lilToon.URP.Extensions.PostProcessing
                     backBufferActive,
                     cameraColorAvailable,
                     maskIdAvailable,
-                    surfaceDataAvailable,
                     custom0Available,
                     objectCustom0Available,
                     objectCustom1Available,
@@ -300,7 +282,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             bool backBufferActive,
             bool cameraColorAvailable,
             bool maskIdAvailable,
-            bool surfaceDataAvailable,
             bool custom0Available,
             bool objectCustom0Available,
             bool objectCustom1Available,
@@ -318,7 +299,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             bool metadataAvailable = (!requirements.RequiresMaskId || maskIdAvailable)
-                && (!requirements.RequiresSurfaceData || surfaceDataAvailable)
                 && (!requirements.RequiresCustom0 || custom0Available)
                 && (!requirements.RequiresObjectCustom0 || objectCustom0Available)
                 && (!requirements.RequiresObjectCustom1 || objectCustom1Available);

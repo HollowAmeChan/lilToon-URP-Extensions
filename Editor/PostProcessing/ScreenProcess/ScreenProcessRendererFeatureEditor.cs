@@ -107,7 +107,6 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 DrawRequiredStatus("MetadataBuffer", snapshot.RequiresMetadataBuffer, snapshot.MetadataBufferAvailable);
                 DrawRequiredStatus("GeometryBuffer", snapshot.RequiresGeometryBuffer, snapshot.GeometryBufferAvailable);
                 DrawRequiredStatus("MaskId", snapshot.RequiresMaskId, snapshot.MaskIdAvailable);
-                DrawRequiredStatus("SurfaceData", snapshot.RequiresSurfaceData, snapshot.SurfaceDataAvailable);
                 DrawRequiredStatus("Custom0", snapshot.RequiresCustom0, snapshot.Custom0Available);
                 DrawRequiredStatus("ObjectCustom0", snapshot.RequiresObjectCustom0, snapshot.ObjectCustom0Available);
                 DrawRequiredStatus("ObjectCustom1", snapshot.RequiresObjectCustom1, snapshot.ObjectCustom1Available);

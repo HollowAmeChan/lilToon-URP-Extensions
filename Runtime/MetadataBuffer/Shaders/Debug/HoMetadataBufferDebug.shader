@@ -27,11 +27,9 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
             float _HoMetadataBufferDebugMode;
 
             TEXTURE2D_X(_HoMetadataBufferMaskIdTexture);
-            TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture);
             TEXTURE2D_X(_HoMetadataBufferMaterialCustom0_3Texture);
             TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
             TEXTURE2D_X(_HoMetadataBufferObjectCustom4_7Texture);
-            TEXTURE2D_X(_HoMetadataBufferReflectionMaterialTexture);
 
             half3 HashColor(float3 value)
             {
@@ -99,7 +97,6 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
 
                 int mode = (int)round(_HoMetadataBufferDebugMode);
                 half4 maskId = SAMPLE_TEXTURE2D_X(_HoMetadataBufferMaskIdTexture, sampler_PointClamp, uv);
-                half4 surfaceData = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceDataTexture, sampler_PointClamp, uv);
                 half valid = step(0.0001, maskId.r);
 
                 if (mode == 1)
@@ -118,66 +115,40 @@ Shader "Hidden/lilToon/URP/MetadataBuffer/DebugView"
                     return half4(Heat(maskId.a) * step(0.0001, maskId.a), 1.0);
                 }
 
-                if (mode == 4)
+                if (mode >= 4 && mode <= 7)
                 {
-                    return half4(surfaceData.rrr, 1.0);
-                }
-
-                if (mode == 5)
-                {
-                    return half4(Heat(surfaceData.g) * step(0.0001, surfaceData.g), 1.0);
-                }
-
-                if (mode == 6)
-                {
-                    return half4(HashScalar(surfaceData.b), 1.0);
-                }
-
-                if (mode == 7)
-                {
-                    return half4(surfaceData.aaa, 1.0);
-                }
-
-                if (mode >= 8 && mode <= 11)
-                {
-                    half value = GetCustomValue(mode - 8, uv);
+                    half value = GetCustomValue(mode - 4, uv);
                     return half4(value, value, value, 1.0);
                 }
 
-                if (mode >= 12 && mode <= 19)
+                if (mode >= 8 && mode <= 15)
                 {
-                    half value = GetObjectCustomValue(mode - 12, uv);
+                    half value = GetObjectCustomValue(mode - 8, uv);
                     return half4(value, value, value, 1.0);
                 }
 
-                if (mode == 20)
+                if (mode == 16)
                 {
                     half hasRsuv = saturate(max(max(step(0.0001, maskId.g), step(0.0001, maskId.b)), step(0.0001, maskId.a)));
                     return half4(maskId.gba * hasRsuv, 1.0);
                 }
 
-                if (mode == 21)
+                if (mode == 17)
                 {
                     half hasValue = step(0.0001, maskId.g);
                     return lerp(source, half4(HashScalar(maskId.g), 1.0), valid * hasValue);
                 }
 
-                if (mode == 22)
+                if (mode == 18)
                 {
                     half hasValue = step(0.0001, maskId.b);
                     return lerp(source, half4(HashScalar(maskId.b), 1.0), valid * hasValue);
                 }
 
-                if (mode == 23)
+                if (mode == 19)
                 {
                     half hasValue = step(0.0001, maskId.a);
                     return half4(Heat(maskId.a) * hasValue, 1.0);
-                }
-
-                if (mode == 26)
-                {
-                    half4 reflectionMaterial = SAMPLE_TEXTURE2D_X(_HoMetadataBufferReflectionMaterialTexture, sampler_PointClamp, uv);
-                    return half4(reflectionMaterial.rgb, 1.0);
                 }
 
                 return source;
