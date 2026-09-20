@@ -74,9 +74,9 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 
 ## 5. 用语与命名
 
-- **UI 上不出现 "Cryptomatte"**（合规导出归 AC 直出或独立 feature）。
+- **UI 上不出现 "Cryptomatte"**（合规导出归独立 AOV/export feature）。
 - ID 相关名只用 OB §1.1 那一套：**组 ID / 部件 ID / 标记 / 物体位（全角色·脸·前发·眼睛·眼透区域·配件·人体·预留 7）/ 材质位 0~3**。
-- 槽位相关一律说"**语义槽**"（`ObjectBuffer.Selection`），身份相关说"**身份池**"。
+- 槽位相关一律说“**语义 lane**”（AC Selection transport lane）；UI 同时显示 SemanticId/名字，不把 LaneIndex 冒充 ID。身份相关说“**身份池**”。
 - 纹理名与契约登记名**不在 UI 上出现**（`_HoObjectBuffer*` 这类只在文档与代码里）。
 
 ## 6. 三个 feature 的具体分节
@@ -86,9 +86,9 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 | 侧 | 分节 | 内容 |
 | --- | --- | --- |
 | **Volume** | 运行 | 启用 |
-| | 调试 | 调试模式（身份池 `Id0` / `Id1` / 覆盖率 / 语义槽 / 朝向 / **溢出** / **未声明 ID**）、`Debug In Scene View`、`Debug In Game View`、强度 |
-| **Feature** | 运行（兜底） | 启用、**语义槽数（4 / 8 / 16，默认 4）**、朝向图开关、采集 `layerMask` |
-| | 声明（只读汇总） | 组表 / 条目表：名字 → 组 / 部件 / 标记 / 物体位 |
+| | 调试 | 身份池 `Id0` / `Id1` / coverage / Facing / object semantic lane mask / **溢出** / **未声明 ID** / owner 对齐参考 |
+| **Feature** | 运行（兜底） | 启用、朝向图开关、采集 `layerMask` |
+| | 声明（只读汇总） | 组表 / 条目表：名字 → 组 / 部件 / 标记 / 物体位 / object semantic membership |
 | | 高级 | `passEvent`、shader、`自建 MSAA 样本数 N = 4`（只读，标注"与相机 AA 解耦"） |
 | | 调试 | 一行 HelpBox → Volume |
 
@@ -97,9 +97,9 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 | 侧 | 分节 | 内容 |
 | --- | --- | --- |
 | **Volume** | 运行 | 启用 |
-| | 调试 | 六张图各一条视图（`Color` / `Normal` / `Material` / `Reflection` / `Classification` / `Selection`）、`Debug In Scene View`、`Debug In Game View`、强度 |
-| **Feature** | 运行（兜底） | 启用、六张图的**按需开关**默认值 |
-| | 声明（只读汇总） | 材质侧参数名；`Selection` 的槽名（来自 OB 的声明） |
+| | 调试 | `Color` / `Normal` / `Material` / `Reflection` / `Classification` / SurfaceOwner / 每个 SurfaceSemantic lane 的 ID·value·written / owner mismatch |
+| **Feature** | 运行（兜底） | 启用、五张数值图按需开关、semantic batch 质量/成本状态 |
+| | 声明（只读汇总） | 材质侧参数名；来自 `HoSemanticSchema` 的 surface-writable SemanticId / LaneIndex / sourceMode |
 | | 高级 | `passEvent`、shader、两段式深度说明 |
 | | 调试 | 一行 HelpBox → Volume |
 
@@ -108,9 +108,9 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 | 侧 | 分节 | 内容 |
 | --- | --- | --- |
 | **Volume** | 运行 | 启用、**按属性的 resolve 开关** |
-| | 调试 | 合成属性图 / 合成语义槽 / **消费者登记表** / **解析失败**、`Debug In Scene View`、`Debug In Game View`、强度 |
-| **Feature** | 运行（兜底） | 启用、属性清单默认开关 |
-| | 声明（只读汇总） | **消费者登记表：谁声明了哪些条目**（读不到就报出来） |
+| | 调试 | 合成属性图 / AC Selection lane SemanticId·coverage·sourceMode / object·surface sample / owner mismatch / **消费者登记表** / **解析失败** |
+| **Feature** | 运行（兜底） | 启用、属性清单默认开关、`HoSemanticSchema`、4/8/16 lane 成本档 |
+| | 声明（只读汇总） | SemanticId / LaneIndex / sourceMode / 消费者登记表（解析不到就报出来） |
 | | 高级 | `passEvent`、shader |
 | | 调试 | 一行 HelpBox → Volume |
 
