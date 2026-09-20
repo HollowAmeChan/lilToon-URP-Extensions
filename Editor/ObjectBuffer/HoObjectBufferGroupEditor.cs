@@ -50,7 +50,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         // 皮肤相关的颜色/样式**不能在静态初始化器里准备**（Unity 禁止在 ScriptableObject 构造期调
         // EditorGUIUtility / EditorStyles，读了会抛 TypeInitializationException 把抽屉整个打死），
         // 统一在 EnsureStyles() 里按需建一次。
-        private static Color listBackground;
         private static GUIStyle rowNameStyle;
         private static GUIStyle switchLabelStyle;
         private static GUIStyle switchActiveLabelStyle;
@@ -59,6 +58,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private static readonly Color RowHighlight = new Color(0.30f, 0.55f, 0.95f, 0.16f);
         private static readonly Color RowHover = new Color(1.0f, 1.0f, 1.0f, 0.06f);
         private static readonly Color RowAccent = new Color(0.35f, 0.65f, 1.0f, 0.85f);
+        private static readonly Color ColumnBackground = new Color(0.0f, 0.0f, 0.0f, 0.10f);
         private static readonly Color NeutralRow = new Color(0.0f, 0.0f, 0.0f, 0.10f);
 
         private static readonly GUIContent AddPartLabel = new GUIContent("+", "添加一个部件（名字先给个占位，其余自己填）");
@@ -198,18 +198,25 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                     listHeight,
                     GUILayout.Width(ListWidth),
                     GUILayout.Height(listHeight));
-                EditorGUI.DrawRect(area, listBackground);
+
+                // 整列底色从视口最左铺到列的右边界：Unity 的那圈内边距就被填掉了，
+                // 左边不再留一条空白；行自己的颜色再叠在这个底色上。
+                float bleedLeft = 0.0f;
+                float columnRight = area.xMax;
+                EditorGUI.DrawRect(
+                    new Rect(bleedLeft, header.y, columnRight - bleedLeft, area.yMax - header.y),
+                    ColumnBackground);
 
                 for (int i = 0; i < count && list != null && i < list.arraySize; i++)
                 {
                     Rect row = new Rect(area.x, area.y + i * (RowHeight + RowSpacing), area.width, RowHeight);
                     if (parts)
                     {
-                        DrawPartRow(row, i);
+                        DrawPartRow(row, bleedLeft, i);
                     }
                     else
                     {
-                        DrawSelectionRow(row, i);
+                        DrawSelectionRow(row, bleedLeft, i);
                     }
                 }
 
@@ -221,7 +228,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             }
         }
 
-        private void DrawPartRow(Rect row, int index)
+        private void DrawPartRow(Rect row, float bleedLeft, int index)
         {
             SerializedProperty entry = partsProperty.GetArrayElementAtIndex(index);
             SerializedProperty nameProperty = entry.FindPropertyRelative("name");
@@ -230,18 +237,19 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             string id = BuildRowIdText(partName);
             string title = string.IsNullOrEmpty(partName) ? "（空名字）" : partName;
 
-            DrawRowVisual(
+            Rect paint = DrawRowVisual(
                 row,
+                bleedLeft,
                 colorProperty != null ? colorProperty.colorValue : Color.gray,
                 title,
                 id,
                 $"{title}\n槽位 {index} · {id}\n列表顺序 = 槽位 = ID 的低字节；拖动可排序",
                 index == selectedPart);
 
-            HandleRowInput(row, partsProperty, index, ref selectedPart);
+            HandleRowInput(paint, partsProperty, index, ref selectedPart);
         }
 
-        private void DrawSelectionRow(Rect row, int index)
+        private void DrawSelectionRow(Rect row, float bleedLeft, int index)
         {
             SerializedProperty entry = selectionsProperty.GetArrayElementAtIndex(index);
             SerializedProperty nameProperty = entry.FindPropertyRelative("name");
@@ -250,15 +258,16 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             uint selectionId = HoObjectBufferRegistry.GetSelectionId(selectionName);
             string title = string.IsNullOrEmpty(selectionName) ? "（空名字）" : selectionName;
 
-            DrawRowVisual(
+            Rect paint = DrawRowVisual(
                 row,
+                bleedLeft,
                 colorProperty != null ? colorProperty.colorValue : Color.gray,
                 title,
                 selectionId > 0 ? selectionId.ToString() : "—",
                 $"{title}\nCryptomatte ID {(selectionId > 0 ? selectionId.ToString() : "未注册")}\n跨部件的具名集合；材质侧引用的是名字",
                 index == selectedSelection);
 
-            HandleRowInput(row, selectionsProperty, index, ref selectedSelection);
+            HandleRowInput(paint, selectionsProperty, index, ref selectedSelection);
         }
 
         /// <summary>
@@ -281,13 +290,18 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             return color;
         }
 
-        private static void DrawRowVisual(Rect row, Color color, string title, string rightText, string tooltip, bool selected)
+        /// <summary>
+        /// 画一行，返回**实际染色的整条 rect**（从视口最左一直到列右边界）：
+        /// 命中区要用它，否则"看着在行上、点下去没反应"的那条窄缝又回来了。
+        /// </summary>
+        private static Rect DrawRowVisual(Rect row, float bleedLeft, Color color, string title, string rightText, string tooltip, bool selected)
         {
-            bool hover = row.Contains(Event.current.mousePosition);
-            EditorGUI.DrawRect(row, GetRowColor(color, selected, hover));
+            Rect paint = new Rect(bleedLeft, row.y, row.xMax - bleedLeft, row.height);
+            bool hover = paint.Contains(Event.current.mousePosition);
+            EditorGUI.DrawRect(paint, GetRowColor(color, selected, hover));
             if (selected)
             {
-                EditorGUI.DrawRect(new Rect(row.x, row.y, 2.0f, row.height), RowAccent);
+                EditorGUI.DrawRect(new Rect(bleedLeft, row.y, 2.0f, row.height), RowAccent);
             }
 
             Rect rightRect = new Rect(row.xMax - 40.0f, row.y, 36.0f, row.height);
@@ -299,7 +313,8 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
             GUI.Label(nameRect, new GUIContent(title, tooltip), rowNameStyle);
             EditorGUI.LabelField(rightRect, rightText, EditorStyles.centeredGreyMiniLabel);
-            EditorGUIUtility.AddCursorRect(row, MouseCursor.Link);
+            EditorGUIUtility.AddCursorRect(paint, MouseCursor.Link);
+            return paint;
         }
 
         private void HandleRowInput(Rect row, SerializedProperty list, int index, ref int selectedIndex)
@@ -896,13 +911,10 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             if (!stylesResolved)
             {
                 stylesResolved = true;
-                listBackground = EditorGUIUtility.isProSkin
-                    ? new Color(0.0f, 0.0f, 0.0f, 0.22f)
-                    : new Color(0.0f, 0.0f, 0.0f, 0.06f);
                 rowNameStyle = new GUIStyle(EditorStyles.miniLabel)
                 {
                     alignment = TextAnchor.MiddleLeft,
-                    clipping = TextClipping.Clip
+                    clipping = TextClipping.Ellipsis
                 };
                 switchLabelStyle = new GUIStyle(EditorStyles.miniLabel)
                 {
