@@ -20,19 +20,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private const float ButtonWidth = 22.0f;
         private const float RightReserve = 100.0f;
 
-        private static readonly Color[] EntryColors =
-        {
-            new Color(0.35f, 0.58f, 0.95f),
-            new Color(0.95f, 0.48f, 0.50f),
-            new Color(0.38f, 0.76f, 0.55f),
-            new Color(0.96f, 0.70f, 0.33f),
-            new Color(0.55f, 0.48f, 0.90f),
-            new Color(0.30f, 0.72f, 0.78f),
-            new Color(0.78f, 0.64f, 0.42f),
-            new Color(0.55f, 0.55f, 0.55f)
-        };
-
-        private static readonly Color SelectionColor = new Color(0.80f, 0.55f, 0.85f);
         private static readonly GUIContent AddSlotLabel = new GUIContent("+", "添加一个空槽（也可以直接把 GameObject / Renderer 拖到这条上）");
         private static readonly GUIContent ClearLabel = new GUIContent("×", "清空本条的 Renderer 列表");
         private static readonly GUIContent RemoveSelectionLabel = new GUIContent("×", "删除这个选择");
@@ -71,12 +58,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
             // 让"已分配的 ID"显示的是最新表（只在标脏后才真正重建）。
             HoObjectBufferRegistry.EnsureBuilt();
-
-            EditorGUILayout.HelpBox(
-                "身份从这里出：**部件**回答“这个 Renderer 是谁”（名字在角色内唯一，它决定像素里的 16 bit ID）；" +
-                "**选择**回答“我想把哪一块单独拿出来调”（具名选区，材质引用名字）。\n" +
-                "材质数值（厚度 / 粗糙度 / 金属度 …）不在这个组件里——它们在材质上已经填过一遍。",
-                MessageType.Info);
 
             DrawIdentitySection();
             DrawPartsSection();
@@ -128,11 +109,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                     DrawPartEntry(i);
                 }
 
-                if (partsProperty.arraySize == 0)
-                {
-                    EditorGUILayout.HelpBox("还没有部件。一个部件 = 一个具名身份 + 它包含的 Renderer。", MessageType.None);
-                }
-
                 EditorGUILayout.Space(2.0f);
                 if (GUILayout.Button("+ 添加部件"))
                 {
@@ -158,7 +134,10 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             SerializedProperty renderersProperty = entry.FindPropertyRelative("renderers");
             string partName = nameProperty != null ? nameProperty.stringValue : string.Empty;
 
-            Color color = EntryColors[index % EntryColors.Length];
+            // 条的颜色**就是**这个部件的显示色：面板上看到的颜色与调试视图里的颜色是同一个，
+            // 不再另用一套"第 n 个条目配第 n 种颜色"的循环色板（那套颜色对不上任何人）。
+            SerializedProperty colorProperty = entry.FindPropertyRelative("displayColor");
+            Color color = colorProperty != null ? colorProperty.colorValue : Color.gray;
             string title = string.IsNullOrEmpty(partName) ? $"（空名字 · 槽位 {index}）" : partName;
             string subtitle = BuildPartIdText(index, partName, categoryProperty);
             int conflictCount = CountPartConflicts(partName);
@@ -208,11 +187,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUILayout.LabelField("Cryptomatte（具名选区）", EditorStyles.boldLabel);
-                EditorGUILayout.HelpBox(
-                    "部件是“这是谁”；Cryptomatte 选择是“想单独调哪一块”——它可以横跨多个部件，也可以是某个部件里的一段遮罩。" +
-                    "名字全局唯一，材质侧只引用名字（所以在这里改名不破资产）。注册了选择才会产出那张选择图；" +
-                    "导出时可选规范合规的 crypto_* 层，Nuke 里能直接点选。",
-                    MessageType.None);
 
                 for (int i = 0; i < selectionsProperty.arraySize; i++)
                 {
@@ -244,7 +218,8 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             uint selectionId = HoObjectBufferRegistry.GetSelectionId(selectionName);
             string title = string.IsNullOrEmpty(selectionName) ? $"（空名字 · {index}）" : selectionName;
             string subtitle = selectionId > 0 ? $"Cryptomatte ID {selectionId}" : "未注册";
-            DrawEntryHeader(entry, selectionsProperty, index, title, subtitle, SelectionColor, null, false);
+            SerializedProperty colorProperty = entry.FindPropertyRelative("displayColor");
+            DrawEntryHeader(entry, selectionsProperty, index, title, subtitle, colorProperty != null ? colorProperty.colorValue : Color.gray, null, false);
 
             if (!entry.isExpanded)
             {

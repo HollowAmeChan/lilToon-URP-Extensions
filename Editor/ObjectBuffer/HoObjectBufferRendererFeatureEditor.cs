@@ -37,11 +37,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 return;
             }
 
-            EditorGUILayout.HelpBox(
-                "Ho-ObjectBuffer：per-pixel 只存 ID 与覆盖率，其余按 ID 查 palette。\n" +
-                "覆盖率由本 feature 自建的 MSAA 产出，**与相机的 AA 设置无关**；几何（法线/深度/几何覆盖率）仍然只从 GeometryBuffer 读。",
-                MessageType.Info);
-
             DrawRuntime();
             DrawCoverage();
             DrawSelections();
@@ -92,10 +87,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty("sampleCount");
-                EditorGUILayout.HelpBox(
-                    "层数 K 固定为 4，请求采样数 N 封顶 4，但平台可降级为 2x/1x。" +
-                    "K 不丢当帧实际 N≤4 个前表面 sample ID；1x 时 coverage 会退化为 0/1。",
-                    MessageType.None);
+                EditorGUILayout.LabelField("层数 K 固定 4；平台可把 N 降到 2x/1x（1x 时 coverage 只有 0/1）。", EditorStyles.miniLabel);
             }
         }
 
@@ -112,11 +104,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty("selectionLayers");
-                EditorGUILayout.HelpBox(
-                    "R1 保留现有选择图仅作迁移兼容；正式 surface SemanticId 由后续 SB + AC 协议接管。" +
-                    "没有注册选择时不会分配这张图。\n" +
-                    "表面色与材质数值（roughness / metallic / thickness / 反射 …）已拆到 Ho-SurfaceBuffer（规划 §5.12），本 feature 不再有这些通道。",
-                    MessageType.None);
+                EditorGUILayout.LabelField("R1 迁移兼容层；没有注册选择时不分配这张图。", EditorStyles.miniLabel);
             }
         }
 
@@ -135,11 +123,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 DrawProperty("debugMode");
                 DrawProperty("debugInSceneView");
                 DrawProperty("debugInGameView");
-                EditorGUILayout.HelpBox(
-                    "ID 视图按 palette 的显示色上色：洋红 = 未注册（RSUV 没写上或索引越界）；" +
-                    "没产出时整屏暗红，用来区分「没跑」和「全背景」。" +
-                    "同一批视图也已注册到 Ho-DebugTile；Volume 中的调试设置会在 override 时覆盖这里的兜底值。",
-                    MessageType.None);
+                EditorGUILayout.LabelField("洋红 = 未注册身份；整屏暗红 = 本帧没产出。", EditorStyles.miniLabel);
             }
         }
 
@@ -157,10 +141,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 DrawProperty("useFallbackMaterial");
                 DrawProperty("fallbackShader");
                 DrawProperty("debugShader");
-                EditorGUILayout.HelpBox(
-                    "fallback 材质只覆盖不透明队列（override 材质看不到源材质的 alpha/cutout）；" +
-                    "cutout / 透明部件要靠 lilToon 侧的 HoObjectBuffer pass（跨仓）。",
-                    MessageType.None);
+                EditorGUILayout.LabelField("fallback 只覆盖不透明队列；cutout / 透明部件走 lilToon 侧 pass。", EditorStyles.miniLabel);
             }
         }
 
