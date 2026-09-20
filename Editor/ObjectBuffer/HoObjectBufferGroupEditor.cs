@@ -132,8 +132,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
         private void DrawListColumn()
         {
-            SerializedProperty list = ActiveList;
-            int count = list != null ? list.arraySize : 0;
             ClampSelection();
 
             using (new EditorGUILayout.VerticalScope(GUILayout.Width(ListWidth)))
@@ -162,19 +160,26 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                     SwitchMode(ListMode.Selections);
                 }
 
+                // 表头先处理完再读行数：+ / - 会当场改数组大小，先读行数的话这一帧就会拿着旧行数
+                // 去索引已经变短的数组（"Retrieving array element that was out of bounds"）。
                 bool parts = listMode == ListMode.Parts;
+                int currentCount = parts ? partCount : selectionCount;
                 if (EffectBrowserView.DrawChromeLessButton(addRect, parts ? AddPartLabel : AddSelectionLabel))
                 {
                     AddEntry(parts);
                 }
 
-                using (new EditorGUI.DisabledScope(count == 0))
+                using (new EditorGUI.DisabledScope(currentCount == 0))
                 {
-                    if (EffectBrowserView.DrawChromeLessButton(removeRect, parts ? RemovePartLabel : RemoveSelectionLabel, count > 0))
+                    if (EffectBrowserView.DrawChromeLessButton(removeRect, parts ? RemovePartLabel : RemoveSelectionLabel, currentCount > 0))
                     {
                         RemoveSelectedEntry(parts);
                     }
                 }
+
+                ClampSelection();
+                SerializedProperty list = ActiveList;
+                int count = list != null ? list.arraySize : 0;
 
                 float listHeight = Mathf.Max(RowHeight, count * (RowHeight + RowSpacing));
                 Rect area = EditorGUILayout.GetControlRect(
@@ -184,7 +189,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                     GUILayout.Height(listHeight));
                 EditorGUI.DrawRect(area, listBackground);
 
-                for (int i = 0; i < count; i++)
+                for (int i = 0; i < count && list != null && i < list.arraySize; i++)
                 {
                     Rect row = new Rect(area.x, area.y + i * (RowHeight + RowSpacing), area.width, RowHeight);
                     if (parts)
@@ -354,6 +359,9 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             int index = list.arraySize;
             list.InsertArrayElementAtIndex(index);
             SerializedProperty entry = list.GetArrayElementAtIndex(index);
+
+            // 新条目要停在**类型的默认值**上：InsertArrayElementAtIndex 会复制上一条的字段，
+            // 不逐字段重置的话，类别/标签/展开子级这些会从上一条"继承"过来（看着像自动填的，其实是脏的）。
             SerializedProperty nameProperty = entry.FindPropertyRelative("name");
             if (nameProperty != null)
             {
@@ -362,6 +370,11 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
             if (parts)
             {
+                var defaults = new HoObjectBufferPartEntry();
+                entry.FindPropertyRelative("category").enumValueIndex = (int)defaults.category;
+                entry.FindPropertyRelative("tags").intValue = (int)defaults.tags;
+                entry.FindPropertyRelative("displayColor").colorValue = defaults.displayColor;
+                entry.FindPropertyRelative("includeChildren").boolValue = defaults.includeChildren;
                 SerializedProperty renderers = entry.FindPropertyRelative("renderers");
                 if (renderers != null)
                 {
@@ -372,6 +385,9 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             }
             else
             {
+                var defaults = new HoObjectBufferSelectionEntry();
+                entry.FindPropertyRelative("tags").intValue = (int)defaults.tags;
+                entry.FindPropertyRelative("displayColor").colorValue = defaults.displayColor;
                 selectedSelection = index;
             }
 
