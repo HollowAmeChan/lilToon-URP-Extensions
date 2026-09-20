@@ -18,7 +18,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             DrawProperty(Find(effects, "enhancedOutlineRadiusPixels"), "外扩半径像素");
             DrawFogProperties(effects);
             DrawHeightFadeProperties(effects);
-            DrawProperty(Find(effects, "semanticMaskBlurEnhancedOutline"), "读取抗锯齿掩码");
         }
 
         private static void DrawFogProperties(

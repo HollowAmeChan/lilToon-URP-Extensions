@@ -14,24 +14,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
     [Serializable]
     public sealed class HoCharacterSpecializationEffects
     {
-        [InspectorName("抗锯齿宽度"), Tooltip("掩码抗锯齿的模糊半径，单位为 MetadataBuffer 的 texel。低于 1 像素没有抗锯齿收益（单采样 0/1 场必须摊到至少一个 texel），内部按 1 像素下限处理；越宽边缘越软、台阶越小。每个效果在自己分区里用「读取抗锯齿掩码」勾选是否读取，任一勾选就会产出这份副本，全不勾选则不跑。")]
-        public float semanticMaskBlurRadiusPixels = 1.0f;
-
-        [InspectorName("读取抗锯齿掩码"), Tooltip("前发投影读取掩码抗锯齿版：接收面的裁剪边（发际线）与眼透区域，以及半影的取样源。不勾选则读原始 bit。")]
-        public bool semanticMaskBlurHairShadow = true;
-
-        [InspectorName("读取抗锯齿掩码"), Tooltip("脸色扩散读取掩码抗锯齿版：前发接收区域的边界。不勾选则读原始 bit。")]
-        public bool semanticMaskBlurFaceHairDiffuse = true;
-
-        [InspectorName("读取抗锯齿掩码"), Tooltip("眼睛透过读取掩码抗锯齿版：遮挡前发与眼透区域的边界。不勾选则读原始 bit。")]
-        public bool semanticMaskBlurEyeReveal = true;
-
-        [InspectorName("读取抗锯齿掩码"), Tooltip("主体轮廓的语义源读取掩码抗锯齿版。默认不读（读原始 bit）。")]
-        public bool semanticMaskBlurSubjectOutline = false;
-
-        [InspectorName("读取抗锯齿掩码"), Tooltip("增强轮廓的语义源读取掩码抗锯齿版。默认不读（读原始 bit）。")]
-        public bool semanticMaskBlurEnhancedOutline = false;
-
         [InspectorName("启用眼睛透过"), Tooltip("让被前发遮挡的眼睛按眼睛捕获结果透出。")]
         public bool eyeRevealEnabled = true;
 
@@ -54,7 +36,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("仅同角色"), Tooltip("启用后，只允许同 Character ID 的前发影响同角色的眼睛/脸。")]
         public bool sameCharacterOnly = true;
 
-        [InspectorName("启用相机角度修正"), Tooltip("开启后，眼睛透过会按相机与角色面部朝向的夹角衰减。角色面部朝向由 HoMetadataBufferGroup 上的“面部朝向”提供（Transform，骨骼或空物体均可）。")]
+        [InspectorName("启用相机角度修正"), Tooltip("开启后，眼睛透过会按相机与角色面部朝向的夹角衰减。角色面部朝向由 HoObjectBufferGroup 上的「朝向参考系」提供（Transform，骨骼或空物体均可）。")]
         public bool eyeRevealAngleEnabled = false;
 
         [InspectorName("角度修正强度"), Tooltip("相机偏离正脸时眼睛透过衰减的总强度。1 表示超出角度范围完全关闭眼睛透过。")]
@@ -204,7 +186,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public bool enhancedOutlineEnabled = false;
 
         [InspectorName("来源通道"), Tooltip("增强轮廓读取的 RSUV / ObjectCustom 分量。默认使用 CharacterBody / ObjectCustom6。")]
-        public HoCharacterObjectCustomChannel enhancedOutlineSourceChannel = HoCharacterObjectCustomChannel.CharacterBody;
+        public HoCharacterSemanticChannel enhancedOutlineSourceChannel = HoCharacterSemanticChannel.CharacterBody;
 
         [InspectorName("雾气强度"), Tooltip("增强轮廓雾气叠到画面上的总强度。")]
         [Range(0.0f, 1.0f)]

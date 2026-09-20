@@ -1,18 +1,14 @@
-﻿#ifndef LIL_HO_CHARACTER_CAPTURE_COMMON_INCLUDED
+#ifndef LIL_HO_CHARACTER_CAPTURE_COMMON_INCLUDED
 #define LIL_HO_CHARACTER_CAPTURE_COMMON_INCLUDED
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
+#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferIdPass.hlsl"
 
 // Material capture passes should keep their own cutout/dissolve rules and use
 // Tags { "LightMode" = "HoCharacterCapture" }. Material alpha is intentionally
-// not used as capture coverage; RSUV/metadata regions define full capture areas.
+// not used as capture coverage; OB identity regions define full capture areas.
 #ifndef LIL_HO_CHARACTER_CAPTURE_HAS_CAPTURE_MODE
 float _HoCharacterCaptureMode;
-#endif
-
-#ifndef LIL_HO_CHARACTER_CAPTURE_HAS_METADATA_PROPERTIES
-float _HoMetadataBufferObjectCustomMask;
-float _HoMetadataBufferGroupId;
 #endif
 
 struct LilHoCharacterCaptureOutput
@@ -26,38 +22,31 @@ float LilHoCharacterCaptureByteToNormalized(float value)
     return saturate(round(clamp(value, 0.0, 255.0)) / 255.0);
 }
 
-float LilHoCharacterCaptureHasObjectBit(uint mask, uint bitIndex)
+// 角色语义只在 OB 里：RSUV 上的 16 bit 就是这个 renderer 的 partId（组 8 + 槽位 8），
+// 部件行表里存着它的**标签位掩码**。所以"这个 pass 该不该画"= 该部件有没有对应标签，
+// 角色 ID = 同一个 partId 的组字节 —— 与屏幕空间那边（OB 身份池层 0 的组字节）同一套编号。
+// OB 不在 renderer 里时表是空的：标签恒 0 ⇒ 整支不画（这是正确行为，不是退化）。
+uint LilHoCharacterCaptureTags()
 {
-    return (float)((mask >> bitIndex) & 1u);
+    return HoObjectBufferLoadPart(unity_RendererUserValue).tags;
 }
 
-uint LilHoCharacterCaptureObjectMask()
+float LilHoCharacterCaptureHasTag(uint tags, uint tagBit)
 {
-    uint rendererUserValue = unity_RendererUserValue;
-    if (rendererUserValue != 0u)
-    {
-        return rendererUserValue & 255u;
-    }
-
-    return (uint)round(saturate(_HoMetadataBufferObjectCustomMask / 255.0) * 255.0);
+    return (tags & tagBit) != 0u ? 1.0 : 0.0;
 }
 
 float LilHoCharacterCaptureCharacterId()
 {
-    uint rendererUserValue = unity_RendererUserValue;
-    if (rendererUserValue != 0u)
-    {
-        return (float)((rendererUserValue >> 8u) & 255u);
-    }
-
-    return _HoMetadataBufferGroupId;
+    // HoObjectBufferGroup 写进 RSUV 的就是 partId = group << 8 | slot。
+    return (float)HoObjectBufferGroupId(unity_RendererUserValue);
 }
 
 float LilHoCharacterCaptureShouldDraw()
 {
-    uint objectMask = LilHoCharacterCaptureObjectMask();
-    float isFace = LilHoCharacterCaptureHasObjectBit(objectMask, 1u);
-    float isEye = LilHoCharacterCaptureHasObjectBit(objectMask, 3u);
+    uint tags = LilHoCharacterCaptureTags();
+    float isFace = LilHoCharacterCaptureHasTag(tags, HO_OBJECT_TAG_FACE);
+    float isEye = LilHoCharacterCaptureHasTag(tags, HO_OBJECT_TAG_EYE);
     float faceMode = 1.0 - step(0.5, abs(_HoCharacterCaptureMode - 1.0));
     float eyeMode = 1.0 - step(0.5, abs(_HoCharacterCaptureMode - 2.0));
     return saturate(faceMode * isFace + eyeMode * isEye);

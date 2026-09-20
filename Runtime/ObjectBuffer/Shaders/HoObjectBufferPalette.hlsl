@@ -5,6 +5,17 @@
 // 规则（规划 §5.3）：像素里只有索引、属性永远在表里；越界一律回 unknown 行，
 // **绝不 clamp 行号**（rowBase + slot 越界会落到别的角色的行上，读出来看着合法其实是错的）。
 
+// 角色标签位（与 C# 的 HoObjectBufferPartTags 逐位对齐）：HLSL 看不到 C# 枚举，
+// 所以这里是 HLSL 侧的**唯一权威**，材质 pass 与屏幕空间消费端都从这里取名字。
+#define HO_OBJECT_TAG_CHARACTER_FULL  1u
+#define HO_OBJECT_TAG_FACE            2u
+#define HO_OBJECT_TAG_FRONT_HAIR      4u
+#define HO_OBJECT_TAG_EYE             8u
+#define HO_OBJECT_TAG_EYE_REVEAL_AREA 16u
+#define HO_OBJECT_TAG_ACCESSORY       32u
+#define HO_OBJECT_TAG_BODY            64u
+#define HO_OBJECT_TAG_RESERVED        128u
+
 struct HoObjectPartData
 {
     uint partId;            // 角色 8 + 槽位 8

@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- `Ho-ObjectBuffer` **R2（第二步）：角色特化的语义源整支切到 OB**（规划 0.3.14）。**语义 = 身份 × 标签 × 覆盖率**：新增 `HoCharacterObjectSemantic.shader` —— 一趟全屏 pass 读 OB 身份池的 4 层 `(组, 槽位)` 与逐层覆盖率，按部件行表的标签位掩码把该层覆盖率累加到对应通道，打成两张位平面（通道布局与从前的 `objectCustom0_3` / `objectCustom4_7` 一致：`全角色/脸/前发/眼睛` + `眼透区/配件/人体/预留`）。**多归属直接累加**（"整角色 + 脸"同时成立），因此：
+  - **前发投影 / 眼睛透过 / 脸色扩散 / 两条轮廓全部拿到真实覆盖率**——以前只有脸那一支碰巧有效、前发与眼透区读不到（MB 的 `objectCustom` 位本来就没被写对），现在四支都按标签工作；像素旋钮（柔化 / 羽化 / 扩张 / 模糊半径）语义不变。
+  - **那套「掩码抗锯齿副本」整体删除**（`HoCharacterSemanticMaskBlur.shader` + pass + 5 个「读取抗锯齿掩码」开关 + 「抗锯齿宽度」）：覆盖率本身就是 MSAA resolve 出来的连续场，再滤波只会把已经正确的边缘搅糊（规划 0.3.x「不再把 bit 通道当普通 UNORM 过滤」）。读取一律点采样。
+  - **同源判定改口径**：同角色比较从 `MaskId.g` 换成 OB 身份池层 0 的**组字节**（`Id0.r`），与眼透角度表的行号同一套编号（眼睛捕获里写的角色 ID 也改成这个组字节，两边单位统一为字节值）。
+  - **材质捕获 pass 也改吃标签**：`LilHoCharacterCaptureShouldDraw()` 由"读 objectCustom 位"改成"读 RSUV 的 `partId` → 部件行表的标签"（`脸` → 脸捕获、`眼睛` → 眼捕获）；标签位名 `HO_OBJECT_TAG_*` 落在 `HoObjectBufferPalette.hlsl` 作为 HLSL 侧唯一权威。没有 OB 身份（RSUV = 0）的物件标签恒 0 ⇒ 两遍都不画。
+  - **角色特化不再读 MetadataBuffer**（maskId / objectCustom / SurfaceColor 全部退出；SurfaceColor 那份 coverage 由标签覆盖率替代），feature 的输入自检改为「OB 身份池 / OB 语义位平面 / GeometryBuffer」三项；OB 不在 renderer 里时整支 no-op 而不是"退化成硬边"。
+  - **顺带修掉一个静默失效**：屏幕空间的 texel size 以前读 `_HoMetadataBufferMaskIdTexture_TexelSize`（全局纹理没有这一项、实际为 0），"按像素扩张 / 羽化"的半径可能一直没生效；现在由 C# 显式发布 `_lilHoCharacterScreenTexelSize`。
+  - 增强轮廓的「来源通道」枚举改名 `HoCharacterSemanticChannel`（值仍是位序号 0..7，与标签位序对齐）。
+  - 文档：`语义掩码.md` 升 v2（盒子核服务已删、OB 就是"拿回亚像素相位"的落地）、眼睛透过 / 脸色扩散 / 通道契约 / 浏览器说明同步。
+
 - 修复 `Ho-ObjectBuffer` 抽屉：**Renderer 列表为空时表头不收拖拽**——「Renderer（0）」那一行原来只在列表非空时才是拖放目标，空列表下往它上面放没任何反应（只有下面那条 16px 提示条收东西），看着像整个列表都不收。现在表头恒定接拖拽。
 
 - `Ho-ObjectBuffer` **R2（第一步）**：眼透相机角度修正切到 OB 口径——角度表数据源改为 `HoObjectBufferGroup`（行号 = **OB 组 ID**，朝向取「朝向参考系」），屏幕空间查表键改为 **OB 身份池层 0 的组字节**（`Id0.r`，新增 `ResolveObjectBufferGroupId`，并加 `_HoObjectBufferValid` 兜底），于是多角色同屏不再跨 ID 平均、且不再依赖眼睛捕获缓冲里的预乘角色 ID。眼睛**遮罩**链路仍走 MetadataBuffer，随 R3/R4 的消费者迁移一起切。

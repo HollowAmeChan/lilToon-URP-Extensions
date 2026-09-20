@@ -5,13 +5,23 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 {
     internal sealed partial class HoCharacterSpecializationPass
     {
+        private sealed class ObjectSemanticPassData
+        {
+            public TextureHandle objectBufferId0Texture;
+            public TextureHandle objectBufferId1Texture;
+            public TextureHandle objectBufferCoverageTexture;
+            public TextureHandle destinationLowTexture;
+            public TextureHandle destinationHighTexture;
+            public Material material;
+        }
+
         private sealed class CompositePassData
         {
             public TextureHandle source;
-            public TextureHandle metadataMaskIdTexture;
+            public TextureHandle objectBufferId0Texture;
             public TextureHandle geometryNormalDepthTexture;
-            public TextureHandle metadataObjectCustom0Texture;
-            public TextureHandle metadataObjectCustom1Texture;
+            public TextureHandle objectSemanticLowTexture;
+            public TextureHandle objectSemanticHighTexture;
             public TextureHandle faceHairDiffuseSourceColorTexture;
             public TextureHandle faceHairDiffuseColorTexture;
             public TextureHandle faceHairDiffuseDepthTexture;
@@ -21,9 +31,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public TextureHandle enhancedOutlineTexture;
             public TextureHandle eyeColorTexture;
             public TextureHandle eyeDataTexture;
-            public TextureHandle semanticMaskBlurredLowTexture;
-            public TextureHandle semanticMaskBlurredHighTexture;
-            public Vector4 semanticMaskOptions;
             public Material material;
             public Vector4 eyeRevealParams;
             public Vector4 eyeAngleParams;
@@ -51,20 +58,18 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public bool faceHairDiffuseReady;
             public bool subjectOutlineReady;
             public bool enhancedOutlineReady;
-            public bool semanticMaskBlurReady;
-            // 以下三个 bool 就是对应的"合成趟到底会不会采它"的门（见录制处注释）：
+            // 以下四个 bool 就是对应的"合成趟到底会不会采它"的门（见录制处注释）：
             // 它们只影响 UseTexture 声明与全局绑定，不影响任何 shader 常量。
             public bool eyeDataSampled;
-            public bool semanticMaskBlurSampled;
             public bool faceHairDiffuseSourceColorSampled;
+            public Vector4 screenTexelSize;
         }
 
         private sealed class FaceHairDiffuseSourcePassData
         {
             // 没有 source 字段：这趟从不用相机颜色（Frag 不采 _BlitTexture），
             // 画面也不再走 Blitter.BlitTexture 去绑它。
-            public TextureHandle metadataObjectCustom0Texture;
-            public TextureHandle metadataSurfaceColorTexture;
+            public TextureHandle objectSemanticLowTexture;
             public TextureHandle geometryNormalDepthTexture;
             // 受光脸：强制脸捕获的 MRT0（= 材质算完光照的 color）。这趟是它的"读"声明，
             // 让 RDG 把捕获两趟排在它前面，并且自己把它绑成全局（不复用上一帧的残留绑定）。
@@ -88,15 +93,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private sealed class SubjectOutlineSourcePassData
         {
             // 没有 source 字段：主体/增强轮廓的 source pass 也从不用相机颜色（同 F1/F2/F3）。
-            public TextureHandle metadataObjectCustom0Texture;
-            public TextureHandle metadataObjectCustom1Texture;
-            public TextureHandle semanticMaskBlurredLowTexture;
-            public TextureHandle semanticMaskBlurredHighTexture;
+            public TextureHandle objectSemanticLowTexture;
+            public TextureHandle objectSemanticHighTexture;
             public TextureHandle geometryDepthTexture;
             public Material material;
             public Vector4 sourceParams;
-            public bool semanticMaskBlurReady;
-            public bool useSemanticMaskAntiAliasing;
         }
 
         private sealed class SubjectOutlineBlurPassData

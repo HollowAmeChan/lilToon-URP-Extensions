@@ -22,7 +22,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             DrawProperty(Find(effects, "hairShadowSoftnessPixels"), "柔化像素");
             DrawProperty(Find(effects, "hairShadowSpreadPixels"), "扩散像素");
             DrawProperty(Find(effects, "hairShadowBlendMode"), "混合模式");
-            DrawProperty(Find(effects, "semanticMaskBlurHairShadow"), "读取抗锯齿掩码");
         }
 
         private static SerializedProperty Find(SerializedProperty settingsProperty, string relativeName)

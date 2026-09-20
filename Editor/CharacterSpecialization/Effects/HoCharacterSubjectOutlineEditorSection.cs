@@ -20,7 +20,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 effects,
                 GetFillMode(Find(effects, "subjectOutlineFillMode")));
             DrawHeightFadeProperties(effects);
-            DrawProperty(Find(effects, "semanticMaskBlurSubjectOutline"), "读取抗锯齿掩码");
         }
 
         private static void DrawModeProperties(

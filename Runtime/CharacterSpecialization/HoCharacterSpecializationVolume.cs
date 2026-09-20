@@ -1,5 +1,4 @@
 using System;
-using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -123,14 +122,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
     }
 
     [Serializable]
-    public sealed class HoCharacterObjectCustomChannelParameter : VolumeParameter<HoCharacterObjectCustomChannel>
+    public sealed class HoCharacterSemanticChannelParameter : VolumeParameter<HoCharacterSemanticChannel>
     {
-        public HoCharacterObjectCustomChannelParameter(HoCharacterObjectCustomChannel value, bool overrideState = false)
+        public HoCharacterSemanticChannelParameter(HoCharacterSemanticChannel value, bool overrideState = false)
             : base(value, overrideState)
         {
         }
 
-        public override void Interp(HoCharacterObjectCustomChannel from, HoCharacterObjectCustomChannel to, float t)
+        public override void Interp(HoCharacterSemanticChannel from, HoCharacterSemanticChannel to, float t)
         {
             value = t > 0.0f ? to : from;
         }
@@ -198,12 +197,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             }
 
             target.eyeRevealEnabled = Effects.value.eyeRevealEnabled;
-            target.semanticMaskBlurRadiusPixels = Effects.value.semanticMaskBlurRadiusPixels;
-            target.semanticMaskBlurHairShadow = Effects.value.semanticMaskBlurHairShadow;
-            target.semanticMaskBlurFaceHairDiffuse = Effects.value.semanticMaskBlurFaceHairDiffuse;
-            target.semanticMaskBlurEyeReveal = Effects.value.semanticMaskBlurEyeReveal;
-            target.semanticMaskBlurSubjectOutline = Effects.value.semanticMaskBlurSubjectOutline;
-            target.semanticMaskBlurEnhancedOutline = Effects.value.semanticMaskBlurEnhancedOutline;
             target.eyeRevealStrength = Effects.value.eyeRevealStrength;
             target.eyeRevealFeatherPixels = Effects.value.eyeRevealFeatherPixels;
             target.eyeRevealDilationPixels = Effects.value.eyeRevealDilationPixels;

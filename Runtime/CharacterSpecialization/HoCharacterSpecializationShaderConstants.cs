@@ -9,7 +9,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public const string CaptureClearShaderName = "Hidden/lilToon-HoCharacterSpecialization/URP/CaptureClear";
         public const string FaceHairDiffuseShaderName = "Hidden/lilToon-HoCharacterSpecialization/URP/FaceHairDiffuse";
         public const string SubjectOutlineShaderName = "Hidden/lilToon-HoCharacterSpecialization/URP/SubjectOutline";
-        public const string SemanticMaskBlurShaderName = "Hidden/lilToon-HoCharacterSpecialization/URP/SemanticMaskBlur";
+        public const string ObjectSemanticShaderName = "Hidden/lilToon-HoCharacterSpecialization/URP/ObjectSemantic";
         public const string CapturePassName = "HoCharacterCapture";
         public const string EyeColorTextureName = "_lilHoCharacterEyeColorTexture";
         public const string EyeDataTextureName = "_lilHoCharacterEyeDataTexture";
@@ -28,8 +28,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public const string EnhancedOutlineTempTextureName = "_lilHoCharacterEnhancedOutlineTempTexture";
         public const string EnhancedOutlineTextureName = "_lilHoCharacterEnhancedOutlineTexture";
         public const string EyeAngleTextureName = "_lilHoCharacterEyeAngleTable";
-        public const string SemanticMaskBlurredLowTextureName = "_lilHoCharacterSemanticMaskBlurred0_3Texture";
-        public const string SemanticMaskBlurredHighTextureName = "_lilHoCharacterSemanticMaskBlurred4_7Texture";
+        /// <summary>角色语义位平面（由 OB 身份池 + 覆盖率打包而来，见 ObjectSemantic pass）。</summary>
+        public const string ObjectSemanticLowTextureName = "_lilHoCharacterObjectSemantic0_3Texture";
+        public const string ObjectSemanticHighTextureName = "_lilHoCharacterObjectSemantic4_7Texture";
+        /// <summary>
+        /// 屏幕空间采样的 texel size（xy = 1/宽高）。语义平面、眼捕获、几何都是同一个渲染分辨率，
+        /// 所以一份就够；**不由 Unity 自动填**（全局纹理没有 _TexelSize），由 C# 显式写。
+        /// </summary>
+        public const string ScreenTexelSizeName = "_lilHoCharacterScreenTexelSize";
 
         public static readonly ShaderTagId CaptureShaderTagId = new ShaderTagId(CapturePassName);
         public static readonly int CaptureModeId = Shader.PropertyToID("_HoCharacterCaptureMode");
@@ -75,11 +81,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public static readonly int OptionsId = Shader.PropertyToID("_HoCharacterOptions");
         public static readonly int EyeAngleTextureId = Shader.PropertyToID(EyeAngleTextureName);
         public static readonly int EyeAngleParamsId = Shader.PropertyToID("_HoCharacterEyeAngleParams");
-        public static readonly int SemanticMaskBlurredLowTextureId = Shader.PropertyToID(SemanticMaskBlurredLowTextureName);
-        public static readonly int SemanticMaskBlurredHighTextureId = Shader.PropertyToID(SemanticMaskBlurredHighTextureName);
-        public static readonly int SemanticMaskBlurParamsId = Shader.PropertyToID("_HoCharacterSemanticMaskBlurParams");
-        public static readonly int SemanticMaskBlurValidId = Shader.PropertyToID("_HoCharacterSemanticMaskBlurValid");
-        public static readonly int SemanticMaskOptionsId = Shader.PropertyToID("_HoCharacterSemanticMaskOptions");
-        public const int SemanticMaskBlurMaxTapsPerAxis = 8;
+        public static readonly int ObjectSemanticLowTextureId = Shader.PropertyToID(ObjectSemanticLowTextureName);
+        public static readonly int ObjectSemanticHighTextureId = Shader.PropertyToID(ObjectSemanticHighTextureName);
+        public static readonly int ScreenTexelSizeId = Shader.PropertyToID(ScreenTexelSizeName);
     }
 }

@@ -2,6 +2,10 @@ using UnityEngine;
 
 namespace lilToon.URP.Extensions.CharacterSpecialization
 {
+    /// <summary>
+    /// 这支 feature 的输入自检快照。**语义全部来自 ObjectBuffer**（规划 §5.13：角色特化只吃
+    /// 「组 + 标签 + 覆盖率」），所以这里只查 OB 身份池、语义位平面和 GeometryBuffer 三件事。
+    /// </summary>
     public readonly struct HoCharacterSpecializationRuntimeDiagnosticSnapshot
     {
         public readonly bool IsValid;
@@ -10,15 +14,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public readonly string Stage;
         public readonly bool BackBufferActive;
         public readonly bool CameraColorAvailable;
-        public readonly bool MetadataMaskIdAvailable;
-        public readonly bool MetadataObjectCustom0Available;
-        public readonly bool MetadataObjectCustom1Available;
-        public readonly bool MetadataSurfaceColorAvailable;
-        public readonly bool MetadataSurfaceColorRequired;
+        /// <summary>OB 身份池（Id0 / Id1 / 覆盖率）在。</summary>
+        public readonly bool ObjectBufferIdentityAvailable;
+        /// <summary>语义位平面这帧能产出（OB 身份 + 打包材质都在）。</summary>
+        public readonly bool ObjectSemanticAvailable;
         public readonly bool GeometryNormalDepthAvailable;
         public readonly bool GeometryDepthAvailable;
         public readonly bool GeometryDepthRequired;
-        public readonly bool MetadataBufferAvailable;
+        public readonly bool ObjectBufferAvailable;
         public readonly bool GeometryBufferAvailable;
         public readonly bool Ready;
         public readonly string Reason;
@@ -30,11 +33,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             string stage,
             bool backBufferActive,
             bool cameraColorAvailable,
-            bool metadataMaskIdAvailable,
-            bool metadataObjectCustom0Available,
-            bool metadataObjectCustom1Available,
-            bool metadataSurfaceColorAvailable,
-            bool metadataSurfaceColorRequired,
+            bool objectBufferIdentityAvailable,
+            bool objectSemanticAvailable,
             bool geometryNormalDepthAvailable,
             bool geometryDepthAvailable,
             bool geometryDepthRequired,
@@ -47,15 +47,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             Stage = stage ?? string.Empty;
             BackBufferActive = backBufferActive;
             CameraColorAvailable = cameraColorAvailable;
-            MetadataMaskIdAvailable = metadataMaskIdAvailable;
-            MetadataObjectCustom0Available = metadataObjectCustom0Available;
-            MetadataObjectCustom1Available = metadataObjectCustom1Available;
-            MetadataSurfaceColorAvailable = metadataSurfaceColorAvailable;
-            MetadataSurfaceColorRequired = metadataSurfaceColorRequired;
+            ObjectBufferIdentityAvailable = objectBufferIdentityAvailable;
+            ObjectSemanticAvailable = objectSemanticAvailable;
             GeometryNormalDepthAvailable = geometryNormalDepthAvailable;
             GeometryDepthAvailable = geometryDepthAvailable;
             GeometryDepthRequired = geometryDepthRequired;
-            MetadataBufferAvailable = metadataMaskIdAvailable && metadataObjectCustom0Available && metadataObjectCustom1Available;
+            ObjectBufferAvailable = objectBufferIdentityAvailable && objectSemanticAvailable;
             GeometryBufferAvailable = geometryNormalDepthAvailable && (!geometryDepthRequired || geometryDepthAvailable);
             Ready = ready;
             Reason = reason ?? string.Empty;
@@ -66,22 +63,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
     {
         private static readonly HoCharacterSpecializationRuntimeDiagnosticSnapshot EmptySnapshot =
             new HoCharacterSpecializationRuntimeDiagnosticSnapshot(
-                false,
-                0,
-                string.Empty,
-                string.Empty,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                string.Empty);
+                false, 0, string.Empty, string.Empty, false, false, false, false, false, false, false, false, string.Empty);
 
         private static HoCharacterSpecializationRuntimeDiagnosticSnapshot currentSnapshot = EmptySnapshot;
 
@@ -94,16 +76,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 Time.frameCount,
                 camera != null ? camera.name : "<no camera>",
                 stage,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
-                false,
+                false, false, false, false, false, false, false,
                 false,
                 reason);
         }
@@ -113,21 +86,16 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             string stage,
             bool backBufferActive,
             bool cameraColorAvailable,
-            bool metadataMaskIdAvailable,
-            bool metadataObjectCustom0Available,
-            bool metadataObjectCustom1Available,
-            bool metadataSurfaceColorAvailable,
+            bool objectBufferIdentityAvailable,
+            bool objectSemanticAvailable,
             bool geometryNormalDepthAvailable,
             bool geometryDepthAvailable,
-            bool geometryDepthRequired,
-            bool metadataSurfaceColorRequired)
+            bool geometryDepthRequired)
         {
             bool ready = !backBufferActive
                 && cameraColorAvailable
-                && metadataMaskIdAvailable
-                && metadataObjectCustom0Available
-                && metadataObjectCustom1Available
-                && (!metadataSurfaceColorRequired || metadataSurfaceColorAvailable)
+                && objectBufferIdentityAvailable
+                && objectSemanticAvailable
                 && geometryNormalDepthAvailable
                 && (!geometryDepthRequired || geometryDepthAvailable);
 
@@ -138,11 +106,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 stage,
                 backBufferActive,
                 cameraColorAvailable,
-                metadataMaskIdAvailable,
-                metadataObjectCustom0Available,
-                metadataObjectCustom1Available,
-                metadataSurfaceColorAvailable,
-                metadataSurfaceColorRequired,
+                objectBufferIdentityAvailable,
+                objectSemanticAvailable,
                 geometryNormalDepthAvailable,
                 geometryDepthAvailable,
                 geometryDepthRequired,
@@ -150,11 +115,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 ready ? "Inputs are valid." : BuildMissingInputReason(
                     backBufferActive,
                     cameraColorAvailable,
-                    metadataMaskIdAvailable,
-                    metadataObjectCustom0Available,
-                    metadataObjectCustom1Available,
-                    metadataSurfaceColorAvailable,
-                    metadataSurfaceColorRequired,
+                    objectBufferIdentityAvailable,
+                    objectSemanticAvailable,
                     geometryNormalDepthAvailable,
                     geometryDepthAvailable,
                     geometryDepthRequired));
@@ -163,11 +125,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private static string BuildMissingInputReason(
             bool backBufferActive,
             bool cameraColorAvailable,
-            bool metadataMaskIdAvailable,
-            bool metadataObjectCustom0Available,
-            bool metadataObjectCustom1Available,
-            bool metadataSurfaceColorAvailable,
-            bool metadataSurfaceColorRequired,
+            bool objectBufferIdentityAvailable,
+            bool objectSemanticAvailable,
             bool geometryNormalDepthAvailable,
             bool geometryDepthAvailable,
             bool geometryDepthRequired)
@@ -182,21 +141,21 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 return "Camera color is unavailable.";
             }
 
-            bool metadataAvailable = metadataMaskIdAvailable && metadataObjectCustom0Available && metadataObjectCustom1Available;
+            bool objectBufferAvailable = objectBufferIdentityAvailable && objectSemanticAvailable;
             bool geometryAvailable = geometryNormalDepthAvailable && (!geometryDepthRequired || geometryDepthAvailable);
-            if (!metadataAvailable && !geometryAvailable)
+            if (!objectBufferAvailable && !geometryAvailable)
             {
-                return "MetadataBuffer and GeometryBuffer are unavailable.";
+                return "ObjectBuffer and GeometryBuffer are unavailable.";
             }
 
-            if (!metadataAvailable)
+            if (!objectBufferIdentityAvailable)
             {
-                return "MetadataBuffer maskId/object custom inputs are incomplete.";
+                return "ObjectBuffer identity pool is unavailable (is the Ho-ObjectBuffer feature in this renderer?).";
             }
 
-            if (metadataSurfaceColorRequired && !metadataSurfaceColorAvailable)
+            if (!objectSemanticAvailable)
             {
-                return "MetadataBuffer SurfaceColor is unavailable.";
+                return "ObjectBuffer semantic plane could not be packed (missing shader or material).";
             }
 
             if (!geometryNormalDepthAvailable)

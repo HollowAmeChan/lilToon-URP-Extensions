@@ -19,7 +19,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             DrawProperty(Find(effects, "faceHairDiffuseLevelWhite"), "白场阈值");
             DrawProperty(Find(effects, "faceHairDiffuseTintColor"), "染色倍率");
             DrawProperty(Find(effects, "faceHairDiffuseBlendMode"), "混合模式");
-            DrawProperty(Find(effects, "semanticMaskBlurFaceHairDiffuse"), "读取抗锯齿掩码");
         }
 
         private static SerializedProperty Find(SerializedProperty settingsProperty, string relativeName)

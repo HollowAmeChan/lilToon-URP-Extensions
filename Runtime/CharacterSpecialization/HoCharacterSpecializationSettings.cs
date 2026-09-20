@@ -1,5 +1,4 @@
 using System;
-using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -44,23 +43,27 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         FadeFarFromGround = 2
     }
 
-    public enum HoCharacterObjectCustomChannel
+    /// <summary>
+    /// 角色语义位平面的**通道号**（0..7），与 <c>HoObjectBufferPartTags</c> 的位序逐位对齐：
+    /// 值就是位序号，不是位掩码。名字用中文标签的读法，方便在面板上挑。
+    /// </summary>
+    public enum HoCharacterSemanticChannel
     {
-        [InspectorName("CharacterFull / 全角色")]
+        [InspectorName("全角色")]
         CharacterFull = 0,
-        [InspectorName("Face / 脸")]
+        [InspectorName("脸")]
         Face = 1,
-        [InspectorName("FrontHair / 前发")]
+        [InspectorName("前发")]
         FrontHair = 2,
-        [InspectorName("Eye / 眼睛")]
+        [InspectorName("眼睛")]
         Eye = 3,
-        [InspectorName("EyeRevealArea / 眼透区域")]
+        [InspectorName("眼透区域")]
         EyeRevealArea = 4,
-        [InspectorName("Accessory / 配件")]
+        [InspectorName("配件")]
         Accessory = 5,
-        [InspectorName("CharacterBody / 人体")]
+        [InspectorName("人体")]
         CharacterBody = 6,
-        [InspectorName("Reserved7 / 预留 7")]
+        [InspectorName("预留 7")]
         Reserved7 = 7
     }
 
@@ -154,36 +157,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [Tooltip("为空时自动使用 Hidden/lilToon-HoCharacterSpecialization/URP/SubjectOutline。主体轮廓和增强轮廓共用它生成外扩场，一般不需要改。")]
         public Shader subjectOutlineShader;
 
-        [InspectorName("抗锯齿宽度")]
-        [Tooltip("掩码抗锯齿的模糊半径，单位为 MetadataBuffer 的 texel。低于 1 像素没有抗锯齿收益（单采样 0/1 场必须摊到至少一个 texel），内部按 1 像素下限处理；越宽边缘越软、台阶越小。每个效果在自己分区里用「读取抗锯齿掩码」勾选是否读取，任一勾选就会产出这份副本，全不勾选则不跑。")]
-        [Min(0.0f)]
-        [NonSerialized]
-        public float semanticMaskBlurRadiusPixels = 1.0f;
-
-        [InspectorName("读取抗锯齿掩码")]
-        [Tooltip("前发投影读取掩码抗锯齿版：接收面的裁剪边（发际线）与眼透区域，以及半影的取样源。不勾选则读原始 bit。")]
-        [NonSerialized]
-        public bool semanticMaskBlurHairShadow = true;
-
-        [InspectorName("读取抗锯齿掩码")]
-        [Tooltip("脸色扩散读取掩码抗锯齿版：前发接收区域的边界。不勾选则读原始 bit。")]
-        [NonSerialized]
-        public bool semanticMaskBlurFaceHairDiffuse = true;
-
-        [InspectorName("读取抗锯齿掩码")]
-        [Tooltip("眼睛透过读取掩码抗锯齿版：遮挡前发与眼透区域的边界。不勾选则读原始 bit。")]
-        [NonSerialized]
-        public bool semanticMaskBlurEyeReveal = true;
-
-        [InspectorName("读取抗锯齿掩码")]
-        [Tooltip("主体轮廓的语义源读取掩码抗锯齿版。默认不读（读原始 bit）。")]
-        [NonSerialized]
-        public bool semanticMaskBlurSubjectOutline;
-
-        [InspectorName("读取抗锯齿掩码")]
-        [Tooltip("增强轮廓的语义源读取掩码抗锯齿版。默认不读（读原始 bit）。")]
-        [NonSerialized]
-        public bool semanticMaskBlurEnhancedOutline;
 
         [Header("眼睛透过")]
         [InspectorName("启用眼睛透过")]
@@ -227,7 +200,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         [Header("眼睛透过 · 相机角度修正")]
         [InspectorName("启用相机角度修正")]
-        [Tooltip("开启后，眼睛透过会按相机与角色面部朝向的夹角衰减。角色面部朝向由 HoMetadataBufferGroup 上的“面部朝向”提供（Transform，骨骼或空物体均可）。")]
+        [Tooltip("开启后，眼睛透过会按相机与角色面部朝向的夹角衰减。角色面部朝向由 HoObjectBufferGroup 上的「朝向参考系」提供（Transform，骨骼或空物体均可）。")]
         [NonSerialized]
         public bool eyeRevealAngleEnabled;
 
@@ -479,7 +452,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("来源通道")]
         [Tooltip("增强轮廓读取的 RSUV / ObjectCustom 分量。默认使用 CharacterBody / ObjectCustom6。")]
         [NonSerialized]
-        public HoCharacterObjectCustomChannel enhancedOutlineSourceChannel = HoCharacterObjectCustomChannel.CharacterBody;
+        public HoCharacterSemanticChannel enhancedOutlineSourceChannel = HoCharacterSemanticChannel.CharacterBody;
 
         [InspectorName("雾气强度")]
         [Tooltip("增强轮廓雾气叠到画面上的总强度。")]

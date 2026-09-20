@@ -23,7 +23,7 @@
 | `surfaceData` | 材质 | SSS | RGBA（thickness/curvature/material/transmittance） | — | ✅ |
 | `reflectionMaterial` | 材质 → MetadataBuffer Target5 | PLR / SSR / Probe | RGBA16F（R=perceptualRoughness，G=metallic，B=reflectance，A=PLR strength，由反射总开关与 PLR 开关共同门控） | — | ✅ |
 | `objectCustom0/1` | 材质 / 对象（Group/Subject） | 角色特化 / AOV matte | RGBA(bits) | `matte_*` | ✅ |
-| `maskcoverage.low/high` | Ho-CharacterSpecialization 掩码抗锯齿 pass（`HoCharacterSemanticMaskBlur.shader`，只要有一个效果勾选「掩码抗锯齿」块里的对应项就产出） | 角色特化（前发投影的接收面与眼透区域、脸色扩散、眼睛透过、主体/增强轮廓，逐效果可选） | R8G8B8A8_UNorm ×2（逐通道与 `objectCustom0_3` / `objectCustom4_7` 同索引；值为该语义的**覆盖率 0..1**，不是 bit） | 不导出 | ✅ |
+| `objectSemantic.low/high` | Ho-CharacterSpecialization 语义打包 pass（`HoCharacterObjectSemantic.shader`：读 **OB 身份池 + 覆盖率**，按部件行表的标签位逐层累加） | 角色特化（前发投影的接收面与眼透区域、脸色扩散、眼睛透过、主体/增强轮廓） | R8G8B8A8_UNorm ×2（逐通道与从前的 `objectCustom0_3` / `objectCustom4_7` 同索引；值为该语义的**覆盖率 0..1**，不是 bit） | 不导出 | ✅ |
 | `shadow.main` | URP 主光阴影 | 材质 toon 门控 / AOV | R8f | `shadow_main` | ✅ |
 | `shadow.add0..N` | ShadowCast cast 组（每组一张 atlas；N≤8，组≠灯） | 材质 / ScreenProcess / AOV | R8f | `shadow_add0..N` | ◻ |
 | `ao` | `Ho-GTAO`（自研，单 feature） | ScreenProcess.AO | R8f | `ao` | ⚠️ |

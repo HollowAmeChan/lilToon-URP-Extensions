@@ -5,23 +5,28 @@
 让**被前发遮挡的眼睛按"眼睛捕获结果"透出**，并支持**按相机相对角色面部朝向的视锥角度**对眼透做区域控制。
 效果为屏幕空间、Opaque 友好，复用现有角色语义输入，不依赖角色材质进入透明队列。
 
-配套语义输入：
+配套语义输入（**R2 起全部走 OB**：身份池 → 部件标签 → 覆盖率）：
 
 | 语义 | 用途 |
 |---|---|
-| `ObjectCustom1` / Face | 捕获来源（脸部颜色） |
-| `ObjectCustom3` / Eye | 捕获来源（眼睛 alpha / 深度 / 角色 ID） |
-| `ObjectCustom2` / FrontHair | 遮挡物 |
-| `ObjectCustom4` / EyeRevealArea | 可选透出区域限制 |
-| `MetadataBuffer MaskId.g` | 与眼睛捕获内的角色 ID 做同角色判定 |
+| OB 标签 `脸`（Face） | 捕获来源（脸部颜色）：材质捕获 pass 按标签决定画不画 |
+| OB 标签 `眼睛`（Eye） | 捕获来源（眼睛 alpha / 深度 / 角色 ID） |
+| OB 标签 `前发`（FrontHair） | 遮挡物（值 = 该标签的覆盖率，天然带亚像素相位） |
+| OB 标签 `眼透区`（EyeRevealArea） | 可选透出区域限制 |
+| OB 身份池层 0 的**组字节** | 与眼睛捕获里的角色 ID 做同角色判定（两者都来自 RSUV 的组字节） |
 | `GeometryBuffer NormalDepth.a` | "前发在眼睛前方"的深度判断 |
+
+语义渠道 = `HoCharacterObjectSemantic.shader` 打出的两张位平面（`_lilHoCharacterObjectSemantic0_3Texture` / `4_7Texture`），
+通道布局与从前的 `objectCustom0_3` / `objectCustom4_7` 一致：`全角色 / 脸 / 前发 / 眼睛` + `眼透区 / 配件 / 人体 / 预留`。
+**不再有「读取抗锯齿掩码」开关**：位平面的值是覆盖率之和（MSAA resolve 的产物），本身就是连续场。
 
 ## 2. 工作原理（原始链路）
 
 1. **捕获**（`HoCharacterCaptureCommon.hlsl`）：材质 pass 调用 `LilHoCharacterBuildCaptureOutput`，
-   按 `_HoCharacterCaptureMode` 分两遍写入捕获 RT：
-   - 模式 1（Face）→ `eyeColor`：脸部颜色（预乘 alpha）；
-   - 模式 2（Eye）→ `eyeData`：眼睛 alpha(R)、线性深度(G)、角色 ID(B)，均预乘。
+   先按 RSUV 上的 `partId` 查 OB 部件行表拿到**标签**，再看 `_HoCharacterCaptureMode` 分两遍写入捕获 RT：
+   - 模式 1（Face）→ `eyeColor`：带 `脸` 标签的部件写脸部颜色（预乘 alpha）；
+   - 模式 2（Eye）→ `eyeData`：带 `眼睛` 标签的部件写眼睛 alpha(R)、线性深度(G)、角色 ID(B)，均预乘。
+   没有 OB 身份（RSUV = 0 / 表里没有这一行）的物件标签恒 0 ⇒ 两遍都不画。
 2. **合成**（`Composite`，全屏 RDG raster pass）：逐像素计算揭示遮罩
    `revealMask = frontHair × eyeAlpha × revealArea × hairInFront × sameCharacter × 强度`，
    最终 `color = lerp(源画面, eyeColor.rgb, revealMask)`。
@@ -52,21 +57,20 @@
 ### 3.3 数据流与实现说明
 
 ```
-HoMetadataBufferGroup
-  ├─ 面部朝向（Transform，骨骼或空物体均可）
-  ├─ 脸前轴 / 右轴 / 上轴（局部轴枚举，默认 +Z / +X / +Y）
-  └─ CharacterId（0..255，多角色必须唯一）
+HoObjectBufferGroup
+  ├─ 朝向参考系（Transform，骨骼或空物体均可）+ 脸前轴 / 右轴 / 上轴（局部轴枚举，默认 +Z / +X / +Y）
+  └─ 组 ID（自动分配，0..255，多角色各自唯一）
         │  TryGetWorldFacing() 输出世界朝向（SDF 等消费者复用同一入口）
         ▼
 HoCharacterEyeAngleTable（RendererFeature 持有）
-  ├─ 每个渲染相机各一张 256×1 RGBAFloat 表（行号 = CharacterId）
+  ├─ 每个渲染相机各一张 256×1 RGBAFloat 表（行号 = OB 组 ID）
   ├─ AddRenderPasses 时机（URP17 fork 主路径唯一保证被调用的时机）：
   │    CPU 按当前渲染相机算每角色 (平转角°, 俯仰角°)
   │    → 上传该相机的表 → SetGlobalTexture 绑定为全局 _lilHoCharacterEyeAngleTable
   └─ 相机销毁自动清理（判活用 ReferenceEquals，见 §3.1）
         ▼
 Composite
-  ├─ 按"眼睛捕获的角色 ID"（eyeData.b / eyeData.r）查表（与 SameCharacter 同源，避免错位）
+  ├─ 按 OB 身份池层 0 的组字节（Id0.r）查表（与 SameCharacter 同源，天然不会错位）
   ├─ 曲线 → angleFactor
   └─ revealMask × angleFactor
 ```
@@ -96,15 +100,16 @@ Composite
 
 ## 4. 配置
 
-### 4.1 HoMetadataBufferGroup（数据入口）
+### 4.1 HoObjectBufferGroup（数据入口）
 
 | 字段 | 说明 |
 |---|---|
-| 面部朝向 | **Transform**：确定角色面部朝向的参考，可以是骨骼，也可以是朝向正确的空物体；留空 = 该角色不参与角度修正。该输入不只服务眼透，未来 SDF 等消费者应复用 `TryGetWorldFacing()` |
+| 朝向参考系 | **Transform**：确定角色面部朝向的参考，可以是骨骼，也可以是朝向正确的空物体；留空 = 该角色不参与角度修正。该输入不只服务眼透，未来 SDF 等消费者应复用 `TryGetWorldFacing()` |
 | 脸前轴 | 局部轴枚举，默认 **+Z (Forward)** |
 | 右轴 | 局部轴枚举，默认 **+X (Right)** |
 | 上轴 | 局部轴枚举，默认 **+Y (Up)** |
-| 角色组 ID (CharacterId) | 表行号；**多角色必须各自唯一**，相同 ID 互相覆盖（后写者胜） |
+| 组 ID | 表行号，**自动分配**（不用手填；重复在结构上不可能） |
+| 部件的「标签」 | 决定捕获画不画：`脸` → 脸捕获（MRT0），`眼睛` → 眼捕获（MRT1）；`前发 / 眼透区` 决定屏幕空间那两把门 |
 
 ### 4.2 Volume / RendererFeature 参数（默认 90 / 60 / 40）
 
@@ -134,15 +139,17 @@ Composite
 
 | 现象 | 原因 | 处理 |
 |---|---|---|
-| debug 17 恒纯蓝（R/G=0、B=1） | 表行未写入有效角度：面部朝向为空 / 轴向异常 / CharacterId 不匹配 | 检查 Group 的面部朝向与三轴；检查 charId 是否与眼睛捕获一致 |
+| debug 17 恒纯蓝（R/G=0、B=1） | 表行未写入有效角度：朝向参考系为空 / 轴向异常 / 组 ID 与像素上的组字节不一致 | 检查 HoObjectBufferGroup 的「朝向参考系」与三轴；确认该物件的 OB 组 ID 已刷新（面板「刷新全场景 RSUV」） |
 | debug 16 恒白 | 因子=1：相机在视锥内，或强度为 0，或修正未启用 | 转相机越过视锥边界；确认开关与强度 |
+| 完全没有眼透 | OB 身份池没产出（feature 不在 renderer / RSUV 没刷新），或部件没打 `脸` / `眼睛` / `前发` 标签 | 看 feature 面板的输入自检（OB 身份池 / OB 语义位平面）；给部件打好标签后刷新 RSUV |
 | 编辑模式下转"摄像机物体"画面不变 | 编辑时 Scene 视图渲染的是**预览相机**，拖动相机物体不触发其渲染 | 旋转 **Scene 视图视角** 验证；或进 Play / 打开 Game 视图 |
 | Play 下转 Scene 视图不起作用 | 每相机各自表，Game 相机的画面使用游戏相机的表，属预期 | 在游戏相机视口或 Play 内转真实相机 |
-| 多角色互相影响 | CharacterId 重复 | 分配唯一 CharacterId |
+| 多角色互相影响 | 两个角色的部件被分到了同一个 OB 组（同一个 `HoObjectBufferGroup`） | 每个角色一个组件（组 ID 自动分配） |
 
 ## 7. 执行边界
 
-- 未提供面部朝向或未启用时，行 (0,0) → factor=1，行为与旧版一致。
+- 未提供朝向参考系或未启用时，行 (0,0) → factor=1，行为与旧版一致。
+- **语义全部来自 OB**：OB feature 不在 renderer 里、或本相机没有 OB 产出时，整支合成 no-op（不是"退化成硬边"）。
 - 每相机表惰性创建（RendererFeature Create 后首次渲染），Dispose 时释放；相机销毁自动清理。
 - 角度修正只衰减 `revealMask`，不影响眼睛捕获本身与前发投影 receiver；debug 3 仍显示未修正的 revealMask。
 - 双视图同帧各自渲染时，各自画面使用各自相机的表（写读成对），不需要额外配置。

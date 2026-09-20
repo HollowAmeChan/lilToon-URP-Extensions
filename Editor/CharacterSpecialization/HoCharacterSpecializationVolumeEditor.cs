@@ -57,19 +57,16 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
         private static readonly EffectSection[] Sections =
         {
             new EffectSection("EyeReveal", "眼透", "icon_Glow_SelectColor_v1", "eyeRevealEnabled", "eyeRevealStrength",
-                new[] { "eyeReveal", "useEyeRevealArea", "sameCharacterOnly", "semanticMaskBlurEyeReveal" }),
+                new[] { "eyeReveal", "useEyeRevealArea", "sameCharacterOnly" }),
             new EffectSection("DropShadow", "前发投影", "icon_DropShadow_v1", "hairDropShadowEnabled", "hairShadowOpacity",
-                new[] { "hairDropShadow", "hairShadow", "semanticMaskBlurHairShadow" }),
+                new[] { "hairDropShadow", "hairShadow" }),
             new EffectSection("FaceHairDiffuse", "前发漫反射", "icon_Blur_v1", "faceHairDiffuseEnabled", "faceHairDiffuseStrength",
-                new[] { "faceHairDiffuse", "semanticMaskBlurFaceHairDiffuse" }),
+                new[] { "faceHairDiffuse" }),
             new EffectSection("SubjectOutline", "主体描边", "icon_OutLine_v1", "subjectOutlineEnabled", "subjectOutlineStrength",
-                new[] { "subjectOutline", "semanticMaskBlurSubjectOutline" }),
+                new[] { "subjectOutline" }),
             new EffectSection("EnhancedOutline", "增强描边", "icon_RimLight_v1", "enhancedOutlineEnabled", "enhancedOutlineStrength",
-                new[] { "enhancedOutline", "semanticMaskBlurEnhancedOutline" }),
+                new[] { "enhancedOutline" }),
         };
-
-        /// <summary>第 6 条侧栏条目：不在区段里的全局一行（语义遮罩抗锯齿宽度）。</summary>
-        private const string BlurField = "semanticMaskBlurRadiusPixels";
 
         private SerializedProperty effectsParameter;
         private SerializedProperty effects;
@@ -109,13 +106,11 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 return;
             }
 
-            var entries = new EffectBrowserEntry[Sections.Length + 1];
+            var entries = new EffectBrowserEntry[Sections.Length];
             for (int i = 0; i < Sections.Length; i++)
             {
                 entries[i] = new EffectBrowserEntry(i, Sections[i].Label, Sections[i].Id, Sections[i].IconName);
             }
-
-            entries[Sections.Length] = new EffectBrowserEntry(Sections.Length, "语义遮罩抗锯齿", "SemanticMaskBlur", "icon_Settings_v1");
 
             browserCatalog = new EffectBrowserCatalog(
                 "CharacterSpecialization",
@@ -126,7 +121,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 CountEnabledMatches);
         }
 
-        /// <summary>侧栏绿色 = 该效果启用；最后一条（抗锯齿宽度）永远算"在"。</summary>
+        /// <summary>侧栏绿色 = 该效果启用。</summary>
         private bool IsEffectEnabled(int effect)
         {
             if (effect >= Sections.Length)
@@ -170,21 +165,14 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             var defaults = new HoCharacterSpecializationEffects();
             FieldInfo[] fields = typeof(HoCharacterSpecializationEffects).GetFields(BindingFlags.Public | BindingFlags.Instance);
 
-            if (effect >= Sections.Length)
+            foreach (FieldInfo field in fields)
             {
-                ApplyDefault(fields, defaults, BlurField);
-            }
-            else
-            {
-                foreach (FieldInfo field in fields)
+                foreach (string prefix in Sections[effect].FieldPrefixes)
                 {
-                    foreach (string prefix in Sections[effect].FieldPrefixes)
+                    if (field.Name.StartsWith(prefix, StringComparison.Ordinal))
                     {
-                        if (field.Name.StartsWith(prefix, StringComparison.Ordinal))
-                        {
-                            ApplyDefault(fields, defaults, field.Name);
-                            break;
-                        }
+                        ApplyDefault(fields, defaults, field.Name);
+                        break;
                     }
                 }
             }
@@ -238,8 +226,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             {
                 DrawSectionRow(i, Sections[i], query);
             }
-
-            DrawBlurRow(query);
         }
 
         private void DrawSectionRow(int index, EffectSection section, string query)
@@ -307,20 +293,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
 
             EditorGUI.indentLevel--;
             EditorGUILayout.Space(2.0f);
-        }
-
-        /// <summary>第 6 条：不属于任何区段的一行（语义遮罩抗锯齿宽度）。</summary>
-        private void DrawBlurRow(string query)
-        {
-            SerializedProperty property = Find(BlurField);
-            if (property == null)
-            {
-                return;
-            }
-
-            Rect rect = EditorGUILayout.GetControlRect(false, LineHeight);
-            DrawRowHighlight(rect, Sections.Length, query);
-            EditorGUI.PropertyField(rect, property, new GUIContent("抗锯齿宽度"));
         }
 
         private void DrawRowHighlight(Rect rect, int effect, string query)

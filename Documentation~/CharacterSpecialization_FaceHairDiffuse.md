@@ -4,11 +4,11 @@
 
 新增一个近景角色效果：把**前发后面那张受光脸**扩散到前发上，让前发获得类似半透的脸色晕染，但不把头发材质改成透明队列。效果保持屏幕空间、Opaque 友好，并复用现有角色语义输入：
 
-- `ObjectCustom1` / Face 作为扩散源遮罩。
-- `ObjectCustom2` / FrontHair 作为接收区域。
+- OB 标签 `脸`（Face）作为扩散源遮罩：**它的覆盖率**既是"这张脸在这个像素上占多少"（脸被前发遮住时它在身份池的层 1 上，照样能取到），也是捕获权重。
+- OB 标签 `前发`（FrontHair）作为接收区域。
 - **强制脸捕获的 MRT0（`_lilHoCharacterEyeColorTexture`）作为扩散颜色来源**：那上面写的是材质算完光照的 `color`（alpha = 1），所以扩散的是"受光脸"，不是不受光的 albedo。
-- `MetadataBuffer SurfaceColor` 只提供 coverage（掩码），颜色不再从这里取。
 - `GeometryBuffer NormalDepth` 作为深度限制。
+- **不再需要 `MetadataBuffer SurfaceColor`**：那份 coverage 就是 OB 的标签覆盖率，角色特化这一整支已经与 MetadataBuffer 无关。
 
 > 为什么用受光色而不是 albedo：扩散色必须和真实脸的明暗连在一起（脸被阴影挡住时，前发上的晕染也要跟着暗），否则叠上去像贴了一层（owner 的判断）。
 
@@ -25,15 +25,15 @@
 新增 RT 只走临时 RenderGraph 纹理，不给兼容路径增加新的持久 `RTHandle`。
 
 1. `FaceHair Source`
-   - 全屏 RDG raster pass（`HoCharacterSpecializationRendererFeature.cs:701-733`）。
-   - 读取 `ObjectCustom0_3`、`SurfaceColor`、`NormalDepth`、**`_lilHoCharacterEyeColorTexture`（捕获）**。
+   - 全屏 RDG raster pass（`HoCharacterSpecializationRendererPass.FaceHairDiffuse` 支）。
+   - 读取 **OB 语义位平面的 `脸` 通道**、`NormalDepth`、**`_lilHoCharacterEyeColorTexture`（捕获）**。
    - 写一张临时 HDR 颜色纹理：
-     - `rgb = faceLit.rgb * faceMask`（`faceLit` = 该像素 UV 处采到的受光脸；`HoCharacterFaceHairDiffuse.shader:52,68`）
-     - `a = faceMask`
+     - `rgb = faceLit.rgb * faceMask`（`faceLit` = 该像素 UV 处采到的受光脸；`HoCharacterFaceHairDiffuse.shader`）
+     - `a = faceMask`，其中 `faceMask = 脸的覆盖率 * step(0.0001, NormalDepth.a)`
    - 写一张临时深度数据纹理：
      - `r = linearDepth * faceMask`
      - `a = faceMask`
-   - depth / mask / validity 的算法与改造前逐字相同，只有颜色来源换了。
+   - depth / mask / validity 的算法与改造前逐字相同，只有颜色来源与语义来源换了（覆盖率天然带亚像素相位）。
 
 2. `FaceHair Blur`
    - 2 轮各向同性 fast Gaussian disk blur，使用同一组 RDG 临时 ping-pong 纹理。
@@ -48,7 +48,7 @@
      - `faceColor = blurredColor.rgb / max(blurMask, eps)`（= **模糊后的受光脸**）
      - `faceDepth = blurredDepth.r / max(blurredDepth.a, eps)`
    - 最终遮罩：
-     - `FrontHair * Levels(blurMask) * depthGate`
+     - `前发覆盖率 * Levels(blurMask) * depthGate`（`前发` 通道现在是覆盖率，不再是 0/1 位）
    - **颜色乘（tint）在模糊之后相乘**，它是层色、不是被扩散的内容：
      - `tintedFaceColor = faceColor * _HoCharacterFaceHairDiffuseTintColor.rgb`
      - 再按混合模式把 `tintedFaceColor` 叠到当前前发颜色上（`HoCharacterSpecializationComposite.shader:838-844`）。
@@ -104,8 +104,8 @@ RendererFeature 默认值和 Volume override 都暴露：
 
 | # | 看什么（调试模式） | 期望 |
 |---|---|---|
-| 1 | **① 18** 脸色扩散捕获受光脸 | 脸上有明暗（高光/阴影/鼻影都在）：这就是"受光"的证据。整屏全黑 ⇒ 捕获没跑（材质侧 `HoCharacterCapture` pass、层遮罩、角色是否被 `HoMetadataBufferGroup` 收进来）。发际线以下（受前发遮挡的脸）应当仍是脸的颜色 —— 这正是被扩散的原料 |
-| 2 | **② 19**，半径 48 → 16 → 96 各抓一次 | 与 ① 同色系但摊开；半径越大越糊；发际线处平滑，不能有硬边或 1px 环（有 ⇒ 语义遮罩抗锯齿没开或半径太小） |
+| 1 | **① 18** 脸色扩散捕获受光脸 | 脸上有明暗（高光/阴影/鼻影都在）：这就是"受光"的证据。整屏全黑 ⇒ 捕获没跑（材质侧 `HoCharacterCapture` pass，或该部件的「标签」里没有 `脸`，或 OB feature 不在 renderer 里）。发际线以下（受前发遮挡的脸）应当仍是脸的颜色 —— 这正是被扩散的原料 |
+| 2 | **② 19**，半径 48 → 16 → 96 各抓一次 | 与 ① 同色系但摊开；半径越大越糊；发际线处平滑，不能有硬边或 1px 环（有 ⇒ OB 覆盖率没生效：看 feature 面板的「OB 身份池 / OB 语义位平面」自检） |
 | 3 | **③ 20**，并临时把 `颜色乘` 改成纯白 | 纯白时必须与 ② 逐像素一致（证明 tint 是"乘"不是"换"）；恢复 (1,0.78,0.72) 后应整体偏暖 |
 | 4 | **④ 21** | 只有脸色扩散这一支落在头发上（眼透/前发投影/轮廓都不参与）；把 `启用脸色扩散` 关掉 ⇒ ④ 回到原画面 |
 | 5 | **关闭(Off) + 启用脸色扩散**：同一帧，改前 / 改后各抓一次 | 改后：晕染跟着脸的明暗走（脸被阴影挡住时前发一起变暗；脸偏暖时前发偏暖）。改前：不管脸明暗，前发上是同一层 albedo×tint。差异最大的地方＝脸有强阴影或强高光的区域；**前发整体亮度会变（通常变暗）**，需要重调 `扩散强度` / `颜色乘` |
@@ -114,8 +114,8 @@ RendererFeature 默认值和 Volume override 都暴露：
 
 ## 执行边界
 
-- 缺少基础 MetadataBuffer / GeometryBuffer 输入时，整个 CharacterSpecialization 仍按现有规则跳过。
-- `SurfaceColor` 只在脸色扩散启用或相关 debug view 开启时成为必需输入（它现在只供 coverage）。
+- 缺少基础 **ObjectBuffer / GeometryBuffer** 输入时，整个 CharacterSpecialization 按现有规则跳过（feature 面板的输入自检会指出缺哪一项）。
+- 语义只有 OB 一个来源：`脸` / `前发` 标签没打、或 RSUV 没刷新时，这一支整体为 0，没有"退回 albedo"的路径。
 - **捕获（`_lilHoCharacterEyeColorTexture`）是脸色扩散的硬输入**：没有回退路径。
 - 非 RenderGraph 兼容路径不分配新增 blur RT，只保留原有眼透和前发投影行为。
 - v1 不做 same-character 隔离。该效果定位为近景角色修正，依赖深度和范围控制；脸部扩散颜色串色风险可接受。

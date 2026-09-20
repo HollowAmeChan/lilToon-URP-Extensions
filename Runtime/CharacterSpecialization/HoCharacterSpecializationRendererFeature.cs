@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 #pragma warning disable CS0618, CS0672
 
-using lilToon.URP.Extensions.MetadataBuffer;
 using lilToon.URP.Extensions.GeometryBuffer;
+using lilToon.URP.Extensions.ObjectBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -24,18 +24,18 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private Material captureClearMaterial;
         private Material faceHairDiffuseMaterial;
         private Material subjectOutlineMaterial;
-        private Material semanticMaskBlurMaterial;
+        private Material objectSemanticMaterial;
         private HoCharacterEyeAngleTable eyeAngleTable;
         private Shader compositeShader;
         private Shader captureClearShader;
         private Shader faceHairDiffuseShader;
         private Shader subjectOutlineShader;
-        private Shader semanticMaskBlurShader;
+        private Shader objectSemanticShader;
         private bool warnedMissingCompositeShader;
         private bool warnedMissingCaptureClearShader;
         private bool warnedMissingFaceHairDiffuseShader;
         private bool warnedMissingSubjectOutlineShader;
-        private bool warnedMissingSemanticMaskBlurShader;
+        private bool warnedMissingObjectSemanticShader;
 
         public HoCharacterSpecializationSettings Settings => settings;
 
@@ -67,7 +67,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 captureClearMaterial,
                 faceHairDiffuseMaterial,
                 subjectOutlineMaterial,
-                semanticMaskBlurMaterial);
+                objectSemanticMaterial);
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -104,7 +104,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 captureClearMaterial,
                 faceHairDiffuseMaterial,
                 subjectOutlineMaterial,
-                semanticMaskBlurMaterial);
+                objectSemanticMaterial);
             renderer.EnqueuePass(pass);
         }
 
@@ -119,17 +119,17 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             CoreUtils.Destroy(captureClearMaterial);
             CoreUtils.Destroy(faceHairDiffuseMaterial);
             CoreUtils.Destroy(subjectOutlineMaterial);
-            CoreUtils.Destroy(semanticMaskBlurMaterial);
+            CoreUtils.Destroy(objectSemanticMaterial);
             compositeMaterial = null;
             captureClearMaterial = null;
             faceHairDiffuseMaterial = null;
             subjectOutlineMaterial = null;
-            semanticMaskBlurMaterial = null;
+            objectSemanticMaterial = null;
             compositeShader = null;
             captureClearShader = null;
             faceHairDiffuseShader = null;
             subjectOutlineShader = null;
-            semanticMaskBlurShader = null;
+            objectSemanticShader = null;
         }
 
         private bool ShouldRender(in RenderingData renderingData, HoCharacterSpecializationSettings activeSettings)
@@ -235,12 +235,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 "HoCharacterSpecialization outline field is unavailable because shader '{0}' could not be found.");
 
             EnsureMaterial(
-                ref semanticMaskBlurMaterial,
-                ref semanticMaskBlurShader,
-                Shader.Find(HoCharacterSpecializationShaderConstants.SemanticMaskBlurShaderName),
-                HoCharacterSpecializationShaderConstants.SemanticMaskBlurShaderName,
-                ref warnedMissingSemanticMaskBlurShader,
-                "HoCharacterSpecialization semantic mask anti-aliasing is unavailable because shader '{0}' could not be found.");
+                ref objectSemanticMaterial,
+                ref objectSemanticShader,
+                Shader.Find(HoCharacterSpecializationShaderConstants.ObjectSemanticShaderName),
+                HoCharacterSpecializationShaderConstants.ObjectSemanticShaderName,
+                ref warnedMissingObjectSemanticShader,
+                "HoCharacterSpecialization object semantics are unavailable because shader '{0}' could not be found.");
 
             Shader clearShader = Shader.Find(HoCharacterSpecializationShaderConstants.CaptureClearShaderName);
             EnsureMaterial(
@@ -303,19 +303,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private Material captureClearMaterial;
         private Material faceHairDiffuseMaterial;
         private Material subjectOutlineMaterial;
-        private Material semanticMaskBlurMaterial;
+        private Material objectSemanticMaterial;
         private FilteringSettings filteringSettings;
         private RenderStateBlock renderStateBlock;
-
-        private sealed class SemanticMaskBlurPassData
-        {
-            public TextureHandle metadataObjectCustom0Texture;
-            public TextureHandle metadataObjectCustom1Texture;
-            public TextureHandle destinationLowTexture;
-            public TextureHandle destinationHighTexture;
-            public Material material;
-            public Vector4 blurParams;
-        }
 
         private sealed class CapturePassData
         {
@@ -341,7 +331,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             Material captureClearMaterial,
             Material faceHairDiffuseMaterial,
             Material subjectOutlineMaterial,
-            Material semanticMaskBlurMaterial)
+            Material objectSemanticMaterial)
         {
             this.settings = settings;
             this.renderTargets = renderTargets;
@@ -350,7 +340,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             this.captureClearMaterial = captureClearMaterial;
             this.faceHairDiffuseMaterial = faceHairDiffuseMaterial;
             this.subjectOutlineMaterial = subjectOutlineMaterial;
-            this.semanticMaskBlurMaterial = semanticMaskBlurMaterial;
+            this.objectSemanticMaterial = objectSemanticMaterial;
             ConfigurePass();
         }
 
@@ -360,14 +350,14 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             Material captureClearMaterial,
             Material faceHairDiffuseMaterial,
             Material subjectOutlineMaterial,
-            Material semanticMaskBlurMaterial)
+            Material objectSemanticMaterial)
         {
             this.settings = settings;
             this.compositeMaterial = compositeMaterial;
             this.captureClearMaterial = captureClearMaterial;
             this.faceHairDiffuseMaterial = faceHairDiffuseMaterial;
             this.subjectOutlineMaterial = subjectOutlineMaterial;
-            this.semanticMaskBlurMaterial = semanticMaskBlurMaterial;
+            this.objectSemanticMaterial = objectSemanticMaterial;
             ConfigurePass();
         }
 
@@ -399,7 +389,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             renderTargets.ReAllocateIfNeeded(
                 renderingData.cameraData.cameraTargetDescriptor,
                 settings,
-                RequiresSemanticMaskBlurTextures(settings));
+                objectSemanticMaterial != null);
             captureColorTargets[0] = renderTargets.EyeColorTexture;
             captureColorTargets[1] = renderTargets.EyeDataTexture;
 
@@ -441,38 +431,33 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
                 cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.CaptureModeId, 0.0f);
 
-                bool semanticMaskBlurReady = RequiresSemanticMaskBlurTextures(settings)
-                    && semanticMaskBlurMaterial != null
-                    && renderTargets.SemanticMaskBlurredLowTexture != null
-                    && renderTargets.SemanticMaskBlurredHighTexture != null;
-                if (semanticMaskBlurReady)
+                bool objectSemanticReady = objectSemanticMaterial != null
+                    && renderTargets.ObjectSemanticLowTexture != null
+                    && renderTargets.ObjectSemanticHighTexture != null;
+                if (objectSemanticReady)
                 {
-                    captureColorIdentifiers[0] = renderTargets.SemanticMaskBlurredLowTexture.nameID;
-                    captureColorIdentifiers[1] = renderTargets.SemanticMaskBlurredHighTexture.nameID;
+                    // 语义位平面：读 OB 身份池 + 覆盖率（这两张图是 OB feature 在兼容路径里设好的全局），
+                    // 写两张 RGBA8 位平面。
+                    captureColorIdentifiers[0] = renderTargets.ObjectSemanticLowTexture.nameID;
+                    captureColorIdentifiers[1] = renderTargets.ObjectSemanticHighTexture.nameID;
                     cmd.SetRenderTarget(captureColorIdentifiers, renderTargets.CaptureDepthTexture.nameID);
+                    Blitter.BlitTexture(cmd, tempTexture, new Vector4(1, 1, 0, 0), objectSemanticMaterial, 0);
                     cmd.SetGlobalVector(
-                        HoCharacterSpecializationShaderConstants.SemanticMaskBlurParamsId,
-                        CreateSemanticMaskBlurParams(settings));
-                    Blitter.BlitTexture(cmd, tempTexture, new Vector4(1, 1, 0, 0), semanticMaskBlurMaterial, 0);
+                        HoCharacterSpecializationShaderConstants.ScreenTexelSizeId,
+                        GetScreenTexelSize(renderingData.cameraData.cameraTargetDescriptor, settings));
                 }
 
                 ApplyMaterialProperties(compositeMaterial, settings);
                 cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, renderTargets.EyeColorTexture.nameID);
                 cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeDataTextureId, renderTargets.EyeDataTexture.nameID);
-                cmd.SetGlobalFloat(
-                    HoCharacterSpecializationShaderConstants.SemanticMaskBlurValidId,
-                    semanticMaskBlurReady ? 1.0f : 0.0f);
-                cmd.SetGlobalVector(
-                    HoCharacterSpecializationShaderConstants.SemanticMaskOptionsId,
-                    CreateSemanticMaskOptions(settings, semanticMaskBlurReady));
-                if (semanticMaskBlurReady)
+                if (objectSemanticReady)
                 {
                     cmd.SetGlobalTexture(
-                        HoCharacterSpecializationShaderConstants.SemanticMaskBlurredLowTextureId,
-                        renderTargets.SemanticMaskBlurredLowTexture.nameID);
+                        HoCharacterSpecializationShaderConstants.ObjectSemanticLowTextureId,
+                        renderTargets.ObjectSemanticLowTexture.nameID);
                     cmd.SetGlobalTexture(
-                        HoCharacterSpecializationShaderConstants.SemanticMaskBlurredHighTextureId,
-                        renderTargets.SemanticMaskBlurredHighTexture.nameID);
+                        HoCharacterSpecializationShaderConstants.ObjectSemanticHighTextureId,
+                        renderTargets.ObjectSemanticHighTexture.nameID);
                 }
 
                 Blitter.BlitCameraTexture(cmd, cameraColorTarget, tempTexture, 0, true);
@@ -495,17 +480,17 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             UniversalRenderingData renderingData = frameData.Get<UniversalRenderingData>();
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
-            HoMetadataBufferRenderGraphResources metadataResources = frameData.GetOrCreate<HoMetadataBufferRenderGraphResources>();
+            HoObjectBufferRenderGraphResources objectBufferResources = frameData.GetOrCreate<HoObjectBufferRenderGraphResources>();
             HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
 
             bool backBufferActive = resourceData.isActiveTargetBackBuffer;
             bool hasCameraColor = resourceData.activeColorTexture.IsValid();
-            bool hasMetadataMaskId = metadataResources.maskIdTexture.IsValid();
+            bool hasObjectBufferIdentity = objectBufferResources.HasRequiredTextures;
+            // 语义位平面这帧能不能产出：身份池在 + 打包材质在。它是合成与两条轮廓源的**共同输入**，
+            // 所以它不成立时整支 no-op（没有 OB 就没有角色语义，退化成"什么都不做"而不是猜）。
+            bool objectSemanticAvailable = hasObjectBufferIdentity && objectSemanticMaterial != null;
             bool hasGeometryNormalDepth = geometryResources.normalDepthTexture.IsValid();
             bool hasGeometryDepth = geometryResources.depthTexture.IsValid();
-            bool hasMetadataObjectCustom0 = metadataResources.objectCustom0Texture.IsValid();
-            bool hasMetadataObjectCustom1 = metadataResources.objectCustom1Texture.IsValid();
-            bool hasMetadataSurfaceColor = metadataResources.surfaceColorTexture.IsValid();
             bool requiresFaceHairDiffuseTextures = RequiresFaceHairDiffuseTextures(settings);
             bool requiresSubjectOutlineTextures = RequiresSubjectOutlineTextures(settings);
             bool requiresEnhancedOutlineTextures = RequiresEnhancedOutlineTextures(settings);
@@ -515,22 +500,17 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 "Composite",
                 backBufferActive,
                 hasCameraColor,
-                hasMetadataMaskId,
-                hasMetadataObjectCustom0,
-                hasMetadataObjectCustom1,
-                hasMetadataSurfaceColor,
+                hasObjectBufferIdentity,
+                objectSemanticAvailable,
                 hasGeometryNormalDepth,
                 hasGeometryDepth,
-                requiresGeometryDepth,
-                requiresFaceHairDiffuseTextures);
+                requiresGeometryDepth);
 
             if (backBufferActive
                 || !hasCameraColor
-                || !hasMetadataMaskId
+                || !objectSemanticAvailable
                 || !hasGeometryNormalDepth
-                || (requiresGeometryDepth && !hasGeometryDepth)
-                || !hasMetadataObjectCustom0
-                || !hasMetadataObjectCustom1)
+                || (requiresGeometryDepth && !hasGeometryDepth))
             {
                 return;
             }
@@ -636,35 +616,30 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 }
             }
 
-            // Shared anti-aliased semantic masks: one pass, two MRTs, for every consumer of the
-            // MetadataBuffer semantic bits. The raw bits stay untouched.
-            TextureHandle semanticMaskBlurredLowTexture = TextureHandle.nullHandle;
-            TextureHandle semanticMaskBlurredHighTexture = TextureHandle.nullHandle;
-            bool semanticMaskBlurReady = RequiresSemanticMaskBlurTextures(settings)
-                && hasMetadataObjectCustom0
-                && hasMetadataObjectCustom1
-                && semanticMaskBlurMaterial != null;
-            if (semanticMaskBlurReady)
+            // 共享的角色语义位平面：一趟、两个 MRT，给合成 / 脸色扩散源 / 两条轮廓源一起用。
+            TextureHandle objectSemanticLowTexture = TextureHandle.nullHandle;
+            TextureHandle objectSemanticHighTexture = TextureHandle.nullHandle;
             {
-                TextureDesc semanticMaskDesc = CreateTextureDesc(
+                TextureDesc objectSemanticDescriptor = CreateTextureDesc(
                     cameraData.cameraTargetDescriptor,
                     settings,
-                    GetSemanticMaskGraphicsFormat(),
-                    HoCharacterSpecializationShaderConstants.SemanticMaskBlurredLowTextureName);
-                semanticMaskBlurredLowTexture = renderGraph.CreateTexture(semanticMaskDesc);
-                semanticMaskDesc.name = HoCharacterSpecializationShaderConstants.SemanticMaskBlurredHighTextureName;
-                semanticMaskBlurredHighTexture = renderGraph.CreateTexture(semanticMaskDesc);
+                    GetObjectSemanticGraphicsFormat(),
+                    HoCharacterSpecializationShaderConstants.ObjectSemanticLowTextureName);
+                objectSemanticLowTexture = renderGraph.CreateTexture(objectSemanticDescriptor);
+                objectSemanticDescriptor.name = HoCharacterSpecializationShaderConstants.ObjectSemanticHighTextureName;
+                objectSemanticHighTexture = renderGraph.CreateTexture(objectSemanticDescriptor);
 
-                AddSemanticMaskBlurPass(
+                AddObjectSemanticPass(
                     renderGraph,
-                    "Ho-CharacterSpecialization SemanticMask Blur",
-                    semanticMaskBlurMaterial,
-                    metadataResources.objectCustom0Texture,
-                    metadataResources.objectCustom1Texture,
-                    semanticMaskBlurredLowTexture,
-                    semanticMaskBlurredHighTexture,
-                    CreateSemanticMaskBlurParams(settings));
+                    "Ho-CharacterSpecialization ObjectSemantic",
+                    objectSemanticMaterial,
+                    objectBufferResources.id0Texture,
+                    objectBufferResources.id1Texture,
+                    objectBufferResources.coverageTexture,
+                    objectSemanticLowTexture,
+                    objectSemanticHighTexture);
             }
+            Vector4 screenTexelSize = GetScreenTexelSize(cameraData.cameraTargetDescriptor, settings);
 
             TextureHandle faceHairDiffuseSourceColorTexture = TextureHandle.nullHandle;
             TextureHandle faceHairDiffuseSourceDepthTexture = TextureHandle.nullHandle;
@@ -672,7 +647,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             TextureHandle faceHairDiffuseTempDepthTexture = TextureHandle.nullHandle;
             TextureHandle faceHairDiffuseColorTexture = TextureHandle.nullHandle;
             TextureHandle faceHairDiffuseDepthTexture = TextureHandle.nullHandle;
-            bool faceHairDiffuseReady = requiresFaceHairDiffuseTextures && hasMetadataSurfaceColor && faceHairDiffuseMaterial != null;
+            bool faceHairDiffuseReady = requiresFaceHairDiffuseTextures && faceHairDiffuseMaterial != null;
             if (faceHairDiffuseReady)
             {
                 TextureDesc faceHairColorDesc = CreateFaceHairDiffuseTextureDesc(
@@ -700,8 +675,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
                 using (var builder = renderGraph.AddRasterRenderPass<FaceHairDiffuseSourcePassData>("Ho-CharacterSpecialization FaceHair Source", out FaceHairDiffuseSourcePassData passData, ProfilingSampler))
                 {
-                    passData.metadataObjectCustom0Texture = metadataResources.objectCustom0Texture;
-                    passData.metadataSurfaceColorTexture = metadataResources.surfaceColorTexture;
+                    passData.objectSemanticLowTexture = objectSemanticLowTexture;
                     passData.geometryNormalDepthTexture = geometryResources.normalDepthTexture;
                     passData.eyeColorTexture = eyeColorTexture;
                     passData.options = CreateCharacterOptions(settings);
@@ -710,8 +684,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     // 相机颜色在这趟里从来没有被采样（HoCharacterFaceHairDiffuse.shader pass 0 的
                     // Frag:43-71 里没有 _BlitTexture），所以不再声明这条读；画面也不再用
                     // Blitter.BlitTexture 去绑 _BlitTexture，改成 DrawProcedural + 显式 _BlitScaleBias。
-                    builder.UseTexture(passData.metadataObjectCustom0Texture, AccessFlags.Read);
-                    builder.UseTexture(passData.metadataSurfaceColorTexture, AccessFlags.Read);
+                    builder.UseTexture(passData.objectSemanticLowTexture, AccessFlags.Read);
                     builder.UseTexture(passData.geometryNormalDepthTexture, AccessFlags.Read);
                     // 受光脸：这趟真的采它（Frag 里 SAMPLE _lilHoCharacterEyeColorTexture），
                     // 所以这条读是真依赖 —— 它把 CaptureFace 排到本趟之前，同时下面自己绑全局，
@@ -723,12 +696,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     builder.AllowPassCulling(false);
                     builder.SetRenderFunc(static (FaceHairDiffuseSourcePassData data, RasterGraphContext context) =>
                     {
-                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.metadataObjectCustom0Texture);
-                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, data.metadataSurfaceColorTexture);
+                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.ObjectSemanticLowTextureId, data.objectSemanticLowTexture);
                         context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.geometryNormalDepthTexture);
                         context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, data.eyeColorTexture);
                         context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.OptionsId, data.options);
-                        context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
                         // Blit.hlsl 的 Vert:50 用 _BlitScaleBias 算 UV，这趟不再是 Blitter.BlitTexture
                         // （它会替我们设），所以要自己设成整张纹理：scale=1, bias=0。
                         context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.BlitScaleBiasId, new Vector4(1, 1, 0, 0));
@@ -784,31 +755,18 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
                 using (var builder = renderGraph.AddRasterRenderPass<SubjectOutlineSourcePassData>("Ho-CharacterSpecialization SubjectOutline Source", out SubjectOutlineSourcePassData passData, ProfilingSampler))
                 {
-                    passData.metadataObjectCustom0Texture = metadataResources.objectCustom0Texture;
-                    passData.metadataObjectCustom1Texture = metadataResources.objectCustom1Texture;
-                    passData.semanticMaskBlurredLowTexture = semanticMaskBlurredLowTexture;
-                    passData.semanticMaskBlurredHighTexture = semanticMaskBlurredHighTexture;
-                    passData.semanticMaskBlurReady = semanticMaskBlurReady;
-                    passData.useSemanticMaskAntiAliasing = settings.semanticMaskBlurSubjectOutline;
+                    passData.objectSemanticLowTexture = objectSemanticLowTexture;
+                    passData.objectSemanticHighTexture = objectSemanticHighTexture;
                     passData.geometryDepthTexture = geometryResources.depthTexture;
                     passData.material = subjectOutlineMaterial;
-                    passData.sourceParams = new Vector4((float)HoCharacterObjectCustomChannel.CharacterFull, 0.0f, 0.0f, 0.0f);
+                    passData.sourceParams = new Vector4((float)HoCharacterSemanticChannel.CharacterFull, 0.0f, 0.0f, 0.0f);
 
                     // 相机颜色在这趟里从来没有被采样（HoCharacterSubjectOutline.shader pass 0 的
                     // Frag:91-112 里没有 _BlitTexture），所以不再声明这条读；画面也不再用
                     // Blitter.BlitTexture 去绑 _BlitTexture，改成 DrawProcedural + 显式 _BlitScaleBias。
-                    builder.UseTexture(passData.metadataObjectCustom0Texture, AccessFlags.Read);
-                    builder.UseTexture(passData.metadataObjectCustom1Texture, AccessFlags.Read);
+                    builder.UseTexture(passData.objectSemanticLowTexture, AccessFlags.Read);
+                    builder.UseTexture(passData.objectSemanticHighTexture, AccessFlags.Read);
                     builder.UseTexture(passData.geometryDepthTexture, AccessFlags.Read);
-                    // shader 只在 _HoCharacterSemanticMaskBlurValid > 0.5 时读模糊对
-                    // （SubjectOutline.shader:43-52），而这个全局量就是下面的
-                    // "semanticMaskBlurReady && 本效果自己的开关"（render func 里写死同一个表达式）。
-                    bool subjectOutlineSamplesSemanticMaskBlur = semanticMaskBlurReady && settings.semanticMaskBlurSubjectOutline;
-                    if (subjectOutlineSamplesSemanticMaskBlur)
-                    {
-                        builder.UseTexture(semanticMaskBlurredLowTexture, AccessFlags.Read);
-                        builder.UseTexture(semanticMaskBlurredHighTexture, AccessFlags.Read);
-                    }
 
                     builder.SetRenderAttachment(subjectOutlineSourceTexture, 0, AccessFlags.WriteAll);
                     builder.AllowGlobalStateModification(true);
@@ -816,18 +774,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     builder.SetRenderFunc(static (SubjectOutlineSourcePassData data, RasterGraphContext context) =>
                     {
                         context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.SubjectOutlineSourceParamsId, data.sourceParams);
-                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.metadataObjectCustom0Texture);
-                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.metadataObjectCustom1Texture);
+                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.ObjectSemanticLowTextureId, data.objectSemanticLowTexture);
+                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.ObjectSemanticHighTextureId, data.objectSemanticHighTexture);
                         context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, data.geometryDepthTexture);
-                        context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
-                        // The outline's own switch: it stays on the raw bits by default.
-                        bool useSemanticMaskAntiAliasing = data.semanticMaskBlurReady && data.useSemanticMaskAntiAliasing;
-                        context.cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.SemanticMaskBlurValidId, useSemanticMaskAntiAliasing ? 1.0f : 0.0f);
-                        if (useSemanticMaskAntiAliasing)
-                        {
-                            context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.SemanticMaskBlurredLowTextureId, data.semanticMaskBlurredLowTexture);
-                            context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.SemanticMaskBlurredHighTextureId, data.semanticMaskBlurredHighTexture);
-                        }
 
                         context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.BlitScaleBiasId, new Vector4(1, 1, 0, 0));
                         context.cmd.DrawProcedural(Matrix4x4.identity, data.material, 0, MeshTopology.Triangles, 3, 1);
@@ -877,28 +826,16 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
                 using (var builder = renderGraph.AddRasterRenderPass<SubjectOutlineSourcePassData>("Ho-CharacterSpecialization EnhancedOutline Source", out SubjectOutlineSourcePassData passData, ProfilingSampler))
                 {
-                    passData.metadataObjectCustom0Texture = metadataResources.objectCustom0Texture;
-                    passData.metadataObjectCustom1Texture = metadataResources.objectCustom1Texture;
-                    passData.semanticMaskBlurredLowTexture = semanticMaskBlurredLowTexture;
-                    passData.semanticMaskBlurredHighTexture = semanticMaskBlurredHighTexture;
-                    passData.semanticMaskBlurReady = semanticMaskBlurReady;
-                    passData.useSemanticMaskAntiAliasing = settings.semanticMaskBlurEnhancedOutline;
+                    passData.objectSemanticLowTexture = objectSemanticLowTexture;
+                    passData.objectSemanticHighTexture = objectSemanticHighTexture;
                     passData.geometryDepthTexture = geometryResources.depthTexture;
                     passData.material = subjectOutlineMaterial;
                     passData.sourceParams = new Vector4(Mathf.Clamp((int)settings.enhancedOutlineSourceChannel, 0, 7), 0.0f, 0.0f, 0.0f);
 
                     // 相机颜色在这趟里从来没有被采样（同 #7 的 shader）：去掉假读，改 DrawProcedural。
-                    builder.UseTexture(passData.metadataObjectCustom0Texture, AccessFlags.Read);
-                    builder.UseTexture(passData.metadataObjectCustom1Texture, AccessFlags.Read);
+                    builder.UseTexture(passData.objectSemanticLowTexture, AccessFlags.Read);
+                    builder.UseTexture(passData.objectSemanticHighTexture, AccessFlags.Read);
                     builder.UseTexture(passData.geometryDepthTexture, AccessFlags.Read);
-                    // 同 #7：模糊对只在 _HoCharacterSemanticMaskBlurValid > 0.5 时被采
-                    // （SubjectOutline.shader:43-52），这里用的就是 render func 里写的那个表达式。
-                    bool enhancedOutlineSamplesSemanticMaskBlur = semanticMaskBlurReady && settings.semanticMaskBlurEnhancedOutline;
-                    if (enhancedOutlineSamplesSemanticMaskBlur)
-                    {
-                        builder.UseTexture(semanticMaskBlurredLowTexture, AccessFlags.Read);
-                        builder.UseTexture(semanticMaskBlurredHighTexture, AccessFlags.Read);
-                    }
 
                     builder.SetRenderAttachment(enhancedOutlineSourceTexture, 0, AccessFlags.WriteAll);
                     builder.AllowGlobalStateModification(true);
@@ -906,18 +843,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     builder.SetRenderFunc(static (SubjectOutlineSourcePassData data, RasterGraphContext context) =>
                     {
                         context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.SubjectOutlineSourceParamsId, data.sourceParams);
-                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.metadataObjectCustom0Texture);
-                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.metadataObjectCustom1Texture);
+                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.ObjectSemanticLowTextureId, data.objectSemanticLowTexture);
+                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.ObjectSemanticHighTextureId, data.objectSemanticHighTexture);
                         context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, data.geometryDepthTexture);
-                        context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
-                        // The outline's own switch: it stays on the raw bits by default.
-                        bool useSemanticMaskAntiAliasing = data.semanticMaskBlurReady && data.useSemanticMaskAntiAliasing;
-                        context.cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.SemanticMaskBlurValidId, useSemanticMaskAntiAliasing ? 1.0f : 0.0f);
-                        if (useSemanticMaskAntiAliasing)
-                        {
-                            context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.SemanticMaskBlurredLowTextureId, data.semanticMaskBlurredLowTexture);
-                            context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.SemanticMaskBlurredHighTextureId, data.semanticMaskBlurredHighTexture);
-                        }
 
                         context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.BlitScaleBiasId, new Vector4(1, 1, 0, 0));
                         context.cmd.DrawProcedural(Matrix4x4.identity, data.material, 0, MeshTopology.Triangles, 3, 1);
@@ -955,14 +883,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             EnsureHdrTextureDesc(ref destinationDesc);
             TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
 
-            // 语义副本（模糊对）在合成里只有三条采样路径，全部要求 _HoCharacterSemanticMaskBlurValid > 0.5
-            // （= ready）且该效果自己的开关位 > 0.5（Composite.shader:92 的 SampleSemanticBit），
-            // 而各路径自己还有前置门：眼透 :243-246、前发投影 :309-312、脸色扩散 :364-367。
-            // 三个"效果开着 && 它勾了读取抗锯齿掩码"的或，就是这张模糊对在合成趟里的全部可达条件。
-            bool compositeSamplesSemanticMaskBlur = semanticMaskBlurReady
-                && ((settings.eyeRevealEnabled && settings.semanticMaskBlurEyeReveal)
-                    || (settings.hairDropShadowEnabled && settings.semanticMaskBlurHairShadow)
-                    || (faceHairDiffuseReady && settings.semanticMaskBlurFaceHairDiffuse));
+            // 语义位平面是合成本趟的常备输入：眼透 / 前发投影 / 脸色扩散 / 两条轮廓以及它们的
+            // debug 视图都会采它，所以不做逐效果门控（它一定已经产出，上面已经检查过）。
             // 源色纹理在合成趟里只有两个采样点：debug 5（源遮罩）与 debug 18（① 捕获受光脸的原始采样）。
             // 别的时候不必让它活到最后一趟（RDG 的别名空间）。
             bool faceHairDiffuseSourceColorSampled =
@@ -972,10 +894,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             using (var builder = renderGraph.AddRasterRenderPass<CompositePassData>("Ho-CharacterSpecialization Composite", out CompositePassData passData, ProfilingSampler))
             {
                 passData.source = source;
-                passData.metadataMaskIdTexture = metadataResources.maskIdTexture;
+                passData.objectBufferId0Texture = objectBufferResources.id0Texture;
                 passData.geometryNormalDepthTexture = geometryResources.normalDepthTexture;
-                passData.metadataObjectCustom0Texture = metadataResources.objectCustom0Texture;
-                passData.metadataObjectCustom1Texture = metadataResources.objectCustom1Texture;
+                passData.objectSemanticLowTexture = objectSemanticLowTexture;
+                passData.objectSemanticHighTexture = objectSemanticHighTexture;
                 passData.faceHairDiffuseSourceColorTexture = faceHairDiffuseSourceColorTexture;
                 passData.faceHairDiffuseColorTexture = faceHairDiffuseColorTexture;
                 passData.faceHairDiffuseDepthTexture = faceHairDiffuseDepthTexture;
@@ -986,16 +908,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 passData.eyeColorTexture = eyeColorTexture;
                 passData.eyeDataTexture = eyeDataTexture;
                 passData.eyeDataSampled = needsEyeCapture;
-                passData.semanticMaskBlurredLowTexture = semanticMaskBlurredLowTexture;
-                passData.semanticMaskBlurredHighTexture = semanticMaskBlurredHighTexture;
-                passData.semanticMaskBlurSampled = compositeSamplesSemanticMaskBlur;
                 passData.faceHairDiffuseSourceColorSampled = faceHairDiffuseSourceColorSampled;
+                passData.screenTexelSize = screenTexelSize;
                 passData.material = compositeMaterial;
                 passData.faceHairDiffuseReady = faceHairDiffuseReady;
                 passData.subjectOutlineReady = subjectOutlineReady;
                 passData.enhancedOutlineReady = enhancedOutlineReady;
-                passData.semanticMaskBlurReady = semanticMaskBlurReady;
-                passData.semanticMaskOptions = CreateSemanticMaskOptions(settings, semanticMaskBlurReady);
                 FillMaterialVectors(
                     settings,
                     faceHairDiffuseReady,
@@ -1026,10 +944,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     out passData.options);
 
                 builder.UseTexture(source, AccessFlags.Read);
-                builder.UseTexture(passData.metadataMaskIdTexture, AccessFlags.Read);
+                builder.UseTexture(passData.objectBufferId0Texture, AccessFlags.Read);
                 builder.UseTexture(passData.geometryNormalDepthTexture, AccessFlags.Read);
-                builder.UseTexture(passData.metadataObjectCustom0Texture, AccessFlags.Read);
-                builder.UseTexture(passData.metadataObjectCustom1Texture, AccessFlags.Read);
                 // eyeColor 是**真读**：Composite.shader:621 在 Frag 开头无条件采样它
                 // （debug 1 在 :640-642 直接返回它，:823 的 lerp 也拿它当目标色）。所以捕获支被门控掉时
                 // 这条读和下面的全局绑定都保留 —— 那张纹理由 RDG 按描述符清成 0，而
@@ -1042,12 +958,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 {
                     builder.UseTexture(eyeDataTexture, AccessFlags.Read);
                 }
-                // 语义副本（模糊对）的读声明见上面 compositeSamplesSemanticMaskBlur 的推导。
-                if (compositeSamplesSemanticMaskBlur)
-                {
-                    builder.UseTexture(semanticMaskBlurredLowTexture, AccessFlags.Read);
-                    builder.UseTexture(semanticMaskBlurredHighTexture, AccessFlags.Read);
-                }
+                // 语义位平面：合成趟一直采它（眼透 / 前发投影 / 脸色扩散 / 两条轮廓的 source
+                // 都由它派生），所以这条读是无条件的。
+                builder.UseTexture(objectSemanticLowTexture, AccessFlags.Read);
+                builder.UseTexture(objectSemanticHighTexture, AccessFlags.Read);
                 if (faceHairDiffuseReady)
                 {
                     // 源色只在 debug 5 / 18 被采（Composite.shader:683 与 :722，都要 options.y > 0.5），
@@ -1101,10 +1015,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                         data.enhancedOutlineHeightFadeParams,
                         data.enhancedOutlineOptions,
                         data.options);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.metadataMaskIdTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.geometryNormalDepthTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom0TextureId, data.metadataObjectCustom0Texture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ObjectCustom1TextureId, data.metadataObjectCustom1Texture);
                     if (data.faceHairDiffuseReady)
                     {
                         if (data.faceHairDiffuseSourceColorSampled)
@@ -1134,20 +1045,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                         context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeDataTextureId, data.eyeDataTexture);
                     }
 
-                    // The anti-aliased semantic masks are optional: when the shared pass did not run,
-                    // the consumers fall back to reading the raw bits. Which effect reads the copy is
-                    // the user's per-effect choice, carried in the options vector.
-                    // 注意 _HoCharacterSemanticMaskBlurValid 必须照旧无条件写：它为 0 正是"读原始 bit"
-                    // 那条分支的条件（Composite.shader:92），跟这里绑不绑模糊对无关。
-                    context.cmd.SetGlobalFloat(HoCharacterSpecializationShaderConstants.SemanticMaskBlurValidId, data.semanticMaskBlurReady ? 1.0f : 0.0f);
-                    context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.SemanticMaskOptionsId, data.semanticMaskOptions);
-                    if (data.semanticMaskBlurSampled)
-                    {
-                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.SemanticMaskBlurredLowTextureId, data.semanticMaskBlurredLowTexture);
-                        context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.SemanticMaskBlurredHighTextureId, data.semanticMaskBlurredHighTexture);
-                    }
-
-                    context.cmd.SetGlobalFloat(HoMetadataBufferShaderConstants.ActiveId, 1.0f);
+                    context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.ObjectSemanticLowTextureId, data.objectSemanticLowTexture);
+                    context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.ObjectSemanticHighTextureId, data.objectSemanticHighTexture);
+                    context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, data.objectBufferId0Texture);
+                    context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.ScreenTexelSizeId, data.screenTexelSize);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                 });
             }
@@ -1275,6 +1176,20 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             return descriptor;
         }
 
+        /// <summary>
+        /// 屏幕空间采样用的 texel size：语义平面 / 眼捕获 / 几何都是同一个渲染分辨率（都由
+        /// <see cref="CreateTextureDesc"/> 按 renderScale 缩过），所以一份就够。
+        /// **不能用纹理自带的 _TexelSize**：全局纹理没有那一项，读出来是 0，
+        /// 会让所有"按像素扩张 / 羽化"的半径静默失效。
+        /// </summary>
+        private static Vector4 GetScreenTexelSize(RenderTextureDescriptor cameraTextureDescriptor, HoCharacterSpecializationSettings settings)
+        {
+            int divisor = Mathf.Max(1, (int)settings.renderScale);
+            float width = Mathf.Max(1, cameraTextureDescriptor.width / divisor);
+            float height = Mathf.Max(1, cameraTextureDescriptor.height / divisor);
+            return new Vector4(1.0f / width, 1.0f / height, width, height);
+        }
+
         private static DrawingSettings CreateCharacterDrawingSettings(List<ShaderTagId> shaderTagIds, ref RenderingData renderingData, SortingCriteria sortingCriteria)
         {
             DrawingSettings drawingSettings = new DrawingSettings(shaderTagIds[0], new SortingSettings(renderingData.cameraData.camera) { criteria = sortingCriteria })
@@ -1324,7 +1239,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         // The blurred semantic masks only carry 0..1 coverage, so 8 bits per channel is plenty and
         // cheaper than the 16F metadata textures they are derived from.
-        private static GraphicsFormat GetSemanticMaskGraphicsFormat()
+        private static GraphicsFormat GetObjectSemanticGraphicsFormat()
         {
             const GraphicsFormat preferredFormat = GraphicsFormat.R8G8B8A8_UNorm;
             return IsColorFormatUsable(preferredFormat) ? preferredFormat : GetFallbackColorFormat();
@@ -1357,16 +1272,16 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private RTHandle eyeColorTexture;
         private RTHandle eyeDataTexture;
         private RTHandle captureDepthTexture;
-        private RTHandle semanticMaskBlurredLowTexture;
-        private RTHandle semanticMaskBlurredHighTexture;
+        private RTHandle objectSemanticLowTexture;
+        private RTHandle objectSemanticHighTexture;
 
         public RTHandle EyeColorTexture => eyeColorTexture;
         public RTHandle EyeDataTexture => eyeDataTexture;
         public RTHandle CaptureDepthTexture => captureDepthTexture;
-        public RTHandle SemanticMaskBlurredLowTexture => semanticMaskBlurredLowTexture;
-        public RTHandle SemanticMaskBlurredHighTexture => semanticMaskBlurredHighTexture;
+        public RTHandle ObjectSemanticLowTexture => objectSemanticLowTexture;
+        public RTHandle ObjectSemanticHighTexture => objectSemanticHighTexture;
 
-        public void ReAllocateIfNeeded(RenderTextureDescriptor cameraTextureDescriptor, HoCharacterSpecializationSettings settings, bool allocateSemanticMaskBlur)
+        public void ReAllocateIfNeeded(RenderTextureDescriptor cameraTextureDescriptor, HoCharacterSpecializationSettings settings, bool allocateObjectSemantic)
         {
             int divisor = Mathf.Max(1, (int)settings.renderScale);
             RenderTextureDescriptor descriptor = cameraTextureDescriptor;
@@ -1386,32 +1301,32 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             RenderingUtils.ReAllocateIfNeeded(ref eyeDataTexture, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.EyeDataTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref captureDepthTexture, CreateDepthDescriptor(cameraTextureDescriptor, settings), FilterMode.Point, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.CaptureDepthTextureName);
 
-            RenderTextureDescriptor semanticMaskDescriptor = descriptor;
-            GraphicsFormat semanticMaskFormat = GetSemanticMaskGraphicsFormat();
+            RenderTextureDescriptor objectSemanticDescriptor = descriptor;
+            GraphicsFormat semanticMaskFormat = GetObjectSemanticGraphicsFormat();
             if (semanticMaskFormat != GraphicsFormat.None)
             {
-                semanticMaskDescriptor.graphicsFormat = semanticMaskFormat;
+                objectSemanticDescriptor.graphicsFormat = semanticMaskFormat;
             }
 
             // Releasing instead of allocating keeps "every effect unchecked" at zero cost without
             // reallocating the pair every frame.
-            if (allocateSemanticMaskBlur)
+            if (allocateObjectSemantic)
             {
-                RenderingUtils.ReAllocateIfNeeded(ref semanticMaskBlurredLowTexture, semanticMaskDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.SemanticMaskBlurredLowTextureName);
-                RenderingUtils.ReAllocateIfNeeded(ref semanticMaskBlurredHighTexture, semanticMaskDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.SemanticMaskBlurredHighTextureName);
+                RenderingUtils.ReAllocateIfNeeded(ref objectSemanticLowTexture, objectSemanticDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.ObjectSemanticLowTextureName);
+                RenderingUtils.ReAllocateIfNeeded(ref objectSemanticHighTexture, objectSemanticDescriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: HoCharacterSpecializationShaderConstants.ObjectSemanticHighTextureName);
             }
             else
             {
-                ReleaseSemanticMaskBlurTextures();
+                ReleaseObjectSemanticTextures();
             }
         }
 
-        private void ReleaseSemanticMaskBlurTextures()
+        private void ReleaseObjectSemanticTextures()
         {
-            semanticMaskBlurredLowTexture?.Release();
-            semanticMaskBlurredHighTexture?.Release();
-            semanticMaskBlurredLowTexture = null;
-            semanticMaskBlurredHighTexture = null;
+            objectSemanticLowTexture?.Release();
+            objectSemanticHighTexture?.Release();
+            objectSemanticLowTexture = null;
+            objectSemanticHighTexture = null;
         }
 
         public void Release()
@@ -1419,13 +1334,13 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             eyeColorTexture?.Release();
             eyeDataTexture?.Release();
             captureDepthTexture?.Release();
-            semanticMaskBlurredLowTexture?.Release();
-            semanticMaskBlurredHighTexture?.Release();
+            objectSemanticLowTexture?.Release();
+            objectSemanticHighTexture?.Release();
             eyeColorTexture = null;
             eyeDataTexture = null;
             captureDepthTexture = null;
-            semanticMaskBlurredLowTexture = null;
-            semanticMaskBlurredHighTexture = null;
+            objectSemanticLowTexture = null;
+            objectSemanticHighTexture = null;
         }
 
         internal static RenderTextureDescriptor CreateDepthDescriptor(RenderTextureDescriptor cameraTextureDescriptor, HoCharacterSpecializationSettings settings)
@@ -1495,7 +1410,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 : GraphicsFormat.B8G8R8A8_UNorm;
         }
 
-        private static GraphicsFormat GetSemanticMaskGraphicsFormat()
+        private static GraphicsFormat GetObjectSemanticGraphicsFormat()
         {
             const GraphicsFormat preferredFormat = GraphicsFormat.R8G8B8A8_UNorm;
             if (SystemInfo.IsFormatSupported(preferredFormat, GraphicsFormatUsage.Render))

@@ -127,20 +127,17 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
                 EditorGUILayout.LabelField("阶段", snapshot.Stage);
                 EditorGUILayout.LabelField("Active Back Buffer", snapshot.BackBufferActive ? "是" : "否");
                 EditorGUILayout.LabelField("Camera Color", LilUrpEditorSectionGui.FormatAvailable(snapshot.CameraColorAvailable));
-                EditorGUILayout.LabelField("MetadataBuffer", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataBufferAvailable));
+                EditorGUILayout.LabelField("ObjectBuffer", LilUrpEditorSectionGui.FormatAvailable(snapshot.ObjectBufferAvailable));
                 EditorGUILayout.LabelField("GeometryBuffer", LilUrpEditorSectionGui.FormatAvailable(snapshot.GeometryBufferAvailable));
-                EditorGUILayout.LabelField("MaskId", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataMaskIdAvailable));
-                EditorGUILayout.LabelField("ObjectCustom0-3", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataObjectCustom0Available));
-                EditorGUILayout.LabelField("ObjectCustom4-7", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataObjectCustom1Available));
-                EditorGUILayout.LabelField("SurfaceColor", LilUrpEditorSectionGui.FormatAvailable(snapshot.MetadataSurfaceColorAvailable));
-                EditorGUILayout.LabelField("SurfaceColor Required", snapshot.MetadataSurfaceColorRequired ? "Yes" : "No");
+                EditorGUILayout.LabelField("OB 身份池", LilUrpEditorSectionGui.FormatAvailable(snapshot.ObjectBufferIdentityAvailable));
+                EditorGUILayout.LabelField("OB 语义位平面", LilUrpEditorSectionGui.FormatAvailable(snapshot.ObjectSemanticAvailable));
                 EditorGUILayout.LabelField("NormalDepth", LilUrpEditorSectionGui.FormatAvailable(snapshot.GeometryNormalDepthAvailable));
                 EditorGUILayout.LabelField("Depth", LilUrpEditorSectionGui.FormatAvailable(snapshot.GeometryDepthAvailable));
                 EditorGUILayout.LabelField("Depth Required", snapshot.GeometryDepthRequired ? "Yes" : "No");
 
                 EditorGUILayout.HelpBox(
                     snapshot.Ready
-                        ? "角色特化输入有效：MetadataBuffer 与 GeometryBuffer 均可用。"
+                        ? "角色特化输入有效：ObjectBuffer 与 GeometryBuffer 均可用。"
                         : "角色特化已跳过：" + snapshot.Reason,
                     snapshot.Ready ? MessageType.Info : MessageType.Warning);
             }

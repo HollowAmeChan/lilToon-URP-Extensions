@@ -24,11 +24,11 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/FaceHairDiffuse"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
 
-            float _HoMetadataBufferActive;
             float4 _HoCharacterOptions; // x eye enabled, y shadow enabled, z same character only, w debug mode（源趟只读 w）
             TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
-            TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture);
-            TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture);
+            // 脸标签的覆盖率（= 这张脸在这个像素上占多少），来自 OB 身份池打包的位平面：
+            // 它同时充当"受光脸的采样权重"和"捕获覆盖率"，所以不再需要 SurfaceColor 那一份。
+            TEXTURE2D_X(_lilHoCharacterObjectSemantic0_3Texture);
             // 脸色扩散的底色来源：强制脸捕获的 MRT0 —— CaptureFace 的材质把**算完光照的 color**
             // 写在这里（alpha=1），所以模糊的是"前发后面那张受光脸"，不再是不受光的 SurfaceColor。
             // 眼透开着时这张图里会混进眼睛像素（两趟捕获共用 MRT0），已知并接受。
@@ -45,14 +45,10 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/FaceHairDiffuse"
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 float2 uv = input.texcoord;
-                float face = SAMPLE_TEXTURE2D_X(_HoMetadataBufferObjectCustom0_3Texture, sampler_PointClamp, uv).g;
-                float4 surfaceColor = SAMPLE_TEXTURE2D_X(_HoMetadataBufferSurfaceColorTexture, sampler_LinearClamp, uv);
+                float face = SAMPLE_TEXTURE2D_X(_lilHoCharacterObjectSemantic0_3Texture, sampler_PointClamp, uv).g;
                 float4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
-                // SurfaceColor 仍然只提供 coverage（掩码），颜色改成取捕获里的受光脸。
                 float3 faceLit = SAMPLE_TEXTURE2D_X(_lilHoCharacterEyeColorTexture, sampler_LinearClamp, uv).rgb;
-                float surfaceCoverage = saturate(surfaceColor.a);
-                float semanticMask = step(0.5, _HoMetadataBufferActive) * saturate(face) * step(0.0001, surfaceCoverage) * step(0.0001, normalDepth.a);
-                float mask = semanticMask * surfaceCoverage;
+                float mask = saturate(face) * step(0.0001, normalDepth.a);
 
                 FaceHairSourceOutput output;
                 int debugMode = (int)round(_HoCharacterOptions.w);
@@ -65,7 +61,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/FaceHairDiffuse"
                     return output;
                 }
 
-                output.color = half4(faceLit * semanticMask, mask);
+                output.color = half4(faceLit * mask, mask);
                 output.depth = half4(normalDepth.a * mask, 0.0, 0.0, mask);
                 return output;
             }

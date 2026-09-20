@@ -14,7 +14,7 @@
 | 有"层"吗 | 有 | **没有**（没有数组、没有顺序、也没有材质/纹理覆盖） |
 | 每个效果的开关 | 图层的 `enabled` | 一个 `*Enabled` bool |
 | 参数规模 | 每层十几到二十行 | 5 段共 **约 69 行**（眼透 13 / 前发投影 12 / 前发漫反射 9 / 主体描边 20 / 增强描边 15）+ 5 条 `HelpBox` |
-| 编辑器 | 已经换成浏览器 | `HoCharacterSpecializationVolumeEditor.cs`（255 行）：HelpBox + 一行「抗锯齿宽度」+ 5 个区段 |
+| 编辑器 | 已经换成浏览器 | `HoCharacterSpecializationVolumeEditor.cs`：5 个区段，没有全局行（语义位平面不再有开关） |
 | 折叠状态 | 每实例 | 每个区段一个 **`private static bool`** ⇒ 两个 Inspector 会串台 |
 
 所以这块借的是**外壳**（搜索 + 图标定位 + 统一行样式），两侧语义按"开关 + 定位"来：

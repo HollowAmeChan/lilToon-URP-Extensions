@@ -18,7 +18,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             DrawProperty(Find(effects, "eyeRevealDepthBias"), "深度偏移");
             DrawProperty(Find(effects, "useEyeRevealArea"), "使用眼透区域");
             DrawProperty(Find(effects, "sameCharacterOnly"), "仅同角色");
-            DrawProperty(Find(effects, "semanticMaskBlurEyeReveal"), "读取抗锯齿掩码");
             EditorGUILayout.Space(4.0f);
             DrawProperty(Find(effects, "eyeRevealAngleEnabled"), "启用相机角度修正");
             DrawProperty(Find(effects, "eyeRevealAngleStrength"), "角度修正强度");
