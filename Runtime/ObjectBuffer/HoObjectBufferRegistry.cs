@@ -2,12 +2,12 @@ using System;
 using System.Collections.Generic;
 using UnityEngine;
 
-namespace lilToon.URP.Extensions.CharacterBuffer
+namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
     /// 部件表与选择表的**唯一真值**：
     /// <list type="bullet">
-    /// <item>把各 <see cref="HoCharacterBufferGroup"/> 的条目编成两级 palette（角色行 + 部件行）；</item>
+    /// <item>把各 <see cref="HoObjectBufferGroup"/> 的条目编成两级 palette（角色行 + 部件行）；</item>
     /// <item>分配 16 bit 部件 ID（角色 8 + 槽位 8）与 8 bit 选择 ID；</item>
     /// <item>上传 <see cref="GraphicsBuffer"/> 并发布全局。</item>
     /// </list>
@@ -19,9 +19,9 @@ namespace lilToon.URP.Extensions.CharacterBuffer
     /// 这是它们与本 feature 之间的只读接口。
     /// </para>
     /// </summary>
-    public static class HoCharacterBufferRegistry
+    public static class HoObjectBufferRegistry
     {
-        private static readonly List<HoCharacterBufferGroup> Groups = new List<HoCharacterBufferGroup>();
+        private static readonly List<HoObjectBufferGroup> Groups = new List<HoObjectBufferGroup>();
         private static readonly Dictionary<uint, int> PartRowByPartId = new Dictionary<uint, int>();
         private static readonly Dictionary<string, uint> PartIdByKey = new Dictionary<string, uint>(StringComparer.Ordinal);
         private static readonly Dictionary<string, uint> SelectionIdByName = new Dictionary<string, uint>(StringComparer.Ordinal);
@@ -49,14 +49,14 @@ namespace lilToon.URP.Extensions.CharacterBuffer
 
         public static GraphicsBuffer PartBuffer => partBuffer;
 
-        public static GraphicsBuffer CharacterBuffer => characterBuffer;
+        public static GraphicsBuffer ObjectBuffer => characterBuffer;
 
         public static GraphicsBuffer SelectionBuffer => selectionBuffer;
 
         /// <summary>平台是否支持 palette 需要的 StructuredBuffer（决策 8 的前置条件）。</summary>
         public static bool SupportsStructuredBuffer => SystemInfo.graphicsShaderLevel >= 45;
 
-        public static void Register(HoCharacterBufferGroup group)
+        public static void Register(HoObjectBufferGroup group)
         {
             if (group == null || Groups.Contains(group))
             {
@@ -67,7 +67,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             MarkDirty();
         }
 
-        public static void Unregister(HoCharacterBufferGroup group)
+        public static void Unregister(HoObjectBufferGroup group)
         {
             if (group == null || !Groups.Remove(group))
             {
@@ -89,11 +89,11 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             return PartIdByKey.TryGetValue(MakePartKey(characterId, partName), out uint partId) ? partId : 0u;
         }
 
-        /// <summary>取部件 ID 在部件表里的行号；未注册返回 <see cref="HoCharacterBufferPaletteLimits.UnknownRow"/>。</summary>
+        /// <summary>取部件 ID 在部件表里的行号；未注册返回 <see cref="HoObjectBufferPaletteLimits.UnknownRow"/>。</summary>
         public static int GetPartRow(uint partId)
         {
             EnsureBuilt();
-            return PartRowByPartId.TryGetValue(partId, out int row) ? row : HoCharacterBufferPaletteLimits.UnknownRow;
+            return PartRowByPartId.TryGetValue(partId, out int row) ? row : HoObjectBufferPaletteLimits.UnknownRow;
         }
 
         /// <summary>取选择名对应的 8 bit 选择 ID；未注册返回 0（= 无选择）。</summary>
@@ -102,7 +102,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             EnsureBuilt();
             return SelectionIdByName.TryGetValue(selectionName ?? string.Empty, out uint id)
                 ? id
-                : HoCharacterBufferPaletteLimits.UnknownSelectionId;
+                : HoObjectBufferPaletteLimits.UnknownSelectionId;
         }
 
         /// <summary>部件行的只读视图（debug / AOV manifest / 编辑器用）。</summary>
@@ -170,17 +170,17 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             SelectionNames.Clear();
 
             // 角色行固定 256 行，按 characterId 直接索引；行 0 保留给 unknown。
-            var characters = new HoCharacterData[HoCharacterBufferPaletteLimits.MaxCharacters];
+            var characters = new HoCharacterData[HoObjectBufferPaletteLimits.MaxCharacters];
             characters[0] = new HoCharacterData { rowBase = 0, slotCount = 0, tags = 0 };
 
             // 部件行 0 = unknown：RSUV 未被写入或因重载被重置时索引会变成 0，必须看得见。
-            var parts = new List<HoCharacterPartData>(Mathf.Min(HoCharacterBufferPaletteLimits.MaxPartRows, 256))
+            var parts = new List<HoCharacterPartData>(Mathf.Min(HoObjectBufferPaletteLimits.MaxPartRows, 256))
             {
                 new HoCharacterPartData
                 {
                     partId = 0,
                     nameHash = 0,
-                    category = (uint)HoCharacterBufferPartCategory.Unspecified,
+                    category = (uint)HoObjectBufferPartCategory.Unspecified,
                     tags = 0,
                     displayColor = new Vector4(1f, 0f, 1f, 1f)
                 }
@@ -198,14 +198,14 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             };
 
             // 确定性顺序：先按 characterId，再按实例 ID，保证跨帧/跨机 ID 稳定（规划 §5.6）。
-            var orderedGroups = new List<HoCharacterBufferGroup>(Groups);
+            var orderedGroups = new List<HoObjectBufferGroup>(Groups);
             orderedGroups.Sort(CompareGroups);
 
             int selectionCount = 0;
             for (int groupIndex = 0; groupIndex < orderedGroups.Count; groupIndex++)
             {
-                HoCharacterBufferGroup group = orderedGroups[groupIndex];
-                int characterId = Mathf.Clamp(group.characterId, 0, HoCharacterBufferPaletteLimits.MaxCharacters - 1);
+                HoObjectBufferGroup group = orderedGroups[groupIndex];
+                int characterId = Mathf.Clamp(group.characterId, 0, HoObjectBufferPaletteLimits.MaxCharacters - 1);
                 if (characterId == 0)
                 {
                     // 角色 0 保留：它的 partId 全部落在 0..255，与 "partId 0 = unknown" 冲突。
@@ -227,15 +227,15 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                         continue;
                     }
 
-                    if (parts.Count >= HoCharacterBufferPaletteLimits.MaxPartRows)
+                    if (parts.Count >= HoObjectBufferPaletteLimits.MaxPartRows)
                     {
-                        Debug.LogWarning($"[Ho-CharacterBuffer] 部件表已满（{HoCharacterBufferPaletteLimits.MaxPartRows} 行），'{partName}' 未注册。");
+                        Debug.LogWarning($"[Ho-ObjectBuffer] 部件表已满（{HoObjectBufferPaletteLimits.MaxPartRows} 行），'{partName}' 未注册。");
                         break;
                     }
 
-                    if (slot >= HoCharacterBufferPaletteLimits.MaxSlotsPerCharacter)
+                    if (slot >= HoObjectBufferPaletteLimits.MaxSlotsPerCharacter)
                     {
-                        Debug.LogWarning($"[Ho-CharacterBuffer] 角色 {characterId} 的槽位已满（{HoCharacterBufferPaletteLimits.MaxSlotsPerCharacter}），'{partName}' 未注册。");
+                        Debug.LogWarning($"[Ho-ObjectBuffer] 角色 {characterId} 的槽位已满（{HoObjectBufferPaletteLimits.MaxSlotsPerCharacter}），'{partName}' 未注册。");
                         break;
                     }
 
@@ -262,9 +262,9 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                         continue;
                     }
 
-                    if (selectionCount + 1 >= HoCharacterBufferPaletteLimits.MaxSelections)
+                    if (selectionCount + 1 >= HoObjectBufferPaletteLimits.MaxSelections)
                     {
-                        Debug.LogWarning($"[Ho-CharacterBuffer] 选择表已满（{HoCharacterBufferPaletteLimits.MaxSelections - 1} 个可用），'{selectionName}' 未注册。");
+                        Debug.LogWarning($"[Ho-ObjectBuffer] 选择表已满（{HoObjectBufferPaletteLimits.MaxSelections - 1} 个可用），'{selectionName}' 未注册。");
                         break;
                     }
 
@@ -290,7 +290,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 if (!warnedMissingGraphicsBufferSupport)
                 {
                     warnedMissingGraphicsBufferSupport = true;
-                    Debug.LogWarning("[Ho-CharacterBuffer] 平台不支持 StructuredBuffer（shader level < 4.5），palette 无法上传，" +
+                    Debug.LogWarning("[Ho-ObjectBuffer] 平台不支持 StructuredBuffer（shader level < 4.5），palette 无法上传，" +
                                      "ID 解析会全部落到 unknown 行。");
                 }
 
@@ -301,15 +301,15 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             characterBuffer = EnsureBuffer(characterBuffer, characterRows.Length, HoCharacterData.Stride, characterRows);
             selectionBuffer = EnsureBuffer(selectionBuffer, selectionRows.Length, HoCharacterSelectionData.Stride, selectionRows);
 
-            Shader.SetGlobalBuffer(HoCharacterBufferShaderConstants.PartBufferId, partBuffer);
-            Shader.SetGlobalBuffer(HoCharacterBufferShaderConstants.CharacterBufferId, characterBuffer);
-            Shader.SetGlobalBuffer(HoCharacterBufferShaderConstants.SelectionBufferId, selectionBuffer);
-            Shader.SetGlobalFloat(HoCharacterBufferShaderConstants.PartCountId, partRows.Length);
-            Shader.SetGlobalFloat(HoCharacterBufferShaderConstants.SelectionCountId, SelectionCount);
+            Shader.SetGlobalBuffer(HoObjectBufferShaderConstants.PartBufferId, partBuffer);
+            Shader.SetGlobalBuffer(HoObjectBufferShaderConstants.ObjectBufferId, characterBuffer);
+            Shader.SetGlobalBuffer(HoObjectBufferShaderConstants.SelectionBufferId, selectionBuffer);
+            Shader.SetGlobalFloat(HoObjectBufferShaderConstants.PartCountId, partRows.Length);
+            Shader.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionCountId, SelectionCount);
 
             // RSUV 不会被序列化（官方文档明确 "not serialized… resets when the object is reloaded"），
             // 所以每次表重建后都要把索引重新写回 renderer；写入前先解决跨组冲突（一个 renderer 只属一个部件）。
-            HoCharacterBufferGroup.ResolveAssignments();
+            HoObjectBufferGroup.ResolveAssignments();
             for (int i = 0; i < Groups.Count; i++)
             {
                 Groups[i].ApplyIdentity();
@@ -326,7 +326,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         /// </summary>
         private static void WarnAboutConflicts()
         {
-            IReadOnlyList<HoCharacterBufferConflict> conflicts = HoCharacterBufferGroup.GetConflicts();
+            IReadOnlyList<HoObjectBufferConflict> conflicts = HoObjectBufferGroup.GetConflicts();
             if (conflicts.Count == lastWarnedConflictCount)
             {
                 return;
@@ -338,9 +338,9 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 return;
             }
 
-            Debug.LogWarning($"[Ho-CharacterBuffer] {conflicts.Count} 个 Renderer 被多个部件条目同时命中" +
+            Debug.LogWarning($"[Ho-ObjectBuffer] {conflicts.Count} 个 Renderer 被多个部件条目同时命中" +
                              "（最常见的原因：拖了父级、展开子级之后与别的条目重叠）。已按「优先级 → 层级距离 → 条目顺序」裁决；" +
-                             "逐条明细在各 HoCharacterBufferGroup 的 Inspector 里。");
+                             "逐条明细在各 HoObjectBufferGroup 的 Inspector 里。");
         }
 
         private static GraphicsBuffer EnsureBuffer<T>(GraphicsBuffer buffer, int count, int stride, T[] source)        {
@@ -404,7 +404,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             return characterId.ToString() + "/" + (partName ?? string.Empty);
         }
 
-        private static int CompareGroups(HoCharacterBufferGroup a, HoCharacterBufferGroup b)
+        private static int CompareGroups(HoObjectBufferGroup a, HoObjectBufferGroup b)
         {
             int characterCompare = a.characterId.CompareTo(b.characterId);
             if (characterCompare != 0)

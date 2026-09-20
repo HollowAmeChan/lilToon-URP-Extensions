@@ -1,11 +1,11 @@
-namespace lilToon.URP.Extensions.CharacterBuffer
+namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
     /// 名字 hash（FNV-1a 32）。用途仅限于工具对账、AOV manifest 与 debug 显示——
     /// **像素里存的永远是整数 ID，不是 hash**（Cryptomatte 把 hash 位重解释进 float 的做法我们明确不抄，
     /// 见规划 §4.1）。
     /// </summary>
-    internal static class HoCharacterBufferHash
+    internal static class HoObjectBufferHash
     {
         private const uint OffsetBasis = 2166136261u;
         private const uint Prime = 16777619u;

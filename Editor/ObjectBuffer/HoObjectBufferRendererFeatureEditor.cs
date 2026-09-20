@@ -1,12 +1,12 @@
-using lilToon.URP.Extensions.CharacterBuffer;
+using lilToon.URP.Extensions.ObjectBuffer;
 using lilToon.URP.Extensions.Editor;
 using UnityEditor;
 using UnityEngine;
 
-namespace lilToon.URP.Extensions.Editor.CharacterBuffer
+namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 {
-    [CustomEditor(typeof(HoCharacterBufferRendererFeature))]
-    internal sealed class HoCharacterBufferRendererFeatureEditor : UnityEditor.Editor
+    [CustomEditor(typeof(HoObjectBufferRendererFeature))]
+    internal sealed class HoObjectBufferRendererFeatureEditor : UnityEditor.Editor
     {
         private static readonly Color RuntimeColor = new Color(0.46f, 0.64f, 0.92f);
         private static readonly Color CoverageColor = new Color(0.42f, 0.72f, 0.58f);
@@ -38,7 +38,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
             }
 
             EditorGUILayout.HelpBox(
-                "Ho-CharacterBuffer：per-pixel 只存 ID 与覆盖率，其余按 ID 查 palette。\n" +
+                "Ho-ObjectBuffer：per-pixel 只存 ID 与覆盖率，其余按 ID 查 palette。\n" +
                 "覆盖率由本 feature 自建的 MSAA 产出，**与相机的 AA 设置无关**；几何（法线/深度/几何覆盖率）仍然只从 GeometryBuffer 读。",
                 MessageType.Info);
 
@@ -68,11 +68,11 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
                 DrawProperty("minRenderQueue");
                 DrawProperty("maxRenderQueue");
 
-                int partRows = HoCharacterBufferRegistry.PartRowCount;
-                int selections = HoCharacterBufferRegistry.SelectionCount;
+                int partRows = HoObjectBufferRegistry.PartRowCount;
+                int selections = HoObjectBufferRegistry.SelectionCount;
                 EditorGUILayout.LabelField("已注册", $"部件行 {Mathf.Max(0, partRows - 1)} / 选择 {selections}", EditorStyles.miniLabel);
 
-                if (!HoCharacterBufferRegistry.SupportsStructuredBuffer)
+                if (!HoObjectBufferRegistry.SupportsStructuredBuffer)
                 {
                     EditorGUILayout.HelpBox("平台不支持 StructuredBuffer（shader level < 4.5），feature 不会运行。", MessageType.Error);
                 }
@@ -159,7 +159,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
                 DrawProperty("debugShader");
                 EditorGUILayout.HelpBox(
                     "fallback 材质只覆盖不透明队列（override 材质看不到源材质的 alpha/cutout）；" +
-                    "cutout / 透明部件要靠 lilToon 侧的 HoCharacterBuffer pass（跨仓）。",
+                    "cutout / 透明部件要靠 lilToon 侧的 HoObjectBuffer pass（跨仓）。",
                     MessageType.None);
             }
         }

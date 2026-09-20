@@ -1,4 +1,4 @@
-Shader "Hidden/lilToon/URP/CharacterBuffer/Fallback"
+Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
 {
     // 非 lilToon 材质（以及临时验证）用的 ID pass：身份只从 RSUV 来。
     // 注意：拿不到 RSUV 的 renderer 类型会写成 0（= 背景），组件会在编辑器里就此告警。
@@ -18,8 +18,8 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Fallback"
         // 选择层在这里恒为 0：跳过 ID pass 的材质本来也不参与选择写入。
         Pass
         {
-            Name "CharacterBuffer IdLayers"
-            Tags { "LightMode" = "HoCharacterBuffer" }
+            Name "ObjectBuffer IdLayers"
+            Tags { "LightMode" = "HoObjectBuffer" }
 
             HLSLPROGRAM
             #pragma target 4.5
@@ -27,7 +27,7 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Fallback"
             #pragma fragment Frag
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterBuffer/Shaders/HoCharacterBufferIdPass.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferIdPass.hlsl"
 
             struct Attributes
             {
@@ -50,7 +50,7 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Fallback"
                 float4 selection1 : SV_Target4;
             };
 
-            uint HoCharacterBufferPartIdFromRsuv()
+            uint HoObjectBufferPartIdFromRsuv()
             {
                 // RSUV 只当索引用：低 16 bit = 角色 8 + 槽位 8（决策 13）。
                 return (uint)unity_RendererUserValue & 0xFFFFu;
@@ -69,11 +69,11 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Fallback"
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                uint partId = HoCharacterBufferPartIdFromRsuv();
+                uint partId = HoObjectBufferPartIdFromRsuv();
                 float coverage = partId != 0u ? 1.0 : 0.0;
 
                 LayerOutput output;
-                output.id0 = HoCharacterBufferPackIdRow(partId, 0u);
+                output.id0 = HoObjectBufferPackIdRow(partId, 0u);
                 output.id1 = float4(0.0, 0.0, 0.0, 0.0);
                 output.coverage = float4(coverage, 0.0, 0.0, 0.0);
                 output.selection0 = float4(0.0, 0.0, 0.0, 0.0);
@@ -88,8 +88,8 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Fallback"
         // 若某个平台/后端对"混合整型与非整型 RT"有意见，症状会是这个 pass 不产出——第一个该查的地方就是这里。
         Pass
         {
-            Name "CharacterBuffer IdMsaaInt"
-            Tags { "LightMode" = "HoCharacterBuffer" }
+            Name "ObjectBuffer IdMsaaInt"
+            Tags { "LightMode" = "HoObjectBuffer" }
 
             HLSLPROGRAM
             #pragma target 4.5
@@ -143,8 +143,8 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Fallback"
         // 消费端用 round(v * 65535) 还原整数——与 GeometryBuffer 用 UNORM8 存身份同法。
         Pass
         {
-            Name "CharacterBuffer IdMsaaUnorm"
-            Tags { "LightMode" = "HoCharacterBuffer" }
+            Name "ObjectBuffer IdMsaaUnorm"
+            Tags { "LightMode" = "HoObjectBuffer" }
 
             HLSLPROGRAM
             #pragma target 4.5

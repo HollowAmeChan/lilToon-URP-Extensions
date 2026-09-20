@@ -1,18 +1,18 @@
 using System.Collections.Generic;
-using lilToon.URP.Extensions.CharacterBuffer;
+using lilToon.URP.Extensions.ObjectBuffer;
 using UnityEditor;
 using UnityEngine;
 
-namespace lilToon.URP.Extensions.Editor.CharacterBuffer
+namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 {
     /// <summary>
     /// 组件抽屉：沿用 MetadataBuffer group 的旧款式（一条彩色条 = 一个条目，条上是名字 + 计数 + `+` / `×`，
     /// 展开后是它的内容和对象行），但信息按新模型收窄了——部件只回答身份，材质数值不在组件里。
     /// 条上的副标题显示**注册表实际分配的 ID**：改名就会换 ID，所以这一栏必须当场看得见。
     /// </summary>
-    [CustomEditor(typeof(HoCharacterBufferGroup))]
+    [CustomEditor(typeof(HoObjectBufferGroup))]
     [CanEditMultipleObjects]
-    internal sealed class HoCharacterBufferGroupEditor : UnityEditor.Editor
+    internal sealed class HoObjectBufferGroupEditor : UnityEditor.Editor
     {
         private const float SectionSpacing = 6.0f;
         private const float EntryHeaderHeight = 38.0f;
@@ -70,7 +70,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
             validationMessage = null;
 
             // 让"已分配的 ID"显示的是最新表（只在标脏后才真正重建）。
-            HoCharacterBufferRegistry.EnsureBuilt();
+            HoObjectBufferRegistry.EnsureBuilt();
 
             EditorGUILayout.HelpBox(
                 "身份从这里出：**部件**回答“这个 Renderer 是谁”（名字在角色内唯一，它决定像素里的 16 bit ID）；" +
@@ -105,7 +105,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
                 DrawProperty(faceRightAxisProperty, new GUIContent("右轴", "骨骼的哪个局部轴作为“角色右侧（画面左侧）”。默认 +X。"));
                 DrawProperty(faceUpAxisProperty, new GUIContent("上轴", "骨骼的哪个局部轴作为“角色上方”。默认 +Y。俯仰角按此轴分解，若俯视/仰视不生效请检查此项。"));
 
-                int characterId = Mathf.Clamp(characterIdProperty != null ? characterIdProperty.intValue : 0, 0, HoCharacterBufferPaletteLimits.MaxCharacters - 1);
+                int characterId = Mathf.Clamp(characterIdProperty != null ? characterIdProperty.intValue : 0, 0, HoObjectBufferPaletteLimits.MaxCharacters - 1);
                 if (characterId == 0)
                 {
                     validationMessage = "角色 ID 0 被保留，这个 group 不会写进 palette。请改成 1-255。";
@@ -241,7 +241,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
             SerializedProperty entry = selectionsProperty.GetArrayElementAtIndex(index);
             SerializedProperty nameProperty = entry.FindPropertyRelative("name");
             string selectionName = nameProperty != null ? nameProperty.stringValue : string.Empty;
-            uint selectionId = HoCharacterBufferRegistry.GetSelectionId(selectionName);
+            uint selectionId = HoObjectBufferRegistry.GetSelectionId(selectionName);
             string title = string.IsNullOrEmpty(selectionName) ? $"（空名字 · {index}）" : selectionName;
             string subtitle = selectionId > 0 ? $"Cryptomatte ID {selectionId}" : "未注册";
             DrawEntryHeader(entry, selectionsProperty, index, title, subtitle, SelectionColor, null, false);
@@ -272,9 +272,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
             EditorGUILayout.Space(SectionSpacing);
             using (new EditorGUILayout.HorizontalScope())
             {
-                int partRows = Mathf.Max(0, HoCharacterBufferRegistry.PartRowCount - 1);
+                int partRows = Mathf.Max(0, HoObjectBufferRegistry.PartRowCount - 1);
                 EditorGUILayout.LabelField(
-                    $"已注册：部件 {partRows} / {HoCharacterBufferPaletteLimits.MaxPartRows}，选择 {HoCharacterBufferRegistry.SelectionCount} / {HoCharacterBufferPaletteLimits.MaxSelections - 1}",
+                    $"已注册：部件 {partRows} / {HoObjectBufferPaletteLimits.MaxPartRows}，选择 {HoObjectBufferRegistry.SelectionCount} / {HoObjectBufferPaletteLimits.MaxSelections - 1}",
                     EditorStyles.miniLabel);
                 GUILayout.FlexibleSpace();
                 if (GUILayout.Button(RefreshLabel, GUILayout.Width(150.0f)))
@@ -297,18 +297,18 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
         /// </summary>
         private void DrawConflicts()
         {
-            var group = target as HoCharacterBufferGroup;
+            var group = target as HoObjectBufferGroup;
             if (group == null)
             {
                 return;
             }
 
-            IReadOnlyList<HoCharacterBufferConflict> conflicts = HoCharacterBufferGroup.GetConflicts();
+            IReadOnlyList<HoObjectBufferConflict> conflicts = HoObjectBufferGroup.GetConflicts();
             int total = 0;
             var lines = new List<string>();
             for (int i = 0; i < conflicts.Count; i++)
             {
-                HoCharacterBufferConflict conflict = conflicts[i];
+                HoObjectBufferConflict conflict = conflicts[i];
                 if (!conflict.Involves(group))
                 {
                     continue;
@@ -337,13 +337,13 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
 
         private int CountPartConflicts(string partName)
         {
-            var group = target as HoCharacterBufferGroup;
+            var group = target as HoObjectBufferGroup;
             if (group == null || string.IsNullOrEmpty(partName))
             {
                 return 0;
             }
 
-            IReadOnlyList<HoCharacterBufferConflict> conflicts = HoCharacterBufferGroup.GetConflicts();
+            IReadOnlyList<HoObjectBufferConflict> conflicts = HoObjectBufferGroup.GetConflicts();
             int count = 0;
             for (int i = 0; i < conflicts.Count; i++)
             {
@@ -500,17 +500,17 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
 
         private string BuildPartIdText(int slot, string partName, SerializedProperty categoryProperty)
         {
-            var group = target as HoCharacterBufferGroup;
+            var group = target as HoObjectBufferGroup;
             int characterId = Mathf.Clamp(
                 characterIdProperty != null ? characterIdProperty.intValue : (group != null ? group.characterId : 0),
                 0,
-                HoCharacterBufferPaletteLimits.MaxCharacters - 1);
+                HoObjectBufferPaletteLimits.MaxCharacters - 1);
             if (group == null || characterId == 0 || string.IsNullOrEmpty(partName))
             {
                 return $"槽位 {slot} · 未注册";
             }
 
-            uint partId = HoCharacterBufferRegistry.GetPartId(characterId, partName);
+            uint partId = HoObjectBufferRegistry.GetPartId(characterId, partName);
             if (partId == 0u)
             {
                 return $"槽位 {slot} · 未注册";
@@ -613,10 +613,10 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
 
         private void RefreshScene()
         {
-            HoCharacterBufferGroup.RefreshLoadedScenes();
+            HoObjectBufferGroup.RefreshLoadedScenes();
             foreach (Object targetObject in targets)
             {
-                if (targetObject is HoCharacterBufferGroup group)
+                if (targetObject is HoObjectBufferGroup group)
                 {
                     group.ApplyIdentity();
                     EditorUtility.SetDirty(group);
@@ -627,10 +627,10 @@ namespace lilToon.URP.Extensions.Editor.CharacterBuffer
         private void ApplyTargets()
         {
             // 条目改名会改变槽位/ID，改完必须重新编译表并把 RSUV 写回去。
-            HoCharacterBufferGroup.RefreshLoadedScenes();
+            HoObjectBufferGroup.RefreshLoadedScenes();
             foreach (Object targetObject in targets)
             {
-                if (targetObject is HoCharacterBufferGroup group)
+                if (targetObject is HoObjectBufferGroup group)
                 {
                     EditorUtility.SetDirty(group);
                 }

@@ -1,6 +1,6 @@
 using UnityEngine;
 
-namespace lilToon.URP.Extensions.CharacterBuffer
+namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
     /// 一个 Renderer 被多个部件条目同时命中的记录。
@@ -12,14 +12,14 @@ namespace lilToon.URP.Extensions.CharacterBuffer
     /// 组件 Inspector 会把这些重复逐条列出来；**不静默吞掉**。
     /// </para>
     /// </summary>
-    public readonly struct HoCharacterBufferConflict
+    public readonly struct HoObjectBufferConflict
     {
-        public HoCharacterBufferConflict(
+        public HoObjectBufferConflict(
             Renderer renderer,
-            HoCharacterBufferGroup winnerGroup,
+            HoObjectBufferGroup winnerGroup,
             int winnerSlot,
             string winnerPartName,
-            HoCharacterBufferGroup loserGroup,
+            HoObjectBufferGroup loserGroup,
             int loserSlot,
             string loserPartName)
         {
@@ -34,24 +34,24 @@ namespace lilToon.URP.Extensions.CharacterBuffer
 
         public readonly Renderer Renderer;
 
-        public readonly HoCharacterBufferGroup WinnerGroup;
+        public readonly HoObjectBufferGroup WinnerGroup;
         public readonly int WinnerSlot;
         public readonly string WinnerPartName;
 
-        public readonly HoCharacterBufferGroup LoserGroup;
+        public readonly HoObjectBufferGroup LoserGroup;
         public readonly int LoserSlot;
         public readonly string LoserPartName;
 
         /// <summary>同一个 group 内的条目打架（同组内按条目顺序裁决）。</summary>
         public bool IsSameGroup => WinnerGroup == LoserGroup;
 
-        public bool Involves(HoCharacterBufferGroup group)
+        public bool Involves(HoObjectBufferGroup group)
         {
             return WinnerGroup == group || LoserGroup == group;
         }
 
         /// <summary>这个部件名在这个 group 里是否参与了冲突（赢或输都算）。</summary>
-        public bool InvolvesPart(HoCharacterBufferGroup group, string partName)
+        public bool InvolvesPart(HoObjectBufferGroup group, string partName)
         {
             if (WinnerGroup == group && WinnerPartName == partName)
             {
@@ -70,7 +70,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             return $"{rendererName} 同时属于「{winner}」和「{loser}」——{reason}";
         }
 
-        private static string DescribeGroup(HoCharacterBufferGroup group)
+        private static string DescribeGroup(HoObjectBufferGroup group)
         {
             return group == null ? "(已销毁)" : $"角色 {group.characterId} · {group.name}";
         }

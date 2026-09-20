@@ -5,25 +5,25 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 
-namespace lilToon.URP.Extensions.CharacterBuffer
+namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
     /// 调试视图：把 CB 的通道画到相机颜色上（与 MetadataBuffer 的调试 pass 同形）。
     /// 没产出时 shader 会输出暗红，而不是静默黑屏——"没跑"和"全是背景"必须能分开。
     /// </summary>
-    internal sealed class HoCharacterBufferDebugPass : ScriptableRenderPass
+    internal sealed class HoObjectBufferDebugPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-CharacterBuffer Debug");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-ObjectBuffer Debug");
 
-        private HoCharacterBufferSettings settings;
-        private HoCharacterBufferRenderTargets renderTargets;
+        private HoObjectBufferSettings settings;
+        private HoObjectBufferRenderTargets renderTargets;
         private RTHandle cameraColorTarget;
         private Material debugMaterial;
 
         private sealed class PassData
         {
             public Material debugMaterial;
-            public HoCharacterBufferDebugMode debugMode;
+            public HoObjectBufferDebugMode debugMode;
             public TextureHandle id0Texture;
             public TextureHandle id1Texture;
             public TextureHandle coverageTexture;
@@ -31,8 +31,8 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         }
 
         public void Setup(
-            HoCharacterBufferSettings settings,
-            HoCharacterBufferRenderTargets renderTargets,
+            HoObjectBufferSettings settings,
+            HoObjectBufferRenderTargets renderTargets,
             RTHandle cameraColorTarget,
             Material debugMaterial)
         {
@@ -58,16 +58,16 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             CommandBuffer cmd = CommandBufferPool.Get();
             using (new ProfilingScope(cmd, ProfilingSampler))
             {
-                debugMaterial.SetFloat(HoCharacterBufferShaderConstants.DebugModeId, (float)settings.debugMode);
-                cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.ValidId, renderTargets.Id0Texture != null ? 1.0f : 0.0f);
+                debugMaterial.SetFloat(HoObjectBufferShaderConstants.DebugModeId, (float)settings.debugMode);
+                cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ValidId, renderTargets.Id0Texture != null ? 1.0f : 0.0f);
                 if (renderTargets.Id0Texture != null)
                 {
-                    cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.Id0TextureId, renderTargets.Id0Texture.nameID);
-                    cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.Id1TextureId, renderTargets.Id1Texture.nameID);
-                    cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.CoverageTextureId, renderTargets.CoverageTexture.nameID);
+                    cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, renderTargets.Id0Texture.nameID);
+                    cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id1TextureId, renderTargets.Id1Texture.nameID);
+                    cmd.SetGlobalTexture(HoObjectBufferShaderConstants.CoverageTextureId, renderTargets.CoverageTexture.nameID);
                     if (renderTargets.SelectionTexture != null)
                     {
-                        cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.SelectionTextureId, renderTargets.SelectionTexture.nameID);
+                        cmd.SetGlobalTexture(HoObjectBufferShaderConstants.SelectionTextureId, renderTargets.SelectionTexture.nameID);
                     }
                 }
 
@@ -86,7 +86,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             }
 
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
-            HoCharacterBufferRenderGraphResources resources = frameData.GetOrCreate<HoCharacterBufferRenderGraphResources>();
+            HoObjectBufferRenderGraphResources resources = frameData.GetOrCreate<HoObjectBufferRenderGraphResources>();
             TextureHandle destination = resourceData.activeColorTexture;
 
             if (!destination.IsValid() || !resources.HasRequiredTextures)
@@ -94,7 +94,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 return;
             }
 
-            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-Character-Buffer Debug", out PassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-Object-Buffer Debug", out PassData passData, ProfilingSampler))
             {
                 passData.debugMaterial = debugMaterial;
                 passData.debugMode = settings.debugMode;
@@ -116,14 +116,14 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
-                    data.debugMaterial.SetFloat(HoCharacterBufferShaderConstants.DebugModeId, (float)data.debugMode);
-                    context.cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.ValidId, 1.0f);
-                    context.cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.Id0TextureId, data.id0Texture);
-                    context.cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.Id1TextureId, data.id1Texture);
-                    context.cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.CoverageTextureId, data.coverageTexture);
+                    data.debugMaterial.SetFloat(HoObjectBufferShaderConstants.DebugModeId, (float)data.debugMode);
+                    context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ValidId, 1.0f);
+                    context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, data.id0Texture);
+                    context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id1TextureId, data.id1Texture);
+                    context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.CoverageTextureId, data.coverageTexture);
                     if (data.selectionTexture.IsValid())
                     {
-                        context.cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.SelectionTextureId, data.selectionTexture);
+                        context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.SelectionTextureId, data.selectionTexture);
                     }
 
                     context.cmd.DrawProcedural(Matrix4x4.identity, data.debugMaterial, 0, MeshTopology.Triangles, 3, 1);

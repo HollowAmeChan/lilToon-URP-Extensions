@@ -1,4 +1,4 @@
-Shader "Hidden/lilToon/URP/CharacterBuffer/Resolve"
+Shader "Hidden/lilToon/URP/ObjectBuffer/Resolve"
 {
     // MSAA → 4 层 (ID, 覆盖率) 的唯一归约点。
     // 规则（规划 §5.4 / §5.5）：
@@ -16,22 +16,22 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Resolve"
 
         Pass
         {
-            Name "CharacterBuffer Resolve"
+            Name "ObjectBuffer Resolve"
 
             HLSLPROGRAM
             #pragma target 4.5
             #pragma vertex Vert
             #pragma fragment Frag
-            #pragma multi_compile_local_fragment _ _HO_CHARACTER_BUFFER_MSAA_2 _HO_CHARACTER_BUFFER_MSAA_4
-            #pragma multi_compile_local_fragment _ _HO_CHARACTER_BUFFER_ID_UNORM
-            #pragma multi_compile_local_fragment _ _HO_CHARACTER_BUFFER_HAS_SELECTION
+            #pragma multi_compile_local_fragment _ _HO_OBJECT_BUFFER_MSAA_2 _HO_OBJECT_BUFFER_MSAA_4
+            #pragma multi_compile_local_fragment _ _HO_OBJECT_BUFFER_ID_UNORM
+            #pragma multi_compile_local_fragment _ _HO_OBJECT_BUFFER_HAS_SELECTION
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             // 全屏三角形的 Vert / Varyings 由 Blit.hlsl 提供（与 GeometryBuffer 的 resolve 同一做法）。
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterBuffer/Shaders/HoCharacterBufferIdPass.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferIdPass.hlsl"
 
-            #if defined(_HO_CHARACTER_BUFFER_MSAA_2)
+            #if defined(_HO_OBJECT_BUFFER_MSAA_2)
                 #define HO_CB_SAMPLES 2
             #else
                 #define HO_CB_SAMPLES 4
@@ -45,25 +45,25 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Resolve"
                 #define HO_CB_LOAD_MS(name, coord, sampleIndex) LOAD_TEXTURE2D_MSAA(name, coord, sampleIndex)
             #endif
 
-            #if defined(_HO_CHARACTER_BUFFER_ID_UNORM)
-                HO_CB_TEXTURE_MS(float, _HoCharacterBufferResolveIdTextureMS);
-                uint HoCharacterBufferLoadSampleId(uint2 coord, int sampleIndex)
+            #if defined(_HO_OBJECT_BUFFER_ID_UNORM)
+                HO_CB_TEXTURE_MS(float, _HoObjectBufferResolveIdTextureMS);
+                uint HoObjectBufferLoadSampleId(uint2 coord, int sampleIndex)
                 {
-                    float encoded = HO_CB_LOAD_MS(_HoCharacterBufferResolveIdTextureMS, coord, sampleIndex);
+                    float encoded = HO_CB_LOAD_MS(_HoObjectBufferResolveIdTextureMS, coord, sampleIndex);
                     return (uint)round(saturate(encoded) * 65535.0);
                 }
             #else
-                HO_CB_TEXTURE_MS(uint, _HoCharacterBufferResolveIdTextureMS);
-                uint HoCharacterBufferLoadSampleId(uint2 coord, int sampleIndex)
+                HO_CB_TEXTURE_MS(uint, _HoObjectBufferResolveIdTextureMS);
+                uint HoObjectBufferLoadSampleId(uint2 coord, int sampleIndex)
                 {
-                    return HO_CB_LOAD_MS(_HoCharacterBufferResolveIdTextureMS, coord, sampleIndex);
+                    return HO_CB_LOAD_MS(_HoObjectBufferResolveIdTextureMS, coord, sampleIndex);
                 }
             #endif
 
-            HO_CB_TEXTURE_MS(float, _HoCharacterBufferResolveDepthTextureMS);
+            HO_CB_TEXTURE_MS(float, _HoObjectBufferResolveDepthTextureMS);
 
-            #if defined(_HO_CHARACTER_BUFFER_HAS_SELECTION)
-                HO_CB_TEXTURE_MS(float4, _HoCharacterBufferResolveSelectionTextureMS);
+            #if defined(_HO_OBJECT_BUFFER_HAS_SELECTION)
+                HO_CB_TEXTURE_MS(float4, _HoObjectBufferResolveSelectionTextureMS);
             #endif
 
             struct LayerOutput
@@ -76,7 +76,7 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Resolve"
             };
 
             // 数票 → 排序（票数降序，平票取更近的样本）。
-            void HoCharacterBufferResolveLayers(uint2 coord, out uint ids[4], out float coverages[4])
+            void HoObjectBufferResolveLayers(uint2 coord, out uint ids[4], out float coverages[4])
             {
                 uint distinct[4] = { 0u, 0u, 0u, 0u };
                 float counts[4] = { 0.0, 0.0, 0.0, 0.0 };
@@ -86,13 +86,13 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Resolve"
                 [unroll]
                 for (int sampleIndex = 0; sampleIndex < HO_CB_SAMPLES; sampleIndex++)
                 {
-                    uint sampleId = HoCharacterBufferLoadSampleId(coord, sampleIndex);
+                    uint sampleId = HoObjectBufferLoadSampleId(coord, sampleIndex);
                     if (sampleId == 0u)
                     {
                         continue;   // 背景不占层，只体现在残差里
                     }
 
-                    float sampleDepth = HO_CB_LOAD_MS(_HoCharacterBufferResolveDepthTextureMS, coord, sampleIndex);
+                    float sampleDepth = HO_CB_LOAD_MS(_HoObjectBufferResolveDepthTextureMS, coord, sampleIndex);
 
                     int found = -1;
                     [unroll]
@@ -156,14 +156,14 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Resolve"
 
             // 选择层归约：按选择 ID 累加覆盖率再排名次（同一条"按 ID 匹配加权"的规则）。
             // P1 只归约前两个选择层（一张选择图）；第二张（4 层配置）见规划 §5.11 的后续项。
-            void HoCharacterBufferResolveSelections(uint2 coord, out uint selectionIds[2], out float selectionCoverages[2])
+            void HoObjectBufferResolveSelections(uint2 coord, out uint selectionIds[2], out float selectionCoverages[2])
             {
                 selectionIds[0] = 0u;
                 selectionIds[1] = 0u;
                 selectionCoverages[0] = 0.0;
                 selectionCoverages[1] = 0.0;
 
-                #if defined(_HO_CHARACTER_BUFFER_HAS_SELECTION)
+                #if defined(_HO_OBJECT_BUFFER_HAS_SELECTION)
                 uint candidates[4] = { 0u, 0u, 0u, 0u };
                 float candidateCoverages[4] = { 0.0, 0.0, 0.0, 0.0 };
                 int candidateCount = 0;
@@ -173,12 +173,12 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Resolve"
                 [unroll]
                 for (int sampleIndex = 0; sampleIndex < HO_CB_SAMPLES; sampleIndex++)
                 {
-                    float4 packed = HO_CB_LOAD_MS(_HoCharacterBufferResolveSelectionTextureMS, coord, sampleIndex);
+                    float4 packed = HO_CB_LOAD_MS(_HoObjectBufferResolveSelectionTextureMS, coord, sampleIndex);
                     uint selectionIdA;
                     float coverageA;
                     uint selectionIdB;
                     float coverageB;
-                    HoCharacterBufferUnpackSelection(packed, selectionIdA, coverageA, selectionIdB, coverageB);
+                    HoObjectBufferUnpackSelection(packed, selectionIdA, coverageA, selectionIdB, coverageB);
 
                     [unroll]
                     for (int pair = 0; pair < 2; pair++)
@@ -264,17 +264,17 @@ Shader "Hidden/lilToon/URP/CharacterBuffer/Resolve"
 
                 uint ids[4];
                 float coverages[4];
-                HoCharacterBufferResolveLayers(coord, ids, coverages);
+                HoObjectBufferResolveLayers(coord, ids, coverages);
 
                 uint selectionIds[2];
                 float selectionCoverages[2];
-                HoCharacterBufferResolveSelections(coord, selectionIds, selectionCoverages);
+                HoObjectBufferResolveSelections(coord, selectionIds, selectionCoverages);
 
                 LayerOutput output;
-                output.id0 = HoCharacterBufferPackIdRow(ids[0], ids[1]);
-                output.id1 = HoCharacterBufferPackIdRow(ids[2], ids[3]);
+                output.id0 = HoObjectBufferPackIdRow(ids[0], ids[1]);
+                output.id1 = HoObjectBufferPackIdRow(ids[2], ids[3]);
                 output.coverage = float4(coverages[0], coverages[1], coverages[2], coverages[3]);
-                output.selection0 = HoCharacterBufferPackSelectionRow(
+                output.selection0 = HoObjectBufferPackSelectionRow(
                     selectionIds[0], selectionCoverages[0], selectionIds[1], selectionCoverages[1]);
                 output.selection1 = float4(0.0, 0.0, 0.0, 0.0);
                 return output;

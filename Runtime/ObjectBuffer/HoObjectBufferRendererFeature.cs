@@ -4,21 +4,21 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace lilToon.URP.Extensions.CharacterBuffer
+namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
-    /// Ho-CharacterBuffer：用"ID + 覆盖率"取代 MetadataBuffer 的位掩码（规划 §5）。
+    /// Ho-ObjectBuffer：用"ID + 覆盖率"取代 MetadataBuffer 的位掩码（规划 §5）。
     /// 与 MetadataBuffer **并存**（暂时不删），两者互不依赖：CB 不读 MetadataBuffer 的任何产物。
     /// </summary>
-    [DisallowMultipleRendererFeature("Ho-CharacterBuffer")]
-    public sealed class HoCharacterBufferRendererFeature : ScriptableRendererFeature
+    [DisallowMultipleRendererFeature("Ho-ObjectBuffer")]
+    public sealed class HoObjectBufferRendererFeature : ScriptableRendererFeature
     {
         [SerializeField]
-        private HoCharacterBufferSettings settings = new HoCharacterBufferSettings();
+        private HoObjectBufferSettings settings = new HoObjectBufferSettings();
 
-        private readonly HoCharacterBufferRenderTargets renderTargets = new HoCharacterBufferRenderTargets();
-        private HoCharacterBufferPass outputPass;
-        private HoCharacterBufferDebugPass debugPass;
+        private readonly HoObjectBufferRenderTargets renderTargets = new HoObjectBufferRenderTargets();
+        private HoObjectBufferPass outputPass;
+        private HoObjectBufferDebugPass debugPass;
         private Material fallbackMaterial;
         private Material resolveMaterial;
         private Material debugMaterial;
@@ -32,13 +32,13 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         private bool warnedUnsupportedPlatform;
         private bool warnedSelectionLayers;
 
-        public HoCharacterBufferSettings Settings => settings;
+        public HoObjectBufferSettings Settings => settings;
 
         public override void Create()
         {
             RegisterCameraReset();
-            outputPass = new HoCharacterBufferPass();
-            debugPass = new HoCharacterBufferDebugPass();
+            outputPass = new HoObjectBufferPass();
+            debugPass = new HoObjectBufferDebugPass();
         }
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
@@ -106,7 +106,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 return;
             }
 
-            RenderPipelineManager.beginCameraRendering += ResetCharacterBufferState;
+            RenderPipelineManager.beginCameraRendering += ResetObjectBufferState;
             registeredCameraReset = true;
         }
 
@@ -117,13 +117,13 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 return;
             }
 
-            RenderPipelineManager.beginCameraRendering -= ResetCharacterBufferState;
+            RenderPipelineManager.beginCameraRendering -= ResetObjectBufferState;
             registeredCameraReset = false;
         }
 
-        private static void ResetCharacterBufferState(ScriptableRenderContext context, Camera camera)
+        private static void ResetObjectBufferState(ScriptableRenderContext context, Camera camera)
         {
-            HoCharacterBufferPass.ResetGlobalState();
+            HoObjectBufferPass.ResetGlobalState();
         }
 
         private void ReleaseCompatibilityResources(bool resetGlobalState = false)
@@ -145,13 +145,13 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 return false;
             }
 
-            if (!HoCharacterBufferRegistry.SupportsStructuredBuffer)
+            if (!HoObjectBufferRegistry.SupportsStructuredBuffer)
             {
                 // 不静默降级：平台拿不到 StructuredBuffer 时 palette 根本读不了，宁可整条不跑并告警。
                 if (!warnedUnsupportedPlatform)
                 {
                     warnedUnsupportedPlatform = true;
-                    Debug.LogWarning("[Ho-CharacterBuffer] 平台不支持 StructuredBuffer（shader level < 4.5），feature 已停用。");
+                    Debug.LogWarning("[Ho-ObjectBuffer] 平台不支持 StructuredBuffer（shader level < 4.5），feature 已停用。");
                 }
 
                 return false;
@@ -160,7 +160,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             if (settings.RequestedSelectionLayerCount > 2 && !warnedSelectionLayers)
             {
                 warnedSelectionLayers = true;
-                Debug.LogWarning("[Ho-CharacterBuffer] P1 只实现 2 个选择层/像素（一张选择图）；4 层配置暂按 2 跑。");
+                Debug.LogWarning("[Ho-ObjectBuffer] P1 只实现 2 个选择层/像素（一张选择图）；4 层配置暂按 2 跑。");
             }
 
             return true;
@@ -170,12 +170,12 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         {
             return settings != null &&
                 settings.RequestedSelectionLayerCount > 0 &&
-                HoCharacterBufferRegistry.SelectionCount > 0;
+                HoObjectBufferRegistry.SelectionCount > 0;
         }
 
         private bool ShouldDebug(in RenderingData renderingData)
         {
-            if (settings == null || settings.debugMode == HoCharacterBufferDebugMode.Off)
+            if (settings == null || settings.debugMode == HoObjectBufferDebugMode.Off)
             {
                 return false;
             }
@@ -199,7 +199,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         {
             Shader shader = settings != null && settings.fallbackShader != null
                 ? settings.fallbackShader
-                : Shader.Find(HoCharacterBufferShaderConstants.FallbackShaderName);
+                : Shader.Find(HoObjectBufferShaderConstants.FallbackShaderName);
 
             if (fallbackMaterial != null && fallbackShader == shader)
             {
@@ -214,8 +214,8 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 if (!warnedMissingFallbackShader)
                 {
                     warnedMissingFallbackShader = true;
-                    Debug.LogWarning($"[Ho-CharacterBuffer] 找不到 fallback shader '{HoCharacterBufferShaderConstants.FallbackShaderName}'，" +
-                                     "未带 HoCharacterBuffer pass 的材质不会写 ID。");
+                    Debug.LogWarning($"[Ho-ObjectBuffer] 找不到 fallback shader '{HoObjectBufferShaderConstants.FallbackShaderName}'，" +
+                                     "未带 HoObjectBuffer pass 的材质不会写 ID。");
                 }
 
                 return;
@@ -226,7 +226,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
 
         private void EnsureResolveMaterial()
         {
-            Shader shader = Shader.Find(HoCharacterBufferShaderConstants.ResolveShaderName);
+            Shader shader = Shader.Find(HoObjectBufferShaderConstants.ResolveShaderName);
             if (resolveMaterial != null && resolveShader == shader)
             {
                 return;
@@ -240,7 +240,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 if (!warnedMissingResolveShader)
                 {
                     warnedMissingResolveShader = true;
-                    Debug.LogWarning($"[Ho-CharacterBuffer] 找不到 resolve shader '{HoCharacterBufferShaderConstants.ResolveShaderName}'，" +
+                    Debug.LogWarning($"[Ho-ObjectBuffer] 找不到 resolve shader '{HoObjectBufferShaderConstants.ResolveShaderName}'，" +
                                      "MSAA 下无法产生覆盖率。");
                 }
 
@@ -254,7 +254,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         {
             Shader shader = settings != null && settings.debugShader != null
                 ? settings.debugShader
-                : Shader.Find(HoCharacterBufferShaderConstants.DebugShaderName);
+                : Shader.Find(HoObjectBufferShaderConstants.DebugShaderName);
 
             if (debugMaterial != null && debugShader == shader)
             {
@@ -269,7 +269,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 if (!warnedMissingDebugShader)
                 {
                     warnedMissingDebugShader = true;
-                    Debug.LogWarning($"[Ho-CharacterBuffer] 找不到 debug shader '{HoCharacterBufferShaderConstants.DebugShaderName}'，调试视图不可用。");
+                    Debug.LogWarning($"[Ho-ObjectBuffer] 找不到 debug shader '{HoObjectBufferShaderConstants.DebugShaderName}'，调试视图不可用。");
                 }
 
                 return;

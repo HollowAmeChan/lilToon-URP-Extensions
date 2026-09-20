@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 
-namespace lilToon.URP.Extensions.CharacterBuffer
+namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
     /// 格式选择与 **MSAA 采样数协商**。
@@ -10,7 +10,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
     /// <c>SystemInfo.GetRenderTextureSupportedMSAASampleCount</c> 官方语义就是"不支持就返回一个平台支持的更低值"，
     /// 所以我们直接要 4、拿回 2 或 1 即可。
     /// </summary>
-    internal static class HoCharacterBufferFormatUtility
+    internal static class HoObjectBufferFormatUtility
     {
         /// <summary>层图（ID / 覆盖率 / Cryptomatte 选择）统一用 RGBA8。</summary>
         public static GraphicsFormat GetLayerGraphicsFormat()

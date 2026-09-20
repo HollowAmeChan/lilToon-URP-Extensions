@@ -5,7 +5,7 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-namespace lilToon.URP.Extensions.CharacterBuffer
+namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
     /// 兼容路径（非 RenderGraph）的 RTHandle 集合。
@@ -14,7 +14,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
     /// `Ho-SurfaceBuffer`，这里不再有 `_Surface` / `Material0`。
     /// ID pass 自己的 depth-stencil **只服务于自身绘制**，永不发布（决策 16）。
     /// </summary>
-    internal sealed class HoCharacterBufferRenderTargets
+    internal sealed class HoObjectBufferRenderTargets
     {
         private RTHandle id0Texture;
         private RTHandle id1Texture;
@@ -56,16 +56,16 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             int samples,
             bool selectionEnabled)
         {
-            idFormatIsInteger = HoCharacterBufferFormatUtility.TryGetIdGraphicsFormat(out _, out bool isInteger) && isInteger;
+            idFormatIsInteger = HoObjectBufferFormatUtility.TryGetIdGraphicsFormat(out _, out bool isInteger) && isInteger;
 
-            RenderingUtils.ReAllocateIfNeeded(ref id0Texture, HoCharacterBufferFormatUtility.CreateLayerDescriptor(cameraTextureDescriptor), FilterMode.Point, TextureWrapMode.Clamp, name: HoCharacterBufferShaderConstants.Id0TextureName);
-            RenderingUtils.ReAllocateIfNeeded(ref id1Texture, HoCharacterBufferFormatUtility.CreateLayerDescriptor(cameraTextureDescriptor), FilterMode.Point, TextureWrapMode.Clamp, name: HoCharacterBufferShaderConstants.Id1TextureName);
-            RenderingUtils.ReAllocateIfNeeded(ref coverageTexture, HoCharacterBufferFormatUtility.CreateLayerDescriptor(cameraTextureDescriptor), FilterMode.Point, TextureWrapMode.Clamp, name: HoCharacterBufferShaderConstants.CoverageTextureName);
-            RenderingUtils.ReAllocateIfNeeded(ref depthTexture, HoCharacterBufferFormatUtility.CreateDepthDescriptor(cameraTextureDescriptor, 1, false), FilterMode.Point, TextureWrapMode.Clamp, name: HoCharacterBufferShaderConstants.Id0TextureName + "Depth");
+            RenderingUtils.ReAllocateIfNeeded(ref id0Texture, HoObjectBufferFormatUtility.CreateLayerDescriptor(cameraTextureDescriptor), FilterMode.Point, TextureWrapMode.Clamp, name: HoObjectBufferShaderConstants.Id0TextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref id1Texture, HoObjectBufferFormatUtility.CreateLayerDescriptor(cameraTextureDescriptor), FilterMode.Point, TextureWrapMode.Clamp, name: HoObjectBufferShaderConstants.Id1TextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref coverageTexture, HoObjectBufferFormatUtility.CreateLayerDescriptor(cameraTextureDescriptor), FilterMode.Point, TextureWrapMode.Clamp, name: HoObjectBufferShaderConstants.CoverageTextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref depthTexture, HoObjectBufferFormatUtility.CreateDepthDescriptor(cameraTextureDescriptor, 1, false), FilterMode.Point, TextureWrapMode.Clamp, name: HoObjectBufferShaderConstants.Id0TextureName + "Depth");
 
             if (selectionEnabled)
             {
-                RenderingUtils.ReAllocateIfNeeded(ref selectionTexture, HoCharacterBufferFormatUtility.CreateLayerDescriptor(cameraTextureDescriptor), FilterMode.Point, TextureWrapMode.Clamp, name: HoCharacterBufferShaderConstants.SelectionTextureName);
+                RenderingUtils.ReAllocateIfNeeded(ref selectionTexture, HoObjectBufferFormatUtility.CreateLayerDescriptor(cameraTextureDescriptor), FilterMode.Point, TextureWrapMode.Clamp, name: HoObjectBufferShaderConstants.SelectionTextureName);
             }
             else
             {
@@ -80,12 +80,12 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 return;
             }
 
-            RenderingUtils.ReAllocateIfNeeded(ref idMsaaTexture, HoCharacterBufferFormatUtility.CreateMsaaIdDescriptor(cameraTextureDescriptor, msaaSamples), FilterMode.Point, TextureWrapMode.Clamp, name: HoCharacterBufferShaderConstants.Id0TextureName + "MSAA");
-            RenderingUtils.ReAllocateIfNeeded(ref depthMsaaTexture, HoCharacterBufferFormatUtility.CreateDepthDescriptor(cameraTextureDescriptor, msaaSamples, true), FilterMode.Point, TextureWrapMode.Clamp, name: HoCharacterBufferShaderConstants.Id0TextureName + "DepthMSAA");
+            RenderingUtils.ReAllocateIfNeeded(ref idMsaaTexture, HoObjectBufferFormatUtility.CreateMsaaIdDescriptor(cameraTextureDescriptor, msaaSamples), FilterMode.Point, TextureWrapMode.Clamp, name: HoObjectBufferShaderConstants.Id0TextureName + "MSAA");
+            RenderingUtils.ReAllocateIfNeeded(ref depthMsaaTexture, HoObjectBufferFormatUtility.CreateDepthDescriptor(cameraTextureDescriptor, msaaSamples, true), FilterMode.Point, TextureWrapMode.Clamp, name: HoObjectBufferShaderConstants.Id0TextureName + "DepthMSAA");
 
             if (selectionEnabled)
             {
-                RenderingUtils.ReAllocateIfNeeded(ref selectionMsaaTexture, HoCharacterBufferFormatUtility.CreateMsaaLayerDescriptor(cameraTextureDescriptor, msaaSamples), FilterMode.Point, TextureWrapMode.Clamp, name: HoCharacterBufferShaderConstants.SelectionTextureName + "MSAA");
+                RenderingUtils.ReAllocateIfNeeded(ref selectionMsaaTexture, HoObjectBufferFormatUtility.CreateMsaaLayerDescriptor(cameraTextureDescriptor, msaaSamples), FilterMode.Point, TextureWrapMode.Clamp, name: HoObjectBufferShaderConstants.SelectionTextureName + "MSAA");
             }
             else
             {

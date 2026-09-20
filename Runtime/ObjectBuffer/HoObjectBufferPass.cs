@@ -8,7 +8,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 
-namespace lilToon.URP.Extensions.CharacterBuffer
+namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
     /// ID / 覆盖率的生产 pass（规划 §5.4）。
@@ -20,10 +20,10 @@ namespace lilToon.URP.Extensions.CharacterBuffer
     /// <item>ID pass 的 depth-stencil 是内部附件：不发布、不给任何 shader 采样（决策 16）。</item>
     /// </list>
     /// </summary>
-    internal sealed class HoCharacterBufferPass : ScriptableRenderPass
+    internal sealed class HoObjectBufferPass : ScriptableRenderPass
     {
-        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-CharacterBuffer Output");
-        private static readonly ProfilingSampler ResolveProfilingSampler = new ProfilingSampler("Ho-CharacterBuffer MSAA Resolve");
+        private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-ObjectBuffer Output");
+        private static readonly ProfilingSampler ResolveProfilingSampler = new ProfilingSampler("Ho-ObjectBuffer MSAA Resolve");
 
         private static readonly List<ShaderTagId> FallbackShaderTagIds = new List<ShaderTagId>
         {
@@ -34,7 +34,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
 
         private static readonly List<ShaderTagId> IdShaderTagIds = new List<ShaderTagId>
         {
-            HoCharacterBufferShaderConstants.ShaderTagId
+            HoObjectBufferShaderConstants.ShaderTagId
         };
 
         private const int FallbackPassLayers = 0;
@@ -48,8 +48,8 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         private readonly RTHandle[] msaaColorTargets = new RTHandle[2];
         private readonly RenderTargetIdentifier[] resolveColorIdentifiers = new RenderTargetIdentifier[4];
 
-        private HoCharacterBufferSettings settings;
-        private HoCharacterBufferRenderTargets renderTargets;
+        private HoObjectBufferSettings settings;
+        private HoObjectBufferRenderTargets renderTargets;
         private Material fallbackMaterial;
         private Material resolveMaterial;
         private FilteringSettings fallbackFilteringSettings;
@@ -87,8 +87,8 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         {
         }
         public void Setup(
-            HoCharacterBufferSettings settings,
-            HoCharacterBufferRenderTargets renderTargets,
+            HoObjectBufferSettings settings,
+            HoObjectBufferRenderTargets renderTargets,
             Material fallbackMaterial,
             Material resolveMaterial,
             int samples,
@@ -112,9 +112,9 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 return;
             }
 
-            HoCharacterBufferRegistry.EnsureBuilt();
+            HoObjectBufferRegistry.EnsureBuilt();
             UpdateDerivedState();
-            msaaSamples = HoCharacterBufferFormatUtility.GetSupportedSampleCount(
+            msaaSamples = HoObjectBufferFormatUtility.GetSupportedSampleCount(
                 cameraTextureDescriptor,
                 settings.RequestedSampleCount,
                 selectionEnabled);
@@ -155,8 +155,8 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             CommandBuffer cmd = CommandBufferPool.Get();
             using (new ProfilingScope(cmd, ProfilingSampler))
             {
-                cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.ActiveId, 1.0f);
-                cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.SelectionLayerCountId, selectionEnabled ? settings.RequestedSelectionLayerCount : 0);
+                cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ActiveId, 1.0f);
+                cmd.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionLayerCountId, selectionEnabled ? settings.RequestedSelectionLayerCount : 0);
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
 
@@ -204,32 +204,32 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             }
 
             // 表内容变了才重建（部件/选择由注册表编译），并保证 GraphicsBuffer 已上传。
-            HoCharacterBufferRegistry.EnsureBuilt();
+            HoObjectBufferRegistry.EnsureBuilt();
             UpdateDerivedState();
 
             UniversalRenderingData renderingData = frameData.Get<UniversalRenderingData>();
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
-            HoCharacterBufferRenderGraphResources resources = frameData.GetOrCreate<HoCharacterBufferRenderGraphResources>();
+            HoObjectBufferRenderGraphResources resources = frameData.GetOrCreate<HoObjectBufferRenderGraphResources>();
 
             RenderTextureDescriptor cameraDescriptor = cameraData.cameraTargetDescriptor;
             // 采样数**只问平台**：相机把 MSAA 关掉时，覆盖率照样是 4x（决策 7，也是最初那个 bug 的场景）。
-            msaaSamples = HoCharacterBufferFormatUtility.GetSupportedSampleCount(
+            msaaSamples = HoObjectBufferFormatUtility.GetSupportedSampleCount(
                 cameraDescriptor,
                 settings.RequestedSampleCount,
                 selectionEnabled);
             bool useMsaa = msaaSamples > 1;
-            bool selection = selectionEnabled && HoCharacterBufferRegistry.SelectionCount > 0;
+            bool selection = selectionEnabled && HoObjectBufferRegistry.SelectionCount > 0;
 
-            TextureHandle id0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoCharacterBufferFormatUtility.GetLayerGraphicsFormat(), HoCharacterBufferShaderConstants.Id0TextureName));
-            TextureHandle id1Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoCharacterBufferFormatUtility.GetLayerGraphicsFormat(), HoCharacterBufferShaderConstants.Id1TextureName));
-            TextureHandle coverageTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoCharacterBufferFormatUtility.GetLayerGraphicsFormat(), HoCharacterBufferShaderConstants.CoverageTextureName));
+            TextureHandle id0Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoObjectBufferFormatUtility.GetLayerGraphicsFormat(), HoObjectBufferShaderConstants.Id0TextureName));
+            TextureHandle id1Texture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoObjectBufferFormatUtility.GetLayerGraphicsFormat(), HoObjectBufferShaderConstants.Id1TextureName));
+            TextureHandle coverageTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoObjectBufferFormatUtility.GetLayerGraphicsFormat(), HoObjectBufferShaderConstants.CoverageTextureName));
             // depth 纹理走 UniversalRenderer 的辅助函数（与 GB / MetadataBuffer 同一路径）：
             // 直接用 TextureDesc 造深度附件容易在 format/depthBufferBits 上写错。
             TextureHandle depthTexture = UniversalRenderer.CreateRenderGraphTexture(
                 renderGraph,
-                HoCharacterBufferFormatUtility.CreateDepthDescriptor(cameraDescriptor, 1, false),
-                HoCharacterBufferShaderConstants.Id0TextureName + "Depth",
+                HoObjectBufferFormatUtility.CreateDepthDescriptor(cameraDescriptor, 1, false),
+                HoObjectBufferShaderConstants.Id0TextureName + "Depth",
                 true,
                 FilterMode.Point,
                 TextureWrapMode.Clamp);
@@ -237,7 +237,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             TextureHandle selectionTexture = TextureHandle.nullHandle;
             if (selection)
             {
-                selectionTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoCharacterBufferFormatUtility.GetLayerGraphicsFormat(), HoCharacterBufferShaderConstants.SelectionTextureName));
+                selectionTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoObjectBufferFormatUtility.GetLayerGraphicsFormat(), HoObjectBufferShaderConstants.SelectionTextureName));
             }
 
             resources.id0Texture = id0Texture;
@@ -251,18 +251,18 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             TextureHandle depthMsaaTexture = TextureHandle.nullHandle;
             if (useMsaa)
             {
-                HoCharacterBufferFormatUtility.TryGetIdGraphicsFormat(out GraphicsFormat idFormat, out _);
-                idMsaaTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, idFormat, HoCharacterBufferShaderConstants.Id0TextureName + "MSAA", msaaSamples));
+                HoObjectBufferFormatUtility.TryGetIdGraphicsFormat(out GraphicsFormat idFormat, out _);
+                idMsaaTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, idFormat, HoObjectBufferShaderConstants.Id0TextureName + "MSAA", msaaSamples));
                 depthMsaaTexture = UniversalRenderer.CreateRenderGraphTexture(
                     renderGraph,
-                    HoCharacterBufferFormatUtility.CreateDepthDescriptor(cameraDescriptor, msaaSamples, true),
-                    HoCharacterBufferShaderConstants.Id0TextureName + "DepthMSAA",
+                    HoObjectBufferFormatUtility.CreateDepthDescriptor(cameraDescriptor, msaaSamples, true),
+                    HoObjectBufferShaderConstants.Id0TextureName + "DepthMSAA",
                     true,
                     FilterMode.Point,
                     TextureWrapMode.Clamp);
                 if (selection)
                 {
-                    selectionMsaaTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoCharacterBufferFormatUtility.GetLayerGraphicsFormat(), HoCharacterBufferShaderConstants.SelectionTextureName + "MSAA", msaaSamples));
+                    selectionMsaaTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoObjectBufferFormatUtility.GetLayerGraphicsFormat(), HoObjectBufferShaderConstants.SelectionTextureName + "MSAA", msaaSamples));
                 }
             }
 
@@ -281,7 +281,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 lightData,
                 SortingCriteria.CommonTransparent);
 
-            using (var builder = renderGraph.AddRasterRenderPass<IdPassData>("Ho-Character-Buffer ID", out IdPassData passData, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<IdPassData>("Ho-Object-Buffer ID", out IdPassData passData, ProfilingSampler))
             {
                 passData.drawFallback = settings.useFallbackMaterial && fallbackMaterial != null && fallbackFilteringEnabled;
                 passData.fallbackRendererList = passData.drawFallback
@@ -322,12 +322,12 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                     }
 
                     builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.Write);
-                    builder.SetGlobalTextureAfterPass(id0Texture, HoCharacterBufferShaderConstants.Id0TextureId);
-                    builder.SetGlobalTextureAfterPass(id1Texture, HoCharacterBufferShaderConstants.Id1TextureId);
-                    builder.SetGlobalTextureAfterPass(coverageTexture, HoCharacterBufferShaderConstants.CoverageTextureId);
+                    builder.SetGlobalTextureAfterPass(id0Texture, HoObjectBufferShaderConstants.Id0TextureId);
+                    builder.SetGlobalTextureAfterPass(id1Texture, HoObjectBufferShaderConstants.Id1TextureId);
+                    builder.SetGlobalTextureAfterPass(coverageTexture, HoObjectBufferShaderConstants.CoverageTextureId);
                     if (selection && selectionTexture.IsValid())
                     {
-                        builder.SetGlobalTextureAfterPass(selectionTexture, HoCharacterBufferShaderConstants.SelectionTextureId);
+                        builder.SetGlobalTextureAfterPass(selectionTexture, HoObjectBufferShaderConstants.SelectionTextureId);
                     }
                 }
 
@@ -335,8 +335,8 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (IdPassData data, RasterGraphContext context) =>
                 {
-                    context.cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.ActiveId, 1.0f);
-                    context.cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.SelectionLayerCountId, data.selectionLayerCount);
+                    context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ActiveId, 1.0f);
+                    context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionLayerCountId, data.selectionLayerCount);
                     if (data.drawFallback && data.fallbackRendererList.IsValid())
                     {
                         context.cmd.DrawRendererList(data.fallbackRendererList);
@@ -351,7 +351,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
 
             if (useMsaa)
             {
-                using (var builder = renderGraph.AddRasterRenderPass<ResolvePassData>("Ho-Character-Buffer MSAA Resolve", out ResolvePassData passData, ResolveProfilingSampler))
+                using (var builder = renderGraph.AddRasterRenderPass<ResolvePassData>("Ho-Object-Buffer MSAA Resolve", out ResolvePassData passData, ResolveProfilingSampler))
                 {
                     passData.resolveMaterial = resolveMaterial;
                     passData.msaaSamples = msaaSamples;
@@ -375,12 +375,12 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                     }
 
                     builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.Write);
-                    builder.SetGlobalTextureAfterPass(id0Texture, HoCharacterBufferShaderConstants.Id0TextureId);
-                    builder.SetGlobalTextureAfterPass(id1Texture, HoCharacterBufferShaderConstants.Id1TextureId);
-                    builder.SetGlobalTextureAfterPass(coverageTexture, HoCharacterBufferShaderConstants.CoverageTextureId);
+                    builder.SetGlobalTextureAfterPass(id0Texture, HoObjectBufferShaderConstants.Id0TextureId);
+                    builder.SetGlobalTextureAfterPass(id1Texture, HoObjectBufferShaderConstants.Id1TextureId);
+                    builder.SetGlobalTextureAfterPass(coverageTexture, HoObjectBufferShaderConstants.CoverageTextureId);
                     if (selection && selectionTexture.IsValid())
                     {
-                        builder.SetGlobalTextureAfterPass(selectionTexture, HoCharacterBufferShaderConstants.SelectionTextureId);
+                        builder.SetGlobalTextureAfterPass(selectionTexture, HoObjectBufferShaderConstants.SelectionTextureId);
                     }
 
                     builder.AllowGlobalStateModification(true);
@@ -393,22 +393,22 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                         }
 
                         SetResolveKeywords(data.resolveMaterial, data.msaaSamples, data.idFormatIsInteger, data.selectionEnabled);
-                        context.cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.ActiveId, 1.0f);
-                        context.cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.SelectionLayerCountId, data.selectionLayerCount);
+                        context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ActiveId, 1.0f);
+                        context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionLayerCountId, data.selectionLayerCount);
                         context.cmd.DrawProcedural(Matrix4x4.identity, data.resolveMaterial, 0, MeshTopology.Triangles, 3, 1);
                     });
                 }
             }
 
-            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("Ho-Character-Buffer Valid", out _, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("Ho-Object-Buffer Valid", out _, ProfilingSampler))
             {
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (ResetPassData data, RasterGraphContext context) =>
                 {
-                    context.cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.ValidId, 1.0f);
-                    context.cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.PartCountId, HoCharacterBufferRegistry.PartRowCount);
-                    context.cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.SelectionCountId, HoCharacterBufferRegistry.SelectionCount);
+                    context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ValidId, 1.0f);
+                    context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.PartCountId, HoObjectBufferRegistry.PartRowCount);
+                    context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionCountId, HoObjectBufferRegistry.SelectionCount);
                 });
             }
         }
@@ -434,12 +434,12 @@ namespace lilToon.URP.Extensions.CharacterBuffer
 
         public static void ResetGlobalState()
         {
-            Shader.SetGlobalFloat(HoCharacterBufferShaderConstants.ActiveId, 0.0f);
-            Shader.SetGlobalFloat(HoCharacterBufferShaderConstants.ValidId, 0.0f);
-            Shader.SetGlobalTexture(HoCharacterBufferShaderConstants.Id0TextureId, Texture2D.blackTexture);
-            Shader.SetGlobalTexture(HoCharacterBufferShaderConstants.Id1TextureId, Texture2D.blackTexture);
-            Shader.SetGlobalTexture(HoCharacterBufferShaderConstants.CoverageTextureId, Texture2D.blackTexture);
-            Shader.SetGlobalTexture(HoCharacterBufferShaderConstants.SelectionTextureId, Texture2D.blackTexture);
+            Shader.SetGlobalFloat(HoObjectBufferShaderConstants.ActiveId, 0.0f);
+            Shader.SetGlobalFloat(HoObjectBufferShaderConstants.ValidId, 0.0f);
+            Shader.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, Texture2D.blackTexture);
+            Shader.SetGlobalTexture(HoObjectBufferShaderConstants.Id1TextureId, Texture2D.blackTexture);
+            Shader.SetGlobalTexture(HoObjectBufferShaderConstants.CoverageTextureId, Texture2D.blackTexture);
+            Shader.SetGlobalTexture(HoObjectBufferShaderConstants.SelectionTextureId, Texture2D.blackTexture);
         }
 
         private void ResolveMsaa(CommandBuffer cmd)
@@ -450,11 +450,11 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             }
 
             SetResolveKeywords(resolveMaterial, msaaSamples, IsIdFormatInteger(), selectionEnabled);
-            cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.ResolveIdTextureMsId, renderTargets.IdMsaaTexture.nameID);
-            cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.ResolveDepthTextureMsId, renderTargets.DepthMsaaTexture.nameID);
+            cmd.SetGlobalTexture(HoObjectBufferShaderConstants.ResolveIdTextureMsId, renderTargets.IdMsaaTexture.nameID);
+            cmd.SetGlobalTexture(HoObjectBufferShaderConstants.ResolveDepthTextureMsId, renderTargets.DepthMsaaTexture.nameID);
             if (selectionEnabled && renderTargets.SelectionMsaaTexture != null)
             {
-                cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.ResolveSelectionTextureMsId, renderTargets.SelectionMsaaTexture.nameID);
+                cmd.SetGlobalTexture(HoObjectBufferShaderConstants.ResolveSelectionTextureMsId, renderTargets.SelectionMsaaTexture.nameID);
             }
 
             resolveColorIdentifiers[0] = renderTargets.Id0Texture.nameID;
@@ -470,16 +470,16 @@ namespace lilToon.URP.Extensions.CharacterBuffer
 
         private void PublishGlobals(CommandBuffer cmd)
         {
-            cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.ValidId, 1.0f);
-            cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.PartCountId, HoCharacterBufferRegistry.PartRowCount);
-            cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.SelectionCountId, HoCharacterBufferRegistry.SelectionCount);
-            cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.SelectionLayerCountId, selectionEnabled ? settings.RequestedSelectionLayerCount : 0);
-            cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.Id0TextureId, renderTargets.Id0Texture.nameID);
-            cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.Id1TextureId, renderTargets.Id1Texture.nameID);
-            cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.CoverageTextureId, renderTargets.CoverageTexture.nameID);
+            cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ValidId, 1.0f);
+            cmd.SetGlobalFloat(HoObjectBufferShaderConstants.PartCountId, HoObjectBufferRegistry.PartRowCount);
+            cmd.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionCountId, HoObjectBufferRegistry.SelectionCount);
+            cmd.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionLayerCountId, selectionEnabled ? settings.RequestedSelectionLayerCount : 0);
+            cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, renderTargets.Id0Texture.nameID);
+            cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id1TextureId, renderTargets.Id1Texture.nameID);
+            cmd.SetGlobalTexture(HoObjectBufferShaderConstants.CoverageTextureId, renderTargets.CoverageTexture.nameID);
             if (selectionEnabled && renderTargets.SelectionTexture != null)
             {
-                cmd.SetGlobalTexture(HoCharacterBufferShaderConstants.SelectionTextureId, renderTargets.SelectionTexture.nameID);
+                cmd.SetGlobalTexture(HoObjectBufferShaderConstants.SelectionTextureId, renderTargets.SelectionTexture.nameID);
             }
         }
 
@@ -490,7 +490,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         {
             if (!idFormatIsIntegerCache.HasValue)
             {
-                idFormatIsIntegerCache = HoCharacterBufferFormatUtility.TryGetIdGraphicsFormat(out _, out bool isInteger) && isInteger;
+                idFormatIsIntegerCache = HoObjectBufferFormatUtility.TryGetIdGraphicsFormat(out _, out bool isInteger) && isInteger;
             }
 
             return idFormatIsIntegerCache.Value;
@@ -513,11 +513,11 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 return;
             }
 
-            material.DisableKeyword(HoCharacterBufferShaderConstants.Msaa2Keyword);
-            material.DisableKeyword(HoCharacterBufferShaderConstants.Msaa4Keyword);
-            material.EnableKeyword(samples <= 2 ? HoCharacterBufferShaderConstants.Msaa2Keyword : HoCharacterBufferShaderConstants.Msaa4Keyword);
+            material.DisableKeyword(HoObjectBufferShaderConstants.Msaa2Keyword);
+            material.DisableKeyword(HoObjectBufferShaderConstants.Msaa4Keyword);
+            material.EnableKeyword(samples <= 2 ? HoObjectBufferShaderConstants.Msaa2Keyword : HoObjectBufferShaderConstants.Msaa4Keyword);
 
-            const string idUnormKeyword = "_HO_CHARACTER_BUFFER_ID_UNORM";
+            const string idUnormKeyword = "_HO_OBJECT_BUFFER_ID_UNORM";
             if (idFormatIsInteger)
             {
                 material.DisableKeyword(idUnormKeyword);
@@ -527,7 +527,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
                 material.EnableKeyword(idUnormKeyword);
             }
 
-            const string selectionKeyword = "_HO_CHARACTER_BUFFER_HAS_SELECTION";
+            const string selectionKeyword = "_HO_OBJECT_BUFFER_HAS_SELECTION";
             if (selectionEnabled)
             {
                 material.EnableKeyword(selectionKeyword);
@@ -543,7 +543,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
             // 选择层是否真的产出：设置要开，且注册表里确实注册了选择（"没有消费者不产出"）。
             selectionEnabled = settings != null &&
                 settings.RequestedSelectionLayerCount > 0 &&
-                HoCharacterBufferRegistry.SelectionCount > 0;
+                HoObjectBufferRegistry.SelectionCount > 0;
             ConfigureFiltering();
         }
 
@@ -622,14 +622,14 @@ namespace lilToon.URP.Extensions.CharacterBuffer
 
         private static void AddResetPass(RenderGraph renderGraph)
         {
-            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("Ho-Character-Buffer Reset", out _, ProfilingSampler))
+            using (var builder = renderGraph.AddRasterRenderPass<ResetPassData>("Ho-Object-Buffer Reset", out _, ProfilingSampler))
             {
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (ResetPassData data, RasterGraphContext context) =>
                 {
-                    context.cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.ActiveId, 0.0f);
-                    context.cmd.SetGlobalFloat(HoCharacterBufferShaderConstants.ValidId, 0.0f);
+                    context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ActiveId, 0.0f);
+                    context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ValidId, 0.0f);
                 });
             }
         }

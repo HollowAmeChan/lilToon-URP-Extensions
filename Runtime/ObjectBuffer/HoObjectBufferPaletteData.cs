@@ -1,11 +1,11 @@
 using System.Runtime.InteropServices;
 using UnityEngine;
 
-namespace lilToon.URP.Extensions.CharacterBuffer
+namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
     /// palette 的部件行。**CPU 与 HLSL 的布局必须逐字段一致**（见
-    /// <c>Runtime/CharacterBuffer/Shaders/HoCharacterBufferPalette.hlsl</c>）。
+    /// <c>Runtime/ObjectBuffer/Shaders/HoObjectBufferPalette.hlsl</c>）。
     /// 大小 64 B；4096 行 = 256 KB，全量上传（决策 11）。
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
@@ -17,10 +17,10 @@ namespace lilToon.URP.Extensions.CharacterBuffer
         /// <summary>名字 hash（FNV-1a 32），供工具与 AOV manifest 对账用。</summary>
         public uint nameHash;
 
-        /// <summary><see cref="HoCharacterBufferPartCategory"/>。</summary>
+        /// <summary><see cref="HoObjectBufferPartCategory"/>。</summary>
         public uint category;
 
-        /// <summary><see cref="HoCharacterBufferPartTags"/> 的位掩码。</summary>
+        /// <summary><see cref="HoObjectBufferPartTags"/> 的位掩码。</summary>
         public uint tags;
 
         public float thickness;
@@ -77,7 +77,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
     }
 
     /// <summary>palette 与选择表的容量上限（规划决策 2 / §5.11）。消费端与编辑器都要读，所以是 public。</summary>
-    public static class HoCharacterBufferPaletteLimits
+    public static class HoObjectBufferPaletteLimits
     {
         /// <summary>部件行上限（注册校验预算，决策 2）。</summary>
         public const int MaxPartRows = 4096;

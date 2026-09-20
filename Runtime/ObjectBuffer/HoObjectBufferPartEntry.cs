@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-namespace lilToon.URP.Extensions.CharacterBuffer
+namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
     /// 部件条目：<b>只回答身份问题</b>——"这是谁、属于哪个角色、能不能被单独选中、debug 长什么样"。
@@ -14,7 +14,7 @@ namespace lilToon.URP.Extensions.CharacterBuffer
     /// </para>
     /// </summary>
     [Serializable]
-    public sealed class HoCharacterBufferPartEntry
+    public sealed class HoObjectBufferPartEntry
     {
         [InspectorName("名字")]
         [Tooltip("角色内唯一。它决定槽位号 = 像素里 ID 的低字节；改名会改变 ID（跨帧稳定性由组件保证）。")]
@@ -22,11 +22,11 @@ namespace lilToon.URP.Extensions.CharacterBuffer
 
         [InspectorName("类别")]
         [Tooltip("单值，回答“这是什么”（脸 / 前发 / 眼睛 …）。多归属语义（如整角色）请用标签位。")]
-        public HoCharacterBufferPartCategory category = HoCharacterBufferPartCategory.Unspecified;
+        public HoObjectBufferPartCategory category = HoObjectBufferPartCategory.Unspecified;
 
         [InspectorName("标签")]
         [Tooltip("位掩码。像 CharacterFull 这种“一个部件同时属于多个语义”的情况用标签最自然，消费端一次 & 即可查询。")]
-        public HoCharacterBufferPartTags tags = HoCharacterBufferPartTags.None;
+        public HoObjectBufferPartTags tags = HoObjectBufferPartTags.None;
 
         [InspectorName("显示色")]
         [Tooltip("debug 与 Nuke color picker 用的颜色；像素里不存颜色，只存 ID。")]
@@ -49,14 +49,14 @@ namespace lilToon.URP.Extensions.CharacterBuffer
     /// </list>
     /// </summary>
     [Serializable]
-    public sealed class HoCharacterBufferSelectionEntry
+    public sealed class HoObjectBufferSelectionEntry
     {
         [InspectorName("名字")]
         [Tooltip("全局唯一。材质里引用的是这个名字（例如“左袖口”）。")]
         public string name = "Selection";
 
         [InspectorName("标签")]
-        public HoCharacterBufferPartTags tags = HoCharacterBufferPartTags.None;
+        public HoObjectBufferPartTags tags = HoObjectBufferPartTags.None;
 
         [InspectorName("显示色")]
         [Tooltip("debug 与 AOV manifest 用的颜色。")]
