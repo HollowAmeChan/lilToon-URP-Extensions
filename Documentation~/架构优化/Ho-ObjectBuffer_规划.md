@@ -139,7 +139,7 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但 `D:\Unity_Fo
 | 自建 MSAA 与相机 AA 解耦（请求 4x，平台可降级） | ✅ | `settings.RequestedSampleCount` → `GetSupportedSampleCount`，不看相机设置 |
 | **发布 requested / actual 采样数（降级可见）** | ✅ 已清 | 全局量 `_HoObjectBufferRequestedSamples` / `_HoObjectBufferActualSamples` + 「Sample Count」调试视图（绿 4x / 橙 2x / 红 1x）+ 降级告警一次；`HoObjectBufferPass.LastActualSamples` 供诊断读 |
 | 失败可见（未声明 ID / 非法槽 / 表满 / 溢出） | ✅ | 未声明 ID → unknown 行洋红；槽位满 / 表满 / 组满 → 警告；**身份池溢出结构性不可能**（见 0.3.2）；选择层那个没人读的 `dropped` 已删 |
-| 最小闭环回归（`HoLil/Validation/Validate Ho-ObjectBuffer R1`） | ⚠ 待跑（一键） | 4 条断言已就绪，需要有人在 Unity 里点一次 |
+| 最小闭环回归（`HoLil/Validation/Validate Ho-ObjectBuffer R1`） | ✅ 已跑通过 | 实测（2026-09）：`Id0=(1,1,1,1)`（白色 Subject、覆盖率 1）、`CoverageTotal=(1,1,1,1)`、`Valid=(0,0.796,0,1)`（绿哨兵；线性 0.6 的 sRGB 值）、`Id3=(0.271,0.271,0.271,1)`（背景 0.06 灰的 sRGB 值） |
 | 表名与计划一致 | ✅ 已清 | 部件行表的全局名改为 `_HoObjectBufferEntries`（HLSL + 常量同步），与 §1.2 一致 |
 | lilToon 跨仓 pass（22 lilblock + 布局关键字 + instancing） | ✅ | 重生成后的 `ltspass_opaque.shader` 已带 `_HO_OBJECT_BUFFER_MSAA` / `_HO_OBJECT_BUFFER_SELECTION`（1079/1080 行） |
 | RSUV 写入 / 收回 / 手动落盘刷新 | ✅ | `ApplyIdentity` / `ClearIdentity` / `lastWrittenRenderers` / 「刷新全场景 RSUV」 |
@@ -149,7 +149,7 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但 `D:\Unity_Fo
 | `HoSemanticSchema` / entry `objectSemanticLaneMask` | ➡ 不属 R1 | §6 的 R1 行把 SB/AC 的东西也写进去了；按实际划分属 R3/R4 |
 | 文档 / CHANGELOG / README 同步 | ✅ | 0.3.1 / 0.3.9 / 0.3.10 / 0.3.12 / 0.3.13 + README 第 4 步（刷新 RSUV） |
 
-**R1 收口结果**：①②④ 已清（actual-N 诊断 + 表名对齐 + 溢出结论与死代码）；③ 回归验证器是**一键动作**，需要有人在 Unity 里点一次（`HoLil/Validation/Validate Ho-ObjectBuffer R1`）。
+**R1 收口结果**：①②③④ 全清（actual-N 诊断 + 表名对齐 + 溢出结论与死代码 + 回归验证器实跑通过）。R1 到此验收完毕，进入 R2。调查期的场景专用诊断（`RunPtpSceneDiagnostic`，硬编码 PTP 场景路径）已随本轮删除；回归验证器保留，它是整链唯一的自检。
 
 **R2 的实际工作量**（比原来记的多一项）：① 眼透角度表的数据源从 `HoMetadataBufferGroup` 切到 `HoObjectBufferGroup`；② **屏幕空间里那个 `charId` 的来源**也要换——今天它来自眼睛捕获缓冲（`eyeData.b / eyeData.r`），切到 OB 后应当来自 OB 身份/组 ID；③ 朝向进 GPU 表（组行默认 + 部件行覆盖，每帧 O(组数) 更新）只在出现屏幕空间消费端时才需要，眼透修正是 CPU 侧、不阻塞。
 
