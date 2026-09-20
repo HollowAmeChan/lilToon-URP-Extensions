@@ -26,15 +26,17 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             Selections
         }
 
-        /// <summary>左列宽度。够放下"色块 + 名字 + ID"，又不至于把右列的字段挤扁。</summary>
-        private const float ListWidth = 152.0f;
+        /// <summary>左列宽度：装得下"名字 + 编号"，再宽就是白占右列的地方。</summary>
+        private const float ListWidth = 128.0f;
 
-        private const float RowHeight = 20.0f;
+        private const float RowHeight = 18.0f;
         private const float RowSpacing = 1.0f;
-        private const float SwatchSize = 12.0f;
         private const float ElementHeight = 20.0f;
         private const float SectionSpacing = 4.0f;
-        private const float SwitchWidth = 42.0f;
+        private const float SwitchWidth = 40.0f;
+
+        /// <summary>两列之间的空隙：不留的话右列折叠三角会和左列右端的 +/- 挤在一起。</summary>
+        private const float ColumnGap = 6.0f;
 
         /// <summary>
         /// 右列字段的标签宽度。Unity 默认按面板宽度取比例，宽面板下标签会把字段挤到最右边、
@@ -57,6 +59,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private static readonly Color RowHighlight = new Color(0.30f, 0.55f, 0.95f, 0.16f);
         private static readonly Color RowHover = new Color(1.0f, 1.0f, 1.0f, 0.06f);
         private static readonly Color RowAccent = new Color(0.35f, 0.65f, 1.0f, 0.85f);
+        private static readonly Color NeutralRow = new Color(0.0f, 0.0f, 0.0f, 0.10f);
 
         private static readonly GUIContent AddPartLabel = new GUIContent("+", "添加一个部件（名字先给个占位，其余自己填）");
         private static readonly GUIContent RemovePartLabel = new GUIContent("-", "删除当前选中的部件");
@@ -108,6 +111,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             {
                 EditorGUILayout.BeginHorizontal();
                 DrawListColumn();
+                GUILayout.Space(ColumnGap);
                 EditorGUILayout.BeginVertical();
                 DrawDetailColumn();
                 EditorGUILayout.EndVertical();
@@ -257,27 +261,40 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             HandleRowInput(row, selectionsProperty, index, ref selectedSelection);
         }
 
+        /// <summary>
+        /// 整行按 displayColor 染色——面板上的颜色就是调试视图里那个颜色，一个颜色只表示一件事。
+        /// 底色向编辑器背景混合，保证行里的文字仍然读得清；选中/悬停只调混合强度 + 左侧 accent 条。
+        /// </summary>
+        private static Color GetRowColor(Color baseColor, bool selected, bool hover)
+        {
+            Color neutral = EditorGUIUtility.isProSkin
+                ? new Color(0.16f, 0.17f, 0.18f, 1.0f)
+                : new Color(0.93f, 0.93f, 0.93f, 1.0f);
+            float strength = selected ? 0.52f : 0.34f;
+            if (hover)
+            {
+                strength += 0.08f;
+            }
+
+            Color color = Color.Lerp(neutral, baseColor, Mathf.Clamp01(strength));
+            color.a = 1.0f;
+            return color;
+        }
+
         private static void DrawRowVisual(Rect row, Color color, string title, string rightText, string tooltip, bool selected)
         {
             bool hover = row.Contains(Event.current.mousePosition);
+            EditorGUI.DrawRect(row, GetRowColor(color, selected, hover));
             if (selected)
             {
-                EditorGUI.DrawRect(row, RowHighlight);
                 EditorGUI.DrawRect(new Rect(row.x, row.y, 2.0f, row.height), RowAccent);
             }
-            else if (hover)
-            {
-                EditorGUI.DrawRect(row, RowHover);
-            }
 
-            Rect swatch = new Rect(row.x + 6.0f, row.y + (row.height - SwatchSize) * 0.5f, SwatchSize, SwatchSize);
-            EditorGUI.DrawRect(swatch, color);
-
-            Rect rightRect = new Rect(row.xMax - 42.0f, row.y, 38.0f, row.height);
+            Rect rightRect = new Rect(row.xMax - 40.0f, row.y, 36.0f, row.height);
             Rect nameRect = new Rect(
-                swatch.xMax + 6.0f,
+                row.x + 2.0f,
                 row.y,
-                Mathf.Max(0.0f, rightRect.x - swatch.xMax - 8.0f),
+                Mathf.Max(0.0f, rightRect.x - row.x - 4.0f),
                 row.height);
 
             GUI.Label(nameRect, new GUIContent(title, tooltip), rowNameStyle);
@@ -486,7 +503,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 DrawProperty(entry.FindPropertyRelative("includeChildren"), new GUIContent("展开子级", "拖入 GameObject 或预制件实例时，包含它下面的子级 Renderer。"));
 
                 EditorGUILayout.Space(2.0f);
-                DrawRendererList(entry.FindPropertyRelative("renderers"), colorProperty != null ? colorProperty.colorValue : Color.gray);
+                DrawRendererList(entry.FindPropertyRelative("renderers"));
             }
 
             EditorGUILayout.Space(SectionSpacing);
@@ -519,11 +536,13 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private static void DrawDetailHeader(Color color, string title, string rightText, string tooltip)
         {
             Rect header = EditorGUILayout.GetControlRect(false, RowHeight);
-            Rect swatch = new Rect(header.x, header.y + (header.height - SwatchSize) * 0.5f, SwatchSize, SwatchSize);
-            EditorGUI.DrawRect(swatch, color);
-            Rect rightRect = new Rect(header.xMax - 42.0f, header.y, 38.0f, header.height);
+            // 与左列选中的那一行同一种染色，一眼能把"左列选的是谁"和"右列在编辑谁"连起来。
+            EditorGUI.DrawRect(header, GetRowColor(color, true, header.Contains(Event.current.mousePosition)));
+            EditorGUI.DrawRect(new Rect(header.x, header.y, 2.0f, header.height), RowAccent);
+
+            Rect rightRect = new Rect(header.xMax - 40.0f, header.y, 36.0f, header.height);
             GUI.Label(
-                new Rect(swatch.xMax + 6.0f, header.y, Mathf.Max(0.0f, rightRect.x - swatch.xMax - 8.0f), header.height),
+                new Rect(header.x + 6.0f, header.y, Mathf.Max(0.0f, rightRect.x - header.x - 8.0f), header.height),
                 new GUIContent(title, tooltip),
                 rowNameStyle);
             EditorGUI.LabelField(rightRect, rightText, EditorStyles.centeredGreyMiniLabel);
@@ -638,7 +657,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
         // ------------------------------------------------------------------ Renderer 列表（沿用原来的拖放行为）
 
-        private void DrawRendererList(SerializedProperty property, Color color)
+        private void DrawRendererList(SerializedProperty property)
         {
             if (property == null || !property.isArray)
             {
@@ -650,34 +669,33 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
             if (property.arraySize == 0)
             {
-                Rect zone = EditorGUILayout.GetControlRect(false, 14.0f);
-                EditorGUI.DrawRect(zone, GetChildColor(color, zone.Contains(Event.current.mousePosition)));
-                GUI.Label(new Rect(zone.x + 6.0f, zone.y, zone.width - 12.0f, zone.height), "把 GameObject / Renderer 拖到这里", EditorStyles.miniLabel);
+                Rect zone = EditorGUILayout.GetControlRect(false, 16.0f);
+                EditorGUI.DrawRect(zone, NeutralRow);
+                GUI.Label(new Rect(zone.x + 4.0f, zone.y, zone.width - 8.0f, zone.height), "把 GameObject / Renderer 拖到这里", EditorStyles.miniLabel);
                 HandleDrop(zone, property);
                 return;
             }
 
             for (int i = 0; i < property.arraySize; i++)
             {
-                if (DrawObjectElement(property, i, color))
+                if (DrawObjectElement(property, i))
                 {
                     i--;
                 }
             }
 
-            Rect dropZone = EditorGUILayout.GetControlRect(false, 10.0f);
-            EditorGUI.DrawRect(dropZone, GetChildColor(color, dropZone.Contains(Event.current.mousePosition)));
+            Rect dropZone = EditorGUILayout.GetControlRect(false, 8.0f);
+            EditorGUI.DrawRect(dropZone, NeutralRow);
             HandleDrop(dropZone, property);
         }
 
-        private bool DrawObjectElement(SerializedProperty property, int index, Color color)
+        private bool DrawObjectElement(SerializedProperty property, int index)
         {
             SerializedProperty element = property.GetArrayElementAtIndex(index);
             Object current = element.objectReferenceValue;
             Rect rect = EditorGUILayout.GetControlRect(false, ElementHeight);
-            EditorGUI.DrawRect(rect, GetChildColor(color, rect.Contains(Event.current.mousePosition)));
-            Rect fieldRect = new Rect(rect.x, rect.y + 1.0f, rect.width - 30.0f, EditorGUIUtility.singleLineHeight);
-            Rect removeRect = new Rect(rect.xMax - 24.0f, rect.y + 1.0f, 24.0f, EditorGUIUtility.singleLineHeight);
+            Rect fieldRect = new Rect(rect.x, rect.y + 1.0f, rect.width - 26.0f, EditorGUIUtility.singleLineHeight);
+            Rect removeRect = new Rect(rect.xMax - 20.0f, rect.y + 1.0f, 20.0f, EditorGUIUtility.singleLineHeight);
 
             EditorGUI.BeginChangeCheck();
             Object next = EditorGUI.ObjectField(fieldRect, current, typeof(Object), true);
@@ -873,16 +891,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             }
         }
 
-        private static Color GetChildColor(Color baseColor, bool hover)
-        {
-            Color neutral = EditorGUIUtility.isProSkin
-                ? new Color(0.16f, 0.17f, 0.18f, 1.0f)
-                : new Color(0.93f, 0.93f, 0.93f, 1.0f);
-            Color color = Color.Lerp(neutral, baseColor, hover ? 0.42f : 0.30f);
-            color.a = 1.0f;
-            return color;
-        }
-
         private static void EnsureStyles()
         {
             if (!stylesResolved)
@@ -898,11 +906,13 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 };
                 switchLabelStyle = new GUIStyle(EditorStyles.miniLabel)
                 {
-                    alignment = TextAnchor.MiddleCenter
+                    alignment = TextAnchor.MiddleLeft,
+                    padding = new RectOffset(6, 2, 0, 0)
                 };
                 switchActiveLabelStyle = new GUIStyle(EditorStyles.miniBoldLabel)
                 {
-                    alignment = TextAnchor.MiddleCenter
+                    alignment = TextAnchor.MiddleLeft,
+                    padding = new RectOffset(6, 2, 0, 0)
                 };
             }
         }
