@@ -97,7 +97,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     }
 
     /// <summary>
-    /// 部件标签位。多归属语义（例如"该角色的任意部件"）走这里，消费端一次 `&` 即可查询。
+    /// 部件标签位。多归属语义（例如"该组的任意部件"）走这里，消费端一次 `&` 即可查询。
     /// </summary>
     [System.Flags]
     public enum HoObjectBufferPartTags

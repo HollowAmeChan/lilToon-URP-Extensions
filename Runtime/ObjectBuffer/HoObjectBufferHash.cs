@@ -30,10 +30,10 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             return hash;
         }
 
-        /// <summary>部件行的稳定名字：角色 ID + 部件名，避免两个角色用同名部件时 hash 相同。</summary>
-        public static uint ComputePart(int characterId, string partName)
+        /// <summary>部件行的稳定名字：组 ID + 部件名，避免两个角色用同名部件时 hash 相同。</summary>
+        public static uint ComputePart(int groupId, string partName)
         {
-            return Compute(characterId.ToString() + "/" + (partName ?? string.Empty));
+            return Compute(groupId.ToString() + "/" + (partName ?? string.Empty));
         }
     }
 }

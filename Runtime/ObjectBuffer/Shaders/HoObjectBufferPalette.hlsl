@@ -5,7 +5,7 @@
 // 规则（规划 §5.3）：像素里只有索引、属性永远在表里；越界一律回 unknown 行，
 // **绝不 clamp 行号**（rowBase + slot 越界会落到别的角色的行上，读出来看着合法其实是错的）。
 
-struct HoCharacterPartData
+struct HoObjectPartData
 {
     uint partId;            // 角色 8 + 槽位 8
     uint nameHash;
@@ -22,7 +22,7 @@ struct HoCharacterPartData
     float4 displayColor;
 };                          // 64 B
 
-struct HoCharacterData
+struct HoObjectGroupData
 {
     uint rowBase;
     uint slotCount;
@@ -30,7 +30,7 @@ struct HoCharacterData
     uint reserved;
 };                          // 16 B
 
-struct HoCharacterSelectionData
+struct HoObjectSelectionData
 {
     uint selectionId;
     uint nameHash;
@@ -39,14 +39,14 @@ struct HoCharacterSelectionData
     float4 displayColor;
 };                          // 32 B
 
-StructuredBuffer<HoCharacterPartData> _HoObjectBufferPalette;
-StructuredBuffer<HoCharacterData> _HoObjectBufferCharacters;
-StructuredBuffer<HoCharacterSelectionData> _HoObjectBufferSelections;
+StructuredBuffer<HoObjectPartData> _HoObjectBufferPalette;
+StructuredBuffer<HoObjectGroupData> _HoObjectBufferGroups;
+StructuredBuffer<HoObjectSelectionData> _HoObjectBufferSelections;
 float _HoObjectBufferPartCount;
 float _HoObjectBufferSelectionCount;
 float _HoObjectBufferSelectionLayerCount;
 
-uint HoObjectBufferCharacterId(uint partId)
+uint HoObjectBufferGroupId(uint partId)
 {
     return partId >> 8;
 }
@@ -67,7 +67,7 @@ uint HoObjectBufferDecodeIdExact(float2 encoded)
     return (HoObjectBufferDecodeId(encoded.x) << 8) | HoObjectBufferDecodeId(encoded.y);
 }
 
-HoCharacterPartData HoObjectBufferLoadPartByRow(uint row)
+HoObjectPartData HoObjectBufferLoadPartByRow(uint row)
 {
     uint count = (uint)max(0.0, _HoObjectBufferPartCount);
     if (count == 0u || row >= count)
@@ -78,30 +78,30 @@ HoCharacterPartData HoObjectBufferLoadPartByRow(uint row)
     return _HoObjectBufferPalette[row];
 }
 
-HoCharacterPartData HoObjectBufferLoadPart(uint partId)
+HoObjectPartData HoObjectBufferLoadPart(uint partId)
 {
     if (partId == 0u)
     {
         return HoObjectBufferLoadPartByRow(0u);
     }
 
-    uint characterId = HoObjectBufferCharacterId(partId);
+    uint groupId = HoObjectBufferGroupId(partId);
     uint slotId = HoObjectBufferSlotId(partId);
-    if (characterId == 0u || characterId >= 256u)
+    if (groupId == 0u || groupId >= 256u)
     {
         return HoObjectBufferLoadPartByRow(0u);
     }
 
-    HoCharacterData character = _HoObjectBufferCharacters[characterId];
-    if (slotId >= object.slotCount)
+    HoObjectGroupData group = _HoObjectBufferGroups[groupId];
+    if (slotId >= group.slotCount)
     {
         return HoObjectBufferLoadPartByRow(0u);
     }
 
-    return HoObjectBufferLoadPartByRow(object.rowBase + slotId);
+    return HoObjectBufferLoadPartByRow(group.rowBase + slotId);
 }
 
-HoCharacterSelectionData HoObjectBufferLoadSelection(uint selectionId)
+HoObjectSelectionData HoObjectBufferLoadSelection(uint selectionId)
 {
     uint count = (uint)max(0.0, _HoObjectBufferSelectionCount);
     if (selectionId >= count)
@@ -112,10 +112,10 @@ HoCharacterSelectionData HoObjectBufferLoadSelection(uint selectionId)
     return _HoObjectBufferSelections[selectionId];
 }
 
-// 同角色判断退化成一次高字节比较（规划 §5.1）。热路径不该为隔离判断查表。
-bool HoObjectBufferIsSameCharacter(uint partIdA, uint partIdB)
+// 同组判断退化成一次高字节比较（规划 §5.1）。热路径不该为隔离判断查表。
+bool HoObjectBufferIsSameGroup(uint partIdA, uint partIdB)
 {
-    return partIdA != 0u && partIdB != 0u && HoObjectBufferCharacterId(partIdA) == HoObjectBufferCharacterId(partIdB);
+    return partIdA != 0u && partIdB != 0u && HoObjectBufferGroupId(partIdA) == HoObjectBufferGroupId(partIdB);
 }
 
 #endif

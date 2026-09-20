@@ -19,7 +19,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         public const string CoverageTextureName = "_HoObjectBufferCoverageTexture";
         public const string SelectionTextureName = "_HoObjectBufferSelectionTexture";
         public const string PartBufferName = "_HoObjectBufferPalette";
-        public const string ObjectBufferName = "_HoObjectBufferCharacters";
+        public const string GroupBufferName = "_HoObjectBufferGroups";
         public const string SelectionBufferName = "_HoObjectBufferSelections";
         public const string PartCountName = "_HoObjectBufferPartCount";
         public const string SelectionCountName = "_HoObjectBufferSelectionCount";
@@ -40,7 +40,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         public static readonly int CoverageTextureId = Shader.PropertyToID(CoverageTextureName);
         public static readonly int SelectionTextureId = Shader.PropertyToID(SelectionTextureName);
         public static readonly int PartBufferId = Shader.PropertyToID(PartBufferName);
-        public static readonly int ObjectBufferId = Shader.PropertyToID(ObjectBufferName);
+        public static readonly int GroupBufferId = Shader.PropertyToID(GroupBufferName);
         public static readonly int SelectionBufferId = Shader.PropertyToID(SelectionBufferName);
         public static readonly int PartCountId = Shader.PropertyToID(PartCountName);
         public static readonly int SelectionCountId = Shader.PropertyToID(SelectionCountName);

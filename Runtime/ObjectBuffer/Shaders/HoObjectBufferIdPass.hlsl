@@ -1,7 +1,7 @@
 #ifndef LIL_HO_OBJECT_BUFFER_IDPASS_INCLUDED
 #define LIL_HO_OBJECT_BUFFER_IDPASS_INCLUDED
 
-// 打包要用到 HoObjectBufferCharacterId / SlotId，所以这里把 palette 表一起带进来——
+// 打包要用到 HoObjectBufferGroupId / SlotId，所以这里把 palette 表一起带进来——
 // 否则每个用它的 shader 都得自己记得包含两次（漏一次就是 "undeclared identifier"）。
 #include "HoObjectBufferPalette.hlsl"
 
@@ -19,9 +19,9 @@ uint HoObjectBufferPackIdByte(uint value)
 float4 HoObjectBufferPackIdRow(uint partIdA, uint partIdB)
 {
     return float4(
-        (float)HoObjectBufferPackIdByte(HoObjectBufferCharacterId(partIdA)) / 255.0,
+        (float)HoObjectBufferPackIdByte(HoObjectBufferGroupId(partIdA)) / 255.0,
         (float)HoObjectBufferPackIdByte(HoObjectBufferSlotId(partIdA)) / 255.0,
-        (float)HoObjectBufferPackIdByte(HoObjectBufferCharacterId(partIdB)) / 255.0,
+        (float)HoObjectBufferPackIdByte(HoObjectBufferGroupId(partIdB)) / 255.0,
         (float)HoObjectBufferPackIdByte(HoObjectBufferSlotId(partIdB)) / 255.0);
 }
 

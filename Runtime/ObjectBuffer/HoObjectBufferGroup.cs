@@ -4,6 +4,8 @@ using System.Collections.Generic;
 // 只要成员顺序不变，迁移不会丢已有场景里的值。
 using lilToon.URP.Extensions.MetadataBuffer;
 using UnityEngine;
+using UnityEngine.Serialization;
+using UnityEngine.Scripting.APIUpdating;
 
 namespace lilToon.URP.Extensions.ObjectBuffer
 {
@@ -19,6 +21,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     /// </summary>
     [ExecuteAlways]
     [DisallowMultipleComponent]
+    [AddComponentMenu("Rendering/Ho-ObjectBuffer Group")]
+    [MovedFrom(true, "lilToon.URP.Extensions.CharacterBuffer", null, "HoCharacterBufferGroup")]
     public sealed class HoObjectBufferGroup : MonoBehaviour
     {
         private static readonly List<HoObjectBufferGroup> ActiveGroups = new List<HoObjectBufferGroup>();
@@ -39,14 +43,16 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         [Tooltip("同一个 Renderer 被多个 Group 命中时，优先级高者胜出；相同则离 Renderer 最近的组胜出。")]
         public int priority;
 
-        [InspectorName("角色 ID (1-255)")]
-        [Tooltip("角色 0 保留：ID 0 表示“未注册/未知”，与 RSUV 被重置后的值重合。")]
+        [InspectorName("组 ID (1-255)")]
+        [Tooltip("组 0 保留：ID 0 表示“未注册/未知”，与 RSUV 被重置后的值重合。")]
         [Range(1, 255)]
-        public int characterId = 1;
+        [FormerlySerializedAs("characterId")]
+        public int groupId = 1;
 
-        [InspectorName("角色级标签")]
-        [Tooltip("放在角色表那一行，用于“整角色”语义（例如 CharacterFull），不必在每个部件行重复。")]
-        public HoObjectBufferPartTags characterTags = HoObjectBufferPartTags.None;
+        [InspectorName("组级标签")]
+        [Tooltip("放在组表那一行，用于“整组”语义（例如 CharacterFull），不必在每个部件行重复。")]
+        [FormerlySerializedAs("characterTags")]
+        public HoObjectBufferPartTags groupTags = HoObjectBufferPartTags.None;
 
         [InspectorName("部件")]
         public List<HoObjectBufferPartEntry> parts = new List<HoObjectBufferPartEntry>();
@@ -93,7 +99,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         private void OnValidate()
         {
-            characterId = Mathf.Clamp(characterId, 1, HoObjectBufferPaletteLimits.MaxCharacters - 1);
+            groupId = Mathf.Clamp(groupId, 1, HoObjectBufferPaletteLimits.MaxGroups - 1);
             HoObjectBufferRegistry.MarkDirty();
         }
 
@@ -210,12 +216,12 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         }
 
         /// <summary>把第 <paramref name="slot"/> 个部件条目编成 palette 行（partId 由注册表填）。</summary>
-        public HoCharacterPartData BuildPartRow(int slot, string partName)
+        public HoObjectPartData BuildPartRow(int slot, string partName)
         {
             HoObjectBufferPartEntry entry = FindPart(partName);
-            return new HoCharacterPartData
+            return new HoObjectPartData
             {
-                nameHash = HoObjectBufferHash.ComputePart(characterId, partName),
+                nameHash = HoObjectBufferHash.ComputePart(groupId, partName),
                 category = (uint)(entry != null ? entry.category : HoObjectBufferPartCategory.Unspecified),
                 tags = (uint)(entry != null ? entry.tags : HoObjectBufferPartTags.None),
                 // 材质数值（thickness / curvature / roughness / metallic / reflectance / plrStrength /
@@ -233,10 +239,10 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             };
         }
 
-        public HoCharacterSelectionData BuildSelectionRow(int index, string selectionName)
+        public HoObjectSelectionData BuildSelectionRow(int index, string selectionName)
         {
             HoObjectBufferSelectionEntry entry = FindSelection(selectionName);
-            return new HoCharacterSelectionData
+            return new HoObjectSelectionData
             {
                 nameHash = HoObjectBufferHash.Compute(selectionName),
                 tags = (uint)(entry != null ? entry.tags : HoObjectBufferPartTags.None),
@@ -273,11 +279,30 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                     continue;
                 }
 
-                uint partId = HoObjectBufferRegistry.MakePartId(characterId, pair.Value);
+                uint partId = HoObjectBufferRegistry.MakePartId(groupId, pair.Value);
                 if (!TrySetRendererUserValue(pair.Key, partId))
                 {
                     WarnUnsupportedRenderer(pair.Key);
                 }
+            }
+        }
+
+        internal void ClearIdentity()
+        {
+            if (parts == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < parts.Count; i++)
+            {
+                HoObjectBufferPartEntry entry = parts[i];
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                CollectRenderers(entry, renderer => TrySetRendererUserValue(renderer, 0u));
             }
         }
 
@@ -293,6 +318,10 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             for (int groupIndex = 0; groupIndex < ActiveGroups.Count; groupIndex++)
             {
                 HoObjectBufferGroup group = ActiveGroups[groupIndex];
+                if (!HoObjectBufferRegistry.IsGroupValid(group))
+                {
+                    continue;
+                }
                 // GetPartNames() 返回的是复用的缓存列表，而冲突记录会再次调它——
                 // 这里先拷一份快照，避免"迭代中清空同一个 List"这类自己咬自己的 bug。
                 var partNames = new List<string>(group.GetPartNames());
@@ -389,7 +418,18 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
                 if (target is GameObject gameObject)
                 {
-                    VisitChildren(gameObject.transform, visit);
+                    // Inspector 允许直接拖 GameObject。根节点上的 MeshRenderer /
+                    // SkinnedMeshRenderer 必须先收集；旧实现只遍历 child，会让正常
+                    // 拖入的模型部件完全不写 RSUV，这就是场景调试只剩小块 unknown 的根因。
+                    if (gameObject.TryGetComponent(out Renderer rootRenderer))
+                    {
+                        visit(rootRenderer);
+                    }
+
+                    if (entry.includeChildren)
+                    {
+                        VisitChildren(gameObject.transform, visit);
+                    }
                 }
             }
         }

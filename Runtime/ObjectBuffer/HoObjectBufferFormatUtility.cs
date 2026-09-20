@@ -25,18 +25,12 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         }
 
         /// <summary>
-        /// 逐样本 ID 的首选格式：`R16_UInt`（整数 RT，天然不可滤波、不可混合）。
-        /// 平台不支持时退化为 `R16_UNorm`，消费端用 <c>round(v * 65535)</c> 还原（与 GB 用 UNORM8 存身份同法）。
+        /// R1 固定使用 `R16_UNorm`：这让 lilToon 自有 HoObjectBuffer pass
+        /// 用统一 float 输出写入，resolve 再用 <c>round(v * 65535)</c> 还原。
+        /// 整数 RT 需要单独的 uint fragment 变体，留到后续协议升级。
         /// </summary>
         public static bool TryGetIdGraphicsFormat(out GraphicsFormat format, out bool isInteger)
         {
-            if (IsUsable(GraphicsFormat.R16_UInt))
-            {
-                format = GraphicsFormat.R16_UInt;
-                isInteger = true;
-                return true;
-            }
-
             if (IsUsable(GraphicsFormat.R16_UNorm))
             {
                 format = GraphicsFormat.R16_UNorm;

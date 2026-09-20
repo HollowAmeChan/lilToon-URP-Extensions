@@ -2,6 +2,7 @@ using System.Collections.Generic;
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.ImageProcess;
 using lilToon.URP.Extensions.MetadataBuffer;
+using lilToon.URP.Extensions.ObjectBuffer;
 using lilToon.URP.Extensions.PlanarReflection;
 using lilToon.URP.Extensions.ScreenProcess;
 using lilToon.URP.Extensions.ShadowCast;
@@ -18,6 +19,7 @@ namespace lilToon.URP.Extensions.Debugging
                 List<HoDebugViewInfo> views = new List<HoDebugViewInfo>();
                 AddRange(views, HoAdaptiveProbeVolumeDebugViewInfo.Views);
                 AddRange(views, HoMetadataBufferDebugViewInfo.Views);
+                AddRange(views, HoObjectBufferDebugViewInfo.Views);
                 AddRange(views, HoGeometryBufferDebugViewInfo.Views);
                 AddRange(views, HoShadowCastDebugViewInfo.Views);
                 AddRange(views, HoSubsurfaceScatteringDebugViewInfo.Views);

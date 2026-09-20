@@ -71,8 +71,9 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Resolve"
                 float4 id0 : SV_Target0;
                 float4 id1 : SV_Target1;
                 float4 coverage : SV_Target2;
+                #if defined(_HO_OBJECT_BUFFER_HAS_SELECTION)
                 float4 selection0 : SV_Target3;
-                float4 selection1 : SV_Target4;
+                #endif
             };
 
             // 数票 → 排序（票数降序，平票取更近的样本）。
@@ -92,7 +93,9 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Resolve"
                         continue;   // 背景不占层，只体现在残差里
                     }
 
-                    float sampleDepth = HO_CB_LOAD_MS(_HoObjectBufferResolveDepthTextureMS, coord, sampleIndex);
+                    float sampleRawDepth = HO_CB_LOAD_MS(_HoObjectBufferResolveDepthTextureMS, coord, sampleIndex);
+                    // 平票一律在 linear eye depth 上比较，避免 reversed-Z 平台把远处当成近处。
+                    float sampleDepth = LinearEyeDepth(sampleRawDepth, _ZBufferParams);
 
                     int found = -1;
                     [unroll]
@@ -274,9 +277,10 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Resolve"
                 output.id0 = HoObjectBufferPackIdRow(ids[0], ids[1]);
                 output.id1 = HoObjectBufferPackIdRow(ids[2], ids[3]);
                 output.coverage = float4(coverages[0], coverages[1], coverages[2], coverages[3]);
+                #if defined(_HO_OBJECT_BUFFER_HAS_SELECTION)
                 output.selection0 = HoObjectBufferPackSelectionRow(
                     selectionIds[0], selectionCoverages[0], selectionIds[1], selectionCoverages[1]);
-                output.selection1 = float4(0.0, 0.0, 0.0, 0.0);
+                #endif
                 return output;
             }
             ENDHLSL

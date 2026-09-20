@@ -72,7 +72,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         private static string DescribeGroup(HoObjectBufferGroup group)
         {
-            return group == null ? "(已销毁)" : $"角色 {group.characterId} · {group.name}";
+            return group == null ? "(已销毁)" : $"组 {group.groupId} · {group.name}";
         }
     }
 }

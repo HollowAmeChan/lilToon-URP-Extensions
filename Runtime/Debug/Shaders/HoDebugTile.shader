@@ -52,6 +52,10 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             TEXTURE2D_X(_lilHoSSSTransmissionTexture);
             TEXTURE2D(_LILPBRPlanarReflectionTexture);
             SAMPLER(sampler_LILPBRPlanarReflectionTexture);
+            TEXTURE2D_X(_HoObjectBufferId0Texture);
+            TEXTURE2D_X(_HoObjectBufferId1Texture);
+            TEXTURE2D_X(_HoObjectBufferCoverageTexture);
+            TEXTURE2D_X(_HoObjectBufferSelectionTexture);
 
             float _HoShadowCastActive;
             int _HoShadowCastSliceCount;
@@ -225,6 +229,66 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 }
 
                 return DebugScalar(maskId.r);
+            }
+
+            uint HoObjectBufferDecodeByte(float encoded)
+            {
+                return (uint)round(saturate(encoded) * 255.0);
+            }
+
+            uint HoObjectBufferDecodeLayerId(float4 id0, float4 id1, int layer)
+            {
+                float4 packed = layer < 2 ? id0 : id1;
+                float2 pair = (layer & 1) == 0 ? packed.xy : packed.zw;
+                return (HoObjectBufferDecodeByte(pair.x) << 8) | HoObjectBufferDecodeByte(pair.y);
+            }
+
+            half HoObjectBufferLayerCoverage(float4 coverage, int layer)
+            {
+                return layer == 0 ? coverage.r : (layer == 1 ? coverage.g : (layer == 2 ? coverage.b : coverage.a));
+            }
+
+            half4 ResolveObjectBufferColor(float2 uv)
+            {
+                float4 id0 = SAMPLE_TEXTURE2D_X(_HoObjectBufferId0Texture, sampler_PointClamp, uv);
+                float4 id1 = SAMPLE_TEXTURE2D_X(_HoObjectBufferId1Texture, sampler_PointClamp, uv);
+                float4 coverage = SAMPLE_TEXTURE2D_X(_HoObjectBufferCoverageTexture, sampler_PointClamp, uv);
+                int mode = _HoDebugTileMode;
+
+                if (mode >= 1 && mode <= 4)
+                {
+                    int layer = mode - 1;
+                    uint id = HoObjectBufferDecodeLayerId(id0, id1, layer);
+                    uint groupId = id >> 8;
+                    uint slotId = id & 255u;
+                    half cov = HoObjectBufferLayerCoverage(coverage, layer);
+                    half3 color = HashColor(float3(groupId, slotId, id)) * (id != 0u ? 1.0h : 0.0h) * saturate(cov);
+                    return half4(color, 1.0h);
+                }
+
+                if (mode == 5)
+                {
+                    return DebugScalar(saturate(coverage.r + coverage.g + coverage.b + coverage.a));
+                }
+
+                if (mode == 6)
+                {
+                    return half4(coverage.rgb, 1.0h);
+                }
+
+                if (mode == 7)
+                {
+                    half4 selection = SAMPLE_TEXTURE2D_X(_HoObjectBufferSelectionTexture, sampler_PointClamp, uv);
+                    return half4(HashEncodedId(selection.r) * selection.g, 1.0h);
+                }
+
+                if (mode == 8)
+                {
+                    uint id = HoObjectBufferDecodeLayerId(id0, id1, 0);
+                    return half4(HashColor(float3(id >> 8, id & 255u, id)) * (id != 0u ? 1.0h : 0.0h), 1.0h);
+                }
+
+                return half4(0.0h, 0.6h, 0.0h, 1.0h);
             }
 
             half4 ResolveGeometryColor(float2 uv)
@@ -804,6 +868,10 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 else if (_HoDebugTileRenderKind == 6)
                 {
                     color = ResolveAdaptiveProbeVolumeColor(input.uv);
+                }
+                else if (_HoDebugTileRenderKind == 7)
+                {
+                    color = ResolveObjectBufferColor(input.uv);
                 }
                 else
                 {

@@ -93,9 +93,8 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             {
                 DrawProperty("sampleCount");
                 EditorGUILayout.HelpBox(
-                    "层数 K 固定为 4，采样数 N 封顶 4。因为 K = N，实际配置下不存在尾部丢失：" +
-                    "层里找不到某个 ID 就等于它没覆盖这个像素（规划 §5.5）。\n" +
-                    "把采样数降到 2 可以省一半瞬态带宽，代价是覆盖率量子变成 0.5。",
+                    "层数 K 固定为 4，请求采样数 N 封顶 4，但平台可降级为 2x/1x。" +
+                    "K 不丢当帧实际 N≤4 个前表面 sample ID；1x 时 coverage 会退化为 0/1。",
                     MessageType.None);
             }
         }
@@ -105,7 +104,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             SerializedProperty selectionLayers = Find("selectionLayers");
             string summary = LilUrpEditorSectionGui.EnumName(selectionLayers);
 
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSelections, "Cryptomatte（选择层）", summary, SelectionColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSelections, "Selection（R1 兼容层）", summary, SelectionColor))
             {
                 return;
             }
@@ -114,8 +113,8 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             {
                 DrawProperty("selectionLayers");
                 EditorGUILayout.HelpBox(
-                    "Cryptomatte 选择层 = 具名选区（取代匿名通道）。只有 group 里注册了选择才会分配那张图；" +
-                    "写入端在 lilToon 侧的材质里（跨仓协议见规划 §5.11）。P1 只实现 2 个选择/像素。\n" +
+                    "R1 保留现有选择图仅作迁移兼容；正式 surface SemanticId 由后续 SB + AC 协议接管。" +
+                    "没有注册选择时不会分配这张图。\n" +
                     "表面色与材质数值（roughness / metallic / thickness / 反射 …）已拆到 Ho-SurfaceBuffer（规划 §5.12），本 feature 不再有这些通道。",
                     MessageType.None);
             }
@@ -138,7 +137,8 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 DrawProperty("debugInGameView");
                 EditorGUILayout.HelpBox(
                     "ID 视图按 palette 的显示色上色：洋红 = 未注册（RSUV 没写上或索引越界）；" +
-                    "没产出时整屏暗红，用来区分「没跑」和「全背景」。",
+                    "没产出时整屏暗红，用来区分「没跑」和「全背景」。" +
+                    "同一批视图也已注册到 Ho-DebugTile；Volume 中的调试设置会在 override 时覆盖这里的兜底值。",
                     MessageType.None);
             }
         }

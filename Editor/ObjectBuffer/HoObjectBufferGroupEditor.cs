@@ -40,8 +40,8 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private static GUIStyle entryNameStyle;
 
         private SerializedProperty priorityProperty;
-        private SerializedProperty characterIdProperty;
-        private SerializedProperty characterTagsProperty;
+        private SerializedProperty groupIdProperty;
+        private SerializedProperty groupTagsProperty;
         private SerializedProperty faceBoneProperty;
         private SerializedProperty faceForwardAxisProperty;
         private SerializedProperty faceRightAxisProperty;
@@ -53,8 +53,8 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private void OnEnable()
         {
             priorityProperty = serializedObject.FindProperty("priority");
-            characterIdProperty = serializedObject.FindProperty("characterId");
-            characterTagsProperty = serializedObject.FindProperty("characterTags");
+            groupIdProperty = serializedObject.FindProperty("groupId");
+            groupTagsProperty = serializedObject.FindProperty("groupTags");
             faceBoneProperty = serializedObject.FindProperty("faceBone");
             faceForwardAxisProperty = serializedObject.FindProperty("faceForwardAxis");
             faceRightAxisProperty = serializedObject.FindProperty("faceRightAxis");
@@ -97,18 +97,18 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty(priorityProperty, new GUIContent("优先级", "同一个 Renderer 被多个 Group 命中时，优先级高者生效；相同时离 Renderer 最近的组生效。"));
-                DrawProperty(characterIdProperty, new GUIContent("角色 ID", "1-255。角色 0 保留：ID 0 表示「未注册」，它也是 RSUV 被重置后的值。"));
-                DrawProperty(characterTagsProperty, new GUIContent("角色级标签", "放在角色表那一行，用于「整角色」语义（例如 CharacterFull），不必在每个部件行重复。"));
+                DrawProperty(groupIdProperty, new GUIContent("组 ID", "1-255。组 0 保留：ID 0 表示「未注册」，它也是 RSUV 被重置后的值。"));
+                DrawProperty(groupTagsProperty, new GUIContent("组级标签", "放在组表那一行，用于「整组」语义（例如 CharacterFull），不必在每个部件行重复。"));
                 EditorGUILayout.Space(2.0f);
                 DrawProperty(faceBoneProperty, new GUIContent("面部朝向", "确定角色面部朝向的 Transform——可以是骨骼，也可以是一个朝向正确的空物体。供眼透相机角度修正、将来的 SDF 等消费者读取；留空表示未提供。"));
                 DrawProperty(faceForwardAxisProperty, new GUIContent("脸前轴", "骨骼的哪个局部轴作为“脸前方”。默认 +Z。若正面/侧面的衰减方向反了，换成 +Z / -Z 试试。"));
                 DrawProperty(faceRightAxisProperty, new GUIContent("右轴", "骨骼的哪个局部轴作为“角色右侧（画面左侧）”。默认 +X。"));
                 DrawProperty(faceUpAxisProperty, new GUIContent("上轴", "骨骼的哪个局部轴作为“角色上方”。默认 +Y。俯仰角按此轴分解，若俯视/仰视不生效请检查此项。"));
 
-                int characterId = Mathf.Clamp(characterIdProperty != null ? characterIdProperty.intValue : 0, 0, HoObjectBufferPaletteLimits.MaxCharacters - 1);
-                if (characterId == 0)
+                int groupId = Mathf.Clamp(groupIdProperty != null ? groupIdProperty.intValue : 0, 0, HoObjectBufferPaletteLimits.MaxGroups - 1);
+                if (groupId == 0)
                 {
-                    validationMessage = "角色 ID 0 被保留，这个 group 不会写进 palette。请改成 1-255。";
+                    validationMessage = "组 ID 0 被保留，这个 group 不会写进 palette。请改成 1-255。";
                 }
             }
         }
@@ -177,9 +177,9 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
             EditorGUI.indentLevel++;
             EditorGUILayout.Space(2.0f);
-            DrawProperty(nameProperty, new GUIContent("名字", "角色内唯一。它决定槽位号 = 像素里 ID 的低字节。"));
+            DrawProperty(nameProperty, new GUIContent("名字", "组内唯一。它决定槽位号 = 像素里 ID 的低字节。"));
             DrawProperty(categoryProperty, new GUIContent("类别", "单值，回答「这是什么」。多归属语义请用标签位。"));
-            DrawProperty(entry.FindPropertyRelative("tags"), new GUIContent("标签", "位掩码：一个部件同时属于多个语义时用它（例如 CharacterFull = 该角色任意部件）。"));
+            DrawProperty(entry.FindPropertyRelative("tags"), new GUIContent("标签", "位掩码：一个部件同时属于多个语义时用它（例如 CharacterFull = 该组任意部件）。"));
             DrawProperty(entry.FindPropertyRelative("displayColor"), new GUIContent("显示色", "debug 与 Nuke color picker 用的颜色；像素里不存颜色，只存 ID。"));
             DrawProperty(entry.FindPropertyRelative("includeChildren"), new GUIContent("展开子级", "拖入 GameObject 或预制件实例时，包含它下面的子级 Renderer。"));
             EditorGUILayout.Space(4.0f);
@@ -501,16 +501,16 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private string BuildPartIdText(int slot, string partName, SerializedProperty categoryProperty)
         {
             var group = target as HoObjectBufferGroup;
-            int characterId = Mathf.Clamp(
-                characterIdProperty != null ? characterIdProperty.intValue : (group != null ? group.characterId : 0),
+            int groupId = Mathf.Clamp(
+                groupIdProperty != null ? groupIdProperty.intValue : (group != null ? group.groupId : 0),
                 0,
-                HoObjectBufferPaletteLimits.MaxCharacters - 1);
-            if (group == null || characterId == 0 || string.IsNullOrEmpty(partName))
+                HoObjectBufferPaletteLimits.MaxGroups - 1);
+            if (group == null || groupId == 0 || string.IsNullOrEmpty(partName))
             {
                 return $"槽位 {slot} · 未注册";
             }
 
-            uint partId = HoObjectBufferRegistry.GetPartId(characterId, partName);
+            uint partId = HoObjectBufferRegistry.GetPartId(groupId, partName);
             if (partId == 0u)
             {
                 return $"槽位 {slot} · 未注册";

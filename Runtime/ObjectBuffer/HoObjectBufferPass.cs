@@ -168,8 +168,11 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                     context.DrawRenderers(renderingData.cullResults, ref fallbackDrawingSettings, ref fallbackFilteringSettings, ref renderStateBlock);
                 }
 
-                DrawingSettings idDrawingSettings = CreateDrawingSettings(IdShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
-                context.DrawRenderers(renderingData.cullResults, ref idDrawingSettings, ref idFilteringSettings, ref renderStateBlock);
+                if (renderTargets.UseMsaaResolve)
+                {
+                    DrawingSettings idDrawingSettings = CreateDrawingSettings(IdShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
+                    context.DrawRenderers(renderingData.cullResults, ref idDrawingSettings, ref idFilteringSettings, ref renderStateBlock);
+                }
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -287,7 +290,11 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 passData.fallbackRendererList = passData.drawFallback
                     ? CreateRendererList(renderGraph, renderingData.cullResults, fallbackDrawingSettings, fallbackFilteringSettings, renderStateBlock)
                     : default;
-                passData.idRendererList = CreateRendererList(renderGraph, renderingData.cullResults, idDrawingSettings, idFilteringSettings, renderStateBlock);
+                // lilToon R1 的自有 pass 固定写 R16_UNorm 逐 sample ID。平台降级到 1x 时
+                // 只跑 opaque fallback，避免把 scalar ID 错写进非 MSAA 的 RGBA8 层图。
+                passData.idRendererList = useMsaa
+                    ? CreateRendererList(renderGraph, renderingData.cullResults, idDrawingSettings, idFilteringSettings, renderStateBlock)
+                    : default;
                 passData.selectionEnabled = selection;
                 passData.selectionLayerCount = selection ? settings.RequestedSelectionLayerCount : 0;
 
@@ -336,6 +343,16 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 builder.SetRenderFunc(static (IdPassData data, RasterGraphContext context) =>
                 {
                     context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ActiveId, 1.0f);
+                    // shader 只声明"实际绑定"的 target 数：绑定选择层时才声明 SV_Target3/1，
+                    // 否则声明的 SV_Target 索引会超过绑定数，D3D 会**丢弃整个 draw**。
+                    if (data.selectionEnabled)
+                    {
+                        Shader.EnableKeyword("_HO_OBJECT_BUFFER_SELECTION");
+                    }
+                    else
+                    {
+                        Shader.DisableKeyword("_HO_OBJECT_BUFFER_SELECTION");
+                    }
                     context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionLayerCountId, data.selectionLayerCount);
                     if (data.drawFallback && data.fallbackRendererList.IsValid())
                     {

@@ -7,7 +7,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     /// <summary>
     /// 部件表与选择表的**唯一真值**：
     /// <list type="bullet">
-    /// <item>把各 <see cref="HoObjectBufferGroup"/> 的条目编成两级 palette（角色行 + 部件行）；</item>
+    /// <item>把各 <see cref="HoObjectBufferGroup"/> 的条目编成两级 palette（组行 + 部件行）；</item>
     /// <item>分配 16 bit 部件 ID（角色 8 + 槽位 8）与 8 bit 选择 ID；</item>
     /// <item>上传 <see cref="GraphicsBuffer"/> 并发布全局。</item>
     /// </list>
@@ -22,18 +22,19 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     public static class HoObjectBufferRegistry
     {
         private static readonly List<HoObjectBufferGroup> Groups = new List<HoObjectBufferGroup>();
+        private static readonly HashSet<HoObjectBufferGroup> InvalidGroups = new HashSet<HoObjectBufferGroup>();
         private static readonly Dictionary<uint, int> PartRowByPartId = new Dictionary<uint, int>();
         private static readonly Dictionary<string, uint> PartIdByKey = new Dictionary<string, uint>(StringComparer.Ordinal);
         private static readonly Dictionary<string, uint> SelectionIdByName = new Dictionary<string, uint>(StringComparer.Ordinal);
         private static readonly List<string> PartNames = new List<string>();
         private static readonly List<string> SelectionNames = new List<string>();
 
-        private static HoCharacterPartData[] partRows = Array.Empty<HoCharacterPartData>();
-        private static HoCharacterData[] characterRows = Array.Empty<HoCharacterData>();
-        private static HoCharacterSelectionData[] selectionRows = Array.Empty<HoCharacterSelectionData>();
+        private static HoObjectPartData[] partRows = Array.Empty<HoObjectPartData>();
+        private static HoObjectGroupData[] groupRows = Array.Empty<HoObjectGroupData>();
+        private static HoObjectSelectionData[] selectionRows = Array.Empty<HoObjectSelectionData>();
 
         private static GraphicsBuffer partBuffer;
-        private static GraphicsBuffer characterBuffer;
+        private static GraphicsBuffer groupBuffer;
         private static GraphicsBuffer selectionBuffer;
 
         private static bool dirty = true;
@@ -49,9 +50,14 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         public static GraphicsBuffer PartBuffer => partBuffer;
 
-        public static GraphicsBuffer ObjectBuffer => characterBuffer;
+        public static GraphicsBuffer GroupBuffer => groupBuffer;
 
         public static GraphicsBuffer SelectionBuffer => selectionBuffer;
+
+        internal static bool IsGroupValid(HoObjectBufferGroup group)
+        {
+            return group != null && !InvalidGroups.Contains(group);
+        }
 
         /// <summary>平台是否支持 palette 需要的 StructuredBuffer（决策 8 的前置条件）。</summary>
         public static bool SupportsStructuredBuffer => SystemInfo.graphicsShaderLevel >= 45;
@@ -83,10 +89,10 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         }
 
         /// <summary>取某个角色/部件名的 16 bit 部件 ID；未注册返回 0（unknown）。</summary>
-        public static uint GetPartId(int characterId, string partName)
+        public static uint GetPartId(int groupId, string partName)
         {
             EnsureBuilt();
-            return PartIdByKey.TryGetValue(MakePartKey(characterId, partName), out uint partId) ? partId : 0u;
+            return PartIdByKey.TryGetValue(MakePartKey(groupId, partName), out uint partId) ? partId : 0u;
         }
 
         /// <summary>取部件 ID 在部件表里的行号；未注册返回 <see cref="HoObjectBufferPaletteLimits.UnknownRow"/>。</summary>
@@ -106,7 +112,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         }
 
         /// <summary>部件行的只读视图（debug / AOV manifest / 编辑器用）。</summary>
-        public static bool TryGetPartRowData(int row, out HoCharacterPartData data)
+        public static bool TryGetPartRowData(int row, out HoObjectPartData data)
         {
             EnsureBuilt();
             if (row < 0 || row >= partRows.Length)
@@ -168,15 +174,16 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             PartNames.Clear();
             SelectionIdByName.Clear();
             SelectionNames.Clear();
+            InvalidGroups.Clear();
 
-            // 角色行固定 256 行，按 characterId 直接索引；行 0 保留给 unknown。
-            var characters = new HoCharacterData[HoObjectBufferPaletteLimits.MaxCharacters];
-            characters[0] = new HoCharacterData { rowBase = 0, slotCount = 0, tags = 0 };
+            // 组行固定 256 行，按 groupId 直接索引；行 0 保留给 unknown。
+            var groups = new HoObjectGroupData[HoObjectBufferPaletteLimits.MaxGroups];
+            groups[0] = new HoObjectGroupData { rowBase = 0, slotCount = 0, tags = 0 };
 
             // 部件行 0 = unknown：RSUV 未被写入或因重载被重置时索引会变成 0，必须看得见。
-            var parts = new List<HoCharacterPartData>(Mathf.Min(HoObjectBufferPaletteLimits.MaxPartRows, 256))
+            var parts = new List<HoObjectPartData>(Mathf.Min(HoObjectBufferPaletteLimits.MaxPartRows, 256))
             {
-                new HoCharacterPartData
+                new HoObjectPartData
                 {
                     partId = 0,
                     nameHash = 0,
@@ -187,9 +194,9 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             };
 
             // 选择行 0 = 无选择。
-            var selections = new List<HoCharacterSelectionData>
+            var selections = new List<HoObjectSelectionData>
             {
-                new HoCharacterSelectionData
+                new HoObjectSelectionData
                 {
                     selectionId = 0,
                     nameHash = 0,
@@ -197,25 +204,69 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 }
             };
 
-            // 确定性顺序：先按 characterId，再按实例 ID，保证跨帧/跨机 ID 稳定（规划 §5.6）。
+            // 确定性顺序：先按 groupId，再按实例 ID，保证跨帧/跨机 ID 稳定（规划 §5.6）。
             var orderedGroups = new List<HoObjectBufferGroup>(Groups);
             orderedGroups.Sort(CompareGroups);
+
+            var groupIdCounts = new int[HoObjectBufferPaletteLimits.MaxGroups];
+            for (int i = 0; i < orderedGroups.Count; i++)
+            {
+                HoObjectBufferGroup candidate = orderedGroups[i];
+                if (candidate == null)
+                {
+                    continue;
+                }
+
+                int candidateId = Mathf.Clamp(candidate.groupId, 0, HoObjectBufferPaletteLimits.MaxGroups - 1);
+                if (candidateId > 0)
+                {
+                    groupIdCounts[candidateId]++;
+                }
+            }
+
+            for (int i = 0; i < orderedGroups.Count; i++)
+            {
+                HoObjectBufferGroup candidate = orderedGroups[i];
+                if (candidate == null)
+                {
+                    continue;
+                }
+
+                int candidateId = Mathf.Clamp(candidate.groupId, 0, HoObjectBufferPaletteLimits.MaxGroups - 1);
+                if (candidateId == 0 || groupIdCounts[candidateId] != 1)
+                {
+                    InvalidGroups.Add(candidate);
+                }
+            }
+
+            for (int groupId = 1; groupId < groupIdCounts.Length; groupId++)
+            {
+                if (groupIdCounts[groupId] > 1)
+                {
+                    Debug.LogError($"[Ho-ObjectBuffer] 组 ID {groupId} 被 {groupIdCounts[groupId]} 个 HoObjectBufferGroup 重复使用。" +
+                                   "冲突组已全部失效，请为每个组分配唯一 ID。");
+                }
+            }
 
             int selectionCount = 0;
             for (int groupIndex = 0; groupIndex < orderedGroups.Count; groupIndex++)
             {
                 HoObjectBufferGroup group = orderedGroups[groupIndex];
-                int characterId = Mathf.Clamp(group.characterId, 0, HoObjectBufferPaletteLimits.MaxCharacters - 1);
-                if (characterId == 0)
+                if (!IsGroupValid(group))
+                {
+                    continue;
+                }
+                int groupId = Mathf.Clamp(group.groupId, 0, HoObjectBufferPaletteLimits.MaxGroups - 1);
+                if (groupId == 0)
                 {
                     // 角色 0 保留：它的 partId 全部落在 0..255，与 "partId 0 = unknown" 冲突。
                     continue;
                 }
 
-                HoCharacterData character = characters[characterId];
-                character.rowBase = (uint)parts.Count;
-                character.slotCount = 0;
-                character.tags = (uint)group.characterTags;
+                HoObjectGroupData groupData = groups[groupId];
+                groupData.rowBase = (uint)parts.Count;
+                groupData.slotCount = 0;
+                groupData.tags = (uint)group.groupTags;
 
                 // 快照：GetPartNames() 是复用缓存，循环体内又可能触发它被重填。
                 var partNames = new List<string>(group.GetPartNames());
@@ -233,25 +284,25 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                         break;
                     }
 
-                    if (slot >= HoObjectBufferPaletteLimits.MaxSlotsPerCharacter)
+                    if (slot >= HoObjectBufferPaletteLimits.MaxSlotsPerGroup)
                     {
-                        Debug.LogWarning($"[Ho-ObjectBuffer] 角色 {characterId} 的槽位已满（{HoObjectBufferPaletteLimits.MaxSlotsPerCharacter}），'{partName}' 未注册。");
+                        Debug.LogWarning($"[Ho-ObjectBuffer] 组 {groupId} 的槽位已满（{HoObjectBufferPaletteLimits.MaxSlotsPerGroup}），'{partName}' 未注册。");
                         break;
                     }
 
-                    uint partId = MakePartId(characterId, slot);
-                    HoCharacterPartData row = group.BuildPartRow(slot, partName);
+                    uint partId = MakePartId(groupId, slot);
+                    HoObjectPartData row = group.BuildPartRow(slot, partName);
                     row.partId = partId;
 
                     PartRowByPartId[partId] = parts.Count;
-                    PartIdByKey[MakePartKey(characterId, partName)] = partId;
+                    PartIdByKey[MakePartKey(groupId, partName)] = partId;
                     PartNames.Add(partName);
                     parts.Add(row);
 
-                    character.slotCount = (uint)(slot + 1);
+                    groupData.slotCount = (uint)(slot + 1);
                 }
 
-                characters[characterId] = character;
+                groups[groupId] = groupData;
 
                 IReadOnlyList<string> groupSelections = group.GetSelectionNames();
                 for (int i = 0; i < groupSelections.Count; i++)
@@ -272,14 +323,14 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                     SelectionIdByName[selectionName] = (uint)selectionCount;
                     SelectionNames.Add(selectionName);
 
-                    HoCharacterSelectionData selectionRow = group.BuildSelectionRow(i, selectionName);
+                    HoObjectSelectionData selectionRow = group.BuildSelectionRow(i, selectionName);
                     selectionRow.selectionId = (uint)selectionCount;
                     selections.Add(selectionRow);
                 }
             }
 
             partRows = parts.ToArray();
-            characterRows = characters;
+            groupRows = groups;
             selectionRows = selections.ToArray();
         }
 
@@ -297,12 +348,12 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 return;
             }
 
-            partBuffer = EnsureBuffer(partBuffer, partRows.Length, HoCharacterPartData.Stride, partRows);
-            characterBuffer = EnsureBuffer(characterBuffer, characterRows.Length, HoCharacterData.Stride, characterRows);
-            selectionBuffer = EnsureBuffer(selectionBuffer, selectionRows.Length, HoCharacterSelectionData.Stride, selectionRows);
+            partBuffer = EnsureBuffer(partBuffer, partRows.Length, HoObjectPartData.Stride, partRows);
+            groupBuffer = EnsureBuffer(groupBuffer, groupRows.Length, HoObjectGroupData.Stride, groupRows);
+            selectionBuffer = EnsureBuffer(selectionBuffer, selectionRows.Length, HoObjectSelectionData.Stride, selectionRows);
 
             Shader.SetGlobalBuffer(HoObjectBufferShaderConstants.PartBufferId, partBuffer);
-            Shader.SetGlobalBuffer(HoObjectBufferShaderConstants.ObjectBufferId, characterBuffer);
+            Shader.SetGlobalBuffer(HoObjectBufferShaderConstants.GroupBufferId, groupBuffer);
             Shader.SetGlobalBuffer(HoObjectBufferShaderConstants.SelectionBufferId, selectionBuffer);
             Shader.SetGlobalFloat(HoObjectBufferShaderConstants.PartCountId, partRows.Length);
             Shader.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionCountId, SelectionCount);
@@ -312,7 +363,14 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             HoObjectBufferGroup.ResolveAssignments();
             for (int i = 0; i < Groups.Count; i++)
             {
-                Groups[i].ApplyIdentity();
+                if (IsGroupValid(Groups[i]))
+                {
+                    Groups[i].ApplyIdentity();
+                }
+                else
+                {
+                    Groups[i].ClearIdentity();
+                }
             }
 
             WarnAboutConflicts();
@@ -363,10 +421,10 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         public static void Release()
         {
             partBuffer?.Dispose();
-            characterBuffer?.Dispose();
+            groupBuffer?.Dispose();
             selectionBuffer?.Dispose();
             partBuffer = null;
-            characterBuffer = null;
+            groupBuffer = null;
             selectionBuffer = null;
         }
 
@@ -384,12 +442,12 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             dirty = true;
         }
 
-        public static uint MakePartId(int characterId, int slot)
+        public static uint MakePartId(int groupId, int slot)
         {
-            return ((uint)(characterId & 0xFF) << 8) | (uint)(slot & 0xFF);
+            return ((uint)(groupId & 0xFF) << 8) | (uint)(slot & 0xFF);
         }
 
-        public static uint GetCharacterId(uint partId)
+        public static uint GetGroupId(uint partId)
         {
             return partId >> 8;
         }
@@ -399,14 +457,14 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             return partId & 0xFF;
         }
 
-        private static string MakePartKey(int characterId, string partName)
+        private static string MakePartKey(int groupId, string partName)
         {
-            return characterId.ToString() + "/" + (partName ?? string.Empty);
+            return groupId.ToString() + "/" + (partName ?? string.Empty);
         }
 
         private static int CompareGroups(HoObjectBufferGroup a, HoObjectBufferGroup b)
         {
-            int characterCompare = a.characterId.CompareTo(b.characterId);
+            int characterCompare = a.groupId.CompareTo(b.groupId);
             if (characterCompare != 0)
             {
                 return characterCompare;

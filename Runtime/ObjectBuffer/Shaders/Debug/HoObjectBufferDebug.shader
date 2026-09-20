@@ -53,7 +53,7 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/DebugView"
 
             float3 LayerColor(uint partId, float coverage)
             {
-                HoCharacterPartData part = HoObjectBufferLoadPart(partId);
+                HoObjectPartData part = HoObjectBufferLoadPart(partId);
                 // 用覆盖率调制亮度：这样"半覆盖的像素"看得见，而不是只有二值的硬边。
                 return part.displayColor.rgb * saturate(coverage) + 0.06;
             }
@@ -112,7 +112,7 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/DebugView"
                         return float4(0.0, 0.0, 0.0, 1.0);
                     }
 
-                    HoCharacterSelectionData selection = HoObjectBufferLoadSelection(selectionIdA);
+                    HoObjectSelectionData selection = HoObjectBufferLoadSelection(selectionIdA);
                     return float4(selection.displayColor.rgb * saturate(coverageA) + 0.06, 1.0);
                 }
 
@@ -120,7 +120,7 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/DebugView"
                 {
                     // palette 行视图：层0 的部件属性（厚度 / 曲率 / 材质分类）——查表对不对一眼可见。
                     uint partId = DecodeLayerId(id0, id1, 0);
-                    HoCharacterPartData part = HoObjectBufferLoadPart(partId);
+                    HoObjectPartData part = HoObjectBufferLoadPart(partId);
                     return float4(saturate(part.thickness), saturate(part.curvature), saturate((float)part.materialClass * 0.25), 1.0);
                 }
 

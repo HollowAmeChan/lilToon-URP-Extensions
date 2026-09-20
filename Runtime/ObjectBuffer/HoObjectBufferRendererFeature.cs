@@ -43,6 +43,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
         {
+            ResolveVolume();
             if (!ShouldRender(in renderingData))
             {
                 ReleaseCompatibilityResources(true);
@@ -57,6 +58,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
+            ResolveVolume();
             if (!ShouldRender(in renderingData))
             {
                 ReleaseCompatibilityResources(true);
@@ -164,6 +166,21 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             }
 
             return true;
+        }
+
+        private void ResolveVolume()
+        {
+            VolumeStack stack = VolumeManager.instance != null ? VolumeManager.instance.stack : null;
+            HoObjectBufferVolume volume = stack != null ? stack.GetComponent<HoObjectBufferVolume>() : null;
+            if (volume == null || settings == null)
+            {
+                return;
+            }
+
+            if (volume.enable.overrideState) settings.enabled = volume.enable.value;
+            if (volume.debugMode.overrideState) settings.debugMode = volume.debugMode.value;
+            if (volume.debugInSceneView.overrideState) settings.debugInSceneView = volume.debugInSceneView.value;
+            if (volume.debugInGameView.overrideState) settings.debugInGameView = volume.debugInGameView.value;
         }
 
         private bool ShouldProduceSelections()

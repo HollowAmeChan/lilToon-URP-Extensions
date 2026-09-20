@@ -25,6 +25,9 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
             #pragma target 4.5
             #pragma vertex Vert
             #pragma fragment Frag
+            #pragma multi_compile _ DOTS_INSTANCING_ON
+            #pragma multi_compile_instancing
+            #pragma instancing_options renderinglayer
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferIdPass.hlsl"
@@ -38,6 +41,7 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
@@ -46,8 +50,9 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
                 float4 id0 : SV_Target0;
                 float4 id1 : SV_Target1;
                 float4 coverage : SV_Target2;
+                #if defined(_HO_OBJECT_BUFFER_SELECTION)
                 float4 selection0 : SV_Target3;
-                float4 selection1 : SV_Target4;
+                #endif
             };
 
             uint HoObjectBufferPartIdFromRsuv()
@@ -60,6 +65,7 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
             {
                 Varyings output;
                 UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
                 output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
                 return output;
@@ -67,6 +73,7 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
 
             LayerOutput Frag(Varyings input)
             {
+                UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 uint partId = HoObjectBufferPartIdFromRsuv();
@@ -76,8 +83,9 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
                 output.id0 = HoObjectBufferPackIdRow(partId, 0u);
                 output.id1 = float4(0.0, 0.0, 0.0, 0.0);
                 output.coverage = float4(coverage, 0.0, 0.0, 0.0);
+                #if defined(_HO_OBJECT_BUFFER_SELECTION)
                 output.selection0 = float4(0.0, 0.0, 0.0, 0.0);
-                output.selection1 = float4(0.0, 0.0, 0.0, 0.0);
+                #endif
                 return output;
             }
             ENDHLSL
@@ -95,6 +103,9 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
             #pragma target 4.5
             #pragma vertex Vert
             #pragma fragment Frag
+            #pragma multi_compile _ DOTS_INSTANCING_ON
+            #pragma multi_compile_instancing
+            #pragma instancing_options renderinglayer
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
@@ -107,20 +118,23 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
             struct MsaaOutput
             {
                 uint sampleId : SV_Target0;
+                #if defined(_HO_OBJECT_BUFFER_SELECTION)
                 float4 selection0 : SV_Target1;
-                float4 selection1 : SV_Target2;
+                #endif
             };
 
             Varyings Vert(Attributes input)
             {
                 Varyings output;
                 UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
                 output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
                 return output;
@@ -128,12 +142,14 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
 
             MsaaOutput Frag(Varyings input)
             {
+                UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 MsaaOutput output;
                 output.sampleId = (uint)unity_RendererUserValue & 0xFFFFu;
+                #if defined(_HO_OBJECT_BUFFER_SELECTION)
                 output.selection0 = float4(0.0, 0.0, 0.0, 0.0);
-                output.selection1 = float4(0.0, 0.0, 0.0, 0.0);
+                #endif
                 return output;
             }
             ENDHLSL
@@ -150,6 +166,9 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
             #pragma target 4.5
             #pragma vertex Vert
             #pragma fragment Frag
+            #pragma multi_compile _ DOTS_INSTANCING_ON
+            #pragma multi_compile_instancing
+            #pragma instancing_options renderinglayer
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 
@@ -162,20 +181,23 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
             struct Varyings
             {
                 float4 positionCS : SV_POSITION;
+                UNITY_VERTEX_INPUT_INSTANCE_ID
                 UNITY_VERTEX_OUTPUT_STEREO
             };
 
             struct MsaaOutput
             {
                 float sampleId : SV_Target0;
+                #if defined(_HO_OBJECT_BUFFER_SELECTION)
                 float4 selection0 : SV_Target1;
-                float4 selection1 : SV_Target2;
+                #endif
             };
 
             Varyings Vert(Attributes input)
             {
                 Varyings output;
                 UNITY_SETUP_INSTANCE_ID(input);
+                UNITY_TRANSFER_INSTANCE_ID(input, output);
                 UNITY_INITIALIZE_VERTEX_OUTPUT_STEREO(output);
                 output.positionCS = TransformObjectToHClip(input.positionOS.xyz);
                 return output;
@@ -183,12 +205,14 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Fallback"
 
             MsaaOutput Frag(Varyings input)
             {
+                UNITY_SETUP_INSTANCE_ID(input);
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 MsaaOutput output;
                 output.sampleId = (float)((uint)unity_RendererUserValue & 0xFFFFu) / 65535.0;
+                #if defined(_HO_OBJECT_BUFFER_SELECTION)
                 output.selection0 = float4(0.0, 0.0, 0.0, 0.0);
-                output.selection1 = float4(0.0, 0.0, 0.0, 0.0);
+                #endif
                 return output;
             }
             ENDHLSL
