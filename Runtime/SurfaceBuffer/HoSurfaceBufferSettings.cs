@@ -31,7 +31,13 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         [InspectorName("Owner")]
         Owner,
         [InspectorName("Class Id")]
-        ClassId
+        ClassId,
+        /// <summary>语义 lane 的 owner（与数值面同一个身份）：绿 = 与 OB 层 0 一致 / 橙 = 不一致 / 红 = 没人写 / 洋红 = OB 没产出。</summary>
+        [InspectorName("Semantic Owner")]
+        SemanticOwner,
+        /// <summary>8 条语义 lane 铺成 4×2 网格：每格一个 lane，通道 = (SemanticId÷255, value, 写了没有)；未写画暗红。</summary>
+        [InspectorName("Semantic Lanes")]
+        SemanticLanes
     }
 
     [Serializable]

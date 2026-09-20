@@ -28,9 +28,16 @@ Shader "Hidden/lilToon/URP/SurfaceBuffer/DebugView"
             TEXTURE2D_X(_HoSurfaceBufferReflectionTexture);
             TEXTURE2D_X(_HoSurfaceBufferClassificationTexture);
             TEXTURE2D_X(_HoSurfaceBufferOwnerTexture);
+            // 语义 lane（单采样，逐像素）：owner 用于对齐诊断，4 张 lane 图各装两条 `(SemanticId, value)`。
+            TEXTURE2D_X(_HoSurfaceSemanticOwnerTexture);
+            TEXTURE2D_X(_HoSurfaceSemanticLane0Texture);
+            TEXTURE2D_X(_HoSurfaceSemanticLane1Texture);
+            TEXTURE2D_X(_HoSurfaceSemanticLane2Texture);
+            TEXTURE2D_X(_HoSurfaceSemanticLane3Texture);
             TEXTURE2D_X(_HoObjectBufferId0Texture);
             float _HoSurfaceBufferDebugMode;
             float _HoSurfaceBufferActive;
+            float _HoSurfaceSemanticActive;
             float _HoObjectBufferActive;
 
             // 数值视图一律**直出原值**（不按 owner 上底纹）：否则"没画上"和"画上了但 owner 是 0"
@@ -108,6 +115,67 @@ Shader "Hidden/lilToon/URP/SurfaceBuffer/DebugView"
                     float4 classification = SAMPLE_TEXTURE2D_X(_HoSurfaceBufferClassificationTexture, sampler_PointClamp, uv);
                     half value = (half)saturate(classification.a * 32.0);
                     return half4(value, 0.0, 0.0, 1.0);
+                }
+
+                if (mode >= 8 && _HoSurfaceSemanticActive <= 0.5)
+                {
+                    // 语义 lane 这趟没跑（feature 关掉 / MRT 不够）：暗红 = 这一批视图没有内容，与"值是 0"分开。
+                    return half4(0.35, 0.0, 0.0, 1.0);
+                }
+
+                if (mode == 8)
+                {
+                    // 语义 lane 的 owner（与数值面同一个身份）：对齐诊断用。
+                    if (_HoObjectBufferActive <= 0.5)
+                    {
+                        return half4(1.0, 0.0, 1.0, 1.0);
+                    }
+
+                    float4 id0 = SAMPLE_TEXTURE2D_X(_HoObjectBufferId0Texture, sampler_PointClamp, uv);
+                    uint obLayer0 = (((uint)round(saturate(id0.r) * 255.0)) << 8) | (uint)round(saturate(id0.g) * 255.0);
+                    uint owner = HoSurfaceOwnerDecode(SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticOwnerTexture, sampler_PointClamp, uv).rg);
+                    if (owner == 0u)
+                    {
+                        return half4(0.8, 0.15, 0.15, 1.0);
+                    }
+
+                    return owner == obLayer0 ? half4(0.1, 0.8, 0.2, 1.0) : half4(0.95, 0.6, 0.1, 1.0);
+                }
+
+                if (mode == 9)
+                {
+                    // 8 条语义 lane 铺成 4×2 网格：每格一个 lane，通道 = (SemanticId ÷ 255, value, 写了没有)。
+                    // 未写画暗红（与其它视图同一约定：暗红 = 这一格没内容）。
+                    uint col = (uint)min(3.0, floor(uv.x * 4.0));
+                    uint row = (uint)min(1.0, floor(uv.y * 2.0));
+                    uint lane = row * 4u + col;
+                    float4 packed;
+                    if (lane < 2u)
+                    {
+                        packed = SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticLane0Texture, sampler_PointClamp, uv);
+                    }
+                    else if (lane < 4u)
+                    {
+                        packed = SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticLane1Texture, sampler_PointClamp, uv);
+                    }
+                    else if (lane < 6u)
+                    {
+                        packed = SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticLane2Texture, sampler_PointClamp, uv);
+                    }
+                    else
+                    {
+                        packed = SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticLane3Texture, sampler_PointClamp, uv);
+                    }
+
+                    bool even = (lane & 1u) == 0u;
+                    uint laneId = (uint)round(saturate(even ? packed.r : packed.b) * 255.0);
+                    float laneValue = saturate(even ? packed.g : packed.a);
+                    if (laneId == 0u)
+                    {
+                        return half4(0.35, 0.0, 0.0, 1.0);
+                    }
+
+                    return half4((half)((float)laneId / 255.0), (half)laneValue, 1.0h, 1.0h);
                 }
 
                 return half4(0.0, 0.0, 0.0, 1.0);

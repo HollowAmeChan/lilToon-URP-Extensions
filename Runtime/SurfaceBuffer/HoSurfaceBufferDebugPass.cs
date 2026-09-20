@@ -29,6 +29,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             public TextureHandle reflectionTexture;
             public TextureHandle classificationTexture;
             public TextureHandle ownerTexture;
+            /// <summary>语义 lane（单采样）：`SemanticOwner` / `SemanticLanes` 两个视图要读。</summary>
+            public TextureHandle semanticOwnerTexture;
+            public TextureHandle[] semanticLaneTextures;
         }
 
         public void Setup(HoSurfaceBufferSettings settings, Material debugMaterial, RTHandle cameraColorTarget)
@@ -92,6 +95,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 passData.reflectionTexture = resources.reflectionTexture;
                 passData.classificationTexture = resources.classificationTexture;
                 passData.ownerTexture = resources.ownerTexture;
+                // 语义 lane 的视图（mode 8/9）读的就是这几张：声明依赖，别靠"生产者刚好不会被裁"。
+                passData.semanticOwnerTexture = resources.semanticOwnerTexture;
+                passData.semanticLaneTextures = resources.semanticLaneTextures;
 
                 builder.UseTexture(passData.colorTexture, AccessFlags.Read);
                 builder.UseTexture(passData.normalTexture, AccessFlags.Read);
@@ -99,6 +105,14 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 builder.UseTexture(passData.reflectionTexture, AccessFlags.Read);
                 builder.UseTexture(passData.classificationTexture, AccessFlags.Read);
                 builder.UseTexture(passData.ownerTexture, AccessFlags.Read);
+                if (resources.HasSemanticLanes)
+                {
+                    builder.UseTexture(passData.semanticOwnerTexture, AccessFlags.Read);
+                    for (int i = 0; i < passData.semanticLaneTextures.Length; i++)
+                    {
+                        builder.UseTexture(passData.semanticLaneTextures[i], AccessFlags.Read);
+                    }
+                }
                 builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
