@@ -80,6 +80,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         private readonly Dictionary<Renderer, int> localSlotByRenderer = new Dictionary<Renderer, int>();
         private readonly List<string> partNameCache = new List<string>();
         private readonly List<string> selectionNameCache = new List<string>();
+        // 本组上一次真正写出去的 renderer：下次重建时靠它做差集，把"不再属于本组"的索引收回来。
+        private readonly HashSet<Renderer> lastWrittenRenderers = new HashSet<Renderer>();
 
         private void OnEnable()
         {
@@ -93,6 +95,10 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         private void OnDisable()
         {
+            // 先把自己写出去的索引收回，再退注册：组件被删/被禁用之后，它定义的组就从表里消失了，
+            // 而 renderer 上的索引还在——像素里那个 ID 查表落到 unknown 行，画面从"有身份"变成洋红，
+            // 看起来就像"删掉的组换了个颜色还在"。索引是我们写的，职责也在这里。
+            ClearIdentity();
             ActiveGroups.Remove(this);
             HoObjectBufferRegistry.Unregister(this);
         }
@@ -272,11 +278,26 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 });
             }
 
+            // 上次写过索引、这次不再覆盖的 renderer：把索引擦掉。改名 / 删条目 / 把物体拖走都会走到这里，
+            // 不擦的话像素里留着一个表里已经没有的 ID —— 查表落到 unknown 行，画面从"有身份"变成洋红，
+            // 看起来就像"删掉的东西换了个颜色还在"。索引是我们写的，就得由我们负责收回。
+            foreach (Renderer previous in lastWrittenRenderers)
+            {
+                if (localSlotByRenderer.ContainsKey(previous) || IsOwnedByOtherGroup(previous))
+                {
+                    continue;
+                }
+
+                TrySetRendererUserValue(previous, 0u);
+            }
+
+            lastWrittenRenderers.Clear();
+
             int written = 0;
             int skippedOtherGroup = 0;
             foreach (KeyValuePair<Renderer, int> pair in localSlotByRenderer)
             {
-                if (Assignments.TryGetValue(pair.Key, out Assignment assignment) && assignment.group != this)
+                if (IsOwnedByOtherGroup(pair.Key))
                 {
                     skippedOtherGroup++;
                     continue;
@@ -288,6 +309,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                     WarnUnsupportedRenderer(pair.Key);
                     continue;
                 }
+
+                lastWrittenRenderers.Add(pair.Key);
 
                 // 诊断：把"写给了谁、写了什么 ID"打出来。画面是洋红（unknown 行）时，用它区分
                 // "CPU 写错了对象/写了表外的值" 与 "写对了但 shader 读到无效 RSUV"。
@@ -302,23 +325,45 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             Debug.Log($"[Ho-ObjectBuffer] RSUV 汇总（组 {groupId} / {name}）：收集 renderer={localSlotByRenderer.Count} 写入={written} 被别组接管={skippedOtherGroup}");
         }
 
+        /// <summary>
+        /// 把本组写出去的 RSUV 归零：组件被禁用 / 被删除（它定义的组随之从表里消失），
+        /// 或者本组整体失效（组 ID 撞车、组 ID = 0）。**已经被别的组接管的 renderer 不碰**，
+        /// 否则会把别人的身份擦掉。
+        /// </summary>
         internal void ClearIdentity()
         {
-            if (parts == null)
+            if (parts != null)
             {
-                return;
-            }
-
-            for (int i = 0; i < parts.Count; i++)
-            {
-                HoObjectBufferPartEntry entry = parts[i];
-                if (entry == null)
+                for (int i = 0; i < parts.Count; i++)
                 {
-                    continue;
-                }
+                    HoObjectBufferPartEntry entry = parts[i];
+                    if (entry == null)
+                    {
+                        continue;
+                    }
 
-                CollectRenderers(entry, renderer => TrySetRendererUserValue(renderer, 0u));
+                    CollectRenderers(entry, renderer =>
+                    {
+                        if (!IsOwnedByOtherGroup(renderer))
+                        {
+                            TrySetRendererUserValue(renderer, 0u);
+                        }
+                    });
+                }
             }
+
+            lastWrittenRenderers.Clear();
+        }
+
+        /// <summary>
+        /// 这个 renderer 是不是已经被**别人**接管了。
+        /// 必须用引用比较：组件被销毁时 Unity 重载的 <c>==</c> 会把"已销毁对象"判成与任何东西都不相等，
+        /// 于是"我自己"也会被认成"别的组"，该擦的索引就擦不掉（这个坑在本仓库的贴图表缓存上已经踩过一次）。
+        /// </summary>
+        private bool IsOwnedByOtherGroup(Renderer renderer)
+        {
+            return Assignments.TryGetValue(renderer, out Assignment assignment)
+                && !ReferenceEquals(assignment.group, this);
         }
 
         /// <summary>
