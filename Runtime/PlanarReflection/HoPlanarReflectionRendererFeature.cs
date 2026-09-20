@@ -5,6 +5,8 @@ using System.Collections.Generic;
 
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.MetadataBuffer;
+// PLR 的材质数值来源已从 MB 的 surface 族切到 SB（经 AC 门面）：
+using lilToon.URP.Extensions.SurfaceBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -643,8 +645,10 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
             TextureHandle source = resourceData.activeColorTexture;
             TextureHandle maskIdTexture = metadataResources.maskIdTexture;
-            TextureHandle reflectionMaterialTexture = metadataResources.reflectionMaterialTexture;
-            TextureHandle surfaceColorTexture = metadataResources.surfaceColorTexture;
+            // 材质数值改从 SB 取（composite shader 走 AC 门面读 SB 的 Material / Reflection / Color）：
+            // MB 的 reflectionMaterial / surfaceColor 在 PLR 这条链上退役。
+            TextureHandle reflectionMaterialTexture = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>().reflectionTexture;
+            TextureHandle surfaceColorTexture = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>().colorTexture;
             TextureHandle normalDepthTexture = geometryResources.normalDepthTexture;
             RTHandle reflectionRtHandle = HoPlanarReflectionSurface.CurrentReflectionTextureHandle;
             RenderTexture reflectionTextureResource = HoPlanarReflectionSurface.CurrentReflectionTexture;
@@ -759,12 +763,12 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
                     if (data.reflectionMaterialTexture.IsValid())
                     {
-                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.ReflectionMaterialTextureId, data.reflectionMaterialTexture);
+                        context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ReflectionTextureId, data.reflectionMaterialTexture);
                     }
 
                     if (data.surfaceColorTexture.IsValid())
                     {
-                        context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceColorTextureId, data.surfaceColorTexture);
+                        context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ColorTextureId, data.surfaceColorTexture);
                     }
 
                     if (data.normalDepthTexture.IsValid())

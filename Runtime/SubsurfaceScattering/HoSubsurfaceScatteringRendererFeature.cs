@@ -656,7 +656,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 passData.destination = destination;
                 passData.maskIdTexture = metadataResources.maskIdTexture;
                 passData.normalDepthTexture = geometryResources.normalDepthTexture;
-                passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
+                passData.surfaceDataTexture = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>().classificationTexture;
                 passData.material = material;
                 passData.sssParams = CreateSssParams(settings, cameraData.cameraTargetDescriptor, destination.GetDescriptor(renderGraph));
                 passData.gateParams = CreateGateParams(settings);
@@ -676,7 +676,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                     data.material.SetVector(HoSubsurfaceScatteringShaderConstants.DirectionId, data.direction);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
+                    context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ClassificationTextureId, data.surfaceDataTexture);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, BlurPassIndex);
                 });
             }
@@ -821,7 +821,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 passData.destination = destination;
                 passData.maskIdTexture = metadataResources.maskIdTexture;
                 passData.normalDepthTexture = geometryResources.normalDepthTexture;
-                passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
+                passData.surfaceDataTexture = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>().classificationTexture;
                 passData.material = material;
                 passData.gateParams = CreateGateParams(settings);
                 passData.transmissionParams = CreateTransmissionParams(settings);
@@ -841,7 +841,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                     context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.SourceTextureId, data.source);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
+                    context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ClassificationTextureId, data.surfaceDataTexture);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, TransmissionGatherPassIndex);
                 });
             }
@@ -1012,7 +1012,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 passData.destination = destination;
                 passData.maskIdTexture = metadataResources.maskIdTexture;
                 passData.normalDepthTexture = geometryResources.normalDepthTexture;
-                passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
+                passData.surfaceDataTexture = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>().classificationTexture;
                 passData.material = material;
                 passData.gateParams = CreateGateParams(settings);
                 passData.transmissionParams = CreateTransmissionParams(settings);
@@ -1035,7 +1035,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                     context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.SourceTextureId, data.source);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
+                    context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ClassificationTextureId, data.surfaceDataTexture);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, TransmissionBlurPassIndex);
                 });
             }
@@ -1195,7 +1195,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 passData.transmissionTexture = transmissionTexture;
                 passData.maskIdTexture = metadataResources.maskIdTexture;
                 passData.normalDepthTexture = geometryResources.normalDepthTexture;
-                passData.surfaceDataTexture = metadataResources.surfaceDataTexture;
+                passData.surfaceDataTexture = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>().classificationTexture;
                 passData.material = material;
                 passData.sssParams = CreateSssParams(settings);
                 passData.gateParams = CreateGateParams(settings);
@@ -1226,7 +1226,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                     context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.TransmissionTextureId, data.transmissionTexture);
                     context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.MaskIdTextureId, data.maskIdTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
-                    context.cmd.SetGlobalTexture(HoMetadataBufferShaderConstants.SurfaceDataTextureId, data.surfaceDataTexture);
+                    context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ClassificationTextureId, data.surfaceDataTexture);
                     Blitter.BlitTexture(context.cmd, data.cameraColor, new Vector4(1, 1, 0, 0), data.material, 4);
                 });
             }
