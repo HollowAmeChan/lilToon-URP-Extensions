@@ -1,8 +1,6 @@
-> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
-
 # HoRP 反射管线：现状、目标契约与路线图
 
-> 状态：反射权威设计文档（2026-09-14）
+> 状态：**反射权威设计文档**（2026-09-14 初稿；2026 文档审核核对：**P0 输入迁移已完成**——SB 已落地、`MetadataBuffer` 反射桥已随 R6/R7 删除，反射消费的是 SB 具名通道 + AC 遮罩 + GB 几何）
 >
 > 结构基线：[`Ho-管线总览.md`](架构优化/Ho-管线总览.md) 的 GB / ObjectBuffer / SurfaceBuffer / AttributeComposite 四层归属。
 >
@@ -30,18 +28,19 @@
 
 任何 source miss 都不能直接变黑。Probe/Sky 继续使用 lilToon/URP 已有的 cubemap、roughness mip、probe blend 和 box projection 路径；探针摆放与用户工作流另文处理。
 
-## 3. 当前运行时桥接
+## 3. 输入归属（迁移已完成）
 
-当前代码尚未完成 v2 的 SurfaceBuffer/Cryptomatte 迁移，反射临时读取：
+v2 的 SurfaceBuffer / 三轴迁移**已经落地**，反射不再有任何 MetadataBuffer 桥：
 
-| 当前输入 | 当前语义 | 目标归属 |
+| 输入 | 语义 | 归属 |
 | --- | --- | --- |
 | GeometryBuffer `NormalDepth` | 几何法线、线性深度、物理 coverage | GB，保留 |
-| MetadataBuffer `SurfaceColor` | RGB 线性 HDR 表面色；A 暂作 coverage | SB `Color.rgb`；coverage 迁到 AC/OB |
-| MetadataBuffer Target5 `ReflectionMaterial` | R perceptualRoughness、G metallic、B reflectance、A PLR strength | SB 的具名 Material/Reflection 通道 |
-| MetadataBuffer mask/id | 特殊 fullscreen 路径的接收面 mask | AC 合成遮罩 |
+| SB `Color` | RGB 线性 HDR 表面色（**A 不是 coverage**） | SB |
+| SB `Normal` | 应用法线贴图后的着色法线 | SB |
+| SB `Material` / `Reflection` | perceptualRoughness / metallic / thickness；reflectance / PLR strength | SB 具名通道 |
+| 身份 / 覆盖率 / 具名遮罩 | 谁占了这像素多少、是不是指定部件 | **OB（身份池 + 覆盖率）经 AC 查询** |
 
-Target5 只是迁移桥，不再作为长期冻结布局。A 当前由 `_UseReflection && _UsePlanarReflection` 门控；SurfaceBuffer 落地时必须把“通用反射接收”和“PLR 专用接收”分开命名，不能让 SSR 复用含混的 PLR strength。
+“通用反射接收”和“PLR 专用接收”必须分开命名，不能让 SSR 复用含混的 PLR strength——这条纪律从桥接期沿用至今；`_UseReflection` 仍是不可绕过的总开关。
 
 ## 4. v2 目标输入契约
 
@@ -75,10 +74,10 @@ roughness = perceptualRoughness²
 F0        = lerp(reflectance, saturate(baseColor), metallic)
 ```
 
-### Cryptomatte / ObjectBuffer
+### ObjectBuffer / AC
 
 - ObjectBuffer 只负责身份、对象 coverage 与逐物体辅助量。
-- Cryptomatte 提供反射消费者需要的最终具名遮罩。
+- **AC 提供反射消费者需要的最终具名遮罩**（typed 查询门面 + runtime catalog；当初设想的独立 `Ho-Cryptomatte` feature 没有实现，遮罩统一归 AC）。
 - SurfaceBuffer 不再用 alpha 重复声明 coverage。
 
 ## 5. PLR 当前完成度
@@ -131,14 +130,14 @@ GTAO/SSGI 现有 depth pyramid 不直接复用。只有在编码、coverage、re
 
 ## 7. 后续实施顺序
 
-### P0：先完成输入迁移
+### P0（✅ 已完成）：输入迁移
 
-1. 冻结 SurfaceBuffer 的 `Color / Normal / Material / Reflection` packing。
-2. 实现 SurfaceBuffer producer 与 DebugTile。
-3. 让 PLR 特殊 composite 从 MetadataBuffer 迁到 SB + AC；opaque ForwardLit 不需要回读 SB。
-4. 所有反射开关做回归矩阵：总开关、PLR 开关、source 有效性、Probe 有无。
+1. ✅ 冻结 SurfaceBuffer 的 `Color / Normal / Material / Reflection / Classification` packing（6 MRT = 五张数值图 + owner）。
+2. ✅ 实现 SurfaceBuffer producer 与 DebugTile。
+3. ✅ PLR 特殊 composite 已从 MetadataBuffer 迁到 SB + AC（`MetadataBuffer` 整块删除）；opaque ForwardLit 不读回 SB。
+4. 反射开关回归矩阵（总开关、PLR 开关、source 有效性、Probe 有无）——**按实机验收继续做**。
 
-验收：MetadataBuffer Target5 不再有新增消费者；关闭 `_UseReflection` 后所有反射输出为零。
+验收：全仓库无 `_HoMetadataBuffer` 引用、无 MB 反射桥（已达成）；关闭 `_UseReflection` 后所有反射输出为零。
 
 ### P1：SSR 基础闭环
 
@@ -170,7 +169,7 @@ GTAO/SSGI 现有 depth pyramid 不直接复用。只有在编码、coverage、re
 
 1. 冻结 reflection AOV：source、resolved contribution、confidence。
 2. 建立 Reflection Probe 命名、体积、Box Projection 与更新模式约定。
-3. 删除 MetadataBuffer 反射桥和旧 composite/debug 名称。
+3. ~~删除 MetadataBuffer 反射桥和旧 composite/debug 名称~~ **已完成**（R6/R7 整块删除）；余下的是旧 debug 名称清理与 AOV 冻结。
 
 ## 8. 不再维护的记录
 

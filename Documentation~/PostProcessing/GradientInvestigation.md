@@ -1,6 +1,7 @@
-> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
-
 # Gradient 效果调查（现状 / 后期对应物 / 拓展方向）
+
+> 状态：**调查文档（2026 文档审核核对）**。写作时 MetadataBuffer 还在，现在语义遮罩来自 **AC**（身份/覆盖率/具名选择），几何来自 **GB**，表面数值来自 **SB**。
+> 家族 A（位置渐变，ImageProcess）与家族 B（亮度驱动 Gradient Map，ImageProcess）已落地；家族 C（深度/大气/天空遮罩驱动的染色，ScreenProcess）是后续方向。细节见 `GradientMap.md` 与 `架构优化/Ho-管线总览.md`。
 
 调查对象：`ImageProcessEffect.Gradient`
 - Shader：`Runtime/ImageProcess/Shaders/ImageProcess/Gradient.shader`
@@ -163,7 +164,7 @@
 ### 对我们的意义
 
 - 用户的直觉"本质是屏幕空间不均匀颜色的 LUT"其实混了两件事：**LUT（家族 B：亮度→颜色）** 与 **graduated filter（家族 A：位置→颜色）**。想要"LUT 的味道"，最直接的补法是加 **家族 B 模式**（ramp 由亮度采样，可复用 `MaterialGradient` 的烘焙管线）；想让位置渐变更像后期，则要补 **家族 A 的形态（两点 + 每点 alpha + 插值曲线）** 和"渐变当遮罩驱动 grade"的组织方式。
-- 另一个现实约束：`ImageProcess` 按架构只读相机颜色（不消费 MetadataBuffer/GeometryBuffer），所以**不能**做深度/语义驱动的染色；亮度与饱和度驱动是允许的，也正好是"只染天空"最便宜的实现路径。
+- 另一个现实约束：`ImageProcess` 按架构只读相机颜色（不消费 AC 遮罩 / GB 几何 / SB 表面数值），所以**不能**做深度/语义驱动的染色；亮度与饱和度驱动是允许的，也正好是"只染天空"最便宜的实现路径。
 
 
 ## 4. 差距清单（改造前）
@@ -267,7 +268,7 @@
 - 细节、参数表、来源可信度与验证结果见 `GradientMap.md`。
 
 **C — 深度/大气/天空遮罩驱动的染色（ScreenProcess 效果）**
-- 放在 ScreenProcess 是合理的：只有那里能读 MetadataBuffer / GeometryBuffer（天空、深度、语义遮罩），ImageProcess 按架构只读相机颜色。
+- 放在 ScreenProcess 是合理的：只有那里能读 **AC 遮罩 / GB 深度与天空 / SB 表面数值**，ImageProcess 按架构只读相机颜色。
 - 参考：Nuke `LightWrap`、天空替换与 aerial perspective（"colors get more desaturated and blue over those distances"——本质是**依赖深度**，纯屏幕位置做不到）、Unreal 的 CustomDepth/Stencil 遮罩与 Color Correction Region。
 - 真正的调色动作建议由 `调色` 效果承担（渐变/遮罩只出权重），避免两个效果职责重叠。
 
