@@ -85,14 +85,20 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 
 ## 6. 各 feature 的具体分节
 
+> **落地状态（2026-09-21 逐份核对代码）**：**AC / CS 两行是现行**（面板已按本表实现）。
+> **OB** 的 feature 面板实际分节是 `运行 / 覆盖率（自建 MSAA）/ Selection（R1 兼容层）/ 调试 / 高级`
+> ——比本表多两节，且**组表 / 条目表在 `HoObjectBufferGroup` 组件 Inspector 上**（左列身份清单），不在 feature 上。
+> **SB 的 feature 还没有自定义面板**（Unity 默认面板直接画 settings），下表 SB 的 feature 部分是目标形态。
+> 三者都符合三条硬规矩、色板与"调试只有 Volume 一份真值"。
+
 ### OB — `HoObjectBufferVolume` / `HoObjectBufferRendererFeature`
 
 | 侧 | 分节 | 内容 |
 | --- | --- | --- |
 | **Volume** | 运行 | 启用 |
-| | 调试 | 身份池 `Id0` / `Id1` / coverage / Facing / object semantic lane mask / **溢出** / **未声明 ID** / owner 对齐参考 |
-| **Feature** | 运行（兜底） | 启用、朝向图开关、采集 `layerMask` |
-| | 声明（只读汇总） | 组表 / 条目表：名字 → 组 / 部件 / 标记 / 物体位 / object semantic membership |
+| | 调试 | `ID (Layer 0..3)` / `Coverage (Total)` / `Coverage (Layers)` / `Selection` / `Palette Row (Layer 0)` / `Valid` / `Sample Count`（视图名照 `HoObjectBufferDebugMode`；`Facing` / 溢出 / 未声明 ID / owner 对齐参考**还没实现**，OB resolve 已不留 dropped 计数，真需要时按 OB 架构 §5.11 再做） |
+| **Feature** | 运行（兜底） | 启用、采集 `layerMask`、渲染队列范围（`minRenderQueue` / `maxRenderQueue`）、已注册行数（只读） |
+| | 声明（只读汇总） | **在 `HoObjectBufferGroup` 组件上**：部件表 / 选区表（名字 → 标签 / 朝向覆盖 / 物体位）、组 ID 常驻只读行 |
 | | 高级 | `passEvent`、shader、`自建 MSAA 样本数 N = 4`（只读，标注"与相机 AA 解耦"） |
 | | 调试 | 一行 HelpBox → Volume |
 
@@ -101,7 +107,7 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 | 侧 | 分节 | 内容 |
 | --- | --- | --- |
 | **Volume** | 运行 | 启用 |
-| | 调试 | `Color` / `Normal` / `Material` / `Reflection` / `Classification` / SurfaceOwner / 每个 SurfaceSemantic lane 的 ID·value·written / owner mismatch |
+| | 调试 | `Color` / `Normal` / `Material` / `Reflection` / `Classification` / `Owner` / `Class Id` / `Semantic Owner`（绿 = 与 OB 层 0 一致 / 橙 = 不一致 / 红 = 没人写 / 洋红 = OB 没产出）/ `Semantic Lanes`（8 条 lane 铺成 4×2 网格，通道 = SemanticId÷255 · value · 写了没有）——视图名照 `HoSurfaceBufferDebugMode` |
 | **Feature** | 运行（兜底） | 启用、五张数值图按需开关、semantic batch 质量/成本状态 |
 | | 声明（只读汇总） | 材质侧参数名；来自 `HoSemanticSchema` 的 surface-writable SemanticId / LaneIndex / sourceMode |
 | | 高级 | `passEvent`、shader、两段式深度说明 |
@@ -111,8 +117,8 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 
 | 侧 | 分节 | 内容 |
 | --- | --- | --- |
-| **Volume** | 运行 | 启用、**按属性的 resolve 开关** |
-| | 调试 | 合成属性图 / AC Selection lane SemanticId·coverage·sourceMode / object·surface sample / owner mismatch / **消费者登记表** / **解析失败** |
+| **Volume** | 运行 | 启用（**按属性的 resolve 开关**还没实现，等属性清单落地再加） |
+| | 调试 | `Lane Coverage`（上下半屏各一组 RGBA = 连续四条 lane 的覆盖率）/ `Lane SemanticId` / `Lane Object Mask`——视图名照 `HoAttributeCompositeDebugMode`；消费者登记表与「解析失败」在 feature 的「声明」，不是调试视图 |
 | **Feature** | 运行（兜底） | 启用、属性清单默认开关、`HoSemanticSchema`、4/8/16 lane 成本档 |
 | | 声明（只读汇总） | SemanticId / LaneIndex / sourceMode / 消费者登记表（解析不到就报出来） |
 | | 高级 | `passEvent`、shader |

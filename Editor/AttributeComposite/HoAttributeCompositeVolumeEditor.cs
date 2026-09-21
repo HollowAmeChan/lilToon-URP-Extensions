@@ -1,4 +1,5 @@
 using lilToon.URP.Extensions.AttributeComposite;
+using lilToon.URP.Extensions.Editor;
 using UnityEditor;
 using UnityEditor.Rendering;
 using UnityEngine;
@@ -13,6 +14,12 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
     [CustomEditor(typeof(HoAttributeCompositeVolume))]
     internal sealed class HoAttributeCompositeVolumeEditor : VolumeComponentEditor
     {
+        private static readonly Color RuntimeColor = new Color(0.46f, 0.64f, 0.92f);
+        private static readonly Color DebugColor = new Color(0.86f, 0.62f, 0.38f);
+
+        private static bool showRuntime = true;
+        private static bool showDebug;
+
         private SerializedDataParameter enable;
         private SerializedDataParameter debugMode;
         private SerializedDataParameter debugInSceneView;
@@ -29,18 +36,60 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
 
         public override void OnInspectorGUI()
         {
-            PropertyField(enable);
-            PropertyField(debugMode);
+            EditorGUILayout.HelpBox(
+                "逐相机覆盖 AC：启用与调试画面。属性清单默认开关、lane 成本档与消费者登记表在 "
+                + "Ho-AttributeComposite RendererFeature 上（声明不是 per-camera 数据）。",
+                MessageType.Info);
 
-            // 只画当前模式的说明：整张表铺出来就等于把说明又挪回下拉里。
-            string description = DescribeDebugMode((HoAttributeCompositeDebugMode)debugMode.value.enumValueIndex);
-            if (!string.IsNullOrEmpty(description))
+            DrawRuntime();
+            DrawDebug();
+        }
+
+        private void DrawRuntime()
+        {
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行", LilUrpEditorSectionGui.BoolSummary(enable), RuntimeColor))
             {
-                EditorGUILayout.HelpBox(description, MessageType.None);
+                return;
             }
 
-            PropertyField(debugInSceneView);
-            PropertyField(debugInGameView);
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawParameter(enable, "启用");
+                EditorGUILayout.HelpBox(
+                    "不勾选覆盖时用 Ho-AttributeComposite RendererFeature 的「运行」兜底值。",
+                    MessageType.None);
+            }
+        }
+
+        private void DrawDebug()
+        {
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showDebug, "调试", LilUrpEditorSectionGui.EnumSummary(debugMode), DebugColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawParameter(debugMode, "调试模式");
+
+                // 只画当前模式的说明：整张表铺出来就等于把说明又挪回下拉里。
+                string description = DescribeDebugMode((HoAttributeCompositeDebugMode)debugMode.value.enumValueIndex);
+                if (!string.IsNullOrEmpty(description))
+                {
+                    EditorGUILayout.HelpBox(description, MessageType.None);
+                }
+
+                DrawParameter(debugInSceneView, "Debug In Scene View");
+                DrawParameter(debugInGameView, "Debug In Game View");
+            }
+        }
+
+        private void DrawParameter(SerializedDataParameter parameter, string label)
+        {
+            if (parameter != null)
+            {
+                PropertyField(parameter, new GUIContent(label));
+            }
         }
 
         /// <summary>通道含义与取景范围照 `Shaders/Debug/HoAttributeCompositeDebug.shader` 写，改 shader 就改这里。</summary>

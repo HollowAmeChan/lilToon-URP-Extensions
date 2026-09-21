@@ -110,20 +110,21 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
         private void DrawDebug()
         {
-            SerializedProperty debugMode = Find("debugMode");
-            string summary = LilUrpEditorSectionGui.EnumName(debugMode);
-
-            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showDebug, "调试", summary, DebugColor))
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showDebug, "调试", "在 Volume", DebugColor))
             {
                 return;
             }
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                DrawProperty("debugMode");
-                DrawProperty("debugInSceneView");
-                DrawProperty("debugInGameView");
-                EditorGUILayout.LabelField("洋红 = 未注册身份；整屏暗红 = 本帧没产出。", EditorStyles.miniLabel);
+                // 调试只有一份真值：Volume 的「调试」分组。settings 上的 debugMode /
+                // debugInSceneView / debugInGameView 仍在（Volume 未覆盖时作兜底、批量验证直接驱动），
+                // 但这里不再画第二份开关。
+                EditorGUILayout.HelpBox(
+                    "调试模式（ID (Layer 0-3) / Coverage (Total·Layers) / Selection / Palette Row (Layer 0) / Valid / Sample Count）、"
+                    + "Debug In Scene View / Debug In Game View 已移至 Ho-ObjectBuffer Volume 的「调试」分组。"
+                    + "视图里洋红 = 未注册身份；整屏暗红 = 本帧没产出。",
+                    MessageType.None);
             }
         }
 

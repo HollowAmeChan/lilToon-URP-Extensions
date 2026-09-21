@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- **UI 风格整理（续）：OB / AC 对齐规范，并修正规范里过期的调试视图清单**：
+  - `HoObjectBufferRendererFeature` 的「调试」分节不再画第二份开关（`debugMode` / 两个视图开关仍在 settings 里作兜底，
+    Volume 覆盖时以 Volume 为准），只留一行 HelpBox 指到 Volume 并列出真实视图名。
+  - `HoAttributeCompositeRendererFeature` 面板重排为 **运行（兜底）/ 声明（只读汇总）/ 调试（一行 → Volume）/ 高级**，
+    全部走 `LilUrpEditorSectionGui` + 规范色板；`HoAttributeCompositeVolumeEditor` 同样加 运行 / 调试 分节。纯 UI，
+    不改运行时行为（AC 的 debug 字段本来就是 `[NonSerialized]` 运行时载体）。
+  - **修正 `Ho-UI_风格规范` §6 里过期的调试视图清单**（OB / SB / AC）：原清单含未实现的视图（OB 的
+    Facing / 溢出 / 未声明 ID / owner 对齐参考、SB 的 SurfaceOwner 与单独的 owner mismatch、AC 的合成属性图 /
+    object·surface sample）。现按各自 DebugMode 枚举逐条核对改写，并标明"还没实现"的部分
+    （OB resolve 已不留 dropped 计数，真需要时按 OB 架构 §5.11 再做）。
+  - §6 顶部加**落地状态**说明：AC / CS 是现行；OB 的 feature 实际分节比表里多「覆盖率（自建 MSAA）」「Selection（R1 兼容层）」
+    两节，组表/条目表在 `HoObjectBufferGroup` 组件上；**SB 的 feature 目前是 Unity 默认面板**，表里 SB 的 feature 部分仍是目标形态。
+    OB 那两行过期的内容（"朝向图开关"、feature 上的组表）按代码改写。
+
 - **逐物体阴影（CS）：UI 按 `Ho-UI_风格规范` 重排，调试入口移进 Volume**：
   - 新增 `HoCharacterShadowVolume`（`Post-processing/Ho-CharacterShadow/逐物体阴影`）。运行 = 启用 + 单角色分辨率；
     调试 = 调试模式（`Off` / `Atlas` / `Character`）+ `Debug In Scene View` / `Debug In Game View` + 单角色 tile。
