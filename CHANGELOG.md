@@ -2,6 +2,20 @@
 
 ## Unreleased
 
+- **逐物体阴影（CS）：修掉“相机拉远后角色整体阴影消失”**（用户场景实测 bug）：
+  - **根因**：局部图集 pass 的时机（`BeforeRenderingPrePasses`）与 URP 自己的逐相机级联 shadow pass 撞在同一事件，
+    Unity 内部“该光源 + 当前相机”的 shadow 状态会否决我们的自定义 split。URP Asset 的
+    **`m_ShadowCascadeCount > 1`** 且观察相机不在自己的级联 0 里时，atlas tile 整块为空 → CS 静默回退到
+    已按 `shadowDistance` 淡出的普通主光阴影，看起来就是“离远了阴影全没了”。
+  - **修法**：pass 时机提前到 `RenderPassEvent.BeforeRenderingShadows`，在 URP 渲染本相机级联阴影**之前**
+    构建局部图集。**不再需要把级联数改成 1**，PTP 场景保持 4 即可。
+  - **回归测试**：新增 `HoCharacterShadowValidation.ValidateDistanceRendering`（级联数 {1,4} × 距离 240→8 m
+    扫描 lilToon 探针可见度与 atlas tile 深度）。修复前 `casc4 60m..8m` = `vis=1.000 atlas=0.000`（FAIL），
+    修复后两档级联全距离 `vis=0.000 atlas=0.984`（PASS）；`ValidateRendering` 一并 PASS。
+  - 排查过程中同时保留了三处安全性修正（持久 RTHandle 图集、剔除参数完全来自光空间正交相机、
+    `Allocator.Temp` 数组不再提前 Dispose）；被排除的假设记在
+    `Documentation~/计划/Ho-CharacterShadow-Plan.md` §0.1，避免重复调查。
+
 - **文档分布整理（撤销 `架构优化/`，现行移到外层、过程记录进 `归档/`）**：46 篇（45 篇 + 新增 `文档索引.md`）重新分布，`Documentation~/` 现在是"外层 = 定型功能/架构 + 少量主题文件夹"：
   - **外层 19**：索引、总览与契约（`Ho-管线总览.md` / `Ho-ChannelContract-v1.md` / `Ho-RenderFeatureOrdering.md` / `Ho-UI_风格规范.md`）、四轴（`Ho-GeometryBuffer.md` / `Ho-ObjectBuffer.md` / `Ho-SurfaceBuffer.md` / `Ho-AttributeComposite.md`）、屏幕效果（`Ho-GTAO.md` / `Ho-SSGI.md` / `Ho-ShadowCast-PCSS.md` / `Ho-已知问题-描边SSGI白边.md`）、光照探针接入说明、`OIT.md` / `TransparentPass.md` / `PlanarReflection.md` / `ReflectionPipelineDesign.md` / `MaterialGradient.md`。
   - **主题文件夹**：`角色特化/`（3）、`后处理/`（6，原 `PostProcessing/` 改名，`Images/` 随之迁移）、`架构边界/`（2）、`计划/`（2）。

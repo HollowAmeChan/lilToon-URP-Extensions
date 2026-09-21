@@ -20,6 +20,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
         /// </summary>
         public static string LastCullStatus = "";
 
+
         private HoCharacterShadowPass pass;
         private HoCharacterShadowDebugPass debugPass;
         private Material debugMaterial;
@@ -95,7 +96,13 @@ namespace lilToon.URP.Extensions.CharacterShadow
             internal RendererListHandle[] lists;
         }
 
-        internal HoCharacterShadowPass() { renderPassEvent = RenderPassEvent.BeforeRenderingPrePasses; }
+        // Must run BEFORE URP's own shadow casting for this camera. When the local atlas was built
+        // at BeforeRenderingPrePasses (the event URP itself uses for the cascade shadow passes) the
+        // caster draw ended up depending on the viewing camera's cascade state: with cascade count
+        // > 1 the atlas came out completely empty whenever the camera was not inside its own
+        // cascade 0, so CS silently fell back to the distance-faded main light shadow and all
+        // shadows vanished as the camera moved away. Measured by ValidateDistanceRendering.
+        internal HoCharacterShadowPass() { renderPassEvent = RenderPassEvent.BeforeRenderingShadows; }
         internal void Setup(HoCharacterShadowFrame value) { frame = value; }
         internal void Dispose()
         {
@@ -227,7 +234,6 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 {
                     if (!Cull(cullContext, camera, frame, frame.slices[i], out var drawing)) continue;
                     passData.lists[i] = graph.CreateShadowRendererList(ref drawing);
-
                     builder.UseRendererList(passData.lists[i]);
                     listCount++;
                 }

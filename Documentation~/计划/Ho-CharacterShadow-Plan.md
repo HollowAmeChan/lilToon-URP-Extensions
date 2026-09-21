@@ -18,38 +18,44 @@
 
 当前实现用 `CullContextData.Cull` 和 `CullShadowCasters` 为每个局部域生成独立原生 shadow renderer list；未借用主相机绘制列表。一个隐藏、禁用渲染的正交相机提供完整的光空间 CameraProperties，仅用于构建剔除参数；保留观察相机的场景范围和 LOD 参数。场景 Renderer/Terrain 的 bounds 每相机收集一次用于收紧深度范围，真正绘制仍由 Unity 的 ShadowCaster 列表处理，未用手工 DrawRenderer 复刻规则。后续可在不变更材质接口的前提下优化 bounds 收集。
 
-验证入口：`HoLil/Validation/Validate Ho-CharacterShadow` 检查投影计算；`HoCharacterShadowValidation.ValidateRendering` 为独立 Unity batch 工程的 GPU 验证入口，不在用户打开的编辑器里创建测试场景。
+验证入口：`HoLil/Validation/Validate Ho-CharacterShadow` 检查投影计算；`HoCharacterShadowValidation.ValidateRendering` 与 `HoCharacterShadowValidation.ValidateDistanceRendering` 为独立 Unity batch 工程的 GPU 验证入口，不在用户打开的编辑器里创建测试场景。后者是 §0.1 那个 bug 的常驻回归测试（带级联数 × 距离扫描），**改动 pass 时机、剔除参数或图集生命周期后必须跑**。
 
 已在 Unity 6000.3.15f1 / D3D11 的隔离工程验证：编译；上游 caster 扩大 Z 而不改变 X/Y；无关 caster 不扩大深度；接收盒覆盖；屏幕外 ShadowsOnly 投影；相机拉远 5 倍；Cast Off、组件禁用、接收部件筛选、Feature 禁用/恢复的回退；atlas 调试；lilToon 实际材质的明暗响应。原始 CS 探针测得近处/远处遮挡值 0、取消投影与禁用回退值 1。
 
-修复过的距离回归：仅替换观察相机的 cullingMatrix/planes/origin，不会替换内部 CameraProperties。原实现拉远后可能得到空 caster 列表，进而用全亮的 CS 替换普通天光阴影。现在由独立正交剔除相机提供一致属性，深度搜索范围不再错误依赖观察相机距离。空 caster 查询仍表示有效的“未遮挡”，但不创建无 caster 的原生绘制列表。
+修复过的距离回归（第一轮，已被 §0.1 取代但仍保留）：仅替换观察相机的 cullingMatrix/planes/origin，不会替换内部 CameraProperties。原实现拉远后可能得到空 caster 列表，进而用全亮的 CS 替换普通天光阴影。现在由独立正交剔除相机提供一致属性，深度搜索范围不再错误依赖观察相机距离。空 caster 查询仍表示有效的“未遮挡”，但不创建无 caster 的原生绘制列表。这一轮修的是“剔除参数”，**不是**远处阴影消失的真正原因 —— 真正原因见 §0.1。
 
-### 0.1 已知未修：局部图集与相机距离相关（2026-09-21 调查）
+### 0.1 已修：局部图集与相机距离相关（2026-09-21）
 
-**现象（用户场景）**：相机/角色离远后角色整体阴影消失（CS 与普通主光阴影一起没了）。隔离工程里能稳定复现同一机制的另一种方向：**观察相机在近处时局部图集整块为空，远了才有内容**。
+**现象（用户场景）**：相机/角色离远后角色整体阴影消失（CS 与普通主光阴影一起没了）。隔离工程里复现出同一机制的另一种方向：**观察相机在近处时局部图集整块为空**。
 
-**复现入口**：`HoCharacterShadowValidation.ValidateDistanceRendering`（batch）。相机沿固定方向从 240 m 拉到 8 m，逐个记录 lilToon 探针可见度与 atlas tile 深度。当前结果：
+**根因**：局部图集的 pass 时机与 URP 自己的逐相机级联 shadow pass 撞在同一个 `RenderPassEvent.BeforeRenderingPrePasses`。此时 Unity 内部“该光源 + 当前相机”的 shadow 状态还没定下来，我们的自定义 split（`ShadowSplitData` + `ShadowDrawingSettings{splitIndex = 0}`）会被这层状态否决：**级联数 > 1 且观察相机不在自己的级联 0 里时，atlas tile 整块为空**，CS 于是静默回退到（已按 shadowDistance 淡出的）普通主光阴影 —— 远处“全部阴影消失”就是这么来的。级联数为 1 时该状态恒定成立，所以现象只在多级联下出现。
 
-```text
-casc1  240m..8m   vis=0.000  atlas≈0.98   ← 全部正常
-casc4  240m/120m  vis=0.000  atlas≈0.98
-casc4   60m..8m   vis=1.000  atlas=0.000  ← 图集整块为空，CS 静默失效
+**修法**：把 CS pass 的时机提前到 `RenderPassEvent.BeforeRenderingShadows`，在 URP 为本相机渲染级联阴影**之前**构建局部图集，不再受级联状态影响。一行改动：
+
+```csharp
+internal HoCharacterShadowPass() { renderPassEvent = RenderPassEvent.BeforeRenderingShadows; }
 ```
 
-**已确认的触发条件**：URP Asset 的**主光阴影级联数 > 1**（`m_ShadowCascadeCount: 4`）。改成 1 后，正交/透视、有无大地面、8–240 m 全部正常。PTP 场景当前正是 4 —— **先把级联数改成 1 即可立刻恢复远处阴影**（代价是主光级联质量下降，属临时规避）。
+**复现与回归入口**：`HoCharacterShadowValidation.ValidateDistanceRendering`（batch）。相机沿固定方向从 240 m 拉到 8 m，逐个记录 lilToon 探针可见度与 atlas tile 深度。
 
-**已排除的原因（均有实测数据）**：
+```text
+修复前  casc1 240m..8m  vis=0.000 atlas≈0.98   casc4 60m..8m  vis=1.000 atlas=0.000  ← FAIL
+修复后  casc1/casc4 240m..8m 全部 vis=0.000 atlas=0.984                              ← PASS
+```
+
+**副作用与残余风险**：该修法依赖 pass 顺序（CS 必须早于 URP 的 shadow pass）。若后续有人把 CS 插到更晚的事件、或引入需要“已渲染的相机阴影”作为输入的逻辑，会重新踩到这个问题 —— 所以距离回归测试必须跟着 feature 一起跑。级联数不再需要改成 1，**PTP 场景保持 `m_ShadowCascadeCount: 4` 即可**。
+
+**排查过程中排除的原因（均有实测数据，记录以免重复调查）**：
 
 | 假设 | 实测 |
 | --- | --- |
-| 图集是 transient，内存被复用 | 改成 feature 持有的持久 RTHandle + `ImportTexture` 后现象不变 |
-| 剔除参数泄漏观察相机状态（lodParameters / isOrthographic / cullingOptions） | 改成完全由光空间剔除相机生成参数后现象不变（`lodCam`、`isOrtho` 已与相机无关） |
-| `Allocator.Temp` 数组提前 Dispose（context 命令延迟执行） | 去掉提前 Dispose 后现象不变（该改动作为安全性修正保留） |
+| 图集是 transient，内存被复用 | 改成 feature 持有的持久 RTHandle + `ImportTexture` 后现象不变（该改动作为安全性修正保留） |
+| 剔除参数泄漏观察相机状态（lodParameters / isOrthographic / cullingOptions） | 改成完全由光空间剔除相机生成参数后现象不变（保留） |
+| `Allocator.Temp` 数组提前 Dispose（context 命令延迟执行） | 去掉提前 Dispose 后现象不变（保留） |
 | caster 材质对相机状态反应（距离淡出 / LOD crossfade） | 换成极简 ShadowCaster 材质后现象相同 |
 | 逐 split 的 shadow caster 剔除 | 整个跳过 `CullShadowCasters`，或按级联数发布多份 split，现象都不变 |
 | 用普通 `ShaderTagId("ShadowCaster")` 列表绕开 Unity 的 shadow 列表 | 该路径在本 pass 里完全不绘制（atlas 全 0） |
-
-**结论**：局部图集的绘制内容由 **Unity 内部“该光源 + 当前相机”的 shadow 状态**决定，我们的自定义 slice 只在部分相机状态下被采纳；级联数 > 1 且观察相机不在自己的级联 0 里时就会得到空图集。真正的修法有两条（都未做）：① 让局部 cast 不再依赖“光源的 shadow 列表”，改成自己驱动 caster（需要跨仓加一个可独立驱动的 caster pass，或找到等价的原生绑定方式）；② 在 URP fork 里把该光源的 split 布局替换成局部 slice。**修好之前，级联数 > 1 的场景不能把 CS 当作可靠的阴影来源。**
+| 级联数本身是原因 | 只是触发条件；提前 pass 时机后级联 1 与 4 结果一致 |
 
 透明/OIT、XR、大规模角色、动画蒙皮边界与 D3D12 尚未做场景验收；旧式 Execute 路径已提供，但当前验证工程使用 RenderGraph。不要将这些未验收项等同于已支持。真实角色场景还需美术调节包围盒和 bias。
 

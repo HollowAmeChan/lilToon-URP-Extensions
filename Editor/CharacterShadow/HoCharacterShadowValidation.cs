@@ -125,7 +125,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 caster.transform.localScale = new Vector3(1, 1, 0.3f);
                 var casterRenderer = caster.GetComponent<MeshRenderer>();
                 casterRenderer.sharedMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit"));
-                var minimalCasterMaterial = new Material(Shader.Find("Hidden/Ho-CharacterShadow/ValidationCaster")); created.Add(minimalCasterMaterial);
                 casterRenderer.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
 
                 target = new RenderTexture(256, 256, 24, RenderTextureFormat.ARGB32); target.Create();
