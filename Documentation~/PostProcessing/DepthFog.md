@@ -1,15 +1,14 @@
-> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
-
 # 深度雾 / 高度雾（ScreenProcess · `DepthFog`）
 
-> **状态：已实现。** 一个效果里两个槽——**深度雾**与**高度雾**，各有自己的开关，可以只开一个或两个都开；
+> **状态：已实现（2026 文档审核核对）。** 一个效果里两个槽——**深度雾**与**高度雾**，各有自己的开关，可以只开一个或两个都开；
 > 两层在同一趟 pass 里按顺序合成（不依赖 ScreenProcess 的层叠加）。见 §3 与 §4。
+> 写作时 MetadataBuffer 还在；现在层遮罩来自 **AC**（`ScreenProcessMask.hlsl` → `HoAC_TotalCoverage`），身份/表面语义分别来自 OB / SB。
 
 相关背景：家族 C（深度/大气/天空遮罩驱动的染色）的划分见 `GradientInvestigation.md` 第 6 节。
 
 ## 0. 定位：这是**合成雾**，不是物理雾
 
-- ScreenProcess 的每个效果都是图像合成，它和 ImageProcess 的差别**不是"更物理"，而是能读 buffer**（MetadataBuffer / GeometryBuffer / Sky）。本效果就是：**用深度（必要时加世界高度、天空遮罩）生成雾层，再合成到画面上**——和「渐变映射」是同一族（一个亮度驱动的颜色合成，一个深度/高度驱动的颜色合成）。
+- ScreenProcess 的每个效果都是图像合成，它和 ImageProcess 的差别**不是"更物理"，而是能读 buffer**（AC 遮罩 / GeometryBuffer / Sky）。本效果就是：**用深度（必要时加世界高度、天空遮罩）生成雾层，再合成到画面上**——和「渐变映射」是同一族（一个亮度驱动的颜色合成，一个深度/高度驱动的颜色合成）。
 - 因此**不追求**：能量守恒、散射积分、与光照/泛光的物理耦合。也**不为"更物理"去换注入点**（tonemap 之前那套是物理雾路线，不做）。
 - **因此得到**：颜色所见即所得（后置、显示空间合成）；透明物体、粒子、天空能统一处理；能被层遮罩按物体排除；参数直白，预设就是"一层雾的配方"。
 - **因此放弃**：不参与 bloom、不被 tonemap 压肩、没有光锥/体积自阴影（要光柱是 `SkyTyndall` 的事）。
@@ -29,7 +28,7 @@
 | `LinearEyeDepth` **不支持正交**；URP 自己的延迟雾也跳过正交 | core `Common.hlsl:1205`、`DeferredLights.cs:1136-1139` |
 | URP 自带雾是 per-object、view-Z、tonemap 之前；与后置雾**会叠加** | `Lighting.hlsl:206-240`、`ShaderVariablesFunctions.hlsl:315-347, 411-414`、延迟走 `Utils/FogDeferred.hlsl` |
 | fork 里没有任何 fog RendererFeature / 体积雾，也没有可复用的 inscattering | 搜 `Ho*` 文件为空；只有一个 GUID 悬空的 `OasisFogVolumeComponent`（`DefaultVolumeProfile.asset:255-282`） |
-| 参考实现里没有能直接搬的雾：PPv2 的 Deferred Fog 只有两个 bool 且没有高度项（Unity Companion License）；Standard Assets `GlobalFog` 是唯一的高度雾但**目录里没有 licence 文件** | `.codex-research/depth_fog_research/existing-fog-implementations.md` |
+| 参考实现里没有能直接搬的雾：PPv2 的 Deferred Fog 只有两个 bool 且没有高度项（Unity Companion License）；Standard Assets `GlobalFog` 是唯一的高度雾但**目录里没有 licence 文件** | 当时的调研记录（本机私有草稿 `.codex-research/depth_fog_research/existing-fog-implementations.md`，**不在仓库内**，结论已写在左栏） |
 | 包内已有"高度窗"先例可对齐 | `HoCharacterSpecializationComposite.shader:487-521`（`ComputeWorldSpacePosition` + world Y + smoothstep + hardness）、参数形状 `Settings.cs:37-45` |
 
 ## 2. 两个槽各自做什么
@@ -55,7 +54,7 @@
 合成（一趟 pass，顺序固定）：
   1. 深度雾：先按 alphaA 的强度对像素做"空气感"去饱和，再把颜色从近色插值到远色，最后按图层混合模式合成
   2. 高度雾：按 alphaB 用高度雾自己的颜色合成
-  两次都用图层的混合模式（与 ImageProcess 共用的 24 模式表，见 `README.md` 的「共享图层混合表」）与 `_Intensity`，并乘以该层的层遮罩（今天 = MetadataBuffer 覆盖率，以后由 AC 提供）
+  两次都用图层的混合模式（与 ImageProcess 共用的 24 模式表，见 `README.md` 的「共享图层混合表」）与 `_Intensity`，并乘以该层的层遮罩（= AC 查询到的覆盖率）
 ```
 
 - **天空**：`跳过天空`（默认，用 GB coverage 精确判定；没有 GB 时用远裁剪面近似）、`一起上雾`（天空也按远平面结果上雾，高度项在天空上自动失效）、`单独天空色`（天空用远色 × 天空强度，地面不受影响）。
@@ -89,7 +88,7 @@
 
 - 两个槽的开关就是"折叠"：关掉的槽只占一行，行数由 `GetDepthFogLineCount` 与绘制函数严格对应（有检查钉住，§6）。
 - 顶部原有的"颜色 / 混合模式"两行属于图层核心字段，其中"颜色"就是深度雾的近色。
-- 层遮罩照旧可用（把角色排除、只对背景上雾等），它是**层内**能力，不是叠层；遮罩来源以后由 AC 提供，今天吃 MetadataBuffer 覆盖率。
+- 层遮罩照旧可用（把角色排除、只对背景上雾等），它是**层内**能力，不是叠层；遮罩来源 = **AC**（OB 覆盖率 / 具名选择），详见 `架构优化/Ho-AttributeComposite.md`。
 
 ## 5. 预设（5 组 13 个）
 
@@ -129,5 +128,5 @@
 ## 8. 后续可做
 
 - **遮罩柔化**（对深度多次采样再算 alpha，出画笔感雾边、压掉半精度台阶）：参数槽位已用满，需要先砍一个参数或给 `ScreenProcessLayer` 加一个 Vector4；
-- **按物体/材质的不同雾**：层遮罩已经能表达一部分（今天只按 MetadataBuffer 覆盖率），更细的要等 AC 的具名遮罩；
+- **按物体/材质的不同雾**：层遮罩已经能表达一部分（按 AC 覆盖率/具名选择），更细的要等 AC 的具名遮罩继续铺开；
 - **体积感**：需要 raymarch + 光源可见性，属于另一个效果（另立方案）。

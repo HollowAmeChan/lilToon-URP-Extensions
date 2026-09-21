@@ -56,8 +56,8 @@
 ### 1.3 主材质侧现状
 
 - lilToon：一/二/三层阴影（含 strength/border/blur mask、receive mask）、rim、backlight、fake SSS、MatCap、反射（metallic/smoothness/reflectance/cube override）、outline、refraction/gem、fur、glitter；`_ScreenSpaceAOSource`（“AO RT”选择器）接收 URP/HTrace AO；`_HTraceSSGIBackfaceNormalFix` 供 UniversalGBuffer/DepthNormals 修正背面法线。
-- 材质语义 pass：`HoMetadataBuffer`（maskId/surfaceData/custom0/objectCustom0-1/SurfaceColor/MBufferDepth）+ `HoGeometryBuffer` + `HoCharacterCapture`（eyeColor/eyeData）。
-- 材质契约（`接口契约.md`）：Blender Principled/OpenPBR → glTF `HO_materials_principled_lil` → lilToon/lilPBR，含 toon/unity/extras 子层；`unity.screenSpaceAO.*` 提示已在契约里占位。
+- 材质语义 pass：`HoGeometryBuffer` + `HoObjectBuffer`（身份）+ `HoSurfaceBuffer`（表面数值）+ `HoCharacterCapture`（eyeColor/eyeData）。（写作时的 `HoMetadataBuffer` 已在 R6/R7 删除。）
+- 材质契约（**跨仓文档，不在本仓库**）：Blender Principled/OpenPBR → glTF `HO_materials_principled_lil` → lilToon/lilPBR，含 toon/unity/extras 子层；`unity.screenSpaceAO.*` 提示已在契约里占位。本仓库的渲染**通道**契约见 `LILTOON_CHANNEL_CONTRACT_V1.md`。
 
 ### 1.4 已知问题（评审基线）
 
@@ -307,4 +307,4 @@
 - Unity URP 17：`ScriptableRendererFeature` https://docs.unity.cn/Packages/com.unity.render-pipelines.universal@17.0//api/UnityEngine.Rendering.Universal.ScriptableRendererFeature.html ；URP17 RenderGraph 全屏效果最小示例 https://discussions.unity.com/t/urp-17-rendergraph-api-blur-multi-pass-fullscreen-blur-shader/1576178 ；Frame Data 纹理参考 https://docs.unity3d.com/6000.1/Documentation/Manual/urp/frame-data-textures-reference.html
 - Unity HDRP：AOV（Custom pass variables）https://docs.unity3d.com/Packages/com.unity.render-pipelines.high-definition@17.3//manual/AOVs.html ；`AOVRequestData` https://docs.unity3d.com/Packages/com.unity.render-pipelines.high-definition@13.0/api/UnityEngine.Rendering.HighDefinition.AOVRequestData.html
 - 本地源码：`D:\Unity_Fork\HoUrp17.3.0`（URP17 对齐）、`D:\Unity_Fork\UnityGraphics-6000.3-HDRP`（SSS/DiffusionProfile 对照）、`D:\Unity_Fork\Unity-ScreenSpaceReflections-URP`（SSR）、`D:\Unity_Fork\HoNpr`（反例）
-- 材质契约：`接口契约.md`（Blender Principled/OpenPBR → glTF → lilToon/lilPBR）；Blender Principled https://docs.blender.org/manual/en/latest/render/shader_nodes/shader/principled.html 、OpenPBR https://academysoftwarefoundation.github.io/OpenPBR/
+- 材质契约：**跨仓文档（不在本仓库）**——Blender Principled/OpenPBR → glTF → lilToon/lilPBR；Blender Principled https://docs.blender.org/manual/en/latest/render/shader_nodes/shader/principled.html 、OpenPBR https://academysoftwarefoundation.github.io/OpenPBR/ 。本仓库的渲染通道契约见 `LILTOON_CHANNEL_CONTRACT_V1.md`。
