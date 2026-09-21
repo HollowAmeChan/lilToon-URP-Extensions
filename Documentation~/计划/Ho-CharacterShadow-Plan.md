@@ -40,6 +40,7 @@
 - `HideFlags.HideAndDontSave` 的方向光，方向 / 剔除层 / 阴影参数跟随主光，但 **`color` 黑 + 强度 0.001**（不贡献任何光照，不动 `RenderSettings.sun`，也争不到主光）。强度必须 > 0：实测 `intensity = 0` 的灯不会出现在 `visibleLights` 里，我们自己也就找不到它。
 - 这盏灯**只在 `beginCameraRendering` 之后到本 pass 记录期间**开着：`beginCameraRendering` 早于 URP 的 `context.Cull`（`UniversalRenderPipeline.cs:857` 在 `CameraRenderingScope` 之内），`endCameraRendering` 再关掉。于是相机永远看不到它（`LastCullStatus` 里的 `camLights/add` 可自查），而我们的 `Cull()` 在 `AddPasses → RecordRenderGraph` 里能看到它。
 - 每个接收域占这盏灯自己的一个 split 索引（`0..N-1`），`LightShadowCasterCullingInfo.splitRange = (0, N)`。
+- 临时对象（隐藏光 + 隐藏剔除相机）的销毁走 `DestroyTemporary()`：**编辑模式推迟到 `EditorApplication.delayCall`**，播放模式用 `Object.Destroy`。三条路都不能直接用 —— `CoreUtils.Destroy` 在编辑器里是 `DestroyImmediate`，而 `Dispose()` 会被 `Create()` 从渲染/Inspector 回调里调到（"not permitted during rendering callbacks"）；`Object.Destroy` 在编辑模式下非法（"Destroy may not be called from edit mode!"）；`DestroyImmediate` 在上面那种回调里同样非法。`ValidateSceneShadows` 里有一段专门模拟 `Create() → Dispose()` 并断言这三类消息一条都不出现。
 
 **复现与回归入口**（两个 batch 入口，缺一不可）：
 
@@ -48,6 +49,7 @@ ValidateDistanceRendering  级联 {1,4} × 相机 240m→8m：局部图集要有
                            修复后 casc1+casc4 全部 vis=0.000 atlas=0.984   ← PASS
 ValidateSceneShadows       URP/Lit 地面 + 场景 caster（再用 lilToon caster 跑一遍），CS 开/关两测：
                            普通投影必须都在、场景亮度不变、日志里不许出现 SRV 跳过
+                           再加一段 Create() → Dispose() 生命周期检查（不许出现 Destroy/DestroyImmediate 用错上下文的消息）
                            修复后 lit=0.803, URP shadow=0.008/0.008 (CS off/on) ← PASS
 ```
 

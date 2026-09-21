@@ -555,6 +555,36 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 Require(toonShadowWithCs <= toonShadowWithoutCs + 0.05f,
                     $"Enabling CS took away a lilToon caster's normal shadow: without CS={toonShadowWithoutCs:F3}, with CS={toonShadowWithCs:F3}");
 
+                // Object lifetime: in the editor Create() runs from SerializedObject.ApplyModifiedProperties,
+                // and its Dispose() must therefore avoid both Object.Destroy ("Destroy may not be called from
+                // edit mode!") and DestroyImmediate ("... not permitted during rendering callbacks").
+                int lifetimeWarnings = 0;
+                Application.LogCallback lifetimeHandler = (condition, stackTrace, type) =>
+                {
+                    if (!string.IsNullOrEmpty(condition)
+                        && (condition.Contains("Destroy may not be called")
+                            || condition.Contains("Destroying GameObjects immediately is not permitted")
+                            || condition.Contains("Destroying an object in edit mode")))
+                    {
+                        lifetimeWarnings++;
+                    }
+                };
+                Application.logMessageReceived += lifetimeHandler;
+                try
+                {
+                    feature.Create();
+                    float afterRecreate = GroundAt(samplePoint);
+                    Require(Shader.GetGlobalFloat("_HoCSActive") > 0.5f && afterRecreate <= shadowWithoutCs + 0.05f,
+                        $"CS stopped working after the feature was recreated: {afterRecreate:F3}");
+                    feature.Create();
+                }
+                finally
+                {
+                    Application.logMessageReceived -= lifetimeHandler;
+                }
+                Require(lifetimeWarnings == 0,
+                    $"Object lifetime warnings while the feature was recreated (Destroy/DestroyImmediate in the wrong context): {lifetimeWarnings}");
+
                 Debug.Log($"[Ho-CS Scene Shadows] PASS: lit={lit:F3}, URP shadow={shadowWithoutCs:F3}/{shadowWithCs:F3} (CS off/on), "
                     + $"lilToon shadow={toonShadowWithoutCs:F3}/{toonShadowWithCs:F3}, skipped draws={skippedDraws.Count}, graphics={SystemInfo.graphicsDeviceType}.");
             }

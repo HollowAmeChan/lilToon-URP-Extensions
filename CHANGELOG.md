@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **逐物体阴影（CS）：隐藏光/隐藏剔除相机的销毁改成延迟执行**（补上一条的收尾）：
+  - `Object.Destroy` 在编辑模式下非法（`Destroy may not be called from edit mode!`），而 `CoreUtils.Destroy`
+    在编辑器里走 `DestroyImmediate`，`Dispose()` 又会被 `Create()` 从渲染 / Inspector 回调里调到
+    （`Destroying GameObjects immediately is not permitted during rendering callbacks`）。三条路都不能直接用。
+  - 新增 `DestroyTemporary()`：播放模式用 `Object.Destroy`，**编辑模式把 `DestroyImmediate` 推迟到
+    `EditorApplication.delayCall`**（那时已经出了回调）。对象是 `HideAndDontSave`，晚一帧销毁无副作用。
+  - `ValidateSceneShadows` 增加一段生命周期检查：模拟 `SerializedObject.ApplyModifiedProperties → feature.Create()`
+    两次，断言三类消息一条都不出现、且中间一次渲染 CS 仍然工作。
+
 - **逐物体阴影（CS）：开 CS 后场景其他物体丢普通投影 + 远处阴影消失，一次修掉**（承接上一条的修法）：
   - **根因**：Unity 的 shadow renderer list 是**按光源一帧一份**提交的，和传入的 `CullingResults` 无关。
     CS 原先借场景主光做局部剔除/绘制，于是和 URP 的相机阴影图抢同一份状态：

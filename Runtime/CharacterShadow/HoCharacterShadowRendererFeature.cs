@@ -131,13 +131,46 @@ namespace lilToon.URP.Extensions.CharacterShadow
         {
             compatibilityAtlas?.Release(); compatibilityAtlas = null;
             persistentAtlas?.Release(); persistentAtlas = null;
-            // Object.Destroy（延迟销毁）而不是 CoreUtils.Destroy：后者在编辑器里走 DestroyImmediate，
-            // 而 Dispose 会被 Create() 调到，Create() 又可能发生在渲染回调 / Inspector 回调里，
-            // 于是刷 "Destroying GameObjects immediately is not permitted during rendering callbacks"。
-            if (cullingCamera != null) Object.Destroy(cullingCamera.gameObject);
+            DestroyTemporary(cullingCamera != null ? cullingCamera.gameObject : null);
             cullingCamera = null;
-            if (localLight != null) Object.Destroy(localLight.gameObject);
+            DestroyTemporary(localLight != null ? localLight.gameObject : null);
             localLight = null;
+        }
+
+        /// <summary>
+        /// 销毁 temp GameObject（隐藏剔除相机 / 隐藏光）。
+        /// 这里三条路都要照顾，谁都不能直接用：
+        /// <list type="bullet">
+        /// <item><c>CoreUtils.Destroy</c> 在编辑器里走 <c>DestroyImmediate</c>，而本方法会被 <c>Create()</c> 调到，
+        /// 那条路可能发生在渲染回调 / Inspector 回调里 → "Destroying GameObjects immediately is not permitted
+        /// during ... rendering callbacks or OnValidate"。</item>
+        /// <item><c>Object.Destroy</c> 在编辑模式下非法 → "Destroy may not be called from edit mode!"。</item>
+        /// <item><c>DestroyImmediate</c> 在上面那种回调里同样非法。</item>
+        /// </list>
+        /// 所以编辑模式统一推迟到下一个编辑器 tick（那时已经出了回调），播放模式用 <c>Destroy</c> 延迟销毁。
+        /// 这两个对象都是 <c>HideFlags.HideAndDontSave</c>，晚一帧销毁没有任何副作用。
+        /// </summary>
+        private static void DestroyTemporary(Object value)
+        {
+            if (value == null)
+            {
+                return;
+            }
+
+            if (Application.isPlaying)
+            {
+                Object.Destroy(value);
+                return;
+            }
+
+#if UNITY_EDITOR
+            UnityEditor.EditorApplication.delayCall += () =>
+            {
+                if (value != null) Object.DestroyImmediate(value);
+            };
+#else
+            Object.Destroy(value);
+#endif
         }
 
         private static RenderTextureDescriptor Descriptor(int size)
