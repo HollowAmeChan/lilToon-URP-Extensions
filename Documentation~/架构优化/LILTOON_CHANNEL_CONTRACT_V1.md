@@ -7,7 +7,7 @@
 > 基线：`mmd场景测试\朱木古堂\New Scene.unity`（40 灯 / GTAO / SSGI / ScreenProcess + ImageProcess 栈）；渲染器 `PC_Renderer.asset`（12 项）。
 > 原则：按需纸面契约（非固定编码）；无消费者不登记；RenderGraph transient 声明；AOV 命名冻结。
 >
-> v1 是当前 Runtime 的 bridge 契约，不是三轴长期归属。`LILTOON_FORMAL_PIPELINE_DRAFT_V2.md` 已冻结 GB / ObjectBuffer / SurfaceBuffer / AttributeComposite 的目标边界；反射字段迁移只在 `ReflectionPipelineDesign.md` 维护。
+> v1 是当前 Runtime 的 bridge 契约，不是三轴长期归属。[`Ho-管线总览.md`](Ho-管线总览.md) 冻结了 GB / ObjectBuffer / SurfaceBuffer / AttributeComposite 的目标边界（已完成）；反射字段迁移只在 `ReflectionPipelineDesign.md` 维护。
 
 ---
 

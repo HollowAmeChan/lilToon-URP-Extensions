@@ -10,7 +10,7 @@
 >
 > 本文目的：建立一份工程认知文档，说明 Unity 中光照、阴影、Light Probe、Adaptive Probe Volume、Reflection Probe、Lightmap、GTAO、SSGI 等系统如何组合，以及它们当前如何被 lilToon 和 HoRP 消费。
 >
-> 反射方案、反射输入契约和后续实现路线不在本文维护；统一查看 `Documentation~/ReflectionPipelineDesign.md`、`Documentation~/PlanarReflection.md` 与 `Documentation~/架构优化/LILTOON_FORMAL_PIPELINE_DRAFT_V2.md`。本文只保留 Reflection Probe 的 Unity 背景和验证方法。
+> 反射方案、反射输入契约和后续实现路线不在本文维护；统一查看 `Documentation~/ReflectionPipelineDesign.md`、`Documentation~/PlanarReflection.md` 与 `Documentation~/架构优化/Ho-管线总览.md`。本文只保留 Reflection Probe 的 Unity 背景和验证方法。
 
 ---
 

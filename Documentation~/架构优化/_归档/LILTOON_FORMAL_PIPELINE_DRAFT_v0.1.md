@@ -1,12 +1,9 @@
-> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
-
 # 正式管线草案 v0.1（定稿）
 
-> ⛔ **本文的部分章节已被 `LILTOON_FORMAL_PIPELINE_DRAFT_V2.md` 取代**（三轴输入 + 属性合成层的重新串联）：
-> **§3.1 层模型 / §3.2 帧序 / §3.3 旧→新映射 / §10 命名分析 / §11 决策落点** 请看 v2。
-> **继续有效**：**§6.2 排序铁律 / §6.3 暴露面三分类 / §6.4 材质接口脚印**（v2 §4 是它的续写——补了"数据载体"列）、§4（通道/AOV 走契约）、§5、§8、§9。
->
-> 为什么改：v0.1 把"对象 / mask / **surface**"放在同一个 buffer 槽位里，没有意识到 MetadataBuffer 本身是**杂糅**的（身份 + 覆盖率 + 表面数值）。这轮拆成 **GB（几何）/ ObjectBuffer（逐物体）/ SurfaceBuffer（表面）三轴 + Ho-AttributeComposite（运行时属性合成）**；Cryptomatte 仅用于导出 ID/manifest。
+> ⛔ **本文已归档（2026 文档审核）**：三轴输入 + 属性合成层的重新串联后来落到
+> [`Ho-管线总览.md`](../Ho-管线总览.md)（并已实现），本文只作历史记录：它记下了当时的事实基线、
+> 实机 12 项 feature 清单、ShadowCast 多光策略与 OIT 难点，这些内容已被吸收进总览或各 feature 文档。
+> 当时认为已被取代的部分（层模型 / 帧序 / 旧→新映射 / 命名分析 / 决策落点）见总览。
 
 > 状态：**方案定稿**（待实现推进）。通道契约冻结见 `LILTOON_CHANNEL_CONTRACT_V1.md`（v1，独立文档）。
 > 事实基线：**正式场景 = `D:\Unity_Project\BREAK_URP\Assets\mmd场景测试\朱木古堂\New Scene.unity`**；渲染器 = `Assets\Settings\PC_Renderer.asset`（12 项挂载）。

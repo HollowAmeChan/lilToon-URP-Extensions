@@ -7,7 +7,7 @@
 >
 > **实现校正记录（2026-09）**：Ho-GTAO 已补 4 级独立深度金字塔（mip0..3，2x2 最近深度归约），march 按 HTrace 的 `log2(length(sampleOffset))-3` 选择 LOD；GeometryBuffer 仍是唯一法线/线性深度生产者。已接入 HTrace 的 32-bin VisibilityBitmask、线性厚度、距离衰减、平方步进、噪声和逐帧 slice rotation；Temporal 现在保存历史深度并按深度一致性拒绝历史，并消费 HoUrp 内置 MotionVectorRenderPass 的前向 UV motion 做历史重投影；Spatial 使用 8 点深度/法线双边滤波；公共输出仍是 0..1 visibility（1=无遮挡）。逐命中 motion rejection 和 checkerboard 寻址仍列为后续功能项。
 > 依据：契约 v1（`ao` 通道：R8f 0..1，生产端=自研 AO，消费端=材质采样 + AOV）；草案 §5 替换位。
-> 关联：`LILTOON_CHANNEL_CONTRACT_V1.md`（冻结）、`LILTOON_FORMAL_PIPELINE_DRAFT.md` §5/§2（帧序）。
+> 关联：`LILTOON_CHANNEL_CONTRACT_V1.md`（冻结）、`Ho-管线总览.md` §2（帧序）/ §5（契约）。
 > 结论先行：**v1 用「材质采样模式」+ 公共 AO 语义**。lilToon 侧删除 `_ScreenSpaceAOSource` 0/1 分支与 URP 内置 fallback，**语义上直接采样公共纹理 `_HoAOTexture`**（与 `_HoGeometryBuffer*`/`_HoMetadataBuffer*` 公共资源命名一致，不含算法名）；自研 Ho-GTAO 只替换生产端。核心时序改动 = **GeometryBuffer 与 Ho-GTAO 同用 BeforeRenderingOpaques（250）**，并由 Renderer Feature 列表顺序显式保证 GeometryBuffer 在前。
 
 ---

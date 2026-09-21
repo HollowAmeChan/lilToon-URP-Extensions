@@ -4,7 +4,7 @@
 
 > 状态：反射权威设计文档（2026-09-14）
 >
-> 结构基线：[`LILTOON_FORMAL_PIPELINE_DRAFT_V2.md`](架构优化/LILTOON_FORMAL_PIPELINE_DRAFT_V2.md) 的 GB / ObjectBuffer / SurfaceBuffer / Cryptomatte 四层归属。
+> 结构基线：[`Ho-管线总览.md`](架构优化/Ho-管线总览.md) 的 GB / ObjectBuffer / SurfaceBuffer / AttributeComposite 四层归属。
 >
 > 实现约束：实验性桌面管线；不维护旧资产和移动端降级；质量优先。
 

@@ -4,7 +4,7 @@
 
 > 状态：Draft v0.3（本地盘点 ✅ + 外部调研 ✅（URP17 源码级 + AOV/Nuke 工业规范），NPR 光照域以本地 HDRP 对照 + 业界为参照）
 >
-> ⚠ **前提已过时**：本文写于 MetadataBuffer 仍承担"材质/对象语义"的时期，它的 buffer 划分（MetadataBuffer + GeometryBuffer）**不再成立**。当前划分见 **`LILTOON_FORMAL_PIPELINE_DRAFT_V2.md`**：**GB（几何）/ ObjectBuffer（逐物体）/ SurfaceBuffer（表面）三轴 + Ho-Cryptomatte（属性合成与遮罩）**。**继续有效**：功能域盘点、AOV 方案、§7 业界对照、§2 的"边界与耦合判定"方法论；**凡涉及 MetadataBuffer 的段落一律按 v2 读**（其槽位变成 OB / SB 的通道，`custom0~3` 那类匿名通道由 CM 的具名遮罩取代）。
+> ⚠ **前提已过时**：本文写于 MetadataBuffer 仍承担"材质/对象语义"的时期，它的 buffer 划分（MetadataBuffer + GeometryBuffer）**不再成立**。当前划分见 **[`Ho-管线总览.md`](Ho-管线总览.md)**：**GB（几何）/ ObjectBuffer（逐物体）/ SurfaceBuffer（表面）三轴 + Ho-AttributeComposite（属性合成与遮罩）**。**继续有效**：功能域盘点、AOV 方案、§7 业界对照、§2 的"边界与耦合判定"方法论；**凡涉及 MetadataBuffer 的段落一律按 v2 读**（其槽位变成 OB / SB 的通道，`custom0~3` 那类匿名通道由 CM 的具名遮罩取代）。
 > 用途：回答“我们现在是什么、工业界怎么组织、URP 的边界在哪、功能该放哪层、怎么为未来拆解留接口、怎么接 Nuke 多通道”。
 > 背景：**渲染环境**（作品集 / 动画渲染），非性能敏感；主材质 `lilToon`（当前）；`HoNpr`（重生成式材质系统，**已因过重暂停**，只作反例）；管线 URP17 / RenderGraph 主线。
 
