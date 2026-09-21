@@ -1,4 +1,5 @@
-> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
+> **状态：现行架构总览**（2026 文档审核时按 R6/R7 之后的实现校正：MetadataBuffer 已整块删除，语义与数值由 OB / SB / AC 提供）。
+> 各 producer 的细节见 `Documentation~/架构优化/Ho-ObjectBuffer.md` / `Ho-SurfaceBuffer.md` / `Ho-AttributeComposite.md` 与 `Documentation~/GeometryBuffer.md`。
 
 # PostProcessing 当前架构
 
@@ -9,8 +10,10 @@
 已落地的运行时模块：
 
 - `ImageProcess`：Volume 驱动的图像域后处理栈，支持 RenderGraph 和兼容路径，当前效果枚举覆盖 50 个以上图像效果，其中 `RemovedEffectSlot*` 只作为旧序列化槽位保留。
-- `ScreenProcess`：Volume 驱动的语义屏幕效果栈，当前效果为 `CustomMaterial`、`EdgeLight`、`Outline`、`DropShadow`、`DepthOfField`、`PostLighting`、`SkyTyndall`、`DepthFog`。它可以读取 MetadataBuffer、GeometryBuffer 和可选 Sky buffer。`DepthFog`（深度雾/高度雾，家族 C）是**一个效果里的两个槽**（各带开关，可同时开），见 `DepthFog.md`。
-- `MetadataBuffer`：输出 Mask/ID、SurfaceData、Material Custom0-3、Object Custom0-7 和 SurfaceColor 等语义缓冲，并提供 Subject/Group 组件写入对象级元数据。
+- `ScreenProcess`：Volume 驱动的语义屏幕效果栈，当前效果为 `CustomMaterial`、`EdgeLight`、`Outline`、`DropShadow`、`DepthOfField`、`PostLighting`、`SkyTyndall`、`DepthFog`。它的遮罩读角色覆盖率（AC 总覆盖率 / OB 身份池），其余输入是 SB 的材质数值、GeometryBuffer 与可选 Sky buffer。`DepthFog`（深度雾/高度雾，家族 C）是**一个效果里的两个槽**（各带开关，可同时开），见 `DepthFog.md`。
+- `ObjectBuffer`：逐样本身份池（16 bit `(组, 槽位)`）→ 自己 resolve 出最多 4 层身份 + 每层覆盖率；对象侧用 `Ho-ObjectBuffer Group` 组件写身份与标签。
+- `SurfaceBuffer`：五张表面数值图（Color / Normal / Material / Reflection / Classification）+ internal owner，由材质侧 `HO_SURFACE_BUFFER` pass 一趟写全。
+- `AttributeComposite`：语义遮罩与合成属性的唯一逻辑入口 —— 读 OB + SB，按 `HoSemanticSchema` 解压出 Selection 池（每张两条 `(SemanticId, coverage)`）供消费者查询。
 - `GeometryBuffer`：输出 normal/depth 缓冲，当前还增加了可选 Sky buffer 捕获，供 `SkyTyndall` 等 ScreenProcess 效果使用。
 - `CharacterSpecialization`：角色特化合成已迁移到独立 RendererFeature 和 Volume，包含眼睛透过、前发投影、角色捕获 RT 和调试输出。
 - `ShadowCast`：独立 RendererFeature，包含可见光采集、自定义阴影 atlas、第二方向光级联、PCSS 参数、运行时发布和调试视图。
@@ -33,9 +36,11 @@
   效果变成固定顺序的链层、资源绑定按冻结的 `HoAC_*`，等到 AC（`Ho-AttributeComposite`）R5 一起做。
   v1（配置模型 + 与另外两块对齐的 UI：搜索栏 + 左侧图标侧栏 + 统一行样式，这块**没有图层也没有顺序**，
   5 个区段固定、只有启用开关）**已落地**，见 `CharacterSpecializationBrowser.md`。
-- `Tests/Runtime` 目录为空，源码中也未检索到 `[Test]` 或 `[UnityTest]`。本次只能做源码结构和静态检查，不能替代 Unity Editor 编译和画面验证。
-- 包目录没有 `.sln`、`.csproj` 或 Unity `ProjectSettings/ProjectVersion.txt`，无法在当前包根直接跑 C# 编译。
-- 工作树里已有未提交改动，尤其是 `ScreenProcess`、`GeometryBuffer` 和 `SkyTyndall` 相关文件。本文档按这些改动后的源码状态描述。
+- `Tests/Runtime` 目录为空，源码中也未检索到 `[Test]` 或 `[UnityTest]`；画面验证仍要人工做，静态检查只能保证"树没坏"。
+- 包目录没有 `.sln` / `.csproj`，Unity 侧编译以编辑器为准；本仓另有三套 Roslyn 静态闸门可离线跑：
+  `.codex-research/check_compile.ps1`（extensions Runtime + Editor）、`check_compile_liltoon.ps1`（lilToon.Editor）、
+  `check_shaders.ps1`（HLSL include 解析与调用可达性）。
+- 本文按 R6/R7 之后的实现核对（MetadataBuffer 已整块删除）；包内文档写作时间跨度大，具体细节以代码为准。
 - 部分 Inspector 文本在源码里已经出现编码乱码，这不影响架构判断，但会影响编辑器显示质量，后续应单独修复。
 
 ## 共享图层混合表（IP / SP）
@@ -63,8 +68,8 @@
 典型相机帧里的关系如下：
 
 1. `HoShadowCastRendererFeature` 在 `BeforeRenderingPrePasses` 默认时机生成自定义阴影数据，并通过全局纹理、矩阵和参数发布给材质侧使用。
-2. `HoMetadataBufferRendererFeature` 在 `AfterRenderingOpaques` 默认时机输出对象和材质语义缓冲。
-3. `HoGeometryBufferRendererFeature` 在 `AfterRenderingOpaques` 默认时机输出 normal/depth；启用 Sky buffer 时，`HoGeometryBufferSkyPass` 在 `AfterRenderingSkybox` 默认时机从当前 camera color 捕获天空信息。
+2. `Ho-ObjectBuffer` / `Ho-SurfaceBuffer`（以及 `Ho-GeometryBuffer`）默认都在 `BeforeRenderingOpaques` 输出身份、表面数值与几何；`Ho-AttributeComposite` 紧随其后把身份 + 标签解压成 Selection 池 —— 消费者按自己的 pass 时机读，不要求它更晚。
+3. `HoGeometryBufferRendererFeature` 默认也是在 `BeforeRenderingOpaques` 输出 normal/depth；启用 Sky buffer 时，`HoGeometryBufferSkyPass` 在 `AfterRenderingSkybox` 默认时机从当前 camera color 捕获天空信息。
 4. `HoCharacterSpecializationRendererFeature` 在 `AfterRenderingTransparents` 默认时机执行角色捕获和合成。
 5. URP 原生后处理执行。
 6. `ScreenProcessRendererFeature` 在 `AfterRenderingPostProcessing` 执行语义屏幕效果。
@@ -74,17 +79,11 @@
 
 ## 语义缓冲层
 
-`MetadataBuffer` 的职责是把对象、材质和分组语义写成可被屏幕效果采样的 RT：
+屏幕效果真正吃的语义由三个 producer 加一个合成器提供（几何见下一节）：
 
-- RendererFeature：`Runtime/MetadataBuffer/HoMetadataBufferRendererFeature.cs`
-- 主输出 Pass：`Runtime/MetadataBuffer/HoMetadataBufferPass.cs`
-- RenderGraph 资源：`HoMetadataBufferRenderGraphResources`
-- 全局纹理：`_HoMetadataBufferMaskIdTexture`、`_HoMetadataBufferSurfaceDataTexture`、`_HoMetadataBufferMaterialCustom0_3Texture`、`_HoMetadataBufferObjectCustom0_3Texture`、`_HoMetadataBufferObjectCustom4_7Texture`、`_HoMetadataBufferSurfaceColorTexture`
-
-对象侧有两种写入方式：
-
-- `HoMetadataBufferSubject` 用 `MaterialPropertyBlock` 写 Mask、GroupId、ObjectId、Flags、Thickness、Curvature、TransmittanceHint 和材质自定义值。
-- `HoMetadataBufferGroup` 把 CharacterId、PartId、Flags 和 ObjectCustom 位打包进 `unity_RendererUserValue`，也会回写对应的 MaterialPropertyBlock。
+- **`ObjectBuffer`（身份与覆盖率）**：`Runtime/ObjectBuffer/HoObjectBufferRendererFeature.cs` → `HoObjectBufferPass`（自建 MSAA：逐样本写 16 bit 身份，再 resolve 出最多 4 层身份 + 每层覆盖率）。对象侧是 `Ho-ObjectBuffer Group` 组件（`HoObjectBufferGroup`：部件行表、标签位掩码、朝向参考系），把 `(组, 槽位)` 写进 `unity_RendererUserValue`。
+- **`SurfaceBuffer`（表面数值）**：`Runtime/SurfaceBuffer/`，材质侧 `HO_SURFACE_BUFFER` pass 一次写五张图 + internal owner。
+- **`AttributeComposite`（合成与查询）**：`Runtime/AttributeComposite/`，读 OB 身份池 + 部件标签，按 `HoSemanticSchema` 写 Selection 池；消费者只经 `HoAC_*` 查询，不自己解码 packing。
 
 `GeometryBuffer` 的职责是提供屏幕空间法线、线性深度和可选天空缓存：
 
@@ -116,7 +115,7 @@ RendererFeature 只安装渲染 Pass，实际层配置来自 Volume。相机类�
 - DepthOfField 的场景焦点目标和路径回退
 - 层遮罩开关/反转/调试：`useMask`、`invertMask`、`debugMask`
 
-层遮罩今天只采样 MetadataBuffer 的 `maskId` 覆盖率（`_HoMetadataBufferMaskIdTexture.r`），配一个每层开关、一个反转和一个 debug 直出（`_LayerMaskDebugOutput`）；开关关闭时该层不做遮罩（乘 1），MetadataBuffer 不可用时乘 0。**规则来源（20 个 rule source、≤4 条规则列表）已作为未使用功能删除**，SP 图层将在 R5 作为**新工作**接入 AC（`Ho-AttributeComposite`）的具名遮罩——它们不是迁移关系。
+层遮罩采样的是**角色覆盖率**（AC 的总覆盖率，来源是 OB 的四层身份覆盖率），配一个每层开关、一个反转和一个 debug 直出（`_LayerMaskDebugOutput`）；开关关闭时该层不做遮罩（乘 1），覆盖率来源不可用时乘 0。遮罩纹理的 texel / 尺寸由 C# 显式发布（`_lilHoSPMaskTexelSize` —— 全局纹理没有 `_TexelSize`，早先读它导致"按像素扩张 / 羽化"的半径恒为 0）。**规则来源（20 个 rule source、≤4 条规则列表）已作为未使用功能删除**；"按语义名选遮罩"仍是后续的新工作，不是迁移。
 
 删除时顺带修掉两个意外（都发生在"没配任何规则"这条路径上）：旧实现即使没配规则也会合成一条 Direct/Mask 规则，
 于是覆盖率在规则级和出口各乘一次、被连乘三次（`coverage³`）；现在就是 `coverage`。
@@ -126,17 +125,17 @@ RendererFeature 只安装渲染 Pass，实际层配置来自 Volume。相机类�
 
 当前资源依赖：
 
-- `EdgeLight`：需要 MetadataBuffer MaskId 和 GeometryBuffer normal/depth。
+- `EdgeLight`：需要角色全覆盖率与 GeometryBuffer normal/depth。
 - `Outline`：优先需要 GeometryBuffer normal/depth；GeometryBuffer coverage 为 0 的像素不参与边缘检测。
-- `DropShadow`：优先需要 MetadataBuffer MaskId；Metadata 不可用时兼容路径和 RenderGraph 使用内部 SubjectMask fallback。
+- `DropShadow`：优先需要角色覆盖率；覆盖率不可用时兼容路径和 RenderGraph 使用内部 SubjectMask fallback。
 - `DepthOfField`：需要 GeometryBuffer 线性深度；coverage 无效时按远裁剪面处理，支持固定焦距和 Transform 目标焦点。
-- `PostLighting`：需要 MetadataBuffer MaskId 和 GeometryBuffer normal/depth。
-- `SkyTyndall`：需要 GeometryBuffer normal/depth 和 Sky buffer；启用层遮罩时还需要 MetadataBuffer MaskId。
+- `PostLighting`：需要角色覆盖率与 GeometryBuffer normal/depth。
+- `SkyTyndall`：需要 GeometryBuffer normal/depth 和 Sky buffer；启用层遮罩时还需要角色覆盖率。
 - `CustomMaterial`：默认只做 layer blit，按用户材质或 shader 扩展。
 
-`ScreenProcessRuntimeDiagnostics.CurrentSnapshot` 会记录 active layer 数、写入 layer 数、back buffer 状态、camera color 状态、MetadataBuffer/GeometryBuffer/SkyTexture 是否满足等信息。调试面板应该优先读这个 snapshot，而不是猜测缺哪个 RendererFeature。
+`ScreenProcessRuntimeDiagnostics.CurrentSnapshot` 会记录 active layer 数、写入 layer 数、back buffer 状态、camera color 状态、角色覆盖率 / GeometryBuffer / SkyTexture 是否满足等信息（面板行是 `Coverage (AC/OB)`）。调试面板应该优先读这个 snapshot，而不是猜测缺哪个 RendererFeature。
 
-RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendererFeature` 在 ScreenProcess stack 后立即入队 `Ho-ScreenProcess Release Semantic Buffers`。它用 `SetGlobalTextureAfterPass` 把 MetadataBuffer、GeometryBuffer 和 Sky buffer 的 shader global 改回 RenderGraph black texture，并把 active / valid flag 清为 0。这样 ImageProcess 仍然只看到 camera color，不会因为上一阶段的全局绑定在 RenderDoc 里表现为继续持有 G/MBuffer。这个 pass 只解绑 global，不代表提前销毁资源；如果 DebugTile 或其他后续 pass 显式 `UseTexture` 读取这些 RenderGraph 资源，资源生命周期仍会延长到真实最后消费者。
+RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendererFeature` 在 ScreenProcess stack 后立即入队 `Ho-ScreenProcess Release Semantic Buffers`。它用 `SetGlobalTextureAfterPass` 把 GeometryBuffer 与 Sky buffer 的 shader global 改回 RenderGraph black texture，并把本 feature 的 `_lilHoSPMaskValid` / `_SubjectMaskValid` 清为 0。这样 ImageProcess 仍然只看到 camera color，不会因为上一阶段的全局绑定在 RenderDoc 里表现为继续持有 G/MBuffer。这个 pass 只解绑 global，不代表提前销毁资源；如果 DebugTile 或其他后续 pass 显式 `UseTexture` 读取这些 RenderGraph 资源，资源生命周期仍会延长到真实最后消费者。
 
 ## ImageProcess
 
@@ -150,7 +149,7 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 - `Runtime/ImageProcess/Shaders/ImageProcess`
 - `Editor/PostProcessing/ImageProcess`
 
-它不消费 MetadataBuffer 或 GeometryBuffer，只处理 camera color。RendererFeature 从 Volume 生成运行时层列表，`ImageProcessPass` 用 ping-pong texture 或 RenderGraph `ImageProcessChain` 串起每个效果。最终结果回写到 camera color。
+它不消费 OB / SB / AC 的产物，也不消费 GeometryBuffer，只处理 camera color。RendererFeature 从 Volume 生成运行时层列表，`ImageProcessPass` 用 ping-pong texture 或 RenderGraph `ImageProcessChain` 串起每个效果。最终结果回写到 camera color。
 
 效果执行分类来自 `ImageProcessEffectDescriptor`：
 
@@ -176,10 +175,10 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 它支持 Volume 覆盖，执行内容包括：
 
 - 使用 `LightMode = HoCharacterCapture` 的材质 pass 捕获眼睛/脸部数据。
-- 读取 MetadataBuffer 的对象自定义位和角色 ID。`ObjectCustom0` 约定为 `CharacterFull / 全角色`，`ObjectCustom6` 约定为 `CharacterBody / 人体`。
+- 语义只经 AC 的 Selection 池查询（`HoAC_Selection` / `HoAC_Predicate` / `HoAC_Layer0Group`）：角色特化把它转置成自己的两张位平面，不再自己解码 OB 身份池与部件行表，也不再读任何 bit 掩码。
 - 读取 GeometryBuffer normal/depth 辅助前发投影距离、深度、轮廓高度渐隐和遮罩判断。
 - 合成眼睛透过、前发投影、脸色扩散、主体轮廓、增强轮廓，或输出调试视图。
-- 眼睛透过支持相机角度修正：在 `HoMetadataBufferGroup` 上指定“面部朝向”（一个 Transform，骨骼或朝向正确的空物体均可；+Z 为脸前、+X 为角色右、+Y 为上，轴向可在组件上配置），CPU 每帧按相机与该朝向的平转/俯仰角写入 256×1 查询表，Composite 中按角色 ID 采样并衰减眼透不透明度。开关与平转/俯仰半角范围、柔化、强度由 Volume/Feature 全局控制（默认关闭）。
+- 眼睛透过支持相机角度修正：在 `Ho-ObjectBuffer Group`（`HoObjectBufferGroup`）上指定“面部朝向”（一个 Transform，骨骼或朝向正确的空物体均可；+Z 为脸前、+X 为角色右、+Y 为上，轴向可在组件上配置），CPU 每帧按相机与该朝向的平转/俯仰角写入 256×1 查询表，Composite 中按角色 ID 采样并衰减眼透不透明度。开关与平转/俯仰半角范围、柔化、强度由 Volume/Feature 全局控制（默认关闭）。
 
 材质接入点保留在 shader include 中：角色捕获 pass 应调用 `LilHoCharacterBuildCaptureOutput`，并让材质自己的 alpha、cutout、dissolve 规则决定是否写入捕获 RT。
 
@@ -234,7 +233,6 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 
 - `ImageProcessRuntimeDiagnostics`
 - `ScreenProcessRuntimeDiagnostics`
-- `HoMetadataBufferDebugPass`
 - `HoGeometryBufferDebugPass`
 - `HoShadowCastDebugPass`
 - `HoCharacterSpecializationRuntimeDiagnostics`
@@ -244,9 +242,9 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 
 1. 先确认对应 RendererFeature 是否启用，并且目标相机是 Game 或允许 SceneView。
 2. 再看 Volume 是否 active，layer 是否 enabled 且 intensity 大于阈值。
-3. 对 `ScreenProcess`，检查诊断 snapshot 中 MetadataBuffer、GeometryBuffer、SkyTexture 的可用性。
+3. 对 `ScreenProcess`，检查诊断 snapshot 中角色覆盖率 / GeometryBuffer / SkyTexture 的可用性。
 4. 对 `ImageProcess`，检查 active layer 数、back buffer 状态和 camera color 是否可用。
-5. 对 `CharacterSpecialization`，检查 capture shader tag、MetadataBuffer 分组位和 GeometryBuffer 输入。
+5. 对 `CharacterSpecialization`，检查 capture shader tag、AC 的 Selection 池（OB 是否在 renderer 里）和 GeometryBuffer 输入。
 
 ## 新增效果接入规则
 
@@ -254,7 +252,7 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 
 1. 在 `ScreenProcessEffect` 增加枚举值。
 2. 在 `ScreenProcessShaderConstants` 和 `ScreenProcessEffectRegistry` 注册默认 shader。
-3. 在 `ScreenProcessRendererFeature` 中声明资源依赖，并在 RenderGraph pass 中绑定需要的 MetadataBuffer、GeometryBuffer 或 Sky texture。
+3. 在 `ScreenProcessRendererFeature` 中声明资源依赖，并在 RenderGraph pass 中绑定需要的覆盖率（OB）、GeometryBuffer 或 Sky texture。
 4. 在 `Editor/PostProcessing/ScreenProcess/Filters` 添加参数 UI。
 5. 在 `ScreenProcessStackVolumeEditor` 和 presets 文件中加入图标、默认值和预设。
 6. 在 `Runtime/ScreenProcess/Shaders/ScreenProcess` 添加 shader。
@@ -277,7 +275,7 @@ RenderGraph 路径有一个刻意保留的小收尾 pass：`ScreenProcessRendere
 
 URP Renderer Asset 中建议按依赖加入这些 RendererFeature：
 
-- 必选：`Ho-MetadataBuffer`，当 ScreenProcess 层遮罩、角色语义、DropShadow 或 PostLighting 需要对象语义时启用。
+- 必选：`Ho-ObjectBuffer` + `Ho-SurfaceBuffer` + `Ho-AttributeComposite`，当 ScreenProcess 层遮罩、角色语义、DropShadow、PostLighting 或 PLR/SSS 需要覆盖率与表面数值时启用（顺序：三个 producer 在前、AC 在后、消费者最后）。
 - 必选：`Ho-GeometryBuffer`，当 EdgeLight、PostLighting、SkyTyndall 或 CharacterSpecialization 需要 normal/depth 时启用。
 - 可选：`Ho-GeometryBuffer` 的 Sky buffer，只有 SkyTyndall 或后续天空采样效果需要时启用。
 - 可选：`Ho-CharacterSpecialization`，角色眼透、前发投影、脸色扩散或轮廓效果需要时启用。
