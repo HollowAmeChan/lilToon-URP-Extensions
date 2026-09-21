@@ -2,6 +2,15 @@
 
 ## Unreleased
 
+- **文档分布整理（撤销 `架构优化/`，现行移到外层、过程记录进 `归档/`）**：46 篇（45 篇 + 新增 `文档索引.md`）重新分布，`Documentation~/` 现在是"外层 = 定型功能/架构 + 少量主题文件夹"：
+  - **外层 19**：索引、总览与契约（`Ho-管线总览.md` / `Ho-ChannelContract-v1.md` / `Ho-RenderFeatureOrdering.md` / `Ho-UI_风格规范.md`）、四轴（`Ho-GeometryBuffer.md` / `Ho-ObjectBuffer.md` / `Ho-SurfaceBuffer.md` / `Ho-AttributeComposite.md`）、屏幕效果（`Ho-GTAO.md` / `Ho-SSGI.md` / `Ho-ShadowCast-PCSS.md` / `Ho-已知问题-描边SSGI白边.md`）、光照探针接入说明、`OIT.md` / `TransparentPass.md` / `PlanarReflection.md` / `ReflectionPipelineDesign.md` / `MaterialGradient.md`。
+  - **主题文件夹**：`角色特化/`（3）、`后处理/`（6，原 `PostProcessing/` 改名，`Images/` 随之迁移）、`架构边界/`（2）、`计划/`（2）。
+  - **`归档/`（14）**：旧管线草案 v0.1、CB 规划、旧评审稿、HoAOV/HoSSS 设计记录、RPComponentRework 验收、描边语义调查、GTAO MSAA 记录、GTAO/SSGI 对齐工作表、ReSTIR 共享层报告、HTrace GTAO 参数档案、GradientInvestigation、DepthOfField 记录、CS 浏览器重构记录——保留作资料与"坑"的来源，不再作为现行依据。
+  - **改名对齐内容**：`GeometryBuffer.md` → `Ho-GeometryBuffer.md`；`LILTOON_CHANNEL_CONTRACT_V1.md` → `Ho-ChannelContract-v1.md`；`LILTOON_RENDER_FEATURE_ORDERING.md` → `Ho-RenderFeatureOrdering.md`；`LILTOON_GTAO_PLAN.md` → `Ho-GTAO.md`；`LILTOON_GI_PLAN.md` → `Ho-SSGI.md`；`LILTOON_SHADOW_PCSS_PLACEHOLDER.md` → `Ho-ShadowCast-PCSS.md`；`LILTOON_KNOWN_ISSUE_OUTLINE_SSGI_GLOW.md` → `Ho-已知问题-描边SSGI白边.md`。
+  - **引用修复**：全部相对/绝对 md 链接、正文路径提及、以及 6 处 extensions 代码注释里的 `Documentation~/PostProcessing/*.md` 同步更新；新增 `Documentation~/文档索引.md` 作为唯一入口（分类 + 一句话 + 归档理由）。
+  - **核查**：46 篇 H1 各一个、链接 0 悬空、旧目录/旧文件名提及 0 残留、无编码损坏；三个检查器全通过。
+
+
 - **文档全量审核（`Documentation~/` 45 篇，只动文档、不改代码）**：按「架构形式 + 设计目的 + 踩过的坑」重审每一篇，把声明与**当前 GB/OB/SB producer + AC compositor** 实现逐条对齐（grep 核对代码事实），分 17 次提交（批 1 → 批 8d，extensions 仓）。要点：
   - **改名/合并/归档**：三篇地基文档改名 `Ho-ObjectBuffer.md` / `Ho-SurfaceBuffer.md` / `Ho-AttributeComposite.md`；两份管线草案合并成 `Ho-管线总览.md`，v0.1 归档；`Ho-CharacterBuffer_规划.md` 606 → 121 行（保留 K=N 容量分析、MSAA 官方规则、非线性 AA 禁令、业界依据与迁移落点）。
   - **调查/工作表压缩成「结论 + 坑」**：描边语义调查、GTAO MSAA 轮廓白线、HTrace GTAO 参数档案、GTAO/SSGI 对齐工作表、SSGI ReSTIR 共享层评估、RPComponentRework 验收、CS 的 RDG 逐趟清单（495 → 130 行）。
