@@ -32,10 +32,21 @@ namespace lilToon.URP.Extensions.CharacterShadow
             debugPass = new HoCharacterShadowDebugPass();
             RenderPipelineManager.beginCameraRendering -= ResetCamera;
             RenderPipelineManager.beginCameraRendering += ResetCamera;
+            RenderPipelineManager.endCameraRendering -= EndCamera;
+            RenderPipelineManager.endCameraRendering += EndCamera;
         }
 
-        private static void ResetCamera(ScriptableRenderContext context, Camera camera)
-        { Shader.SetGlobalFloat("_HoCSActive", 0); }
+        private void ResetCamera(ScriptableRenderContext context, Camera camera)
+        {
+            Shader.SetGlobalFloat("_HoCSActive", 0);
+            // Hide the CS-only light for this camera's cull; the pass re-enables it while it records.
+            pass?.DisableLocalLight();
+        }
+
+        private void EndCamera(ScriptableRenderContext context, Camera camera)
+        {
+            pass?.DisableLocalLight();
+        }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
@@ -82,6 +93,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
         protected override void Dispose(bool disposing)
         {
             RenderPipelineManager.beginCameraRendering -= ResetCamera;
+            RenderPipelineManager.endCameraRendering -= EndCamera;
             pass?.Dispose();
             CoreUtils.Destroy(debugMaterial);
             Shader.SetGlobalFloat("_HoCSActive", 0);
@@ -103,26 +115,29 @@ namespace lilToon.URP.Extensions.CharacterShadow
         private RTHandle compatibilityAtlas;
         private RTHandle persistentAtlas;
         private Camera cullingCamera;
+        private Light localLight;
         private sealed class PassData
         {
             internal HoCharacterShadowFrame frame;
             internal RendererListHandle[] lists;
         }
 
-        // Must run BEFORE URP's own shadow casting for this camera. When the local atlas was built
-        // at BeforeRenderingPrePasses (the event URP itself uses for the cascade shadow passes) the
-        // caster draw ended up depending on the viewing camera's cascade state: with cascade count
-        // > 1 the atlas came out completely empty whenever the camera was not inside its own
-        // cascade 0, so CS silently fell back to the distance-faded main light shadow and all
-        // shadows vanished as the camera moved away. Measured by ValidateDistanceRendering.
+        // 排在 URP 相机阴影阶段之前、任何材质消费之前。CS 用的是**自己的隐藏光**（见 EnsureLocalLight），
+        // 所以不会和 URP 的相机级联抢同一个光源的 shadow renderer list；这里保留早于阴影阶段的时机，
+        // 与 CS 最初的行为一致。
         internal HoCharacterShadowPass() { renderPassEvent = RenderPassEvent.BeforeRenderingShadows; }
         internal void Setup(HoCharacterShadowFrame value) { frame = value; }
         internal void Dispose()
         {
             compatibilityAtlas?.Release(); compatibilityAtlas = null;
             persistentAtlas?.Release(); persistentAtlas = null;
-            if (cullingCamera != null) CoreUtils.Destroy(cullingCamera.gameObject);
+            // Object.Destroy（延迟销毁）而不是 CoreUtils.Destroy：后者在编辑器里走 DestroyImmediate，
+            // 而 Dispose 会被 Create() 调到，Create() 又可能发生在渲染回调 / Inspector 回调里，
+            // 于是刷 "Destroying GameObjects immediately is not permitted during rendering callbacks"。
+            if (cullingCamera != null) Object.Destroy(cullingCamera.gameObject);
             cullingCamera = null;
+            if (localLight != null) Object.Destroy(localLight.gameObject);
+            localLight = null;
         }
 
         private static RenderTextureDescriptor Descriptor(int size)
@@ -139,10 +154,59 @@ namespace lilToon.URP.Extensions.CharacterShadow
             };
         }
 
+        // 每个 slice 占光源自己的一个 split 索引（0 起）。
+        // 注意：**不能借场景主光**。Unity 的 shadow renderer list 是按“光源一帧一份”提交的
+        // （和传进去的 CullingResults 无关），对主光调 CreateShadowRendererList 会让 URP 的相机阴影图
+        // 拿到我们的局部盒列表：场景里没有 CS 组件的物体一起丢阴影
+        // （ValidateSceneShadows 实测 without CS=0.008 / with CS=0.803），
+        // 而把我们的 pass 挪到 URP 阴影阶段之后，我们自己又什么都拿不到（atlas 全 0）。
+        // 隐藏光 + split 索引 0..N-1 的组合两件事都成立：URP 阴影图完好，局部图集也有内容。
+
+        // CS 用自己的隐藏方向光做局部剔除/绘制，**不能借场景主光**：
+        // Unity 的 shadow renderer list 是“每光源一帧一份”的提交式状态（CullingResults 不参与身份），
+        // 在同一帧里对主光调 CreateShadowRendererList 会让 URP 的相机阴影图拿到我们的局部盒列表 ——
+        // 实测：CS 开启后除角色外所有物体失去普通投影（ValidateSceneShadows: without CS=0.008 / with CS=0.803），
+        // 而把我们的 pass 挪到 URP 阴影阶段之后，我们自己又什么都拿不到（atlas 全 0）。
+        // 用的隐藏光：方向/剔除层跟随主光，但**不贡献任何光照**（color 黑 + 极小强度），也不动 RenderSettings.sun，
+        // 因此 URP 的主光选择（优先 RenderSettings.sun）与场景明暗都不受影响。
+        // 强度必须 > 0：实测 intensity = 0 的灯**不会出现在 visibleLights 里**，我们自己也就找不到它；
+        // 取一个远小于任何真实太阳的强度，既保证可见，又保证万一没设 RenderSettings.sun 也争不到主光。
+        private void EnsureLocalLight(Light source)
+        {
+            if (localLight == null)
+            {
+                var lightObject = new GameObject("Ho-CS Local Light", typeof(Light)) { hideFlags = HideFlags.HideAndDontSave };
+                localLight = lightObject.GetComponent<Light>();
+                localLight.type = LightType.Directional;
+                localLight.shadows = LightShadows.Hard;
+                localLight.color = Color.black;
+            }
+
+            // 强度必须 > 0：实测 intensity = 0 的灯**不会出现在 visibleLights 里**，我们自己也就找不到它；
+            // 取一个远小于任何真实太阳的强度，既保证可见，又保证万一没设 RenderSettings.sun 也争不到主光。
+            localLight.intensity = 0.001f;
+            localLight.transform.rotation = source.transform.rotation;
+            localLight.cullingMask = source.cullingMask;
+            localLight.renderingLayerMask = source.renderingLayerMask;
+            localLight.shadowStrength = source.shadowStrength;
+            localLight.shadowBias = source.shadowBias;
+            localLight.shadowNormalBias = source.shadowNormalBias;
+            // 只在“本相机剔除完之后、本相机画完之前”这段窗口里开着：beginCameraRendering 早于
+            // URP 的 context.Cull（UniversalRenderPipeline.cs:857 在 CameraRenderingScope 之内），
+            // 所以相机永远看不到这盏灯；而我们的 Cull() 在 AddRenderPasses→RecordRenderGraph 里，
+            // 晚于相机剔除，能看到它。
+            localLight.enabled = true;
+        }
+
+        internal void DisableLocalLight()
+        {
+            if (localLight != null) localLight.enabled = false;
+        }
+
         // A separate CullingResults per local projection keeps native shadow split state isolated
         // from URP's main CSM and from other CS characters. No HoURP modifications required.
         private bool Cull(CullContextData context, Camera camera, HoCharacterShadowFrame frame,
-            HoCharacterShadowSlice slice, out ShadowDrawingSettings drawing)
+            HoCharacterShadowSlice slice, int sliceIndex, int sliceCount, out ShadowDrawingSettings drawing)
         {
             drawing = default;
             if (cullingCamera == null)
@@ -182,9 +246,13 @@ namespace lilToon.URP.Extensions.CharacterShadow
 
             int lightIndex = -1;
             for (int i = 0; i < results.visibleLights.Length; i++)
-                if (results.visibleLights[i].light == frame.light) { lightIndex = i; break; }
+                if (results.visibleLights[i].light == localLight) { lightIndex = i; break; }
             if (lightIndex < 0)
-            { HoCharacterShadowRendererFeature.LastCullStatus += $"|noLight(lights={results.visibleLights.Length})"; return false; }
+            {
+                HoCharacterShadowRendererFeature.LastCullStatus +=
+                    $"|noLocalLight(lights={results.visibleLights.Length},local={(localLight != null)},intensity={(localLight != null ? localLight.intensity : -1)})";
+                return false;
+            }
             if (!results.GetShadowCasterBounds(lightIndex, out _))
             {
                 // A completed, empty cull is valid visibility=1, not a failed query.
@@ -201,15 +269,16 @@ namespace lilToon.URP.Extensions.CharacterShadow
             Vector3 sphereCenter = slice.origin + frame.light.transform.forward * (slice.nearPlane + halfDepth);
             split.cullingSphere = new Vector4(sphereCenter.x, sphereCenter.y, sphereCenter.z,
                 Mathf.Sqrt(2 * halfWidth * halfWidth + halfDepth * halfDepth));
-            var splits = new NativeArray<ShadowSplitData>(1, Allocator.Temp);
+            var splits = new NativeArray<ShadowSplitData>(Mathf.Max(1, sliceCount), Allocator.Temp);
             var lights = new NativeArray<LightShadowCasterCullingInfo>(results.visibleLights.Length, Allocator.Temp);
-            splits[0] = split;
+            int splitIndex = sliceIndex;
+            splits[splitIndex] = split;
             lights[lightIndex] = new LightShadowCasterCullingInfo
-            { splitRange = new RangeInt(0, 1), projectionType = BatchCullingProjectionType.Orthographic };
+            { splitRange = new RangeInt(0, sliceCount), projectionType = BatchCullingProjectionType.Orthographic };
             context.CullShadowCasters(results, new ShadowCastersCullingInfos { splitBuffer = splits, perLightInfos = lights });
             drawing = new ShadowDrawingSettings(results, lightIndex)
             {
-                splitIndex = 0,
+                splitIndex = splitIndex,
                 useRenderingLayerMaskTest = UniversalRenderPipeline.asset != null && UniversalRenderPipeline.asset.useRenderingLayers
             };
             slice.valid = true;
@@ -229,7 +298,12 @@ namespace lilToon.URP.Extensions.CharacterShadow
             if (frame == null) return;
             var camera = data.Get<UniversalCameraData>().camera;
             var cullContext = data.Get<CullContextData>();
-            HoCharacterShadowRendererFeature.LastCullStatus = $"slices={frame.slices.Count}";
+            EnsureLocalLight(frame.light);
+            var lightData = data.Get<UniversalLightData>();
+            // camLights/add 是给“隐藏光有没有泄漏进相机灯光列表”留的哨兵：CS 的灯只在
+            // beginCameraRendering→本 pass 之间开着，正常情况下相机看到的灯光数与 CS 无关。
+            HoCharacterShadowRendererFeature.LastCullStatus =
+                $"slices={frame.slices.Count}|camLights={lightData.visibleLights.Length},add={lightData.additionalLightsCount}";
             // The atlas is consumed by opaque materials through a global binding, which
             // RenderGraph cannot see. A transient (graph-owned) texture is therefore free to be
             // aliased away right after this pass and the materials then sample another pass's
@@ -245,7 +319,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 int listCount = 0;
                 for (int i = 0; i < frame.slices.Count; i++)
                 {
-                    if (!Cull(cullContext, camera, frame, frame.slices[i], out var drawing)) continue;
+                    if (!Cull(cullContext, camera, frame, frame.slices[i], i, frame.slices.Count, out var drawing)) continue;
                     passData.lists[i] = graph.CreateShadowRendererList(ref drawing);
                     builder.UseRendererList(passData.lists[i]);
                     listCount++;
@@ -285,11 +359,12 @@ namespace lilToon.URP.Extensions.CharacterShadow
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
             if (frame == null || compatibilityAtlas == null) return;
+            EnsureLocalLight(frame.light);
             var cullContext = new CullContextData();
             cullContext.SetRenderContext(context);
             var lists = new RendererList[frame.slices.Count];
             for (int i = 0; i < frame.slices.Count; i++)
-                if (Cull(cullContext, renderingData.cameraData.camera, frame, frame.slices[i], out var drawing))
+                if (Cull(cullContext, renderingData.cameraData.camera, frame, frame.slices[i], i, frame.slices.Count, out var drawing))
                     lists[i] = context.CreateShadowRendererList(ref drawing);
             CommandBuffer buffer = CommandBufferPool.Get("Ho-CS Shadow Atlas");
             var cmd = CommandBufferHelpers.GetRasterCommandBuffer(buffer);
@@ -311,16 +386,20 @@ namespace lilToon.URP.Extensions.CharacterShadow
         private static void SetupSlice(RasterCommandBuffer cmd, HoCharacterShadowFrame f, HoCharacterShadowSlice slice)
         {
             cmd.SetViewport(slice.viewport);
-            cmd.SetViewProjectionMatrices(slice.view, slice.projection);
-            cmd.SetGlobalVector("_WorldSpaceCameraPos", f.cameraPosition);
-            Matrix4x4 worldToCamera = Matrix4x4.Scale(new Vector3(1, 1, -1)) * slice.view;
-            cmd.SetGlobalMatrix("unity_WorldToCamera", worldToCamera);
-            cmd.SetGlobalMatrix("unity_CameraToWorld", worldToCamera.inverse);
-            cmd.SetGlobalVector("_ShadowBias", slice.bias);
-            cmd.SetGlobalVector("_LightDirection", -f.light.transform.forward);
-            cmd.SetGlobalVector("_LightPosition", f.light.transform.position);
-            cmd.SetKeyword(Punctual, false);
-            cmd.SetGlobalDepthBias(1, 2.5f);
+            {
+                cmd.SetViewProjectionMatrices(slice.view, slice.projection);
+                cmd.SetGlobalVector("_WorldSpaceCameraPos", f.cameraPosition);
+                Matrix4x4 worldToCamera = Matrix4x4.Scale(new Vector3(1, 1, -1)) * slice.view;
+                cmd.SetGlobalMatrix("unity_WorldToCamera", worldToCamera);
+                cmd.SetGlobalMatrix("unity_CameraToWorld", worldToCamera.inverse);
+            }
+            {
+                cmd.SetGlobalVector("_ShadowBias", slice.bias);
+                cmd.SetGlobalVector("_LightDirection", -f.light.transform.forward);
+                cmd.SetGlobalVector("_LightPosition", f.light.transform.position);
+                cmd.SetKeyword(Punctual, false);
+                cmd.SetGlobalDepthBias(1, 2.5f);
+            }
         }
 
         private static void RestoreAndPublish(RasterCommandBuffer cmd, HoCharacterShadowFrame f)

@@ -173,12 +173,13 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.LabelField("渲染时机", "BeforeRenderingShadows（固定，早于 URP 相机阴影）");
+                EditorGUILayout.LabelField("渲染时机", "BeforeRenderingShadows（固定）");
                 EditorGUILayout.HelpBox(
-                    "CS 必须在 URP 为本相机渲染级联阴影之前建好局部图集。放到更晚的事件（原先是 BeforeRenderingPrePasses）时，"
-                    + "级联数 > 1 的相机会拿到空图集，CS 静默回退普通天光阴影，表现就是相机拉远后阴影整体消失。"
-                    + "改这里之前先跑 HoCharacterShadowValidation.ValidateDistanceRendering。",
-                    MessageType.Warning);
+                    "CS 用**自己的隐藏方向光**做局部剔除与绘制（跟着主光的方向/剔除层，但 color 黑、强度极小，"
+                    + "只在相机剔除之后到本 pass 之间开着），因此不会碰 URP 的相机阴影图。"
+                    + "早于相机阴影阶段的时机与最初实现一致；改这一段之前请跑 "
+                    + "HoCharacterShadowValidation.ValidateSceneShadows 与 ValidateDistanceRendering。",
+                    MessageType.None);
 
                 DrawProperty("debugShader", "调试 Shader");
                 EditorGUILayout.HelpBox(
@@ -187,6 +188,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
 
                 EditorGUILayout.LabelField("图集", "feature 持有的持久 RenderTexture（Point / Clamp）");
                 EditorGUILayout.LabelField("剔除", "每个接收域一份 ShadowSplitData（6 平面 + cullingSphere）");
+                EditorGUILayout.LabelField("剔除光源", "feature 自己的隐藏方向光（不参与场景光照，不占相机灯光名额）");
             }
         }
 
@@ -213,7 +215,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 EditorGUILayout.HelpBox(
                     "add: 之后为空表示这一帧排入了 CS；noSettings / disabled / camType / light(...) / noSlices "
                     + "分别表示 feature 缺设置、被 Volume 或兜底关掉、相机类型不支持、主方向光条件不满足、没有有效接收域。"
-                    + "ok(...) 与 lists=n/m 只有拿到有效接收域时才追加。",
+                    + "ok(...) 与 lists=n/m 只有拿到有效接收域时才追加；noLocalLight(...) 表示 CS 自己的隐藏光没进剔除结果。"
+                    + "camLights/add 是相机看到的灯光数，正常情况下它和 CS 无关（CS 的灯只在相机剔除之后才开）。",
                     MessageType.None);
             }
         }
