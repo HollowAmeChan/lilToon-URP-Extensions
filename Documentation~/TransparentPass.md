@@ -1,5 +1,8 @@
 # Ho-Transparent
 
+> **状态：现行功能说明**（内容与实现一致：`HoTransparentRendererFeature` / `HoTransparentPass` /
+> `HoTransparentStatePass`，`publishActiveFlag` 与两个 `LightMode` 都已核对）。
+
 `HoTransparentRendererFeature` 是一个通用的 URP 透明物体绘制调度器。
 它不会绑定到宝石、玻璃、毛发或某一个具体 Shader，而是在透明阶段按配置顺序绘制指定 `LightMode` 的 Shader Pass。
 

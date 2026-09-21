@@ -1,6 +1,6 @@
-> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
-
 # PLR（Planar Reflection）
+
+> **状态：现行功能说明**（2026 文档审核时按 R6/R7 之后的实现校正：MB 的桥接输入已删除，数值改读 SB、遮罩改读 OB）。
 
 PLR 为水面、光滑地面、玻璃和镜子生成镜像相机反射源。它只生产 radiance source，不决定材质最终反射强度；最终消费必须结合 roughness、metallic、reflectance/F0、Fresnel 和接收 mask。
 
@@ -10,11 +10,11 @@ PLR 的 PBR 材质路径只支持完整 lilToon Forward，不接入 lilToonLite/
 
 ## 快速设置
 
-1. 启用 `HoMetadataBufferRendererFeature` 和 `HoGeometryBufferRendererFeature`。
-2. 启用 `HoPlanarReflectionRendererFeature`，在需要透明/OIT 合成时才打开 `启用特殊表面后处理合成`。
-3. 在水面、镜面或光滑地面 renderer 上添加 `HoPlanarReflectionSurface`。
+1. 启用 `Ho-GeometryBuffer`、`Ho-ObjectBuffer`、`Ho-SurfaceBuffer` 三个 Renderer Feature（PLR 要读几何、接收面覆盖率与材质数值），并保证它们排在 PLR 之前。
+2. 启用 `Ho-PlanarReflection` Renderer Feature，在需要透明/OIT 合成时才打开 `启用特殊表面后处理合成`。
+3. 在水面、镜面或光滑地面 renderer 上添加 `Ho-PlanarReflection Surface`。
 4. 设置反射层遮罩，通常排除接收平面自身；按需要设置分辨率、更新帧间隔、裁剪和 Scene View 开关。
-5. opaque ForwardLit 只依赖 surface 写入的 source 与 `_UsePlanarReflection`；特殊 fullscreen 路径还要求材质拥有 `HoMetadataBuffer` 与 `HoGeometryBuffer` pass。
+5. opaque ForwardLit 只依赖 surface 写入的 source 与 `_UsePlanarReflection`；特殊 fullscreen 路径还要求材质拥有 `HoGeometryBuffer` pass 与 SB 的材质 pass（`HO_SURFACE_BUFFER`，22 个 lilToon URP lilblock 都带）。
 
 ## Surface 参数
 
@@ -44,16 +44,17 @@ beginCameraRendering
 
 递归相机、Reflection/Preview 相机、被禁用的 Game/Scene View 或超过 `每相机最大表面数` 时跳过 surface，并把 `_UsePlanarReflection` 清零。ForwardLit 通过每个 Renderer 的 PropertyBlock 读取各自 source，因此支持多个 surface；特殊 fullscreen 路径仍只有一个全局 source，在 source id/PLR 专用 receiver RT 落地前，多于一个有效 surface 时会自动关闭特殊合成。
 
-## 当前过渡输入
+## 输入（已换到 OB / SB / GB）
 
-下面的 MetadataBuffer 输入只服务当前特殊 fullscreen resolve；opaque ForwardLit 直接使用材质值。它们将在 SurfaceBuffer/Cryptomatte 落地后迁移，不是长期布局：
+特殊 fullscreen resolve 的输入**只**来自现役 producer；opaque ForwardLit 直接使用材质值：
 
-| 输入 | 读取内容 |
+| 输入 | 来源与读取内容 |
 | --- | --- |
-| `_HoMetadataBufferReflectionMaterialTexture` | `R=perceptualRoughness`、`G=metallic`、`B=reflectance`、`A=PLR 接收强度；由 _UseReflection 与 _UsePlanarReflection 共同门控` |
-| `_HoMetadataBufferSurfaceColorTexture` | 线性 baseColor 提示；RGB 不钳制，A 为 coverage |
-| `_HoMetadataBufferMaskIdTexture` | 接收面 mask/id |
-| `_HoGeometryBufferNormalDepthTexture` | RGB 世界法线编码，A 线性深度/coverage |
+| 接收面遮罩 | **OB 的 `coverageTexture`**（四层身份覆盖率之和）；composite 里用 `HoAC_TotalCoverage(uv)` 读，同一份也用于"这一格有多少属于角色" |
+| 材质数值 | **SB 的 `Material` / `Reflection`**，经 AC 门面 `HoAC_Attribute(uv, 1)`（perceptualRoughness / metallic / thickness）与 `HoAC_Attribute(uv, 2)`（reflectance / plrStrength）两行拼出老的 `reflectionMaterial` 四通道序 |
+| 表面色提示 | **SB 的 `_HoSurfaceBufferColorTexture`**（线性 HDR，`Color.a` 不承载覆盖率） |
+| 几何 | `_HoGeometryBufferNormalDepthTexture`（RGB 世界法线编码，A 线性深度 / coverage） |
+| 有效性 | `HoAC_SurfaceValid(uv)`：SB 有产出 **且** SB 的 owner 与 OB 层 0 身份一致 |
 
 `_LILPBRPlanarReflectionParams` 的冻结语义为 `(valid, width, height, maxMipLevel)`；`maxMipLevel` 用于 roughness-aware source 采样。
 
@@ -70,7 +71,7 @@ smoothness map、MetallicGlossMap 和 GSAA 必须在 lilToon producer 端完成�
 
 ```text
 PLR source update         -> beginCameraRendering
-Metadata/Geometry output  -> BeforeRenderingOpaques（或更早）
+GB / OB / SB output       -> BeforeRenderingOpaques（或更早）
 Opaque ForwardLit         -> 直接消费 PLR（已实现）
 Transparent/OIT           -> PLR 专用 composite（过渡路径）
 SSR                       -> AfterRenderingOpaques，作为屏幕内补充
@@ -83,15 +84,20 @@ PLR 始终服从 lilToon 的 `_UseReflection` 总开关。总开关关闭时，�
 
 ## 调试与排查
 
-- `metadata.reflection-material`：检查 roughness、metallic、reflectance、PLR strength。
-- `metadata.surface-color`：检查 baseColor 与 coverage；HDR 高于 1 的 RGB 是允许的。
-- `geometry.world-normal` / `geometry.linear-depth`：检查物理几何输入；描边不得成为 coverage。
+DebugTile / 整屏调试里 PLR 有自己的一整套视图（`planar-reflection.*`，与 `HoPlanarReflectionDebugMode` 一一对应）：
+
+- `planar-reflection.inputs`：输入自检 —— R = source 有效、G = 接收面遮罩、B = 几何、A = 材质数值。
+- `planar-reflection.surface-mask` / `perceptual-roughness` / `metallic` / `reflectance` / `reflection-strength`：逐项对齐 composite 的输入。
+- `planar-reflection.composite-weight` / `depth-gate` / `reflection-color` / `edge-extend`：合成权重、深度门控与 source 采样。
+- `geometry.world-normal` / `geometry.linear-depth`：物理几何输入；描边不得成为 coverage。
 - PLR source debug：检查镜像相机内容、Flip Y、source 有效性和分辨率。
-- 无反射时依次检查 Feature、surface renderer、反射层遮罩、`_UsePlanarReflection`、buffer layer mask/render queue，以及 source 是否被清成 black。
-- 回归检查：将材质 `_UseReflection = 0`、`_UsePlanarReflection = 1`；`ReflectionMaterial.a` 应为 0，ForwardLit 与特殊 composite 都必须保持原色。再打开 `_UseReflection` 后，才允许按 `_UsePlanarReflection` 和 source 有效性产生 PLR。
+
+无反射时依次检查 Feature、surface renderer、反射层遮罩、`_UsePlanarReflection`、GB/OB/SB 是否都在 renderer 里且排在 PLR 之前，以及 source 是否被清成 black。
+
+回归检查：将材质 `_UseReflection = 0`、`_UsePlanarReflection = 1`；`Reflection.g`（PLR 接收强度）应为 0，ForwardLit 与特殊 composite 都必须保持原色。再打开 `_UseReflection` 后，才允许按 `_UsePlanarReflection` 和 source 有效性产生 PLR。
 
 ## 后续边界
 
-PLR 后续只处理水面/玻璃的直接消费、必要时的 receiver/source-id RT，以及预过滤质量评估。SSR、SurfaceBuffer 迁移、Probe 工作流和完整优先级统一在 [`ReflectionPipelineDesign.md`](ReflectionPipelineDesign.md) 规划，本文不再复制路线图。
+PLR 后续只处理水面/玻璃的直接消费、必要时的 receiver/source-id RT，以及预过滤质量评估。SSR、Probe 工作流和完整优先级统一在 [`ReflectionPipelineDesign.md`](ReflectionPipelineDesign.md) 规划，本文不再复制路线图。
 
 PLR 不维护 lilToon 卡通反射模式；材质统一使用 glTF/PBR 风格的 smoothness、metallic、baseColor 和 reflectance 输入。
