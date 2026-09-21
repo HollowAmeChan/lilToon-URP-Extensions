@@ -124,7 +124,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 var renderer = ScriptableObject.CreateInstance<UniversalRendererData>(); created.Add(renderer);
                 var feature = ScriptableObject.CreateInstance<HoCharacterShadowRendererFeature>(); created.Add(feature);
                 feature.Settings.resolution = HoCharacterShadowResolution.R1024;
-                feature.Settings.filterRadius = 1;
+                feature.Settings.softnessRadius = 0.005f;
                 renderer.rendererFeatures.Add(feature);
                 var pipeline = UniversalRenderPipelineAsset.Create(renderer); created.Add(pipeline);
                 pipeline.shadowDistance = 50;
@@ -258,7 +258,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 var renderer = ScriptableObject.CreateInstance<UniversalRendererData>(); created.Add(renderer);
                 var feature = ScriptableObject.CreateInstance<HoCharacterShadowRendererFeature>(); created.Add(feature);
                 feature.Settings.resolution = HoCharacterShadowResolution.R1024;
-                feature.Settings.filterRadius = 0;
+                feature.Settings.softnessRadius = 0f;
                 renderer.rendererFeatures.Add(feature);
                 var pipeline = UniversalRenderPipelineAsset.Create(renderer); created.Add(pipeline);
                 pipeline.shadowDistance = 50;
@@ -480,7 +480,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 var renderer = ScriptableObject.CreateInstance<UniversalRendererData>(); created.Add(renderer);
                 var feature = ScriptableObject.CreateInstance<HoCharacterShadowRendererFeature>(); created.Add(feature);
                 feature.Settings.resolution = HoCharacterShadowResolution.R1024;
-                feature.Settings.filterRadius = 0;
+                feature.Settings.softnessRadius = 0f;
                 renderer.rendererFeatures.Add(feature);
                 var pipeline = UniversalRenderPipelineAsset.Create(renderer); created.Add(pipeline);
                 pipeline.shadowDistance = 50;
@@ -681,7 +681,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 var feature = ScriptableObject.CreateInstance<HoCharacterShadowRendererFeature>(); created.Add(feature);
                 // 低一点的分辨率让 1 texel 在屏幕上约 0.8 px：PCF 边缘保持在 1px 量级，PCSS 的 texel 半径才看得出来。
                 feature.Settings.resolution = HoCharacterShadowResolution.R512;
-                feature.Settings.filterRadius = 1;
+                feature.Settings.softnessRadius = 0.005f;
                 feature.Settings.pcssEnabled = false;
                 renderer.rendererFeatures.Add(feature);
                 var pipeline = UniversalRenderPipelineAsset.Create(renderer); created.Add(pipeline);
@@ -726,7 +726,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 cs.edgeBlend = 0f;
 
                 var caster = GameObject.CreatePrimitive(PrimitiveType.Cube); created.Add(caster);
-                caster.transform.position = toLight * 1.5f;
+                // 放远一点：半影 = (接收距离 - 遮挡距离) / 遮挡距离，遮挡物离接收面越远半影越宽（相机沿光方向看，
+                // 投影落点不变，所以不影响取景）。
+                caster.transform.position = toLight * 6f;
                 caster.transform.localScale = Vector3.one * 1.5f;
                 var casterRenderer = caster.GetComponent<MeshRenderer>();
                 var casterMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit")); created.Add(casterMaterial);
@@ -735,10 +737,10 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
 
                 var cameraObject = new GameObject("CS PCSS Camera"); created.Add(cameraObject);
                 Camera camera = cameraObject.AddComponent<Camera>();
-                camera.enabled = false; camera.orthographic = true; camera.orthographicSize = 2;
+                camera.enabled = false; camera.orthographic = true; camera.orthographicSize = 1;
                 camera.aspect = 1; camera.nearClipPlane = 0.5f; camera.farClipPlane = 100;
                 camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = Color.black;
-                camera.transform.position = toLight * 10f;
+                camera.transform.position = toLight * 14f;
                 camera.transform.rotation = Quaternion.LookRotation(-toLight, Vector3.up);
                 camera.GetUniversalAdditionalCameraData().renderPostProcessing = false;
 
@@ -778,7 +780,15 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                         for (int x = 1; x < 255; x++)
                         {
                             float distance = Mathf.Abs(pixels[y * 256 + x] - 0.5f);
-                            if (distance < bestDistance) { bestDistance = distance; ex = x; ey = y; }
+                            if (distance >= bestDistance) continue;
+                            // 必须落在**有梯度**的地方：抖动边缘上"最接近 0.5"的像素可能整片同值，
+                            // 那样梯度为 0，量出来会是 0px（踩过）。
+                            float dx = pixels[y * 256 + x + 1] - pixels[y * 256 + x - 1];
+                            float dy = pixels[(y + 1) * 256 + x] - pixels[(y - 1) * 256 + x];
+                            if (dx * dx + dy * dy < 0.0025f) continue;
+                            bestDistance = distance;
+                            ex = x;
+                            ey = y;
                         }
 
                     if (ex < 0) return 0f;
@@ -812,6 +822,32 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 float MinValue(float[] pixels) { float min = 1f; for (int i = 0; i < pixels.Length; i++) min = Mathf.Min(min, pixels[i]); return min; }
                 float MaxValue(float[] pixels) { float max = 0f; for (int i = 0; i < pixels.Length; i++) max = Mathf.Max(max, pixels[i]); return max; }
 
+                // 斑点：4 邻里有 ≥3 个"反相"的像素（亮区里孤立的暗点 / 暗区里孤立的亮点）。
+                // 用户报的"PCSS 产生很多噪声黑点"就是它 —— 采样太稀、以及硬像素与软像素混在一起。
+                int Speckles(float[] pixels)
+                {
+                    int count = 0;
+                    for (int y = 1; y < 255; y++)
+                        for (int x = 1; x < 255; x++)
+                        {
+                            float value = pixels[y * 256 + x];
+                            if (value > 0.35f && value < 0.65f) continue;
+                            bool dark = value < 0.35f;
+                            int opposite = 0;
+                            for (int d = 0; d < 4; d++)
+                            {
+                                int nx = x + (d == 0 ? 1 : d == 1 ? -1 : 0);
+                                int ny = y + (d == 2 ? 1 : d == 3 ? -1 : 0);
+                                float neighbour = pixels[ny * 256 + nx];
+                                if (dark ? neighbour > 0.65f : neighbour < 0.35f) opposite++;
+                            }
+
+                            if (opposite >= 3) count++;
+                        }
+
+                    return count;
+                }
+
                 SampleImage(null); // 预热 / 管线初始化
                 Require(cs.atlasSlice >= 0, "PCSS receiver did not get a CS slice: " + cs.status);
                 Debug.Log($"[Ho-CS PCSS] cull={HoCharacterShadowRendererFeature.LastCullStatus} cs={cs.status}");
@@ -835,39 +871,65 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 feature.Settings.debugMode = HoCharacterShadowDebugMode.Off;
                 feature.Settings.debugInGameView = false;
 
+                // 半径是世界单位（米）。测试场景里相机覆盖 4m/256px ≈ 15.6mm/像素，所以用 R512（≈4.7mm/texel）
+                // 让"看得见的软边"落在几十毫米这一档；R4096 那一档另外测（见文件末尾的 4096 段）。
+                feature.Settings.resolution = HoCharacterShadowResolution.R512;
+                feature.Settings.softnessRadius = 0.005f;
                 feature.Settings.pcssEnabled = false;
                 float[] pcf = SampleImage("pcf");
                 float pcfWidth = EdgeWidth(pcf);
                 float pcfCore = MinValue(pcf);
                 float pcfLit = MaxValue(pcf);
+                int pcfSpeckles = Speckles(pcf);
                 Require(pcfCore < 0.15f, $"PCF shadow core is not dark: {pcfCore:F3} | {HoCharacterShadowRendererFeature.LastCullStatus} | {cs.status}");
                 Require(pcfLit > 0.85f, $"PCF lit side is not bright: {pcfLit:F3}");
                 Require(pcfWidth > 0f && pcfWidth <= 16f, $"PCF edge should be localized (not a giant ramp): 10-90% width {pcfWidth:F0}px");
+                Require(pcfSpeckles <= 8, $"PCF edge is speckled: {pcfSpeckles} isolated pixels");
 
                 feature.Settings.pcssEnabled = true;
                 feature.Settings.pcssQuality = HoCharacterShadowPcssQuality.Ultra;
                 feature.Settings.pcssSoftness = 3f;
-                feature.Settings.pcssBlockerSearchRadius = 4f;
-                feature.Settings.pcssMaxPenumbraRadius = 24f;
-                feature.Settings.pcssDepthBias = 0f;
+                feature.Settings.pcssBlockerSearchRadius = 0.06f;
+                feature.Settings.pcssMaxPenumbraRadius = 0.12f;
+                feature.Settings.pcssDepthBias = 0.0005f;
                 float[] pcss = SampleImage("pcss");
                 float pcssWidth = EdgeWidth(pcss);
                 float pcssCore = MinValue(pcss);
                 float pcssLit = MaxValue(pcss);
+                int pcssSpeckles = Speckles(pcss);
                 Require(pcssCore < 0.25f, $"PCSS shadow core leaks light: {pcssCore:F3}");
                 Require(pcssLit > 0.8f, $"PCSS edge shows a halo (lit side not bright enough): {pcssLit:F3}");
                 Require(pcssWidth >= pcfWidth + 6f,
-                    $"PCSS did not widen the penumbra along the light direction: pcf={pcfWidth:F0}px, pcss={pcssWidth:F0}px");
+                    $"PCSS did not widen the penumbra: pcf={pcfWidth:F0}px, pcss={pcssWidth:F0}px");
+                Require(pcssSpeckles <= 8 && pcssSpeckles <= pcfSpeckles + 6,
+                    $"PCSS is speckled (the reported noise/dark dots): pcss={pcssSpeckles}, pcf={pcfSpeckles}");
 
                 feature.Settings.pcssSoftness = 0f;
                 float[] hard = SampleImage("pcss-softness0");
                 float hardWidth = EdgeWidth(hard);
-                Require(hardWidth <= pcfWidth + 3f,
+                Require(hardWidth >= pcfWidth - 3f && hardWidth <= pcfWidth + 3f,
                     $"PCSS with softness 0 should degenerate back to PCF: pcss={hardWidth:F0}px, pcf={pcfWidth:F0}px");
 
-                Debug.Log($"[Ho-CS PCSS] PASS: pcf width={pcfWidth:F0}px core={pcfCore:F3} lit={pcfLit:F3} | "
-                    + $"pcss width={pcssWidth:F0}px core={pcssCore:F3} lit={pcssLit:F3} | "
-                    + $"softness0 width={hardWidth:F0}px, graphics={SystemInfo.graphicsDeviceType}.");
+                // 用户现场那一档：4096 的 tile（0.6mm/texel）+ 默认参数。图集比屏幕细得多，同样世界半径吃掉的
+                // texel 很多、采样相对稀，是最容易冒颗粒的组合 —— 这里必须也干净（这是"噪声黑点"的直接回归）。
+                feature.Settings.resolution = HoCharacterShadowResolution.R4096;
+                feature.Settings.softnessRadius = 0.005f;
+                feature.Settings.pcssQuality = HoCharacterShadowPcssQuality.Ultra;
+                feature.Settings.pcssSoftness = 2f;
+                feature.Settings.pcssBlockerSearchRadius = 0.02f;
+                feature.Settings.pcssMaxPenumbraRadius = 0.04f;
+                feature.Settings.pcssDepthBias = 0.0005f;
+                float[] user = SampleImage("pcss-user-settings");
+                float userWidth = EdgeWidth(user);
+                int userSpeckles = Speckles(user);
+                float userCore = MinValue(user);
+                Require(userSpeckles <= 12,
+                    $"PCSS is speckled at the reported settings (4096 tile): {userSpeckles} isolated pixels");
+                Require(userCore < 0.25f, $"PCSS leaks light at the reported settings (4096 tile): core={userCore:F3}");
+
+                Debug.Log($"[Ho-CS PCSS] PASS: pcf width={pcfWidth:F0}px core={pcfCore:F3} lit={pcfLit:F3} speckles={pcfSpeckles} | "
+                    + $"pcss width={pcssWidth:F0}px core={pcssCore:F3} lit={pcssLit:F3} speckles={pcssSpeckles} | "
+                    + $"softness0 width={hardWidth:F0}px | 4096-tile width={userWidth:F0}px speckles={userSpeckles} core={userCore:F3}, graphics={SystemInfo.graphicsDeviceType}.");
             }
             finally
             {

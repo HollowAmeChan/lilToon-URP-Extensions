@@ -20,7 +20,6 @@ namespace lilToon.URP.Extensions.CharacterShadow
         internal Light light;
         internal Vector3 cameraPosition;
         internal Matrix4x4 cameraView, cameraProjection;
-        internal float filterRadius;
         internal Vector4 pcssParams, pcssParams2;
 
         internal static HoCharacterShadowFrame Build(Camera camera, Light light,
@@ -30,18 +29,20 @@ namespace lilToon.URP.Extensions.CharacterShadow
             {
                 light = light, resolution = config.resolution,
                 cameraPosition = camera.transform.position, cameraView = cameraView,
-                cameraProjection = cameraProjection, filterRadius = Mathf.Clamp(config.filterRadius, 0, 2)
+                cameraProjection = cameraProjection
             };
             // PCSS 的四个形状参数 + (深度偏移, blocker 采样数, filter 采样数, 0)。
-            // 关闭时 params2 归零，shader 只看 params.x 就回退 PCF（与 ShadowCast 同一套约定）。
+            // **采样数必须一直发布**：PCSS 关闭时那条 PCF 也走同一个旋转盘（只是半径固定为「PCF 半径」），
+            // 采样数归零会让它退化成单点采样 —— 边缘变成逐像素抖动的噪声边（实测踩过）。
+            // 开关本身由 params.x 决定。
             frame.pcssParams = new Vector4(
                 config.pcssEnabled ? 1.0f : 0.0f,
                 Mathf.Max(0.0f, config.pcssSoftness),
-                Mathf.Max(0.0f, config.pcssBlockerRadius),
-                Mathf.Max(0.0f, config.pcssMaxPenumbraRadius));
-            frame.pcssParams2 = config.pcssEnabled
-                ? new Vector4(Mathf.Max(0.0f, config.pcssDepthBias), config.pcssBlockerSamples, config.pcssFilterSamples, 0.0f)
-                : Vector4.zero;
+                Mathf.Max(0.0f, config.pcssBlockerRadiusWorld),
+                Mathf.Max(0.0f, config.pcssMaxPenumbraRadiusWorld));
+            frame.pcssParams2 = new Vector4(
+                Mathf.Max(0.0f, config.pcssDepthBias), config.pcssBlockerSamples, config.pcssFilterSamples,
+                Mathf.Max(0.0f, config.softnessRadiusWorld));
             HoObjectBufferRegistry.EnsureBuilt();
             var subjects = new List<HoCharacterShadow>(HoCharacterShadow.Active);
             subjects.Sort((a, b) => a.GetInstanceID().CompareTo(b.GetInstanceID()));
@@ -100,7 +101,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 }
                 if (!hasReceiver) { subject.status = "没有匹配的 OB 接收部件"; continue; }
                 HoCharacterShadowSlice slice = HoCharacterShadowProjection.Build(subject, light, corners,
-                    casterBounds, frame.resolution, frame.filterRadius, config.depthBias, config.normalBias);
+                    casterBounds, frame.resolution, config.pcssFilterRadiusTexels, config.depthBias, config.normalBias);
                 if (slice == null) { subject.status = "包围盒变换无效"; continue; }
                 groups.Add(group.groupId);
                 frame.slices.Add(slice);
@@ -108,7 +109,8 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 frame.worldToShadow[index] = slice.worldToShadow;
                 frame.worldToBounds[index] = Matrix4x4.Scale(new Vector3(1 / subject.size.x, 1 / subject.size.y, 1 / subject.size.z))
                     * Matrix4x4.Translate(-subject.center) * subject.Anchor.worldToLocalMatrix;
-                frame.parameters[index] = new Vector4(subject.edgeBlend, light.shadowStrength, 0, 0);
+                // .w = 该 slice 的 1 texel 等于多少世界单位：软阴影半径用世界单位给，shader 靠它换算成 texel。
+                frame.parameters[index] = new Vector4(subject.edgeBlend, light.shadowStrength, 0, slice.texelSize);
                 subject.atlasSlice = index;
                 subject.depthRange = slice.farPlane - slice.nearPlane;
                 subject.worldUnitsPerTexel = slice.texelSize;

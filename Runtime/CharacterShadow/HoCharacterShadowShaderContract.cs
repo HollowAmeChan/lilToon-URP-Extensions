@@ -22,8 +22,8 @@ namespace lilToon.URP.Extensions.CharacterShadow
     /// </summary>
     public static class HoCharacterShadowShaderContract
     {
-        public const int PcssBlockerSamples = 16;
-        public const int PcssFilterSamples = 32;
+        public const int PcssBlockerSamples = 32;
+        public const int PcssFilterSamples = 64;
 
         public static HoCharacterShadowPcssQuality ClampQuality(int value)
         {
@@ -36,20 +36,20 @@ namespace lilToon.URP.Extensions.CharacterShadow
             switch (quality)
             {
                 case HoCharacterShadowPcssQuality.Low:
-                    blockerSamples = 4;
-                    filterSamples = 8;
-                    break;
-                case HoCharacterShadowPcssQuality.Medium:
                     blockerSamples = 8;
                     filterSamples = 16;
                     break;
-                case HoCharacterShadowPcssQuality.Ultra:
+                case HoCharacterShadowPcssQuality.Medium:
                     blockerSamples = 16;
                     filterSamples = 32;
                     break;
+                case HoCharacterShadowPcssQuality.Ultra:
+                    blockerSamples = 32;
+                    filterSamples = 64;
+                    break;
                 default:
-                    blockerSamples = 12;
-                    filterSamples = 24;
+                    blockerSamples = 24;
+                    filterSamples = 48;
                     break;
             }
 

@@ -79,7 +79,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 DrawProperty("resolution", "单角色分辨率");
                 DrawProperty("maxCharacters", "同时接收域上限");
                 DrawProperty("maxAtlasSize", "图集边长上限");
-                DrawProperty("filterRadius", "PCF 半径");
                 DrawProperty("depthBias", "深度偏移");
                 DrawProperty("normalBias", "法线偏移");
 
@@ -104,17 +103,24 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty("pcssEnabled", "启用 PCSS");
+                DrawProperty("softnessRadius", "最低软度（米）");
                 DrawProperty("pcssQuality", "质量档");
                 DrawProperty("pcssSoftness", "半影放大");
-                DrawProperty("pcssBlockerSearchRadius", "Blocker 搜索半径");
-                DrawProperty("pcssMaxPenumbraRadius", "半影半径上限");
+                DrawProperty("pcssBlockerSearchRadius", "Blocker 搜索半径（米）");
+                DrawProperty("pcssMaxPenumbraRadius", "半影半径上限（米）");
                 DrawProperty("pcssDepthBias", "Blocker 深度偏移");
 
                 EditorGUILayout.HelpBox(
                     "PCSS：blocker search → 用平均遮挡深度估半影宽度 → 按该宽度做可变半径滤波，所以离遮挡物越远边缘越软。"
-                    + "关掉、半影放大为 0、或盘里没有遮挡物时回退上面「运行」里的 PCF 半径（降级即回退，不是另一套 shader）。"
-                    + "质量档只决定 blocker / filter 的采样数（上限 " + HoCharacterShadowShaderContract.PcssBlockerSamples + "/"
+                    + "关掉、或半影放大为 0 时回退「最低软度」那个固定半径的旋转盘 PCF（降级即回退，不是另一套 shader）。"
+                    + "质量档只决定采样数（上限 " + HoCharacterShadowShaderContract.PcssBlockerSamples + "/"
                     + HoCharacterShadowShaderContract.PcssFilterSamples + "，与 HLSL 里的宏一致，由 Validate() 校验）。",
+                    MessageType.None);
+
+                EditorGUILayout.HelpBox(
+                    "软阴影半径一律是**米（世界单位）**，这样换分辨率不用重调；tile 越细，同样半径吃掉的 texel 越多、"
+                    + "同样采样数铺开越稀，超出采样预算时半径会被收窄以免出颗粒。想更软又不想出噪点：把「单角色分辨率」"
+                    + "降到 1024/2048（让 1 texel 接近 1 像素），或提高质量档。",
                     MessageType.None);
 
                 EditorGUILayout.HelpBox(

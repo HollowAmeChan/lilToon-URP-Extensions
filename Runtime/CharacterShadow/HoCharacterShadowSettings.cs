@@ -21,8 +21,9 @@ namespace lilToon.URP.Extensions.CharacterShadow
         public int maxCharacters = 16;
         [Range(2048, 16384), Tooltip("不自动降低单角色分辨率。超出图集容量的角色回退普通投影并在组件上说明。")]
         public int maxAtlasSize = 8192;
-        [Range(0, 2), Tooltip("PCF 半径（texel）；0 为硬阴影。PCSS 关闭或退化时走这条 PCF。")]
-        public float filterRadius = 1;
+        [Range(0, 0.2f), Tooltip("**最低软度**（世界单位，米）：软阴影的滤波半径永远不会比它更小，用来盖掉几何锯齿"
+            + "（发丝/低模剪影）。0 = 允许硬边。注意 tile 越细，同样世界半径吃掉的 texel 越多、越吃采样。")]
+        public float softnessRadius = 0.005f;
         [Min(0), Tooltip("投影深度偏移（单位：texel）。")]
         public float depthBias = 1;
         [Min(0), Tooltip("法线方向偏移（单位：texel）。")]
@@ -32,15 +33,18 @@ namespace lilToon.URP.Extensions.CharacterShadow
         [Tooltip("启用 PCSS（blocker search + 按遮挡距离估算的可变半影）。关闭时回退上面的 3×3 PCF。")]
         public bool pcssEnabled = true;
         [Tooltip("采样档：只决定 blocker / filter 的采样数，不改变阴影形状。")]
-        public HoCharacterShadowPcssQuality pcssQuality = HoCharacterShadowPcssQuality.High;
-        [Range(0, 8), Tooltip("半影放大系数：PCSS 估出的半影半径再乘它；0 = 硬边（等价回退 PCF）。")]
+        public HoCharacterShadowPcssQuality pcssQuality = HoCharacterShadowPcssQuality.Ultra;
+        [Range(0, 8), Tooltip("半影放大系数：PCSS 估出的半影半径再乘它；0 = 只用最低软度（等价回退 PCF）。")]
         public float pcssSoftness = 2;
-        [Range(0.25f, 16), Tooltip("blocker 搜索半径（texel）：越大越能找到更远的遮挡物，也越容易漏光。")]
-        public float pcssBlockerSearchRadius = 4;
-        [Range(1, 64), Tooltip("半影半径上限（texel）：最软能软到什么程度。")]
-        public float pcssMaxPenumbraRadius = 12;
-        [Range(0, 0.01f), Tooltip("blocker 判定的深度偏移（阴影空间 z）：压自遮挡与漏光。")]
-        public float pcssDepthBias;
+        [Range(0.001f, 0.2f), Tooltip("blocker 搜索半径（**世界单位，米**）。它至少要接近半影半径上限，否则半影里的遮挡物会被漏采样、"
+            + "估算值乱跳（表现成斑点）。")]
+        public float pcssBlockerSearchRadius = 0.02f;
+        [Range(0.001f, 0.2f), Tooltip("半影半径上限（**世界单位，米**）：最软能软到什么程度。用世界单位是为了跟 tile 分辨率解耦"
+            + "（texel 当单位的话，4096 的 tile 上同一个数值只有 7mm，看着还是硬边）。")]
+        public float pcssMaxPenumbraRadius = 0.04f;
+        [Range(0, 0.02f), Tooltip("blocker 判定的深度偏移（阴影空间 z，1 ≈ 盒子整个深度范围）：压自遮挡与深度抖动。"
+            + "默认给一点，避免 blocker 数量在相邻像素之间跳变（那会变成斑点）。")]
+        public float pcssDepthBias = 0.0005f;
 
         [Tooltip("Volume 未覆盖时的调试模式；调试入口在 Ho-CharacterShadow Volume 的「调试」分组。")]
         public HoCharacterShadowDebugMode debugMode;
@@ -58,14 +62,14 @@ namespace lilToon.URP.Extensions.CharacterShadow
         {
             maxCharacters = Mathf.Clamp(maxCharacters, 1, 16);
             maxAtlasSize = Mathf.Clamp(maxAtlasSize, 2048, 16384);
-            filterRadius = Mathf.Clamp(filterRadius, 0.0f, 2.0f);
+            softnessRadius = Mathf.Clamp(softnessRadius, 0.0f, 0.2f);
             depthBias = Mathf.Max(0.0f, depthBias);
             normalBias = Mathf.Max(0.0f, normalBias);
             pcssQuality = HoCharacterShadowShaderContract.ClampQuality((int)pcssQuality);
             pcssSoftness = Mathf.Clamp(pcssSoftness, 0.0f, 8.0f);
-            pcssBlockerSearchRadius = Mathf.Clamp(pcssBlockerSearchRadius, 0.25f, 16.0f);
-            pcssMaxPenumbraRadius = Mathf.Clamp(pcssMaxPenumbraRadius, 1.0f, 64.0f);
-            pcssDepthBias = Mathf.Clamp(pcssDepthBias, 0.0f, 0.01f);
+            pcssBlockerSearchRadius = Mathf.Clamp(pcssBlockerSearchRadius, 0.001f, 0.2f);
+            pcssMaxPenumbraRadius = Mathf.Clamp(pcssMaxPenumbraRadius, 0.001f, 0.2f);
+            pcssDepthBias = Mathf.Clamp(pcssDepthBias, 0.0f, 0.02f);
         }
     }
 
@@ -78,17 +82,20 @@ namespace lilToon.URP.Extensions.CharacterShadow
         internal int resolution;
         internal int maxCharacters;
         internal int maxAtlasSize;
-        internal float filterRadius;
+        internal float softnessRadiusWorld;
         internal float depthBias;
         internal float normalBias;
         internal bool pcssEnabled;
         internal HoCharacterShadowPcssQuality pcssQuality;
         internal float pcssSoftness;
-        internal float pcssBlockerRadius;
-        internal float pcssMaxPenumbraRadius;
+        internal float pcssBlockerRadiusWorld;
+        internal float pcssMaxPenumbraRadiusWorld;
         internal float pcssDepthBias;
         internal int pcssBlockerSamples;
         internal int pcssFilterSamples;
+
+        /// <summary>「PCF 半径」这个 texel 单位的旧旋钮还留一个 texel 值：只给投影拟合留边界余量用。</summary>
+        internal float pcssFilterRadiusTexels = 1.0f;
 
         internal static HoCharacterShadowRenderConfig Resolve(HoCharacterShadowSettings settings, HoCharacterShadowVolume volume)
         {
@@ -103,13 +110,13 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 resolution = (int)settings.resolution,
                 maxCharacters = settings.maxCharacters,
                 maxAtlasSize = settings.maxAtlasSize,
-                filterRadius = settings.filterRadius,
+                softnessRadiusWorld = settings.softnessRadius,
                 depthBias = settings.depthBias,
                 normalBias = settings.normalBias,
                 pcssEnabled = settings.pcssEnabled,
                 pcssSoftness = settings.pcssSoftness,
-                pcssBlockerRadius = settings.pcssBlockerSearchRadius,
-                pcssMaxPenumbraRadius = settings.pcssMaxPenumbraRadius,
+                pcssBlockerRadiusWorld = settings.pcssBlockerSearchRadius,
+                pcssMaxPenumbraRadiusWorld = settings.pcssMaxPenumbraRadius,
                 pcssDepthBias = settings.pcssDepthBias,
                 pcssQuality = settings.pcssQuality
             };
@@ -117,11 +124,12 @@ namespace lilToon.URP.Extensions.CharacterShadow
             if (volume != null)
             {
                 if (volume.resolution.overrideState) config.resolution = (int)volume.resolution.value;
+                if (volume.softnessRadius.overrideState) config.softnessRadiusWorld = volume.softnessRadius.value;
                 if (volume.pcssEnabled.overrideState) config.pcssEnabled = volume.pcssEnabled.value;
                 if (volume.pcssQuality.overrideState) config.pcssQuality = volume.pcssQuality.value;
                 if (volume.pcssSoftness.overrideState) config.pcssSoftness = volume.pcssSoftness.value;
-                if (volume.pcssBlockerSearchRadius.overrideState) config.pcssBlockerRadius = volume.pcssBlockerSearchRadius.value;
-                if (volume.pcssMaxPenumbraRadius.overrideState) config.pcssMaxPenumbraRadius = volume.pcssMaxPenumbraRadius.value;
+                if (volume.pcssBlockerSearchRadius.overrideState) config.pcssBlockerRadiusWorld = volume.pcssBlockerSearchRadius.value;
+                if (volume.pcssMaxPenumbraRadius.overrideState) config.pcssMaxPenumbraRadiusWorld = volume.pcssMaxPenumbraRadius.value;
                 if (volume.pcssDepthBias.overrideState) config.pcssDepthBias = volume.pcssDepthBias.value;
             }
 

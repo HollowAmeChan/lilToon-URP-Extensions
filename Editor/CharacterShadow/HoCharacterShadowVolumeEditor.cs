@@ -19,6 +19,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
         private SerializedDataParameter enable;
         private SerializedDataParameter resolution;
         private SerializedDataParameter pcssEnabled;
+        private SerializedDataParameter softnessRadius;
         private SerializedDataParameter pcssQuality;
         private SerializedDataParameter pcssSoftness;
         private SerializedDataParameter pcssBlockerSearchRadius;
@@ -35,6 +36,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             enable = Unpack(fetcher.Find(x => x.enable));
             resolution = Unpack(fetcher.Find(x => x.resolution));
             pcssEnabled = Unpack(fetcher.Find(x => x.pcssEnabled));
+            softnessRadius = Unpack(fetcher.Find(x => x.softnessRadius));
             pcssQuality = Unpack(fetcher.Find(x => x.pcssQuality));
             pcssSoftness = Unpack(fetcher.Find(x => x.pcssSoftness));
             pcssBlockerSearchRadius = Unpack(fetcher.Find(x => x.pcssBlockerSearchRadius));
@@ -91,22 +93,28 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawParameter(pcssEnabled, "启用 PCSS");
+                DrawParameter(softnessRadius, "最低软度（米）");
                 DrawParameter(pcssQuality, "质量档");
                 DrawParameter(pcssSoftness, "半影放大");
-                DrawParameter(pcssBlockerSearchRadius, "Blocker 搜索半径");
-                DrawParameter(pcssMaxPenumbraRadius, "半影半径上限");
+                DrawParameter(pcssBlockerSearchRadius, "Blocker 搜索半径（米）");
+                DrawParameter(pcssMaxPenumbraRadius, "半影半径上限（米）");
                 DrawParameter(pcssDepthBias, "Blocker 深度偏移");
 
                 EditorGUILayout.HelpBox(
-                    "PCSS 先在 blocker 搜索盘里找遮挡物，用平均遮挡深度估半影宽度，再按该宽度做可变半径滤波 —— "
-                    + "离遮挡物越远边缘越软。关掉、半影放大为 0、或没找到遮挡物时回退固定半径的 3×3 PCF（降级即回退）。"
-                    + "质 量档只决定 blocker / filter 的采样数，不改变形状。",
+                    "PCSS 先在 blocker 搜索盘里找遮挡物，用平均遮挡深度估半影宽度，再按该宽度做可变半径滤波 —— 离遮挡物越远边缘越软。"
+                    + "关掉、或半影放大为 0 时回退「最低软度」那个固定半径的旋转盘 PCF（降级即回退）。质量档只决定采样数。",
+                    MessageType.None);
+
+                EditorGUILayout.HelpBox(
+                    "**软阴影半径一律是米（世界单位）**：tile 越细（单角色分辨率越高），同样世界半径吃掉的 texel 越多、"
+                    + "同样采样数铺开也越稀；超出采样预算时半径会被收窄，以免出现颗粒噪点。想要更软的边又不想出噪点，"
+                    + "优先把「单角色分辨率」降到 1024/2048，或提高质量档（Ultra = 32/64 采样）。",
                     MessageType.None);
 
                 if (pcssEnabled != null && pcssEnabled.value != null && !pcssEnabled.value.boolValue)
                 {
                     EditorGUILayout.HelpBox(
-                        "PCSS 关闭：边缘走 RendererFeature 上的 PCF 半径（半影不会随遮挡距离变化）。",
+                        "PCSS 关闭：边缘走固定半径的旋转盘 PCF（半影不会随遮挡距离变化），半径就是上面的「最低软度」。",
                         MessageType.None);
                 }
             }

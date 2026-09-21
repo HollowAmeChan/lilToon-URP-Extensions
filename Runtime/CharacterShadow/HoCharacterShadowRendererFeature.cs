@@ -453,7 +453,6 @@ namespace lilToon.URP.Extensions.CharacterShadow
             cmd.SetGlobalVectorArray("_HoCSTileRects", f.tileRects);
             cmd.SetGlobalVectorArray("_HoCSParameters", f.parameters);
             cmd.SetGlobalVector("_HoCSAtlasSize", new Vector4(1f / f.atlasSize, 1f / f.atlasSize, f.atlasSize, f.atlasSize));
-            cmd.SetGlobalFloat("_HoCSFilterRadius", f.filterRadius);
             // PCSS：(enabled, softness, blocker 搜索半径, 半影半径上限) + (深度偏移, blocker 采样数, filter 采样数, 0)。
             cmd.SetGlobalVector("_HoCSPcssParams", f.pcssParams);
             cmd.SetGlobalVector("_HoCSPcssParams2", f.pcssParams2);
