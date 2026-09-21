@@ -67,13 +67,13 @@ namespace lilToon.URP.Extensions.CharacterShadow
         [InspectorName("启用 PCSS"), Tooltip("blocker search + 按遮挡距离估算的可变半影。关闭时回退固定半径的旋转盘 PCF。")]
         public BoolParameter pcssEnabled = new BoolParameter(true);
 
-        [InspectorName("最低软度"), Tooltip("世界单位（米）：软阴影的滤波半径永远不会比它更小，用来盖掉几何锯齿（发丝/低模剪影）。0 = 允许硬边。")]
+        [InspectorName("阴影软边"), Tooltip("世界单位（米）：始终生效的基础滤波半径，用来盖掉几何锯齿（发丝/低模剪影）。PCSS 在它之上再加半影；0 = 完全硬边。")]
         public ClampedFloatParameter softnessRadius = new ClampedFloatParameter(0.005f, 0.0f, 0.2f);
 
         [InspectorName("PCSS 质量档"), Tooltip("只决定 blocker / filter 的采样数，不改变阴影形状。")]
         public HoCharacterShadowPcssQualityParameter pcssQuality = new HoCharacterShadowPcssQualityParameter(HoCharacterShadowPcssQuality.Ultra);
 
-        [InspectorName("半影放大"), Tooltip("PCSS 估出的半影半径再乘它；0 = 只用最低软度（等价回退 PCF）。")]
+        [InspectorName("半影放大"), Tooltip("PCSS 估出的半影半径再乘它；0 = 只用「阴影软边」那一档（等价回退 PCF）。")]
         public ClampedFloatParameter pcssSoftness = new ClampedFloatParameter(2.0f, 0.0f, 8.0f);
 
         [InspectorName("Blocker 搜索半径"), Tooltip("世界单位（米）。它至少要接近半影半径上限，否则半影里的遮挡物会被漏采样、估算值乱跳（表现成斑点）。")]

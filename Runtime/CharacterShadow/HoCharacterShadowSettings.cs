@@ -21,7 +21,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
         public int maxCharacters = 16;
         [Range(2048, 16384), Tooltip("不自动降低单角色分辨率。超出图集容量的角色回退普通投影并在组件上说明。")]
         public int maxAtlasSize = 8192;
-        [Range(0, 0.2f), Tooltip("**最低软度**（世界单位，米）：软阴影的滤波半径永远不会比它更小，用来盖掉几何锯齿"
+        [Range(0, 0.2f), Tooltip("**阴影软边**（世界单位，米）：始终生效的基础滤波半径，用来盖掉几何锯齿"
             + "（发丝/低模剪影）。0 = 允许硬边。注意 tile 越细，同样世界半径吃掉的 texel 越多、越吃采样。")]
         public float softnessRadius = 0.005f;
         [Min(0), Tooltip("投影深度偏移（单位：texel）。")]
@@ -34,7 +34,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
         public bool pcssEnabled = true;
         [Tooltip("采样档：只决定 blocker / filter 的采样数，不改变阴影形状。")]
         public HoCharacterShadowPcssQuality pcssQuality = HoCharacterShadowPcssQuality.Ultra;
-        [Range(0, 8), Tooltip("半影放大系数：PCSS 估出的半影半径再乘它；0 = 只用最低软度（等价回退 PCF）。")]
+        [Range(0, 8), Tooltip("半影放大系数：PCSS 估出的半影半径再乘它；0 = 只用「阴影软边」那一档（等价回退 PCF）。")]
         public float pcssSoftness = 2;
         [Range(0.001f, 0.2f), Tooltip("blocker 搜索半径（**世界单位，米**）。它至少要接近半影半径上限，否则半影里的遮挡物会被漏采样、"
             + "估算值乱跳（表现成斑点）。")]

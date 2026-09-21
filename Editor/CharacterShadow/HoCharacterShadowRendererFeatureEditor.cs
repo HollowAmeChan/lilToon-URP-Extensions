@@ -77,6 +77,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             {
                 DrawProperty("enabled", "启用");
                 DrawProperty("resolution", "单角色分辨率");
+                DrawProperty("softnessRadius", "阴影软边（米）");
                 DrawProperty("maxCharacters", "同时接收域上限");
                 DrawProperty("maxAtlasSize", "图集边长上限");
                 DrawProperty("depthBias", "深度偏移");
@@ -86,6 +87,13 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                     "启用与单角色分辨率是兜底值：Ho-CharacterShadow Volume 覆盖了就用 Volume 的（Volume 未覆盖时用这里的值）。"
                     + "容量按「图集边长上限 / 单角色分辨率」换算成可容纳的 tile 数，再与「同时接收域上限」取小；"
                     + "容量不足时不降低分辨率，多出来的接收域回退普通天光投影（在组件 Inspector 上说明）。",
+                    MessageType.None);
+
+                EditorGUILayout.HelpBox(
+                    "「阴影软边」是**始终生效**的基础滤波半径（单位米），用来盖掉几何锯齿（发丝/低模剪影）；"
+                    + "下面的「软阴影（PCSS）」是在它之上再按遮挡距离加半影。用世界单位是为了换分辨率不用重调；"
+                    + "tile 越细，同样半径吃掉的 texel 越多，超出采样预算时会被收窄以免出颗粒 —— 想更软又不想出噪点，"
+                    + "把「单角色分辨率」降到 1024/2048，或提高 PCSS 质量档。0 = 完全硬边。",
                     MessageType.None);
             }
         }
@@ -103,7 +111,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty("pcssEnabled", "启用 PCSS");
-                DrawProperty("softnessRadius", "最低软度（米）");
                 DrawProperty("pcssQuality", "质量档");
                 DrawProperty("pcssSoftness", "半影放大");
                 DrawProperty("pcssBlockerSearchRadius", "Blocker 搜索半径（米）");
@@ -112,22 +119,15 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
 
                 EditorGUILayout.HelpBox(
                     "PCSS：blocker search → 用平均遮挡深度估半影宽度 → 按该宽度做可变半径滤波，所以离遮挡物越远边缘越软。"
-                    + "关掉、或半影放大为 0 时回退「最低软度」那个固定半径的旋转盘 PCF（降级即回退，不是另一套 shader）。"
+                    + "关掉、或半影放大为 0 时只剩上面「运行」里的「阴影软边」那一档基础滤波（降级即回退，不是另一套 shader）。"
                     + "质量档只决定采样数（上限 " + HoCharacterShadowShaderContract.PcssBlockerSamples + "/"
                     + HoCharacterShadowShaderContract.PcssFilterSamples + "，与 HLSL 里的宏一致，由 Validate() 校验）。",
                     MessageType.None);
 
                 EditorGUILayout.HelpBox(
-                    "软阴影半径一律是**米（世界单位）**，这样换分辨率不用重调；tile 越细，同样半径吃掉的 texel 越多、"
-                    + "同样采样数铺开越稀，超出采样预算时半径会被收窄以免出颗粒。想更软又不想出噪点：把「单角色分辨率」"
-                    + "降到 1024/2048（让 1 texel 接近 1 像素），或提高质量档。",
-                    MessageType.None);
-
-                EditorGUILayout.HelpBox(
                     "**这一组在 Volume 里也有一份，Volume 覆盖了就以 Volume 为准**（Volume 面板点 Add Override 会把该组件的"
-                    + "所有字段都设成覆盖态）。在这里改了没反应时，先看 Ho-CharacterShadow Volume 的「软阴影（PCSS）」分组；"
-                    + "「运行状态」那一节的 pcss=(...) 会写出本帧实际生效的值与被 Volume 覆盖的字段个数（vol=n）。"
-                    + "另外：关闭 PCSS 后仍会保留「最低软度」那一档抗锯齿滤波，想要完全硬边就把最低软度设为 0。",
+                    + "所有字段都设成覆盖态）。在这里改了没反应时，先看 Ho-CharacterShadow Volume；"
+                    + "「运行状态」那一节的 pcss=(...) 会写出本帧实际生效的值与被 Volume 覆盖的字段个数（vol=n）。",
                     MessageType.None);
 
                 EditorGUILayout.HelpBox(

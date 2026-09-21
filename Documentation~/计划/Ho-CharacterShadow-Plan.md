@@ -86,10 +86,11 @@ pcf width=2px core=0.000 lit=1.000 speckles=0 | pcss width=22px core=0.000 lit=1
 
 改法（详见 `Documentation~/Ho-ShadowCast-PCSS.md` §6）：
 
-1. **半径全部改成米**：`softnessRadius`（最低软度，默认 5mm）、`pcssBlockerSearchRadius`（2cm）、`pcssMaxPenumbraRadius`（4cm）；shader 用 `_HoCSParameters[slice].w`（1 texel = 多少世界单位）换算。换分辨率不用重调。
+1. **半径全部改成米**：`softnessRadius`（**阴影软边**，默认 5mm）、`pcssBlockerSearchRadius`（2cm）、`pcssMaxPenumbraRadius`（4cm）；shader 用 `_HoCSParameters[slice].w`（1 texel = 多少世界单位）换算。换分辨率不用重调。
 2. **采样预算收窄**：texel 半径按 `sqrt(sampleCount * 6.25)` 收（64 采样 ≈ 20 texel），防止细 tile 上稀疏大盘。
-3. 固定 3×3 PCF → **旋转盘**；旋转角按**世界位置**取（逐像素，不再出方块）；blocker 为空但中心被遮挡 → 按最大半影（不再退回硬 PCF）；「最低软度」作为滤波下限；采样数在关闭时也照常发布（否则 PCF 退化成单点采样、边缘变抖动）；blocker 深度偏移默认 0.0005。
+3. 固定 3×3 PCF → **旋转盘**；旋转角按**世界位置**取（逐像素，不再出方块）；blocker 为空但中心被遮挡 → 按最大半影（不再退回硬 PCF）；「阴影软边」作为滤波下限；采样数在关闭时也照常发布（否则 PCF 退化成单点采样、边缘变抖动）；blocker 深度偏移默认 0.0005。
 4. 采样上限 32/64、档位 8/16·16/32·24/48·32/64、默认 **Ultra**。
+5. **「阴影软边」不放 PCSS 分组**：它始终生效（关掉 PCSS 也照样滤波），所以 UI 上放在「运行」分节；用户指出"如果它始终起效那就不应该放在 PCSS 里面"。PCSS 分组里只留 PCSS 专属的六项。
 
 **给美术的调参结论**：4096 的 tile 太细（1 texel 远小于 1 像素），默认参数下有效的软边半径被采样预算压在 ~12mm；**把「单角色分辨率」降到 1024/2048 是最有效的"变软且不出噪点"手段**（让 1 texel 接近 1 像素），或提高质量档。
 
@@ -130,11 +131,11 @@ CS 是**逐物体组件**型 feature（接收对象是每个角色自己的声�
 
 | 侧 | 分节 | 内容 |
 | --- | --- | --- |
-| **`HoCharacterShadowVolume`**（调试与逐相机覆盖的落点） | 运行 | 启用、单角色分辨率 |
-| | 软阴影（PCSS） | 启用 PCSS、质量档、半影放大、Blocker 搜索半径、半影半径上限、Blocker 深度偏移 |
+| **`HoCharacterShadowVolume`**（调试与逐相机覆盖的落点） | 运行 | 启用、单角色分辨率、阴影软边（米） |
+| | 软阴影（PCSS） | 启用 PCSS、质量档、半影放大、Blocker 搜索半径（米）、半影半径上限（米）、Blocker 深度偏移 |
 | | 调试 | 调试模式（`Off` / `Atlas` / `Character`）、`Debug In Scene View`、`Debug In Game View`、单角色 tile |
-| **`HoCharacterShadowRendererFeature`** | 运行（兜底） | 启用、单角色分辨率、同时接收域上限、图集边长上限、PCF 半径、深度偏移、法线偏移 |
-| | 软阴影（PCSS，兜底） | 与 Volume 的六个字段一一对应（Volume 未覆盖时生效） |
+| **`HoCharacterShadowRendererFeature`** | 运行（兜底） | 启用、单角色分辨率、阴影软边（米）、同时接收域上限、图集边长上限、深度偏移、法线偏移 |
+| | 软阴影（PCSS，兜底） | 与 Volume 的六个 PCSS 字段一一对应（Volume 未覆盖时生效） |
 | | 声明（只读汇总） | 场景里的 `HoCharacterShadow` 组件 → OB 组 / tile / 盒尺寸 / 状态；图集容量与已分配 tile |
 | | 调试 | 一行 HelpBox → Volume |
 | | 高级 | 渲染时机（只读：固定 `BeforeRenderingShadows`）、调试 Shader、图集 / 剔除 / 剔除光源（只读：feature 自己的隐藏方向光） |
