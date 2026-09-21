@@ -238,7 +238,7 @@ ShoostPostProcessRendererFeature -> Ho-ImageProcess
 - **SSGI**：第一版只做独立 `Ho-SSGI`（替换 HTrace；`gisexclude` 位必做）。
 - **motion**：✅ 转正占坑（通道 `motion` + AOV；动态模糊/Nuke 要用，先登记不实现）。
 - **PCSS**：暂不做（`Ho-ShadowCast-PCSS.md`）。
-- **专用 cast 组（角色脸/远平面）**：只规划（`LILTOON_SPECIAL_CAST_PLACEHOLDER.md`），首版不做。
+- **专用 cast 组（角色脸/远平面）**：旧草案中只规划、首版不做；原占位文档已撤下，角色投影的现行计划见 [Ho-CharacterShadow](../计划/Ho-CharacterShadow-Plan.md)，远平面不在本轮范围。
 - **ShadowCast 分组模型**：cast 分组（每组一张 atlas、灯按 slice 排布）；首版 2 组、上限 N=8；`shadow.add0..N` 的 N 指"组"不是"灯"。
 - **Hiro Missing-Script 清理**：可选（该场景不再是基线）。
 - **推进顺序**：Ho-GTAO（独立 feature）→ Ho-SSGI（含 `gisexclude`）→ 其余系统。
