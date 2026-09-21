@@ -1,8 +1,8 @@
-> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
-
 # 架构边界：MSAA
 
-> 结论性说明（v2，2026-09-14）。过程记录见 `Documentation~/架构优化/LILTOON_GTAO_MSAA_SILHOUETTE_INVESTIGATION_LOG.md`。
+> **状态：现行架构边界说明**（结论 2026-09-14 定稿，2026 文档审核时按当前代码校正）。
+> 我们对 MSAA 的底线与"哪些地方必须处理它"仍然有效；文中的实现指路已从 MetadataBuffer 换到 GB / OB / SB / AC。
+> 过程记录与实测数据见 `Documentation~/架构优化/LILTOON_GTAO_MSAA_SILHOUETTE_INVESTIGATION_LOG.md`。
 
 ## 结论
 
@@ -24,11 +24,16 @@ MSAA 可以开。我们对它只有一条底线：**开着不能坏** —— 不
 
 **必需的解析入口。** `HoGeometryBufferRenderTargets`（MSAA 色/深度目标的分配与采样数协商）、`HoGeometryBufferPass`（MSAA 绘制目标 + Resolve pass，RenderGraph 与兼容两条路径）、`HoGeometryBufferResolve.shader`（多关键帧的 `Texture2DMS` 读取与单采样写出），以及覆盖率纹理本身。少了它们，MSAA 下几何就退化成"最近 sample"，屏幕空间特性会立刻出现整圈硬边 —— 这正是修复前观察到的情况。
 
+**自建 MSAA 的第三条路。** `Ho-ObjectBuffer` 的身份池**不跟随相机 MSAA**：它按平台能力协商自己的采样数（`HoObjectBufferFormatUtility.GetSupportedSampleCount` + `_HoObjectBufferRequestedSamples` / `_HoObjectBufferActualSamples`），逐样本写 16 bit 身份后自己 resolve 成"最多 4 层身份 + 每层覆盖率"。这是"掩码自带亚像素覆盖"的正解（见 `语义掩码.md`），代价是自成一套目标与 resolve。
+
 **必需的补偿。** 屏幕空间特性的覆盖率加权：目前是 GTAO `Spatial` 末段的轮廓复合，以及 `RecordBlit` 里把发布给材质的纹理固定为单采样。
 
 **有意跟随相机 MSAA 的地方。** OIT 的主目标在满分辨率分支上沿用相机采样数（`WeightedOITRendererFeature`），GeometryBuffer 的绘制目标同理。**这是刻意的**，不要顺手统一成单采样：它们和相机颜色是同一张多重采样目标，必须同采样数。
 
-**必须单采样的地方。** 所有会被材质或后处理采样、或者要被重采样 / 重投影 / 跨帧重投影的 RT：各特性的 history 与屏幕空间输出（GTAO history、MetadataBuffer、SSGI、SSS、PlanarReflection、CharacterSpecialization、ScreenProcess、ImageProcess、ShadowCast 等）。理由只有两条，但都是硬的：多重采样资源不支持线性过滤（重投影与上采样都依赖 bilinear），以及多次采样的 sample 索引没有时间语义、无法跨帧对应。
+**必须单采样的地方。** 所有会被材质或后处理采样、或者要被重采样 / 重投影 / 跨帧重投影的 RT：各特性的 history 与屏幕空间输出（GTAO history、SB 的五张数值图与语义 lane、SSGI、SSS、PlanarReflection、CharacterSpecialization、ScreenProcess、ImageProcess、ShadowCast 等）。理由只有两条，但都是硬的：多重采样资源不支持线性过滤（重投影与上采样都依赖 bilinear），以及多次采样的 sample 索引没有时间语义、无法跨帧对应。
+
+> SB 的语义 lane 曾经按 MSAA 渲染、让 AC 用 `Texture2DMS` + `Load` 读，**结果是拖影**（坐标 / 采样数 / `bindMS` 任一处理解错就会静默读到邻域或旧 sample）。
+> 现在 lane 是**单采样**，读端只做普通采样；逐 sample 细分将来由 SB 自己 resolve 成单采样再发布 —— 与这里"会被采样的 RT 一律单采样"是同一条纪律。
 
 **诊断。** `HoGeometryBufferRendererFeature` 在 resolve shader 缺失时会打 warning，保留 —— 它提示的正是"MSAA 下几何会退化成最近 sample"。
 
@@ -44,7 +49,7 @@ MSAA 可以开。我们对它只有一条底线：**开着不能坏** —— 不
 
 另外要知道消费端的边界：材质侧没有逐 sample 能力（lilToon 全仓库检索 `Texture2DMS` / `Texture2DMSArray` / `EvaluateAttributeAtSample` / `SV_Coverage` 零命中），屏幕空间信号对材质而言永远是"每像素一个值"。
 
-单采样带来的另一类后果，见配套文档 `语义掩码.md`：MetadataBuffer 的语义位（`objectCustom` 的 8 个 0/1 通道）当轮廓用时必然是硬边，只能由消费端自己补低频，且不能指望上面这套 MSAA —— 那份文档同时记录了这轮踩过的坑。
+"用 1 bit 语义位当轮廓"这类坑见配套文档 `语义掩码.md`：语义位表达**归属**而不是**覆盖率**，当轮廓用时必然是硬边；现在覆盖率统一从 OB 身份池拿，不再从 bit 里挤。
 
 ## AA 怎么选
 
