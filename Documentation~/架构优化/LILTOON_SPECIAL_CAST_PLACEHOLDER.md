@@ -2,6 +2,7 @@
 
 > 状态：**占位，只规划**（首版不做，2026 文档审核核对后仍成立）。
 > 模型：cast **分组**（每组一张 atlas、组内灯按 slice 排布）；`shadow.add0..N` 的 **N 指“组”不是“灯”**，组上限规划为 **N = 8**；现状是 **2 组**（附加灯 punctual + 第二方向光）。本文件是“未来新组”的蓝图，不是施工单。
+> **注意**：其中的“CharacterFace 组”已被 **`Ho-CharacterShadow-Plan.md`（CS，独立 feature、receiver-focused local shadow）**取代——旧方案是“在 ShadowCast 里加一个组”，新方案有独立的生命周期、接收身份与逐灯可见性接口；本文件的 `shadow.face` 通道名仍是通道规划，不代表已有逐灯 shader 接口。
 
 ## 1. 规划中的专用组
 
