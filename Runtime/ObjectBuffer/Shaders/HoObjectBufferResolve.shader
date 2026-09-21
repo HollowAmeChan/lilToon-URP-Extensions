@@ -1,7 +1,7 @@
 Shader "Hidden/lilToon/URP/ObjectBuffer/Resolve"
 {
     // MSAA → 4 层 (ID, 覆盖率) 的唯一归约点。
-    // 规则（规划 §5.4 / §5.5）：
+    // 规则（OB 架构 §5.4 / §5.5）：
     //   * 逐样本 **Load**，绝不做硬件 resolve（resolve 是求平均，身份过不去）；
     //   * 每个样本的一张票投给它的部件 ID，按票数降序取前 4；**平票取更近的样本**；
     //   * 覆盖率 = 票数 / 采样数，**不归一化**，`1 - Σcov` 就是背景占比（ID 0 = 背景，不占层）；
@@ -158,7 +158,7 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Resolve"
             }
 
             // 选择层归约：按选择 ID 累加覆盖率再排名次（同一条"按 ID 匹配加权"的规则）。
-            // P1 只归约前两个选择层（一张选择图）；第二张（4 层配置）见规划 §5.11 的后续项。
+            // P1 只归约前两个选择层（一张选择图）；第二张（4 层配置）见OB 架构 §5.11 的后续项。
             void HoObjectBufferResolveSelections(uint2 coord, out uint selectionIds[2], out float selectionCoverages[2])
             {
                 selectionIds[0] = 0u;
@@ -171,7 +171,7 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/Resolve"
                 float candidateCoverages[4] = { 0.0, 0.0, 0.0, 0.0 };
                 int candidateCount = 0;
                 // 每像素最多 4 个候选，最终只发布前两名（P1 的选择层是迁移兼容层）。
-                // 之前这里有一个 `dropped` 计数，算了没人读——真需要"溢出可见"时再按规划 §5.11 发布，
+                // 之前这里有一个 `dropped` 计数，算了没人读——真需要"溢出可见"时再按OB 架构 §5.11 发布，
                 // 现在不留死代码。
 
                 [unroll]

@@ -11,7 +11,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     /// <item>分配 16 bit 部件 ID（角色 8 + 槽位 8）与 8 bit 选择 ID；</item>
     /// <item>上传 <see cref="GraphicsBuffer"/> 并发布全局。</item>
     /// </list>
-    /// 规则（规划 §5.3 / §5.11）：像素里只有索引、属性永远在表里；两级是为了让稀疏的
+    /// 规则（OB 架构 §5.3 / §5.11）：像素里只有索引、属性永远在表里；两级是为了让稀疏的
     /// <c>角色&lt;&lt;8 | 槽位</c> 能定位到稠密行；越界一律回 unknown 行而**不是 clamp 行号**
     /// （clamp 会落到别的角色的行上，读出来看着合法其实是错的）。
     /// <para>
@@ -282,7 +282,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 groupData.rowBase = (uint)parts.Count;
                 groupData.slotCount = 0;
                 // 组行的 tags 保留在结构里但目前恒 0：没有任何消费端读它，
-                // "整组"语义用组 ID 判定即可（规划 §1.2 的两级表里组行只有 组名 / 朝向来源）。
+                // "整组"语义用组 ID 判定即可（OB 架构 §1.2 的两级表里组行只有 组名 / 朝向来源）。
                 groupData.tags = 0;
 
                 // 快照：GetPartNames() 是复用缓存，循环体内又可能触发它被重填。

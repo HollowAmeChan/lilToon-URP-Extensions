@@ -12,7 +12,7 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.AttributeComposite
 {
     /// <summary>
-    /// AC 的产出趟：`SemanticResolve`（规划 §0.5）。本轮只有 object 来源，所以这一趟就是
+    /// AC 的产出趟：`SemanticResolve`（AC 架构 §0.5）。本轮只有 object 来源，所以这一趟就是
     /// "OB 身份池 + 部件行标签 → 固定 lane 的 `(SemanticId, coverage)`"——
     /// 也就是以前角色特化自己烤的那张位平面，收上来变成所有消费者共用的一份。
     /// <para>
@@ -238,7 +238,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
             PublishResources(resources, selectionTextures, laneCount, objectBufferResources, surfaceResources);
         }
 
-        /// <summary>把 Selection 池与身份池 / SB 数值面的引用一起发布（规划 §0.1：句柄是引用，依赖各自声明）。</summary>
+        /// <summary>把 Selection 池与身份池 / SB 数值面的引用一起发布（AC 架构 §0.1：句柄是引用，依赖各自声明）。</summary>
         private static void PublishResources(
             HoAttributeCompositeRenderGraphResources resources,
             TextureHandle[] selectionTextures,
@@ -313,7 +313,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
         }
 
         /// <summary>
-        /// runtime catalog → GPU（规划 §5：像素纹理每帧生产，catalog 只在变脏时重建）。
+        /// runtime catalog → GPU（AC 架构 §5：像素纹理每帧生产，catalog 只在变脏时重建）。
         /// 表很小（每条 16 B × ≤16），重建时上传一次即可；**按 LaneIndex 落位**，
         /// 不是按声明顺序 —— lane 是传输位，声明顺序不保证等于 lane 号。
         /// </summary>

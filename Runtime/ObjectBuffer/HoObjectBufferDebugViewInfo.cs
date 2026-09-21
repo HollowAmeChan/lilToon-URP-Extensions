@@ -10,7 +10,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         private const string MissingFallback = "ObjectBuffer debug view is skipped when the feature-local debug shader is missing.";
 
         /// <summary>
-        /// 每个通道都要有视图（规划 §5.9①）：没有视图的成本与错误都只能在 Frame Debugger 里猜。
+        /// 每个通道都要有视图（OB 架构 §5.9①）：没有视图的成本与错误都只能在 Frame Debugger 里猜。
         /// ID 视图按 palette 的显示色上色，所以"未注册"会直接显示成洋红的 unknown 行。
         /// </summary>
         public static readonly HoDebugViewInfo[] Views =

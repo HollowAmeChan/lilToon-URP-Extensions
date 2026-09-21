@@ -9,9 +9,9 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.SurfaceBuffer
 {
     /// <summary>
-    /// SB 的数值 pass：材质侧 `HoSurfaceBuffer` pass 一次写五张数值图 + owner（规划 §1 / §0.1）。
+    /// SB 的数值 pass：材质侧 `HoSurfaceBuffer` pass 一次写五张数值图 + owner（SB 架构 §1 / §0.1）。
     /// <list type="bullet">
-    /// <item>**自用深度**：不发布深度、也不读别人的深度（规划 §1.2）；opaque/cutout 写深度，保证"前表面"唯一。</item>
+    /// <item>**自用深度**：不发布深度、也不读别人的深度（SB 架构 §1.2）；opaque/cutout 写深度，保证"前表面"唯一。</item>
     /// <item>**透明不生产**：队列上限压在上不透明段末尾（多层透明没有唯一表面真值，<see cref="HoSurfaceBufferSettings.maxRenderQueue"/>）。</item>
     /// <item>**owner = RSUV 的低 16 bit**（与 OB 写的 `partId` 同一个值），所以 AC 能用它跟 OB 层 0 的 IdentityId 逐像素对齐。</item>
     /// </list>
@@ -258,7 +258,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 dimension = cameraTextureDescriptor.dimension,
                 slices = cameraTextureDescriptor.volumeDepth,
                 depthBufferBits = 0,
-                // 数值图单采样：材质值属于最近的那个面（规划 §1.2），MSAA resolve 会把两个面平均掉。
+                // 数值图单采样：材质值属于最近的那个面（SB 架构 §1.2），MSAA resolve 会把两个面平均掉。
                 msaaSamples = MSAASamples.None,
                 clearBuffer = true,
                 clearColor = Color.clear,

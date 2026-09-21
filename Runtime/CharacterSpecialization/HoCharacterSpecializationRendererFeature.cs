@@ -86,7 +86,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             }
 
             EnsureMaterial(activeSettings);
-            // 消费者登记（AC 规划 §3）：声明本 feature 读了 schema 里哪些名字。
+            // 消费者登记（AC 架构 §3）：声明本 feature 读了 schema 里哪些名字。
             // 这里读的就是物体位那 8 条 lane；名字解析不到会在 AC 的 feature 面板里报出来。
             HoAttributeCompositeConsumerRegistry.Declare(
                 "Ho-CharacterSpecialization",

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.AttributeComposite
 {
     /// <summary>
-    /// 一条 lane 的来源合成方式（规划 §0.4 / §0.3.6）。**五种都已经在 AC 的 resolve 里实现**
+    /// 一条 lane 的来源合成方式（AC 架构 §0.4 / §0.3.6）。**五种都已经在 AC 的 resolve 里实现**
     /// （`HoACSelectionResolve.shader` 的 `ComposeLane`）：surface 侧来自 SB 的单采样语义 lane。
     /// <para>
     /// 公式里的 `o` 是物体侧（像素级：Σ 层覆盖率 · 该层带不带这一位），`s` / `written` 是 SB 在同一像素上写的 lane 值；
@@ -28,7 +28,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
     }
 
     /// <summary>
-    /// schema 里的一条语义声明（规划 §0.3.6 / §3）。**SemanticId 是权威语义，LaneIndex 只是屏幕传输位**，
+    /// schema 里的一条语义声明（AC 架构 §0.3.6 / §3）。**SemanticId 是权威语义，LaneIndex 只是屏幕传输位**，
     /// 两者不许混用：像素里传的是 lane，名字解析出来的是 SemanticId。
     /// </summary>
     public sealed class HoSemanticEntry
@@ -55,7 +55,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
     }
 
     /// <summary>
-    /// OB / SB / AC 三方共用的一份语义声明（规划 §0.3.6：OB/SB 都只读该声明，不自造 ID）。
+    /// OB / SB / AC 三方共用的一份语义声明（AC 架构 §0.3.6：OB/SB 都只读该声明，不自造 ID）。
     /// <para>
     /// **词表只有一份**：所有 lane 都是"物体位"，直接由 <see cref="HoObjectBufferPartTags"/> 生成 ——
     /// SemanticId = 位序 + 1、LaneIndex = 位序、objectTagBit = 位序。
@@ -69,7 +69,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
     /// </summary>
     public static class HoSemanticSchema
     {
-        /// <summary>传输位上限（规划 §0.3.6：最多 16 个 surface-writable 语义同时占 lane）。</summary>
+        /// <summary>传输位上限（AC 架构 §0.3.6：最多 16 个 surface-writable 语义同时占 lane）。</summary>
         public const int MaxLanes = 16;
 
         /// <summary>本轮 SemanticResolve 一次写 4 张 RGBA8（= 8 条 lane，每张 2 条）。</summary>
@@ -113,7 +113,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
             return bit >= 0 && bit < 32 ? 1u << bit : 0u;
         }
 
-        /// <summary>一条声明的问题描述；全部合法时返回 null。解析不到 / 撞车必须可见（规划 §3）。</summary>
+        /// <summary>一条声明的问题描述；全部合法时返回 null。解析不到 / 撞车必须可见（AC 架构 §3）。</summary>
         public static string DescribeValidation()
         {
             if (Entries.Count == 0)

@@ -4,7 +4,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
     /// ID pass 的自建 MSAA 采样数。**与相机的 MSAA 设置解耦**：覆盖率是这个 feature 的产品功能，
-    /// 相机把 AA 关掉时它也必须照常产出（见规划 §5.4 / 决策 7）。
+    /// 相机把 AA 关掉时它也必须照常产出（见OB 架构 §5.4 / 决策 7）。
     /// </summary>
     public enum HoObjectBufferSampleCount
     {
@@ -16,7 +16,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
     /// <summary>
     /// 每像素可容纳的选择层数。一张 RGBA8 按 Cryptomatte 的成对布局装 2 个选择
-    /// （R=ID0, G=覆盖率0, B=ID1, A=覆盖率1），所以 4 个选择 = 两张图（见规划 §5.11）。
+    /// （R=ID0, G=覆盖率0, B=ID1, A=覆盖率1），所以 4 个选择 = 两张图（见OB 架构 §5.11）。
     /// </summary>
     public enum HoObjectBufferSelectionLayers
     {
@@ -30,7 +30,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
     /// <summary>
     /// 选择层的遮罩来源。**这是跨仓协议里被冻结的枚举**：加来源只能加枚举值，
-    /// 不允许改动通道布局或选择 ID 空间（规划 §5.11）。
+    /// 不允许改动通道布局或选择 ID 空间（OB 架构 §5.11）。
     /// </summary>
     public enum HoObjectBufferMaskSource
     {
@@ -67,9 +67,9 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     /// <summary>
     /// **角色标签**：这个部件在角色语义上属于哪几类（**位掩码，可多选**）。
     /// <list type="bullet">
-    /// <item>它本质上是**"角色的预置标签表"**：角色一旦被当作角色来做，需要的词就是固定那几条，所以预置成一张表，作者只做"打标签"；场景那边多变，才用自由创建的**选区**（规划 0.3.12）。</item>
+    /// <item>它本质上是**"角色的预置标签表"**：角色一旦被当作角色来做，需要的词就是固定那几条，所以预置成一张表，作者只做"打标签"；场景那边多变，才用自由创建的**选区**（OB 架构 0.3.12）。</item>
     /// <item>**多选正是它存在的理由**："整角色 + 脸"这种同时成立的情况，单值枚举表达不了。它与旧 MB 的 `objectCustomMask` 完全对等；R3/R4 的 schema lane mask 只换机制、不换词表。</item>
-    /// <item>**目前只有角色特化读它**，按「组 + 标签 + 覆盖率」取遮罩（规划里 SSS 也会读它）。</item>
+    /// <item>**目前只有角色特化读它**，按「组 + 标签 + 覆盖率」取遮罩（OB 架构里 SSS 也会读它）。</item>
     /// <item>**AC 上线也不改这套词表**：AC 只是"怎么读、怎么合成"的通道，不改变"标签是什么"。</item>
     /// <item>这里**不放材质类语义**（皮肤 / 半透明 / 不透明测试…）：那些是表面语义，归 SB。加一位 = 给**角色语义**加一条，不是因为某个 feature 缺一位。</item>
     /// <item>**这就是角色侧唯一的语义扩展点**：以后所有新的角色级开关都往这一张表里加（加一位 + 起个名字），

@@ -9,7 +9,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     /// <para>
     /// **这里刻意不放材质数值**（thickness / curvature / roughness / metallic / reflectance /
     /// PLR strength / materialClass / transmittance）：这些是**材质自己填过一遍**的东西，
-    /// 组件再存一份就会出现两个来源。它们的权威归属与写入路径见规划 §5.3 的"材质数值从哪里来"，
+    /// 组件再存一份就会出现两个来源。它们的权威归属与写入路径见OB 架构 §5.3 的"材质数值从哪里来"，
     /// 在定下来之前 palette 里那几栏恒为 0，消费端不得依赖。
     /// </para>
     /// </summary>
@@ -47,7 +47,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     }
 
     /// <summary>
-    /// 选择条目（规划 §5.11）：一个**具名的选区**，用来取代 `custom0~3` 这类匿名通道。
+    /// 选择条目（OB 架构 §5.11）：一个**具名的选区**，用来取代 `custom0~3` 这类匿名通道。
     /// <list type="bullet">
     /// <item>部件回答"这是谁"；选择回答"我想把哪一块单独拿出来调"——一块可以横跨多个部件，也可以是同一个部件里的一段遮罩；</item>
     /// <item>名字**全局唯一**，ID 由注册表按顺序分配（独立的 8 bit 空间）；材质侧只引用名字、不定义名字，所以改名不破资产。</item>

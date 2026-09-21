@@ -8,7 +8,7 @@ using UnityEngine.Scripting.APIUpdating;
 namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
-    /// 角色特化的身份来源：**部件表 + 选择表**（规划 §5.7 / §5.11）。
+    /// 角色特化的身份来源：**部件表 + 选择表**（OB 架构 §5.7 / §5.11）。
     /// <list type="bullet">
     /// <item>部件条目回答"这个 renderer 是哪个角色的哪个部件"，索引写进 RSUV（低 16 bit = 角色 8 + 槽位 8）；</item>
     /// <item>选择条目是具名的选区，取代 `custom0~3` 这类匿名通道；</item>
@@ -55,7 +55,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         public List<HoObjectBufferPartEntry> parts = new List<HoObjectBufferPartEntry>();
 
         [InspectorName("选择")]
-        [Tooltip("具名的选区（规划 §5.11）。名字全局唯一；材质侧只能引用这里的名字。")]
+        [Tooltip("具名的选区（OB 架构 §5.11）。名字全局唯一；材质侧只能引用这里的名字。")]
         public List<HoObjectBufferSelectionEntry> selections = new List<HoObjectBufferSelectionEntry>();
 
         [InspectorName("面部朝向")]
@@ -258,7 +258,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 tags = (uint)(entry != null ? entry.tags : HoObjectBufferPartTags.None),
                 // 材质数值（thickness / curvature / roughness / metallic / reflectance / plrStrength /
                 // materialClass / transmittance）**不由组件提供**：它们在材质里已经填过一遍，
-                // 权威归属与写入路径见规划 §5.3。定下来之前这里恒为 0，消费端不得依赖。
+                // 权威归属与写入路径见OB 架构 §5.3。定下来之前这里恒为 0，消费端不得依赖。
                 thickness = 0f,
                 curvature = 0f,
                 transmittance = 0f,

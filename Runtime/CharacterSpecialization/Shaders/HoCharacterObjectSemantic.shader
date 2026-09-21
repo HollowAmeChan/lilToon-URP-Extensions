@@ -28,7 +28,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/ObjectSemantic"
             // 角色语义位平面：**从 AC 的 Selection 池转置而来**，不再自己解码 OB 的身份池与部件表。
             // AC 的池是 `(SemanticId, coverage)` 的固定 lane（每张 RGBA8 两条），这里是"每通道一个语义"的
             // 位平面 —— 因为下游（前发投影的半影滤波、眼透的羽化）要在同一张图上按 texel 抽很多次，
-            // 位平面布局更便宜。这就是规划 §9.2 的"消费者自己用 API 烤一张、图记在自己名下"。
+            // 位平面布局更便宜。这就是AC 架构 §9.2 的"消费者自己用 API 烤一张、图记在自己名下"。
             //
             // 通道布局沿用历史上的 objectCustom 布局，消费端不用动：
             //   low  = (0 全角色, 1 脸, 2 前发, 3 眼睛)

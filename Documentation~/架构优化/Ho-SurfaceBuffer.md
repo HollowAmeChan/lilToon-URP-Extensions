@@ -1,8 +1,13 @@
-# Ho-SurfaceBuffer（SB）规划
+# Ho-SurfaceBuffer（SB）
+
+> **状态：已落地并稳定**（代码在 `Runtime/SurfaceBuffer/`，材质侧在 lilToon 的 22 个 URP lilblock）。
+> 本文是 **SB 的现行架构说明**：字段、名字、执行记录与冻结决议；§0 是流水线复核与勘误基线。
+> 相关：`Ho-ObjectBuffer.md`、`Ho-AttributeComposite.md`（AC 是 SB 属性值的唯一读取入口）、`架构边界/MSAA.md`。
+> **已删除的旧来源**：MetadataBuffer 的 `SurfaceColor` / `SurfaceData` / `ReflectionMaterial`（R6/R7 删除，见 `CHANGELOG.md`）。
 
 表面数值 buffer：回答"表面是什么样"。**几何在 GB，身份与逐物体属性在 OB，合成在 AC。**
 
-> **状态：五张数值 RT、SurfaceOwner validity、Classification 四通道、同 SemanticId 的 surface sample 协议与 4/8/16 lane batching 已冻结。**
+
 
 > **落地状态（R3-sb，数值面 + 语义 lane 本轮）**：SB 的**数值面**已经可以跑：
 > - 已落地：`Runtime/SurfaceBuffer/`（feature + 数值 pass + 语义 lane pass + 资源集 + 格式工具 + Volume/调试直出）、材质侧 `lil_pass_surface_buffer.hlsl` / `lil_pass_surface_semantic.hlsl`（两者共用 `lil_pass_surface_common.hlsl` 的几何 + alpha clip 前半段）与 22 个 URP lilblock 的 `LightMode=HoSurfaceBuffer` / `HoSurfaceSemantic` 两个 pass、5 个新材质属性（`_HoSurfaceThickness` / `_HoSurfaceCurvature` / `_HoSurfaceTransmittanceHint` / `_HoSurfaceMaterialClassId` / `_HoSemanticWeight`）。

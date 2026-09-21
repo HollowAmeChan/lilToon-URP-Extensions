@@ -18,7 +18,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         public const string Id1TextureName = "_HoObjectBufferId1Texture";
         public const string CoverageTextureName = "_HoObjectBufferCoverageTexture";
         public const string SelectionTextureName = "_HoObjectBufferSelectionTexture";
-        /// <summary>部件行表（规划 §1.2 的"条目表"）：全局名与文档统一，别再写成 Palette。</summary>
+        /// <summary>部件行表（OB 架构 §1.2 的"条目表"）：全局名与文档统一，别再写成 Palette。</summary>
         public const string PartBufferName = "_HoObjectBufferEntries";
         public const string GroupBufferName = "_HoObjectBufferGroups";
         public const string SelectionBufferName = "_HoObjectBufferSelections";

@@ -7,7 +7,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 {
     internal sealed partial class HoCharacterSpecializationPass
     {
-        // 角色特化的语义源 = **AC 的 Selection 池**（规划 §9.2：AC 不给每个消费者烤图，
+        // 角色特化的语义源 = **AC 的 Selection 池**（AC 架构 §9.2：AC 不给每个消费者烤图，
         // 要烤的自己用 API 烤、图记在自己名下）。这一趟只做布局转置：
         // AC 的池是 `(SemanticId, coverage)` 固定 lane，这里转成"每通道一个语义"的位平面，
         // 因为下游要在同一张图上按 texel 抽很多次（前发投影的半影、眼透的羽化）。

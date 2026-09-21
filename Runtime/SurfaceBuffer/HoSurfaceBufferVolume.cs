@@ -19,7 +19,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         }
     }
 
-    /// <summary>SB 的**调试入口**（规划 §14：调试在 Volume，feature 只放高级设置 + 兜底默认值）。</summary>
+    /// <summary>SB 的**调试入口**（SB 架构 §14：调试在 Volume，feature 只放高级设置 + 兜底默认值）。</summary>
     [Serializable]
     [VolumeComponentMenu("Post-processing/Ho-SurfaceBuffer/表面数值")]
     [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]

@@ -1,7 +1,7 @@
 #ifndef LIL_HO_AC_QUERY_INCLUDED
 #define LIL_HO_AC_QUERY_INCLUDED
 
-// Ho-AttributeComposite（AC）查询门面（规划 §3）。**消费端只经这里读语义与属性**：
+// Ho-AttributeComposite（AC）查询门面（AC 架构 §3）。**消费端只经这里读语义与属性**：
 // 不自己解码 OB/SB 的 packing、也不自己攒语义图；RenderGraph 的物理读依赖仍要各自声明。
 //
 // 本轮（R3-obj / R4b / R4c）落地的：Identity / Group / Layer0Identity / Predicate / TotalCoverage /
@@ -132,7 +132,7 @@ float HoAC_Group(float2 uv, uint group8)
 }
 
 /// <summary>
-/// 物体位谓词：`Σ cov_i · 该层部件带不带这一位`（规划 §0.2 的 `HoAC_Predicate`）。
+/// 物体位谓词：`Σ cov_i · 该层部件带不带这一位`（AC 架构 §0.2 的 `HoAC_Predicate`）。
 /// 位号就是 <c>HoObjectBufferPartTags</c> 的位序；部件行表里存的是整份标签掩码。
 /// </summary>
 float HoAC_Predicate(float2 uv, uint objectTagBit)
@@ -169,7 +169,7 @@ float HoAC_Predicate(float2 uv, uint objectTagBit)
 
 /// <summary>
 /// 一条 lane 的覆盖率：按 runtime catalog 定位 lane、**校验图内 SemanticId** 后返回
-/// （图内 ID 与声明不符时按"未写"处理，规划 §3）。`laneIndex` 是编译期常量时会被折叠。
+/// （图内 ID 与声明不符时按"未写"处理，AC 架构 §3）。`laneIndex` 是编译期常量时会被折叠。
 /// </summary>
 float HoAC_Selection(float2 uv, uint laneIndex)
 {
@@ -211,7 +211,7 @@ float HoAC_Selection(float2 uv, uint laneIndex)
 }
 
 /// <summary>
-/// 具名语义的覆盖率：名字在 C# 侧已经解析成 lane 号，这里只做 ID 校验与取值（规划 §3：像素里只有 ID 比较）。
+/// 具名语义的覆盖率：名字在 C# 侧已经解析成 lane 号，这里只做 ID 校验与取值（AC 架构 §3：像素里只有 ID 比较）。
 /// 解析不到的名字要传 laneCount 之外的号（C# 会这么给），于是恒返回 0 并在诊断里报出来。
 /// </summary>
 float HoAC_SelectionByName(float2 uv, uint laneIndex)
@@ -228,7 +228,7 @@ float _HoSurfaceBufferActive;
 
 /// <summary>
 /// 这个像素的 surface 数值能不能用：SB 有产出 **且** SB 的前表面就是 OB 层 0 说的那个身份
-/// （规划 §0.1 的 owner 对齐）。不匹配时消费者拿到的是 constant 兜底，不是错值。
+/// （AC 架构 §0.1 的 owner 对齐）。不匹配时消费者拿到的是 constant 兜底，不是错值。
 /// </summary>
 bool HoAC_SurfaceValid(float2 uv)
 {
@@ -243,7 +243,7 @@ bool HoAC_SurfaceValid(float2 uv)
 }
 
 /// <summary>
-/// 合成数值属性：覆盖链 `constant &lt; surface`（规划 §4）。
+/// 合成数值属性：覆盖链 `constant &lt; surface`（AC 架构 §4）。
 /// <list type="bullet">
 /// <item><b>0 = Classification</b>：`(sssProfileIdByte, curvatureHint, transmittanceHint, materialClassIdByte)`。</item>
 /// <item><b>1 = Material</b>：`(perceptualRoughness, metallic, thickness, 0)` —— 消费端自己平方成 linear roughness。</item>

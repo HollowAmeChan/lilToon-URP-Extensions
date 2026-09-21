@@ -6,7 +6,7 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.Editor.SurfaceBuffer
 {
     /// <summary>
-    /// SB 的调试入口面板（规划 §14：调试在 Volume，feature 只放高级设置 + 兜底默认值）。
+    /// SB 的调试入口面板（SB 架构 §14：调试在 Volume，feature 只放高级设置 + 兜底默认值）。
     /// 调试模式的下拉里**只写视图名**，每个模式的说明按当前选择在下面**单独画一行**：
     /// 说明塞进枚举显示名会被 Unity 的下拉当成分组（名字里的 "/" 会变成一层子菜单），
     /// 而且下拉一展开就是一屏长句，选值反而看不见。

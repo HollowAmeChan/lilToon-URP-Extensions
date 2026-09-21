@@ -1,9 +1,10 @@
-# Ho-AttributeComposite（AC）规划
+# Ho-AttributeComposite（AC）
 
-**所有语义遮罩与合成属性的唯一逻辑入口**：它屏蔽 OB/SB 的存储布局与 ID 解压规则，下游不再自行解码 OB/SB 的存储布局（MB 已整块删除）。
+> **状态：已落地**（代码在 `Runtime/AttributeComposite/`）。本文是 **AC 的现行架构说明**：边界、输出、查询 API、
+> 覆盖链、帧序与生命周期、导出面。**AC 不画几何、不画表面**：它只读 OB + SB，把来源压成"一个每像素答案"。
+> 相关：`Ho-ObjectBuffer.md`、`Ho-SurfaceBuffer.md`、`Ho-UI_风格规范.md`（面板与 Volume 的排法）。
 
-> **状态：typed 查询、runtime catalog、sample 级 object/surface SemanticId 合成、Selection resolve 与属性 validity 已冻结。**
-> AC **不画几何、不画表面**：它只读 OB + SB，把"三个来源"压成"一个每像素答案"。
+**所有语义遮罩与合成属性的唯一逻辑入口**：它屏蔽 OB/SB 的存储布局与 ID 解压规则，下游不再自行解码。
 
 > **落地状态（R4b，surface 来源本轮）**：AC 已经存在并可跑，范围是 **object + surface 两个来源**：
 > - 已落地：`HoSemanticSchema`（由 `HoObjectBufferPartTags` 生成 8 条 lane，SemanticId = 位序+1、Lane = 位序；**默认 `SurfaceOverride`**）、runtime catalog（按 LaneIndex 编译成 GPU 常量表，变脏重建）、`SemanticResolve`（一轮 4 张 RGBA8 = 8 条 lane 的 `(SemanticId, coverage)`）、资源集 `HoAttributeCompositeRenderGraphResources`、`HoAC_*` 查询（Identity / Group / Layer0Group / Predicate / TotalCoverage / Selection）、消费者登记与解析失败诊断、feature 面板（schema 与登记只读汇总）、Volume + 调试直出（lane 覆盖率 / lane ID / catalog）。

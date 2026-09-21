@@ -40,7 +40,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
     /// <summary>
     /// 组行。两级表的第一级：像素里的 ID 是稀疏的 <c>角色 8 + 槽位 8</c>，
-    /// 而部件表是稠密的 ≤4096 行，靠 <c>rowBase + slot</c> 定位（规划 §5.3）。
+    /// 而部件表是稠密的 ≤4096 行，靠 <c>rowBase + slot</c> 定位（OB 架构 §5.3）。
     /// 大小 16 B；256 行 = 4 KB。
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
@@ -61,7 +61,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     }
 
     /// <summary>
-    /// 选择表的行。选择 ID 是**独立的 8 bit 空间**（≤256），与部件的 16 bit ID 无关（规划 §5.11）。
+    /// 选择表的行。选择 ID 是**独立的 8 bit 空间**（≤256），与部件的 16 bit ID 无关（OB 架构 §5.11）。
     /// 大小 32 B；256 行 = 8 KB。
     /// </summary>
     [StructLayout(LayoutKind.Sequential)]
@@ -76,7 +76,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         public const int Stride = 32;
     }
 
-    /// <summary>palette 与选择表的容量上限（规划决策 2 / §5.11）。消费端与编辑器都要读，所以是 public。</summary>
+    /// <summary>palette 与选择表的容量上限（OB 架构 决策 2 / §5.11）。消费端与编辑器都要读，所以是 public。</summary>
     public static class HoObjectBufferPaletteLimits
     {
         /// <summary>部件行上限（注册校验预算，决策 2）。</summary>

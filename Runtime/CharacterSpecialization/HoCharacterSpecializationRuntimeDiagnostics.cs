@@ -3,7 +3,7 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.CharacterSpecialization
 {
     /// <summary>
-    /// 这支 feature 的输入自检快照。**语义全部来自 ObjectBuffer**（规划 §5.13：角色特化只吃
+    /// 这支 feature 的输入自检快照。**语义全部来自 ObjectBuffer**（AC 架构 §5.13：角色特化只吃
     /// 「组 + 标签 + 覆盖率」），所以这里只查 OB 身份池（经 AC 引用）、语义位平面和 GeometryBuffer 三件事。
     /// </summary>
     public readonly struct HoCharacterSpecializationRuntimeDiagnosticSnapshot

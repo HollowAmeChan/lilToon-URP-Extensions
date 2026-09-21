@@ -20,7 +20,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
     }
 
     /// <summary>
-    /// AC 的**调试入口**（规划 §9.13：调试在 Volume，feature 只放高级设置 + 兜底默认值 + 消费者登记表）。
+    /// AC 的**调试入口**（AC 架构 §9.13：调试在 Volume，feature 只放高级设置 + 兜底默认值 + 消费者登记表）。
     /// </summary>
     [Serializable]
     [VolumeComponentMenu("Post-processing/Ho-AttributeComposite/属性合成")]

@@ -7,7 +7,7 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
-    /// Ho-ObjectBuffer：用"ID + 覆盖率"取代旧的位掩码方案（规划 §5）。
+    /// Ho-ObjectBuffer：用"ID + 覆盖率"取代旧的位掩码方案（OB 架构 §5）。
     /// 旧的位掩码方案（MetadataBuffer）已整块删除：它的 maskId / 自定义通道由 OB 与 AC 接管。
     /// </summary>
     [DisallowMultipleRendererFeature("Ho-ObjectBuffer")]

@@ -6,7 +6,7 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.Editor.AttributeComposite
 {
     /// <summary>
-    /// AC feature 面板：**高级设置 + 只读的 schema/catalog 汇总 + 消费者登记表**（规划 §9.13：
+    /// AC feature 面板：**高级设置 + 只读的 schema/catalog 汇总 + 消费者登记表**（AC 架构 §9.13：
     /// 调试入口在 Volume，feature 不放调试开关）。解析不到的名字在这里报出来。
     /// </summary>
     [CustomEditor(typeof(HoAttributeCompositeRendererFeature))]

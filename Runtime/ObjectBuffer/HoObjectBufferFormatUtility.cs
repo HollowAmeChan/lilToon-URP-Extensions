@@ -6,7 +6,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
     /// 格式选择与 **MSAA 采样数协商**。
-    /// 关键点（规划决策 7）：采样数**只看平台能力，不看相机的 MSAA 设置**——
+    /// 关键点（OB 架构 决策 7）：采样数**只看平台能力，不看相机的 MSAA 设置**——
     /// <c>SystemInfo.GetRenderTextureSupportedMSAASampleCount</c> 官方语义就是"不支持就返回一个平台支持的更低值"，
     /// 所以我们直接要 4、拿回 2 或 1 即可。
     /// </summary>

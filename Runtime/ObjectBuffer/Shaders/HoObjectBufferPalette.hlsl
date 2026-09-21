@@ -2,7 +2,7 @@
 #define LIL_HO_OBJECT_BUFFER_PALETTE_INCLUDED
 
 // palette 访问层。结构布局必须与 Runtime/ObjectBuffer/HoObjectBufferPaletteData.cs 逐字段一致。
-// 规则（规划 §5.3）：像素里只有索引、属性永远在表里；越界一律回 unknown 行，
+// 规则（OB 架构 §5.3）：像素里只有索引、属性永远在表里；越界一律回 unknown 行，
 // **绝不 clamp 行号**（rowBase + slot 越界会落到别的角色的行上，读出来看着合法其实是错的）。
 
 // 角色标签位（与 C# 的 HoObjectBufferPartTags 逐位对齐）：HLSL 看不到 C# 枚举，
@@ -50,7 +50,7 @@ struct HoObjectSelectionData
     float4 displayColor;
 };                          // 32 B
 
-// 部件行表（规划里叫"条目表"）：名字与注册表上传时用的全局名保持一致。
+// 部件行表（OB 架构里叫"条目表"）：名字与注册表上传时用的全局名保持一致。
 StructuredBuffer<HoObjectPartData> _HoObjectBufferEntries;
 StructuredBuffer<HoObjectGroupData> _HoObjectBufferGroups;
 StructuredBuffer<HoObjectSelectionData> _HoObjectBufferSelections;
@@ -68,7 +68,7 @@ uint HoObjectBufferSlotId(uint partId)
     return partId & 0xFFu;
 }
 
-// ID 是整数身份：比较一律在整数上做，绝不在插值/滤波后的值上做（规划 §6 第 1 条）。
+// ID 是整数身份：比较一律在整数上做，绝不在插值/滤波后的值上做（OB 架构 §6 第 1 条）。
 uint HoObjectBufferDecodeId(float encoded)
 {
     return (uint)round(saturate(encoded) * 255.0);
@@ -124,7 +124,7 @@ HoObjectSelectionData HoObjectBufferLoadSelection(uint selectionId)
     return _HoObjectBufferSelections[selectionId];
 }
 
-// 同组判断退化成一次高字节比较（规划 §5.1）。热路径不该为隔离判断查表。
+// 同组判断退化成一次高字节比较（OB 架构 §5.1）。热路径不该为隔离判断查表。
 bool HoObjectBufferIsSameGroup(uint partIdA, uint partIdB)
 {
     return partIdA != 0u && partIdB != 0u && HoObjectBufferGroupId(partIdA) == HoObjectBufferGroupId(partIdB);

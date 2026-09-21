@@ -18,7 +18,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         public const string OwnerTextureName = "_HoSurfaceBufferOwnerTexture";
         public const string DebugModeName = "_HoSurfaceBufferDebugMode";
 
-        // ---------------------------------------------------------------- 语义 lane（单采样，规划 §0.4 / §0.3.7）
+        // ---------------------------------------------------------------- 语义 lane（单采样，SB 架构 §0.4 / §0.3.7）
 
         /// <summary>语义 pass 的 LightMode：**与数值 pass 分开**（附件格式 / 数量都不同，一趟最多 8 个 MRT）。</summary>
         public const string SemanticShaderPassName = "HoSurfaceSemantic";

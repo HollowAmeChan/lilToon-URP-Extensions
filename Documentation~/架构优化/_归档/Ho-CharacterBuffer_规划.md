@@ -1,8 +1,8 @@
-> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
-
-# Ho-CharacterBuffer 规划：用 ID + Coverage 取代 MetadataBuffer 的 bit 位掩码
-
-> ⛔ **本 feature 已取消（CB 不再作为一个 feature 存在）**：身份、覆盖率、palette、RSUV、自建 MSAA、resolve 这一整套机制**整体并入 `Ho-Cryptomatte`**（见 `Documentation~/架构优化/Ho-Cryptomatte_规划.md`）——角色特化后处理留着，但它吃的东西改成 `Ho-Cryptomatte`；所有需要遮罩的后处理统一走那一个 feature。
+> **已归档（2026）**：这篇是**被取代**的规划稿，只作资料保留 —— 身份 / 覆盖率 / palette / RSUV / 自建 MSAA /
+> resolve 这一整套机制最后**落地成了 `Ho-ObjectBuffer` + `Ho-AttributeComposite`**（角色特化后处理留着，吃的就是它们），
+> 而不是本文当时设想的 `Ho-Cryptomatte`；MetadataBuffer 也已在 R6/R7 整块删除。
+> 现行架构以 `Documentation~/架构优化/Ho-ObjectBuffer.md` / `Ho-SurfaceBuffer.md` / `Ho-AttributeComposite.md`
+> 与 `CHANGELOG.md` 为准。
 >
 > **本文保留作参考资料**，因为下面这些内容仍然有效、且被新规划引用：
 > - **§4 业界依据**（Cryptomatte 的成对布局与排序、Deep IDs 的层数权衡、MSAA 的官方规则、RSUV 的官方定位）——逐条核对过链接；
@@ -11,7 +11,10 @@
 > - **§5.9 与 GeometryBuffer 的对齐** + **§5.9⑦ 的 GB 文档逐条复核**；
 > - **§6 非线性 AA 禁令**（这套纪律与具体 feature 无关，仍然要遵守）。
 >
-> 代码侧：`Runtime/CharacterBuffer/` 下的实现（注册表 / 组件 / RSUV / MSAA / resolve / 调试 / 编辑器）**就是 `Ho-Cryptomatte` 的骨架**，C1 阶段改名搬迁即可；**选择层从未删除**（上一轮只删了文档），它在新规划里是核心能力。
+> 代码侧：这套机制的实现已经落在 `Runtime/ObjectBuffer/` 与 `Runtime/AttributeComposite/`（注册表 / 组件 /
+> RSUV / 自建 MSAA / resolve / 调试 / 编辑器）；本文里的 `Runtime/CharacterBuffer/` 路径是当时的设想。
+
+# Ho-CharacterBuffer 规划：用 ID + Coverage 取代 MetadataBuffer 的 bit 位掩码
 
 > 状态：**设计已定，待开工 P1**（决策全部锁定见 §1，无开放问题）。
 > 前因：`Documentation~/架构边界/语义掩码.md`、`CHANGELOG.md` 0.2.0。
@@ -538,7 +541,7 @@ MSAA 阶段**每个样本只需要一个 ID**（一个样本只属于一个部�
 
 ### 5.12 `Ho-SurfaceBuffer`：表面/材质数值的新家（决策 20）
 
-> **详细规划已独立成文档：`Documentation~/架构优化/Ho-SurfaceBuffer_规划.md`**（含现状全量清单、通道布局草案、消费端迁移映射、成本对照与 4 项待拍）。本节只保留与 CB 交界处必须知道的部分。
+> **详细规划已独立成文档：`Documentation~/架构优化/Ho-SurfaceBuffer.md`**（含现状全量清单、通道布局草案、消费端迁移映射、成本对照与 4 项待拍）。本节只保留与 CB 交界处必须知道的部分。
 
 **为什么拆**：MetadataBuffer 原本一个 buffer 承担了三种语义——身份（哪些是角色/脸/前发）、覆盖率、以及**表面数值**（roughness / metallic / reflectance / thickness / curvature / materialClass / transmittance / 线性表面色）。这次只把前两者搬进 CB；后一组**不是"这是谁"，而是"表面是什么样"**，混在 CB 里会重演老毛病：加一个材质参数要动身份 buffer 的布局与契约，两边互相拖累。
 

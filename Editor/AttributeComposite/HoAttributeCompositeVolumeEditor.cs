@@ -6,7 +6,7 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.Editor.AttributeComposite
 {
     /// <summary>
-    /// AC 的调试入口面板（规划 §9.13：调试在 Volume，feature 只放高级设置 + 消费者登记表）。
+    /// AC 的调试入口面板（AC 架构 §9.13：调试在 Volume，feature 只放高级设置 + 消费者登记表）。
     /// 调试模式的下拉里**只写视图名**，每个模式的说明按当前选择在下面**单独画一行** ——
     /// 说明塞进枚举显示名会被 Unity 的下拉当成分组。
     /// </summary>

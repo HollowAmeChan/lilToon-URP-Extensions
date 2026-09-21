@@ -8,12 +8,12 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 {
     /// <summary>
     /// **Ho-SurfaceBuffer（SB）= 表面数值 buffer**：回答"表面是什么样"。
-    /// 几何在 GB、身份在 OB、合成在 AC；SB 只发布五张数值图 + internal owner（规划 §1）。
+    /// 几何在 GB、身份在 OB、合成在 AC；SB 只发布五张数值图 + internal owner（SB 架构 §1）。
     /// <para>
     /// 本轮范围（数值面）：`Color / Normal / Material / Reflection / Classification` + owner，
     /// 由材质侧 `HoSurfaceBuffer` pass 一趟写全。**透明不生产**（队列上限压在不透明段末尾）。
     /// 语义 lane（`enableSemanticLanes`）由 `HoSurfaceBufferSemanticPass` 单采样另跑一趟，
-    /// 只允许收窄 / 细化 OB 的物体位（规划 §0.4）。
+    /// 只允许收窄 / 细化 OB 的物体位（SB 架构 §0.4）。
     /// </para>
     /// </summary>
     [DisallowMultipleRendererFeature("Ho-SurfaceBuffer")]
@@ -58,7 +58,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             int maxQueue = Mathf.Max(minQueue, activeSettings.maxRenderQueue);
 
             // 6 个 MRT 是硬要求（五张数值图 + owner）。平台不够就**整条不跑并报错**，不静默降级
-            // （规划 §5 的同一条纪律）：少绑附件时 D3D 会直接丢掉整个 draw，表现正是"什么都没写"。
+            // （SB 架构 §5 的同一条纪律）：少绑附件时 D3D 会直接丢掉整个 draw，表现正是"什么都没写"。
             if (SystemInfo.supportedRenderTargetCount < HoSurfaceBufferShaderConstants.ValueAttachmentCount)
             {
                 if (!warnedMrtCapacity)

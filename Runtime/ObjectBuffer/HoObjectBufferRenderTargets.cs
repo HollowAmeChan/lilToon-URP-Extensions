@@ -9,7 +9,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
     /// 兼容路径（非 RenderGraph）的 RTHandle 集合。
-    /// **CB 只有身份与覆盖率**（规划 §5.1 / 决策 20）：3 张 RGBA8 装 4 层 `(ID, 覆盖率)` + 按需的选择层；
+    /// **CB 只有身份与覆盖率**（OB 架构 §5.1 / 决策 20）：3 张 RGBA8 装 4 层 `(ID, 覆盖率)` + 按需的选择层；
     /// 线性表面色与材质数值（roughness / metallic / thickness / reflectance / PLR …）已搬到
     /// `Ho-SurfaceBuffer`，这里不再有 `_Surface` / `Material0`。
     /// ID pass 自己的 depth-stencil **只服务于自身绘制**，永不发布（决策 16）。

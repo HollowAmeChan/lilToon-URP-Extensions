@@ -7,7 +7,7 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.AttributeComposite
 {
     /// <summary>
-    /// **AC（Ho-AttributeComposite）= 语义遮罩与合成属性的唯一逻辑入口**（规划 §1）。
+    /// **AC（Ho-AttributeComposite）= 语义遮罩与合成属性的唯一逻辑入口**（AC 架构 §1）。
     /// 本轮（R3-obj）只落 object 来源：`SemanticResolve` 把 OB 身份池 + 部件行标签解压成
     /// 固定 lane 的 Selection 池，消费者经 `HoAC_*` 查询，不再自己解码 OB 的 packing。
     /// <para>

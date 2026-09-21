@@ -1,9 +1,13 @@
-# Ho-ObjectBuffer（OB）规划
+# Ho-ObjectBuffer（OB）
+
+> **状态：已落地并稳定**（代码在 `Runtime/ObjectBuffer/`）。本文是 **OB 的现行架构说明**：ID 空间、每像素存储、
+> 名字、消费者、边界与准入、执行记录。文中 §0 是流水线复核与勘误基线，与后文旧冻结条款冲突时以 §0 为准。
+> 相关：`Ho-SurfaceBuffer.md`（数值面）、`Ho-AttributeComposite.md`（语义与属性的唯一逻辑入口）、
+> `架构边界/语义掩码.md`（为什么放弃 bit 掩码）、`架构边界/MSAA.md`。
+> **已删除的旧方案**：MetadataBuffer 的 bit 位掩码与 `objectCustom` 通道（R6/R7 整块删除，见 `CHANGELOG.md`）。
 
 逐物体 buffer：回答"**这是谁、占多少、我要抠哪一块**"。**几何在 GB，表面数值在 SB，合成在 AC。**
 
-> **状态：身份池、Facing、同 SemanticId 的 object/surface 合成、Selection lane 与 4/8/16 lane batching 已冻结，可按 §0.5 开工。**
-> 2026-09-20 流水线复核与 P0 勘误已合并到本文 §0；§0 与后文旧冻结条款冲突时，以 §0 为准。
 > **"Cryptomatte" 在本 feature 一律不用**：合规导出档位（`crypto_*`、float 位重解释 + manifest）**不是 OB 的事**，归 AC 或以后的独立 feature。
 
 ---
@@ -176,7 +180,7 @@ Extensions 仓库已有 CharacterBuffer 的 C#/resolve 骨架，但当时 `D:\Un
 
 #### 0.3.16 R3：AC 接手解压，角色特化成为第一个消费者
 
-- 语义不再由消费者各自解码：**AC（`Ho-AttributeComposite`）** 按 `HoSemanticSchema` 把 OB 身份池 + 部件行标签解压成**固定 lane 的 Selection 池**（`(SemanticId, coverage)`，8 条 lane / 4 张 RGBA8），消费者只经 `HoAC_*` 查询。落地范围（object 来源子集）与推迟项见 `Ho-AttributeComposite_规划.md` 顶部的「落地状态」。
+- 语义不再由消费者各自解码：**AC（`Ho-AttributeComposite`）** 按 `HoSemanticSchema` 把 OB 身份池 + 部件行标签解压成**固定 lane 的 Selection 池**（`(SemanticId, coverage)`，8 条 lane / 4 张 RGBA8），消费者只经 `HoAC_*` 查询。落地范围（object 来源子集）与推迟项见 `Ho-AttributeComposite.md` 顶部的「落地状态」。
 - **角色特化**随之改读 AC 的 Selection 池（自己只做一次布局转置，把池摊成"每通道一个语义"的位平面给下游的逐 texel 滤波用），同角色判定改用 `HoAC_Layer0Group`；它不再引用 OB 的身份池与部件行表，也不再用 `_HoObjectBufferValid` 当门（改 `_HoACActive`）。
 - 这一步也把"谁负责解压"这件事钉死了：**OB 只管身份与覆盖率，解压归 AC，烤图归消费者自己**（规划 §9.2）。后续 SB 落地后，同一张 Selection 池上再叠 surface 来源的五种 sourceMode，消费者不用改。
 

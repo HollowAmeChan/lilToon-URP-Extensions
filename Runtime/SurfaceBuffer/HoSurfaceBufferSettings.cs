@@ -61,7 +61,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         /// <summary>
         /// 上限固定在上不透明段的末尾（`GeometryLast`）：**透明表面本轮不生产 SB 数值**。
-        /// 多层透明的 roughness / classification 加不出唯一的前表面真值（规划 §0.5），
+        /// 多层透明的 roughness / classification 加不出唯一的前表面真值（SB 架构 §0.5），
         /// 先明确"不生产"，等策略定下来再放开。
         /// </summary>
         public int maxRenderQueue = (int)RenderQueue.GeometryLast;

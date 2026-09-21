@@ -3,7 +3,7 @@
 # 正式管线草案 v2（重新串联）：三轴输入 + 属性合成 + 屏幕效果
 
 > 状态：**三轴拆分、typed ID、sample 级 object/surface SemanticId 合成、SurfaceOwner validity 与 4/8/16 lane batching 已冻结**。
-> 2026-09-20 OB 勘误基线已合并到 [`Ho-ObjectBuffer_规划.md`](Ho-ObjectBuffer_规划.md) §0。
+> 2026-09-20 OB 勘误基线已合并到 [`Ho-ObjectBuffer.md`](Ho-ObjectBuffer.md) §0。
 > 取代：v0.1 的层模型 / 帧序 / 旧→新映射 / 命名决策。`LILTOON_RENDER_PIPELINE_REVIEW_AND_PLAN.md` 只保留功能域盘点与非反射背景。
 
 ## 0. 冻结的四条修正
@@ -236,4 +236,4 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 1. **AC 的纯值来源**：由材质声明的 surface payload 提供，还是由独立 Subject/Group 组件提供；必须先于消费者迁移冻结。
 2. **透明 PLR 是否需要 receiver/source-id RT**：只有材质/OIT 直接消费无法满足多平面时才立项。
 
-（已解决并移出：SB 的 RT packing → **`Material` 与 `Reflection` 不并**，各自一张；OB 的命名搬迁 → **`HoObjectBuffer*` / `_HoObjectBuffer*` / `object.*`**，见 `Ho-ObjectBuffer_规划.md` §3。）
+（已解决并移出：SB 的 RT packing → **`Material` 与 `Reflection` 不并**，各自一张；OB 的命名搬迁 → **`HoObjectBuffer*` / `_HoObjectBuffer*` / `object.*`**，见 `Ho-ObjectBuffer.md` §3。）

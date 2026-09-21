@@ -28,7 +28,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         [InspectorName("MSAA Samples")]
         [Tooltip("ID pass 自建的 MSAA 采样数。**与相机的 MSAA 设置无关**：覆盖率是本 feature 的产品功能，" +
-                 "相机把 AA 关掉时它也必须照常产出（规划决策 7）。")]
+                 "相机把 AA 关掉时它也必须照常产出（OB 架构 决策 7）。")]
         public HoObjectBufferSampleCount sampleCount = HoObjectBufferSampleCount.Four;
 
         [InspectorName("Selection Layers")]

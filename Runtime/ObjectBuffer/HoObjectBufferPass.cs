@@ -11,7 +11,7 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.ObjectBuffer
 {
     /// <summary>
-    /// ID / 覆盖率的生产 pass（规划 §5.4）。
+    /// ID / 覆盖率的生产 pass（OB 架构 §5.4）。
     /// <list type="bullet">
     /// <item>自建 MSAA：采样数来自 feature 设置，**与相机 MSAA 解耦**（决策 7）；</item>
     /// <item>N = 1 时直接写 4 层结果；N &gt; 1 时逐样本写一个 16 bit ID，再由 resolve 数票；</item>

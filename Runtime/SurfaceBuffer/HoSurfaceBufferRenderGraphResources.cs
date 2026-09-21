@@ -8,9 +8,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
     /// <summary>
     /// 消费者取句柄的入口（与 OB / AC / GeometryBuffer 同形）。对外发布**五张数值图 + owner**：
     /// <list type="bullet">
-    /// <item>`Color` / `Normal` / `Material` / `Reflection` / `Classification`：表面数值，采样一律 Point（规划 §1.2）；</item>
+    /// <item>`Color` / `Normal` / `Material` / `Reflection` / `Classification`：表面数值，采样一律 Point（SB 架构 §1.2）；</item>
     /// <item>`OwnerTexture`：这个像素的前表面是谁（16-bit IdentityId，0 = 没有 writer）——**pixel validity 的唯一判据**：
-    /// 数值图里的 0 始终是合法值，只有 owner 能区分"写了 0"和"没人写"（规划 §0.1 / §4.8）。</item>
+    /// 数值图里的 0 始终是合法值，只有 owner 能区分"写了 0"和"没人写"（SB 架构 §0.1 / §4.8）。</item>
     /// </list>
     /// </summary>
     internal sealed class HoSurfaceBufferRenderGraphResources : ContextItem

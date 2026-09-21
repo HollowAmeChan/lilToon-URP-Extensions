@@ -126,7 +126,7 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
             #endif
 
             /// <summary>
-            /// 按 catalog 里的 `sourceMode` 合成一条 lane（规划 §0.3.6 的五种）：
+            /// 按 catalog 里的 `sourceMode` 合成一条 lane（AC 架构 §0.3.6 的五种）：
             /// `o` = 物体侧（像素级：Σ 层覆盖率 · 该层带不带这一位），`(written, s)` = SB 在**同一像素**写的 lane 值。
             /// <list type="bullet">
             /// <item>0 `ObjectOnly`：`o`（没有 SB 语义 lane 时也是这条路径）；</item>

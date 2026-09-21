@@ -40,7 +40,7 @@ Shader "Hidden/lilToon/URP/ObjectBuffer/DebugView"
             float4 SampleId1(float2 uv) { return SAMPLE_TEXTURE2D_X(_HoObjectBufferId1Texture, sampler_PointClamp, uv); }
             float4 SampleCoverage(float2 uv) { return SAMPLE_TEXTURE2D_X(_HoObjectBufferCoverageTexture, sampler_PointClamp, uv); }
 
-            // 层 ID 的解码：UNORM8 → round(v*255)，绝不在插值后的值上比（规划 §6 第 1 条）。
+            // 层 ID 的解码：UNORM8 → round(v*255)，绝不在插值后的值上比（OB 架构 §6 第 1 条）。
             uint DecodeLayerId(float4 id0, float4 id1, int layer)
             {
                 float4 packed = layer < 2 ? id0 : id1;

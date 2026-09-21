@@ -11,7 +11,7 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.SurfaceBuffer
 {
     /// <summary>
-    /// SB 的**语义 lane pass**：材质侧 `HoSurfaceSemantic` 一趟写 owner + 8 条 lane（规划 §0.4 / §0.3.7）。
+    /// SB 的**语义 lane pass**：材质侧 `HoSurfaceSemantic` 一趟写 owner + 8 条 lane（SB 架构 §0.4 / §0.3.7）。
     /// <list type="bullet">
     /// <item>**与数值 pass 分开**：这一趟是 5 个 MRT（owner + 4 张 lane 图），数值那趟是 6 个，
     /// 附件集合不同，只能两趟。</item>

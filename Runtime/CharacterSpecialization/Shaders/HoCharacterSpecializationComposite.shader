@@ -23,7 +23,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-            // 语义只经 AC 查询（规划 §3）：这里不再自己声明/解码 OB 的身份池与部件表。
+            // 语义只经 AC 查询（AC 架构 §3）：这里不再自己声明/解码 OB 的身份池与部件表。
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACQuery.hlsl"
 
             float4 _HoCharacterEyeRevealParams; // x strength, y feather px, z dilation px, w depth bias

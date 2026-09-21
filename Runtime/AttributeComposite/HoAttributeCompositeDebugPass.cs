@@ -9,7 +9,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
 {
     /// <summary>
     /// AC 的调试直出：把 Selection 池画到相机颜色上（与 OB 的调试 pass 同形）。
-    /// 规划 §12：没有 debug 视图与登记就不算落地 —— AC 至少要能看到合成语义槽。
+    /// AC 架构 §12：没有 debug 视图与登记就不算落地 —— AC 至少要能看到合成语义槽。
     /// **这趟只做"看"，不产出任何东西**，所以它可以被随时关掉。
     /// </summary>
     internal sealed class HoAttributeCompositeDebugPass : ScriptableRenderPass
