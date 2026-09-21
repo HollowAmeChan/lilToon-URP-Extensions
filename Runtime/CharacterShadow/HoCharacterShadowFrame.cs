@@ -21,22 +21,33 @@ namespace lilToon.URP.Extensions.CharacterShadow
         internal Vector3 cameraPosition;
         internal Matrix4x4 cameraView, cameraProjection;
         internal float filterRadius;
+        internal Vector4 pcssParams, pcssParams2;
 
         internal static HoCharacterShadowFrame Build(Camera camera, Light light,
-            Matrix4x4 cameraView, Matrix4x4 cameraProjection, HoCharacterShadowSettings settings, int resolution)
+            Matrix4x4 cameraView, Matrix4x4 cameraProjection, HoCharacterShadowRenderConfig config)
         {
             var frame = new HoCharacterShadowFrame
             {
-                light = light, resolution = resolution,
+                light = light, resolution = config.resolution,
                 cameraPosition = camera.transform.position, cameraView = cameraView,
-                cameraProjection = cameraProjection, filterRadius = Mathf.Clamp(settings.filterRadius, 0, 2)
+                cameraProjection = cameraProjection, filterRadius = Mathf.Clamp(config.filterRadius, 0, 2)
             };
+            // PCSS 的四个形状参数 + (深度偏移, blocker 采样数, filter 采样数, 0)。
+            // 关闭时 params2 归零，shader 只看 params.x 就回退 PCF（与 ShadowCast 同一套约定）。
+            frame.pcssParams = new Vector4(
+                config.pcssEnabled ? 1.0f : 0.0f,
+                Mathf.Max(0.0f, config.pcssSoftness),
+                Mathf.Max(0.0f, config.pcssBlockerRadius),
+                Mathf.Max(0.0f, config.pcssMaxPenumbraRadius));
+            frame.pcssParams2 = config.pcssEnabled
+                ? new Vector4(Mathf.Max(0.0f, config.pcssDepthBias), config.pcssBlockerSamples, config.pcssFilterSamples, 0.0f)
+                : Vector4.zero;
             HoObjectBufferRegistry.EnsureBuilt();
             var subjects = new List<HoCharacterShadow>(HoCharacterShadow.Active);
             subjects.Sort((a, b) => a.GetInstanceID().CompareTo(b.GetInstanceID()));
-            int maxSize = Mathf.Min(settings.maxAtlasSize, SystemInfo.maxTextureSize);
+            int maxSize = Mathf.Min(config.maxAtlasSize, SystemInfo.maxTextureSize);
             int columns = Mathf.FloorToInt((float)maxSize / frame.resolution);
-            int capacity = Mathf.Min(Mathf.Clamp(settings.maxCharacters, 1, MaxSlices), columns * columns);
+            int capacity = Mathf.Min(Mathf.Clamp(config.maxCharacters, 1, MaxSlices), columns * columns);
             var groups = new HashSet<int>();
             var corners = new Vector3[8];
             var cameraPlanes = GeometryUtility.CalculateFrustumPlanes(camera);
@@ -89,7 +100,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
                 }
                 if (!hasReceiver) { subject.status = "没有匹配的 OB 接收部件"; continue; }
                 HoCharacterShadowSlice slice = HoCharacterShadowProjection.Build(subject, light, corners,
-                    casterBounds, frame.resolution, frame.filterRadius, settings.depthBias, settings.normalBias);
+                    casterBounds, frame.resolution, frame.filterRadius, config.depthBias, config.normalBias);
                 if (slice == null) { subject.status = "包围盒变换无效"; continue; }
                 groups.Add(group.groupId);
                 frame.slices.Add(slice);

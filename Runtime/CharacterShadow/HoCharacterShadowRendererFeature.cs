@@ -64,9 +64,9 @@ namespace lilToon.URP.Extensions.CharacterShadow
             if (light == null || light.type != LightType.Directional || light.shadows == LightShadows.None
                 || !renderingData.shadowData.supportsMainLightShadows || HoCharacterShadow.Active.Count == 0)
             { LastCullStatus += $"light(main={main},null={light == null},dir={(light != null && light.type == LightType.Directional)},shadows={(light != null && light.shadows != LightShadows.None)},supports={renderingData.shadowData.supportsMainLightShadows},active={HoCharacterShadow.Active.Count})"; return; }
-            int resolution = volume != null && volume.resolution.overrideState ? (int)volume.resolution.value : (int)settings.resolution;
+            var config = HoCharacterShadowRenderConfig.Resolve(settings, volume);
             var frame = HoCharacterShadowFrame.Build(camera, light, renderingData.cameraData.GetViewMatrix(),
-                renderingData.cameraData.GetProjectionMatrix(), settings, resolution);
+                renderingData.cameraData.GetProjectionMatrix(), config);
             if (frame.slices.Count == 0) { LastCullStatus += "noSlices"; return; }
             pass.Setup(frame);
             renderer.EnqueuePass(pass);
@@ -454,6 +454,9 @@ namespace lilToon.URP.Extensions.CharacterShadow
             cmd.SetGlobalVectorArray("_HoCSParameters", f.parameters);
             cmd.SetGlobalVector("_HoCSAtlasSize", new Vector4(1f / f.atlasSize, 1f / f.atlasSize, f.atlasSize, f.atlasSize));
             cmd.SetGlobalFloat("_HoCSFilterRadius", f.filterRadius);
+            // PCSS：(enabled, softness, blocker 搜索半径, 半影半径上限) + (深度偏移, blocker 采样数, filter 采样数, 0)。
+            cmd.SetGlobalVector("_HoCSPcssParams", f.pcssParams);
+            cmd.SetGlobalVector("_HoCSPcssParams2", f.pcssParams2);
             cmd.SetGlobalInt("_HoCSCount", f.slices.Count);
             cmd.SetGlobalFloat("_HoCSActive", 1);
         }
