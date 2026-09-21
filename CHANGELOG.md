@@ -2,6 +2,14 @@
 
 ## Unreleased
 
+- **文档全量审核（`Documentation~/` 45 篇，只动文档、不改代码）**：按「架构形式 + 设计目的 + 踩过的坑」重审每一篇，把声明与**当前 GB/OB/SB producer + AC compositor** 实现逐条对齐（grep 核对代码事实），分 17 次提交（批 1 → 批 8d，extensions 仓）。要点：
+  - **改名/合并/归档**：三篇地基文档改名 `Ho-ObjectBuffer.md` / `Ho-SurfaceBuffer.md` / `Ho-AttributeComposite.md`；两份管线草案合并成 `Ho-管线总览.md`，v0.1 归档；`Ho-CharacterBuffer_规划.md` 606 → 121 行（保留 K=N 容量分析、MSAA 官方规则、非线性 AA 禁令、业界依据与迁移落点）。
+  - **调查/工作表压缩成「结论 + 坑」**：描边语义调查、GTAO MSAA 轮廓白线、HTrace GTAO 参数档案、GTAO/SSGI 对齐工作表、SSGI ReSTIR 共享层评估、RPComponentRework 验收、CS 的 RDG 逐趟清单（495 → 130 行）。
+  - **修正失实陈述（按代码/资产核对）**：PCSS 实为**已实现且默认开**（原文写“暂不做”）；`Ho-管线总览` 的 Feature 清单补齐 OB/SB/AC（12 → 14 项）；**通道契约 v1 的“生产端”整列从 MetadataBuffer 改为 OB/SB/AC**（`surfaceColor`→SB `Color` 且 A 不再是 coverage、`maskId`→OB 身份池、`surfaceData`→SB `Classification`+`Material.b`、`reflectionMaterial`→SB `Material`/`Reflection`；`maskcoverage.*` 段作废，AC lane 覆盖率原生带 AA）；CS 的 `SemanticMask Blur` 那一趟与整套“读取抗锯齿掩码”开关**已不存在**（语义位由 `HoCharacterObjectSemantic.shader` 从 AC Selection 池按覆盖率烤出）；反射文档的 P0 输入迁移标记完成；脸色扩散/眼透/SSS 设计文档的语义来源改按 AC/OB/SB 口径。
+  - **工程资产重扫（写进光照/探针说明）**：`PC_Renderer.asset` 现有 4 类已删脚本的 Missing Script 死条目（MB / HoAov / HoPostProcess / Shoost）与 7 组同名重复 feature；Ho-SSGI 与 HTrace AO/SSGI 当前均 `m_Active: 0`；`lilToonSetting.json` 仍是 `LIL_OPTIMIZE_USE_LIGHTMAP=false` / `USE_PROBEVOLUMES=true`；生成 Shader 52 → 54、APV 命中 47 → 49。
+  - **结构收尾**：45 篇全部带状态头（现行 / 已收敛 / 已归档 / 占位 / 调查），H1 各恰好一个，相对 md 链接无悬空；`.codex-research/*` 一律标注为不在仓库的本机私有脚本。
+  - 新增 `Ho-CharacterShadow-Plan.md`（CS 独立 feature 规划，尚未实现）入库。
+
 - **MetadataBuffer（MB）整块删除**：maskId / 自定义通道由 OB + AC 接管，surface 族（表面色 / 厚度 / 曲率 /
   材质 / 反射 / 分类）由 SB 接管。分两步走，每一步都保持树能跑：
   - **R6-1**：删掉 MB 的 `HoMetadataBufferSurfaceColor` 独立 pass（22 个 lilblock + `fragMetadataBufferSurfaceColor`），
