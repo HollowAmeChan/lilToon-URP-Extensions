@@ -2,7 +2,7 @@
 
 > 状态：**现行规范（2026 文档审核核对）**。
 >
-> **适用范围**：OB / SB / AC 及后续**通道 / 声明型** feature。
+> **适用范围**：OB / SB / AC 及后续**通道 / 声明型** feature；**逐物体组件型** feature（CS，见 §6）同样遵守三条硬规矩、色板与分节顺序，只是它的“声明”落在每个角色的组件上，不是 feature 里的表。
 > **后处理三块**（`ImageProcess` / `ScreenProcess` / 角色特化）的效果行与"效果浏览器"是**自成一套**的特殊设计
 > （搜索栏 + 图标侧栏 + 窄行 + 无底控件），**不受本规范约束**，也不要照本规范去"统一"它们。
 >
@@ -83,7 +83,7 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 - 纹理名与契约登记名**不在 UI 上出现**（`_HoObjectBuffer*` 这类只在文档与代码里）。
 - 枚举的 `InspectorName` **只写名字**：不写说明（下拉里一屏长句，选值反而看不见），更不许出现 `/`（Unity 的下拉把斜杠当分组分隔符，那一项会变成一串子菜单而不是一个可选值；`[InspectorName("")]` 变分隔线是同一套规则）。每个值的说明**在字段下面按当前值单独画一行**（见 §3）。摘要行里的 `" / "` 是普通字符串，不受影响。
 
-## 6. 三个 feature 的具体分节
+## 6. 各 feature 的具体分节
 
 ### OB — `HoObjectBufferVolume` / `HoObjectBufferRendererFeature`
 
@@ -117,6 +117,27 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 | | 声明（只读汇总） | SemanticId / LaneIndex / sourceMode / 消费者登记表（解析不到就报出来） |
 | | 高级 | `passEvent`、shader |
 | | 调试 | 一行 HelpBox → Volume |
+
+### CS — `HoCharacterShadowVolume` / `HoCharacterShadowRendererFeature` / `HoCharacterShadow`（逐物体组件型）
+
+接收对象是**每个角色自己的组件声明**，所以比通道型多一侧：组件。控制项按"能不能按相机覆盖"分三处。
+
+| 侧 | 分节 | 内容 |
+| --- | --- | --- |
+| **Volume** | 运行 | 启用、单角色分辨率 |
+| | 调试 | 调试模式（`Off` / `Atlas` / `Character`）、`Debug In Scene View`、`Debug In Game View`、单角色 tile |
+| **Feature** | 运行（兜底） | 启用、单角色分辨率、同时接收域上限、图集边长上限、PCF 半径、深度偏移、法线偏移 |
+| | 声明（只读汇总） | 场景里的 `HoCharacterShadow` 组件 → OB 组 / tile / 盒尺寸 / 状态；图集容量与已分配 tile |
+| | 调试 | 一行 HelpBox → Volume |
+| | 高级 | 渲染时机（只读：固定 `BeforeRenderingShadows`）、调试 Shader、图集与剔除形态（只读） |
+| | 运行状态 | 最近一次 `AddRenderPasses` 的结果 |
+| **组件** | 运行 | 接收组 / 接收部件 / 包围盒锚点 / 中心 / 尺寸 / 边缘回退 + "从接收对象计算包围盒" |
+| | 运行状态 | 状态、接收部件匹配数、图集 Tile、投影深度、世界单位每 texel |
+
+CS 的两条有意偏离：
+
+- **调试分组没有"强度"曲线**（GTAO 是 `AO Debug Pow`）：CS 的调试画面直出光空间线性深度，加显示曲线会让人把亮度误读成深度。这一句写在 Volume 的调试分节里。
+- 调试画面只在对应视图开关打开时输出（Scene View 默认开、Game View 默认关），因为它是**直出替换**最终画面；feature 上的 `debugMode` / `debugCharacter` / 两个开关只作兜底真值，**Inspector 上不再画第二份**。
 
 ## 7. 禁止清单
 

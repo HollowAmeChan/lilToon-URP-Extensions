@@ -2,6 +2,25 @@
 
 ## Unreleased
 
+- **逐物体阴影（CS）：UI 按 `Ho-UI_风格规范` 重排，调试入口移进 Volume**：
+  - 新增 `HoCharacterShadowVolume`（`Post-processing/Ho-CharacterShadow/逐物体阴影`）。运行 = 启用 + 单角色分辨率；
+    调试 = 调试模式（`Off` / `Atlas` / `Character`）+ `Debug In Scene View` / `Debug In Game View` + 单角色 tile。
+    启用 / 分辨率 / 调试因此变成**逐相机可覆盖**，未勾选覆盖时用 feature 的兜底值（`Resolve()` +
+    `overrideState` 判定，不写回 feature 资产）。
+  - `HoCharacterShadowRendererFeature` Inspector 重排为 **运行（兜底默认值）/ 声明（只读汇总）/ 调试（一行 → Volume）/
+    高级（时机·Shader）/ 运行状态**，全部走 `LilUrpEditorSectionGui.DrawSectionHeader` + 规范色板，中文标签 + 英文原名。
+    「声明」列出场景里每个 `HoCharacterShadow` 组件 → OB 组 / tile / 盒尺寸 / 状态、图集容量与已分配 tile；
+    「高级」把渲染时机做成只读行（固定 `BeforeRenderingShadows`）并写明"放到更晚会重新丢远处阴影"；
+    「运行状态」读 `LastCullStatus`。feature 上**不再画第二份调试开关**（避免两份真值，字段仍作兜底保留）。
+  - `HoCharacterShadow` 组件 Inspector 重排为 **运行 / 运行状态**（状态、接收部件匹配数、图集 Tile、投影深度、
+    世界单位每 texel），字段加中文 `[InspectorName]` / `[Tooltip]`。
+  - 调试画面改为**按视图开关输出**（Scene View 默认开、Game View 默认关）：它是直出替换最终画面，默认不该动 Game View。
+    调试分组**没有强度曲线**（CS 直出光空间线性深度，加曲线会让人把亮度误读成深度），这是对规范「调试固定内容」的有意偏离。
+  - 验证：`ValidateRendering` 增加 Volume 覆盖子测试——Volume 关启用 → 回退普通投影 `1.000`；Volume 单角色分辨率 `R512`
+    → `_HoCSAtlasSize.z = 512`。两个 batch 入口（`ValidateRendering` / `ValidateDistanceRendering`）全 PASS。
+  - 文档：`Documentation~/Ho-UI_风格规范.md` §6 增加 CS 分节与两条偏离说明；
+    `Documentation~/计划/Ho-CharacterShadow-Plan.md` §0.2 增加三处 UI 布局表与使用步骤更新。
+
 - **逐物体阴影（CS）：修掉“相机拉远后角色整体阴影消失”**（用户场景实测 bug）：
   - **根因**：局部图集 pass 的时机（`BeforeRenderingPrePasses`）与 URP 自己的逐相机级联 shadow pass 撞在同一事件，
     Unity 内部“该光源 + 当前相机”的 shadow 状态会否决我们的自定义 split。URP Asset 的

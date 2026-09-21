@@ -11,8 +11,8 @@
 1. 在 Renderer Data 添加 `HoCharacterShadowRendererFeature`。主方向光开启 Shadows，URP 支持主光阴影。
 2. 在预制件根节点添加 `Rendering/Ho-CharacterShadow`，引用已有 `HoObjectBufferGroup`。OB 部件中指定的 Renderer 是接收对象；`Receiver Parts` 留空接收全组，也可填写已有部件名。一个 OB 组使用一个 CS 组件。
 3. 点“从接收对象计算包围盒”，然后用场景手柄调整 Anchor / Center / Size，确保动作范围留在盒内。自动计算是一次性工具，不会每帧跟随蒙皮收缩。
-4. Feature 中调分辨率、PCF 半径与 bias；默认每 tile 2048，最大 16 个接收域、最大 atlas 边长 8192，受设备纹理上限限制。容量不足不降低分辨率，对未分配角色回退普通投影并显示状态。
-5. Feature 的 Debug Mode 选 Atlas 看整图，Character 按组件显示的 Tile 编号放大查看。组件 Inspector 显示深度范围和世界单位/texel；场景中可编辑角色盒。当前没有额外的光空间视锥 Gizmo，也没有最终阴影 AOV。
+4. Volume 里覆盖分辨率（`Ho-CharacterShadow Volume` 的运行分组）与 PCF 半径、bias；默认每 tile 2048，最大 16 个接收域、最大 atlas 边长 8192，受设备纹理上限限制。容量不足不降低分辨率，对未分配角色回退普通投影并显示状态。
+5. 调试在 Volume 的「调试」分组：`Atlas` 看整图，`Character` 按组件显示的 Tile 编号放大查看，另有两个视图开关（Scene / Game View）。组件 Inspector 显示深度范围和世界单位/texel；场景中可编辑角色盒。当前没有额外的光空间视锥 Gizmo，也没有最终阴影 AOV。
 
 无需改材质；无需为 CS 单独开启 OB 的屏幕纹理绘制。lilToon 原有接收开关、Mask 和各层接收强度继续有效。
 
@@ -56,6 +56,29 @@ internal HoCharacterShadowPass() { renderPassEvent = RenderPassEvent.BeforeRende
 | 逐 split 的 shadow caster 剔除 | 整个跳过 `CullShadowCasters`，或按级联数发布多份 split，现象都不变 |
 | 用普通 `ShaderTagId("ShadowCaster")` 列表绕开 Unity 的 shadow 列表 | 该路径在本 pass 里完全不绘制（atlas 全 0） |
 | 级联数本身是原因 | 只是触发条件；提前 pass 时机后级联 1 与 4 结果一致 |
+
+### 0.2 UI 布局（按 Ho-UI 风格规范）
+
+CS 是**逐物体组件**型 feature（接收对象是每个角色自己的声明），不是 OB/SB/AC 那种通道型，所以控制项按“能不能按相机覆盖”分三处：
+
+| 侧 | 分节 | 内容 |
+| --- | --- | --- |
+| **`HoCharacterShadowVolume`**（调试与逐相机覆盖的落点） | 运行 | 启用、单角色分辨率 |
+| | 调试 | 调试模式（`Off` / `Atlas` / `Character`）、`Debug In Scene View`、`Debug In Game View`、单角色 tile |
+| **`HoCharacterShadowRendererFeature`** | 运行（兜底） | 启用、单角色分辨率、同时接收域上限、图集边长上限、PCF 半径、深度偏移、法线偏移 |
+| | 声明（只读汇总） | 场景里的 `HoCharacterShadow` 组件 → OB 组 / tile / 盒尺寸 / 状态；图集容量与已分配 tile |
+| | 调试 | 一行 HelpBox → Volume |
+| | 高级 | 渲染时机（只读：固定 `BeforeRenderingShadows`）、调试 Shader、图集与剔除形态（只读） |
+| | 运行状态 | 最近一次 `AddRenderPasses` 的结果（`LastCullStatus`） |
+| **`HoCharacterShadow`**（组件） | 运行 | 接收组 / 接收部件 / 包围盒锚点 / 中心 / 尺寸 / 边缘回退 + “从接收对象计算包围盒” |
+| | 运行状态 | 状态、接收部件匹配数、图集 Tile、投影深度、世界单位每 texel |
+
+约定与偏离说明：
+
+- 色板、分节标题、中文标签 + 英文原名全部按 `Documentation~/Ho-UI_风格规范.md`（运行 / 名称·声明 / 调试 / 高级 / RendererFeature 设置）。
+- **调试只有一份真值**：Volume 的「调试」分组。feature 上仍保留 `debugMode` / `debugCharacter` / 两个视图开关作为**兜底值**（Volume 未覆盖时生效，batch 回归测试也直接驱动它们），但 feature Inspector 不再画第二份开关。
+- **调试分组没有“强度”曲线**（规范里那一项对 GTAO 是 `AO Debug Pow`）：CS 的调试画面直出光空间线性深度，加显示曲线会让人把亮度误读成深度。这是有意的偏离，写在 Volume 的调试分节里。
+- 调试画面只在对应视图开关打开时输出（Scene View 默认开、Game View 默认关），因为它是**直出替换**最终画面。
 
 透明/OIT、XR、大规模角色、动画蒙皮边界与 D3D12 尚未做场景验收；旧式 Execute 路径已提供，但当前验证工程使用 RenderGraph。不要将这些未验收项等同于已支持。真实角色场景还需美术调节包围盒和 bias。
 
