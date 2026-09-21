@@ -1,6 +1,8 @@
 # Ho-GTAO / Ho-SSGI ReSTIR 共享层评估
 
-> 日期：2026-09-09（2026 文档审核核对：结论仍然成立，已按当前代码更新事实性细节）
+> 日期：2026-09-09
+>
+> 状态：**结论报告（2026 文档审核核对：结论仍然成立，已按当前代码更新事实性细节）**
 >
 > 结论：当前不合并 GTAO 和 SSGI，也不新增一个“万能 ReSTIR RendererFeature”。先在 Ho-SSGI 内完成 HTrace 风格的 GI reservoir、temporal/spatial reuse 和 validation。只有当 GTAO、SSGI 或后续 DI 确实重复消耗同一套几何/Hi-Z资源时，才抽出共享资源 Feature。
 >

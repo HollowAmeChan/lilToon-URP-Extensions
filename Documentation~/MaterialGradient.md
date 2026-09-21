@@ -1,5 +1,7 @@
 # Material Gradient Texture
 
+> 状态：**现行功能说明（2026 文档审核核对）**。本文是 Editor-only 的材质编辑增强（Gradient ↔ 256×1 ramp 贴图），**不进运行时契约**：材质、RenderFeature 与后处理 shader 看到的都只是普通 `Texture2D`。
+
 ## 定位
 
 `MaterialGradient` 是 lilToon URP Extensions 里的材质编辑增强模块。它不改变 shader 的运行时契约，也不要求材质仓库保存 `Gradient` 类型数据。材质、RenderFeature shader 和后处理 shader 仍然只接收普通 `Texture2D` ramp 图。

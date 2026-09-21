@@ -1,5 +1,7 @@
 # ColorGradingCustom 调色预设
 
+> 状态：**现行预设清单（2026 文档审核核对）**。预设只写 `ColorGradingCustom` 一层的参数，不新增效果、不改 shader、不引入资源依赖；**预览图是 shader 数学的离线 1:1 模拟，不是 Unity 实机渲染**。
+
 `ImageProcess` → `调色`（`ImageProcessEffect.ColorGradingCustom`）的预设菜单根级只剩 `默认`（重置），所有 look 统一走 5 个子菜单，共 **34 个**：原有 `暖调 / 冷调` 已并入 `基础` 组，参数**原样保留**（见文末说明）。
 
 | 菜单 | 内容 |

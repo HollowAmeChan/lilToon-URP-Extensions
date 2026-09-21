@@ -1,5 +1,7 @@
 # 渐变映射（GradientMap）
 
+> 状态：**现行功能说明（2026 文档审核核对）**。ImageProcess 的亮度驱动颜色映射；预览图是离线模拟（`.codex-research/*` 为本机私有脚本，不在仓库内），实机效果需自行确认。
+
 `ImageProcessEffect.GradientMap` / 面板名「渐变映射」/ shader `Hidden/lilToon/URP/ImageProcess/GradientMap`。
 
 它做的是**亮度驱动的颜色映射**：先用画面里的某个量（默认 Rec.709 亮度）算出 0–1 的索引，再用这个索引去查一条色标，最后按图层混合模式与不透明度合成回画面。位置无关——和「渐变」（`Gradient`，屏幕空间位置驱动）是两件事，这也是它被做成独立效果而不是 Gradient 的新模式的原因（决策记录见 `GradientInvestigation.md` 第 6 节）。

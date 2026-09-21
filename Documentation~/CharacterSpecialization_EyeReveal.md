@@ -1,5 +1,8 @@
 # CharacterSpecialization 眼睛透过（Eye Reveal）
 
+> 状态：**现行功能说明（2026 文档审核核对）**。语义输入全部经 **AC**（OB 身份池 → 部件标签 → 覆盖率 → Selection 池），几何用 **GB**，不再有 MetadataBuffer 读取。
+> 相关：RDG 结构与逐趟清单见 `架构优化/Ho-CharacterSpecialization_RDG优化.md`；脸色扩散见 `CharacterSpecialization_FaceHairDiffuse.md`。
+
 ## 1. 目标
 
 让**被前发遮挡的眼睛按"眼睛捕获结果"透出**，并支持**按相机相对角色面部朝向的视锥角度**对眼透做区域控制。
