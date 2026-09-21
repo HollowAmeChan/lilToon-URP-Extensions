@@ -248,6 +248,22 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             return selectionNameCache;
         }
 
+        /// <summary>只读获取最终归属于本组的 Renderer；可按已有部件名过滤，遵循 OB 的覆盖与跨组裁决。</summary>
+        public void GetAssignedRenderers(List<Renderer> destination, ICollection<string> partFilter = null)
+        {
+            HoObjectBufferRegistry.EnsureBuilt();
+            destination.Clear();
+            IReadOnlyList<string> names = GetPartNames();
+            foreach (Renderer renderer in lastWrittenRenderers)
+            {
+                if (renderer == null || IsOwnedByOtherGroup(renderer)) continue;
+                if (partFilter != null && partFilter.Count > 0
+                    && (!localSlotByRenderer.TryGetValue(renderer, out int slot)
+                        || slot >= names.Count || !partFilter.Contains(names[slot]))) continue;
+                destination.Add(renderer);
+            }
+        }
+
         /// <summary>把第 <paramref name="slot"/> 个部件条目编成 palette 行（partId 由注册表填）。</summary>
         public HoObjectPartData BuildPartRow(int slot, string partName)
         {
