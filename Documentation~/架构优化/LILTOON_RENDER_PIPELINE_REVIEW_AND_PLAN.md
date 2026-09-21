@@ -1,11 +1,10 @@
-> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
+> **历史评审稿（R6/R7 之后仅作资料）**：本文写于 MetadataBuffer 仍承担“材质/对象语义”的时期。`MetadataBuffer` 已整块删除，`maskId` / 自定义通道归 OB + AC，surface 族归 SB。**仍然有效**的部分：功能域盘点、AOV 方案、§7 业界对照、§2 的“边界与耦合判定”方法论、SSS 的 HDRP 对齐线路（见 `HoAOVTrueSSSDesign.md`）。**其余段落按 v2 读**（旧通道换成 OB / SB 的具名通道 + AC 遮罩）。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
 
 # 渲染管线架构评审与规划（lilToon / HoNpr / URP / 渲染环境）
 
 > 状态：Draft v0.3（本地盘点 ✅ + 外部调研 ✅（URP17 源码级 + AOV/Nuke 工业规范），NPR 光照域以本地 HDRP 对照 + 业界为参照）
 >
-> ⚠ **前提已过时**：本文写于 MetadataBuffer 仍承担"材质/对象语义"的时期，它的 buffer 划分（MetadataBuffer + GeometryBuffer）**不再成立**。当前划分见 **[`Ho-管线总览.md`](Ho-管线总览.md)**：**GB（几何）/ ObjectBuffer（逐物体）/ SurfaceBuffer（表面）三轴 + Ho-AttributeComposite（属性合成与遮罩）**。**继续有效**：功能域盘点、AOV 方案、§7 业界对照、§2 的"边界与耦合判定"方法论；**凡涉及 MetadataBuffer 的段落一律按 v2 读**（其槽位变成 OB / SB 的通道，`custom0~3` 那类匿名通道由 CM 的具名遮罩取代）。
-> 用途：回答“我们现在是什么、工业界怎么组织、URP 的边界在哪、功能该放哪层、怎么为未来拆解留接口、怎么接 Nuke 多通道”。
+> 用途（承上：本文的“现在是什么”一节已过时）：回答“工业界怎么组织、URP 的边界在哪、功能该放哪层、怎么为未来拆解留接口、怎么接 Nuke 多通道”。
 > 背景：**渲染环境**（作品集 / 动画渲染），非性能敏感；主材质 `lilToon`（当前）；`HoNpr`（重生成式材质系统，**已因过重暂停**，只作反例）；管线 URP17 / RenderGraph 主线。
 
 ---

@@ -2,9 +2,13 @@
 
 # HoAOV / HoSSS 设计现状
 
-> 历史资料：本文记录旧 `HoAOV` / `HoSSS` 数据契约，不作为当前 `MetadataBuffer` / `GeometryBuffer` / `Ho-SubsurfaceScattering` 使用说明。当前边界、用户顺序和验收口径以 `RPComponentRework/RPComponentRework_验收文档.md` 为准。
+> 状态：**设计记录（2026 文档审核核对）**。文中**对照 HDRP 17.3 源码得出的差距与路线（profile + Burley disk + backface thickness prepass + 干净的 diffuse source）仍然有效**，也是 SSS 后续方向的依据；但**“数据契约 / pass 名 / 通道”这些章节写于 `HoAOV` + `MetadataBuffer` 时期，已被现行实现取代**：
+> - 表面数值来自 **SB**（`Classification.r` = `sssProfileId`、`Classification.g/h` = curvature / transmittance hint、`Material.b` = thickness、`Color` = 线性 HDR 表面色）；
+> - 遮罩与覆盖率来自 **AC**（OB 身份池 + 覆盖率）；
+> - 几何来自 **GB**；SSS 是 `Runtime/SubsurfaceScattering/` 的独立 feature（`Ho-SubsurfaceScattering`），不叫 `HoSSS`、也不再有 `HoAOV`。
+> 现行边界见 `架构优化/Ho-SurfaceBuffer.md` / `Ho-AttributeComposite.md`、`架构优化/Ho-管线总览.md` 与 `RPComponentRework/RPComponentRework_验收文档.md`。
 
-本文只记录已经落地的 HoSSS 工作、当前数据契约，以及对照 Unity HDRP 17.3 SSS 源码后确认的差距。早期试验过程和按日期堆叠的流水账不再保留。
+本文只记录已经落地的 HoSSS 工作、当时的数据契约，以及对照 Unity HDRP 17.3 SSS 源码后确认的差距。早期试验过程和按日期堆叠的流水账不再保留。
 
 ## 目标边界
 
@@ -72,7 +76,8 @@ SV_Target4 -> _lilHoAovCustom0_3Texture
 SV_Target7 -> _lilHoAovSssTexture
 ```
 
-当前 lilToon HoAOV pass 在启用 `_UseSSS` 时把 `_SSSColor` / albedo 混合结果写入 `_lilHoAovSssTexture`；lilPBR 在启用 Subsurface 时把 `_SubsurfaceColor` 与 albedo blend 后写入同一通道。HoSSS Source pass 会优先读取这个专用通道，未写入时回退 camera color。
+> **口径更新（2026 文档审核）**：下面这段“写进 `_lilHoAovSssTexture` / 回退 camera color”的描述属于旧实现。现行 SSS 的扩散源颜色来自 **SB `Color`**（经 AC 门面取遮罩与覆盖率），**通用 albedo 不再被预混 SSS 色**——材质侧不得把 `_SSSColor` 混进表面色，也不得只在 `_UseSSS` 时才写，那会把通用 diffuse buffer 变成 SSS 专用中间量。
+> 当时的 lilToon HoAOV pass 在启用 `_UseSSS` 时把 `_SSSColor` / albedo 混合结果写入 `_lilHoAovSssTexture`；lilPBR 在启用 Subsurface 时把 `_SubsurfaceColor` 与 albedo blend 后写入同一通道，HoSSS Source pass 优先读它、未写入时回退 camera color。
 
 ### 材质接口
 
@@ -85,20 +90,16 @@ _HoSSSTransmissionStrength
 _HoSSSTransmissionRadius
 ```
 
-启用 `_UseSSS` 时：
+**现行归属（2026）**：`sssProfileId` = **SB `Classification.r`**（byte），thinness / curvature / transmittance hint = **SB `Classification.g/h`** 与 `Material.b`（thickness）；mask / coverage = **AC**。旧的 `surfaceData.r/.b` 命名只存在于 `MetadataBuffer`（已删除），下表按当时口径保留：
+
+lilToon 当时启用 `_UseSSS` 时：
 
 ```text
 surfaceData.r = SSS thinness / scattering mask
 surfaceData.b = byte encoded _HoSSSProfileId
 ```
 
-lilPBR 已接入：
-
-```text
-_HoSSSProfileId
-```
-
-启用 `_SUBSURFACE` 时：
+lilPBR 当时启用 `_SUBSURFACE` 时：
 
 ```text
 surfaceData.r = Subsurface mask / thickness proxy
@@ -289,7 +290,7 @@ else:
     source = camera color fallback
 ```
 
-这样可以减少从屏幕投射里“猜颜色”，也更接近 HDRP 的 SSSBuffer / lighting source 思路。Custom0 保持给后处理链路，不再承担 SSS 数据契约。
+这样可以减少从屏幕投射里“猜颜色”，也更接近 HDRP 的 SSSBuffer / lighting source 思路。当时的“Custom0 保持给后处理链路、不再承担 SSS 数据契约”这条纪律**至今仍然成立**——只是承载它的匿名 Custom0 通道已经整体退役：现在**没有匿名 per-pixel 材质通道**，需要具名数据就走 SB 的具名通道、需要遮罩就走 AC 的 typed 查询。
 
 ### 2. 替换 diffusion kernel
 
@@ -334,7 +335,7 @@ renderInSceneView
 
 ### 5. 后续 thickness
 
-短期继续使用：
+短期继续使用（口径按现行：`surfaceData.r` → **SB `Classification.g/h` + `Material.b`**，其余不变）：
 
 ```text
 surfaceData.r

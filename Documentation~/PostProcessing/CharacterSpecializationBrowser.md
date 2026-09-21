@@ -1,10 +1,9 @@
-> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
-
 # 角色特化后处理 UI（与 ImageProcess / ScreenProcess 对齐）— 规划稿 + v1 落地记录
 
+> 状态：**v1 已落地（2026 文档审核核对）**。本文记录 CS 配置模型与 UI 的重构决策、已落地的改动和踩过的坑；语义来源现为 **AC**（身份池 / Selection lane / 覆盖率）+ **GB**（几何），`MetadataBuffer` 已整块删除。
 > 三块后处理语义相同，UI 与配置模型都应当一致：同一套 **搜索栏 + 左侧图标侧栏 + 右侧内容**、
 > 同一套无底控件与行样式、同样的"要用才开、不开就关"的配置方式。
-> 本文只规划；`EffectBrowser.md` 是那套外壳的说明。
+> 本文只规划；`EffectBrowser.md` 是那套外壳的说明。**`.codex-research/*` 下提到的检查脚本都是本机私有工具，不在仓库内**（结论写在文里，脚本不随仓发布）。
 
 ## 0. 现状
 
@@ -153,11 +152,10 @@ v1 落地后跑行覆盖检查发现两类问题，都已修：
 └───────────────┴──────────────────────────────────────────────┘
 ```
 
-- 侧栏 **6 条**：眼透 / 前发投影 / 前发漫反射 / 主体描边 / 增强描边 + 「语义遮罩抗锯齿」；
-  图标全部用现成资源（`icon_Glow_SelectColor_v1`、`icon_DropShadow_v1`、`icon_Blur_v1`、
-  `icon_OutLine_v1`、`icon_RimLight_v1`、`icon_Settings_v1`）。
-- 侧栏 **6 行**（图标档 3 列 × 6 = 18 格、名字档 1 列 × 6 = 6 格，两档同高 168px、不用翻页）。
-  这需要给 `EffectBrowserCatalog` 加**一个可选的 `Rows`**（IP/SP 不传，保持 3×20）——本次唯一动共享代码的地方。
+- 侧栏 **5 条**：眼透 / 前发投影 / 前发漫反射 / 主体描边 / 增强描边（对照 `HoCharacterSpecializationVolumeEditor.cs` 的 `Sections` 表）。
+  > **原来的第 6 条「语义遮罩抗锯齿」已删除**：那一整套开关随“位掩码 + 抗锯齿副本”一起退役——现在语义覆盖率由 **AC lane** 原生提供（`HoCharacterObjectSemantic.shader` 直接按覆盖率累加），不再需要单独一趟模糊，也不再需要“读覆盖率版还是原始 bit”的勾选项。
+  图标全部用现成资源（`icon_Glow_SelectColor_v1`、`icon_DropShadow_v1`、`icon_Blur_v1`、`icon_OutLine_v1`、`icon_RimLight_v1`）。
+- 侧栏 **5 行**（图标档 3 列 × 5、名字档 1 列 × 5）。这需要给 `EffectBrowserCatalog` 加**一个可选的 `Rows`**（IP/SP 不传，保持 3×20）——本次唯一动共享代码的地方。
 - 交互（与 IP/SP 同一套）：左键点图标 = 开/关该效果（绿色 = 已启用）；右键菜单 = 启用/停用、
   恢复默认、展开该区段、清空搜索；搜索只过滤侧栏，右侧区段标题行高亮；`Esc` 清空；
   悬停页码看「侧栏命中 n · 已启用 m 个效果」。
@@ -183,7 +181,7 @@ v1 落地后跑行覆盖检查发现两类问题，都已修：
 
 | 现在 | 改成 |
 | --- | --- |
-| 5 个静态类各带一份 `DrawVolume(13 个参数…)`，编辑器逐个调用 | 编辑器持有一张 **6 条的 `EffectBrowserEntry` 目录**（枚举名 = 参数前缀，中文标签与图标见 §2），右侧由各区段画参数行，**标题行统一由编辑器画**（`DrawSectionRow(效果, 展开状态)`） |
+| 5 个静态类各带一份 `DrawVolume(13 个参数…)`，编辑器逐个调用 | 编辑器持有一张 **5 条的 `EffectBrowserEntry` 目录**（枚举名 = 参数前缀，中文标签与图标见 §2），右侧由各区段画参数行，**标题行统一由编辑器画**（`DrawSectionRow(效果, 展开状态)`） |
 | 折叠状态 `private static bool` | `SessionState` 每实例 |
 | 没有图标/调色板 | 与 IP/SP 同款的目录表 |
 | 无底控件各写各的 | 统一用 `EffectBrowserView.DrawChromeLessButton` |
@@ -196,7 +194,7 @@ v1 落地后跑行覆盖检查发现两类问题，都已修：
 | --- | --- | --- |
 | `.codex-research/cs_config_split/audit_migration.py`（一次性，对旧 Volume 的备份比对） | 70 个效果参数是否 1:1 迁到新的 Effects 类：字段名（PascalCase → lowerCamelCase）、类型映射、**默认值文本**、`ClampedFloatParameter` 的区间是否变成 `[Range]`、`[InspectorName]`/`[Tooltip]` 是否保留 | **70/70 通过**（不丢字段、不改默认值） |
 | `.codex-research/character_specialization_sim/check_cs_browser_ui.js`（新） | 目录 ↔ 字段一一对应（无孤儿/无重复覆盖）、图标文件存在、行内 `×` 只把启用字段置 false、折叠走 `SessionState` 而非 `static`、**逐参数 `overrideState` 不得回来**（只剩 `VolumeParameter<T>` 构造必需的装箱）、**但容器那一个 override 必须是 true**（默认值 + 字段初始化两处都钉住，见 §1.1）、`ApplyTo` 与 7 个死字段已删、Settings 的 70 个 `[NonSerialized]` 与"CopyFrom 只剩管线"、Feature 调 `CopyEffectsTo`、无底按钮规则、5 处 `DrawEffects` 各一次、每行都必须画得出来（统计沿 `DrawXProperties(effects, …)` 递归） | 见下 |
-| 行覆盖（**已升级为 gated**，本次修 A） | 5 个区段的 `DrawEffects(effects)` 必须画出该区段目录里拥有的每一行；行允许由同文件的参数组 helper（`DrawModeProperties`/`DrawHeightFadeProperties`/`DrawFogProperties`，按模式分支）代画，所以统计沿调用关系递归 | **70 = 64 行 + 5 个启用开关 + 1 个第六侧栏项**；修前 30 个字段在面板上没有任何入口 |
+| 行覆盖（**已升级为 gated**，本次修 A） | 5 个区段的 `DrawEffects(effects)` 必须画出该区段目录里拥有的每一行；行允许由同文件的参数组 helper（`DrawModeProperties`/`DrawHeightFadeProperties`/`DrawFogProperties`，按模式分支）代画，所以统计沿调用关系递归 | 无覆盖字段（修前有 30 个字段在面板上没有任何入口）。**注意口径已随「语义遮罩抗锯齿」的删除变化**（那一条侧栏与它的一组字段都不在了），当前行数由 `check_cs_browser_ui.js` 的就地断言钉住 |
 | 行覆盖 + 摘要字段的负对照（本次新增 4 条，共 **22/22**） | ①helper 里删掉一行 ②`DrawEffects` 不再调用某个 helper ③摘要字段改名成不存在的 ④摘要字段借用别的区段的 —— 四种改法都必须被抓住 | 全过 |
 | 摘要字段（本次修 D） | `EffectSection` 增加 `SummaryField`，折行摘要读它（原实现读 `"<prefix>Strength"`，对前发投影这类没有该字段的区段永远显示"开"）；检查断言该字段存在且属于本区段的 prefixes | 5/5 通过 |
 | 死代码清理（本次修 C） | 5 个区段文件里已无调用者的 `DrawVolume`/`DrawSettings`/`Draw*Settings`/`DrawParameter(SerializedDataParameter, …)`、`private static bool showVolume/showSettings`、只给旧标题用的 `SectionColor` 等颜色常量 | 已删；Roslyn 0 error |
@@ -217,7 +215,7 @@ v1 落地后跑行覆盖检查发现两类问题，都已修：
 
 1. **方案 A：Volume 是效果参数的唯一来源**，删掉 Settings 的重复字段与 `ApplyTo`，不再有保底与逐参数覆盖
    —— 已确认**需要逐场景调**，所以更不能走"纯 Feature 级配置"的备选 B；
-2. 侧栏 6 条（含「语义遮罩抗锯齿」）；
+2. 侧栏 **5 条**（原第 6 条「语义遮罩抗锯齿」已随该功能删除，见 §2）；
 3. 区段行 `×` = **关掉效果**（不是恢复默认）；
 4. **顺序保持固定、不提供排序入口**：侧栏与右侧区段都按写死的顺序（眼透 → 前发投影 → 前发漫反射 →
    主体描边 → 增强描边）。顺序在代码里是**一张表**（数据），只是 UI 不给改的入口 —— 以后想放开只需加一个开关，
@@ -247,7 +245,7 @@ v1 落地后跑行覆盖检查发现两类问题，都已修：
 ### 建议形态（不变）
 
 ```
-[capture 序幕：脸部 RT / 眼部 RT + 各效果 Source + 语义遮罩模糊 + 降分辨率]   ← 留在 Feature（约 40% 代码不动）
+[capture 序幕：脸部 RT / 眼部 RT + 各效果 Source + 降分辨率]   ← 留在 Feature（约 40% 代码不动）
         ↓ 产出具名资源
 [链：一个效果一个全屏图层，读上面的资源；顺序 = 固定表，不做拖拽；开关/强度/混合/遮罩]  ← 复用链式基础设施
 ```
@@ -277,7 +275,7 @@ v1 落地后跑行覆盖检查发现两类问题，都已修：
 | 强度 `intensity` | ✓ | ✓ | ✗ | CS 链化后白拿 |
 | 颜色 `color` | ✓ | ✓ | ✗（各效果自带颜色参数） | 语义不同，保持各自参数 |
 | 混合模式 | **24 种** | **只有 4 种**（Normal/Add/Screen/Multiply） | ad-hoc 2 个（`hairShadowBlendMode`/`faceHairDiffuseBlendMode`） | **SP 补到 24**：共享 include `ImageProcessBlend.hlsl` 已抽好，SP 直接复用；CS 链化后白拿 |
-| 规则遮罩 | **✗（0 处引用）** | ✓（只留层遮罩：每层开关 + MetadataBuffer 覆盖率） | ✗ | **AC 落地前不做**：遮罩的来源将来只有一个 = AC（见 §10）；SP 原来的 20 个 source 与规则列表**已作为未使用功能删除**（不是迁移），R5 时 SP 图层作为**新工作**直接吃 AC 具名遮罩 + `HoAC_*`，现在照 MetadataBuffer 通道再实现一套会白做 |
+| 规则遮罩 | **✗（0 处引用）** | ✓（层遮罩 = **AC 覆盖率**查询；rule-source 下拉与规则列表已删） | ✓（经 AC 的 Selection lane 取语义覆盖率） | **已完成**：遮罩的来源只有一个 = AC（见 §10）；SP 原来的 20 个 source 与规则列表**已作为未使用功能删除**，新工作直接吃 AC 具名遮罩 + `HoAC_*` |
 | 预设菜单 | ✓ | ✓ | ✗ | CS 链化后按 IP/SP 的写法补（两段描边最需要） |
 | 行样式 / 无底控件 / 浏览器 | ✓ | ✓ | 本次对齐 | — |
 
@@ -300,18 +298,16 @@ v1 落地后跑行覆盖检查发现两类问题，都已修：
    （AC 文档 §1）；查询形状是 `HoAC_Mask(id)` / `HoAC_Group(groupId)` / `HoAC_Slot(slot)` /
    `HoAC_Attribute(attr)` / `HoAC_Coverage()`，C# 侧由 feature **声明名字**、经 manifest 解析，解析不到要报诊断
    （不许静默）。
-2. **只吃 AC 的消费者**里明确列了 **ScreenProcess 与角色特化**；排期上 R4 = AC 落地，
-   **R5 = 消费者输入切换**（SP 图层作为**新工作**接入 AC 具名遮罩——原来的 20 个 rule source 已作为未使用功能删除，没有旧配置要迁移；
-   角色特化 → AC（组 / 物体位 / 覆盖率）+ SB（表面色））。
+2. **只吃 AC 的消费者**里明确列了 **ScreenProcess 与角色特化**。R4（AC 落地）与 **R5（消费者输入切换）均已完成**：SP 图层改吃 AC 具名遮罩（原来的 20 个 rule source 作为未使用功能删除，没有旧配置要迁移）；角色特化改走 AC（身份池 / Selection lane / 覆盖率）+ GB（几何），不再读任何 MB 图。
 
 对本文档的影响：
 
 | 事项 | 结论 |
 | --- | --- |
-| IP 补规则遮罩 | **取消**（§8）：现在按 MetadataBuffer 通道做一套，AC 一到就全废；等 R5 直接吃 `HoAC_*` |
-| SP 现有遮罩 UI | 现在只剩**每层开关 + 反转 + debug**（rule-source 下拉与规则列表已删除）；R5 接 AC 时换成"具名条目 + 登记表 + 解析失败可见"，不要在此基础上加功能 |
-| CS v2 链化的资源绑定 | CS 现在直接读 `_HoMetadataBuffer*`（Composite shader `:52` 等）正是 AC 边界里**禁止**的最终形态 ⇒ 链化时按已冻结的 `HoAC_*` 形状设计（组 / 物体位 / 覆盖率 + SB 表面色），并与 R5 对齐排期 |
-| CS v1（本次） | **不依赖 AC**，可以先做：它只动配置模型与 UI 外壳，不碰语义读取 |
+| IP 补规则遮罩 | **取消**（§8）：等真要给 IP 遮罩时直接吃 `HoAC_*`（现在 AC 已落地），不要另起一套 |
+| SP 现有遮罩 UI | 现在只剩**每层开关 + 反转 + debug**（rule-source 下拉与规则列表已删除）；遮罩已改吃 AC（`ScreenProcessMask.hlsl` → `HoAC_TotalCoverage`） |
+| CS 语义输入 | **已完成**：CS 经 AC 取语义（`HoCharacterObjectSemantic.shader` 读 `_HoACSelection0..3` + `_HoACLanes`，按覆盖率累加进两张位平面），合成趟与两条轮廓读的都是它——**不再有任何对 MetadataBuffer 的直接读取**（MB 已整块删除） |
+| CS v1（本次） | **不依赖 AC**，可以先做：它只动配置模型与 UI 外壳，不碰语义读取（已完成） |
 | UI 文案 | 规范禁止在 UI 上出现 `_HoMetadataBuffer*`、`custom0` 这类旧名；侧栏/区段文案要按 AC 的用语（身份池 / 语义槽 / 组 ID / 部件 ID / 标记 / 物体位） |
 
 ## 11. 与 `Ho-UI_风格规范.md` 的关系
