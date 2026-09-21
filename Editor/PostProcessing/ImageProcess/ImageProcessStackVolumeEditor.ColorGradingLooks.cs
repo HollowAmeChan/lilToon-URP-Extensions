@@ -19,7 +19,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         /// Every look below is authored in wheel mode 0 (色轮) and leaves the log wheels
         /// (<c>parameters3</c>-<c>parameters5</c>) at zero, so all of its parameters stay visible in the
         /// default editor UI. The table was tuned numerically against a port of the shader; see
-        /// Documentation~/PostProcessing/ColorGradingPresets.md.
+        /// Documentation~/后处理/ColorGradingPresets.md.
         /// </remarks>
         private readonly struct ColorGradingLook
         {

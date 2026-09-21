@@ -1,7 +1,7 @@
 # Ho-GTAO：设计意图与现状
 
 > 状态：**已实现并接入**（2026 文档审核核对）。原“v1 实施规划”的任务清单已执行完，本文保留**设计意图、契约、现状参数、取舍与坑**。
-> 配套：`LILTOON_HTRACE_GTAO_QUALITY_REFERENCE.md`（HTrace 参数档案）、`LILTOON_GTAO_H_TRACE_ALIGNMENT_WORKSHEET.md`（对齐口径与坑）、`LILTOON_GTAO_MSAA_SILHOUETTE_INVESTIGATION_LOG.md`（MSAA 轮廓白线的机理与修法）。
+> 配套：`归档/LILTOON_HTRACE_GTAO_QUALITY_REFERENCE.md`（HTrace 参数档案）、`归档/LILTOON_GTAO_H_TRACE_ALIGNMENT_WORKSHEET.md`（对齐口径与坑）、`归档/LILTOON_GTAO_MSAA_SILHOUETTE_INVESTIGATION_LOG.md`（MSAA 轮廓白线的机理与修法）。
 > 契约：`ao` 通道（R8f，0..1 visibility，1 = 无遮挡）；生产端 = 自研 `Ho-GTAO`；消费端 = 材质采样 + AOV。
 
 ## 1. 目标与立场
@@ -61,7 +61,7 @@
 
 ## 4. 坑
 
-1. **同事件顺序是契约，不是巧合**：GB 与 Ho-GTAO 都在 250，先后靠 feature 列表；顺序颠倒会读到 black/空纹理。**改 pass event 前先看 `LILTOON_RENDER_FEATURE_ORDERING.md`。**
+1. **同事件顺序是契约，不是巧合**：GB 与 Ho-GTAO 都在 250，先后靠 feature 列表；顺序颠倒会读到 black/空纹理。**改 pass event 前先看 `Ho-RenderFeatureOrdering.md`。**
 2. **历史必须按 camera 隔离**（SceneView/GameView 交替否则互相清空），并在相机尺寸/切换/重载时重置。
 3. **`_HoAOTexture` 要显式关 MSAA 并指定 Bilinear**（见 §2）；`filterMode` 不指定会继承相机颜色。
 4. **半分辨率换算不要用 `_ScreenParams.zw`**：那是全屏尺寸，要乘 divisor 才对（更稳的做法是用计算 RT 的 texel size 全局参数），否则会出现半径变小/条纹这类“分辨率感错误”。
@@ -69,7 +69,7 @@
 6. **RG 中把持久 `RTHandle` `ImportTexture` 当 raster attachment 写**需要有预案（失败特征是 Console 断言 / 历史不更新 → 改为写 transient 再 `CopyTexture`）。
 7. **无 temporal 档（Low）会有静止噪声/闪烁**：靠蓝噪声 + Disk 兜底，与 HTrace SpatialOnly 同级。
 8. **Bitmask + 降分辨率在细几何（头发缝隙）上仍可能渗漏**：由 Radius/Thickness 调，并靠深度引导上采样抑制 checker 残留。
-9. **MSAA 开启时的轮廓白线**不是 AO 数值问题，而是“单值 AO × MSAA 平均色”+ 解析几何取最近 sample 的结构性问题；修法见 `LILTOON_GTAO_MSAA_SILHOUETTE_INVESTIGATION_LOG.md`。
+9. **MSAA 开启时的轮廓白线**不是 AO 数值问题，而是“单值 AO × MSAA 平均色”+ 解析几何取最近 sample 的结构性问题；修法见 `归档/LILTOON_GTAO_MSAA_SILHOUETTE_INVESTIGATION_LOG.md`。
 
 ## 5. URP 内置 SSAO：解耦（已做）与完整删除（未做）
 

@@ -65,7 +65,7 @@
 
 - ~~“把描边写进 GeometryBuffer／MetadataBuffer 就等于补齐数据”~~ → 与“GB 是唯一几何真值、描边 coverage 无效”冲突，须先定义 §2 的三种语义。
 - ~~“DOF 读 `_CameraDepthTexture` 是既定事实”~~ → 现在 GB 优先，URP depth 只是显式 fallback。
-- ~~“描边应该被 SSGI 当成受光面处理”~~ → 描边是非物理装饰壳，见 `架构优化/LILTOON_KNOWN_ISSUE_OUTLINE_SSGI_GLOW.md`。
+- ~~“描边应该被 SSGI 当成受光面处理”~~ → 描边是非物理装饰壳，见 `Ho-已知问题-描边SSGI白边.md`。
 
 ## 6. 关键文件
 

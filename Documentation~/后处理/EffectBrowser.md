@@ -1,10 +1,10 @@
 # 效果浏览器（后处理 UI 换代）
 
 > 状态：**现行 UI 说明（2026 文档审核核对）**。三块后处理（ImageProcess / ScreenProcess / 角色特化）共用这套外壳；
-> 角色特化的侧栏为 **5 条**（原「语义遮罩抗锯齿」已随该功能删除，语义覆盖率由 AC lane 原生提供），见 `CharacterSpecializationBrowser.md`。
+> 角色特化的侧栏为 **5 条**（原「语义遮罩抗锯齿」已随该功能删除，语义覆盖率由 AC lane 原生提供），见 `归档/CharacterSpecializationBrowser.md`。
 >
 > **样式归属**：这套浏览器是三块纯后处理（`ImageProcess` / `ScreenProcess` / 角色特化）**自成一套**的界面，
-> 与 `Documentation~/架构优化/Ho-UI_风格规范.md`（OB / SB / AC 及后续通道型 feature 的规范）**互不约束**：
+> 与 `Documentation~/Ho-UI_风格规范.md`（OB / SB / AC 及后续通道型 feature 的规范）**互不约束**：
 > 效果行不用 `DrawSectionHeader`、控件无底 + 悬停高亮，都是有意为之，不要照那份规范来"统一"。
 
 `ImageProcess` / `ScreenProcess` 两个 Volume 编辑器的顶部 UI：**搜索栏 + 左侧可翻页图标侧栏 + 右侧原有图层列表**，

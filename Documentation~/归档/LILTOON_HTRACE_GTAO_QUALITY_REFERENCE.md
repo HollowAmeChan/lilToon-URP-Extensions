@@ -2,7 +2,7 @@
 
 > 状态：**对照档案（2026 文档审核核对）**。HTrace 侧全部是包源码事实（`D:\Unity_Project\BREAK_URP\Assets\HTraceAO`，URP 前向 / compute 版 GTAO 链）；Ho 侧一列已更新为**当前实现现状**。
 > 用途：Ho-GTAO 调档 / 加档时的原始依据——HTrace 原本有什么档、每个参数怎么生效、我们保留或剪掉了什么。
-> 配套：`LILTOON_GTAO_PLAN.md`（Ho-GTAO 规划）、`LILTOON_GTAO_H_TRACE_ALIGNMENT_WORKSHEET.md`（对齐口径与坑）。
+> 配套：`Ho-GTAO.md`（Ho-GTAO 规划）、`归档/LILTOON_GTAO_H_TRACE_ALIGNMENT_WORKSHEET.md`（对齐口径与坑）。
 > 行号为 HTrace 包源码实际行号；缩写：GTAO.cs=`Runtime/Shared/MainPasses/GTAO.cs`，HRender=`.../Computes/HRenderGTAO.compute`，HTPF=`HTemporalFilterGTAO.compute`，HSPF=`HSpatialFilterGTAO.compute`，HPYR=`HDepthPyramidAO.compute`，Enums=`Runtime/Shared/Globals/HEnums.cs`，Settings=`Runtime/Shared/Data/Public/GTAOSettings.cs`，Feature=`Runtime/URP/Infrastructure/HTraceAORendererFeature.cs`，Output=`Shaders/URP/OutputCompositionURP.shader`。
 
 ## 0. 一句话结论

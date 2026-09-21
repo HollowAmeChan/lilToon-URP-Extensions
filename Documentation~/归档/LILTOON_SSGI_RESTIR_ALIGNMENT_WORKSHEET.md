@@ -2,7 +2,7 @@
 
 > 状态：**已实现并收敛（2026 文档审核）**。本文原为逐阶段进度表，现压缩为「链路 + 资源契约 + 已知差异 + 坑 + 验收」。
 > Ho-SSGI 已落地（`Runtime/SSGI/`，自研，读 `gisexclude`，opaque 之后合成）；HTrace SSGI 只作对照参考（`Assets/HTraceSSGI`）。
-> 场景：`D:\Unity_Project\BREAK_URP\Assets\mmd场景测试\朱木古堂`。描边白边是已知问题（见 `LILTOON_KNOWN_ISSUE_OUTLINE_SSGI_GLOW.md`）。
+> 场景：`D:\Unity_Project\BREAK_URP\Assets\mmd场景测试\朱木古堂`。描边白边是已知问题（见 `Ho-已知问题-描边SSGI白边.md`）。
 
 ## 1. 链路
 

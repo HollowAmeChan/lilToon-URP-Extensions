@@ -1,4 +1,4 @@
-> **历史评审稿（R6/R7 之后仅作资料）**：本文写于 MetadataBuffer 仍承担“材质/对象语义”的时期。`MetadataBuffer` 已整块删除，`maskId` / 自定义通道归 OB + AC，surface 族归 SB。**仍然有效**的部分：功能域盘点、AOV 方案、§7 业界对照、§2 的“边界与耦合判定”方法论、SSS 的 HDRP 对齐线路（见 `HoAOVTrueSSSDesign.md`）。**其余段落按 v2 读**（旧通道换成 OB / SB 的具名通道 + AC 遮罩）。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
+> **历史评审稿（R6/R7 之后仅作资料）**：本文写于 MetadataBuffer 仍承担“材质/对象语义”的时期。`MetadataBuffer` 已整块删除，`maskId` / 自定义通道归 OB + AC，surface 族归 SB。**仍然有效**的部分：功能域盘点、AOV 方案、§7 业界对照、§2 的“边界与耦合判定”方法论、SSS 的 HDRP 对齐线路（见 `归档/HoAOVTrueSSSDesign.md`）。**其余段落按 v2 读**（旧通道换成 OB / SB 的具名通道 + AC 遮罩）。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
 
 # 渲染管线架构评审与规划（lilToon / HoNpr / URP / 渲染环境）
 
@@ -56,11 +56,11 @@
 
 - lilToon：一/二/三层阴影（含 strength/border/blur mask、receive mask）、rim、backlight、fake SSS、MatCap、反射（metallic/smoothness/reflectance/cube override）、outline、refraction/gem、fur、glitter；`_ScreenSpaceAOSource`（“AO RT”选择器）接收 URP/HTrace AO；`_HTraceSSGIBackfaceNormalFix` 供 UniversalGBuffer/DepthNormals 修正背面法线。
 - 材质语义 pass：`HoGeometryBuffer` + `HoObjectBuffer`（身份）+ `HoSurfaceBuffer`（表面数值）+ `HoCharacterCapture`（eyeColor/eyeData）。（写作时的 `HoMetadataBuffer` 已在 R6/R7 删除。）
-- 材质契约（**跨仓文档，不在本仓库**）：Blender Principled/OpenPBR → glTF `HO_materials_principled_lil` → lilToon/lilPBR，含 toon/unity/extras 子层；`unity.screenSpaceAO.*` 提示已在契约里占位。本仓库的渲染**通道**契约见 `LILTOON_CHANNEL_CONTRACT_V1.md`。
+- 材质契约（**跨仓文档，不在本仓库**）：Blender Principled/OpenPBR → glTF `HO_materials_principled_lil` → lilToon/lilPBR，含 toon/unity/extras 子层；`unity.screenSpaceAO.*` 提示已在契约里占位。本仓库的渲染**通道**契约见 `Ho-ChannelContract-v1.md`。
 
 ### 1.4 已知问题（评审基线）
 
-- SSGI 与 toon 描边语义冲突：描边壳只存在于相机颜色/深度、不存在于 SSGI 法线/层输入 → 发亮白边（**已知 bug**，`LILTOON_KNOWN_ISSUE_OUTLINE_SSGI_GLOW.md` 已记录；原因：HTrace 偏 PBR、不理解非物理表面）。
+- SSGI 与 toon 描边语义冲突：描边壳只存在于相机颜色/深度、不存在于 SSGI 法线/层输入 → 发亮白边（**已知 bug**，`Ho-已知问题-描边SSGI白边.md` 已记录；原因：HTrace 偏 PBR、不理解非物理表面）。
 - 屏幕空间 AO 目前是“采样模式”，且 HTrace 参数多、偏 PBR；材质内 Main Color / Shadow Color Blend 等 toon 化方向没有稳定验收。
 - 反射/透射/多光没有统一的“域方案”。
 - AOV 未成体系（数据散在 MetadataBuffer/CharacterSpecialization 内部）。
@@ -175,7 +175,7 @@
 ### 3.6 SSS
 
 - 现状：`Ho-SubsurfaceScattering`（意图模式）：材质写 surfaceData（thickness/curvature/profile/transmittance），HoSSS 读 source/diffusion/composite；离 HDRP 17.3 差距 = Burley 本体 + SSSBuffer/backface thickness + 干净 diffuse source。
-- 推荐：按 `HoAOVTrueSSSDesign.md` 的 HDRP 对齐线路走：① profile 数据结构补齐（可在插件内做成资产或 Volume，不必照搬 DiffusionProfile 资产）；② diffusion kernel 用 Burley disk（已迈出一步）；③ backface thickness prepass（前端/后端 depth）；④ source 尽量用**干净的 diffuse lighting / irradiance**（不是 camera color）；⑤ 材质内 fake SSS 保留为低配。
+- 推荐：按 `归档/HoAOVTrueSSSDesign.md` 的 HDRP 对齐线路走：① profile 数据结构补齐（可在插件内做成资产或 Volume，不必照搬 DiffusionProfile 资产）；② diffusion kernel 用 Burley disk（已迈出一步）；③ backface thickness prepass（前端/后端 depth）；④ source 尽量用**干净的 diffuse lighting / irradiance**（不是 camera color）；⑤ 材质内 fake SSS 保留为低配。
 - 层：意图 = 材质（surfaceData）；数据 = MetadataBuffer；扩散 = ScreenProcess/SSS pass；profile = 管线资源。
 - 耦合：单向。
 - AOV：`sss`（散射分量）、`sssintent`（mask）、`diffuseLight`（干净源）。
@@ -266,7 +266,7 @@
 1. AO：意图模式迁移（材质写意图 + AO 层施加）；HTrace 调参收敛；自制 toon AO 立项（可复用 `_UseScreenSpaceAO` 参数集）。
 2. 阴影：ShadowCast “多光源衰减”通道化；材质 toon 门控统一。
 3. 多光源：光源合并语义 + AOV 分光（可选）。
-4. SSS：Burley 补完 + backface thickness prepass + 干净 diffuse source（按 `HoAOVTrueSSSDesign.md` 后续）。
+4. SSS：Burley 补完 + backface thickness prepass + 干净 diffuse source（按 `归档/HoAOVTrueSSSDesign.md` 后续）。
 5. 反射：按 `ReflectionPipelineDesign.md` 的 PLR → SSR → Probe/Sky 路线推进。
 
 ### P2（按需立项，先证明需求）
@@ -296,7 +296,7 @@
 | Toon 阴影 | UTS3（三/多层阴影 + ramp 贴图 + blur/AA；阴影遮罩类材质）、MToon（VRM，轻量 ramp 单层） | 我们的“一/二/三层阴影 + ramp/mask”已是标准做法；不需要更复杂的阴影系统 |
 | AO | URP SSAO（depth/normal + bilateral blur，After-Forward 前）、EEVEE GTAO（screen-space，简单）、烘焙 AO | 屏幕空间 GTAO 对 toon 的颗粒/糊是通病；**toon 角色更该“小半径 + 接触暗部 + 材质内 remap”**；值得自制一个“toon AO”但别做算法库 |
 | GI | HDRP PathTracer/APV（对质量导向友好）、UE5 Lumen（动态全屏）、SSGI（PBR 假设） | 我们不是游戏，**“烘焙/APV 作静态主源 + 屏幕空间作风格化增强”**比依赖纯 SSGI 更稳；SSGI 只做增强并排除描边/非物理表面 |
-| SSS | HDRP DiffusionProfile + SSSBuffer + Burley（`RenderaPipeline.SubsurfaceScattering`，已拉源码） | 本地 `HoAOVTrueSSSDesign.md` 的 HDRP 对齐线路正确：**profile + Burley + 干净 diffuse source + backface thickness**；别学它的“compute 全量”起步 |
+| SSS | HDRP DiffusionProfile + SSSBuffer + Burley（`RenderaPipeline.SubsurfaceScattering`，已拉源码） | 本地 `归档/HoAOVTrueSSSDesign.md` 的 HDRP 对齐线路正确：**profile + Burley + 干净 diffuse source + backface thickness**；别学它的“compute 全量”起步 |
 | 反射 | 现成 `Unity-ScreenSpaceReflections-URP`（Linear/Hi-Z）、HDRP SSR（half-res + temporal + probe fallback）、planar（镜面） | 反射来源可插拔（cube/planar/SSR）；**收尾选 SSE 时优先现成包 + fallback** |
 | 多光 | URP additional lights（cluster/forward+）、UE 多光；toon 一般只对主光做完整风格化 | 多光合并语义 + 材质 toon 门控；不做每光 GI |
 | AOV | Arnold `diffuse_direct` 命名、Redshift/V-Ray raw×filter、HDRP Decoupled AOV、cryptomatte、OpenEXR layer.channel | 采用“Arnold 小写 + 点分”命名；通道表登记；`FullScreenPassRendererFeature`/`RenderObjects` 做低成本原型 |
@@ -306,4 +306,4 @@
 - Unity URP 17：`ScriptableRendererFeature` https://docs.unity.cn/Packages/com.unity.render-pipelines.universal@17.0//api/UnityEngine.Rendering.Universal.ScriptableRendererFeature.html ；URP17 RenderGraph 全屏效果最小示例 https://discussions.unity.com/t/urp-17-rendergraph-api-blur-multi-pass-fullscreen-blur-shader/1576178 ；Frame Data 纹理参考 https://docs.unity3d.com/6000.1/Documentation/Manual/urp/frame-data-textures-reference.html
 - Unity HDRP：AOV（Custom pass variables）https://docs.unity3d.com/Packages/com.unity.render-pipelines.high-definition@17.3//manual/AOVs.html ；`AOVRequestData` https://docs.unity3d.com/Packages/com.unity.render-pipelines.high-definition@13.0/api/UnityEngine.Rendering.HighDefinition.AOVRequestData.html
 - 本地源码：`D:\Unity_Fork\HoUrp17.3.0`（URP17 对齐）、`D:\Unity_Fork\UnityGraphics-6000.3-HDRP`（SSS/DiffusionProfile 对照）、`D:\Unity_Fork\Unity-ScreenSpaceReflections-URP`（SSR）、`D:\Unity_Fork\HoNpr`（反例）
-- 材质契约：**跨仓文档（不在本仓库）**——Blender Principled/OpenPBR → glTF → lilToon/lilPBR；Blender Principled https://docs.blender.org/manual/en/latest/render/shader_nodes/shader/principled.html 、OpenPBR https://academysoftwarefoundation.github.io/OpenPBR/ 。本仓库的渲染通道契约见 `LILTOON_CHANNEL_CONTRACT_V1.md`。
+- 材质契约：**跨仓文档（不在本仓库）**——Blender Principled/OpenPBR → glTF → lilToon/lilPBR；Blender Principled https://docs.blender.org/manual/en/latest/render/shader_nodes/shader/principled.html 、OpenPBR https://academysoftwarefoundation.github.io/OpenPBR/ 。本仓库的渲染通道契约见 `Ho-ChannelContract-v1.md`。

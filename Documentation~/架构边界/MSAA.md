@@ -2,7 +2,7 @@
 
 > **状态：现行架构边界说明**（结论 2026-09-14 定稿，2026 文档审核时按当前代码校正）。
 > 我们对 MSAA 的底线与"哪些地方必须处理它"仍然有效；文中的实现指路已从 MetadataBuffer 换到 GB / OB / SB / AC。
-> 过程记录与实测数据见 `Documentation~/架构优化/LILTOON_GTAO_MSAA_SILHOUETTE_INVESTIGATION_LOG.md`。
+> 过程记录与实测数据见 `Documentation~/归档/LILTOON_GTAO_MSAA_SILHOUETTE_INVESTIGATION_LOG.md`。
 
 ## 结论
 

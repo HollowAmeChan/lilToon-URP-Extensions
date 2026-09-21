@@ -1,11 +1,11 @@
 # Unity 光照、阴影与探针：lilToon / HoRP 混合实现与接入说明
 
-> 状态：**现行参考手册（2026 文档审核时重校）**。本文是“Unity 光照系统 ↔ lilToon 消费 ↔ HoRP 增强”的工程认知文档，不是架构契约；契约看 `Ho-管线总览.md` / `Ho-*.md` / `LILTOON_CHANNEL_CONTRACT_V1.md`。
+> 状态：**现行参考手册（2026 文档审核时重校）**。本文是“Unity 光照系统 ↔ lilToon 消费 ↔ HoRP 增强”的工程认知文档，不是架构契约；契约看 `Ho-管线总览.md` / `Ho-*.md` / `Ho-ChannelContract-v1.md`。
 > 适用范围：Unity 6000.x、URP 17.x、本地 lilToon fork、lilToon-URP-Extensions（Ho-GTAO / Ho-SSGI 已实现并接入）。
 > **本次重校范围**：① §0/§1 的 Unity 侧事实（通用知识，未逐条重验）；② §2 的 lilToon 消费路径与“语义而非实现名”原则；③ §3 的编译工作表、设置入口、朱木古堂实测基线（**已按当前 `PC_Renderer.asset` / `lilToonSetting.json` 重新扫描**）；④ §4 的推荐基线与操作路径；⑤ §5/§6 任务与参考。
 > 写作时仍存在的 `MetadataBuffer` 已在 R6/R7 删除（身份→OB、表面→SB、语义遮罩→AC）；凡本文提到“材质/对象语义 buffer”的地方一律按 **OB + AC + SB** 读。
 > **数字口径**：文中“52 个生成 Shader / 47 个命中 `ProbeVolumeVariants.hlsl`”是 2026-09-08 写作时的数；2026 文档审核重扫为 **54 个输出 / 49 个命中**（Lite 家族仍为 12 个）。其余历史数字保留原样，读到时按本条换算。
-> 反射方案、反射输入契约和后续实现路线不在本文维护：见 `Documentation~/ReflectionPipelineDesign.md`、`Documentation~/PlanarReflection.md`、`Documentation~/架构优化/Ho-管线总览.md`。本文只保留 Reflection Probe 的 Unity 背景与验证方法。
+> 反射方案、反射输入契约和后续实现路线不在本文维护：见 `Documentation~/ReflectionPipelineDesign.md`、`Documentation~/PlanarReflection.md`、`Documentation~/Ho-管线总览.md`。本文只保留 Reflection Probe 的 Unity 背景与验证方法。
 
 ---
 
@@ -149,7 +149,7 @@ GeometryBuffer normal/depth
 
 它的强项是接触暗部、缝隙、脚底和局部结构；弱点是屏幕外物体不可见、远距离不稳定、容易产生 halo 或 temporal 拖影。
 
-当前 Ho-GTAO 以 GeometryBuffer 作为唯一几何输入，输出公共 `_HoAOTexture`（0..1 visibility，**生产端不烘焙强度**），材质强度与 mask 留在消费端。[LILTOON_GTAO_PLAN.md](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/架构优化/LILTOON_GTAO_PLAN.md)
+当前 Ho-GTAO 以 GeometryBuffer 作为唯一几何输入，输出公共 `_HoAOTexture`（0..1 visibility，**生产端不烘焙强度**），材质强度与 mask 留在消费端。[Ho-GTAO.md](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/Ho-GTAO.md)
 
 ### 1.7 GI / SSGI：动态间接光增强
 
@@ -162,7 +162,7 @@ Lightmap/APV/SH = 稳定、低频、全场景基础 GI
 Ho-GI/SSGI      = 动态、局部、高频风格化增强
 ```
 
-SSGI 必须排除描边壳、非物理表面和不应参与反弹的材质，否则会出现描边发亮等问题。已有管线评审也将 `lightmap/APV/SH` 定为静态主源、屏幕空间 GI 定为增强。[LILTOON_RENDER_PIPELINE_REVIEW_AND_PLAN.md:147](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/架构优化/LILTOON_RENDER_PIPELINE_REVIEW_AND_PLAN.md:147)
+SSGI 必须排除描边壳、非物理表面和不应参与反弹的材质，否则会出现描边发亮等问题。已有管线评审也将 `lightmap/APV/SH` 定为静态主源、屏幕空间 GI 定为增强。[归档/LILTOON_RENDER_PIPELINE_REVIEW_AND_PLAN.md:147](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/归档/LILTOON_RENDER_PIPELINE_REVIEW_AND_PLAN.md:147)
 
 ### 1.8 Planar Reflection、SSR 与折射
 
@@ -344,7 +344,7 @@ ao_visibility = Ho-GTAO
 reflection    = Probe + Planar + SSR fallback
 ```
 
-不要让 lilToon Shader 根据 `_HTraceBufferAO`、某个 SSGI 实现名或某个具体 RT 名称决定行为。材质应该消费语义纹理或已经解析好的光照结果。现有 HoRP 通道契约已经把 `ao`、`gi`、`reflection`、`normal`、`depth` 分开登记，这个方向应继续保持。[LILTOON_CHANNEL_CONTRACT_V1.md](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/架构优化/LILTOON_CHANNEL_CONTRACT_V1.md)
+不要让 lilToon Shader 根据 `_HTraceBufferAO`、某个 SSGI 实现名或某个具体 RT 名称决定行为。材质应该消费语义纹理或已经解析好的光照结果。现有 HoRP 通道契约已经把 `ao`、`gi`、`reflection`、`normal`、`depth` 分开登记，这个方向应继续保持。[Ho-ChannelContract-v1.md](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/Ho-ChannelContract-v1.md)
 
 ### 2.9 每个 lilToon 组分的资源与 API 对照
 
@@ -1648,11 +1648,11 @@ lilToon APV variants          已生成
 - [lilToon shader settings](D:/Unity_Fork/lilToon/Assets/lilToon/Editor/lilToonSetting.cs)
 - [当前 Standard 生成输出 lts.shader](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/lts.shader)
 - [当前 Cutout 生成输出 lts_cutout.shader](D:/Unity_Fork/lilToon/Assets/lilToon/Shader/lts_cutout.shader)
-- [朱木古堂测试场景](D:/Unity_Project/BREAK_URP/Assets/mmd场景测试/朱木古堂/New%20Scene.unity)
+- [朱木古堂测试场景目录](D:/Unity_Project/BREAK_URP/Assets/mmd场景测试/朱木古堂)（写作时的场景文件是 `New Scene.unity`；2026 文档整理时该目录里只剩 `HIRO.unity`，实机以工程为准）
 - [朱木古堂 lilToon 编译设置](D:/Unity_Project/BREAK_URP/ProjectSettings/lilToonSetting.json)
 - [朱木古堂 URP Asset](D:/Unity_Project/BREAK_URP/Assets/Settings/PC_RPAsset.asset)
 - [朱木古堂 Renderer](D:/Unity_Project/BREAK_URP/Assets/Settings/PC_Renderer.asset)
 - [URP17 LightProbeSystem enum](D:/Unity_Fork/HoUrp17.3.0/Runtime/Data/UniversalRenderPipelineAsset.cs:398)
-- [HO pipeline review](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/架构优化/LILTOON_RENDER_PIPELINE_REVIEW_AND_PLAN.md)
-- [HO channel contract](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/架构优化/LILTOON_CHANNEL_CONTRACT_V1.md)
-- [HO GTAO plan](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/架构优化/LILTOON_GTAO_PLAN.md)
+- [HO pipeline review](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/归档/LILTOON_RENDER_PIPELINE_REVIEW_AND_PLAN.md)
+- [HO channel contract](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/Ho-ChannelContract-v1.md)
+- [HO GTAO plan](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/Ho-GTAO.md)

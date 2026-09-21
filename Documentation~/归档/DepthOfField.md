@@ -1,7 +1,7 @@
 # 景深（ScreenProcess · `DepthOfField`）
 
 > **状态：已修复并验证。** 本文记录根因（含一次行为回归）、修复内容、修复前后实测对比，以及仍然存在的取舍。
-> 相关：`Outline_Surface_Semantics_Investigation.md`（描边与景深的深度来源）、`GeometryBuffer.md` §3.3。
+> 相关：`归档/Outline_Surface_Semantics_Investigation.md`（描边与景深的深度来源）、`Ho-GeometryBuffer.md` §3.3。
 
 ## 0. 定位与判定标准
 
@@ -194,7 +194,7 @@ float coc = focusDelta / denom * lensScale * 0.014 * gain * sideBoost;
 
 ### 6.3 无 GeometryBuffer 时的深度回退
 
-`SampleEyeDepth()` 在 `_HoGeometryBufferValid <= 0.5` 时回退到 `SampleSceneDepth`，但 `ScreenProcessRendererFeature.RequiresDepth()` 现在只为 DropShadow 的 SubjectMask 兼容路径请求 URP 深度（见 `Outline_Surface_Semantics_Investigation.md` §11.2）。也就是说"只开 DoF、且 GeometryBuffer feature 不在 renderer 里"时，`_CameraDepthTexture` 可能没被生产，回退会读到未定义值。要么让 feature 在这种情况下显式请求深度（文档 §11.4 第 4 条的方向），要么按文档宣称的"GB 不可用即 no-op"。本次未动。
+`SampleEyeDepth()` 在 `_HoGeometryBufferValid <= 0.5` 时回退到 `SampleSceneDepth`，但 `ScreenProcessRendererFeature.RequiresDepth()` 现在只为 DropShadow 的 SubjectMask 兼容路径请求 URP 深度（见 `归档/Outline_Surface_Semantics_Investigation.md` §11.2）。也就是说"只开 DoF、且 GeometryBuffer feature 不在 renderer 里"时，`_CameraDepthTexture` 可能没被生产，回退会读到未定义值。要么让 feature 在这种情况下显式请求深度（文档 §11.4 第 4 条的方向），要么按文档宣称的"GB 不可用即 no-op"。本次未动。
 
 ### 6.4 需要在实机确认
 

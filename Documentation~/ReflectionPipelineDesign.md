@@ -2,7 +2,7 @@
 
 > 状态：**反射权威设计文档**（2026-09-14 初稿；2026 文档审核核对：**P0 输入迁移已完成**——SB 已落地、`MetadataBuffer` 反射桥已随 R6/R7 删除，反射消费的是 SB 具名通道 + AC 遮罩 + GB 几何）
 >
-> 结构基线：[`Ho-管线总览.md`](架构优化/Ho-管线总览.md) 的 GB / ObjectBuffer / SurfaceBuffer / AttributeComposite 四层归属。
+> 结构基线：[`Ho-管线总览.md`](Ho-管线总览.md) 的 GB / ObjectBuffer / SurfaceBuffer / AttributeComposite 四层归属。
 >
 > 实现约束：实验性桌面管线；不维护旧资产和移动端降级；质量优先。
 

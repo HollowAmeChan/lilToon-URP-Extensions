@@ -3,7 +3,7 @@
 > **已归档（2026 文档审核）**：本文是被取代的规划稿，已压缩为「结论 + 坑 + 仍然有效的依据」。
 > 它设想的整套机制（身份 / 覆盖率 / palette / RSUV / 自建 MSAA / resolve）最终落地成了 **`Ho-ObjectBuffer`（OB）+ `Ho-AttributeComposite`（AC）**，
 > 表面数值另立 **`Ho-SurfaceBuffer`（SB）**；它曾经设想的独立 `Ho-Cryptomatte` 没有做，遮罩需求由 **AC** 承担；`HoMetadataBuffer` 已在 R6／R7 整块删除。
-> 现行架构以 `架构优化/Ho-ObjectBuffer.md` / `Ho-SurfaceBuffer.md` / `Ho-AttributeComposite.md` / `Ho-管线总览.md` 与 `CHANGELOG.md` 为准。
+> 现行架构以 `Ho-ObjectBuffer.md` / `Ho-SurfaceBuffer.md` / `Ho-AttributeComposite.md` / `Ho-管线总览.md` 与 `CHANGELOG.md` 为准。
 > 代码落点：`Runtime/ObjectBuffer/`、`Runtime/AttributeComposite/`、`Runtime/SurfaceBuffer/`（本文里的 `Runtime/CharacterBuffer/` 是当时的设想）。
 
 ## 1. 一句话结论

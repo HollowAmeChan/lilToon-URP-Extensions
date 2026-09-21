@@ -15,7 +15,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
     /// <remarks>
     /// 这块**没有图层、也没有顺序**：五个效果是固定的一组区段，每个只有"启用/停用"两态，
     /// 参数由 Volume 单一提供（不再有 Settings 兜底值与逐参数 override，见
-    /// Documentation~/PostProcessing/CharacterSpecializationBrowser.md）。
+    /// Documentation~/归档/CharacterSpecializationBrowser.md）。
     /// </remarks>
     [CustomEditor(typeof(HoCharacterSpecializationVolume))]
     internal sealed class HoCharacterSpecializationVolumeEditor : VolumeComponentEditor

@@ -1,6 +1,6 @@
 # RPComponentRework：组件边界与验收结论
 
-> 状态：**已收口，契约仍然有效（2026 文档审核后重写）**。本文是 2026-05 RPComponentRework 的收口文档，旧 00-09 分布文档已删除；原验收清单里的 `Ho-MetadataBuffer` 已在 R6／R7 删除（身份归 OB、表面归 SB、合成归 AC），组件边界按当前架构重述。Renderer Feature 清单见 `架构优化/Ho-管线总览.md` §6，顺序契约见 `架构优化/LILTOON_RENDER_FEATURE_ORDERING.md`。
+> 状态：**已收口，契约仍然有效（2026 文档审核后重写）**。本文是 2026-05 RPComponentRework 的收口文档，旧 00-09 分布文档已删除；原验收清单里的 `Ho-MetadataBuffer` 已在 R6／R7 删除（身份归 OB、表面归 SB、合成归 AC），组件边界按当前架构重述。Renderer Feature 清单见 `Ho-管线总览.md` §6，顺序契约见 `Ho-RenderFeatureOrdering.md`。
 
 ## 1. 验收结论
 

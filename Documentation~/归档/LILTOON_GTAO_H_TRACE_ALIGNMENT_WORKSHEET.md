@@ -64,5 +64,5 @@
 | Ho 侧实现 | `Runtime/GTAO/HoGTAO.shader`、`HoGTAORendererFeature.cs`、`HoGTAOMotion.shader`、`Shaders/Debug/HoGTAODebug.shader` |
 | 深度/几何输入 | `Runtime/GeometryBuffer/`（raw depth attachment；由 Ho-GTAO 直接消费） |
 | HTrace 对照源码 | `Assets/HTraceAO`（`HRenderGTAO.compute`、`HDepthPyramidAO.compute`、`HTemporalFilterGTAO.compute`、`HSpatialFilterGTAO.compute`、`HDebugAO.compute`） |
-| MSAA 轮廓白线的机理与修法 | `LILTOON_GTAO_MSAA_SILHOUETTE_INVESTIGATION_LOG.md` |
-| 参数含义对照 | `LILTOON_HTRACE_GTAO_QUALITY_REFERENCE.md` |
+| MSAA 轮廓白线的机理与修法 | `归档/LILTOON_GTAO_MSAA_SILHOUETTE_INVESTIGATION_LOG.md` |
+| 参数含义对照 | `归档/LILTOON_HTRACE_GTAO_QUALITY_REFERENCE.md` |

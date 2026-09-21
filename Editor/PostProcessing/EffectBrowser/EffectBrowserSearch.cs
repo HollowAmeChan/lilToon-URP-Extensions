@@ -9,7 +9,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
     /// and paging rules directly.
     /// </summary>
     /// <remarks>
-    /// Rules (see Documentation~/PostProcessing/EffectBrowser.md §2):
+    /// Rules (see Documentation~/后处理/EffectBrowser.md §2):
     /// <list type="bullet">
     /// <item>the query matches the <b>effect only</b> - Chinese label or enum member name; preset
     /// names and pinyin deliberately do not participate;</item>

@@ -1,7 +1,7 @@
 # GeometryBuffer 公共契约
 
 > **状态：现行契约**（2026 文档审核时按当前实现校正：语义数值现由 SB / OB / AC 提供，MetadataBuffer 已删除）。
-> 相关：`架构优化/Ho-ObjectBuffer.md`、`架构优化/Ho-SurfaceBuffer.md`、`架构优化/Ho-AttributeComposite.md`、
+> 相关：`Ho-ObjectBuffer.md`、`Ho-SurfaceBuffer.md`、`Ho-AttributeComposite.md`、
 > `架构边界/MSAA.md`（GB 是唯一的 MSAA 解析入口）。
 
 > GeometryBuffer 是 Ho-URP Extensions 的屏幕几何输入层。

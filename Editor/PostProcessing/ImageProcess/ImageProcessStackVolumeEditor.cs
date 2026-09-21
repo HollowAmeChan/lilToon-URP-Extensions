@@ -1786,7 +1786,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetFloat(element, "intensity", 1.0f);
                     // Defaults to the look an artist expects from "网点": black ink dots in the
                     // shadows of an otherwise untouched image (mode 1 round, 6 px cells at 45
-                    // degrees, dark areas inked, white paper, OverInk). See Documentation~/PostProcessing/Halftone.md.
+                    // degrees, dark areas inked, white paper, OverInk). See Documentation~/后处理/Halftone.md.
                     SetEnum(element, "blendMode", (int)ImageProcessBlendMode.Normal);
                     SetColor(element, "color", Color.black);
                     SetVector4(element, "parameters0", new Vector4(1.0f, 0.0f, 0.0f, 1.0f));

@@ -4,7 +4,7 @@
 > 两层在同一趟 pass 里按顺序合成（不依赖 ScreenProcess 的层叠加）。见 §3 与 §4。
 > 写作时 MetadataBuffer 还在；现在层遮罩来自 **AC**（`ScreenProcessMask.hlsl` → `HoAC_TotalCoverage`），身份/表面语义分别来自 OB / SB。
 
-相关背景：家族 C（深度/大气/天空遮罩驱动的染色）的划分见 `GradientInvestigation.md` 第 6 节。
+相关背景：家族 C（深度/大气/天空遮罩驱动的染色）的划分见 `归档/GradientInvestigation.md` 第 6 节。
 
 ## 0. 定位：这是**合成雾**，不是物理雾
 
@@ -88,7 +88,7 @@
 
 - 两个槽的开关就是"折叠"：关掉的槽只占一行，行数由 `GetDepthFogLineCount` 与绘制函数严格对应（有检查钉住，§6）。
 - 顶部原有的"颜色 / 混合模式"两行属于图层核心字段，其中"颜色"就是深度雾的近色。
-- 层遮罩照旧可用（把角色排除、只对背景上雾等），它是**层内**能力，不是叠层；遮罩来源 = **AC**（OB 覆盖率 / 具名选择），详见 `架构优化/Ho-AttributeComposite.md`。
+- 层遮罩照旧可用（把角色排除、只对背景上雾等），它是**层内**能力，不是叠层；遮罩来源 = **AC**（OB 覆盖率 / 具名选择），详见 `Ho-AttributeComposite.md`。
 
 ## 5. 预设（5 组 13 个）
 

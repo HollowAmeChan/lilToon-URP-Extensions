@@ -1,7 +1,7 @@
 # lilToon / Ho-SSGI：设计意图、契约与坑
 
 > 状态：**已实现并收敛（2026 文档审核核对）**。原“Draft v0.6 实施规划”的任务清单已执行完，本文保留**设计意图、source 分析、资源所有权、契约、描边排除与坑**。
-> 配套：`LILTOON_SSGI_RESTIR_ALIGNMENT_WORKSHEET.md`（链路阶段 / reservoir 契约 / 已知差异 / 验收）、`LILTOON_RESTIR_SHARED_LAYER_REPORT.md`（共享层评估）、`LILTOON_KNOWN_ISSUE_OUTLINE_SSGI_GLOW.md`（描边白边已知问题）。
+> 配套：`归档/LILTOON_SSGI_RESTIR_ALIGNMENT_WORKSHEET.md`（链路阶段 / reservoir 契约 / 已知差异 / 验收）、`归档/LILTOON_RESTIR_SHARED_LAYER_REPORT.md`（共享层评估）、`Ho-已知问题-描边SSGI白边.md`（描边白边已知问题）。
 > 主线决策：**先把 HTrace SSGI 改造成适合 lilToon 的 Ho-SSGI**；Brixelizer GI 只作为后续 producer 替换，不提前展开。**不为低质量档另做一套算法**——先确定一条高质量路径，用分辨率 / ray count / history length / denoise 参数控成本，Low/Medium 只改参数、不改算法结构。
 
 ## 1. 插入时机的取舍（唯一的硬约束）

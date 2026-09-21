@@ -2,7 +2,7 @@
 
 > 状态：**已冻结 · v1（2026 文档审核按 OB/SB/AC 实现重校生产端）**
 > 冻结规则：`AOV=冻结` 的通道，命名与编码**只增不改**；修订须升 v2 并记录变更。
-> 基线：`mmd场景测试\朱木古堂\New Scene.unity`（40 灯 / GTAO / SSGI / ScreenProcess + ImageProcess 栈）；渲染器 `PC_Renderer.asset`（14 项 feature；另有 4 类已删脚本的 Missing Script 死条目与若干同名重复条目，属资产卫生）。
+> 基线：`mmd场景测试\朱木古堂\New Scene.unity`（**写作时的文件名**；2026 文档整理时该目录里只剩 `HIRO.unity`，实机以工程为准）（40 灯 / GTAO / SSGI / ScreenProcess + ImageProcess 栈）；渲染器 `PC_Renderer.asset`（14 项 feature；另有 4 类已删脚本的 Missing Script 死条目与若干同名重复条目，属资产卫生）。
 > 原则：按需纸面契约（非固定编码）；无消费者不登记；RenderGraph transient 声明；AOV 命名冻结。
 >
 > v1 是当前 Runtime 的 bridge 契约，不是三轴长期归属。[`Ho-管线总览.md`](Ho-管线总览.md) 冻结了 GB / ObjectBuffer / SurfaceBuffer / AttributeComposite 的目标边界（已完成）；反射字段迁移只在 `ReflectionPipelineDesign.md` 维护。
@@ -38,7 +38,7 @@
 | `emission` | 材质（全部发光，HDR 强度） | AOV | RGB hdr | `emission` | ◻ |
 | `motion` | （占坑） | AOV / temporal | RG | `motion` | ◻ |
 
-> 说明：`gisexclude` 为描边/非物理表面排除位（描边白边已知 bug 的正式解，见 `LILTOON_KNOWN_ISSUE_OUTLINE_SSGI_GLOW.md`）；`aointent`/`gi`/`gisexclude`/`emission`/`motion` 已登记，随对应系统落地实现。
+> 说明：`gisexclude` 为描边/非物理表面排除位（描边白边已知 bug 的正式解，见 `Ho-已知问题-描边SSGI白边.md`）；`aointent`/`gi`/`gisexclude`/`emission`/`motion` 已登记，随对应系统落地实现。
 >
 > ~~`maskcoverage.*`~~ **已废弃**：那条“把 `objectCustom` 位图整体过一遍盒核滤波”的抗锯齿副本路线已经被 **AC 的覆盖率**取代——OB 身份池的每条 lane 天生带 `(IdentityId, coverage)`，`HoCharacterObjectSemantic.shader` 直接把覆盖率按语义累加进两张位平面（见上表 `objectSemantic.low/high`），不再需要单独一趟模糊，也不再需要“读覆盖率版还是原始 bit”的勾选项。**ID 与材质分类仍然不可平均**（`IdentityId` / `materialClass` 一经插值即无意义）——这条纪律没有变。
 

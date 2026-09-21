@@ -4,7 +4,7 @@
 
 `ImageProcessEffect.GradientMap` / 面板名「渐变映射」/ shader `Hidden/lilToon/URP/ImageProcess/GradientMap`。
 
-它做的是**亮度驱动的颜色映射**：先用画面里的某个量（默认 Rec.709 亮度）算出 0–1 的索引，再用这个索引去查一条色标，最后按图层混合模式与不透明度合成回画面。位置无关——和「渐变」（`Gradient`，屏幕空间位置驱动）是两件事，这也是它被做成独立效果而不是 Gradient 的新模式的原因（决策记录见 `GradientInvestigation.md` 第 6 节）。
+它做的是**亮度驱动的颜色映射**：先用画面里的某个量（默认 Rec.709 亮度）算出 0–1 的索引，再用这个索引去查一条色标，最后按图层混合模式与不透明度合成回画面。位置无关——和「渐变」（`Gradient`，屏幕空间位置驱动）是两件事，这也是它被做成独立效果而不是 Gradient 的新模式的原因（决策记录见 `归档/GradientInvestigation.md` 第 6 节）。
 
 预览图（由 `.codex-research/gradient_map_sim/sheet.js` 生成，不是 Unity 截图）：
 
@@ -68,7 +68,7 @@
 - 「亮度索引一条 1D 色带」这个做法本身有可核实的一手来源：
   - GPU Gems 1 第 22 章（NVIDIA 官方在线版）给的是 `float grayscale = dot(float3(0.222,0.707,0.071), inColor); OutColor = tex1D(ColorCorrMap, grayscale);`，即用亮度索引 1×256 的颜色校正贴图（权重是 Rec.709 亮度的一种舍入，本效果用标准 0.2126/0.7152/0.0722）。
   - Godot 官方文档源码（`godot-docs` 仓库 `environment_and_post_processing.rst`）：`Color Correction` 用一条 1D 渐变，"leftmost part of the gradient represents black … rightmost part represents white"，并且"a linear black-to-white gradient like the following one will produce no effect"——这正是本效果默认值的语义。
-- **Adobe 的正文没有核实过**：Photoshop「Gradient Map」帮助页正文抓不到（导航体积吞掉正文），AE 的 Gradient Ramp / Colorama 同理，详见 `GradientInvestigation.md` 第 7 节的工具限制说明。本文档只把 `Reverse` / `Dither` 当作命名习惯，不声称 Adobe 的具体行为。
+- **Adobe 的正文没有核实过**：Photoshop「Gradient Map」帮助页正文抓不到（导航体积吞掉正文），AE 的 Gradient Ramp / Colorama 同理，详见 `归档/GradientInvestigation.md` 第 7 节的工具限制说明。本文档只把 `Reverse` / `Dither` 当作命名习惯，不声称 Adobe 的具体行为。
 - Oklab 插值：矩阵与推导见下节，来源是 Björn Ottosson 2020 的 Oklab 与 W3C CSS Color 4 的示例转换代码。
 - Unity 渐变的 `Fixed` 模式语义按"每个键的颜色保持到下一个键"实现（与 Unity 编辑器里 Fixed 渐变条的观感一致）。这一点**没有和 native `Gradient.Evaluate` 逐点比对过**（本仓库外无法执行 Unity 原生渐变），见"尚未验证"。
 

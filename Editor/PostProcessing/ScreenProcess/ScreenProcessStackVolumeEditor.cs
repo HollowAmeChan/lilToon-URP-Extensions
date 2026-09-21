@@ -731,7 +731,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     SetEnum(element, "blendMode", (int)ScreenProcessBlendMode.Normal);
                     // Depth slot on (exponential, 5 m -> 400 m), height slot off: the usual "distance
                     // haze" starting point. Both slots and their switches are documented in
-                    // Documentation~/PostProcessing/DepthFog.md.
+                    // Documentation~/后处理/DepthFog.md.
                     SetVector4(element, "parameters0", new Vector4(1.0f, (float)ScreenProcessFogDepthMode.Exponential, 5.0f, 400.0f));
                     SetVector4(element, "parameters1", new Vector4(0.01f, 0.6f, 1.0f, 0.3f));
                     SetVector4(element, "parameters2", new Vector4(0.49f, 0.58f, 0.71f, 0.0f));

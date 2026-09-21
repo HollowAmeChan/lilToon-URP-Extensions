@@ -1,10 +1,10 @@
 # Ho 管线总览
 
 > **状态：现行总览**（2026 文档审核时把原来的两份草案合并到这里；**三轴 producer + AC 合成器已经落地**，
-> 本文描述的是完成形态，历史草案见 `_归档/LILTOON_FORMAL_PIPELINE_DRAFT_v0.1.md`）。
+> 本文描述的是完成形态，历史草案见 `归档/LILTOON_FORMAL_PIPELINE_DRAFT_v0.1.md`）。
 > 分轴细节：`Ho-ObjectBuffer.md`（OB）/ `Ho-SurfaceBuffer.md`（SB）/ `Ho-AttributeComposite.md`（AC）/
-> `GeometryBuffer.md`（GB）；边界：`架构边界/MSAA.md`、`架构边界/语义掩码.md`；UI：`Ho-UI_风格规范.md`。
-> 事实基线：正式场景 = `D:\Unity_Project\BREAK_URP\Assets\mmd场景测试\朱木古堂\New Scene.unity`，
+> `Ho-GeometryBuffer.md`（GB）；边界：`架构边界/MSAA.md`、`架构边界/语义掩码.md`；UI：`Ho-UI_风格规范.md`。
+> 事实基线：正式场景 = `D:\Unity_Project\BREAK_URP\Assets\mmd场景测试\朱木古堂\New Scene.unity`（**写作时的文件名**；2026 文档整理时该目录里只剩 `HIRO.unity`，实机以工程为准），
 > 渲染器 = `Assets\Settings\PC_Renderer.asset`。
 
 ## 0. 摘要
@@ -184,7 +184,7 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 | 新增 | OB 身份池 / 朝向 / 标签位；SB owner + 单采样语义 lane；AC Selection 池 + typed query + runtime catalog |
 | 导出档位 | 现状（UINT 通道）保留；合规 `crypto_*`（float 位重解释 + manifest + 32 bit）仍属未做的独立 AOV/export feature |
 
-契约 v2 走 `LILTOON_CHANNEL_CONTRACT_V1.md` §3 的登记模板 + §5 变更记录；AOV 名只增不改，编码变更必须标明。
+契约 v2 走 `Ho-ChannelContract-v1.md` §3 的登记模板 + §5 变更记录；AOV 名只增不改，编码变更必须标明。
 
 ---
 
@@ -216,7 +216,7 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 角色 14 个材质覆盖 toon 阴影 / 屏幕 AO / fake SSS / 反射 / rim / emission / outline 七类。
 （历史上资产里的"旧名"只是 ScriptableObject 实例名，Unity 按 GUID 加载；Hiro 场景已不是基线。）
 
-**ShadowCast 多光策略**（细节见 `PostProcessing/README.md`）：主光阴影与 ShadowCast 永不合流；
+**ShadowCast 多光策略**（细节见 `后处理/README.md`）：主光阴影与 ShadowCast 永不合流；
 ShadowCast = **cast 组**（每组一张 atlas，灯按 slice 排布，首版 2 组、上限 8 组）；
 `Light Capacity` 档位只约束"同时采样的附加灯数"，切片数由图集尺寸与分辨率算出
 （`floor(atlasSize / resolution)^2`，硬上限 128 片）；全局数组长度固定（Unity 会缓存全局数组槽位长度，
@@ -233,7 +233,7 @@ ShadowCast = **cast 组**（每组一张 atlas，灯按 slice 排布，首版 2 
 3. **新增 render kind**：`HoDebugViewRenderKind` 加枚举值（每个 feature 一个）；
 4. **让 DebugTile 接得上**：`HoDebugTileRendererFeature` 的可用性判定 + `BuildTiles` 过滤 + `ResourceNeeds`；
    `HoDebugTile.shader` 加 slice；`LilUrpDebugShaderValidator` 的收集表；
-5. **契约登记的 debug 列**：`LILTOON_CHANNEL_CONTRACT_V1.md` §3 模板逐条填；
+5. **契约登记的 debug 列**：`Ho-ChannelContract-v1.md` §3 模板逐条填；
 6. **失败可见**（不静默）：声明与实际 RT 张数不一致 / 未声明 ID / 一像素 ID 溢出 / 非法槽 /
    消费者声明的名字解析不到 → 视图里标出 + 告警；
 7. **UI 按家规写**：调试入口在 Volume（`HoXxxVolume` 的「调试」分组），feature 只放高级设置 + 兜底默认值；

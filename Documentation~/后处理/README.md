@@ -1,5 +1,5 @@
 > **状态：现行架构总览**（2026 文档审核时按 R6/R7 之后的实现校正：MetadataBuffer 已整块删除，语义与数值由 OB / SB / AC 提供）。
-> 各 producer 的细节见 `Documentation~/架构优化/Ho-ObjectBuffer.md` / `Ho-SurfaceBuffer.md` / `Ho-AttributeComposite.md` 与 `Documentation~/GeometryBuffer.md`。
+> 各 producer 的细节见 `Documentation~/Ho-ObjectBuffer.md` / `Ho-SurfaceBuffer.md` / `Ho-AttributeComposite.md` 与 `Documentation~/Ho-Ho-GeometryBuffer.md`。
 
 # PostProcessing 当前架构
 
@@ -23,7 +23,7 @@
 - `ImageProcessStackVolumeEditor` 和 `ScreenProcessStackVolumeEditor` 负责层列表、图标按钮、预设菜单、每个效果的参数 UI。
 - **效果浏览器**（两个编辑器共用）：顶栏搜索（只按中文标签与枚举名匹配，样式开关在最左、输入框占满其余宽度）+ 左侧可翻页图标侧栏（两档样式同一个侧栏宽度与同样的 20 行高度：默认纯图标 3×20 = 60 格/页、41 个效果一页放下，可切图标+名字 1×20 = 20 格/页；开关/清空/翻页/行内移除全是无底按钮，不够的格子留白不缩）+ 右侧原有图层列表（搜索只高亮命中行，不过滤不重排）；图标右键有添加/移除/重置菜单，图层行有 `×` 移除。见 `EffectBrowser.md`。
 - `调色`（`ColorGradingCustom`）的预设根级只有 `默认`（重置），其余 34 个 look 统一走 `基础/电影感/胶片/动画/风格` 五个子菜单，见 `ColorGradingPresets.md`。
-- `渐变`（`Gradient`）除原有 4 种形状外新增 4 个两点模式（线性/径向/椭圆/锥形，旋转靠拖 B 点）、过渡曲线、镜像（反向渐变）、线性光插值、分辨率量化与输出抖动的暴露，见 `GradientInvestigation.md`。
+- `渐变`（`Gradient`）除原有 4 种形状外新增 4 个两点模式（线性/径向/椭圆/锥形，旋转靠拖 B 点）、过渡曲线、镜像（反向渐变）、线性光插值、分辨率量化与输出抖动的暴露，见 `归档/GradientInvestigation.md`。
 - `渐变映射`（`GradientMap`，新增）是亮度/通道驱动的颜色映射（Photoshop Gradient Map 那一类）：色标用 **Unity 原生 `Gradient`**（≤8 颜色键 + ≤8 透明度键，Blend/Fixed），运行时烘焙成 1×256 的 ramp 贴图，shader 只做一次采样；另有输入窗口、反转、色阶数（平涂）、显示空间/线性光/Oklab 烘焙空间、输出抖动，以及 5 组 16 个 look（含 matplotlib/Google turbo/FLIR 风格色表采样）。见 `GradientMap.md`。
 - `深度雾`（`DepthFog`，新增）是 ScreenProcess 里的合成雾：一个效果带**深度雾**与**高度雾**两个槽（各带开关，可同时开，两层在同一趟 pass 内按顺序合成）。深度项支持直线/指数/指数平方三种距离曲线与远近双色 + 空气感去饱和；高度项支持"高度窗／指数衰减 × 下方浓／上方浓"四种形式，高度取世界 Y（可切相机相对）并用包内既有的 smoothness + hardness 习惯；天空可跳过／一起上雾／单独染色；不依赖 GeometryBuffer 也能工作（自动回落相机深度，正交也走这条路）。预设 5 组 13 个，见 `DepthFog.md`。
 - `网点`（`Halftone`，新增）是 ImageProcess 的半调网屏：模式有拜耳有序抖动（2/3/4/8 矩阵）与圆点/方点/菱形/线条四种面积调制网点，配色是「墨色（图层颜色）+ 纸色」两种颜色、四种合成（叠墨／双色／乘算／遮罩原色），另有输入窗口、暗部上墨、角度、柔化、网格抖动、浓度上限与输出抖动。设计上与 `渐变映射` 串联使用（ramp 管颜色、网点管墨量），也能单走。预设 5 组 15 个，见 `Halftone.md`。
@@ -35,7 +35,7 @@
 - 规划中（**尚未实现**）：`角色特化`（`HoCharacterSpecialization`）的**图像链化（v2）** —— capture 序留在 Feature、
   效果变成固定顺序的链层、资源绑定按冻结的 `HoAC_*`，等到 AC（`Ho-AttributeComposite`）R5 一起做。
   v1（配置模型 + 与另外两块对齐的 UI：搜索栏 + 左侧图标侧栏 + 统一行样式，这块**没有图层也没有顺序**，
-  5 个区段固定、只有启用开关）**已落地**，见 `CharacterSpecializationBrowser.md`。
+  5 个区段固定、只有启用开关）**已落地**，见 `归档/CharacterSpecializationBrowser.md`。
 - `Tests/Runtime` 目录为空，源码中也未检索到 `[Test]` 或 `[UnityTest]`；画面验证仍要人工做，静态检查只能保证"树没坏"。
 - 包目录没有 `.sln` / `.csproj`，Unity 侧编译以编辑器为准；本仓另有三套 Roslyn 静态闸门可离线跑：
   `.codex-research/check_compile.ps1`（extensions Runtime + Editor）、`check_compile_liltoon.ps1`（lilToon.Editor）、

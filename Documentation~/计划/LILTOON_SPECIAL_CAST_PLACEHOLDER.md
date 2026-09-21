@@ -24,7 +24,7 @@
 
 1. **先有真实需求**（先证明需求再实现）；本文件只占位。
 2. 加组 = 在 ShadowCast 组列表里新增一项（用途 / 光源类型 / 分辨率 / 过滤 / 层掩码 / 强度 / 组内容量），**不动主框架**。
-3. 组数仍 **≤ 8**；AOV 通道名 `shadow.face` / `shadow.far` 需在冻结时登记（`LILTOON_CHANNEL_CONTRACT_V1.md`）。
+3. 组数仍 **≤ 8**；AOV 通道名 `shadow.face` / `shadow.far` 需在冻结时登记（`Ho-ChannelContract-v1.md`）。
 4. 现阶段不实现、不占 AOV 槽。
 
 ## 3. 现状锚点（加组时要对齐的实现）
@@ -34,5 +34,5 @@
 | 组 → 资源 | 每组一张 atlas：附加灯组按 slice/block 装箱，第二方向光组另有 4 灯 × 4 级联 = 16 slice |
 | 容量 | 附加灯容量档 Low/Medium/High = 12/24/48 灯；切片几何上限由 atlas 尺寸与分辨率决定，被固定数组上限 128 片截断 |
 | 单灯多片 | 点光每面一片（6 片） |
-| 软阴影 | 每组独立 PCSS 软度（见 `LILTOON_SHADOW_PCSS_PLACEHOLDER.md`），主光由 URP 处理 |
+| 软阴影 | 每组独立 PCSS 软度（见 `Ho-ShadowCast-PCSS.md`），主光由 URP 处理 |
 | 数值契约 | 数组长度、档位、灯类型 id、PCSS 采样上限全在 `HoShadowCastShaderContract.hlsl`，C# 镜像并由编辑器校验器防漂移——**加组必须同时改这两侧** |

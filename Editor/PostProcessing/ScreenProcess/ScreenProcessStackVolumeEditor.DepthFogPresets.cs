@@ -7,7 +7,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
     internal sealed partial class ScreenProcessStackVolumeEditor
     {
         // DepthFog presets. Each one is a recipe for the two slots (depth fog / height fog); the
-        // layout they write is documented in Documentation~/PostProcessing/DepthFog.md:
+        // layout they write is documented in Documentation~/后处理/DepthFog.md:
         //   color = depth slot near colour
         //   p0 = (depth on, depth mode, start, far)      p1 = (density, depth max opacity, far mix, desaturate)
         //   p2 = (far colour rgb, height on)             p3 = (height mode, reference, A, B)

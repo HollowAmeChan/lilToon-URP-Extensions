@@ -6,7 +6,7 @@
 > - 表面数值来自 **SB**（`Classification.r` = `sssProfileId`、`Classification.g/h` = curvature / transmittance hint、`Material.b` = thickness、`Color` = 线性 HDR 表面色）；
 > - 遮罩与覆盖率来自 **AC**（OB 身份池 + 覆盖率）；
 > - 几何来自 **GB**；SSS 是 `Runtime/SubsurfaceScattering/` 的独立 feature（`Ho-SubsurfaceScattering`），不叫 `HoSSS`、也不再有 `HoAOV`。
-> 现行边界见 `架构优化/Ho-SurfaceBuffer.md` / `Ho-AttributeComposite.md`、`架构优化/Ho-管线总览.md` 与 `RPComponentRework/RPComponentRework_验收文档.md`。
+> 现行边界见 `Ho-SurfaceBuffer.md` / `Ho-AttributeComposite.md`、`Ho-管线总览.md` 与 `归档/RPComponentRework_验收文档.md`。
 
 本文只记录已经落地的 HoSSS 工作、当时的数据契约，以及对照 Unity HDRP 17.3 SSS 源码后确认的差距。早期试验过程和按日期堆叠的流水账不再保留。
 

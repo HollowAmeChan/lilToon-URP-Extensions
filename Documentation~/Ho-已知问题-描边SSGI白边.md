@@ -41,7 +41,7 @@ GBUFFER           Cull [_Cull]         <- SSGI albedo / rendering layer 来源�
 
 - SSGI 假设屏幕上每个像素都是“有正确 albedo + 法线 + 深度”的真实表面；外扩描边是**非物理装饰壳**，两者的语义天然不匹配。
 - 在“主体 + 描边一体材质”的当前架设下，**没有既不动主体深度／法线、又不关 ZWrite、又不需要独立 rendering layer 的干净修法**。
-- 后续大概率要自建一套接入本管线（BRP／URP fork）的 SSGI，用能识别 lilToon 语义（描边壳、toon 法线、`_FlipNormal`／背面法线等）的输入做间接光，而不是依赖偏 PBR 的 HTrace。描边语义应显式识别并排除（参见 `Outline_Surface_Semantics_Investigation.md §2` 的三种语义契约）。
+- 后续大概率要自建一套接入本管线（BRP／URP fork）的 SSGI，用能识别 lilToon 语义（描边壳、toon 法线、`_FlipNormal`／背面法线等）的输入做间接光，而不是依赖偏 PBR 的 HTrace。描边语义应显式识别并排除（参见 `归档/Outline_Surface_Semantics_Investigation.md §2` 的三种语义契约）。
 
 ## 5. 备注
 

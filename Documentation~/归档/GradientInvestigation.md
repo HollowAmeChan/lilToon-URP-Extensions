@@ -1,7 +1,7 @@
 # Gradient 效果调查（现状 / 后期对应物 / 拓展方向）
 
 > 状态：**调查文档（2026 文档审核核对）**。写作时 MetadataBuffer 还在，现在语义遮罩来自 **AC**（身份/覆盖率/具名选择），几何来自 **GB**，表面数值来自 **SB**。
-> 家族 A（位置渐变，ImageProcess）与家族 B（亮度驱动 Gradient Map，ImageProcess）已落地；家族 C（深度/大气/天空遮罩驱动的染色，ScreenProcess）是后续方向。细节见 `GradientMap.md` 与 `架构优化/Ho-管线总览.md`。
+> 家族 A（位置渐变，ImageProcess）与家族 B（亮度驱动 Gradient Map，ImageProcess）已落地；家族 C（深度/大气/天空遮罩驱动的染色，ScreenProcess）是后续方向。细节见 `GradientMap.md` 与 `Ho-管线总览.md`。
 
 调查对象：`ImageProcessEffect.Gradient`
 - Shader：`Runtime/ImageProcess/Shaders/ImageProcess/Gradient.shader`
@@ -88,15 +88,15 @@
 
 同理，椭圆模式**没有旋转**：`角度` 在模式 3 下完全不参与计算（掩码图第 4、5 格完全相同）。
 
-![掩码形状与隐藏控制](Images/Gradient/grad_masks.png)
+![掩码形状与隐藏控制](../后处理/Images/Gradient/grad_masks.png)
 
 *上排：线性 45°（柔=5）、线性 45°（柔=0，注意硬边锯齿）、圆形 r=0.6。下排：椭圆 1.6×0.6、椭圆再设 角度=45（与左格完全相同，说明椭圆不能旋转）、分辨率量化 0.08（shader 里已有、UI 未暴露）。*
 
-![角度与画幅](Images/Gradient/grad_aspect.png)
+![角度与画幅](../后处理/Images/Gradient/grad_aspect.png)
 
 *同一个 角度=45°：16:9（左）与 1:1（右）。*
 
-![七个预设](Images/Gradient/grad_presets.png)
+![七个预设](../后处理/Images/Gradient/grad_presets.png)
 
 *七个现有预设，左=原图，右=结果。*
 

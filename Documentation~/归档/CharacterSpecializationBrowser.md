@@ -292,7 +292,7 @@ v1 落地后跑行覆盖检查发现两类问题，都已修：
 
 ## 10. 与 AC（Ho-AttributeComposite）的关系
 
-`Documentation~/架构优化/Ho-AttributeComposite.md` 已经把 AC 的边界与接口**冻结**了，其中两条直接管到这块 UI：
+`Documentation~/Ho-AttributeComposite.md` 已经把 AC 的边界与接口**冻结**了，其中两条直接管到这块 UI：
 
 1. **遮罩只有一个来源 = AC**：消费者不许直接读 OB/SB 的原始图，也不许自己再攒一套语义图
    （AC 文档 §1）；查询形状是 `HoAC_Mask(id)` / `HoAC_Group(groupId)` / `HoAC_Slot(slot)` /

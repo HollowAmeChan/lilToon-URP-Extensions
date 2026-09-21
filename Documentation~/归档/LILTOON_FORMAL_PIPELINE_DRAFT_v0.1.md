@@ -5,10 +5,10 @@
 > 实机 12 项 feature 清单、ShadowCast 多光策略与 OIT 难点，这些内容已被吸收进总览或各 feature 文档。
 > 当时认为已被取代的部分（层模型 / 帧序 / 旧→新映射 / 命名分析 / 决策落点）见总览。
 
-> 状态：**方案定稿**（待实现推进）。通道契约冻结见 `LILTOON_CHANNEL_CONTRACT_V1.md`（v1，独立文档）。
+> 状态：**方案定稿**（待实现推进）。通道契约冻结见 `Ho-ChannelContract-v1.md`（v1，独立文档）。
 > 事实基线：**正式场景 = `D:\Unity_Project\BREAK_URP\Assets\mmd场景测试\朱木古堂\New Scene.unity`**；渲染器 = `Assets\Settings\PC_Renderer.asset`（12 项挂载）。
 > 角色材质域参考 = `Hollow\Hiro\Hiro_M_*.mat`（14 个）。
-> 关联文档：`LILTOON_RENDER_PIPELINE_REVIEW_AND_PLAN.md`（评审与边界）、`lilToon-URP-Extensions/Documentation~/RPComponentRework/RPComponentRework_验收文档.md`（组件边界）。
+> 关联文档：`归档/LILTOON_RENDER_PIPELINE_REVIEW_AND_PLAN.md`（评审与边界）、`lilToon-URP-Extensions/Documentation~/归档/RPComponentRework_验收文档.md`（组件边界）。
 > 定位：**按需纸面契约**（非 HDRP 式固定 GBuffer 编码）。通道随需求登记、无消费者不输出、AOV 命名冻结。
 > 反射章节已被 `Documentation~/ReflectionPipelineDesign.md` 取代；本文只保留总体帧序和跨系统背景，不再作为 PLR/SSR 输入契约。
 
@@ -111,7 +111,7 @@ ShoostPostProcessRendererFeature -> Ho-ImageProcess
 
 ## 4. 通道 / AOV / 声明模板
 
-**→ 见 `LILTOON_CHANNEL_CONTRACT_V1.md`（已冻结）**。本草案不再重复通道表、AOV 导出清单与声明模板；新增/变更通道一律走该文档的登记流程（无消费者不登记、不输出）。
+**→ 见 `Ho-ChannelContract-v1.md`（已冻结）**。本草案不再重复通道表、AOV 导出清单与声明模板；新增/变更通道一律走该文档的登记流程（无消费者不登记、不输出）。
 
 ---
 
@@ -237,7 +237,7 @@ ShoostPostProcessRendererFeature -> Ho-ImageProcess
 - **GTAO**：第一版只做一个独立 `Ho-GTAO` RendererFeature；参数以自研后为准（HTrace 值仅供参考，不绑定契约）。
 - **SSGI**：第一版只做独立 `Ho-SSGI`（替换 HTrace；`gisexclude` 位必做）。
 - **motion**：✅ 转正占坑（通道 `motion` + AOV；动态模糊/Nuke 要用，先登记不实现）。
-- **PCSS**：暂不做（`LILTOON_SHADOW_PCSS_PLACEHOLDER.md`）。
+- **PCSS**：暂不做（`Ho-ShadowCast-PCSS.md`）。
 - **专用 cast 组（角色脸/远平面）**：只规划（`LILTOON_SPECIAL_CAST_PLACEHOLDER.md`），首版不做。
 - **ShadowCast 分组模型**：cast 分组（每组一张 atlas、灯按 slice 排布）；首版 2 组、上限 N=8；`shadow.add0..N` 的 N 指"组"不是"灯"。
 - **Hiro Missing-Script 清理**：可选（该场景不再是基线）。
