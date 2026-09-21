@@ -2,6 +2,26 @@
 
 ## Unreleased
 
+- **逐物体阴影（CS）：修掉"PCF 锯齿依旧 + PCSS 一片噪声黑点"**（用户实测截图反馈）：
+  - **根因（一个）**：软阴影半径原本用 **texel** 当单位，而 PTP 的 tile 是 4096、盒子只有 1~2 m ⇒
+    **1 texel ≈ 0.6mm**。于是：半径 1 texel 的 3×3 PCF 等于没滤波（几何锯齿原样保留），
+    而为了看得见把 PCSS 半径拉到 12 texel 时，24 个采样铺在 12 texel 的盘上只有 1 个/25 像素²，
+    立刻变成颗粒；再加上旋转角按 atlas texel 取（相邻像素共用一套图案）⇒ 噪声表现成 texel 大小的方块。
+  - **半径全部改成世界单位（米）**：`softnessRadius`（最低软度，默认 5mm）、`pcssBlockerSearchRadius`（默认 2cm）、
+    `pcssMaxPenumbraRadius`（默认 4cm）；shader 用 C# 发布的 `_HoCSParameters[slice].w`（该 slice 的 1 texel = 多少世界单位）
+    换算成 texel。换分辨率不用重调，也不会再出现"4096 上 12 texel 只有 7mm"这种隐性硬边。
+  - **采样预算收窄**：换算后的 texel 半径按 `sqrt(sampleCount * 6.25)` 收（64 采样 ≈ 20 texel 上限），
+    防止细 tile 上出现稀疏大盘；想更软又不出噪点的做法写进 UI 提示（降「单角色分辨率」到 1024/2048 或提高质量档）。
+  - **采样图案换掉**：固定 3×3 网格 → 旋转盘（黄金角螺旋）；旋转角按**世界位置**取（逐像素去相关，不再出方块）；
+    blocker 盘里没找到遮挡物但中心被遮挡时按"半影最大"处理（早期在这里退回硬 PCF，硬/软像素混杂也是斑点来源）；
+    给「最低软度」加了下限（PCSS 永远不会比 PCF 更硬）；采样数不再在关闭时归零（那会把 PCF 退化成单点采样、
+    边缘变成抖动噪声边）；blocker 深度偏移默认给 0.0005（压相邻像素间 blocker 数量跳变）。
+  - 采样上限提到 **32/64**，档位 8/16、16/32、24/48、32/64，默认档 **Ultra**（CS 只作用在角色附近的屏幕区域）。
+  - **回归**（`ValidatePcss`，D3D11 + D3D12 都跑）：新增**斑点指标**（4 邻里有 ≥3 个反相的孤立像素）与
+    "用户现场那一档"用例（4096 tile + 默认参数）：
+    `pcf width=2px speckles=0 | pcss width=22px core=0.000 lit=1.000 speckles=0 | softness0 width=2px | 4096-tile width=6px speckles=0`。
+  - 文档：`Ho-ShadowCast-PCSS.md` §6 补"半径用世界单位/采样预算/采样图案"三节与量错过三次的坑。
+
 - **逐物体阴影（CS）：补上 PCSS 软阴影**（用户反馈"PCF 边缘锯齿感比较严重"）：
   - 图集采样从"固定半径 3×3 PCF"升级成 PCSS：blocker search → 用平均遮挡深度估半影 → 按半影做可变半径滤波。
     形状/质量参数与 `Ho-ShadowCast` 那套同构：`pcssEnabled` / `pcssQuality`(`Low`·`Medium`·`High`·`Ultra`) /

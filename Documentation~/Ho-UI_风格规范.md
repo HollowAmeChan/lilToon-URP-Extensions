@@ -131,10 +131,10 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 | 侧 | 分节 | 内容 |
 | --- | --- | --- |
 | **Volume** | 运行 | 启用、单角色分辨率 |
-| | 软阴影（PCSS） | 启用 PCSS、质量档、半影放大、Blocker 搜索半径、半影半径上限、Blocker 深度偏移 |
+| | 软阴影（PCSS） | 启用 PCSS、最低软度（米）、质量档、半影放大、Blocker 搜索半径（米）、半影半径上限（米）、Blocker 深度偏移 |
 | | 调试 | 调试模式（`Off` / `Atlas` / `Character`）、`Debug In Scene View`、`Debug In Game View`、单角色 tile |
 | **Feature** | 运行（兜底） | 启用、单角色分辨率、同时接收域上限、图集边长上限、PCF 半径、深度偏移、法线偏移 |
-| | 软阴影（PCSS，兜底） | 与 Volume 一一对应的六个字段 + 回退说明 |
+| | 软阴影（PCSS，兜底） | 与 Volume 一一对应的七个字段 + 回退/单位说明 |
 | | 声明（只读汇总） | 场景里的 `HoCharacterShadow` 组件 → OB 组 / tile / 盒尺寸 / 状态；图集容量与已分配 tile |
 | | 调试 | 一行 HelpBox → Volume |
 | | 高级 | 渲染时机（只读：固定 `BeforeRenderingShadows`）、调试 Shader、图集 / 剔除 / 剔除光源（只读：feature 自己的隐藏方向光，不参与场景光照也不占相机灯光名额） |
@@ -146,7 +146,7 @@ CS 的分节与两条有意偏离：
 
 - **调试分组没有"强度"曲线**（GTAO 是 `AO Debug Pow`）：CS 的调试画面直出光空间线性深度，加显示曲线会让人把亮度误读成深度。这一句写在 Volume 的调试分节里。
 - 调试画面只在对应视图开关打开时输出（Scene View 默认开、Game View 默认关），因为它是**直出替换**最终画面；feature 上的 `debugMode` / `debugCharacter` / 两个开关只作兜底真值，**Inspector 上不再画第二份**。
-- 「软阴影（PCSS）」这一节用的是「内容/通道」色 `0.42, 0.72, 0.58`（与 GTAO 的「追踪」同色系），不新造颜色。它属于 CS 的"内容/质量"分节，所以按 §2 的顺序排在「运行」之后、「调试」之前，六项在 Volume（逐相机真值）与 feature（兜底）上各出现一次。
+- 「软阴影（PCSS）」这一节用的是「内容/通道」色 `0.42, 0.72, 0.58`（与 GTAO 的「追踪」同色系），不新造颜色。它属于 CS 的"内容/质量"分节，所以按 §2 的顺序排在「运行」之后、「调试」之前，七项在 Volume（逐相机真值）与 feature（兜底）上各出现一次；半径是米（世界单位），这样换「单角色分辨率」不用重调。
 
 ## 7. 禁止清单
 

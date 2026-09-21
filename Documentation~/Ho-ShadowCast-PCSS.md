@@ -46,11 +46,11 @@
 
 | 项 | CS | 与 ShadowCast 的差异 |
 | --- | --- | --- |
-| 开关 / 质量档 | `pcssEnabled`（默认开）、`pcssQuality` = `Low / Medium / High / Ultra` | 档位采样数不同：4/8、8/16、12/24、16/32（CS 只作用在角色附近的屏幕区域，预算比全屏的 ShadowCast 小） |
-| 形状参数 | `pcssSoftness`（0~8，默认 2）、`pcssBlockerSearchRadius`（0.25~16 texel，默认 4）、`pcssMaxPenumbraRadius`（1~64 texel，默认 12）、`pcssDepthBias`（0~0.01，默认 0） | 单位是 **CS tile 的 texel**（tile 分辨率由「单角色分辨率」决定），不是全局 atlas 的 texel |
-| 常量 | `_HoCSPcssParams` = `(enabled, softness, blockerRadius, maxPenumbraRadius)`；`_HoCSPcssParams2` = `(depthBias, blockerSamples, filterSamples, 0)` | 同构 |
-| 采样上限 | `HO_CS_MAX_PCSS_BLOCKER_SAMPLES = 16`、`HO_CS_MAX_PCSS_FILTER_SAMPLES = 32`（`HoCharacterShadowShaderContract` 镜像） | 上限更小；防漂移由 `HoCharacterShadowValidation.Validate()` 解析 HLSL 比对（batch 里也跑） |
-| PCF 回退 | 关闭 / softness 0 / 采样数 0 / 盘里没有 blocker → 回退 CS 自己的固定半径 3×3 PCF（半径 = feature 的「PCF 半径」） | 同构：降级即回退 |
+| 开关 / 质量档 | `pcssEnabled`（默认开）、`pcssQuality` = `Low / Medium / High / Ultra`（默认 **Ultra**） | 档位采样数不同：8/16、16/32、24/48、32/64 —— CS 的 tile 常比屏幕细，采样要更足才不出颗粒 |
+| 形状参数 | `softnessRadius`（最低软度，米，默认 0.005）、`pcssSoftness`（0~8，默认 2）、`pcssBlockerSearchRadius`（米，默认 0.02）、`pcssMaxPenumbraRadius`（米，默认 0.04）、`pcssDepthBias`（默认 0.0005） | **单位是米（世界单位）**，不是 texel：见下面"半径用世界单位" |
+| 常量 | `_HoCSPcssParams` = `(enabled, softness, blockerRadiusWorld, maxPenumbraRadiusWorld)`；`_HoCSPcssParams2` = `(depthBias, blockerSamples, filterSamples, minSoftnessWorld)`；`_HoCSParameters[i].w` = 该 slice 的 1 texel 等于多少世界单位 | 同构，但多一个 texelSize 通道用来做单位换算 |
+| 采样上限 | `HO_CS_MAX_PCSS_BLOCKER_SAMPLES = 32`、`HO_CS_MAX_PCSS_FILTER_SAMPLES = 64`（`HoCharacterShadowShaderContract` 镜像） | 与 ShadowCast 相同；防漂移由 `HoCharacterShadowValidation.Validate()` 解析 HLSL 比对（batch 里也跑） |
+| PCF 回退 | 关闭 / softness 0 → 半径 = 最低软度的**旋转盘** PCF（不是 3×3 网格） | ShadowCast 用固定 3×3；CS 在 4096 tile 上 3×3 等于没滤波（1 texel ≈ 0.6mm），必须用能按世界单位缩放的盘 |
 
 **半影公式（有意与 ShadowCast 不同）**：CS 用物理形式
 
@@ -61,14 +61,22 @@ filterRadius = min(maxPenumbra, softness * maxPenumbra * penumbra)
 
 atlas 里的 z 是阴影空间的归一化线性深度，所以"到光源的距离"用 `1 - z`（reversed-Z）表达，归一化的深度范围在分子分母里约掉。**ShadowCast 那边除的是接收深度**（`(blocker - receiver) / receiver`）：接收深度接近 0 时半影会被放大到把整片阴影糊掉 —— CS 试过那个形式，实测阴影核心会漏光到 0.376（`ValidatePcss` 的 `core` 断言直接抓到了），换成除遮挡距离后同样的参数下核心保持 0.000。
 
-**回归入口**：`HoCharacterShadowValidation.ValidatePcss`（batch，D3D11/D3D12 都跑）。摆法是标准 PCSS 场景（接收面正对光源、投影物悬在光源与接收面之间），量 **10%–90% 边宽**（按图像梯度方向走，不按屏幕轴走 —— 按轴走会被"边与扫描方向的夹角"放大好几倍，这是量错过两次的坑）：
+**半径用世界单位（米），不用 texel**（2026-09-22 用户实测后改的）：CS 的 tile 分辨率可以到 4096，盒子只有 1~2 m 时 **1 texel ≈ 0.6mm**，此时"12 texel 半影"只有 7mm —— 屏幕上还是硬边（用户截图里 PCF 的锯齿依旧），而为了看得见把 texel 半径拉大，采样又立刻变稀、出颗粒（用户截图里的"噪声黑点"）。改成米之后换分辨率不用重调，shader 里用 C# 发布的 `_HoCSParameters[slice].w`（该 slice 的 1 texel = 多少世界单位）换算。
+
+**采样预算收窄**：世界半径 ÷ texel = texel 半径，tile 越细这个值越大；同一个采样数铺在大盘上就会出颗粒。所以换算后按 `budget = sqrt(sampleCount * 6.25)` 收一下（64 采样 ≈ 20 texel 上限）。想更软又不出噪点：**把「单角色分辨率」降到 1024/2048**（让 1 texel 接近 1 像素）或提高质量档。
+
+**采样图案**：旋转盘（黄金角螺旋）而不是固定 3×3 网格；旋转角按**世界位置**取（每个屏幕像素都不同）—— 早期按 atlas texel 取，相邻像素共用同一套图案，噪声表现成 texel 大小的**方块**，正是"一片黑点"的形态。另外 blocker 盘里没找到遮挡物、但中心被遮挡时按"半影最大"处理：早期在这里退回硬 PCF，于是同一半影带里硬像素与软像素混在一起，也是斑点来源。
+
+**回归入口**：`HoCharacterShadowValidation.ValidatePcss`（batch，D3D11/D3D12 都跑）。摆法是标准 PCSS 场景（接收面正对光源、投影物悬在光源与接收面之间），量 **10%–90% 边宽**（按图像梯度方向走，不按屏幕轴走 —— 按轴走会被"边与扫描方向的夹角"放大好几倍，这是量错过两次的坑），另外数**斑点**（4 邻里有 ≥3 个反相的孤立像素）：
 
 ```text
-pcf width=11px core=0.000 lit=1.000 | pcss width=59px core=0.000 lit=1.000 | softness0 width=11px
+pcf width=2px core=0.000 lit=1.000 speckles=0 | pcss width=22px core=0.000 lit=1.000 speckles=0 | softness0 width=2px
+4096-tile（用户现场参数）width=6px speckles=0 core=0.000
 ```
 
-- PCF 边缘窄、核心全黑、外侧全亮；
-- PCSS（softness 3 / maxPenumbra 24）把边宽放大到 5 倍，核心仍然全黑（不漏光）、外侧仍然全亮（无光环）；
-- softness 0 时精确回到 PCF 的宽度（降级即回退）。
+- PCF 边缘窄、核心全黑、外侧全亮、无斑点；
+- PCSS 把边宽从 2px 铺到 22px，核心仍全黑（不漏光）、外侧仍全亮（无光环）、**斑点 0**；
+- softness 0 精确回到 PCF；
+- 4096 tile + 默认参数（用户现场那一档）同样 **斑点 0**。
 
-**坑**：`ValidatePcss` 两版都错在**测量**上，而不是实现上 —— 第一版用斜掠的接收面（PCF 自己就变成 20+px 的锯齿斜坡，量出来的是几何不是滤波），第二版沿屏幕轴量边宽（被夹角放大）。要加新的软阴影指标时先确认"这个数只反映滤波"。
+**坑**：`ValidatePcss` 前两版都错在**测量**上，而不是实现上 —— 第一版用斜掠的接收面（PCF 自己就变成 20+px 的锯齿斜坡，量出来的是几何不是滤波），第二版沿屏幕轴量边宽（被夹角放大）。第三版又发现"最接近 0.5 的像素可能整片同值、梯度为 0"，于是加了"必须落在有梯度处"的条件。要加新的软阴影指标时先确认"这个数只反映滤波"。

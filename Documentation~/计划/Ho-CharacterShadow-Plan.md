@@ -70,12 +70,31 @@ ValidateSceneShadows       URP/Lit 地面 + 场景 caster（再用 lilToon caste
 **回归**：`HoCharacterShadowValidation.ValidatePcss`（D3D11 + D3D12）：
 
 ```text
-pcf width=11px core=0.000 lit=1.000 | pcss width=59px core=0.000 lit=1.000 | softness0 width=11px  ← PASS
+pcf width=2px core=0.000 lit=1.000 speckles=0 | pcss width=22px core=0.000 lit=1.000 speckles=0 | softness0 width=2px
+4096-tile（用户现场参数）width=6px speckles=0 core=0.000  ← PASS
 ```
 
-标准 PCSS 摆法（接收面正对光源、投影物悬在光源与接收面之间），量 10%–90% 边宽（沿图像梯度方向）。
+标准 PCSS 摆法（接收面正对光源、投影物悬在光源与接收面之间），量 10%–90% 边宽（沿图像梯度方向），另数孤立斑点。
 
-**量错过两次，记下来**：① 斜掠的接收面上，PCF 自己就变成 20+px 的锯齿斜坡，量到的是几何不是滤波；② 沿屏幕轴量边宽会被"边与扫描方向的夹角"放大。新加软阴影指标时先确认这个数只反映滤波。
+### 0.5 软阴影第二轮：半径改成世界单位（2026-09-22 用户截图反馈后）
+
+用户反馈"PCF 边缘锯齿依旧明显、PCSS 甚至产生很多噪声黑点"。根因是一个：**半径单位是 texel，而 tile 是 4096、盒子只有 1~2 m ⇒ 1 texel ≈ 0.6mm**。
+
+- 半径 1 texel 的 3×3 PCF = 对 0.6mm 做滤波 → 发丝多边形剪影的锯齿原样保留（用户图 1）；
+- 为了看得见而把 PCSS 半径拉到 12 texel → 24 个采样铺在 12 texel 的盘上（1 个/25 像素²）→ 颗粒；
+  而且旋转角按 atlas texel 取，相邻像素共用一套图案 → 噪声是 texel 大小的**方块**（用户图 2 的"黑点"）。
+
+改法（详见 `Documentation~/Ho-ShadowCast-PCSS.md` §6）：
+
+1. **半径全部改成米**：`softnessRadius`（最低软度，默认 5mm）、`pcssBlockerSearchRadius`（2cm）、`pcssMaxPenumbraRadius`（4cm）；shader 用 `_HoCSParameters[slice].w`（1 texel = 多少世界单位）换算。换分辨率不用重调。
+2. **采样预算收窄**：texel 半径按 `sqrt(sampleCount * 6.25)` 收（64 采样 ≈ 20 texel），防止细 tile 上稀疏大盘。
+3. 固定 3×3 PCF → **旋转盘**；旋转角按**世界位置**取（逐像素，不再出方块）；blocker 为空但中心被遮挡 → 按最大半影（不再退回硬 PCF）；「最低软度」作为滤波下限；采样数在关闭时也照常发布（否则 PCF 退化成单点采样、边缘变抖动）；blocker 深度偏移默认 0.0005。
+4. 采样上限 32/64、档位 8/16·16/32·24/48·32/64、默认 **Ultra**。
+
+**给美术的调参结论**：4096 的 tile 太细（1 texel 远小于 1 像素），默认参数下有效的软边半径被采样预算压在 ~12mm；**把「单角色分辨率」降到 1024/2048 是最有效的"变软且不出噪点"手段**（让 1 texel 接近 1 像素），或提高质量档。
+
+**量错过三次，全部记下来**：① 斜掠的接收面上 PCF 自己就是 20+px 的锯齿斜坡（量到的是几何）；② 沿屏幕轴量边宽会被夹角放大；③ "最接近 0.5 的像素"可能整片同值、梯度为 0（量出 0px）。新加软阴影指标时先确认这个数只反映滤波。
+
 
 **排查过程中排除的原因（均有实测数据，记录以免重复调查）**：
 
