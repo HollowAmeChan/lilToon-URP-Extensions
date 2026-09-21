@@ -335,8 +335,11 @@ namespace lilToon.URP.Extensions.CharacterShadow
             var lightData = data.Get<UniversalLightData>();
             // camLights/add 是给“隐藏光有没有泄漏进相机灯光列表”留的哨兵：CS 的灯只在
             // beginCameraRendering→本 pass 之间开着，正常情况下相机看到的灯光数与 CS 无关。
+            // pcss 那一段是"这一帧到底用了哪组软阴影参数"（含被 Volume 覆盖了几个字段），
+            // 用来回答"为什么关了没反应 / 改了没反应"。
             HoCharacterShadowRendererFeature.LastCullStatus =
-                $"slices={frame.slices.Count}|camLights={lightData.visibleLights.Length},add={lightData.additionalLightsCount}";
+                $"slices={frame.slices.Count}|camLights={lightData.visibleLights.Length},add={lightData.additionalLightsCount}"
+                + $"|pcss={frame.pcssStatus}";
             // The atlas is consumed by opaque materials through a global binding, which
             // RenderGraph cannot see. A transient (graph-owned) texture is therefore free to be
             // aliased away right after this pass and the materials then sample another pass's

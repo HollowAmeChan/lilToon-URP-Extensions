@@ -94,6 +94,12 @@ namespace lilToon.URP.Extensions.CharacterShadow
         internal int pcssBlockerSamples;
         internal int pcssFilterSamples;
 
+        /// <summary>被 Volume 覆盖掉的 PCSS 字段个数：&gt;0 说明"改 feature 上的值没用"，UI 靠它提示。</summary>
+        internal int pcssVolumeOverrides;
+
+        /// <summary>这一帧实际生效的 PCSS 状态（发布在 LastCullStatus 里，用来回答"为什么关不掉"）。</summary>
+        internal string pcssStatus;
+
         /// <summary>「PCF 半径」这个 texel 单位的旧旋钮还留一个 texel 值：只给投影拟合留边界余量用。</summary>
         internal float pcssFilterRadiusTexels = 1.0f;
 
@@ -124,16 +130,23 @@ namespace lilToon.URP.Extensions.CharacterShadow
             if (volume != null)
             {
                 if (volume.resolution.overrideState) config.resolution = (int)volume.resolution.value;
-                if (volume.softnessRadius.overrideState) config.softnessRadiusWorld = volume.softnessRadius.value;
-                if (volume.pcssEnabled.overrideState) config.pcssEnabled = volume.pcssEnabled.value;
-                if (volume.pcssQuality.overrideState) config.pcssQuality = volume.pcssQuality.value;
-                if (volume.pcssSoftness.overrideState) config.pcssSoftness = volume.pcssSoftness.value;
-                if (volume.pcssBlockerSearchRadius.overrideState) config.pcssBlockerRadiusWorld = volume.pcssBlockerSearchRadius.value;
-                if (volume.pcssMaxPenumbraRadius.overrideState) config.pcssMaxPenumbraRadiusWorld = volume.pcssMaxPenumbraRadius.value;
-                if (volume.pcssDepthBias.overrideState) config.pcssDepthBias = volume.pcssDepthBias.value;
+                if (volume.softnessRadius.overrideState) { config.softnessRadiusWorld = volume.softnessRadius.value; config.pcssVolumeOverrides++; }
+                if (volume.pcssEnabled.overrideState) { config.pcssEnabled = volume.pcssEnabled.value; config.pcssVolumeOverrides++; }
+                if (volume.pcssQuality.overrideState) { config.pcssQuality = volume.pcssQuality.value; config.pcssVolumeOverrides++; }
+                if (volume.pcssSoftness.overrideState) { config.pcssSoftness = volume.pcssSoftness.value; config.pcssVolumeOverrides++; }
+                if (volume.pcssBlockerSearchRadius.overrideState) { config.pcssBlockerRadiusWorld = volume.pcssBlockerSearchRadius.value; config.pcssVolumeOverrides++; }
+                if (volume.pcssMaxPenumbraRadius.overrideState) { config.pcssMaxPenumbraRadiusWorld = volume.pcssMaxPenumbraRadius.value; config.pcssVolumeOverrides++; }
+                if (volume.pcssDepthBias.overrideState) { config.pcssDepthBias = volume.pcssDepthBias.value; config.pcssVolumeOverrides++; }
             }
 
             HoCharacterShadowShaderContract.GetPcssSampleCounts(config.pcssQuality, out config.pcssBlockerSamples, out config.pcssFilterSamples);
+            config.pcssStatus =
+                (config.pcssEnabled ? "on" : "off")
+                + ",min=" + config.softnessRadiusWorld.ToString("0.###") + "m"
+                + ",max=" + config.pcssMaxPenumbraRadiusWorld.ToString("0.###") + "m"
+                + ",soft=" + config.pcssSoftness.ToString("0.##")
+                + "," + config.pcssQuality
+                + ",vol=" + config.pcssVolumeOverrides;
             return config;
         }
     }

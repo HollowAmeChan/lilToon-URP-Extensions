@@ -111,6 +111,12 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                     + "优先把「单角色分辨率」降到 1024/2048，或提高质量档（Ultra = 32/64 采样）。",
                     MessageType.None);
 
+                EditorGUILayout.HelpBox(
+                    "这一组在 RendererFeature 上也有一份兜底值。**本面板勾了覆盖就以这里为准**（Add Override 会把该组件所有"
+                    + "字段都设成覆盖态，包括「启用 PCSS」），所以 feature 上改不动是正常的 —— 要么在这里改，要么把对应字段的"
+                    + "覆盖勾掉。关闭 PCSS 后仍会保留「最低软度」那一档抗锯齿滤波；要完全硬边就把它设为 0。",
+                    MessageType.None);
+
                 if (pcssEnabled != null && pcssEnabled.value != null && !pcssEnabled.value.boolValue)
                 {
                     EditorGUILayout.HelpBox(

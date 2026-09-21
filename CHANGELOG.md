@@ -2,6 +2,16 @@
 
 ## Unreleased
 
+- **逐物体阴影（CS）：把"这一帧到底用了哪组软阴影参数"做成可见**（用户报"PCSS 永远启用"）：
+  - LastCullStatus 追加一段 `pcss=on/off,min=…m,max=…m,soft=…,<质量档>,vol=n`：**vol=n 是被 Volume 覆盖掉的
+    字段个数**。运行状态一节直接能看到本帧实际生效的开关与参数 —— "关了没反应 / 改了没反应"时先读这一行：
+    若 feature 上关了而这里是 `pcss=on`（或 vol>0），说明 Volume 里的覆盖赢了（Volume 面板 Add Override 会把该组件
+    所有字段都设成覆盖态，包括「启用 PCSS」），去 Volume 改或把该字段的覆盖勾掉。
+  - feature 与 Volume 的「软阴影（PCSS）」两处 HelpBox 写明这条优先级，并说明**关闭 PCSS 后仍会保留「最低软度」
+    那档抗锯齿滤波，想完全硬边就把最低软度设为 0**。
+  - 回归：ValidatePcss 增加断言"关闭 PCSS 必须真的到达渲染器"（`LastCullStatus` 含 `pcss=off`）；
+    实测 `pcss=off,min=0.005m,max=0.04m,soft=2,Ultra,vol=0`，开关通路正常。
+
 - **逐物体阴影（CS）：修掉"PCF 锯齿依旧 + PCSS 一片噪声黑点"**（用户实测截图反馈）：
   - **根因（一个）**：软阴影半径原本用 **texel** 当单位，而 PTP 的 tile 是 4096、盒子只有 1~2 m ⇒
     **1 texel ≈ 0.6mm**。于是：半径 1 texel 的 3×3 PCF 等于没滤波（几何锯齿原样保留），

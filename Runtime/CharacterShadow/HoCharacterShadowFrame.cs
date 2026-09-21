@@ -21,6 +21,8 @@ namespace lilToon.URP.Extensions.CharacterShadow
         internal Vector3 cameraPosition;
         internal Matrix4x4 cameraView, cameraProjection;
         internal Vector4 pcssParams, pcssParams2;
+        /// <summary>这一帧实际生效的 PCSS 状态（给 LastCullStatus 用，回答"为什么关不掉/改不动"）。</summary>
+        internal string pcssStatus = "";
 
         internal static HoCharacterShadowFrame Build(Camera camera, Light light,
             Matrix4x4 cameraView, Matrix4x4 cameraProjection, HoCharacterShadowRenderConfig config)
@@ -29,7 +31,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
             {
                 light = light, resolution = config.resolution,
                 cameraPosition = camera.transform.position, cameraView = cameraView,
-                cameraProjection = cameraProjection
+                cameraProjection = cameraProjection, pcssStatus = config.pcssStatus
             };
             // PCSS 的四个形状参数 + (深度偏移, blocker 采样数, filter 采样数, 0)。
             // **采样数必须一直发布**：PCSS 关闭时那条 PCF 也走同一个旋转盘（只是半径固定为「PCF 半径」），

@@ -885,6 +885,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 Require(pcfLit > 0.85f, $"PCF lit side is not bright: {pcfLit:F3}");
                 Require(pcfWidth > 0f && pcfWidth <= 16f, $"PCF edge should be localized (not a giant ramp): 10-90% width {pcfWidth:F0}px");
                 Require(pcfSpeckles <= 8, $"PCF edge is speckled: {pcfSpeckles} isolated pixels");
+                // 开关必须真的到达渲染器（用户报"PCSS 永远启用"）；这句同时是新状态行的回归。
+                Require(HoCharacterShadowRendererFeature.LastCullStatus.Contains("pcss=off"),
+                    "PCSS disable did not reach the renderer: " + HoCharacterShadowRendererFeature.LastCullStatus);
 
                 feature.Settings.pcssEnabled = true;
                 feature.Settings.pcssQuality = HoCharacterShadowPcssQuality.Ultra;

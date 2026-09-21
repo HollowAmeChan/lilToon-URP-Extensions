@@ -124,6 +124,13 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                     MessageType.None);
 
                 EditorGUILayout.HelpBox(
+                    "**这一组在 Volume 里也有一份，Volume 覆盖了就以 Volume 为准**（Volume 面板点 Add Override 会把该组件的"
+                    + "所有字段都设成覆盖态）。在这里改了没反应时，先看 Ho-CharacterShadow Volume 的「软阴影（PCSS）」分组；"
+                    + "「运行状态」那一节的 pcss=(...) 会写出本帧实际生效的值与被 Volume 覆盖的字段个数（vol=n）。"
+                    + "另外：关闭 PCSS 后仍会保留「最低软度」那一档抗锯齿滤波，想要完全硬边就把最低软度设为 0。",
+                    MessageType.None);
+
+                EditorGUILayout.HelpBox(
                     "这一节是兜底值：Ho-CharacterShadow Volume 的「软阴影（PCSS）」覆盖了就用 Volume 的（Volume 未覆盖时用这里的值）。",
                     MessageType.None);
             }
