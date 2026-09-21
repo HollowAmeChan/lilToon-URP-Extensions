@@ -135,7 +135,7 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 | **Feature** | 运行（兜底） | 启用、单角色分辨率、同时接收域上限、图集边长上限、PCF 半径、深度偏移、法线偏移 |
 | | 声明（只读汇总） | 场景里的 `HoCharacterShadow` 组件 → OB 组 / tile / 盒尺寸 / 状态；图集容量与已分配 tile |
 | | 调试 | 一行 HelpBox → Volume |
-| | 高级 | 渲染时机（只读：固定 `BeforeRenderingShadows`）、调试 Shader、图集与剔除形态（只读） |
+| | 高级 | 渲染时机（只读：固定 `BeforeRenderingShadows`）、调试 Shader、图集 / 剔除 / 剔除光源（只读：feature 自己的隐藏方向光，不参与场景光照也不占相机灯光名额） |
 | | 运行状态 | 最近一次 `AddRenderPasses` 的结果 |
 | **组件** | 运行 | 接收组 / 接收部件 / 包围盒锚点 / 中心 / 尺寸 / 边缘回退 + "从接收对象计算包围盒" |
 | | 运行状态 | 状态、接收部件匹配数、图集 Tile、投影深度、世界单位每 texel |

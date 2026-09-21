@@ -24,26 +24,34 @@
 
 修复过的距离回归（第一轮，已被 §0.1 取代但仍保留）：仅替换观察相机的 cullingMatrix/planes/origin，不会替换内部 CameraProperties。原实现拉远后可能得到空 caster 列表，进而用全亮的 CS 替换普通天光阴影。现在由独立正交剔除相机提供一致属性，深度搜索范围不再错误依赖观察相机距离。空 caster 查询仍表示有效的“未遮挡”，但不创建无 caster 的原生绘制列表。这一轮修的是“剔除参数”，**不是**远处阴影消失的真正原因 —— 真正原因见 §0.1。
 
-### 0.1 已修：局部图集与相机距离相关（2026-09-21）
+### 0.1 已修：远处阴影消失 + “开 CS 后其他物体丢阴影”（2026-09-21，两轮）
 
-**现象（用户场景）**：相机/角色离远后角色整体阴影消失（CS 与普通主光阴影一起没了）。隔离工程里复现出同一机制的另一种方向：**观察相机在近处时局部图集整块为空**。
+**现象（用户场景）**：① 相机/角色离远后角色整体阴影消失（CS 与普通主光阴影一起没了）；② 修了 ① 之后又出现：**开启 CS 后，场景里没有 CS 组件的其他物体也拿不到正常主光投影**。
 
-**根因**：局部图集的 pass 时机与 URP 自己的逐相机级联 shadow pass 撞在同一个 `RenderPassEvent.BeforeRenderingPrePasses`。此时 Unity 内部“该光源 + 当前相机”的 shadow 状态还没定下来，我们的自定义 split（`ShadowSplitData` + `ShadowDrawingSettings{splitIndex = 0}`）会被这层状态否决：**级联数 > 1 且观察相机不在自己的级联 0 里时，atlas tile 整块为空**，CS 于是静默回退到（已按 shadowDistance 淡出的）普通主光阴影 —— 远处“全部阴影消失”就是这么来的。级联数为 1 时该状态恒定成立，所以现象只在多级联下出现。
+**根因（一条，两种表现）**：Unity 的 shadow renderer list 是**按光源一帧一份**提交的，和传给 `CreateShadowRendererList` 的 `CullingResults` 无关。CS 原先**借场景主光**做局部剔除与绘制，于是和 URP 自己的相机阴影图抢同一份状态：
 
-**修法**：把 CS pass 的时机提前到 `RenderPassEvent.BeforeRenderingShadows`，在 URP 为本相机渲染级联阴影**之前**构建局部图集，不再受级联状态影响。一行改动：
+| 我们的 pass 时机 | 结果 |
+| --- | --- |
+| 早于 URP 的相机阴影阶段（第一轮的修法） | URP 的相机阴影图拿到我们的“局部盒”列表 → **除角色外所有物体丢普通投影**（实测 without CS=0.008 / with CS=0.803） |
+| 晚于 URP 的相机阴影阶段 | 我们的 tile 拿到 URP 已提交的状态 → **局部图集整块为空**（atlas=0.000），CS 静默失效 |
 
-```csharp
-internal HoCharacterShadowPass() { renderPassEvent = RenderPassEvent.BeforeRenderingShadows; }
-```
+**修法**：CS 用自己的**隐藏方向光**（`EnsureLocalLight()`），彻底不碰主光：
 
-**复现与回归入口**：`HoCharacterShadowValidation.ValidateDistanceRendering`（batch）。相机沿固定方向从 240 m 拉到 8 m，逐个记录 lilToon 探针可见度与 atlas tile 深度。
+- `HideFlags.HideAndDontSave` 的方向光，方向 / 剔除层 / 阴影参数跟随主光，但 **`color` 黑 + 强度 0.001**（不贡献任何光照，不动 `RenderSettings.sun`，也争不到主光）。强度必须 > 0：实测 `intensity = 0` 的灯不会出现在 `visibleLights` 里，我们自己也就找不到它。
+- 这盏灯**只在 `beginCameraRendering` 之后到本 pass 记录期间**开着：`beginCameraRendering` 早于 URP 的 `context.Cull`（`UniversalRenderPipeline.cs:857` 在 `CameraRenderingScope` 之内），`endCameraRendering` 再关掉。于是相机永远看不到它（`LastCullStatus` 里的 `camLights/add` 可自查），而我们的 `Cull()` 在 `AddPasses → RecordRenderGraph` 里能看到它。
+- 每个接收域占这盏灯自己的一个 split 索引（`0..N-1`），`LightShadowCasterCullingInfo.splitRange = (0, N)`。
+
+**复现与回归入口**（两个 batch 入口，缺一不可）：
 
 ```text
-修复前  casc1 240m..8m  vis=0.000 atlas≈0.98   casc4 60m..8m  vis=1.000 atlas=0.000  ← FAIL
-修复后  casc1/casc4 240m..8m 全部 vis=0.000 atlas=0.984                              ← PASS
+ValidateDistanceRendering  级联 {1,4} × 相机 240m→8m：局部图集要有内容、探针不该被照亮
+                           修复后 casc1+casc4 全部 vis=0.000 atlas=0.984   ← PASS
+ValidateSceneShadows       URP/Lit 地面 + 场景 caster（再用 lilToon caster 跑一遍），CS 开/关两测：
+                           普通投影必须都在、场景亮度不变、日志里不许出现 SRV 跳过
+                           修复后 lit=0.803, URP shadow=0.008/0.008 (CS off/on) ← PASS
 ```
 
-**副作用与残余风险**：该修法依赖 pass 顺序（CS 必须早于 URP 的 shadow pass）。若后续有人把 CS 插到更晚的事件、或引入需要“已渲染的相机阴影”作为输入的逻辑，会重新踩到这个问题 —— 所以距离回归测试必须跟着 feature 一起跑。级联数不再需要改成 1，**PTP 场景保持 `m_ShadowCascadeCount: 4` 即可**。
+**残余风险**：多接收域（>1 slice）尚未单独验证 —— 同一盏隐藏光上不同 slice 用不同 split 索引，理论上成立（引擎按 `splitRange` 解析），但没实测过两个角色同时在场。级联数不再需要改成 1，**PTP 场景保持 `m_ShadowCascadeCount: 4` 即可**。
 
 **排查过程中排除的原因（均有实测数据，记录以免重复调查）**：
 
@@ -54,10 +62,26 @@ internal HoCharacterShadowPass() { renderPassEvent = RenderPassEvent.BeforeRende
 | `Allocator.Temp` 数组提前 Dispose（context 命令延迟执行） | 去掉提前 Dispose 后现象不变（保留） |
 | caster 材质对相机状态反应（距离淡出 / LOD crossfade） | 换成极简 ShadowCaster 材质后现象相同 |
 | 逐 split 的 shadow caster 剔除 | 整个跳过 `CullShadowCasters`，或按级联数发布多份 split，现象都不变 |
-| 用普通 `ShaderTagId("ShadowCaster")` 列表绕开 Unity 的 shadow 列表 | 该路径在本 pass 里完全不绘制（atlas 全 0） |
-| 级联数本身是原因 | 只是触发条件；提前 pass 时机后级联 1 与 4 结果一致 |
+| **`CullShadowCasters` 污染了主光状态** | 只跳过 `CullShadowCasters`、仍建列表并绘制 → 其他物体照样丢阴影；只跳过列表创建（保留 `CullShadowCasters`）→ 一切正常。**问题出在 `CreateShadowRendererList`** |
+| 我们的绘制内容 / 全局状态（viewport、矩阵、`_ShadowBias`、`_LightDirection`、scissor、深度偏移） | 逐个开关排除（含“完全跳过 `DrawRendererList`”）：其他物体的阴影照样丢 → 与绘制内容无关 |
+| 用普通 `ShaderTagId("ShadowCaster")` 列表绕开 Unity 的 shadow 列表 | 该路径在本 pass 里完全不绘制（atlas 全 0）；而且它不遵守 `ShadowCastingMode`，会把手动关掉投影的物体也画进图集 |
+| 级联数本身是原因 | 只是触发条件（决定主光那份阴影状态里有哪些 split） |
+| 借主光但把 splitIndex 挪到 4..19 躲开级联 0..3 | 仍然丢阴影（提交按“光源”而不是“光源+split”）；放到阴影阶段之后则完全拿不到列表（atlas 全 0） |
 
-### 0.2 UI 布局（按 Ho-UI 风格规范）
+### 0.2 OB palette SRV 在 D3D12 上被跳过（2026-09-21）
+
+**现象（用户编辑器）**：`d3d12: Fragment Shader "lilToon" requires a buffer (SRV) "_HoObjectBufferEntries" at index 0, but none provided. Skipping draw calls to avoid crashing.`（另一条是 `Hidden/lilToonCutout`），出现在编辑器刚启动时。
+
+**根因**：lilToon 生成的 pass 里有两类读 OB 身份表（`HoObjectBufferLoadPart(...).tags`）——`HoObjectBuffer`（OB feature 画）与 `HoSurfaceSemantic`（SB feature 画）。表由 `HoObjectBufferRegistry` 建好后再 `Shader.SetGlobalBuffer` 绑定；在“还没建表”或“刚 `Release()` 过”的窗口里，D3D12 会拒绝绘制（D3D11 只是静默读到 0 → 语义位全 0）。编辑器启动第一帧、进播放模式、以及 OB feature 没启用时都可能落到这个窗口。
+
+**修法**（两层，缺一不可）：
+
+1. `HoObjectBufferRegistry.Release()` 释放后**立刻改绑一份占位缓冲**（三个 1 行 buffer + 计数 0，语义等于“没建表”，查询一律落回 unknown 行）；并在 `[InitializeOnLoadMethod]`（编辑器启动）与 `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]`（播放模式第一帧之前）各绑一次。**任何时刻都不允许 SRV 为空。**
+2. `HoSurfaceBufferSemanticPass.Setup` 里显式 `HoObjectBufferRegistry.EnsureBuilt()`：语义 lane 的 shader 读 OB 表，就不能假设 OB feature 已经跑过（这是跨 feature 的隐式依赖，之前没人写下来）。
+
+**回归**：`ValidateSceneShadows` 在 D3D12（`-force-d3d12`）下跑，并断言整段日志里没有 SRV 跳过（`skipped draws=0`）。
+
+### 0.3 UI 布局（按 Ho-UI 风格规范）
 
 CS 是**逐物体组件**型 feature（接收对象是每个角色自己的声明），不是 OB/SB/AC 那种通道型，所以控制项按“能不能按相机覆盖”分三处：
 
@@ -68,7 +92,7 @@ CS 是**逐物体组件**型 feature（接收对象是每个角色自己的声�
 | **`HoCharacterShadowRendererFeature`** | 运行（兜底） | 启用、单角色分辨率、同时接收域上限、图集边长上限、PCF 半径、深度偏移、法线偏移 |
 | | 声明（只读汇总） | 场景里的 `HoCharacterShadow` 组件 → OB 组 / tile / 盒尺寸 / 状态；图集容量与已分配 tile |
 | | 调试 | 一行 HelpBox → Volume |
-| | 高级 | 渲染时机（只读：固定 `BeforeRenderingShadows`）、调试 Shader、图集与剔除形态（只读） |
+| | 高级 | 渲染时机（只读：固定 `BeforeRenderingShadows`）、调试 Shader、图集 / 剔除 / 剔除光源（只读：feature 自己的隐藏方向光） |
 | | 运行状态 | 最近一次 `AddRenderPasses` 的结果（`LastCullStatus`） |
 | **`HoCharacterShadow`**（组件） | 运行 | 接收组 / 接收部件 / 包围盒锚点 / 中心 / 尺寸 / 边缘回退 + “从接收对象计算包围盒” |
 | | 运行状态 | 状态、接收部件匹配数、图集 Tile、投影深度、世界单位每 texel |

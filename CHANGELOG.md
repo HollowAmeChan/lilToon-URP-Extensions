@@ -2,6 +2,32 @@
 
 ## Unreleased
 
+- **逐物体阴影（CS）：开 CS 后场景其他物体丢普通投影 + 远处阴影消失，一次修掉**（承接上一条的修法）：
+  - **根因**：Unity 的 shadow renderer list 是**按光源一帧一份**提交的，和传入的 `CullingResults` 无关。
+    CS 原先借场景主光做局部剔除/绘制，于是和 URP 的相机阴影图抢同一份状态：
+    我们早于 URP 阴影阶段建列表 → **相机阴影图变成我们的局部盒**（其他物体全丢普通投影，实测
+    `without CS=0.008 / with CS=0.803`）；放到 URP 之后 → **我们的图集整块为空**（`atlas=0.000`）。
+    上一轮把 pass 提前只是把第二种表现换成了第一种。
+  - **修法**：CS 用自己的**隐藏方向光**（`HideFlags.HideAndDontSave`，方向/剔除层跟随主光，`color` 黑 +
+    强度 0.001，因此不参与场景光照、不占相机灯光名额、争不到主光）。该灯只在
+    `beginCameraRendering` 之后到本 pass 记录期间开着（该回调早于 URP 的 `context.Cull`），
+    相机永远看不到它；每个接收域占这盏灯自己的一个 split 索引。**不再与主光共享任何阴影状态。**
+  - **新增回归测试 `HoCharacterShadowValidation.ValidateSceneShadows`**：URP/Lit 地面 + 场景 caster
+    （再用 lilToon caster 跑一遍），CS 开/关两测断言普通投影都在、场景亮度不变、日志里没有 SRV 跳过。
+    修复后 `lit=0.803, URP shadow=0.008/0.008 (CS off/on)`，D3D11 与 D3D12 都 PASS；
+    `ValidateRendering` / `ValidateDistanceRendering` 一并 PASS。
+  - 被排除的假设（含"只跳过 `CullShadowCasters` 仍丢阴影"/"只跳过列表创建则正常"这类关键对照）
+    记在 `Documentation~/计划/Ho-CharacterShadow-Plan.md` §0.1。
+
+- **OB 身份表 SRV 在 D3D12 上被跳过（`_HoObjectBufferEntries`）**：
+  - **现象**：编辑器启动时 `d3d12: Fragment Shader "lilToon" requires a buffer (SRV) "_HoObjectBufferEntries" ...
+    Skipping draw calls to avoid crashing.`（D3D11 只是静默读到 0，语义位全 0）。
+  - **修法两层**：① `HoObjectBufferRegistry.Release()` 释放后立刻改绑占位缓冲（三个 1 行 buffer + 计数 0，
+    语义等于"没建表"），并在 `[InitializeOnLoadMethod]` 与 `[RuntimeInitializeOnLoadMethod(BeforeSceneLoad)]`
+    各绑一次 —— **任何时刻都不允许 SRV 为空**；② `HoSurfaceBufferSemanticPass.Setup` 显式
+    `HoObjectBufferRegistry.EnsureBuilt()`：语义 lane 的 shader 读 OB 表，不能假设 OB feature 已经跑过。
+  - 详见 `Documentation~/计划/Ho-CharacterShadow-Plan.md` §0.2（含"为什么两层都要"）。
+
 - **UI 风格整理（续）：OB / AC 对齐规范，并修正规范里过期的调试视图清单**：
   - `HoObjectBufferRendererFeature` 的「调试」分节不再画第二份开关（`debugMode` / 两个视图开关仍在 settings 里作兜底，
     Volume 覆盖时以 Volume 为准），只留一行 HelpBox 指到 Volume 并列出真实视图名。
