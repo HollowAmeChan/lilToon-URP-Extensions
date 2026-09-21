@@ -2,6 +2,7 @@
 
 using System.Collections.Generic;
 using lilToon.URP.Extensions.AttributeComposite;
+using lilToon.URP.Extensions.ObjectBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -64,6 +65,10 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         {
             this.settings = settings;
             this.filteringSettings = filteringSettings;
+            // 语义 lane 的 shader 读 OB 身份表（`HoObjectBufferLoadPart(partId).tags`），所以 OB 的
+            // palette 必须先建好并绑上。OB feature 不在这条链上（或没启用）时没人建，D3D12 会直接
+            // 跳过 draw（"requires a buffer (SRV) _HoObjectBufferEntries"），D3D11 则静默读到 0。
+            HoObjectBufferRegistry.EnsureBuilt();
             // **单采样**：语义 lane 这一轮按像素走。逐 sample 的细分（同一材质内部的眼白 / 虹膜）
             // 等真有消费者要时再上，而且形态必须是"SB 自己 resolve 出单采样 lane 再发布"——
             // 读端永远只读单采样：让消费者按 `Texture2DMS` + `Load` 读，坐标 / 采样数 / bindMS

@@ -435,6 +435,13 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             return buffer;
         }
 
+        /// <summary>
+        /// 释放 GPU 缓冲，但**立刻改绑占位缓冲**：lilToon 的 OB / SB pass 无条件需要
+        /// `_HoObjectBufferEntries` 这个 SRV，D3D12 上"要 SRV 却没提供"会直接跳过 draw
+        /// （日志：requires a buffer (SRV) "_HoObjectBufferEntries" ... Skipping draw calls），
+        /// 编辑器刚启动、进播放模式、或表还没建好的那一帧都踩得到；D3D11 只是静默读到 0。
+        /// 占位符只有一行且计数为 0，语义与"没建表"一致（所有查询落回 unknown 行）。
+        /// </summary>
         public static void Release()
         {
             partBuffer?.Dispose();
@@ -443,7 +450,44 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             partBuffer = null;
             groupBuffer = null;
             selectionBuffer = null;
+            BindPlaceholderBuffers();
         }
+
+        private static GraphicsBuffer placeholderPart, placeholderGroup, placeholderSelection;
+
+        /// <summary>任何时刻都必须有一个合法的 SRV 绑在三个全局名上（见 <see cref="Release"/>）。</summary>
+        private static void BindPlaceholderBuffers()
+        {
+            if (!SupportsStructuredBuffer)
+            {
+                return;
+            }
+
+            if (placeholderPart == null)
+            {
+                placeholderPart = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, HoObjectPartData.Stride);
+                placeholderGroup = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, HoObjectGroupData.Stride);
+                placeholderSelection = new GraphicsBuffer(GraphicsBuffer.Target.Structured, 1, HoObjectSelectionData.Stride);
+            }
+
+            Shader.SetGlobalBuffer(HoObjectBufferShaderConstants.PartBufferId, placeholderPart);
+            Shader.SetGlobalBuffer(HoObjectBufferShaderConstants.GroupBufferId, placeholderGroup);
+            Shader.SetGlobalBuffer(HoObjectBufferShaderConstants.SelectionBufferId, placeholderSelection);
+            Shader.SetGlobalFloat(HoObjectBufferShaderConstants.PartCountId, 0.0f);
+            Shader.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionCountId, 0.0f);
+        }
+
+#if UNITY_EDITOR
+        /// <summary>
+        /// 编辑器刚启动时（场景还没加载、OB feature 还没跑）先把 SRV 绑上，否则第一帧的
+        /// lilToon pass 会被 D3D12 跳过。此时表是空的，等场景里的组注册后会重建。
+        /// </summary>
+        [UnityEditor.InitializeOnLoadMethod]
+        private static void BindOnEditorLoad()
+        {
+            BindPlaceholderBuffers();
+        }
+#endif
 
         /// <summary>
         /// 进入播放模式时丢掉旧的 GPU 缓冲并标脏（关闭 Domain Reload 时静态字段会跨播放存活，
@@ -457,6 +501,13 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             warnedMissingGraphicsBufferSupport = false;
             lastWarnedConflictCount = -1;
             dirty = true;
+        }
+
+        /// <summary>播放模式里第一帧之前也要有绑定（SubsystemRegistration 与首次渲染之间的窗口）。</summary>
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
+        private static void BindBeforeSceneLoad()
+        {
+            BindPlaceholderBuffers();
         }
 
         public static uint MakePartId(int groupId, int slot)
