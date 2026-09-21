@@ -1,6 +1,8 @@
-> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
-
 # GeometryBuffer 公共契约
+
+> **状态：现行契约**（2026 文档审核时按当前实现校正：语义数值现由 SB / OB / AC 提供，MetadataBuffer 已删除）。
+> 相关：`架构优化/Ho-ObjectBuffer.md`、`架构优化/Ho-SurfaceBuffer.md`、`架构优化/Ho-AttributeComposite.md`、
+> `架构边界/MSAA.md`（GB 是唯一的 MSAA 解析入口）。
 
 > GeometryBuffer 是 Ho-URP Extensions 的屏幕几何输入层。
 >
@@ -256,24 +258,25 @@ GeometryBuffer DebugView 和 DebugTile 已注册：
 | --- | --- | --- |
 | GTAO | NormalDepth normal/depth/coverage | OutlineNormalDepth 当作物理几何 |
 | Ho-SSGI | NormalDepth coverage、normal、depth | OutlineNormalDepth 作为 caster/receiver |
-| SSS | NormalDepth 几何 + MetadataBuffer 语义 | 用描边 coverage 伪造物理表面 |
-| PLR | NormalDepth 深度/法线与 MetadataBuffer mask/ReflectionMaterial | 把 outline mask 当反射平面 |
-| CharacterSpecialization | NormalDepth + MetadataBuffer | 用 outline coverage 推断角色几何 |
+| SSS | NormalDepth 几何 + SB 的 Classification（经 AC 门面） | 用描边 coverage 伪造物理表面 |
+| PLR | NormalDepth 深度/法线 + OB 覆盖率（接收面遮罩）+ SB 的 Material/Reflection | 把 outline mask 当反射平面 |
+| CharacterSpecialization | NormalDepth + AC 的 Selection 池（语义覆盖率） | 用 outline coverage 推断角色几何 |
 | ScreenProcess DOF | NormalDepth 深度 + OutlineNormalDepth visual depth | 把描边写入主 NormalDepth |
-| ScreenProcess Outline/EdgeLight | NormalDepth 几何；必要时 MetadataBuffer | 把 OutlineNormalDepth 当真实法线/深度 |
+| ScreenProcess Outline/EdgeLight | NormalDepth 几何；遮罩用 OB 覆盖率 | 把 OutlineNormalDepth 当真实法线/深度 |
 
 公共原则：
 
 ```text
 NormalDepth = physical geometry truth
 OutlineNormalDepth = visual outline normal/depth truth
-MetadataBuffer = object/material semantic truth
+OB identity pool + part tags = object/semantic truth（覆盖率与归属）
+SB five surfaces = material/surface numeric truth
 CameraColor = rendered color source
 ```
 
 ## 8. 反射专用边界
 
-GeometryBuffer 只提供 PLR/SSR 所需的物理法线、线性深度和 coverage；材质 roughness、metallic、reflectance 与 PLR strength 固定放在 MetadataBuffer Target5 `ReflectionMaterial`，SurfaceColor 仅作为线性 baseColor 提示。
+GeometryBuffer 只提供 PLR/SSR 所需的物理法线、线性深度和 coverage；材质 roughness、metallic、reflectance 与 PLR strength 现在由 **SB 的 `Material` / `Reflection`** 提供（经 AC 门面 `HoAC_Attribute` 两行读出），表面色提示由 SB 的 `Color` 提供 —— 这些都不再经过 GeometryBuffer，也不再有任何 `Target5` 之类的槽位叫法。
 
 当前实现没有 GeometryBuffer `Custom0` producer 或消费者。若未来需要逐像素 PLR receiver 数据，应新增并命名为 PLR 专用 RT，先冻结 RGBA 语义后再接入；不得把它重新定义为跨功能的泛用 Custom0，也不得覆盖 `NormalDepth` 的物理几何语义。
 

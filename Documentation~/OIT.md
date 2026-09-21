@@ -1,5 +1,10 @@
 # lilToon URP 加权 OIT 实现笔记
 
+> **状态：现行功能说明（实现笔记）**。2026 文档审核时逐项核对过：`_lilOITEnabled` / `_lilOITActive` /
+> `lil_oit.hlsl`（lilToon 侧）、`WeightedOITRendererFeature` 与 `_lilOITAccumulationTexture` /
+> `_lilOITRevealageTexture` / `_lilOITOpaqueTexture`（本仓）在代码里都在，各 `*OIT.lilblock` 也在。
+> 写作时的目标环境是 Unity 2022.3 + URP 14.x；本项目现在跑 Unity 6000.3 + HoUrp17.3.0 fork，机制未变。
+
 本文记录 `lilToon` fork 与配套 `lilToon-URP-Extensions` 包之间已经完成的加权 OIT 集成。
 
 它不是单纯的功能概览，而是一份实现案例笔记。目标是保留架构、实际到文件级别的工作流，以及通过 RenderDoc 抓帧调试时踩到的坑。
