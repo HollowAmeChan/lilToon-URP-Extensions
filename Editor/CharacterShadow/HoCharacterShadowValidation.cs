@@ -50,9 +50,53 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 }
                 Shader shader = Shader.Find("Hidden/Ho-CharacterShadow/Debug");
                 Require(shader != null && !ShaderUtil.ShaderHasError(shader), "CS debug shader missing or failed");
-                Debug.Log("[Ho-CS Validation] PASS: fixed XY, upstream coverage, unrelated-caster rejection, receiver coverage, debug shader.");
+                RequirePcssSampleContract();
+                Debug.Log("[Ho-CS Validation] PASS: fixed XY, upstream coverage, unrelated-caster rejection, receiver coverage, debug shader, PCSS sample contract.");
             }
             finally { Object.DestroyImmediate(root); EditorSceneManager.ClosePreviewScene(scene); }
+        }
+
+        /// <summary>
+        /// C# 与 HLSL 的 PCSS 采样上限必须一致：HLSL 用它们定循环上界，C# 用它们夹档位请求。
+        /// 编译器关联不了两边，所以这里解析 HLSL 的 #define 逐条比对（batch 里也跑，防漂移）。
+        /// </summary>
+        private static void RequirePcssSampleContract()
+        {
+            string path = null;
+            string[] guids = AssetDatabase.FindAssets("HoCharacterShadowSampling");
+            for (int i = 0; i < guids.Length; i++)
+            {
+                string candidate = AssetDatabase.GUIDToAssetPath(guids[i]);
+                if (candidate != null && candidate.EndsWith("/HoCharacterShadowSampling.hlsl", StringComparison.Ordinal))
+                {
+                    path = candidate;
+                    break;
+                }
+            }
+
+            Require(!string.IsNullOrEmpty(path), "HoCharacterShadowSampling.hlsl was not found for the PCSS contract check");
+            string text;
+            try
+            {
+                text = System.IO.File.ReadAllText(System.IO.Path.GetFullPath(path));
+            }
+            catch (System.IO.IOException exception)
+            {
+                throw new InvalidOperationException("[Ho-CS Validation] could not read " + path + ": " + exception.Message);
+            }
+
+            RequireReadDefine(text, "HO_CS_MAX_PCSS_BLOCKER_SAMPLES", HoCharacterShadowShaderContract.PcssBlockerSamples);
+            RequireReadDefine(text, "HO_CS_MAX_PCSS_FILTER_SAMPLES", HoCharacterShadowShaderContract.PcssFilterSamples);
+        }
+
+        private static void RequireReadDefine(string text, string name, int expected)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(
+                text, "^[ \\t]*#define[ \\t]+" + name + "[ \\t]+([0-9]+)", System.Text.RegularExpressions.RegexOptions.Multiline);
+            Require(match.Success, name + " is missing from HoCharacterShadowSampling.hlsl");
+            int actual = int.Parse(match.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture);
+            Require(actual == expected,
+                name + " is " + actual + " in the shader but " + expected + " in HoCharacterShadowShaderContract.cs");
         }
 
         private static T Field<T>(object value, string name) => (T)value.GetType().GetField(name, BindingFlags.Instance | BindingFlags.NonPublic).GetValue(value);
@@ -591,6 +635,242 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             finally
             {
                 if (logCallback != null) Application.logMessageReceived -= logCallback;
+                GraphicsSettings.defaultRenderPipeline = previousGraphics;
+                QualitySettings.renderPipeline = previousQuality;
+                RenderSettings.sun = previousSun;
+                RenderSettings.ambientMode = previousAmbientMode;
+                RenderSettings.ambientLight = previousAmbientColor;
+                ShaderUtil.allowAsyncCompilation = previousAsync;
+                if (target != null) { target.Release(); Object.DestroyImmediate(target); }
+                for (int i = created.Count - 1; i >= 0; i--) if (created[i] != null) Object.DestroyImmediate(created[i]);
+                HoObjectBufferRegistry.Release();
+                HoObjectBufferRegistry.MarkDirty();
+                if (previousScene.IsValid() && previousScene.isLoaded)
+                    UnityEngine.SceneManagement.SceneManager.SetActiveScene(previousScene);
+            }
+        }
+
+        /// <summary>
+        /// PCSS 的可量化回归：把一个立方体的投影打到水平接收面上，正交相机俯视，
+        /// 扫过阴影边缘测"过渡带宽度"（visibility 落在 0.15..0.85 的最长连续像素数）。
+        /// 断言：PCF 时边缘很窄；PCSS 打开后明显变宽；半影放大 0 时退化回窄边；
+        /// 两种情况阴影核心都必须够暗（不许漏光）、边缘外侧必须够亮（不许出现 PCSS 经典光环）。
+        /// </summary>
+        public static void ValidatePcss()
+        {
+            Require(Application.isBatchMode, "PCSS validation runs in a separate batch editor only");
+            Validate();
+            RenderPipelineAsset previousGraphics = GraphicsSettings.defaultRenderPipeline;
+            RenderPipelineAsset previousQuality = QualitySettings.renderPipeline;
+            Light previousSun = RenderSettings.sun;
+            bool previousAsync = ShaderUtil.allowAsyncCompilation;
+            AmbientMode previousAmbientMode = RenderSettings.ambientMode;
+            Color previousAmbientColor = RenderSettings.ambientLight;
+            var created = new List<Object>();
+            RenderTexture target = null;
+            var previousScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
+            var scene = EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            UnityEngine.SceneManagement.SceneManager.SetActiveScene(scene);
+            try
+            {
+                ShaderUtil.allowAsyncCompilation = false;
+                RenderSettings.ambientMode = AmbientMode.Flat;
+                RenderSettings.ambientLight = Color.black;
+
+                var renderer = ScriptableObject.CreateInstance<UniversalRendererData>(); created.Add(renderer);
+                var feature = ScriptableObject.CreateInstance<HoCharacterShadowRendererFeature>(); created.Add(feature);
+                // 低一点的分辨率让 1 texel 在屏幕上约 0.8 px：PCF 边缘保持在 1px 量级，PCSS 的 texel 半径才看得出来。
+                feature.Settings.resolution = HoCharacterShadowResolution.R512;
+                feature.Settings.filterRadius = 1;
+                feature.Settings.pcssEnabled = false;
+                renderer.rendererFeatures.Add(feature);
+                var pipeline = UniversalRenderPipelineAsset.Create(renderer); created.Add(pipeline);
+                pipeline.shadowDistance = 50;
+                pipeline.shadowCascadeCount = 1;
+                GraphicsSettings.defaultRenderPipeline = pipeline;
+                QualitySettings.renderPipeline = pipeline;
+
+                var sunObject = new GameObject("CS PCSS Sun"); created.Add(sunObject);
+                sunObject.transform.rotation = Quaternion.Euler(55, 25, 0);
+                Light sun = sunObject.AddComponent<Light>(); sun.type = LightType.Directional;
+                sun.shadows = LightShadows.Hard; sun.intensity = 1; sun.shadowStrength = 1;
+                RenderSettings.sun = sun;
+
+                // 标准 PCSS 摆法：接收面**正对光源**（它在光空间的深度基本恒定，阴影边界就是干净的剪影），
+                // 投影物悬在光源与接收面之间。斜掠的接收面会让 PCF 自己就变成一条 20+px 的锯齿斜坡，
+                // 那样量出来的"边宽"来自几何而不是滤波（本测试第一版就踩了这个坑）。
+                // 注意方向命名：Unity 的 Light.transform.forward 是**光的行进方向**，
+                // 指向光源要用 -forward；第一版把两者搞反，投影物落到了接收面背后。
+                Vector3 toLight = -sun.transform.forward;
+                Quaternion facingLight = Quaternion.LookRotation(toLight, Vector3.up);
+
+                var receiver = GameObject.CreatePrimitive(PrimitiveType.Quad); created.Add(receiver);
+                receiver.transform.position = Vector3.zero;
+                receiver.transform.rotation = facingLight;
+                receiver.transform.localScale = Vector3.one * 8;
+                var receiverRenderer = receiver.GetComponent<MeshRenderer>();
+                receiverRenderer.shadowCastingMode = ShadowCastingMode.Off;
+                var probeMaterial = new Material(Shader.Find("Hidden/Ho-CharacterShadow/ValidationProbe")); created.Add(probeMaterial);
+                receiverRenderer.sharedMaterial = probeMaterial;
+                var group = receiver.AddComponent<HoObjectBufferGroup>();
+                group.parts.Add(new HoObjectBufferPartEntry { name = "Receiver", includeChildren = false, renderers = new Object[] { receiverRenderer } });
+                group.Apply();
+                var cs = receiver.AddComponent<HoCharacterShadow>(); cs.objectGroup = group;
+                // 盒子用**不带旋转**的空物体当锚点：接收面本身是斜的，用它的局部空间不方便描述盒子。
+                var anchor = new GameObject("CS PCSS Box Anchor"); created.Add(anchor);
+                anchor.transform.position = Vector3.zero;
+                anchor.transform.rotation = Quaternion.identity;
+                cs.boundsAnchor = anchor.transform;
+                cs.center = Vector3.zero;
+                cs.size = new Vector3(16, 16, 16);
+                cs.edgeBlend = 0f;
+
+                var caster = GameObject.CreatePrimitive(PrimitiveType.Cube); created.Add(caster);
+                caster.transform.position = toLight * 1.5f;
+                caster.transform.localScale = Vector3.one * 1.5f;
+                var casterRenderer = caster.GetComponent<MeshRenderer>();
+                var casterMaterial = new Material(Shader.Find("Universal Render Pipeline/Lit")); created.Add(casterMaterial);
+                casterRenderer.sharedMaterial = casterMaterial;
+                casterRenderer.shadowCastingMode = ShadowCastingMode.ShadowsOnly;
+
+                var cameraObject = new GameObject("CS PCSS Camera"); created.Add(cameraObject);
+                Camera camera = cameraObject.AddComponent<Camera>();
+                camera.enabled = false; camera.orthographic = true; camera.orthographicSize = 2;
+                camera.aspect = 1; camera.nearClipPlane = 0.5f; camera.farClipPlane = 100;
+                camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = Color.black;
+                camera.transform.position = toLight * 10f;
+                camera.transform.rotation = Quaternion.LookRotation(-toLight, Vector3.up);
+                camera.GetUniversalAdditionalCameraData().renderPostProcessing = false;
+
+                target = new RenderTexture(256, 256, 24, RenderTextureFormat.ARGB32); target.Create();
+                HoObjectBufferRegistry.EnsureBuilt();
+
+                float[] SampleImage(string label)
+                {
+                    RenderPipeline.SubmitRenderRequest(camera, new UniversalRenderPipeline.SingleCameraRequest { destination = target });
+                    var prior = RenderTexture.active; RenderTexture.active = target;
+                    var image = new Texture2D(256, 256, TextureFormat.RGBA32, false);
+                    image.ReadPixels(new Rect(0, 0, 256, 256), 0, 0); image.Apply();
+                    RenderTexture.active = prior;
+                    var pixels = new float[256 * 256];
+                    for (int y = 0; y < 256; y++)
+                        for (int x = 0; x < 256; x++)
+                            pixels[y * 256 + x] = image.GetPixel(x, y).grayscale;
+                    if (label != null)
+                    {
+                        string directory = System.IO.Path.Combine(System.IO.Path.GetTempPath(), "HoCSValidation");
+                        System.IO.Directory.CreateDirectory(directory);
+                        System.IO.File.WriteAllBytes(System.IO.Path.Combine(directory, "cs-pcss-" + label + ".png"), image.EncodeToPNG());
+                    }
+                    Object.DestroyImmediate(image);
+                    return pixels;
+                }
+
+                // 10%–90% 边宽：先找一个刚好在边上的像素（值最接近 0.5），按它那里的**图像梯度方向**
+                // （即边的法线）往两边各走到 0.9 / 0.1，两段长度相加。
+                // 沿固定屏幕方向走会被"边与扫描方向的夹角"放大（斜着穿过一条边，量出来能虚高好几倍），
+                // 这就是本测试前两版量到 20+px 的原因。
+                float EdgeWidth(float[] pixels)
+                {
+                    int ex = -1, ey = -1;
+                    float bestDistance = 2f;
+                    for (int y = 1; y < 255; y++)
+                        for (int x = 1; x < 255; x++)
+                        {
+                            float distance = Mathf.Abs(pixels[y * 256 + x] - 0.5f);
+                            if (distance < bestDistance) { bestDistance = distance; ex = x; ey = y; }
+                        }
+
+                    if (ex < 0) return 0f;
+                    float gx = pixels[ey * 256 + ex + 1] - pixels[ey * 256 + ex - 1];
+                    float gy = pixels[(ey + 1) * 256 + ex] - pixels[(ey - 1) * 256 + ex];
+                    float length = Mathf.Sqrt(gx * gx + gy * gy);
+                    if (length < 1e-5f) return 0f;
+                    gx /= length;
+                    gy /= length;
+
+                    int Walk(float stepX, float stepY, float limit, bool below)
+                    {
+                        float x = ex, y = ey;
+                        int steps = 0;
+                        while (steps < 128)
+                        {
+                            x += stepX; y += stepY;
+                            int sx = Mathf.Clamp(Mathf.RoundToInt(x), 0, 255);
+                            int sy = Mathf.Clamp(Mathf.RoundToInt(y), 0, 255);
+                            float v = pixels[sy * 256 + sx];
+                            steps++;
+                            if (below ? v < limit : v > limit) break;
+                        }
+
+                        return steps;
+                    }
+
+                    return Walk(gx, gy, 0.9f, false) + Walk(-gx, -gy, 0.1f, true);
+                }
+
+                float MinValue(float[] pixels) { float min = 1f; for (int i = 0; i < pixels.Length; i++) min = Mathf.Min(min, pixels[i]); return min; }
+                float MaxValue(float[] pixels) { float max = 0f; for (int i = 0; i < pixels.Length; i++) max = Mathf.Max(max, pixels[i]); return max; }
+
+                SampleImage(null); // 预热 / 管线初始化
+                Require(cs.atlasSlice >= 0, "PCSS receiver did not get a CS slice: " + cs.status);
+                Debug.Log($"[Ho-CS PCSS] cull={HoCharacterShadowRendererFeature.LastCullStatus} cs={cs.status}");
+                {
+                    var w2s = Shader.GetGlobalMatrixArray("_HoCSWorldToShadow")[0];
+                    Vector4 tile0 = Shader.GetGlobalVectorArray("_HoCSTileRects")[0];
+                    Vector4 params0 = Shader.GetGlobalVectorArray("_HoCSParameters")[0];
+                    Vector4 atlasSize0 = Shader.GetGlobalVector("_HoCSAtlasSize");
+                    Vector3 receiverShadow = w2s.MultiplyPoint3x4(receiver.transform.position);
+                    Vector3 casterShadow = w2s.MultiplyPoint3x4(caster.transform.position);
+                    Debug.Log($"[Ho-CS PCSS] receiver shadow=({receiverShadow.x:F3},{receiverShadow.y:F3},{receiverShadow.z:F3}) "
+                        + $"caster shadow=({casterShadow.x:F3},{casterShadow.y:F3},{casterShadow.z:F3}) "
+                        + $"tile=({tile0.x:F3},{tile0.y:F3},{tile0.z:F3},{tile0.w:F3}) params=({params0.x:F3},{params0.y:F3},{params0.z:F3}) "
+                        + $"atlas=({atlasSize0.x:F5},{atlasSize0.z:F0})");
+                }
+
+                // 顺手把调试图集也存一张：边缘不对时先看图集里到底有没有内容。
+                feature.Settings.debugInGameView = true;
+                feature.Settings.debugMode = HoCharacterShadowDebugMode.Character;
+                SampleImage("atlas");
+                feature.Settings.debugMode = HoCharacterShadowDebugMode.Off;
+                feature.Settings.debugInGameView = false;
+
+                feature.Settings.pcssEnabled = false;
+                float[] pcf = SampleImage("pcf");
+                float pcfWidth = EdgeWidth(pcf);
+                float pcfCore = MinValue(pcf);
+                float pcfLit = MaxValue(pcf);
+                Require(pcfCore < 0.15f, $"PCF shadow core is not dark: {pcfCore:F3} | {HoCharacterShadowRendererFeature.LastCullStatus} | {cs.status}");
+                Require(pcfLit > 0.85f, $"PCF lit side is not bright: {pcfLit:F3}");
+                Require(pcfWidth > 0f && pcfWidth <= 16f, $"PCF edge should be localized (not a giant ramp): 10-90% width {pcfWidth:F0}px");
+
+                feature.Settings.pcssEnabled = true;
+                feature.Settings.pcssQuality = HoCharacterShadowPcssQuality.Ultra;
+                feature.Settings.pcssSoftness = 3f;
+                feature.Settings.pcssBlockerSearchRadius = 4f;
+                feature.Settings.pcssMaxPenumbraRadius = 24f;
+                feature.Settings.pcssDepthBias = 0f;
+                float[] pcss = SampleImage("pcss");
+                float pcssWidth = EdgeWidth(pcss);
+                float pcssCore = MinValue(pcss);
+                float pcssLit = MaxValue(pcss);
+                Require(pcssCore < 0.25f, $"PCSS shadow core leaks light: {pcssCore:F3}");
+                Require(pcssLit > 0.8f, $"PCSS edge shows a halo (lit side not bright enough): {pcssLit:F3}");
+                Require(pcssWidth >= pcfWidth + 6f,
+                    $"PCSS did not widen the penumbra along the light direction: pcf={pcfWidth:F0}px, pcss={pcssWidth:F0}px");
+
+                feature.Settings.pcssSoftness = 0f;
+                float[] hard = SampleImage("pcss-softness0");
+                float hardWidth = EdgeWidth(hard);
+                Require(hardWidth <= pcfWidth + 3f,
+                    $"PCSS with softness 0 should degenerate back to PCF: pcss={hardWidth:F0}px, pcf={pcfWidth:F0}px");
+
+                Debug.Log($"[Ho-CS PCSS] PASS: pcf width={pcfWidth:F0}px core={pcfCore:F3} lit={pcfLit:F3} | "
+                    + $"pcss width={pcssWidth:F0}px core={pcssCore:F3} lit={pcssLit:F3} | "
+                    + $"softness0 width={hardWidth:F0}px, graphics={SystemInfo.graphicsDeviceType}.");
+            }
+            finally
+            {
                 GraphicsSettings.defaultRenderPipeline = previousGraphics;
                 QualitySettings.renderPipeline = previousQuality;
                 RenderSettings.sun = previousSun;

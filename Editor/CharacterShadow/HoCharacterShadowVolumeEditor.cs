@@ -9,13 +9,21 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
     internal sealed class HoCharacterShadowVolumeEditor : VolumeComponentEditor
     {
         private static readonly Color RuntimeColor = new Color(0.46f, 0.64f, 0.92f);
+        private static readonly Color SoftShadowColor = new Color(0.42f, 0.72f, 0.58f);
         private static readonly Color DebugColor = new Color(0.86f, 0.62f, 0.38f);
 
         private static bool showRuntime = true;
+        private static bool showSoftShadow = true;
         private static bool showDebug;
 
         private SerializedDataParameter enable;
         private SerializedDataParameter resolution;
+        private SerializedDataParameter pcssEnabled;
+        private SerializedDataParameter pcssQuality;
+        private SerializedDataParameter pcssSoftness;
+        private SerializedDataParameter pcssBlockerSearchRadius;
+        private SerializedDataParameter pcssMaxPenumbraRadius;
+        private SerializedDataParameter pcssDepthBias;
         private SerializedDataParameter debugMode;
         private SerializedDataParameter debugInSceneView;
         private SerializedDataParameter debugInGameView;
@@ -26,6 +34,12 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             var fetcher = new PropertyFetcher<HoCharacterShadowVolume>(serializedObject);
             enable = Unpack(fetcher.Find(x => x.enable));
             resolution = Unpack(fetcher.Find(x => x.resolution));
+            pcssEnabled = Unpack(fetcher.Find(x => x.pcssEnabled));
+            pcssQuality = Unpack(fetcher.Find(x => x.pcssQuality));
+            pcssSoftness = Unpack(fetcher.Find(x => x.pcssSoftness));
+            pcssBlockerSearchRadius = Unpack(fetcher.Find(x => x.pcssBlockerSearchRadius));
+            pcssMaxPenumbraRadius = Unpack(fetcher.Find(x => x.pcssMaxPenumbraRadius));
+            pcssDepthBias = Unpack(fetcher.Find(x => x.pcssDepthBias));
             debugMode = Unpack(fetcher.Find(x => x.debugMode));
             debugInSceneView = Unpack(fetcher.Find(x => x.debugInSceneView));
             debugInGameView = Unpack(fetcher.Find(x => x.debugInGameView));
@@ -35,11 +49,12 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
         public override void OnInspectorGUI()
         {
             EditorGUILayout.HelpBox(
-                "逐相机覆盖 Ho-CharacterShadow：启用、单角色分辨率与调试画面。接收对象（OB 组、接收部件、包围盒）"
+                "逐相机覆盖 Ho-CharacterShadow：启用、单角色分辨率、软阴影与调试画面。接收对象（OB 组、接收部件、包围盒）"
                 + "仍然由场景里 Ho-CharacterShadow 组件声明，不在这里。未勾选覆盖的字段用 RendererFeature 上的兜底值。",
                 MessageType.Info);
 
             DrawRuntime();
+            DrawSoftShadow();
             DrawDebug();
         }
 
@@ -60,6 +75,40 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                     "不勾选覆盖时用 Ho-CharacterShadow RendererFeature 的「运行」兜底值。分辨率提高会同时提高图集占用："
                     + "图集可容纳的 tile 数按「图集边长上限 / 单角色分辨率」换算。",
                     MessageType.None);
+            }
+        }
+
+        private void DrawSoftShadow()
+        {
+            string summary = LilUrpEditorSectionGui.BoolSummary(pcssEnabled)
+                + " / " + LilUrpEditorSectionGui.EnumSummary(pcssQuality)
+                + " / " + LilUrpEditorSectionGui.FloatSummary(pcssSoftness);
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSoftShadow, "软阴影（PCSS）", summary, SoftShadowColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawParameter(pcssEnabled, "启用 PCSS");
+                DrawParameter(pcssQuality, "质量档");
+                DrawParameter(pcssSoftness, "半影放大");
+                DrawParameter(pcssBlockerSearchRadius, "Blocker 搜索半径");
+                DrawParameter(pcssMaxPenumbraRadius, "半影半径上限");
+                DrawParameter(pcssDepthBias, "Blocker 深度偏移");
+
+                EditorGUILayout.HelpBox(
+                    "PCSS 先在 blocker 搜索盘里找遮挡物，用平均遮挡深度估半影宽度，再按该宽度做可变半径滤波 —— "
+                    + "离遮挡物越远边缘越软。关掉、半影放大为 0、或没找到遮挡物时回退固定半径的 3×3 PCF（降级即回退）。"
+                    + "质 量档只决定 blocker / filter 的采样数，不改变形状。",
+                    MessageType.None);
+
+                if (pcssEnabled != null && pcssEnabled.value != null && !pcssEnabled.value.boolValue)
+                {
+                    EditorGUILayout.HelpBox(
+                        "PCSS 关闭：边缘走 RendererFeature 上的 PCF 半径（半影不会随遮挡距离变化）。",
+                        MessageType.None);
+                }
             }
         }
 

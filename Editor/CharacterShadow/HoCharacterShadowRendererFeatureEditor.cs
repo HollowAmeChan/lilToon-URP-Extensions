@@ -9,12 +9,14 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
     {
         // Palette (Ho-UI 风格规范 §1): 运行 / 名称·声明 / 调试 / 高级 / RendererFeature 设置。
         private static readonly Color RuntimeColor = new Color(0.46f, 0.64f, 0.92f);
+        private static readonly Color SoftShadowColor = new Color(0.42f, 0.72f, 0.58f);
         private static readonly Color DeclarationColor = new Color(0.80f, 0.55f, 0.85f);
         private static readonly Color DebugColor = new Color(0.86f, 0.62f, 0.38f);
         private static readonly Color AdvancedColor = new Color(0.62f, 0.58f, 0.78f);
         private static readonly Color StatusColor = new Color(0.45f, 0.64f, 0.96f);
 
         private static bool showRuntime = true;
+        private static bool showSoftShadow = true;
         private static bool showDeclaration;
         private static bool showDebug;
         private static bool showAdvanced;
@@ -52,6 +54,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 MessageType.Info);
 
             DrawRuntime();
+            DrawSoftShadow();
             DrawDeclaration();
             DrawDebug();
             DrawAdvanced();
@@ -84,6 +87,38 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                     "启用与单角色分辨率是兜底值：Ho-CharacterShadow Volume 覆盖了就用 Volume 的（Volume 未覆盖时用这里的值）。"
                     + "容量按「图集边长上限 / 单角色分辨率」换算成可容纳的 tile 数，再与「同时接收域上限」取小；"
                     + "容量不足时不降低分辨率，多出来的接收域回退普通天光投影（在组件 Inspector 上说明）。",
+                    MessageType.None);
+            }
+        }
+
+        private void DrawSoftShadow()
+        {
+            string summary = LilUrpEditorSectionGui.BoolSummary(Find("pcssEnabled"))
+                + " / " + LilUrpEditorSectionGui.EnumName(Find("pcssQuality"))
+                + " / " + LilUrpEditorSectionGui.FloatSummary(Find("pcssSoftness"));
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showSoftShadow, "软阴影（PCSS）", summary, SoftShadowColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawProperty("pcssEnabled", "启用 PCSS");
+                DrawProperty("pcssQuality", "质量档");
+                DrawProperty("pcssSoftness", "半影放大");
+                DrawProperty("pcssBlockerSearchRadius", "Blocker 搜索半径");
+                DrawProperty("pcssMaxPenumbraRadius", "半影半径上限");
+                DrawProperty("pcssDepthBias", "Blocker 深度偏移");
+
+                EditorGUILayout.HelpBox(
+                    "PCSS：blocker search → 用平均遮挡深度估半影宽度 → 按该宽度做可变半径滤波，所以离遮挡物越远边缘越软。"
+                    + "关掉、半影放大为 0、或盘里没有遮挡物时回退上面「运行」里的 PCF 半径（降级即回退，不是另一套 shader）。"
+                    + "质量档只决定 blocker / filter 的采样数（上限 " + HoCharacterShadowShaderContract.PcssBlockerSamples + "/"
+                    + HoCharacterShadowShaderContract.PcssFilterSamples + "，与 HLSL 里的宏一致，由 Validate() 校验）。",
+                    MessageType.None);
+
+                EditorGUILayout.HelpBox(
+                    "这一节是兜底值：Ho-CharacterShadow Volume 的「软阴影（PCSS）」覆盖了就用 Volume 的（Volume 未覆盖时用这里的值）。",
                     MessageType.None);
             }
         }
