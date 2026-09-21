@@ -115,17 +115,19 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 DrawParameter(debugMode, "调试模式");
 
                 int mode = debugMode != null && debugMode.value != null ? debugMode.value.enumValueIndex : 0;
+                string desc = null;
                 if (mode == (int)HoCharacterShadowDebugMode.Atlas)
                 {
-                    EditorGUILayout.HelpBox(
-                        "整张图集：所有接收域的 tile 排一张图，画光空间线性深度（越亮越远）。",
-                        MessageType.None);
+                    desc = "整张图集：所有接收域的 tile 排一张图，画光空间线性深度（越亮越远）。";
                 }
                 else if (mode == (int)HoCharacterShadowDebugMode.Character)
                 {
-                    EditorGUILayout.HelpBox(
-                        "只放大「单角色 tile」那个 tile（编号见组件 Inspector 的「图集 Tile」；超范围显示紫色）。",
-                        MessageType.None);
+                    desc = "只放大「单角色 tile」那个 tile（编号见组件 Inspector 的「图集 Tile」；超范围显示紫色）。";
+                }
+
+                if (!string.IsNullOrEmpty(desc))
+                {
+                    EditorGUILayout.HelpBox(desc, MessageType.None);
                 }
 
                 DrawParameter(debugInSceneView, "Debug In Scene View");

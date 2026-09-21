@@ -8,9 +8,18 @@
     HelpBox 只保留三种内容：① 前置依赖（例如必须先建 ObjectBuffer 才生效）；
     ② 静默失败模式（例如图集容量不足时不会降分辨率，多出来的接收域**悄悄**回退普通天光投影）；
     ③ 必要指向（调试参数在 Volume、每个调试模式的说明行）。每条 ≤ 1 行，不重复。
-  - **量级**：全部 Inspector 面板的 HelpBox 正文中文 **~3300 → 945 字**；CS 三个面板
-    **826 / 572 / 279 → 142 / 115 / 149 字**（feature / Volume / 组件）；
-    ShadowCast 223→82、AttributeComposite 156→42、PlanarReflection 148→81、SubsurfaceScattering 129→54。
+  - **量级**（基线 = 本次改动前的 `d982c5d`，用扫描脚本逐面板量）：全部面板的 HelpBox 正文中文
+    **2613 → 863 字**，改前有 **4 个面板超预算、改后 0 个**。逐面板：CS feature **826 → 109**（13 → 4 条）、
+    CS Volume **572 → 66**（10 → 3 条）、CS 组件 **279 → 149**（4 → 3 条）、ShadowCast **223 → 82**（6 → 4 条）、
+    AttributeComposite 156 → 42（6 → 4 条）、PlanarReflection 148 → 81（5 → 4 条）、SubsurfaceScattering 129 → 54（6 → 3 条）。
+  - **预算对齐到规范**：规范写的是 feature/组件 ≤ 4 条、Volume ≤ 3 条，但 CS feature 当时还剩 6 条、
+    CS Volume 静态数是 4 条，等于"规矩定了没执行"。这一轮补齐：
+    - CS feature：「渲染时机」的改 pass 顺序告警挪进该行 Tooltip；「还没有记录到运行帧」的空状态
+      从 `HelpBox(Info)` 改成 `wordWrappedMiniLabel`（它只是一句提示，不需要告警框）。6 → 4 条。
+    - CS Volume：两个调试模式的说明行原本各写一次 `HelpBox(...)`，改成**先算 `desc` 字符串再调一次**，
+      静态计数 4 → 3 条（运行时本来就只显示一条）。
+  - 检查脚本 `.codex-research/check-ui-verbosity.ps1` 的默认预算同步改成 **panel ≤ 4 / volume ≤ 3**
+    （按文件名 `*VolumeEditor.cs` 区分），超预算时逐文件打印"哪儿超了"，不再用宽松的 6 条。
   - **面板同步重排**：CS feature 分节固定为 运行 / 软阴影（PCSS）/ 声明 / 调试 / 高级 / 运行状态，
     Volume 为 运行 / 软阴影（PCSS）/ 声明 / 调试；「阴影软边（米）」归 运行，PCSS 分组只留 PCSS 专属六项。
   - **Tooltip 补全**：把删掉的信息按"这一项到底管什么"重写进 `[Tooltip]`，包括
@@ -18,9 +27,10 @@
     容量不足的后果、软边半径的调参方向（想更软又不出颗粒就降分辨率或提高 PCSS 质量档）、
     PCSS 关闭后只剩固定半径滤波等；组件面板的"贴合包围盒"说明也改成按钮 Tooltip。
   - **规范**：`Documentation~/Ho-UI_风格规范.md` 新增 **§2.1 HelpBox 预算**（面板 ≤ 4 条 feature / 3 条 Volume，
-    每条 ≤ 1 行，summary ≤ 3 段），并删掉旧条目"解释语义用 None"（与上一条自相矛盾）。
-  - 新增检查脚本 `.codex-research/check-ui-verbosity.ps1`（默认每面板 HelpBox ≤ 6、HelpBox 正文中文 ≤ 200，
-    超出即 exit 1），逐面板打印计数，纳入每次改动后的验证流程。
+    每条 ≤ 1 行，summary ≤ 3 段；允许内容固定为"依赖/前置条件、会静默出错的失败模式、必要指针、
+    Volume 覆盖优先级"四类），并删掉旧条目"解释语义用 None"（与上一条自相矛盾）。
+  - 新增检查脚本 `.codex-research/check-ui-verbosity.ps1`（feature/组件 ≤ 4 条、Volume ≤ 3 条、
+    HelpBox 正文中文 ≤ 200 字，超出即 exit 1），逐面板打印 kind / 条数 / 中文字数，纳入每次改动后的验证流程。
 
 - **逐物体阴影（CS）：「阴影软边」从 PCSS 分组挪到「运行」**（用户指出：关掉 PCSS 它照样起作用，那就不该放在 PCSS 里）：
   - 字段本身没变（`softnessRadius`，米），只是**换了分组与名字**：原来叫「最低软度」待在「软阴影（PCSS）」里，

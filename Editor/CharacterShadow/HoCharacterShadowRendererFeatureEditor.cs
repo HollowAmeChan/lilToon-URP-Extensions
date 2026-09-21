@@ -187,10 +187,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.LabelField("渲染时机", "BeforeRenderingShadows（固定）");
-                EditorGUILayout.HelpBox(
-                    "时机固定，改 pass 顺序前请先跑 ValidateSceneShadows 与 ValidateDistanceRendering。",
-                    MessageType.None);
+                EditorGUILayout.LabelField(
+                    new GUIContent("渲染时机", "时机固定；改 pass 顺序前先跑 ValidateSceneShadows 与 ValidateDistanceRendering。"),
+                    new GUIContent("BeforeRenderingShadows（固定）"));
 
                 DrawProperty("debugShader", "调试 Shader");
 
@@ -213,9 +212,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             {
                 if (string.IsNullOrEmpty(status))
                 {
-                    EditorGUILayout.HelpBox(
+                    EditorGUILayout.LabelField(
                         "还没有记录到 CS 运行帧。进入 Play Mode，或让使用该 RendererFeature 的 Scene/Game camera 渲染一帧。",
-                        MessageType.Info);
+                        EditorStyles.wordWrappedMiniLabel);
                     return;
                 }
 
