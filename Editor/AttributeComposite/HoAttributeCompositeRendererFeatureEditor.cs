@@ -43,9 +43,7 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
             }
 
             EditorGUILayout.HelpBox(
-                "AC 合成 OB / SB 产出的属性图，下游只吃 AC。必须排在 Ho-ObjectBuffer 与 Ho-SurfaceBuffer 之后："
-                + "同事件时按 Renderer Feature 列表顺序，加上 RenderGraph 的读依赖保证在后。"
-                + "调试入口在 Ho-AttributeComposite Volume 的「调试」分组。",
+                "必须排在 Ho-ObjectBuffer 与 Ho-SurfaceBuffer 之后（同事件时按 Renderer Feature 列表顺序，加上 RenderGraph 读依赖）。",
                 MessageType.Info);
 
             DrawRuntime();
@@ -69,10 +67,6 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty(enabled, "启用");
-                EditorGUILayout.HelpBox(
-                    "启用是兜底值：Ho-AttributeComposite Volume 覆盖了就用 Volume 的（Volume 未覆盖时用这里的值）。"
-                    + "属性清单默认开关与 lane 成本档由 HoSemanticSchema 声明，见下面的「声明」。",
-                    MessageType.None);
             }
         }
 
@@ -102,9 +96,7 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUILayout.HelpBox(
-                    "调试模式（Lane Coverage / Lane SemanticId / Lane Object Mask）与 Debug In Scene View / "
-                    + "Debug In Game View 已移至 Ho-AttributeComposite Volume 的「调试」分组。"
-                    + "消费者登记表与「解析不到」的报错不在这里，在下面的「声明（只读汇总）」。",
+                    "调试模式与视图开关已移至 Ho-AttributeComposite Volume 的「调试」分组。",
                     MessageType.None);
             }
         }
@@ -125,10 +117,7 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
                     DrawProperty(Find("debugPassEvent"), "调试时机");
                 }
 
-                EditorGUILayout.HelpBox(
-                    "合成与调试用 shader 由 feature 按 HoAttributeCompositeShaderConstants 里的固定名字取（Shader.Find），"
-                    + "不走资产字段。",
-                    MessageType.None);
+
             }
         }
 

@@ -31,7 +31,7 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
             serializedObject.Update();
 
             EditorGUILayout.HelpBox(
-                "ShadowCast 会从当前 RendererFeature 收集可用的 URP 可见灯光。额外灯光不需要开启 Unity Light 自带阴影；URP 主光会跳过并交给 URP 原生阴影处理。",
+                "收集当前相机的 URP 可见灯；URP 主光跳过（仍走原生阴影）。",
                 MessageType.Info);
 
             if (settingsProperty == null)
@@ -113,19 +113,8 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
                 EditorGUILayout.LabelField("图集", atlasSize + "px（切片数按图集尺寸与分辨率动态计算，硬上限 " + HoShadowCastShaderContract.ArraySlices + " 片）");
 
                 EditorGUILayout.HelpBox(
-                    "档位只决定可同时采样的附加灯数上限；切片数由图集尺寸与聚光/点光分辨率动态决定——降低分辨率就能容纳更多灯，不需要改档位。",
-                    MessageType.Info);
-
-                EditorGUILayout.HelpBox(
-                    "Unity 会缓存全局数组槽位的长度，且同一会话内只允许变小。如果改动过契约里的数组长度（或从旧版本升级）后控制台出现 \"exceeds previous array size ... Restart Unity to recreate the arrays\"，重启一次 Unity 编辑器即可恢复；该提示与切换档位无关。",
+                    "数组长度是会话级缓存：改过它之后出现 \"exceeds previous array size\" 就重启一次 Unity。",
                     MessageType.Warning);
-
-                if (capacity != HoShadowCastLightCapacity.Low)
-                {
-                    EditorGUILayout.HelpBox(
-                        "更高容量档会为所有使用 lilToon 的材质增加 shader 变体。",
-                        MessageType.Info);
-                }
             }
         }
 

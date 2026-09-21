@@ -36,10 +36,6 @@ namespace lilToon.URP.Extensions.Editor.PlanarReflection
                 return;
             }
 
-            EditorGUILayout.HelpBox(
-                "Ho-PlanarReflection 先渲染镜像相机，再由合成 pass 消费 GeometryBuffer 与 SB（经 AC 门面）的材质数值，对反射表面做扰动、预处理和混合。",
-                MessageType.Info);
-
             DrawRuntime();
             DrawComposite();
             DrawDebug();
@@ -89,7 +85,7 @@ namespace lilToon.URP.Extensions.Editor.PlanarReflection
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 EditorGUILayout.HelpBox(
-                    "Opaque lilToon 已在 ForwardLit 中按 PBR 响应消费 PLR。这里只用于水面/OIT/调试等特殊全屏路径；同一材质不要同时启用两条路径。特殊合成当前只允许一个有效 PLR surface，多平面时会自动关闭。",
+                    "同一材质不要同时走 ForwardLit 的 PBR 响应与这条全屏路径；特殊合成只支持一个有效 surface，多平面会自动关闭。",
                     MessageType.Info);
                 DrawProperty(compositeEnabled, "启用特殊表面后处理合成");
                 DrawProperty(compositeStrength, "合成强度");
@@ -126,7 +122,7 @@ namespace lilToon.URP.Extensions.Editor.PlanarReflection
                 DrawProperty(Find("debugDepthFar"), "深度显示 Far");
                 DrawProperty(Find("debugDistortionScale"), "扰动显示倍率");
                 EditorGUILayout.HelpBox(
-                    "这里的调试模式会直接替换当前相机颜色。小窗调试请添加 Ho-DebugTile，并选择 PlanarReflection 条目。",
+                    "调试模式直接替换相机颜色；小窗调试请用 Ho-DebugTile 的 PlanarReflection 条目。",
                     MessageType.Info);
             }
         }

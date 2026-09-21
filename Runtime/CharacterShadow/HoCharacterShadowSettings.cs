@@ -17,12 +17,13 @@ namespace lilToon.URP.Extensions.CharacterShadow
         public bool enabled = true;
         [Tooltip("每个接收域的方形深度图分辨率（Volume 未覆盖时生效）。")]
         public HoCharacterShadowResolution resolution = HoCharacterShadowResolution.R2048;
-        [Range(1, 16), Tooltip("同时存在的接收域上限（每域一张 tile）。")]
+        [Range(1, 16), Tooltip("同时存在的接收域上限（每域一张 tile）。容量不足时不降低分辨率，多出来的接收域回退普通天光投影。")]
         public int maxCharacters = 16;
-        [Range(2048, 16384), Tooltip("不自动降低单角色分辨率。超出图集容量的角色回退普通投影并在组件上说明。")]
+        [Range(2048, 16384), Tooltip("图集边长上限。可容纳 tile 数 = (本值 / 单角色分辨率)²，再与「同时接收域上限」取小。")]
         public int maxAtlasSize = 8192;
         [Range(0, 0.2f), Tooltip("**阴影软边**（世界单位，米）：始终生效的基础滤波半径，用来盖掉几何锯齿"
-            + "（发丝/低模剪影）。0 = 允许硬边。注意 tile 越细，同样世界半径吃掉的 texel 越多、越吃采样。")]
+            + "（发丝/低模剪影）；PCSS 在它之上再加半影。0 = 完全硬边。tile 越细同样半径吃掉的 texel 越多，"
+            + "想更软又不出颗粒就降分辨率或提高 PCSS 质量档。")]
         public float softnessRadius = 0.005f;
         [Min(0), Tooltip("投影深度偏移（单位：texel）。")]
         public float depthBias = 1;
@@ -30,7 +31,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
         public float normalBias = 1;
 
         [Header("PCSS 软阴影")]
-        [Tooltip("启用 PCSS（blocker search + 按遮挡距离估算的可变半影）。关闭时回退上面的 3×3 PCF。")]
+        [Tooltip("启用 PCSS（blocker search + 按遮挡距离估算的可变半影）。关闭后只剩「阴影软边」那一档固定半径滤波。")]
         public bool pcssEnabled = true;
         [Tooltip("采样档：只决定 blocker / filter 的采样数，不改变阴影形状。")]
         public HoCharacterShadowPcssQuality pcssQuality = HoCharacterShadowPcssQuality.Ultra;
@@ -39,8 +40,8 @@ namespace lilToon.URP.Extensions.CharacterShadow
         [Range(0.001f, 0.2f), Tooltip("blocker 搜索半径（**世界单位，米**）。它至少要接近半影半径上限，否则半影里的遮挡物会被漏采样、"
             + "估算值乱跳（表现成斑点）。")]
         public float pcssBlockerSearchRadius = 0.02f;
-        [Range(0.001f, 0.2f), Tooltip("半影半径上限（**世界单位，米**）：最软能软到什么程度。用世界单位是为了跟 tile 分辨率解耦"
-            + "（texel 当单位的话，4096 的 tile 上同一个数值只有 7mm，看着还是硬边）。")]
+        [Range(0.001f, 0.2f), Tooltip("半影半径上限（**世界单位，米**）：最软能软到什么程度。用世界单位跟 tile 分辨率解耦；"
+            + "超出采样预算时会被收窄以免出颗粒（想更软就提高质量档或降低单角色分辨率）。")]
         public float pcssMaxPenumbraRadius = 0.04f;
         [Range(0, 0.02f), Tooltip("blocker 判定的深度偏移（阴影空间 z，1 ≈ 盒子整个深度范围）：压自遮挡与深度抖动。"
             + "默认给一点，避免 blocker 数量在相邻像素之间跳变（那会变成斑点）。")]

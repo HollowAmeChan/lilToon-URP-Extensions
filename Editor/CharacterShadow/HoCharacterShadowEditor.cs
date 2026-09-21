@@ -40,9 +40,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             var subject = (HoCharacterShadow)target;
 
             EditorGUILayout.HelpBox(
-                "CS 只提高这个接收盒里的天光投影精度：feature 生成一张围绕盒子的高精度天光深度图，"
-                + "lilToon 在盒内用它替换主光实时阴影采样，盒外回退原采样。场景、其他角色、其他部件只要符合天光"
-                + "普通投影规则都会参与投影。不改材质：仍然沿用 lilToon 原有的接收开关、Mask 与各层接收强度。",
+                "只提高这个接收盒里的天光投影精度，不改材质（沿用 lilToon 原有的接收开关与强度）。",
                 MessageType.Info);
 
             DrawRuntime(subject);
@@ -105,16 +103,10 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 else
                 {
                     EditorGUILayout.HelpBox(
-                        "当前没有分配到图集 tile，lilToon 用的是普通天光投影。常见原因：接收盒不在当前相机视锥内、"
-                        + "图集容量不足（降低单角色分辨率或提高图集上限）、同一个 OB 组挂了多个 CS 组件、"
-                        + "接收部件名对不上、feature 未启用或主方向光没开阴影。",
+                        "没分配到 tile（正在用普通天光投影）：盒不在相机视锥内 / 图集容量不足 / 同组挂了多个 CS 组件 / "
+                        + "接收部件名对不上 / feature 未启用或主光没开阴影。",
                         MessageType.Info);
                 }
-
-                EditorGUILayout.HelpBox(
-                    "Atlas / Character 调试画面在 Ho-CharacterShadow Volume 的「调试」分组里选；"
-                    + "这里只报这个组件的分配结果。",
-                    MessageType.None);
             }
         }
 

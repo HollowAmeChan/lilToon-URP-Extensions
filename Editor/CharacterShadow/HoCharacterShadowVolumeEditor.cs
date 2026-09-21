@@ -51,8 +51,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
         public override void OnInspectorGUI()
         {
             EditorGUILayout.HelpBox(
-                "逐相机覆盖 Ho-CharacterShadow：启用、单角色分辨率、软阴影与调试画面。接收对象（OB 组、接收部件、包围盒）"
-                + "仍然由场景里 Ho-CharacterShadow 组件声明，不在这里。未勾选覆盖的字段用 RendererFeature 上的兜底值。",
+                "逐相机覆盖；未勾选覆盖的字段用 RendererFeature 兜底值。接收对象由场景组件声明。",
                 MessageType.Info);
 
             DrawRuntime();
@@ -75,17 +74,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 DrawParameter(enable, "启用");
                 DrawParameter(resolution, "单角色分辨率");
                 DrawParameter(softnessRadius, "阴影软边（米）");
-                EditorGUILayout.HelpBox(
-                    "不勾选覆盖时用 Ho-CharacterShadow RendererFeature 的「运行」兜底值。分辨率提高会同时提高图集占用："
-                    + "图集可容纳的 tile 数按「图集边长上限 / 单角色分辨率」换算。",
-                    MessageType.None);
-
-                EditorGUILayout.HelpBox(
-                    "「阴影软边」是**始终生效**的基础滤波半径（单位米），用来盖掉几何锯齿（发丝/低模剪影）；"
-                    + "「软阴影（PCSS）」是在它之上再按遮挡距离加半影。用世界单位是为了换分辨率不用重调；"
-                    + "tile 越细，同样半径吃掉的 texel 越多，超出采样预算时会被收窄以免出颗粒 —— 想更软又不想出噪点，"
-                    + "把「单角色分辨率」降到 1024/2048，或提高 PCSS 质量档。0 = 完全硬边。",
-                    MessageType.None);
             }
         }
 
@@ -109,22 +97,8 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 DrawParameter(pcssDepthBias, "Blocker 深度偏移");
 
                 EditorGUILayout.HelpBox(
-                    "PCSS 先在 blocker 搜索盘里找遮挡物，用平均遮挡深度估半影宽度，再按该宽度做可变半径滤波 —— 离遮挡物越远边缘越软。"
-                    + "关掉、或半影放大为 0 时只剩「运行」里那个「阴影软边」的基础滤波。质量档只决定采样数。",
+                    "Add Override 会把该组件所有字段都设成覆盖态，所以 feature 上改不动是正常的（要么在这里改，要么把覆盖勾掉）。",
                     MessageType.None);
-
-                EditorGUILayout.HelpBox(
-                    "这一组在 RendererFeature 上也有一份兜底值。**本面板勾了覆盖就以这里为准**（Add Override 会把该组件所有"
-                    + "字段都设成覆盖态，包括「启用 PCSS」），所以 feature 上改不动是正常的 —— 要么在这里改，要么把对应字段的"
-                    + "覆盖勾掉。",
-                    MessageType.None);
-
-                if (pcssEnabled != null && pcssEnabled.value != null && !pcssEnabled.value.boolValue)
-                {
-                    EditorGUILayout.HelpBox(
-                        "PCSS 关闭：半影不再随遮挡距离变化，只剩「运行」里那个「阴影软边」的基础滤波。",
-                        MessageType.None);
-                }
             }
         }
 
@@ -144,31 +118,19 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 if (mode == (int)HoCharacterShadowDebugMode.Atlas)
                 {
                     EditorGUILayout.HelpBox(
-                        "整张图集：同一时刻所有接收域的 tile 排在一张图里，画的是光空间线性深度（越亮越远）。"
-                        + "总图集边长 = ceil(sqrt(域数)) × 单角色分辨率。",
+                        "整张图集：所有接收域的 tile 排一张图，画光空间线性深度（越亮越远）。",
                         MessageType.None);
                 }
                 else if (mode == (int)HoCharacterShadowDebugMode.Character)
                 {
                     EditorGUILayout.HelpBox(
-                        "单个接收域：只放大「单角色 tile」那一个 tile，编号见 Ho-CharacterShadow 组件 Inspector 的「图集 Tile」。"
-                        + "编号超出已分配数量时显示紫色。",
+                        "只放大「单角色 tile」那个 tile（编号见组件 Inspector 的「图集 Tile」；超范围显示紫色）。",
                         MessageType.None);
                 }
 
                 DrawParameter(debugInSceneView, "Debug In Scene View");
                 DrawParameter(debugInGameView, "Debug In Game View");
                 DrawParameter(debugCharacter, "单角色 tile");
-
-                if (debugInGameView != null && debugInGameView.value != null && debugInGameView.value.boolValue)
-                {
-                    EditorGUILayout.HelpBox("Game View 调试是直接替换最终画面；做完检查记得把调试模式改回 Off。", MessageType.Warning);
-                }
-
-                EditorGUILayout.HelpBox(
-                    "调试画面只有这一份真值：RendererFeature 上不再放调试开关。调试视图没有独立强度曲线——"
-                    + "它直出光空间深度，加曲线会让人把显示亮度误读成深度。",
-                    MessageType.None);
             }
         }
 

@@ -37,7 +37,7 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
             }
 
             EditorGUILayout.HelpBox(
-                "Ho-SSS consumes the SurfaceBuffer color (via the AC facade) as diffuse input. Material/profile settings control diffusion tint, radius, thickness, and transmission.",
+                "漫反射输入取 SB 的 Color（经 AC 门面）；外观参数由材质/profile 控制。",
                 MessageType.Info);
 
             DrawRuntime();
@@ -112,7 +112,6 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty(profiles, includeChildren: true);
-                EditorGUILayout.HelpBox("皮肤外观优先调 profile：扩散颜色、扩散半径、源色保留、厚度倍率。RendererFeature 的全局颜色/半径只作为未命中 profile 的兼容回退。", MessageType.None);
             }
         }
 
@@ -130,7 +129,6 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
             {
                 DrawProperty(debugMode);
                 DrawProperty("renderInSceneView");
-                EditorGUILayout.HelpBox("Debug shader 只在调试模式非关闭时按需查找。若要把它纳入构建，请显式生成 Debug Shader Collection。", MessageType.None);
             }
         }
 
@@ -158,7 +156,6 @@ namespace lilToon.URP.Extensions.Editor.SubsurfaceScattering
 
                 EditorGUILayout.Space(5);
                 EditorGUILayout.LabelField("透射补偿", EditorStyles.boldLabel);
-                EditorGUILayout.HelpBox("透射只用于耳缘、鼻翼、指尖等薄处暖边。主要皮肤柔和感应来自 Diffusion Profiles。", MessageType.None);
                 DrawProperty("transmissionStrength");
                 DrawProperty("transmissionRadius");
                 DrawProperty("transmissionSamples");

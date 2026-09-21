@@ -60,14 +60,14 @@ namespace lilToon.URP.Extensions.CharacterShadow
         [InspectorName("启用"), Tooltip("该相机是否使用局部高精度天光投影。未勾选覆盖时用 Ho-CharacterShadow RendererFeature 的兜底值。")]
         public BoolParameter enable = new BoolParameter(true);
 
-        [InspectorName("单角色分辨率"), Tooltip("每个接收域一张方形深度图的分辨率。图集容量按它换算；容量不足的接收域回退普通天光投影。"
+        [InspectorName("单角色分辨率"), Tooltip("每个接收域一张方形深度图的分辨率。可容纳 tile 数 = (图集边长上限/本值)²；容量不足的接收域回退普通天光投影。"
             + "它同时决定软阴影半径覆盖的世界尺寸：分辨率越高，同样 texel 半径覆盖的世界范围越小。")]
         public HoCharacterShadowResolutionParameter resolution = new HoCharacterShadowResolutionParameter(HoCharacterShadowResolution.R2048);
 
-        [InspectorName("启用 PCSS"), Tooltip("blocker search + 按遮挡距离估算的可变半影。关闭时回退固定半径的旋转盘 PCF。")]
+        [InspectorName("启用 PCSS"), Tooltip("blocker search + 按遮挡距离估算的可变半影。关闭后只剩「阴影软边」那一档固定半径滤波。")]
         public BoolParameter pcssEnabled = new BoolParameter(true);
 
-        [InspectorName("阴影软边"), Tooltip("世界单位（米）：始终生效的基础滤波半径，用来盖掉几何锯齿（发丝/低模剪影）。PCSS 在它之上再加半影；0 = 完全硬边。")]
+        [InspectorName("阴影软边"), Tooltip("世界单位（米）：始终生效的基础滤波半径，用来盖掉几何锯齿（发丝/低模剪影）；PCSS 在它之上再加半影。0 = 完全硬边。tile 越细同样半径吃掉的 texel 越多，想更软又不出颗粒就降分辨率或提高 PCSS 质量档。")]
         public ClampedFloatParameter softnessRadius = new ClampedFloatParameter(0.005f, 0.0f, 0.2f);
 
         [InspectorName("PCSS 质量档"), Tooltip("只决定 blocker / filter 的采样数，不改变阴影形状。")]
@@ -79,7 +79,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
         [InspectorName("Blocker 搜索半径"), Tooltip("世界单位（米）。它至少要接近半影半径上限，否则半影里的遮挡物会被漏采样、估算值乱跳（表现成斑点）。")]
         public ClampedFloatParameter pcssBlockerSearchRadius = new ClampedFloatParameter(0.02f, 0.001f, 0.2f);
 
-        [InspectorName("半影半径上限"), Tooltip("世界单位（米）：最软能软到什么程度。用世界单位是为了跟 tile 分辨率解耦（texel 当单位的话，4096 的 tile 上同一个数值只有 7mm，看着还是硬边）。")]
+        [InspectorName("半影半径上限"), Tooltip("世界单位（米）：最软能软到什么程度。超出采样预算时会被收窄以免出颗粒（想更软就提高质量档或降低单角色分辨率）。")]
         public ClampedFloatParameter pcssMaxPenumbraRadius = new ClampedFloatParameter(0.04f, 0.001f, 0.2f);
 
         [InspectorName("Blocker 深度偏移"), Tooltip("判定 blocker 时加在接收深度上的偏移（阴影空间 z）：压自遮挡与深度抖动。留一点默认值，避免 blocker 数量在相邻像素间跳变。")]
