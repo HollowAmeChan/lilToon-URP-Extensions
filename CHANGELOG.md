@@ -2,6 +2,21 @@
 
 ## Unreleased
 
+- **逐物体阴影（CS）：补上 PCSS 软阴影**（用户反馈"PCF 边缘锯齿感比较严重"）：
+  - 图集采样从"固定半径 3×3 PCF"升级成 PCSS：blocker search → 用平均遮挡深度估半影 → 按半影做可变半径滤波。
+    形状/质量参数与 `Ho-ShadowCast` 那套同构：`pcssEnabled` / `pcssQuality`(`Low`·`Medium`·`High`·`Ultra`) /
+    `pcssSoftness` / `pcssBlockerSearchRadius` / `pcssMaxPenumbraRadius` / `pcssDepthBias`，发布
+    `_HoCSPcssParams` = `(enabled, softness, blockerRadius, maxPenumbraRadius)`、
+    `_HoCSPcssParams2` = `(depthBias, blockerSamples, filterSamples, 0)`。
+  - **降级即回退**：关闭 / 半影放大 0 / 采样数 0 / 搜索盘里没有 blocker → 回退原来那条 PCF（半径仍是 feature 的「PCF 半径」），不是另一套 shader。
+  - **半影公式用物理形式**（`(接收距离 - 遮挡距离) / 遮挡距离`，reversed-Z 下用 `1 - z`）：ShadowCast 那边除的是接收深度，接收深度接近 0 时半影会被放大到把阴影核心糊亮（实测漏光到 0.376）；换公式后同参数核心保持 0.000。
+  - **参数按 UI 规范分两处**：新「软阴影（PCSS）」分节，Volume 是逐相机真值、feature 是兜底（`HoCharacterShadowRenderConfig.Resolve()` 每相机解析一次，`Build`/帧数据只读解析结果）。
+  - **采样上限防漂移**：`HoCharacterShadowShaderContract` 镜像 HLSL 的 `HO_CS_MAX_PCSS_BLOCKER_SAMPLES = 16` / `HO_CS_MAX_PCSS_FILTER_SAMPLES = 32`，`Validate()` 解析 HLSL 比对（batch 里也跑）。
+  - **新回归 `HoCharacterShadowValidation.ValidatePcss`**（D3D11 + D3D12）：标准 PCSS 摆法（接收面正对光源、投影物悬在光源与接收面之间），量 10%–90% 边宽（沿图像梯度方向）：
+    `pcf width=11px core=0.000 lit=1.000 | pcss width=59px core=0.000 lit=1.000 | softness0 width=11px` —— 边缘明显变宽、
+    核心不漏光、外侧无光环、softness 0 精确回到 PCF。
+  - 文档：`Ho-ShadowCast-PCSS.md` 新增 §6（CS 的那一套 + 公式差异 + 量错过两次的坑）；`Ho-CharacterShadow-Plan.md` §0.4 与 §0.3 UI 表同步。
+
 - **逐物体阴影（CS）：隐藏光/隐藏剔除相机的销毁改成延迟执行**（补上一条的收尾）：
   - `Object.Destroy` 在编辑模式下非法（`Destroy may not be called from edit mode!`），而 `CoreUtils.Destroy`
     在编辑器里走 `DestroyImmediate`，`Dispose()` 又会被 `Create()` 从渲染 / Inspector 回调里调到

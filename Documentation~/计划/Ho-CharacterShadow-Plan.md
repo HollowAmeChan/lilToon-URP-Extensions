@@ -55,6 +55,28 @@ ValidateSceneShadows       URP/Lit 地面 + 场景 caster（再用 lilToon caste
 
 **残余风险**：多接收域（>1 slice）尚未单独验证 —— 同一盏隐藏光上不同 slice 用不同 split 索引，理论上成立（引擎按 `splitRange` 解析），但没实测过两个角色同时在场。级联数不再需要改成 1，**PTP 场景保持 `m_ShadowCascadeCount: 4` 即可**。
 
+### 0.4 软阴影：PCSS（2026-09-22 补）
+
+**起因**：用户反馈"PCF 边缘锯齿感比较严重"。CS 原来只有固定半径的 3×3 PCF（`_HoCSFilterRadius`），边宽与遮挡距离无关，斜边台阶很明显（调试图见 `%TEMP%/HoCSValidation/cs-pcss-pcf.png`）。
+
+**做法**：把 ShadowCast 那套 PCSS 形态搬到 CS 的图集采样上（形态/命名/契约见 `Documentation~/Ho-ShadowCast-PCSS.md` §6）：
+
+- 参数走「软阴影（PCSS）」分组：`pcssEnabled` / `pcssQuality`(Low·Medium·High·Ultra) / `pcssSoftness` / `pcssBlockerSearchRadius` / `pcssMaxPenumbraRadius` / `pcssDepthBias`；**Volume 是逐相机的真值，feature 上是兜底**。
+- 每相机在 `HoCharacterShadowRenderConfig.Resolve()` 里解析一次（settings + Volume 覆盖 + 档位→采样数），`Build` 与帧数据只读解析结果，`RestoreAndPublish` 发布 `_HoCSPcssParams` / `_HoCSPcssParams2`。
+- 关闭 / softness 0 / 采样数 0 / 盘里没有 blocker → 回退 CS 原来的固定半径 PCF（**降级即回退**，不是另一套 shader）。
+- **半影公式用物理形式**（除以遮挡距离，而不是像 ShadowCast 那样除以接收深度）：后者在接收深度接近 0 时会把半影放大到糊掉整片阴影 —— 实测核心漏光到 0.376，换公式后同样参数核心保持 0.000。
+- 采样上限 `16 / 32` 由 C# `HoCharacterShadowShaderContract` 镜像 HLSL 的 `HO_CS_MAX_PCSS_*_SAMPLES`，`Validate()` 解析 HLSL 比对防漂移。
+
+**回归**：`HoCharacterShadowValidation.ValidatePcss`（D3D11 + D3D12）：
+
+```text
+pcf width=11px core=0.000 lit=1.000 | pcss width=59px core=0.000 lit=1.000 | softness0 width=11px  ← PASS
+```
+
+标准 PCSS 摆法（接收面正对光源、投影物悬在光源与接收面之间），量 10%–90% 边宽（沿图像梯度方向）。
+
+**量错过两次，记下来**：① 斜掠的接收面上，PCF 自己就变成 20+px 的锯齿斜坡，量到的是几何不是滤波；② 沿屏幕轴量边宽会被"边与扫描方向的夹角"放大。新加软阴影指标时先确认这个数只反映滤波。
+
 **排查过程中排除的原因（均有实测数据，记录以免重复调查）**：
 
 | 假设 | 实测 |
@@ -90,8 +112,10 @@ CS 是**逐物体组件**型 feature（接收对象是每个角色自己的声�
 | 侧 | 分节 | 内容 |
 | --- | --- | --- |
 | **`HoCharacterShadowVolume`**（调试与逐相机覆盖的落点） | 运行 | 启用、单角色分辨率 |
+| | 软阴影（PCSS） | 启用 PCSS、质量档、半影放大、Blocker 搜索半径、半影半径上限、Blocker 深度偏移 |
 | | 调试 | 调试模式（`Off` / `Atlas` / `Character`）、`Debug In Scene View`、`Debug In Game View`、单角色 tile |
 | **`HoCharacterShadowRendererFeature`** | 运行（兜底） | 启用、单角色分辨率、同时接收域上限、图集边长上限、PCF 半径、深度偏移、法线偏移 |
+| | 软阴影（PCSS，兜底） | 与 Volume 的六个字段一一对应（Volume 未覆盖时生效） |
 | | 声明（只读汇总） | 场景里的 `HoCharacterShadow` 组件 → OB 组 / tile / 盒尺寸 / 状态；图集容量与已分配 tile |
 | | 调试 | 一行 HelpBox → Volume |
 | | 高级 | 渲染时机（只读：固定 `BeforeRenderingShadows`）、调试 Shader、图集 / 剔除 / 剔除光源（只读：feature 自己的隐藏方向光） |
