@@ -1,8 +1,10 @@
 # Ho-GTAO / Ho-SSGI ReSTIR 共享层评估
 
-> 日期：2026-09-09
+> 日期：2026-09-09（2026 文档审核核对：结论仍然成立，已按当前代码更新事实性细节）
 >
 > 结论：当前不合并 GTAO 和 SSGI，也不新增一个“万能 ReSTIR RendererFeature”。先在 Ho-SSGI 内完成 HTrace 风格的 GI reservoir、temporal/spatial reuse 和 validation。只有当 GTAO、SSGI 或后续 DI 确实重复消耗同一套几何/Hi-Z资源时，才抽出共享资源 Feature。
+>
+> 本次核对到的当前事实（结论未变）：Ho-GTAO 仍**没有 reservoir**（history = AO+velocity / depth / normal 三对 ping-pong）；Ho-SSGI 的 reservoir 以 RGBAHalf 保存 color/aux（另有代表方向的 ray 纹理）；HTrace 侧 `HCommonSSGI.hlsl:8-9` 仍是 `ENABLE_SPATIAL_RESTIR 1` / `ENABLE_TEMPORAL_RESTIR 1`（§7 的判断不变）。
 
 ## 1. 先纠正当前语义
 
@@ -11,7 +13,7 @@
 ```text
 HoGeometryBuffer normal/depth
     -> depth pyramid MIP0..3
-    -> horizon search AO
+    -> Bitmask ray march（32-bin visibility bitmask；Ho 只实现这一种 tracing）
     -> AO temporal history + motion/depth validation
     -> bilateral spatial filter
     -> AO output
@@ -31,7 +33,7 @@ opaque camera source + GeometryBuffer
     -> GI resolve
 ```
 
-实现位于 `Runtime/SSGI/HoSSGIRendererFeature.cs` 和 `Runtime/SSGI/Shaders/HoSSGI.shader`。当前布局用两张 RGBAHalf 保存 reservoir color/aux，仍是 HTrace 的第一段移植，不是完整的 HTrace 打包格式。
+实现位于 `Runtime/SSGI/HoSSGIRendererFeature.cs` 和 `Runtime/SSGI/Shaders/HoSSGI.shader`。当前布局用 RGBAHalf 保存 reservoir color/aux（另有代表方向的 ray 纹理），仍是 HTrace 的第一段移植，不是完整的 HTrace 打包格式。
 
 HTrace 的情况容易造成误解：它在 `HRenderSSGI.compute` 中同时生成 `TemporalReservoir` 和 `OcclusionReservoir`。后者是 SSGI tracing 的近距离遮挡辅助，不等于一个独立 Ho-GTAO producer。随后 `HRestirSSGI.compute` 会把 GI reservoir、AO/occlusion、temporal invalidity 和 denoiser guidance 一起处理。HTrace 这样做是为了让同一条 GI ray 的命中、遮挡和滤波互相提供验证信息。
 
