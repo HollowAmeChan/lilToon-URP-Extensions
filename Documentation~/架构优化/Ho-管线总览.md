@@ -188,22 +188,28 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 
 ---
 
-## 6. 实机 Renderer Feature 清单（12 项）
+## 6. Renderer Feature 清单
 
-| # | 实机名 | 现状 |
+> 顺序见 §2；这里只登记各 feature 的现状。`Ho-MetadataBuffer` 已删除，不在清单内。
+
+| # | Feature | 现状 |
 | --- | --- | --- |
-| 1 | Ho-GeometryBuffer | ✅ 几何轴 |
-| 2 | ~~Ho-MetadataBuffer~~ | **已删除**（R6/R7）；职责拆给 OB（身份）/ SB（表面）/ AC（合成） |
-| 3 | Ho-GTAO | ✅ 自研 AO（原 HTrace AO 占位已替换） |
-| 4 | Ho-PlanarReflection | ✅ PLR source；opaque ForwardLit 消费，特殊 composite 默认关闭 |
-| 5 | Ho-WeightedOIT | ✅ |
-| 6 | Ho-ShadowCast | ✅ 附加灯 cast 组（PCSS 未做，见占位文档） |
-| 7 | Ho-SubsurfaceScattering | ✅ |
-| 8 | Ho-CharacterSpecialization | ✅ 眼透 / 发影 / 脸色 / 轮廓 |
-| 9 | Ho-SSGI | ✅ 自研 GI（含 `gisexclude`；描边白边是已知问题） |
-| 10 | Ho-ScreenProcess | ✅ 语义屏幕效果（遮罩吃 AC/OB 的覆盖率） |
-| 11 | Ho-ImageProcess | ✅ 最终图像链 |
-| 12 | Ho-DebugTile | 调试时开启 |
+| 1 | Ho-GeometryBuffer | ✅ 几何轴（normal / depth / 几何覆盖率；描边视觉壳与 sky 为可选输出） |
+| 2 | Ho-ObjectBuffer | ✅ 身份轴（4 层 `(IdentityId, 覆盖率)` + 朝向；自建 MSAA resolve，与相机 AA 解耦） |
+| 3 | Ho-SurfaceBuffer | ✅ 表面轴（五张数值图 + owner + 语义 lane；单采样） |
+| 4 | Ho-AttributeComposite | ✅ 语义遮罩与合成属性的唯一逻辑入口（Selection 池 + typed 查询门面 + runtime catalog） |
+| 5 | Ho-GTAO | ✅ 自研 AO（原 HTrace AO 占位已替换） |
+| 6 | Ho-PlanarReflection | ✅ PLR source；opaque ForwardLit 消费，特殊 composite 默认关闭 |
+| 7 | Ho-WeightedOIT | ✅ |
+| 8 | Ho-ShadowCast | ✅ 附加灯 cast 组（自带 PCSS，默认开；专用 cast 组只规划） |
+| 9 | Ho-SubsurfaceScattering | ✅ |
+| 10 | Ho-CharacterSpecialization | ✅ 眼透 / 发影 / 脸色 / 轮廓 |
+| 11 | Ho-SSGI | ✅ 自研 GI（含 `gisexclude`；描边白边是已知问题） |
+| 12 | Ho-ScreenProcess | ✅ 语义屏幕效果（遮罩吃 AC/OB 的覆盖率） |
+| 13 | Ho-ImageProcess | ✅ 最终图像链 |
+| 14 | Ho-DebugTile | 调试时开启 |
+
+另有一个独立入口 `Ho-Transparent`：通用透明绘制调度器（接入的 shader 用 `_HoTransparentActive` 跳过自身的 `UniversalForward`，避免重复绘制；它不是 OIT resolve），细节见 `TransparentPass.md`。
 
 **场景基线**（朱木古堂 / `New Scene.unity`）：40 盏灯 = 1×Directional（软阴影）+ 39×Point（全无阴影），
 是多光 + ShadowCast 收集的用例场景；Volume Profile 走当前新栈无 Missing；舞台 55 个材质与角色共用 lilToon 变体家族；
