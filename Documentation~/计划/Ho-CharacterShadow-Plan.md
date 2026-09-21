@@ -1,10 +1,59 @@
 # Ho-CharacterShadow（CS）计划
 
-日期：2026-09-21。状态：规划，尚未实现。本文是角色专用高精度投影的唯一现行计划，已合并并取代旧“专用 Cast 组”占位方案。
+日期：2026-09-21。状态：首版实现与验证记录，保留设计边界。本文是角色专用高精度投影的唯一现行文档，已合并并取代旧“专用 Cast 组”占位方案。
 
 本轮已按用户意见收紧范围：**服务 NPR、画面优先；只做天光的角色局部高精度 cast；在 lilToon 中仍是现有环境投影；全场景 caster 候选；不做来源分类或 caster → receiver 美术关系；调试只看投影图。**
 
-这里的“天光”具体指当前 URP 主方向光（太阳光）的实时 cast，不将 SH/APV/天空环境漫反射重新定义为一盏投影灯。本轮只改规划，未修改渲染实现，未运行 Unity 场景验收。
+这里的“天光”具体指当前 URP 主方向光（太阳光）的实时 cast，不将 SH/APV/天空环境漫反射重新定义为一盏投影灯。实现位于 Extensions 与 lilToon，未修改 HoUrp 源码。
+
+## 0. 首版使用与实际验证
+
+1. 在 Renderer Data 添加 `HoCharacterShadowRendererFeature`。主方向光开启 Shadows，URP 支持主光阴影。
+2. 在预制件根节点添加 `Rendering/Ho-CharacterShadow`，引用已有 `HoObjectBufferGroup`。OB 部件中指定的 Renderer 是接收对象；`Receiver Parts` 留空接收全组，也可填写已有部件名。一个 OB 组使用一个 CS 组件。
+3. 点“从接收对象计算包围盒”，然后用场景手柄调整 Anchor / Center / Size，确保动作范围留在盒内。自动计算是一次性工具，不会每帧跟随蒙皮收缩。
+4. Feature 中调分辨率、PCF 半径与 bias；默认每 tile 2048，最大 16 个接收域、最大 atlas 边长 8192，受设备纹理上限限制。容量不足不降低分辨率，对未分配角色回退普通投影并显示状态。
+5. Feature 的 Debug Mode 选 Atlas 看整图，Character 按组件显示的 Tile 编号放大查看。组件 Inspector 显示深度范围和世界单位/texel；场景中可编辑角色盒。当前没有额外的光空间视锥 Gizmo，也没有最终阴影 AOV。
+
+无需改材质；无需为 CS 单独开启 OB 的屏幕纹理绘制。lilToon 原有接收开关、Mask 和各层接收强度继续有效。
+
+当前实现用 `CullContextData.Cull` 和 `CullShadowCasters` 为每个局部域生成独立原生 shadow renderer list；未借用主相机绘制列表。一个隐藏、禁用渲染的正交相机提供完整的光空间 CameraProperties，仅用于构建剔除参数；保留观察相机的场景范围和 LOD 参数。场景 Renderer/Terrain 的 bounds 每相机收集一次用于收紧深度范围，真正绘制仍由 Unity 的 ShadowCaster 列表处理，未用手工 DrawRenderer 复刻规则。后续可在不变更材质接口的前提下优化 bounds 收集。
+
+验证入口：`HoLil/Validation/Validate Ho-CharacterShadow` 检查投影计算；`HoCharacterShadowValidation.ValidateRendering` 为独立 Unity batch 工程的 GPU 验证入口，不在用户打开的编辑器里创建测试场景。
+
+已在 Unity 6000.3.15f1 / D3D11 的隔离工程验证：编译；上游 caster 扩大 Z 而不改变 X/Y；无关 caster 不扩大深度；接收盒覆盖；屏幕外 ShadowsOnly 投影；相机拉远 5 倍；Cast Off、组件禁用、接收部件筛选、Feature 禁用/恢复的回退；atlas 调试；lilToon 实际材质的明暗响应。原始 CS 探针测得近处/远处遮挡值 0、取消投影与禁用回退值 1。
+
+修复过的距离回归：仅替换观察相机的 cullingMatrix/planes/origin，不会替换内部 CameraProperties。原实现拉远后可能得到空 caster 列表，进而用全亮的 CS 替换普通天光阴影。现在由独立正交剔除相机提供一致属性，深度搜索范围不再错误依赖观察相机距离。空 caster 查询仍表示有效的“未遮挡”，但不创建无 caster 的原生绘制列表。
+
+### 0.1 已知未修：局部图集与相机距离相关（2026-09-21 调查）
+
+**现象（用户场景）**：相机/角色离远后角色整体阴影消失（CS 与普通主光阴影一起没了）。隔离工程里能稳定复现同一机制的另一种方向：**观察相机在近处时局部图集整块为空，远了才有内容**。
+
+**复现入口**：`HoCharacterShadowValidation.ValidateDistanceRendering`（batch）。相机沿固定方向从 240 m 拉到 8 m，逐个记录 lilToon 探针可见度与 atlas tile 深度。当前结果：
+
+```text
+casc1  240m..8m   vis=0.000  atlas≈0.98   ← 全部正常
+casc4  240m/120m  vis=0.000  atlas≈0.98
+casc4   60m..8m   vis=1.000  atlas=0.000  ← 图集整块为空，CS 静默失效
+```
+
+**已确认的触发条件**：URP Asset 的**主光阴影级联数 > 1**（`m_ShadowCascadeCount: 4`）。改成 1 后，正交/透视、有无大地面、8–240 m 全部正常。PTP 场景当前正是 4 —— **先把级联数改成 1 即可立刻恢复远处阴影**（代价是主光级联质量下降，属临时规避）。
+
+**已排除的原因（均有实测数据）**：
+
+| 假设 | 实测 |
+| --- | --- |
+| 图集是 transient，内存被复用 | 改成 feature 持有的持久 RTHandle + `ImportTexture` 后现象不变 |
+| 剔除参数泄漏观察相机状态（lodParameters / isOrthographic / cullingOptions） | 改成完全由光空间剔除相机生成参数后现象不变（`lodCam`、`isOrtho` 已与相机无关） |
+| `Allocator.Temp` 数组提前 Dispose（context 命令延迟执行） | 去掉提前 Dispose 后现象不变（该改动作为安全性修正保留） |
+| caster 材质对相机状态反应（距离淡出 / LOD crossfade） | 换成极简 ShadowCaster 材质后现象相同 |
+| 逐 split 的 shadow caster 剔除 | 整个跳过 `CullShadowCasters`，或按级联数发布多份 split，现象都不变 |
+| 用普通 `ShaderTagId("ShadowCaster")` 列表绕开 Unity 的 shadow 列表 | 该路径在本 pass 里完全不绘制（atlas 全 0） |
+
+**结论**：局部图集的绘制内容由 **Unity 内部“该光源 + 当前相机”的 shadow 状态**决定，我们的自定义 slice 只在部分相机状态下被采纳；级联数 > 1 且观察相机不在自己的级联 0 里时就会得到空图集。真正的修法有两条（都未做）：① 让局部 cast 不再依赖“光源的 shadow 列表”，改成自己驱动 caster（需要跨仓加一个可独立驱动的 caster pass，或找到等价的原生绑定方式）；② 在 URP fork 里把该光源的 split 布局替换成局部 slice。**修好之前，级联数 > 1 的场景不能把 CS 当作可靠的阴影来源。**
+
+透明/OIT、XR、大规模角色、动画蒙皮边界与 D3D12 尚未做场景验收；旧式 Execute 路径已提供，但当前验证工程使用 RenderGraph。不要将这些未验收项等同于已支持。真实角色场景还需美术调节包围盒和 bias。
+
+下文是设计约束与后续验收清单；遇到实现状态差异，以本节和源码为准。
 
 ## 1. 功能边界
 
