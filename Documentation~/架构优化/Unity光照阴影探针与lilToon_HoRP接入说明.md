@@ -1,16 +1,11 @@
-> **已过时（R6/R7）**：本文写作时 MetadataBuffer 还在。它已在 R6（摘槽）／R7（消费者换源 + 整块删除）中删掉：`maskId` 与自定义通道归 OB + AC，surface 族归 SB。当前架构以 `Documentation~/架构优化/Ho-*.md` 与 `CHANGELOG.md` 为准。
-
 # Unity 光照、阴影与探针：lilToon / HoRP 混合实现与接入说明
 
-> 状态：Draft v0.1
->
-> 更新时间：2026-09-08
->
-> 适用范围：Unity 6000.x、URP 17.x、本地 lilToon fork 2.3.x、lilToon-URP-Extensions、Ho-GTAO / Ho-GI 计划。
->
-> 本文目的：建立一份工程认知文档，说明 Unity 中光照、阴影、Light Probe、Adaptive Probe Volume、Reflection Probe、Lightmap、GTAO、SSGI 等系统如何组合，以及它们当前如何被 lilToon 和 HoRP 消费。
->
-> 反射方案、反射输入契约和后续实现路线不在本文维护；统一查看 `Documentation~/ReflectionPipelineDesign.md`、`Documentation~/PlanarReflection.md` 与 `Documentation~/架构优化/Ho-管线总览.md`。本文只保留 Reflection Probe 的 Unity 背景和验证方法。
+> 状态：**现行参考手册（2026 文档审核时重校）**。本文是“Unity 光照系统 ↔ lilToon 消费 ↔ HoRP 增强”的工程认知文档，不是架构契约；契约看 `Ho-管线总览.md` / `Ho-*.md` / `LILTOON_CHANNEL_CONTRACT_V1.md`。
+> 适用范围：Unity 6000.x、URP 17.x、本地 lilToon fork、lilToon-URP-Extensions（Ho-GTAO / Ho-SSGI 已实现并接入）。
+> **本次重校范围**：① §0/§1 的 Unity 侧事实（通用知识，未逐条重验）；② §2 的 lilToon 消费路径与“语义而非实现名”原则；③ §3 的编译工作表、设置入口、朱木古堂实测基线（**已按当前 `PC_Renderer.asset` / `lilToonSetting.json` 重新扫描**）；④ §4 的推荐基线与操作路径；⑤ §5/§6 任务与参考。
+> 写作时仍存在的 `MetadataBuffer` 已在 R6/R7 删除（身份→OB、表面→SB、语义遮罩→AC）；凡本文提到“材质/对象语义 buffer”的地方一律按 **OB + AC + SB** 读。
+> **数字口径**：文中“52 个生成 Shader / 47 个命中 `ProbeVolumeVariants.hlsl`”是 2026-09-08 写作时的数；2026 文档审核重扫为 **54 个输出 / 49 个命中**（Lite 家族仍为 12 个）。其余历史数字保留原样，读到时按本条换算。
+> 反射方案、反射输入契约和后续实现路线不在本文维护：见 `Documentation~/ReflectionPipelineDesign.md`、`Documentation~/PlanarReflection.md`、`Documentation~/架构优化/Ho-管线总览.md`。本文只保留 Reflection Probe 的 Unity 背景与验证方法。
 
 ---
 
@@ -154,7 +149,7 @@ GeometryBuffer normal/depth
 
 它的强项是接触暗部、缝隙、脚底和局部结构；弱点是屏幕外物体不可见、远距离不稳定、容易产生 halo 或 temporal 拖影。
 
-当前 Ho-GTAO 计划采用 GeometryBuffer 作为唯一几何输入，输出公共 `_HoAOTexture`，材质强度和 mask 留在消费端。[LILTOON_GTAO_PLAN.md](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/架构优化/LILTOON_GTAO_PLAN.md)
+当前 Ho-GTAO 以 GeometryBuffer 作为唯一几何输入，输出公共 `_HoAOTexture`（0..1 visibility，**生产端不烘焙强度**），材质强度与 mask 留在消费端。[LILTOON_GTAO_PLAN.md](D:/Unity_Fork/lilToon-URP-Extensions/Documentation~/架构优化/LILTOON_GTAO_PLAN.md)
 
 ### 1.7 GI / SSGI：动态间接光增强
 
@@ -228,7 +223,7 @@ Lightmap/APV 和 Reflection Probe 可以在同一编辑器工作流中触发，�
 | Camera Opaque | 相机不透明颜色拷贝 | URP `UniversalResourceData.cameraOpaqueTexture`；需要 Copy Color/输入声明 | `_CameraOpaqueTexture`、`SampleCameraColor` 或 lilToon 的 `LIL_GET_BG_TEX` | 当前帧资源 |
 | Geometry Buffer | HoRP 自定义 normal/depth TextureHandle | `HoGeometryBufferPass`、`HoGeometryBufferShaderConstants` | `_HoGeometryBufferNormalDepthTexture`、`_HoGeometryBufferDepthTexture` | 当前帧资源 |
 | GTAO | Ho-GTAO 输出 visibility RT | `HoGTAORendererFeature`、`HoGTAOShaderConstants.AOTextureId` | `_HoAOTexture`，语义为 0..1 visibility | 当前帧资源 |
-| Ho-GI/SSGI | Ho-GI 输出的颜色/因子 RT | 未来 RendererFeature 的 `TextureHandle` 和 channel constants | 推荐注册为 `_HoGITexture` 或语义等价资源，不让材质绑定算法名 | 当前帧资源，可选 temporal history |
+| Ho-GI/SSGI | Ho-SSGI 输出的颜色 RT | `HoSSGIRendererFeature`、`HoSSGIShaderConstants` | **`_HoGITexture`**（已实现；材质侧目前仍由 fullscreen composite 叠加，不是材质采样） | 当前帧资源，带 temporal history |
 
 几个关键 Unity API 的意义：
 
@@ -623,9 +618,9 @@ Ho-ShadowCast 通过 RenderGraph 创建 atlas，再调用 `SetGlobalTextureAfter
 | ShadowCaster | `lil_pass_shadowcaster.hlsl` | 所有主要 URP 模板包含 ShadowCaster Pass | **实际支持** | 逐材质检查 Alpha Clip、Cull、Bias |
 | Main Light Shadow | toon shadow / shadowmix | DefaultDirect 等模板按需保留主光 shadow variants | **实际支持，但由模板选择决定** | Standard 与 Direct 变体分别验证 |
 | Additional Light Shadow | Additional Light keywords | 部分模板显式 skip `_ADDITIONAL_LIGHT_SHADOWS` | **按模板/材质变体变化** | 不要假设所有 lilToon 材质都支持附加灯阴影 |
-| URP 内置 SSAO | 原始 shader 仍可见兼容逻辑 | 模板有 `lil_skip_variants_ao`；当前 Ho-GTAO 计划移除旧消费路径 | **不应作为 HO 主路径** | 统一使用 `_HoAOTexture` 语义 |
-| Ho-GTAO | 材质消费 `_HoAOTexture` 的计划与 Runtime Feature | Ho-GTAO 生产端正在替换 HTrace | **规划/实现中** | 完成时序、材质采样和 debug 验收 |
-| Ho-GI / SSGI | 管线规划与通道契约 | 不属于 lilToon 原生 Shader 变体 | **HoRP 管线增强** | 以 `gi` 语义接入，排除描边/非物理表面 |
+| URP 内置 SSAO | 原始 shader 仍可见兼容逻辑 | 模板有 `lil_skip_variants_ao`；lilToon 已**解耦**（不再消费 `_ScreenSpaceOcclusionTexture` / `_SCREEN_SPACE_OCCLUSION` / `_AmbientOcclusionParam`） | **不作为 HO 路径**；内置 SSAO 本体保留不动 | 统一使用 `_HoAOTexture` 语义 |
+| Ho-GTAO | 材质采样 `_HoAOTexture`，`Runtime/GTAO/` 生产 | 已实现并在 Renderer 中启用 | **已实现** | 已完成时序/采样/debug 接入；余下是画面验收与 MSAA 轮廓复合 |
+| Ho-GI / SSGI | `Runtime/SSGI/`（含 `gisexclude`） | 不属于 lilToon 原生 Shader 变体 | **已实现**（当前 Renderer 中 `m_Active: 0`） | 以 `gi` 语义接入，排除描边/非物理表面 |
 | Planar Reflection | HoPlanarReflection + lilToon reflection intent | 独立 RendererFeature / ScreenProcess | **HoRP 扩展支持** | 与 Reflection Probe/SSR 做 fallback 链 |
 | Refraction | `_CameraOpaqueTexture` + Reflection Probe env | DefaultRefraction 保留环境反射路径 | **实际支持，但依赖 camera opaque** | 明确透明输入契约和排序 |
 
@@ -704,11 +699,17 @@ lilToon：D:\Unity_Fork\lilToon\Assets\lilToon
 | Reflection Probe | `New Scene.unity` 未发现 ReflectionProbe 组件 | 当前画面不构成局部 Reflection Probe 实证，只能验证 Shader 变体存在 |
 | URP depth | `PC_RPAsset.m_RequireDepthTexture: 1` | `_CameraDepthTexture`/Ho Geometry 相关消费有基础条件 |
 | URP opaque | `PC_RPAsset.m_RequireOpaqueTexture: 1` | lilToon Refraction/Camera Opaque 路径有基础条件 |
-| Ho Geometry/Metadata | Renderer 中均启用 | 标准 lilToon 输出带 `HoGeometryBuffer`、`HoMetadataBuffer` Pass |
-| Ho-GTAO | Renderer 中配置，当前 `m_Active: 1` | 当前基线已启用 Ho-GTAO；材质 AO 路径与 GeometryBuffer/GTAO 时序需要验收 |
-| HTrace AO | Renderer 中配置，但 `m_Active: 0` | 当前基线未启用 HTrace AO |
-| HTrace SSGI | Renderer 中配置，当前 `m_Active: 1` | 当前基线已启用 HTrace SSGI；它属于屏幕空间增强，不是 lilToon 原生 Shader 变体 |
-| Ho-ShadowCast | 一档 `m_Active: 1`，另一档 `m_Active: 0` | 启用档生产额外阴影 atlas，不等于主光 ShadowMap |
+| Ho 生产轴 | Renderer 中启用 | 标准 lilToon 输出带 `HoGeometryBuffer` / `HoObjectBuffer` / `HoSurfaceBuffer` Pass（`HoMetadataBuffer` 已删除，条目留作 Missing Script） |
+| Ho-AttributeComposite | Renderer 中 `m_Active: 1` | 语义遮罩与合成属性的唯一逻辑入口；CS / SP / SSS / PLR 都经它取遮罩 |
+| Ho-GTAO | `m_Active: 1` | 已启用；输出公共 `_HoAOTexture`，材质 AO 路径与 GB 时序需验收 |
+| HTrace AO | `m_Active: 0` | 已停用（自研 GTAO 取代） |
+| HTrace SSGI | `m_Active: 0` | 已停用 |
+| Ho-SSGI | `m_Active: 0` | 自研 GI 已在 Renderer 中配置但**当前未启用**；它是屏幕空间增强，不是 lilToon 原生变体 |
+| Ho-ShadowCast | 两档均 `m_Active: 1` | 生产额外阴影 atlas，不等于主光 ShadowMap |
+| Ho-PlanarReflection / Ho-WeightedOIT / Ho-SubsurfaceScattering / Ho-CharacterSpecialization | 均 `m_Active: 1` | 现行效果链；`Ho-DebugTile` 为 `m_Active: 0`（调试时才开） |
+
+> **2026 文档审核重扫（`Assets/Settings/PC_Renderer.asset`）**：当前列表里还留着 **4 类已删除脚本的死条目**（`HoMetadataBufferRendererFeature`、`HoAovRendererFeature`、`HoPostProcessRendererFeature`、`ShoostPostProcessRendererFeature`，`m_Active` 有 1 有 0），它们在 Inspector 里显示为 Missing Script；另有 **同名 feature 重复条目**（`HoCharacterSpecialization`、`Ho-ShadowCast`、`Ho-WeightedOIT`、`Ho-SubsurfaceScattering`、`HoAov`、`HoPostProcess`、`Shoost` 各两份）。这两类都属于**资产卫生**，不改变已生效的行为，但会让“到底跑了几个 feature”难以判断——建议在实机验收前清理。
+> 同时重扫了 `ProjectSettings/lilToonSetting.json`：`LIL_OPTIMIZE_USE_LIGHTMAP = false`（Lightmap 变体仍被主动裁掉）、`LIL_OPTIMIZE_USE_PROBEVOLUMES = true`（APV 变体已生成）——与 §3.10、§3.2 的结论一致。
 
 `PC_RPAsset.asset` 的相关设置见 [PC_RPAsset.asset](D:/Unity_Project/BREAK_URP/Assets/Settings/PC_RPAsset.asset)，测试 Shader 设置见 [lilToonSetting.json](D:/Unity_Project/BREAK_URP/ProjectSettings/lilToonSetting.json)。
 
@@ -917,9 +918,9 @@ Standard（lts*.shader）：238
 4. 只有出现明确的大规模远景、透明层或 Shader 编译瓶颈时，才重新评估 Lite。
 5. 如果未来需要 Lite，也应把它定义为明确的“质量降级 preset”，而不是和 Standard 混用后再猜测功能差异。
 
-### 3.6 52 个输出 Shader 家族的用途与宏环境
+### 3.6 输出 Shader 家族的用途与宏环境
 
-当前 `D:\Unity_Fork\lilToon\Assets\lilToon\Shader` 有 52 个生成 Shader，按用途分为四个家族：
+当前 `D:\Unity_Fork\lilToon\Assets\lilToon\Shader` 有 **54** 个生成 Shader（写作时 52；本轮重扫），按用途分为四个家族：
 
 | 家族 | 数量 | 文件前缀 | 主要用途 | 关键宏/限制 |
 |---|---:|---|---|---|
@@ -1062,11 +1063,12 @@ ShadowCaster
 DepthOnly
 DepthNormals
 HoGeometryBuffer
-HoMetadataBuffer
+HoObjectBuffer
+HoSurfaceBuffer
 MotionVectors
 ```
 
-如果一个外部材质只 UsePass 了 Forward，而没有复用 Geometry/Metadata/Shadow Pass，它就不能自动参与 HoRP 的全部语义通道。
+如果一个外部材质只 UsePass 了 Forward，而没有复用 Geometry/Object/Surface/Shadow Pass，它就不能自动参与 HoRP 的全部语义通道。
 
 ### 3.7 当前项目的宏开关与真实功能状态
 
@@ -1102,12 +1104,12 @@ MotionVectors
 | APV | HLSL 存在 | **是，适用输出含 `ProbeVolumeVariants.hlsl`** | URP Asset 已启用 APV，场景数据待烘焙 |
 | Reflection Probe | HLSL/URP variants 存在 | **是，含 blending/box/atlas** | 场景未放 ReflectionProbe，未实际验证 |
 | Refraction | 独立 `lts_ref` 输出 | 不属于当前标准场景 Shader | 工程有 opaque texture，但朱木古堂材质主要是 `lts/lts_cutout` |
-| Ho Geometry/Metadata | HoRP Pass 存在 | **是** | 当前场景 Renderer 已启用对应 Feature |
-| Ho-GTAO | 材质属性和 `_HoAOTexture` 存在 | **是** | 当前 Renderer 同时存在 HTrace AO 与 Ho-GTAO，需按顺序验收 |
-| Ho-GI/SSGI | 管线 Feature | 不是 lilToon 固有宏 | HTrace SSGI 当前 `m_Active: 1`，后续换 Ho-GI |
+| Ho Geometry/Object/Surface | HoRP Pass 存在 | **是** | 当前场景 Renderer 已启用对应 Feature（身份→OB、表面→SB、语义遮罩→AC） |
+| Ho-GTAO | 材质属性与 `_HoAOTexture` 存在 | **是** | 当前 Renderer 已启用 Ho-GTAO；HTrace AO 已停用 |
+| Ho-GI/SSGI | `Runtime/SSGI/` 的 feature | 不是 lilToon 固有宏 | Ho-SSGI 已实现，但当前 Renderer 里 `m_Active: 0`（HTrace SSGI 也已停用） |
 | ShadowCaster | Pass 存在 | **是** | Standard/Cutout 都可被 ShadowMap/HoRP 重绘 |
 
-这张表比“lilToon 支持 Lightmap/Probe/Reflection”更接近当前工程真实情况：**支持能力必须同时通过源码、生成文本、ProjectSettings 和测试场景资产四层证据确认。** 当前朱木古堂的 Ho-GTAO/SSGI 已激活，HTrace AO/Planar Reflection 仍未激活；Renderer 资产状态变化后必须重新核对这张表。
+这张表比“lilToon 支持 Lightmap/Probe/Reflection”更接近当前工程真实情况：**支持能力必须同时通过源码、生成文本、ProjectSettings 和测试场景资产四层证据确认。** 本轮重扫（2026 文档审核）后的状态是：Ho-GTAO / ShadowCast / OIT / SSS / PLR / 角色特化 / AC 已启用，**Ho-SSGI 与 HTrace AO/SSGI 均未启用**，Renderer 资产里还留着已删脚本的 Missing Script 条目与同名重复条目（见 §3.5 备注）。
 
 ### 3.9 P0 调查结果与决策
 
@@ -1600,7 +1602,7 @@ lilToon APV variants          已生成
 
 - [x] 扫描修复前的 `lts.shader`、`lts_cutout.shader` 和全部 52 个输出，确认 APV 变体缺失。
 - [x] 实现并启用“条件启用 APV 变体、不新增 Shader 文件”的路线。
-- [x] 重新生成并确认 47/52 个适用输出包含 `ProbeVolumeVariants.hlsl`。
+- [x] 重新生成并确认 49/54 个适用输出包含 `ProbeVolumeVariants.hlsl`（写作时口径 47/52）。
 - [x] 确认当前朱木古堂不需要 `DIRLIGHTMAP_COMBINED`；未来启用 Lightmap 后再单独验收方向性路径。
 - [x] 标记 Lite 家族不适合高质量 Reflection Probe blending/box projection 场景。
 - [x] 在 Unity Editor 中生成 APV 开关打开后的真实 Shader。
