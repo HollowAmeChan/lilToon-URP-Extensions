@@ -10,14 +10,17 @@ namespace lilToon.URP.Extensions.CharacterShadow
     {
         internal static readonly List<HoCharacterShadow> Active = new List<HoCharacterShadow>();
 
-        [Tooltip("接收高精度天光投影的 OB 组。CS 不改写对象身份或材质。")]
+        [InspectorName("接收组"), Tooltip("接收高精度天光投影的 OB 组。CS 不改写对象身份或材质；一个 OB 组只能有一个 CS 组件。")]
         public HoObjectBufferGroup objectGroup;
-        [Tooltip("留空接收全组；否则填写 OB 中已有的部件名。")]
+        [InspectorName("接收部件"), Tooltip("留空接收整组；否则只接收这里列出的 OB 部件名（名字必须与组里的部件名一致）。")]
         public List<string> receiverParts = new List<string>();
+        [InspectorName("包围盒锚点"), Tooltip("留空时用本物体。Center/Size 在该锚点的本地空间里解释，场景手柄直接编辑这个盒。")]
         public Transform boundsAnchor;
+        [InspectorName("中心"), Tooltip("接收盒在锚点本地空间的中心。")]
         public Vector3 center = new Vector3(0, 1, 0);
+        [InspectorName("尺寸"), Tooltip("接收盒在锚点本地空间的尺寸。必须覆盖角色的动作范围；自动计算是一次性工具，不会每帧跟随蒙皮。")]
         public Vector3 size = new Vector3(2, 2.5f, 2);
-        [Range(0, 0.25f), Tooltip("包围盒边缘回退普通天光投影的比例。")]
+        [InspectorName("边缘回退"), Range(0, 0.25f), Tooltip("包围盒边缘回退普通天光投影的比例，用来软化盒边界的接缝。")]
         public float edgeBlend = 0.05f;
 
         public Transform Anchor => boundsAnchor != null ? boundsAnchor : transform;

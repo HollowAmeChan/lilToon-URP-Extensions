@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using lilToon.URP.Extensions.CharacterShadow;
+using lilToon.URP.Extensions.ObjectBuffer;
 using UnityEditor;
 using UnityEditor.IMGUI.Controls;
 using UnityEngine;
@@ -9,23 +10,137 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
     [CustomEditor(typeof(HoCharacterShadow))]
     public sealed class HoCharacterShadowEditor : UnityEditor.Editor
     {
+        private static readonly Color RuntimeColor = new Color(0.46f, 0.64f, 0.92f);
+        private static readonly Color StatusColor = new Color(0.45f, 0.64f, 0.96f);
+
+        private static bool showRuntime = true;
+        private static bool showStatus = true;
+
         private readonly BoxBoundsHandle boundsHandle = new BoxBoundsHandle();
+        private SerializedProperty objectGroup;
+        private SerializedProperty receiverParts;
+        private SerializedProperty boundsAnchor;
+        private SerializedProperty center;
+        private SerializedProperty size;
+        private SerializedProperty edgeBlend;
+
+        private void OnEnable()
+        {
+            objectGroup = serializedObject.FindProperty("objectGroup");
+            receiverParts = serializedObject.FindProperty("receiverParts");
+            boundsAnchor = serializedObject.FindProperty("boundsAnchor");
+            center = serializedObject.FindProperty("center");
+            size = serializedObject.FindProperty("size");
+            edgeBlend = serializedObject.FindProperty("edgeBlend");
+        }
+
         public override void OnInspectorGUI()
         {
-            DrawDefaultInspector();
+            serializedObject.Update();
             var subject = (HoCharacterShadow)target;
-            EditorGUILayout.HelpBox("只提高指定对象的天光投影精度。场景与其他角色自动参与投影；材质沿用环境投影接收设置。", MessageType.Info);
-            if (GUILayout.Button("从接收对象计算包围盒")) FitBounds(subject);
-            EditorGUILayout.LabelField("当前状态", subject.status);
-            if (subject.atlasSlice >= 0)
+
+            EditorGUILayout.HelpBox(
+                "CS 只提高这个接收盒里的天光投影精度：feature 生成一张围绕盒子的高精度天光深度图，"
+                + "lilToon 在盒内用它替换主光实时阴影采样，盒外回退原采样。场景、其他角色、其他部件只要符合天光"
+                + "普通投影规则都会参与投影。不改材质：仍然沿用 lilToon 原有的接收开关、Mask 与各层接收强度。",
+                MessageType.Info);
+
+            DrawRuntime(subject);
+            DrawStatus(subject);
+
+            serializedObject.ApplyModifiedProperties();
+        }
+
+        private void DrawRuntime(HoCharacterShadow subject)
+        {
+            string summary = (subject.objectGroup != null ? "组 " + subject.objectGroup.groupId : "未指定组")
+                + " / " + FormatSize(subject.size);
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行", summary, RuntimeColor))
             {
-                EditorGUILayout.LabelField("图集 Tile", subject.atlasSlice.ToString());
-                EditorGUILayout.LabelField("投影深度", subject.depthRange.ToString("F3") + " m");
-                EditorGUILayout.LabelField("世界单位 / texel", subject.worldUnitsPerTexel.ToString("F6") + " m");
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                DrawProperty(objectGroup, "接收组");
+                DrawProperty(receiverParts, "接收部件");
+                DrawProperty(boundsAnchor, "包围盒锚点");
+                DrawProperty(center, "中心");
+                DrawProperty(size, "尺寸");
+                DrawProperty(edgeBlend, "边缘回退");
+
+                if (GUILayout.Button("从接收对象计算包围盒"))
+                {
+                    FitBounds(subject);
+                }
+
+                EditorGUILayout.HelpBox(
+                    "「从接收对象计算包围盒」是一次性工具：按当前姿态把接收部件包进去，不会每帧跟随蒙皮收缩。"
+                    + "动作幅度大的角色留出余量，或用场景里的盒手柄直接调整。",
+                    MessageType.None);
             }
         }
 
-        private static void FitBounds(HoCharacterShadow subject)
+        private void DrawStatus(HoCharacterShadow subject)
+        {
+            if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showStatus, "运行状态", subject.status, StatusColor))
+            {
+                return;
+            }
+
+            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                bool hasGroup = subject.objectGroup != null;
+                EditorGUILayout.LabelField("接收组", hasGroup ? LilUrpEditorSectionGui.FormatAvailable(true) : LilUrpEditorSectionGui.FormatAvailable(false));
+                int matched = CountMatchedParts(subject);
+                EditorGUILayout.LabelField("接收部件匹配", matched + " 个");
+                EditorGUILayout.LabelField("状态", subject.status);
+
+                if (subject.atlasSlice >= 0)
+                {
+                    EditorGUILayout.LabelField("图集 Tile", subject.atlasSlice.ToString());
+                    EditorGUILayout.LabelField("投影深度", subject.depthRange.ToString("F3") + " m");
+                    EditorGUILayout.LabelField("世界单位 / texel", subject.worldUnitsPerTexel.ToString("F6") + " m");
+                }
+                else
+                {
+                    EditorGUILayout.HelpBox(
+                        "当前没有分配到图集 tile，lilToon 用的是普通天光投影。常见原因：接收盒不在当前相机视锥内、"
+                        + "图集容量不足（降低单角色分辨率或提高图集上限）、同一个 OB 组挂了多个 CS 组件、"
+                        + "接收部件名对不上、feature 未启用或主方向光没开阴影。",
+                        MessageType.Info);
+                }
+
+                EditorGUILayout.HelpBox(
+                    "Atlas / Character 调试画面在 Ho-CharacterShadow Volume 的「调试」分组里选；"
+                    + "这里只报这个组件的分配结果。",
+                    MessageType.None);
+            }
+        }
+
+        private static int CountMatchedParts(HoCharacterShadow subject)
+        {
+            HoObjectBufferGroup group = subject.objectGroup;
+            if (group == null || group.groupId <= 0) return 0;
+            var renderers = new List<Renderer>();
+            group.GetAssignedRenderers(renderers, subject.receiverParts);
+            return renderers.Count;
+        }
+
+        private static string FormatSize(Vector3 value)
+        {
+            return "盒 " + value.x.ToString("0.00") + "×" + value.y.ToString("0.00") + "×" + value.z.ToString("0.00");
+        }
+
+        private static void DrawProperty(SerializedProperty property, string label)
+        {
+            if (property != null)
+            {
+                EditorGUILayout.PropertyField(property, new GUIContent(label));
+            }
+        }
+
+        private void FitBounds(HoCharacterShadow subject)
         {
             if (subject.objectGroup == null) return;
             var renderers = new List<Renderer>();
@@ -67,27 +182,6 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                     EditorUtility.SetDirty(subject);
                 }
             }
-        }
-    }
-
-    [CustomEditor(typeof(HoCharacterShadowRendererFeature))]
-    public sealed class HoCharacterShadowRendererFeatureEditor : UnityEditor.Editor
-    {
-        private void OnEnable()
-        {
-            serializedObject.Update();
-            var shader = serializedObject.FindProperty("settings").FindPropertyRelative("debugShader");
-            if (shader.objectReferenceValue == null)
-            {
-                shader.objectReferenceValue = AssetDatabase.LoadAssetAtPath<Shader>(
-                    "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/CharacterShadow/Shaders/HoCharacterShadowDebug.shader");
-                serializedObject.ApplyModifiedProperties();
-            }
-        }
-        public override void OnInspectorGUI()
-        {
-            DrawDefaultInspector();
-            EditorGUILayout.HelpBox("CS 只替换角色的主方向光采样。Debug 显示 atlas / 单角色深度图，不改材质输出。单角色分辨率固定，容量不足时回退普通阴影。", MessageType.Info);
         }
     }
 }

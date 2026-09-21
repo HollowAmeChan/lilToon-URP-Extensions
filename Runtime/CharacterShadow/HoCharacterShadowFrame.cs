@@ -23,11 +23,11 @@ namespace lilToon.URP.Extensions.CharacterShadow
         internal float filterRadius;
 
         internal static HoCharacterShadowFrame Build(Camera camera, Light light,
-            Matrix4x4 cameraView, Matrix4x4 cameraProjection, HoCharacterShadowSettings settings)
+            Matrix4x4 cameraView, Matrix4x4 cameraProjection, HoCharacterShadowSettings settings, int resolution)
         {
             var frame = new HoCharacterShadowFrame
             {
-                light = light, resolution = (int)settings.resolution,
+                light = light, resolution = resolution,
                 cameraPosition = camera.transform.position, cameraView = cameraView,
                 cameraProjection = cameraProjection, filterRadius = Mathf.Clamp(settings.filterRadius, 0, 2)
             };

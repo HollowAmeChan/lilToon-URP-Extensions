@@ -40,7 +40,12 @@ namespace lilToon.URP.Extensions.CharacterShadow
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
             LastCullStatus = "add:";
-            if (settings == null || !settings.enabled || pass == null) { LastCullStatus += "noSettings"; return; }
+            if (settings == null || pass == null) { LastCullStatus += "noSettings"; return; }
+            // Per-camera overrides live in Ho-CharacterShadow Volume; an un-overridden field keeps the
+            // RendererFeature value as its fallback.
+            HoCharacterShadowVolume volume = HoCharacterShadowVolume.Resolve();
+            bool enabled = volume != null && volume.enable.overrideState ? volume.enable.value : settings.enabled;
+            if (!enabled) { LastCullStatus += "disabled"; return; }
             Camera camera = renderingData.cameraData.camera;
             if (camera.cameraType != CameraType.Game && camera.cameraType != CameraType.SceneView) { LastCullStatus += "camType"; return; }
             int main = renderingData.lightData.mainLightIndex;
@@ -48,12 +53,19 @@ namespace lilToon.URP.Extensions.CharacterShadow
             if (light == null || light.type != LightType.Directional || light.shadows == LightShadows.None
                 || !renderingData.shadowData.supportsMainLightShadows || HoCharacterShadow.Active.Count == 0)
             { LastCullStatus += $"light(main={main},null={light == null},dir={(light != null && light.type == LightType.Directional)},shadows={(light != null && light.shadows != LightShadows.None)},supports={renderingData.shadowData.supportsMainLightShadows},active={HoCharacterShadow.Active.Count})"; return; }
+            int resolution = volume != null && volume.resolution.overrideState ? (int)volume.resolution.value : (int)settings.resolution;
             var frame = HoCharacterShadowFrame.Build(camera, light, renderingData.cameraData.GetViewMatrix(),
-                renderingData.cameraData.GetProjectionMatrix(), settings);
+                renderingData.cameraData.GetProjectionMatrix(), settings, resolution);
             if (frame.slices.Count == 0) { LastCullStatus += "noSlices"; return; }
             pass.Setup(frame);
             renderer.EnqueuePass(pass);
-            if (settings.debugMode == HoCharacterShadowDebugMode.Off) return;
+
+            HoCharacterShadowDebugMode debugMode = volume != null && volume.debugMode.overrideState ? volume.debugMode.value : settings.debugMode;
+            if (debugMode == HoCharacterShadowDebugMode.Off) return;
+            bool debugInSceneView = volume != null && volume.debugInSceneView.overrideState ? volume.debugInSceneView.value : settings.debugInSceneView;
+            bool debugInGameView = volume != null && volume.debugInGameView.overrideState ? volume.debugInGameView.value : settings.debugInGameView;
+            if (!((camera.cameraType == CameraType.SceneView && debugInSceneView)
+                || (camera.cameraType == CameraType.Game && debugInGameView))) return;
             if (debugMaterial == null)
             {
                 Shader shader = settings.debugShader != null ? settings.debugShader : Shader.Find("Hidden/Ho-CharacterShadow/Debug");
@@ -61,7 +73,8 @@ namespace lilToon.URP.Extensions.CharacterShadow
             }
             if (debugMaterial != null)
             {
-                debugPass.Setup(debugMaterial, settings.debugMode, settings.debugCharacter);
+                int debugCharacter = volume != null && volume.debugCharacter.overrideState ? volume.debugCharacter.value : settings.debugCharacter;
+                debugPass.Setup(debugMaterial, debugMode, debugCharacter);
                 renderer.EnqueuePass(debugPass);
             }
         }

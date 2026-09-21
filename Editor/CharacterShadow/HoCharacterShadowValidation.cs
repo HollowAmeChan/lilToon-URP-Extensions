@@ -162,6 +162,9 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                         camera.transform.LookAt(Vector3.zero);
                         float value = RenderCenter("cs-distance-" + distance.ToString("F0"));
                         // Read the atlas tile itself: 0 = cleared far (empty tile), >0 = caster stored.
+                        // Debug views are gated per view type, so the Game View switch has to be on
+                        // (there is no Volume in this test scene, so the feature fallback applies).
+                        feature.Settings.debugInGameView = true;
                         feature.Settings.debugMode = HoCharacterShadowDebugMode.Character;
                         feature.Settings.debugCharacter = 0;
                         float atlasTile = RenderCenter("cs-atlas-tile-" + distance.ToString("F0"));
@@ -300,10 +303,61 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 camera.orthographic = true;
                 camera.transform.position = nearCameraPosition;
                 camera.transform.LookAt(Vector3.zero);
+                feature.Settings.debugInGameView = true;
                 feature.Settings.debugMode = HoCharacterShadowDebugMode.Character;
                 float atlasDepth = RenderCenter("cs-atlas-debug");
                 Require(atlasDepth > 0.5f, "Atlas debug did not display caster depth");
                 feature.Settings.debugMode = HoCharacterShadowDebugMode.Off;
+                feature.Settings.debugInGameView = false;
+
+                // Volume overrides (the UI contract): 启用 / 单角色分辨率 are per-camera and have to reach the
+                // renderer through Ho-CharacterShadowVolume, while an un-overridden field keeps the feature
+                // fallback. SingleCameraRequest does not run the volume framework, so the stack is updated by
+                // hand here exactly like URP does once per camera. The main stack is mutated in place: a
+                // hand-made stack misses URP's component set and breaks ForwardLights.
+                var profile = ScriptableObject.CreateInstance<VolumeProfile>(); created.Add(profile);
+                HoCharacterShadowVolume volumeComponent = profile.Add<HoCharacterShadowVolume>();
+                var volumeObject = new GameObject("CS Test Volume"); created.Add(volumeObject);
+                var volume = volumeObject.AddComponent<Volume>();
+                volume.isGlobal = true; volume.profile = profile;
+                UniversalAdditionalCameraData additionalData = camera.GetUniversalAdditionalCameraData();
+                VolumeStack volumeStack = VolumeManager.instance.stack;
+                string volumeResult = "volume=skipped(no stack)";
+                try
+                {
+                    if (volumeStack != null)
+                    {
+                        volumeComponent.enable.overrideState = true;
+                        volumeComponent.enable.value = false;
+                        VolumeManager.instance.Update(volumeStack, camera.transform, additionalData.volumeLayerMask);
+                        float volumeDisabled = RenderCenter("cs-volume-disabled");
+                        Require(volumeDisabled > 0.8f, $"Volume 覆盖的启用没有生效（关闭后仍走 CS）: {volumeDisabled:F3}");
+
+                        volumeComponent.enable.value = true;
+                        volumeComponent.resolution.overrideState = true;
+                        volumeComponent.resolution.value = HoCharacterShadowResolution.R512;
+                        VolumeManager.instance.Update(volumeStack, camera.transform, additionalData.volumeLayerMask);
+                        RenderCenter();
+                        float atlasSize = Shader.GetGlobalVector("_HoCSAtlasSize").z;
+                        Require(Mathf.Approximately(atlasSize, 512f), $"Volume 覆盖的单角色分辨率没有生效: {atlasSize:F0}");
+                        volumeResult = $"volume={volumeDisabled:F3}/atlas {atlasSize:F0}";
+                    }
+                    else
+                    {
+                        Debug.LogWarning("[Ho-CS Rendering] 没有可用的 volume stack，跳过量覆盖检查。");
+                    }
+                }
+                finally
+                {
+                    volumeComponent.enable.overrideState = false;
+                    volumeComponent.resolution.overrideState = false;
+                    volume.profile = null;
+                    Object.DestroyImmediate(volumeObject);
+                    created.Remove(volumeObject);
+                    VolumeManager.instance.ResetMainStack();
+                    if (VolumeManager.instance.stack != null)
+                        VolumeManager.instance.Update(VolumeManager.instance.stack, camera.transform, additionalData.volumeLayerMask);
+                }
 
                 Shader toonShader = Shader.Find("lilToon");
                 Require(toonShader != null, "lilToon shader unavailable");
@@ -319,7 +373,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
                 // Existing NPR ambient/ramp response is intentionally retained; unlike the probe,
                 // the final material is not expected to switch between pure black and white.
                 Require(toonLit > toonShadow + 0.05f, $"lilToon reception did not respond: {toonShadow:F3} / {toonLit:F3}");
-                Debug.Log($"[Ho-CS Rendering] PASS: off-screen caster={shadow:F3}, distant={distantShadow:F3}, perspective={perspectiveShadow:F3}, cast-off={noCaster:F3}, disabled fallback={fallback:F3}, identity/feature reset, atlas={atlasDepth:F3}, lilToon={toonShadow:F3}/{toonLit:F3}.");
+                Debug.Log($"[Ho-CS Rendering] PASS: off-screen caster={shadow:F3}, distant={distantShadow:F3}, perspective={perspectiveShadow:F3}, cast-off={noCaster:F3}, disabled fallback={fallback:F3}, identity/feature reset, atlas={atlasDepth:F3}, {volumeResult}, lilToon={toonShadow:F3}/{toonLit:F3}.");
             }
             finally
             {
