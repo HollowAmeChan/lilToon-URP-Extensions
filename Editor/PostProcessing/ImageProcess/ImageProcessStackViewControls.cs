@@ -154,7 +154,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private static bool HandleImageProcessVignetteViewControl(Rect viewRect, Event evt, UnityEngine.Object target, SerializedProperty element)
         {
             SerializedProperty parameters0 = element.FindPropertyRelative("parameters0");
-            EnsureVignetteCustomDefaults(parameters0);
+            EnsureVignetteCustomDefaults(parameters0, element.FindPropertyRelative("parameters1"));
             Vector4 p0 = parameters0.vector4Value;
             Vector2 center = new Vector2(p0.x, p0.y);
             float radius = p0.z;

@@ -933,12 +933,14 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             ApplyImageProcessDefaultPreset(element, effect);
             SetVector4(element, "parameters0", new Vector4(0.5f, 0.45f, 0.9f, 0.35f));
+            SetVector4(element, "parameters1", new Vector4(0.0f, 0.5f, 0.0f, 0.0f)); // 色散默认关：预设观感与旧版一致
         }
 
         private static void ApplyImageProcessStrongVignettePreset(SerializedProperty element, ImageProcessEffect effect)
         {
             ApplyImageProcessDefaultPreset(element, effect);
             SetVector4(element, "parameters0", new Vector4(0.5f, 0.55f, 1.0f, 0.8f));
+            SetVector4(element, "parameters1", new Vector4(0.0f, 0.5f, 0.0f, 0.0f)); // 色散默认关：预设观感与旧版一致
         }
 
         private static void ApplyImageProcessSoftPixelizePreset(SerializedProperty element, ImageProcessEffect effect)
