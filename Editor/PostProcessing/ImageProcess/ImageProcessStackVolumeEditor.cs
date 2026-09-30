@@ -878,7 +878,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                     break;
                 case ImageProcessEffect.VignetteCustom:
                     lineCount += GetCoreLineCount(false, GetVignetteCustomUsesTintMode(element), false, false, false, showAdvanced);
-                    lineCount += 5;
+                    lineCount += 7; // 模式 + 视图控件按钮 + 中心X/Y + 半径 + 柔和度 + 色散开关 + 色散强度
                     break;
                 case ImageProcessEffect.Gradient:
                     lineCount += GetGradientLineCount(element);
