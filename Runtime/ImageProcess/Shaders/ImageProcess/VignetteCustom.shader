@@ -66,7 +66,8 @@ Shader "Hidden/lilToon/URP/ImageProcess/VignetteCustom"
             }
 
             // 色散（可开关）：沿"暗角中心 -> 当前像素"的径向把 R/B 分开采样，G 用原来的中心采样。
-            // 偏移量 = 离中心的距离（按宽高比校正）* 强度 * 16 像素，所以画面中心没有彩边、越靠边缘彩虹越强。
+            // 强度沿用暗角的径向落区（半径以内基本为 0、越过柔和带后最强），所以彩边只出现在暗角边缘；
+            // 偏移量 = 该落区值 * 色散强度 * 16 像素（0..1 强度对应 0..16 像素）。
             // 开关关闭时直接返回传进来的颜色 —— 那两次采样根本不会执行，关掉时逐像素与旧版一致。
             half3 ApplyVignetteDispersion(float2 uv, half3 centerColor)
             {
@@ -79,8 +80,18 @@ Shader "Hidden/lilToon/URP/ImageProcess/VignetteCustom"
                 float aspect = _ScreenParams.x / max(_ScreenParams.y, 1.0);
                 delta.x *= aspect;
                 float distanceFromCenter = length(delta);
+
+                // 色散范围 = 暗角自己的径向落区：半径以内基本没有、越过柔和带后达到最强。
+                // 所以"范围"用「半径 / 柔和度」控制（与压暗同一条曲线），"强弱"用「色散强度」控制，
+                // 且不乘 _Intensity —— 强度只负责压暗，不该顺带改色散。
+                float radius = ResolveRadius();
+                float softness = ResolveSoftness();
+                float edge0 = max(radius - softness, 0.0001);
+                float edge1 = max(radius, edge0 + 0.0001);
+                float edgeAmount = smoothstep(edge0, edge1, distanceFromCenter);
+
                 float2 direction = delta / max(distanceFromCenter, 0.0001);
-                float dispersionPixels = distanceFromCenter * saturate(_LayerParams1.y) * 16.0;
+                float dispersionPixels = edgeAmount * saturate(_LayerParams1.y) * 16.0;
                 float2 offset = direction * dispersionPixels * _BlitTexture_TexelSize.xy;
 
                 half red = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv - offset).r;
@@ -155,7 +166,8 @@ Shader "Hidden/lilToon/URP/ImageProcess/VignetteCustom"
             }
 
             // 色散（可开关）：沿"暗角中心 -> 当前像素"的径向把 R/B 分开采样，G 用原来的中心采样。
-            // 偏移量 = 离中心的距离（按宽高比校正）* 强度 * 16 像素，所以画面中心没有彩边、越靠边缘彩虹越强。
+            // 强度沿用暗角的径向落区（半径以内基本为 0、越过柔和带后最强），所以彩边只出现在暗角边缘；
+            // 偏移量 = 该落区值 * 色散强度 * 16 像素（0..1 强度对应 0..16 像素）。
             // 开关关闭时直接返回传进来的颜色 —— 那两次采样根本不会执行，关掉时逐像素与旧版一致。
             half3 ApplyVignetteDispersion(float2 uv, half3 centerColor)
             {
@@ -168,8 +180,18 @@ Shader "Hidden/lilToon/URP/ImageProcess/VignetteCustom"
                 float aspect = _ScreenParams.x / max(_ScreenParams.y, 1.0);
                 delta.x *= aspect;
                 float distanceFromCenter = length(delta);
+
+                // 色散范围 = 暗角自己的径向落区：半径以内基本没有、越过柔和带后达到最强。
+                // 所以"范围"用「半径 / 柔和度」控制（与压暗同一条曲线），"强弱"用「色散强度」控制，
+                // 且不乘 _Intensity —— 强度只负责压暗，不该顺带改色散。
+                float radius = ResolveRadius();
+                float softness = ResolveSoftness();
+                float edge0 = max(radius - softness, 0.0001);
+                float edge1 = max(radius, edge0 + 0.0001);
+                float edgeAmount = smoothstep(edge0, edge1, distanceFromCenter);
+
                 float2 direction = delta / max(distanceFromCenter, 0.0001);
-                float dispersionPixels = distanceFromCenter * saturate(_LayerParams1.y) * 16.0;
+                float dispersionPixels = edgeAmount * saturate(_LayerParams1.y) * 16.0;
                 float2 offset = direction * dispersionPixels * _BlitTexture_TexelSize.xy;
 
                 half red = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv - offset).r;
