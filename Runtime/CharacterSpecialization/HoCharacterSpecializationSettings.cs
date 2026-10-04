@@ -103,8 +103,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         EnhancedOutlineFogMask = 15,
         [InspectorName("相机角度因子")]
         EyeAngleFactor = 16,
-        [InspectorName("相机角度表")]
-        EyeAngleTable = 17,
+        [InspectorName("参考系视角")]
+        ReferenceFrameView = 17,
         // 脸色扩散链路的四个阶段视图（受光脸输入改造后新增）：
         // ① 源趟采样到的受光脸（未乘语义遮罩）在 `HoCharacterFaceHairDiffuse.shader` pass 0 里写进源色纹理；
         // ②③④ 都在合成趟的调试链里（② 与既有的 7 同内容，这里按"阶段"再给一个入口）。
@@ -200,7 +200,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         [Header("眼睛透过 · 相机角度修正")]
         [InspectorName("启用相机角度修正")]
-        [Tooltip("开启后，眼睛透过会按相机与角色面部朝向的夹角衰减。角色面部朝向由 HoObjectBufferGroup 上的「朝向参考系」提供（Transform，骨骼或空物体均可）。")]
+        [Tooltip("开启后，眼睛透过按 GD ReferenceFrame 与当前相机的夹角衰减。在对象上添加 GD ReferenceFrame 并指定参考骨骼。")]
         [NonSerialized]
         public bool eyeRevealAngleEnabled;
 

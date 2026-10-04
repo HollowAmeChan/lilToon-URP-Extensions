@@ -1,9 +1,8 @@
 using System.Collections.Generic;
-// `HoFaceAxis` 已随 MB 的删除搬到本命名空间（`Runtime/ObjectBuffer/HoFaceAxis.cs`）：
-// 枚举按 int 序列化、成员顺序没动，旧场景里的朝向配置照旧生效。
 using UnityEngine;
 using UnityEngine.Serialization;
 using UnityEngine.Scripting.APIUpdating;
+using lilToon.URP.Extensions.GeometryData;
 
 namespace lilToon.URP.Extensions.ObjectBuffer
 {
@@ -58,21 +57,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         [Tooltip("具名的选区（OB 架构 §5.11）。名字全局唯一；材质侧只能引用这里的名字。")]
         public List<HoObjectBufferSelectionEntry> selections = new List<HoObjectBufferSelectionEntry>();
 
-        [InspectorName("面部朝向")]
-        [Tooltip("确定角色面部朝向的 Transform——可以是骨骼，也可以是一个朝向正确的空物体。仅供各消费者系统读取（眼透相机角度修正、未来的 SDF 等）；留空表示未提供。以 Transform 的局部轴配合下方三个轴向设置来定义脸前/右/上。")]
-        public Transform faceBone;
-
-        [InspectorName("脸前轴")]
-        [Tooltip("骨骼的哪个局部轴作为“脸前方”。默认 +Z（Unity 模型常见脸前约定）。若正面/侧面的衰减方向反了，换成 +Z / -Z 试试。")]
-        public HoFaceAxis faceForwardAxis = HoFaceAxis.Forward;
-
-        [InspectorName("右轴")]
-        [Tooltip("骨骼的哪个局部轴作为“角色右侧（画面左侧）”。默认 +X。")]
-        public HoFaceAxis faceRightAxis = HoFaceAxis.Right;
-
-        [InspectorName("上轴")]
-        [Tooltip("骨骼的哪个局部轴作为“角色上方”。默认 +Y。俯仰角按此轴分解，若俯视/仰视不生效请检查此项。")]
-        public HoFaceAxis faceUpAxis = HoFaceAxis.Up;
+        [HideInInspector]
+        public HoGeometryReferenceFrame geometryReferenceFrame;
 
         private readonly Dictionary<Renderer, int> localSlotByRenderer = new Dictionary<Renderer, int>();
         private readonly List<string> partNameCache = new List<string>();
@@ -128,82 +114,6 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         {
             HoObjectBufferRegistry.MarkDirty();
             HoObjectBufferRegistry.EnsureBuilt();
-        }
-
-        /// <summary>
-        /// 提供角色世界朝向（供眼透相机角度修正、SDF 等消费者系统读取）。
-        /// 以 <see cref="faceBone"/> 的局部轴按三个轴向配置换算成世界向量；
-        /// 未设置朝向时返回 false。不负责相机相关计算，仅输出朝向参考数据。
-        /// 朝向参考系的解析与旧组件同形：消费者换过来时不用改调用方式。
-        /// <para>
-        /// 朝向是**每个角色一份的常量**（不是逐像素几何量），所以它按"查表"消费：
-        /// 拿到像素里层 0 的获胜身份 → 取它的组 → 调这里。不需要逐像素的朝向纹理。
-        /// </para>
-        /// </summary>
-        public bool TryGetWorldFacing(
-            out Vector3 position,
-            out Vector3 forward,
-            out Vector3 right,
-            out Vector3 up)
-        {
-            return TryGetWorldFacing(faceBone, out position, out forward, out right, out up);
-        }
-
-        /// <summary>
-        /// 部件级朝向：条目上填了「朝向覆盖」就用它，留空则继承组。三个轴向沿用组的配置
-        /// （只有参考骨骼可能不同）——头/脸这类会相对身体转动的部件才需要它。
-        /// </summary>
-        public bool TryGetWorldFacing(
-            string partName,
-            out Vector3 position,
-            out Vector3 forward,
-            out Vector3 right,
-            out Vector3 up)
-        {
-            HoObjectBufferPartEntry entry = FindPart(partName);
-            return TryGetWorldFacing(entry != null ? entry.faceBone : null, out position, out forward, out right, out up);
-        }
-
-        private bool TryGetWorldFacing(
-            Transform reference,
-            out Vector3 position,
-            out Vector3 forward,
-            out Vector3 right,
-            out Vector3 up)
-        {
-            if (reference == null)
-            {
-                position = Vector3.zero;
-                forward = Vector3.zero;
-                right = Vector3.zero;
-                up = Vector3.zero;
-                return false;
-            }
-
-            position = reference.position;
-            forward = GetLocalAxis(reference, faceForwardAxis).normalized;
-            right = GetLocalAxis(reference, faceRightAxis).normalized;
-            up = GetLocalAxis(reference, faceUpAxis).normalized;
-            return true;
-        }
-
-        private static Vector3 GetLocalAxis(Transform reference, HoFaceAxis axis)
-        {
-            switch (axis)
-            {
-                case HoFaceAxis.Up:
-                    return reference.up;
-                case HoFaceAxis.Down:
-                    return -reference.up;
-                case HoFaceAxis.Right:
-                    return reference.right;
-                case HoFaceAxis.Left:
-                    return -reference.right;
-                case HoFaceAxis.Forward:
-                    return reference.forward;
-                default:
-                    return -reference.forward;
-            }
         }
 
         /// <summary>部件名列表（按槽位顺序）；注册表按这个顺序分配槽位号。</summary>
@@ -624,20 +534,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         private static bool TrySetRendererUserValue(Renderer targetRenderer, uint value)
         {
-            // RSUV 是**按具体类型**暴露的 API，不在 Renderer 基类上（Unity 官方文档逐个点名了 5 个类型）。
-            // TODO(P1)：SpriteRenderer 走 SpriteRendererDataAccessExtensions.SetShaderUserValue，
-            // SpriteShapeRenderer / TilemapRenderer 各自的 API 需在编辑器里核对命名空间后补全。
-            switch (targetRenderer)
-            {
-                case MeshRenderer meshRenderer:
-                    meshRenderer.SetShaderUserValue(value);
-                    return true;
-                case SkinnedMeshRenderer skinnedMeshRenderer:
-                    skinnedMeshRenderer.SetShaderUserValue(value);
-                    return true;
-                default:
-                    return false;
-            }
+            return HoGeometryRendererBinding.SetObjectIdentity(targetRenderer, value);
         }
 
         private readonly struct Assignment

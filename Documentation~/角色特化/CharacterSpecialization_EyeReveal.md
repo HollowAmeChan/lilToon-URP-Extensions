@@ -57,49 +57,23 @@
 
 最终 `revealMask × angleFactor` **只作用于眼透颜色混合**，前发投影的 receiver 与 debug 3 的原始 revealMask 不受影响。
 
-### 3.3 数据流与实现说明
+### 3.3 当前数据流（GD ReferenceFrame）
 
 ```
-HoObjectBufferGroup
-  ├─ 朝向参考系（Transform，骨骼或空物体均可）+ 脸前轴 / 右轴 / 上轴（局部轴枚举，默认 +Z / +X / +Y）
-  └─ 组 ID（自动分配，0..255，多角色各自唯一）
-        │  TryGetWorldFacing() 输出世界朝向（SDF 等消费者复用同一入口）
-        ▼
-HoCharacterEyeAngleTable（RendererFeature 持有）
-  ├─ 每个渲染相机各一张 256×1 RGBAFloat 表（行号 = OB 组 ID）
-  ├─ AddRenderPasses 时机（URP17 fork 主路径唯一保证被调用的时机）：
-  │    CPU 按当前渲染相机算每角色 (平转角°, 俯仰角°)
-  │    → 上传该相机的表 → SetGlobalTexture 绑定为全局 _lilHoCharacterEyeAngleTable
-  └─ 相机销毁自动清理（判活用 ReferenceEquals，见 §3.1）
-        ▼
-Composite
-  ├─ 按 OB 身份池层 0 的组字节（Id0.r）查表（与 SameCharacter 同源，天然不会错位）
-  ├─ 曲线 → angleFactor
-  └─ revealMask × angleFactor
+GD ReferenceFrame：骨骼/空物体 + 前/右/上轴
+  -> 动态世界参考系（独立于相机）
+OB：身份关联 -> FrameData 行
+  -> Composite pass 声明 frame buffer 读依赖
+  -> 捕获本次相机位置，执行时绑定
+  -> shader 计算 yaw/pitch -> angleFactor
+  -> revealMask × angleFactor
 ```
 
-**为什么是"每相机表 + 渲染前绑定"**（环境约束已逐一核实）：
+每相机的角度纹理与 `HoCharacterEyeAngleTable` 已删除。参考系未改变时共用上传，相机只作为消费参数；相机参数在 RenderGraph 记录时捕获，不延迟读取会变化的 Camera 对象。
 
-- `RenderTexture` 没有任何 CPU 写 API（`SetPixelData`/`SetPixels` 均不存在）；
-- `RenderGraph.ImportTexture` 只接受 `RTHandle`（不接受 `Texture2D`）；
-- `RasterCommandBuffer.SetGlobalTexture` 只接受 `TextureHandle`（不接受裸 `Texture`）。
+在 OB 组对象上添加 `Rendering/Ho-GeometryData ReferenceFrame`，设置参考骨骼和轴。OB 可显式关联外部参考系，也可使用同对象组件。旧场景由用户自行配置，不保留旧朝向字段的兼容读取。
 
-因此采用 **CPU 侧 `Texture2D`（唯一可靠的 SetPixelData 上传路径）+ 当前相机渲染前全局绑定**。
-每个相机的"写表 → 本相机 composite 读取"在同一渲染循环内顺序成对，**多窗口（Scene + Game）、多屏、录制相机各自正确，无需任何"活动相机"判定，也无需区分 Play/编辑模式**。
-⚠️ 不要改成 Unsafe pass + `RenderTargetIdentifier(Texture2D)` 绑定——实测会把表读成全黑。
-
-### 3.1 表纹理的生命周期（切换场景黑屏的坑）
-
-曾经的表现是：**切换场景后新场景完全渲染不出来，必须重启编辑器/播放**，报
-`MissingReferenceException: The object of type 'UnityEngine.Texture2D' has been destroyed`
-且栈顶落在 `HoCharacterEyeAngleTable.Upload`。异常抛在 `AddRenderPasses` 内部，会中断该相机这一帧渲染录制的后续步骤，所以症状是"整屏渲染不出来"而不是"只有眼透不对"。
-
-两条规则必须同时守住：
-
-1. **判活只能用 `ReferenceEquals`。** 表以 `Camera` 为键，而 Unity 把 `UnityEngine.Object.==` 重载成"两边只要有一边是已销毁对象就返回 `true`"——对"已销毁相机 vs 存活相机"这种比较也返回 `true`。用 `camera == null` 判 stale，会把仍然健在的相机的表当成过期表销毁掉，同一帧紧接着的 `Upload` 就落到已销毁纹理上。
-2. **销毁纹理后条目要留"待重建"标记，不能直接当时就假定以后不会再被取用。** `Upload` 前统一走 `EnsureTexture` 校验，发现纹理为空或 `textureDestroyed` 就在原条目上重建。这样无论纹理是被 `Release()`、被场景卸载的资源回收、还是被上面那条误判销毁的，都不会再出现"访问已销毁对象"，且修复只发生在异常本来会发生的那一帧。
-
-配套约定：表纹理**不带相机名后缀**（统一为 `_lilHoCharacterEyeAngleTable`），避免逐场景切换时不断累积名字各异的泄漏纹理；纹理的创建与重建**只允许出现在 `Upload`/`EnsureTexture` 一处**，不要在 `GetOrCreateEntry` 或别处再建。
+资源由 GD publication 管理消费者寿命，域重载/Play 边界释放后按需重建。未提供或禁用参考系时角度因子为 1。其他眼透遮罩与混色公式保持原行为。
 
 ## 4. 配置
 
@@ -107,7 +81,7 @@ Composite
 
 | 字段 | 说明 |
 |---|---|
-| 朝向参考系 | **Transform**：确定角色面部朝向的参考，可以是骨骼，也可以是朝向正确的空物体；留空 = 该角色不参与角度修正。该输入不只服务眼透，未来 SDF 等消费者应复用 `TryGetWorldFacing()` |
+| 朝向参考系 | **GD ReferenceFrame**：骨骼或空物体，留空不参与角度修正；其他消费者复用组件输出 |
 | 脸前轴 | 局部轴枚举，默认 **+Z (Forward)** |
 | 右轴 | 局部轴枚举，默认 **+X (Right)** |
 | 上轴 | 局部轴枚举，默认 **+Y (Up)** |
@@ -133,7 +107,7 @@ Composite
 | 模式 | 内容 |
 |---|---|
 | `EyeAngleFactor (16)` | 视锥因子灰度（视锥内白、视锥外黑） |
-| `EyeAngleTable (17)` | 表原始数据：R = \|平转角\|/180、G = \|俯仰角\|/180、B = 强度（>0 表示参数已进入渲染） |
+| `ReferenceFrameView (17)` | 当前参考系视角：R = \|平转角\|/180、G = \|俯仰角\|/180、B = 强度（>0 表示参数已进入渲染） |
 
 **轴向校准判读**（debug 17）：相机在**正脸**应 R≈0 且 G≈0；绕侧转 90° 时 R≈0.5；俯仰 90° 时 G≈0.5。
 若某项对不上，调整四个轴向枚举之一（常见约定 +Z 脸前 / +X 右 / +Y 上）。
@@ -142,7 +116,7 @@ Composite
 
 | 现象 | 原因 | 处理 |
 |---|---|---|
-| debug 17 恒纯蓝（R/G=0、B=1） | 表行未写入有效角度：朝向参考系为空 / 轴向异常 / 组 ID 与像素上的组字节不一致 | 检查 HoObjectBufferGroup 的「朝向参考系」与三轴；确认该物件的 OB 组 ID 已刷新（面板「刷新全场景 RSUV」） |
+| debug 17 恒纯蓝（R/G=0、B=1） | 表行未写入有效角度：朝向参考系为空 / 轴向异常 / 组 ID 与像素上的组字节不一致 | 检查 GD ReferenceFrame 的参考输入与三轴；确认该物件的 OB 组 ID 已刷新（面板「刷新全场景 RSUV」） |
 | debug 16 恒白 | 因子=1：相机在视锥内，或强度为 0，或修正未启用 | 转相机越过视锥边界；确认开关与强度 |
 | 完全没有眼透 | OB 身份池没产出（feature 不在 renderer / RSUV 没刷新），或部件没打 `脸` / `眼睛` / `前发` 标签 | 看 feature 面板的输入自检（OB 身份池 / OB 语义位平面）；给部件打好标签后刷新 RSUV |
 | 编辑模式下转"摄像机物体"画面不变 | 编辑时 Scene 视图渲染的是**预览相机**，拖动相机物体不触发其渲染 | 旋转 **Scene 视图视角** 验证；或进 Play / 打开 Game 视图 |

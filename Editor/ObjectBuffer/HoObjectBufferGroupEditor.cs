@@ -3,6 +3,7 @@ using lilToon.URP.Extensions.Editor.PostProcessing;
 using lilToon.URP.Extensions.ObjectBuffer;
 using UnityEditor;
 using UnityEngine;
+using lilToon.URP.Extensions.GeometryData;
 
 namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 {
@@ -68,10 +69,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private static readonly GUIContent RefreshLabel = new GUIContent("刷新全场景 RSUV", "重新编译 palette 并把 RSUV 索引写回所有 renderer（RSUV 不会被序列化，场景/域重载后必须重写）。");
 
         private SerializedProperty assignmentModeProperty;
-        private SerializedProperty faceBoneProperty;
-        private SerializedProperty faceForwardAxisProperty;
-        private SerializedProperty faceRightAxisProperty;
-        private SerializedProperty faceUpAxisProperty;
         private SerializedProperty partsProperty;
         private SerializedProperty selectionsProperty;
         private string validationMessage;
@@ -86,10 +83,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private void OnEnable()
         {
             assignmentModeProperty = serializedObject.FindProperty("assignmentMode");
-            faceBoneProperty = serializedObject.FindProperty("faceBone");
-            faceForwardAxisProperty = serializedObject.FindProperty("faceForwardAxis");
-            faceRightAxisProperty = serializedObject.FindProperty("faceRightAxis");
-            faceUpAxisProperty = serializedObject.FindProperty("faceUpAxis");
             partsProperty = serializedObject.FindProperty("parts");
             selectionsProperty = serializedObject.FindProperty("selections");
         }
@@ -574,7 +567,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 DrawProperty(entry.FindPropertyRelative("tags"), new GUIContent("标签", "这个部件在角色语义上属于哪几类（位掩码，可多选）：可以同时是「全角色」和「脸」。只有角色特化读它，按「组 + 标签 + 覆盖率」取遮罩。这里只放角色语义——材质类的语义是表面语义，归 SB。新的角色级开关都往这张表里加一位，不要再新开字段。"));
                 DrawProperty(colorProperty, new GUIContent("显示色", "debug 视图与面板色块用的颜色；像素里不存颜色，只存 ID。"));
                 DrawProperty(entry.FindPropertyRelative("includeChildren"), new GUIContent("展开子级", "拖入 GameObject 或预制件实例时，包含它下面的子级 Renderer。"));
-                DrawProperty(entry.FindPropertyRelative("faceBone"), new GUIContent("朝向覆盖", "留空 = 用组上的「朝向参考系」。只有会相对身体转动的部件（头 / 脸 / 前发…）才需要填。"));
 
                 EditorGUILayout.Space(2.0f);
                 DrawRendererList(renderersProperty);
@@ -625,7 +617,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
         private void DrawFacingSection()
         {
-            showFacing = EditorGUILayout.Foldout(showFacing, "朝向参考系", true);
+            showFacing = EditorGUILayout.Foldout(showFacing, "GD 参考朝向", true);
             if (!showFacing)
             {
                 return;
@@ -634,10 +626,13 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             using (new EditorGUI.IndentLevelScope())
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                DrawProperty(faceBoneProperty, new GUIContent("参考朝向", "整个物件的朝向参考（骨骼或朝向正确的空物体）。留空表示不提供朝向。"));
-                DrawProperty(faceForwardAxisProperty, new GUIContent("脸前轴", "参考物体的哪个局部轴作为「脸前方」。默认 +Z。"));
-                DrawProperty(faceRightAxisProperty, new GUIContent("右轴", "参考物体的哪个局部轴作为「角色右侧」。默认 +X。"));
-                DrawProperty(faceUpAxisProperty, new GUIContent("上轴", "参考物体的哪个局部轴作为「角色上方」。默认 +Y。"));
+                DrawProperty(serializedObject.FindProperty("geometryReferenceFrame"), new GUIContent("参考系组件"));
+                if (targets.Length == 1)
+                {
+                    var group = (HoObjectBufferGroup)target;
+                    var frame = HoObjectReferenceFrameBinding.Find(group);
+                    if (frame != null && GUILayout.Button("编辑 GD 参考系")) Selection.activeObject = frame;
+                }
             }
         }
 

@@ -27,7 +27,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public const string EnhancedOutlineSourceTextureName = "_lilHoCharacterEnhancedOutlineSourceTexture";
         public const string EnhancedOutlineTempTextureName = "_lilHoCharacterEnhancedOutlineTempTexture";
         public const string EnhancedOutlineTextureName = "_lilHoCharacterEnhancedOutlineTexture";
-        public const string EyeAngleTextureName = "_lilHoCharacterEyeAngleTable";
         /// <summary>角色语义位平面（由 OB 身份池 + 覆盖率打包而来，见 ObjectSemantic pass）。</summary>
         public const string ObjectSemanticLowTextureName = "_lilHoCharacterObjectSemantic0_3Texture";
         public const string ObjectSemanticHighTextureName = "_lilHoCharacterObjectSemantic4_7Texture";
@@ -79,7 +78,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public static readonly int SubjectOutlineSourceParamsId = Shader.PropertyToID("_HoCharacterSubjectOutlineSourceParams");
         public static readonly int SubjectOutlineBlurParamsId = Shader.PropertyToID("_HoCharacterSubjectOutlineBlurParams");
         public static readonly int OptionsId = Shader.PropertyToID("_HoCharacterOptions");
-        public static readonly int EyeAngleTextureId = Shader.PropertyToID(EyeAngleTextureName);
         public static readonly int EyeAngleParamsId = Shader.PropertyToID("_HoCharacterEyeAngleParams");
         public static readonly int ObjectSemanticLowTextureId = Shader.PropertyToID(ObjectSemanticLowTextureName);
         public static readonly int ObjectSemanticHighTextureId = Shader.PropertyToID(ObjectSemanticHighTextureName);

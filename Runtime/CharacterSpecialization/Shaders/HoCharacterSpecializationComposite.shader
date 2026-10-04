@@ -59,7 +59,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             TEXTURE2D_X(_lilHoCharacterObjectSemantic4_7Texture);
             TEXTURE2D_X(_lilHoCharacterEyeColorTexture);
             TEXTURE2D_X(_lilHoCharacterEyeDataTexture);
-            TEXTURE2D(_lilHoCharacterEyeAngleTable);
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryData/Shaders/HoGeometryReferenceFrame.hlsl"
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseSourceColorTexture);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseColorTexture);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseDepthTexture);
@@ -241,10 +241,9 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                     return 1.0;
                 }
 
-                // 与 RevealEyeMask 的 SameCharacter 同源：用眼睛捕获里的角色 ID（预乘取回）作为表的行号，
-                // 避免 maskId.g（前发像素的角色 ID）与设置骨骼的 Group 错位导致的空行。
+                // AC 获胜表面的组身份关联 GD 的世界参考系，相机仅作为本次消费参数。
                 float charId = ResolveObjectBufferGroupId(uv);
-                float2 yawPitch = SAMPLE_TEXTURE2D(_lilHoCharacterEyeAngleTable, sampler_PointClamp, float2((charId + 0.5) / 256.0, 0.5)).xy;
+                float2 yawPitch = HoGDObjectViewAngles((uint)charId, _HoGDObserverPosition.xyz);
                 // 某轴 range 为 0 表示该轴不参与衰减。
                 float2 activeAxis = step(0.001, abs(_HoCharacterEyeAngleParams.yz));
                 float2 range = max(abs(_HoCharacterEyeAngleParams.yz), 0.0001);
@@ -627,10 +626,10 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
 
                 if (debugMode == 17)
                 {
-                    // 表原始信息：R = |平转角|/180，G = |俯仰角|/180，B = 强度（>0 表示修正参数已进入渲染）。
+                    // 参考系视角：R = |平转角|/180，G = |俯仰角|/180，B = 修正强度。
                     // 行号与正式路径一致，都取 OB 身份池层 0 的组字节。
                     float debugCharId = ResolveObjectBufferGroupId(uv);
-                    float2 debugYawPitch = SAMPLE_TEXTURE2D(_lilHoCharacterEyeAngleTable, sampler_PointClamp, float2((debugCharId + 0.5) / 256.0, 0.5)).xy;
+                    float2 debugYawPitch = HoGDObjectViewAngles((uint)debugCharId, _HoGDObserverPosition.xyz);
                     return half4(abs(debugYawPitch.x) / 180.0, abs(debugYawPitch.y) / 180.0, saturate(_HoCharacterEyeAngleParams.x), source.a);
                 }
 

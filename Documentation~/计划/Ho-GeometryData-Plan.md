@@ -1,6 +1,6 @@
 # Ho-GeometryData 分层架构与实施规划
 
-日期：2026-10-04。状态：规划草案，尚未实现。面向本地 Unity 6 / HoUrp17.3.0 / lilToon。
+日期：2026-10-04。状态：分层规划；ReferenceFrame 与 OutlineCorrection 首版已实现，后续模块仍为规划。面向本地 Unity 6 / HoUrp17.3.0 / lilToon。
 
 研究依据见 [业内分层调查](Ho-GeometryData-Industry-Research.md)。本文按本轮用户校正重新收敛：组件显式触发、专用数据生产、消费者自主选择、相机参数独立。旧稿中的统一属性覆盖链与默认导入 bake 不再采用。
 
@@ -318,18 +318,13 @@ SV_VertexID 与 mesh 顶点对齐需验证多 submesh、baseVertex、LOD、one-p
 
 容量不足、来源不支持或结果失效时，由模块明确报告状态，消费者采用自己已有的正常来源/回退。slot 回收等待旧绘制引用与 GPU 命令结束，避免角色串数据。
 
-## 13. HeadFrame 迁移
+## 13. ReferenceFrame 正式替换（用户自行调整旧场景）
 
-当前 OB Group 持有 faceBone/轴向配置与 TryGetWorldFacing；HoCharacterEyeAngleTable 每相机 CPU 计算 yaw/pitch，上传查询纹理。这是需要迁移的实际路径。
+正式代码已删除 OB 的旧朝向字段、HoFaceAxis 与 TryGetWorldFacing，以及 HoCharacterEyeAngleTable 的每相机纹理生产。没有旧配置兼容读取、迁移按钮或自动场景/预制件改写。
 
-1. 建立独立 HoReferenceFrame 组件/模块，保留现有可用打包与轴约定。
-2. 维护当前 sample 的动态参考系，提供 GPU 数据与必要 CPU 镜像。
-3. 旧 OB 配置经兼容读取或迁移工具转入组件，不改变已序列化 HoFaceAxis 整数顺序。
-4. 眼透等实际消费者切到 ReferenceFrame + 显式 ViewContext 的共用求值函数，默认取消每相机角度纹理及其管理。
-5. 材质用 draw-local 关联，屏幕效果用 AC 有类型身份关联，找到所属 FrameData；不是所有字段都按顶点展开。
-6. 消费迁移通过后，删除旧角度表生产与重复配置。先保留原版对照，验证打包/解码、角度、有效性与多相机行为。
+用户在对象上添加 HoGeometryReferenceFrame，设置参考骨骼/轴，在 OB 中关联或使用同对象组件。眼透按身份关联动态 FrameData，传入本次相机位置并即时计算角度。GD 组件自己拥有组默认/具名部件的参考数据。
 
-组级/部件级配置的继承由 ReferenceFrame 模块清楚定义，不由 GD 通用覆盖规则处理。现有空部件引用路径与文档继承说明是否一致，在迁移时校验。
+ReferenceFrame、材质来源模式与资源读依赖的当前用法见 [Ho-GeometryData](../Ho-GeometryData.md)。历史原型的兼容/清空 OB 测试只作对照证据，不表示正式代码仍有旧配置路径。
 
 ## 14. 扩展边界
 
@@ -388,7 +383,7 @@ Feature 显示调度/平台能力/预算；组件拥有参数和触发；Profile
 
 ### P1：基础服务、组件触发与动态 FrameData
 
-实现模块注册/资源寿命、类型化输出、共享准备缓存、URP 同步调度、Initialize/BeforePlay/Manual 请求与去重、Pending/Stale 状态、HoReferenceFrame 与旧配置兼容。
+实现模块注册/资源寿命、类型化输出、共享准备缓存、URP 同步调度、Initialize/BeforePlay/Manual 请求与去重、Pending/Stale 状态、HoReferenceFrame 不读取旧配置。
 
 接入参考系 + ViewContext 即时角度函数，对照旧 EyeAngleTable。验收多对象 frame 归属、两相机相反角度、同 Camera 不同调用、正交/透视、打包解码和禁用恢复；不默认建立新角度表。
 
@@ -408,7 +403,7 @@ Feature 显示调度/平台能力/预算；组件拥有参数和触发；Profile
 
 ### P5：真实消费范围的依赖与优化
 
-审计实际读 GD 资源的 pass，补齐 RG buffer read 和寿命；评估共享缓存、资源预算、1/10/50 角色与单/多相机成本；完成旧 Frame/EyeAngle 路径迁移。
+审计实际读 GD 资源的 pass，补齐 RG buffer read 和寿命；评估共享缓存、资源预算、1/10/50 角色与单/多相机成本；删除旧 Frame/EyeAngle 生产路径；用户自行调整场景。
 
 AC 的 GB 输入及屏幕遮罩/ID 产出由 AC 专项实施。GD 可独立验收专用生产与消费者接入，不宣称未实施的 AC 目标链已完成。
 

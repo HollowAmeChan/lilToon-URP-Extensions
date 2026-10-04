@@ -36,7 +36,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("仅同角色"), Tooltip("启用后，只允许同 Character ID 的前发影响同角色的眼睛/脸。")]
         public bool sameCharacterOnly = true;
 
-        [InspectorName("启用相机角度修正"), Tooltip("开启后，眼睛透过会按相机与角色面部朝向的夹角衰减。角色面部朝向由 HoObjectBufferGroup 上的「朝向参考系」提供（Transform，骨骼或空物体均可）。")]
+        [InspectorName("启用相机角度修正"), Tooltip("开启后，眼睛透过按 GD ReferenceFrame 与当前相机的夹角衰减。在对象上添加 GD ReferenceFrame 并指定参考骨骼。")]
         public bool eyeRevealAngleEnabled = false;
 
         [InspectorName("角度修正强度"), Tooltip("相机偏离正脸时眼睛透过衰减的总强度。1 表示超出角度范围完全关闭眼睛透过。")]

@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.AttributeComposite;
 using lilToon.URP.Extensions.ObjectBuffer;
+using lilToon.URP.Extensions.GeometryData;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -26,7 +27,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private Material faceHairDiffuseMaterial;
         private Material subjectOutlineMaterial;
         private Material objectSemanticMaterial;
-        private HoCharacterEyeAngleTable eyeAngleTable;
         private Shader compositeShader;
         private Shader captureClearShader;
         private Shader faceHairDiffuseShader;
@@ -42,11 +42,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         public override void Create()
         {
+            pass?.Dispose();
             pass = new HoCharacterSpecializationPass();
-            // Create 可能在同一 feature 实例上被重复调用（编辑器重载、资产重导入），
-            // 先释放旧表，避免上一批"每相机一张"的纹理成为永久泄漏。
-            eyeAngleTable?.Dispose();
-            eyeAngleTable = new HoCharacterEyeAngleTable();
         }
 
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
@@ -98,8 +95,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 "Accessory",
                 "Body",
                 "Reserved");
-            // 注意：UPR 17 fork 的 RenderGraph 主路径不调用 SetupRenderPasses，只在 AddRenderPasses 里能拿到每相机时机。
-            eyeAngleTable?.UpdateForCamera(renderingData.cameraData.camera, activeSettings);
             if (compositeMaterial == null)
             {
                 pass?.ReleaseCompatibilityResources();
@@ -126,8 +121,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             pass?.Dispose();
             pass = null;
             renderTargets.Release();
-            eyeAngleTable?.Dispose();
-            eyeAngleTable = null;
             CoreUtils.Destroy(compositeMaterial);
             CoreUtils.Destroy(captureClearMaterial);
             CoreUtils.Destroy(faceHairDiffuseMaterial);
@@ -298,6 +291,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
     internal sealed partial class HoCharacterSpecializationPass : ScriptableRenderPass
     {
+        private readonly HoGeometryObjectFrameBuffer referenceFrameBuffer = new HoGeometryObjectFrameBuffer();
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-CharacterSpecialization");
         private const int FaceHairDiffuseBlurIterationCount = 2;
         private const int SubjectOutlineBlurIterationCount = 2;
@@ -377,6 +371,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public void Dispose()
         {
             ReleaseCompatibilityResources();
+            referenceFrameBuffer.Dispose();
         }
 
         public void ReleaseCompatibilityResources()
@@ -461,6 +456,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 }
 
                 ApplyMaterialProperties(compositeMaterial, settings);
+                cmd.SetGlobalBuffer(HoGeometryObjectFrameBuffer.BufferId, referenceFrameBuffer.Capture());
+                Vector3 observerPosition = renderingData.cameraData.camera.transform.position;
+                cmd.SetGlobalVector(HoGeometryObjectFrameBuffer.ViewPositionId,
+                    new Vector4(observerPosition.x, observerPosition.y, observerPosition.z, 0));
                 cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, renderTargets.EyeColorTexture.nameID);
                 cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeDataTextureId, renderTargets.EyeDataTexture.nameID);
                 if (objectSemanticReady)
@@ -906,6 +905,9 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             {
                 passData.source = source;
                 passData.identityId0Texture = acResources.identityId0Texture;
+                passData.referenceFrames = renderGraph.ImportBuffer(referenceFrameBuffer.Capture());
+                Vector3 observerPosition = cameraData.camera.transform.position;
+                passData.observerPosition = new Vector4(observerPosition.x, observerPosition.y, observerPosition.z, 0);
                 passData.geometryNormalDepthTexture = geometryResources.normalDepthTexture;
                 passData.objectSemanticLowTexture = objectSemanticLowTexture;
                 passData.objectSemanticHighTexture = objectSemanticHighTexture;
@@ -956,6 +958,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.UseTexture(passData.identityId0Texture, AccessFlags.Read);
+                builder.UseBuffer(passData.referenceFrames, AccessFlags.Read);
                 builder.UseTexture(passData.geometryNormalDepthTexture, AccessFlags.Read);
                 // eyeColor 是**真读**：Composite.shader:621 在 Frag 开头无条件采样它
                 // （debug 1 在 :640-642 直接返回它，:823 的 lerp 也拿它当目标色）。所以捕获支被门控掉时
@@ -1060,6 +1063,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.ObjectSemanticHighTextureId, data.objectSemanticHighTexture);
                     context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, data.identityId0Texture);
                     context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.ScreenTexelSizeId, data.screenTexelSize);
+                    context.cmd.SetGlobalBuffer(HoGeometryObjectFrameBuffer.BufferId, data.referenceFrames);
+                    context.cmd.SetGlobalVector(HoGeometryObjectFrameBuffer.ViewPositionId, data.observerPosition);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                 });
             }
@@ -1106,7 +1111,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 case HoCharacterSpecializationDebugMode.EyeAlpha:
                 case HoCharacterSpecializationDebugMode.EyeRevealMask:
                 case HoCharacterSpecializationDebugMode.EyeAngleFactor:
-                case HoCharacterSpecializationDebugMode.EyeAngleTable:
+                case HoCharacterSpecializationDebugMode.ReferenceFrameView:
                     return true;
                 default:
                     return false;
