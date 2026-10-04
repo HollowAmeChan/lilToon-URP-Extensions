@@ -212,8 +212,10 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
 
                 if (mode == 4)
                 {
-                    float4 reflection = SAMPLE_TEXTURE2D_X(_HoSurfaceBufferReflectionTexture, sampler_PointClamp, uv);
-                    return half4(reflection.r, reflection.g, 0.0h, 1.0h);
+                    // 改名只为消歧义：ResolvePlanarReflectionColor 里另有一个 reflection。
+                    // 那个才是真正会报 "redefinition of 'reflection'" 的地方（同一函数同一层作用域）。
+                    float4 surfaceReflectionRow = SAMPLE_TEXTURE2D_X(_HoSurfaceBufferReflectionTexture, sampler_PointClamp, uv);
+                    return half4(surfaceReflectionRow.r, surfaceReflectionRow.g, 0.0h, 1.0h);
                 }
 
                 if (mode == 5)
@@ -681,9 +683,10 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                     return half4(0.0h, 0.0h, 0.0h, 1.0h);
                 }
 
+                // 显式取 .r：赋值给 float 会让编译器报 "implicit truncation of vector type"。
                 float rawDepth = debugSecondDirectional
-                    ? SAMPLE_TEXTURE2D(_HoShadowCastSecondDirectionalAtlas, sampler_PointClamp, uv)
-                    : SAMPLE_TEXTURE2D(_HoShadowCastAtlas, sampler_PointClamp, uv);
+                    ? SAMPLE_TEXTURE2D(_HoShadowCastSecondDirectionalAtlas, sampler_PointClamp, uv).r
+                    : SAMPLE_TEXTURE2D(_HoShadowCastAtlas, sampler_PointClamp, uv).r;
                 half valid = rawDepth < 0.99999;
                 half3 atlasColor = lerp(ShadowDepthRamp(1.0 - rawDepth), half3(0.015h, 0.018h, 0.022h), 1.0h - valid);
                 atlasColor = debugSecondDirectional
@@ -837,11 +840,13 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                     reflectionUv.y = 1.0 - reflectionUv.y;
                 }
 
-                half3 reflection = SAMPLE_TEXTURE2D(_LILPBRPlanarReflectionTexture, sampler_LILPBRPlanarReflectionTexture, reflectionUv).rgb;
-                reflection *= _HoPlanarReflectionCompositeTint.rgb;
+                // 不能叫 reflection：本函数上面（同一层作用域）已经有一个 half4 reflection = SB 的
+                // Reflection 行，d3d11 会按 "redefinition of 'reflection'" 报错。
+                half3 planarReflectionColor = SAMPLE_TEXTURE2D(_LILPBRPlanarReflectionTexture, sampler_LILPBRPlanarReflectionTexture, reflectionUv).rgb;
+                planarReflectionColor *= _HoPlanarReflectionCompositeTint.rgb;
                 half compositeWeight = saturate(centerWeight * depthGate * _HoPlanarReflectionCompositeParams.x * _HoPlanarReflectionCompositeTint.a);
 
-                if (mode == 11) return half4(reflection, 1.0h);
+                if (mode == 11) return half4(planarReflectionColor, 1.0h);
                 if (mode == 12) return half4(compositeWeight.xxx, 1.0h);
                 if (mode == 15)
                 {

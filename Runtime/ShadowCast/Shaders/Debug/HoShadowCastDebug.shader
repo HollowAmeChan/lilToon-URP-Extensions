@@ -181,11 +181,11 @@ Shader "Hidden/lilToon-HoShadowCast/URP/DebugView"
                 float rawDepth = 1.0;
                 if (debugSecondDirectional)
                 {
-                    rawDepth = SAMPLE_TEXTURE2D(_HoShadowCastSecondDirectionalAtlas, sampler_PointClamp, uv);
+                    rawDepth = SAMPLE_TEXTURE2D(_HoShadowCastSecondDirectionalAtlas, sampler_PointClamp, uv).r;
                 }
                 else
                 {
-                    rawDepth = SAMPLE_TEXTURE2D(_HoShadowCastAtlas, sampler_PointClamp, uv);
+                    rawDepth = SAMPLE_TEXTURE2D(_HoShadowCastAtlas, sampler_PointClamp, uv).r;
                 }
                 half valid = rawDepth < 0.99999;
                 half3 depthColor = ShadowDepthRamp(1.0 - rawDepth);
