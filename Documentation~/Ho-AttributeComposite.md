@@ -1,10 +1,12 @@
 # Ho-AttributeComposite（AC）
 
 > **状态：已落地**（代码在 `Runtime/AttributeComposite/`）。本文是 **AC 的现行架构说明**：边界、输出、查询 API、
-> 覆盖链、帧序与生命周期、导出面。**AC 不画几何、不画表面**：它只读 OB + SB，把来源压成"一个每像素答案"。
+> 覆盖链、帧序与生命周期、导出面。**AC 不画几何、不画表面**：当前已实现输入为 OB + SB；目标输入包括 GB，并由 AC 产出屏幕后处理需要的遮罩与 ID（见下方目标架构校正）。
 > 相关：`Ho-ObjectBuffer.md`、`Ho-SurfaceBuffer.md`、`Ho-UI_风格规范.md`（面板与 Volume 的排法）。
 
-**所有语义遮罩与合成属性的唯一逻辑入口**：它屏蔽 OB/SB 的存储布局与 ID 解压规则，下游不再自行解码。
+**所有语义遮罩与合成属性的唯一逻辑入口**：当前它屏蔽 OB/SB 的存储布局与 ID 解压规则，下游不再自行解码；目标扩展还包括 GB 输入与屏幕后处理遮罩/ID 生产。
+
+> **目标架构校正（2026-10-04，尚未实现）**：AC 消费 **GB + OB + SB**，组合并产出屏幕后处理需要的遮罩与 ID。GB 接入与相应输出扩展尚未开始实现。下文 OB/SB 的“已落地”与“冻结”记录描述当前实现阶段，**不构成禁止 AC 消费 GB 的长期边界**。GD 负责几何状态/属性生产，AC 负责屏幕输入的组合；具体遮罩/ID 格式、规则和执行 pass 在 AC 专项规划中确定。
 
 > **落地状态（R4b，surface 来源本轮）**：AC 已经存在并可跑，范围是 **object + surface 两个来源**：
 > - 已落地：`HoSemanticSchema`（由 `HoObjectBufferPartTags` 生成 8 条 lane，SemanticId = 位序+1、Lane = 位序；**默认 `SurfaceOverride`**）、runtime catalog（按 LaneIndex 编译成 GPU 常量表，变脏重建）、`SemanticResolve`（一轮 4 张 RGBA8 = 8 条 lane 的 `(SemanticId, coverage)`）、资源集 `HoAttributeCompositeRenderGraphResources`、`HoAC_*` 查询（Identity / Group / Layer0Group / Predicate / TotalCoverage / Selection）、消费者登记与解析失败诊断、feature 面板（schema 与登记只读汇总）、Volume + 调试直出（lane 覆盖率 / lane ID / catalog）。
@@ -61,12 +63,12 @@
 
 ---
 
-## 1. 边界（冻结）
+## 1. 边界（当前实现与目标）
 
 | 项 | 内容 |
 | --- | --- |
-| **输入** | **OB + SB**。**GB 不喂 AC**——几何门控由消费端自己读 GB |
-| **输出** | 合成属性图 + 查询 API + runtime catalog（§2） |
+| **输入** | 当前已实现：**OB + SB**。目标：**GB + OB + SB**；GB 接入待实现 |
+| **输出** | 当前：合成属性查询、Selection 池、资源引用与 runtime catalog（§2）。目标扩展：屏幕后处理需要的遮罩与 ID，待实现 |
 | **只经 AC 查询语义的消费者** | ScreenProcess、角色特化；SSS / PLR 是“物理数值句柄经 AC 资源集取自 SB，遮罩用 `HoAC_*`” |
 | **禁止** | 消费者不许自己解码 OB/SB packing、不许自己再攒一套语义图；RenderGraph 仍必须声明底层物理纹理的读依赖 |
 | **不负责** | 不定义"这是谁"（OB 定）、不定义"表面是什么样"（SB 定）、不做合规导出（导出层做，§6） |
@@ -77,7 +79,7 @@
 
 ---
 
-## 2. 输出（冻结）
+## 2. 输出（当前实现阶段）
 
 AC **不为每个消费者烤遮罩图**。它发布**一份可查询的合成结果 + 一个查询 API**；要烤成图的效果自己用 API 烤，烤出来的图记在**它自己**名下。
 
