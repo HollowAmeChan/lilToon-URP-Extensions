@@ -35,6 +35,8 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DropShadow"
 
             float SampleSubjectMask(float2 uv)
             {
+                // An explicitly selected AC mask must never fall back to a different subject.
+                if (_LayerMaskEnabled > 0.5 && _lilHoSPMaskValid <= 0.5) return 0.0;
                 if (_lilHoSPMaskValid > 0.5)
                 {
                     return LilScreenProcessResolveCoverageMask(uv);

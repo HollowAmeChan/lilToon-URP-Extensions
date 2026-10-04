@@ -43,7 +43,7 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
             }
 
             EditorGUILayout.HelpBox(
-                "必须排在 Ho-ObjectBuffer 与 Ho-SurfaceBuffer 之后（同事件时按 Renderer Feature 列表顺序，加上 RenderGraph 读依赖）。",
+                "必须排在所需的 GeometryBuffer、ObjectBuffer 与 SurfaceBuffer 之后。输入可用性按相机发布。",
                 MessageType.Info);
 
             DrawRuntime();
@@ -113,7 +113,7 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
             {
                 using (new EditorGUI.DisabledScope(Find("enabled") != null && !Find("enabled").boolValue))
                 {
-                    DrawProperty(passEvent, "产出时机", "AC 必须排在 OB / SB 之后。同事件时按 Renderer Feature 列表顺序，加上 RenderGraph 的读依赖保证在后。");
+                    DrawProperty(passEvent, "产出时机", "AC 必须排在 GB / OB / SB 之后，同事件时按 Renderer Feature 列表顺序。");
                     DrawProperty(Find("debugPassEvent"), "调试时机");
                 }
 
@@ -125,7 +125,7 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
         {
             EditorGUILayout.LabelField($"语义声明（{HoSemanticSchema.LaneCount} 条 lane）", EditorStyles.boldLabel);
             EditorGUILayout.LabelField(
-                "本轮只有 object 来源：lane 的值 = 「该物体位的覆盖率之和」。surface 来源与五种 sourceMode 的合成等 SB 落地。",
+                "Selection 合成物体与表面语义；几何覆盖率经 AC 独立查询。",
                 EditorStyles.miniLabel);
 
             IReadOnlyList<HoSemanticEntry> declarations = HoSemanticSchema.Declarations;

@@ -12,7 +12,7 @@
 - **拓扑**：前向着色为权威 + 按需语义通道 + 运行时合成 + 屏幕效果 + 图像链 + 独立 AOV 导出 + DebugTile。
   **不做完整 GBuffer / 延迟光照**（按需纸面契约，通道随需求登记、无消费者不输出、AOV 命名冻结）。
 - **三条输入轴并列，互不读取**：**GB**（几何在哪、朝向、几何覆盖）/ **OB**（这是谁、占多少）/
-  **SB**（表面长什么样）。**AC** 是唯一的语义与属性合成器（读 OB + SB），消费者只经 `HoAC_*` 查询。
+  **SB**（表面长什么样）。**AC** 是唯一的语义与属性合成器（读 GB + OB + SB），消费者只经 `HoAC_*` 查询。
 - **`Cryptomatte` 在 GB/OB/SB/AC 里一个名字都不用**：合规的 `crypto_*` 导出（float 位重解释 + manifest + 32 bit）
   由以后的独立 AOV/export feature 负责，经 AC 资源集读 OB 身份池与 runtime catalog。
 - **唯一占位符是外部 AO/GI**：通道契约已备好（`ao` / `gi` / `gisexclude`），生产端已由自研 `Ho-GTAO` /
@@ -50,7 +50,7 @@
 
 | 位置 | 谁 | 前置条件 |
 | --- | --- | --- |
-| **opaque 之前** | 阴影 → GB / OB / SB → **AC SemanticResolve + AttributeComposite** → **GTAO** | AC 只读 OB/SB，把语义/属性理顺；GTAO 与 opaque ForwardLit 可在登记后查询 AC |
+| **opaque 之前** | 阴影 → GB / OB / SB → **AC SemanticResolve + AttributeComposite** → **GTAO** | AC 发布 GB 覆盖范围并合成 OB/SB 语义与属性；GTAO 与 opaque ForwardLit 可在登记后查询 AC |
 | **opaque 之后** | **SSGI** → SSS → OIT → PLR → 角色特化 → ScreenProcess | SSGI 需要 opaque color；后续消费者读 pre-opaque 产生的 AC 资源 |
 | **图像链** | ImageProcess | 只读 camera color |
 | **最后** | AOV 导出（可选） → DebugTile | 调试最后 |
@@ -87,7 +87,7 @@
 | `GB ↮ OB`、`GB ↮ SB`、`OB ↮ SB` | 三个生产轴默认互不读取；跨轴 gate 只能由具体消费者显式声明 |
 | **`GTAO → opaque`** | 材质 forward 里采样 AO |
 | **`opaque → SSGI`** | GI 要 opaque 后的颜色 |
-| `{OB, SB} → AC → GTAO → opaque` | AC 只读 OB/SB（GB 不喂 AC） |
+| `{GB, OB, SB} → AC → GTAO → opaque` | AC 消费三轴输入；几何与身份覆盖范围独立，按 typed 查询读取 |
 | `AC → GTAO / opaque ForwardLit / SSS / OIT / PLR / 角色特化 / ScreenProcess` | AC 在 pre-opaque 产出语义与属性；消费者按登记的需求查询 |
 
 > GB/OB/SB/AC/GTAO 默认都在 `BeforeRenderingOpaques`，同事件内的先后由 Renderer Feature 列表表达
@@ -252,7 +252,9 @@ ShadowCast = **cast 组**（每组一张 atlas，灯按 slice 排布，首版 2 
 | **R4** | AC 落地：schema + typed API + runtime catalog + SemanticResolve + 属性合成 | ✅ |
 | **R5** | 消费者输入切换：ScreenProcess（遮罩→覆盖率）、角色特化（→AC）、SSS / PLR（→SB + AC） | ✅ |
 | **R6** | 删 MetadataBuffer，契约出 v2 | ✅（见 `CHANGELOG.md` 的 R6/R7 记录） |
-| **剩余** | ① 合规 `crypto_*` AOV/export feature；② 透明 PLR 的 receiver/source-id RT（多平面时才立项）；③ AC 的 16-lane MRT 分批（词表 > 8 位才需要）；④ SB 语义 lane 的逐 sample 细分（形态：SB 自渲染 MSAA → 自己 resolve 成单采样再发布）；⑤ ScreenProcess 的"按语义名选遮罩"；⑥ AOV 导出层 | — |
+| **剩余** | ① 合规 `crypto_*` AOV/export feature；② 透明 PLR 的 receiver/source-id RT（多平面时才立项）；③ AC 的 16-lane MRT 分批（词表 > 8 位才需要）；④ SB 语义 lane 的逐 sample 细分（形态：SB 自渲染 MSAA → 自己 resolve 成单采样再发布）；⑤ AC 跨来源 sample/owner 关联与精确合成（SP 具名选择已接入）；⑥ AOV 导出层 | — |
 
 **推进顺序的历史决策**：`Ho-GTAO`（独立 feature）→ `Ho-SSGI`（含 `gisexclude`）→ 其余系统；
 R1–R6 属于"其余系统"里的地基工程，与 AO/GI 并行且互不读对方产物。
+
+> 2026-10-05 AC 接入：ScreenProcess 已支持语义、组、完整身份、几何、描边与全屏选择，以及指定范围内反选；当前仍是像素级合成，不是完整 sample 合成或按需求裁剪。详见 `计划/Ho-AttributeComposite-Plan.md`。

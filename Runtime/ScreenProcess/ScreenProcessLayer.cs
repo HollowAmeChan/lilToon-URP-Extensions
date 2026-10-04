@@ -1,5 +1,6 @@
 using System;
 using UnityEngine;
+using lilToon.URP.Extensions.AttributeComposite;
 
 namespace lilToon.URP.Extensions.PostProcessing
 {
@@ -60,7 +61,16 @@ namespace lilToon.URP.Extensions.PostProcessing
         [UnityEngine.Serialization.FormerlySerializedAs("use" + "Rule" + "Mask")]
         public bool useMask;
 
-        [Tooltip("Invert the resolved ScreenProcess mask within covered character pixels.")]
+        [Tooltip("选择本层使用的 AC 覆盖率来源。")]
+        public HoACQueryKind maskSource = HoACQueryKind.TotalCoverage;
+        [Tooltip("HoSemanticSchema 中的稳定语义名，例如 Face、FrontHair、Eye。")]
+        public string maskSemanticName = "CharacterFull";
+        [Tooltip("组查询使用 1..255；完整身份为 (组 ID << 8) | 部件槽位。")]
+        public int maskId = 1;
+        [Tooltip("限定选择和反选的范围；全屏反选可用于排除角色。")]
+        public HoACMaskDomain maskDomain = HoACMaskDomain.Screen;
+
+        [Tooltip("在所选范围内排除命中的覆盖率。输入缺失时返回零。")]
         [UnityEngine.Serialization.FormerlySerializedAs("invert" + "Rule" + "Mask")]
         public bool invertMask;
 
@@ -69,5 +79,24 @@ namespace lilToon.URP.Extensions.PostProcessing
         public bool debugMask;
 
         public bool IsActive => enabled && intensity > 0.0001f;
+
+        [NonSerialized] private bool queryCached;
+        [NonSerialized] private HoACQueryKind cachedSource;
+        [NonSerialized] private HoACMaskDomain cachedDomain;
+        [NonSerialized] private string cachedName;
+        [NonSerialized] private int cachedId;
+        [NonSerialized] private HoACQueryDescriptor cachedQuery;
+
+        internal HoACQueryDescriptor ResolveMaskQuery()
+        {
+            if (!queryCached || cachedSource != maskSource || cachedDomain != maskDomain ||
+                cachedName != maskSemanticName || cachedId != maskId)
+            {
+                cachedQuery = HoACQueryDescriptor.Resolve(maskSource, maskSemanticName, maskId, maskDomain);
+                cachedSource = maskSource; cachedDomain = maskDomain; cachedName = maskSemanticName; cachedId = maskId;
+                queryCached = true;
+            }
+            return cachedQuery;
+        }
     }
 }

@@ -23,6 +23,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     internal sealed class HoObjectBufferPass : ScriptableRenderPass
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-ObjectBuffer Output");
+        internal static HoObjectBufferRenderTargets CompatibilityTargets { get; private set; }
         private static readonly ProfilingSampler ResolveProfilingSampler = new ProfilingSampler("Ho-ObjectBuffer MSAA Resolve");
 
         private static readonly List<ShaderTagId> FallbackShaderTagIds = new List<ShaderTagId>
@@ -47,6 +48,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         private readonly RTHandle[] idColorTargets = new RTHandle[3];
         private readonly RTHandle[] msaaColorTargets = new RTHandle[2];
         private readonly RenderTargetIdentifier[] resolveColorIdentifiers = new RenderTargetIdentifier[4];
+        private readonly RenderTargetIdentifier[] resolveIdentityIdentifiers = new RenderTargetIdentifier[3];
 
         private HoObjectBufferSettings settings;
         private HoObjectBufferRenderTargets renderTargets;
@@ -163,6 +165,11 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             CommandBuffer cmd = CommandBufferPool.Get();
             using (new ProfilingScope(cmd, ProfilingSampler))
             {
+                // Native material passes must use the same attachment layout as the compatibility targets.
+                if (renderTargets.UseMsaaResolve) Shader.EnableKeyword("_HO_OBJECT_BUFFER_MSAA");
+                else Shader.DisableKeyword("_HO_OBJECT_BUFFER_MSAA");
+                if (selectionEnabled) Shader.EnableKeyword("_HO_OBJECT_BUFFER_SELECTION");
+                else Shader.DisableKeyword("_HO_OBJECT_BUFFER_SELECTION");
                 cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ActiveId, 1.0f);
                 cmd.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionLayerCountId, selectionEnabled ? settings.RequestedSelectionLayerCount : 0);
                 cmd.SetGlobalFloat(HoObjectBufferShaderConstants.RequestedSamplesId, settings.RequestedSampleCount);
@@ -205,6 +212,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             PublishGlobals(cmd);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
+            CompatibilityTargets = renderTargets;
         }
 
         public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
@@ -508,6 +516,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         public static void ResetGlobalState()
         {
+            CompatibilityTargets = null;
             Shader.SetGlobalFloat(HoObjectBufferShaderConstants.ActiveId, 0.0f);
             Shader.SetGlobalFloat(HoObjectBufferShaderConstants.ValidId, 0.0f);
             Shader.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, Texture2D.blackTexture);
@@ -534,11 +543,12 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             resolveColorIdentifiers[0] = renderTargets.Id0Texture.nameID;
             resolveColorIdentifiers[1] = renderTargets.Id1Texture.nameID;
             resolveColorIdentifiers[2] = renderTargets.CoverageTexture.nameID;
-            resolveColorIdentifiers[3] = selectionEnabled && renderTargets.SelectionTexture != null
-                ? renderTargets.SelectionTexture.nameID
-                : renderTargets.CoverageTexture.nameID;   // 选择层关闭时该 MRT 不参与，写回覆盖率图是无害的占位
-
-            CoreUtils.SetRenderTarget(cmd, resolveColorIdentifiers, renderTargets.DepthTexture, ClearFlag.None, Color.clear);
+            bool hasSelection = selectionEnabled && renderTargets.SelectionTexture != null;
+            if (hasSelection) resolveColorIdentifiers[3] = renderTargets.SelectionTexture.nameID;
+            for (int i = 0; i < resolveIdentityIdentifiers.Length; i++) resolveIdentityIdentifiers[i] = resolveColorIdentifiers[i];
+            // A duplicate coverage attachment invalidates the MRT binding on D3D; use exactly three when selection is absent.
+            CoreUtils.SetRenderTarget(cmd, hasSelection ? resolveColorIdentifiers : resolveIdentityIdentifiers,
+                renderTargets.DepthTexture, ClearFlag.None, Color.clear);
             CoreUtils.DrawFullScreen(cmd, resolveMaterial, shaderPassId: 0);
         }
 

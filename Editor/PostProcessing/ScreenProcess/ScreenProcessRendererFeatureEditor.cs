@@ -104,7 +104,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 EditorGUILayout.LabelField("Written Layers", snapshot.WrittenLayerCount.ToString());
                 EditorGUILayout.LabelField("Active Back Buffer", snapshot.BackBufferActive ? "是" : "否");
                 EditorGUILayout.LabelField("Camera Color", LilUrpEditorSectionGui.FormatAvailable(snapshot.CameraColorAvailable));
-                DrawRequiredStatus("Coverage (AC/OB)", snapshot.RequiresCoverage, snapshot.CoverageAvailable);
+                DrawRequiredStatus("Mask Inputs (AC)", snapshot.RequiresCoverage, snapshot.CoverageAvailable);
                 DrawRequiredStatus("GeometryBuffer", snapshot.RequiresGeometryBuffer, snapshot.GeometryBufferAvailable);
                 DrawRequiredStatus("NormalDepth", snapshot.RequiresNormalDepth, snapshot.NormalDepthAvailable);
                 DrawRequiredStatus("SkyTexture", snapshot.RequiresSkyTexture, snapshot.SkyTextureAvailable);

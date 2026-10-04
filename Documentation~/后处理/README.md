@@ -115,7 +115,7 @@ RendererFeature 只安装渲染 Pass，实际层配置来自 Volume。相机类�
 - DepthOfField 的场景焦点目标和路径回退
 - 层遮罩开关/反转/调试：`useMask`、`invertMask`、`debugMask`
 
-层遮罩采样的是**角色覆盖率**（AC 的总覆盖率，来源是 OB 的四层身份覆盖率），配一个每层开关、一个反转和一个 debug 直出（`_LayerMaskDebugOutput`）；开关关闭时该层不做遮罩（乘 1），覆盖率来源不可用时乘 0。遮罩纹理的 texel / 尺寸由 C# 显式发布（`_lilHoSPMaskTexelSize` —— 全局纹理没有 `_TexelSize`，早先读它导致"按像素扩张 / 羽化"的半径恒为 0）。**规则来源（20 个 rule source、≤4 条规则列表）已作为未使用功能删除**；"按语义名选遮罩"仍是后续的新工作，不是迁移。
+层遮罩采样的是**角色覆盖率**（AC 的总覆盖率，来源是 OB 的四层身份覆盖率），配一个每层开关、一个反转和一个 debug 直出（`_LayerMaskDebugOutput`）；开关关闭时该层不做遮罩（乘 1），覆盖率来源不可用时乘 0。遮罩纹理的 texel / 尺寸由 C# 显式发布（`_lilHoSPMaskTexelSize` —— 全局纹理没有 `_TexelSize`，早先读它导致"按像素扩张 / 羽化"的半径恒为 0）。**规则来源（20 个 rule source、≤4 条规则列表）已作为未使用功能删除**；"按语义名选遮罩"已在 2026-10-05 接入，同时支持组、完整身份、几何、描边与全屏选择及指定范围内反选。
 
 删除时顺带修掉两个意外（都发生在"没配任何规则"这条路径上）：旧实现即使没配规则也会合成一条 Direct/Mask 规则，
 于是覆盖率在规则级和出口各乘一次、被连乘三次（`coverage³`）；现在就是 `coverage`。
@@ -284,3 +284,5 @@ URP Renderer Asset 中建议按依赖加入这些 RendererFeature：
 - 必选后处理：`Ho-ImageProcess` 在最终图像风格栈需要时启用。
 
 Volume 中则分别添加 `Ho-ScreenProcess/Process Stack`、`Ho-ImageProcess/Post Process Stack` 和需要时的 `Ho-CharacterSpecialization/角色特化`。
+
+2026-10-05：ScreenProcess 每层遮罩来源与选择范围由 AC typed query 提供。默认仍是物体总覆盖率，全屏范围下反选可排除角色；输入缺失时包括反选均为零。自定义材质需自行遵守 `ScreenProcessMask.hlsl` 接口。详见 `../计划/Ho-AttributeComposite-Plan.md`。

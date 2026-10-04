@@ -1,6 +1,7 @@
 #pragma warning disable CS0618, CS0672
 
 using UnityEngine.Rendering;
+using UnityEngine;
 using UnityEngine.Rendering.RenderGraphModule;
 
 namespace lilToon.URP.Extensions.AttributeComposite
@@ -42,6 +43,24 @@ namespace lilToon.URP.Extensions.AttributeComposite
         /// <summary>SB 的数值面本帧有没有产出（没有的话 `HoAC_Attribute` 全是 constant 兜底）。</summary>
         public bool surfaceValid;
 
+        // GB 引用。单采样时没有 coverage RT，以 NormalDepth.a 的有效深度作二值回退。
+        public TextureHandle geometryCoverageTexture = TextureHandle.nullHandle;
+        public TextureHandle geometryNormalDepthTexture = TextureHandle.nullHandle;
+        public TextureHandle outlineCoverageTexture = TextureHandle.nullHandle;
+        public TextureHandle outlineNormalDepthTexture = TextureHandle.nullHandle;
+        public bool published;
+        public bool HasGeometry => geometryNormalDepthTexture.IsValid();
+        public bool HasOutline => outlineNormalDepthTexture.IsValid();
+        public Vector4 InputFlags => new Vector4(HasIdentityPool ? 1 : 0, HasSelectionPool ? 1 : 0,
+            HasGeometry ? 1 : 0, HasOutline ? 1 : 0);
+        public Vector4 GeometryFlags => new Vector4(geometryCoverageTexture.IsValid() ? 1 : 0,
+            outlineCoverageTexture.IsValid() ? 1 : 0, 0, 0);
+
+        public string DescribeMissingInput(HoACQueryDescriptor query)
+        {
+            return query.DescribeMissingInput(published, InputFlags);
+        }
+
         public bool HasSelectionPool => laneCount > 0 && selectionTextures[0].IsValid();
 
         public bool HasIdentityPool =>
@@ -66,6 +85,11 @@ namespace lilToon.URP.Extensions.AttributeComposite
             surfaceReflectionTexture = TextureHandle.nullHandle;
             surfaceOwnerTexture = TextureHandle.nullHandle;
             surfaceValid = false;
+            geometryCoverageTexture = TextureHandle.nullHandle;
+            geometryNormalDepthTexture = TextureHandle.nullHandle;
+            outlineCoverageTexture = TextureHandle.nullHandle;
+            outlineNormalDepthTexture = TextureHandle.nullHandle;
+            published = false;
         }
     }
 }

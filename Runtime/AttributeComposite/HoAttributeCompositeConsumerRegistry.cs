@@ -77,5 +77,10 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
             return total;
         }
+
+        public static void Remove(string consumer)
+        {
+            Declarations_.RemoveAll(declaration => declaration.Consumer == consumer);
+        }
     }
 }

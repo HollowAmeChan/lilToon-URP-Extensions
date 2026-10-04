@@ -18,7 +18,13 @@ namespace lilToon.URP.Extensions.AttributeComposite
         [InspectorName("Lane SemanticId")]
         LaneSemanticId,
         [InspectorName("Lane Object Mask")]
-        LaneObjectMask
+        LaneObjectMask,
+        [InspectorName("Geometry Coverage")]
+        GeometryCoverage,
+        [InspectorName("Outline Coverage")]
+        OutlineCoverage,
+        [InspectorName("Input Availability")]
+        InputAvailability
     }
 
     [Serializable]

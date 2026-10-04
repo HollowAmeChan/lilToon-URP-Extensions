@@ -35,6 +35,13 @@ StructuredBuffer<HoACLaneData> _HoACLanes;
 float _HoACLaneCount;
 /// <summary>本帧 AC 有没有产出（0 = 没有；调试与兜底都靠它，不要拿 LaneCount 当"有没有跑"）。</summary>
 float _HoACActive;
+float _HoACInputsPublished;
+float4 _HoACInputFlags; // identity, selection, geometry, outline
+float4 _HoACGeometryFlags; // geometry coverage RT, outline coverage RT
+TEXTURE2D_X(_HoACGeometryCoverageTexture);
+TEXTURE2D_X(_HoACGeometryNormalDepthTexture);
+TEXTURE2D_X(_HoACOutlineCoverageTexture);
+TEXTURE2D_X(_HoACOutlineNormalDepthTexture);
 
 /// <summary>一张 RGBA8 里两条 lane 的 `(SemanticId, coverage)`。</summary>
 void HoAC_UnpackSelection(float4 packed, out uint semanticIdA, out float coverageA, out uint semanticIdB, out float coverageB)
@@ -171,7 +178,7 @@ float HoAC_Predicate(float2 uv, uint objectTagBit)
 /// 一条 lane 的覆盖率：按 runtime catalog 定位 lane、**校验图内 SemanticId** 后返回
 /// （图内 ID 与声明不符时按"未写"处理，AC 架构 §3）。`laneIndex` 是编译期常量时会被折叠。
 /// </summary>
-float HoAC_Selection(float2 uv, uint laneIndex)
+float HoAC_SelectionExact(float2 uv, uint laneIndex, uint declaredId)
 {
     uint laneCount = (uint)max(0.0, _HoACLaneCount);
     if (laneIndex >= laneCount)
@@ -206,8 +213,13 @@ float HoAC_Selection(float2 uv, uint laneIndex)
     bool isEven = (laneIndex & 1u) == 0u;
     uint inImageId = isEven ? semanticIdA : semanticIdB;
     float coverage = isEven ? coverageA : coverageB;
-    uint declaredId = _HoACLanes[laneIndex].semanticId;
     return inImageId == declaredId ? coverage : 0.0;
+}
+
+float HoAC_Selection(float2 uv, uint laneIndex)
+{
+    if (laneIndex >= (uint)max(0.0, _HoACLaneCount)) return 0.0;
+    return HoAC_SelectionExact(uv, laneIndex, _HoACLanes[laneIndex].semanticId);
 }
 
 /// <summary>
@@ -307,6 +319,68 @@ float4 HoAC_AttributeLinear(float2 uv, uint attributeId)
     }
 
     return float4(0.0, 0.0, 0.0, 0.0);
+}
+
+// Query kind and domain values match HoAttributeCompositeQuery.cs.
+float HoAC_GeometryCoverage(float2 uv)
+{
+    if (_HoACInputFlags.z < 0.5) return 0.0;
+    if (_HoACGeometryFlags.x > 0.5)
+        return saturate(SAMPLE_TEXTURE2D_X(_HoACGeometryCoverageTexture, sampler_PointClamp, uv).r);
+    return SAMPLE_TEXTURE2D_X(_HoACGeometryNormalDepthTexture, sampler_PointClamp, uv).a > 1e-4 ? 1.0 : 0.0;
+}
+
+float HoAC_OutlineCoverage(float2 uv)
+{
+    if (_HoACInputFlags.w < 0.5) return 0.0;
+    if (_HoACGeometryFlags.y > 0.5)
+        return saturate(SAMPLE_TEXTURE2D_X(_HoACOutlineCoverageTexture, sampler_PointClamp, uv).r);
+    return SAMPLE_TEXTURE2D_X(_HoACOutlineNormalDepthTexture, sampler_PointClamp, uv).a > 1e-4 ? 1.0 : 0.0;
+}
+
+bool HoAC_QueryValid(float4 query)
+{
+    if (_HoACInputsPublished < 0.5 || query.w < 0.5) return false;
+    uint kind = (uint)round(query.x);
+    uint domain = (uint)round(query.z);
+    if (kind > 6u || domain > 3u) return false;
+    if ((kind == 0u || kind == 2u || kind == 3u || domain == 1u) && _HoACInputFlags.x < 0.5) return false;
+    if (kind == 1u && (_HoACInputFlags.y < 0.5 || query.y < 0.0 || query.y >= _HoACLaneCount)) return false;
+    if ((kind == 4u || domain == 2u) && _HoACInputFlags.z < 0.5) return false;
+    if ((kind == 5u || domain == 3u) && _HoACInputFlags.w < 0.5) return false;
+    return true;
+}
+
+float HoAC_QueryCoverage(float2 uv, float4 query)
+{
+    uint kind = (uint)round(query.x);
+    uint value = (uint)round(query.y);
+    if (kind == 0u) return HoAC_TotalCoverage(uv);
+    // Expected ID comes from the CPU descriptor: typed consumers do not require a catalog buffer.
+    if (kind == 1u) return HoAC_SelectionExact(uv, value, (uint)round(query.w));
+    if (kind == 2u) return HoAC_Group(uv, value);
+    if (kind == 3u) return HoAC_Identity(uv, value);
+    if (kind == 4u) return HoAC_GeometryCoverage(uv);
+    if (kind == 5u) return HoAC_OutlineCoverage(uv);
+    return kind == 6u ? 1.0 : 0.0;
+}
+
+float HoAC_DomainCoverage(float2 uv, uint domain)
+{
+    if (domain == 1u) return HoAC_TotalCoverage(uv);
+    if (domain == 2u) return HoAC_GeometryCoverage(uv);
+    if (domain == 3u) return HoAC_OutlineCoverage(uv);
+    return domain == 0u ? 1.0 : 0.0;
+}
+
+// Pixel-level domain clipping, not an exact sample-level intersection of independent sources.
+// Clamp rather than multiply so an existing 0.5 edge remains 0.5 within a 0.5 domain.
+float HoAC_QueryMask(float2 uv, float4 query, bool invert)
+{
+    if (!HoAC_QueryValid(query)) return 0.0; // Fail closed even when inverted.
+    float domain = saturate(HoAC_DomainCoverage(uv, (uint)round(query.z)));
+    float selected = min(domain, saturate(HoAC_QueryCoverage(uv, query)));
+    return invert ? saturate(domain - selected) : selected;
 }
 
 #endif

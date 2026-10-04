@@ -19,9 +19,11 @@ Shader "Hidden/lilToon/URP/ScreenProcess/LayerBlit"
             HLSLPROGRAM
             #pragma vertex Vert
             #pragma fragment Frag
+            #pragma target 4.5
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessMask.hlsl"
 
             float _Intensity;
             float4 _LayerColor;
@@ -38,6 +40,8 @@ Shader "Hidden/lilToon/URP/ScreenProcess/LayerBlit"
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
+                if (LilScreenProcessShouldOutputMaskDebug())
+                    return LilScreenProcessMaskDebugColor(input.texcoord, false, 1.0h);
                 return SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, input.texcoord);
             }
             ENDHLSL

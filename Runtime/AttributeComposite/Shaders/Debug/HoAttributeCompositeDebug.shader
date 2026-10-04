@@ -61,6 +61,14 @@ Shader "Hidden/lilToon/URP/AttributeComposite/DebugView"
 
                 float2 uv = input.texcoord;
                 uint mode = (uint)round(_HoACDebugMode);
+                if (mode == 6u) return half4(_HoACInputFlags.xyz, 1.0);
+                if (mode == 4u || mode == 5u)
+                {
+                    float4 query = float4(mode, 0.0, 0.0, 1.0);
+                    if (!HoAC_QueryValid(query)) return half4(0.35, 0.0, 0.0, 1.0);
+                    float coverage = HoAC_QueryCoverage(uv, query);
+                    return half4(coverage, coverage, coverage, 1.0);
+                }
                 if (_HoACActive <= 0.5)
                 {
                     // 没产出时给一个明确的信号色，而不是静默黑屏（与 OB 的 Valid 视图同一个约定）。

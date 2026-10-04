@@ -16,7 +16,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         public const string TempTextureAName = "_lilScreenProcessTempA";
         public const string TempTextureBName = "_lilScreenProcessTempB";
         public const string SubjectMaskTextureName = "_lilScreenProcessSubjectMaskTexture";
-        /// <summary>图层遮罩这一帧有没有来源（来源 = AC 的总覆盖率，即 OB 的身份覆盖率）。</summary>
+        /// <summary>当前层的 AC 查询与范围输入是否可用；缺失时包括反选都返回零。</summary>
         public const string MaskValidName = "_lilHoSPMaskValid";
         /// <summary>遮罩纹理的 texel / 尺寸（xy = texel、zw = 尺寸）：全局纹理没有 `_TexelSize`，只能 C# 发布。</summary>
         public const string MaskTexelSizeName = "_lilHoSPMaskTexelSize";
@@ -38,6 +38,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static readonly int SubjectMaskTextureId = Shader.PropertyToID(SubjectMaskTextureName);
         public static readonly int SubjectMaskValidId = Shader.PropertyToID("_SubjectMaskValid");
         public static readonly int MaskValidId = Shader.PropertyToID(MaskValidName);
+        public static readonly int MaskQueryId = Shader.PropertyToID("_LayerMaskQuery");
+        public static readonly int CoverageValidId = Shader.PropertyToID("_lilHoSPCoverageValid");
         public static readonly int MaskTexelSizeId = Shader.PropertyToID(MaskTexelSizeName);
     }
 }

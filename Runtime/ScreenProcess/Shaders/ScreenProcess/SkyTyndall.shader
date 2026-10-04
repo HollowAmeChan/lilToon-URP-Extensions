@@ -357,6 +357,8 @@ Shader "Hidden/lilToon/URP/ScreenProcess/SkyTyndall"
 
                 float2 uv = input.texcoord;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
+                if (LilScreenProcessShouldOutputMaskDebug())
+                    return LilScreenProcessMaskDebugColor(uv, false, source.a);
                 if (_HoGeometryBufferSkyTextureValid <= 0.5 || _Intensity <= 0.0001)
                 {
                     if (LilScreenProcessShouldOutputMaskDebug())

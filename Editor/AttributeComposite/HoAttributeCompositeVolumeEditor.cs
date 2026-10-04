@@ -37,8 +37,7 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
         public override void OnInspectorGUI()
         {
             EditorGUILayout.HelpBox(
-                "逐相机覆盖 AC：启用与调试画面。属性清单默认开关、lane 成本档与消费者登记表在 "
-                + "Ho-AttributeComposite RendererFeature 上（声明不是 per-camera 数据）。",
+                "逐相机覆盖 AC：启用与调试画面。语义声明和消费者登记汇总在 RendererFeature 上。",
                 MessageType.Info);
 
             DrawRuntime();
@@ -103,6 +102,12 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
                     return "上下半屏各一组：RGBA = 连续四条 lane 的 SemanticId（÷255 显示）。";
                 case HoAttributeCompositeDebugMode.LaneObjectMask:
                     return "左右半屏各一条 lane：R = object 位（÷8），G = sourceMode（÷4），B = 是否在产出范围内。";
+                case HoAttributeCompositeDebugMode.GeometryCoverage:
+                    return "场景几何总覆盖率；单采样时由有效几何深度得到二值覆盖率。";
+                case HoAttributeCompositeDebugMode.OutlineCoverage:
+                    return "描边视觉壳覆盖率，与场景物理几何分开查询。";
+                case HoAttributeCompositeDebugMode.InputAvailability:
+                    return "R = 身份池可用，G = Selection 可用，B = 场景几何可用。";
                 default:
                     // Off：没有要解释的东西就不画那一行。
                     return string.Empty;

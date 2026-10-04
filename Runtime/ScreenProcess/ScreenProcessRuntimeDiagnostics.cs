@@ -138,6 +138,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     {
                         requiresCoverage = true;
                     }
+                    if (layer.debugMask) continue; // Selection preview does not require the effect's physical inputs.
 
                     if (isEdgeLight || isOutline || isDepthOfField || isPostLighting || isSkyTyndall)
                     {
@@ -186,13 +187,15 @@ namespace lilToon.URP.Extensions.PostProcessing
             bool cameraColorAvailable,
             bool coverageAvailable,
             bool normalDepthAvailable,
-            bool skyTextureAvailable)
+            bool skyTextureAvailable,
+            string queryErrors = null)
         {
             bool ready = !backBufferActive
                 && cameraColorAvailable
                 && (!requirements.RequiresCoverage || coverageAvailable)
                 && (!requirements.RequiresNormalDepth || normalDepthAvailable)
-                && (!requirements.RequiresSkyTexture || skyTextureAvailable);
+                && (!requirements.RequiresSkyTexture || skyTextureAvailable)
+                && string.IsNullOrEmpty(queryErrors);
 
             currentSnapshot = new ScreenProcessRuntimeDiagnosticSnapshot(
                 true,
@@ -208,7 +211,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 normalDepthAvailable,
                 skyTextureAvailable,
                 ready,
-                ready ? "输入有效。" : BuildMissingInputReason(
+                ready ? "输入有效。" : !string.IsNullOrEmpty(queryErrors) ? queryErrors : BuildMissingInputReason(
                     requirements,
                     backBufferActive,
                     cameraColorAvailable,

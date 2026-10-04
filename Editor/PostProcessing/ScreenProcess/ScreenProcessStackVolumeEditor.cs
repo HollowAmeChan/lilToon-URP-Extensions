@@ -1,5 +1,6 @@
 using System.Collections.Generic;
 using lilToon.URP.Extensions.PostProcessing;
+using lilToon.URP.Extensions.AttributeComposite;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEditor.Rendering;
@@ -349,6 +350,11 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
 
         private static int GetElementLineCount(SerializedProperty element)
         {
+            return GetEffectLineCount(element) + GetMaskExtraLineCount(element);
+        }
+
+        private static int GetEffectLineCount(SerializedProperty element)
+        {
             switch (GetEffect(element))
             {
                 case ScreenProcessEffect.EdgeLight:
@@ -451,9 +457,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         private const float MaskToggleWidth = 62.0f;
 
         /// <summary>
-        /// The per-layer mask row. The mask source is the character coverage (AC total coverage,
-        /// produced by OB), so the row only offers enable / invert / debug.
-        /// It must stay exactly one row: GetElementLineCount reserves one line for it.
+        /// Mask selection and domain rows share their exact line budget with GetMaskExtraLineCount.
         /// </summary>
         private static void DrawMaskProperties(Rect rect, ref float y, SerializedProperty element)
         {
@@ -472,11 +476,48 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             float labelWidth = Mathf.Max(0.0f, enableRect.x - row.x - 4.0f);
             EditorGUI.LabelField(
                 new Rect(row.x, row.y, labelWidth, row.height),
-                new GUIContent("遮罩", "遮罩来源 = 角色覆盖率（AC 总覆盖率，由 OB 的身份池产出）。"));
+                new GUIContent("遮罩", "通过 AC 选择语义、身份或几何覆盖率，并在指定范围内反选。"));
             useMask.boolValue = EditorGUI.ToggleLeft(enableRect, "启用", useMask.boolValue);
             invertMask.boolValue = EditorGUI.ToggleLeft(invertRect, "反转", invertMask.boolValue);
             debugMask.boolValue = EditorGUI.ToggleLeft(debugRect, "调试", debugMask.boolValue);
             y += LineHeight + LineSpacing;
+            if (!useMask.boolValue && !debugMask.boolValue) return;
+            DrawPropertyLine(rect, ref y, element, "maskSource", "选择来源");
+            HoACQueryKind source = (HoACQueryKind)element.FindPropertyRelative("maskSource").intValue;
+            if (source == HoACQueryKind.Semantic)
+            {
+                SerializedProperty name = element.FindPropertyRelative("maskSemanticName");
+                var entries = HoSemanticSchema.Declarations;
+                var labels = new string[entries.Count + 1];
+                labels[0] = "未声明：" + name.stringValue;
+                int selected = 0;
+                for (int i = 0; i < entries.Count; i++)
+                {
+                    labels[i + 1] = entries[i].displayName + "（" + entries[i].name + "）";
+                    if (entries[i].name == name.stringValue) selected = i + 1;
+                }
+                EditorGUI.BeginChangeCheck();
+                int next = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "语义", selected, labels);
+                if (EditorGUI.EndChangeCheck() && next > 0) name.stringValue = entries[next - 1].name;
+                y += LineHeight + LineSpacing;
+            }
+            else if (source == HoACQueryKind.Group || source == HoACQueryKind.Identity)
+                DrawPropertyLine(rect, ref y, element, "maskId", source == HoACQueryKind.Group ? "组 ID" : "完整身份 ID");
+            DrawPropertyLine(rect, ref y, element, "maskDomain", "选择与反选范围");
+            HoACQueryDescriptor query = HoACQueryDescriptor.Resolve(source,
+                element.FindPropertyRelative("maskSemanticName").stringValue,
+                element.FindPropertyRelative("maskId").intValue,
+                (HoACMaskDomain)element.FindPropertyRelative("maskDomain").intValue);
+            EditorGUI.LabelField(new Rect(rect.x, y, rect.width, LineHeight),
+                query.Error ?? "输入缺失时遮罩为零；调试直出选择结果。", EditorStyles.miniLabel);
+            y += LineHeight + LineSpacing;
+        }
+
+        private static int GetMaskExtraLineCount(SerializedProperty element)
+        {
+            if (!element.FindPropertyRelative("useMask").boolValue && !element.FindPropertyRelative("debugMask").boolValue) return 0;
+            HoACQueryKind source = (HoACQueryKind)element.FindPropertyRelative("maskSource").intValue;
+            return 3 + (source == HoACQueryKind.Semantic || source == HoACQueryKind.Group || source == HoACQueryKind.Identity ? 1 : 0);
         }
 
         private static void DrawPropertyLine(Rect rect, ref float y, SerializedProperty element, string propertyName, string label)
@@ -703,6 +744,10 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
             SetBool(element, "useMask", false);
             SetBool(element, "invertMask", false);
             SetBool(element, "debugMask", false);
+            SetEnum(element, "maskSource", (int)HoACQueryKind.TotalCoverage);
+            SetEnum(element, "maskDomain", (int)HoACMaskDomain.Screen);
+            SetString(element, "maskSemanticName", "CharacterFull");
+            SetInt(element, "maskId", 1);
 
             switch (effect)
             {

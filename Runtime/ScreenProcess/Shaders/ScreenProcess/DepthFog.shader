@@ -131,6 +131,8 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthFog"
 
                 float2 uv = input.texcoord;
                 half4 source = SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, uv);
+                if (LilScreenProcessShouldOutputMaskDebug())
+                    return LilScreenProcessMaskDebugColor(uv, false, source.a);
                 float intensity = saturate(_Intensity);
                 bool depthSlotOn = _LayerParams0.x > 0.5;
                 bool heightSlotOn = _LayerParams2.w > 0.5;

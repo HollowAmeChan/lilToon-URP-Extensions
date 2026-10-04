@@ -8,12 +8,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
 {
     /// <summary>
     /// **AC（Ho-AttributeComposite）= 语义遮罩与合成属性的唯一逻辑入口**（AC 架构 §1）。
-    /// 本轮（R3-obj）只落 object 来源：`SemanticResolve` 把 OB 身份池 + 部件行标签解压成
-    /// 固定 lane 的 Selection 池，消费者经 `HoAC_*` 查询，不再自己解码 OB 的 packing。
-    /// <para>
-    /// 还没落地（不要假装有）：surface 来源与五种 sourceMode 的合成（等 SB，R4b）、
-    /// 合成数值属性（`constant &lt; surface`，R4c）、Selection 池的 16 lane MRT 分批。
-    /// </para>
+    /// 发布 GB 覆盖范围、OB 身份引用、SB 数值引用，并合成固定 8 lane 的 Selection 池。
+    /// 消费者经 typed query 选择遮罩与范围。精确 sample 合成与按需求裁剪尚未实现。
     /// </summary>
     [DisallowMultipleRendererFeature("Ho-AttributeComposite")]
     public sealed class HoAttributeCompositeRendererFeature : ScriptableRendererFeature
@@ -29,11 +25,17 @@ namespace lilToon.URP.Extensions.AttributeComposite
         private Shader resolveShader;
         private Shader debugShader;
         private bool warnedMissingResolveShader;
+        private bool registeredCameraReset;
 
         public HoAttributeCompositeSettings Settings => settings;
 
         public override void Create()
         {
+            if (!registeredCameraReset)
+            {
+                RenderPipelineManager.beginCameraRendering += ResetCameraState;
+                registeredCameraReset = true;
+            }
             pass = new HoAttributeCompositePass();
             debugPass = new HoAttributeCompositeDebugPass();
         }
@@ -69,6 +71,11 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
         protected override void Dispose(bool disposing)
         {
+            if (registeredCameraReset)
+            {
+                RenderPipelineManager.beginCameraRendering -= ResetCameraState;
+                registeredCameraReset = false;
+            }
             pass?.Dispose();
             pass = null;
             debugPass?.ReleaseCompatibilityResources();
@@ -85,11 +92,13 @@ namespace lilToon.URP.Extensions.AttributeComposite
         {
             runtimeSettings.CopyFrom(settings);
             HoAttributeCompositeVolume volume = GetVolumeComponent();
-            if (volume == null || !volume.IsActive())
+            if (volume == null || !volume.active)
             {
                 return runtimeSettings;
             }
 
+            if (volume.enable.overrideState) runtimeSettings.enabled = volume.enable.value;
+            if (!volume.IsActive()) return runtimeSettings;
             runtimeSettings.debugMode = volume.debugMode.value;
             runtimeSettings.debugInSceneView = volume.debugInSceneView.value;
             runtimeSettings.debugInGameView = volume.debugInGameView.value;
@@ -100,6 +109,11 @@ namespace lilToon.URP.Extensions.AttributeComposite
         {
             VolumeStack stack = VolumeManager.instance != null ? VolumeManager.instance.stack : null;
             return stack != null ? stack.GetComponent<HoAttributeCompositeVolume>() : null;
+        }
+
+        private static void ResetCameraState(ScriptableRenderContext context, Camera camera)
+        {
+            HoAttributeCompositePass.ResetGlobalState();
         }
 
         private static bool WantsDebugView(HoAttributeCompositeSettings activeSettings, CameraType cameraType)

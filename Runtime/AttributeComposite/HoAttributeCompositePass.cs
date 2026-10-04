@@ -3,6 +3,7 @@
 using System.Collections.Generic;
 using lilToon.URP.Extensions.ObjectBuffer;
 using lilToon.URP.Extensions.SurfaceBuffer;
+using lilToon.URP.Extensions.GeometryBuffer;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -12,12 +13,8 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.AttributeComposite
 {
     /// <summary>
-    /// AC 的产出趟：`SemanticResolve`（AC 架构 §0.5）。本轮只有 object 来源，所以这一趟就是
-    /// "OB 身份池 + 部件行标签 → 固定 lane 的 `(SemanticId, coverage)`"——
-    /// 也就是以前角色特化自己烤的那张位平面，收上来变成所有消费者共用的一份。
-    /// <para>
-    /// 它发布 <see cref="HoAttributeCompositeRenderGraphResources"/>：Selection 池 + 身份池引用。
-    /// </para>
+    /// 发布三轴输入引用与本相机可用性；有 OB 时执行像素级 object/surface SemanticResolve。
+    /// GB 几何/描边查询不依赖 OB，也不复制已有纹理。
     /// </summary>
     internal sealed class HoAttributeCompositePass : ScriptableRenderPass
     {
@@ -27,10 +24,22 @@ namespace lilToon.URP.Extensions.AttributeComposite
         private Material resolveMaterial;
         private ComputeBuffer laneBuffer;
         private bool catalogUploaded;
+        private static int compatibilityCameraId;
+        private static int compatibilityFrame = -1;
+        internal static Vector4 CompatibilityInputFlags { get; private set; }
+        internal static bool IsCompatibilityPublished(Camera camera) => camera != null &&
+            compatibilityFrame == Time.frameCount && compatibilityCameraId == camera.GetInstanceID();
+
+        private sealed class PublishPassData
+        {
+            public Vector4 inputFlags;
+            public Vector4 geometryFlags;
+        }
 
         // 兼容（非 RenderGraph）路径的常驻目标：与 OB 的兼容路径同形。
         private readonly RTHandle[] selectionTargets = new RTHandle[HoAttributeCompositeShaderConstants.SelectionTexturesPerResolve];
         private readonly RenderTargetIdentifier[] selectionIdentifiers = new RenderTargetIdentifier[HoAttributeCompositeShaderConstants.SelectionTexturesPerResolve];
+        private RTHandle compatibilityDepthNone;
 
         private sealed class ResolvePassData
         {
@@ -40,6 +49,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
             public TextureHandle[] selectionTextures;
             public Material material;
             public int laneCount;
+            public Vector4 inputFlags;
 
             /// <summary>SB 的语义 lane（单采样）：有的话每条 lane 按 catalog 的 sourceMode 与它合成。</summary>
             public bool surfaceEnabled;
@@ -69,6 +79,10 @@ namespace lilToon.URP.Extensions.AttributeComposite
         {
             Shader.SetGlobalFloat(HoAttributeCompositeShaderConstants.ActiveId, 0.0f);
             Shader.SetGlobalFloat(HoAttributeCompositeShaderConstants.LaneCountId, 0.0f);
+            Shader.SetGlobalFloat(HoAttributeCompositeShaderConstants.InputsPublishedId, 0);
+            Shader.SetGlobalVector(HoAttributeCompositeShaderConstants.InputFlagsId, Vector4.zero);
+            compatibilityFrame = -1;
+            CompatibilityInputFlags = Vector4.zero;
         }
 
         // ------------------------------------------------------------------ 兼容（非 RenderGraph）路径
@@ -94,7 +108,11 @@ namespace lilToon.URP.Extensions.AttributeComposite
                     FilterMode.Point,
                     TextureWrapMode.Clamp,
                     name: string.Format(HoAttributeCompositeShaderConstants.SelectionTextureFormat, i));
+                selectionIdentifiers[i] = selectionTargets[i].nameID;
             }
+            // Inform URP's attachment cache so the following opaque pass restores the camera targets.
+            if (compatibilityDepthNone == null) compatibilityDepthNone = RTHandles.Alloc(BuiltinRenderTextureType.None);
+            ConfigureTarget(selectionTargets, compatibilityDepthNone);
         }
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
@@ -114,21 +132,53 @@ namespace lilToon.URP.Extensions.AttributeComposite
             CommandBuffer cmd = CommandBufferPool.Get();
             using (new ProfilingScope(cmd, ProfilingSampler))
             {
-                for (int i = 0; i < selectionIdentifiers.Length; i++)
+                HoObjectBufferRenderTargets objects = HoObjectBufferPass.CompatibilityTargets;
+                HoGeometryBufferRenderTargets geometryTargets = HoGeometryBufferPass.CompatibilityTargets;
+                bool identity = objects != null && objects.Id0Texture != null && objects.Id1Texture != null && objects.CoverageTexture != null;
+                bool geometry = geometryTargets != null && geometryTargets.NormalDepthTexture != null;
+                bool hasOutline = geometry && geometryTargets.OutlineNormalDepthTexture != null;
+                CompatibilityInputFlags = new Vector4(identity ? 1 : 0, identity ? 1 : 0, geometry ? 1 : 0, hasOutline ? 1 : 0);
+                cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.InputsPublishedId, 1);
+                cmd.SetGlobalVector(HoAttributeCompositeShaderConstants.InputFlagsId, CompatibilityInputFlags);
+                cmd.SetGlobalVector(HoAttributeCompositeShaderConstants.GeometryFlagsId, new Vector4(
+                    geometry && geometryTargets.UseMsaaResolve ? 1 : 0,
+                    hasOutline && geometryTargets.UseMsaaResolve ? 1 : 0, 0, 0));
+                if (geometry)
                 {
-                    selectionIdentifiers[i] = selectionTargets[i].nameID;
+                    BindCompatibilityTexture(cmd, HoAttributeCompositeShaderConstants.GeometryNormalDepthId, geometryTargets.NormalDepthTexture);
+                    BindCompatibilityTexture(cmd, HoAttributeCompositeShaderConstants.GeometryCoverageId, geometryTargets.CoverageTexture);
+                    BindCompatibilityTexture(cmd, HoAttributeCompositeShaderConstants.OutlineNormalDepthId, geometryTargets.OutlineNormalDepthTexture);
+                    BindCompatibilityTexture(cmd, HoAttributeCompositeShaderConstants.OutlineCoverageId, geometryTargets.OutlineCoverageTexture);
                 }
-
-                // 身份池的全局名由 OB 的兼容路径设好（它排在本趟之前）；SB 的语义 lane 同理。
-                SetSurfaceKeywords(resolveMaterial, HoSurfaceBufferSemanticPass.LastProduced);
-
-                cmd.SetRenderTarget(selectionIdentifiers, selectionTargets[0].nameID);
-                cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.LaneCountId, laneCount);
-                cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.ActiveId, 1.0f);
-                Blitter.BlitTexture(cmd, selectionTargets[0], new Vector4(1, 1, 0, 0), resolveMaterial, 0);
-                for (int i = 0; i < selectionTargets.Length; i++)
+                compatibilityCameraId = renderingData.cameraData.camera.GetInstanceID();
+                compatibilityFrame = Time.frameCount;
+                if (!identity)
                 {
-                    cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.SelectionTextureIds[i], selectionTargets[i].nameID);
+                    cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.ActiveId, 0);
+                    cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.LaneCountId, 0);
+                }
+                else
+                {
+                    for (int i = 0; i < selectionIdentifiers.Length; i++)
+                    {
+                        selectionIdentifiers[i] = selectionTargets[i].nameID;
+                    }
+
+                    // 身份池的全局名由 OB 的兼容路径设好（它排在本趟之前）；SB 的语义 lane 同理。
+                    SetSurfaceKeywords(resolveMaterial, HoSurfaceBufferSemanticPass.LastProduced);
+
+                    cmd.SetRenderTarget(selectionIdentifiers, BuiltinRenderTextureType.None);
+                    cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, objects.Id0Texture.nameID);
+                    cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id1TextureId, objects.Id1Texture.nameID);
+                    cmd.SetGlobalTexture(HoObjectBufferShaderConstants.CoverageTextureId, objects.CoverageTexture.nameID);
+                    cmd.SetGlobalFloat(HoObjectBufferShaderConstants.PartCountId, HoObjectBufferRegistry.PartRowCount);
+                    cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.LaneCountId, laneCount);
+                    cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.ActiveId, 1.0f);
+                    Blitter.BlitTexture(cmd, objects.Id0Texture, new Vector4(1, 1, 0, 0), resolveMaterial, 0);
+                    for (int i = 0; i < selectionTargets.Length; i++)
+                    {
+                        cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.SelectionTextureIds[i], selectionTargets[i].nameID);
+                    }
                 }
             }
 
@@ -136,8 +186,15 @@ namespace lilToon.URP.Extensions.AttributeComposite
             CommandBufferPool.Release(cmd);
         }
 
+        private static void BindCompatibilityTexture(CommandBuffer cmd, int target, RTHandle texture)
+        {
+            if (texture != null) cmd.SetGlobalTexture(target, texture.nameID);
+        }
+
         private void ReleaseCompatibilityTargets()
         {
+            compatibilityDepthNone?.Release();
+            compatibilityDepthNone = null;
             for (int i = 0; i < selectionTargets.Length; i++)
             {
                 selectionTargets[i]?.Release();
@@ -156,6 +213,15 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
             HoObjectBufferRenderGraphResources objectBufferResources = frameData.GetOrCreate<HoObjectBufferRenderGraphResources>();
             HoAttributeCompositeRenderGraphResources resources = frameData.GetOrCreate<HoAttributeCompositeRenderGraphResources>();
+            HoSurfaceBufferRenderGraphResources surfaceResources = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
+            HoGeometryBufferRenderGraphResources geometry = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
+            PublishResources(resources, System.Array.Empty<TextureHandle>(), 0, objectBufferResources, surfaceResources);
+            resources.geometryCoverageTexture = geometry.coverageTexture;
+            resources.geometryNormalDepthTexture = geometry.normalDepthTexture;
+            resources.outlineCoverageTexture = geometry.outlineCoverageTexture;
+            resources.outlineNormalDepthTexture = geometry.outlineNormalDepthTexture;
+            resources.published = true;
+            RecordInputPublication(renderGraph, resources);
             if (!objectBufferResources.HasRequiredTextures)
             {
                 // 没有身份池就没有语义可解压：不产出、不报错（OB 自己的诊断会说为什么没有）。
@@ -163,7 +229,6 @@ namespace lilToon.URP.Extensions.AttributeComposite
             }
 
             // SB 的语义 lane：有就按 catalog 的 sourceMode 合成（如 SurfaceOverride），没有就纯物体位（ObjectOnly）。
-            HoSurfaceBufferRenderGraphResources surfaceResources = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
             bool surfaceEnabled = surfaceResources.HasSemanticLanes && HoSurfaceBufferSemanticPass.LastProduced;
 
             int laneCount = Mathf.Min(HoSemanticSchema.LaneCount, HoSemanticSchema.ResolvedLaneCount);
@@ -190,6 +255,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 passData.selectionTextures = selectionTextures;
                 passData.material = resolveMaterial;
                 passData.laneCount = laneCount;
+                passData.inputFlags = new Vector4(resources.HasIdentityPool ? 1 : 0, 1, resources.HasGeometry ? 1 : 0, resources.HasOutline ? 1 : 0);
                 passData.surfaceEnabled = surfaceEnabled;
                 passData.surfaceOwnerTexture = surfaceResources.semanticOwnerTexture;
                 passData.surfaceLaneTextures = surfaceResources.semanticLaneTextures;
@@ -221,6 +287,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
                     context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.CoverageTextureId, data.identityCoverageTexture);
                     context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.LaneCountId, data.laneCount);
                     context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.ActiveId, 1.0f);
+                    context.cmd.SetGlobalVector(HoAttributeCompositeShaderConstants.InputFlagsId, data.inputFlags);
                     SetSurfaceKeywords(data.material, data.surfaceEnabled);
                     if (data.surfaceEnabled)
                     {
@@ -236,6 +303,36 @@ namespace lilToon.URP.Extensions.AttributeComposite
             }
 
             PublishResources(resources, selectionTextures, laneCount, objectBufferResources, surfaceResources);
+        }
+
+        private static void RecordInputPublication(RenderGraph graph, HoAttributeCompositeRenderGraphResources r)
+        {
+            using (var builder = graph.AddRasterRenderPass<PublishPassData>("Ho-AC Publish Inputs", out var data, ProfilingSampler))
+            {
+                data.inputFlags = r.InputFlags;
+                data.geometryFlags = r.GeometryFlags;
+                Publish(builder, r.geometryCoverageTexture, HoAttributeCompositeShaderConstants.GeometryCoverageId);
+                Publish(builder, r.geometryNormalDepthTexture, HoAttributeCompositeShaderConstants.GeometryNormalDepthId);
+                Publish(builder, r.outlineCoverageTexture, HoAttributeCompositeShaderConstants.OutlineCoverageId);
+                Publish(builder, r.outlineNormalDepthTexture, HoAttributeCompositeShaderConstants.OutlineNormalDepthId);
+                builder.AllowGlobalStateModification(true);
+                builder.AllowPassCulling(false);
+                builder.SetRenderFunc(static (PublishPassData d, RasterGraphContext c) =>
+                {
+                    c.cmd.SetGlobalVector(HoAttributeCompositeShaderConstants.InputFlagsId, d.inputFlags);
+                    c.cmd.SetGlobalVector(HoAttributeCompositeShaderConstants.GeometryFlagsId, d.geometryFlags);
+                    c.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.InputsPublishedId, 1);
+                    c.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.ActiveId, 0);
+                    c.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.LaneCountId, 0);
+                });
+            }
+        }
+
+        private static void Publish(IRasterRenderGraphBuilder builder, TextureHandle texture, int id)
+        {
+            if (!texture.IsValid()) return;
+            builder.UseTexture(texture, AccessFlags.Read);
+            builder.SetGlobalTextureAfterPass(texture, id);
         }
 
         /// <summary>把 Selection 池与身份池 / SB 数值面的引用一起发布（AC 架构 §0.1：句柄是引用，依赖各自声明）。</summary>

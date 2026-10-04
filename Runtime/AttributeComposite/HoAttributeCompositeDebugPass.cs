@@ -25,6 +25,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
             public Material material;
             public HoAttributeCompositeDebugMode debugMode;
             public TextureHandle[] selectionTextures;
+            public HoAttributeCompositeRenderGraphResources resources;
+            public HoACQueryDescriptor query;
         }
 
         public void Setup(HoAttributeCompositeSettings settings, Material debugMaterial, RTHandle cameraColorTarget)
@@ -73,7 +75,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             HoAttributeCompositeRenderGraphResources resources = frameData.GetOrCreate<HoAttributeCompositeRenderGraphResources>();
             TextureHandle destination = resourceData.activeColorTexture;
-            if (!destination.IsValid() || !resources.HasSelectionPool)
+            if (!destination.IsValid() || !resources.published)
             {
                 return;
             }
@@ -83,6 +85,11 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 passData.material = debugMaterial;
                 passData.debugMode = settings.debugMode;
                 passData.selectionTextures = resources.selectionTextures;
+                passData.resources = resources;
+                HoACQueryKind kind = settings.debugMode == HoAttributeCompositeDebugMode.GeometryCoverage ? HoACQueryKind.Geometry :
+                    settings.debugMode == HoAttributeCompositeDebugMode.OutlineCoverage ? HoACQueryKind.Outline : HoACQueryKind.Screen;
+                passData.query = HoACQueryDescriptor.Resolve(kind, null, 0, HoACMaskDomain.Screen);
+                HoAttributeCompositeBindings.ReadQuery(builder, resources, passData.query);
 
                 for (int i = 0; i < resources.selectionTextures.Length; i++)
                 {
@@ -98,6 +105,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
                     data.material.SetFloat(HoAttributeCompositeShaderConstants.DebugModeId, (float)data.debugMode);
+                    HoAttributeCompositeBindings.BindQuery(context.cmd, data.resources, data.query);
                     for (int i = 0; i < data.selectionTextures.Length; i++)
                     {
                         if (data.selectionTextures[i].IsValid())
