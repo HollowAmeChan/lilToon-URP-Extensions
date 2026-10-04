@@ -42,3 +42,11 @@ ReferenceFrame 提供世界原点和轴，随 Transform 动态更新。眼透保
 验证代码、隔离包/工程、Blender fixture、日志与截图在本地忽略目录 `research~/GeometryData/`，不进入生产 Runtime/Editor。首个目标为 Unity 6000.3.15f1 / D3D11。
 
 ReferenceFrame 正式代码通过 148 项检查，包含真实眼透 shader 对照、真实 GB/OB/AC/角色特化调用、多相机上传复用、动态转头、禁用、资源重建和正交旧行为。OutlineCorrection 通过 22 项检查：6 组 HoTools 角点数据最大误差约 6.67×10⁻⁸；实际 lilToon 新旧来源图像差 0；蒙皮 + 形态键与旧来源对照通过。具体结果见本地 `research~/GeometryData/Production-Report.md`。
+
+## 5. Tension 基础接口进展（2026-10-05）
+
+`HoGeometrySkinnedSource.Prepare/TryAcquire` 提供原生蒙皮 GPU 缓冲的借用、实际 stride 与 Renderer-local 分析空间转换。当前支持范围明确限定 D3D11、有效 rootBone、stream0/offset0 的 float32 三维位置。调用方必须在 native skinning 后取得样本，并在 GPU 消费完成后释放；接口不负责强行推进 Unity 的蒙皮。
+
+此目标的 GPU 位置已包含缩放，却使用根骨骼位置/旋转参考系；转换使用 `renderer.transform.worldToLocalMatrix * TRS(rootBone.position, rootBone.rotation, Vector3.one)`，避免将根缩放再应用一次。24 组骨骼/morph/缩放样本对解析参考的最大误差约 9.10×10⁻⁷。
+
+research 中的边长、面积、角点角变化 Compute 原型通过 8 组 CPU/GPU 对照，最大误差约 3.65×10⁻⁶；切线方向褶皱响应的基准、开关与拉伸/挤压验证通过。Tension 组件、全链路调度和 lilToon 正式皮肤褶皱组分尚未完成，不能将这些原型验证当作完整功能。进展见本地 `research~/GeometryData/Tension-Progress.md`。
