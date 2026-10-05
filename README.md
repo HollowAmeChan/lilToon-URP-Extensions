@@ -12,7 +12,7 @@
 
 ## Runtime 模块
 
-- `Runtime/GeometryData`：专用 ReferenceFrame 与 OutlineCorrection 数据生产；眼透使用动态参考系和相机参数，lilToon 描边可选择 GD 来源。用法见 `Documentation~/Ho-GeometryData.md`。
+- `Runtime/GeometryData`：专用 ReferenceFrame、OutlineCorrection 与 Tension 数据生产；眼透使用动态参考系和相机参数，lilToon 描边可选择 GD 来源，Tesion 可消费张力混合拉伸/挤压贴图。用法见 `Documentation~/Ho-GeometryData.md`。
 - `Runtime/OIT`：给 lilToon 透明 pass 使用的 Weighted Blended OIT。它会绘制 `LightMode = "lilToonOIT"`，写入 accumulation/revealage，再合成回 camera color。
 - `Runtime/MetadataBuffer`：材质、对象、mask、metadata 与当前 SSS source 输入缓冲。
 - `Runtime/ObjectBuffer`：R1 逐 sample IdentityId + coverage 底层；`HoObjectBufferGroup` 把组/部件 ID 写入 RSUV，Renderer Feature 用自建 MSAA resolve 成 4 层身份池。
@@ -25,7 +25,7 @@
 
 ## Editor 模块
 
-- `Editor/GeometryData`：参考系/描边组件 Inspector、显式准备按钮与 Play 前触发，不提供旧配置迁移。
+- `Editor/GeometryData`：参考系/描边/张力组件 Inspector、显式准备按钮与 Play 前触发，不提供旧配置迁移。
 - `Editor/MetadataBuffer`：MetadataBuffer Inspector 和工具。
 - `Editor/ObjectBuffer`：OB 组/部件 Inspector、Volume 调试 UI，以及 `HoLil/Validation/Validate Ho-ObjectBuffer R1` 最小闭环验证。
 - `Editor/CharacterSpecialization`：角色特化编辑器 UI。
@@ -42,7 +42,7 @@
 - `HoMetadataBufferRendererFeature`
 - `HoObjectBufferRendererFeature`
 - `HoGeometryBufferRendererFeature`
-- `HoGeometryDataRendererFeature`（描边专用数据发布）
+- `HoGeometryDataRendererFeature`（描边数据发布与动态张力 Compute 生产）
 - `HoCharacterSpecializationRendererFeature`
 - `ScreenProcessRendererFeature`
 - `ImageProcessRendererFeature`

@@ -7,18 +7,18 @@ namespace lilToon.URP.Extensions.GeometryData
     /// <summary>Identity-to-frame adapter. ReferenceFrame itself has no OB dependency.</summary>
     public static class HoObjectReferenceFrameBinding
     {
-        public static HoGeometryReferenceFrame Find(HoObjectBufferGroup group)
+        public static HoGeometryDataReferenceFrame Find(HoObjectBufferGroup group)
         {
             if (group == null) return null;
             return group.geometryReferenceFrame != null ? group.geometryReferenceFrame
-                : group.GetComponent<HoGeometryReferenceFrame>();
+                : group.GetComponent<HoGeometryDataReferenceFrame>();
         }
 
         public static bool TryGetFrame(HoObjectBufferGroup group, string partName, out HoGeometryFrameData data)
         {
             data = default;
             if (group == null || !group.isActiveAndEnabled) return false;
-            HoGeometryReferenceFrame frame = Find(group);
+            HoGeometryDataReferenceFrame frame = Find(group);
             return frame != null && frame.TryGetFrame(partName, out data);
         }
     }

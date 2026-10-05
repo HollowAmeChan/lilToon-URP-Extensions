@@ -8,20 +8,65 @@ namespace lilToon.URP.Extensions.GeometryData
     [DisallowMultipleRendererFeature("Ho-GeometryData")]
     public sealed class HoGeometryDataRendererFeature : ScriptableRendererFeature
     {
+        [SerializeField] private HoGeometryDataSettings settings = new HoGeometryDataSettings();
+        public HoGeometryDataSettings Settings => settings;
+        public Camera LastCamera { get; private set; }
+        public int LastScheduledFrame { get; private set; } = -1;
+        public string DebugStatus { get; private set; } = "预览关闭";
         private PublishPass pass;
+        private HoGeometryTensionPass tensionPass;
+        private HoGeometryDataDebugPass debugPass;
+        private Material debugMaterial;
         private bool registered;
         public override void Create()
         {
-            pass=new PublishPass();
-            if(!registered){RenderPipelineManager.beginCameraRendering+=ResetCamera;registered=true;}
+            tensionPass?.ReleaseBorrowed();
+            debugPass?.Dispose();
+            pass=new PublishPass();tensionPass=new HoGeometryTensionPass();
+            debugPass = new HoGeometryDataDebugPass();
+            if(!registered){RenderPipelineManager.beginCameraRendering+=ResetCamera;RenderPipelineManager.endCameraRendering+=EndCamera;registered=true;}
         }
         private static void ResetCamera(ScriptableRenderContext context,Camera camera)
-            => Shader.SetGlobalFloat(HoOutlineDataRegistry.AvailableId,0);
-        public override void AddRenderPasses(ScriptableRenderer renderer,ref RenderingData renderingData) => renderer.EnqueuePass(pass);
+        {
+            Shader.SetGlobalFloat(HoOutlineDataRegistry.AvailableId,0);
+            Shader.SetGlobalFloat(HoTensionDataRegistry.AvailableId,0);
+        }
+        private void EndCamera(ScriptableRenderContext context,Camera camera) => tensionPass?.ReleaseBorrowed();
+        public override void AddRenderPasses(ScriptableRenderer renderer,ref RenderingData renderingData)
+        {
+            if (!settings.enabled) { DebugStatus = "运行关闭"; return; }
+            LastCamera = renderingData.cameraData.camera; LastScheduledFrame = Time.frameCount;
+            // Allocate Tension slots before building the outline table, so both tables cover the shared addressing range.
+            HoTensionDataRegistry.Capture(out _,out _);
+            renderer.EnqueuePass(pass);renderer.EnqueuePass(tensionPass);
+            DebugStatus = "预览关闭";
+            if (!ShouldDebug(renderingData.cameraData.camera)) return;
+            if (debugMaterial == null)
+            {
+                var shader = Resources.Load<Shader>("HoGeometryDataDebug");
+                if (shader == null || !shader.isSupported) { DebugStatus = "数据预览 Shader 不可用"; return; }
+                debugMaterial = CoreUtils.CreateEngineMaterial(shader);
+            }
+            debugPass.Setup(settings, debugMaterial); renderer.EnqueuePass(debugPass);
+            DebugStatus = "已安排数据预览";
+        }
+        private bool ShouldDebug(Camera camera) => settings.debugMode != HoGeometryDataDebugMode.Off && camera != null
+            && (camera.cameraType == CameraType.SceneView ? settings.debugInSceneView
+                : camera.cameraType == CameraType.Game && settings.debugInGameView);
+#pragma warning disable CS0672, CS0618
+        public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
+        {
+            if (settings.enabled && ShouldDebug(renderingData.cameraData.camera))
+                debugPass.SetupCompatibility(renderer.cameraColorTargetHandle);
+        }
+#pragma warning restore CS0672, CS0618
         protected override void Dispose(bool disposing)
         {
-            if(registered){RenderPipelineManager.beginCameraRendering-=ResetCamera;registered=false;}
+            if(registered){RenderPipelineManager.beginCameraRendering-=ResetCamera;RenderPipelineManager.endCameraRendering-=EndCamera;registered=false;}
+            tensionPass?.ReleaseBorrowed();
+            debugPass?.Dispose(); CoreUtils.Destroy(debugMaterial); debugMaterial = null;
             Shader.SetGlobalFloat(HoOutlineDataRegistry.AvailableId,0);
+            Shader.SetGlobalFloat(HoTensionDataRegistry.AvailableId,0);
         }
 
         private sealed class PublishPass : ScriptableRenderPass

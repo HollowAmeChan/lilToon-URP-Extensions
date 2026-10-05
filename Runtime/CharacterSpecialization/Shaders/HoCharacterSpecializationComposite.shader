@@ -59,7 +59,7 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             TEXTURE2D_X(_lilHoCharacterObjectSemantic4_7Texture);
             TEXTURE2D_X(_lilHoCharacterEyeColorTexture);
             TEXTURE2D_X(_lilHoCharacterEyeDataTexture);
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryData/Shaders/HoGeometryReferenceFrame.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryData/Shaders/HoGeometryDataReferenceFrame.hlsl"
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseSourceColorTexture);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseColorTexture);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseDepthTexture);

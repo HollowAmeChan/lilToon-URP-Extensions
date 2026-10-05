@@ -5,7 +5,7 @@ namespace lilToon.URP.Extensions.GeometryData
 {
     [ExecuteAlways, DisallowMultipleComponent]
     [AddComponentMenu("Rendering/Ho-GeometryData OutlineCorrection")]
-    public sealed class HoOutlineCorrection : MonoBehaviour
+    public sealed class HoGeometryDataOutlineCorrection : MonoBehaviour
     {
         [InspectorName("目标渲染器")] public Renderer targetRenderer;
         [InspectorName("初始化时准备")] public bool prepareOnInitialize = true;
@@ -17,6 +17,7 @@ namespace lilToon.URP.Extensions.GeometryData
         [SerializeField, HideInInspector] private Vector4[] preparedData;
         [SerializeField, HideInInspector] private bool preparedWeld;
         [NonSerialized] private string status;
+        [NonSerialized] private bool bindingDirty;
         public string Status => targetRenderer != null && targetRenderer.isPartOfStaticBatch
             ? "目标参加了静态合批，无法使用原 Mesh 顶点索引；描边回退材质法线。"
             : status ?? (HasData ? "已准备" : "未准备");
@@ -32,9 +33,19 @@ namespace lilToon.URP.Extensions.GeometryData
             if(targetRenderer==null)targetRenderer=GetComponent<Renderer>();
             if(prepareOnInitialize && !HasData)Prepare();
             HoOutlineDataRegistry.Register(this);
+            bindingDirty=false;
         }
         private void OnDisable() => HoOutlineDataRegistry.Unregister(this);
-        private void OnValidate() => HoOutlineDataRegistry.MarkDirty();
+        private void OnValidate()
+        {
+            bindingDirty=true;HoOutlineDataRegistry.MarkDirty();
+        }
+        private void Update()
+        {
+            // OnValidate may run on Unity's loading thread; the native Renderer binding belongs on the main thread.
+            if(!bindingDirty)return;
+            bindingDirty=false;HoOutlineDataRegistry.Register(this);
+        }
 
         public bool Prepare()
         {
@@ -42,10 +53,12 @@ namespace lilToon.URP.Extensions.GeometryData
             try
             {
                 Mesh mesh=SourceMesh;
-                var data=HoOutlineCorrectionBuilder.Build(mesh,weldCoincidentVertices);
+                var data=HoGeometryDataOutlineCorrectionBuilder.Build(mesh,weldCoincidentVertices);
                 preparedMesh=mesh;preparedWeld=weldCoincidentVertices;preparedData=data;
                 status=$"已准备：{data.Length} 顶点";
-                HoOutlineDataRegistry.MarkDirty();return true;
+                if(isActiveAndEnabled)HoOutlineDataRegistry.Register(this);else HoOutlineDataRegistry.MarkDirty();
+                bindingDirty=false;
+                return true;
             }
             catch(Exception exception)
             {

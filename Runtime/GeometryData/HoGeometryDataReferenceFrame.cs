@@ -38,7 +38,7 @@ namespace lilToon.URP.Extensions.GeometryData
     /// <summary>Dynamic object/bone frame. Camera-relative evaluation belongs to its consumer.</summary>
     [ExecuteAlways, DisallowMultipleComponent]
     [AddComponentMenu("Rendering/Ho-GeometryData ReferenceFrame")]
-    public sealed class HoGeometryReferenceFrame : MonoBehaviour
+    public sealed class HoGeometryDataReferenceFrame : MonoBehaviour
     {
         [InspectorName("参考朝向")]
         [Tooltip("提供世界原点与方向的骨骼或空物体。留空表示不提供参考系。")]

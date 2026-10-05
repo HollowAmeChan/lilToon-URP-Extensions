@@ -58,7 +58,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         public List<HoObjectBufferSelectionEntry> selections = new List<HoObjectBufferSelectionEntry>();
 
         [HideInInspector]
-        public HoGeometryReferenceFrame geometryReferenceFrame;
+        public HoGeometryDataReferenceFrame geometryReferenceFrame;
 
         private readonly Dictionary<Renderer, int> localSlotByRenderer = new Dictionary<Renderer, int>();
         private readonly List<string> partNameCache = new List<string>();

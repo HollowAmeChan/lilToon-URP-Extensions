@@ -5,7 +5,7 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.GeometryData
 {
     /// <summary>HoTools SOLIDIFY_RAW2SMOOTH port. Output is the existing RGBA consumer's TBN encoding.</summary>
-    public static class HoOutlineCorrectionBuilder
+    public static class HoGeometryDataOutlineCorrectionBuilder
     {
         private sealed class Face { public int[] points; public Vector3 normal; }
         private sealed class Edge { public int a,b; public readonly List<int> faces = new List<int>(2); }

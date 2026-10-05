@@ -1,0 +1,67 @@
+#pragma kernel ExtractPositions
+#pragma kernel TriangleMetrics
+#pragma kernel VertexGather
+
+ByteAddressBuffer _Source;
+RWStructuredBuffer<float4> _Positions;
+StructuredBuffer<float4> _RestPositions;
+StructuredBuffer<uint> _Triangles;
+StructuredBuffer<float4> _RestMetrics;
+StructuredBuffer<uint> _NeighborOffsets;
+StructuredBuffer<uint> _Neighbors;
+StructuredBuffer<uint> _CornerOffsets;
+StructuredBuffer<uint> _Corners;
+RWStructuredBuffer<float4> _TriangleMetrics;
+RWStructuredBuffer<float4> _Tension;
+int _VertexCount, _TriangleCount, _Stride, _OutputOffset;
+float _LengthEpsilon, _AreaEpsilon;
+float3 _Weights;
+float4x4 _ToRendererLocal;
+float Angle(float3 a,float3 b) { return atan2(length(cross(a,b)),dot(a,b)); }
+[numthreads(64,1,1)]
+void ExtractPositions(uint id:SV_DispatchThreadID)
+{
+    if(id>=(uint)_VertexCount)return;
+    float3 p=asfloat(_Source.Load3(id*(uint)_Stride));
+    p=mul(_ToRendererLocal,float4(p,1)).xyz;
+    _Positions[id]=float4(p,all(isfinite(p)) ? 1 : 0);
+}
+[numthreads(64,1,1)]
+void TriangleMetrics(uint id:SV_DispatchThreadID)
+{
+    if(id>=(uint)_TriangleCount)return;
+    uint3 t=uint3(_Triangles[id*3],_Triangles[id*3+1],_Triangles[id*3+2]);
+    float4 pa=_Positions[t.x],pb=_Positions[t.y],pc=_Positions[t.z];
+    float3 a=pa.xyz,b=pb.xyz,c=pc.xyz;
+    float4 rest=_RestMetrics[id];float area=length(cross(b-a,c-a))*0.5;
+    if(rest.x<=_AreaEpsilon || area<=_AreaEpsilon || pa.w*pb.w*pc.w<0.5 || !isfinite(area))
+    { _TriangleMetrics[id]=0;return; }
+    _TriangleMetrics[id]=float4(log(area/rest.x),(float3(Angle(b-a,c-a),Angle(a-b,c-b),Angle(a-c,b-c))-rest.yzw)/3.141592653589793);
+}
+[numthreads(64,1,1)]
+void VertexGather(uint id:SV_DispatchThreadID)
+{
+    if(id>=(uint)_VertexCount)return;
+    if(_Positions[id].w<0.5){_Tension[_OutputOffset+id]=0;return;}
+    float stretch=0,compression=0,edgeWeight=0;bool invalid=false;
+    for(uint i=_NeighborOffsets[id];i<_NeighborOffsets[id+1];i++)
+    {
+        uint n=_Neighbors[i];float restLength=distance(_RestPositions[id].xyz,_RestPositions[n].xyz);
+        if(restLength<=_LengthEpsilon)continue;
+        if(_Positions[n].w<0.5){invalid=true;continue;}
+        float strain=log(max(distance(_Positions[id].xyz,_Positions[n].xyz),_LengthEpsilon)/restLength);
+        stretch+=max(strain,0);compression+=max(-strain,0);edgeWeight++;
+    }
+    float areaStretch=0,areaCompression=0,angular=0,areaWeight=0;
+    for(uint cornerIndex=_CornerOffsets[id];cornerIndex<_CornerOffsets[id+1];cornerIndex++)
+    {
+        uint corner=_Corners[cornerIndex],triId=corner/3;float weight=_RestMetrics[triId].x;
+        if(weight<=_AreaEpsilon)continue;
+        float4 metrics=_TriangleMetrics[triId];areaStretch+=max(metrics.x,0)*weight;areaCompression+=max(-metrics.x,0)*weight;
+        angular+=abs(metrics[corner%3+1])*weight;areaWeight+=weight;
+    }
+    float4 result=float4(_Weights.x*stretch/max(edgeWeight,1)+_Weights.y*areaStretch/max(areaWeight,_AreaEpsilon),
+        _Weights.x*compression/max(edgeWeight,1)+_Weights.y*areaCompression/max(areaWeight,_AreaEpsilon),
+        _Weights.z*angular/max(areaWeight,_AreaEpsilon),!invalid && (edgeWeight>0 || areaWeight>0) ? 1 : 0);
+    _Tension[_OutputOffset+id]=all(isfinite(result)) && result.w>0.5 ? result : 0;
+}

@@ -1,6 +1,8 @@
 # Ho-GeometryData
 
-状态：ReferenceFrame 与 OutlineCorrection 首版实现。GD 发布专用数据，消费者自己选择来源；不建立通用属性覆盖链。Tension、皮肤褶皱和其他几何模块后置。
+状态：ReferenceFrame、OutlineCorrection 与 Tension 首版代码已实现。GD 发布专用数据，消费者自己选择来源；不建立通用属性覆盖链。Tension 的正式 GPU / 材质验证记录见下文。
+
+组件类名统一包含 `GeometryData`：`HoGeometryDataReferenceFrame`、`HoGeometryDataOutlineCorrection`、`HoGeometryDataTension`。lilToon 的默认关闭 `Tesion`、拉伸/挤压两组 BaseColor + NormalMap 契约见 [Tesion 设计](计划/Ho-GeometryData-Tesion-Plan.md)。
 
 ## 1. 参考朝向与眼透
 
@@ -27,13 +29,14 @@ ReferenceFrame 提供世界原点和轴，随 Transform 动态更新。眼透保
 
 结果缓存在组件中，可以跨 Play/序列化重建复用。修改模型或准备参数后使用按钮更新。基准使用原始 Mesh；运行时由现有 TBN 跟随蒙皮，首版不每帧重算邻接与 shell。
 
-新来源使用专用材质关键字 `_HO_GD_OUTLINE`，只该变体要求 SM4.5。通过材质 Inspector 选择时同步关键字；脚本选择时使用 `HoOutlineCorrection.SelectMaterialSource(material, true)`。原来源保留原编译目标与消费行为。
+新来源使用专用材质关键字 `_HO_GD_OUTLINE`，只该变体要求 SM4.5。通过材质 Inspector 选择时同步关键字；脚本选择时使用 `HoGeometryDataOutlineCorrection.SelectMaterialSource(material, true)`。原来源保留原编译目标与消费行为。
 
 ## 3. 数据与资源边界
 
-- 描边数据按具体 Renderer 与原 Mesh vertex ID 寻址。RSUV 低 16 位继续为 OB 身份，高 16 位为描边槽；公共 transport 写入保留另一个位域。
+- 数据按具体 Renderer 与原 Mesh vertex ID 寻址。RSUV 低 16 位继续为 OB 身份，高 16 位为共享 GD Renderer 槽；描边与张力通过同一槽查询各自的专用表。公共 transport 写入保留另一个位域。
+- 槽在组件启用或显式准备时建立，先于相机剔除，避免首帧绘制拿到 0 号槽。Inspector 参数改变仅在 OnValidate 标记，后续主线程 Update 更新关联；这遵循 [Unity 的 OnValidate 线程约束](https://docs.unity3d.com/kr/current/ScriptReference/MonoBehaviour.OnValidate.html)。
 - GD Feature 在绘制前发布外部持久只读 buffer，使用明确的全局状态同步点；首版没有 async compute 或 transient 输出。
-- 停用组件后描边槽收回；无数据/无发布时 GD 来源回退材质原法线与宽度。参考系和描边是独立输出。
+- 停用某个组件只撤销它自己的关联；最后一个生产者离开时才收回 GD 槽。无数据/无发布时 GD 来源回退已有材质行为。参考系、描边与张力是独立输出。
 - 构建需要可读 Mesh、法线和切线，或已准备的组件缓存。仅支持三角形/四边形。静态合批改变索引，首版不发布给已静态合批的 Renderer。
 - 同位置连接需要位置、骨骼权重及 morph 位置轨迹一致。完全重合而实际应分离的表面可关闭连接；不能仅靠导入数据保证重建任意 DCC 原始拓扑。
 
@@ -43,10 +46,50 @@ ReferenceFrame 提供世界原点和轴，随 Transform 动态更新。眼透保
 
 ReferenceFrame 正式代码通过 148 项检查，包含真实眼透 shader 对照、真实 GB/OB/AC/角色特化调用、多相机上传复用、动态转头、禁用、资源重建和正交旧行为。OutlineCorrection 通过 22 项检查：6 组 HoTools 角点数据最大误差约 6.67×10⁻⁸；实际 lilToon 新旧来源图像差 0；蒙皮 + 形态键与旧来源对照通过。具体结果见本地 `research~/GeometryData/Production-Report.md`。
 
-## 5. Tension 基础接口进展（2026-10-05）
+## 5. Tension 与材质 Tesion（2026-10-05）
+
+1. 在 URP Renderer Data 添加 `HoGeometryDataRendererFeature`。
+2. 在 SkinnedMeshRenderer 对象上添加 `Rendering/Ho-GeometryData Tension`，指定目标 Renderer。
+3. 通过初始化、Play 前或“生成 / 更新张力参考状态”按钮准备原 Mesh 的参考姿势。修改同一个 Mesh 的几何/拓扑后手动更新参考；不靠资产导入触发。
+4. lilToon 完整 URP 材质的“额外属性 → Tesion”默认关闭。启用后分别指定拉伸与挤压的 BaseColor / NormalMap、范围、强度。特殊 Lite/Fur/Gem/Hair/Liquid 材质暂不开放。
+
+组件仅持有参考位置、拓扑、测量权重及 GPU 资源，不修改材质、UV、normal 或顶点色。每帧在 native skinning 后取得 Raw 位置，转换到 Renderer-local 空间，再计算三角面面积/角点角变化与 CSR 顶点 gather。输出为 float4：拉伸、挤压、角变化、有效性。没有逐帧 CPU BakeMesh。
+
+动态资源按实例分开，Time.frameCount 未改变且测量参数未变时，多相机复用已生产的结果。离屏持续测量需要 Renderer 的 Update When Offscreen；组件不强行改变这个 Renderer 设置。Shader 数据缺失时维持原颜色/法线。
+
+Tesion 的 BaseColor 仅混合 RGB，保持原 alpha/clip。普通 normalmap 组合完成后，在切线空间与额外 NormalMap 混合，再进入世界法线。两路同时响应时按对称权重归一化，没有后者覆盖前者；未指定的某类贴图不参与该类混合。拉伸/挤压每路共享该路 BaseColor 的 UV0 tiling/offset。
+
+脚本设置材质开关或纹理后调用 `HoGeometryTensionMaterial.Synchronize(material)`，同步专用本地关键字和贴图存在标志；Inspector 自动同步。关闭 `_HO_GD_TENSION` 时不引入新增 varying、纹理采样或 SM4.5 编译要求，材质常量缓冲布局保持一致。
+
+GPU Extract / Triangle / Gather 显式声明输入、临时读写和输出 buffer；发布 pass 读取结果并绑定全局表。当前使用同步 graphics queue，未开启 async compute。RenderGraph 的 `ImportBuffer` / `UseBuffer` 方式依据 [Unity Compute Shader 输入资源文档](https://docs.unity3d.com/cn/6000.0/Manual/urp/render-graph-compute-shader-input.html)。
 
 `HoGeometrySkinnedSource.Prepare/TryAcquire` 提供原生蒙皮 GPU 缓冲的借用、实际 stride 与 Renderer-local 分析空间转换。当前支持范围明确限定 D3D11、有效 rootBone、stream0/offset0 的 float32 三维位置。调用方必须在 native skinning 后取得样本，并在 GPU 消费完成后释放；接口不负责强行推进 Unity 的蒙皮。
 
 此目标的 GPU 位置已包含缩放，却使用根骨骼位置/旋转参考系；转换使用 `renderer.transform.worldToLocalMatrix * TRS(rootBone.position, rootBone.rotation, Vector3.one)`，避免将根缩放再应用一次。24 组骨骼/morph/缩放样本对解析参考的最大误差约 9.10×10⁻⁷。
 
-research 中的边长、面积、角点角变化 Compute 原型通过 8 组 CPU/GPU 对照，最大误差约 3.65×10⁻⁶；切线方向褶皱响应的基准、开关与拉伸/挤压验证通过。Tension 组件、全链路调度和 lilToon 正式皮肤褶皱组分尚未完成，不能将这些原型验证当作完整功能。进展见本地 `research~/GeometryData/Tension-Progress.md`。
+research 中的边长、面积、角点角变化 Compute 原型通过 8 组 CPU/GPU 对照，最大误差约 3.65×10⁻⁶。正式组件、调度与 lilToon 消费的验证结果单独记录在本地 `research~/GeometryData/Results/production-tension-results.json`，不与原型结果混用。显式捕获当前 GPU 姿势作为基准、其他 graphics API / skin 布局和特殊材质仍留待后续。
+
+正式 Tesion 验证通过 90 项检查：native skin / morph / 多实例测量、双相机复用、描边共存、真实 GB NormalMap、两路颜色响应、缺图/缺组件回退、Cutout alpha、资源重建。GPU 数据对 CPU 最大误差约 3.65×10⁻⁶，关闭后的像素误差为 0。场景为合成几何；真实角色的美术响应和性能需要目标场景验证。
+
+## 6. 在编辑器里调试
+
+选中当前相机实际使用的 URP Renderer Data，展开 **Ho-GeometryData**。Feature 资产有“运行 / 调试 / 数据源”三节。
+
+1. **数据源**：查看当前已载入场景的 ReferenceFrame / OutlineCorrection / Tesion 组件。点“定位”进入组件 Inspector，使用组件自己的准备按钮。描边显示 GD 槽和发布状态；Tesion 显示有效性、顶点/面数、参考版本、最近生产帧和累计次数，以及缺来源 / rootBone / 缓存失效原因。
+2. **运行**：检查本 Feature 最近安排过的相机和帧，及共享表的发布来源/顶点数。没有相机记录时确认相机实际使用这个 Renderer，并保持 Feature 与“运行”开启。
+3. **调试**：选择数据预览。Scene 默认开启、Game 默认关闭，可分别切换；Layer Mask 只过滤预览。Tesion 热图可调满量程，默认 0.2，它只改变显示，不改变计算或材质。
+4. **参考朝向**：定位并选择 HoGeometryDataReferenceFrame，在 Scene 查看前轴蓝、右轴红、上轴绿的箭头与默认/部件参考系标签。相机观察角及眼透结果继续用 CharacterSpecialization 的 ReferenceFrameView / EyeAngleFactor。
+
+| 数据预览 | 读法 |
+| --- | --- |
+| Renderer 绑定 / GD 槽 | 彩色表示共享 GD 绑定，深灰表示未绑定 |
+| 描边方向 | 世界方向编码 RGB = direction × 0.5 + 0.5 |
+| 描边厚度 | 灰度为原算法输出 A，0.5 中性；不是最终屏幕像素宽度 |
+| Tesion 拉伸 / 挤压 / 角变化 | 黑色是零，蓝→青→黄→红表示信号变强 |
+| Tesion 有效性 | 绿色有效，品红无来源/未生产/无效顶点；也显示未绑定的模型 |
+
+其它数据视图的品红同样表示该对象缺少所选专用数据。Tesion 预览不需要开启材质 Tesion；让角色变形，观察拉伸 / 挤压视图即可核查生产结果。
+
+这是几何数据的独立预览：替换所选视图画面，使用自己的深度，跳过材质 alpha clip 与描边位移。普通模型在绑定视图显示灰色，在有效性视图显示品红，其它模式只显示有 GD 槽的模型。后续屏幕处理仍可能处理预览，必要时调整预览绘制时机或暂时关闭相应后处理。
+
+数据预览通过隔离 Unity 项目的 36 项检查，包含 CustomEditor 选择、配置字段、首帧有效性、Renderer 槽、描边方向/厚度、三通道、Game 开关、Layer Mask、组件停用、Feature 停用与预览切换不重复生产。材质 Tesion 的 90 项回归继续通过。验证脚本与日志仍在本地忽略的 `research~/GeometryData/`。
