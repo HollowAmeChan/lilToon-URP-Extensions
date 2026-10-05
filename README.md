@@ -1,24 +1,24 @@
 # lilToon URP Extensions
 
-这个包包含本地 lilToon/lilPBR 渲染系统使用的 URP RendererFeature 和 runtime 桥接代码。它是整套系统里的管线层：`lilToon` 和 `lilPBR` 暴露 shader pass 与材质属性，而这个包负责分配 render target、调度 pass、发布全局贴图和缓冲。
+这个包包含本地 Ho 渲染系统使用的 URP RendererFeature 和 runtime 桥接代码。`lilToon` 暴露 shader pass 与材质属性，这个包负责分配 render target、调度 pass、发布全局贴图和缓冲。专用材质效果归现有 HoShader 模块，lilPBR / WaterFlowmap 已列入退役范围。
 
 ## 在整套系统里的定位
 
-- `lilToon`：消费 OIT、MetadataBuffer、HoCharacterCapture、HoShadowCast 和后处理 mask 的角色/NPR shader。
-- `lilPBR`：为平面反射写入 MetadataBuffer / GeometryBuffer 参数的场景/PBR shader。
+- `lilToon`：消费 OIT、OB/SB/GB、HoCharacterCapture、HoShadowCast 和语义遮罩的角色/NPR shader。
 - `HoUrp17.3.0`：本包面向的本地 URP 版本。
 - `HoUrpConfig17.0.3`：本地 URP shader 配置包。
-- `lilToon-UnityGLTF-Extensions`：保存导入阶段的材质契约，后续可映射到 lilToon/lilPBR。
+- `lilToon-UnityGLTF-Extensions`：保存导入阶段的材质契约，映射到当前管线支持的材质。
 
 ## Runtime 模块
 
 - `Runtime/GeometryData`：专用 ReferenceFrame、OutlineCorrection 与 Tension 数据生产；眼透使用动态参考系和相机参数，lilToon 描边可选择 GD 来源，Tesion 可消费张力混合拉伸/挤压贴图。用法见 `Documentation~/Ho-GeometryData.md`。
 - `Runtime/OIT`：给 lilToon 透明 pass 使用的 Weighted Blended OIT。它会绘制 `LightMode = "lilToonOIT"`，写入 accumulation/revealage，再合成回 camera color。
-- `Runtime/MetadataBuffer`：材质、对象、mask、metadata 与当前 SSS source 输入缓冲。
+- `Runtime/SurfaceBuffer`：表面数值与语义 lane 的生产；与 OB/AC 一起替代已删除的 MetadataBuffer。
+- `Runtime/AttributeComposite`：按 OB 身份与 SB 语义查询和合成遮罩。
 - `Runtime/ObjectBuffer`：R1 逐 sample IdentityId + coverage 底层；`HoObjectBufferGroup` 把组/部件 ID 写入 RSUV，Renderer Feature 用自建 MSAA resolve 成 4 层身份池。
 - `Runtime/GeometryBuffer`：normal/depth 几何输入缓冲。
 - `Runtime/CharacterSpecialization`：角色捕获和角色定制后处理，包括头发/脸部等风格化处理路径。
-- `Runtime/ScreenProcess`：用户可控的语义屏幕处理图层栈，支持 MetadataBuffer rule mask，并有 RenderGraph/非 RenderGraph 路径。
+- `Runtime/ScreenProcess`：用户可控的语义屏幕处理图层栈，使用 OB/SB/AC 遮罩，并有 RenderGraph/非 RenderGraph 路径。
 - `Runtime/ImageProcess`：最终图像处理链和具体效果移植。
 - `Runtime/PlanarReflection`：`HoPlanarReflectionRendererFeature` 调度 PLR surface 并发布 tent-prefiltered HDR mip source；opaque lilToon 在 ForwardLit 中按 PBR 响应消费，fullscreen composite 仅保留给水面/OIT/调试等特殊路径。
 - `Runtime/ShadowCast`：独立 HoShadowCast atlas 生成，用于指定的额外方向光、聚光和点光。多光容量由 `Light Capacity` 档位（同时采样灯数）与图集几何（切片数 = `floor(atlasSize / resolution)^2`，硬上限 128 片）共同决定；数值契约集中在 `Runtime/ShadowCast/HoShadowCastShaderContract.cs` + `Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl`，由编辑器校验器守住 C#/HLSL 一致性。
@@ -26,7 +26,6 @@
 ## Editor 模块
 
 - `Editor/GeometryData`：参考系/描边/张力组件 Inspector、显式准备按钮与 Play 前触发，不提供旧配置迁移。
-- `Editor/MetadataBuffer`：MetadataBuffer Inspector 和工具。
 - `Editor/ObjectBuffer`：OB 组/部件 Inspector、Volume 调试 UI，以及 `HoLil/Validation/Validate Ho-ObjectBuffer R1` 最小闭环验证。
 - `Editor/CharacterSpecialization`：角色特化编辑器 UI。
 - `Editor/LilMatConvert`：材质转换工具。
@@ -39,7 +38,8 @@
 按需要添加到 URP Renderer Asset：
 
 - `WeightedOITRendererFeature`
-- `HoMetadataBufferRendererFeature`
+- `HoSurfaceBufferRendererFeature`
+- `HoAttributeCompositeRendererFeature`
 - `HoObjectBufferRendererFeature`
 - `HoGeometryBufferRendererFeature`
 - `HoGeometryDataRendererFeature`（描边数据发布与动态张力 Compute 生产）
@@ -73,12 +73,12 @@ Peer requirement：
 - Unity 6000.x
 - URP 17.x，推荐使用本地 `HoUrp17.3.0`
 - 本地 `lilToon` fork，用于 toon shader pass 集成
-- `lilPBR`，用于平面反射参数写入和 PBR 侧 MetadataBuffer 工作流
 
 ## 注意事项
 
 - 主要功能同时实现了 RenderGraph 和兼容模式路径。
 - HoShadowCast 使用自己的 atlas：`_HoShadowCastAtlas` 和 `_HoShadowCastSecondDirectionalAtlas`，不依赖 URP additional light shadow receiver。
-- 这个包把 `lilToon` 和 `lilPBR` 当作 peer package，而不是硬依赖，方便项目自己控制包解析。
+- `lilToon` 作为 peer package，由项目控制包解析；本包不要求安装 lilPBR。
+- `_LILPBRPlanarReflection*` 是现役平面反射协议的历史名称，仍由本包生产、lilToon 消费；旧包退役时保留这套协议。
 
 更多设计和排查记录见 `Documentation~/`。
