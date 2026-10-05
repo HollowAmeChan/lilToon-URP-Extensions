@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.AttributeComposite;
 using lilToon.URP.Extensions.ObjectBuffer;
-using lilToon.URP.Extensions.GeometryData;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -291,7 +290,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
     internal sealed partial class HoCharacterSpecializationPass : ScriptableRenderPass
     {
-        private readonly HoGeometryObjectFrameBuffer referenceFrameBuffer = new HoGeometryObjectFrameBuffer();
+        private readonly HoCharacterReferenceFrameBuffer referenceFrameBuffer = new HoCharacterReferenceFrameBuffer();
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-CharacterSpecialization");
         private const int FaceHairDiffuseBlurIterationCount = 2;
         private const int SubjectOutlineBlurIterationCount = 2;
@@ -456,9 +455,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 }
 
                 ApplyMaterialProperties(compositeMaterial, settings);
-                cmd.SetGlobalBuffer(HoGeometryObjectFrameBuffer.BufferId, referenceFrameBuffer.Capture());
+                cmd.SetGlobalBuffer(HoCharacterReferenceFrameBuffer.BufferId, referenceFrameBuffer.Capture());
+                cmd.SetGlobalBuffer(HoCharacterReferenceFrameBuffer.IdentityMapId, HoCharacterReferenceFrameBuffer.IdentityMapBuffer);
+                cmd.SetGlobalInt(HoCharacterReferenceFrameBuffer.FrameCountId, HoCharacterReferenceFrameBuffer.FrameCount);
                 Vector3 observerPosition = renderingData.cameraData.camera.transform.position;
-                cmd.SetGlobalVector(HoGeometryObjectFrameBuffer.ViewPositionId,
+                cmd.SetGlobalVector(HoCharacterReferenceFrameBuffer.ViewPositionId,
                     new Vector4(observerPosition.x, observerPosition.y, observerPosition.z, 0));
                 cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeColorTextureId, renderTargets.EyeColorTexture.nameID);
                 cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.EyeDataTextureId, renderTargets.EyeDataTexture.nameID);
@@ -906,6 +907,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 passData.source = source;
                 passData.identityId0Texture = acResources.identityId0Texture;
                 passData.referenceFrames = renderGraph.ImportBuffer(referenceFrameBuffer.Capture());
+                passData.referenceFrameIdentities = renderGraph.ImportBuffer(HoCharacterReferenceFrameBuffer.IdentityMapBuffer);
+                passData.referenceFrameCount = HoCharacterReferenceFrameBuffer.FrameCount;
                 Vector3 observerPosition = cameraData.camera.transform.position;
                 passData.observerPosition = new Vector4(observerPosition.x, observerPosition.y, observerPosition.z, 0);
                 passData.geometryNormalDepthTexture = geometryResources.normalDepthTexture;
@@ -959,6 +962,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 builder.UseTexture(source, AccessFlags.Read);
                 builder.UseTexture(passData.identityId0Texture, AccessFlags.Read);
                 builder.UseBuffer(passData.referenceFrames, AccessFlags.Read);
+                builder.UseBuffer(passData.referenceFrameIdentities, AccessFlags.Read);
                 builder.UseTexture(passData.geometryNormalDepthTexture, AccessFlags.Read);
                 // eyeColor 是**真读**：Composite.shader:621 在 Frag 开头无条件采样它
                 // （debug 1 在 :640-642 直接返回它，:823 的 lerp 也拿它当目标色）。所以捕获支被门控掉时
@@ -1063,8 +1067,10 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.ObjectSemanticHighTextureId, data.objectSemanticHighTexture);
                     context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, data.identityId0Texture);
                     context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.ScreenTexelSizeId, data.screenTexelSize);
-                    context.cmd.SetGlobalBuffer(HoGeometryObjectFrameBuffer.BufferId, data.referenceFrames);
-                    context.cmd.SetGlobalVector(HoGeometryObjectFrameBuffer.ViewPositionId, data.observerPosition);
+                    context.cmd.SetGlobalBuffer(HoCharacterReferenceFrameBuffer.BufferId, data.referenceFrames);
+                    context.cmd.SetGlobalBuffer(HoCharacterReferenceFrameBuffer.IdentityMapId, data.referenceFrameIdentities);
+                    context.cmd.SetGlobalInt(HoCharacterReferenceFrameBuffer.FrameCountId, data.referenceFrameCount);
+                    context.cmd.SetGlobalVector(HoCharacterReferenceFrameBuffer.ViewPositionId, data.observerPosition);
                     Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                 });
             }

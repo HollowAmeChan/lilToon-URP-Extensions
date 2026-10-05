@@ -6,15 +6,19 @@
 
 ## 1. 参考朝向与眼透
 
-在原 OB 组所在对象添加 `Rendering/Ho-GeometryData ReferenceFrame`，将骨骼或参考空物体赋给“参考朝向”，配置前/右/上轴。OB 的“GD 参考朝向”可以显式关联该组件；未指定关联时使用同对象上的组件。
+在任意对象添加 `Rendering/Ho-GeometryData ReferenceFrame`，将骨骼或参考空物体赋给“方向来源（骨骼 Transform）”，配置前/右/上轴。在“作用 Renderer”中直接陈列 MeshRenderer / SkinnedMeshRenderer；没有别名或 GD part。组件不必与 OB 位于同一对象，OB 不保存 GD 引用。
 
-OB 只负责身份关联。旧 `faceBone` / 轴配置、`HoFaceAxis` 和 `TryGetWorldFacing` 已删除，不做旧配置兼容或自动迁移；场景/预制件由用户自行调整。
+空列表只作用于组件同对象上的 Renderer，不自动覆盖子级或整个角色。“添加子级 Renderer”是可手动点击的收集按钮。不同方向来源使用不同 GD 组件及其作用列表，不能将两个参考系隐式叠加到同一 Renderer。
+
+OB 只生产身份。GD 的 Renderer 注册与 CPU 输出不依赖 OB；CharacterSpecialization 消费适配器把 Renderer 输出关联到屏幕的完整 16 bit 身份。旧 `faceBone` / 轴配置、`HoFaceAxis`、`TryGetWorldFacing` 和 `geometryReferenceFrame` 已删除，不做旧配置兼容或自动迁移；场景/预制件由用户自行调整。
 
 ReferenceFrame 提供世界原点和轴，随 Transform 动态更新。眼透保持既有角度与衰减公式，在 shader 中以当前 pass 捕获的相机位置求值。没有每相机 yaw/pitch 纹理；不同相机的视角参数分开，参考系内容未变时不重复上传。
 
-未提供、禁用或无效参考系时角度因子回到 1。`EyeAngleFactor (16)` 看衰减；`ReferenceFrameView (17)` 看当前求值的 yaw/pitch，编号 17 不变。部件参考系由 GD 组件按部件名配置，眼透目前仍按角色组读取默认参考系。
+未提供、禁用或无效参考系时角度因子回到 1。`EyeAngleFactor (16)` 看衰减；`ReferenceFrameView (17)` 看当前求值的 yaw/pitch，B 是有效参考系的修正强度，无参考系的表面为黑色。编号不变，不再按角色组把同一角度显示到全身。
 
-该消费者自己记录 frame buffer 的 RG 读依赖，因此只使用眼透朝向时无需额外添加 GD RendererFeature。其他消费者使用 ReferenceFrame 的 CPU 输出或自己的 GPU 绑定接口。
+眼透合成读取遮挡处的层 0 表面身份，所以需要将参与眼透的前发 Renderer 加入作用列表。共用同一个 OB 部件 ID 的 Renderer 在屏幕中无法区分，它们会共用该身份的参考系；需要不同作用范围时，为它们配置不同 OB 部件身份。不同 GD 来源争用同一 Renderer 或屏幕身份时，该映射无效，没有后者覆盖前者的规则。
+
+该消费者自己持有 frame palette、身份到 frame 的索引表及资源寿命，并声明两个 buffer 的 RG 读依赖，因此只使用眼透朝向时无需额外添加 GD RendererFeature。骨骼运动只更新紧凑的世界参考系表，身份关系没变时不重复上传索引表。其他消费者通过 `HoGeometryReferenceFrameRegistry.TryGetFrame(Renderer, out data)` 使用 CPU 输出或建立自己的 GPU 绑定接口。
 
 ## 2. 描边修正
 
@@ -44,7 +48,7 @@ ReferenceFrame 提供世界原点和轴，随 Transform 动态更新。眼透保
 
 验证代码、隔离包/工程、Blender fixture、日志与截图在本地忽略目录 `research~/GeometryData/`，不进入生产 Runtime/Editor。目标为 Unity 6000.3.15f1 / D3D11、D3D12。
 
-ReferenceFrame 正式代码通过 148 项检查，包含真实眼透 shader 对照、真实 GB/OB/AC/角色特化调用、多相机上传复用、动态转头、禁用、资源重建和正交旧行为。OutlineCorrection 通过 22 项检查：6 组 HoTools 角点数据最大误差约 6.67×10⁻⁸；实际 lilToon 新旧来源图像差 0；蒙皮 + 形态键与旧来源对照通过。具体结果见本地 `research~/GeometryData/Production-Report.md`。
+ReferenceFrame 的 Renderer 作用范围版本通过 171 项检查（Unity 6000.3.15f1 / D3D12），包含独立 GD/OB 挂载、Mesh/Skinned 目标、同组不同参考系、非目标身体无映射、冲突失效、身份变更、真实眼透 shader 对照、真实 GB/OB/AC/角色特化调用、多相机上传复用、动态转头、禁用、资源重建和正交旧行为。与旧眼透的最大 GPU 差值约 4.31×10⁻⁵。结果见本地 `research~/GeometryData/Results/production-frame-results.json`。OutlineCorrection 通过 22 项检查：6 组 HoTools 角点数据最大误差约 6.67×10⁻⁸；实际 lilToon 新旧来源图像差 0；蒙皮 + 形态键与旧来源对照通过。具体结果见本地 `research~/GeometryData/Production-Report.md`。
 
 ## 5. Tension 与材质 Tesion（2026-10-05）
 

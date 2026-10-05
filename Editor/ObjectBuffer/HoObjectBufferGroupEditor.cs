@@ -3,7 +3,7 @@ using lilToon.URP.Extensions.Editor.PostProcessing;
 using lilToon.URP.Extensions.ObjectBuffer;
 using UnityEditor;
 using UnityEngine;
-using lilToon.URP.Extensions.GeometryData;
+
 
 namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 {
@@ -78,7 +78,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
         private int selectedSelection;
         private int draggingIndex = -1;
         private bool structureChanged;
-        private bool showFacing;
+
 
         private void OnEnable()
         {
@@ -536,7 +536,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                     DrawSelectedSelection();
                 }
 
-                DrawFacingSection();
+
             }
             finally
             {
@@ -613,27 +613,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 rowNameStyle);
             EditorGUI.LabelField(rightRect, rightText, EditorStyles.centeredGreyMiniLabel);
             return header;
-        }
-
-        private void DrawFacingSection()
-        {
-            showFacing = EditorGUILayout.Foldout(showFacing, "GD 参考朝向", true);
-            if (!showFacing)
-            {
-                return;
-            }
-
-            using (new EditorGUI.IndentLevelScope())
-            using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                DrawProperty(serializedObject.FindProperty("geometryReferenceFrame"), new GUIContent("参考系组件"));
-                if (targets.Length == 1)
-                {
-                    var group = (HoObjectBufferGroup)target;
-                    var frame = HoObjectReferenceFrameBinding.Find(group);
-                    if (frame != null && GUILayout.Button("编辑 GD 参考系")) Selection.activeObject = frame;
-                }
-            }
         }
 
         private int GetAssignedGroupId()

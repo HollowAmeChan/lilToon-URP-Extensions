@@ -3,12 +3,20 @@
 // Matches HoGeometryFrameData: 64 bytes. Row 0 and unavailable frames are invalid.
 struct HoGDObjectFrame { float4 originValid; float4 forward; float4 right; float4 up; };
 StructuredBuffer<HoGDObjectFrame> _HoGDObjectFrames;
+StructuredBuffer<uint> _HoGDIdentityFrameSlots;
+uint _HoGDObjectFrameCount;
 float4 _HoGDObserverPosition;
 
-float2 HoGDObjectViewAngles(uint groupId, float3 observerPosition)
+bool HoGDIdentityFrameValid(uint identityId)
 {
-    if (groupId == 0u || groupId >= 256u) return 0.0;
-    HoGDObjectFrame frame = _HoGDObjectFrames[groupId];
+    if(identityId == 0u || identityId >= 65536u)return false;
+    uint slot = _HoGDIdentityFrameSlots[identityId];
+    return slot > 0u && slot < _HoGDObjectFrameCount && _HoGDObjectFrames[slot].originValid.w > 0.5;
+}
+float2 HoGDObjectViewAngles(uint identityId, float3 observerPosition)
+{
+    if (!HoGDIdentityFrameValid(identityId)) return 0.0;
+    HoGDObjectFrame frame = _HoGDObjectFrames[_HoGDIdentityFrameSlots[identityId]];
     if (frame.originValid.w < 0.5) return 0.0;
     float3 direction = observerPosition - frame.originValid.xyz;
     if (dot(direction, direction) < 1e-8) return 0.0;

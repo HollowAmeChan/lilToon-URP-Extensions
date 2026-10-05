@@ -28,47 +28,36 @@ namespace lilToon.URP.Extensions.GeometryData
             && forward.Equals(other.forward) && right.Equals(other.right) && up.Equals(other.up);
     }
 
-    [Serializable]
-    public sealed class HoGeometryPartFrame
-    {
-        public string partName;
-        public Transform reference;
-    }
-
     /// <summary>Dynamic object/bone frame. Camera-relative evaluation belongs to its consumer.</summary>
     [ExecuteAlways, DisallowMultipleComponent]
     [AddComponentMenu("Rendering/Ho-GeometryData ReferenceFrame")]
     public sealed class HoGeometryDataReferenceFrame : MonoBehaviour
     {
-        [InspectorName("参考朝向")]
-        [Tooltip("提供世界原点与方向的骨骼或空物体。留空表示不提供参考系。")]
+        [InspectorName("方向来源（骨骼 Transform）")]
+        [Tooltip("提供世界原点与方向，例如 Head 骨骼。它是方向来源，作用对象在下面的 Renderer 列表中指定。")]
         public Transform reference;
         [InspectorName("前轴")] public HoGeometryAxis forwardAxis = HoGeometryAxis.Forward;
         [InspectorName("右轴")] public HoGeometryAxis rightAxis = HoGeometryAxis.Right;
         [InspectorName("上轴")] public HoGeometryAxis upAxis = HoGeometryAxis.Up;
-        [InspectorName("部件参考系")]
-        [Tooltip("按部件名提供独立参考；未指定参考的部件使用本组件的默认参考系。")]
-        public List<HoGeometryPartFrame> parts = new List<HoGeometryPartFrame>();
-
-        public bool TryGetFrame(out HoGeometryFrameData data) => TryGetFrame(null, out data);
-        public bool TryGetFrame(string partName, out HoGeometryFrameData data)
+        [InspectorName("作用 Renderer")]
+        [Tooltip("扁平列表，支持 SkinnedMeshRenderer 与 MeshRenderer，不需要别名或 OB 引用。空列表只尝试同对象上的 Renderer，不自动扩展整个角色。")]
+        public List<Renderer> targetRenderers = new List<Renderer>();
+        private void OnEnable() => HoGeometryReferenceFrameRegistry.Register(this);
+        private void OnDisable() => HoGeometryReferenceFrameRegistry.Unregister(this);
+        public bool TryGetFrame(out HoGeometryFrameData data)
         {
             data = default;
             if (!isActiveAndEnabled) return false;
-            Transform source = reference;
-            if (!string.IsNullOrEmpty(partName))
+            return Sample(reference, forwardAxis, rightAxis, upAxis, out data);
+        }
+        public IEnumerable<Renderer> GetTargetRenderers()
+        {
+            if (targetRenderers.Count == 0)
             {
-                for (int i = 0; i < parts.Count; i++)
-                {
-                    HoGeometryPartFrame part = parts[i];
-                    if (part != null && part.partName == partName)
-                    {
-                        if (part.reference != null) source = part.reference;
-                        break;
-                    }
-                }
+                if (TryGetComponent<Renderer>(out var renderer)) yield return renderer;
+                yield break;
             }
-            return Sample(source, forwardAxis, rightAxis, upAxis, out data);
+            foreach (var renderer in targetRenderers) if (renderer != null) yield return renderer;
         }
 
         public static bool Sample(Transform source, HoGeometryAxis forwardAxis,

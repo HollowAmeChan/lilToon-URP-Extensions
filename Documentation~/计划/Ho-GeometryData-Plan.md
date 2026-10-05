@@ -322,7 +322,7 @@ SV_VertexID 与 mesh 顶点对齐需验证多 submesh、baseVertex、LOD、one-p
 
 正式代码已删除 OB 的旧朝向字段、HoFaceAxis 与 TryGetWorldFacing，以及 HoCharacterEyeAngleTable 的每相机纹理生产。没有旧配置兼容读取、迁移按钮或自动场景/预制件改写。
 
-用户在对象上添加 HoGeometryReferenceFrame，设置参考骨骼/轴，在 OB 中关联或使用同对象组件。眼透按身份关联动态 FrameData，传入本次相机位置并即时计算角度。GD 组件自己拥有组默认/具名部件的参考数据。
+用户在任意对象上添加 HoGeometryDataReferenceFrame，设置参考骨骼/轴和扁平 Renderer 作用列表。OB 不引用 GD，GD 不保存组默认或具名部件数据；眼透消费适配器将 Renderer 输出关联到完整屏幕身份，传入本次相机位置并即时计算角度。屏幕中共用同一 OB 部件 ID 的 Renderer 无法分别选参考系，独立范围需要独立部件身份。眼透的前发遮挡表面应包含在作用列表中。
 
 ReferenceFrame、材质来源模式与资源读依赖的当前用法见 [Ho-GeometryData](../Ho-GeometryData.md)。历史原型的兼容/清空 OB 测试只作对照证据，不表示正式代码仍有旧配置路径。
 

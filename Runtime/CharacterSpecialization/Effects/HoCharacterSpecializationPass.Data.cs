@@ -17,6 +17,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         private sealed class CompositePassData
         {
             public BufferHandle referenceFrames;
+            public BufferHandle referenceFrameIdentities;
+            public int referenceFrameCount;
             public Vector4 observerPosition;
             public TextureHandle source;
             public TextureHandle identityId0Texture;

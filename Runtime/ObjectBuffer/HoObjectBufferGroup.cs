@@ -57,9 +57,6 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         [Tooltip("具名的选区（OB 架构 §5.11）。名字全局唯一；材质侧只能引用这里的名字。")]
         public List<HoObjectBufferSelectionEntry> selections = new List<HoObjectBufferSelectionEntry>();
 
-        [HideInInspector]
-        public HoGeometryDataReferenceFrame geometryReferenceFrame;
-
         private readonly Dictionary<Renderer, int> localSlotByRenderer = new Dictionary<Renderer, int>();
         private readonly List<string> partNameCache = new List<string>();
         private readonly List<string> selectionNameCache = new List<string>();

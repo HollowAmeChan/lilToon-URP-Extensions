@@ -241,9 +241,9 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                     return 1.0;
                 }
 
-                // AC 获胜表面的组身份关联 GD 的世界参考系，相机仅作为本次消费参数。
-                float charId = ResolveObjectBufferGroupId(uv);
-                float2 yawPitch = HoGDObjectViewAngles((uint)charId, _HoGDObserverPosition.xyz);
+                // 消费者以获胜 Renderer 的完整身份关联 GD；相机仅作为本次消费参数。
+                uint identity = HoAC_Layer0Identity(uv);
+                float2 yawPitch = HoGDObjectViewAngles(identity, _HoGDObserverPosition.xyz);
                 // 某轴 range 为 0 表示该轴不参与衰减。
                 float2 activeAxis = step(0.001, abs(_HoCharacterEyeAngleParams.yz));
                 float2 range = max(abs(_HoCharacterEyeAngleParams.yz), 0.0001);
@@ -627,10 +627,11 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 if (debugMode == 17)
                 {
                     // 参考系视角：R = |平转角|/180，G = |俯仰角|/180，B = 修正强度。
-                    // 行号与正式路径一致，都取 OB 身份池层 0 的组字节。
-                    float debugCharId = ResolveObjectBufferGroupId(uv);
-                    float2 debugYawPitch = HoGDObjectViewAngles((uint)debugCharId, _HoGDObserverPosition.xyz);
-                    return half4(abs(debugYawPitch.x) / 180.0, abs(debugYawPitch.y) / 180.0, saturate(_HoCharacterEyeAngleParams.x), source.a);
+                    // 与正式路径一致，未关联 GD 的完整身份不显示参考系信息。
+                    uint debugIdentity = HoAC_Layer0Identity(uv);
+                    float2 debugYawPitch = HoGDObjectViewAngles(debugIdentity, _HoGDObserverPosition.xyz);
+                    float valid = HoGDIdentityFrameValid(debugIdentity) ? 1.0 : 0.0;
+                    return half4(abs(debugYawPitch.x) / 180.0, abs(debugYawPitch.y) / 180.0, valid * saturate(_HoCharacterEyeAngleParams.x), source.a);
                 }
 
                 if (debugMode == 4)
