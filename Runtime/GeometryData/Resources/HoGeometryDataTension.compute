@@ -1,6 +1,8 @@
 #pragma kernel ExtractPositions
 #pragma kernel TriangleMetrics
 #pragma kernel VertexGather
+#pragma kernel SmoothVertices
+#pragma kernel BlendSmoothing
 
 ByteAddressBuffer _Source;
 RWStructuredBuffer<float4> _Positions;
@@ -13,6 +15,11 @@ StructuredBuffer<uint> _CornerOffsets;
 StructuredBuffer<uint> _Corners;
 RWStructuredBuffer<float4> _TriangleMetrics;
 RWStructuredBuffer<float4> _Tension;
+StructuredBuffer<float4> _SmoothInput;
+RWStructuredBuffer<float4> _SmoothOutput;
+int _SmoothInputOffset;
+float _SmoothBlend;
+float4x4 _RendererToWorld;
 int _VertexCount, _TriangleCount, _Stride, _OutputOffset;
 float _LengthEpsilon, _AreaEpsilon;
 float3 _Weights;
@@ -64,4 +71,37 @@ void VertexGather(uint id:SV_DispatchThreadID)
         _Weights.x*compression/max(edgeWeight,1)+_Weights.y*areaCompression/max(areaWeight,_AreaEpsilon),
         _Weights.z*angular/max(areaWeight,_AreaEpsilon),!invalid && (edgeWeight>0 || areaWeight>0) ? 1 : 0);
     _Tension[_OutputOffset+id]=all(isfinite(result)) && result.w>0.5 ? result : 0;
+}
+
+[numthreads(64,1,1)]
+void SmoothVertices(uint id:SV_DispatchThreadID)
+{
+    if(id>=(uint)_VertexCount)return;
+    float4 center=_SmoothInput[_SmoothInputOffset+id];
+    if(center.w<0.5 || _Positions[id].w<0.5){_SmoothOutput[id]=center;return;}
+    float3 sum=0;float weights=0,distances=0;uint count=0;
+    for(uint neighborIndex=_NeighborOffsets[id];neighborIndex<_NeighborOffsets[id+1];neighborIndex++)
+    {
+        uint n=_Neighbors[neighborIndex];float4 value=_SmoothInput[_SmoothInputOffset+n];
+        if(value.w<0.5 || _Positions[n].w<0.5 || !all(isfinite(value)))continue;
+        // Translation cancels; the full linear transform retains object/parent nonuniform scale.
+        float distanceWS=length(mul((float3x3)_RendererToWorld,_Positions[n].xyz-_Positions[id].xyz));
+        if(!isfinite(distanceWS))continue;
+        float d=max(distanceWS,1e-6),weight=rcp(d);
+        sum+=value.xyz*weight;weights+=weight;distances+=d;count++;
+    }
+    if(count==0){_SmoothOutput[id]=center;return;}
+    // Include the center at a typical neighbor distance, avoiding an infinite inverse-distance self weight.
+    float centerWeight=count/max(distances,1e-6);
+    float3 averaged=(sum+center.xyz*centerWeight)/(weights+centerWeight);
+    _SmoothOutput[id]=all(isfinite(averaged)) ? float4(averaged,center.w) : center;
+}
+[numthreads(64,1,1)]
+void BlendSmoothing(uint id:SV_DispatchThreadID)
+{
+    if(id>=(uint)_VertexCount)return;
+    float4 raw=_Tension[_OutputOffset+id],smoothed=_SmoothInput[id];
+    // Validity is never blurred or manufactured from valid neighbors.
+    if(raw.w<0.5 || smoothed.w<0.5 || !all(isfinite(smoothed)))return;
+    _Tension[_OutputOffset+id]=float4(lerp(raw.xyz,smoothed.xyz,saturate(_SmoothBlend)),raw.w);
 }

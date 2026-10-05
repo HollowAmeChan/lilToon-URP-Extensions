@@ -202,3 +202,9 @@ GPU Compute 写入与实际材质读取要建立声明完整的资源链。首�
 调试模式、Scene / Game、Layer Mask、热图范围与时机移至 HoGeometryDataVolume，Feature 只保留运行兜底与数据源只读状态。每相机解析当前 Volume stack，不把调试状态存到数据生产组件中。
 
 编辑器的 HoGeometryDataTensionPreparation 使用 MeshUtility.AcquireReadOnlyMeshData 读取关闭 Read/Write 的导入 Mesh，临时只拷贝参考位置 / 索引后完成 Prepare；sourceMesh 仍指向原资产，临时输入销毁。不更改 importer、不在导入阶段烘焙。Runtime 源支持已验证的 D3D11 / D3D12。
+
+## 10. 输出 WS 加权平均
+
+用户指定默认平均 1 次 / Lerp 1，上限 3 次。实现为当前变形位置的拓扑一环 WS 逆距离加权，分别平均 stretch / compression / angular；有效性保持原值。中心以有效平均邻距计权，最终一次性 lerp 原始结果与完成 N 次后的结果。
+
+在原 Extract / Triangle / Gather 后执行 SmoothVertices N 次与 BlendSmoothing，GPU buffer 交替读写；读写范围按 Renderer 的专用 atlas offset 隔离。禁用参数跳过此步，多个相机复用处理完成的发布结果；材质和 Volume 都消费同一专用输出，不新增覆盖层或屏幕后处理 Feature。

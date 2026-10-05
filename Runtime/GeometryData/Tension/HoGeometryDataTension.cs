@@ -16,6 +16,12 @@ namespace lilToon.URP.Extensions.GeometryData
         [Min(0), InspectorName("边长权重")] public float edgeWeight = 1;
         [Min(0), InspectorName("面积权重")] public float areaWeight = 0.5f;
         [Min(0), InspectorName("角变化权重")] public float angularWeight = 1;
+        [Range(0, 3), InspectorName("WS 加权平均次数")]
+        [Tooltip("沿拓扑一环，以当前世界空间距离的倒数加权。0 关闭，最多 3 次；不跨独立模型寻找邻居。")]
+        public int smoothingIterations = 1;
+        [Range(0, 1), InspectorName("平均结果 Lerp")]
+        [Tooltip("完成所有平均后，与原始数据混合。0 为原始数据，1 为完整平均结果。")]
+        public float smoothingBlend = 1;
         [SerializeField, HideInInspector] private Mesh preparedMesh;
         [SerializeField, HideInInspector] private Vector4[] restPositions, restMetrics;
         [SerializeField, HideInInspector] private int[] triangles, neighborOffsets, neighbors, cornerOffsets, corners;
@@ -26,6 +32,8 @@ namespace lilToon.URP.Extensions.GeometryData
         internal HoTensionResources Resources;
         internal int ProducedFrame = -1;
         internal Vector3 ProducedWeights;
+        internal int ProducedSmoothingIterations;
+        internal float ProducedSmoothingBlend;
         public int ProductionCount { get; internal set; }
         public int LastProducedFrame => ProducedFrame;
         public int ReferenceVersion => referenceVersion;
@@ -47,6 +55,8 @@ namespace lilToon.URP.Extensions.GeometryData
             }
         }
         internal Vector3 Weights => new Vector3(SafeWeight(edgeWeight), SafeWeight(areaWeight), SafeWeight(angularWeight));
+        internal int SmoothingIterations => Mathf.Clamp(smoothingIterations, 0, 3);
+        internal float SmoothingBlend => float.IsNaN(smoothingBlend) || float.IsInfinity(smoothingBlend) ? 0 : Mathf.Clamp01(smoothingBlend);
         private static float SafeWeight(float value) => float.IsNaN(value) || float.IsInfinity(value) ? 0 : Mathf.Max(0, value);
 
         private void OnEnable()

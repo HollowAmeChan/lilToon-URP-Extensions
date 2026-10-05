@@ -55,6 +55,16 @@ ReferenceFrame 正式代码通过 148 项检查，包含真实眼透 shader 对�
 
 组件仅持有参考位置、拓扑、测量权重及 GPU 资源，不修改材质、UV、normal 或顶点色。每帧在 native skinning 后取得 Raw 位置，转换到 Renderer-local 空间，再计算三角面面积/角点角变化与 CSR 顶点 gather。输出为 float4：拉伸、挤压、角变化、有效性。没有逐帧 CPU BakeMesh。
 
+### 逐顶点 WS 加权平均
+
+`HoGeometryDataTension` 的“WS 加权平均次数”范围 0–3，默认 **1**；“平均结果 Lerp”范围 0–1，默认 **1**。每次沿已有拓扑一环，把 X/Y/Z 分别加权平均。权重为当前变形后 WS 距离的倒数（最小距离 10⁻⁶），完整考虑对象/父级非均匀缩放；中心顶点按有效邻居的平均距离取权重，避免自身距离 0 导致权重无限大。
+
+完成 N 次平均后才执行 `lerp(raw.xyz, averaged.xyz, smoothingBlend)`，W 有效性保持原值。无效邻居不参与，无邻居回退自己；不把无效顶点从邻居“修复”为有效。不会搜索跨对象 / 跨独立部件的 WS 邻居。
+
+此步属于 GD 输出的 GPU 逐顶点 Compute 后处理，不是屏幕模糊。临时 buffer 交替读写，结束后发布一份结果，材质顶点阶段与 Volume 预览都读它。默认 1 次需要一个临时 buffer；2–3 次使用两个。0 次或 Lerp 0 跳过额外 dispatch，未使用时不分配临时 buffer。参数改变无需重新准备参考，纳入同帧结果复用检查。
+
+独立 GPU 平均验证 107 项通过，最大误差约 3.43×10⁻⁷；正式 RenderGraph、非均匀 WS 缩放、1–3 次、上限钳制、同帧参数更改与复用验证 27 项通过，最大误差约 7.49×10⁻⁸。验证仍在本地 `research~/GeometryData/`。
+
 动态资源按实例分开，Time.frameCount 未改变且测量参数未变时，多相机复用已生产的结果。离屏持续测量需要 Renderer 的 Update When Offscreen；组件不强行改变这个 Renderer 设置。Shader 数据缺失时维持原颜色/法线。
 
 Tesion 的 BaseColor 仅混合 RGB，保持原 alpha/clip。普通 normalmap 组合完成后，在切线空间与额外 NormalMap 混合，再进入世界法线。两路同时响应时按对称权重归一化，没有后者覆盖前者；未指定的某类贴图不参与该类混合。拉伸/挤压每路共享该路 BaseColor 的 UV0 tiling/offset。

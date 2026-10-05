@@ -11,6 +11,7 @@ namespace lilToon.URP.Extensions.Editor.GeometryData
         public override void OnInspectorGUI()
         {
             DrawDefaultInspector();
+            EditorGUILayout.HelpBox("WS 加权平均处理逐顶点输出：最多 3 次，默认 1 次 / Lerp 1。0 次或 Lerp 0 保持原始测量；无需重新准备参考。", MessageType.None);
             if (GUILayout.Button("生成 / 更新张力参考状态"))
                 foreach (Object item in targets)
                 {

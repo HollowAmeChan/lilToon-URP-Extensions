@@ -6,6 +6,7 @@ namespace lilToon.URP.Extensions.GeometryData
     internal sealed class HoTensionResources : IDisposable
     {
         internal GraphicsBuffer rest, metrics, triangles, neighborOffsets, neighbors, cornerOffsets, corners, positions, triangleMetrics;
+        internal GraphicsBuffer smoothA, smoothB;
         internal readonly float lengthEpsilon, areaEpsilon;
         internal HoTensionResources(Vector4[] rest, Vector4[] metrics, int[] triangles, int[] neighborOffsets, int[] neighbors,
             int[] cornerOffsets, int[] corners, float lengthEpsilon, float areaEpsilon)
@@ -25,10 +26,16 @@ namespace lilToon.URP.Extensions.GeometryData
             var buffer = new GraphicsBuffer(GraphicsBuffer.Target.Structured, Mathf.Max(1, data.Length), stride);
             if (data.Length > 0) buffer.SetData(data); return buffer;
         }
+        internal void EnsureSmoothing(int iterations)
+        {
+            if (iterations > 0 && smoothA == null) smoothA = new GraphicsBuffer(GraphicsBuffer.Target.Structured, positions.count, 16) { name = "Ho-GD Tension Smooth A" };
+            if (iterations > 1 && smoothB == null) smoothB = new GraphicsBuffer(GraphicsBuffer.Target.Structured, positions.count, 16) { name = "Ho-GD Tension Smooth B" };
+        }
         public void Dispose()
         {
             rest?.Dispose(); metrics?.Dispose(); triangles?.Dispose(); neighborOffsets?.Dispose(); neighbors?.Dispose();
             cornerOffsets?.Dispose(); corners?.Dispose(); positions?.Dispose(); triangleMetrics?.Dispose();
+            smoothA?.Dispose(); smoothB?.Dispose();
         }
     }
 }
