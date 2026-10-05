@@ -7,6 +7,9 @@ namespace lilToon.URP.Extensions.GeometryData
     [AddComponentMenu("Rendering/Ho-GeometryData Tension")]
     public sealed class HoGeometryDataTension : MonoBehaviour
     {
+        // The Editor supplies imported mesh access without changing the model's Read/Write flag.
+        // Player builds use the serialized reference cache or a readable source mesh.
+        public static Func<Mesh, Action<Mesh>, bool> EditorPrepareUnreadableMesh { get; set; }
         [InspectorName("目标渲染器")] public SkinnedMeshRenderer targetRenderer;
         [InspectorName("初始化时准备")] public bool prepareOnInitialize = true;
         [InspectorName("Play 前准备")] public bool prepareBeforePlay = true;
@@ -73,7 +76,14 @@ namespace lilToon.URP.Extensions.GeometryData
             if (targetRenderer == null) targetRenderer = GetComponent<SkinnedMeshRenderer>();
             try
             {
-                var prepared = HoTensionTopology.Build(SourceMesh);
+                Mesh source = SourceMesh;
+                HoTensionTopology prepared = null;
+                if (source != null && !source.isReadable && EditorPrepareUnreadableMesh != null)
+                {
+                    if (!EditorPrepareUnreadableMesh(source, readable => prepared = HoTensionTopology.Build(readable)) || prepared == null)
+                        throw new InvalidOperationException("未能读取导入 Mesh 的参考数据。");
+                }
+                else prepared = HoTensionTopology.Build(source);
                 ReleaseGpu();
                 preparedMesh = SourceMesh; restPositions = prepared.positions; restMetrics = prepared.metrics;
                 triangles = prepared.triangles; neighborOffsets = prepared.neighborOffsets; neighbors = prepared.neighbors;

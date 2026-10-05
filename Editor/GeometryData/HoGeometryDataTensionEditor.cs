@@ -23,7 +23,7 @@ namespace lilToon.URP.Extensions.Editor.GeometryData
             EditorGUILayout.LabelField("顶点 / 面", $"{producer.VertexCount} / {producer.TriangleCount}");
             EditorGUILayout.LabelField("参考版本", producer.ReferenceVersion.ToString());
             EditorGUILayout.LabelField("最近生产帧 / 次数", $"{producer.LastProducedFrame} / {producer.ProductionCount}");
-            EditorGUILayout.HelpBox("在 Renderer 的 Ho-GeometryData → 调试选择 Tesion 拉伸 / 挤压 / 角变化 / 有效性，不需要先开启材质 Tesion。", MessageType.None);
+            EditorGUILayout.HelpBox("在 Volume 的 Ho-GeometryData → 调试选择 Tesion 拉伸 / 挤压 / 角变化 / 有效性，不需要先开启材质 Tesion。", MessageType.None);
             EditorGUILayout.HelpBox(producer.Status, MessageType.Info);
             if (producer.targetRenderer != null && !producer.targetRenderer.updateWhenOffscreen)
                 EditorGUILayout.HelpBox("离屏来源需要 Renderer 的 Update When Offscreen，才能保证 native skinning 持续提供新姿势。", MessageType.Info);

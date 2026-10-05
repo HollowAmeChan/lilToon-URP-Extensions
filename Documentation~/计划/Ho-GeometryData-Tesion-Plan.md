@@ -45,7 +45,7 @@ GD 不持有 BaseColor/NormalMap，不裁决材质效果优先级。两对纹理
 4. 每顶点 gather 输出，按实例发布。
 5. 同一来源样本被多相机消费时不再推进/重复生产；相机只影响后续消费者自己的观察相关计算。
 
-运行时不逐帧 BakeMesh。当前来源接口的 D3D11 / rootBone / float32 位置布局限制仍如实保留，后续逐项扩展。
+运行时不逐帧 BakeMesh。当前来源接口的 D3D11、D3D12 / rootBone / float32 位置布局限制仍如实保留，后续逐项扩展。
 
 ## 3. TensionData
 
@@ -191,8 +191,14 @@ GPU Compute 写入与实际材质读取要建立声明完整的资源链。首�
 
 材质使用 `_HO_GD_TENSION` 本地关键字，前向 / GB / 角色颜色采集使用同一颜色/法线求值。普通 DepthNormals pass 保留既有几何法线策略；本轮没有改动它的通用 normalmap 行为。特殊材质不开放 UI。
 
-首版暂未包含：当前 GPU 姿势基准捕获、跨面二面角、其他 API / skin 布局、blendshape 或骨骼在同帧多相机之间再次变化的自动来源版本检测。需要同帧重算时显式更新参考或改变测量参数；普通动画帧以 Time.frameCount 复用。
+首版暂未包含：当前 GPU 姿势基准捕获、跨面二面角、D3D11 / D3D12 以外的 API / skin 布局、blendshape 或骨骼在同帧多相机之间再次变化的自动来源版本检测。需要同帧重算时显式更新参考或改变测量参数；普通动画帧以 Time.frameCount 复用。
 
 正式验证入口为本地 `research~/GeometryData/U/Assets/Editor/ProductionTensionValidation.cs`，结果 `Results/production-tension-results.json`。真实角色的美术响应范围仍需要在目标场景调节。
 
 正式测试 90 项通过；GPU 数据最大误差约 3.65×10⁻⁶，关闭后的像素误差 0。包括完整 URP 材质、真实 GB normalmap、双路混合、多实例 / 多相机、缺图 / 缺组件、alpha clip、描边共存和资源重建。不是仅用数学原型替代正式消费验证。
+
+## 9. Volume 调试与导入模型准备
+
+调试模式、Scene / Game、Layer Mask、热图范围与时机移至 HoGeometryDataVolume，Feature 只保留运行兜底与数据源只读状态。每相机解析当前 Volume stack，不把调试状态存到数据生产组件中。
+
+编辑器的 HoGeometryDataTensionPreparation 使用 MeshUtility.AcquireReadOnlyMeshData 读取关闭 Read/Write 的导入 Mesh，临时只拷贝参考位置 / 索引后完成 Prepare；sourceMesh 仍指向原资产，临时输入销毁。不更改 importer、不在导入阶段烘焙。Runtime 源支持已验证的 D3D11 / D3D12。

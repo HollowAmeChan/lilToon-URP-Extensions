@@ -18,6 +18,8 @@ namespace lilToon.URP.Extensions.GeometryData
         private HoGeometryDataDebugPass debugPass;
         private Material debugMaterial;
         private bool registered;
+        private readonly HoGeometryDataDebugSettings cameraDebug = new HoGeometryDataDebugSettings();
+        private bool cameraEnabled;
         public override void Create()
         {
             tensionPass?.ReleaseBorrowed();
@@ -34,7 +36,8 @@ namespace lilToon.URP.Extensions.GeometryData
         private void EndCamera(ScriptableRenderContext context,Camera camera) => tensionPass?.ReleaseBorrowed();
         public override void AddRenderPasses(ScriptableRenderer renderer,ref RenderingData renderingData)
         {
-            if (!settings.enabled) { DebugStatus = "运行关闭"; return; }
+            ResolveCameraSettings();
+            if (!cameraEnabled) { DebugStatus = "运行关闭"; return; }
             LastCamera = renderingData.cameraData.camera; LastScheduledFrame = Time.frameCount;
             // Allocate Tension slots before building the outline table, so both tables cover the shared addressing range.
             HoTensionDataRegistry.Capture(out _,out _);
@@ -47,16 +50,33 @@ namespace lilToon.URP.Extensions.GeometryData
                 if (shader == null || !shader.isSupported) { DebugStatus = "数据预览 Shader 不可用"; return; }
                 debugMaterial = CoreUtils.CreateEngineMaterial(shader);
             }
-            debugPass.Setup(settings, debugMaterial); renderer.EnqueuePass(debugPass);
+            debugPass.Setup(cameraDebug, debugMaterial); renderer.EnqueuePass(debugPass);
             DebugStatus = "已安排数据预览";
         }
-        private bool ShouldDebug(Camera camera) => settings.debugMode != HoGeometryDataDebugMode.Off && camera != null
-            && (camera.cameraType == CameraType.SceneView ? settings.debugInSceneView
-                : camera.cameraType == CameraType.Game && settings.debugInGameView);
+        private void ResolveCameraSettings()
+        {
+            cameraEnabled = settings.enabled;
+            cameraDebug.debugMode = HoGeometryDataDebugMode.Off;
+            cameraDebug.debugPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
+            var volume = VolumeManager.instance?.stack?.GetComponent<HoGeometryDataVolume>();
+            if (volume == null || !volume.active) return;
+            if (volume.enable.overrideState) cameraEnabled = volume.enable.value;
+            if (!volume.IsActive()) return;
+            cameraDebug.debugMode = volume.debugMode.value;
+            cameraDebug.debugInSceneView = volume.debugInSceneView.value;
+            cameraDebug.debugInGameView = volume.debugInGameView.value;
+            cameraDebug.debugLayerMask = volume.debugLayerMask.value;
+            cameraDebug.debugMaxValue = volume.debugMaxValue.value;
+            cameraDebug.debugPassEvent = volume.debugPassEvent.value;
+        }
+        private bool ShouldDebug(Camera camera) => cameraDebug.debugMode != HoGeometryDataDebugMode.Off && camera != null
+            && (camera.cameraType == CameraType.SceneView ? cameraDebug.debugInSceneView
+                : camera.cameraType == CameraType.Game && cameraDebug.debugInGameView);
 #pragma warning disable CS0672, CS0618
         public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
         {
-            if (settings.enabled && ShouldDebug(renderingData.cameraData.camera))
+            ResolveCameraSettings();
+            if (cameraEnabled && ShouldDebug(renderingData.cameraData.camera))
                 debugPass.SetupCompatibility(renderer.cameraColorTargetHandle);
         }
 #pragma warning restore CS0672, CS0618

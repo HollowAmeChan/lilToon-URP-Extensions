@@ -26,7 +26,7 @@ namespace lilToon.URP.Extensions.Editor.GeometryData
                 EditorGUILayout.LabelField("GD 槽",(HoGeometryRendererBinding.GetManagedValue(producer.targetRenderer)>>16).ToString());
                 EditorGUILayout.LabelField("发布状态",HoOutlineDataRegistry.IsPublished(producer)?"已发布":"尚未发布");
                 EditorGUILayout.HelpBox(producer.Status,MessageType.Info);
-                EditorGUILayout.HelpBox("在 Renderer 的 Ho-GeometryData → 调试选择描边方向 / 厚度，直接检查生产结果。",MessageType.None);
+                EditorGUILayout.HelpBox("在 Volume 的 Ho-GeometryData → 调试选择描边方向 / 厚度，直接检查生产结果。",MessageType.None);
             }
         }
     }

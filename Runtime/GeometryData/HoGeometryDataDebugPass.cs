@@ -15,7 +15,7 @@ namespace lilToon.URP.Extensions.GeometryData
         };
         private static readonly int ModeId = Shader.PropertyToID("_HoGDDebugMode");
         private static readonly int RangeId = Shader.PropertyToID("_HoGDDebugMaxValue");
-        private HoGeometryDataSettings settings;
+        private HoGeometryDataDebugSettings settings;
         private Material material;
         private RTHandle cameraColor, depth;
         private sealed class Data
@@ -27,7 +27,7 @@ namespace lilToon.URP.Extensions.GeometryData
             public int outlineCount, tensionCount;
             public float range;
         }
-        internal void Setup(HoGeometryDataSettings configuration, Material debugMaterial)
+        internal void Setup(HoGeometryDataDebugSettings configuration, Material debugMaterial)
         {
             settings = configuration; material = debugMaterial; renderPassEvent = settings.debugPassEvent;
         }

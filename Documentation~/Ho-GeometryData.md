@@ -37,12 +37,12 @@ ReferenceFrame 提供世界原点和轴，随 Transform 动态更新。眼透保
 - 槽在组件启用或显式准备时建立，先于相机剔除，避免首帧绘制拿到 0 号槽。Inspector 参数改变仅在 OnValidate 标记，后续主线程 Update 更新关联；这遵循 [Unity 的 OnValidate 线程约束](https://docs.unity3d.com/kr/current/ScriptReference/MonoBehaviour.OnValidate.html)。
 - GD Feature 在绘制前发布外部持久只读 buffer，使用明确的全局状态同步点；首版没有 async compute 或 transient 输出。
 - 停用某个组件只撤销它自己的关联；最后一个生产者离开时才收回 GD 槽。无数据/无发布时 GD 来源回退已有材质行为。参考系、描边与张力是独立输出。
-- 构建需要可读 Mesh、法线和切线，或已准备的组件缓存。仅支持三角形/四边形。静态合批改变索引，首版不发布给已静态合批的 Renderer。
+- 描边构建需要可读 Mesh、法线和切线，或已准备的组件缓存。仅支持三角形/四边形。静态合批改变索引，首版不发布给已静态合批的 Renderer。
 - 同位置连接需要位置、骨骼权重及 morph 位置轨迹一致。完全重合而实际应分离的表面可关闭连接；不能仅靠导入数据保证重建任意 DCC 原始拓扑。
 
 ## 4. 验证记录
 
-验证代码、隔离包/工程、Blender fixture、日志与截图在本地忽略目录 `research~/GeometryData/`，不进入生产 Runtime/Editor。首个目标为 Unity 6000.3.15f1 / D3D11。
+验证代码、隔离包/工程、Blender fixture、日志与截图在本地忽略目录 `research~/GeometryData/`，不进入生产 Runtime/Editor。目标为 Unity 6000.3.15f1 / D3D11、D3D12。
 
 ReferenceFrame 正式代码通过 148 项检查，包含真实眼透 shader 对照、真实 GB/OB/AC/角色特化调用、多相机上传复用、动态转头、禁用、资源重建和正交旧行为。OutlineCorrection 通过 22 项检查：6 组 HoTools 角点数据最大误差约 6.67×10⁻⁸；实际 lilToon 新旧来源图像差 0；蒙皮 + 形态键与旧来源对照通过。具体结果见本地 `research~/GeometryData/Production-Report.md`。
 
@@ -50,7 +50,7 @@ ReferenceFrame 正式代码通过 148 项检查，包含真实眼透 shader 对�
 
 1. 在 URP Renderer Data 添加 `HoGeometryDataRendererFeature`。
 2. 在 SkinnedMeshRenderer 对象上添加 `Rendering/Ho-GeometryData Tension`，指定目标 Renderer。
-3. 通过初始化、Play 前或“生成 / 更新张力参考状态”按钮准备原 Mesh 的参考姿势。修改同一个 Mesh 的几何/拓扑后手动更新参考；不靠资产导入触发。
+3. 通过初始化、Play 前或“生成 / 更新张力参考状态”按钮准备原 Mesh 的参考姿势。编辑器可用 MeshUtility 导入数据快照准备 Read/Write 关闭的模型，不改变 importer 的开关。修改几何/拓扑后手动更新参考；不靠资产导入触发。Player 使用已保存的参考缓存，或可读源 Mesh。
 4. lilToon 完整 URP 材质的“额外属性 → Tesion”默认关闭。启用后分别指定拉伸与挤压的 BaseColor / NormalMap、范围、强度。特殊 Lite/Fur/Gem/Hair/Liquid 材质暂不开放。
 
 组件仅持有参考位置、拓扑、测量权重及 GPU 资源，不修改材质、UV、normal 或顶点色。每帧在 native skinning 后取得 Raw 位置，转换到 Renderer-local 空间，再计算三角面面积/角点角变化与 CSR 顶点 gather。输出为 float4：拉伸、挤压、角变化、有效性。没有逐帧 CPU BakeMesh。
@@ -63,7 +63,7 @@ Tesion 的 BaseColor 仅混合 RGB，保持原 alpha/clip。普通 normalmap 组
 
 GPU Extract / Triangle / Gather 显式声明输入、临时读写和输出 buffer；发布 pass 读取结果并绑定全局表。当前使用同步 graphics queue，未开启 async compute。RenderGraph 的 `ImportBuffer` / `UseBuffer` 方式依据 [Unity Compute Shader 输入资源文档](https://docs.unity3d.com/cn/6000.0/Manual/urp/render-graph-compute-shader-input.html)。
 
-`HoGeometrySkinnedSource.Prepare/TryAcquire` 提供原生蒙皮 GPU 缓冲的借用、实际 stride 与 Renderer-local 分析空间转换。当前支持范围明确限定 D3D11、有效 rootBone、stream0/offset0 的 float32 三维位置。调用方必须在 native skinning 后取得样本，并在 GPU 消费完成后释放；接口不负责强行推进 Unity 的蒙皮。
+`HoGeometrySkinnedSource.Prepare/TryAcquire` 提供原生蒙皮 GPU 缓冲的借用、实际 stride 与 Renderer-local 分析空间转换。当前支持范围为已验证的 D3D11 / D3D12、有效 rootBone、stream0/offset0 的 float32 三维位置。调用方必须在 native skinning 后取得样本，并在 GPU 消费完成后释放；接口不负责强行推进 Unity 的蒙皮。
 
 此目标的 GPU 位置已包含缩放，却使用根骨骼位置/旋转参考系；转换使用 `renderer.transform.worldToLocalMatrix * TRS(rootBone.position, rootBone.rotation, Vector3.one)`，避免将根缩放再应用一次。24 组骨骼/morph/缩放样本对解析参考的最大误差约 9.10×10⁻⁷。
 
@@ -73,16 +73,17 @@ research 中的边长、面积、角点角变化 Compute 原型通过 8 组 CPU/
 
 ## 6. 在编辑器里调试
 
-选中当前相机实际使用的 URP Renderer Data，展开 **Ho-GeometryData**。Feature 资产有“运行 / 调试 / 数据源”三节。
+在相机作用范围内的 Global / Local Volume Profile 中添加 **Post-processing → Ho-GeometryData → 几何数据**。调试只在 Volume；Feature 保留运行兜底与只读数据源状态，不显示调试选项。
 
-1. **数据源**：查看当前已载入场景的 ReferenceFrame / OutlineCorrection / Tesion 组件。点“定位”进入组件 Inspector，使用组件自己的准备按钮。描边显示 GD 槽和发布状态；Tesion 显示有效性、顶点/面数、参考版本、最近生产帧和累计次数，以及缺来源 / rootBone / 缓存失效原因。
-2. **运行**：检查本 Feature 最近安排过的相机和帧，及共享表的发布来源/顶点数。没有相机记录时确认相机实际使用这个 Renderer，并保持 Feature 与“运行”开启。
-3. **调试**：选择数据预览。Scene 默认开启、Game 默认关闭，可分别切换；Layer Mask 只过滤预览。Tesion 热图可调满量程，默认 0.2，它只改变显示，不改变计算或材质。
-4. **参考朝向**：定位并选择 HoGeometryDataReferenceFrame，在 Scene 查看前轴蓝、右轴红、上轴绿的箭头与默认/部件参考系标签。相机观察角及眼透结果继续用 CharacterSpecialization 的 ReferenceFrameView / EyeAngleFactor。
+1. **Volume → 调试**：勾选调试模式的 Override，先选 Tesion 有效性，检查绿色 / 品红。然后改为拉伸 / 挤压 / 角变化或描边数据视图。
+2. **Scene / Game**：Volume 中分别控制，默认值均开启，但默认调试模式关闭。Layer Mask 只过滤预览，热图满量程默认 0.2，不改变测量或材质。
+3. **Feature → 数据源**：查看场景的参考系 / 描边 / Tesion 组件，点“定位”打开组件自己的准备按钮。这里显示缓存、槽、版本、生产帧 / 次数与失败原因。
+4. **Feature → 运行**：检查当前 Renderer 是否曾执行此 Feature。Volume 的“启用”勾选 Override 后覆盖运行兜底；未勾选则使用 Feature 运行值。
+5. **参考朝向**：选择 HoGeometryDataReferenceFrame，在 Scene 查看前蓝 / 右红 / 上绿；眼透观察角继续由 CharacterSpecialization 的 ReferenceFrameView / EyeAngleFactor 检查。
 
 | 数据预览 | 读法 |
 | --- | --- |
-| Renderer 绑定 / GD 槽 | 彩色表示共享 GD 绑定，深灰表示未绑定 |
+| GD 绑定槽 | 彩色表示共享 GD 绑定，深灰表示未绑定 |
 | 描边方向 | 世界方向编码 RGB = direction × 0.5 + 0.5 |
 | 描边厚度 | 灰度为原算法输出 A，0.5 中性；不是最终屏幕像素宽度 |
 | Tesion 拉伸 / 挤压 / 角变化 | 黑色是零，蓝→青→黄→红表示信号变强 |
@@ -93,3 +94,9 @@ research 中的边长、面积、角点角变化 Compute 原型通过 8 组 CPU/
 这是几何数据的独立预览：替换所选视图画面，使用自己的深度，跳过材质 alpha clip 与描边位移。普通模型在绑定视图显示灰色，在有效性视图显示品红，其它模式只显示有 GD 槽的模型。后续屏幕处理仍可能处理预览，必要时调整预览绘制时机或暂时关闭相应后处理。
 
 数据预览通过隔离 Unity 项目的 36 项检查，包含 CustomEditor 选择、配置字段、首帧有效性、Renderer 槽、描边方向/厚度、三通道、Game 开关、Layer Mask、组件停用、Feature 停用与预览切换不重复生产。材质 Tesion 的 90 项回归继续通过。验证脚本与日志仍在本地忽略的 `research~/GeometryData/`。
+
+### D3D12 / Read/Write 关闭模型验证
+
+原 D3D11-only 检查已在验证后扩展到 D3D12：24 组 native skin / morph / 非均匀缩放位置，对解析参考最大误差约 9.10×10⁻⁷。D3D12 Volume 预览与覆盖 / 回退通过 38 项检查。
+
+用户 GD 测试目录关联的 potato.fbx 保持 Read/Write 关闭，在隔离工程中实际导入并验证其上衣网格（11962 顶点、17470 三角面）。编辑器准备、D3D12 生产、Volume 绿色有效性与骨骼缩放后的红色拉伸热图全部通过，共 11 项检查。测试文件、FBX 副本与截图仅在 research~，不进入生产包。

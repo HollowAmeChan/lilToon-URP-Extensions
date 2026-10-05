@@ -6,7 +6,7 @@ namespace lilToon.URP.Extensions.GeometryData
 {
     /// <summary>
     /// Borrowed native skin output for geometry producers. Acquisition must happen after native skinning.
-    /// Validated baseline: Unity 6000.3 / D3D11, float32 position first in the skin output.
+    /// Validated baseline: Unity 6000.3 / D3D11 and D3D12, float32 position first in the skin output.
     /// </summary>
     public sealed class HoGeometrySkinnedSample : IDisposable
     {
@@ -42,8 +42,8 @@ namespace lilToon.URP.Extensions.GeometryData
             sample = null;
             if (renderer == null || renderer.sharedMesh == null)
             { reason = "未提供蒙皮来源。"; return false; }
-            if (SystemInfo.graphicsDeviceType != GraphicsDeviceType.Direct3D11)
-            { reason = "当前蒙皮来源布局只验证了 D3D11。"; return false; }
+            if (SystemInfo.graphicsDeviceType != GraphicsDeviceType.Direct3D11 && SystemInfo.graphicsDeviceType != GraphicsDeviceType.Direct3D12)
+            { reason = "当前蒙皮来源布局支持已验证的 D3D11 / D3D12。"; return false; }
             Mesh mesh = renderer.sharedMesh;
             if (renderer.rootBone == null)
             { reason = "当前来源需要指定 rootBone。"; return false; }
