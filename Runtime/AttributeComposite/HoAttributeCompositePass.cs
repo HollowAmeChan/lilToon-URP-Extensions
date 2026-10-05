@@ -34,6 +34,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
         {
             public Vector4 inputFlags;
             public Vector4 geometryFlags;
+            public TextureHandle neutralSelection;
         }
 
         // 兼容（非 RenderGraph）路径的常驻目标：与 OB 的兼容路径同形。
@@ -84,6 +85,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
             Shader.SetGlobalFloat(HoAttributeCompositeShaderConstants.InputsPublishedId, 0);
             Shader.SetGlobalVector(HoAttributeCompositeShaderConstants.InputFlagsId, Vector4.zero);
             Shader.SetGlobalFloat(HoAttributeCompositeShaderConstants.PrecisionActiveId, 0);
+            foreach (int textureId in HoAttributeCompositeShaderConstants.SelectionTextureIds)
+                Shader.SetGlobalTexture(textureId, Texture2D.blackTexture);
             compatibilityFrame = -1;
             CompatibilityInputFlags = Vector4.zero;
         }
@@ -92,6 +95,11 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
+            if (!HoAttributeCompositeConsumerRegistry.Freeze(renderingData.cameraData.camera).NeedsSelection)
+            {
+                ReleaseCompatibilityTargets(); ResetTarget();
+                return;
+            }
             if (settings == null || !settings.enabled)
             {
                 return;
@@ -120,8 +128,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            HoAttributeCompositeConsumerRegistry.Freeze(renderingData.cameraData.camera);
-            if (settings == null || !settings.enabled || resolveMaterial == null || selectionTargets[0] == null)
+            HoAttributeCompositeDemandSnapshot demand = HoAttributeCompositeConsumerRegistry.Freeze(renderingData.cameraData.camera);
+            if (settings == null || !settings.enabled)
             {
                 return;
             }
@@ -141,7 +149,9 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 bool identity = objects != null && objects.Id0Texture != null && objects.Id1Texture != null && objects.CoverageTexture != null;
                 bool geometry = geometryTargets != null && geometryTargets.NormalDepthTexture != null;
                 bool hasOutline = geometry && geometryTargets.OutlineNormalDepthTexture != null;
-                CompatibilityInputFlags = new Vector4(identity ? 1 : 0, identity ? 1 : 0, geometry ? 1 : 0, hasOutline ? 1 : 0);
+                bool selection = identity && demand.NeedsSelection && resolveMaterial != null && selectionTargets[0] != null;
+                CompatibilityInputFlags = new Vector4(identity ? 1 : 0, selection ? 1 : 0, geometry ? 1 : 0, hasOutline ? 1 : 0);
+                cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.PrecisionActiveId, 0);
                 cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.InputsPublishedId, 1);
                 cmd.SetGlobalVector(HoAttributeCompositeShaderConstants.InputFlagsId, CompatibilityInputFlags);
                 cmd.SetGlobalVector(HoAttributeCompositeShaderConstants.GeometryFlagsId, new Vector4(
@@ -156,10 +166,14 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 }
                 compatibilityCameraId = renderingData.cameraData.camera.GetInstanceID();
                 compatibilityFrame = Time.frameCount;
-                if (!identity)
+                HoAttributeCompositeProductionDiagnostics.Publish(demand, selection ? 4 : 0,
+                    HoSurfaceBufferSemanticPass.LastProduced ? 5 : 0, 0, HoSurfaceBufferPass.CompatibilityProduced ? 6 : 0);
+                if (!selection)
                 {
                     cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.ActiveId, 0);
                     cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.LaneCountId, 0);
+                    foreach (int textureId in HoAttributeCompositeShaderConstants.SelectionTextureIds)
+                        cmd.SetGlobalTexture(textureId, Texture2D.blackTexture);
                 }
                 else
                 {
@@ -229,7 +243,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
             resources.outlineNormalDepthTexture = geometry.outlineNormalDepthTexture;
             resources.published = true;
             RecordInputPublication(renderGraph, resources);
-            if (!objectBufferResources.HasRequiredTextures)
+            PublishProduction(resources);
+            if (!resources.demand.NeedsSelection || !objectBufferResources.HasRequiredTextures)
             {
                 // 没有身份池就没有语义可解压：不产出、不报错（OB 自己的诊断会说为什么没有）。
                 return;
@@ -329,7 +344,12 @@ namespace lilToon.URP.Extensions.AttributeComposite
             }
 
             PublishResources(resources, selectionTextures, laneCount, objectBufferResources, surfaceResources);
+            PublishProduction(resources);
         }
+
+        private static void PublishProduction(HoAttributeCompositeRenderGraphResources r) =>
+            HoAttributeCompositeProductionDiagnostics.Publish(r.demand, r.HasSelectionPool ? 4 : 0,
+                r.HasSurfaceSemantics ? 5 : 0, r.HasCorrelatedSemantics ? 3 : 0, r.HasSurfaceAttributes ? 6 : 0);
 
         private static void RecordInputPublication(RenderGraph graph, HoAttributeCompositeRenderGraphResources r)
         {
@@ -337,6 +357,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
             {
                 data.inputFlags = r.InputFlags;
                 data.geometryFlags = r.GeometryFlags;
+                data.neutralSelection = graph.defaultResources.blackTextureXR;
+                builder.UseTexture(data.neutralSelection, AccessFlags.Read);
                 Publish(builder, r.geometryCoverageTexture, HoAttributeCompositeShaderConstants.GeometryCoverageId);
                 Publish(builder, r.geometryNormalDepthTexture, HoAttributeCompositeShaderConstants.GeometryNormalDepthId);
                 Publish(builder, r.outlineCoverageTexture, HoAttributeCompositeShaderConstants.OutlineCoverageId);
@@ -350,6 +372,9 @@ namespace lilToon.URP.Extensions.AttributeComposite
                     c.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.InputsPublishedId, 1);
                     c.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.ActiveId, 0);
                     c.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.LaneCountId, 0);
+                    c.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.PrecisionActiveId, 0);
+                    foreach (int textureId in HoAttributeCompositeShaderConstants.SelectionTextureIds)
+                        c.cmd.SetGlobalTexture(textureId, d.neutralSelection);
                 });
             }
         }

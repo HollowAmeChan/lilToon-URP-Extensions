@@ -215,4 +215,10 @@ SB 归约显式读取 OB 原始身份样本及 ranked 身份纹理；这是登�
 
 CS/SP 与 AC/SB 调试在入队阶段提交实例所有的本相机需求；Registry 在每次 `beginCameraRendering` 分配新 RenderSequence。生产 Record 阶段冻结 query、资源 flags 与 lane/attribute masks，并附于 AC 资源集。`Time.frameCount` 用于诊断，不作为渲染调用的唯一键。快照只读，冻结后拒绝新的本次声明；相机结束清理工作请求。
 
-消费者显示名和实例 ID 分离，避免同名 Feature 跨 RendererData 覆盖。外部旧 `Declare(string,...)` 仍作为保守全局需求存在；新调用使用 `DeclareForCamera`/`DeclareSemantics`。当前快照用于诊断与下一轮规划，实际 RT 生产不变。详见 [阶段计划](计划/Ho-AttributeComposite-Plan.md)。
+消费者显示名和实例 ID 分离，避免同名 Feature 跨 RendererData 覆盖。外部旧 `Declare(string,...)` 仍作为保守全局需求存在；新调用使用 `DeclareForCamera`/`DeclareSemantics`。需求快照现已用于 §12.1 的整池跳过；阶段记录见 [推进计划](计划/Ho-AttributeComposite-Plan.md)。
+
+### 12.1 按需求生产
+
+Selection、旧 surface lane 与 W/V 捕获现已按冻结快照独立判断。没有语义需求时 AC 保留三轴输入发布，Selection flag 为 0；总覆盖率、组/完整身份、GB 几何查询继续可用。需要 Selection 的相机仍保留旧/新 surface 两套输入，确保近似 fallback 的读取有对应资源。SB 数值面沿用自己的启用与消费者契约。
+
+`HoAttributeCompositeProductionDiagnostics` 发布最近相机的逻辑 RT 分配计数。兼容与 RG 都处理需求停用/恢复，兼容 target 同步复位，未产出选择图使用中性绑定。DebugTile 的 SB 语义视图纳入需求收集。上述变化不重新编号 SemanticId/LaneIndex。

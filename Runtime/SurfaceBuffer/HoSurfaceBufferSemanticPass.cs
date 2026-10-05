@@ -144,6 +144,11 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
+            if (!HoAttributeCompositeConsumerRegistry.Freeze(renderingData.cameraData.camera).NeedsLegacySemantic)
+            {
+                ReleaseCompatibilityResources(); ResetGlobalState(); ResetTarget();
+                return;
+            }
             if (settings == null || !settings.enabled || !settings.enableSemanticLanes)
             {
                 return;
@@ -174,6 +179,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
             LastProduced = false;
+            if (!HoAttributeCompositeConsumerRegistry.Freeze(renderingData.cameraData.camera).NeedsLegacySemantic) return;
             if (settings == null || !settings.enabled || !settings.enableSemanticLanes || ownerTexture == null || depthTexture == null)
             {
                 return;
@@ -229,6 +235,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
             UniversalRenderingData renderingData = frameData.Get<UniversalRenderingData>();
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
+            if (!HoAttributeCompositeConsumerRegistry.Freeze(cameraData.camera).NeedsLegacySemantic) return;
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
 
             // 单采样（见 Setup 的说明）。

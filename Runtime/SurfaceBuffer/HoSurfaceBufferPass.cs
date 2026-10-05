@@ -84,8 +84,10 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         internal static void ResetGlobalState()
         {
+            CompatibilityProduced = false;
             Shader.SetGlobalFloat(HoSurfaceBufferShaderConstants.ActiveId, 0.0f);
         }
+        internal static bool CompatibilityProduced { get; private set; }
 
         // ------------------------------------------------------------------ 兼容（非 RenderGraph）路径
 
@@ -158,6 +160,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
+            CompatibilityProduced = true;
         }
 
         // ------------------------------------------------------------------ RenderGraph 路径

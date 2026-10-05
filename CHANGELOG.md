@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- AC/SB 按当前相机需求整池跳过语义产物：无需求时不分配四张 Selection、旧 SB lane 或关联 MSAA/W/V/status；身份、GB 查询与 SB 数值引用仍发布。原始 lane/W/V 调试可独立请求，DebugTile 的 SB 语义视图补齐登记。Selection 相机继续保留两套输入供近似 fallback。兼容路径释放停用的常驻语义 RT 并重置 target，面板显示实际声明的语义 RT 数量。
+
 - AC 新增按相机渲染调用冻结的消费者需求快照：typed query、资源种类、lane/attribute mask 与实例标识分开；同帧重复 RenderRequest 不复用旧请求。CS/SP 和 AC/SB 调试接入，补齐跳过/销毁生命周期。面板展示只读需求摘要；本轮保持 RT 生产规模，为下一轮整池跳过提供依据。
 
 - 修复 AC 关联语义在相机移动时出现局部残影：OB/SB 私有附件的 `ColorDepth` 清理遗漏 stencil，池化纹理中的旧 stencil 会影响当前材质测试。统一改为 `RTClearFlags.All`，在每次捕获开始时重置 color/depth/stencil；HIRO 前发区域的眼睛残影经现场复测消失。

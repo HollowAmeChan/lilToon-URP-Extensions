@@ -7,6 +7,7 @@ using lilToon.URP.Extensions.PlanarReflection;
 using lilToon.URP.Extensions.ShadowCast;
 using lilToon.URP.Extensions.SubsurfaceScattering;
 using lilToon.URP.Extensions.SurfaceBuffer;
+using lilToon.URP.Extensions.AttributeComposite;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
@@ -47,12 +48,14 @@ namespace lilToon.URP.Extensions.Debugging
 
         public override void Create()
         {
+            HoAttributeCompositeConsumerRegistry.EnsureInitialized();
             pass = new HoDebugTilePass();
             EnsureMaterial();
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
+            HoAttributeCompositeConsumerRegistry.Remove(this, renderingData.cameraData.camera);
             if (!ShouldRender(in renderingData))
             {
                 return;
@@ -65,11 +68,23 @@ namespace lilToon.URP.Extensions.Debugging
             }
 
             pass.Setup(material, selectedDebugViewId, passEvent, GetGeometryDepthParams());
+            foreach (HoDebugViewInfo view in HoDebugViewRegistry.AllViews)
+            {
+                if (selectedDebugViewId != AllRegisteredViewId && selectedDebugViewId != view.ViewId) continue;
+                if (view.RenderKind == HoDebugViewRenderKind.SurfaceBuffer &&
+                    (view.ModeValue == (int)HoSurfaceBufferDebugMode.SemanticOwner || view.ModeValue == (int)HoSurfaceBufferDebugMode.SemanticLanes))
+                {
+                    HoAttributeCompositeConsumerRegistry.DeclareForCamera(renderingData.cameraData.camera, this, "DebugTile SB Semantics",
+                        System.Array.Empty<HoACQueryDescriptor>(), null, HoACDemandResources.LegacySemantic | HoACDemandResources.Identity, 0, 255u);
+                    break;
+                }
+            }
             renderer.EnqueuePass(pass);
         }
 
         protected override void Dispose(bool disposing)
         {
+            HoAttributeCompositeConsumerRegistry.Remove(this);
             CoreUtils.Destroy(material);
             material = null;
             shader = null;

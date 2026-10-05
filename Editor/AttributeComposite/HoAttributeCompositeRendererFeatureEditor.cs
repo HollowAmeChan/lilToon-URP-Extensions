@@ -88,7 +88,11 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
                 if (demand != null)
                 {
                     EditorGUILayout.LabelField("最近需求快照", demand.CameraName + " / #" + demand.RenderSequence + " / frame " + demand.Frame);
-                    EditorGUILayout.LabelField("请求资源（尚未裁剪）", demand.Resources + " / lanes 0x" + demand.LaneMask.ToString("X2"));
+                    EditorGUILayout.LabelField("请求资源", demand.Resources + " / lanes 0x" + demand.LaneMask.ToString("X2"));
+                    HoAttributeCompositeProductionSnapshot production = HoAttributeCompositeProductionDiagnostics.LastSnapshot;
+                    if (production != null && production.Demand.RenderSequence == demand.RenderSequence)
+                        EditorGUILayout.LabelField("语义 RT", "Selection " + production.SelectionTextures + " / lane " + production.LegacySemanticTextures +
+                            " / W,V,status " + production.CorrelatedStatisticTextures + " / MS捕获 " + production.CorrelatedCaptureTextures);
                 }
                 EditorGUILayout.LabelField("语义精度", HoSurfaceSemanticPrecisionDiagnostics.Status);
                 if (HoSurfaceSemanticPrecisionDiagnostics.Frame >= 0)

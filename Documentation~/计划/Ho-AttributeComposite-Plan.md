@@ -102,3 +102,13 @@ OB/SB common sample domain、raw owner 引用、sample-frequency 原生 writer�
 - Feature 面板只读展示最近相机的渲染序号、请求资源与 lane mask。当前生产规模保持原样；尚未按计划裁剪 RT，也没有宣称 GPU 性能收益。属性 mask API 已预留，数值消费者仍由各 feature 管理。
 
 下一轮直接推进 §7.2 第二步的整池跳过：先让无语义需求相机省掉 Selection 与语义统计，再处理旧 lane 的 fallback/调试依赖。catalog 可编辑 revision 与稀疏 lane 对仍为后续项。
+
+### 7.5 第二轮已接入：整池跳过（2026-10-06）
+
+- AC 在冻结计划不需要 Selection 时只发布输入引用与当前相机 flags，不分配四张 Selection；兼容路径释放常驻目标并 ResetTarget，恢复时重新分配。未产出的 Selection 绑定中性黑图，Active/LaneCount/Selection flag 清零。
+- SB 在 RecordRenderGraph/OnCameraSetup 消费冻结需求。原始 legacy 调试只要求五张旧 lane/owner，W/V 调试只要求关联捕获与三张统计；无两类需求时，两套语义捕获/归约全部跳过，数值面保持现行生产。
+- Selection 相机保留旧 lane 与关联输入，供旧 writer、平台/viewport/变体等近似 fallback；本轮没有删除关联路径中的旧几何捕获。DebugTile 的 SB semantic owner/lane 和全视图模式也登记 legacy 需求。
+- 新增只读生产诊断：Selection、legacy、W/V/status、MS packet/private-depth 与 SB 数值 RT 数量，按当前渲染序号匹配。计数表示实际声明的逻辑分配，不是 GPU 时间估计。
+- D3D11/D3D12 各 124 项跳过/恢复验证通过，含兼容/RG、总覆盖/组/身份/GB 查询、独立调试、DebugTile、双相机、viewport 与 SB 重启；SP 两路径各 82 项、关联 149 项、D3D11 移动/stencil 54 项通过，均退出码 0。
+
+接下来推进 catalog revision/变脏重解析，并为冗余旧 lane 捕获冻结按像素关联失败的 fallback 契约；有条件后才裁剪 Selection 活跃相机的重复捕获。稀疏 lane 对继续后置。

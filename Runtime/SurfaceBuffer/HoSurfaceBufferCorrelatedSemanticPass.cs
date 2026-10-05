@@ -105,6 +105,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         {
             HoSurfaceBufferRenderGraphResources output = frame.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
             UniversalCameraData camera = frame.Get<UniversalCameraData>();
+            if (!HoAttributeCompositeConsumerRegistry.Freeze(camera.camera).NeedsCorrelatedSemantic)
+            { SetStatus(output, camera, 0, "No correlated semantic demand"); return; }
             if (settings == null || !settings.enableSemanticLanes || !settings.enableCorrelatedSemantics)
             { SetStatus(output, camera, 0, "Correlated semantics disabled"); return; }
             HoObjectBufferRenderGraphResources ob = frame.GetOrCreate<HoObjectBufferRenderGraphResources>();

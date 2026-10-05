@@ -83,6 +83,9 @@ namespace lilToon.URP.Extensions.AttributeComposite
         public int InvalidQueryCount { get; }
         public bool HasUnscopedConsumers { get; }
         public bool NeedsSelection => (Resources & HoACDemandResources.Selection) != 0;
+        // Selection retains both inputs for approximate fallback; raw debug views can request them independently.
+        public bool NeedsLegacySemantic => NeedsSelection || (Resources & (HoACDemandResources.SurfaceSemantic | HoACDemandResources.LegacySemantic)) != 0;
+        public bool NeedsCorrelatedSemantic => NeedsSelection || (Resources & (HoACDemandResources.SurfaceSemantic | HoACDemandResources.CorrelatedSemantic)) != 0;
         public bool NeedsSurfaceSemantic => (Resources & (HoACDemandResources.SurfaceSemantic |
             HoACDemandResources.LegacySemantic | HoACDemandResources.CorrelatedSemantic)) != 0;
 
