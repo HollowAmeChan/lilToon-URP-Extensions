@@ -1,6 +1,6 @@
 # Ho-AttributeComposite 推进计划
 
-日期：2026-10-05。当前阶段：AC 三轴输入域与 ScreenProcess typed 选择接入；完整跨来源精确合成、按需求资源规划后置。
+日期：2026-10-05。当前阶段：三轴输入/ScreenProcess 接入与合成正确性诊断已落地；精确 producer/resolve 与按需求资源规划后置。
 
 ## 1. 本轮落地
 
@@ -48,3 +48,11 @@ GB 存在 coverage RT 时取总覆盖率 R；无该 RT 时由有效几何深度�
 - 在上述证据上设计 object/surface 对应 sample、owner、viewport 与采样位置的关联契约。只新增“等于 OB layer 0”的 gate，或让两侧分别 resolve 后相乘，都不能恢复多身份交界的关联信息。
 
 该验收包完成后再接精确 producer/resolve 实现，然后推进按相机消费者需求裁剪。16-lane 与导出继续后置。
+
+### 本轮落地记录
+
+已新增单语义 Object Coverage、Surface Written、Surface Value、Semantic Owner Match、Final Coverage 与 Semantic Compare 六格视图。owner 的“在身份池内”和“为主导身份”分别显示。公式重算与生产 resolve 共用 `HoACSemanticCompose.hlsl`；差异图扣除 UNORM8 一 LSB 后放大，避免把存储量化当成公式错误。
+
+RG 调试使用 AC 发布的当帧 semantic owner/lane 引用；不以跨相机静态 LastProduced 判定 RG 来源。当前合成数值行为保留，owner 未作为新 gate。
+
+五种 sourceMode 的未写/写零/缺失/ID 不匹配 GPU 案例已建立；同语义不同材质权重与移动交界证明当前近似缺少 owner/sample 关联。下一轮采用每 owner 的 C/W/V 充分统计契约，详见 [Ho-AC-SemanticPrecision-Contract.md](Ho-AC-SemanticPrecision-Contract.md)。生产关联归约尚未实现。

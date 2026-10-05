@@ -43,6 +43,15 @@ namespace lilToon.URP.Extensions.AttributeComposite
         /// <summary>SB 的数值面本帧有没有产出（没有的话 `HoAC_Attribute` 全是 constant 兜底）。</summary>
         public bool surfaceValid;
 
+        // Read-only semantic inputs for composition diagnostics. Distinct from numeric surface owner.
+        public TextureHandle semanticOwnerTexture = TextureHandle.nullHandle;
+        public TextureHandle[] semanticLaneTextures =
+        {
+            TextureHandle.nullHandle, TextureHandle.nullHandle, TextureHandle.nullHandle, TextureHandle.nullHandle
+        };
+        public bool semanticValid;
+        public bool HasSurfaceSemantics => semanticValid && semanticOwnerTexture.IsValid() && semanticLaneTextures[0].IsValid();
+
         // GB 引用。单采样时没有 coverage RT，以 NormalDepth.a 的有效深度作二值回退。
         public TextureHandle geometryCoverageTexture = TextureHandle.nullHandle;
         public TextureHandle geometryNormalDepthTexture = TextureHandle.nullHandle;
@@ -85,6 +94,9 @@ namespace lilToon.URP.Extensions.AttributeComposite
             surfaceReflectionTexture = TextureHandle.nullHandle;
             surfaceOwnerTexture = TextureHandle.nullHandle;
             surfaceValid = false;
+            semanticOwnerTexture = TextureHandle.nullHandle;
+            for (int i = 0; i < semanticLaneTextures.Length; i++) semanticLaneTextures[i] = TextureHandle.nullHandle;
+            semanticValid = false;
             geometryCoverageTexture = TextureHandle.nullHandle;
             geometryNormalDepthTexture = TextureHandle.nullHandle;
             outlineCoverageTexture = TextureHandle.nullHandle;

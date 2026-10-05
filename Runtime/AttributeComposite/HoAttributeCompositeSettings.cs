@@ -24,7 +24,19 @@ namespace lilToon.URP.Extensions.AttributeComposite
         [InspectorName("Outline Coverage")]
         OutlineCoverage,
         [InspectorName("Input Availability")]
-        InputAvailability
+        InputAvailability,
+        [InspectorName("Object Coverage")]
+        ObjectCoverage,
+        [InspectorName("Surface Written")]
+        SurfaceWritten,
+        [InspectorName("Surface Value")]
+        SurfaceValue,
+        [InspectorName("Semantic Owner Match")]
+        SemanticOwnerMatch,
+        [InspectorName("Final Coverage")]
+        FinalCoverage,
+        [InspectorName("Semantic Compare")]
+        SemanticCompare
     }
 
     [Serializable]
@@ -49,6 +61,22 @@ namespace lilToon.URP.Extensions.AttributeComposite
         [NonSerialized]
         public bool debugInGameView = true;
 
+        [NonSerialized]
+        public string debugSemanticName = "Face";
+
+        internal static bool IsSemanticDebug(HoAttributeCompositeDebugMode mode) =>
+            mode >= HoAttributeCompositeDebugMode.ObjectCoverage && mode <= HoAttributeCompositeDebugMode.SemanticCompare;
+
+        internal static bool TryResolveDebugLane(string name, out Vector4 lane)
+        {
+            lane = Vector4.zero;
+            if (!HoSemanticSchema.TryGetByName(name, out HoSemanticEntry entry) || entry.laneIndex < 0 ||
+                entry.laneIndex >= HoSemanticSchema.ResolvedLaneCount || entry.semanticId < 1 || entry.semanticId > 255)
+                return false;
+            lane = new Vector4(entry.laneIndex, entry.semanticId, entry.objectTagBit, (int)entry.sourceMode);
+            return true;
+        }
+
         /// <summary>把资产上的高级设置复制进运行时载体（Volume 只覆盖调试项）。</summary>
         public void CopyFrom(HoAttributeCompositeSettings source)
         {
@@ -63,6 +91,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
             debugMode = source.debugMode;
             debugInSceneView = source.debugInSceneView;
             debugInGameView = source.debugInGameView;
+            debugSemanticName = source.debugSemanticName;
         }
     }
 }

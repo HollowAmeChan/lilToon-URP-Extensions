@@ -4,6 +4,8 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
+using lilToon.URP.Extensions.ObjectBuffer;
+using lilToon.URP.Extensions.SurfaceBuffer;
 
 namespace lilToon.URP.Extensions.AttributeComposite
 {
@@ -15,6 +17,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
     internal sealed class HoAttributeCompositeDebugPass : ScriptableRenderPass
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-AttributeComposite Debug");
+        private static readonly int BlitScaleBiasId = Shader.PropertyToID("_BlitScaleBias");
 
         private HoAttributeCompositeSettings settings;
         private Material debugMaterial;
@@ -27,6 +30,9 @@ namespace lilToon.URP.Extensions.AttributeComposite
             public TextureHandle[] selectionTextures;
             public HoAttributeCompositeRenderGraphResources resources;
             public HoACQueryDescriptor query;
+            public Vector4 lane;
+            public bool laneValid;
+            public bool semanticDebug;
         }
 
         public void Setup(HoAttributeCompositeSettings settings, Material debugMaterial, RTHandle cameraColorTarget)
@@ -34,6 +40,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
             this.settings = settings;
             this.debugMaterial = debugMaterial;
             this.cameraColorTarget = cameraColorTarget;
+            if (settings != null && HoAttributeCompositeSettings.IsSemanticDebug(settings.debugMode))
+                HoObjectBufferRegistry.EnsureBuilt();
             renderPassEvent = settings != null ? settings.debugPassEvent : RenderPassEvent.AfterRenderingPostProcessing;
             ConfigureInput(ScriptableRenderPassInput.None);
             if (cameraColorTarget != null)
@@ -58,6 +66,12 @@ namespace lilToon.URP.Extensions.AttributeComposite
             using (new ProfilingScope(cmd, ProfilingSampler))
             {
                 debugMaterial.SetFloat(HoAttributeCompositeShaderConstants.DebugModeId, (float)settings.debugMode);
+                cmd.SetGlobalVector(BlitScaleBiasId, new Vector4(1, 1, 0, 0));
+                bool laneValid = HoAttributeCompositeSettings.TryResolveDebugLane(settings.debugSemanticName, out Vector4 lane);
+                cmd.SetGlobalVector(HoAttributeCompositeShaderConstants.DebugLaneId, lane);
+                cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.DebugLaneValidId, laneValid ? 1 : 0);
+                cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.DebugSurfaceAvailableId,
+                    HoSurfaceBufferSemanticPass.LastProduced ? 1 : 0);
                 CoreUtils.DrawFullScreen(cmd, debugMaterial, shaderPassId: 0);
             }
 
@@ -86,10 +100,24 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 passData.debugMode = settings.debugMode;
                 passData.selectionTextures = resources.selectionTextures;
                 passData.resources = resources;
+                passData.semanticDebug = HoAttributeCompositeSettings.IsSemanticDebug(settings.debugMode);
+                passData.laneValid = HoAttributeCompositeSettings.TryResolveDebugLane(settings.debugSemanticName, out passData.lane);
                 HoACQueryKind kind = settings.debugMode == HoAttributeCompositeDebugMode.GeometryCoverage ? HoACQueryKind.Geometry :
                     settings.debugMode == HoAttributeCompositeDebugMode.OutlineCoverage ? HoACQueryKind.Outline : HoACQueryKind.Screen;
                 passData.query = HoACQueryDescriptor.Resolve(kind, null, 0, HoACMaskDomain.Screen);
                 HoAttributeCompositeBindings.ReadQuery(builder, resources, passData.query);
+                if (passData.semanticDebug)
+                {
+                    HoAttributeCompositeBindings.Read(builder, resources.identityId0Texture);
+                    HoAttributeCompositeBindings.Read(builder, resources.identityId1Texture);
+                    HoAttributeCompositeBindings.Read(builder, resources.identityCoverageTexture);
+                    if (resources.HasSurfaceSemantics)
+                    {
+                        HoAttributeCompositeBindings.Read(builder, resources.semanticOwnerTexture);
+                        for (int i = 0; i < resources.semanticLaneTextures.Length; i++)
+                            HoAttributeCompositeBindings.Read(builder, resources.semanticLaneTextures[i]);
+                    }
+                }
 
                 for (int i = 0; i < resources.selectionTextures.Length; i++)
                 {
@@ -105,7 +133,27 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
                     data.material.SetFloat(HoAttributeCompositeShaderConstants.DebugModeId, (float)data.debugMode);
+                    context.cmd.SetGlobalVector(BlitScaleBiasId, new Vector4(1, 1, 0, 0));
                     HoAttributeCompositeBindings.BindQuery(context.cmd, data.resources, data.query);
+                    context.cmd.SetGlobalVector(HoAttributeCompositeShaderConstants.DebugLaneId, data.lane);
+                    context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.DebugLaneValidId, data.laneValid ? 1 : 0);
+                    context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.DebugSurfaceAvailableId, data.resources.HasSurfaceSemantics ? 1 : 0);
+                    context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.ActiveId, data.resources.HasSelectionPool ? 1 : 0);
+                    if (data.semanticDebug)
+                    {
+                        if (data.resources.HasIdentityPool)
+                        {
+                            context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, data.resources.identityId0Texture);
+                            context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id1TextureId, data.resources.identityId1Texture);
+                            context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.CoverageTextureId, data.resources.identityCoverageTexture);
+                        }
+                        if (data.resources.HasSurfaceSemantics)
+                        {
+                            context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.SemanticOwnerTextureId, data.resources.semanticOwnerTexture);
+                            for (int i = 0; i < data.resources.semanticLaneTextures.Length; i++)
+                                context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.GetSemanticLaneTextureId(i), data.resources.semanticLaneTextures[i]);
+                        }
+                    }
                     for (int i = 0; i < data.selectionTextures.Length; i++)
                     {
                         if (data.selectionTextures[i].IsValid())

@@ -47,14 +47,7 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
             StructuredBuffer<HoACLaneData> _HoACLanes;
             float _HoACLaneCount;
 
-            #if defined(_HO_SURFACE_SEMANTIC)
-                // SB 的语义 lane（**单采样、逐像素**）。配对与 SB 写出时同一套：
-                // 一张 RGBA8 装两条 lane（R/G = A，B/A = B）。
-                TEXTURE2D_X(_HoSurfaceSemanticLane0Texture);
-                TEXTURE2D_X(_HoSurfaceSemanticLane1Texture);
-                TEXTURE2D_X(_HoSurfaceSemanticLane2Texture);
-                TEXTURE2D_X(_HoSurfaceSemanticLane3Texture);
-            #endif
+            #include "HoACSemanticCompose.hlsl"
 
             // 输出：4 张 RGBA8，每张两条 lane 的 `(SemanticId, coverage)` ——
             // 布局与 OB 的 Selection 行一致（R=ID0, G=覆盖率0, B=ID1, A=覆盖率1）。
@@ -80,92 +73,6 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
                 return saturate(total);
             }
 
-            #if defined(_HO_SURFACE_SEMANTIC)
-                /// <summary>按 lane 号选到它所在的那张 lane 图（单采样，普通采样）。</summary>
-                float4 SampleSurfaceLane(uint laneIndex, float2 uv)
-                {
-                    if (laneIndex < 2u)
-                    {
-                        return SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticLane0Texture, sampler_PointClamp, uv);
-                    }
-
-                    if (laneIndex < 4u)
-                    {
-                        return SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticLane1Texture, sampler_PointClamp, uv);
-                    }
-
-                    if (laneIndex < 6u)
-                    {
-                        return SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticLane2Texture, sampler_PointClamp, uv);
-                    }
-
-                    return SAMPLE_TEXTURE2D_X(_HoSurfaceSemanticLane3Texture, sampler_PointClamp, uv);
-                }
-
-                /// <summary>
-                /// 一条 lane 的 surface 侧：`(写了没有 0/1, value)`。
-                /// `SemanticId = 0` 是未写；`SemanticId = 声明值` 才算写了（`value = 0` 也是"明确写 0"）。
-                /// </summary>
-                float2 ResolveSurfaceLane(uint laneIndex, uint declaredId, float2 uv)
-                {
-                    if (declaredId == 0u)
-                    {
-                        return float2(0.0, 0.0);
-                    }
-
-                    uint idA;
-                    float valueA;
-                    uint idB;
-                    float valueB;
-                    HoObjectBufferUnpackSelection(SampleSurfaceLane(laneIndex, uv), idA, valueA, idB, valueB);
-                    bool even = (laneIndex & 1u) == 0u;
-                    uint inImageId = even ? idA : idB;
-                    float inImageValue = even ? valueA : valueB;
-                    return inImageId == declaredId ? float2(1.0, saturate(inImageValue)) : float2(0.0, 0.0);
-                }
-            #endif
-
-            /// <summary>
-            /// 按 catalog 里的 `sourceMode` 合成一条 lane（AC 架构 §0.3.6 的五种）：
-            /// `o` = 物体侧（像素级：Σ 层覆盖率 · 该层带不带这一位），`(written, s)` = SB 在**同一像素**写的 lane 值。
-            /// <list type="bullet">
-            /// <item>0 `ObjectOnly`：`o`（没有 SB 语义 lane 时也是这条路径）；</item>
-            /// <item>1 `SurfaceOnly`：`written ? s : 0`；</item>
-            /// <item>2 `Union`：`max(o, written ? s : 0)`；</item>
-            /// <item>3 `SurfaceOverride`：`written ? s : o` —— **材质写了就以材质为准，没写回落到物体位**；</item>
-            /// <item>4 `Intersection`：`o · (written ? s : 0)`。</item>
-            /// </list>
-            /// </summary>
-            float ComposeLane(uint mode, float objectCoverage, float2 surface)
-            {
-                #if defined(_HO_SURFACE_SEMANTIC)
-                    float surfaceAll = saturate(surface.y);
-                    if (mode == 1u)
-                    {
-                        return surfaceAll;
-                    }
-
-                    if (mode == 2u)
-                    {
-                        return saturate(max(objectCoverage, surfaceAll));
-                    }
-
-                    if (mode == 3u)
-                    {
-                        return saturate(surfaceAll + (1.0 - saturate(surface.x)) * objectCoverage);
-                    }
-
-                    if (mode == 4u)
-                    {
-                        return saturate(objectCoverage * surfaceAll);
-                    }
-
-                    return objectCoverage;
-                #else
-                    return objectCoverage;
-                #endif
-            }
-
             /// <summary>
             /// 一条 lane 的最终覆盖率：物体侧一律先算（`o` 是所有模式的输入），再按 `sourceMode` 与 SB 合成。
             /// </summary>
@@ -174,8 +81,8 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
             {
                 float objectCoverage = LaneCoverage(objectBit, tags0, tags1, tags2, tags3, coverage);
                 #if defined(_HO_SURFACE_SEMANTIC)
-                    float2 surface = ResolveSurfaceLane(laneIndex, declaredId, uv);
-                    return ComposeLane(mode, objectCoverage, surface);
+                    float2 surface = HoAC_ReadSurfaceLane(uv, laneIndex, declaredId, true);
+                    return HoAC_ComposeSemantic(mode, objectCoverage, surface, true);
                 #else
                     return objectCoverage;
                 #endif

@@ -100,6 +100,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
             if (volume.enable.overrideState) runtimeSettings.enabled = volume.enable.value;
             if (!volume.IsActive()) return runtimeSettings;
             runtimeSettings.debugMode = volume.debugMode.value;
+            runtimeSettings.debugSemanticName = volume.debugSemanticName.value;
             runtimeSettings.debugInSceneView = volume.debugInSceneView.value;
             runtimeSettings.debugInGameView = volume.debugInGameView.value;
             return runtimeSettings;

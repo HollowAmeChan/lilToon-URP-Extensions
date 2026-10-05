@@ -31,6 +31,9 @@ namespace lilToon.URP.Extensions.AttributeComposite
         public static readonly int LaneCountId = Shader.PropertyToID(LaneCountName);
         public static readonly int LaneBufferId = Shader.PropertyToID(LaneBufferName);
         public static readonly int DebugModeId = Shader.PropertyToID(DebugModeName);
+        public static readonly int DebugLaneId = Shader.PropertyToID("_HoACDebugLane");
+        public static readonly int DebugLaneValidId = Shader.PropertyToID("_HoACDebugLaneValid");
+        public static readonly int DebugSurfaceAvailableId = Shader.PropertyToID("_HoACDebugSurfaceAvailable");
         public static readonly int InputFlagsId = Shader.PropertyToID("_HoACInputFlags");
         public static readonly int InputsPublishedId = Shader.PropertyToID("_HoACInputsPublished");
         public static readonly int GeometryFlagsId = Shader.PropertyToID("_HoACGeometryFlags");

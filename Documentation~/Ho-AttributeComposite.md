@@ -82,6 +82,8 @@
 
 AC **不为每个消费者烤遮罩图**。它发布**一份可查询的合成结果 + 一个查询 API**；要烤成图的效果自己用 API 烤，烤出来的图记在**它自己**名下。
 
+诊断另发布 SB semantic owner 与 lane 的当帧只读引用。`Object Coverage / Surface Written / Surface Value / Semantic Owner Match / Final Coverage / Semantic Compare` 可按语义选择；owner 的在池与主导匹配分开显示。当前精度案例与下一轮关联统计契约见 `计划/Ho-AC-SemanticPrecision-Contract.md`，owner 视图本轮不改变合成公式。
+
 | 输出 | 内容 | 形态 |
 | --- | --- | --- |
 | **AC 合成属性查询** | `sssProfileIdByte / curvatureHint / transmittanceHint / materialClassIdByte` 及登记属性；SB owner 匹配时取 surface，否则取 AC constant fallback | 当前引用 SB，读取时合成；独立 RT 尚未实现 |

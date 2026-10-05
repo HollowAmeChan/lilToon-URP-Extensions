@@ -229,7 +229,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
             }
 
             // SB 的语义 lane：有就按 catalog 的 sourceMode 合成（如 SurfaceOverride），没有就纯物体位（ObjectOnly）。
-            bool surfaceEnabled = surfaceResources.HasSemanticLanes && HoSurfaceBufferSemanticPass.LastProduced;
+            bool surfaceEnabled = surfaceResources.HasSemanticLanes;
 
             int laneCount = Mathf.Min(HoSemanticSchema.LaneCount, HoSemanticSchema.ResolvedLaneCount);
             if (laneCount <= 0)
@@ -359,6 +359,10 @@ namespace lilToon.URP.Extensions.AttributeComposite
             resources.surfaceReflectionTexture = surfaceResources.reflectionTexture;
             resources.surfaceOwnerTexture = surfaceResources.ownerTexture;
             resources.surfaceValid = surfaceResources.HasRequiredTextures;
+            resources.semanticOwnerTexture = surfaceResources.semanticOwnerTexture;
+            for (int i = 0; i < resources.semanticLaneTextures.Length; i++)
+                resources.semanticLaneTextures[i] = surfaceResources.semanticLaneTextures[i];
+            resources.semanticValid = surfaceResources.HasSemanticLanes;
         }
 
         /// <summary>

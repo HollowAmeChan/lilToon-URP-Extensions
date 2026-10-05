@@ -20,8 +20,16 @@ namespace lilToon.URP.Extensions.AttributeComposite
     }
 
     /// <summary>
-    /// AC 的**调试入口**（AC 架构 §9.13：调试在 Volume，feature 只放高级设置 + 兜底默认值 + 消费者登记表）。
+    /// 调试语义名称的离散 Volume 参数；不在名字之间插值。
     /// </summary>
+    [Serializable]
+    public sealed class HoACSemanticNameParameter : VolumeParameter<string>
+    {
+        public HoACSemanticNameParameter(string value, bool overrideState = false) : base(value, overrideState) { }
+        public override void Interp(string from, string to, float t) { value = t > 0f ? to : from; }
+    }
+
+    /// <summary>AC 调试入口与逐相机启用；声明仍由 feature/schema 管理。</summary>
     [Serializable]
     [VolumeComponentMenu("Post-processing/Ho-AttributeComposite/属性合成")]
     [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
@@ -33,6 +41,9 @@ namespace lilToon.URP.Extensions.AttributeComposite
         [InspectorName("调试模式")]
         public HoAttributeCompositeDebugModeParameter debugMode =
             new HoAttributeCompositeDebugModeParameter(HoAttributeCompositeDebugMode.Off);
+
+        [InspectorName("调试语义"), Tooltip("单语义视图与六格对照使用的 schema 稳定名称。")]
+        public HoACSemanticNameParameter debugSemanticName = new HoACSemanticNameParameter("Face");
 
         [InspectorName("Debug In Scene View")]
         public BoolParameter debugInSceneView = new BoolParameter(true);
