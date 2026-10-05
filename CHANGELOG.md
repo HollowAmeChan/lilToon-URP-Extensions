@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- 修复 AC 关联语义在相机移动时出现局部残影：OB/SB 私有附件的 `ColorDepth` 清理遗漏 stencil，池化纹理中的旧 stencil 会影响当前材质测试。统一改为 `RTClearFlags.All`，在每次捕获开始时重置 color/depth/stencil；HIRO 前发区域的眼睛残影经现场复测消失。
+
 - AC Scalar V1 支持 OB/SB 对应样本的 owner 关联：SB 捕获 owner/weight/written，归约并发布 W/V/status；AC 用 C/W/V 合成八条 Selection lane，复用每像素四次身份查表。
   - 支持 RenderGraph + D3D11/D3D12、2D 完整 viewport、实际 N=1/2/4；旧 writer、其他采样域、兼容路径与未就绪的编辑器变体明确近似降级。
   - AC 增加 Written Coverage、Weighted Coverage、Semantic Precision 与最近相机的生产状态；修正 AC/SB 调试在相机目标创建前读取 handle 的时序。

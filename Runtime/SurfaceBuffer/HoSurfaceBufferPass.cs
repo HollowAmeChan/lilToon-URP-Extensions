@@ -133,7 +133,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 colorIdentifiers[HoSurfaceBufferShaderConstants.OwnerAttachment] = ownerTexture.nameID;
 
                 cmd.SetRenderTarget(colorIdentifiers, depthTexture.nameID);
-                cmd.ClearRenderTarget(RTClearFlags.ColorDepth, Color.clear, 1.0f, 0);
+                cmd.ClearRenderTarget(RTClearFlags.All, Color.clear, 1.0f, 0);
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
 
@@ -233,7 +233,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 {
                     // 清屏：五张数值图清 0、owner 清 0（"没人写"的唯一表示），深度清成远平面。
                     // 附件是 WriteAll，所以这里清完直接画，不需要额外的 clear pass。
-                    context.cmd.ClearRenderTarget(RTClearFlags.ColorDepth, Color.clear, 1.0f, 0);
+                    context.cmd.ClearRenderTarget(RTClearFlags.All, Color.clear, 1.0f, 0);
                     context.cmd.SetGlobalFloat(HoSurfaceBufferShaderConstants.ActiveId, 1.0f);
                     context.cmd.DrawRendererList(data.rendererList);
                 });

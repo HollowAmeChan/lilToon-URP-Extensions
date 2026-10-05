@@ -189,7 +189,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 }
 
                 cmd.SetRenderTarget(colorIdentifiers, depthTexture.nameID);
-                cmd.ClearRenderTarget(RTClearFlags.ColorDepth, Color.clear, 1.0f, 0);
+                cmd.ClearRenderTarget(RTClearFlags.All, Color.clear, 1.0f, 0);
                 ApplyGlobalState(cmd);
                 // 兼容路径的句柄是常驻 RTHandle，AC 那趟只认全局名 —— 在这里绑好。
                 cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.SemanticOwnerTextureId, ownerTexture.nameID);
@@ -297,8 +297,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (SemanticPassData data, RasterGraphContext context) =>
                 {
-                    // 清屏：owner 清 0（"没人写"），lane 清 0（SemanticId = 0 = 未写）。深度清成远平面。
-                    context.cmd.ClearRenderTarget(RTClearFlags.ColorDepth, Color.clear, 1.0f, 0);
+                    // owner/lane 清 0；同时重置私有 depth/stencil，不能让池化附件的旧 stencil 剔除当前 writer。
+                    context.cmd.ClearRenderTarget(RTClearFlags.All, Color.clear, 1.0f, 0);
                     context.cmd.SetGlobalVector(HoSurfaceBufferShaderConstants.SemanticLaneIdsId0, data.laneIds0);
                     context.cmd.SetGlobalVector(HoSurfaceBufferShaderConstants.SemanticLaneIdsId1, data.laneIds1);
                     context.cmd.SetGlobalVector(HoSurfaceBufferShaderConstants.SemanticLaneTagMasksId0, data.laneTagMasks0);

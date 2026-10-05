@@ -154,7 +154,11 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 builder.UseRendererList(data.list); builder.SetRenderAttachment(packet, 0, AccessFlags.WriteAll);
                 builder.SetRenderAttachmentDepth(depth, AccessFlags.WriteAll); builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (CaptureData d, RasterGraphContext c) =>
-                { c.cmd.ClearRenderTarget(RTClearFlags.ColorDepth, Color.clear, 1f, 0); c.cmd.DrawRendererList(d.list); });
+                {
+                    // WriteAll skips the graph's load clear. Pooled MSAA stencil must not retain another frame's material writes.
+                    c.cmd.ClearRenderTarget(RTClearFlags.All, Color.clear, 1f, 0);
+                    c.cmd.DrawRendererList(d.list);
+                });
             }
             TextureHandle written = Statistics(graph, domain, "_HoSurfaceSemanticWrittenCoverage");
             TextureHandle weighted = Statistics(graph, domain, "_HoSurfaceSemanticWeightedCoverage");

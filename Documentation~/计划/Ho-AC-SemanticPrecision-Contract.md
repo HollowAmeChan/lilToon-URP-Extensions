@@ -61,6 +61,8 @@ W 和 V 必须先在对应样本上校验 owner，然后按身份归约。不能
 
 1. OB 发布当前相机/帧的原始 IdentityMS（N>1），或 packed Id0（N=1），以及实际 N、尺寸、slice、纹理维度、动态缩放标志、viewport、view/projection 矩阵。
 2. SB 在独立 RGBA8 MSAA 附件与私有深度上执行 `HoSurfaceCorrelatedV1`。packet 为 `RG=owner bytes, B=weight, A=written`；weight=0 保留 A=1。该 pass 共用原生 SB 的几何与 alpha clip 路径。
+
+   私有附件每次捕获必须显式清 color/depth/**stencil**。`WriteAll` 不保证 load clear，`RTClearFlags.ColorDepth` 即使传入 stencil=0 也不会清 stencil；旧 stencil 会改变当前片元的可见性，破坏 owner 关联的前提。OB/SB 初始化均使用 `RTClearFlags.All`。
 3. fragment 用 `SV_SampleIndex` 和 `EvaluateAttributeAtSample` 计算当前样本的 UV、位置与裁切；纹理遮罩须显式启用 `_HO_SEMANTIC_MASK`。相关 HLSL 行为见 [Microsoft 文档](https://learn.microsoft.com/en-us/windows/win32/direct3dhlsl/evaluateattributeatsample)。
 4. 归约读取两个 MSAA 附件的同一像素/sample，比较实际 `GetSamplePosition`。匹配 owner 后按 OB ranked 身份累计 W/V，不只接受主导身份。
 5. 发布两张 RGBA16F 单采样统计及一张 RGBA8 状态：R=owner mismatch/身份不在池，G=有 OB 但无 writer，B=样本位置不一致，A=背景上的 SB writer。它们都是 /N 的覆盖率。

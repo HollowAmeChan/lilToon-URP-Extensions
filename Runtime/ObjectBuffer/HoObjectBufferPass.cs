@@ -390,7 +390,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                     // 自己清：附件用 WriteAll 时原生 pass 的 load action 是 DontCare（RG 不会替我们清），
                     // 而"没被任何 draw 覆盖的像素必须是 0"是这条通道的硬契约（0 = 背景）。
                     // GeometryBuffer 的输出 pass 也是这个写法，两边保持一致。
-                    context.cmd.ClearRenderTarget(RTClearFlags.ColorDepth, Color.clear, 1.0f, 0);
+                    // 还必须清 stencil；材质 pass 会读写它，池化附件的旧 stencil 不能参与本相机身份判断。
+                    context.cmd.ClearRenderTarget(RTClearFlags.All, Color.clear, 1.0f, 0);
                     context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ActiveId, 1.0f);
                     // shader 只声明"实际绑定"的 target 数：绑定选择层时才声明 SV_Target3/1，
                     // 否则声明的 SV_Target 索引会超过绑定数，D3D 会**丢弃整个 draw**。
@@ -488,7 +489,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                         context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionLayerCountId, data.selectionLayerCount);
                         // 全屏三角形本来就铺满，但显式清一次把它和"只画了一半"的失败模式区分开：
                         // 清理值就是契约里的"背景 = ID 0、覆盖率 0"。
-                        context.cmd.ClearRenderTarget(RTClearFlags.ColorDepth, Color.clear, 1.0f, 0);
+                        context.cmd.ClearRenderTarget(RTClearFlags.All, Color.clear, 1.0f, 0);
                         context.cmd.DrawProcedural(Matrix4x4.identity, data.resolveMaterial, 0, MeshTopology.Triangles, 3, 1);
                     });
                 }
