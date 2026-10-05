@@ -3,6 +3,7 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using lilToon.URP.Extensions.AttributeComposite;
 
 namespace lilToon.URP.Extensions.SurfaceBuffer
 {
@@ -44,6 +45,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         public override void Create()
         {
+            HoAttributeCompositeConsumerRegistry.EnsureInitialized();
             pass = new HoSurfaceBufferPass();
             semanticPass = new HoSurfaceBufferSemanticPass();
             correlatedPass?.Dispose();
@@ -78,6 +80,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
+            HoAttributeCompositeConsumerRegistry.Remove(this, renderingData.cameraData.camera);
             HoSurfaceBufferSettings activeSettings = ResolveSettings(in renderingData);
             if (activeSettings == null || !activeSettings.enabled)
             {
@@ -160,6 +163,13 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 EnsureDebugMaterial();
                 if (debugMaterial != null)
                 {
+                    HoACDemandResources demand = HoACDemandResources.Identity;
+                    if (activeSettings.debugMode == HoSurfaceBufferDebugMode.SemanticLanes || activeSettings.debugMode == HoSurfaceBufferDebugMode.SemanticOwner)
+                        demand |= HoACDemandResources.LegacySemantic;
+                    else demand |= HoACDemandResources.SurfaceAttributes | HoACDemandResources.SurfaceColor | HoACDemandResources.SurfaceNormal;
+                    HoAttributeCompositeConsumerRegistry.DeclareForCamera(renderingData.cameraData.camera, this, "SurfaceBuffer Debug",
+                        System.Array.Empty<HoACQueryDescriptor>(), null, demand, 0,
+                        (demand & HoACDemandResources.LegacySemantic) != 0 ? 255u : 0u);
                     debugPass?.Setup(activeSettings, debugMaterial, null);
                     renderer.EnqueuePass(debugPass);
                 }
@@ -168,6 +178,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         protected override void Dispose(bool disposing)
         {
+            HoAttributeCompositeConsumerRegistry.Remove(this);
             if (registeredCameraReset)
             {
                 RenderPipelineManager.beginCameraRendering -= ResetCameraState;

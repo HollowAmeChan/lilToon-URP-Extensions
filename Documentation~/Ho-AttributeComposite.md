@@ -210,3 +210,9 @@ AC 调试增加 Geometry Coverage、Outline Coverage、Input Availability；Scre
 ## 11. Scalar V1 关联资源（2026-10-06）
 
 SB 归约显式读取 OB 原始身份样本及 ranked 身份纹理；这是登记的跨轴例外，不改变 SB 数值面的独立生产。AC resolve/调试对 W、V、status 逐一声明 `UseTexture(Read)`，按同一 sample domain 发布当相机资源。统计格式、降级规则与成本见 [关联契约](计划/Ho-AC-SemanticPrecision-Contract.md)。
+
+## 12. 消费者需求快照（2026-10-06）
+
+CS/SP 与 AC/SB 调试在入队阶段提交实例所有的本相机需求；Registry 在每次 `beginCameraRendering` 分配新 RenderSequence。生产 Record 阶段冻结 query、资源 flags 与 lane/attribute masks，并附于 AC 资源集。`Time.frameCount` 用于诊断，不作为渲染调用的唯一键。快照只读，冻结后拒绝新的本次声明；相机结束清理工作请求。
+
+消费者显示名和实例 ID 分离，避免同名 Feature 跨 RendererData 覆盖。外部旧 `Declare(string,...)` 仍作为保守全局需求存在；新调用使用 `DeclareForCamera`/`DeclareSemantics`。当前快照用于诊断与下一轮规划，实际 RT 生产不变。详见 [阶段计划](计划/Ho-AttributeComposite-Plan.md)。

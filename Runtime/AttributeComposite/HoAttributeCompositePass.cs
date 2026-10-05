@@ -120,6 +120,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
+            HoAttributeCompositeConsumerRegistry.Freeze(renderingData.cameraData.camera);
             if (settings == null || !settings.enabled || resolveMaterial == null || selectionTargets[0] == null)
             {
                 return;
@@ -218,6 +219,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
             HoObjectBufferRenderGraphResources objectBufferResources = frameData.GetOrCreate<HoObjectBufferRenderGraphResources>();
             HoAttributeCompositeRenderGraphResources resources = frameData.GetOrCreate<HoAttributeCompositeRenderGraphResources>();
+            resources.demand = HoAttributeCompositeConsumerRegistry.Freeze(frameData.Get<UniversalCameraData>().camera);
             HoSurfaceBufferRenderGraphResources surfaceResources = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
             HoGeometryBufferRenderGraphResources geometry = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
             PublishResources(resources, System.Array.Empty<TextureHandle>(), 0, objectBufferResources, surfaceResources);

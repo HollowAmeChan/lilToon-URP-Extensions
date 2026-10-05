@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- AC 新增按相机渲染调用冻结的消费者需求快照：typed query、资源种类、lane/attribute mask 与实例标识分开；同帧重复 RenderRequest 不复用旧请求。CS/SP 和 AC/SB 调试接入，补齐跳过/销毁生命周期。面板展示只读需求摘要；本轮保持 RT 生产规模，为下一轮整池跳过提供依据。
+
 - 修复 AC 关联语义在相机移动时出现局部残影：OB/SB 私有附件的 `ColorDepth` 清理遗漏 stencil，池化纹理中的旧 stencil 会影响当前材质测试。统一改为 `RTClearFlags.All`，在每次捕获开始时重置 color/depth/stencil；HIRO 前发区域的眼睛残影经现场复测消失。
 
 - AC Scalar V1 支持 OB/SB 对应样本的 owner 关联：SB 捕获 owner/weight/written，归约并发布 W/V/status；AC 用 C/W/V 合成八条 Selection lane，复用每像素四次身份查表。

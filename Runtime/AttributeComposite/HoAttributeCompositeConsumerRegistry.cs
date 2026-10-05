@@ -1,86 +1,142 @@
+using System;
 using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace lilToon.URP.Extensions.AttributeComposite
 {
-    /// <summary>一个消费者声明：它读了 schema 里哪些名字。</summary>
-    public sealed class HoAttributeCompositeConsumerDeclaration
+    /// <summary>Camera-scoped demand collection. Freeze after all consumers have queued their passes.</summary>
+    public static class HoAttributeCompositeConsumerRegistry
     {
-        public HoAttributeCompositeConsumerDeclaration(string consumer, string[] names)
+        private sealed class CameraRequests
         {
-            Consumer = consumer;
-            Names = names;
+            public Camera camera;
+            public long sequence;
+            public int frame;
+            public readonly Dictionary<int, HoAttributeCompositeConsumerDeclaration> consumers = new Dictionary<int, HoAttributeCompositeConsumerDeclaration>();
+            public HoAttributeCompositeDemandSnapshot snapshot;
         }
+        private static readonly Dictionary<int, CameraRequests> requests = new Dictionary<int, CameraRequests>();
+        private static readonly Dictionary<string, HoAttributeCompositeConsumerDeclaration> legacy = new Dictionary<string, HoAttributeCompositeConsumerDeclaration>();
+        private static long sequence;
+        private static bool registered;
+        public static HoAttributeCompositeDemandSnapshot LastSnapshot { get; private set; }
 
-        public string Consumer { get; }
-
-        public string[] Names { get; }
-
-        /// <summary>解析不到的名字（空数组 = 全部解析成功）。</summary>
-        public string[] UnresolvedNames
+        static HoAttributeCompositeConsumerRegistry() { EnsureInitialized(); }
+        public static void EnsureInitialized()
+        {
+            if (registered) return;
+            RenderPipelineManager.beginCameraRendering += BeginCamera;
+            RenderPipelineManager.endCameraRendering += EndCamera;
+            registered = true;
+        }
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void Reset()
+        {
+            Shutdown(); sequence = 0;
+            EnsureInitialized();
+        }
+        private static void Shutdown()
+        {
+            // Do not retain camera callbacks while editor/native rendering objects are torn down.
+            if (registered)
+            {
+                RenderPipelineManager.beginCameraRendering -= BeginCamera;
+                RenderPipelineManager.endCameraRendering -= EndCamera;
+                registered = false;
+            }
+            requests.Clear(); legacy.Clear(); LastSnapshot = null;
+        }
+        #if UNITY_EDITOR
+        [UnityEditor.InitializeOnLoadMethod]
+        private static void InitializeEditor()
+        {
+            EnsureInitialized();
+            UnityEditor.AssemblyReloadEvents.beforeAssemblyReload -= Shutdown;
+            UnityEditor.AssemblyReloadEvents.beforeAssemblyReload += Shutdown;
+            UnityEditor.EditorApplication.quitting -= Shutdown;
+            UnityEditor.EditorApplication.quitting += Shutdown;
+        }
+        #endif
+        private static void BeginCamera(ScriptableRenderContext context, Camera camera)
+        {
+            if (camera != null) requests[camera.GetInstanceID()] = NewRequests(camera);
+        }
+        private static CameraRequests NewRequests(Camera camera) => new CameraRequests
+        { camera = camera, sequence = ++sequence, frame = Time.frameCount };
+        private static CameraRequests GetRequests(Camera camera)
+        {
+            EnsureInitialized();
+            if (!requests.TryGetValue(camera.GetInstanceID(), out CameraRequests value))
+                requests[camera.GetInstanceID()] = value = NewRequests(camera);
+            return value;
+        }
+        private static void EndCamera(ScriptableRenderContext context, Camera camera)
+        {
+            if (camera == null || !requests.ContainsKey(camera.GetInstanceID())) return;
+            if (camera.cameraType == CameraType.Game || camera.cameraType == CameraType.SceneView) Freeze(camera);
+            requests.Remove(camera.GetInstanceID());
+        }
+        public static void DeclareForCamera(Camera camera, UnityEngine.Object owner, string displayName,
+            IEnumerable<HoACQueryDescriptor> queries, IEnumerable<string> semanticNames = null,
+            HoACDemandResources resources = HoACDemandResources.None, uint attributeMask = 0, uint laneMask = 0)
+        {
+            if (camera == null || owner == null) return;
+            CameraRequests current = GetRequests(camera);
+            if (current.snapshot != null) throw new InvalidOperationException("AC demand is frozen; declare during AddRenderPasses/SetupRenderPasses.");
+            current.consumers[owner.GetInstanceID()] = new HoAttributeCompositeConsumerDeclaration(owner.GetInstanceID(),
+                displayName, queries, semanticNames, resources, attributeMask, laneMask);
+        }
+        public static void DeclareSemantics(Camera camera, UnityEngine.Object owner, string displayName, string[] names,
+            HoACDemandResources resources = HoACDemandResources.None)
+        {
+            DeclareForCamera(camera, owner, displayName, HoAttributeCompositeConsumerDeclaration.ResolveNames(names), names, resources);
+        }
+        public static HoAttributeCompositeDemandSnapshot Freeze(Camera camera)
+        {
+            if (camera == null) return null;
+            CameraRequests current = GetRequests(camera);
+            if (current.snapshot == null)
+            {
+                var all = new List<HoAttributeCompositeConsumerDeclaration>(current.consumers.Values);
+                all.AddRange(legacy.Values); // External unscoped callers conservatively apply to every camera.
+                current.snapshot = new HoAttributeCompositeDemandSnapshot(camera, current.sequence, current.frame, all);
+            }
+            LastSnapshot = current.snapshot;
+            return current.snapshot;
+        }
+        public static void Remove(UnityEngine.Object owner, Camera camera = null)
+        {
+            if (owner == null) return;
+            int id = owner.GetInstanceID();
+            if (camera != null)
+            {
+                if (requests.TryGetValue(camera.GetInstanceID(), out CameraRequests value) && value.snapshot == null) value.consumers.Remove(id);
+            }
+            else foreach (CameraRequests value in requests.Values)
+                if (value.snapshot == null) value.consumers.Remove(id);
+        }
+        // Legacy API remains conservative. New consumers should use the scoped API.
+        public static void Declare(string consumer, params string[] names)
+        {
+            if (!string.IsNullOrEmpty(consumer)) legacy[consumer] = new HoAttributeCompositeConsumerDeclaration(consumer, names);
+        }
+        public static void Remove(string consumer) { if (consumer != null) legacy.Remove(consumer); }
+        public static IReadOnlyList<HoAttributeCompositeConsumerDeclaration> Declarations
         {
             get
             {
-                var unresolved = new List<string>();
-                for (int i = 0; i < Names.Length; i++)
-                {
-                    if (!HoSemanticSchema.TryGetByName(Names[i], out _))
-                    {
-                        unresolved.Add(Names[i]);
-                    }
-                }
-
-                return unresolved.ToArray();
+                var result = new List<HoAttributeCompositeConsumerDeclaration>();
+                if (LastSnapshot != null) foreach (var item in LastSnapshot.Consumers) if (item.OwnerId != 0) result.Add(item);
+                result.AddRange(legacy.Values);
+                return result.AsReadOnly();
             }
         }
-    }
-
-    /// <summary>
-    /// 消费者登记（AC 架构 §3）：**登记用于资源规划与诊断**，HLSL 拦不住没登记的代码直接调函数，
-    /// 所以这里的判据是"没登记/解析不到就报出来"，而不是"读不到"。
-    /// <para>静态表按消费者名去重（重复声明覆盖旧值），不会随域重载无界增长。</para>
-    /// </summary>
-    public static class HoAttributeCompositeConsumerRegistry
-    {
-        private static readonly List<HoAttributeCompositeConsumerDeclaration> Declarations_ =
-            new List<HoAttributeCompositeConsumerDeclaration>();
-
-        public static IReadOnlyList<HoAttributeCompositeConsumerDeclaration> Declarations => Declarations_;
-
-        public static void Declare(string consumer, params string[] semanticNames)
-        {
-            if (string.IsNullOrEmpty(consumer))
-            {
-                return;
-            }
-
-            var names = semanticNames ?? System.Array.Empty<string>();
-            for (int i = 0; i < Declarations_.Count; i++)
-            {
-                if (Declarations_[i].Consumer == consumer)
-                {
-                    Declarations_[i] = new HoAttributeCompositeConsumerDeclaration(consumer, names);
-                    return;
-                }
-            }
-
-            Declarations_.Add(new HoAttributeCompositeConsumerDeclaration(consumer, names));
-        }
-
-        /// <summary>解析不到的名字总数（面板与诊断用；0 = 全部命中 schema）。</summary>
         public static int CountUnresolved()
         {
             int total = 0;
-            for (int i = 0; i < Declarations_.Count; i++)
-            {
-                total += Declarations_[i].UnresolvedNames.Length;
-            }
-
+            foreach (var declaration in Declarations) total += declaration.UnresolvedNames.Length;
             return total;
-        }
-
-        public static void Remove(string consumer)
-        {
-            Declarations_.RemoveAll(declaration => declaration.Consumer == consumer);
         }
     }
 }

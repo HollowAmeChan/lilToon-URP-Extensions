@@ -24,6 +24,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
         };
 
         public int laneCount;
+        public HoAttributeCompositeDemandSnapshot demand;
 
         /// <summary>引用：OB 身份池（ranked 4 层）。</summary>
         public TextureHandle identityId0Texture = TextureHandle.nullHandle;
@@ -93,6 +94,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
             }
 
             laneCount = 0;
+            demand = null;
             identityId0Texture = TextureHandle.nullHandle;
             identityId1Texture = TextureHandle.nullHandle;
             identityCoverageTexture = TextureHandle.nullHandle;

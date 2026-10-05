@@ -39,6 +39,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
         public override void Create()
         {
+            HoAttributeCompositeConsumerRegistry.EnsureInitialized();
             if (!registeredCameraReset)
             {
                 RenderPipelineManager.beginCameraRendering += ResetCameraState;
@@ -50,6 +51,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
+            HoAttributeCompositeConsumerRegistry.Remove(this, renderingData.cameraData.camera);
             HoAttributeCompositeSettings activeSettings = ResolveSettings(in renderingData);
             if (activeSettings == null || !activeSettings.enabled)
             {
@@ -72,6 +74,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
             if (WantsDebugView(activeSettings, renderingData.cameraData.cameraType))
             {
+                HoAttributeCompositeDemandDebug.Declare(renderingData.cameraData.camera, this, activeSettings);
                 debugPass?.Setup(activeSettings, debugMaterial, null);
                 renderer.EnqueuePass(debugPass);
             }
@@ -79,6 +82,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
         protected override void Dispose(bool disposing)
         {
+            HoAttributeCompositeConsumerRegistry.Remove(this);
             if (registeredCameraReset)
             {
                 RenderPipelineManager.beginCameraRendering -= ResetCameraState;

@@ -28,7 +28,6 @@ namespace lilToon.URP.Extensions.PostProcessing
         private bool warnedMissingSubjectMaskShader;
         private ScreenProcessPass pass;
         private ScreenProcessSemanticBufferReleasePass semanticBufferReleasePass;
-        private bool registeredCameraReset;
 
         [Tooltip("The renderer feature installs the pass, and Volume profiles provide the active ScreenProcess stack.")]
         public bool UseVolumes = true;
@@ -36,15 +35,10 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static bool IsUseVolumes { get; private set; } = true;
 
         public ScreenProcessStackSettings Settings => settings;
-        private string ConsumerName => "ScreenProcess " + GetInstanceID();
 
         public override void Create()
         {
-            if (!registeredCameraReset)
-            {
-                RenderPipelineManager.beginCameraRendering += ResetConsumerDeclaration;
-                registeredCameraReset = true;
-            }
+            HoAttributeCompositeConsumerRegistry.EnsureInitialized();
             IsUseVolumes = UseVolumes;
             pass = new ScreenProcessPass("Ho-ScreenProcess AfterURP BeforeImageProcess");
             semanticBufferReleasePass = new ScreenProcessSemanticBufferReleasePass();
@@ -55,13 +49,13 @@ namespace lilToon.URP.Extensions.PostProcessing
             ScreenProcessStackVolume volume = GetVolumeComponent();
             if (!ShouldRender(in renderingData, volume))
             {
-                HoAttributeCompositeConsumerRegistry.Remove(ConsumerName);
+                HoAttributeCompositeConsumerRegistry.Remove(this, renderingData.cameraData.camera);
                 pass?.ClearRuntimeLayers();
                 pass?.ReleaseCompatibilityResources();
                 return;
             }
 
-            BuildRuntimeLayers(volume);
+            BuildRuntimeLayers(volume, renderingData.cameraData.camera);
             SetupCompatibilityPass(pass, renderer.cameraColorTargetHandle, renderer.cameraDepthTargetHandle, runtimeLayers);
         }
 
@@ -70,7 +64,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             ScreenProcessStackVolume volume = GetVolumeComponent();
             if (!ShouldRender(in renderingData, volume))
             {
-                HoAttributeCompositeConsumerRegistry.Remove(ConsumerName);
+                HoAttributeCompositeConsumerRegistry.Remove(this, renderingData.cameraData.camera);
                 ScreenProcessRuntimeDiagnostics.PublishSkipped(
                     renderingData.cameraData.camera,
                     "RendererFeature",
@@ -80,7 +74,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
-            BuildRuntimeLayers(volume);
+            BuildRuntimeLayers(volume, renderingData.cameraData.camera);
             if (runtimeLayers.Count == 0)
             {
                 ScreenProcessRuntimeDiagnostics.PublishSkipped(
@@ -94,12 +88,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         protected override void Dispose(bool disposing)
         {
-            if (registeredCameraReset)
-            {
-                RenderPipelineManager.beginCameraRendering -= ResetConsumerDeclaration;
-                registeredCameraReset = false;
-            }
-            HoAttributeCompositeConsumerRegistry.Remove(ConsumerName);
+            HoAttributeCompositeConsumerRegistry.Remove(this);
             pass?.Dispose();
             pass = null;
             semanticBufferReleasePass = null;
@@ -115,11 +104,6 @@ namespace lilToon.URP.Extensions.PostProcessing
             materialCache.Clear();
             runtimeLayers.Clear();
             warnedMissingShaders.Clear();
-        }
-
-        private void ResetConsumerDeclaration(ScriptableRenderContext context, Camera camera)
-        {
-            HoAttributeCompositeConsumerRegistry.Remove(ConsumerName);
         }
 
         private bool ShouldRender(in RenderingData renderingData, ScreenProcessStackVolume volume)
@@ -172,14 +156,16 @@ namespace lilToon.URP.Extensions.PostProcessing
                 : "当前 camera type 不支持。";
         }
 
-        private void BuildRuntimeLayers(ScreenProcessStackVolume volume)
+        private void BuildRuntimeLayers(ScreenProcessStackVolume volume, Camera camera)
         {
             runtimeLayers.Clear();
             var semanticNames = new HashSet<string>();
+            var queries = new List<HoACQueryDescriptor>();
+            HoACDemandResources resources = HoACDemandResources.None;
             List<ScreenProcessLayer> layers = volume != null && volume.layers != null ? volume.layers.value : null;
             if (layers == null)
             {
-                HoAttributeCompositeConsumerRegistry.Remove(ConsumerName);
+                HoAttributeCompositeConsumerRegistry.Remove(this, camera);
                 return;
             }
 
@@ -197,12 +183,23 @@ namespace lilToon.URP.Extensions.PostProcessing
                 }
 
                 runtimeLayers.Add(new ScreenProcessRuntimeLayer(layer, material));
-                if ((layer.useMask || layer.debugMask) && layer.maskSource == HoACQueryKind.Semantic)
-                    semanticNames.Add(layer.maskSemanticName ?? string.Empty);
+                bool optionalMask = layer.useMask || layer.debugMask;
+                if (optionalMask)
+                {
+                    queries.Add(layer.ResolveMaskQuery());
+                    if (layer.maskSource == HoACQueryKind.Semantic) semanticNames.Add(layer.maskSemanticName ?? string.Empty);
+                }
+                else if (layer.effect == ScreenProcessEffect.EdgeLight || layer.effect == ScreenProcessEffect.DropShadow || layer.effect == ScreenProcessEffect.PostLighting)
+                    queries.Add(HoACQueryDescriptor.Resolve(HoACQueryKind.TotalCoverage, null, 0, HoACMaskDomain.Screen));
+                if (layer.effect == ScreenProcessEffect.Outline || layer.effect == ScreenProcessEffect.DepthOfField) resources |= HoACDemandResources.Outline;
+                if (layer.effect == ScreenProcessEffect.EdgeLight || layer.effect == ScreenProcessEffect.DropShadow ||
+                    layer.effect == ScreenProcessEffect.Outline || layer.effect == ScreenProcessEffect.DepthOfField ||
+                    layer.effect == ScreenProcessEffect.PostLighting || layer.effect == ScreenProcessEffect.DepthFog || layer.effect == ScreenProcessEffect.SkyTyndall)
+                    resources |= HoACDemandResources.Geometry;
             }
             if (runtimeLayers.Count > 0)
-                HoAttributeCompositeConsumerRegistry.Declare(ConsumerName, new List<string>(semanticNames).ToArray());
-            else HoAttributeCompositeConsumerRegistry.Remove(ConsumerName);
+                HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera, this, "Ho-ScreenProcess", queries, semanticNames, resources);
+            else HoAttributeCompositeConsumerRegistry.Remove(this, camera);
         }
 
         private void SetupCompatibilityPass(

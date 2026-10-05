@@ -84,6 +84,12 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
             {
                 DrawSchemaTable();
                 DrawConsumerTable();
+                HoAttributeCompositeDemandSnapshot demand = HoAttributeCompositeConsumerRegistry.LastSnapshot;
+                if (demand != null)
+                {
+                    EditorGUILayout.LabelField("最近需求快照", demand.CameraName + " / #" + demand.RenderSequence + " / frame " + demand.Frame);
+                    EditorGUILayout.LabelField("请求资源（尚未裁剪）", demand.Resources + " / lanes 0x" + demand.LaneMask.ToString("X2"));
+                }
                 EditorGUILayout.LabelField("语义精度", HoSurfaceSemanticPrecisionDiagnostics.Status);
                 if (HoSurfaceSemanticPrecisionDiagnostics.Frame >= 0)
                     EditorGUILayout.LabelField("最近相机与采样", HoSurfaceSemanticPrecisionDiagnostics.CameraName + " / " +
@@ -174,10 +180,13 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
             {
                 HoAttributeCompositeConsumerDeclaration declaration = declarations[i];
                 string[] unresolved = declaration.UnresolvedNames;
-                string line = $"{declaration.Consumer}：{string.Join(", ", declaration.Names)}";
-                if (unresolved.Length > 0)
+                string[] names = declaration.Names;
+                string identity = declaration.OwnerId != 0 ? " #" + declaration.OwnerId : "（全局旧声明）";
+                string detail = names.Length > 0 ? string.Join(", ", names) : declaration.Resources.ToString();
+                string line = $"{declaration.Consumer}{identity}：{detail}";
+                if (unresolved.Length > 0 || declaration.InvalidQueryCount > 0)
                 {
-                    EditorGUILayout.HelpBox($"{line}\n解析不到：{string.Join(", ", unresolved)}", MessageType.Warning);
+                    EditorGUILayout.HelpBox($"{line}\n解析不到：{string.Join(", ", unresolved)} / 无效查询 {declaration.InvalidQueryCount}", MessageType.Warning);
                 }
                 else
                 {
