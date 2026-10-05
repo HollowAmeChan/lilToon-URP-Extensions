@@ -25,20 +25,55 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         private readonly HoSurfaceBufferSettings runtimeSettings = new HoSurfaceBufferSettings();
         private HoSurfaceBufferPass pass;
         private HoSurfaceBufferSemanticPass semanticPass;
+        private HoSurfaceBufferCorrelatedSemanticPass correlatedPass;
         private HoSurfaceBufferDebugPass debugPass;
         private Material debugMaterial;
         private Shader debugShader;
         private bool warnedMissingDebugShader;
         private static bool warnedMrtCapacity;
         private static bool warnedSemanticMrtCapacity;
+        private bool registeredCameraReset;
 
         public HoSurfaceBufferSettings Settings => settings;
+
+        public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
+        {
+            if (runtimeSettings.enabled && WantsDebugView(runtimeSettings, renderingData.cameraData.cameraType))
+                debugPass?.Setup(runtimeSettings, debugMaterial, renderer.cameraColorTargetHandle);
+        }
 
         public override void Create()
         {
             pass = new HoSurfaceBufferPass();
             semanticPass = new HoSurfaceBufferSemanticPass();
+            correlatedPass?.Dispose();
+            correlatedPass = new HoSurfaceBufferCorrelatedSemanticPass();
             debugPass = new HoSurfaceBufferDebugPass();
+            if (!registeredCameraReset)
+            {
+                RenderPipelineManager.beginCameraRendering += ResetCameraState;
+                registeredCameraReset = true;
+            }
+            #if UNITY_EDITOR
+            if (WantsCorrelatedVariants()) correlatedPass.PrepareWriterVariants(settings, null);
+            #endif
+        }
+
+        #if UNITY_EDITOR
+        private bool WantsCorrelatedVariants() => isActive && settings != null && settings.enabled &&
+            settings.enableSemanticLanes && settings.enableCorrelatedSemantics &&
+            (SystemInfo.graphicsDeviceType == GraphicsDeviceType.Direct3D11 || SystemInfo.graphicsDeviceType == GraphicsDeviceType.Direct3D12);
+
+        #endif
+
+        private void ResetCameraState(ScriptableRenderContext context, Camera camera)
+        {
+            HoSurfaceBufferPass.ResetGlobalState();
+            HoSurfaceBufferSemanticPass.ResetGlobalState();
+            #if UNITY_EDITOR
+            // Renderer material variants are selected during culling; preparing in RecordRenderGraph is too late.
+            if (WantsCorrelatedVariants()) correlatedPass?.PrepareWriterVariants(settings, camera);
+            #endif
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
@@ -51,6 +86,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 debugPass?.ReleaseCompatibilityResources();
                 HoSurfaceBufferPass.ResetGlobalState();
                 HoSurfaceBufferSemanticPass.ResetGlobalState();
+                HoSurfaceSemanticPrecisionDiagnostics.Publish(renderingData.cameraData.camera, 0, "SurfaceBuffer disabled");
                 return;
             }
 
@@ -70,6 +106,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
                 HoSurfaceBufferPass.ResetGlobalState();
                 HoSurfaceBufferSemanticPass.ResetGlobalState();
+                HoSurfaceSemanticPrecisionDiagnostics.Publish(renderingData.cameraData.camera, 0, "Surface attachment capacity unsupported");
                 return;
             }
 
@@ -95,16 +132,27 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                     }
 
                     HoSurfaceBufferSemanticPass.ResetGlobalState();
+                    HoSurfaceSemanticPrecisionDiagnostics.Publish(renderingData.cameraData.camera, 0, "Semantic attachment capacity unsupported");
                 }
                 else
                 {
                     semanticPass?.Setup(activeSettings, filteringSettings);
                     renderer.EnqueuePass(semanticPass);
+                    if (activeSettings.enableCorrelatedSemantics)
+                    {
+                        correlatedPass?.Setup(activeSettings, filteringSettings, renderingData.cameraData.camera);
+                        renderer.EnqueuePass(correlatedPass);
+                    }
+                    else
+                    {
+                        HoSurfaceSemanticPrecisionDiagnostics.Publish(renderingData.cameraData.camera, 0, "Correlated semantics disabled");
+                    }
                 }
             }
             else
             {
                 HoSurfaceBufferSemanticPass.ResetGlobalState();
+                HoSurfaceSemanticPrecisionDiagnostics.Publish(renderingData.cameraData.camera, 0, "Surface semantics disabled");
             }
 
             if (WantsDebugView(activeSettings, renderingData.cameraData.cameraType))
@@ -112,7 +160,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 EnsureDebugMaterial();
                 if (debugMaterial != null)
                 {
-                    debugPass?.Setup(activeSettings, debugMaterial, renderer.cameraColorTargetHandle);
+                    debugPass?.Setup(activeSettings, debugMaterial, null);
                     renderer.EnqueuePass(debugPass);
                 }
             }
@@ -120,10 +168,17 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         protected override void Dispose(bool disposing)
         {
+            if (registeredCameraReset)
+            {
+                RenderPipelineManager.beginCameraRendering -= ResetCameraState;
+                registeredCameraReset = false;
+            }
             pass?.Dispose();
             pass = null;
             semanticPass?.Dispose();
             semanticPass = null;
+            correlatedPass?.Dispose();
+            correlatedPass = null;
             debugPass?.ReleaseCompatibilityResources();
             debugPass = null;
             CoreUtils.Destroy(debugMaterial);

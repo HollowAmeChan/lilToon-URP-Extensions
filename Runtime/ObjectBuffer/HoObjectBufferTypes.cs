@@ -11,7 +11,9 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         [InspectorName("2x")]
         Two = 2,
         [InspectorName("4x")]
-        Four = 4
+        Four = 4,
+        [InspectorName("1x")]
+        One = 1
     }
 
     /// <summary>

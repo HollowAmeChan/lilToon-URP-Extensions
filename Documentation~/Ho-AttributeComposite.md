@@ -6,12 +6,12 @@
 
 **所有语义遮罩与合成属性的唯一逻辑入口**：它屏蔽 OB/SB 的存储布局与 ID 解压规则，并发布 GB 场景几何、描边覆盖率查询；下游不再自行解码遮罩与身份。
 
-> **接入状态（2026-10-05）**：AC 已消费 **GB + OB + SB**。GB 作为独立的几何与描边覆盖范围发布；没有 OB 时仍能查询 GB。ScreenProcess 已接 typed 遮罩选择、范围内反选、直接预览与缺失输入诊断。跨来源精确 sample 合成和按需求裁剪尚未实现，详见 `计划/Ho-AttributeComposite-Plan.md`。GD 仍负责几何数据生产，不建立 GD 属性覆盖链。
+> **接入状态（2026-10-05）**：AC 已消费 **GB + OB + SB**。GB 作为独立的几何与描边覆盖范围发布；没有 OB 时仍能查询 GB。ScreenProcess 已接 typed 遮罩选择、范围内反选、直接预览与缺失输入诊断。Scalar V1 已接 OB/SB 样本关联统计；按需求裁剪尚未实现，详见 `计划/Ho-AttributeComposite-Plan.md`。GD 仍负责几何数据生产，不建立 GD 属性覆盖链。
 
 > **落地状态（R4b，surface 来源本轮）**：AC 已经存在并可跑，范围是 **object + surface 两个来源**：
 > - 已落地：`HoSemanticSchema`（由 `HoObjectBufferPartTags` 生成 8 条 lane，SemanticId = 位序+1、Lane = 位序；**默认 `Intersection`**）、runtime catalog（按 LaneIndex 首次编译成 GPU 常量表；schema 编辑与变脏版本机制待实现）、`SemanticResolve`（一轮 4 张 RGBA8 = 8 条 lane 的 `(SemanticId, coverage)`）、资源集 `HoAttributeCompositeRenderGraphResources`、`HoAC_*` 查询（Identity / Group / Layer0Group / Predicate / TotalCoverage / Selection）、消费者登记与解析失败诊断、feature 面板（schema 与登记只读汇总）、Volume + 调试直出（lane 覆盖率 / lane ID / catalog）。
 > - 第一个消费者：**角色特化**已切过来 —— 它不再自己解码 OB 身份池与部件行表，改读 AC 的 Selection 池（转置成自己的位平面），并把 8 个物体位登记为消费者。
-> - **surface 来源（R4b）已落地**：SB 的语义 lane（4 张 RGBA8，一张装两条 `(SemanticId, value)`）在 `SemanticResolve` 里按 catalog 的 `sourceMode` 合成（`Intersection` 为默认：表面侧只能收窄 / 细化），**单采样、普通采样**读 —— **不读 MSAA**（按 `Texture2DMS`+`Load` 读时坐标 / 采样数 / `bindMS` 任一处对不上都会静默读错，实测过：池子整片均匀无形状、移动时局部拖影）。逐 sample 细分将来由 SB 自己 resolve 后发布。逐像素的 owner **不参与合成公式**：那道门由 SB 的材质 pass 按 palette 表在数据上把住（材质只能覆盖自己 renderer 已经有的位）。
+> - **surface 来源（R4b）已落地**：SB 的语义 lane（4 张 RGBA8，一张装两条 `(SemanticId, value)`）在 `SemanticResolve` 里按 catalog 的 `sourceMode` 合成（`Intersection` 为默认：表面侧只能收窄 / 细化），**单采样、普通采样**读 —— **不读 MSAA**（按 `Texture2DMS`+`Load` 读时坐标 / 采样数 / `bindMS` 任一处对不上都会静默读错，实测过：池子整片均匀无形状、移动时局部拖影）。此段描述旧的近似路径。2026-10-06 新增 Scalar V1：SB 按 OB 实际 N 捕获 owner/weight/written，在生产侧关联归约为单采样 W/V，AC 消费这些统计。
 > - **`AttributeComposite`（R4c）已落地**：`HoAC_Attribute(uv, 0)` = `Classification` 四通道（`sssProfileIdByte / curvatureHint / transmittanceHint / materialClassIdByte`），覆盖链是 `constant < surface` —— **surface 可用性由 `HoAC_SurfaceValid(uv)` 判定**（SB 有产出 **且** SB 的 owner == OB 层 0 身份），不匹配就返回 constant 兜底（本轮恒 0，等有消费者要非 0 再加常量表）。**本轮不落"合成属性图"这张 RT**：AC 只把 SB 的 Classification + owner 作为**引用**发布（与它发布 OB 身份池引用同一套做法），合成在读取时做；真有"要一张图"的需求（调试视图 / 屏空间复用）时再落 RT。
 > - **仍然不做**：Selection 池 16 lane 的 MRT 分批（现在固定 4 张 = 8 lane，词表超过 8 位才需要）、DebugTile 的 AC 九宫格（需要给 Debug 轴加一个 `HoDebugViewRenderKind`，AC 自带整屏调试不受影响）、**按消费者登记决定要不要产出 Selection 池**（现在只要 OB 有身份就恒产出 4 张，等消费者多起来再按登记裁剪）。
 
@@ -44,12 +44,12 @@
 - `idmanifest`、`crypto_object`、32-bit MurmurHash3 和 float 位重解释只属于 AOV 导出层的 **Cryptomatte manifest**。
 - 导出层可通过 AC 资源集读 OB 身份池与 runtime catalog，但 AC 不应声称自己复制或“合成”了一份新身份池。
 
-### 0.4 当前 Selection 精度与未来目标
+### 0.4 Selection 精度与样本关联
 
 - 当前 OB 已从逐 sample 身份得到 ranked 身份池与 coverage；AC 读取这份单采样身份池。
 - SB 发布单采样 `(SemanticId,value)` lane，AC 按五种 sourceMode 在像素级合成。`Intersection` 是 `objectCoverage * surfaceValue`，不是精确的 sample 集合交集。
-- SB lane 的 `SemanticId=0` 是未写，声明 ID 配 value=0 是显式写零。当前语义公式不使用 semantic owner；数值属性的 owner 校验是另一条通路。
-- 将来若要求精确交集，需要保留 object/surface 对应 sample 与 owner 关系。分别 resolve 后相乘不能恢复关联；不将“SB 自己 resolve”为“精确交集已完成”。消费者继续采样单采样产物。
+- SB lane 的 `SemanticId=0` 是未写，声明 ID 配 value=0 是显式写零。近似路径不使用 semantic owner；关联路径逐样本匹配 owner 后统计 W/V；数值属性的 owner 校验是另一条通路。
+- Scalar V1 已保留 object/surface 对应 sample 与 owner 关系，在 SB 专用 pass 归约；D3D11/12 完整 2D viewport、N=1/2/4 支持关联，其他域明确近似降级。消费者继续采样单采样产物。详见 `计划/Ho-AC-SemanticPrecision-Contract.md`。
 
 ### 0.4.1 表面属性的 object tier 尚无合法生产者
 
@@ -74,7 +74,7 @@
 
 **名字**：`HoAttributeCompositeRendererFeature`（代码目录 `Runtime/AttributeComposite/`）、**`HoAttributeCompositeVolume`**（**调试入口**）、契约登记族 `ac.*`。**UI 按 `Ho-UI_风格规范.md`**：调试在 Volume，feature 只放高级设置 + 兜底默认值 + 消费者登记表（只读汇总）。
 
-**合成原则**：语义 Selection 当前在像素级按 schema sourceMode 合并 object/surface；表面数值本轮只走 `constant < surface`，用 SB SurfaceOwner 匹配 OB layer-0 IdentityId 表达 validity。
+**合成原则**：语义 Selection 按 schema sourceMode 合并 object/surface；满足 Scalar V1 域时使用 C/W/V，否则使用旧的像素近似；表面数值本轮只走 `constant < surface`，用 SB SurfaceOwner 匹配 OB layer-0 IdentityId 表达 validity。
 
 ---
 
@@ -82,13 +82,13 @@
 
 AC **不为每个消费者烤遮罩图**。它发布**一份可查询的合成结果 + 一个查询 API**；要烤成图的效果自己用 API 烤，烤出来的图记在**它自己**名下。
 
-诊断另发布 SB semantic owner 与 lane 的当帧只读引用。`Object Coverage / Surface Written / Surface Value / Semantic Owner Match / Final Coverage / Semantic Compare` 可按语义选择；owner 的在池与主导匹配分开显示。当前精度案例与下一轮关联统计契约见 `计划/Ho-AC-SemanticPrecision-Contract.md`，owner 视图本轮不改变合成公式。
+诊断另发布 SB semantic owner 与 lane 的当帧只读引用。`Object Coverage / Surface Written / Surface Value / Semantic Owner Match / Final Coverage / Semantic Compare` 可按语义选择；owner 的在池与主导匹配分开显示。关联统计契约与支持边界见 `计划/Ho-AC-SemanticPrecision-Contract.md`，另有 Written Coverage / Weighted Coverage / Semantic Precision 视图；关联路径的重组误差按 C/W/V 重算。
 
 | 输出 | 内容 | 形态 |
 | --- | --- | --- |
 | **AC 合成属性查询** | `sssProfileIdByte / curvatureHint / transmittanceHint / materialClassIdByte` 及登记属性；SB owner 匹配时取 surface，否则取 AC constant fallback | 当前引用 SB，读取时合成；独立 RT 尚未实现 |
 | **身份池**（引用） | OB 的身份池（ranked：组 / 槽位 / 覆盖率，K=4，实际 N=4/2/1）——**SB 不写身份 ⇒ 不复制**，AC 只发布句柄 | 引用 |
-| **AC Selection 池** | 当前像素级合并 object/surface 后的 8（目标 4/8/16） 个 `(SemanticId,coverage)` 固定 lane | `_HoACSelection{0..3}Texture`，当前 RGBA8 ×4；16 lane 分批为目标 |
+| **AC Selection 池** | Scalar V1 关联或像素近似合并 object/surface 后的 8（目标 4/8/16） 个 `(SemanticId,coverage)` 固定 lane | `_HoACSelection{0..3}Texture`，当前 RGBA8 ×4；16 lane 分批为目标 |
 | **GB 覆盖范围**（引用） | 场景几何与描边分别引用 GB coverage / NormalDepth，单采样时以深度有效性回退 | 引用 |
 | **查询 API** | §3 的 `HoAC_*` | API |
 | **runtime catalog** | 语义名字 → schema entry；typed descriptor 编码查询类型、数值与范围 | lane 表首次上传，SP 配置变化时重新解析 |
@@ -120,7 +120,7 @@ AC **不为每个消费者烤遮罩图**。它发布**一份可查询的合成�
 | 分类 / 曲率 / 透射提示 / SSS profile | AC 常量 fallback | 本轮无 object tier | SB `Classification`，用 SurfaceOwner 匹配表达 validity |
 | 朝向 | 无（缺省 = 不生效） | 组表（forward / side） | 材质**不覆盖**朝向 |
 
-身份 predicate 查询按四层 coverage 加权。Selection 当前为像素级近似合成；精确 sample 合成属于后续阶段。
+身份 predicate 查询按四层 coverage 加权。Selection 在支持域内使用 Scalar V1 关联统计；其他域明确使用像素近似。
 
 ---
 
@@ -174,7 +174,7 @@ AC **不为每个消费者烤遮罩图**。它发布**一份可查询的合成�
 2. **输出形态 = 可查询**：一份合成结果 + 查询 API；**不为每个消费者烤遮罩图**（要烤由消费者自己用 API 烤，图记在它自己名下）。
 3. 当前 AC 写四张 Selection RT，其他输入发布引用；按需合成属性 RT 与 lane 分批尚未实现。
 4. 表面数值本轮为 `constant < surface`，以 SurfaceOwner 匹配表达 validity；不把数值属性塞回 OB entry。
-5. Selection 当前在像素级合并 object/surface；sample 关联与精确 resolve 为后续目标。朝向材质不覆盖。
+5. Selection 支持 Scalar V1 的样本关联；一般化的逐 lane 权重、其他采样域仍为后续目标。朝向材质不覆盖。
 6. **排序按属性合成**：每条属性一条覆盖链，先 resolve 成每像素答案，再给消费者读。
 7. **名字在 C# 侧解析一次**，像素里只有 ID 比较；消费者要**登记**自己读了什么，解析不到就报诊断。
 8. AC 查询本身无 pass；SemanticResolve 按 MRT 能力分 batch，AttributeComposite 一趟；两者默认在 opaque 前。
@@ -206,3 +206,7 @@ ScreenProcess 保留默认物体总覆盖率；新增默认范围为全屏，因
 AC 调试增加 Geometry Coverage、Outline Coverage、Input Availability；ScreenProcess 的层调试直出选择结果。未知语义、非法 ID、缺失 producer 的说明显示在 ScreenProcess Feature 运行状态；具名需求同时登记到 AC，消费者停用或销毁后移除。
 
 自定义材质需遵守 `ScreenProcessMask.hlsl` 的字段与查询接口；任意外部 shader 不会自动获得遮罩合成。Selection 仍固定 8 lane / 四张 RGBA8，消费者登记暂不裁剪 RT。GB 发布 pass 无绘制和新 RT；属性合成仍在读取时完成。
+
+## 11. Scalar V1 关联资源（2026-10-06）
+
+SB 归约显式读取 OB 原始身份样本及 ranked 身份纹理；这是登记的跨轴例外，不改变 SB 数值面的独立生产。AC resolve/调试对 W、V、status 逐一声明 `UseTexture(Read)`，按同一 sample domain 发布当相机资源。统计格式、降级规则与成本见 [关联契约](计划/Ho-AC-SemanticPrecision-Contract.md)。

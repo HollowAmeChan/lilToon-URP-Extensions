@@ -2,6 +2,11 @@
 
 ## Unreleased
 
+- AC Scalar V1 支持 OB/SB 对应样本的 owner 关联：SB 捕获 owner/weight/written，归约并发布 W/V/status；AC 用 C/W/V 合成八条 Selection lane，复用每像素四次身份查表。
+  - 支持 RenderGraph + D3D11/D3D12、2D 完整 viewport、实际 N=1/2/4；旧 writer、其他采样域、兼容路径与未就绪的编辑器变体明确近似降级。
+  - AC 增加 Written Coverage、Weighted Coverage、Semantic Precision 与最近相机的生产状态；修正 AC/SB 调试在相机目标创建前读取 handle 的时序。
+  - lilToon 增加 `HoSurfaceCorrelatedV1` 原生 pass，逐样本计算 UV/clip 与遮罩；现有数值面、近似 lane 与业务查询接口保留。关联成本及边界见 `计划/Ho-AC-SemanticPrecision-Contract.md`。
+
 - **编辑器 UI 瘦身：参数解释搬进 Tooltip，HelpBox 只留"前置依赖 / 静默失败 / 必要指向"三类**
   （用户："UI 太复杂啰嗦了改简单直观一点，用户不知道参数啥意思会自己看悬浮菜单提示的"）：
   - **判据**：HelpBox 里不再写"这个参数是什么、单位、范围、怎么调"——那是 Tooltip 的活；

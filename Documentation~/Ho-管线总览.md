@@ -62,7 +62,7 @@
         ── opaque 之前 ──────────────────────────────────────────────
 [3]  GB：Ho-GeometryBuffer                                  → 几何法线 / depth / 几何覆盖率（+ 描边视觉壳 / sky 可选）
 [4]  OB：Ho-ObjectBuffer                                    → 4 层身份 + 覆盖率（自建 MSAA resolve）+ 朝向
-[5]  SB：Ho-SurfaceBuffer                                   → 五张数值图 + owner + 语义 lane（单采样）
+[5]  SB：Ho-SurfaceBuffer                                   → 五张数值图 + owner + 语义 lane + Scalar V1 单采样 W/V
 [6]  AC：SemanticResolve + AttributeComposite               → Selection 池（每张两条 `(SemanticId, coverage)`）
 [6.5] Ho-GTAO（独立 feature）                               → ao / aointent   ★ 必须在 opaque 之前
         ── URP opaque / cutout 常规绘制 ──────────────────────────────
@@ -84,7 +84,7 @@
 | 约束 | 为什么 |
 | --- | --- |
 | `Ho-ShadowCast → 所有效果`（**含 OIT**） | 实机确认 OIT 在 ShadowCast 之后，所以"材质/效果都吃阴影"成立 |
-| `GB ↮ OB`、`GB ↮ SB`、`OB ↮ SB` | 三个生产轴默认互不读取；跨轴 gate 只能由具体消费者显式声明 |
+| `GB ↮ OB`、`GB ↮ SB`、`OB ↮ SB` | 三个数值生产轴独立；显式例外：OB raw/ranked → SB Scalar V1 关联归约 → AC |
 | **`GTAO → opaque`** | 材质 forward 里采样 AO |
 | **`opaque → SSGI`** | GI 要 opaque 后的颜色 |
 | `{GB, OB, SB} → AC → GTAO → opaque` | AC 消费三轴输入；几何与身份覆盖范围独立，按 typed 查询读取 |
@@ -252,9 +252,11 @@ ShadowCast = **cast 组**（每组一张 atlas，灯按 slice 排布，首版 2 
 | **R4** | AC 落地：schema + typed API + runtime catalog + SemanticResolve + 属性合成 | ✅ |
 | **R5** | 消费者输入切换：ScreenProcess（遮罩→覆盖率）、角色特化（→AC）、SSS / PLR（→SB + AC） | ✅ |
 | **R6** | 删 MetadataBuffer，契约出 v2 | ✅（见 `CHANGELOG.md` 的 R6/R7 记录） |
-| **剩余** | ① 合规 `crypto_*` AOV/export feature；② 透明 PLR 的 receiver/source-id RT（多平面时才立项）；③ AC 的 16-lane MRT 分批（词表 > 8 位才需要）；④ SB 语义 lane 的逐 sample 细分（形态：SB 自渲染 MSAA → 自己 resolve 成单采样再发布）；⑤ AC 跨来源 sample/owner 关联与精确合成（SP 具名选择已接入）；⑥ AOV 导出层 | — |
+| **剩余** | ① 合规 `crypto_*` AOV/export feature；② 透明 PLR 的 receiver/source-id RT（多平面时才立项）；③ AC 的 16-lane MRT 分批（词表 > 8 位才需要）；④ SB 语义 lane 的逐 sample 细分（形态：SB 自渲染 MSAA → 自己 resolve 成单采样再发布）；⑤ AC 一般化逐 lane 权重与其他采样域（Scalar V1 sample/owner 关联已接入）；⑥ AOV 导出层 | — |
 
 **推进顺序的历史决策**：`Ho-GTAO`（独立 feature）→ `Ho-SSGI`（含 `gisexclude`）→ 其余系统；
 R1–R6 属于"其余系统"里的地基工程，与 AO/GI 并行且互不读对方产物。
 
-> 2026-10-05 AC 接入：ScreenProcess 已支持语义、组、完整身份、几何、描边与全屏选择，以及指定范围内反选；当前仍是像素级合成，不是完整 sample 合成或按需求裁剪。详见 `计划/Ho-AttributeComposite-Plan.md`。
+> 2026-10-05 AC 接入：ScreenProcess 已支持语义、组、完整身份、几何、描边与全屏选择，以及指定范围内反选；2026-10-06 已接 Scalar V1 sample/owner 关联；逐 lane 独立权重、其他采样域与按需求裁剪尚未实现。详见 `计划/Ho-AttributeComposite-Plan.md`。
+
+> **2026-10-06 关联接入**：OB 发布当前域的 raw IdentityMS；SB 专用 capture/reduce 显式读取 OB 并发布 owner 排序的 W/V/status；AC 使用单采样统计合成 Selection。支持 RG + D3D11/12 + 2D 完整 viewport + N=1/2/4，其他域与旧 writer 明确近似降级。原有 SB 数值面不依赖 OB。见 [关联契约](计划/Ho-AC-SemanticPrecision-Contract.md)。

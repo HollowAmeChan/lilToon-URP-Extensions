@@ -7,6 +7,7 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
+using lilToon.URP.Extensions.AttributeComposite;
 
 namespace lilToon.URP.Extensions.ObjectBuffer
 {
@@ -296,6 +297,17 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                     selectionMsaaTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraDescriptor, HoObjectBufferFormatUtility.GetLayerGraphicsFormat(), HoObjectBufferShaderConstants.SelectionTextureName + "MSAA", msaaSamples));
                 }
             }
+
+            resources.identitySampleTexture = useMsaa ? idMsaaTexture : id0Texture;
+            resources.sampleDomain = new HoSemanticSampleDomain
+            {
+                cameraId = cameraData.camera.GetInstanceID(), frame = Time.frameCount,
+                width = cameraDescriptor.width, height = cameraDescriptor.height,
+                slices = cameraDescriptor.volumeDepth, dimension = cameraDescriptor.dimension,
+                samples = msaaSamples, dynamicScale = cameraDescriptor.useDynamicScale,
+                viewport = cameraData.camera.rect,
+                view = cameraData.GetViewMatrix(), projection = cameraData.GetProjectionMatrix()
+            };
 
             DrawingSettings fallbackDrawingSettings = RenderingUtils.CreateDrawingSettings(
                 FallbackShaderTagIds,

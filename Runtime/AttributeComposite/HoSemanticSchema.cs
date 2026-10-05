@@ -10,7 +10,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
     /// （`HoACSelectionResolve.shader` 的 `ComposeLane`）：surface 侧来自 SB 的单采样语义 lane。
     /// <para>
     /// 公式里的 `o` 是物体侧（像素级：Σ 层覆盖率 · 该层带不带这一位），`s` / `written` 是 SB 在同一像素上写的 lane 值；
-    /// 五种模式都在**像素级**合成出覆盖率（SB 侧单采样，读端不做逐 sample resolve）。
+    /// Scalar V1 支持对应样本的 owner 关联统计；不支持的域保留像素级近似。AC 读端均消费单采样产物。
     /// </para>
     /// </summary>
     public enum HoSemanticSourceMode

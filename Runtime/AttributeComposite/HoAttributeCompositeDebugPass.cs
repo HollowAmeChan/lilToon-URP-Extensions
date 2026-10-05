@@ -108,6 +108,12 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 HoAttributeCompositeBindings.ReadQuery(builder, resources, passData.query);
                 if (passData.semanticDebug)
                 {
+                    if (resources.HasCorrelatedSemantics)
+                    {
+                        HoAttributeCompositeBindings.Read(builder, resources.semanticWrittenCoverageTexture);
+                        HoAttributeCompositeBindings.Read(builder, resources.semanticWeightedCoverageTexture);
+                        HoAttributeCompositeBindings.Read(builder, resources.semanticAssociationStatusTexture);
+                    }
                     HoAttributeCompositeBindings.Read(builder, resources.identityId0Texture);
                     HoAttributeCompositeBindings.Read(builder, resources.identityId1Texture);
                     HoAttributeCompositeBindings.Read(builder, resources.identityCoverageTexture);
@@ -139,6 +145,13 @@ namespace lilToon.URP.Extensions.AttributeComposite
                     context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.DebugLaneValidId, data.laneValid ? 1 : 0);
                     context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.DebugSurfaceAvailableId, data.resources.HasSurfaceSemantics ? 1 : 0);
                     context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.ActiveId, data.resources.HasSelectionPool ? 1 : 0);
+                    context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.PrecisionActiveId, data.resources.HasCorrelatedSemantics ? 1 : 0);
+                    if (data.semanticDebug && data.resources.HasCorrelatedSemantics)
+                    {
+                        context.cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.WrittenCoverageId, data.resources.semanticWrittenCoverageTexture);
+                        context.cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.WeightedCoverageId, data.resources.semanticWeightedCoverageTexture);
+                        context.cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.AssociationStatusId, data.resources.semanticAssociationStatusTexture);
+                    }
                     if (data.semanticDebug)
                     {
                         if (data.resources.HasIdentityPool)

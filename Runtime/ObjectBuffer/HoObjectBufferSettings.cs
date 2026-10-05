@@ -53,7 +53,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         [InspectorName("Debug In Game View")]
         public bool debugInGameView;
 
-        public int RequestedSampleCount => Mathf.Max(2, (int)sampleCount);
+        public int RequestedSampleCount => Mathf.Max(1, (int)sampleCount);
 
         public int RequestedSelectionLayerCount => Mathf.Clamp((int)selectionLayers, 0, 4);
     }

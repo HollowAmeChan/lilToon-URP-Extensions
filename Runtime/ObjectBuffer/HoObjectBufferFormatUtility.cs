@@ -94,7 +94,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             };
 
             int supported = SystemInfo.GetRenderTextureSupportedMSAASampleCount(idDescriptor);
-            if (selectionEnabled)
+            // RGBA8 also carries the correlated semantic sample packet. Negotiate a common sample count.
             {
                 var selectionDescriptor = new RenderTextureDescriptor(
                     Mathf.Max(1, cameraTextureDescriptor.width),

@@ -14,7 +14,7 @@
 > - **owner 用两个字节（RGBA8 的 R/G）承载 16-bit IdentityId**（规划写的是 `R16_UINT`，此处按可采样性改）：0..65535 逐值精确，且消费端仍是普通浮点采样；`R16_UINT` 需要整数纹理通道，会污染所有消费端。语义 lane 的 owner 同布局。
 > - **透明不生产**：队列上限压在上不透明段末尾（`GeometryLast`），对应 §0.5 的第三种策略（"对 transparent 不生产"）；其余两种策略等定了再放开。
 > - **语义 lane（§0.4 的 8-lane 档）已落地，但读端走单采样**：材质侧 `HoSurfaceSemantic` 逐像素写 `owner + 8 条 (SemanticId, value)`（4 张 RGBA8，5 MRT + 自用深度），AC 用**普通采样**读、按 catalog 的 `sourceMode` 合成（默认 `Intersection`：表面侧只能收窄 / 细化）。**SB 只覆盖 OB 语义**——材质先按 palette 表读自己 renderer 的物体位，只写它真有的那几位，lane → SemanticId / 物体位掩码由 `HoSemanticSchema` 上传，材质侧是 `_HoSemanticWeight`（0..1）× 可选的 `_HoSemanticWeightTex`（R 通道，**要显式打开 `_HO_SEMANTIC_MASK`** 才采样 —— 老材质没有这张图，无条件采样会读到未定义的绑定）。
->   **为什么读端是单采样**：让 AC 按 `Texture2DMS` + `Load` 读 SB 的 MSAA lane 时，坐标 / 采样数 / `bindMS` 任何一处对不上都会**静默**读出邻域或旧 sample（实测表现：池子整片均匀、无形状，角色移动时局部拖影）。逐 sample 的细分（同一材质内部的眼白 / 虹膜）等真有消费者要时再上，形态固定为"**SB 自己按 MSAA 渲染 → 自己 resolve 成单采样 lane → 再发布**"。
+>   **为什么读端是单采样**：让 AC 按 `Texture2DMS` + `Load` 读 SB 的 MSAA lane 时，坐标 / 采样数 / `bindMS` 任何一处对不上都会**静默**读出邻域或旧 sample（实测表现：池子整片均匀、无形状，角色移动时局部拖影）。2026-10-06 Scalar V1 已按此形态实现 owner/共享权重关联；逐 lane 独立细分仍待实现。形态为"**SB 自己按 MSAA 渲染 → 自己 resolve 成单采样 lane → 再发布**"。
 > - **消费者与登记都已收口**：SSS 的覆盖率改吃 AC 总覆盖率、ScreenProcess 的图层遮罩改吃角色覆盖率、DebugTile 与 Volume 的五张图 / owner / 语义 lane 视图都在；MB 的 surface 族与 MB 本体已整块删除（§3）。
 > - **验收口径**：owner 视图（调试模式 6）绿 = 与 OB 层 0 对齐、红 = 不一致或没人写、洋红 = OB 没产出；五张图与 AC 门面（`HoAC_Attribute`）在同一像素上取值一致。
 > - **SRP Batcher**：`_HoSurface*` / `_HoSSS*` / `_HoSemanticWeight` 已按规划并进 `UnityPerMaterial`
@@ -51,7 +51,7 @@
 
 - SB 的语义 pass 与数值 pass 分开，因为附件集合不同（5 个 MRT vs 6 个），不能并成一趟。
 - 每个 lane 逐像素写 `(SemanticId,value)`；ID=0 是未写，ID=声明值且 value=0 是显式 0。一张 RGBA8 存两个 lane（单采样）。
-- 同时写 `_HoSurfaceSemanticOwnerTexture`（RGBA8 两个字节 = 16-bit IdentityId），AC 与 OB 层 0 的 IdentityId 校验后才接受语义值。
+- 同时写 `_HoSurfaceSemanticOwnerTexture`（RGBA8 两个字节 = 16-bit IdentityId）。旧的像素合成不检查语义 owner；Scalar V1 在对应样本上匹配任一 OB ranked owner 后归约。数值面的 layer-0 validity 是独立规则。
 - 4 lane = owner + 2 RT；8 lane = owner + 4 RT；16 lane = 两个 8-lane batch，每 batch 都重写 owner + 4 RT。每趟最多 5 MRT。
 - 中间图命名为 `_HoSurfaceSemanticOwnerMS`、`_HoSurfaceSemanticLane{0..7}MS`；都是 internal RenderGraph 句柄，不发布给业务消费者。
 
@@ -97,7 +97,7 @@ _UsePlanarReflection             → 只在总开关打开时生效
 ### 1.2 约束（冻结）
 
 - **不发布深度、不发布身份**；SB 的 depth-stencil 只服务自己的两段式深度（opaque/cutout 写深度、transparent 只 ZTest 后叠加）。
-- **GB / OB / SB 并列，producer 互不读**（交叉 gate 必须显式登记）。
+- **GB / OB / SB 数值生产并列**。明确例外：SB Scalar V1 关联归约读取 OB 原始身份样本及 ranked 身份，在 producer 侧完成配对；普通数值 pass 不增加该依赖。
 - **不与别的语义打包**：几何 → GB，效果调参 → 材质轻量参数，屏幕空间产物 → 各效果自己的通道。
 - 采样 **Point**（材质值属于最近的那个面）。
 - `Color.a` 不承载覆盖率；覆盖率只有 OB/AC 一个来源。
@@ -199,3 +199,7 @@ _UsePlanarReflection             → 只在总开关打开时生效
 12. 通道一律用 SB 纹理名（`target` / `Target5` 这类 slot 号是桥接期叫法，随 MB 的删除一起作废）。
 13. **调试与登记是落地的一部分**：五张数值图、owner alignment 与每个 surface semantic lane 都有 debug 视图。
 14. **UI 按 `Ho-UI_风格规范.md`**：调试入口在 **`HoSurfaceBufferVolume`**，feature 里只放高级设置 + 兜底默认值。
+
+## 7. Scalar V1 关联（2026-10-06）
+
+`enableCorrelatedSemantics` 默认为开。新增 `HoSurfaceCorrelatedV1` 捕获 RGBA8 owner/weight/written，私有深度与 OB 实际 N 一致；专用三 MRT 归约输出 RGBA16F W/V 与 RGBA8 status。发布的是单采样 owner 统计，业务消费者不读取 raw MSAA。旧数值面与单采样语义捕获本轮保留。支持域、fallback、writer 协议和性能成本详见 [关联契约](计划/Ho-AC-SemanticPrecision-Contract.md)。

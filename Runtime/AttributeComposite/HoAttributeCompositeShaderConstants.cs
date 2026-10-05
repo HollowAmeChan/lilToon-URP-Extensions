@@ -34,6 +34,10 @@ namespace lilToon.URP.Extensions.AttributeComposite
         public static readonly int DebugLaneId = Shader.PropertyToID("_HoACDebugLane");
         public static readonly int DebugLaneValidId = Shader.PropertyToID("_HoACDebugLaneValid");
         public static readonly int DebugSurfaceAvailableId = Shader.PropertyToID("_HoACDebugSurfaceAvailable");
+        public static readonly int PrecisionActiveId = Shader.PropertyToID("_HoACSemanticPrecisionActive");
+        public static readonly int WrittenCoverageId = Shader.PropertyToID("_HoACSemanticWrittenCoverageTexture");
+        public static readonly int WeightedCoverageId = Shader.PropertyToID("_HoACSemanticWeightedCoverageTexture");
+        public static readonly int AssociationStatusId = Shader.PropertyToID("_HoACSemanticAssociationStatusTexture");
         public static readonly int InputFlagsId = Shader.PropertyToID("_HoACInputFlags");
         public static readonly int InputsPublishedId = Shader.PropertyToID("_HoACInputsPublished");
         public static readonly int GeometryFlagsId = Shader.PropertyToID("_HoACGeometryFlags");

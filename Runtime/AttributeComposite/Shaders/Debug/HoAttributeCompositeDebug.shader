@@ -21,6 +21,7 @@ Shader "Hidden/lilToon/URP/AttributeComposite/DebugView"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACQuery.hlsl"
             #include "../HoACSemanticCompose.hlsl"
+            #include "../HoACCorrelatedCompose.hlsl"
 
             float _HoACDebugMode;
             float4 _HoACDebugLane; // lane, semantic ID, object bit, source mode
@@ -36,6 +37,15 @@ Shader "Hidden/lilToon/URP/AttributeComposite/DebugView"
                 float objectCoverage = _HoACInputFlags.x > 0.5 ? HoAC_Predicate(uv, (uint)_HoACDebugLane.z) : 0.0;
                 float2 surface = HoAC_ReadSurfaceLane(uv, lane, id, surfaceAvailable);
                 float final = _HoACInputFlags.y > 0.5 ? HoAC_SelectionExact(uv, lane, id) : 0.0;
+                bool precision=HoAC_CorrelatedValid(uv);
+                if(view==15u) return precision ? half4(0,1,0,1) : half4(1,0.4,0,1);
+                if(view==13u || view==14u)
+                {
+                    if(!precision) return half4(0.35,0,0,1);
+                    float3 stats=HoAC_CorrelatedLane(uv,(uint)_HoACDebugLane.z);
+                    float value=view==13u?stats.y:stats.z;
+                    return half4(value,value,value,1);
+                }
                 if (view == 10u)
                 {
                     if (!surfaceAvailable || _HoACInputFlags.x < 0.5) return half4(0.35, 0.0, 0.0, 1.0);
@@ -47,15 +57,16 @@ Shader "Hidden/lilToon/URP/AttributeComposite/DebugView"
                 }
                 if ((view == 7u && _HoACInputFlags.x < 0.5) ||
                     ((view == 8u || view == 9u) && !surfaceAvailable) ||
-                    ((view == 11u || view == 13u) && _HoACInputFlags.y < 0.5))
+                    ((view == 11u || view == 17u) && _HoACInputFlags.y < 0.5))
                     return half4(0.35, 0.0, 0.0, 1.0);
                 float value = objectCoverage;
                 if (view == 8u) value = surface.x;
                 if (view == 9u) value = surface.y;
                 if (view == 11u) value = final;
-                if (view == 13u)
+                if (view == 17u)
                 {
-                    float recomposed = HoAC_ComposeSemantic((uint)round(_HoACDebugLane.w), objectCoverage, surface, surfaceAvailable);
+                    float recomposed = precision ? HoAC_ComposeCorrelated((uint)round(_HoACDebugLane.w),HoAC_CorrelatedLane(uv,(uint)_HoACDebugLane.z)) :
+                        HoAC_ComposeSemantic((uint)round(_HoACDebugLane.w), objectCoverage, surface, surfaceAvailable);
                     // Ignore one UNORM8 LSB before amplification: storage quantization is not a composition fault.
                     value = saturate(64.0 * max(0.0, abs(final - recomposed) - 1.0 / 255.0));
                 }
@@ -101,12 +112,13 @@ Shader "Hidden/lilToon/URP/AttributeComposite/DebugView"
                 float2 uv = input.texcoord;
                 uint mode = (uint)round(_HoACDebugMode);
                 if (mode >= 7u && mode <= 11u) return SemanticView(uv, mode);
+                if (mode >= 13u && mode <= 15u) return SemanticView(uv, mode);
                 if (mode == 12u)
                 {
                     uint tile = (uint)min(floor(uv.x * 3.0), 2.0) + 3u * (uint)min(floor(uv.y * 2.0), 1.0);
                     float2 sceneUv = frac(uv * float2(3.0, 2.0));
                     // UV row 0: object / written / value. UV row 1: owner / final / recomposition delta.
-                    uint view = tile < 5u ? 7u + tile : 13u;
+                    uint view = tile < 5u ? 7u + tile : 17u;
                     return SemanticView(sceneUv, view);
                 }
                 if (mode == 6u) return half4(_HoACInputFlags.xyz, 1.0);

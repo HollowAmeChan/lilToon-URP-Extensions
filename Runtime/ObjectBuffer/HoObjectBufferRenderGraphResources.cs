@@ -2,6 +2,7 @@
 
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
+using lilToon.URP.Extensions.AttributeComposite;
 
 namespace lilToon.URP.Extensions.ObjectBuffer
 {
@@ -20,6 +21,9 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         public TextureHandle coverageTexture = TextureHandle.nullHandle;
         public TextureHandle selectionTexture = TextureHandle.nullHandle;
         public TextureHandle depthTexture = TextureHandle.nullHandle;
+        // Only the producer-side association reducer reads this; screen consumers keep ranked single-sample inputs.
+        public TextureHandle identitySampleTexture = TextureHandle.nullHandle;
+        public HoSemanticSampleDomain sampleDomain;
 
         public bool HasRequiredTextures =>
             id0Texture.IsValid() && id1Texture.IsValid() && coverageTexture.IsValid();
@@ -31,6 +35,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             coverageTexture = TextureHandle.nullHandle;
             selectionTexture = TextureHandle.nullHandle;
             depthTexture = TextureHandle.nullHandle;
+            identitySampleTexture = TextureHandle.nullHandle;
+            sampleDomain = default;
         }
     }
 }

@@ -2,6 +2,7 @@
 
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
+using lilToon.URP.Extensions.AttributeComposite;
 
 namespace lilToon.URP.Extensions.SurfaceBuffer
 {
@@ -44,6 +45,14 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         /// <summary>语义 lane 是否本帧产出（关掉开关 / 平台不够时是 false；AC 必须据此回落）。</summary>
         public bool HasSemanticLanes => semanticOwnerTexture.IsValid() && semanticLaneTextures[0].IsValid();
 
+        public TextureHandle semanticWrittenCoverageTexture = TextureHandle.nullHandle;
+        public TextureHandle semanticWeightedCoverageTexture = TextureHandle.nullHandle;
+        public TextureHandle semanticAssociationStatusTexture = TextureHandle.nullHandle;
+        public HoSemanticSampleDomain semanticSampleDomain;
+        public string semanticPrecisionStatus = "Not recorded";
+        public bool HasCorrelatedSemantics => semanticSampleDomain.IsValid && semanticWrittenCoverageTexture.IsValid() &&
+            semanticWeightedCoverageTexture.IsValid() && semanticAssociationStatusTexture.IsValid();
+
         public override void Reset()
         {
             colorTexture = TextureHandle.nullHandle;
@@ -53,6 +62,11 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             classificationTexture = TextureHandle.nullHandle;
             ownerTexture = TextureHandle.nullHandle;
             semanticOwnerTexture = TextureHandle.nullHandle;
+            semanticWrittenCoverageTexture = TextureHandle.nullHandle;
+            semanticWeightedCoverageTexture = TextureHandle.nullHandle;
+            semanticAssociationStatusTexture = TextureHandle.nullHandle;
+            semanticSampleDomain = default;
+            semanticPrecisionStatus = "Not recorded";
             for (int i = 0; i < semanticLaneTextures.Length; i++)
             {
                 semanticLaneTextures[i] = TextureHandle.nullHandle;

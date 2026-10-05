@@ -24,6 +24,7 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
             // **单采样**：lane 是逐像素的，普通采样即可 —— 不读 MSAA（读端按 Texture2DMS + Load 时，
             // 坐标 / 采样数 / bindMS 任何一处对不上都会静默读出邻域或旧 sample）。
             #pragma multi_compile_local_fragment _ _HO_SURFACE_SEMANTIC
+            #pragma multi_compile_local_fragment _ _HO_CORRELATED_SEMANTIC
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
             // 全屏三角形的 Vert / Varyings 由 Blit.hlsl 提供（与 OB 的 resolve 同一做法）。
@@ -48,6 +49,7 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
             float _HoACLaneCount;
 
             #include "HoACSemanticCompose.hlsl"
+            #include "HoACCorrelatedCompose.hlsl"
 
             // 输出：4 张 RGBA8，每张两条 lane 的 `(SemanticId, coverage)` ——
             // 布局与 OB 的 Selection 行一致（R=ID0, G=覆盖率0, B=ID1, A=覆盖率1）。
@@ -77,8 +79,13 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
             /// 一条 lane 的最终覆盖率：物体侧一律先算（`o` 是所有模式的输入），再按 `sourceMode` 与 SB 合成。
             /// </summary>
             float LaneCoverageWithSurface(uint laneIndex, uint mode, uint objectBit, uint declaredId, float2 uv,
-                                          uint tags0, uint tags1, uint tags2, uint tags3, float4 coverage)
+                                          uint tags0, uint tags1, uint tags2, uint tags3, float4 coverage, bool correlated, float4 written, float4 weighted)
             {
+                #if defined(_HO_CORRELATED_SEMANTIC)
+                    if (correlated)
+                        return HoAC_ComposeCorrelated(mode, HoAC_CorrelatedLaneFromTags(objectBit,
+                            uint4(tags0, tags1, tags2, tags3), coverage, written, weighted));
+                #endif
                 float objectCoverage = LaneCoverage(objectBit, tags0, tags1, tags2, tags3, coverage);
                 #if defined(_HO_SURFACE_SEMANTIC)
                     float2 surface = HoAC_ReadSurfaceLane(uv, laneIndex, declaredId, true);
@@ -89,7 +96,7 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
             }
 
             float4 PackLanePair(uint laneA, uint laneB, uint laneCount, float2 uv,
-                                uint tags0, uint tags1, uint tags2, uint tags3, float4 coverage)
+                                uint tags0, uint tags1, uint tags2, uint tags3, float4 coverage, bool correlated, float4 written, float4 weighted)
             {
                 if (laneA >= laneCount)
                 {
@@ -98,7 +105,7 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
 
                 uint idA = _HoACLanes[laneA].semanticId;
                 float covA = LaneCoverageWithSurface(laneA, _HoACLanes[laneA].sourceMode, _HoACLanes[laneA].objectTagBit, idA, uv,
-                    tags0, tags1, tags2, tags3, coverage);
+                    tags0, tags1, tags2, tags3, coverage, correlated, written, weighted);
 
                 uint idB = 0u;
                 float covB = 0.0;
@@ -106,7 +113,7 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
                 {
                     idB = _HoACLanes[laneB].semanticId;
                     covB = LaneCoverageWithSurface(laneB, _HoACLanes[laneB].sourceMode, _HoACLanes[laneB].objectTagBit, idB, uv,
-                        tags0, tags1, tags2, tags3, coverage);
+                        tags0, tags1, tags2, tags3, coverage, correlated, written, weighted);
                 }
 
                 return HoObjectBufferPackSelectionRow(idA, covA, idB, covB);
@@ -138,12 +145,24 @@ Shader "Hidden/lilToon/URP/AttributeComposite/SelectionResolve"
                     }
                 }
 
+                bool correlated = false;
+                float4 written = 0;
+                float4 weighted = 0;
+                #if defined(_HO_CORRELATED_SEMANTIC)
+                    correlated = HoAC_CorrelatedValid(uv);
+                    if (correlated)
+                    {
+                        written = SAMPLE_TEXTURE2D_X(_HoACSemanticWrittenCoverageTexture, sampler_PointClamp, uv);
+                        weighted = SAMPLE_TEXTURE2D_X(_HoACSemanticWeightedCoverageTexture, sampler_PointClamp, uv);
+                    }
+                #endif
+
                 uint laneCount = (uint)max(0.0, _HoACLaneCount);
                 AcResolveOutput output;
-                output.lanes01 = (half4)PackLanePair(0u, 1u, laneCount, uv, tags[0], tags[1], tags[2], tags[3], coverage);
-                output.lanes23 = (half4)PackLanePair(2u, 3u, laneCount, uv, tags[0], tags[1], tags[2], tags[3], coverage);
-                output.lanes45 = (half4)PackLanePair(4u, 5u, laneCount, uv, tags[0], tags[1], tags[2], tags[3], coverage);
-                output.lanes67 = (half4)PackLanePair(6u, 7u, laneCount, uv, tags[0], tags[1], tags[2], tags[3], coverage);
+                output.lanes01 = (half4)PackLanePair(0u, 1u, laneCount, uv, tags[0], tags[1], tags[2], tags[3], coverage, correlated, written, weighted);
+                output.lanes23 = (half4)PackLanePair(2u, 3u, laneCount, uv, tags[0], tags[1], tags[2], tags[3], coverage, correlated, written, weighted);
+                output.lanes45 = (half4)PackLanePair(4u, 5u, laneCount, uv, tags[0], tags[1], tags[2], tags[3], coverage, correlated, written, weighted);
+                output.lanes67 = (half4)PackLanePair(6u, 7u, laneCount, uv, tags[0], tags[1], tags[2], tags[3], coverage, correlated, written, weighted);
                 return output;
             }
             ENDHLSL

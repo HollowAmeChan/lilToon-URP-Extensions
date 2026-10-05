@@ -51,6 +51,13 @@ namespace lilToon.URP.Extensions.AttributeComposite
         };
         public bool semanticValid;
         public bool HasSurfaceSemantics => semanticValid && semanticOwnerTexture.IsValid() && semanticLaneTextures[0].IsValid();
+        public TextureHandle semanticWrittenCoverageTexture = TextureHandle.nullHandle;
+        public TextureHandle semanticWeightedCoverageTexture = TextureHandle.nullHandle;
+        public TextureHandle semanticAssociationStatusTexture = TextureHandle.nullHandle;
+        public bool correlatedSemantics;
+        public string semanticPrecisionStatus;
+        public bool HasCorrelatedSemantics => correlatedSemantics && semanticWrittenCoverageTexture.IsValid() &&
+            semanticWeightedCoverageTexture.IsValid() && semanticAssociationStatusTexture.IsValid();
 
         // GB 引用。单采样时没有 coverage RT，以 NormalDepth.a 的有效深度作二值回退。
         public TextureHandle geometryCoverageTexture = TextureHandle.nullHandle;
@@ -97,6 +104,11 @@ namespace lilToon.URP.Extensions.AttributeComposite
             semanticOwnerTexture = TextureHandle.nullHandle;
             for (int i = 0; i < semanticLaneTextures.Length; i++) semanticLaneTextures[i] = TextureHandle.nullHandle;
             semanticValid = false;
+            semanticWrittenCoverageTexture = TextureHandle.nullHandle;
+            semanticWeightedCoverageTexture = TextureHandle.nullHandle;
+            semanticAssociationStatusTexture = TextureHandle.nullHandle;
+            correlatedSemantics = false;
+            semanticPrecisionStatus = null;
             geometryCoverageTexture = TextureHandle.nullHandle;
             geometryNormalDepthTexture = TextureHandle.nullHandle;
             outlineCoverageTexture = TextureHandle.nullHandle;

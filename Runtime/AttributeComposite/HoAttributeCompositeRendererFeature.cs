@@ -3,13 +3,14 @@
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using lilToon.URP.Extensions.SurfaceBuffer;
 
 namespace lilToon.URP.Extensions.AttributeComposite
 {
     /// <summary>
     /// **AC（Ho-AttributeComposite）= 语义遮罩与合成属性的唯一逻辑入口**（AC 架构 §1）。
     /// 发布 GB 覆盖范围、OB 身份引用、SB 数值引用，并合成固定 8 lane 的 Selection 池。
-    /// 消费者经 typed query 选择遮罩与范围。精确 sample 合成与按需求裁剪尚未实现。
+    /// 消费者经 typed query 选择遮罩与范围。Scalar V1 支持样本关联合成；按需求裁剪尚未实现。
     /// </summary>
     [DisallowMultipleRendererFeature("Ho-AttributeComposite")]
     public sealed class HoAttributeCompositeRendererFeature : ScriptableRendererFeature
@@ -28,6 +29,13 @@ namespace lilToon.URP.Extensions.AttributeComposite
         private bool registeredCameraReset;
 
         public HoAttributeCompositeSettings Settings => settings;
+
+        public override void SetupRenderPasses(ScriptableRenderer renderer, in RenderingData renderingData)
+        {
+            // URP creates the camera target after AddRenderPasses. Compatibility debug binds it here.
+            if (runtimeSettings.enabled && WantsDebugView(runtimeSettings, renderingData.cameraData.cameraType))
+                debugPass?.Setup(runtimeSettings, debugMaterial, renderer.cameraColorTargetHandle);
+        }
 
         public override void Create()
         {
@@ -64,7 +72,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
             if (WantsDebugView(activeSettings, renderingData.cameraData.cameraType))
             {
-                debugPass?.Setup(activeSettings, debugMaterial, renderer.cameraColorTargetHandle);
+                debugPass?.Setup(activeSettings, debugMaterial, null);
                 renderer.EnqueuePass(debugPass);
             }
         }
@@ -115,6 +123,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
         private static void ResetCameraState(ScriptableRenderContext context, Camera camera)
         {
             HoAttributeCompositePass.ResetGlobalState();
+            HoSurfaceSemanticPrecisionDiagnostics.Publish(camera, 0, "Surface producer not recorded");
         }
 
         private static bool WantsDebugView(HoAttributeCompositeSettings activeSettings, CameraType cameraType)

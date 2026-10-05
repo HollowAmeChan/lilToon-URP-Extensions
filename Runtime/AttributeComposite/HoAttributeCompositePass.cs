@@ -55,6 +55,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
             public bool surfaceEnabled;
             public TextureHandle surfaceOwnerTexture;
             public TextureHandle[] surfaceLaneTextures;
+            public bool correlated;
+            public TextureHandle writtenCoverage, weightedCoverage, associationStatus;
         }
 
         public void Setup(HoAttributeCompositeSettings settings, Material resolveMaterial)
@@ -81,6 +83,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
             Shader.SetGlobalFloat(HoAttributeCompositeShaderConstants.LaneCountId, 0.0f);
             Shader.SetGlobalFloat(HoAttributeCompositeShaderConstants.InputsPublishedId, 0);
             Shader.SetGlobalVector(HoAttributeCompositeShaderConstants.InputFlagsId, Vector4.zero);
+            Shader.SetGlobalFloat(HoAttributeCompositeShaderConstants.PrecisionActiveId, 0);
             compatibilityFrame = -1;
             CompatibilityInputFlags = Vector4.zero;
         }
@@ -166,6 +169,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
                     // 身份池的全局名由 OB 的兼容路径设好（它排在本趟之前）；SB 的语义 lane 同理。
                     SetSurfaceKeywords(resolveMaterial, HoSurfaceBufferSemanticPass.LastProduced);
+                    resolveMaterial.DisableKeyword("_HO_CORRELATED_SEMANTIC");
+                    cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.PrecisionActiveId, 0);
 
                     cmd.SetRenderTarget(selectionIdentifiers, BuiltinRenderTextureType.None);
                     cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, objects.Id0Texture.nameID);
@@ -259,6 +264,16 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 passData.surfaceEnabled = surfaceEnabled;
                 passData.surfaceOwnerTexture = surfaceResources.semanticOwnerTexture;
                 passData.surfaceLaneTextures = surfaceResources.semanticLaneTextures;
+                passData.correlated = surfaceResources.HasCorrelatedSemantics && surfaceResources.semanticSampleDomain.Matches(objectBufferResources.sampleDomain);
+                passData.writtenCoverage = surfaceResources.semanticWrittenCoverageTexture;
+                passData.weightedCoverage = surfaceResources.semanticWeightedCoverageTexture;
+                passData.associationStatus = surfaceResources.semanticAssociationStatusTexture;
+                if (passData.correlated)
+                {
+                    builder.UseTexture(passData.writtenCoverage, AccessFlags.Read);
+                    builder.UseTexture(passData.weightedCoverage, AccessFlags.Read);
+                    builder.UseTexture(passData.associationStatus, AccessFlags.Read);
+                }
 
                 builder.UseTexture(passData.identityId0Texture, AccessFlags.Read);
                 builder.UseTexture(passData.identityId1Texture, AccessFlags.Read);
@@ -289,6 +304,15 @@ namespace lilToon.URP.Extensions.AttributeComposite
                     context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.ActiveId, 1.0f);
                     context.cmd.SetGlobalVector(HoAttributeCompositeShaderConstants.InputFlagsId, data.inputFlags);
                     SetSurfaceKeywords(data.material, data.surfaceEnabled);
+                    if (data.correlated) data.material.EnableKeyword("_HO_CORRELATED_SEMANTIC");
+                    else data.material.DisableKeyword("_HO_CORRELATED_SEMANTIC");
+                    context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.PrecisionActiveId, data.correlated ? 1 : 0);
+                    if (data.correlated)
+                    {
+                        context.cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.WrittenCoverageId, data.writtenCoverage);
+                        context.cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.WeightedCoverageId, data.weightedCoverage);
+                        context.cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.AssociationStatusId, data.associationStatus);
+                    }
                     if (data.surfaceEnabled)
                     {
                         context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.SemanticOwnerTextureId, data.surfaceOwnerTexture);
@@ -363,6 +387,11 @@ namespace lilToon.URP.Extensions.AttributeComposite
             for (int i = 0; i < resources.semanticLaneTextures.Length; i++)
                 resources.semanticLaneTextures[i] = surfaceResources.semanticLaneTextures[i];
             resources.semanticValid = surfaceResources.HasSemanticLanes;
+            resources.semanticWrittenCoverageTexture = surfaceResources.semanticWrittenCoverageTexture;
+            resources.semanticWeightedCoverageTexture = surfaceResources.semanticWeightedCoverageTexture;
+            resources.semanticAssociationStatusTexture = surfaceResources.semanticAssociationStatusTexture;
+            resources.correlatedSemantics = surfaceResources.HasCorrelatedSemantics && surfaceResources.semanticSampleDomain.Matches(objectBufferResources.sampleDomain);
+            resources.semanticPrecisionStatus = surfaceResources.semanticPrecisionStatus;
         }
 
         /// <summary>

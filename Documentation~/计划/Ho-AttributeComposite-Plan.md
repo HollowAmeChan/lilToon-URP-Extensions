@@ -55,4 +55,8 @@ GB 存在 coverage RT 时取总覆盖率 R；无该 RT 时由有效几何深度�
 
 RG 调试使用 AC 发布的当帧 semantic owner/lane 引用；不以跨相机静态 LastProduced 判定 RG 来源。当前合成数值行为保留，owner 未作为新 gate。
 
-五种 sourceMode 的未写/写零/缺失/ID 不匹配 GPU 案例已建立；同语义不同材质权重与移动交界证明当前近似缺少 owner/sample 关联。下一轮采用每 owner 的 C/W/V 充分统计契约，详见 [Ho-AC-SemanticPrecision-Contract.md](Ho-AC-SemanticPrecision-Contract.md)。生产关联归约尚未实现。
+五种 sourceMode 的未写/写零/缺失/ID 不匹配 GPU 案例已建立；同语义不同材质权重与移动交界证明当前近似缺少 owner/sample 关联。下一轮采用每 owner 的 C/W/V 充分统计契约，详见 [Ho-AC-SemanticPrecision-Contract.md](Ho-AC-SemanticPrecision-Contract.md)。生产关联归约与 AC 消费已于 2026-10-06 接入 Scalar V1；一般化逐 lane 权重仍待实现。
+
+## 6. 持续推进：Scalar V1 已接入（2026-10-06）
+
+OB/SB common sample domain、raw owner 引用、sample-frequency 原生 writer、W/V/status 归约、AC 消费与降级可观察性均已接入。实际支持域与成本见 [关联契约](Ho-AC-SemanticPrecision-Contract.md)。下一优先项转为消费者需求规划：先收集当前相机需要的 lane/资源，再裁剪无消费者的 Selection 和重复旧 lane 捕获；在此之前不扩大为 16-lane 或逐 lane 独立权重。

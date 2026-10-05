@@ -55,6 +55,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         /// </summary>
         public bool enableSemanticLanes = true;
 
+        [Tooltip("RenderGraph 语义关联归约；只为支持 Scalar V1 pass 且采样域匹配的材质发布 W/V。")]
+        public bool enableCorrelatedSemantics = true;
+
         public LayerMask layerMask = -1;
 
         public int minRenderQueue;
@@ -89,6 +92,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
             enabled = source.enabled;
             enableSemanticLanes = source.enableSemanticLanes;
+            enableCorrelatedSemantics = source.enableCorrelatedSemantics;
             layerMask = source.layerMask;
             minRenderQueue = source.minRenderQueue;
             maxRenderQueue = source.maxRenderQueue;

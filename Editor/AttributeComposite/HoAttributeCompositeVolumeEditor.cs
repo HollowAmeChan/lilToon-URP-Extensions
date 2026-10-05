@@ -73,7 +73,7 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
             {
                 DrawParameter(debugMode, "调试模式");
                 HoAttributeCompositeDebugMode mode = (HoAttributeCompositeDebugMode)debugMode.value.enumValueIndex;
-                bool semanticDebug = mode >= HoAttributeCompositeDebugMode.ObjectCoverage && mode <= HoAttributeCompositeDebugMode.SemanticCompare;
+                bool semanticDebug = mode >= HoAttributeCompositeDebugMode.ObjectCoverage && mode <= HoAttributeCompositeDebugMode.SemanticPrecision;
                 if (semanticDebug) DrawSemanticSelector();
 
                 // 只画当前模式的说明：整张表铺出来就等于把说明又挪回下拉里。
@@ -151,6 +151,12 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
                     return "所选语义的实际 Selection 覆盖率。";
                 case HoAttributeCompositeDebugMode.SemanticCompare:
                     return "上排：物体 / 写入 / 表面值；下排：owner / 最终值 / 重算差（扣除 1 LSB 后×64）。每格显示完整画面。";
+                case HoAttributeCompositeDebugMode.WrittenCoverage:
+                    return "按 owner 关联的有效写入覆盖率 W；写零仍计入覆盖。";
+                case HoAttributeCompositeDebugMode.WeightedCoverage:
+                    return "按 owner 关联的加权语义贡献 V。";
+                case HoAttributeCompositeDebugMode.SemanticPrecision:
+                    return "绿 = 关联统计可用；橙 = 近似路径或样本位置不匹配。";
                 default:
                     // Off：没有要解释的东西就不画那一行。
                     return string.Empty;

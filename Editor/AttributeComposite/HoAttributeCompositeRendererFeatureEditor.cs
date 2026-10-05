@@ -3,6 +3,7 @@ using lilToon.URP.Extensions.AttributeComposite;
 using lilToon.URP.Extensions.Editor;
 using UnityEditor;
 using UnityEngine;
+using lilToon.URP.Extensions.SurfaceBuffer;
 
 namespace lilToon.URP.Extensions.Editor.AttributeComposite
 {
@@ -83,6 +84,10 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
             {
                 DrawSchemaTable();
                 DrawConsumerTable();
+                EditorGUILayout.LabelField("语义精度", HoSurfaceSemanticPrecisionDiagnostics.Status);
+                if (HoSurfaceSemanticPrecisionDiagnostics.Frame >= 0)
+                    EditorGUILayout.LabelField("最近相机与采样", HoSurfaceSemanticPrecisionDiagnostics.CameraName + " / " +
+                        (HoSurfaceSemanticPrecisionDiagnostics.Samples > 0 ? HoSurfaceSemanticPrecisionDiagnostics.Samples + "x" : "—"));
             }
         }
 

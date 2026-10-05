@@ -36,7 +36,13 @@ namespace lilToon.URP.Extensions.AttributeComposite
         [InspectorName("Final Coverage")]
         FinalCoverage,
         [InspectorName("Semantic Compare")]
-        SemanticCompare
+        SemanticCompare,
+        [InspectorName("Written Coverage")]
+        WrittenCoverage,
+        [InspectorName("Weighted Coverage")]
+        WeightedCoverage,
+        [InspectorName("Semantic Precision")]
+        SemanticPrecision
     }
 
     [Serializable]
@@ -65,7 +71,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
         public string debugSemanticName = "Face";
 
         internal static bool IsSemanticDebug(HoAttributeCompositeDebugMode mode) =>
-            mode >= HoAttributeCompositeDebugMode.ObjectCoverage && mode <= HoAttributeCompositeDebugMode.SemanticCompare;
+            mode >= HoAttributeCompositeDebugMode.ObjectCoverage && mode <= HoAttributeCompositeDebugMode.SemanticPrecision;
 
         internal static bool TryResolveDebugLane(string name, out Vector4 lane)
         {
