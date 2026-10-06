@@ -3,6 +3,7 @@ using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using lilToon.URP.Extensions.AttributeComposite;
 
 namespace lilToon.URP.Extensions.PlanarReflection
 {
@@ -368,7 +369,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
             try
             {
 #pragma warning disable CS0618
-                UniversalRenderPipeline.RenderSingleCamera(context, reflectionCamera);
+                using (HoAttributeCompositeConsumerRegistry.BeginStandaloneCamera(reflectionCamera))
+                    UniversalRenderPipeline.RenderSingleCamera(context, reflectionCamera);
 #pragma warning restore CS0618
                 renderedReflection = true;
             }

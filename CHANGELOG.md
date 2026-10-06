@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- 修复 PLR 子相机与 AC 需求作用域：URP `RenderSingleCamera` 不触发 begin/end 回调，PLR 现在显式开始/结束独立渲染调用，避免复用冻结请求并保留父相机工作表。无 Selection 的 2D 相机使用 RenderGraph 初始化的 2D 黑图，避免首帧反射早于 XR 默认纹理初始化而产生 `temporary render texture not found (SetGlobalTexture)`。
+
 - AC/SB 按当前相机需求整池跳过语义产物：无需求时不分配四张 Selection、旧 SB lane 或关联 MSAA/W/V/status；身份、GB 查询与 SB 数值引用仍发布。原始 lane/W/V 调试可独立请求，DebugTile 的 SB 语义视图补齐登记。Selection 相机继续保留两套输入供近似 fallback。兼容路径释放停用的常驻语义 RT 并重置 target，面板显示实际声明的语义 RT 数量。
 
 - AC 新增按相机渲染调用冻结的消费者需求快照：typed query、资源种类、lane/attribute mask 与实例标识分开；同帧重复 RenderRequest 不复用旧请求。CS/SP 和 AC/SB 调试接入，补齐跳过/销毁生命周期。面板展示只读需求摘要；本轮保持 RT 生产规模，为下一轮整池跳过提供依据。

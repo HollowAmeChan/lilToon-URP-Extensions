@@ -242,7 +242,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
             resources.outlineCoverageTexture = geometry.outlineCoverageTexture;
             resources.outlineNormalDepthTexture = geometry.outlineNormalDepthTexture;
             resources.published = true;
-            RecordInputPublication(renderGraph, resources);
+            bool textureArray = frameData.Get<UniversalCameraData>().cameraTargetDescriptor.dimension == TextureDimension.Tex2DArray;
+            RecordInputPublication(renderGraph, resources, textureArray);
             PublishProduction(resources);
             if (!resources.demand.NeedsSelection || !objectBufferResources.HasRequiredTextures)
             {
@@ -351,13 +352,15 @@ namespace lilToon.URP.Extensions.AttributeComposite
             HoAttributeCompositeProductionDiagnostics.Publish(r.demand, r.HasSelectionPool ? 4 : 0,
                 r.HasSurfaceSemantics ? 5 : 0, r.HasCorrelatedSemantics ? 3 : 0, r.HasSurfaceAttributes ? 6 : 0);
 
-        private static void RecordInputPublication(RenderGraph graph, HoAttributeCompositeRenderGraphResources r)
+        private static void RecordInputPublication(RenderGraph graph, HoAttributeCompositeRenderGraphResources r, bool textureArray)
         {
             using (var builder = graph.AddRasterRenderPass<PublishPassData>("Ho-AC Publish Inputs", out var data, ProfilingSampler))
             {
                 data.inputFlags = r.InputFlags;
                 data.geometryFlags = r.GeometryFlags;
-                data.neutralSelection = graph.defaultResources.blackTextureXR;
+                // Standalone reflections may render before TextureXR's first-frame initialization.
+                // The ordinary 2D default is initialized by the graph itself and is sufficient for 2D cameras.
+                data.neutralSelection = textureArray ? graph.defaultResources.blackTextureXR : graph.defaultResources.blackTexture;
                 builder.UseTexture(data.neutralSelection, AccessFlags.Read);
                 Publish(builder, r.geometryCoverageTexture, HoAttributeCompositeShaderConstants.GeometryCoverageId);
                 Publish(builder, r.geometryNormalDepthTexture, HoAttributeCompositeShaderConstants.GeometryNormalDepthId);

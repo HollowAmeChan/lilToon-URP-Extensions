@@ -222,3 +222,9 @@ CS/SP 与 AC/SB 调试在入队阶段提交实例所有的本相机需求；Regi
 Selection、旧 surface lane 与 W/V 捕获现已按冻结快照独立判断。没有语义需求时 AC 保留三轴输入发布，Selection flag 为 0；总覆盖率、组/完整身份、GB 几何查询继续可用。需要 Selection 的相机仍保留旧/新 surface 两套输入，确保近似 fallback 的读取有对应资源。SB 数值面沿用自己的启用与消费者契约。
 
 `HoAttributeCompositeProductionDiagnostics` 发布最近相机的逻辑 RT 分配计数。兼容与 RG 都处理需求停用/恢复，兼容 target 同步复位，未产出选择图使用中性绑定。DebugTile 的 SB 语义视图纳入需求收集。上述变化不重新编号 SemanticId/LaneIndex。
+
+### 12.2 独立子相机
+
+URP 的旧 `RenderSingleCamera` 不触发 begin/end camera 事件。PLR 在调用它时使用 `HoAttributeCompositeConsumerRegistry.BeginStandaloneCamera(camera)` 的 `IDisposable` 作用域：每次渲染分配新请求表和序号，结束/异常时移除子相机状态；同相机嵌套时恢复原表。外部直接调用同类无回调渲染 API 也应显式包裹作用域。
+
+2D 相机的未产出 Selection 使用 `RenderGraph.defaultResources.blackTexture`，纹理数组相机仍使用匹配维度的 XR 黑图。独立反射可能在首个普通相机的 XR 默认纹理初始化之前执行，2D 路径不能依赖那份初始 XR 句柄。

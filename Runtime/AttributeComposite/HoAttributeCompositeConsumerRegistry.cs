@@ -71,6 +71,36 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 requests[camera.GetInstanceID()] = value = NewRequests(camera);
             return value;
         }
+
+        /// <summary>RenderSingleCamera does not emit camera events. Explicitly delimit that render invocation.</summary>
+        public static IDisposable BeginStandaloneCamera(Camera camera)
+        {
+            if (camera == null) throw new ArgumentNullException(nameof(camera));
+            EnsureInitialized();
+            return new StandaloneCameraScope(camera);
+        }
+        private sealed class StandaloneCameraScope : IDisposable
+        {
+            private readonly int cameraId;
+            private readonly CameraRequests current;
+            private readonly CameraRequests previous;
+            private bool disposed;
+            internal StandaloneCameraScope(Camera camera)
+            {
+                cameraId = camera.GetInstanceID();
+                requests.TryGetValue(cameraId, out previous);
+                requests[cameraId] = current = NewRequests(camera);
+                HoAttributeCompositePass.ResetGlobalState();
+            }
+            public void Dispose()
+            {
+                if (disposed) return;
+                disposed = true;
+                if (!requests.TryGetValue(cameraId, out CameraRequests value) || !ReferenceEquals(value, current)) return;
+                if (previous != null) requests[cameraId] = previous;
+                else requests.Remove(cameraId);
+            }
+        }
         private static void EndCamera(ScriptableRenderContext context, Camera camera)
         {
             if (camera == null || !requests.ContainsKey(camera.GetInstanceID())) return;
