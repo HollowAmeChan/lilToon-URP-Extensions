@@ -72,6 +72,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.DebugLaneValidId, laneValid ? 1 : 0);
                 cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.DebugSurfaceAvailableId,
                     HoSurfaceBufferSemanticPass.LastProduced ? 1 : 0);
+                HoAttributeCompositePass.BindCompatibilityDiagnostics(cmd);
                 CoreUtils.DrawFullScreen(cmd, debugMaterial, shaderPassId: 0);
             }
 
@@ -103,11 +104,15 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 passData.semanticDebug = HoAttributeCompositeSettings.IsSemanticDebug(settings.debugMode);
                 passData.laneValid = HoAttributeCompositeSettings.TryResolveDebugLane(settings.debugSemanticName, out passData.lane);
                 HoACQueryKind kind = settings.debugMode == HoAttributeCompositeDebugMode.GeometryCoverage ? HoACQueryKind.Geometry :
-                    settings.debugMode == HoAttributeCompositeDebugMode.OutlineCoverage ? HoACQueryKind.Outline : HoACQueryKind.Screen;
+                    (settings.debugMode == HoAttributeCompositeDebugMode.OutlineCoverage || settings.debugMode == HoAttributeCompositeDebugMode.OutlineOwner) ? HoACQueryKind.Outline : HoACQueryKind.Screen;
                 passData.query = HoACQueryDescriptor.Resolve(kind, null, 0, HoACMaskDomain.Screen);
                 HoAttributeCompositeBindings.ReadQuery(builder, resources, passData.query);
+                HoAttributeCompositeBindings.Read(builder,resources.outlineOwnerTexture);
                 if (passData.semanticDebug)
                 {
+                    HoAttributeCompositeBindings.Read(builder,resources.rawIdentityId0Texture);
+                    HoAttributeCompositeBindings.Read(builder,resources.rawIdentityId1Texture);
+                    HoAttributeCompositeBindings.Read(builder,resources.rawIdentityCoverageTexture);
                     if (resources.HasCorrelatedSemantics)
                     {
                         HoAttributeCompositeBindings.Read(builder, resources.semanticWrittenCoverageTexture);
@@ -141,6 +146,16 @@ namespace lilToon.URP.Extensions.AttributeComposite
                     data.material.SetFloat(HoAttributeCompositeShaderConstants.DebugModeId, (float)data.debugMode);
                     context.cmd.SetGlobalVector(BlitScaleBiasId, new Vector4(1, 1, 0, 0));
                     HoAttributeCompositeBindings.BindQuery(context.cmd, data.resources, data.query);
+                    context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.OutlineInheritanceActiveId,data.resources.outlineOwnerTexture.IsValid() ? 1 : 0);
+                    if (data.resources.outlineOwnerTexture.IsValid()) context.cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.OutlineOwnerId,data.resources.outlineOwnerTexture);
+                    bool rawAvailable = data.semanticDebug && data.resources.rawIdentityId0Texture.IsValid();
+                    context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.RawInputsAvailableId,rawAvailable ? 1 : 0);
+                    if (rawAvailable)
+                    {
+                        context.cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.RawIdentityIds[0],data.resources.rawIdentityId0Texture);
+                        context.cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.RawIdentityIds[1],data.resources.rawIdentityId1Texture);
+                        context.cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.RawIdentityIds[2],data.resources.rawIdentityCoverageTexture);
+                    }
                     context.cmd.SetGlobalVector(HoAttributeCompositeShaderConstants.DebugLaneId, data.lane);
                     context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.DebugLaneValidId, data.laneValid ? 1 : 0);
                     context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.DebugSurfaceAvailableId, data.resources.HasSurfaceSemantics ? 1 : 0);

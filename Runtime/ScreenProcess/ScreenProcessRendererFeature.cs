@@ -416,6 +416,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-ScreenProcess Release Semantic Buffers", out PassData passData, ProfilingSampler))
             {
                 passData.blackTexture = blackTexture;
+                builder.UseTexture(blackTexture,AccessFlags.Read);
                 // MB 的 maskId / custom0 / objectCustom 兜底已删：遮罩来源现在是 AC（OB 覆盖率），
                 // 由 OB 的 pass 自己发布，SP 只在每层明确置 _lilHoSPMaskValid。
                 builder.SetGlobalTextureAfterPass(blackTexture, HoGeometryBufferShaderConstants.NormalDepthTextureId);
@@ -454,6 +455,10 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         private static void ResetSemanticBufferFlags(CommandBuffer cmd)
         {
+            cmd.SetGlobalFloat(ScreenProcessShaderConstants.OutlineDepthValidId, 0);
+            cmd.SetGlobalFloat(ScreenProcessShaderConstants.CameraDepthValidId, 0);
+            cmd.SetGlobalFloat(ScreenProcessShaderConstants.CameraNormalsValidId, 0);
+            cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.OutlineCoverageTextureValidId, 0);
             cmd.SetGlobalFloat(ScreenProcessShaderConstants.MaskValidId, 0.0f);
             cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 0.0f);
             cmd.SetGlobalFloat(ScreenProcessShaderConstants.SubjectMaskValidId, 0.0f);
@@ -461,6 +466,10 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         private static void ResetSemanticBufferFlags(RasterCommandBuffer cmd)
         {
+            cmd.SetGlobalFloat(ScreenProcessShaderConstants.OutlineDepthValidId, 0);
+            cmd.SetGlobalFloat(ScreenProcessShaderConstants.CameraDepthValidId, 0);
+            cmd.SetGlobalFloat(ScreenProcessShaderConstants.CameraNormalsValidId, 0);
+            cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.OutlineCoverageTextureValidId, 0);
             cmd.SetGlobalFloat(ScreenProcessShaderConstants.MaskValidId, 0.0f);
             cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 0.0f);
             cmd.SetGlobalFloat(ScreenProcessShaderConstants.SubjectMaskValidId, 0.0f);
@@ -494,6 +503,9 @@ namespace lilToon.URP.Extensions.PostProcessing
             public TextureHandle source;
             public TextureHandle subjectMaskTexture;
             public TextureHandle outlineNormalDepthTexture;
+            public TextureHandle outlineCoverageTexture;
+            public TextureHandle cameraDepthTexture;
+            public TextureHandle cameraNormalsTexture;
             public TextureHandle normalDepthTexture;
             public TextureHandle skyTexture;
             public ScreenProcessLayer layer;
@@ -515,6 +527,9 @@ namespace lilToon.URP.Extensions.PostProcessing
             public bool useSkyTexture;
             public bool useSubjectMask;
             public bool useOutlineNormalDepth;
+            public bool useOutlineCoverage;
+            public bool useCameraDepth;
+            public bool useCameraNormals;
             /// <summary>遮罩来源的 texel / 尺寸（xy = texel、zw = 尺寸）：给"按像素扩张 / 羽化"用。</summary>
             public Vector4 maskTexelSize;
         }
@@ -643,12 +658,28 @@ namespace lilToon.URP.Extensions.PostProcessing
                     RTHandle destination = writeToA ? tempTextureA : tempTextureB;
                     float dynamicFocusDistance = ResolveDepthOfFieldFocusDistance(runtimeLayer.settings, renderingData.cameraData.camera);
                     ApplyLayerProperties(runtimeLayer.settings, runtimeLayer.material, dynamicFocusDistance);
+                    var geometry = HoGeometryBufferPass.CompatibilityTargets;
+                    bool hasGeometry = geometry != null && geometry.NormalDepthTexture != null;
+                    bool dof = runtimeLayer.settings.effect == ScreenProcessEffect.DepthOfField;
+                    bool hasOutline = dof && hasGeometry && geometry.OutlineNormalDepthTexture != null;
+                    bool hasOutlineCoverage = hasOutline && geometry.UseMsaaResolve;
+                    cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, hasGeometry ? 1 : 0);
+                    cmd.SetGlobalFloat(ScreenProcessShaderConstants.OutlineDepthValidId, hasOutline ? 1 : 0);
+                    cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.OutlineCoverageTextureValidId, hasOutlineCoverage ? 1 : 0);
+                    // ConfigureInput requests these URP textures for the compatibility pass.
+                    cmd.SetGlobalFloat(ScreenProcessShaderConstants.CameraDepthValidId, RequiresDepth() ? 1 : 0);
+                    cmd.SetGlobalFloat(ScreenProcessShaderConstants.CameraNormalsValidId, RequiresNormals() ? 1 : 0);
+                    if (hasOutline)
+                        cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineNormalDepthTextureId, geometry.OutlineNormalDepthTexture);
+                    if (hasOutlineCoverage)
+                        cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineCoverageTextureId, geometry.OutlineCoverageTexture);
                     bool published = HoAttributeCompositePass.IsCompatibilityPublished(renderingData.cameraData.camera);
                     Vector4 flags = published ? HoAttributeCompositePass.CompatibilityInputFlags : Vector4.zero;
                     HoACQueryDescriptor query = runtimeLayer.settings.useMask || runtimeLayer.settings.debugMask ? runtimeLayer.maskQuery :
                         HoACQueryDescriptor.Resolve(HoACQueryKind.TotalCoverage, null, 0, HoACMaskDomain.Screen);
                     string queryError = query.DescribeMissingInput(published, flags);
                     bool queryValid = queryError == null;
+                    if (published) HoAttributeCompositePass.BindCompatibilityQuery(cmd,query);
                     bool needsMask = EffectRequiresSubjectMask(runtimeLayer.settings.effect) ||
                         runtimeLayer.settings.effect == ScreenProcessEffect.EdgeLight ||
                         runtimeLayer.settings.effect == ScreenProcessEffect.PostLighting ||
@@ -693,7 +724,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                 ScreenProcessRuntimeDiagnostics.AnalyzeRequirements(runtimeLayers), writtenLayerCount, false, true,
                 maskInputsAvailable, HoGeometryBufferPass.CompatibilityTargets != null,
                 HoGeometryBufferPass.CompatibilityTargets != null && HoGeometryBufferPass.CompatibilityTargets.SkyTexture != null,
-                string.Join("\n", queryErrors));
+                string.Join("\n", queryErrors),
+                HoGeometryBufferPass.CompatibilityTargets != null && HoGeometryBufferPass.CompatibilityTargets.OutlineNormalDepthTexture != null);
         }
 
         private void RenderSubjectMask(ScriptableRenderContext context, CommandBuffer cmd, ref RenderingData renderingData)
@@ -852,6 +884,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     passData.source = source;
                     passData.subjectMaskTexture = subjectMaskTexture;
                     passData.outlineNormalDepthTexture = geometryResources.outlineNormalDepthTexture;
+                    passData.outlineCoverageTexture = geometryResources.outlineCoverageTexture;
                     passData.normalDepthTexture = geometryResources.normalDepthTexture;
                     passData.skyTexture = geometryResources.skyTexture;
                     passData.layer = runtimeLayer.settings;
@@ -882,6 +915,15 @@ namespace lilToon.URP.Extensions.PostProcessing
                     passData.useSkyTexture = passData.isSkyTyndall && geometryResources.skyTexture.IsValid();
                     passData.useSubjectMask = passData.isDropShadow && useSubjectMask;
                     passData.useOutlineNormalDepth = passData.isDepthOfField && geometryResources.outlineNormalDepthTexture.IsValid();
+                    passData.useOutlineCoverage = passData.useOutlineNormalDepth && passData.outlineCoverageTexture.IsValid();
+                    bool needsCameraDepth = !passData.layer.debugMask &&
+                        (((passData.isDepthOfField || passData.isOutline) && !passData.useNormalDepth) ||
+                        (passData.isDepthFog && (!passData.useNormalDepth || cameraData.camera.orthographic)));
+                    bool needsCameraNormals = !passData.layer.debugMask && passData.isOutline && !passData.useNormalDepth;
+                    passData.cameraDepthTexture = needsCameraDepth ? resourceData.cameraDepthTexture : TextureHandle.nullHandle;
+                    passData.cameraNormalsTexture = needsCameraNormals ? resourceData.cameraNormalsTexture : TextureHandle.nullHandle;
+                    passData.useCameraDepth = passData.cameraDepthTexture.IsValid();
+                    passData.useCameraNormals = passData.cameraNormalsTexture.IsValid();
                     TextureHandle queryTexture = passData.maskQuery.NeedsSelection ? acResources.selectionTextures[0] :
                         passData.maskQuery.NeedsGeometry ? acResources.geometryNormalDepthTexture :
                         passData.maskQuery.NeedsOutline ? acResources.outlineNormalDepthTexture : maskSourceTexture;
@@ -912,6 +954,12 @@ namespace lilToon.URP.Extensions.PostProcessing
                     {
                         builder.UseTexture(geometryResources.outlineNormalDepthTexture, AccessFlags.Read);
                     }
+                    if (passData.useOutlineCoverage)
+                        builder.UseTexture(passData.outlineCoverageTexture, AccessFlags.Read);
+                    if (passData.useCameraDepth)
+                        builder.UseTexture(passData.cameraDepthTexture, AccessFlags.Read);
+                    if (passData.useCameraNormals)
+                        builder.UseTexture(passData.cameraNormalsTexture, AccessFlags.Read);
 
                     builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
                     builder.AllowGlobalStateModification(true);
@@ -927,6 +975,16 @@ namespace lilToon.URP.Extensions.PostProcessing
                             HoAttributeCompositeBindings.BindQuery(context.cmd, data.acResources, data.maskQuery, data.intrinsicCoverage);
                         context.cmd.SetGlobalVector(ScreenProcessShaderConstants.MaskTexelSizeId, data.maskTexelSize);
                         context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, data.useNormalDepth ? 1.0f : 0.0f);
+                        context.cmd.SetGlobalFloat(ScreenProcessShaderConstants.OutlineDepthValidId, data.useOutlineNormalDepth ? 1 : 0);
+                        context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.OutlineCoverageTextureValidId, data.useOutlineCoverage ? 1 : 0);
+                        context.cmd.SetGlobalFloat(ScreenProcessShaderConstants.CameraDepthValidId, data.useCameraDepth ? 1 : 0);
+                        context.cmd.SetGlobalFloat(ScreenProcessShaderConstants.CameraNormalsValidId, data.useCameraNormals ? 1 : 0);
+                        if (data.useOutlineCoverage)
+                            context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineCoverageTextureId, data.outlineCoverageTexture);
+                        if (data.useCameraDepth)
+                            context.cmd.SetGlobalTexture(ScreenProcessShaderConstants.CameraDepthTextureId, data.cameraDepthTexture);
+                        if (data.useCameraNormals)
+                            context.cmd.SetGlobalTexture(ScreenProcessShaderConstants.CameraNormalsTextureId, data.cameraNormalsTexture);
                         context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.SkyTextureValidId, 0.0f);
                         context.cmd.SetGlobalFloat(ScreenProcessShaderConstants.SubjectMaskValidId, data.useSubjectMask ? 1.0f : 0.0f);
                         if (data.useSubjectMask)
@@ -976,7 +1034,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                 maskInputsAvailable,
                 geometryResources.normalDepthTexture.IsValid(),
                 geometryResources.skyTexture.IsValid(),
-                string.Join("\n", queryErrors));
+                string.Join("\n", queryErrors),
+                geometryResources.outlineNormalDepthTexture.IsValid());
         }
 
         private static Vector4 ResolveMaskTexelSize(RenderGraph renderGraph, TextureHandle maskTexture)

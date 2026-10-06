@@ -137,6 +137,8 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
                     return "场景几何总覆盖率；单采样时由有效几何深度得到二值覆盖率。";
                 case HoAttributeCompositeDebugMode.OutlineCoverage:
                     return "描边视觉壳覆盖率，与场景物理几何分开查询。";
+                case HoAttributeCompositeDebugMode.OutlineOwner:
+                    return "颜色区分原始 owner；黄=未登记，洋红=缺少描边 owner writer。";
                 case HoAttributeCompositeDebugMode.InputAvailability:
                     return "R = 身份池可用，G = Selection 可用，B = 场景几何可用。";
                 case HoAttributeCompositeDebugMode.ObjectCoverage:

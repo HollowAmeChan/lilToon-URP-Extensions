@@ -21,10 +21,9 @@ Shader "Hidden/lilToon/URP/ScreenProcess/Outline"
             #pragma vertex Vert
             #pragma fragment Frag
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareNormalsTexture.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessDepthInputs.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessMask.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/ImageProcessBlend.hlsl"
 
@@ -34,14 +33,12 @@ Shader "Hidden/lilToon/URP/ScreenProcess/Outline"
             float4 _LayerParams0; // x thickness px, y depth weight, z normal weight, w threshold
             float4 _LayerParams1; // x softness, y depth scale, z normal scale, w opacity
 
-            TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
-            float _HoGeometryBufferValid;
-
             float SampleLinearDepth01(float2 uv)
             {
                 if (_HoGeometryBufferValid <= 0.5)
                 {
-                    return Linear01Depth(SampleSceneDepth(uv), _ZBufferParams);
+                    return _lilHoSPCameraDepthValid > 0.5
+                        ? LilScreenProcessEyeDepth(uv) / max(_ProjectionParams.z, 0.0001) : 1.0;
                 }
 
                 half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
@@ -53,6 +50,8 @@ Shader "Hidden/lilToon/URP/ScreenProcess/Outline"
             {
                 if (_HoGeometryBufferValid <= 0.5)
                 {
+                    if (_lilHoSPCameraNormalsValid <= 0.5)
+                        return 0;
                     float3 cameraNormal = SampleSceneNormals(uv);
                     return dot(cameraNormal, cameraNormal) > 0.0001 ? normalize(cameraNormal) : 0.0;
                 }

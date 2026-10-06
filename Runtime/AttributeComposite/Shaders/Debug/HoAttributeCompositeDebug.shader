@@ -22,6 +22,7 @@ Shader "Hidden/lilToon/URP/AttributeComposite/DebugView"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/AttributeComposite/Shaders/HoACQuery.hlsl"
             #include "../HoACSemanticCompose.hlsl"
             #include "../HoACCorrelatedCompose.hlsl"
+            #include "../HoACOutlineInheritance.hlsl"
 
             float _HoACDebugMode;
             float4 _HoACDebugLane; // lane, semantic ID, object bit, source mode
@@ -66,7 +67,12 @@ Shader "Hidden/lilToon/URP/AttributeComposite/DebugView"
                 if (view == 17u)
                 {
                     float recomposed = precision ? HoAC_ComposeCorrelated((uint)round(_HoACDebugLane.w),HoAC_CorrelatedLane(uv,(uint)_HoACDebugLane.z)) :
-                        HoAC_ComposeSemantic((uint)round(_HoACDebugLane.w), objectCoverage, surface, surfaceAvailable);
+                        HoAC_ComposeSemantic((uint)round(_HoACDebugLane.w), HoAC_Predicate(uv,(uint)_HoACDebugLane.z,true), surface, surfaceAvailable);
+                    float4 outline = HoAC_ReadOutlineOwner(uv);
+                    uint owner = HoAC_OutlineOriginalOwner(outline);
+                    uint tags = owner != 0u ? HoObjectBufferLoadPart(owner).tags : 0u;
+                    recomposed = HoAC_ApplyOutlineSemantic(recomposed,(uint)round(_HoACDebugLane.w),(uint)_HoACDebugLane.z,
+                        outline,tags,surfaceAvailable || precision);
                     // Ignore one UNORM8 LSB before amplification: storage quantization is not a composition fault.
                     value = saturate(64.0 * max(0.0, abs(final - recomposed) - 1.0 / 255.0));
                 }
@@ -111,6 +117,14 @@ Shader "Hidden/lilToon/URP/AttributeComposite/DebugView"
 
                 float2 uv = input.texcoord;
                 uint mode = (uint)round(_HoACDebugMode);
+                if (mode == 16u)
+                {
+                    float4 packet = HoAC_ReadOutlineOwner(uv);
+                    if (packet.a <= 0) return HoAC_OutlineCoverage(uv) > 0 ? half4(1,0,1,1) : half4(0,0,0,1);
+                    uint owner = HoAC_OutlineOriginalOwner(packet);
+                    if (owner == 0u) return half4(packet.a,packet.a,0,1);
+                    return half4(frac(float3(owner*.1031,owner*.11369,owner*.13787))*packet.a,1);
+                }
                 if (mode >= 7u && mode <= 11u) return SemanticView(uv, mode);
                 if (mode >= 13u && mode <= 15u) return SemanticView(uv, mode);
                 if (mode == 12u)

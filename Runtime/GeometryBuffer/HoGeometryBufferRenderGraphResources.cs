@@ -12,6 +12,8 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         public TextureHandle outlineNormalDepthTexture = TextureHandle.nullHandle;
         public TextureHandle coverageTexture = TextureHandle.nullHandle;
         public TextureHandle outlineCoverageTexture = TextureHandle.nullHandle;
+        // Raw owner, semantic weight and visible shell share; separate from physical geometry.
+        public TextureHandle outlineOwnerTexture = TextureHandle.nullHandle;
         public TextureHandle skyTexture = TextureHandle.nullHandle;
 
         public bool HasRequiredTextures => normalDepthTexture.IsValid();
@@ -23,6 +25,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             outlineNormalDepthTexture = TextureHandle.nullHandle;
             coverageTexture = TextureHandle.nullHandle;
             outlineCoverageTexture = TextureHandle.nullHandle;
+            outlineOwnerTexture = TextureHandle.nullHandle;
             skyTexture = TextureHandle.nullHandle;
         }
     }

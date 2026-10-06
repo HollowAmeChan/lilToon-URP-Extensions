@@ -24,9 +24,11 @@ namespace lilToon.URP.Extensions.AttributeComposite
         private Material resolveMaterial;
         private ComputeBuffer laneBuffer;
         private bool catalogUploaded;
+        private readonly HoAttributeCompositeOutlineIdentityPass outlineIdentityPass = new HoAttributeCompositeOutlineIdentityPass();
         private static int compatibilityCameraId;
         private static int compatibilityFrame = -1;
         internal static Vector4 CompatibilityInputFlags { get; private set; }
+        private static HoAttributeCompositePass compatibilityInstance;
         internal static bool IsCompatibilityPublished(Camera camera) => camera != null &&
             compatibilityFrame == Time.frameCount && compatibilityCameraId == camera.GetInstanceID();
 
@@ -34,6 +36,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
         {
             public Vector4 inputFlags;
             public Vector4 geometryFlags;
+            public bool outlineInheritance;
             public TextureHandle neutralSelection;
         }
 
@@ -73,6 +76,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
             laneBuffer?.Release();
             laneBuffer = null;
             catalogUploaded = false;
+            outlineIdentityPass.Dispose();
             ReleaseCompatibilityTargets();
             ResetGlobalState();
         }
@@ -85,10 +89,18 @@ namespace lilToon.URP.Extensions.AttributeComposite
             Shader.SetGlobalFloat(HoAttributeCompositeShaderConstants.InputsPublishedId, 0);
             Shader.SetGlobalVector(HoAttributeCompositeShaderConstants.InputFlagsId, Vector4.zero);
             Shader.SetGlobalFloat(HoAttributeCompositeShaderConstants.PrecisionActiveId, 0);
+            Shader.SetGlobalFloat(HoAttributeCompositeShaderConstants.OutlineInheritanceActiveId,0);
+            Shader.SetGlobalTexture(HoAttributeCompositeShaderConstants.OutlineOwnerId,Texture2D.blackTexture);
+            Shader.SetGlobalFloat(HoAttributeCompositeShaderConstants.RawInputsAvailableId,0);
+            foreach (int textureId in HoAttributeCompositeShaderConstants.RawIdentityIds)
+                Shader.SetGlobalTexture(textureId,Texture2D.blackTexture);
+            foreach (int textureId in HoAttributeCompositeShaderConstants.RawSelectionIds)
+                Shader.SetGlobalTexture(textureId,Texture2D.blackTexture);
             foreach (int textureId in HoAttributeCompositeShaderConstants.SelectionTextureIds)
                 Shader.SetGlobalTexture(textureId, Texture2D.blackTexture);
             compatibilityFrame = -1;
             CompatibilityInputFlags = Vector4.zero;
+            compatibilityInstance = null;
         }
 
         // ------------------------------------------------------------------ 兼容（非 RenderGraph）路径
@@ -149,6 +161,9 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 bool identity = objects != null && objects.Id0Texture != null && objects.Id1Texture != null && objects.CoverageTexture != null;
                 bool geometry = geometryTargets != null && geometryTargets.NormalDepthTexture != null;
                 bool hasOutline = geometry && geometryTargets.OutlineNormalDepthTexture != null;
+                bool ownerAvailable = identity && geometryTargets?.OutlineOwnerTexture != null;
+                cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.OutlineInheritanceActiveId,ownerAvailable ? 1 : 0);
+                if (ownerAvailable) cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.OutlineOwnerId,geometryTargets.OutlineOwnerTexture);
                 bool selection = identity && demand.NeedsSelection && resolveMaterial != null && selectionTargets[0] != null;
                 CompatibilityInputFlags = new Vector4(identity ? 1 : 0, selection ? 1 : 0, geometry ? 1 : 0, hasOutline ? 1 : 0);
                 cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.PrecisionActiveId, 0);
@@ -200,8 +215,19 @@ namespace lilToon.URP.Extensions.AttributeComposite
                         cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.SelectionTextureIds[i], selectionTargets[i].nameID);
                     }
                 }
+                outlineIdentityPass.Execute(cmd,renderingData.cameraData.cameraTargetDescriptor,demand,objects,geometryTargets,
+                    selection ? selectionTargets : null,HoSurfaceBufferSemanticPass.LastProduced);
+                HoAttributeCompositeProductionDiagnostics.Publish(demand,selection ? 4 : 0,
+                    HoSurfaceBufferSemanticPass.LastProduced ? 5 : 0,0,HoSurfaceBufferPass.CompatibilityProduced ? 6 : 0,
+                    outlineIdentityPass.CompatibilityIdentityCount,outlineIdentityPass.CompatibilitySelectionCount);
+                compatibilityInstance = this;
             }
 
+            // With identity-only demand this pass is configured for the camera target. Restore it
+            // after the private MRT draw: URP may otherwise skip its next rebind and draw the scene
+            // into the visual ID target (especially at camera MSAA=1).
+            var renderer = renderingData.cameraData.renderer;
+            CoreUtils.SetRenderTarget(cmd,renderer.cameraColorTargetHandle,renderer.cameraDepthTargetHandle,ClearFlag.None,Color.clear);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
@@ -241,12 +267,18 @@ namespace lilToon.URP.Extensions.AttributeComposite
             resources.geometryNormalDepthTexture = geometry.normalDepthTexture;
             resources.outlineCoverageTexture = geometry.outlineCoverageTexture;
             resources.outlineNormalDepthTexture = geometry.outlineNormalDepthTexture;
+            resources.outlineOwnerTexture = geometry.outlineOwnerTexture;
+            resources.rawIdentityId0Texture = objectBufferResources.id0Texture;
+            resources.rawIdentityId1Texture = objectBufferResources.id1Texture;
+            resources.rawIdentityCoverageTexture = objectBufferResources.coverageTexture;
             resources.published = true;
             bool textureArray = frameData.Get<UniversalCameraData>().cameraTargetDescriptor.dimension == TextureDimension.Tex2DArray;
             RecordInputPublication(renderGraph, resources, textureArray);
             PublishProduction(resources);
             if (!resources.demand.NeedsSelection || !objectBufferResources.HasRequiredTextures)
             {
+                outlineIdentityPass.Record(renderGraph,frameData.Get<UniversalCameraData>(),resources,objectBufferResources);
+                PublishProduction(resources);
                 // 没有身份池就没有语义可解压：不产出、不报错（OB 自己的诊断会说为什么没有）。
                 return;
             }
@@ -345,12 +377,46 @@ namespace lilToon.URP.Extensions.AttributeComposite
             }
 
             PublishResources(resources, selectionTextures, laneCount, objectBufferResources, surfaceResources);
+            outlineIdentityPass.Record(renderGraph,cameraData,resources,objectBufferResources);
             PublishProduction(resources);
+        }
+
+        internal static void BindCompatibilityQuery(CommandBuffer cmd, HoACQueryDescriptor query)
+        {
+            var raw = HoObjectBufferPass.CompatibilityTargets;
+            var visual = compatibilityInstance?.outlineIdentityPass.CompatibilityTargets;
+            if (raw == null) return;
+            bool physical = query.Domain == HoACMaskDomain.Geometry || visual == null || visual[0] == null;
+            cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId,physical ? raw.Id0Texture : visual[0]);
+            cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id1TextureId,physical ? raw.Id1Texture : visual[1]);
+            cmd.SetGlobalTexture(HoObjectBufferShaderConstants.CoverageTextureId,physical ? raw.CoverageTexture : visual[2]);
+            if (query.NeedsSelection && compatibilityInstance != null)
+                for (int i = 0; i < 4; ++i)
+                {
+                    var texture = physical ? compatibilityInstance.selectionTargets[i] : visual[i+3];
+                    if (texture != null) cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.SelectionTextureIds[i],texture);
+                }
+        }
+
+        internal static void BindCompatibilityDiagnostics(CommandBuffer cmd)
+        {
+            var raw = HoObjectBufferPass.CompatibilityTargets;
+            cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.RawInputsAvailableId,raw != null ? 1 : 0);
+            if (raw != null)
+            {
+                cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.RawIdentityIds[0],raw.Id0Texture);
+                cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.RawIdentityIds[1],raw.Id1Texture);
+                cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.RawIdentityIds[2],raw.CoverageTexture);
+            }
+            var geometry = HoGeometryBufferPass.CompatibilityTargets;
+            cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.OutlineInheritanceActiveId,geometry?.OutlineOwnerTexture != null ? 1 : 0);
+            if (geometry?.OutlineOwnerTexture != null) cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.OutlineOwnerId,geometry.OutlineOwnerTexture);
         }
 
         private static void PublishProduction(HoAttributeCompositeRenderGraphResources r) =>
             HoAttributeCompositeProductionDiagnostics.Publish(r.demand, r.HasSelectionPool ? 4 : 0,
-                r.HasSurfaceSemantics ? 5 : 0, r.HasCorrelatedSemantics ? 3 : 0, r.HasSurfaceAttributes ? 6 : 0);
+                r.HasSurfaceSemantics ? 5 : 0, r.HasCorrelatedSemantics ? 3 : 0, r.HasSurfaceAttributes ? 6 : 0,
+                r.outlineInheritance ? 3 : 0, r.outlineInheritance && r.HasSelectionPool ? 4 : 0);
 
         private static void RecordInputPublication(RenderGraph graph, HoAttributeCompositeRenderGraphResources r, bool textureArray)
         {
@@ -358,6 +424,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
             {
                 data.inputFlags = r.InputFlags;
                 data.geometryFlags = r.GeometryFlags;
+                data.outlineInheritance = r.HasIdentityPool && r.outlineOwnerTexture.IsValid();
                 // Standalone reflections may render before TextureXR's first-frame initialization.
                 // The ordinary 2D default is initialized by the graph itself and is sufficient for 2D cameras.
                 data.neutralSelection = textureArray ? graph.defaultResources.blackTextureXR : graph.defaultResources.blackTexture;
@@ -366,6 +433,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 Publish(builder, r.geometryNormalDepthTexture, HoAttributeCompositeShaderConstants.GeometryNormalDepthId);
                 Publish(builder, r.outlineCoverageTexture, HoAttributeCompositeShaderConstants.OutlineCoverageId);
                 Publish(builder, r.outlineNormalDepthTexture, HoAttributeCompositeShaderConstants.OutlineNormalDepthId);
+                Publish(builder, r.outlineOwnerTexture, HoAttributeCompositeShaderConstants.OutlineOwnerId);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PublishPassData d, RasterGraphContext c) =>
@@ -376,6 +444,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
                     c.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.ActiveId, 0);
                     c.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.LaneCountId, 0);
                     c.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.PrecisionActiveId, 0);
+                    c.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.RawInputsAvailableId,0);
+                    c.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.OutlineInheritanceActiveId,d.outlineInheritance ? 1 : 0);
                     foreach (int textureId in HoAttributeCompositeShaderConstants.SelectionTextureIds)
                         c.cmd.SetGlobalTexture(textureId, d.neutralSelection);
                 });
@@ -470,6 +540,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
         public void ReleaseCompatibilityResources()
         {
             ReleaseCompatibilityTargets();
+            outlineIdentityPass.ReleaseCompatibilityResources();
         }
 
         /// <summary>

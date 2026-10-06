@@ -33,6 +33,7 @@ Shader "Hidden/lilToon/URP/GeometryBuffer/Resolve"
 
     HO_GEOMETRY_BUFFER_TEXTURE_MS(float4, _HoGeometryBufferResolveNormalDepthTextureMS);
     HO_GEOMETRY_BUFFER_TEXTURE_MS(float, _HoGeometryBufferResolveDepthTextureMS);
+    HO_GEOMETRY_BUFFER_TEXTURE_MS(float4, _HoGeometryBufferResolveOutlineOwnerTextureMS);
 
     struct ResolvedGeometry
     {
@@ -176,17 +177,31 @@ Shader "Hidden/lilToon/URP/GeometryBuffer/Resolve"
             {
                 half4 normalDepth : SV_Target0;
                 half4 coverage : SV_Target1;
+                half4 owner : SV_Target2;
             };
 
             OutlineResolveOutput Frag(Varyings input)
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
-                ResolvedGeometry resolved = ResolveNormalDepth(uint2(input.positionCS.xy));
+                uint2 coord = uint2(input.positionCS.xy);
+                ResolvedGeometry resolved = ResolveNormalDepth(coord);
+                float4 packet = HO_GEOMETRY_BUFFER_LOAD_MS(_HoGeometryBufferResolveOutlineOwnerTextureMS, coord, resolved.selectedSample);
+                float count = 0, weighted = 0;
+                UNITY_UNROLL for (int i = 0; i < HO_GEOMETRY_BUFFER_MSAA_SAMPLES; ++i)
+                {
+                    float4 samplePacket = HO_GEOMETRY_BUFFER_LOAD_MS(_HoGeometryBufferResolveOutlineOwnerTextureMS, coord, i);
+                    if (samplePacket.a > 0.5 && all(round(samplePacket.rg * 255.0) == round(packet.rg * 255.0)))
+                    {
+                        count += 1; weighted += samplePacket.b;
+                    }
+                }
 
                 OutlineResolveOutput output;
                 output.normalDepth = (half4)resolved.normalDepth;
                 output.coverage = half4((half)resolved.coverage, (half)resolved.selectedCoverage, 0.0h, 1.0h);
+                output.owner = packet.a > 0.5 && resolved.coverage > 0
+                    ? half4(packet.rg, weighted / max(count, 1), count / HO_GEOMETRY_BUFFER_MSAA_SAMPLES) : 0;
                 return output;
             }
             ENDHLSL

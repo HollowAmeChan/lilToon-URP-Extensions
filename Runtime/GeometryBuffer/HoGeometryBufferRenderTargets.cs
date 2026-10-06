@@ -14,6 +14,10 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         private RTHandle outlineNormalDepthTexture;
         private RTHandle coverageTexture;
         private RTHandle outlineCoverageTexture;
+        private RTHandle outlineOwnerTexture;
+        private RTHandle outlineOwnerMsaaTexture;
+        private RTHandle outlineDepthTexture;
+        private RTHandle outlineDepthMsaaTexture;
         private RTHandle normalDepthMsaaTexture;
         private RTHandle depthMsaaTexture;
         private RTHandle outlineNormalDepthMsaaTexture;
@@ -25,6 +29,10 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         public RTHandle OutlineNormalDepthTexture => outlineNormalDepthTexture;
         public RTHandle CoverageTexture => coverageTexture;
         public RTHandle OutlineCoverageTexture => outlineCoverageTexture;
+        public RTHandle OutlineOwnerTexture => outlineOwnerTexture;
+        public RTHandle OutlineOwnerMsaaTexture => outlineOwnerMsaaTexture;
+        public RTHandle OutlineDepthTexture => outlineDepthTexture;
+        public RTHandle OutlineDepthMsaaTexture => outlineDepthMsaaTexture;
         public RTHandle NormalDepthMsaaTexture => normalDepthMsaaTexture;
         public RTHandle DepthMsaaTexture => depthMsaaTexture;
         public RTHandle OutlineNormalDepthMsaaTexture => outlineNormalDepthMsaaTexture;
@@ -54,7 +62,11 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
             RenderingUtils.ReAllocateIfNeeded(ref normalDepthTexture, descriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.NormalDepthTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref depthTexture, CreateDepthDescriptor(cameraTextureDescriptor, settings), FilterMode.Point, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.DepthTextureName);
+            RenderingUtils.ReAllocateIfNeeded(ref outlineDepthTexture, CreateDepthDescriptor(cameraTextureDescriptor, settings), FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGeometryBufferOutlinePrivateDepth");
             RenderingUtils.ReAllocateIfNeeded(ref outlineNormalDepthTexture, CreateOutlineNormalDepthDescriptor(cameraTextureDescriptor, settings), FilterMode.Point, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.OutlineNormalDepthTextureName);
+            var ownerDescriptor = CreateColorDescriptor(cameraTextureDescriptor, settings);
+            ownerDescriptor.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
+            RenderingUtils.ReAllocateIfNeeded(ref outlineOwnerTexture, ownerDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.OutlineOwnerTextureName);
             msaaSamples = Mathf.Max(1, requestedMsaaSamples);
             if (msaaSamples <= 1)
             {
@@ -70,7 +82,11 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
             RenderingUtils.ReAllocateIfNeeded(ref normalDepthMsaaTexture, msaaColorDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.NormalDepthTextureName + "MSAA");
             RenderingUtils.ReAllocateIfNeeded(ref depthMsaaTexture, CreateDepthDescriptor(cameraTextureDescriptor, settings, msaaSamples, true), FilterMode.Point, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.DepthTextureName + "MSAA");
+            RenderingUtils.ReAllocateIfNeeded(ref outlineDepthMsaaTexture, CreateDepthDescriptor(cameraTextureDescriptor, settings, msaaSamples, true), FilterMode.Point, TextureWrapMode.Clamp, name: "_HoGeometryBufferOutlinePrivateDepthMSAA");
             RenderingUtils.ReAllocateIfNeeded(ref outlineNormalDepthMsaaTexture, msaaColorDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.OutlineNormalDepthTextureName + "MSAA");
+            var ownerMsaaDescriptor = msaaColorDescriptor;
+            ownerMsaaDescriptor.graphicsFormat = GraphicsFormat.R8G8B8A8_UNorm;
+            RenderingUtils.ReAllocateIfNeeded(ref outlineOwnerMsaaTexture, ownerMsaaDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.OutlineOwnerTextureName + "MSAA");
             RenderingUtils.ReAllocateIfNeeded(ref coverageTexture, CreateCoverageDescriptor(cameraTextureDescriptor, settings), FilterMode.Point, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.CoverageTextureName);
             RenderingUtils.ReAllocateIfNeeded(ref outlineCoverageTexture, CreateCoverageDescriptor(cameraTextureDescriptor, settings), FilterMode.Point, TextureWrapMode.Clamp, name: HoGeometryBufferShaderConstants.OutlineCoverageTextureName);
         }
@@ -87,6 +103,10 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             outlineNormalDepthTexture?.Release();
             coverageTexture?.Release();
             outlineCoverageTexture?.Release();
+            outlineOwnerTexture?.Release();
+            outlineOwnerMsaaTexture?.Release();
+            outlineDepthTexture?.Release();
+            outlineDepthMsaaTexture?.Release();
             normalDepthMsaaTexture?.Release();
             depthMsaaTexture?.Release();
             outlineNormalDepthMsaaTexture?.Release();
@@ -96,6 +116,10 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             outlineNormalDepthTexture = null;
             coverageTexture = null;
             outlineCoverageTexture = null;
+            outlineOwnerTexture = null;
+            outlineOwnerMsaaTexture = null;
+            outlineDepthTexture = null;
+            outlineDepthMsaaTexture = null;
             normalDepthMsaaTexture = null;
             depthMsaaTexture = null;
             outlineNormalDepthMsaaTexture = null;
@@ -105,6 +129,10 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
         public void ReleaseMsaaResolveResources()
         {
+            outlineDepthMsaaTexture?.Release();
+            outlineDepthMsaaTexture = null;
+            outlineOwnerMsaaTexture?.Release();
+            outlineOwnerMsaaTexture = null;
             coverageTexture?.Release();
             outlineCoverageTexture?.Release();
             normalDepthMsaaTexture?.Release();

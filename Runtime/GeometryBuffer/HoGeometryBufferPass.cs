@@ -42,6 +42,8 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         private bool fallbackFilteringEnabled;
         private RenderStateBlock renderStateBlock;
         private readonly RenderTargetIdentifier[] resolveColorIdentifiers = new RenderTargetIdentifier[2];
+        private readonly RenderTargetIdentifier[] outlineCaptureIdentifiers = new RenderTargetIdentifier[2];
+        private readonly RenderTargetIdentifier[] outlineResolveIdentifiers = new RenderTargetIdentifier[3];
 
         private sealed class PassData
         {
@@ -54,6 +56,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         {
             public RendererListHandle rendererList;
         }
+        private sealed class OutlineDepthCopyData { public TextureHandle source, destination; }
 
         private sealed class ResolvePassData
         {
@@ -66,6 +69,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         private sealed class OutlineResolvePassData
         {
             public TextureHandle outlineNormalDepthMsaaTexture;
+            public TextureHandle outlineOwnerMsaaTexture;
             public Material resolveMaterial;
             public int msaaSamples;
         }
@@ -154,7 +158,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                     depthTarget,
                     RenderBufferLoadAction.DontCare,
                     RenderBufferStoreAction.Store);
-                cmd.ClearRenderTarget(RTClearFlags.ColorDepth, Color.clear, 1.0f, 0);
+                cmd.ClearRenderTarget(RTClearFlags.All, Color.clear, 1.0f, 0);
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
 
@@ -169,13 +173,11 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 DrawingSettings geometryDrawingSettings = CreateDrawingSettings(GeometryShaderTagIds, ref renderingData, SortingCriteria.CommonTransparent);
                 context.DrawRenderers(renderingData.cullResults, ref geometryDrawingSettings, ref geometryFilteringSettings, ref renderStateBlock);
 
-                cmd.SetRenderTarget(
-                    outlineNormalDepthTarget,
-                    RenderBufferLoadAction.DontCare,
-                    RenderBufferStoreAction.Store,
-                    depthTarget,
-                    RenderBufferLoadAction.Load,
-                    RenderBufferStoreAction.Store);
+                outlineCaptureIdentifiers[0] = outlineNormalDepthTarget.nameID;
+                outlineCaptureIdentifiers[1] = (useMsaaResolve ? renderTargets.OutlineOwnerMsaaTexture : renderTargets.OutlineOwnerTexture).nameID;
+                RTHandle outlineDepth = useMsaaResolve ? renderTargets.OutlineDepthMsaaTexture : renderTargets.OutlineDepthTexture;
+                cmd.CopyTexture(depthTarget.nameID,outlineDepth.nameID);
+                cmd.SetRenderTarget(outlineCaptureIdentifiers, outlineDepth.nameID);
                 cmd.ClearRenderTarget(RTClearFlags.Color, Color.clear, 1.0f, 0);
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
@@ -192,6 +194,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, renderTargets.NormalDepthTexture.nameID);
                 cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, renderTargets.DepthTexture.nameID);
                 cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineNormalDepthTextureId, renderTargets.OutlineNormalDepthTexture.nameID);
+                cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineOwnerTextureId, renderTargets.OutlineOwnerTexture.nameID);
                 if (useMsaaResolve)
                 {
                     cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.CoverageTextureId, renderTargets.CoverageTexture.nameID);
@@ -245,13 +248,18 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             TextureHandle outlineNormalDepthTexture = renderGraph.CreateTexture(CreateOutlineNormalDepthDesc(
                 cameraData.cameraTargetDescriptor,
                 settings));
+            TextureHandle outlineOwnerTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor,
+                settings, GraphicsFormat.R8G8B8A8_UNorm, HoGeometryBufferShaderConstants.OutlineOwnerTextureName));
             TextureHandle coverageTexture = TextureHandle.nullHandle;
             TextureHandle outlineCoverageTexture = TextureHandle.nullHandle;
             TextureHandle normalDepthMsaaTexture = TextureHandle.nullHandle;
             TextureHandle depthMsaaTexture = TextureHandle.nullHandle;
             TextureHandle outlineNormalDepthMsaaTexture = TextureHandle.nullHandle;
+            TextureHandle outlineOwnerMsaaTexture = TextureHandle.nullHandle;
             if (useMsaaResolve)
             {
+                outlineOwnerMsaaTexture = renderGraph.CreateTexture(CreateTextureDesc(cameraData.cameraTargetDescriptor,
+                    settings, GraphicsFormat.R8G8B8A8_UNorm, HoGeometryBufferShaderConstants.OutlineOwnerTextureName + "MSAA", msaaSamples, true));
                 normalDepthMsaaTexture = renderGraph.CreateTexture(CreateTextureDesc(
                     cameraData.cameraTargetDescriptor,
                     settings,
@@ -290,6 +298,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             geometryResources.outlineNormalDepthTexture = outlineNormalDepthTexture;
             geometryResources.coverageTexture = coverageTexture;
             geometryResources.outlineCoverageTexture = outlineCoverageTexture;
+            geometryResources.outlineOwnerTexture = outlineOwnerTexture;
 
             TextureHandle geometryColorTarget = useMsaaResolve ? normalDepthMsaaTexture : normalDepthTexture;
             TextureHandle geometryDepthTarget = useMsaaResolve ? depthMsaaTexture : depthTexture;
@@ -358,7 +367,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
-                    context.cmd.ClearRenderTarget(RTClearFlags.ColorDepth, Color.clear, 1.0f, 0);
+                    context.cmd.ClearRenderTarget(RTClearFlags.All, Color.clear, 1.0f, 0);
                     if (data.drawFallback && data.fallbackRendererList.IsValid())
                     {
                         context.cmd.DrawRendererList(data.fallbackRendererList);
@@ -374,6 +383,18 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 });
             }
 
+            // Preserve the body's depth AND stencil, then let outline ZWrite/Stencil follow the
+            // real forward pass in a separate target. Overlapping shells must occlude one another
+            // without changing the physical GB depth consumed by AO/GI.
+            var outlineDepthDesc = renderGraph.GetTextureDesc(geometryDepthTarget);
+            outlineDepthDesc.name = "_HoGeometryBufferOutlinePrivateDepth"; outlineDepthDesc.clearBuffer = false;
+            TextureHandle outlinePrivateDepth = renderGraph.CreateTexture(outlineDepthDesc);
+            using (var builder = renderGraph.AddUnsafePass<OutlineDepthCopyData>("Ho-GeometryBuffer Copy Outline Depth Stencil",out var copy))
+            {
+                copy.source = geometryDepthTarget; copy.destination = outlinePrivateDepth;
+                builder.UseTexture(copy.source,AccessFlags.Read); builder.UseTexture(copy.destination,AccessFlags.Write);
+                builder.SetRenderFunc(static (OutlineDepthCopyData data, UnsafeGraphContext context) => context.cmd.CopyTexture(data.source,data.destination));
+            }
             using (var builder = renderGraph.AddRasterRenderPass<OutlineNormalDepthPassData>("Ho-GeometryBuffer Outline NormalDepth", out OutlineNormalDepthPassData outlinePassData, ProfilingSampler))
             {
                 outlinePassData.rendererList = renderGraph.CreateRendererList(outlineNormalDepthRendererListParams);
@@ -383,10 +404,14 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 }
 
                 builder.SetRenderAttachment(outlineColorTarget, 0, AccessFlags.WriteAll);
-                builder.SetRenderAttachmentDepth(geometryDepthTarget, AccessFlags.Read);
+                // Sparse shell geometry does NOT overwrite the owner attachment outside its
+                // silhouette. Preserve the descriptor's clear load, rather than declaring WriteAll.
+                builder.SetRenderAttachment(useMsaaResolve ? outlineOwnerMsaaTexture : outlineOwnerTexture, 1, AccessFlags.Write);
+                builder.SetRenderAttachmentDepth(outlinePrivateDepth, AccessFlags.ReadWrite);
                 if (!useMsaaResolve)
                 {
                     builder.SetGlobalTextureAfterPass(outlineNormalDepthTexture, HoGeometryBufferShaderConstants.OutlineNormalDepthTextureId);
+                    builder.SetGlobalTextureAfterPass(outlineOwnerTexture, HoGeometryBufferShaderConstants.OutlineOwnerTextureId);
                 }
 
                 builder.AllowGlobalStateModification(true);
@@ -437,21 +462,26 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 using (var builder = renderGraph.AddRasterRenderPass<OutlineResolvePassData>("Ho-GeometryBuffer Outline MSAA Resolve", out OutlineResolvePassData outlineResolvePassData, ProfilingSampler))
                 {
                     outlineResolvePassData.outlineNormalDepthMsaaTexture = outlineNormalDepthMsaaTexture;
+                    outlineResolvePassData.outlineOwnerMsaaTexture = outlineOwnerMsaaTexture;
                     outlineResolvePassData.resolveMaterial = resolveMaterial;
                     outlineResolvePassData.msaaSamples = msaaSamples;
 
                     builder.UseTexture(outlineResolvePassData.outlineNormalDepthMsaaTexture, AccessFlags.Read);
+                    builder.UseTexture(outlineResolvePassData.outlineOwnerMsaaTexture, AccessFlags.Read);
                     builder.SetRenderAttachment(outlineNormalDepthTexture, 0, AccessFlags.WriteAll);
                     builder.SetRenderAttachment(outlineCoverageTexture, 1, AccessFlags.WriteAll);
+                    builder.SetRenderAttachment(outlineOwnerTexture, 2, AccessFlags.WriteAll);
                     builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.Read);
                     builder.SetGlobalTextureAfterPass(outlineNormalDepthTexture, HoGeometryBufferShaderConstants.OutlineNormalDepthTextureId);
                     builder.SetGlobalTextureAfterPass(outlineCoverageTexture, HoGeometryBufferShaderConstants.OutlineCoverageTextureId);
+                    builder.SetGlobalTextureAfterPass(outlineOwnerTexture, HoGeometryBufferShaderConstants.OutlineOwnerTextureId);
                     builder.AllowGlobalStateModification(true);
                     builder.AllowPassCulling(false);
                     builder.SetRenderFunc(static (OutlineResolvePassData data, RasterGraphContext context) =>
                     {
                         SetResolveKeywords(data.resolveMaterial, data.msaaSamples);
                         context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.ResolveNormalDepthTextureMsId, data.outlineNormalDepthMsaaTexture);
+                        context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.ResolveOutlineOwnerMsId, data.outlineOwnerMsaaTexture);
                         context.cmd.ClearRenderTarget(RTClearFlags.Color, Color.clear, 1.0f, 0);
                         context.cmd.DrawProcedural(Matrix4x4.identity, data.resolveMaterial, 1, MeshTopology.Triangles, 3, 1);
                         context.cmd.SetGlobalFloat(HoGeometryBufferShaderConstants.OutlineCoverageTextureValidId, 1.0f);
@@ -476,6 +506,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineNormalDepthTextureId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.CoverageTextureId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineCoverageTextureId, Texture2D.blackTexture);
+            Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineOwnerTextureId, Texture2D.blackTexture);
             Shader.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, Texture2D.blackTexture);
             CompatibilityTargets = null;
             Shader.SetGlobalFloat(HoGeometryBufferShaderConstants.ValidId, 0.0f);
@@ -499,9 +530,11 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         {
             SetResolveKeywords(resolveMaterial, renderTargets.MsaaSamples);
             cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.ResolveNormalDepthTextureMsId, renderTargets.OutlineNormalDepthMsaaTexture.nameID);
-            resolveColorIdentifiers[0] = renderTargets.OutlineNormalDepthTexture.nameID;
-            resolveColorIdentifiers[1] = renderTargets.OutlineCoverageTexture.nameID;
-            CoreUtils.SetRenderTarget(cmd, resolveColorIdentifiers, renderTargets.DepthTexture, ClearFlag.Color, Color.clear);
+            cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.ResolveOutlineOwnerMsId, renderTargets.OutlineOwnerMsaaTexture.nameID);
+            outlineResolveIdentifiers[0] = renderTargets.OutlineNormalDepthTexture.nameID;
+            outlineResolveIdentifiers[1] = renderTargets.OutlineCoverageTexture.nameID;
+            outlineResolveIdentifiers[2] = renderTargets.OutlineOwnerTexture.nameID;
+            CoreUtils.SetRenderTarget(cmd, outlineResolveIdentifiers, renderTargets.DepthTexture, ClearFlag.Color, Color.clear);
             cmd.DrawProcedural(Matrix4x4.identity, resolveMaterial, 1, MeshTopology.Triangles, 3, 1);
         }
 

@@ -42,7 +42,9 @@ namespace lilToon.URP.Extensions.AttributeComposite
         [InspectorName("Weighted Coverage")]
         WeightedCoverage,
         [InspectorName("Semantic Precision")]
-        SemanticPrecision
+        SemanticPrecision,
+        [InspectorName("Outline Owner")]
+        OutlineOwner
     }
 
     [Serializable]

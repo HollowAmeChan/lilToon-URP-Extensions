@@ -10,6 +10,7 @@
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferIdPass.hlsl"
+#include "HoACRawIdentity.hlsl"
 
 // 身份池（引用 OB；AC 的 pass 把它们绑成全局，消费者从 AC 资源集取句柄并声明读依赖）。
 TEXTURE2D_X(_HoObjectBufferId0Texture);
@@ -59,8 +60,15 @@ void HoAC_IdentityLayer(float4 id0, float4 id1, float4 coverage, uint layer, out
 }
 
 /// <summary>0..3 层的身份与覆盖率（consumer 自己读一遍，别在循环里反复采样）。</summary>
-void HoAC_LoadIdentityPool(float2 uv, out float4 id0, out float4 id1, out float4 coverage)
+void HoAC_LoadIdentityPool(float2 uv, out float4 id0, out float4 id1, out float4 coverage, bool raw = false)
 {
+    [branch] if (raw && _HoACRawInputsAvailable > 0.5)
+    {
+        id0 = SAMPLE_TEXTURE2D_X(_HoACRawIdentityId0Texture,sampler_PointClamp,uv);
+        id1 = SAMPLE_TEXTURE2D_X(_HoACRawIdentityId1Texture,sampler_PointClamp,uv);
+        coverage = SAMPLE_TEXTURE2D_X(_HoACRawIdentityCoverageTexture,sampler_PointClamp,uv);
+        return;
+    }
     id0 = SAMPLE_TEXTURE2D_X(_HoObjectBufferId0Texture, sampler_PointClamp, uv);
     id1 = SAMPLE_TEXTURE2D_X(_HoObjectBufferId1Texture, sampler_PointClamp, uv);
     coverage = SAMPLE_TEXTURE2D_X(_HoObjectBufferCoverageTexture, sampler_PointClamp, uv);
@@ -142,7 +150,7 @@ float HoAC_Group(float2 uv, uint group8)
 /// 物体位谓词：`Σ cov_i · 该层部件带不带这一位`（AC 架构 §0.2 的 `HoAC_Predicate`）。
 /// 位号就是 <c>HoObjectBufferPartTags</c> 的位序；部件行表里存的是整份标签掩码。
 /// </summary>
-float HoAC_Predicate(float2 uv, uint objectTagBit)
+float HoAC_Predicate(float2 uv, uint objectTagBit, bool raw = false)
 {
     if (objectTagBit >= 32u)
     {
@@ -152,7 +160,7 @@ float HoAC_Predicate(float2 uv, uint objectTagBit)
     float4 id0;
     float4 id1;
     float4 coverage;
-    HoAC_LoadIdentityPool(uv, id0, id1, coverage);
+    HoAC_LoadIdentityPool(uv, id0, id1, coverage, raw);
 
     uint bit = 1u << objectTagBit;
     float total = 0.0;

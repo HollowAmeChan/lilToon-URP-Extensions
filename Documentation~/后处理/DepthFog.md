@@ -102,6 +102,8 @@
 
 ## 6. 验证
 
+2026-10-06 补充 GPU 回归：旧数学检查没有验证世界坐标重建的 UV 输入，出货 shader 曾把 `uv * 2 - 1` 传给内部已做同一转换的 `ComputeWorldSpacePosition`，导致高度窗偏移。现在直接传 0..1 UV；永久 `ScreenProcessRegressionTests.HeightFogUsesScreenUvExactlyOnce` 对每一行的出货 shader 输出检查解析高度雾值。同时显式声明并绑定正交 / 无 GB 分支的 camera-depth 依赖，缺失时保留原图。
+
 | 检查 | 内容 | 结果 |
 | --- | --- | --- |
 | `.codex-research/depth_fog_sim/fog_math_check`（dotnet，链接出货的 `ScreenProcessFogMath.cs`） | 11 项：三种距离曲线的解析值/单调性/边界、高度窗与衰减（含方向与硬度）、浓度合成、**眼深↔设备深度往返**（reversed-Z 与非 reversed 两组，最坏相对误差 6.6e-5；换算到世界空间的影响 < 0.0002）、**模式枚举数值契约**、两槽合成顺序与混合模式（可分离的 20 个模式逐一镜像共享混合表）、两槽互不影响 | 全过；`-- --negative-control` 会让 3 项 FAIL（证明检查能失败） |

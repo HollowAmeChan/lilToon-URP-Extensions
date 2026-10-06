@@ -30,6 +30,12 @@ namespace lilToon.URP.Extensions.AttributeComposite
         public TextureHandle identityId0Texture = TextureHandle.nullHandle;
         public TextureHandle identityId1Texture = TextureHandle.nullHandle;
         public TextureHandle identityCoverageTexture = TextureHandle.nullHandle;
+        public TextureHandle rawIdentityId0Texture = TextureHandle.nullHandle;
+        public TextureHandle rawIdentityId1Texture = TextureHandle.nullHandle;
+        public TextureHandle rawIdentityCoverageTexture = TextureHandle.nullHandle;
+        public TextureHandle outlineOwnerTexture = TextureHandle.nullHandle;
+        public bool outlineInheritance;
+        public TextureHandle[] rawSelectionTextures = { TextureHandle.nullHandle, TextureHandle.nullHandle, TextureHandle.nullHandle, TextureHandle.nullHandle };
 
         /// <summary>
         /// 引用：SB 的**数值面**（Classification 四通道 + 逐像素 owner）——`HoAC_Attribute` 的 surface 来源。
@@ -98,6 +104,10 @@ namespace lilToon.URP.Extensions.AttributeComposite
             identityId0Texture = TextureHandle.nullHandle;
             identityId1Texture = TextureHandle.nullHandle;
             identityCoverageTexture = TextureHandle.nullHandle;
+            rawIdentityId0Texture = rawIdentityId1Texture = rawIdentityCoverageTexture = TextureHandle.nullHandle;
+            outlineOwnerTexture = TextureHandle.nullHandle;
+            outlineInheritance = false;
+            for (int i = 0; i < rawSelectionTextures.Length; ++i) rawSelectionTextures[i] = TextureHandle.nullHandle;
             surfaceClassificationTexture = TextureHandle.nullHandle;
             surfaceMaterialTexture = TextureHandle.nullHandle;
             surfaceReflectionTexture = TextureHandle.nullHandle;

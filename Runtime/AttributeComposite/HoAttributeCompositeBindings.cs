@@ -9,16 +9,18 @@ namespace lilToon.URP.Extensions.AttributeComposite
         public static void ReadQuery(IRasterRenderGraphBuilder builder, HoAttributeCompositeRenderGraphResources r,
             HoACQueryDescriptor query, bool intrinsicCoverage = false)
         {
+            bool physical = query.Domain == HoACMaskDomain.Geometry && r.outlineInheritance;
             if (query.NeedsIdentity || intrinsicCoverage || query.NeedsSelection)
             {
-                Read(builder, r.identityCoverageTexture);
+                Read(builder, physical ? r.rawIdentityCoverageTexture : r.identityCoverageTexture);
                 if (query.Kind == HoACQueryKind.Group || query.Kind == HoACQueryKind.Identity)
                 {
-                    Read(builder, r.identityId0Texture); Read(builder, r.identityId1Texture);
+                    Read(builder, physical ? r.rawIdentityId0Texture : r.identityId0Texture);
+                    Read(builder, physical ? r.rawIdentityId1Texture : r.identityId1Texture);
                 }
             }
             if (query.NeedsSelection)
-                foreach (TextureHandle texture in r.selectionTextures) Read(builder, texture);
+                foreach (TextureHandle texture in physical ? r.rawSelectionTextures : r.selectionTextures) Read(builder, texture);
             if (query.NeedsGeometry)
                 Read(builder, r.geometryCoverageTexture.IsValid() ? r.geometryCoverageTexture : r.geometryNormalDepthTexture);
             if (query.NeedsOutline)
@@ -34,22 +36,23 @@ namespace lilToon.URP.Extensions.AttributeComposite
         public static void BindQuery(RasterCommandBuffer cmd, HoAttributeCompositeRenderGraphResources r,
             HoACQueryDescriptor query, bool intrinsicCoverage = false)
         {
+            bool physical = query.Domain == HoACMaskDomain.Geometry && r.outlineInheritance;
             cmd.SetGlobalVector(HoAttributeCompositeShaderConstants.InputFlagsId, r.InputFlags);
             cmd.SetGlobalVector(HoAttributeCompositeShaderConstants.GeometryFlagsId, r.GeometryFlags);
             cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.InputsPublishedId, r.published ? 1 : 0);
             cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.LaneCountId, r.laneCount);
             if (query.NeedsIdentity || intrinsicCoverage || query.NeedsSelection)
             {
-                Bind(cmd, HoObjectBufferShaderConstants.CoverageTextureId, r.identityCoverageTexture);
+                Bind(cmd, HoObjectBufferShaderConstants.CoverageTextureId, physical ? r.rawIdentityCoverageTexture : r.identityCoverageTexture);
                 if (query.Kind == HoACQueryKind.Group || query.Kind == HoACQueryKind.Identity)
                 {
-                    Bind(cmd, HoObjectBufferShaderConstants.Id0TextureId, r.identityId0Texture);
-                    Bind(cmd, HoObjectBufferShaderConstants.Id1TextureId, r.identityId1Texture);
+                    Bind(cmd, HoObjectBufferShaderConstants.Id0TextureId, physical ? r.rawIdentityId0Texture : r.identityId0Texture);
+                    Bind(cmd, HoObjectBufferShaderConstants.Id1TextureId, physical ? r.rawIdentityId1Texture : r.identityId1Texture);
                 }
             }
             if (query.NeedsSelection)
                 for (int i = 0; i < r.selectionTextures.Length; i++)
-                    Bind(cmd, HoAttributeCompositeShaderConstants.SelectionTextureIds[i], r.selectionTextures[i]);
+                    Bind(cmd, HoAttributeCompositeShaderConstants.SelectionTextureIds[i], physical ? r.rawSelectionTextures[i] : r.selectionTextures[i]);
             if (query.NeedsGeometry)
                 Bind(cmd, r.geometryCoverageTexture.IsValid() ? HoAttributeCompositeShaderConstants.GeometryCoverageId :
                     HoAttributeCompositeShaderConstants.GeometryNormalDepthId,

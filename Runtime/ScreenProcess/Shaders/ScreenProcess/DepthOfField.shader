@@ -22,9 +22,8 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
             #pragma fragment Frag
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessDepthInputs.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessMask.hlsl"
 
             float _Intensity;
@@ -32,10 +31,6 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
             float4 _LayerParams1; // x gaussian start, y gaussian end, z max radius px, w high quality
             float4 _LayerParams2; // x blade count, y blade curvature, z blade rotation
             float4 _LayerParams3; // x coc gain, y foreground boost, z background boost, w coc curve
-
-            TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
-            TEXTURE2D_X(_HoGeometryBufferOutlineNormalDepthTexture);
-            float _HoGeometryBufferValid;
 
             // Tap layout: golden-angle spiral, r = sqrt((i + 0.5) / N).
             // sqrt() is what makes the taps uniform per unit AREA instead of per unit radius, so the
@@ -123,38 +118,6 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
             static const float ScreenProcessDofReachMargin = 0.1;
             static const float ScreenProcessDofReachMarginMinPx = 1.0;
 
-            half4 SampleOutlineNormalDepth(float2 uv)
-            {
-                return SAMPLE_TEXTURE2D_X(_HoGeometryBufferOutlineNormalDepthTexture, sampler_PointClamp, uv);
-            }
-
-            float SampleEyeDepth(float2 uv)
-            {
-                if (_HoGeometryBufferValid <= 0.5)
-                {
-                    return LinearEyeDepth(SampleSceneDepth(uv), _ZBufferParams);
-                }
-
-                half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
-                return LilHoGeometryBufferLinearDepthOrFar(normalDepth, _ProjectionParams.z);
-            }
-
-            // The outline shell has its own linear eye depth, so an outline pixel is focused and
-            // blurred like the surface it hugs instead of being force-kept sharp. It is used for the
-            // centre pixel AND for every tap, which is what keeps the outline consistent with itself.
-            float SampleVisualEyeDepth(float2 uv)
-            {
-                if (_HoGeometryBufferValid <= 0.5)
-                {
-                    return SampleEyeDepth(uv);
-                }
-
-                half4 outlineNormalDepth = SampleOutlineNormalDepth(uv);
-                return LilHoGeometryBufferCoverage(outlineNormalDepth) > 0.5
-                    ? outlineNormalDepth.a
-                    : SampleEyeDepth(uv);
-            }
-
             float ResolvePositiveDefault(float value, float fallback)
             {
                 return value > 0.0001 ? value : fallback;
@@ -219,6 +182,52 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                 return direction * polygon;
             }
 
+            float ResolveTapWeight(float2 uv, float distancePx, float maxRadiusPx, float marginPx)
+            {
+                float reachPx = abs(ResolveSignedCoc(LilScreenProcessVisualEyeDepth(uv))) * maxRadiusPx;
+                // The soft reach margin must not give an in-focus outline a nonzero blur footprint.
+                return reachPx <= 0.0001 ? 0.0 : saturate((reachPx - distancePx + marginPx) / marginPx);
+            }
+
+            // Match depth/outline coverage to ALL four contributors of the color's bilinear footprint.
+            // Testing one point depth and then sampling bilinear color leaks focused outlines into
+            // background taps even when every input texture is correct. Keep this contract in the
+            // GPU regression tests; a 5% halo threshold previously hid the remaining 2-4% bleed.
+            half4 SampleWeightedFootprint(float2 sampleUv, float distancePx, float maxRadiusPx,
+                float marginPx, out float footprintWeight)
+            {
+                float2 pixel = sampleUv * _BlitTexture_TexelSize.zw - 0.5;
+                float2 origin = (floor(pixel) + 0.5) * _BlitTexture_TexelSize.xy;
+                float2 blend = frac(pixel);
+                float2 uv00 = origin;
+                float2 uv10 = origin + float2(_BlitTexture_TexelSize.x, 0);
+                float2 uv01 = origin + float2(0, _BlitTexture_TexelSize.y);
+                float2 uv11 = origin + _BlitTexture_TexelSize.xy;
+                float4 reach = float4(
+                    ResolveTapWeight(uv00, distancePx, maxRadiusPx, marginPx),
+                    ResolveTapWeight(uv10, distancePx, maxRadiusPx, marginPx),
+                    ResolveTapWeight(uv01, distancePx, maxRadiusPx, marginPx),
+                    ResolveTapWeight(uv11, distancePx, maxRadiusPx, marginPx));
+                float4 area = float4((1-blend.x)*(1-blend.y), blend.x*(1-blend.y),
+                    (1-blend.x)*blend.y, blend.x*blend.y);
+                float4 weights = area * reach;
+                footprintWeight = dot(weights, 1.0);
+                if (footprintWeight <= 0.0001)
+                {
+                    footprintWeight = 0;
+                    return 0;
+                }
+
+                // Uniform depth regions retain hardware bilinear color filtering (one color fetch).
+                if (all(reach == reach.x))
+                    return SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUv) * reach.x;
+
+                return SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv00) * weights.x
+                    + SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv10) * weights.y
+                    + SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv01) * weights.z
+                    + SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_PointClamp, uv11) * weights.w;
+            }
+
             // Gather with CoC-consistent weights.
             //
             // A tap may only fill the part of the blur circle its OWN CoC can cover: if the tap is
@@ -237,15 +246,14 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                         float2 offsetPx = ResolveBokehOffset(dir) * radiusPx; \
                         float2 sampleUv = uv + offsetPx * texel; \
                         float distPx = length(offsetPx); \
-                        float tapCoc = ResolveSignedCoc(SampleVisualEyeDepth(sampleUv)); \
-                        float tapWeight = saturate((abs(tapCoc) * maxRadiusPx - distPx + marginPx) / marginPx); \
-                        color += SAMPLE_TEXTURE2D_X(_BlitTexture, sampler_LinearClamp, sampleUv) * tapWeight; \
+                        float tapWeight; \
+                        color += SampleWeightedFootprint(sampleUv, distPx, maxRadiusPx, marginPx, tapWeight); \
                         weight += tapWeight; \
                     }
 
                 if (highQuality > 0.5)
                 {
-                    [unroll]
+                    [loop]
                     for (int i = 0; i < ScreenProcessDofKernelHqCount; i++)
                     {
                         ADD_DOF_SAMPLE(ScreenProcessDofKernelHq[i])
@@ -253,7 +261,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                 }
                 else
                 {
-                    [unroll]
+                    [loop]
                     for (int i = 0; i < ScreenProcessDofKernelLqCount; i++)
                     {
                         ADD_DOF_SAMPLE(ScreenProcessDofKernelLq[i])
@@ -275,7 +283,10 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthOfField"
                     return LilScreenProcessMaskDebugColor(uv, false, source.a);
                 }
 
-                float depth = SampleVisualEyeDepth(uv);
+                if (!LilScreenProcessHasVisualDepth())
+                    return source;
+
+                float depth = LilScreenProcessVisualEyeDepth(uv);
                 float coc = ResolveSignedCoc(depth);
                 float maxRadiusPx = max(_LayerParams1.z, 0.0);
                 float radiusPx = abs(coc) * maxRadiusPx;

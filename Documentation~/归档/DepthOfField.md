@@ -1,6 +1,6 @@
 # 景深（ScreenProcess · `DepthOfField`）
 
-> **状态：已修复并验证。** 本文记录根因（含一次行为回归）、修复内容、修复前后实测对比，以及仍然存在的取舍。
+> **状态：历史修复记录。** 2026-10-06 GPU 调查确认：下文旧检查的 5% 阈值漏过轻微描边渗色，“0 列”不代表严格无污染。当前逐颜色邻点 CoC、描边 coverage 和永久 GPU 回归契约见 [后处理/DepthOfField.md](../后处理/DepthOfField.md)。
 > 相关：`归档/Outline_Surface_Semantics_Investigation.md`（描边与景深的深度来源）、`Ho-GeometryBuffer.md` §3.3。
 
 ## 0. 定位与判定标准

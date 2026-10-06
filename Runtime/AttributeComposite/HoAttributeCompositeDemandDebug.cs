@@ -15,7 +15,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
             var mode = settings.debugMode;
             if (mode == HoAttributeCompositeDebugMode.GeometryCoverage)
                 queries.Add(HoACQueryDescriptor.Resolve(HoACQueryKind.Geometry, null, 0, HoACMaskDomain.Screen));
-            else if (mode == HoAttributeCompositeDebugMode.OutlineCoverage)
+            else if (mode == HoAttributeCompositeDebugMode.OutlineCoverage || mode == HoAttributeCompositeDebugMode.OutlineOwner)
                 queries.Add(HoACQueryDescriptor.Resolve(HoACQueryKind.Outline, null, 0, HoACMaskDomain.Screen));
             else if (mode == HoAttributeCompositeDebugMode.InputAvailability)
                 resources = HoACDemandResources.Identity | HoACDemandResources.Geometry | HoACDemandResources.Outline;

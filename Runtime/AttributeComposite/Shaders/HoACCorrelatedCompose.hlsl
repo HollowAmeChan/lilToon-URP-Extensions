@@ -1,5 +1,6 @@
 #ifndef HO_AC_CORRELATED_COMPOSE_INCLUDED
 #define HO_AC_CORRELATED_COMPOSE_INCLUDED
+#include "HoACRawIdentity.hlsl"
 TEXTURE2D_X(_HoACSemanticWrittenCoverageTexture);
 TEXTURE2D_X(_HoACSemanticWeightedCoverageTexture);
 TEXTURE2D_X(_HoACSemanticAssociationStatusTexture);
@@ -28,6 +29,12 @@ float3 HoAC_CorrelatedLane(float2 uv,uint bit)
     float4 id0=SAMPLE_TEXTURE2D_X(_HoObjectBufferId0Texture,sampler_PointClamp,uv);
     float4 id1=SAMPLE_TEXTURE2D_X(_HoObjectBufferId1Texture,sampler_PointClamp,uv);
     float4 c=SAMPLE_TEXTURE2D_X(_HoObjectBufferCoverageTexture,sampler_PointClamp,uv);
+    [branch] if (_HoACRawInputsAvailable > 0.5)
+    {
+        id0=SAMPLE_TEXTURE2D_X(_HoACRawIdentityId0Texture,sampler_PointClamp,uv);
+        id1=SAMPLE_TEXTURE2D_X(_HoACRawIdentityId1Texture,sampler_PointClamp,uv);
+        c=SAMPLE_TEXTURE2D_X(_HoACRawIdentityCoverageTexture,sampler_PointClamp,uv);
+    }
     float4 w=SAMPLE_TEXTURE2D_X(_HoACSemanticWrittenCoverageTexture,sampler_PointClamp,uv);
     float4 v=SAMPLE_TEXTURE2D_X(_HoACSemanticWeightedCoverageTexture,sampler_PointClamp,uv);
     uint ids[4]={HoObjectBufferDecodeIdExact(id0.rg),HoObjectBufferDecodeIdExact(id0.ba),HoObjectBufferDecodeIdExact(id1.rg),HoObjectBufferDecodeIdExact(id1.ba)};

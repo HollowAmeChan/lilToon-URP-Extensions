@@ -16,6 +16,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         public const string OutlineNormalDepthTextureName = "_HoGeometryBufferOutlineNormalDepthTexture";
         public const string CoverageTextureName = "_HoGeometryBufferCoverageTexture";
         public const string OutlineCoverageTextureName = "_HoGeometryBufferOutlineCoverageTexture";
+        public const string OutlineOwnerTextureName = "_HoGeometryBufferOutlineOwnerTexture";
         public const string ResolveNormalDepthTextureMsName = "_HoGeometryBufferResolveNormalDepthTextureMS";
         public const string ResolveDepthTextureMsName = "_HoGeometryBufferResolveDepthTextureMS";
         public const string SkyTextureName = "_HoGeometryBufferSkyTexture";
@@ -25,6 +26,8 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         public static readonly int OutlineNormalDepthTextureId = Shader.PropertyToID(OutlineNormalDepthTextureName);
         public static readonly int CoverageTextureId = Shader.PropertyToID(CoverageTextureName);
         public static readonly int OutlineCoverageTextureId = Shader.PropertyToID(OutlineCoverageTextureName);
+        public static readonly int OutlineOwnerTextureId = Shader.PropertyToID(OutlineOwnerTextureName);
+        public static readonly int ResolveOutlineOwnerMsId = Shader.PropertyToID("_HoGeometryBufferResolveOutlineOwnerTextureMS");
         public static readonly int ResolveNormalDepthTextureMsId = Shader.PropertyToID(ResolveNormalDepthTextureMsName);
         public static readonly int ResolveDepthTextureMsId = Shader.PropertyToID(ResolveDepthTextureMsName);
         public static readonly int SkyTextureId = Shader.PropertyToID(SkyTextureName);

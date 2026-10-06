@@ -22,9 +22,8 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthFog"
             #pragma fragment Frag
 
             #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
-            #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/DeclareDepthTexture.hlsl"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
-            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl"
+            #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessDepthInputs.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ScreenProcess/Shaders/ScreenProcess/ScreenProcessMask.hlsl"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ImageProcess/Shaders/ImageProcess/ImageProcessBlend.hlsl"
 
@@ -43,10 +42,6 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthFog"
             float4 _LayerParams3; // x height mode (0 window-below, 1 window-above, 2 falloff-below, 3 falloff-above), y height reference (0 world, 1 camera), z height A, w height B
             float4 _LayerParams4; // x height hardness, y height slot max opacity, z height colour r, w height colour g
             float4 _LayerParams5; // x height colour b, y sky mode (0 skip, 1 include, 2 tint), z sky strength, w output dither (8-bit LSB)
-
-            TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture);
-            // Declared per shader (not by any include), exactly like DepthOfField/Outline do.
-            float _HoGeometryBufferValid;
 
             // ---- ScreenProcessFogMath mirrors -------------------------------------------------
 
@@ -143,8 +138,12 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthFog"
 
                 bool hasGeometryBuffer = _HoGeometryBufferValid > 0.5;
                 bool isOrthographic = unity_OrthoParams.w > 0.5;
+                if ((!hasGeometryBuffer || isOrthographic) && _lilHoSPCameraDepthValid <= 0.5)
+                    return source;
 
-                half4 normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
+                half4 normalDepth = 0;
+                if (hasGeometryBuffer)
+                    normalDepth = SAMPLE_TEXTURE2D_X(_HoGeometryBufferNormalDepthTexture, sampler_PointClamp, uv);
                 float coverage = hasGeometryBuffer ? LilHoGeometryBufferCoverage(normalDepth) : 1.0;
                 bool isSky = hasGeometryBuffer ? coverage < 0.5 : false;
 
@@ -167,7 +166,7 @@ Shader "Hidden/lilToon/URP/ScreenProcess/DepthFog"
                     return source;
                 }
 
-                float3 positionWS = ComputeWorldSpacePosition(uv * 2.0 - 1.0, deviceDepth, UNITY_MATRIX_I_VP);
+                float3 positionWS = ComputeWorldSpacePosition(uv, deviceDepth, UNITY_MATRIX_I_VP);
                 float3 positionVS = mul(UNITY_MATRIX_V, float4(positionWS, 1.0)).xyz;
 
                 float layerMask = 1.0;

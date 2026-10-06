@@ -5,6 +5,7 @@ using System.Collections.Generic;
 
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.ObjectBuffer;
+using lilToon.URP.Extensions.AttributeComposite;
 // PLR 的遮罩 = OB 的四层覆盖率，材质数值 = SB（经 AC 门面）：MB 在 PLR 这条链上已经没有任何输入。
 using lilToon.URP.Extensions.SurfaceBuffer;
 using UnityEngine;
@@ -645,7 +646,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
             TextureHandle source = resourceData.activeColorTexture;
             // 遮罩 = **AC 的总覆盖率**（OB 四层覆盖率之和），不再读 MB 的 maskId：
             // 这一格"有多少属于角色"的表达权归 OB，PLR 只是借用。
-            TextureHandle maskIdTexture = frameData.GetOrCreate<HoObjectBufferRenderGraphResources>().coverageTexture;
+            TextureHandle maskIdTexture = frameData.GetOrCreate<HoAttributeCompositeRenderGraphResources>().identityCoverageTexture;
             // 材质数值改从 SB 取（composite shader 走 AC 门面读 SB 的 Material / Reflection / Color）：
             // MB 的 reflectionMaterial / surfaceColor 在 PLR 这条链上退役。
             TextureHandle reflectionMaterialTexture = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>().reflectionTexture;

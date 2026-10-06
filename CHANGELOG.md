@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+- AC 统一描边继承：原有 GB outline draw 同时捕获原始 renderer owner、语义权重与可见覆盖；AC 产出独立视觉 identity/Selection，Geometry 查询仍绑定物理池。outline 使用复制的私有 depth/stencil 遵循 forward 写入状态，保留物理 GB 深度；修正稀疏 owner 附件误用 WriteAll 导致的历史残留。新增 native 角色重叠、语义贴图和整幅移动/stencil GPU 回归及能重现残留的负对照；未来 SurfaceBuffer 身份组覆写尚未实现，当前投影边界见 `计划/Ho-AC-OutlineInheritance-Contract.md`。
+
+- 修复 SC/SP 景深的轻微描边渗色：双线性颜色足迹逐邻点检查 CoC 和描边视觉深度，合焦描边不再借软 margin 渗入背景；保留失焦描边自然模糊及非零 MSAA 描边 coverage。每层显式发布描边有效性、声明并绑定 coverage 和 URP depth/normals fallback，诊断补齐描边深度与 DepthFog 需求。独立修正高度雾 UV 重复转换。新增仓库内出货 shader / 实际 GB→AC→SP GPU 回归，污染阈值收紧到 0.05%，取代旧 5% 检查的盲区；契约见 `后处理/DepthOfField.md`。
+
 - 修复 PLR 子相机与 AC 需求作用域：URP `RenderSingleCamera` 不触发 begin/end 回调，PLR 现在显式开始/结束独立渲染调用，避免复用冻结请求并保留父相机工作表。无 Selection 的 2D 相机使用 RenderGraph 初始化的 2D 黑图，避免首帧反射早于 XR 默认纹理初始化而产生 `temporary render texture not found (SetGlobalTexture)`。
 
 - AC/SB 按当前相机需求整池跳过语义产物：无需求时不分配四张 Selection、旧 SB lane 或关联 MSAA/W/V/status；身份、GB 查询与 SB 数值引用仍发布。原始 lane/W/V 调试可独立请求，DebugTile 的 SB 语义视图补齐登记。Selection 相机继续保留两套输入供近似 fallback。兼容路径释放停用的常驻语义 RT 并重置 target，面板显示实际声明的语义 RT 数量。

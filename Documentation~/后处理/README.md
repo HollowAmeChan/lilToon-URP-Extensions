@@ -128,7 +128,7 @@ RendererFeature 只安装渲染 Pass，实际层配置来自 Volume。相机类�
 - `EdgeLight`：需要角色全覆盖率与 GeometryBuffer normal/depth。
 - `Outline`：优先需要 GeometryBuffer normal/depth；GeometryBuffer coverage 为 0 的像素不参与边缘检测。
 - `DropShadow`：优先需要角色覆盖率；覆盖率不可用时兼容路径和 RenderGraph 使用内部 SubjectMask fallback。
-- `DepthOfField`：需要 GeometryBuffer 线性深度；coverage 无效时按远裁剪面处理，支持固定焦距和 Transform 目标焦点。
+- `DepthOfField`：主体用 GeometryBuffer 线性深度，描边 coverage 非零时用壳层视觉深度；每个双线性颜色邻点独立检查 CoC，coverage 无效时按远裁剪面处理。支持固定焦距和 Transform 目标焦点，详见 `DepthOfField.md` 的描边契约与 GPU 回归。
 - `PostLighting`：需要角色覆盖率与 GeometryBuffer normal/depth。
 - `SkyTyndall`：需要 GeometryBuffer normal/depth 和 Sky buffer；启用层遮罩时还需要角色覆盖率。
 - `CustomMaterial`：默认只做 layer blit，按用户材质或 shader 扩展。

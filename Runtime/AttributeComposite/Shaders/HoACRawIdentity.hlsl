@@ -1,0 +1,7 @@
+#ifndef HO_AC_RAW_IDENTITY_INCLUDED
+#define HO_AC_RAW_IDENTITY_INCLUDED
+TEXTURE2D_X(_HoACRawIdentityId0Texture);
+TEXTURE2D_X(_HoACRawIdentityId1Texture);
+TEXTURE2D_X(_HoACRawIdentityCoverageTexture);
+float _HoACRawInputsAvailable;
+#endif

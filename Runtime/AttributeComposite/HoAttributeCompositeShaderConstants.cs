@@ -45,6 +45,12 @@ namespace lilToon.URP.Extensions.AttributeComposite
         public static readonly int GeometryNormalDepthId = Shader.PropertyToID("_HoACGeometryNormalDepthTexture");
         public static readonly int OutlineCoverageId = Shader.PropertyToID("_HoACOutlineCoverageTexture");
         public static readonly int OutlineNormalDepthId = Shader.PropertyToID("_HoACOutlineNormalDepthTexture");
+        public static readonly int OutlineOwnerId = Shader.PropertyToID("_HoACOutlineOwnerTexture");
+        public static readonly int OutlineInheritanceActiveId = Shader.PropertyToID("_HoACOutlineInheritanceActive");
+        public static readonly int RawInputsAvailableId = Shader.PropertyToID("_HoACRawInputsAvailable");
+        public static readonly int OutlineSurfaceAvailableId = Shader.PropertyToID("_HoACOutlineSurfaceAvailable");
+        public static readonly int[] RawIdentityIds = { Shader.PropertyToID("_HoACRawIdentityId0Texture"), Shader.PropertyToID("_HoACRawIdentityId1Texture"), Shader.PropertyToID("_HoACRawIdentityCoverageTexture") };
+        public static readonly int[] RawSelectionIds = { Shader.PropertyToID("_HoACRawSelection0Texture"), Shader.PropertyToID("_HoACRawSelection1Texture"), Shader.PropertyToID("_HoACRawSelection2Texture"), Shader.PropertyToID("_HoACRawSelection3Texture") };
 
         public static readonly int[] SelectionTextureIds = BuildSelectionTextureIds();
 

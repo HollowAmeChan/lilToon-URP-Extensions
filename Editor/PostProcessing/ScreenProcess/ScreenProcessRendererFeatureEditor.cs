@@ -107,6 +107,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 DrawRequiredStatus("Mask Inputs (AC)", snapshot.RequiresCoverage, snapshot.CoverageAvailable);
                 DrawRequiredStatus("GeometryBuffer", snapshot.RequiresGeometryBuffer, snapshot.GeometryBufferAvailable);
                 DrawRequiredStatus("NormalDepth", snapshot.RequiresNormalDepth, snapshot.NormalDepthAvailable);
+                DrawRequiredStatus("Outline Visual Depth", snapshot.RequiresOutlineDepth, snapshot.OutlineDepthAvailable);
                 DrawRequiredStatus("SkyTexture", snapshot.RequiresSkyTexture, snapshot.SkyTextureAvailable);
 
                 EditorGUILayout.HelpBox(

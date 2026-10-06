@@ -91,8 +91,11 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
                     EditorGUILayout.LabelField("请求资源", demand.Resources + " / lanes 0x" + demand.LaneMask.ToString("X2"));
                     HoAttributeCompositeProductionSnapshot production = HoAttributeCompositeProductionDiagnostics.LastSnapshot;
                     if (production != null && production.Demand.RenderSequence == demand.RenderSequence)
+                    {
                         EditorGUILayout.LabelField("语义 RT", "Selection " + production.SelectionTextures + " / lane " + production.LegacySemanticTextures +
                             " / W,V,status " + production.CorrelatedStatisticTextures + " / MS捕获 " + production.CorrelatedCaptureTextures);
+                        EditorGUILayout.LabelField("描边继承",production.OutlineInheritanceStatus + " / visual identity " + production.VisualIdentityTextures);
+                    }
                 }
                 EditorGUILayout.LabelField("语义精度", HoSurfaceSemanticPrecisionDiagnostics.Status);
                 if (HoSurfaceSemanticPrecisionDiagnostics.Frame >= 0)

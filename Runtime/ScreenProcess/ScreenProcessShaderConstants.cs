@@ -41,5 +41,10 @@ namespace lilToon.URP.Extensions.PostProcessing
         public static readonly int MaskQueryId = Shader.PropertyToID("_LayerMaskQuery");
         public static readonly int CoverageValidId = Shader.PropertyToID("_lilHoSPCoverageValid");
         public static readonly int MaskTexelSizeId = Shader.PropertyToID(MaskTexelSizeName);
+        public static readonly int OutlineDepthValidId = Shader.PropertyToID("_lilHoSPOutlineDepthValid");
+        public static readonly int CameraDepthValidId = Shader.PropertyToID("_lilHoSPCameraDepthValid");
+        public static readonly int CameraNormalsValidId = Shader.PropertyToID("_lilHoSPCameraNormalsValid");
+        public static readonly int CameraDepthTextureId = Shader.PropertyToID("_CameraDepthTexture");
+        public static readonly int CameraNormalsTextureId = Shader.PropertyToID("_CameraNormalsTexture");
     }
 }

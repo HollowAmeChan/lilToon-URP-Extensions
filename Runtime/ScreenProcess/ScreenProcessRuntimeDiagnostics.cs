@@ -9,17 +9,20 @@ namespace lilToon.URP.Extensions.PostProcessing
         public readonly bool RequiresCoverage;
         public readonly bool RequiresNormalDepth;
         public readonly bool RequiresSkyTexture;
+        public readonly bool RequiresOutlineDepth;
 
         public ScreenProcessRuntimeResourceRequirements(
             int activeLayerCount,
             bool requiresCoverage,
             bool requiresNormalDepth,
-            bool requiresSkyTexture)
+            bool requiresSkyTexture,
+            bool requiresOutlineDepth = false)
         {
             ActiveLayerCount = activeLayerCount;
             RequiresCoverage = requiresCoverage;
             RequiresNormalDepth = requiresNormalDepth;
             RequiresSkyTexture = requiresSkyTexture;
+            RequiresOutlineDepth = requiresOutlineDepth;
         }
     }
 
@@ -41,6 +44,8 @@ namespace lilToon.URP.Extensions.PostProcessing
         public readonly bool NormalDepthAvailable;
         public readonly bool RequiresSkyTexture;
         public readonly bool SkyTextureAvailable;
+        public readonly bool RequiresOutlineDepth;
+        public readonly bool OutlineDepthAvailable;
         public readonly bool Ready;
         public readonly string Reason;
 
@@ -58,7 +63,8 @@ namespace lilToon.URP.Extensions.PostProcessing
             bool normalDepthAvailable,
             bool skyTextureAvailable,
             bool ready,
-            string reason)
+            string reason,
+            bool outlineDepthAvailable = false)
         {
             IsValid = isValid;
             FrameCount = frameCount;
@@ -71,12 +77,15 @@ namespace lilToon.URP.Extensions.PostProcessing
             RequiresCoverage = requirements.RequiresCoverage;
             RequiresNormalDepth = requirements.RequiresNormalDepth;
             RequiresSkyTexture = requirements.RequiresSkyTexture;
+            RequiresOutlineDepth = requirements.RequiresOutlineDepth;
+            OutlineDepthAvailable = outlineDepthAvailable;
             CoverageAvailable = coverageAvailable;
             NormalDepthAvailable = normalDepthAvailable;
             SkyTextureAvailable = skyTextureAvailable;
-            RequiresGeometryBuffer = RequiresNormalDepth || RequiresSkyTexture;
+            RequiresGeometryBuffer = RequiresNormalDepth || RequiresSkyTexture || RequiresOutlineDepth;
             GeometryBufferAvailable = (!RequiresNormalDepth || NormalDepthAvailable)
-                && (!RequiresSkyTexture || SkyTextureAvailable);
+                && (!RequiresSkyTexture || SkyTextureAvailable)
+                && (!RequiresOutlineDepth || OutlineDepthAvailable);
             Ready = ready;
             Reason = reason ?? string.Empty;
         }
@@ -114,6 +123,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             bool requiresCoverage = false;
             bool requiresNormalDepth = false;
             bool requiresSkyTexture = false;
+            bool requiresOutlineDepth = false;
 
             if (layers != null)
             {
@@ -139,8 +149,9 @@ namespace lilToon.URP.Extensions.PostProcessing
                         requiresCoverage = true;
                     }
                     if (layer.debugMask) continue; // Selection preview does not require the effect's physical inputs.
+                    requiresOutlineDepth |= isDepthOfField;
 
-                    if (isEdgeLight || isOutline || isDepthOfField || isPostLighting || isSkyTyndall)
+                    if (isEdgeLight || isOutline || isDepthOfField || isPostLighting || isSkyTyndall || layer.effect == ScreenProcessEffect.DepthFog)
                     {
                         requiresNormalDepth = true;
                     }
@@ -156,7 +167,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                 activeLayerCount,
                 requiresCoverage,
                 requiresNormalDepth,
-                requiresSkyTexture);
+                requiresSkyTexture,
+                requiresOutlineDepth);
         }
 
         internal static void PublishSkipped(Camera camera, string stage, string reason)
@@ -188,13 +200,15 @@ namespace lilToon.URP.Extensions.PostProcessing
             bool coverageAvailable,
             bool normalDepthAvailable,
             bool skyTextureAvailable,
-            string queryErrors = null)
+            string queryErrors = null,
+            bool outlineDepthAvailable = false)
         {
             bool ready = !backBufferActive
                 && cameraColorAvailable
                 && (!requirements.RequiresCoverage || coverageAvailable)
                 && (!requirements.RequiresNormalDepth || normalDepthAvailable)
                 && (!requirements.RequiresSkyTexture || skyTextureAvailable)
+                && (!requirements.RequiresOutlineDepth || outlineDepthAvailable)
                 && string.IsNullOrEmpty(queryErrors);
 
             currentSnapshot = new ScreenProcessRuntimeDiagnosticSnapshot(
@@ -211,13 +225,16 @@ namespace lilToon.URP.Extensions.PostProcessing
                 normalDepthAvailable,
                 skyTextureAvailable,
                 ready,
-                ready ? "输入有效。" : !string.IsNullOrEmpty(queryErrors) ? queryErrors : BuildMissingInputReason(
+                ready ? "输入有效。" : !string.IsNullOrEmpty(queryErrors) ? queryErrors :
+                    requirements.RequiresOutlineDepth && normalDepthAvailable && !outlineDepthAvailable
+                    ? "描边视觉深度不可用，景深无法修正描边覆盖区域。" : BuildMissingInputReason(
                     requirements,
                     backBufferActive,
                     cameraColorAvailable,
                     coverageAvailable,
                     normalDepthAvailable,
-                    skyTextureAvailable));
+                    skyTextureAvailable),
+                outlineDepthAvailable);
         }
 
         private static string BuildMissingInputReason(
