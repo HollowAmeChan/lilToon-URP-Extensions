@@ -24,6 +24,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         public RenderPassEvent passEvent = RenderPassEvent.BeforeRenderingOpaques;
 
         [InspectorName("Debug Pass Event")]
+        [HideInInspector] // Legacy serialized value; presentation is fixed by HoDebugRenderPass.
         public RenderPassEvent debugPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
 
         [InspectorName("Render Scale")]

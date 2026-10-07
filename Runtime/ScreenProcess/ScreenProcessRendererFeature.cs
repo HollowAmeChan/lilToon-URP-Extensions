@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.ObjectBuffer;
 using lilToon.URP.Extensions.AttributeComposite;
+using lilToon.URP.Extensions.Debugging;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -242,7 +243,8 @@ namespace lilToon.URP.Extensions.PostProcessing
                 ScreenProcessRenderPassEvents.ScreenProcessStack,
                 settings,
                 EnsureSubjectMaskMaterial());
-            renderer.EnqueuePass(pass);
+            if (layers.Exists(layer => layer.settings.debugMask)) pass.Enqueue(renderer);
+            else renderer.EnqueuePass(pass);
             EnqueueSemanticBufferReleasePass(renderer);
         }
 
@@ -476,7 +478,7 @@ namespace lilToon.URP.Extensions.PostProcessing
         }
     }
 
-    internal sealed class ScreenProcessPass : ScriptableRenderPass
+    internal sealed class ScreenProcessPass : HoDebugRenderPass
     {
         private static readonly List<ShaderTagId> SubjectMaskShaderTagIds = new List<ShaderTagId>
         {
@@ -587,6 +589,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         public void ReleaseCompatibilityResources()
         {
+            ReleaseDebugResources();
             tempTextureA?.Release();
             tempTextureB?.Release();
             subjectMaskTexture?.Release();
@@ -609,6 +612,12 @@ namespace lilToon.URP.Extensions.PostProcessing
                 return;
             }
 
+            if (runtimeLayers.Exists(layer => layer.settings.debugMask)) base.OnCameraSetup(cmd, ref renderingData);
+            else
+            {
+                ConfigureTarget(cameraColorTarget);
+                ConfigureClear(ClearFlag.None, Color.clear);
+            }
             RenderTextureDescriptor descriptor = renderingData.cameraData.cameraTargetDescriptor;
             descriptor.depthBufferBits = 0;
             descriptor.depthStencilFormat = GraphicsFormat.None;
@@ -638,6 +647,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             CommandBuffer cmd = CommandBufferPool.Get();
             bool maskInputsAvailable = true;
             int writtenLayerCount = 0;
+            bool capturedDebugMask = false;
             var queryErrors = new List<string>();
             using (new ProfilingScope(cmd, screenProcessProfilingSampler))
             {
@@ -655,7 +665,9 @@ namespace lilToon.URP.Extensions.PostProcessing
                         continue;
                     }
 
-                    RTHandle destination = writeToA ? tempTextureA : tempTextureB;
+                    if (runtimeLayer.settings.debugMask && capturedDebugMask) continue;
+                    capturedDebugMask |= runtimeLayer.settings.debugMask;
+                    RTHandle destination = runtimeLayer.settings.debugMask ? DebugTarget : (writeToA ? tempTextureA : tempTextureB);
                     float dynamicFocusDistance = ResolveDepthOfFieldFocusDistance(runtimeLayer.settings, renderingData.cameraData.camera);
                     ApplyLayerProperties(runtimeLayer.settings, runtimeLayer.material, dynamicFocusDistance);
                     var geometry = HoGeometryBufferPass.CompatibilityTargets;
@@ -706,9 +718,13 @@ namespace lilToon.URP.Extensions.PostProcessing
                     }
 
                     Blitter.BlitCameraTexture(cmd, source, destination, runtimeLayer.material, Mathf.Max(0, runtimeLayer.settings.passIndex));
-                    source = destination;
-                    writeToA = !writeToA;
-                    hasWritten = true;
+                    if (runtimeLayer.settings.debugMask) PublishCompatibility(renderingData.cameraData.camera);
+                    else
+                    {
+                        source = destination;
+                        writeToA = !writeToA;
+                        hasWritten = true;
+                    }
                     writtenLayerCount++;
                 }
 
@@ -862,6 +878,7 @@ namespace lilToon.URP.Extensions.PostProcessing
             }
 
             int writtenLayerCount = 0;
+            bool capturedDebugMask = false;
             var queryErrors = new List<string>();
             bool maskInputsAvailable = true;
             for (int i = 0; i < runtimeLayers.Count; i++)
@@ -872,12 +889,14 @@ namespace lilToon.URP.Extensions.PostProcessing
                     continue;
                 }
 
+                if (runtimeLayer.settings.debugMask && capturedDebugMask) continue;
+                capturedDebugMask |= runtimeLayer.settings.debugMask;
                 TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
                 destinationDesc.name = $"_lilScreenProcessLayer{writtenLayerCount}";
                 destinationDesc.clearBuffer = false;
                 destinationDesc.depthBufferBits = 0;
                 EnsureHdrTextureDesc(ref destinationDesc);
-                TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
+                TextureHandle destination = runtimeLayer.settings.debugMask ? CreateDebugTarget(renderGraph, frameData) : renderGraph.CreateTexture(destinationDesc);
 
                 using (var builder = renderGraph.AddRasterRenderPass<PassData>($"{screenProcessPassName} Layer {writtenLayerCount}", out PassData passData, screenProcessProfilingSampler))
                 {
@@ -1015,7 +1034,7 @@ namespace lilToon.URP.Extensions.PostProcessing
                     });
                 }
 
-                source = destination;
+                if (!runtimeLayer.settings.debugMask) source = destination;
                 writtenLayerCount++;
             }
 

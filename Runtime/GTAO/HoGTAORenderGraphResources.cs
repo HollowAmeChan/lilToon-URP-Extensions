@@ -12,11 +12,14 @@ namespace lilToon.URP.Extensions.GTAO
     {
         public TextureHandle aoTexture = TextureHandle.nullHandle;
 
+        public TextureHandle[] debugViews = new TextureHandle[5];
+
         public bool HasAO => aoTexture.IsValid();
 
         public override void Reset()
         {
             aoTexture = TextureHandle.nullHandle;
+            System.Array.Clear(debugViews, 0, debugViews.Length);
         }
     }
 }

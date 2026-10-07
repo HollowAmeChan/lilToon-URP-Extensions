@@ -34,7 +34,6 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 viewId,
                 shortName,
                 (int)mode,
-                HoDebugViewRenderKind.PlanarReflection,
                 HoPlanarReflectionShaderConstants.CompositeShaderName,
                 ShaderAssetPath,
                 true,

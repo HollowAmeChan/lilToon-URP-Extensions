@@ -1,16 +1,19 @@
 // Compatibility-mode hooks are kept for projects that still run URP's non-RenderGraph path.
 #pragma warning disable CS0618, CS0672
 
+using lilToon.URP.Extensions.Debugging;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
 using lilToon.URP.Extensions.AttributeComposite;
 using lilToon.URP.Extensions.GeometryBuffer;
+using lilToon.URP.Extensions.ObjectBuffer;
+using lilToon.URP.Extensions.SurfaceBuffer;
 
 namespace lilToon.URP.Extensions.SubsurfaceScattering
 {
-    internal sealed class HoSubsurfaceScatteringDebugPass : ScriptableRenderPass
+    internal sealed class HoSubsurfaceScatteringDebugPass : HoDebugRenderPass
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-SubsurfaceScattering Debug");
         private RTHandle cameraColorTarget;
@@ -20,11 +23,14 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
         private sealed class PassData
         {
+            public Vector2Int debugSize;
             public TextureHandle cameraColor;
             public TextureHandle sssTexture;
             public TextureHandle transmissionTexture;
             public TextureHandle normalDepthTexture;
             public Material material;
+            public TextureHandle id0, coverage, classification, surfaceMaterial, owner, surfaceColor;
+            public bool surfaceAvailable;
             public Vector4 sssParams;
             public Vector4 gateParams;
             public Vector4 color;
@@ -60,14 +66,15 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
 
         public void ReleaseCompatibilityResources()
         {
+            ReleaseDebugResources();
             cameraColorTarget = null;
-            renderTargets?.Release();
+
         }
 
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
+            base.OnCameraSetup(cmd, ref renderingData);
             renderTargets.ReAllocateCompositeSource(renderingData.cameraData.cameraTargetDescriptor);
-            ConfigureTarget(cameraColorTarget);
         }
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
@@ -84,9 +91,12 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.SourceTextureId, renderTargets.SourceTexture.nameID);
                 cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.TransmissionTextureId, renderTargets.TransmissionTexture.nameID);
                 Blitter.BlitCameraTexture(cmd, cameraColorTarget, renderTargets.CompositeSourceTexture, 0, true);
-                Blitter.BlitCameraTexture(cmd, renderTargets.CompositeSourceTexture, cameraColorTarget, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, material, 0);
+                cmd.SetGlobalTexture("_BlitTexture", renderTargets.CompositeSourceTexture.nameID);
+                CoreUtils.SetRenderTarget(cmd, DebugTarget);
+                HoDebugGrid.Draw(CommandBufferHelpers.GetRasterCommandBuffer(cmd), material, (int)settings.debugMode, HoSubsurfaceScatteringShaderConstants.DebugParamsId, HoSubsurfaceScatteringDebugViewInfo.Views, new Vector2Int(DebugTarget.rt.width, DebugTarget.rt.height), CreateDebugParams(settings));
             }
 
+            PublishCompatibility(renderingData.cameraData.camera);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
@@ -115,16 +125,23 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 return;
             }
 
-            TextureDesc destinationDesc = renderGraph.GetTextureDesc(cameraColor);
-            destinationDesc.name = "_lilHoSSSDebugColor";
-            destinationDesc.clearBuffer = false;
-            destinationDesc.depthBufferBits = 0;
-            TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
+            TextureHandle destination = CreateDebugTarget(renderGraph, frameData);
             HoSubsurfaceScatteringProfileShaderData.Set(material, settings);
 
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-SubsurfaceScattering Debug", out PassData passData, ProfilingSampler))
             {
+                passData.debugSize = DebugSize(renderGraph, destination);
                 passData.cameraColor = cameraColor;
+                var surface = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
+                passData.id0 = acResources.identityId0Texture;
+                passData.coverage = acResources.identityCoverageTexture;
+                passData.classification = surface.classificationTexture;
+                passData.surfaceMaterial = surface.materialTexture;
+                passData.owner = surface.ownerTexture;
+                passData.surfaceColor = surface.colorTexture;
+                passData.surfaceAvailable = surface.HasRequiredTextures;
+                foreach (var texture in new[] { passData.id0, passData.coverage, passData.classification, passData.surfaceMaterial, passData.owner, passData.surfaceColor })
+                    HoAttributeCompositeBindings.Read(builder, texture);
                 passData.sssTexture = sssTexture;
                 passData.transmissionTexture = transmissionTexture;
                 passData.normalDepthTexture = geometryResources.normalDepthTexture;
@@ -141,10 +158,17 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 builder.UseTexture(sssTexture, AccessFlags.Read);
                 builder.UseTexture(transmissionTexture, AccessFlags.Read);
                 builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
-                builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
                 builder.AllowGlobalStateModification(true);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
+                    data.material.SetFloat(HoSurfaceBufferShaderConstants.ActiveId, data.surfaceAvailable ? 1 : 0);
+                    if (data.id0.IsValid()) context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, data.id0);
+                    if (data.coverage.IsValid()) context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.CoverageTextureId, data.coverage);
+                    if (data.classification.IsValid()) context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ClassificationTextureId, data.classification);
+                    if (data.surfaceMaterial.IsValid()) context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.MaterialTextureId, data.surfaceMaterial);
+                    if (data.owner.IsValid()) context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.OwnerTextureId, data.owner);
+                    if (data.surfaceColor.IsValid()) context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ColorTextureId, data.surfaceColor);
                     data.material.SetVector(HoSubsurfaceScatteringShaderConstants.ParamsId, data.sssParams);
                     data.material.SetVector(HoSubsurfaceScatteringShaderConstants.GateParamsId, data.gateParams);
                     data.material.SetVector(HoSubsurfaceScatteringShaderConstants.ColorId, data.color);
@@ -156,11 +180,11 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                     context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.TransmissionTextureId, data.transmissionTexture);
                     context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
                     // 表面数值不再绑 MB 的两张图：调试 shader 已改读 AC 门面（SB 的全局名由 SB 的 pass 绑）。
-                    Blitter.BlitTexture(context.cmd, data.cameraColor, new Vector4(1, 1, 0, 0), data.material, 0);
+                    context.cmd.SetGlobalTexture("_BlitTexture", data.cameraColor);
+                    HoDebugGrid.Draw(context.cmd, data.material, (int)data.debugParams.x, HoSubsurfaceScatteringShaderConstants.DebugParamsId, HoSubsurfaceScatteringDebugViewInfo.Views, data.debugSize, data.debugParams);
                 });
             }
 
-            resourceData.cameraColor = destination;
         }
 
         private static void SetMaterialProperties(Material material, HoSubsurfaceScatteringSettings settings)

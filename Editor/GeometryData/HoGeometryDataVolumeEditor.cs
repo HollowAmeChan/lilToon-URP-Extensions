@@ -9,14 +9,13 @@ namespace lilToon.URP.Extensions.Editor.GeometryData
     internal sealed class HoGeometryDataVolumeEditor : VolumeComponentEditor
     {
         private bool showRuntime = true, showDebug;
-        private SerializedDataParameter enable, mode, scene, game, layers, range, timing;
+        private SerializedDataParameter enable, mode, scene, game, layers, range;
         public override void OnEnable()
         {
             var fetcher = new PropertyFetcher<HoGeometryDataVolume>(serializedObject);
             enable = Unpack(fetcher.Find(x => x.enable)); mode = Unpack(fetcher.Find(x => x.debugMode));
             scene = Unpack(fetcher.Find(x => x.debugInSceneView)); game = Unpack(fetcher.Find(x => x.debugInGameView));
             layers = Unpack(fetcher.Find(x => x.debugLayerMask)); range = Unpack(fetcher.Find(x => x.debugMaxValue));
-            timing = Unpack(fetcher.Find(x => x.debugPassEvent));
         }
         public override void OnInspectorGUI()
         {
@@ -33,15 +32,14 @@ namespace lilToon.URP.Extensions.Editor.GeometryData
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 PropertyField(mode, new GUIContent("调试模式"));
-                var selected = (HoGeometryDataDebugMode)mode.value.enumValueIndex;
+                var selected = (HoGeometryDataDebugMode)mode.value.intValue;
                 if (selected != HoGeometryDataDebugMode.Off) EditorGUILayout.HelpBox(Describe(selected), MessageType.Info);
                 PropertyField(scene, new GUIContent("Scene 视图")); PropertyField(game, new GUIContent("Game 视图"));
                 PropertyField(layers, new GUIContent("预览 Layer Mask"));
-                if (selected >= HoGeometryDataDebugMode.TensionStretch && selected <= HoGeometryDataDebugMode.TensionAngular)
+                if (selected == HoGeometryDataDebugMode.All || (selected >= HoGeometryDataDebugMode.TensionStretch && selected <= HoGeometryDataDebugMode.TensionAngular))
                     PropertyField(range, new GUIContent("热图满量程"));
-                PropertyField(timing, new GUIContent("预览绘制时机"));
                 if (selected != HoGeometryDataDebugMode.Off)
-                    EditorGUILayout.HelpBox("预览替换所选视图画面，直接画几何，跳过材质裁剪与描边位移。后续屏幕处理仍可能处理预览；数据源的准备状态和失败原因在组件与 Feature 中查看。", MessageType.None);
+                    EditorGUILayout.HelpBox("预览替换所选视图画面，直接画几何，跳过材质裁剪与描边位移。预览在最终后处理之后显示；数据源的准备状态和失败原因在组件与 Feature 中查看。", MessageType.None);
             }
         }
         private static string Describe(HoGeometryDataDebugMode mode)

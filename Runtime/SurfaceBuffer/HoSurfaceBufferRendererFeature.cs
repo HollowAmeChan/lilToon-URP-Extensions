@@ -50,6 +50,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             semanticPass = new HoSurfaceBufferSemanticPass();
             correlatedPass?.Dispose();
             correlatedPass = new HoSurfaceBufferCorrelatedSemanticPass();
+            debugPass?.ReleaseDebugResources();
             debugPass = new HoSurfaceBufferDebugPass();
             if (!registeredCameraReset)
             {
@@ -165,16 +166,19 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 if (debugMaterial != null)
                 {
                     HoACDemandResources demand = HoACDemandResources.Identity;
-                    if (activeSettings.debugMode == HoSurfaceBufferDebugMode.SemanticLanes || activeSettings.debugMode == HoSurfaceBufferDebugMode.SemanticOwner)
+                    if (activeSettings.debugMode == HoSurfaceBufferDebugMode.All)
+                        demand |= HoACDemandResources.LegacySemantic | HoACDemandResources.SurfaceAttributes | HoACDemandResources.SurfaceColor | HoACDemandResources.SurfaceNormal;
+                    else if (activeSettings.debugMode == HoSurfaceBufferDebugMode.SemanticLanes || activeSettings.debugMode == HoSurfaceBufferDebugMode.SemanticOwner)
                         demand |= HoACDemandResources.LegacySemantic;
                     else demand |= HoACDemandResources.SurfaceAttributes | HoACDemandResources.SurfaceColor | HoACDemandResources.SurfaceNormal;
                     HoAttributeCompositeConsumerRegistry.DeclareForCamera(renderingData.cameraData.camera, this, "SurfaceBuffer Debug",
                         System.Array.Empty<HoACQueryDescriptor>(), null, demand, 0,
                         (demand & HoACDemandResources.LegacySemantic) != 0 ? 255u : 0u);
                     debugPass?.Setup(activeSettings, debugMaterial, null);
-                    renderer.EnqueuePass(debugPass);
+                    debugPass.Enqueue(renderer);
                 }
             }
+            else debugPass?.ReleaseDebugResources();
         }
 
         protected override void Dispose(bool disposing)

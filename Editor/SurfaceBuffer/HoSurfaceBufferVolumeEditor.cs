@@ -34,7 +34,7 @@ namespace lilToon.URP.Extensions.Editor.SurfaceBuffer
             PropertyField(debugMode);
 
             // 只画当前模式的说明：整张表铺出来就等于把说明又挪回下拉里。
-            string description = DescribeDebugMode((HoSurfaceBufferDebugMode)debugMode.value.enumValueIndex);
+            string description = DescribeDebugMode((HoSurfaceBufferDebugMode)debugMode.value.intValue);
             if (!string.IsNullOrEmpty(description))
             {
                 EditorGUILayout.HelpBox(description, MessageType.None);
@@ -49,6 +49,8 @@ namespace lilToon.URP.Extensions.Editor.SurfaceBuffer
         {
             switch (mode)
             {
+                case HoSurfaceBufferDebugMode.All:
+                    return "平铺所有 SB 视图，沿用各单视图的解码与颜色；在最终后处理之后显示。";
                 case HoSurfaceBufferDebugMode.Color:
                     return "写入的着色色：lilToon 的最终颜色，未过后处理。";
                 case HoSurfaceBufferDebugMode.Emission:

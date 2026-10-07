@@ -58,6 +58,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
         /// </summary>
         public RenderPassEvent passEvent = RenderPassEvent.BeforeRenderingOpaques;
 
+        [HideInInspector] // Legacy serialized value; presentation is fixed by HoDebugRenderPass.
         public RenderPassEvent debugPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
 
         [NonSerialized]

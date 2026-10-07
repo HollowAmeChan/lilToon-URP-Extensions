@@ -25,6 +25,7 @@ namespace lilToon.URP.Extensions.ShadowCast
             settings?.Validate();
             RegisterCameraReset();
             pass = new HoShadowCastPass();
+            debugPass?.ReleaseDebugResources();
             debugPass = new HoShadowCastDebugPass();
         }
 
@@ -81,7 +82,7 @@ namespace lilToon.URP.Extensions.ShadowCast
                 if (debugMaterialCache.Ensure())
                 {
                     debugPass.SetupRenderGraph(config, debugMaterialCache.Material);
-                    renderer.EnqueuePass(debugPass);
+                    debugPass.Enqueue(renderer);
                 }
             }
             else

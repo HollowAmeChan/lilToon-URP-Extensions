@@ -1,5 +1,6 @@
 #pragma warning disable CS0618, CS0672
 using Unity.Collections;
+using lilToon.URP.Extensions.Debugging;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -20,7 +21,6 @@ namespace lilToon.URP.Extensions.CharacterShadow
         /// </summary>
         public static string LastCullStatus = "";
 
-
         private HoCharacterShadowPass pass;
         private HoCharacterShadowDebugPass debugPass;
         private Material debugMaterial;
@@ -29,6 +29,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
         {
             pass?.Dispose();
             pass = new HoCharacterShadowPass();
+            debugPass?.ReleaseDebugResources();
             debugPass = new HoCharacterShadowDebugPass();
             RenderPipelineManager.beginCameraRendering -= ResetCamera;
             RenderPipelineManager.beginCameraRendering += ResetCamera;
@@ -86,7 +87,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
             {
                 int debugCharacter = volume != null && volume.debugCharacter.overrideState ? volume.debugCharacter.value : settings.debugCharacter;
                 debugPass.Setup(debugMaterial, debugMode, debugCharacter);
-                renderer.EnqueuePass(debugPass);
+                debugPass.Enqueue(renderer);
             }
         }
 
@@ -97,6 +98,7 @@ namespace lilToon.URP.Extensions.CharacterShadow
             pass?.Dispose();
             CoreUtils.Destroy(debugMaterial);
             Shader.SetGlobalFloat("_HoCSActive", 0);
+            debugPass?.ReleaseDebugResources();
         }
     }
 
@@ -464,11 +466,11 @@ namespace lilToon.URP.Extensions.CharacterShadow
         }
     }
 
-    internal sealed class HoCharacterShadowDebugPass : ScriptableRenderPass
+    internal sealed class HoCharacterShadowDebugPass : HoDebugRenderPass
     {
         private Material material;
         private int mode, character;
-        private sealed class PassData { internal Material material; internal TextureHandle atlas; internal int mode, character; }
+        private sealed class PassData { internal Material material; internal TextureHandle atlas; internal int mode, character; internal Vector2Int size; }
         internal HoCharacterShadowDebugPass() { renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing; }
         internal void Setup(Material value, HoCharacterShadowDebugMode debugMode, int slice)
         { material = value; mode = (int)debugMode; character = slice; }
@@ -477,17 +479,18 @@ namespace lilToon.URP.Extensions.CharacterShadow
         {
             TextureHandle atlas = frameData.GetOrCreate<HoCharacterShadowResources>().atlas;
             if (!atlas.IsValid()) return;
-            var resources = frameData.Get<UniversalResourceData>();
+            TextureHandle destination = CreateDebugTarget(graph, frameData);
             using (var builder = graph.AddRasterRenderPass<PassData>("Ho-CS Atlas Debug", out var data))
             {
-                data.atlas = atlas; data.material = material; data.mode = mode; data.character = character;
+                data.atlas = atlas; data.material = material; data.mode = mode; data.character = character; data.size = DebugSize(graph, destination);
                 builder.UseTexture(atlas, AccessFlags.Read);
-                builder.SetRenderAttachment(resources.activeColorTexture, 0, AccessFlags.Write);
+                builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
                 builder.SetRenderFunc(static (PassData d, RasterGraphContext ctx) =>
                 {
                     d.material.SetInt("_HoCSDebugMode", d.mode);
                     d.material.SetInt("_HoCSDebugCharacter", d.character);
-                    Blitter.BlitTexture(ctx.cmd, d.atlas, new Vector4(1, 1, 0, 0), d.material, 0);
+                    ctx.cmd.SetGlobalTexture("_BlitTexture", d.atlas);
+                    HoDebugGrid.Draw(ctx.cmd, d.material, d.mode, Shader.PropertyToID("_HoCSDebugMode"), HoCharacterShadowDebugViewInfo.Views, d.size, integerMode: true);
                 });
             }
         }
@@ -497,12 +500,13 @@ namespace lilToon.URP.Extensions.CharacterShadow
             var atlas = Shader.GetGlobalTexture("_HoCSAtlas");
             if (atlas == null || Shader.GetGlobalFloat("_HoCSActive") < 0.5f) return;
             var cmd = CommandBufferPool.Get("Ho-CS Atlas Debug");
-            CoreUtils.SetRenderTarget(cmd, renderingData.cameraData.renderer.cameraColorTargetHandle);
+            CoreUtils.SetRenderTarget(cmd, DebugTarget);
             material.SetInt("_HoCSDebugMode", mode);
             material.SetInt("_HoCSDebugCharacter", character);
             cmd.SetGlobalTexture("_BlitTexture", atlas);
             cmd.SetGlobalVector("_BlitScaleBias", new Vector4(1, 1, 0, 0));
-            cmd.DrawProcedural(Matrix4x4.identity, material, 0, MeshTopology.Triangles, 3);
+            HoDebugGrid.Draw(CommandBufferHelpers.GetRasterCommandBuffer(cmd), material, mode, Shader.PropertyToID("_HoCSDebugMode"), HoCharacterShadowDebugViewInfo.Views, new Vector2Int(DebugTarget.rt.width, DebugTarget.rt.height), integerMode: true);
+            PublishCompatibility(renderingData.cameraData.camera);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }

@@ -49,6 +49,8 @@ namespace lilToon.URP.Extensions.GTAO
         // already selected the previously-added Temporal mode.
         [InspectorName("Temporal Disocclusion"), Tooltip("输出历史重投影后的 disocclusion/rejection 掩码：稳定历史为白色，拒绝区域为红色。")]
         Temporal = 5,
+        [UnityEngine.InspectorName("All")]
+        All = 255
     }
 
     [Serializable]

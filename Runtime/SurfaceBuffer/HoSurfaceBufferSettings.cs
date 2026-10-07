@@ -39,7 +39,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         [InspectorName("Semantic Lanes")]
         SemanticLanes,
         [InspectorName("Emission")]
-        Emission = 10
+        Emission = 10,
+        [UnityEngine.InspectorName("All")]
+        All = 255
     }
 
     [Serializable]
@@ -74,6 +76,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         /// <summary>必须排在 OB 之后（AC 要用 OB 层 0 的身份校验 owner）。</summary>
         public RenderPassEvent passEvent = RenderPassEvent.BeforeRenderingOpaques;
 
+        [HideInInspector] // Legacy serialized value; presentation is fixed by HoDebugRenderPass.
         public RenderPassEvent debugPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
 
         [NonSerialized]

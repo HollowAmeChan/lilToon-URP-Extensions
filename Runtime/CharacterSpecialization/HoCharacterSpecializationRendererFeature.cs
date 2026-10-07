@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.AttributeComposite;
 using lilToon.URP.Extensions.ObjectBuffer;
+using lilToon.URP.Extensions.Debugging;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -112,7 +113,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 faceHairDiffuseMaterial,
                 subjectOutlineMaterial,
                 objectSemanticMaterial);
-            renderer.EnqueuePass(pass);
+            if (activeSettings.debugMode != HoCharacterSpecializationDebugMode.Off) pass.Enqueue(renderer);
+            else renderer.EnqueuePass(pass);
         }
 
         protected override void Dispose(bool disposing)
@@ -289,7 +291,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         }
     }
 
-    internal sealed partial class HoCharacterSpecializationPass : ScriptableRenderPass
+    internal sealed partial class HoCharacterSpecializationPass : HoDebugRenderPass
     {
         private readonly HoCharacterReferenceFrameBuffer referenceFrameBuffer = new HoCharacterReferenceFrameBuffer();
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-CharacterSpecialization");
@@ -376,6 +378,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
         public void ReleaseCompatibilityResources()
         {
+            ReleaseDebugResources();
             tempTexture?.Release();
             renderTargets?.Release();
             cameraColorTarget = null;
@@ -394,6 +397,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 return;
             }
 
+            if (settings.debugMode != HoCharacterSpecializationDebugMode.Off) base.OnCameraSetup(cmd, ref renderingData);
+            else
+            {
+                ConfigureTarget(cameraColorTarget);
+                ConfigureClear(ClearFlag.None, Color.clear);
+            }
             renderTargets.ReAllocateIfNeeded(
                 renderingData.cameraData.cameraTargetDescriptor,
                 settings,
@@ -475,7 +484,17 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 }
 
                 Blitter.BlitCameraTexture(cmd, cameraColorTarget, tempTexture, 0, true);
-                Blitter.BlitCameraTexture(cmd, tempTexture, cameraColorTarget, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, compositeMaterial, 0);
+                if (settings.debugMode != HoCharacterSpecializationDebugMode.Off)
+                {
+                    CoreUtils.SetRenderTarget(cmd, DebugTarget);
+                    cmd.SetGlobalTexture("_BlitTexture", tempTexture.nameID);
+                    Vector4 options = compositeMaterial.GetVector(HoCharacterSpecializationShaderConstants.OptionsId);
+                    HoDebugGrid.Draw(CommandBufferHelpers.GetRasterCommandBuffer(cmd), compositeMaterial, (int)settings.debugMode,
+                        HoCharacterSpecializationShaderConstants.OptionsId, HoCharacterSpecializationDebugViewInfo.Views,
+                        new Vector2Int(DebugTarget.rt.width, DebugTarget.rt.height), options, modeComponent: 3);
+                    PublishCompatibility(renderingData.cameraData.camera);
+                }
+                else Blitter.BlitCameraTexture(cmd, tempTexture, cameraColorTarget, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, compositeMaterial, 0);
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -893,7 +912,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             destinationDesc.clearBuffer = false;
             destinationDesc.depthBufferBits = 0;
             EnsureHdrTextureDesc(ref destinationDesc);
-            TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
+            TextureHandle destination = settings.debugMode == HoCharacterSpecializationDebugMode.Off
+                ? renderGraph.CreateTexture(destinationDesc) : CreateDebugTarget(renderGraph, frameData);
 
             // 语义位平面是合成本趟的常备输入：眼透 / 前发投影 / 脸色扩散 / 两条轮廓以及它们的
             // debug 视图都会采它，所以不做逐效果门控（它一定已经产出，上面已经检查过）。
@@ -901,10 +921,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             // 别的时候不必让它活到最后一趟（RDG 的别名空间）。
             bool faceHairDiffuseSourceColorSampled =
                 settings.debugMode == HoCharacterSpecializationDebugMode.FaceHairDiffuseSourceMask
-                || settings.debugMode == HoCharacterSpecializationDebugMode.FaceHairDiffuseCapturedFaceLit;
+                || settings.debugMode == HoCharacterSpecializationDebugMode.FaceHairDiffuseCapturedFaceLit
+                || settings.debugMode == HoCharacterSpecializationDebugMode.All;
 
             using (var builder = renderGraph.AddRasterRenderPass<CompositePassData>("Ho-CharacterSpecialization Composite", out CompositePassData passData, ProfilingSampler))
             {
+                passData.debugSize = DebugSize(renderGraph, destination);
                 passData.source = source;
                 passData.identityId0Texture = acResources.identityId0Texture;
                 passData.referenceFrames = renderGraph.ImportBuffer(referenceFrameBuffer.Capture());
@@ -1072,11 +1094,17 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     context.cmd.SetGlobalBuffer(HoCharacterReferenceFrameBuffer.IdentityMapId, data.referenceFrameIdentities);
                     context.cmd.SetGlobalInt(HoCharacterReferenceFrameBuffer.FrameCountId, data.referenceFrameCount);
                     context.cmd.SetGlobalVector(HoCharacterReferenceFrameBuffer.ViewPositionId, data.observerPosition);
-                    Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
+                    if (data.options.w > 0)
+                    {
+                        context.cmd.SetGlobalTexture("_BlitTexture", data.source);
+                        HoDebugGrid.Draw(context.cmd, data.material, (int)data.options.w, HoCharacterSpecializationShaderConstants.OptionsId,
+                            HoCharacterSpecializationDebugViewInfo.Views, data.debugSize, data.options, modeComponent: 3);
+                    }
+                    else Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                 });
             }
 
-            resourceData.cameraColor = destination;
+            if (settings.debugMode == HoCharacterSpecializationDebugMode.Off) resourceData.cameraColor = destination;
         }
 
         // 捕获支（CaptureFace / CaptureEye 两趟几何 pass + captureDepth + eyeData）的消费者有两个：
@@ -1114,6 +1142,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
             switch (settings.debugMode)
             {
+                case HoCharacterSpecializationDebugMode.All:
                 case HoCharacterSpecializationDebugMode.EyeColor:
                 case HoCharacterSpecializationDebugMode.EyeAlpha:
                 case HoCharacterSpecializationDebugMode.EyeRevealMask:

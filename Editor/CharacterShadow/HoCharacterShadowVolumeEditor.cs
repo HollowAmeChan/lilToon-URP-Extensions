@@ -114,11 +114,15 @@ namespace lilToon.URP.Extensions.Editor.CharacterShadow
             {
                 DrawParameter(debugMode, "调试模式");
 
-                int mode = debugMode != null && debugMode.value != null ? debugMode.value.enumValueIndex : 0;
+                int mode = debugMode != null && debugMode.value != null ? debugMode.value.intValue : 0;
                 string desc = null;
                 if (mode == (int)HoCharacterShadowDebugMode.Atlas)
                 {
                     desc = "整张图集：所有接收域的 tile 排一张图，画光空间线性深度（越亮越远）。";
+                }
+                else if (mode == (int)HoCharacterShadowDebugMode.All)
+                {
+                    desc = "平铺整张图集与所选角色 tile，在最终后处理之后显示。";
                 }
                 else if (mode == (int)HoCharacterShadowDebugMode.Character)
                 {

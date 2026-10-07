@@ -1,5 +1,7 @@
 #pragma warning disable CS0618, CS0672
 
+using lilToon.URP.Extensions.Debugging;
+using lilToon.URP.Extensions.ObjectBuffer;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
@@ -11,7 +13,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
     /// SB 的调试直出：六张数值图、owner 与语义视图。
     /// **owner 视图是"对齐有没有出问题"的唯一入口**：绿 = owner 与 OB 层 0 一致，红 = 不一致（没人写也算）。
     /// </summary>
-    internal sealed class HoSurfaceBufferDebugPass : ScriptableRenderPass
+    internal sealed class HoSurfaceBufferDebugPass : HoDebugRenderPass
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-SurfaceBuffer Debug");
         private static readonly int BlitScaleBiasId = Shader.PropertyToID("_BlitScaleBias");
@@ -22,6 +24,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         private sealed class PassData
         {
+            public Vector2Int debugSize;
             public Material material;
             public HoSurfaceBufferDebugMode debugMode;
             public TextureHandle colorTexture;
@@ -32,6 +35,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             public TextureHandle classificationTexture;
             public TextureHandle ownerTexture;
             /// <summary>语义 lane（单采样）：`SemanticOwner` / `SemanticLanes` 两个视图要读。</summary>
+            public TextureHandle objectId0;
+            public bool semanticAvailable;
             public TextureHandle semanticOwnerTexture;
             public TextureHandle[] semanticLaneTextures;
         }
@@ -41,16 +46,13 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             this.settings = settings;
             this.debugMaterial = debugMaterial;
             this.cameraColorTarget = cameraColorTarget;
-            renderPassEvent = settings != null ? settings.debugPassEvent : RenderPassEvent.AfterRenderingPostProcessing;
+            renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
             ConfigureInput(ScriptableRenderPassInput.None);
-            if (cameraColorTarget != null)
-            {
-                ConfigureTarget(cameraColorTarget);
-            }
         }
 
         public void ReleaseCompatibilityResources()
         {
+            ReleaseDebugResources();
             cameraColorTarget = null;
         }
 
@@ -66,9 +68,10 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             {
                 debugMaterial.SetFloat(HoSurfaceBufferShaderConstants.DebugModeId, (float)settings.debugMode);
                 debugMaterial.SetVector(BlitScaleBiasId, new Vector4(1, 1, 0, 0));
-                CoreUtils.DrawFullScreen(cmd, debugMaterial, shaderPassId: 0);
+                HoDebugGrid.Draw(CommandBufferHelpers.GetRasterCommandBuffer(cmd), debugMaterial, (int)settings.debugMode, HoSurfaceBufferShaderConstants.DebugModeId, HoSurfaceBufferDebugViewInfo.Views, new Vector2Int(DebugTarget.rt.width, DebugTarget.rt.height));
             }
 
+            PublishCompatibility(renderingData.cameraData.camera);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
@@ -82,14 +85,16 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             HoSurfaceBufferRenderGraphResources resources = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
-            TextureHandle destination = resourceData.activeColorTexture;
-            if (!destination.IsValid() || !resources.HasRequiredTextures)
+            if (!resources.HasRequiredTextures)
             {
                 return;
             }
 
+            TextureHandle destination = CreateDebugTarget(renderGraph, frameData);
+
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-SurfaceBuffer Debug", out PassData passData, ProfilingSampler))
             {
+                passData.debugSize = DebugSize(renderGraph, destination);
                 passData.material = debugMaterial;
                 passData.debugMode = settings.debugMode;
                 passData.colorTexture = resources.colorTexture;
@@ -100,6 +105,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 passData.classificationTexture = resources.classificationTexture;
                 passData.ownerTexture = resources.ownerTexture;
                 // 语义 lane 的视图（mode 8/9）读的就是这几张：声明依赖，别靠"生产者刚好不会被裁"。
+                passData.objectId0 = frameData.GetOrCreate<HoObjectBufferRenderGraphResources>().id0Texture;
+                passData.semanticAvailable = resources.HasSemanticLanes;
+                if (passData.objectId0.IsValid()) builder.UseTexture(passData.objectId0, AccessFlags.Read);
                 passData.semanticOwnerTexture = resources.semanticOwnerTexture;
                 passData.semanticLaneTextures = resources.semanticLaneTextures;
 
@@ -118,11 +126,21 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                         builder.UseTexture(passData.semanticLaneTextures[i], AccessFlags.Read);
                     }
                 }
-                builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
+                    context.cmd.SetGlobalFloat("_HoSurfaceBufferActive", 1);
+                    context.cmd.SetGlobalFloat("_HoSurfaceSemanticActive", data.semanticAvailable ? 1 : 0);
+                    context.cmd.SetGlobalFloat("_HoObjectBufferActive", data.objectId0.IsValid() ? 1 : 0);
+                    if (data.objectId0.IsValid()) context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, data.objectId0);
+                    if (data.semanticAvailable)
+                    {
+                        context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.SemanticOwnerTextureId, data.semanticOwnerTexture);
+                        for (int i = 0; i < data.semanticLaneTextures.Length; i++)
+                            context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.GetSemanticLaneTextureId(i), data.semanticLaneTextures[i]);
+                    }
                     data.material.SetFloat(HoSurfaceBufferShaderConstants.DebugModeId, (float)data.debugMode);
                     data.material.SetVector(BlitScaleBiasId, new Vector4(1, 1, 0, 0));
                     context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ColorTextureId, data.colorTexture);
@@ -132,7 +150,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                     context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ReflectionTextureId, data.reflectionTexture);
                     context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ClassificationTextureId, data.classificationTexture);
                     context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.OwnerTextureId, data.ownerTexture);
-                    context.cmd.DrawProcedural(Matrix4x4.identity, data.material, 0, MeshTopology.Triangles, 3, 1);
+                    HoDebugGrid.Draw(context.cmd, data.material, (int)data.debugMode, HoSurfaceBufferShaderConstants.DebugModeId, HoSurfaceBufferDebugViewInfo.Views, data.debugSize);
                 });
             }
         }

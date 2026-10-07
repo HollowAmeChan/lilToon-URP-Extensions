@@ -53,7 +53,7 @@
 | **opaque 之前** | 阴影 → GB / OB / SB → **AC SemanticResolve + AttributeComposite** → **GTAO** | AC 发布 GB 覆盖范围并合成 OB/SB 语义与属性；GTAO 与 opaque ForwardLit 可在登记后查询 AC |
 | **opaque 之后** | **SSGI** → SSS → OIT → PLR → 角色特化 → ScreenProcess | SSGI 需要 opaque color；后续消费者读 pre-opaque 产生的 AC 资源 |
 | **图像链** | ImageProcess | 只读 camera color |
-| **最后** | AOV 导出（可选） → DebugTile | 调试最后 |
+| **最后** | AOV 导出（可选） → 公共调试显示 | 调试最后，不依赖 feature 顺序 |
 
 ```text
 [1]  URP 主光阴影
@@ -76,7 +76,7 @@
 [13] Ho-ScreenProcess（其余语义效果）
 [14] Ho-ImageProcess（最终图像链）
 [15] AOV 导出层（可选）
-[16] DebugTile（调试时最后）
+[16] 模块调试捕获 → 公共最终显示（DebugTile 仅外部系统）
 ```
 
 **必须成立的偏序关系**（比线性列表更重要，改 pass event 时照这个检查）：
@@ -207,7 +207,7 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 | 11 | Ho-SSGI | ✅ 自研 GI（含 `gisexclude`；描边白边是已知问题） |
 | 12 | Ho-ScreenProcess | ✅ 语义屏幕效果（遮罩吃 AC/OB 的覆盖率） |
 | 13 | Ho-ImageProcess | ✅ 最终图像链 |
-| 14 | Ho-DebugTile | 调试时开启 |
+| 14 | Ho-DebugTile | APV 等外部系统调试；模块调试走自己的入口 |
 
 **场景基线**（朱木古堂 / `New Scene.unity`）：40 盏灯 = 1×Directional（软阴影）+ 39×Point（全无阴影），
 是多光 + ShadowCast 收集的用例场景；Volume Profile 走当前新栈无 Missing；舞台 55 个材质与角色共用 lilToon 变体家族；
@@ -228,9 +228,8 @@ ShadowCast = **cast 组**（每组一张 atlas，灯按 slice 排布，首版 2 
 
 1. **自己的 debug pass + debug 视图**（每个池 / 每张图一条，能单独看）；
 2. **注册视图**：`HoDebugViewInfo` + 进 `HoDebugViewRegistry.AllViews`；
-3. **新增 render kind**：`HoDebugViewRenderKind` 加枚举值（每个 feature 一个）；
-4. **让 DebugTile 接得上**：`HoDebugTileRendererFeature` 的可用性判定 + `BuildTiles` 过滤 + `ResourceNeeds`；
-   `HoDebugTile.shader` 加 slice；`LilUrpDebugShaderValidator` 的收集表；
+3. **复用模块内 All**：调用 `HoDebugGrid`，与单视图共用所属模块 shader；AC 保持双参数入口；
+4. **最终显示**：由 `HoDebugRenderPass` 捕获独立调试目标并入队 companion presenter；不写回正常 cameraColor，不增加 DebugTile 资源分支。详见 `Ho-Debug.md`；
 5. **契约登记的 debug 列**：`Ho-ChannelContract-v1.md` §3 模板逐条填；
 6. **失败可见**（不静默）：声明与实际 RT 张数不一致 / 未声明 ID / 一像素 ID 溢出 / 非法槽 /
    消费者声明的名字解析不到 → 视图里标出 + 告警；

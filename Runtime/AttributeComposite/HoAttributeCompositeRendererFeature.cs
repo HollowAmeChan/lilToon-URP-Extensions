@@ -46,6 +46,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 registeredCameraReset = true;
             }
             pass = new HoAttributeCompositePass();
+            debugPass?.ReleaseDebugResources();
             debugPass = new HoAttributeCompositeDebugPass();
         }
 
@@ -76,8 +77,9 @@ namespace lilToon.URP.Extensions.AttributeComposite
             {
                 HoAttributeCompositeDemandDebug.Declare(renderingData.cameraData.camera, this, activeSettings);
                 debugPass?.Setup(activeSettings, debugMaterial, null);
-                renderer.EnqueuePass(debugPass);
+                debugPass.Enqueue(renderer);
             }
+            else debugPass?.ReleaseDebugResources();
         }
 
         protected override void Dispose(bool disposing)

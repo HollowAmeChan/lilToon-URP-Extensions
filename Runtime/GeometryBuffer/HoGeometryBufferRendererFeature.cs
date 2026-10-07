@@ -37,6 +37,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             RegisterCameraReset();
             outputPass = new HoGeometryBufferPass();
             skyPass = new HoGeometryBufferSkyPass();
+            debugPass?.ReleaseDebugResources();
             debugPass = new HoGeometryBufferDebugPass();
         }
 
@@ -83,7 +84,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             if (debugPass != null && shouldDebug)
             {
                 debugPass.SetupRenderGraph(settings, renderTargets, debugMaterial);
-                renderer.EnqueuePass(debugPass);
+                debugPass.Enqueue(renderer);
             }
             else
             {

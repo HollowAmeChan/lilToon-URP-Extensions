@@ -150,6 +150,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         [InspectorName("Valid")]
         Valid,
         [InspectorName("Sample Count")]
-        SampleCount
+        SampleCount,
+        [UnityEngine.InspectorName("All")]
+        All = 255
     }
 }

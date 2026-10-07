@@ -4,6 +4,8 @@ namespace lilToon.URP.Extensions.ShadowCast
     {
         Off = 0,
         Atlas = 1,
-        SecondDirectionalAtlas = 2
+        SecondDirectionalAtlas = 2,
+        [UnityEngine.InspectorName("All")]
+        All = 255
     }
 }

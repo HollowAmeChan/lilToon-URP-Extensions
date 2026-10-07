@@ -39,7 +39,9 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
         [InspectorName("透射方向")]
         TransmissionDirection = 10,
         [InspectorName("透射轮廓")]
-        TransmissionRim = 11
+        TransmissionRim = 11,
+        [UnityEngine.InspectorName("All")]
+        All = 255
     }
 
     public enum HoSubsurfaceScatteringQuality

@@ -8,6 +8,7 @@ using lilToon.URP.Extensions.ObjectBuffer;
 using lilToon.URP.Extensions.AttributeComposite;
 // PLR 的遮罩 = OB 的四层覆盖率，材质数值 = SB（经 AC 门面）：MB 在 PLR 这条链上已经没有任何输入。
 using lilToon.URP.Extensions.SurfaceBuffer;
+using lilToon.URP.Extensions.Debugging;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -85,7 +86,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
             public Color tint = Color.white;
 
             [Header("Debug")]
-            [Tooltip("Debug view rendered by the composite pass. Off renders the normal composite result.")]
+            [Tooltip("Feature-local diagnostic view, presented after final post-processing. All shows a grid.")]
             public HoPlanarReflectionDebugMode debugMode = HoPlanarReflectionDebugMode.Off;
 
             [Tooltip("Far depth used to normalize GeometryBuffer linear depth in debug views.")]
@@ -158,7 +159,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
             }
 
             compositePass?.SetupRenderGraph(settings, compositeMaterial);
-            renderer.EnqueuePass(compositePass);
+            if (settings.debugMode != HoPlanarReflectionDebugMode.Off) compositePass.Enqueue(renderer);
+            else renderer.EnqueuePass(compositePass);
         }
 
         protected override void Dispose(bool disposing)
@@ -288,7 +290,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
         private bool ShouldCompositeRender(in RenderingData renderingData)
         {
-            if (settings == null || !settings.enabled || !settings.compositeEnabled)
+            if (settings == null || !settings.enabled || (!settings.compositeEnabled && settings.debugMode == HoPlanarReflectionDebugMode.Off))
             {
                 return false;
             }
@@ -363,7 +365,9 @@ namespace lilToon.URP.Extensions.PlanarReflection
         CompositeWeight = 12,
         DepthGate = 13,
         ReflectionMaterial = 14,
-        EdgeExtend = 15
+        EdgeExtend = 15,
+        [UnityEngine.InspectorName("All")]
+        All = 255
     }
 
     internal static class HoPlanarReflectionShaderConstants
@@ -504,7 +508,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
         }
     }
 
-    internal sealed class HoPlanarReflectionCompositePass : ScriptableRenderPass
+    internal sealed class HoPlanarReflectionCompositePass : HoDebugRenderPass
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-PLR Composite");
         private static readonly ProfilingSampler PreprocessProfilingSampler = new ProfilingSampler("Ho-PLR Preprocess");
@@ -530,6 +534,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
             public TextureHandle reflectionMaterialTexture;
             public TextureHandle surfaceColorTexture;
             public TextureHandle normalDepthTexture;
+            public TextureHandle id0, surfaceMaterial, owner;
+            public bool surfaceAvailable;
             public Material material;
             public Vector4 compositeParams;
             public Vector4 compositeOptions;
@@ -537,6 +543,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
             public Vector4 preprocessParams;
             public Vector4 debugParams;
             public Vector4 debugInputStatus;
+            public Vector2Int debugSize;
         }
 
         public void Setup(
@@ -562,9 +569,11 @@ namespace lilToon.URP.Extensions.PlanarReflection
 
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
-            if (cameraColorTarget != null)
+            if (settings.debugMode != HoPlanarReflectionDebugMode.Off) base.OnCameraSetup(cmd, ref renderingData);
+            else if (cameraColorTarget != null)
             {
                 ConfigureTarget(cameraColorTarget);
+                ConfigureClear(ClearFlag.None, Color.clear);
             }
         }
 
@@ -613,14 +622,17 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 }
 
                 Blitter.BlitCameraTexture(cmd, cameraColorTarget, compositeSourceTexture, 0, true);
-                Blitter.BlitCameraTexture(
-                    cmd,
-                    compositeSourceTexture,
-                    cameraColorTarget,
-                    RenderBufferLoadAction.DontCare,
-                    RenderBufferStoreAction.Store,
-                    compositeMaterial,
-                    0);
+                if (settings.debugMode != HoPlanarReflectionDebugMode.Off)
+                {
+                    CoreUtils.SetRenderTarget(cmd, DebugTarget);
+                    cmd.SetGlobalTexture("_BlitTexture", compositeSourceTexture.nameID);
+                    HoDebugGrid.Draw(CommandBufferHelpers.GetRasterCommandBuffer(cmd), compositeMaterial, (int)settings.debugMode,
+                        HoPlanarReflectionShaderConstants.DebugParamsId, HoPlanarReflectionDebugViewInfo.Views,
+                        new Vector2Int(DebugTarget.rt.width, DebugTarget.rt.height), HoPlanarReflectionShaderParams.CreateDebugParams(settings));
+                    PublishCompatibility(renderingData.cameraData.camera);
+                }
+                else Blitter.BlitCameraTexture(cmd, compositeSourceTexture, cameraColorTarget, RenderBufferLoadAction.DontCare,
+                    RenderBufferStoreAction.Store, compositeMaterial, 0);
             }
 
             context.ExecuteCommandBuffer(cmd);
@@ -660,7 +672,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
             bool hasReflectionMaterial = reflectionMaterialTexture.IsValid();
             bool hasSurfaceColor = surfaceColorTexture.IsValid();
             bool hasNormalDepth = normalDepthTexture.IsValid();
-            bool inputStatusDebug = settings.debugMode == HoPlanarReflectionDebugMode.InputStatus;
+            bool inputStatusDebug = settings.debugMode == HoPlanarReflectionDebugMode.InputStatus || settings.debugMode == HoPlanarReflectionDebugMode.All;
             if (!hasSource || (!inputStatusDebug && (!hasReflectionTexture || !hasMaskId || !hasReflectionMaterial || !hasSurfaceColor || !hasNormalDepth)))
             {
                 return;
@@ -689,7 +701,8 @@ namespace lilToon.URP.Extensions.PlanarReflection
             destinationDesc.name = "_HoPlanarReflectionCompositeColor";
             destinationDesc.clearBuffer = false;
             destinationDesc.depthBufferBits = 0;
-            TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
+            TextureHandle destination = settings.debugMode == HoPlanarReflectionDebugMode.Off
+                ? renderGraph.CreateTexture(destinationDesc) : CreateDebugTarget(renderGraph, frameData);
 
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-PLR Composite", out PassData passData, ProfilingSampler))
             {
@@ -699,12 +712,36 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 passData.reflectionMaterialTexture = reflectionMaterialTexture;
                 passData.surfaceColorTexture = surfaceColorTexture;
                 passData.normalDepthTexture = normalDepthTexture;
+                var ac = frameData.GetOrCreate<HoAttributeCompositeRenderGraphResources>();
+                var surface = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
+                passData.id0 = ac.identityId0Texture;
+                passData.surfaceMaterial = surface.materialTexture;
+                passData.owner = surface.ownerTexture;
+                passData.surfaceAvailable = surface.HasRequiredTextures;
+                if (settings.debugMode == HoPlanarReflectionDebugMode.All)
+                {
+                    // Missing cells must not sample globals left by another camera/renderer.
+                    TextureHandle black = renderGraph.defaultResources.blackTexture;
+                    if (!passData.reflectionTexture.IsValid()) passData.reflectionTexture = black;
+                    if (!passData.maskIdTexture.IsValid()) passData.maskIdTexture = black;
+                    if (!passData.reflectionMaterialTexture.IsValid()) passData.reflectionMaterialTexture = black;
+                    if (!passData.surfaceColorTexture.IsValid()) passData.surfaceColorTexture = black;
+                    if (!passData.normalDepthTexture.IsValid()) passData.normalDepthTexture = black;
+                    if (!passData.id0.IsValid()) passData.id0 = black;
+                    if (!passData.surfaceMaterial.IsValid()) passData.surfaceMaterial = black;
+                    if (!passData.owner.IsValid()) passData.owner = black;
+                    builder.UseTexture(black, AccessFlags.Read);
+                }
+                HoAttributeCompositeBindings.Read(builder, passData.id0);
+                HoAttributeCompositeBindings.Read(builder, passData.surfaceMaterial);
+                HoAttributeCompositeBindings.Read(builder, passData.owner);
                 passData.material = compositeMaterial;
                 passData.compositeParams = HoPlanarReflectionShaderParams.CreateCompositeParams(settings);
                 passData.compositeOptions = HoPlanarReflectionShaderParams.CreateCompositeOptions(settings);
                 passData.tint = HoPlanarReflectionShaderParams.CreateTint(settings);
                 passData.preprocessParams = preprocessParams;
                 passData.debugParams = HoPlanarReflectionShaderParams.CreateDebugParams(settings);
+                passData.debugSize = DebugSize(renderGraph, destination);
                 passData.debugInputStatus = new Vector4(hasReflectionTexture ? 1.0f : 0.0f, hasMaskId && hasSurfaceColor ? 1.0f : 0.0f, hasNormalDepth ? 1.0f : 0.0f, hasReflectionMaterial ? 1.0f : 0.0f);
 
                 builder.UseTexture(source, AccessFlags.Read);
@@ -733,10 +770,14 @@ namespace lilToon.URP.Extensions.PlanarReflection
                     builder.UseTexture(normalDepthTexture, AccessFlags.Read);
                 }
 
-                builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
                 builder.AllowGlobalStateModification(true);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
+                    data.material.SetFloat(HoSurfaceBufferShaderConstants.ActiveId, data.surfaceAvailable ? 1 : 0);
+                    if (data.id0.IsValid()) context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, data.id0);
+                    if (data.surfaceMaterial.IsValid()) context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.MaterialTextureId, data.surfaceMaterial);
+                    if (data.owner.IsValid()) context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.OwnerTextureId, data.owner);
                     HoPlanarReflectionShaderParams.ApplyMaterial(
                         data.material,
                         data.compositeParams,
@@ -778,15 +819,22 @@ namespace lilToon.URP.Extensions.PlanarReflection
                         context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
                     }
 
-                    Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
+                    if (data.debugParams.x > 0)
+                    {
+                        context.cmd.SetGlobalTexture("_BlitTexture", data.source);
+                        HoDebugGrid.Draw(context.cmd, data.material, (int)data.debugParams.x, HoPlanarReflectionShaderConstants.DebugParamsId,
+                            HoPlanarReflectionDebugViewInfo.Views, data.debugSize, data.debugParams);
+                    }
+                    else Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.material, 0);
                 });
             }
 
-            resourceData.cameraColor = destination;
+            if (settings.debugMode == HoPlanarReflectionDebugMode.Off) resourceData.cameraColor = destination;
         }
 
         public void ReleaseCompatibilityResources()
         {
+            ReleaseDebugResources();
             compositeSourceTexture?.Release();
             compositeSourceTexture = null;
             reflectionProcessedTexture?.Release();
@@ -866,7 +914,7 @@ namespace lilToon.URP.Extensions.PlanarReflection
                 passData.preprocessParams = preprocessParams;
 
                 builder.UseTexture(source, AccessFlags.Read);
-                builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
                 builder.AllowGlobalStateModification(true);
                 builder.SetRenderFunc(static (PreprocessPassData data, RasterGraphContext context) =>
                 {

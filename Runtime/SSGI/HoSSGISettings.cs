@@ -45,6 +45,8 @@ namespace lilToon.URP.Extensions.SSGI
         SpatialFilter1 = 17,
         [InspectorName("Near Occlusion")]
         NearOcclusion = 18,
+        [UnityEngine.InspectorName("All")]
+        All = 255
     }
 
     [Serializable]

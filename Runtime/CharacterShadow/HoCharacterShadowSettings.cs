@@ -4,7 +4,7 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.CharacterShadow
 {
     public enum HoCharacterShadowResolution { R512 = 512, R1024 = 1024, R2048 = 2048, R4096 = 4096 }
-    public enum HoCharacterShadowDebugMode { Off, Atlas, Character }
+    public enum HoCharacterShadowDebugMode { Off, Atlas, Character, [InspectorName("All")] All = 255 }
 
     /// <summary>
     /// Ho-CharacterShadow 的兜底默认值与结构设置。逐相机可覆盖的部分（启用 / 单角色分辨率 / 软阴影 / 调试）

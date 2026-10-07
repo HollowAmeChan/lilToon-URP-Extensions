@@ -76,7 +76,8 @@ public sealed class HoObjectBufferVolume : VolumeComponent, IPostProcessComponen
 - 枚举参数要有自己的 `VolumeParameter<T>` 子类并实现 `Interp`（离散量取 `t > 0 ? to : from`），照 `HoGTAOVolume.cs` 顶部那批写。
 - **「调试」分组固定内容**：调试模式 → `Debug In Scene View` → `Debug In Game View` → 强度（`Debug Pow` 之类）。
 - 调试模式的下拉**只写视图名**（`Color` / `Owner` / `Lane Coverage`…），**当前模式的说明跟着字段单独画一行**（`EditorGUILayout.HelpBox(desc, MessageType.None)`）。说明写通道含义与取景范围，照对应 debug shader 写 —— 改 shader 就改这一行；`Off` 和名字已经自解释的视图不画那一行。
-- 调试模式**直出替换画面**；同一批视图**同时注册进 `HoDebugViewRegistry`**，这样 DebugTile 里还能按条目小窗看（两者不冲突）。
+- 调试模式通过独立目标在最终后处理之后显示；适合枚举的模块提供 `All` 平铺，与单视图共用 shader。AC 保持双参数调试。
+- 视图登记到 `HoDebugViewRegistry` 供 shader 检查；DebugTile 只承接 APV 等外部系统。新模块不增加集中式 render kind / shader 分支。公共绘制与时序见 `Ho-Debug.md`。
 - Volume 未覆盖 / volume 关掉时**用 feature 的兜底默认值**，UI 上要写明这件事。
 
 **什么进 Volume，什么留 feature**：

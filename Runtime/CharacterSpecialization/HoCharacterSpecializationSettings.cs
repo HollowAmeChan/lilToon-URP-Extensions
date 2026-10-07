@@ -115,7 +115,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("脸色扩散受光脸乘色")]
         FaceHairDiffuseTintedFaceLit = 20,
         [InspectorName("脸色扩散最终合成")]
-        FaceHairDiffuseComposite = 21
+        FaceHairDiffuseComposite = 21,
+        [InspectorName("All")] All = 255
     }
 
     [Serializable]
@@ -156,7 +157,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [InspectorName("轮廓场 Shader")]
         [Tooltip("为空时自动使用 Hidden/lilToon-HoCharacterSpecialization/URP/SubjectOutline。主体轮廓和增强轮廓共用它生成外扩场，一般不需要改。")]
         public Shader subjectOutlineShader;
-
 
         [Header("眼睛透过")]
         [InspectorName("启用眼睛透过")]

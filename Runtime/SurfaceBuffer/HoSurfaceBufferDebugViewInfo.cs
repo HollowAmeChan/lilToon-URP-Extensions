@@ -11,7 +11,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         /// <summary>
         /// SB 的视图登记：六张数值图、owner 对齐及 surface semantic lane。
-        /// mode 值与 `HoSurfaceBufferDebugMode` 一一对应，DebugTile 的平铺视图与 Volume 的整屏调试**共用同一套 mode**。
+        /// mode 值与 `HoSurfaceBufferDebugMode` 一一对应，模块内 All 平铺视图与 Volume 的整屏调试**共用同一套 mode**。
         /// </summary>
         public static readonly HoDebugViewInfo[] Views =
         {
@@ -29,7 +29,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         private static HoDebugViewInfo View(string viewId, string shortName, HoSurfaceBufferDebugMode mode)
         {
-            return new HoDebugViewInfo(FeatureName, viewId, shortName, (int)mode, HoDebugViewRenderKind.SurfaceBuffer, ShaderName, ShaderAssetPath, true, MissingFallback);
+            return new HoDebugViewInfo(FeatureName, viewId, shortName, (int)mode, ShaderName, ShaderAssetPath, true, MissingFallback);
         }
     }
 }

@@ -99,7 +99,6 @@ namespace lilToon.URP.Extensions.Editor.GeometryBuffer
             {
                 DrawProperty("passEvent");
                 DrawProperty("skyPassEvent");
-                DrawProperty("debugPassEvent");
                 DrawProperty("fallbackShader");
                 DrawProperty("skyCaptureShader");
                 DrawProperty("debugShader");

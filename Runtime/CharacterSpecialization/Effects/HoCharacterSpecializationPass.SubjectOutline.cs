@@ -25,6 +25,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
             switch (settings.debugMode)
             {
+                case HoCharacterSpecializationDebugMode.All:
                 case HoCharacterSpecializationDebugMode.SubjectOutlineSourceMask:
                 case HoCharacterSpecializationDebugMode.SubjectOutlineBlurMask:
                 case HoCharacterSpecializationDebugMode.SubjectOutlineMask:
@@ -49,6 +50,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
             switch (settings.debugMode)
             {
+                case HoCharacterSpecializationDebugMode.All:
                 case HoCharacterSpecializationDebugMode.EnhancedOutlineSourceMask:
                 case HoCharacterSpecializationDebugMode.EnhancedOutlineBlurMask:
                 case HoCharacterSpecializationDebugMode.EnhancedOutlineFogMask:

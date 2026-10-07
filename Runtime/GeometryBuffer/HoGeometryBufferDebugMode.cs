@@ -21,6 +21,8 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         [InspectorName("Outline Normal")]
         OutlineNormal,
         [InspectorName("Outline Linear Depth")]
-        OutlineLinearDepth
+        OutlineLinearDepth,
+        [UnityEngine.InspectorName("All")]
+        All = 255
     }
 }

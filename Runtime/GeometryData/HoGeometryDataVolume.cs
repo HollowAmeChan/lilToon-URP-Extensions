@@ -33,7 +33,7 @@ namespace lilToon.URP.Extensions.GeometryData
         [InspectorName("Game 视图")] public BoolParameter debugInGameView = new BoolParameter(true);
         [InspectorName("预览 Layer Mask")] public HoGeometryDataLayerMaskParameter debugLayerMask = new HoGeometryDataLayerMaskParameter(-1);
         [InspectorName("热图满量程")] public MinFloatParameter debugMaxValue = new MinFloatParameter(0.2f, 0.0001f);
-        [InspectorName("预览绘制时机")] public HoGeometryDataPassEventParameter debugPassEvent = new HoGeometryDataPassEventParameter(RenderPassEvent.AfterRenderingPostProcessing);
+        [HideInInspector] public HoGeometryDataPassEventParameter debugPassEvent = new HoGeometryDataPassEventParameter(RenderPassEvent.AfterRenderingPostProcessing);
         public bool IsActive() => enable.value;
         public bool IsTileCompatible() => false;
     }

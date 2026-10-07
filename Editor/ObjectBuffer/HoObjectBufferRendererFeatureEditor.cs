@@ -138,7 +138,6 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawProperty("passEvent");
-                DrawProperty("debugPassEvent");
                 DrawProperty("useFallbackMaterial");
                 DrawProperty("fallbackShader");
                 DrawProperty("debugShader");

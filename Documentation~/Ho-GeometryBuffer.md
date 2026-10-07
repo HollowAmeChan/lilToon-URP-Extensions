@@ -229,9 +229,9 @@ define    LIL_OUTLINE
 - pass 结束后设置对应 global texture；
 - camera begin/reset 或 ScreenProcess 收尾时恢复 black texture 和 valid flag。
 
-## 6. DebugTile 调试入口
+## 6. 模块调试入口
 
-GeometryBuffer DebugView 和 DebugTile 已注册：
+GeometryBuffer 的整屏 DebugView 与模块内 All 平铺共用以下登记，最终在后处理之后显示：
 
 | View ID | 作用 |
 | --- | --- |
@@ -295,7 +295,7 @@ GeometryBuffer 只提供 PLR/SSR 所需的物理法线、线性深度和 coverag
 - RT：`Runtime/GeometryBuffer/HoGeometryBufferRenderTargets.cs`
 - RenderGraph 资源：`Runtime/GeometryBuffer/HoGeometryBufferRenderGraphResources.cs`
 - 采样函数：`Runtime/GeometryBuffer/Shaders/HoGeometryBufferSampling.hlsl`
-- DebugTile 注册：`Runtime/GeometryBuffer/HoGeometryBufferDebugViewInfo.cs`
+- 模块视图注册：`Runtime/GeometryBuffer/HoGeometryBufferDebugViewInfo.cs`
 - Debug shader：`Runtime/GeometryBuffer/Shaders/Debug/HoGeometryBufferDebug.shader`
 - lilToon outline 模板：`D:\Unity_Fork\lilToon\Assets\lilToon\CustomShaderResources\URP\Default*Outline.lilblock`
 - lilToon UsePass 模板（仅当隐藏 pass shader 提供对应 pass 时适用）：`D:\Unity_Fork\lilToon\Assets\lilToon\CustomShaderResources\URP\DefaultUsePassOutline*.lilblock`
@@ -359,6 +359,6 @@ VisualSurfaceBuffer
 1. `OutlineNormalDepth` 与主 `NormalDepth` 使用同构格式，避免消费者维护另一套采样协议。
 2. 需要颜色或种类标记时继续扩展同一个 visual surface contract，避免每个效果各自创建一套 RT。
 3. 只有存在 Outline、DOF、motion blur 或明确的 visual surface 消费者时，才分配 VisualSurfaceBuffer；纯 AO/GI 场景不应为它付出成本。**尚未实现**：当前除 sky 外没有按需分配，见 §11.3。
-4. DebugTile 必须为每个新增 visual channel 提供视图，否则 RT 成本无法在 Frame Debugger 之外被验证。
+4. 模块的单视图与 All 必须覆盖每个新增 visual channel，否则 RT 成本无法在 Frame Debugger 之外被验证。
 
 当前实现处于第 1 阶段：已经有独立 `OutlineNormalDepthTexture`。它目前随 GeometryBuffer 主资源一起创建，后续可以根据项目中的视觉消费者登记做懒分配（目前并没有"消费者登记"这种机制，唯一的按需分配是 `enableSkyBuffer`）；normal/depth 已经在同一张视觉 RT 内打包，不再需要再增加独立 `OutlineDepth` attachment。

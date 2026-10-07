@@ -1,5 +1,6 @@
 #pragma warning disable CS0618, CS0672
 
+using lilToon.URP.Extensions.Debugging;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
@@ -14,7 +15,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
     /// AC 架构 §12：没有 debug 视图与登记就不算落地 —— AC 至少要能看到合成语义槽。
     /// **这趟只做"看"，不产出任何东西**，所以它可以被随时关掉。
     /// </summary>
-    internal sealed class HoAttributeCompositeDebugPass : ScriptableRenderPass
+    internal sealed class HoAttributeCompositeDebugPass : HoDebugRenderPass
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-AttributeComposite Debug");
         private static readonly int BlitScaleBiasId = Shader.PropertyToID("_BlitScaleBias");
@@ -42,16 +43,13 @@ namespace lilToon.URP.Extensions.AttributeComposite
             this.cameraColorTarget = cameraColorTarget;
             if (settings != null && HoAttributeCompositeSettings.IsSemanticDebug(settings.debugMode))
                 HoObjectBufferRegistry.EnsureBuilt();
-            renderPassEvent = settings != null ? settings.debugPassEvent : RenderPassEvent.AfterRenderingPostProcessing;
+            renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
             ConfigureInput(ScriptableRenderPassInput.None);
-            if (cameraColorTarget != null)
-            {
-                ConfigureTarget(cameraColorTarget);
-            }
         }
 
         public void ReleaseCompatibilityResources()
         {
+            ReleaseDebugResources();
             cameraColorTarget = null;
         }
 
@@ -76,6 +74,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 CoreUtils.DrawFullScreen(cmd, debugMaterial, shaderPassId: 0);
             }
 
+            PublishCompatibility(renderingData.cameraData.camera);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
@@ -89,11 +88,12 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             HoAttributeCompositeRenderGraphResources resources = frameData.GetOrCreate<HoAttributeCompositeRenderGraphResources>();
-            TextureHandle destination = resourceData.activeColorTexture;
-            if (!destination.IsValid() || !resources.published)
+            if (!resources.published)
             {
                 return;
             }
+
+            TextureHandle destination = CreateDebugTarget(renderGraph, frameData);
 
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-AttributeComposite Debug", out PassData passData, ProfilingSampler))
             {
@@ -138,7 +138,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
                     }
                 }
 
-                builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>

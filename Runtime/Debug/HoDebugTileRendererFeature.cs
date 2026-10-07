@@ -1,13 +1,6 @@
 #pragma warning disable CS0618, CS0672
 
-using System.Collections.Generic;
 using lilToon.URP.Extensions.GeometryBuffer;
-using lilToon.URP.Extensions.ObjectBuffer;
-using lilToon.URP.Extensions.PlanarReflection;
-using lilToon.URP.Extensions.ShadowCast;
-using lilToon.URP.Extensions.SubsurfaceScattering;
-using lilToon.URP.Extensions.SurfaceBuffer;
-using lilToon.URP.Extensions.AttributeComposite;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
@@ -15,724 +8,104 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.Debugging
 {
-    [DisallowMultipleRendererFeature("Ho-DebugTile")]
+    // Keep the type and script GUID so existing renderer assets remain valid.
+    [DisallowMultipleRendererFeature("Ho-DebugTile (External Systems)")]
     public sealed class HoDebugTileRendererFeature : ScriptableRendererFeature
     {
         public const string NoneViewId = "";
         public const string AllRegisteredViewId = "__AllRegistered";
-
-        [SerializeField]
-        private bool enabledForGameView = true;
-
-        [SerializeField]
-        private bool enabledForSceneView = true;
-
-        [SerializeField]
-        private RenderPassEvent passEvent = RenderPassEvent.AfterRenderingPostProcessing;
-
-        [SerializeField]
-        [InspectorName("Geometry Depth Near")]
-        private float geometryDepthNear = 0.0f;
-
-        [SerializeField]
-        [InspectorName("Geometry Depth Far")]
-        private float geometryDepthFar = 100.0f;
-
-        [SerializeField]
-        private string selectedDebugViewId = NoneViewId;
-
-        private HoDebugTilePass pass;
-        private Shader shader;
+        [SerializeField] private bool enabledForGameView = true;
+        [SerializeField] private bool enabledForSceneView = true;
+        [SerializeField] private string selectedDebugViewId = NoneViewId;
+        private HoSystemDebugPass pass;
         private Material material;
         private bool warnedMissingShader;
 
         public override void Create()
         {
-            HoAttributeCompositeConsumerRegistry.EnsureInitialized();
-            pass = new HoDebugTilePass();
-            EnsureMaterial();
+            pass?.ReleaseDebugResources();
+            pass = new HoSystemDebugPass();
         }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
-            HoAttributeCompositeConsumerRegistry.Remove(this, renderingData.cameraData.camera);
-            if (!ShouldRender(in renderingData))
+            CameraType type = renderingData.cameraData.cameraType;
+            if (!((enabledForGameView && type == CameraType.Game) || (enabledForSceneView && type == CameraType.SceneView))) return;
+            int mode = selectedDebugViewId == AllRegisteredViewId ? HoDebugGrid.All : 0;
+            foreach (var view in HoDebugViewRegistry.SystemViews)
+                if (view.ViewId == selectedDebugViewId) mode = view.ModeValue;
+            if (mode == 0) { pass?.ReleaseDebugResources(); return; }
+            if (material == null)
             {
-                return;
-            }
-
-            EnsureMaterial();
-            if (pass == null || material == null)
-            {
-                return;
-            }
-
-            pass.Setup(material, selectedDebugViewId, passEvent, GetGeometryDepthParams());
-            foreach (HoDebugViewInfo view in HoDebugViewRegistry.AllViews)
-            {
-                if (selectedDebugViewId != AllRegisteredViewId && selectedDebugViewId != view.ViewId) continue;
-                if (view.RenderKind == HoDebugViewRenderKind.SurfaceBuffer &&
-                    (view.ModeValue == (int)HoSurfaceBufferDebugMode.SemanticOwner || view.ModeValue == (int)HoSurfaceBufferDebugMode.SemanticLanes))
+                var shader = Shader.Find(HoDebugTileShaderConstants.ShaderName);
+                if (shader == null)
                 {
-                    HoAttributeCompositeConsumerRegistry.DeclareForCamera(renderingData.cameraData.camera, this, "DebugTile SB Semantics",
-                        System.Array.Empty<HoACQueryDescriptor>(), null, HoACDemandResources.LegacySemantic | HoACDemandResources.Identity, 0, 255u);
-                    break;
+                    if (!warnedMissingShader) Debug.LogWarning("External system debug shader is missing.");
+                    warnedMissingShader = true;
+                    return;
                 }
+                material = CoreUtils.CreateEngineMaterial(shader);
             }
-            renderer.EnqueuePass(pass);
+            pass.Setup(material, mode);
+            pass.Enqueue(renderer);
         }
 
         protected override void Dispose(bool disposing)
         {
-            HoAttributeCompositeConsumerRegistry.Remove(this);
-            CoreUtils.Destroy(material);
-            material = null;
-            shader = null;
+            pass?.ReleaseDebugResources();
             pass = null;
-        }
-
-        private bool ShouldRender(in RenderingData renderingData)
-        {
-            if (string.IsNullOrEmpty(selectedDebugViewId))
-            {
-                return false;
-            }
-
-            CameraType cameraType = renderingData.cameraData.cameraType;
-            return (enabledForGameView && cameraType == CameraType.Game)
-                || (enabledForSceneView && cameraType == CameraType.SceneView);
-        }
-
-        private void EnsureMaterial()
-        {
-            Shader currentShader = Shader.Find(HoDebugTileShaderConstants.ShaderName);
-            if (material != null && shader == currentShader)
-            {
-                return;
-            }
-
             CoreUtils.Destroy(material);
             material = null;
-            shader = currentShader;
-            if (shader == null)
-            {
-                if (!warnedMissingShader)
-                {
-                    warnedMissingShader = true;
-                    Debug.LogWarning($"Debug tile view is unavailable because shader '{HoDebugTileShaderConstants.ShaderName}' could not be found.");
-                }
-
-                return;
-            }
-
-            material = CoreUtils.CreateEngineMaterial(shader);
         }
 
-        private Vector4 GetGeometryDepthParams()
+        private sealed class HoSystemDebugPass : HoDebugRenderPass
         {
-            float near = Mathf.Max(0.0f, geometryDepthNear);
-            float far = Mathf.Max(near + 0.0001f, geometryDepthFar);
-            return new Vector4(near, far, 1.0f / (far - near), 0.0f);
-        }
-
-        private sealed class HoDebugTilePass : ScriptableRenderPass
-        {
-            private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-DebugTile");
-            private static readonly MaterialPropertyBlock PropertyBlock = new MaterialPropertyBlock();
-
             private Material material;
-            private string selectedDebugViewId;
-            private Vector4 geometryDepthParams;
-
-            public HoDebugTilePass()
-            {
-                ConfigureInput(ScriptableRenderPassInput.None);
-                requiresIntermediateTexture = true;
-            }
-
-            public void Setup(Material material, string selectedDebugViewId, RenderPassEvent passEvent, Vector4 geometryDepthParams)
-            {
-                this.material = material;
-                this.selectedDebugViewId = selectedDebugViewId;
-                this.geometryDepthParams = geometryDepthParams;
-                renderPassEvent = passEvent;
-            }
-
-            public override void RecordRenderGraph(RenderGraph renderGraph, ContextContainer frameData)
-            {
-                if (material == null)
-                {
-                    return;
-                }
-
-                UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
-                HoObjectBufferRenderGraphResources objectResources = frameData.GetOrCreate<HoObjectBufferRenderGraphResources>();
-                HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
-                HoShadowCastRenderGraphResources shadowCastResources = frameData.GetOrCreate<HoShadowCastRenderGraphResources>();
-                HoSubsurfaceScatteringRenderGraphResources sssResources = frameData.GetOrCreate<HoSubsurfaceScatteringRenderGraphResources>();
-                HoSurfaceBufferRenderGraphResources surfaceResources = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
-
-                // 遮罩/覆盖率来源与表面数值都归 OB / SB（MB 的格子在 R7-3 退役）。
-                bool hasCoverage = objectResources.coverageTexture.IsValid();
-                bool hasSurfaceValues = surfaceResources.HasRequiredTextures;
-                bool hasGeometry = geometryResources.normalDepthTexture.IsValid();
-                bool hasObjectBuffer = objectResources.HasRequiredTextures;
-                // SB 的平铺视图：五张数值图 + owner 就够；语义 lane 的视图在语义趟没跑时会各自画暗红。
-                bool hasSurfaceBuffer = surfaceResources.HasRequiredTextures;
-                RTHandle planarReflectionRtHandle = HoPlanarReflectionSurface.CurrentReflectionTextureHandle;
-                RenderTexture planarReflectionTextureResource = HoPlanarReflectionSurface.CurrentReflectionTexture;
-                bool hasPlanarReflectionTexture = planarReflectionRtHandle != null && planarReflectionTextureResource != null;
-                bool hasPlanarReflectionInputs = hasPlanarReflectionTexture && hasCoverage && hasSurfaceValues && hasGeometry;
-                bool hasShadowCastAtlas = shadowCastResources.atlasTexture.IsValid();
-                bool hasShadowCastSecondDirectionalAtlas = shadowCastResources.secondDirectionalAtlasTexture.IsValid();
-                bool hasSubsurfaceScattering = sssResources.sourceTexture.IsValid()
-                    && sssResources.transmissionTexture.IsValid()
-                    && objectResources.coverageTexture.IsValid()
-            && surfaceResources.HasRequiredTextures
-                    && geometryResources.HasRequiredTextures;
-
-                List<DebugTile> tiles = BuildTiles(
-                    selectedDebugViewId,
-                    hasObjectBuffer,
-                    hasGeometry,
-                    hasShadowCastAtlas,
-                    hasShadowCastSecondDirectionalAtlas,
-                    hasSubsurfaceScattering,
-                    hasPlanarReflectionInputs,
-                    hasSurfaceBuffer);
-                if (tiles.Count == 0)
-                {
-                    return;
-                }
-
-                ResourceNeeds resourceNeeds = ResourceNeeds.FromTiles(tiles);
-                TextureHandle source = resourceData.activeColorTexture;
-                if (!source.IsValid())
-                {
-                    return;
-                }
-
-                TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
-                destinationDesc.name = "_lilHoDebugTileColor";
-                destinationDesc.clearBuffer = false;
-                destinationDesc.depthBufferBits = 0;
-                TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
-
-                CalculateTileGrid(tiles.Count, out int columns, out int rows);
-
-                for (int i = 0; i < tiles.Count; i++)
-                {
-                    DebugTile tile = tiles[i];
-                    int column = i % columns;
-                    int row = i / columns;
-                    tiles[i] = new DebugTile(
-                        tile.renderKind,
-                        tile.modeValue,
-                        new LabelData(tile.label0, tile.label1, tile.label2, tile.label3),
-                        CalculateTileRect(column, row, columns, rows));
-                }
-
-                using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-DebugTile", out PassData passData, ProfilingSampler))
-                {
-                    passData.material = material;
-                    passData.source = source;
-                    passData.tiles = tiles;
-                    passData.tileGrid = new Vector4(columns, rows, tiles.Count, 0.0f);
-                    passData.coverageAvailable = hasCoverage;
-                    passData.surfaceValuesAvailable = hasSurfaceValues;
-                    passData.normalDepthAvailable = hasGeometry;
-                    passData.planarReflectionAvailable = hasPlanarReflectionTexture;
-                    passData.bindObjectBuffer = resourceNeeds.objectBuffer && hasObjectBuffer;
-                    passData.bindCoverage = (resourceNeeds.planarReflectionBuffers || resourceNeeds.subsurfaceScattering) && hasCoverage;
-                    passData.bindSurfaceValues = resourceNeeds.planarReflectionBuffers && hasSurfaceValues;
-                    passData.bindGeometry = (resourceNeeds.geometry || resourceNeeds.planarReflectionBuffers || resourceNeeds.subsurfaceScattering) && hasGeometry;
-                    passData.bindPlanarReflectionTexture = resourceNeeds.planarReflectionBuffers && hasPlanarReflectionTexture;
-                    passData.bindShadowCastAtlas = resourceNeeds.shadowCastAtlas && hasShadowCastAtlas;
-                    passData.bindShadowCastSecondDirectionalAtlas = resourceNeeds.shadowCastSecondDirectionalAtlas && hasShadowCastSecondDirectionalAtlas;
-                    passData.bindSubsurfaceScattering = resourceNeeds.subsurfaceScattering && hasSubsurfaceScattering;
-                    passData.bindSurfaceBuffer = resourceNeeds.surfaceBuffer && hasSurfaceBuffer;
-                    passData.coverageTexture = objectResources.coverageTexture;
-                    passData.surfaceMaterialTexture = surfaceResources.materialTexture;
-                    passData.surfaceReflectionTexture = surfaceResources.reflectionTexture;
-                    passData.objectId0Texture = objectResources.id0Texture;
-                    passData.objectId1Texture = objectResources.id1Texture;
-                    passData.objectCoverageTexture = objectResources.coverageTexture;
-                    passData.objectSelectionTexture = objectResources.selectionTexture;
-                    passData.normalDepthTexture = geometryResources.normalDepthTexture;
-                    passData.outlineNormalDepthTexture = geometryResources.outlineNormalDepthTexture;
-                    passData.planarReflectionTexture = passData.bindPlanarReflectionTexture
-                        ? renderGraph.ImportTexture(planarReflectionRtHandle)
-                        : TextureHandle.nullHandle;
-                    passData.shadowCastAtlasTexture = shadowCastResources.atlasTexture;
-                    passData.shadowCastSecondDirectionalAtlasTexture = shadowCastResources.secondDirectionalAtlasTexture;
-                    passData.sssSourceTexture = sssResources.sourceTexture;
-                    passData.sssTransmissionTexture = sssResources.transmissionTexture;
-                    passData.geometryDepthParams = geometryDepthParams;
-
-                    if (passData.bindCoverage)
-                    {
-                        builder.UseTexture(passData.coverageTexture, AccessFlags.Read);
-                    }
-
-                    if (passData.bindSurfaceValues)
-                    {
-                        builder.UseTexture(passData.surfaceMaterialTexture, AccessFlags.Read);
-                        builder.UseTexture(passData.surfaceReflectionTexture, AccessFlags.Read);
-                    }
-
-                    if (passData.bindSurfaceBuffer)
-                    {
-                        // SB 的平铺视图（RenderKind = SurfaceBuffer）：数值面 + owner 必读；语义 lane 有产出才读。
-                        // 全局名由 SB 的 pass 自己绑（它不会被裁），这里只声明 RDG 读依赖。
-                        builder.UseTexture(surfaceResources.colorTexture, AccessFlags.Read);
-                        builder.UseTexture(surfaceResources.emissionTexture, AccessFlags.Read);
-                        builder.UseTexture(surfaceResources.normalTexture, AccessFlags.Read);
-                        builder.UseTexture(surfaceResources.materialTexture, AccessFlags.Read);
-                        builder.UseTexture(surfaceResources.reflectionTexture, AccessFlags.Read);
-                        builder.UseTexture(surfaceResources.classificationTexture, AccessFlags.Read);
-                        builder.UseTexture(surfaceResources.ownerTexture, AccessFlags.Read);
-                        if (surfaceResources.HasSemanticLanes)
-                        {
-                            builder.UseTexture(surfaceResources.semanticOwnerTexture, AccessFlags.Read);
-                            for (int i = 0; i < surfaceResources.semanticLaneTextures.Length; i++)
-                            {
-                                builder.UseTexture(surfaceResources.semanticLaneTextures[i], AccessFlags.Read);
-                            }
-                        }
-                    }
-
-                    else if (passData.bindCoverage)
-                    {
-                        builder.UseTexture(passData.coverageTexture, AccessFlags.Read);
-                    }
-
-                    if (passData.bindObjectBuffer)
-                    {
-                        builder.UseTexture(passData.objectId0Texture, AccessFlags.Read);
-                        builder.UseTexture(passData.objectId1Texture, AccessFlags.Read);
-                        builder.UseTexture(passData.objectCoverageTexture, AccessFlags.Read);
-                        if (passData.objectSelectionTexture.IsValid())
-                        {
-                            builder.UseTexture(passData.objectSelectionTexture, AccessFlags.Read);
-                        }
-                    }
-
-                    if (passData.bindGeometry)
-                    {
-                        builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
-                        if (passData.outlineNormalDepthTexture.IsValid())
-                        {
-                            builder.UseTexture(passData.outlineNormalDepthTexture, AccessFlags.Read);
-                        }
-                    }
-
-                    if (passData.bindPlanarReflectionTexture)
-                    {
-                        builder.UseTexture(passData.planarReflectionTexture, AccessFlags.Read);
-                    }
-
-                    if (passData.bindShadowCastAtlas)
-                    {
-                        builder.UseTexture(passData.shadowCastAtlasTexture, AccessFlags.Read);
-                    }
-
-                    if (passData.bindShadowCastSecondDirectionalAtlas)
-                    {
-                        builder.UseTexture(passData.shadowCastSecondDirectionalAtlasTexture, AccessFlags.Read);
-                    }
-
-                    if (passData.bindSubsurfaceScattering)
-                    {
-                        builder.UseTexture(passData.sssSourceTexture, AccessFlags.Read);
-                        builder.UseTexture(passData.sssTransmissionTexture, AccessFlags.Read);
-                        if (!passData.bindCoverage)
-                        {
-                            builder.UseTexture(passData.coverageTexture, AccessFlags.Read);
-                        }
-
-                        builder.UseTexture(surfaceResources.materialTexture, AccessFlags.Read);
-                        builder.UseTexture(surfaceResources.colorTexture, AccessFlags.Read);
-
-                        if (!passData.bindGeometry)
-                        {
-                            builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
-                        }
-                    }
-
-                    builder.UseTexture(source, AccessFlags.Read);
-                    builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
-                    builder.AllowPassCulling(false);
-                    builder.AllowGlobalStateModification(true);
-                    builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
-                    {
-                        Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), 0.0f, false);
-                        if (data.bindCoverage)
-                        {
-                            context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.CoverageTextureId, data.coverageTexture);
-                        }
-
-                        if (data.bindSurfaceValues)
-                        {
-                            context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.MaterialTextureId, data.surfaceMaterialTexture);
-                            context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ReflectionTextureId, data.surfaceReflectionTexture);
-                        }
-
-                        if (data.bindObjectBuffer)
-                        {
-                            context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, data.objectId0Texture);
-                            context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id1TextureId, data.objectId1Texture);
-                            context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.CoverageTextureId, data.objectCoverageTexture);
-                            context.cmd.SetGlobalFloat(HoObjectBufferShaderConstants.ValidId, 1.0f);
-                            if (data.objectSelectionTexture.IsValid())
-                            {
-                                context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.SelectionTextureId, data.objectSelectionTexture);
-                            }
-                        }
-
-                        if (data.bindGeometry)
-                        {
-                            context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
-                            if (data.outlineNormalDepthTexture.IsValid())
-                            {
-                                context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.OutlineNormalDepthTextureId, data.outlineNormalDepthTexture);
-                            }
-                        }
-
-                        if (data.bindPlanarReflectionTexture)
-                        {
-                            context.cmd.SetGlobalTexture(HoPlanarReflectionShaderConstants.ReflectionTextureId, data.planarReflectionTexture);
-                        }
-
-                        if (data.bindShadowCastAtlas)
-                        {
-                            context.cmd.SetGlobalTexture(HoShadowCastShaderConstants.AtlasTextureId, data.shadowCastAtlasTexture);
-                        }
-
-                        if (data.bindShadowCastSecondDirectionalAtlas)
-                        {
-                            context.cmd.SetGlobalTexture(HoShadowCastShaderConstants.SecondDirectionalAtlasTextureId, data.shadowCastSecondDirectionalAtlasTexture);
-                        }
-
-                        if (data.bindSubsurfaceScattering)
-                        {
-                            context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.CoverageTextureId, data.coverageTexture);
-                            context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, data.normalDepthTexture);
-                            context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.MaterialTextureId, data.surfaceMaterialTexture);
-                            context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.SourceTextureId, data.sssSourceTexture);
-                            context.cmd.SetGlobalTexture(HoSubsurfaceScatteringShaderConstants.TransmissionTextureId, data.sssTransmissionTexture);
-                        }
-
-                        for (int i = 0; i < data.tiles.Count; i++)
-                        {
-                            DebugTile tile = data.tiles[i];
-                            PropertyBlock.Clear();
-                            PropertyBlock.SetInt(HoDebugTileShaderConstants.RenderKindId, (int)tile.renderKind);
-                            PropertyBlock.SetInt(HoDebugTileShaderConstants.ModeId, tile.modeValue);
-                            PropertyBlock.SetVector(HoDebugTileShaderConstants.RectId, tile.tileRect);
-                            PropertyBlock.SetVector(HoDebugTileShaderConstants.GridId, data.tileGrid);
-                            PropertyBlock.SetVector(HoDebugTileShaderConstants.Label0Id, tile.label0);
-                            PropertyBlock.SetVector(HoDebugTileShaderConstants.Label1Id, tile.label1);
-                            PropertyBlock.SetVector(HoDebugTileShaderConstants.Label2Id, tile.label2);
-                            PropertyBlock.SetVector(HoDebugTileShaderConstants.Label3Id, tile.label3);
-                            PropertyBlock.SetVector(HoDebugTileShaderConstants.GeometryDepthParamsId, data.geometryDepthParams);
-                            PropertyBlock.SetVector(
-                                HoDebugTileShaderConstants.PlanarReflectionDebugInputStatusId,
-                                new Vector4(data.planarReflectionAvailable ? 1.0f : 0.0f, data.coverageAvailable ? 1.0f : 0.0f, data.normalDepthAvailable ? 1.0f : 0.0f, data.surfaceValuesAvailable ? 1.0f : 0.0f));
-                            context.cmd.DrawProcedural(Matrix4x4.identity, data.material, 0, MeshTopology.Triangles, 6, 1, PropertyBlock);
-                        }
-                    });
-                }
-
-                resourceData.cameraColor = destination;
-            }
-
-            private static List<DebugTile> BuildTiles(
-                string selectedId,
-                bool hasObjectBuffer,
-                bool hasGeometry,
-                bool hasShadowCastAtlas,
-                bool hasShadowCastSecondDirectionalAtlas,
-                bool hasSubsurfaceScattering,
-            bool hasSurfaceBuffer,
-                bool hasPlanarReflectionInputs)
-            {
-                List<DebugTile> tiles = new List<DebugTile>();
-                IReadOnlyList<HoDebugViewInfo> views = HoDebugViewRegistry.AllViews;
-                bool all = selectedId == AllRegisteredViewId;
-                for (int i = 0; i < views.Count; i++)
-                {
-                    HoDebugViewInfo view = views[i];
-                    if (!view.SupportsAutomaticTile || (!all && view.ViewId != selectedId))
-                    {
-                        continue;
-                    }
-
-                    if (view.RenderKind == HoDebugViewRenderKind.ObjectBuffer && !hasObjectBuffer)
-                    {
-                        continue;
-                    }
-
-                    if (view.RenderKind == HoDebugViewRenderKind.GeometryBuffer && !hasGeometry)
-                    {
-                        continue;
-                    }
-
-                    if (view.RenderKind == HoDebugViewRenderKind.AdaptiveProbeVolume && !hasGeometry)
-                    {
-                        continue;
-                    }
-
-                    if (view.RenderKind == HoDebugViewRenderKind.ShadowCast
-                        && ((view.ModeValue == (int)HoShadowCastDebugMode.Atlas && !hasShadowCastAtlas)
-                            || (view.ModeValue == (int)HoShadowCastDebugMode.SecondDirectionalAtlas && !hasShadowCastSecondDirectionalAtlas)))
-                    {
-                        continue;
-                    }
-
-                    if (view.RenderKind == HoDebugViewRenderKind.SubsurfaceScattering && !hasSubsurfaceScattering)
-                    {
-                        continue;
-                    }
-
-                    if (view.RenderKind == HoDebugViewRenderKind.SurfaceBuffer && !hasSurfaceBuffer)
-                    {
-                        continue;
-                    }
-
-                    if (view.RenderKind == HoDebugViewRenderKind.PlanarReflection
-                        && view.ModeValue != (int)HoPlanarReflectionDebugMode.InputStatus
-                        && !hasPlanarReflectionInputs)
-                    {
-                        continue;
-                    }
-
-                    tiles.Add(new DebugTile(view.RenderKind, view.ModeValue, EncodeLabel(view.ShortName)));
-                }
-
-                return tiles;
-            }
-
-            private static void CalculateTileGrid(int tileCount, out int columns, out int rows)
-            {
-                tileCount = Mathf.Max(1, tileCount);
-                int side = Mathf.CeilToInt(Mathf.Sqrt(tileCount));
-                columns = side;
-                rows = side;
-            }
-
-            private static Vector4 CalculateTileRect(int column, int row, int columns, int rows)
-            {
-                float cellWidth = 1.0f / columns;
-                float cellHeight = 1.0f / rows;
-                return new Vector4(
-                    column * cellWidth,
-                    row * cellHeight,
-                    Mathf.Max(0.0001f, cellWidth),
-                    Mathf.Max(0.0001f, cellHeight));
-            }
-
-            private static LabelData EncodeLabel(string label)
-            {
-                return new LabelData(
-                    PackLabelChunk(label, 0),
-                    PackLabelChunk(label, 4),
-                    PackLabelChunk(label, 8),
-                    PackLabelChunk(label, 12));
-            }
-
-            private static Vector4 PackLabelChunk(string label, int start)
-            {
-                return new Vector4(
-                    LabelCharCode(label, start),
-                    LabelCharCode(label, start + 1),
-                    LabelCharCode(label, start + 2),
-                    LabelCharCode(label, start + 3));
-            }
-
-            private static float LabelCharCode(string label, int index)
-            {
-                if (string.IsNullOrEmpty(label) || index < 0 || index >= label.Length)
-                {
-                    return ' ';
-                }
-
-                char c = label[index];
-                if (c >= 'a' && c <= 'z')
-                {
-                    return c - 32;
-                }
-
-                if ((c >= 'A' && c <= 'Z') || (c >= '0' && c <= '9'))
-                {
-                    return c;
-                }
-
-                return ' ';
-            }
-
-            private readonly struct ResourceNeeds
-            {
-                private ResourceNeeds(
-                    bool objectBuffer,
-                    bool geometry,
-                    bool shadowCastAtlas,
-                    bool shadowCastSecondDirectionalAtlas,
-                    bool subsurfaceScattering,
-                    bool planarReflectionBuffers,
-                    bool surfaceBuffer)
-                {
-                    this.objectBuffer = objectBuffer;
-                    this.geometry = geometry;
-                    this.shadowCastAtlas = shadowCastAtlas;
-                    this.shadowCastSecondDirectionalAtlas = shadowCastSecondDirectionalAtlas;
-                    this.subsurfaceScattering = subsurfaceScattering;
-                    this.planarReflectionBuffers = planarReflectionBuffers;
-                    this.surfaceBuffer = surfaceBuffer;
-                }
-
-                public readonly bool objectBuffer;
-                public readonly bool geometry;
-                public readonly bool shadowCastAtlas;
-                public readonly bool shadowCastSecondDirectionalAtlas;
-                public readonly bool subsurfaceScattering;
-                public readonly bool planarReflectionBuffers;
-                public readonly bool surfaceBuffer;
-
-                public static ResourceNeeds FromTiles(List<DebugTile> tiles)
-                {
-                    bool objectBuffer = false;
-                    bool geometry = false;
-                    bool shadowCastAtlas = false;
-                    bool shadowCastSecondDirectionalAtlas = false;
-                    bool subsurfaceScattering = false;
-                    bool planarReflectionBuffers = false;
-                    bool surfaceBuffer = false;
-
-                    for (int i = 0; i < tiles.Count; i++)
-                    {
-                        DebugTile tile = tiles[i];
-                        switch (tile.renderKind)
-                        {
-                            case HoDebugViewRenderKind.ObjectBuffer:
-                                objectBuffer = true;
-                                break;
-                            case HoDebugViewRenderKind.GeometryBuffer:
-                                geometry = true;
-                                break;
-                            case HoDebugViewRenderKind.AdaptiveProbeVolume:
-                                geometry = true;
-                                break;
-                            case HoDebugViewRenderKind.ShadowCast:
-                                if (tile.modeValue == (int)HoShadowCastDebugMode.SecondDirectionalAtlas)
-                                {
-                                    shadowCastSecondDirectionalAtlas = true;
-                                }
-                                else
-                                {
-                                    shadowCastAtlas = true;
-                                }
-
-                                break;
-                            case HoDebugViewRenderKind.SubsurfaceScattering:
-                                subsurfaceScattering = true;
-                                break;
-                            case HoDebugViewRenderKind.PlanarReflection:
-                                planarReflectionBuffers |= tile.modeValue != (int)HoPlanarReflectionDebugMode.InputStatus;
-                                break;
-                            case HoDebugViewRenderKind.SurfaceBuffer:
-                                surfaceBuffer = true;
-                                break;
-                        }
-                    }
-
-                    return new ResourceNeeds(
-                        objectBuffer,
-                        geometry,
-                        shadowCastAtlas,
-                        shadowCastSecondDirectionalAtlas,
-                        subsurfaceScattering,
-                        planarReflectionBuffers,
-                        surfaceBuffer);
-                }
-            }
-
-            private readonly struct DebugTile
-            {
-                public DebugTile(HoDebugViewRenderKind renderKind, int modeValue, LabelData label)
-                    : this(renderKind, modeValue, label, Vector4.zero)
-                {
-                }
-
-                public DebugTile(HoDebugViewRenderKind renderKind, int modeValue, LabelData label, Vector4 tileRect)
-                {
-                    this.renderKind = renderKind;
-                    this.modeValue = modeValue;
-                    label0 = label.label0;
-                    label1 = label.label1;
-                    label2 = label.label2;
-                    label3 = label.label3;
-                    this.tileRect = tileRect;
-                }
-
-                public readonly HoDebugViewRenderKind renderKind;
-                public readonly int modeValue;
-                public readonly Vector4 label0;
-                public readonly Vector4 label1;
-                public readonly Vector4 label2;
-                public readonly Vector4 label3;
-                public readonly Vector4 tileRect;
-            }
-
-            private readonly struct LabelData
-            {
-                public LabelData(Vector4 label0, Vector4 label1, Vector4 label2, Vector4 label3)
-                {
-                    this.label0 = label0;
-                    this.label1 = label1;
-                    this.label2 = label2;
-                    this.label3 = label3;
-                }
-
-                public readonly Vector4 label0;
-                public readonly Vector4 label1;
-                public readonly Vector4 label2;
-                public readonly Vector4 label3;
-            }
-
+            private int mode;
             private sealed class PassData
             {
                 public Material material;
-                public TextureHandle source;
-                public List<DebugTile> tiles;
-                public Vector4 tileGrid;
-                public bool coverageAvailable;
-                public bool surfaceValuesAvailable;
-                public bool normalDepthAvailable;
-                public bool planarReflectionAvailable;
-                public bool bindObjectBuffer;
-                public bool bindCoverage;
-                public bool bindSurfaceValues;
-                public bool bindGeometry;
-                public bool bindPlanarReflectionTexture;
-                public bool bindShadowCastAtlas;
-                public bool bindShadowCastSecondDirectionalAtlas;
-                public bool bindSubsurfaceScattering;
-                public bool bindSurfaceBuffer;
-                public TextureHandle coverageTexture;
-                public TextureHandle surfaceMaterialTexture;
-                public TextureHandle surfaceReflectionTexture;
-                public TextureHandle objectId0Texture;
-                public TextureHandle objectId1Texture;
-                public TextureHandle objectCoverageTexture;
-                public TextureHandle objectSelectionTexture;
-                public TextureHandle normalDepthTexture;
-                public TextureHandle outlineNormalDepthTexture;
-                public TextureHandle planarReflectionTexture;
-                public TextureHandle shadowCastAtlasTexture;
-                public TextureHandle shadowCastSecondDirectionalAtlasTexture;
-                public TextureHandle sssSourceTexture;
-                public TextureHandle sssTransmissionTexture;
-                public Vector4 geometryDepthParams;
+                public TextureHandle geometry;
+                public int mode;
+                public Vector2Int size;
+            }
+
+            public void Setup(Material value, int selectedMode)
+            {
+                material = value;
+                mode = selectedMode;
+                renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
+            }
+
+            public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)
+            {
+                var geometry = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>().normalDepthTexture;
+                if (!geometry.IsValid()) return;
+                TextureHandle destination = CreateDebugTarget(graph, frameData);
+                using (var builder = graph.AddRasterRenderPass<PassData>("Ho-External System Debug", out var data))
+                {
+                    data.material = material; data.geometry = geometry; data.mode = mode;
+                    data.size = DebugSize(graph, destination);
+                    builder.UseTexture(geometry, AccessFlags.Read);
+                    builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
+                    builder.AllowGlobalStateModification(true);
+                    builder.SetRenderFunc(static (PassData d, RasterGraphContext ctx) =>
+                    {
+                        ctx.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId, d.geometry);
+                        HoDebugGrid.Draw(ctx.cmd, d.material, d.mode, HoDebugTileShaderConstants.ModeId, HoDebugViewRegistry.SystemViews, d.size, integerMode: true);
+                    });
+                }
+            }
+
+            public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
+            {
+                if (Shader.GetGlobalTexture(HoGeometryBufferShaderConstants.NormalDepthTextureId) == null) return;
+                var cmd = CommandBufferPool.Get("Ho-External System Debug");
+                HoDebugGrid.Draw(CommandBufferHelpers.GetRasterCommandBuffer(cmd), material, mode,
+                    HoDebugTileShaderConstants.ModeId, HoDebugViewRegistry.SystemViews, new Vector2Int(DebugTarget.rt.width, DebugTarget.rt.height), integerMode: true);
+                PublishCompatibility(renderingData.cameraData.camera);
+                context.ExecuteCommandBuffer(cmd);
+                CommandBufferPool.Release(cmd);
             }
         }
     }

@@ -1,5 +1,6 @@
 #pragma warning disable CS0618, CS0672
 
+using lilToon.URP.Extensions.Debugging;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -8,18 +9,17 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.GeometryBuffer
 {
-    internal sealed class HoGeometryBufferDebugPass : ScriptableRenderPass
+    internal sealed class HoGeometryBufferDebugPass : HoDebugRenderPass
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-GeometryBuffer Debug");
         private HoGeometryBufferSettings settings;
         private HoGeometryBufferRenderTargets renderTargets;
         private RTHandle cameraColorTarget;
-        private RTHandle tempTexture;
         private Material debugMaterial;
 
         private sealed class PassData
         {
-            public TextureHandle source;
+            public Vector2Int debugSize;
             public TextureHandle normalDepthTexture;
             public TextureHandle outlineNormalDepthTexture;
             public TextureHandle coverageTexture;
@@ -43,8 +43,8 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             this.renderTargets = renderTargets;
             this.cameraColorTarget = cameraColorTarget;
             this.debugMaterial = debugMaterial;
-            renderPassEvent = settings != null ? settings.debugPassEvent : RenderPassEvent.AfterRenderingPostProcessing;
-            ConfigureInput(ScriptableRenderPassInput.Color);
+            renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
+            ConfigureInput(ScriptableRenderPassInput.None);
         }
 
         public void SetupRenderGraph(
@@ -55,8 +55,8 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             this.settings = settings;
             this.renderTargets = renderTargets;
             this.debugMaterial = debugMaterial;
-            renderPassEvent = settings != null ? settings.debugPassEvent : RenderPassEvent.AfterRenderingPostProcessing;
-            ConfigureInput(ScriptableRenderPassInput.Color);
+            renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
+            ConfigureInput(ScriptableRenderPassInput.None);
         }
 
         public void Dispose()
@@ -66,26 +66,19 @@ namespace lilToon.URP.Extensions.GeometryBuffer
 
         public void ReleaseCompatibilityResources()
         {
+            ReleaseDebugResources();
             renderTargets = null;
             cameraColorTarget = null;
-            tempTexture?.Release();
-            tempTexture = null;
         }
 
         public override void OnCameraSetup(CommandBuffer cmd, ref RenderingData renderingData)
         {
-            RenderTextureDescriptor descriptor = renderingData.cameraData.cameraTargetDescriptor;
-            descriptor.depthBufferBits = 0;
-            descriptor.depthStencilFormat = GraphicsFormat.None;
-            descriptor.msaaSamples = 1;
-            descriptor.bindMS = false;
-            RenderingUtils.ReAllocateIfNeeded(ref tempTexture, descriptor, FilterMode.Bilinear, TextureWrapMode.Clamp, name: "_lilHoGeometryBufferDebugSource");
-            ConfigureTarget(cameraColorTarget);
+            base.OnCameraSetup(cmd, ref renderingData);
         }
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
         {
-            if (settings == null || debugMaterial == null || cameraColorTarget == null || tempTexture == null || renderTargets == null)
+            if (settings == null || debugMaterial == null || cameraColorTarget == null || renderTargets == null)
             {
                 return;
             }
@@ -113,10 +106,10 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                     cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, renderTargets.SkyTexture.nameID);
                 }
 
-                Blitter.BlitCameraTexture(cmd, cameraColorTarget, tempTexture, 0, true);
-                Blitter.BlitCameraTexture(cmd, tempTexture, cameraColorTarget, RenderBufferLoadAction.DontCare, RenderBufferStoreAction.Store, debugMaterial, 0);
+                HoDebugGrid.Draw(CommandBufferHelpers.GetRasterCommandBuffer(cmd), debugMaterial, (int)settings.debugMode, HoGeometryBufferShaderConstants.DebugModeId, HoGeometryBufferDebugViewInfo.Views, new Vector2Int(DebugTarget.rt.width, DebugTarget.rt.height));
             }
 
+            PublishCompatibility(renderingData.cameraData.camera);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
@@ -137,15 +130,11 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 return;
             }
 
-            TextureDesc destinationDesc = renderGraph.GetTextureDesc(source);
-            destinationDesc.name = "_lilHoGeometryBufferDebugColor";
-            destinationDesc.clearBuffer = false;
-            destinationDesc.depthBufferBits = 0;
-            TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
+            TextureHandle destination = CreateDebugTarget(renderGraph, frameData);
 
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-GeometryBuffer Debug", out PassData passData, ProfilingSampler))
             {
-                passData.source = source;
+                passData.debugSize = DebugSize(renderGraph, destination);
                 passData.normalDepthTexture = geometryResources.normalDepthTexture;
                 passData.outlineNormalDepthTexture = geometryResources.outlineNormalDepthTexture;
                 passData.coverageTexture = geometryResources.coverageTexture;
@@ -158,7 +147,6 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                 passData.useCoverageTexture = geometryResources.coverageTexture.IsValid();
                 passData.useOutlineCoverageTexture = geometryResources.outlineCoverageTexture.IsValid();
 
-                builder.UseTexture(source, AccessFlags.Read);
                 builder.UseTexture(passData.normalDepthTexture, AccessFlags.Read);
                 if (passData.outlineNormalDepthTexture.IsValid())
                 {
@@ -177,7 +165,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                     builder.UseTexture(passData.skyTexture, AccessFlags.Read);
                 }
 
-                builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
@@ -206,11 +194,10 @@ namespace lilToon.URP.Extensions.GeometryBuffer
                         context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.SkyTextureId, data.skyTexture);
                     }
 
-                    Blitter.BlitTexture(context.cmd, data.source, new Vector4(1, 1, 0, 0), data.debugMaterial, 0);
+                    HoDebugGrid.Draw(context.cmd, data.debugMaterial, (int)data.debugMode, HoGeometryBufferShaderConstants.DebugModeId, HoGeometryBufferDebugViewInfo.Views, data.debugSize);
                 });
             }
 
-            resourceData.cameraColor = destination;
         }
 
         private static void SetMaterialProperties(Material material, HoGeometryBufferSettings settings)

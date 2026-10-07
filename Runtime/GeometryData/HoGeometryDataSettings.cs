@@ -13,7 +13,8 @@ namespace lilToon.URP.Extensions.GeometryData
         [InspectorName("Tesion 拉伸")] TensionStretch,
         [InspectorName("Tesion 挤压")] TensionCompression,
         [InspectorName("Tesion 角变化")] TensionAngular,
-        [InspectorName("Tesion 有效性")] TensionValidity
+        [InspectorName("Tesion 有效性")] TensionValidity,
+        [InspectorName("All")] All = 255
     }
     [Serializable]
     public sealed class HoGeometryDataSettings

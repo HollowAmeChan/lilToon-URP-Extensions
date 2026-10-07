@@ -1,6 +1,7 @@
 #pragma warning disable CS0618, CS0672
 
 using System.Collections.Generic;
+using lilToon.URP.Extensions.Debugging;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -32,6 +33,7 @@ namespace lilToon.URP.Extensions.SSGI
         {
             pass = new HoSSGIPass();
             compositePass = new HoSSGICompositePass();
+            debugPass?.ReleaseDebugResources();
             debugPass = new HoSSGIDebugPass();
             RenderPipelineManager.beginCameraRendering += ResetGlobalState;
         }
@@ -97,7 +99,7 @@ namespace lilToon.URP.Extensions.SSGI
             if (debugEnabled)
             {
                 debugPass.Setup(settings, debugMaterial);
-                renderer.EnqueuePass(debugPass);
+                debugPass.Enqueue(renderer);
             }
         }
 
@@ -111,6 +113,7 @@ namespace lilToon.URP.Extensions.SSGI
             debugMaterial = null;
             pass = null;
             compositePass = null;
+            debugPass?.ReleaseDebugResources();
             debugPass = null;
             foreach (HoSSGIHistory cameraHistory in histories.Values)
             {
@@ -1439,7 +1442,7 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.gi, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
-                builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(data.destination, 0, AccessFlags.Write);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
@@ -1454,10 +1457,11 @@ namespace lilToon.URP.Extensions.SSGI
         }
     }
 
-    internal sealed class HoSSGIDebugPass : ScriptableRenderPass
+    internal sealed class HoSSGIDebugPass : HoDebugRenderPass
     {
         private sealed class PassData
         {
+            public Vector2Int debugSize;
             public Material material;
             public TextureHandle cameraColor;
             public TextureHandle cameraSource;
@@ -1506,12 +1510,10 @@ namespace lilToon.URP.Extensions.SSGI
                 || !ssgi.temporalTexture.IsValid() || !ssgi.spatialResolveTexture.IsValid()
                 || !ssgi.temporalDenoisedTexture.IsValid() || !ssgi.bilateralFirstTexture.IsValid()
                 || !geometry.normalDepthTexture.IsValid()) return;
-            TextureDesc desc = renderGraph.GetTextureDesc(cameraColor);
-            desc.name = "_HoSSGIDebugColor";
-            desc.depthBufferBits = 0;
-            TextureHandle destination = renderGraph.CreateTexture(desc);
+            TextureHandle destination = CreateDebugTarget(renderGraph, frameData);
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-SSGI Debug", out PassData data, new ProfilingSampler("Ho-SSGI Debug")))
             {
+                data.debugSize = DebugSize(renderGraph, destination);
                 data.material = material;
                 data.cameraColor = cameraColor;
                 data.cameraSource = ssgi.cameraSourceTexture;
@@ -1547,7 +1549,7 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.UseTexture(data.spatialResolve, AccessFlags.Read);
                 builder.UseTexture(data.temporalDenoised, AccessFlags.Read);
                 builder.UseTexture(data.bilateralFirst, AccessFlags.Read);
-                builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(data.destination, 0, AccessFlags.Write);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
@@ -1568,10 +1570,11 @@ namespace lilToon.URP.Extensions.SSGI
                     context.cmd.SetGlobalTexture(Shader.PropertyToID("_HoSSGISpatialResolveDebug"), passData.spatialResolve);
                     context.cmd.SetGlobalTexture(Shader.PropertyToID("_HoSSGITemporalDenoisedDebug"), passData.temporalDenoised);
                     context.cmd.SetGlobalTexture(Shader.PropertyToID("_HoSSGIBilateralFirstDebug"), passData.bilateralFirst);
-                    Blitter.BlitTexture(context.cmd, passData.cameraColor, new Vector4(1, 1, 0, 0), passData.material, 0);
+                    context.cmd.SetGlobalTexture("_BlitTexture", passData.cameraColor);
+                    HoDebugGrid.Draw(context.cmd, passData.material, passData.debugMode, HoSSGIShaderConstants.DebugModeId, HoSSGIDebugViewInfo.Views, passData.debugSize, integerMode: true);
                 });
             }
-            resourceData.cameraColor = destination;
+
         }
     }
 }

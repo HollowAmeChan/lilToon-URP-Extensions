@@ -23,9 +23,6 @@ namespace lilToon.URP.Extensions.Editor.Debugging
 
         private SerializedProperty enabledForGameView;
         private SerializedProperty enabledForSceneView;
-        private SerializedProperty passEvent;
-        private SerializedProperty geometryDepthNear;
-        private SerializedProperty geometryDepthFar;
         private SerializedProperty selectedDebugViewId;
         private string[] labels = EmptyLabels;
         private string[] ids = EmptyIds;
@@ -36,9 +33,6 @@ namespace lilToon.URP.Extensions.Editor.Debugging
         {
             enabledForGameView = serializedObject.FindProperty("enabledForGameView");
             enabledForSceneView = serializedObject.FindProperty("enabledForSceneView");
-            passEvent = serializedObject.FindProperty("passEvent");
-            geometryDepthNear = serializedObject.FindProperty("geometryDepthNear");
-            geometryDepthFar = serializedObject.FindProperty("geometryDepthFar");
             selectedDebugViewId = serializedObject.FindProperty("selectedDebugViewId");
             RebuildDebugViewOptions();
         }
@@ -68,7 +62,6 @@ namespace lilToon.URP.Extensions.Editor.Debugging
             {
                 EditorGUILayout.PropertyField(enabledForGameView);
                 EditorGUILayout.PropertyField(enabledForSceneView);
-                EditorGUILayout.PropertyField(passEvent);
             }
         }
 
@@ -83,15 +76,13 @@ namespace lilToon.URP.Extensions.Editor.Debugging
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 DrawDebugViewPopup();
-                EditorGUILayout.PropertyField(geometryDepthNear);
-                EditorGUILayout.PropertyField(geometryDepthFar);
-                EditorGUILayout.HelpBox("Automatic tiles use registry views with render-kind metadata. ScreenProcess and ImageProcess views remain layer-local until they expose render-kind data.", MessageType.Info);
+                EditorGUILayout.HelpBox("Only external-system diagnostics (currently APV). Buffer and effect views use their own Volume debug modes and All grids. Presentation always runs after final post-processing.", MessageType.Info);
             }
         }
 
         private void DrawRegistry()
         {
-            IReadOnlyList<HoDebugViewInfo> views = HoDebugViewRegistry.AllViews;
+            IReadOnlyList<HoDebugViewInfo> views = HoDebugViewRegistry.SystemViews;
             string summary = views.Count + " views";
             if (!LilUrpEditorSectionGui.DrawSectionHeader(ref showRegistry, "Registry", summary, RegistryColor))
             {
@@ -100,7 +91,7 @@ namespace lilToon.URP.Extensions.Editor.Debugging
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                EditorGUILayout.HelpBox("Read-only registry used by this Debug Tile feature. Debug shaders, materials and render targets stay owned by each feature.", MessageType.None);
+                EditorGUILayout.HelpBox("External-system views only. Feature-owned diagnostics are not dispatched by this renderer feature.", MessageType.None);
                 string currentFeature = null;
                 for (int i = 0; i < views.Count; i++)
                 {
@@ -158,8 +149,15 @@ namespace lilToon.URP.Extensions.Editor.Debugging
         private void DrawDebugViewPopup()
         {
             int selectedIndex = FindSelectedIndex(selectedDebugViewId.stringValue);
+            bool migrated = !string.IsNullOrEmpty(selectedDebugViewId.stringValue)
+                && selectedDebugViewId.stringValue != HoDebugTileRendererFeature.AllRegisteredViewId;
+            foreach (var view in HoDebugViewRegistry.SystemViews)
+                if (view.ViewId == selectedDebugViewId.stringValue) migrated = false;
+            if (migrated)
+                EditorGUILayout.HelpBox("该视图已迁回所属 Feature 的调试入口：" + selectedDebugViewId.stringValue, MessageType.Info);
+            EditorGUI.BeginChangeCheck();
             int nextIndex = EditorGUILayout.Popup("Debug View", selectedIndex, labels);
-            selectedDebugViewId.stringValue = ids[nextIndex];
+            if (EditorGUI.EndChangeCheck()) selectedDebugViewId.stringValue = ids[nextIndex];
         }
 
         private int FindSelectedIndex(string value)
@@ -177,7 +175,7 @@ namespace lilToon.URP.Extensions.Editor.Debugging
 
         private void RebuildDebugViewOptions()
         {
-            IReadOnlyList<HoDebugViewInfo> views = HoDebugViewRegistry.AllViews;
+            IReadOnlyList<HoDebugViewInfo> views = HoDebugViewRegistry.SystemViews;
             List<string> labelList = new List<string>(views.Count + 2)
             {
                 "None",
@@ -192,11 +190,6 @@ namespace lilToon.URP.Extensions.Editor.Debugging
             for (int i = 0; i < views.Count; i++)
             {
                 HoDebugViewInfo view = views[i];
-                if (!view.SupportsAutomaticTile)
-                {
-                    continue;
-                }
-
                 labelList.Add(view.FeatureName + " / " + view.ShortName + " (" + view.ViewId + ")");
                 idList.Add(view.ViewId);
             }
@@ -213,7 +206,7 @@ namespace lilToon.URP.Extensions.Editor.Debugging
 
         private static string BuildViewStatusText(HoDebugViewInfo view)
         {
-            string tileStatus = view.SupportsAutomaticTile ? view.RenderKind.ToString() : "no tile";
+            string tileStatus = "external system";
             string shaderStatus = view.HasShader ? GetShaderAssetStatus(view.ShaderAssetPath) : "no shader";
             return "Mode " + view.ModeValue + " / " + tileStatus + " / " + shaderStatus;
         }

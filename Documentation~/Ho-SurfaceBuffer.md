@@ -1,5 +1,7 @@
 # Ho-SurfaceBuffer（SB）
 
+> 调试架构更新：单视图与模块内 All 共用本模块 shader，并在最终后处理之后显示。DebugTile 已收缩为 APV 等外部系统入口；本文中原 DebugTile 接入要求由模块内 All 替代，见 [Ho-Debug.md](Ho-Debug.md)。
+
 > **状态：已落地并稳定**（代码在 `Runtime/SurfaceBuffer/`，材质侧在 lilToon 的 22 个 URP lilblock）。
 > 本文是 **SB 的现行架构说明**：字段、名字、执行记录与冻结决议；§0 是流水线复核与勘误基线。
 > 相关：`Ho-ObjectBuffer.md`、`Ho-AttributeComposite.md`（AC 是 SB 属性值的唯一读取入口）、`架构边界/MSAA.md`。

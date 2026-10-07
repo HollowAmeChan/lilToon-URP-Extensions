@@ -50,7 +50,7 @@ namespace lilToon.URP.Extensions.GeometryData
                 if (shader == null || !shader.isSupported) { DebugStatus = "数据预览 Shader 不可用"; return; }
                 debugMaterial = CoreUtils.CreateEngineMaterial(shader);
             }
-            debugPass.Setup(cameraDebug, debugMaterial); renderer.EnqueuePass(debugPass);
+            debugPass.Setup(cameraDebug, debugMaterial); debugPass.Enqueue(renderer);
             DebugStatus = "已安排数据预览";
         }
         private void ResolveCameraSettings()
@@ -67,7 +67,7 @@ namespace lilToon.URP.Extensions.GeometryData
             cameraDebug.debugInGameView = volume.debugInGameView.value;
             cameraDebug.debugLayerMask = volume.debugLayerMask.value;
             cameraDebug.debugMaxValue = volume.debugMaxValue.value;
-            cameraDebug.debugPassEvent = volume.debugPassEvent.value;
+
         }
         private bool ShouldDebug(Camera camera) => cameraDebug.debugMode != HoGeometryDataDebugMode.Off && camera != null
             && (camera.cameraType == CameraType.SceneView ? cameraDebug.debugInSceneView

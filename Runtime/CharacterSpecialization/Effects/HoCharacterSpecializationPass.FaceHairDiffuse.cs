@@ -22,6 +22,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
 
             switch (settings.debugMode)
             {
+                case HoCharacterSpecializationDebugMode.All:
                 case HoCharacterSpecializationDebugMode.FaceHairDiffuseSourceMask:
                 case HoCharacterSpecializationDebugMode.FaceHairDiffuseBlurMask:
                 case HoCharacterSpecializationDebugMode.FaceHairDiffuseBlurColor:

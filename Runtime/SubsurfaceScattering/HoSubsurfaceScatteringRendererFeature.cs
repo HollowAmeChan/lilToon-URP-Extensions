@@ -107,6 +107,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             transmissionHorizontalBlurPass = new HoSubsurfaceScatteringTransmissionBlurPass("Ho-SubsurfaceScattering TransmissionX", new Vector2(1.0f, 0.0f));
             transmissionVerticalBlurPass = new HoSubsurfaceScatteringTransmissionBlurPass("Ho-SubsurfaceScattering TransmissionY", new Vector2(0.0f, 1.0f));
             compositePass = new HoSubsurfaceScatteringCompositePass();
+            debugPass?.ReleaseDebugResources();
             debugPass = new HoSubsurfaceScatteringDebugPass();
         }
 
@@ -199,7 +200,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 if (debugMaterial != null)
                 {
                     debugPass?.SetupRenderGraph(settings, renderTargets, debugMaterial);
-                    renderer.EnqueuePass(debugPass);
+                    debugPass.Enqueue(renderer);
                 }
             }
             else
@@ -221,6 +222,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             transmissionHorizontalBlurPass = null;
             transmissionVerticalBlurPass = null;
             compositePass = null;
+            debugPass?.ReleaseDebugResources();
             debugPass = null;
             material = null;
             materialShader = null;

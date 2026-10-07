@@ -115,7 +115,12 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 Near(DrawDirect(), new Color(2.25f, 2, 1, 1), "direct seven-MRT shader output");
                 Near(firstResult, new Color(2.25f, 2, 1, 1), "two-layer HDR sum");
                 Near(Read(target), new Color(2.25f, 2, 1, 1), "emission debug output");
-                Near(DrawTile(), new Color(2.25f, 2, 1, 1), "emission DebugTile output");
+                Near(DrawModuleDebug(), new Color(2.25f, 2, 1, 1), "emission module debug output");
+                volumeSettings.debugMode.value = HoSurfaceBufferDebugMode.All;
+                Render();
+                Near(Read(target, 24, 24), new Color(2.25f, 2, 1, 1), "emission in module All grid");
+                volumeSettings.debugMode.value = HoSurfaceBufferDebugMode.Emission;
+                Render();
                 var emission = capture.rt;
                 Require(emission != null, "emission global missing");
                 var raw = Read(emission);
@@ -164,7 +169,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             return Read(capture.rt);
         }
 
-        private static Color Read(Texture source)
+        private static Color Read(Texture source, int x = 32, int y = 32)
         {
             Require(source != null, "readback texture missing");
             var sourceTarget = source as RenderTexture;
@@ -177,7 +182,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 RenderTexture.active = copy;
                 image.ReadPixels(new Rect(0, 0, 64, 64), 0, 0);
                 image.Apply();
-                return image.GetPixel(32, 32);
+                return image.GetPixel(x, y);
             }
             finally
             {
@@ -214,15 +219,13 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             }
         }
 
-        private static Color DrawTile()
+        private static Color DrawModuleDebug()
         {
-            var shader = Shader.Find("Hidden/lilToon/URP/Debug/DebugTile");
-            Require(shader != null, "DebugTile shader missing");
+            var shader = Shader.Find("Hidden/lilToon/URP/SurfaceBuffer/DebugView");
+            Require(shader != null, "SurfaceBuffer debug shader missing");
             var tile = Keep(new Material(shader));
-            tile.SetInt("_HoDebugTileRenderKind", 7);
-            tile.SetInt("_HoDebugTileMode", 10);
-            tile.SetVector("_HoDebugTileRect", new Vector4(0, 0, 1, 1));
-            tile.SetVector("_HoDebugTileGrid", new Vector4(1, 1, 0, 0));
+            tile.SetFloat("_HoSurfaceBufferDebugMode", 10);
+            tile.SetVector("_BlitScaleBias", new Vector4(1, 1, 0, 0));
             tile.SetFloat("_HoSurfaceBufferActive", 1);
             tile.SetTexture("_HoSurfaceBufferEmissionTexture", capture.rt);
             var cmd = new CommandBuffer();
@@ -230,7 +233,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             {
                 cmd.SetRenderTarget(target);
                 cmd.ClearRenderTarget(false, true, Color.clear);
-                cmd.DrawProcedural(Matrix4x4.identity, tile, 0, MeshTopology.Triangles, 6);
+                cmd.DrawProcedural(Matrix4x4.identity, tile, 0, MeshTopology.Triangles, 3);
                 Graphics.ExecuteCommandBuffer(cmd);
                 return Read(target);
             }

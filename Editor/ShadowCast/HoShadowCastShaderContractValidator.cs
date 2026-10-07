@@ -22,7 +22,6 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         private const string ContractFileName = "HoShadowCastShaderContract.hlsl";
         private const string SamplingFileName = "HoShadowCastSampling.hlsl";
         private const string DebugShaderFileName = "HoShadowCastDebug.shader";
-        private const string DebugTileShaderFileName = "HoDebugTile.shader";
         private const string LogPrefix = "[lilToon URP Extensions] ShadowCast shader contract: ";
 
         private static readonly Regex DefinePattern = new Regex(
@@ -214,7 +213,6 @@ namespace lilToon.URP.Extensions.Editor.ShadowCast
         private static void CheckDebugShaders(List<string> errors)
         {
             CheckDebugShader(DebugShaderFileName, "its arrays use the shared sizes", errors);
-            CheckDebugShader(DebugTileShaderFileName, "its slice overlay uses the shared sizes", errors);
         }
 
         private static void CheckDebugShader(string fileName, string includeReason, List<string> errors)

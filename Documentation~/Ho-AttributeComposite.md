@@ -13,7 +13,7 @@
 > - 第一个消费者：**角色特化**已切过来 —— 它不再自己解码 OB 身份池与部件行表，改读 AC 的 Selection 池（转置成自己的位平面），并把 8 个物体位登记为消费者。
 > - **surface 来源（R4b）已落地**：SB 的语义 lane（4 张 RGBA8，一张装两条 `(SemanticId, value)`）在 `SemanticResolve` 里按 catalog 的 `sourceMode` 合成（`Intersection` 为默认：表面侧只能收窄 / 细化），**单采样、普通采样**读 —— **不读 MSAA**（按 `Texture2DMS`+`Load` 读时坐标 / 采样数 / `bindMS` 任一处对不上都会静默读错，实测过：池子整片均匀无形状、移动时局部拖影）。此段描述旧的近似路径。2026-10-06 新增 Scalar V1：SB 按 OB 实际 N 捕获 owner/weight/written，在生产侧关联归约为单采样 W/V，AC 消费这些统计。
 > - **`AttributeComposite`（R4c）已落地**：`HoAC_Attribute(uv, 0)` = `Classification` 四通道（`sssProfileIdByte / curvatureHint / transmittanceHint / materialClassIdByte`），覆盖链是 `constant < surface` —— **surface 可用性由 `HoAC_SurfaceValid(uv)` 判定**（SB 有产出 **且** SB 的 owner == OB 层 0 身份），不匹配就返回 constant 兜底（本轮恒 0，等有消费者要非 0 再加常量表）。**本轮不落"合成属性图"这张 RT**：AC 只把 SB 的 Classification + owner 作为**引用**发布（与它发布 OB 身份池引用同一套做法），合成在读取时做；真有"要一张图"的需求（调试视图 / 屏空间复用）时再落 RT。
-> - **仍然不做**：Selection 池 16 lane 的 MRT 分批（现在固定 4 张 = 8 lane，词表超过 8 位才需要）、DebugTile 的 AC 九宫格（需要给 Debug 轴加一个 `HoDebugViewRenderKind`，AC 自带整屏调试不受影响）、**按消费者登记决定要不要产出 Selection 池**（现在只要 OB 有身份就恒产出 4 张，等消费者多起来再按登记裁剪）。
+> - **仍然不做**：Selection 池 16 lane 的 MRT 分批（现在固定 4 张 = 8 lane，词表超过 8 位才需要）、AC 的 All 九宫格（AC 保持模式＋语义参数的独立调试，不接 All）、**按消费者登记决定要不要产出 Selection 池**（现在只要 OB 有身份就恒产出 4 张，等消费者多起来再按登记裁剪）。
 
 
 ---
@@ -221,7 +221,7 @@ CS/SP 与 AC/SB 调试在入队阶段提交实例所有的本相机需求；Regi
 
 Selection、旧 surface lane 与 W/V 捕获现已按冻结快照独立判断。没有语义需求时 AC 保留三轴输入发布，Selection flag 为 0；总覆盖率、组/完整身份、GB 几何查询继续可用。需要 Selection 的相机仍保留旧/新 surface 两套输入，确保近似 fallback 的读取有对应资源。SB 数值面沿用自己的启用与消费者契约。
 
-`HoAttributeCompositeProductionDiagnostics` 发布最近相机的逻辑 RT 分配计数。兼容与 RG 都处理需求停用/恢复，兼容 target 同步复位，未产出选择图使用中性绑定。DebugTile 的 SB 语义视图纳入需求收集。上述变化不重新编号 SemanticId/LaneIndex。
+`HoAttributeCompositeProductionDiagnostics` 发布最近相机的逻辑 RT 分配计数。兼容与 RG 都处理需求停用/恢复，兼容 target 同步复位，未产出选择图使用中性绑定。SB 自己的语义视图及 All 纳入需求收集。上述变化不重新编号 SemanticId/LaneIndex。
 
 ### 12.2 独立子相机
 

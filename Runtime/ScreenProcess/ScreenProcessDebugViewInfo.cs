@@ -11,7 +11,6 @@ namespace lilToon.URP.Extensions.ScreenProcess
                 "screen-process.mask",
                 "Mask",
                 0,
-                HoDebugViewRenderKind.None,
                 string.Empty,
                 string.Empty,
                 false,

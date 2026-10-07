@@ -38,6 +38,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         {
             RegisterCameraReset();
             outputPass = new HoObjectBufferPass();
+            debugPass?.ReleaseDebugResources();
             debugPass = new HoObjectBufferDebugPass();
         }
 
@@ -78,8 +79,9 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             if (debugPass != null && shouldDebug)
             {
                 debugPass.Setup(settings, renderTargets, renderer.cameraColorTargetHandle, debugMaterial);
-                renderer.EnqueuePass(debugPass);
+                debugPass.Enqueue(renderer);
             }
+            else debugPass?.ReleaseDebugResources();
         }
 
         protected override void Dispose(bool disposing)

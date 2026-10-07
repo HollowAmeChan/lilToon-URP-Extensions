@@ -132,9 +132,7 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
                 using (new EditorGUI.DisabledScope(Find("enabled") != null && !Find("enabled").boolValue))
                 {
                     DrawProperty(passEvent, "产出时机", "AC 必须排在 GB / OB / SB 之后，同事件时按 Renderer Feature 列表顺序。");
-                    DrawProperty(Find("debugPassEvent"), "调试时机");
                 }
-
 
             }
         }

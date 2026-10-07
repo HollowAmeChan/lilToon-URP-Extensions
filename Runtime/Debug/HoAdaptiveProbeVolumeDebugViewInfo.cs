@@ -21,7 +21,6 @@ namespace lilToon.URP.Extensions.Debugging
                 viewId,
                 shortName,
                 (int)mode,
-                HoDebugViewRenderKind.AdaptiveProbeVolume,
                 ShaderName,
                 ShaderAssetPath,
                 true,

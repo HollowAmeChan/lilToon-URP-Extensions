@@ -1,6 +1,7 @@
 #pragma warning disable CS0618, CS0672
 
 using System.Collections.Generic;
+using lilToon.URP.Extensions.Debugging;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -33,6 +34,7 @@ namespace lilToon.URP.Extensions.GTAO
         public override void Create()
         {
             pass = new HoGTAOPass();
+            debugPass?.ReleaseDebugResources();
             debugPass = new HoGTAODebugPass();
             RenderPipelineManager.beginCameraRendering += ResetGlobalState;
             resetRegistered = true;
@@ -109,7 +111,7 @@ namespace lilToon.URP.Extensions.GTAO
             if (debugEnabledForCamera && debugMaterial != null)
             {
                 debugPass.Setup(debugMaterial, settings.debugMode, settings.debugIntensity);
-                renderer.EnqueuePass(debugPass);
+                debugPass.Enqueue(renderer);
             }
         }
 
@@ -141,6 +143,7 @@ namespace lilToon.URP.Extensions.GTAO
             }
             cameraHistories.Clear();
             pass = null;
+            debugPass?.ReleaseDebugResources();
             debugPass = null;
         }
 
@@ -320,12 +323,15 @@ namespace lilToon.URP.Extensions.GTAO
         }
     }
 
-    internal sealed class HoGTAODebugPass : ScriptableRenderPass
+    internal sealed class HoGTAODebugPass : HoDebugRenderPass
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-GTAO Debug Output");
 
         private sealed class PassData
         {
+            public Vector2Int debugSize;
+            public TextureHandle[] views;
+            public bool all;
             public Material material;
             public TextureHandle source;
             public TextureHandle cameraColor;
@@ -363,25 +369,25 @@ namespace lilToon.URP.Extensions.GTAO
                 return;
             }
 
-            TextureDesc destinationDesc = renderGraph.GetTextureDesc(cameraColor);
-            destinationDesc.name = "_HoGTAODebugColor";
-            destinationDesc.clearBuffer = false;
-            destinationDesc.depthBufferBits = 0;
-            TextureHandle destination = renderGraph.CreateTexture(destinationDesc);
+            TextureHandle destination = CreateDebugTarget(renderGraph, frameData);
 
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-GTAO Debug Output", out PassData data, ProfilingSampler))
             {
                 data.material = material;
+                data.debugSize = DebugSize(renderGraph, destination);
+                data.views = (TextureHandle[])gtao.debugViews.Clone();
+                data.all = debugMode == HoGTAODebugMode.All;
                 data.source = gtao.aoTexture;
                 data.cameraColor = cameraColor;
                 data.destination = destination;
                 // HTrace profile: Intensity=3.06, output exponent=Intensity*1.2.
-                data.displayIntensity = debugMode == HoGTAODebugMode.AO ? debugIntensity : 1.0f;
-                data.displayInvert = debugMode == HoGTAODebugMode.AO ? 1.0f : 0.0f;
+                data.displayIntensity = (debugMode == HoGTAODebugMode.AO || debugMode == HoGTAODebugMode.All) ? debugIntensity : 1.0f;
+                data.displayInvert = (debugMode == HoGTAODebugMode.AO || debugMode == HoGTAODebugMode.All) ? 1.0f : 0.0f;
                 data.displayMode = (float)debugMode;
                 builder.UseTexture(data.source, AccessFlags.Read);
+                if (data.all) foreach (var view in data.views) if (view.IsValid()) builder.UseTexture(view, AccessFlags.Read);
                 builder.UseTexture(data.cameraColor, AccessFlags.Read);
-                builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(data.destination, 0, AccessFlags.Write);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
@@ -389,11 +395,16 @@ namespace lilToon.URP.Extensions.GTAO
                     context.cmd.SetGlobalFloat(HoGTAOShaderConstants.DebugIntensityId, passData.displayIntensity);
                     context.cmd.SetGlobalFloat(HoGTAOShaderConstants.DebugInvertId, passData.displayInvert);
                     context.cmd.SetGlobalFloat(HoGTAOShaderConstants.DebugViewModeId, passData.displayMode);
-                    Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 0);
+                    context.cmd.SetGlobalFloat("_HoGTAOAllDebugViews", passData.all ? 1 : 0);
+                    if (passData.all)
+                        for (int i = 0; i < passData.views.Length; i++)
+                            if (passData.views[i].IsValid()) context.cmd.SetGlobalTexture("_HoGTAODebugView" + i, passData.views[i]);
+                    context.cmd.SetGlobalTexture("_BlitTexture", passData.source);
+                    HoDebugGrid.Draw(context.cmd, passData.material, (int)passData.displayMode, HoGTAOShaderConstants.DebugViewModeId,
+                        HoGTAODebugViewInfo.Views, passData.debugSize);
                 });
             }
 
-            resourceData.cameraColor = destination;
         }
     }
 
@@ -812,6 +823,10 @@ namespace lilToon.URP.Extensions.GTAO
                 });
             }
 
+            if (settings.debugMode == HoGTAODebugMode.All)
+                RecordAllDebugViews(renderGraph, frameData, gtao, geometry.normalDepthTexture, geometry.depthTexture,
+                    generateMotionVectors, motionMask, motionDelta, currentDesc);
+
             bool debugTemporal = settings.debugMode == HoGTAODebugMode.Temporal;
             bool debugRawGeometry = settings.debugMode == HoGTAODebugMode.Depth
                 || settings.debugMode == HoGTAODebugMode.Normal
@@ -840,6 +855,7 @@ namespace lilToon.URP.Extensions.GTAO
                 wrapMode = TextureWrapMode.Clamp
             };
             TextureHandle temporalDebug = renderGraph.CreateTexture(temporalDebugDesc);
+            if (settings.debugMode == HoGTAODebugMode.All) gtao.debugViews[4] = temporalDebug;
             // SceneView does not provide HTrace's stable camera-motion pass;
             // using the built-in texture there makes a stationary editor view
             // reproject through stale values every frame.
@@ -862,7 +878,7 @@ namespace lilToon.URP.Extensions.GTAO
                 data.useHistory = history.Valid;
                 data.useMotionVectors = motionVectors.IsValid();
                 data.useCameraMotion = !data.useMotionVectors && cameraData.cameraType == CameraType.SceneView;
-                data.debugDisocclusion = debugTemporal;
+                data.debugDisocclusion = debugTemporal || settings.debugMode == HoGTAODebugMode.All;
                 // HTrace's SampleCountTemporal=8 gates motion-vector work but
                 // accumulates up to g_HTemporalSamplecountAO*2 = 12 frames.
                 data.maxFrames = settings.temporalFrameCount > 0 ? 12 : 1;
@@ -1009,7 +1025,7 @@ namespace lilToon.URP.Extensions.GTAO
                     builder.UseTexture(data.geometry, AccessFlags.Read);
                     builder.UseTexture(data.geometryDepth, AccessFlags.Read);
                     builder.UseTexture(data.depth, AccessFlags.Read);
-                    builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
+                    builder.SetRenderAttachment(data.destination, 0, AccessFlags.Write);
                     builder.AllowGlobalStateModification(true);
                     builder.AllowPassCulling(false);
                     builder.SetRenderFunc(static (SpatialData passData, RasterGraphContext context) =>
@@ -1029,6 +1045,8 @@ namespace lilToon.URP.Extensions.GTAO
                 spatialSource = spatial;
             }
 
+            if (settings.debugMode == HoGTAODebugMode.All) gtao.debugViews[0] = spatial;
+
             if (settings.debugMode == HoGTAODebugMode.AO)
             {
                 // HTrace's AO debug view is taken after temporal and spatial
@@ -1043,6 +1061,48 @@ namespace lilToon.URP.Extensions.GTAO
             }
 
             gtao.aoTexture = RecordBlit(renderGraph, frameData, spatial, resourceData.activeColorTexture, material, "Ho-GTAO Output");
+        }
+
+        private sealed class AllDebugData
+        {
+            public Material material;
+            public TextureHandle geometry, depth, motion, motionMask, motionDelta;
+            public int mode;
+            public Vector2Int size;
+        }
+
+        // Reuse Generate's existing diagnostic branches while its camera parameters are still bound.
+        private void RecordAllDebugViews(RenderGraph graph, ContextContainer frameData, HoGTAORenderGraphResources resources,
+            TextureHandle geometry, TextureHandle depth, TextureHandle motion, TextureHandle motionMask, TextureHandle motionDelta, TextureDesc desc)
+        {
+            for (int mode = 2; mode <= 4; mode++)
+            {
+                desc.name = "_HoGTAOAllDebug" + mode;
+                TextureHandle output = graph.CreateTexture(desc);
+                resources.debugViews[mode - 1] = output;
+                using (var builder = graph.AddRasterRenderPass<AllDebugData>("Ho-GTAO Capture Debug " + mode, out var data))
+                {
+                    data.material = material; data.mode = mode; data.geometry = geometry; data.depth = depth;
+                    data.motion = motion; data.motionMask = motionMask; data.motionDelta = motionDelta;
+                    data.size = new Vector2Int(desc.width, desc.height);
+                    builder.UseTexture(geometry, AccessFlags.Read);
+                    builder.UseTexture(depth, AccessFlags.Read);
+                    if (motion.IsValid()) builder.UseTexture(motion, AccessFlags.Read);
+                    if (motionMask.IsValid()) builder.UseTexture(motionMask, AccessFlags.Read);
+                    if (motionDelta.IsValid()) builder.UseTexture(motionDelta, AccessFlags.Read);
+                    builder.SetRenderAttachment(output, 0, AccessFlags.WriteAll);
+                    builder.AllowGlobalStateModification(true);
+                    builder.SetRenderFunc(static (AllDebugData d, RasterGraphContext ctx) =>
+                    {
+                        ctx.cmd.SetGlobalTexture("_BlitTexture", d.geometry);
+                        ctx.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, d.depth);
+                        if (d.motion.IsValid()) ctx.cmd.SetGlobalTexture("_MotionVectorTexture", d.motion);
+                        if (d.motionMask.IsValid()) ctx.cmd.SetGlobalTexture(HoGTAOShaderConstants.MotionMaskId, d.motionMask);
+                        if (d.motionDelta.IsValid()) ctx.cmd.SetGlobalTexture(HoGTAOShaderConstants.MotionDeltaId, d.motionDelta);
+                        HoDebugGrid.Draw(ctx.cmd, d.material, d.mode, DebugModeId, HoGTAODebugViewInfo.Views, d.size, shaderPass: 2);
+                    });
+                }
+            }
         }
 
         private void RecordObjectMotionPasses(
@@ -1106,7 +1166,7 @@ namespace lilToon.URP.Extensions.GTAO
                 data.rendererList = renderGraph.CreateRendererList(rendererListDesc);
                 data.destination = motionMask;
                 builder.UseRendererList(data.rendererList);
-                builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(data.destination, 0, AccessFlags.Write);
                 builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.Read);
                 builder.SetGlobalTextureAfterPass(data.destination, HoGTAOShaderConstants.MotionMaskId);
                 builder.AllowGlobalStateModification(true);
@@ -1126,7 +1186,7 @@ namespace lilToon.URP.Extensions.GTAO
                 data.rendererList = renderGraph.CreateRendererList(rendererListDesc);
                 data.destination = motionDelta;
                 builder.UseRendererList(data.rendererList);
-                builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(data.destination, 0, AccessFlags.Write);
                 builder.SetRenderAttachmentDepth(depthTexture, AccessFlags.Read);
                 builder.SetGlobalTextureAfterPass(data.destination, HoGTAOShaderConstants.MotionDeltaId);
                 builder.AllowGlobalStateModification(true);
@@ -1178,7 +1238,7 @@ namespace lilToon.URP.Extensions.GTAO
                 data.currentOrthographic = currentOrthographic;
                 data.previousOrthographic = previousOrthographic;
                 builder.UseTexture(data.geometryDepth, AccessFlags.Read);
-                builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(data.destination, 0, AccessFlags.Write);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (CameraMotionData passData, RasterGraphContext context) =>
@@ -1249,7 +1309,7 @@ namespace lilToon.URP.Extensions.GTAO
                     {
                         builder.UseTexture(data.coverage, AccessFlags.Read);
                     }
-                    builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
+                    builder.SetRenderAttachment(data.destination, 0, AccessFlags.Write);
                     builder.SetGlobalTextureAfterPass(data.destination, data.outputId);
                     builder.AllowGlobalStateModification(true);
                     builder.AllowPassCulling(false);
@@ -1304,7 +1364,7 @@ namespace lilToon.URP.Extensions.GTAO
                 data.destination = destination;
                 data.passIndex = isDebug ? 0 : 4;
                 builder.UseTexture(data.source, AccessFlags.Read);
-                builder.SetRenderAttachment(data.destination, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(data.destination, 0, AccessFlags.Write);
                 if (!isDebug)
                 {
                     builder.SetGlobalTextureAfterPass(data.destination, HoGTAOShaderConstants.AOTextureId);

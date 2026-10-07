@@ -1,5 +1,6 @@
 #pragma warning disable CS0618, CS0672
 
+using lilToon.URP.Extensions.Debugging;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
@@ -11,7 +12,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     /// 调试视图：把 CB 的通道画到相机颜色上（与其它 feature 的调试 pass 同形）。
     /// 没产出时 shader 会输出暗红，而不是静默黑屏——"没跑"和"全是背景"必须能分开。
     /// </summary>
-    internal sealed class HoObjectBufferDebugPass : ScriptableRenderPass
+    internal sealed class HoObjectBufferDebugPass : HoDebugRenderPass
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-ObjectBuffer Debug");
 
@@ -22,6 +23,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         private sealed class PassData
         {
+            public Vector2Int debugSize;
             public Material debugMaterial;
             public HoObjectBufferDebugMode debugMode;
             public TextureHandle id0Texture;
@@ -40,12 +42,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             this.renderTargets = renderTargets;
             this.cameraColorTarget = cameraColorTarget;
             this.debugMaterial = debugMaterial;
-            renderPassEvent = settings != null ? settings.debugPassEvent : RenderPassEvent.AfterRenderingPostProcessing;
+            renderPassEvent = RenderPassEvent.AfterRenderingPostProcessing;
             ConfigureInput(ScriptableRenderPassInput.None);
-            if (cameraColorTarget != null)
-            {
-                ConfigureTarget(cameraColorTarget);
-            }
         }
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
@@ -71,9 +69,10 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                     }
                 }
 
-                CoreUtils.DrawFullScreen(cmd, debugMaterial, shaderPassId: 0);
+                HoDebugGrid.Draw(CommandBufferHelpers.GetRasterCommandBuffer(cmd), debugMaterial, (int)settings.debugMode, HoObjectBufferShaderConstants.DebugModeId, HoObjectBufferDebugViewInfo.Views, new Vector2Int(DebugTarget.rt.width, DebugTarget.rt.height));
             }
 
+            PublishCompatibility(renderingData.cameraData.camera);
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
         }
@@ -87,15 +86,17 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
             UniversalResourceData resourceData = frameData.Get<UniversalResourceData>();
             HoObjectBufferRenderGraphResources resources = frameData.GetOrCreate<HoObjectBufferRenderGraphResources>();
-            TextureHandle destination = resourceData.activeColorTexture;
 
-            if (!destination.IsValid() || !resources.HasRequiredTextures)
+            if (!resources.HasRequiredTextures)
             {
                 return;
             }
 
+            TextureHandle destination = CreateDebugTarget(renderGraph, frameData);
+
             using (var builder = renderGraph.AddRasterRenderPass<PassData>("Ho-Object-Buffer Debug", out PassData passData, ProfilingSampler))
             {
+                passData.debugSize = DebugSize(renderGraph, destination);
                 passData.debugMaterial = debugMaterial;
                 passData.debugMode = settings.debugMode;
                 passData.id0Texture = resources.id0Texture;
@@ -111,7 +112,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                     builder.UseTexture(resources.selectionTexture, AccessFlags.Read);
                 }
 
-                builder.SetRenderAttachment(destination, 0, AccessFlags.WriteAll);
+                builder.SetRenderAttachment(destination, 0, AccessFlags.Write);
                 builder.AllowGlobalStateModification(true);
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
@@ -126,13 +127,14 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                         context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.SelectionTextureId, data.selectionTexture);
                     }
 
-                    context.cmd.DrawProcedural(Matrix4x4.identity, data.debugMaterial, 0, MeshTopology.Triangles, 3, 1);
+                    HoDebugGrid.Draw(context.cmd, data.debugMaterial, (int)data.debugMode, HoObjectBufferShaderConstants.DebugModeId, HoObjectBufferDebugViewInfo.Views, data.debugSize);
                 });
             }
         }
 
         public void ReleaseCompatibilityResources()
         {
+            ReleaseDebugResources();
             cameraColorTarget = null;
         }
     }

@@ -11,7 +11,6 @@ namespace lilToon.URP.Extensions.ImageProcess
                 "image-process.layer-chain",
                 "Chain",
                 0,
-                HoDebugViewRenderKind.None,
                 string.Empty,
                 string.Empty,
                 false,

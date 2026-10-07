@@ -1,4 +1,9 @@
 using System.Collections.Generic;
+using lilToon.URP.Extensions.CharacterSpecialization;
+using lilToon.URP.Extensions.GeometryData;
+using lilToon.URP.Extensions.CharacterShadow;
+using lilToon.URP.Extensions.GTAO;
+using lilToon.URP.Extensions.SSGI;
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.ImageProcess;
 using lilToon.URP.Extensions.ObjectBuffer;
@@ -12,6 +17,8 @@ namespace lilToon.URP.Extensions.Debugging
 {
     public static class HoDebugViewRegistry
     {
+        public static HoDebugViewInfo[] SystemViews => HoAdaptiveProbeVolumeDebugViewInfo.Views;
+
         public static IReadOnlyList<HoDebugViewInfo> AllViews
         {
             get
@@ -24,6 +31,11 @@ namespace lilToon.URP.Extensions.Debugging
                 AddRange(views, HoSubsurfaceScatteringDebugViewInfo.Views);
                 AddRange(views, HoPlanarReflectionDebugViewInfo.Views);
                 AddRange(views, HoSurfaceBufferDebugViewInfo.Views);
+                AddRange(views, HoSSGIDebugViewInfo.Views);
+                AddRange(views, HoGTAODebugViewInfo.Views);
+                AddRange(views, HoGeometryDataDebugViewInfo.Views);
+                AddRange(views, HoCharacterShadowDebugViewInfo.Views);
+                AddRange(views, HoCharacterSpecializationDebugViewInfo.Views);
                 AddRange(views, ScreenProcessDebugViewInfo.Views);
                 AddRange(views, ImageProcessDebugViewInfo.Views);
                 return views;
@@ -43,6 +55,9 @@ namespace lilToon.URP.Extensions.Debugging
                     }
                 }
 
+                views.Add(new HoDebugViewInfo("DebugGrid", "debug-grid.overlay", "Labels", 0,
+                    "Hidden/lilToon/URP/Debug/GridOverlay",
+                    "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Debug/Shaders/HoDebugGridOverlay.shader", true, "Grid labels unavailable."));
                 return views;
             }
         }
