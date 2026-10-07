@@ -209,8 +209,6 @@ v0.1 的脚印表只写了"管线决定 / 材质轻量参数"，**没写这些�
 | 13 | Ho-ImageProcess | ✅ 最终图像链 |
 | 14 | Ho-DebugTile | 调试时开启 |
 
-另有一个独立入口 `Ho-Transparent`：通用透明绘制调度器（接入的 shader 用 `_HoTransparentActive` 跳过自身的 `UniversalForward`，避免重复绘制；它不是 OIT resolve），细节见 `TransparentPass.md`。
-
 **场景基线**（朱木古堂 / `New Scene.unity`）：40 盏灯 = 1×Directional（软阴影）+ 39×Point（全无阴影），
 是多光 + ShadowCast 收集的用例场景；Volume Profile 走当前新栈无 Missing；舞台 55 个材质与角色共用 lilToon 变体家族；
 角色 14 个材质覆盖 toon 阴影 / 屏幕 AO / fake SSS / 反射 / rim / emission / outline 七类。

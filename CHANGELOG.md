@@ -2,6 +2,8 @@
 
 ## Unreleased
 
+- 删除未被当前 Shader 接入的 `Ho-Transparent` Renderer Feature、配套 Pass / 设置 / Shader 常量及使用文档；透明绘制继续使用 URP 常规透明流程或 Weighted OIT。
+
 - AC 统一描边继承：原有 GB outline draw 同时捕获原始 renderer owner、语义权重与可见覆盖；AC 产出独立视觉 identity/Selection，Geometry 查询仍绑定物理池。outline 使用复制的私有 depth/stencil 遵循 forward 写入状态，保留物理 GB 深度；修正稀疏 owner 附件误用 WriteAll 导致的历史残留。新增 native 角色重叠、语义贴图和整幅移动/stencil GPU 回归及能重现残留的负对照；未来 SurfaceBuffer 身份组覆写尚未实现，当前投影边界见 `计划/Ho-AC-OutlineInheritance-Contract.md`。
 
 - 修复 SC/SP 景深的轻微描边渗色：双线性颜色足迹逐邻点检查 CoC 和描边视觉深度，合焦描边不再借软 margin 渗入背景；保留失焦描边自然模糊及非零 MSAA 描边 coverage。每层显式发布描边有效性、声明并绑定 coverage 和 URP depth/normals fallback，诊断补齐描边深度与 DepthFog 需求。独立修正高度雾 UV 重复转换。新增仓库内出货 shader / 实际 GB→AC→SP GPU 回归，污染阈值收紧到 0.05%，取代旧 5% 检查的盲区；契约见 `后处理/DepthOfField.md`。
