@@ -19,11 +19,19 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             return IsUsable(GraphicsFormat.R8G8B8A8_UNorm) ? GraphicsFormat.R8G8B8A8_UNorm : GraphicsFormat.B8G8R8A8_UNorm;
         }
 
+        // Emission must retain values above one; never fall back to UNorm.
+        public static GraphicsFormat GetEmissionGraphicsFormat()
+        {
+            if (IsUsable(GraphicsFormat.R16G16B16A16_SFloat)) return GraphicsFormat.R16G16B16A16_SFloat;
+            if (IsUsable(GraphicsFormat.R32G32B32A32_SFloat)) return GraphicsFormat.R32G32B32A32_SFloat;
+            return GraphicsFormat.None;
+        }
+
         /// <summary>
         /// owner（16-bit IdentityId）用 **RGBA8 的两个字节**承载（R = 高字节、G = 低字节），
         /// 与 OB 身份池 `Id0.r/.g` 同一套做法。
         /// <para>
-        /// **不用 `R16_UINT` / `R16_UNorm` 单独扛**：本趟是 6 个 MRT，而 R16 作为 MRT 在本仓库从未验证过 ——
+        /// **不用 `R16_UINT` / `R16_UNorm` 单独扛**：本趟是 7 个 MRT，而 R16 作为 MRT 在本仓库从未验证过 ——
         /// 附件组合非法时 D3D 会整趟丢 draw，表现就是"什么都没写进切图"（R1 已经踩过一次同类坑）。
         /// RGBA8 是这里已经被 MB/OB 跑通的组合。
         /// </para>

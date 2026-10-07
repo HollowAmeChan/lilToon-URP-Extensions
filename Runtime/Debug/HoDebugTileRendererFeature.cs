@@ -285,6 +285,7 @@ namespace lilToon.URP.Extensions.Debugging
                         // SB 的平铺视图（RenderKind = SurfaceBuffer）：数值面 + owner 必读；语义 lane 有产出才读。
                         // 全局名由 SB 的 pass 自己绑（它不会被裁），这里只声明 RDG 读依赖。
                         builder.UseTexture(surfaceResources.colorTexture, AccessFlags.Read);
+                        builder.UseTexture(surfaceResources.emissionTexture, AccessFlags.Read);
                         builder.UseTexture(surfaceResources.normalTexture, AccessFlags.Read);
                         builder.UseTexture(surfaceResources.materialTexture, AccessFlags.Read);
                         builder.UseTexture(surfaceResources.reflectionTexture, AccessFlags.Read);

@@ -96,15 +96,16 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             int minQueue = activeSettings.minRenderQueue;
             int maxQueue = Mathf.Max(minQueue, activeSettings.maxRenderQueue);
 
-            // 6 个 MRT 是硬要求（五张数值图 + owner）。平台不够就**整条不跑并报错**，不静默降级
+            // 7 个 MRT 是硬要求（六张数值图 + owner）。平台不够就**整条不跑并报错**，不静默降级
             // （SB 架构 §5 的同一条纪律）：少绑附件时 D3D 会直接丢掉整个 draw，表现正是"什么都没写"。
-            if (SystemInfo.supportedRenderTargetCount < HoSurfaceBufferShaderConstants.ValueAttachmentCount)
+            if (SystemInfo.supportedRenderTargetCount < HoSurfaceBufferShaderConstants.ValueAttachmentCount
+                || HoSurfaceBufferFormatUtility.GetEmissionGraphicsFormat() == UnityEngine.Experimental.Rendering.GraphicsFormat.None)
             {
                 if (!warnedMrtCapacity)
                 {
                     warnedMrtCapacity = true;
                     Debug.LogError($"[Ho-SurfaceBuffer] 本平台只支持 {SystemInfo.supportedRenderTargetCount} 个 MRT，" +
-                                   $"数值面需要 {HoSurfaceBufferShaderConstants.ValueAttachmentCount} 个（五张数值图 + owner）：整条不跑。");
+                                   $"数值面需要 {HoSurfaceBufferShaderConstants.ValueAttachmentCount} 个（六张数值图 + owner）和 HDR 自发光格式：整条不跑。");
                 }
 
                 HoSurfaceBufferPass.ResetGlobalState();
@@ -178,6 +179,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         protected override void Dispose(bool disposing)
         {
+            HoSurfaceBufferPass.ResetGlobalState();
+            HoSurfaceBufferSemanticPass.ResetGlobalState();
             HoAttributeCompositeConsumerRegistry.Remove(this);
             if (registeredCameraReset)
             {

@@ -10,7 +10,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         private const string MissingFallback = "SurfaceBuffer debug view is skipped when the feature-local debug shader is missing.";
 
         /// <summary>
-        /// SB 的视图登记（SB 架构 §4.13：五张数值图 + owner 对齐 + **每个 surface semantic lane** 都要有视图）。
+        /// SB 的视图登记：六张数值图、owner 对齐及 surface semantic lane。
         /// mode 值与 `HoSurfaceBufferDebugMode` 一一对应，DebugTile 的平铺视图与 Volume 的整屏调试**共用同一套 mode**。
         /// </summary>
         public static readonly HoDebugViewInfo[] Views =
@@ -23,7 +23,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             View("surface.owner", "Owner", HoSurfaceBufferDebugMode.Owner),
             View("surface.class-id", "ClassId", HoSurfaceBufferDebugMode.ClassId),
             View("surface.semantic-owner", "SemOwner", HoSurfaceBufferDebugMode.SemanticOwner),
-            View("surface.semantic-lanes", "SemLanes", HoSurfaceBufferDebugMode.SemanticLanes)
+            View("surface.semantic-lanes", "SemLanes", HoSurfaceBufferDebugMode.SemanticLanes),
+            View("surface.emission", "Emit", HoSurfaceBufferDebugMode.Emission)
         };
 
         private static HoDebugViewInfo View(string viewId, string shortName, HoSurfaceBufferDebugMode mode)

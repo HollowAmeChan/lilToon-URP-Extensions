@@ -7,16 +7,19 @@ using lilToon.URP.Extensions.AttributeComposite;
 namespace lilToon.URP.Extensions.SurfaceBuffer
 {
     /// <summary>
-    /// 消费者取句柄的入口（与 OB / AC / GeometryBuffer 同形）。对外发布**五张数值图 + owner**：
+    /// 消费者取句柄的入口。对外发布六张数值图（含独立 Emission）+ owner。
     /// <list type="bullet">
     /// <item>`Color` / `Normal` / `Material` / `Reflection` / `Classification`：表面数值，采样一律 Point（SB 架构 §1.2）；</item>
-    /// <item>`OwnerTexture`：这个像素的前表面是谁（16-bit IdentityId，0 = 没有 writer）——**pixel validity 的唯一判据**：
-    /// 数值图里的 0 始终是合法值，只有 owner 能区分"写了 0"和"没人写"（SB 架构 §0.1 / §4.8）。</item>
+    /// <item>`OwnerTexture`：与 OB 关联的 16-bit IdentityId；0 = 无有效身份，保留现有 AC 对齐规则。</item>
+    /// <item>`Emission`：RGB 为独立 HDR 贡献，A 为本次表面的 writer-validity，与 OB 是否登记无关。
+    /// 全局采样还须检查 Active；RenderGraph 消费须检查本相机句柄有效性并声明读依赖。</item>
     /// </list>
     /// </summary>
     internal sealed class HoSurfaceBufferRenderGraphResources : ContextItem
     {
         public TextureHandle colorTexture = TextureHandle.nullHandle;
+        // RGB: dedicated emission component, linear HDR. A: surface writer (not coverage/OB identity).
+        public TextureHandle emissionTexture = TextureHandle.nullHandle;
         public TextureHandle normalTexture = TextureHandle.nullHandle;
         public TextureHandle materialTexture = TextureHandle.nullHandle;
         public TextureHandle reflectionTexture = TextureHandle.nullHandle;
@@ -36,6 +39,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         public bool HasRequiredTextures =>
             colorTexture.IsValid()
+            && emissionTexture.IsValid()
             && normalTexture.IsValid()
             && materialTexture.IsValid()
             && reflectionTexture.IsValid()
@@ -56,6 +60,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         public override void Reset()
         {
             colorTexture = TextureHandle.nullHandle;
+            emissionTexture = TextureHandle.nullHandle;
             normalTexture = TextureHandle.nullHandle;
             materialTexture = TextureHandle.nullHandle;
             reflectionTexture = TextureHandle.nullHandle;

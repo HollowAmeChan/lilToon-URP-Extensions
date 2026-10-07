@@ -8,12 +8,13 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.SurfaceBuffer
 {
     /// <summary>
-    /// SB 的调试直出：把五张数值图（与 owner 对齐）画到相机颜色上。
+    /// SB 的调试直出：六张数值图、owner 与语义视图。
     /// **owner 视图是"对齐有没有出问题"的唯一入口**：绿 = owner 与 OB 层 0 一致，红 = 不一致（没人写也算）。
     /// </summary>
     internal sealed class HoSurfaceBufferDebugPass : ScriptableRenderPass
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-SurfaceBuffer Debug");
+        private static readonly int BlitScaleBiasId = Shader.PropertyToID("_BlitScaleBias");
 
         private HoSurfaceBufferSettings settings;
         private Material debugMaterial;
@@ -24,6 +25,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             public Material material;
             public HoSurfaceBufferDebugMode debugMode;
             public TextureHandle colorTexture;
+            public TextureHandle emissionTexture;
             public TextureHandle normalTexture;
             public TextureHandle materialTexture;
             public TextureHandle reflectionTexture;
@@ -63,6 +65,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             using (new ProfilingScope(cmd, ProfilingSampler))
             {
                 debugMaterial.SetFloat(HoSurfaceBufferShaderConstants.DebugModeId, (float)settings.debugMode);
+                debugMaterial.SetVector(BlitScaleBiasId, new Vector4(1, 1, 0, 0));
                 CoreUtils.DrawFullScreen(cmd, debugMaterial, shaderPassId: 0);
             }
 
@@ -90,6 +93,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 passData.material = debugMaterial;
                 passData.debugMode = settings.debugMode;
                 passData.colorTexture = resources.colorTexture;
+                passData.emissionTexture = resources.emissionTexture;
                 passData.normalTexture = resources.normalTexture;
                 passData.materialTexture = resources.materialTexture;
                 passData.reflectionTexture = resources.reflectionTexture;
@@ -100,6 +104,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 passData.semanticLaneTextures = resources.semanticLaneTextures;
 
                 builder.UseTexture(passData.colorTexture, AccessFlags.Read);
+                builder.UseTexture(passData.emissionTexture, AccessFlags.Read);
                 builder.UseTexture(passData.normalTexture, AccessFlags.Read);
                 builder.UseTexture(passData.materialTexture, AccessFlags.Read);
                 builder.UseTexture(passData.reflectionTexture, AccessFlags.Read);
@@ -119,7 +124,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 builder.SetRenderFunc(static (PassData data, RasterGraphContext context) =>
                 {
                     data.material.SetFloat(HoSurfaceBufferShaderConstants.DebugModeId, (float)data.debugMode);
+                    data.material.SetVector(BlitScaleBiasId, new Vector4(1, 1, 0, 0));
                     context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ColorTextureId, data.colorTexture);
+                    context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.EmissionTextureId, data.emissionTexture);
                     context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.NormalTextureId, data.normalTexture);
                     context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.MaterialTextureId, data.materialTexture);
                     context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ReflectionTextureId, data.reflectionTexture);

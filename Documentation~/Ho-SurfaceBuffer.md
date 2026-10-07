@@ -7,6 +7,10 @@
 
 表面数值 buffer：回答"表面是什么样"。**几何在 GB，身份与逐物体属性在 OB，合成在 AC。**
 
+> **2026-10-07 数值面更新**：独立 Emission 已接入第 7 个 MRT（旧 0..5 索引不变），现为六张数值图 + owner。下文 R3 等执行记录中的“五张图 / 6 MRT”是旧实现记录，以本段与字段表为当前事实。Emission 可直接供 RT 消费，不要求经过 AC；SSS 本轮不扩展。
+>
+> 已在 Unity 6000.3.15f1 的 D3D12/11 RenderGraph 与 D3D11 compatibility 验证两层 HDR、mask、组分混色分离、未登记/零发光 writer、cutout、全屏/平铺调试及开关/销毁。入口为 `HoSurfaceBufferEmissionValidation.Run` / `RunCompatibility`（后者需隔离工程定义 `URP_COMPATIBILITY_MODE`）。
+
 
 
 > **落地状态（R3-sb，数值面 + 语义 lane 本轮）**：SB 的**数值面**已经可以跑：
@@ -79,11 +83,13 @@
 | | `b` | `transmittanceHint` | | | SSS |
 | | `a` | `materialClassIdByte` | | | ScreenProcess / 其他分类消费者（经 AC） |
 | `SurfaceSemantic` | 成对 | 每 lane `(SemanticId,value)`，两 lane / RGBA8；另有 owner（16-bit IdentityId 两字节） | RGBA8 ×4 + RGBA8 owner（单采样） | 材质 | 只给 AC semantic resolve |
-| `Emission` | — | **占位**：契约里登记名字，**lilToon 侧没有 pass 写它 ⇒ 不分配通道** | — | 无 | 无 |
+| `Emission` | `rgb` / `a` | 第一/第二层专用自发光的线性 HDR 加权贡献 / surface writer（写入=1，清屏=0） | RGBA16F（可回退 RGBA32F，不能 UNORM） | 材质 | RT 输入准备、独立调试 |
 
 - SurfaceSemantic 承接材质逐像素的具名 SemanticId/value，不做导出源；SB 只使用 `HoSemanticSchema` 声明的 ID/lane。AC 在 sample 级合成后才产生对外 Selection coverage。
 - `Normal` 与 GB 的几何法线是**并列的两个量**：GB 出几何法线（遮挡、阴影偏移、描边），SB 出着色法线（PBR、SSR）。
-- `Emission` 的字段语义等 lilToon 侧有 pass 写它时再冻结。
+- `Emission.rgb` 为两层各自 `sampledColor * blendWeight` 的和，保留大于 1 的 HDR 值；不包含 Rim、MatCap、高光或溶解边缘。`_EmissionBlendMode` 仍用于 forward 的最终混色，不用于把底色混入独立输出。
+- SB 在光照前输出材质组分：主色混合使用当前 SB 主色，荧光的入射光门控固定为中性 1；原 forward 继续使用原来的 `fd.invLighting`，显示行为不变。Emission 不宣称是完整最终画面的差值。
+- `Emission.a` 是本次表面 pass 确实写入的标记，与 OB 身份无关；未登记对象也可为 1，黑色且 A=1 是合法零发光。不是透明覆盖率。现有 AC 的 owner 对齐规则没有改变。
 
 ### 1.1 换算与开关（冻结）
 
@@ -111,6 +117,7 @@ _UsePlanarReflection             → 只在总开关打开时生效
 | 名字 | 谁在写 |
 | --- | --- |
 | `_HoSurfaceBufferColorTexture` | SB 数值 pass：`fd.col`（线性 HDR 主色） |
+| `_HoSurfaceBufferEmissionTexture` | SB 数值 pass：专用自发光组分，RGB=HDR 贡献，A=writer |
 | `_HoSurfaceBufferNormalTexture` | 同上：着色法线 octa RG |
 | `_HoSurfaceBufferMaterialTexture` | 同上：`perceptualRoughness` / `metallic` / `thickness` |
 | `_HoSurfaceBufferReflectionTexture` | 同上：`reflectance` / `plrStrength` |

@@ -23,6 +23,7 @@ Shader "Hidden/lilToon/URP/SurfaceBuffer/DebugView"
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SurfaceBuffer/Shaders/HoSurfaceBufferCommon.hlsl"
 
             TEXTURE2D_X(_HoSurfaceBufferColorTexture);
+            TEXTURE2D_X(_HoSurfaceBufferEmissionTexture);
             TEXTURE2D_X(_HoSurfaceBufferNormalTexture);
             TEXTURE2D_X(_HoSurfaceBufferMaterialTexture);
             TEXTURE2D_X(_HoSurfaceBufferReflectionTexture);
@@ -117,7 +118,12 @@ Shader "Hidden/lilToon/URP/SurfaceBuffer/DebugView"
                     return half4(value, 0.0, 0.0, 1.0);
                 }
 
-                if (mode >= 8 && _HoSurfaceSemanticActive <= 0.5)
+                if (mode == 10)
+                {
+                    return half4(SAMPLE_TEXTURE2D_X(_HoSurfaceBufferEmissionTexture, sampler_PointClamp, uv).rgb, 1.0);
+                }
+
+                if ((mode == 8 || mode == 9) && _HoSurfaceSemanticActive <= 0.5)
                 {
                     // 语义 lane 这趟没跑（feature 关掉 / MRT 不够）：暗红 = 这一批视图没有内容，与"值是 0"分开。
                     return half4(0.35, 0.0, 0.0, 1.0);

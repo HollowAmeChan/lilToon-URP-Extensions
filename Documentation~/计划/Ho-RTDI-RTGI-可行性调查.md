@@ -1,6 +1,6 @@
 # Ho-RTDI / Ho-RTGI 可行性调查
 
-日期：2026-10-07。状态：源码与官方资料调查；未实现新 Feature，未运行光追原型，未测量性能。
+日期：2026-10-07。状态：调查完成，SB 独立 Emission 接口已实现并通过 GPU 验证（见 §10）。尚未实现 RT Feature、运行光追原型或测量 RT 性能。
 
 ## 判断
 
@@ -62,7 +62,7 @@ SSGI 的改进仍有价值，可作为较低成本的近场补充或回退；不
 
 因此主表面工作应是 **直接读取所需 GB/SB/OB 资源，适配到 RTXDI 的 Surface/Material bridge**：区分几何法线与着色法线；按契约转换 roughness、F0、颜色及 packing。复用生产端已有共享编解码函数，不在每个 Feature 重写 packing。RenderGraph 按实际采样逐项声明 `UseTexture(Read)`。这是一层数据读取与求值适配，默认不落新的主表面 RT，也不需要先补齐 AC。当前 AC 资源集并未覆盖所有主表面字段；用户最新决策优先于旧文档中的“只吃 AC”接入方向，当前 RT 不按该方向增加前置工作。
 
-当前应核对/补充的具体缺口包括：SB 的 Emission 仍是未分配的占位、RTXDI motion/history 的坐标约定、未登记 OB 的场景材质覆盖与 owner validity，以及完整 PBR/NPR 响应参数。不能把零值兜底当作有效的黑色金属/零粗糙度表面。
+当前 SB Emission 已接通，主表面 writer 通过其 A 通道与 OB 身份解耦。后续仍需核对 RTXDI motion/history 的坐标约定、与 GB 前表面对齐及完整 PBR/NPR 响应参数；屏幕外材质求值仍待接入。不能把零值兜底当作有效的黑色金属/零粗糙度表面。
 
 这套生产结果描述主相机可见表面。**屏幕外二次命中的材质、几何更新和 visibility** 仍需世界空间路径，建议复用 SB 材质求值的语义与可共享函数，使 raster 与 ray-hit 结果一致。AC 的屏幕查询不能直接替代任意世界空间命中着色。
 
@@ -197,7 +197,7 @@ Ho-RTGI 可以复用共享的 direct-light evaluator 给二次命中着色；不
 | 表面 writer/owner | SB Owner，已有 | 判断材质值是否有效 | 同左，防止跨物体取错值 | 不能用颜色/roughness 为 0 判断缺失；与几何、按需 OB 校验对齐 |
 | 身份/覆盖率/对象语义 | OB，已有，按需求读取 | 接收/排除规则、可选历史拒绝 | 同左 | 不要求为所有 RT 像素制造 OB 身份；未登记对象的有效性路径仍需明确定义 |
 | SSS profile/thickness/透射响应 | SB 中有部分现存字段；用户仍在设计 | 本轮不接入 | 本轮不接入 | 不增加 RT 依赖、不改 SSS 设计或现有消费链 |
-| Emission | SB 当前未生产 | 发光面的自发光输出、mesh light 关联 | 次级命中 radiance、发光反弹 | 补齐明确的材质求值/生产路径；发光三角形采样还需世界空间登记 |
+| Emission | SB 已追加独立 HDR 输出（实现进展见 §10） | 发光面的自发光输出、mesh light 关联 | 次级命中 radiance、发光反弹 | 主表面直接读；屏幕外发光材质及三角形采样仍需世界空间登记 |
 | Motion / 相机 / jitter | URP motion + 相机状态，已有基础 | temporal reprojection | temporal reprojection | 核对单位、方向、jitter、动态分辨率与蒙皮运动 |
 | 主表面历史 | RT 自己维护，待实现 | 前帧深度/法线/必要材质信息 | 同左 | 只保存算法实际需要的历史，不保存整套无关 SB/OB 图 |
 | 世界空间 AS 与几何 | UnityPathTracing 有参考，Ho 待接入 | 光源遮挡 | 二次命中与重连遮挡 | 独立于屏幕 buffer，维护 instance/submesh/transform/变形/裁切 |
@@ -219,11 +219,11 @@ Ho-RTGI 可以复用共享的 direct-light evaluator 给二次命中着色；不
 
 ### 4.3 接口铺路的优先级
 
-以下是根据现有源码得到的准备清单，尚未实现这些新增输出。可以先做明确、可独立验证的数据接口，不提前增加 RT 算法框架。
+以下是根据现有源码得到的准备清单，实施状态见 §10。SB Emission 已落地；其余接口按实际消费者推进，不提前增加 RT 算法框架。
 
 | 优先级 | 项目 | 应先确定/补齐的内容 |
 | --- | --- | --- |
-| P0 | SB Emission | 线性 HDR emission radiance、有效性、材质采样求值、RG/兼容路径发布/回收/黑色回退、独立调试 |
+| P0（已完成） | SB Emission | 线性 HDR 组分、独立 writer、材质采样求值、RG/兼容路径发布/回收/黑色回退、独立调试 |
 | P0 | 世界方向环境辐射 | 原始 HDR 环境资源、世界方向采样、朝向/强度、版本与更新、无天空回退；与画面 sky 背景区别 |
 | P0 | 主表面有效性 | producer 本帧存在、像素确有 writer、与 GB 前表面对齐；OB 未登记不等于没有几何或材质 |
 | P1 | 主表面读取函数 | 直接读现有 GB/SB，输出 position/geometric normal/shading normal/base color/roughness/metallic/F0/emission；共享解码，不落副本 |
@@ -309,10 +309,29 @@ reservoir 的内存要按真实 stride 与份数估算。例如仅为示意，32
 
 ## 9. 本轮边界与下一步
 
-本轮只新增此调查文档。开始时已有的 SSGI RendererFeature 修改及 Editor/SSGI 验证文件未改动；未切换工程 API、启用宏、拉取 SDK、修改运行场景或声称编译通过。
+调查阶段只新增此报告；随后按用户指示实施 SB Emission，见 §10。本次筛选提交不纳入已有 SSGI 修改；GPU 验证使用独立工程，不保存用户场景或修改用户工程的 API/编译宏。未拉取新的 RT SDK 或修改 Unity 可执行文件。
 
 下一项最有价值的实现任务：**以现有 UnityPathTracing 的 Unity RTXDI 为基础，恢复一个小场景的 raw DI/GI，关闭或移除不必要的输出/降噪耦合，再提取 Ho 的 visibility + 单灯/一跳 diffuse 原型**。按 §4.1 清单直接读取 GB/SB/按需 OB 的生产结果；补齐 emission 等具体缺项，并建立屏幕外 ray-hit 材质求值，提供命中与可见性调试。不等待 AC 完善，不默认复制当前主表面属性。它已有 ReSTIR 链路，可对照关闭重采样的参考结果，而不必重新造一份完整算法。
 
 待补充：目标灯数与场景规模、主要接收材质、分辨率/帧率预算、动态角色是否首版进入 GI caster。fork 路径已确认；接下来应依其已有代码推进，不预设重写。
 
 若直接引入 NVIDIA SDK 源码，需保留其自己的授权与第三方标注；本仓库 package 的 MIT 标识不能自动覆盖 vendor 代码。[RTXDI-Library 当前许可文件](https://github.com/NVIDIA-RTX/RTXDI-Library/blob/main/LICENSE.txt)
+
+## 10. 实现进展：SB Emission
+
+2026-10-07 开始实施接口准备，未启动 RT 算法移植。
+
+- 从 lilToon 第一/第二层自发光中抽出组分求值；forward 继续执行原 blend mode。SB 分别累加 `sampledColor * blendWeight`，不混入底色或其他发亮效果。
+- SB 新增 `_HoSurfaceBufferEmissionTexture`，旧 MRT 索引不变，追加 SV_Target6。RGB 为线性 HDR，A 为 writer-validity；未登记 OB 的表面也能输出，有效黑色与未写可区分。
+- 接通 RenderGraph/兼容路径分配、发布、回收与关闭时黑色绑定；保持 HDR 格式，容量要求变为 7 MRT。
+- 修正 SB RenderGraph 的部分写入声明，保留各附件的初始清屏；cutout 后的 Emission 不再残留上一帧值。兼容路径显式清全部 MRT。
+- 新增 `Emission` Volume 调试与 `surface.emission` DebugTile 入口，显式声明读依赖；不增加 AC 副本、不接 SSS。
+- 修正全屏 SB 调试的 `_BlitScaleBias` 初始化，避免独立场景中全部采样到背景角落。Feature 销毁时也复位全局有效性与黑色绑定。
+- SB 使用材质侧中性入射光门控提取组分，荧光 gate=1；原 forward 的荧光 gate 保持不变。未来 ray-hit 需要使用一致语义并处理相应采样接口。
+- 独立验证入口：`HoSurfaceBufferEmissionValidation.Run`；兼容模式入口 `RunCompatibility` 要求隔离工程启用 `URP_COMPATIBILITY_MODE`。验证范围包括 HDR 两层、遮罩、混色分离、writer/零值、cutout 与关闭回退。
+
+验证记录：Unity 6000.3.15f1，D3D12 RenderGraph、D3D11 RenderGraph、D3D11 compatibility 均通过。包含直接七 MRT 绘制、RG 帧内持久目标读回、全屏/DebugTile 输出、关闭/恢复/销毁。两层 HDR 合计参考值为 `(2.25, 2, 1)`。RG 临时资源在帧内复制后读回，不能把 CPU 的 `Shader.GetGlobalTexture` 当作 command buffer 发布资源的读回接口。
+
+C# 编译检查通过。全库 shader reachability 脚本仍报告 4 处既有项，位于 AC correlated 与 GD vertex/outline 的调用可达性；本轮未修改这些模块。本轮相关材质与调试 shader 由实际 GPU 验证覆盖。
+
+天空环境仍按 §4.4 的全方向辐射契约推进，当前没有新增环境生产代码。

@@ -9,7 +9,7 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.SurfaceBuffer
 {
     /// <summary>
-    /// SB 的数值 pass：材质侧 `HoSurfaceBuffer` pass 一次写五张数值图 + owner（SB 架构 §1 / §0.1）。
+    /// SB 的数值 pass：六张数值图（含 HDR Emission）+ owner，共七个 MRT。
     /// <list type="bullet">
     /// <item>**自用深度**：不发布深度、也不读别人的深度（SB 架构 §1.2）；opaque/cutout 写深度，保证"前表面"唯一。</item>
     /// <item>**透明不生产**：队列上限压在上不透明段末尾（多层透明没有唯一表面真值，<see cref="HoSurfaceBufferSettings.maxRenderQueue"/>）。</item>
@@ -19,6 +19,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
     internal sealed class HoSurfaceBufferPass : ScriptableRenderPass
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-SurfaceBuffer");
+        private static readonly Color[] ClearColors = new Color[HoSurfaceBufferShaderConstants.ValueAttachmentCount];
 
         private HoSurfaceBufferSettings settings;
         private FilteringSettings filteringSettings;
@@ -26,6 +27,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         // 兼容（非 RenderGraph）路径的常驻目标。
         private RTHandle colorTexture;
+        private RTHandle emissionTexture;
         private RTHandle normalTexture;
         private RTHandle materialTexture;
         private RTHandle reflectionTexture;
@@ -38,6 +40,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         {
             public RendererListHandle rendererList;
             public TextureHandle colorTexture;
+            public TextureHandle emissionTexture;
             public TextureHandle normalTexture;
             public TextureHandle materialTexture;
             public TextureHandle reflectionTexture;
@@ -67,6 +70,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         public void ReleaseCompatibilityResources()
         {
             colorTexture?.Release();
+            emissionTexture?.Release();
             normalTexture?.Release();
             materialTexture?.Release();
             reflectionTexture?.Release();
@@ -74,6 +78,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             ownerTexture?.Release();
             depthTexture?.Release();
             colorTexture = null;
+            emissionTexture = null;
             normalTexture = null;
             materialTexture = null;
             reflectionTexture = null;
@@ -86,6 +91,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         {
             CompatibilityProduced = false;
             Shader.SetGlobalFloat(HoSurfaceBufferShaderConstants.ActiveId, 0.0f);
+            Shader.SetGlobalTexture(HoSurfaceBufferShaderConstants.EmissionTextureId, Texture2D.blackTexture);
         }
         internal static bool CompatibilityProduced { get; private set; }
 
@@ -105,6 +111,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             descriptor.bindMS = false;
 
             AllocateIfNeeded(ref colorTexture, descriptor, HoSurfaceBufferFormatUtility.GetColorGraphicsFormat(), HoSurfaceBufferShaderConstants.ColorTextureName);
+            AllocateIfNeeded(ref emissionTexture, descriptor, HoSurfaceBufferFormatUtility.GetEmissionGraphicsFormat(), HoSurfaceBufferShaderConstants.EmissionTextureName);
             AllocateIfNeeded(ref normalTexture, descriptor, HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat(), HoSurfaceBufferShaderConstants.NormalTextureName);
             AllocateIfNeeded(ref materialTexture, descriptor, HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat(), HoSurfaceBufferShaderConstants.MaterialTextureName);
             AllocateIfNeeded(ref reflectionTexture, descriptor, HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat(), HoSurfaceBufferShaderConstants.ReflectionTextureName);
@@ -128,6 +135,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             using (new ProfilingScope(cmd, ProfilingSampler))
             {
                 colorIdentifiers[HoSurfaceBufferShaderConstants.ColorAttachment] = colorTexture.nameID;
+                colorIdentifiers[HoSurfaceBufferShaderConstants.EmissionAttachment] = emissionTexture.nameID;
                 colorIdentifiers[HoSurfaceBufferShaderConstants.NormalAttachment] = normalTexture.nameID;
                 colorIdentifiers[HoSurfaceBufferShaderConstants.MaterialAttachment] = materialTexture.nameID;
                 colorIdentifiers[HoSurfaceBufferShaderConstants.ReflectionAttachment] = reflectionTexture.nameID;
@@ -135,7 +143,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 colorIdentifiers[HoSurfaceBufferShaderConstants.OwnerAttachment] = ownerTexture.nameID;
 
                 cmd.SetRenderTarget(colorIdentifiers, depthTexture.nameID);
-                cmd.ClearRenderTarget(RTClearFlags.All, Color.clear, 1.0f, 0);
+                cmd.ClearRenderTarget(RTClearFlags.All, ClearColors, 1.0f, 0);
                 context.ExecuteCommandBuffer(cmd);
                 cmd.Clear();
 
@@ -148,6 +156,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
                 cmd.SetGlobalFloat(HoSurfaceBufferShaderConstants.ActiveId, 1.0f);
                 cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ColorTextureId, colorTexture.nameID);
+                cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.EmissionTextureId, emissionTexture.nameID);
                 cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.NormalTextureId, normalTexture.nameID);
                 cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.MaterialTextureId, materialTexture.nameID);
                 cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ReflectionTextureId, reflectionTexture.nameID);
@@ -178,6 +187,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             UniversalLightData lightData = frameData.Get<UniversalLightData>();
 
             TextureHandle color = CreateTexture(renderGraph, cameraData.cameraTargetDescriptor, HoSurfaceBufferFormatUtility.GetColorGraphicsFormat(), HoSurfaceBufferShaderConstants.ColorTextureName);
+            TextureHandle emission = CreateTexture(renderGraph, cameraData.cameraTargetDescriptor, HoSurfaceBufferFormatUtility.GetEmissionGraphicsFormat(), HoSurfaceBufferShaderConstants.EmissionTextureName);
             TextureHandle normal = CreateTexture(renderGraph, cameraData.cameraTargetDescriptor, HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat(), HoSurfaceBufferShaderConstants.NormalTextureName);
             TextureHandle material = CreateTexture(renderGraph, cameraData.cameraTargetDescriptor, HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat(), HoSurfaceBufferShaderConstants.MaterialTextureName);
             TextureHandle reflection = CreateTexture(renderGraph, cameraData.cameraTargetDescriptor, HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat(), HoSurfaceBufferShaderConstants.ReflectionTextureName);
@@ -189,6 +199,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 name = "_HoSurfaceBufferDepth",
                 format = GraphicsFormat.None,
                 depthBufferBits = DepthBits.Depth24,
+                clearBuffer = true,
                 msaaSamples = MSAASamples.None,
                 filterMode = FilterMode.Point,
                 wrapMode = TextureWrapMode.Clamp,
@@ -209,6 +220,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             {
                 passData.rendererList = renderGraph.CreateRendererList(rendererListParams);
                 passData.colorTexture = color;
+                passData.emissionTexture = emission;
                 passData.normalTexture = normal;
                 passData.materialTexture = material;
                 passData.reflectionTexture = reflection;
@@ -217,14 +229,18 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 passData.depthTexture = depth;
 
                 builder.UseRendererList(passData.rendererList);
-                builder.SetRenderAttachment(color, HoSurfaceBufferShaderConstants.ColorAttachment, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(normal, HoSurfaceBufferShaderConstants.NormalAttachment, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(material, HoSurfaceBufferShaderConstants.MaterialAttachment, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(reflection, HoSurfaceBufferShaderConstants.ReflectionAttachment, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(classification, HoSurfaceBufferShaderConstants.ClassificationAttachment, AccessFlags.WriteAll);
-                builder.SetRenderAttachment(owner, HoSurfaceBufferShaderConstants.OwnerAttachment, AccessFlags.WriteAll);
-                builder.SetRenderAttachmentDepth(depth, AccessFlags.WriteAll);
+                // Geometry and cutout do not overwrite every pixel. Preserve
+                // the descriptor clear so every MRT starts at zero on reuse.
+                builder.SetRenderAttachment(color, HoSurfaceBufferShaderConstants.ColorAttachment, AccessFlags.Write);
+                builder.SetRenderAttachment(emission, HoSurfaceBufferShaderConstants.EmissionAttachment, AccessFlags.Write);
+                builder.SetRenderAttachment(normal, HoSurfaceBufferShaderConstants.NormalAttachment, AccessFlags.Write);
+                builder.SetRenderAttachment(material, HoSurfaceBufferShaderConstants.MaterialAttachment, AccessFlags.Write);
+                builder.SetRenderAttachment(reflection, HoSurfaceBufferShaderConstants.ReflectionAttachment, AccessFlags.Write);
+                builder.SetRenderAttachment(classification, HoSurfaceBufferShaderConstants.ClassificationAttachment, AccessFlags.Write);
+                builder.SetRenderAttachment(owner, HoSurfaceBufferShaderConstants.OwnerAttachment, AccessFlags.Write);
+                builder.SetRenderAttachmentDepth(depth, AccessFlags.Write);
                 builder.SetGlobalTextureAfterPass(color, HoSurfaceBufferShaderConstants.ColorTextureId);
+                builder.SetGlobalTextureAfterPass(emission, HoSurfaceBufferShaderConstants.EmissionTextureId);
                 builder.SetGlobalTextureAfterPass(normal, HoSurfaceBufferShaderConstants.NormalTextureId);
                 builder.SetGlobalTextureAfterPass(material, HoSurfaceBufferShaderConstants.MaterialTextureId);
                 builder.SetGlobalTextureAfterPass(reflection, HoSurfaceBufferShaderConstants.ReflectionTextureId);
@@ -234,9 +250,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (SurfacePassData data, RasterGraphContext context) =>
                 {
-                    // 清屏：五张数值图清 0、owner 清 0（"没人写"的唯一表示），深度清成远平面。
-                    // 附件是 WriteAll，所以这里清完直接画，不需要额外的 clear pass。
-                    context.cmd.ClearRenderTarget(RTClearFlags.All, Color.clear, 1.0f, 0);
+                    // Attachment load actions clear all numeric targets and
+                    // owner, including pixels discarded by the material.
                     context.cmd.SetGlobalFloat(HoSurfaceBufferShaderConstants.ActiveId, 1.0f);
                     context.cmd.DrawRendererList(data.rendererList);
                 });
@@ -244,6 +259,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
             HoSurfaceBufferRenderGraphResources resources = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
             resources.colorTexture = color;
+            resources.emissionTexture = emission;
             resources.normalTexture = normal;
             resources.materialTexture = material;
             resources.reflectionTexture = reflection;

@@ -37,7 +37,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         SemanticOwner,
         /// <summary>8 条语义 lane 铺成 4×2 网格：每格一个 lane，通道 = (SemanticId÷255, value, 写了没有)；未写画暗红。</summary>
         [InspectorName("Semantic Lanes")]
-        SemanticLanes
+        SemanticLanes,
+        [InspectorName("Emission")]
+        Emission = 10
     }
 
     [Serializable]

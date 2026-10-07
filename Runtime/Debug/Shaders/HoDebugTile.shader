@@ -52,6 +52,7 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
             SAMPLER(sampler_LILPBRPlanarReflectionTexture);
             // SB 的平铺视图（RenderKind = SurfaceBuffer）：与 Volume 的整屏调试共用同一套 mode。
             TEXTURE2D_X(_HoSurfaceBufferColorTexture);
+            TEXTURE2D_X(_HoSurfaceBufferEmissionTexture);
             TEXTURE2D_X(_HoSurfaceBufferNormalTexture);
             TEXTURE2D_X(_HoSurfaceBufferMaterialTexture);
             TEXTURE2D_X(_HoSurfaceBufferReflectionTexture);
@@ -191,6 +192,11 @@ Shader "Hidden/lilToon/URP/Debug/DebugTile"
                 if (_HoSurfaceBufferActive <= 0.5)
                 {
                     return half4(0.35, 0.0, 0.0, 1.0);
+                }
+
+                if (mode == 10)
+                {
+                    return half4(SAMPLE_TEXTURE2D_X(_HoSurfaceBufferEmissionTexture, sampler_PointClamp, uv).rgb, 1.0h);
                 }
 
                 if (mode == 1)
