@@ -39,6 +39,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         TEXTURE2D_X(_HoSSGIGeometry);
         TEXTURE2D_X(_HoSSGISource);
         TEXTURE2D_X(_HoSSGISourceHistory);
+        TEXTURE2D_X(_HoSSGICameraSource);
         TEXTURE2D_X(_HoGeometryBufferSkyTexture);
         TEXTURE2D_X(_HoGITexture);
         TEXTURE2D_X(_HoSSGIRawGI);
@@ -75,10 +76,12 @@ Shader "Hidden/lilToon/URP/HoSSGI"
         float _HoSSGIIntensity;
         float _HoSSGISourceSaturation;
         int _HoSSGIFrameIndex;
+        float4 _HoSSGITextureSize;
         float4x4 _HoSSGIPreviousInverseViewProjection;
         float _HoSSGIPreviousMatrixValid;
         float _HoSSGITemporalBlend;
         float _HoSSGISpatialRadius;
+        float4 _HoSSGIFilterAxis;
         float _HoSSGIHistoryValid;
         float _HoSSGIUseMotion;
         float _HoSSGIReservoirReuse;
@@ -229,14 +232,21 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             return float4(reducedDepth < 1.0e29 ? reducedDepth : 0.0, 0.0, 0.0, 1.0);
         }
 
+        uint HoSSGIHash(uint value)
+        {
+            value = value * 747796405u + 2891336453u;
+            uint word = ((value >> ((value >> 28u) + 4u)) ^ value) * 277803737u;
+            return (word >> 22u) ^ word;
+        }
+
         float HoSSGIReservoirRandom(float2 pixel, float salt)
         {
-            // Reservoir replacement must be re-seeded every frame. A fixed
-            // per-pixel value repeats the same accept/reject decisions and
-            // leaves a stationary noise pattern even when candidates change.
-            float frame = (float)(_HoSSGIFrameIndex & 1023);
-            float2 seed = pixel + salt + frame * float2(17.0, 29.0);
-            return frac(sin(dot(seed, float2(12.9898, 78.233))) * 43758.5453);
+            uint2 coordinate = (uint2)floor(pixel);
+            uint seed = HoSSGIHash(coordinate.x ^ HoSSGIHash(coordinate.y)
+                ^ HoSSGIHash((uint)_HoSSGIFrameIndex) ^ asuint(salt));
+            // Use the top 24 bits. Float sine hashes lose fractional precision
+            // at large inputs and can introduce correlated screen-space bands.
+            return (float)(seed >> 8u) * (1.0 / 16777216.0);
         }
 
         void HoSSGIReservoirUpdate(
@@ -485,7 +495,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 return 0.0;
 
             float expectedDepth = HoSSGILinearDepth(expectedHitWS);
-            float2 texel = rcp(max(_ScreenParams.xy, 1.0));
+            float2 texel = rcp(max(_HoSSGITextureSize.xy, 1.0));
             float depthTolerance = max(_HoSSGIThickness * 2.0, expectedDepth * 0.05);
             float bestAgreement = 0.0;
             [unroll]
@@ -510,8 +520,10 @@ Shader "Hidden/lilToon/URP/HoSSGI"
 
         float2 HoSSGIHash2(float2 p)
         {
-            float2 q = float2(dot(p, float2(127.1, 311.7)), dot(p, float2(269.5, 183.3)));
-            return frac(sin(q) * 43758.5453);
+            uint2 coordinate = (uint2)floor(p);
+            uint seed = HoSSGIHash(coordinate.x ^ HoSSGIHash(coordinate.y + 0x9e3779b9u));
+            return float2(HoSSGIHash(seed) >> 8u, HoSSGIHash(seed ^ 0x85ebca6bu) >> 8u)
+                * (1.0 / 16777216.0);
         }
 
         float HoSSGIRadicalInverse(uint bits)
@@ -521,7 +533,21 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             bits = ((bits & 0x33333333u) << 2) | ((bits & 0xCCCCCCCCu) >> 2);
             bits = ((bits & 0x0F0F0F0Fu) << 4) | ((bits & 0xF0F0F0F0u) >> 4);
             bits = ((bits & 0x00FF00FFu) << 8) | ((bits & 0xFF00FF00u) >> 8);
-            return (float)bits * 2.3283064365386963e-10;
+            return (float)(bits >> 8u) * (1.0 / 16777216.0);
+        }
+
+        float HoSSGISequenceSecondDimension(uint index)
+        {
+            uint value = 0u;
+            uint direction = 0x80000000u;
+            [loop]
+            while (index != 0u)
+            {
+                if ((index & 1u) != 0u) value ^= direction;
+                index >>= 1u;
+                direction ^= direction >> 1u;
+            }
+            return (float)(value >> 8u) * (1.0 / 16777216.0);
         }
 
         float3 HoSSGIBuildTangent(float3 normal)
@@ -606,7 +632,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
 
             float2 hitUV = hitNDC.xy;
             float expectedDepth = HoSSGILinearDepth(expectedHitWS);
-            float2 texel = rcp(max(_ScreenParams.xy, 1.0));
+            float2 texel = rcp(max(_HoSSGITextureSize.xy, 1.0));
             float depthTolerance = max(_HoSSGIThickness * 2.0, expectedDepth * 0.05);
             float bestAgreement = 0.0;
             [unroll]
@@ -736,7 +762,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 return 0.0;
 
             float storedLuminance = HoSSGILuminance(reservoir.color);
-            float2 texel = rcp(max(_ScreenParams.xy, 1.0));
+            float2 texel = rcp(max(_HoSSGITextureSize.xy, 1.0));
             float currentLuminance = 0.0;
             float weightSum = 0.0;
             float distanceWeight = HoSSGIExponentialFalloff(reservoir.distance, _HoSSGIRayLength);
@@ -776,7 +802,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
 
             float3 sourceAccum = 0.0;
             float weightAccum = 0.0;
-            float2 texel = rcp(max(_ScreenParams.xy, 1.0));
+            float2 texel = rcp(max(_HoSSGITextureSize.xy, 1.0));
             [unroll]
             for (int y = -1; y <= 1; y++)
             {
@@ -814,10 +840,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
 
             float3 centerNormalWS = normalize((float3)center.rgb * 2.0 - 1.0);
             float3 centerPositionWS = HoSSGIWorldPosition(uv, center.a);
-            float2 pixel = uv * _ScreenParams.xy;
-            float2 noise = HoSSGIHash2(pixel + (float)(_HoSSGIFrameIndex & 15));
-            int frameCycle = _HoSSGIFrameIndex - (_HoSSGIFrameIndex / 16) * 16;
-            float frameOffset = (float)frameCycle;
+            float2 pixel = uv * _HoSSGITextureSize.xy;
+            float2 noise = HoSSGIHash2(pixel);
             float3 radiance = 0;
             float hits = 0;
             HoSSGIReservoir reservoir = (HoSSGIReservoir)0;
@@ -831,13 +855,13 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             {
                 // Cosine-weighted hemisphere sampling follows HTrace's world-space
                 // ray path. Screen UV is only used for visibility traversal.
-                // HTrace uses a frame-indexed low-discrepancy/BND sequence.
-                // Keep the same property here without a runtime blue-noise
-                // texture: the pixel hash only rotates the sequence, while the
-                // 16-frame phase advances samples deterministically.
-                uint sampleIndex = (uint)ray + 1u + (uint)frameCycle * 131u;
-                float u = frac((ray + 0.5) / rays + noise.x + frameOffset * 0.61803398875);
-                float v = frac(HoSSGIRadicalInverse(sampleIndex) + noise.y + frameOffset * 0.754877666);
+                // Progress through a 2D digital sequence instead of repeating
+                // the same 16 candidate sets forever. The per-pixel rotation
+                // stays fixed so time adds new low-discrepancy samples.
+                uint sampleIndex = (uint)_HoSSGIFrameIndex * (uint)rays + (uint)ray + 1u;
+                float u = frac(HoSSGIRadicalInverse(sampleIndex) + noise.x);
+                float v = frac(HoSSGISequenceSecondDimension(sampleIndex) + noise.y);
+                float marchJitter = HoSSGIReservoirRandom(pixel, (float)ray + 101.0);
                 float phi = 6.2831853 * u;
                 float cosTheta = sqrt(saturate(v));
                 float sinTheta = sqrt(saturate(1.0 - v));
@@ -848,7 +872,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
 
                 // Match HTrace's footprint-aware normal bias to avoid self hits
                 // without requiring an excessively large thickness value.
-                float2 screenTexel = rcp(max(_ScreenParams.xy, 1.0));
+                float2 screenTexel = rcp(max(_HoSSGITextureSize.xy, 1.0));
                 float3 cornerPositionWS = HoSSGIWorldPosition(saturate(uv + screenTexel * 0.5), center.a);
                 float normalBias = abs(dot(cornerPositionWS - centerPositionWS, centerNormalWS)) * 2.0;
                 float3 normalForBias = dot(centerNormalWS, rayDirWS) < 0.0 ? -centerNormalWS : centerNormalWS;
@@ -884,12 +908,12 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 {
                     // HTrace marches quadratically, concentrating samples near
                     // the receiver where screen-space intersections are stable.
-                    float t = pow(saturate((stepIndex + noise.y) / steps), 2.0);
+                    float t = pow(saturate((stepIndex + marchJitter) / steps), 2.0);
                     float3 rayPositionWS = lerp(rayStartWS, rayEndWS, t);
                     float3 rayNDC = ComputeNormalizedDeviceCoordinatesWithZ(rayPositionWS, UNITY_MATRIX_VP);
                     float2 sampleUV = rayNDC.xy;
                     if (any(sampleUV <= 0.001) || any(sampleUV >= 0.999)) break;
-                    if (distance(sampleUV * _ScreenParams.xy, pixel) < 1.5) continue;
+                    if (distance(sampleUV * _HoSSGITextureSize.xy, pixel) < 1.5) continue;
                     int depthMip = clamp((int)floor(t * 4.0), 0, 4);
                     float surfaceDepth = HoSSGISampleDepthPyramid(sampleUV, depthMip);
                     if (surfaceDepth <= 0.0001)
@@ -1059,8 +1083,8 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 && previousUVUnclamped.y >= 0.0 && previousUVUnclamped.y <= 1.0;
             if (_HoSSGIReservoirReuse > 0.5 && _HoSSGIHistoryValid > 0.5 && historyUVValid)
             {
-                float2 historyTexel = rcp(max(_ScreenParams.xy, 1.0));
-                float2 previousPixel = previousUVUnclamped * _ScreenParams.xy - 0.5;
+                float2 historyTexel = rcp(max(_HoSSGITextureSize.xy, 1.0));
+                float2 previousPixel = previousUVUnclamped * _HoSSGITextureSize.xy - 0.5;
                 float2 previousBasePixel = floor(previousPixel);
                 float2 previousFraction = frac(previousPixel);
                 const float2 historyOffsets[4] =
@@ -1132,7 +1156,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     }
                     historyConfidenceSum += saturate(history.a) * tapM;
                     HoSSGIReservoirMerge(merged, historyReservoir,
-                        HoSSGIReservoirRandom(uv * _ScreenParams.xy, (float)(historyTap + 17)));
+                        HoSSGIReservoirRandom(uv * _HoSSGITextureSize.xy, (float)(historyTap + 17)));
 
                     HoSSGIOcclusionReservoir historyOcclusion = HoSSGILoadOcclusionHistory(tapUV);
                     if (_HoSSGIReservoirValidation > 0.5)
@@ -1146,7 +1170,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                         mergedOcclusion,
                         historyOcclusion,
                         historyScale,
-                        HoSSGIReservoirRandom(uv * _ScreenParams.xy, (float)(historyTap + 53)));
+                        HoSSGIReservoirRandom(uv * _HoSSGITextureSize.xy, (float)(historyTap + 53)));
                 }
             }
 
@@ -1198,10 +1222,11 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float accepted = 0.0;
             float previousCount = 0.0;
             float2 previousInvalidity = 0.0;
+            float3 previousSourceColor = 0.0;
             float metadataWeight = 0.0;
             if (_HoSSGIHistoryValid > 0.5 && all(previousUV >= 0.0) && all(previousUV <= 1.0))
             {
-                float2 previousPixel = previousUV * _ScreenParams.xy - 0.5;
+                float2 previousPixel = previousUV * _HoSSGITextureSize.xy - 0.5;
                 float2 previousBasePixel = floor(previousPixel);
                 float2 previousFraction = frac(previousPixel);
                 const float2 metadataOffsets[4] =
@@ -1220,7 +1245,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 for (int metadataTap = 0; metadataTap < 4; metadataTap++)
                 {
                     float2 tapUV = (previousBasePixel + metadataOffsets[metadataTap] + 0.5)
-                        / max(_ScreenParams.xy, 1.0);
+                        / max(_HoSSGITextureSize.xy, 1.0);
                     float tapWeight = metadataWeights[metadataTap];
                     if (tapWeight <= 1.0e-4 || any(tapUV < 0.0) || any(tapUV > 1.0)) continue;
                     half4 previousGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIHistoryDepth, sampler_PointClamp, tapUV);
@@ -1238,6 +1263,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     if (tapAccepted <= 0.0) continue;
                     previousCount += SAMPLE_TEXTURE2D_X(_HoSSGISampleCountHistory, sampler_PointClamp, tapUV).r * tapAccepted;
                     previousInvalidity += SAMPLE_TEXTURE2D_X(_HoSSGIInvalidityHistory, sampler_PointClamp, tapUV).rg * tapAccepted;
+                    previousSourceColor += SAMPLE_TEXTURE2D_X(_HoSSGISourceHistory, sampler_PointClamp, tapUV).rgb * tapAccepted;
                     metadataWeight += tapAccepted;
                 }
                 if (metadataWeight > 1.0e-4)
@@ -1248,6 +1274,14 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     // footprint above 0.15 is a valid history, even when only
                     // one tap survives disocclusion.
                     accepted = metadataWeight > 0.15 ? 1.0 : 0.0;
+                    // Geometry can remain valid while its lighting or albedo
+                    // changes. Reset denoised history on a large photometric
+                    // change rather than dragging the old GI through 16 frames.
+                    previousSourceColor /= metadataWeight;
+                    float3 currentSourceColor = SAMPLE_TEXTURE2D_X(_HoSSGICameraSource, sampler_PointClamp, uv).rgb;
+                    float sourceChange = length(previousSourceColor - currentSourceColor)
+                        / max(length(previousSourceColor) + length(currentSourceColor), 0.001);
+                    accepted *= step(sourceChange, 0.2);
                 }
             }
 
@@ -1286,7 +1320,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             // HTrace suppresses isolated reservoir spikes before spatial reuse.
             // Use strict bounds so edge pixels never fold the opposite border into
             // their local statistics.
-            float2 texel = rcp(max(_ScreenParams.xy, 1.0));
+            float2 texel = rcp(max(_HoSSGITextureSize.xy, 1.0));
             float mean = 0.0;
             float mean2 = 0.0;
             float statisticsWeight = 0.0;
@@ -1348,8 +1382,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float3 bitangent = normalize(cross(centerNormal, tangent));
             float worldRadius = max(centerDepth * max(_HoSSGISpatialRadius, 0.5) * 0.0025, 0.002);
             float sigma = max(worldRadius * 0.8, 0.001);
-            float randomAngle = HoSSGIHash2(uv * _ScreenParams.xy
-                + (float)(_HoSSGIFrameIndex & 1023) * float2(0.37, 0.61)).x * 6.2831853;
+            float randomAngle = HoSSGIReservoirRandom(uv * _HoSSGITextureSize.xy, 71.0) * 6.2831853;
             float2x2 rotation = float2x2(cos(randomAngle), -sin(randomAngle), sin(randomAngle), cos(randomAngle));
             HoSSGIReservoir centerReservoir = HoSSGILoadReservoir(uv);
             HoSSGIReservoir merged = centerReservoir;
@@ -1422,12 +1455,12 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 }
                 tapReservoir.wsum *= reuseWeight;
                 tapReservoir.m *= reuseWeight;
-                HoSSGIReservoirMerge(merged, tapReservoir, HoSSGIReservoirRandom(uv * _ScreenParams.xy, (float)(i + 31)));
+                HoSSGIReservoirMerge(merged, tapReservoir, HoSSGIReservoirRandom(uv * _HoSSGITextureSize.xy, (float)(i + 31)));
                 HoSSGIOcclusionMerge(
                     mergedOcclusion,
                     tapOcclusion,
                     reuseWeight,
-                    HoSSGIReservoirRandom(uv * _ScreenParams.xy, (float)(i + 67)));
+                    HoSSGIReservoirRandom(uv * _HoSSGITextureSize.xy, (float)(i + 67)));
 
                 half4 tapTemporal = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_PointClamp, tapUV);
                 confidenceSum += tapTemporal.a * reuseWeight;
@@ -1498,7 +1531,9 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float3 centerNormal = normalize((float3)centerGeometry.rgb * 2.0 - 1.0);
             float centerDepth = centerGeometry.a;
             float3 centerPositionWS = HoSSGIWorldPosition(uv, centerDepth);
-            float2 texel = rcp(max(_ScreenParams.xy, 1.0)) * max(_HoSSGISpatialRadius, 0.5);
+            float2 texel = rcp(max(_HoSSGITextureSize.xy, 1.0));
+            float radius = max(_HoSSGISpatialRadius, 0.5);
+            int support = min(16, (int)ceil(radius * 2.0));
             float3 centerTone = HoSSGISpatialDenoisingTonemap(center.rgb);
             float4 centerGuidanceData = SAMPLE_TEXTURE2D_X(_HoSSGISpatialGuidance, sampler_PointClamp, uv);
             float centerGuidance = centerGuidanceData.x;
@@ -1510,44 +1545,43 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             float confidence = center.a;
             float weightSum = 1.0;
 
-            [unroll]
-            for (int y = -2; y <= 2; y++)
+            // Two dense, separable passes. Scaling the grid stride by radius
+            // leaves interleaved pixel classes disconnected (e.g. 4/8-pixel
+            // grids at radius 8), so periodic noise survives both old passes.
+            [loop]
+            for (int tapIndex = -support; tapIndex <= support; tapIndex++)
             {
-                [unroll]
-                for (int x = -2; x <= 2; x++)
-                {
-                    if (x == 0 && y == 0) continue;
-                    float2 offset = float2(x, y);
-                    float2 tapUV = uv + offset * texel;
-                    if (any(tapUV < 0.0) || any(tapUV > 1.0)) continue;
-                    half4 tapGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, tapUV);
-                    if (tapGeometry.a < 0.0001h) continue;
-                    float depthDelta = abs(tapGeometry.a - centerDepth) / max(centerDepth, 0.05);
-                    float normalWeight = saturate((dot(centerNormal, normalize((float3)tapGeometry.rgb * 2.0 - 1.0)) - 0.25) * 1.3333);
-                    float depthWeight = exp2(-28.0 * depthDelta * depthDelta);
-                    float3 tapPositionWS = HoSSGIWorldPosition(tapUV, tapGeometry.a);
-                    float planeDistance = abs(dot(tapPositionWS - centerPositionWS, centerNormal));
-                    float planeDistanceNormalized = planeDistance / max(centerDepth, 0.05);
-                    float planeWeight = exp2(-100.0 * planeDistanceNormalized * planeDistanceNormalized);
-                    float gaussianWeight = exp2(-0.55 * dot(offset, offset));
-                    float4 tapGuidanceData = SAMPLE_TEXTURE2D_X(_HoSSGISpatialGuidance, sampler_PointClamp, tapUV);
-                    float tapGuidance = tapGuidanceData.x;
-                    float guidanceWeight = exp2(-4.0 * abs(tapGuidance - centerGuidance));
-                    float tapOcclusion = tapGuidanceData.z;
-                    float occlusionWeight = exp2(-max(5.0, 10.0 * (1.0 - centerOcclusion))
-                        * abs(centerOcclusion - tapOcclusion));
-                    float tapAO = _HoSSGIUseAO > 0.5
-                        ? SAMPLE_TEXTURE2D_X(_HoAOTexture, sampler_LinearClamp, tapUV).r
-                        : 1.0;
-                    float aoWeight = exp2(-max(5.0, 10.0 * (1.0 - centerAO)) * abs(centerAO - tapAO));
-                    float tapWeight = normalWeight * depthWeight * planeWeight * guidanceWeight
-                        * occlusionWeight * aoWeight * gaussianWeight;
-                    if (tapWeight <= 0.001) continue;
-                    half4 tap = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_LinearClamp, tapUV);
-                    sum += HoSSGISpatialDenoisingTonemap(tap.rgb) * tapWeight;
-                    confidence += tap.a * tapWeight;
-                    weightSum += tapWeight;
-                }
+                if (tapIndex == 0) continue;
+                float2 offset = _HoSSGIFilterAxis.xy * (float)tapIndex;
+                float2 tapUV = uv + offset * texel;
+                if (any(tapUV < 0.0) || any(tapUV > 1.0)) continue;
+                half4 tapGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, tapUV);
+                if (tapGeometry.a < 0.0001h) continue;
+                float depthDelta = abs(tapGeometry.a - centerDepth) / max(centerDepth, 0.05);
+                float normalWeight = saturate((dot(centerNormal, normalize((float3)tapGeometry.rgb * 2.0 - 1.0)) - 0.25) * 1.3333);
+                float depthWeight = exp2(-28.0 * depthDelta * depthDelta);
+                float3 tapPositionWS = HoSSGIWorldPosition(tapUV, tapGeometry.a);
+                float planeDistance = abs(dot(tapPositionWS - centerPositionWS, centerNormal));
+                float planeDistanceNormalized = planeDistance / max(centerDepth, 0.05);
+                float planeWeight = exp2(-100.0 * planeDistanceNormalized * planeDistanceNormalized);
+                float gaussianWeight = exp2(-0.55 * dot(offset, offset) / (radius * radius));
+                float4 tapGuidanceData = SAMPLE_TEXTURE2D_X(_HoSSGISpatialGuidance, sampler_PointClamp, tapUV);
+                float tapGuidance = tapGuidanceData.x;
+                float guidanceWeight = exp2(-4.0 * abs(tapGuidance - centerGuidance));
+                float tapOcclusion = tapGuidanceData.z;
+                float occlusionWeight = exp2(-max(5.0, 10.0 * (1.0 - centerOcclusion))
+                    * abs(centerOcclusion - tapOcclusion));
+                float tapAO = _HoSSGIUseAO > 0.5
+                    ? SAMPLE_TEXTURE2D_X(_HoAOTexture, sampler_LinearClamp, tapUV).r
+                    : 1.0;
+                float aoWeight = exp2(-max(5.0, 10.0 * (1.0 - centerAO)) * abs(centerAO - tapAO));
+                float tapWeight = normalWeight * depthWeight * planeWeight * guidanceWeight
+                    * occlusionWeight * aoWeight * gaussianWeight;
+                if (tapWeight <= 0.001) continue;
+                half4 tap = SAMPLE_TEXTURE2D_X(_HoSSGIRawGIInput, sampler_LinearClamp, tapUV);
+                sum += HoSSGISpatialDenoisingTonemap(tap.rgb) * tapWeight;
+                confidence += tap.a * tapWeight;
+                weightSum += tapWeight;
             }
 
             float3 filteredToneMapped = sum / max(weightSum, 1.0e-5);
@@ -1569,7 +1603,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             if (any(previousUV < 0.0) || any(previousUV > 1.0))
                 return current;
 
-            float2 previousPixel = previousUV * _ScreenParams.xy - 0.5;
+            float2 previousPixel = previousUV * _HoSSGITextureSize.xy - 0.5;
             float2 basePixel = floor(previousPixel);
             float2 fraction = frac(previousPixel);
             const float2 offsets[4] =
@@ -1596,7 +1630,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 for (int momentX = -1; momentX <= 1; momentX++)
                 {
                     if (momentX == 0 && momentY == 0) continue;
-                    float2 momentUV = uv + float2(momentX, momentY) * rcp(max(_ScreenParams.xy, 1.0));
+                    float2 momentUV = uv + float2(momentX, momentY) * rcp(max(_HoSSGITextureSize.xy, 1.0));
                     if (any(momentUV < 0.0) || any(momentUV > 1.0)) continue;
                     half4 momentGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIGeometry, sampler_PointClamp, momentUV);
                     if (momentGeometry.a < 0.0001h) continue;
@@ -1614,7 +1648,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
             [unroll]
             for (int i = 0; i < 4; i++)
             {
-                float2 tapUV = (basePixel + offsets[i] + 0.5) / max(_ScreenParams.xy, 1.0);
+                float2 tapUV = (basePixel + offsets[i] + 0.5) / max(_HoSSGITextureSize.xy, 1.0);
                 if (any(tapUV < 0.0) || any(tapUV > 1.0)) continue;
                 half4 previousGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIHistoryDepth, sampler_PointClamp, tapUV);
                 if (previousGeometry.a < 0.0001h) continue;
@@ -1638,9 +1672,17 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 return current;
             historyColor /= weightSum;
             float historyLuminance = HoSSGILuminance(historyColor);
+            // Source is lit camera color, not a Monte Carlo GI estimate. A
+            // blend of 1 must not replace the current input entirely with last
+            // frame's radiance and defer trace/lighting validation by a frame.
+            // Compare RGB before clamping so hue changes are reactive too.
+            float sourceChange = length(historyColor - current.rgb)
+                / max(length(historyColor) + length(current.rgb), 0.001);
+            float sourceAgreement = 1.0 - smoothstep(0.025, 0.15, sourceChange);
             if (historyLuminance > sourceThreshold)
                 historyColor *= sourceThreshold / max(historyLuminance, 1.0e-5);
-            float historyWeight = saturate(_HoSSGITemporalBlend * weightSum);
+            float historyWeight = min(saturate(_HoSSGITemporalBlend), 0.9)
+                * saturate(weightSum) * sourceAgreement;
             return float4(lerp(current.rgb, historyColor, historyWeight), current.a);
         }
 
@@ -1660,7 +1702,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 return 0;
 
             float currentConfidence = saturate(current.a);
-            float2 texel = rcp(max(_ScreenParams.xy, 1.0));
+            float2 texel = rcp(max(_HoSSGITextureSize.xy, 1.0));
             float3 centerNormal = normalize((float3)geometry.rgb * 2.0 - 1.0);
             float centerDepth = geometry.a;
             float3 moment1 = current.rgb;
@@ -1708,7 +1750,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                 float2 previousUV = uv - SAMPLE_TEXTURE2D_X(_HoSSGIMotionVectors, sampler_LinearClamp, uv).xy;
                 if (all(previousUV >= 0.0) && all(previousUV <= 1.0))
                 {
-                    float2 previousPixel = previousUV * _ScreenParams.xy - 0.5;
+                    float2 previousPixel = previousUV * _HoSSGITextureSize.xy - 0.5;
                     float2 previousBasePixel = floor(previousPixel);
                     float2 previousFraction = frac(previousPixel);
                     const float2 denoiseOffsets[4] =
@@ -1731,7 +1773,7 @@ Shader "Hidden/lilToon/URP/HoSSGI"
                     for (int denoiseTap = 0; denoiseTap < 4; denoiseTap++)
                     {
                         float2 tapUV = (previousBasePixel + denoiseOffsets[denoiseTap] + 0.5)
-                            / max(_ScreenParams.xy, 1.0);
+                            / max(_HoSSGITextureSize.xy, 1.0);
                         float tapWeight = denoiseWeights[denoiseTap];
                         if (tapWeight <= 1.0e-4 || any(tapUV < 0.0) || any(tapUV > 1.0)) continue;
                         half4 previousGeometry = SAMPLE_TEXTURE2D_X(_HoSSGIHistoryDepth, sampler_PointClamp, tapUV);

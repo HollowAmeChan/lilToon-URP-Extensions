@@ -240,6 +240,7 @@ namespace lilToon.URP.Extensions.SSGI
         private bool valid;
         private Matrix4x4 previousInverseViewProjection = Matrix4x4.identity;
         private bool previousMatrixValid;
+        public int SamplingFrameIndex { get; private set; }
 
         public RTHandle Previous => previous;
         public RTHandle Next => next;
@@ -269,7 +270,12 @@ namespace lilToon.URP.Extensions.SSGI
 
         public void Ensure(int requestedWidth, int requestedHeight, int requestedCameraId)
         {
-            bool changed = width != requestedWidth || height != requestedHeight || cameraId != requestedCameraId;
+            bool changed = previous == null || width != requestedWidth || height != requestedHeight || cameraId != requestedCameraId;
+            // Prev/Next are roles, not physical allocation identities: Swap()
+            // exchanges them each frame. URP also compares allocation names, so
+            // asking for the role's original name again reallocates every history
+            // texture after every swap and silently discards the previous frame.
+            if (!changed) return;
             RenderTextureDescriptor descriptor = new RenderTextureDescriptor(requestedWidth, requestedHeight)
             {
                 graphicsFormat = GraphicsFormat.R16G16B16A16_SFloat,
@@ -314,6 +320,7 @@ namespace lilToon.URP.Extensions.SSGI
                 cameraId = requestedCameraId;
                 valid = false;
                 previousMatrixValid = false;
+                SamplingFrameIndex = 0;
             }
         }
 
@@ -368,9 +375,17 @@ namespace lilToon.URP.Extensions.SSGI
             nextInvalidity = texture;
         }
 
-        public void MarkValid() => valid = true;
+        public void MarkValid()
+        {
+            valid = true;
+            SamplingFrameIndex = unchecked(SamplingFrameIndex + 1);
+        }
 
-        public void Invalidate() => valid = false;
+        public void Invalidate()
+        {
+            valid = false;
+            SamplingFrameIndex = 0;
+        }
 
         public void Dispose()
         {
@@ -468,6 +483,11 @@ namespace lilToon.URP.Extensions.SSGI
             public bool historyValid;
             public Matrix4x4 previousInverseViewProjection;
             public bool previousMatrixValid;
+            public Matrix4x4 projection;
+            public Matrix4x4 view;
+            public HoSSGIHistory cameraHistory;
+            public float blend;
+            public Vector4 textureSize;
         }
 
         private sealed class SourceHistoryPassData
@@ -519,6 +539,8 @@ namespace lilToon.URP.Extensions.SSGI
 
         private sealed class TemporalMetadataPassData
         {
+            public TextureHandle currentSource;
+            public TextureHandle previousSource;
             public Material material;
             public TextureHandle temporal;
             public TextureHandle previousSampleCount;
@@ -605,6 +627,7 @@ namespace lilToon.URP.Extensions.SSGI
             public TextureHandle ao;
             public TextureHandle output;
             public float radius;
+            public Vector4 axis;
         }
 
         private sealed class DenoisedTemporalPassData
@@ -680,8 +703,6 @@ namespace lilToon.URP.Extensions.SSGI
             int cameraId = cameraData.camera != null ? cameraData.camera.GetInstanceID() : 0;
             history.Ensure(width, height, cameraId);
             bool historyValid = history.Valid;
-            Matrix4x4 currentViewProjection = cameraData.GetProjectionMatrix() * cameraData.GetViewMatrix();
-            Matrix4x4 currentInverseViewProjection = currentViewProjection.inverse;
             Matrix4x4 previousInverseViewProjection = history.PreviousInverseViewProjection;
             bool previousMatrixValid = history.PreviousMatrixValid;
             TextureHandle[] depthPyramid = CreateDepthPyramid(renderGraph, geometry.normalDepthTexture);
@@ -702,6 +723,11 @@ namespace lilToon.URP.Extensions.SSGI
                 data.historyValid = historyValid;
                 data.previousInverseViewProjection = previousInverseViewProjection;
                 data.previousMatrixValid = previousMatrixValid;
+                data.projection = cameraData.GetProjectionMatrix();
+                data.view = cameraData.GetViewMatrix();
+                data.cameraHistory = history;
+                data.blend = settings.temporalBlend;
+                data.textureSize = new Vector4(width, height, 1.0f / width, 1.0f / height);
                 builder.UseTexture(data.currentSource, AccessFlags.Read);
                 builder.UseTexture(data.previousSource, AccessFlags.Read);
                 builder.UseTexture(data.previousDepth, AccessFlags.Read);
@@ -712,16 +738,27 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (SourceReprojectionPassData passData, RasterGraphContext context) =>
                 {
-                    passData.material.SetFloat(HoSSGIShaderConstants.HistoryValidId, passData.historyValid ? 1.0f : 0.0f);
-                    passData.material.SetFloat(HoSSGIShaderConstants.MotionValidId, passData.motion.IsValid() ? 1.0f : 0.0f);
-                    passData.material.SetMatrix(HoSSGIShaderConstants.PreviousInverseViewProjectionId, passData.previousInverseViewProjection);
-                    passData.material.SetFloat(HoSSGIShaderConstants.PreviousMatrixValidId, passData.previousMatrixValid ? 1.0f : 0.0f);
+                    // Record per-stage values in command order. Mutating the
+                    // shared Material lets later passes overwrite earlier draws.
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.TemporalBlendId, passData.blend);
+                    context.cmd.SetGlobalVector(HoSSGIShaderConstants.TextureSizeId, passData.textureSize);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.HistoryValidId, passData.historyValid ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.MotionValidId, passData.motion.IsValid() ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalMatrix(HoSSGIShaderConstants.PreviousInverseViewProjectionId, passData.previousInverseViewProjection);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.PreviousMatrixValidId, passData.previousMatrixValid ? 1.0f : 0.0f);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceId, passData.currentSource);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceHistoryId, passData.previousSource);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.HistoryDepthId, passData.previousDepth);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     if (passData.motion.IsValid()) context.cmd.SetGlobalTexture(HoSSGIShaderConstants.MotionVectorId, passData.motion);
                     Blitter.BlitTexture(context.cmd, passData.currentSource, new Vector4(1, 1, 0, 0), passData.material, 7);
+                    // Match URP's camera setup, including reversed Z and the
+                    // actual RenderGraph target origin. A CPU projection inverse
+                    // cannot reconstruct world positions from GPU device depth.
+                    bool yFlipped = SystemInfo.graphicsUVStartsAtTop
+                        && context.GetTextureUVOrigin(passData.currentSource) == TextureUVOrigin.BottomLeft;
+                    Matrix4x4 gpuProjection = GL.GetGPUProjectionMatrix(passData.projection, yFlipped);
+                    passData.cameraHistory.CommitCameraMatrix((gpuProjection * passData.view).inverse);
                 });
             }
 
@@ -767,7 +804,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.rayLength = Mathf.Clamp(settings.rayLength, 0.01f, 32.0f);
                 data.thickness = Mathf.Clamp(settings.thickness, 0.0f, 4.0f);
                 data.sourceSaturation = Mathf.Clamp01(settings.sourceSaturation);
-                data.frameIndex = Time.frameCount;
+                data.frameIndex = history.SamplingFrameIndex;
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.UseTexture(data.source, AccessFlags.Read);
                 for (int i = 0; i < data.depthPyramid.Length; i++)
@@ -785,12 +822,12 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
                 {
-                    passData.material.SetInt(HoSSGIShaderConstants.RayCountId, passData.rayCount);
-                    passData.material.SetInt(HoSSGIShaderConstants.StepCountId, passData.stepCount);
-                    passData.material.SetFloat(HoSSGIShaderConstants.RayLengthId, passData.rayLength);
-                    passData.material.SetFloat(HoSSGIShaderConstants.ThicknessId, passData.thickness);
-                    passData.material.SetFloat(HoSSGIShaderConstants.SourceSaturationId, passData.sourceSaturation);
-                    passData.material.SetInt(HoSSGIShaderConstants.FrameIndexId, passData.frameIndex);
+                    context.cmd.SetGlobalInt(HoSSGIShaderConstants.RayCountId, passData.rayCount);
+                    context.cmd.SetGlobalInt(HoSSGIShaderConstants.StepCountId, passData.stepCount);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.RayLengthId, passData.rayLength);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.ThicknessId, passData.thickness);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.SourceSaturationId, passData.sourceSaturation);
+                    context.cmd.SetGlobalInt(HoSSGIShaderConstants.FrameIndexId, passData.frameIndex);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     HoSSGIPass.BindDepthPyramid(context.cmd, passData.depthPyramid);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceId, passData.source);
@@ -855,7 +892,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.previousMatrixValid = previousMatrixValid;
                 data.reservoirReuse = settings.temporalReservoirReuse;
                 data.reservoirValidation = settings.temporalReservoirValidation;
-                data.frameIndex = Time.frameCount;
+                data.frameIndex = history.SamplingFrameIndex;
                 builder.UseTexture(data.current, AccessFlags.Read);
                 builder.UseTexture(data.currentSource, AccessFlags.Read);
                 builder.UseTexture(data.previous, AccessFlags.Read);
@@ -884,14 +921,14 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (TemporalPassData passData, RasterGraphContext context) =>
                 {
-                    passData.material.SetFloat(HoSSGIShaderConstants.TemporalBlendId, passData.blend);
-                    passData.material.SetFloat(HoSSGIShaderConstants.HistoryValidId, passData.historyValid ? 1.0f : 0.0f);
-                    passData.material.SetFloat(HoSSGIShaderConstants.MotionValidId, passData.motion.IsValid() ? 1.0f : 0.0f);
-                    passData.material.SetMatrix(HoSSGIShaderConstants.PreviousInverseViewProjectionId, passData.previousInverseViewProjection);
-                    passData.material.SetFloat(HoSSGIShaderConstants.PreviousMatrixValidId, passData.previousMatrixValid ? 1.0f : 0.0f);
-                    passData.material.SetFloat(HoSSGIShaderConstants.ReservoirReuseId, passData.reservoirReuse ? 1.0f : 0.0f);
-                    passData.material.SetFloat(HoSSGIShaderConstants.ReservoirValidationId, passData.reservoirValidation ? 1.0f : 0.0f);
-                    passData.material.SetInt(HoSSGIShaderConstants.FrameIndexId, passData.frameIndex);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.TemporalBlendId, passData.blend);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.HistoryValidId, passData.historyValid ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.MotionValidId, passData.motion.IsValid() ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalMatrix(HoSSGIShaderConstants.PreviousInverseViewProjectionId, passData.previousInverseViewProjection);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.PreviousMatrixValidId, passData.previousMatrixValid ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.ReservoirReuseId, passData.reservoirReuse ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.ReservoirValidationId, passData.reservoirValidation ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalInt(HoSSGIShaderConstants.FrameIndexId, passData.frameIndex);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.current);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceId, passData.currentSource);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.HistoryTextureId, passData.previous);
@@ -951,6 +988,8 @@ namespace lilToon.URP.Extensions.SSGI
             TextureHandle invalidityOutput = nextInvalidity;
             using (var builder = renderGraph.AddRasterRenderPass<TemporalMetadataPassData>("Ho-SSGI Temporal Metadata", out TemporalMetadataPassData data, new ProfilingSampler("Ho-SSGI Temporal Metadata")))
             {
+                data.currentSource = source;
+                data.previousSource = previousSource;
                 data.material = material;
                 data.temporal = temporal;
                 data.previousSampleCount = previousSampleCount;
@@ -963,6 +1002,8 @@ namespace lilToon.URP.Extensions.SSGI
                 data.previousInverseViewProjection = previousInverseViewProjection;
                 data.previousMatrixValid = previousMatrixValid;
                 data.historyValid = historyValid;
+                builder.UseTexture(data.currentSource, AccessFlags.Read);
+                builder.UseTexture(data.previousSource, AccessFlags.Read);
                 builder.UseTexture(data.temporal, AccessFlags.Read);
                 builder.UseTexture(data.previousSampleCount, AccessFlags.Read);
                 builder.UseTexture(data.previousInvalidity, AccessFlags.Read);
@@ -975,10 +1016,12 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (TemporalMetadataPassData passData, RasterGraphContext context) =>
                 {
-                    passData.material.SetFloat(HoSSGIShaderConstants.HistoryValidId, passData.historyValid ? 1.0f : 0.0f);
-                    passData.material.SetFloat(HoSSGIShaderConstants.MotionValidId, passData.motion.IsValid() ? 1.0f : 0.0f);
-                    passData.material.SetMatrix(HoSSGIShaderConstants.PreviousInverseViewProjectionId, passData.previousInverseViewProjection);
-                    passData.material.SetFloat(HoSSGIShaderConstants.PreviousMatrixValidId, passData.previousMatrixValid ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.CameraSourceId, passData.currentSource);
+                    context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceHistoryId, passData.previousSource);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.HistoryValidId, passData.historyValid ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.MotionValidId, passData.motion.IsValid() ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalMatrix(HoSSGIShaderConstants.PreviousInverseViewProjectionId, passData.previousInverseViewProjection);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.PreviousMatrixValidId, passData.previousMatrixValid ? 1.0f : 0.0f);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.temporal);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SampleCountHistoryId, passData.previousSampleCount);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.InvalidityHistoryId, passData.previousInvalidity);
@@ -1039,7 +1082,7 @@ namespace lilToon.URP.Extensions.SSGI
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirRayId, passData.reservoirRay);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SampleCountHistoryId, passData.sampleCount);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
-                    passData.material.SetFloat(HoSSGIShaderConstants.FireflyEnabledId, passData.enabled ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.FireflyEnabledId, passData.enabled ? 1.0f : 0.0f);
                     Blitter.BlitTexture(context.cmd, passData.reservoirColor, new Vector4(1, 1, 0, 0), passData.material, 5);
                 });
             }
@@ -1067,7 +1110,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.outputGuidance = spatialGuidance;
                 data.radius = Mathf.Clamp(settings.spatialRadius, 0.5f, 8.0f);
                 data.reservoirReuse = settings.spatialReservoirReuse;
-                data.frameIndex = Time.frameCount;
+                data.frameIndex = history.SamplingFrameIndex;
                 builder.UseTexture(data.reservoirColor, AccessFlags.Read);
                 builder.UseTexture(data.reservoirAux, AccessFlags.Read);
                 builder.UseTexture(data.reservoirRay, AccessFlags.Read);
@@ -1084,10 +1127,10 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (SpatialResamplingPassData passData, RasterGraphContext context) =>
                 {
-                    passData.material.SetFloat(HoSSGIShaderConstants.SpatialRadiusId, passData.radius);
-                    passData.material.SetFloat(HoSSGIShaderConstants.ReservoirReuseId, passData.reservoirReuse ? 1.0f : 0.0f);
-                    passData.material.SetInt(HoSSGIShaderConstants.FrameIndexId, passData.frameIndex);
-                    passData.material.SetFloat(HoSSGIShaderConstants.ReservoirValidationId, 0.0f);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.SpatialRadiusId, passData.radius);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.ReservoirReuseId, passData.reservoirReuse ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalInt(HoSSGIShaderConstants.FrameIndexId, passData.frameIndex);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.ReservoirValidationId, 0.0f);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirColorId, passData.reservoirColor);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirAuxId, passData.reservoirAux);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirRayId, passData.reservoirRay);
@@ -1095,7 +1138,7 @@ namespace lilToon.URP.Extensions.SSGI
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.OcclusionRayId, passData.occlusionRay);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.temporal);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
-                    passData.material.SetFloat(HoSSGIShaderConstants.UseAOId, passData.ao.IsValid() ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.UseAOId, passData.ao.IsValid() ? 1.0f : 0.0f);
                     if (passData.ao.IsValid()) context.cmd.SetGlobalTexture(HoSSGIShaderConstants.AOTextureId, passData.ao);
                     Blitter.BlitTexture(context.cmd, passData.reservoirColor, new Vector4(1, 1, 0, 0), passData.material, 4);
                 });
@@ -1132,8 +1175,8 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (SpatialValidationPassData passData, RasterGraphContext context) =>
                 {
-                    passData.material.SetFloat(HoSSGIShaderConstants.ReservoirReuseId, 1.0f);
-                    passData.material.SetFloat(HoSSGIShaderConstants.ReservoirValidationId, passData.reservoirValidation ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.ReservoirReuseId, 1.0f);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.ReservoirValidationId, passData.reservoirValidation ? 1.0f : 0.0f);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirColorId, passData.reservoirColor);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirAuxId, passData.reservoirAux);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.ReservoirRayId, passData.reservoirRay);
@@ -1171,10 +1214,10 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (DenoisedTemporalPassData passData, RasterGraphContext context) =>
                 {
-                    passData.material.SetFloat(HoSSGIShaderConstants.HistoryValidId, passData.historyValid ? 1.0f : 0.0f);
-                    passData.material.SetFloat(HoSSGIShaderConstants.MotionValidId, passData.motion.IsValid() ? 1.0f : 0.0f);
-                    passData.material.SetMatrix(HoSSGIShaderConstants.PreviousInverseViewProjectionId, passData.previousInverseViewProjection);
-                    passData.material.SetFloat(HoSSGIShaderConstants.PreviousMatrixValidId, passData.previousMatrixValid ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.HistoryValidId, passData.historyValid ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.MotionValidId, passData.motion.IsValid() ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalMatrix(HoSSGIShaderConstants.PreviousInverseViewProjectionId, passData.previousInverseViewProjection);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.PreviousMatrixValidId, passData.previousMatrixValid ? 1.0f : 0.0f);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.source);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.DenoisedHistoryId, passData.history);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SampleCountHistoryId, passData.sampleCount);
@@ -1210,7 +1253,8 @@ namespace lilToon.URP.Extensions.SSGI
                 data.guidance = validatedGuidance;
                 data.ao = aoTexture;
                 data.output = bilateralFirst;
-                data.radius = Mathf.Clamp(settings.spatialRadius * 0.5f, 0.5f, 8.0f);
+                data.radius = Mathf.Clamp(settings.spatialRadius, 0.5f, 8.0f);
+                data.axis = new Vector4(1, 0, 0, 0);
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.UseTexture(data.guidance, AccessFlags.Read);
@@ -1220,11 +1264,12 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (BilateralPassData passData, RasterGraphContext context) =>
                 {
-                    passData.material.SetFloat(HoSSGIShaderConstants.SpatialRadiusId, passData.radius);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.SpatialRadiusId, passData.radius);
+                    context.cmd.SetGlobalVector(HoSSGIShaderConstants.FilterAxisId, passData.axis);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.source);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SpatialGuidanceId, passData.guidance);
-                    passData.material.SetFloat(HoSSGIShaderConstants.UseAOId, passData.ao.IsValid() ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.UseAOId, passData.ao.IsValid() ? 1.0f : 0.0f);
                     if (passData.ao.IsValid()) context.cmd.SetGlobalTexture(HoSSGIShaderConstants.AOTextureId, passData.ao);
                     Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 6);
                 });
@@ -1240,6 +1285,7 @@ namespace lilToon.URP.Extensions.SSGI
                 data.ao = aoTexture;
                 data.output = denoised;
                 data.radius = Mathf.Clamp(settings.spatialRadius, 0.5f, 8.0f);
+                data.axis = new Vector4(0, 1, 0, 0);
                 builder.UseTexture(data.source, AccessFlags.Read);
                 builder.UseTexture(data.geometry, AccessFlags.Read);
                 builder.UseTexture(data.guidance, AccessFlags.Read);
@@ -1250,11 +1296,12 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (BilateralPassData passData, RasterGraphContext context) =>
                 {
-                    passData.material.SetFloat(HoSSGIShaderConstants.SpatialRadiusId, passData.radius);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.SpatialRadiusId, passData.radius);
+                    context.cmd.SetGlobalVector(HoSSGIShaderConstants.FilterAxisId, passData.axis);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.RawGIInputId, passData.source);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SpatialGuidanceId, passData.guidance);
-                    passData.material.SetFloat(HoSSGIShaderConstants.UseAOId, passData.ao.IsValid() ? 1.0f : 0.0f);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.UseAOId, passData.ao.IsValid() ? 1.0f : 0.0f);
                     if (passData.ao.IsValid()) context.cmd.SetGlobalTexture(HoSSGIShaderConstants.AOTextureId, passData.ao);
                     Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 6);
                 });
@@ -1271,7 +1318,6 @@ namespace lilToon.URP.Extensions.SSGI
             resources.spatialResolveTexture = filtered;
             resources.temporalDenoisedTexture = temporallyDenoised;
             resources.bilateralFirstTexture = bilateralFirst;
-            history.CommitCameraMatrix(currentInverseViewProjection);
             history.SwapDenoised();
             history.Swap();
             history.SwapMetadata();
@@ -1330,7 +1376,7 @@ namespace lilToon.URP.Extensions.SSGI
                     builder.SetRenderFunc(static (DepthPyramidPassData passData, RasterGraphContext context) =>
                     {
                         if (passData.passIndex == 14)
-                            passData.material.SetVector(HoSSGIShaderConstants.DepthPyramidTexelSizeId, passData.sourceTexelSize);
+                            context.cmd.SetGlobalVector(HoSSGIShaderConstants.DepthPyramidTexelSizeId, passData.sourceTexelSize);
                         Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, passData.passIndex);
                     });
                 }
@@ -1398,7 +1444,7 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
                 {
-                    passData.material.SetFloat(HoSSGIShaderConstants.IntensityId, passData.strength);
+                    context.cmd.SetGlobalFloat(HoSSGIShaderConstants.IntensityId, passData.strength);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GITextureId, passData.gi);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     Blitter.BlitTexture(context.cmd, passData.source, new Vector4(1, 1, 0, 0), passData.material, 1);
@@ -1506,7 +1552,7 @@ namespace lilToon.URP.Extensions.SSGI
                 builder.AllowPassCulling(false);
                 builder.SetRenderFunc(static (PassData passData, RasterGraphContext context) =>
                 {
-                    passData.material.SetInt(HoSSGIShaderConstants.DebugModeId, passData.debugMode);
+                    context.cmd.SetGlobalInt(HoSSGIShaderConstants.DebugModeId, passData.debugMode);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.GeometryId, passData.geometry);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.SourceId, passData.source);
                     context.cmd.SetGlobalTexture(HoSSGIShaderConstants.CameraSourceId, passData.cameraSource);

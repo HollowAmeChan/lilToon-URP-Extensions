@@ -1,7 +1,7 @@
 # Ho-SSGI / HTrace ReSTIR 对齐：结论、契约与坑
 
-> 状态：**已实现并收敛（2026 文档审核）**。本文原为逐阶段进度表，现压缩为「链路 + 资源契约 + 已知差异 + 坑 + 验收」。
-> Ho-SSGI 已落地（`Runtime/SSGI/`，自研，读 `gisexclude`，opaque 之后合成）；HTrace SSGI 只作对照参考（`Assets/HTraceSSGI`）。
+> 状态：**链路已落地，真实场景待验收**。2026-10-07 GPU 回归证实旧版没有积累历史；修正分配与 GPU inverse VP 后基础累积恢复，见现行 `Ho-SSGI.md §0`。本文不再作为“已收敛”的证据。
+> Ho-SSGI 已落地（`Runtime/SSGI/`，自研，读 GB/GTAO/URP，opaque 之后合成）；**AC `gisexclude` 尚未接入**。HTrace SSGI 只作对照参考（`Assets/HTraceSSGI`）。
 > 场景：`D:\Unity_Project\BREAK_URP\Assets\mmd场景测试\朱木古堂`。描边白边是已知问题（见 `Ho-已知问题-描边SSGI白边.md`）。
 
 ## 1. 链路
@@ -79,9 +79,9 @@ OcclusionRay.xy = oct(selected direction)
 - **几何输入**：GB `NormalDepth`（RGB 法线、A 线性深度/coverage）是唯一几何真值；**描边 coverage 必须为无效**，不进入 candidate/history。
 - **Motion**：复用 URP `motionVectorColor`；render scale / motion UV 的 Y 翻转契约仍需登记。
 - **Camera history**：每个 Game/SceneView camera 独立 history（最多 4 槽、LRU 淘汰），cameraId/尺寸变化即失效；GI/depth/reservoir/source/denoised/metadata 全部 ping-pong，Temporal GI / source / denoised 都有 producer，保存 previous inverse VP。**仍缺 camera cut 与 render-scale 的显式 reset。**
-- **Depth / Hi-Z**：自有 5 级 R32 线性深度 pyramid；trace 远段采粗层，候选 crossing 回读 mip0 GB 精确确认，selected-ray validation 始终用精确深度。**仍缺 raw-device-depth 归约、LOD 随 march footprint 变化、refine intersection / half-step validation。**
+- **Depth / Hi-Z**：自有 5 级 R32 线性深度 pyramid；trace 远段采粗层，候选 crossing 回读 mip0 GB 精确确认，selected-ray validation 始终用精确深度；候选和 validation 已接 quarter-step crossing refinement（`5166f28` / `e78f8a0`）。**仍缺 raw-device-depth 归约、LOD 随 march footprint 变化。**
 - **Source 时域重投影**：source history ping-pong + motion/depth/normal/previous-plane 四 tap + 3×3 source luminance moments clamp。**仍缺 render-scale 坐标与 best-tap/曝光语义。**
-- **Candidate**：world-space cosine ray、稳定 16 帧低差异序列、35% 距离阈值后指数衰减、`M` 含 miss、可选 sky fallback、几何命中与 radiance brightness 分离、**同时产生独立 near-occlusion candidate**。
+- **Candidate**：world-space cosine ray、逐相机渲染序号推进的二维 digital sequence（2026-10-07 删除 16 帧重复与浮点 sine hash）、35% 距离阈值后指数衰减、`M` 含 miss、可选 sky fallback、几何命中与 radiance brightness 分离、**同时产生独立 near-occlusion candidate**。
 - **Temporal reservoir**：四 tap history merge，near-occlusion 同步重投影/验证，history M cap = 100，reuse 可单独关闭，replacement 随帧重新播种。**仍缺 reprojected hit validity 与 selected target 重评估。**
 - **Temporal validation**：selected-ray 几何 re-march + source lighting validation，**只限制 history、不压黑当前 candidate**；用 previous inverse VP 做 plane agreement。**moving hit / off-screen / 曝光变化三类需分别测。**
 - **Firefly**：7×7 luminance moments，按 metadata sample count 调阈值，限制 reservoir W，可单独关闭。

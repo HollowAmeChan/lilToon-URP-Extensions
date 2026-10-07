@@ -1,8 +1,77 @@
 # lilToon / Ho-SSGI：设计意图、契约与坑
 
-> 状态：**已实现并收敛（2026 文档审核核对）**。原“Draft v0.6 实施规划”的任务清单已执行完，本文保留**设计意图、source 分析、资源所有权、契约、描边排除与坑**。
+> 状态：**链路已落地；基础历史累积回归通过，真实场景仍待验收（2026-10-07）**。此前“已实现并收敛”的结论不成立：用户实测仍发散，本轮 GPU 回归确认了每帧丢失历史与历史矩阵约定错误，见 §0。本文保留设计意图、source 分析、资源所有权、契约、描边排除与坑。
 > 配套：`归档/LILTOON_SSGI_RESTIR_ALIGNMENT_WORKSHEET.md`（链路阶段 / reservoir 契约 / 已知差异 / 验收）、`归档/LILTOON_RESTIR_SHARED_LAYER_REPORT.md`（共享层评估）、`Ho-已知问题-描边SSGI白边.md`（描边白边已知问题）。
 > 主线决策：**先把 HTrace SSGI 改造成适合 lilToon 的 Ho-SSGI**；Brixelizer GI 只作为后续 producer 替换，不提前展开。**不为低质量档另做一套算法**——先确定一条高质量路径，用分辨率 / ray count / history length / denoise 参数控成本，Low/Medium 只改参数、不改算法结构。
+
+## 0. 2026-10-07：先恢复真实历史累积
+
+此次修正两个使静止画面不能积累的实现错误，保留原来的追踪、ReSTIR 和去噪算法：
+
+- **历史分配**：Prev/Next 每帧交换后，`Ensure()` 仍按角色原名调用 `ReAllocateIfNeeded()`。URP 的重分配判断包含纹理名字，导致历史纹理每帧被重新分配。现在仅在首次使用、尺寸或相机身份变化时分配，交换不改变物理纹理身份。
+- **历史矩阵**：先前保存普通 CPU projection 的逆，shader 却输入 GPU device depth。现在在 RenderGraph 执行时按 source 的实际 UV origin 计算 GPU projection，包含 reversed-Z / Y flip，再保存 inverse VP；与 URP 相机矩阵约定一致。
+
+独立 batch 场景（彩色墙 / 白色接收面，160×128，静止 32 帧）读回持久历史纹理；D3D11、D3D12 均通过。表中帧间变化为 temporal denoised RGB 的整图平均绝对差，比较第 25–32 帧，数值只用于这个固定夹具：
+
+| 路径 | 原历史接受率 / 累积帧数 | 修复后接受率 / 累积帧数 | 原后期帧间变化 | 修复后后期帧间变化 |
+| --- | --- | --- | --- | --- |
+| 时域重用，无空间/验证/Firefly | 0% / 1 | 100% / 16 | 0.098188 | 0.004359 |
+| 完整链路 | 0% / 1 | 100% / 16 | 0.098423 | 0.009572 |
+| 完整链路，URP render scale 0.7 | 0% / 1 | 100% / 16 | 0.100021 | 0.013194 |
+
+回归入口为 `lilToon.URP.Extensions.SSGI.HoSSGIValidation.Run`，**只能在独立 batch 项目中执行**。检查 22 张历史纹理在交换后保持同一组物理对象、有效像素的接受率、累积帧数、GI 有效性与后期帧间变化下降。`RunBaseline` 仅记录数据；`RunLegacyProjection` 保留分配修复但重新注入旧 CPU inverse VP，作为矩阵错误的负对照。
+
+矩阵负对照在 D3D11 上重新得到 **0% 接受率 / 累积帧数 1**，证明只修分配仍不足以恢复历史，两处修复均必要。
+
+### 0.1 细网纹：采样、滤波与阶段参数（同日后续）
+
+用户继续反馈有带运动感的细网纹，基础累积通过并不等于画面已干净。本轮进一步修正：
+
+- **去掉稀疏滤波栅格**：原两轮 5×5 filter 在 radius=8 时以 4/8 像素为步长，周期纹理的像素类互不连通。现在用连续像素的水平/垂直 bilateral 两轮，radius 控制滤波支持范围与 Gaussian 宽度，不再放大像素间距；保留 normal/depth/plane/AO/occlusion 边界权重。
+- **每个阶段按命令顺序设置参数**：原多个 callback 通过 `Material.Set*` 修改共享 Material，后阶段值可能覆盖之前尚未执行的 draw，包括 reuse/validation、radius、Hi-Z texel size。现改为 `context.cmd.SetGlobal*`，明确记录各阶段的值。横向条纹测试能抓到“两轮意外都读成同一方向”的错误。
+- **采样不再每 16 帧重复**：整数 hash 替代浮点 sine hash；像素使用稳定 scramble，射线按逐相机递增的渲染序号推进二维 digital sequence，march jitter / reservoir replacement 独立变化。同一 Unity update 中两次 RenderRequest 也推进采样，不依赖 `Time.frameCount`。
+- **统一纹理尺寸**：GI/history footprint 与像素索引用实际 GI RT 的 `_HoSSGITextureSize`，不再使用未缩放的 `_ScreenParams`。
+
+GPU 证据（D3D11 / D3D12）：
+
+| 固定夹具 | 修复前 | 修复后 |
+| --- | --- | --- |
+| 周期棋盘格的输出对比度 | 0.7991 | 0 |
+| 周期竖条纹的输出对比度 | 0.7991 | 0.00952 |
+| 几何断面需要保留的亮度差 | — | 0.79999 |
+| radius=8、9 rays、99 steps、128 帧后，同平面相邻像素高频残差 | 0.0022933 | 0.0011706 |
+
+最后一项测的是最终 GI，并同时保留 GI 能量与历史累积检查；不是只检查计数或帧间变化。`HoSSGIFilterValidation.Run` 验证周期噪声清除及几何边界，`HoSSGIValidation.RunPattern` 验证长时间静止的实际链路，`RunSamplingSequence` 验证重复渲染推进与 16 帧候选不重复。
+
+`Spatial Filter 1`（debug 17）现在显示第一轴的中间结果；最终去噪 GI 使用 `Raw GI`（debug 4），最终场景合成使用 `Off`。本轮仍不以夹具结果代替朱木古堂实际镜头验收。
+
+### 0.2 响应速度：输入颜色历史与去噪历史分开处理
+
+用户确认横向条纹是在 debug 17 看到的：只完成横向过滤时，未做纵向混合的行间噪声仍可见。不能以该中间结果判断最终 GI。
+
+“响应变懒”另有两层原因：
+
+- Source reprojection 在 temporalBlend=1 时完全取上一帧颜色，让 trace / lighting validation 迟读旧输入。Source history 保存的是**原始当帧颜色**，因此这里是一帧输入延迟，而不是无限递归冻结。现在 source 历史权重上限为 0.9，并根据钳制前的 RGB 变化降低历史权重；不降低 GI reservoir / denoiser 的静止累积上限。
+- 去噪 metadata 原来只验证几何。几何不变而光照/颜色大变时，旧 GI 会继续留在 16 帧历史里。现用同一组几何有效的重投影 tap 比较前后原始 source 的 RGB；显著变化时将该像素的 sample count 重置为 1，并拒绝旧 denoised history。静止稳定输入仍能累积到 16。
+
+响应夹具改用 Unlit 表面，严格把全部辐射降至 10%，避免 Lit 镜面项不随 base color 同比缩放而误判。以静止 64 帧后的最终 GI 为 100%：
+
+| 变化后帧数 | 原 source/denoise 行为 | 两层修正后（D3D11） |
+| --- | --- | --- |
+| 1 | 90.09% | 10.79% |
+| 2 | 27.39% | 10.27% |
+| 8 | 15.26% | 10.28% |
+| 64 | 10.29% | 10.22% |
+
+`HoSSGIValidation.RunResponse` 检查首帧接近新亮度及后续能量保持。旧行为对照使用独立 batch 工程里的 `Hidden/HoSSGI/ResponseBaseline` 快照。后续临时工程放到包外 `D:/Unity_Fork/.codex_temp/SSGIValidation-20261007`，避免包内临时 Library 写入触发主工程的文件监控。
+
+以上证明基础累积与周期纹理问题得到针对性修复，不代表整个 SSGI 已验收。仍需处理或验证：
+
+- 邻居/重投影代表射线换起点后的命中点重连，以及 target / radiance 的一致性。
+- 当前 SSGI 仅读 GB/GTAO/URP 资源，**未接 AC `gisexclude`**；其他文档“含 gisexclude”的说法不能当实现证据。
+- 描边背后有实体表面时，GB coverage 不一定为空；必须检查 source 与 GB 可见表面一致性。
+- Camera cut、投影参数变化、运动物体与灯光变化的历史拒绝；GB 采用不同分辨率时的纹理 footprint。
+- 朱木古堂实际镜头的画面对照。此次未修改主工程 Renderer / Volume 资产。
 
 ## 1. 插入时机的取舍（唯一的硬约束）
 
