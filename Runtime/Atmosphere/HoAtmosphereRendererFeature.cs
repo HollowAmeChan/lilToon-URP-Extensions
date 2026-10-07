@@ -6,7 +6,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.Atmosphere
 {
-    [DisallowMultipleRendererFeature("HoAtmosphere")]
+    [DisallowMultipleRendererFeature("Ho-Atmosphere")]
     public sealed class HoAtmosphereRendererFeature : ScriptableRendererFeature
     {
         [SerializeField] private HoAtmosphereSettings settings = new HoAtmosphereSettings();

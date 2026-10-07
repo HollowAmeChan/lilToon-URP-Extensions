@@ -267,6 +267,7 @@ namespace lilToon.URP.Extensions.Editor.Debugging
         }
     }
 
+    [SupportedOnRenderer()]
     internal sealed class DebugValidationFeature : ScriptableRendererFeature
     {
         public bool available = true;
@@ -275,6 +276,7 @@ namespace lilToon.URP.Extensions.Editor.Debugging
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData data) { pass.available=available; if (data.cameraData.camera.name != "No Debug") pass.Enqueue(renderer); }
         protected override void Dispose(bool disposing) { pass?.ReleaseDebugResources(); }
     }
+    [SupportedOnRenderer()]
     internal sealed class RivalDebugFeature : ScriptableRendererFeature
     {
         private ZPatternDebugPass pass;
@@ -305,6 +307,7 @@ namespace lilToon.URP.Extensions.Editor.Debugging
     }
     internal sealed class ZPatternDebugPass : APatternDebugPass { }
 
+    [SupportedOnRenderer()]
     internal sealed class LateOverwriteFeature : ScriptableRendererFeature
     {
         public RTHandle normal;
@@ -335,6 +338,7 @@ namespace lilToon.URP.Extensions.Editor.Debugging
         }
     }
 
+    [SupportedOnRenderer()]
     internal sealed class GridValidationFeature : ScriptableRendererFeature
     {
         public int mode;

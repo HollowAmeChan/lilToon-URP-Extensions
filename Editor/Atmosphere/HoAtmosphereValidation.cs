@@ -222,6 +222,8 @@ namespace lilToon.URP.Extensions.Atmosphere
         }
     }
 
+    // Empty renderer support hides test-only helpers from URP's Add Renderer Feature menu.
+    [SupportedOnRenderer()]
     internal sealed class HoAtmosphereProbeFeature : ScriptableRendererFeature
     {
         public RTHandle destination;

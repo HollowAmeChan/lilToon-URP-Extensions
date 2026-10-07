@@ -265,6 +265,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
     // Copy while the RenderGraph resource is alive. CPU Shader.GetGlobalTexture
     // is not a readback contract for command-buffer-published transient handles.
+    [SupportedOnRenderer()]
     internal sealed class HoSurfaceBufferEmissionCaptureFeature : ScriptableRendererFeature
     {
         public RTHandle destination;

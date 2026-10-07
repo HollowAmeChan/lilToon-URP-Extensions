@@ -67,6 +67,7 @@ namespace lilToon.URP.Extensions.SSGI
             EditorApplication.Exit(exitCode);
         }
 
+        [SupportedOnRenderer()]
         private sealed class FilterProbe : ScriptableRendererFeature
         {
             private Material material;
