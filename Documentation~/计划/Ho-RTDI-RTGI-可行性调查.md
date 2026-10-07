@@ -10,11 +10,13 @@
 
 第一阶段建议瞄准 **Windows / D3D12 / 硬件 RT / 不透明静态场景 / 一跳 diffuse GI**。本机枚举到 RTX 4060，当前 Unity Editor.log 记录 D3D12；具备尝试条件。用户指定的 `UnityPathTracing-6000.3.15` 已包含较完整的 RTXDI / ReSTIR GI 链路，建议以它为首要代码基础，先恢复最小验证，再抽取模块。是否能在目标场景的预算内运行，需要独立原型验证。
 
-角色保留主方向光与 CS 的美术控制；新 DI 先服务场景及可加性的补光。ShadowCast 可以逐步成为可选补充，但必须等新 DI 真正接管对应灯光的可见性和材质响应后再替换。
+新 DI/GI 默认通过后续 pass 合成，未来保留材质内接收模式。DI 接管的灯需与旧材质直接光明确分工。CS/ShadowCast 与 DI 的双重阴影混合策略暂缓，当前可先由用户手动关闭旧 cast 接收；几何仍参与 RT 遮挡。
 
 用户确认的范围：复用现有 GB/SB/OB 的生产结果。AC 更面向合成与后处理，且尚未完善；当前 RT 照明计算直接读取所需数据，不以完善 AC、统一终端入口或再复制一套属性图为前置条件。AC 的具体物化与复制策略仍待斟酌。lilPBR 已废弃，不作为实现依赖、支持目标或验收对象。正式接入围绕当前 lilToon 与 Extensions 契约推进。
 
 最新范围补充：**SSS 暂不接入**，用户仍在斟酌其设计。RT 首版不依赖 SSS profile、thickness、透射响应或 SSS 专用历史，不因现有 SB 中已有字段就要求消费或扩展它们。当前铺路重点是 SB emission、世界方向环境辐射，以及必要的数据有效性/读取约定。
+
+**最新实施优先级**：用户决定先完成可独立验证的 DI/GI 与环境生产端，暂不处理 lilToon 怎么接收、暗部如何过渡、材质内/后处理的具体合成映射。后续 pass 合成保留为方向，具体 PBR/NPR 结合另设阶段；此前 §4.5/§6 的讨论作为约束与备选，不是当前实现要求。算法验证用最小 PBR 响应参考；当前不自动关闭或改写材质的旧光照、cast、CS 等。当前下一项为 HoAtmosphere 全方向 HDR 环境输入。
 
 ## 1. ReSTIR、RTXDI、RTXGI 的职责
 
@@ -241,6 +243,16 @@ Emission 输出的契约：RGB 为该专用组分的独立线性 HDR 结果，�
 
 ### 4.4 天空盒：先补环境辐射输入，再做重要性采样
 
+**最新归属决策**：用户确定独立 Feature 名称为 **`HoAtmosphere`**。此前“先挂 GB Sky 分支”的临时方向由本条替代。GB 二维 screen sky 保留其屏幕背景职责，DI/GI 共同读取 HoAtmosphere 的全方向环境输入。
+
+**本轮实施范围仅为全方向 HDR 环境输入**。用户关于丁达尔光的讨论是未来职责确认，不是要求当前实现体积光、雾、大气散射或云。体积光在逻辑上可以归 HoAtmosphere：环境辐射与空气介质中的散射/消光属于相邻职责。未来接入时保持独立模块、开关、资源与更新节奏；仅启用环境输入时不分配体积网格/历史或执行体积积分。是否实施及具体算法另行确定。
+
+世界方向环境按来源/参数变化维护缓存与 revision，不随每个观察相机重复捕获。环境准备与逐相机体积积分分别调度，确保 opaque 前的 RT 消费能拿到有效环境资源；同一个 Feature 可以拥有多个 pass，不将它们塞入同一个执行时机。当前仅冻结 HoAtmosphere 的环境输入职责，体积模块的最终 Feature 归属与合成位置保持待定，不能因名称相近提前绑定依赖。
+
+丁达尔光在这里指雾/尘等参与介质中的可见光束。它需要介质密度、散射/消光、相函数，以及光源在介质采样点的照明和遮挡。首版可以使用现有 URP 方向光与阴影图，不依赖 RTXDI/RTGI 完成；后续再接局部灯、局部介质和可选 RT visibility。体积点上的响应与表面 BRDF 不同，不直接使用表面 DI 颜色或 reservoir 作为体积光答案。[Unity HDRP 灯光的体积光与阴影参数](https://github.com/Unity-Technologies/Graphics/blob/master/Packages/com.unity.render-pipelines.high-definition/Documentation~/reference-light-component.md)
+
+模块应区分两类输出：①供 DI/GI 使用的全方向 HDR 环境辐射；②供画面合成使用的逐相机体积散射与透射。主相机局部雾、光束、Bloom 等不烘入环境辐射图，避免重复积分。体积输出按 `Lscatter + T * sceneRadiance` 的语义组织；OIT/透明的深度与合成位置需要单独接入，不能无条件给最终图加亮。角色 SSS 继续暂缓，与本轮体积介质规划分别推进。
+
 已确认 `HoGeometryBufferSkyPass` 在 AfterRenderingSkybox 读取 camera color，并由 `HoGeometryBufferSkyCapture.shader` 根据几何覆盖剔除前景。它提供的是**当前视角二维背景**，不能查询相机背后的天空；也不能提供被房顶挡住、但从二次射线出口可见的天空方向。RT 环境输入要有独立的全方向表示。
 
 拟议的最小环境契约：
@@ -254,6 +266,35 @@ Emission 输出的契约：RGB 为该专用组分的独立线性 HDR 结果，�
 
 环境可先用于 ray miss 的方向查询。等环境灯 DI 或更有效的 GI 采样真正使用时，再增加环境 PDF/采样接口；权重按亮度与立体角构造，采样与方向 PDF 保持一致。反射用的预滤波环境、漫反射 SH/APV、天空背景和 RT 原始 radiance 可以来自同一来源，但用途与积分不能混在一起重复相加。
 
+### 4.5 调度与 NPR 接收：分别确定数据契约
+
+> 当前状态：本节为后续接入讨论记录。用户已明确先不做 lilToon 接收与合成设计，先验证光照生产端；不据本节提前实现材质路由、影色映射、旧光照旁路或双重阴影策略。
+
+**用户确定的默认方向**：DI/GI 均通过后续 pass 合成到画面，保留未来材质内接收的能力。本轮不同时实现两套消费路线，也不展开双重阴影的混合策略。HoAtmosphere 的全方向环境输入可以独立实施；未来体积后处理的合成位置另定。
+
+**NPR 基底澄清**：用户所说的初始状态是 lilToon 的暗部表现（影色、层次与材质感），不是物理全黑或把材质本色清零。默认后合成应保留这份明确的艺术基底，由 DI 提供受光/高光变化、GI 提供受控间接光。新增贡献/响应要与暗部基底匹配，不能直接假定完整 PBR 着色结果与任意暗部底图相加就得到目标 NPR 表现；也不保留已接管灯的旧亮部后再重复提亮。具体受光过渡与控制接口待小场景验证，不将“全黑起步”写成实现要求。
+
+首版接收域为不透明/cutout（与当前 SB 生产范围一致），主路相对顺序为：环境/RT 场景准备 → GB/SB 等主表面输入 → opaque 基础画面及必要 motion/depth 就绪 → DI/GI 求值、重采样与降噪 → DI/GI 合成 → 透明/OIT → 常规后处理。具体 URP 注入点按资源就绪情况确定；透明本身的 RT 接收另行设计。世界空间 GI 的二次命中着色独立于主相机合成结果，不隐式从已叠加 GI 的 camera color 回灌。
+
+**直接光归属仍须明确**：用户可以先手动关闭材质里的旧 cast 接收；DI 接管的灯还须从材质旧直接光路径排除，避免双份直射。关闭投影不会自动移除灯光贡献，正值 DI 叠加也无法压暗底图里已经存在的无阴影直射。此项是能量与路径归属，不要求本轮设计双重阴影混合。关闭材质旧投影接收也不等于让几何退出 RT AS/遮挡查询；后者必须保留。
+
+| 环节 | 需要的数据 / 输出 | 时序与边界 |
+| --- | --- | --- |
+| 环境输入准备 | 天空来源、参数 → 全方向 HDR radiance + revision | 在 RT 消费前可用，不读取本帧主相机着色结果 |
+| 可见天空背景 | 天空渲染与主相机 depth/coverage | 可按常规背景时机绘制；不要求为环境输入而提前绘制进 camera color |
+| RT 照明求值 | AS、灯、材质、主表面、环境 → 样本/光照分量 | 默认后续 pass 求值/降噪；材质内接收模式需要另行提前生产 |
+| 材质响应 | SB/所需响应参数 → 后合成可用的受控贡献 | 后处理主路仍需定义响应与光照归属；未来保留 forward 接收能力 |
+| 降噪与画面合成 | 独立贡献与 guide → 可显示结果 | 与材质负责响应可以同时成立，不等于只能二选一 |
+| 未来体积积分/合成 | 介质、灯、遮挡、场景深度/颜色 → 散射与透射 | 逐相机晚阶段；透明/OIT 的处理与最终归属另定 |
+
+RTDI 的离散性来自灯光/灯上位置的采样；最终估计的仍是给定着色模型下的直接光贡献。若 NPR 把光照总量再送入非线性 ramp、明暗层混合或钳制，事后加一张 RGB 图不自动等价于材质内响应。若某项已明确为可加补光，独立求值后合成是可选路径，但最终响应与采样 target 的支持范围仍需一致。不能把随机选中灯的方向直接替换稳定的角色主光方向。
+
+默认后处理输出需明确为已经计入当前支持材质响应的线性 HDR DI/GI 贡献，再进行合成；不能拿任意 incident irradiance 当作最终颜色直接相加。材质控制可以通过所需的表面数据/接收参数提供，不因此把全部积分放回 forward。未来材质内接收作为互斥消费模式保留：若要在当帧 forward 采样，相关 producer 必须提前，不能读取本帧 opaque 之后才生成的图；该模式也必须避免再走同一份后合成。当前不为预留能力提前分配无人消费的额外输出或历史。
+
+GI 也应明确输出是入射 irradiance、含接收材质的 radiance，还是更具体的间接光分量，避免重复乘 albedo、重复叠加 APV/SH 或绕过材质的接收控制。当前 Ho-SSGI 的后处理契约不直接约束新世界空间 RTGI。若需要当帧材质采样 GI，候选的二次表面 radiance 求值应摆脱对本帧 opaque camera color 的依赖。
+
+HoAtmosphere 的环境资源与未来体积输出分开：前者供光照采样，后者供视图合成。不要将主相机的体积合成结果回灌环境图或基础 GI source，形成重复积分/反馈。共享 Feature 只影响配置和调度归属，数据读写依赖仍须逐 pass 声明；跨阶段共享内容应是明确的参数/资源，不是一份反复改写的 camera color。
+
 ## 5. Unity 技术路线
 
 本地目标工程是 Unity 6000.3.15f1 / URP 17.3.0；Core 包已提供 UnifiedRayTracing。它支持 Hardware 与 Compute 两种 backend。URP 没有现成的 RTXDI Feature，不妨碍自行通过渲染 pass 集成求交与采样。[Core 17.3 UnifiedRayTracing](https://docs.unity3d.com/Packages/com.unity.render-pipelines.core@17.3/manual/UnifiedRayTracing/unified-ray-tracing-api.html)
@@ -266,9 +307,11 @@ Compute backend 可以保留接口上的可能性，性能和图像一致性单�
 
 ## 6. 场景 PBR 与角色 NPR 的接入
 
+> 延后阶段：当前先用参考材质响应验证 producer，以下 lilToon/PBR/NPR 接入考虑不作为环境或 DI/GI 原型的前置任务。
+
 正式场景接收在当前 lilToon/Extensions 上实现，主表面直接复用 GB/SB/按需 OB，不以 AC 完善为前置。隔离原型可使用 UnityPathTracing 自带材质作为算法参考，但它不是正式管线的新材质依赖。把 direct diffuse/specular、indirect diffuse、IBL/reflection 分开输出和调试，明确替代哪些旧贡献，避免原 additional lights、SH/APV/IBL 与新结果重复相加。
 
-角色继续用确定性的主光方向与 CS 塑形。ReSTIR 选中的灯每帧可能不同，不适合直接替换 lilToon 的主光方向、驱动脸部 ramp 或高光方向。补光可先走加性的 lighting 贡献，并使候选 target 与最终 NPR 响应保持足够一致。
+角色需要稳定的主光方向来维持脸部 ramp/高光等表现；ReSTIR 随机选中的灯不直接替换这一方向。当前按用户决定采用后合成主路，不展开 CS 与 DI 的双重投影策略，旧 cast 接收可先手动关闭。后合成贡献仍须匹配当前支持的材质响应，候选 target 与最终 NPR 响应保持足够一致；可加补光也属于可选受控贡献。
 
 GI 的二次命中首版可使用明确记录的 diffuse 材质代理（albedo + emission + 物理遮挡），再决定是否复现 toon ramp。这样得到的反弹与完整 toon forward 不完全相同，属于可控的表现选择；不能把任意屏幕最终颜色继续当作屏幕外材质模型。
 
@@ -334,4 +377,20 @@ reservoir 的内存要按真实 stride 与份数估算。例如仅为示意，32
 
 C# 编译检查通过。全库 shader reachability 脚本仍报告 4 处既有项，位于 AC correlated 与 GD vertex/outline 的调用可达性；本轮未修改这些模块。本轮相关材质与调试 shader 由实际 GPU 验证覆盖。
 
-天空环境仍按 §4.4 的全方向辐射契约推进，当前没有新增环境生产代码。
+天空环境按 §4.4 的全方向辐射契约进入实施，见 §11。
+
+## 11. 实现进展：HoAtmosphere
+
+2026-10-08 继续实施环境输入基建。新增独立 HoAtmosphere，默认读取 Unity 场景天空盒材质；还提供显式材质、原始 HDR Cubemap 和常量来源。天空捕获不读取主相机 color，不包含场景几何，提前发布全方向 HDR radiance、有效性和 revision。
+
+提供 RenderGraph 上下文资源和共享 HLSL 方向查询；强度、染色、旋转只影响求值，不强制重捕获。默认按来源变化更新，同时提供每帧、手动刷新与显式 dirty 接口。缺失来源、禁用、跳过相机和销毁均清有效性；有效的黑色环境仍可区分。
+
+当前没有迁移旧 feature 的输入。SSGI 与 SkyTyndall 使用的是带几何遮罩的屏幕天空，直接把它们的 miss 改成全方向天空会改变遮挡语义并引入漏光；应先保留屏幕可见性，再逐项接方向查询。GB 可见背景、平面反射、预滤波 IBL、SH/APV 也不能用裸 radiance 一次性替换。详细契约和迁移表见 [HoAtmosphere](../Ho-Atmosphere.md)。
+
+未启动 RTDI/RTGI 算法移植；未加入 AC 副本、SSS、lilPBR、lilToon 接收/合成或体积后处理。
+
+验证完成：Unity 6000.3.15f1，D3D12 RenderGraph、D3D11 RenderGraph、D3D11 compatibility 均通过。覆盖六面中心/斜向/角点方向、HDR、主相机正常绘制（含半分辨率）、跨相机缓存、显式刷新、材质/纹理内容变化、原生 cube 存储丢失恢复、Unity Cubemap/Panoramic/Procedural 来源、Volume 覆盖、缺失/关闭/销毁回退与调试输出。
+
+实际验证修正了六面绘制矩阵与 cubemap Y 轴方向；本地 D3D11 的 RG raster attachment 面选择不完整，捕获改用声明写依赖的 unsafe pass 显式绑定 CubemapFace，D3D12 与兼容模式共用相同面语义。兼容模式显式恢复主相机目标、视口和矩阵。未增加每帧的屏幕颜色副本。
+
+C# Runtime/Editor 分程序集编译通过。新增两个 Inspector 的 HelpBox 数量符合现行 UI 预算；全库 UI 预算检查仍有 GD 的两个既有超预算面板，本轮未改动。
