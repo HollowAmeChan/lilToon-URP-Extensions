@@ -1,6 +1,6 @@
 # Ho-RTDI / Ho-RTGI 可行性调查
 
-日期：2026-10-07，更新于 2026-10-08。状态：输入与求交准备已通过 GPU 验证（§10～§14）；已沿用户参考工程实现 Ho-RTDI 初版及独立光照输出（§15）。GI、最终材质接收/合成、生产性能与 Player 尚未交付。
+日期：2026-10-07，更新于 2026-10-08。状态：输入与求交准备已通过 GPU 验证（§10～§14）；已沿用户参考工程实现 Ho-RTDI 初版及独立光照输出（§15）。GI 的二次命中材质适配已通过真实 DXR 验证（§16）；GI 光照与重采样、最终材质接收/合成、生产性能与 Player 尚未交付。
 
 ## 判断
 
@@ -16,7 +16,7 @@
 
 最新范围补充：**SSS 暂不接入**，用户仍在斟酌其设计。RT 首版不依赖 SSS profile、thickness、透射响应或 SSS 专用历史，不因现有 SB 中已有字段就要求消费或扩展它们。当前铺路重点是 SB emission、世界方向环境辐射，以及必要的数据有效性/读取约定。
 
-**最新实施优先级**：用户决定先完成可独立验证的 DI/GI 与环境生产端，暂不处理 lilToon 怎么接收、暗部如何过渡、材质内/后处理的具体合成映射。后续 pass 合成保留为方向，具体 PBR/NPR 结合另设阶段；此前 §4.5/§6 的讨论作为约束与备选，不是当前实现要求。算法验证用最小 PBR 响应参考；当前不自动关闭或改写材质的旧光照、cast、CS 等。环境、主表面共享读取、刚性 opaque 世界求交及参考 RTXDI 的 DI 四阶段已有首版并通过验证；下一项沿参考工程的 GI passes 接入二次射线、命中着色与 GI 重采样，只补这条链路实际需要的输入。
+**最新实施优先级**：用户决定先完成可独立验证的 DI/GI 与环境生产端，暂不处理 lilToon 怎么接收、暗部如何过渡、材质内/后处理的具体合成映射。后续 pass 合成保留为方向，具体 PBR/NPR 结合另设阶段；此前 §4.5/§6 的讨论作为约束与备选，不是当前实现要求。算法验证用最小 PBR 响应参考；当前不自动关闭或改写材质的旧光照、cast、CS 等。环境、主表面共享读取、刚性 opaque 世界求交及参考 RTXDI 的 DI 四阶段已有首版并通过验证；GI 所需的二次命中材质适配已验证（§16）；下一项接参考 BrdfRayTracing / ShadeSecondarySurfaces 与 GI temporal/spatial/final 的间接光输出，只补这条链路实际需要的输入。
 
 ## 1. ReSTIR、RTXDI、RTXGI 的职责
 
@@ -459,3 +459,12 @@ RAB surface 直接读取 Ho 的已有 GB/SB 适配，visibility 接 HoRTScene；
 验证：C# 分程序集编译通过；D3D12 RenderGraph / compatibility 的 SDK 四阶段、多灯统计能量、真实遮挡、spot/方向光、specular、历史累积/失效、相机重投影、receiver 域拒绝、无自动合成、调试/关闭/销毁通过；D3D11 禁用分支通过，Compute 无警告/错误。单灯与逐灯数学参考核对，多灯比较跨像素/帧的统计均值；不以 raw 单像素波动判断算法有偏。
 
 使用与当前限制见 [Ho-RTDI](../Ho-RTDI.md)。下一步沿用参考工程的 BrdfRayTracing / ShadeSecondarySurfaces / GI temporal/spatial/final passes，只为这条 GI 链路补必要的命中材质适配。
+
+
+## 16. GI 二次命中材质接入
+
+按参考工程 BrdfRayTracing / SurfaceRayTracingCommon 的实际 hit 路径接入 Unity 顶点属性读取与材质着色，为后续 ShadeSecondarySurfaces 提供真实屏幕外命中。HoRTScene 增加可选的 hit-material 适配与 RayTracingShader 绑定；DI 默认仍使用原来的 inline query 路径。
+
+GI 专用材质副本调用 lilToon 现有两组 emission component，不采样 Forward 画面，不把额外亮色当 emission；源材质不改动。不支持的 opaque 命中明确返回 unsupported 并继续遮挡，避免变成环境 miss。当前接收标准 opaque lilToon 的第一主色链/normal map/两组 emission，Main2nd/Main3rd、parallax 位移与其他 shader 尚未接入；LOD 0，无 ray cone/GSAA。
+
+隔离 D3D12 验证（Gamma / Linear 均通过）：真实 DXR 离屏命中、材质参数、两组 HDR emission、main-strength、UV1/贴图 alpha/ST、mask RGB/alpha、禁用、shader 切换、unsupported 遮挡、镜像非均匀变换、源材质保持原样。现有 DI 的 D3D12 RG / compatibility、D3D11 不支持分支回归通过。此时还没有 GI Renderer Feature 或间接光输出，下一步接参考 GI 的采样与重采样链路。详见 [Ho-RTGI](../Ho-RTGI.md)。

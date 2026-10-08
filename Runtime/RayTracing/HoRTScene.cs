@@ -23,6 +23,7 @@ namespace lilToon.URP.Extensions.RayTracing
         private readonly HashSet<(int renderer, int submesh)> seen = new();
         private readonly HashSet<int> seenRenderers = new();
         private readonly List<(int renderer, int submesh)> removed = new();
+        private readonly Func<Material, Material> secondaryMaterial;
         internal readonly List<string> Rejections = new();
         private RayTracingAccelerationStructure acceleration;
         private GraphicsBuffer instanceBuffer;
@@ -51,6 +52,7 @@ namespace lilToon.URP.Extensions.RayTracing
             internal MeshRenderer renderer;
             internal Mesh mesh;
             internal Material material;
+            internal Material hitMaterial;
             internal uint identity, materialId, triangles, mask;
             internal int submesh, handle;
             internal Matrix4x4 matrix;
@@ -67,8 +69,9 @@ namespace lilToon.URP.Extensions.RayTracing
             { this.identity = identity; this.materialId = materialId; this.triangleCount = triangleCount; this.renderer = renderer; this.mesh = mesh; this.material = material; this.submesh = submesh; }
         }
 
-        internal HoRTScene()
+        internal HoRTScene(Func<Material, Material> secondaryMaterial = null)
         {
+            this.secondaryMaterial = secondaryMaterial;
             if (!IsSupported) return;
             acceleration = new RayTracingAccelerationStructure(new RayTracingAccelerationStructure.Settings
             {
@@ -106,17 +109,18 @@ namespace lilToon.URP.Extensions.RayTracing
                     if (!Opaque(material) || mesh.GetTopology(submesh) != MeshTopology.Triangles || descriptor.indexCount == 0 || descriptor.indexCount % 3 != 0)
                     { Rejections.Add(renderer.name + " submesh " + submesh + ": requires opaque triangle geometry and a material."); continue; }
                     var key = (renderer.GetInstanceID(), submesh); seen.Add(key);
+                    var hitMaterial = secondaryMaterial?.Invoke(material);
                     var matrix = renderer.localToWorldMatrix; uint triangles = (uint)(descriptor.indexCount / 3);
                     if (!ValidTransform(matrix))
                     { seen.Remove(key); Rejections.Add(renderer.name + ": non-finite or singular transform."); continue; }
-                    if (entries.TryGetValue(key, out var entry) && (!ReferenceEquals(entry.renderer, renderer) || !ReferenceEquals(entry.mesh, mesh) || entry.triangles != triangles))
+                    if (entries.TryGetValue(key, out var entry) && (!ReferenceEquals(entry.renderer, renderer) || !ReferenceEquals(entry.mesh, mesh) || entry.triangles != triangles || !ReferenceEquals(entry.hitMaterial, hitMaterial)))
                     { Remove(key); entry = null; changed = true; }
                     if (entry == null)
                     {
                         if (nextIdentity >= 0x1000000) throw new InvalidOperationException("RT instance ID domain exhausted; recreate the scene service.");
                         uint identity = nextIdentity++;
                         // Opaque two-sided reference geometry; no ShaderPass/material hit group is needed for inline queries.
-                        var config = new RayTracingMeshInstanceConfig(mesh, (uint)submesh, null)
+                        var config = new RayTracingMeshInstanceConfig(mesh, (uint)submesh, hitMaterial)
                         {
                             mask = mask, enableTriangleCulling = false,
                             // Allow explicit geometry refresh instead of reusing a static BLAS after a Mesh edit.
@@ -127,7 +131,7 @@ namespace lilToon.URP.Extensions.RayTracing
                         // Native instance handles are opaque signed tokens, not positive array indices.
                         acceleration.UpdateInstanceGeometry(handle);
                         entry = new Entry { renderer = renderer, mesh = mesh, material = material, submesh = submesh,
-                            identity = identity, handle = handle, matrix = matrix, triangles = triangles, mask = mask, materialId = MaterialIdentity(material) };
+                            identity = identity, handle = handle, matrix = matrix, triangles = triangles, mask = mask, materialId = MaterialIdentity(material), hitMaterial = hitMaterial };
                         entries.Add(key, entry); identities.Add(identity, entry); asDirty = metadataDirty = true; changed = true;
                     }
                     else
@@ -200,7 +204,7 @@ namespace lilToon.URP.Extensions.RayTracing
             private readonly HoRTScene scene;
             private readonly uint revision;
             internal Inputs(HoRTScene scene) { this.scene = scene; revision = scene.Revision; }
-            internal void BuildAndBind(CommandBuffer cmd, ComputeShader shader, int kernel)
+            private void Build(CommandBuffer cmd)
             {
                 scene.ThrowIfDisposed();
                 if (!scene.IsAvailable || scene.Revision != revision) throw new InvalidOperationException("RT scene unavailable or changed after graph recording.");
@@ -211,9 +215,18 @@ namespace lilToon.URP.Extensions.RayTracing
                     cmd.SetBufferData(scene.instanceBuffer, scene.instanceData); scene.metadataDirty = false;
                 }
                 if (scene.asDirty) { cmd.BuildRayTracingAccelerationStructure(scene.acceleration); scene.asDirty = false; scene.BuildCount++; }
+            }
+            internal void BuildAndBind(CommandBuffer cmd, ComputeShader shader, int kernel)
+            {
+                Build(cmd);
                 cmd.SetRayTracingAccelerationStructure(shader, kernel, AccelerationId, scene.acceleration);
                 cmd.SetComputeBufferParam(shader, kernel, InstancesId, scene.instanceBuffer);
                 cmd.SetComputeVectorParam(shader, StateId, new Vector4(1, scene.instanceBuffer.count, scene.entries.Count, 0));
+            }
+            internal void BuildAndBind(CommandBuffer cmd, RayTracingShader shader)
+            {
+                Build(cmd);
+                cmd.SetRayTracingAccelerationStructure(shader, AccelerationId, scene.acceleration);
             }
         }
 
