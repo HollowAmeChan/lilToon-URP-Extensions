@@ -45,6 +45,12 @@ namespace lilToon.URP.Extensions.AttributeComposite
         [InspectorName("调试语义"), Tooltip("单语义视图与六格对照使用的 schema 稳定名称。")]
         public HoACSemanticNameParameter debugSemanticName = new HoACSemanticNameParameter("Face");
 
+        [InspectorName("调试选择组")]
+        public HoACSemanticNameParameter debugSelectionName = new HoACSemanticNameParameter("Selection");
+
+        [InspectorName("调试身份组 ID")]
+        public NoInterpClampedIntParameter debugGroupId = new NoInterpClampedIntParameter(1, 1, 255);
+
         [InspectorName("Debug In Scene View")]
         public BoolParameter debugInSceneView = new BoolParameter(true);
 

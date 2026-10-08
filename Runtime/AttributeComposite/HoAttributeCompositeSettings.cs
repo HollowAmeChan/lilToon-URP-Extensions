@@ -13,7 +13,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
     {
         [InspectorName("Off")]
         Off = 0,
-        [InspectorName("Lane Coverage")]
+        [InspectorName("语义 Lane 覆盖率")]
         LaneCoverage,
         [InspectorName("Lane SemanticId")]
         LaneSemanticId,
@@ -44,7 +44,11 @@ namespace lilToon.URP.Extensions.AttributeComposite
         [InspectorName("Semantic Precision")]
         SemanticPrecision,
         [InspectorName("Outline Owner")]
-        OutlineOwner
+        OutlineOwner,
+        [InspectorName("身份组覆盖率")]
+        IdentityGroupCoverage,
+        [InspectorName("选择组覆盖率")]
+        SelectionGroupCoverage
     }
 
     [Serializable]
@@ -72,6 +76,20 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
         [NonSerialized]
         public string debugSemanticName = "Face";
+
+        [NonSerialized] public string debugSelectionName = "Selection";
+        [NonSerialized] public int debugGroupId = 1;
+
+        internal HoACQueryDescriptor ResolveDebugQuery()
+        {
+            if (debugMode == HoAttributeCompositeDebugMode.IdentityGroupCoverage)
+                return HoACQueryDescriptor.Resolve(HoACQueryKind.Group, null, debugGroupId, HoACMaskDomain.Screen);
+            if (debugMode == HoAttributeCompositeDebugMode.SelectionGroupCoverage)
+                return HoACQueryDescriptor.Resolve(HoACQueryKind.SelectionGroup, debugSelectionName, 0, HoACMaskDomain.Screen);
+            var kind = debugMode == HoAttributeCompositeDebugMode.GeometryCoverage ? HoACQueryKind.Geometry :
+                (debugMode == HoAttributeCompositeDebugMode.OutlineCoverage || debugMode == HoAttributeCompositeDebugMode.OutlineOwner) ? HoACQueryKind.Outline : HoACQueryKind.Screen;
+            return HoACQueryDescriptor.Resolve(kind, null, 0, HoACMaskDomain.Screen);
+        }
 
         internal static bool IsSemanticDebug(HoAttributeCompositeDebugMode mode) =>
             mode >= HoAttributeCompositeDebugMode.ObjectCoverage && mode <= HoAttributeCompositeDebugMode.SemanticPrecision;
@@ -101,6 +119,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
             debugInSceneView = source.debugInSceneView;
             debugInGameView = source.debugInGameView;
             debugSemanticName = source.debugSemanticName;
+            debugSelectionName = source.debugSelectionName;
+            debugGroupId = source.debugGroupId;
         }
     }
 }

@@ -54,7 +54,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         public List<HoObjectBufferPartEntry> parts = new List<HoObjectBufferPartEntry>();
 
         [InspectorName("选择")]
-        [Tooltip("具名的选区（OB 架构 §5.11）。名字全局唯一；材质侧只能引用这里的名字。")]
+        [Tooltip("具名的对象集合。可跨身份组、重叠；同名声明合并成员，AC 按名字查询。")]
         public List<HoObjectBufferSelectionEntry> selections = new List<HoObjectBufferSelectionEntry>();
 
         private readonly Dictionary<Renderer, int> localSlotByRenderer = new Dictionary<Renderer, int>();
@@ -408,14 +408,19 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         private void CollectRenderers(HoObjectBufferPartEntry entry, System.Action<Renderer> visit)
         {
-            if (entry?.renderers == null)
+            CollectRenderers(entry?.renderers, entry != null && entry.includeChildren, visit);
+        }
+
+        internal static void CollectRenderers(UnityEngine.Object[] targets, bool includeChildren, System.Action<Renderer> visit)
+        {
+            if (targets == null)
             {
                 return;
             }
 
-            for (int i = 0; i < entry.renderers.Length; i++)
+            for (int i = 0; i < targets.Length; i++)
             {
-                UnityEngine.Object target = entry.renderers[i];
+                UnityEngine.Object target = targets[i];
                 if (target == null)
                 {
                     continue;
@@ -424,7 +429,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                 if (target is Renderer renderer)
                 {
                     visit(renderer);
-                    if (entry.includeChildren)
+                    if (includeChildren)
                     {
                         VisitChildren(renderer.transform, visit);
                     }
@@ -442,7 +447,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
                         visit(rootRenderer);
                     }
 
-                    if (entry.includeChildren)
+                    if (includeChildren)
                     {
                         VisitChildren(gameObject.transform, visit);
                     }

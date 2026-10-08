@@ -261,7 +261,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 colorProperty != null ? colorProperty.colorValue : Color.gray,
                 title,
                 selectionId > 0 ? selectionId.ToString() : "—",
-                $"{title}\nCryptomatte ID {(selectionId > 0 ? selectionId.ToString() : "未注册")}\n跨部件的具名集合；材质侧引用的是名字",
+                $"{title}\n选择组 ID {(selectionId > 0 ? selectionId.ToString() : "未注册")}\n可重叠的对象集合；AC 按名字查询",
                 index == selectedSelection);
 
             HandleRowInput(paint, selectionsProperty, index, ref selectedSelection);
@@ -425,6 +425,8 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 var defaults = new HoObjectBufferSelectionEntry();
                 entry.FindPropertyRelative("tags").intValue = (int)defaults.tags;
                 entry.FindPropertyRelative("displayColor").colorValue = CreateUnusedDisplayColor(selectionsProperty, index);
+                entry.FindPropertyRelative("includeChildren").boolValue = defaults.includeChildren;
+                entry.FindPropertyRelative("renderers").ClearArray();
                 selectedSelection = index;
             }
 
@@ -580,19 +582,24 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             SerializedProperty entry = selectionsProperty.GetArrayElementAtIndex(selectedSelection);
             SerializedProperty nameProperty = entry.FindPropertyRelative("name");
             SerializedProperty colorProperty = entry.FindPropertyRelative("displayColor");
+            SerializedProperty renderersProperty = entry.FindPropertyRelative("renderers");
             string selectionName = nameProperty != null ? nameProperty.stringValue : string.Empty;
             uint selectionId = HoObjectBufferRegistry.GetSelectionId(selectionName);
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                DrawDetailHeader(
+                Rect headerRect = DrawDetailHeader(
                     colorProperty != null ? colorProperty.colorValue : Color.gray,
                     string.IsNullOrEmpty(selectionName) ? "（空名字）" : selectionName,
                     selectionId > 0 ? selectionId.ToString() : "—",
-                    "选区是跨部件的具名集合：它有自己的 8 bit ID 空间，材质侧引用的是名字。");
+                    "选择组是可重叠的对象集合。拖入 GameObject / Renderer，可跨部件和身份组。");
+                HandleDrop(headerRect, renderersProperty);
 
-                DrawProperty(nameProperty, new GUIContent("名字", "全局唯一。材质里引用的是这个名字。"));
+                DrawProperty(nameProperty, new GUIContent("名字", "AC 与后处理按名字查询。同名声明合并成员。"));
                 DrawProperty(colorProperty, new GUIContent("显示色", "debug 与 AOV manifest 用的颜色。"));
+                DrawProperty(entry.FindPropertyRelative("includeChildren"), new GUIContent("展开子级"));
+                DrawRendererList(renderersProperty, "选择组成员");
+                EditorGUILayout.HelpBox("AC 调试选择「选择组覆盖率」，再选择本组名字。后处理的遮罩来源也可选择「选择组」。当前支持整个 Renderer，尚不支持材质内绘制的局部遮罩。", MessageType.None);
             }
 
             EditorGUILayout.Space(SectionSpacing);
@@ -717,7 +724,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
 
         // ------------------------------------------------------------------ Renderer 列表（沿用原来的拖放行为）
 
-        private void DrawRendererList(SerializedProperty property)
+        private void DrawRendererList(SerializedProperty property, string label = "Renderer")
         {
             if (property == null || !property.isArray)
             {
@@ -729,7 +736,14 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
             // 标题行也接拖拽：这是"再加一个"最自然的入口。**空列表时更要接**——
             // 那时人第一反应就是往"Renderer（0）"上放，落空会显得整个列表都不收东西。
             Rect labelRect = EditorGUILayout.GetControlRect(false, 16.0f);
-            GUI.Label(labelRect, $"Renderer（{property.arraySize}）", EditorStyles.miniBoldLabel);
+            GUI.Label(labelRect, $"{label}（{property.arraySize}）", EditorStyles.miniBoldLabel);
+            Rect addRect = new Rect(labelRect.xMax - 76, labelRect.y, 76, labelRect.height);
+            if (GUI.Button(addRect, "添加对象", EditorStyles.miniButton))
+            {
+                int index = property.arraySize;
+                property.InsertArrayElementAtIndex(index);
+                property.GetArrayElementAtIndex(index).objectReferenceValue = null;
+            }
             HandleDrop(labelRect, property);
 
             if (property.arraySize == 0)

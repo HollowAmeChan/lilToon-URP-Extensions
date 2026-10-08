@@ -1,4 +1,5 @@
 using lilToon.URP.Extensions.AttributeComposite;
+using lilToon.URP.Extensions.ObjectBuffer;
 using lilToon.URP.Extensions.Editor;
 using UnityEditor;
 using UnityEditor.Rendering;
@@ -23,6 +24,7 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
         private SerializedDataParameter enable;
         private SerializedDataParameter debugMode;
         private SerializedDataParameter debugSemanticName;
+        private SerializedDataParameter debugSelectionName, debugGroupId;
         private SerializedDataParameter debugInSceneView;
         private SerializedDataParameter debugInGameView;
 
@@ -32,6 +34,8 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
             enable = Unpack(fetcher.Find(x => x.enable));
             debugMode = Unpack(fetcher.Find(x => x.debugMode));
             debugSemanticName = Unpack(fetcher.Find(x => x.debugSemanticName));
+            debugSelectionName = Unpack(fetcher.Find(x => x.debugSelectionName));
+            debugGroupId = Unpack(fetcher.Find(x => x.debugGroupId));
             debugInSceneView = Unpack(fetcher.Find(x => x.debugInSceneView));
             debugInGameView = Unpack(fetcher.Find(x => x.debugInGameView));
         }
@@ -75,6 +79,8 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
                 HoAttributeCompositeDebugMode mode = (HoAttributeCompositeDebugMode)debugMode.value.enumValueIndex;
                 bool semanticDebug = mode >= HoAttributeCompositeDebugMode.ObjectCoverage && mode <= HoAttributeCompositeDebugMode.SemanticPrecision;
                 if (semanticDebug) DrawSemanticSelector();
+                if (mode == HoAttributeCompositeDebugMode.SelectionGroupCoverage) DrawSelectionSelector();
+                if (mode == HoAttributeCompositeDebugMode.IdentityGroupCoverage) DrawParameter(debugGroupId, "调试身份组 ID");
 
                 // 只画当前模式的说明：整张表铺出来就等于把说明又挪回下拉里。
                 string description = DescribeDebugMode(mode);
@@ -123,12 +129,40 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
         }
 
         /// <summary>通道含义与取景范围照 `Shaders/Debug/HoAttributeCompositeDebug.shader` 写，改 shader 就改这里。</summary>
+        private void DrawSelectionSelector()
+        {
+            var names = HoObjectBufferRegistry.GetSelectionNames();
+            var labels = new string[names.Count + 1];
+            labels[0] = "未声明：" + debugSelectionName.value.stringValue;
+            int current = 0;
+            for (int i = 0; i < names.Count; i++)
+            {
+                labels[i + 1] = names[i];
+                if (names[i] == debugSelectionName.value.stringValue) current = i + 1;
+            }
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.PropertyField(debugSelectionName.overrideState, GUIContent.none, GUILayout.Width(15));
+                using (new EditorGUI.DisabledScope(!debugSelectionName.overrideState.boolValue))
+                {
+                    EditorGUI.BeginChangeCheck();
+                    int next = EditorGUILayout.Popup("调试选择组", current, labels);
+                    if (EditorGUI.EndChangeCheck() && next > 0) debugSelectionName.value.stringValue = names[next - 1];
+                }
+            }
+            if (names.Count == 0) EditorGUILayout.HelpBox("尚无选择组。先在 OB 组件的「选区」中创建一组并添加对象。", MessageType.Info);
+        }
+
         private static string DescribeDebugMode(HoAttributeCompositeDebugMode mode)
         {
             switch (mode)
             {
+                case HoAttributeCompositeDebugMode.IdentityGroupCoverage:
+                    return "所选身份组的可见覆盖率，包含归属于该组的部件与描边。白 = 命中，黑 = 未命中。";
+                case HoAttributeCompositeDebugMode.SelectionGroupCoverage:
+                    return "OB 自定义选择组的可见覆盖率，包含成员对象及其描边。与内置语义 Lane 分开；同一对象可属于多个选择组。白 = 命中，黑 = 未命中，暗红 = 查询或输入缺失。";
                 case HoAttributeCompositeDebugMode.LaneCoverage:
-                    return "上下半屏各一组：RGBA = 连续四条 lane 的覆盖率。";
+                    return "内置语义，非自定义选择组。上下半屏各一组：RGBA = 连续四条语义 lane 的覆盖率。";
                 case HoAttributeCompositeDebugMode.LaneSemanticId:
                     return "上下半屏各一组：RGBA = 连续四条 lane 的 SemanticId（÷255 显示）。";
                 case HoAttributeCompositeDebugMode.LaneObjectMask:

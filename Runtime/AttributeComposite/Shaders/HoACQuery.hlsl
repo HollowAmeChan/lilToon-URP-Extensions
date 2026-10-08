@@ -39,6 +39,9 @@ float _HoACActive;
 float _HoACInputsPublished;
 float4 _HoACInputFlags; // identity, selection, geometry, outline
 float4 _HoACGeometryFlags; // geometry coverage RT, outline coverage RT
+// Named object selections: eight membership words per OB palette row (255 overlapping groups).
+StructuredBuffer<uint> _HoOBSelectionMembership;
+float _HoOBSelectionMembershipCount;
 TEXTURE2D_X(_HoACGeometryCoverageTexture);
 TEXTURE2D_X(_HoACGeometryNormalDepthTexture);
 TEXTURE2D_X(_HoACOutlineCoverageTexture);
@@ -114,7 +117,8 @@ float HoAC_Identity(float2 uv, uint id16)
         uint partId;
         float layerCoverage;
         HoAC_IdentityLayer(id0, id1, coverage, layer, partId, layerCoverage);
-        total += (partId == id16) ? layerCoverage : 0.0;
+        // Selection partitioning preserves the public, named part identity.
+        total += (partId == id16 || (partId != 0u && HoObjectBufferLoadPart(partId).reserved == id16)) ? layerCoverage : 0.0;
     }
 
     return saturate(total);
@@ -351,12 +355,37 @@ bool HoAC_QueryValid(float4 query)
     if (_HoACInputsPublished < 0.5 || query.w < 0.5) return false;
     uint kind = (uint)round(query.x);
     uint domain = (uint)round(query.z);
-    if (kind > 6u || domain > 3u) return false;
-    if ((kind == 0u || kind == 2u || kind == 3u || domain == 1u) && _HoACInputFlags.x < 0.5) return false;
+    if (kind > 7u || domain > 3u) return false;
+    if ((kind == 0u || kind == 2u || kind == 3u || kind == 7u || domain == 1u) && _HoACInputFlags.x < 0.5) return false;
+    if (kind == 7u && (query.y < 1.0 || query.y > _HoObjectBufferSelectionCount || _HoOBSelectionMembershipCount < 1.0)) return false;
     if (kind == 1u && (_HoACInputFlags.y < 0.5 || query.y < 0.0 || query.y >= _HoACLaneCount)) return false;
     if ((kind == 4u || domain == 2u) && _HoACInputFlags.z < 0.5) return false;
     if ((kind == 5u || domain == 3u) && _HoACInputFlags.w < 0.5) return false;
     return true;
+}
+
+float HoAC_SelectionGroup(float2 uv, uint selectionId)
+{
+    if (selectionId == 0u || selectionId > (uint)_HoObjectBufferSelectionCount || _HoOBSelectionMembershipCount < 1.0) return 0.0;
+    float4 id0, id1, coverage;
+    HoAC_LoadIdentityPool(uv, id0, id1, coverage);
+    uint bit = selectionId - 1u;
+    float total = 0.0;
+    [unroll] for (uint layer = 0u; layer < 4u; layer++)
+    {
+        uint identity;
+        float weight;
+        HoAC_IdentityLayer(id0, id1, coverage, layer, identity, weight);
+        if (identity == 0u || weight <= 0.0) continue;
+        uint groupId = HoObjectBufferGroupId(identity);
+        uint slot = HoObjectBufferSlotId(identity);
+        HoObjectGroupData group = _HoObjectBufferGroups[groupId];
+        uint row = group.rowBase + slot;
+        if (slot >= group.slotCount || row >= (uint)_HoOBSelectionMembershipCount) continue;
+        uint word = _HoOBSelectionMembership[row * 8u + (bit >> 5u)];
+        total += (word & (1u << (bit & 31u))) != 0u ? weight : 0.0;
+    }
+    return saturate(total);
 }
 
 float HoAC_QueryCoverage(float2 uv, float4 query)
@@ -370,6 +399,7 @@ float HoAC_QueryCoverage(float2 uv, float4 query)
     if (kind == 3u) return HoAC_Identity(uv, value);
     if (kind == 4u) return HoAC_GeometryCoverage(uv);
     if (kind == 5u) return HoAC_OutlineCoverage(uv);
+    if (kind == 7u) return HoAC_SelectionGroup(uv, value);
     return kind == 6u ? 1.0 : 0.0;
 }
 

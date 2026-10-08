@@ -19,6 +19,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
     {
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-AttributeComposite Debug");
         private static readonly int BlitScaleBiasId = Shader.PropertyToID("_BlitScaleBias");
+        private static readonly int DebugQueryId = Shader.PropertyToID("_HoACDebugQuery");
 
         private HoAttributeCompositeSettings settings;
         private Material debugMaterial;
@@ -71,6 +72,9 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.DebugSurfaceAvailableId,
                     HoSurfaceBufferSemanticPass.LastProduced ? 1 : 0);
                 HoAttributeCompositePass.BindCompatibilityDiagnostics(cmd);
+                var query = settings.ResolveDebugQuery();
+                HoAttributeCompositePass.BindCompatibilityQuery(cmd, query);
+                cmd.SetGlobalVector(DebugQueryId, query.ShaderValue);
                 CoreUtils.DrawFullScreen(cmd, debugMaterial, shaderPassId: 0);
             }
 
@@ -103,9 +107,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 passData.resources = resources;
                 passData.semanticDebug = HoAttributeCompositeSettings.IsSemanticDebug(settings.debugMode);
                 passData.laneValid = HoAttributeCompositeSettings.TryResolveDebugLane(settings.debugSemanticName, out passData.lane);
-                HoACQueryKind kind = settings.debugMode == HoAttributeCompositeDebugMode.GeometryCoverage ? HoACQueryKind.Geometry :
-                    (settings.debugMode == HoAttributeCompositeDebugMode.OutlineCoverage || settings.debugMode == HoAttributeCompositeDebugMode.OutlineOwner) ? HoACQueryKind.Outline : HoACQueryKind.Screen;
-                passData.query = HoACQueryDescriptor.Resolve(kind, null, 0, HoACMaskDomain.Screen);
+                passData.query = settings.ResolveDebugQuery();
                 HoAttributeCompositeBindings.ReadQuery(builder, resources, passData.query);
                 HoAttributeCompositeBindings.Read(builder,resources.outlineOwnerTexture);
                 if (passData.semanticDebug)
@@ -146,6 +148,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
                     data.material.SetFloat(HoAttributeCompositeShaderConstants.DebugModeId, (float)data.debugMode);
                     context.cmd.SetGlobalVector(BlitScaleBiasId, new Vector4(1, 1, 0, 0));
                     HoAttributeCompositeBindings.BindQuery(context.cmd, data.resources, data.query);
+                    context.cmd.SetGlobalVector(DebugQueryId, data.query.ShaderValue);
                     context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.OutlineInheritanceActiveId,data.resources.outlineOwnerTexture.IsValid() ? 1 : 0);
                     if (data.resources.outlineOwnerTexture.IsValid()) context.cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.OutlineOwnerId,data.resources.outlineOwnerTexture);
                     bool rawAvailable = data.semanticDebug && data.resources.rawIdentityId0Texture.IsValid();

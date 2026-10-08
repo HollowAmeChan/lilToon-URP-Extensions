@@ -43,15 +43,15 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     /// <summary>
     /// 选择条目（OB 架构 §5.11）：一个**具名的选区**，用来取代 `custom0~3` 这类匿名通道。
     /// <list type="bullet">
-    /// <item>部件回答"这是谁"；选择回答"我想把哪一块单独拿出来调"——一块可以横跨多个部件，也可以是同一个部件里的一段遮罩；</item>
-    /// <item>名字**全局唯一**，ID 由注册表按顺序分配（独立的 8 bit 空间）；材质侧只引用名字、不定义名字，所以改名不破资产。</item>
+    /// <item>部件回答"这是谁"；选择回答"我想把哪些对象单独拿出来调"，可横跨多个部件、身份组并重叠；</item>
+    /// <item>名字属于全局空间，同名声明合并成员。ID 由注册表分配；消费者按名字解析，不持久化数字 ID。</item>
     /// </list>
     /// </summary>
     [Serializable]
     public sealed class HoObjectBufferSelectionEntry
     {
         [InspectorName("名字")]
-        [Tooltip("全局唯一。材质里引用的是这个名字（例如“左袖口”）。")]
+        [Tooltip("全局唯一。AC 与后处理按这个名字查询对象集合（例如“左袖口”）。同名声明合并成员。")]
         public string name = "Selection";
 
         /// <summary>
@@ -65,5 +65,13 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         [InspectorName("显示色")]
         [Tooltip("debug 与 AOV manifest 用的颜色。")]
         public Color displayColor = new Color(0.2f, 0.6f, 1f, 1f);
+
+        [InspectorName("展开子级")]
+        [Tooltip("包含所添加物体下的子级 Renderer。")]
+        public bool includeChildren = true;
+
+        [InspectorName("选择组成员")]
+        [Tooltip("拖入 GameObject 或 Renderer；允许跨部件、跨身份组，同一对象可加入多个选择组。当前以整个 Renderer 为单位。")]
+        public UnityEngine.Object[] renderers;
     }
 }

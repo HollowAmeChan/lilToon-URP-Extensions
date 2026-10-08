@@ -63,7 +63,7 @@ namespace lilToon.URP.Extensions.PostProcessing
 
         [Tooltip("选择本层使用的 AC 覆盖率来源。")]
         public HoACQueryKind maskSource = HoACQueryKind.TotalCoverage;
-        [Tooltip("HoSemanticSchema 中的稳定语义名，例如 Face、FrontHair、Eye。")]
+        [Tooltip("具名语义使用 schema 名称；选择组使用 OB 选区名称。")]
         public string maskSemanticName = "CharacterFull";
         [Tooltip("组查询使用 1..255；完整身份为 (组 ID << 8) | 部件槽位。")]
         public int maskId = 1;
@@ -85,15 +85,23 @@ namespace lilToon.URP.Extensions.PostProcessing
         [NonSerialized] private HoACMaskDomain cachedDomain;
         [NonSerialized] private string cachedName;
         [NonSerialized] private int cachedId;
+        [NonSerialized] private int cachedRegistryVersion;
         [NonSerialized] private HoACQueryDescriptor cachedQuery;
 
         internal HoACQueryDescriptor ResolveMaskQuery()
         {
+            int registryVersion = 0;
+            if (maskSource == HoACQueryKind.SelectionGroup)
+            {
+                ObjectBuffer.HoObjectBufferRegistry.EnsureBuilt();
+                registryVersion = ObjectBuffer.HoObjectBufferRegistry.Version;
+            }
             if (!queryCached || cachedSource != maskSource || cachedDomain != maskDomain ||
-                cachedName != maskSemanticName || cachedId != maskId)
+                cachedName != maskSemanticName || cachedId != maskId || cachedRegistryVersion != registryVersion)
             {
                 cachedQuery = HoACQueryDescriptor.Resolve(maskSource, maskSemanticName, maskId, maskDomain);
                 cachedSource = maskSource; cachedDomain = maskDomain; cachedName = maskSemanticName; cachedId = maskId;
+                cachedRegistryVersion = registryVersion;
                 queryCached = true;
             }
             return cachedQuery;

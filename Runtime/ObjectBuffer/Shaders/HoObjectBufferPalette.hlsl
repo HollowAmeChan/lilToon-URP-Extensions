@@ -21,7 +21,7 @@ struct HoObjectPartData
     uint partId;            // 角色 8 + 槽位 8
     uint nameHash;
     uint tags;              // HoObjectBufferPartTags 位掩码（角色语义）
-    uint reserved;          // 保留（恒 0），消费端不得依赖
+    uint reserved;          // 选择成员细分行的规范部件身份；0 = 本行就是规范身份
     float thickness;
     float curvature;
     float transmittance;

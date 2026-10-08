@@ -1,5 +1,7 @@
 # Ho-AttributeComposite（AC）
 
+> **2026-10-08 选择组接入**：OB「选区」现可添加对象。`HoACQueryKind.SelectionGroup` 按 OB 选择组名字解析，HLSL `HoAC_SelectionGroup(uv, selectionId)` 从 ranked 身份 coverage 与成员位集取遮罩；不占内置语义 lane。Volume 新增明确的「选择组覆盖率」＋名字选择，以及「身份组覆盖率」＋组 ID；原 Lane Coverage 已标明为语义 Lane。ScreenProcess 可直接选「选择组」作为层遮罩。配置步骤、容量及 Renderer 粒度限制见 [Ho-ObjectBuffer.md](Ho-ObjectBuffer.md)。
+
 > **状态：已落地**（代码在 `Runtime/AttributeComposite/`）。本文是 **AC 的现行架构说明**：边界、输出、查询 API、
 > 覆盖链、帧序与生命周期、导出面。**AC 不画几何、不画表面**：当前输入为 GB + OB + SB；AC 提供屏幕后处理的 typed 遮罩与 ID 查询（见下方接入状态）。
 > 相关：`Ho-ObjectBuffer.md`、`Ho-SurfaceBuffer.md`、`Ho-UI_风格规范.md`（面板与 Volume 的排法）。

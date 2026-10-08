@@ -19,7 +19,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
     /// 这是它们与本 feature 之间的只读接口。
     /// </para>
     /// </summary>
-    public static class HoObjectBufferRegistry
+    public static partial class HoObjectBufferRegistry
     {
         private static readonly List<HoObjectBufferGroup> Groups = new List<HoObjectBufferGroup>();
         private static readonly HashSet<HoObjectBufferGroup> InvalidGroups = new HashSet<HoObjectBufferGroup>();
@@ -162,7 +162,15 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             }
 
             dirty = false;
+            ClearSelectionBindings();
             Build();
+            HoObjectBufferGroup.ResolveAssignments();
+            for (int i = 0; i < Groups.Count; i++)
+            {
+                if (IsGroupValid(Groups[i])) Groups[i].ApplyIdentity();
+                else Groups[i]?.ClearIdentity();
+            }
+            BuildSelectionMembership();
             Upload();
             version++;
         }
@@ -374,21 +382,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             Shader.SetGlobalBuffer(HoObjectBufferShaderConstants.SelectionBufferId, selectionBuffer);
             Shader.SetGlobalFloat(HoObjectBufferShaderConstants.PartCountId, partRows.Length);
             Shader.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionCountId, SelectionCount);
-
-            // RSUV 不会被序列化（官方文档明确 "not serialized… resets when the object is reloaded"），
-            // 所以每次表重建后都要把索引重新写回 renderer；写入前先解决跨组冲突（一个 renderer 只属一个部件）。
-            HoObjectBufferGroup.ResolveAssignments();
-            for (int i = 0; i < Groups.Count; i++)
-            {
-                if (IsGroupValid(Groups[i]))
-                {
-                    Groups[i].ApplyIdentity();
-                }
-                else
-                {
-                    Groups[i].ClearIdentity();
-                }
-            }
+            UploadSelectionMembership();
 
             WarnAboutConflicts();
         }
@@ -450,6 +444,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             partBuffer = null;
             groupBuffer = null;
             selectionBuffer = null;
+            ReleaseSelectionMembership();
             BindPlaceholderBuffers();
         }
 
@@ -475,6 +470,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             Shader.SetGlobalBuffer(HoObjectBufferShaderConstants.SelectionBufferId, placeholderSelection);
             Shader.SetGlobalFloat(HoObjectBufferShaderConstants.PartCountId, 0.0f);
             Shader.SetGlobalFloat(HoObjectBufferShaderConstants.SelectionCountId, 0.0f);
+            BindSelectionMembershipPlaceholder();
         }
 
 #if UNITY_EDITOR

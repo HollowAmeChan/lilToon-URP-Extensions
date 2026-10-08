@@ -25,6 +25,7 @@ Shader "Hidden/lilToon/URP/AttributeComposite/DebugView"
             #include "../HoACOutlineInheritance.hlsl"
 
             float _HoACDebugMode;
+            float4 _HoACDebugQuery;
             float4 _HoACDebugLane; // lane, semantic ID, object bit, source mode
             float _HoACDebugLaneValid;
             float _HoACDebugSurfaceAvailable;
@@ -117,6 +118,12 @@ Shader "Hidden/lilToon/URP/AttributeComposite/DebugView"
 
                 float2 uv = input.texcoord;
                 uint mode = (uint)round(_HoACDebugMode);
+                if (mode == 17u || mode == 18u)
+                {
+                    if (!HoAC_QueryValid(_HoACDebugQuery)) return half4(.35, 0, 0, 1);
+                    float coverage = HoAC_QueryMask(uv, _HoACDebugQuery, false);
+                    return half4(coverage, coverage, coverage, 1);
+                }
                 if (mode == 16u)
                 {
                     float4 packet = HoAC_ReadOutlineOwner(uv);

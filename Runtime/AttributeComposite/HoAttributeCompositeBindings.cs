@@ -13,7 +13,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
             if (query.NeedsIdentity || intrinsicCoverage || query.NeedsSelection)
             {
                 Read(builder, physical ? r.rawIdentityCoverageTexture : r.identityCoverageTexture);
-                if (query.Kind == HoACQueryKind.Group || query.Kind == HoACQueryKind.Identity)
+                if (query.Kind == HoACQueryKind.Group || query.Kind == HoACQueryKind.Identity || query.Kind == HoACQueryKind.SelectionGroup)
                 {
                     Read(builder, physical ? r.rawIdentityId0Texture : r.identityId0Texture);
                     Read(builder, physical ? r.rawIdentityId1Texture : r.identityId1Texture);
@@ -44,7 +44,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
             if (query.NeedsIdentity || intrinsicCoverage || query.NeedsSelection)
             {
                 Bind(cmd, HoObjectBufferShaderConstants.CoverageTextureId, physical ? r.rawIdentityCoverageTexture : r.identityCoverageTexture);
-                if (query.Kind == HoACQueryKind.Group || query.Kind == HoACQueryKind.Identity)
+                if (query.Kind == HoACQueryKind.Group || query.Kind == HoACQueryKind.Identity || query.Kind == HoACQueryKind.SelectionGroup)
                 {
                     Bind(cmd, HoObjectBufferShaderConstants.Id0TextureId, physical ? r.rawIdentityId0Texture : r.identityId0Texture);
                     Bind(cmd, HoObjectBufferShaderConstants.Id1TextureId, physical ? r.rawIdentityId1Texture : r.identityId1Texture);

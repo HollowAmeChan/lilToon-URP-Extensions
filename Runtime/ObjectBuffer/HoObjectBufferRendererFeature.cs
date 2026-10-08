@@ -127,6 +127,8 @@ namespace lilToon.URP.Extensions.ObjectBuffer
 
         private static void ResetObjectBufferState(ScriptableRenderContext context, Camera camera)
         {
+            // Renderer user values must be ready before URP culls and snapshots draw metadata.
+            HoObjectBufferRegistry.EnsureBuilt();
             HoObjectBufferPass.ResetGlobalState();
         }
 

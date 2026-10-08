@@ -305,7 +305,8 @@ namespace lilToon.URP.Extensions.Tests
             actor.GetComponent<Renderer>().sharedMaterial = material;
             var group = actor.AddComponent<HoObjectBufferGroup>();
             group.parts.Add(new HoObjectBufferPartEntry { name="Face",tags=HoObjectBufferPartTags.CharacterFull | HoObjectBufferPartTags.Face,
-                renderers=new Object[]{actor.GetComponent<Renderer>()} }); group.Apply();
+                renderers=new Object[]{actor.GetComponent<Renderer>()} });
+            group.selections.Add(new HoObjectBufferSelectionEntry { name="Face", renderers=new Object[]{actor} }); group.Apply();
             var volume = GameObject("AC outline owner volume").AddComponent<Volume>(); volume.isGlobal = true;
             var profile = Keep(ScriptableObject.CreateInstance<VolumeProfile>()); volume.sharedProfile = profile;
             var stack = profile.Add<ScreenProcessStackVolume>(true); stack.Enable.Override(true);
@@ -318,7 +319,7 @@ namespace lilToon.URP.Extensions.Tests
                 layer.maskId = kind == HoACQueryKind.Identity ? (int)HoObjectBufferRegistry.GetPartId(group.groupId,"Face") : group.groupId;
                 return Render();
             }
-            foreach (var kind in new[]{HoACQueryKind.TotalCoverage,HoACQueryKind.Group,HoACQueryKind.Identity,HoACQueryKind.Semantic})
+            foreach (var kind in new[]{HoACQueryKind.TotalCoverage,HoACQueryKind.Group,HoACQueryKind.Identity,HoACQueryKind.Semantic,HoACQueryKind.SelectionGroup})
             {
                 var visual = Query(kind); var physical = Query(kind,HoACMaskDomain.Geometry);
                 for (int i = 0; i < original.Length; ++i)
@@ -343,6 +344,53 @@ namespace lilToon.URP.Extensions.Tests
         }
 
         [TestCase(false,1), TestCase(true,1), TestCase(false,4), TestCase(true,4)]
+        public void SelectionGroupDebugShowsOnlyMembersAndRefreshesAfterRemoval(bool compatibility, int samples)
+        {
+            var rd = Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
+            rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>()));
+            var ob = Keep(ScriptableObject.CreateInstance<HoObjectBufferRendererFeature>()); ob.Settings.useFallbackMaterial = false;
+            rd.rendererFeatures.Add(ob);
+            rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoAttributeCompositeRendererFeature>()));
+            rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<ScreenProcessRendererFeature>()));
+            SetPipeline(rd,samples); GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode = compatibility;
+            var group = GameObject("Selection GPU group").AddComponent<HoObjectBufferGroup>();
+            var actors = new Renderer[2];
+            for (int j = 0; j < 2; j++)
+            {
+                var go = Keep(UnityEngine.GameObject.CreatePrimitive(PrimitiveType.Quad)); go.layer = TestLayer;
+                SceneManager.MoveGameObjectToScene(go,testScene); go.transform.localScale = Vector3.one * 4;
+                actors[j] = go.GetComponent<Renderer>();
+                var material = Keep(new Material(Shader.Find("Hidden/lilToon/URP/Tests/OutlineHandoffSubject"))); material.enableInstancing = true;
+                material.SetVector("_TestBand", new Vector4(j * 64, (j+1)*64,0,0)); actors[j].sharedMaterial = material;
+            }
+            group.parts.Add(new HoObjectBufferPartEntry { name="Shared",renderers=new Object[]{actors[0],actors[1]} });
+            var selection = new HoObjectBufferSelectionEntry { name="GPU selection",renderers=new Object[]{actors[0]} };
+            group.selections.Add(selection); group.Apply();
+            var volume = GameObject("Selection debug volume").AddComponent<Volume>(); volume.isGlobal = true;
+            var profile = Keep(ScriptableObject.CreateInstance<VolumeProfile>()); volume.sharedProfile = profile;
+            var stack = profile.Add<ScreenProcessStackVolume>(true); stack.Enable.Override(true);
+            var layer = new ScreenProcessLayer { effect=ScreenProcessEffect.DepthOfField,intensity=0,debugMask=true,
+                maskSource=HoACQueryKind.SelectionGroup,maskSemanticName=selection.name };
+            stack.layers.Override(new List<ScreenProcessLayer>{layer});
+            var original = Render(); layer.intensity = 1; var mask = Render();
+            for (int i = 0; i < mask.Length; i++)
+                Assert.That(mask[i].r,Is.EqualTo(i / Width < 64 ? original[i].r + original[i].g : 0).Within(.006f),"Only lower-band member (including outline) pixel " + i);
+            var ac = profile.Add<HoAttributeCompositeVolume>(true);
+            ac.debugMode.Override(HoAttributeCompositeDebugMode.SelectionGroupCoverage); ac.debugSelectionName.Override(selection.name);
+            var debug = Render();
+            for (int i = 0; i < debug.Length; i++) Assert.That(debug[i].r,Is.EqualTo(mask[i].r).Within(.006f),"Explicit selection debug pixel " + i);
+            selection.renderers = new Object[]{actors[1]}; group.Apply();
+            var changed = Render();
+            for (int i = 0; i < changed.Length; i++)
+                Assert.That(changed[i].r,Is.EqualTo(i / Width >= 64 ? original[i].r + original[i].g : 0).Within(.006f),"Selection edited pixel " + i);
+            ac.debugMode.Override(HoAttributeCompositeDebugMode.IdentityGroupCoverage); ac.debugGroupId.Override(group.groupId);
+            var identity = Render();
+            for (int i = 0; i < identity.Length; i++) Assert.That(identity[i].r,Is.EqualTo(original[i].r+original[i].g).Within(.006f),"Identity debug still includes both members pixel " + i);
+            ac.debugMode.Override(HoAttributeCompositeDebugMode.Off); layer.maskSemanticName = "Deleted selection"; layer.invertMask = true;
+            foreach (var pixel in Render()) Assert.That(pixel.r,Is.LessThan(.001f),"Unresolved inverted group must fail closed");
+        }
+
+        [TestCase(false,1), TestCase(true,1), TestCase(false,4), TestCase(true,4)]
         public void NativeLilToonOutlineRetainsItsRendererOwnerDuringCameraMotion(bool compatibility, int samples)
         {
             var shader = Shader.Find("Hidden/lilToonOutline");
@@ -362,7 +410,8 @@ namespace lilToon.URP.Extensions.Tests
             actor.GetComponent<Renderer>().sharedMaterial = material;
             var group = actor.AddComponent<HoObjectBufferGroup>(); group.parts.Add(new HoObjectBufferPartEntry {
                 name="Face",tags=HoObjectBufferPartTags.CharacterFull | HoObjectBufferPartTags.Face,
-                renderers=new Object[]{actor.GetComponent<Renderer>()} }); group.Apply();
+                renderers=new Object[]{actor.GetComponent<Renderer>()} });
+            group.selections.Add(new HoObjectBufferSelectionEntry { name="Native selection",renderers=new Object[]{actor} }); group.Apply();
             var volume = GameObject("Native owner volume").AddComponent<Volume>(); volume.isGlobal = true;
             var profile = Keep(ScriptableObject.CreateInstance<VolumeProfile>()); volume.sharedProfile = profile;
             var stack = profile.Add<ScreenProcessStackVolume>(true); stack.Enable.Override(true);
@@ -375,6 +424,7 @@ namespace lilToon.URP.Extensions.Tests
                 layer.maskSource = HoACQueryKind.Outline; layer.maskDomain = HoACMaskDomain.Screen; var shell = Render();
                 layer.maskSource = HoACQueryKind.Group; layer.maskDomain = HoACMaskDomain.Outline; var owner = Render();
                 layer.maskSource = HoACQueryKind.Semantic; layer.maskSemanticName = "Face"; var semantic = Render();
+                layer.maskSource = HoACQueryKind.SelectionGroup; layer.maskSemanticName = "Native selection"; var selected = Render();
                 int shellPixels = 0;
                 for (int i = 0; i < shell.Length; ++i)
                 {
@@ -382,13 +432,14 @@ namespace lilToon.URP.Extensions.Tests
                     shellPixels++;
                     Assert.That(owner[i].r,Is.GreaterThan(.99f),"Native outline loses owner frame=" + frame + " pixel=" + i);
                     Assert.That(semantic[i].r,Is.GreaterThan(.99f),"Native outline loses Face semantics frame=" + frame + " pixel=" + i);
+                    Assert.That(selected[i].r,Is.GreaterThan(.99f),"Native outline loses custom selection frame=" + frame + " pixel=" + i);
                 }
                 Assert.That(shellPixels,Is.GreaterThan(8),"Native writer fixture must have a visible expanded outline");
                 Assert.That(ShaderUtil.ShaderHasError(shader),Is.False,"Native lilToon outline writer failed to compile");
             }
             material.SetFloat("_HoSemanticMaskOn",1); material.EnableKeyword("_HO_SEMANTIC_MASK"); material.SetTexture("_HoSemanticWeightTex",Solid(new Color(.75f,0,0,1)));
             layer.maskSource = HoACQueryKind.Outline; var weightedShell = Render();
-            layer.maskSource = HoACQueryKind.Semantic; var weightedSemantic = Render();
+            layer.maskSource = HoACQueryKind.Semantic; layer.maskSemanticName = "Face"; var weightedSemantic = Render();
             for (int i = 0; i < weightedShell.Length; ++i)
                 if (weightedShell[i].r > .99f) Assert.That(weightedSemantic[i].r,Is.EqualTo(.75f).Within(.006f),"Native shell inherits the SurfaceBuffer material mask R channel");
         }

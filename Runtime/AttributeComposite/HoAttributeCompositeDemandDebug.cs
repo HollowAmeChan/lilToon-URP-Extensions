@@ -13,7 +13,9 @@ namespace lilToon.URP.Extensions.AttributeComposite
             HoACDemandResources resources = HoACDemandResources.None;
             uint lanes = 0;
             var mode = settings.debugMode;
-            if (mode == HoAttributeCompositeDebugMode.GeometryCoverage)
+            if (mode == HoAttributeCompositeDebugMode.IdentityGroupCoverage || mode == HoAttributeCompositeDebugMode.SelectionGroupCoverage)
+                queries.Add(settings.ResolveDebugQuery());
+            else if (mode == HoAttributeCompositeDebugMode.GeometryCoverage)
                 queries.Add(HoACQueryDescriptor.Resolve(HoACQueryKind.Geometry, null, 0, HoACMaskDomain.Screen));
             else if (mode == HoAttributeCompositeDebugMode.OutlineCoverage || mode == HoAttributeCompositeDebugMode.OutlineOwner)
                 queries.Add(HoACQueryDescriptor.Resolve(HoACQueryKind.Outline, null, 0, HoACMaskDomain.Screen));

@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using lilToon.URP.Extensions.PostProcessing;
 using lilToon.URP.Extensions.AttributeComposite;
+using lilToon.URP.Extensions.ObjectBuffer;
 using UnityEditor;
 using UnityEditorInternal;
 using UnityEditor.Rendering;
@@ -501,6 +502,23 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
                 if (EditorGUI.EndChangeCheck() && next > 0) name.stringValue = entries[next - 1].name;
                 y += LineHeight + LineSpacing;
             }
+            else if (source == HoACQueryKind.SelectionGroup)
+            {
+                var name = element.FindPropertyRelative("maskSemanticName");
+                var names = HoObjectBufferRegistry.GetSelectionNames();
+                var labels = new string[names.Count + 1];
+                labels[0] = "未声明：" + name.stringValue;
+                int selected = 0;
+                for (int i = 0; i < names.Count; i++)
+                {
+                    labels[i + 1] = names[i];
+                    if (names[i] == name.stringValue) selected = i + 1;
+                }
+                EditorGUI.BeginChangeCheck();
+                int next = EditorGUI.Popup(new Rect(rect.x, y, rect.width, LineHeight), "选择组", selected, labels);
+                if (EditorGUI.EndChangeCheck() && next > 0) name.stringValue = names[next - 1];
+                y += LineHeight + LineSpacing;
+            }
             else if (source == HoACQueryKind.Group || source == HoACQueryKind.Identity)
                 DrawPropertyLine(rect, ref y, element, "maskId", source == HoACQueryKind.Group ? "组 ID" : "完整身份 ID");
             DrawPropertyLine(rect, ref y, element, "maskDomain", "选择与反选范围");
@@ -517,7 +535,7 @@ namespace lilToon.URP.Extensions.Editor.PostProcessing
         {
             if (!element.FindPropertyRelative("useMask").boolValue && !element.FindPropertyRelative("debugMask").boolValue) return 0;
             HoACQueryKind source = (HoACQueryKind)element.FindPropertyRelative("maskSource").intValue;
-            return 3 + (source == HoACQueryKind.Semantic || source == HoACQueryKind.Group || source == HoACQueryKind.Identity ? 1 : 0);
+            return 3 + (source == HoACQueryKind.Semantic || source == HoACQueryKind.SelectionGroup || source == HoACQueryKind.Group || source == HoACQueryKind.Identity ? 1 : 0);
         }
 
         private static void DrawPropertyLine(Rect rect, ref float y, SerializedProperty element, string propertyName, string label)

@@ -22,6 +22,8 @@ D3D12 将末尾参数换为 `-force-d3d12`。不要添加 `-nographics`；不能
 
 回归还覆盖 AC 的视觉身份/语义继承和物理域隔离，native lilToon 轮廓、重叠角色、语义贴图、相机移动与 stencil 复制。时间残留检查允许当前 outline/OB AA 的窄边缘，但不允许历史落在当前轮廓边缘外。
 
+修改选择组时也运行同目录 `ObjectSelectionRegressionTests`：覆盖共享部件的对象子集、重叠、跨身份组、独立对象、展开子级、禁用与移除清理、255 个成员位、GD 高位保留及槽位满时的封闭失败。GPU 测试同时验证选择组的描边继承、物理域隔离、具名 SP 遮罩与 AC 两个明确的分组调试视图；两个视图不会误用内置语义 lane。
+
 owner 清理的独立负对照：仅在隔离包副本中将 GB owner attachment 的 `AccessFlags.Write` 改回 `WriteAll`。D3D12 的移动测试应失败；该负对照曾在第二帧检测到 341 个历史像素。检查两个 API、保留 negative-control 结果，不能只测试静止相机或 writer 存在的位置。
 
 验证测试有效性的负对照：仅在隔离测试项目的包副本中换回修复前的 DoF / DepthFog shader，运行同一测试。合焦描边污染和高度雾应失败；随后恢复当前包。不要在用户打开的场景或主工作区替换生产 shader 做负对照。

@@ -10,7 +10,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
         [InspectorName("完整身份")] Identity = 3,
         [InspectorName("场景几何")] Geometry = 4,
         [InspectorName("描边视觉壳")] Outline = 5,
-        [InspectorName("全屏")] Screen = 6
+        [InspectorName("全屏")] Screen = 6,
+        [InspectorName("选择组")] SelectionGroup = 7
     }
 
     public enum HoACMaskDomain
@@ -31,7 +32,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
         public readonly string Error;
         public bool IsValid => SemanticId > 0 && Error == null;
         public bool NeedsIdentity => Kind == HoACQueryKind.TotalCoverage || Kind == HoACQueryKind.Group ||
-            Kind == HoACQueryKind.Identity || Domain == HoACMaskDomain.Objects;
+            Kind == HoACQueryKind.Identity || Kind == HoACQueryKind.SelectionGroup || Domain == HoACMaskDomain.Objects;
         public bool NeedsSelection => Kind == HoACQueryKind.Semantic;
         public bool NeedsGeometry => Kind == HoACQueryKind.Geometry || Domain == HoACMaskDomain.Geometry;
         public bool NeedsOutline => Kind == HoACQueryKind.Outline || Domain == HoACMaskDomain.Outline;
@@ -69,6 +70,11 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 else if (entry.laneIndex < 0 || entry.laneIndex >= HoSemanticSchema.ResolvedLaneCount)
                     error = $"语义 '{semanticName}' 尚无 Selection 产出。";
                 else { value = entry.laneIndex; semanticId = entry.semanticId; }
+            }
+            else if (kind == HoACQueryKind.SelectionGroup)
+            {
+                value = (int)ObjectBuffer.HoObjectBufferRegistry.GetSelectionId(semanticName);
+                if (value == 0) error = $"未声明的选择组：'{semanticName}'。请在 OB 组件的选区中添加对象。";
             }
             else if (kind == HoACQueryKind.Group && (id < 1 || id > 255))
                 error = "组 ID 必须在 1..255。";

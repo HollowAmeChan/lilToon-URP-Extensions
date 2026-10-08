@@ -20,7 +20,7 @@ namespace lilToon.URP.Extensions.ObjectBuffer
         /// <summary><see cref="HoObjectBufferPartTags"/> 的位掩码（角色语义，可多选）。</summary>
         public uint tags;
 
-        /// <summary>保留：R3/R4 的 schema lane mask 之类会落到这里，现在恒 0，消费端不得依赖。</summary>
+        /// <summary>选择组内部细分行的原始部件身份；0 表示本行就是原始身份。布局保持 64 B。</summary>
         public uint reserved;
 
         public float thickness;
