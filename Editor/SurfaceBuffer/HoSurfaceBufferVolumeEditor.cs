@@ -61,6 +61,8 @@ namespace lilToon.URP.Extensions.Editor.SurfaceBuffer
                     return "绿 = 深度匹配，橙 = 深度错配，红 = 无 SB writer，蓝 = 无 GB 几何，黄 = 分辨率或取样域不同，洋红 = 缺少输入。匹配不等于 primitive 身份证明。";
                 case HoSurfaceBufferDebugMode.Normal:
                     return "世界空间法线：octa 解出的方向，已映射到 0..1。";
+                case HoSurfaceBufferDebugMode.GeometryNormal:
+                    return "未经过 normal map 的世界空间网格法线；映射到 0..1，洋红表示 writer 未提供该组分。";
                 case HoSurfaceBufferDebugMode.Material:
                     return "R = 1-粗糙度（越白越光滑），G = 金属度，B = 厚度。";
                 case HoSurfaceBufferDebugMode.Reflection:

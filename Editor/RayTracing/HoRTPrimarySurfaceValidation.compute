@@ -1,0 +1,8 @@
+#pragma kernel CSMain
+#include "HoRTPrimarySurfaceValidation.hlsl"
+RWTexture2D<float4> _TestOutput;
+[numthreads(8, 8, 1)]
+void CSMain(uint3 id : SV_DispatchThreadID)
+{
+    if (id.x < 64 && id.y < 512) _TestOutput[id.xy] = HoRTValidationPixel(id.xy);
+}

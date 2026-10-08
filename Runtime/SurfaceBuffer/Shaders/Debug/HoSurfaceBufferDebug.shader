@@ -137,6 +137,13 @@ Shader "Hidden/lilToon/URP/SurfaceBuffer/DebugView"
                     float depth;
                     return half4(HoSurfaceAssociationDebugColor(HoSurfaceAssociationStatus(uv, depth)), 1);
                 }
+                if (mode == 13)
+                {
+                    if (SAMPLE_TEXTURE2D_X(_HoSurfaceBufferMaterialTexture, sampler_PointClamp, uv).a < .5)
+                        return half4(1, 0, 1, 1);
+                    float2 octa = SAMPLE_TEXTURE2D_X(_HoSurfaceBufferNormalTexture, sampler_PointClamp, uv).ba;
+                    return half4(HoSurfaceOctDecode(octa) * .5 + .5, 1);
+                }
 
                 if ((mode == 8 || mode == 9) && _HoSurfaceSemanticActive <= 0.5)
                 {

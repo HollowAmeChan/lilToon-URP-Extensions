@@ -15,6 +15,8 @@
 
 > **2026-10-08 深度与主表面关联**：SB 开始发布已有单采样深度附件，供 RT 等消费者验证 GB/SB 深度关联；不增加 MRT、不复制深度、不让 SB 生产端读取 GB。新增 `Depth` / `Geometry Association` 调试，规则见 §1.3。此决议替代旧记录中的“不发布深度”。
 
+> **2026-10-08 两种法线与 RT 读取**：Normal.RG 保留着色法线，原预留 BA 写入未经过 normal map 的网格法线；Material.A 写该组分可用标记。Normal 格式/MRT 数量不变。GB 的 lilToon 法线实际也含 normal map/Tesion，不能当作通用无扰动几何法线。共享读取接口见 [Ho-RT-PrimarySurface.md](Ho-RT-PrimarySurface.md)。
+
 
 
 > **落地状态（R3-sb，数值面 + 语义 lane 本轮）**：SB 的**数值面**已经可以跑：
@@ -74,11 +76,12 @@
 | 纹理 | 通道 | 语义 | 格式 | 生产端 | 消费端 |
 | --- | --- | --- | --- | --- | --- |
 | `Color` | `rgb` | linear HDR base color，producer 不钳制；**无 coverage 语义** | RGBA16F | 材质 | 角色特化·脸色扩散、SSS、PLR、AOV `diffuse_albedo` |
-| `Normal` | `rg` | `octa(shadingNormal)`——**含着色法线（含法线贴图）**；`ba` 备用 | RGBA8 | 材质 | PBR 光照、SSR 反射方向、一切吃法线贴图的效果 |
+| `Normal` | `rg` | `octa(shadingNormal)`——**含法线贴图的着色法线** | RGBA8 | 材质 | PBR 光照、SSR 反射方向、一切吃法线贴图的效果 |
+| | `ba` | `octa(meshNormalWS)`——顶点路径之后插值的网格法线，不经过 normal map | | | RT 主表面读取；不是逐三角形 flat face normal |
 | `Material` | `r` | **`perceptualRoughness`**（不是 linear roughness） | RGBA8 | 材质 | PLR / SSR / Probe |
 | | `g` | `metallic` | | | PLR / PBR |
 | | `b` | `thickness` | | | SSS / 透射 |
-| | `a` | 备用 | | | |
+| | `a` | `meshNormalAvailable`：1 表示 Normal.BA 已写上述网格法线；旧/自定义 writer 未提供则为 0 | | | RT 读取端拒绝不完整布局 |
 | `Reflection` | `r` | `reflectance`（F0 的标量近似） | RGBA8 | 材质 | PLR / SSR / Probe |
 | | `g` | `plrStrength`（= `_PlanarReflectionStrength`，材质侧 0..1） | | | PLR |
 | | `ba` | 备用 | | | |
@@ -91,7 +94,7 @@
 | `DepthTexture` | `r` | SB 本次绘制的 raw device depth，借用已有附件，不是线性深度或独立 MRT | 原有单采样 depth-stencil | SB 深度测试 | 主表面关联、位置重建前的验证 |
 
 - SurfaceSemantic 承接材质逐像素的具名 SemanticId/value，不做导出源；SB 只使用 `HoSemanticSchema` 声明的 ID/lane。AC 在 sample 级合成后才产生对外 Selection coverage。
-- `Normal` 与 GB 的几何法线是**并列的两个量**：GB 出几何法线（遮挡、阴影偏移、描边），SB 出着色法线（PBR、SSR）。
+- SB `Normal.rg` 是着色法线，`Normal.ba` 是无 normal map 的插值网格法线；均按材质现有 `_FlipNormal` / facing 约定翻转。GB 的 lilToon `RGB` 也经过 normal map/Tesion，fallback 则输出无贴图的网格法线，不能统一作为 RT 的无扰动法线。
 - `Emission.rgb` 为两层各自 `sampledColor * blendWeight` 的和，保留大于 1 的 HDR 值；不包含 Rim、MatCap、高光或溶解边缘。`_EmissionBlendMode` 仍用于 forward 的最终混色，不用于把底色混入独立输出。
 - SB 在光照前输出材质组分：主色混合使用当前 SB 主色，荧光的入射光门控固定为中性 1；原 forward 继续使用原来的 `fd.invLighting`，显示行为不变。Emission 不宣称是完整最终画面的差值。
 - `Emission.a` 是本次表面 pass 确实写入的标记，与 OB 身份无关；未登记对象也可为 1，黑色且 A=1 是合法零发光。不是透明覆盖率。现有 AC 的 owner 对齐规则没有改变。

@@ -96,10 +96,17 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             Shader.SetGlobalTexture(HoSurfaceBufferShaderConstants.DepthTextureId, Texture2D.blackTexture);
             CompatibilityDepthTexture = null;
             CompatibilityWriterTexture = null;
+            CompatibilitySource = null;
         }
         internal static bool CompatibilityProduced { get; private set; }
         internal static RTHandle CompatibilityDepthTexture { get; private set; }
         internal static RTHandle CompatibilityWriterTexture { get; private set; }
+        internal static HoSurfaceBufferPass CompatibilitySource { get; private set; }
+        internal RTHandle ColorTexture => colorTexture;
+        internal RTHandle NormalTexture => normalTexture;
+        internal RTHandle MaterialTexture => materialTexture;
+        internal RTHandle ReflectionTexture => reflectionTexture;
+        internal RTHandle OwnerTexture => ownerTexture;
 
         // ------------------------------------------------------------------ 兼容（非 RenderGraph）路径
 
@@ -179,6 +186,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             CompatibilityProduced = true;
             CompatibilityDepthTexture = depthTexture;
             CompatibilityWriterTexture = emissionTexture;
+            CompatibilitySource = this;
         }
 
         // ------------------------------------------------------------------ RenderGraph 路径

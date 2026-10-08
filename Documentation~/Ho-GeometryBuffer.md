@@ -8,6 +8,8 @@
 >
 > 它提供真实几何的法线、线性深度和有效覆盖判断，并额外提供与物理几何隔离的描边视觉 coverage。AO、GI、SSS、反射、角色特化和 ScreenProcess 都应按本文的语义消费这些资源。
 
+> **2026-10-08 法线语义复核**：这里的“真实几何”表示基础表面而非描边壳，不代表法线未经扰动。lilToon `fragGeometryBuffer` 实际应用 normal map 与 Tesion 法线；fallback 材质则输出网格法线。本轮保留 GB 行为，RT 不把 GB.RGB 统一当作无扰动几何法线，而读取 SB Normal.BA 的明确组分，见 [RT 主表面契约](Ho-RT-PrimarySurface.md)。
+
 ## 1. 设计边界
 
 GeometryBuffer 不是 URP `_CameraDepthTexture` 的别名，也不是完整 deferred GBuffer。它是由 Ho 管线主动重绘得到的、可复用的屏幕空间几何层：

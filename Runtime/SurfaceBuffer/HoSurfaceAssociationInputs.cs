@@ -15,17 +15,17 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         private static readonly int WriterId = Shader.PropertyToID("_HoSurfaceAssociationWriter");
         private static readonly int GeometryDepthId = Shader.PropertyToID("_HoSurfaceAssociationGeometryDepth");
         private static readonly int GeometryId = Shader.PropertyToID("_HoSurfaceAssociationGeometry");
-        private readonly TextureHandle surfaceDepth, writer, geometryDepth, geometry;
+        private readonly TextureHandle surfaceDepth, writer, geometryDepth, geometry, fallback;
         private readonly Vector4 state;
 
         private HoSurfaceAssociationInputs(TextureHandle surfaceDepth, TextureHandle writer,
-            TextureHandle geometryDepth, TextureHandle geometry, Vector4 state)
+            TextureHandle geometryDepth, TextureHandle geometry, TextureHandle fallback, Vector4 state)
         {
             this.surfaceDepth = surfaceDepth; this.writer = writer;
-            this.geometryDepth = geometryDepth; this.geometry = geometry; this.state = state;
+            this.geometryDepth = geometryDepth; this.geometry = geometry; this.fallback = fallback; this.state = state;
         }
 
-        internal static HoSurfaceAssociationInputs Read(RenderGraph graph, ContextContainer frame, IRasterRenderGraphBuilder builder)
+        internal static HoSurfaceAssociationInputs Read(RenderGraph graph, ContextContainer frame, IBaseRenderGraphBuilder builder)
         {
             var sb = frame.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
             var gb = frame.GetOrCreate<HoGeometryBufferRenderGraphResources>();
@@ -41,7 +41,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             }
             if (surfacePresent) { builder.UseTexture(sb.depthTexture); builder.UseTexture(sb.emissionTexture); }
             if (geometryPresent) { builder.UseTexture(gb.depthTexture); builder.UseTexture(gb.normalDepthTexture); }
-            return new HoSurfaceAssociationInputs(sb.depthTexture, sb.emissionTexture, gb.depthTexture, gb.normalDepthTexture,
+            if (!surfacePresent || !geometryPresent) builder.UseTexture(graph.defaultResources.blackTexture);
+            return new HoSurfaceAssociationInputs(sb.depthTexture, sb.emissionTexture, gb.depthTexture, gb.normalDepthTexture, graph.defaultResources.blackTexture,
                 new Vector4(surfacePresent ? 1 : 0, geometryPresent ? 1 : 0, sameDomain ? 1 : 0, 0));
         }
 
@@ -52,19 +53,46 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             if (state.y > .5f) { cmd.SetGlobalTexture(GeometryDepthId, geometryDepth); cmd.SetGlobalTexture(GeometryId, geometry); }
         }
 
+        internal void Bind(ComputeCommandBuffer cmd, ComputeShader shader, int kernel)
+        {
+            cmd.SetComputeVectorParam(shader, StateId, state);
+            // Compute kernels require all declared texture slots, even when an early-out makes them unused.
+            cmd.SetComputeTextureParam(shader, kernel, SurfaceDepthId, state.x > .5f ? surfaceDepth : fallback);
+            cmd.SetComputeTextureParam(shader, kernel, WriterId, state.x > .5f ? writer : fallback);
+            cmd.SetComputeTextureParam(shader, kernel, GeometryDepthId, state.y > .5f ? geometryDepth : fallback);
+            cmd.SetComputeTextureParam(shader, kernel, GeometryId, state.y > .5f ? geometry : fallback);
+        }
+
         internal static void BindCompatibility(CommandBuffer cmd)
         {
-            var s = HoSurfaceBufferPass.CompatibilityDepthTexture;
-            var w = HoSurfaceBufferPass.CompatibilityWriterTexture;
-            var gb = HoGeometryBufferPass.CompatibilityTargets;
+            Vector4 state = CompatibilityState(out var s, out var w, out var gb);
+            cmd.SetGlobalVector(StateId, state);
+            if (state.x > .5f) { cmd.SetGlobalTexture(SurfaceDepthId, s.nameID); cmd.SetGlobalTexture(WriterId, w.nameID); }
+            if (state.y > .5f) { cmd.SetGlobalTexture(GeometryDepthId, gb.DepthTexture.nameID); cmd.SetGlobalTexture(GeometryId, gb.NormalDepthTexture.nameID); }
+        }
+
+        internal static void BindCompatibilityCompute(CommandBuffer cmd, ComputeShader shader, int kernel)
+        {
+            Vector4 state = CompatibilityState(out var s, out var w, out var gb);
+            cmd.SetComputeVectorParam(shader, StateId, state);
+            var fallback = new RenderTargetIdentifier(Texture2D.blackTexture);
+            cmd.SetComputeTextureParam(shader, kernel, SurfaceDepthId, state.x > .5f ? s.nameID : fallback);
+            cmd.SetComputeTextureParam(shader, kernel, WriterId, state.x > .5f ? w.nameID : fallback);
+            cmd.SetComputeTextureParam(shader, kernel, GeometryDepthId, state.y > .5f ? gb.DepthTexture.nameID : fallback);
+            cmd.SetComputeTextureParam(shader, kernel, GeometryId, state.y > .5f ? gb.NormalDepthTexture.nameID : fallback);
+        }
+
+        private static Vector4 CompatibilityState(out RTHandle s, out RTHandle w, out HoGeometryBufferRenderTargets gb)
+        {
+            s = HoSurfaceBufferPass.CompatibilityDepthTexture;
+            w = HoSurfaceBufferPass.CompatibilityWriterTexture;
+            gb = HoGeometryBufferPass.CompatibilityTargets;
             bool surfacePresent = HoSurfaceBufferPass.CompatibilityProduced && s?.rt != null && w?.rt != null;
             bool geometryPresent = gb?.DepthTexture?.rt != null && gb.NormalDepthTexture?.rt != null;
             bool sameDomain = surfacePresent && geometryPresent && gb.MsaaSamples == 1
                 && s.rt.width == gb.DepthTexture.rt.width && s.rt.height == gb.DepthTexture.rt.height
                 && s.rt.dimension == gb.DepthTexture.rt.dimension && s.rt.volumeDepth == gb.DepthTexture.rt.volumeDepth;
-            cmd.SetGlobalVector(StateId, new Vector4(surfacePresent ? 1 : 0, geometryPresent ? 1 : 0, sameDomain ? 1 : 0, 0));
-            if (surfacePresent) { cmd.SetGlobalTexture(SurfaceDepthId, s.nameID); cmd.SetGlobalTexture(WriterId, w.nameID); }
-            if (geometryPresent) { cmd.SetGlobalTexture(GeometryDepthId, gb.DepthTexture.nameID); cmd.SetGlobalTexture(GeometryId, gb.NormalDepthTexture.nameID); }
+            return new Vector4(surfacePresent ? 1 : 0, geometryPresent ? 1 : 0, sameDomain ? 1 : 0, 0);
         }
     }
 }

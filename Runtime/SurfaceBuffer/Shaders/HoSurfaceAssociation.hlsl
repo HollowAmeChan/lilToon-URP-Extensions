@@ -17,19 +17,33 @@ float4 _HoSurfaceAssociationState;
 #define HO_SURFACE_ASSOCIATION_MATCH 5u
 #define HO_SURFACE_ASSOCIATION_OUT_OF_BOUNDS 6u
 
-float HoSurfaceDeviceToEyeDepth(float rawDepth)
+// Explicit overloads can be used by compute/ray consumers without raster camera globals.
+// clipParameters = near, far, orthographic, reversed Z.
+float HoSurfaceDeviceToEyeDepth(float rawDepth, float4 zBufferParameters, float4 clipParameters)
 {
-    if (unity_OrthoParams.w > 0.5)
+    if (clipParameters.z > 0.5)
     {
-        #if UNITY_REVERSED_Z
-            rawDepth = 1.0 - rawDepth;
-        #endif
-        return lerp(_ProjectionParams.y, _ProjectionParams.z, rawDepth);
+        if (clipParameters.w > 0.5) rawDepth = 1.0 - rawDepth;
+        return lerp(clipParameters.x, clipParameters.y, rawDepth);
     }
-    return LinearEyeDepth(rawDepth, _ZBufferParams);
+    return LinearEyeDepth(rawDepth, zBufferParameters);
 }
 
-uint HoSurfaceAssociationStatus(float2 uv, out float surfaceEyeDepth)
+float4 HoSurfaceRasterClipParameters()
+{
+    float reversedZ = 0;
+    #if UNITY_REVERSED_Z
+        reversedZ = 1;
+    #endif
+    return float4(_ProjectionParams.yz, unity_OrthoParams.w, reversedZ);
+}
+
+float HoSurfaceDeviceToEyeDepth(float rawDepth)
+{
+    return HoSurfaceDeviceToEyeDepth(rawDepth, _ZBufferParams, HoSurfaceRasterClipParameters());
+}
+
+uint HoSurfaceAssociationStatus(float2 uv, float4 zBufferParameters, float4 clipParameters, out float surfaceEyeDepth)
 {
     surfaceEyeDepth = 0;
     if (any(uv < 0) || any(uv >= 1)) return HO_SURFACE_ASSOCIATION_OUT_OF_BOUNDS;
@@ -43,11 +57,16 @@ uint HoSurfaceAssociationStatus(float2 uv, out float surfaceEyeDepth)
         return HO_SURFACE_ASSOCIATION_NO_GEOMETRY;
     float sb = SAMPLE_TEXTURE2D_X_LOD(_HoSurfaceAssociationSurfaceDepth, sampler_PointClamp, uv, 0).r;
     float gb = SAMPLE_TEXTURE2D_X_LOD(_HoSurfaceAssociationGeometryDepth, sampler_PointClamp, uv, 0).r;
-    surfaceEyeDepth = HoSurfaceDeviceToEyeDepth(sb);
-    float geometryEyeDepth = HoSurfaceDeviceToEyeDepth(gb);
+    surfaceEyeDepth = HoSurfaceDeviceToEyeDepth(sb, zBufferParameters, clipParameters);
+    float geometryEyeDepth = HoSurfaceDeviceToEyeDepth(gb, zBufferParameters, clipParameters);
     float tolerance = max(0.0001, abs(surfaceEyeDepth) * 0.00001);
     return abs(surfaceEyeDepth - geometryEyeDepth) <= tolerance
         ? HO_SURFACE_ASSOCIATION_MATCH : HO_SURFACE_ASSOCIATION_DEPTH_MISMATCH;
+}
+
+uint HoSurfaceAssociationStatus(float2 uv, out float surfaceEyeDepth)
+{
+    return HoSurfaceAssociationStatus(uv, _ZBufferParams, HoSurfaceRasterClipParameters(), surfaceEyeDepth);
 }
 
 float3 HoSurfaceAssociationDebugColor(uint status)

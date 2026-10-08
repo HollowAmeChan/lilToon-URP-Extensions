@@ -44,6 +44,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         Depth = 11,
         [InspectorName("Geometry Association")]
         GeometryAssociation = 12,
+        [InspectorName("Geometry Normal")]
+        GeometryNormal = 13,
         [UnityEngine.InspectorName("All")]
         All = 255
     }

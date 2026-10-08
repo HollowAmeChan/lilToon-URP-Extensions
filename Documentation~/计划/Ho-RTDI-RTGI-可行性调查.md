@@ -1,6 +1,6 @@
 # Ho-RTDI / Ho-RTGI 可行性调查
 
-日期：2026-10-07，更新于 2026-10-08。状态：SB 独立 Emission、Ho-Atmosphere 环境输入已通过 GPU 验证（见 §10/§11）；主表面深度关联基建见 §12。尚未实现 RT Feature、运行光追原型或测量 RT 性能。
+日期：2026-10-07，更新于 2026-10-08。状态：SB 独立 Emission、Ho-Atmosphere 环境输入、主表面深度关联与共享读取已通过 GPU 验证（见 §10～§13）。尚未实现 RT Feature、运行光追原型或测量 RT 性能。
 
 ## 判断
 
@@ -16,7 +16,7 @@
 
 最新范围补充：**SSS 暂不接入**，用户仍在斟酌其设计。RT 首版不依赖 SSS profile、thickness、透射响应或 SSS 专用历史，不因现有 SB 中已有字段就要求消费或扩展它们。当前铺路重点是 SB emission、世界方向环境辐射，以及必要的数据有效性/读取约定。
 
-**最新实施优先级**：用户决定先完成可独立验证的 DI/GI 与环境生产端，暂不处理 lilToon 怎么接收、暗部如何过渡、材质内/后处理的具体合成映射。后续 pass 合成保留为方向，具体 PBR/NPR 结合另设阶段；此前 §4.5/§6 的讨论作为约束与备选，不是当前实现要求。算法验证用最小 PBR 响应参考；当前不自动关闭或改写材质的旧光照、cast、CS 等。Ho-Atmosphere 环境输入已完成；继续补已有 SB 深度的发布与 GB/SB 关联验证。
+**最新实施优先级**：用户决定先完成可独立验证的 DI/GI 与环境生产端，暂不处理 lilToon 怎么接收、暗部如何过渡、材质内/后处理的具体合成映射。后续 pass 合成保留为方向，具体 PBR/NPR 结合另设阶段；此前 §4.5/§6 的讨论作为约束与备选，不是当前实现要求。算法验证用最小 PBR 响应参考；当前不自动关闭或改写材质的旧光照、cast、CS 等。环境、主表面深度关联和共享读取已完成首版；下一项是 HoRTScene 的静态求交与实例/材质关联。
 
 ## 1. ReSTIR、RTXDI、RTXGI 的职责
 
@@ -55,12 +55,12 @@ SSGI 的改进仍有价值，可作为较低成本的近场补充或回退；不
 
 | 模块 | 当前职责与已有产出 | DI/GI 接入价值 |
 | --- | --- | --- |
-| GB | 几何法线/深度、几何与描边 coverage、outline owner、sky | 位置重建、几何有效性、偏移与几何验证 |
-| SB | linear HDR 主色、贴图后的 shading normal、perceptual roughness、metallic、thickness、reflectance、分类与 surface owner/语义 | 主表面材质响应已有主要字段，不应另造重复 PBR GBuffer |
+| GB | 基础表面法线/深度、几何与描边 coverage、outline owner、sky；lilToon 法线含 normal map/Tesion | 深度关联与几何有效性；不能将 RGB 统一当作无扰动网格法线 |
+| SB | linear HDR 主色、贴图后 shading normal、Normal.BA 未扰动网格法线、perceptual roughness、metallic、thickness、reflectance、分类与 surface owner/语义 | 主表面主要字段已具备，不应另造重复 PBR GBuffer；两种法线显式区分 |
 | OB | 身份、ranked coverage、物体/部件语义事实 | 接收域、排除规则、身份关联；具体 RT instance/submesh 键仍需独立映射 |
 | AC | 面向合成与后处理；已实现部分 typed 查询、属性/语义合成、owner validity 与资源引用，整体仍未完善 | RT 照明计算不经它中转；后续合成/后处理确需其属性或遮罩时按需消费 |
 
-直接代码依据：`Runtime/SurfaceBuffer/HoSurfaceBufferShaderConstants.cs`、`Runtime/AttributeComposite/HoAttributeCompositeRenderGraphResources.cs`、`Shaders/HoACQuery.hlsl`，以及 lilToon 的 `lil_pass_surface_buffer.hlsl`。后者实际输出 Color/Normal/Material/Reflection/Classification + owner 六个 MRT，不只是规划。`HoAC_Attribute(uv,1)` 返回 perceptualRoughness/metallic/thickness，`(uv,2)` 返回 reflectance/plrStrength；`HoAC_SurfaceValid` 检查 SB owner 与 OB 层 0 身份一致。
+直接代码依据：`Runtime/SurfaceBuffer/HoSurfaceBufferShaderConstants.cs`、`Runtime/AttributeComposite/HoAttributeCompositeRenderGraphResources.cs`、`Runtime/AttributeComposite/Shaders/HoACQuery.hlsl`，以及 lilToon 的 `lil_pass_surface_buffer.hlsl`。后者实际输出 Color/Normal/Material/Reflection/Classification/Emission + owner 七个 MRT，不只是规划。`HoAC_Attribute(uv,1)` 返回 perceptualRoughness/metallic/thickness，`(uv,2)` 返回 reflectance/plrStrength；`HoAC_SurfaceValid` 检查 SB owner 与 OB 层 0 身份一致。RT 共享读取不经过该 AC 门面。
 
 因此主表面工作应是 **直接读取所需 GB/SB/OB 资源，适配到 RTXDI 的 Surface/Material bridge**：区分几何法线与着色法线；按契约转换 roughness、F0、颜色及 packing。复用生产端已有共享编解码函数，不在每个 Feature 重写 packing。RenderGraph 按实际采样逐项声明 `UseTexture(Read)`。这是一层数据读取与求值适配，默认不落新的主表面 RT，也不需要先补齐 AC。当前 AC 资源集并未覆盖所有主表面字段；用户最新决策优先于旧文档中的“只吃 AC”接入方向，当前 RT 不按该方向增加前置工作。
 
@@ -191,8 +191,9 @@ Ho-RTGI 可以复用共享的 direct-light evaluator 给二次命中着色；不
 | 输入 | 当前来源/状态 | DI 用途 | GI 用途 | 接入处理 |
 | --- | --- | --- | --- | --- |
 | 主表面深度/世界位置 | GB normalDepth/depth + 相机矩阵，已有 | 起点、方向、几何项 | 初始射线起点、重连几何项 | 直接读，统一 depth/坐标约定 |
-| 几何法线与 coverage | GB，已有 | visibility 偏移、有效面判定 | 偏移、重连和几何验证 | 直接读；描边视觉壳默认不作 RT 几何 |
-| 着色法线 | SB Normal，已有 | 最终响应与 target PDF | BRDF 方向采样、主表面响应 | 复用 SB octa 解码，与几何法线分别保存语义 |
+| 无 normal map 的网格法线 | SB Normal.BA，已补齐；Material.A 可用标记 | 主表面参考法线 | 主表面几何验证参考 | 共享 octa 解码；不是 AS primitive flat face normal，也不使用受扰动 GB.RGB 冒充 |
+| 几何 coverage / 深度 | GB，已有 | 有效面与深度关联 | 同左 | 直接读；描边视觉壳默认不作 RT 几何 |
+| 着色法线 | SB Normal.RG，已有 | 最终响应与 target PDF | BRDF 方向采样、主表面响应 | 复用 SB octa 解码，与未扰动网格法线分别保存语义 |
 | 主色 | SB Color，已有 | 漫反射/金属 F0 的输入 | 主表面接收响应 | 直接读；HDR 主色与物理反射率的映射另定义 |
 | perceptual roughness / metallic | SB Material.rg，已有 | BRDF、target PDF | BRDF/PDF、GI 接收与反射分流 | 按契约平方转换 roughness，避免重复转换 |
 | reflectance | SB Reflection.r，已有 | 非金属 F0 近似 | 主表面反射响应 | 只读需要的通道；PLR strength 不作为 RT 能量参数 |
@@ -228,7 +229,7 @@ Ho-RTGI 可以复用共享的 direct-light evaluator 给二次命中着色；不
 | P0（已完成） | SB Emission | 线性 HDR 组分、独立 writer、材质采样求值、RG/兼容路径发布/回收/黑色回退、独立调试 |
 | P0（已完成） | 世界方向环境辐射 | Ho-Atmosphere 已生产原始 HDR 环境资源、世界方向采样、朝向/强度、revision/更新与无天空回退 |
 | P0（首版实现） | 主表面有效性 | SB 已有独立 writer；发布自身深度并验证与 GB 深度关联，不能把 OB 未登记视为无表面；MSAA/异分辨率关联仍待扩展 |
-| P1 | 主表面读取函数 | 直接读现有 GB/SB，输出 position/geometric normal/shading normal/base color/roughness/metallic/F0/emission；共享解码，不落副本 |
+| P1（首版实现） | 主表面读取函数 | 直接读 GB/SB，输出位置、两种法线、原始 HDR 主色、perceptual roughness/metallic/reflectance/emission；不落副本，不在读取层定义 F0/BRDF 响应 |
 | P1 | 相机与失效约定 | motion、jitter、坐标与曝光域、相机切换/重置；material/light/environment 版本用于后续 history 拒绝 |
 | 随最小原型 | Ray-hit 材质与灯光 bridge | 与 SB 同语义的屏幕外求值、裁切/双面、稳定 instance/light 键；在真实求交路径中验证 |
 | 暂缓 | SSS、完整 AC 迁移、ReGIR、NRC/SHaRC、多跳缓存 | 不属于当前低耦合铺路范围 |
@@ -410,3 +411,17 @@ C# Runtime/Editor 分程序集编译通过。新增两个 Inspector 的 HelpBox 
 验证：Unity 6000.3.15f1，D3D12 RG、D3D11 RG、D3D11 compatibility 均通过。包括正交/透视深度、未登记/黑色/零参数 writer、GB-only 前景拒绝后方 SB、两表面深度胜出、cutout 显露/清空、缺少几何/生产者、GB Half/Quarter 与 MSAA 域拒绝、共同 render scale、2mm 前景间隔、斜视角、UV 越界、禁用/恢复/销毁、单视图与 All。旧 SB Emission 验证另在 D3D12 RG 回归通过。
 
 下一项是直接读取已有输入的主表面适配；随后验证内部 HoRTScene 的静态世界空间求交与实例/材质关联。motion 的符号、UV/像素单位和深度差在 temporal 接入前适配；目前不另生产 motion、不加入 reservoir/降噪/合成、SSS 或 AC 副本。
+
+## 13. 实现进展：共享主表面读取
+
+2026-10-08，新增 `HoRTPrimarySurfaceInputs` / `HoRTPrimarySurface.hlsl` 内部读取适配，直接借用现有纹理，无新增 Runtime Feature、GBuffer 或属性复制。光栅、Compute 与兼容模式均提供绑定；Compute 显式绑定 shader/kernel 的纹理、矩阵与向量，缺失资源/未请求 owner 使用已有黑色默认资源占位。缺失必需资源时表面无效，未请求 owner 仅标记该字段不可用。
+
+**纠正旧法线判断**：法线贴图 GPU 用例暴露 GB 的 lilToon 法线实际也应用 normal map/Tesion。保持 GB 行为，改用 SB Normal 原预留 BA 输出未扰动的插值网格法线，Material.A 写可用标记；RGBA8 / MRT 数量不变。原 Normal.RG 与 Material.RGB 保留。旧 writer 不提供标记时读取失败，避免将旧预留值误解为网格法线。该法线不是三角形 flat face normal，世界空间 primitive 法线仍待真实求交接入。
+
+读取先检查深度关联，再解码 position、两种 normal、view direction、eye depth、HDR 主色、perceptual roughness、metallic、reflectance、专用 emission。可选读取 SB owner，不依赖 OB 登记。粗糙度不在读取层平方，主色不钳制为反射率，reflectance 不提前换算 F0；BRDF/NPR 响应仍留给后续消费者设计。
+
+位置按源像素中心重建，UV 入口先定位像素再吸附；逐相机快照保留实际投影/视图、逆 GPU VP 与深度参数。支持 Mono 标准透视/正交及偏移投影；XR/array、oblique/非标准深度投影、MSAA resolve 与异分辨率关联暂不支持，明确拒绝。失败只保留 status，其余 payload 清零。没有引入 motion/history。
+
+验证：Unity 6000.3.15f1，D3D12 RG、D3D11 RG、D3D11 compatibility 均通过；每个路径同时验 raster 与 compute。覆盖双轴离心像素、正交/透视、偏移投影、相机移动/旋转、两种法线与 Geometry Normal 单视图/All、HDR 主色与 emission、原始 roughness/reflectance、可选身份、旧布局标记、cutout/遮挡/缺失/越界/域不匹配/不支持投影以及关闭/恢复后的 payload 清零。已有深度关联与 Emission 用例在 D3D12 RG 回归通过。
+
+读取契约见 [RT 主表面读取](../Ho-RT-PrimarySurface.md)。下一项为 **HoRTScene 的静态求交、实例/submesh/材质关联与命中调试**；不立即引入 ReSTIR、完整 native fork、降噪和最终合成。
