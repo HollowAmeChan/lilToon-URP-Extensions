@@ -84,8 +84,13 @@ bool HoRTTryLoadPrimarySurface(uint2 pixel, out HoRTPrimarySurface surface)
 
 bool HoRTTryLoadPrimarySurfaceAtUV(float2 uv, out HoRTPrimarySurface surface)
 {
+    surface = (HoRTPrimarySurface)0;
     if (any(uv != uv) || any(uv < 0) || any(uv >= 1))
-    { surface = (HoRTPrimarySurface)0; surface.status = HO_SURFACE_ASSOCIATION_OUT_OF_BOUNDS; return false; }
-    return HoRTTryLoadPrimarySurface((uint2)(uv * _HoRTPrimarySize.xy), surface);
+    { surface.status = HO_SURFACE_ASSOCIATION_OUT_OF_BOUNDS; return false; }
+    // Keep the forwarded out value explicit for FXC's definite-assignment analysis.
+    HoRTPrimarySurface loaded = (HoRTPrimarySurface)0;
+    bool valid = HoRTTryLoadPrimarySurface((uint2)(uv * _HoRTPrimarySize.xy), loaded);
+    surface = loaded;
+    return valid;
 }
 #endif

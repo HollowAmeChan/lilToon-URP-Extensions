@@ -123,7 +123,10 @@ namespace lilToon.URP.Extensions.RayTracing
                 sb.SetActive(false); Invalid(Render(), 0, "SB disabled"); sb.SetActive(true);
                 material.SetColor("_Color", BaseColor); material.SetFloat("_UseEmission", 1); material.SetFloat("_Smoothness", .6f); material.SetFloat("_Metallic", .4f); material.SetFloat("_Reflectance", .12f);
                 Validate("re-enabled", Render());
-                Debug.Log("[HoRTPrimarySurfaceValidation] PASS: raster + explicit compute bindings, mono ortho/perspective/shifted/moved cameras, pixel-centre positions, separate normals, raw HDR/material/emission, optional owner, failure zeroing; API=" + SystemInfo.graphicsDeviceType + "; compatibility=" + compatibility);
+                foreach (var message in ShaderUtil.GetComputeShaderMessages(probe.shader))
+                    Require(message.severity != UnityEditor.Rendering.ShaderCompilerMessageSeverity.Warning && message.severity != UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error,
+                        "Compute shader diagnostic: " + message.message);
+                Debug.Log("[HoRTPrimarySurfaceValidation] PASS: raster + explicit compute bindings, mono ortho/perspective/shifted/moved cameras, pixel-centre positions, separate normals, raw HDR/material/emission, optional owner, failure zeroing, no compute warnings/errors; API=" + SystemInfo.graphicsDeviceType + "; compatibility=" + compatibility);
                 Finish(null);
             }
             catch (Exception error) { Finish(error); }
