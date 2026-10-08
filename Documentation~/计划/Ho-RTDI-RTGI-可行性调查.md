@@ -1,6 +1,6 @@
 # Ho-RTDI / Ho-RTGI 可行性调查
 
-日期：2026-10-07，更新于 2026-10-08。状态：SB 独立 Emission、Ho-Atmosphere 环境输入、主表面深度关联与共享读取已通过 GPU 验证（见 §10～§13）；HoRTScene 已完成 Editor 中的 D3D12 硬件求交尖峰（§14）。尚未实现生产 DI/GI Feature、光照输出或测量 RT 性能。
+日期：2026-10-07，更新于 2026-10-08。状态：输入与求交准备已通过 GPU 验证（§10～§14）；已沿用户参考工程实现 Ho-RTDI 初版及独立光照输出（§15）。GI、最终材质接收/合成、生产性能与 Player 尚未交付。
 
 ## 判断
 
@@ -16,7 +16,7 @@
 
 最新范围补充：**SSS 暂不接入**，用户仍在斟酌其设计。RT 首版不依赖 SSS profile、thickness、透射响应或 SSS 专用历史，不因现有 SB 中已有字段就要求消费或扩展它们。当前铺路重点是 SB emission、世界方向环境辐射，以及必要的数据有效性/读取约定。
 
-**最新实施优先级**：用户决定先完成可独立验证的 DI/GI 与环境生产端，暂不处理 lilToon 怎么接收、暗部如何过渡、材质内/后处理的具体合成映射。后续 pass 合成保留为方向，具体 PBR/NPR 结合另设阶段；此前 §4.5/§6 的讨论作为约束与备选，不是当前实现要求。算法验证用最小 PBR 响应参考；当前不自动关闭或改写材质的旧光照、cast、CS 等。环境、主表面共享读取和刚性 opaque 世界求交已有首版；下一项是命中顶点属性与材质组分求值。
+**最新实施优先级**：用户决定先完成可独立验证的 DI/GI 与环境生产端，暂不处理 lilToon 怎么接收、暗部如何过渡、材质内/后处理的具体合成映射。后续 pass 合成保留为方向，具体 PBR/NPR 结合另设阶段；此前 §4.5/§6 的讨论作为约束与备选，不是当前实现要求。算法验证用最小 PBR 响应参考；当前不自动关闭或改写材质的旧光照、cast、CS 等。环境、主表面共享读取、刚性 opaque 世界求交及参考 RTXDI 的 DI 四阶段已有首版并通过验证；下一项沿参考工程的 GI passes 接入二次射线、命中着色与 GI 重采样，只补这条链路实际需要的输入。
 
 ## 1. ReSTIR、RTXDI、RTXGI 的职责
 
@@ -443,3 +443,19 @@ RenderGraph 使用 graphics queue 上的 unsafe pass，记录 metadata 上传、
 本轮同时修复主表面 UV 包装函数的 FXC `out surface` 初始化警告（`c6e4fd4`）；D3D11 RG / compatibility 重跑通过，验证现在将 Compute 警告和错误都作为失败条件。此前 GPU 输出通过没有覆盖编译警告，已补齐验收。
 
 详细接口与支持域见 [HoRTScene](../Ho-RTScene.md)。下一项是 **世界空间命中的顶点属性读取与材质组分求值**，补上 UV、法线、base color、专用 emission 等 GI 必需输入；少量灯的参考求值随后接入，暂不启动 ReSTIR/降噪/最终合成。
+
+## 15. 按用户参考工程移植 DI
+
+**用户纠偏后的实施原则**：只做 DI/GI，优先移植已提供的 UnityPathTracing 成熟链路；不继续自行铺开通用 RT/路径追踪框架，也不另写一套单灯 DI 算法。单灯只是移植后的验证场景。§14 结尾的旧“下一项”已由本节取代：已有输入/求交仅作为 RAB 适配层，后续按 GI 的实际需要补接口。
+
+本轮新增 `Ho-RTDI`，参考 `UnityRtxdiFeature` 的 GenerateInitialSamples → TemporalResampling → SpatialResampling → ShadeSamples。直接引入 SDK shader 最小依赖闭包，调用 `RTXDI_SampleLightsForSurface`、`RTXDI_DITemporalResampling`、`RTXDI_DISpatialResampling` 和 reservoir storage。SDK/Donut 共 22 个源码文件仅改 include 路径，逐一核对源 SHA-256 与算法正文；保留 NVIDIA/MIT 原始声明、NVIDIA LICENSE 与 provenance。
+
+RAB surface 直接读取 Ho 的已有 GB/SB 适配，visibility 接 HoRTScene；灯光、参考 PBR 响应与输出按应用接口适配。支持 point/spot/directional 解析灯，初版禁用 environment/mesh/BRDF light candidates、ReGIR 和 presampling。未引入 native/DLSS/NRD/PT 依赖，未复制一套当前 GBuffer。
+
+独立输出 direct diffuse/specular，已含参考接收 BRDF；A 表示 receiver-validity。默认不写 camera color，不自动旁路材质旧灯光/投影。Volume 提供 Diffuse/Specular/Combined/Receiver/All 调试。PBR 参考响应不等于已完成 NPR 接收，GI/SSS/lilPBR 不在本轮实现中。
+
+逐相机三份 SDK reservoir（24 B/份/像素）和一份必要的上一帧 guide（16 B/像素）。静态世界相机运动按前后矩阵生成像素 motion/depth delta；场景/灯变更保守清历史。未接动态角色 motion、previous TLAS、完整灯索引重映射或降噪。当前保持 Mono、同分辨率单采样及 HoRTScene 刚性 opaque 支持域。
+
+验证：C# 分程序集编译通过；D3D12 RenderGraph / compatibility 的 SDK 四阶段、多灯统计能量、真实遮挡、spot/方向光、specular、历史累积/失效、相机重投影、receiver 域拒绝、无自动合成、调试/关闭/销毁通过；D3D11 禁用分支通过，Compute 无警告/错误。单灯与逐灯数学参考核对，多灯比较跨像素/帧的统计均值；不以 raw 单像素波动判断算法有偏。
+
+使用与当前限制见 [Ho-RTDI](../Ho-RTDI.md)。下一步沿用参考工程的 BrdfRayTracing / ShadeSecondarySurfaces / GI temporal/spatial/final passes，只为这条 GI 链路补必要的命中材质适配。

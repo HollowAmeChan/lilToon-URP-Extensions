@@ -1,0 +1,96 @@
+{
+  "reference": "UnityPathTracing-6000.3.15/Assets/Shaders",
+  "fork": "https://github.com/Kuan-Mi/UnityPathTracing",
+  "localForkCommit": "eb9ee9276390412d5791a4ec39212bf4039df8a0",
+  "changes": "Include paths only; original algorithm and copyright headers retained.",
+  "files": [
+    {
+      "path": "RTXDI/DI/InitialSampling.hlsl",
+      "sourceSHA256": "311E5432FCAA42234948415A5E682BF2C027EBAC0D34E066B220E0D0DC5F7AAE"
+    },
+    {
+      "path": "RTXDI/DI/ReservoirStorage.hlsl",
+      "sourceSHA256": "152B6BD707463613EE7C71207CA64A80D890FA180FC3033D15980C62A078C9F2"
+    },
+    {
+      "path": "RTXDI/DI/TemporalResampling.hlsl",
+      "sourceSHA256": "CAA03B9286C9AB896D2CEB7003928F26DACE7CD2CECA1443F9A31CF98014317B"
+    },
+    {
+      "path": "RTXDI/DI/SpatialResampling.hlsl",
+      "sourceSHA256": "DCA54EFD2CDFF3C5229E356A22FE53CE8E7D131E6C5CE4A7EFF62CE153FC1CD3"
+    },
+    {
+      "path": "RTXDI/Utils/RandomSamplerState.hlsl",
+      "sourceSHA256": "B65EA81A16A07C95CBEDC79D64878188ECA3F9278B58CD23C3B4B1FE26166AA9"
+    },
+    {
+      "path": "donut/brdf.hlsli",
+      "sourceSHA256": "7CC808E2EBFF7D61BDD8F54DA034D9313DEC838BADF14556553C08ED6D2535DE"
+    },
+    {
+      "path": "RTXDI/DI/ReSTIRDIParameters.h",
+      "sourceSHA256": "D6A8B7355F2850ED9195D979D9E6658A7D6A157E97115437235B5FD5A9161949"
+    },
+    {
+      "path": "RTXDI/DI/Reservoir.hlsl",
+      "sourceSHA256": "D39D60C889A3F94E5A31DD851CB53D6E04005CD71E8B3B0C158D93FA8C079763"
+    },
+    {
+      "path": "RTXDI/LightSampling/LocalLightSelection.hlsl",
+      "sourceSHA256": "2A0C83ED4D0606D5E9A69056A24D3FD4C395E2B2DA86DDB7C2007B53C873CCB1"
+    },
+    {
+      "path": "RTXDI/LightSampling/RISBuffer.hlsl",
+      "sourceSHA256": "9E2C1DDB813203B7DC559FBD1223DEEDC9D16BF146F750C77074F0E4D2729C9A"
+    },
+    {
+      "path": "RTXDI/ReGIR/ReGIRSampling.hlsl",
+      "sourceSHA256": "A40F21D02DF3AE7E546E8E2F1435482FBB0D6CF073A8A08C7D580C2EFC6B43A7"
+    },
+    {
+      "path": "RTXDI/LightSampling/UniformSampling.hlsl",
+      "sourceSHA256": "40ECEA3503A1EEEB734DB65E09FEF1F4DBEA7574883F80D6043A59DCA3A4B86E"
+    },
+    {
+      "path": "RTXDI/Utils/ReservoirAddressing.hlsl",
+      "sourceSHA256": "CFE65684FB4FD958534E92A107E9DB2CF47AAE443395164C1C18D833D768B261"
+    },
+    {
+      "path": "RTXDI/Utils/Checkerboard.hlsl",
+      "sourceSHA256": "CE3EC2485C4325A3F32C9D8D58D6C63B62B803DA873038AE999584A9D04D6E2F"
+    },
+    {
+      "path": "RTXDI/RtxdiParameters.h",
+      "sourceSHA256": "47543FCB95B69E912A50D3666AB0E3FB23CF8808D6176D5CE053A6A248378E5D"
+    },
+    {
+      "path": "RTXDI/DI/PairwiseStreaming.hlsl",
+      "sourceSHA256": "50AC5E41B8383305C5C9B7AE4AF11A0495346A45F62B392FD58AB3BC1D95A88C"
+    },
+    {
+      "path": "RTXDI/Utils/Math.hlsl",
+      "sourceSHA256": "4099BB0359D8E2732F46F80B74AD62A01365CD2012D537786CAB66680DF9FF82"
+    },
+    {
+      "path": "RTXDI/Utils/RandomSamplerPerPassSeeds.hlsl",
+      "sourceSHA256": "DF9E3A92F7A5F8260DDD87F9B565A8583788C422122FFF8AFDD1352BCEAEA457"
+    },
+    {
+      "path": "donut/utils.hlsli",
+      "sourceSHA256": "00AE446AEDF30570A817C04B6D03A66515B40DBF061F8F955087C9A7DE4890FD"
+    },
+    {
+      "path": "RTXDI/RtxdiTypes.h",
+      "sourceSHA256": "78AD0D8F75ACC58EE289E635B926BE991BBDE1D04FB242118DEEFBDD0F6F5BE5"
+    },
+    {
+      "path": "RTXDI/LightSampling/RISBufferSegmentParameters.h",
+      "sourceSHA256": "D1773FE335DCDD0636E90E861AA18269D83781231F8A9EA109D465EBA512675B"
+    },
+    {
+      "path": "RTXDI/ReGIR/ReGIRParameters.h",
+      "sourceSHA256": "F13F898CE0C8A6A54D3CBBB8708BE6630A3A2E377D706190C8A1CBFCB5139F78"
+    }
+  ]
+}

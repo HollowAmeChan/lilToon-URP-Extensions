@@ -1,0 +1,113 @@
+// Copyright (c) 2020-2026, NVIDIA CORPORATION. All rights reserved.
+// NVIDIA portions are governed by ../ThirdParty/RTXDI/LICENSE.txt.
+// Pass sequence adapted from UnityPathTracing/Assets/Shaders/RayTracing/DI.
+#pragma kernel Initial
+#pragma kernel Temporal
+#pragma kernel Spatial
+#pragma kernel Shade
+#pragma use_dxc
+#pragma target 6.0
+#pragma require inlineraytracing
+#include "HoRTDIApplicationBridge.hlsl"
+#include "../ThirdParty/RTXDI/DI/InitialSampling.hlsl"
+#include "../ThirdParty/RTXDI/DI/ReservoirStorage.hlsl"
+#include "../ThirdParty/RTXDI/DI/TemporalResampling.hlsl"
+#include "../ThirdParty/RTXDI/DI/SpatialResampling.hlsl"
+RWTexture2D<float4> _HoRTDIDiffuse, _HoRTDISpecular;
+
+RTXDI_ReservoirBufferParameters HoDILayout()
+{RTXDI_ReservoirBufferParameters p=(RTXDI_ReservoirBufferParameters)0;p.reservoirBlockRowPitch=(uint)_HoRTDIReservoirLayout.x;p.reservoirArrayPitch=(uint)_HoRTDIReservoirLayout.y;return p;}
+RTXDI_RuntimeParameters HoDIRuntime()
+{RTXDI_RuntimeParameters p=(RTXDI_RuntimeParameters)0;p.neighborOffsetMask=255;p.frameIndex=(uint)_HoRTDIFrameIndex;return p;}
+bool HoDIInside(uint2 pixel) {return all(pixel<(uint2)_HoRTDIFrame.xy);}
+
+[numthreads(8,8,1)]
+void Initial(uint3 id:SV_DispatchThreadID)
+{
+    if(!HoDIInside(id.xy))return;
+    RTXDI_DIReservoir reservoir=RTXDI_EmptyDIReservoir();RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
+    if(RAB_IsSurfaceValid(surface)&&_HoRTDIFrame.z>0)
+    {
+        RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTDIFrameIndex,RTXDI_DI_GENERATE_INITIAL_SAMPLES_RANDOM_SEED);
+        RTXDI_RandomSamplerState tileRng=RTXDI_InitRandomSampler(id.xy/16,(uint)_HoRTDIFrameIndex,RTXDI_DI_GENERATE_INITIAL_SAMPLES_RANDOM_SEED);
+        RTXDI_DIInitialSamplingParameters p=(RTXDI_DIInitialSamplingParameters)0;
+        p.numLocalLightSamples=(uint)_HoRTDISettings.x;p.brdfRayMinT=_HoRTDISettings.w;p.enableInitialVisibility=1;
+        RTXDI_LightBufferParameters lights=(RTXDI_LightBufferParameters)0;lights.localLightBufferRegion.numLights=(uint)_HoRTDIFrame.z;
+        RAB_LightSample sample=RAB_EmptyLightSample();
+        reservoir=RTXDI_SampleLightsForSurface(rng,tileRng,surface,p,lights,sample);
+    }
+    RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,1);
+}
+[numthreads(8,8,1)]
+void Temporal(uint3 id:SV_DispatchThreadID)
+{
+    if(!HoDIInside(id.xy))return;
+    RTXDI_DIReservoir reservoir=RTXDI_LoadDIReservoir(HoDILayout(),id.xy,1);RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
+    if(_HoRTDIFlags.x>.5&&RAB_IsSurfaceValid(surface))
+    {
+        float4 previousClip=mul(_HoRTDIPreviousVP,float4(surface.worldPos,1));
+        if(abs(previousClip.w)<1e-6 || !all(isfinite(previousClip)))
+        {RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,2);return;}
+        float2 previousUV=previousClip.xy/previousClip.w*.5+.5;
+        #if UNITY_UV_STARTS_AT_TOP
+            previousUV.y=1-previousUV.y;
+        #endif
+        float previousDepth=-dot(_HoRTDIPreviousViewZ,float4(surface.worldPos,1));
+        if(previousDepth<=0 || !all(isfinite(previousUV)))
+        {RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,2);return;}
+        float3 motion=float3(previousUV*_HoRTDIFrame.xy-(float2(id.xy)+.5),previousDepth-surface.viewDepth);
+        RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTDIFrameIndex,RTXDI_DI_TEMPORAL_RESAMPLING_RANDOM_SEED);
+        RTXDI_DITemporalResamplingParameters p=(RTXDI_DITemporalResamplingParameters)0;
+        p.maxHistoryLength=(uint)_HoRTDIFlags.z;p.biasCorrectionMode=RTXDI_BIAS_CORRECTION_RAY_TRACED;p.depthThreshold=.05;p.normalThreshold=.9;p.enablePermutationSampling=1;p.uniformRandomNumber=(uint)_HoRTDIFrameIndex;
+        int2 temporalPosition;RAB_LightSample sample=RAB_EmptyLightSample();
+        reservoir=RTXDI_DITemporalResampling(id.xy,surface,reservoir,rng,HoDIRuntime(),HoDILayout(),motion,0,p,temporalPosition,sample);
+    }
+    RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,2);
+}
+[numthreads(8,8,1)]
+void Spatial(uint3 id:SV_DispatchThreadID)
+{
+    if(!HoDIInside(id.xy))return;
+    RTXDI_DIReservoir reservoir=RTXDI_LoadDIReservoir(HoDILayout(),id.xy,2);RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
+    if(_HoRTDIFlags.y>.5&&RAB_IsSurfaceValid(surface))
+    {
+        RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTDIFrameIndex,RTXDI_DI_SPATIAL_RESAMPLING_RANDOM_SEED);
+        RTXDI_DISpatialResamplingParameters p=(RTXDI_DISpatialResamplingParameters)0;
+        p.numSamples=(uint)_HoRTDISettings.y;p.numDisocclusionBoostSamples=p.numSamples;p.samplingRadius=_HoRTDISettings.z;p.biasCorrectionMode=RTXDI_BIAS_CORRECTION_RAY_TRACED;p.depthThreshold=.05;p.normalThreshold=.9;p.enableMaterialSimilarityTest=1;
+        RAB_LightSample sample=RAB_EmptyLightSample();
+        reservoir=RTXDI_DISpatialResampling(id.xy,surface,reservoir,rng,HoDIRuntime(),HoDILayout(),2,p,sample);
+    }
+    RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,1);
+}
+[numthreads(8,8,1)]
+void Shade(uint3 id:SV_DispatchThreadID)
+{
+    if(!HoDIInside(id.xy))return;
+    RTXDI_DIReservoir reservoir=RTXDI_LoadDIReservoir(HoDILayout(),id.xy,1);RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
+    float3 diffuse=0,specular=0;
+    if(RAB_IsSurfaceValid(surface)&&RTXDI_IsValidDIReservoir(reservoir))
+    {
+        RAB_LightSample sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(reservoir),false),surface,RTXDI_GetDIReservoirSampleUV(reservoir));
+        float visibility=RAB_GetConservativeVisibility(surface,sample)?1:0;
+        RTXDI_StoreVisibilityInDIReservoir(reservoir,visibility.xxx,false);
+        float3 radiance=sample.radiance*visibility*RTXDI_GetDIReservoirInvPdf(reservoir)/max(sample.solidAnglePdf,1e-12);
+        float3 L;float distance;RAB_GetLightDirDistance(surface,sample,L,distance);
+        if(dot(L,surface.geoNormal)>0)
+        {
+            diffuse=Lambert(surface.normal,-L)*surface.material.diffuseAlbedo*radiance;
+            if(surface.material.roughness>=.03)specular=GGX_times_NdotL(surface.viewDir,L,surface.normal,max(.03,surface.material.roughness),surface.material.specularF0)*radiance;
+        }
+    }
+    float receiver=RAB_IsSurfaceValid(surface)?1:0;
+    _HoRTDIDiffuse[id.xy]=float4(diffuse,receiver);_HoRTDISpecular[id.xy]=float4(specular,receiver);
+    RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,0);
+    uint4 history=0;
+    if(RAB_IsSurfaceValid(surface))
+    {
+        float2 uv=(float2(id.xy)+.5)/_HoRTDIFrame.xy;
+        history.x=asuint(SAMPLE_TEXTURE2D_X_LOD(_HoSurfaceAssociationSurfaceDepth,sampler_PointClamp,uv,0).r);
+        history.y=HoDIPack(float4(HoSurfaceOctEncode(surface.normal),HoSurfaceOctEncode(surface.geoNormal)));
+        history.z=HoDIPack(float4(surface.material.diffuseAlbedo,1));history.w=HoDIPack(float4(surface.material.specularF0,surface.material.roughness));
+    }
+    _HoRTDIHistory[id.y*(uint)_HoRTDIFrame.x+id.x]=history;
+}
