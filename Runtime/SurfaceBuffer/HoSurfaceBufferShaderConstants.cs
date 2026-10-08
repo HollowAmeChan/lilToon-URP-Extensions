@@ -11,6 +11,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         public const string ActiveName = "_HoSurfaceBufferActive";
         public const string ColorTextureName = "_HoSurfaceBufferColorTexture";
         public const string EmissionTextureName = "_HoSurfaceBufferEmissionTexture";
+        public const string DepthTextureName = "_HoSurfaceBufferDepthTexture";
         public const string NormalTextureName = "_HoSurfaceBufferNormalTexture";
         public const string MaterialTextureName = "_HoSurfaceBufferMaterialTexture";
         public const string ReflectionTextureName = "_HoSurfaceBufferReflectionTexture";
@@ -70,6 +71,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         public static readonly int ActiveId = Shader.PropertyToID(ActiveName);
         public static readonly int ColorTextureId = Shader.PropertyToID(ColorTextureName);
         public static readonly int EmissionTextureId = Shader.PropertyToID(EmissionTextureName);
+        public static readonly int DepthTextureId = Shader.PropertyToID(DepthTextureName);
         public static readonly int NormalTextureId = Shader.PropertyToID(NormalTextureName);
         public static readonly int MaterialTextureId = Shader.PropertyToID(MaterialTextureName);
         public static readonly int ReflectionTextureId = Shader.PropertyToID(ReflectionTextureName);

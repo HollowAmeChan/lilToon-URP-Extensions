@@ -15,6 +15,8 @@ namespace lilToon.URP.Extensions.GeometryBuffer
         // Raw owner, semantic weight and visible shell share; separate from physical geometry.
         public TextureHandle outlineOwnerTexture = TextureHandle.nullHandle;
         public TextureHandle skyTexture = TextureHandle.nullHandle;
+        // Raster sample count before resolve; a resolved texture is not a pixel-centre sample.
+        public int rasterSamples;
 
         public bool HasRequiredTextures => normalDepthTexture.IsValid();
 
@@ -27,6 +29,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             outlineCoverageTexture = TextureHandle.nullHandle;
             outlineOwnerTexture = TextureHandle.nullHandle;
             skyTexture = TextureHandle.nullHandle;
+            rasterSamples = 0;
         }
     }
 }

@@ -11,7 +11,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
     /// <summary>
     /// SB 的数值 pass：六张数值图（含 HDR Emission）+ owner，共七个 MRT。
     /// <list type="bullet">
-    /// <item>**自用深度**：不发布深度、也不读别人的深度（SB 架构 §1.2）；opaque/cutout 写深度，保证"前表面"唯一。</item>
+    /// <item>**独立深度**：不读别人的深度；发布已有附件供消费者验证关联，不增加分配或 MRT。</item>
     /// <item>**透明不生产**：队列上限压在上不透明段末尾（多层透明没有唯一表面真值，<see cref="HoSurfaceBufferSettings.maxRenderQueue"/>）。</item>
     /// <item>**owner = RSUV 的低 16 bit**（与 OB 写的 `partId` 同一个值），所以 AC 能用它跟 OB 层 0 的 IdentityId 逐像素对齐。</item>
     /// </list>
@@ -69,6 +69,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
         public void ReleaseCompatibilityResources()
         {
+            if (CompatibilityDepthTexture == depthTexture && depthTexture != null) ResetGlobalState();
             colorTexture?.Release();
             emissionTexture?.Release();
             normalTexture?.Release();
@@ -92,8 +93,13 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             CompatibilityProduced = false;
             Shader.SetGlobalFloat(HoSurfaceBufferShaderConstants.ActiveId, 0.0f);
             Shader.SetGlobalTexture(HoSurfaceBufferShaderConstants.EmissionTextureId, Texture2D.blackTexture);
+            Shader.SetGlobalTexture(HoSurfaceBufferShaderConstants.DepthTextureId, Texture2D.blackTexture);
+            CompatibilityDepthTexture = null;
+            CompatibilityWriterTexture = null;
         }
         internal static bool CompatibilityProduced { get; private set; }
+        internal static RTHandle CompatibilityDepthTexture { get; private set; }
+        internal static RTHandle CompatibilityWriterTexture { get; private set; }
 
         // ------------------------------------------------------------------ 兼容（非 RenderGraph）路径
 
@@ -121,7 +127,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             RenderTextureDescriptor depthDescriptor = descriptor;
             depthDescriptor.graphicsFormat = GraphicsFormat.None;
             depthDescriptor.depthStencilFormat = HoSurfaceBufferFormatUtility.GetDepthStencilFormat(renderingData.cameraData.cameraTargetDescriptor);
-            RenderingUtils.ReAllocateIfNeeded(ref depthTexture, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: "_HoSurfaceBufferDepth");
+            RenderingUtils.ReAllocateIfNeeded(ref depthTexture, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoSurfaceBufferShaderConstants.DepthTextureName);
         }
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
@@ -157,6 +163,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 cmd.SetGlobalFloat(HoSurfaceBufferShaderConstants.ActiveId, 1.0f);
                 cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ColorTextureId, colorTexture.nameID);
                 cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.EmissionTextureId, emissionTexture.nameID);
+                cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.DepthTextureId, depthTexture.nameID);
                 cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.NormalTextureId, normalTexture.nameID);
                 cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.MaterialTextureId, materialTexture.nameID);
                 cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ReflectionTextureId, reflectionTexture.nameID);
@@ -170,6 +177,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             context.ExecuteCommandBuffer(cmd);
             CommandBufferPool.Release(cmd);
             CompatibilityProduced = true;
+            CompatibilityDepthTexture = depthTexture;
+            CompatibilityWriterTexture = emissionTexture;
         }
 
         // ------------------------------------------------------------------ RenderGraph 路径
@@ -196,14 +205,17 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
             TextureDesc depthDescriptor = new TextureDesc(cameraData.cameraTargetDescriptor.width, cameraData.cameraTargetDescriptor.height)
             {
-                name = "_HoSurfaceBufferDepth",
+                name = HoSurfaceBufferShaderConstants.DepthTextureName,
                 format = GraphicsFormat.None,
+                dimension = cameraData.cameraTargetDescriptor.dimension,
+                slices = cameraData.cameraTargetDescriptor.volumeDepth,
                 depthBufferBits = DepthBits.Depth24,
                 clearBuffer = true,
                 msaaSamples = MSAASamples.None,
                 filterMode = FilterMode.Point,
                 wrapMode = TextureWrapMode.Clamp,
                 useDynamicScale = cameraData.cameraTargetDescriptor.useDynamicScale,
+                useDynamicScaleExplicit = cameraData.cameraTargetDescriptor.useDynamicScaleExplicit,
                 vrUsage = cameraData.cameraTargetDescriptor.vrUsage
             };
             TextureHandle depth = renderGraph.CreateTexture(depthDescriptor);
@@ -241,6 +253,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 builder.SetRenderAttachmentDepth(depth, AccessFlags.Write);
                 builder.SetGlobalTextureAfterPass(color, HoSurfaceBufferShaderConstants.ColorTextureId);
                 builder.SetGlobalTextureAfterPass(emission, HoSurfaceBufferShaderConstants.EmissionTextureId);
+                builder.SetGlobalTextureAfterPass(depth, HoSurfaceBufferShaderConstants.DepthTextureId);
                 builder.SetGlobalTextureAfterPass(normal, HoSurfaceBufferShaderConstants.NormalTextureId);
                 builder.SetGlobalTextureAfterPass(material, HoSurfaceBufferShaderConstants.MaterialTextureId);
                 builder.SetGlobalTextureAfterPass(reflection, HoSurfaceBufferShaderConstants.ReflectionTextureId);
@@ -260,6 +273,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             HoSurfaceBufferRenderGraphResources resources = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
             resources.colorTexture = color;
             resources.emissionTexture = emission;
+            resources.depthTexture = depth;
             resources.normalTexture = normal;
             resources.materialTexture = material;
             resources.reflectionTexture = reflection;

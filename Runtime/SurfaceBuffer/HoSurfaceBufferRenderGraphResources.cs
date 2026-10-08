@@ -20,6 +20,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         public TextureHandle colorTexture = TextureHandle.nullHandle;
         // RGB: dedicated emission component, linear HDR. A: surface writer (not coverage/OB identity).
         public TextureHandle emissionTexture = TextureHandle.nullHandle;
+        // Borrow the existing single-sample depth attachment. Raw device depth, not linear eye depth.
+        public TextureHandle depthTexture = TextureHandle.nullHandle;
         public TextureHandle normalTexture = TextureHandle.nullHandle;
         public TextureHandle materialTexture = TextureHandle.nullHandle;
         public TextureHandle reflectionTexture = TextureHandle.nullHandle;
@@ -61,6 +63,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         {
             colorTexture = TextureHandle.nullHandle;
             emissionTexture = TextureHandle.nullHandle;
+            depthTexture = TextureHandle.nullHandle;
             normalTexture = TextureHandle.nullHandle;
             materialTexture = TextureHandle.nullHandle;
             reflectionTexture = TextureHandle.nullHandle;

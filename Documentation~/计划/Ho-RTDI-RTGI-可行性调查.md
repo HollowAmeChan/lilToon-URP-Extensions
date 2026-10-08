@@ -1,6 +1,6 @@
 # Ho-RTDI / Ho-RTGI 可行性调查
 
-日期：2026-10-07。状态：调查完成，SB 独立 Emission 接口已实现并通过 GPU 验证（见 §10）。尚未实现 RT Feature、运行光追原型或测量 RT 性能。
+日期：2026-10-07，更新于 2026-10-08。状态：SB 独立 Emission、Ho-Atmosphere 环境输入已通过 GPU 验证（见 §10/§11）；主表面深度关联基建见 §12。尚未实现 RT Feature、运行光追原型或测量 RT 性能。
 
 ## 判断
 
@@ -16,7 +16,7 @@
 
 最新范围补充：**SSS 暂不接入**，用户仍在斟酌其设计。RT 首版不依赖 SSS profile、thickness、透射响应或 SSS 专用历史，不因现有 SB 中已有字段就要求消费或扩展它们。当前铺路重点是 SB emission、世界方向环境辐射，以及必要的数据有效性/读取约定。
 
-**最新实施优先级**：用户决定先完成可独立验证的 DI/GI 与环境生产端，暂不处理 lilToon 怎么接收、暗部如何过渡、材质内/后处理的具体合成映射。后续 pass 合成保留为方向，具体 PBR/NPR 结合另设阶段；此前 §4.5/§6 的讨论作为约束与备选，不是当前实现要求。算法验证用最小 PBR 响应参考；当前不自动关闭或改写材质的旧光照、cast、CS 等。当前下一项为 HoAtmosphere 全方向 HDR 环境输入。
+**最新实施优先级**：用户决定先完成可独立验证的 DI/GI 与环境生产端，暂不处理 lilToon 怎么接收、暗部如何过渡、材质内/后处理的具体合成映射。后续 pass 合成保留为方向，具体 PBR/NPR 结合另设阶段；此前 §4.5/§6 的讨论作为约束与备选，不是当前实现要求。算法验证用最小 PBR 响应参考；当前不自动关闭或改写材质的旧光照、cast、CS 等。Ho-Atmosphere 环境输入已完成；继续补已有 SB 深度的发布与 GB/SB 关联验证。
 
 ## 1. ReSTIR、RTXDI、RTXGI 的职责
 
@@ -196,7 +196,7 @@ Ho-RTGI 可以复用共享的 direct-light evaluator 给二次命中着色；不
 | 主色 | SB Color，已有 | 漫反射/金属 F0 的输入 | 主表面接收响应 | 直接读；HDR 主色与物理反射率的映射另定义 |
 | perceptual roughness / metallic | SB Material.rg，已有 | BRDF、target PDF | BRDF/PDF、GI 接收与反射分流 | 按契约平方转换 roughness，避免重复转换 |
 | reflectance | SB Reflection.r，已有 | 非金属 F0 近似 | 主表面反射响应 | 只读需要的通道；PLR strength 不作为 RT 能量参数 |
-| 表面 writer/owner | SB Owner，已有 | 判断材质值是否有效 | 同左，防止跨物体取错值 | 不能用颜色/roughness 为 0 判断缺失；与几何、按需 OB 校验对齐 |
+| 表面 writer/owner | Emission.a 独立 writer、已发布 SB depth、SB Owner | 判断材质值是否有效 | 同左，防止跨物体取错值 | 不能用 owner/颜色/roughness 为 0 判断没写；先验证深度关联，按需检查 OB 身份 |
 | 身份/覆盖率/对象语义 | OB，已有，按需求读取 | 接收/排除规则、可选历史拒绝 | 同左 | 不要求为所有 RT 像素制造 OB 身份；未登记对象的有效性路径仍需明确定义 |
 | SSS profile/thickness/透射响应 | SB 中有部分现存字段；用户仍在设计 | 本轮不接入 | 本轮不接入 | 不增加 RT 依赖、不改 SSS 设计或现有消费链 |
 | Emission | SB 已追加独立 HDR 输出（实现进展见 §10） | 发光面的自发光输出、mesh light 关联 | 次级命中 radiance、发光反弹 | 主表面直接读；屏幕外发光材质及三角形采样仍需世界空间登记 |
@@ -205,7 +205,7 @@ Ho-RTGI 可以复用共享的 direct-light evaluator 给二次命中着色；不
 | 世界空间 AS 与几何 | UnityPathTracing 有参考，Ho 待接入 | 光源遮挡 | 二次命中与重连遮挡 | 独立于屏幕 buffer，维护 instance/submesh/transform/变形/裁切 |
 | 任意命中材质 | UnityPathTracing 专用材质参考，Ho 待接入 | alpha visibility；需要时更多响应 | 二次表面 albedo/normal/emission/BRDF | 不能用主相机 SB 查屏幕外表面；复用材质语义/函数 |
 | 灯列表与采样分布 | UnityPathTracing LightScene/PDF/ReGIR 有参考 | 灯候选、PDF、稳定前后帧身份 | 二次表面 direct evaluation | 与 URP 灯单位/layer/cookie 对齐；预采样按规模引入 |
-| 世界方向天空 radiance | 环境贴图/天空求值需接入 | 环境采样（启用时） | ray miss（启用时） | GB 屏幕 sky 图不能单独提供任意方向环境辐射 |
+| 世界方向天空 radiance | Ho-Atmosphere 已实现 | 环境采样（启用时） | ray miss（启用时） | 使用共享求值与 revision；重要性采样 PDF 后续再接 |
 | DI/GI reservoir | RT 各自拥有，参考代码已有 | 灯样本、权重、历史 | 次级表面/路径样本、权重、历史 | 是算法状态，不能由 AC 属性副本替代 |
 | 降噪 guide | 借用上述输入 + RT trace 输出 | depth/normal/albedo、hit distance 等 | 同左及置信度/响应分类 | 按选定 denoiser 取最小集合；raw 验证可关闭降噪 |
 
@@ -226,8 +226,8 @@ Ho-RTGI 可以复用共享的 direct-light evaluator 给二次命中着色；不
 | 优先级 | 项目 | 应先确定/补齐的内容 |
 | --- | --- | --- |
 | P0（已完成） | SB Emission | 线性 HDR 组分、独立 writer、材质采样求值、RG/兼容路径发布/回收/黑色回退、独立调试 |
-| P0 | 世界方向环境辐射 | 原始 HDR 环境资源、世界方向采样、朝向/强度、版本与更新、无天空回退；与画面 sky 背景区别 |
-| P0 | 主表面有效性 | producer 本帧存在、像素确有 writer、与 GB 前表面对齐；OB 未登记不等于没有几何或材质 |
+| P0（已完成） | 世界方向环境辐射 | Ho-Atmosphere 已生产原始 HDR 环境资源、世界方向采样、朝向/强度、revision/更新与无天空回退 |
+| P0（首版实现） | 主表面有效性 | SB 已有独立 writer；发布自身深度并验证与 GB 深度关联，不能把 OB 未登记视为无表面；MSAA/异分辨率关联仍待扩展 |
 | P1 | 主表面读取函数 | 直接读现有 GB/SB，输出 position/geometric normal/shading normal/base color/roughness/metallic/F0/emission；共享解码，不落副本 |
 | P1 | 相机与失效约定 | motion、jitter、坐标与曝光域、相机切换/重置；material/light/environment 版本用于后续 history 拒绝 |
 | 随最小原型 | Ray-hit 材质与灯光 bridge | 与 SB 同语义的屏幕外求值、裁切/双面、稳定 instance/light 键；在真实求交路径中验证 |
@@ -394,3 +394,19 @@ C# 编译检查通过。全库 shader reachability 脚本仍报告 4 处既有�
 实际验证修正了六面绘制矩阵与 cubemap Y 轴方向；本地 D3D11 的 RG raster attachment 面选择不完整，捕获改用声明写依赖的 unsafe pass 显式绑定 CubemapFace，D3D12 与兼容模式共用相同面语义。兼容模式显式恢复主相机目标、视口和矩阵。未增加每帧的屏幕颜色副本。
 
 C# Runtime/Editor 分程序集编译通过。新增两个 Inspector 的 HelpBox 数量符合现行 UI 预算；全库 UI 预算检查仍有 GD 的两个既有超预算面板，本轮未改动。
+
+## 12. 实现进展：SB 深度发布与主表面关联
+
+2026-10-08，用户确认先完成主表面关联这一项前提。
+
+源码复查发现：SB 只绘制支持 `HoSurfaceBuffer` pass 的材质，并使用自己的深度；GB 有 fallback、独立过滤范围与可配置分辨率。GB 最前面可能是一堵不支持 SB 的墙，SB 则写入墙后的材质。独立 writer 不能解决这个错配，owner=0 也不能作为无 writer 的判断。
+
+已发布 SB 原有单采样深度附件（RG 句柄与兼容模式全局绑定），不新增 MRT/深度分配或属性副本。增加共享 `HoSurfaceAssociationInputs` / `HoSurfaceAssociation.hlsl`，直接读取 SB depth/Emission writer、GB raw depth/normalDepth；不要求 OB 身份，不改 SB/GB 的生产集合。
+
+检查区分缺失输入、无 writer、无 GB 几何、取样域不匹配、深度错配、深度一致与 UV 越界。Depth 和 Geometry Association 调试均接入 SB Volume、模块 All 与视图登记。关联只确认数值深度一致，不作为 primitive 身份或完整相机可见性的证明。
+
+**首版保守边界**：相同分辨率、维度/层数且单采样中心域可检查。GB MSAA resolve 的最近 sample 与 SB 中心 sample 不可默认等同；异分辨率和 MSAA 域当前明确返回“不匹配/无法确认”，不通过插值或大容差接受。未来主表面读取适配须继续处理该支持域，不据此宣布所有 MSAA 接入准备已完成。
+
+验证：Unity 6000.3.15f1，D3D12 RG、D3D11 RG、D3D11 compatibility 均通过。包括正交/透视深度、未登记/黑色/零参数 writer、GB-only 前景拒绝后方 SB、两表面深度胜出、cutout 显露/清空、缺少几何/生产者、GB Half/Quarter 与 MSAA 域拒绝、共同 render scale、2mm 前景间隔、斜视角、UV 越界、禁用/恢复/销毁、单视图与 All。旧 SB Emission 验证另在 D3D12 RG 回归通过。
+
+下一项是直接读取已有输入的主表面适配；随后验证内部 HoRTScene 的静态世界空间求交与实例/材质关联。motion 的符号、UV/像素单位和深度差在 temporal 接入前适配；目前不另生产 motion、不加入 reservoir/降噪/合成、SSS 或 AC 副本。

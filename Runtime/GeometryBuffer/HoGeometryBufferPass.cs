@@ -294,6 +294,7 @@ namespace lilToon.URP.Extensions.GeometryBuffer
             }
 
             geometryResources.normalDepthTexture = normalDepthTexture;
+            geometryResources.rasterSamples = msaaSamples;
             geometryResources.depthTexture = depthTexture;
             geometryResources.outlineNormalDepthTexture = outlineNormalDepthTexture;
             geometryResources.coverageTexture = coverageTexture;

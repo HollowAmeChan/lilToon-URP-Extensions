@@ -40,6 +40,10 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         SemanticLanes,
         [InspectorName("Emission")]
         Emission = 10,
+        [InspectorName("Depth")]
+        Depth = 11,
+        [InspectorName("Geometry Association")]
+        GeometryAssociation = 12,
         [UnityEngine.InspectorName("All")]
         All = 255
     }

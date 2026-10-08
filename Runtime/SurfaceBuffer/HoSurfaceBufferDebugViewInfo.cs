@@ -24,7 +24,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             View("surface.class-id", "ClassId", HoSurfaceBufferDebugMode.ClassId),
             View("surface.semantic-owner", "SemOwner", HoSurfaceBufferDebugMode.SemanticOwner),
             View("surface.semantic-lanes", "SemLanes", HoSurfaceBufferDebugMode.SemanticLanes),
-            View("surface.emission", "Emit", HoSurfaceBufferDebugMode.Emission)
+            View("surface.emission", "Emit", HoSurfaceBufferDebugMode.Emission),
+            View("surface.depth", "Depth", HoSurfaceBufferDebugMode.Depth),
+            View("surface.geometry-association", "GeomMatch", HoSurfaceBufferDebugMode.GeometryAssociation)
         };
 
         private static HoDebugViewInfo View(string viewId, string shortName, HoSurfaceBufferDebugMode mode)

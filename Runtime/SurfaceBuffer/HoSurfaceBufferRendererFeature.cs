@@ -9,9 +9,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 {
     /// <summary>
     /// **Ho-SurfaceBuffer（SB）= 表面数值 buffer**：回答"表面是什么样"。
-    /// 几何在 GB、身份在 OB、合成在 AC；SB 只发布五张数值图 + internal owner（SB 架构 §1）。
+    /// 几何在 GB、身份在 OB、合成在 AC；SB 发布六张数值图、owner 与已有深度附件（SB 架构 §1）。
     /// <para>
-    /// 本轮范围（数值面）：`Color / Normal / Material / Reflection / Classification` + owner，
+    /// 数值面：`Color / Normal / Material / Reflection / Classification / Emission` + owner，
     /// 由材质侧 `HoSurfaceBuffer` pass 一趟写全。**透明不生产**（队列上限压在不透明段末尾）。
     /// 语义 lane（`enableSemanticLanes`）由 `HoSurfaceBufferSemanticPass` 单采样另跑一趟，
     /// 只允许收窄 / 细化 OB 的物体位（SB 架构 §0.4）。

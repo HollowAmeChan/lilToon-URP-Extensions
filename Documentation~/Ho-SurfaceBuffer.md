@@ -4,7 +4,7 @@
 
 > **状态：已落地并稳定**（代码在 `Runtime/SurfaceBuffer/`，材质侧在 lilToon 的 22 个 URP lilblock）。
 > 本文是 **SB 的现行架构说明**：字段、名字、执行记录与冻结决议；§0 是流水线复核与勘误基线。
-> 相关：`Ho-ObjectBuffer.md`、`Ho-AttributeComposite.md`（AC 是 SB 属性值的唯一读取入口）、`架构边界/MSAA.md`。
+> 相关：`Ho-ObjectBuffer.md`、`Ho-AttributeComposite.md`（AC 面向合成与后处理；RT 按需直接读取已有 SB 输入）、`架构边界/MSAA.md`。
 > **已删除的旧来源**：MetadataBuffer 的 `SurfaceColor` / `SurfaceData` / `ReflectionMaterial`（R6/R7 删除，见 `CHANGELOG.md`）。
 
 表面数值 buffer：回答"表面是什么样"。**几何在 GB，身份与逐物体属性在 OB，合成在 AC。**
@@ -12,6 +12,8 @@
 > **2026-10-07 数值面更新**：独立 Emission 已接入第 7 个 MRT（旧 0..5 索引不变），现为六张数值图 + owner。下文 R3 等执行记录中的“五张图 / 6 MRT”是旧实现记录，以本段与字段表为当前事实。Emission 可直接供 RT 消费，不要求经过 AC；SSS 本轮不扩展。
 >
 > 已在 Unity 6000.3.15f1 的 D3D12/11 RenderGraph 与 D3D11 compatibility 验证两层 HDR、mask、组分混色分离、未登记/零发光 writer、cutout、全屏/平铺调试及开关/销毁。入口为 `HoSurfaceBufferEmissionValidation.Run` / `RunCompatibility`（后者需隔离工程定义 `URP_COMPATIBILITY_MODE`）。
+
+> **2026-10-08 深度与主表面关联**：SB 开始发布已有单采样深度附件，供 RT 等消费者验证 GB/SB 深度关联；不增加 MRT、不复制深度、不让 SB 生产端读取 GB。新增 `Depth` / `Geometry Association` 调试，规则见 §1.3。此决议替代旧记录中的“不发布深度”。
 
 
 
@@ -35,7 +37,7 @@
 规划同时声明“0 是合法表面值”、“不写 `subjectValid`”、“valid 由 OB/AC 表达”，但 GB/OB/SB producer 又被定义为互不读。这要求必须冻结一条可验证的对齐契约：
 
 - OB 身份 layer 0 与 SB 表面值必须代表同一个前表面，使用同一 camera descriptor、layer/render-queue filter、clip/dissolve/cull 和深度胜出规则。
-- SB 数值 pass 与五张数值 RT 同时写一张 **internal `_HoSurfaceBufferOwnerTexture`**（RGBA8 的两个字节），内容是该前表面的 16-bit IdentityId。0 = 无 writer；数值 RT 中的 0 始终是合法值。
+- SB 数值 pass 同时写 **internal `_HoSurfaceBufferOwnerTexture`**（RGBA8 的两个字节），内容是该表面的 16-bit IdentityId。0 = 无登记身份；独立 writer 由 `Emission.a` 表达，不能再用 owner=0 推断没写。数值 RT 中的 0 始终是合法值。
 - AC 只在 `SurfaceOwner == OB ranked layer 0 IdentityId` 时接受 SB 数值；不匹配使用属性 fallback 并写 alignment diagnostic。
 - Texture-level valid（这张图本帧是否存在）与 pixel-level valid（这个像素是否有 writer）必须分开。
 
@@ -86,6 +88,7 @@
 | | `a` | `materialClassIdByte` | | | ScreenProcess / 其他分类消费者（经 AC） |
 | `SurfaceSemantic` | 成对 | 每 lane `(SemanticId,value)`，两 lane / RGBA8；另有 owner（16-bit IdentityId 两字节） | RGBA8 ×4 + RGBA8 owner（单采样） | 材质 | 只给 AC semantic resolve |
 | `Emission` | `rgb` / `a` | 第一/第二层专用自发光的线性 HDR 加权贡献 / surface writer（写入=1，清屏=0） | RGBA16F（可回退 RGBA32F，不能 UNORM） | 材质 | RT 输入准备、独立调试 |
+| `DepthTexture` | `r` | SB 本次绘制的 raw device depth，借用已有附件，不是线性深度或独立 MRT | 原有单采样 depth-stencil | SB 深度测试 | 主表面关联、位置重建前的验证 |
 
 - SurfaceSemantic 承接材质逐像素的具名 SemanticId/value，不做导出源；SB 只使用 `HoSemanticSchema` 声明的 ID/lane。AC 在 sample 级合成后才产生对外 Selection coverage。
 - `Normal` 与 GB 的几何法线是**并列的两个量**：GB 出几何法线（遮挡、阴影偏移、描边），SB 出着色法线（PBR、SSR）。
@@ -104,11 +107,37 @@ _UsePlanarReflection             → 只在总开关打开时生效
 
 ### 1.2 约束（冻结）
 
-- **不发布深度、不发布身份**；SB 的 depth-stencil 只服务自己的两段式深度（opaque/cutout 写深度、transparent 只 ZTest 后叠加）。
+- **发布已有深度附件，不生产新几何图**；SB 深度仅表示自身 opaque/cutout 绘制集合中的最近表面，不保证与 GB 或最终相机前表面一致。透明不生产数值，owner 保留现有身份关联职责。
 - **GB / OB / SB 数值生产并列**。明确例外：SB Scalar V1 关联归约读取 OB 原始身份样本及 ranked 身份，在 producer 侧完成配对；普通数值 pass 不增加该依赖。
 - **不与别的语义打包**：几何 → GB，效果调参 → 材质轻量参数，屏幕空间产物 → 各效果自己的通道。
 - 采样 **Point**（材质值属于最近的那个面）。
 - `Color.a` 不承载覆盖率；覆盖率只有 OB/AC 一个来源。
+
+### 1.3 主表面深度关联
+
+RenderGraph 直接借用 `HoSurfaceBufferRenderGraphResources.depthTexture`；全局名称为 `_HoSurfaceBufferDepthTexture`，有效性与 `_HoSurfaceBufferActive` 一起使用。禁用、跳过相机和销毁时清有效性并绑定黑色；禁止把这个中性值当成有效的近/远平面。读取时声明 `UseTexture(Read)`。深度格式、单采样与现有分配保持不变，发布只可能延长已有附件的使用生命周期。
+
+`HoSurfaceAssociationInputs.Read` 为 raster 消费者登记并借用 SB depth/Emission writer、GB depth/normalDepth；`Bind` 显式绑定共享 HLSL `HoSurfaceAssociation.hlsl` 的输入。兼容模式使用 `BindCompatibility`，从实际生产者的 CPU 资源记录取句柄，不用 CPU `Shader.GetGlobalTexture` 推断 GPU 发布结果。
+
+`HoSurfaceAssociationStatus(uv, out surfaceEyeDepth)` 的状态：
+
+| 值 | 含义 | Geometry Association 调试 |
+| --- | --- | --- |
+| 0 | 当前相机缺少 SB 或 GB 所需输入 | 洋红 |
+| 1 | 无 SB writer | 红 |
+| 2 | SB 有 writer，但 GB 无几何 | 蓝 |
+| 3 | 分辨率、纹理维度/层数或取样位置域不能确认一致 | 黄 |
+| 4 | 两份深度不一致 | 橙 |
+| 5 | 同取样域内深度一致 | 绿 |
+| 6 | UV 越界 | 洋红 |
+
+只把状态 5 当作本检查的成功结果；OB 未登记、黑色、零 roughness/metallic/emission 都不影响 writer。取样域检查优先于逐像素读取；深度使用 point、mip 0，按相机透视/正交及 reversed-Z 约定转换到眼空间，比较容差为 `max(0.0001, abs(depth)*0.00001)`。`surfaceEyeDepth` 仅在状态 4/5 时填充，其他状态为 0，不能当作有效近表面。
+
+**首版限制**：只确认相同分辨率、维度与层数的单采样中心域。GB 的 MSAA resolve 选择最近 sample，不能把它冒充 SB 的中心 sample；当前返回状态 3，不插值、不放宽容差。GB/SB 同时随相机 render scale 缩放且取样域一致时可以通过。后续支持 MSAA 或异分辨率须增加明确的采样关联规则。
+
+深度一致不等于 primitive 身份证明；共面重叠无法由深度区分。GB 未表示的几何、透明/OIT 与最终相机表面域也不由这个函数补齐。未来 RT 消费者仍须确定自身 opaque/cutout 支持域，世界空间 AS 身份单独管理。此检查不改变已有 AC 的 owner 对齐策略。
+
+`Depth` 调试使用线性眼空间 `depth/(1+depth)` 显示，无 writer 为暗红。验证入口 `HoSurfaceAssociationValidation.Run` / `RunCompatibility`，辅助 feature 通过空 `SupportedOnRenderer` 从添加菜单隐藏。
 
 ---
 

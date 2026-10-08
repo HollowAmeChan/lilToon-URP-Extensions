@@ -29,6 +29,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             public HoSurfaceBufferDebugMode debugMode;
             public TextureHandle colorTexture;
             public TextureHandle emissionTexture;
+            public TextureHandle depthTexture;
+            public HoSurfaceAssociationInputs association;
             public TextureHandle normalTexture;
             public TextureHandle materialTexture;
             public TextureHandle reflectionTexture;
@@ -68,6 +70,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             {
                 debugMaterial.SetFloat(HoSurfaceBufferShaderConstants.DebugModeId, (float)settings.debugMode);
                 debugMaterial.SetVector(BlitScaleBiasId, new Vector4(1, 1, 0, 0));
+                if (settings.debugMode == HoSurfaceBufferDebugMode.GeometryAssociation || settings.debugMode == HoSurfaceBufferDebugMode.All)
+                    HoSurfaceAssociationInputs.BindCompatibility(cmd);
                 HoDebugGrid.Draw(CommandBufferHelpers.GetRasterCommandBuffer(cmd), debugMaterial, (int)settings.debugMode, HoSurfaceBufferShaderConstants.DebugModeId, HoSurfaceBufferDebugViewInfo.Views, new Vector2Int(DebugTarget.rt.width, DebugTarget.rt.height));
             }
 
@@ -99,6 +103,10 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                 passData.debugMode = settings.debugMode;
                 passData.colorTexture = resources.colorTexture;
                 passData.emissionTexture = resources.emissionTexture;
+                passData.depthTexture = settings.debugMode == HoSurfaceBufferDebugMode.Depth || settings.debugMode == HoSurfaceBufferDebugMode.All
+                    ? resources.depthTexture : TextureHandle.nullHandle;
+                if (settings.debugMode == HoSurfaceBufferDebugMode.GeometryAssociation || settings.debugMode == HoSurfaceBufferDebugMode.All)
+                    passData.association = HoSurfaceAssociationInputs.Read(renderGraph, frameData, builder);
                 passData.normalTexture = resources.normalTexture;
                 passData.materialTexture = resources.materialTexture;
                 passData.reflectionTexture = resources.reflectionTexture;
@@ -113,6 +121,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
                 builder.UseTexture(passData.colorTexture, AccessFlags.Read);
                 builder.UseTexture(passData.emissionTexture, AccessFlags.Read);
+                if (passData.depthTexture.IsValid()) builder.UseTexture(passData.depthTexture, AccessFlags.Read);
                 builder.UseTexture(passData.normalTexture, AccessFlags.Read);
                 builder.UseTexture(passData.materialTexture, AccessFlags.Read);
                 builder.UseTexture(passData.reflectionTexture, AccessFlags.Read);
@@ -145,6 +154,9 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
                     data.material.SetVector(BlitScaleBiasId, new Vector4(1, 1, 0, 0));
                     context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ColorTextureId, data.colorTexture);
                     context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.EmissionTextureId, data.emissionTexture);
+                    if (data.depthTexture.IsValid()) context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.DepthTextureId, data.depthTexture);
+                    if (data.debugMode == HoSurfaceBufferDebugMode.GeometryAssociation || data.debugMode == HoSurfaceBufferDebugMode.All)
+                        data.association.Bind(context.cmd);
                     context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.NormalTextureId, data.normalTexture);
                     context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.MaterialTextureId, data.materialTexture);
                     context.cmd.SetGlobalTexture(HoSurfaceBufferShaderConstants.ReflectionTextureId, data.reflectionTexture);

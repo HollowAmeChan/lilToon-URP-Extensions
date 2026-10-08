@@ -21,9 +21,11 @@ Shader "Hidden/lilToon/URP/SurfaceBuffer/DebugView"
             #include "Packages/com.unity.render-pipelines.core/Runtime/Utilities/Blit.hlsl"
             // octa / owner 的编解码与生产者（lilToon 的 SB 材质 pass）共用同一份实现。
             #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/SurfaceBuffer/Shaders/HoSurfaceBufferCommon.hlsl"
+            #include "../HoSurfaceAssociation.hlsl"
 
             TEXTURE2D_X(_HoSurfaceBufferColorTexture);
             TEXTURE2D_X(_HoSurfaceBufferEmissionTexture);
+            TEXTURE2D_X_FLOAT(_HoSurfaceBufferDepthTexture);
             TEXTURE2D_X(_HoSurfaceBufferNormalTexture);
             TEXTURE2D_X(_HoSurfaceBufferMaterialTexture);
             TEXTURE2D_X(_HoSurfaceBufferReflectionTexture);
@@ -121,6 +123,19 @@ Shader "Hidden/lilToon/URP/SurfaceBuffer/DebugView"
                 if (mode == 10)
                 {
                     return half4(SAMPLE_TEXTURE2D_X(_HoSurfaceBufferEmissionTexture, sampler_PointClamp, uv).rgb, 1.0);
+                }
+
+                if (mode == 11)
+                {
+                    if (SAMPLE_TEXTURE2D_X(_HoSurfaceBufferEmissionTexture, sampler_PointClamp, uv).a < 0.5)
+                        return half4(0.35, 0, 0, 1);
+                    float depth = HoSurfaceDeviceToEyeDepth(SAMPLE_TEXTURE2D_X(_HoSurfaceBufferDepthTexture, sampler_PointClamp, uv).r);
+                    return half4((depth / (1.0 + depth)).xxx, 1);
+                }
+                if (mode == 12)
+                {
+                    float depth;
+                    return half4(HoSurfaceAssociationDebugColor(HoSurfaceAssociationStatus(uv, depth)), 1);
                 }
 
                 if ((mode == 8 || mode == 9) && _HoSurfaceSemanticActive <= 0.5)
