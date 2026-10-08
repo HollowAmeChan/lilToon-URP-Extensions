@@ -27,6 +27,11 @@ namespace lilToon.URP.Extensions.Atmosphere
 
     public static class HoAtmosphereBindings
     {
+        // Borrowed compatibility snapshot published by the environment pass.
+        // Consumers must read it at execution, after that pass, not during AddRenderPasses.
+        internal static RTHandle compatibilityTexture;
+        internal static Vector4 compatibilityParameters, compatibilityTint, compatibilityConstant;
+        internal static uint compatibilityRevision;
         public static readonly int RadianceId = Shader.PropertyToID("_HoAtmosphereRadianceTexture");
         public static readonly int ParametersId = Shader.PropertyToID("_HoAtmosphereParameters");
         public static readonly int TintId = Shader.PropertyToID("_HoAtmosphereTint");
@@ -42,6 +47,7 @@ namespace lilToon.URP.Extensions.Atmosphere
 
         internal static void ResetGlobals()
         {
+            compatibilityTexture = null; compatibilityParameters = compatibilityTint = compatibilityConstant = Vector4.zero; compatibilityRevision = 0;
             Shader.SetGlobalTexture(RadianceId, CoreUtils.blackCubeTexture);
             Shader.SetGlobalVector(ParametersId, Vector4.zero);
             Shader.SetGlobalVector(TintId, Vector4.zero);

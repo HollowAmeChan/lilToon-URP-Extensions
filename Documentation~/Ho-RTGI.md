@@ -1,6 +1,14 @@
-# Ho-RTGI：二次命中接入
+# Ho-RTGI：参考工程的一跳 diffuse GI 初版
 
-当前已交付 GI 所需的实际 DXR 命中材质路径，尚未添加可用的 Ho-RTGI Renderer Feature，也未输出间接光。下一步接用户参考工程的 BrdfRayTracing → ShadeSecondarySurfaces → GI temporal/spatial/final 链路。
+已沿用户参考工程接通 BrdfRayTracing → ShadeSecondarySurfaces → GI temporal/spatial/final，提供独立的一跳 diffuse GI 输出。SDK GI reservoir 与时间/空间重采样直接复用原文件，只改 include 路径；应用 bridge 适配 Ho 的生产端。尚未设计 lilToon 的最终 NPR 接收/合成。
+
+## 使用与输出
+
+Renderer 添加 **Ho-RTGI**，前面启用 GB / SB；需要天空时再启用 Ho-Atmosphere。需要 D3D12 DXR、inline RT、Compute、Mono、同分辨率单采样 GB/SB，以及已更新的 SB 网格法线布局。GI 可以独立启用，不要求先打开 Ho-RTDI；两者同时启用也各自生产独立输出。
+
+默认不写 camera color。全局 Volume 的 Ho-RTGI 提供启用覆盖及 Diffuse / Receiver / All 调试；Receiver 绿为有效接收面、红为输入无效。调试显示不代表完成了与原材质画面的合成。
+
+RenderGraph 消费 `HoRTGIRenderGraphResources.diffuse` 并声明读依赖；兼容全局为 `_HoRTGIDiffuseTexture` 与 `_HoRTGIActive`。RGB 为线性 HDR，**已包含参考 Lambert 接收 BRDF 与 diffuse albedo**；A 为 receiver validity。有效暗处可以 RGB=0、A=1，主表面缺失或 GB/SB 域不匹配为 A=0。
 
 ## 已接通的部分
 
@@ -12,13 +20,35 @@ Emission 直接调用 lilToon 现有 `lilEmissionComponent` / `lilEmission2ndCom
 
 ## 首版支持域
 
-- 使用现有 HoRTScene 的刚性 opaque MeshRenderer，支持屏幕外、非均匀/镜像变换；不支持 skinned、cutout/透明、顶点变形、static batching 或 additional vertex streams。
+- 使用现有 HoRTScene 的刚性 opaque MeshRenderer，支持屏幕外、变换更新和非均匀/镜像变换；不支持 skinned、cutout/透明、顶点变形、运行中 Mesh 内容编辑、static batching 或 additional vertex streams。
 - 当前命中材质接收标准 `lilToon` opaque，第一主色链、两组 normal map、两组专用 emission，以及 smoothness/metallic 贴图。Main2nd/Main3rd、parallax 位移、Lite/Multi/Hair/自定义 shader 尚未接入，明确返回 unsupported。
+- 命中材质副本读取 sharedMaterial；Renderer MaterialPropertyBlock 属性覆盖及自定义 lilToon 扩展尚未接入。
 - Unsupported opaque 材质仍有真实命中，status=2，保持遮挡；不能把它转成环境 miss。status=0 才表示 miss，status=1 表示已求值的材质。
 - 纹理采样显式 LOD 0，尚未实现 ray-cone 过滤与 GSAA。发光视角组分使用二次射线的观察方向。没有 SSS、最终 NPR 接收、合成、降噪或 Player 验收。
+- 二次命中点支持 point / spot / directional 解析灯，限制与 Ho-RTDI 相同：cookie、非全局 cullingMask、baked-only、其他灯型排除；Rendering Layer / 艺术灯光链接未接入。RT 可见性独立于 raster Light.shadows。
+- **天空通过主表面生成射线的 miss 路径贡献；二次材质命中点暂只计算解析灯与 emission，未计算该点的天空照明或更多反弹。** 没有天空/发光网格重要性采样、主表面 specular GI 或完美镜面路径。
+- 不支持的 opaque 命中按黑表面处理；无贡献或被几何法线拒绝的方向仍计作黑样本，避免丢弃零贡献样本导致能量偏高。为保留 HDR 能量，未启用参考中的 firefly radiance clamp；当前 raw 输出有噪声。
+
+## 参考链路、资源与历史
+
+GenerateSecondary 使用参考 BrdfRayTracing 的 diffuse 分支、SDK RNG 与 Donut cosine hemisphere / ONB，每像素一条射线。ShadeSecondary 调用 `RTXDI_SampleLightsForSurface` 求命中点解析灯贡献，加专用 emission，再调用 `RTXDI_MakeGIReservoir`。Temporal / Spatial 分别调用 SDK `RTXDI_GITemporalResampling` / `RTXDI_GISpatialResampling`，均使用 ray-traced bias correction；Final 按参考 visibility / reservoir weight / diffuse BRDF 着色，不启用 final MIS。
+
+天空 miss 沿参考的 distant-sample 表示进入 GI reservoir，读取 Ho-Atmosphere 全方向原始 HDR 辐射。共享 SDK 目录为此追加 6 个必要头文件，总计 28 个，源 SHA-256、原始许可和 provenance 均保留；没有引入 PT、native、DLSS、NRD、ReGIR 或环境预采样框架。
+
+五阶段在 BeforeRenderingPostProcessing 的一个 graphics-queue unsafe pass 内顺序执行。直接借用 GB/SB，不复制当前主表面 GBuffer；显式声明 AS metadata、buffer、输出与天空 texture 依赖。Ho-Atmosphere 先生产环境，GI 对天空做 shader-local 绑定，关闭 GI 天空采样不会清掉其他消费者的环境输入。
+
+兼容路径由 Ho-Atmosphere 环境 pass 发布借用快照，GI 在执行时读取；每相机开始和生产端销毁时清空快照。RenderGraph pass data 会由池复用，因此每次记录都显式清空缺失天空的 handle/参数/revision，避免沿用旧输入。
+
+每相机保存三份 32 B SDK GI reservoir、一份 48 B 二次射线数据、一份 16 B 上帧 guide，以及一张 RGBA16F 输出（8 B/像素）。1080p 约 332 MiB，另有 block padding、灯、AS 与输入开销。DI/GI 目前各自拥有场景注册和 AS 生命周期，尚未合并其持有成本，也未完成生产性能预算。
+
+静态世界按前后相机矩阵生成 SDK 所需的像素 motion / depth delta。几何 Revision、灯、材质属性、纹理 updateCount / sampler / ST、天空 Revision、分辨率或关键采样设置变化清历史；禁用后重启也清历史。已声明的时间动画参数保守禁用时间复用。纹理更新识别依赖 Texture.updateCount，不能据此宣称识别任意外部 GPU 写入或自定义 shader global 变化。
+
+不维护 previous TLAS，也没有动态角色 motion；只有未变化的几何可以复用历史，此时当前 AS 同时描述上一帧世界，可从上一帧表面做 visibility。一次只做一跳，不把历史 reservoir 当作多跳反馈缓存。
 
 ## 验证
 
 `HoRTGISecondaryValidation.Run` 在隔离工程的 D3D12 上分别以 Gamma / Linear 色彩空间执行真实 TraceRay，核对离屏命中/距离、材质参数、两组 HDR emission、main-strength、UV1/贴图 alpha/ST、mask RGB/alpha、禁用与材质切换、unsupported 遮挡、镜像非均匀变换及源材质保持原样。保留原材质 Color/HDR 与 Gamma-tagged metallic/reflectance 的颜色空间语义；三角形法线朝向射线所在侧，插值法线对齐同侧。Shader 警告/错误视作失败。
 
-现有 Ho-RTDI 的 D3D12 RenderGraph / compatibility 与 D3D11 不支持分支已回归通过。这一步完成的是 GI 链路必需的命中着色适配，不能据此宣称 ReSTIR GI 已交付。
+`HoRTGIValidation.Run` / `RunCompatibility` / `RunUnsupported` 验证完整五阶段。Unity 6000.3.15f1 的 D3D12 RenderGraph / compatibility 在 Gamma / Linear 下通过：天空积分、实际 HDR cube、Unity 天空盒方向性 HDR 捕获、彩色/金属接收响应、离屏 HDR emission、次级 RTXDI 解析灯能量、unsupported 遮挡、空间单独复用、时间单独复用与 sample age、历史失效、静态世界相机重投影、receiver 域拒绝、关闭/销毁、无自动合成与 Volume 调试。Compute 警告/错误视作失败，D3D11 不支持分支通过。DI/GI 同时启用的独立发布与既有 DI 两条路径回归也通过。
+
+定向测试天空 RGB = 8 × (direction × 0.5 + 0.5)，面向 -Z 的白色 Lambert 接收面的理论积分为 (4, 4, 1.3333)，实测统计均值约 (4.008, 3.982, 1.330)。这是链路与能量验证，不是性能或最终画质验收。

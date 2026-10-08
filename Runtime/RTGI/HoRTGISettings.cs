@@ -1,0 +1,23 @@
+using System;
+using UnityEngine;
+
+namespace lilToon.URP.Extensions.RTGI
+{
+    [Serializable]
+    public sealed class HoRTGISettings
+    {
+        public bool enabled = true;
+        public bool inSceneView = true;
+        [Range(1,32)] public int secondaryLightSamples = 8;
+        public bool temporal = true;
+        [Range(1,32)] public int maxHistory = 20;
+        public bool spatial = true;
+        [Range(1,16)] public int spatialSamples = 4;
+        [Range(1,32)] public float spatialRadius = 16;
+        [Min(.00001f)] public float rayBias = .001f;
+        [Min(1)] public float maxDistance = 1000;
+        public bool useEnvironment = true;
+        public LayerMask geometryLayers = -1;
+        public LayerMask lightLayers = -1;
+    }
+}

@@ -49,4 +49,4 @@ RGBA16F 输出约 16 B/像素（diffuse/specular 两张）；history 16 B/像素
 
 Unity 6000.3.15f1 的 D3D12 RenderGraph / compatibility 均通过；D3D11 不支持分支通过。多灯测试比较空间/时间样本均值，不把单像素噪声误判为能量错误。SDK/Donut 共 22 个源码文件的 SHA-256 与依赖 include 之外的算法正文已逐一核对。
 
-下一步继续参考工程的 GI passes；只补其实际需要的二次命中材质输入，不扩成通用路径追踪框架。
+共享 SDK 目录随后为 GI 追加 6 个必要头文件（provenance 现共 28 个文件），DI 的原始 22 文件依赖闭包保持原算法不变。参考 GI 链路已接入首版一跳 diffuse 输出，见 [Ho-RTGI](Ho-RTGI.md)；两者均尚未接入最终 PBR/NPR 合成。

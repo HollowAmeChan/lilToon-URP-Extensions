@@ -1,6 +1,6 @@
 # Ho-RTDI / Ho-RTGI 可行性调查
 
-日期：2026-10-07，更新于 2026-10-08。状态：输入与求交准备已通过 GPU 验证（§10～§14）；已沿用户参考工程实现 Ho-RTDI 初版及独立光照输出（§15）。GI 的二次命中材质适配已通过真实 DXR 验证（§16）；GI 光照与重采样、最终材质接收/合成、生产性能与 Player 尚未交付。
+日期：2026-10-07，更新于 2026-10-08。状态：输入与求交准备已通过 GPU 验证（§10～§14）；已沿用户参考工程实现 Ho-RTDI 初版及独立光照输出（§15）。GI 二次命中材质适配（§16）与参考 SDK 的一跳 diffuse GI 独立输出/重采样（§17）已通过真实 GPU 验证；最终材质接收/合成、降噪、生产性能与 Player 尚未交付。
 
 ## 判断
 
@@ -16,7 +16,7 @@
 
 最新范围补充：**SSS 暂不接入**，用户仍在斟酌其设计。RT 首版不依赖 SSS profile、thickness、透射响应或 SSS 专用历史，不因现有 SB 中已有字段就要求消费或扩展它们。当前铺路重点是 SB emission、世界方向环境辐射，以及必要的数据有效性/读取约定。
 
-**最新实施优先级**：用户决定先完成可独立验证的 DI/GI 与环境生产端，暂不处理 lilToon 怎么接收、暗部如何过渡、材质内/后处理的具体合成映射。后续 pass 合成保留为方向，具体 PBR/NPR 结合另设阶段；此前 §4.5/§6 的讨论作为约束与备选，不是当前实现要求。算法验证用最小 PBR 响应参考；当前不自动关闭或改写材质的旧光照、cast、CS 等。环境、主表面共享读取、刚性 opaque 世界求交及参考 RTXDI 的 DI 四阶段已有首版并通过验证；GI 所需的二次命中材质适配已验证（§16）；下一项接参考 BrdfRayTracing / ShadeSecondarySurfaces 与 GI temporal/spatial/final 的间接光输出，只补这条链路实际需要的输入。
+**最新实施优先级**：用户决定先完成可独立验证的 DI/GI 与环境生产端，暂不处理 lilToon 怎么接收、暗部如何过渡、材质内/后处理的具体合成映射。后续 pass 合成保留为方向，具体 PBR/NPR 结合另设阶段；此前 §4.5/§6 的讨论作为约束与备选，不是当前实现要求。算法验证用最小 PBR 响应参考；当前不自动关闭或改写材质的旧光照、cast、CS 等。环境、主表面共享读取、刚性 opaque 世界求交及参考 RTXDI 的 DI 四阶段已有首版并通过验证；GI 的二次命中材质适配及参考 BrdfRayTracing / ShadeSecondarySurfaces / GI temporal/spatial/final 已有一跳 diffuse 初版（§16～§17）。后续围绕当前 DI/GI 的实际支持域、目标场景验证与性能/降噪推进，仍不提前设计最终 NPR 合成或通用 PT 框架。
 
 ## 1. ReSTIR、RTXDI、RTXGI 的职责
 
@@ -468,3 +468,14 @@ RAB surface 直接读取 Ho 的已有 GB/SB 适配，visibility 接 HoRTScene；
 GI 专用材质副本调用 lilToon 现有两组 emission component，不采样 Forward 画面，不把额外亮色当 emission；源材质不改动。不支持的 opaque 命中明确返回 unsupported 并继续遮挡，避免变成环境 miss。当前接收标准 opaque lilToon 的第一主色链/normal map/两组 emission，Main2nd/Main3rd、parallax 位移与其他 shader 尚未接入；LOD 0，无 ray cone/GSAA。
 
 隔离 D3D12 验证（Gamma / Linear 均通过）：真实 DXR 离屏命中、材质参数、两组 HDR emission、main-strength、UV1/贴图 alpha/ST、mask RGB/alpha、禁用、shader 切换、unsupported 遮挡、镜像非均匀变换、源材质保持原样。现有 DI 的 D3D12 RG / compatibility、D3D11 不支持分支回归通过。此时还没有 GI Renderer Feature 或间接光输出，下一步接参考 GI 的采样与重采样链路。详见 [Ho-RTGI](../Ho-RTGI.md)。
+
+
+## 17. 参考 ReSTIR GI 链路与独立输出
+
+新增 Ho-RTGI Renderer Feature / Volume，接参考工程的二次射线、次级 RTXDI 灯光着色、GI 时间/空间重采样与最终 diffuse 着色。SDK 新增的 6 个 GI/packing/color 头文件只改 include，依赖闭包共 28 个原文件，逐一核对 SHA-256 与算法正文。直接借用 GB/SB，未复制当前 GBuffer，未引入 PT/native/DLSS/NRD/ReGIR。
+
+天空 miss 从 Ho-Atmosphere 全方向 HDR 输入生成 distant GI sample；兼容路径补借用快照，RenderGraph 显式声明依赖，GI shader-local 绑定不会清掉其他天空消费者。二次命中目前计算解析灯与专用 emission，未计算该点的天空照明、多跳、主表面 specular GI 或发光网格重要性采样。输出已含参考 Lambert BRDF/albedo，alpha 表示 receiver-validity，默认不合成 camera color，不改旧材质光照/CS/ShadowCast。
+
+逐相机 32 B × 3 SDK GI reservoir、48 B 二次数据、16 B 历史 guide 与 8 B HDR 输出，1080p 约 332 MiB（不含 padding/AS/输入）。几何/灯/材质/纹理/天空变化保守清历史，静态世界相机矩阵重投影；无动态角色 motion 或 previous TLAS。当前 DI/GI 各自拥有 AS 生命周期，生产预算与降噪仍待完成。
+
+隔离 D3D12 RG / compatibility、Gamma / Linear 验证通过，覆盖完整五阶段、实际 HDR cube/Unity 天空盒捕获积分、离屏发光、次级解析灯能量、空间与时间单独复用/age、遮挡、历史失效、相机运动、输入拒绝与调试/关闭。D3D11 禁用分支通过；DI/GI 同时启用独立输出及已有 DI 两条路径回归通过。详见 [Ho-RTGI](../Ho-RTGI.md)。

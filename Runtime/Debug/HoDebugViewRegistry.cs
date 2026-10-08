@@ -40,6 +40,7 @@ namespace lilToon.URP.Extensions.Debugging
                 AddRange(views, ImageProcessDebugViewInfo.Views);
                 AddRange(views, lilToon.URP.Extensions.Atmosphere.HoAtmosphereDebugViewInfo.Views);
                 AddRange(views, lilToon.URP.Extensions.RTDI.HoRTDIDebugViewInfo.Views);
+                AddRange(views, lilToon.URP.Extensions.RTGI.HoRTGIDebugViewInfo.Views);
                 return views;
             }
         }

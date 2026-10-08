@@ -186,6 +186,11 @@ namespace lilToon.URP.Extensions.Atmosphere
                 cmd.SetGlobalVector(HoAtmosphereBindings.ParametersId, parameters);
                 cmd.SetGlobalVector(HoAtmosphereBindings.TintId, tint);
                 cmd.SetGlobalVector(HoAtmosphereBindings.ConstantId, constant);
+                HoAtmosphereBindings.compatibilityTexture = input.texture;
+                HoAtmosphereBindings.compatibilityParameters = parameters;
+                HoAtmosphereBindings.compatibilityTint = tint;
+                HoAtmosphereBindings.compatibilityConstant = constant;
+                HoAtmosphereBindings.compatibilityRevision = revision;
                 context.ExecuteCommandBuffer(cmd);
                 CommandBufferPool.Release(cmd);
             }
