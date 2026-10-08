@@ -16,7 +16,7 @@
 
 最新范围补充：**SSS 暂不接入**，用户仍在斟酌其设计。RT 首版不依赖 SSS profile、thickness、透射响应或 SSS 专用历史，不因现有 SB 中已有字段就要求消费或扩展它们。当前铺路重点是 SB emission、世界方向环境辐射，以及必要的数据有效性/读取约定。
 
-**最新实施优先级**：用户决定先完成可独立验证的 DI/GI 与环境生产端，暂不处理 lilToon 怎么接收、暗部如何过渡、材质内/后处理的具体合成映射。后续 pass 合成保留为方向，具体 PBR/NPR 结合另设阶段；此前 §4.5/§6 的讨论作为约束与备选，不是当前实现要求。算法验证用最小 PBR 响应参考；当前不自动关闭或改写材质的旧光照、cast、CS 等。环境、主表面共享读取、刚性 opaque 世界求交及参考 RTXDI 的 DI 四阶段已有首版并通过验证；GI 的二次命中材质适配及参考 BrdfRayTracing / ShadeSecondarySurfaces / GI temporal/spatial/final 已有一跳 diffuse 初版（§16～§17）。后续围绕当前 DI/GI 的实际支持域、目标场景验证与性能/降噪推进，仍不提前设计最终 NPR 合成或通用 PT 框架。
+**最新实施优先级**：用户决定先完成可独立验证的 DI/GI 与环境生产端，暂不处理 lilToon 怎么接收、暗部如何过渡、材质内/后处理的具体合成映射。后续 pass 合成保留为方向，具体 PBR/NPR 结合另设阶段；此前 §4.5/§6 的讨论作为约束与备选，不是当前实现要求。算法验证用最小 PBR 响应参考；当前不自动关闭或改写材质的旧光照、cast、CS 等。环境、主表面共享读取、刚性 opaque 世界求交及参考 RTXDI 的 DI 四阶段已有首版并通过验证；GI 的二次命中材质适配及参考 BrdfRayTracing / ShadeSecondarySurfaces / GI temporal/spatial/final 已有一跳 diffuse 初版（§16～§17）。当前优先推进 DI；已补静态世界的动态解析灯历史与索引映射（§18）。后续围绕 DI 的实际支持域、目标场景验证与性能/降噪推进，仍不提前设计最终 NPR 合成或通用 PT 框架。
 
 ## 1. ReSTIR、RTXDI、RTXGI 的职责
 
@@ -479,3 +479,12 @@ GI 专用材质副本调用 lilToon 现有两组 emission component，不采样 
 逐相机 32 B × 3 SDK GI reservoir、48 B 二次数据、16 B 历史 guide 与 8 B HDR 输出，1080p 约 332 MiB（不含 padding/AS/输入）。几何/灯/材质/纹理/天空变化保守清历史，静态世界相机矩阵重投影；无动态角色 motion 或 previous TLAS。当前 DI/GI 各自拥有 AS 生命周期，生产预算与降噪仍待完成。
 
 隔离 D3D12 RG / compatibility、Gamma / Linear 验证通过，覆盖完整五阶段、实际 HDR cube/Unity 天空盒捕获积分、离屏发光、次级解析灯能量、空间与时间单独复用/age、遮挡、历史失效、相机运动、输入拒绝与调试/关闭。D3D11 禁用分支通过；DI/GI 同时启用独立输出及已有 DI 两条路径回归通过。详见 [Ho-RTGI](../Ho-RTGI.md)。
+
+
+## 18. DI 动态解析灯的历史与双向索引映射
+
+本轮按用户要求优先推进 DI。参考 Unity 示例的 RAB_TranslateLightIndex 只返回静态同索引；在不改 SDK 初始/时间/空间重采样算法的前提下，补齐应用侧 current/previous 灯数据快照与双向索引表。灯移动、变色、强度/delta 类型改变、增删/启停与容量扩展不再清整份历史；另一轮不存在的灯映射为 -1，SDK 丢弃相应样本，按 Light 托管引用区分身份，避免删除后数组槽或 native ID 复用造成串灯。
+
+快照逐相机、按实际渲染轮推进；RenderGraph 与兼容路径都显式上传旧灯参数和映射。世界几何未变才允许复用，可用当前 AS 从旧表面查询旧灯 visibility；几何变化仍清历史，不扩大为动态角色/previous TLAS 支持。GI 二次点的 DI 初始采样显式关闭新增的 DI light-history 分支，GI 本身的历史策略保持原样。
+
+GPU 验证核对连续移动/灯属性变化能量的区域统计均值、增删/替换/空集合、容量增长、旧参数与双向映射、空间复用关闭时的时间阶段 M/age。最终 shading 刷新 visibility 会重置 SDK visibility age，不能用最终历史槽的 age 推断是否复用。仍保留 raw 采样方差，没有提前加入降噪或材质合成。详见 [Ho-RTDI](../Ho-RTDI.md)。

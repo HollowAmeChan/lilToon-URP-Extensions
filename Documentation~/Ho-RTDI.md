@@ -1,6 +1,6 @@
 # Ho-RTDI：参考工程移植初版
 
-本版沿用用户提供的 `UnityPathTracing-6000.3.15` 的 Unity RTXDI 路径。直接复用 RTXDI 的初始采样、reservoir、时间/空间重采样；适配 RAB bridge 和 pass 绑定，不另写 ReSTIR。尚未接入 GI 或 lilToon 最终接收/合成。
+本版沿用用户提供的 `UnityPathTracing-6000.3.15` 的 Unity RTXDI 路径。直接复用 RTXDI 的初始采样、reservoir、时间/空间重采样；适配 RAB bridge 和 pass 绑定，不另写 ReSTIR。已补齐静态几何下动态解析灯的历史数据与索引映射；最终 lilToon 接收/合成尚未接入。GI 是独立 Feature，见文末链接。
 
 ## 使用与输出
 
@@ -22,6 +22,7 @@ RenderGraph 读取 `HoRTDIRenderGraphResources.diffuse / specular` 并声明读�
 | BRDF 和最终着色 | 参考 RAB_Surface / ShadingHelpers 的 Lambert + Donut GGX、最终可见性与 reservoir inverse PDF |
 | 主表面 | RAB_GetGBufferSurface 改读 HoRTPrimarySurfaceInputs，不重新渲染/复制当前 GBuffer |
 | visibility | RAB_GetConservativeVisibility 改接 HoRTScene 的真实世界求交 |
+| 前后帧灯数据 / 索引 | 按 SDK `RAB_LoadLightInfo(previousFrame)` / `RAB_TranslateLightIndex` 契约提供实际快照与双向映射；参考 Unity 示例该处原本只做静态 identity 映射 |
 
 SDK 文件只改 include 路径，保留原始算法与许可。`Runtime/RTDI/ThirdParty/provenance.json` 保存原文件 SHA-256，许可说明见同目录 NOTICE 和 NVIDIA LICENSE。只引入 DI 依赖闭包，没有把参考项目的 PT/native/DLSS/NRD 框架搬进来。
 
@@ -37,16 +38,22 @@ SDK 文件只改 include 路径，保留原始算法与许可。`Runtime/RTDI/Th
 
 四阶段在一个 graphics-queue unsafe pass 中有序执行，位置为 BeforeRenderingPostProcessing；主表面/AS/灯数据和输出均显式声明依赖。初始化写 reservoir 1，temporal 写 2，spatial 写回 1，shade 保存历史 0。SDK reservoir stride 为 24 B，保存三份；只额外保存上一帧必要的 surface guide（raw depth、两种 octa normal、参考材质，16 B/像素），不物化另一套当前主表面属性。
 
-历史逐相机拥有。分辨率、场景 Revision、灯集合/位置/颜色/强度、初始采样数或 ray bias 变化会使旧历史失效；禁用后重新启用也从新历史开始。静态世界的相机运动使用实际前后矩阵生成 SDK 所需的像素位移/深度差，未使用或重新生产 URP motion。几何变换时保守清历史，不宣称支持动态角色 temporal。
+历史逐相机拥有。分辨率、场景 Revision、初始采样数或 ray bias 变化会使旧历史失效；禁用后重新启用也从新历史开始。静态世界的相机运动使用实际前后矩阵生成 SDK 所需的像素位移/深度差，未使用或重新生产 URP motion。几何变换时保守清历史，不宣称支持动态角色 temporal。
 
-灯变化当前清历史，因此 previous-light 查询只在灯数据完全不变时复用当前 buffer，尚未实现完整的前后帧灯索引重映射。没有 previous TLAS；几何变化清历史后用当前世界 visibility。该限制需要保留，不能据“调用了 temporal”宣称支持完整动态场景。
+灯的位置、颜色、强度、受支持的 delta 灯型变化，以及增删/启停/筛选导致的列表变化，不再整份清历史。每相机保存上一轮实际渲染的灯参数快照，分别绑定 current / previous light buffers；SDK 需要旧 target PDF 时读取真实旧数据。双向索引映射按 Light 的托管引用身份建立，灯在另一轮不存在就返回 -1，由 SDK 丢弃该样本，避免把删除/替换的灯误认成占据同一数组槽的新灯。容量扩展也保留 reservoir 历史。
 
-RGBA16F 输出约 16 B/像素（diffuse/specular 两张）；history 16 B/像素；reservoir 三份约 72 B/像素，另有 block padding、灯和 AS。1080p 三类合计约 206 MiB，不含 AS/其他输入/驱动开销。尚未做生产性能预算与 Player 验收。
+快照在 pass 记录时捕获，完成调度后推进到下一轮；GPU 上传、两个映射及其 RenderGraph 依赖都显式记录。GI 只在二次命中点调用 DI 初始采样，因此在其共享 bridge 中明确关闭 DI light-history 分支，不增加 GI 资源或改变其历史策略。
+
+没有 previous TLAS；几何变化仍清历史。允许复用时世界几何未变，当前 AS 同时描述上一轮世界，可从旧表面向旧灯做 temporal visibility。此处支持的是动态灯光与静态世界相机重投影，不能据此宣称支持动态角色/几何。
+
+RGBA16F 输出约 16 B/像素（diffuse/specular 两张）；history 16 B/像素；reservoir 三份约 72 B/像素，另有 block padding、灯和 AS。1080p 三类合计约 206 MiB，不含 AS/其他输入/驱动开销。灯历史额外保存一份 64 B/灯参数及双向 4 B/索引，容量取二次幂，另外有 CPU 快照；没有复制主表面图。尚未做生产性能预算与 Player 验收。
 
 ## 验证
 
 隔离入口 `HoRTDIValidation.Run` / `RunCompatibility` / `RunUnsupported`。验证真实 SDK 四阶段、单灯能量与世界遮挡、多灯统计均值、spot/方向光、独立 specular、历史累积/清理、静态世界相机重投影、输入域拒绝、无自动 camera composite、Volume 调试和资源关闭/销毁。Compute 编译警告和错误均作为失败。
 
 Unity 6000.3.15f1 的 D3D12 RenderGraph / compatibility 均通过；D3D11 不支持分支通过。多灯测试比较空间/时间样本均值，不把单像素噪声误判为能量错误。SDK/Donut 共 22 个源码文件的 SHA-256 与依赖 include 之外的算法正文已逐一核对。
+
+动态灯验证覆盖连续移动、变色/强度/delta 灯型变化、移动进入静态遮挡、增删/替换、空集合恢复与容量增长；实际读回 GPU 双向映射和旧灯参数。空间复用关闭时，检查时间阶段输出的 M 与 age 确认旧样本被选中；最终 shading 重测 visibility 会按 SDK 重置 visibility age，因此不拿最终历史槽中的 age 判断是否复用。动态 target PDF 的 ray-traced MIS 结果存在单像素方差，能量以区域统计均值核对；此处尚未降噪。
 
 共享 SDK 目录随后为 GI 追加 6 个必要头文件（provenance 现共 28 个文件），DI 的原始 22 文件依赖闭包保持原算法不变。参考 GI 链路已接入首版一跳 diffuse 输出，见 [Ho-RTGI](Ho-RTGI.md)；两者均尚未接入最终 PBR/NPR 合成。

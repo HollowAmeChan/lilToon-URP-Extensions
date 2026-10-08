@@ -103,7 +103,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 Require((data[address].visibility>>18)>1,"reference temporal/spatial did not accumulate samples");
                 red.enabled=blue.enabled=false;for(int i=0;i<3;i++)Render();
                 blocker.SetActive(true);Near(Render().r,0,"geometry change rejects temporal history",.003f);blocker.SetActive(false);
-                feature.Settings.spatial=false;light.intensity=2;Near(Render().r,Expected(light),"light change resets history",.015f);
+                feature.Settings.spatial=false;Render();light.intensity=2;Near(RenderMean().r,ExpectedMean(light),"light intensity retargets history mean",.015f);
+                Require(feature.LastContext.lastTemporal,"Light intensity change cleared all history");
+                ValidateDynamicLights();
                 volume.debugMode.value=HoRTDIDebugMode.Combined;var debug=Render();NearRGB(Read(target),debug,"debug presentation",.01f);volume.debugMode.value=HoRTDIDebugMode.Off;
                 gb.Settings.renderScale=HoGeometryBufferRenderScale.Half;Near(Render().a,0,"domain mismatch receiver invalid",.01f);
                 volume.debugMode.value=HoRTDIDebugMode.Receiver;Render();NearRGB(Read(target),Color.red,"invalid receiver debug",.01f);
@@ -115,11 +117,74 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 var shader=AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDI.compute");
                 foreach(var message in ShaderUtil.GetComputeShaderMessages(shader))Require(message.severity!=UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error&&message.severity!=UnityEditor.Rendering.ShaderCompilerMessageSeverity.Warning,message.message);
                 feature.Dispose();Require(Shader.GetGlobalFloat("_HoRTDIActive")==0,"dispose reset");
-                Debug.Log("[HoRTDIValidation] PASS reference RTXDI initial/temporal/spatial/shade, analytic energy, world visibility, multi-light mean, history/reset, independent output/debug; API="+SystemInfo.graphicsDeviceType+"; compatibility="+compatibility);
+                Debug.Log("[HoRTDIValidation] PASS reference RTXDI initial/temporal/spatial/shade, dynamic light snapshots/remapping/retargeting, analytic energy, world visibility, multi-light mean, history/reset, independent output/debug; API="+SystemInfo.graphicsDeviceType+"; compatibility="+compatibility);
                 Finish(null);
             }
             catch(Exception error){Finish(error);}
         }
+        private static void ValidateDynamicLights()
+        {
+            // Actual temporal reuse: spatial is off, while the same light moves every frame.
+            for(int i=0;i<8;i++)
+            {
+                light.transform.position=new Vector3(-1.2f+i*.1f,.1f,-1.5f);
+                Near(RenderMean().r,ExpectedMean(light),"moving single-light energy mean",.015f);
+                Require(feature.LastContext.lastTemporal,"Moving light cleared history");
+            }
+            var reservoirs=new Reservoir[feature.LastContext.reservoirs.count];feature.LastContext.reservoirs.GetData(reservoirs);int aged=0;
+            for(int y=24;y<40;y++)for(int x=24;x<40;x++)
+            {
+                // Inspect temporal output (slot 2): final visibility refresh
+                // resets SDK visibility age to zero in the history slot.
+                int pointer=2*feature.LastContext.arrayPitch+(y/16)*feature.LastContext.rowPitch+(x/16)*256+(y%16)*16+x%16;
+                if((reservoirs[pointer].visibility>>18)>1&&((reservoirs[pointer].age>>16)&255)>0)aged++;
+            }
+            Require(aged>128,"Moving-light temporal stage did not retain actual samples");
+            var oldPosition=light.transform.position;
+            light.color=new Color(.2f,.7f,.4f,1);NearRGB(RenderMean(),LightColor(light)*ExpectedMean(light),"light color retarget mean",.02f);
+            Require(feature.LastContext.lastTemporal,"Light color change cleared history");
+            var previousData=new HoRTDIRendererFeature.AnalyticLight[feature.LastContext.previousLights.count];feature.LastContext.previousLights.GetData(previousData);
+            Near(previousData[0].radianceType.x,2,"old light radiance was overwritten",.001f);
+            Near(previousData[0].positionRange.x,oldPosition.x,"old light position was overwritten",.001f);
+            light.color=Color.white;light.type=LightType.Directional;light.intensity=.5f;light.transform.rotation=Quaternion.identity;
+            Near(RenderMean().r,.5f/Mathf.PI,"light type retarget mean",.015f);Require(feature.LastContext.lastTemporal,"Delta light type change cleared history");
+            light.type=LightType.Point;light.intensity=2;light.transform.position=new Vector3(-1.5f,0,-1);
+            blocker.SetActive(true);Near(Render().r,Expected(light),"static occluder visible lamp",.015f);
+            light.transform.position=new Vector3(1.5f,0,-1);Near(Render().r,0,"moving light enters world shadow",.002f);
+            Require(feature.LastContext.lastTemporal,"Moving shadowed light cleared history");blocker.SetActive(false);Render();
+
+            var oldKeys=feature.LastContext.previousLightKeys;
+            var added=Point(new Vector3(-1.5f,0,-1),Color.red,3);
+            Render();Require(feature.LastContext.lastTemporal,"Light insertion / buffer growth cleared history");CheckLightMappings(oldKeys);
+            Color average=Color.clear;
+            for(int i=0;i<48;i++){Render();average+=ReadMean(feature.LastContext.diffuse.rt);}average/=48;
+            Color expected=Color.clear;for(int y=24;y<40;y++)for(int x=24;x<40;x++)
+                expected+=Color.white*Expected(light,x,y)+Color.red*Expected(added,x,y);
+            expected/=256;NearRGB(average,expected,"inserted light temporal statistical energy",.035f);
+            oldKeys=feature.LastContext.previousLightKeys;added.enabled=false;Render();CheckLightMappings(oldKeys);
+            Require(feature.LastContext.lastTemporal,"Light removal cleared all history");
+            // Replacement with the same light count must never treat slot 0 as the old identity.
+            oldKeys=feature.LastContext.previousLightKeys;Object.DestroyImmediate(light.gameObject);
+            light=Point(new Vector3(.4f,0,-2),Color.green,2);NearRGB(Render(),Color.green*Expected(light),"replacement has no old-light ghost",.02f);
+            CheckLightMappings(oldKeys);Require(feature.LastContext.lastTemporal,"Replacement unnecessarily cleared surface history");
+            oldKeys=feature.LastContext.previousLightKeys;light.enabled=false;NearRGB(Render(),Color.black,"empty light set",.002f);CheckLightMappings(oldKeys);
+            oldKeys=feature.LastContext.previousLightKeys;light.enabled=true;NearRGB(Render(),Color.green*Expected(light),"empty to nonempty lights",.02f);CheckLightMappings(oldKeys);
+            light.color=Color.white;light.transform.position=new Vector3(1.5f,0,-1);Render();
+        }
+        private static Color LightColor(Light source)=>QualitySettings.activeColorSpace==ColorSpace.Linear?source.color.linear:source.color;
+        private static Color RenderMean(){Render();return ReadMean(feature.LastContext.diffuse.rt);}
+        private static float ExpectedMean(Light source)
+        {float sum=0;for(int y=24;y<40;y++)for(int x=24;x<40;x++)sum+=Expected(source,x,y);return sum/256;}
+        private static void CheckLightMappings(Light[] oldKeys)
+        {
+            var context=feature.LastContext;var current=context.previousLightKeys;
+            var forward=new int[context.currentToPrevious.count];var reverse=new int[context.previousToCurrent.count];
+            context.currentToPrevious.GetData(forward);context.previousToCurrent.GetData(reverse);
+            for(int i=0;i<current.Length;i++)Require(forward[i]==ReferenceIndex(oldKeys,current[i]),"GPU current-to-previous mapping mismatch");
+            for(int i=0;i<oldKeys.Length;i++)Require(reverse[i]==ReferenceIndex(current,oldKeys[i]),"GPU previous-to-current mapping mismatch");
+        }
+        private static int ReferenceIndex(Light[] keys,Light key)
+        {for(int i=0;i<keys.Length;i++)if(ReferenceEquals(keys[i],key))return i;return -1;}
         private static Light Point(Vector3 position,Color color,float intensity)
         {var result=Keep(new GameObject("RTDI point light")).AddComponent<Light>();result.type=LightType.Point;result.transform.position=position;result.color=color;result.intensity=intensity;result.range=100;result.shadows=LightShadows.Hard;return result;}
         private static float Expected(Light source,int x=32,int y=32)

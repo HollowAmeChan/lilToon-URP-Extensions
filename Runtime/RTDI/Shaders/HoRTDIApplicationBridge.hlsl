@@ -23,6 +23,14 @@ float4 _HoRTDIPreviousCameraPosition, _HoRTDIPreviousTowardsEye, _HoRTDIPrevious
 float4 _HoRTDIPreviousClipParameters;
 struct HoRTDILight { float4 positionRange, radianceType, directionOuter, innerShadow; };
 StructuredBuffer<HoRTDILight> _HoRTDILights;
+#ifndef HO_RTDI_LIGHT_HISTORY_ENABLED
+#define HO_RTDI_LIGHT_HISTORY_ENABLED 1
+#endif
+#if HO_RTDI_LIGHT_HISTORY_ENABLED
+StructuredBuffer<HoRTDILight> _HoRTDIPreviousLights;
+StructuredBuffer<int> _HoRTDICurrentToPrevious, _HoRTDIPreviousToCurrent;
+int _HoRTDIPreviousLightCount;
+#endif
 RWStructuredBuffer<uint4> _HoRTDIHistory;
 StructuredBuffer<float2> _HoRTDINeighbors;
 RWStructuredBuffer<RTXDI_PackedDIReservoir> _HoRTDIReservoirs;
@@ -83,7 +91,14 @@ bool RAB_AreMaterialsSimilar(RAB_Material a,RAB_Material b)
         && abs(HoDILuminance(a.diffuseAlbedo)-HoDILuminance(b.diffuseAlbedo))<.25;
 }
 RAB_LightInfo RAB_LoadLightInfo(uint index,bool previousFrame)
-{ RAB_LightInfo result=RAB_EmptyLightInfo();if(index<(uint)_HoRTDIFrame.z)result.data=_HoRTDILights[index];return result; }
+{
+    RAB_LightInfo result=RAB_EmptyLightInfo();
+    #if HO_RTDI_LIGHT_HISTORY_ENABLED
+    if(previousFrame)
+    {if(index<(uint)_HoRTDIPreviousLightCount)result.data=_HoRTDIPreviousLights[index];return result;}
+    #endif
+    if(index<(uint)_HoRTDIFrame.z)result.data=_HoRTDILights[index];return result;
+}
 RAB_LightInfo RAB_LoadCompactLightInfo(uint index) { return RAB_EmptyLightInfo(); }
 bool RAB_IsAnalyticLightSample(RAB_LightSample sample) { return true; }
 float RAB_LightSampleSolidAnglePdf(RAB_LightSample sample) { return sample.solidAnglePdf; }
@@ -126,8 +141,18 @@ bool RAB_GetConservativeVisibility(RAB_Surface surface,RAB_LightSample sample)
     return hit.status==0;
 }
 bool RAB_GetTemporalConservativeVisibility(RAB_Surface current,RAB_Surface previous,RAB_LightSample sample)
-{return RAB_GetConservativeVisibility(current,sample);}
-int RAB_TranslateLightIndex(uint index,bool currentToPrevious) {return index<(uint)_HoRTDIFrame.z?(int)index:-1;}
+// Geometry changes reject history, so current AS also represents the previous
+// world. The sample carries the old light, and must be tested from the old surface.
+{return RAB_GetConservativeVisibility(previous,sample);}
+int RAB_TranslateLightIndex(uint index,bool currentToPrevious)
+{
+    #if HO_RTDI_LIGHT_HISTORY_ENABLED
+    if(currentToPrevious)return index<(uint)_HoRTDIFrame.z?_HoRTDICurrentToPrevious[index]:-1;
+    return index<(uint)_HoRTDIPreviousLightCount?_HoRTDIPreviousToCurrent[index]:-1;
+    #else
+    return index<(uint)_HoRTDIFrame.z?(int)index:-1;
+    #endif
+}
 int2 RAB_ClampSamplePositionIntoView(int2 pixel,bool previous)
 {
     int2 size=(int2)_HoRTDIFrame.xy;
