@@ -1,6 +1,6 @@
 # Ho-RTDI / Ho-RTGI 可行性调查
 
-日期：2026-10-07，更新于 2026-10-08。状态：SB 独立 Emission、Ho-Atmosphere 环境输入、主表面深度关联与共享读取已通过 GPU 验证（见 §10～§13）。尚未实现 RT Feature、运行光追原型或测量 RT 性能。
+日期：2026-10-07，更新于 2026-10-08。状态：SB 独立 Emission、Ho-Atmosphere 环境输入、主表面深度关联与共享读取已通过 GPU 验证（见 §10～§13）；HoRTScene 已完成 Editor 中的 D3D12 硬件求交尖峰（§14）。尚未实现生产 DI/GI Feature、光照输出或测量 RT 性能。
 
 ## 判断
 
@@ -16,7 +16,7 @@
 
 最新范围补充：**SSS 暂不接入**，用户仍在斟酌其设计。RT 首版不依赖 SSS profile、thickness、透射响应或 SSS 专用历史，不因现有 SB 中已有字段就要求消费或扩展它们。当前铺路重点是 SB emission、世界方向环境辐射，以及必要的数据有效性/读取约定。
 
-**最新实施优先级**：用户决定先完成可独立验证的 DI/GI 与环境生产端，暂不处理 lilToon 怎么接收、暗部如何过渡、材质内/后处理的具体合成映射。后续 pass 合成保留为方向，具体 PBR/NPR 结合另设阶段；此前 §4.5/§6 的讨论作为约束与备选，不是当前实现要求。算法验证用最小 PBR 响应参考；当前不自动关闭或改写材质的旧光照、cast、CS 等。环境、主表面深度关联和共享读取已完成首版；下一项是 HoRTScene 的静态求交与实例/材质关联。
+**最新实施优先级**：用户决定先完成可独立验证的 DI/GI 与环境生产端，暂不处理 lilToon 怎么接收、暗部如何过渡、材质内/后处理的具体合成映射。后续 pass 合成保留为方向，具体 PBR/NPR 结合另设阶段；此前 §4.5/§6 的讨论作为约束与备选，不是当前实现要求。算法验证用最小 PBR 响应参考；当前不自动关闭或改写材质的旧光照、cast、CS 等。环境、主表面共享读取和刚性 opaque 世界求交已有首版；下一项是命中顶点属性与材质组分求值。
 
 ## 1. ReSTIR、RTXDI、RTXGI 的职责
 
@@ -203,7 +203,7 @@ Ho-RTGI 可以复用共享的 direct-light evaluator 给二次命中着色；不
 | Emission | SB 已追加独立 HDR 输出（实现进展见 §10） | 发光面的自发光输出、mesh light 关联 | 次级命中 radiance、发光反弹 | 主表面直接读；屏幕外发光材质及三角形采样仍需世界空间登记 |
 | Motion / 相机 / jitter | URP motion + 相机状态，已有基础 | temporal reprojection | temporal reprojection | 核对单位、方向、jitter、动态分辨率与蒙皮运动 |
 | 主表面历史 | RT 自己维护，待实现 | 前帧深度/法线/必要材质信息 | 同左 | 只保存算法实际需要的历史，不保存整套无关 SB/OB 图 |
-| 世界空间 AS 与几何 | UnityPathTracing 有参考，Ho 待接入 | 光源遮挡 | 二次命中与重连遮挡 | 独立于屏幕 buffer，维护 instance/submesh/transform/变形/裁切 |
+| 世界空间 AS 与几何 | HoRTScene 已实现刚性 opaque mesh 的 Editor 硬件求交 | 光源遮挡 | 二次命中与重连遮挡 | 已有 instance/submesh/material 关联、变换与显式几何刷新；裁切、变形、Player 待接 |
 | 任意命中材质 | UnityPathTracing 专用材质参考，Ho 待接入 | alpha visibility；需要时更多响应 | 二次表面 albedo/normal/emission/BRDF | 不能用主相机 SB 查屏幕外表面；复用材质语义/函数 |
 | 灯列表与采样分布 | UnityPathTracing LightScene/PDF/ReGIR 有参考 | 灯候选、PDF、稳定前后帧身份 | 二次表面 direct evaluation | 与 URP 灯单位/layer/cookie 对齐；预采样按规模引入 |
 | 世界方向天空 radiance | Ho-Atmosphere 已实现 | 环境采样（启用时） | ray miss（启用时） | 使用共享求值与 revision；重要性采样 PDF 后续再接 |
@@ -425,3 +425,21 @@ C# Runtime/Editor 分程序集编译通过。新增两个 Inspector 的 HelpBox 
 验证：Unity 6000.3.15f1，D3D12 RG、D3D11 RG、D3D11 compatibility 均通过；每个路径同时验 raster 与 compute。覆盖双轴离心像素、正交/透视、偏移投影、相机移动/旋转、两种法线与 Geometry Normal 单视图/All、HDR 主色与 emission、原始 roughness/reflectance、可选身份、旧布局标记、cutout/遮挡/缺失/越界/域不匹配/不支持投影以及关闭/恢复后的 payload 清零。已有深度关联与 Emission 用例在 D3D12 RG 回归通过。
 
 读取契约见 [RT 主表面读取](../Ho-RT-PrimarySurface.md)。下一项为 **HoRTScene 的静态求交、实例/submesh/材质关联与命中调试**；不立即引入 ReSTIR、完整 native fork、降噪和最终合成。
+
+## 14. 实现进展：HoRTScene 硬件求交尖峰
+
+2026-10-08，新增 Runtime 内部 `HoRTScene` 与共享 `HoRTSceneQuery.hlsl`，采用 Unity 原生 D3D12 inline ray query。没有添加用户必须排序的新 Feature，没有复制屏幕属性、引入 native 插件或改动 Unity 可执行文件。UnityPathTracing 继续作为后续 SDK/bridge 参考；首个求交用例先独立于其配置、DLSS 与输出依赖。
+
+显式登记世界集合而非相机 culling results，一个 Renderer/submesh 对应一个 RT instance。提供稳定 instance/material ID、CPU Renderer/Mesh/submesh/Material 关联、GPU `uint4` metadata、8-bit mask、Revision/Lifetime、dirty Build 与显式 Mesh 更新。保留 native handle 的不透明 token 语义，不把有符号返回值误当成正数组下标。
+
+返回真实硬件命中距离、位置、instance/submesh/material ID、primitiveIndex、重心与 frontFace。CPU 用 Mesh 三角形和 GPU 重心重建世界命中点，已核对一致。没有命中点 UV/法线或材质 radiance 求值；Material ID 当前仅是对象关联，不是完整 GPU 材质池。
+
+实际验证发现静态 BLAS 会复用 Mesh 修改前的数据；改用 `DynamicGeometryManualUpdate` 并明确通知几何 dirty，显式刷新后命中新位置。初版仍只支持刚性网格，不支持蒙皮/顶点 shader 变形/布料/裁切。已知 cutout/透明被排除且有诊断，不应据此替代生产 ShadowCast。
+
+RenderGraph 使用 graphics queue 上的 unsafe pass，记录 metadata 上传、AS Build 与 query 顺序；Read 禁止 async，并固定全局状态修改/不可裁剪。record 后的 CPU 变更会使输入快照失效；禁用/移除/销毁、空集合和服务销毁后重建均有验证。
+
+验证：Unity 6000.3.15f1，D3D12 RenderGraph 与 D3D12 compatibility 均通过真实 GPU 测试；D3D11 能力不足分支不创建 RT 资源并返回原因。覆盖相机不绘制的屏幕外几何、多 submesh/材质、双面、mask、非单位/无效方向、变换与材质更新、移除重加、cutout 排除、Mesh 修改/非 readable、空场景、资源销毁/重建、过期快照。尚未完成 Player、GPU 性能、动态角色或完整材质可见性验收，§7 的 0b 阶段不能整体标记完成。
+
+本轮同时修复主表面 UV 包装函数的 FXC `out surface` 初始化警告（`c6e4fd4`）；D3D11 RG / compatibility 重跑通过，验证现在将 Compute 警告和错误都作为失败条件。此前 GPU 输出通过没有覆盖编译警告，已补齐验收。
+
+详细接口与支持域见 [HoRTScene](../Ho-RTScene.md)。下一项是 **世界空间命中的顶点属性读取与材质组分求值**，补上 UV、法线、base color、专用 emission 等 GI 必需输入；少量灯的参考求值随后接入，暂不启动 ReSTIR/降噪/最终合成。

@@ -1,6 +1,6 @@
 # RT 主表面读取
 
-`HoRTPrimarySurfaceInputs` 是 Runtime 内部的逐 pass 输入快照，`HoRTPrimarySurface.hlsl` 是共享读取入口。它直接借用 GB/SB 资源，不是新的 Renderer Feature，不分配 GBuffer，不写相机颜色，也不经过 AC。当前提供 raster、compute 与 compatibility 的绑定方式；尚未接入 DXR dispatch、灯光、reservoir、降噪或最终合成。
+`HoRTPrimarySurfaceInputs` 是 Runtime 内部的逐 pass 输入快照，`HoRTPrimarySurface.hlsl` 是共享读取入口。它直接借用 GB/SB 资源，不是新的 Renderer Feature，不分配 GBuffer，不写相机颜色，也不经过 AC。当前提供 raster、compute 与 compatibility 的绑定方式；世界空间求交另由 [HoRTScene](Ho-RTScene.md) 提供。本模块不管理 AS、灯光、reservoir、降噪或最终合成。
 
 ## 数据与来源
 
@@ -73,3 +73,5 @@ if (HoRTTryLoadPrimarySurface(pixel, surface))
 隔离入口：`HoRTPrimarySurfaceValidation.Run` / `RunCompatibility`。同一场景同时输出 raster 与显式 compute 读回，验证正交/透视、偏移投影、移动/旋转相机、双轴离心像素、像素中心吸附、两种法线、HDR 主色与专用 emission、未平方的粗糙度、可选身份、旧 writer 标记、失效与清零。SB 的 `Geometry Normal` 单视图/All 也有实际像素验证。
 
 平台完成记录见 RTDI/RTGI 调查报告的实现进展；测试输出 RT 仅存在于 Editor 隔离验证，不是 Runtime 的属性副本。
+
+2026-10-08：FXC 对 UV 包装函数转发 `out surface` 的 definite-assignment 警告已通过显式初始化和局部结果修正；D3D11 RG / compatibility 重新通过。验证现在同时拦截 Compute 编译警告与错误，不能仅以 GPU 输出通过作为编译干净的证据。
