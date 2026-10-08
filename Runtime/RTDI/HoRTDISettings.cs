@@ -7,6 +7,7 @@ namespace lilToon.URP.Extensions.RTDI
     {
         public bool enabled = true;
         public bool inSceneView = true;
+        [Tooltip("局部灯初始候选数；存在方向灯时，另从方向灯分区抽取一个候选。")]
         [Range(1,32)] public int initialSamples = 8;
         public bool temporal = true;
         [Range(1,32)] public int maxHistory = 20;

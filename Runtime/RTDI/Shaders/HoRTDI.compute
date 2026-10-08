@@ -31,8 +31,16 @@ void Initial(uint3 id:SV_DispatchThreadID)
         RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTDIFrameIndex,RTXDI_DI_GENERATE_INITIAL_SAMPLES_RANDOM_SEED);
         RTXDI_RandomSamplerState tileRng=RTXDI_InitRandomSampler(id.xy/16,(uint)_HoRTDIFrameIndex,RTXDI_DI_GENERATE_INITIAL_SAMPLES_RANDOM_SEED);
         RTXDI_DIInitialSamplingParameters p=(RTXDI_DIInitialSamplingParameters)0;
-        p.numLocalLightSamples=(uint)_HoRTDISettings.x;p.brdfRayMinT=_HoRTDISettings.w;p.enableInitialVisibility=1;
-        RTXDI_LightBufferParameters lights=(RTXDI_LightBufferParameters)0;lights.localLightBufferRegion.numLights=(uint)_HoRTDIFrame.z;
+        // Keep the local sample parameter nonzero even for an empty local
+        // region: SDK ComputeInitialSamplingMisData divides by its MIS count.
+        // The SDK skips the empty region and samples the infinite range below.
+        p.numLocalLightSamples=(uint)_HoRTDISettings.x;
+        p.numInfiniteLightSamples=_HoRTDIFrame.z>_HoRTDIFrame.w?1:0;
+        p.brdfRayMinT=_HoRTDISettings.w;p.enableInitialVisibility=1;
+        RTXDI_LightBufferParameters lights=(RTXDI_LightBufferParameters)0;
+        lights.localLightBufferRegion.numLights=(uint)_HoRTDIFrame.w;
+        lights.infiniteLightBufferRegion.firstLightIndex=(uint)_HoRTDIFrame.w;
+        lights.infiniteLightBufferRegion.numLights=(uint)(_HoRTDIFrame.z-_HoRTDIFrame.w);
         RAB_LightSample sample=RAB_EmptyLightSample();
         reservoir=RTXDI_SampleLightsForSurface(rng,tileRng,surface,p,lights,sample);
     }

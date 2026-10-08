@@ -28,7 +28,7 @@ SDK 文件只改 include 路径，保留原始算法与许可。`Runtime/RTDI/Th
 
 ## 当前支持域
 
-- 显式 point、spot、directional 灯；均匀选择解析灯，point/spot 使用参考 delta point-light 的 inverse-square 极限，并适配 Unity range/spot cone；directional 当前为 delta 方向光。遵循参考 RAB 的 RT 可见性，独立于 Unity raster `Light.shadows` 开关。
+- 显式 point、spot、directional 灯；point/spot 在 local 分区均匀选择，directional 在独立的 infinite 分区均匀选择，由 SDK 合并两个估计。局部灯候选预算 1～32，有方向灯时另取一个方向灯候选。point/spot 使用参考 delta point-light 的 inverse-square 极限，并适配 Unity range/spot cone；directional 当前为 delta 方向光。遵循参考 RAB 的 RT 可见性，独立于 Unity raster `Light.shadows` 开关。
 - Cookie、非全局 cullingMask、baked-only 和其他灯型排除，Feature 状态显示排除计数。Rendering Layer/艺术灯光链接、面灯/发光网格与天空重要性采样尚未接入；当前用于默认灯光链接的参考场景。
 - 初始采样参数明确关闭 environment / mesh-light / BRDF light candidates；相应 RAB 接口只有禁用分支，不伪造这些光照贡献。Ho-Atmosphere 的输入保持独立，当前不作为 DI 环境灯。
 - 使用明确的 PBR 参考响应：主色在此响应层映射到 0～1，按 metallic 分出 diffuse 与 F0，perceptual roughness 交给参考 GGX。没有修改 SB 原值或设计 NPR ramp、影色与接收路由。Emissive 不作为 DI 自发光叠加。
@@ -55,5 +55,9 @@ RGBA16F 输出约 16 B/像素（diffuse/specular 两张）；history 16 B/像素
 Unity 6000.3.15f1 的 D3D12 RenderGraph / compatibility 均通过；D3D11 不支持分支通过。多灯测试比较空间/时间样本均值，不把单像素噪声误判为能量错误。SDK/Donut 共 22 个源码文件的 SHA-256 与依赖 include 之外的算法正文已逐一核对。
 
 动态灯验证覆盖连续移动、变色/强度/delta 灯型变化、移动进入静态遮挡、增删/替换、空集合恢复与容量增长；实际读回 GPU 双向映射和旧灯参数。空间复用关闭时，检查时间阶段输出的 M 与 age 确认旧样本被选中；最终 shading 重测 visibility 会按 SDK 重置 visibility age，因此不拿最终历史槽中的 age 判断是否复用。动态 target PDF 的 ray-traced MIS 结果存在单像素方差，能量以区域统计均值核对；此处尚未降噪。
+
+分区验证在关闭时空复用、局部候选预算为 1 的条件下，加入 64 盏超出作用范围的局部灯及一盏方向灯，首帧仍得到正确的太阳贡献。混合有效局部灯后的统计均值约 0.36409，参考值 0.36480。方向灯改为点灯时会重排数组，双向历史映射与旧灯型快照也经过 GPU 核对。仅方向灯时仍维持非零的 local 候选参数，以满足 SDK 初始 MIS 计数的除法约定；空 local region 本身由 SDK 跳过，不生成假的局部灯贡献。
+
+分区不新增 GPU buffer、pass 或 Feature。后续局部灯采样质量与 NRD 接入的取舍见 [DI 持续推进记录](计划/Ho-RTDI-持续推进记录.md)。
 
 共享 SDK 目录随后为 GI 追加 6 个必要头文件（provenance 现共 28 个文件），DI 的原始 22 文件依赖闭包保持原算法不变。参考 GI 链路已接入首版一跳 diffuse 输出，见 [Ho-RTGI](Ho-RTGI.md)；两者均尚未接入最终 PBR/NPR 合成。

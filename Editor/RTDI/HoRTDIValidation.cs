@@ -106,6 +106,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 feature.Settings.spatial=false;Render();light.intensity=2;Near(RenderMean().r,ExpectedMean(light),"light intensity retargets history mean",.015f);
                 Require(feature.LastContext.lastTemporal,"Light intensity change cleared all history");
                 ValidateDynamicLights();
+                ValidateLightRegions();
                 volume.debugMode.value=HoRTDIDebugMode.Combined;var debug=Render();NearRGB(Read(target),debug,"debug presentation",.01f);volume.debugMode.value=HoRTDIDebugMode.Off;
                 gb.Settings.renderScale=HoGeometryBufferRenderScale.Half;Near(Render().a,0,"domain mismatch receiver invalid",.01f);
                 volume.debugMode.value=HoRTDIDebugMode.Receiver;Render();NearRGB(Read(target),Color.red,"invalid receiver debug",.01f);
@@ -117,7 +118,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 var shader=AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDI.compute");
                 foreach(var message in ShaderUtil.GetComputeShaderMessages(shader))Require(message.severity!=UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error&&message.severity!=UnityEditor.Rendering.ShaderCompilerMessageSeverity.Warning,message.message);
                 feature.Dispose();Require(Shader.GetGlobalFloat("_HoRTDIActive")==0,"dispose reset");
-                Debug.Log("[HoRTDIValidation] PASS reference RTXDI initial/temporal/spatial/shade, dynamic light snapshots/remapping/retargeting, analytic energy, world visibility, multi-light mean, history/reset, independent output/debug; API="+SystemInfo.graphicsDeviceType+"; compatibility="+compatibility);
+                Debug.Log("[HoRTDIValidation] PASS reference RTXDI initial/temporal/spatial/shade, local/infinite regions, dynamic light snapshots/remapping/retargeting, analytic energy, world visibility, multi-light mean, history/reset, independent output/debug; API="+SystemInfo.graphicsDeviceType+"; compatibility="+compatibility);
                 Finish(null);
             }
             catch(Exception error){Finish(error);}
@@ -172,6 +173,29 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             light.color=Color.white;light.transform.position=new Vector3(1.5f,0,-1);Render();
         }
         private static Color LightColor(Light source)=>QualitySettings.activeColorSpace==ColorSpace.Linear?source.color.linear:source.color;
+        private static void ValidateLightRegions()
+        {
+            feature.Settings.temporal=false;feature.Settings.spatial=false;feature.Settings.initialSamples=1;light.enabled=false;
+            var sun=Keep(new GameObject("Independent infinite-light region")).AddComponent<Light>();sun.type=LightType.Directional;sun.intensity=.8f;
+            // Local proposals are all out of range. A shared uniform pool would
+            // produce either 0 or 65x sunlight; a separate infinite candidate
+            // produces the correct sun integral on the very first frame.
+            var irrelevant=new List<Light>();
+            for(int i=0;i<64;i++){var item=Point(new Vector3(100+i*3,0,0),Color.white,1);item.range=.1f;irrelevant.Add(item);}
+            Near(Render().r,.8f/Mathf.PI,"sun survives 64 irrelevant local lights at one local candidate",.004f);
+            light.enabled=true;Color average=Color.clear;
+            for(int i=0;i<64;i++){Render();average+=ReadMean(feature.LastContext.diffuse.rt);}average/=64;
+            float mixedReference=.8f/Mathf.PI+ExpectedMean(light);
+            Debug.Log("[HoRTDIValidation] local/infinite mixed mean="+average.r+" reference="+mixedReference);
+            NearRGB(average,Color.white*mixedReference,"local/infinite SDK combination energy",.035f);
+            var oldKeys=feature.LastContext.previousLightKeys;int oldSun=ReferenceIndex(oldKeys,sun);
+            feature.Settings.temporal=true;sun.type=LightType.Point;sun.transform.position=new Vector3(0,0,-2);sun.range=100;
+            Render();CheckLightMappings(oldKeys);Require(feature.LastContext.lastTemporal,"Changing light region cleared history");
+            var previous=new HoRTDIRendererFeature.AnalyticLight[feature.LastContext.previousLights.count];feature.LastContext.previousLights.GetData(previous);
+            Near(previous[oldSun].radianceType.w,2,"previous infinite-light type was overwritten",.001f);
+            sun.enabled=false;foreach(var item in irrelevant)item.enabled=false;
+            feature.Settings.initialSamples=8;Render();
+        }
         private static Color RenderMean(){Render();return ReadMean(feature.LastContext.diffuse.rt);}
         private static float ExpectedMean(Light source)
         {float sum=0;for(int y=24;y<40;y++)for(int x=24;x<40;x++)sum+=Expected(source,x,y);return sum/256;}

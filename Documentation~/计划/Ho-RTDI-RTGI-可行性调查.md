@@ -488,3 +488,9 @@ GI 专用材质副本调用 lilToon 现有两组 emission component，不采样 
 快照逐相机、按实际渲染轮推进；RenderGraph 与兼容路径都显式上传旧灯参数和映射。世界几何未变才允许复用，可用当前 AS 从旧表面查询旧灯 visibility；几何变化仍清历史，不扩大为动态角色/previous TLAS 支持。GI 二次点的 DI 初始采样显式关闭新增的 DI light-history 分支，GI 本身的历史策略保持原样。
 
 GPU 验证核对连续移动/灯属性变化能量的区域统计均值、增删/替换/空集合、容量增长、旧参数与双向映射、空间复用关闭时的时间阶段 M/age。最终 shading 刷新 visibility 会重置 SDK visibility age，不能用最终历史槽的 age 推断是否复用。仍保留 raw 采样方差，没有提前加入降噪或材质合成。详见 [Ho-RTDI](../Ho-RTDI.md)。
+
+## 19. 持续推进目标与方向灯分区
+
+2026-10-09 用户授权开启持续推进 DI 的目标：每步独立评审、找参考、实现验证、复查并过滤提交。后续逐步记录在 [Ho-RTDI 持续推进记录](Ho-RTDI-持续推进记录.md)，不把每一步的选择默认为永久优先级。
+
+第一步按参考 LightScene / ReSTIRDIContext 与 SDK SampleInfiniteLights，接入 local / infinite 连续分区。point/spot 使用原局部预算，方向灯独立取一个候选；不增加 pass/buffer，不改 SDK。64 盏无贡献局部灯加太阳、局部预算 1 且关闭时空复用时，首帧出光正确；混合灯统计均值 0.36409，参考 0.36480。D3D12 两条路径及 Gamma/Linear、D3D11 禁用与 GI 回归通过。下一项先量化局部功率提案的收益；NRD 先审输入契约和本地 native 接入路线，不提前搬入完整框架或合成。

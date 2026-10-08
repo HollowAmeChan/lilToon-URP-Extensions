@@ -56,6 +56,7 @@ namespace lilToon.URP.Extensions.RTDI
             foreach(var item in renderers)if((settings.geometryLayers.value&(1<<item.gameObject.layer))!=0)geometry.Add(item);
             scene.Synchronize(geometry);
             var lightList=new List<AnalyticLight>();var lightKeys=new List<Light>();int signature=settings.initialSamples.GetHashCode()^settings.rayBias.GetHashCode();int excludedLights=0;
+            var infiniteLights=new List<AnalyticLight>();var infiniteKeys=new List<Light>();
             foreach(var light in UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.InstanceID))
             {
                 if(!light.enabled||!light.gameObject.activeInHierarchy||(settings.lightLayers.value&(1<<light.gameObject.layer))==0)continue;
@@ -70,14 +71,19 @@ namespace lilToon.URP.Extensions.RTDI
                     radianceType=new Vector4(color.r,color.g,color.b,light.type==LightType.Point?0:light.type==LightType.Spot?1:2),
                     directionOuter=new Vector4(direction.x,direction.y,direction.z,Mathf.Cos(light.spotAngle*Mathf.Deg2Rad*.5f)),
                     innerShadow=new Vector4(Mathf.Cos(light.innerSpotAngle*Mathf.Deg2Rad*.5f),0,0,0)};
-                lightList.Add(item);lightKeys.Add(light);
+                if(light.type==LightType.Directional){infiniteLights.Add(item);infiniteKeys.Add(light);}
+                else {lightList.Add(item);lightKeys.Add(light);}
             }
+            // RTXDI's uniform local and infinite samplers operate on separate
+            // contiguous ranges. Stable ordering within each range keeps the
+            // identity-based temporal maps valid when a light changes type.
+            int localCount=lightList.Count;lightList.AddRange(infiniteLights);lightKeys.AddRange(infiniteKeys);
             if(!contexts.TryGetValue(camera,out var context)){context=new HoRTDIContext();contexts.Add(camera,context);}
             var descriptor=data.cameraData.cameraTargetDescriptor;
             context.Prepare(descriptor.width,descriptor.height,lightList.Count,format);LastContext=context;
             var lightData=lightList.Count>0?lightList.ToArray():new AnalyticLight[1];
-            pass.Setup(context,scene,shader,settings,lightData,lightKeys.ToArray(),lightList.Count,signature);
-            renderer.EnqueuePass(pass);Status=$"RTXDI DI：{lightList.Count} 灯 / {scene.InstanceCount} RT submesh / 排除 {excludedLights} 灯、{scene.Rejections.Count} 几何项";
+            pass.Setup(context,scene,shader,settings,lightData,lightKeys.ToArray(),lightList.Count,localCount,signature);
+            renderer.EnqueuePass(pass);Status=$"RTXDI DI：{localCount} 局部 / {infiniteLights.Count} 方向灯 / {scene.InstanceCount} RT submesh / 排除 {excludedLights} 灯、{scene.Rejections.Count} 几何项";
             if(volume!=null&&volume.debugMode.value!=HoRTDIDebugMode.Off&&(camera.cameraType==CameraType.SceneView?volume.debugInSceneView.value:volume.debugInGameView.value))
             {
                 if(debugMaterial==null){var found=Shader.Find("Hidden/lilToon/URP/RTDI/Debug");if(found!=null)debugMaterial=CoreUtils.CreateEngineMaterial(found);}
@@ -92,19 +98,19 @@ namespace lilToon.URP.Extensions.RTDI
         private sealed class HoRTDIPass : ScriptableRenderPass
         {
             private HoRTDIContext context;private HoRTScene scene;private ComputeShader shader;private HoRTDISettings settings;
-            private AnalyticLight[] lights;private Light[] lightKeys;private int lightCount,signature;
+            private AnalyticLight[] lights;private Light[] lightKeys;private int lightCount,localLightCount,signature;
             internal HoRTDIPass(){renderPassEvent=RenderPassEvent.BeforeRenderingPostProcessing;}
-            internal void Setup(HoRTDIContext context,HoRTScene scene,ComputeShader shader,HoRTDISettings settings,AnalyticLight[] lights,Light[] keys,int count,int signature)
-            {this.context=context;this.scene=scene;this.shader=shader;this.settings=settings;this.lights=lights;lightKeys=keys;lightCount=count;this.signature=signature;}
+            internal void Setup(HoRTDIContext context,HoRTScene scene,ComputeShader shader,HoRTDISettings settings,AnalyticLight[] lights,Light[] keys,int count,int localCount,int signature)
+            {this.context=context;this.scene=scene;this.shader=shader;this.settings=settings;this.lights=lights;lightKeys=keys;lightCount=count;localLightCount=localCount;this.signature=signature;}
             private sealed class Data
             {
                 internal HoRTDIContext context;internal HoRTScene.Inputs scene;internal HoRTPrimarySurfaceInputs primary;
                 internal ComputeShader shader;internal HoRTDISettings settings;internal HoRTDIContext.LightFrame lightFrame;
-                internal int lightCount,signature;internal uint revision;internal Matrix4x4 view,projection;internal Camera camera;
+                internal int lightCount,localLightCount,signature;internal uint revision;internal Matrix4x4 view,projection;internal Camera camera;
                 internal TextureHandle diffuse,specular;
             }
             private Data Snapshot(Camera camera,Matrix4x4 view,Matrix4x4 projection) => new Data {context=context,scene=scene.ReadCompatibility(),shader=shader,settings=settings,lightFrame=context.CaptureLights(lights,lightKeys),
-                lightCount=lightCount,signature=signature,revision=scene.Revision,view=view,projection=projection,camera=camera};
+                lightCount=lightCount,localLightCount=localLightCount,signature=signature,revision=scene.Revision,view=view,projection=projection,camera=camera};
             public override void RecordRenderGraph(RenderGraph graph,ContextContainer frame)
             {
                 var camera=frame.Get<UniversalCameraData>();
@@ -112,6 +118,7 @@ namespace lilToon.URP.Extensions.RTDI
                 {
                     var source=Snapshot(camera.camera,camera.GetViewMatrix(),camera.GetProjectionMatrix());
                     data.context=source.context;data.shader=source.shader;data.settings=source.settings;data.lightFrame=source.lightFrame;data.lightCount=source.lightCount;
+                    data.localLightCount=source.localLightCount;
                     data.signature=source.signature;data.revision=source.revision;data.view=source.view;data.projection=source.projection;data.camera=source.camera;
                     data.scene=scene.Read(graph,builder);data.primary=HoRTPrimarySurfaceInputs.Read(graph,frame,builder);
                     foreach(var buffer in new[]{context.reservoirs,context.history,context.lights,context.previousLights,context.currentToPrevious,context.previousToCurrent})builder.UseBuffer(graph.ImportBuffer(buffer),AccessFlags.ReadWrite);
@@ -141,7 +148,7 @@ namespace lilToon.URP.Extensions.RTDI
                     cmd.SetComputeIntParam(d.shader,"_HoRTDIPreviousLightCount",d.lightFrame.previousCount);
                     cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDIHistory",c.history);cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDINeighbors",c.neighbors);
                     cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDIDiffuse",c.diffuse.nameID);cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDISpecular",c.specular.nameID);
-                    cmd.SetComputeVectorParam(d.shader,"_HoRTDIFrame",new Vector4(c.width,c.height,d.lightCount,0));
+                    cmd.SetComputeVectorParam(d.shader,"_HoRTDIFrame",new Vector4(c.width,c.height,d.lightCount,d.localLightCount));
                     cmd.SetComputeVectorParam(d.shader,"_HoRTDISettings",new Vector4(Mathf.Clamp(d.settings.initialSamples,1,32),Mathf.Clamp(d.settings.spatialSamples,1,16),Mathf.Clamp(d.settings.spatialRadius,1,32),Mathf.Max(.00001f,d.settings.rayBias)));
                     cmd.SetComputeVectorParam(d.shader,"_HoRTDIFlags",new Vector4(temporal?1:0,d.settings.spatial?1:0,Mathf.Clamp(d.settings.maxHistory,1,32),0));
                     cmd.SetComputeVectorParam(d.shader,"_HoRTDIReservoirLayout",new Vector4(c.rowPitch,c.arrayPitch,0,0));cmd.SetComputeIntParam(d.shader,"_HoRTDIFrameIndex",c.frame);

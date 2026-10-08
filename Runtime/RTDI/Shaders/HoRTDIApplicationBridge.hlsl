@@ -13,7 +13,7 @@
 #include "../ThirdParty/RTXDI/RtxdiParameters.h"
 #include "../ThirdParty/RTXDI/Utils/RandomSamplerState.hlsl"
 
-float4 _HoRTDIFrame; // width, height, light count, reserved
+float4 _HoRTDIFrame; // width, height, total light count, DI local region count (unused by GI)
 float4 _HoRTDISettings; // initial samples, spatial samples, spatial radius, ray bias
 float4 _HoRTDIFlags; // temporal history valid, spatial enabled, max history, reserved
 float4 _HoRTDIReservoirLayout;
