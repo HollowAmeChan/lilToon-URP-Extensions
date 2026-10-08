@@ -28,7 +28,7 @@ SDK 文件只改 include 路径，保留原始算法与许可。`Runtime/RTDI/Th
 
 ## 当前支持域
 
-- 显式 point、spot、directional 灯；point/spot 在 local 分区均匀选择，directional 在独立的 infinite 分区均匀选择，由 SDK 合并两个估计。局部灯候选预算 1～32，有方向灯时另取一个方向灯候选。point/spot 使用参考 delta point-light 的 inverse-square 极限，并适配 Unity range/spot cone；directional 当前为 delta 方向光。遵循参考 RAB 的 RT 可见性，独立于 Unity raster `Light.shadows` 开关。
+- 显式 point、spot、directional 灯；point/spot 在 local 分区使用均匀或功率提案，directional 在独立的 infinite 分区均匀选择，由 SDK 合并两个估计。局部灯候选预算 1～32，有方向灯时另取一个方向灯候选。point/spot 使用参考 delta point-light 的 inverse-square 极限，并适配 Unity range/spot cone；directional 当前为 delta 方向光。遵循参考 RAB 的 RT 可见性，独立于 Unity raster `Light.shadows` 开关。
 - Cookie、非全局 cullingMask、baked-only 和其他灯型排除，Feature 状态显示排除计数。Rendering Layer/艺术灯光链接、面灯/发光网格与天空重要性采样尚未接入；当前用于默认灯光链接的参考场景。
 - 初始采样参数明确关闭 environment / mesh-light / BRDF light candidates；相应 RAB 接口只有禁用分支，不伪造这些光照贡献。Ho-Atmosphere 的输入保持独立，当前不作为 DI 环境灯。
 - 使用明确的 PBR 参考响应：主色在此响应层映射到 0～1，按 metallic 分出 diffuse 与 F0，perceptual roughness 交给参考 GGX。没有修改 SB 原值或设计 NPR ramp、影色与接收路由。Emissive 不作为 DI 自发光叠加。
@@ -36,7 +36,7 @@ SDK 文件只改 include 路径，保留原始算法与许可。`Runtime/RTDI/Th
 
 ## 历史、资源与调度
 
-四阶段在一个 graphics-queue unsafe pass 中有序执行，位置为 BeforeRenderingPostProcessing；主表面/AS/灯数据和输出均显式声明依赖。初始化写 reservoir 1，temporal 写 2，spatial 写回 1，shade 保存历史 0。SDK reservoir stride 为 24 B，保存三份；只额外保存上一帧必要的 surface guide（raw depth、两种 octa normal、参考材质，16 B/像素），不物化另一套当前主表面属性。
+采样四阶段在一个 graphics-queue unsafe pass 中有序执行，位置为 BeforeRenderingPostProcessing；主表面/AS/灯数据和输出均显式声明依赖。功率模式在同一 pass 内先执行 PDF build / GenerateMips / SDK Presample。初始化写 reservoir 1，temporal 写 2，spatial 写回 1，shade 保存历史 0。SDK reservoir stride 为 24 B，保存三份；只额外保存上一帧必要的 surface guide（raw depth、两种 octa normal、参考材质，16 B/像素），不物化另一套当前主表面属性。
 
 历史逐相机拥有。分辨率、场景 Revision、初始采样数或 ray bias 变化会使旧历史失效；禁用后重新启用也从新历史开始。静态世界的相机运动使用实际前后矩阵生成 SDK 所需的像素位移/深度差，未使用或重新生产 URP motion。几何变换时保守清历史，不宣称支持动态角色 temporal。
 
@@ -58,6 +58,18 @@ Unity 6000.3.15f1 的 D3D12 RenderGraph / compatibility 均通过；D3D11 不支
 
 分区验证在关闭时空复用、局部候选预算为 1 的条件下，加入 64 盏超出作用范围的局部灯及一盏方向灯，首帧仍得到正确的太阳贡献。混合有效局部灯后的统计均值约 0.36409，参考值 0.36480。方向灯改为点灯时会重排数组，双向历史映射与旧灯型快照也经过 GPU 核对。仅方向灯时仍维持非零的 local 候选参数，以满足 SDK 初始 MIS 计数的除法约定；空 local region 本身由 SDK 跳过，不生成假的局部灯贡献。
 
-分区不新增 GPU buffer、pass 或 Feature。后续局部灯采样质量与 NRD 接入的取舍见 [DI 持续推进记录](计划/Ho-RTDI-持续推进记录.md)。
+分区本身不新增 GPU buffer、pass 或 Feature。后续局部灯采样质量与 NRD 接入的取舍见 [DI 持续推进记录](计划/Ho-RTDI-持续推进记录.md)。
 
-共享 SDK 目录随后为 GI 追加 6 个必要头文件（provenance 现共 28 个文件），DI 的原始 22 文件依赖闭包保持原算法不变。参考 GI 链路已接入首版一跳 diffuse 输出，见 [Ho-RTGI](Ho-RTGI.md)；两者均尚未接入最终 PBR/NPR 合成。
+## 可选的局部灯功率采样
+
+Feature 的「局部灯采样」可选择均匀/功率，默认均匀。功率模式沿参考 PdfTexture → box-filter mip chain → Presample 流程，直接调用 SDK `RTXDI_PresampleLocalLights`，初始采样使用 SDK `POWER_RIS`。PDF 为 R32F 的 Morton 方形域；点灯权重使用参考的 4π × 强度亮度，spot 再乘本 bridge 的平方 cone 衰减积分。该权重仅是提案，不改灯光着色；SDK 保留逆选择 PDF 以核对能量。它不包含接收点的距离/BRDF/遮挡，不能取代 ReGIR。
+
+每相机增加 64 × 256 个 uint2 RIS 条目（128 KiB）与一张按局部灯数取 2 次幂的 R32F 完整 mip PDF。每轮按当前灯参数重建，padding 清零；灯重排、功率变化和全黑根节点均经过验证。无局部灯或缺少 R32F UAV/过滤支持时实际使用均匀路径；状态显示实际模式。切回均匀会释放 PDF 与完整 RIS，只保留供编译后资源绑定的单条 8 B dummy buffer。GI 保持未启用 presampling 的编译分支。
+
+均匀模式保持原有四个全屏 kernel；功率模式增加 PDF build、mip generation 与 16384 个预采样线程，不增加全屏 GBuffer、副 Feature 或原生 DLL。模式切换清 reservoir 历史，动态灯本身的参数变化继续使用既有前后快照/映射。
+
+1 盏强灯与 63 盏弱灯同位置、每像素 1 候选、关闭时空复用的基准中，以每像素数学参考归一化后，均匀均值约 1.0033、方差 55.8132；功率均值约 0.9995，方差在 F6 打印精度下为 0。该场景的功率提案与目标几何因子匹配，不能据此推断任意场景都接近零方差。
+
+完整 Power 模式的 D3D12 RG/compatibility、Gamma/Linear，以及 Uniform 两条路径回归通过；包含全黑 PDF、强灯身份互换并保留历史、完整 mip 链、资源释放、动态灯/类型跨分区、旧功能能量及 GI 回归。基准 Stopwatch 包含渲染请求、同步读回、CPU 开销和首次使用成本，不是 GPU kernel 时间；预采样的固定开销是继续保留均匀默认值的原因之一。尚无生产帧率承诺。
+
+共享 SDK 目录为 GI 追加 6 个、为 DI 功率预采样追加 1 个必要头文件（provenance 现共 29 个文件），原始算法均保持不变。参考 GI 链路已接入首版一跳 diffuse 输出，见 [Ho-RTGI](Ho-RTGI.md)；两者均尚未接入最终 PBR/NPR 合成。

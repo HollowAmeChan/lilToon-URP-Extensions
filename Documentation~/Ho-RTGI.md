@@ -33,7 +33,7 @@ Emission 直接调用 lilToon 现有 `lilEmissionComponent` / `lilEmission2ndCom
 
 GenerateSecondary 使用参考 BrdfRayTracing 的 diffuse 分支、SDK RNG 与 Donut cosine hemisphere / ONB，每像素一条射线。ShadeSecondary 调用 `RTXDI_SampleLightsForSurface` 求命中点解析灯贡献，加专用 emission，再调用 `RTXDI_MakeGIReservoir`。Temporal / Spatial 分别调用 SDK `RTXDI_GITemporalResampling` / `RTXDI_GISpatialResampling`，均使用 ray-traced bias correction；Final 按参考 visibility / reservoir weight / diffuse BRDF 着色，不启用 final MIS。
 
-天空 miss 沿参考的 distant-sample 表示进入 GI reservoir，读取 Ho-Atmosphere 全方向原始 HDR 辐射。共享 SDK 目录为此追加 6 个必要头文件，总计 28 个，源 SHA-256、原始许可和 provenance 均保留；没有引入 PT、native、DLSS、NRD、ReGIR 或环境预采样框架。
+天空 miss 沿参考的 distant-sample 表示进入 GI reservoir，读取 Ho-Atmosphere 全方向原始 HDR 辐射。共享 SDK 目录为 GI 追加 6 个必要头文件，随后 DI 功率预采样又追加 1 个，现总计 29 个，源 SHA-256、原始许可和 provenance 均保留；没有引入 PT、native、DLSS、NRD、ReGIR 或环境预采样框架。
 
 五阶段在 BeforeRenderingPostProcessing 的一个 graphics-queue unsafe pass 内顺序执行。直接借用 GB/SB，不复制当前主表面 GBuffer；显式声明 AS metadata、buffer、输出与天空 texture 依赖。Ho-Atmosphere 先生产环境，GI 对天空做 shader-local 绑定，关闭 GI 天空采样不会清掉其他消费者的环境输入。
 

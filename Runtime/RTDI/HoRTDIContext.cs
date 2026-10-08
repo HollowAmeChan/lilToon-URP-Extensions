@@ -15,6 +15,11 @@ namespace lilToon.URP.Extensions.RTDI
     {
         internal GraphicsBuffer reservoirs,history,lights,neighbors,previousLights,currentToPrevious,previousToCurrent;
         internal RTHandle diffuse,specular;
+        internal RTHandle powerPdf;
+        internal GraphicsBuffer ris;
+        internal const int RISTileSize=256,RISTileCount=64;
+        internal int pdfSize;
+        internal bool powerSampling;
         internal int width,height,rowPitch,arrayPitch,frame;
         internal uint sceneRevision;
         internal int settingsSignature;
@@ -62,6 +67,21 @@ namespace lilToon.URP.Extensions.RTDI
             if(buffer!=null&&buffer.count>=Mathf.Max(1,count))return;
             buffer?.Dispose();buffer=new GraphicsBuffer(GraphicsBuffer.Target.Structured,Mathf.NextPowerOfTwo(Mathf.Max(1,count)),stride){name=name};
         }
+        internal void PreparePower(int localCount,bool requested)
+        {
+            powerSampling=requested&&localCount>0&&SystemInfo.IsFormatSupported(GraphicsFormat.R32_SFloat,GraphicsFormatUsage.LoadStore)
+                &&SystemInfo.IsFormatSupported(GraphicsFormat.R32_SFloat,GraphicsFormatUsage.Linear);
+            int risCount=powerSampling?RISTileSize*RISTileCount:1;
+            if(ris==null||ris.count!=risCount)
+            {ris?.Dispose();ris=new GraphicsBuffer(GraphicsBuffer.Target.Structured,risCount,8){name="HoRTDI SDK RIS tiles"};}
+            if(!powerSampling){powerPdf?.Release();powerPdf=null;pdfSize=0;return;}
+            // Square power-of-two Morton domain, with a minimum 2x2 root.
+            pdfSize=2;while((long)pdfSize*pdfSize<localCount)pdfSize*=2;
+            if(pdfSize>16384)throw new InvalidOperationException("RTXDI PDF mip domain exceeds 16k");
+            var desc=new RenderTextureDescriptor(pdfSize,pdfSize)
+            {graphicsFormat=GraphicsFormat.R32_SFloat,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true,useMipMap=true,autoGenerateMips=false};
+            RenderingUtils.ReAllocateIfNeeded(ref powerPdf,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTDI local light power PDF");
+        }
         private sealed class LightReferences:IEqualityComparer<Light>
         {
             internal static readonly LightReferences Instance=new();
@@ -97,6 +117,6 @@ namespace lilToon.URP.Extensions.RTDI
             previousLightKeys=lightFrame.keys;previousLightData=lightFrame.current;
         }
         public void Dispose()
-        {reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();previousLights?.Dispose();currentToPrevious?.Dispose();previousToCurrent?.Dispose();diffuse?.Release();specular?.Release();reservoirs=history=lights=neighbors=previousLights=currentToPrevious=previousToCurrent=null;diffuse=specular=null;previousLightKeys=Array.Empty<Light>();previousLightData=null;}
+        {reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();previousLights?.Dispose();currentToPrevious?.Dispose();previousToCurrent?.Dispose();ris?.Dispose();powerPdf?.Release();ris=null;powerPdf=null;diffuse?.Release();specular?.Release();reservoirs=history=lights=neighbors=previousLights=currentToPrevious=previousToCurrent=null;diffuse=specular=null;previousLightKeys=Array.Empty<Light>();previousLightData=null;}
     }
 }

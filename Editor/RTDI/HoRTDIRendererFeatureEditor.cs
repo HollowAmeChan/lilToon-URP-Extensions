@@ -15,7 +15,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(LilUrpEditorSectionGui.DrawSectionHeader(ref runtime,"运行","RTXDI DI",RuntimeColor))
             using(new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                Draw(settings,"enabled","启用");Draw(settings,"initialSamples","局部灯候选数");Draw(settings,"temporal","时间重采样");Draw(settings,"maxHistory","历史长度");
+                Draw(settings,"enabled","启用");Draw(settings,"localSampling","局部灯采样");Draw(settings,"initialSamples","局部灯候选数");Draw(settings,"temporal","时间重采样");Draw(settings,"maxHistory","历史长度");
                 Draw(settings,"spatial","空间重采样");Draw(settings,"spatialSamples","邻域样本数");Draw(settings,"spatialRadius","邻域半径");
             }
             EditorGUILayout.HelpBox("调试在 Ho-RTDI Volume 的「调试」分组。",MessageType.Info);

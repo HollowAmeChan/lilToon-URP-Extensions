@@ -494,3 +494,10 @@ GPU 验证核对连续移动/灯属性变化能量的区域统计均值、增删
 2026-10-09 用户授权开启持续推进 DI 的目标：每步独立评审、找参考、实现验证、复查并过滤提交。后续逐步记录在 [Ho-RTDI 持续推进记录](Ho-RTDI-持续推进记录.md)，不把每一步的选择默认为永久优先级。
 
 第一步按参考 LightScene / ReSTIRDIContext 与 SDK SampleInfiniteLights，接入 local / infinite 连续分区。point/spot 使用原局部预算，方向灯独立取一个候选；不增加 pass/buffer，不改 SDK。64 盏无贡献局部灯加太阳、局部预算 1 且关闭时空复用时，首帧出光正确；混合灯统计均值 0.36409，参考 0.36480。D3D12 两条路径及 Gamma/Linear、D3D11 禁用与 GI 回归通过。下一项先量化局部功率提案的收益；NRD 先审输入契约和本地 native 接入路线，不提前搬入完整框架或合成。
+
+
+## 20. DI 可选局部功率预采样
+
+按持续推进记录先量化强弱灯退化，再接参考 PDF mip / SDK PresampleLocalLights / POWER_RIS。1 强 + 63 弱、一个候选的归一化均匀均值 1.003284、方差 55.813219；功率均值 0.999520，方差在 F6 打印精度下为 0。Shader SDK 只追加一个 header，29 个源文件算法正文核对不变。增加每相机 128 KiB RIS 及 R32F PDF/mips，Uniform 保持默认，GPU 生产预算尚未完成。
+
+Power 的 D3D12 RG/compatibility、Gamma/Linear、全黑/动态功率/类型分区、mip/资源释放、D3D11 禁用和 GI 回归通过；一次完成后 Unity Worker IPC 退出崩溃保留日志并重跑正常退出。此时 raw 输出仍未降噪；下一项优先 NRD 输入契约与本地调度路线，继续不改材质合成。详细评审与限制见 [持续推进记录](Ho-RTDI-持续推进记录.md)。

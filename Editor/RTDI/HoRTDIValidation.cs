@@ -17,7 +17,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     {
         private static readonly List<Object> objects=new();
         private static RenderPipelineAsset previousDefault,previousQuality;
-        private static bool compatibility,previousAsync,unsupported;
+        private static bool compatibility,previousAsync,unsupported,forcePower;
         private static Camera camera;
         private static RenderTexture target;
         private static HoRTDIRendererFeature feature;
@@ -30,6 +30,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         [StructLayout(LayoutKind.Sequential)]
         private struct Reservoir {public uint light,uv,visibility,age;public float target,weight;}
         public static void RunCompatibility(){compatibility=true;Run();}
+        public static void RunPower(){forcePower=true;Run();}
+        public static void RunPowerCompatibility(){forcePower=true;compatibility=true;Run();}
         public static void RunUnsupported(){unsupported=true;Run();}
         public static void Run()
         {
@@ -43,6 +45,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 gb=Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>());gb.Settings.maxRenderQueue=(int)RenderQueue.GeometryLast;
                 var sb=Keep(ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>());sb.Settings.enableSemanticLanes=sb.Settings.enableCorrelatedSemantics=false;
                 feature=Keep(ScriptableObject.CreateInstance<HoRTDIRendererFeature>());feature.Settings.temporal=false;feature.Settings.spatial=false;feature.Settings.initialSamples=1;
+                if(forcePower)feature.Settings.localSampling=HoRTDILocalSampling.Power;
                 renderer.rendererFeatures.Add(gb);renderer.rendererFeatures.Add(sb);renderer.rendererFeatures.Add(feature);
                 var pipeline=Keep(UniversalRenderPipelineAsset.Create(renderer));pipeline.supportsHDR=true;pipeline.msaaSampleCount=1;
                 GraphicsSettings.defaultRenderPipeline=pipeline;QualitySettings.renderPipeline=pipeline;
@@ -107,6 +110,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 Require(feature.LastContext.lastTemporal,"Light intensity change cleared all history");
                 ValidateDynamicLights();
                 ValidateLightRegions();
+                ValidatePowerSpread();
                 volume.debugMode.value=HoRTDIDebugMode.Combined;var debug=Render();NearRGB(Read(target),debug,"debug presentation",.01f);volume.debugMode.value=HoRTDIDebugMode.Off;
                 gb.Settings.renderScale=HoGeometryBufferRenderScale.Half;Near(Render().a,0,"domain mismatch receiver invalid",.01f);
                 volume.debugMode.value=HoRTDIDebugMode.Receiver;Render();NearRGB(Read(target),Color.red,"invalid receiver debug",.01f);
@@ -197,6 +201,66 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             feature.Settings.initialSamples=8;Render();
         }
         private static Color RenderMean(){Render();return ReadMean(feature.LastContext.diffuse.rt);}
+        private static void ValidatePowerSpread()
+        {
+            var previousMode=feature.Settings.localSampling;feature.Settings.localSampling=HoRTDILocalSampling.Uniform;
+            feature.Settings.temporal=false;feature.Settings.spatial=false;feature.Settings.initialSamples=1;
+            var position=light.transform.position;float intensity=light.intensity;
+            light.transform.position=new Vector3(0,0,-2);light.intensity=1;
+            var weak=new List<Light>();for(int i=0;i<63;i++)weak.Add(Point(light.transform.position,Color.white,.001f));
+            try
+            {
+                var uniform=MeasureNormalizedNoise(128,1.063f);
+                Debug.Log($"[HoRTDIValidation] power-spread uniform mean={uniform.mean:F6} variance={uniform.variance:F6} wallMs={uniform.ms:F1}");
+                Near((float)uniform.mean,1,"uniform power-spread statistical energy",.13f);
+                Require(uniform.variance>10,"Power-spread benchmark did not expose uniform variance");
+                feature.Settings.localSampling=HoRTDILocalSampling.Power;
+                var power=MeasureNormalizedNoise(128,1.063f);
+                Require(feature.LastContext.powerSampling,"Power mode unexpectedly fell back");
+                Debug.Log($"[HoRTDIValidation] power-spread SDK power mean={power.mean:F6} variance={power.variance:F6} wallMs={power.ms:F1}");
+                Near((float)power.mean,1,"power sampling statistical energy",.02f);
+                Require(power.variance<uniform.variance*.01,"SDK power sampling did not materially reduce variance");
+                Require(feature.LastContext.powerPdf.rt.mipmapCount==1+(int)Mathf.Log(feature.LastContext.pdfSize,2),"PDF mip chain incomplete");
+                light.intensity=0;foreach(var item in weak)item.intensity=0;
+                NearRGB(Render(),Color.black,"all-black PDF has no stale samples",.002f);
+                // Swap which identity carries the power, preserving the light
+                // set and temporal history; PDF/RIS must use current values.
+                light.intensity=.001f;foreach(var item in weak)item.intensity=.001f;weak[0].intensity=1;
+                feature.Settings.temporal=true;Render();Require(feature.LastContext.lastTemporal,"Power change cleared history");
+                var swapped=MeasureNormalizedNoise(32,1.063f/.001f);
+                Near((float)swapped.mean,1,"power changes update PDF/RIS energy",.02f);
+                Require(swapped.variance<.01,"Power proposal did not follow the new bright light");
+            }
+            finally
+            {
+                foreach(var item in weak)item.enabled=false;light.transform.position=position;light.intensity=intensity;
+                feature.Settings.localSampling=previousMode;
+                feature.Settings.initialSamples=8;feature.Settings.temporal=true;Render();
+                if(previousMode==HoRTDILocalSampling.Uniform)
+                    Require(feature.LastContext.powerPdf==null&&feature.LastContext.ris.count==1,"Uniform mode retained power resources");
+            }
+        }
+        private static (double mean,double variance,double ms) MeasureNormalizedNoise(int frames,float totalIntensity)
+        {
+            double sum=0,sumSquares=0;int count=0;var image=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);
+            var watch=System.Diagnostics.Stopwatch.StartNew();
+            try
+            {
+                for(int frame=0;frame<frames;frame++)
+                {
+                    Render();var previous=RenderTexture.active;
+                    try{RenderTexture.active=feature.LastContext.diffuse.rt;image.ReadPixels(new Rect(0,0,64,64),0,0);image.Apply();}
+                    finally{RenderTexture.active=previous;}
+                    for(int y=24;y<40;y++)for(int x=24;x<40;x++)
+                    {
+                        double value=image.GetPixel(x,y).r/(Expected(light,x,y)*totalIntensity);
+                        Require(!double.IsNaN(value)&&!double.IsInfinity(value),"Non-finite sampling estimate");sum+=value;sumSquares+=value*value;count++;
+                    }
+                }
+                double mean=sum/count;return(mean,Math.Max(0,sumSquares/count-mean*mean),watch.Elapsed.TotalMilliseconds);
+            }
+            finally{Object.DestroyImmediate(image);}
+        }
         private static float ExpectedMean(Light source)
         {float sum=0;for(int y=24;y<40;y++)for(int x=24;x<40;x++)sum+=Expected(source,x,y);return sum/256;}
         private static void CheckLightMappings(Light[] oldKeys)

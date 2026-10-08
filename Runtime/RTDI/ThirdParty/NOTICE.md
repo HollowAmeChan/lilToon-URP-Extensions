@@ -9,7 +9,8 @@ is https://github.com/Kuan-Mi/UnityPathTracing at local commit
 rewritten in the copied SDK/Donut files; resampling algorithms were not rewritten.
 The subset includes DI initial sampling, reservoir/storage, temporal/spatial
 resampling, GI reservoir/temporal/spatial resampling, random sampling and their transitive shader headers. ReGIR headers
-are compile dependencies; runtime ReGIR and presampling are disabled. No PT,
+are compile dependencies; runtime ReGIR and environment presampling are disabled.
+DI local-light power presampling is optional. No PT,
 DLSS, NRD or native rendering plugin is included in this subset.
 
 - `RTXDI/` retains NVIDIA's copyright/SPDX notices and is governed by the
@@ -31,3 +32,7 @@ GI application adaptations in `../../RTGI/Shaders/HoRTGI.raytrace`,
 ShadeSecondarySurfaces, GI passes and RAB_SpatialHelpers. Their NVIDIA portions
 are governed by the same bundled NVIDIA license. The initial DI dependency
 closure has 22 files; the GI extension adds six, for 28 recorded source files.
+
+The optional DI power path adds `LightSampling/PresamplingFunctions.hlsl`,
+also unchanged except include paths, for 29 recorded source files. Its PDF build
+and mip/presample scheduling adapt the reference PdfTexture / Presample passes.

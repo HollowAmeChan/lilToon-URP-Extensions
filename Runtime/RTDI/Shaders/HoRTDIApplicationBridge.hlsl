@@ -7,11 +7,20 @@
 #include "../../RayTracing/Shaders/HoRTPrimarySurface.hlsl"
 #include "../../RayTracing/Shaders/HoRTSceneQuery.hlsl"
 #include "../ThirdParty/donut/brdf.hlsli"
-#define RTXDI_ENABLE_PRESAMPLING 0
+#ifndef HO_RTDI_PRESAMPLING_ENABLED
+#define HO_RTDI_PRESAMPLING_ENABLED 0
+#endif
+#define RTXDI_ENABLE_PRESAMPLING HO_RTDI_PRESAMPLING_ENABLED
 #define RTXDI_REGIR_MODE 0
 #define RTXDI_ALLOWED_BIAS_CORRECTION 3
 #include "../ThirdParty/RTXDI/RtxdiParameters.h"
 #include "../ThirdParty/RTXDI/Utils/RandomSamplerState.hlsl"
+#if RTXDI_ENABLE_PRESAMPLING
+#include "../ThirdParty/RTXDI/LightSampling/RISBufferSegmentParameters.h"
+RWStructuredBuffer<uint2> _HoRTDIRISBuffer;
+#define RTXDI_RIS_BUFFER _HoRTDIRISBuffer
+float4 _HoRTDIRISLayout; // tile size, tile count, power enabled, reserved
+#endif
 
 float4 _HoRTDIFrame; // width, height, total light count, DI local region count (unused by GI)
 float4 _HoRTDISettings; // initial samples, spatial samples, spatial radius, ray bias
@@ -100,6 +109,9 @@ RAB_LightInfo RAB_LoadLightInfo(uint index,bool previousFrame)
     if(index<(uint)_HoRTDIFrame.z)result.data=_HoRTDILights[index];return result;
 }
 RAB_LightInfo RAB_LoadCompactLightInfo(uint index) { return RAB_EmptyLightInfo(); }
+// Compact-light copies are optional in the SDK. Keep the canonical light
+// buffer as the single source; RIS entries store an index and inverse PDF.
+bool RAB_StoreCompactLightInfo(uint index,RAB_LightInfo light) { return false; }
 bool RAB_IsAnalyticLightSample(RAB_LightSample sample) { return true; }
 float RAB_LightSampleSolidAnglePdf(RAB_LightSample sample) { return sample.solidAnglePdf; }
 void RAB_GetLightDirDistance(RAB_Surface surface,RAB_LightSample sample,out float3 direction,out float distance)
