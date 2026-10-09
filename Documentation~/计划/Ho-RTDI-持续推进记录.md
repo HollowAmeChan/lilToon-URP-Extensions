@@ -55,12 +55,25 @@
 
 **完成后复查：** 只有 DI 增加信号与降噪调度，未改 GI、最终材质接收、CS 或 ShadowCast。核心库不持有 Unity GPU 设备、command list 或 descriptor heap；native 返回的本轮裸数据及时复制，pass 使用各自 CB 偏移与三帧常量 buffer。NRD 只在开启时加载与分配，缺库/错误 ABI/资源不支持显示状态并回退 raw。仍限静态 Mono；Player、TAA 显式契约、动态几何、真实材质边界与 GPU budget 不能因 Editor 测试通过就视为交付。详见 [NRD 接入说明](../Ho-RTDI-NRD.md)。
 
-## 4. 下一步取舍
+## 4. Windows release Player 部署
+
+**动手前评审：应做。** Editor 的 AssetDatabase 自动补 shader、已加载的核心库及即时 shader 编译会掩盖 Player 缺口。NRD 上一步只能算 Editor 交付；需要普通保存的 renderer asset 和独立 EXE 才能证明当前输出链路可部署。只使用隔离工程，不改用户场景、不扩展合成或 PT 框架。
+
+**参考核对：** 再读用户参考的 NativeRtxdiFeature / NrdDenoiserHelper 原生入口与插件引用，保留当前独立 CPU core 路线；对照 [Unity PluginImporter](https://docs.unity.com/en-us/engine/6000.3/script-reference/unityeditor/pluginimporter) 和 [BuildPipeline](https://docs.unity.com/en-us/engine/6000.0/script-reference/unityeditor/buildpipeline) 的普通打包契约。[LightBakingOutput](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/LightBakingOutput.html) 与本地 URP ForwardLights 使用 bakingOutput 读取运行时烘焙状态。
+
+**实现与发现：** 增加隔离构建入口和 Unity 忽略的 Player probe 模板，不把捕获 helper 加入包 Feature 菜单。分别保存 RG / compatibility 模式并构建 Win64 Mono release，检查 renderer 中 DI / 15 个 NRD compute 引用，不用 Always Included 保留整个包。首次真实构建暴露 DI/GI 直接读取 Editor-only Light.lightmapBakeType，已修为 Player bakingOutput.lightmapBakeType，Editor 继续用设置值拒绝尚未烘焙的 baked-only 灯。GI 仅做这一必要编译修正，两条 GI 回归通过。测试脚本的运行时兼容模式切换被 Unity 拒绝，改为两个独立构建；compatibility Blit 不能把 shader-global 名当 temporary RT，用测试 shader 直接采样 globals。这两个测试失败均未计为通过。
+
+**结果：** 两个 release 构建均成功、0 errors；DI/NRD shaders 在 build report 中，packed HoRTDINRD.dll hash 与源相同。实际 D3D12 RG / compatibility EXE exit=0、JSON pass=true，覆盖单灯能量、baked-only 排除/Mixed 保留、金属 diffuse 与独立镜面、相机外遮挡、Power、RELAX 噪声/能量、关闭回 raw/重建。raw MSE 约 0.050401、filtered 约 0.000066，红/蓝均值约 0.227；D3D11 EXE 确认为 Direct3D11 并保持 DI inactive。最初强制 D3D11 的单 API 构建不能启动，已把 D3D11 加入测试 API 列表后重新验收。Roslyn 编译通过，仅有已有非本步警告；没有 DI/NRD shader 或 command-buffer 错误。
+
+**完成后复查与边界：** 生产改动仅灯烘焙模式的跨 Editor/Player API 修正。测试 probe 明确 Dispose 自己的 DI/capture/target；退出时仍有四条 GraphicsBuffer GC 提示，D3D11（未创建 DI GPU context）也相同，不能据此宣称整个 URP 退出已无泄漏。真实 lilToon、MSAA=1 不依赖 GB generic fallback / MSAA resolve，当前两种 Shader.Find 缺失提示保留为已知输入设施边界。DI 隐藏调试 shader 未进入 build report，需要下一步建立自身资源保留引用，且旧 renderer asset 的自动补引用仍须保存；尚未证明旧资产的构建迁移。只有 Mono/64² 受控场景，没有 IL2CPP、目标性能、TAA、动态几何或完整材质边界结论。[复现说明](../../Tests~/Player/RTDI/README.md)。
+
+## 5. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
-| NRD 部署与质量 | Editor 原始信号/调度已交付；下一项优先验证 Player shader 引用、核心库打包与实际运行，随后检查目标分辨率、材质边界/动态灯响应、CPU 分配和 GPU budget。TAA/动态几何需独立证明。 |
+| Player 资源完整性 | DI/NRD 输出与核心 DLL 的 Win64 Mono release 部署已交付；优先补自身 debug shader 序列化保留，并验证旧 renderer 的补引用/保存流程，避免只在新建受控资产中有效。GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
+| NRD 质量与预算 | 随后检查目标分辨率、材质边界/动态灯响应、CPU 分配和 GPU budget。TAA/动态几何需独立证明。不能用 64² Player 回归代表目标场景性能。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

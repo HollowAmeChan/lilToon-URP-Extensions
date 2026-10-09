@@ -93,7 +93,11 @@ namespace lilToon.URP.Extensions.RTGI
             foreach(var light in Object.FindObjectsByType<Light>(FindObjectsSortMode.InstanceID))
             {
                 if(!light.enabled||!light.gameObject.activeInHierarchy||(layerMask&(1<<light.gameObject.layer))==0)continue;
-                if((light.type!=LightType.Point&&light.type!=LightType.Spot&&light.type!=LightType.Directional)||light.cookie!=null||light.cullingMask!=-1||light.lightmapBakeType==LightmapBakeType.Baked){excluded++;continue;}
+                bool bakedOnly=light.bakingOutput.lightmapBakeType==LightmapBakeType.Baked;
+                #if UNITY_EDITOR
+                bakedOnly=light.lightmapBakeType==LightmapBakeType.Baked;
+                #endif
+                if((light.type!=LightType.Point&&light.type!=LightType.Spot&&light.type!=LightType.Directional)||light.cookie!=null||light.cullingMask!=-1||bakedOnly){excluded++;continue;}
                 var color=QualitySettings.activeColorSpace==ColorSpace.Linear?light.color.linear:light.color;
                 if(light.useColorTemperature)color*=Mathf.CorrelatedColorTemperatureToRGB(light.colorTemperature);
                 color*=Mathf.Max(0,light.intensity);var direction=light.transform.forward;

@@ -40,7 +40,9 @@ Feature 的 **NRD RELAX 降噪** 为可选项，默认关闭。开启后仍保�
 - 64² 镜面测试中，raw ROI 均值约 0.296814，默认 prepass 时约 0.222147；dense-DI 预设约 0.276015。该改进不等于无偏、无空间模糊或任意高光都保真。
 - 已覆盖选中灯距离、正 viewZ、金属 diffuse、镜面信号、静态世界相机移动、透视相机、输入域拒绝、raw/filtered 调试、关闭释放与重建。无效表面最后仍输出 A=0。
 
-当前只是 **静态不透明 Mono 的 Editor 初版**。不支持/未验证 skinned 或运动几何、XR、TAA jitter 的显式 NRD 契约、相机切换/时间跳变的大规模场景、完整材质 ID 边界路由和生产 GPU budget。Player 的资源引用、核心 DLL 打包及运行仍需独立验收；DLL importer 已限定 Windows x64。
+Windows x64 Mono release Player 已独立验收：普通序列化 renderer 引用 DI compute 与 15 个 NRD compute，正常裁剪后实际执行 RG / compatibility，两条路径的单灯、世界遮挡、Power、独立镜面、raw/filtered、RELAX 关闭重建均通过。packed 核心 DLL SHA-256 与源 DLL 相同；D3D11 实际启动并保持 DI inactive。双色灯 Player raw MSE 约 0.050401，filtered 约 0.000066，红/蓝均值约 0.227；仍是 64² 受控场景，不能代表生产画质。验证入口与复现步骤见 [Player probe](../Tests~/Player/RTDI/README.md)。
+
+当前是 **静态不透明 Mono 的 Editor / Windows Player 初版**。不支持/未验证 IL2CPP、skinned 或运动几何、XR、TAA jitter 的显式 NRD 契约、相机切换/时间跳变的大规模场景、完整材质 ID 边界路由和生产 GPU budget。DI 隐藏调试 shader 尚无可靠的 Player 保留引用；GB 通用 fallback / MSAA resolve 也不在本次真实 lilToon、MSAA=1 接收测试内。默认 shader-reference 自动补齐仍在 Editor Create，旧 renderer asset 必须保存引用，尚未做跨旧资产的构建迁移。DLL importer 限定 Windows x64。
 
 新增八张信号/输出/恢复纹理合计约 60 B/像素，RELAX pool 约 80 B/像素，另有三个 64 KiB 常量 buffer。1080p 增量约 277 MiB，不含驱动/对齐；与已有 DI 资源合计约 483 MiB 以上。当前每轮还有描述/常量的 managed 分配，CPU/GPU 时间及内存优化是后续门槛，不以 64² 回归代表目标场景性能。
 

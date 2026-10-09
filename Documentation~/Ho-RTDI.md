@@ -46,7 +46,7 @@ SDK 文件只改 include 路径，保留原始算法与许可。`Runtime/RTDI/Th
 
 没有 previous TLAS；几何变化仍清历史。允许复用时世界几何未变，当前 AS 同时描述上一轮世界，可从旧表面向旧灯做 temporal visibility。此处支持的是动态灯光与静态世界相机重投影，不能据此宣称支持动态角色/几何。
 
-RGBA16F 输出约 16 B/像素（diffuse/specular 两张）；history 16 B/像素；reservoir 三份约 72 B/像素，另有 block padding、灯和 AS。1080p 三类合计约 206 MiB，不含 AS/其他输入/驱动开销。灯历史额外保存一份 64 B/灯参数及双向 4 B/索引，容量取二次幂，另外有 CPU 快照；没有复制主表面图。尚未做生产性能预算与 Player 验收。
+RGBA16F 输出约 16 B/像素（diffuse/specular 两张）；history 16 B/像素；reservoir 三份约 72 B/像素，另有 block padding、灯和 AS。1080p 三类合计约 206 MiB，不含 AS/其他输入/驱动开销。灯历史额外保存一份 64 B/灯参数及双向 4 B/索引，容量取二次幂，另外有 CPU 快照；没有复制主表面图。Windows x64 Mono Player 的受控 64² 输出链路已验收；尚未做生产性能预算。
 
 ## 验证
 
@@ -77,4 +77,4 @@ Feature 的「局部灯采样」可选择均匀/功率，默认均匀。功率�
 
 ## 可选 NRD RELAX
 
-开启 Feature 的 NRD RELAX 降噪后，公开 diffuse/specular 发布 filtered，额外 raw handles/globals 保持原始结果。当前已验证静态 Mono、D3D12 两条路径与 Gamma/Linear；Player、TAA/XR/动态几何与目标性能尚未验收。NRD 只过滤独立 DI 并恢复同一参考材质因子，不负责最终 lilToon 合成。信号、ABI、资源成本、测试与限制详见 [Ho-RTDI-NRD](Ho-RTDI-NRD.md)。
+开启 Feature 的 NRD RELAX 降噪后，公开 diffuse/specular 发布 filtered，额外 raw handles/globals 保持原始结果。当前已验证静态 Mono、D3D12 两条路径、Editor Gamma/Linear，以及 Windows x64 release Player 实际执行；IL2CPP、TAA/XR/动态几何与目标性能尚未验收。NRD 只过滤独立 DI 并恢复同一参考材质因子，不负责最终 lilToon 合成。信号、ABI、资源成本、测试与限制详见 [Ho-RTDI-NRD](Ho-RTDI-NRD.md)。

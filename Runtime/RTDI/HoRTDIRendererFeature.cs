@@ -67,7 +67,12 @@ namespace lilToon.URP.Extensions.RTDI
                 if(!light.enabled||!light.gameObject.activeInHierarchy||(settings.lightLayers.value&(1<<light.gameObject.layer))==0)continue;
                 if(light.type!=LightType.Point&&light.type!=LightType.Spot&&light.type!=LightType.Directional){excludedLights++;continue;}
                 // Cookies / light-layer material routing are deliberately not silently approximated.
-                if(light.cookie!=null||light.cullingMask!=-1||light.lightmapBakeType==LightmapBakeType.Baked){excludedLights++;continue;}
+                bool bakedOnly=light.bakingOutput.lightmapBakeType==LightmapBakeType.Baked;
+                #if UNITY_EDITOR
+                // In an unbaked Editor scene the requested mode is authoritative.
+                bakedOnly=light.lightmapBakeType==LightmapBakeType.Baked;
+                #endif
+                if(light.cookie!=null||light.cullingMask!=-1||bakedOnly){excludedLights++;continue;}
                 var color=QualitySettings.activeColorSpace==ColorSpace.Linear?light.color.linear:light.color;
                 if(light.useColorTemperature)color*=Mathf.CorrelatedColorTemperatureToRGB(light.colorTemperature);
                 color*=Mathf.Max(0,light.intensity);
