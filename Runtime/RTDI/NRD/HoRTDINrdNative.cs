@@ -73,20 +73,30 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             internal float minDiffMaterial,minSpecMaterial;internal byte antiFirefly,roughEdge;
             // Dense analytic DI needs responsive diffuse lighting; keep the
             // specular history budget, use SDK fast history/antilag for changes.
-            internal static RelaxSettings DenseDI()=>new RelaxSettings
+            internal static RelaxSettings DenseDI(float seconds=1f/60)
             {
-                acceleration=.6f,spatialSigma=4.5f,temporalSigma=.5f,reset=1,diffFrames=3,specFrames=30,diffFast=1,specFast=6,
+                var result=new RelaxSettings
+                {
+                acceleration=.6f,spatialSigma=4.5f,temporalSigma=.5f,reset=1,
                 historyFixFrames=3,baseStride=14,alternateStride=14,historyNormalPower=8,fastSigma=2,diffPrepass=0,specPrepass=0,
                 minHitWeight=.1f,varianceHistory=3,diffPhi=2,specPhi=1,lobeFraction=.5f,roughFraction=.15f,specSlack=.15f,atrous=5,
                 depthThreshold=.003f,lumRelax=.5f,normalRelax=.3f,roughRelax=1,minDiffMaterial=4,minSpecMaterial=4,roughEdge=1
-            };
+                };
+                if(!float.IsFinite(seconds)||seconds<=0)seconds=1f/60;
+                // Pinned NRD GetMaxAccumulatedFrameNum: round(period * FPS).
+                result.diffFrames=Frames(.05f,seconds,255);result.specFrames=Frames(.5f,seconds,255);
+                result.diffFast=Math.Min(Frames(1f/60,seconds,255),result.diffFrames>0?result.diffFrames-1:0);
+                result.specFast=Math.Min(Frames(.1f,seconds,255),result.specFrames>0?result.specFrames-1:0);
+                result.historyFixFrames=Frames(.05f,seconds,3);return result;
+            }
+            private static uint Frames(float period,float seconds,uint maximum)=>(uint)Math.Min(maximum,Math.Max(0,Math.Floor(period/seconds+.5)));
         }
         [DllImport(Library,CallingConvention=CallingConvention.StdCall)] private static extern IntPtr GetLibraryDesc();
         [DllImport(Library,CallingConvention=CallingConvention.StdCall)] private static extern uint CreateInstance(ref CreationDesc desc,out IntPtr instance);
         [DllImport(Library,CallingConvention=CallingConvention.StdCall)] internal static extern void DestroyInstance(IntPtr instance);
         [DllImport(Library,CallingConvention=CallingConvention.StdCall)] internal static extern IntPtr GetInstanceDesc(IntPtr instance);
         [DllImport(Library,CallingConvention=CallingConvention.StdCall)] internal static extern uint SetCommonSettings(IntPtr instance,ref CommonSettings settings);
-        [DllImport(Library,CallingConvention=CallingConvention.StdCall)] private static extern uint SetDenoiserSettings(IntPtr instance,uint identifier,ref RelaxSettings settings);
+        [DllImport(Library,CallingConvention=CallingConvention.StdCall)] internal static extern uint SetDenoiserSettings(IntPtr instance,uint identifier,ref RelaxSettings settings);
         [DllImport(Library,CallingConvention=CallingConvention.StdCall)] internal static extern uint GetComputeDispatches(IntPtr instance,[In]uint[] identifiers,uint count,out IntPtr dispatches,out uint dispatchCount);
         // This reference fork's exported string helper retains an older enum
         // order. Bind by the pinned header's authoritative numeric enum order.

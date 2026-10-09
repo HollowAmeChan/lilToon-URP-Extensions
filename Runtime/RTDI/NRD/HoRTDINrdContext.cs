@@ -28,6 +28,18 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         private int width,height;
         private const int ConstantBytes=65536;
         private readonly int constantStride;
+        private readonly HoRTDINrdTiming timing=new();
+        internal HoRTDINrdNative.RelaxSettings AppliedSettings {get;private set;}=HoRTDINrdNative.RelaxSettings.DenseDI();
+        #if UNITY_EDITOR
+        internal double? ValidationTimeSeconds;
+        #endif
+        internal float SetRenderTime(double time,out bool reset)
+        {
+            #if UNITY_EDITOR
+            time=ValidationTimeSeconds??time;
+            #endif
+            reset=timing.Advance(time);return timing.Seconds*1000;
+        }
         internal int LastDispatchCount {get;private set;}
         internal HoRTDINrdContext(ComputeShader[] shaders)
         {
@@ -87,6 +99,10 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         internal void Record(CommandBuffer cmd,HoRTDINrdNative.CommonSettings settings,Dictionary<string,RenderTargetIdentifier> external)
         {
             HoRTDINrdNative.Check(HoRTDINrdNative.SetCommonSettings(instance,ref settings),"SetCommonSettings");
+            var desired=HoRTDINrdNative.RelaxSettings.DenseDI(timing.FilteredSeconds);
+            var previous=AppliedSettings;
+            if(desired.diffFrames!=previous.diffFrames||desired.specFrames!=previous.specFrames||desired.diffFast!=previous.diffFast||desired.specFast!=previous.specFast||desired.historyFixFrames!=previous.historyFixFrames)
+            {HoRTDINrdNative.Check(HoRTDINrdNative.SetDenoiserSettings(instance,0,ref desired),"SetDenoiserSettings");AppliedSettings=desired;}
             HoRTDINrdNative.Check(HoRTDINrdNative.GetComputeDispatches(instance,identifiers,1,out var pointer,out uint count),"GetComputeDispatches");
             if(count*constantStride>ConstantBytes)throw new InvalidOperationException("NRD dispatch constants exceed per-frame storage");
             LastDispatchCount=0;if(count==0)return;

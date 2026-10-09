@@ -21,7 +21,7 @@ Feature 的 **NRD RELAX 降噪** 为可选项，默认关闭。开启后仍保�
 | motion | 静态世界的 world-space 零位移；不把相机运动混入 MV，相机重投影由实际前后 view/projection 矩阵提供 |
 | filtered publication | 按同一材质 helper 恢复 modulation，RGB 保持原 DI 接收含义，alpha 重新写 receiver-validity |
 
-没有复制当前主表面 GBuffer；现有 GB/SB 被借用，新增的是 NRD 实际要求的信号编码。NRD shader 不自行读取/重渲染场景。Native core 使用自动帧间时间跟踪，不硬编码生产帧率。
+没有复制当前主表面 GBuffer；现有 GB/SB 被借用，新增的是 NRD 实际要求的信号编码。NRD shader 不自行读取/重渲染场景。帧间时间与历史预算现在使用相机实际提交的 unscaled sample time，详见后面的时间契约。
 
 `HoRTDIRenderGraphResources.diffuse/specular` 与原兼容 globals 发布最终选择的 raw/filtered 结果；新增 rawDiffuse/rawSpecular 与 `_HoRTDIRawDiffuseTexture` / `_HoRTDIRawSpecularTexture` 始终保留 raw。Volume 的 RawDiffuse / RawSpecular 可作同帧对照，原 Receiver 枚举值保持不变。
 
@@ -31,7 +31,7 @@ Feature 的 **NRD RELAX 降噪** 为可选项，默认关闭。开启后仍保�
 
 核心调用返回的指针只在本轮复制描述、资源与常量时读取，不跨下一次 GetComputeDispatches 保存裸指针。每个 dispatch 使用独立常量偏移，帧常量使用三份 64 KiB buffer，避免同轮不同 pass 共用覆盖的 CB 地址。原始 ResourceType 数值以固定头文件为准；该参考库的 GetResourceTypeString 字符串数组顺序已经落后于枚举，不能用它决定绑定。
 
-分辨率变化、禁用/重启、DI 关键设置或世界几何 Revision 变化会重启 NRD 历史；灯参数变化交给 RELAX 的历史/antilag 处理。当前 dense-DI 预设关闭 diffuse/specular prepass：两条 lobe 都有有效距离，未使用概率 lobe split；空间 prepass 会抹平干净解析高光并把确定的可见性边界带亮。diffuse 主/快速历史为 3/1，specular 仍为 30/6；antilag acceleration=0.6、reset=1，其他主要参数保留原 SDK 默认值。使用 SDK temporal、history fix/clamp 与 A-trous，没有自写降噪算法或对每次灯变化整份清历史。数值按本节测试取舍；尚未转换为基于实际 FPS 的积累时间配置。
+分辨率变化、禁用/重启、DI 关键设置或世界几何 Revision 变化会重启 NRD 历史；灯参数变化交给 RELAX 的历史/antilag 处理。当前 dense-DI 预设关闭 diffuse/specular prepass：两条 lobe 都有有效距离，未使用概率 lobe split；空间 prepass 会抹平干净解析高光并把确定的可见性边界带亮。历史以秒定义，60 Hz 时 diffuse 主/快速为 3/1、specular 为 30/6；antilag acceleration=0.6、reset=1，其他主要参数保留原 SDK 默认值。使用 SDK temporal、history fix/clamp 与 A-trous，没有自写降噪算法或对每次灯变化整份清历史。数值与时间换算按本节测试取舍。
 
 ## 验证与边界
 
@@ -85,4 +85,20 @@ NRD 本身允许滤波偏差，材质因子下限、时空积累与空间滤波�
 
 阴影和响应明显改善，代价是静态双色噪声 MSE 高于长历史旧预设；当前仍约比 raw 低 430 倍，filtered 红/蓝均值约 0.2128（参考约 0.22），镜面 raw/filtered 约 0.296814/0.281728。Win64 release Player 两条路径的变色/关灯、原有能量/噪声/镜面/遮挡/Power/debug/lifecycle，以及 D3D11 inactive 均通过；Player filtered MSE 约 0.000085～0.000101。
 
-**仍有的限制：** 移动点灯末轮 ROI 的 raw=0.813635、数学参考=0.809308，而 filtered=0.673002；静止再积累 40 轮后 filtered=0.821692。因此连续变化仍有实质滞后，不能宣称解决动态灯保真。变色第一轮也保留旧成分；短历史是响应/噪声折中，复杂材质/灯分布、specular 动态响应、FPS 适配与 TAA 仍需验证。概率采样的每 lobe hit-distance 代表性也须单独核对，不能从这一组解析灯直接推广到任意 ReSTIR/路径追踪信号。
+**仍有的限制：** 上述固定 60 Hz 预算的移动点灯末轮 ROI raw=0.813635、数学参考=0.809308，而 filtered=0.673002；静止再积累 40 轮后 filtered=0.821692。因此连续变化仍有实质滞后，不能宣称解决动态灯保真。变色第一轮也保留旧成分；短历史是响应/噪声折中，复杂材质/灯分布、specular 动态响应与 TAA 仍需验证。概率采样的每 lobe hit-distance 代表性也须单独核对，不能从这一组解析灯直接推广到任意 ReSTIR/路径追踪信号。
+
+## 相机时间与历史秒数
+
+固定 NRDSettings.h 的 GetMaxAccumulatedFrameNum 明确推荐以积累秒数换算帧数。当前相机 pass 记录 `Time.unscaledTimeAsDouble`，在实际执行 NRD 时推进本相机时间状态，并把时间差乘 1000 传入 CommonSettings.timeDeltaBetweenFrames（该字段单位为 ms）。相同 Unity frame 内额外请求不推进 FPS 估计；first sample 使用 60 Hz seed。正时间差用 0.1 秒时间常数低通，按 `floor(period / filteredSeconds + 0.5)` 换算预算，更新后的整数预算有变化才调用 SetDenoiserSettings。
+
+固定周期为 diffuse 主/fast 50/16.67 ms、specular 主/fast 500/100 ms、history fix 50 ms。主历史上限 255，fast 保持小于主预算，history fix 按固定版本上限 3 裁剪。时间回退、无效值或相机超过 1 秒无样本触发 NRD clear/restart，避免把旧画面接上；该 1 秒界限是本项目的暂停/恢复策略。时间缩放不改变此 unscaled 契约。额外采样仍能推进 sampler frame index；只是不把一帧中 100 次 SubmitRenderRequest 解释成真实 6000 FPS。
+
+| 相同速度、0.4 秒点灯移动的受控时间线 | diffuse 主/fast | specular 主/fast | filtered ROI 平均相对误差 |
+| --- | --- | --- | --- |
+| 30 Hz | 2/1 | 15/3 | 15.44% |
+| 60 Hz | 3/1 | 30/6 | 17.17% |
+| 120 Hz | 6/2 | 60/12 | 14.22% |
+
+时间线由 Editor-only 内部注入，使用真实 GB/SB、ReSTIR reuse、原生 NRD 和 GPU 读回；灯的速度/时长一致，不能把它称作三种真实 wall-clock Player 帧率 benchmark。30/60/120 的预算与输出、重复时间戳、时间回退、无效时间、两秒间隔后旧灯消失均验证；RG / compatibility 一致。现有阴影/变色/噪声/镜面/生命周期与 release Player 回归通过，Record 稳定轮仍 0 个 GC 事件。复现入口 HoRTDIValidation.RunTiming / RunTimingCompatibility。
+
+该契约使不同帧率的响应时长接近，未消除约 14～17% 的连续移动误差；不与上一组中心单像素误差直接作同指标比较。低帧率整数化、高帧率 255 帧上限、整数预算边界的轻微摆动仍属于限制；没有做 frame generation、TAA、XR 或信号置信度处理。参考为用户 NrdDenoiserHelper / NrdSettings、固定 NRDSettings.h，以及 [NVIDIA FPS / history confidence 说明](https://github.com/NVIDIA-RTX/NRD)；没有混入新版本 ABI。

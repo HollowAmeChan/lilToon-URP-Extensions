@@ -17,7 +17,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     {
         private static readonly List<Object> objects=new();
         private static RenderPipelineAsset previousDefault,previousQuality;
-        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise,forceBudget,forceQuality;
+        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise,forceBudget,forceQuality,forceTiming;
         private static Camera camera;
         private static RenderTexture target;
         private static HoRTDIRendererFeature feature;
@@ -38,6 +38,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunBudgetCompatibility(){compatibility=true;RunBudget();}
         public static void RunQuality(){Require(Application.dataPath.Replace('\\','/').Contains("/.codex-research/"),"Use the isolated project");forceQuality=forceDenoise=true;Run();}
         public static void RunQualityCompatibility(){compatibility=true;RunQuality();}
+        public static void RunTiming(){Require(Application.dataPath.Replace('\\','/').Contains("/.codex-research/"),"Use the isolated project");forceTiming=forceDenoise=true;Run();}
+        public static void RunTimingCompatibility(){compatibility=true;RunTiming();}
         public static void RunUnsupported(){unsupported=true;Run();}
         public static void Run()
         {
@@ -89,6 +91,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(++tick<3){Render();return;}
                 if(forceBudget){ValidateBudget();Finish(null);return;}
                 if(forceQuality){ValidateQuality();Finish(null);return;}
+                if(forceTiming){ValidateTiming();Finish(null);return;}
                 if(forceDenoise){ValidateDenoiser();Finish(null);return;}
                 var single=Render();float expected=Expected(light);Near(single.r,expected,"single-light reference",.015f);Near(single.a,1,"receiver valid",.01f);
                 var baseline=Read(target);feature.SetActive(false);RenderCamera();NearRGB(Read(target),baseline,"no automatic camera composite");feature.SetActive(true);
@@ -185,6 +188,40 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             oldKeys=feature.LastContext.previousLightKeys;light.enabled=false;NearRGB(Render(),Color.black,"empty light set",.002f);CheckLightMappings(oldKeys);
             oldKeys=feature.LastContext.previousLightKeys;light.enabled=true;NearRGB(Render(),Color.green*Expected(light),"empty to nonempty lights",.02f);CheckLightMappings(oldKeys);
             light.color=Color.white;light.transform.position=new Vector3(1.5f,0,-1);Render();
+        }
+        private static void ValidateTiming()
+        {
+            var timing=new lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdTiming();timing.Advance(0);
+            for(int i=1;i<90;i++)Require(!timing.Advance(i/30.0),"Continuous clock unexpectedly reset");
+            var before=timing.FilteredSeconds;Require(!timing.Advance(89/30.0)&&timing.FilteredSeconds==before,"Duplicate render changed FPS estimate");
+            Require(timing.Advance(0),"Clock rewind did not reset history");Require(timing.Advance(2),"Long camera gap did not reset history");
+            Require(timing.Advance(double.NaN),"Invalid clock did not reset history");
+            double minError=double.MaxValue,maxError=0;
+            foreach(int fps in new[]{30,60,120})
+            {
+                feature.Settings.denoise=false;RenderCamera();feature.Settings.denoise=true;RenderCamera();var context=feature.LastContext;
+                feature.Settings.temporal=true;feature.Settings.spatial=true;feature.Settings.initialSamples=8;light.transform.position=new Vector3(1.5f,0,-1);
+                double time=0;
+                for(int i=0;i<(int)(fps*.7);i++){context.nrd.ValidationTimeSeconds=time;RenderCamera();time+=1.0/fps;}
+                var settings=context.nrd.AppliedSettings;
+                uint expected=(uint)Math.Floor(.05*fps+.5);Require(settings.diffFrames==expected,"Time-based diffuse history budget mismatch");
+                Require(settings.specFrames==(uint)(fps/2),"Time-based specular history budget mismatch");
+                double error=0;int steps=(int)(fps*.4);
+                for(int i=1;i<=steps;i++)
+                {
+                    light.transform.position=new Vector3(1.5f-(float)(i*2.4/fps),0,-1);context.nrd.ValidationTimeSeconds=time;RenderCamera();time+=1.0/fps;
+                    float reference=ExpectedMean(light);error+=Math.Abs(ReadMean(context.filteredDiffuse.rt).r-reference)/reference;
+                }
+                error/=steps;minError=Math.Min(minError,error);maxError=Math.Max(maxError,error);
+                Require(error<.3,"Time-based moving-light response unexpectedly degraded");
+                Debug.Log($"[HoRTDIValidation] TIMING fps={fps} diff={settings.diffFrames}/{settings.diffFast} spec={settings.specFrames}/{settings.specFast} movingMeanRelative={error:F6} rawFinal={ReadMean(context.diffuse.rt).r:F6} filteredFinal={ReadMean(context.filteredDiffuse.rt).r:F6} reference={ExpectedMean(light):F6}");
+            }
+            Require(maxError-minError<.1,"Equivalent-speed response changed excessively across FPS");
+            var last=feature.LastContext;light.enabled=false;last.nrd.ValidationTimeSeconds+=2;RenderCamera();
+            Near(ReadCenter(last.filteredDiffuse.rt).r,0,"Long camera gap did not discard stale illumination",.002f);
+            light.enabled=true;last.nrd.ValidationTimeSeconds=0;RenderCamera();
+            Require(float.IsFinite(ReadCenter(last.filteredDiffuse.rt).r),"Clock rewind broke actual NRD output");
+            Debug.Log("[HoRTDIValidation] PASS time contract: 30/60/120 Hz actual GPU, camera clock duplicate/rewind/gap/invalid; compatibility="+compatibility);
         }
         private static void ValidateQuality()
         {

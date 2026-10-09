@@ -103,13 +103,23 @@
 
 **完成后复查与下一项：** 连续点灯移动的中心平均相对误差仍 18.71%，末轮 ROI raw 0.813635≈参考 0.809308，而 filtered 0.673002；停止后积累能恢复。这是仍存在的响应限制，不能用门槛通过掩盖。明确 raw 正确、filtered 滞后，未把原始 ReSTIR 方差误判为错误；第一次阴影实验的逐像素 raw 数学比较确实受到 reuse 方差影响，已在确定边界测试中关 reuse，动态灯另保留 reuse。下一步继续评审响应/FPS 契约与必要的信号置信度，再审计 GPU 中间输出复用；完整材质边界、specular 动态响应与 BRDF-aware hit-distance 不能由本步代替。详见 [NRD 质量对照](../Ho-RTDI-NRD.md)。
 
-## 8. 下一步取舍
+## 8. NRD 时间契约与相机历史秒数
+
+**动手前评审：应做。** 原固定 diffuse 3 帧在 30 / 120 FPS 意味着约 100 / 25 ms，无法作为稳定响应时间。用户参考 CommonFrameInput 默认 timeDelta=0，让 core 自动跟踪；但固定 NRDSettings.h 与 [官方说明](https://github.com/NVIDIA-RTX/NRD) 推荐把积累秒数换算成实际（非 frame-generated）FPS。Unity Editor 实测 unscaled time 会随 frame 推进，render-loop 同帧内保持时间戳一致，具备合适的源契约。
+
+**实现：** 本相机 pass Snapshot 捕获 unscaled sample time，执行时更新相机计时。实际 delta 以 ms 输入 native common；0.1 秒低通的 delta 用于 SDK round(period × FPS)。周期 diffuse 50/16.67 ms，specular 500/100 ms，history fix 50 ms；保留 255 / 3 上限与 fast < main。重复时间戳保留预算；回退/无效/>1 秒间隔清 NRD 历史。整数预算变化才更新 native settings，没有新 GPU 资源、Feature、Shader 算法或最终合成；Editor-only 内部时间注入用于可重复的物理时长测试，不暴露为产品开关。
+
+**验证：** 同样 2.4 units/sec、0.4 秒点灯移动、真实 GPU 下，30/60/120 Hz 对应 diffuse 2/3/6、specular 15/30/60 帧，ROI 平均误差 15.44/17.17/14.22%；两条路径一致。重复时间戳不改 FPS，clock rewind/invalid/gap 状态验证；两秒间隔后关灯首轮没有旧残光。原质量门槛和 NRD 两条路径回归、Win64 release 两个构建与实际 EXE、D3D11 inactive、Roslyn 编译通过。Record 仍测为 0 个 GC 事件。没有更改 GI 或共享桥接。
+
+**完成后复查与下一项：** 本步解决不同采样频率的时间含义，没有解决连续运动本身的滞后，也不是实际 wall-clock Player FPS benchmark。低 FPS 的整数化、高 FPS 的帧数上限与 round 边界仍可能影响响应；1 秒 cut 是项目策略，应在更多相机暂停/恢复场景复查。下一步核对每 lobe 距离与 history confidence 的参考实现，先证明对现有静态世界动态灯有效，再考虑增加输入；GPU 输出复用仍待评审，不扩展通用 PT 框架。详见 [时间与预算](../Ho-RTDI-NRD.md)。
+
+## 9. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
-| NRD 质量与预算 | 确定阴影 halo 与突变响应已改进，连续灯运动仍滞后。接下来评审响应/FPS 契约、每 lobe hit-distance 的代表性与可验证的置信度，随后审计 GPU 中间纹理复用。完整材质边界、TAA/动态几何与复杂场景性能仍需独立证明，保留 raw/filtered 对照。 |
+| NRD 质量与预算 | 阴影/突变响应及相机时间预算已交付；连续灯运动仍滞后。接下来核对每 lobe hit-distance 代表性与可验证的 history confidence，随后审计 GPU 中间纹理复用。完整材质边界、TAA/动态几何与复杂场景性能仍需独立证明，保留 raw/filtered 对照。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 
