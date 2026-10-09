@@ -17,7 +17,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     {
         private static readonly List<Object> objects=new();
         private static RenderPipelineAsset previousDefault,previousQuality;
-        private static bool compatibility,previousAsync,unsupported,forcePower;
+        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise;
         private static Camera camera;
         private static RenderTexture target;
         private static HoRTDIRendererFeature feature;
@@ -32,6 +32,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunCompatibility(){compatibility=true;Run();}
         public static void RunPower(){forcePower=true;Run();}
         public static void RunPowerCompatibility(){forcePower=true;compatibility=true;Run();}
+        public static void RunDenoise(){forceDenoise=true;Run();}
+        public static void RunDenoiseCompatibility(){forceDenoise=true;compatibility=true;Run();}
         public static void RunUnsupported(){unsupported=true;Run();}
         public static void Run()
         {
@@ -46,6 +48,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 var sb=Keep(ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>());sb.Settings.enableSemanticLanes=sb.Settings.enableCorrelatedSemantics=false;
                 feature=Keep(ScriptableObject.CreateInstance<HoRTDIRendererFeature>());feature.Settings.temporal=false;feature.Settings.spatial=false;feature.Settings.initialSamples=1;
                 if(forcePower)feature.Settings.localSampling=HoRTDILocalSampling.Power;
+                feature.Settings.denoise=forceDenoise;
                 renderer.rendererFeatures.Add(gb);renderer.rendererFeatures.Add(sb);renderer.rendererFeatures.Add(feature);
                 var pipeline=Keep(UniversalRenderPipelineAsset.Create(renderer));pipeline.supportsHDR=true;pipeline.msaaSampleCount=1;
                 GraphicsSettings.defaultRenderPipeline=pipeline;QualitySettings.renderPipeline=pipeline;
@@ -80,6 +83,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     Debug.Log("[HoRTDIValidation] PASS unsupported platform: "+feature.Status);Finish(null);return;
                 }
                 if(++tick<3){Render();return;}
+                if(forceDenoise){ValidateDenoiser();Finish(null);return;}
                 var single=Render();float expected=Expected(light);Near(single.r,expected,"single-light reference",.015f);Near(single.a,1,"receiver valid",.01f);
                 var baseline=Read(target);feature.SetActive(false);RenderCamera();NearRGB(Read(target),baseline,"no automatic camera composite");feature.SetActive(true);
                 blocker.SetActive(true);var shadow=Render();Near(shadow.r,0,"world visibility",.002f);Near(shadow.a,1,"shadow is still a valid receiver",.01f);
@@ -175,6 +179,52 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             oldKeys=feature.LastContext.previousLightKeys;light.enabled=false;NearRGB(Render(),Color.black,"empty light set",.002f);CheckLightMappings(oldKeys);
             oldKeys=feature.LastContext.previousLightKeys;light.enabled=true;NearRGB(Render(),Color.green*Expected(light),"empty to nonempty lights",.02f);CheckLightMappings(oldKeys);
             light.color=Color.white;light.transform.position=new Vector3(1.5f,0,-1);Render();
+        }
+        private static void ValidateDenoiser()
+        {
+            for(int i=0;i<8;i++)Render();var context=feature.LastContext;
+            Require(context.nrd!=null,"NRD unavailable: "+feature.Status);Require(context.nrd.LastDispatchCount>0,"No native NRD dispatches recorded");
+            Debug.Log("[HoRTDIValidation] NRD single raw="+ReadMean(context.diffuse.rt)+" filtered="+ReadMean(context.filteredDiffuse.rt)+" dispatches="+context.nrd.LastDispatchCount);
+            Near(ReadMean(context.filteredDiffuse.rt).r,ExpectedMean(light),"NRD single-light energy",.03f);
+            var signal=Read(context.nrdDiffuse.rt);Require(signal.a>1.5f&&signal.a<2.1f,"NRD alpha is not selected-light distance");
+            Near(Read(context.nrdViewZ.rt).r,3,"NRD positive linear view Z",.01f);
+            light.color=Color.red;var blue=Point(light.transform.position,Color.blue,light.intensity);
+            for(int i=0;i<40;i++)Render();double rawError=0,filteredError=0,sumRed=0,sumBlue=0;int count=0;
+            var raw=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);var filtered=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);
+            try
+            {
+                for(int frame=0;frame<32;frame++)
+                {
+                    Render();var previous=RenderTexture.active;
+                    try{RenderTexture.active=context.diffuse.rt;raw.ReadPixels(new Rect(0,0,64,64),0,0);raw.Apply();RenderTexture.active=context.filteredDiffuse.rt;filtered.ReadPixels(new Rect(0,0,64,64),0,0);filtered.Apply();}
+                    finally{RenderTexture.active=previous;}
+                    for(int y=24;y<40;y++)for(int x=24;x<40;x++)
+                    {
+                        float reference=Expected(light,x,y);var a=raw.GetPixel(x,y);var b=filtered.GetPixel(x,y);
+                        Require(float.IsFinite(b.r)&&float.IsFinite(b.b),"Non-finite NRD output");rawError+=(a.r-reference)*(a.r-reference);filteredError+=(b.r-reference)*(b.r-reference);
+                        sumRed+=b.r;sumBlue+=b.b;count++;
+                    }
+                }
+            }
+            finally{Object.DestroyImmediate(raw);Object.DestroyImmediate(filtered);}
+            Debug.Log($"[HoRTDIValidation] NRD noise rawMSE={rawError/count:F6} filteredMSE={filteredError/count:F6} red={sumRed/count:F6} blue={sumBlue/count:F6}");
+            Require(filteredError<rawError*.3,"RELAX did not substantially reduce colored-light noise");
+            Near((float)(sumRed/count),ExpectedMean(light),"NRD red energy",.04f);Near((float)(sumBlue/count),ExpectedMean(blue),"NRD blue energy",.04f);
+            blue.enabled=false;light.color=Color.white;light.transform.position=new Vector3(0,0,-2);light.intensity=1;surfaceMaterial.SetFloat("_Metallic",1);
+            for(int i=0;i<40;i++)Render();float rawSpecular=ReadMean(context.specular.rt).r,filteredSpecular=ReadMean(context.filteredSpecular.rt).r;
+            Debug.Log($"[HoRTDIValidation] NRD specular raw={rawSpecular:F6} filtered={filteredSpecular:F6}");
+            Require(filteredSpecular>0,"NRD specular channel missing");Near(filteredSpecular,rawSpecular,"NRD specular energy",rawSpecular*.15f+.005f);
+            Near(ReadMean(context.filteredDiffuse.rt).r,0,"NRD metallic diffuse",.005f);surfaceMaterial.SetFloat("_Metallic",0);
+            camera.transform.position+=new Vector3(.1f,0,-.5f);for(int i=0;i<8;i++)Render();Near(ReadMean(context.filteredDiffuse.rt).r,ExpectedMean(light),"NRD static-world camera movement",.05f);
+            volume.debugMode.value=HoRTDIDebugMode.Diffuse;Render();NearRGB(Read(target),Read(context.filteredDiffuse.rt),"NRD debug publishes filtered result",.015f);volume.debugMode.value=HoRTDIDebugMode.Off;
+            volume.debugMode.value=HoRTDIDebugMode.RawDiffuse;Render();NearRGB(Read(target),Read(context.diffuse.rt),"NRD raw debug",.015f);volume.debugMode.value=HoRTDIDebugMode.Off;
+            gb.Settings.renderScale=HoGeometryBufferRenderScale.Half;Near(Render().a,0,"NRD raw receiver invalid");Near(Read(context.filteredDiffuse.rt).a,0,"NRD filtered receiver invalid");gb.Settings.renderScale=HoGeometryBufferRenderScale.Full;Render();
+            feature.Settings.denoise=false;Render();Require(context.nrd==null&&context.filteredDiffuse==null,"NRD disable retained resources");
+            feature.Settings.denoise=true;Render();Require(context.nrd!=null&&context.nrd.LastDispatchCount>0,"NRD reenable failed");
+            camera.orthographic=false;camera.fieldOfView=40;for(int i=0;i<12;i++)Render();Near(ReadMean(context.filteredDiffuse.rt).r,ExpectedMean(light),"NRD perspective energy",.04f);
+            var compute=AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDI.compute");
+            foreach(var message in ShaderUtil.GetComputeShaderMessages(compute))Require(message.severity!=UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error&&message.severity!=UnityEditor.Rendering.ShaderCompilerMessageSeverity.Warning,message.message);
+            Debug.Log("[HoRTDIValidation] PASS real NRD core/Unity RELAX dispatch, frontend distance/viewZ, energy/noise, camera motion, output/debug/lifecycle; compatibility="+compatibility);
         }
         private static Color LightColor(Light source)=>QualitySettings.activeColorSpace==ColorSpace.Linear?source.color.linear:source.color;
         private static void ValidateLightRegions()

@@ -1,0 +1,122 @@
+#pragma warning disable CS0618
+using System;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
+using UnityEngine;
+using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.RenderGraphModule;
+using UnityEngine.Rendering.Universal;
+
+namespace lilToon.URP.Extensions.RTDI.NRD
+{
+    // NRD core chooses passes/constants/pools; Unity owns and dispatches GPU resources.
+    internal sealed class HoRTDINrdContext:IDisposable
+    {
+        private IntPtr instance;
+        private readonly HoRTDINrdNative.InstanceDesc description;
+        private readonly ComputeShader[] shaders;
+        private readonly int[][] bindings;
+        private readonly RTHandle[] permanent,transient;
+        private readonly GraphicsBuffer[] constants=new GraphicsBuffer[3];
+        private readonly Dictionary<uint,string> names=new();
+        private int width,height;
+        private const int ConstantBytes=65536;
+        private readonly int constantStride;
+        internal int LastDispatchCount {get;private set;}
+        internal HoRTDINrdContext(ComputeShader[] shaders)
+        {
+            instance=HoRTDINrdNative.Create();description=HoRTDINrdNative.Read<HoRTDINrdNative.InstanceDesc>(HoRTDINrdNative.GetInstanceDesc(instance));
+            try
+            {
+                if(description.pipelineCount!=HoRTDINrdManifest.Identifiers.Length||shaders==null||shaders.Length!=description.pipelineCount)
+                    throw new InvalidOperationException("NRD shader library count mismatch");
+                this.shaders=(ComputeShader[])shaders.Clone();bindings=new int[shaders.Length][];
+                for(int i=0;i<shaders.Length;i++)
+                {
+                    if(shaders[i]==null)throw new InvalidOperationException("NRD Unity shader missing: "+i);
+                    var pipeline=HoRTDINrdNative.Read<HoRTDINrdNative.PipelineDesc>(description.pipelines,i);
+                    if(pipeline.identifier!=HoRTDINrdManifest.Identifiers[i])throw new InvalidOperationException("NRD shader permutation mismatch");
+                    var resources=HoRTDINrdManifest.Resources[i];bindings[i]=new int[resources.Length];
+                    for(int j=0;j<resources.Length;j++)bindings[i][j]=Shader.PropertyToID(resources[j]);
+                }
+                constantStride=((int)description.constantMax+255)&~255;
+                for(int i=0;i<constants.Length;i++)constants[i]=new GraphicsBuffer(GraphicsBuffer.Target.Constant,ConstantBytes/4,4){name="HoRTDI NRD constants "+i};
+                permanent=new RTHandle[description.permanentCount];transient=new RTHandle[description.transientCount];
+            }
+            catch{Dispose();throw;}
+        }
+        internal void Prepare(int width,int height)
+        {
+            this.width=width;this.height=height;
+            AllocatePool(permanent,description.permanent,"permanent");AllocatePool(transient,description.transient,"transient");
+        }
+        private void AllocatePool(RTHandle[] pool,IntPtr descriptors,string name)
+        {
+            for(int i=0;i<pool.Length;i++)
+            {
+                var texture=HoRTDINrdNative.Read<HoRTDINrdNative.TextureDesc>(descriptors,i);int factor=Math.Max(1,(int)texture.downsample);
+                var format=Format(texture.format);
+                if(!SystemInfo.IsFormatSupported(format,GraphicsFormatUsage.LoadStore))throw new NotSupportedException("NRD UAV format "+format);
+                var desc=new RenderTextureDescriptor((width+factor-1)/factor,(height+factor-1)/factor)
+                {graphicsFormat=format,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true};
+                RenderingUtils.ReAllocateIfNeeded(ref pool[i],desc,FilterMode.Point,TextureWrapMode.Clamp,name:$"HoRTDI NRD {name} {i}");
+            }
+        }
+        private static GraphicsFormat Format(uint format)=>format switch
+        {
+            0=>GraphicsFormat.R8_UNorm,8=>GraphicsFormat.R8G8B8A8_UNorm,17=>GraphicsFormat.R16_SFloat,
+            27=>GraphicsFormat.R16G16B16A16_SFloat,30=>GraphicsFormat.R32_SFloat,
+            _=>throw new NotSupportedException("Unmapped pinned RELAX pool format "+format)
+        };
+        internal void Declare(RenderGraph graph,IUnsafeRenderGraphBuilder builder)
+        {
+            foreach(var texture in permanent)builder.UseTexture(graph.ImportTexture(texture),AccessFlags.ReadWrite);
+            foreach(var texture in transient)builder.UseTexture(graph.ImportTexture(texture),AccessFlags.ReadWrite);
+            foreach(var buffer in constants)builder.UseBuffer(graph.ImportBuffer(buffer),AccessFlags.ReadWrite);
+        }
+        internal void Record(CommandBuffer cmd,HoRTDINrdNative.CommonSettings settings,Dictionary<string,RenderTargetIdentifier> external)
+        {
+            HoRTDINrdNative.Check(HoRTDINrdNative.SetCommonSettings(instance,ref settings),"SetCommonSettings");
+            HoRTDINrdNative.Check(HoRTDINrdNative.GetComputeDispatches(instance,new uint[]{0},1,out var pointer,out uint count),"GetComputeDispatches");
+            if(count*constantStride>ConstantBytes)throw new InvalidOperationException("NRD dispatch constants exceed per-frame storage");
+            var passes=new HoRTDINrdNative.DispatchDesc[count];var resources=new HoRTDINrdNative.ResourceDesc[count][];
+            var bytes=new byte[ConstantBytes];
+            for(int i=0;i<count;i++)
+            {
+                passes[i]=HoRTDINrdNative.Read<HoRTDINrdNative.DispatchDesc>(pointer,i);var pass=passes[i];
+                if(pass.pipeline>=shaders.Length||pass.resourceCount!=bindings[pass.pipeline].Length||pass.constantSize>constantStride)
+                    throw new InvalidOperationException("NRD dispatch layout mismatch");
+                resources[i]=new HoRTDINrdNative.ResourceDesc[pass.resourceCount];
+                for(int j=0;j<pass.resourceCount;j++)resources[i][j]=HoRTDINrdNative.Read<HoRTDINrdNative.ResourceDesc>(pass.resources,j);
+                if(pass.constantSize>0)Marshal.Copy(pass.constants,bytes,i*constantStride,(int)pass.constantSize);
+            }
+            var words=new uint[bytes.Length/4];Buffer.BlockCopy(bytes,0,words,0,bytes.Length);
+            var buffer=constants[settings.frameIndex%3];cmd.SetBufferData(buffer,words);
+            for(int i=0;i<count;i++)
+            {
+                var pass=passes[i];var shader=shaders[pass.pipeline];int kernel=shader.FindKernel("main");
+                if(pass.constantSize>0)cmd.SetComputeConstantBufferParam(shader,"HoRTDINrdConstants",buffer,i*constantStride,((int)pass.constantSize+15)&~15);
+                for(int j=0;j<pass.resourceCount;j++)
+                {
+                    var resource=resources[i][j];
+                    if(!names.TryGetValue(resource.type,out string name)){name=HoRTDINrdNative.ResourceName(resource.type);names.Add(resource.type,name);}
+                    RenderTargetIdentifier texture;
+                    if(name=="PERMANENT_POOL")texture=permanent[resource.poolIndex].nameID;
+                    else if(name=="TRANSIENT_POOL")texture=transient[resource.poolIndex].nameID;
+                    else if(!external.TryGetValue(name,out texture))throw new InvalidOperationException($"NRD external resource missing: {name}; descriptor={resource.descriptorType}, type={resource.type}, pool={resource.poolIndex}, pipeline={pass.pipeline}");
+                    cmd.SetComputeTextureParam(shader,kernel,bindings[pass.pipeline][j],texture);
+                }
+                cmd.DispatchCompute(shader,kernel,pass.gridWidth,pass.gridHeight,1);
+            }
+            LastDispatchCount=(int)count;
+        }
+        public void Dispose()
+        {
+            if(instance!=IntPtr.Zero){HoRTDINrdNative.DestroyInstance(instance);instance=IntPtr.Zero;}
+            if(permanent!=null)foreach(var texture in permanent)texture?.Release();
+            if(transient!=null)foreach(var texture in transient)texture?.Release();
+            foreach(var buffer in constants)buffer?.Dispose();
+        }
+    }
+}

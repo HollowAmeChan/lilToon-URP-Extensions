@@ -6,6 +6,7 @@ namespace lilToon.URP.Extensions.RTDI
     public sealed class HoRTDIRenderGraphResources : ContextItem
     {
         public TextureHandle diffuse=TextureHandle.nullHandle,specular=TextureHandle.nullHandle;
-        public override void Reset() { diffuse=specular=TextureHandle.nullHandle; }
+        public TextureHandle rawDiffuse=TextureHandle.nullHandle,rawSpecular=TextureHandle.nullHandle;
+        public override void Reset() { diffuse=specular=rawDiffuse=rawSpecular=TextureHandle.nullHandle; }
     }
 }

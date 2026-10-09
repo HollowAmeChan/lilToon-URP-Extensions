@@ -4,7 +4,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.RTDI
 {
-    public enum HoRTDIDebugMode { Off, Diffuse, Specular, Combined, Receiver, All=255 }
+    public enum HoRTDIDebugMode { Off, Diffuse, Specular, Combined, Receiver, RawDiffuse, RawSpecular, All=255 }
     [Serializable]
     public sealed class HoRTDIDebugModeParameter : VolumeParameter<HoRTDIDebugMode>
     {

@@ -6,7 +6,7 @@
 
 Renderer 上添加 `Ho-RTDI`，在其前面启用 GB / SB。需要 D3D12 inline RT、Mono、同分辨率单采样的 GB/SB 及已更新的 SB 网格法线布局。当前世界求交仅支持 HoRTScene 的刚性 opaque MeshRenderer 范围。
 
-Feature 默认只生产独立直接光，主相机基础画面保持原有渲染。全局 Volume 的 `Ho-RTDI` 提供启用覆盖和 Diffuse / Specular / Combined / Receiver / All 调试；Receiver 绿为有效接收面、红为无效，能区分有效暗部与输入不全。调试在最终后处理后显示，不能把它当成已完成的 NPR 合成。
+Feature 默认只生产独立直接光，主相机基础画面保持原有渲染。全局 Volume 的 `Ho-RTDI` 提供启用覆盖和 Diffuse / Specular / Combined / Receiver / RawDiffuse / RawSpecular / All 调试；Receiver 绿为有效接收面、红为无效，能区分有效暗部与输入不全。调试在最终后处理后显示，不能把它当成已完成的 NPR 合成。
 
 RenderGraph 读取 `HoRTDIRenderGraphResources.diffuse / specular` 并声明读依赖。RGB 为线性 HDR、已经包含参考接收 BRDF 的贡献；A 为接收面有效性，阴影中的有效表面可以 RGB=0、A=1，输入缺失/取样域不匹配为 A=0。兼容全局为 `_HoRTDIDiffuseTexture`、`_HoRTDISpecularTexture` 和 `_HoRTDIActive`。
 
@@ -32,7 +32,7 @@ SDK 文件只改 include 路径，保留原始算法与许可。`Runtime/RTDI/Th
 - Cookie、非全局 cullingMask、baked-only 和其他灯型排除，Feature 状态显示排除计数。Rendering Layer/艺术灯光链接、面灯/发光网格与天空重要性采样尚未接入；当前用于默认灯光链接的参考场景。
 - 初始采样参数明确关闭 environment / mesh-light / BRDF light candidates；相应 RAB 接口只有禁用分支，不伪造这些光照贡献。Ho-Atmosphere 的输入保持独立，当前不作为 DI 环境灯。
 - 使用明确的 PBR 参考响应：主色在此响应层映射到 0～1，按 metallic 分出 diffuse 与 F0，perceptual roughness 交给参考 GGX。没有修改 SB 原值或设计 NPR ramp、影色与接收路由。Emissive 不作为 DI 自发光叠加。
-- 无降噪；raw ReSTIR 输出可有噪声。单个像素的 colored-light 或重采样结果不要求逐帧等于所有灯的精确和，应以统计均值核对能量。
+- 可选 NRD RELAX，默认关闭，接入与限制见 [NRD 初版](Ho-RTDI-NRD.md)。raw ReSTIR 输出仍可有噪声。单个像素的 colored-light 或重采样结果不要求逐帧等于所有灯的精确和，应以统计均值核对能量。
 
 ## 历史、资源与调度
 
@@ -73,3 +73,8 @@ Feature 的「局部灯采样」可选择均匀/功率，默认均匀。功率�
 完整 Power 模式的 D3D12 RG/compatibility、Gamma/Linear，以及 Uniform 两条路径回归通过；包含全黑 PDF、强灯身份互换并保留历史、完整 mip 链、资源释放、动态灯/类型跨分区、旧功能能量及 GI 回归。基准 Stopwatch 包含渲染请求、同步读回、CPU 开销和首次使用成本，不是 GPU kernel 时间；预采样的固定开销是继续保留均匀默认值的原因之一。尚无生产帧率承诺。
 
 共享 SDK 目录为 GI 追加 6 个、为 DI 功率预采样追加 1 个必要头文件（provenance 现共 29 个文件），原始算法均保持不变。参考 GI 链路已接入首版一跳 diffuse 输出，见 [Ho-RTGI](Ho-RTGI.md)；两者均尚未接入最终 PBR/NPR 合成。
+
+
+## 可选 NRD RELAX
+
+开启 Feature 的 NRD RELAX 降噪后，公开 diffuse/specular 发布 filtered，额外 raw handles/globals 保持原始结果。当前已验证静态 Mono、D3D12 两条路径与 Gamma/Linear；Player、TAA/XR/动态几何与目标性能尚未验收。NRD 只过滤独立 DI 并恢复同一参考材质因子，不负责最终 lilToon 合成。信号、ABI、资源成本、测试与限制详见 [Ho-RTDI-NRD](Ho-RTDI-NRD.md)。

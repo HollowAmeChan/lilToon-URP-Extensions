@@ -41,12 +41,26 @@
 
 **限制：** 此基准中提案和目标几何因子匹配，所以降方差极明显。功率忽略距离、可见性和接收 BRDF；同功率远近灯、被遮挡强灯仍可退化。当前每轮重建 PDF/mips 并预采样，尚未做目标分辨率的 GPU budget、静态 PDF 缓存或自适应 tile 配置。
 
-## 3. 下一步取舍
+## 3. NRD RELAX 实际接入
+
+**动手前评审：应做，先核 ABI 与信号。** raw DI 仍有可见方差，单靠提案改进不能覆盖各种灯/材质/遮挡分布。当前 alpha 是接收有效性、RGB 已含参考 BRDF，不能直接作为 NRD 输入。参考 Denoiser.dll 同时包含 NRI/DLSS/NIS、Unity heap hook 和内存控制，完整搬入会超出 DI 目标。
+
+**参考与路线验证：** 读取用户工程 NrdDenoiser / NrdFrameData / NrdPass、原 NRD.hlsli 和 Include ABI；实际调用参考 NRD.dll，确认 4.17.3、编码 2/1、15 个 RELAX pipeline 标识及资源池。选用核心库 CPU 调度 + Unity CommandBuffer 执行原 shader 的路线，完全保留 SDK RELAX 算法，只适配其 custom-engine bindings，不导入 NRI、Denoiser、DLSS/NIS 或 descriptor-heap hook。
+
+**实现与验证：** 新增可选 NRD 开关（默认关）。ShadeNRD 用 SDK material factors 解调，提供真实选中灯距离、编码 normal/roughness、正 viewZ 与静态 world-space 零 MV；原始输出保留。核心库选择 pass/资源/常量，Unity 执行，Resolve 恢复同一因子并写回 receiver alpha。固定版本 ABI、结构大小和 shaderIdentifier 检查；33 个 shader/config/MathLib 原文与 3 个 API header、原 CPU DLL 均记录 SHA。15 个 kernel 编译、实际 GPU 调度、RG/compatibility、Gamma/Linear、镜面/金属、透视、相机移动、域拒绝、raw/filtered 调试与关闭重建通过；原有 DI/power/动态灯与 GI 回归通过。
+
+**发现与修正：** 参考核心库 GetResourceTypeString 的字符串表仍按旧枚举排序，不能据它绑定纹理。使用固定 NRDDescs.h 数值顺序生成 manifest，并由真实 dispatch 验证。默认 50 px specular prepass 在 64² 干净高光场景损失约 25% ROI 均值；dense DI 两个通道都有距离，关闭该 prepass 后约 7%，保留其他默认 temporal/history/A-trous。相应镜面测试已收紧，没有放宽门槛掩盖问题。
+
+**量化结果与限制：** 双色灯 raw 红通道 MSE 0.050401，filtered 0.000049；红/蓝均值约 0.22549/0.22642，数学参考约 0.22。镜面 raw 0.296814，dense-DI filtered 0.276015。滤波仍有空间偏差，尤其默认 diffuse prepass 与材质因子下限；这些数字不是全场景保真或生产性能结论。NRD 增量资源约 277 MiB/1080p，另有 managed 分配和驱动开销。首次手写 plugin meta 不符合 Unity 6 serializedVersion 3 字典格式，已由 PluginImporter 生成并限定 Windows x64，不把测试失败计作通过。
+
+**完成后复查：** 只有 DI 增加信号与降噪调度，未改 GI、最终材质接收、CS 或 ShadowCast。核心库不持有 Unity GPU 设备、command list 或 descriptor heap；native 返回的本轮裸数据及时复制，pass 使用各自 CB 偏移与三帧常量 buffer。NRD 只在开启时加载与分配，缺库/错误 ABI/资源不支持显示状态并回退 raw。仍限静态 Mono；Player、TAA 显式契约、动态几何、真实材质边界与 GPU budget 不能因 Editor 测试通过就视为交付。详见 [NRD 接入说明](../Ho-RTDI-NRD.md)。
+
+## 4. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
-| NRD 降噪 | 下一项优先核对信号输入和本地接入路线，再落实可验证的 DI denoiser 输入/调度。当前 RGB 已含接收 BRDF，alpha 是有效性，不能直接冒充 NRD radiance / hit-distance 输入。明确解调、选中灯距离、normal/roughness/viewZ、motion 与历史状态；不先改最终合成。 |
+| NRD 部署与质量 | Editor 原始信号/调度已交付；下一项优先验证 Player shader 引用、核心库打包与实际运行，随后检查目标分辨率、材质边界/动态灯响应、CPU 分配和 GPU budget。TAA/动态几何需独立证明。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

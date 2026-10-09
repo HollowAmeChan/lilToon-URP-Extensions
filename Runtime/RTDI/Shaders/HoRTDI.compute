@@ -5,6 +5,8 @@
 #pragma kernel Temporal
 #pragma kernel Spatial
 #pragma kernel Shade
+#pragma kernel ShadeNRD HO_RTDI_NRD_ACTIVE
+#pragma kernel ResolveNRD HO_RTDI_NRD_ACTIVE
 #pragma kernel BuildPowerPdf
 #pragma kernel Presample
 #pragma use_dxc
@@ -17,6 +19,13 @@
 #include "../ThirdParty/RTXDI/DI/TemporalResampling.hlsl"
 #include "../ThirdParty/RTXDI/DI/SpatialResampling.hlsl"
 #include "../ThirdParty/RTXDI/LightSampling/PresamplingFunctions.hlsl"
+#if defined(HO_RTDI_NRD_ACTIVE)
+#include "../ThirdParty/NRD/NRD.hlsli"
+RWTexture2D<float4> _HoRTDINrdDiffuse,_HoRTDINrdSpecular,_HoRTDINrdNormal;
+RWTexture2D<float> _HoRTDINrdViewZ;
+Texture2D<float4> _HoRTDINrdOutputDiffuse,_HoRTDINrdOutputSpecular;
+RWTexture2D<float4> _HoRTDIFilteredDiffuse,_HoRTDIFilteredSpecular;
+#endif
 RWTexture2D<float4> _HoRTDIDiffuse, _HoRTDISpecular;
 Texture2D _HoRTDIPdf;
 RWTexture2D<float> _HoRTDIPdfOutput;
@@ -126,12 +135,12 @@ void Spatial(uint3 id:SV_DispatchThreadID)
     }
     RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,1);
 }
-[numthreads(8,8,1)]
-void Shade(uint3 id:SV_DispatchThreadID)
+void HoDIShade(uint3 id)
 {
     if(!HoDIInside(id.xy))return;
     RTXDI_DIReservoir reservoir=RTXDI_LoadDIReservoir(HoDILayout(),id.xy,1);RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
     float3 diffuse=0,specular=0;
+    float selectedDistance=65504;
     if(RAB_IsSurfaceValid(surface)&&RTXDI_IsValidDIReservoir(reservoir))
     {
         RAB_LightSample sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(reservoir),false),surface,RTXDI_GetDIReservoirSampleUV(reservoir));
@@ -139,6 +148,7 @@ void Shade(uint3 id:SV_DispatchThreadID)
         RTXDI_StoreVisibilityInDIReservoir(reservoir,visibility.xxx,false);
         float3 radiance=sample.radiance*visibility*RTXDI_GetDIReservoirInvPdf(reservoir)/max(sample.solidAnglePdf,1e-12);
         float3 L;float distance;RAB_GetLightDirDistance(surface,sample,L,distance);
+        selectedDistance=min(distance,65504);
         if(dot(L,surface.geoNormal)>0)
         {
             diffuse=Lambert(surface.normal,-L)*surface.material.diffuseAlbedo*radiance;
@@ -147,6 +157,20 @@ void Shade(uint3 id:SV_DispatchThreadID)
     }
     float receiver=RAB_IsSurfaceValid(surface)?1:0;
     _HoRTDIDiffuse[id.xy]=float4(diffuse,receiver);_HoRTDISpecular[id.xy]=float4(specular,receiver);
+    #if defined(HO_RTDI_NRD_ACTIVE)
+    float4 diffSignal=0,specSignal=0,normal=0;float viewZ=1000000;
+    if(receiver>.5)
+    {
+        float3 diffFactor,specFactor;
+        NRD_MaterialFactors(surface.normal,surface.viewDir,surface.material.diffuseAlbedo,surface.material.specularF0,surface.material.roughness,diffFactor,specFactor);
+        diffSignal=RELAX_FrontEnd_PackRadianceAndHitDist(diffuse/diffFactor,selectedDistance,true);
+        specSignal=RELAX_FrontEnd_PackRadianceAndHitDist(specular/specFactor,selectedDistance,true);
+        normal=NRD_FrontEnd_PackNormalAndRoughness(surface.normal,surface.material.roughness,0);
+        viewZ=surface.viewDepth;
+    }
+    _HoRTDINrdDiffuse[id.xy]=diffSignal;_HoRTDINrdSpecular[id.xy]=specSignal;
+    _HoRTDINrdNormal[id.xy]=normal;_HoRTDINrdViewZ[id.xy]=viewZ;
+    #endif
     RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,0);
     uint4 history=0;
     if(RAB_IsSurfaceValid(surface))
@@ -157,4 +181,21 @@ void Shade(uint3 id:SV_DispatchThreadID)
         history.z=HoDIPack(float4(surface.material.diffuseAlbedo,1));history.w=HoDIPack(float4(surface.material.specularF0,surface.material.roughness));
     }
     _HoRTDIHistory[id.y*(uint)_HoRTDIFrame.x+id.x]=history;
+}
+[numthreads(8,8,1)]void Shade(uint3 id:SV_DispatchThreadID){HoDIShade(id);}
+[numthreads(8,8,1)]void ShadeNRD(uint3 id:SV_DispatchThreadID){HoDIShade(id);}
+[numthreads(8,8,1)]void ResolveNRD(uint3 id:SV_DispatchThreadID)
+{
+    #if defined(HO_RTDI_NRD_ACTIVE)
+    if(!HoDIInside(id.xy))return;
+    RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);float3 diffuse=0,specular=0;
+    if(RAB_IsSurfaceValid(surface))
+    {
+        float3 diffFactor,specFactor;
+        NRD_MaterialFactors(surface.normal,surface.viewDir,surface.material.diffuseAlbedo,surface.material.specularF0,surface.material.roughness,diffFactor,specFactor);
+        diffuse=_HoRTDINrdOutputDiffuse[id.xy].rgb*diffFactor;specular=_HoRTDINrdOutputSpecular[id.xy].rgb*specFactor;
+    }
+    float receiver=RAB_IsSurfaceValid(surface)?1:0;
+    _HoRTDIFilteredDiffuse[id.xy]=float4(diffuse,receiver);_HoRTDIFilteredSpecular[id.xy]=float4(specular,receiver);
+    #endif
 }

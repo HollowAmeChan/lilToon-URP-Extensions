@@ -1,0 +1,162 @@
+{
+  "version": [
+    4,
+    17,
+    3
+  ],
+  "normalEncoding": 2,
+  "roughnessEncoding": 1,
+  "changes": "Source bodies unchanged; Unity binding/entry wrappers are separate.",
+  "files": {
+    "NRD.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/NRD.hlsli",
+      "sha256": "30abbdfdcdefbe4e1178cc972e923268c945d91954568284612f5ca01f0c31ad"
+    },
+    "NRDConfig.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/NRDConfig.hlsli",
+      "sha256": "de5ac2561205454d4ddab00af062d13928f8d5d8c52f5f6371a8ea4b7b98e939"
+    },
+    "Clear.cs.hlsl": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/Clear.cs.hlsl",
+      "sha256": "24881ebd9e5b16cae635ed569fbcc969acd8af79c6109efd9f3f4c086fc5ccb0"
+    },
+    "Common.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/Common.hlsli",
+      "sha256": "e4f7dd4e9767dfdd2d377e6059c875bf3455e30a2593b97f862c8c802f56c95c"
+    },
+    "Poisson.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/Poisson.hlsli",
+      "sha256": "66836e654c8eb771c14a01c0e72edaec40a1ac337037e289927259326510dc49"
+    },
+    "Clear.resources.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/Clear.resources.hlsli",
+      "sha256": "82c51b6091070debf1212ecf37975033f8e08e91199001997eb7abfb065c8bb7"
+    },
+    "ml.hlsli": {
+      "source": ".codex-research/UnityPathTracing/UnityProject/Assets/Shaders/Include/ml.hlsli",
+      "sha256": "aeea3bbec753bbe3c1e16495c109c9e43c676082c11c18186564ea79024aa685"
+    },
+    "RELAX_Validation.cs.hlsl": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_Validation.cs.hlsl",
+      "sha256": "b28f75d965e9da90234442de7478fd52cddbe52fa1366edfd1980717dcebc08b"
+    },
+    "RELAX_Common.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_Common.hlsli",
+      "sha256": "4e0245d75951f6582d13c8257feb56b1b78a2c369bd177113cf1cdaee38c4d8a"
+    },
+    "RELAX_Validation.resources.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_Validation.resources.hlsli",
+      "sha256": "e54905dd1a9e21d6550ae49061d2b8ab147866fe0d4bda82758b474c944de389"
+    },
+    "RELAX_Config.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_Config.hlsli",
+      "sha256": "722121cd19aa9961050f6593e344567eb634503235c74549c01d4b2240c5d5fa"
+    },
+    "RELAX_SplitScreen.cs.hlsl": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_SplitScreen.cs.hlsl",
+      "sha256": "7f56cfbc16996a85ff8b9dffb74d5322568960ff2ce1136a870b2522b56da0a6"
+    },
+    "RELAX_SplitScreen.resources.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_SplitScreen.resources.hlsli",
+      "sha256": "a55151f70130c845904c9d880879a33b31cb11d31b78231a69ba8551ed3529f6"
+    },
+    "RELAX_Atrous.cs.hlsl": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_Atrous.cs.hlsl",
+      "sha256": "bc4c998e30852232ac98e4f2a7f924ef0072d900f44f4de1d725171f9e1508b8"
+    },
+    "RELAX_Atrous.resources.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_Atrous.resources.hlsli",
+      "sha256": "c4eff8e57ace80bf84353576b3fa34e80272ac0f5329b4148603e2373d37e4be"
+    },
+    "RELAX_AtrousSmem.cs.hlsl": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_AtrousSmem.cs.hlsl",
+      "sha256": "58e8b5bdc93cc3b331a8cf9994a784d5137be2b566c78e39ef617ce6be8b289e"
+    },
+    "RELAX_AtrousSmem.resources.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_AtrousSmem.resources.hlsli",
+      "sha256": "5d6a2ea982b96c6599786f1e0d58bcc6fead846541c39b20b3fcc99ee4f9a5c4"
+    },
+    "RELAX_AntiFirefly.cs.hlsl": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_AntiFirefly.cs.hlsl",
+      "sha256": "2a756f16ffb591646853b295b1e99583e935841dad9091fb37b7a349b660dd8c"
+    },
+    "RELAX_AntiFirefly.resources.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_AntiFirefly.resources.hlsli",
+      "sha256": "a97b340d9b65f88e4d5c91d6e516db9538513bb1781dc9171ac828f0ff43e236"
+    },
+    "RELAX_Copy.cs.hlsl": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_Copy.cs.hlsl",
+      "sha256": "213c2d8d9ae4ab3994035d6d826451cf2f548217ed3bd3626e53cddc50b28894"
+    },
+    "RELAX_Copy.resources.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_Copy.resources.hlsli",
+      "sha256": "005bd298194565e424a35a05b33d509869c47b6ce99ad1b9a107da6bedb0ac38"
+    },
+    "RELAX_HistoryClamping.cs.hlsl": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_HistoryClamping.cs.hlsl",
+      "sha256": "9cdac4a0810c72fc2da936b8bbb8633a9f27881b6930e5375d3f3b8e008e40fc"
+    },
+    "RELAX_HistoryClamping.resources.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_HistoryClamping.resources.hlsli",
+      "sha256": "00731bcd49e94fb6db828e21b354d4aa77ac68f3afedf75a13cc5f9e4721c3ce"
+    },
+    "RELAX_HistoryFix.cs.hlsl": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_HistoryFix.cs.hlsl",
+      "sha256": "275f5f6807bcc90f72ce1e84da767174aff31bc89d58cedfccb414867f01dab2"
+    },
+    "RELAX_HistoryFix.resources.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_HistoryFix.resources.hlsli",
+      "sha256": "94ba4e657c5c2df16404ef879e7b980233d8f6f943f291ccbf9d91bb8aed0096"
+    },
+    "RELAX_TemporalAccumulation.cs.hlsl": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_TemporalAccumulation.cs.hlsl",
+      "sha256": "7f323cb68814f99b417e69b607c80d859323f404a8f4095b9407f3b41d053b5f"
+    },
+    "RELAX_TemporalAccumulation.resources.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_TemporalAccumulation.resources.hlsli",
+      "sha256": "35d062baad5814b21794167a5e141ce856f658ad9bbba5c9bd3b30d11e5c4c31"
+    },
+    "RELAX_PrePass.cs.hlsl": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_PrePass.cs.hlsl",
+      "sha256": "242cc9463e71ccc1960b5e37b838278754533393314f5e0f25ea5b295da693a4"
+    },
+    "RELAX_PrePass.resources.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_PrePass.resources.hlsli",
+      "sha256": "37c6c067638750fc58949e2564d1b278f1b57203053edf1979d7a55e57f890e3"
+    },
+    "RELAX_HitDistReconstruction.cs.hlsl": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_HitDistReconstruction.cs.hlsl",
+      "sha256": "64803acb9938461633e07ba05df8e9bc732fd6ad178ae250fd08e60b5901fbd1"
+    },
+    "RELAX_HitDistReconstruction.resources.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_HitDistReconstruction.resources.hlsli",
+      "sha256": "d9c6184d70eef0ccef97ac3db573cba294a786bcac8510d49723e796b8047fb1"
+    },
+    "RELAX_ClassifyTiles.cs.hlsl": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_ClassifyTiles.cs.hlsl",
+      "sha256": "3bf9d7f020c0540e951ce7f58cd95cec2e268b1590ac37e24b28d915b047345a"
+    },
+    "RELAX_ClassifyTiles.resources.hlsli": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Shaders/RELAX_ClassifyTiles.resources.hlsli",
+      "sha256": "6679ca875140ae3877125ae6611b74bd966417ca30ad3e12eeb0c0d413392c67"
+    },
+    "Include/NRD.h": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Include/NRD.h",
+      "sha256": "250f990b8f2f200eceff9cb8ecc3615bb7aa719d984d549555cb9c4850924be3"
+    },
+    "Include/NRDDescs.h": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Include/NRDDescs.h",
+      "sha256": "f3594a82241cb0a9c03479906dbed2d81421c6a19ce64ba204ed1d2cd285badd"
+    },
+    "Include/NRDSettings.h": {
+      "source": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Include/NRDSettings.h",
+      "sha256": "3a1c30d3958c3fc867f0554ed4dbad84e4278a7d890019abc4ee631b1d487b51"
+    }
+  },
+  "nativeLibrary": {
+    "source": ".codex-research/UnityPathTracing-6000.3.15/Assets/Plugins/x86_64/NRD.dll",
+    "sha256": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb",
+    "renamedTo": "HoRTDINRD.dll",
+    "cpuOnly": true
+  }
+}

@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using lilToon.URP.Extensions.RayTracing;
+using lilToon.URP.Extensions.RTDI.NRD;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -15,6 +16,7 @@ namespace lilToon.URP.Extensions.RTDI
     {
         [SerializeField] private HoRTDISettings settings=new HoRTDISettings();
         [SerializeField] private ComputeShader shader;
+        [SerializeField] private ComputeShader[] nrdShaders;
         private HoRTScene scene;
         private readonly Dictionary<Camera,HoRTDIContext> contexts=new();
         private readonly List<Camera> dead=new();
@@ -30,13 +32,16 @@ namespace lilToon.URP.Extensions.RTDI
             DisposeResources();scene=new HoRTScene();pass=new HoRTDIPass();debugPass=new HoRTDIDebugPass();
             #if UNITY_EDITOR
             if(shader==null)shader=UnityEditor.AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDI.compute");
+            if(nrdShaders==null||nrdShaders.Length!=HoRTDINrdManifest.Identifiers.Length)nrdShaders=new ComputeShader[HoRTDINrdManifest.Identifiers.Length];
+            for(int i=0;i<nrdShaders.Length;i++)if(nrdShaders[i]==null)nrdShaders[i]=UnityEditor.AssetDatabase.LoadAssetAtPath<ComputeShader>($"Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd{i:00}.compute");
             #endif
             if(!registered){RenderPipelineManager.beginCameraRendering+=ResetCamera;registered=true;}
         }
         private void ResetCamera(ScriptableRenderContext context,Camera camera)
         {
             Shader.SetGlobalFloat("_HoRTDIActive",0);Shader.SetGlobalTexture("_HoRTDIDiffuseTexture",Texture2D.blackTexture);Shader.SetGlobalTexture("_HoRTDISpecularTexture",Texture2D.blackTexture);
-            if(!isActive||!settings.enabled)foreach(var item in contexts.Values)item.historyValid=false;
+            Shader.SetGlobalTexture("_HoRTDIRawDiffuseTexture",Texture2D.blackTexture);Shader.SetGlobalTexture("_HoRTDIRawSpecularTexture",Texture2D.blackTexture);
+            if(!isActive||!settings.enabled)foreach(var item in contexts.Values){item.historyValid=false;item.nrdHistoryValid=false;}
         }
         [StructLayout(LayoutKind.Sequential)]
         internal struct AnalyticLight {public Vector4 positionRange,radianceType,directionOuter,innerShadow;}
@@ -45,7 +50,7 @@ namespace lilToon.URP.Extensions.RTDI
             var camera=data.cameraData.camera;var volume=VolumeManager.instance.stack.GetComponent<HoRTDIVolume>();
             if(!settings.enabled||(volume!=null&&volume.enable.overrideState&&!volume.enable.value)||data.cameraData.renderType!=CameraRenderType.Base
                 ||(camera.cameraType!=CameraType.Game&&(camera.cameraType!=CameraType.SceneView||!settings.inSceneView)))
-            {if(contexts.TryGetValue(camera,out var skipped))skipped.historyValid=false;return;}
+            {if(contexts.TryGetValue(camera,out var skipped)){skipped.historyValid=false;skipped.nrdHistoryValid=false;}return;}
             if(!scene.IsAvailable||shader==null){Status="需要 D3D12 inline RT 与 Compute Shader";return;}
             var format=GraphicsFormat.R16G16B16A16_SFloat;
             if(!SystemInfo.IsFormatSupported(format,GraphicsFormatUsage.LoadStore))format=GraphicsFormat.R32G32B32A32_SFloat;
@@ -82,9 +87,11 @@ namespace lilToon.URP.Extensions.RTDI
             var descriptor=data.cameraData.cameraTargetDescriptor;
             context.Prepare(descriptor.width,descriptor.height,lightList.Count,format);LastContext=context;
             context.PreparePower(localCount,settings.localSampling==HoRTDILocalSampling.Power);
+            context.PrepareDenoiser(settings.denoise,nrdShaders);
             var lightData=lightList.Count>0?lightList.ToArray():new AnalyticLight[1];
             pass.Setup(context,scene,shader,settings,lightData,lightKeys.ToArray(),lightList.Count,localCount,signature);
             renderer.EnqueuePass(pass);Status=$"RTXDI DI：{(context.powerSampling?"功率":"均匀")} / {localCount} 局部 / {infiniteLights.Count} 方向灯 / {scene.InstanceCount} RT submesh / 排除 {excludedLights} 灯、{scene.Rejections.Count} 几何项";
+            if(settings.denoise)Status+=" / "+context.nrdStatus;
             if(volume!=null&&volume.debugMode.value!=HoRTDIDebugMode.Off&&(camera.cameraType==CameraType.SceneView?volume.debugInSceneView.value:volume.debugInGameView.value))
             {
                 if(debugMaterial==null){var found=Shader.Find("Hidden/lilToon/URP/RTDI/Debug");if(found!=null)debugMaterial=CoreUtils.CreateEngineMaterial(found);}
@@ -128,8 +135,16 @@ namespace lilToon.URP.Extensions.RTDI
                     builder.UseBuffer(graph.ImportBuffer(context.neighbors));
                     data.diffuse=graph.ImportTexture(context.diffuse);data.specular=graph.ImportTexture(context.specular);
                     builder.UseTexture(data.diffuse,AccessFlags.WriteAll);builder.UseTexture(data.specular,AccessFlags.WriteAll);
+                    var output=frame.GetOrCreate<HoRTDIRenderGraphResources>();output.rawDiffuse=data.diffuse;output.rawSpecular=data.specular;
+                    builder.SetGlobalTextureAfterPass(data.diffuse,Shader.PropertyToID("_HoRTDIRawDiffuseTexture"));builder.SetGlobalTextureAfterPass(data.specular,Shader.PropertyToID("_HoRTDIRawSpecularTexture"));
+                    if(context.nrd!=null)
+                    {
+                        foreach(var texture in new[]{context.nrdDiffuse,context.nrdSpecular,context.nrdNormal,context.nrdViewZ,context.nrdOutputDiffuse,context.nrdOutputSpecular,context.filteredDiffuse,context.filteredSpecular})
+                            builder.UseTexture(graph.ImportTexture(texture),AccessFlags.ReadWrite);
+                        context.nrd.Declare(graph,builder);data.diffuse=graph.ImportTexture(context.filteredDiffuse);data.specular=graph.ImportTexture(context.filteredSpecular);
+                    }
                     builder.SetGlobalTextureAfterPass(data.diffuse,Shader.PropertyToID("_HoRTDIDiffuseTexture"));builder.SetGlobalTextureAfterPass(data.specular,Shader.PropertyToID("_HoRTDISpecularTexture"));
-                    var output=frame.GetOrCreate<HoRTDIRenderGraphResources>();output.diffuse=data.diffuse;output.specular=data.specular;
+                    output.diffuse=data.diffuse;output.specular=data.specular;
                     builder.SetRenderFunc(static(Data d,UnsafeGraphContext ctx)=>Dispatch(CommandBufferHelpers.GetNativeCommandBuffer(ctx.cmd),d,false,default));
                 }
             }
@@ -139,7 +154,8 @@ namespace lilToon.URP.Extensions.RTDI
                 c.lastTemporal=temporal;
                 cmd.SetBufferData(c.lights,d.lightFrame.current);cmd.SetBufferData(c.previousLights,d.lightFrame.previous);
                 cmd.SetBufferData(c.currentToPrevious,d.lightFrame.currentToPrevious);cmd.SetBufferData(c.previousToCurrent,d.lightFrame.previousToCurrent);
-                var names=c.powerSampling?new[]{"BuildPowerPdf","Presample","Initial","Temporal","Spatial","Shade"}:new[]{"Initial","Temporal","Spatial","Shade"};
+                string shade=c.nrd!=null?"ShadeNRD":"Shade";
+                var names=c.powerSampling?new[]{"BuildPowerPdf","Presample","Initial","Temporal","Spatial",shade}:new[]{"Initial","Temporal","Spatial",shade};
                 foreach(var name in names)
                 {
                     int kernel=d.shader.FindKernel(name);d.scene.BuildAndBind(cmd,d.shader,kernel);
@@ -161,6 +177,11 @@ namespace lilToon.URP.Extensions.RTDI
                     cmd.SetComputeMatrixParam(d.shader,"_HoRTDIPreviousVP",c.previousVP);cmd.SetComputeMatrixParam(d.shader,"_HoRTDIPreviousInverseVP",c.previousInverseVP);
                     cmd.SetComputeVectorParam(d.shader,"_HoRTDIPreviousCameraPosition",c.previousCamera);cmd.SetComputeVectorParam(d.shader,"_HoRTDIPreviousTowardsEye",c.previousTowardsEye);
                     cmd.SetComputeVectorParam(d.shader,"_HoRTDIPreviousViewZ",c.previousViewZ);cmd.SetComputeVectorParam(d.shader,"_HoRTDIPreviousClipParameters",c.previousClip);
+                    if(name=="ShadeNRD")
+                    {
+                        cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdDiffuse",c.nrdDiffuse.nameID);cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdSpecular",c.nrdSpecular.nameID);
+                        cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdNormal",c.nrdNormal.nameID);cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdViewZ",c.nrdViewZ.nameID);
+                    }
                     if(name=="BuildPowerPdf")
                     {
                         cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDIPdfOutput",c.powerPdf.nameID,0);
@@ -173,7 +194,28 @@ namespace lilToon.URP.Extensions.RTDI
                     }
                     else cmd.DispatchCompute(d.shader,kernel,(c.width+7)/8,(c.height+7)/8,1);
                 }
-                cmd.SetGlobalFloat("_HoRTDIActive",1);cmd.SetGlobalTexture("_HoRTDIDiffuseTexture",c.diffuse.nameID);cmd.SetGlobalTexture("_HoRTDISpecularTexture",c.specular.nameID);
+                if(c.nrd!=null)
+                {
+                    bool reset=!c.nrdHistoryValid||!c.historyValid||c.sceneRevision!=d.revision||c.settingsSignature!=d.signature;
+                    var common=HoRTDINrdNative.CommonSettings.Create(c.width,c.height,d.view,d.projection,c.previousView,c.previousProjection,c.frame,reset);
+                    var external=new Dictionary<string,RenderTargetIdentifier>
+                    {
+                        ["IN_MV"]=new RenderTargetIdentifier(Texture2D.blackTexture),["IN_NORMAL_ROUGHNESS"]=c.nrdNormal.nameID,["IN_VIEWZ"]=c.nrdViewZ.nameID,
+                        ["IN_DIFF_RADIANCE_HITDIST"]=c.nrdDiffuse.nameID,["IN_SPEC_RADIANCE_HITDIST"]=c.nrdSpecular.nameID,
+                        ["OUT_DIFF_RADIANCE_HITDIST"]=c.nrdOutputDiffuse.nameID,["OUT_SPEC_RADIANCE_HITDIST"]=c.nrdOutputSpecular.nameID,
+                        ["IN_DIFF_CONFIDENCE"]=new RenderTargetIdentifier(Texture2D.whiteTexture),["IN_SPEC_CONFIDENCE"]=new RenderTargetIdentifier(Texture2D.whiteTexture),
+                        ["IN_DISOCCLUSION_THRESHOLD_MIX"]=new RenderTargetIdentifier(Texture2D.blackTexture)
+                    };
+                    cmd.BeginSample("HoRTDI NRD RELAX");c.nrd.Record(cmd,common,external);cmd.EndSample("HoRTDI NRD RELAX");
+                    int kernel=d.shader.FindKernel("ResolveNRD");
+                    if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,kernel,cameraData);
+                    else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,kernel);
+                    cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdOutputDiffuse",c.nrdOutputDiffuse.nameID);cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdOutputSpecular",c.nrdOutputSpecular.nameID);
+                    cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDIFilteredDiffuse",c.filteredDiffuse.nameID);cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDIFilteredSpecular",c.filteredSpecular.nameID);
+                    cmd.DispatchCompute(d.shader,kernel,(c.width+7)/8,(c.height+7)/8,1);c.nrdHistoryValid=true;
+                }
+                cmd.SetGlobalFloat("_HoRTDIActive",1);cmd.SetGlobalTexture("_HoRTDIDiffuseTexture",c.PublishedDiffuse.nameID);cmd.SetGlobalTexture("_HoRTDISpecularTexture",c.PublishedSpecular.nameID);
+                cmd.SetGlobalTexture("_HoRTDIRawDiffuseTexture",c.diffuse.nameID);cmd.SetGlobalTexture("_HoRTDIRawSpecularTexture",c.specular.nameID);
                 c.Complete(d.view,d.projection,d.camera,d.revision,d.signature,d.lightFrame);
             }
             public override void Execute(ScriptableRenderContext rendering,ref RenderingData data)

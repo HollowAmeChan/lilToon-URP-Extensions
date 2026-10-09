@@ -9,6 +9,7 @@ using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using lilToon.URP.Extensions.RTDI.NRD;
 namespace lilToon.URP.Extensions.RTDI
 {
     internal sealed class HoRTDIContext : IDisposable
@@ -20,6 +21,13 @@ namespace lilToon.URP.Extensions.RTDI
         internal const int RISTileSize=256,RISTileCount=64;
         internal int pdfSize;
         internal bool powerSampling;
+        internal HoRTDINrdContext nrd;
+        internal RTHandle nrdDiffuse,nrdSpecular,nrdNormal,nrdViewZ,nrdOutputDiffuse,nrdOutputSpecular,filteredDiffuse,filteredSpecular;
+        internal bool nrdHistoryValid;
+        internal string nrdStatus;
+        internal RTHandle PublishedDiffuse=>nrd!=null?filteredDiffuse:diffuse;
+        internal RTHandle PublishedSpecular=>nrd!=null?filteredSpecular:specular;
+        internal Matrix4x4 previousView=Matrix4x4.identity,previousProjection=Matrix4x4.identity;
         internal int width,height,rowPitch,arrayPitch,frame;
         internal uint sceneRevision;
         internal int settingsSignature;
@@ -82,6 +90,37 @@ namespace lilToon.URP.Extensions.RTDI
             {graphicsFormat=GraphicsFormat.R32_SFloat,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true,useMipMap=true,autoGenerateMips=false};
             RenderingUtils.ReAllocateIfNeeded(ref powerPdf,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTDI local light power PDF");
         }
+        internal void PrepareDenoiser(bool enabled,ComputeShader[] shaders)
+        {
+            if(!enabled){ReleaseDenoiser();nrdStatus=null;return;}
+            try
+            {
+                if(nrd==null){nrd=new HoRTDINrdContext(shaders);nrdHistoryValid=false;}
+                nrd.Prepare(width,height);
+                AllocateSignal(ref nrdDiffuse,GraphicsFormat.R16G16B16A16_SFloat,"NRD diffuse signal");
+                AllocateSignal(ref nrdSpecular,GraphicsFormat.R16G16B16A16_SFloat,"NRD specular signal");
+                AllocateSignal(ref nrdNormal,GraphicsFormat.R16G16B16A16_SFloat,"NRD normal roughness");
+                AllocateSignal(ref nrdViewZ,GraphicsFormat.R32_SFloat,"NRD view Z");
+                AllocateSignal(ref nrdOutputDiffuse,GraphicsFormat.R16G16B16A16_SFloat,"NRD diffuse output");
+                AllocateSignal(ref nrdOutputSpecular,GraphicsFormat.R16G16B16A16_SFloat,"NRD specular output");
+                AllocateSignal(ref filteredDiffuse,GraphicsFormat.R16G16B16A16_SFloat,"Filtered diffuse");
+                AllocateSignal(ref filteredSpecular,GraphicsFormat.R16G16B16A16_SFloat,"Filtered specular");
+                nrdStatus="RELAX";
+            }
+            catch(Exception error){ReleaseDenoiser();nrdStatus="NRD unavailable: "+error.Message;}
+        }
+        private void AllocateSignal(ref RTHandle texture,GraphicsFormat format,string name)
+        {
+            if(!SystemInfo.IsFormatSupported(format,GraphicsFormatUsage.LoadStore))throw new NotSupportedException("NRD signal UAV "+format);
+            var desc=new RenderTextureDescriptor(width,height){graphicsFormat=format,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true};
+            if(RenderingUtils.ReAllocateIfNeeded(ref texture,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTDI "+name))nrdHistoryValid=false;
+        }
+        internal void ReleaseDenoiser()
+        {
+            nrd?.Dispose();nrd=null;nrdHistoryValid=false;
+            foreach(var texture in new[]{nrdDiffuse,nrdSpecular,nrdNormal,nrdViewZ,nrdOutputDiffuse,nrdOutputSpecular,filteredDiffuse,filteredSpecular})texture?.Release();
+            nrdDiffuse=nrdSpecular=nrdNormal=nrdViewZ=nrdOutputDiffuse=nrdOutputSpecular=filteredDiffuse=filteredSpecular=null;
+        }
         private sealed class LightReferences:IEqualityComparer<Light>
         {
             internal static readonly LightReferences Instance=new();
@@ -111,12 +150,13 @@ namespace lilToon.URP.Extensions.RTDI
         internal void Complete(Matrix4x4 view,Matrix4x4 projection,Camera camera,uint revision,int signature,LightFrame lightFrame)
         {
             previousVP=GL.GetGPUProjectionMatrix(projection,true)*view;previousInverseVP=previousVP.inverse;
+            previousView=view;previousProjection=projection;
             previousCamera=view.inverse.GetColumn(3);previousTowardsEye=view.GetRow(2);previousTowardsEye.w=0;previousViewZ=view.GetRow(2);
             previousClip=new Vector4(camera.nearClipPlane,camera.farClipPlane,camera.orthographic?1:0,SystemInfo.usesReversedZBuffer?1:0);
             sceneRevision=revision;settingsSignature=signature;historyValid=true;frame++;
             previousLightKeys=lightFrame.keys;previousLightData=lightFrame.current;
         }
         public void Dispose()
-        {reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();previousLights?.Dispose();currentToPrevious?.Dispose();previousToCurrent?.Dispose();ris?.Dispose();powerPdf?.Release();ris=null;powerPdf=null;diffuse?.Release();specular?.Release();reservoirs=history=lights=neighbors=previousLights=currentToPrevious=previousToCurrent=null;diffuse=specular=null;previousLightKeys=Array.Empty<Light>();previousLightData=null;}
+        {ReleaseDenoiser();reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();previousLights?.Dispose();currentToPrevious?.Dispose();previousToCurrent?.Dispose();ris?.Dispose();powerPdf?.Release();ris=null;powerPdf=null;diffuse?.Release();specular?.Release();reservoirs=history=lights=neighbors=previousLights=currentToPrevious=previousToCurrent=null;diffuse=specular=null;previousLightKeys=Array.Empty<Light>();previousLightData=null;}
     }
 }

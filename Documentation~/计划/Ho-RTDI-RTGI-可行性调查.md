@@ -501,3 +501,10 @@ GPU 验证核对连续移动/灯属性变化能量的区域统计均值、增删
 按持续推进记录先量化强弱灯退化，再接参考 PDF mip / SDK PresampleLocalLights / POWER_RIS。1 强 + 63 弱、一个候选的归一化均匀均值 1.003284、方差 55.813219；功率均值 0.999520，方差在 F6 打印精度下为 0。Shader SDK 只追加一个 header，29 个源文件算法正文核对不变。增加每相机 128 KiB RIS 及 R32F PDF/mips，Uniform 保持默认，GPU 生产预算尚未完成。
 
 Power 的 D3D12 RG/compatibility、Gamma/Linear、全黑/动态功率/类型分区、mip/资源释放、D3D11 禁用和 GI 回归通过；一次完成后 Unity Worker IPC 退出崩溃保留日志并重跑正常退出。此时 raw 输出仍未降噪；下一项优先 NRD 输入契约与本地调度路线，继续不改材质合成。详细评审与限制见 [持续推进记录](Ho-RTDI-持续推进记录.md)。
+
+
+## 21. DI 可选 NRD RELAX Editor 初版
+
+固定参考 NRD 4.17.3 核心 CPU 库调度 + Unity ComputeShader 执行原始 RELAX，未搬入 NRI/Denoiser/DLSS/NIS 或 heap hook。补齐解调辐射、选中灯距离、normal/roughness/viewZ 和静态 world MV；公开 raw/filtered 对照，默认关闭，不做最终合成。原库资源名称表顺序落后于数值枚举，按固定头文件生成绑定并实测校验。
+
+D3D12 RG/compatibility、Gamma/Linear、实际 GPU、镜面/金属、透视、相机运动、生命周期及旧 DI/GI 回归通过。双色灯红通道 MSE 从 0.050401 到 0.000049；dense-DI 预设避免默认镜面 prepass 的过度模糊，仍保留滤波偏差。新增资源约 277 MiB/1080p，不代表目标性能；Player、TAA/动态几何和完整材质边界仍待独立验收。详见 [NRD 接入](../Ho-RTDI-NRD.md) 与 [持续推进记录](Ho-RTDI-持续推进记录.md)。
