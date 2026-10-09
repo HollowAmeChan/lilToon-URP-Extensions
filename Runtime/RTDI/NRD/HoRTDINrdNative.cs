@@ -71,10 +71,12 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             internal float diffMinLum,specMinLum,depthThreshold,confidenceMultiplier,confidenceLum,confidenceNormal,lumRelax,normalRelax,roughRelax;
             internal byte checkerboard,reconstruction;
             internal float minDiffMaterial,minSpecMaterial;internal byte antiFirefly,roughEdge;
+            // Dense analytic DI needs responsive diffuse lighting; keep the
+            // specular history budget, use SDK fast history/antilag for changes.
             internal static RelaxSettings DenseDI()=>new RelaxSettings
             {
-                acceleration=.3f,spatialSigma=4.5f,temporalSigma=.5f,reset=.5f,diffFrames=30,specFrames=30,diffFast=6,specFast=6,
-                historyFixFrames=3,baseStride=14,alternateStride=14,historyNormalPower=8,fastSigma=2,diffPrepass=30,specPrepass=0,
+                acceleration=.6f,spatialSigma=4.5f,temporalSigma=.5f,reset=1,diffFrames=3,specFrames=30,diffFast=1,specFast=6,
+                historyFixFrames=3,baseStride=14,alternateStride=14,historyNormalPower=8,fastSigma=2,diffPrepass=0,specPrepass=0,
                 minHitWeight=.1f,varianceHistory=3,diffPhi=2,specPhi=1,lobeFraction=.5f,roughFraction=.15f,specSlack=.15f,atrous=5,
                 depthThreshold=.003f,lumRelax=.5f,normalRelax=.3f,roughRelax=1,minDiffMaterial=4,minSpecMaterial=4,roughEdge=1
             };
@@ -107,8 +109,8 @@ namespace lilToon.URP.Extensions.RTDI.NRD
                 {
                     if(Marshal.SizeOf<RelaxSettings>()!=148)throw new InvalidOperationException("NRD RELAX settings ABI size mismatch");
                     // Dense DI supplies both lobes with a valid light distance.
-                    // Avoid the default 50 px specular prepass smearing a clean
-                    // analytic highlight; retain SDK temporal and A-trous passes.
+                    // Avoid prepass blurring deterministic DI visibility and clean
+                    // analytic highlights; retain SDK temporal and A-trous passes.
                     var settings=RelaxSettings.DenseDI();Check(SetDenoiserSettings(instance,0,ref settings),"SetDenoiserSettings");return instance;
                 }
                 catch{DestroyInstance(instance);throw;}

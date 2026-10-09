@@ -31,7 +31,7 @@ Feature 的 **NRD RELAX 降噪** 为可选项，默认关闭。开启后仍保�
 
 核心调用返回的指针只在本轮复制描述、资源与常量时读取，不跨下一次 GetComputeDispatches 保存裸指针。每个 dispatch 使用独立常量偏移，帧常量使用三份 64 KiB buffer，避免同轮不同 pass 共用覆盖的 CB 地址。原始 ResourceType 数值以固定头文件为准；该参考库的 GetResourceTypeString 字符串数组顺序已经落后于枚举，不能用它决定绑定。
 
-分辨率变化、禁用/重启、DI 关键设置或世界几何 Revision 变化会重启 NRD 历史；灯参数变化交给 RELAX 的历史/antilag 处理。当前 dense-DI 预设沿用 SDK 默认设置，唯独关闭 50 px specular prepass：两条 lobe 都有有效距离，并未使用概率 lobe split；原 prepass 会抹平干净解析高光。保留 SDK temporal、history fix/clamp 与 A-trous，不另写降噪算法。默认 diffuse prepass 仍保留。
+分辨率变化、禁用/重启、DI 关键设置或世界几何 Revision 变化会重启 NRD 历史；灯参数变化交给 RELAX 的历史/antilag 处理。当前 dense-DI 预设关闭 diffuse/specular prepass：两条 lobe 都有有效距离，未使用概率 lobe split；空间 prepass 会抹平干净解析高光并把确定的可见性边界带亮。diffuse 主/快速历史为 3/1，specular 仍为 30/6；antilag acceleration=0.6、reset=1，其他主要参数保留原 SDK 默认值。使用 SDK temporal、history fix/clamp 与 A-trous，没有自写降噪算法或对每次灯变化整份清历史。数值按本节测试取舍；尚未转换为基于实际 FPS 的积累时间配置。
 
 ## 验证与边界
 
@@ -65,4 +65,24 @@ GPU 读回验证了延后执行的两次 partial SetBufferData 各自保存正�
 
 复现入口：`HoRTDINrdRecordingValidation.RunBaseline` / `Run` 与 `HoRTDIValidation.RunBudget` / `RunBudgetCompatibility`，均在隔离工程执行。旧算法 baseline 必须使用优化前的源版本，否则 RunBaseline 只是记录当前版本，不能伪造前后对照。原始报告保留在隔离工程 rtdi-nrd-recording-baseline.json / optimized.json 与 budget 两条日志。参考契约为固定 NRD.h 的返回数据生命周期、[NVIDIA 集成说明](https://github.com/NVIDIA-RTX/NRD)、[Unity partial SetBufferData](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Rendering.CommandBuffer.SetBufferData.html) 与 [GC.Alloc 事件统计示例](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Unity.Profiling.ProfilerRecorderOptions.SumAllSamplesInFrame.html)。
 
-NRD 本身允许滤波偏差，默认 diffuse prepass 与材质因子下限仍可影响细节/暗材质。应先用 Raw / Filtered 和真实目标场景对照，不把启用开关当作最终画质验收。
+NRD 本身允许滤波偏差，材质因子下限、时空积累与空间滤波仍可影响细节/暗材质。应先用 Raw / Filtered 和真实目标场景对照，不把启用开关当作最终画质验收。
+
+## 动态灯与阴影边界复查
+
+本轮先保留原预设建立 baseline，再分别比较取消 diffuse prepass、12/2、6/1、3/1 的 diffuse 历史与 SDK antilag。原引用项目也使用 30 px diffuse prepass、30/6 历史与半量 antilag reset；[官方说明](https://github.com/NVIDIA-RTX/NRD) 提醒较干净信号可能被 prepass 模糊，固定 NRDSettings.h 提供 fast history / antilag 的含义。当前为两个都有效的 dense lobe，取消 prepass 不等同于概率 lobe split 的集成方案；后者仍需要重建与预滤波。
+
+| 受控场景 | 原预设 | 当前预设 |
+| --- | --- | --- |
+| 256² 定向光阴影，距边界至少 8 px 的阴影内平均误亮 | 0.012850 | F6 精度 0.000000 |
+| 同区域最大误亮 | 0.090759 | F6 精度 0.000000 |
+| 确定照亮区域平均误差 | 0.011347 | 0.000333 |
+| 太阳移动后新阴影区首轮残光 | 0.111626 | 0.001938 |
+| 全灯关闭，第 4 次渲染残光 | 0.031174 | 0.000002 |
+| 64² 移动点灯中心平均相对误差 | 22.79% | 18.71% |
+| 双色灯 filtered MSE（raw=0.050401） | 0.000049 | 0.000117 |
+
+动态点灯/变色/关灯使用 ReSTIR temporal + spatial、8 个局部候选；阴影边界单独关闭 ReSTIR reuse，让 raw 有严格的数学可见性真值。遮挡物在 camera culling mask 外、在 RT 世界内，接收平面的材质/法线/深度连续。48 轮预热后检查 y=64..191、x=104..215 的内部阴影与照亮侧；新增方向光角度后再检查真正从亮转暗的区域。质量门槛分别检查阴影均值/最大值、亮侧误差、旧颜色/关灯残光及移动误差；RG / compatibility 通过。对照图保留在隔离工程 nrd-shadow-quality-baseline.png / rg.png / compat.png，左为 raw、右为 filtered，以 1/π 归一并作显示 gamma。
+
+阴影和响应明显改善，代价是静态双色噪声 MSE 高于长历史旧预设；当前仍约比 raw 低 430 倍，filtered 红/蓝均值约 0.2128（参考约 0.22），镜面 raw/filtered 约 0.296814/0.281728。Win64 release Player 两条路径的变色/关灯、原有能量/噪声/镜面/遮挡/Power/debug/lifecycle，以及 D3D11 inactive 均通过；Player filtered MSE 约 0.000085～0.000101。
+
+**仍有的限制：** 移动点灯末轮 ROI 的 raw=0.813635、数学参考=0.809308，而 filtered=0.673002；静止再积累 40 轮后 filtered=0.821692。因此连续变化仍有实质滞后，不能宣称解决动态灯保真。变色第一轮也保留旧成分；短历史是响应/噪声折中，复杂材质/灯分布、specular 动态响应、FPS 适配与 TAA 仍需验证。概率采样的每 lobe hit-distance 代表性也须单独核对，不能从这一组解析灯直接推广到任意 ReSTIR/路径追踪信号。

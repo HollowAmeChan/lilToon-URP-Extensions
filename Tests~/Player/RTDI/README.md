@@ -44,6 +44,8 @@ and the receiver tile in the All grid, including retention of the grid-label sha
 The builder stores the HoRTDIVolume as a profile subasset, so the deployed profile
 has a real component rather than a missing reference. The probe disposes owned
 DI/capture/target resources before exit.
+It additionally enables ReSTIR reuse and checks settled light recoloring and
+switched-off raw/filtered results after four renders.
 Compatibility capture samples the published shader globals; their names are not
 temporary RT identifiers for `CommandBuffer.Blit`.
 

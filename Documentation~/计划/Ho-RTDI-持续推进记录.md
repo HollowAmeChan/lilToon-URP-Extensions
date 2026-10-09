@@ -91,13 +91,25 @@
 
 **目标尺寸与完成后复查：** 在原有真实 lilToon fixture 中，720p / 1080p 分配、resize/reset、raw/filtered 出光与 alpha 均通过。实际活动 DI＋NRD 载荷为 214.646 / 483.772 MiB；12 次预热后 8 次完整渲染加最终 GPU 读回，RG 均摊 6.143 / 10.770 ms，compatibility 5.387 / 11.333 ms。场景只有一张 quad / 一盏灯 / 一候选 / 无时空复用；时间含 CPU、输入/raster/DI/NRD 与同步，载荷不含输入/AS/driver/cache，不能代表生产帧率或 NRD 单独 GPU 时间。Record 零分配也不代表整个 Feature 零分配，Prepare 的描述名、外部字典/扫描等仍有空间。这个结果证明基建在目标尺寸能执行，同时确认 NRD 的 GPU 资源成本仍高。下一项优先检查动态灯响应和遮挡边界的实际画质，再根据资源使用关系评审可移除的中间纹理与实际 GPU 分段预算；不因微基准变快就扩大支持域。[详细预算与复现](../Ho-RTDI-NRD.md)。
 
-## 7. 下一步取舍
+## 7. 动态灯响应与真实阴影边界
+
+**动手前评审：应做。** 原 NRD 验证证明稳定噪声/能量，不证明改变灯光后的响应或确定阴影是否被滤波带亮。用户对漏光的担忧要求把 RT visibility 与降噪输出分别核对。先使用现有 fixture，检查 raw 数学真值、连续点灯、变色/关灯、隐藏于 camera 的世界遮挡；不把修复转成每次灯变化整体清历史或自写后处理。
+
+**参考：** 用户 NrdSettings.cs / 固定 NRDSettings.h 的原 diffuse prepass=30、主/fast=30/6、antilag reset=0.5；[官方 NRD 说明](https://github.com/NVIDIA-RTX/NRD) 对干净信号 prepass 模糊、概率 lobe split 的重建要求、fast history / antilag 作用。实现继续固定 4.17.3 API，不更换新版 ABI/算法。
+
+**证据与实现：** baseline 阴影内部平均误亮 0.012850、最大 0.090759；raw 在同处严格为零。移动太阳新阴影区首轮 residual=0.111626，关灯第 4 轮=0.031174。单独关 diffuse prepass 能消除大部分静态 halo，但点灯运动平均相对误差从 22.79% 变成 30.44%，因此没有只选这项好看的结果交付。比较 12/2、6/1、3/1 diffuse 历史与 SDK reset=1/acceleration=0.6，最终选 3/1，specular 仍 30/6；两个 prepass 关，其余主要项保持默认。只改 DenseDI 预设，不新增纹理、Feature 或自写降噪。
+
+**验证与收益：** RG / compatibility 的质量门槛通过。阴影内部均值/最大值在 F6 精度下归零，亮侧误差 0.000333；移动太阳首轮残光约 0.001938，第 4 轮归零；关灯第 4 轮约 0.000002。双色 raw MSE 0.050401、filtered 0.000117，镜面 raw/filtered 0.296814/0.281728。旧预设 filtered MSE 0.000049，所以改动改善硬阴影与响应，牺牲部分静态噪声平滑，未宣称全面优于旧预设。实际 Player 变色/关闭及所有已有输出回归通过，D3D11 inactive 通过；编译无本步错误，仅既有其他模块警告。
+
+**完成后复查与下一项：** 连续点灯移动的中心平均相对误差仍 18.71%，末轮 ROI raw 0.813635≈参考 0.809308，而 filtered 0.673002；停止后积累能恢复。这是仍存在的响应限制，不能用门槛通过掩盖。明确 raw 正确、filtered 滞后，未把原始 ReSTIR 方差误判为错误；第一次阴影实验的逐像素 raw 数学比较确实受到 reuse 方差影响，已在确定边界测试中关 reuse，动态灯另保留 reuse。下一步继续评审响应/FPS 契约与必要的信号置信度，再审计 GPU 中间输出复用；完整材质边界、specular 动态响应与 BRDF-aware hit-distance 不能由本步代替。详见 [NRD 质量对照](../Ho-RTDI-NRD.md)。
+
+## 8. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
-| NRD 质量与预算 | 目标尺寸简单链路与 Record 热路径已有实测；下一步优先验证动态灯响应/遮挡边界，随后审计 GPU 中间纹理与分段预算。完整材质边界、TAA/动态几何与复杂场景性能仍需独立证明，保留 raw/filtered 对照。 |
+| NRD 质量与预算 | 确定阴影 halo 与突变响应已改进，连续灯运动仍滞后。接下来评审响应/FPS 契约、每 lobe hit-distance 的代表性与可验证的置信度，随后审计 GPU 中间纹理复用。完整材质边界、TAA/动态几何与复杂场景性能仍需独立证明，保留 raw/filtered 对照。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

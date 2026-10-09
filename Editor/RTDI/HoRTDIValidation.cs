@@ -17,7 +17,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     {
         private static readonly List<Object> objects=new();
         private static RenderPipelineAsset previousDefault,previousQuality;
-        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise,forceBudget;
+        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise,forceBudget,forceQuality;
         private static Camera camera;
         private static RenderTexture target;
         private static HoRTDIRendererFeature feature;
@@ -36,6 +36,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunDenoiseCompatibility(){forceDenoise=true;compatibility=true;Run();}
         public static void RunBudget(){Require(Application.dataPath.Replace('\\','/').Contains("/.codex-research/"),"Use the isolated project");forceBudget=forceDenoise=true;Run();}
         public static void RunBudgetCompatibility(){compatibility=true;RunBudget();}
+        public static void RunQuality(){Require(Application.dataPath.Replace('\\','/').Contains("/.codex-research/"),"Use the isolated project");forceQuality=forceDenoise=true;Run();}
+        public static void RunQualityCompatibility(){compatibility=true;RunQuality();}
         public static void RunUnsupported(){unsupported=true;Run();}
         public static void Run()
         {
@@ -86,6 +88,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 }
                 if(++tick<3){Render();return;}
                 if(forceBudget){ValidateBudget();Finish(null);return;}
+                if(forceQuality){ValidateQuality();Finish(null);return;}
                 if(forceDenoise){ValidateDenoiser();Finish(null);return;}
                 var single=Render();float expected=Expected(light);Near(single.r,expected,"single-light reference",.015f);Near(single.a,1,"receiver valid",.01f);
                 var baseline=Read(target);feature.SetActive(false);RenderCamera();NearRGB(Read(target),baseline,"no automatic camera composite");feature.SetActive(true);
@@ -182,6 +185,84 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             oldKeys=feature.LastContext.previousLightKeys;light.enabled=false;NearRGB(Render(),Color.black,"empty light set",.002f);CheckLightMappings(oldKeys);
             oldKeys=feature.LastContext.previousLightKeys;light.enabled=true;NearRGB(Render(),Color.green*Expected(light),"empty to nonempty lights",.02f);CheckLightMappings(oldKeys);
             light.color=Color.white;light.transform.position=new Vector3(1.5f,0,-1);Render();
+        }
+        private static void ValidateQuality()
+        {
+            feature.Settings.temporal=true;feature.Settings.spatial=true;feature.Settings.initialSamples=8;
+            for(int i=0;i<40;i++)RenderCamera();var context=feature.LastContext;Require(context.nrd!=null,"Quality NRD unavailable");
+            light.color=Color.red;
+            for(int frame=0;frame<16;frame++)
+            {
+                RenderCamera();var recolored=ReadCenter(context.filteredDiffuse.rt);
+                if(frame==0)Require(Mathf.Max(recolored.g,recolored.b)<.15f,"NRD retained too much old light color");
+                if(frame==15)Require(Mathf.Max(recolored.g,recolored.b)<.004f,"NRD old light color did not settle");
+                if(frame==0||frame==3||frame==7||frame==15)Debug.Log($"[HoRTDIValidation] QUALITY recolor frame={frame} raw={ReadCenter(context.diffuse.rt)} filtered={recolored}");
+            }
+            light.enabled=false;
+            for(int frame=0;frame<8;frame++)
+            {
+                RenderCamera();var raw=ReadCenter(context.diffuse.rt);var filtered=ReadCenter(context.filteredDiffuse.rt);Near(raw.r,0,"switched-off raw light",.002f);
+                if(frame==0||frame==3||frame==7)Debug.Log($"[HoRTDIValidation] QUALITY off frame={frame} filtered={filtered.r:F6}");
+                if(frame==3)Require(filtered.r<.002f,"NRD switched-off light ghost persisted");
+            }
+            light.enabled=true;light.color=Color.white;for(int i=0;i<40;i++)RenderCamera();
+            double worst=0,mean=0;
+            for(int frame=0;frame<24;frame++)
+            {
+                light.transform.position=new Vector3(1.5f-frame*.04f,0,-1);RenderCamera();var raw=ReadCenter(context.diffuse.rt);var filtered=ReadCenter(context.filteredDiffuse.rt);
+                double relative=Math.Abs(filtered.r-Expected(light))/Expected(light);worst=Math.Max(worst,relative);mean+=relative;
+                if(frame==0||frame==11||frame==23)Debug.Log($"[HoRTDIValidation] QUALITY moving frame={frame} raw={raw.r:F6} filtered={filtered.r:F6} expected={Expected(light):F6}");
+            }
+            Debug.Log($"[HoRTDIValidation] QUALITY moving relative mean={mean/24:F6} worst={worst:F6}");
+            Require(mean/24<.21,"NRD moving-light response exceeded measured relative error budget");
+            Debug.Log($"[HoRTDIValidation] QUALITY moving finalROI raw={ReadMean(context.diffuse.rt).r:F6} filtered={ReadMean(context.filteredDiffuse.rt).r:F6} expected={ExpectedMean(light):F6}");
+            for(int i=0;i<40;i++)RenderCamera();
+            Debug.Log($"[HoRTDIValidation] QUALITY stopped finalROI raw={ReadMean(context.diffuse.rt).r:F6} filtered={ReadMean(context.filteredDiffuse.rt).r:F6} expected={ExpectedMean(light):F6}");
+            target.Release();Object.DestroyImmediate(target);target=Keep(new RenderTexture(256,256,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));target.Create();
+            // Isolate deterministic raw visibility from stochastic ReSTIR reuse.
+            feature.Settings.temporal=false;feature.Settings.spatial=false;
+            camera.cullingMask=1;blocker.layer=1;blocker.transform.position=new Vector3(.25f,0,-.5f);blocker.transform.localScale=new Vector3(1,4,.1f);blocker.SetActive(true);
+            light.type=LightType.Directional;light.intensity=1;light.transform.rotation=Quaternion.identity;
+            for(int i=0;i<48;i++)RenderCamera();context=feature.LastContext;
+            var rawImage=Keep(new Texture2D(256,256,TextureFormat.RGBAFloat,false,true));var filteredImage=Keep(new Texture2D(256,256,TextureFormat.RGBAFloat,false,true));
+            ReadImage(context.diffuse.rt,rawImage);ReadImage(context.filteredDiffuse.rt,filteredImage);
+            double leak=0,litError=0;int shadowCount=0,litCount=0;float maximum=0;
+            for(int y=64;y<192;y++)for(int x=0;x<256;x++)
+            {
+                var a=rawImage.GetPixel(x,y);var b=filteredImage.GetPixel(x,y);Require(float.IsFinite(b.r),"Non-finite filtered visibility");
+                if(x>=104&&x<216){Near(a.r,0,"analytic world shadow",.002f);leak+=b.r;maximum=Mathf.Max(maximum,b.r);shadowCount++;}
+                if(x>=16&&x<88){Near(a.r,1/Mathf.PI,"analytic lit side",.003f);litError+=Math.Abs(b.r-a.r);litCount++;}
+            }
+            Debug.Log($"[HoRTDIValidation] QUALITY shadow interior8px mean={leak/shadowCount:F6} max={maximum:F6} litError={litError/litCount:F6}");
+            Require(leak/shadowCount<.0005&&maximum<.003,"NRD blurred deterministic world shadow into visible light");
+            Require(litError/litCount<.003,"NRD attenuated the deterministic lit side");
+            var preview=Keep(new Texture2D(512,256,TextureFormat.RGB24,false,true));
+            for(int y=0;y<256;y++)for(int x=0;x<256;x++)
+            {
+                float a=Mathf.LinearToGammaSpace(Mathf.Clamp01(rawImage.GetPixel(x,y).r*Mathf.PI));float b=Mathf.LinearToGammaSpace(Mathf.Clamp01(filteredImage.GetPixel(x,y).r*Mathf.PI));
+                preview.SetPixel(x,y,new Color(a,a,a));preview.SetPixel(x+256,y,new Color(b,b,b));
+            }
+            preview.Apply();string root=System.IO.Directory.GetParent(Application.dataPath).FullName;
+            System.IO.File.WriteAllBytes(System.IO.Path.Combine(root,compatibility?"nrd-shadow-quality-compat.png":"nrd-shadow-quality-rg.png"),preview.EncodeToPNG());
+            light.transform.rotation=Quaternion.Euler(0,30,0);
+            for(int frame=0;frame<16;frame++)
+            {
+                RenderCamera();ReadImage(context.diffuse.rt,rawImage);ReadImage(context.filteredDiffuse.rt,filteredImage);
+                if(frame==0||frame==3||frame==7||frame==15)
+                {
+                    double shadow=0,lit=0;for(int x=232;x<248;x++){Near(rawImage.GetPixel(x,128).r,0,"moving sun shadow truth",.002f);shadow+=filteredImage.GetPixel(x,128).r;}
+                    for(int x=100;x<116;x++)lit+=filteredImage.GetPixel(x,128).r;
+                    Debug.Log($"[HoRTDIValidation] QUALITY movingSun frame={frame} newShadow={shadow/16:F6} newlyLit={lit/16:F6}");
+                    Require(shadow/16<.003,"NRD newly shadowed region kept old illumination");
+                }
+            }
+            Debug.Log("[HoRTDIValidation] PASS quality response gates: recolor/off/moving-light and offscreen-world visibility; compatibility="+compatibility);
+        }
+        private static void ReadImage(RenderTexture source,Texture2D image)
+        {
+            var previous=RenderTexture.active;
+            try{RenderTexture.active=source;image.ReadPixels(new Rect(0,0,source.width,source.height),0,0);image.Apply();}
+            finally{RenderTexture.active=previous;}
         }
         private static void ValidateBudget()
         {

@@ -90,6 +90,11 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         volume.debugMode.value=HoRTDIDebugMode.RawDiffuse;Render();NearRGB(Read(target),Read(capture.Raw),"Player noisy raw debug");volume.debugMode.value=HoRTDIDebugMode.Off;
         feature.Settings.denoise=false;Render();Near(Read(capture.Diffuse).r,Read(capture.Raw).r,"Player raw fallback",.002f);
         feature.Settings.denoise=true;Render();Require(feature.Status.Contains("RELAX")&&!feature.Status.Contains("unavailable"),"Player NRD recreate failed");
+        feature.Settings.temporal=feature.Settings.spatial=true;feature.Settings.initialSamples=8;light.color=Color.white;blue.enabled=false;
+        for(int i=0;i<40;i++)Render();light.color=Color.red;
+        for(int i=0;i<16;i++)Render();var recolored=Read(capture.Diffuse);
+        Require(Mathf.Max(recolored.g,recolored.b)<.01f,"Player retained stale light color");
+        light.enabled=false;for(int i=0;i<4;i++)Render();Near(Read(capture.Raw).r,0,"Player switched-off raw light",.002f);Near(Read(capture.Diffuse).r,0,"Player switched-off filtered ghost",.002f);
     }
     private void Render(){VolumeManager.instance.Update(probeCamera.transform,-1);RenderPipeline.SubmitRenderRequest(probeCamera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
     private float Expected(int x,int y)
