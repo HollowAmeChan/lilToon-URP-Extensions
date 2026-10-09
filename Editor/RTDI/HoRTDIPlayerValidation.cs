@@ -47,6 +47,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 foreach(var feature in new ScriptableRendererFeature[]{gb,sb,di,capture}){feature.name=feature.GetType().Name;AssetDatabase.AddObjectToAsset(feature,renderer);renderer.rendererFeatures.Add(feature);EditorUtility.SetDirty(feature);}
                 EditorUtility.SetDirty(renderer);
                 var serialized=new SerializedObject(di);if(serialized.FindProperty("shader").objectReferenceValue==null||serialized.FindProperty("nrdShaders").arraySize!=15)throw new Exception("DI shader serialization missing");
+                if(serialized.FindProperty("debugShader").objectReferenceValue==null)throw new Exception("DI debug shader serialization missing");
+                if(serialized.FindProperty("debugOverlayShader").objectReferenceValue==null)throw new Exception("DI debug grid shader serialization missing");
                 for(int i=0;i<15;i++)if(serialized.FindProperty("nrdShaders").GetArrayElementAtIndex(i).objectReferenceValue==null)throw new Exception("NRD shader reference missing "+i);
                 var pipeline=UniversalRenderPipelineAsset.Create(renderer);pipeline.supportsHDR=true;pipeline.msaaSampleCount=1;AssetDatabase.CreateAsset(pipeline,assets+"Pipeline.asset");
                 GraphicsSettings.defaultRenderPipeline=pipeline;QualitySettings.renderPipeline=pipeline;
@@ -62,9 +64,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 AssetDatabase.CreateAsset(material,assets+"Receiver.mat");receiver.GetComponent<Renderer>().sharedMaterial=material;
                 var blocker=GameObject.CreatePrimitive(PrimitiveType.Cube);blocker.layer=1;blocker.transform.position=new Vector3(.75f,0,-.5f);blocker.transform.localScale=new Vector3(.4f,.4f,.2f);blocker.GetComponent<Renderer>().sharedMaterial=material;blocker.SetActive(false);
                 var light=Point("White/Red light",new Vector3(1.5f,0,-1),Color.white);var blue=Point("Blue light",light.transform.position,Color.blue);blue.enabled=false;
-                var volume=new GameObject("Global DI volume").AddComponent<Volume>();volume.isGlobal=true;var profile=ScriptableObject.CreateInstance<VolumeProfile>();profile.Add<HoRTDIVolume>(true);AssetDatabase.CreateAsset(profile,assets+"Volume.asset");volume.sharedProfile=profile;
+                var volume=new GameObject("Global DI volume").AddComponent<Volume>();volume.isGlobal=true;var profile=ScriptableObject.CreateInstance<VolumeProfile>();var component=profile.Add<HoRTDIVolume>(true);AssetDatabase.CreateAsset(profile,assets+"Volume.asset");AssetDatabase.AddObjectToAsset(component,profile);EditorUtility.SetDirty(profile);EditorUtility.SetDirty(component);volume.sharedProfile=profile;
                 var probe=new GameObject("Player DI validation").AddComponent(probeType);var so=new SerializedObject(probe);
-                Set(so,"probeCamera",camera);Set(so,"feature",di);Set(so,"capture",capture);Set(so,"light",light);Set(so,"blue",blue);Set(so,"blocker",blocker);Set(so,"surfaceMaterial",material);so.ApplyModifiedPropertiesWithoutUndo();
+                Set(so,"probeCamera",camera);Set(so,"feature",di);Set(so,"capture",capture);Set(so,"light",light);Set(so,"blue",blue);Set(so,"blocker",blocker);Set(so,"surfaceMaterial",material);Set(so,"profile",profile);so.ApplyModifiedPropertiesWithoutUndo();
                 AssetDatabase.SaveAssets();EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(),assets+"Probe.unity");
                 var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{assets+"Probe.unity"},target=BuildTarget.StandaloneWindows64,locationPathName=Path.Combine(root,compatibility?"PlayerBuildCompatibility/HoRTDIProbe.exe":"PlayerBuild/HoRTDIProbe.exe"),options=BuildOptions.None});
                 if(report.summary.result!=BuildResult.Succeeded)throw new Exception("Player build failed: "+report.summary.result);

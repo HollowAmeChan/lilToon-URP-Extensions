@@ -67,13 +67,25 @@
 
 **完成后复查与边界：** 生产改动仅灯烘焙模式的跨 Editor/Player API 修正。测试 probe 明确 Dispose 自己的 DI/capture/target；退出时仍有四条 GraphicsBuffer GC 提示，D3D11（未创建 DI GPU context）也相同，不能据此宣称整个 URP 退出已无泄漏。真实 lilToon、MSAA=1 不依赖 GB generic fallback / MSAA resolve，当前两种 Shader.Find 缺失提示保留为已知输入设施边界。DI 隐藏调试 shader 未进入 build report，需要下一步建立自身资源保留引用，且旧 renderer asset 的自动补引用仍须保存；尚未证明旧资产的构建迁移。只有 Mono/64² 受控场景，没有 IL2CPP、目标性能、TAA、动态几何或完整材质边界结论。[复现说明](../../Tests~/Player/RTDI/README.md)。
 
-## 5. 下一步取舍
+## 5. DI 调试资源保留与旧资产保存
+
+**动手前评审：应做，限定 DI 自身依赖。** 上一步 build report 缺少 DI debug shader，且 Create 内自动填 shader 没有标记待保存。Player 主输出通过不能证明调试可用，新的测试 asset 显式 SetDirty 也不能证明旧 renderer 的自然保存流程有效。网格模式还依赖共享标签 shader，应作为 DI 直接依赖一并保留。
+
+**参考核对：** 用户工程 NativeRtxdiFeature.AutoFillShaders 末尾显式 SetDirty；[Unity Shader.Find](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Shader.Find.html) 建议保留 shader 引用，未引用的 shader 可能只在 Editor 可找；[SetDirty](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/EditorUtility.SetDirty.html) / [SaveAssets](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/AssetDatabase.SaveAssets.html) 对应资产修改与保存。原生库、RTXDI/NRD 算法不需要变。
+
+**实现：** DI 序列化自身 debug 和 grid-label shader，使用正式引用建材质，不依赖默认 shader-name 查找保留 DI debug。Editor 补齐只填缺失引用；固定 NRD 数组扩容用 Array.Resize 保留已有前缀 override，实际变化才 SetDirty。Create 与自定义 Inspector OnEnable 共用这一补齐函数，Inspector 不重建 runtime context。共享网格 helper 仅增加可选显式 shader 参数，原调用方式保持相同行为。两个 debug shaders 在 release build report 中，未扩张 Always Included 列表或引入全工程构建迁移。
+
+**验证与发现：** 三个独立 Editor 进程分别保存空库/部分库旧 renderer、经实际 Create / Inspector 回调修复并 SaveAssets、重启后先读磁盘 GUID 再加载；完整 15 个引用、debug / grid-label、dirty 标记、重复调用不修改、override 与 initialSamples 保留均通过。release D3D12 RG / compatibility 实际 EXE 的 Raw / Filtered / Receiver / All 网格、原 raw/NRD 输出与生命周期通过；D3D11 inactive 通过。新保留的标签 shader 暴露发布编译的 LabelChar 初始化警告，改为明确初始化的选择后消除，字符映射语义相同。测试旧 YAML 的第一次正则过宽，以及构建脚本 Volume component 没有 AddObjectToAsset 导致部署为空，均修正后重新验证；未把失败运行算作通过。
+
+**完成后复查与下一项：** Shader/采样/NRD 输出含义未变，没有额外主表面 buffer、RT 算法、Feature 或最终合成。Player 两条路径 raw MSE 约 0.050401、filtered 约 0.000066，单灯/遮挡/Power/镜面继续通过。共享网格变化由 DI 与 GI 两条路径回归确认。DI Inspector 仍是两个 HelpBox；全局 UI 预算检查仍因已有 GD/AC 三处超预算失败，未改其他任务。旧资产仍需正常打开/保存，没有给未处理的外部资产作批量迁移保证。下一步转回实际运行预算：先量化目标分辨率与 CPU 分配，再据证据减少 NRD 调度热路径开销；材质边界/动态灯响应、TAA/动态几何仍需分别验证。
+
+## 6. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
-| Player 资源完整性 | DI/NRD 输出与核心 DLL 的 Win64 Mono release 部署已交付；优先补自身 debug shader 序列化保留，并验证旧 renderer 的补引用/保存流程，避免只在新建受控资产中有效。GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
-| NRD 质量与预算 | 随后检查目标分辨率、材质边界/动态灯响应、CPU 分配和 GPU budget。TAA/动态几何需独立证明。不能用 64² Player 回归代表目标场景性能。 |
+| Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
+| NRD 质量与预算 | 下一步先量化目标分辨率与调度热路径 CPU 分配；据实际结果优化，并保留 raw/filtered 对照。材质边界/动态灯响应、TAA/动态几何仍需独立证明。不能用 64² Player 回归代表目标场景性能。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

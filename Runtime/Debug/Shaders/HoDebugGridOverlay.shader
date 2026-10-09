@@ -26,10 +26,12 @@ Shader "Hidden/lilToon/URP/Debug/GridOverlay"
 
             uint LabelChar(int index)
             {
-                if (index < 4) return PickVectorChar(_HoDebugTileLabel0, index);
-                if (index < 8) return PickVectorChar(_HoDebugTileLabel1, index - 4);
-                if (index < 12) return PickVectorChar(_HoDebugTileLabel2, index - 8);
-                return PickVectorChar(_HoDebugTileLabel3, index - 12);
+                float4 chars = _HoDebugTileLabel3;
+                int localIndex = index - 12;
+                if (index < 4) { chars = _HoDebugTileLabel0; localIndex = index; }
+                else if (index < 8) { chars = _HoDebugTileLabel1; localIndex = index - 4; }
+                else if (index < 12) { chars = _HoDebugTileLabel2; localIndex = index - 8; }
+                return PickVectorChar(chars, localIndex);
             }
 
             uint GlyphRow(uint c, uint row)

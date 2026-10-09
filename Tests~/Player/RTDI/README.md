@@ -39,11 +39,29 @@ The probe uses a real lilToon receiver, dedicated GB/SB and a hidden-from-camera
 world blocker. It checks single-light energy/validity, baked-only exclusion,
 Mixed direct light, metal diffuse/independent specular, off-screen occlusion,
 power sampling, raw/filtered publication, RELAX noise/energy, disable/recreate and
-D3D11 inactivity. It disposes owned DI/capture/target resources before exit.
+D3D11 inactivity. It also checks actual Raw/Filtered/Receiver debug presentation
+and the receiver tile in the All grid, including retention of the grid-label shader.
+The builder stores the HoRTDIVolume as a profile subasset, so the deployed profile
+has a real component rather than a missing reference. The probe disposes owned
+DI/capture/target resources before exit.
 Compatibility capture samples the published shader globals; their names are not
 temporary RT identifiers for `CommandBuffer.Blit`.
 
-This is 64² Mono validation, not IL2CPP, shader-debug retention, GB generic
+This is 64² Mono validation, not IL2CPP, GB generic
 fallback/MSAA resolve, dynamic geometry, TAA or production-performance acceptance.
 The current real lilToon receiver needs neither GB generic fallback nor MSAA
 resolve; their absent `Shader.Find` warnings are recorded separately.
+
+For legacy renderer reference persistence, run three more separate Editor
+processes in the same isolated project:
+
+1. `lilToon.URP.Extensions.Editor.RTDI.HoRTDIResourceValidation.Stage`
+2. `lilToon.URP.Extensions.Editor.RTDI.HoRTDIResourceValidation.Repair`
+3. `lilToon.URP.Extensions.Editor.RTDI.HoRTDIResourceValidation.Verify`
+
+Stage saves one empty library and one partial library with an assigned override.
+Repair uses actual feature Create / custom Inspector callbacks, checks dirty and
+idempotence behavior, then SaveAssets without explicitly dirtying the renderer or
+feature. Verify checks on-disk GUIDs before loading the assets in another process.
+Assigned overrides and DI settings must survive. This tests the normal open/save
+workflow; it does not run an automatic project-wide migration during a build.

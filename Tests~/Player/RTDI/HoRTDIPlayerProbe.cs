@@ -15,6 +15,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     public Light blue;
     public GameObject blocker;
     public Material surfaceMaterial;
+    public VolumeProfile profile;
     private RenderTexture target;
     private bool unsupported;
     [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue;}
@@ -58,6 +59,11 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         surfaceMaterial.SetFloat("_Metallic",1);Render();Near(Read(capture.Raw).r,0,"Player metal diffuse",.002f);Require(Read(capture.Specular).r>0,"Player independent specular missing");surfaceMaterial.SetFloat("_Metallic",0);
         blocker.SetActive(true);Render();Near(Read(capture.Raw).r,0,"Player world occlusion",.002f);blocker.SetActive(false);
         feature.Settings.localSampling=HoRTDILocalSampling.Power;Render();Near(Read(capture.Raw).r,Expected(32,32),"Player power path",.015f);
+        Require(profile.TryGet<HoRTDIVolume>(out var volume),"DI debug Volume missing");
+        volume.debugMode.value=HoRTDIDebugMode.RawDiffuse;Render();NearRGB(Read(target),Read(capture.Raw),"Player raw debug");
+        volume.debugMode.value=HoRTDIDebugMode.Receiver;Render();NearRGB(Read(target),Color.green,"Player receiver debug");
+        Require(Shader.Find("Hidden/lilToon/URP/Debug/GridOverlay")!=null,"Player grid label shader stripped");
+        volume.debugMode.value=HoRTDIDebugMode.All;Render();NearRGB(Read(target,10,32),Color.green,"Player grid receiver tile");volume.debugMode.value=HoRTDIDebugMode.Off;
         feature.Settings.localSampling=HoRTDILocalSampling.Uniform;feature.Settings.denoise=true;
         light.color=Color.red;blue.enabled=true;
         for(int i=0;i<48;i++)Render();Require(feature.Status.Contains("RELAX")&&!feature.Status.Contains("unavailable"),"Player NRD failed: "+feature.Status);
@@ -80,6 +86,8 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         result.rawMse=(float)(rawMse/count);result.filteredMse=(float)(filteredMse/count);result.red=(float)(redSum/count);result.blue=(float)(blueSum/count);
         Require(filteredMse<rawMse*.3,"Player RELAX did not reduce noise");float reference=0;for(int y=24;y<40;y++)for(int x=24;x<40;x++)reference+=Expected(x,y);reference/=256;
         Near(result.red,reference,"Player NRD red energy",.04f);Near(result.blue,reference,"Player NRD blue energy",.04f);
+        volume.debugMode.value=HoRTDIDebugMode.Diffuse;Render();NearRGB(Read(target),Read(capture.Diffuse),"Player filtered debug");
+        volume.debugMode.value=HoRTDIDebugMode.RawDiffuse;Render();NearRGB(Read(target),Read(capture.Raw),"Player noisy raw debug");volume.debugMode.value=HoRTDIDebugMode.Off;
         feature.Settings.denoise=false;Render();Near(Read(capture.Diffuse).r,Read(capture.Raw).r,"Player raw fallback",.002f);
         feature.Settings.denoise=true;Render();Require(feature.Status.Contains("RELAX")&&!feature.Status.Contains("unavailable"),"Player NRD recreate failed");
     }
@@ -91,7 +99,8 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     }
     private static void ReadInto(RenderTexture texture,Texture2D image)
     {var previous=RenderTexture.active;try{RenderTexture.active=texture;image.ReadPixels(new Rect(0,0,64,64),0,0);image.Apply();}finally{RenderTexture.active=previous;}}
-    private static Color Read(RenderTexture texture){var image=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);try{ReadInto(texture,image);return image.GetPixel(32,32);}finally{Destroy(image);}}
+    private static Color Read(RenderTexture texture,int x=32,int y=32){var image=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);try{ReadInto(texture,image);return image.GetPixel(x,y);}finally{Destroy(image);}}
     private static void Near(float actual,float expected,string name,float tolerance)=>Require(Mathf.Abs(actual-expected)<tolerance,$"{name}: {actual} != {expected}");
+    private static void NearRGB(Color actual,Color expected,string name){Near(actual.r,expected.r,name+" R",.015f);Near(actual.g,expected.g,name+" G",.015f);Near(actual.b,expected.b,name+" B",.015f);}
     private static void Require(bool value,string message){if(!value)throw new Exception(message);}
 }

@@ -42,7 +42,9 @@ Feature 的 **NRD RELAX 降噪** 为可选项，默认关闭。开启后仍保�
 
 Windows x64 Mono release Player 已独立验收：普通序列化 renderer 引用 DI compute 与 15 个 NRD compute，正常裁剪后实际执行 RG / compatibility，两条路径的单灯、世界遮挡、Power、独立镜面、raw/filtered、RELAX 关闭重建均通过。packed 核心 DLL SHA-256 与源 DLL 相同；D3D11 实际启动并保持 DI inactive。双色灯 Player raw MSE 约 0.050401，filtered 约 0.000066，红/蓝均值约 0.227；仍是 64² 受控场景，不能代表生产画质。验证入口与复现步骤见 [Player probe](../Tests~/Player/RTDI/README.md)。
 
-当前是 **静态不透明 Mono 的 Editor / Windows Player 初版**。不支持/未验证 IL2CPP、skinned 或运动几何、XR、TAA jitter 的显式 NRD 契约、相机切换/时间跳变的大规模场景、完整材质 ID 边界路由和生产 GPU budget。DI 隐藏调试 shader 尚无可靠的 Player 保留引用；GB 通用 fallback / MSAA resolve 也不在本次真实 lilToon、MSAA=1 接收测试内。默认 shader-reference 自动补齐仍在 Editor Create，旧 renderer asset 必须保存引用，尚未做跨旧资产的构建迁移。DLL importer 限定 Windows x64。
+DI 的 debug / grid-label shader 现由 Feature 序列化持有，正常裁剪后 Raw / Filtered / Receiver / All 网格在独立 EXE 的两条路径均通过。旧 renderer 的缺失引用会在 Create 或打开 Feature Inspector 时补齐并 SetDirty；请保存 renderer asset 后构建。补齐只填空位，NRD 固定库扩容保留已有 override；再次检查完整引用不会弄脏资产。空库/部分库已在三个独立 Editor 进程中验证保存与磁盘重载，没有借 AssetDatabase 的内存状态冒充部署持久化。
+
+当前是 **静态不透明 Mono 的 Editor / Windows Player 初版**。不支持/未验证 IL2CPP、skinned 或运动几何、XR、TAA jitter 的显式 NRD 契约、相机切换/时间跳变的大规模场景、完整材质 ID 边界路由和生产 GPU budget。GB 通用 fallback / MSAA resolve 不在本次真实 lilToon、MSAA=1 接收测试内。没有添加构建时全工程批量迁移；未打开/保存的外部旧 renderer 仍应先完成正常补引用流程。DLL importer 限定 Windows x64。
 
 新增八张信号/输出/恢复纹理合计约 60 B/像素，RELAX pool 约 80 B/像素，另有三个 64 KiB 常量 buffer。1080p 增量约 277 MiB，不含驱动/对齐；与已有 DI 资源合计约 483 MiB 以上。当前每轮还有描述/常量的 managed 分配，CPU/GPU 时间及内存优化是后续门槛，不以 64² 回归代表目标场景性能。
 

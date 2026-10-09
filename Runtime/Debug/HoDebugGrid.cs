@@ -12,10 +12,10 @@ namespace lilToon.URP.Extensions.Debugging
         private static readonly MaterialPropertyBlock Properties = new();
         private static Material overlay;
 
-        public static void EnsureOverlay()
+        public static void EnsureOverlay(Shader preferredShader = null)
         {
             if (overlay != null) return;
-            Shader shader = Shader.Find("Hidden/lilToon/URP/Debug/GridOverlay");
+            Shader shader = preferredShader != null ? preferredShader : Shader.Find("Hidden/lilToon/URP/Debug/GridOverlay");
             if (shader != null) overlay = CoreUtils.CreateEngineMaterial(shader);
         }
 

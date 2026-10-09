@@ -78,3 +78,5 @@ Feature 的「局部灯采样」可选择均匀/功率，默认均匀。功率�
 ## 可选 NRD RELAX
 
 开启 Feature 的 NRD RELAX 降噪后，公开 diffuse/specular 发布 filtered，额外 raw handles/globals 保持原始结果。当前已验证静态 Mono、D3D12 两条路径、Editor Gamma/Linear，以及 Windows x64 release Player 实际执行；IL2CPP、TAA/XR/动态几何与目标性能尚未验收。NRD 只过滤独立 DI 并恢复同一参考材质因子，不负责最终 lilToon 合成。信号、ABI、资源成本、测试与限制详见 [Ho-RTDI-NRD](Ho-RTDI-NRD.md)。
+
+Feature 序列化引用自身 debug shader 和网格标签 shader，Player Raw / Filtered / Receiver / All 网格调试已验收。升级旧 renderer 时，Create 或打开 Feature Inspector 会补齐缺失 shader 并标记待保存；保存后再构建。已有 override 保留，重复检查不会修改完整资产。尚未加入构建时全工程资源迁移。[隔离重载与发布验证](../Tests~/Player/RTDI/README.md)。

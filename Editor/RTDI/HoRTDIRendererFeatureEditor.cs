@@ -8,6 +8,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     {
         private static readonly Color RuntimeColor=new Color(.46f,.64f,.92f),AdvancedColor=new Color(.62f,.58f,.78f);
         private static bool runtime=true,advanced;
+        private void OnEnable()=>((HoRTDIRendererFeature)target).EnsureEditorShaderReferences();
         public override void OnInspectorGUI()
         {
             serializedObject.Update();var settings=serializedObject.FindProperty("settings");
@@ -26,6 +27,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 Draw(settings,"rayBias","射线偏移");Draw(settings,"geometryLayers","几何层");Draw(settings,"lightLayers","灯所在物体层");Draw(settings,"inSceneView","Scene View 中生产");
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("shader"),new GUIContent("Compute Shader"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("nrdShaders"),new GUIContent("NRD Shader Library"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("debugShader"),new GUIContent("Debug Shader"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("debugOverlayShader"),new GUIContent("Debug Grid Shader"));
             }
             serializedObject.ApplyModifiedProperties();EditorGUILayout.LabelField("运行状态",((HoRTDIRendererFeature)target).Status);
         }

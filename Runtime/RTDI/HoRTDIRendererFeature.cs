@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using lilToon.URP.Extensions.RayTracing;
 using lilToon.URP.Extensions.RTDI.NRD;
+using lilToon.URP.Extensions.Debugging;
 using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
@@ -17,6 +18,8 @@ namespace lilToon.URP.Extensions.RTDI
         [SerializeField] private HoRTDISettings settings=new HoRTDISettings();
         [SerializeField] private ComputeShader shader;
         [SerializeField] private ComputeShader[] nrdShaders;
+        [SerializeField] private Shader debugShader;
+        [SerializeField] private Shader debugOverlayShader;
         private HoRTScene scene;
         private readonly Dictionary<Camera,HoRTDIContext> contexts=new();
         private readonly List<Camera> dead=new();
@@ -31,12 +34,31 @@ namespace lilToon.URP.Extensions.RTDI
         {
             DisposeResources();scene=new HoRTScene();pass=new HoRTDIPass();debugPass=new HoRTDIDebugPass();
             #if UNITY_EDITOR
-            if(shader==null)shader=UnityEditor.AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDI.compute");
-            if(nrdShaders==null||nrdShaders.Length!=HoRTDINrdManifest.Identifiers.Length)nrdShaders=new ComputeShader[HoRTDINrdManifest.Identifiers.Length];
-            for(int i=0;i<nrdShaders.Length;i++)if(nrdShaders[i]==null)nrdShaders[i]=UnityEditor.AssetDatabase.LoadAssetAtPath<ComputeShader>($"Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/NRD/HoRTDINrd{i:00}.compute");
+            EnsureEditorShaderReferences();
             #endif
             if(!registered){RenderPipelineManager.beginCameraRendering+=ResetCamera;registered=true;}
         }
+        #if UNITY_EDITOR
+        // Repair missing references without resetting the runtime context or
+        // replacing assigned shader overrides. SaveAssets persists the subasset.
+        internal bool EnsureEditorShaderReferences()
+        {
+            const string root="Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/";
+            bool changed=LoadMissing(ref shader,root+"HoRTDI.compute");
+            changed|=LoadMissing(ref debugShader,root+"HoRTDIDebug.shader");
+            changed|=LoadMissing(ref debugOverlayShader,"Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Debug/Shaders/HoDebugGridOverlay.shader");
+            if(nrdShaders==null||nrdShaders.Length!=HoRTDINrdManifest.Identifiers.Length)
+            {Array.Resize(ref nrdShaders,HoRTDINrdManifest.Identifiers.Length);changed=true;}
+            for(int i=0;i<nrdShaders.Length;i++)changed|=LoadMissing(ref nrdShaders[i],$"{root}NRD/HoRTDINrd{i:00}.compute");
+            if(changed)UnityEditor.EditorUtility.SetDirty(this);
+            return changed;
+        }
+        private static bool LoadMissing<T>(ref T asset,string path) where T:UnityEngine.Object
+        {
+            if(asset!=null)return false;
+            asset=UnityEditor.AssetDatabase.LoadAssetAtPath<T>(path);return asset!=null;
+        }
+        #endif
         private void ResetCamera(ScriptableRenderContext context,Camera camera)
         {
             Shader.SetGlobalFloat("_HoRTDIActive",0);Shader.SetGlobalTexture("_HoRTDIDiffuseTexture",Texture2D.blackTexture);Shader.SetGlobalTexture("_HoRTDISpecularTexture",Texture2D.blackTexture);
@@ -99,7 +121,8 @@ namespace lilToon.URP.Extensions.RTDI
             if(settings.denoise)Status+=" / "+context.nrdStatus;
             if(volume!=null&&volume.debugMode.value!=HoRTDIDebugMode.Off&&(camera.cameraType==CameraType.SceneView?volume.debugInSceneView.value:volume.debugInGameView.value))
             {
-                if(debugMaterial==null){var found=Shader.Find("Hidden/lilToon/URP/RTDI/Debug");if(found!=null)debugMaterial=CoreUtils.CreateEngineMaterial(found);}
+                if(debugMaterial==null&&debugShader!=null)debugMaterial=CoreUtils.CreateEngineMaterial(debugShader);
+                HoDebugGrid.EnsureOverlay(debugOverlayShader);
                 if(debugMaterial!=null){debugPass.Setup(volume.debugMode.value,debugMaterial,context);debugPass.Enqueue(renderer);}
             }
         }
