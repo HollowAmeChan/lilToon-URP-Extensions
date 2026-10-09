@@ -46,6 +46,11 @@ has a real component rather than a missing reference. The probe disposes owned
 DI/capture/target resources before exit.
 It additionally enables ReSTIR reuse and checks settled light recoloring and
 switched-off raw/filtered results after four renders.
+The probe also checks two-pixel red/blue albedo preservation and a four-pixel
+full-metal strip against adjacent zero-F0 dielectric lighting. These boundary
+gates disable ReSTIR reuse to give NRD a deterministic analytic input. The JSON
+records maximum albedo error, metal specular relative error and adjacent specular
+leak; they do not establish arbitrary colored-specular/material-ID support.
 Compatibility capture samples the published shader globals; their names are not
 temporary RT identifiers for `CommandBuffer.Blit`.
 

@@ -18,7 +18,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     public VolumeProfile profile;
     private RenderTexture target;
     private bool unsupported;
-    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue;}
+    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak;}
     private readonly Result result=new Result();
     private IEnumerator Start()
     {
@@ -95,6 +95,42 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         for(int i=0;i<16;i++)Render();var recolored=Read(capture.Diffuse);
         Require(Mathf.Max(recolored.g,recolored.b)<.01f,"Player retained stale light color");
         light.enabled=false;for(int i=0;i<4;i++)Render();Near(Read(capture.Raw).r,0,"Player switched-off raw light",.002f);Near(Read(capture.Diffuse).r,0,"Player switched-off filtered ghost",.002f);
+        ValidateBoundaries();
+    }
+    private void ValidateBoundaries()
+    {
+        feature.Settings.temporal=feature.Settings.spatial=false;feature.Settings.denoise=true;
+        blue.enabled=false;light.enabled=true;light.color=Color.white;light.type=LightType.Directional;light.intensity=.5f;light.transform.rotation=Quaternion.identity;
+        var pattern=new Texture2D(64,1,TextureFormat.RGBA32,false,true){filterMode=FilterMode.Point,wrapMode=TextureWrapMode.Clamp};
+        var raw=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);var filtered=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);
+        GameObject strip=null;Material metal=null;
+        try
+        {
+            for(int x=0;x<64;x++)pattern.SetPixel(x,0,(x/2)%2==0?Color.red:Color.blue);pattern.Apply();surfaceMaterial.SetTexture("_MainTex",pattern);
+            for(int i=0;i<48;i++)Render();ReadInto(capture.Raw,raw);ReadInto(capture.Diffuse,filtered);
+            int redPixels=0,bluePixels=0;
+            for(int y=16;y<48;y++)for(int x=8;x<56;x++)
+            {
+                var a=raw.GetPixel(x,y);var b=filtered.GetPixel(x,y);Near(Mathf.Max(a.r,a.b),.5f/Mathf.PI,"Player albedo raw truth",.003f);
+                Near(Mathf.Min(a.r,a.b),0,"Player albedo absent raw channel",.001f);if(a.r>.1f)redPixels++;if(a.b>.1f)bluePixels++;
+                result.boundaryAlbedoMax=Mathf.Max(result.boundaryAlbedoMax,Mathf.Max(Mathf.Abs(a.r-b.r),Mathf.Abs(a.g-b.g),Mathf.Abs(a.b-b.b)));
+            }
+            Require(redPixels==32*24&&bluePixels==32*24,"Player fixture did not produce both albedo colors");
+            Require(result.boundaryAlbedoMax<.008f,"Player NRD blurred albedo channels");surfaceMaterial.SetTexture("_MainTex",Texture2D.whiteTexture);
+            strip=GameObject.CreatePrimitive(PrimitiveType.Quad);strip.transform.position=new Vector3(0,0,-.001f);strip.transform.localScale=new Vector3(4*2f/64,2,1);
+            metal=new Material(surfaceMaterial);metal.SetFloat("_Metallic",1);strip.GetComponent<Renderer>().sharedMaterial=metal;
+            feature.Settings.denoise=false;Render();float specReference=Read(capture.Specular).r;Require(specReference>.1f,"Player thin metal raw specular missing");
+            feature.Settings.denoise=true;for(int i=0;i<48;i++)Render();
+            result.boundaryMetalRelative=Mathf.Abs(Read(capture.Specular).r-specReference)/specReference;
+            result.boundarySpecLeak=Read(capture.Specular,28,32).r;
+            Near(Read(capture.Diffuse).r,0,"Player thin metal diffuse",.0005f);Near(Read(capture.Diffuse,28,32).r,.5f/Mathf.PI,"Player adjacent diffuse",.004f);
+            Require(result.boundaryMetalRelative<.05f&&result.boundarySpecLeak<.0005f,"Player NRD mixed material classes");
+        }
+        finally
+        {
+            if(strip!=null){strip.SetActive(false);Destroy(strip);}if(metal!=null)Destroy(metal);
+            surfaceMaterial.SetTexture("_MainTex",Texture2D.whiteTexture);Destroy(pattern);Destroy(raw);Destroy(filtered);
+        }
     }
     private void Render(){VolumeManager.instance.Update(probeCamera.transform,-1);RenderPipeline.SubmitRenderRequest(probeCamera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
     private float Expected(int x,int y)

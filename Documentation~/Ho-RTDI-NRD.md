@@ -14,12 +14,13 @@ Feature 的 **NRD RELAX 降噪** 为可选项，默认关闭。开启后仍保�
 
 | 信号 | 当前处理 |
 | --- | --- |
-| diffuse/specular RGB | raw 仍为已有参考 BRDF 光照；用 NRD_MaterialFactors 解调后，调用 RELAX_FrontEnd_PackRadianceAndHitDist |
+| diffuse RGB | raw 仍为 Lambert × albedo × 所选灯贡献；NRD 直接接收乘 albedo 之前的 Lambert lighting，避免反除丢失零颜色通道 |
+| specular RGB | raw 仍为参考 GGX 光照；用 NRD_MaterialFactors 的 specular 因子解调后，调用 RELAX_FrontEnd_PackRadianceAndHitDist |
 | signal alpha | 选中灯的距离，point/spot 为实际距离，directional 为 FP16 有限最大值；有效暗面没有选中灯时也提供有效的远距离零信号，不把 receiver-validity 写进 hit distance |
-| normal/roughness | 世界着色法线与当前参考 roughness，经 NRD_FrontEnd_PackNormalAndRoughness，固定编码 2/1；使用 RGBA16F 存储编码值 |
+| normal/roughness | 世界着色法线与参考 roughness，固定编码 2/1；RGBA16F 存储。material class=0 表示 active diffuse，3 表示全部 diffuseAlbedo 为零；不是逐对象/材质资产 ID |
 | view Z | 正的线性眼空间深度；无效主表面写 1000000，超过 denoising range 500000 |
 | motion | 静态世界的 world-space 零位移；不把相机运动混入 MV，相机重投影由实际前后 view/projection 矩阵提供 |
-| filtered publication | 按同一材质 helper 恢复 modulation，RGB 保持原 DI 接收含义，alpha 重新写 receiver-validity |
+| filtered publication | diffuse 乘当前 albedo，specular 按同一 NRD helper 恢复；RGB 保持原 DI 接收含义，alpha 重新写 receiver-validity |
 
 没有复制当前主表面 GBuffer；现有 GB/SB 被借用，新增的是 NRD 实际要求的信号编码。NRD shader 不自行读取/重渲染场景。帧间时间与历史预算现在使用相机实际提交的 unscaled sample time，详见后面的时间契约。
 
@@ -139,3 +140,26 @@ Resolve 通过同一个 RWTexture2D 逐像素读写，避免同轮把同一资�
 减少量为两张 RGBA16F 的 16 B/像素，不包含输入/AS/driver/cache；计时沿用上述简单 fixture 和最终读回同步方式，本轮没有证明速度提升。RG / compatibility 的能量、噪声、镜面、相机移动、raw/filtered 调试、域拒绝和释放重建通过；目标尺寸 resize/reset、动态灯/阴影质量与 compatibility 30/60/120 Hz 时间线通过。兼容路径数值与前版相同：raw MSE=0.050401、filtered=0.000257，specular raw/filtered=0.296814/0.292526；RG 不同实际执行节奏下 filtered=0.000184。两个 Win64 Mono release 构建、真实 D3D12 两条 EXE 与 D3D11 inactive 通过，Player filtered MSE≈0.000085/0.000101；packed DLL hash 相同。无新增 DI/NRD shader 或 command-buffer 错误，已有 lilToon duplicate-keyword 构建警告与其他模块 C# 警告保留。
 
 首次“external output 不可作为 SRV”检查被实际 Temporal 读取否定，随后改成并验证本轮先写后读；失败运行没有计为通过。此项没有改变 NRD 算法、滤波设置或接收含义。尚未证明的薄几何/材质边界、动态几何与每 lobe 距离代表性仍需独立检查。后端原始参考：[用户 fork 内 RTXPT 对应上游](https://github.com/NVIDIA-RTX/RTXPT/blob/main/Rtxpt/NRD/DenoiserNRD.hlsli)，运行行为仍以本地固定 NRD 版本为准。
+
+## Diffuse 颜色通道与零 diffuse 材质边界
+
+步骤 11 的真实 lilToon / 128² fixture 使用单个正面 directional delta 光与显式 Lambert 真值。2 像素红/蓝 point-sampled 纹理、近共面 2/4/8 像素金属条和有 0.35 深度差的 4 像素蓝色前景分别隔离颜色、材质与几何影响。确定性 NRD 门槛关闭 ReSTIR reuse，深度前景另启用 reuse；不能把带随机归一化的 raw 每个像素都强行要求等于解析值。
+
+旧实现先把 albedo 乘入 raw，再除以带 0.02 下限的 NRD diffuse factor。零通道的 lighting 已经丢失，空间滤波会将其当作暗信号；恢复时的下限还会生成假颜色/金属 diffuse。用户工程 Assets/Shaders/RayTracing/ShadingHelpers.hlsl / DI/ShadeSamples.hlsl 保留 demodulatedDiffuse，再乘 albedo 得最终 DI。当前按这个严格可分离的 Lambert 分解直接生产 NRD diffuse signal，最后乘当前 albedo。raw 表达式、采样/visibility、confidence 的配对照明计算不变；specular 继续使用 NRD helper，因为它不能照搬 Lambert 分解。
+
+只改 diffuse 分解已经恢复颜色/深度前景和金属 diffuse，但金属镜面仍被周围零 specular 信号严重压暗。固定 NRD 的 normal encoding 2 支持 2-bit 分类，原来统一 ID=0 且 minMaterial=4 禁用比较。现传 active-diffuse=0 / all-zero-diffuse=3，RELAX 两条 minMaterial 设为 0；Temporal、HistoryFix、A-trous 使用原始 CompareMaterials。0/3 对应存储 alpha 0/1，避免 1/3 或 2/3 经 FP16 传输后与历史 R8 ID 不精确相等。分类直接来自已有量化 albedo，包括全金属与全黑 diffuse；不是新的主表面副本、对象 ID 或完整资产路由。[官方材质解调与分类说明](https://github.com/NVIDIA-RTX/NRD)，具体实现按固定 NRD.hlsli / NRDSettings.h / RELAX shader 核对。
+
+| 确定性边界指标 | 旧实现 | 仅 diffuse 分解 | 分解＋分类（最终 Editor） |
+| --- | --- | --- | --- |
+| 2px 红/蓝最大绝对误差 | 0.080811 | 0.000122 | 0.000122 |
+| 2px 金属镜面平均相对误差 | 73.43% | 73.43% | 0.0071% |
+| 4px 金属镜面平均相对误差 | 42.03% | 42.03% | 0.0407% |
+| 8px 金属镜面平均相对误差 | 14.49% | 14.49% | 0.0524% |
+| 电介质最大假镜面（4px case） | 0.011414 | 0.011414 | F6 精度下 0 |
+| 4px 有深度差的蓝色前景最大误差（reuse） | 0.018433 | 0.000122 | 0.000122 |
+
+最终两条 Editor 路径相同。关闭 reuse 的金属 diffuse 为零，邻近 active diffuse 平均相对误差 <0.023%；输入 class alpha=1 的实际 GPU 传输通过。单独启用 temporal＋spatial、48 次预热和 64 次观察后，邻近 diffuse raw/filtered 均值 0.158370/0.158098，解析值 0.159155；金属 specular 为 0.640791/0.636575，确定性 raw specular 参考为 0.646484。有限、相关的 64 帧数据不是无偏证明，后续应继续检查异材质归一化/guide 精度。
+
+原 NRD 两条路径、动态灯/阴影质量、30/60/120 Hz compatibility 时间线、raw/filtered/debug 与释放重建回归通过。Editor raw MSE=0.050401、filtered=0.000257，specular raw/filtered=0.296814/0.293737。Win64 Mono release 两个构建与实际 EXE、D3D11 inactive 通过；Player 新增的 64² 两像素颜色与四像素金属边界最大 albedo 误差 0.000122、镜面相对误差约 0.227%、假镜面为零，原 filtered MSE≈0.000101。没有新增 GPU 资源、Feature 或最终材质合成。无 DI/NRD shader/command-buffer 错误，Roslyn 编译无错误；其他模块及已有 lilToon duplicate-keyword 警告保留。
+
+**边界：** 只证明这些静态 opaque 受控案例。深度前景案例使用相同入射 directional 光，证明颜色恢复/投影与 reuse 输出，不单独证明不同入射光照下的 NRD 深度隔离；后续需要点灯/异法线的边界对照。两个类别不能隔离所有材质，特别是同类的彩色/低 F0 镜面仍使用带下限的解调，不能宣称完整纹理保真；梯度滤波跨几何扩散、每 lobe 距离、动态材质/几何、TAA 与复杂场景仍需检查。首次混合材质 reuse 实验采用了不成立的逐像素确定性断言（raw≈0.15393 vs 0.15915），已改为独立连续统计；失败实验没有计作通过，也没有借调降 NRD 门槛掩盖 raw 差异。下一项检查不同入射光照的几何边界与镜面颜色/低 F0，再据参考评审信号表示。

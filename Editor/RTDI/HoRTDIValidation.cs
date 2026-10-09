@@ -17,7 +17,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     {
         private static readonly List<Object> objects=new();
         private static RenderPipelineAsset previousDefault,previousQuality;
-        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise,forceBudget,forceQuality,forceTiming;
+        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise,forceBudget,forceQuality,forceTiming,forceBoundaries;
         private static Camera camera;
         private static RenderTexture target;
         private static HoRTDIRendererFeature feature;
@@ -40,6 +40,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunQualityCompatibility(){compatibility=true;RunQuality();}
         public static void RunTiming(){Require(Application.dataPath.Replace('\\','/').Contains("/.codex-research/"),"Use the isolated project");forceTiming=forceDenoise=true;Run();}
         public static void RunTimingCompatibility(){compatibility=true;RunTiming();}
+        public static void RunBoundaries(){Require(Application.dataPath.Replace('\\','/').Contains("/.codex-research/"),"Use the isolated project");forceBoundaries=forceDenoise=true;Run();}
+        public static void RunBoundariesCompatibility(){compatibility=true;RunBoundaries();}
         public static void RunUnsupported(){unsupported=true;Run();}
         public static void Run()
         {
@@ -92,6 +94,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(forceBudget){ValidateBudget();Finish(null);return;}
                 if(forceQuality){ValidateQuality();Finish(null);return;}
                 if(forceTiming){ValidateTiming();Finish(null);return;}
+                if(forceBoundaries){ValidateBoundaries();Finish(null);return;}
                 if(forceDenoise){ValidateDenoiser();Finish(null);return;}
                 var single=Render();float expected=Expected(light);Near(single.r,expected,"single-light reference",.015f);Near(single.a,1,"receiver valid",.01f);
                 var baseline=Read(target);feature.SetActive(false);RenderCamera();NearRGB(Read(target),baseline,"no automatic camera composite");feature.SetActive(true);
@@ -294,6 +297,89 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 }
             }
             Debug.Log("[HoRTDIValidation] PASS quality response gates: recolor/off/moving-light and offscreen-world visibility; compatibility="+compatibility);
+        }
+        private static void ValidateBoundaries()
+        {
+            const int size=128;
+            target.Release();Object.DestroyImmediate(target);target=Keep(new RenderTexture(size,size,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));target.Create();
+            light.type=LightType.Directional;light.intensity=.5f;light.transform.rotation=Quaternion.identity;
+            feature.Settings.temporal=false;feature.Settings.spatial=false;
+            var raw=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
+            var filtered=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
+            var rawSpec=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
+            var filteredSpec=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
+            var pattern=Keep(new Texture2D(size,1,TextureFormat.RGBA32,false,true));pattern.filterMode=FilterMode.Point;pattern.wrapMode=TextureWrapMode.Clamp;
+            for(int x=0;x<size;x++)pattern.SetPixel(x,0,(x/2)%2==0?Color.red:Color.blue);pattern.Apply();surfaceMaterial.SetTexture("_MainTex",pattern);
+            for(int i=0;i<48;i++)RenderCamera();var context=feature.LastContext;
+            ReadImage(context.diffuse.rt,raw);ReadImage(context.filteredDiffuse.rt,filtered);
+            double textureError=0;float textureWorst=0;int redPixels=0,bluePixels=0;
+            for(int y=32;y<96;y++)for(int x=16;x<112;x++)
+            {
+                var a=raw.GetPixel(x,y);var b=filtered.GetPixel(x,y);
+                Near(Mathf.Max(a.r,a.b),.5f/Mathf.PI,"two-pixel albedo raw truth",.003f);Near(a.g,0,"albedo green raw",.001f);
+                Near(Mathf.Min(a.r,a.b),0,"albedo absent raw channel",.001f);if(a.r>.1f)redPixels++;if(a.b>.1f)bluePixels++;
+                float error=Mathf.Max(Mathf.Abs(a.r-b.r),Mathf.Abs(a.g-b.g),Mathf.Abs(a.b-b.b));textureError+=error;textureWorst=Mathf.Max(textureWorst,error);
+            }
+            Debug.Log($"[HoRTDIValidation] BOUNDARY albedo2px meanAbsolute={textureError/(64*96):F6} maxAbsolute={textureWorst:F6}");
+            Require(redPixels==64*48&&bluePixels==64*48,"Fixture did not produce both alternating albedo colors");
+            Debug.Log($"[HoRTDIValidation] BOUNDARY albedo sample raw={raw.GetPixel(32,64)} filtered={filtered.GetPixel(32,64)}");surfaceMaterial.SetTexture("_MainTex",Texture2D.whiteTexture);
+            var strip=Keep(GameObject.CreatePrimitive(PrimitiveType.Quad));
+            var metal=Keep(new Material(surfaceMaterial));metal.SetFloat("_Metallic",1);strip.GetComponent<Renderer>().sharedMaterial=metal;
+            // Almost coplanar: isolate material response from depth rejection.
+            strip.transform.position=new Vector3(0,0,-.001f);
+            foreach(int width in new[]{2,4,8})
+            {
+                strip.transform.localScale=new Vector3(width*2f/size,2,1);
+                for(int i=0;i<48;i++)RenderCamera();context=feature.LastContext;
+                ReadImage(context.diffuse.rt,raw);ReadImage(context.filteredDiffuse.rt,filtered);
+                ReadImage(context.specular.rt,rawSpec);ReadImage(context.filteredSpecular.rt,filteredSpec);
+                Near(ReadCenter(context.nrdNormal.rt).a,1,"Zero-diffuse class FP16 transport",.0001f);
+                double adjacentLoss=0,metalSpecError=0;float specLeak=0,metalDiffuse=0;int samples=0,metalSamples=0;
+                int start=(size-width)/2,end=start+width;
+                for(int y=32;y<96;y++)for(int x=start-4;x<end+4;x++)
+                {
+                    var a=raw.GetPixel(x,y);var b=filtered.GetPixel(x,y);var s=rawSpec.GetPixel(x,y);var t=filteredSpec.GetPixel(x,y);
+                    if(x>=start&&x<end){Near(a.r,0,"metal diffuse raw truth",.002f);metalDiffuse=Mathf.Max(metalDiffuse,b.r);Require(s.r>.1f,"Thin metal specular raw missing");metalSpecError+=Math.Abs(t.r-s.r)/s.r;metalSamples++;}
+                    else{Near(a.r,.5f/Mathf.PI,"dielectric diffuse raw truth",.003f);Near(s.r,0,"zero-F0 dielectric specular raw truth",.002f);adjacentLoss+=Math.Abs(b.r-a.r)/a.r;specLeak=Mathf.Max(specLeak,t.r);samples++;}
+                    Require(float.IsFinite(t.r)&&b.a>.99f,"Boundary signal invalid");
+                }
+                Debug.Log($"[HoRTDIValidation] BOUNDARY metal width={width}px adjacentDiffuseRelative={adjacentLoss/samples:F6} metalSpecRelative={metalSpecError/metalSamples:F6} dielectricSpecLeak={specLeak:F6} metalDiffuse={metalDiffuse:F6}");
+                Require(adjacentLoss/samples<.02&&metalSpecError/metalSamples<.05&&specLeak<.0005f&&metalDiffuse<.0005f,"NRD mixed active/zero diffuse material classes");
+            }
+            // Reuse has a stochastic normalization. Measure its own raw signal
+            // separately from the deterministic NRD boundary gates above.
+            feature.Settings.temporal=feature.Settings.spatial=true;strip.transform.localScale=new Vector3(4*2f/size,2,1);
+            for(int i=0;i<48;i++)RenderCamera();context=feature.LastContext;
+            double reusedRaw=0,reusedFiltered=0,reusedSpec=0,reusedFilteredSpec=0;int diffuseSamples=0,specSamples=0;
+            float specReference=rawSpec.GetPixel(64,64).r;
+            for(int frame=0;frame<64;frame++)
+            {
+                RenderCamera();ReadImage(context.diffuse.rt,raw);ReadImage(context.filteredDiffuse.rt,filtered);
+                ReadImage(context.specular.rt,rawSpec);ReadImage(context.filteredSpecular.rt,filteredSpec);
+                for(int y=48;y<80;y++)for(int x=58;x<70;x++)
+                {
+                    if(x>=62&&x<66){reusedSpec+=rawSpec.GetPixel(x,y).r;reusedFilteredSpec+=filteredSpec.GetPixel(x,y).r;specSamples++;}
+                    else{reusedRaw+=raw.GetPixel(x,y).r;reusedFiltered+=filtered.GetPixel(x,y).r;diffuseSamples++;}
+                }
+            }
+            Require(context.lastTemporal,"Material reuse observation did not enable temporal sampling");
+            Debug.Log($"[HoRTDIValidation] OBSERVATION material reuse frames=64 rawDiffuse={reusedRaw/diffuseSamples:F6} filteredDiffuse={reusedFiltered/diffuseSamples:F6} diffuseReference={.5f/Mathf.PI:F6} rawSpecular={reusedSpec/specSamples:F6} filteredSpecular={reusedFilteredSpec/specSamples:F6} specularReference={specReference:F6}; statistical observation, not a per-pixel deterministic gate");
+            // Real thin foreground at a different depth, with a colored material.
+            metal.SetFloat("_Metallic",0);metal.SetColor("_Color",Color.blue);strip.transform.position=new Vector3(0,0,-.35f);
+            strip.transform.localScale=new Vector3(4*2f/size,2,1);
+            feature.Settings.temporal=true;feature.Settings.spatial=true;
+            for(int i=0;i<48;i++)RenderCamera();context=feature.LastContext;
+            ReadImage(context.diffuse.rt,raw);ReadImage(context.filteredDiffuse.rt,filtered);
+            float depthWorst=0;
+            for(int y=32;y<96;y++)for(int x=56;x<72;x++)
+            {
+                var a=raw.GetPixel(x,y);var b=filtered.GetPixel(x,y);var expected=x>=62&&x<66?Color.blue:Color.white;
+                NearRGB(a,expected*(.5f/Mathf.PI),"thin foreground raw truth",.003f);
+                depthWorst=Mathf.Max(depthWorst,Mathf.Max(Mathf.Abs(a.r-b.r),Mathf.Abs(a.b-b.b)));
+            }
+            Debug.Log($"[HoRTDIValidation] BOUNDARY depth4px reuse maxAbsolute={depthWorst:F6}");Require(depthWorst<.008f,"Thin depth boundary lost deterministic lighting");
+            Require(textureWorst<.008f,"NRD blurred demodulated two-pixel albedo");
+            Debug.Log("[HoRTDIValidation] PASS boundary gates: analytic raw, 2px albedo, 2/4/8px metal classes and 4px depth/reuse; compatibility="+compatibility);
         }
         private static void ReadImage(RenderTexture source,Texture2D image)
         {

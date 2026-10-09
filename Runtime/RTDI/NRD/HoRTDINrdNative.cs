@@ -80,7 +80,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
                 acceleration=.6f,spatialSigma=4.5f,temporalSigma=.5f,reset=1,
                 historyFixFrames=3,baseStride=14,alternateStride=14,historyNormalPower=8,fastSigma=2,diffPrepass=0,specPrepass=0,
                 minHitWeight=.1f,varianceHistory=3,diffPhi=2,specPhi=1,lobeFraction=.5f,roughFraction=.15f,specSlack=.15f,atrous=5,
-                depthThreshold=.003f,lumRelax=.5f,normalRelax=.3f,roughRelax=1,minDiffMaterial=4,minSpecMaterial=4,roughEdge=1
+                depthThreshold=.003f,lumRelax=.5f,normalRelax=.3f,roughRelax=1,minDiffMaterial=0,minSpecMaterial=0,roughEdge=1
                 };
                 if(!float.IsFinite(seconds)||seconds<=0)seconds=1f/60;
                 // Pinned NRD GetMaxAccumulatedFrameNum: round(period * FPS).

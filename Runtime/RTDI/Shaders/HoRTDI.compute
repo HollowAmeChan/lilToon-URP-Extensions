@@ -145,7 +145,7 @@ void HoDIShade(uint3 id)
 {
     if(!HoDIInside(id.xy))return;
     RTXDI_DIReservoir reservoir=RTXDI_LoadDIReservoir(HoDILayout(),id.xy,1);RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
-    float3 diffuse=0,specular=0;
+    float3 diffuse=0,specular=0,diffuseLighting=0;
     float selectedDistance=65504;
     if(RAB_IsSurfaceValid(surface)&&RTXDI_IsValidDIReservoir(reservoir))
     {
@@ -157,6 +157,9 @@ void HoDIShade(uint3 id)
         selectedDistance=min(distance,65504);
         if(dot(L,surface.geoNormal)>0)
         {
+            // Keep the reference DI Lambert lighting before albedo modulation.
+            // Dividing a modulated signal cannot recover zero color channels.
+            diffuseLighting=Lambert(surface.normal,-L)*radiance;
             diffuse=Lambert(surface.normal,-L)*surface.material.diffuseAlbedo*radiance;
             if(surface.material.roughness>=.03)specular=GGX_times_NdotL(surface.viewDir,L,surface.normal,max(.03,surface.material.roughness),surface.material.specularF0)*radiance;
         }
@@ -172,9 +175,12 @@ void HoDIShade(uint3 id)
     {
         float3 diffFactor,specFactor;
         NRD_MaterialFactors(surface.normal,surface.viewDir,surface.material.diffuseAlbedo,surface.material.specularF0,surface.material.roughness,diffFactor,specFactor);
-        diffSignal=RELAX_FrontEnd_PackRadianceAndHitDist(diffuse/diffFactor,selectedDistance,true);
+        diffSignal=RELAX_FrontEnd_PackRadianceAndHitDist(diffuseLighting,selectedDistance,true);
         specSignal=RELAX_FrontEnd_PackRadianceAndHitDist(specular/specFactor,selectedDistance,true);
-        normal=NRD_FrontEnd_PackNormalAndRoughness(surface.normal,surface.material.roughness,0);
+        // Separate zero-diffuse receivers (including full metals) from active
+        // diffuse. IDs 0/3 survive our FP16 normal transport exactly.
+        float materialClass=all(surface.material.diffuseAlbedo==0)?3:0;
+        normal=NRD_FrontEnd_PackNormalAndRoughness(surface.normal,surface.material.roughness,materialClass);
         viewZ=surface.viewDepth;
     }
     _HoRTDINrdDiffuse[id.xy]=diffSignal;_HoRTDINrdSpecular[id.xy]=specSignal;
@@ -211,7 +217,7 @@ void HoDIShade(uint3 id)
     {
         float3 diffFactor,specFactor;
         NRD_MaterialFactors(surface.normal,surface.viewDir,surface.material.diffuseAlbedo,surface.material.specularF0,surface.material.roughness,diffFactor,specFactor);
-        diffuse=_HoRTDINrdOutputDiffuse[id.xy].rgb*diffFactor;specular=_HoRTDINrdOutputSpecular[id.xy].rgb*specFactor;
+        diffuse=_HoRTDINrdOutputDiffuse[id.xy].rgb*surface.material.diffuseAlbedo;specular=_HoRTDINrdOutputSpecular[id.xy].rgb*specFactor;
     }
     float receiver=RAB_IsSurfaceValid(surface)?1:0;
     _HoRTDINrdOutputDiffuse[id.xy]=float4(diffuse,receiver);_HoRTDINrdOutputSpecular[id.xy]=float4(specular,receiver);

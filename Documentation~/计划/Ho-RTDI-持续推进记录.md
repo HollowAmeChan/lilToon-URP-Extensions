@@ -133,13 +133,23 @@
 
 **完成后复查与下一项：** NRD 算法/预设/输出含义不变，只减少确实冗余的输出存储。固定版本升级仍需重新核对 lifecycle，不能将本结论扩展到其他 denoiser。下一项优先构造薄几何与不同材质交界的真实 raw/filtered 对照，分别检查表面判别、confidence 扩散和 NRD 本身的滤波边界，再决定是否需要输入或权重修正；每 lobe hit-distance 也必须以参考和证据评审。详见 [当前预算与复用约束](../Ho-RTDI-NRD.md)。
 
-## 11. 下一步取舍
+## 11. Diffuse 零通道与零 diffuse 材质边界
+
+**动手前评审：应做，先分离 raw 与滤波。** 上一步没有证明薄几何/异材质边界。新增真实 lilToon 的 2px 红蓝纹理、近共面 2/4/8px 全金属条、有深度差 4px 蓝色前景；单 directional 光、关闭 reuse 的确定性 raw 作为 NRD 对照，深度案例另启用 reuse。用户 UnityPathTracing-6000.3.15 的 ShadingHelpers / DI/ShadeSamples 明确保留无 albedo 的 diffuse，再乘材质；固定 NRD 编码与 minMaterial 比较也是已有接口。
+
+**发现、消融与实现：** 旧红/蓝 filtered 从 raw≈0.159 降到≈0.079，还混入另一颜色；金属 diffuse 出现假光。带下限的反除不能恢复已丢失的零通道。按参考的 Lambert 分解直接产生无 albedo 的 NRD signal、最后乘 albedo，单独验证即可修复颜色/金属 diffuse，但 2px 金属镜面仍损失 73.43%。随后使用原 SDK 的 active-diffuse=0 / zero-diffuse=3 分类，minDiffuse / minSpecular=0 开启比较；0/3 在 FP16 normal transport 中精确保存为 alpha 0/1。没有增加纹理、Feature、对象 ID 路由、最终合成或修改原始 NRD 正文；raw 着色表达式与 confidence 配对算法不变。
+
+**验证与结果：** 最终两条 Editor 路径颜色/深度前景最大误差 0.000122（旧为 0.080811/0.018433），2/4/8px 金属镜面相对误差约 0.0071/0.0407/0.0524%，电介质假镜面与金属 diffuse 在 F6 下为零。原 NRD 两条路径、动态灯/阴影、compatibility 时间线通过。两个 Win64 Mono release 构建与真实 EXE、D3D11 inactive 通过；发布新增颜色/金属门槛最大颜色误差 0.000122、金属镜面约 0.227%、假镜面为零，原 filtered MSE≈0.000101。无本步 Shader/command-buffer 错误，Roslyn 无错误，已有其他模块和 lilToon duplicate-keyword 警告保留。
+
+**复查与下一项：** 混合材质 reuse 的首次逐像素解析断言失败（raw≈0.15393 vs 0.15915）；不能将随机归一化信号强制当确定值。已补独立 64 帧统计：diffuse raw/filtered≈0.158370/0.158098，对照 0.159155；specular≈0.640791/0.636575，对照确定性 raw 0.646484。有限相关观察不证明无偏，后续仍需审计归一化/guide 精度。深度前景的相同 directional 入射仅证明颜色恢复与投影，点灯/异法线还需单独验证隔离。本步只隔离 active/zero diffuse，两类别不代表所有材质；彩色/低 F0 镜面的 helper 下限、梯度跨几何扩散、每 lobe 距离仍未解决。下一项检查不同入射的几何边界与镜面颜色/低 F0 的实际 raw/filtered，再据原参考评审信号。详见 [边界对照与复现](../Ho-RTDI-NRD.md)。
+
+## 12. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
-| NRD 质量与预算 | 静态解析灯 confidence 改善响应，external output 复用减少 16 B/像素，仍有成本和滞后。下一步专项核对薄几何/材质边界、每 lobe hit-distance 代表性。TAA/动态几何与复杂场景性能仍需独立证明，保留 raw/filtered 对照。 |
+| NRD 质量与预算 | 静态解析灯 confidence 改善响应，external output 复用减少 16 B/像素，diffuse 颜色与 active/zero 材质边界已修复。下一步专项检查彩色/低 F0 镜面、每 lobe hit-distance、异材质 reuse 统计与梯度边界。TAA/动态几何与复杂场景性能仍需独立证明，保留 raw/filtered 对照。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 
