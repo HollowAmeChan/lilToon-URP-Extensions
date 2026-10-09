@@ -23,6 +23,11 @@ DLSS, NRD or native rendering plugin is included in this subset.
   applicable NVIDIA license; they are not relicensed by the package's MIT label.
 
 Host scheduling, URP/Ho bindings, feature UI and validation are integration code.
+`../Shaders/HoRTDIConfidence.hlsl` adapts the pinned FullSample
+ComputeGradients, FilterGradientsPass and ConfidencePass to static Ho surfaces,
+existing analytic-light identity maps and low-resolution NRD confidence inputs.
+`confidence-provenance.json` records those original sample hashes; the adaptation
+is not an include-only copy and its NVIDIA portions use the bundled license.
 The four-pass flow follows the reference UnityRtxdi implementation; bridge
 structures and enabled light types are application-specific as prescribed by RAB.
 

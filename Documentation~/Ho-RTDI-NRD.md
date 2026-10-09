@@ -101,4 +101,24 @@ NRD 本身允许滤波偏差，材质因子下限、时空积累与空间滤波�
 
 时间线由 Editor-only 内部注入，使用真实 GB/SB、ReSTIR reuse、原生 NRD 和 GPU 读回；灯的速度/时长一致，不能把它称作三种真实 wall-clock Player 帧率 benchmark。30/60/120 的预算与输出、重复时间戳、时间回退、无效时间、两秒间隔后旧灯消失均验证；RG / compatibility 一致。现有阴影/变色/噪声/镜面/生命周期与 release Player 回归通过，Record 稳定轮仍 0 个 GC 事件。复现入口 HoRTDIValidation.RunTiming / RunTimingCompatibility。
 
-该契约使不同帧率的响应时长接近，未消除约 14～17% 的连续移动误差；不与上一组中心单像素误差直接作同指标比较。低帧率整数化、高帧率 255 帧上限、整数预算边界的轻微摆动仍属于限制；没有做 frame generation、TAA、XR 或信号置信度处理。参考为用户 NrdDenoiserHelper / NrdSettings、固定 NRDSettings.h，以及 [NVIDIA FPS / history confidence 说明](https://github.com/NVIDIA-RTX/NRD)；没有混入新版本 ABI。
+该契约使不同帧率的响应时长接近，未消除约 14～17% 的连续移动误差；不与上一组中心单像素误差直接作同指标比较。低帧率整数化、高帧率 255 帧上限、整数预算边界的轻微摆动仍属于限制；没有做 frame generation、TAA 或 XR。后续置信度接入见下节。参考为用户 NrdDenoiserHelper / NrdSettings、固定 NRDSettings.h，以及 [NVIDIA FPS / history confidence 说明](https://github.com/NVIDIA-RTX/NRD)；没有混入新版本 ABI。
+
+## 静态世界的 analytic-light history confidence
+
+本步采用用户 fork 中 RTXDI FullSample 的 ComputeGradients / FilterGradientsPass / ConfidencePass 思路，而非用两张随机 raw 图直接求差。每个 3×3 stratum 选择当前/上轮最亮的 diffuse 或 specular 样本，保存其 reservoir 的 light ID / UV / inverse PDF，并用另一轮的真实灯快照重新评价同一代表样本。增删灯映射为 -1 时给全量变化；冻结灯光时随机样本变化不产生梯度。RGB / luminance 的 FP16 精度与存储信号匹配。
+
+既有三份 reservoir 与 16 B 表面历史继续复用。ShadeNRD 先保存旧 raw 的 RG16F luminance，再输出当前 raw；旧 history reservoir / guides 在梯度完成前保留，由最后的 SaveHistory 写回。raw-only 路径保持原有 Shade 存储流程。表面位置通过静态世界的相机矩阵重新投影，法线/位置不匹配时不比较该对；这里没有 previous TLAS 或运动几何。
+
+原始梯度为 abs(old-new) / max(old,new) 的分子与分母，经过四轮参考 3×3 A-trous triangular filter，再用 exp2(-12) darkness bias、sensitivity=8 转成两路 R8 confidence。没有增加 confidence temporal history；4.17 支持 lower-resolution confidence，由 NRD 线性采样。接受的静态 revision 内，若选中解析灯的全部参数相同，则同一表面的重算必然相同，直接得到零梯度，避免不必要 visibility ray 和旧 guide 精度误差。关闭/重启、resize、时间 cut 等仍通过原 NRD history reset。
+
+| 同速时间线 | 仅时间预算的旧平均误差 | 加 confidence 后 |
+| --- | --- | --- |
+| 30 Hz | 15.44% | 9.25% |
+| 60 Hz | 17.17% | 14.45% |
+| 120 Hz | 14.22% | 12.76% |
+
+RG / compatibility 的原质量门槛、相机运动、变色/关灯、阴影边界、Metal/specular、域拒绝、生命周期和时间线均通过。冻结的随机双色灯 confidence 全图 min / mean=1，证明没有把 RNG 变化误报为光照变化。该 Editor fixture 的 filtered MSE 约 0.000257、raw=0.050401，红/蓝均值约 0.213；镜面 raw/filtered 0.296814/0.292526。旧预设/时间测试的数值保留作历史记录，不把不同执行节奏的单次噪声数据当成严格独立消融。Win64 release Player 两条路径与 D3D11 inactive 通过，Player filtered MSE 约 0.000101，raw 输出保持一致。
+
+新增资源为全分辨率 RG16F previous sampled luminance，以及 1/3 线性尺寸的两张 RGBA16F gradient 和两张 R8 confidence。1080p 活动载荷增加 11.865 MiB，DI＋NRD 为 495.637 MiB；720p 为 219.921 MiB。简单同步 batch 本轮 RG 测为 6.863 / 13.755 ms（720p / 1080p）；相对先前约 11 ms 的 1080p 链路有实质开销，仍不代表 NRD GPU 单独时间或生产场景 FPS。增加的调度为 gradient、4 filter、confidence 与 full-resolution history store；只有 NRD 开启时分配/执行。
+
+**限制：** 连续运动仍有滞后。Exact reprojection 取代参考的 temporal-selected pixel positions，只承诺静态世界；8-bit 旧材质 guide、薄几何、深度/法线判别与亮样本选择仍可能误判。参考 A-trous 不含新推荐的几何权重，跨材质/几何的 gradient 扩散尚需专项检查。固定三个 delta 灯型没有重新随机生成光点，reservoir ID / UV 就是同一个代表样本；环境/面灯或 probabilistic lobe split 接入时不能沿用这一结论。每 lobe hit-distance 的 BRDF 代表性仍未证明。来源与原 SHA 记录在 ThirdParty/confidence-provenance.json，NVIDIA 部分沿用原许可，未导入 native renderer / PT 框架。[官方 confidence 契约](https://github.com/NVIDIA-RTX/NRD)。

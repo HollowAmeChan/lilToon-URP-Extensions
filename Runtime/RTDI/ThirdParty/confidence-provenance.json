@@ -1,0 +1,10 @@
+{
+  "reference": "UnityPathTracing/RenderingPlugin/External/RTXDI/Samples/FullSample/Shaders/DenoisingPasses",
+  "localForkCommit": "eb9ee9276390412d5791a4ec39212bf4039df8a0",
+  "adaptation": "../Shaders/HoRTDIConfidence.hlsl; static-world reprojection, Ho surface/light bindings, low-resolution spatial-only confidence, guarded bounds and FP16 shading parity; no native renderer imported",
+  "files": [
+    {"path":"ComputeGradients.hlsl","sourceSHA256":"9E253F116252076DA36CDF1E3DCC8AE751CBBA0AF74B853EC5BF54E838AA40BE"},
+    {"path":"FilterGradientsPass.hlsl","sourceSHA256":"7BA03F672B96F7FCA5A738ABC1A906D3EB38702084EF1D2A92D71746F944BA66"},
+    {"path":"ConfidencePass.hlsl","sourceSHA256":"E7476BB0164F9994BDF55D0B6D2E1CBC0BADCDC49159A508C66025B2A55D1D39"}
+  ]
+}

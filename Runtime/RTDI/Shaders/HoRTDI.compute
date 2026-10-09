@@ -7,6 +7,10 @@
 #pragma kernel Shade
 #pragma kernel ShadeNRD HO_RTDI_NRD_ACTIVE
 #pragma kernel ResolveNRD HO_RTDI_NRD_ACTIVE
+#pragma kernel Gradients HO_RTDI_NRD_ACTIVE
+#pragma kernel FilterGradients HO_RTDI_NRD_ACTIVE
+#pragma kernel Confidence HO_RTDI_NRD_ACTIVE
+#pragma kernel SaveHistory HO_RTDI_NRD_ACTIVE
 #pragma kernel BuildPowerPdf
 #pragma kernel Presample
 #pragma use_dxc
@@ -66,6 +70,9 @@ RTXDI_ReservoirBufferParameters HoDILayout()
 RTXDI_RuntimeParameters HoDIRuntime()
 {RTXDI_RuntimeParameters p=(RTXDI_RuntimeParameters)0;p.neighborOffsetMask=255;p.frameIndex=(uint)_HoRTDIFrameIndex;return p;}
 bool HoDIInside(uint2 pixel) {return all(pixel<(uint2)_HoRTDIFrame.xy);}
+#if defined(HO_RTDI_NRD_ACTIVE)
+#include "HoRTDIConfidence.hlsl"
+#endif
 
 [numthreads(8,8,1)]
 void Initial(uint3 id:SV_DispatchThreadID)
@@ -156,6 +163,9 @@ void HoDIShade(uint3 id)
         }
     }
     float receiver=RAB_IsSurfaceValid(surface)?1:0;
+    #if defined(HO_RTDI_NRD_ACTIVE)
+    _HoRTDIPreviousLuminance[id.xy]=f16tof32(f32tof16(float2(HoDILuminance(_HoRTDIDiffuse[id.xy].rgb),HoDILuminance(_HoRTDISpecular[id.xy].rgb))));
+    #endif
     _HoRTDIDiffuse[id.xy]=float4(diffuse,receiver);_HoRTDISpecular[id.xy]=float4(specular,receiver);
     #if defined(HO_RTDI_NRD_ACTIVE)
     float4 diffSignal=0,specSignal=0,normal=0;float viewZ=1000000;
@@ -170,6 +180,15 @@ void HoDIShade(uint3 id)
     }
     _HoRTDINrdDiffuse[id.xy]=diffSignal;_HoRTDINrdSpecular[id.xy]=specSignal;
     _HoRTDINrdNormal[id.xy]=normal;_HoRTDINrdViewZ[id.xy]=viewZ;
+    #endif
+    #if defined(HO_RTDI_NRD_ACTIVE)
+    RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,1);
+}
+[numthreads(8,8,1)]void SaveHistory(uint3 id:SV_DispatchThreadID)
+{
+    if(!HoDIInside(id.xy))return;
+    RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
+    RTXDI_DIReservoir reservoir=RTXDI_LoadDIReservoir(HoDILayout(),id.xy,1);
     #endif
     RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,0);
     uint4 history=0;

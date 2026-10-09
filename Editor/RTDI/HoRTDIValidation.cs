@@ -326,7 +326,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         {
             long result=0;
             foreach(var buffer in new[]{context.reservoirs,context.history,context.lights,context.neighbors,context.previousLights,context.currentToPrevious,context.previousToCurrent,context.ris})if(buffer!=null)result+=(long)buffer.count*buffer.stride;
-            foreach(var texture in new[]{context.diffuse,context.specular,context.nrdDiffuse,context.nrdSpecular,context.nrdNormal,context.nrdViewZ,context.nrdOutputDiffuse,context.nrdOutputSpecular,context.filteredDiffuse,context.filteredSpecular})result+=Payload(texture);
+            foreach(var texture in new[]{context.diffuse,context.specular,context.nrdDiffuse,context.nrdSpecular,context.nrdNormal,context.nrdViewZ,context.nrdOutputDiffuse,context.nrdOutputSpecular,context.filteredDiffuse,context.filteredSpecular,context.previousLuminance,context.gradientA,context.gradientB,context.diffConfidence,context.specConfidence})result+=Payload(texture);
             var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
             foreach(string name in new[]{"permanent","transient"})foreach(var texture in (RTHandle[])context.nrd.GetType().GetField(name,flags).GetValue(context.nrd))result+=Payload(texture);
             foreach(var buffer in (GraphicsBuffer[])context.nrd.GetType().GetField("constants",flags).GetValue(context.nrd))result+=(long)buffer.count*buffer.stride;
@@ -345,6 +345,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             Require(context.nrd!=null,"NRD unavailable: "+feature.Status);Require(context.nrd.LastDispatchCount>0,"No native NRD dispatches recorded");
             Debug.Log("[HoRTDIValidation] NRD single raw="+ReadMean(context.diffuse.rt)+" filtered="+ReadMean(context.filteredDiffuse.rt)+" dispatches="+context.nrd.LastDispatchCount);
             Near(ReadMean(context.filteredDiffuse.rt).r,ExpectedMean(light),"NRD single-light energy",.03f);
+            Near(ReadCenter(context.diffConfidence.rt).r,1,"Stable lighting reported a confidence gradient",.02f);
             var signal=Read(context.nrdDiffuse.rt);Require(signal.a>1.5f&&signal.a<2.1f,"NRD alpha is not selected-light distance");
             Near(Read(context.nrdViewZ.rt).r,3,"NRD positive linear view Z",.01f);
             light.color=Color.red;var blue=Point(light.transform.position,Color.blue,light.intensity);
@@ -369,6 +370,13 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             Debug.Log($"[HoRTDIValidation] NRD noise rawMSE={rawError/count:F6} filteredMSE={filteredError/count:F6} red={sumRed/count:F6} blue={sumBlue/count:F6}");
             Require(filteredError<rawError*.3,"RELAX did not substantially reduce colored-light noise");
             Near((float)(sumRed/count),ExpectedMean(light),"NRD red energy",.04f);Near((float)(sumBlue/count),ExpectedMean(blue),"NRD blue energy",.04f);
+            Near(ReadCenter(context.diffConfidence.rt).r,1,"Static stochastic lighting caused false confidence loss",.03f);
+            var confidenceImage=Keep(new Texture2D(context.diffConfidence.rt.width,context.diffConfidence.rt.height,TextureFormat.RGBAFloat,false,true));ReadImage(context.diffConfidence.rt,confidenceImage);
+            float confidenceMinimum=1;double confidenceMean=0;
+            for(int y=0;y<confidenceImage.height;y++)for(int x=0;x<confidenceImage.width;x++){float value=confidenceImage.GetPixel(x,y).r;confidenceMinimum=Mathf.Min(confidenceMinimum,value);confidenceMean+=value;}
+            confidenceMean/=confidenceImage.width*confidenceImage.height;
+            Debug.Log($"[HoRTDIValidation] static stochastic confidence min={confidenceMinimum:F6} mean={confidenceMean:F6}");
+            Require(confidenceMinimum>.97f,"Static RNG changes were interpreted as lighting gradients");
             blue.enabled=false;light.color=Color.white;light.transform.position=new Vector3(0,0,-2);light.intensity=1;surfaceMaterial.SetFloat("_Metallic",1);
             for(int i=0;i<40;i++)Render();float rawSpecular=ReadMean(context.specular.rt).r,filteredSpecular=ReadMean(context.filteredSpecular.rt).r;
             Debug.Log($"[HoRTDIValidation] NRD specular raw={rawSpecular:F6} filtered={filteredSpecular:F6}");
