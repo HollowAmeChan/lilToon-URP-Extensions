@@ -79,13 +79,25 @@
 
 **完成后复查与下一项：** Shader/采样/NRD 输出含义未变，没有额外主表面 buffer、RT 算法、Feature 或最终合成。Player 两条路径 raw MSE 约 0.050401、filtered 约 0.000066，单灯/遮挡/Power/镜面继续通过。共享网格变化由 DI 与 GI 两条路径回归确认。DI Inspector 仍是两个 HelpBox；全局 UI 预算检查仍因已有 GD/AC 三处超预算失败，未改其他任务。旧资产仍需正常打开/保存，没有给未处理的外部资产作批量迁移保证。下一步转回实际运行预算：先量化目标分辨率与 CPU 分配，再据证据减少 NRD 调度热路径开销；材质边界/动态灯响应、TAA/动态几何仍需分别验证。
 
-## 6. 下一步取舍
+## 6. NRD 调度热路径与目标尺寸初测
+
+**动手前评审：应做，但先测量。** Record 每轮创建两份 64 KiB 常量载荷、dispatch 数组和每 pass 资源数组；这些是 CPU 调度临时数据，复用不会改变 NRD 算法，也不需要通用 PT/native 框架。此前 483 MiB/1080p 只是公式，需要实际目标尺寸分配和出光验证；测量范围必须说明。
+
+**参考核对：** 用户 NrdPass 通过 native plugin event 调度，未在 C# 每轮复制整套 64 KiB 临时数组；本步继续自己的 Unity Compute 路线，不导入 NRI/heap hook。固定 NRD.h 明确返回内存会在下一次 GetComputeDispatches 覆盖，[官方集成 README](https://github.com/NVIDIA-RTX/NRD) 相同；[Unity SetBufferData](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Rendering.CommandBuffer.SetBufferData.html) 支持 partial copy。
+
+**测量与实现：** 最初 GC.GetAllocatedBytesForCurrentThread 返回零，已拒绝这个弱证据；随后发现 GC.Alloc 的 Value 不是字节数。改用 [官方 Count 示例](https://docs.unity3d.com/6000.0/Documentation/ScriptReference/Unity.Profiling.ProfilerRecorderOptions.SumAllSamplesInFrame.html)，已知分配自检后，预热 16 次、实录 128 次，baseline 每轮 15 个 GC 事件、约 54.5 μs。复制区改为持久 int words、资源二维表与 dispatch 缓存，kernel/identifier 缓存；清有效区 padding，保留 native 当前轮复制、独立 pass 偏移与三帧 CB，仅上传有效 stride 区段。优化后稳定 Record 每轮 0 个 GC 事件、约 11.0 μs；确定移除每轮 128 KiB 常量临时载荷，CPU 缓存代价一次性分配，不改变 GPU pools 或 shader。
+
+**验证：** 实际 GPU 读回两个延后 partial SetBufferData，复用/改写 CPU 数组不会污染前一条上传。DI NRD 两条路径的原始信号、噪声、镜面、相机、域拒绝、释放重建回归通过；Editor 统计与前版相同。两个 Win64 Mono release 构建及实际 RG / compatibility EXE、D3D11 inactive、调试与所有原输出回归通过，无 DI/NRD shader/command-buffer 诊断。Roslyn 编译通过；GI 源和共享桥接未变，无需重复无关 GI 功能测试。
+
+**目标尺寸与完成后复查：** 在原有真实 lilToon fixture 中，720p / 1080p 分配、resize/reset、raw/filtered 出光与 alpha 均通过。实际活动 DI＋NRD 载荷为 214.646 / 483.772 MiB；12 次预热后 8 次完整渲染加最终 GPU 读回，RG 均摊 6.143 / 10.770 ms，compatibility 5.387 / 11.333 ms。场景只有一张 quad / 一盏灯 / 一候选 / 无时空复用；时间含 CPU、输入/raster/DI/NRD 与同步，载荷不含输入/AS/driver/cache，不能代表生产帧率或 NRD 单独 GPU 时间。Record 零分配也不代表整个 Feature 零分配，Prepare 的描述名、外部字典/扫描等仍有空间。这个结果证明基建在目标尺寸能执行，同时确认 NRD 的 GPU 资源成本仍高。下一项优先检查动态灯响应和遮挡边界的实际画质，再根据资源使用关系评审可移除的中间纹理与实际 GPU 分段预算；不因微基准变快就扩大支持域。[详细预算与复现](../Ho-RTDI-NRD.md)。
+
+## 7. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
-| NRD 质量与预算 | 下一步先量化目标分辨率与调度热路径 CPU 分配；据实际结果优化，并保留 raw/filtered 对照。材质边界/动态灯响应、TAA/动态几何仍需独立证明。不能用 64² Player 回归代表目标场景性能。 |
+| NRD 质量与预算 | 目标尺寸简单链路与 Record 热路径已有实测；下一步优先验证动态灯响应/遮挡边界，随后审计 GPU 中间纹理与分段预算。完整材质边界、TAA/动态几何与复杂场景性能仍需独立证明，保留 raw/filtered 对照。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

@@ -17,7 +17,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     {
         private static readonly List<Object> objects=new();
         private static RenderPipelineAsset previousDefault,previousQuality;
-        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise;
+        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise,forceBudget;
         private static Camera camera;
         private static RenderTexture target;
         private static HoRTDIRendererFeature feature;
@@ -34,6 +34,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunPowerCompatibility(){forcePower=true;compatibility=true;Run();}
         public static void RunDenoise(){forceDenoise=true;Run();}
         public static void RunDenoiseCompatibility(){forceDenoise=true;compatibility=true;Run();}
+        public static void RunBudget(){Require(Application.dataPath.Replace('\\','/').Contains("/.codex-research/"),"Use the isolated project");forceBudget=forceDenoise=true;Run();}
+        public static void RunBudgetCompatibility(){compatibility=true;RunBudget();}
         public static void RunUnsupported(){unsupported=true;Run();}
         public static void Run()
         {
@@ -83,6 +85,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     Debug.Log("[HoRTDIValidation] PASS unsupported platform: "+feature.Status);Finish(null);return;
                 }
                 if(++tick<3){Render();return;}
+                if(forceBudget){ValidateBudget();Finish(null);return;}
                 if(forceDenoise){ValidateDenoiser();Finish(null);return;}
                 var single=Render();float expected=Expected(light);Near(single.r,expected,"single-light reference",.015f);Near(single.a,1,"receiver valid",.01f);
                 var baseline=Read(target);feature.SetActive(false);RenderCamera();NearRGB(Read(target),baseline,"no automatic camera composite");feature.SetActive(true);
@@ -179,6 +182,44 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             oldKeys=feature.LastContext.previousLightKeys;light.enabled=false;NearRGB(Render(),Color.black,"empty light set",.002f);CheckLightMappings(oldKeys);
             oldKeys=feature.LastContext.previousLightKeys;light.enabled=true;NearRGB(Render(),Color.green*Expected(light),"empty to nonempty lights",.02f);CheckLightMappings(oldKeys);
             light.color=Color.white;light.transform.position=new Vector3(1.5f,0,-1);Render();
+        }
+        private static void ValidateBudget()
+        {
+            foreach(var size in new[]{new Vector2Int(1280,720),new Vector2Int(1920,1080)})
+            {
+                target.Release();Object.DestroyImmediate(target);target=Keep(new RenderTexture(size.x,size.y,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));target.Create();
+                for(int i=0;i<12;i++)RenderCamera();var context=feature.LastContext;
+                Require(context!=null&&context.nrd!=null,"Target-size NRD unavailable: "+feature.Status);
+                Require(context.width==size.x&&context.height==size.y,"Target dimensions were not used");
+                ReadCenter(context.filteredDiffuse.rt); // Finish warm-up work before starting the timed batch.
+                const int samples=8;var timer=System.Diagnostics.Stopwatch.StartNew();
+                for(int i=0;i<samples;i++)RenderCamera();var filtered=ReadCenter(context.filteredDiffuse.rt);timer.Stop();
+                var raw=ReadCenter(context.diffuse.rt);var ray=camera.ViewportPointToRay(new Vector3((size.x/2+.5f)/size.x,(size.y/2+.5f)/size.y,0));
+                var p=ray.origin+ray.direction*(-ray.origin.z/ray.direction.z);var delta=light.transform.position-p;float d2=delta.sqrMagnitude;
+                float fade=Mathf.Clamp01(1-Mathf.Pow(d2/(light.range*light.range),2));float reference=light.intensity/d2*(-delta.normalized.z)/Mathf.PI*fade*fade;
+                Near(raw.r,reference,"target-size raw energy",.015f);Near(filtered.r,reference,"target-size filtered energy",.025f);Near(filtered.a,1,"target-size receiver alpha",.01f);
+                Require(float.IsFinite(filtered.r)&&context.nrd.LastDispatchCount>0,"Target-size NRD output invalid");
+                long bytes=OwnedPayload(context);
+                Debug.Log($"[HoRTDIValidation] BUDGET {size.x}x{size.y} ownedPayloadMiB={bytes/1048576.0:F3} synchronizedBatchMsPerRender={timer.Elapsed.TotalMilliseconds/samples:F3} raw={raw.r:F6} filtered={filtered.r:F6} dispatches={context.nrd.LastDispatchCount} compatibility={compatibility}; one quad/one lamp/local candidate=1/no reuse; excludes input/AS/driver/cache memory; time includes CPU and final GPU readback, not isolated GPU timing");
+            }
+            Debug.Log("[HoRTDIValidation] PASS target-size DI/NRD allocation, resize/reset, actual energy and synchronized batch");
+        }
+        private static long OwnedPayload(HoRTDIContext context)
+        {
+            long result=0;
+            foreach(var buffer in new[]{context.reservoirs,context.history,context.lights,context.neighbors,context.previousLights,context.currentToPrevious,context.previousToCurrent,context.ris})if(buffer!=null)result+=(long)buffer.count*buffer.stride;
+            foreach(var texture in new[]{context.diffuse,context.specular,context.nrdDiffuse,context.nrdSpecular,context.nrdNormal,context.nrdViewZ,context.nrdOutputDiffuse,context.nrdOutputSpecular,context.filteredDiffuse,context.filteredSpecular})result+=Payload(texture);
+            var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+            foreach(string name in new[]{"permanent","transient"})foreach(var texture in (RTHandle[])context.nrd.GetType().GetField(name,flags).GetValue(context.nrd))result+=Payload(texture);
+            foreach(var buffer in (GraphicsBuffer[])context.nrd.GetType().GetField("constants",flags).GetValue(context.nrd))result+=(long)buffer.count*buffer.stride;
+            return result;
+        }
+        private static long Payload(RTHandle texture)=>texture?.rt==null?0:(long)texture.rt.width*texture.rt.height*UnityEngine.Experimental.Rendering.GraphicsFormatUtility.GetBlockSize(texture.rt.graphicsFormat);
+        private static Color ReadCenter(RenderTexture source)
+        {
+            var previous=RenderTexture.active;var image=new Texture2D(1,1,TextureFormat.RGBAFloat,false,true);
+            try{RenderTexture.active=source;image.ReadPixels(new Rect(source.width/2,source.height/2,1,1),0,0);image.Apply();return image.GetPixel(0,0);}
+            finally{RenderTexture.active=previous;Object.DestroyImmediate(image);}
         }
         private static void ValidateDenoiser()
         {

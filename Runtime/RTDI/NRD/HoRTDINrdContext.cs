@@ -17,6 +17,11 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         private readonly HoRTDINrdNative.InstanceDesc description;
         private readonly ComputeShader[] shaders;
         private readonly int[][] bindings;
+        private readonly int[] kernels;
+        private readonly uint[] identifiers={0};
+        private readonly HoRTDINrdNative.DispatchDesc[] passes;
+        private readonly HoRTDINrdNative.ResourceDesc[,] resources;
+        private readonly int[] constantWords=new int[ConstantBytes/4];
         private readonly RTHandle[] permanent,transient;
         private readonly GraphicsBuffer[] constants=new GraphicsBuffer[3];
         private readonly Dictionary<uint,string> names=new();
@@ -31,7 +36,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             {
                 if(description.pipelineCount!=HoRTDINrdManifest.Identifiers.Length||shaders==null||shaders.Length!=description.pipelineCount)
                     throw new InvalidOperationException("NRD shader library count mismatch");
-                this.shaders=(ComputeShader[])shaders.Clone();bindings=new int[shaders.Length][];
+                this.shaders=(ComputeShader[])shaders.Clone();bindings=new int[shaders.Length][];kernels=new int[shaders.Length];int maxResources=0;
                 for(int i=0;i<shaders.Length;i++)
                 {
                     if(shaders[i]==null)throw new InvalidOperationException("NRD Unity shader missing: "+i);
@@ -39,8 +44,12 @@ namespace lilToon.URP.Extensions.RTDI.NRD
                     if(pipeline.identifier!=HoRTDINrdManifest.Identifiers[i])throw new InvalidOperationException("NRD shader permutation mismatch");
                     var resources=HoRTDINrdManifest.Resources[i];bindings[i]=new int[resources.Length];
                     for(int j=0;j<resources.Length;j++)bindings[i][j]=Shader.PropertyToID(resources[j]);
+                    maxResources=Math.Max(maxResources,resources.Length);kernels[i]=shaders[i].FindKernel("main");
                 }
                 constantStride=((int)description.constantMax+255)&~255;
+                if(constantStride<=0||constantStride>ConstantBytes)throw new InvalidOperationException("NRD constant stride exceeds storage");
+                passes=new HoRTDINrdNative.DispatchDesc[ConstantBytes/constantStride];
+                resources=new HoRTDINrdNative.ResourceDesc[passes.Length,maxResources];
                 for(int i=0;i<constants.Length;i++)constants[i]=new GraphicsBuffer(GraphicsBuffer.Target.Constant,ConstantBytes/4,4){name="HoRTDI NRD constants "+i};
                 permanent=new RTHandle[description.permanentCount];transient=new RTHandle[description.transientCount];
             }
@@ -78,28 +87,28 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         internal void Record(CommandBuffer cmd,HoRTDINrdNative.CommonSettings settings,Dictionary<string,RenderTargetIdentifier> external)
         {
             HoRTDINrdNative.Check(HoRTDINrdNative.SetCommonSettings(instance,ref settings),"SetCommonSettings");
-            HoRTDINrdNative.Check(HoRTDINrdNative.GetComputeDispatches(instance,new uint[]{0},1,out var pointer,out uint count),"GetComputeDispatches");
+            HoRTDINrdNative.Check(HoRTDINrdNative.GetComputeDispatches(instance,identifiers,1,out var pointer,out uint count),"GetComputeDispatches");
             if(count*constantStride>ConstantBytes)throw new InvalidOperationException("NRD dispatch constants exceed per-frame storage");
-            var passes=new HoRTDINrdNative.DispatchDesc[count];var resources=new HoRTDINrdNative.ResourceDesc[count][];
-            var bytes=new byte[ConstantBytes];
+            LastDispatchCount=0;if(count==0)return;
+            int wordCount=(int)count*constantStride/4;Array.Clear(constantWords,0,wordCount);
             for(int i=0;i<count;i++)
             {
                 passes[i]=HoRTDINrdNative.Read<HoRTDINrdNative.DispatchDesc>(pointer,i);var pass=passes[i];
-                if(pass.pipeline>=shaders.Length||pass.resourceCount!=bindings[pass.pipeline].Length||pass.constantSize>constantStride)
+                if(pass.pipeline>=shaders.Length||pass.resourceCount!=bindings[pass.pipeline].Length||pass.constantSize>constantStride||(pass.constantSize&3)!=0)
                     throw new InvalidOperationException("NRD dispatch layout mismatch");
-                resources[i]=new HoRTDINrdNative.ResourceDesc[pass.resourceCount];
-                for(int j=0;j<pass.resourceCount;j++)resources[i][j]=HoRTDINrdNative.Read<HoRTDINrdNative.ResourceDesc>(pass.resources,j);
-                if(pass.constantSize>0)Marshal.Copy(pass.constants,bytes,i*constantStride,(int)pass.constantSize);
+                for(int j=0;j<pass.resourceCount;j++)resources[i,j]=HoRTDINrdNative.Read<HoRTDINrdNative.ResourceDesc>(pass.resources,j);
+                // Copy current native data now; the next SDK call invalidates its pointers.
+                if(pass.constantSize>0)Marshal.Copy(pass.constants,constantWords,i*constantStride/4,(int)pass.constantSize/4);
             }
-            var words=new uint[bytes.Length/4];Buffer.BlockCopy(bytes,0,words,0,bytes.Length);
-            var buffer=constants[settings.frameIndex%3];cmd.SetBufferData(buffer,words);
+            // SetBufferData snapshots the CPU array into the recorded command.
+            var buffer=constants[settings.frameIndex%3];cmd.SetBufferData(buffer,constantWords,0,0,wordCount);
             for(int i=0;i<count;i++)
             {
-                var pass=passes[i];var shader=shaders[pass.pipeline];int kernel=shader.FindKernel("main");
+                var pass=passes[i];var shader=shaders[pass.pipeline];int kernel=kernels[pass.pipeline];
                 if(pass.constantSize>0)cmd.SetComputeConstantBufferParam(shader,"HoRTDINrdConstants",buffer,i*constantStride,((int)pass.constantSize+15)&~15);
                 for(int j=0;j<pass.resourceCount;j++)
                 {
-                    var resource=resources[i][j];
+                    var resource=resources[i,j];
                     if(!names.TryGetValue(resource.type,out string name)){name=HoRTDINrdNative.ResourceName(resource.type);names.Add(resource.type,name);}
                     RenderTargetIdentifier texture;
                     if(name=="PERMANENT_POOL")texture=permanent[resource.poolIndex].nameID;
