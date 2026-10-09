@@ -22,7 +22,11 @@ namespace lilToon.URP.Extensions.RTDI
         internal int pdfSize;
         internal bool powerSampling;
         internal HoRTDINrdContext nrd;
-        internal RTHandle nrdDiffuse,nrdSpecular,nrdNormal,nrdViewZ,nrdOutputDiffuse,nrdOutputSpecular,filteredDiffuse,filteredSpecular;
+        internal RTHandle nrdDiffuse,nrdSpecular,nrdNormal,nrdViewZ,nrdOutputDiffuse,nrdOutputSpecular;
+        // RELAX keeps history in its permanent pool. Resolve restores the
+        // external output in place, then publishes that same owned texture.
+        internal RTHandle filteredDiffuse=>nrdOutputDiffuse;
+        internal RTHandle filteredSpecular=>nrdOutputSpecular;
         internal RTHandle previousLuminance,gradientA,gradientB,diffConfidence,specConfidence;
         internal bool nrdHistoryValid;
         internal string nrdStatus;
@@ -104,8 +108,6 @@ namespace lilToon.URP.Extensions.RTDI
                 AllocateSignal(ref nrdViewZ,GraphicsFormat.R32_SFloat,"NRD view Z");
                 AllocateSignal(ref nrdOutputDiffuse,GraphicsFormat.R16G16B16A16_SFloat,"NRD diffuse output");
                 AllocateSignal(ref nrdOutputSpecular,GraphicsFormat.R16G16B16A16_SFloat,"NRD specular output");
-                AllocateSignal(ref filteredDiffuse,GraphicsFormat.R16G16B16A16_SFloat,"Filtered diffuse");
-                AllocateSignal(ref filteredSpecular,GraphicsFormat.R16G16B16A16_SFloat,"Filtered specular");
                 AllocateSignal(ref previousLuminance,GraphicsFormat.R16G16_SFloat,"Previous sampled luminance");
                 var gradientDesc=new RenderTextureDescriptor((width+2)/3,(height+2)/3){graphicsFormat=GraphicsFormat.R16G16B16A16_SFloat,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true};
                 if(RenderingUtils.ReAllocateIfNeeded(ref gradientA,gradientDesc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTDI gradients A"))nrdHistoryValid=false;
@@ -126,8 +128,8 @@ namespace lilToon.URP.Extensions.RTDI
         internal void ReleaseDenoiser()
         {
             nrd?.Dispose();nrd=null;nrdHistoryValid=false;
-            foreach(var texture in new[]{nrdDiffuse,nrdSpecular,nrdNormal,nrdViewZ,nrdOutputDiffuse,nrdOutputSpecular,filteredDiffuse,filteredSpecular})texture?.Release();
-            nrdDiffuse=nrdSpecular=nrdNormal=nrdViewZ=nrdOutputDiffuse=nrdOutputSpecular=filteredDiffuse=filteredSpecular=null;
+            foreach(var texture in new[]{nrdDiffuse,nrdSpecular,nrdNormal,nrdViewZ,nrdOutputDiffuse,nrdOutputSpecular})texture?.Release();
+            nrdDiffuse=nrdSpecular=nrdNormal=nrdViewZ=nrdOutputDiffuse=nrdOutputSpecular=null;
             previousLuminance?.Release();gradientA?.Release();gradientB?.Release();diffConfidence?.Release();specConfidence?.Release();
             previousLuminance=gradientA=gradientB=diffConfidence=specConfidence=null;
         }

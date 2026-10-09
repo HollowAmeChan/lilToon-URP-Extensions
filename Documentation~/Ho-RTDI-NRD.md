@@ -46,7 +46,7 @@ DI 的 debug / grid-label shader 现由 Feature 序列化持有，正常裁剪�
 
 当前是 **静态不透明 Mono 的 Editor / Windows Player 初版**。不支持/未验证 IL2CPP、skinned 或运动几何、XR、TAA jitter 的显式 NRD 契约、相机切换/时间跳变的大规模场景、完整材质 ID 边界路由和生产 GPU budget。GB 通用 fallback / MSAA resolve 不在本次真实 lilToon、MSAA=1 接收测试内。没有添加构建时全工程批量迁移；未打开/保存的外部旧 renderer 仍应先完成正常补引用流程。DLL importer 限定 Windows x64。
 
-新增八张信号/输出/恢复纹理合计约 60 B/像素，RELAX pool 约 80 B/像素，另有三个 64 KiB 常量 buffer。1080p 增量约 277 MiB，不含驱动/对齐；与已有 DI 资源合计约 483 MiB 以上。NRD Record 的稳定热路径已复用描述、资源表与常量 CPU 拷贝区，见下节；Feature 的扫描、Prepare、外部绑定与渲染图等仍可能分配，不能把局部零分配写成整帧零分配。
+当前六张 NRD 信号/输出纹理合计约 44 B/像素；材质因子在 external output 上原地恢复，不再另分配两张 filtered 纹理。RELAX pool 约 80 B/像素，另有三个 64 KiB 常量 buffer 和后文的 confidence 资源。1080p 实测 DI＋NRD 活动载荷约 463.996 MiB，不含输入、AS、驱动/对齐与缓存。NRD Record 的稳定热路径已复用描述、资源表与常量 CPU 拷贝区，见下节；Feature 的扫描、Prepare、外部绑定与渲染图等仍可能分配，不能把局部零分配写成整帧零分配。
 
 ## 调度分配与分辨率预算
 
@@ -55,6 +55,8 @@ NRD Record 缓存固定 denoiser ID、kernel、dispatch 与资源表，直接将
 在实际 Unity 6000.3.15f1 D3D12 Editor、RTX 4060、16 轮预热后记录 128 轮 SDK 调度：稳定轮 GC.Alloc 事件由 15 次降为 0 次，命令记录 CPU 平均约 54.5 μs → 11.0 μs。零分配指这一已预热 Record 段；首次创建、其他 Feature 阶段与 native 内存不在计数内。GC.GetAllocatedBytesForCurrentThread 的零值未通过可信测量审查，GC.Alloc marker 的 Value 是耗时而非字节；最终使用官方 Count 事件数，并先通过已知分配自检。移除的 128 KiB 临时常量载荷是数组大小的确定值，不伪装成字节 profiler 读数。
 
 GPU 读回验证了延后执行的两次 partial SetBufferData 各自保存正确的 CPU 数据快照。NRD 的两条路径、噪声/镜面/相机移动/关闭重建与 release Player 回归通过，输出统计保持一致。
+
+以下为步骤 6 的历史测量，尚未加入 confidence 或合并 external output；当前载荷见文末。
 
 | 简单测试尺寸 | DI＋NRD 活动资源载荷 | RG 同步批次均摊 | compatibility 同步批次均摊 |
 | --- | --- | --- | --- |
@@ -119,6 +121,21 @@ NRD 本身允许滤波偏差，材质因子下限、时空积累与空间滤波�
 
 RG / compatibility 的原质量门槛、相机运动、变色/关灯、阴影边界、Metal/specular、域拒绝、生命周期和时间线均通过。冻结的随机双色灯 confidence 全图 min / mean=1，证明没有把 RNG 变化误报为光照变化。该 Editor fixture 的 filtered MSE 约 0.000257、raw=0.050401，红/蓝均值约 0.213；镜面 raw/filtered 0.296814/0.292526。旧预设/时间测试的数值保留作历史记录，不把不同执行节奏的单次噪声数据当成严格独立消融。Win64 release Player 两条路径与 D3D11 inactive 通过，Player filtered MSE 约 0.000101，raw 输出保持一致。
 
-新增资源为全分辨率 RG16F previous sampled luminance，以及 1/3 线性尺寸的两张 RGBA16F gradient 和两张 R8 confidence。1080p 活动载荷增加 11.865 MiB，DI＋NRD 为 495.637 MiB；720p 为 219.921 MiB。简单同步 batch 本轮 RG 测为 6.863 / 13.755 ms（720p / 1080p）；相对先前约 11 ms 的 1080p 链路有实质开销，仍不代表 NRD GPU 单独时间或生产场景 FPS。增加的调度为 gradient、4 filter、confidence 与 full-resolution history store；只有 NRD 开启时分配/执行。
+新增资源为全分辨率 RG16F previous sampled luminance，以及 1/3 线性尺寸的两张 RGBA16F gradient 和两张 R8 confidence。1080p 活动载荷增加 11.865 MiB。步骤 9、尚未合并 external output 时，DI＋NRD 为 495.637 MiB；720p 为 219.921 MiB。该轮简单同步 batch RG 测为 6.863 / 13.755 ms（720p / 1080p）；相对先前约 11 ms 的 1080p 链路有实质开销，仍不代表 NRD GPU 单独时间或生产场景 FPS。增加的调度为 gradient、4 filter、confidence 与 full-resolution history store；只有 NRD 开启时分配/执行。
 
 **限制：** 连续运动仍有滞后。Exact reprojection 取代参考的 temporal-selected pixel positions，只承诺静态世界；8-bit 旧材质 guide、薄几何、深度/法线判别与亮样本选择仍可能误判。参考 A-trous 不含新推荐的几何权重，跨材质/几何的 gradient 扩散尚需专项检查。固定三个 delta 灯型没有重新随机生成光点，reservoir ID / UV 就是同一个代表样本；环境/面灯或 probabilistic lobe split 接入时不能沿用这一结论。每 lobe hit-distance 的 BRDF 代表性仍未证明。来源与原 SHA 记录在 ThirdParty/confidence-provenance.json，NVIDIA 部分沿用原许可，未导入 native renderer / PT 框架。[官方 confidence 契约](https://github.com/NVIDIA-RTX/NRD)。
+
+## External output 原地恢复与资源复用
+
+固定 RELAX 4.17.3 的 PrePass 写 external radiance output，Temporal 随后读取这轮结果，最终 A-trous 再写最终输出。跨帧 history 位于 permanent pool；不能把“output 会被读取”直接理解为上一帧历史，也不能假定所有 NRD denoiser 都有这一生命周期。本轮对照原始 shader、用户参考中的 NRD/RTXPT 后端材质恢复以及实际 dispatch 描述，确认当前完整尺寸路径允许在最后 ResolveNRD 中原地恢复材质因子。
+
+Resolve 通过同一个 RWTexture2D 逐像素读写，避免同轮把同一资源分别绑定为 SRV 与 UAV。公开 filtered diffuse/specular 直接引用这两张 owned output，raw 仍独立；释放时只释放拥有的六张 NRD 信号/输出纹理。RenderGraph 也只声明这一组资源。调度检查分别追踪 diffuse/specular 本轮的写入，若首次 SRV 读取早于写入则拒绝；这只是固定源码审计的补充，UAV 描述本身不能证明任意未来 shader 已完整覆盖所有像素。
+
+| 简单测试尺寸 | 复用前载荷（已含 confidence） | 当前活动载荷 | 减少 | RG 同步批次均摊 |
+| --- | --- | --- | --- | --- |
+| 1280×720 | 219.921 MiB | 205.858 MiB | 14.063 MiB | 6.669 ms |
+| 1920×1080 | 495.637 MiB | 463.996 MiB | 31.641 MiB | 14.183 ms |
+
+减少量为两张 RGBA16F 的 16 B/像素，不包含输入/AS/driver/cache；计时沿用上述简单 fixture 和最终读回同步方式，本轮没有证明速度提升。RG / compatibility 的能量、噪声、镜面、相机移动、raw/filtered 调试、域拒绝和释放重建通过；目标尺寸 resize/reset、动态灯/阴影质量与 compatibility 30/60/120 Hz 时间线通过。兼容路径数值与前版相同：raw MSE=0.050401、filtered=0.000257，specular raw/filtered=0.296814/0.292526；RG 不同实际执行节奏下 filtered=0.000184。两个 Win64 Mono release 构建、真实 D3D12 两条 EXE 与 D3D11 inactive 通过，Player filtered MSE≈0.000085/0.000101；packed DLL hash 相同。无新增 DI/NRD shader 或 command-buffer 错误，已有 lilToon duplicate-keyword 构建警告与其他模块 C# 警告保留。
+
+首次“external output 不可作为 SRV”检查被实际 Temporal 读取否定，随后改成并验证本轮先写后读；失败运行没有计为通过。此项没有改变 NRD 算法、滤波设置或接收含义。尚未证明的薄几何/材质边界、动态几何与每 lobe 距离代表性仍需独立检查。后端原始参考：[用户 fork 内 RTXPT 对应上游](https://github.com/NVIDIA-RTX/RTXPT/blob/main/Rtxpt/NRD/DenoiserNRD.hlsli)，运行行为仍以本地固定 NRD 版本为准。

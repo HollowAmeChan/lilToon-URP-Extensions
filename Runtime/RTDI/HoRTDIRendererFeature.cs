@@ -169,7 +169,7 @@ namespace lilToon.URP.Extensions.RTDI
                     builder.SetGlobalTextureAfterPass(data.diffuse,Shader.PropertyToID("_HoRTDIRawDiffuseTexture"));builder.SetGlobalTextureAfterPass(data.specular,Shader.PropertyToID("_HoRTDIRawSpecularTexture"));
                     if(context.nrd!=null)
                     {
-                        foreach(var texture in new[]{context.nrdDiffuse,context.nrdSpecular,context.nrdNormal,context.nrdViewZ,context.nrdOutputDiffuse,context.nrdOutputSpecular,context.filteredDiffuse,context.filteredSpecular,context.previousLuminance,context.gradientA,context.gradientB,context.diffConfidence,context.specConfidence})
+                        foreach(var texture in new[]{context.nrdDiffuse,context.nrdSpecular,context.nrdNormal,context.nrdViewZ,context.nrdOutputDiffuse,context.nrdOutputSpecular,context.previousLuminance,context.gradientA,context.gradientB,context.diffConfidence,context.specConfidence})
                             builder.UseTexture(graph.ImportTexture(texture),AccessFlags.ReadWrite);
                         context.nrd.Declare(graph,builder);data.diffuse=graph.ImportTexture(context.filteredDiffuse);data.specular=graph.ImportTexture(context.filteredSpecular);
                     }
@@ -260,7 +260,6 @@ namespace lilToon.URP.Extensions.RTDI
                     if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,kernel,cameraData);
                     else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,kernel);
                     cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdOutputDiffuse",c.nrdOutputDiffuse.nameID);cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdOutputSpecular",c.nrdOutputSpecular.nameID);
-                    cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDIFilteredDiffuse",c.filteredDiffuse.nameID);cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDIFilteredSpecular",c.filteredSpecular.nameID);
                     cmd.DispatchCompute(d.shader,kernel,(c.width+7)/8,(c.height+7)/8,1);c.nrdHistoryValid=true;
                     kernel=d.shader.FindKernel("SaveHistory");
                     if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,kernel,cameraData);

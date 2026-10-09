@@ -326,7 +326,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         {
             long result=0;
             foreach(var buffer in new[]{context.reservoirs,context.history,context.lights,context.neighbors,context.previousLights,context.currentToPrevious,context.previousToCurrent,context.ris})if(buffer!=null)result+=(long)buffer.count*buffer.stride;
-            foreach(var texture in new[]{context.diffuse,context.specular,context.nrdDiffuse,context.nrdSpecular,context.nrdNormal,context.nrdViewZ,context.nrdOutputDiffuse,context.nrdOutputSpecular,context.filteredDiffuse,context.filteredSpecular,context.previousLuminance,context.gradientA,context.gradientB,context.diffConfidence,context.specConfidence})result+=Payload(texture);
+            foreach(var texture in new[]{context.diffuse,context.specular,context.nrdDiffuse,context.nrdSpecular,context.nrdNormal,context.nrdViewZ,context.nrdOutputDiffuse,context.nrdOutputSpecular,context.previousLuminance,context.gradientA,context.gradientB,context.diffConfidence,context.specConfidence})result+=Payload(texture);
             var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
             foreach(string name in new[]{"permanent","transient"})foreach(var texture in (RTHandle[])context.nrd.GetType().GetField(name,flags).GetValue(context.nrd))result+=Payload(texture);
             foreach(var buffer in (GraphicsBuffer[])context.nrd.GetType().GetField("constants",flags).GetValue(context.nrd))result+=(long)buffer.count*buffer.stride;
@@ -343,6 +343,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         {
             for(int i=0;i<8;i++)Render();var context=feature.LastContext;
             Require(context.nrd!=null,"NRD unavailable: "+feature.Status);Require(context.nrd.LastDispatchCount>0,"No native NRD dispatches recorded");
+            Require(ReferenceEquals(context.filteredDiffuse,context.nrdOutputDiffuse)&&ReferenceEquals(context.filteredSpecular,context.nrdOutputSpecular),"Filtered publication allocated duplicate external outputs");
+            Require(!ReferenceEquals(context.diffuse,context.filteredDiffuse),"In-place NRD resolve overwrote raw DI");
             Debug.Log("[HoRTDIValidation] NRD single raw="+ReadMean(context.diffuse.rt)+" filtered="+ReadMean(context.filteredDiffuse.rt)+" dispatches="+context.nrd.LastDispatchCount);
             Near(ReadMean(context.filteredDiffuse.rt).r,ExpectedMean(light),"NRD single-light energy",.03f);
             Near(ReadCenter(context.diffConfidence.rt).r,1,"Stable lighting reported a confidence gradient",.02f);

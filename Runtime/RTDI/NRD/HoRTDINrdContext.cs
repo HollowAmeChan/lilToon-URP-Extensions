@@ -118,13 +118,24 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             }
             // SetBufferData snapshots the CPU array into the recorded command.
             var buffer=constants[settings.frameIndex%3];cmd.SetBufferData(buffer,constantWords,0,0,wordCount);
+            bool diffuseWritten=false,specularWritten=false;
             for(int i=0;i<count;i++)
             {
                 var pass=passes[i];var shader=shaders[pass.pipeline];int kernel=kernels[pass.pipeline];
+                bool writesDiffuse=false,writesSpecular=false;
                 if(pass.constantSize>0)cmd.SetComputeConstantBufferParam(shader,"HoRTDINrdConstants",buffer,i*constantStride,((int)pass.constantSize+15)&~15);
                 for(int j=0;j<pass.resourceCount;j++)
                 {
                     var resource=resources[i,j];
+                    // PrePass writes these outputs before Temporal reads them in
+                    // this frame. A read before any current-frame write would
+                    // require the old demodulated output and forbid in-place resolve.
+                    if(resource.type==18||resource.type==19)
+                    {
+                        bool written=resource.type==18?diffuseWritten:specularWritten;
+                        if(resource.descriptorType==0&&!written)throw new InvalidOperationException("NRD reads external radiance output before this frame writes it");
+                        if(resource.descriptorType==1){if(resource.type==18)writesDiffuse=true;else writesSpecular=true;}
+                    }
                     if(!names.TryGetValue(resource.type,out string name)){name=HoRTDINrdNative.ResourceName(resource.type);names.Add(resource.type,name);}
                     RenderTargetIdentifier texture;
                     if(name=="PERMANENT_POOL")texture=permanent[resource.poolIndex].nameID;
@@ -133,6 +144,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
                     cmd.SetComputeTextureParam(shader,kernel,bindings[pass.pipeline][j],texture);
                 }
                 cmd.DispatchCompute(shader,kernel,pass.gridWidth,pass.gridHeight,1);
+                diffuseWritten|=writesDiffuse;specularWritten|=writesSpecular;
             }
             LastDispatchCount=(int)count;
         }

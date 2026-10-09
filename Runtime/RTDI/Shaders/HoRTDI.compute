@@ -27,8 +27,7 @@
 #include "../ThirdParty/NRD/NRD.hlsli"
 RWTexture2D<float4> _HoRTDINrdDiffuse,_HoRTDINrdSpecular,_HoRTDINrdNormal;
 RWTexture2D<float> _HoRTDINrdViewZ;
-Texture2D<float4> _HoRTDINrdOutputDiffuse,_HoRTDINrdOutputSpecular;
-RWTexture2D<float4> _HoRTDIFilteredDiffuse,_HoRTDIFilteredSpecular;
+RWTexture2D<float4> _HoRTDINrdOutputDiffuse,_HoRTDINrdOutputSpecular;
 #endif
 RWTexture2D<float4> _HoRTDIDiffuse, _HoRTDISpecular;
 Texture2D _HoRTDIPdf;
@@ -215,6 +214,6 @@ void HoDIShade(uint3 id)
         diffuse=_HoRTDINrdOutputDiffuse[id.xy].rgb*diffFactor;specular=_HoRTDINrdOutputSpecular[id.xy].rgb*specFactor;
     }
     float receiver=RAB_IsSurfaceValid(surface)?1:0;
-    _HoRTDIFilteredDiffuse[id.xy]=float4(diffuse,receiver);_HoRTDIFilteredSpecular[id.xy]=float4(specular,receiver);
+    _HoRTDINrdOutputDiffuse[id.xy]=float4(diffuse,receiver);_HoRTDINrdOutputSpecular[id.xy]=float4(specular,receiver);
     #endif
 }

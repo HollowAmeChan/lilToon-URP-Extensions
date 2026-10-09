@@ -123,13 +123,23 @@
 
 **成本与完成后复查：** 新增 RG16F previous luminance 全尺寸，以及 1/3 尺寸 gradient pair / R8 confidence pair，1080p +11.865 MiB，活动 DI＋NRD 总计 495.637 MiB。增加 gradient、4 filter、confidence、history store 调度；RG 简单同步 batch 为 6.863/13.755 ms（720p/1080p），有明确成本。第一次版重复 visibility ray 的 1080p batch 测约 16.4 ms，静态等参数精确分支降到本轮约 13.8 ms；这不是生产 GPU benchmark。仍限静态 opaque delta 灯域；exact reprojection 和 8-bit history guides 替代参考 temporal sample positions，对薄物体/复杂材质未证明，gradient 跨几何扩散与 BRDF-aware 每 lobe 距离仍需验证。下一步优先减少可证明冗余的 GPU 中间输出，再继续检查这些输入质量，不能把原始算法/复杂域改成易过测试的假信号。详见 [confidence 接入与限制](../Ho-RTDI-NRD.md)。
 
-## 10. 下一步取舍
+## 10. NRD external output 原地恢复
+
+**动手前评审：应做，先核对生命周期。** 两张独立 filtered RGBA16F 只接收 Resolve 恢复后的结果，1080p 占 31.641 MiB；若 NRD 下轮需要其旧解调结果就不能复用。对照用户工程固定 RELAX shader、RTXPT 后端材质恢复与实际 core dispatch，不引入新的 Feature、主表面副本或 PT 框架。
+
+**发现与实现：** 最初禁止 external output 的所有 SRV 读取，被实际 Temporal pipeline 4 的读取否定；该读取来自同轮 PrePass，跨帧 history 在 permanent pool。改为逐通道检查本轮先写后读，写入在 dispatch 后才标记。Resolve 用同一 UAV 逐像素读写恢复 RGB/receiver alpha，filtered 发布引用 owned external output；移除两张纹理的分配、重复 RG 依赖和释放，raw 独立。描述检查仅补充固定源码审计，不能证明任意将来 shader 的完整覆盖。
+
+**验证与收益：** Editor NRD 两条路径、动态灯/阴影质量、compatibility 时间线、目标尺寸 resize/reset 通过；兼容路径的 raw/filtered MSE 与镜面值和前版相同。两个 Win64 Mono release 构建及真实 D3D12 两条 EXE、D3D11 inactive 均通过，packed DLL hash 一致。raw/filtered/debug、相机与关闭重建继续有效。Roslyn 无错误，无新增 DI/NRD Shader/command-buffer 诊断；已有其他模块 C# 与 lilToon duplicate-keyword 构建警告保留。实际活动载荷 720p/1080p 从 219.921/495.637 降到 205.858/463.996 MiB，减少 14.063/31.641 MiB。简单同步 batch 为 6.669/14.183 ms，没有证明速度提升。
+
+**完成后复查与下一项：** NRD 算法/预设/输出含义不变，只减少确实冗余的输出存储。固定版本升级仍需重新核对 lifecycle，不能将本结论扩展到其他 denoiser。下一项优先构造薄几何与不同材质交界的真实 raw/filtered 对照，分别检查表面判别、confidence 扩散和 NRD 本身的滤波边界，再决定是否需要输入或权重修正；每 lobe hit-distance 也必须以参考和证据评审。详见 [当前预算与复用约束](../Ho-RTDI-NRD.md)。
+
+## 11. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
-| NRD 质量与预算 | 静态解析灯的参考 confidence 已接入并改善响应，仍有成本和滞后。下一步审计 GPU 中间输出复用，并专项核对薄几何/材质边界、每 lobe hit-distance 代表性。TAA/动态几何与复杂场景性能仍需独立证明，保留 raw/filtered 对照。 |
+| NRD 质量与预算 | 静态解析灯 confidence 改善响应，external output 复用减少 16 B/像素，仍有成本和滞后。下一步专项核对薄几何/材质边界、每 lobe hit-distance 代表性。TAA/动态几何与复杂场景性能仍需独立证明，保留 raw/filtered 对照。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 
