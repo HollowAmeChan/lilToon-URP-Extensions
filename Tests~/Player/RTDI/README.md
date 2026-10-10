@@ -64,6 +64,11 @@ RGB ratios, so Monte Carlo intensity variation and fractional material sampling
 are not mislabeled as a tint error. The JSON records noisyMetalMean/reference,
 noisyCameraMean and noisyCameraTint. The fourth capture texture belongs only to
 this isolated test helper, not the production feature.
+The multi-candidate initial-visibility gate hides the near point light behind
+the serialized blocker while a far point light remains visible, using eight
+initial candidates without temporal/spatial reuse. initialVisibilityShadowRatio
+must stay within 5% of the independent inverse-square/range reference. This
+guards against discarding the stored light using a different SDK-returned sample.
 The probe also keeps NRD alive while two normal-incidence directional lights
 change intensity through 0.5/0.25, 16/8, 0.0005/0.00025 and back. An independent
 GGX reference uses this material's SB FP16 / DI 8-bit roughness of 25/255.

@@ -1,0 +1,25 @@
+#pragma kernel Compare
+#pragma use_dxc
+#pragma target 6.0
+#pragma require inlineraytracing
+#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDIApplicationBridge.hlsl"
+#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/ThirdParty/RTXDI/DI/InitialSampling.hlsl"
+RWStructuredBuffer<float4> _Results;
+int _SampleCount;
+[numthreads(8,8,1)]void Compare(uint3 id:SV_DispatchThreadID)
+{
+    if(any(id.xy>=64))return;
+    RAB_Surface s=RAB_EmptySurface();s.worldPos=float3((id.xy+.5)/64.0-.5,0);s.normal=s.geoNormal=float3(0,0,-1);
+    s.viewDir=normalize(float3(-.776457,0,-2.897777)-s.worldPos);s.viewDepth=3;
+    s.material.diffuseAlbedo=1;s.material.specularF0=10.0/255;s.material.roughness=76.0/255;
+    RTXDI_DIInitialSamplingParameters p=(RTXDI_DIInitialSamplingParameters)0;p.numLocalLightSamples=(uint)_SampleCount;p.brdfRayMinT=.001;
+    p.localLightSamplingMode=ReSTIRDI_LocalLightSamplingMode_UNIFORM;
+    RTXDI_LightBufferParameters lights=(RTXDI_LightBufferParameters)0;lights.localLightBufferRegion.numLights=2;
+    RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,37,RTXDI_DI_GENERATE_INITIAL_SAMPLES_RANDOM_SEED),tile=RTXDI_InitRandomSampler(id.xy/16,37,0);
+    RAB_LightSample sample=RAB_EmptyLightSample();
+    RTXDI_DIReservoir r=RTXDI_SampleLightsForSurface(rng,tile,s,p,lights,sample);
+    RAB_LightSample canonical=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(r),false),s,RTXDI_GetDIReservoirSampleUV(r));
+    uint offset=(id.y*64+id.x)*2;
+    _Results[offset]=float4(sample.position,RTXDI_GetDIReservoirLightIndex(r));
+    _Results[offset+1]=float4(canonical.position,RTXDI_IsValidDIReservoir(r)?1:0);
+}

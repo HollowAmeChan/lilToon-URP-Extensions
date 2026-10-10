@@ -18,7 +18,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     public VolumeProfile profile;
     private RenderTexture target;
     private bool unsupported;
-    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak,pointDepthMax,pointShadowMax,coloredSpecRelative,coloredSpecLeak,noisyMetalMean,noisyMetalReference,noisyCameraMean,noisyCameraTint,hdrRelative,hdrRawRelative;}
+    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak,pointDepthMax,pointShadowMax,coloredSpecRelative,coloredSpecLeak,noisyMetalMean,noisyMetalReference,noisyCameraMean,noisyCameraTint,hdrRelative,hdrRawRelative,initialVisibilityShadowRatio;}
     private readonly Result result=new Result();
     private IEnumerator Start()
     {
@@ -58,6 +58,26 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         light.bakingOutput=new LightBakingOutput{lightmapBakeType=LightmapBakeType.Mixed,isBaked=true};Render();Near(Read(capture.Raw).r,Expected(32,32),"Player mixed direct light",.015f);light.bakingOutput=originalBake;
         surfaceMaterial.SetFloat("_Metallic",1);Render();Near(Read(capture.Raw).r,0,"Player metal diffuse",.002f);Require(Read(capture.Specular).r>0,"Player independent specular missing");surfaceMaterial.SetFloat("_Metallic",0);
         blocker.SetActive(true);Render();Near(Read(capture.Raw).r,0,"Player world occlusion",.002f);blocker.SetActive(false);
+        // A hidden near lamp must not discard a visible far lamp when RIS
+        // considers multiple candidates. Test the actual serialized DXR path.
+        var oldBluePosition=blue.transform.position;float oldBlueRange=blue.range,oldBlueIntensity=blue.intensity;var oldBlueColor=blue.color;
+        try
+        {
+            blue.transform.position=new Vector3(-30,0,-50);blue.range=100;blue.intensity=25000;blue.color=Color.white;blue.enabled=true;blocker.SetActive(true);feature.Settings.initialSamples=8;
+            var image=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);double actual=0,expected=0;
+            try
+            {
+                for(int frame=0;frame<128;frame++)
+                {
+                    Render();ReadInto(capture.Raw,image);
+                    for(int y=24;y<40;y++)for(int x=24;x<40;x++){actual+=image.GetPixel(x,y).r;expected+=Expected(blue,x,y);}
+                }
+            }
+            finally{Destroy(image);}
+            result.initialVisibilityShadowRatio=(float)(actual/expected);
+            Require(Math.Abs(actual/expected-1)<.05,"Player multi-candidate visibility lost the visible far light");
+        }
+        finally{blue.enabled=false;blue.transform.position=oldBluePosition;blue.range=oldBlueRange;blue.intensity=oldBlueIntensity;blue.color=oldBlueColor;blocker.SetActive(false);feature.Settings.initialSamples=1;}
         feature.Settings.localSampling=HoRTDILocalSampling.Power;Render();Near(Read(capture.Raw).r,Expected(32,32),"Player power path",.015f);
         Require(profile.TryGet<HoRTDIVolume>(out var volume),"DI debug Volume missing");
         volume.debugMode.value=HoRTDIDebugMode.RawDiffuse;Render();NearRGB(Read(target),Read(capture.Raw),"Player raw debug");
@@ -201,9 +221,11 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     }
     private void Render(){VolumeManager.instance.Update(probeCamera.transform,-1);RenderPipeline.SubmitRenderRequest(probeCamera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
     private float Expected(int x,int y)
+        =>Expected(light,x,y);
+    private float Expected(Light source,int x,int y)
     {
-        var ray=probeCamera.ViewportPointToRay(new Vector3((x+.5f)/64,(y+.5f)/64,0));var p=ray.origin+ray.direction*(-ray.origin.z/ray.direction.z);var delta=light.transform.position-p;float d2=delta.sqrMagnitude;
-        float fade=Mathf.Clamp01(1-Mathf.Pow(d2/(light.range*light.range),2));return light.intensity/d2*(-delta.normalized.z)/Mathf.PI*fade*fade;
+        var ray=probeCamera.ViewportPointToRay(new Vector3((x+.5f)/64,(y+.5f)/64,0));var p=ray.origin+ray.direction*(-ray.origin.z/ray.direction.z);var delta=source.transform.position-p;float d2=delta.sqrMagnitude;
+        float fade=Mathf.Clamp01(1-Mathf.Pow(d2/(source.range*source.range),2));return source.intensity/d2*(-delta.normalized.z)/Mathf.PI*fade*fade;
     }
     private static void ReadInto(RenderTexture texture,Texture2D image)
     {var previous=RenderTexture.active;try{RenderTexture.active=texture;image.ReadPixels(new Rect(0,0,64,64),0,0);image.Apply();}finally{RenderTexture.active=previous;}}

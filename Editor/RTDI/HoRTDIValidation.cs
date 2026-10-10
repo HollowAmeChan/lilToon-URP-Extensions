@@ -17,7 +17,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     {
         private static readonly List<Object> objects=new();
         private static RenderPipelineAsset previousDefault,previousQuality;
-        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise,forceBudget,forceQuality,forceTiming,forceBoundaries,forceSpecular,requireHDR,forceLocalLighting,forceLocalPair,requireLocalPairQuality,forceLocalFilterAudit,forceLocalSpatialAudit,forceLocalPairShadow;
+        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise,forceBudget,forceQuality,forceTiming,forceBoundaries,forceSpecular,requireHDR,forceLocalLighting,forceLocalPair,requireLocalPairQuality,forceLocalFilterAudit,forceLocalSpatialAudit,forceLocalPairShadow,forceLocalVisibilityAudit;
         private static Camera camera;
         private static RenderTexture target;
         private static HoRTDIRendererFeature feature;
@@ -55,6 +55,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunLocalFilterAudit(){forceLocalFilterAudit=true;RunLocalPair();}
         public static void RunLocalSpatialAudit(){forceLocalSpatialAudit=true;RunLocalPair();}
         public static void RunLocalPairShadow(){forceLocalPairShadow=true;RunLocalPair();}
+        public static void RunLocalVisibilityAudit(){forceLocalVisibilityAudit=forceLocalPairShadow=true;RunLocalPair();}
         public static void RunUnsupported(){unsupported=true;Run();}
         public static void Run()
         {
@@ -553,8 +554,42 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 SetLocalView(15);light.type=LightType.Point;surfaceMaterial.SetFloat("_Smoothness",.7f);light.transform.position=new Vector3(-camera.transform.position.x*1.5f/(-camera.transform.position.z),.15f,-1.5f);
                 var distant=Point(new Vector3(-30,0,-50),light.color,25000);distant.range=100;
                 if(forceLocalPairShadow){blocker.layer=1;camera.cullingMask=~(1<<1);blocker.transform.position=light.transform.position*.5f;blocker.transform.localScale=new Vector3(.05f,.7f,.08f);blocker.SetActive(true);}
+                if(forceLocalVisibilityAudit)
+                {
+                    feature.Settings.denoise=false;feature.Settings.temporal=feature.Settings.spatial=false;
+                    var bounds=blocker.GetComponent<Renderer>().bounds;
+                    foreach(var test in new[]{0,1,2,3})
+                    {
+                        light.enabled=test!=0;distant.enabled=test!=1;feature.Settings.initialSamples=test==3?8:1;
+                        for(int frame=0;frame<4;frame++)RenderCamera();var c=feature.LastContext;
+                        double reference=0,actual=0,diffRef=0,diffActual=0,shadowRef=0,shadowActual=0;int invalid=0,farSelected=0,nearSelected=0;
+                        var reservoirs=new Reservoir[c.reservoirs.count];
+                        for(int frame=0;frame<128;frame++)
+                        {
+                            RenderCamera();ReadImage(c.specular.rt,rawSpec);ReadImage(c.diffuse.rt,rawDiff);if(frame==0)c.reservoirs.GetData(reservoirs);
+                            for(int y=48;y<80;y++)for(int x=48;x<80;x++)
+                            {
+                                var p=PlanePosition(x,y,size);bool nearBlocked=SegmentHitsBox(p,light.transform.position,bounds),farBlocked=SegmentHitsBox(p,distant.transform.position,bounds);
+                                var a=ReferenceLocalLight(x,y,size,76f/255);var b=ReferenceLocalLight(distant,x,y,size,76f/255);
+                                float s=(light.enabled&&!nearBlocked?a.specular.r:0)+(distant.enabled&&!farBlocked?b.specular.r:0),d=(light.enabled&&!nearBlocked?a.diffuse.r:0)+(distant.enabled&&!farBlocked?b.diffuse.r:0);
+                                reference+=s;actual+=rawSpec.GetPixel(x,y).r;diffRef+=d;diffActual+=rawDiff.GetPixel(x,y).r;
+                                if(nearBlocked)
+                                {
+                                    shadowRef+=s;shadowActual+=rawSpec.GetPixel(x,y).r;
+                                    if(frame==0)
+                                    {
+                                        int index=(y>>4)*c.rowPitch+(x>>4)*256+(y&15)*16+(x&15);var reservoir=reservoirs[index];
+                                        if(reservoir.light==0)invalid++;else if(ReferenceEquals(c.previousLightKeys[(int)(reservoir.light&0x7fffffff)],distant))farSelected++;else nearSelected++;
+                                    }
+                                }
+                            }
+                        }
+                        Debug.Log($"[HoRTDIValidation] LOCAL_VISIBILITY test={test} near={light.enabled} far={distant.enabled} initial={feature.Settings.initialSamples} specRatio={actual/reference:F6} diffuseRatio={diffActual/diffRef:F6} shadowSpecRatio={shadowActual/shadowRef:F6} firstShadowReservoirFar={farSelected} near={nearSelected} invalid={invalid}; independent CPU visibility, raw only");
+                    }
+                    Debug.Log("[HoRTDIValidation] LOCAL_VISIBILITY observations completed; not acceptance");return;
+                }
                 var modes=forceLocalSpatialAudit?new[]{(false,false),(true,true)}:forceLocalFilterAudit?new[]{(false,false),(false,false),(false,false),(false,false),(false,false)}:new[]{(false,false),(true,false),(false,true),(true,true)};
-                bool shadowQuality=true;
+                bool shadowRawQuality=true,shadowFilteredQuality=true;
                 int variant=0;
                 foreach(var mode in modes)
                 {
@@ -634,8 +669,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     if(forceLocalPairShadow)
                     {
                         Debug.Log($"[HoRTDIValidation] LOCAL_PAIR_SHADOW samples={shadowCount} shadowRawRatio={shadowRaw/shadowReference:F6} shadowFilteredRatio={shadowFiltered/shadowReference:F6} litFilteredRatio={litFiltered/litReference:F6}");
-                        shadowQuality&=shadowCount>0&&Math.Abs(shadowRaw/shadowReference-1)<.05;
-                        shadowQuality&=Math.Abs(shadowFiltered/shadowReference-1)<.1&&Math.Abs(litFiltered/litReference-1)<.05;
+                        shadowRawQuality&=shadowCount>0&&Math.Abs(shadowRaw/shadowReference-1)<.05;
+                        shadowFilteredQuality&=Math.Abs(shadowFiltered/shadowReference-1)<.1&&Math.Abs(litFiltered/litReference-1)<.05;
                     }
                     if(forceLocalSpatialAudit)
                     {
@@ -658,7 +693,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     }
                     Require(c.nrd.AppliedSettings.diffFrames==applied.diffFrames&&c.nrd.AppliedSettings.specFrames==applied.specFrames&&c.nrd.AppliedSettings.specFast==applied.specFast,"Filter audit timing budget changed and invalidated native override");variant++;
                 }
-                Require(!forceLocalPairShadow||shadowQuality,"Paired-light shadow raw visibility/energy or filtered highlight failed");
+                Require(!forceLocalPairShadow||shadowRawQuality,"Paired-light shadow raw visibility/energy failed");
+                if(forceLocalPairShadow)Debug.Log("[HoRTDIValidation] PASS paired-light shadow raw visibility/energy in all four reuse modes");
+                Require(!forceLocalPairShadow||shadowFilteredQuality,"Paired-light shadow filtered highlight failed");
                 Debug.Log("[HoRTDIValidation] LOCAL_PAIR observation completed; diagnostic ratios are not quality acceptance");return;
             }
             foreach(var type in new[]{LightType.Point,LightType.Spot})foreach(float rough in new[]{.3f,.7f})foreach(float angle in new[]{0f,30f,60f})

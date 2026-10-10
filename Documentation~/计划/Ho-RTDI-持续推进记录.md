@@ -205,13 +205,23 @@
 
 **最终验证与成本：** 两条Editor的NRD/边界/九组GGX/HDR/生命周期通过，RG quality/time/尺寸通过，两个release构建和实际D3D12 Player/D3D11 inactive通过。Player部署回归不是新128²场景的支持域证明。Roslyn/派生重建通过，最终无新增DI/NRD诊断。RT载荷仍219.921/495.637MiB，简单RG同步batch6.750/12.799ms；没有新增纹理/pass/射线，但组内cache/读取和方差运算有成本。保留5.293%固定quality与双灯shadow两个失败，不以新观察通过重新定义完成。
 
-## 18. 下一步取舍
+## 18. 初始 visibility 使用真实选中样本
+
+**动手前评审：应修raw，不再调滤波。** 对照用户固定InitialSampling/VisibilityTest及官方Bridge的保守visibility契约，先做单Far、单Near、混合1/8候选隔离。单灯和混合1正常，8候选阴影区所有reservoir被清空。独立GPU API探针不含场景ray：1候选SDK返回位置与reservoir位置全匹配，8候选988/4096不匹配。保留复现模板，不能未经证明把它叫作通用DXC/SDK bug。
+
+**实现：** DI关闭SDK内部initial visibility，在返回后由reservoir实际light index/UV重建sample，执行相同的RAB_GetConservativeVisibility与M-preserving discard。原SDK正文、MIS/选择算法和ray策略不变，不增加一条visibility射线，只新增canonical light读取/重建。GI未改。多候选返回sample不再用于丢弃实际可见的另一盏灯。
+
+**结果与复查：** 8候选阴影raw从0恢复至约1.004；完整512轮无/T/S/TS的shadow raw约1.002/1.001/0.998/1.004，diffuse整体约1.000/1.002/0.999/1.005。raw门槛独立通过；temporal-only filtered lit约0.928，原5%门槛仍失败，提示已与raw失败分开。旧固定quality序列5.293%偏差未变化，仍不算完成。
+
+**验证与下一项：** 两条raw动态灯/遮挡回归、Power compatibility、NRD compatibility通过；真实Win64 release两条D3D12 EXE新增8候选遮挡gate通过，比例约0.996/1.002，旧HDR/噪声/F0边界通过，D3D11 inactive通过。Roslyn/派生重建通过，无新增本步Shader/command-buffer诊断。后续先检查temporal-only filtered的受光高光和固定quality剩余误差；再扩大curved/目标场景。未扩展最终PBR/NPR接收、通用PT或ReGIR。详见 [初始visibility修复](../Ho-RTDI-NRD.md)。
+
+## 19. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
-| NRD 质量与预算 | 空间specular总误差已明显改善，原固定quality序列仍约5.3%偏差、gate未过。双灯遮挡新暴露raw/visibility缺口，旧shader也重现，下一项先定位它；再推进剩余quality、曲面与目标场景。 |
+| NRD 质量与预算 | raw初始visibility错误已修复，四种复用模式及Player通过。temporal-only filtered lit约7.2%偏暗、固定quality约5.3%仍未过，下一项优先这两处；再扩大曲面/目标场景。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

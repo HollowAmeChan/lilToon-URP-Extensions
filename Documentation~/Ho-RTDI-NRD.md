@@ -331,3 +331,26 @@ MSE以解析reference平方和归一，包含bias和随时间的noise；raw分�
 自有载荷仍为720p/1080p约219.921/495.637 MiB；简单RG同步batch本轮6.750/12.799 ms，前轮6.570/12.172 ms，含完整CPU/渲染/读回，不是孤立GPU性能。除了上述组内cache、history读取和额外方差运算，没有新增纹理、pass或光线；成本有变化，不宣称免费。
 
 完成后判断：这一局部修复有明确的镜面总误差收益，保留两个失败门槛。下一项优先用单Far lamp和实际ray/reservoir数据定位双灯遮挡的raw缺口，再处理固定quality序列的剩余偏差、曲面和目标场景。保持最终lilToon PBR/NPR接收与合成边界。
+
+## 初始 visibility 与选中 reservoir 的一致性
+
+步骤18从raw隔离开始，生产滤波配置不变。单Far在有薄遮挡的场景仍全可见，shadow raw/reference≈0.999629；单Near正确被挡，混合1候选约1.001557；混合8候选则为0，第一次读回的256个shadow reservoir全部invalid。这与场景ray/材质的普遍错误不符，缺口在多候选初始阶段。
+
+独立GPU API探针只给synthetic surfaces和两个analytic lights，不包含场景AS或visibility。固定shader SDK调用返回后，比较returned sample.position与reservoir的light index/UV重建position：1候选0/4096不一致，8候选988/4096不一致；所有reservoir有效。于是内部initial visibility可能针对另一candidate执行，导致visible stored light被丢弃。[官方Bridge契约](https://github.com/NVIDIA-RTX/RTXDI/blob/main/Doc/RtxdiApplicationBridge.md)要求initial保留/丢弃与复用bias-correction使用同样的visibility；用户fork有内部同名检查，但当前Unity DXC执行的returned sample不能作为可靠的选中来源。未证明具体编译器或一般SDK原因，不修改vendor正文或冒称升级。
+
+现在DI把 `enableInitialVisibility`设0，SDK返回后由实际reservoir index/UV调用相同polymorphic sampler，执行相同保守visibility和 `StoreVisibility(...,0,true)`。保留M的discard政策、选择target/MIS和final visibility。仍是每个有效初始样本一次visibility ray，没有新GPU纹理/pass；代价是一次canonical light读取/重建。当前analytic delta域UV不改变采样位置；未以此声明未来mesh/environment域已完成。GI没有修改。
+
+| 512次观察、薄遮挡，initial=8 | shadow raw/reference | diffuse raw总比例 | filtered受光高光比例 |
+| --- | --- | --- | --- |
+| 无复用 | 1.002468 | 1.000011 | 0.982341 |
+| temporal-only | 1.000642 | 1.002335 | 0.927634 |
+| spatial-only | 0.998263 | 0.999417 | 0.976023 |
+| temporal+spatial | 1.003937 | 1.004691 | 0.987721 |
+
+独立raw gate已通过；filtered gate仍失败于temporal-only的受光高光，原5%条件保留。`RunLocalPairShadow`现在明确分开raw/filtered消息，不再把它概括为ray失败。原无遮挡quality固定序列ratio仍0.947065，另一项5% gate也没有被删除。有限MC观察不是无偏证明。
+
+SDK探针模板与复现说明位于 [InitialSampleProbe.md](../Tests~/RTDI/InitialSampleProbe.md)，只需复制到隔离Editor目录，不注册Feature；0退出代表观察完成，不是SDK contract通过。`RunLocalVisibilityAudit`保留四个真实场景隔离项。Player新增近灯被挡、Far可见、initial8/no-reuse的部署gate，D3D12 RG/compatibility实际EXE比值约0.995916/1.001791；普通序列化依赖、旧HDR/F0/点灯边界/noise通过，D3D11实际启动保持inactive。两个release构建、两条Editor raw动态灯/遮挡、Power compatibility、NRD compatibility、Roslyn与派生重建通过，没有新增本步Shader/UAV/command-buffer诊断；其他模块警告另计。Player新增采样会推进随机序列，旧统计数值变化不算严格单项消融。
+
+完成后判断：修复了会漏掉可见灯的实际raw错误，且支持域仍为现有analytic/static opaque/Mono。下一项优先temporal-only filtered的剩余高光损失与固定quality序列，再进入曲面和目标场景。最终材质接收/合成继续保持原范围。
+
+本轮预算复查：自有载荷仍为720p/1080p约219.921/495.637 MiB，简单RG同步batch约6.977/13.555 ms，前轮6.750/12.799 ms。含完整渲染和GPU读回，不是初始light重建的孤立GPU成本，也不以不同随机序列的单次时间代表严格消融。没有新增常驻GPU资源或ray次数。
