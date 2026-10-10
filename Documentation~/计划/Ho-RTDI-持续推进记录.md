@@ -181,13 +181,25 @@
 
 **成本和下一项：** 新增16B/px＋16B状态、四次dispatch（两次单线程）；720p/1080p载荷219.921/495.637MiB，简单RG同步batch6.570/12.172ms，不冒充单项GPU时间。全屏尺度仍受亮峰值/保留历史影响，极端动态范围及FP16终端65504上限仍存在。下一项优先验证局部Point/Spot、变化视角/曲面上的hitT/遮挡边缘，按证据决定每lobe距离与采样质量改进；保持最终PBR/NPR合成边界。详见 [HDR域、测量与限制](../Ho-RTDI-NRD.md)。
 
-## 16. 下一步取舍
+## 16. 局部灯、斜视角与随机高光审计
+
+**动手前评审：应做验证，不先增加射线。** 单正面方向灯和 diffuse 点灯不能证明局部 specular / 斜视角。对照用户 ShadingHelpers 的 lightDistance 与固定 donor BRDF，并核对 NRD 的 in-lobe / ReSTIR 距离限制。CPU GGX 扩展到任意 V，使用参考实际的 height-correlated Smith G/NdotV；原 NdotV=1 公式只是特例。仅修改 Editor 验证，无生产 Feature、采样、材质或资源扩展。
+
+**通过的域：** 128²透视平面，点/聚光灯 ×roughness约0.298/0.698×视角0/30/60°，逐像素核对平方距离、range和inner/outer锥衰减、GGX及选中灯距离。两条Editor路径通过；raw归一化L1约0.03–0.04%，filtered约0.08–0.6%，距离最大误差约1.3e-5。锥内/过渡/外部样本计数882/4502/760；最初cone未覆盖外部的fixture失败后收窄实际锥角，不取消覆盖条件。独立CPU segment/AABB检查薄遮挡，暗区最大约3.9e-5 diffuse峰值、1e-6 specular峰值；单灯15°/秒绕视镜面L1约1.77%。这些只证明受控平面，不代表曲面或in-lobe契约已完成。
+
+**发现与定位：** 近灯供高光、远灯主导diffuse（约1.6/58距离），真实初始RIS=8＋时空复用时，512轮中心ROI raw镜面比例≈0.973、filtered≈0.814；移动时filtered≈0.845。`RunLocalPairQualityCompatibility`明确以5%静态能量门槛失败。128轮raw偏差4.8%不能直接定性为采样bug；扩大观察并做无/T/S/TS复用消融，raw接近参考但filtered仍低约14–15%。读取真实permanent history并恢复材质/尺度后，history约0.99、final约0.856，主要损失出现在A-trous阶段。它是ROI形状/能量缺口，未测整画面能量守恒。
+
+**不采用的试验：** SDK支持范围内sigma3、更长fast15、关闭antilag均未消除；specular prepass5反而降至约0.694。按fast history计数缩放空间方差的生产原型也未改善（TS filtered≈0.812），已完整撤回，原派生重建再次通过。`RunLocalFilterAudit`的native参数覆写只存在于隔离Editor诊断，不是生产配置或质量通过。日志的0退出只代表观察成功，不能掩盖独立quality gate失败。
+
+**完成后复查与下一项：** 保留所有失败门槛，提交解析验证、stage读回和取舍证据；不把复杂域改成简单域求通过。下一项优先查A-trous置信度、空间权重及局部高光扩散范围，再按证据决定滤波/采样/距离调整。需补曲面、宽域/点列Profile与最终目标场景；没有重新做Player/预算，因为本步生产代码最终未改。详见 [局部灯审计与复现](../Ho-RTDI-NRD.md)。
+
+## 17. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
-| NRD 质量与预算 | HDR二阶矩饱和及暗场尺度恢复已修复，成本已记录。下一项优先局部灯/每lobe距离、变化视角/曲面及遮挡边缘；根据真实场景再推进梯度、TAA/动态域和复杂性能。 |
+| NRD 质量与预算 | HDR已修复；单个Point/Spot斜视角、薄阴影和绕视通过。双局部灯镜面存在14–19%ROI偏暗，quality gate仍失败，已定位主要在A-trous。下一项先查该阶段置信度/空间权重/光斑扩散，再推进曲面、每lobe距离及目标场景；不以简单域替代失败域。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

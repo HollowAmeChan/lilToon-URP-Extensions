@@ -258,3 +258,45 @@ NRD confidence 也改为按其自身历史有效性读取 previous guides，独�
 代价：+16 B/像素与16 B状态，720p /1080p 活动载荷≈219.921 /495.637 MiB；简单 RG 同步 batch≈6.570 /12.172 ms（含 CPU、全部渲染及读回，不是孤立 GPU benchmark）。多一次全尺寸历史范围读取与归一化，且归一化阶段借用主表面恢复 raw。全屏共同尺度仍受最亮输入/保留历史约束，极端同屏动态范围可能使很暗的统计失去精度；最终 FP16 输出的65504上限也仍在，未声称无限 HDR。当前验证是受控静态表面/方向灯，Player 不读内部 pool；不是动态几何、TAA、XR 或生产场景证明。
 
 完成后判断：这一修复有明确正确性收益，成本已量化。下一项优先核对 Point/Spot 与变化视角/曲面上的 specular hitT、遮挡边缘和能量，评审信号/距离是否需要按 lobe 区分；随后再决定优化 staging / peak reduction，不先扩张灯域、PT 框架或最终 PBR/NPR 合成。
+
+## 局部灯与斜视角：通过域和仍失败的随机高光
+
+步骤16对照用户 `RayTracing/ShadingHelpers.hlsl` / donor `brdf.hlsli`，新增独立CPU透视射线/平面交点、Point/Spot平方距离及range/锥衰减、height-correlated Smith GGX、segment/AABB遮挡参考。原GGX验证只涉及NdotV=1，扩展V后采用实际的correlated G/NdotV，不能直接推广separable G1积。当前仍从SB量化roughness与F0后计算DI；F0=10/255，名义roughness0.3/0.7实际约0.298/0.698。
+
+`RunLocalLighting` / `RunLocalLightingCompatibility`：128²透视平面，Point/Spot ×两个roughness×视角0/30/60°，一个候选、无ReSTIR复用，64轮预热/16轮观察、明确60Hz。每像素核对raw、filtered和选中灯距离；RGB照明为非白色，当前误差统计用R通道（固定灰F0、两灯同色）。两条路径通过：
+
+| 检查 | 结果与实际覆盖 |
+| --- | --- |
+| 静态解析照明 | raw归一化L1约0.03–0.04%；filtered diffuse/specular约0.08–0.60% |
+| selected-light hitT | 最大误差约1.3e-5，不把接收alpha或相机距离当作灯距 |
+| Spot角域 | inner/transition/outside样本882/4502/760；最初fixture未覆盖外锥，收窄至inner6°/outer20°后通过覆盖门槛 |
+| 薄世界遮挡 | 每种灯320个有正入射的遮挡样本；独立CPU visibility正确，filtered L1约0.24–0.60% diffuse、0.25–0.28% specular |
+| 暗区最大值/受光峰值 | Point两路为0；Spot约3.9e-5 diffuse、1e-6 specular |
+| 单Point，15°/秒绕视 | raw L1≈0.035%、filtered specular L1≈1.77%，64次运动采样 |
+
+这只证明固定材质平面上的局部灯/斜视角/薄遮挡/单灯绕视，不证明曲面、每个ReSTIR样本都在specular lobe内或最终NPR合成。对照[NRD输入契约](https://github.com/NVIDIA-RTX/NRD)后，selected-light distance仍有in-lobe和多lobe代表性限制；用户DI helper产生lightDistance也不足以独立证明NRD tracking正确。当前没有据此增加一条反射追踪射线。
+
+**保留的失败：** `RunLocalPairQuality` / `RunLocalPairQualityCompatibility`在同一场景增加远Point(-30,0,-50)、intensity25000、range100，近Point供中心高光、远灯主导diffuse；两灯同色，距离约1.6/58。真实initial=8、temporal+spatial开启，192预热/512观察。compatibility中心32² ROI的raw镜面均值/解析值≈0.973010、filtered≈0.814340；绕视raw≈0.976933、filtered≈0.844867。静态5%能量gate明确exit1：`Paired local-light NRD static energy bias exceeds 5%`。它是ROI亮度/光斑形状缺口，还没有整画面能量守恒的测量。
+
+128轮初测raw偏差约4.8%，不能据此直接宣称RIS有偏。`RunLocalPair`扩展到512轮，并独立消融复用，得到下面这一次观察；ROI/调度/随机序列都明确，不能把有限样本当成无偏证明：
+
+| ReSTIR temporal/spatial | raw specular比例 | filtered specular比例 | raw diffuse比例 |
+| --- | --- | --- | --- |
+| off/off | 1.000828 | 0.855860 | 0.999572 |
+| on/off | 1.009871 | 0.847682 | 0.998054 |
+| off/on | 1.000627 | 0.848728 | 0.999673 |
+| on/on | 1.012106 | 0.859024 | 1.001706 |
+
+`RunLocalFilterAudit`只在隔离Editor中通过真实native SetDenoiserSettings作受控诊断；clock预算稳定后覆写，确认Record未因预算变化撤销覆写，生产DenseDI保持原配置。它不把诊断0退出记为质量通过。通过实际Temporal manifest读取permanent history，每8轮用同像素raw/staged比值恢复其材质因子与尺度，测量空间滤波前的物理历史亮度：
+
+| 参数试验，无ReSTIR复用 | history/参考 | final/参考 | 绕视final/参考 |
+| --- | --- | --- | --- |
+| 基线sigma2、fast6、acceleration0.6、reset1 | 0.989741 | 0.855980 | 0.841579 |
+| 支持范围内sigma3 | 0.989554 | 0.854461 | 0.850136 |
+| fast15 | 0.987055 | 0.853251 | 0.850280 |
+| acceleration/reset均0 | 0.989722 | 0.855850 | 0.853715 |
+| specular prepass5 | 0.805617 | 0.694448 | 0.705294 |
+
+固定核心把HistoryClamping写到这些permanent颜色，再供A-trous读取，antiFirefly在DenseDI关闭，因此主要剩余损失在空间阶段。不要把它未经验证地归因到hitT，或放宽fast-clamp参数求过关。一个按fast历史计数缩放specular空间方差的派生原型也没有改善（TS final≈0.811816），已撤回；原vendor/派生SHA重建通过。没有保留该cache、GPU成本或参数改动。
+
+本步最终只有Editor验证/诊断及文档变化；两条支持域gate、Roslyn、派生重建通过，双灯quality gate保持失败。没有新增生产资源、Feature、参数、射线或改PBR/NPR合成，也未重新声称Player/曲面/TAA域通过。下一项查A-trous置信度、空间权重、不同宽度ROI与整光斑的扩散/能量；尤其需要区分真实高光轮廓、随机输入噪声与reprojection relaxation，再决定适当的算法修复。

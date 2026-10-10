@@ -17,7 +17,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     {
         private static readonly List<Object> objects=new();
         private static RenderPipelineAsset previousDefault,previousQuality;
-        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise,forceBudget,forceQuality,forceTiming,forceBoundaries,forceSpecular,requireHDR;
+        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise,forceBudget,forceQuality,forceTiming,forceBoundaries,forceSpecular,requireHDR,forceLocalLighting,forceLocalPair,requireLocalPairQuality,forceLocalFilterAudit;
         private static Camera camera;
         private static RenderTexture target;
         private static HoRTDIRendererFeature feature;
@@ -47,6 +47,12 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunSpecularCompatibility(){compatibility=true;RunSpecular();}
         public static void RunSpecularHDR(){requireHDR=true;RunSpecular();}
         public static void RunSpecularHDRCompatibility(){compatibility=true;RunSpecularHDR();}
+        public static void RunLocalLighting(){Require(Application.dataPath.Replace('\\','/').Contains("/.codex-research/"),"Use the isolated project");forceLocalLighting=forceDenoise=true;Run();}
+        public static void RunLocalLightingCompatibility(){compatibility=true;RunLocalLighting();}
+        public static void RunLocalPair(){forceLocalPair=true;RunLocalLighting();}
+        public static void RunLocalPairQuality(){requireLocalPairQuality=true;RunLocalLighting();}
+        public static void RunLocalPairQualityCompatibility(){compatibility=true;RunLocalPairQuality();}
+        public static void RunLocalFilterAudit(){forceLocalFilterAudit=true;RunLocalPair();}
         public static void RunUnsupported(){unsupported=true;Run();}
         public static void Run()
         {
@@ -101,6 +107,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(forceTiming){ValidateTiming();Finish(null);return;}
                 if(forceBoundaries){ValidateBoundaries();Finish(null);return;}
                 if(forceSpecular){ValidateSpecular();Finish(null);return;}
+                if(forceLocalLighting){ValidateLocalLighting();Finish(null);return;}
                 if(forceDenoise){ValidateDenoiser();Finish(null);return;}
                 var single=Render();float expected=Expected(light);Near(single.r,expected,"single-light reference",.015f);Near(single.a,1,"receiver valid",.01f);
                 var baseline=Read(target);feature.SetActive(false);RenderCamera();NearRGB(Read(target),baseline,"no automatic camera composite");feature.SetActive(true);
@@ -498,13 +505,240 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             Debug.Log("[HoRTDIValidation] PASS boundary gates: analytic raw, 2px albedo/specular, metal classes, unequal point-lit depth and thin world shadow; compatibility="+compatibility);
         }
         private static Color ReferenceGGX(Vector3 L,float rough,Color f0)
+            =>ReferenceGGX(Vector3.back,Vector3.back,L,rough,f0);
+        private static Color ReferenceGGX(Vector3 N,Vector3 V,Vector3 L,float rough,Color f0)
         {
-            var N=Vector3.back;var V=Vector3.back;var H=(V+L).normalized;
-            double nl=Math.Max(0,Vector3.Dot(N,L)),nh=Math.Max(0,Vector3.Dot(N,H)),vh=Math.Max(0,Vector3.Dot(V,H));
-            if(nl<=0)return Color.black;
+            var H=(V+L).normalized;
+            double nl=Math.Max(0,Vector3.Dot(N,L)),nv=Math.Max(0,Vector3.Dot(N,V)),nh=Math.Max(0,Vector3.Dot(N,H)),vh=Math.Max(0,Vector3.Dot(V,H));
+            if(nl<=0||nv<=0)return Color.black;
             double a=rough*rough,a2=a*a,d=a2/(Math.PI*Math.Pow(nh*nh*a2+1-nh*nh,2));
-            double g=2*nl/(Math.Sqrt(a2+(1-a2)*nl*nl)+nl),fc=Math.Pow(1-vh,5);
+            // Height-correlated Smith G / NdotV, as used by the reference BRDF.
+            // A separable G1 product agrees only when NdotV=1.
+            double g=2*nl/(nv*Math.Sqrt(a2+(1-a2)*nl*nl)+nl*Math.Sqrt(a2+(1-a2)*nv*nv)),fc=Math.Pow(1-vh,5);
             return new Color((float)((f0.r+(1-f0.r)*fc)*d*g/4),(float)((f0.g+(1-f0.g)*fc)*d*g/4),(float)((f0.b+(1-f0.b)*fc)*d*g/4),1);
+        }
+        private static Vector3 PlanePosition(int x,int y,int size)
+        {var ray=camera.ViewportPointToRay(new Vector3((x+.5f)/size,(y+.5f)/size,0));return ray.origin-ray.direction*(ray.origin.z/ray.direction.z);}
+        private static (Color diffuse,Color specular,float distance,float cone) ReferenceLocalLight(int x,int y,int size,float rough)
+            =>ReferenceLocalLight(light,x,y,size,rough);
+        private static (Color diffuse,Color specular,float distance,float cone) ReferenceLocalLight(Light source,int x,int y,int size,float rough)
+        {
+            var p=PlanePosition(x,y,size);var delta=source.transform.position-p;float distance=delta.magnitude;var L=delta/distance;
+            float range=source.range;float attenuation=Mathf.Pow(Mathf.Clamp01(1-Mathf.Pow(distance/range,4)),2)/(distance*distance),cone=1;
+            if(source.type==LightType.Spot)
+            {
+                float inner=Mathf.Cos(source.innerSpotAngle*Mathf.Deg2Rad*.5f),outer=Mathf.Cos(source.spotAngle*Mathf.Deg2Rad*.5f);
+                cone=Mathf.Clamp01((Vector3.Dot(-L,source.transform.forward)-outer)/(inner-outer));attenuation*=cone*cone;
+            }
+            var radiance=LightColor(source)*(source.intensity*attenuation);var V=(camera.transform.position-p).normalized;
+            var diffuse=radiance*(Mathf.Max(0,-L.z)/Mathf.PI);
+            var spec=ReferenceGGX(Vector3.back,V,L,rough,new Color(10f/255,10f/255,10f/255,1))*radiance;
+            return(diffuse,spec,distance,cone);
+        }
+        private static void SetLocalView(float angle)
+        {camera.transform.position=Quaternion.Euler(0,angle,0)*new Vector3(0,0,-3);camera.transform.rotation=Quaternion.LookRotation(-camera.transform.position,Vector3.up);}
+        private static void ValidateLocalLighting()
+        {
+            const int size=128;target.Release();target.width=target.height=size;target.Create();camera.orthographic=false;camera.fieldOfView=40;
+            surfaceMaterial.SetFloat("_Metallic",0);surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetColor("_Color",Color.white);
+            light.color=new Color(.7f,.4f,.2f);light.intensity=4;light.range=20;light.innerSpotAngle=6;light.spotAngle=20;
+            feature.Settings.temporal=feature.Settings.spatial=false;feature.Settings.initialSamples=1;
+            var rawDiff=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));var rawSpec=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
+            var filteredDiff=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));var filteredSpec=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
+            var hit=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));int inside=0,penumbra=0,outside=0;
+            if(forceLocalPair)
+            {
+                SetLocalView(15);light.type=LightType.Point;surfaceMaterial.SetFloat("_Smoothness",.7f);light.transform.position=new Vector3(-camera.transform.position.x*1.5f/(-camera.transform.position.z),.15f,-1.5f);
+                var distant=Point(new Vector3(-30,0,-50),light.color,25000);distant.range=100;
+                var modes=forceLocalFilterAudit?new[]{(false,false),(false,false),(false,false),(false,false),(false,false)}:new[]{(false,false),(true,false),(false,true),(true,true)};
+                int variant=0;
+                foreach(var mode in modes)
+                {
+                    SetLocalView(15);
+                    feature.Settings.initialSamples=8;feature.Settings.temporal=mode.Item1;feature.Settings.spatial=mode.Item2;
+                    feature.Settings.denoise=false;RenderCamera();feature.Settings.denoise=true;for(int frame=0;frame<192;frame++)RenderCamera();var c=feature.LastContext;
+                    float r=Mathf.Round(Mathf.Abs(ReadCenter(c.nrdNormal.rt).b*2-1)*255)/255;
+                    var applied=c.nrd.AppliedSettings;
+                    if(forceLocalFilterAudit)
+                    {
+                        // Isolated Editor experiment: change the real SDK setting
+                        // after timing budgets settle. Record won't overwrite it
+                        // unless a budget changes; production DenseDI stays intact.
+                        var probeSettings=applied;
+                        if(variant==1)probeSettings.fastSigma=3; // Pinned supported range: 1..3.
+                        if(variant==2)probeSettings.specFast=15;
+                        if(variant==3){probeSettings.acceleration=0;probeSettings.reset=0;}
+                        if(variant==4)probeSettings.specPrepass=5;
+                        var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+                        var instance=(IntPtr)c.nrd.GetType().GetField("instance",flags).GetValue(c.nrd);
+                        lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.Check(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.SetDenoiserSettings(instance,0,ref probeSettings),"Local filter audit settings");
+                        for(int frame=0;frame<128;frame++)RenderCamera();
+                        Debug.Log($"[HoRTDIValidation] LOCAL_FILTER_VARIANT sigma={probeSettings.fastSigma} specFast={probeSettings.specFast} acceleration={probeSettings.acceleration} reset={probeSettings.reset} specPrepass={probeSettings.specPrepass}; real native setting, diagnostic only");
+                    }
+                    double expectedSum=0,rawSum=0,filteredSum=0,error=0,diffReference=0,diffRaw=0,historySum=0,historyReference=0;
+                    var historyTexture=FindNrdHistory(c,"gHistory_Spec");
+                    for(int frame=0;frame<512;frame++)
+                    {
+                        RenderCamera();ReadImage(c.specular.rt,rawSpec);ReadImage(c.filteredSpecular.rt,filteredSpec);ReadImage(c.diffuse.rt,rawDiff);
+                        if(frame%8==0){ReadImage(historyTexture,hit);ReadImage(c.nrdSpecular.rt,filteredDiff);}
+                        for(int y=48;y<80;y++)for(int x=48;x<80;x++)
+                        {
+                            var a=ReferenceLocalLight(x,y,size,r);var b=ReferenceLocalLight(distant,x,y,size,r);float expected=a.specular.r+b.specular.r;
+                            expectedSum+=expected;rawSum+=rawSpec.GetPixel(x,y).r;filteredSum+=filteredSpec.GetPixel(x,y).r;error+=Math.Abs(filteredSpec.GetPixel(x,y).r-expected);diffReference+=a.diffuse.r+b.diffuse.r;diffRaw+=rawDiff.GetPixel(x,y).r;
+                            if(frame%8==0)
+                            {
+                                // The raw/staged ratio recovers this pixel's
+                                // material factor and current scale. Restore
+                                // history physically without another GPU pass.
+                                float input=filteredDiff.GetPixel(x,y).r;Require(input>0,"Cannot recover local material factor from zero input");
+                                historySum+=hit.GetPixel(x,y).r*rawSpec.GetPixel(x,y).r/input;historyReference+=expected;
+                            }
+                        }
+                    }
+                    Debug.Log($"[HoRTDIValidation] LOCAL_PAIR_ABLATION temporal={mode.Item1} spatial={mode.Item2} rawRatio={rawSum/expectedSum:F6} historyRatio={historySum/historyReference:F6} filteredRatio={filteredSum/expectedSum:F6} filteredL1={error/expectedSum:F6} diffuseRawRatio={diffRaw/diffReference:F6}");
+                    if(forceLocalFilterAudit)
+                    {
+                        expectedSum=rawSum=filteredSum=error=0;
+                        for(int frame=0;frame<64;frame++)
+                        {
+                            SetLocalView(15+(frame+1)*.25f);RenderCamera();ReadImage(c.specular.rt,rawSpec);ReadImage(c.filteredSpecular.rt,filteredSpec);
+                            for(int y=48;y<80;y++)for(int x=48;x<80;x++)
+                            {
+                                float expected=ReferenceLocalLight(x,y,size,r).specular.r+ReferenceLocalLight(distant,x,y,size,r).specular.r;
+                                expectedSum+=expected;rawSum+=rawSpec.GetPixel(x,y).r;filteredSum+=filteredSpec.GetPixel(x,y).r;error+=Math.Abs(filteredSpec.GetPixel(x,y).r-expected);
+                            }
+                        }
+                        Debug.Log($"[HoRTDIValidation] LOCAL_FILTER_MOTION variant={variant} rawRatio={rawSum/expectedSum:F6} filteredRatio={filteredSum/expectedSum:F6} filteredL1={error/expectedSum:F6}");
+                    }
+                    Require(c.nrd.AppliedSettings.diffFrames==applied.diffFrames&&c.nrd.AppliedSettings.specFrames==applied.specFrames&&c.nrd.AppliedSettings.specFast==applied.specFast,"Filter audit timing budget changed and invalidated native override");variant++;
+                }
+                Debug.Log("[HoRTDIValidation] LOCAL_PAIR observation completed; diagnostic ratios are not quality acceptance");return;
+            }
+            foreach(var type in new[]{LightType.Point,LightType.Spot})foreach(float rough in new[]{.3f,.7f})foreach(float angle in new[]{0f,30f,60f})
+            {
+                SetLocalView(angle);light.type=type;light.transform.position=new Vector3(-camera.transform.position.x*1.5f/(-camera.transform.position.z),.15f,-1.5f);
+                light.transform.rotation=Quaternion.LookRotation(-light.transform.position,Vector3.up);surfaceMaterial.SetFloat("_Smoothness",1-rough);
+                feature.Settings.denoise=false;RenderCamera();feature.Settings.denoise=true;for(int i=0;i<64;i++)RenderCamera();var c=feature.LastContext;
+                float r=Mathf.Round(Mathf.Abs(ReadCenter(c.nrdNormal.rt).b*2-1)*255)/255;
+                ReadImage(c.diffuse.rt,rawDiff);ReadImage(c.specular.rt,rawSpec);ReadImage(c.nrdSpecular.rt,hit);
+                double diffReference=0,specReference=0,rawDiffError=0,rawSpecError=0,filteredDiffError=0,filteredSpecError=0;float maxDistanceError=0;
+                for(int sample=0;sample<16;sample++)
+                {
+                    RenderCamera();ReadImage(c.filteredDiffuse.rt,filteredDiff);ReadImage(c.filteredSpecular.rt,filteredSpec);
+                    for(int y=48;y<80;y++)for(int x=48;x<80;x++)
+                    {
+                        var expected=ReferenceLocalLight(x,y,size,r);var a=rawDiff.GetPixel(x,y);var b=rawSpec.GetPixel(x,y);var f=filteredDiff.GetPixel(x,y);var g=filteredSpec.GetPixel(x,y);
+                        Require(a.a>.5f&&b.a>.5f&&f.a>.5f&&g.a>.5f,"Local-light receiver missing");
+                        diffReference+=expected.diffuse.r;specReference+=expected.specular.r;
+                        rawDiffError+=Math.Abs(a.r-expected.diffuse.r);rawSpecError+=Math.Abs(b.r-expected.specular.r);
+                        filteredDiffError+=Math.Abs(f.r-expected.diffuse.r);filteredSpecError+=Math.Abs(g.r-expected.specular.r);
+                        if(sample==0)
+                        {
+                            // ReSTIR may have no valid reservoir outside the cone.
+                            if(expected.cone>0)maxDistanceError=Mathf.Max(maxDistanceError,Mathf.Abs(hit.GetPixel(x,y).a-expected.distance));
+                            if(type==LightType.Spot){if(expected.cone==0)outside++;else if(expected.cone==1)inside++;else penumbra++;}
+                        }
+                    }
+                }
+                Debug.Log($"[HoRTDIValidation] LOCAL type={type} rough={r:F4} view={angle} rawDiffL1={rawDiffError/diffReference:F6} rawSpecL1={rawSpecError/specReference:F6} filteredDiffL1={filteredDiffError/diffReference:F6} filteredSpecL1={filteredSpecError/specReference:F6} hitDistanceMax={maxDistanceError:F6}");
+                Require(rawDiffError/diffReference<.02&&rawSpecError/specReference<.02,"Local-light raw differs from independent attenuation / correlated GGX");
+                Require(maxDistanceError<.002f,"Local-light NRD hit distance differs from selected-light distance");
+                Require(filteredDiffError/diffReference<.05&&filteredSpecError/specReference<.05,"Static local-light filtered L1 error exceeds 5%");
+            }
+            Debug.Log($"[HoRTDIValidation] LOCAL_CONE inner={inside} transition={penumbra} outside={outside}");
+            Require(inside>0&&penumbra>0&&outside>0,"Spot test did not exercise inner/transition/outside cone");
+            // An off-camera opaque strip is checked with an independent CPU
+            // segment/AABB intersection, rather than accepting raw as truth.
+            SetLocalView(30);surfaceMaterial.SetFloat("_Smoothness",.7f);light.transform.position=new Vector3(-camera.transform.position.x*1.5f/(-camera.transform.position.z),.15f,-1.5f);
+            light.transform.rotation=Quaternion.LookRotation(-light.transform.position,Vector3.up);
+            blocker.layer=1;camera.cullingMask=~(1<<1);blocker.transform.position=light.transform.position*.5f;blocker.transform.localScale=new Vector3(.05f,.7f,.08f);blocker.SetActive(true);
+            foreach(var type in new[]{LightType.Point,LightType.Spot})
+            {
+                light.type=type;feature.Settings.denoise=false;RenderCamera();feature.Settings.denoise=true;for(int i=0;i<64;i++)RenderCamera();var c=feature.LastContext;
+                float r=Mathf.Round(Mathf.Abs(ReadCenter(c.nrdNormal.rt).b*2-1)*255)/255;
+                ReadImage(c.diffuse.rt,rawDiff);ReadImage(c.specular.rt,rawSpec);ReadImage(c.filteredDiffuse.rt,filteredDiff);ReadImage(c.filteredSpecular.rt,filteredSpec);
+                var bounds=blocker.GetComponent<Renderer>().bounds;double refDiff=0,refSpec=0,rawErrorDiff=0,rawErrorSpec=0,errorDiff=0,errorSpec=0;float darkDiff=0,darkSpec=0,peakDiff=0,peakSpec=0;int shadowPixels=0,litPixels=0;
+                for(int y=48;y<80;y++)for(int x=48;x<80;x++)
+                {
+                    var p=PlanePosition(x,y,size);bool shadow=SegmentHitsBox(p,light.transform.position,bounds);var expected=ReferenceLocalLight(x,y,size,r);
+                    float d=shadow?0:expected.diffuse.r,s=shadow?0:expected.specular.r;
+                    var a=rawDiff.GetPixel(x,y);var b=rawSpec.GetPixel(x,y);var f=filteredDiff.GetPixel(x,y);var g=filteredSpec.GetPixel(x,y);
+                    rawErrorDiff+=Math.Abs(a.r-d);rawErrorSpec+=Math.Abs(b.r-s);errorDiff+=Math.Abs(f.r-d);errorSpec+=Math.Abs(g.r-s);refDiff+=d;refSpec+=s;peakDiff=Mathf.Max(peakDiff,d);peakSpec=Mathf.Max(peakSpec,s);
+                    if(shadow&&expected.diffuse.r>0){shadowPixels++;darkDiff=Mathf.Max(darkDiff,f.r);darkSpec=Mathf.Max(darkSpec,g.r);}else if(d>0)litPixels++;
+                }
+                Debug.Log($"[HoRTDIValidation] LOCAL_SHADOW type={type} shadowPixels={shadowPixels} litPixels={litPixels} rawDiffL1={rawErrorDiff/refDiff:F6} rawSpecL1={rawErrorSpec/refSpec:F6} filteredDiffL1={errorDiff/refDiff:F6} filteredSpecL1={errorSpec/refSpec:F6} shadowMaxFraction={darkDiff/peakDiff:F6}/{darkSpec/peakSpec:F6}");
+                Require(shadowPixels>0&&litPixels>0,"Local shadow fixture missed lit or occluded pixels");
+                Require(rawErrorDiff/refDiff<.02&&rawErrorSpec/refSpec<.02,"Local-light raw visibility differs from CPU segment/box");
+                Require(errorDiff/refDiff<.05&&errorSpec/refSpec<.05&&darkDiff/peakDiff<.01f&&darkSpec/peakSpec<.01f,"Local-light filtered shadow edge or dark region failed");
+            }
+            blocker.SetActive(false);
+            light.type=LightType.Point;surfaceMaterial.SetFloat("_Smoothness",.7f);SetLocalView(15);light.transform.position=new Vector3(-camera.transform.position.x*1.5f/(-camera.transform.position.z),.15f,-1.5f);
+            for(int i=0;i<96;i++)RenderCamera();var context=feature.LastContext;float actualRough=Mathf.Round(Mathf.Abs(ReadCenter(context.nrdNormal.rt).b*2-1)*255)/255;
+            double movingReference=0,movingRawError=0,movingFilteredError=0;
+            for(int frame=0;frame<64;frame++)
+            {
+                SetLocalView(15+(frame+1)*.25f);RenderCamera();ReadImage(context.specular.rt,rawSpec);ReadImage(context.filteredSpecular.rt,filteredSpec);
+                for(int y=48;y<80;y++)for(int x=48;x<80;x++)
+                {var expected=ReferenceLocalLight(x,y,size,actualRough).specular.r;movingReference+=expected;movingRawError+=Math.Abs(rawSpec.GetPixel(x,y).r-expected);movingFilteredError+=Math.Abs(filteredSpec.GetPixel(x,y).r-expected);}
+            }
+            Debug.Log($"[HoRTDIValidation] LOCAL_MOTION degreesPerSecond=15 rawL1={movingRawError/movingReference:F6} filteredL1={movingFilteredError/movingReference:F6}; moving finite-distance highlight, perspective orbit at 60Hz");
+            Require(movingRawError/movingReference<.02,"Moving local-light raw GGX mismatch");
+            Require(movingFilteredError/movingReference<.15,"Moving local-light highlight L1 exceeds 15%");
+            if(!requireLocalPairQuality)
+            {Debug.Log("[HoRTDIValidation] PASS local-light attenuation, oblique perspective GGX, selected distance, shadows and single-lamp orbit; compatibility="+compatibility);return;}
+            var far=Point(new Vector3(-30,0,-50),light.color,25000);far.range=100;
+            SetLocalView(15);feature.Settings.initialSamples=8;feature.Settings.temporal=feature.Settings.spatial=true;
+            for(int frame=0;frame<192;frame++)RenderCamera();
+            double pairedReference=0,pairedRaw=0,pairedError=0,pairedFiltered=0;
+            for(int frame=0;frame<512;frame++)
+            {
+                RenderCamera();ReadImage(context.specular.rt,rawSpec);ReadImage(context.filteredSpecular.rt,filteredSpec);
+                for(int y=48;y<80;y++)for(int x=48;x<80;x++)
+                {
+                    float expected=ReferenceLocalLight(x,y,size,actualRough).specular.r+ReferenceLocalLight(far,x,y,size,actualRough).specular.r;
+                    pairedReference+=expected;pairedRaw+=rawSpec.GetPixel(x,y).r;pairedFiltered+=filteredSpec.GetPixel(x,y).r;pairedError+=Math.Abs(filteredSpec.GetPixel(x,y).r-expected);
+                }
+            }
+            double staticRawRatio=pairedRaw/pairedReference,staticFilteredRatio=pairedFiltered/pairedReference;
+            Debug.Log($"[HoRTDIValidation] LOCAL_PAIR_STATIC specRawRatio={staticRawRatio:F6} specFilteredRatio={staticFilteredRatio:F6} filteredL1={pairedError/pairedReference:F6}; near mirror lamp / far diffuse-dominant lamp, initial=8 temporal+spatial enabled, 192 warmup / 512 observations");
+            pairedReference=pairedRaw=pairedError=pairedFiltered=0;
+            for(int frame=0;frame<64;frame++)
+            {
+                SetLocalView(15+(frame+1)*.25f);RenderCamera();ReadImage(context.specular.rt,rawSpec);ReadImage(context.filteredSpecular.rt,filteredSpec);
+                for(int y=48;y<80;y++)for(int x=48;x<80;x++)
+                {
+                    float expected=ReferenceLocalLight(x,y,size,actualRough).specular.r+ReferenceLocalLight(far,x,y,size,actualRough).specular.r;
+                    pairedReference+=expected;pairedRaw+=rawSpec.GetPixel(x,y).r;pairedFiltered+=filteredSpec.GetPixel(x,y).r;pairedError+=Math.Abs(filteredSpec.GetPixel(x,y).r-expected);
+                }
+            }
+            Debug.Log($"[HoRTDIValidation] LOCAL_PAIR_MOTION specRawRatio={pairedRaw/pairedReference:F6} specFilteredRatio={pairedFiltered/pairedReference:F6} filteredL1={pairedError/pairedReference:F6}; near/far competing distances at 15deg/s, 60Hz");
+            Require(Math.Abs(staticRawRatio-1)<.03,"Paired local-light raw ensemble energy mismatch");
+            Require(Math.Abs(staticFilteredRatio-1)<.05,"Paired local-light NRD static energy bias exceeds 5%");
+            Require(Math.Abs(pairedRaw/pairedReference-1)<.03,"Moving paired local-light raw ensemble energy mismatch");
+            Require(pairedError/pairedReference<.15,"Moving paired local-light highlight L1 exceeds 15%");
+            Debug.Log("[HoRTDIValidation] PASS local-light attenuation, oblique perspective GGX, selected distance and orbit; compatibility="+compatibility);
+        }
+        private static bool SegmentHitsBox(Vector3 start,Vector3 end,Bounds bounds)
+        {
+            float near=0,far=1;var delta=end-start;var min=bounds.min;var max=bounds.max;
+            for(int axis=0;axis<3;axis++)
+            {
+                if(Mathf.Abs(delta[axis])<1e-8f){if(start[axis]<min[axis]||start[axis]>max[axis])return false;continue;}
+                float a=(min[axis]-start[axis])/delta[axis],b=(max[axis]-start[axis])/delta[axis];if(a>b){float swap=a;a=b;b=swap;}
+                near=Mathf.Max(near,a);far=Mathf.Min(far,b);if(near>far)return false;
+            }
+            return far>0&&near<1;
+        }
+        private static RenderTexture FindNrdHistory(HoRTDIContext context,string name)
+        {
+            var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;var type=context.nrd.GetType();
+            var passes=(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.DispatchDesc[])type.GetField("passes",flags).GetValue(context.nrd);
+            var resources=(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.ResourceDesc[,])type.GetField("resources",flags).GetValue(context.nrd);
+            var permanent=(RTHandle[])type.GetField("permanent",flags).GetValue(context.nrd);var manifest=lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdManifest.Resources[4];
+            for(int i=0;i<context.nrd.LastDispatchCount;i++)if(passes[i].pipeline==4)
+                for(int j=0;j<manifest.Length;j++)if(manifest[j]==name)
+                {var resource=resources[i,j];Require(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.ResourceName(resource.type)=="PERMANENT_POOL","History diagnostic is not a permanent pool input");return permanent[resource.poolIndex].rt;}
+            throw new InvalidOperationException("NRD history diagnostic input missing: "+name);
         }
         private static void ValidateSpecular()
         {
@@ -836,7 +1070,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var ray=camera.ViewportPointToRay(new Vector3((x+.5f)/64,(y+.5f)/64,0));var position=ray.origin+ray.direction*(-ray.origin.z/ray.direction.z);var delta=source.transform.position-position;float d2=delta.sqrMagnitude;
             float fade=Mathf.Clamp01(1-Mathf.Pow(d2/(source.range*source.range),2));return source.intensity/d2*(-delta.normalized.z)/Mathf.PI*fade*fade;
         }
-        private static void RenderCamera(){if((forceBoundaries||forceSpecular)&&feature.LastContext?.nrd!=null)feature.LastContext.nrd.ValidationTimeSeconds=++boundarySample/60.0;VolumeManager.instance.Update(camera.transform,-1);RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
+        private static void RenderCamera(){if((forceBoundaries||forceSpecular||forceLocalLighting)&&feature.LastContext?.nrd!=null)feature.LastContext.nrd.ValidationTimeSeconds=++boundarySample/60.0;VolumeManager.instance.Update(camera.transform,-1);RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
         private static Color Render(){RenderCamera();Require(feature.LastContext!=null,"DI context missing: "+feature.Status);return Read(feature.LastContext.diffuse.rt);}
         private static Color Read(RenderTexture source)
         {
