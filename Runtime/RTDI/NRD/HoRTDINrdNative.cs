@@ -78,16 +78,21 @@ namespace lilToon.URP.Extensions.RTDI.NRD
                 var result=new RelaxSettings
                 {
                 acceleration=.6f,spatialSigma=4.5f,temporalSigma=.5f,reset=1,
-                historyFixFrames=3,baseStride=14,alternateStride=14,historyNormalPower=8,fastSigma=2,diffPrepass=0,specPrepass=0,
-                minHitWeight=.1f,varianceHistory=3,diffPhi=2,specPhi=1,lobeFraction=.5f,roughFraction=.15f,specSlack=.15f,atrous=5,
+                historyFixFrames=0,baseStride=14,alternateStride=14,historyNormalPower=8,fastSigma=2,diffPrepass=0,specPrepass=0,
+                minHitWeight=.1f,varianceHistory=0,diffPhi=2,specPhi=1,lobeFraction=.5f,roughFraction=.15f,specSlack=.15f,atrous=5,
                 depthThreshold=.003f,lumRelax=.5f,normalRelax=.3f,roughRelax=1,minDiffMaterial=0,minSpecMaterial=0,roughEdge=1
                 };
                 if(!float.IsFinite(seconds)||seconds<=0)seconds=1f/60;
                 // Pinned NRD GetMaxAccumulatedFrameNum: round(period * FPS).
-                result.diffFrames=Frames(.05f,seconds,255);result.specFrames=Frames(.5f,seconds,255);
+                // Two temporal observations are the minimum for a variance
+                // estimate. Dense DI avoids the SDK cold spatial color bootstrap,
+                // which averages through depth and visibility discontinuities.
+                result.diffFrames=Math.Max(1u,Frames(.05f,seconds,255));result.specFrames=Frames(.5f,seconds,255);
                 result.diffFast=Math.Min(Frames(1f/60,seconds,255),result.diffFrames>0?result.diffFrames-1:0);
                 result.specFast=Math.Min(Frames(.1f,seconds,255),result.specFrames>0?result.specFrames-1:0);
-                result.historyFixFrames=Frames(.05f,seconds,3);return result;
+                // Dense DI supplies both lobes every pixel. The sparse-history
+                // reconstruction averages colors before luminance edge stopping.
+                result.historyFixFrames=0;return result;
             }
             private static uint Frames(float period,float seconds,uint maximum)=>(uint)Math.Min(maximum,Math.Max(0,Math.Floor(period/seconds+.5)));
         }

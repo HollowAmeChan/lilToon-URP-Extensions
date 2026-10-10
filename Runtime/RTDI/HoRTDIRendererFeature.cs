@@ -231,6 +231,9 @@ namespace lilToon.URP.Extensions.RTDI
                     var common=HoRTDINrdNative.CommonSettings.Create(c.width,c.height,d.view,d.projection,c.previousView,c.previousProjection,c.frame,reset);
                     common.timeDelta=c.nrd.SetRenderTime(d.renderTime,out bool timeReset);if(timeReset)common.accumulationMode=2;
                     cmd.SetComputeIntParam(d.shader,"_HoRTDINrdHistoryReady",reset||timeReset?0:1);
+                    // Confidence needs previous primary guides even when the
+                    // independent RTXDI temporal-reservoir stage is disabled.
+                    cmd.SetComputeVectorParam(d.shader,"_HoRTDIFlags",new Vector4(reset||timeReset?0:1,d.settings.spatial?1:0,Mathf.Clamp(d.settings.maxHistory,1,32),0));
                     foreach(string stage in new[]{"Gradients","FilterGradients","Confidence"})
                     {
                         int k=d.shader.FindKernel(stage);d.scene.BuildAndBind(cmd,d.shader,k);

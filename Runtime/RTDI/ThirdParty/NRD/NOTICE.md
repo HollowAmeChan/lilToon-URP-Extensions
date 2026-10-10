@@ -19,7 +19,19 @@ independently rewritten RELAX algorithm.
 
 Only the core CPU scheduler is used. No Denoiser.dll, NRI.dll, D3D12HeapHook,
 DLSS/NIS plugin or Unity native command-list/descriptor-heap hook is imported.
-Unity ComputeShaders execute the original RELAX passes; Unity owns GPU resources.
+Unity ComputeShaders execute the RELAX dispatch sequence; Unity owns GPU resources.
+
+DenseDI uses two explicitly derived shader bodies in ../../Shaders/NRD:
+HoRTDINrdAtrousSmem.hlsl averages per-pixel temporal variance instead of
+including between-pixel illumination/material contrast in noise variance.
+HoRTDINrdHistoryClamping.hlsl preserves the second moment when HistoryFix is
+disabled: fast specular alpha then contains hit distance, not a moment.
+The remaining code, resource layouts, CPU library and original files in this
+directory stay pinned. These are project adaptations, not an upstream NRD
+upgrade or a claim that NVIDIA's general-purpose filtering is unmodified.
+Original notices and license apply to the derived files as well.
+Tests~/RTDI/generate_nrd_variance_adapter.py --check reconstructs both changes
+against the original SHA records and verifies exact normalized contents.
 
 The reference fork's GetResourceTypeString lookup retains an older enum order.
 Integration uses the numeric ResourceType order in the pinned NRDDescs.h instead.

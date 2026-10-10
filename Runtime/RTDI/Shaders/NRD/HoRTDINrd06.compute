@@ -1,4 +1,5 @@
-// Original NRD algorithm; Unity bindings adapter. See ThirdParty/NRD/NOTICE.md.
+// Dense DI specular-moment adapter; remaining NRD kernel is unchanged.
+// See HoRTDINrdHistoryClamping.hlsl and ThirdParty/NRD/NOTICE.md.
 #pragma kernel main
 #pragma use_dxc
 #pragma target 6.0
@@ -7,4 +8,4 @@
 #define NRD_SIGNAL BOTH
 #define NRD_MODE RADIANCE
 #include "HoRTDINrdBindings.hlsl"
-#include "../../ThirdParty/NRD/RELAX_HistoryClamping.cs.hlsl"
+#include "HoRTDINrdHistoryClamping.hlsl"

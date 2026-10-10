@@ -143,13 +143,23 @@
 
 **复查与下一项：** 混合材质 reuse 的首次逐像素解析断言失败（raw≈0.15393 vs 0.15915）；不能将随机归一化信号强制当确定值。已补独立 64 帧统计：diffuse raw/filtered≈0.158370/0.158098，对照 0.159155；specular≈0.640791/0.636575，对照确定性 raw 0.646484。有限相关观察不证明无偏，后续仍需审计归一化/guide 精度。深度前景的相同 directional 入射仅证明颜色恢复与投影，点灯/异法线还需单独验证隔离。本步只隔离 active/zero diffuse，两类别不代表所有材质；彩色/低 F0 镜面的 helper 下限、梯度跨几何扩散、每 lobe 距离仍未解决。下一项检查不同入射的几何边界与镜面颜色/低 F0 的实际 raw/filtered，再据原参考评审信号。详见 [边界对照与复现](../Ho-RTDI-NRD.md)。
 
-## 12. 下一步取舍
+## 12. DenseDI 方差与 disabled-HistoryFix 二阶矩
+
+**动手前评审：应做。** 上一步同向 directional 的深度案例不能证明入射不同的隔离。新增点灯薄前景及其解析投影阴影，并核对同类红/蓝金属。旧 raw 正确，filtered 阴影最高 0.153076、彩色镜面约 50.2% 偏暗。逐 pass 读回定位 A-trous 的空间统计；关闭 acceleration 无效，已撤回。
+
+**参考、实现与复查：** 固定 RELAX 短历史分支平均颜色且不计 depth；热分支先混合 RGB/二阶矩再相减，包含邻域固定光照差异。当前 DI 关闭 spatial variance color bootstrap 与稀疏 HistoryFix，diffuse 主预算至少 1，改为平均每像素时间方差。原 vendor 文件和 CPU DLL 不改，单独派生 A-trous helper。强制正常 60 Hz 又揭露 fast specular alpha=hit distance 被 disabled-HistoryFix 的 HistoryClamping 复制成 normal 二阶矩，Temporal alpha≈2230，正确应≈0.077。第二份派生只修该分支的 RGB/alpha 复制。矩阵与 Constant-buffer 双上传 GPU 对照正确，没有做猜测式底层修改。NRD confidence 的 previous guides 也独立于 RTXDI temporal 开关，关闭 reservoir reuse 的改色回归通过。临时 capture hook 已从生产源码清除。
+
+**结果与代价：** 两条 Editor 的明确 60 Hz 边界回归通过：点灯 ROI 最大误差 0.006348、阴影 0.000010；单灯彩色镜面约 0.1465% 误差。两个 release 构建及实际 D3D12 EXE / D3D11 inactive 通过；Player 点灯误差 0.000488、阴影/假镜面为零，彩色镜面约 0.1511%。原 NRD、动态灯/阴影、30/60/120 Hz 时间线、目标尺寸/释放重建通过，无新增 DI/NRD shader/command-buffer 错误，Roslyn 无错误。Editor filtered MSE≈0.000179、Player≈0.000086，raw≈0.050401。物理时间线约 9.337/14.474/12.764%，接近前轮；另一个 bulk render-request 运动 fixture 中心误差约 10.89%（前轮≈6.55%），记录为代价，不混淆执行节奏。没有新增 GPU 资源或 Feature；1080p 活动载荷仍 463.996 MiB，简单同步 RG batch≈10.606 ms，不当成孤立 GPU 性能证明。
+
+**完成后复查与下一项：** 两份派生源码明确保留版权/许可，用 Tests~/RTDI/generate_nrd_variance_adapter.py --check 对原 SHA 和窄变更逐字重建；绑定 identifier 不证明原始算法未改。单灯确定性改善不能代替噪声输入：两方向白灯的彩色金属 raw mean=0.970442≈参考0.969727，filtered=0.816392、假通道平均0.005367，仍约 15.8% 偏暗。下一项优先核对这个实际噪声下的 F0 解调/滤波边界，并检查低 F0 / 不同角度；gradient、每 lobe 距离与动态域仍未证明。详见 [方差与二阶矩证据](../Ho-RTDI-NRD.md)。
+
+## 13. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
-| NRD 质量与预算 | 静态解析灯 confidence 改善响应，external output 复用减少 16 B/像素，diffuse 颜色与 active/zero 材质边界已修复。下一步专项检查彩色/低 F0 镜面、每 lobe hit-distance、异材质 reuse 统计与梯度边界。TAA/动态几何与复杂场景性能仍需独立证明，保留 raw/filtered 对照。 |
+| NRD 质量与预算 | 方差适配改善点灯薄阴影与单灯镜面，disabled-HistoryFix 的二阶矩已修复；两灯彩色金属仍偏暗约 15.8%，下一项优先解决其 F0/噪声耦合，再检查低 F0、不同角度、每 lobe 距离与梯度边界。TAA/动态几何与复杂性能仍需独立证明。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

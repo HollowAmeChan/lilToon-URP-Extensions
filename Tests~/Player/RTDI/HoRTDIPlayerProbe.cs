@@ -18,7 +18,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     public VolumeProfile profile;
     private RenderTexture target;
     private bool unsupported;
-    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak;}
+    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak,pointDepthMax,pointShadowMax,coloredSpecRelative,coloredSpecLeak;}
     private readonly Result result=new Result();
     private IEnumerator Start()
     {
@@ -125,11 +125,39 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
             result.boundarySpecLeak=Read(capture.Specular,28,32).r;
             Near(Read(capture.Diffuse).r,0,"Player thin metal diffuse",.0005f);Near(Read(capture.Diffuse,28,32).r,.5f/Mathf.PI,"Player adjacent diffuse",.004f);
             Require(result.boundaryMetalRelative<.05f&&result.boundarySpecLeak<.0005f,"Player NRD mixed material classes");
+            metal.SetFloat("_Metallic",0);metal.SetColor("_Color",Color.blue);strip.transform.position=new Vector3(0,0,-.35f);
+            light.type=LightType.Point;light.transform.position=new Vector3(0,0,-1);light.intensity=.5f;
+            for(int i=0;i<48;i++)Render();ReadInto(capture.Raw,raw);ReadInto(capture.Diffuse,filtered);
+            for(int y=16;y<48;y++)for(int x=24;x<40;x++)
+            {
+                bool foreground=x>=30&&x<34;float z=foreground?-.35f:0;
+                var ray=probeCamera.ViewportPointToRay(new Vector3((x+.5f)/64,(y+.5f)/64,0));var p=ray.origin+ray.direction*((z-ray.origin.z)/ray.direction.z);
+                var delta=light.transform.position-p;float d2=delta.sqrMagnitude,fade=Mathf.Clamp01(1-Mathf.Pow(d2/(light.range*light.range),2));
+                bool shadow=!foreground&&Mathf.Abs(p.x*.65f)<4f/64;
+                float irradiance=shadow?0:light.intensity/d2*(-delta.normalized.z)/Mathf.PI*fade*fade;
+                var expected=(foreground?Color.blue:Color.white)*irradiance;var a=raw.GetPixel(x,y);var b=filtered.GetPixel(x,y);
+                Near(a.r,expected.r,"Player point-depth raw R",.003f);Near(a.b,expected.b,"Player point-depth raw B",.003f);
+                result.pointDepthMax=Mathf.Max(result.pointDepthMax,Mathf.Max(Mathf.Abs(a.r-b.r),Mathf.Abs(a.b-b.b)));
+                if(shadow)result.pointShadowMax=Mathf.Max(result.pointShadowMax,Mathf.Max(b.r,b.b));
+            }
+            Require(result.pointDepthMax<.008f&&result.pointShadowMax<.003f,"Player NRD blurred unequal depth or thin point shadow");
+            strip.SetActive(false);surfaceMaterial.SetFloat("_Metallic",1);surfaceMaterial.SetTexture("_MainTex",pattern);light.type=LightType.Directional;light.intensity=.5f;
+            feature.Settings.denoise=false;Render();ReadInto(capture.Specular,raw);
+            feature.Settings.denoise=true;for(int i=0;i<48;i++)Render();ReadInto(capture.Specular,filtered);
+            double specError=0;int specPixels=0;
+            for(int y=16;y<48;y++)for(int x=8;x<56;x++)
+            {
+                var a=raw.GetPixel(x,y);var b=filtered.GetPixel(x,y);float peak=Mathf.Max(a.r,a.b);Require(peak>.1f,"Player colored specular raw missing");
+                specError+=Mathf.Abs(Mathf.Max(b.r,b.b)-peak)/peak;specPixels++;
+                result.coloredSpecLeak=Mathf.Max(result.coloredSpecLeak,Mathf.Max(b.g,a.r>.1f?b.b:b.r));
+            }
+            result.coloredSpecRelative=(float)(specError/specPixels);
+            Require(result.coloredSpecRelative<.02f&&result.coloredSpecLeak<.0005f,"Player NRD lost colored specular detail");
         }
         finally
         {
             if(strip!=null){strip.SetActive(false);Destroy(strip);}if(metal!=null)Destroy(metal);
-            surfaceMaterial.SetTexture("_MainTex",Texture2D.whiteTexture);Destroy(pattern);Destroy(raw);Destroy(filtered);
+            surfaceMaterial.SetTexture("_MainTex",Texture2D.whiteTexture);surfaceMaterial.SetFloat("_Metallic",0);Destroy(pattern);Destroy(raw);Destroy(filtered);
         }
     }
     private void Render(){VolumeManager.instance.Update(probeCamera.transform,-1);RenderPipeline.SubmitRenderRequest(probeCamera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}

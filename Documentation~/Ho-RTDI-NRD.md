@@ -6,7 +6,7 @@ Feature 的 **NRD RELAX 降噪** 为可选项，默认关闭。开启后仍保�
 
 使用用户参考中的 NRD 4.17.3 CPU 库、RELAX 原始 shader、NRD 前端 helpers 与调度描述。原参考 Denoiser.dll 同时集成 NRI、DLSS、NIS、Unity descriptor-heap hook 和设备内存控制。本步只引入重命名后的 NRD 核心 CPU 库，由它选择 pass、常量和 pool；Unity CommandBuffer 执行对应的原始 ComputeShader，所有 GPU 资源归 Unity 管理。
 
-本地 DLL 实测为 4.17.3，normal encoding=2、roughness encoding=1。15 个 pipeline 的完整 shaderIdentifier（含宏）与生成的 Unity wrappers 逐一对齐。常量缓冲、sampler 和资源声明通过 NRD 提供的 custom-engine 宏适配，算法正文未改。33 个 shader/MathLib/config 文件和 3 个 ABI header 的原 SHA-256 与正文已核对；许可、CPU DLL hash 与出处见 ThirdParty/NRD。
+本地 DLL 实测为 4.17.3，normal encoding=2、roughness encoding=1。15 个 pipeline 的 shaderIdentifier（含宏）与 Unity wrappers 的资源布局逐一对齐。常量缓冲、sampler 和资源声明通过 custom-engine 宏适配。33 个 shader/MathLib/config 文件和 3 个 ABI header 的原 SHA-256 与正文保留；当前 DenseDI 另有两份明确派生的方差/HistoryClamping body，见文末，不能把布局核对当成原始算法未改的证明。许可、CPU DLL hash 与出处见 ThirdParty/NRD。
 
 参考：[NRD 官方集成说明](https://github.com/NVIDIA-RTX/NRD)，本地 NRD.hlsli / NRDDescs.h / NRDSettings.h / InstanceDesc / DispatchDesc，以及用户项目的 NrdDenoiserHelper、NrdFrameData、NrdPass。线上资料用于核对原则，实现严格按本地固定版本，而非混用新版 ABI。
 
@@ -32,7 +32,7 @@ Feature 的 **NRD RELAX 降噪** 为可选项，默认关闭。开启后仍保�
 
 核心调用返回的指针只在本轮复制描述、资源与常量时读取，不跨下一次 GetComputeDispatches 保存裸指针。每个 dispatch 使用独立常量偏移，帧常量使用三份 64 KiB buffer，避免同轮不同 pass 共用覆盖的 CB 地址。原始 ResourceType 数值以固定头文件为准；该参考库的 GetResourceTypeString 字符串数组顺序已经落后于枚举，不能用它决定绑定。
 
-分辨率变化、禁用/重启、DI 关键设置或世界几何 Revision 变化会重启 NRD 历史；灯参数变化交给 RELAX 的历史/antilag 处理。当前 dense-DI 预设关闭 diffuse/specular prepass：两条 lobe 都有有效距离，未使用概率 lobe split；空间 prepass 会抹平干净解析高光并把确定的可见性边界带亮。历史以秒定义，60 Hz 时 diffuse 主/快速为 3/1、specular 为 30/6；antilag acceleration=0.6、reset=1，其他主要参数保留原 SDK 默认值。使用 SDK temporal、history fix/clamp 与 A-trous，没有自写降噪算法或对每次灯变化整份清历史。数值与时间换算按本节测试取舍。
+分辨率变化、禁用/重启、DI 关键设置或世界几何 Revision 变化会重启 NRD 历史；灯参数变化交给 RELAX 的 confidence / antilag。DenseDI 关闭两个 prepass、短历史颜色预滤波和稀疏 HistoryFix；两条 lobe 都有有效距离，没有概率 lobe split。历史以秒定义，60 Hz 时 diffuse 主/fast 为 3/1、specular 为 30/6；低 FPS diffuse 至少保留一份旧样本用于时间方差。antilag acceleration=0.6、reset=1。SDK temporal / A-trous 调度继续使用，两个派生 body 的具体变化及代价见文末；没有另建整套降噪器或每次灯变化整份清历史。
 
 ## 验证与边界
 
@@ -94,7 +94,7 @@ NRD 本身允许滤波偏差，材质因子下限、时空积累与空间滤波�
 
 固定 NRDSettings.h 的 GetMaxAccumulatedFrameNum 明确推荐以积累秒数换算帧数。当前相机 pass 记录 `Time.unscaledTimeAsDouble`，在实际执行 NRD 时推进本相机时间状态，并把时间差乘 1000 传入 CommonSettings.timeDeltaBetweenFrames（该字段单位为 ms）。相同 Unity frame 内额外请求不推进 FPS 估计；first sample 使用 60 Hz seed。正时间差用 0.1 秒时间常数低通，按 `floor(period / filteredSeconds + 0.5)` 换算预算，更新后的整数预算有变化才调用 SetDenoiserSettings。
 
-固定周期为 diffuse 主/fast 50/16.67 ms、specular 主/fast 500/100 ms、history fix 50 ms。主历史上限 255，fast 保持小于主预算，history fix 按固定版本上限 3 裁剪。时间回退、无效值或相机超过 1 秒无样本触发 NRD clear/restart，避免把旧画面接上；该 1 秒界限是本项目的暂停/恢复策略。时间缩放不改变此 unscaled 契约。额外采样仍能推进 sampler frame index；只是不把一帧中 100 次 SubmitRenderRequest 解释成真实 6000 FPS。
+当前周期为 diffuse 主/fast 50/16.67 ms、specular 主/fast 500/100 ms；主历史上限 255，fast 小于主预算，diffuse 主预算下限 1 为时间方差保留两次观察。步骤 8 的 history fix 50 ms / 3 帧预算已在步骤 12 关闭。时间回退、无效值或相机超过 1 秒无样本触发 NRD clear/restart；该 1 秒界限是项目的暂停/恢复策略。时间缩放不改变 unscaled 契约。额外采样仍推进 sampler frame index，不把一帧中 100 次 SubmitRenderRequest 解释成真实 6000 FPS。
 
 | 相同速度、0.4 秒点灯移动的受控时间线 | diffuse 主/fast | specular 主/fast | filtered ROI 平均相对误差 |
 | --- | --- | --- | --- |
@@ -163,3 +163,32 @@ Resolve 通过同一个 RWTexture2D 逐像素读写，避免同轮把同一资�
 原 NRD 两条路径、动态灯/阴影质量、30/60/120 Hz compatibility 时间线、raw/filtered/debug 与释放重建回归通过。Editor raw MSE=0.050401、filtered=0.000257，specular raw/filtered=0.296814/0.293737。Win64 Mono release 两个构建与实际 EXE、D3D11 inactive 通过；Player 新增的 64² 两像素颜色与四像素金属边界最大 albedo 误差 0.000122、镜面相对误差约 0.227%、假镜面为零，原 filtered MSE≈0.000101。没有新增 GPU 资源、Feature 或最终材质合成。无 DI/NRD shader/command-buffer 错误，Roslyn 编译无错误；其他模块及已有 lilToon duplicate-keyword 警告保留。
 
 **边界：** 只证明这些静态 opaque 受控案例。深度前景案例使用相同入射 directional 光，证明颜色恢复/投影与 reuse 输出，不单独证明不同入射光照下的 NRD 深度隔离；后续需要点灯/异法线的边界对照。两个类别不能隔离所有材质，特别是同类的彩色/低 F0 镜面仍使用带下限的解调，不能宣称完整纹理保真；梯度滤波跨几何扩散、每 lobe 距离、动态材质/几何、TAA 与复杂场景仍需检查。首次混合材质 reuse 实验采用了不成立的逐像素确定性断言（raw≈0.15393 vs 0.15915），已改为独立连续统计；失败实验没有计作通过，也没有借调降 NRD 门槛掩盖 raw 差异。下一项检查不同入射光照的几何边界与镜面颜色/低 F0，再据参考评审信号表示。
+
+## DenseDI 方差、短历史与镜面二阶矩
+
+步骤 12 增加点灯 (0,0,-1)、深度 -0.35 的四像素蓝色前景和 z=0 白色背景，逐像素核对距离/余弦衰减与投影到背景的更宽阴影。原始 raw 符合解析真值，旧 filtered 阴影最高 0.153076、全 ROI 最大误差同值；同类两像素红/蓝金属的单灯镜面平均相对误差约 50.2%，出现 0.013237 的假颜色。
+
+逐 pass GPU 副本确认 PrePass / Temporal / HistoryClamping 仍输出正确的零阴影，第一次 A-trous 才填亮。关闭 acceleration 没有改善，已撤回该尝试。固定版本短历史 variance 分支先平均颜色，且 depthW=1；热分支的 3×3 helper 则先平均 RGB/二阶矩再相减，也把邻域确定的光照/材质差异算入“噪声”。[原参考对应的上游 shader](https://github.com/NVIDIA-RTX/NRD/blob/master/Shaders/RELAX_AtrousSmem.cs.hlsl)仍采用这种空间统计；这里的更改是 DenseDI 取舍，不宣称是普适的上游修复。
+
+当前 DenseDI 禁用短历史颜色 bootstrap（varianceHistory=0）与稀疏 HistoryFix（settings=0；core 实际阈值为 1）。diffuse 主预算下限 1，保留两次观察用于时间方差；30/60/120 Hz 的既有主/fast 预算不变。独立派生的 A-trous body 只将 computeVariance 改为每像素 max(m2-luma²,0) 的 Gaussian 平均，排除邻域均值差异。其余 kernel、资源/常量布局、MathLib 与 CPU DLL 未换版本；首次/断史时不再依赖邻域颜色预平均，噪声需要后续时间观察与 A-trous 抑制。
+
+正常 60 Hz 验证进一步发现 HistoryFix 关闭时的 alpha 混用：Temporal 的 fast specular alpha 存命中距离；固定 HistoryClamping 在 historyLength≤1 复制整个 fast float4，方向灯的 65504 就进入 normal history 的二阶矩。实测之后的 Temporal alpha 达到约 2230，而稳定红色信号的正确二阶矩约 0.077。第二份派生 body 只在 gHistoryFixFrameNum==1 的复制分支采用 fast RGB、保留 Temporal 二阶矩，继续执行原 moment correction；HistoryFix 开启的原分支不变。修后 alpha≈0.077。独立 GPU probe 同时验证矩阵列布局和两次延后 Constant-buffer 上传快照正确，未凭猜测更改矩阵或 buffer 所有权。
+
+NRD confidence 也改为按其自身历史有效性读取 previous guides，独立于是否启用 RTXDI temporal reservoir；采样阶段的开关不变。单灯改色且 reservoir temporal 关闭时，实际 confidence 下降的回归已通过。临时逐 pass 复制/反射工具保留在隔离研究日志，生产调度没有这些 hook。
+
+| 指标 | 当前结果 |
+| --- | --- |
+| Editor 128² / 60 Hz 点灯深度 ROI | 平均绝对误差 0.000423，最大 0.006348，阴影最大 0.000010 |
+| Editor 单灯红/蓝金属 | 相对误差约 0.1465%，假通道 F6 下为零 |
+| Win64 Player 64² 两条路径 | 点灯最大误差 0.000488、阴影为零；彩色镜面误差约 0.1511%、假通道为零 |
+| 稳定双色灯噪声 | Editor raw MSE≈0.050401、filtered≈0.000179；Player filtered≈0.000086 |
+| 物理时间线 30 / 60 / 120 Hz | 平均相对误差约 9.337 / 14.474 / 12.764%，与前轮接近 |
+| 自有载荷 720p / 1080p | 205.858 / 463.996 MiB，不增 GPU 资源；简单 RG 同步 batch 6.405 / 10.606 ms |
+
+同一 render-request 运动 fixture 的中心误差约 10.89%，前轮约 6.55%；它受实际 clock budget 和新增的低 FPS 最小历史影响，不能隐去这项代价或把不同节奏当成因果证明。单独注入时间的 30/60/120 Hz 对照只变化约 0.09/0.02/0.005 个百分点。同步 batch 含 CPU / raster / DI / NRD / GPU 读回，不是孤立 GPU 性能证明。
+
+两条 Editor 边界/NRD、动态灯/阴影、compatibility 时间线、目标分辨率与生命周期通过。两个 release 构建和实际 D3D12 EXE / D3D11 inactive 通过；没有新增 DI/NRD shader 或 command-buffer 错误，Roslyn 无错误，已有其他模块与 lilToon duplicate-keyword 警告保留。
+
+**仍未解决：** 60 Hz、两个同向白色方向灯 intensity=0.5/0.25、每轮一个 infinite candidate 的彩色金属，64 次观察 raw 平均 0.970442（解析参考 0.969727），filtered 仅 0.816392，假通道平均 0.005367。单灯通过不能代替这个随机输入的支持；下一项优先评审 F0 解调、材质边界及噪声下的滤波耦合。低 F0 / 不同角度与粗糙度、材质动画、动态几何、TAA、gradient 跨边界扩散仍需证明。未设计最终 PBR/NPR 合成。
+
+原始 36 份 vendor 文件的 SHA 保持原记录，两个派生 body 位于 Runtime/RTDI/Shaders/NRD，原版权/许可保留。执行 `python Tests~/RTDI/generate_nrd_variance_adapter.py --check` 校验原 SHA 并逐字重建“一个 helper / 一个分支”改动；去掉 `--check` 可重新生成。ShaderIdentifier 仅验证绑定布局，不能宣称算法 body 与原版完全相同。验证入口为 `RunBoundaries` / `RunBoundariesCompatibility`（明确 60 Hz sample timeline），以及原 NRD/质量/时间/预算与 Player probe。

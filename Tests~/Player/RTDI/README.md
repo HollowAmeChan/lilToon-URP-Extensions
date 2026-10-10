@@ -51,6 +51,11 @@ full-metal strip against adjacent zero-F0 dielectric lighting. These boundary
 gates disable ReSTIR reuse to give NRD a deterministic analytic input. The JSON
 records maximum albedo error, metal specular relative error and adjacent specular
 leak; they do not establish arbitrary colored-specular/material-ID support.
+Additional gates cover a four-pixel blue foreground under a point light,
+its analytically projected wider shadow, and single-directional-light red/blue
+metal detail. The JSON records point-depth error, shadow leak and colored
+specular error/leak. These deterministic gates do not establish stochastic
+multi-light material-boundary fidelity.
 Compatibility capture samples the published shader globals; their names are not
 temporary RT identifiers for `CommandBuffer.Blit`.
 

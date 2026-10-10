@@ -27,6 +27,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         private static Material surfaceMaterial;
         private static GameObject blocker;
         private static int tick;
+        private static int boundarySample;
         [StructLayout(LayoutKind.Sequential)]
         private struct Reservoir {public uint light,uv,visibility,age;public float target,weight;}
         public static void RunCompatibility(){compatibility=true;Run();}
@@ -378,8 +379,60 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 depthWorst=Mathf.Max(depthWorst,Mathf.Max(Mathf.Abs(a.r-b.r),Mathf.Abs(a.b-b.b)));
             }
             Debug.Log($"[HoRTDIValidation] BOUNDARY depth4px reuse maxAbsolute={depthWorst:F6}");Require(depthWorst<.008f,"Thin depth boundary lost deterministic lighting");
+            // Different incoming irradiance at the two depths, including the
+            // strip's wider projected world shadow on the background plane.
+            feature.Settings.temporal=feature.Settings.spatial=false;
+            light.type=LightType.Point;light.transform.position=new Vector3(0,0,-1);light.intensity=.5f;
+            for(int i=0;i<48;i++)RenderCamera();context=feature.LastContext;
+            ReadImage(context.diffuse.rt,raw);ReadImage(context.filteredDiffuse.rt,filtered);
+            float pointDepthWorst=0,shadowLeak=0;double pointDepthError=0;int pointDepthCount=0;
+            for(int y=32;y<96;y++)for(int x=56;x<72;x++)
+            {
+                bool foreground=x>=62&&x<66;
+                var ray=camera.ViewportPointToRay(new Vector3((x+.5f)/size,(y+.5f)/size,0));
+                float z=foreground?-.35f:0;var p=ray.origin+ray.direction*((z-ray.origin.z)/ray.direction.z);
+                var delta=light.transform.position-p;float d2=delta.sqrMagnitude,fade=Mathf.Clamp01(1-Mathf.Pow(d2/(light.range*light.range),2));
+                bool shadow=!foreground&&Mathf.Abs(p.x*.65f)<4f/size;
+                float irradiance=shadow?0:light.intensity/d2*(-delta.normalized.z)/Mathf.PI*fade*fade;
+                var expected=(foreground?Color.blue:Color.white)*irradiance;
+                var a=raw.GetPixel(x,y);var b=filtered.GetPixel(x,y);NearRGB(a,expected,"point-lit thin depth raw truth",.003f);
+                float error=Mathf.Max(Mathf.Abs(a.r-b.r),Mathf.Abs(a.b-b.b));pointDepthWorst=Mathf.Max(pointDepthWorst,error);pointDepthError+=error;pointDepthCount++;
+                if(shadow)shadowLeak=Mathf.Max(shadowLeak,Mathf.Max(b.r,b.b));
+            }
+            Debug.Log($"[HoRTDIValidation] BOUNDARY pointDepth4px meanAbsolute={pointDepthError/pointDepthCount:F6} maxAbsolute={pointDepthWorst:F6} shadowMax={shadowLeak:F6}");
+            // Same NRD class: no material-ID barrier hides chromatic specular loss.
+            strip.SetActive(false);surfaceMaterial.SetFloat("_Metallic",1);surfaceMaterial.SetTexture("_MainTex",pattern);
+            light.type=LightType.Directional;light.intensity=.5f;light.transform.rotation=Quaternion.identity;
+            for(int i=0;i<48;i++)RenderCamera();context=feature.LastContext;
+            ReadImage(context.specular.rt,rawSpec);ReadImage(context.filteredSpecular.rt,filteredSpec);
+            double specColorError=0;float absentSpec=0;int specColorCount=0;
+            for(int y=32;y<96;y++)for(int x=16;x<112;x++)
+            {
+                var a=rawSpec.GetPixel(x,y);var b=filteredSpec.GetPixel(x,y);float peak=Mathf.Max(a.r,a.b);
+                Require(peak>.1f,"Colored metal specular fixture missing");Near(Mathf.Min(a.r,a.b),0,"Colored metal absent raw specular",.001f);
+                specColorError+=Mathf.Abs(Mathf.Max(b.r,b.b)-peak)/peak;specColorCount++;
+                absentSpec=Mathf.Max(absentSpec,Mathf.Max(b.g,a.r>.1f?b.b:b.r));
+            }
+            Debug.Log($"[HoRTDIValidation] OBSERVATION coloredSpec2px relative={specColorError/specColorCount:F6} absentChannelMax={absentSpec:F6} raw={rawSpec.GetPixel(32,64)} filtered={filteredSpec.GetPixel(32,64)}");
+            Debug.Log($"[HoRTDIValidation] COLOR_BUDGET diff={context.nrd.AppliedSettings.diffFrames} spec={context.nrd.AppliedSettings.specFrames} fix={context.nrd.AppliedSettings.historyFixFrames}");
+            Require(specColorError/specColorCount<.02&&absentSpec<.0005f,"NRD lost deterministic colored specular detail");
+            float singleSpec=Mathf.Max(rawSpec.GetPixel(32,64).r,rawSpec.GetPixel(32,64).b);
+            var second=Keep(new GameObject("Noisy colored specular directional")).AddComponent<Light>();second.type=LightType.Directional;second.intensity=.25f;
+            for(int i=0;i<64;i++)RenderCamera();double noisyRaw=0,noisyFiltered=0,noisyLeak=0;int noisyCount=0;
+            for(int frame=0;frame<64;frame++)
+            {
+                RenderCamera();ReadImage(context.specular.rt,rawSpec);ReadImage(context.filteredSpecular.rt,filteredSpec);
+                for(int y=48;y<80;y++)for(int x=32;x<96;x++)
+                {
+                    var a=rawSpec.GetPixel(x,y);var b=filteredSpec.GetPixel(x,y);noisyRaw+=Mathf.Max(a.r,a.b);noisyFiltered+=Mathf.Max(b.r,b.b);
+                    noisyLeak+=Mathf.Max(b.g,a.r>.1f?b.b:b.r);noisyCount++;
+                }
+            }
+            Debug.Log($"[HoRTDIValidation] OBSERVATION coloredSpec2px twoWhiteLamps rawMean={noisyRaw/noisyCount:F6} filteredMean={noisyFiltered/noisyCount:F6} reference={singleSpec*1.5f:F6} absentChannelMean={noisyLeak/noisyCount:F6}; stochastic material boundary remains a separate support audit");
+            Near((float)(noisyRaw/noisyCount),singleSpec*1.5f,"Noisy colored specular raw statistical energy",.02f);
+            Require(pointDepthWorst<.008f&&shadowLeak<.003f,"NRD mixed unequal point-lit depth surfaces or blurred their thin shadow");
             Require(textureWorst<.008f,"NRD blurred demodulated two-pixel albedo");
-            Debug.Log("[HoRTDIValidation] PASS boundary gates: analytic raw, 2px albedo, 2/4/8px metal classes and 4px depth/reuse; compatibility="+compatibility);
+            Debug.Log("[HoRTDIValidation] PASS boundary gates: analytic raw, 2px albedo/specular, metal classes, unequal point-lit depth and thin world shadow; compatibility="+compatibility);
         }
         private static void ReadImage(RenderTexture source,Texture2D image)
         {
@@ -434,6 +487,10 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             Debug.Log("[HoRTDIValidation] NRD single raw="+ReadMean(context.diffuse.rt)+" filtered="+ReadMean(context.filteredDiffuse.rt)+" dispatches="+context.nrd.LastDispatchCount);
             Near(ReadMean(context.filteredDiffuse.rt).r,ExpectedMean(light),"NRD single-light energy",.03f);
             Near(ReadCenter(context.diffConfidence.rt).r,1,"Stable lighting reported a confidence gradient",.02f);
+            light.color=Color.red;RenderCamera();
+            Require(!context.lastTemporal,"Confidence independence probe unexpectedly reused reservoirs");
+            Require(ReadCenter(context.diffConfidence.rt).r<.5f,"NRD confidence ignored light changes while RTXDI temporal was disabled");
+            light.color=Color.white;for(int i=0;i<8;i++)RenderCamera();
             var signal=Read(context.nrdDiffuse.rt);Require(signal.a>1.5f&&signal.a<2.1f,"NRD alpha is not selected-light distance");
             Near(Read(context.nrdViewZ.rt).r,3,"NRD positive linear view Z",.01f);
             light.color=Color.red;var blue=Point(light.transform.position,Color.blue,light.intensity);
@@ -585,7 +642,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var ray=camera.ViewportPointToRay(new Vector3((x+.5f)/64,(y+.5f)/64,0));var position=ray.origin+ray.direction*(-ray.origin.z/ray.direction.z);var delta=source.transform.position-position;float d2=delta.sqrMagnitude;
             float fade=Mathf.Clamp01(1-Mathf.Pow(d2/(source.range*source.range),2));return source.intensity/d2*(-delta.normalized.z)/Mathf.PI*fade*fade;
         }
-        private static void RenderCamera(){VolumeManager.instance.Update(camera.transform,-1);RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
+        private static void RenderCamera(){if(forceBoundaries&&feature.LastContext?.nrd!=null)feature.LastContext.nrd.ValidationTimeSeconds=++boundarySample/60.0;VolumeManager.instance.Update(camera.transform,-1);RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
         private static Color Render(){RenderCamera();Require(feature.LastContext!=null,"DI context missing: "+feature.Status);return Read(feature.LastContext.diffuse.rt);}
         private static Color Read(RenderTexture source)
         {
