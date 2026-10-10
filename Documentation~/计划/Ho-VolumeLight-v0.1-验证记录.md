@@ -14,6 +14,12 @@
 
 基础介质已单独提交为 `50b1b4b`；太阳 HD、验证入口和文档作为后续步骤提交。
 
+### lilToon Cutout 补充验证
+
+用户实际树叶使用 lilToon Cutout，故追加 `Hidden/lilToonCutout` 的 GPU 测试，分别用主贴图 alpha 和 Alpha Mask 替换输入，断言孔位的光源空间 probe 透过、实心位置被遮挡。D3D12 的 `volumelight-liltoon-cutout-d3d12.log` 与 D3D11 的 `volumelight-liltoon-cutout-d3d11.log` 均报告 `lilToon Cutout MainTex alpha + AlphaMask PASS`，完整 suite 也 PASS。对应 JSON 增加 `lilToonCutout = MainTex alpha + AlphaMask PASS`。
+
+该结果只证明二值 cutout，未把阈值裁切当成连续灰度透光或彩色玻璃。用户要求连续灰度透光作为后续功能，彩色透光暂缓。
+
 ## 目标逐项证据
 
 | 要求 | 权威证据 |

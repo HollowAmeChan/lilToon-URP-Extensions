@@ -39,6 +39,7 @@ namespace lilToon.URP.Extensions.VolumeLight
         {
             public bool passed;
             public string graphicsAPI, error, medium, solar;
+            public string lilToonCutout;
             public float windowReduction;
         }
         public static void Run()
@@ -206,7 +207,9 @@ namespace lilToon.URP.Extensions.VolumeLight
             probe.Points(new Vector3(-1.5f, 1, 0) + offset, new Vector3(1.5f, 1, 0) + offset);
             var cutoutImage = Render(); shadowSamples = Read(probe.destination.rt);
             Require(shadowSamples[0].r > .75f && shadowSamples[1].r < .25f, "alpha holes lost in atlas: " + shadowSamples[0] + " / " + shadowSamples[1]);
-            Save(cutoutImage, "solar-cutout"); cutout.SetActive(false);
+            Save(cutoutImage, "solar-cutout");
+            ValidateLilToonCutout(cutout, alpha);
+            cutout.SetActive(false);
             sun.transform.rotation = Quaternion.LookRotation(new Vector3(.95f, 0, .31f));
             var offscreen = Box("Offscreen caster", new Vector3(-10, 1, -2), new Vector3(1.5f, 6, .3f));
             Require(!GeometryUtility.TestPlanesAABB(GeometryUtility.CalculateFrustumPlanes(camera), offscreen.GetComponent<Renderer>().bounds), "caster is not offscreen");
@@ -241,6 +244,25 @@ namespace lilToon.URP.Extensions.VolumeLight
             foreach (string shaderName in new[] { "Hidden/lilToon/URP/VolumeLight/SolarHD", "Hidden/lilToon/URP/VolumeLight/Validation", "Hidden/lilToon/URP/Atmosphere/Debug" })
                 foreach (var message in ShaderUtil.GetShaderMessages(Shader.Find(shaderName))) Require(message.severity != UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error, shaderName + ": " + message.message);
             results["solar"] = "PASS";
+        }
+        private static void ValidateLilToonCutout(GameObject cutout, Texture2D alpha)
+        {
+            var lil = Mat("Hidden/lilToonCutout");
+            lil.SetTexture("_MainTex", alpha); lil.SetColor("_Color", Color.black);
+            lil.SetFloat("_Cutoff", .5f); lil.SetFloat("_Cull", 0); lil.SetFloat("_ZWrite", 1); lil.SetFloat("_AlphaToMask", 0);
+            lil.SetFloat("_AlphaMaskMode", 0); lil.renderQueue = 2450;
+            Require(lil.FindPass("SHADOW_CASTER") >= 0, "lilToon Cutout ShadowCaster missing");
+            cutout.GetComponent<Renderer>().sharedMaterial = lil;
+            Render(); var samples = Read(probe.destination.rt);
+            Require(samples[0].r > .75f && samples[1].r < .25f, "lilToon MainTex alpha lost: " + samples[0] + " / " + samples[1]);
+            var mask = Keep(new Texture2D(2, 1, TextureFormat.RGBA32, false, true) { filterMode = FilterMode.Point, wrapMode = TextureWrapMode.Clamp });
+            mask.SetPixels(new[] { Color.black, Color.white }); mask.Apply();
+            lil.SetTexture("_MainTex", Texture2D.whiteTexture); lil.SetTexture("_AlphaMask", mask); lil.SetFloat("_AlphaMaskMode", 1);
+            var image = Render(); samples = Read(probe.destination.rt);
+            Require(samples[0].r > .75f && samples[1].r < .25f, "lilToon AlphaMask lost: " + samples[0] + " / " + samples[1]);
+            Save(image, "solar-liltoon-cutout");
+            results["lilToonCutout"] = "MainTex alpha + AlphaMask PASS";
+            Debug.Log("[HoVolumeLightValidation] lilToon Cutout MainTex alpha + AlphaMask PASS");
         }
         private static GameObject Box(string name, Vector3 position, Vector3 size)
         {
@@ -293,6 +315,7 @@ namespace lilToon.URP.Extensions.VolumeLight
             var dir = Path.Combine(Directory.GetCurrentDirectory(), "VolumeLightValidation"); Directory.CreateDirectory(dir);
             var report = new Report { passed = error == null, graphicsAPI = SystemInfo.graphicsDeviceType.ToString(), error = error?.Message ?? "",
                 medium = results.ContainsKey("medium") ? (string)results["medium"] : "NOT RUN", solar = results.ContainsKey("solar") ? (string)results["solar"] : "NOT PASSED",
+                lilToonCutout = results.ContainsKey("lilToonCutout") ? (string)results["lilToonCutout"] : "NOT RUN",
                 windowReduction = results.ContainsKey("windowReduction") ? Convert.ToSingle(results["windowReduction"]) : 0 };
             File.WriteAllText(Path.Combine(dir, "result-" + SystemInfo.graphicsDeviceType + ".json"), JsonUtility.ToJson(report, true));
             if (error != null) Debug.LogException(error);

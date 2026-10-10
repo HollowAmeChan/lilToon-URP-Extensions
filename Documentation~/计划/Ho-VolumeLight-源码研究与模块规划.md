@@ -23,6 +23,7 @@
 9. 最新补充：SDF 区域定义共享大气属性，归 HoAtmosphere；包括体积光激活权重、灰尘纹理/颜色/密度、动态噪声。区域范围也可为 HD 捕获提供接收区域参考。
 10. 源码复核：当前 Feature 实际仅有天空环境输入；空间区域需新增数据层与契约，现有天空 Cache 和 GI 的环境 revision 保持原语义。
 11. 最新用户前提：HoAtmosphere 固定开启并基建化，与 GD/GB/OB/SB/AC 同级；适合统一发布环境和空间介质。轻量来自按需准备/缓存，而不是拒绝共同数据职责；光束渲染仍在 VolumeLight。
+12. 后续补充：lilToon Cutout 主贴图 alpha / Alpha Mask 已追加实测；仍需要连续灰度透光。彩色透光涉及后续高级玻璃，用户要求先搁置。灰度光源空间输入与对象参数可独立于材质，SB/AC 依赖按实际契约决定，不能以主相机表面图代替光源遮挡。
 
 因此初版只设计 HoURP 17 的固定 Shader 与 RenderGraph 路径。Built-in、HDRP、旧 LWRP、旧 Unity 兼容、跨管线自动探测和 Shader 生成器不进入本模块。非 RenderGraph 路径不列为首版承诺；以后有明确需求再补。
 
