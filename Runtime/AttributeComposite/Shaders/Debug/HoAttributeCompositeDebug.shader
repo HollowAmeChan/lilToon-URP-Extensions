@@ -26,6 +26,8 @@ Shader "Hidden/lilToon/URP/AttributeComposite/DebugView"
 
             float _HoACDebugMode;
             float4 _HoACDebugQuery;
+            float _HoACDebugCategory, _HoACDebugFocus;
+            float4 _HoACDebugColors[256];
             float4 _HoACDebugLane; // lane, semantic ID, object bit, source mode
             float _HoACDebugLaneValid;
             float _HoACDebugSurfaceAvailable;
@@ -112,13 +114,91 @@ Shader "Hidden/lilToon/URP/AttributeComposite/DebugView"
                     1.0);
             }
 
+            float3 MemberColor(uint identity, out bool member)
+            {
+                member = false;
+                uint groupId = HoObjectBufferGroupId(identity), slot = HoObjectBufferSlotId(identity);
+                HoObjectGroupData group = _HoObjectBufferGroups[groupId];
+                uint row = group.rowBase + slot;
+                if (slot >= group.slotCount || row >= (uint)_HoOBSelectionMembershipCount) return 0;
+                float3 color = 0;
+                uint count = 0u;
+                [unroll] for (uint word = 0u; word < 8u; word++)
+                {
+                    uint bits = _HoOBSelectionMembership[row * 8u + word];
+                    [loop] while (bits != 0u)
+                    {
+                        uint bit = (uint)firstbitlow(bits);
+                        uint id = word * 32u + bit + 1u;
+                        if (id <= (uint)_HoObjectBufferSelectionCount)
+                        { color += _HoACDebugColors[id].rgb; count++; }
+                        bits &= bits - 1u;
+                    }
+                }
+                member = count != 0u;
+                return color / max(1u, count);
+            }
+
+            half4 ColorOverview(float2 uv)
+            {
+                uint category = (uint)round(_HoACDebugCategory);
+                if (_HoACInputsPublished < .5 || (category == 3u ? _HoACInputFlags.y : _HoACInputFlags.x) < .5)
+                    return half4(.35,0,0,1);
+                float3 background = float3(.025,.025,.025);
+                float3 color = 0;
+                float occupied = 0;
+                if (category == 3u)
+                {
+                    float contributions = 0;
+                    [unroll] for (uint lane = 0u; lane < 8u; lane++)
+                    {
+                        float coverage = HoAC_Selection(uv, lane);
+                        color += _HoACDebugColors[lane].rgb * coverage;
+                        contributions += coverage;
+                        occupied = max(occupied,coverage);
+                    }
+                    // A display of overlapping masks, not a new union mask: do not double the AA edge.
+                    color *= occupied / max(1e-5, contributions);
+                }
+                else
+                {
+                    float4 id0, id1, coverage;
+                    HoAC_LoadIdentityPool(uv, id0, id1, coverage);
+                    [unroll] for (uint layer = 0u; layer < 4u; layer++)
+                    {
+                        uint identity; float weight;
+                        HoAC_IdentityLayer(id0,id1,coverage,layer,identity,weight);
+                        if (identity == 0u || weight <= 0) continue;
+                        float3 tint = HoObjectBufferLoadPart(identity).displayColor.rgb;
+                        if (category == 1u) tint = _HoACDebugColors[HoObjectBufferGroupId(identity)].rgb;
+                        if (category == 2u)
+                        {
+                            bool member; tint = MemberColor(identity,member);
+                            if (!member) continue;
+                        }
+                        color += tint * weight;
+                        occupied += weight;
+                    }
+                }
+                color += background * (1.0 - saturate(occupied));
+                if (_HoACDebugFocus > .5)
+                {
+                    if (!HoAC_QueryValid(_HoACDebugQuery)) return half4(.35,0,0,1);
+                    // Keep the scene readable while making the chosen named mask stand out.
+                    float selected = HoAC_QueryMask(uv,_HoACDebugQuery,false);
+                    color = lerp(background + color * .12,color,saturate(selected));
+                }
+                return half4(color,1);
+            }
+
             half4 Frag(Varyings input) : SV_Target
             {
                 UNITY_SETUP_STEREO_EYE_INDEX_POST_VERTEX(input);
 
                 float2 uv = input.texcoord;
                 uint mode = (uint)round(_HoACDebugMode);
-                if (mode == 17u || mode == 18u)
+                if (mode == 19u) return ColorOverview(uv);
+                if (mode == 17u || mode == 18u || mode == 20u)
                 {
                     if (!HoAC_QueryValid(_HoACDebugQuery)) return half4(.35, 0, 0, 1);
                     float coverage = HoAC_QueryMask(uv, _HoACDebugQuery, false);

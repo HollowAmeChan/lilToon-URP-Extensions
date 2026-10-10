@@ -19,12 +19,15 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
         private static readonly Color DebugColor = new Color(0.86f, 0.62f, 0.38f);
 
         private static bool showRuntime = true;
-        private static bool showDebug;
+        private static bool showDebug = true;
+        private static bool showTechnical;
+        private static int diagnosticFamily;
 
         private SerializedDataParameter enable;
         private SerializedDataParameter debugMode;
         private SerializedDataParameter debugSemanticName;
         private SerializedDataParameter debugSelectionName, debugGroupId;
+        private SerializedDataParameter debugCategory, debugTarget;
         private SerializedDataParameter debugInSceneView;
         private SerializedDataParameter debugInGameView;
 
@@ -36,16 +39,14 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
             debugSemanticName = Unpack(fetcher.Find(x => x.debugSemanticName));
             debugSelectionName = Unpack(fetcher.Find(x => x.debugSelectionName));
             debugGroupId = Unpack(fetcher.Find(x => x.debugGroupId));
+            debugCategory = Unpack(fetcher.Find(x => x.debugCategory));
+            debugTarget = Unpack(fetcher.Find(x => x.debugTarget));
             debugInSceneView = Unpack(fetcher.Find(x => x.debugInSceneView));
             debugInGameView = Unpack(fetcher.Find(x => x.debugInGameView));
         }
 
         public override void OnInspectorGUI()
         {
-            EditorGUILayout.HelpBox(
-                "逐相机覆盖 AC：启用与调试画面。语义声明和消费者登记汇总在 RendererFeature 上。",
-                MessageType.Info);
-
             DrawRuntime();
             DrawDebug();
         }
@@ -75,24 +76,155 @@ namespace lilToon.URP.Extensions.Editor.AttributeComposite
 
             using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                DrawParameter(debugMode, "调试模式");
+                DrawViewSelector();
                 HoAttributeCompositeDebugMode mode = (HoAttributeCompositeDebugMode)debugMode.value.enumValueIndex;
-                bool semanticDebug = mode >= HoAttributeCompositeDebugMode.ObjectCoverage && mode <= HoAttributeCompositeDebugMode.SemanticPrecision;
-                if (semanticDebug) DrawSemanticSelector();
-                if (mode == HoAttributeCompositeDebugMode.SelectionGroupCoverage) DrawSelectionSelector();
-                if (mode == HoAttributeCompositeDebugMode.IdentityGroupCoverage) DrawParameter(debugGroupId, "调试身份组 ID");
+                if (mode == HoAttributeCompositeDebugMode.ColorOverview || mode == HoAttributeCompositeDebugMode.MaskPreview)
+                    DrawPresentation(mode);
+                EditorGUILayout.Space(4);
+                bool technicalActive = mode != HoAttributeCompositeDebugMode.Off && mode < HoAttributeCompositeDebugMode.ColorOverview;
+                showTechnical = EditorGUILayout.Foldout(showTechnical, technicalActive ? "技术诊断（正在显示）" : "技术诊断", true);
+                if (showTechnical) DrawTechnical(mode);
+                DrawParameter(debugInSceneView, "场景视图");
+                DrawParameter(debugInGameView, "游戏视图");
+            }
+        }
 
-                // 只画当前模式的说明：整张表铺出来就等于把说明又挪回下拉里。
-                string description = DescribeDebugMode(mode);
-                if (semanticDebug && !HoSemanticSchema.TryGetByName(debugSemanticName.value.stringValue, out _))
-                    description = "未声明的语义名称：" + debugSemanticName.value.stringValue + "。";
-                if (!string.IsNullOrEmpty(description))
+        private void DrawViewSelector()
+        {
+            int mode = debugMode.value.intValue;
+            int selected = mode == 0 ? 0 : mode == (int)HoAttributeCompositeDebugMode.ColorOverview ? 1 :
+                mode == (int)HoAttributeCompositeDebugMode.MaskPreview ? 2 : -1;
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.PropertyField(debugMode.overrideState, GUIContent.none, GUILayout.Width(15));
+                using (new EditorGUI.DisabledScope(!debugMode.overrideState.boolValue))
                 {
-                    EditorGUILayout.HelpBox(description, MessageType.None);
+                    EditorGUI.BeginChangeCheck();
+                    int next = GUILayout.Toolbar(selected, new[] { "关闭", "彩色总览", "单项遮罩" });
+                    if (EditorGUI.EndChangeCheck()) debugMode.value.intValue = next == 0 ? 0 : next == 1 ?
+                        (int)HoAttributeCompositeDebugMode.ColorOverview : (int)HoAttributeCompositeDebugMode.MaskPreview;
                 }
+            }
+        }
 
-                DrawParameter(debugInSceneView, "Debug In Scene View");
-                DrawParameter(debugInGameView, "Debug In Game View");
+        private void DrawPresentation(HoAttributeCompositeDebugMode mode)
+        {
+            EditorGUI.BeginChangeCheck();
+            DrawParameter(debugCategory, "分类");
+            if (EditorGUI.EndChangeCheck()) { debugTarget.value.stringValue = string.Empty; debugTarget.overrideState.boolValue = true; }
+            var category = (HoACDebugCategory)debugCategory.value.intValue;
+            var entries = HoACDebugCatalog.GetEntries(category);
+            var labels = new string[entries.Count + 1];
+            labels[0] = mode == HoAttributeCompositeDebugMode.ColorOverview ? "全部" : "请选择一项";
+            int selected = 0;
+            for (int i = 0; i < entries.Count; i++)
+            {
+                labels[i + 1] = entries[i].Label;
+                if (entries[i].Key == debugTarget.value.stringValue) selected = i + 1;
+            }
+            using (new EditorGUILayout.HorizontalScope())
+            {
+                EditorGUILayout.PropertyField(debugTarget.overrideState, GUIContent.none, GUILayout.Width(15));
+                using (new EditorGUI.DisabledScope(!debugTarget.overrideState.boolValue))
+                {
+                    EditorGUI.BeginChangeCheck();
+                    int next = EditorGUILayout.Popup(mode == HoAttributeCompositeDebugMode.ColorOverview ? "突出显示" : "查看遮罩", selected, labels);
+                    if (EditorGUI.EndChangeCheck()) debugTarget.value.stringValue = next == 0 ? string.Empty : entries[next - 1].Key;
+                }
+            }
+            if (selected == 0 && !string.IsNullOrEmpty(debugTarget.value.stringValue))
+                EditorGUILayout.HelpBox("目标已不存在，请重新选择。", MessageType.Warning);
+            if (mode == HoAttributeCompositeDebugMode.ColorOverview && !string.IsNullOrEmpty(debugTarget.value.stringValue) && GUILayout.Button("显示全部"))
+            { debugTarget.value.stringValue = string.Empty; debugTarget.overrideState.boolValue = true; }
+            if (entries.Count == 0)
+                EditorGUILayout.HelpBox(category == HoACDebugCategory.SelectionGroups ? "先在 OB 的「选区」中添加选择组和对象。" : "当前分类还没有登记项。", MessageType.None);
+            else
+            {
+                // A searchable color legend replaces numeric IDs in the normal workflow.
+                legendSearch = EditorGUILayout.TextField("查找名称", legendSearch);
+                legendScroll = EditorGUILayout.BeginScrollView(legendScroll, GUILayout.MaxHeight(180));
+                foreach (var entry in entries)
+                {
+                    if (!string.IsNullOrEmpty(legendSearch) && entry.Label.IndexOf(legendSearch, System.StringComparison.OrdinalIgnoreCase) < 0) continue;
+                    Rect rect = EditorGUILayout.GetControlRect(false, 20);
+                    EditorGUI.DrawRect(new Rect(rect.x + 2, rect.y + 3, 14, 14), entry.Color);
+                    bool current = debugTarget.value.stringValue == entry.Key;
+                    if (GUI.Button(new Rect(rect.x + 22, rect.y, rect.width - 22, rect.height), entry.Label,
+                        current ? EditorStyles.miniButton : EditorStyles.label))
+                    {
+                        debugTarget.value.stringValue = current && mode == HoAttributeCompositeDebugMode.ColorOverview ? string.Empty : entry.Key;
+                        debugTarget.overrideState.boolValue = true;
+                        SceneView.RepaintAll();
+                    }
+                }
+                EditorGUILayout.EndScrollView();
+            }
+            if (mode == HoAttributeCompositeDebugMode.ColorOverview)
+                EditorGUILayout.LabelField("点击色标旁的名称突出显示；重叠的选择组或语义会混色。", EditorStyles.wordWrappedMiniLabel);
+        }
+
+        private string legendSearch = string.Empty;
+        private Vector2 legendScroll;
+
+        private static readonly HoAttributeCompositeDebugMode[][] DiagnosticModes = {
+            new[] { HoAttributeCompositeDebugMode.GeometryCoverage, HoAttributeCompositeDebugMode.OutlineCoverage, HoAttributeCompositeDebugMode.OutlineOwner, HoAttributeCompositeDebugMode.InputAvailability },
+            new[] { HoAttributeCompositeDebugMode.ObjectCoverage, HoAttributeCompositeDebugMode.SurfaceWritten, HoAttributeCompositeDebugMode.SurfaceValue, HoAttributeCompositeDebugMode.FinalCoverage, HoAttributeCompositeDebugMode.SemanticCompare },
+            new[] { HoAttributeCompositeDebugMode.SemanticOwnerMatch, HoAttributeCompositeDebugMode.WrittenCoverage, HoAttributeCompositeDebugMode.WeightedCoverage, HoAttributeCompositeDebugMode.SemanticPrecision },
+            new[] { HoAttributeCompositeDebugMode.LaneCoverage, HoAttributeCompositeDebugMode.LaneSemanticId, HoAttributeCompositeDebugMode.LaneObjectMask, HoAttributeCompositeDebugMode.IdentityGroupCoverage, HoAttributeCompositeDebugMode.SelectionGroupCoverage }
+        };
+
+        private void DrawTechnical(HoAttributeCompositeDebugMode currentMode)
+        {
+            for (int i = 0; i < DiagnosticModes.Length; i++)
+                if (System.Array.IndexOf(DiagnosticModes[i], currentMode) >= 0) diagnosticFamily = i;
+            EditorGUI.BeginChangeCheck();
+            int family = EditorGUILayout.Popup("检查内容", diagnosticFamily, new[] { "几何与输入", "语义合成", "关联与精度", "原始通道与兼容视图" });
+            bool changedFamily = EditorGUI.EndChangeCheck();
+            diagnosticFamily = family;
+            var modes = DiagnosticModes[family];
+            var labels = new string[modes.Length];
+            for (int i = 0; i < modes.Length; i++) labels[i] = DiagnosticLabel(modes[i]);
+            int selected = Mathf.Max(0, System.Array.IndexOf(modes, currentMode));
+            EditorGUI.BeginChangeCheck();
+            int next = EditorGUILayout.Popup("诊断视图", selected, labels);
+            if (EditorGUI.EndChangeCheck() || changedFamily)
+            {
+                debugMode.value.intValue = (int)modes[changedFamily ? 0 : next];
+                debugMode.overrideState.boolValue = true;
+                currentMode = (HoAttributeCompositeDebugMode)debugMode.value.intValue;
+            }
+            if (GUILayout.Button("显示此诊断")) { debugMode.value.intValue = (int)modes[selected]; debugMode.overrideState.boolValue = true; currentMode = modes[selected]; }
+            bool semantic = currentMode >= HoAttributeCompositeDebugMode.ObjectCoverage && currentMode <= HoAttributeCompositeDebugMode.SemanticPrecision;
+            if (semantic) DrawSemanticSelector();
+            if (currentMode == HoAttributeCompositeDebugMode.SelectionGroupCoverage) DrawSelectionSelector();
+            if (currentMode == HoAttributeCompositeDebugMode.IdentityGroupCoverage) DrawParameter(debugGroupId, "身份组 ID");
+            string description = DescribeDebugMode(currentMode);
+            if (!string.IsNullOrEmpty(description)) EditorGUILayout.HelpBox(description, MessageType.None);
+        }
+
+        private static string DiagnosticLabel(HoAttributeCompositeDebugMode mode)
+        {
+            switch (mode)
+            {
+                case HoAttributeCompositeDebugMode.GeometryCoverage: return "几何覆盖率";
+                case HoAttributeCompositeDebugMode.OutlineCoverage: return "描边覆盖率";
+                case HoAttributeCompositeDebugMode.OutlineOwner: return "描边归属";
+                case HoAttributeCompositeDebugMode.InputAvailability: return "输入可用性";
+                case HoAttributeCompositeDebugMode.ObjectCoverage: return "物体来源";
+                case HoAttributeCompositeDebugMode.SurfaceWritten: return "表面是否写入";
+                case HoAttributeCompositeDebugMode.SurfaceValue: return "表面权重";
+                case HoAttributeCompositeDebugMode.FinalCoverage: return "合成结果";
+                case HoAttributeCompositeDebugMode.SemanticCompare: return "合成过程对照";
+                case HoAttributeCompositeDebugMode.SemanticOwnerMatch: return "表面归属匹配";
+                case HoAttributeCompositeDebugMode.WrittenCoverage: return "关联写入覆盖率";
+                case HoAttributeCompositeDebugMode.WeightedCoverage: return "关联加权覆盖率";
+                case HoAttributeCompositeDebugMode.SemanticPrecision: return "样本关联精度";
+                case HoAttributeCompositeDebugMode.LaneCoverage: return "语义通道覆盖率";
+                case HoAttributeCompositeDebugMode.LaneSemanticId: return "语义通道编号";
+                case HoAttributeCompositeDebugMode.LaneObjectMask: return "语义通道声明";
+                case HoAttributeCompositeDebugMode.IdentityGroupCoverage: return "旧身份组遮罩";
+                case HoAttributeCompositeDebugMode.SelectionGroupCoverage: return "旧选择组遮罩";
+                default: return mode.ToString();
             }
         }
 

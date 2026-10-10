@@ -13,7 +13,18 @@ namespace lilToon.URP.Extensions.AttributeComposite
             HoACDemandResources resources = HoACDemandResources.None;
             uint lanes = 0;
             var mode = settings.debugMode;
-            if (mode == HoAttributeCompositeDebugMode.IdentityGroupCoverage || mode == HoAttributeCompositeDebugMode.SelectionGroupCoverage)
+            if (settings.IsPresentationDebug)
+            {
+                queries.Add(settings.ResolveDebugQuery());
+                if (mode == HoAttributeCompositeDebugMode.ColorOverview)
+                {
+                    if (settings.debugCategory == HoACDebugCategory.Semantics)
+                        foreach (var entry in HoSemanticSchema.Declarations)
+                            queries.Add(HoACQueryDescriptor.Resolve(HoACQueryKind.Semantic, entry.name, 0, HoACMaskDomain.Screen));
+                    else resources |= HoACDemandResources.Identity;
+                }
+            }
+            else if (mode == HoAttributeCompositeDebugMode.IdentityGroupCoverage || mode == HoAttributeCompositeDebugMode.SelectionGroupCoverage)
                 queries.Add(settings.ResolveDebugQuery());
             else if (mode == HoAttributeCompositeDebugMode.GeometryCoverage)
                 queries.Add(HoACQueryDescriptor.Resolve(HoACQueryKind.Geometry, null, 0, HoACMaskDomain.Screen));

@@ -6,6 +6,13 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.AttributeComposite
 {
     [Serializable]
+    public sealed class HoACDebugCategoryParameter : VolumeParameter<HoACDebugCategory>
+    {
+        public HoACDebugCategoryParameter(HoACDebugCategory value, bool overrideState = false) : base(value, overrideState) { }
+        public override void Interp(HoACDebugCategory from, HoACDebugCategory to, float t) { value = t > 0f ? to : from; }
+    }
+
+    [Serializable]
     public sealed class HoAttributeCompositeDebugModeParameter : VolumeParameter<HoAttributeCompositeDebugMode>
     {
         public HoAttributeCompositeDebugModeParameter(HoAttributeCompositeDebugMode value, bool overrideState = false)
@@ -41,6 +48,9 @@ namespace lilToon.URP.Extensions.AttributeComposite
         [InspectorName("调试模式")]
         public HoAttributeCompositeDebugModeParameter debugMode =
             new HoAttributeCompositeDebugModeParameter(HoAttributeCompositeDebugMode.Off);
+
+        public HoACDebugCategoryParameter debugCategory = new HoACDebugCategoryParameter(HoACDebugCategory.Parts);
+        public HoACSemanticNameParameter debugTarget = new HoACSemanticNameParameter(string.Empty);
 
         [InspectorName("调试语义"), Tooltip("单语义视图与六格对照使用的 schema 稳定名称。")]
         public HoACSemanticNameParameter debugSemanticName = new HoACSemanticNameParameter("Face");

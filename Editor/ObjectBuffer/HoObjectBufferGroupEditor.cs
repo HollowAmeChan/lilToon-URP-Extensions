@@ -599,7 +599,7 @@ namespace lilToon.URP.Extensions.Editor.ObjectBuffer
                 DrawProperty(colorProperty, new GUIContent("显示色", "debug 与 AOV manifest 用的颜色。"));
                 DrawProperty(entry.FindPropertyRelative("includeChildren"), new GUIContent("展开子级"));
                 DrawRendererList(renderersProperty, "选择组成员");
-                EditorGUILayout.HelpBox("AC 调试选择「选择组覆盖率」，再选择本组名字。后处理的遮罩来源也可选择「选择组」。当前支持整个 Renderer，尚不支持材质内绘制的局部遮罩。", MessageType.None);
+                EditorGUILayout.HelpBox("AC 调试选择「彩色总览」或「单项遮罩」，分类选「选择组」，再点击本组名称。后处理的遮罩来源也可选择「选择组」。当前支持整个 Renderer。", MessageType.None);
             }
 
             EditorGUILayout.Space(SectionSpacing);

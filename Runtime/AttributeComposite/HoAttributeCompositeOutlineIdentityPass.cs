@@ -140,7 +140,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
             if (!selections) for (int i = 3; i < targets.Length; ++i) { targets[i]?.Release(); targets[i] = null; }
             for (int i = 0; i < identifiers.Length; ++i)
             {
-                RenderingUtils.ReAllocateIfNeeded(ref targets[i],descriptor,FilterMode.Point,TextureWrapMode.Clamp,name:Names[i]);
+                RenderingUtils.ReAllocateHandleIfNeeded(ref targets[i],descriptor,FilterMode.Point,TextureWrapMode.Clamp,name:Names[i]);
                 identifiers[i] = targets[i].nameID;
             }
             cmd.SetGlobalTexture(InputIds[0],raw.Id0Texture); cmd.SetGlobalTexture(InputIds[1],raw.Id1Texture);

@@ -343,6 +343,110 @@ namespace lilToon.URP.Extensions.Tests
             foreach (var pixel in cleared) Assert.That(pixel.r,Is.LessThan(.001f),"Removed outline cannot retain old ownership");
         }
 
+        [Test]
+        public void AcColorOverviewCompositesEveryRankWithoutRenormalizingCoverage()
+        {
+            var rd = Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
+            rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoAttributeCompositeRendererFeature>()));
+            SetPipeline(rd); Render(); // Bind the shared lane SRV as well as the OB placeholder SRVs.
+            var group = GameObject("Four color ranks").AddComponent<HoObjectBufferGroup>();
+            foreach (var color in new[]{Color.red,Color.green,Color.blue,new Color(1,1,0)})
+                group.parts.Add(new HoObjectBufferPartEntry { name="Rank " + group.parts.Count,displayColor=color });
+            group.Apply();
+            var material = Keep(new Material(Shader.Find("Hidden/lilToon/URP/AttributeComposite/DebugView")));
+            var id0 = Solid(new Color(group.groupId/255f,0,group.groupId/255f,1/255f));
+            var id1 = Solid(new Color(group.groupId/255f,2/255f,group.groupId/255f,3/255f));
+            void AssertBlend(Color coverage, Color expected)
+            {
+                using (var cmd = new CommandBuffer())
+                {
+                    cmd.SetRenderTarget(output); cmd.SetViewport(new Rect(0,0,Width,Height));
+                    cmd.SetGlobalVector("_BlitScaleBias",new Vector4(1,1,0,0));
+                    cmd.SetGlobalFloat("_HoACDebugMode",19); cmd.SetGlobalFloat("_HoACDebugCategory",0); cmd.SetGlobalFloat("_HoACDebugFocus",0);
+                    cmd.SetGlobalFloat("_HoACInputsPublished",1); cmd.SetGlobalVector("_HoACInputFlags",new Vector4(1,0,0,0));
+                    cmd.SetGlobalFloat("_HoACActive",0); // Identity overview works without the semantic RTs.
+                    cmd.SetGlobalTexture("_HoObjectBufferId0Texture",id0); cmd.SetGlobalTexture("_HoObjectBufferId1Texture",id1);
+                    cmd.SetGlobalTexture("_HoObjectBufferCoverageTexture",Solid(coverage));
+                    cmd.DrawProcedural(Matrix4x4.identity,material,0,MeshTopology.Triangles,3); Graphics.ExecuteCommandBuffer(cmd);
+                }
+                foreach (var pixel in Read())
+                {
+                    Assert.That(pixel.r,Is.EqualTo(expected.r).Within(.002f)); Assert.That(pixel.g,Is.EqualTo(expected.g).Within(.002f));
+                    Assert.That(pixel.b,Is.EqualTo(expected.b).Within(.002f));
+                }
+            }
+            AssertBlend(new Color(.1f,.2f,.3f,.4f),new Color(.5f,.6f,.3f));
+            AssertBlend(new Color(.25f,.25f,0,0),new Color(.2625f,.2625f,.0125f));
+            Assert.That(ShaderUtil.ShaderHasError(material.shader),Is.False);
+        }
+
+        [TestCase(false,1), TestCase(true,1), TestCase(false,4), TestCase(true,4)]
+        public void AcColorOverviewAndNamedMaskUseVisualOwnership(bool compatibility, int samples)
+        {
+            var rd = Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
+            rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>()));
+            var ob = Keep(ScriptableObject.CreateInstance<HoObjectBufferRendererFeature>()); ob.Settings.useFallbackMaterial = false;
+            rd.rendererFeatures.Add(ob); rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>()));
+            rd.rendererFeatures.Add(Keep(ScriptableObject.CreateInstance<HoAttributeCompositeRendererFeature>()));
+            SetPipeline(rd,samples); GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode = compatibility;
+            output.Release(); output.antiAliasing = samples; output.Create();
+            var group = GameObject("AC color group").AddComponent<HoObjectBufferGroup>();
+            var actors = new Renderer[2];
+            for (int j = 0; j < 2; j++)
+            {
+                var go = Keep(UnityEngine.GameObject.CreatePrimitive(PrimitiveType.Quad)); go.layer = TestLayer;
+                SceneManager.MoveGameObjectToScene(go,testScene); go.transform.localScale = Vector3.one * 4;
+                actors[j] = go.GetComponent<Renderer>();
+                var material = Keep(new Material(Shader.Find("Hidden/lilToon/URP/Tests/OutlineHandoffSubject"))); material.enableInstancing = true;
+                material.SetVector("_TestBand", new Vector4(j * 64, (j+1)*64,0,0)); actors[j].sharedMaterial = material;
+                group.parts.Add(new HoObjectBufferPartEntry { name=j==0 ? "Lower" : "Upper",displayColor=j==0 ? Color.red : Color.green,
+                    tags=HoObjectBufferPartTags.CharacterFull | (j==0 ? HoObjectBufferPartTags.Face : HoObjectBufferPartTags.Eye),renderers=new Object[]{actors[j]} });
+            }
+            group.selections.Add(new HoObjectBufferSelectionEntry { name="Lower selection",displayColor=Color.red,renderers=new Object[]{actors[0]} });
+            group.selections.Add(new HoObjectBufferSelectionEntry { name="Both selection",displayColor=Color.blue,renderers=new Object[]{actors[0],actors[1]} });
+            group.Apply();
+            var volume = GameObject("Color overview volume").AddComponent<Volume>(); volume.isGlobal = true;
+            var profile = Keep(ScriptableObject.CreateInstance<VolumeProfile>()); volume.sharedProfile = profile;
+            var ac = profile.Add<HoAttributeCompositeVolume>(true);
+            var original = Render();
+            ac.debugMode.Override(HoAttributeCompositeDebugMode.ColorOverview);
+            void AssertColors(Color[] pixels, Color lower, Color upper, string context)
+            {
+                for (int i = 0; i < pixels.Length; i++)
+                {
+                    float coverage = original[i].r + original[i].g;
+                    Color expected = (i / Width < 64 ? lower : upper) * coverage + new Color(.025f,.025f,.025f) * (1-coverage);
+                    Assert.That(pixels[i].r,Is.EqualTo(expected.r).Within(.007f),context + " red " + i);
+                    Assert.That(pixels[i].g,Is.EqualTo(expected.g).Within(.007f),context + " green " + i);
+                    Assert.That(pixels[i].b,Is.EqualTo(expected.b).Within(.007f),context + " blue " + i);
+                }
+            }
+            ac.debugCategory.Override(HoACDebugCategory.Parts); AssertColors(Render(),Color.red,Color.green,"Parts, all ranked coverage and outlines");
+            var entries = HoACDebugCatalog.GetEntries(HoACDebugCategory.Parts);
+            Assert.That(entries.Count,Is.EqualTo(2),"Selection aliases must not duplicate the name legend");
+            foreach (var entry in entries) if (entry.Label.EndsWith(" · Lower",StringComparison.Ordinal)) ac.debugTarget.Override(entry.Key);
+            var focus = Render();
+            Assert.That(focus[30+Width*32].r,Is.GreaterThan(.9f));
+            Assert.That(focus[30+Width*96].g,Is.LessThan(.2f),"Nonselected parts dim in the overview");
+            ac.debugMode.Override(HoAttributeCompositeDebugMode.MaskPreview); var mask = Render();
+            for (int i = 0; i < mask.Length; i++) Assert.That(mask[i].r,Is.EqualTo(i / Width < 64 ? original[i].r+original[i].g : 0).Within(.007f));
+            ac.debugTarget.Override(string.Empty); ac.debugMode.Override(HoAttributeCompositeDebugMode.ColorOverview);
+            ac.debugCategory.Override(HoACDebugCategory.IdentityGroups); var groupColor = HoACDebugCatalog.GroupColor((uint)group.groupId);
+            AssertColors(Render(),groupColor,groupColor,"Identity group");
+            ac.debugCategory.Override(HoACDebugCategory.SelectionGroups); AssertColors(Render(),new Color(.5f,0,.5f),Color.blue,"Overlapping custom groups");
+            ac.debugTarget.Override("Lower selection"); ac.debugMode.Override(HoAttributeCompositeDebugMode.MaskPreview); mask = Render();
+            for (int i = 0; i < mask.Length; i++) Assert.That(mask[i].r,Is.EqualTo(i / Width < 64 ? original[i].r+original[i].g : 0).Within(.007f));
+            ac.debugTarget.Override(string.Empty); ac.debugMode.Override(HoAttributeCompositeDebugMode.ColorOverview); ac.debugCategory.Override(HoACDebugCategory.Semantics);
+            AssertColors(Render(),new Color(1,.86f,.725f),new Color(.675f,.975f,.975f),"Composed semantics, no doubled AA edge");
+            ac.debugTarget.Override("Face"); ac.debugMode.Override(HoAttributeCompositeDebugMode.MaskPreview); mask = Render();
+            for (int i = 0; i < mask.Length; i++) Assert.That(mask[i].r,Is.EqualTo(i / Width < 64 ? original[i].r+original[i].g : 0).Within(.007f));
+            ac.debugCategory.Override(HoACDebugCategory.SelectionGroups); ac.debugTarget.Override("Deleted selection");
+            foreach (var pixel in Render()) Assert.That(pixel.r,Is.EqualTo(.35f).Within(.002f),"Missing target stays visibly invalid");
+            ac.debugTarget.Override(string.Empty); ac.debugMode.Override(HoAttributeCompositeDebugMode.ColorOverview);
+            group.selections.Clear(); group.Apply();
+            AssertColors(Render(),new Color(.025f,.025f,.025f),new Color(.025f,.025f,.025f),"Removed selections clear their colors");
+        }
+
         [TestCase(false,1), TestCase(true,1), TestCase(false,4), TestCase(true,4)]
         public void SelectionGroupDebugShowsOnlyMembersAndRefreshesAfterRemoval(bool compatibility, int samples)
         {

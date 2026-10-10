@@ -20,6 +20,9 @@ namespace lilToon.URP.Extensions.AttributeComposite
         private static readonly ProfilingSampler ProfilingSampler = new ProfilingSampler("Ho-AttributeComposite Debug");
         private static readonly int BlitScaleBiasId = Shader.PropertyToID("_BlitScaleBias");
         private static readonly int DebugQueryId = Shader.PropertyToID("_HoACDebugQuery");
+        private static readonly int DebugCategoryId = Shader.PropertyToID("_HoACDebugCategory");
+        private static readonly int DebugFocusId = Shader.PropertyToID("_HoACDebugFocus");
+        private static readonly int DebugColorsId = Shader.PropertyToID("_HoACDebugColors");
 
         private HoAttributeCompositeSettings settings;
         private Material debugMaterial;
@@ -35,6 +38,10 @@ namespace lilToon.URP.Extensions.AttributeComposite
             public Vector4 lane;
             public bool laneValid;
             public bool semanticDebug;
+            public HoACDebugCategory category;
+            public bool focus;
+            public Vector4[] colors;
+            public HoACQueryDescriptor overviewQuery;
         }
 
         public void Setup(HoAttributeCompositeSettings settings, Material debugMaterial, RTHandle cameraColorTarget)
@@ -75,6 +82,14 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 var query = settings.ResolveDebugQuery();
                 HoAttributeCompositePass.BindCompatibilityQuery(cmd, query);
                 cmd.SetGlobalVector(DebugQueryId, query.ShaderValue);
+                if (settings.IsPresentationDebug)
+                {
+                    cmd.SetGlobalFloat(DebugCategoryId, (int)settings.debugCategory);
+                    cmd.SetGlobalFloat(DebugFocusId, string.IsNullOrEmpty(settings.debugTarget) ? 0 : 1);
+                    cmd.SetGlobalVectorArray(DebugColorsId, HoACDebugCatalog.BuildColors(settings.debugCategory));
+                    // A focus query can narrow demand, but the overview still reads every color source.
+                    HoAttributeCompositePass.BindCompatibilityQuery(cmd, HoACDebugCatalog.OverviewQuery(settings.debugCategory));
+                }
                 CoreUtils.DrawFullScreen(cmd, debugMaterial, shaderPassId: 0);
             }
 
@@ -108,7 +123,12 @@ namespace lilToon.URP.Extensions.AttributeComposite
                 passData.semanticDebug = HoAttributeCompositeSettings.IsSemanticDebug(settings.debugMode);
                 passData.laneValid = HoAttributeCompositeSettings.TryResolveDebugLane(settings.debugSemanticName, out passData.lane);
                 passData.query = settings.ResolveDebugQuery();
+                passData.category = settings.debugCategory;
+                passData.focus = !string.IsNullOrEmpty(settings.debugTarget);
+                passData.colors = settings.IsPresentationDebug ? HoACDebugCatalog.BuildColors(settings.debugCategory) : null;
+                passData.overviewQuery = HoACDebugCatalog.OverviewQuery(settings.debugCategory);
                 HoAttributeCompositeBindings.ReadQuery(builder, resources, passData.query);
+                if (settings.IsPresentationDebug) HoAttributeCompositeBindings.ReadQuery(builder, resources, passData.overviewQuery);
                 HoAttributeCompositeBindings.Read(builder,resources.outlineOwnerTexture);
                 if (passData.semanticDebug)
                 {
@@ -149,6 +169,13 @@ namespace lilToon.URP.Extensions.AttributeComposite
                     context.cmd.SetGlobalVector(BlitScaleBiasId, new Vector4(1, 1, 0, 0));
                     HoAttributeCompositeBindings.BindQuery(context.cmd, data.resources, data.query);
                     context.cmd.SetGlobalVector(DebugQueryId, data.query.ShaderValue);
+                    if (data.colors != null)
+                    {
+                        HoAttributeCompositeBindings.BindQuery(context.cmd, data.resources, data.overviewQuery);
+                        context.cmd.SetGlobalFloat(DebugCategoryId, (int)data.category);
+                        context.cmd.SetGlobalFloat(DebugFocusId, data.focus ? 1 : 0);
+                        context.cmd.SetGlobalVectorArray(DebugColorsId, data.colors);
+                    }
                     context.cmd.SetGlobalFloat(HoAttributeCompositeShaderConstants.OutlineInheritanceActiveId,data.resources.outlineOwnerTexture.IsValid() ? 1 : 0);
                     if (data.resources.outlineOwnerTexture.IsValid()) context.cmd.SetGlobalTexture(HoAttributeCompositeShaderConstants.OutlineOwnerId,data.resources.outlineOwnerTexture);
                     bool rawAvailable = data.semanticDebug && data.resources.rawIdentityId0Texture.IsValid();

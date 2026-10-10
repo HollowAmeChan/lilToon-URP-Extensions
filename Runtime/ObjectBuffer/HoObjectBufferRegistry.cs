@@ -153,6 +153,14 @@ namespace lilToon.URP.Extensions.ObjectBuffer
             return false;
         }
 
+        public static bool TryGetSelectionRowData(uint selectionId, out HoObjectSelectionData data)
+        {
+            EnsureBuilt();
+            if (selectionId == 0 || selectionId >= selectionRows.Length) { data = default; return false; }
+            data = selectionRows[selectionId];
+            return true;
+        }
+
         /// <summary>按需重建表并（重新）上传。渲染线程每帧调用一次即可。</summary>
         public static void EnsureBuilt()
         {

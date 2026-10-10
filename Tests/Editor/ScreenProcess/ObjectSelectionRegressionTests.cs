@@ -108,12 +108,15 @@ namespace lilToon.URP.Extensions.Tests
             var layer = new ScreenProcessLayer { maskSource=HoACQueryKind.SelectionGroup,maskSemanticName="Cached selection" };
             var resolve = typeof(ScreenProcessLayer).GetMethod("ResolveMaskQuery",BindingFlags.Instance|BindingFlags.NonPublic);
             var before = (HoACQueryDescriptor)resolve.Invoke(layer,null);
+            Assert.That(HoACDebugCatalog.Resolve(HoACDebugCategory.SelectionGroups,layer.maskSemanticName).Value,Is.EqualTo(before.Value));
             owner.selections.Insert(0,new HoObjectBufferSelectionEntry { name="Earlier selection" }); owner.Apply();
             var after = (HoACQueryDescriptor)resolve.Invoke(layer,null);
             Assert.That(after.Value,Is.Not.EqualTo(before.Value));
             Assert.That(after.Value,Is.EqualTo((int)HoObjectBufferRegistry.GetSelectionId(layer.maskSemanticName)));
+            Assert.That(HoACDebugCatalog.Resolve(HoACDebugCategory.SelectionGroups,layer.maskSemanticName).Value,Is.EqualTo(after.Value),"Legend cache follows registry revisions");
             owner.selections.RemoveAt(1); owner.Apply();
             Assert.That(((HoACQueryDescriptor)resolve.Invoke(layer,null)).IsValid,Is.False,"Deleted group must not reuse another group's numeric ID");
+            Assert.That(HoACDebugCatalog.Resolve(HoACDebugCategory.SelectionGroups,layer.maskSemanticName).IsValid,Is.False);
         }
 
         [Test]

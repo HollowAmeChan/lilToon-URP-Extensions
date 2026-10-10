@@ -48,7 +48,19 @@ namespace lilToon.URP.Extensions.AttributeComposite
         [InspectorName("身份组覆盖率")]
         IdentityGroupCoverage,
         [InspectorName("选择组覆盖率")]
-        SelectionGroupCoverage
+        SelectionGroupCoverage,
+        [InspectorName("彩色总览")]
+        ColorOverview,
+        [InspectorName("单项遮罩")]
+        MaskPreview
+    }
+
+    public enum HoACDebugCategory
+    {
+        [InspectorName("部件")] Parts,
+        [InspectorName("身份组")] IdentityGroups,
+        [InspectorName("选择组")] SelectionGroups,
+        [InspectorName("语义")] Semantics
     }
 
     [Serializable]
@@ -79,9 +91,19 @@ namespace lilToon.URP.Extensions.AttributeComposite
 
         [NonSerialized] public string debugSelectionName = "Selection";
         [NonSerialized] public int debugGroupId = 1;
+        [NonSerialized] public HoACDebugCategory debugCategory = HoACDebugCategory.Parts;
+        [NonSerialized] public string debugTarget = string.Empty;
+
+        internal bool IsPresentationDebug => debugMode == HoAttributeCompositeDebugMode.ColorOverview || debugMode == HoAttributeCompositeDebugMode.MaskPreview;
 
         internal HoACQueryDescriptor ResolveDebugQuery()
         {
+            if (IsPresentationDebug)
+            {
+                if (debugMode == HoAttributeCompositeDebugMode.MaskPreview || !string.IsNullOrEmpty(debugTarget))
+                    return HoACDebugCatalog.Resolve(debugCategory, debugTarget);
+                return HoACDebugCatalog.OverviewQuery(debugCategory);
+            }
             if (debugMode == HoAttributeCompositeDebugMode.IdentityGroupCoverage)
                 return HoACQueryDescriptor.Resolve(HoACQueryKind.Group, null, debugGroupId, HoACMaskDomain.Screen);
             if (debugMode == HoAttributeCompositeDebugMode.SelectionGroupCoverage)
@@ -121,6 +143,8 @@ namespace lilToon.URP.Extensions.AttributeComposite
             debugSemanticName = source.debugSemanticName;
             debugSelectionName = source.debugSelectionName;
             debugGroupId = source.debugGroupId;
+            debugCategory = source.debugCategory;
+            debugTarget = source.debugTarget;
         }
     }
 }
