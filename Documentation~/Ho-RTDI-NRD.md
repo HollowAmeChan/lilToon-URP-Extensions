@@ -6,7 +6,7 @@ Feature 的 **NRD RELAX 降噪** 为可选项，默认关闭。开启后仍保�
 
 使用用户参考中的 NRD 4.17.3 CPU 库、RELAX 原始 shader、NRD 前端 helpers 与调度描述。原参考 Denoiser.dll 同时集成 NRI、DLSS、NIS、Unity descriptor-heap hook 和设备内存控制。本步只引入重命名后的 NRD 核心 CPU 库，由它选择 pass、常量和 pool；Unity CommandBuffer 执行对应的原始 ComputeShader，所有 GPU 资源归 Unity 管理。
 
-本地 DLL 实测为 4.17.3，normal encoding=2、roughness encoding=1。15 个 pipeline 的 shaderIdentifier（含宏）与 Unity wrappers 的资源布局逐一对齐。常量缓冲、sampler 和资源声明通过 custom-engine 宏适配。33 个 shader/MathLib/config 文件和 3 个 ABI header 的原 SHA-256 与正文保留；当前 DenseDI 另有两份明确派生的方差/HistoryClamping body，见文末，不能把布局核对当成原始算法未改的证明。许可、CPU DLL hash 与出处见 ThirdParty/NRD。
+本地 DLL 实测为 4.17.3，normal encoding=2、roughness encoding=1。15 个 pipeline 的 shaderIdentifier（含宏）与 Unity wrappers 的资源布局逐一对齐。常量缓冲、sampler 和资源声明通过 custom-engine 宏适配。33 个 shader/MathLib/config 文件和 3 个 ABI header 的原 SHA-256 与正文保留；当前 DenseDI 另有明确派生的方差、HistoryClamping 与 F0 条件 body，见文末，不能把布局核对当成原始算法未改的证明。许可、CPU DLL hash 与出处见 ThirdParty/NRD。
 
 参考：[NRD 官方集成说明](https://github.com/NVIDIA-RTX/NRD)，本地 NRD.hlsli / NRDDescs.h / NRDSettings.h / InstanceDesc / DispatchDesc，以及用户项目的 NrdDenoiserHelper、NrdFrameData、NrdPass。线上资料用于核对原则，实现严格按本地固定版本，而非混用新版 ABI。
 
@@ -192,3 +192,28 @@ NRD confidence 也改为按其自身历史有效性读取 previous guides，独�
 **仍未解决：** 60 Hz、两个同向白色方向灯 intensity=0.5/0.25、每轮一个 infinite candidate 的彩色金属，64 次观察 raw 平均 0.970442（解析参考 0.969727），filtered 仅 0.816392，假通道平均 0.005367。单灯通过不能代替这个随机输入的支持；下一项优先评审 F0 解调、材质边界及噪声下的滤波耦合。低 F0 / 不同角度与粗糙度、材质动画、动态几何、TAA、gradient 跨边界扩散仍需证明。未设计最终 PBR/NPR 合成。
 
 原始 36 份 vendor 文件的 SHA 保持原记录，两个派生 body 位于 Runtime/RTDI/Shaders/NRD，原版权/许可保留。执行 `python Tests~/RTDI/generate_nrd_variance_adapter.py --check` 校验原 SHA 并逐字重建“一个 helper / 一个分支”改动；去掉 `--check` 可重新生成。ShaderIdentifier 仅验证绑定布局，不能宣称算法 body 与原版完全相同。验证入口为 `RunBoundaries` / `RunBoundariesCompatibility`（明确 60 Hz sample timeline），以及原 NRD/质量/时间/预算与 Player probe。
+
+## 随机输入下的 F0 条件与历史输运
+
+步骤 13 先改变条纹宽度，原实现同一两灯/采样配置的 filtered 均值从 2px 的 0.816392 到 8px 的 0.934920、64px 的 0.957986、整片红色的 0.959881；raw 始终约 0.969727。偏差随材质交界密度变化，不能用整体提亮修正。[官方解调/材质分类原则](https://github.com/NVIDIA-RTX/NRD)和用户 FullSample 的 DemodulateSpecular(max(0.01,F0)) 仍有非零下限，零通道的信息不能反除恢复。当前仍保留 NRD specular helper 和原 raw GGX，增加材质条件来限制空间/历史信号相混，不声称实现了精确可分离的 Fresnel 表示。
+
+`HoRTDINrdMaterialGuide.hlsl` 直接 Load 现有 Mono SB color / material / reflection，按 DI bridge 相同的 8-bit 量化得到 F0。引导向量为 F0 加 NRD 的 0.02 正则常量（不是再次计算完整 envBRDF）；同类 guide 权重为 dot(min(a,b)²)/dot(max(a,b)²)，相同值权重严格为 1。量化后的零通道集合不匹配则拒绝：这只是保守的材质匹配，不意味着零 F0 在掠射角没有 Fresnel。条件只乘在 specular A-trous 权重上，diffuse 不变；小步 kernel 在 groupshared 缓存 guide，大步 kernel 缓存中心 guide。无需按颜色生成 ID，也不新增完整材质纹理。
+
+只加空间条件后，相机以每样本 1/8 pixel 移动的颜色条纹仍偏暗约 20%；NRD 旧输入的非线性解调不能直接在不同 F0 间插值。Temporal 现在借用已存在的 16 B DI 主表面历史中的 F0，根据有效 bilinear footprint 的最低材质匹配度降低 specular 主/fast 历史预算；零通道变更不继承旧预算。历史无效、域外或非有限 UV 返回零。原矩阵、motion、NRD pool、资源布局和 DLL 不变；没有增添 previous-material 输出。
+
+移动相机时原 metric 也需修正：fractional 主表面采样本来可能同时含红/蓝，且 MC 亮度每轮不同。因此移动测试比较 RGB **总和**及归一化颜色比，与同帧 raw 的颜色比对照，不把 max(R,B) 的下降或单帧亮度误差当作色彩失败。部署测试新增独立 raw-specular 捕获，NRD 始终开启，避免开关 NRD 销毁待测历史。
+
+| 明确 60 Hz 的 Editor 对照 | raw / filtered / 参考 | 其他指标 |
+| --- | --- | --- |
+| 2px 红/蓝、两白色同向方向灯 | 0.970442 / 0.942949 / 0.969727 | 偏暗约 2.76%，假通道均值约 0.000275；原偏暗约 15.8% |
+| 8px / 64px / 整片红色 | filtered 约 0.959436 / 0.959968 / 0.959881 | 继续在 5% 能量门槛内 |
+| F0 0.04 的 2px 颜色 | 0.038077 / 0.037573 / 0.038028 | 假通道约 0.000001 |
+| F0 0.2 的 2px 颜色 | 0.193972 / 0.191952 / 0.193945 | 假通道约 0.000002 |
+| 连续红/蓝 F0 渐变，RGB 总和 | 0.969773 / 0.958483 / 0.969727 | 能量误差约 1.16% |
+| 相机缓慢移动，RGB 总和 | 0.968610 / 0.971167 / 0.969727 | 颜色比误差约 0.000046 |
+
+两条 Editor 路径均通过这些门槛，原 NRD 噪声/镜面/相机/输出调试/释放重建、动态灯/阴影与 compatibility 时间线继续通过。Win64 Mono release 两个构建及实际 D3D12 EXE / D3D11 inactive 通过：Player 两灯 filtered 0.953528 / 参考0.969727（约 1.67% 偏暗），移动总和0.971560、颜色比误差0.000046；原有 Player 噪声 MSE≈0.000086–0.000102。没有新增 DI/NRD shader/command-buffer 错误，Roslyn 无错误，已有 lilToon duplicate-keyword 与其他模块警告保留。
+
+代价是额外材质读取和 specular history 条件。自有 GPU 载荷仍为 205.858 / 463.996 MiB（720p / 1080p）；简单 RG 同步 batch 本轮约 6.408 / 11.615 ms，前轮约 6.405 / 10.606 ms，不宣称没有 GPU 成本或是严格 GPU 单项消融。靠近材质变更的历史更短，可能增加噪声；约 1–3% 的剩余偏差仍未消除。条件/Shader 从固定源码生成，可用原 `--check` 重建验证，原 vendor 正文不改；当前派生包括 Temporal、A-trous、A-trousSmem 与 HistoryClamping。
+
+**下一项：** 本轮只有正面平面、两同向白灯和规则颜色，尚未证明不同光角、粗糙度、彩色入射光、复杂形状与粗糙/低 F0 混合；世界/材质动画、TAA、XR 未扩张。优先扩大真实 GGX 与命中距离对照，再评审是否需要改变 specular signal 表示。保持 raw / filtered 独立，不设计终端 PBR/NPR 合成。

@@ -153,13 +153,23 @@
 
 **完成后复查与下一项：** 两份派生源码明确保留版权/许可，用 Tests~/RTDI/generate_nrd_variance_adapter.py --check 对原 SHA 和窄变更逐字重建；绑定 identifier 不证明原始算法未改。单灯确定性改善不能代替噪声输入：两方向白灯的彩色金属 raw mean=0.970442≈参考0.969727，filtered=0.816392、假通道平均0.005367，仍约 15.8% 偏暗。下一项优先核对这个实际噪声下的 F0 解调/滤波边界，并检查低 F0 / 不同角度；gradient、每 lobe 距离与动态域仍未证明。详见 [方差与二阶矩证据](../Ho-RTDI-NRD.md)。
 
-## 13. 下一步取舍
+## 13. F0 空间条件与历史输运
+
+**动手前评审：应做。** 原两灯彩色金属约 15.8% 偏暗，宽度对照将偏差定位到材质边界：2/8/64px / 整片红色分别约 0.816/0.935/0.958/0.960，raw 正确。核对官方 NRD 材质解调/分类与用户 FullSample 的 floor；没有整体放大输出或套用不可分离的 Lambert 逻辑。
+
+**实现与复查：** 镜面 A-trous 直接读取现有 SB 量化 F0，用 regularized 分量 overlap 条件约束相混，零通道集合不同则拒绝。小步 shared cache / 大步中心 cache 减少重复读取。相机移动又揭示历史混合，借用已有 16 B DI history 的 F0 对有效 bilinear footprint 降低 specular 主/fast 预算；不新建 previous-material texture。diffuse、raw BRDF、Native CPU/library/layout 不变，Temporal/A-trous 是明确派生 body，生成器 `--check` 校验原 SHA 和窄改动。没有新 Feature、全屏 buffer 或 AC 路由。
+
+**结果：** 两条 Editor 的 2px filtered=0.942949 / 参考0.969727，偏暗约 2.76%；低 F0 0.04/0.2、连续渐变与慢相机移动通过，移动总和≈0.971167、颜色比误差≈0.000046。校正了旧移动 metric：max(R,B) 会因 fractional 材质采样下降，绝对色差又混入 MC 亮度，应比较 RGB 总和和归一化 tint。两个 release 构建和实际两条 D3D12 EXE / D3D11 inactive 通过；Player 静态偏暗约1.67%、移动约0.2%、tint约0.005%。测试使用独立 raw-spec capture，不切换 NRD 破坏历史。原噪声/生命周期、薄阴影、动态灯与时间线通过，无新增 DI/NRD shader/command-buffer 错误，Roslyn 无错误，既有其他警告保留。
+
+**代价与下一项：** 无新增生产 GPU 资源，1080p仍463.996 MiB；多了 guide 读取和历史条件，同步 RG batch≈11.615 ms（前轮10.606），不是孤立 GPU 消融。短历史可能增加材质边界噪声，剩余1–3%偏差仍在。下一项检查不同角度/粗糙度/彩色入射光与真实命中距离，不用本轮规则白灯平面代表复杂 GGX 场景或动画/TAA。详见 [条件与完整对照](../Ho-RTDI-NRD.md)。
+
+## 14. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
-| NRD 质量与预算 | 方差适配改善点灯薄阴影与单灯镜面，disabled-HistoryFix 的二阶矩已修复；两灯彩色金属仍偏暗约 15.8%，下一项优先解决其 F0/噪声耦合，再检查低 F0、不同角度、每 lobe 距离与梯度边界。TAA/动态几何与复杂性能仍需独立证明。 |
+| NRD 质量与预算 | F0 条件将两灯彩色金属偏暗降到约1–3%，慢相机输运通过但仍有成本和噪声代价。下一项检查不同角度/粗糙度/彩色灯与每 lobe 命中距离；梯度、TAA/动态几何、复杂性能仍需独立证明。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

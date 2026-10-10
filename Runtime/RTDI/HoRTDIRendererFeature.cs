@@ -258,6 +258,7 @@ namespace lilToon.URP.Extensions.RTDI
                         ["IN_DIFF_CONFIDENCE"]=c.diffConfidence.nameID,["IN_SPEC_CONFIDENCE"]=c.specConfidence.nameID,
                         ["IN_DISOCCLUSION_THRESHOLD_MIX"]=new RenderTargetIdentifier(Texture2D.blackTexture)
                     };
+                    c.nrd.BindPrimaryGuide(cmd,d.primary,compatibility,cameraData,c.history,!(reset||timeReset));
                     cmd.BeginSample("HoRTDI NRD RELAX");c.nrd.Record(cmd,common,external);cmd.EndSample("HoRTDI NRD RELAX");
                     int kernel=d.shader.FindKernel("ResolveNRD");
                     if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,kernel,cameraData);

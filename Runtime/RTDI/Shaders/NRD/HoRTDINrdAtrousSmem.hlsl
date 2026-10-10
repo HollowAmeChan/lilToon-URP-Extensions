@@ -1,7 +1,6 @@
 // Ho-RTDI dense-signal adaptation of NRD 4.17.3 RELAX_AtrousSmem.
 // Original SHA256: 58e8b5bdc93cc3b331a8cf9994a784d5137be2b566c78e39ef617ce6be8b289e
-// Only computeVariance changes: blur per-pixel temporal variance,
-// excluding between-pixel lighting/material contrast from noise variance.
+// Adapted: per-pixel temporal variance and borrowed F0 specular weights.
 // Original source/license remain in ../../ThirdParty/NRD.
 /*
 Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
@@ -22,6 +21,7 @@ license agreement from NVIDIA CORPORATION is strictly prohibited.
 #include "../../ThirdParty/NRD/Common.hlsli"
 
 #include "../../ThirdParty/NRD/RELAX_Common.hlsli"
+#include "HoRTDINrdMaterialGuide.hlsl"
 
 #if( NRD_DIFF )
     groupshared float4 s_Diff[BUFFER_Y][BUFFER_X];
@@ -38,6 +38,7 @@ license agreement from NVIDIA CORPORATION is strictly prohibited.
 #endif
 
 groupshared float4 s_Normal_Roughness[BUFFER_Y][BUFFER_X];
+groupshared float3 s_SpecularMaterial[BUFFER_Y][BUFFER_X];
 groupshared float4 s_WorldPos_MaterialID[BUFFER_Y][BUFFER_X];
 
 // Helper functions
@@ -103,6 +104,7 @@ void Preload(uint2 sharedPos, int2 globalPos)
         s_DiffSH[sharedPos.y][sharedPos.x] = gIn_DiffSh[globalPos];
     #endif
 #endif
+    s_SpecularMaterial[sharedPos.y][sharedPos.x] = HoNrdSpecularGuide(globalPos);
     float materialID;
     s_Normal_Roughness[sharedPos.y][sharedPos.x] = NRD_FrontEnd_UnpackNormalAndRoughness(gIn_Normal_Roughness[globalPos], materialID);
 
@@ -308,6 +310,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                 float wSpecular = geometryW * exp(-specularLuminanceW);
                 wSpecular *= gRoughnessEdgeStoppingEnabled ? (normalWSpecular * roughnessWSpecular) : normalWSpecularSimplified;
                 wSpecular *= CompareMaterials(sampleMaterialID, centerMaterialID, gSpecMinMaterial);
+                wSpecular *= HoNrdSpecularMaterialWeight(s_SpecularMaterial[sharedMemoryIndex.y][sharedMemoryIndex.x], s_SpecularMaterial[sharedMemoryIndexP.y][sharedMemoryIndexP.x]);
                 wSpecular = isCenter ? kernel : wSpecular;
 
                 sumWSpecular += wSpecular;

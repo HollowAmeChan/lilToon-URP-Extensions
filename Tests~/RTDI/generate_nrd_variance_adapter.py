@@ -1,4 +1,4 @@
-"""Regenerate/check the two narrow DenseDI adaptations of pinned NRD 4.17.3."""
+"""Regenerate/check DenseDI moment and material-guide adaptations of NRD 4.17.3."""
 import argparse
 import hashlib
 import json
@@ -73,12 +73,42 @@ def generate():
         raise ValueError("Unexpected NRD function order")
     derived = text[:begin] + HELPER + text[end:]
     derived = re.sub(r'#include "([^\"]+)"', r'#include "../../ThirdParty/NRD/\1"', derived)
+    derived = guide_include(derived)
+    derived = derived.replace("groupshared float4 s_Normal_Roughness[BUFFER_Y][BUFFER_X];", "groupshared float4 s_Normal_Roughness[BUFFER_Y][BUFFER_X];\ngroupshared float3 s_SpecularMaterial[BUFFER_Y][BUFFER_X];")
+    derived = derived.replace("    float materialID;", "    s_SpecularMaterial[sharedPos.y][sharedPos.x] = HoNrdSpecularGuide(globalPos);\n    float materialID;")
+    derived = derived.replace("wSpecular *= CompareMaterials(sampleMaterialID, centerMaterialID, gSpecMinMaterial);", "wSpecular *= CompareMaterials(sampleMaterialID, centerMaterialID, gSpecMinMaterial);\n                wSpecular *= HoNrdSpecularMaterialWeight(s_SpecularMaterial[sharedMemoryIndex.y][sharedMemoryIndex.x], s_SpecularMaterial[sharedMemoryIndexP.y][sharedMemoryIndexP.x]);")
     notice = ("// Ho-RTDI dense-signal adaptation of NRD 4.17.3 RELAX_AtrousSmem.\n"
               f"// Original SHA256: {expected}\n"
-              "// Only computeVariance changes: blur per-pixel temporal variance,\n"
-              "// excluding between-pixel lighting/material contrast from noise variance.\n"
+              "// Adapted: per-pixel temporal variance and borrowed F0 specular weights.\n"
               "// Original source/license remain in ../../ThirdParty/NRD.\n")
     return notice + derived
+
+
+def guide_include(text):
+    marker = '#include "../../ThirdParty/NRD/RELAX_Common.hlsli"'
+    if text.count(marker) != 1:
+        raise ValueError("Unexpected NRD common include")
+    return text.replace(marker, marker + '\n#include "HoRTDINrdMaterialGuide.hlsl"')
+
+
+def generate_atrous():
+    text, expected = original("RELAX_Atrous.cs.hlsl")
+    text = re.sub(r'#include "([^\"]+)"', r'#include "../../ThirdParty/NRD/\1"', text)
+    text = guide_include(text)
+    text = text.replace("    float3 centerV = -normalize(centerWorldPos);", "    float3 centerV = -normalize(centerWorldPos);\n    float3 centerSpecularMaterial = HoNrdSpecularGuide(pixelPos);")
+    text = text.replace("wSpecular *= CompareMaterials(sampleMaterialID, centerMaterialID, gSpecMinMaterial);", "wSpecular *= CompareMaterials(sampleMaterialID, centerMaterialID, gSpecMinMaterial);\n                wSpecular *= (isInside ? HoNrdSpecularMaterialWeight(centerSpecularMaterial, HoNrdSpecularGuide(p)) : 0.0);")
+    return f"// Ho-RTDI F0-weight adaptation of NRD 4.17.3. Original SHA256: {expected}\n" + text
+
+
+def generate_temporal():
+    text, expected = original("RELAX_TemporalAccumulation.cs.hlsl")
+    text = re.sub(r'#include "([^\"]+)"', r'#include "../../ThirdParty/NRD/\1"', text)
+    text = guide_include(text)
+    marker = "    float specHistoryLength = historyLength;"
+    if text.count(marker) != 1:
+        raise ValueError("Unexpected NRD specular budget location")
+    text = text.replace(marker, "    float materialMatch = HoNrdSpecularHistoryMatch(pixelPos, prevUVSMB);\n    specMaxAccumulatedFrameNum *= materialMatch;\n    specMaxFastAccumulatedFrameNum *= materialMatch;\n" + marker)
+    return f"// Ho-RTDI F0-history adaptation of NRD 4.17.3. Original SHA256: {expected}\n" + text
 
 
 def generate_clamping():
@@ -108,7 +138,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
-    outputs = {OUTPUT: generate(), OUTPUT.with_name("HoRTDINrdHistoryClamping.hlsl"): generate_clamping()}
+    outputs = {OUTPUT: generate(), OUTPUT.with_name("HoRTDINrdHistoryClamping.hlsl"): generate_clamping(), OUTPUT.with_name("HoRTDINrdAtrous.hlsl"): generate_atrous(), OUTPUT.with_name("HoRTDINrdTemporal.hlsl"): generate_temporal()}
     for path, generated in outputs.items():
         if args.check:
             if path.read_text(encoding="utf-8-sig") != generated:
@@ -117,4 +147,4 @@ if __name__ == "__main__":
             path.write_text(generated, encoding="utf-8", newline="\n")
             print(path)
     if args.check:
-        print("PASS: original SHAs and both narrow adaptations match")
+        print("PASS: original SHAs and all DenseDI adaptations match")

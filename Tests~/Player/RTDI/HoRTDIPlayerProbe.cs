@@ -18,7 +18,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     public VolumeProfile profile;
     private RenderTexture target;
     private bool unsupported;
-    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak,pointDepthMax,pointShadowMax,coloredSpecRelative,coloredSpecLeak;}
+    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak,pointDepthMax,pointShadowMax,coloredSpecRelative,coloredSpecLeak,noisyMetalMean,noisyMetalReference,noisyCameraMean,noisyCameraTint;}
     private readonly Result result=new Result();
     private IEnumerator Start()
     {
@@ -103,7 +103,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         blue.enabled=false;light.enabled=true;light.color=Color.white;light.type=LightType.Directional;light.intensity=.5f;light.transform.rotation=Quaternion.identity;
         var pattern=new Texture2D(64,1,TextureFormat.RGBA32,false,true){filterMode=FilterMode.Point,wrapMode=TextureWrapMode.Clamp};
         var raw=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);var filtered=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);
-        GameObject strip=null;Material metal=null;
+        GameObject strip=null,secondLight=null;Material metal=null;
         try
         {
             for(int x=0;x<64;x++)pattern.SetPixel(x,0,(x/2)%2==0?Color.red:Color.blue);pattern.Apply();surfaceMaterial.SetTexture("_MainTex",pattern);
@@ -153,10 +153,28 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
             }
             result.coloredSpecRelative=(float)(specError/specPixels);
             Require(result.coloredSpecRelative<.02f&&result.coloredSpecLeak<.0005f,"Player NRD lost colored specular detail");
+            result.noisyMetalReference=Mathf.Max(raw.GetPixel(32,32).r,raw.GetPixel(32,32).b)*1.5f;
+            secondLight=new GameObject("Player noisy F0 directional");var extra=secondLight.AddComponent<Light>();extra.type=LightType.Directional;extra.intensity=.25f;
+            for(int i=0;i<96;i++)Render();double noisy=0;int noisyCount=0;
+            for(int frame=0;frame<64;frame++)
+            {
+                Render();ReadInto(capture.Specular,filtered);for(int y=16;y<48;y++)for(int x=16;x<48;x++){var b=filtered.GetPixel(x,y);noisy+=Mathf.Max(b.r,b.b);noisyCount++;}
+            }
+            result.noisyMetalMean=(float)(noisy/noisyCount);Require(Mathf.Abs(result.noisyMetalMean/result.noisyMetalReference-1)<.05f,"Player noisy F0 energy loss");
+            double moving=0,tint=0;int movingCount=0;
+            for(int frame=0;frame<32;frame++)
+            {
+                probeCamera.transform.position+=new Vector3(2f/64*.125f,0,0);
+                Render();ReadInto(capture.RawSpecular,raw);ReadInto(capture.Specular,filtered);
+                for(int y=16;y<48;y++)for(int x=16;x<48;x++){var a=raw.GetPixel(x,y);var b=filtered.GetPixel(x,y);float sa=a.r+a.b,sb=b.r+b.b;moving+=sb;tint+=Mathf.Abs(b.r/Mathf.Max(sb,1e-6f)-a.r/Mathf.Max(sa,1e-6f));movingCount++;}
+            }
+            result.noisyCameraMean=(float)(moving/movingCount);result.noisyCameraTint=(float)(tint/movingCount);
+            Require(Mathf.Abs(result.noisyCameraMean/result.noisyMetalReference-1)<.05f&&result.noisyCameraTint<.02f,"Player moving F0 transport loss");
         }
         finally
         {
             if(strip!=null){strip.SetActive(false);Destroy(strip);}if(metal!=null)Destroy(metal);
+            if(secondLight!=null){secondLight.SetActive(false);Destroy(secondLight);}
             surfaceMaterial.SetTexture("_MainTex",Texture2D.whiteTexture);surfaceMaterial.SetFloat("_Metallic",0);Destroy(pattern);Destroy(raw);Destroy(filtered);
         }
     }

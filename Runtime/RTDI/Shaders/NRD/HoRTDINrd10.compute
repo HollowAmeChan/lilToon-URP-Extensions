@@ -1,4 +1,5 @@
-// Original NRD algorithm; Unity bindings adapter. See ThirdParty/NRD/NOTICE.md.
+// DenseDI F0 spatial condition; remaining NRD A-trous kernel is unchanged.
+// See HoRTDINrdAtrous.hlsl and ThirdParty/NRD/NOTICE.md.
 #pragma kernel main
 #pragma use_dxc
 #pragma target 6.0
@@ -7,4 +8,4 @@
 #define NRD_SIGNAL BOTH
 #define NRD_MODE RADIANCE
 #include "HoRTDINrdBindings.hlsl"
-#include "../../ThirdParty/NRD/RELAX_Atrous.cs.hlsl"
+#include "HoRTDINrdAtrous.hlsl"

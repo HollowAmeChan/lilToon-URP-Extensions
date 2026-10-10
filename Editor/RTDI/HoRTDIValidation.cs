@@ -430,6 +430,64 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             }
             Debug.Log($"[HoRTDIValidation] OBSERVATION coloredSpec2px twoWhiteLamps rawMean={noisyRaw/noisyCount:F6} filteredMean={noisyFiltered/noisyCount:F6} reference={singleSpec*1.5f:F6} absentChannelMean={noisyLeak/noisyCount:F6}; stochastic material boundary remains a separate support audit");
             Near((float)(noisyRaw/noisyCount),singleSpec*1.5f,"Noisy colored specular raw statistical energy",.02f);
+            Require(Math.Abs(noisyFiltered/noisyCount/(singleSpec*1.5f)-1)<.05&&noisyLeak/noisyCount<.0005,"Noisy two-pixel specular boundary lost energy or color");
+            foreach(int band in new[]{8,64,128})
+            {
+                for(int x=0;x<size;x++)pattern.SetPixel(x,0,(x/band)%2==0?Color.red:Color.blue);pattern.Apply();
+                feature.Settings.denoise=false;RenderCamera();feature.Settings.denoise=true;
+                for(int i=0;i<96;i++)RenderCamera();context=feature.LastContext;
+                double sumRaw=0,sumFiltered=0,sumLeak=0;int count=0;
+                for(int frame=0;frame<64;frame++)
+                {
+                    RenderCamera();ReadImage(context.specular.rt,rawSpec);ReadImage(context.filteredSpecular.rt,filteredSpec);
+                    for(int y=48;y<80;y++)for(int x=32;x<96;x++)
+                    {
+                        var a=rawSpec.GetPixel(x,y);var b=filteredSpec.GetPixel(x,y);
+                        sumRaw+=Mathf.Max(a.r,a.b);sumFiltered+=Mathf.Max(b.r,b.b);sumLeak+=Mathf.Max(b.g,a.r>.1f?b.b:b.r);count++;
+                    }
+                }
+                Debug.Log($"[HoRTDIValidation] SPEC_BANDS width={band} rawMean={sumRaw/count:F6} filteredMean={sumFiltered/count:F6} reference={singleSpec*1.5f:F6} absentChannelMean={sumLeak/count:F6}");
+                Require(Math.Abs(sumFiltered/count/(singleSpec*1.5f)-1)<.05,"Specular material guide changed band energy");
+            }
+            foreach(float scale in new[]{.04f,.2f})
+            {
+                for(int x=0;x<size;x++)pattern.SetPixel(x,0,((x/2)%2==0?Color.red:Color.blue)*scale);pattern.Apply();
+                feature.Settings.denoise=false;RenderCamera();feature.Settings.denoise=true;
+                for(int i=0;i<96;i++)RenderCamera();context=feature.LastContext;
+                double sumRaw=0,sumFiltered=0,sumLeak=0;int count=0;
+                for(int frame=0;frame<64;frame++)
+                {
+                    RenderCamera();ReadImage(context.specular.rt,rawSpec);ReadImage(context.filteredSpecular.rt,filteredSpec);
+                    for(int y=48;y<80;y++)for(int x=32;x<96;x++)
+                    {
+                        var a=rawSpec.GetPixel(x,y);var b=filteredSpec.GetPixel(x,y);sumRaw+=Mathf.Max(a.r,a.b);sumFiltered+=Mathf.Max(b.r,b.b);sumLeak+=Mathf.Max(b.g,a.r>a.b?b.b:b.r);count++;
+                    }
+                }
+                float reference=singleSpec*1.5f*Mathf.Round(scale*255)/255;
+                Debug.Log($"[HoRTDIValidation] SPEC_LOW_F0 scale={scale} rawMean={sumRaw/count:F6} filteredMean={sumFiltered/count:F6} reference={reference:F6} absentChannelMean={sumLeak/count:F6}");
+                Require(Math.Abs(sumFiltered/count/reference-1)<.06&&sumLeak/count/reference<.02,"Low F0 material guide lost relative energy/color");
+            }
+            for(int x=0;x<size;x++)pattern.SetPixel(x,0,new Color((x+.5f)/size,0,1-(x+.5f)/size,1));pattern.Apply();
+            feature.Settings.denoise=false;RenderCamera();feature.Settings.denoise=true;
+            for(int i=0;i<96;i++)RenderCamera();context=feature.LastContext;
+            double rampRaw=0,rampFiltered=0;int rampCount=0;
+            for(int frame=0;frame<64;frame++)
+            {
+                RenderCamera();ReadImage(context.specular.rt,rawSpec);ReadImage(context.filteredSpecular.rt,filteredSpec);
+                for(int y=48;y<80;y++)for(int x=32;x<96;x++){var a=rawSpec.GetPixel(x,y);var b=filteredSpec.GetPixel(x,y);rampRaw+=a.r+a.b;rampFiltered+=b.r+b.b;rampCount++;}
+            }
+            Debug.Log($"[HoRTDIValidation] SPEC_CONTINUOUS rawSumMean={rampRaw/rampCount:F6} filteredSumMean={rampFiltered/rampCount:F6} reference={singleSpec*1.5f:F6}");
+            Require(Math.Abs(rampFiltered/rampCount/(singleSpec*1.5f)-1)<.05,"Continuous F0 guide changed total energy");
+            for(int x=0;x<size;x++)pattern.SetPixel(x,0,(x/2)%2==0?Color.red:Color.blue);pattern.Apply();
+            feature.Settings.denoise=false;RenderCamera();feature.Settings.denoise=true;
+            for(int i=0;i<96;i++)RenderCamera();context=feature.LastContext;double movingRaw=0,movingFiltered=0,movingLeak=0,movingTint=0;int movingCount=0;
+            for(int frame=0;frame<32;frame++)
+            {
+                camera.transform.position+=new Vector3(2f/size*.125f,0,0);RenderCamera();ReadImage(context.specular.rt,rawSpec);ReadImage(context.filteredSpecular.rt,filteredSpec);
+                for(int y=48;y<80;y++)for(int x=32;x<96;x++){var a=rawSpec.GetPixel(x,y);var b=filteredSpec.GetPixel(x,y);float rawSum=a.r+a.b;movingRaw+=rawSum;movingFiltered+=b.r+b.b;float filteredSum=b.r+b.b;movingLeak+=Mathf.Max(0,Mathf.Min(b.r,b.b)/Mathf.Max(filteredSum,1e-6f)-Mathf.Min(a.r,a.b)/Mathf.Max(rawSum,1e-6f));movingTint+=Mathf.Abs(b.r/Mathf.Max(filteredSum,1e-6f)-a.r/Mathf.Max(rawSum,1e-6f));movingCount++;}
+            }
+            Debug.Log($"[HoRTDIValidation] SPEC_CAMERA quarterCycle rawMean={movingRaw/movingCount:F6} filteredMean={movingFiltered/movingCount:F6} reference={singleSpec*1.5f:F6} excessChannelMean={movingLeak/movingCount:F6} tintFraction={movingTint/movingCount:F6}; temporal material transport observation");
+            Require(Math.Abs(movingFiltered/movingCount/(singleSpec*1.5f)-1)<.05&&movingTint/movingCount<.02,"Moving F0 boundary lost energy or tint");
             Require(pointDepthWorst<.008f&&shadowLeak<.003f,"NRD mixed unequal point-lit depth surfaces or blurred their thin shadow");
             Require(textureWorst<.008f,"NRD blurred demodulated two-pixel albedo");
             Debug.Log("[HoRTDIValidation] PASS boundary gates: analytic raw, 2px albedo/specular, metal classes, unequal point-lit depth and thin world shadow; compatibility="+compatibility);

@@ -7,6 +7,7 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
+using lilToon.URP.Extensions.RayTracing;
 
 namespace lilToon.URP.Extensions.RTDI.NRD
 {
@@ -95,6 +96,16 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             foreach(var texture in permanent)builder.UseTexture(graph.ImportTexture(texture),AccessFlags.ReadWrite);
             foreach(var texture in transient)builder.UseTexture(graph.ImportTexture(texture),AccessFlags.ReadWrite);
             foreach(var buffer in constants)builder.UseBuffer(graph.ImportBuffer(buffer),AccessFlags.ReadWrite);
+        }
+        internal void BindPrimaryGuide(CommandBuffer cmd,HoRTPrimarySurfaceInputs primary,bool compatibility,CameraData camera,GraphicsBuffer history,bool historyValid)
+        {
+            for(int index=4;index<=10;index++)
+            {
+                if(index!=4&&index!=9&&index!=10)continue;
+                if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,shaders[index],kernels[index],camera);
+                else primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),shaders[index],kernels[index]);
+                if(index==4){cmd.SetComputeBufferParam(shaders[index],kernels[index],"_HoRTDIHistory",history);cmd.SetComputeIntParam(shaders[index],"_HoRTDINrdGuideHistoryValid",historyValid?1:0);}
+            }
         }
         internal void Record(CommandBuffer cmd,HoRTDINrdNative.CommonSettings settings,Dictionary<string,RenderTargetIdentifier> external)
         {

@@ -56,6 +56,14 @@ its analytically projected wider shadow, and single-directional-light red/blue
 metal detail. The JSON records point-depth error, shadow leak and colored
 specular error/leak. These deterministic gates do not establish stochastic
 multi-light material-boundary fidelity.
+The deployed probe additionally checks stochastic two-white-directional-light
+energy across two-pixel metal colors and slow camera movement. Raw specular is
+captured independently while NRD stays enabled; toggling NRD for each reference
+sample would destroy the history under test. Camera tint compares normalized
+RGB ratios, so Monte Carlo intensity variation and fractional material sampling
+are not mislabeled as a tint error. The JSON records noisyMetalMean/reference,
+noisyCameraMean and noisyCameraTint. The fourth capture texture belongs only to
+this isolated test helper, not the production feature.
 Compatibility capture samples the published shader globals; their names are not
 temporary RT identifiers for `CommandBuffer.Blit`.
 
