@@ -2,6 +2,7 @@
 using System;
 using System.Collections.Generic;
 using lilToon.URP.Extensions.AttributeComposite;
+using lilToon.URP.Extensions.Atmosphere;
 using System.Runtime.InteropServices;
 using lilToon.URP.Extensions.RayTracing;
 using lilToon.URP.Extensions.RTDI.NRD;
@@ -135,6 +136,7 @@ namespace lilToon.URP.Extensions.RTDI
 
         private sealed class HoRTDIPass : ScriptableRenderPass
         {
+            private static readonly string[] ReferenceStages={"BuildPowerPdf","Presample","BuildEnvironmentPdf","PresampleEnvironment","Initial","Temporal","Spatial","Shade"};
             private HoRTDIContext context;private HoRTScene scene;private ComputeShader shader;private HoRTDISettings settings;
             private AnalyticLight[] lights;private Light[] lightKeys;private int lightCount,localLightCount,signature;
             internal HoRTDIPass(){renderPassEvent=RenderPassEvent.BeforeRenderingPostProcessing;}
@@ -147,6 +149,9 @@ namespace lilToon.URP.Extensions.RTDI
                 internal int lightCount,localLightCount,signature;internal uint revision;internal Matrix4x4 view,projection;internal Camera camera;
                 internal double renderTime;
                 internal TextureHandle diffuse,specular,powerPdf;
+                internal TextureHandle environment,environmentPdf;
+                internal Vector4 environmentParameters,environmentTint,environmentConstant;
+                internal uint environmentRevision;
             }
             private Data Snapshot(Camera camera,Matrix4x4 view,Matrix4x4 projection) => new Data {context=context,scene=scene.ReadCompatibility(),shader=shader,settings=settings,lightFrame=context.CaptureLights(lights,lightKeys),
                 lightCount=lightCount,localLightCount=localLightCount,signature=signature,revision=scene.Revision,view=view,projection=projection,camera=camera,renderTime=Time.unscaledTimeAsDouble};
@@ -161,6 +166,14 @@ namespace lilToon.URP.Extensions.RTDI
                     data.signature=source.signature;data.revision=source.revision;data.view=source.view;data.projection=source.projection;data.camera=source.camera;
                     data.renderTime=source.renderTime;
                     data.scene=scene.Read(graph,builder);data.primary=HoRTPrimarySurfaceInputs.Read(graph,frame,builder);
+                    data.environment=TextureHandle.nullHandle;data.environmentPdf=TextureHandle.nullHandle;data.environmentRevision=0;
+                    data.environmentParameters=data.environmentTint=data.environmentConstant=Vector4.zero;
+                    var sky=frame.GetOrCreate<HoAtmosphereRenderGraphResources>();context.PrepareEnvironment(settings.useEnvironment&&sky.IsValid);
+                    if(context.environmentSampling)
+                    {
+                        data.environment=sky.radianceTexture;data.environmentParameters=sky.parameters;data.environmentTint=sky.tint;data.environmentConstant=sky.constantColor;data.environmentRevision=sky.revision;
+                        builder.UseTexture(data.environment);data.environmentPdf=graph.ImportTexture(context.environmentPdf);builder.UseTexture(data.environmentPdf,AccessFlags.ReadWrite);
+                    }
                     foreach(var buffer in new[]{context.reservoirs,context.history,context.lights,context.previousLights,context.currentToPrevious,context.previousToCurrent,context.ris})builder.UseBuffer(graph.ImportBuffer(buffer),AccessFlags.ReadWrite);
                     data.powerPdf=TextureHandle.nullHandle;
                     if(context.powerSampling){data.powerPdf=graph.ImportTexture(context.powerPdf);builder.UseTexture(data.powerPdf,AccessFlags.ReadWrite);}
@@ -183,7 +196,8 @@ namespace lilToon.URP.Extensions.RTDI
             }
             private static void Dispatch(CommandBuffer cmd,Data d,bool compatibility,CameraData cameraData)
             {
-                var c=d.context;bool temporal=d.settings.temporal&&c.historyValid&&c.sceneRevision==d.revision&&c.settingsSignature==d.signature;
+                var c=d.context;unchecked{d.signature=d.signature*397^(int)d.environmentRevision^d.settings.useEnvironment.GetHashCode()^(d.settings.environmentSamples*7919);}
+                bool temporal=d.settings.temporal&&c.historyValid&&c.sceneRevision==d.revision&&c.settingsSignature==d.signature;
                 c.lastTemporal=temporal;
                 bool reset=false,timeReset=false;
                 var common=default(HoRTDINrdNative.CommonSettings);
@@ -199,10 +213,12 @@ namespace lilToon.URP.Extensions.RTDI
                 }
                 cmd.SetBufferData(c.lights,d.lightFrame.current);cmd.SetBufferData(c.previousLights,d.lightFrame.previous);
                 cmd.SetBufferData(c.currentToPrevious,d.lightFrame.currentToPrevious);cmd.SetBufferData(c.previousToCurrent,d.lightFrame.previousToCurrent);
-                string shade=c.nrd!=null?"ShadeNRD":"Shade";
-                var names=c.powerSampling?new[]{"BuildPowerPdf","Presample","Initial","Temporal","Spatial",shade}:new[]{"Initial","Temporal","Spatial",shade};
-                foreach(var name in names)
+                foreach(var stage in ReferenceStages)
                 {
+                    if((stage=="BuildPowerPdf"||stage=="Presample")&&!c.powerSampling)continue;
+                    if((stage=="BuildEnvironmentPdf"||stage=="PresampleEnvironment")&&!c.environmentSampling)continue;
+                    if(stage=="BuildEnvironmentPdf"&&c.environmentPdfReady&&c.environmentPdfRevision==d.environmentRevision)continue;
+                    string name=stage=="Shade"&&c.nrd!=null?"ShadeNRD":stage;
                     int kernel=d.shader.FindKernel(name);d.scene.BuildAndBind(cmd,d.shader,kernel);
                     if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,kernel,cameraData);
                     else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,kernel);
@@ -214,6 +230,7 @@ namespace lilToon.URP.Extensions.RTDI
                     cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDIRISBuffer",c.ris);
                     cmd.SetComputeVectorParam(d.shader,"_HoRTDIRISLayout",new Vector4(HoRTDIContext.RISTileSize,HoRTDIContext.RISTileCount,c.powerSampling?1:0,0));
                     cmd.SetComputeIntParam(d.shader,"_HoRTDIPdfSize",c.pdfSize);
+                    BindEnvironment(cmd,d,compatibility,kernel);
                     cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDIDiffuse",c.diffuse.nameID);cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDISpecular",c.specular.nameID);
                     cmd.SetComputeVectorParam(d.shader,"_HoRTDIFrame",new Vector4(c.width,c.height,d.lightCount,d.localLightCount));
                     cmd.SetComputeVectorParam(d.shader,"_HoRTDISettings",new Vector4(Mathf.Clamp(d.settings.initialSamples,1,32),Mathf.Clamp(d.settings.spatialSamples,1,16),Mathf.Clamp(d.settings.spatialRadius,1,32),Mathf.Max(.00001f,d.settings.rayBias)));
@@ -234,6 +251,13 @@ namespace lilToon.URP.Extensions.RTDI
                         cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDIPdfOutput",c.powerPdf.nameID,0);
                         cmd.DispatchCompute(d.shader,kernel,(c.pdfSize+7)/8,(c.pdfSize+7)/8,1);cmd.GenerateMips(c.powerPdf.nameID);
                     }
+                    else if(name=="BuildEnvironmentPdf")
+                    {
+                        cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDIEnvironmentPdfOutput",c.environmentPdf.nameID,0);
+                        cmd.DispatchCompute(d.shader,kernel,(HoRTDIContext.EnvironmentPdfSize+7)/8,(HoRTDIContext.EnvironmentPdfSize+7)/8,1);cmd.GenerateMips(c.environmentPdf.nameID);
+                        c.environmentPdfReady=true;c.environmentPdfRevision=d.environmentRevision;
+                    }
+                    else if(name=="PresampleEnvironment")cmd.DispatchCompute(d.shader,kernel,HoRTDIContext.RISTileSize/256,HoRTDIContext.RISTileCount,1);
                     else if(name=="Presample")
                     {
                         cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDIPdf",c.powerPdf.nameID);
@@ -264,6 +288,7 @@ namespace lilToon.URP.Extensions.RTDI
                     foreach(string stage in new[]{"Gradients","FilterGradients","Confidence"})
                     {
                         int k=d.shader.FindKernel(stage);d.scene.BuildAndBind(cmd,d.shader,k);
+                        BindEnvironment(cmd,d,compatibility,k);
                         if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,k,cameraData);
                         else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,k);
                         cmd.SetComputeBufferParam(d.shader,k,"_HoRTDIReservoirs",c.reservoirs);cmd.SetComputeBufferParam(d.shader,k,"_HoRTDIHistory",c.history);
@@ -303,9 +328,25 @@ namespace lilToon.URP.Extensions.RTDI
                 cmd.SetGlobalTexture("_HoRTDIRawDiffuseTexture",c.diffuse.nameID);cmd.SetGlobalTexture("_HoRTDIRawSpecularTexture",c.specular.nameID);
                 c.Complete(d.view,d.projection,d.camera,d.revision,d.signature,d.lightFrame);
             }
+            private static void BindEnvironment(CommandBuffer cmd,Data d,bool compatibility,int kernel)
+            {
+                var c=d.context;
+                cmd.SetComputeVectorParam(d.shader,"_HoRTDIEnvironment",new Vector4(HoRTDIContext.EnvironmentPdfSize,Mathf.Clamp(d.settings.environmentSamples,1,32),c.environmentSampling?1:0,c.powerSampling?HoRTDIContext.RISTileSize*HoRTDIContext.RISTileCount:0));
+                cmd.SetComputeVectorParam(d.shader,HoAtmosphereBindings.ParametersId,d.environmentParameters);cmd.SetComputeVectorParam(d.shader,HoAtmosphereBindings.TintId,d.environmentTint);cmd.SetComputeVectorParam(d.shader,HoAtmosphereBindings.ConstantId,d.environmentConstant);
+                if(!compatibility&&d.environment.IsValid())cmd.SetComputeTextureParam(d.shader,kernel,HoAtmosphereBindings.RadianceId,d.environment);
+                else if(compatibility&&c.environmentSampling)cmd.SetComputeTextureParam(d.shader,kernel,HoAtmosphereBindings.RadianceId,HoAtmosphereBindings.compatibilityTexture.nameID);
+                else cmd.SetComputeTextureParam(d.shader,kernel,HoAtmosphereBindings.RadianceId,CoreUtils.blackCubeTexture);
+                if(c.environmentSampling)cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDIEnvironmentPdf",c.environmentPdf.nameID);
+                else cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDIEnvironmentPdf",Texture2D.blackTexture);
+            }
             public override void Execute(ScriptableRenderContext rendering,ref RenderingData data)
             {
                 var d=Snapshot(data.cameraData.camera,data.cameraData.GetViewMatrix(),data.cameraData.GetProjectionMatrix());
+                context.PrepareEnvironment(settings.useEnvironment&&HoAtmosphereBindings.compatibilityTexture!=null&&HoAtmosphereBindings.compatibilityParameters.w>.5f);
+                if(context.environmentSampling)
+                {
+                    d.environmentParameters=HoAtmosphereBindings.compatibilityParameters;d.environmentTint=HoAtmosphereBindings.compatibilityTint;d.environmentConstant=HoAtmosphereBindings.compatibilityConstant;d.environmentRevision=HoAtmosphereBindings.compatibilityRevision;
+                }
                 var cmd=CommandBufferPool.Get("Ho-RTDI reference DI passes");Dispatch(cmd,d,true,data.cameraData);rendering.ExecuteCommandBuffer(cmd);CommandBufferPool.Release(cmd);
             }
         }

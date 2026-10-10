@@ -3,6 +3,7 @@ using System.Collections;
 using System.IO;
 using lilToon.URP.Extensions.RTDI;
 using lilToon.URP.Extensions.AttributeComposite;
+using lilToon.URP.Extensions.Atmosphere;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -11,6 +12,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
 {
     public Camera probeCamera;
     public HoRTDIRendererFeature feature;
+    public HoAtmosphereRendererFeature atmosphere;
     public HoRTDIPlayerCaptureFeature capture;
     public Light light;
     public Light blue;
@@ -20,7 +22,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     public VolumeProfile profile;
     private RenderTexture target;
     private bool unsupported;
-    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak,pointDepthMax,pointShadowMax,coloredSpecRelative,coloredSpecLeak,noisyMetalMean,noisyMetalReference,noisyCameraMean,noisyCameraTint,hdrRelative,hdrRawRelative,initialVisibilityShadowRatio,mixedSpecularRatio,mixedDiffuseRatio,temporalMixedSpecularRatio,temporalMixedDiffuseRatio,curvedRawL1,curvedFilteredL1;public int temporalMixedMaxHistory;}
+    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak,pointDepthMax,pointShadowMax,coloredSpecRelative,coloredSpecLeak,noisyMetalMean,noisyMetalReference,noisyCameraMean,noisyCameraTint,hdrRelative,hdrRawRelative,initialVisibilityShadowRatio,mixedSpecularRatio,mixedDiffuseRatio,temporalMixedSpecularRatio,temporalMixedDiffuseRatio,curvedRawL1,curvedFilteredL1,environmentRawRatio,environmentFilteredRatio,environmentShadow;public int temporalMixedMaxHistory;}
     private readonly Result result=new Result();
     private IEnumerator Start()
     {
@@ -82,6 +84,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         finally{blue.enabled=false;blue.transform.position=oldBluePosition;blue.range=oldBlueRange;blue.intensity=oldBlueIntensity;blue.color=oldBlueColor;blocker.SetActive(false);feature.Settings.initialSamples=1;}
         ValidateMixedProposal();
         ValidateCurvedReceiver();
+        ValidateEnvironmentLight();
         feature.Settings.localSampling=HoRTDILocalSampling.Power;Render();Near(Read(capture.Raw).r,Expected(32,32),"Player power path",.015f);
         Require(profile.TryGet<HoRTDIVolume>(out var volume),"DI debug Volume missing");
         volume.debugMode.value=HoRTDIDebugMode.RawDiffuse;Render();NearRGB(Read(target),Read(capture.Raw),"Player raw debug");
@@ -298,6 +301,24 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         }
         finally
         {sphere.SetActive(false);Destroy(sphere);if(receiver!=null)receiver.SetActive(true);light.transform.position=position;light.range=range;light.intensity=intensity;light.color=color;surfaceMaterial.SetFloat("_Reflectance",0);surfaceMaterial.SetFloat("_Smoothness",.5f);feature.Settings.denoise=false;Destroy(raw);Destroy(filtered);}
+    }
+    private void ValidateEnvironmentLight()
+    {
+        Require(atmosphere!=null,"Player environment feature missing");bool enabled=light.enabled,blueEnabled=blue.enabled;
+        var image=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);var room=GameObject.CreatePrimitive(PrimitiveType.Cube);room.layer=1;room.transform.localScale=Vector3.one*10;room.GetComponent<Renderer>().sharedMaterial=surfaceMaterial;room.SetActive(false);
+        try
+        {
+            light.enabled=blue.enabled=false;atmosphere.Settings.enabled=true;feature.Settings.useEnvironment=true;feature.Settings.denoise=false;
+            for(int i=0;i<8;i++)Render();double raw=0;
+            for(int frame=0;frame<128;frame++){Render();ReadInto(capture.Raw,image);for(int y=24;y<40;y++)for(int x=24;x<40;x++)raw+=image.GetPixel(x,y).r;}
+            result.environmentRawRatio=(float)(raw/(128*256));Require(Math.Abs(raw/(128*256)-1)<.03,"Player sky Lambert integral mismatch");
+            feature.Settings.denoise=true;for(int i=0;i<96;i++)Render();double filtered=0;
+            for(int frame=0;frame<128;frame++){Render();ReadInto(capture.Diffuse,image);for(int y=24;y<40;y++)for(int x=24;x<40;x++)filtered+=image.GetPixel(x,y).r;}
+            result.environmentFilteredRatio=(float)(filtered/(128*256));Require(Math.Abs(filtered/(128*256)-1)<.05,"Player sky NRD energy mismatch");
+            feature.Settings.denoise=false;room.SetActive(true);for(int i=0;i<4;i++)Render();result.environmentShadow=Read(capture.Raw).r;Require(result.environmentShadow<.001f,"Player enclosed world leaks sky");room.SetActive(false);
+            atmosphere.Settings.enabled=false;Render();Near(Read(capture.Raw).r,0,"Player absent sky retains radiance",.001f);
+        }
+        finally{room.SetActive(false);Destroy(room);Destroy(image);atmosphere.Settings.enabled=false;light.enabled=enabled;blue.enabled=blueEnabled;feature.Settings.denoise=false;}
     }
     private void Render(){VolumeManager.instance.Update(probeCamera.transform,-1);RenderPipeline.SubmitRenderRequest(probeCamera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
     private float Expected(int x,int y)

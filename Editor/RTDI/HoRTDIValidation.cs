@@ -86,6 +86,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(forcePower)feature.Settings.localSampling=HoRTDILocalSampling.Power;
                 feature.Settings.denoise=forceDenoise;
                 renderer.rendererFeatures.Add(gb);renderer.rendererFeatures.Add(sb);renderer.rendererFeatures.Add(feature);
+                if(forceEnvironment)SetupEnvironment(renderer);
                 var pipeline=Keep(UniversalRenderPipelineAsset.Create(renderer));pipeline.supportsHDR=true;pipeline.msaaSampleCount=1;
                 GraphicsSettings.defaultRenderPipeline=pipeline;QualitySettings.renderPipeline=pipeline;
                 #if URP_COMPATIBILITY_MODE
@@ -124,6 +125,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(forceQuality){ValidateQuality();Finish(null);return;}
                 if(forceTiming){ValidateTiming();Finish(null);return;}
                 if(forceCurved){ValidateCurved();Finish(null);return;}
+                if(forceEnvironment){ValidateEnvironment();Finish(null);return;}
                 if(forceBoundaries){ValidateBoundaries();Finish(null);return;}
                 if(forceSpecular){ValidateSpecular();Finish(null);return;}
                 if(forceLocalLighting){ValidateLocalLighting();Finish(null);return;}
@@ -1220,7 +1222,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var ray=camera.ViewportPointToRay(new Vector3((x+.5f)/64,(y+.5f)/64,0));var position=ray.origin+ray.direction*(-ray.origin.z/ray.direction.z);var delta=source.transform.position-position;float d2=delta.sqrMagnitude;
             float fade=Mathf.Clamp01(1-Mathf.Pow(d2/(source.range*source.range),2));return source.intensity/d2*(-delta.normalized.z)/Mathf.PI*fade*fade;
         }
-        private static void RenderCamera(){if((forceBoundaries||forceSpecular||forceLocalLighting||forceCurved)&&feature.LastContext?.nrd!=null)feature.LastContext.nrd.ValidationTimeSeconds=++boundarySample/60.0;VolumeManager.instance.Update(camera.transform,-1);RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
+        private static void RenderCamera(){if((forceBoundaries||forceSpecular||forceLocalLighting||forceCurved||forceEnvironment)&&feature.LastContext?.nrd!=null)feature.LastContext.nrd.ValidationTimeSeconds=++boundarySample/60.0;VolumeManager.instance.Update(camera.transform,-1);RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
         private static Color Render(){RenderCamera();Require(feature.LastContext!=null,"DI context missing: "+feature.Status);return Read(feature.LastContext.diffuse.rt);}
         private static Color Read(RenderTexture source)
         {

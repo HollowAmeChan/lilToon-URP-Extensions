@@ -3,6 +3,7 @@ using System.IO;
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.SurfaceBuffer;
 using lilToon.URP.Extensions.RTDI;
+using lilToon.URP.Extensions.Atmosphere;
 using UnityEditor;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -40,11 +41,12 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 var gb=ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>();gb.Settings.maxRenderQueue=(int)RenderQueue.GeometryLast;
                 var sb=ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>();sb.Settings.enableSemanticLanes=sb.Settings.enableCorrelatedSemantics=false;
                 var di=ScriptableObject.CreateInstance<HoRTDIRendererFeature>();di.Settings.denoise=true;di.Settings.inSceneView=false;di.Create();
+                var sky=ScriptableObject.CreateInstance<HoAtmosphereRendererFeature>();sky.Settings.source=HoAtmosphereSource.Constant;sky.Settings.constantColor=new Color(1,.5f,.25f,1);sky.Settings.enabled=false;sky.Create();
                 var captureType=Type.GetType("HoRTDIPlayerCaptureFeature, Assembly-CSharp");var probeType=Type.GetType("HoRTDIPlayerProbe, Assembly-CSharp");
                 if(captureType==null||probeType==null)throw new Exception("Run Prepare and allow script import before Build");
                 var capture=(ScriptableRendererFeature)ScriptableObject.CreateInstance(captureType);
                 var captureSerialized=new SerializedObject(capture);Set(captureSerialized,"captureShader",AssetDatabase.LoadAssetAtPath<Shader>(assets+"HoRTDIPlayerCapture.shader"));captureSerialized.ApplyModifiedPropertiesWithoutUndo();
-                foreach(var feature in new ScriptableRendererFeature[]{gb,sb,di,capture}){feature.name=feature.GetType().Name;AssetDatabase.AddObjectToAsset(feature,renderer);renderer.rendererFeatures.Add(feature);EditorUtility.SetDirty(feature);}
+                foreach(var feature in new ScriptableRendererFeature[]{sky,gb,sb,di,capture}){feature.name=feature.GetType().Name;AssetDatabase.AddObjectToAsset(feature,renderer);renderer.rendererFeatures.Add(feature);EditorUtility.SetDirty(feature);}
                 EditorUtility.SetDirty(renderer);
                 var serialized=new SerializedObject(di);if(serialized.FindProperty("shader").objectReferenceValue==null||serialized.FindProperty("nrdShaders").arraySize!=15)throw new Exception("DI shader serialization missing");
                 if(serialized.FindProperty("debugShader").objectReferenceValue==null)throw new Exception("DI debug shader serialization missing");
@@ -66,7 +68,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 var light=Point("White/Red light",new Vector3(1.5f,0,-1),Color.white);var blue=Point("Blue light",light.transform.position,Color.blue);blue.enabled=false;
                 var volume=new GameObject("Global DI volume").AddComponent<Volume>();volume.isGlobal=true;var profile=ScriptableObject.CreateInstance<VolumeProfile>();var component=profile.Add<HoRTDIVolume>(true);AssetDatabase.CreateAsset(profile,assets+"Volume.asset");AssetDatabase.AddObjectToAsset(component,profile);EditorUtility.SetDirty(profile);EditorUtility.SetDirty(component);volume.sharedProfile=profile;
                 var probe=new GameObject("Player DI validation").AddComponent(probeType);var so=new SerializedObject(probe);
-                Set(so,"probeCamera",camera);Set(so,"feature",di);Set(so,"capture",capture);Set(so,"light",light);Set(so,"blue",blue);Set(so,"blocker",blocker);Set(so,"receiver",receiver);Set(so,"surfaceMaterial",material);Set(so,"profile",profile);so.ApplyModifiedPropertiesWithoutUndo();
+                Set(so,"probeCamera",camera);Set(so,"feature",di);Set(so,"atmosphere",sky);Set(so,"capture",capture);Set(so,"light",light);Set(so,"blue",blue);Set(so,"blocker",blocker);Set(so,"receiver",receiver);Set(so,"surfaceMaterial",material);Set(so,"profile",profile);so.ApplyModifiedPropertiesWithoutUndo();
                 AssetDatabase.SaveAssets();EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(),assets+"Probe.unity");
                 var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{assets+"Probe.unity"},target=BuildTarget.StandaloneWindows64,locationPathName=Path.Combine(root,compatibility?"PlayerBuildCompatibility/HoRTDIProbe.exe":"PlayerBuild/HoRTDIProbe.exe"),options=BuildOptions.None});
                 if(report.summary.result!=BuildResult.Succeeded)throw new Exception("Player build failed: "+report.summary.result);

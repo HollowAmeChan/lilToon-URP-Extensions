@@ -6,6 +6,8 @@
 
 Renderer 上添加 `Ho-RTDI`，在其前面启用 GB / SB。需要 D3D12 inline RT、Mono、同分辨率单采样的 GB/SB 及已更新的 SB 网格法线布局。当前世界求交仅支持 HoRTScene 的刚性 opaque MeshRenderer 范围。
 
+「天空环境光」默认开启，有效输入来自前置Ho-Atmosphere；没有输入时仍只运行解析灯。「环境光候选数」独立于局部预算。当前支持HDR环境PDF/RIS采样、真实世界可见性与独立raw/NRD输出；概率单位、成本、验证及与旧GI天空项的重叠见 [Ho-RTDI-Environment](Ho-RTDI-Environment.md)。
+
 Feature 默认只生产独立直接光，主相机基础画面保持原有渲染。全局 Volume 的 `Ho-RTDI` 提供启用覆盖和 Diffuse / Specular / Combined / Receiver / RawDiffuse / RawSpecular / All 调试；Receiver 绿为有效接收面、红为无效，能区分有效暗部与输入不全。调试在最终后处理后显示，不能把它当成已完成的 NPR 合成。
 
 RenderGraph 读取 `HoRTDIRenderGraphResources.diffuse / specular` 并声明读依赖。RGB 为线性 HDR、已经包含参考接收 BRDF 的贡献；A 为接收面有效性，阴影中的有效表面可以 RGB=0、A=1，输入缺失/取样域不匹配为 A=0。兼容全局为 `_HoRTDIDiffuseTexture`、`_HoRTDISpecularTexture` 和 `_HoRTDIActive`。

@@ -95,6 +95,13 @@ This does not establish arbitrary normal maps, silhouette fidelity or curved
 camera motion. The broader 128x128 Editor curve validator checks both roughness
 values, the near/far pair in all four reuse modes, actual normal/viewZ guides and
 precision-demand disable/re-enable behavior.
+The builder also serializes a disabled Constant HoAtmosphere feature. The Player
+environment gate enables it, disables analytic lights and measures the white
+receiver against the constant-sky Lambert integral. environmentRawRatio must be
+within 3% and environmentFilteredRatio within 5% of unity. A hidden-from-camera
+closed cube must make environmentShadow less than 0.001; disabling the sky must
+clear the raw contribution. The feature and lights are restored for later gates.
+HDR Cubemap direction/rotation and broad GGX integration remain Editor checks.
 The probe also keeps NRD alive while two normal-incidence directional lights
 change intensity through 0.5/0.25, 16/8, 0.0005/0.00025 and back. An independent
 GGX reference uses this material's SB FP16 / DI 8-bit roughness of 25/255.

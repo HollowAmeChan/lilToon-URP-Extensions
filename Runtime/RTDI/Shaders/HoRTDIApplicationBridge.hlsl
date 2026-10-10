@@ -8,6 +8,9 @@
 #include "../../RayTracing/Shaders/HoRTSceneQuery.hlsl"
 #include "HoRTDIPrimaryHistory.hlsl"
 #include "../ThirdParty/donut/brdf.hlsli"
+#if defined(HO_RTDI_ENVIRONMENT_ENABLED)
+#include "HoRTDIEnvironment.hlsl"
+#endif
 #ifndef HO_RTDI_PRESAMPLING_ENABLED
 #define HO_RTDI_PRESAMPLING_ENABLED 0
 #endif
@@ -50,7 +53,11 @@ RWStructuredBuffer<RTXDI_PackedDIReservoir> _HoRTDIReservoirs;
 struct RAB_Material { float3 diffuseAlbedo, specularF0; float roughness; };
 struct RAB_Surface { float3 worldPos, normal, geoNormal, viewDir; float viewDepth; RAB_Material material; };
 struct RAB_LightInfo { HoRTDILight data; };
-struct RAB_LightSample { float3 position, radiance; float solidAnglePdf; };
+struct RAB_LightSample { float3 position, radiance; float solidAnglePdf;
+    #if defined(HO_RTDI_ENVIRONMENT_ENABLED)
+    float3 environmentDirection;uint environment;
+    #endif
+};
 RAB_Surface RAB_EmptySurface() { return (RAB_Surface)0; }
 RAB_LightInfo RAB_EmptyLightInfo() { return (RAB_LightInfo)0; }
 RAB_LightSample RAB_EmptyLightSample() { return (RAB_LightSample)0; }
@@ -106,6 +113,9 @@ bool RAB_AreMaterialsSimilar(RAB_Material a,RAB_Material b)
 RAB_LightInfo RAB_LoadLightInfo(uint index,bool previousFrame)
 {
     RAB_LightInfo result=RAB_EmptyLightInfo();
+    #if defined(HO_RTDI_ENVIRONMENT_ENABLED)
+    if(index==HO_RTDI_ENVIRONMENT_LIGHT_INDEX){result.data.radianceType.w=3;return result;}
+    #endif
     #if HO_RTDI_LIGHT_HISTORY_ENABLED
     if(previousFrame)
     {if(index<(uint)_HoRTDIPreviousLightCount)result.data=_HoRTDIPreviousLights[index];return result;}
@@ -116,13 +126,31 @@ RAB_LightInfo RAB_LoadCompactLightInfo(uint index) { return RAB_EmptyLightInfo()
 // Compact-light copies are optional in the SDK. Keep the canonical light
 // buffer as the single source; RIS entries store an index and inverse PDF.
 bool RAB_StoreCompactLightInfo(uint index,RAB_LightInfo light) { return false; }
-bool RAB_IsAnalyticLightSample(RAB_LightSample sample) { return true; }
+bool RAB_IsAnalyticLightSample(RAB_LightSample sample) {
+    #if defined(HO_RTDI_ENVIRONMENT_ENABLED)
+    return sample.environment==0;
+    #else
+    return true;
+    #endif
+}
 float RAB_LightSampleSolidAnglePdf(RAB_LightSample sample) { return sample.solidAnglePdf; }
 void RAB_GetLightDirDistance(RAB_Surface surface,RAB_LightSample sample,out float3 direction,out float distance)
-{float3 delta=sample.position-surface.worldPos;distance=length(delta);direction=delta/max(distance,1e-12);}
+{
+    #if defined(HO_RTDI_ENVIRONMENT_ENABLED)
+    if(sample.environment!=0){direction=sample.environmentDirection;distance=100000;return;}
+    #endif
+    float3 delta=sample.position-surface.worldPos;distance=length(delta);direction=delta/max(distance,1e-12);
+}
 RAB_LightSample RAB_SamplePolymorphicLight(RAB_LightInfo info,RAB_Surface surface,float2 uv)
 {
     RAB_LightSample sample=RAB_EmptyLightSample();HoRTDILight light=info.data;
+    #if defined(HO_RTDI_ENVIRONMENT_ENABLED)
+    if(light.radianceType.w>2.5)
+    {
+        sample.environment=1;sample.environmentDirection=HoDIEnvironmentDirection(uv);sample.position=surface.worldPos+sample.environmentDirection*100000;
+        sample.radiance=HoAtmosphereSampleRadiance(sample.environmentDirection);sample.solidAnglePdf=_HoRTDIEnvironment.x*_HoRTDIEnvironment.x/(4*M_PI);return sample;
+    }
+    #endif
     if(light.radianceType.w>1.5)
     {sample.position=surface.worldPos-light.directionOuter.xyz*100000;sample.radiance=light.radianceType.rgb;sample.solidAnglePdf=1;return sample;}
     float3 vector=light.positionRange.xyz-surface.worldPos;float d2=dot(vector,vector);
@@ -177,6 +205,9 @@ bool RAB_GetTemporalConservativeVisibility(RAB_Surface current,RAB_Surface previ
 {return RAB_GetConservativeVisibility(previous,sample);}
 int RAB_TranslateLightIndex(uint index,bool currentToPrevious)
 {
+    #if defined(HO_RTDI_ENVIRONMENT_ENABLED)
+    if(index==HO_RTDI_ENVIRONMENT_LIGHT_INDEX)return _HoRTDIEnvironment.z>.5?(int)index:-1;
+    #endif
     #if HO_RTDI_LIGHT_HISTORY_ENABLED
     if(currentToPrevious)return index<(uint)_HoRTDIFrame.z?_HoRTDICurrentToPrevious[index]:-1;
     return index<(uint)_HoRTDIPreviousLightCount?_HoRTDIPreviousToCurrent[index]:-1;
@@ -191,10 +222,16 @@ int2 RAB_ClampSamplePositionIntoView(int2 pixel,bool previous)
     if(pixel.x>=size.x)pixel.x=2*size.x-pixel.x-1;if(pixel.y>=size.y)pixel.y=2*size.y-pixel.y-1;
     return pixel;
 }
-// Disabled by initial-sampling parameters: no environment, mesh-light or BRDF light candidates in this slice.
+// Mesh-light and BRDF ray candidates remain disabled. DI environment candidates
+// use their own PDF/RIS path; the shared GI bridge retains its existing behavior.
 float RAB_EvaluateLocalLightSourcePdf(uint index) {return rcp(max(1,_HoRTDIFrame.z));}
+#if defined(HO_RTDI_ENVIRONMENT_ENABLED)
+float RAB_EvaluateEnvironmentMapSamplingPdf(float3 direction) {return HoDIEnvironmentTexelPdf(HoDIEnvironmentUV(direction));}
+float2 RAB_GetEnvironmentMapRandXYFromDir(float3 direction) {return HoDIEnvironmentUV(direction);}
+#else
 float RAB_EvaluateEnvironmentMapSamplingPdf(float3 direction) {return 0;}
 float2 RAB_GetEnvironmentMapRandXYFromDir(float3 direction) {return 0;}
+#endif
 float RAB_SurfaceEvaluateBrdfPdf(RAB_Surface surface,float3 direction) {return max(0,dot(surface.normal,direction))/M_PI;}
 bool RAB_SurfaceImportanceSampleBrdf(RAB_Surface surface,inout RTXDI_RandomSamplerState rng,out float3 direction) {direction=0;return false;}
 bool RAB_TraceRayForLocalLight(float3 origin,float3 direction,float tMin,float tMax,out uint lightIndex,out float2 uv) {lightIndex=RTXDI_InvalidLightIndex;uv=0;return false;}

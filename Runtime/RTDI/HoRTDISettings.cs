@@ -10,6 +10,9 @@ namespace lilToon.URP.Extensions.RTDI
         public bool inSceneView = true;
         [Tooltip("NRD RELAX diffuse/specular；当前仅支持静态几何、Mono 与同分辨率 GB/SB。保留原始光照输出以便对照。")]
         public bool denoise;
+        [Tooltip("从前置 Ho-Atmosphere 借用天空 HDR，作为 RTXDI 环境光候选。")]
+        public bool useEnvironment = true;
+        [Range(1,32)] public int environmentSamples = 4;
         [Tooltip("均匀模式用于低开销与对照；功率模式使用 SDK PDF mip / RIS 预采样，降低强弱灯功率跨度造成的方差。")]
         public HoRTDILocalSampling localSampling = HoRTDILocalSampling.Uniform;
         [Tooltip("局部灯初始候选数；存在方向灯时，另从方向灯分区抽取一个候选。")]

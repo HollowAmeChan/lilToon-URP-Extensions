@@ -50,7 +50,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 atmosphere=Keep(ScriptableObject.CreateInstance<HoAtmosphereRendererFeature>());atmosphere.Settings.source=HoAtmosphereSource.Constant;
                 atmosphere.Settings.constantColor=new Color(.5f,.25f,.125f,1);
                 feature=Keep(ScriptableObject.CreateInstance<HoRTGIRendererFeature>());feature.Settings.temporal=false;feature.Settings.spatial=false;feature.Settings.secondaryLightSamples=1;
-                direct=Keep(ScriptableObject.CreateInstance<HoRTDIRendererFeature>());direct.Settings.temporal=false;direct.Settings.spatial=false;direct.Settings.initialSamples=1;direct.SetActive(false);
+                direct=Keep(ScriptableObject.CreateInstance<HoRTDIRendererFeature>());direct.Settings.useEnvironment=false;direct.Settings.temporal=false;direct.Settings.spatial=false;direct.Settings.initialSamples=1;direct.SetActive(false);
                 renderer.rendererFeatures.Add(gb);renderer.rendererFeatures.Add(sb);renderer.rendererFeatures.Add(atmosphere);renderer.rendererFeatures.Add(direct);renderer.rendererFeatures.Add(feature);
                 var pipeline=Keep(UniversalRenderPipelineAsset.Create(renderer));pipeline.supportsHDR=true;pipeline.msaaSampleCount=1;
                 GraphicsSettings.defaultRenderPipeline=pipeline;QualitySettings.renderPipeline=pipeline;

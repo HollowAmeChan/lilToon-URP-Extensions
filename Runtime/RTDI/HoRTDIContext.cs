@@ -18,6 +18,11 @@ namespace lilToon.URP.Extensions.RTDI
         internal GraphicsBuffer reservoirs,history,lights,neighbors,previousLights,currentToPrevious,previousToCurrent;
         internal RTHandle diffuse,specular;
         internal RTHandle powerPdf;
+        internal RTHandle environmentPdf;
+        internal bool environmentSampling;
+        internal bool environmentPdfReady;
+        internal uint environmentPdfRevision;
+        internal const int EnvironmentPdfSize=128;
         internal GraphicsBuffer ris;
         internal const int RISTileSize=256,RISTileCount=64;
         internal int pdfSize;
@@ -87,9 +92,7 @@ namespace lilToon.URP.Extensions.RTDI
         {
             powerSampling=requested&&localCount>0&&SystemInfo.IsFormatSupported(GraphicsFormat.R32_SFloat,GraphicsFormatUsage.LoadStore)
                 &&SystemInfo.IsFormatSupported(GraphicsFormat.R32_SFloat,GraphicsFormatUsage.Linear);
-            int risCount=powerSampling?RISTileSize*RISTileCount:1;
-            if(ris==null||ris.count!=risCount)
-            {ris?.Dispose();ris=new GraphicsBuffer(GraphicsBuffer.Target.Structured,risCount,8){name="HoRTDI SDK RIS tiles"};}
+            PrepareRis();
             if(!powerSampling){powerPdf?.Release();powerPdf=null;pdfSize=0;return;}
             // Square power-of-two Morton domain, with a minimum 2x2 root.
             pdfSize=2;while((long)pdfSize*pdfSize<localCount)pdfSize*=2;
@@ -97,6 +100,22 @@ namespace lilToon.URP.Extensions.RTDI
             var desc=new RenderTextureDescriptor(pdfSize,pdfSize)
             {graphicsFormat=GraphicsFormat.R32_SFloat,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true,useMipMap=true,autoGenerateMips=false};
             RenderingUtils.ReAllocateIfNeeded(ref powerPdf,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTDI local light power PDF");
+        }
+        private void PrepareRis()
+        {
+            int count=Math.Max(1,(powerSampling?RISTileSize*RISTileCount:0)+(environmentSampling?RISTileSize*RISTileCount:0));
+            if(ris!=null&&ris.count==count)return;
+            ris?.Dispose();ris=new GraphicsBuffer(GraphicsBuffer.Target.Structured,count,8){name="HoRTDI SDK RIS tiles"};
+        }
+        internal void PrepareEnvironment(bool requested)
+        {
+            environmentSampling=requested&&SystemInfo.IsFormatSupported(GraphicsFormat.R32_SFloat,GraphicsFormatUsage.LoadStore)
+                &&SystemInfo.IsFormatSupported(GraphicsFormat.R32_SFloat,GraphicsFormatUsage.Linear);
+            PrepareRis();
+            if(!environmentSampling){environmentPdf?.Release();environmentPdf=null;environmentPdfReady=false;return;}
+            var desc=new RenderTextureDescriptor(EnvironmentPdfSize,EnvironmentPdfSize)
+            {graphicsFormat=GraphicsFormat.R32_SFloat,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true,useMipMap=true,autoGenerateMips=false};
+            if(RenderingUtils.ReAllocateIfNeeded(ref environmentPdf,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTDI environment PDF"))environmentPdfReady=false;
         }
         internal void PrepareDenoiser(bool enabled,ComputeShader[] shaders)
         {
@@ -176,6 +195,6 @@ namespace lilToon.URP.Extensions.RTDI
             previousLightKeys=lightFrame.keys;previousLightData=lightFrame.current;
         }
         public void Dispose()
-        {ReleaseDenoiser();reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();previousLights?.Dispose();currentToPrevious?.Dispose();previousToCurrent?.Dispose();ris?.Dispose();powerPdf?.Release();ris=null;powerPdf=null;diffuse?.Release();specular?.Release();reservoirs=history=lights=neighbors=previousLights=currentToPrevious=previousToCurrent=null;diffuse=specular=null;previousLightKeys=Array.Empty<Light>();previousLightData=null;}
+        {ReleaseDenoiser();reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();previousLights?.Dispose();currentToPrevious?.Dispose();previousToCurrent?.Dispose();ris?.Dispose();powerPdf?.Release();environmentPdf?.Release();ris=null;powerPdf=environmentPdf=null;diffuse?.Release();specular?.Release();reservoirs=history=lights=neighbors=previousLights=currentToPrevious=previousToCurrent=null;diffuse=specular=null;previousLightKeys=Array.Empty<Light>();previousLightData=null;}
     }
 }

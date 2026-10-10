@@ -271,7 +271,19 @@
 
 **成本与下一项：** 每个DI/GI history相对旧布局720p/1080p增加约3.52/7.91 MiB，SB原normal附件的增量另算；同时启用DI/GI各有一份history。无新纹理/pass/ray，有额外normal codec运算。后续依结果复查运动与实际场景支持，再评估环境/更多灯域，不继续围绕单个平面序列调NRD。
 
-## 24. 下一步取舍
+## 24. HoAtmosphere 环境光进入 RTXDI
+
+**动手前评审：补灯域，应做。** HoAtmosphere只提供radiance与版本，没有环境PDF。核对用户PolymorphicLight.EnvironmentLight、固定SDK Presampling/InitialSampling以及官方采样API，DI自行构建128²等立体角luminance PDF mip，再调用原SDK环境RIS与环境候选采样；不用uniform假扮importance，不新增天空Feature或最终合成。
+
+**实现与取舍：** 独立环境候选预算默认4、天空选项默认开，只有前置HoAtmosphere输入有效才分配PDF/RIS。环境使用保留index，解析灯分区/Unity Light映射不变。条件solid-angle density=N²/(4π)，target/final统一除条件密度，源概率来自SDK texel RIS。稳定版本缓存PDF，每帧更新RIS；天空内容/旋转/tint/gain变化重置DI/NRD，缺失路径清零pooled参数并绑定black cube。没有保存第二份天空。NRD confidence阶段也显式绑定环境输入。首个prototype因Texture2D元素类型不符固定SDK签名编译失败，已修正，失败不计通过。
+
+**验证：** RG/compatibility常量天空raw≈(.996,.498,.249)，参考(1,.5,.25)，无/T/S/TS的3%条件通过；解析灯+环境MIS、封闭世界遮挡、HDR六面Cubemap与yaw0/90、gain/tint的独立半球积分、black/disable/absent生命周期通过。宽GGX参考≈.027514，raw≈.027515、NRD≈.027149，5%条件通过。旧两条核心/NRD、Power/边界/HDR/动态灯/时间/曲面运动/预算通过；GI独立性fixture显式关闭DI环境项后两条回归通过。解析-only预算仍223.437/503.547 MiB，同步batch约7.398/15.666 ms，含CPU/完整渲染/读回，不能作生产性能结论。
+
+**部署复查：** 两个Win64 Mono release构建与实际D3D12 EXE通过常量天空新gate，raw/NRD比例≈1.005200/1.001977、封闭遮挡0，旧域检查通过；D3D11 inactive通过，packed DLL SHA一致。Roslyn/派生检查通过，无新增本步GPU诊断。Player只有64²常量天空，不算HDR Cubemap/窄镜面验收；原平面短运动失败保留，最终材质合成继续延期。
+
+**成本与边界：** 新环境PDF全mip约.0833 MiB，256×64 uint2 RIS段.125 MiB，共约.2083 MiB/context，独立于画面尺寸；只在有效环境时持有，与local Power共用不同RIS段。每帧预采样/候选/可见性成本另计。尚无BRDF/VNDF环境MIS、窄镜面/小太阳、mesh emitters或最终NPR接收结论。旧GI primary-ray miss包含直接天空，与DI环境相加会重叠；保留两者独立开关和旧GI语义，叠加时选择一份直接贡献，后续再按bounce归属拆分。详见 [环境光接入](../Ho-RTDI-Environment.md)。
+
+## 25. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
@@ -279,6 +291,7 @@
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
 | NRD 质量与预算 | 当前/历史normal codec已统一，真实GPU history与SB匹配，评分表示差异消除；仍需分别核对运动误差和原平面64帧失败。SB输入及每个DI/GI history各增加1080p约7.91 MiB，下一项转向实际场景/灯域支持，保留既有失败，旧历史预算设置不会自动迁移。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
+| 环境灯 / GI路径归属 | DI HDR天空PDF/RIS已接入并验证基础能量/世界遮挡；下一项评审窄镜面、小亮源的BRDF环境MIS及DI/GI直接天空重叠。现有开关可显式选择一份直接天空，尚未补secondary环境NEE。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 
 NRD 参考：[官方集成 README](https://github.com/NVIDIA-RTX/NRD)，以及用户参考工程 Assets/Scripts/NativePlugin/NRD 的 NrdDenoiserHelper / NrdFrameData。官方资料要求对应的辐射、命中距离与表面/运动 guides；本地参考还涉及 NRI/native ABI。后续应以可验证的输入契约和实际接入为单位推进，不能通过搬入整套原生框架或对 raw 输出简单模糊就宣称 NRD 已接好。

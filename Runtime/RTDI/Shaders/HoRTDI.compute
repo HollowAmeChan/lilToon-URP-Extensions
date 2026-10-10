@@ -17,10 +17,13 @@
 #pragma kernel SaveHistory HO_RTDI_NRD_ACTIVE
 #pragma kernel BuildPowerPdf
 #pragma kernel Presample
+#pragma kernel BuildEnvironmentPdf
+#pragma kernel PresampleEnvironment
 #pragma use_dxc
 #pragma target 6.0
 #pragma require inlineraytracing
 #define HO_RTDI_PRESAMPLING_ENABLED 1
+#define HO_RTDI_ENVIRONMENT_ENABLED 1
 // RIS target only: give narrow specular peaks more candidates; final shading stays physical.
 #define HO_RTDI_SPECULAR_PROPOSAL_IMPORTANCE 4.0
 #include "HoRTDIApplicationBridge.hlsl"
@@ -73,6 +76,21 @@ void Presample(uint3 id:SV_DispatchThreadID)
     RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTDIFrameIndex,0);
     RTXDI_LightBufferRegion local=(RTXDI_LightBufferRegion)0;local.numLights=(uint)_HoRTDIFrame.w;
     RTXDI_PresampleLocalLights(rng,_HoRTDIPdf,uint2(_HoRTDIPdfSize,_HoRTDIPdfSize),id.y,id.x,local,HoDIRIS());
+}
+[numthreads(8,8,1)]
+void BuildEnvironmentPdf(uint3 id:SV_DispatchThreadID)
+{
+    uint size=(uint)_HoRTDIEnvironment.x;if(any(id.xy>=size))return;
+    float weight=HoDILuminance(HoAtmosphereSampleRadiance(HoDIEnvironmentDirection((float2(id.xy)+.5)/size)));
+    _HoRTDIEnvironmentPdfOutput[id.xy]=isfinite(weight)?max(weight,1e-8):0;
+}
+[numthreads(256,1,1)]
+void PresampleEnvironment(uint3 id:SV_DispatchThreadID)
+{
+    if(id.x>=(uint)_HoRTDIRISLayout.x||id.y>=(uint)_HoRTDIRISLayout.y)return;
+    RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTDIFrameIndex,17);
+    RTXDI_RISBufferSegmentParameters segment=HoDIRIS();segment.bufferOffset=(uint)_HoRTDIEnvironment.w;
+    uint size=(uint)_HoRTDIEnvironment.x;RTXDI_PresampleEnvironmentMap(rng,_HoRTDIEnvironmentPdf,uint2(size,size),id.y,id.x,segment);
 }
 
 RTXDI_ReservoirBufferParameters HoDILayout()
@@ -141,7 +159,7 @@ void Initial(uint3 id:SV_DispatchThreadID)
 {
     if(!HoDIInside(id.xy))return;
     RTXDI_DIReservoir reservoir=RTXDI_EmptyDIReservoir();RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
-    if(RAB_IsSurfaceValid(surface)&&_HoRTDIFrame.z>0)
+    if(RAB_IsSurfaceValid(surface)&&(_HoRTDIFrame.z>0||_HoRTDIEnvironment.z>.5))
     {
         RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTDIFrameIndex,RTXDI_DI_GENERATE_INITIAL_SAMPLES_RANDOM_SEED);
         RTXDI_RandomSamplerState tileRng=RTXDI_InitRandomSampler(id.xy/16,(uint)_HoRTDIFrameIndex,RTXDI_DI_GENERATE_INITIAL_SAMPLES_RANDOM_SEED);
@@ -152,14 +170,16 @@ void Initial(uint3 id:SV_DispatchThreadID)
         p.numLocalLightSamples=(uint)_HoRTDISettings.x;
         p.localLightSamplingMode=_HoRTDIRISLayout.z>.5?ReSTIRDI_LocalLightSamplingMode_POWER_RIS:ReSTIRDI_LocalLightSamplingMode_UNIFORM;
         p.numInfiniteLightSamples=_HoRTDIFrame.z>_HoRTDIFrame.w?1:0;
+        p.numEnvironmentSamples=_HoRTDIEnvironment.z>.5?(uint)_HoRTDIEnvironment.y:0;
         p.brdfRayMinT=_HoRTDISettings.w;p.enableInitialVisibility=0;
         RTXDI_LightBufferParameters lights=(RTXDI_LightBufferParameters)0;
         lights.localLightBufferRegion.numLights=(uint)_HoRTDIFrame.w;
         lights.infiniteLightBufferRegion.firstLightIndex=(uint)_HoRTDIFrame.w;
         lights.infiniteLightBufferRegion.numLights=(uint)(_HoRTDIFrame.z-_HoRTDIFrame.w);
+        lights.environmentLightParams.lightPresent=_HoRTDIEnvironment.z>.5?1:0;lights.environmentLightParams.lightIndex=HO_RTDI_ENVIRONMENT_LIGHT_INDEX;
         RAB_LightSample sample=RAB_EmptyLightSample();
-        RTXDI_RISBufferSegmentParameters emptyRIS=(RTXDI_RISBufferSegmentParameters)0;
-        reservoir=RTXDI_SampleLightsForSurface(rng,tileRng,surface,p,lights,HoDIRIS(),emptyRIS,sample);
+        RTXDI_RISBufferSegmentParameters environmentRIS=HoDIRIS();environmentRIS.bufferOffset=(uint)_HoRTDIEnvironment.w;
+        reservoir=RTXDI_SampleLightsForSurface(rng,tileRng,surface,p,lights,HoDIRIS(),environmentRIS,sample);
         if(RTXDI_IsValidDIReservoir(reservoir))
         {
             // The pinned SDK's returned sample can diverge from the selected
