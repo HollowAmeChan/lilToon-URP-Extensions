@@ -445,3 +445,24 @@ SB原Normal从4到8 B/像素，720p/1080p增加约3.516/7.910 MiB，不计driver
 两个Win64 Mono release构建0 errors，实际D3D12 RG/compatibility EXE通过新增64²正交曲面部署gate：独立mesh ray/triangle与Smith GGX，192预热/32观察，中央16²，单候选无ReSTIR复用，raw/filtered镜面L1=0.000588/0.000814，满足原2%/5%条件，且真实camera demand含高精度请求。测试球体先停用再延后销毁，恢复序列化Quad与原灯/材质；旧初始visibility、混合/temporal-only、HDR/noise/F0/点灯边界通过，D3D11实际EXE inactive通过，packed NRD DLL SHA与源一致。当前Player HDR最差约1.196%、filtered noise MSE≈0.0000992；新增曲面观察推进RNG序列，不当作单项消融。
 
 Editor两条核心/NRD、材质/点灯边界、HDR九组与范围、动态灯、目标尺寸以及必要的GI两条路径回归通过；Roslyn无错误，派生重建`--check`通过，无新增本步DI/NRD shader/command-buffer诊断，其他模块既有警告另计。GI只补同一个SB精度请求和释放声明，没有改变GI算法。
+
+## 曲面相机运动、独立序列与历史表示缺口
+
+步骤22只扩展Editor验收，未改生产采样、NRD或资源布局。`RunCurvedMotion` / `RunCurvedMotionCompatibility` 使用前步球体/同色Near-Far灯，在两种roughness、单Near及双灯无/T/S/TS五种状态下测三个frame-index起点0/1024/4096，共30组/路径。每组先关闭NRD、清除DI/NRD history-valid、设定可复现frame起点，再开启NRD预热192帧；随后64帧按15deg/s、60Hz从0到16度绕视。CPU提前为每个相机姿态缓存真实网格ray/triangle位置与插值法线，观察时重新计算该姿态的V/局部灯/GGX参考。没有用上一帧或raw结果代替真值。
+
+静态世界的NRD world-space MV保持0，相机运动由当前/上一帧矩阵描述，符合[官方运动输入契约](https://github.com/NVIDIA-RTX/NRD#non-noisy-inputs)；用户参考RAB_Surface也以current/previous g-buffer和相应矩阵读取表面。三个frame起点同时改变ReSTIR/NRD的帧序列，不是三个独立场景或物理时间轨迹；单灯确定性case的序列一致是预期行为。
+
+| 两条路径各30组、64帧运动 | 最小 | 最大 |
+| --- | --- | --- |
+| raw diffuse/reference | 0.991727 | 1.008307 |
+| raw specular/reference | 0.986156 | 1.016857 |
+| filtered diffuse/reference | 0.979710 | 0.994401 |
+| filtered specular/reference | 0.989396 | 1.011930 |
+| filtered specular L1/reference | 0.024551 | 0.129224 |
+| filtered specular 归一化MSE | 0.000847 | 0.025721 |
+
+所有组通过原3%raw能量、2%单灯raw形状、5%filtered能量、15%filtered L1门槛。低roughness单灯raw L1≈0.000445、filtered≈0.034569；双灯T/TS的filtered L1约0.115..0.129，已有明显的运动形状/噪声误差，不能因gate通过宣称精确保真。两条路径数据相同，无新增本步shader/command-buffer诊断，Roslyn无错误。当前只覆盖固定球体的相机运动和中央32²ROI，未证明对象运动、轮廓、TAA、normal-map或任意网格；没有新增本步Player运动验收，前步Player只证明静态部署。
+
+**新的待修缺口：** 静态SB升为16-bit后，DI/GI仍把两种法线各以2×8-bit oct存入16-byte主表面历史。当前`RAB_GetGBufferSurface(false)`读取SB高精度normal，previous分支读取这份8-bit历史，表面材质/位置不变时也可能给候选不同评分。`RunCurvedHistoryAudit`明确只在隔离compatibility项目、固定16-byte布局下读取实际SB Normal与GraphicsBuffer历史；以同一个CPU mesh位置、同一灯/材质计算DI现有diffuse+4*specular评分，仅改变来自两份实际数据的法线。测得normal最大差0.580135°、target L1≈0.008821、最大相对差≈0.077467。该CPU诊断不是GPU bias证明，也没有把它认定为原64帧平面失败的唯一原因。
+
+下一项优先评审并修复当前/历史法线表示的一致性，保留现有PBR量化和资源接口；量化历史buffer布局/显存成本，再用这里的独立序列、原静态/平面失败、必要的共享GI回归及实际Player检查。不要仅因这些较宽的能量门槛通过就跳过该接口差异，也不要继续调NRD或输出增益来补它。

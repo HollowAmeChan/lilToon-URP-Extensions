@@ -8,9 +8,14 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     public static partial class HoRTDIValidation
     {
         private static bool forceCurved;
+        private static bool forceCurvedMotion;
+        private static bool forceCurvedHistoryAudit;
         public static void RunCurved()
         {Require(Application.dataPath.Replace('\\','/').Contains("/.codex-research/"),"Use the isolated project");forceCurved=forceDenoise=true;Run();}
         public static void RunCurvedCompatibility(){compatibility=true;RunCurved();}
+        public static void RunCurvedMotion(){forceCurvedMotion=true;RunCurved();}
+        public static void RunCurvedMotionCompatibility(){compatibility=true;RunCurvedMotion();}
+        public static void RunCurvedHistoryAudit(){compatibility=true;forceCurvedHistoryAudit=true;RunCurved();}
 
         private struct CurvedHit {internal Vector3 position,normal;internal bool valid;}
         private static CurvedHit[] CurvedReference(Mesh mesh,Transform transform,int size)
@@ -62,6 +67,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var rawDiffuse=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));var rawSpecular=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
             var filteredDiffuse=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));var filteredSpecular=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
             var normals=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));var depth=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
+            if(forceCurvedMotion){ValidateCurvedMotion(receiver,far,rawDiffuse,rawSpecular,filteredDiffuse,filteredSpecular);return;}
             bool rawQuality=true,filteredQuality=true;
             foreach(float roughness in new[]{.3f,.7f})foreach(int mode in new[]{0,1,2,3,4})
             {
@@ -73,6 +79,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 Require(demand.NeedsHighPrecisionSurfaceNormal&&!demand.NeedsSurfaceSemantic,"RT normal precision request added semantic resources or was lost");
                 if(compatibility)Require(HoSurfaceBufferPass.CompatibilitySource.NormalTexture.rt.graphicsFormat==HoSurfaceBufferFormatUtility.GetNormalGraphicsFormat(true),"Compatibility SB normal precision was not upgraded");
                 float rough=Mathf.Round(Mathf.Abs(ReadCenter(context.nrdNormal.rt).b*2-1)*255)/255;
+                if(forceCurvedHistoryAudit){AuditCurvedHistory(context,reference,rough,normals,size);return;}
                 ReadImage(context.nrdNormal.rt,normals);ReadImage(context.nrdViewZ.rt,depth);
                 float normalWorst=0,depthWorst=0;
                 double diffReference=0,specReference=0,diffRaw=0,specRaw=0,diffFiltered=0,specFiltered=0,diffRawError=0,specRawError=0,diffFilteredError=0,specFilteredError=0,specRawMse=0,specFilteredMse=0,specReferenceSquares=0;
@@ -106,6 +113,65 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(compatibility)Require(HoSurfaceBufferPass.CompatibilitySource.NormalTexture.rt.graphicsFormat==HoSurfaceBufferFormatUtility.GetNormalGraphicsFormat(false),"Disabled DI did not restore the compact SB normal format");
             feature.SetActive(true);RenderCamera();Require(HoAttributeCompositeConsumerRegistry.LastSnapshot.NeedsHighPrecisionSurfaceNormal,"DI re-enable lost the precision request");
             Debug.Log("[HoRTDIValidation] PASS curved single/pair-light NRD energy and shape; compatibility="+compatibility);
+        }
+
+        private static void ValidateCurvedMotion(GameObject receiver,Light far,Texture2D rawDiffuse,Texture2D rawSpecular,Texture2D filteredDiffuse,Texture2D filteredSpecular)
+        {
+            const int size=128,observations=64;var references=new CurvedHit[observations][];
+            for(int frame=0;frame<observations;frame++){SetLocalView((frame+1)*.25f);references[frame]=CurvedReference(receiver.GetComponent<MeshFilter>().sharedMesh,receiver.transform,size);}
+            bool rawQuality=true,filteredQuality=true;
+            foreach(float roughness in new[]{.3f,.7f})foreach(int mode in new[]{0,1,2,3,4})foreach(int seed in new[]{0,1024,4096})
+            {
+                SetLocalView(0);far.enabled=mode>0;feature.Settings.initialSamples=mode==0?1:8;feature.Settings.temporal=mode==2||mode==4;feature.Settings.spatial=mode==3||mode==4;
+                surfaceMaterial.SetFloat("_Smoothness",1-roughness);feature.Settings.denoise=false;RenderCamera();
+                var context=feature.LastContext;context.frame=seed;context.historyValid=context.nrdHistoryValid=false;feature.Settings.denoise=true;
+                for(int frame=0;frame<192;frame++)RenderCamera();
+                float rough=Mathf.Round(Mathf.Abs(ReadCenter(context.nrdNormal.rt).b*2-1)*255)/255;
+                double diffReference=0,specReference=0,diffRaw=0,specRaw=0,diffFiltered=0,specFiltered=0,diffRawL1=0,specRawL1=0,diffL1=0,specL1=0,rawMse=0,filteredMse=0,referenceSquares=0;
+                for(int frame=0;frame<observations;frame++)
+                {
+                    SetLocalView((frame+1)*.25f);RenderCamera();ReadImage(context.diffuse.rt,rawDiffuse);ReadImage(context.specular.rt,rawSpecular);ReadImage(context.filteredDiffuse.rt,filteredDiffuse);ReadImage(context.filteredSpecular.rt,filteredSpecular);
+                    for(int y=48;y<80;y++)for(int x=48;x<80;x++)
+                    {
+                        var hit=references[frame][y*size+x];var a=CurvedLightReference(hit,light,rough);var b=CurvedLightReference(hit,far,rough);float d=a.diffuse+b.diffuse,s=a.specular+b.specular;
+                        float dr=rawDiffuse.GetPixel(x,y).r,sr=rawSpecular.GetPixel(x,y).r,df=filteredDiffuse.GetPixel(x,y).r,sf=filteredSpecular.GetPixel(x,y).r;
+                        diffReference+=d;specReference+=s;diffRaw+=dr;specRaw+=sr;diffFiltered+=df;specFiltered+=sf;
+                        diffRawL1+=Math.Abs(dr-d);specRawL1+=Math.Abs(sr-s);diffL1+=Math.Abs(df-d);specL1+=Math.Abs(sf-s);
+                        rawMse+=(sr-s)*(sr-s);filteredMse+=(sf-s)*(sf-s);referenceSquares+=s*s;
+                    }
+                }
+                Debug.Log($"[HoRTDIValidation] CURVED_MOTION rough={rough:F4} mode={mode} seed={seed} rawDiffuseRatio={diffRaw/diffReference:F6} rawSpecularRatio={specRaw/specReference:F6} filteredDiffuseRatio={diffFiltered/diffReference:F6} filteredSpecularRatio={specFiltered/specReference:F6} rawDiffuseL1={diffRawL1/diffReference:F6} rawSpecularL1={specRawL1/specReference:F6} filteredDiffuseL1={diffL1/diffReference:F6} filteredSpecularL1={specL1/specReference:F6} rawNormalizedMSE={rawMse/referenceSquares:F6} filteredNormalizedMSE={filteredMse/referenceSquares:F6}; 64 frames, 15deg/s, 60Hz, independent mesh reference");
+                rawQuality&=Math.Abs(diffRaw/diffReference-1)<.03&&Math.Abs(specRaw/specReference-1)<.03;
+                if(mode==0)rawQuality&=diffRawL1/diffReference<.02&&specRawL1/specReference<.02;
+                filteredQuality&=Math.Abs(diffFiltered/diffReference-1)<.05&&Math.Abs(specFiltered/specReference-1)<.05&&diffL1/diffReference<.15&&specL1/specReference<.15;
+            }
+            Require(rawQuality,"Curved camera motion raw energy/shape failed");Debug.Log("[HoRTDIValidation] PASS curved camera motion raw across three independent sequences; compatibility="+compatibility);
+            Require(filteredQuality,"Curved camera motion filtered energy/shape failed");Debug.Log("[HoRTDIValidation] PASS curved camera motion filtered energy/shape across three independent sequences; compatibility="+compatibility);
+        }
+
+        [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+        private struct CurvedHistory16 {internal uint depth,normals,diffuse,specular;}
+        private static Vector3 CurvedDecodeSbNormal(float x,float y)
+        {
+            var n=new Vector3(x*2-1,y*2-1,1-Mathf.Abs(x*2-1)-Mathf.Abs(y*2-1));
+            if(n.z<0){float oldX=n.x;n.x=(1-Mathf.Abs(n.y))*(oldX<0?-1:1);n.y=(1-Mathf.Abs(oldX))*(n.y<0?-1:1);}
+            return n.normalized;
+        }
+        private static void AuditCurvedHistory(lilToon.URP.Extensions.RTDI.HoRTDIContext context,CurvedHit[] reference,float rough,Texture2D normals,int size)
+        {
+            Require(context.history.stride==16,"Audit expects the current pinned 16-byte history layout");
+            var history=new CurvedHistory16[context.history.count];context.history.GetData(history);
+            ReadImage(HoSurfaceBufferPass.CompatibilitySource.NormalTexture.rt,normals);
+            double scoreReference=0,scoreError=0;float angleWorst=0,relativeWorst=0;
+            for(int y=48;y<80;y++)for(int x=48;x<80;x++)
+            {
+                int p=y*size+x;var h=history[p];Require((h.diffuse>>24)!=0,"History audit encountered an invalid receiver");var encoded=normals.GetPixel(x,y);
+                var current=reference[p];current.normal=CurvedDecodeSbNormal(encoded.r,encoded.g);var previous=current;previous.normal=CurvedDecodeSbNormal((h.normals&255)/255f,((h.normals>>8)&255)/255f);
+                angleWorst=Mathf.Max(angleWorst,Vector3.Angle(current.normal,previous.normal));
+                var a=CurvedLightReference(current,light,rough);var b=CurvedLightReference(previous,light,rough);float currentScore=a.diffuse+4*a.specular,previousScore=b.diffuse+4*b.specular;
+                scoreReference+=currentScore;scoreError+=Math.Abs(currentScore-previousScore);relativeWorst=Mathf.Max(relativeWorst,Mathf.Abs(previousScore/currentScore-1));
+            }
+            Debug.Log($"[HoRTDIValidation] CURVED_HISTORY_AUDIT stride={context.history.stride} normalMaxDegrees={angleWorst:F6} targetL1={scoreError/scoreReference:F6} targetMaxRelative={relativeWorst:F6}; actual stationary SB/history normals, independent CPU DI score; diagnostic only, not a GPU bias proof");
         }
     }
 }
