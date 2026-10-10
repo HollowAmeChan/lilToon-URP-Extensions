@@ -38,6 +38,8 @@ Feature 中的强度、染色与水平旋转是兜底值；`HoAtmosphereVolume` 
 
 天空捕获图可跨相机复用；采样参数和有效性按相机发布。Revision 是内容与求值参数的相等性标记，不承诺单调递增；仅用于判断历史是否需要失效。
 
+捕获纹理由 Cache 持有并显式释放，使用 `HideAndDontSave` 防止切场景时被卸载。每次准备先检查 RTHandle 内的 Unity 纹理是否仍有效；对象被销毁或句柄已释放时重建，只有显存丢失时重新创建原纹理。两种情况都会重新捕获，即使更新方式为 `Manual`，也不会发布已经失效的缓存。黑色回退纹理被销毁时同样重建包装，不访问旧引用。
+
 256 分辨率的 RGBA16F 六面图占约 3 MiB，RGBA32F 约 6 MiB，不含驱动额外开销。每次更新绘制六面；缓存命中时只发布输入。RenderGraph 捕获使用显式 CubemapFace 绑定，避开本地 D3D11 的 raster attachment 面选择问题；主相机矩阵在捕获后恢复。
 
 ## 消费契约
@@ -76,3 +78,5 @@ float3 radiance = HoAtmosphereSampleRadiance(directionWS);
 隔离工程入口为 `lilToon.URP.Extensions.Atmosphere.HoAtmosphereValidation.Run`；兼容模式使用 `RunCompatibility`，要求工程定义 `URP_COMPATIBILITY_MODE`。测试在 RenderGraph 存活期间采样并写入持久目标再读回，不能用 CPU `Shader.GetGlobalTexture` 代替 GPU 资源验证。
 
 Unity 6000.3.15f1 下，D3D12 RenderGraph、D3D11 RenderGraph 与 D3D11 compatibility 均通过。覆盖六面中心/斜向/角点方向与 HDR、Unity 三类天空来源、参数与 Volume 覆盖、缓存/刷新、跨相机、纹理内容变化、原生存储恢复、主相机绘制（含半分辨率）、缺失/禁用/销毁回退与调试显示。测试日志位于隔离工程 `.codex-research/RTInputValidation/atmosphere-*.log`，不提交生成的工程缓存。
+
+2026-10-10 切场景修复追加回归：D3D12 / D3D11 RenderGraph 均通过。验证保留 RTHandle 后 `DestroyImmediate` 底层纹理、手动模式释放句柄、连续三次 `EditorSceneManager.NewScene(..., Single)`、切场景后的纹理销毁恢复及失效资源 Dispose；重建后实际 GPU 采样保持 HDR 数值，正常切换复用已有捕获。日志为 `atmosphere-scene-recovery-d3d12.log` / `atmosphere-scene-recovery-d3d11.log`。这轮同时执行了上述原有环境测试。

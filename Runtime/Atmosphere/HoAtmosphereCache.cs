@@ -39,7 +39,11 @@ namespace lilToon.URP.Extensions.Atmosphere
 
         internal Input Prepare(HoAtmosphereSettings settings, Light sun)
         {
-            if (blackWrapper == null) blackWrapper = RTHandles.Alloc(CoreUtils.blackCubeTexture);
+            if (blackWrapper == null || blackWrapper.externalTexture == null)
+            {
+                blackWrapper?.Release();
+                blackWrapper = RTHandles.Alloc(CoreUtils.blackCubeTexture);
+            }
             if (settings.source == HoAtmosphereSource.Constant)
                 return new Input(blackWrapper, null, true, false, 0, 1, Time.frameCount, (uint)Hash((int)epoch, settings.constantColor.GetHashCode()));
             if (settings.source == HoAtmosphereSource.RadianceCubemap)
@@ -64,7 +68,9 @@ namespace lilToon.URP.Extensions.Atmosphere
             if (!SystemInfo.IsFormatSupported(format, GraphicsFormatUsage.Render) || !SystemInfo.IsFormatSupported(format, GraphicsFormatUsage.Sample)) return Missing();
 
             int resolution = Mathf.NextPowerOfTwo(Mathf.Clamp(settings.resolution, 16, Mathf.Min(1024, SystemInfo.maxTextureSize)));
-            if (capturedCube == null || capturedCube.rt.width != resolution || capturedCube.rt.graphicsFormat != format)
+            // RTHandle can outlive its Unity object when a scene unloads or the texture is destroyed.
+            var captureTexture = capturedCube != null ? capturedCube.rt : null;
+            if (captureTexture == null || captureTexture.width != resolution || captureTexture.graphicsFormat != format)
             {
                 capturedCube?.Release();
                 var desc = new RenderTextureDescriptor(resolution, resolution)
@@ -73,12 +79,17 @@ namespace lilToon.URP.Extensions.Atmosphere
                     dimension = TextureDimension.Cube, volumeDepth = 1, msaaSamples = 1,
                     useMipMap = false, autoGenerateMips = false, sRGB = false
                 };
-                capturedCube = RTHandles.Alloc(new RenderTexture(desc) { name = "HoAtmosphere Raw Radiance", filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp }, transferOwnership: true);
+                captureTexture = new RenderTexture(desc)
+                {
+                    name = "HoAtmosphere Raw Radiance", hideFlags = HideFlags.HideAndDontSave,
+                    filterMode = FilterMode.Bilinear, wrapMode = TextureWrapMode.Clamp
+                };
+                capturedCube = RTHandles.Alloc(captureTexture, transferOwnership: true);
                 completed = false;
             }
-            if (!capturedCube.rt.IsCreated())
+            if (!captureTexture.IsCreated())
             {
-                if (!capturedCube.rt.Create()) return Missing();
+                if (!captureTexture.Create()) return Missing();
                 completed = false;
             }
 

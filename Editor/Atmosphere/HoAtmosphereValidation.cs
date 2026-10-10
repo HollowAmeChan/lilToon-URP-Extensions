@@ -106,6 +106,7 @@ namespace lilToon.URP.Extensions.Atmosphere
                 cache.capturedCube.rt.Release();
                 Near(Render()[0], samples[0], "lost native cube restoration");
                 Require(feature.CaptureCount == 2, "lost storage must recapture");
+                ValidateDestroyedCapture(cache, samples[0]);
                 var initialCount = feature.CaptureCount;
                 previousRevision = probe.revision;
                 feature.Settings.intensity = 2; feature.Settings.tint = new Color(.5f, 1, .25f); feature.Settings.rotationY = 90;
@@ -153,12 +154,67 @@ namespace lilToon.URP.Extensions.Atmosphere
                 Near(RenderAndReadTarget(), Color.green, "debug availability presentation");
                 volume.debugMode.value = HoAtmosphereDebugMode.All; Render();
                 volume.debugMode.value = HoAtmosphereDebugMode.Off;
+                ValidateSceneSwitch(cache);
                 feature.Settings.source = HoAtmosphereSource.SceneSkybox; RenderSettings.skybox = null; Invalid(Render(), "missing scene sky");
+                Object.DestroyImmediate(cache.capturedCube.rt);
                 feature.Dispose(); Require(Shader.GetGlobalVector(HoAtmosphereBindings.ParametersId).w == 0, "dispose reset");
-                Debug.Log("[HoAtmosphereValidation] PASS: native six-face HDR + off-axis orientation, opaque canary, cache/refresh, cube/constant, built-in sky sources, volume, reset, debug; API=" + SystemInfo.graphicsDeviceType + "; compatibility=" + compatibility);
+                Debug.Log("[HoAtmosphereValidation] PASS: native six-face HDR + off-axis orientation, opaque canary, cache/refresh, destroyed texture/handle recovery, scene switches, cube/constant, built-in sky sources, volume, reset, debug; API=" + SystemInfo.graphicsDeviceType + "; compatibility=" + compatibility);
                 Finish(null);
             }
             catch (Exception error) { Finish(error); }
+        }
+        private static void ValidateDestroyedCapture(HoAtmosphereCache cache, Color expected)
+        {
+            var count = feature.CaptureCount;
+            var handle = cache.capturedCube;
+            var destroyed = handle.rt;
+            Object.DestroyImmediate(destroyed);
+            Require(handle != null && handle.rt == null, "destroyed Unity texture must leave a live RTHandle");
+            Near(Render()[0], expected, "destroyed cube restoration");
+            Require(cache.capturedCube != handle && cache.capturedCube.rt != null && cache.capturedCube.rt.IsCreated(), "destroyed cube must rebuild its handle and texture");
+            Require(feature.CaptureCount == count + 1, "destroyed cube must recapture once");
+            Render(); Require(feature.CaptureCount == count + 1, "rebuilt cube must be cached");
+            feature.Settings.update = HoAtmosphereUpdate.Manual;
+            handle = cache.capturedCube; handle.Release();
+            Near(Render()[0], expected, "released handle restoration in manual mode");
+            Require(cache.capturedCube != handle && feature.CaptureCount == count + 2, "manual mode must recapture invalid resources");
+            feature.Settings.update = HoAtmosphereUpdate.OnChange;
+            Near(Render()[0], expected, "return to change tracking after recovery");
+            Debug.Log("[HoAtmosphereValidation] Destroyed texture + released handle recovery PASS");
+        }
+        private static void ValidateSceneSwitch(HoAtmosphereCache cache)
+        {
+            sky = Mat("Hidden/lilToon/URP/Atmosphere/ValidationSky"); sky.SetFloat("_TestGain", 8);
+            feature.Settings.source = HoAtmosphereSource.SkyboxMaterial; feature.Settings.skyboxMaterial = sky;
+            var sceneSun = RenderSettings.sun;
+            RenderSettings.sun = null;
+            if (sceneSun != null) Object.DestroyImmediate(sceneSun.gameObject);
+            Near(Render()[0], new Color(8, 4, 4), "pre-switch sky");
+            var count = feature.CaptureCount;
+            var handle = cache.capturedCube;
+            Require((handle.rt.hideFlags & HideFlags.DontUnloadUnusedAsset) != 0, "owned sky texture must survive unused asset unloading");
+            for (int index = 0; index < 3; ++index)
+            {
+                var previousCamera = camera;
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+                Require(previousCamera == null, "single scene switch must destroy the old scene camera");
+                camera = Keep(new GameObject("Atmosphere scene-switch camera " + index)).AddComponent<Camera>();
+                camera.enabled = false; camera.clearFlags = CameraClearFlags.SolidColor;
+                camera.GetUniversalAdditionalCameraData().volumeLayerMask = -1;
+                Near(Render()[0], new Color(8, 4, 4), "persistent source after scene switch " + index);
+                Require(cache.capturedCube == handle && feature.CaptureCount == count,
+                    "scene switch must reuse valid capture resources " + index + ": same handle=" + (cache.capturedCube == handle) + ", captures=" + feature.CaptureCount + ", expected=" + count);
+                RenderSettings.skybox = sky; feature.Settings.source = HoAtmosphereSource.SceneSkybox;
+                Near(Render()[0], new Color(8, 4, 4), "scene sky after scene switch " + index);
+                RenderSettings.skybox = null; Invalid(Render(), "empty scene sky " + index);
+                RenderSettings.skybox = sky; Near(Render()[0], new Color(8, 4, 4), "restored scene sky " + index);
+                feature.Settings.source = HoAtmosphereSource.SkyboxMaterial;
+            }
+            // Reproduce loss of the Unity object while the renderer/cache survives a scene switch.
+            Object.DestroyImmediate(handle.rt);
+            Near(Render()[0], new Color(8, 4, 4), "destroyed capture after scene switch");
+            Require(feature.CaptureCount == count + 1, "destroyed capture after scene switch must recapture once");
+            Debug.Log("[HoAtmosphereValidation] Three single-scene switches + post-switch texture recovery PASS");
         }
         private static void ValidateBuiltin(Cubemap cube)
         {
@@ -208,7 +264,12 @@ namespace lilToon.URP.Extensions.Atmosphere
             Mathf.Abs(actual.r - expected.r) < epsilon && Mathf.Abs(actual.g - expected.g) < epsilon && Mathf.Abs(actual.b - expected.b) < epsilon,
             label + ": expected " + expected + ", got " + actual);
         private static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }
-        private static T Keep<T>(T value) where T : Object { objects.Add(value); return value; }
+        private static T Keep<T>(T value) where T : Object
+        {
+            // Test-created assets model persistent project assets; scene GameObjects must still unload.
+            if (!(value is GameObject)) value.hideFlags = HideFlags.HideAndDontSave;
+            objects.Add(value); return value;
+        }
         private static Material Mat(string name) { var shader = Shader.Find(name); Require(shader != null, "Missing shader " + name); return Keep(new Material(shader)); }
         private static void Finish(Exception error)
         {
