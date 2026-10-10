@@ -5,7 +5,13 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.Atmosphere
 {
-    public enum HoAtmosphereDebugMode { Off, Radiance, Directions, Availability, All = 255 }
+    public enum HoAtmosphereDebugMode
+    {
+        Off, Radiance, Directions, Availability,
+        [InspectorName("介质密度切片")] MediumDensity,
+        [InspectorName("介质激活切片")] MediumActivation,
+        All = 255
+    }
 
     [Serializable]
     public sealed class HoAtmosphereDebugModeParameter : VolumeParameter<HoAtmosphereDebugMode>
@@ -18,7 +24,8 @@ namespace lilToon.URP.Extensions.Atmosphere
     [SupportedOnRenderPipeline(typeof(UniversalRenderPipelineAsset))]
     public sealed class HoAtmosphereVolume : VolumeComponent, IPostProcessComponent
     {
-        [InspectorName("启用")] public BoolParameter enable = new BoolParameter(true);
+        [InspectorName("环境输入启用"), Tooltip("仅覆盖环境辐射输入，不关闭基础大气区域介质。")]
+        public BoolParameter enable = new BoolParameter(true);
         public MinFloatParameter intensity = new MinFloatParameter(1, 0);
         public ColorParameter tint = new ColorParameter(Color.white, true, false, false);
         [Tooltip("世界空间水平旋转（度）；未覆盖时使用 feature 默认值。")]

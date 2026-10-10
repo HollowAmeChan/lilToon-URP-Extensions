@@ -12,18 +12,23 @@ namespace lilToon.URP.Extensions.Atmosphere
         [SerializeField] private HoAtmosphereSettings settings = new HoAtmosphereSettings();
         private HoAtmosphereCache cache;
         private EnvironmentPass environmentPass;
+        private HoAtmosphereMediumPass mediumPass;
         private HoAtmosphereDebugPass debugPass;
         private Material debugMaterial;
         private bool registered;
         public HoAtmosphereSettings Settings => settings;
         public uint CaptureCount => cache != null ? cache.CaptureCount : 0;
         public string Status { get; private set; } = "未生产";
+        public HoAtmosphereMediumSnapshot Medium { get; private set; }
+        public string MediumStatus => Medium.status ?? "未生产";
         public void RefreshEnvironment() => cache?.Refresh();
 
         public override void Create()
         {
             cache ??= new HoAtmosphereCache();
             environmentPass = new EnvironmentPass(cache);
+            mediumPass?.Dispose();
+            mediumPass = new HoAtmosphereMediumPass();
             debugPass?.ReleaseDebugResources();
             debugPass = new HoAtmosphereDebugPass();
             if (!registered)
@@ -33,17 +38,31 @@ namespace lilToon.URP.Extensions.Atmosphere
             }
         }
 
-        private void ResetCamera(ScriptableRenderContext context, Camera camera) => HoAtmosphereBindings.ResetGlobals();
+        private void ResetCamera(ScriptableRenderContext context, Camera camera)
+        {
+            HoAtmosphereBindings.ResetGlobals();
+            HoAtmosphereMediumBindings.ResetGlobals();
+        }
 
         public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData renderingData)
         {
             Camera camera = renderingData.cameraData.camera;
             var volume = VolumeManager.instance.stack.GetComponent<HoAtmosphereVolume>();
             bool enabled = settings.enabled && (volume == null || !volume.enable.overrideState || volume.enable.value);
-            if (!enabled || renderingData.cameraData.renderType != CameraRenderType.Base ||
+            if (!settings.enabled || renderingData.cameraData.renderType != CameraRenderType.Base ||
                 (camera.cameraType != CameraType.Game && (camera.cameraType != CameraType.SceneView || !settings.inSceneView)))
             {
                 Status = "本相机未生产";
+                Medium = default;
+                return;
+            }
+            Medium = HoAtmosphereRegionRegistry.Capture();
+            mediumPass.Setup(Medium);
+            renderer.EnqueuePass(mediumPass);
+            if (!enabled)
+            {
+                Status = "环境输入关闭";
+                EnqueueDebug(renderer, camera, volume);
                 return;
             }
             Light sun = RenderSettings.sun;
@@ -63,7 +82,10 @@ namespace lilToon.URP.Extensions.Atmosphere
             environmentPass.Setup(input, parameters, color, constant, input.valid ? revision : 0);
             renderer.EnqueuePass(environmentPass);
             Status = input.valid ? (input.capture ? "已安排天空捕获" : "复用环境输入") : "天空来源缺失或不支持，输出无效/黑色";
-
+            EnqueueDebug(renderer, camera, volume);
+        }
+        private void EnqueueDebug(ScriptableRenderer renderer, Camera camera, HoAtmosphereVolume volume)
+        {
             if (volume != null && volume.debugMode.value != HoAtmosphereDebugMode.Off &&
                 (camera.cameraType == CameraType.SceneView ? volume.debugInSceneView.value : volume.debugInGameView.value))
             {
@@ -86,6 +108,7 @@ namespace lilToon.URP.Extensions.Atmosphere
             registered = false;
             HoAtmosphereBindings.ResetGlobals();
             cache?.Dispose(); cache = null;
+            mediumPass?.Dispose(); mediumPass = null; Medium = default;
             debugPass?.ReleaseDebugResources(); debugPass = null;
             CoreUtils.Destroy(debugMaterial); debugMaterial = null;
             environmentPass = null;

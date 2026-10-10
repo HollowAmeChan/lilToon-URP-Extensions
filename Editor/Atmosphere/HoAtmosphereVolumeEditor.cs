@@ -27,7 +27,7 @@ namespace lilToon.URP.Extensions.Editor.Atmosphere
             {
                 using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                 {
-                    PropertyField(enable, new GUIContent("启用")); PropertyField(intensity, new GUIContent("强度"));
+                    PropertyField(enable, new GUIContent("环境输入启用")); PropertyField(intensity, new GUIContent("强度"));
                     PropertyField(tint, new GUIContent("染色")); PropertyField(rotation, new GUIContent("水平旋转（度）"));
                 }
             }
@@ -38,7 +38,9 @@ namespace lilToon.URP.Extensions.Editor.Atmosphere
                     PropertyField(mode, new GUIContent("调试模式"));
                     string description = mode.value.intValue == 1 ? "全方向 HDR 辐射的经纬图，中心 +Z、右侧 +X、上方 +Y。" :
                         mode.value.intValue == 2 ? "世界方向映射到 RGB；与天空颜色无关。" :
-                        mode.value.intValue == 3 ? "绿色为有效来源，洋红色为来源缺失。有效的黑色天空仍为绿色。" : "";
+                        mode.value.intValue == 3 ? "绿色为有效来源，洋红色为来源缺失。有效的黑色天空仍为绿色。" :
+                        mode.value.intValue == 4 ? "区域局部 XY 中央切片：灰度为密度乘体积光激活权重。" :
+                        mode.value.intValue == 5 ? "区域局部 XY 中央切片：灰度为体积光激活权重。" : "";
                     if (description.Length > 0) EditorGUILayout.HelpBox(description, MessageType.None);
                     PropertyField(scene, new GUIContent("Debug In Scene View"));
                     PropertyField(game, new GUIContent("Debug In Game View"));

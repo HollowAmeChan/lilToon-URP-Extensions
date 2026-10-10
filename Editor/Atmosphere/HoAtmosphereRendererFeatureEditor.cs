@@ -44,6 +44,7 @@ namespace lilToon.URP.Extensions.Editor.Atmosphere
             var feature = (HoAtmosphereRendererFeature)target;
             EditorGUILayout.LabelField("运行状态", feature.Status);
             EditorGUILayout.LabelField("累计捕获", feature.CaptureCount.ToString());
+            EditorGUILayout.LabelField("空间介质", feature.MediumStatus);
         }
         private static void Draw(SerializedProperty settings, string name, string label) =>
             EditorGUILayout.PropertyField(settings.FindPropertyRelative(name), new GUIContent(label), true);

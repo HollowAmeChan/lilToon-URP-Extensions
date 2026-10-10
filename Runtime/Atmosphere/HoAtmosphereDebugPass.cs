@@ -20,20 +20,24 @@ namespace lilToon.URP.Extensions.Atmosphere
             public int mode;
             public Vector2Int size;
             public HoAtmosphereRenderGraphResources input;
+            public HoAtmosphereMediumResources medium;
         }
         public override void RecordRenderGraph(RenderGraph graph, ContextContainer frameData)
         {
             var input = frameData.GetOrCreate<HoAtmosphereRenderGraphResources>();
             var output = CreateDebugTarget(graph, frameData);
+            var medium = frameData.GetOrCreate<HoAtmosphereMediumResources>();
             using (var builder = graph.AddRasterRenderPass<PassData>("HoAtmosphere Debug", out var data))
             {
-                data.material = material; data.mode = (int)mode; data.input = input; data.size = DebugSize(graph, output);
+                data.material = material; data.mode = (int)mode; data.input = input; data.medium = medium; data.size = DebugSize(graph, output);
                 if (input.radianceTexture.IsValid()) builder.UseTexture(input.radianceTexture, AccessFlags.Read);
+                if (medium.densityTexture.IsValid()) builder.UseTexture(medium.densityTexture, AccessFlags.Read);
                 builder.SetRenderAttachment(output, 0, AccessFlags.Write);
                 builder.AllowGlobalStateModification(true);
                 builder.SetRenderFunc(static (PassData d, RasterGraphContext context) =>
                 {
-                    HoAtmosphereBindings.Bind(context.cmd, d.input);
+                    if (d.input.radianceTexture.IsValid()) HoAtmosphereBindings.Bind(context.cmd, d.input);
+                    HoAtmosphereMediumBindings.Bind(context.cmd, d.medium, d.medium.snapshot.sampleTime);
                     HoDebugGrid.Draw(context.cmd, d.material, d.mode, ModeId, HoAtmosphereDebugViewInfo.Views, d.size);
                 });
             }
