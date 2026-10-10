@@ -22,7 +22,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     public VolumeProfile profile;
     private RenderTexture target;
     private bool unsupported;
-    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak,pointDepthMax,pointShadowMax,coloredSpecRelative,coloredSpecLeak,noisyMetalMean,noisyMetalReference,noisyCameraMean,noisyCameraTint,hdrRelative,hdrRawRelative,initialVisibilityShadowRatio,mixedSpecularRatio,mixedDiffuseRatio,temporalMixedSpecularRatio,temporalMixedDiffuseRatio,curvedRawL1,curvedFilteredL1,environmentRawRatio,environmentFilteredRatio,environmentShadow;public int temporalMixedMaxHistory;}
+    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak,pointDepthMax,pointShadowMax,coloredSpecRelative,coloredSpecLeak,noisyMetalMean,noisyMetalReference,noisyCameraMean,noisyCameraTint,hdrRelative,hdrRawRelative,initialVisibilityShadowRatio,mixedSpecularRatio,mixedDiffuseRatio,temporalMixedSpecularRatio,temporalMixedDiffuseRatio,curvedRawL1,curvedFilteredL1,environmentRawRatio,environmentFilteredRatio,environmentShadow,environmentSpecularRawRatio,environmentSpecularFilteredRatio;public int temporalMixedMaxHistory;}
     private readonly Result result=new Result();
     private IEnumerator Start()
     {
@@ -315,10 +315,23 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
             feature.Settings.denoise=true;for(int i=0;i<96;i++)Render();double filtered=0;
             for(int frame=0;frame<128;frame++){Render();ReadInto(capture.Diffuse,image);for(int y=24;y<40;y++)for(int x=24;x<40;x++)filtered+=image.GetPixel(x,y).r;}
             result.environmentFilteredRatio=(float)(filtered/(128*256));Require(Math.Abs(filtered/(128*256)-1)<.05,"Player sky NRD energy mismatch");
+            surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetFloat("_Smoothness",.9f);feature.Settings.denoise=false;Render();feature.Settings.denoise=true;
+            for(int i=0;i<192;i++)Render();double reference=0,a2=Math.Pow(25.0/255,4);const int intervals=262144;
+            for(int i=0;i<intervals;i++)
+            {
+                double mu=(i+.5)/intervals,nh2=(1+mu)*.5,nh=Math.Sqrt(nh2),den=nh2*a2+1-nh2,D=a2/(Math.PI*den*den),G=2*mu/(Math.Sqrt(a2+(1-a2)*mu*mu)+mu),F=10.0/255+(1-10.0/255)*Math.Pow(1-nh,5);
+                reference+=D*G*F*.5*Math.PI/intervals;
+            }
+            var specFiltered=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);double specRaw=0,spec=0;
+            try{for(int frame=0;frame<256;frame++){Render();ReadInto(capture.RawSpecular,image);ReadInto(capture.Specular,specFiltered);for(int y=24;y<40;y++)for(int x=24;x<40;x++){specRaw+=image.GetPixel(x,y).r;spec+=specFiltered.GetPixel(x,y).r;}}}
+            finally{Destroy(specFiltered);}
+            result.environmentSpecularRawRatio=(float)(specRaw/(256*256*reference));result.environmentSpecularFilteredRatio=(float)(spec/(256*256*reference));
+            Require(Math.Abs(result.environmentSpecularRawRatio-1)<.05&&Math.Abs(result.environmentSpecularFilteredRatio-1)<.05,"Player narrow sky GGX/MIS energy mismatch");
+            surfaceMaterial.SetFloat("_Reflectance",0);surfaceMaterial.SetFloat("_Smoothness",.5f);
             feature.Settings.denoise=false;room.SetActive(true);for(int i=0;i<4;i++)Render();result.environmentShadow=Read(capture.Raw).r;Require(result.environmentShadow<.001f,"Player enclosed world leaks sky");room.SetActive(false);
             atmosphere.Settings.enabled=false;Render();Near(Read(capture.Raw).r,0,"Player absent sky retains radiance",.001f);
         }
-        finally{room.SetActive(false);Destroy(room);Destroy(image);atmosphere.Settings.enabled=false;light.enabled=enabled;blue.enabled=blueEnabled;feature.Settings.denoise=false;}
+        finally{room.SetActive(false);Destroy(room);Destroy(image);atmosphere.Settings.enabled=false;light.enabled=enabled;blue.enabled=blueEnabled;feature.Settings.denoise=false;surfaceMaterial.SetFloat("_Reflectance",0);surfaceMaterial.SetFloat("_Smoothness",.5f);}
     }
     private void Render(){VolumeManager.instance.Update(probeCamera.transform,-1);RenderPipeline.SubmitRenderRequest(probeCamera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
     private float Expected(int x,int y)

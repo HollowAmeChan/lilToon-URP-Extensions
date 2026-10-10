@@ -7,9 +7,19 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     public static partial class HoRTDIValidation
     {
         private static bool forceEnvironment;
+        private static bool forceEnvironmentSpecular;
+        private static bool forceEnvironmentPdfBudget;
+        private static bool forceEnvironmentOblique;
+        private static bool forceEnvironmentSun;
         private static HoAtmosphereRendererFeature atmosphere;
         public static void RunEnvironment(){Require(Application.dataPath.Replace('\\','/').Contains("/.codex-research/"),"Use the isolated project");forceEnvironment=true;Run();}
         public static void RunEnvironmentCompatibility(){compatibility=true;RunEnvironment();}
+        public static void RunEnvironmentSpecular(){forceEnvironmentSpecular=true;RunEnvironment();}
+        public static void RunEnvironmentSpecularCompatibility(){compatibility=true;RunEnvironmentSpecular();}
+        public static void RunEnvironmentPdfBudget(){forceEnvironmentPdfBudget=true;RunEnvironmentSpecular();}
+        public static void RunEnvironmentOblique(){forceEnvironmentOblique=true;RunEnvironmentSpecular();}
+        public static void RunEnvironmentObliqueCompatibility(){compatibility=true;RunEnvironmentOblique();}
+        public static void RunEnvironmentSun(){forceEnvironmentSun=true;RunEnvironmentSpecular();}
         private static void SetupEnvironment(UniversalRendererData renderer)
         {
             atmosphere=Keep(ScriptableObject.CreateInstance<HoAtmosphereRendererFeature>());atmosphere.Settings.source=HoAtmosphereSource.Constant;atmosphere.Settings.constantColor=new Color(1,.5f,.25f,1);
@@ -20,6 +30,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             light.enabled=false;blocker.SetActive(false);feature.Settings.useEnvironment=true;feature.Settings.environmentSamples=4;feature.Settings.initialSamples=1;
             feature.Settings.temporal=feature.Settings.spatial=false;feature.Settings.denoise=false;
             var image=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));Color sum=Color.clear;
+            if(forceEnvironmentSpecular){ValidateEnvironmentSpecular(image);return;}
             for(int i=0;i<8;i++)RenderCamera();var context=feature.LastContext;
             Require(context.environmentSampling&&context.environmentPdf!=null,"Environment PDF/RIS resources missing");
             for(int frame=0;frame<256;frame++){RenderCamera();ReadImage(context.diffuse.rt,image);for(int y=24;y<40;y++)for(int x=24;x<40;x++)sum+=image.GetPixel(x,y);}
@@ -73,6 +84,75 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 int face=a.x>=a.y&&a.x>=a.z?(L.x>0?0:1):a.y>=a.z?(L.y>0?2:3):(L.z>0?4:5);result+=faces[face]*(2*mu/(steps*steps));
             }
             return result;
+        }
+        private static double EnvironmentSpecularReference(double rough)
+        {
+            return EnvironmentIntegral(mu=>EnvironmentSpecularIntegrand(mu,rough),0,1);
+        }
+        private static double EnvironmentSpecularIntegrand(double mu,double rough)
+        {
+            double a2=Math.Pow(rough,4),f0=10.0/255,nh2=(1+mu)*.5,nh=Math.Sqrt(nh2),den=nh2*a2+1-nh2;
+            double D=a2/(Math.PI*den*den),G=mu>0?2*mu/(Math.Sqrt(a2+(1-a2)*mu*mu)+mu):0,F=f0+(1-f0)*Math.Pow(1-nh,5);
+            return 2*Math.PI*D*G*F/4;
+        }
+        private static double EnvironmentIntegral(Func<double,double> integrand,double start,double finish)
+        {
+            double Adaptive(double a,double b,double fa,double fm,double fb,double whole,double tolerance,int depth)
+            {
+                double middle=(a+b)*.5,leftMiddle=(a+middle)*.5,rightMiddle=(middle+b)*.5,fl=integrand(leftMiddle),fr=integrand(rightMiddle);
+                double left=(middle-a)*(fa+4*fl+fm)/6,right=(b-middle)*(fm+4*fr+fb)/6,delta=left+right-whole;
+                return depth==0||Math.Abs(delta)<15*tolerance?left+right+delta/15:Adaptive(a,middle,fa,fl,fm,left,tolerance*.5,depth-1)+Adaptive(middle,b,fm,fr,fb,right,tolerance*.5,depth-1);
+            }
+            double first=integrand(start),half=integrand((start+finish)*.5),last=integrand(finish);return Adaptive(start,finish,first,half,last,(finish-start)*(first+4*half+last)/6,1e-9,30);
+        }
+        private static double EnvironmentObliqueReference(double rough,double noV)
+        {
+            double a2=Math.Pow(rough,4),sinV=Math.Sqrt(1-noV*noV),sum=0;const int azimuths=128;
+            for(int i=0;i<azimuths;i++)
+            {
+                double cosine=Math.Cos(2*Math.PI*(i+.5)/azimuths);
+                sum+=EnvironmentIntegral(muH=>
+                {
+                    double vh=sinV*Math.Sqrt(Math.Max(0,1-muH*muH))*cosine+noV*muH,noL=2*vh*muH-noV;if(vh<=0||noL<=0)return 0;
+                    double den=muH*muH*a2+1-muH*muH,D=a2/(Math.PI*den*den),G=2*noL/(noV*Math.Sqrt(a2+(1-a2)*noL*noL)+noL*Math.Sqrt(a2+(1-a2)*noV*noV)),F=10.0/255+(1-10.0/255)*Math.Pow(1-vh,5);
+                    return D*G*F*vh; // integrate H-space with reflection Jacobian 4*VdotH
+                },0,1)*2*Math.PI/azimuths;
+            }
+            return sum;
+        }
+        private static void ValidateEnvironmentSpecular(Texture2D image)
+        {
+            bool quality=true;var filtered=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));
+            surfaceMaterial.SetFloat("_Reflectance",.04f);feature.Settings.denoise=true;
+            feature.Settings.environmentSamples=forceEnvironmentPdfBudget?8:4;feature.Settings.environmentBrdfSamples=forceEnvironmentPdfBudget?0:4;
+            foreach(float angle in forceEnvironmentOblique?new[]{30f,60f}:new[]{0f})foreach(float smoothness in new[]{.9f,.7f,.3f})
+            {
+                SetLocalView(angle);
+                surfaceMaterial.SetFloat("_Smoothness",smoothness);feature.Settings.denoise=false;RenderCamera();feature.Settings.denoise=true;
+                for(int i=0;i<192;i++)RenderCamera();var context=feature.LastContext;float rough=Mathf.Round(Mathf.Abs(ReadCenter(context.nrdNormal.rt).b*2-1)*255)/255;double reference=angle==0?EnvironmentSpecularReference(rough):EnvironmentObliqueReference(rough,Math.Cos(angle*Math.PI/180)),sum=0,filteredSum=0,mse=0,filteredMse=0;int count=0;
+                for(int frame=0;frame<512;frame++)
+                {
+                    RenderCamera();ReadImage(context.specular.rt,image);ReadImage(context.filteredSpecular.rt,filtered);
+                    for(int y=24;y<40;y++)for(int x=24;x<40;x++){double a=image.GetPixel(x,y).r,b=filtered.GetPixel(x,y).r;sum+=a;filteredSum+=b;mse+=(a-reference)*(a-reference);filteredMse+=(b-reference)*(b-reference);count++;}
+                }
+                Debug.Log($"[HoRTDIValidation] ENV_SPECULAR view={angle} rough={rough:F6} reference={reference:F9} rawRatio={sum/count/reference:F6} filteredRatio={filteredSum/count/reference:F6} rawNormalizedMSE={mse/count/(reference*reference):F6} filteredNormalizedMSE={filteredMse/count/(reference*reference):F6}; adaptive double Smith GGX integral, no ReSTIR reuse");
+                quality&=Math.Abs(sum/count/reference-1)<.05&&Math.Abs(filteredSum/count/reference-1)<.05;
+            }
+            if(forceEnvironmentSun)ValidateEnvironmentSmallSun(image,filtered);
+            Require(quality,"Environment specular energy mismatch");Debug.Log("[HoRTDIValidation] PASS environment specular roughness sweep; compatibility="+compatibility);
+        }
+        private static void ValidateEnvironmentSmallSun(Texture2D raw,Texture2D filtered)
+        {
+            SetLocalView(0);const int size=128;const float background=.02f,sun=1000;var cube=Keep(new Cubemap(size,TextureFormat.RGBAHalf,false));cube.filterMode=FilterMode.Point;
+            for(int face=0;face<6;face++){var colors=new Color[size*size];Array.Fill(colors,Color.white*background);if(face==5)for(int y=63;y<65;y++)for(int x=63;x<65;x++)colors[y*size+x]=Color.white*sun;cube.SetPixels(colors,(CubemapFace)face);}cube.Apply(false,false);
+            atmosphere.Settings.source=HoAtmosphereSource.RadianceCubemap;atmosphere.Settings.radianceCubemap=cube;surfaceMaterial.SetFloat("_Smoothness",.9f);feature.Settings.denoise=false;RenderCamera();feature.Settings.denoise=true;
+            for(int i=0;i<192;i++)RenderCamera();var c=feature.LastContext;double rough=Math.Round(Math.Abs(ReadCenter(c.nrdNormal.rt).b*2-1)*255)/255,limit=2.0/size,muStart=1/Math.Sqrt(1+2*limit*limit),muFull=1/Math.Sqrt(1+limit*limit);
+            double Fraction(double mu){double tangent=Math.Sqrt(Math.Max(0,1-mu*mu))/mu,q=limit/Math.Max(1e-30,tangent);return q>=1?1:q<=1/Math.Sqrt(2)?0:1-4/Math.PI*Math.Acos(q);}
+            double patch=EnvironmentIntegral(mu=>EnvironmentSpecularIntegrand(mu,rough)*Fraction(mu),muStart,muFull)+EnvironmentIntegral(mu=>EnvironmentSpecularIntegrand(mu,rough),muFull,1);
+            double reference=background*EnvironmentSpecularReference(rough)+(sun-background)*patch,total=0,totalFiltered=0,mse=0;int count=0;
+            for(int frame=0;frame<512;frame++){RenderCamera();ReadImage(c.specular.rt,raw);ReadImage(c.filteredSpecular.rt,filtered);for(int y=24;y<40;y++)for(int x=24;x<40;x++){double a=raw.GetPixel(x,y).r,b=filtered.GetPixel(x,y).r;total+=a;totalFiltered+=b;mse+=(a-reference)*(a-reference);count++;}}
+            Debug.Log($"[HoRTDIValidation] ENV_SMALL_SUN rough={rough:F6} reference={reference:F9} rawRatio={total/count/reference:F6} filteredRatio={totalFiltered/count/reference:F6} rawNormalizedMSE={mse/count/(reference*reference):F6}; 2x2 of 128 cube pixels, HDR1000/.02, exact square angular coverage");
+            Require(Math.Abs(total/count/reference-1)<.05&&Math.Abs(totalFiltered/count/reference-1)<.05,"Small-sun environment energy mismatch");
         }
     }
 }

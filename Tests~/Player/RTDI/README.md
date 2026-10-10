@@ -102,6 +102,13 @@ within 3% and environmentFilteredRatio within 5% of unity. A hidden-from-camera
 closed cube must make environmentShadow less than 0.001; disabling the sky must
 clear the raw contribution. The feature and lights are restored for later gates.
 HDR Cubemap direction/rotation and broad GGX integration remain Editor checks.
+The environment gate additionally checks roughness=25/255, F0=10/255 with the
+default 4 environment + 4 BRDF candidates. An independent double hemisphere
+integral with 262144 midpoint intervals resolves the narrow peak. After 192
+warmup / 256 observation frames, environmentSpecularRawRatio and
+environmentSpecularFilteredRatio must both stay within 5% of unity. This is a
+constant-sky deployment gate; the HDR 2x2 small-source and oblique-view oracles
+remain Editor checks. The material is restored before later legacy gates.
 The probe also keeps NRD alive while two normal-incidence directional lights
 change intensity through 0.5/0.25, 16/8, 0.0005/0.00025 and back. An independent
 GGX reference uses this material's SB FP16 / DI 8-bit roughness of 25/255.

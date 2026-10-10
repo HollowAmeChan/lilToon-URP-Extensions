@@ -222,8 +222,8 @@ int2 RAB_ClampSamplePositionIntoView(int2 pixel,bool previous)
     if(pixel.x>=size.x)pixel.x=2*size.x-pixel.x-1;if(pixel.y>=size.y)pixel.y=2*size.y-pixel.y-1;
     return pixel;
 }
-// Mesh-light and BRDF ray candidates remain disabled. DI environment candidates
-// use their own PDF/RIS path; the shared GI bridge retains its existing behavior.
+// BRDF rays contribute environment misses only; analytic delta lights cannot
+// be intersected and mesh emitters remain outside this DI slice.
 float RAB_EvaluateLocalLightSourcePdf(uint index) {return rcp(max(1,_HoRTDIFrame.z));}
 #if defined(HO_RTDI_ENVIRONMENT_ENABLED)
 float RAB_EvaluateEnvironmentMapSamplingPdf(float3 direction) {return HoDIEnvironmentTexelPdf(HoDIEnvironmentUV(direction));}
@@ -232,7 +232,44 @@ float2 RAB_GetEnvironmentMapRandXYFromDir(float3 direction) {return HoDIEnvironm
 float RAB_EvaluateEnvironmentMapSamplingPdf(float3 direction) {return 0;}
 float2 RAB_GetEnvironmentMapRandXYFromDir(float3 direction) {return 0;}
 #endif
+#if defined(HO_RTDI_ENVIRONMENT_ENABLED)
+float HoDIDiffuseProposalProbability(RAB_Surface s)
+{
+    bool diffuse=HoDILuminance(s.material.diffuseAlbedo)>0,specular=HoDILuminance(s.material.specularF0)>0&&s.material.roughness>=.03;
+    return diffuse?(specular?.5:1):0;
+}
+float RAB_SurfaceEvaluateBrdfPdf(RAB_Surface s,float3 L)
+{
+    float NoL=dot(s.normal,L),NoV=dot(s.normal,s.viewDir);if(NoL<=0||NoV<=0)return 0;
+    float3 H=normalize(L+s.viewDir);float NoH=saturate(dot(s.normal,H)),a2=pow(max(.03,s.material.roughness),4);
+    float den=NoH*NoH*a2+(1-NoH*NoH);float D=a2/(M_PI*den*den);
+    // VNDF projected-normal density / reflection Jacobian: D*G1(V)/(4*NoV).
+    // Keep this local to the bridge; the pinned vendor PDF helper is unmodified.
+    float specularPdf=D/(2*(NoV+sqrt(a2+(1-a2)*NoV*NoV)));
+    return lerp(specularPdf,NoL/M_PI,HoDIDiffuseProposalProbability(s));
+}
+bool RAB_SurfaceImportanceSampleBrdf(RAB_Surface s,inout RTXDI_RandomSamplerState rng,out float3 direction)
+{
+    direction=0;if(dot(s.normal,s.viewDir)<=0||HoDILuminance(s.material.diffuseAlbedo)+HoDILuminance(s.material.specularF0)<=0)return false;
+    float3 random=float3(RTXDI_GetNextRandom(rng),RTXDI_GetNextRandom(rng),RTXDI_GetNextRandom(rng));float3 T,B;ConstructONB(s.normal,T,B);
+    if(random.x<HoDIDiffuseProposalProbability(s)){float pdf;float3 local=SampleCosHemisphere(random.yz,pdf);direction=T*local.x+B*local.y+s.normal*local.z;}
+    else
+    {
+        float3 V=normalize(float3(dot(s.viewDir,T),dot(s.viewDir,B),dot(s.viewDir,s.normal)));
+        float3 H=normalize(ImportanceSampleGGX_VNDF(random.yz,max(.03,s.material.roughness),V,1));
+        direction=reflect(-s.viewDir,T*H.x+B*H.y+s.normal*H.z);
+    }
+    return dot(s.normal,direction)>0&&dot(s.geoNormal,direction)>0&&dot(s.normal,s.viewDir)>0;
+}
+bool RAB_TraceRayForLocalLight(float3 origin,float3 direction,float tMin,float tMax,out uint lightIndex,out float2 uv)
+{
+    lightIndex=RTXDI_InvalidLightIndex;uv=0;
+    HoRTSceneHit hit=HoRTTraceScene(origin,direction,tMin,min(tMax,100000.0),255);
+    return hit.status!=0;
+}
+#else
 float RAB_SurfaceEvaluateBrdfPdf(RAB_Surface surface,float3 direction) {return max(0,dot(surface.normal,direction))/M_PI;}
 bool RAB_SurfaceImportanceSampleBrdf(RAB_Surface surface,inout RTXDI_RandomSamplerState rng,out float3 direction) {direction=0;return false;}
 bool RAB_TraceRayForLocalLight(float3 origin,float3 direction,float tMin,float tMax,out uint lightIndex,out float2 uv) {lightIndex=RTXDI_InvalidLightIndex;uv=0;return false;}
+#endif
 #endif

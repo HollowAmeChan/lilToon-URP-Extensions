@@ -20,6 +20,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 Draw(settings,"spatial","空间重采样");Draw(settings,"spatialSamples","邻域样本数");Draw(settings,"spatialRadius","邻域半径");
                 Draw(settings,"denoise","NRD RELAX 降噪");
                 Draw(settings,"useEnvironment","天空环境光");Draw(settings,"environmentSamples","环境光候选数");
+                Draw(settings,"environmentBrdfSamples","BRDF 环境候选");
             }
             EditorGUILayout.HelpBox("调试在 Ho-RTDI Volume 的「调试」分组。",MessageType.Info);
             if(LilUrpEditorSectionGui.DrawSectionHeader(ref advanced,"高级","筛选 / Shader",AdvancedColor))

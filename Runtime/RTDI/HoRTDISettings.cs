@@ -13,6 +13,8 @@ namespace lilToon.URP.Extensions.RTDI
         [Tooltip("从前置 Ho-Atmosphere 借用天空 HDR，作为 RTXDI 环境光候选。")]
         public bool useEnvironment = true;
         [Range(1,32)] public int environmentSamples = 4;
+        [Tooltip("环境 BRDF 提案；余弦 diffuse / GGX VNDF 与天空 PDF 使用 SDK MIS。0 可用于对照。")]
+        [Range(0,32)] public int environmentBrdfSamples = 4;
         [Tooltip("均匀模式用于低开销与对照；功率模式使用 SDK PDF mip / RIS 预采样，降低强弱灯功率跨度造成的方差。")]
         public HoRTDILocalSampling localSampling = HoRTDILocalSampling.Uniform;
         [Tooltip("局部灯初始候选数；存在方向灯时，另从方向灯分区抽取一个候选。")]

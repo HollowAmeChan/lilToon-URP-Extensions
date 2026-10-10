@@ -196,7 +196,7 @@ namespace lilToon.URP.Extensions.RTDI
             }
             private static void Dispatch(CommandBuffer cmd,Data d,bool compatibility,CameraData cameraData)
             {
-                var c=d.context;unchecked{d.signature=d.signature*397^(int)d.environmentRevision^d.settings.useEnvironment.GetHashCode()^(d.settings.environmentSamples*7919);}
+                var c=d.context;unchecked{d.signature=d.signature*397^(int)d.environmentRevision^d.settings.useEnvironment.GetHashCode()^(d.settings.environmentSamples*7919)^(d.settings.environmentBrdfSamples*104729);}
                 bool temporal=d.settings.temporal&&c.historyValid&&c.sceneRevision==d.revision&&c.settingsSignature==d.signature;
                 c.lastTemporal=temporal;
                 bool reset=false,timeReset=false;
@@ -332,6 +332,7 @@ namespace lilToon.URP.Extensions.RTDI
             {
                 var c=d.context;
                 cmd.SetComputeVectorParam(d.shader,"_HoRTDIEnvironment",new Vector4(HoRTDIContext.EnvironmentPdfSize,Mathf.Clamp(d.settings.environmentSamples,1,32),c.environmentSampling?1:0,c.powerSampling?HoRTDIContext.RISTileSize*HoRTDIContext.RISTileCount:0));
+                cmd.SetComputeIntParam(d.shader,"_HoRTDIEnvironmentBrdfSamples",Mathf.Clamp(d.settings.environmentBrdfSamples,0,32));
                 cmd.SetComputeVectorParam(d.shader,HoAtmosphereBindings.ParametersId,d.environmentParameters);cmd.SetComputeVectorParam(d.shader,HoAtmosphereBindings.TintId,d.environmentTint);cmd.SetComputeVectorParam(d.shader,HoAtmosphereBindings.ConstantId,d.environmentConstant);
                 if(!compatibility&&d.environment.IsValid())cmd.SetComputeTextureParam(d.shader,kernel,HoAtmosphereBindings.RadianceId,d.environment);
                 else if(compatibility&&c.environmentSampling)cmd.SetComputeTextureParam(d.shader,kernel,HoAtmosphereBindings.RadianceId,HoAtmosphereBindings.compatibilityTexture.nameID);

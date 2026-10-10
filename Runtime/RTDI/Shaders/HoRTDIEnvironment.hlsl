@@ -4,6 +4,7 @@
 Texture2D _HoRTDIEnvironmentPdf;
 RWTexture2D<float> _HoRTDIEnvironmentPdfOutput;
 float4 _HoRTDIEnvironment; // PDF size, candidates, active, RIS segment offset
+int _HoRTDIEnvironmentBrdfSamples;
 static const uint HO_RTDI_ENVIRONMENT_LIGHT_INDEX=0x7ffffffe;
 float3 HoDIEnvironmentDirection(float2 uv)
 {
