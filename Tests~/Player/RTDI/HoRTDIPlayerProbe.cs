@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.IO;
 using lilToon.URP.Extensions.RTDI;
+using lilToon.URP.Extensions.AttributeComposite;
 using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
@@ -14,11 +15,12 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     public Light light;
     public Light blue;
     public GameObject blocker;
+    public GameObject receiver;
     public Material surfaceMaterial;
     public VolumeProfile profile;
     private RenderTexture target;
     private bool unsupported;
-    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak,pointDepthMax,pointShadowMax,coloredSpecRelative,coloredSpecLeak,noisyMetalMean,noisyMetalReference,noisyCameraMean,noisyCameraTint,hdrRelative,hdrRawRelative,initialVisibilityShadowRatio,mixedSpecularRatio,mixedDiffuseRatio,temporalMixedSpecularRatio,temporalMixedDiffuseRatio;public int temporalMixedMaxHistory;}
+    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak,pointDepthMax,pointShadowMax,coloredSpecRelative,coloredSpecLeak,noisyMetalMean,noisyMetalReference,noisyCameraMean,noisyCameraTint,hdrRelative,hdrRawRelative,initialVisibilityShadowRatio,mixedSpecularRatio,mixedDiffuseRatio,temporalMixedSpecularRatio,temporalMixedDiffuseRatio,curvedRawL1,curvedFilteredL1;public int temporalMixedMaxHistory;}
     private readonly Result result=new Result();
     private IEnumerator Start()
     {
@@ -79,6 +81,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         }
         finally{blue.enabled=false;blue.transform.position=oldBluePosition;blue.range=oldBlueRange;blue.intensity=oldBlueIntensity;blue.color=oldBlueColor;blocker.SetActive(false);feature.Settings.initialSamples=1;}
         ValidateMixedProposal();
+        ValidateCurvedReceiver();
         feature.Settings.localSampling=HoRTDILocalSampling.Power;Render();Near(Read(capture.Raw).r,Expected(32,32),"Player power path",.015f);
         Require(profile.TryGet<HoRTDIVolume>(out var volume),"DI debug Volume missing");
         volume.debugMode.value=HoRTDIDebugMode.RawDiffuse;Render();NearRGB(Read(target),Read(capture.Raw),"Player raw debug");
@@ -255,6 +258,46 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         double nl=Math.Max(0,-L.z),nh=Math.Max(0,-H.z),rough=76.0/255,a2=Math.Pow(rough,4);
         double D=a2/(Math.PI*Math.Pow(nh*nh*a2+1-nh*nh,2)),G=2*nl/(Math.Sqrt(a2+(1-a2)*nl*nl)+nl),F=10.0/255+(1-10.0/255)*Math.Pow(1-nh,5);
         double fade=Math.Pow(Math.Max(0,1-Math.Pow(delta.magnitude/source.range,4)),2);return D*G*F/4*source.intensity/delta.sqrMagnitude*fade;
+    }
+    private void ValidateCurvedReceiver()
+    {
+        var position=light.transform.position;float range=light.range,intensity=light.intensity;var color=light.color;
+        var sphere=GameObject.CreatePrimitive(PrimitiveType.Sphere);sphere.transform.localScale=Vector3.one*1.5f;sphere.GetComponent<Renderer>().sharedMaterial=surfaceMaterial;
+        var raw=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);var filtered=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);
+        try
+        {
+            Require(receiver!=null,"Player curved fixture receiver missing");receiver.SetActive(false);
+            light.transform.position=new Vector3(-.3f,.35f,-1.7f);light.range=20;light.intensity=4;light.color=Color.white;
+            surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetFloat("_Smoothness",.7f);feature.Settings.denoise=true;
+            var mesh=sphere.GetComponent<MeshFilter>().sharedMesh;var vertices=mesh.vertices;var normals=mesh.normals;var triangles=mesh.triangles;
+            for(int i=0;i<vertices.Length;i++)vertices[i]=sphere.transform.TransformPoint(vertices[i]);
+            var reference=new double[64*64];for(int y=24;y<40;y++)for(int x=24;x<40;x++)
+            {
+                var ray=probeCamera.ViewportPointToRay(new Vector3((x+.5f)/64,(y+.5f)/64,0));float closest=float.PositiveInfinity;var N=Vector3.zero;var p=Vector3.zero;
+                for(int t=0;t<triangles.Length;t+=3)
+                {
+                    int a=triangles[t],b=triangles[t+1],c=triangles[t+2];var e1=vertices[b]-vertices[a];var e2=vertices[c]-vertices[a];var cross=Vector3.Cross(ray.direction,e2);float det=Vector3.Dot(e1,cross);if(Mathf.Abs(det)<1e-8f)continue;
+                    float inv=1/det;var offset=ray.origin-vertices[a];float u=Vector3.Dot(offset,cross)*inv;if(u<0||u>1)continue;var q=Vector3.Cross(offset,e1);float v=Vector3.Dot(ray.direction,q)*inv;if(v<0||u+v>1)continue;
+                    float distance=Vector3.Dot(e2,q)*inv;if(distance<=0||distance>=closest)continue;closest=distance;p=ray.GetPoint(distance);N=(normals[a]*(1-u-v)+normals[b]*u+normals[c]*v).normalized;
+                }
+                Require(float.IsFinite(closest),"Player curved CPU ray missed the mesh");
+                var delta=light.transform.position-p;var L=delta.normalized;var V=probeCamera.orthographic?-probeCamera.transform.forward:(probeCamera.transform.position-p).normalized;var H=(V+L).normalized;
+                double nl=Math.Max(0,Vector3.Dot(N,L)),nv=Math.Max(0,Vector3.Dot(N,V)),nh=Math.Max(0,Vector3.Dot(N,H)),vh=Math.Max(0,Vector3.Dot(V,H)),a2=Math.Pow(76.0/255,4);
+                double D=a2/(Math.PI*Math.Pow(nh*nh*a2+1-nh*nh,2)),G=2*nl/(nv*Math.Sqrt(a2+(1-a2)*nl*nl)+nl*Math.Sqrt(a2+(1-a2)*nv*nv)),F=10.0/255+(1-10.0/255)*Math.Pow(1-vh,5),fade=Math.Pow(Math.Max(0,1-Math.Pow(delta.magnitude/light.range,4)),2);
+                reference[y*64+x]=D*G*F/4*light.intensity/delta.sqrMagnitude*fade;
+            }
+            for(int i=0;i<192;i++)Render();Require(HoAttributeCompositeConsumerRegistry.LastSnapshot.NeedsHighPrecisionSurfaceNormal,"Player RT normal precision request missing");
+            double total=0,rawError=0,filteredError=0;
+            for(int frame=0;frame<32;frame++)
+            {
+                Render();ReadInto(capture.RawSpecular,raw);ReadInto(capture.Specular,filtered);
+                for(int y=24;y<40;y++)for(int x=24;x<40;x++){double expected=reference[y*64+x];total+=expected;rawError+=Math.Abs(raw.GetPixel(x,y).r-expected);filteredError+=Math.Abs(filtered.GetPixel(x,y).r-expected);}
+            }
+            result.curvedRawL1=(float)(rawError/total);result.curvedFilteredL1=(float)(filteredError/total);
+            Require(rawError/total<.02&&filteredError/total<.05,"Player curved GGX shape failed");
+        }
+        finally
+        {sphere.SetActive(false);Destroy(sphere);if(receiver!=null)receiver.SetActive(true);light.transform.position=position;light.range=range;light.intensity=intensity;light.color=color;surfaceMaterial.SetFloat("_Reflectance",0);surfaceMaterial.SetFloat("_Smoothness",.5f);feature.Settings.denoise=false;Destroy(raw);Destroy(filtered);}
     }
     private void Render(){VolumeManager.instance.Update(probeCamera.transform,-1);RenderPipeline.SubmitRenderRequest(probeCamera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
     private float Expected(int x,int y)

@@ -417,3 +417,31 @@ MSE 用解析 reference 平方和归一，包含噪声和偏差；该 fixture �
 实际 Win64 Mono release 两条 D3D12 EXE 通过新增 temporal-only 混合材质部署 gate：序列化 maxHistory 均为4，RG specular/diffuse 比例=0.971927/0.970563，compatibility=0.985094/0.967562，均满足5%。原 no-reuse 混合 gate、初始visibility、点灯/F0边界、HDR与noise继续通过；D3D11实际EXE保持inactive。旧Player noisy镜面、HDR测试的RNG序列因新增观察而改变，当前HDR最差约1.227%、filtered噪声MSE约0.0000915/0.0000907，不把它们当作严格单项消融。两个构建0 errors，packed DLL与源SHA相同。
 
 Editor两条核心/NRD、Power、动态灯质量、边界、HDR九组与范围、30/60/120Hz时间线、目标尺寸回归通过；Roslyn无错误、派生生成器`--check`通过，无新增本步DI/NRD shader/command-buffer诊断，既有其他模块警告另计。没有修改共享GI代码。720p/1080p自有载荷仍219.921/495.637 MiB；简单RG同步batch约6.952/15.388 ms，前步6.809/13.170 ms。该fixture没有启用temporal，含CPU/完整渲染/读回，不能把时间差直接归因于hash或视为孤立GPU成本。
+
+## 曲面接收体与 RT 请求的 SB 法线精度
+
+步骤21新增 `RunCurved` / `RunCurvedCompatibility`，使用真实 lilToon、GB/SB、128²透视、均匀缩放的 Unity 球网格。CPU 对中央32²像素求最近 ray/triangle hit，再插值顶点法线；独立距离/范围衰减、Lambert 和 height-correlated Smith GGX 给出参考，F0=10/255、roughness来自已知量化布局。没有用 raw 输出当真值或假设网格是解析球体。192预热/256观察、roughness约0.298/0.698，单Near确定性与Near/Far的无/T/S/TS四种状态，共10组。检查真实NRD输入法线/viewZ、raw能量/单灯形状、filtered能量/L1/MSE。
+
+原 SB Normal 使用 RGBA8 UNorm，曲面guide最大法线误差约0.5713°；viewZ最大误差仅0.000009。低roughness单灯raw/filtered镜面L1=0.042997/0.042996，归一化MSE=0.002379/0.002376，证明主要形状误差已经在输入/raw阶段。高roughness单灯raw L1=0.006555。[NRD官方输入说明](https://github.com/NVIDIA-RTX/NRD#inputs)强调法线精度影响曲率与镜面跟踪；用户参考RAB_Surface也区分shading与无normal-map的mesh normal。本步保留已有组件含义，不用GB的扰动法线替换SB。
+
+实际入队的 RTDI/RTGI 在现有camera consumer registry中请求 `HighPrecisionSurfaceNormal`，SB按已冻结请求为原Normal附件优先选择RGBA16 UNorm，次选RGBA16F；平台都不支持则保留紧凑UNorm回退。请求不包含AC normal-copy、identity、attribute或semantic flags，AC没有因此多一份主表面副本。两条路径均以相机请求决定格式，纹理名、RG/BA oct编码、七个MRT、material标记、DI物理BRDF/采样/NRD与最终合成均未变。没有活跃RT请求时恢复紧凑格式，不让普通SB消费者承担这项精度成本。
+
+| 两条路径同数据、低roughness单Near | 旧RGBA8 | RT请求高精度 |
+| --- | --- | --- |
+| normal guide最大角误差（度） | 0.571298 | 0.081565 |
+| raw specular L1/reference | 0.042997 | 0.000528 |
+| filtered specular L1/reference | 0.042996 | 0.000946 |
+| raw specular/reference | 0.996480 | 0.999493 |
+| filtered specular/reference | 0.996080 | 0.999062 |
+
+高roughness单Near raw/filtered镜面L1约0.000364/0.000897。新低roughness双灯无/T/S/TS filtered比例约0.985215/0.995309/0.989856/0.976155，L1约0.0425/0.0597/0.0726/0.0812、归一化MSE约0.002817/0.006029/0.009381/0.012167；对应旧MSE=0.005049/0.008947/0.010782/0.012550。高roughness双灯filtered比例约0.9871..0.9879。两条路径10组均通过原2%单灯raw形状、3%raw能量、5%filtered能量、15%filtered L1及guide阈值，没有放松门槛。
+
+测试是单独Editor partial，不注册Feature。首轮post-frame全局纹理转RenderTexture的读取方式失败，改为读取实际NRD输入guide；它来自DI真实消费的SB normal，不直接验证SB BA或任意normal-map。完成相机使用真实 `LastSnapshot`，不在渲染结束后创建新的空请求快照。兼容路径验证了启停DI时SB Normal的实际格式升降，RG验证请求清除/恢复，两者均无语义资源需求。
+
+SB原Normal从4到8 B/像素，720p/1080p增加约3.516/7.910 MiB，不计driver/alignment；没有新增附件数量、生产pass或ray。当前0.0816°残余还包含writer的half输出与NRD guide编码，不能只按16-bit UNorm理论精度推断实际误差。两种16-bit格式均不支持的平台未证明这项精度收益。DI内部载荷仍219.921/495.637 MiB，现有预算统计不包含SB输入，应把上述增量单独计入；RG同步batch约6.896/15.109 ms，含CPU/完整渲染/读回，未证明孤立GPU速度变化。
+
+支持边界仍是静态无normal-map、同色双灯、均匀缩放球体、中央ROI；曲面运动、轮廓、非均匀缩放、normal-map/任意网格仍待验证。原64帧平面运动raw失败没有被这项静态曲面结果替代。
+
+两个Win64 Mono release构建0 errors，实际D3D12 RG/compatibility EXE通过新增64²正交曲面部署gate：独立mesh ray/triangle与Smith GGX，192预热/32观察，中央16²，单候选无ReSTIR复用，raw/filtered镜面L1=0.000588/0.000814，满足原2%/5%条件，且真实camera demand含高精度请求。测试球体先停用再延后销毁，恢复序列化Quad与原灯/材质；旧初始visibility、混合/temporal-only、HDR/noise/F0/点灯边界通过，D3D11实际EXE inactive通过，packed NRD DLL SHA与源一致。当前Player HDR最差约1.196%、filtered noise MSE≈0.0000992；新增曲面观察推进RNG序列，不当作单项消融。
+
+Editor两条核心/NRD、材质/点灯边界、HDR九组与范围、动态灯、目标尺寸以及必要的GI两条路径回归通过；Roslyn无错误，派生重建`--check`通过，无新增本步DI/NRD shader/command-buffer诊断，其他模块既有警告另计。GI只补同一个SB精度请求和释放声明，没有改变GI算法。

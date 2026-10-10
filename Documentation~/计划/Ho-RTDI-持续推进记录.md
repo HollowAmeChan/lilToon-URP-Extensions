@@ -239,13 +239,25 @@
 
 **完成后取舍：** 只调整 DI frame permutation 和可配置默认值，不修改 SDK 正文、物理照明、NRD配置、GI 或最终材质合成，不新增生产GPU资源/pass/ray。下一项先扩大独立序列与曲面/目标场景，检查短序列波动和长历史的实际收益，再按证据推进环境/更多灯域；不继续靠均值提亮或降低门槛消除失败。详见 [ReSTIR历史审计](../Ho-RTDI-NRD.md)。
 
-## 21. 下一步取舍
+## 21. 曲面接收体与 SB 法线精度
+
+**动手前评审：扩大真实几何支持域，应做。** 原验证主要是平面，不能证明曲率跟踪和局部高光。用户参考 RAB_Surface 区分 shading/mesh normal；[NRD 官方输入说明](https://github.com/NVIDIA-RTX/NRD#inputs)指出法线精度影响曲率与镜面跟踪。本步不搬入 PT 框架，使用真实 lilToon 球形网格、现有 GB/SB 和独立 CPU ray/triangle + 插值顶点法线 + 距离衰减/Smith GGX 参考。
+
+**发现与实现：** 128²、两种 roughness、单 Near 与 Near/Far 四种复用状态，共10组。RGBA8 SB 法线导致最大 normal guide 误差约0.571°，单灯低roughness raw镜面L1≈4.300%，viewZ最大误差仅约0.000009；filtered约4.300%，说明不是NRD新增的形状误差。沿用已有camera需求收集，仅实际入队的RTDI/RTGI请求SB原Normal附件提高精度：RGBA16 UNorm优先、RGBA16F次选，不支持时保留紧凑回退。请求不包含AC normal-copy、identity或semantic flags。无新GPU纹理/pass/MRT或Feature，无最终合成改动。
+
+**结果与代价：** 两条路径10组原gate全部通过：法线最大误差约0.0816°；低roughness单灯raw/filtered镜面L1从0.042997/0.042996降至0.000528/0.000946，能量比例0.999493/0.999062。低roughness双灯无/T/S/TS filtered比例约0.9852/0.9953/0.9899/0.9762；高roughness双灯约0.9871..0.9879。旧2%单灯形状、3%raw能量、5%filtered能量与15%filtered L1门槛没有放松。SB原Normal从4到8 B/像素，720p/1080p新增约3.52/7.91 MiB；不是DI内部载荷的节省或免费改进。
+
+**验证：** 两个Win64 Mono release构建及实际D3D12 EXE通过新增64²正交曲面gate，raw/filtered镜面L1=0.000588/0.000814，真实精度请求存在；旧HDR/noise/初始visibility/材质边界与混合/仅时域gate通过，D3D11 inactive通过，packed DLL SHA一致。Editor两条核心/NRD、边界、HDR、动态灯、预算与GI两条必要回归通过，Roslyn/派生重建通过，无新增本步GPU诊断。DI内部载荷仍219.921/495.637 MiB，SB输入增量另计；RG同步batch约6.896/15.109 ms，含CPU/完整渲染/读回，未证明孤立性能。
+
+**完成后复查：** 测试独立放在Editor partial中，不添加Renderer Feature。NRD真实输入guide与CPU网格比较，不以post-frame shader global冒充RG纹理；camera demand读取实际完成的LastSnapshot。兼容路径已检查启停DI时Normal实际格式升降，RG已检查请求清除/恢复，未触发语义资源。当前只覆盖静态、无normal-map、均匀缩放球体、中央32²ROI与同色灯，尚未证明完整曲面运动、轮廓边缘、非均匀缩放、normal-map或任意网格。原短运动失败仍保留；下一步扩大运动/独立序列，并据实际支持缺口推进灯域。
+
+## 22. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
-| NRD 质量与预算 | 默认短 ReSTIR 历史的匹配 temporal-only 与四模式遮挡通过，总误差进一步下降。原64帧运动raw统计仍超过3%，512帧收敛检查通过，两项分别保留；下一项扩大独立序列、曲面与目标场景，不能把一个通过序列视为全域验收。旧资产历史设置不会自动迁移。 |
+| NRD 质量与预算 | 默认短历史、匹配temporal-only与静态曲面10组通过；RT请求SB原法线附件提高精度，1080p额外约7.91 MiB。原64帧运动raw统计仍超过3%，512帧检查通过，两项分别保留；下一项曲面运动、独立序列与目标场景，不能把中央ROI通过视为全域验收。旧资产历史设置不会自动迁移。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

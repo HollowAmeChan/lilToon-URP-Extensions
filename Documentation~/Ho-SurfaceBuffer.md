@@ -17,6 +17,8 @@
 
 > **2026-10-08 两种法线与 RT 读取**：Normal.RG 保留着色法线，原预留 BA 写入未经过 normal map 的网格法线；Material.A 写该组分可用标记。Normal 格式/MRT 数量不变。GB 的 lilToon 法线实际也含 normal map/Tesion，不能当作通用无扰动几何法线。共享读取接口见 [Ho-RT-PrimarySurface.md](Ho-RT-PrimarySurface.md)。
 
+> **2026-10-10 RT 法线精度**：启用且实际入队的 Ho-RTDI / Ho-RTGI 通过现有 camera demand 声明 `HighPrecisionSurfaceNormal`。SB 原 Normal 附件优先用 RGBA16 UNorm，再回退 RGBA16F；两者不可用时保留紧凑 UNorm 回退。没有该请求时继续 RGBA8。编码、纹理名和七个 MRT 不变，不创建第二份法线或请求 AC 的 normal copy/语义 lane。16-bit 附件比 RGBA8 多4 B/像素，720p/1080p约3.52/7.91 MiB；各相机请求独立。详见 [DI 曲面测量](Ho-RTDI-NRD.md)。
+
 
 
 > **落地状态（R3-sb，数值面 + 语义 lane 本轮）**：SB 的**数值面**已经可以跑：
@@ -76,7 +78,7 @@
 | 纹理 | 通道 | 语义 | 格式 | 生产端 | 消费端 |
 | --- | --- | --- | --- | --- | --- |
 | `Color` | `rgb` | linear HDR base color，producer 不钳制；**无 coverage 语义** | RGBA16F | 材质 | 角色特化·脸色扩散、SSS、PLR、AOV `diffuse_albedo` |
-| `Normal` | `rg` | `octa(shadingNormal)`——**含法线贴图的着色法线** | RGBA8 | 材质 | PBR 光照、SSR 反射方向、一切吃法线贴图的效果 |
+| `Normal` | `rg` | `octa(shadingNormal)`——**含法线贴图的着色法线** | RGBA8；RT 请求时优先 RGBA16 UNorm | 材质 | PBR 光照、SSR 反射方向、一切吃法线贴图的效果 |
 | | `ba` | `octa(meshNormalWS)`——顶点路径之后插值的网格法线，不经过 normal map | | | RT 主表面读取；不是逐三角形 flat face normal |
 | `Material` | `r` | **`perceptualRoughness`**（不是 linear roughness） | RGBA8 | 材质 | PLR / SSR / Probe |
 | | `g` | `metallic` | | | PLR / PBR |

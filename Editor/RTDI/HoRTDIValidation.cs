@@ -13,7 +13,7 @@ using UnityEngine.Rendering.Universal;
 using Object=UnityEngine.Object;
 namespace lilToon.URP.Extensions.Editor.RTDI
 {
-    public static class HoRTDIValidation
+    public static partial class HoRTDIValidation
     {
         private static readonly List<Object> objects=new();
         private static RenderPipelineAsset previousDefault,previousQuality;
@@ -26,6 +26,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         private static Light light;
         private static Material surfaceMaterial;
         private static GameObject blocker;
+        private static GameObject primaryReceiver;
         private static int tick;
         private static int boundarySample;
         [StructLayout(LayoutKind.Sequential)]
@@ -98,6 +99,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 camera.transform.position=new Vector3(0,0,-3);camera.nearClipPlane=.1f;camera.farClipPlane=50;camera.aspect=1;camera.allowHDR=true;camera.GetUniversalAdditionalCameraData().volumeLayerMask=-1;
                 target=Keep(new RenderTexture(64,64,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));target.Create();
                 var surface=Keep(GameObject.CreatePrimitive(PrimitiveType.Quad));surface.transform.localScale=new Vector3(2,2,1);
+                primaryReceiver=surface;
                 var material=Mat("lilToon");material.EnableKeyword("UNITY_UI_ALPHACLIP");material.SetFloat("_Cull",0);material.SetColor("_Color",Color.white);material.SetTexture("_MainTex",Texture2D.whiteTexture);
                 surfaceMaterial=material;
                 material.SetFloat("_Reflectance",0);material.SetFloat("_Metallic",0);material.SetFloat("_Smoothness",.5f);surface.GetComponent<Renderer>().sharedMaterial=material;
@@ -121,6 +123,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(forceBudget){ValidateBudget();Finish(null);return;}
                 if(forceQuality){ValidateQuality();Finish(null);return;}
                 if(forceTiming){ValidateTiming();Finish(null);return;}
+                if(forceCurved){ValidateCurved();Finish(null);return;}
                 if(forceBoundaries){ValidateBoundaries();Finish(null);return;}
                 if(forceSpecular){ValidateSpecular();Finish(null);return;}
                 if(forceLocalLighting){ValidateLocalLighting();Finish(null);return;}
@@ -1217,7 +1220,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var ray=camera.ViewportPointToRay(new Vector3((x+.5f)/64,(y+.5f)/64,0));var position=ray.origin+ray.direction*(-ray.origin.z/ray.direction.z);var delta=source.transform.position-position;float d2=delta.sqrMagnitude;
             float fade=Mathf.Clamp01(1-Mathf.Pow(d2/(source.range*source.range),2));return source.intensity/d2*(-delta.normalized.z)/Mathf.PI*fade*fade;
         }
-        private static void RenderCamera(){if((forceBoundaries||forceSpecular||forceLocalLighting)&&feature.LastContext?.nrd!=null)feature.LastContext.nrd.ValidationTimeSeconds=++boundarySample/60.0;VolumeManager.instance.Update(camera.transform,-1);RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
+        private static void RenderCamera(){if((forceBoundaries||forceSpecular||forceLocalLighting||forceCurved)&&feature.LastContext?.nrd!=null)feature.LastContext.nrd.ValidationTimeSeconds=++boundarySample/60.0;VolumeManager.instance.Update(camera.transform,-1);RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
         private static Color Render(){RenderCamera();Require(feature.LastContext!=null,"DI context missing: "+feature.Status);return Read(feature.LastContext.diffuse.rt);}
         private static Color Read(RenderTexture source)
         {

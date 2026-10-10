@@ -19,6 +19,16 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             return IsUsable(GraphicsFormat.R8G8B8A8_UNorm) ? GraphicsFormat.R8G8B8A8_UNorm : GraphicsFormat.B8G8R8A8_UNorm;
         }
 
+        public static GraphicsFormat GetNormalGraphicsFormat(bool highPrecision)
+        {
+            if (highPrecision)
+            {
+                if (IsUsable(GraphicsFormat.R16G16B16A16_UNorm)) return GraphicsFormat.R16G16B16A16_UNorm;
+                if (IsUsable(GraphicsFormat.R16G16B16A16_SFloat)) return GraphicsFormat.R16G16B16A16_SFloat;
+            }
+            return GetUnormGraphicsFormat();
+        }
+
         // Emission must retain values above one; never fall back to UNorm.
         public static GraphicsFormat GetEmissionGraphicsFormat()
         {

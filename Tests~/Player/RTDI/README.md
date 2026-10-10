@@ -83,6 +83,18 @@ gates; temporalMixedMaxHistory records the serialized ReSTIR history budget.
 New DI settings default to 4; existing renderer assets retain their configured
 value. This is a reservoir sample-count limit relative to the current initial
 sample count, not the NRD accumulation-frame budget.
+The curve gate temporarily replaces the serialized quad with a real lilToon
+sphere, uses one point-light candidate without ReSTIR reuse, and keeps NRD on.
+A CPU ray/triangle intersection and interpolated mesh normal feed an independent
+height-correlated Smith GGX reference in the central 16x16 region. After 192
+warmup / 32 observation frames, curvedRawL1 must remain below 2% and
+curvedFilteredL1 below 5%. It also checks the camera's high-precision normal
+request. The sphere is deactivated before deferred destruction and the original
+receiver/light/material are restored, so later gates render their original scene.
+This does not establish arbitrary normal maps, silhouette fidelity or curved
+camera motion. The broader 128x128 Editor curve validator checks both roughness
+values, the near/far pair in all four reuse modes, actual normal/viewZ guides and
+precision-demand disable/re-enable behavior.
 The probe also keeps NRD alive while two normal-incidence directional lights
 change intensity through 0.5/0.25, 16/8, 0.0005/0.00025 and back. An independent
 GGX reference uses this material's SB FP16 / DI 8-bit roughness of 25/255.

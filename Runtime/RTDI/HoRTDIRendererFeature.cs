@@ -1,6 +1,7 @@
 #pragma warning disable CS0618,CS0672
 using System;
 using System.Collections.Generic;
+using lilToon.URP.Extensions.AttributeComposite;
 using System.Runtime.InteropServices;
 using lilToon.URP.Extensions.RayTracing;
 using lilToon.URP.Extensions.RTDI.NRD;
@@ -115,6 +116,7 @@ namespace lilToon.URP.Extensions.RTDI
             context.Prepare(descriptor.width,descriptor.height,lightList.Count,format);LastContext=context;
             context.PreparePower(localCount,settings.localSampling==HoRTDILocalSampling.Power);
             context.PrepareDenoiser(settings.denoise,nrdShaders);
+            HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTDI primary normals",System.Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.HighPrecisionSurfaceNormal);
             var lightData=lightList.Count>0?lightList.ToArray():new AnalyticLight[1];
             pass.Setup(context,scene,shader,settings,lightData,lightKeys.ToArray(),lightList.Count,localCount,signature);
             renderer.EnqueuePass(pass);Status=$"RTXDI DI：{(context.powerSampling?"功率":"均匀")} / {localCount} 局部 / {infiniteLights.Count} 方向灯 / {scene.InstanceCount} RT submesh / 排除 {excludedLights} 灯、{scene.Rejections.Count} 几何项";
@@ -127,7 +129,7 @@ namespace lilToon.URP.Extensions.RTDI
             }
         }
         private void DisposeResources()
-        {foreach(var context in contexts.Values)context.Dispose();contexts.Clear();scene?.Dispose();scene=null;debugPass?.ReleaseDebugResources();CoreUtils.Destroy(debugMaterial);debugMaterial=null;LastContext=null;}
+        {HoAttributeCompositeConsumerRegistry.Remove(this);foreach(var context in contexts.Values)context.Dispose();contexts.Clear();scene?.Dispose();scene=null;debugPass?.ReleaseDebugResources();CoreUtils.Destroy(debugMaterial);debugMaterial=null;LastContext=null;}
         protected override void Dispose(bool disposing)
         {if(registered)RenderPipelineManager.beginCameraRendering-=ResetCamera;registered=false;ResetCamera(default,null);DisposeResources();}
 

@@ -10,7 +10,9 @@ namespace lilToon.URP.Extensions.AttributeComposite
     {
         None = 0, Identity = 1, Geometry = 2, Outline = 4, Selection = 8,
         SurfaceSemantic = 16, LegacySemantic = 32, CorrelatedSemantic = 64,
-        SurfaceAttributes = 128, SurfaceColor = 256, SurfaceNormal = 512
+        SurfaceAttributes = 128, SurfaceColor = 256, SurfaceNormal = 512,
+        // Producer precision only: does not request an AC normal copy or semantic lane.
+        HighPrecisionSurfaceNormal = 1024
     }
 
     /// <summary>Immutable declaration. Display names are not ownership keys.</summary>
@@ -88,6 +90,7 @@ namespace lilToon.URP.Extensions.AttributeComposite
         public bool NeedsCorrelatedSemantic => NeedsSelection || (Resources & (HoACDemandResources.SurfaceSemantic | HoACDemandResources.CorrelatedSemantic)) != 0;
         public bool NeedsSurfaceSemantic => (Resources & (HoACDemandResources.SurfaceSemantic |
             HoACDemandResources.LegacySemantic | HoACDemandResources.CorrelatedSemantic)) != 0;
+        public bool NeedsHighPrecisionSurfaceNormal => (Resources & HoACDemandResources.HighPrecisionSurfaceNormal) != 0;
 
         internal HoAttributeCompositeDemandSnapshot(Camera camera, long sequence, int frame,
             IEnumerable<HoAttributeCompositeConsumerDeclaration> declarations)

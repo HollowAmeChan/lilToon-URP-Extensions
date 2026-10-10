@@ -1,5 +1,6 @@
 #pragma warning disable CS0618,CS0672
 using System.Collections.Generic;
+using lilToon.URP.Extensions.AttributeComposite;
 using lilToon.URP.Extensions.Atmosphere;
 using lilToon.URP.Extensions.RayTracing;
 using lilToon.URP.Extensions.RTDI;
@@ -76,6 +77,7 @@ namespace lilToon.URP.Extensions.RTGI
             if(!contexts.TryGetValue(camera,out var context)){context=new HoRTGIContext();contexts.Add(camera,context);}
             var descriptor=data.cameraData.cameraTargetDescriptor;
             context.Prepare(descriptor.width,descriptor.height,lights.Count,format);LastContext=context;
+            HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTGI primary normals",System.Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.HighPrecisionSurfaceNormal);
             if(materials.TimeVarying)context.historyValid=false;
             pass.Setup(context,scene,shader,rayShader,settings,lights.Count>0?lights.ToArray():new HoRTDIRendererFeature.AnalyticLight[1],lights.Count,signature);
             renderer.EnqueuePass(pass);
@@ -114,6 +116,7 @@ namespace lilToon.URP.Extensions.RTGI
         }
         private void DisposeResources()
         {
+            HoAttributeCompositeConsumerRegistry.Remove(this);
             foreach(var context in contexts.Values)context.Dispose();contexts.Clear();scene?.Dispose();scene=null;
             materials?.Dispose();materials=null;debugPass?.ReleaseDebugResources();CoreUtils.Destroy(debugMaterial);debugMaterial=null;LastContext=null;
         }

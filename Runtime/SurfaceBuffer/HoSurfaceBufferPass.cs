@@ -5,6 +5,7 @@ using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.RenderGraphModule;
 using UnityEngine.Rendering.Universal;
+using lilToon.URP.Extensions.AttributeComposite;
 
 namespace lilToon.URP.Extensions.SurfaceBuffer
 {
@@ -125,7 +126,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
             AllocateIfNeeded(ref colorTexture, descriptor, HoSurfaceBufferFormatUtility.GetColorGraphicsFormat(), HoSurfaceBufferShaderConstants.ColorTextureName);
             AllocateIfNeeded(ref emissionTexture, descriptor, HoSurfaceBufferFormatUtility.GetEmissionGraphicsFormat(), HoSurfaceBufferShaderConstants.EmissionTextureName);
-            AllocateIfNeeded(ref normalTexture, descriptor, HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat(), HoSurfaceBufferShaderConstants.NormalTextureName);
+            var demand = HoAttributeCompositeConsumerRegistry.Freeze(renderingData.cameraData.camera);
+            AllocateIfNeeded(ref normalTexture, descriptor, HoSurfaceBufferFormatUtility.GetNormalGraphicsFormat(demand.NeedsHighPrecisionSurfaceNormal), HoSurfaceBufferShaderConstants.NormalTextureName);
             AllocateIfNeeded(ref materialTexture, descriptor, HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat(), HoSurfaceBufferShaderConstants.MaterialTextureName);
             AllocateIfNeeded(ref reflectionTexture, descriptor, HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat(), HoSurfaceBufferShaderConstants.ReflectionTextureName);
             AllocateIfNeeded(ref classificationTexture, descriptor, HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat(), HoSurfaceBufferShaderConstants.ClassificationTextureName);
@@ -205,7 +207,8 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
 
             TextureHandle color = CreateTexture(renderGraph, cameraData.cameraTargetDescriptor, HoSurfaceBufferFormatUtility.GetColorGraphicsFormat(), HoSurfaceBufferShaderConstants.ColorTextureName);
             TextureHandle emission = CreateTexture(renderGraph, cameraData.cameraTargetDescriptor, HoSurfaceBufferFormatUtility.GetEmissionGraphicsFormat(), HoSurfaceBufferShaderConstants.EmissionTextureName);
-            TextureHandle normal = CreateTexture(renderGraph, cameraData.cameraTargetDescriptor, HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat(), HoSurfaceBufferShaderConstants.NormalTextureName);
+            var demand = HoAttributeCompositeConsumerRegistry.Freeze(cameraData.camera);
+            TextureHandle normal = CreateTexture(renderGraph, cameraData.cameraTargetDescriptor, HoSurfaceBufferFormatUtility.GetNormalGraphicsFormat(demand.NeedsHighPrecisionSurfaceNormal), HoSurfaceBufferShaderConstants.NormalTextureName);
             TextureHandle material = CreateTexture(renderGraph, cameraData.cameraTargetDescriptor, HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat(), HoSurfaceBufferShaderConstants.MaterialTextureName);
             TextureHandle reflection = CreateTexture(renderGraph, cameraData.cameraTargetDescriptor, HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat(), HoSurfaceBufferShaderConstants.ReflectionTextureName);
             TextureHandle classification = CreateTexture(renderGraph, cameraData.cameraTargetDescriptor, HoSurfaceBufferFormatUtility.GetUnormGraphicsFormat(), HoSurfaceBufferShaderConstants.ClassificationTextureName);

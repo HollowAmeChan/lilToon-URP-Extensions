@@ -20,6 +20,8 @@
 
 无扰动网格法线不是三角形 flat face normal，也不是世界空间 AS 的命中法线。它保留材质的既有 `_FlipNormal` / facing 约定；真实求交时的 primitive、双面、ray origin 与 face normal 仍由 HoRTScene / ray-hit 契约处理。
 
+启用并入队的 RTDI/RTGI 会通过现有 camera demand 请求 SB 原 Normal 附件采用高精度格式，优先 RGBA16 UNorm、其次 RGBA16F；没有请求时保留紧凑格式。请求只决定生产附件精度，不经 AC 复制或改变上述读取布局。支持格式回退与每像素增加4 B的成本见 [SurfaceBuffer](Ho-SurfaceBuffer.md)，曲面独立参考测量见 [RTDI NRD记录](Ho-RTDI-NRD.md)。
+
 本轮 GPU 验证发现此前“GB 提供无扰动几何法线”的判断不成立：lilToon 的 GB shader 也应用 normal map/Tesion。因此保留 GB 现有消费者行为，使用 SB Normal 的预留 BA 通道提供明确组分。Material.A 为 `meshNormalAvailable`；lilToon SB writer 写 1，旧版/自定义 writer 未实现时必须保留 0。读取端在标记缺失时拒绝，而不是解码旧预留值。原 Normal.RG、Material.RGB 和 MRT 格式/数量不变。
 
 ## 调用
