@@ -108,13 +108,13 @@ void Final(uint3 id:SV_DispatchThreadID)
         diffuse=HoGIEvaluateDiffuse(surface,reservoir.position)*reservoir.radiance*reservoir.weightSum;
     _HoRTGIDiffuse[id.xy]=float4(diffuse,RAB_IsSurfaceValid(surface)?1:0);
     RTXDI_StoreGIReservoir(reservoir,HoGILayout(),id.xy,0);
-    uint4 history=0;
+    HoRTDIPrimaryHistory history=(HoRTDIPrimaryHistory)0;
     if(RAB_IsSurfaceValid(surface))
     {
         float2 uv=(float2(id.xy)+.5)/_HoRTGIFrame.xy;
-        history.x=asuint(SAMPLE_TEXTURE2D_X_LOD(_HoSurfaceAssociationSurfaceDepth,sampler_PointClamp,uv,0).r);
-        history.y=HoDIPack(float4(HoSurfaceOctEncode(surface.normal),HoSurfaceOctEncode(surface.geoNormal)));
-        history.z=HoDIPack(float4(surface.material.diffuseAlbedo,1));history.w=HoDIPack(float4(surface.material.specularF0,surface.material.roughness));
+        history.depth=asuint(SAMPLE_TEXTURE2D_X_LOD(_HoSurfaceAssociationSurfaceDepth,sampler_PointClamp,uv,0).r);
+        history.shadingNormal=HoDIPackNormal(surface.normal);history.geometricNormal=HoDIPackNormal(surface.geoNormal);
+        history.diffuse=HoDIPack(float4(surface.material.diffuseAlbedo,1));history.specular=HoDIPack(float4(surface.material.specularF0,surface.material.roughness));
     }
     _HoRTGIHistory[id.y*(uint)_HoRTGIFrame.x+id.x]=history;
 }

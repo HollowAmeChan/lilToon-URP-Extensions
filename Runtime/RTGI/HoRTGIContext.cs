@@ -27,7 +27,7 @@ namespace lilToon.URP.Extensions.RTGI
                 // Reference RTXDI block-linear layout / three-buffer GI schedule.
                 rowPitch=((w+15)/16)*256;arrayPitch=rowPitch*((h+15)/16);
                 reservoirs=new GraphicsBuffer(GraphicsBuffer.Target.Structured,arrayPitch*3,32){name="HoRTGI SDK reservoirs"};
-                history=new GraphicsBuffer(GraphicsBuffer.Target.Structured,w*h,16){name="HoRTGI previous surface guides"};
+                history=new GraphicsBuffer(GraphicsBuffer.Target.Structured,w*h,lilToon.URP.Extensions.RTDI.HoRTDIContext.PrimaryHistoryStride){name="HoRTGI previous surface guides"};
                 secondary=new GraphicsBuffer(GraphicsBuffer.Target.Structured,w*h,48){name="HoRTGI secondary surfaces"};historyValid=false;frame=0;
             }
             if(lights==null||lights.count<Mathf.Max(1,lightCount))

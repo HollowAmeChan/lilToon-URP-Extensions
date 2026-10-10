@@ -150,7 +150,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         }
 
         [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
-        private struct CurvedHistory16 {internal uint depth,normals,diffuse,specular;}
+        private struct CurvedHistory20 {internal uint depth,shadingNormal,geometricNormal,diffuse,specular;}
         private static Vector3 CurvedDecodeSbNormal(float x,float y)
         {
             var n=new Vector3(x*2-1,y*2-1,1-Mathf.Abs(x*2-1)-Mathf.Abs(y*2-1));
@@ -159,19 +159,22 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         }
         private static void AuditCurvedHistory(lilToon.URP.Extensions.RTDI.HoRTDIContext context,CurvedHit[] reference,float rough,Texture2D normals,int size)
         {
-            Require(context.history.stride==16,"Audit expects the current pinned 16-byte history layout");
-            var history=new CurvedHistory16[context.history.count];context.history.GetData(history);
+            Require(context.history.stride==20&&System.Runtime.InteropServices.Marshal.SizeOf<CurvedHistory20>()==20,"Primary history ABI must be 20 bytes");
+            var history=new CurvedHistory20[context.history.count];context.history.GetData(history);
             ReadImage(HoSurfaceBufferPass.CompatibilitySource.NormalTexture.rt,normals);
-            double scoreReference=0,scoreError=0;float angleWorst=0,relativeWorst=0;
+            double scoreReference=0,scoreError=0;float angleWorst=0,relativeWorst=0;int mismatches=0;
             for(int y=48;y<80;y++)for(int x=48;x<80;x++)
             {
                 int p=y*size+x;var h=history[p];Require((h.diffuse>>24)!=0,"History audit encountered an invalid receiver");var encoded=normals.GetPixel(x,y);
-                var current=reference[p];current.normal=CurvedDecodeSbNormal(encoded.r,encoded.g);var previous=current;previous.normal=CurvedDecodeSbNormal((h.normals&255)/255f,((h.normals>>8)&255)/255f);
+                uint expectedShading=(uint)Mathf.RoundToInt(encoded.r*65535)|((uint)Mathf.RoundToInt(encoded.g*65535)<<16),expectedGeometric=(uint)Mathf.RoundToInt(encoded.b*65535)|((uint)Mathf.RoundToInt(encoded.a*65535)<<16);
+                if(h.shadingNormal!=expectedShading||h.geometricNormal!=expectedGeometric)mismatches++;
+                var current=reference[p];current.normal=CurvedDecodeSbNormal(encoded.r,encoded.g);var previous=current;previous.normal=CurvedDecodeSbNormal((h.shadingNormal&65535)/65535f,(h.shadingNormal>>16)/65535f);
                 angleWorst=Mathf.Max(angleWorst,Vector3.Angle(current.normal,previous.normal));
                 var a=CurvedLightReference(current,light,rough);var b=CurvedLightReference(previous,light,rough);float currentScore=a.diffuse+4*a.specular,previousScore=b.diffuse+4*b.specular;
                 scoreReference+=currentScore;scoreError+=Math.Abs(currentScore-previousScore);relativeWorst=Mathf.Max(relativeWorst,Mathf.Abs(previousScore/currentScore-1));
             }
-            Debug.Log($"[HoRTDIValidation] CURVED_HISTORY_AUDIT stride={context.history.stride} normalMaxDegrees={angleWorst:F6} targetL1={scoreError/scoreReference:F6} targetMaxRelative={relativeWorst:F6}; actual stationary SB/history normals, independent CPU DI score; diagnostic only, not a GPU bias proof");
+            Debug.Log($"[HoRTDIValidation] CURVED_HISTORY_AUDIT stride={context.history.stride} mismatches={mismatches}/1024 normalMaxDegrees={angleWorst:F6} targetL1={scoreError/scoreReference:F9} targetMaxRelative={relativeWorst:F9}; actual stationary SB/history normals, independent CPU DI score; not a GPU bias proof");
+            Require(mismatches==0&&relativeWorst<.0001f,"Current and history normal representation differ");
         }
     }
 }

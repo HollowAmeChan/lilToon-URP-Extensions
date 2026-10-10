@@ -259,13 +259,25 @@
 
 **发现与下一项：** 当前SB高精度normal与DI/GI的8-bit历史表示不一致。新增 `RunCurvedHistoryAudit` 读取实际SB/16-byte GPU历史，静止同灯/材质/CPU位置下计算独立DI评分：最大法线差≈0.5801°，评分L1≈0.8821%、最大差≈7.7467%。这是接口量化差异的实测，不是GPU偏差证明或原平面64帧失败的归因。下一项修当前/历史法线表示，评审共享buffer布局与成本，用本步多序列和必要的GI/Player回归验收；最终合成保持原范围。详见 [运动与历史审计](../Ho-RTDI-NRD.md)。
 
-## 23. 下一步取舍
+## 23. 当前/历史法线表示一致性
+
+**动手前评审：应修接口，不调亮度。** 前步测得静止同表面评分最大差约7.75%。核对用户current/previous RAB_Surface与官方Bridge一致性契约，将两种法线当前/历史都统一到2×16-bit oct，同时保留既有8-bit材质响应。历史从四到五个uint、16到20 B；共享header和host stride同步更新DI/GI，NRD F0 history reader同步字段偏移。不是新增GBuffer副本、Feature或PT接口。
+
+**首项验证：** 真实GPU history的shading/mesh normal与SB坐标中央1024像素0不一致，host/Marshal stride=20；独立CPU评分L1在F9精度下0、最大差约0.000000167，新增编码/评分硬gate通过。该接口差异已消除，但不能据此宣称所有GPU估计无偏或原平面64帧失败已修。当前/历史同codec也覆盖FP16输入回退，材质/depth、SDK reservoir、采样预算与NRD配置不变。
+
+**回归与收益边界：** 两条曲面运动各30组、静态曲面、两条核心/NRD、边界/HDR、Power/时间/预算与必要的GI两条路径通过。曲面运动镜面filtered比例0.989390..1.011075，L1最高0.131369；部分MSE略高于旧布局，不作普遍降噪改善结论。原平面64帧raw=0.964139的3%gate仍失败，512帧raw/filtered=1.015134/0.991015继续通过，分别保留。DI实测载荷223.437/503.547 MiB，SB增量另计；同步RG batch约6.815/13.238 ms，不能当孤立性能。
+
+**部署与复查：** 两个Win64 Mono release构建与实际D3D12 EXE通过曲面/混合/仅时域/HDR/noise/初始visibility等旧gate，D3D11 inactive通过；packed NRD DLL SHA一致。Roslyn/派生检查通过，无新增本步GPU诊断。共享GI只同步20-byte host/writer/reader，NRD材质历史guide同步字段偏移，当前normal与previous同codec。原ABI/材质量化、SDK算法、预算和最终接收未扩张。
+
+**成本与下一项：** 每个DI/GI history相对旧布局720p/1080p增加约3.52/7.91 MiB，SB原normal附件的增量另算；同时启用DI/GI各有一份history。无新纹理/pass/ray，有额外normal codec运算。后续依结果复查运动与实际场景支持，再评估环境/更多灯域，不继续围绕单个平面序列调NRD。
+
+## 24. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
-| NRD 质量与预算 | 静态曲面与相机运动三序列30组/路径通过；仍有双灯运动形状误差及原平面64帧raw失败。当前高精度SB/8-bit历史法线导致评分不一致已实测，下一项优先修该接口并评估buffer成本，再扩大目标场景。当前SB输入增量1080p约7.91 MiB，旧历史设置不会自动迁移。 |
+| NRD 质量与预算 | 当前/历史normal codec已统一，真实GPU history与SB匹配，评分表示差异消除；仍需分别核对运动误差和原平面64帧失败。SB输入及每个DI/GI history各增加1080p约7.91 MiB，下一项转向实际场景/灯域支持，保留既有失败，旧历史预算设置不会自动迁移。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

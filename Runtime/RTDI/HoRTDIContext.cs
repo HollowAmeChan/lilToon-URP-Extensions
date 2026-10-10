@@ -14,6 +14,7 @@ namespace lilToon.URP.Extensions.RTDI
 {
     internal sealed class HoRTDIContext : IDisposable
     {
+        internal const int PrimaryHistoryStride=20;
         internal GraphicsBuffer reservoirs,history,lights,neighbors,previousLights,currentToPrevious,previousToCurrent;
         internal RTHandle diffuse,specular;
         internal RTHandle powerPdf;
@@ -51,7 +52,7 @@ namespace lilToon.URP.Extensions.RTDI
                 // Reference RTXDI block-linear layout / three-buffer DI schedule.
                 rowPitch=((w+15)/16)*256;arrayPitch=rowPitch*((h+15)/16);
                 reservoirs=new GraphicsBuffer(GraphicsBuffer.Target.Structured,arrayPitch*3,24){name="HoRTDI SDK reservoirs"};
-                history=new GraphicsBuffer(GraphicsBuffer.Target.Structured,w*h,16){name="HoRTDI previous surface guides"};
+                history=new GraphicsBuffer(GraphicsBuffer.Target.Structured,w*h,PrimaryHistoryStride){name="HoRTDI previous surface guides"};
                 historyValid=false;frame=0;
             }
             // Buffer growth does not invalidate the reservoirs: the previous

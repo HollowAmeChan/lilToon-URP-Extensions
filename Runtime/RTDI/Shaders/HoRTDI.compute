@@ -275,13 +275,13 @@ void HoDIShade(uint3 id,out uint peak)
     RTXDI_DIReservoir reservoir=RTXDI_LoadDIReservoir(HoDILayout(),id.xy,1);
     #endif
     RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,0);
-    uint4 history=0;
+    HoRTDIPrimaryHistory history=(HoRTDIPrimaryHistory)0;
     if(RAB_IsSurfaceValid(surface))
     {
         float2 uv=(float2(id.xy)+.5)/_HoRTDIFrame.xy;
-        history.x=asuint(SAMPLE_TEXTURE2D_X_LOD(_HoSurfaceAssociationSurfaceDepth,sampler_PointClamp,uv,0).r);
-        history.y=HoDIPack(float4(HoSurfaceOctEncode(surface.normal),HoSurfaceOctEncode(surface.geoNormal)));
-        history.z=HoDIPack(float4(surface.material.diffuseAlbedo,1));history.w=HoDIPack(float4(surface.material.specularF0,surface.material.roughness));
+        history.depth=asuint(SAMPLE_TEXTURE2D_X_LOD(_HoSurfaceAssociationSurfaceDepth,sampler_PointClamp,uv,0).r);
+        history.shadingNormal=HoDIPackNormal(surface.normal);history.geometricNormal=HoDIPackNormal(surface.geoNormal);
+        history.diffuse=HoDIPack(float4(surface.material.diffuseAlbedo,1));history.specular=HoDIPack(float4(surface.material.specularF0,surface.material.roughness));
     }
     _HoRTDIHistory[id.y*(uint)_HoRTDIFrame.x+id.x]=history;
 }

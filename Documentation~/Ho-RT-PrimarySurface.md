@@ -22,6 +22,8 @@
 
 启用并入队的 RTDI/RTGI 会通过现有 camera demand 请求 SB 原 Normal 附件采用高精度格式，优先 RGBA16 UNorm、其次 RGBA16F；没有请求时保留紧凑格式。请求只决定生产附件精度，不经 AC 复制或改变上述读取布局。支持格式回退与每像素增加4 B的成本见 [SurfaceBuffer](Ho-SurfaceBuffer.md)，曲面独立参考测量见 [RTDI NRD记录](Ho-RTDI-NRD.md)。
 
+DI/GI bridge 会将当前帧两种法线统一到2×16-bit oct坐标，再按同一表示保存和读取历史，避免当前高精度、历史8-bit时对同一表面给出不同候选评分。内部主表面历史为20 B/像素：raw depth、shading normal、mesh normal、diffuse/validity、F0/roughness各一个uint；材质仍沿用8-bit量化。相对原16 B历史，每个DI/GI context的720p/1080p新增约3.52/7.91 MiB，不是新Feature或当前GBuffer副本，详细GPU一致性验证见 [RTDI记录](Ho-RTDI-NRD.md)。
+
 本轮 GPU 验证发现此前“GB 提供无扰动几何法线”的判断不成立：lilToon 的 GB shader 也应用 normal map/Tesion。因此保留 GB 现有消费者行为，使用 SB Normal 的预留 BA 通道提供明确组分。Material.A 为 `meshNormalAvailable`；lilToon SB writer 写 1，旧版/自定义 writer 未实现时必须保留 0。读取端在标记缺失时拒绝，而不是解码旧预留值。原 Normal.RG、Material.RGB 和 MRT 格式/数量不变。
 
 ## 调用

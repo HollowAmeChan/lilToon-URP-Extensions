@@ -1,7 +1,8 @@
 // Borrowed Mono primary inputs; no additional material texture or object-ID routing.
+#include "../HoRTDIPrimaryHistory.hlsl"
 Texture2D<float4> _HoRTPrimaryColor, _HoRTPrimaryMaterial, _HoRTPrimaryReflection;
 float4 _HoRTPrimarySize;
-StructuredBuffer<uint4> _HoRTDIHistory;
+StructuredBuffer<HoRTDIPrimaryHistory> _HoRTDIHistory;
 int _HoRTDINrdGuideHistoryValid;
 
 float3 HoNrdSpecularGuide(int2 pixel)
@@ -31,8 +32,8 @@ float HoNrdSpecularHistoryMatch(int2 pixel, float2 previousUV)
     {
         float w = (x==0?1-f.x:f.x)*(y==0?1-f.y:f.y); if(w <= 1e-6) continue;
         int2 q=origin+int2(x,y); if(any(q<0)||any(q>=(int2)_HoRTPrimarySize.xy)) return 0;
-        uint4 h=_HoRTDIHistory[q.y*(uint)_HoRTPrimarySize.x+q.x]; if((h.z>>24)==0) return 0;
-        float3 old=float3(h.w&255,(h.w>>8)&255,(h.w>>16)&255)/255.0 + NRD_MATERIAL_FACTOR_MIN_SCALE;
+        HoRTDIPrimaryHistory h=_HoRTDIHistory[q.y*(uint)_HoRTPrimarySize.x+q.x]; if((h.diffuse>>24)==0) return 0;
+        float3 old=float3(h.specular&255,(h.specular>>8)&255,(h.specular>>16)&255)/255.0 + NRD_MATERIAL_FACTOR_MIN_SCALE;
         match=min(match,HoNrdSpecularMaterialWeight(current,old));
     }
     return match;

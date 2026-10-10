@@ -6,6 +6,7 @@
 #define HO_RTDI_APPLICATION_BRIDGE_INCLUDED
 #include "../../RayTracing/Shaders/HoRTPrimarySurface.hlsl"
 #include "../../RayTracing/Shaders/HoRTSceneQuery.hlsl"
+#include "HoRTDIPrimaryHistory.hlsl"
 #include "../ThirdParty/donut/brdf.hlsli"
 #ifndef HO_RTDI_PRESAMPLING_ENABLED
 #define HO_RTDI_PRESAMPLING_ENABLED 0
@@ -40,7 +41,7 @@ StructuredBuffer<HoRTDILight> _HoRTDIPreviousLights;
 StructuredBuffer<int> _HoRTDICurrentToPrevious, _HoRTDIPreviousToCurrent;
 int _HoRTDIPreviousLightCount;
 #endif
-RWStructuredBuffer<uint4> _HoRTDIHistory;
+RWStructuredBuffer<HoRTDIPrimaryHistory> _HoRTDIHistory;
 StructuredBuffer<float2> _HoRTDINeighbors;
 RWStructuredBuffer<RTXDI_PackedDIReservoir> _HoRTDIReservoirs;
 #define RTXDI_LIGHT_RESERVOIR_BUFFER _HoRTDIReservoirs
@@ -60,6 +61,8 @@ float RAB_GetSurfaceLinearDepth(RAB_Surface s) { return s.viewDepth; }
 RAB_Material RAB_GetMaterial(RAB_Surface s) { return s.material; }
 uint HoDIPack(float4 v) { uint4 b=(uint4)round(saturate(v)*255);return b.x|(b.y<<8)|(b.z<<16)|(b.w<<24); }
 float4 HoDIUnpack(uint v) { return float4(v&255,(v>>8)&255,(v>>16)&255,v>>24)/255.0; }
+uint HoDIPackNormal(float3 n) { uint2 p=(uint2)round(saturate(HoSurfaceOctEncode(n))*65535.0);return p.x|(p.y<<16); }
+float3 HoDIUnpackNormal(uint p) { return HoSurfaceOctDecode(float2(p&65535,p>>16)/65535.0); }
 float HoDILuminance(float3 v) { return dot(v,float3(.2126,.7152,.0722)); }
 RAB_Surface RAB_GetGBufferSurface(int2 pixel, bool previousFrame)
 {
@@ -68,24 +71,25 @@ RAB_Surface RAB_GetGBufferSurface(int2 pixel, bool previousFrame)
     if(previousFrame)
     {
         if(_HoRTDIFlags.x<.5)return s;
-        uint4 h=_HoRTDIHistory[pixel.y*(uint)_HoRTDIFrame.x+pixel.x];
-        if((h.z>>24)==0)return s;
-        float raw=asfloat(h.x);float2 uv=(float2(pixel)+.5)/_HoRTDIFrame.xy;
+        HoRTDIPrimaryHistory h=_HoRTDIHistory[pixel.y*(uint)_HoRTDIFrame.x+pixel.x];
+        if((h.diffuse>>24)==0)return s;
+        float raw=asfloat(h.depth);float2 uv=(float2(pixel)+.5)/_HoRTDIFrame.xy;
         #if !UNITY_REVERSED_Z
             raw=lerp(UNITY_NEAR_CLIP_VALUE,1,raw);
         #endif
         s.worldPos=ComputeWorldSpacePosition(uv,raw,_HoRTDIPreviousInverseVP);
-        float4 normals=HoDIUnpack(h.y);
-        s.normal=HoSurfaceOctDecode(normals.xy);s.geoNormal=HoSurfaceOctDecode(normals.zw);
+        s.normal=HoDIUnpackNormal(h.shadingNormal);s.geoNormal=HoDIUnpackNormal(h.geometricNormal);
         s.viewDepth=-dot(_HoRTDIPreviousViewZ,float4(s.worldPos,1));
         s.viewDir=_HoRTDIPreviousClipParameters.z>.5?normalize(_HoRTDIPreviousTowardsEye.xyz):normalize(_HoRTDIPreviousCameraPosition.xyz-s.worldPos);
-        s.material.diffuseAlbedo=HoDIUnpack(h.z).rgb;
-        float4 specular=HoDIUnpack(h.w);s.material.specularF0=specular.rgb;s.material.roughness=specular.a;
+        s.material.diffuseAlbedo=HoDIUnpack(h.diffuse).rgb;
+        float4 specular=HoDIUnpack(h.specular);s.material.specularF0=specular.rgb;s.material.roughness=specular.a;
         return s;
     }
     HoRTPrimarySurface p;
     if(!HoRTTryLoadPrimarySurface((uint2)pixel,p))return s;
-    s.worldPos=p.positionWS;s.normal=p.shadingNormalWS;s.geoNormal=p.geometricNormalWS;s.viewDir=p.viewDirectionWS;s.viewDepth=p.eyeDepth;
+    s.worldPos=p.positionWS;s.viewDir=p.viewDirectionWS;s.viewDepth=p.eyeDepth;
+    // Canonicalize both frames identically, including a producer's FP16 fallback.
+    s.normal=HoDIUnpackNormal(HoDIPackNormal(p.shadingNormalWS));s.geoNormal=HoDIUnpackNormal(HoDIPackNormal(p.geometricNormalWS));
     // Explicit PBR reference response, not a change to the raw primary input or NPR reception.
     float3 base=saturate(p.baseColor);
     s.material.diffuseAlbedo=HoDIUnpack(HoDIPack(float4(base*(1-p.metallic),1))).rgb;

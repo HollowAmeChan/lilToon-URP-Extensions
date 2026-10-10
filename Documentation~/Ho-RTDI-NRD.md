@@ -466,3 +466,27 @@ Editor两条核心/NRD、材质/点灯边界、HDR九组与范围、动态灯、
 **新的待修缺口：** 静态SB升为16-bit后，DI/GI仍把两种法线各以2×8-bit oct存入16-byte主表面历史。当前`RAB_GetGBufferSurface(false)`读取SB高精度normal，previous分支读取这份8-bit历史，表面材质/位置不变时也可能给候选不同评分。`RunCurvedHistoryAudit`明确只在隔离compatibility项目、固定16-byte布局下读取实际SB Normal与GraphicsBuffer历史；以同一个CPU mesh位置、同一灯/材质计算DI现有diffuse+4*specular评分，仅改变来自两份实际数据的法线。测得normal最大差0.580135°、target L1≈0.008821、最大相对差≈0.077467。该CPU诊断不是GPU bias证明，也没有把它认定为原64帧平面失败的唯一原因。
 
 下一项优先评审并修复当前/历史法线表示的一致性，保留现有PBR量化和资源接口；量化历史buffer布局/显存成本，再用这里的独立序列、原静态/平面失败、必要的共享GI回归及实际Player检查。不要仅因这些较宽的能量门槛通过就跳过该接口差异，也不要继续调NRD或输出增益来补它。
+
+## 当前/历史法线的统一表示与20-byte布局
+
+步骤23按前步实际SB/历史读回补齐接口一致性。[官方Bridge契约](https://github.com/NVIDIA-RTX/RTXDI/blob/main/Doc/RtxdiApplicationBridge.md)允许近似target，但评分规则必须一致；用户参考RAB_Surface对current/previous读取相应normal/geometric-normal纹理。我们此前当前帧从高精度SB读取，而历史只保留8-bit oct；本步不以提高输出或调整NRD消除这项差异。
+
+新增共享 `HoRTDIPrimaryHistory.hlsl` 定义五个uint、20-byte primary history，DI/GI host buffer均使用同一stride，NRD F0历史guide同步读取新字段位置。当前bridge先把shading/mesh normal统一编码解码为2×16-bit oct，保存与previous分支使用同一codec；这样SB为16-bit UNorm或FP16回退时，两帧仍采用一致表示。depth保持32-bit，diffuse/validity和F0/roughness仍各4×8-bit，灯/SDK reservoir布局、采样预算、物理BRDF、NRD配置与最终材质合成不变。
+
+| 每像素20-byte GPU布局 | 字节偏移 | 含义 |
+| --- | --- | --- |
+| depth | 0 | 原始device depth的float bits |
+| shadingNormal | 4 | 两个16-bit oct坐标 |
+| geometricNormal | 8 | 两个16-bit oct坐标；SB的无normal-map网格组分 |
+| diffuse | 12 | RGB albedo/validity，各8-bit |
+| specular | 16 | RGB F0/roughness，各8-bit |
+
+`RunCurvedHistoryAudit`现在检查host/Marshal均为20-byte，并从真实GPU history读回两种normal word，对实际SB的16-bit坐标逐像素核对。中央1024像素0不一致；静止同灯/材质/CPU位置下的候选评分L1在F9精度下为0，最大相对差约0.000000167（约0.0000167%），旧16-byte历史为0.008821/0.077467。新增硬gate要求编码全匹配及最大score差<0.0001；它证明该数据表示差异已消除，不是全部GPU估计无偏的证明。无新增本步shader诊断，原vendor/派生NRD正文SHA检查继续通过。
+
+历史buffer相对原布局每像素增加4 B，每个DI/GI context的720p/1080p新增约3.516/7.910 MiB；若两个Feature同相机都启用，各自历史都计入。前步SB normal附件的增量另外计算，且共享SB只算一次。没有增加纹理、pass或visibility ray；当前bridge增加normal codec运算，不宣称免费或孤立GPU速度提升。新增共享header只服务既有DI/GI历史，没有扩大PT框架或最终材质接收。
+
+两条路径曲面运动各30组继续通过，新的raw镜面比例0.985020..1.015488、filtered镜面0.989390..1.011075、filtered L1=0.024551..0.131369。没有普遍MSE改善结论：低roughness/seed0的T-only filtered MSE从0.025721变为0.026657，TS从0.023142变为0.024181；raw分别0.462135→0.457503、0.825769→0.838535。这步修复评分输入一致性，未据单个序列声称滤波更好或消除所有偏差。静态曲面10组、两条核心/NRD、边界、HDR、Power、30/60/120Hz时间线、目标尺寸及必要的GI两条路径回归通过。原平面64帧raw比例仍0.964139，3%gate保持exit1；独立512帧raw/filtered=1.015134/0.991015、L1=0.065642，通过。
+
+实际DI自有载荷720p/1080p为223.437/503.547 MiB，旧219.921/495.637 MiB；SB输入增量另计。简单RG同步batch约6.815/13.238 ms，含CPU/完整渲染/最终读回，不是codec的孤立GPU成本。代码/host布局一并重编，旧运行中context依正常重建处理，不把20-byte buffer绑定给旧16-byte reader。
+
+两个Win64 Mono release构建0 errors，实际D3D12 RG/compatibility EXE和D3D11 inactive通过。Player曲面raw/filtered L1≈0.000588/0.000814，混合/仅时域两种lobe的原5%条件、初始visibility、F0/点灯边界、HDR/noise及资源重建继续通过；HDR最差约1.196%，filtered noise MSE≈0.0000992/0.0000868。不同实际执行节奏/RNG历史的数据不作严格性能或质量消融。packed NRD DLL SHA与源一致。Roslyn无错误，NRD原始SHA/派生生成器检查通过，无新增本步DI/NRD shader或command-buffer诊断；已有lilToon duplicate-keyword与其他模块C#警告另计。
