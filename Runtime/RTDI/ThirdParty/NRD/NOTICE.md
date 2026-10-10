@@ -31,6 +31,14 @@ F0. Temporal reduces specular history budgets when the existing DI primary
 history's F0 footprint does not match. HoRTDINrdMaterialGuide.hlsl implements
 this project-specific material condition; it does not allocate another guide
 texture or alter the raw BRDF. Diffuse filtering is not conditioned by this guide.
+The first A-trous kernel now propagates specular temporal variance with squared
+filter weights, matching the later kernels rather than adding spatial shading
+contrast back into variance. Specular range weights use the smaller endpoint
+variance, so a noisy bright center cannot alone set the contrast bandwidth.
+The first pass estimates accumulated-color variance conservatively with the
+shorter fast-history budget and current history length. This sample-count
+correction is approximate for correlated ReSTIR inputs; it is not a claim of
+general NRD statistical unbiasedness. Diffuse propagation remains pinned.
 Temporal also converts previous RGB and second moments into the GPU-selected
 current linear signal domain (ratio and ratio squared, respectively). Responsive
 alpha remains hit distance and is not scaled. The DI integration selects a safe

@@ -75,11 +75,32 @@ def generate():
     derived = re.sub(r'#include "([^\"]+)"', r'#include "../../ThirdParty/NRD/\1"', derived)
     derived = guide_include(derived)
     derived = derived.replace("groupshared float4 s_Normal_Roughness[BUFFER_Y][BUFFER_X];", "groupshared float4 s_Normal_Roughness[BUFFER_Y][BUFFER_X];\ngroupshared float3 s_SpecularMaterial[BUFFER_Y][BUFFER_X];")
+    derived = derived.replace("// Helper functions", "groupshared float s_SpecularVarianceSamples[BUFFER_Y][BUFFER_X];\n\n// Helper functions")
+    derived = derived.replace("    globalPos = clamp(globalPos, 0, gRectSize - 1.0);", "    globalPos = clamp(globalPos, 0, gRectSize - 1.0);\n    // Clamping may adopt fast color: use the shorter budget conservatively.\n    s_SpecularVarianceSamples[sharedPos.y][sharedPos.x] = max(1.0, min(255.0 * gIn_HistoryLength[globalPos], gSpecMaxFastAccumulatedFrameNum + 1.0));")
     derived = derived.replace("    float materialID;", "    s_SpecularMaterial[sharedPos.y][sharedPos.x] = HoNrdSpecularGuide(globalPos);\n    float materialID;")
     derived = derived.replace("wSpecular *= CompareMaterials(sampleMaterialID, centerMaterialID, gSpecMinMaterial);", "wSpecular *= CompareMaterials(sampleMaterialID, centerMaterialID, gSpecMinMaterial);\n                wSpecular *= HoNrdSpecularMaterialWeight(s_SpecularMaterial[sharedMemoryIndex.y][sharedMemoryIndex.x], s_SpecularMaterial[sharedMemoryIndexP.y][sharedMemoryIndexP.x]);")
+    # Match the later A-trous kernels: propagate uncertainty of the weighted
+    # color rather than reclassifying real spatial shading contrast as noise.
+    patches = {
+        "        float4 sumSpecularIlluminationAnd2ndMoment = 0;": "        float4 sumSpecularIlluminationAnd2ndMoment = 0;\n        float sumSpecularTemporalVariance = 0;",
+        "                sumSpecularIlluminationAnd2ndMoment += wSpecular * sampleSpecularIlluminationAnd2ndMoment;": "                sumSpecularIlluminationAnd2ndMoment += wSpecular * sampleSpecularIlluminationAnd2ndMoment;\n                sumSpecularTemporalVariance += wSpecular * wSpecular * sampleSpecularVar;",
+        "        float specularVariance = max(0, specular2ndMoment - specular1stMoment * specular1stMoment);": "        float specularVariance = sumSpecularTemporalVariance / (sumWSpecular * sumWSpecular);",
+    }
+    for old, new in patches.items():
+        if derived.count(old) != 1: raise ValueError("Unexpected first A-trous variance propagation: " + old)
+        derived = derived.replace(old, new)
+    old = "float specularLuminanceW = abs(centerSpecularLuminance - sampleSpecularLuminance) * specularPhiLIlluminationInv;"
+    new = """float sampleSpecularVar = max(0.0, sampleSpecularIlluminationAnd2ndMoment.a - sampleSpecularLuminance * sampleSpecularLuminance) / s_SpecularVarianceSamples[sharedMemoryIndexP.y][sharedMemoryIndexP.x];
+                float centerRawSpecularVar = max(0.0, s_Spec[sharedMemoryIndex.y][sharedMemoryIndex.x].a - centerSpecularLuminance * centerSpecularLuminance) / s_SpecularVarianceSamples[sharedMemoryIndex.y][sharedMemoryIndex.x];
+                // Either precise endpoint can reject contrast: a bright noisy
+                // center must not alone decide the range bandwidth.
+                float pairSpecularVar = min(centerRawSpecularVar, sampleSpecularVar);
+                float specularLuminanceW = abs(centerSpecularLuminance - sampleSpecularLuminance) / max(1.0e-4, gSpecPhiLuminance * sqrt(pairSpecularVar));"""
+    if derived.count(old) != 1: raise ValueError("Unexpected smem specular luminance weight")
+    derived = derived.replace(old, new)
     notice = ("// Ho-RTDI dense-signal adaptation of NRD 4.17.3 RELAX_AtrousSmem.\n"
               f"// Original SHA256: {expected}\n"
-              "// Adapted: per-pixel temporal variance and borrowed F0 specular weights.\n"
+              "// Adapted: temporal variance, accumulated specular uncertainty/pair bandwidth, weighted propagation, F0 weights.\n"
               "// Original source/license remain in ../../ThirdParty/NRD.\n")
     return notice + derived
 
@@ -97,7 +118,12 @@ def generate_atrous():
     text = guide_include(text)
     text = text.replace("    float3 centerV = -normalize(centerWorldPos);", "    float3 centerV = -normalize(centerWorldPos);\n    float3 centerSpecularMaterial = HoNrdSpecularGuide(pixelPos);")
     text = text.replace("wSpecular *= CompareMaterials(sampleMaterialID, centerMaterialID, gSpecMinMaterial);", "wSpecular *= CompareMaterials(sampleMaterialID, centerMaterialID, gSpecMinMaterial);\n                wSpecular *= (isInside ? HoNrdSpecularMaterialWeight(centerSpecularMaterial, HoNrdSpecularGuide(p)) : 0.0);")
-    return f"// Ho-RTDI F0-weight adaptation of NRD 4.17.3. Original SHA256: {expected}\n" + text
+    old = "float specularLuminanceW = abs(centerSpecularLuminance - sampleSpecularLuminance) * specularPhiLIlluminationInv;"
+    new = """float pairSpecularVar = min(centerSpecularVar, max(0.0, sampleSpecularIlluminationAndVariance.a));
+                float specularLuminanceW = abs(centerSpecularLuminance - sampleSpecularLuminance) / max(1.0e-4, gSpecPhiLuminance * sqrt(pairSpecularVar));"""
+    if text.count(old) != 1: raise ValueError("Unexpected atrous specular luminance weight")
+    text = text.replace(old, new)
+    return f"// Ho-RTDI F0/pair-bandwidth adaptation of NRD 4.17.3. Original SHA256: {expected}\n" + text
 
 
 def generate_temporal():

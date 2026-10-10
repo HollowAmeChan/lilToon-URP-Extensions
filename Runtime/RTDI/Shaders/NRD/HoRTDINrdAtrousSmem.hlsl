@@ -1,6 +1,6 @@
 // Ho-RTDI dense-signal adaptation of NRD 4.17.3 RELAX_AtrousSmem.
 // Original SHA256: 58e8b5bdc93cc3b331a8cf9994a784d5137be2b566c78e39ef617ce6be8b289e
-// Adapted: per-pixel temporal variance and borrowed F0 specular weights.
+// Adapted: temporal variance, accumulated specular uncertainty/pair bandwidth, weighted propagation, F0 weights.
 // Original source/license remain in ../../ThirdParty/NRD.
 /*
 Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
@@ -40,6 +40,8 @@ license agreement from NVIDIA CORPORATION is strictly prohibited.
 groupshared float4 s_Normal_Roughness[BUFFER_Y][BUFFER_X];
 groupshared float3 s_SpecularMaterial[BUFFER_Y][BUFFER_X];
 groupshared float4 s_WorldPos_MaterialID[BUFFER_Y][BUFFER_X];
+
+groupshared float s_SpecularVarianceSamples[BUFFER_Y][BUFFER_X];
 
 // Helper functions
 
@@ -90,6 +92,8 @@ void computeVariance(
 void Preload(uint2 sharedPos, int2 globalPos)
 {
     globalPos = clamp(globalPos, 0, gRectSize - 1.0);
+    // Clamping may adopt fast color: use the shorter budget conservatively.
+    s_SpecularVarianceSamples[sharedPos.y][sharedPos.x] = max(1.0, min(255.0 * gIn_HistoryLength[globalPos], gSpecMaxFastAccumulatedFrameNum + 1.0));
 
 #if( NRD_SPEC )
     s_Spec[sharedPos.y][sharedPos.x] = gIn_Spec_Variance[globalPos];
@@ -220,6 +224,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
         float sumWSpecular = 0;
         float4 sumSpecularIlluminationAnd2ndMoment = 0;
+        float sumSpecularTemporalVariance = 0;
         #if( NRD_MODE == SH )
             float4 sumSpecularSH = 0;
             float roughnessModified = s_SpecSH[sharedMemoryIndex.y][sharedMemoryIndex.x].w;
@@ -303,7 +308,12 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                 float4 sampleSpecularIlluminationAnd2ndMoment = s_Spec[sharedMemoryIndexP.y][sharedMemoryIndexP.x];
                 float sampleSpecularLuminance = Color::Luminance(sampleSpecularIlluminationAnd2ndMoment.rgb);
 
-                float specularLuminanceW = abs(centerSpecularLuminance - sampleSpecularLuminance) * specularPhiLIlluminationInv;
+                float sampleSpecularVar = max(0.0, sampleSpecularIlluminationAnd2ndMoment.a - sampleSpecularLuminance * sampleSpecularLuminance) / s_SpecularVarianceSamples[sharedMemoryIndexP.y][sharedMemoryIndexP.x];
+                float centerRawSpecularVar = max(0.0, s_Spec[sharedMemoryIndex.y][sharedMemoryIndex.x].a - centerSpecularLuminance * centerSpecularLuminance) / s_SpecularVarianceSamples[sharedMemoryIndex.y][sharedMemoryIndex.x];
+                // Either precise endpoint can reject contrast: a bright noisy
+                // center must not alone decide the range bandwidth.
+                float pairSpecularVar = min(centerRawSpecularVar, sampleSpecularVar);
+                float specularLuminanceW = abs(centerSpecularLuminance - sampleSpecularLuminance) / max(1.0e-4, gSpecPhiLuminance * sqrt(pairSpecularVar));
                 specularLuminanceW = min(gSpecMaxLuminanceRelativeDifference, specularLuminanceW);
                 specularLuminanceW *= specularLuminanceWeightRelaxation;
 
@@ -315,6 +325,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
                 sumWSpecular += wSpecular;
                 sumSpecularIlluminationAnd2ndMoment += wSpecular * sampleSpecularIlluminationAnd2ndMoment;
+                sumSpecularTemporalVariance += wSpecular * wSpecular * sampleSpecularVar;
                 #if( NRD_MODE == SH )
                     sumSpecularSH += wSpecular * s_SpecSH[sharedMemoryIndexP.y][sharedMemoryIndexP.x];
                 #endif
@@ -349,7 +360,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         sumSpecularIlluminationAnd2ndMoment /= sumWSpecular;
         float specular1stMoment = Color::Luminance(sumSpecularIlluminationAnd2ndMoment.rgb);
         float specular2ndMoment = sumSpecularIlluminationAnd2ndMoment.a;
-        float specularVariance = max(0, specular2ndMoment - specular1stMoment * specular1stMoment);
+        float specularVariance = sumSpecularTemporalVariance / (sumWSpecular * sumWSpecular);
         float4 filteredSpecularIlluminationAndVariance = float4(sumSpecularIlluminationAnd2ndMoment.rgb, specularVariance);
         gOut_Spec_Variance[pixelPos] = filteredSpecularIlluminationAndVariance;
         #if( NRD_MODE == SH )

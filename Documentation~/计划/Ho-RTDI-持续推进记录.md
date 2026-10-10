@@ -193,13 +193,25 @@
 
 **完成后复查与下一项：** 保留所有失败门槛，提交解析验证、stage读回和取舍证据；不把复杂域改成简单域求通过。下一项优先查A-trous置信度、空间权重及局部高光扩散范围，再按证据决定滤波/采样/距离调整。需补曲面、宽域/点列Profile与最终目标场景；没有重新做Player/预算，因为本步生产代码最终未改。详见 [局部灯审计与复现](../Ho-RTDI-NRD.md)。
 
-## 17. 下一步取舍
+## 17. Specular 空间权重与方差传播
+
+**动手前评审：应查空间阶段，不增加射线。** 新诊断读取真实reprojection confidence和不同宽度ROI：置信度全1，但final/参考从32²的0.856到全部可见平面的0.913，不能仅解释为光斑扩散到ROI之外。对照用户固定NRD源码及官方A-trous实现，首层又将真实空间亮度差混入输出variance，后续层已用平方权重传播variance，当前DenseDI定义需要一致。
+
+**实现与试验取舍：** 只改DI的派生specular滤波：亮暗端用较小的方差共同决定luminance bandwidth；首层用Σ(w²×temporalVariance)/Σ(w)²传播，避免空间轮廓再次变成noise；以fast预算和已存在history length估计累积颜色方差，相关ReSTIR下仍是近似。原型曾同时改diffuse传播，使diffuse MSE由约0.000179升至0.000543，已撤回该部分。无新RT纹理/射线/Feature/ABI，首层新增576B groupshared history cache与已有R8历史读取。
+
+**收益和未完成项：** 相同随机序列/512轮对照，无复用及T+S的specular归一化MSE从0.037400/0.050194降为0.007037/0.010763；无复用中心/整平面比例从0.856/0.913变为0.984/0.987。T+S另一条固定序列整体ratio约0.963，但原quality序列仍为0.947065（5.293%偏差），原5% gate保持失败；不通过改门槛消除有限样本/历史剩余误差。运动L1从约15.6%降到8.0%，旧HDR/材质边界/时间/噪声回归继续检查。没有宣称整个DI目标已完成。
+
+**新增失败域：** 双灯薄遮挡CPU segment/AABB检查发现raw shadow也不足：off/off为0，T/S/TS约0.830/0.513/0.866；diffuse raw整体约0.797–0.910。切回旧生产shader重复，raw完全一致，因此属于新暴露的采样/visibility输入问题，不能借本步修饰。滤波对受光高光与暗区的改进已单独测量，shadow gate保留失败。下一项优先单Far lamp与actual ray/reservoir读回定位该缺口，再解决固定quality序列剩余偏差和曲面/目标场景支持。详见 [空间修复与限制](../Ho-RTDI-NRD.md)。
+
+**最终验证与成本：** 两条Editor的NRD/边界/九组GGX/HDR/生命周期通过，RG quality/time/尺寸通过，两个release构建和实际D3D12 Player/D3D11 inactive通过。Player部署回归不是新128²场景的支持域证明。Roslyn/派生重建通过，最终无新增DI/NRD诊断。RT载荷仍219.921/495.637MiB，简单RG同步batch6.750/12.799ms；没有新增纹理/pass/射线，但组内cache/读取和方差运算有成本。保留5.293%固定quality与双灯shadow两个失败，不以新观察通过重新定义完成。
+
+## 18. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
-| NRD 质量与预算 | HDR已修复；单个Point/Spot斜视角、薄阴影和绕视通过。双局部灯镜面存在14–19%ROI偏暗，quality gate仍失败，已定位主要在A-trous。下一项先查该阶段置信度/空间权重/光斑扩散，再推进曲面、每lobe距离及目标场景；不以简单域替代失败域。 |
+| NRD 质量与预算 | 空间specular总误差已明显改善，原固定quality序列仍约5.3%偏差、gate未过。双灯遮挡新暴露raw/visibility缺口，旧shader也重现，下一项先定位它；再推进剩余quality、曲面与目标场景。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

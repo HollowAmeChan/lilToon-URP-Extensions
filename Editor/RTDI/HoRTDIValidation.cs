@@ -17,7 +17,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     {
         private static readonly List<Object> objects=new();
         private static RenderPipelineAsset previousDefault,previousQuality;
-        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise,forceBudget,forceQuality,forceTiming,forceBoundaries,forceSpecular,requireHDR,forceLocalLighting,forceLocalPair,requireLocalPairQuality,forceLocalFilterAudit;
+        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise,forceBudget,forceQuality,forceTiming,forceBoundaries,forceSpecular,requireHDR,forceLocalLighting,forceLocalPair,requireLocalPairQuality,forceLocalFilterAudit,forceLocalSpatialAudit,forceLocalPairShadow;
         private static Camera camera;
         private static RenderTexture target;
         private static HoRTDIRendererFeature feature;
@@ -53,6 +53,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunLocalPairQuality(){requireLocalPairQuality=true;RunLocalLighting();}
         public static void RunLocalPairQualityCompatibility(){compatibility=true;RunLocalPairQuality();}
         public static void RunLocalFilterAudit(){forceLocalFilterAudit=true;RunLocalPair();}
+        public static void RunLocalSpatialAudit(){forceLocalSpatialAudit=true;RunLocalPair();}
+        public static void RunLocalPairShadow(){forceLocalPairShadow=true;RunLocalPair();}
         public static void RunUnsupported(){unsupported=true;Run();}
         public static void Run()
         {
@@ -550,7 +552,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             {
                 SetLocalView(15);light.type=LightType.Point;surfaceMaterial.SetFloat("_Smoothness",.7f);light.transform.position=new Vector3(-camera.transform.position.x*1.5f/(-camera.transform.position.z),.15f,-1.5f);
                 var distant=Point(new Vector3(-30,0,-50),light.color,25000);distant.range=100;
-                var modes=forceLocalFilterAudit?new[]{(false,false),(false,false),(false,false),(false,false),(false,false)}:new[]{(false,false),(true,false),(false,true),(true,true)};
+                if(forceLocalPairShadow){blocker.layer=1;camera.cullingMask=~(1<<1);blocker.transform.position=light.transform.position*.5f;blocker.transform.localScale=new Vector3(.05f,.7f,.08f);blocker.SetActive(true);}
+                var modes=forceLocalSpatialAudit?new[]{(false,false),(true,true)}:forceLocalFilterAudit?new[]{(false,false),(false,false),(false,false),(false,false),(false,false)}:new[]{(false,false),(true,false),(false,true),(true,true)};
+                bool shadowQuality=true;
                 int variant=0;
                 foreach(var mode in modes)
                 {
@@ -575,27 +579,69 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                         for(int frame=0;frame<128;frame++)RenderCamera();
                         Debug.Log($"[HoRTDIValidation] LOCAL_FILTER_VARIANT sigma={probeSettings.fastSigma} specFast={probeSettings.specFast} acceleration={probeSettings.acceleration} reset={probeSettings.reset} specPrepass={probeSettings.specPrepass}; real native setting, diagnostic only");
                     }
-                    double expectedSum=0,rawSum=0,filteredSum=0,error=0,diffReference=0,diffRaw=0,historySum=0,historyReference=0;
+                    double expectedSum=0,rawSum=0,filteredSum=0,error=0,diffReference=0,diffRaw=0,historySum=0,historyReference=0,rawMse=0,filteredMse=0,referenceSquares=0;
                     var historyTexture=FindNrdHistory(c,"gHistory_Spec");
+                    var shadowBounds=blocker.GetComponent<Renderer>().bounds;double shadowReference=0,shadowFiltered=0,shadowRaw=0,litReference=0,litFiltered=0;int shadowCount=0;
+                    var reprojection=forceLocalSpatialAudit?FindNrdTemporalPool(c,"gOut_SpecReprojectionConfidence"):null;
+                    var confidenceImage=forceLocalSpatialAudit?Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true)):null;
+                    var bandReference=new double[4];var bandRaw=new double[4];var bandHistory=new double[4];var bandFinal=new double[4];
+                    double confidenceSum=0,confidenceReference=0;float confidenceMin=1,confidenceMax=0;
                     for(int frame=0;frame<512;frame++)
                     {
                         RenderCamera();ReadImage(c.specular.rt,rawSpec);ReadImage(c.filteredSpecular.rt,filteredSpec);ReadImage(c.diffuse.rt,rawDiff);
                         if(frame%8==0){ReadImage(historyTexture,hit);ReadImage(c.nrdSpecular.rt,filteredDiff);}
+                        if(forceLocalSpatialAudit&&frame%8==0)
+                        {
+                            ReadImage(reprojection,confidenceImage);
+                            for(int y=0;y<size;y++)for(int x=0;x<size;x++)
+                            {
+                                var p=PlanePosition(x,y,size);if(Mathf.Abs(p.x)>=.999f||Mathf.Abs(p.y)>=.999f)continue;
+                                float expected=ReferenceLocalLight(x,y,size,r).specular.r+ReferenceLocalLight(distant,x,y,size,r).specular.r;
+                                float input=filteredDiff.GetPixel(x,y).r;Require(input>0,"Spatial audit cannot restore material factor");
+                                float history=hit.GetPixel(x,y).r*rawSpec.GetPixel(x,y).r/input;
+                                float confidence=confidenceImage.GetPixel(x,y).r;confidenceSum+=expected*confidence;confidenceReference+=expected;confidenceMin=Mathf.Min(confidenceMin,confidence);confidenceMax=Mathf.Max(confidenceMax,confidence);
+                                for(int band=0;band<4;band++)if(x>=64-(band+1)*16&&x<64+(band+1)*16&&y>=64-(band+1)*16&&y<64+(band+1)*16)
+                                {bandReference[band]+=expected;bandRaw[band]+=rawSpec.GetPixel(x,y).r;bandHistory[band]+=history;bandFinal[band]+=filteredSpec.GetPixel(x,y).r;}
+                            }
+                        }
                         for(int y=48;y<80;y++)for(int x=48;x<80;x++)
                         {
-                            var a=ReferenceLocalLight(x,y,size,r);var b=ReferenceLocalLight(distant,x,y,size,r);float expected=a.specular.r+b.specular.r;
+                            var a=ReferenceLocalLight(x,y,size,r);var b=ReferenceLocalLight(distant,x,y,size,r);bool nearShadow=false;
+                            if(forceLocalPairShadow)
+                            {
+                                var p=PlanePosition(x,y,size);nearShadow=SegmentHitsBox(p,light.transform.position,shadowBounds);
+                                if(nearShadow){a.diffuse=Color.clear;a.specular=Color.clear;}
+                                if(SegmentHitsBox(p,distant.transform.position,shadowBounds)){b.diffuse=Color.clear;b.specular=Color.clear;}
+                            }
+                            float expected=a.specular.r+b.specular.r;
                             expectedSum+=expected;rawSum+=rawSpec.GetPixel(x,y).r;filteredSum+=filteredSpec.GetPixel(x,y).r;error+=Math.Abs(filteredSpec.GetPixel(x,y).r-expected);diffReference+=a.diffuse.r+b.diffuse.r;diffRaw+=rawDiff.GetPixel(x,y).r;
+                            double rawDelta=rawSpec.GetPixel(x,y).r-expected,filteredDelta=filteredSpec.GetPixel(x,y).r-expected;
+                            rawMse+=rawDelta*rawDelta;filteredMse+=filteredDelta*filteredDelta;referenceSquares+=expected*expected;
+                            if(forceLocalPairShadow){if(nearShadow){shadowReference+=expected;shadowFiltered+=filteredSpec.GetPixel(x,y).r;shadowRaw+=rawSpec.GetPixel(x,y).r;shadowCount++;}else{litReference+=expected;litFiltered+=filteredSpec.GetPixel(x,y).r;}}
                             if(frame%8==0)
                             {
                                 // The raw/staged ratio recovers this pixel's
                                 // material factor and current scale. Restore
                                 // history physically without another GPU pass.
-                                float input=filteredDiff.GetPixel(x,y).r;Require(input>0,"Cannot recover local material factor from zero input");
-                                historySum+=hit.GetPixel(x,y).r*rawSpec.GetPixel(x,y).r/input;historyReference+=expected;
+                                float input=filteredDiff.GetPixel(x,y).r;
+                                if(input>0){historySum+=hit.GetPixel(x,y).r*rawSpec.GetPixel(x,y).r/input;historyReference+=expected;}
+                                else Require(forceLocalPairShadow,"Cannot recover local material factor from zero input");
                             }
                         }
                     }
                     Debug.Log($"[HoRTDIValidation] LOCAL_PAIR_ABLATION temporal={mode.Item1} spatial={mode.Item2} rawRatio={rawSum/expectedSum:F6} historyRatio={historySum/historyReference:F6} filteredRatio={filteredSum/expectedSum:F6} filteredL1={error/expectedSum:F6} diffuseRawRatio={diffRaw/diffReference:F6}");
+                    Debug.Log($"[HoRTDIValidation] LOCAL_SPECULAR_MSE temporal={mode.Item1} spatial={mode.Item2} rawNormalized={rawMse/referenceSquares:F6} filteredNormalized={filteredMse/referenceSquares:F6}; includes bias and temporal noise against analytic reference");
+                    if(forceLocalPairShadow)
+                    {
+                        Debug.Log($"[HoRTDIValidation] LOCAL_PAIR_SHADOW samples={shadowCount} shadowRawRatio={shadowRaw/shadowReference:F6} shadowFilteredRatio={shadowFiltered/shadowReference:F6} litFilteredRatio={litFiltered/litReference:F6}");
+                        shadowQuality&=shadowCount>0&&Math.Abs(shadowRaw/shadowReference-1)<.05;
+                        shadowQuality&=Math.Abs(shadowFiltered/shadowReference-1)<.1&&Math.Abs(litFiltered/litReference-1)<.05;
+                    }
+                    if(forceLocalSpatialAudit)
+                    {
+                        for(int band=0;band<4;band++)Debug.Log($"[HoRTDIValidation] LOCAL_SPATIAL_BAND width={(band+1)*32} rawRatio={bandRaw[band]/bandReference[band]:F6} historyRatio={bandHistory[band]/bandReference[band]:F6} finalRatio={bandFinal[band]/bandReference[band]:F6}");
+                        Debug.Log($"[HoRTDIValidation] LOCAL_REPROJECTION weightedMean={confidenceSum/confidenceReference:F6} min={confidenceMin:F6} max={confidenceMax:F6} lightingConfidenceCenter={ReadCenter(c.specConfidence.rt).r:F6}");
+                    }
                     if(forceLocalFilterAudit)
                     {
                         expectedSum=rawSum=filteredSum=error=0;
@@ -612,6 +658,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     }
                     Require(c.nrd.AppliedSettings.diffFrames==applied.diffFrames&&c.nrd.AppliedSettings.specFrames==applied.specFrames&&c.nrd.AppliedSettings.specFast==applied.specFast,"Filter audit timing budget changed and invalidated native override");variant++;
                 }
+                Require(!forceLocalPairShadow||shadowQuality,"Paired-light shadow raw visibility/energy or filtered highlight failed");
                 Debug.Log("[HoRTDIValidation] LOCAL_PAIR observation completed; diagnostic ratios are not quality acceptance");return;
             }
             foreach(var type in new[]{LightType.Point,LightType.Spot})foreach(float rough in new[]{.3f,.7f})foreach(float angle in new[]{0f,30f,60f})
@@ -730,14 +777,16 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             return far>0&&near<1;
         }
         private static RenderTexture FindNrdHistory(HoRTDIContext context,string name)
+            =>FindNrdTemporalPool(context,name,true);
+        private static RenderTexture FindNrdTemporalPool(HoRTDIContext context,string name,bool requirePermanent=false)
         {
             var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;var type=context.nrd.GetType();
             var passes=(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.DispatchDesc[])type.GetField("passes",flags).GetValue(context.nrd);
             var resources=(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.ResourceDesc[,])type.GetField("resources",flags).GetValue(context.nrd);
-            var permanent=(RTHandle[])type.GetField("permanent",flags).GetValue(context.nrd);var manifest=lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdManifest.Resources[4];
+            var permanent=(RTHandle[])type.GetField("permanent",flags).GetValue(context.nrd);var transient=(RTHandle[])type.GetField("transient",flags).GetValue(context.nrd);var manifest=lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdManifest.Resources[4];
             for(int i=0;i<context.nrd.LastDispatchCount;i++)if(passes[i].pipeline==4)
                 for(int j=0;j<manifest.Length;j++)if(manifest[j]==name)
-                {var resource=resources[i,j];Require(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.ResourceName(resource.type)=="PERMANENT_POOL","History diagnostic is not a permanent pool input");return permanent[resource.poolIndex].rt;}
+                {var resource=resources[i,j];string kind=lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.ResourceName(resource.type);Require(kind=="PERMANENT_POOL"||(!requirePermanent&&kind=="TRANSIENT_POOL"),"Temporal diagnostic is not the expected pool");return(kind=="PERMANENT_POOL"?permanent:transient)[resource.poolIndex].rt;}
             throw new InvalidOperationException("NRD history diagnostic input missing: "+name);
         }
         private static void ValidateSpecular()

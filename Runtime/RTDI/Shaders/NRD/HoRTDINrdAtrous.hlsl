@@ -1,4 +1,4 @@
-// Ho-RTDI F0-weight adaptation of NRD 4.17.3. Original SHA256: bc4c998e30852232ac98e4f2a7f924ef0072d900f44f4de1d725171f9e1508b8
+// Ho-RTDI F0/pair-bandwidth adaptation of NRD 4.17.3. Original SHA256: bc4c998e30852232ac98e4f2a7f924ef0072d900f44f4de1d725171f9e1508b8
 /*
 Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
 
@@ -193,7 +193,8 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                 float4 sampleSpecularIlluminationAndVariance = gIn_Spec_Variance[p];
                 float sampleSpecularLuminance = Color::Luminance(sampleSpecularIlluminationAndVariance.rgb);
 
-                float specularLuminanceW = abs(centerSpecularLuminance - sampleSpecularLuminance) * specularPhiLIlluminationInv;
+                float pairSpecularVar = min(centerSpecularVar, max(0.0, sampleSpecularIlluminationAndVariance.a));
+                float specularLuminanceW = abs(centerSpecularLuminance - sampleSpecularLuminance) / max(1.0e-4, gSpecPhiLuminance * sqrt(pairSpecularVar));
                 specularLuminanceW = min(gSpecMaxLuminanceRelativeDifference, specularLuminanceW);
                 specularLuminanceW *= specularLuminanceWeightRelaxation;
 

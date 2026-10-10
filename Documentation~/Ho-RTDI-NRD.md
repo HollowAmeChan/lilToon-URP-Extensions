@@ -300,3 +300,34 @@ NRD confidence 也改为按其自身历史有效性读取 previous guides，独�
 固定核心把HistoryClamping写到这些permanent颜色，再供A-trous读取，antiFirefly在DenseDI关闭，因此主要剩余损失在空间阶段。不要把它未经验证地归因到hitT，或放宽fast-clamp参数求过关。一个按fast历史计数缩放specular空间方差的派生原型也没有改善（TS final≈0.811816），已撤回；原vendor/派生SHA重建通过。没有保留该cache、GPU成本或参数改动。
 
 本步最终只有Editor验证/诊断及文档变化；两条支持域gate、Roslyn、派生重建通过，双灯quality gate保持失败。没有新增生产资源、Feature、参数、射线或改PBR/NPR合成，也未重新声称Player/曲面/TAA域通过。下一项查A-trous置信度、空间权重、不同宽度ROI与整光斑的扩散/能量；尤其需要区分真实高光轮廓、随机输入噪声与reprojection relaxation，再决定适当的算法修复。
+
+## Specular 空间方差传播与成对边缘权重
+
+步骤17先通过 `RunLocalSpatialAudit` 读取实际Temporal输出的reprojection confidence和外部lighting confidence；该静态用例都是1。宽度32/64/96/128的ROI中，旧final/解析值约0.856/0.881/0.900/0.913。128覆盖全部可见平面（按独立平面交点排除边界外像素），因此除了ROI外扩散，还存在整体下降。原permanent颜色历史约0.989；本轮修复限制于它之后的DI specular滤波。
+
+对照用户固定源码与[官方A-trous shader](https://github.com/NVIDIA-RTX/NRD/blob/master/Shaders/RELAX_Atrous.cs.hlsl)，采用三项DenseDI适配，原vendor正文/ABI/pool和raw不改：
+
+- specular range bandwidth同时使用两个端点较小的方差。精确的暗端可以拒绝亮端的噪声尺度，不再单由bright center较大的variance放宽范围；后续step同样采用这一对称规则。它是保守边缘策略，不是声称两端差值的精确概率方差等于min。
+- 首层原来混合M2后减去混合RGB的亮度平方，会重新把真实光斑空间变化算进variance。现在从每像素时间方差用Σ(w²v)/Σ(w)²传播，和后续A-trous的传播形式一致。
+- 首层估计累积specular颜色的不确定度时，用max(1,min(historyLength,fastFrames+1))除时间方差。clamping可能采用更短fast颜色，因此不直接使用完整main预算；相关ReSTIR输入和自适应历史下仍是近似，不承诺统计无偏。增加的是576 B/组的history-count cache及已有R8输入的读取。
+
+最初同时改diffuse传播，原noise MSE约0.000179变为0.000543，已撤回diffuse部分，最终回到0.000179。单独成对权重、单独传播、两项合并及历史计数的消融都在真实shader执行；各自不能代替完整验证。之前步骤16“只除方差/fast计数”的失败没有被删除，本步作用于成对权重与输出variance的整体契约。
+
+同一诊断入口、随机序列、192预热/512观察，对照baseline源码并恢复最终代码：
+
+| 初始8候选，状态 | 旧final/解析值 | 新final/解析值 | 旧/新归一化specular MSE |
+| --- | --- | --- | --- |
+| 无时空复用，中心32² | 0.855860 | 0.984282 | 0.037400 / 0.007037 |
+| temporal+spatial，中心32² | 0.828719 | 0.963095 | 0.050194 / 0.010763 |
+| 无复用，全部可见平面 | 0.913263 | 0.987245 | — |
+| temporal+spatial，全部可见平面 | 0.898673 | 0.975442 | — |
+
+MSE以解析reference平方和归一，包含bias和随时间的noise；raw分别为1.669559/1.893981。这里有明确总误差下降，不能只用均值变亮宣称有效。单Point绕视L1约1.17%；原另一个固定quality随机序列（`RunLocalPairQualityCompatibility`）静态ratio仍为0.947065、运动ratio约0.982016、运动L1约8.04%，静态5%门槛仍exit1。没有调整门槛或全局RGB增益，不能把另一个通过的观察替代这项失败。
+
+**新增双灯遮挡失败：** `RunLocalPairShadow`用相同CPU segment/AABB visibility，近灯薄遮挡、远灯仍贡献。raw shadow/参考在无复用/T/S/TS为0/0.829793/0.513458/0.865544，diffuse raw总比例约0.797–0.910。切回baseline重跑，raw数据完全一致，说明这是已有sampling/visibility域缺口，尚未证明是实现还是输入契约的问题。旧filtered shadow比例为0.932/3.168/1.564/2.941，受光区0.712/0.519/0.693/0.626；新分别为0/0.816/0.506/0.852、受光区0.982/0.932/0.969/0.972。滤波已减少泄漏/偏暗，但raw问题未修复，shadow gate保持exit1。
+
+两条Editor的NRD、F0/薄遮挡边界、九组GGX、HDR范围、释放重建回归通过；RG的quality/time、目标尺寸通过。两个Win64 Mono release构建与实际D3D12 EXE、D3D11 inactive通过，packed NRD ABI不变。Player旧噪声MSE约0.000086–0.000102，noisy metal均值0.953351/参考0.969727、HDR最差约1.070%能量误差；这是旧部署fixture回归，没有把新128²双灯支持域算成Player验收。最终没有新增DI/NRD Shader/UAV/command-buffer诊断；Roslyn和派生重建通过，其他模块旧警告保留。
+
+自有载荷仍为720p/1080p约219.921/495.637 MiB；简单RG同步batch本轮6.750/12.799 ms，前轮6.570/12.172 ms，含完整CPU/渲染/读回，不是孤立GPU性能。除了上述组内cache、history读取和额外方差运算，没有新增纹理、pass或光线；成本有变化，不宣称免费。
+
+完成后判断：这一局部修复有明确的镜面总误差收益，保留两个失败门槛。下一项优先用单Far lamp和实际ray/reservoir数据定位双灯遮挡的raw缺口，再处理固定quality序列的剩余偏差、曲面和目标场景。保持最终lilToon PBR/NPR接收与合成边界。
