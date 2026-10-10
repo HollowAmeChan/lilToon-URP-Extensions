@@ -76,6 +76,13 @@ observation frames. The central 16x16 region is checked against independent
 inverse-square/range and GGX references (quantized F0=10/255, roughness=76/255).
 JSON mixedSpecularRatio and mixedDiffuseRatio must both stay within 5% of unity.
 This deployment check does not replace the 128x128 Editor temporal-only audit.
+The same receiver and lights are also measured with temporal-only reuse, after
+resetting NRD and using another 192 warmup / 256 observation frames. JSON
+temporalMixedSpecularRatio and temporalMixedDiffuseRatio retain the same 5%
+gates; temporalMixedMaxHistory records the serialized ReSTIR history budget.
+New DI settings default to 4; existing renderer assets retain their configured
+value. This is a reservoir sample-count limit relative to the current initial
+sample count, not the NRD accumulation-frame budget.
 The probe also keeps NRD alive while two normal-incidence directional lights
 change intensity through 0.5/0.25, 16/8, 0.0005/0.00025 and back. An independent
 GGX reference uses this material's SB FP16 / DI 8-bit roughness of 25/255.

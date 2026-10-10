@@ -381,3 +381,39 @@ MSE 用解析 reference 平方和归一，包含噪声和偏差；该 fixture �
 两个 Win64 Mono release 构建与实际 D3D12 RG/compatibility EXE 通过新增的 64²混合材质部署 gate：192 预热、256 观察、central16²、initial8/no-reuse，独立 GGX/reference 下 filtered specular=0.980891、diffuse=0.969552，均满足 5%。旧初始 visibility≈0.995916、点灯/颜色/F0 边界、HDR 最差约 1.028%、noise 回归通过，D3D11 实际 EXE inactive 通过。64²部署 gate 没有证明 128² temporal-only 的失败已消失。Editor 两条核心/NRD、Power、动态灯/边界、HDR、时间线/目标尺寸以及 GI compatibility 通过；Roslyn 无错误、派生生成器 `--check` 通过，无新增本步 shader/command-buffer 诊断，其他模块既有警告另计。
 
 没有新增常驻 GPU 资源、pass、ray 或 native 依赖；720p/1080p 自有载荷仍约 219.921/495.637 MiB。简单 RG 同步 batch 约 6.809/13.170 ms，含 CPU/完整渲染/读回，不是单项 GPU 成本。接下来优先继续量化 temporal-only 的相关噪声、history 输运和 A-trous 剩余误差，再扩大曲面与目标场景；保持最终 lilToon PBR/NPR 接收/合成的原范围。
+
+## ReSTIR 历史样本预算与 permutation 审计
+
+步骤20保持步骤19的候选 target、NRD 配置和物理 Shade，先在同一薄遮挡、temporal-only、192+128 预热/512 观察序列中比较 ReSTIR 历史上限。`RunLocalReservoirHistoryOneAudit` / `FourAudit` / `EightAudit` / `TwentyAudit` 显式覆盖 1/4/8/20；`RunLocalHistoryAudit` 现在测生产默认值。这里的 maxHistory 是固定 SDK `min(MaxM, maxHistoryLength * curSample.M)` 的历史样本数量上限，不是 NRD 历史帧数，也不是所选样本的最大 age。
+
+| 旧 frame-counter permutation，ReSTIR maxHistory | raw specular 归一化 MSE | filtered specular 归一化 MSE | lit filtered/reference |
+| --- | --- | --- | --- |
+| 20 | 10.094452 | 0.052974 | 0.935517 |
+| 8 | 4.739896 | 0.025909 | 0.969939 |
+| 4 | 2.476860 | 0.015112 | 0.980582 |
+| 1 | 1.239605 | 0.008352 | 0.982272 |
+
+新诊断按每像素的 511 对相邻帧误差去均值，再汇总 covariance/variance；lag-one 分别约 -0.0042/-0.0074/0.0010/-0.0024，均接近零。它没有证明逐像素相邻噪声相关，也不能排除空间 transport、多帧 ancestry 或共享 reservoir 的相关性。表中长历史增加了该 fixture 的 raw 方差，不能据此宣布长历史在所有场景有害。
+
+用户参考 `Assets/RTXDI/Scripts/Rtxdi/DI/ReSTIRDIContext.cs` 的 `SetFrameIndex` 与 `SetTemporalResamplingParameters` 使用 `JenkinsHash(frameIndex)`。固定 SDK `ReSTIRDIParameters.h` 要求 frame-uniform random，`ReservoirAddressing.hlsl` 只取低四位。DI 原来直接传 frameIndex，每16帧重复 permutation offset；现在使用现有 SDK `RTXDI_JenkinsHash`，所有像素仍共享一个值，不修改 vendor。单独 hash 在 maxHistory20 下 lit=0.952955，通过5%门槛，但 raw/filtered镜面 MSE=11.906299/0.072785，比旧counter更差；不把这个均值变化单独计作质量提升。
+
+采用 hash 与较短默认历史的组合。新建 `HoRTDISettings.maxHistory=4`，Inspector 为「历史样本预算」，tooltip说明与NRD不同并建议从4开始。范围仍1..32，已有 renderer 资产的序列化20或其他值继续生效，没有静默覆盖、自动迁移或强制4；长历史可按场景显式比较。NRD main/fast帧预算与现有材质支持域均未调整。
+
+| 同一匹配长预热 temporal-only | 步骤19（counter，20） | 新默认（hash，4） |
+| --- | --- | --- |
+| raw specular / reference | 0.989989 | 1.002485 |
+| raw specular 归一化 MSE | 10.094452 | 2.633737 |
+| filtered specular 归一化 MSE | 0.052974 | 0.016470 |
+| filtered specular L1 / reference | 0.173647 | 0.095937 |
+| lit filtered/reference | 0.935517 | 0.976478 |
+| raw diffuse 归一化 MSE | 0.944692 | 0.167633 |
+| filtered diffuse 归一化 MSE | 0.010298 | 0.005551 |
+| filtered diffuse / reference | 0.965401 | 1.002761 |
+
+当前默认的匹配 temporal-only 原5%gate通过；四模式薄遮挡的 lit 比例为 0.980064/0.976316/0.976589/0.976302，shadow raw/filtered 均通过。temporal+spatial 的镜面归一化 MSE=2.253991/0.013794、diffuse=0.192115/0.006241。没有增加生产纹理、pass、ray或NRD调度；每像素多一次现有整数hash，实际预算另测，不宣称零成本。
+
+**保留短运动失败：** `RunLocalPairQualityCompatibility` 的原静态 filtered/reference=0.971634，64帧运动 raw=0.964139 超过3%gate，filtered=0.951544、L1=0.072589。原方法与门槛保持不变，仍exit1。独立 `RunLocalPairMotionConvergenceAudit` 用同15deg/s、同15..31度域往返512帧；其前64帧数据与原失败完全相同，128/256/512帧 raw比例约0.982864/0.991638/1.015134，512帧filtered=0.991004、L1=0.065639，通过原能量/L1门槛。更长观察说明统计结果对长度敏感，没有证明短序列已经可靠，也不代表任意场景无偏。后续须增加独立序列/曲面/目标场景，避免只围绕单个平面序列调参数。
+
+实际 Win64 Mono release 两条 D3D12 EXE 通过新增 temporal-only 混合材质部署 gate：序列化 maxHistory 均为4，RG specular/diffuse 比例=0.971927/0.970563，compatibility=0.985094/0.967562，均满足5%。原 no-reuse 混合 gate、初始visibility、点灯/F0边界、HDR与noise继续通过；D3D11实际EXE保持inactive。旧Player noisy镜面、HDR测试的RNG序列因新增观察而改变，当前HDR最差约1.227%、filtered噪声MSE约0.0000915/0.0000907，不把它们当作严格单项消融。两个构建0 errors，packed DLL与源SHA相同。
+
+Editor两条核心/NRD、Power、动态灯质量、边界、HDR九组与范围、30/60/120Hz时间线、目标尺寸回归通过；Roslyn无错误、派生生成器`--check`通过，无新增本步DI/NRD shader/command-buffer诊断，既有其他模块警告另计。没有修改共享GI代码。720p/1080p自有载荷仍219.921/495.637 MiB；简单RG同步batch约6.952/15.388 ms，前步6.809/13.170 ms。该fixture没有启用temporal，含CPU/完整渲染/读回，不能把时间差直接归因于hash或视为孤立GPU成本。

@@ -18,7 +18,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     public VolumeProfile profile;
     private RenderTexture target;
     private bool unsupported;
-    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak,pointDepthMax,pointShadowMax,coloredSpecRelative,coloredSpecLeak,noisyMetalMean,noisyMetalReference,noisyCameraMean,noisyCameraTint,hdrRelative,hdrRawRelative,initialVisibilityShadowRatio,mixedSpecularRatio,mixedDiffuseRatio;}
+    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak,pointDepthMax,pointShadowMax,coloredSpecRelative,coloredSpecLeak,noisyMetalMean,noisyMetalReference,noisyCameraMean,noisyCameraTint,hdrRelative,hdrRawRelative,initialVisibilityShadowRatio,mixedSpecularRatio,mixedDiffuseRatio,temporalMixedSpecularRatio,temporalMixedDiffuseRatio;public int temporalMixedMaxHistory;}
     private readonly Result result=new Result();
     private IEnumerator Start()
     {
@@ -224,24 +224,30 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     {
         var position=light.transform.position;float range=light.range,intensity=light.intensity;var color=light.color;
         var bluePosition=blue.transform.position;float blueRange=blue.range,blueIntensity=blue.intensity;var blueColor=blue.color;
+        bool temporal=feature.Settings.temporal,spatial=feature.Settings.spatial;
         var raw=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);var filtered=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);
         try
         {
             light.transform.position=new Vector3(0,.15f,-1.5f);light.range=20;light.intensity=4;light.color=Color.white;
             blue.transform.position=new Vector3(-30,0,-50);blue.range=100;blue.intensity=25000;blue.color=Color.white;blue.enabled=true;
             surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetFloat("_Smoothness",.7f);feature.Settings.initialSamples=8;feature.Settings.denoise=true;
-            for(int i=0;i<192;i++)Render();double spec=0,specReference=0,diff=0,diffReference=0;
-            for(int frame=0;frame<256;frame++)
+            foreach(bool reuse in new[]{false,true})
             {
-                Render();ReadInto(capture.Specular,filtered);ReadInto(capture.Diffuse,raw);
-                for(int y=24;y<40;y++)for(int x=24;x<40;x++)
-                {spec+=filtered.GetPixel(x,y).r;specReference+=ExpectedLocalSpecular(light,x,y)+ExpectedLocalSpecular(blue,x,y);diff+=raw.GetPixel(x,y).r;diffReference+=Expected(light,x,y)+Expected(blue,x,y);}
+                feature.Settings.temporal=reuse;feature.Settings.spatial=false;feature.Settings.denoise=false;Render();feature.Settings.denoise=true;
+                for(int i=0;i<192;i++)Render();double spec=0,specReference=0,diff=0,diffReference=0;
+                for(int frame=0;frame<256;frame++)
+                {
+                    Render();ReadInto(capture.Specular,filtered);ReadInto(capture.Diffuse,raw);
+                    for(int y=24;y<40;y++)for(int x=24;x<40;x++)
+                    {spec+=filtered.GetPixel(x,y).r;specReference+=ExpectedLocalSpecular(light,x,y)+ExpectedLocalSpecular(blue,x,y);diff+=raw.GetPixel(x,y).r;diffReference+=Expected(light,x,y)+Expected(blue,x,y);}
+                }
+                if(reuse){result.temporalMixedSpecularRatio=(float)(spec/specReference);result.temporalMixedDiffuseRatio=(float)(diff/diffReference);result.temporalMixedMaxHistory=feature.Settings.maxHistory;}
+                else{result.mixedSpecularRatio=(float)(spec/specReference);result.mixedDiffuseRatio=(float)(diff/diffReference);}
+                Require(Math.Abs(spec/specReference-1)<.05&&Math.Abs(diff/diffReference-1)<.05,"Player mixed diffuse/specular proposal energy mismatch; temporal="+reuse);
             }
-            result.mixedSpecularRatio=(float)(spec/specReference);result.mixedDiffuseRatio=(float)(diff/diffReference);
-            Require(Math.Abs(spec/specReference-1)<.05&&Math.Abs(diff/diffReference-1)<.05,"Player mixed diffuse/specular proposal energy mismatch");
         }
         finally
-        {light.transform.position=position;light.range=range;light.intensity=intensity;light.color=color;blue.enabled=false;blue.transform.position=bluePosition;blue.range=blueRange;blue.intensity=blueIntensity;blue.color=blueColor;surfaceMaterial.SetFloat("_Reflectance",0);surfaceMaterial.SetFloat("_Smoothness",.5f);feature.Settings.denoise=false;feature.Settings.initialSamples=1;Destroy(raw);Destroy(filtered);}
+        {light.transform.position=position;light.range=range;light.intensity=intensity;light.color=color;blue.enabled=false;blue.transform.position=bluePosition;blue.range=blueRange;blue.intensity=blueIntensity;blue.color=blueColor;surfaceMaterial.SetFloat("_Reflectance",0);surfaceMaterial.SetFloat("_Smoothness",.5f);feature.Settings.denoise=false;feature.Settings.initialSamples=1;feature.Settings.temporal=temporal;feature.Settings.spatial=spatial;Destroy(raw);Destroy(filtered);}
     }
     private double ExpectedLocalSpecular(Light source,int x,int y)
     {

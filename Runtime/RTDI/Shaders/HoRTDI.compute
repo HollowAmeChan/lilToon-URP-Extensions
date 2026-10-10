@@ -192,7 +192,9 @@ void Temporal(uint3 id:SV_DispatchThreadID)
         float3 motion=float3(previousUV*_HoRTDIFrame.xy-(float2(id.xy)+.5),previousDepth-surface.viewDepth);
         RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTDIFrameIndex,RTXDI_DI_TEMPORAL_RESAMPLING_RANDOM_SEED);
         RTXDI_DITemporalResamplingParameters p=(RTXDI_DITemporalResamplingParameters)0;
-        p.maxHistoryLength=(uint)_HoRTDIFlags.z;p.biasCorrectionMode=RTXDI_BIAS_CORRECTION_RAY_TRACED;p.depthThreshold=.05;p.normalThreshold=.9;p.enablePermutationSampling=1;p.uniformRandomNumber=(uint)_HoRTDIFrameIndex;
+        // The SDK uses four low bits for a frame-uniform permutation offset.
+        // Match the reference hash rather than repeating the frame counter's 16-step pattern.
+        p.maxHistoryLength=(uint)_HoRTDIFlags.z;p.biasCorrectionMode=RTXDI_BIAS_CORRECTION_RAY_TRACED;p.depthThreshold=.05;p.normalThreshold=.9;p.enablePermutationSampling=1;p.uniformRandomNumber=RTXDI_JenkinsHash((uint)_HoRTDIFrameIndex);
         int2 temporalPosition;RAB_LightSample sample=RAB_EmptyLightSample();
         reservoir=RTXDI_DITemporalResampling(id.xy,surface,reservoir,rng,HoDIRuntime(),HoDILayout(),motion,0,p,temporalPosition,sample);
     }

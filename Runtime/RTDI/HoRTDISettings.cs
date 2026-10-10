@@ -15,7 +15,8 @@ namespace lilToon.URP.Extensions.RTDI
         [Tooltip("局部灯初始候选数；存在方向灯时，另从方向灯分区抽取一个候选。")]
         [Range(1,32)] public int initialSamples = 8;
         public bool temporal = true;
-        [Range(1,32)] public int maxHistory = 20;
+        [Tooltip("ReSTIR 历史样本预算相对当前候选数的上限，不是 NRD 的历史帧数。推荐从 4 开始；长历史可能放大局部高光的方差，可按场景调整。")]
+        [Range(1,32)] public int maxHistory = 4;
         public bool spatial = true;
         [Range(1,16)] public int spatialSamples = 4;
         [Range(1,32)] public float spatialRadius = 16;

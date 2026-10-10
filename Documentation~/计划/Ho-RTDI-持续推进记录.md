@@ -227,13 +227,25 @@
 
 **完成后复查：** 无新生产纹理/pass/Feature/native DLL。阶段 capture 仅诊断入口分配测试纹理，回调在 Player 中被编译移除。下一项继续定位 temporal-only 的相关噪声、history 输运与空间滤波剩余误差；再进入曲面/目标场景，不提前扩张最终材质合成。详见 [混合候选权重](../Ho-RTDI-NRD.md)。
 
-## 20. 下一步取舍
+## 20. ReSTIR permutation 与较短默认历史
+
+**动手前评审：检查 sampling 输入，不再放松 NRD。** 同序列比较 ReSTIR maxHistory=1/4/8/20，保持前步 target、NRD、192+128 预热及 512 观察不变。20/8/4/1 的 raw 镜面归一化 MSE 约 10.094/4.740/2.477/1.240，filtered 约 0.052974/0.025909/0.015112/0.008352。逐像素去均值的 lag-one correlation 接近零，不能把改善归因于逐像素相邻帧相关性；更长的空间 ancestry 与历史权重影响仍需另查。
+
+**参考与实现：** 用户 fork 的 ReSTIRDIContext.SetFrameIndex/SetTemporalResamplingParameters 使用 JenkinsHash(frameIndex)；固定 SDK temporal 参数要求 frame-uniform random，permutation 只取低四位。DI 原来直接使用 frame counter，现改为 SDK JenkinsHash。单独 hash、历史20虽然通过长预热亮度 gate，却把该 fixture 镜面 MSE 提高至 0.072785，并使原短运动 raw gate 失败，未把它称为独立质量改善。新建 DI 的默认 maxHistory 从20降为4，两项组合采用；Inspector 改称「历史样本预算」并说明含义。旧 renderer 序列化值继续有效，没有暗中 clamp 到4，范围仍1..32，NRD帧预算不变。
+
+**结果与保留的失败：** 组合后的匹配 temporal-only lit/reference=0.976478，原5% gate通过；raw/filtered镜面 MSE=2.633737/0.016470，diffuse=0.167633/0.005551，均低于步骤19。原四模式shadow gate通过，temporal+spatial镜面filtered MSE=0.013794、lit=0.976302。原固定quality静态filtered=0.971634；64帧运动raw=0.964139，3% gate仍exit1，filtered=0.951544、L1=0.072589。保留原检查，另加 `RunLocalPairMotionConvergenceAudit`：同15deg/s、同15..31度域来回观察512帧，raw/filtered=1.015134/0.991004、L1=0.065639，通过原能量/L1门槛。延长观察不是短序列通过的证据，也没有证明任意场景无偏或默认4最优。
+
+**验证：** 两个Win64 Mono release构建与实际D3D12 EXE通过新增temporal-only混合gate，序列化maxHistory=4，RG镜面/diffuse=0.971927/0.970563，compatibility=0.985094/0.967562，D3D11 inactive通过；旧HDR/noise/边界与初始visibility通过，packed DLL SHA一致。Editor两条核心/NRD、Power、动态灯、边界、HDR、时间/预算回归、Roslyn和派生重建通过，无新增本步GPU诊断。自有载荷仍219.921/495.637 MiB，RG同步batch约6.952/15.388 ms；该fixture关闭temporal且包含CPU/完整渲染/读回，未证明hash的孤立性能。
+
+**完成后取舍：** 只调整 DI frame permutation 和可配置默认值，不修改 SDK 正文、物理照明、NRD配置、GI 或最终材质合成，不新增生产GPU资源/pass/ray。下一项先扩大独立序列与曲面/目标场景，检查短序列波动和长历史的实际收益，再按证据推进环境/更多灯域；不继续靠均值提亮或降低门槛消除失败。详见 [ReSTIR历史审计](../Ho-RTDI-NRD.md)。
+
+## 21. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
-| NRD 质量与预算 | raw 初始 visibility 和原固定 quality 已通过，DI 混合候选总误差下降。匹配长预热 temporal-only 的 filtered lit 仍约 6.45% 偏暗，下一项优先定位此处，保留 MSE 对照；再扩大曲面/目标场景。 |
+| NRD 质量与预算 | 默认短 ReSTIR 历史的匹配 temporal-only 与四模式遮挡通过，总误差进一步下降。原64帧运动raw统计仍超过3%，512帧收敛检查通过，两项分别保留；下一项扩大独立序列、曲面与目标场景，不能把一个通过序列视为全域验收。旧资产历史设置不会自动迁移。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 
