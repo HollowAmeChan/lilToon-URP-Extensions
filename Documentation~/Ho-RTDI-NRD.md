@@ -217,3 +217,21 @@ NRD confidence 也改为按其自身历史有效性读取 previous guides，独�
 代价是额外材质读取和 specular history 条件。自有 GPU 载荷仍为 205.858 / 463.996 MiB（720p / 1080p）；简单 RG 同步 batch 本轮约 6.408 / 11.615 ms，前轮约 6.405 / 10.606 ms，不宣称没有 GPU 成本或是严格 GPU 单项消融。靠近材质变更的历史更短，可能增加噪声；约 1–3% 的剩余偏差仍未消除。条件/Shader 从固定源码生成，可用原 `--check` 重建验证，原 vendor 正文不改；当前派生包括 Temporal、A-trous、A-trousSmem 与 HistoryClamping。
 
 **下一项：** 本轮只有正面平面、两同向白灯和规则颜色，尚未证明不同光角、粗糙度、彩色入射光、复杂形状与粗糙/低 F0 混合；世界/材质动画、TAA、XR 未扩张。优先扩大真实 GGX 与命中距离对照，再评审是否需要改变 specular signal 表示。保持 raw / filtered 独立，不设计终端 PBR/NPR 合成。
+
+## GGX 角度/粗糙度审计与 HDR 范围缺口
+
+步骤 14 使用 CPU double 的独立 GGX D/G 与 Schlick Fresnel 计算，核对实际解析灯 RGB、旋转和 8-bit F0。两彩色方向灯 intensity=0.02/0.01，入射角为 θ / -0.7θ；64² 正面平面、2px 红蓝金属、一个 infinite candidate，明确 60 Hz。每组预热 96 次、观察 96 次；按输入 guide 的实际量化 roughness 而不是名义 Material 数值计算参考。名义 0.1/0.3/0.7 经 SB/DI 量化后约为 0.0980/0.2980/0.6980；第一次以名义 0.1 断言实际 roughness 的失败已纠正，不借这个差异改着色。
+
+| 实际 roughness | θ=0° filtered 总能量误差 | θ=20° | θ=45° |
+| --- | --- | --- | --- |
+| 0.0980 | 1.44% | 1.02% | 2.20% |
+| 0.2980 | 1.76% | 1.25% | 1.46% |
+| 0.6980 | 0.93% | 1.38% | 1.27% |
+
+`RunSpecular` / `RunSpecularCompatibility` 两条 Editor 路径的九组 raw RGB 数学门槛及 filtered 5% 总能量门槛通过。raw 容差为 max(2e-7, reference RGB sum ×4%)，没有用 1e-4 固定容差掩盖低至 1e-5 的离轴信号。参考公式按用户 ShadingHelpers / donut brdf 核对，CPU 单独实现。这个结果扩大了低强度角度域，不证明任意 HDR、粗糙形状、Point/Spot 或视角都正确；没有改生产着色/滤波，也没有重新声称 Player 的角度域已验收。
+
+高强度案例：roughness≈0.0980、两同向白灯 intensity=0.5/0.25。raw 平均≈646.167、filtered≈640.069、独立参考≈646.029，表面上误差只有约0.9%；但 NRD 的 `gHistory_Spec` 中 mean≈3330、二阶矩仅65504，variance≈-11023400。全 pool 的 finite 检查仍通过，说明有限/输出均值接近不足以证明内部统计正确。
+
+这是**未修复的 HDR 二阶矩饱和**。当前 `RunSpecularHDR` / `RunSpecularHDRCompatibility` 明确检查 m2≥0.99×mean²；本轮 compatibility 实测 exit=1，日志为 `HDR second moment saturated below mean squared`。不要把这个失败算作九组角度 gate 的通过，也不要将数值直接当作负噪声再置零验收。原 NRD pool 的四张 permanent / 四张 transient RGBA16 支持有限动态范围；[官方 NRD 范围建议](https://github.com/NVIDIA-RTX/NRD)明确二阶矩的平方需落在 FP16 内，并建议较宽范围信号先作适当压缩/线性缩放。
+
+下一项最高优先级为 NRD 信号归一化与历史尺度契约：保持 raw RGB 和最终 DI 单位，避免瞬时尺度变化损坏历史，证明亮/暗并存、灯光动态与高峰值的 m2/能量。不能用整体提亮、静默饱和或取消高强度测试代替；也不能只升某张 history texture 而忽略中间 RGBA16 写入。本步只交付验证/证据，没有增加 Feature、生产纹理、GPU pass 或改变 PBR/NPR 合成。

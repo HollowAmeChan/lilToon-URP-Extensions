@@ -17,7 +17,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     {
         private static readonly List<Object> objects=new();
         private static RenderPipelineAsset previousDefault,previousQuality;
-        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise,forceBudget,forceQuality,forceTiming,forceBoundaries;
+        private static bool compatibility,previousAsync,unsupported,forcePower,forceDenoise,forceBudget,forceQuality,forceTiming,forceBoundaries,forceSpecular,requireHDR;
         private static Camera camera;
         private static RenderTexture target;
         private static HoRTDIRendererFeature feature;
@@ -43,6 +43,10 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunTimingCompatibility(){compatibility=true;RunTiming();}
         public static void RunBoundaries(){Require(Application.dataPath.Replace('\\','/').Contains("/.codex-research/"),"Use the isolated project");forceBoundaries=forceDenoise=true;Run();}
         public static void RunBoundariesCompatibility(){compatibility=true;RunBoundaries();}
+        public static void RunSpecular(){Require(Application.dataPath.Replace('\\','/').Contains("/.codex-research/"),"Use the isolated project");forceSpecular=forceDenoise=true;Run();}
+        public static void RunSpecularCompatibility(){compatibility=true;RunSpecular();}
+        public static void RunSpecularHDR(){requireHDR=true;RunSpecular();}
+        public static void RunSpecularHDRCompatibility(){compatibility=true;RunSpecularHDR();}
         public static void RunUnsupported(){unsupported=true;Run();}
         public static void Run()
         {
@@ -96,6 +100,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(forceQuality){ValidateQuality();Finish(null);return;}
                 if(forceTiming){ValidateTiming();Finish(null);return;}
                 if(forceBoundaries){ValidateBoundaries();Finish(null);return;}
+                if(forceSpecular){ValidateSpecular();Finish(null);return;}
                 if(forceDenoise){ValidateDenoiser();Finish(null);return;}
                 var single=Render();float expected=Expected(light);Near(single.r,expected,"single-light reference",.015f);Near(single.a,1,"receiver valid",.01f);
                 var baseline=Read(target);feature.SetActive(false);RenderCamera();NearRGB(Read(target),baseline,"no automatic camera composite");feature.SetActive(true);
@@ -492,6 +497,78 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             Require(textureWorst<.008f,"NRD blurred demodulated two-pixel albedo");
             Debug.Log("[HoRTDIValidation] PASS boundary gates: analytic raw, 2px albedo/specular, metal classes, unequal point-lit depth and thin world shadow; compatibility="+compatibility);
         }
+        private static Color ReferenceGGX(Vector3 L,float rough,Color f0)
+        {
+            var N=Vector3.back;var V=Vector3.back;var H=(V+L).normalized;
+            double nl=Math.Max(0,Vector3.Dot(N,L)),nh=Math.Max(0,Vector3.Dot(N,H)),vh=Math.Max(0,Vector3.Dot(V,H));
+            if(nl<=0)return Color.black;
+            double a=rough*rough,a2=a*a,d=a2/(Math.PI*Math.Pow(nh*nh*a2+1-nh*nh,2));
+            double g=2*nl/(Math.Sqrt(a2+(1-a2)*nl*nl)+nl),fc=Math.Pow(1-vh,5);
+            return new Color((float)((f0.r+(1-f0.r)*fc)*d*g/4),(float)((f0.g+(1-f0.g)*fc)*d*g/4),(float)((f0.b+(1-f0.b)*fc)*d*g/4),1);
+        }
+        private static void ValidateSpecular()
+        {
+            surfaceMaterial.SetFloat("_Metallic",1);surfaceMaterial.SetColor("_Color",Color.white);
+            light.type=LightType.Directional;
+            var other=Keep(new GameObject("GGX colored directional")).AddComponent<Light>();other.type=LightType.Directional;
+            var texture=Keep(new Texture2D(64,1,TextureFormat.RGBA32,false,true));texture.filterMode=FilterMode.Point;texture.wrapMode=TextureWrapMode.Clamp;
+            for(int x=0;x<64;x++)texture.SetPixel(x,0,(x/2)%2==0?Color.red:Color.blue);texture.Apply();surfaceMaterial.SetTexture("_MainTex",texture);
+            var raw=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));var filtered=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));
+            foreach(float rough in new[]{.1f,.3f,.7f})foreach(float angle in new[]{0f,20f,45f})
+            {
+                surfaceMaterial.SetFloat("_Smoothness",1-rough);
+                light.transform.rotation=Quaternion.Euler(0,angle,0);other.transform.rotation=Quaternion.Euler(0,-angle*.7f,0);
+                light.color=new Color(1,.2f,.1f);other.color=new Color(.1f,.3f,1);
+                light.intensity=.02f;other.intensity=.01f;
+                feature.Settings.temporal=feature.Settings.spatial=false;feature.Settings.denoise=false;RenderCamera();feature.Settings.denoise=true;
+                for(int i=0;i<96;i++)RenderCamera();var c=feature.LastContext;
+                float decoded=Mathf.Abs(ReadCenter(c.nrdNormal.rt).b*2-1);float r=Mathf.Round(decoded*255)/255;
+                Near(decoded,rough,"GGX material roughness guide",.004f);
+                var L=-light.transform.forward;var L2=-other.transform.forward;var lc=LightColor(light)*light.intensity;var lc2=LightColor(other)*other.intensity;
+                var red=ReferenceGGX(L,r,Color.red)*lc+ReferenceGGX(L2,r,Color.red)*lc2;
+                var blueRef=ReferenceGGX(L,r,Color.blue)*lc+ReferenceGGX(L2,r,Color.blue)*lc2;
+                Color rawSum=Color.clear,filteredSum=Color.clear;int count=0;
+                for(int frame=0;frame<96;frame++)
+                {
+                    RenderCamera();ReadImage(c.specular.rt,raw);ReadImage(c.filteredSpecular.rt,filtered);
+                    for(int y=16;y<48;y++)for(int x=16;x<48;x++){rawSum+=raw.GetPixel(x,y);filteredSum+=filtered.GetPixel(x,y);count++;}
+                }
+                var reference=(red+blueRef)*.5f;var a=rawSum/count;var b=filteredSum/count;
+                Debug.Log($"[HoRTDIValidation] GGX rough={r:F4} angle={angle} raw={a.ToString("F6")} filtered={b.ToString("F6")} reference={reference.ToString("F6")} relative={Math.Abs((b.r+b.g+b.b)/(reference.r+reference.g+reference.b)-1):F6}");
+                NearRGB(a,reference,"Independent GGX raw mean",Mathf.Max(.0000002f,(reference.r+reference.g+reference.b)*.04f));
+                Require(Math.Abs((b.r+b.g+b.b)/(reference.r+reference.g+reference.b)-1)<.05,"GGX angular filtered energy exceeds 5% budget");
+            }
+            Debug.Log("[HoRTDIValidation] PASS nine independent low-intensity GGX angular/color/roughness gates; compatibility="+compatibility);
+            if(!requireHDR)return;
+            surfaceMaterial.SetFloat("_Smoothness",.9f);surfaceMaterial.SetTexture("_MainTex",Texture2D.whiteTexture);
+            light.transform.rotation=other.transform.rotation=Quaternion.identity;light.color=other.color=Color.white;light.intensity=.5f;other.intensity=.25f;
+            feature.Settings.denoise=false;RenderCamera();feature.Settings.denoise=true;for(int i=0;i<96;i++)RenderCamera();
+            var hdrContext=feature.LastContext;var hdrRaw=ReadCenter(hdrContext.specular.rt);var hdrFiltered=ReadCenter(hdrContext.filteredSpecular.rt);
+            int nonFinite=0;float momentMax=0;var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+            foreach(var pool in new[]{"permanent","transient"})foreach(var handle in (RTHandle[])hdrContext.nrd.GetType().GetField(pool,flags).GetValue(hdrContext.nrd))
+            {
+                if(handle.rt.graphicsFormat!=UnityEngine.Experimental.Rendering.GraphicsFormat.R16G16B16A16_SFloat)continue;
+                var image=Keep(new Texture2D(handle.rt.width,handle.rt.height,TextureFormat.RGBAFloat,false,true));ReadImage(handle.rt,image);
+                foreach(var pixel in image.GetPixels()){if(!float.IsFinite(pixel.r)||!float.IsFinite(pixel.g)||!float.IsFinite(pixel.b)||!float.IsFinite(pixel.a))nonFinite++;else momentMax=Mathf.Max(momentMax,pixel.a);}
+            }
+            Debug.Log($"[HoRTDIValidation] GGX_HDR raw={hdrRaw} filtered={hdrFiltered} nonFinitePoolPixels={nonFinite} poolAlphaMax={momentMax}");
+            Color hdrRawSum=Color.clear,hdrFilteredSum=Color.clear;int hdrCount=0;
+            for(int i=0;i<96;i++){RenderCamera();ReadImage(hdrContext.specular.rt,raw);ReadImage(hdrContext.filteredSpecular.rt,filtered);for(int y=16;y<48;y++)for(int x=16;x<48;x++){hdrRawSum+=raw.GetPixel(x,y);hdrFilteredSum+=filtered.GetPixel(x,y);hdrCount++;}}
+            float hdrRough=Mathf.Round(Mathf.Abs(ReadCenter(hdrContext.nrdNormal.rt).b*2-1)*255)/255;
+            var hdrReference=ReferenceGGX(Vector3.back,hdrRough,Color.white)*.75f;
+            Debug.Log($"[HoRTDIValidation] GGX_HDR_MEAN raw={hdrRawSum/hdrCount} filtered={hdrFilteredSum/hdrCount} reference={hdrReference}");
+            var nrdType=hdrContext.nrd.GetType();
+            var passArray=(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.DispatchDesc[])nrdType.GetField("passes",flags).GetValue(hdrContext.nrd);
+            var resourceArray=(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.ResourceDesc[,])nrdType.GetField("resources",flags).GetValue(hdrContext.nrd);
+            var permanent=(RTHandle[])nrdType.GetField("permanent",flags).GetValue(hdrContext.nrd);
+            for(int i=0;i<hdrContext.nrd.LastDispatchCount;i++)if(passArray[i].pipeline==4)
+            {
+                var names=lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdManifest.Resources[4];
+                for(int j=0;j<names.Length;j++)if(names[j]=="gHistory_Spec")
+                {var sample=ReadCenter(permanent[resourceArray[i,j].poolIndex].rt);Debug.Log($"[HoRTDIValidation] GGX_HDR_MOMENT mean={sample.r:F3} second={sample.a:F3} variance={sample.a-sample.r*sample.r:F3}; second must exceed square of mean for the sampled HDR signal");Require(float.IsFinite(sample.a)&&sample.a>=sample.r*sample.r*.99f,"HDR second moment saturated below mean squared");}
+            }
+            Debug.Log("[HoRTDIValidation] PASS HDR moment range; compatibility="+compatibility);
+        }
         private static void ReadImage(RenderTexture source,Texture2D image)
         {
             var previous=RenderTexture.active;
@@ -700,7 +777,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var ray=camera.ViewportPointToRay(new Vector3((x+.5f)/64,(y+.5f)/64,0));var position=ray.origin+ray.direction*(-ray.origin.z/ray.direction.z);var delta=source.transform.position-position;float d2=delta.sqrMagnitude;
             float fade=Mathf.Clamp01(1-Mathf.Pow(d2/(source.range*source.range),2));return source.intensity/d2*(-delta.normalized.z)/Mathf.PI*fade*fade;
         }
-        private static void RenderCamera(){if(forceBoundaries&&feature.LastContext?.nrd!=null)feature.LastContext.nrd.ValidationTimeSeconds=++boundarySample/60.0;VolumeManager.instance.Update(camera.transform,-1);RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
+        private static void RenderCamera(){if((forceBoundaries||forceSpecular)&&feature.LastContext?.nrd!=null)feature.LastContext.nrd.ValidationTimeSeconds=++boundarySample/60.0;VolumeManager.instance.Update(camera.transform,-1);RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
         private static Color Render(){RenderCamera();Require(feature.LastContext!=null,"DI context missing: "+feature.Status);return Read(feature.LastContext.diffuse.rt);}
         private static Color Read(RenderTexture source)
         {
