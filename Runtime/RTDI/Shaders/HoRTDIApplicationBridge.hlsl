@@ -144,7 +144,22 @@ float3 RAB_SurfaceEvaluateBrdfTimesNoL(RAB_Surface s,float3 L)
     return d*s.material.diffuseAlbedo+specular;
 }
 float RAB_GetLightSampleTargetPdfForSurface(RAB_LightSample sample,RAB_Surface surface)
-{float3 direction;float distance;RAB_GetLightDirDistance(surface,sample,direction,distance);return max(0,HoDILuminance(RAB_SurfaceEvaluateBrdfTimesNoL(surface,direction)*sample.radiance))/max(sample.solidAnglePdf,1e-12);}
+{
+    float3 direction;float distance;RAB_GetLightDirDistance(surface,sample,direction,distance);
+    #if defined(HO_RTDI_SPECULAR_PROPOSAL_IMPORTANCE)
+    // Use the same target for initial selection and every reuse/bias-correction evaluation.
+    // The DI-only multiplier changes the proposal, not RAB_SurfaceEvaluateBrdfTimesNoL.
+    float3 response=0;
+    if(dot(direction,surface.geoNormal)>0)
+    {
+        response=Lambert(surface.normal,-direction)*surface.material.diffuseAlbedo;
+        if(surface.material.roughness>=.03)response+=HO_RTDI_SPECULAR_PROPOSAL_IMPORTANCE*GGX_times_NdotL(surface.viewDir,direction,surface.normal,max(.03,surface.material.roughness),surface.material.specularF0);
+    }
+    #else
+    float3 response=RAB_SurfaceEvaluateBrdfTimesNoL(surface,direction);
+    #endif
+    return max(0,HoDILuminance(response*sample.radiance))/max(sample.solidAnglePdf,1e-12);
+}
 bool RAB_GetConservativeVisibility(RAB_Surface surface,RAB_LightSample sample)
 {
     float3 direction;float distance;RAB_GetLightDirDistance(surface,sample,direction,distance);

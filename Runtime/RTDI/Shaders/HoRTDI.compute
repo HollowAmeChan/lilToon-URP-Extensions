@@ -21,6 +21,8 @@
 #pragma target 6.0
 #pragma require inlineraytracing
 #define HO_RTDI_PRESAMPLING_ENABLED 1
+// RIS target only: give narrow specular peaks more candidates; final shading stays physical.
+#define HO_RTDI_SPECULAR_PROPOSAL_IMPORTANCE 4.0
 #include "HoRTDIApplicationBridge.hlsl"
 #include "../ThirdParty/RTXDI/DI/InitialSampling.hlsl"
 #include "../ThirdParty/RTXDI/DI/ReservoirStorage.hlsl"

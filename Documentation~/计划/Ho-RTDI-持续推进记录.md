@@ -215,13 +215,25 @@
 
 **验证与下一项：** 两条raw动态灯/遮挡回归、Power compatibility、NRD compatibility通过；真实Win64 release两条D3D12 EXE新增8候选遮挡gate通过，比例约0.996/1.002，旧HDR/噪声/F0边界通过，D3D11 inactive通过。Roslyn/派生重建通过，无新增本步Shader/command-buffer诊断。后续先检查temporal-only filtered的受光高光和固定quality剩余误差；再扩大curved/目标场景。未扩展最终PBR/NPR接收、通用PT或ReGIR。详见 [初始visibility修复](../Ho-RTDI-NRD.md)。
 
-## 19. 下一步取舍
+## 19. 混合 diffuse/specular 的 DI 候选权重
+
+**动手前评审：先量化，不用亮度补偿。** 用户参考工程的 RAB_LightSampling 和 [官方 Bridge 契约](https://github.com/NVIDIA-RTX/RTXDI/blob/main/Doc/RtxdiApplicationBridge.md)允许近似 target，最终照明由 reservoir 权重和真实 BRDF 决定。双灯场景中的窄镜面高光与强 diffuse 竞争同一 reservoir，先检查输入方差和 NRD 各阶段，避免把能量变亮本身视为改善。
+
+**实验取舍：** 新增仅 Editor 的四阶段即时 GPU capture。相同 192+128 预热、512 次观察下，基线 temporal-only 的受光区在 Temporal/HistoryClamping/首末 A-trous 比例约 0.937/0.936/0.924/0.910，损失并非主要来自 clamping。关闭 virtual-motion 实验更差；延长 fast history 或关闭 clamp 能抬高均值，但归一化 filtered 镜面 MSE 从 0.118676 增至 0.167437/0.218093，均未采用。原生产 NRD 配置与派生正文保持不变。
+
+**实现与结果：** 仅 HoRTDI.compute 定义镜面 target 权重 4，initial/temporal/spatial/bias correction 共用同一函数；最终 BRDF、RGB、ray 次数不变，GI 未定义该宏。匹配序列中 raw/filtered 镜面归一化 MSE 从 20.399940/0.118676 降至 10.094452/0.052974；diffuse 从 1.168848/0.011119 降至 0.944692/0.010298。原无遮挡 quality 的静态 filtered/reference 从 0.947065 升至 0.981143，运动 0.987345，原 5% 门槛通过；原四模式遮挡检查也通过。权重 4 是本项目质量策略，未证明任意场景最优。
+
+**保留的失败与验证：** 更长预热的匹配 temporal-only audit 受光区仍为 0.935517，约 6.45% 偏暗，5% gate 保持失败；不能用原序列通过替代它。Win64 Mono 两条实际 D3D12 EXE 新混合材质 gate 的镜面/diffuse 比例约 0.980891/0.969552，旧 HDR/边界/初始 visibility/noise 通过，D3D11 inactive 通过。Editor 两条核心/NRD、Power、动态灯、边界、HDR、时间/预算与 GI compatibility 回归通过；Roslyn 和派生重建通过，无新增本步 shader/command-buffer 诊断。自有 720p/1080p 载荷仍约 219.921/495.637 MiB，简单 RG 同步 batch 约 6.809/13.170 ms，含 CPU/完整渲染/读回，不能当作孤立 GPU 性能。
+
+**完成后复查：** 无新生产纹理/pass/Feature/native DLL。阶段 capture 仅诊断入口分配测试纹理，回调在 Player 中被编译移除。下一项继续定位 temporal-only 的相关噪声、history 输运与空间滤波剩余误差；再进入曲面/目标场景，不提前扩张最终材质合成。详见 [混合候选权重](../Ho-RTDI-NRD.md)。
+
+## 20. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
 | 局部灯功率采样 | 可选路径与可重复基准已交付；后续按目标场景 GPU budget 决定缓存和 tile 规模，保留 Uniform 对照。不能用此结果代表任意灯光空间分布。 |
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
-| NRD 质量与预算 | raw初始visibility错误已修复，四种复用模式及Player通过。temporal-only filtered lit约7.2%偏暗、固定quality约5.3%仍未过，下一项优先这两处；再扩大曲面/目标场景。 |
+| NRD 质量与预算 | raw 初始 visibility 和原固定 quality 已通过，DI 混合候选总误差下降。匹配长预热 temporal-only 的 filtered lit 仍约 6.45% 偏暗，下一项优先定位此处，保留 MSE 对照；再扩大曲面/目标场景。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

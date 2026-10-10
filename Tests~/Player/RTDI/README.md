@@ -69,6 +69,13 @@ the serialized blocker while a far point light remains visible, using eight
 initial candidates without temporal/spatial reuse. initialVisibilityShadowRatio
 must stay within 5% of the independent inverse-square/range reference. This
 guards against discarding the stored light using a different SDK-returned sample.
+The mixed-lobe proposal gate uses a near point light for a narrow dielectric
+highlight and a far, powerful point light for diffuse illumination. Eight initial
+candidates run without ReSTIR reuse; NRD remains enabled for 192 warmup and 256
+observation frames. The central 16x16 region is checked against independent
+inverse-square/range and GGX references (quantized F0=10/255, roughness=76/255).
+JSON mixedSpecularRatio and mixedDiffuseRatio must both stay within 5% of unity.
+This deployment check does not replace the 128x128 Editor temporal-only audit.
 The probe also keeps NRD alive while two normal-incidence directional lights
 change intensity through 0.5/0.25, 16/8, 0.0005/0.00025 and back. An independent
 GGX reference uses this material's SB FP16 / DI 8-bit roughness of 25/255.

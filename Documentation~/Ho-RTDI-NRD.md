@@ -354,3 +354,30 @@ SDK探针模板与复现说明位于 [InitialSampleProbe.md](../Tests~/RTDI/Init
 完成后判断：修复了会漏掉可见灯的实际raw错误，且支持域仍为现有analytic/static opaque/Mono。下一项优先temporal-only filtered的剩余高光损失与固定quality序列，再进入曲面和目标场景。最终材质接收/合成继续保持原范围。
 
 本轮预算复查：自有载荷仍为720p/1080p约219.921/495.637 MiB，简单RG同步batch约6.977/13.555 ms，前轮6.750/12.799 ms。含完整渲染和GPU读回，不是初始light重建的孤立GPU成本，也不以不同随机序列的单次时间代表严格消融。没有新增常驻GPU资源或ray次数。
+
+## DI 混合 diffuse/specular 候选权重
+
+步骤19先保留原物理输出与 NRD 配置，用 `RunLocalHistoryAudit` 追踪双灯薄遮挡 temporal-only 的真实 GPU 输出。它在原 192 轮预热后额外预热 128 轮，观察 512 轮；`RunLocalHistoryFastAudit` / `RunLocalHistoryNoClampAudit` 使用相同帧序列，仅通过真实 native settings 暂时覆盖历史参数。仅 Editor 的回调在 pipeline 4/6/9/10 dispatch 后即时复制 specular 输出，再用当前 staging/raw 比例恢复物理单位，按受光区统计。四张测试纹理只属于诊断入口，回调为空时没有 capture 分配，Player 编译移除该代码。
+
+基线受光区 Temporal/HistoryClamping/首末 A-trous 比例为 0.936861/0.935774/0.923750/0.910389。fast history 延长至 15 或设为 main history 并关闭 acceleration/reset 后，均值提高，但相同序列的 filtered 镜面归一化 MSE 从 0.118676 增至 0.167437/0.218093，L1 从 0.235646 增至 0.273859/0.311256。关闭 virtual-motion 的实验同样更差。这些实验没有进入生产设置，不能以平均亮度替代质量判断。
+
+现在只在 `HoRTDI.compute` 定义 `HO_RTDI_SPECULAR_PROPOSAL_IMPORTANCE=4`，target 为 luminance((Lambert*albedo + 4*GGX)*radiance)/solidAnglePdf。初始选择、时空复用与 bias correction 全部调用相同 target；最终 `RAB_SurfaceEvaluateBrdfTimesNoL` 和 Shade 仍用原物理 BRDF，reservoir 的 inverse PDF 恢复真实贡献。改变的是候选分配，不是输出增益。[官方 Bridge 契约](https://github.com/NVIDIA-RTX/RTXDI/blob/main/Doc/RtxdiApplicationBridge.md)允许近似评分；用户参考 `UnityPathTracing-6000.3.15/Assets/Shaders/RayTracing/RtxdiApplicationBridge/RAB_LightSampling.hlsl` 也注明该契约，但其现有策略仍是物理 BRDF luminance。系数 4 是本项目针对混合 lobe 的质量策略，不是 upstream 默认值或任意场景的最优证明。GI 使用共享 bridge 的原分支，实际 compatibility 回归通过。
+
+| 相同长预热、temporal-only、512 次观察 | 基线 | 镜面 target 权重 4 |
+| --- | --- | --- |
+| raw specular / reference | 0.991061 | 0.989989 |
+| raw specular 归一化 MSE | 20.399940 | 10.094452 |
+| filtered specular 归一化 MSE | 0.118676 | 0.052974 |
+| filtered specular / reference | 0.910873 | 0.936219 |
+| filtered specular L1 / reference | 0.235646 | 0.173647 |
+| raw diffuse 归一化 MSE | 1.168848 | 0.944692 |
+| filtered diffuse 归一化 MSE | 0.011119 | 0.010298 |
+| filtered diffuse / reference | 0.955380 | 0.965401 |
+
+MSE 用解析 reference 平方和归一，包含噪声和偏差；该 fixture 中两个 lobe 的总误差都下降。新受光区 Temporal/HistoryClamping/首末 A-trous 为 0.955614/0.954932/0.946942/0.936107，thin-shadow raw/filtered 比例为 0.998797/0.983049。**更长预热匹配序列的 lit filtered/reference=0.935517，约 6.45% 偏暗，原 5% gate 仍 exit1。** 它继续作为剩余问题，不把另一序列通过当作全域验收。
+
+原 `RunLocalPairQualityCompatibility` 固定序列现在通过：静态 raw/filtered 比例 1.003165/0.981143，filtered L1=0.078130；运动 0.992741/0.987345，L1=0.062395。原 `RunLocalPairShadow` 四模式通过，lit 比例依次 0.980064/0.953853/0.976589/0.991964。序列之间不同的随机历史会影响结果，只有匹配对照表用于这次严格单项比较。
+
+两个 Win64 Mono release 构建与实际 D3D12 RG/compatibility EXE 通过新增的 64²混合材质部署 gate：192 预热、256 观察、central16²、initial8/no-reuse，独立 GGX/reference 下 filtered specular=0.980891、diffuse=0.969552，均满足 5%。旧初始 visibility≈0.995916、点灯/颜色/F0 边界、HDR 最差约 1.028%、noise 回归通过，D3D11 实际 EXE inactive 通过。64²部署 gate 没有证明 128² temporal-only 的失败已消失。Editor 两条核心/NRD、Power、动态灯/边界、HDR、时间线/目标尺寸以及 GI compatibility 通过；Roslyn 无错误、派生生成器 `--check` 通过，无新增本步 shader/command-buffer 诊断，其他模块既有警告另计。
+
+没有新增常驻 GPU 资源、pass、ray 或 native 依赖；720p/1080p 自有载荷仍约 219.921/495.637 MiB。简单 RG 同步 batch 约 6.809/13.170 ms，含 CPU/完整渲染/读回，不是单项 GPU 成本。接下来优先继续量化 temporal-only 的相关噪声、history 输运和 A-trous 剩余误差，再扩大曲面与目标场景；保持最终 lilToon PBR/NPR 接收/合成的原范围。

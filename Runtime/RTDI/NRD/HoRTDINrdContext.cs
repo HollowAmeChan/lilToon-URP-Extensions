@@ -34,6 +34,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         internal HoRTDINrdNative.RelaxSettings AppliedSettings {get;private set;}=HoRTDINrdNative.RelaxSettings.DenseDI();
         #if UNITY_EDITOR
         internal double? ValidationTimeSeconds;
+        internal Action<CommandBuffer,int,RenderTargetIdentifier> ValidationSpecularStage;
         #endif
         internal float SetRenderTime(double time,out bool reset)
         {
@@ -161,6 +162,9 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             {
                 var pass=passes[i];var shader=shaders[pass.pipeline];int kernel=kernels[pass.pipeline];
                 bool writesDiffuse=false,writesSpecular=false;
+                #if UNITY_EDITOR
+                RenderTargetIdentifier validationOutput=default;bool hasValidationOutput=false;
+                #endif
                 if(pass.constantSize>0)cmd.SetComputeConstantBufferParam(shader,"HoRTDINrdConstants",buffer,i*constantStride,((int)pass.constantSize+15)&~15);
                 for(int j=0;j<pass.resourceCount;j++)
                 {
@@ -180,8 +184,18 @@ namespace lilToon.URP.Extensions.RTDI.NRD
                     else if(name=="TRANSIENT_POOL")texture=transient[resource.poolIndex].nameID;
                     else if(!external.TryGetValue(name,out texture))throw new InvalidOperationException($"NRD external resource missing: {name}; descriptor={resource.descriptorType}, type={resource.type}, pool={resource.poolIndex}, pipeline={pass.pipeline}");
                     cmd.SetComputeTextureParam(shader,kernel,bindings[pass.pipeline][j],texture);
+                    #if UNITY_EDITOR
+                    if(ValidationSpecularStage!=null&&resource.descriptorType==1)
+                    {
+                        string binding=HoRTDINrdManifest.Resources[pass.pipeline][j];
+                        if(binding=="gOut_Spec"||binding=="gOut_Spec_Variance"){validationOutput=texture;hasValidationOutput=true;}
+                    }
+                    #endif
                 }
                 cmd.DispatchCompute(shader,kernel,pass.gridWidth,pass.gridHeight,1);
+                #if UNITY_EDITOR
+                if(hasValidationOutput)ValidationSpecularStage(cmd,(int)pass.pipeline,validationOutput);
+                #endif
                 diffuseWritten|=writesDiffuse;specularWritten|=writesSpecular;
             }
             LastDispatchCount=(int)count;
