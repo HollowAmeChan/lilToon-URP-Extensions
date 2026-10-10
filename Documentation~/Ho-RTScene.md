@@ -1,4 +1,4 @@
-# HoRTScene：刚性网格求交基建
+# HoRTScene：网格求交基建
 
 `HoRTScene` 是 Runtime 内部服务，不是新的 Renderer Feature。首版使用 Unity 原生 AS 和 inline ray query，登记一份与观察相机无关的世界几何集合，提供命中身份与 CPU 材质关联。没有引入 RTXDI SDK、native 插件、降噪、灯光或画面合成。
 
@@ -8,9 +8,11 @@
 
 调用 `Synchronize(IReadOnlyList<Renderer>, mask)`，传入世界集合，不传相机 culling results。每个支持的 Renderer/submesh 单独加入 AS，CPU 保存 Renderer、Mesh、submesh、Material 与 RT instance ID 的关系；GPU metadata 为 `uint4(submesh, materialId, primitiveCount, valid)`。
 
-- 支持刚性 MeshRenderer、三角形 submesh，要求一材质对应一 submesh。Mesh 不必开启 CPU Read/Write，AS 直接使用 Unity 的 Mesh 资源。
-- 排除 disabled、inactive、forceRenderingOff、static batch、additional vertex stream、SkinnedMeshRenderer、缺失材质和非三角形。已知 alpha-test/透明的队列、tag、keyword 或 `_AlphaClip` 会被排除，并记录 `Rejections`。
-- 首版是明确的 opaque、双面几何参考。不会计算任意自定义 shader 的裁切，也不执行顶点 shader、蒙皮、布料、Terrain 转换、fur 或描边壳。不能因此宣称与任意材质的画面几何完全一致。
+- 支持 MeshRenderer 与 SkinnedMeshRenderer 的不透明三角形 submesh，要求一材质对应一 submesh。源 Mesh 不必开启 CPU Read/Write；刚性路径直接使用源 Mesh，蒙皮路径持有一份当前姿态 Mesh。
+- 排除 disabled、inactive、forceRenderingOff、static batch、additional vertex stream、其他 Renderer、缺失材质和非三角形。已知 alpha-test/透明的队列、tag、keyword 或 `_AlphaClip` 会被排除，并记录 `Rejections`。
+- 这是明确的 opaque、双面几何参考。蒙皮快照包含骨骼与 BlendShape，不执行任意顶点 shader、自定义 GPU 变形、布料、Terrain 转换、fur 或描边壳。不能因此宣称与任意材质的画面几何完全一致。
+
+蒙皮使用 `BakeMesh(mesh, true)` 补偿 Renderer 缩放，由 AS 的 `localToWorld` 应用一次变换。骨骼相对矩阵、BlendShape、源 Mesh 或蒙皮质量变化时更新快照并刷新对应 BLAS；稳定姿态复用。缺失/非有限骨骼姿态移除旧实例，禁用、移除、显式 `MarkGeometryDirty` 与服务销毁释放自有 Mesh。源 Mesh 原地编辑仍须调用 `MarkGeometryDirty`。快照发生在图记录之前，姿态变化推进 Revision，DI/NRD 保守清历史，不提供动态角色 temporal。CPU 蒙皮及完整 Mesh 副本有成本，详见 [场景支持与验收](Ho-RTDI-SceneSupport.md)。
 - 不因 `shadowCastingMode=Off` 或材质旧 cast 接收关闭而删除显式登记的 RT 几何；AS 由本服务的集合与 mask 控制，不依赖 Renderer 的旧 rayTracingMode 设置。
 - RT instance ID 从 1 分配，在同一服务 Lifetime 内不复用；0 保留。变换、mask、材质替换保留几何身份；移除/重新加入、Mesh 替换、显式几何刷新得到新 ID。
 - Material ID 也是本服务内的身份，不是 Unity InstanceID、OB ID 或 GPU 材质参数索引。当前只关联 Material 对象，不上传材质颜色/贴图。

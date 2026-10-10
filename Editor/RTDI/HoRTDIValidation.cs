@@ -27,6 +27,10 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         private static Material surfaceMaterial;
         private static GameObject blocker;
         private static GameObject primaryReceiver;
+        private static bool forceSkinBlocker;
+        private static Transform skinBlockerBone;
+        public static void RunSkinnedBlocker() { forceSkinBlocker = true; Run(); }
+        public static void RunSkinnedBlockerCompatibility() { compatibility = true; RunSkinnedBlocker(); }
         private static int tick;
         private static int boundarySample;
         [StructLayout(LayoutKind.Sequential)]
@@ -107,6 +111,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 light=Point(new Vector3(1.5f,0,-1),Color.white,4);
                 blocker=Keep(GameObject.CreatePrimitive(PrimitiveType.Cube));blocker.transform.position=new Vector3(.75f,0,-.5f);blocker.transform.localScale=new Vector3(.4f,.4f,.2f);
                 blocker.GetComponent<Renderer>().sharedMaterial=Mat("Universal Render Pipeline/Unlit");blocker.SetActive(false);
+                if (forceSkinBlocker) SetupSkinBlocker();
                 EditorApplication.update+=Tick;
             }
             catch(Exception error){Finish(error);}
@@ -133,6 +138,11 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 var single=Render();float expected=Expected(light);Near(single.r,expected,"single-light reference",.015f);Near(single.a,1,"receiver valid",.01f);
                 var baseline=Read(target);feature.SetActive(false);RenderCamera();NearRGB(Read(target),baseline,"no automatic camera composite");feature.SetActive(true);
                 blocker.SetActive(true);var shadow=Render();Near(shadow.r,0,"world visibility",.002f);Near(shadow.a,1,"shadow is still a valid receiver",.01f);
+                if (forceSkinBlocker)
+                {
+                    skinBlockerBone.localPosition = Vector3.right * 100; Near(Render().r, expected, "skinned caster moved away", .015f);
+                    skinBlockerBone.localPosition = Vector3.zero; Near(Render().r, 0, "skinned caster returned", .002f);
+                }
                 blocker.SetActive(false);Near(Render().r,expected,"occluder removed",.015f);
                 light.shadows=LightShadows.None;blocker.SetActive(true);Near(Render().r,0,"RT visibility independent of raster shadow switch",.002f);blocker.SetActive(false);light.shadows=LightShadows.Hard;
                 surfaceMaterial.SetFloat("_Metallic",1);Near(Render().r,0,"metal has no diffuse response",.002f);Require(Read(feature.LastContext.specular.rt).r>0,"reference GGX specular output missing");surfaceMaterial.SetFloat("_Metallic",0);

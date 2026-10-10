@@ -295,7 +295,17 @@
 
 **复查与成本：** 默认候选与几何查询数量增加，没有新增GPU常驻载荷也不是免费优化；相同预算对照用于判定提案收益，不当作孤立GPU性能。仍未证明任意窄镜面、小太阳方向/尺寸、动态normal-map、对象运动或最终接收。旧GI直接天空重叠与原平面64帧失败继续保留，后续按实际路径归属/支持缺口推进，不用NRD亮度补偿隐藏它们。详见 [环境MIS](../Ho-RTDI-Environment.md)。
 
-## 26. 下一步取舍
+## 26. 血月古堡支持审计与蒙皮世界遮挡
+
+**动手前评审：按用户选定场景，应先补几何。** 源工程只读，依赖闭包共38资产约48 MiB，保留GUID/导入metadata/材质remap并复制匹配UnityGLTF到隔离工程。展开后的18盏灯为9Point/8Spot/1Directional，均Realtime、无Cookie、默认cullingMask，已有灯域足够；主模型却是单骨骼SkinnedMeshRenderer、15submesh/241472tri，旧registry完全排除，只剩测试球。先补不透明蒙皮当前姿态，Cutout仍明确排除，不把整个mesh当opaque。
+
+**实现与参考：** HoRTScene为每个skin持有一份当前姿态Mesh，骨骼相对矩阵/BlendShape/源Mesh/质量变化才CPU Bake并UpdateInstanceGeometry，稳定姿态复用；推进Revision，DI/NRD保守清历史。Pose更新前后身份/图捕获约束和旧实例释放保持一致，无新Feature、纹理或native接口。核对Unity6.3 BakeMesh/手动BLAS更新与用户RTXPT per-renderer GPU repack；前版false参数在非均匀缩放实测双重缩放，修true后两条gate通过。GPU路径作为成本替代参考，本步不引入其Native/PT框架。
+
+**结果与验证：** 实际古堡登记由1增至4（主体天空/古堡/地板三opaque submesh共13573tri，另测试球）；仍排除12Cutout/227899tri。两条GPU求交覆盖双骨骼、混合权重、BlendShape、独立距离/barycentrics/身份、非均匀/镜像缩放、离屏/缓存、非readable/source替换/显式编辑、无效姿态/启停/销毁/捕获后mutation；两条DI骨骼移走/归位及原SDK域通过，旧rigid/GI各两条回归通过。两个Mono Win64 release及实际D3D12 EXE蒙皮shadow0/open≈.222046，旧HDR/NRD/曲面/环境/VNDF等gate通过；D3D11 inactive与Roslyn通过，无本步新Shader诊断。原平面64帧失败保留，没有实际古堡完整画面或最终接收结论。
+
+**复查与成本：** 实际首次CPU登记约22.75..77.29ms，64次静止平均.038.. .041ms且0额外Bake；自有完整Mesh计数29924936B≈28.54MiB，不含AS/驱动或GPU帧耗时。DI/GI独立HoRTScene会各持一份，不能宣称廉价动态角色或时域运动支持。复现copy脚本与隔离审计保留，源资产SHA复核无变动，没有修改源场景/renderer。下一项优先正确lilToon Cutout候选UV/alpha/cutoff；它关系到大多数剩余几何，优先于更多灯型/ReGIR/NRD参数。详见 [场景支持与验收](../Ho-RTDI-SceneSupport.md)。
+
+## 27. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
@@ -303,6 +313,7 @@
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
 | NRD 质量与预算 | 当前/历史normal codec已统一，真实GPU history与SB匹配，评分表示差异消除；仍需分别核对运动误差和原平面64帧失败。SB输入及每个DI/GI history各增加1080p约7.91 MiB，下一项转向实际场景/灯域支持，保留既有失败，旧历史预算设置不会自动迁移。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
+| 血月古堡几何支持 | 不透明skin当前姿态已接入并验证缓存/更新，CPU快照有28.54MiB/服务的实际成本。下步先做lilToon Cutout世界可见性，12submesh仍排除；不得把裁切面整体当opaque。按实测再评估GPU蒙皮输入与快照共享，不扩张Native/PT框架。 |
 | 环境灯 / GI路径归属 | DI HDR天空PDF/RIS及BRDF/VNDF MIS已验证常量窄镜面、斜视与特定小亮源；下一项实际场景与DI/GI直接天空路径归属。现有开关可显式选择一份直接天空，尚未补secondary环境NEE，动态/任意天空质量仍待验证。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

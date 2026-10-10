@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 
 namespace lilToon.URP.Extensions.RayTracing
 {
-    public static class HoRTSceneValidation
+    public static partial class HoRTSceneValidation
     {
         private static readonly List<Object> objects = new();
         private static HoRTScene scene;
@@ -74,6 +74,7 @@ namespace lilToon.URP.Extensions.RayTracing
                 mesh.subMeshCount = 2; mesh.SetTriangles(new[] {0,2,1,2,3,1},0); mesh.SetTriangles(new[] {4,6,5,6,7,5},1); mesh.RecalculateNormals(); mesh.RecalculateBounds();
                 var multiObject = Keep(new GameObject("RT two submesh object")); multiObject.AddComponent<MeshFilter>().sharedMesh = mesh;
                 multi = multiObject.AddComponent<MeshRenderer>(); multi.sharedMaterials = new[] { Mat("Universal Render Pipeline/Unlit"), Mat("Universal Render Pipeline/Unlit") };
+                if (forceSkinned) SetupSkinned(multiObject);
                 // Turning raster cast off must not remove the explicitly registered RT geometry.
                 multi.shadowCastingMode = ShadowCastingMode.Off;
                 outside = Keep(GameObject.CreatePrimitive(PrimitiveType.Cube)).GetComponent<Renderer>(); outside.transform.position = new Vector3(6, 0, 0);
@@ -92,6 +93,7 @@ namespace lilToon.URP.Extensions.RayTracing
             try
             {
                 if (++frame < 3) { Render(); return; }
+                if (forceSkinned) { ValidateSkinned(); Finish(null); return; }
                 var image = Render(); Require(scene.InstanceCount == 3, "one instance per submesh");
                 Hit(image, 0, 3, multi, 0); Hit(image, 1, 3, multi, 1); Hit(image, 2, 2.5f, outside, 0);
                 Status(image, 3, 0, "opposite ray miss"); Hit(image, 4, 3, multi, 0); Status(image, 5, 0, "instance mask");

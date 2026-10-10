@@ -9,7 +9,7 @@ using UnityEngine.Rendering.RenderGraphModule;
 
 namespace lilToon.URP.Extensions.RayTracing
 {
-    // Explicit, camera-independent registry for the first opaque rigid-mesh tracing path.
+    // Explicit, camera-independent registry for opaque mesh world visibility.
     // No lighting, material evaluation, renderer feature or automatic scene scan.
     internal sealed class HoRTScene : IDisposable
     {
@@ -23,6 +23,9 @@ namespace lilToon.URP.Extensions.RayTracing
         private readonly HashSet<(int renderer, int submesh)> seen = new();
         private readonly HashSet<int> seenRenderers = new();
         private readonly List<(int renderer, int submesh)> removed = new();
+        private readonly Dictionary<int, HoRTSkinnedMesh> skinnedMeshes = new();
+        private readonly HashSet<int> seenSkinned = new();
+        private readonly List<int> removedSkinned = new();
         private readonly Func<Material, Material> secondaryMaterial;
         internal readonly List<string> Rejections = new();
         private RayTracingAccelerationStructure acceleration;
@@ -34,6 +37,8 @@ namespace lilToon.URP.Extensions.RayTracing
         internal uint Revision { get; private set; } = 1;
         internal uint BuildCount { get; private set; }
         internal int InstanceCount => entries.Count;
+        internal int SkinnedMeshCount => skinnedMeshes.Count;
+        internal uint SkinnedBakeCount { get; private set; }
         internal bool IsAvailable => !disposed && acceleration != null;
         internal static bool IsSupported => SystemInfo.graphicsDeviceType == GraphicsDeviceType.Direct3D12 && SystemInfo.supportsInlineRayTracing;
 
@@ -49,7 +54,7 @@ namespace lilToon.URP.Extensions.RayTracing
 
         private sealed class Entry
         {
-            internal MeshRenderer renderer;
+            internal Renderer renderer;
             internal Mesh mesh;
             internal Material material;
             internal Material hitMaterial;
@@ -61,11 +66,11 @@ namespace lilToon.URP.Extensions.RayTracing
         internal readonly struct Instance
         {
             internal readonly uint identity, materialId, triangleCount;
-            internal readonly MeshRenderer renderer;
+            internal readonly Renderer renderer;
             internal readonly Mesh mesh;
             internal readonly Material material;
             internal readonly int submesh;
-            internal Instance(uint identity, uint materialId, uint triangleCount, MeshRenderer renderer, Mesh mesh, Material material, int submesh)
+            internal Instance(uint identity, uint materialId, uint triangleCount, Renderer renderer, Mesh mesh, Material material, int submesh)
             { this.identity = identity; this.materialId = materialId; this.triangleCount = triangleCount; this.renderer = renderer; this.mesh = mesh; this.material = material; this.submesh = submesh; }
         }
 
@@ -89,20 +94,43 @@ namespace lilToon.URP.Extensions.RayTracing
             ThrowIfDisposed();
             if (renderers == null) throw new ArgumentNullException(nameof(renderers));
             if (mask > 0xff) throw new ArgumentOutOfRangeException(nameof(mask), "RT instance masks are eight bits.");
-            Rejections.Clear(); seen.Clear(); seenRenderers.Clear();
+            Rejections.Clear(); seen.Clear(); seenRenderers.Clear(); seenSkinned.Clear();
             if (!IsAvailable) { Rejections.Add("D3D12 inline ray tracing is unavailable."); return; }
             bool changed = false;
             foreach (Renderer candidate in renderers)
             {
                 if (candidate == null || !seenRenderers.Add(candidate.GetInstanceID())) continue;
                 if (!candidate.enabled || !candidate.gameObject.activeInHierarchy || candidate.forceRenderingOff) continue;
-                if (!(candidate is MeshRenderer renderer)) { Rejections.Add(candidate.name + ": only rigid MeshRenderer is supported."); continue; }
-                var filter = renderer.GetComponent<MeshFilter>(); var mesh = filter != null ? filter.sharedMesh : null;
-                if (mesh == null || renderer.isPartOfStaticBatch || renderer.additionalVertexStreams != null)
+                var renderer = candidate;
+                var rigid = renderer as MeshRenderer; var skin = renderer as SkinnedMeshRenderer;
+                if (rigid == null && skin == null) { Rejections.Add(candidate.name + ": requires MeshRenderer or SkinnedMeshRenderer."); continue; }
+                var filter = rigid != null ? rigid.GetComponent<MeshFilter>() : null;
+                var mesh = skin != null ? skin.sharedMesh : filter != null ? filter.sharedMesh : null;
+                if (mesh == null || renderer.isPartOfStaticBatch || (rigid != null && rigid.additionalVertexStreams != null))
                 { Rejections.Add(renderer.name + ": missing mesh, static batch or additional vertex stream."); continue; }
                 var materials = renderer.sharedMaterials;
                 if (materials.Length != mesh.subMeshCount)
                 { Rejections.Add(renderer.name + ": requires exactly one material per submesh."); continue; }
+                bool poseChanged = false;
+                if (skin != null)
+                {
+                    if (!ValidTransform(renderer.localToWorldMatrix))
+                    { Rejections.Add(renderer.name + ": non-finite or singular transform."); continue; }
+                    bool hasOpaque = false;
+                    for (int i = 0; i < materials.Length; ++i) hasOpaque |= Opaque(materials[i]);
+                    if (hasOpaque)
+                    {
+                        int id = skin.GetInstanceID();
+                        if (!skinnedMeshes.TryGetValue(id, out var snapshot) || !ReferenceEquals(snapshot.renderer, skin))
+                        {
+                            snapshot?.Dispose(); snapshot = new HoRTSkinnedMesh(skin); skinnedMeshes[id] = snapshot;
+                        }
+                        if (!snapshot.Synchronize(out poseChanged))
+                        { Rejections.Add(renderer.name + ": missing or non-finite skin pose."); continue; }
+                        seenSkinned.Add(id); mesh = snapshot.mesh;
+                        if (poseChanged) SkinnedBakeCount++;
+                    }
+                }
                 for (int submesh = 0; submesh < mesh.subMeshCount; ++submesh)
                 {
                     var material = materials[submesh]; var descriptor = mesh.GetSubMesh(submesh);
@@ -136,6 +164,7 @@ namespace lilToon.URP.Extensions.RayTracing
                     }
                     else
                     {
+                        if (poseChanged) { acceleration.UpdateInstanceGeometry(entry.handle); asDirty = true; changed = true; }
                         if (entry.matrix != matrix) { acceleration.UpdateInstanceTransform(entry.handle, matrix); entry.matrix = matrix; asDirty = true; changed = true; }
                         if (entry.mask != mask) { acceleration.UpdateInstanceMask(entry.handle, mask); entry.mask = mask; asDirty = true; changed = true; }
                         if (!ReferenceEquals(entry.material, material)) { entry.material = material; entry.materialId = MaterialIdentity(material); metadataDirty = true; changed = true; }
@@ -144,6 +173,8 @@ namespace lilToon.URP.Extensions.RayTracing
             }
             removed.Clear(); foreach (var pair in entries) if (!seen.Contains(pair.Key)) removed.Add(pair.Key);
             foreach (var key in removed) { Remove(key); changed = true; }
+            removedSkinned.Clear(); foreach (var pair in skinnedMeshes) if (!seenSkinned.Contains(pair.Key)) removedSkinned.Add(pair.Key);
+            foreach (int id in removedSkinned) { skinnedMeshes[id].Dispose(); skinnedMeshes.Remove(id); }
             if (changed) { unchecked { Revision++; } EnsureMetadataCapacity(); }
         }
 
@@ -178,6 +209,7 @@ namespace lilToon.URP.Extensions.RayTracing
             // Explicit full re-registration keeps old primitive IDs from referring to edited topology.
             if (!IsAvailable) return;
             acceleration.ClearInstances(); entries.Clear(); identities.Clear();
+            foreach (var snapshot in skinnedMeshes.Values) snapshot.Dispose(); skinnedMeshes.Clear();
             asDirty = metadataDirty = true; unchecked { Revision++; }
         }
 
@@ -251,6 +283,7 @@ namespace lilToon.URP.Extensions.RayTracing
         {
             if (disposed) return; disposed = true;
             acceleration?.Dispose(); acceleration = null; instanceBuffer?.Dispose(); instanceBuffer = null;
+            foreach (var snapshot in skinnedMeshes.Values) snapshot.Dispose(); skinnedMeshes.Clear();
             entries.Clear(); identities.Clear(); materialIds.Clear(); instanceData = null;
         }
     }

@@ -31,14 +31,15 @@ SDK 文件只改 include 路径，保留原始算法与许可。`Runtime/RTDI/Th
 ## 当前支持域
 
 - 显式 point、spot、directional 灯；point/spot 在 local 分区使用均匀或功率提案，directional 在独立的 infinite 分区均匀选择，由 SDK 合并两个估计。局部灯候选预算 1～32，有方向灯时另取一个方向灯候选。point/spot 使用参考 delta point-light 的 inverse-square 极限，并适配 Unity range/spot cone；directional 当前为 delta 方向光。遵循参考 RAB 的 RT 可见性，独立于 Unity raster `Light.shadows` 开关。
-- Cookie、非全局 cullingMask、baked-only 和其他灯型排除，Feature 状态显示排除计数。Rendering Layer/艺术灯光链接、面灯/发光网格与天空重要性采样尚未接入；当前用于默认灯光链接的参考场景。
-- 初始采样参数明确关闭 environment / mesh-light / BRDF light candidates；相应 RAB 接口只有禁用分支，不伪造这些光照贡献。Ho-Atmosphere 的输入保持独立，当前不作为 DI 环境灯。
+- Cookie、非全局 cullingMask、baked-only 和其他灯型排除，Feature 状态显示排除计数。Rendering Layer/艺术灯光链接、面灯/发光网格尚未接入；当前用于默认灯光链接的参考场景。
+- Ho-Atmosphere 提供有效 HDR 时可采环境灯，默认 4 个天空 PDF/RIS 候选与 4 个 BRDF/VNDF 候选，通过 SDK MIS 合并；mesh-light candidates 仍关闭。输入版本变化清历史，不复制另一份天空，详见 [环境光](Ho-RTDI-Environment.md)。
+- 世界遮挡支持不透明 MeshRenderer 与 SkinnedMeshRenderer 当前姿态，Cutout 仍排除。蒙皮更新有 CPU/自有网格成本，姿态变化清历史；血月古堡的实际缺口、成本与验证边界见 [场景支持](Ho-RTDI-SceneSupport.md)。
 - 使用明确的 PBR 参考响应：主色在此响应层映射到 0～1，按 metallic 分出 diffuse 与 F0，perceptual roughness 交给参考 GGX。没有修改 SB 原值或设计 NPR ramp、影色与接收路由。Emissive 不作为 DI 自发光叠加。
 - 可选 NRD RELAX，默认关闭，接入与限制见 [NRD 初版](Ho-RTDI-NRD.md)。raw ReSTIR 输出仍可有噪声。单个像素的 colored-light 或重采样结果不要求逐帧等于所有灯的精确和，应以统计均值核对能量。
 
 ## 历史、资源与调度
 
-采样四阶段在一个 graphics-queue unsafe pass 中有序执行，位置为 BeforeRenderingPostProcessing；主表面/AS/灯数据和输出均显式声明依赖。功率模式在同一 pass 内先执行 PDF build / GenerateMips / SDK Presample。初始化写 reservoir 1，temporal 写 2，spatial 写回 1，shade 保存历史 0。SDK reservoir stride 为 24 B，保存三份；只额外保存上一帧必要的 surface guide（raw depth、两种 octa normal、参考材质，16 B/像素），不物化另一套当前主表面属性。
+采样四阶段在一个 graphics-queue unsafe pass 中有序执行，位置为 BeforeRenderingPostProcessing；主表面/AS/灯数据和输出均显式声明依赖。功率模式在同一 pass 内先执行 PDF build / GenerateMips / SDK Presample。初始化写 reservoir 1，temporal 写 2，spatial 写回 1，shade 保存历史 0。SDK reservoir stride 为 24 B，保存三份；只额外保存上一帧必要的 surface guide（raw depth、两种 2×16-bit octa normal、参考材质，20 B/像素），不物化另一套当前主表面属性。
 
 历史逐相机拥有。分辨率、场景 Revision、初始采样数或 ray bias 变化会使旧历史失效；禁用后重新启用也从新历史开始。静态世界的相机运动使用实际前后矩阵生成 SDK 所需的像素位移/深度差，未使用或重新生产 URP motion。几何变换时保守清历史，不宣称支持动态角色 temporal。
 

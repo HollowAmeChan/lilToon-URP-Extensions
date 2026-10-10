@@ -22,12 +22,16 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     public VolumeProfile profile;
     private RenderTexture target;
     private bool unsupported;
+    private Mesh skinnedProbeMesh;
+    private Transform skinnedProbeBone;
     [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak,pointDepthMax,pointShadowMax,coloredSpecRelative,coloredSpecLeak,noisyMetalMean,noisyMetalReference,noisyCameraMean,noisyCameraTint,hdrRelative,hdrRawRelative,initialVisibilityShadowRatio,mixedSpecularRatio,mixedDiffuseRatio,temporalMixedSpecularRatio,temporalMixedDiffuseRatio,curvedRawL1,curvedFilteredL1,environmentRawRatio,environmentFilteredRatio,environmentShadow,environmentSpecularRawRatio,environmentSpecularFilteredRatio;public int temporalMixedMaxHistory;}
     private readonly Result result=new Result();
+    private float skinnedShadow,skinnedUnblocked;
     private IEnumerator Start()
     {
         var args=Environment.GetCommandLineArgs();bool compatibility=Array.Exists(args,x=>x=="--compat");unsupported=Array.Exists(args,x=>x=="--unsupported");
         result.api=SystemInfo.graphicsDeviceType.ToString();result.mode=compatibility?"compatibility":"RenderGraph";
+        if(!unsupported)SetupSkinnedBlocker();
         // Pipeline settings are immutable in Player: build each mode separately.
         #if URP_COMPATIBILITY_MODE
         if(GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode!=compatibility)
@@ -43,7 +47,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     private void Finish(string[] args)
     {
         var index=Array.IndexOf(args,"--result");if(index>=0&&index+1<args.Length)File.WriteAllText(args[index+1],JsonUtility.ToJson(result,true));
-        feature.Dispose();capture.Dispose();if(target!=null){target.Release();Destroy(target);}Application.Quit(result.pass?0:1);
+        feature.Dispose();capture.Dispose();if(skinnedProbeMesh!=null)Destroy(skinnedProbeMesh);if(target!=null){target.Release();Destroy(target);}Application.Quit(result.pass?0:1);
     }
     private void Validate()
     {
@@ -61,7 +65,11 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         light.bakingOutput=new LightBakingOutput{lightmapBakeType=LightmapBakeType.Baked,isBaked=true};Render();Near(Read(capture.Raw).r,0,"Player baked-only exclusion",.002f);
         light.bakingOutput=new LightBakingOutput{lightmapBakeType=LightmapBakeType.Mixed,isBaked=true};Render();Near(Read(capture.Raw).r,Expected(32,32),"Player mixed direct light",.015f);light.bakingOutput=originalBake;
         surfaceMaterial.SetFloat("_Metallic",1);Render();Near(Read(capture.Raw).r,0,"Player metal diffuse",.002f);Require(Read(capture.Specular).r>0,"Player independent specular missing");surfaceMaterial.SetFloat("_Metallic",0);
-        blocker.SetActive(true);Render();Near(Read(capture.Raw).r,0,"Player world occlusion",.002f);blocker.SetActive(false);
+        blocker.SetActive(true);Render();skinnedShadow=Read(capture.Raw).r;Near(skinnedShadow,0,"Player skinned world occlusion",.002f);
+        skinnedProbeBone.localPosition=Vector3.right*100;Render();skinnedUnblocked=Read(capture.Raw).r;
+        Near(skinnedUnblocked,Expected(32,32),"Player skinned caster moved away",.015f);
+        skinnedProbeBone.localPosition=Vector3.zero;Render();Near(Read(capture.Raw).r,0,"Player skinned caster returned",.002f);
+        Debug.Log($"[HoRTDIPlayerProbe] SKIN shadow={skinnedShadow:F6} unblocked={skinnedUnblocked:F6}");blocker.SetActive(false);
         // A hidden near lamp must not discard a visible far lamp when RIS
         // considers multiple candidates. Test the actual serialized DXR path.
         var oldBluePosition=blue.transform.position;float oldBlueRange=blue.range,oldBlueIntensity=blue.intensity;var oldBlueColor=blue.color;
@@ -332,6 +340,17 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
             atmosphere.Settings.enabled=false;Render();Near(Read(capture.Raw).r,0,"Player absent sky retains radiance",.001f);
         }
         finally{room.SetActive(false);Destroy(room);Destroy(image);atmosphere.Settings.enabled=false;light.enabled=enabled;blue.enabled=blueEnabled;feature.Settings.denoise=false;surfaceMaterial.SetFloat("_Reflectance",0);surfaceMaterial.SetFloat("_Smoothness",.5f);}
+    }
+    private void SetupSkinnedBlocker()
+    {
+        var rigid=blocker.GetComponent<MeshRenderer>();var material=rigid.sharedMaterial;
+        skinnedProbeMesh=Instantiate(blocker.GetComponent<MeshFilter>().sharedMesh);
+        rigid.enabled=false;Destroy(rigid);Destroy(blocker.GetComponent<MeshFilter>());
+        skinnedProbeBone=new GameObject("Player DI caster bone").transform;skinnedProbeBone.SetParent(blocker.transform,false);
+        skinnedProbeMesh.bindposes=new[]{Matrix4x4.identity};var weights=new BoneWeight[skinnedProbeMesh.vertexCount];
+        for(int i=0;i<weights.Length;i++)weights[i]=new BoneWeight{boneIndex0=0,weight0=1};skinnedProbeMesh.boneWeights=weights;
+        var skin=blocker.AddComponent<SkinnedMeshRenderer>();skin.sharedMesh=skinnedProbeMesh;skin.sharedMaterial=material;
+        skin.bones=new[]{skinnedProbeBone};skin.rootBone=skinnedProbeBone;
     }
     private void Render(){VolumeManager.instance.Update(probeCamera.transform,-1);RenderPipeline.SubmitRenderRequest(probeCamera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
     private float Expected(int x,int y)
