@@ -1,4 +1,4 @@
-// Ho-RTDI F0-history adaptation of NRD 4.17.3. Original SHA256: 7f323cb68814f99b417e69b607c80d859323f404a8f4095b9407f3b41d053b5f
+// Ho-RTDI F0/history-domain adaptation of NRD 4.17.3. Original SHA256: 7f323cb68814f99b417e69b607c80d859323f404a8f4095b9407f3b41d053b5f
 /*
 Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
 
@@ -19,6 +19,16 @@ license agreement from NVIDIA CORPORATION is strictly prohibited.
 
 #include "../../ThirdParty/NRD/RELAX_Common.hlsli"
 #include "HoRTDINrdMaterialGuide.hlsl"
+// Current and previous signal domains are GPU-selected, independent of exposure.
+// Scale RGB linearly and second moments quadratically; hit distances stay intact.
+StructuredBuffer<uint> _HoRTDINrdScale;
+float HoNrdHistoryScale() { return asfloat(_HoRTDINrdScale[1]) / asfloat(_HoRTDINrdScale[2]); }
+float4 HoNrdScaleMoment(float4 value)
+{
+    float ratio = HoNrdHistoryScale();
+    return value * float4(ratio.xxx, ratio * ratio);
+}
+
 
 groupshared float4 sharedNormalSpecHitT[BUFFER_Y][BUFFER_X];
 
@@ -185,12 +195,12 @@ float loadSurfaceMotionBasedPrevData(
     );
 
 #if( NRD_DIFF )
-    prevDiffuseIllumAnd2ndMoment = max(prevDiffuseIllumAnd2ndMoment, 0);
-    prevDiffuseResponsiveIllum = max(diff.rgb, 0);
+    prevDiffuseIllumAnd2ndMoment = HoNrdScaleMoment(max(prevDiffuseIllumAnd2ndMoment, 0));
+    prevDiffuseResponsiveIllum = max(diff.rgb, 0) * HoNrdHistoryScale();
 #endif
 #if( NRD_SPEC )
-    prevSpecularIllumAnd2ndMoment = max(prevSpecularIllumAnd2ndMoment, 0.0);
-    prevSpecularResponsiveIllum = max(spec.rgb, 0);
+    prevSpecularIllumAnd2ndMoment = HoNrdScaleMoment(max(prevSpecularIllumAnd2ndMoment, 0.0));
+    prevSpecularResponsiveIllum = max(spec.rgb, 0) * HoNrdHistoryScale();
 #endif
 
     // Fitering previous SH data
@@ -322,7 +332,7 @@ float loadVirtualMotionBasedPrevData(
             bilinearCustomWeights, useBicubic,
             gHistory_Spec, prevSpecularIllumAnd2ndMoment);
 
-        prevSpecularIllumAnd2ndMoment = max(prevSpecularIllumAnd2ndMoment, 0.0);
+        prevSpecularIllumAnd2ndMoment = HoNrdScaleMoment(max(prevSpecularIllumAnd2ndMoment, 0.0));
 
         // Fetching fast virtual motion based specular history
         BicubicFilterNoCornersWithFallbackToBilinearFilterWithCustomWeights(
@@ -331,6 +341,7 @@ float loadVirtualMotionBasedPrevData(
             gHistory_SpecFast, prevSpecularResponsiveIllum);
 
         prevSpecularResponsiveIllum = max(prevSpecularResponsiveIllum, 0.0);
+        prevSpecularResponsiveIllum.rgb *= HoNrdHistoryScale();
 
         // Fitering previous SH data
         #if( NRD_MODE == SH )

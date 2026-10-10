@@ -18,7 +18,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     public VolumeProfile profile;
     private RenderTexture target;
     private bool unsupported;
-    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak,pointDepthMax,pointShadowMax,coloredSpecRelative,coloredSpecLeak,noisyMetalMean,noisyMetalReference,noisyCameraMean,noisyCameraTint;}
+    [Serializable]private sealed class Result {public bool pass;public string api,mode,error;public float rawMse,filteredMse,red,blue,boundaryAlbedoMax,boundaryMetalRelative,boundarySpecLeak,pointDepthMax,pointShadowMax,coloredSpecRelative,coloredSpecLeak,noisyMetalMean,noisyMetalReference,noisyCameraMean,noisyCameraTint,hdrRelative,hdrRawRelative;}
     private readonly Result result=new Result();
     private IEnumerator Start()
     {
@@ -170,6 +170,27 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
             }
             result.noisyCameraMean=(float)(moving/movingCount);result.noisyCameraTint=(float)(tint/movingCount);
             Require(Mathf.Abs(result.noisyCameraMean/result.noisyMetalReference-1)<.05f&&result.noisyCameraTint<.02f,"Player moving F0 transport loss");
+            surfaceMaterial.SetTexture("_MainTex",Texture2D.whiteTexture);surfaceMaterial.SetColor("_Color",Color.white);surfaceMaterial.SetFloat("_Smoothness",.9f);
+            light.transform.rotation=extra.transform.rotation=Quaternion.identity;light.color=extra.color=Color.white;
+            // SB FP16 roughness then DI 8-bit decode gives 25/255 for this
+            // saved material. Independent GGX normal-incidence D*G*F/4.
+            double rough=25.0/255,ggx=1/(4*Math.PI*Math.Pow(rough,4));
+            foreach(float intensity in new[]{.5f,16f,.0005f,.5f})
+            {
+                light.intensity=intensity;extra.intensity=intensity*.5f;
+                for(int i=0;i<96;i++)Render();double sum=0,rawSum=0;int count=0;
+                for(int frame=0;frame<96;frame++)
+                {
+                    Render();ReadInto(capture.Specular,filtered);ReadInto(capture.RawSpecular,raw);
+                    for(int y=16;y<48;y++)for(int x=16;x<48;x++)
+                    {var a=raw.GetPixel(x,y);var b=filtered.GetPixel(x,y);Require(float.IsFinite(a.r)&&float.IsFinite(b.r),"Player HDR non-finite output");sum+=b.r;rawSum+=a.r;count++;}
+                }
+                double reference=ggx*intensity*1.5;
+                result.hdrRelative=Mathf.Max(result.hdrRelative,(float)Math.Abs(sum/count/reference-1));
+                result.hdrRawRelative=Mathf.Max(result.hdrRawRelative,(float)Math.Abs(rawSum/count/reference-1));
+                Debug.Log($"[HoRTDIPlayerProbe] HDR intensity={intensity} raw={rawSum/count:F6} filtered={sum/count:F6} reference={reference:F6}");
+            }
+            Require(result.hdrRawRelative<.04f&&result.hdrRelative<.05f,"Player HDR scale/history lost physical energy");
         }
         finally
         {

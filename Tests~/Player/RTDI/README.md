@@ -64,6 +64,13 @@ RGB ratios, so Monte Carlo intensity variation and fractional material sampling
 are not mislabeled as a tint error. The JSON records noisyMetalMean/reference,
 noisyCameraMean and noisyCameraTint. The fourth capture texture belongs only to
 this isolated test helper, not the production feature.
+The probe also keeps NRD alive while two normal-incidence directional lights
+change intensity through 0.5/0.25, 16/8, 0.0005/0.00025 and back. An independent
+GGX reference uses this material's SB FP16 / DI 8-bit roughness of 25/255.
+JSON fields hdrRawRelative and hdrRelative report worst mean energy errors.
+The 16/8 case has demodulated radiance above FP16 range while physical raw
+remains inside the existing FP16 output range. Internal moment/scale recovery,
+bright/dark F0 regions and resource reset gates are in the Editor HDR validator.
 Compatibility capture samples the published shader globals; their names are not
 temporary RT identifiers for `CommandBuffer.Blit`.
 

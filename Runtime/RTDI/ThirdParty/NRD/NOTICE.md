@@ -31,6 +31,12 @@ F0. Temporal reduces specular history budgets when the existing DI primary
 history's F0 footprint does not match. HoRTDINrdMaterialGuide.hlsl implements
 this project-specific material condition; it does not allocate another guide
 texture or alter the raw BRDF. Diffuse filtering is not conditioned by this guide.
+Temporal also converts previous RGB and second moments into the GPU-selected
+current linear signal domain (ratio and ratio squared, respectively). Responsive
+alpha remains hit distance and is not scaled. The DI integration selects a safe
+power-of-two scale from current radiance plus the actual permanent slow/fast
+histories, then restores physical units after filtering. Original vendor bodies,
+pool formats, CPU library and dispatch layouts remain unchanged.
 The remaining code, resource layouts, CPU library and original files in this
 directory stay pinned. These are project adaptations, not an upstream NRD
 upgrade or a claim that NVIDIA's general-purpose filtering is unmodified.

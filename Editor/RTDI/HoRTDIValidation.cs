@@ -557,6 +557,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             float hdrRough=Mathf.Round(Mathf.Abs(ReadCenter(hdrContext.nrdNormal.rt).b*2-1)*255)/255;
             var hdrReference=ReferenceGGX(Vector3.back,hdrRough,Color.white)*.75f;
             Debug.Log($"[HoRTDIValidation] GGX_HDR_MEAN raw={hdrRawSum/hdrCount} filtered={hdrFilteredSum/hdrCount} reference={hdrReference}");
+            Require(nonFinite==0,"Non-finite HDR pool pixel");
+            NearRGB(hdrRawSum/hdrCount,hdrReference,"HDR raw energy",hdrReference.r*.04f);
+            NearRGB(hdrFilteredSum/hdrCount,hdrReference,"HDR filtered energy",hdrReference.r*.05f);
             var nrdType=hdrContext.nrd.GetType();
             var passArray=(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.DispatchDesc[])nrdType.GetField("passes",flags).GetValue(hdrContext.nrd);
             var resourceArray=(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.ResourceDesc[,])nrdType.GetField("resources",flags).GetValue(hdrContext.nrd);
@@ -565,10 +568,65 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             {
                 var names=lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdManifest.Resources[4];
                 for(int j=0;j<names.Length;j++)if(names[j]=="gHistory_Spec")
-                {var sample=ReadCenter(permanent[resourceArray[i,j].poolIndex].rt);Debug.Log($"[HoRTDIValidation] GGX_HDR_MOMENT mean={sample.r:F3} second={sample.a:F3} variance={sample.a-sample.r*sample.r:F3}; second must exceed square of mean for the sampled HDR signal");Require(float.IsFinite(sample.a)&&sample.a>=sample.r*sample.r*.99f,"HDR second moment saturated below mean squared");}
+                {var sample=ReadCenter(permanent[resourceArray[i,j].poolIndex].rt);Debug.Log($"[HoRTDIValidation] GGX_HDR_MOMENT mean={sample.r:F3} second={sample.a:F3} variance={sample.a-sample.r*sample.r:F3}; second must exceed square of mean for the sampled HDR signal");Require(float.IsFinite(sample.a)&&sample.a>=sample.r*sample.r*.99f&&sample.a<20000,"HDR second moment saturated below mean squared or exhausted headroom");}
             }
+            // This sequence keeps one NRD context/history alive. The 16+8 case
+            // exceeds FP16 before demodulated input scaling, while raw stays in
+            // its existing FP16 output range. A later dark frame may grow its
+            // scale only when the existing history also fits the new domain.
+            float oldScale=ReadNrdScale(hdrContext);
+            foreach(float intensity in new[]{16f,.0005f,.5f})
+            {
+                light.intensity=intensity;other.intensity=intensity*.5f;
+                RenderCamera();float scale=ReadNrdScale(hdrContext);
+                Require(scale>0&&scale<=1,"NRD scale outside finite linear domain");
+                if(intensity==16)Require(scale<oldScale,"HDR peak did not reduce scale");oldScale=scale;
+                for(int frame=0;frame<96;frame++)RenderCamera();
+                Color sum=Color.clear,rawTotal=Color.clear;int samples=0;
+                for(int frame=0;frame<96;frame++)
+                {
+                    RenderCamera();ReadImage(hdrContext.filteredSpecular.rt,filtered);ReadImage(hdrContext.specular.rt,raw);
+                    for(int y=16;y<48;y++)for(int x=16;x<48;x++){sum+=filtered.GetPixel(x,y);rawTotal+=raw.GetPixel(x,y);samples++;}
+                }
+                var reference=ReferenceGGX(Vector3.back,hdrRough,Color.white)*(intensity*1.5f);
+                Debug.Log($"[HoRTDIValidation] HDR_SCALE intensity={intensity} initialScale={scale} settledScale={ReadNrdScale(hdrContext)} raw={rawTotal/samples} filtered={sum/samples} reference={reference}");
+                if(intensity==.0005f)Require(ReadNrdScale(hdrContext)>scale,"NRD dark-domain precision did not recover");
+                NearRGB(rawTotal/samples,reference,"HDR changing-light raw energy",reference.r*.04f);
+                NearRGB(sum/samples,reference,"HDR changing-light filtered energy",reference.r*.05f);
+                for(int i=0;i<hdrContext.nrd.LastDispatchCount;i++)if(passArray[i].pipeline==4)
+                    for(int j=0;j<lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdManifest.Resources[4].Length;j++)if(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdManifest.Resources[4][j]=="gHistory_Spec")
+                    {
+                        var sample=ReadCenter(permanent[resourceArray[i,j].poolIndex].rt);
+                        Debug.Log($"[HoRTDIValidation] HDR_SCALE_MOMENT intensity={intensity} mean={sample.r:E6} second={sample.a:E6} variance={sample.a-sample.r*sample.r:E6}");
+                        // Several FP16 writes can round subnormal moments by a
+                        // few 2^-24 ULPs. Retain the relative saturation gate at
+                        // larger values, and an explicit absolute bound here.
+                        Require(float.IsFinite(sample.a)&&sample.a<20000&&sample.a+4f/16777216>=sample.r*sample.r*.99f,"Changing-scale HDR moment overflow");
+                    }
+            }
+            // Bright/dark F0 regions share the scale. Compare each against the
+            // analytic reference so precision loss cannot hide in a frame mean.
+            for(int x=0;x<64;x++)texture.SetPixel(x,0,x<32?Color.white:new Color(.04f,.04f,.04f,1));texture.Apply();surfaceMaterial.SetTexture("_MainTex",texture);
+            light.intensity=16;other.intensity=8;
+            for(int frame=0;frame<96;frame++)RenderCamera();
+            Color bright=Color.clear,dark=Color.clear;int regionCount=0;
+            for(int frame=0;frame<96;frame++)
+            {
+                RenderCamera();ReadImage(hdrContext.filteredSpecular.rt,filtered);
+                for(int y=16;y<48;y++)for(int x=16;x<24;x++){bright+=filtered.GetPixel(x,y);dark+=filtered.GetPixel(x+24,y);regionCount++;}
+            }
+            var brightRef=ReferenceGGX(Vector3.back,hdrRough,Color.white)*24;
+            var darkRef=brightRef*(10f/255); // RGBA32 F0 quantization of 0.04.
+            Debug.Log($"[HoRTDIValidation] HDR_MIX bright={bright/regionCount} dark={dark/regionCount} references={brightRef}/{darkRef} scale={ReadNrdScale(hdrContext)}");
+            NearRGB(bright/regionCount,brightRef,"Shared-scale bright region",brightRef.r*.05f);
+            NearRGB(dark/regionCount,darkRef,"Shared-scale dark region",darkRef.r*.05f);
+            // Denoiser disposal/rebuild owns a fresh scale and permits recovery.
+            light.intensity=other.intensity=.0001f;feature.Settings.denoise=false;RenderCamera();feature.Settings.denoise=true;RenderCamera();
+            Require(ReadNrdScale(feature.LastContext)==1,"NRD scale did not reset on resource recreation");
             Debug.Log("[HoRTDIValidation] PASS HDR moment range; compatibility="+compatibility);
         }
+        private static float ReadNrdScale(HoRTDIContext context)
+        {var words=new uint[4];context.nrdScale.GetData(words);return BitConverter.Int32BitsToSingle((int)words[1]);}
         private static void ReadImage(RenderTexture source,Texture2D image)
         {
             var previous=RenderTexture.active;
@@ -600,6 +658,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         {
             long result=0;
             foreach(var buffer in new[]{context.reservoirs,context.history,context.lights,context.neighbors,context.previousLights,context.currentToPrevious,context.previousToCurrent,context.ris})if(buffer!=null)result+=(long)buffer.count*buffer.stride;
+            if(context.nrdScale!=null)result+=(long)context.nrdScale.count*context.nrdScale.stride;
             foreach(var texture in new[]{context.diffuse,context.specular,context.nrdDiffuse,context.nrdSpecular,context.nrdNormal,context.nrdViewZ,context.nrdOutputDiffuse,context.nrdOutputSpecular,context.previousLuminance,context.gradientA,context.gradientB,context.diffConfidence,context.specConfidence})result+=Payload(texture);
             var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
             foreach(string name in new[]{"permanent","transient"})foreach(var texture in (RTHandle[])context.nrd.GetType().GetField(name,flags).GetValue(context.nrd))result+=Payload(texture);

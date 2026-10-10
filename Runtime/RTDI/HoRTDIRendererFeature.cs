@@ -169,6 +169,7 @@ namespace lilToon.URP.Extensions.RTDI
                     builder.SetGlobalTextureAfterPass(data.diffuse,Shader.PropertyToID("_HoRTDIRawDiffuseTexture"));builder.SetGlobalTextureAfterPass(data.specular,Shader.PropertyToID("_HoRTDIRawSpecularTexture"));
                     if(context.nrd!=null)
                     {
+                        builder.UseBuffer(graph.ImportBuffer(context.nrdScale),AccessFlags.ReadWrite);
                         foreach(var texture in new[]{context.nrdDiffuse,context.nrdSpecular,context.nrdNormal,context.nrdViewZ,context.nrdOutputDiffuse,context.nrdOutputSpecular,context.previousLuminance,context.gradientA,context.gradientB,context.diffConfidence,context.specConfidence})
                             builder.UseTexture(graph.ImportTexture(texture),AccessFlags.ReadWrite);
                         context.nrd.Declare(graph,builder);data.diffuse=graph.ImportTexture(context.filteredDiffuse);data.specular=graph.ImportTexture(context.filteredSpecular);
@@ -182,6 +183,18 @@ namespace lilToon.URP.Extensions.RTDI
             {
                 var c=d.context;bool temporal=d.settings.temporal&&c.historyValid&&c.sceneRevision==d.revision&&c.settingsSignature==d.signature;
                 c.lastTemporal=temporal;
+                bool reset=false,timeReset=false;
+                var common=default(HoRTDINrdNative.CommonSettings);
+                if(c.nrd!=null)
+                {
+                    reset=!c.nrdHistoryValid||!c.historyValid||c.sceneRevision!=d.revision||c.settingsSignature!=d.signature;
+                    common=HoRTDINrdNative.CommonSettings.Create(c.width,c.height,d.view,d.projection,c.previousView,c.previousProjection,c.frame,reset);
+                    common.timeDelta=c.nrd.SetRenderTime(d.renderTime,out timeReset);if(timeReset)common.accumulationMode=2;
+                    int begin=d.shader.FindKernel("BeginNRDScale");
+                    cmd.SetComputeBufferParam(d.shader,begin,"_HoRTDINrdScale",c.nrdScale);
+                    cmd.SetComputeIntParam(d.shader,"_HoRTDINrdScaleReset",reset||timeReset?1:0);
+                    cmd.DispatchCompute(d.shader,begin,1,1,1);
+                }
                 cmd.SetBufferData(c.lights,d.lightFrame.current);cmd.SetBufferData(c.previousLights,d.lightFrame.previous);
                 cmd.SetBufferData(c.currentToPrevious,d.lightFrame.currentToPrevious);cmd.SetBufferData(c.previousToCurrent,d.lightFrame.previousToCurrent);
                 string shade=c.nrd!=null?"ShadeNRD":"Shade";
@@ -209,6 +222,7 @@ namespace lilToon.URP.Extensions.RTDI
                     cmd.SetComputeVectorParam(d.shader,"_HoRTDIPreviousViewZ",c.previousViewZ);cmd.SetComputeVectorParam(d.shader,"_HoRTDIPreviousClipParameters",c.previousClip);
                     if(name=="ShadeNRD")
                     {
+                        cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDINrdScale",c.nrdScale);
                         cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdDiffuse",c.nrdDiffuse.nameID);cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdSpecular",c.nrdSpecular.nameID);
                         cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdNormal",c.nrdNormal.nameID);cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdViewZ",c.nrdViewZ.nameID);
                         cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDIPreviousLuminance",c.previousLuminance.nameID);
@@ -227,9 +241,20 @@ namespace lilToon.URP.Extensions.RTDI
                 }
                 if(c.nrd!=null)
                 {
-                    bool reset=!c.nrdHistoryValid||!c.historyValid||c.sceneRevision!=d.revision||c.settingsSignature!=d.signature;
-                    var common=HoRTDINrdNative.CommonSettings.Create(c.width,c.height,d.view,d.projection,c.previousView,c.previousProjection,c.frame,reset);
-                    common.timeDelta=c.nrd.SetRenderTime(d.renderTime,out bool timeReset);if(timeReset)common.accumulationMode=2;
+                    int measure=d.shader.FindKernel("MeasureNRDHistory");
+                    cmd.SetComputeBufferParam(d.shader,measure,"_HoRTDINrdScale",c.nrdScale);
+                    c.nrd.BindSignalHistory(cmd,d.shader,measure,!(reset||timeReset));
+                    cmd.DispatchCompute(d.shader,measure,(c.width+7)/8,(c.height+7)/8,1);
+                    int select=d.shader.FindKernel("SelectNRDScale");
+                    cmd.SetComputeBufferParam(d.shader,select,"_HoRTDINrdScale",c.nrdScale);cmd.DispatchCompute(d.shader,select,1,1,1);
+                    int normalize=d.shader.FindKernel("NormalizeNRD");
+                    if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,normalize,cameraData);
+                    else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,normalize);
+                    cmd.SetComputeBufferParam(d.shader,normalize,"_HoRTDINrdScale",c.nrdScale);
+                    cmd.SetComputeTextureParam(d.shader,normalize,"_HoRTDINrdDiffuse",c.nrdDiffuse.nameID);cmd.SetComputeTextureParam(d.shader,normalize,"_HoRTDINrdSpecular",c.nrdSpecular.nameID);
+                    cmd.SetComputeTextureParam(d.shader,normalize,"_HoRTDIDiffuse",c.diffuse.nameID);cmd.SetComputeTextureParam(d.shader,normalize,"_HoRTDISpecular",c.specular.nameID);
+                    cmd.SetComputeTextureParam(d.shader,normalize,"_HoRTDIPreviousLuminance",c.previousLuminance.nameID);
+                    cmd.DispatchCompute(d.shader,normalize,(c.width+7)/8,(c.height+7)/8,1);
                     cmd.SetComputeIntParam(d.shader,"_HoRTDINrdHistoryReady",reset||timeReset?0:1);
                     // Confidence needs previous primary guides even when the
                     // independent RTXDI temporal-reservoir stage is disabled.
@@ -258,9 +283,10 @@ namespace lilToon.URP.Extensions.RTDI
                         ["IN_DIFF_CONFIDENCE"]=c.diffConfidence.nameID,["IN_SPEC_CONFIDENCE"]=c.specConfidence.nameID,
                         ["IN_DISOCCLUSION_THRESHOLD_MIX"]=new RenderTargetIdentifier(Texture2D.blackTexture)
                     };
-                    c.nrd.BindPrimaryGuide(cmd,d.primary,compatibility,cameraData,c.history,!(reset||timeReset));
+                    c.nrd.BindPrimaryGuide(cmd,d.primary,compatibility,cameraData,c.history,!(reset||timeReset),c.nrdScale);
                     cmd.BeginSample("HoRTDI NRD RELAX");c.nrd.Record(cmd,common,external);cmd.EndSample("HoRTDI NRD RELAX");
                     int kernel=d.shader.FindKernel("ResolveNRD");
+                    cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDINrdScale",c.nrdScale);
                     if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,kernel,cameraData);
                     else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,kernel);
                     cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdOutputDiffuse",c.nrdOutputDiffuse.nameID);cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdOutputSpecular",c.nrdOutputSpecular.nameID);

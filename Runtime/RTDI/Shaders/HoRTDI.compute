@@ -6,6 +6,10 @@
 #pragma kernel Spatial
 #pragma kernel Shade
 #pragma kernel ShadeNRD HO_RTDI_NRD_ACTIVE
+#pragma kernel BeginNRDScale HO_RTDI_NRD_ACTIVE
+#pragma kernel SelectNRDScale HO_RTDI_NRD_ACTIVE
+#pragma kernel MeasureNRDHistory HO_RTDI_NRD_ACTIVE
+#pragma kernel NormalizeNRD HO_RTDI_NRD_ACTIVE
 #pragma kernel ResolveNRD HO_RTDI_NRD_ACTIVE
 #pragma kernel Gradients HO_RTDI_NRD_ACTIVE
 #pragma kernel FilterGradients HO_RTDI_NRD_ACTIVE
@@ -28,6 +32,11 @@
 RWTexture2D<float4> _HoRTDINrdDiffuse,_HoRTDINrdSpecular,_HoRTDINrdNormal;
 RWTexture2D<float> _HoRTDINrdViewZ;
 RWTexture2D<float4> _HoRTDINrdOutputDiffuse,_HoRTDINrdOutputSpecular;
+RWStructuredBuffer<uint> _HoRTDINrdScale;
+int _HoRTDINrdScaleReset;
+groupshared uint HoDINrdGroupPeak;
+Texture2D<float4> _HoRTDINrdHistorySpec,_HoRTDINrdHistoryDiff,_HoRTDINrdHistorySpecFast,_HoRTDINrdHistoryDiffFast;
+
 #endif
 RWTexture2D<float4> _HoRTDIDiffuse, _HoRTDISpecular;
 Texture2D _HoRTDIPdf;
@@ -71,6 +80,58 @@ RTXDI_RuntimeParameters HoDIRuntime()
 bool HoDIInside(uint2 pixel) {return all(pixel<(uint2)_HoRTDIFrame.xy);}
 #if defined(HO_RTDI_NRD_ACTIVE)
 #include "HoRTDIConfidence.hlsl"
+// Limit RGB to 128 so RELAX's squared luminance has FP16 headroom.
+// Include old RGB and sqrt(second moment) when growing the scale, so old
+// bright history also fits. This lets dark scenes recover FP16 precision.
+[numthreads(1,1,1)]void BeginNRDScale(uint3 id:SV_DispatchThreadID)
+{
+    _HoRTDINrdScale[0]=0;
+    float previous=_HoRTDINrdScaleReset!=0?1:asfloat(_HoRTDINrdScale[1]);
+    _HoRTDINrdScale[1]=asuint(previous);_HoRTDINrdScale[2]=asuint(previous);
+}
+[numthreads(1,1,1)]void SelectNRDScale(uint3 id:SV_DispatchThreadID)
+{
+    float peak=asfloat(_HoRTDINrdScale[0]);
+    float required=peak>128?exp2(floor(log2(128/peak))):1;
+    _HoRTDINrdScale[1]=asuint(required);
+}
+[numthreads(8,8,1)]void MeasureNRDHistory(uint3 id:SV_DispatchThreadID,uint index:SV_GroupIndex)
+{
+    if(index==0)HoDINrdGroupPeak=0;
+    GroupMemoryBarrierWithGroupSync();
+    uint peak=0;
+    if(_HoRTDINrdScaleReset==0&&all(id.xy<(uint2)_HoRTDIFrame.xy))
+    {
+        float4 spec=_HoRTDINrdHistorySpec[id.xy],diff=_HoRTDINrdHistoryDiff[id.xy];
+        float3 rgb=max(max(spec.rgb,diff.rgb),max(_HoRTDINrdHistorySpecFast[id.xy].rgb,_HoRTDINrdHistoryDiffFast[id.xy].rgb));
+        float bound=max(max(rgb.r,max(rgb.g,rgb.b)),sqrt(max(spec.a,diff.a)));
+        peak=asuint(bound/asfloat(_HoRTDINrdScale[2]));
+    }
+    InterlockedMax(HoDINrdGroupPeak,peak);
+    GroupMemoryBarrierWithGroupSync();
+    if(index==0)InterlockedMax(_HoRTDINrdScale[0],HoDINrdGroupPeak);
+}
+[numthreads(8,8,1)]void NormalizeNRD(uint3 id:SV_DispatchThreadID)
+{
+    if(any(id.xy>=(uint2)_HoRTDIFrame.xy))return;
+    float scale=asfloat(_HoRTDINrdScale[1]);
+    float4 diff=_HoRTDINrdDiffuse[id.xy],spec=_HoRTDINrdSpecular[id.xy];
+    // Publish physical raw lighting here while staging is still unscaled.
+    // This keeps ShadeNRD below the common eight-UAV compiler limit without
+    // adding a capture pass or tracing the selected light a second time.
+    RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
+    float3 rawDiff=0,rawSpec=0;float receiver=RAB_IsSurfaceValid(surface)?1:0;
+    if(receiver>.5)
+    {
+        float3 diffFactor,specFactor;
+        NRD_MaterialFactors(surface.normal,surface.viewDir,surface.material.diffuseAlbedo,surface.material.specularF0,surface.material.roughness,diffFactor,specFactor);
+        rawDiff=diff.rgb*surface.material.diffuseAlbedo;rawSpec=spec.rgb*specFactor;
+    }
+    _HoRTDIPreviousLuminance[id.xy]=f16tof32(f32tof16(float2(HoDILuminance(_HoRTDIDiffuse[id.xy].rgb),HoDILuminance(_HoRTDISpecular[id.xy].rgb))));
+    _HoRTDIDiffuse[id.xy]=float4(rawDiff,receiver);_HoRTDISpecular[id.xy]=float4(rawSpec,receiver);
+    _HoRTDINrdDiffuse[id.xy]=RELAX_FrontEnd_PackRadianceAndHitDist(diff.rgb*scale,diff.a,true);
+    _HoRTDINrdSpecular[id.xy]=RELAX_FrontEnd_PackRadianceAndHitDist(spec.rgb*scale,spec.a,true);
+}
 #endif
 
 [numthreads(8,8,1)]
@@ -141,8 +202,9 @@ void Spatial(uint3 id:SV_DispatchThreadID)
     }
     RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,1);
 }
-void HoDIShade(uint3 id)
+void HoDIShade(uint3 id,out uint peak)
 {
+    peak=0;
     if(!HoDIInside(id.xy))return;
     RTXDI_DIReservoir reservoir=RTXDI_LoadDIReservoir(HoDILayout(),id.xy,1);RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
     float3 diffuse=0,specular=0,diffuseLighting=0;
@@ -165,18 +227,22 @@ void HoDIShade(uint3 id)
         }
     }
     float receiver=RAB_IsSurfaceValid(surface)?1:0;
-    #if defined(HO_RTDI_NRD_ACTIVE)
-    _HoRTDIPreviousLuminance[id.xy]=f16tof32(f32tof16(float2(HoDILuminance(_HoRTDIDiffuse[id.xy].rgb),HoDILuminance(_HoRTDISpecular[id.xy].rgb))));
-    #endif
+    #if !defined(HO_RTDI_NRD_ACTIVE)
     _HoRTDIDiffuse[id.xy]=float4(diffuse,receiver);_HoRTDISpecular[id.xy]=float4(specular,receiver);
+    #endif
     #if defined(HO_RTDI_NRD_ACTIVE)
     float4 diffSignal=0,specSignal=0,normal=0;float viewZ=1000000;
     if(receiver>.5)
     {
         float3 diffFactor,specFactor;
         NRD_MaterialFactors(surface.normal,surface.viewDir,surface.material.diffuseAlbedo,surface.material.specularF0,surface.material.roughness,diffFactor,specFactor);
-        diffSignal=RELAX_FrontEnd_PackRadianceAndHitDist(diffuseLighting,selectedDistance,true);
-        specSignal=RELAX_FrontEnd_PackRadianceAndHitDist(specular/specFactor,selectedDistance,true);
+        float3 specLighting=specular/specFactor;
+        // Match front-end non-finite rejection, but defer its FP16 clamp until
+        // the full-frame peak has selected a common linear signal domain.
+        diffSignal=float4(all(isfinite(diffuseLighting))?max(0,diffuseLighting):0,selectedDistance);
+        specSignal=float4(all(isfinite(specLighting))?max(0,specLighting):0,selectedDistance);
+        float3 peakRGB=max(diffSignal.rgb,specSignal.rgb);
+        peak=asuint(max(peakRGB.r,max(peakRGB.g,peakRGB.b)));
         // Separate zero-diffuse receivers (including full metals) from active
         // diffuse. IDs 0/3 survive our FP16 normal transport exactly.
         float materialClass=all(surface.material.diffuseAlbedo==0)?3:0;
@@ -206,8 +272,18 @@ void HoDIShade(uint3 id)
     }
     _HoRTDIHistory[id.y*(uint)_HoRTDIFrame.x+id.x]=history;
 }
-[numthreads(8,8,1)]void Shade(uint3 id:SV_DispatchThreadID){HoDIShade(id);}
-[numthreads(8,8,1)]void ShadeNRD(uint3 id:SV_DispatchThreadID){HoDIShade(id);}
+[numthreads(8,8,1)]void Shade(uint3 id:SV_DispatchThreadID){uint peak;HoDIShade(id,peak);}
+[numthreads(8,8,1)]void ShadeNRD(uint3 id:SV_DispatchThreadID,uint index:SV_GroupIndex)
+{
+    #if defined(HO_RTDI_NRD_ACTIVE)
+    if(index==0)HoDINrdGroupPeak=0;
+    GroupMemoryBarrierWithGroupSync();
+    uint peak;HoDIShade(id,peak);
+    InterlockedMax(HoDINrdGroupPeak,peak);
+    GroupMemoryBarrierWithGroupSync();
+    if(index==0)InterlockedMax(_HoRTDINrdScale[0],HoDINrdGroupPeak);
+    #endif
+}
 [numthreads(8,8,1)]void ResolveNRD(uint3 id:SV_DispatchThreadID)
 {
     #if defined(HO_RTDI_NRD_ACTIVE)
@@ -217,7 +293,8 @@ void HoDIShade(uint3 id)
     {
         float3 diffFactor,specFactor;
         NRD_MaterialFactors(surface.normal,surface.viewDir,surface.material.diffuseAlbedo,surface.material.specularF0,surface.material.roughness,diffFactor,specFactor);
-        diffuse=_HoRTDINrdOutputDiffuse[id.xy].rgb*surface.material.diffuseAlbedo;specular=_HoRTDINrdOutputSpecular[id.xy].rgb*specFactor;
+        float inverseScale=rcp(asfloat(_HoRTDINrdScale[1]));
+        diffuse=_HoRTDINrdOutputDiffuse[id.xy].rgb*inverseScale*surface.material.diffuseAlbedo;specular=_HoRTDINrdOutputSpecular[id.xy].rgb*inverseScale*specFactor;
     }
     float receiver=RAB_IsSurfaceValid(surface)?1:0;
     _HoRTDINrdOutputDiffuse[id.xy]=float4(diffuse,receiver);_HoRTDINrdOutputSpecular[id.xy]=float4(specular,receiver);

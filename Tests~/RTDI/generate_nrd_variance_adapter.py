@@ -108,7 +108,29 @@ def generate_temporal():
     if text.count(marker) != 1:
         raise ValueError("Unexpected NRD specular budget location")
     text = text.replace(marker, "    float materialMatch = HoNrdSpecularHistoryMatch(pixelPos, prevUVSMB);\n    specMaxAccumulatedFrameNum *= materialMatch;\n    specMaxFastAccumulatedFrameNum *= materialMatch;\n" + marker)
-    return f"// Ho-RTDI F0-history adaptation of NRD 4.17.3. Original SHA256: {expected}\n" + text
+    text = text.replace('#include "HoRTDINrdMaterialGuide.hlsl"', '#include "HoRTDINrdMaterialGuide.hlsl"' + '''
+// Current and previous signal domains are GPU-selected, independent of exposure.
+// Scale RGB linearly and second moments quadratically; hit distances stay intact.
+StructuredBuffer<uint> _HoRTDINrdScale;
+float HoNrdHistoryScale() { return asfloat(_HoRTDINrdScale[1]) / asfloat(_HoRTDINrdScale[2]); }
+float4 HoNrdScaleMoment(float4 value)
+{
+    float ratio = HoNrdHistoryScale();
+    return value * float4(ratio.xxx, ratio * ratio);
+}
+''')
+    markers = {
+        '    prevDiffuseIllumAnd2ndMoment = max(prevDiffuseIllumAnd2ndMoment, 0);': '    prevDiffuseIllumAnd2ndMoment = HoNrdScaleMoment(max(prevDiffuseIllumAnd2ndMoment, 0));',
+        '    prevDiffuseResponsiveIllum = max(diff.rgb, 0);': '    prevDiffuseResponsiveIllum = max(diff.rgb, 0) * HoNrdHistoryScale();',
+        'prevSpecularIllumAnd2ndMoment = max(prevSpecularIllumAnd2ndMoment, 0.0);': 'prevSpecularIllumAnd2ndMoment = HoNrdScaleMoment(max(prevSpecularIllumAnd2ndMoment, 0.0));',
+        '    prevSpecularResponsiveIllum = max(spec.rgb, 0);': '    prevSpecularResponsiveIllum = max(spec.rgb, 0) * HoNrdHistoryScale();',
+        '        prevSpecularResponsiveIllum = max(prevSpecularResponsiveIllum, 0.0);': '        prevSpecularResponsiveIllum = max(prevSpecularResponsiveIllum, 0.0);\n        prevSpecularResponsiveIllum.rgb *= HoNrdHistoryScale();',
+    }
+    for old, new in markers.items():
+        if text.count(old) != (2 if old.startswith('prevSpecularIllum') else 1):
+            raise ValueError("Unexpected NRD signal-history layout: " + old)
+        text = text.replace(old, new)
+    return f"// Ho-RTDI F0/history-domain adaptation of NRD 4.17.3. Original SHA256: {expected}\n" + text
 
 
 def generate_clamping():

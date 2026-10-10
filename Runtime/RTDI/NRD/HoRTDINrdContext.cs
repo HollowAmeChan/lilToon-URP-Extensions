@@ -26,6 +26,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         private readonly RTHandle[] permanent,transient;
         private readonly GraphicsBuffer[] constants=new GraphicsBuffer[3];
         private readonly Dictionary<uint,string> names=new();
+        private static readonly int[] signalHistoryBindings={Shader.PropertyToID("_HoRTDINrdHistorySpec"),Shader.PropertyToID("_HoRTDINrdHistoryDiff"),Shader.PropertyToID("_HoRTDINrdHistorySpecFast"),Shader.PropertyToID("_HoRTDINrdHistoryDiffFast")};
         private int width,height;
         private const int ConstantBytes=65536;
         private readonly int constantStride;
@@ -97,15 +98,41 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             foreach(var texture in transient)builder.UseTexture(graph.ImportTexture(texture),AccessFlags.ReadWrite);
             foreach(var buffer in constants)builder.UseBuffer(graph.ImportBuffer(buffer),AccessFlags.ReadWrite);
         }
-        internal void BindPrimaryGuide(CommandBuffer cmd,HoRTPrimarySurfaceInputs primary,bool compatibility,CameraData camera,GraphicsBuffer history,bool historyValid)
+        internal void BindPrimaryGuide(CommandBuffer cmd,HoRTPrimarySurfaceInputs primary,bool compatibility,CameraData camera,GraphicsBuffer history,bool historyValid,GraphicsBuffer signalScale)
         {
             for(int index=4;index<=10;index++)
             {
                 if(index!=4&&index!=9&&index!=10)continue;
                 if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,shaders[index],kernels[index],camera);
                 else primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),shaders[index],kernels[index]);
-                if(index==4){cmd.SetComputeBufferParam(shaders[index],kernels[index],"_HoRTDIHistory",history);cmd.SetComputeIntParam(shaders[index],"_HoRTDINrdGuideHistoryValid",historyValid?1:0);}
+                if(index==4){cmd.SetComputeBufferParam(shaders[index],kernels[index],"_HoRTDIHistory",history);cmd.SetComputeIntParam(shaders[index],"_HoRTDINrdGuideHistoryValid",historyValid?1:0);cmd.SetComputeBufferParam(shaders[index],kernels[index],"_HoRTDINrdScale",signalScale);}
             }
+        }
+        internal void BindSignalHistory(CommandBuffer cmd,ComputeShader shader,int kernel,bool valid)
+        {
+            // Borrow the exact permanent inputs selected by the previous core
+            // dispatch, rather than inventing pool indices or a second history.
+            if(!valid)
+            {
+                foreach(int binding in signalHistoryBindings)cmd.SetComputeTextureParam(shader,kernel,binding,Texture2D.blackTexture);
+                return;
+            }
+            int found=0;
+            for(int i=0;i<LastDispatchCount;i++)if(passes[i].pipeline==4)
+            {
+                var manifest=HoRTDINrdManifest.Resources[4];
+                for(int j=0;j<manifest.Length;j++)
+                {
+                    string name=manifest[j];int bit=name switch{"gHistory_Spec"=>1,"gHistory_Diff"=>2,"gHistory_SpecFast"=>4,"gHistory_DiffFast"=>8,_=>0};
+                    if(bit==0)continue;
+                    var resource=resources[i,j];
+                    if(HoRTDINrdNative.ResourceName(resource.type)!="PERMANENT_POOL"||resource.poolIndex>=permanent.Length)throw new InvalidOperationException("NRD signal history is not a permanent pool input");
+                    int binding=signalHistoryBindings[bit==1?0:bit==2?1:bit==4?2:3];
+                    cmd.SetComputeTextureParam(shader,kernel,binding,permanent[resource.poolIndex].nameID);found|=bit;
+                }
+                break;
+            }
+            if(found!=15)throw new InvalidOperationException("NRD signal history inputs missing from pinned Temporal dispatch");
         }
         internal void Record(CommandBuffer cmd,HoRTDINrdNative.CommonSettings settings,Dictionary<string,RenderTargetIdentifier> external)
         {

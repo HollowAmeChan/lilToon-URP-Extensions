@@ -20,7 +20,7 @@ Feature 的 **NRD RELAX 降噪** 为可选项，默认关闭。开启后仍保�
 | normal/roughness | 世界着色法线与参考 roughness，固定编码 2/1；RGBA16F 存储。material class=0 表示 active diffuse，3 表示全部 diffuseAlbedo 为零；不是逐对象/材质资产 ID |
 | view Z | 正的线性眼空间深度；无效主表面写 1000000，超过 denoising range 500000 |
 | motion | 静态世界的 world-space 零位移；不把相机运动混入 MV，相机重投影由实际前后 view/projection 矩阵提供 |
-| filtered publication | diffuse 乘当前 albedo，specular 按同一 NRD helper 恢复；RGB 保持原 DI 接收含义，alpha 重新写 receiver-validity |
+| filtered publication | 先撤销 GPU 线性信号尺度，再由 diffuse albedo / 同一 specular helper 恢复材质；RGB 保持原 DI 接收含义，alpha 重新写 receiver-validity |
 
 没有复制当前主表面 GBuffer；现有 GB/SB 被借用，新增的是 NRD 实际要求的信号编码。NRD shader 不自行读取/重渲染场景。帧间时间与历史预算现在使用相机实际提交的 unscaled sample time，详见后面的时间契约。
 
@@ -28,7 +28,7 @@ Feature 的 **NRD RELAX 降噪** 为可选项，默认关闭。开启后仍保�
 
 ## 调度、ABI 与历史
 
-在已有 unsafe graphics-queue DI pass 内，ShadeNRD 写 raw 与 NRD inputs，随后执行核心库返回的 dispatch 列表，最后 ResolveNRD 恢复材质因子。pool、signal、output 和 constant buffers 都声明 RenderGraph 依赖，compatibility 使用同一调度函数。没有 Unity native graphics device、command-list 或 descriptor-heap 直接操作。
+在已有 unsafe graphics-queue DI pass 内，BeginNRDScale 初始化尺度状态，ShadeNRD 写 FP32 解调暂存并按线程组统计峰值，MeasureNRDHistory 计入旧 RGB / 二阶矩，SelectNRDScale 选择共同尺度。NormalizeNRD 在缩放之前发布物理 raw 并保存旧 raw luminance，然后打包缩放后的 NRD inputs；随后执行核心库返回的 dispatch 列表，最后 ResolveNRD 撤销尺度并恢复材质因子。pool、signal、output、scale 和 constant buffers 都声明 RenderGraph 依赖，compatibility 使用同一调度函数。没有 Unity native graphics device、command-list 或 descriptor-heap 直接操作。
 
 核心调用返回的指针只在本轮复制描述、资源与常量时读取，不跨下一次 GetComputeDispatches 保存裸指针。每个 dispatch 使用独立常量偏移，帧常量使用三份 64 KiB buffer，避免同轮不同 pass 共用覆盖的 CB 地址。原始 ResourceType 数值以固定头文件为准；该参考库的 GetResourceTypeString 字符串数组顺序已经落后于枚举，不能用它决定绑定。
 
@@ -47,7 +47,7 @@ DI 的 debug / grid-label shader 现由 Feature 序列化持有，正常裁剪�
 
 当前是 **静态不透明 Mono 的 Editor / Windows Player 初版**。不支持/未验证 IL2CPP、skinned 或运动几何、XR、TAA jitter 的显式 NRD 契约、相机切换/时间跳变的大规模场景、完整材质 ID 边界路由和生产 GPU budget。GB 通用 fallback / MSAA resolve 不在本次真实 lilToon、MSAA=1 接收测试内。没有添加构建时全工程批量迁移；未打开/保存的外部旧 renderer 仍应先完成正常补引用流程。DLL importer 限定 Windows x64。
 
-当前六张 NRD 信号/输出纹理合计约 44 B/像素；材质因子在 external output 上原地恢复，不再另分配两张 filtered 纹理。RELAX pool 约 80 B/像素，另有三个 64 KiB 常量 buffer 和后文的 confidence 资源。1080p 实测 DI＋NRD 活动载荷约 463.996 MiB，不含输入、AS、驱动/对齐与缓存。NRD Record 的稳定热路径已复用描述、资源表与常量 CPU 拷贝区，见下节；Feature 的扫描、Prepare、外部绑定与渲染图等仍可能分配，不能把局部零分配写成整帧零分配。
+当前六张 NRD 信号/输出纹理合计约 60 B/像素（两张 radiance staging 为 FP32）；材质因子在 external output 上原地恢复，不再另分配两张 filtered 纹理。RELAX pool 约 80 B/像素，另有三个 64 KiB 常量 buffer、16 B scale buffer 和后文的 confidence 资源。1080p 实测 DI＋NRD 活动载荷约 495.637 MiB，不含输入、AS、驱动/对齐与缓存。NRD Record 的稳定热路径已复用描述、资源表与常量 CPU 拷贝区，见下节；Feature 的扫描、Prepare、外部绑定与渲染图等仍可能分配，不能把局部零分配写成整帧零分配。
 
 ## 调度分配与分辨率预算
 
@@ -232,6 +232,29 @@ NRD confidence 也改为按其自身历史有效性读取 previous guides，独�
 
 高强度案例：roughness≈0.0980、两同向白灯 intensity=0.5/0.25。raw 平均≈646.167、filtered≈640.069、独立参考≈646.029，表面上误差只有约0.9%；但 NRD 的 `gHistory_Spec` 中 mean≈3330、二阶矩仅65504，variance≈-11023400。全 pool 的 finite 检查仍通过，说明有限/输出均值接近不足以证明内部统计正确。
 
-这是**未修复的 HDR 二阶矩饱和**。当前 `RunSpecularHDR` / `RunSpecularHDRCompatibility` 明确检查 m2≥0.99×mean²；本轮 compatibility 实测 exit=1，日志为 `HDR second moment saturated below mean squared`。不要把这个失败算作九组角度 gate 的通过，也不要将数值直接当作负噪声再置零验收。原 NRD pool 的四张 permanent / 四张 transient RGBA16 支持有限动态范围；[官方 NRD 范围建议](https://github.com/NVIDIA-RTX/NRD)明确二阶矩的平方需落在 FP16 内，并建议较宽范围信号先作适当压缩/线性缩放。
+这是**步骤 14 明确重现的 HDR 二阶矩饱和**（步骤 15 的修复见下节）。`RunSpecularHDR` / `RunSpecularHDRCompatibility` 明确检查 m2≥0.99×mean²；步骤 14 compatibility 实测 exit=1，日志为 `HDR second moment saturated below mean squared`。不要把这个失败算作九组角度 gate 的通过，也不要将数值直接当作负噪声再置零验收。原 NRD pool 的四张 permanent / 四张 transient RGBA16 支持有限动态范围；[官方 NRD 范围建议](https://github.com/NVIDIA-RTX/NRD)明确二阶矩的平方需落在 FP16 内，并建议较宽范围信号先作适当压缩/线性缩放。
 
 下一项最高优先级为 NRD 信号归一化与历史尺度契约：保持 raw RGB 和最终 DI 单位，避免瞬时尺度变化损坏历史，证明亮/暗并存、灯光动态与高峰值的 m2/能量。不能用整体提亮、静默饱和或取消高强度测试代替；也不能只升某张 history texture 而忽略中间 RGBA16 写入。本步只交付验证/证据，没有增加 Feature、生产纹理、GPU pass 或改变 PBR/NPR 合成。
+
+## GPU 线性 HDR 信号域与历史恢复
+
+步骤 15 保留原失败门槛，按[官方线性缩放建议](https://github.com/NVIDIA-RTX/NRD#other)把解调信号限制到 RGB≤128，为 FP16 二阶矩保留余量。两个输入改为 RGBA32F 暂存，避免峰值选择之前被 front-end / FP16 裁剪；raw 与发布输出仍是 RGBA16F、物理 DI 单位。16 B GPU 状态记录峰值、当前尺度与前轮尺度，不做逐帧 CPU 读回。Shade 按 8×8 组归约峰值；新调度为 Begin、MeasureHistory、Select、Normalize，后两者中的 Select / Begin 是单线程。
+
+第一次只允许尺度下降，亮场统计恢复但暗场 mean≈0.001457、m2≈1.07e-6，明显小于 mean²；新增门槛再次失败，不能归咎于几个 half ULP。最终选择同时纳入旧 slow/fast RGB 的最大分量与 slow sqrt(m2)，将它们除以前轮尺度恢复成物理范围后与当前输入峰值一起归约。通过实际上一轮 Temporal manifest 借用 permanent pool，检查资源种类与四个输入完整性，不硬编码 pool index、不复制历史。由此可以安全增大尺度，保留有效历史，同时恢复暗处精度。
+
+派生 Temporal 在 SMB / VMB 取样后把旧 RGB 乘 current/previous、旧 m2 乘其平方，fast alpha 的 hitT 不动；同轮其他 NRD 阶段天然处在新域。Resolve 撤销尺度再恢复材质，原 confidence 仍吃物理 raw。Normalize 在缩放前写 raw、采集前轮 raw luminance，避免 ShadeNRD 新增状态超过八个 UAV；没有增加重复光线或额外 capture pass。比例、native 版本/ABI、pool 格式与原 vendor 正文仍可独立核对，generator `--check` 包含这项派生。
+
+| Editor，明确 60 Hz，两条路径相同 | 结果 |
+| --- | --- |
+| 原 HDR 0.5/0.25，参考≈646.029 | filtered≈639.597；history mean≈52.031、m2≈2984，variance≈276.749 |
+| 提高至 16/8，参考≈20672.93 | raw≈20674.16、filtered≈20443.01，scale=1/2048；解调 staging 已超过原 FP16 输入范围 |
+| 降至 0.0005/0.00025，参考≈0.646029 | filtered≈0.638；scale 从 1/1024 安全恢复至1，mean≈2.984、m2≈10.023、variance≈1.117 |
+| 恢复 0.5/0.25 | filtered≈638.022，scale=1/64，m2≈2722，variance≈284.109 |
+| 同屏 F0=1 与10/255，16/8照明 | filtered≈20393.74 / 804.404，参考≈20672.93 / 810.703，两区各自通过5%门槛 |
+| 释放重建 / resize | 新状态初始化、尺度恢复与能量门槛通过 |
+
+原九组角度、两条 Editor NRD 回归、目标分辨率通过；两个 Win64 Mono release 构建和实际 D3D12 EXE / D3D11 inactive 通过。Player 四段 HDR 最差 raw / filtered 平均相对误差约0.119% / 1.071%，原噪声 MSE≈0.000086、点灯边界与 F0 输运门槛继续通过。最终日志没有新增 DI/NRD shader、UAV 或 command-buffer 诊断；其他模块与 lilToon 旧警告不计入这个结论。Roslyn 与派生源码重建通过。
+
+代价：+16 B/像素与16 B状态，720p /1080p 活动载荷≈219.921 /495.637 MiB；简单 RG 同步 batch≈6.570 /12.172 ms（含 CPU、全部渲染及读回，不是孤立 GPU benchmark）。多一次全尺寸历史范围读取与归一化，且归一化阶段借用主表面恢复 raw。全屏共同尺度仍受最亮输入/保留历史约束，极端同屏动态范围可能使很暗的统计失去精度；最终 FP16 输出的65504上限也仍在，未声称无限 HDR。当前验证是受控静态表面/方向灯，Player 不读内部 pool；不是动态几何、TAA、XR 或生产场景证明。
+
+完成后判断：这一修复有明确正确性收益，成本已量化。下一项优先核对 Point/Spot 与变化视角/曲面上的 specular hitT、遮挡边缘和能量，评审信号/距离是否需要按 lobe 区分；随后再决定优化 staging / peak reduction，不先扩张灯域、PT 框架或最终 PBR/NPR 合成。

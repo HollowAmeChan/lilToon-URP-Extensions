@@ -22,6 +22,8 @@ namespace lilToon.URP.Extensions.RTDI
         internal int pdfSize;
         internal bool powerSampling;
         internal HoRTDINrdContext nrd;
+        // GPU peak + current/previous linear signal scales (not camera exposure).
+        internal GraphicsBuffer nrdScale;
         internal RTHandle nrdDiffuse,nrdSpecular,nrdNormal,nrdViewZ,nrdOutputDiffuse,nrdOutputSpecular;
         // RELAX keeps history in its permanent pool. Resolve restores the
         // external output in place, then publishes that same owned texture.
@@ -102,8 +104,11 @@ namespace lilToon.URP.Extensions.RTDI
             {
                 if(nrd==null){nrd=new HoRTDINrdContext(shaders);nrdHistoryValid=false;}
                 nrd.Prepare(width,height);
-                AllocateSignal(ref nrdDiffuse,GraphicsFormat.R16G16B16A16_SFloat,"NRD diffuse signal");
-                AllocateSignal(ref nrdSpecular,GraphicsFormat.R16G16B16A16_SFloat,"NRD specular signal");
+                if(nrdScale==null){nrdScale=new GraphicsBuffer(GraphicsBuffer.Target.Structured,4,4){name="HoRTDI NRD signal scale"};nrdHistoryValid=false;}
+                // Stage demodulated radiance before scaling: FP16 would already
+                // clamp a sharp HDR lobe before the peak reduction can see it.
+                AllocateSignal(ref nrdDiffuse,GraphicsFormat.R32G32B32A32_SFloat,"NRD diffuse signal");
+                AllocateSignal(ref nrdSpecular,GraphicsFormat.R32G32B32A32_SFloat,"NRD specular signal");
                 AllocateSignal(ref nrdNormal,GraphicsFormat.R16G16B16A16_SFloat,"NRD normal roughness");
                 AllocateSignal(ref nrdViewZ,GraphicsFormat.R32_SFloat,"NRD view Z");
                 AllocateSignal(ref nrdOutputDiffuse,GraphicsFormat.R16G16B16A16_SFloat,"NRD diffuse output");
@@ -128,6 +133,7 @@ namespace lilToon.URP.Extensions.RTDI
         internal void ReleaseDenoiser()
         {
             nrd?.Dispose();nrd=null;nrdHistoryValid=false;
+            nrdScale?.Dispose();nrdScale=null;
             foreach(var texture in new[]{nrdDiffuse,nrdSpecular,nrdNormal,nrdViewZ,nrdOutputDiffuse,nrdOutputSpecular})texture?.Release();
             nrdDiffuse=nrdSpecular=nrdNormal=nrdViewZ=nrdOutputDiffuse=nrdOutputSpecular=null;
             previousLuminance?.Release();gradientA?.Release();gradientB?.Release();diffConfidence?.Release();specConfidence?.Release();
