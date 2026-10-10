@@ -17,6 +17,8 @@
 - `Runtime/AttributeComposite`：按 OB 身份与 SB 语义查询和合成遮罩。
 - `Runtime/ObjectBuffer`：R1 逐 sample IdentityId + coverage 底层；`HoObjectBufferGroup` 把组/部件 ID 写入 RSUV，Renderer Feature 用自建 MSAA resolve 成 4 层身份池。
 - `Runtime/GeometryBuffer`：normal/depth 几何输入缓冲。
+- `Runtime/Atmosphere`：固定基础环境输入与共享 Box 介质，分别发布 radiance 与 Medium；用法见 `Documentation~/Ho-Atmosphere.md`。
+- `Runtime/VolumeLight`：消费大气介质与已有太阳的 HD 丁达尔，SDF 仅控制显示参与；v0.1 用法与边界见 `Documentation~/Ho-VolumeLight.md`。
 - `Runtime/CharacterSpecialization`：角色捕获和角色定制后处理，包括头发/脸部等风格化处理路径。
 - `Runtime/ScreenProcess`：用户可控的语义屏幕处理图层栈，使用 OB/SB/AC 遮罩，并有 RenderGraph/非 RenderGraph 路径。
 - `Runtime/ImageProcess`：最终图像处理链和具体效果移植。
@@ -26,6 +28,7 @@
 ## Editor 模块
 
 - `Editor/GeometryData`：参考系/描边/张力组件 Inspector、显式准备按钮与 Play 前触发，不提供旧配置迁移。
+- `Editor/Atmosphere` / `Editor/VolumeLight`：大气区域手柄、参数/调试面板及隔离 GPU 验证入口。
 - `Editor/ObjectBuffer`：OB 组/部件 Inspector、Volume 调试 UI，以及 `HoLil/Validation/Validate Ho-ObjectBuffer R1` 最小闭环验证。
 - `Editor/CharacterSpecialization`：角色特化编辑器 UI。
 - `Editor/LilMatConvert`：材质转换工具。
@@ -35,7 +38,7 @@
 
 ## 主要 RendererFeature
 
-按需要添加到 URP Renderer Asset：
+当前 Ho 管线的 GD/GB/OB/SB/AC/HoAtmosphere 作为基础项保持开启；效果项按需要添加到 URP Renderer Asset：
 
 - `WeightedOITRendererFeature`
 - `HoSurfaceBufferRendererFeature`
@@ -43,6 +46,8 @@
 - `HoObjectBufferRendererFeature`
 - `HoGeometryBufferRendererFeature`
 - `HoGeometryDataRendererFeature`（描边数据发布与动态张力 Compute 生产）
+- `HoAtmosphereRendererFeature`（固定环境/空间介质输入）
+- `HoVolumeLightRendererFeature`（太阳 HD，RenderGraph）
 - `HoCharacterSpecializationRendererFeature`
 - `ScreenProcessRendererFeature`
 - `ImageProcessRendererFeature`
