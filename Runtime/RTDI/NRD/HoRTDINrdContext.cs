@@ -36,6 +36,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         #if UNITY_EDITOR
         // Isolated stage/settings A/B only; no serialized/runtime product option.
         internal Func<HoRTDINrdNative.RelaxSettings,HoRTDINrdNative.RelaxSettings> ValidationSettings;
+        internal bool ValidationPreserveWorldHistory;
         #endif
         #if UNITY_EDITOR
         internal double? ValidationTimeSeconds;

@@ -347,7 +347,17 @@
 
 **下一项：** 核对世界revision与NRD主表面历史的区别；现有confidence的相同灯shortcut只在static-world成立，且保守射线跳过Cutout。先用可复现诊断评审保留历史的噪声收益/拖影失败，再设计真实动态可见性confidence，不能简单取消全局reset上线。
 
-## 31. 下一步取舍
+## 31. 动态遮挡历史收益与残影失败对照
+
+**动手前评审：不能直接放宽world reset。** 固定世界revision混合pose/transform/实例集合，现有confidence相同灯捷径和保守inline跳过Cutout，尚无真实动态alpha变化信号。核对用户RTXDI固定FullSample ComputeGradients的同reservoir再求可见性、官方NRD History Confidence的同采样梯度契约。
+
+**实现：** 仅Editor隔离入口对比原重置/保留NRD世界历史，ReSTIR temporal仍原策略。原慢速caster、正向快速caster、16帧阶跃，独立CPU逐像素alpha参考且断言Far始终无遮挡；新增最差帧/阶跃前三帧变化像素红通道误差，恒亮蓝不稀释。无生产开关、资源、Shader/native/vendor或合成修改。
+
+**证据与取舍：** 慢速frameL1 1.064071→.125951，快速1.024179→.237205，raw各case完全相同且3%内。但阶跃变化像素L1 .157649→.570931，整体frameL1却.204079→.176262，单看均值会误判。新增变化像素35%门槛后保留历史qualityPass=false，不上线忽略世界变化。原保守策略仍生产默认；下一步做真正动态最终可见性confidence后再评审保留历史，不能用平均噪声掩盖残影。
+
+**验证与复查：** Runtime/Editor Roslyn通过，两条硬件对照、正式失败入口和默认核心回归核对后独立过滤提交；无需重复Shader/native/Player未变的构建或GI测试。详见 [动态可见性](../Ho-RTDI-DynamicVisibility.md)。完整DI目标继续，GPU预算和任意动态主表面仍未证明。
+
+## 32. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

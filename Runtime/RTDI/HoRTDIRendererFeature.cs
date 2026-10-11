@@ -221,7 +221,13 @@ namespace lilToon.URP.Extensions.RTDI
                 if(c.nrd!=null)
                 {
                     c.nrd.HasCutoutVisibility=c.finalVisibility!=null;
-                    reset=!c.nrdHistoryValid||!c.historyValid||c.sceneRevision!=d.revision||c.settingsSignature!=d.signature;
+                    bool worldChanged=c.sceneRevision!=d.revision;
+                    #if UNITY_EDITOR
+                    // Isolated motion audit only: keeping history here is unsafe
+                    // without dynamic final-visibility confidence.
+                    worldChanged&=!c.nrd.ValidationPreserveWorldHistory;
+                    #endif
+                    reset=!c.nrdHistoryValid||!c.historyValid||worldChanged||c.settingsSignature!=d.signature;
                     common=HoRTDINrdNative.CommonSettings.Create(c.width,c.height,d.view,d.projection,c.previousView,c.previousProjection,c.frame,reset);
                     common.timeDelta=c.nrd.SetRenderTime(d.renderTime,out timeReset);if(timeReset)common.accumulationMode=2;
                     int begin=d.shader.FindKernel("BeginNRDScale");

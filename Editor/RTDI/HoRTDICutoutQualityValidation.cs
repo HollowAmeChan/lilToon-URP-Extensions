@@ -59,9 +59,11 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             Debug.Log("[HoRTDIValidation] PASS cutout raw edge/camera/caster oracle; filtered metrics recorded for review; compatibility="+compatibility);
         }
         private static bool CutoutPlaneShadow(int x,int y)
+            =>CutoutPlaneShadow(light,x,y);
+        private static bool CutoutPlaneShadow(Light source,int x,int y)
         {
             var ray=camera.ViewportPointToRay(new Vector3((x+.5f)/64,(y+.5f)/64,0));var p=ray.origin+ray.direction*(-ray.origin.z/ray.direction.z);
-            var direction=light.transform.position-p;float t=(blocker.transform.position.z-p.z)/direction.z;if(t<=0||t>=1)return false;
+            var direction=source.transform.position-p;float t=(blocker.transform.position.z-p.z)/direction.z;if(t<=0||t>=1)return false;
             var point=blocker.transform.InverseTransformPoint(p+direction*t)-skinBlockerBone.localPosition;
             if(Mathf.Abs(point.x)>.5f||Mathf.Abs(point.y)>.5f)return false;
             return CutoutCpuSample(alphaTexture,new Vector2(point.x+.5f,point.y+.5f))>=.5f;
