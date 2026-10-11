@@ -47,6 +47,6 @@ Win64 Mono实际Player使用non-readable mesh/texture，末尾立体连续/阶�
 
 有变化时最多每个有效匹配历史像素重求一次可见性，外加原最终Shade可见性；梯度网格仍1/3分辨率。静态世界/灯跳过新增射线，新增 `HoRTDI Visibility Gradients` GPU scope。不新增纹理内存，但dispatch和动态额外射线可能显著增加成本；尚无有效GPU毫秒预算，不能据小测试帧率估算。
 
-下一步优先验证动态Cutout镜面、移动主表面及灯参数/身份变化，再评审梯度成本和门槛余量。当前证据来自静态接收面、局部caster、固定Alpha与指定运动，不代表任意动态材质/环境或整座古堡。
+第33步已补[指定GGX材料的动态Cutout镜面验证](Ho-RTDI-CutoutSpecular.md)，原八组与额外运动正式门槛通过，快速/阶跃噪声接近上限。下一步审计移动主表面及灯参数/身份变化，再评审梯度成本和余量。当前证据来自静态接收面、局部caster、固定Alpha与指定运动，不代表任意动态材质/环境或整座古堡。
 
 入口：`RunCutoutMultiQuality`、`RunCutoutMotionProductionQuality`、`RunVisibilityConfidence`及各Compatibility；阶段诊断 `RunCutoutCubeStages/RunCutoutCubeOriginalStages/RunCutoutCubeSigmaFour`。报告为隔离工程 `rtdi-cutout32-current-rg/compat.*` 和 `rtdi-cutout32-motionProduction-rg/compat.*`。旧失败对照入口显式锁定旧参数/重置策略，仍可复现。

@@ -371,7 +371,15 @@
 
 **成本与下一项：** 有变化时最多额外1可见性射线/有效历史像素，scope已加，无新显存；实际GPU预算未证实。下一步验证动态Cutout镜面、移动primary、灯/身份变化及余量，再优化采样成本，不放大为整古堡质量或最终NPR接收。过滤提交本步owned代码/验证/文档。详见 [动态visibility confidence](../Ho-RTDI-VisibilityConfidence.md)。
 
-## 33. 下一步取舍
+## 33. 动态Cutout镜面独立质量门槛
+
+**动手前评审：** 第32步sigma影响两lobe，必须验证specular，不能用diffuse代替。核对用户固定ComputeGradients的同reservoir重求和本地Raygen的GGX/FP16亮度；沿用独立解析GGX/Smith/Schlick参考、输入F0/roughness量化、点灯衰减及CPU alpha几何，不改生产参数。
+
+**实现与结果：** 原多灯fixture可显式评分raw/filtered specular，报告增加signal，独立前缀不覆盖旧diffuse。F0=10/255、roughness=102/255，原8组两条正式qualityPass=true；static红/蓝.984996/.991624，camera meanL1 .028293，caster frameL1 .108094。额外慢/快/阶跃frameL1 .110073/.343487/.347752，阶跃变化像素.309657<.35，两条正式通过。快速/阶跃非常接近上限，峰值.591305仍保留，不宣称完全平滑或任意材质通过。
+
+**验证、范围与下一项：** Runtime/Editor Roslyn通过，旧diffuse八组正式回归通过；本步只Editor验证/文档，生产、shader/native/GI与Player模板均未变，不重做无关构建。复查信号选择/独立GGX和alpha参考、原gate/失败语义，过滤提交owned文件。接下来单独审计移动primary：当前IN_MV黑纹理/worldMotion只表示零对象运动，用户参考和NRD契约需要对应表面运动；已找到HoURP17 motionVectorColor与lilToon MotionVectors pass，先检查覆盖/时机再直接消费，不引入AC复制/新Feature。详见 [Cutout镜面](../Ho-RTDI-CutoutSpecular.md)。
+
+## 34. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

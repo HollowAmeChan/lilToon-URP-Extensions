@@ -10,7 +10,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         private static bool forceCutoutMultiQuality;
         private static bool cutoutMultiAudit;
         private static string cutoutNrdDiagnostic;
-        [Serializable] private sealed class MultiQualityReport {public bool qualityPass;public string path;public MultiQualityCase[] cases;}
+        private static bool cutoutSpecularQuality;
+        [Serializable] private sealed class MultiQualityReport {public bool qualityPass;public string path,signal;public MultiQualityCase[] cases;}
         [Serializable] private sealed class MultiQualityCase
         {public string mode;public double rawRed,rawBlue,filteredRed,filteredBlue,rawMeanL1,filteredMeanL1,filteredFrameL1,filteredWorstFrameL1,transitionL1,transitionChangedL1;public bool rawPass,filteredPass;}
         public static void RunCutoutMultiQuality(){forceCutoutMultiQuality=true;RunCutoutQuality();}
@@ -33,9 +34,17 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunCutoutMotionProductionQualityCompatibility(){compatibility=true;RunCutoutMotionProductionQuality();}
         public static void RunCutoutPhiOneQuality(){cutoutNrdDiagnostic="phiOneFull";RunCutoutMultiQuality();}
         public static void RunCutoutSigmaFourQuality(){cutoutNrdDiagnostic="sigmaFourFull";RunCutoutMultiQuality();}
+        public static void RunCutoutSpecularAudit(){cutoutSpecularQuality=true;RunCutoutMultiAudit();}
+        public static void RunCutoutSpecularAuditCompatibility(){compatibility=true;RunCutoutSpecularAudit();}
+        public static void RunCutoutSpecularQuality(){cutoutSpecularQuality=true;RunCutoutMultiQuality();}
+        public static void RunCutoutSpecularQualityCompatibility(){compatibility=true;RunCutoutSpecularQuality();}
+        public static void RunCutoutSpecularMotionAudit(){cutoutSpecularQuality=true;cutoutNrdDiagnostic="motionProduction";RunCutoutMultiAudit();}
+        public static void RunCutoutSpecularMotionQuality(){cutoutSpecularQuality=true;cutoutNrdDiagnostic="motionProduction";RunCutoutMultiQuality();}
+        public static void RunCutoutSpecularMotionQualityCompatibility(){compatibility=true;RunCutoutSpecularMotionQuality();}
         private static void ValidateCutoutMultiQuality()
         {
             light.color=Color.red;var far=Point(new Vector3(-1.5f,0,-1),Color.blue,4);
+            if(cutoutSpecularQuality){surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetFloat("_Smoothness",.6f);}
             feature.Settings.initialSamples=8;feature.Settings.denoise=true;
             var raw=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));var filtered=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));
             var cases=new List<MultiQualityCase>();bool allPass=true;
@@ -73,17 +82,17 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     if(mode=="caster")skinBlockerBone.localPosition=Vector3.right*(.12f*Mathf.Sin(frame*.0175f));
                     if(mode=="casterRapid")skinBlockerBone.localPosition=Vector3.right*(.25f+.25f*Mathf.Sin(frame*.27f));
                     if(mode=="casterStep")skinBlockerBone.localPosition=Vector3.right*((frame/16&1)==0?0:.5f);
-                    RenderCamera();var context=feature.LastContext;ReadImage(context.diffuse.rt,raw);ReadImage(context.filteredDiffuse.rt,filtered);
+                    RenderCamera();var context=feature.LastContext;ReadImage(cutoutSpecularQuality?context.specular.rt:context.diffuse.rt,raw);ReadImage(cutoutSpecularQuality?context.filteredSpecular.rt:context.filteredDiffuse.rt,filtered);
                     double frameError=0,frameReference=0;
                     for(int y=16;y<48;y++)for(int x=16;x<44;x++)
                     {
-                        float red=CutoutPlaneShadow(x,y)?0:Expected(light,x,y),blue=Expected(far,x,y);
+                        float red=CutoutPlaneShadow(x,y)?0:CutoutLampReference(light,x,y),blue=CutoutLampReference(far,x,y);
                         if(motionAudit)Require(!CutoutPlaneShadow(far,x,y),"motion fixture must keep Far unoccluded");
                         var a=raw.GetPixel(x,y);var b=filtered.GetPixel(x,y);int index=(y*64+x)*2;
                         int pixel=y*64+x;
                         if(mode=="casterStep"&&frame%16==0)changedPixels[pixel]=frame>0&&Math.Abs(red-previousRed[pixel])>1e-6;
                         if(mode=="casterStep"&&frame%16<3&&changedPixels[pixel])
-                        {changedError+=Math.Abs(b.r-red);changedReference+=Expected(light,x,y);}
+                        {changedError+=Math.Abs(b.r-red);changedReference+=CutoutLampReference(light,x,y);}
                         previousRed[pixel]=red;
                         redRef+=red;blueRef+=blue;rawRed+=a.r;rawBlue+=a.b;filterRed+=b.r;filterBlue+=b.b;
                         filteredL1+=Math.Abs(b.r-red)+Math.Abs(b.b-blue);
@@ -103,17 +112,26 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 result.filteredPass=Math.Abs(result.filteredRed-1)<.05&&Math.Abs(result.filteredBlue-1)<.05&&result.filteredMeanL1<.15&&result.filteredFrameL1<.35;
                 if(mode=="casterStep")result.filteredPass&=changedReference>0&&result.transitionChangedL1<.35;
                 allPass&=result.rawPass&&result.filteredPass;cases.Add(result);
-                Debug.Log($"[HoRTDIValidation] CUTOUT_MULTI_QUALITY diagnostic={cutoutNrdDiagnostic??"baseline"} mode={mode} rawRed={rawRed/redRef:F6} rawBlue={rawBlue/blueRef:F6} filteredRed={filterRed/redRef:F6} filteredBlue={filterBlue/blueRef:F6} rawMeanL1={rawMeanL1/total:F6} filteredMeanL1={filterMeanL1/total:F6} filteredFrameL1={filteredL1/total:F6}");
+                Debug.Log($"[HoRTDIValidation] CUTOUT_MULTI_QUALITY signal={(cutoutSpecularQuality?"specular":"diffuse")} diagnostic={cutoutNrdDiagnostic??"baseline"} mode={mode} rawRed={rawRed/redRef:F6} rawBlue={rawBlue/blueRef:F6} filteredRed={filterRed/redRef:F6} filteredBlue={filterBlue/blueRef:F6} rawMeanL1={rawMeanL1/total:F6} filteredMeanL1={filterMeanL1/total:F6} filteredFrameL1={filteredL1/total:F6}");
                 if(motionAudit)Debug.Log($"[HoRTDIValidation] CUTOUT_MOTION mode={mode} reset={feature.LastContext.lastNrdReset} traced={feature.LastContext.lastVisibilityGradients} worstFrameL1={worstFrameL1:F6} transitionL1={result.transitionL1:F6} transitionChangedL1={result.transitionChangedL1:F6}");
                 Require(feature.LastContext.nrd.LastDispatchCount>0,"two nonzero lights bypassed RELAX");
                 Require(Math.Abs(rawRed/redRef-1)<.03&&Math.Abs(rawBlue/blueRef-1)<.03,"multi-light raw energy mismatch");
             }
-            var report=new MultiQualityReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",cases=cases.ToArray()};
+            var report=new MultiQualityReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",signal=cutoutSpecularQuality?"specular":"diffuse",cases=cases.ToArray()};
             string prefix=motionAudit?(visibilityAudit||cutoutNrdDiagnostic=="motionProduction"?"rtdi-cutout32-":"rtdi-cutout31-")+cutoutNrdDiagnostic+"-"+(compatibility?"compat":"rg"):cutoutNrdDiagnostic==null?"rtdi-cutout32-current-"+(compatibility?"compat":"rg"):"rtdi-cutout30-"+cutoutNrdDiagnostic;
+            if(cutoutSpecularQuality)prefix="rtdi-cutout33-spec-"+(motionAudit?"motion-":"all-")+(compatibility?"compat":"rg");
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+".json"),JsonUtility.ToJson(report,true));
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+".csv"),rows.ToString());
             Debug.Log($"[HoRTDIValidation] CUTOUT_MULTI_RESULT qualityPass={allPass} diagnostic={cutoutMultiAudit} compatibility={compatibility}");
             Require(cutoutMultiAudit||allPass,"nonzero multi-light filtered quality gates failed; inspect saved report");
+        }
+        private static float CutoutLampReference(Light source,int x,int y)
+        {
+            if(!cutoutSpecularQuality)return Expected(source,x,y);
+            var p=PlanePosition(x,y,64);var delta=source.transform.position-p;float d2=delta.sqrMagnitude;
+            var V=camera.orthographic?-camera.transform.forward:(camera.transform.position-p).normalized;
+            var response=ReferenceGGX(Vector3.back,V,delta.normalized,102f/255,new Color(10f/255,10f/255,10f/255,1));
+            float fade=Mathf.Clamp01(1-Mathf.Pow(d2/(source.range*source.range),2));return response.r*source.intensity/d2*fade*fade;
         }
     }
 }
