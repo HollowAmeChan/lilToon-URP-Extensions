@@ -11,6 +11,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunCutoutQualityCompatibility(){compatibility=true;RunCutoutQuality();}
         private static void SetupCutoutQuality()
         {
+            if(forceCutoutCube){SetupCutoutCube();return;}
             var mesh=Keep(new Mesh{name="Independent cutout plane"});
             mesh.vertices=new[]{new Vector3(-.5f,-.5f,0),new Vector3(.5f,-.5f,0),new Vector3(-.5f,.5f,0),new Vector3(.5f,.5f,0)};
             mesh.uv=new[]{Vector2.zero,Vector2.right,Vector2.up,Vector2.one};mesh.triangles=new[]{0,2,1,2,3,1};mesh.RecalculateNormals();mesh.RecalculateBounds();
@@ -21,6 +22,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         }
         private static void ValidateCutoutQuality()
         {
+            if(forceCutoutCube){ValidateCutoutCube();return;}
+            if(forceVisibilityConfidenceOracle){ValidateVisibilityConfidence();return;}
             if(forceCutoutMultiQuality){ValidateCutoutMultiQuality();return;}
             var raw=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));var filtered=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));
             for(int i=0;i<192;i++)RenderCamera();

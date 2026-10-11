@@ -26,6 +26,13 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunCutoutMotionResetCompatibility(){compatibility=true;RunCutoutMotionReset();}
         public static void RunCutoutMotionKeepCompatibility(){compatibility=true;RunCutoutMotionKeep();}
         public static void RunCutoutMotionKeepQuality(){cutoutNrdDiagnostic="motionKeep";RunCutoutMultiQuality();}
+        public static void RunCutoutMotionVisibility(){cutoutNrdDiagnostic="motionVisibility";RunCutoutMultiAudit();}
+        public static void RunCutoutMotionVisibilityCompatibility(){compatibility=true;RunCutoutMotionVisibility();}
+        public static void RunCutoutMotionVisibilitySharp(){cutoutNrdDiagnostic="motionVisibilitySharp";RunCutoutMultiAudit();}
+        public static void RunCutoutMotionProductionQuality(){cutoutNrdDiagnostic="motionProduction";RunCutoutMultiQuality();}
+        public static void RunCutoutMotionProductionQualityCompatibility(){compatibility=true;RunCutoutMotionProductionQuality();}
+        public static void RunCutoutPhiOneQuality(){cutoutNrdDiagnostic="phiOneFull";RunCutoutMultiQuality();}
+        public static void RunCutoutSigmaFourQuality(){cutoutNrdDiagnostic="sigmaFourFull";RunCutoutMultiQuality();}
         private static void ValidateCutoutMultiQuality()
         {
             light.color=Color.red;var far=Point(new Vector3(-1.5f,0,-1),Color.blue,4);
@@ -33,14 +40,19 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var raw=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));var filtered=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));
             var cases=new List<MultiQualityCase>();bool allPass=true;
             var rows=new System.Text.StringBuilder("mode,x,y,referenceRed,referenceBlue,rawRed,rawBlue,filteredRed,filteredBlue\n");
-            bool motionAudit=cutoutNrdDiagnostic=="motionReset"||cutoutNrdDiagnostic=="motionKeep";
-            foreach(string mode in motionAudit?new[]{"caster","casterRapid","casterStep"}:cutoutNrdDiagnostic==null?new[]{"static","camera","caster","staticT","staticS","staticTS","unshadowed","unshadowedTS"}:new[]{"static","staticTS","unshadowedTS"})
+            bool visibilityAudit=cutoutNrdDiagnostic!=null&&cutoutNrdDiagnostic.StartsWith("motionVisibility",StringComparison.Ordinal);
+            bool motionAudit=cutoutNrdDiagnostic=="motionReset"||cutoutNrdDiagnostic=="motionKeep"||visibilityAudit||cutoutNrdDiagnostic=="motionProduction";
+            foreach(string mode in motionAudit?new[]{"caster","casterRapid","casterStep"}:cutoutNrdDiagnostic==null||cutoutNrdDiagnostic=="phiOneFull"||cutoutNrdDiagnostic=="sigmaFourFull"?new[]{"static","camera","caster","staticT","staticS","staticTS","unshadowed","unshadowedTS"}:new[]{"static","staticTS","unshadowedTS"})
             {
                 if(cutoutNrdDiagnostic!=null)
                 {
-                    RenderCamera();feature.LastContext.nrd.ValidationSettings=s=>
-                    {s.diffPhi=motionAudit?.5f:2;if(cutoutNrdDiagnostic=="atrous1")s.atrous=1;if(cutoutNrdDiagnostic=="history8"){s.diffFrames=8;s.diffFast=1;}if(cutoutNrdDiagnostic=="phiHalf")s.diffPhi=.5f;return s;};
-                    feature.LastContext.nrd.ValidationPreserveWorldHistory=cutoutNrdDiagnostic=="motionKeep";
+                    RenderCamera();if(cutoutNrdDiagnostic!="motionProduction")feature.LastContext.nrd.ValidationSettings=s=>
+                    {s.diffPhi=motionAudit?.5f:2;s.fastSigma=2;if(cutoutNrdDiagnostic=="atrous1")s.atrous=1;if(cutoutNrdDiagnostic=="history8"){s.diffFrames=8;s.diffFast=1;}if(cutoutNrdDiagnostic=="phiHalf")s.diffPhi=.5f;if(cutoutNrdDiagnostic=="phiOneFull")s.diffPhi=1;if(cutoutNrdDiagnostic=="sigmaFourFull"){s.diffPhi=.5f;s.fastSigma=4;}return s;};
+                    feature.LastContext.nrd.ValidationPreserveWorldHistory=cutoutNrdDiagnostic=="motionKeep"||visibilityAudit;
+                    feature.LastContext.nrd.ValidationForceWorldReset=cutoutNrdDiagnostic=="motionReset";
+                    feature.LastContext.nrd.ValidationSkipVisibilityConfidence=cutoutNrdDiagnostic=="motionReset"||cutoutNrdDiagnostic=="motionKeep";
+                    feature.LastContext.nrd.ValidationTraceVisibilityConfidence=visibilityAudit;
+                    feature.LastContext.nrd.ValidationVisibilityFilterPasses=cutoutNrdDiagnostic=="motionVisibilitySharp"?0:2;
                 }
                 if(mode=="unshadowed"||mode=="unshadowedTS")AlphaFill(alphaTexture,0);
                 bool movingCaster=mode.StartsWith("caster",StringComparison.Ordinal);
@@ -92,12 +104,12 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(mode=="casterStep")result.filteredPass&=changedReference>0&&result.transitionChangedL1<.35;
                 allPass&=result.rawPass&&result.filteredPass;cases.Add(result);
                 Debug.Log($"[HoRTDIValidation] CUTOUT_MULTI_QUALITY diagnostic={cutoutNrdDiagnostic??"baseline"} mode={mode} rawRed={rawRed/redRef:F6} rawBlue={rawBlue/blueRef:F6} filteredRed={filterRed/redRef:F6} filteredBlue={filterBlue/blueRef:F6} rawMeanL1={rawMeanL1/total:F6} filteredMeanL1={filterMeanL1/total:F6} filteredFrameL1={filteredL1/total:F6}");
-                if(motionAudit)Debug.Log($"[HoRTDIValidation] CUTOUT_MOTION mode={mode} keep={cutoutNrdDiagnostic=="motionKeep"} worstFrameL1={worstFrameL1:F6} transitionL1={result.transitionL1:F6} transitionChangedL1={result.transitionChangedL1:F6}");
+                if(motionAudit)Debug.Log($"[HoRTDIValidation] CUTOUT_MOTION mode={mode} reset={feature.LastContext.lastNrdReset} traced={feature.LastContext.lastVisibilityGradients} worstFrameL1={worstFrameL1:F6} transitionL1={result.transitionL1:F6} transitionChangedL1={result.transitionChangedL1:F6}");
                 Require(feature.LastContext.nrd.LastDispatchCount>0,"two nonzero lights bypassed RELAX");
                 Require(Math.Abs(rawRed/redRef-1)<.03&&Math.Abs(rawBlue/blueRef-1)<.03,"multi-light raw energy mismatch");
             }
             var report=new MultiQualityReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",cases=cases.ToArray()};
-            string prefix=motionAudit?"rtdi-cutout31-"+cutoutNrdDiagnostic+"-"+(compatibility?"compat":"rg"):cutoutNrdDiagnostic==null?"rtdi-cutout30-current-"+(compatibility?"compat":"rg"):"rtdi-cutout30-"+cutoutNrdDiagnostic;
+            string prefix=motionAudit?(visibilityAudit||cutoutNrdDiagnostic=="motionProduction"?"rtdi-cutout32-":"rtdi-cutout31-")+cutoutNrdDiagnostic+"-"+(compatibility?"compat":"rg"):cutoutNrdDiagnostic==null?"rtdi-cutout32-current-"+(compatibility?"compat":"rg"):"rtdi-cutout30-"+cutoutNrdDiagnostic;
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+".json"),JsonUtility.ToJson(report,true));
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+".csv"),rows.ToString());
             Debug.Log($"[HoRTDIValidation] CUTOUT_MULTI_RESULT qualityPass={allPass} diagnostic={cutoutMultiAudit} compatibility={compatibility}");

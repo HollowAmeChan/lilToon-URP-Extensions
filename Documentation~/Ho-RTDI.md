@@ -4,7 +4,7 @@
 
 ## 使用与输出
 
-Renderer 上添加 `Ho-RTDI`，在其前面启用 GB / SB。需要 D3D12 inline RT、Mono、同分辨率单采样的 GB/SB 及已更新的 SB 网格法线布局。当前世界求交仅支持 HoRTScene 的刚性 opaque MeshRenderer 范围。
+Renderer 上添加 `Ho-RTDI`，在其前面启用 GB / SB。需要 D3D12 inline RT、Mono、同分辨率单采样的 GB/SB 及已更新的 SB 网格法线布局。世界求交已支持刚性/骨骼opaque和基础lilToon Cutout，具体材质边界见[Cutout说明](Ho-RTDI-Cutout.md)。Cutout pose/transform的NRD历史以[真实最终可见性confidence](Ho-RTDI-VisibilityConfidence.md)处理，实例/源mesh结构变化仍重置；最终NPR接收/合成未接入。
 
 「天空环境光」默认开启，有效输入来自前置Ho-Atmosphere；没有输入时仍只运行解析灯。「环境光候选数」独立于局部预算。当前支持HDR环境PDF/RIS采样、真实世界可见性与独立raw/NRD输出；概率单位、成本、验证及与旧GI天空项的重叠见 [Ho-RTDI-Environment](Ho-RTDI-Environment.md)。
 

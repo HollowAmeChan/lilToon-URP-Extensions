@@ -44,6 +44,8 @@ namespace lilToon.URP.Extensions.RTDI
         internal Matrix4x4 previousView=Matrix4x4.identity,previousProjection=Matrix4x4.identity;
         internal int width,height,rowPitch,arrayPitch,frame;
         internal uint sceneRevision;
+        internal uint sceneStructureRevision;
+        internal bool lastVisibilityGradients,lastNrdReset;
         internal int settingsSignature;
         internal Light[] previousLightKeys=Array.Empty<Light>();
         private HoRTDIRendererFeature.AnalyticLight[] previousLightData=new HoRTDIRendererFeature.AnalyticLight[1];

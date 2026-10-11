@@ -75,7 +75,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             foreach(bool cutoutActive in new[]{true,false,true})
             {
                 blocker.SetActive(cutoutActive);for(int i=0;i<96;i++)RenderCamera();
-                Require(feature.LastContext.nrd.AppliedSettings.diffPhi==(cutoutActive?.5f:2f),"NRD cutout/opaque luminance profile must follow scene support");
+                Require(feature.LastContext.nrd.AppliedSettings.diffPhi==(cutoutActive?1f:2f)&&feature.LastContext.nrd.AppliedSettings.fastSigma==(cutoutActive?4f:2f),"NRD cutout/opaque luminance and clamping profile must follow scene support");
                 double sum=0;for(int frame=0;frame<256;frame++)
                 {RenderCamera();ReadImage(feature.LastContext.filteredDiffuse.rt,image);for(int y=24;y<40;y++)for(int x=24;x<40;x++)sum+=image.GetPixel(x,y).r;}
                 float ratio=(float)(sum/(256*256*(expected+(cutoutActive?0:ExpectedMean(light)))));

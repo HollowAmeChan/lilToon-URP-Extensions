@@ -37,10 +37,14 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         // Isolated stage/settings A/B only; no serialized/runtime product option.
         internal Func<HoRTDINrdNative.RelaxSettings,HoRTDINrdNative.RelaxSettings> ValidationSettings;
         internal bool ValidationPreserveWorldHistory;
+        internal bool ValidationForceWorldReset,ValidationSkipVisibilityConfidence;
+        internal bool ValidationTraceVisibilityConfidence;
+        internal int ValidationVisibilityFilterPasses=2;
         #endif
         #if UNITY_EDITOR
         internal double? ValidationTimeSeconds;
         internal Action<CommandBuffer,int,RenderTargetIdentifier> ValidationSpecularStage;
+        internal Action<CommandBuffer,int,RenderTargetIdentifier> ValidationDiffuseStage;
         #endif
         internal float SetRenderTime(double time,out bool reset)
         {
@@ -147,13 +151,15 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             var desired=HoRTDINrdNative.RelaxSettings.DenseDI(timing.FilteredSeconds);
             // Final anyhit visibility can create sharp radiance discontinuities
             // on a smooth receiver. Keep their diffuse luminance gate tighter.
-            if(HasCutoutVisibility)desired.diffPhi=.5f;
+            // Its rare visible light samples also need a wider history box;
+            // keep the ordinary opaque profile unchanged.
+            if(HasCutoutVisibility){desired.diffPhi=1f;desired.fastSigma=4f;}
             bool diagnostic=false;
             #if UNITY_EDITOR
             if(ValidationSettings!=null){desired=ValidationSettings(desired);diagnostic=true;}
             #endif
             var previous=AppliedSettings;
-            if(diagnostic||desired.diffPhi!=previous.diffPhi||desired.diffFrames!=previous.diffFrames||desired.specFrames!=previous.specFrames||desired.diffFast!=previous.diffFast||desired.specFast!=previous.specFast||desired.historyFixFrames!=previous.historyFixFrames)
+            if(diagnostic||desired.diffPhi!=previous.diffPhi||desired.fastSigma!=previous.fastSigma||desired.diffFrames!=previous.diffFrames||desired.specFrames!=previous.specFrames||desired.diffFast!=previous.diffFast||desired.specFast!=previous.specFast||desired.historyFixFrames!=previous.historyFixFrames)
             {HoRTDINrdNative.Check(HoRTDINrdNative.SetDenoiserSettings(instance,0,ref desired),"SetDenoiserSettings");AppliedSettings=desired;}
             HoRTDINrdNative.Check(HoRTDINrdNative.GetComputeDispatches(instance,identifiers,1,out var pointer,out uint count),"GetComputeDispatches");
             if(count*constantStride>ConstantBytes)throw new InvalidOperationException("NRD dispatch constants exceed per-frame storage");
@@ -176,7 +182,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
                 var pass=passes[i];var shader=shaders[pass.pipeline];int kernel=kernels[pass.pipeline];
                 bool writesDiffuse=false,writesSpecular=false;
                 #if UNITY_EDITOR
-                RenderTargetIdentifier validationOutput=default;bool hasValidationOutput=false;
+                RenderTargetIdentifier validationOutput=default,validationDiffuse=default;bool hasValidationOutput=false,hasValidationDiffuse=false;
                 #endif
                 if(pass.constantSize>0)cmd.SetComputeConstantBufferParam(shader,"HoRTDINrdConstants",buffer,i*constantStride,((int)pass.constantSize+15)&~15);
                 for(int j=0;j<pass.resourceCount;j++)
@@ -203,11 +209,17 @@ namespace lilToon.URP.Extensions.RTDI.NRD
                         string binding=HoRTDINrdManifest.Resources[pass.pipeline][j];
                         if(binding=="gOut_Spec"||binding=="gOut_Spec_Variance"){validationOutput=texture;hasValidationOutput=true;}
                     }
+                    if(ValidationDiffuseStage!=null&&resource.descriptorType==1)
+                    {
+                        string binding=HoRTDINrdManifest.Resources[pass.pipeline][j];
+                        if(binding=="gOut_Diff"||binding=="gOut_Diff_Variance"){validationDiffuse=texture;hasValidationDiffuse=true;}
+                    }
                     #endif
                 }
                 cmd.DispatchCompute(shader,kernel,pass.gridWidth,pass.gridHeight,1);
                 #if UNITY_EDITOR
                 if(hasValidationOutput)ValidationSpecularStage(cmd,(int)pass.pipeline,validationOutput);
+                if(hasValidationDiffuse)ValidationDiffuseStage(cmd,(int)pass.pipeline,validationDiffuse);
                 #endif
                 diffuseWritten|=writesDiffuse;specularWritten|=writesSpecular;
             }

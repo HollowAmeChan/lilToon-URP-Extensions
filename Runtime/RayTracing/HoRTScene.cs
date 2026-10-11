@@ -36,6 +36,9 @@ namespace lilToon.URP.Extensions.RayTracing
         private bool asDirty = true, metadataDirty = true, disposed;
         internal long Lifetime { get; } = Interlocked.Increment(ref nextLifetime);
         internal uint Revision { get; private set; } = 1;
+        // Pose/transform updates invalidate cached ray visibility, while this
+        // revision additionally rejects histories across instance/material edits.
+        internal uint StructureRevision { get; private set; } = 1;
         internal uint BuildCount { get; private set; }
         internal int InstanceCount => entries.Count;
         internal int CutoutCount { get; private set; }
@@ -57,7 +60,7 @@ namespace lilToon.URP.Extensions.RayTracing
         private sealed class Entry
         {
             internal Renderer renderer;
-            internal Mesh mesh;
+            internal Mesh mesh, sourceMesh;
             internal Material material;
             internal Material hitMaterial;
             internal uint identity, materialId, triangles, mask;
@@ -100,7 +103,7 @@ namespace lilToon.URP.Extensions.RayTracing
             if (mask > 0xff) throw new ArgumentOutOfRangeException(nameof(mask), "RT instance masks are eight bits.");
             Rejections.Clear(); seen.Clear(); seenRenderers.Clear(); seenSkinned.Clear();
             if (!IsAvailable) { Rejections.Add("D3D12 inline ray tracing is unavailable."); return; }
-            bool changed = false;
+            bool changed = false, structureChanged = false;
             foreach (Renderer candidate in renderers)
             {
                 if (candidate == null || !seenRenderers.Add(candidate.GetInstanceID())) continue;
@@ -113,6 +116,7 @@ namespace lilToon.URP.Extensions.RayTracing
                 if (mesh == null || renderer.isPartOfStaticBatch || (rigid != null && rigid.additionalVertexStreams != null))
                 { Rejections.Add(renderer.name + ": missing mesh, static batch or additional vertex stream."); continue; }
                 var materials = renderer.sharedMaterials;
+                var sourceMesh = mesh;
                 if (materials.Length != mesh.subMeshCount)
                 { Rejections.Add(renderer.name + ": requires exactly one material per submesh."); continue; }
                 bool poseChanged = false;
@@ -148,8 +152,8 @@ namespace lilToon.URP.Extensions.RayTracing
                     var matrix = renderer.localToWorldMatrix; uint triangles = (uint)(descriptor.indexCount / 3);
                     if (!ValidTransform(matrix))
                     { seen.Remove(key); Rejections.Add(renderer.name + ": non-finite or singular transform."); continue; }
-                    if (entries.TryGetValue(key, out var entry) && (!ReferenceEquals(entry.renderer, renderer) || !ReferenceEquals(entry.mesh, mesh) || entry.triangles != triangles || !ReferenceEquals(entry.hitMaterial, hitMaterial) || entry.cutout != cutout))
-                    { Remove(key); entry = null; changed = true; }
+                    if (entries.TryGetValue(key, out var entry) && (!ReferenceEquals(entry.renderer, renderer) || !ReferenceEquals(entry.mesh, mesh) || !ReferenceEquals(entry.sourceMesh, sourceMesh) || entry.triangles != triangles || !ReferenceEquals(entry.hitMaterial, hitMaterial) || entry.cutout != cutout))
+                    { Remove(key); entry = null; changed = structureChanged = true; }
                     if (entry == null)
                     {
                         if (nextIdentity >= 0x1000000) throw new InvalidOperationException("RT instance ID domain exhausted; recreate the scene service.");
@@ -165,25 +169,26 @@ namespace lilToon.URP.Extensions.RayTracing
                         int handle = acceleration.AddInstance(config, matrix, null, identity);
                         // Native instance handles are opaque signed tokens, not positive array indices.
                         acceleration.UpdateInstanceGeometry(handle);
-                        entry = new Entry { renderer = renderer, mesh = mesh, material = material, submesh = submesh,
+                        entry = new Entry { renderer = renderer, mesh = mesh, sourceMesh = sourceMesh, material = material, submesh = submesh,
                             identity = identity, handle = handle, matrix = matrix, triangles = triangles, mask = mask, materialId = MaterialIdentity(material), hitMaterial = hitMaterial, cutout = cutout };
-                        entries.Add(key, entry); identities.Add(identity, entry); asDirty = metadataDirty = true; changed = true;
+                        entries.Add(key, entry); identities.Add(identity, entry); asDirty = metadataDirty = true; changed = structureChanged = true;
                     }
                     else
                     {
                         if (poseChanged) { acceleration.UpdateInstanceGeometry(entry.handle); asDirty = true; changed = true; }
                         if (entry.matrix != matrix) { acceleration.UpdateInstanceTransform(entry.handle, matrix); entry.matrix = matrix; asDirty = true; changed = true; }
-                        if (entry.mask != mask) { acceleration.UpdateInstanceMask(entry.handle, mask); entry.mask = mask; asDirty = true; changed = true; }
-                        if (!ReferenceEquals(entry.material, material)) { entry.material = material; entry.materialId = MaterialIdentity(material); metadataDirty = true; changed = true; }
+                        if (entry.mask != mask) { acceleration.UpdateInstanceMask(entry.handle, mask); entry.mask = mask; asDirty = true; changed = structureChanged = true; }
+                        if (!ReferenceEquals(entry.material, material)) { entry.material = material; entry.materialId = MaterialIdentity(material); metadataDirty = true; changed = structureChanged = true; }
                     }
                 }
             }
             removed.Clear(); foreach (var pair in entries) if (!seen.Contains(pair.Key)) removed.Add(pair.Key);
-            foreach (var key in removed) { Remove(key); changed = true; }
+            foreach (var key in removed) { Remove(key); changed = structureChanged = true; }
             removedSkinned.Clear(); foreach (var pair in skinnedMeshes) if (!seenSkinned.Contains(pair.Key)) removedSkinned.Add(pair.Key);
             foreach (int id in removedSkinned) { skinnedMeshes[id].Dispose(); skinnedMeshes.Remove(id); }
             CutoutCount = 0; foreach (var entry in entries.Values) if (entry.cutout) CutoutCount++;
             if (changed) { unchecked { Revision++; } EnsureMetadataCapacity(); }
+            if (structureChanged) { unchecked { StructureRevision++; } }
         }
 
         private static bool Opaque(Material material) => material != null && material.renderQueue < (int)RenderQueue.AlphaTest
@@ -219,7 +224,7 @@ namespace lilToon.URP.Extensions.RayTracing
             acceleration.ClearInstances(); entries.Clear(); identities.Clear();
             CutoutCount = 0;
             foreach (var snapshot in skinnedMeshes.Values) snapshot.Dispose(); skinnedMeshes.Clear();
-            asDirty = metadataDirty = true; unchecked { Revision++; }
+            asDirty = metadataDirty = true; unchecked { Revision++; StructureRevision++; }
         }
 
         internal bool TryResolve(uint identity, out Instance instance)

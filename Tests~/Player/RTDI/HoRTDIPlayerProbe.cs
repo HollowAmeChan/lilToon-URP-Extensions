@@ -133,6 +133,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         Require(Mathf.Max(recolored.g,recolored.b)<.01f,"Player retained stale light color");
         light.enabled=false;for(int i=0;i<4;i++)Render();Near(Read(capture.Raw).r,0,"Player switched-off raw light",.002f);Near(Read(capture.Diffuse).r,0,"Player switched-off filtered ghost",.002f);
         ValidateBoundaries();
+        ValidateCutoutMotion();
     }
     private void ValidateBoundaries()
     {
@@ -377,6 +378,60 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         {
             skin.sharedMaterial=original;blocker.SetActive(false);Render();Destroy(adapter);Destroy(transparent);Destroy(solid);
         }
+    }
+    private void ValidateCutoutMotion()
+    {
+        var skin=blocker.GetComponent<SkinnedMeshRenderer>();var original=skin.sharedMaterial;var adapter=Instantiate(cutoutMaterial);
+        var raw=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);var filtered=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);
+        try
+        {
+            surfaceMaterial.SetFloat("_Metallic",0);surfaceMaterial.SetFloat("_Reflectance",0);surfaceMaterial.SetFloat("_Smoothness",.5f);
+            light.type=blue.type=LightType.Point;light.enabled=blue.enabled=true;
+            light.transform.position=new Vector3(1.5f,0,-1);blue.transform.position=new Vector3(-1.5f,0,-1);
+            light.color=Color.red;blue.color=Color.blue;light.range=blue.range=10;light.intensity=blue.intensity=4;
+            skin.sharedMaterial=adapter;adapter.SetTexture("_MainTex",Texture2D.whiteTexture);adapter.SetColor("_Color",Color.white);adapter.SetFloat("_Cutoff",.5f);
+            blocker.SetActive(true);feature.Settings.denoise=feature.Settings.temporal=feature.Settings.spatial=true;feature.Settings.initialSamples=8;
+            foreach(bool step in new[]{false,true})
+            {
+                skinnedProbeBone.localPosition=Vector3.zero;for(int i=0;i<192;i++)Render();
+                const System.Reflection.BindingFlags inspect=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;
+                var context=feature.GetType().GetProperty("LastContext",inspect).GetValue(feature);var nrd=context.GetType().GetField("nrd",inspect).GetValue(context);
+                var applied=nrd.GetType().GetProperty("AppliedSettings",inspect).GetValue(nrd);
+                Debug.Log($"[HoRTDIPlayerProbe] CUTOUT_NRD diffFrames={applied.GetType().GetField("diffFrames",inspect).GetValue(applied)} specFrames={applied.GetType().GetField("specFrames",inspect).GetValue(applied)} phi={applied.GetType().GetField("diffPhi",inspect).GetValue(applied)} sigma={applied.GetType().GetField("fastSigma",inspect).GetValue(applied)}");
+                double redReference=0,blueReference=0,redRaw=0,blueRaw=0,redFiltered=0,blueFiltered=0,error=0,changedError=0,changedReference=0;
+                var previousRed=new float[64*64];var changed=new bool[64*64];
+                for(int frame=0;frame<256;frame++)
+                {
+                    skinnedProbeBone.localPosition=Vector3.right*(step?((frame/16&1)==0?0:2):(.6f+.6f*Mathf.Sin(frame*.07f)));
+                    Render();ReadInto(capture.Raw,raw);ReadInto(capture.Diffuse,filtered);
+                    for(int y=24;y<40;y++)for(int x=24;x<40;x++)
+                    {
+                        Require(!CutoutCubeShadow(blue,x,y),"Player cutout motion Far reference occluded");
+                        float red=CutoutCubeShadow(light,x,y)?0:Expected(light,x,y),b=Expected(blue,x,y);int pixel=y*64+x;
+                        var a=raw.GetPixel(x,y);var f=filtered.GetPixel(x,y);
+                        if(step&&frame%16==0)changed[pixel]=frame>0&&Mathf.Abs(red-previousRed[pixel])>1e-6f;
+                        if(step&&frame%16<3&&changed[pixel]){changedError+=Math.Abs(f.r-red);changedReference+=Expected(light,x,y);}
+                        previousRed[pixel]=red;redReference+=red;blueReference+=b;redRaw+=a.r;blueRaw+=a.b;redFiltered+=f.r;blueFiltered+=f.b;error+=Math.Abs(f.r-red)+Math.Abs(f.b-b);
+                    }
+                }
+                double rawR=redRaw/redReference,rawB=blueRaw/blueReference,filteredR=redFiltered/redReference,filteredB=blueFiltered/blueReference,l1=error/(redReference+blueReference),transition=changedReference>0?changedError/changedReference:0;
+                Debug.Log($"[HoRTDIPlayerProbe] CUTOUT_MOTION step={step} rawR={rawR:F6} rawB={rawB:F6} filteredR={filteredR:F6} filteredB={filteredB:F6} frameL1={l1:F6} transitionChangedL1={transition:F6}");
+                Require(Math.Abs(rawR-1)<.03&&Math.Abs(rawB-1)<.03,"Player dynamic cutout raw energy");
+                Require(Math.Abs(filteredR-1)<.05&&Math.Abs(filteredB-1)<.05&&l1<.35&&(!step||changedReference>0&&transition<.35),"Player dynamic cutout noise/energy/trailing gate");
+            }
+        }
+        finally{skin.sharedMaterial=original;blocker.SetActive(false);skinnedProbeBone.localPosition=Vector3.zero;Destroy(adapter);Destroy(raw);Destroy(filtered);}
+    }
+    private bool CutoutCubeShadow(Light source,int x,int y)
+    {
+        var ray=probeCamera.ViewportPointToRay(new Vector3((x+.5f)/64,(y+.5f)/64,0));var p=ray.origin+ray.direction*(-ray.origin.z/ray.direction.z);
+        var origin=blocker.transform.InverseTransformPoint(p)-skinnedProbeBone.localPosition;var direction=blocker.transform.InverseTransformVector(source.transform.position-p);
+        float lo=0,hi=1;for(int axis=0;axis<3;axis++)
+        {
+            if(Mathf.Abs(direction[axis])<1e-7f){if(Mathf.Abs(origin[axis])>.5f)return false;continue;}
+            float a=(-.5f-origin[axis])/direction[axis],b=(.5f-origin[axis])/direction[axis];lo=Mathf.Max(lo,Mathf.Min(a,b));hi=Mathf.Min(hi,Mathf.Max(a,b));if(lo>hi)return false;
+        }
+        return hi>0&&lo<1;
     }
     private void Render(){VolumeManager.instance.Update(probeCamera.transform,-1);RenderPipeline.SubmitRenderRequest(probeCamera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
     private float Expected(int x,int y)

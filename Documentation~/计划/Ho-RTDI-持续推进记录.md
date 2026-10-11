@@ -357,7 +357,21 @@
 
 **验证与复查：** Runtime/Editor Roslyn通过，两条硬件对照、正式失败入口和默认核心回归核对后独立过滤提交；无需重复Shader/native/Player未变的构建或GI测试。详见 [动态可见性](../Ho-RTDI-DynamicVisibility.md)。完整DI目标继续，GPU预算和任意动态主表面仍未证明。
 
-## 32. 下一步取舍
+## 32. 同历史采样的动态最终可见性confidence
+
+**动手前评审：必须补真实变化信号，不能直接取消reset。** 用户固定RTXDI FullSample同reservoir再求可见性及官方NRD同采样梯度契约作为依据。native raygen读取上一帧实际Shade的样本/UV/权重、灯映射/主表面，在当前TLAS求opaque/Cutout anyhit，比较已存亮度；不混新RNG。检查3×3历史格内至多9个样本，含旧亮度0，保留各lobe最大相对变化，复用原gradient/confidence/history资源与原4字节payload，无新Feature/纹理/buffer/native ABI。
+
+**调度取舍：** ReSTIR仍拒绝完整world变化；仅Cutout最终可见性路径，NRD对pose/transform保留历史并用真实confidence，对新增StructureRevision硬重置实例/材质/掩码/源mesh及显式geometry dirty。追踪skinned原source，防止同拓扑换源误归pose；共享GI仍原Revision策略。世界/灯稳定跳过新射线。4/2次梯度模糊扩散低confidence，快速运动噪声仍高；原生格内信号直接转换/采样后通过运动与残影门槛，静态compute处理保留。
+
+**立体部署反馈：** 平面通过后，新增Player实心Cutout cube移动，phi=.5/sigma2蓝≈.918失败；仅phi1阶跃蓝≈.923仍失败。GPU阶段即时副本按实际scale恢复单位，发现裁剪与反馈压低稀疏高亮样本；固定phi1下sigma2→4，阶跃Temporal/Clamping/final≈.971260/.960514/.967756→1.001048/1.000647/.998615。最终Cutout phi1/sigma4，无Cutout仍2/2，时间预算/其他NRD设置不变，显式切换；sigma共用于两lobe，新增动态镜面仍需后续验证。未改vendor/派生算法/DLL，不补偿亮度。
+
+**质量与余量：** 原双灯8组正式两条qualityPass=true，全部raw3%内、filtered各通道5%/meanL1<.15/frameL1<.35；caster frameL1 .127042。额外慢/快/阶跃生产frameL1 .128248/.213909/.179925、变化像素.209548<.35。静态红1.045045/全透光TS蓝1.046886近门槛，保留余量，不宣称普遍无偏。CPU native gradient oracle216格/169变化，两条通过；匹配FP16解析容差.003及导数/量化传播confidence.03，不改质量gate，稳定跳射线与结构reset通过。
+
+**部署与复查：** 核心、NRD、Cutout、scene skin与必要共享GI两条及HDR回归通过；最终profile切换能量.997681/.999160/.990697，opaque noise filtered MSE仍.000183。Runtime/Editor Roslyn及派生SHA通过；两个Win64 Mono release errors0，实际D3D12 EXE通过原gate及non-readable cube连续/阶跃，RG frameL1 .157265/.173242、变化像素.109085，compat .164167/.172591、变化像素.113743；D3D11 inactive通过。Player部分蓝能量≈.950761近5%边界，不能扩张结论。初次测试入口namespace拼错只重跑正确入口；CPU oracle补FP16/解析误差传播后通过，未改生产梯度换通过。无新增DI shader诊断，原lilToon keyword/C#警告另计。
+
+**成本与下一项：** 有变化时最多额外1可见性射线/有效历史像素，scope已加，无新显存；实际GPU预算未证实。下一步验证动态Cutout镜面、移动primary、灯/身份变化及余量，再优化采样成本，不放大为整古堡质量或最终NPR接收。过滤提交本步owned代码/验证/文档。详见 [动态visibility confidence](../Ho-RTDI-VisibilityConfidence.md)。
+
+## 33. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
@@ -365,7 +379,7 @@
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
 | NRD 质量与预算 | 当前/历史normal codec已统一，真实GPU history与SB匹配，评分表示差异消除；仍需分别核对运动误差和原平面64帧失败。SB输入及每个DI/GI history各增加1080p约7.91 MiB，下一项转向实际场景/灯域支持，保留既有失败，旧历史预算设置不会自动迁移。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
-| 血月古堡几何支持 | 基础Cutout已接入；合并天空/模型只作支持审计。真实双灯局部静态/相机filtered质量已改善，移动caster仍失败；下一项核对世界变化与真实动态visibility confidence，不直接取消全部reset。GPU计时仍不足，CPU pose28.54MiB/服务，不扩张PT。 |
+| 血月古堡几何支持 | 基础Cutout和局部动态最终可见性confidence已接入，原8组及立体Player运动门槛通过；合并天空/模型只作支持审计。下一项动态镜面/primary/灯身份与门槛余量，GPU计时仍不足、动态额外射线成本待测，CPU pose28.54MiB/服务，不扩张PT。 |
 | 环境灯 / GI路径归属 | DI HDR天空PDF/RIS及BRDF/VNDF MIS已验证常量窄镜面、斜视与特定小亮源；下一项实际场景与DI/GI直接天空路径归属。现有开关可显式选择一份直接天空，尚未补secondary环境NEE，动态/任意天空质量仍待验证。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

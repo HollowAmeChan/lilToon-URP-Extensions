@@ -36,6 +36,7 @@ namespace lilToon.URP.Extensions.RTDI
         public string Status {get;private set;}="未生产";
         internal HoRTDIContext LastContext {get;private set;}
         internal static readonly ProfilingSampler FinalVisibilityProfiling=new("HoRTDI Final Visibility");
+        internal static readonly ProfilingSampler VisibilityGradientsProfiling=new("HoRTDI Visibility Gradients");
         public override void Create()
         {
             DisposeResources();pass=new HoRTDIPass();debugPass=new HoRTDIDebugPass();
@@ -158,7 +159,7 @@ namespace lilToon.URP.Extensions.RTDI
                 internal HoRTDIContext context;internal HoRTScene.Inputs scene;internal HoRTPrimarySurfaceInputs primary;
                 internal ComputeShader shader;internal HoRTDISettings settings;internal HoRTDIContext.LightFrame lightFrame;
                 internal RayTracingShader finalVisibilityShader;
-                internal int lightCount,localLightCount,signature;internal uint revision;internal Matrix4x4 view,projection;internal Camera camera;
+                internal int lightCount,localLightCount,signature;internal uint revision,structureRevision;internal Matrix4x4 view,projection;internal Camera camera;
                 internal double renderTime;
                 internal TextureHandle diffuse,specular,powerPdf;
                 internal TextureHandle environment,environmentPdf;
@@ -166,7 +167,7 @@ namespace lilToon.URP.Extensions.RTDI
                 internal uint environmentRevision;
             }
             private Data Snapshot(Camera camera,Matrix4x4 view,Matrix4x4 projection) => new Data {context=context,scene=scene.ReadCompatibility(),shader=shader,finalVisibilityShader=finalVisibilityShader,settings=settings,lightFrame=context.CaptureLights(lights,lightKeys),
-                lightCount=lightCount,localLightCount=localLightCount,signature=signature,revision=scene.Revision,view=view,projection=projection,camera=camera,renderTime=Time.unscaledTimeAsDouble};
+                lightCount=lightCount,localLightCount=localLightCount,signature=signature,revision=scene.Revision,structureRevision=scene.StructureRevision,view=view,projection=projection,camera=camera,renderTime=Time.unscaledTimeAsDouble};
             public override void RecordRenderGraph(RenderGraph graph,ContextContainer frame)
             {
                 var camera=frame.Get<UniversalCameraData>();
@@ -176,7 +177,7 @@ namespace lilToon.URP.Extensions.RTDI
                     data.context=source.context;data.shader=source.shader;data.settings=source.settings;data.lightFrame=source.lightFrame;data.lightCount=source.lightCount;
                     data.finalVisibilityShader=source.finalVisibilityShader;
                     data.localLightCount=source.localLightCount;
-                    data.signature=source.signature;data.revision=source.revision;data.view=source.view;data.projection=source.projection;data.camera=source.camera;
+                    data.signature=source.signature;data.revision=source.revision;data.structureRevision=source.structureRevision;data.view=source.view;data.projection=source.projection;data.camera=source.camera;
                     data.renderTime=source.renderTime;
                     data.scene=scene.Read(graph,builder);data.primary=HoRTPrimarySurfaceInputs.Read(graph,frame,builder);
                     if(context.finalVisibility!=null)builder.UseTexture(graph.ImportTexture(context.finalVisibility),AccessFlags.ReadWrite);
@@ -216,20 +217,30 @@ namespace lilToon.URP.Extensions.RTDI
                 bool singleDelta=d.lightCount==1&&!c.environmentSampling;
                 bool temporal=!singleDelta&&d.settings.temporal&&c.historyValid&&c.sceneRevision==d.revision&&c.settingsSignature==d.signature;
                 c.lastTemporal=temporal;
-                bool reset=false,timeReset=false;
+                bool reset=false,timeReset=false,traceConfidence=false;
+                c.lastVisibilityGradients=false;c.lastNrdReset=false;
                 var common=default(HoRTDINrdNative.CommonSettings);
                 if(c.nrd!=null)
                 {
                     c.nrd.HasCutoutVisibility=c.finalVisibility!=null;
                     bool worldChanged=c.sceneRevision!=d.revision;
+                    bool dynamicVisibility=c.finalVisibility!=null&&d.finalVisibilityShader!=null;
+                    bool worldReset=dynamicVisibility?c.sceneStructureRevision!=d.structureRevision:worldChanged;
                     #if UNITY_EDITOR
                     // Isolated motion audit only: keeping history here is unsafe
                     // without dynamic final-visibility confidence.
-                    worldChanged&=!c.nrd.ValidationPreserveWorldHistory;
+                    worldReset&=!c.nrd.ValidationPreserveWorldHistory;
+                    worldReset|=worldChanged&&c.nrd.ValidationForceWorldReset;
                     #endif
-                    reset=!c.nrdHistoryValid||!c.historyValid||worldChanged||c.settingsSignature!=d.signature;
+                    reset=!c.nrdHistoryValid||!c.historyValid||worldReset||c.settingsSignature!=d.signature;
                     common=HoRTDINrdNative.CommonSettings.Create(c.width,c.height,d.view,d.projection,c.previousView,c.previousProjection,c.frame,reset);
                     common.timeDelta=c.nrd.SetRenderTime(d.renderTime,out timeReset);if(timeReset)common.accumulationMode=2;
+                    traceConfidence=dynamicVisibility&&!(reset||timeReset)&&(worldChanged||LightsChanged(d.lightFrame));
+                    #if UNITY_EDITOR
+                    traceConfidence|=c.nrd.ValidationTraceVisibilityConfidence;
+                    traceConfidence&=!c.nrd.ValidationSkipVisibilityConfidence;
+                    #endif
+                    c.lastNrdReset=reset||timeReset;
                     int begin=d.shader.FindKernel("BeginNRDScale");
                     cmd.SetComputeBufferParam(d.shader,begin,"_HoRTDINrdScale",c.nrdScale);
                     cmd.SetComputeIntParam(d.shader,"_HoRTDINrdScaleReset",reset||timeReset?1:0);
@@ -327,6 +338,8 @@ namespace lilToon.URP.Extensions.RTDI
                         cmd.SetComputeVectorParam(d.shader,"_HoRTDIFlags",new Vector4(reset||timeReset?0:1,d.settings.spatial?1:0,Mathf.Clamp(d.settings.maxHistory,1,32),0));
                         foreach(string stage in new[]{"Gradients","FilterGradients","Confidence"})
                         {
+                            if(stage=="Gradients"&&traceConfidence)
+                            {using(new ProfilingScope(cmd,VisibilityGradientsProfiling))DispatchVisibilityGradients(cmd,d,compatibility,cameraData,!(reset||timeReset));c.lastVisibilityGradients=true;continue;}
                             int k=d.shader.FindKernel(stage);d.scene.BuildAndBind(cmd,d.shader,k);
                             BindEnvironment(cmd,d,compatibility,k);
                             if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,k,cameraData);
@@ -339,6 +352,10 @@ namespace lilToon.URP.Extensions.RTDI
                             cmd.SetComputeTextureParam(d.shader,k,"_HoRTDIGradientA",c.gradientA.nameID);cmd.SetComputeTextureParam(d.shader,k,"_HoRTDIGradientB",c.gradientB.nameID);
                             cmd.SetComputeTextureParam(d.shader,k,"_HoRTDIDiffConfidence",c.diffConfidence.nameID);cmd.SetComputeTextureParam(d.shader,k,"_HoRTDISpecConfidence",c.specConfidence.nameID);
                             int iterations=stage=="FilterGradients"?4:1;
+                            if(stage=="FilterGradients"&&traceConfidence)iterations=0;
+                            #if UNITY_EDITOR
+                            if(stage=="FilterGradients"&&c.nrd.ValidationTraceVisibilityConfidence)iterations=c.nrd.ValidationVisibilityFilterPasses;
+                            #endif
                             for(int step=0;step<iterations;step++){cmd.SetComputeIntParam(d.shader,"_HoRTDIGradientPass",step);cmd.DispatchCompute(d.shader,k,((c.width+2)/3+7)/8,((c.height+2)/3+7)/8,1);}
                         }
                         common.confidence=1;
@@ -368,8 +385,24 @@ namespace lilToon.URP.Extensions.RTDI
                 cmd.SetGlobalFloat("_HoRTDIActive",1);cmd.SetGlobalTexture("_HoRTDIDiffuseTexture",c.PublishedDiffuse.nameID);cmd.SetGlobalTexture("_HoRTDISpecularTexture",c.PublishedSpecular.nameID);
                 cmd.SetGlobalTexture("_HoRTDIRawDiffuseTexture",c.diffuse.nameID);cmd.SetGlobalTexture("_HoRTDIRawSpecularTexture",c.specular.nameID);
                 c.Complete(d.view,d.projection,d.camera,d.revision,d.signature,d.lightFrame);
+                c.sceneStructureRevision=d.structureRevision;
+            }
+            private static bool LightsChanged(HoRTDIContext.LightFrame frame)
+            {
+                if(frame.keys.Length!=frame.previousCount)return true;
+                for(int i=0;i<frame.keys.Length;i++)
+                {
+                    int old=frame.currentToPrevious[i];if(old<0)return true;
+                    var a=frame.current[i];var b=frame.previous[old];
+                    if(!a.positionRange.Equals(b.positionRange)||!a.radianceType.Equals(b.radianceType)||!a.directionOuter.Equals(b.directionOuter)||!a.innerShadow.Equals(b.innerShadow))return true;
+                }
+                return false;
             }
             private static void DispatchFinalVisibility(CommandBuffer cmd,Data d,bool compatibility,CameraData cameraData)
+                =>DispatchVisibilityRays(cmd,d,compatibility,cameraData,false,false);
+            private static void DispatchVisibilityGradients(CommandBuffer cmd,Data d,bool compatibility,CameraData cameraData,bool historyReady)
+                =>DispatchVisibilityRays(cmd,d,compatibility,cameraData,true,historyReady);
+            private static void DispatchVisibilityRays(CommandBuffer cmd,Data d,bool compatibility,CameraData cameraData,bool gradients,bool historyReady)
             {
                 var c=d.context;var rayShader=d.finalVisibilityShader;
                 if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibility(cmd,cameraData);
@@ -379,7 +412,23 @@ namespace lilToon.URP.Extensions.RTDI
                 cmd.SetRayTracingVectorParam(rayShader,"_HoRTDIFrame",new Vector4(c.width,c.height,d.lightCount,d.localLightCount));
                 cmd.SetRayTracingVectorParam(rayShader,"_HoRTDIReservoirLayout",new Vector4(c.rowPitch,c.arrayPitch,0,0));
                 cmd.SetRayTracingVectorParam(rayShader,"_HoRTDISettings",new Vector4(0,0,0,Mathf.Max(.00001f,d.settings.rayBias)));
-                cmd.SetRayTracingTextureParam(rayShader,"_HoRTDIFinalVisibility",c.finalVisibility.nameID);
+                if(gradients)
+                {
+                    cmd.SetRayTracingBufferParam(rayShader,"_HoRTDIHistory",c.history);
+                    cmd.SetRayTracingBufferParam(rayShader,"_HoRTDIPreviousLights",c.previousLights);
+                    cmd.SetRayTracingBufferParam(rayShader,"_HoRTDIPreviousToCurrent",c.previousToCurrent);
+                    cmd.SetRayTracingIntParam(rayShader,"_HoRTDIPreviousLightCount",d.lightFrame.previousCount);
+                    cmd.SetRayTracingVectorParam(rayShader,"_HoRTDIFlags",new Vector4(historyReady?1:0,0,0,0));
+                    cmd.SetRayTracingMatrixParam(rayShader,"_HoRTDIPreviousVP",c.previousVP);
+                    cmd.SetRayTracingMatrixParam(rayShader,"_HoRTDIPreviousInverseVP",c.previousInverseVP);
+                    cmd.SetRayTracingVectorParam(rayShader,"_HoRTDIPreviousCameraPosition",c.previousCamera);
+                    cmd.SetRayTracingVectorParam(rayShader,"_HoRTDIPreviousTowardsEye",c.previousTowardsEye);
+                    cmd.SetRayTracingVectorParam(rayShader,"_HoRTDIPreviousViewZ",c.previousViewZ);
+                    cmd.SetRayTracingVectorParam(rayShader,"_HoRTDIPreviousClipParameters",c.previousClip);
+                    cmd.SetRayTracingTextureParam(rayShader,"_HoRTDIPreviousLuminance",c.previousLuminance.nameID);
+                    cmd.SetRayTracingTextureParam(rayShader,"_HoRTDIGradientA",c.gradientA.nameID);
+                }
+                else cmd.SetRayTracingTextureParam(rayShader,"_HoRTDIFinalVisibility",c.finalVisibility.nameID);
                 cmd.SetRayTracingVectorParam(rayShader,"_HoRTDIEnvironment",new Vector4(HoRTDIContext.EnvironmentPdfSize,0,c.environmentSampling?1:0,0));
                 cmd.SetRayTracingVectorParam(rayShader,HoAtmosphereBindings.ParametersId,d.environmentParameters);
                 cmd.SetRayTracingVectorParam(rayShader,HoAtmosphereBindings.TintId,d.environmentTint);cmd.SetRayTracingVectorParam(rayShader,HoAtmosphereBindings.ConstantId,d.environmentConstant);
@@ -388,7 +437,7 @@ namespace lilToon.URP.Extensions.RTDI
                 else cmd.SetRayTracingTextureParam(rayShader,HoAtmosphereBindings.RadianceId,CoreUtils.blackCubeTexture);
                 if(c.environmentSampling)cmd.SetRayTracingTextureParam(rayShader,"_HoRTDIEnvironmentPdf",c.environmentPdf.nameID);
                 else cmd.SetRayTracingTextureParam(rayShader,"_HoRTDIEnvironmentPdf",Texture2D.blackTexture);
-                cmd.DispatchRays(rayShader,"FinalVisibility",(uint)c.width,(uint)c.height,1);
+                cmd.DispatchRays(rayShader,gradients?"VisibilityGradients":"FinalVisibility",(uint)(gradients?(c.width+2)/3:c.width),(uint)(gradients?(c.height+2)/3:c.height),1);
             }
             private static void BindEnvironment(CommandBuffer cmd,Data d,bool compatibility,int kernel)
             {

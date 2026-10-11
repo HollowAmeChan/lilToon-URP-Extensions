@@ -1,6 +1,6 @@
 # Ho-RTDI 动态遮挡与历史取舍
 
-第31步只增加隔离诊断，生产世界revision仍清空DI/NRD历史。已有[Cutout条件滤波](Ho-RTDI-CutoutFiltering.md)解决特定静态/相机质量，但移动caster逐帧噪声仍高。取消全局NRD重置看似直接，必须同时检验残影。
+第31步只增加隔离诊断，当时生产世界revision仍清空DI/NRD历史。已有[Cutout条件滤波](Ho-RTDI-CutoutFiltering.md)解决特定静态/相机质量，但移动caster逐帧噪声仍高。取消全局NRD重置看似直接，必须同时检验残影。第32步的真实可见性confidence与生产结果见[后续实现](Ho-RTDI-VisibilityConfidence.md)，以下保留原失败对照。
 
 ## 前提与参考
 

@@ -34,13 +34,14 @@ namespace lilToon.URP.Extensions.RayTracing
         {
             var image = Render(); Hit(image, 0, 3, skin, 0); Hit(image, 1, 3, skin, 1);
             Require(scene.SkinnedMeshCount == 1 && scene.SkinnedBakeCount == 1, "one owned pose for both submeshes");
-            uint builds = scene.BuildCount, revision = scene.Revision;
+            uint builds = scene.BuildCount, revision = scene.Revision, structure = scene.StructureRevision;
             scene.Synchronize(new[] { outside, skin, skin }, 1); Render();
             Require(scene.SkinnedBakeCount == 1 && scene.BuildCount == builds && scene.Revision == revision, "stable/offscreen skin must reuse pose/BLAS");
             uint identity = (uint)Pixel(image, 0, 0).g;
             bone0.localPosition = Vector3.forward * .25f; bone1.localPosition = Vector3.forward * .75f;
             scene.Synchronize(sources, 1); image = Render(); Hit(image, 0, 3.25f, skin, 0); Hit(image, 1, 3.75f, skin, 1);
             Require(scene.SkinnedBakeCount == 2 && scene.BuildCount == builds + 1 && scene.Revision != revision, "bone pose refresh");
+            Require(scene.StructureRevision == structure, "bone pose must keep structure history identity");
             Require((uint)Pixel(image, 0, 0).g == identity, "deformation preserves primitive identity");
             skin.SetBlendShapeWeight(0, 50); scene.Synchronize(sources, 1); image = Render();
             Hit(image, 0, 4.25f, skin, 0); Hit(image, 1, 3.25f, skin, 1);
@@ -65,8 +66,9 @@ namespace lilToon.URP.Extensions.RayTracing
             var replacement = Keep(Object.Instantiate(mesh));
             var mixedWeights = replacement.boneWeights;
             for (int i = 0; i < 4; ++i) mixedWeights[i] = new BoneWeight { boneIndex0 = 0, weight0 = .25f, boneIndex1 = 1, weight1 = .75f };
-            replacement.boneWeights = mixedWeights; skin.sharedMesh = replacement;
+            replacement.boneWeights = mixedWeights; skin.sharedMesh = replacement;structure=scene.StructureRevision;
             bone0.localPosition = Vector3.forward; scene.Synchronize(sources, 1); Hit(Render(), 0, 3.8125f, skin, 0);
+            Require(scene.StructureRevision != structure, "same-topology source mesh replacement rejects structure history");
             var snapshot = ResolveMesh((uint)Pixel(Render(), 0, 0).g); scene.MarkGeometryDirty();
             Require(snapshot == null && scene.SkinnedMeshCount == 0, "explicit geometry edit releases owned snapshot");
             var vertices = replacement.vertices; for (int i = 0; i < vertices.Length; ++i) vertices[i].z += .125f;

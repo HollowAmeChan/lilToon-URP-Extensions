@@ -21,7 +21,9 @@
 
 Editor 专用 `ValidationSettings` 用于可复现的单项A/B，不增加序列化配置或产品开关。生产路径不使用该委托，不增加资源或滤波 pass，不做亮度补偿，不改变 specular gate、历史预算、五次 Atrous、ReSTIR、guide ABI 或最终材质合成。
 
-## 最终八组结果
+## 第30步八组结果
+
+第32步补真实动态最终可见性confidence，并根据立体Player对照调整Cutout profile，原八组全部通过；见[后续实现](Ho-RTDI-VisibilityConfidence.md)。以下保留第30步的结果与限制。
 
 两条硬件路径一致，全部 raw 分通道能量仍在3%内。filtered 门槛保持：各通道能量5%、mean L1<.15、frame L1<.35。
 
