@@ -4,6 +4,8 @@
 
 ## 对照与取舍
 
+第36步复核固定NRD的Atrous合法范围为[2;8]：本节历史“Atrous=1”是请求值，SDK有效下限为2；诊断入口现显式传2并保留旧名称，不能把该数据理解成实际只有一次滤波。
+
 核对用户参考工程 `UnityPathTracing-6000.3.15/Assets/Scripts/NativePlugin/NRD/NrdSettings.cs`、固定版本 `NRDSettings.h` 和 `RELAX_Atrous/AtrousSmem`。参考默认 diffusePhiLuminance=2、5次 Atrous；亮度权重含 `1/(phi*sqrt(variance))`，减小 phi 会更强地阻止不同亮度之间的混合。[官方集成契约](https://github.com/NVIDIA-RTX/NRD/blob/master/README.md)仍用于核对输入与运动，未修改 vendor shader、派生算法或 native DLL。
 
 隔离入口固定原 phi=2，再分别改一项：Atrous 5→1、漫反射历史→8帧、phi→.5。以下为静态无复用的 filtered 结果：

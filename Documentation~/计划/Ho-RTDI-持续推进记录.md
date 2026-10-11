@@ -395,7 +395,17 @@
 
 **验证与下一项：** Roslyn、两条同帧gate、原diffuse8组通过；两个Mono release errors0，默认实际D3D12两条原suite及D3D11 inactive通过，源probe实际失败保留。复查资源读声明、compat全局采样、有效捕获和产品无死成本，过滤owned提交。实际自动渲染时序/覆盖/旧帧仍待验证；静态局部diffuse能量偏差不依赖它，下一项先分阶段定位该偏差继续推进DI。详见 [motion协议](../Ho-RTDI-MotionProtocol.md)。
 
-## 36. 下一步取舍
+## 36. 静态彩灯的后续Atrous阶段定位
+
+**动手前评审：** 第34步static控制也失败，不能靠motion解决。核对pinned NRD头/RELAX及原RAB/SDK目标契约，以即时GPU阶段副本按真实scale恢复单位、包含0输入像素，固定原64² central256/192+256观察。
+
+**证据：** raw红/蓝1.001966/.981079，Temporal1.000924/.979831、Clamping1.000925/.979830、首Atrous .997767/.981529，后续最终.946180/1.086831。无Cutout/关闭clamp/延长history/关闭ReSTIR spatial不能解决；仅3次滤波静态最终.992161/.993944。NRD范围[2;8]，旧AtrousOne实际上请求非法1再归下限，本步修为明确2并锁定A/B五次baseline，保留历史名字与更正说明。
+
+**未接受与范围：** 迭代/phi分辨率候选主表面可过，但镜面阶跃.357087或Player蓝.920688失败；RGB importance raw正确却带来滤波/阴影/残影失败；分lobe半径派生候选也Player阶跃蓝.928451失败。所有生产、RAB、NRD参数/派生shader/生成器实验均撤回，不放宽原门槛，不用单灯/局部通过替代目标。保留阶段入口和正式完整Compatibility入口，当前qualityPass=false/exit1。
+
+**完成前复查与下一项：** Runtime/Editor Roslyn、原SHA/派生check通过；恢复后阶段current/atrous3复现、完整gate实际失败。过滤仅Editor探针/参数范围/文档，无生产/GI/Player模板变化，不把实验构建失败冒充部署验收。下一项按方差与颜色梯度响应改善空间阶段，继续保留立体/镜面压力门槛和完整DI范围，motion源/GPU成本仍待证实。详见 [阶段审计](../Ho-RTDI-PrimaryFilteringAudit.md)。
+
+## 37. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

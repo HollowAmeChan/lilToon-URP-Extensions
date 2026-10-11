@@ -56,7 +56,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(cutoutNrdDiagnostic!=null)
                 {
                     RenderCamera();if(cutoutNrdDiagnostic!="motionProduction")feature.LastContext.nrd.ValidationSettings=s=>
-                    {s.diffPhi=motionAudit?.5f:2;s.fastSigma=2;if(cutoutNrdDiagnostic=="atrous1")s.atrous=1;if(cutoutNrdDiagnostic=="history8"){s.diffFrames=8;s.diffFast=1;}if(cutoutNrdDiagnostic=="phiHalf")s.diffPhi=.5f;if(cutoutNrdDiagnostic=="phiOneFull")s.diffPhi=1;if(cutoutNrdDiagnostic=="sigmaFourFull"){s.diffPhi=.5f;s.fastSigma=4;}return s;};
+                    {s.atrous=5;s.diffPhi=motionAudit?.5f:2;s.fastSigma=2;if(cutoutNrdDiagnostic=="atrous1")s.atrous=2;if(cutoutNrdDiagnostic=="history8"){s.diffFrames=8;s.diffFast=1;}if(cutoutNrdDiagnostic=="phiHalf")s.diffPhi=.5f;if(cutoutNrdDiagnostic=="phiOneFull")s.diffPhi=1;if(cutoutNrdDiagnostic=="sigmaFourFull"){s.diffPhi=.5f;s.fastSigma=4;}return s;};
                     feature.LastContext.nrd.ValidationPreserveWorldHistory=cutoutNrdDiagnostic=="motionKeep"||visibilityAudit;
                     feature.LastContext.nrd.ValidationForceWorldReset=cutoutNrdDiagnostic=="motionReset";
                     feature.LastContext.nrd.ValidationSkipVisibilityConfidence=cutoutNrdDiagnostic=="motionReset"||cutoutNrdDiagnostic=="motionKeep";

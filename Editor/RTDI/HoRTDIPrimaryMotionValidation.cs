@@ -16,11 +16,13 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunPrimaryMotionOriginQuality(){primaryOriginQuality=true;RunPrimaryMotionAudit();}
         public static void RunPrimaryMotionOriginQualityCompatibility(){compatibility=true;RunPrimaryMotionOriginQuality();}
         public static void RunPrimaryMotionQuality(){primaryFullQuality=true;RunPrimaryMotionAudit();}
+        public static void RunPrimaryMotionQualityCompatibility(){compatibility=true;RunPrimaryMotionQuality();}
         private static void ValidatePrimaryMotion()
         {
             skinBlockerBone.localPosition=Vector3.right*100;light.color=Color.red;var far=Point(new Vector3(-1.5f,0,-1),Color.blue,4);
             surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetFloat("_Smoothness",.6f);
             feature.Settings.initialSamples=8;feature.Settings.temporal=feature.Settings.spatial=true;
+            if(primaryStageMode!=null){ValidatePrimaryStages(far);return;}
             var raw=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));var filtered=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));
             var cases=new List<PrimaryMotionCase>();bool allPass=true,originPass=true;
             foreach(bool spec in new[]{false,true})foreach(string mode in new[]{"static","smoothZ","stepZ"})
