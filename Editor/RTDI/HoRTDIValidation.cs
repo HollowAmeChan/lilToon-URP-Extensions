@@ -127,6 +127,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     Debug.Log("[HoRTDIValidation] PASS unsupported platform: "+feature.Status);Finish(null);return;
                 }
                 if(++tick<3){Render();return;}
+                if(forceCutoutGpuTiming){TickCutoutGpuTiming();return;}
                 if(forceCutout){ValidateCutout();Finish(null);return;}
                 if(forceBudget){ValidateBudget();Finish(null);return;}
                 if(forceQuality){ValidateQuality();Finish(null);return;}
@@ -169,7 +170,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 red.enabled=blue.enabled=false;for(int i=0;i<3;i++)Render();
                 blocker.SetActive(true);Near(Render().r,0,"geometry change rejects temporal history",.003f);blocker.SetActive(false);
                 feature.Settings.spatial=false;Render();light.intensity=2;Near(RenderMean().r,ExpectedMean(light),"light intensity retargets history mean",.015f);
-                Require(feature.LastContext.lastTemporal,"Light intensity change cleared all history");
+                Require(feature.LastContext.historyValid&&!feature.LastContext.lastTemporal,"Single delta intensity change did not preserve valid exact history");
                 ValidateDynamicLights();
                 ValidateLightRegions();
                 ValidatePowerSpread();
@@ -178,7 +179,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 volume.debugMode.value=HoRTDIDebugMode.Receiver;Render();NearRGB(Read(target),Color.red,"invalid receiver debug",.01f);
                 gb.Settings.renderScale=HoGeometryBufferRenderScale.Full;Render();NearRGB(Read(target),Color.green,"valid receiver debug",.01f);volume.debugMode.value=HoRTDIDebugMode.Off;
                 volume.enable.Override(false);RenderCamera();Require(Shader.GetGlobalFloat("_HoRTDIActive")==0,"volume disabled reset");volume.enable.Override(true);Render();
-                camera.transform.position+=new Vector3(.1f,0,-.5f);Render();Require(feature.LastContext.lastTemporal,"static-world camera movement should use reference reprojection");
+                camera.transform.position+=new Vector3(.1f,0,-.5f);Render();Require(feature.LastContext.historyValid&&!feature.LastContext.lastTemporal,"single delta camera movement should preserve exact valid history");
                 Color moved=ReadMean(feature.LastContext.diffuse.rt);float movedReference=0;for(int y=24;y<40;y++)for(int x=24;x<40;x++)movedReference+=Expected(light,x,y);movedReference/=256;
                 Near(moved.r,movedReference,"camera reprojection mean",.025f);
                 var shader=AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDI.compute");
@@ -191,6 +192,10 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         }
         private static void ValidateDynamicLights()
         {
+            // Keep this transport/remapping fixture in the multi-light domain.
+            // The zero-flux control leaves the existing analytic energy references
+            // intact; the single-delta bypass is verified by the Cutout quality fixture.
+            var transportControl=Point(new Vector3(10,10,-10),Color.white,0);
             // Actual temporal reuse: spatial is off, while the same light moves every frame.
             for(int i=0;i<8;i++)
             {
@@ -211,8 +216,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             light.color=new Color(.2f,.7f,.4f,1);NearRGB(RenderMean(),LightColor(light)*ExpectedMean(light),"light color retarget mean",.02f);
             Require(feature.LastContext.lastTemporal,"Light color change cleared history");
             var previousData=new HoRTDIRendererFeature.AnalyticLight[feature.LastContext.previousLights.count];feature.LastContext.previousLights.GetData(previousData);
-            Near(previousData[0].radianceType.x,2,"old light radiance was overwritten",.001f);
-            Near(previousData[0].positionRange.x,oldPosition.x,"old light position was overwritten",.001f);
+            int previousLightIndex=ReferenceIndex(feature.LastContext.previousLightKeys,light);Require(previousLightIndex>=0,"dynamic light snapshot identity missing");
+            Near(previousData[previousLightIndex].radianceType.x,2,"old light radiance was overwritten",.001f);
+            Near(previousData[previousLightIndex].positionRange.x,oldPosition.x,"old light position was overwritten",.001f);
             light.color=Color.white;light.type=LightType.Directional;light.intensity=.5f;light.transform.rotation=Quaternion.identity;
             Near(RenderMean().r,.5f/Mathf.PI,"light type retarget mean",.015f);Require(feature.LastContext.lastTemporal,"Delta light type change cleared history");
             light.type=LightType.Point;light.intensity=2;light.transform.position=new Vector3(-1.5f,0,-1);
@@ -234,6 +240,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             oldKeys=feature.LastContext.previousLightKeys;Object.DestroyImmediate(light.gameObject);
             light=Point(new Vector3(.4f,0,-2),Color.green,2);NearRGB(Render(),Color.green*Expected(light),"replacement has no old-light ghost",.02f);
             CheckLightMappings(oldKeys);Require(feature.LastContext.lastTemporal,"Replacement unnecessarily cleared surface history");
+            transportControl.enabled=false;
             oldKeys=feature.LastContext.previousLightKeys;light.enabled=false;NearRGB(Render(),Color.black,"empty light set",.002f);CheckLightMappings(oldKeys);
             oldKeys=feature.LastContext.previousLightKeys;light.enabled=true;NearRGB(Render(),Color.green*Expected(light),"empty to nonempty lights",.02f);CheckLightMappings(oldKeys);
             light.color=Color.white;light.transform.position=new Vector3(1.5f,0,-1);Render();
@@ -408,7 +415,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     else{reusedRaw+=raw.GetPixel(x,y).r;reusedFiltered+=filtered.GetPixel(x,y).r;diffuseSamples++;}
                 }
             }
-            Require(context.lastTemporal,"Material reuse observation did not enable temporal sampling");
+            Require(context.historyValid&&!context.lastTemporal,"single delta material observation did not use the exact path");
             Debug.Log($"[HoRTDIValidation] OBSERVATION material reuse frames=64 rawDiffuse={reusedRaw/diffuseSamples:F6} filteredDiffuse={reusedFiltered/diffuseSamples:F6} diffuseReference={.5f/Mathf.PI:F6} rawSpecular={reusedSpec/specSamples:F6} filteredSpecular={reusedFilteredSpec/specSamples:F6} specularReference={specReference:F6}; statistical observation, not a per-pixel deterministic gate");
             // Real thin foreground at a different depth, with a colored material.
             metal.SetFloat("_Metallic",0);metal.SetColor("_Color",Color.blue);strip.transform.position=new Vector3(0,0,-.35f);
@@ -1073,19 +1080,20 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         private static void ValidateDenoiser()
         {
             for(int i=0;i<8;i++)Render();var context=feature.LastContext;
-            Require(context.nrd!=null,"NRD unavailable: "+feature.Status);Require(context.nrd.LastDispatchCount>0,"No native NRD dispatches recorded");
+            Require(context.nrd!=null,"NRD unavailable: "+feature.Status);Require(context.nrd.LastDispatchCount==0&&!context.nrdHistoryValid,"single delta unnecessarily dispatched RELAX");
             Require(ReferenceEquals(context.filteredDiffuse,context.nrdOutputDiffuse)&&ReferenceEquals(context.filteredSpecular,context.nrdOutputSpecular),"Filtered publication allocated duplicate external outputs");
             Require(!ReferenceEquals(context.diffuse,context.filteredDiffuse),"In-place NRD resolve overwrote raw DI");
             Debug.Log("[HoRTDIValidation] NRD single raw="+ReadMean(context.diffuse.rt)+" filtered="+ReadMean(context.filteredDiffuse.rt)+" dispatches="+context.nrd.LastDispatchCount);
             Near(ReadMean(context.filteredDiffuse.rt).r,ExpectedMean(light),"NRD single-light energy",.03f);
-            Near(ReadCenter(context.diffConfidence.rt).r,1,"Stable lighting reported a confidence gradient",.02f);
+            NearRGB(Read(context.filteredDiffuse.rt),Read(context.diffuse.rt),"single delta publication preserves exact raw");
             light.color=Color.red;RenderCamera();
             Require(!context.lastTemporal,"Confidence independence probe unexpectedly reused reservoirs");
-            Require(ReadCenter(context.diffConfidence.rt).r<.5f,"NRD confidence ignored light changes while RTXDI temporal was disabled");
+            NearRGB(Read(context.filteredDiffuse.rt),Read(context.diffuse.rt),"single delta light change is immediate");
             light.color=Color.white;for(int i=0;i<8;i++)RenderCamera();
             var signal=Read(context.nrdDiffuse.rt);Require(signal.a>1.5f&&signal.a<2.1f,"NRD alpha is not selected-light distance");
             Near(Read(context.nrdViewZ.rt).r,3,"NRD positive linear view Z",.01f);
             light.color=Color.red;var blue=Point(light.transform.position,Color.blue,light.intensity);
+            Render();Require(context.nrd.LastDispatchCount>0,"multi-light signal failed to enter native RELAX");
             for(int i=0;i<40;i++)Render();double rawError=0,filteredError=0,sumRed=0,sumBlue=0;int count=0;
             var raw=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);var filtered=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);
             try
@@ -1124,7 +1132,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             volume.debugMode.value=HoRTDIDebugMode.RawDiffuse;Render();NearRGB(Read(target),Read(context.diffuse.rt),"NRD raw debug",.015f);volume.debugMode.value=HoRTDIDebugMode.Off;
             gb.Settings.renderScale=HoGeometryBufferRenderScale.Half;Near(Render().a,0,"NRD raw receiver invalid");Near(Read(context.filteredDiffuse.rt).a,0,"NRD filtered receiver invalid");gb.Settings.renderScale=HoGeometryBufferRenderScale.Full;Render();
             feature.Settings.denoise=false;Render();Require(context.nrd==null&&context.filteredDiffuse==null,"NRD disable retained resources");
-            feature.Settings.denoise=true;Render();Require(context.nrd!=null&&context.nrd.LastDispatchCount>0,"NRD reenable failed");
+            feature.Settings.denoise=true;Render();Require(context.nrd!=null,"NRD reenable failed");
+            NearRGB(Read(context.filteredDiffuse.rt),Read(context.diffuse.rt),"single delta reenable exact publication");
+            blue.enabled=true;Render();Require(context.nrd.LastDispatchCount>0,"NRD reenable multi-light dispatch failed");blue.enabled=false;
             camera.orthographic=false;camera.fieldOfView=40;for(int i=0;i<12;i++)Render();Near(ReadMean(context.filteredDiffuse.rt).r,ExpectedMean(light),"NRD perspective energy",.04f);
             var compute=AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDI.compute");
             foreach(var message in ShaderUtil.GetComputeShaderMessages(compute))Require(message.severity!=UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error&&message.severity!=UnityEditor.Rendering.ShaderCompilerMessageSeverity.Warning,message.message);

@@ -317,7 +317,17 @@
 
 **成本与下一项：** 有Cutout时逐相机一张R8 visibility，720p/1080p约.879/1.978MiB、R32回退四倍。最终射线替代原Shade inline终测，不是额外复制天空/GBuffer；新增native dispatch/anyhit/SBT和更多AS几何的实际GPU成本未量化。仅LOD0，复杂alpha/PB/动态UV/任意变形仍排除，GI Cutout secondary未扩张。下一项先在受控局部场景评审边缘、运动/历史与成本，再据证据优化；古堡合并天空不当作调NRD/采样依据。详见 [Cutout](../Ho-RTDI-Cutout.md)。
 
-## 28. 下一步取舍
+## 28. 局部 Cutout 质量与单灯精确路径
+
+**动手前评审：先测形状与成本，不调亮度。** 继续用可控平面、alpha洞与骨骼caster，独立像素参考，避免古堡合并天空干扰。核对官方NRD信号/运动契约和用户ComputeGradients/Confidence及固定SDK。单灯空域复用raw总能量近1但逐帧方差L1≈.208/.226，NRD staticS/TS能量≈.925/.916；无复用的camera motion仍有约10%L1及2pixel margin约5%leak。
+
+**实现与取舍：** 单个解析delta灯且无有效环境，没有灯/UV随机自由度，跳过Temporal/Spatial。保留实际Initial、主表面/灯历史及必要frontend，NRD已分配时把raw复制到原有发布输出，跳过Confidence/RELAX/Resolve；多灯/天空仍原完整路径，回到降噪时history失效。不是vendor/NRD参数修改、亮度补偿、新Feature或最终接收设计，也不宣称显存节省。
+
+**验证与限制：** 两条64帧×896像素的static/camera/caster及静态T/S/TS均raw/发布一致，能量≈.999689/.999687/.999672，L1≈.000311/.000313/.000328，1/2pixel margin leak0，原物理shape gate通过。单灯历史断言改查有效精确输出；原动态transport/age fixture用0通量控制保持真实多灯调度，snapshot按identity取索引，原非零双灯统计/RELAX与Cutout复用gate另保留。GPU scope/采样入口已补，但批处理样本稀疏不稳定、未达32样本条件；RenderDoc注入超时、无capture且进程已终止，不给GPU预算结论。正式计时与真实多灯边缘/运动仍未完成。
+
+**完成前复查：** 旧核心、NRD两条、Cutout两条，材质边界/HDR/环境/VNDF/曲面、必要GI两条回归通过；两个Mono Win64 release构建与实际D3D12原gate/Cutout、D3D11 inactive通过，Roslyn/派生SHA通过。无native/vendor/历史ABI修改，目标继续保持完整DI范围，下一项真实多灯局部质量与可复现GPU成本。详见 [单灯精确路径](../Ho-RTDI-SingleDelta.md)。
+
+## 29. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
@@ -325,7 +335,7 @@
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
 | NRD 质量与预算 | 当前/历史normal codec已统一，真实GPU history与SB匹配，评分表示差异消除；仍需分别核对运动误差和原平面64帧失败。SB输入及每个DI/GI history各增加1080p约7.91 MiB，下一项转向实际场景/灯域支持，保留既有失败，旧历史预算设置不会自动迁移。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
-| 血月古堡几何支持 | 基础Cutout最终可见性已验证，两条路径与实际Player通过。古堡全登记16/12Cutout、隔离排天空后15/12；它是合并天空/模型的特殊资产，不能作整体阴影质量基准。下一项受控局部边缘、运动与GPU成本；按证据评估GPU蒙皮/快照共享，CPU完整pose仍28.54MiB/服务。 |
+| 血月古堡几何支持 | 基础Cutout已接入；合并天空/模型只作支持审计。单灯退化路径已有受控边缘/运动结果，多灯仍ReSTIR/RELAX。下一项真实多灯局部质量和可复现GPU计时；批处理Recorder/RenderDoc尝试尚不足。CPU完整pose仍28.54MiB/服务，不扩张PT。 |
 | 环境灯 / GI路径归属 | DI HDR天空PDF/RIS及BRDF/VNDF MIS已验证常量窄镜面、斜视与特定小亮源；下一项实际场景与DI/GI直接天空路径归属。现有开关可显式选择一份直接天空，尚未补secondary环境NEE，动态/任意天空质量仍待验证。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

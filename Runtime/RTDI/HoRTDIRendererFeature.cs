@@ -35,6 +35,7 @@ namespace lilToon.URP.Extensions.RTDI
         public HoRTDISettings Settings=>settings;
         public string Status {get;private set;}="未生产";
         internal HoRTDIContext LastContext {get;private set;}
+        internal static readonly ProfilingSampler FinalVisibilityProfiling=new("HoRTDI Final Visibility");
         public override void Create()
         {
             DisposeResources();pass=new HoRTDIPass();debugPass=new HoRTDIDebugPass();
@@ -210,7 +211,10 @@ namespace lilToon.URP.Extensions.RTDI
             private static void Dispatch(CommandBuffer cmd,Data d,bool compatibility,CameraData cameraData)
             {
                 var c=d.context;unchecked{d.signature=d.signature*397^(int)d.environmentRevision^d.settings.useEnvironment.GetHashCode()^(d.settings.environmentSamples*7919)^(d.settings.environmentBrdfSamples*104729);}
-                bool temporal=d.settings.temporal&&c.historyValid&&c.sceneRevision==d.revision&&c.settingsSignature==d.signature;
+                // One delta light and no environment has no light/UV uncertainty.
+                // Keep its exact initial estimate instead of injecting resampling variance.
+                bool singleDelta=d.lightCount==1&&!c.environmentSampling;
+                bool temporal=!singleDelta&&d.settings.temporal&&c.historyValid&&c.sceneRevision==d.revision&&c.settingsSignature==d.signature;
                 c.lastTemporal=temporal;
                 bool reset=false,timeReset=false;
                 var common=default(HoRTDINrdNative.CommonSettings);
@@ -228,11 +232,13 @@ namespace lilToon.URP.Extensions.RTDI
                 cmd.SetBufferData(c.currentToPrevious,d.lightFrame.currentToPrevious);cmd.SetBufferData(c.previousToCurrent,d.lightFrame.previousToCurrent);
                 foreach(var stage in ReferenceStages)
                 {
+                    if(singleDelta&&(stage=="Temporal"||stage=="Spatial"))continue;
                     if((stage=="BuildPowerPdf"||stage=="Presample")&&!c.powerSampling)continue;
                     if((stage=="BuildEnvironmentPdf"||stage=="PresampleEnvironment")&&!c.environmentSampling)continue;
                     if(stage=="BuildEnvironmentPdf"&&c.environmentPdfReady&&c.environmentPdfRevision==d.environmentRevision)continue;
                     string name=stage=="Shade"&&c.nrd!=null?"ShadeNRD":stage;
-                    if(stage=="Shade"&&c.finalVisibility!=null)DispatchFinalVisibility(cmd,d,compatibility,cameraData);
+                    if(stage=="Shade"&&c.finalVisibility!=null)
+                    {using(new ProfilingScope(cmd,FinalVisibilityProfiling))DispatchFinalVisibility(cmd,d,compatibility,cameraData);}
                     int kernel=d.shader.FindKernel(name);d.scene.BuildAndBind(cmd,d.shader,kernel);
                     if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,kernel,cameraData);
                     else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,kernel);
@@ -298,48 +304,59 @@ namespace lilToon.URP.Extensions.RTDI
                     cmd.SetComputeTextureParam(d.shader,normalize,"_HoRTDIDiffuse",c.diffuse.nameID);cmd.SetComputeTextureParam(d.shader,normalize,"_HoRTDISpecular",c.specular.nameID);
                     cmd.SetComputeTextureParam(d.shader,normalize,"_HoRTDIPreviousLuminance",c.previousLuminance.nameID);
                     cmd.DispatchCompute(d.shader,normalize,(c.width+7)/8,(c.height+7)/8,1);
-                    cmd.SetComputeIntParam(d.shader,"_HoRTDINrdHistoryReady",reset||timeReset?0:1);
-                    // Confidence needs previous primary guides even when the
-                    // independent RTXDI temporal-reservoir stage is disabled.
-                    cmd.SetComputeVectorParam(d.shader,"_HoRTDIFlags",new Vector4(reset||timeReset?0:1,d.settings.spatial?1:0,Mathf.Clamp(d.settings.maxHistory,1,32),0));
-                    foreach(string stage in new[]{"Gradients","FilterGradients","Confidence"})
+                    if(singleDelta)
                     {
-                        int k=d.shader.FindKernel(stage);d.scene.BuildAndBind(cmd,d.shader,k);
-                        BindEnvironment(cmd,d,compatibility,k);
-                        if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,k,cameraData);
-                        else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,k);
-                        cmd.SetComputeBufferParam(d.shader,k,"_HoRTDIReservoirs",c.reservoirs);cmd.SetComputeBufferParam(d.shader,k,"_HoRTDIHistory",c.history);
-                        cmd.SetComputeBufferParam(d.shader,k,"_HoRTDILights",c.lights);cmd.SetComputeBufferParam(d.shader,k,"_HoRTDIPreviousLights",c.previousLights);
-                        cmd.SetComputeBufferParam(d.shader,k,"_HoRTDICurrentToPrevious",c.currentToPrevious);cmd.SetComputeBufferParam(d.shader,k,"_HoRTDIPreviousToCurrent",c.previousToCurrent);
-                        cmd.SetComputeTextureParam(d.shader,k,"_HoRTDIDiffuse",c.diffuse.nameID);cmd.SetComputeTextureParam(d.shader,k,"_HoRTDISpecular",c.specular.nameID);
-                        cmd.SetComputeTextureParam(d.shader,k,"_HoRTDIPreviousLuminance",c.previousLuminance.nameID);
-                        cmd.SetComputeTextureParam(d.shader,k,"_HoRTDIGradientA",c.gradientA.nameID);cmd.SetComputeTextureParam(d.shader,k,"_HoRTDIGradientB",c.gradientB.nameID);
-                        cmd.SetComputeTextureParam(d.shader,k,"_HoRTDIDiffConfidence",c.diffConfidence.nameID);cmd.SetComputeTextureParam(d.shader,k,"_HoRTDISpecConfidence",c.specConfidence.nameID);
-                        int iterations=stage=="FilterGradients"?4:1;
-                        for(int step=0;step<iterations;step++){cmd.SetComputeIntParam(d.shader,"_HoRTDIGradientPass",step);cmd.DispatchCompute(d.shader,k,((c.width+2)/3+7)/8,((c.height+2)/3+7)/8,1);}
+                        // The per-pixel delta estimate is already noise-free. Preserve
+                        // hard visibility edges instead of temporally filtering them.
+                        cmd.CopyTexture(c.diffuse.nameID,c.nrdOutputDiffuse.nameID);
+                        cmd.CopyTexture(c.specular.nameID,c.nrdOutputSpecular.nameID);
+                        c.nrdHistoryValid=false;
                     }
-                    common.confidence=1;
-                    var external=new Dictionary<string,RenderTargetIdentifier>
+                    else
                     {
-                        ["IN_MV"]=new RenderTargetIdentifier(Texture2D.blackTexture),["IN_NORMAL_ROUGHNESS"]=c.nrdNormal.nameID,["IN_VIEWZ"]=c.nrdViewZ.nameID,
-                        ["IN_DIFF_RADIANCE_HITDIST"]=c.nrdDiffuse.nameID,["IN_SPEC_RADIANCE_HITDIST"]=c.nrdSpecular.nameID,
-                        ["OUT_DIFF_RADIANCE_HITDIST"]=c.nrdOutputDiffuse.nameID,["OUT_SPEC_RADIANCE_HITDIST"]=c.nrdOutputSpecular.nameID,
-                        ["IN_DIFF_CONFIDENCE"]=c.diffConfidence.nameID,["IN_SPEC_CONFIDENCE"]=c.specConfidence.nameID,
-                        ["IN_DISOCCLUSION_THRESHOLD_MIX"]=new RenderTargetIdentifier(Texture2D.blackTexture)
-                    };
-                    c.nrd.BindPrimaryGuide(cmd,d.primary,compatibility,cameraData,c.history,!(reset||timeReset),c.nrdScale);
-                    cmd.BeginSample("HoRTDI NRD RELAX");c.nrd.Record(cmd,common,external);cmd.EndSample("HoRTDI NRD RELAX");
-                    int kernel=d.shader.FindKernel("ResolveNRD");
-                    cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDINrdScale",c.nrdScale);
-                    if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,kernel,cameraData);
-                    else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,kernel);
-                    cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdOutputDiffuse",c.nrdOutputDiffuse.nameID);cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdOutputSpecular",c.nrdOutputSpecular.nameID);
-                    cmd.DispatchCompute(d.shader,kernel,(c.width+7)/8,(c.height+7)/8,1);c.nrdHistoryValid=true;
-                    kernel=d.shader.FindKernel("SaveHistory");
-                    if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,kernel,cameraData);
-                    else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,kernel);
-                    cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDIReservoirs",c.reservoirs);cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDIHistory",c.history);
-                    cmd.DispatchCompute(d.shader,kernel,(c.width+7)/8,(c.height+7)/8,1);
+                        cmd.SetComputeIntParam(d.shader,"_HoRTDINrdHistoryReady",reset||timeReset?0:1);
+                        // Confidence needs previous primary guides even when the
+                        // independent RTXDI temporal-reservoir stage is disabled.
+                        cmd.SetComputeVectorParam(d.shader,"_HoRTDIFlags",new Vector4(reset||timeReset?0:1,d.settings.spatial?1:0,Mathf.Clamp(d.settings.maxHistory,1,32),0));
+                        foreach(string stage in new[]{"Gradients","FilterGradients","Confidence"})
+                        {
+                            int k=d.shader.FindKernel(stage);d.scene.BuildAndBind(cmd,d.shader,k);
+                            BindEnvironment(cmd,d,compatibility,k);
+                            if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,k,cameraData);
+                            else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,k);
+                            cmd.SetComputeBufferParam(d.shader,k,"_HoRTDIReservoirs",c.reservoirs);cmd.SetComputeBufferParam(d.shader,k,"_HoRTDIHistory",c.history);
+                            cmd.SetComputeBufferParam(d.shader,k,"_HoRTDILights",c.lights);cmd.SetComputeBufferParam(d.shader,k,"_HoRTDIPreviousLights",c.previousLights);
+                            cmd.SetComputeBufferParam(d.shader,k,"_HoRTDICurrentToPrevious",c.currentToPrevious);cmd.SetComputeBufferParam(d.shader,k,"_HoRTDIPreviousToCurrent",c.previousToCurrent);
+                            cmd.SetComputeTextureParam(d.shader,k,"_HoRTDIDiffuse",c.diffuse.nameID);cmd.SetComputeTextureParam(d.shader,k,"_HoRTDISpecular",c.specular.nameID);
+                            cmd.SetComputeTextureParam(d.shader,k,"_HoRTDIPreviousLuminance",c.previousLuminance.nameID);
+                            cmd.SetComputeTextureParam(d.shader,k,"_HoRTDIGradientA",c.gradientA.nameID);cmd.SetComputeTextureParam(d.shader,k,"_HoRTDIGradientB",c.gradientB.nameID);
+                            cmd.SetComputeTextureParam(d.shader,k,"_HoRTDIDiffConfidence",c.diffConfidence.nameID);cmd.SetComputeTextureParam(d.shader,k,"_HoRTDISpecConfidence",c.specConfidence.nameID);
+                            int iterations=stage=="FilterGradients"?4:1;
+                            for(int step=0;step<iterations;step++){cmd.SetComputeIntParam(d.shader,"_HoRTDIGradientPass",step);cmd.DispatchCompute(d.shader,k,((c.width+2)/3+7)/8,((c.height+2)/3+7)/8,1);}
+                        }
+                        common.confidence=1;
+                        var external=new Dictionary<string,RenderTargetIdentifier>
+                        {
+                            ["IN_MV"]=new RenderTargetIdentifier(Texture2D.blackTexture),["IN_NORMAL_ROUGHNESS"]=c.nrdNormal.nameID,["IN_VIEWZ"]=c.nrdViewZ.nameID,
+                            ["IN_DIFF_RADIANCE_HITDIST"]=c.nrdDiffuse.nameID,["IN_SPEC_RADIANCE_HITDIST"]=c.nrdSpecular.nameID,
+                            ["OUT_DIFF_RADIANCE_HITDIST"]=c.nrdOutputDiffuse.nameID,["OUT_SPEC_RADIANCE_HITDIST"]=c.nrdOutputSpecular.nameID,
+                            ["IN_DIFF_CONFIDENCE"]=c.diffConfidence.nameID,["IN_SPEC_CONFIDENCE"]=c.specConfidence.nameID,
+                            ["IN_DISOCCLUSION_THRESHOLD_MIX"]=new RenderTargetIdentifier(Texture2D.blackTexture)
+                        };
+                        c.nrd.BindPrimaryGuide(cmd,d.primary,compatibility,cameraData,c.history,!(reset||timeReset),c.nrdScale);
+                        cmd.BeginSample("HoRTDI NRD RELAX");c.nrd.Record(cmd,common,external);cmd.EndSample("HoRTDI NRD RELAX");
+                        int kernel=d.shader.FindKernel("ResolveNRD");
+                        cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDINrdScale",c.nrdScale);
+                        if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,kernel,cameraData);
+                        else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,kernel);
+                        cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdOutputDiffuse",c.nrdOutputDiffuse.nameID);cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDINrdOutputSpecular",c.nrdOutputSpecular.nameID);
+                        cmd.DispatchCompute(d.shader,kernel,(c.width+7)/8,(c.height+7)/8,1);c.nrdHistoryValid=true;
+                    }
+                    int historyKernel=d.shader.FindKernel("SaveHistory");
+                    if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,historyKernel,cameraData);
+                    else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,historyKernel);
+                    cmd.SetComputeBufferParam(d.shader,historyKernel,"_HoRTDIReservoirs",c.reservoirs);cmd.SetComputeBufferParam(d.shader,historyKernel,"_HoRTDIHistory",c.history);
+                    cmd.DispatchCompute(d.shader,historyKernel,(c.width+7)/8,(c.height+7)/8,1);
                 }
                 cmd.SetGlobalFloat("_HoRTDIActive",1);cmd.SetGlobalTexture("_HoRTDIDiffuseTexture",c.PublishedDiffuse.nameID);cmd.SetGlobalTexture("_HoRTDISpecularTexture",c.PublishedSpecular.nameID);
                 cmd.SetGlobalTexture("_HoRTDIRawDiffuseTexture",c.diffuse.nameID);cmd.SetGlobalTexture("_HoRTDIRawSpecularTexture",c.specular.nameID);

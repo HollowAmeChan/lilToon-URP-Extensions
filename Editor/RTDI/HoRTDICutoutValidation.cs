@@ -19,11 +19,14 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             blocker.GetComponent<Renderer>().sharedMaterial=cutoutMaterial;blocker.SetActive(true);
             AlphaFill(alphaTexture,1);AlphaFill(alphaMask,1);
             atmosphere.Settings.enabled=false;feature.Settings.useEnvironment=false;
+            if(forceCutoutQuality)SetupCutoutQuality();
+            if(forceCutoutGpuTiming)SetupCutoutGpuTiming();
         }
         private static void AlphaFill(Texture2D texture,float alpha)
         {var data=new Color[texture.width*texture.height];for(int i=0;i<data.Length;i++)data[i]=new Color(alpha,alpha,alpha,alpha);texture.SetPixels(data);texture.Apply();}
         private static void ValidateCutout()
         {
+            if(forceCutoutQuality){ValidateCutoutQuality();return;}
             float reference=Expected(light);var context=feature.LastContext;
             Require(context.finalVisibility!=null,"final alpha pass not allocated: "+feature.Status);
             Near(Render().r,0,"cutout solid alpha shadow",.002f);

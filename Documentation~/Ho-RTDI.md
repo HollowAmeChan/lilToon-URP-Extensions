@@ -36,6 +36,7 @@ SDK 文件只改 include 路径，保留原始算法与许可。`Runtime/RTDI/Th
 - 世界遮挡支持不透明 MeshRenderer 与 SkinnedMeshRenderer 当前姿态；基础 lilToon Cutout 使用原生材质最终可见性，纹理/UV 不另复制，支持范围与成本见 [Cutout](Ho-RTDI-Cutout.md)。蒙皮更新有 CPU/自有网格成本，姿态变化清历史；血月古堡的天空壳/合并网格不作为阴影画质基准，见 [场景支持](Ho-RTDI-SceneSupport.md)。
 - 使用明确的 PBR 参考响应：主色在此响应层映射到 0～1，按 metallic 分出 diffuse 与 F0，perceptual roughness 交给参考 GGX。没有修改 SB 原值或设计 NPR ramp、影色与接收路由。Emissive 不作为 DI 自发光叠加。
 - 可选 NRD RELAX，默认关闭，接入与限制见 [NRD 初版](Ho-RTDI-NRD.md)。raw ReSTIR 输出仍可有噪声。单个像素的 colored-light 或重采样结果不要求逐帧等于所有灯的精确和，应以统计均值核对能量。
+- 单盏 point/spot/directional 且没有有效环境时，跳过无收益的 reservoir 时空复用与 RELAX，原发布输出保留实际 raw 硬阴影；多灯/天空仍用原完整路径。触发条件、验证与性能限制见 [单灯精确路径](Ho-RTDI-SingleDelta.md)。
 
 ## 历史、资源与调度
 
