@@ -41,6 +41,9 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         target=new RenderTexture(64,64,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear);target.Create();
         probeCamera.targetTexture=target;probeCamera.enabled=true;
         yield return null;yield return null;probeCamera.enabled=false;probeCamera.targetTexture=null;
+        // SubmitRenderRequest renders a square target; clearing targetTexture
+        // otherwise restores the window's aspect for the independent CPU rays.
+        probeCamera.aspect=(float)target.width/target.height;
         if(!unsupported&&Array.Exists(args,x=>x=="--motion-protocol"))
         {yield return MotionProtocol();Finish(args);yield break;}
         try{Validate();result.pass=true;Debug.Log("[HoRTDIPlayerProbe] PASS "+JsonUtility.ToJson(result));}
@@ -276,15 +279,19 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
             foreach(bool reuse in new[]{false,true})
             {
                 feature.Settings.temporal=reuse;feature.Settings.spatial=false;feature.Settings.denoise=false;Render();feature.Settings.denoise=true;
-                for(int i=0;i<192;i++)Render();double spec=0,specReference=0,diff=0,diffReference=0;
+                for(int i=0;i<192;i++)Render();double spec=0,specReference=0,diff=0,diffReference=0,rawSpec=0;
+                Require(Math.Abs(probeCamera.aspect-(float)target.width/target.height)<1e-6,"Player CPU reference aspect differs from render request target");
+                Debug.Log($"[HoRTDIPlayerProbe] MIXED_INPUT aspect={probeCamera.aspect:R} screen={Screen.width}x{Screen.height} smoothness={surfaceMaterial.GetFloat("_Smoothness"):R} reflectance={surfaceMaterial.GetFloat("_Reflectance"):R}");
                 for(int frame=0;frame<256;frame++)
                 {
                     Render();ReadInto(capture.Specular,filtered);ReadInto(capture.Diffuse,raw);
                     for(int y=24;y<40;y++)for(int x=24;x<40;x++)
                     {spec+=filtered.GetPixel(x,y).r;specReference+=ExpectedLocalSpecular(light,x,y)+ExpectedLocalSpecular(blue,x,y);diff+=raw.GetPixel(x,y).r;diffReference+=Expected(light,x,y)+Expected(blue,x,y);}
+                    ReadInto(capture.RawSpecular,raw);for(int y=24;y<40;y++)for(int x=24;x<40;x++)rawSpec+=raw.GetPixel(x,y).r;
                 }
                 if(reuse){result.temporalMixedSpecularRatio=(float)(spec/specReference);result.temporalMixedDiffuseRatio=(float)(diff/diffReference);result.temporalMixedMaxHistory=feature.Settings.maxHistory;}
                 else{result.mixedSpecularRatio=(float)(spec/specReference);result.mixedDiffuseRatio=(float)(diff/diffReference);}
+                Debug.Log($"[HoRTDIPlayerProbe] MIXED_RESULT temporal={reuse} rawSpecRatio={rawSpec/specReference:F6} filteredSpecRatio={spec/specReference:F6} filteredDiffuseRatio={diff/diffReference:F6}");
                 Require(Math.Abs(spec/specReference-1)<.05&&Math.Abs(diff/diffReference-1)<.05,"Player mixed diffuse/specular proposal energy mismatch; temporal="+reuse);
             }
         }

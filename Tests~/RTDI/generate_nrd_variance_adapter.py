@@ -128,7 +128,10 @@ def generate_atrous():
     text = text.replace(old, new)
     old = "float diffuseLuminanceW = abs(centerDiffuseLuminance - sampleDiffuseLuminance) * diffusePhiLIlluminationInv;"
     new = """float pairDiffuseVar = min(max(0.0, centerDiffuseVar), max(0.0, sampleDiffuseIlluminationAndVariance.a));
-                float diffuseLuminanceW = abs(centerDiffuseLuminance - sampleDiffuseLuminance) / max(1.0e-4, gDiffPhiLuminance * sqrt(pairDiffuseVar));"""
+                // Avoid cancellation between opposing RGB changes at colored
+                // shadow boundaries; retain the same luminance units/bandwidth.
+                float diffuseColorDistance = Color::Luminance(abs(centerDiffuseIlluminationAndVariance.rgb - sampleDiffuseIlluminationAndVariance.rgb));
+                float diffuseLuminanceW = diffuseColorDistance / max(1.0e-4, gDiffPhiLuminance * sqrt(pairDiffuseVar));"""
     if text.count(old) != 1: raise ValueError("Unexpected atrous diffuse luminance weight")
     text = text.replace(old, new)
     old = "    float4 filteredDiffuseIlluminationAndVariance = float4(sumDiffuseIlluminationAndVariance / float4(sumWDiffuse.xxx, sumWDiffuse * sumWDiffuse));"
@@ -140,7 +143,7 @@ def generate_atrous():
     float4 filteredDiffuseIlluminationAndVariance = diffuseNeighborSum + centerDiffuseIlluminationAndVariance * float4(retainedDiffuseWeight.xxx, retainedDiffuseWeight * retainedDiffuseWeight);"""
     if text.count(old) != 1: raise ValueError("Unexpected atrous diffuse normalization")
     text = text.replace(old, new)
-    return f"// Ho-RTDI F0/diffuse-specular pair-bandwidth adaptation of NRD 4.17.3. Original SHA256: {expected}\n" + text
+    return f"// Ho-RTDI F0/RGB contrast/pair-bandwidth adaptation of NRD 4.17.3. Original SHA256: {expected}\n" + text
 
 
 def generate_temporal():

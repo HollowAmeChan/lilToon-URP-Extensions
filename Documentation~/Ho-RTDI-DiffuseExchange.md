@@ -30,7 +30,7 @@
 
 ## 噪声取舍与部署
 
-旧opaque noise raw MSE .050401保持，filtered MSE .000183→.001333，仍通过原filtered<raw×.3条件，但绝对噪声约高7倍。本步接受的是完整能量gate修正与约97%原方差抑制的取舍，不能称降噪全面改善；噪声和复用相关性仍是后续改进项。不是通过抬亮/压暗补偿能量。
+旧opaque noise raw MSE .050401保持，filtered MSE .000183→.001333，仍通过原filtered<raw×.3条件，但filtered MSE约高7倍。本步接受的是完整能量gate修正与约97%原方差抑制的取舍，不能称降噪全面改善；噪声和复用相关性仍是后续改进项。不是通过抬亮/压暗补偿能量。
 
 材质颜色/F0/金属、两像素边界、薄阴影/不等深度、HDR范围、环境镜面/MIS、曲面回归通过，无新增DI shader诊断。Roslyn及原始SHA/派生check通过。生成器精确检查每个替换布局，原始copyright/许可证保留。
 
@@ -40,4 +40,4 @@
 
 `RunPrimaryMotionQuality/Compatibility` 现验证完整能量；`RunCutoutMultiQuality`、`RunCutoutSpecularQuality`、`RunCutoutSpecularMotionQuality`及各Compatibility保留原gate。标准Player启动验部署；原源motion专用probe仍独立失败，不混同。
 
-第38步的[复用/颜色噪声对照](Ho-RTDI-ReuseNoise.md)已发现额外分离灯spatial-only能量失败；第39步[双灯阴影core检查](Ho-RTDI-CutoutShadowCore.md)加入此前未覆盖的局部2%门槛，生产四组正式失败。这里保留第37步旧门槛的通过证据，不代表新范围通过。后续需同时解决局部过滤残留和颜色噪声；已有结果不是整座古堡质量/真实motion/GPU预算验收。用户原古堡资产、AC/合成、lilPBR/SSS和通用PT框架未扩张。
+第38/39步分别发现新彩灯能量与局部阴影core失败；第40步的[后续RGB差修正](Ho-RTDI-RgbContrast.md)已让新范围通过，并记录进一步增噪取舍。这里保留第37步历史证据；当前仍需改善颜色噪声和扩大验证。已有结果不是整座古堡质量/真实motion/GPU预算验收。用户原古堡资产、AC/合成、lilPBR/SSS和通用PT框架未扩张。

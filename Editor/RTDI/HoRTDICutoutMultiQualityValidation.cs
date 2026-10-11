@@ -46,6 +46,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             light.color=Color.red;var far=Point(new Vector3(-1.5f,0,-1),Color.blue,4);
             if(cutoutSpecularQuality){surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetFloat("_Smoothness",.6f);}
             feature.Settings.initialSamples=8;feature.Settings.denoise=true;
+            if(forceCutoutShadowStages){ValidateCutoutShadowStages();return;}
             var raw=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));var filtered=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));
             var cases=new List<MultiQualityCase>();bool allPass=true;
             var rows=new System.Text.StringBuilder("mode,x,y,referenceRed,referenceBlue,rawRed,rawBlue,filteredRed,filteredBlue\n");

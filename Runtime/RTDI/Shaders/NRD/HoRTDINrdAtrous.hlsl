@@ -1,4 +1,4 @@
-// Ho-RTDI F0/diffuse-specular pair-bandwidth adaptation of NRD 4.17.3. Original SHA256: bc4c998e30852232ac98e4f2a7f924ef0072d900f44f4de1d725171f9e1508b8
+// Ho-RTDI F0/RGB contrast/pair-bandwidth adaptation of NRD 4.17.3. Original SHA256: bc4c998e30852232ac98e4f2a7f924ef0072d900f44f4de1d725171f9e1508b8
 /*
 Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
 
@@ -222,7 +222,10 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                 float sampleDiffuseLuminance = Color::Luminance(sampleDiffuseIlluminationAndVariance.rgb);
 
                 float pairDiffuseVar = min(max(0.0, centerDiffuseVar), max(0.0, sampleDiffuseIlluminationAndVariance.a));
-                float diffuseLuminanceW = abs(centerDiffuseLuminance - sampleDiffuseLuminance) / max(1.0e-4, gDiffPhiLuminance * sqrt(pairDiffuseVar));
+                // Avoid cancellation between opposing RGB changes at colored
+                // shadow boundaries; retain the same luminance units/bandwidth.
+                float diffuseColorDistance = Color::Luminance(abs(centerDiffuseIlluminationAndVariance.rgb - sampleDiffuseIlluminationAndVariance.rgb));
+                float diffuseLuminanceW = diffuseColorDistance / max(1.0e-4, gDiffPhiLuminance * sqrt(pairDiffuseVar));
                 diffuseLuminanceW = min(gDiffMaxLuminanceRelativeDifference, diffuseLuminanceW);
                 diffuseLuminanceW *= diffuseLuminanceWeightRelaxation;
 

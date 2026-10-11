@@ -429,7 +429,17 @@
 
 **验证与下一项：** 最终仅Editor/文档，运行时diff为空；两条新core失败复现、原完整primary true，Roslyn/原SHA/派生check通过。不重复相同Player/GI。下一项用既有阶段捕获定位Temporal/Clamping/首轮/后续对同一core的红光混入，再同时修复局部阴影与彩灯噪声，保留动态镜面/Player，不扩大PT/合成/古堡编辑。详见[阴影core](../Ho-RTDI-CutoutShadowCore.md)。
 
-## 40. 下一步取舍
+## 40. 后续Atrous的RGB差判定
+
+**动手前评审与定位：** 同CPU 5×5 core/168像素读取实际Temporal/Clamping/首Atrous/后续，即时副本恢复本帧GPU scale、逐帧捕获和最终输出一致性断言。早期三阶段core红0，后续才2.3%～2.6%。核对用户RAB/NRD及pinned HistoryClamping已有RGB绝对差度量；后续diffuse range从abs(L(A)-L(B))改L(abs(A-B))，避免相反RGB变化抵消。首轮/物理Shade/提案/参数/资源/native/spec/GI不改。
+
+**结果与取舍：** 两条双灯8组含2% core正式通过，最大1.7198%～1.9375%；新16组正式通过，分离8候选spatial-only蓝1.051984→1.004080。原完整primary、动态spec/HDR/环境/边界/曲面通过。旧noise MSE .001333→.002776，primary diffuse frameL1升至.125～.135，仍过原gate但噪声增加。统一种子core最高.019488，余量小，不宣称普遍无偏。
+
+**Player复查与部署：** 新旧运行时初次mixed spec均约1.394失败；raw诊断约1.418、SB量化输入正常。发现CPU相机清空targetTexture后aspect1.789/窗口1898×1061，与64²请求不符；核对URP绑定/恢复源码，fixture固定目标aspect并断言，保留原独立参考/gate和raw日志，撤去临时SB捕获。两个Mono release errors0，实际两条全suite及D3D11 inactive通过；立体连续/阶跃frameL1约.234/.272高于旧值，RG阶跃蓝.951655近门槛。Roslyn/原SHA/派生check通过，无新增DI shader诊断。过滤owned提交，不改旁边仓库，不扩张合成/PT。
+
+**下一项：** 改善噪声并扩展材质/灯/尺寸，在新的RGB判定下保留全部core/彩灯/动态镜面/Player验收；实际motion/GPU预算仍待证实。详见[RGB差判定](../Ho-RTDI-RgbContrast.md)。
+
+## 41. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
@@ -437,7 +447,7 @@
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
 | NRD 质量与预算 | 当前/历史normal codec已统一，真实GPU history与SB匹配，评分表示差异消除；仍需分别核对运动误差和原平面64帧失败。SB输入及每个DI/GI history各增加1080p约7.91 MiB，下一项转向实际场景/灯域支持，保留既有失败，旧历史预算设置不会自动迁移。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
-| 血月古堡几何支持 | 基础Cutout和局部动态最终可见性confidence已接入，原8组及立体Player旧门槛通过；第39步新增双灯阴影core有四组失败，优先定位过滤残留。合并天空/模型只作支持审计。GPU计时仍不足、动态额外射线成本待测，CPU pose28.54MiB/服务，不扩张PT。 |
+| 血月古堡几何支持 | 基础Cutout和动态最终可见性confidence已接入；第40步新core/彩灯与实际Player门槛通过，但core/Player蓝光余量小、噪声增加，继续扩大验证。合并天空/模型只作支持审计。GPU计时仍不足、动态额外射线成本待测，CPU pose28.54MiB/服务，不扩张PT。 |
 | 环境灯 / GI路径归属 | DI HDR天空PDF/RIS及BRDF/VNDF MIS已验证常量窄镜面、斜视与特定小亮源；下一项实际场景与DI/GI直接天空路径归属。现有开关可显式选择一份直接天空，尚未补secondary环境NEE，动态/任意天空质量仍待验证。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 
