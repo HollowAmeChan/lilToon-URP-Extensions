@@ -51,6 +51,10 @@ RWStructuredBuffer<RTXDI_PackedDIReservoir> _HoRTDIReservoirs;
 #define RTXDI_NEIGHBOR_OFFSETS_BUFFER _HoRTDINeighbors
 
 struct RAB_Material { float3 diffuseAlbedo, specularF0; float roughness; };
+#ifndef HO_RTDI_RGB_IMPORTANCE_ENABLED
+#define HO_RTDI_RGB_IMPORTANCE_ENABLED 1
+#endif
+bool HoDIUsesRgbImportance(RAB_Material material) { return HO_RTDI_RGB_IMPORTANCE_ENABLED != 0 && all(material.specularF0 == 0); }
 struct RAB_Surface { float3 worldPos, normal, geoNormal, viewDir; float viewDepth; RAB_Material material; };
 struct RAB_LightInfo { HoRTDILight data; };
 struct RAB_LightSample { float3 position, radiance; float solidAnglePdf;
@@ -106,7 +110,10 @@ RAB_Surface RAB_GetGBufferSurface(int2 pixel, bool previousFrame)
 }
 bool RAB_AreMaterialsSimilar(RAB_Material a,RAB_Material b)
 {
-    return RTXDI_CompareRelativeDifference(a.roughness,b.roughness,.5)
+    // Tiny F0 differences can switch proposal distributions substantially.
+    // This empirical stability guard supplements the usual BRDF thresholds.
+    bool sameProposal = HoDIUsesRgbImportance(a) == HoDIUsesRgbImportance(b);
+    return sameProposal && RTXDI_CompareRelativeDifference(a.roughness,b.roughness,.5)
         && abs(HoDILuminance(a.specularF0)-HoDILuminance(b.specularF0))<.25
         && abs(HoDILuminance(a.diffuseAlbedo)-HoDILuminance(b.diffuseAlbedo))<.25;
 }
@@ -194,7 +201,7 @@ float RAB_GetLightSampleTargetPdfForSurface(RAB_LightSample sample,RAB_Surface s
     // Preserve the established proposal for surfaces with nonzero F0. With
     // quantized F0 exactly zero, balance RGB error rather than only luminance.
     // This includes the same full BRDF response; Fresnel/Shade are not disabled.
-    float importance = all(surface.material.specularF0 == 0) ? length(max(0, contribution)) : max(0, HoDILuminance(contribution));
+    float importance = HoDIUsesRgbImportance(surface.material) ? length(max(0, contribution)) : max(0, HoDILuminance(contribution));
     return importance/max(sample.solidAnglePdf,1e-12);
 }
 bool RAB_GetConservativeVisibility(RAB_Surface surface,RAB_LightSample sample)

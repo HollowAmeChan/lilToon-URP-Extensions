@@ -447,7 +447,15 @@
 
 **部署、范围与下一项：** 两个Mono release errors0，实际两条全suite及D3D11 inactive通过。立体连续/阶跃frameL1 .179656/.233885、蓝能量.990885/.991820改善，但阶跃变化像素误差约.134→.277329，仍过.35，短期响应待继续改进；单候选无复用Player MSE仍.000526。Roslyn/原SHA/派生check通过，无新增DI shader诊断，GI/合成/native不变。下一项扩大材质/灯/尺寸及GPU成本验证，评审单候选/非零F0颜色误差和短期残影，保留所有core/能量/动态镜面/Player门槛，不扩张通用PT。详见[零F0 RGB采样](../Ho-RTDI-ZeroF0RgbSampling.md)。
 
-## 42. 下一步取舍
+## 42. 相邻策略的材质相容性与尺寸验收
+
+**动手前评审与失败：** 零/非零F0切换不能代表空间边界。新增左右半Quad F0=0/1、布局交换、64/128、none/TS共8配置/32区域，固定60Hz/192+512、CPU解析与缺失绿色通道检查。基线两条30/32，64混合TS右蓝filtered .919141、edge raw/filtered .961776/.929789失败。均匀0/1四区域对照各通过，保留正式失败语义，不放宽门槛。
+
+**实现与结果：** 核对用户RAB/pinned SDK material-similarity hook，在原阈值前限制空间邻居使用同一提案策略，predicate与目标回调共用。是本应用稳定性约束，SDK允许不同目标，不宣称必须相同；边界减少复用机会，不改Shade/参数/资源/射线。两条32/32数值一致，原右蓝恢复.992275、edge .997412，64/128最小blue .966966/.968828，最大frameL1约.12。旧core/16组/primary/动态spec/边界/HDR/环境及时间切换回归通过。
+
+**共享与下一项：** 发现GI bridge直接包含共享DI，41目标变化曾传入GI，补充更正历史说明；本步编译隔离GI目标与新guard，必要GI两条Editor GPU回归通过，不推进新GI。两个Mono release errors0，实际DI两条全suite/D3D11 inactive通过，立体阶跃frame约.234、变化像素.277/.285仍过门槛但需改善；GI未新增Player验收。Roslyn/原SHA/派生check通过，无新增DI/GI shader诊断。过滤owned提交；下一项更多材质/灯/更大尺寸、GPU预算和动态短期响应，不扩张最终合成/PT。详见[策略边界](../Ho-RTDI-ProposalBoundary.md)。
+
+## 43. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

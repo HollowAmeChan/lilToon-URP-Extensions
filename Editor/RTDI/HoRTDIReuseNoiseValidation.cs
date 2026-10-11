@@ -20,6 +20,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         {
             const int frames=256,side=16,pixels=side*side;
             light.color=Color.red;var blue=Point(light.transform.position,Color.blue,light.intensity);
+            if(forceF0Boundary){ValidateF0Boundary(blue);return;}
             if(forceZeroF0Transition){ValidateZeroF0Transition(blue);return;}
             if(forceReuseNoiseStages){ValidateReuseNoiseStages(blue);return;}
             var raw=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));var filtered=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));

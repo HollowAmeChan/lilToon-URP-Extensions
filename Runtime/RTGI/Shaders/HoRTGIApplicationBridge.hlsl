@@ -6,6 +6,9 @@
 // The DI and GI features bind independent resources to these shader-local names.
 // GI only uses DI initial sampling at secondary hits, not DI light history.
 #define HO_RTDI_LIGHT_HISTORY_ENABLED 0
+// Keep the shared light helpers' established GI proposal; DI's new sampling
+// policy and its neighbor-compatibility guard belong to the DI path.
+#define HO_RTDI_RGB_IMPORTANCE_ENABLED 0
 #define _HoRTDIFrame _HoRTGIFrame
 #define _HoRTDISettings _HoRTGISettings
 #define _HoRTDIFlags _HoRTGIFlags
