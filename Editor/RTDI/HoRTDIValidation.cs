@@ -138,6 +138,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(forceBoundaries){ValidateBoundaries();Finish(null);return;}
                 if(forceSpecular){ValidateSpecular();Finish(null);return;}
                 if(forceLocalLighting){ValidateLocalLighting();Finish(null);return;}
+                if(forceReuseNoise){ValidateReuseNoise();Finish(null);return;}
                 if(forceDenoise){ValidateDenoiser();Finish(null);return;}
                 var single=Render();float expected=Expected(light);Near(single.r,expected,"single-light reference",.015f);Near(single.a,1,"receiver valid",.01f);
                 var baseline=Read(target);feature.SetActive(false);RenderCamera();NearRGB(Read(target),baseline,"no automatic camera composite");feature.SetActive(true);

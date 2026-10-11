@@ -413,7 +413,15 @@
 
 **验证与范围：** boundaries/颜色/F0/金属/薄阴影/深度、HDR、环境GGX/MIS、曲面通过；Roslyn及原SHA/派生check通过。两个Mono release errors0，实际D3D12两条原suite/不可读资产Cutout及primary起点通过，立体连续/阶跃noise约.207/.234高于旧值但原gate通过，D3D11 inactive通过，无新增DI shader诊断。未改NV原始源/native/资源/5次调度/目标/Shade/NRD参数/GI；生成器和两份DI派生shader owned过滤提交。下步验证相关样本/材质/灯/尺寸并改善noise，真实motion与GPU预算仍待验，不扩张接收/AC/lilPBR/SSS/PT。详见 [diffuse交换](../Ho-RTDI-DiffuseExchange.md)。
 
-## 38. 下一步取舍
+## 38. 彩灯噪声与复用对照
+
+**动手前评审：** 第37步能量改善但噪声退步，不能盲目抬方差。核对用户RAB/NRD设置及pinned SDK归一化，参考GRIS/MCMC原始研究。新16组对照包含初始1/8、同位置/分离红蓝灯、四种复用，统一种子与192+256帧、CPU解析参考；分别记录RGB/亮度MSE和去每像素时间均值的空间/lag1相关。
+
+**证据与候选：** raw邻域相关很低，而8候选无复用亮度MSE小于5e-9但RGB MSE .077567～.083336，不能只看亮度。生产两条15/16组通过，分离8候选spatial蓝1.051984失败，入口保留false/exit1。全阶段相关上界noise .000170但primary蓝最高1.124730；仅首轮上界noise .000416但蓝1.058485；RGB向量目标同位置新MSE .000163却分离灯蓝最高1.070385。均撤回，不放宽门槛。
+
+**验证与下一项：** 最终只Editor探针/文档，运行时diff为空；恢复后原完整primary qualityPass=true，新16组两条一致且正式失败保留，Roslyn/原SHA/派生check通过。不重复未变的Player/GI。下一项区分颜色噪声与真实彩灯梯度，审计权重对称性，修复需覆盖新16组与原运动/镜面/Player，不为古堡合并天空或通用PT扩张。详见[噪声对照](../Ho-RTDI-ReuseNoise.md)。
+
+## 39. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

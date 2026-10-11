@@ -40,4 +40,4 @@
 
 `RunPrimaryMotionQuality/Compatibility` 现验证完整能量；`RunCutoutMultiQuality`、`RunCutoutSpecularQuality`、`RunCutoutSpecularMotionQuality`及各Compatibility保留原gate。标准Player启动验部署；原源motion专用probe仍独立失败，不混同。
 
-下一项应验证当前方差/固定交换在相关ReSTIR噪声、更多材质/灯分布和分辨率中的表现，并改善额外噪声；已有结果不是整座古堡质量/真实motion/ GPU预算验收。用户原古堡资产、AC/合成、lilPBR/SSS和通用PT框架未扩张。
+第38步的[复用/颜色噪声对照](Ho-RTDI-ReuseNoise.md)已发现额外分离灯spatial-only能量失败，并撤回三个未能同时满足噪声/能量的候选。后续仍需改善颜色噪声、验证更多材质/灯分布与分辨率；已有结果不是整座古堡质量/真实motion/GPU预算验收。用户原古堡资产、AC/合成、lilPBR/SSS和通用PT框架未扩张。
