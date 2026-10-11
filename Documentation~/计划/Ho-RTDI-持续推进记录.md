@@ -327,7 +327,15 @@
 
 **完成前复查：** 旧核心、NRD两条、Cutout两条，材质边界/HDR/环境/VNDF/曲面、必要GI两条回归通过；两个Mono Win64 release构建与实际D3D12原gate/Cutout、D3D11 inactive通过，Roslyn/派生SHA通过。无native/vendor/历史ABI修改，目标继续保持完整DI范围，下一项真实多灯局部质量与可复现GPU成本。详见 [单灯精确路径](../Ho-RTDI-SingleDelta.md)。
 
-## 29. 下一步取舍
+## 29. 真实双灯局部质量与失败基线
+
+**动手前评审：必须验证多灯，不能以单灯替代。** 独立Cutout平面、Near红/Far蓝两非零点灯，各自解析能量与独立阴影参考。64²/896ROI，192预热，静态512帧、相机/caster运动256帧；无/T/S/TS加全透光控制，正式保存JSON/像素均值CSV。核对用户ComputeGradients/ConfidencePass、本地confidence及pinned NRD history/edge契约，不先调参数。
+
+**结果：** 两条raw分通道能量均在3%内，但filtered质量未通过：无复用静态红1.143309/蓝1.028107、meanL1 .129259；静态S/TS约.187941/.190498形状L1；相机TS蓝1.063002；caster每帧Revision重置，均值接近1但frameL1 1.060215。全透光无复用控制通过，TS仍蓝1.063502，问题不局限alpha命中。正式5%分通道能量/15%meanL1/35%frameL1 gate输出qualityPass=false；诊断exit0不冒充通过，实际正式运行exit1确认。Roslyn通过，无生产/Shader/native变化。
+
+**完成后复查与下一项：** 本步交付未达标基线，不宣称问题已修或DI完成。静态颜色/形状偏差与运动历史清空分开定位，先对照输入、confidence、clamping/spatial与世界变化策略，禁止亮度补偿或用单灯收缩验收。无新Feature、不改古堡/接收设计，完整目标继续；GPU计时仍未达有效证据。详见 [双灯质量审计](../Ho-RTDI-MultiLightQuality.md)。
+
+## 30. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
@@ -335,7 +343,7 @@
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
 | NRD 质量与预算 | 当前/历史normal codec已统一，真实GPU history与SB匹配，评分表示差异消除；仍需分别核对运动误差和原平面64帧失败。SB输入及每个DI/GI history各增加1080p约7.91 MiB，下一项转向实际场景/灯域支持，保留既有失败，旧历史预算设置不会自动迁移。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
-| 血月古堡几何支持 | 基础Cutout已接入；合并天空/模型只作支持审计。单灯退化路径已有受控边缘/运动结果，多灯仍ReSTIR/RELAX。下一项真实多灯局部质量和可复现GPU计时；批处理Recorder/RenderDoc尝试尚不足。CPU完整pose仍28.54MiB/服务，不扩张PT。 |
+| 血月古堡几何支持 | 基础Cutout已接入；合并天空/模型只作支持审计。真实双灯局部filtered能量/形状与运动噪声已有正式失败基线，下一项按阴影/全透光、静态/运动控制定位并修复；单灯不替代多灯。GPU计时仍不足，CPU pose28.54MiB/服务，不扩张PT。 |
 | 环境灯 / GI路径归属 | DI HDR天空PDF/RIS及BRDF/VNDF MIS已验证常量窄镜面、斜视与特定小亮源；下一项实际场景与DI/GI直接天空路径归属。现有开关可显式选择一份直接天空，尚未补secondary环境NEE，动态/任意天空质量仍待验证。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

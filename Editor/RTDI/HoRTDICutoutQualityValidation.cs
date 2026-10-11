@@ -21,6 +21,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         }
         private static void ValidateCutoutQuality()
         {
+            if(forceCutoutMultiQuality){ValidateCutoutMultiQuality();return;}
             var raw=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));var filtered=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));
             for(int i=0;i<192;i++)RenderCamera();
             var rows=new System.Text.StringBuilder("mode,frame,x,y,reference,unshadowed,raw,filtered\n");
