@@ -134,6 +134,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         light.enabled=false;for(int i=0;i<4;i++)Render();Near(Read(capture.Raw).r,0,"Player switched-off raw light",.002f);Near(Read(capture.Diffuse).r,0,"Player switched-off filtered ghost",.002f);
         ValidateBoundaries();
         ValidateCutoutMotion();
+        ValidatePrimaryOrigin();
     }
     private void ValidateBoundaries()
     {
@@ -432,6 +433,39 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
             float a=(-.5f-origin[axis])/direction[axis],b=(.5f-origin[axis])/direction[axis];lo=Mathf.Max(lo,Mathf.Min(a,b));hi=Mathf.Min(hi,Mathf.Max(a,b));if(lo>hi)return false;
         }
         return hi>0&&lo<1;
+    }
+    private void ValidatePrimaryOrigin()
+    {
+        var skin=blocker.GetComponent<SkinnedMeshRenderer>();var original=skin.sharedMaterial;var adapter=Instantiate(cutoutMaterial);
+        var raw=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);var filtered=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);
+        try
+        {
+            skin.sharedMaterial=adapter;blocker.SetActive(true);skinnedProbeBone.localPosition=Vector3.right*100;
+            surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetFloat("_Smoothness",.6f);surfaceMaterial.SetFloat("_Metallic",0);
+            receiver.transform.position=Vector3.zero;for(int i=0;i<192;i++)Render();
+            double rawR=0,rawB=0,redReference=0,blueReference=0,error=0;
+            for(int frame=0;frame<256;frame++)
+            {
+                float z=.025f*Mathf.Sin(frame*.11f);receiver.transform.position=Vector3.forward*z;Render();ReadInto(capture.RawSpecular,raw);ReadInto(capture.Specular,filtered);
+                for(int y=24;y<40;y++)for(int x=24;x<40;x++)
+                {
+                    float r=PrimarySpecularReference(light,x,y,z),b=PrimarySpecularReference(blue,x,y,z);var a=raw.GetPixel(x,y);var f=filtered.GetPixel(x,y);
+                    redReference+=r;blueReference+=b;rawR+=a.r;rawB+=a.b;error+=Math.Abs(f.r-r)+Math.Abs(f.b-b);
+                }
+            }
+            double l1=error/(redReference+blueReference);
+            Debug.Log($"[HoRTDIPlayerProbe] PRIMARY_ORIGIN rawR={rawR/redReference:F6} rawB={rawB/blueReference:F6} specFrameL1={l1:F6}; origin-specific gate");
+            Require(Math.Abs(rawR/redReference-1)<.03&&Math.Abs(rawB/blueReference-1)<.03&&l1<.15,"Player moving-primary origin regression");
+        }
+        finally{receiver.transform.position=Vector3.zero;skin.sharedMaterial=original;blocker.SetActive(false);skinnedProbeBone.localPosition=Vector3.zero;Destroy(adapter);Destroy(raw);Destroy(filtered);}
+    }
+    private float PrimarySpecularReference(Light source,int x,int y,float z)
+    {
+        var ray=probeCamera.ViewportPointToRay(new Vector3((x+.5f)/64,(y+.5f)/64,0));var p=ray.origin+ray.direction*((z-ray.origin.z)/ray.direction.z);
+        var delta=source.transform.position-p;double d2=delta.sqrMagnitude;var L=delta.normalized;var V=-probeCamera.transform.forward;var H=(V+L).normalized;
+        double nl=Math.Max(0,-L.z),nv=Math.Max(0,-V.z),nh=Math.Max(0,-H.z),vh=Math.Max(0,Vector3.Dot(V,H)),a2=Math.Pow(102.0/255,4);
+        double D=a2/(Math.PI*Math.Pow(nh*nh*a2+1-nh*nh,2)),G=2*nl/(nv*Math.Sqrt(a2+(1-a2)*nl*nl)+nl*Math.Sqrt(a2+(1-a2)*nv*nv)),F=10.0/255+(1-10.0/255)*Math.Pow(1-vh,5),fade=Math.Max(0,1-Math.Pow(d2/(source.range*source.range),2));
+        return(float)(D*G*F/4*source.intensity/d2*fade*fade);
     }
     private void Render(){VolumeManager.instance.Update(probeCamera.transform,-1);RenderPipeline.SubmitRenderRequest(probeCamera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
     private float Expected(int x,int y)

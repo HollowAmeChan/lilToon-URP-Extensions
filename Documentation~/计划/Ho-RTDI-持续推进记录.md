@@ -379,7 +379,15 @@
 
 **验证、范围与下一项：** Runtime/Editor Roslyn通过，旧diffuse八组正式回归通过；本步只Editor验证/文档，生产、shader/native/GI与Player模板均未变，不重做无关构建。复查信号选择/独立GGX和alpha参考、原gate/失败语义，过滤提交owned文件。接下来单独审计移动primary：当前IN_MV黑纹理/worldMotion只表示零对象运动，用户参考和NRD契约需要对应表面运动；已找到HoURP17 motionVectorColor与lilToon MotionVectors pass，先检查覆盖/时机再直接消费，不引入AC复制/新Feature。详见 [Cutout镜面](../Ho-RTDI-CutoutSpecular.md)。
 
-## 34. 下一步取舍
+## 34. 移动主表面梯度起点修正与完整失败基线
+
+**动手前评审：** caster通过不能代表primary运动。保持红/蓝灯及远处Cutout稳定，移动实际Quad深度，参考用当前平面交点+Lambert/GGX，不沿用z=0。用户FullSample旧sample surface加worldMotion再求当前TLAS；本地旧worldPos可能在移动表面后方，假自遮挡。真实motion仍未接，先修正已重投影匹配表面的射线起点。
+
+**实现与证据：** Native gradient从匹配current.worldPos重求旧reservoir/UV/权重，4行注释/赋值，无新资源/参数。64² central256、192+256帧，static/smoothZ/stepZ两lobe。平滑diff/spec frameL1 .457433/.503624→.093396/.049972；阶跃.134944/.305553→.105428/.051900，raw全3%内，两条一致。但static diffuse红/蓝.946252/1.086598，smooth .940400/1.108769，仍5%gate失败；静态偏差独立于运动。originPass=true/qualityPass=false分别保存，完整入口实际exit1，不用起点15%noise gate替代完整质量。
+
+**验证、范围与下一项：** 起点入口两条通过，原CPU native gradient oracle两条与Cutout diffuse/specular八组通过；Roslyn/派生SHA通过。两个Mono release errors0、实际D3D12 EXE两条原gate与primary spec起点raw .998981/1.012912、frameL1 .047741通过，D3D11 inactive通过；无新增DI Shader诊断。无共享GI变化，不重复GI。复查源位置修正的近邻对应限制和完整false，过滤提交本步owned代码/文档。下步验证URP/lilToon已有motion的真实帧时机/覆盖/符号和当前主表面关系，直接借用/转换不走AC；静态局部diffuse能量偏差另查，不靠运动向量消除或放宽gate。详见 [移动主表面](../Ho-RTDI-PrimaryMotion.md)。
+
+## 35. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

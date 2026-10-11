@@ -57,6 +57,10 @@ void VisibilityGradients()
         int2 old=int2(floor(uv*_HoRTDIFrame.xy));if(any(old<0)||any(old>=(int2)_HoRTDIFrame.xy))continue;
         RAB_Surface surface=RAB_GetGBufferSurface(old,true);
         if(!RAB_IsSurfaceValid(surface)||dot(current.normal,surface.normal)<.9||distance(current.worldPos,surface.worldPos)>.02*max(1,current.viewDepth))continue;
+        // Reprojected correspondence: move the old shading sample to the
+        // current surface before querying the current TLAS. An old origin can
+        // lie behind a moving receiver and falsely count its own geometry.
+        surface.worldPos=current.worldPos;
         RTXDI_DIReservoir reservoir=RTXDI_LoadDIReservoir(layout,old,0);
         float2 previous=_HoRTDIPreviousLuminance.Load(int3(old,0)),traced=0;
         int mapped=RTXDI_IsValidDIReservoir(reservoir)?RAB_TranslateLightIndex(RTXDI_GetDIReservoirLightIndex(reservoir),false):-1;
