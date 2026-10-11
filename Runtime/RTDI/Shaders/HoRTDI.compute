@@ -44,6 +44,8 @@ Texture2D<float4> _HoRTDINrdHistorySpec,_HoRTDINrdHistoryDiff,_HoRTDINrdHistoryS
 
 #endif
 RWTexture2D<float4> _HoRTDIDiffuse, _HoRTDISpecular;
+Texture2D<float> _HoRTDIFinalVisibility;
+int _HoRTDIFinalVisibilityEnabled;
 Texture2D _HoRTDIPdf;
 RWTexture2D<float> _HoRTDIPdfOutput;
 int _HoRTDIPdfSize;
@@ -246,7 +248,7 @@ void HoDIShade(uint3 id,out uint peak)
     if(RAB_IsSurfaceValid(surface)&&RTXDI_IsValidDIReservoir(reservoir))
     {
         RAB_LightSample sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(reservoir),false),surface,RTXDI_GetDIReservoirSampleUV(reservoir));
-        float visibility=RAB_GetConservativeVisibility(surface,sample)?1:0;
+        float visibility=_HoRTDIFinalVisibilityEnabled!=0?_HoRTDIFinalVisibility.Load(int3(id.xy,0)):(RAB_GetConservativeVisibility(surface,sample)?1:0);
         RTXDI_StoreVisibilityInDIReservoir(reservoir,visibility.xxx,false);
         float3 radiance=sample.radiance*visibility*RTXDI_GetDIReservoirInvPdf(reservoir)/max(sample.solidAnglePdf,1e-12);
         float3 L;float distance;RAB_GetLightDirDistance(surface,sample,L,distance);

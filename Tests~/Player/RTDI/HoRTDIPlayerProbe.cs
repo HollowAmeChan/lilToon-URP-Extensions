@@ -19,6 +19,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     public GameObject blocker;
     public GameObject receiver;
     public Material surfaceMaterial;
+    public Material cutoutMaterial;
     public VolumeProfile profile;
     private RenderTexture target;
     private bool unsupported;
@@ -70,6 +71,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         Near(skinnedUnblocked,Expected(32,32),"Player skinned caster moved away",.015f);
         skinnedProbeBone.localPosition=Vector3.zero;Render();Near(Read(capture.Raw).r,0,"Player skinned caster returned",.002f);
         Debug.Log($"[HoRTDIPlayerProbe] SKIN shadow={skinnedShadow:F6} unblocked={skinnedUnblocked:F6}");blocker.SetActive(false);
+        ValidateCutoutVisibility();
         // A hidden near lamp must not discard a visible far lamp when RIS
         // considers multiple candidates. Test the actual serialized DXR path.
         var oldBluePosition=blue.transform.position;float oldBlueRange=blue.range,oldBlueIntensity=blue.intensity;var oldBlueColor=blue.color;
@@ -351,6 +353,30 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         for(int i=0;i<weights.Length;i++)weights[i]=new BoneWeight{boneIndex0=0,weight0=1};skinnedProbeMesh.boneWeights=weights;
         var skin=blocker.AddComponent<SkinnedMeshRenderer>();skin.sharedMesh=skinnedProbeMesh;skin.sharedMaterial=material;
         skin.bones=new[]{skinnedProbeBone};skin.rootBone=skinnedProbeBone;
+    }
+    private void ValidateCutoutVisibility()
+    {
+        Require(cutoutMaterial!=null,"Serialized Player cutout material missing");
+        var skin=blocker.GetComponent<SkinnedMeshRenderer>();var original=skin.sharedMaterial;
+        var adapter=Instantiate(cutoutMaterial);
+        var transparent=new Texture2D(4,4,TextureFormat.RGBA32,false,true);var solid=new Texture2D(4,4,TextureFormat.RGBA32,false,true);
+        var data=new Color[16];for(int i=0;i<data.Length;i++)data[i]=new Color(1,1,1,0);transparent.SetPixels(data);transparent.Apply(false,true);
+        for(int i=0;i<data.Length;i++)data[i]=Color.white;solid.SetPixels(data);solid.Apply(false,true);
+        skinnedProbeMesh.UploadMeshData(true);skin.sharedMaterial=adapter;blocker.SetActive(true);
+        try
+        {
+            adapter.SetTexture("_MainTex",transparent);adapter.SetFloat("_Cutoff",.5f);adapter.SetColor("_Color",Color.white);Render();
+            float open=Read(capture.Raw).r;Near(open,Expected(32,32),"Player non-readable cutout transmission",.015f);
+            adapter.SetTexture("_MainTex",solid);Render();float shadow=Read(capture.Raw).r;Near(shadow,0,"Player cutout solid shadow",.002f);
+            adapter.SetColor("_Color",new Color(1,1,1,.4f));Render();Near(Read(capture.Raw).r,Expected(32,32),"Player color alpha/cutoff",.015f);
+            adapter.SetColor("_Color",Color.white);skinnedProbeBone.localPosition=Vector3.right*100;Render();Near(Read(capture.Raw).r,Expected(32,32),"Player cutout bone motion",.015f);
+            skinnedProbeBone.localPosition=Vector3.zero;Render();Near(Read(capture.Raw).r,0,"Player cutout bone return",.002f);
+            Debug.Log($"[HoRTDIPlayerProbe] CUTOUT shadow={shadow:F6} open={open:F6} non-readable source mesh/textures");
+        }
+        finally
+        {
+            skin.sharedMaterial=original;blocker.SetActive(false);Render();Destroy(adapter);Destroy(transparent);Destroy(solid);
+        }
     }
     private void Render(){VolumeManager.instance.Update(probeCamera.transform,-1);RenderPipeline.SubmitRenderRequest(probeCamera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
     private float Expected(int x,int y)

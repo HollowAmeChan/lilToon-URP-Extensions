@@ -1,0 +1,29 @@
+#pragma max_recursion_depth 1
+#define HO_RTDI_ENVIRONMENT_ENABLED 1
+#include "HoRTDIApplicationBridge.hlsl"
+#include "../ThirdParty/RTXDI/DI/ReservoirStorage.hlsl"
+#include "HoRTDIVisibilityPayload.hlsl"
+RWTexture2D<float> _HoRTDIFinalVisibility;
+
+[shader("miss")]
+void HoRTDIVisibilityMiss(inout HoRTDIVisibilityPayload payload : SV_RayPayload) {payload.blocked=0;}
+
+[shader("raygeneration")]
+void FinalVisibility()
+{
+    uint2 pixel=DispatchRaysIndex().xy;
+    _HoRTDIFinalVisibility[pixel]=0;
+    RAB_Surface surface=RAB_GetGBufferSurface(pixel,false);
+    RTXDI_ReservoirBufferParameters layout=(RTXDI_ReservoirBufferParameters)0;
+    layout.reservoirBlockRowPitch=(uint)_HoRTDIReservoirLayout.x;layout.reservoirArrayPitch=(uint)_HoRTDIReservoirLayout.y;
+    RTXDI_DIReservoir reservoir=RTXDI_LoadDIReservoir(layout,pixel,1);
+    if(!RAB_IsSurfaceValid(surface)||!RTXDI_IsValidDIReservoir(reservoir))return;
+    RAB_LightSample sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(reservoir),false),surface,RTXDI_GetDIReservoirSampleUV(reservoir));
+    float3 direction;float distance;RAB_GetLightDirDistance(surface,sample,direction,distance);
+    float bias=_HoRTDISettings.w;
+    if(distance<=bias*2||!all(isfinite(direction)))return;
+    RayDesc ray;ray.Origin=surface.worldPos;ray.Direction=direction;ray.TMin=bias;ray.TMax=distance-bias;
+    HoRTDIVisibilityPayload payload=(HoRTDIVisibilityPayload)0;
+    TraceRay(_HoRTSceneAccelerationStructure,RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH|RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES,255,0,1,0,ray,payload);
+    _HoRTDIFinalVisibility[pixel]=payload.blocked==0?1:0;
+}

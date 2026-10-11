@@ -27,6 +27,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 var feature=ScriptableObject.CreateInstance<HoRTDIRendererFeature>();feature.name="Legacy DI";feature.Settings.initialSamples=7;
                 AssetDatabase.AddObjectToAsset(feature,renderer);renderer.rendererFeatures.Add(feature);EditorUtility.SetDirty(renderer);
                 var serialized=new SerializedObject(feature);serialized.FindProperty("shader").objectReferenceValue=null;
+                serialized.FindProperty("finalVisibilityShader").objectReferenceValue=null;serialized.FindProperty("visibilityMaterialShader").objectReferenceValue=null;
                 serialized.FindProperty("debugShader").objectReferenceValue=null;serialized.FindProperty("debugOverlayShader").objectReferenceValue=null;var library=serialized.FindProperty("nrdShaders");library.arraySize=index==0?0:2;
                 if(index==1)
                 {
@@ -67,6 +68,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         {
             string text=File.ReadAllText(PathFor(index));
             Require(text.Contains("guid: "+AssetDatabase.AssetPathToGUID(ShaderRoot+"HoRTDI.compute")),"DI shader missing from disk");
+            Require(text.Contains("guid: "+AssetDatabase.AssetPathToGUID(ShaderRoot+"HoRTDIFinalVisibility.raytrace")),"DI final visibility shader missing from disk");
+            Require(text.Contains("guid: "+AssetDatabase.AssetPathToGUID(ShaderRoot+"HoRTDIVisibilityMaterial.shader")),"DI visibility material shader missing from disk");
             Require(text.Contains("guid: "+AssetDatabase.AssetPathToGUID(ShaderRoot+"HoRTDIDebug.shader")),"Debug shader missing from disk");
             Require(text.Contains("guid: "+AssetDatabase.AssetPathToGUID("Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Debug/Shaders/HoDebugGridOverlay.shader")),"Debug grid shader missing from disk");
             string library=Regex.Match(text,@"(?m)^  nrdShaders:\r?\n(?<refs>(?:  - [^\r\n]*\r?\n){15})").Groups["refs"].Value;

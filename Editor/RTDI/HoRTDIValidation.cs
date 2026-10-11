@@ -112,6 +112,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 blocker=Keep(GameObject.CreatePrimitive(PrimitiveType.Cube));blocker.transform.position=new Vector3(.75f,0,-.5f);blocker.transform.localScale=new Vector3(.4f,.4f,.2f);
                 blocker.GetComponent<Renderer>().sharedMaterial=Mat("Universal Render Pipeline/Unlit");blocker.SetActive(false);
                 if (forceSkinBlocker) SetupSkinBlocker();
+                if (forceCutout) SetupCutout();
                 EditorApplication.update+=Tick;
             }
             catch(Exception error){Finish(error);}
@@ -126,6 +127,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     Debug.Log("[HoRTDIValidation] PASS unsupported platform: "+feature.Status);Finish(null);return;
                 }
                 if(++tick<3){Render();return;}
+                if(forceCutout){ValidateCutout();Finish(null);return;}
                 if(forceBudget){ValidateBudget();Finish(null);return;}
                 if(forceQuality){ValidateQuality();Finish(null);return;}
                 if(forceTiming){ValidateTiming();Finish(null);return;}

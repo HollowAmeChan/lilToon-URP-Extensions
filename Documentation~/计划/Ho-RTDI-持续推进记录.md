@@ -305,7 +305,19 @@
 
 **复查与成本：** 实际首次CPU登记约22.75..77.29ms，64次静止平均.038.. .041ms且0额外Bake；自有完整Mesh计数29924936B≈28.54MiB，不含AS/驱动或GPU帧耗时。DI/GI独立HoRTScene会各持一份，不能宣称廉价动态角色或时域运动支持。复现copy脚本与隔离审计保留，源资产SHA复核无变动，没有修改源场景/renderer。下一项优先正确lilToon Cutout候选UV/alpha/cutoff；它关系到大多数剩余几何，优先于更多灯型/ReGIR/NRD参数。详见 [场景支持与验收](../Ho-RTDI-SceneSupport.md)。
 
-## 27. 下一步取舍
+## 27. lilToon Cutout 原生最终可见性
+
+**动手前评审：应补最终裁切，不扩张PT。** 用户参考anyhit与官方RTXDI桥允许保守可见性跳过alpha-test、最终再求真实遮挡。古堡12材质均无多主纹理/视差/dissolve，基础alpha域足够推进。用户同时指出主模型含球形天空壳且未拆分，改用可控小场景定量验收，古堡仅做资产覆盖，隔离审计允许临时排除天空材质；不编辑/拆分/保存源资产。
+
+**实现：** DI显式提供已知Cutout predicate和私有原生命中Material，非opaque登记；默认HoRTScene/GI仍opaque。inline候选/时空校正/BRDF提案统一CULL_NON_OPAQUE，Spatial后、Shade前原生最终射线读取同一reservoir/RAB方向距离与真实Mesh UV、借用源Texture2D，匹配Color.a/cutoff/AlphaMask/UV/纹理采样，透明IgnoreHit。Shade/NRD/历史使用实际最终visibility，SDK/BRDF/NRD不变。Opaque共用私有Material，未另复制纹理/UV，无新Feature/native接口，alpha参数/纹理内容变更清历史。
+
+**验证：** 两条64²硬件路径通过常量/Color/cutoff相等、四mask及scale/value、纹理revision、骨骼/生命周期与NRD全遮挡/透光。独立CPU几何+采样oracle的8组transform/rotation/Point/Bilinear/混合wrap有4835遮挡+1335透光像素通过，102边界明确跳过；初次参考float共边漏两面已用临时GPU数据确认并修参考容差，诊断代码全部撤去。双灯仅Near遮挡、512帧×无/T/S/TS能量比例.996001/1.005337/.996663/1.003256，两条3%gate通过；Spot/Directional、独立环境壳shadow0/open≈(1,.5,.25)通过。古堡全登记16/12Cutout、排除天空后15/12，前者0排除、后者单一测试天空排除，不是完整画面/漏光结论。
+
+**部署与复查：** 三进程旧renderer资源补引用/保存/重载通过，两个Win64 Mono release与实际D3D12 EXE使用non-readable mesh/texture通过Cutoutshadow0/open≈.222046与骨骼更新，旧NRD/HDR/环境/VNDF/曲面等gate通过；D3D11 inactive、旧DI/NRD两条、共享GI两条及rigid/skin求交通过，Roslyn/派生SHA通过，无新增本步Shader诊断。源hash复核发现场景层级/Volume有外部更新，模型/材质/纹理等其余清单一致，保留隔离快照且未回写源工程；工作区过滤与语义边界复核，不宣称原平面短运动失败已修。
+
+**成本与下一项：** 有Cutout时逐相机一张R8 visibility，720p/1080p约.879/1.978MiB、R32回退四倍。最终射线替代原Shade inline终测，不是额外复制天空/GBuffer；新增native dispatch/anyhit/SBT和更多AS几何的实际GPU成本未量化。仅LOD0，复杂alpha/PB/动态UV/任意变形仍排除，GI Cutout secondary未扩张。下一项先在受控局部场景评审边缘、运动/历史与成本，再据证据优化；古堡合并天空不当作调NRD/采样依据。详见 [Cutout](../Ho-RTDI-Cutout.md)。
+
+## 28. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
@@ -313,7 +325,7 @@
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
 | NRD 质量与预算 | 当前/历史normal codec已统一，真实GPU history与SB匹配，评分表示差异消除；仍需分别核对运动误差和原平面64帧失败。SB输入及每个DI/GI history各增加1080p约7.91 MiB，下一项转向实际场景/灯域支持，保留既有失败，旧历史预算设置不会自动迁移。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
-| 血月古堡几何支持 | 不透明skin当前姿态已接入并验证缓存/更新，CPU快照有28.54MiB/服务的实际成本。下步先做lilToon Cutout世界可见性，12submesh仍排除；不得把裁切面整体当opaque。按实测再评估GPU蒙皮输入与快照共享，不扩张Native/PT框架。 |
+| 血月古堡几何支持 | 基础Cutout最终可见性已验证，两条路径与实际Player通过。古堡全登记16/12Cutout、隔离排天空后15/12；它是合并天空/模型的特殊资产，不能作整体阴影质量基准。下一项受控局部边缘、运动与GPU成本；按证据评估GPU蒙皮/快照共享，CPU完整pose仍28.54MiB/服务。 |
 | 环境灯 / GI路径归属 | DI HDR天空PDF/RIS及BRDF/VNDF MIS已验证常量窄镜面、斜视与特定小亮源；下一项实际场景与DI/GI直接天空路径归属。现有开关可显式选择一份直接天空，尚未补secondary环境NEE，动态/任意天空质量仍待验证。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

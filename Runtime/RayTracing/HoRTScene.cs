@@ -27,6 +27,7 @@ namespace lilToon.URP.Extensions.RayTracing
         private readonly HashSet<int> seenSkinned = new();
         private readonly List<int> removedSkinned = new();
         private readonly Func<Material, Material> secondaryMaterial;
+        private readonly Func<Material, bool> supportsCutout;
         internal readonly List<string> Rejections = new();
         private RayTracingAccelerationStructure acceleration;
         private GraphicsBuffer instanceBuffer;
@@ -37,6 +38,7 @@ namespace lilToon.URP.Extensions.RayTracing
         internal uint Revision { get; private set; } = 1;
         internal uint BuildCount { get; private set; }
         internal int InstanceCount => entries.Count;
+        internal int CutoutCount { get; private set; }
         internal int SkinnedMeshCount => skinnedMeshes.Count;
         internal uint SkinnedBakeCount { get; private set; }
         internal bool IsAvailable => !disposed && acceleration != null;
@@ -60,6 +62,7 @@ namespace lilToon.URP.Extensions.RayTracing
             internal Material hitMaterial;
             internal uint identity, materialId, triangles, mask;
             internal int submesh, handle;
+            internal bool cutout;
             internal Matrix4x4 matrix;
         }
 
@@ -74,9 +77,10 @@ namespace lilToon.URP.Extensions.RayTracing
             { this.identity = identity; this.materialId = materialId; this.triangleCount = triangleCount; this.renderer = renderer; this.mesh = mesh; this.material = material; this.submesh = submesh; }
         }
 
-        internal HoRTScene(Func<Material, Material> secondaryMaterial = null)
+        internal HoRTScene(Func<Material, Material> secondaryMaterial = null, Func<Material, bool> supportsCutout = null)
         {
             this.secondaryMaterial = secondaryMaterial;
+            this.supportsCutout = supportsCutout;
             if (!IsSupported) return;
             acceleration = new RayTracingAccelerationStructure(new RayTracingAccelerationStructure.Settings
             {
@@ -117,7 +121,7 @@ namespace lilToon.URP.Extensions.RayTracing
                     if (!ValidTransform(renderer.localToWorldMatrix))
                     { Rejections.Add(renderer.name + ": non-finite or singular transform."); continue; }
                     bool hasOpaque = false;
-                    for (int i = 0; i < materials.Length; ++i) hasOpaque |= Opaque(materials[i]);
+                    for (int i = 0; i < materials.Length; ++i) hasOpaque |= Opaque(materials[i]) || (supportsCutout != null && supportsCutout(materials[i]));
                     if (hasOpaque)
                     {
                         int id = skin.GetInstanceID();
@@ -134,14 +138,17 @@ namespace lilToon.URP.Extensions.RayTracing
                 for (int submesh = 0; submesh < mesh.subMeshCount; ++submesh)
                 {
                     var material = materials[submesh]; var descriptor = mesh.GetSubMesh(submesh);
-                    if (!Opaque(material) || mesh.GetTopology(submesh) != MeshTopology.Triangles || descriptor.indexCount == 0 || descriptor.indexCount % 3 != 0)
+                    bool cutout = !Opaque(material) && supportsCutout != null && supportsCutout(material);
+                    if ((!Opaque(material) && !cutout) || mesh.GetTopology(submesh) != MeshTopology.Triangles || descriptor.indexCount == 0 || descriptor.indexCount % 3 != 0)
                     { Rejections.Add(renderer.name + " submesh " + submesh + ": requires opaque triangle geometry and a material."); continue; }
+                    if (cutout && (renderer.HasPropertyBlock() || !mesh.HasVertexAttribute(VertexAttribute.TexCoord0) || mesh.GetVertexAttributeDimension(VertexAttribute.TexCoord0) < 2))
+                    { Rejections.Add(renderer.name + " submesh " + submesh + ": cutout requires UV0 and no material property block."); continue; }
                     var key = (renderer.GetInstanceID(), submesh); seen.Add(key);
                     var hitMaterial = secondaryMaterial?.Invoke(material);
                     var matrix = renderer.localToWorldMatrix; uint triangles = (uint)(descriptor.indexCount / 3);
                     if (!ValidTransform(matrix))
                     { seen.Remove(key); Rejections.Add(renderer.name + ": non-finite or singular transform."); continue; }
-                    if (entries.TryGetValue(key, out var entry) && (!ReferenceEquals(entry.renderer, renderer) || !ReferenceEquals(entry.mesh, mesh) || entry.triangles != triangles || !ReferenceEquals(entry.hitMaterial, hitMaterial)))
+                    if (entries.TryGetValue(key, out var entry) && (!ReferenceEquals(entry.renderer, renderer) || !ReferenceEquals(entry.mesh, mesh) || entry.triangles != triangles || !ReferenceEquals(entry.hitMaterial, hitMaterial) || entry.cutout != cutout))
                     { Remove(key); entry = null; changed = true; }
                     if (entry == null)
                     {
@@ -153,13 +160,13 @@ namespace lilToon.URP.Extensions.RayTracing
                             mask = mask, enableTriangleCulling = false,
                             // Allow explicit geometry refresh instead of reusing a static BLAS after a Mesh edit.
                             rayTracingMode = UnityEngine.Experimental.Rendering.RayTracingMode.DynamicGeometryManualUpdate,
-                            subMeshFlags = RayTracingSubMeshFlags.Enabled | RayTracingSubMeshFlags.ClosestHitOnly
+                            subMeshFlags = cutout ? RayTracingSubMeshFlags.Enabled : RayTracingSubMeshFlags.Enabled | RayTracingSubMeshFlags.ClosestHitOnly
                         };
                         int handle = acceleration.AddInstance(config, matrix, null, identity);
                         // Native instance handles are opaque signed tokens, not positive array indices.
                         acceleration.UpdateInstanceGeometry(handle);
                         entry = new Entry { renderer = renderer, mesh = mesh, material = material, submesh = submesh,
-                            identity = identity, handle = handle, matrix = matrix, triangles = triangles, mask = mask, materialId = MaterialIdentity(material), hitMaterial = hitMaterial };
+                            identity = identity, handle = handle, matrix = matrix, triangles = triangles, mask = mask, materialId = MaterialIdentity(material), hitMaterial = hitMaterial, cutout = cutout };
                         entries.Add(key, entry); identities.Add(identity, entry); asDirty = metadataDirty = true; changed = true;
                     }
                     else
@@ -175,6 +182,7 @@ namespace lilToon.URP.Extensions.RayTracing
             foreach (var key in removed) { Remove(key); changed = true; }
             removedSkinned.Clear(); foreach (var pair in skinnedMeshes) if (!seenSkinned.Contains(pair.Key)) removedSkinned.Add(pair.Key);
             foreach (int id in removedSkinned) { skinnedMeshes[id].Dispose(); skinnedMeshes.Remove(id); }
+            CutoutCount = 0; foreach (var entry in entries.Values) if (entry.cutout) CutoutCount++;
             if (changed) { unchecked { Revision++; } EnsureMetadataCapacity(); }
         }
 
@@ -209,6 +217,7 @@ namespace lilToon.URP.Extensions.RayTracing
             // Explicit full re-registration keeps old primitive IDs from referring to edited topology.
             if (!IsAvailable) return;
             acceleration.ClearInstances(); entries.Clear(); identities.Clear();
+            CutoutCount = 0;
             foreach (var snapshot in skinnedMeshes.Values) snapshot.Dispose(); skinnedMeshes.Clear();
             asDirty = metadataDirty = true; unchecked { Revision++; }
         }

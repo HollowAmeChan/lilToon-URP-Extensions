@@ -19,10 +19,13 @@ namespace lilToon.URP.Extensions.RTDI
     {
         [SerializeField] private HoRTDISettings settings=new HoRTDISettings();
         [SerializeField] private ComputeShader shader;
+        [SerializeField] private RayTracingShader finalVisibilityShader;
+        [SerializeField] private Shader visibilityMaterialShader;
         [SerializeField] private ComputeShader[] nrdShaders;
         [SerializeField] private Shader debugShader;
         [SerializeField] private Shader debugOverlayShader;
         private HoRTScene scene;
+        private HoRTDIVisibilityMaterials visibilityMaterials;
         private readonly Dictionary<Camera,HoRTDIContext> contexts=new();
         private readonly List<Camera> dead=new();
         private HoRTDIPass pass;
@@ -34,10 +37,13 @@ namespace lilToon.URP.Extensions.RTDI
         internal HoRTDIContext LastContext {get;private set;}
         public override void Create()
         {
-            DisposeResources();scene=new HoRTScene();pass=new HoRTDIPass();debugPass=new HoRTDIDebugPass();
+            DisposeResources();pass=new HoRTDIPass();debugPass=new HoRTDIDebugPass();
             #if UNITY_EDITOR
             EnsureEditorShaderReferences();
             #endif
+            bool alpha=SystemInfo.supportsRayTracing&&finalVisibilityShader!=null&&visibilityMaterialShader!=null;
+            if(alpha)visibilityMaterials=new HoRTDIVisibilityMaterials(visibilityMaterialShader);
+            scene=alpha?new HoRTScene(visibilityMaterials.Resolve,HoRTDIVisibilityMaterials.SupportsCutout):new HoRTScene();
             if(!registered){RenderPipelineManager.beginCameraRendering+=ResetCamera;registered=true;}
         }
         #if UNITY_EDITOR
@@ -47,6 +53,8 @@ namespace lilToon.URP.Extensions.RTDI
         {
             const string root="Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/";
             bool changed=LoadMissing(ref shader,root+"HoRTDI.compute");
+            changed|=LoadMissing(ref finalVisibilityShader,root+"HoRTDIFinalVisibility.raytrace");
+            changed|=LoadMissing(ref visibilityMaterialShader,root+"HoRTDIVisibilityMaterial.shader");
             changed|=LoadMissing(ref debugShader,root+"HoRTDIDebug.shader");
             changed|=LoadMissing(ref debugOverlayShader,"Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Debug/Shaders/HoDebugGridOverlay.shader");
             if(nrdShaders==null||nrdShaders.Length!=HoRTDINrdManifest.Identifiers.Length)
@@ -83,8 +91,8 @@ namespace lilToon.URP.Extensions.RTDI
             foreach(var key in dead){contexts[key].Dispose();contexts.Remove(key);}
             var renderers=UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);var geometry=new List<Renderer>();
             foreach(var item in renderers)if((settings.geometryLayers.value&(1<<item.gameObject.layer))!=0)geometry.Add(item);
-            scene.Synchronize(geometry);
-            var lightList=new List<AnalyticLight>();var lightKeys=new List<Light>();int signature=settings.initialSamples.GetHashCode()^settings.rayBias.GetHashCode()^((int)settings.localSampling*397);int excludedLights=0;
+            visibilityMaterials?.BeginFrame();scene.Synchronize(geometry);visibilityMaterials?.EndFrame();
+            var lightList=new List<AnalyticLight>();var lightKeys=new List<Light>();int signature=settings.initialSamples.GetHashCode()^settings.rayBias.GetHashCode()^((int)settings.localSampling*397)^(visibilityMaterials?.Signature??0);int excludedLights=0;
             var infiniteLights=new List<AnalyticLight>();var infiniteKeys=new List<Light>();
             foreach(var light in UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.InstanceID))
             {
@@ -115,11 +123,12 @@ namespace lilToon.URP.Extensions.RTDI
             if(!contexts.TryGetValue(camera,out var context)){context=new HoRTDIContext();contexts.Add(camera,context);}
             var descriptor=data.cameraData.cameraTargetDescriptor;
             context.Prepare(descriptor.width,descriptor.height,lightList.Count,format);LastContext=context;
+            context.PrepareFinalVisibility(scene.CutoutCount>0);
             context.PreparePower(localCount,settings.localSampling==HoRTDILocalSampling.Power);
             context.PrepareDenoiser(settings.denoise,nrdShaders);
             HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTDI primary normals",System.Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.HighPrecisionSurfaceNormal);
             var lightData=lightList.Count>0?lightList.ToArray():new AnalyticLight[1];
-            pass.Setup(context,scene,shader,settings,lightData,lightKeys.ToArray(),lightList.Count,localCount,signature);
+            pass.Setup(context,scene,shader,finalVisibilityShader,settings,lightData,lightKeys.ToArray(),lightList.Count,localCount,signature);
             renderer.EnqueuePass(pass);Status=$"RTXDI DI：{(context.powerSampling?"功率":"均匀")} / {localCount} 局部 / {infiniteLights.Count} 方向灯 / {scene.InstanceCount} RT submesh / 排除 {excludedLights} 灯、{scene.Rejections.Count} 几何项";
             if(settings.denoise)Status+=" / "+context.nrdStatus;
             if(volume!=null&&volume.debugMode.value!=HoRTDIDebugMode.Off&&(camera.cameraType==CameraType.SceneView?volume.debugInSceneView.value:volume.debugInGameView.value))
@@ -130,7 +139,7 @@ namespace lilToon.URP.Extensions.RTDI
             }
         }
         private void DisposeResources()
-        {HoAttributeCompositeConsumerRegistry.Remove(this);foreach(var context in contexts.Values)context.Dispose();contexts.Clear();scene?.Dispose();scene=null;debugPass?.ReleaseDebugResources();CoreUtils.Destroy(debugMaterial);debugMaterial=null;LastContext=null;}
+        {HoAttributeCompositeConsumerRegistry.Remove(this);foreach(var context in contexts.Values)context.Dispose();contexts.Clear();scene?.Dispose();scene=null;visibilityMaterials?.Dispose();visibilityMaterials=null;debugPass?.ReleaseDebugResources();CoreUtils.Destroy(debugMaterial);debugMaterial=null;LastContext=null;}
         protected override void Dispose(bool disposing)
         {if(registered)RenderPipelineManager.beginCameraRendering-=ResetCamera;registered=false;ResetCamera(default,null);DisposeResources();}
 
@@ -138,14 +147,16 @@ namespace lilToon.URP.Extensions.RTDI
         {
             private static readonly string[] ReferenceStages={"BuildPowerPdf","Presample","BuildEnvironmentPdf","PresampleEnvironment","Initial","Temporal","Spatial","Shade"};
             private HoRTDIContext context;private HoRTScene scene;private ComputeShader shader;private HoRTDISettings settings;
+            private RayTracingShader finalVisibilityShader;
             private AnalyticLight[] lights;private Light[] lightKeys;private int lightCount,localLightCount,signature;
             internal HoRTDIPass(){renderPassEvent=RenderPassEvent.BeforeRenderingPostProcessing;}
-            internal void Setup(HoRTDIContext context,HoRTScene scene,ComputeShader shader,HoRTDISettings settings,AnalyticLight[] lights,Light[] keys,int count,int localCount,int signature)
-            {this.context=context;this.scene=scene;this.shader=shader;this.settings=settings;this.lights=lights;lightKeys=keys;lightCount=count;localLightCount=localCount;this.signature=signature;}
+            internal void Setup(HoRTDIContext context,HoRTScene scene,ComputeShader shader,RayTracingShader finalVisibilityShader,HoRTDISettings settings,AnalyticLight[] lights,Light[] keys,int count,int localCount,int signature)
+            {this.context=context;this.scene=scene;this.shader=shader;this.finalVisibilityShader=finalVisibilityShader;this.settings=settings;this.lights=lights;lightKeys=keys;lightCount=count;localLightCount=localCount;this.signature=signature;}
             private sealed class Data
             {
                 internal HoRTDIContext context;internal HoRTScene.Inputs scene;internal HoRTPrimarySurfaceInputs primary;
                 internal ComputeShader shader;internal HoRTDISettings settings;internal HoRTDIContext.LightFrame lightFrame;
+                internal RayTracingShader finalVisibilityShader;
                 internal int lightCount,localLightCount,signature;internal uint revision;internal Matrix4x4 view,projection;internal Camera camera;
                 internal double renderTime;
                 internal TextureHandle diffuse,specular,powerPdf;
@@ -153,7 +164,7 @@ namespace lilToon.URP.Extensions.RTDI
                 internal Vector4 environmentParameters,environmentTint,environmentConstant;
                 internal uint environmentRevision;
             }
-            private Data Snapshot(Camera camera,Matrix4x4 view,Matrix4x4 projection) => new Data {context=context,scene=scene.ReadCompatibility(),shader=shader,settings=settings,lightFrame=context.CaptureLights(lights,lightKeys),
+            private Data Snapshot(Camera camera,Matrix4x4 view,Matrix4x4 projection) => new Data {context=context,scene=scene.ReadCompatibility(),shader=shader,finalVisibilityShader=finalVisibilityShader,settings=settings,lightFrame=context.CaptureLights(lights,lightKeys),
                 lightCount=lightCount,localLightCount=localLightCount,signature=signature,revision=scene.Revision,view=view,projection=projection,camera=camera,renderTime=Time.unscaledTimeAsDouble};
             public override void RecordRenderGraph(RenderGraph graph,ContextContainer frame)
             {
@@ -162,10 +173,12 @@ namespace lilToon.URP.Extensions.RTDI
                 {
                     var source=Snapshot(camera.camera,camera.GetViewMatrix(),camera.GetProjectionMatrix());
                     data.context=source.context;data.shader=source.shader;data.settings=source.settings;data.lightFrame=source.lightFrame;data.lightCount=source.lightCount;
+                    data.finalVisibilityShader=source.finalVisibilityShader;
                     data.localLightCount=source.localLightCount;
                     data.signature=source.signature;data.revision=source.revision;data.view=source.view;data.projection=source.projection;data.camera=source.camera;
                     data.renderTime=source.renderTime;
                     data.scene=scene.Read(graph,builder);data.primary=HoRTPrimarySurfaceInputs.Read(graph,frame,builder);
+                    if(context.finalVisibility!=null)builder.UseTexture(graph.ImportTexture(context.finalVisibility),AccessFlags.ReadWrite);
                     data.environment=TextureHandle.nullHandle;data.environmentPdf=TextureHandle.nullHandle;data.environmentRevision=0;
                     data.environmentParameters=data.environmentTint=data.environmentConstant=Vector4.zero;
                     var sky=frame.GetOrCreate<HoAtmosphereRenderGraphResources>();context.PrepareEnvironment(settings.useEnvironment&&sky.IsValid);
@@ -219,10 +232,14 @@ namespace lilToon.URP.Extensions.RTDI
                     if((stage=="BuildEnvironmentPdf"||stage=="PresampleEnvironment")&&!c.environmentSampling)continue;
                     if(stage=="BuildEnvironmentPdf"&&c.environmentPdfReady&&c.environmentPdfRevision==d.environmentRevision)continue;
                     string name=stage=="Shade"&&c.nrd!=null?"ShadeNRD":stage;
+                    if(stage=="Shade"&&c.finalVisibility!=null)DispatchFinalVisibility(cmd,d,compatibility,cameraData);
                     int kernel=d.shader.FindKernel(name);d.scene.BuildAndBind(cmd,d.shader,kernel);
                     if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,kernel,cameraData);
                     else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,kernel);
                     cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDILights",c.lights);cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDIReservoirs",c.reservoirs);
+                    cmd.SetComputeIntParam(d.shader,"_HoRTDIFinalVisibilityEnabled",c.finalVisibility!=null?1:0);
+                    if(c.finalVisibility!=null)cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDIFinalVisibility",c.finalVisibility.nameID);
+                    else cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDIFinalVisibility",Texture2D.whiteTexture);
                     cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDIPreviousLights",c.previousLights);
                     cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDICurrentToPrevious",c.currentToPrevious);cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDIPreviousToCurrent",c.previousToCurrent);
                     cmd.SetComputeIntParam(d.shader,"_HoRTDIPreviousLightCount",d.lightFrame.previousCount);
@@ -327,6 +344,27 @@ namespace lilToon.URP.Extensions.RTDI
                 cmd.SetGlobalFloat("_HoRTDIActive",1);cmd.SetGlobalTexture("_HoRTDIDiffuseTexture",c.PublishedDiffuse.nameID);cmd.SetGlobalTexture("_HoRTDISpecularTexture",c.PublishedSpecular.nameID);
                 cmd.SetGlobalTexture("_HoRTDIRawDiffuseTexture",c.diffuse.nameID);cmd.SetGlobalTexture("_HoRTDIRawSpecularTexture",c.specular.nameID);
                 c.Complete(d.view,d.projection,d.camera,d.revision,d.signature,d.lightFrame);
+            }
+            private static void DispatchFinalVisibility(CommandBuffer cmd,Data d,bool compatibility,CameraData cameraData)
+            {
+                var c=d.context;var rayShader=d.finalVisibilityShader;
+                if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibility(cmd,cameraData);
+                else d.primary.Bind(CommandBufferHelpers.GetRasterCommandBuffer(cmd));
+                d.scene.BuildAndBind(cmd,rayShader);cmd.SetRayTracingShaderPass(rayShader,"HoRTDIVisibility");
+                cmd.SetRayTracingBufferParam(rayShader,"_HoRTDIReservoirs",c.reservoirs);cmd.SetRayTracingBufferParam(rayShader,"_HoRTDILights",c.lights);
+                cmd.SetRayTracingVectorParam(rayShader,"_HoRTDIFrame",new Vector4(c.width,c.height,d.lightCount,d.localLightCount));
+                cmd.SetRayTracingVectorParam(rayShader,"_HoRTDIReservoirLayout",new Vector4(c.rowPitch,c.arrayPitch,0,0));
+                cmd.SetRayTracingVectorParam(rayShader,"_HoRTDISettings",new Vector4(0,0,0,Mathf.Max(.00001f,d.settings.rayBias)));
+                cmd.SetRayTracingTextureParam(rayShader,"_HoRTDIFinalVisibility",c.finalVisibility.nameID);
+                cmd.SetRayTracingVectorParam(rayShader,"_HoRTDIEnvironment",new Vector4(HoRTDIContext.EnvironmentPdfSize,0,c.environmentSampling?1:0,0));
+                cmd.SetRayTracingVectorParam(rayShader,HoAtmosphereBindings.ParametersId,d.environmentParameters);
+                cmd.SetRayTracingVectorParam(rayShader,HoAtmosphereBindings.TintId,d.environmentTint);cmd.SetRayTracingVectorParam(rayShader,HoAtmosphereBindings.ConstantId,d.environmentConstant);
+                if(!compatibility&&d.environment.IsValid())cmd.SetRayTracingTextureParam(rayShader,HoAtmosphereBindings.RadianceId,d.environment);
+                else if(compatibility&&c.environmentSampling)cmd.SetRayTracingTextureParam(rayShader,HoAtmosphereBindings.RadianceId,HoAtmosphereBindings.compatibilityTexture.nameID);
+                else cmd.SetRayTracingTextureParam(rayShader,HoAtmosphereBindings.RadianceId,CoreUtils.blackCubeTexture);
+                if(c.environmentSampling)cmd.SetRayTracingTextureParam(rayShader,"_HoRTDIEnvironmentPdf",c.environmentPdf.nameID);
+                else cmd.SetRayTracingTextureParam(rayShader,"_HoRTDIEnvironmentPdf",Texture2D.blackTexture);
+                cmd.DispatchRays(rayShader,"FinalVisibility",(uint)c.width,(uint)c.height,1);
             }
             private static void BindEnvironment(CommandBuffer cmd,Data d,bool compatibility,int kernel)
             {

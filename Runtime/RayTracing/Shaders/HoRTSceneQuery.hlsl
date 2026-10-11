@@ -26,7 +26,9 @@ HoRTSceneHit HoRTTraceScene(float3 origin, float3 direction, float tMin, float t
     if (_HoRTSceneState.z < .5 || mask == 0) return hit;
     direction *= rsqrt(lengthSquared);
     RayDesc ray; ray.Origin = origin; ray.Direction = direction; ray.TMin = tMin; ray.TMax = tMax;
-    const uint flags = RAY_FLAG_FORCE_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES;
+    // Conservative queries skip explicitly non-opaque instances. DI traces their
+    // real material alpha in its native final-visibility pass before shading.
+    const uint flags = RAY_FLAG_CULL_NON_OPAQUE | RAY_FLAG_SKIP_PROCEDURAL_PRIMITIVES;
     UnityRayQuery<flags> query;
     query.TraceRayInline(_HoRTSceneAccelerationStructure, flags, mask, ray);
     while (query.Proceed()) { }

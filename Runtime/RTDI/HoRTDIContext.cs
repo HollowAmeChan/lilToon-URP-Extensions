@@ -17,6 +17,7 @@ namespace lilToon.URP.Extensions.RTDI
         internal const int PrimaryHistoryStride=20;
         internal GraphicsBuffer reservoirs,history,lights,neighbors,previousLights,currentToPrevious,previousToCurrent;
         internal RTHandle diffuse,specular;
+        internal RTHandle finalVisibility;
         internal RTHandle powerPdf;
         internal RTHandle environmentPdf;
         internal bool environmentSampling;
@@ -87,6 +88,13 @@ namespace lilToon.URP.Extensions.RTDI
         {
             if(buffer!=null&&buffer.count>=Mathf.Max(1,count))return;
             buffer?.Dispose();buffer=new GraphicsBuffer(GraphicsBuffer.Target.Structured,Mathf.NextPowerOfTwo(Mathf.Max(1,count)),stride){name=name};
+        }
+        internal void PrepareFinalVisibility(bool requested)
+        {
+            if(!requested){finalVisibility?.Release();finalVisibility=null;return;}
+            var format=SystemInfo.IsFormatSupported(GraphicsFormat.R8_UNorm,GraphicsFormatUsage.LoadStore)?GraphicsFormat.R8_UNorm:GraphicsFormat.R32_SFloat;
+            var desc=new RenderTextureDescriptor(width,height){graphicsFormat=format,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true};
+            RenderingUtils.ReAllocateIfNeeded(ref finalVisibility,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTDI final alpha visibility");
         }
         internal void PreparePower(int localCount,bool requested)
         {
@@ -195,6 +203,6 @@ namespace lilToon.URP.Extensions.RTDI
             previousLightKeys=lightFrame.keys;previousLightData=lightFrame.current;
         }
         public void Dispose()
-        {ReleaseDenoiser();reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();previousLights?.Dispose();currentToPrevious?.Dispose();previousToCurrent?.Dispose();ris?.Dispose();powerPdf?.Release();environmentPdf?.Release();ris=null;powerPdf=environmentPdf=null;diffuse?.Release();specular?.Release();reservoirs=history=lights=neighbors=previousLights=currentToPrevious=previousToCurrent=null;diffuse=specular=null;previousLightKeys=Array.Empty<Light>();previousLightData=null;}
+        {ReleaseDenoiser();reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();previousLights?.Dispose();currentToPrevious?.Dispose();previousToCurrent?.Dispose();ris?.Dispose();powerPdf?.Release();environmentPdf?.Release();finalVisibility?.Release();finalVisibility=null;ris=null;powerPdf=environmentPdf=null;diffuse?.Release();specular?.Release();reservoirs=history=lights=neighbors=previousLights=currentToPrevious=previousToCurrent=null;diffuse=specular=null;previousLightKeys=Array.Empty<Light>();previousLightData=null;}
     }
 }
