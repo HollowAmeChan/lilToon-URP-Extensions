@@ -40,4 +40,4 @@ raw邻域相关系数绝对值约不超过.0054、lag1不超过.01；filtered邻
 
 恢复运行时后两条新入口均实际exit1且保存false；第37步完整主表面入口重新qualityPass=true。Roslyn errors0、原始SHA/派生check通过，git运行时代码diff为空。本步只有Editor/文档，不重建相同Player或重复无共享变更的GI。
 
-下一项应核对颜色误差与真实空间彩灯渐变的区分，继续检查首轮/后续权重对称性；任何采样或滤波修复必须同时通过本16组、原主表面、Cutout动态/镜面和实际Player门槛。先处理确定失败，不增加通用PT资源或借古堡天空球调参数。GPU预算和真实motion时序仍未证明。
+第39步的[双灯阴影core检查](Ho-RTDI-CutoutShadowCore.md)进一步发现：线性首轮虽降噪，却将局部阴影残留放大约2.5倍，已撤回；原生产core也未通过既有2%标准。下一项先分阶段定位这些局部残留，修复必须兼顾本16组、原主表面、Cutout动态/镜面和实际Player门槛。GPU预算和真实motion时序仍未证明。

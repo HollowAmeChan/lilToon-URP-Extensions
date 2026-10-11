@@ -13,7 +13,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         private static bool cutoutSpecularQuality;
         [Serializable] private sealed class MultiQualityReport {public bool qualityPass;public string path,signal;public MultiQualityCase[] cases;}
         [Serializable] private sealed class MultiQualityCase
-        {public string mode;public double rawRed,rawBlue,filteredRed,filteredBlue,rawMeanL1,filteredMeanL1,filteredFrameL1,filteredWorstFrameL1,transitionL1,transitionChangedL1;public bool rawPass,filteredPass;}
+        {public string mode;public double rawRed,rawBlue,filteredRed,filteredBlue,rawMeanL1,filteredMeanL1,filteredFrameL1,filteredWorstFrameL1,transitionL1,transitionChangedL1,rawShadowCoreLeak,shadowCoreLeak,shadowCoreMeanLeak;public int shadowCorePixels;public bool rawPass,filteredPass;}
         public static void RunCutoutMultiQuality(){forceCutoutMultiQuality=true;RunCutoutQuality();}
         public static void RunCutoutMultiQualityCompatibility(){compatibility=true;RunCutoutMultiQuality();}
         public static void RunCutoutMultiAudit(){cutoutMultiAudit=true;RunCutoutMultiQuality();}
@@ -111,6 +111,31 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 result.rawPass=Math.Abs(result.rawRed-1)<.03&&Math.Abs(result.rawBlue-1)<.03;
                 result.filteredPass=Math.Abs(result.filteredRed-1)<.05&&Math.Abs(result.filteredBlue-1)<.05&&result.filteredMeanL1<.15&&result.filteredFrameL1<.35;
                 if(mode=="casterStep")result.filteredPass&=changedReference>0&&result.transitionChangedL1<.35;
+                if(!cutoutSpecularQuality&&mode.StartsWith("static",StringComparison.Ordinal))
+                {
+                    // A true multi-light NRD gate: the single-delta thin-shadow
+                    // fixture bypasses RELAX and cannot validate spatial filtering.
+                    // Use only observed pixels at least two pixels inside the CPU
+                    // shadow mask, then score each pixel's converged mean independently.
+                    for(int y=18;y<46;y++)for(int x=18;x<42;x++)
+                    {
+                        bool core=true;
+                        for(int dy=-2;dy<=2&&core;dy++)for(int dx=-2;dx<=2;dx++)
+                            if(!CutoutPlaneShadow(x+dx,y+dy)){core=false;break;}
+                        if(!core)continue;
+                        double reference=CutoutLampReference(light,x,y);Require(reference>0,"shadow core unoccluded reference missing");
+                        int i=(y*64+x)*2;double leak=filterMean[i]/(frames*reference);
+                        Require(double.IsFinite(leak)&&leak>=0,"shadow core non-finite or negative filtered signal");
+                        result.rawShadowCoreLeak=Math.Max(result.rawShadowCoreLeak,rawMean[i]/(frames*reference));
+                        result.shadowCoreLeak=Math.Max(result.shadowCoreLeak,leak);result.shadowCoreMeanLeak+=leak;result.shadowCorePixels++;
+                    }
+                    result.shadowCoreMeanLeak/=Math.Max(1,result.shadowCorePixels);
+                    result.rawPass&=result.shadowCorePixels>0&&result.rawShadowCoreLeak<.003;
+                    // Preserve the existing single-light 2% core criterion;
+                    // stochastic samples are averaged, not hidden in the ROI mean.
+                    result.filteredPass&=result.shadowCorePixels>0&&result.shadowCoreLeak<.02;
+                    Debug.Log($"[HoRTDIValidation] CUTOUT_SHADOW_CORE mode={mode} pixels={result.shadowCorePixels} rawMax={result.rawShadowCoreLeak:F6} filteredMax={result.shadowCoreLeak:F6} filteredMean={result.shadowCoreMeanLeak:F6}");
+                }
                 allPass&=result.rawPass&&result.filteredPass;cases.Add(result);
                 Debug.Log($"[HoRTDIValidation] CUTOUT_MULTI_QUALITY signal={(cutoutSpecularQuality?"specular":"diffuse")} diagnostic={cutoutNrdDiagnostic??"baseline"} mode={mode} rawRed={rawRed/redRef:F6} rawBlue={rawBlue/blueRef:F6} filteredRed={filterRed/redRef:F6} filteredBlue={filterBlue/blueRef:F6} rawMeanL1={rawMeanL1/total:F6} filteredMeanL1={filterMeanL1/total:F6} filteredFrameL1={filteredL1/total:F6}");
                 if(motionAudit)Debug.Log($"[HoRTDIValidation] CUTOUT_MOTION mode={mode} reset={feature.LastContext.lastNrdReset} traced={feature.LastContext.lastVisibilityGradients} worstFrameL1={worstFrameL1:F6} transitionL1={result.transitionL1:F6} transitionChangedL1={result.transitionChangedL1:F6}");

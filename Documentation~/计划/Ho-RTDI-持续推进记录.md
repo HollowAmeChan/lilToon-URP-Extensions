@@ -421,7 +421,15 @@
 
 **验证与下一项：** 最终只Editor探针/文档，运行时diff为空；恢复后原完整primary qualityPass=true，新16组两条一致且正式失败保留，Roslyn/原SHA/派生check通过。不重复未变的Player/GI。下一项区分颜色噪声与真实彩灯梯度，审计权重对称性，修复需覆盖新16组与原运动/镜面/Player，不为古堡合并天空或通用PT扩张。详见[噪声对照](../Ho-RTDI-ReuseNoise.md)。
 
-## 39. 下一步取舍
+## 39. 双灯阴影内部的真实NRD门槛
+
+**动手前评审：** 核对用户RAB/NRD及pinned Smem/Atrous。首轮接受sumW与luma不足以描述彩灯噪声，但降噪不能牺牲阴影。固定系数首轮增噪且新spatial-only仍失败；两端方差加RGB目标仍primary/动态spec失败；几何3×3预滤波旧gate通过并降低MSE，却需真实阴影审计。
+
+**覆盖与证据：** 旧薄阴影/单灯core走single-delta直通，不能验证本改动。离线双灯CSV发现几何预滤波core最大.062893～.066808，相对生产.023282～.026633放大约2.5倍，撤回。正式双灯fixed diffuse四组加入独立CPU 5×5阴影mask、168 core像素/512帧逐像素均值最大值，沿用2%标准。两条raw core=0、filtered最大2.3%～2.7%，虽旧整体均值通过，新完整入口false/exit1，未放宽门槛。
+
+**验证与下一项：** 最终仅Editor/文档，运行时diff为空；两条新core失败复现、原完整primary true，Roslyn/原SHA/派生check通过。不重复相同Player/GI。下一项用既有阶段捕获定位Temporal/Clamping/首轮/后续对同一core的红光混入，再同时修复局部阴影与彩灯噪声，保留动态镜面/Player，不扩大PT/合成/古堡编辑。详见[阴影core](../Ho-RTDI-CutoutShadowCore.md)。
+
+## 40. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
@@ -429,7 +437,7 @@
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
 | NRD 质量与预算 | 当前/历史normal codec已统一，真实GPU history与SB匹配，评分表示差异消除；仍需分别核对运动误差和原平面64帧失败。SB输入及每个DI/GI history各增加1080p约7.91 MiB，下一项转向实际场景/灯域支持，保留既有失败，旧历史预算设置不会自动迁移。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
-| 血月古堡几何支持 | 基础Cutout和局部动态最终可见性confidence已接入，原8组及立体Player运动门槛通过；合并天空/模型只作支持审计。下一项动态镜面/primary/灯身份与门槛余量，GPU计时仍不足、动态额外射线成本待测，CPU pose28.54MiB/服务，不扩张PT。 |
+| 血月古堡几何支持 | 基础Cutout和局部动态最终可见性confidence已接入，原8组及立体Player旧门槛通过；第39步新增双灯阴影core有四组失败，优先定位过滤残留。合并天空/模型只作支持审计。GPU计时仍不足、动态额外射线成本待测，CPU pose28.54MiB/服务，不扩张PT。 |
 | 环境灯 / GI路径归属 | DI HDR天空PDF/RIS及BRDF/VNDF MIS已验证常量窄镜面、斜视与特定小亮源；下一项实际场景与DI/GI直接天空路径归属。现有开关可显式选择一份直接天空，尚未补secondary环境NEE，动态/任意天空质量仍待验证。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 
