@@ -45,6 +45,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         internal double? ValidationTimeSeconds;
         internal Action<CommandBuffer,int,RenderTargetIdentifier> ValidationSpecularStage;
         internal Action<CommandBuffer,int,RenderTargetIdentifier> ValidationDiffuseStage;
+        internal Action<CommandBuffer,RenderTargetIdentifier> ValidationMotionCapture;
         #endif
         internal float SetRenderTime(double time,out bool reset)
         {

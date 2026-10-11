@@ -387,7 +387,15 @@
 
 **验证、范围与下一项：** 起点入口两条通过，原CPU native gradient oracle两条与Cutout diffuse/specular八组通过；Roslyn/派生SHA通过。两个Mono release errors0、实际D3D12 EXE两条原gate与primary spec起点raw .998981/1.012912、frameL1 .047741通过，D3D11 inactive通过；无新增DI Shader诊断。无共享GI变化，不重复GI。复查源位置修正的近邻对应限制和完整false，过滤提交本步owned代码/文档。下步验证URP/lilToon已有motion的真实帧时机/覆盖/符号和当前主表面关系，直接借用/转换不走AC；静态局部diffuse能量偏差另查，不靠运动向量消除或放宽gate。详见 [移动主表面](../Ho-RTDI-PrimaryMotion.md)。
 
-## 35. 下一步取舍
+## 35. 既有motion协议与逐请求历史限制
+
+**动手前评审：** 先核对HoURP17 motionVectorColor/MotionVectorRenderPass、lilToon MotionVectors及NRD符号契约，再读取实际GPU源，不先假定每次请求可用。64²正交Quad x0/.125/.25/0，同应用帧两条UV x0/.062469/.124939/0、y0及同帧gate通过，是累计到应用旧矩阵。兼容初次把shader全局当临时RT读0，改全局采样后与RG一致。
+
+**失败与取舍：** 跨Editor update和Player手动请求未满足增量.0625；自动Player的捕获计数仅手动预热1次，无后续捕获，隐藏普通启动也未证明可用。补空读回/本帧计数断言，源probe明确false/exit1；不把FrameCount/旧0值当有效源，不推断唯一原因。未给NRD绑定未知motion，产品不额外请求pass或纹理；借用/读回仅验证启用，Player CaptureMotion只属隔离fixture。原生产/参数/native/GI/最终接收不改。
+
+**验证与下一项：** Roslyn、两条同帧gate、原diffuse8组通过；两个Mono release errors0，默认实际D3D12两条原suite及D3D11 inactive通过，源probe实际失败保留。复查资源读声明、compat全局采样、有效捕获和产品无死成本，过滤owned提交。实际自动渲染时序/覆盖/旧帧仍待验证；静态局部diffuse能量偏差不依赖它，下一项先分阶段定位该偏差继续推进DI。详见 [motion协议](../Ho-RTDI-MotionProtocol.md)。
+
+## 36. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

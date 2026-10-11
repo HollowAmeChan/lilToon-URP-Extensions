@@ -41,6 +41,8 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         target=new RenderTexture(64,64,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear);target.Create();
         probeCamera.targetTexture=target;probeCamera.enabled=true;
         yield return null;yield return null;probeCamera.enabled=false;probeCamera.targetTexture=null;
+        if(!unsupported&&Array.Exists(args,x=>x=="--motion-protocol"))
+        {yield return MotionProtocol();Finish(args);yield break;}
         try{Validate();result.pass=true;Debug.Log("[HoRTDIPlayerProbe] PASS "+JsonUtility.ToJson(result));}
         catch(Exception error){result.error=error.ToString();Debug.LogException(error);}
         Finish(args);
@@ -49,6 +51,28 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     {
         var index=Array.IndexOf(args,"--result");if(index>=0&&index+1<args.Length)File.WriteAllText(args[index+1],JsonUtility.ToJson(result,true));
         feature.Dispose();capture.Dispose();if(skinnedProbeMesh!=null)Destroy(skinnedProbeMesh);if(target!=null){target.Release();Destroy(target);}Application.Quit(result.pass?0:1);
+    }
+    private IEnumerator MotionProtocol()
+    {
+        capture.CaptureMotion=true;feature.Settings.denoise=true;receiver.GetComponent<Renderer>().motionVectorGenerationMode=MotionVectorGenerationMode.Object;
+        Render();
+        probeCamera.targetTexture=target;probeCamera.enabled=true;
+        var positions=new[]{0f,0,0,.125f,.25f,.25f,0,0};var pixels=new Texture2D(64,64,TextureFormat.RGBAFloat,false,true);
+        for(int sample=0;sample<positions.Length;sample++)
+        {
+            int beforeCapture=capture.MotionCaptureCount;receiver.transform.position=Vector3.right*positions[sample];yield return null;bool failed=false;
+            try
+            {
+                Require(capture.Motion!=null,"Player motion capture not created by a render pass");
+                Require(capture.MotionCaptureCount>beforeCapture,"automatic rendering did not capture this frame; motion source remains unverified");
+                ReadInto(capture.Motion,pixels);var value=pixels.GetPixel(32,32);float expected=sample>0?(positions[sample]-positions[sample-1])*.5f:0;
+                Debug.Log($"[HoRTDIPlayerProbe] MOTION_REAL frame={Time.frameCount} sample={sample} captures={capture.MotionCaptureCount} cameraEnabled={probeCamera.enabled} motionUV=({value.r:F6},{value.g:F6}) expectedX={expected:F6}");
+                if(sample>=3){Near(value.r,expected,"Player real-frame motion X",.0002f);Near(value.g,0,"Player real-frame motion Y",.0002f);}
+            }
+            catch(Exception error){result.error=error.ToString();Debug.LogException(error);failed=true;}
+            if(failed){Destroy(pixels);yield break;}
+        }
+        result.pass=true;Destroy(pixels);Debug.Log("[HoRTDIPlayerProbe] PASS real-frame motion source protocol");
     }
     private void Validate()
     {

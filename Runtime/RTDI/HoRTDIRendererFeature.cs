@@ -153,7 +153,12 @@ namespace lilToon.URP.Extensions.RTDI
             private AnalyticLight[] lights;private Light[] lightKeys;private int lightCount,localLightCount,signature;
             internal HoRTDIPass(){renderPassEvent=RenderPassEvent.BeforeRenderingPostProcessing;}
             internal void Setup(HoRTDIContext context,HoRTScene scene,ComputeShader shader,RayTracingShader finalVisibilityShader,HoRTDISettings settings,AnalyticLight[] lights,Light[] keys,int count,int localCount,int signature)
-            {this.context=context;this.scene=scene;this.shader=shader;this.finalVisibilityShader=finalVisibilityShader;this.settings=settings;this.lights=lights;lightKeys=keys;lightCount=count;localLightCount=localCount;this.signature=signature;}
+            {
+                this.context=context;this.scene=scene;this.shader=shader;this.finalVisibilityShader=finalVisibilityShader;this.settings=settings;this.lights=lights;lightKeys=keys;lightCount=count;localLightCount=localCount;this.signature=signature;
+                #if UNITY_EDITOR
+                ConfigureInput(context.nrd?.ValidationMotionCapture!=null?ScriptableRenderPassInput.Motion:ScriptableRenderPassInput.None);
+                #endif
+            }
             private sealed class Data
             {
                 internal HoRTDIContext context;internal HoRTScene.Inputs scene;internal HoRTPrimarySurfaceInputs primary;
@@ -163,6 +168,9 @@ namespace lilToon.URP.Extensions.RTDI
                 internal double renderTime;
                 internal TextureHandle diffuse,specular,powerPdf;
                 internal TextureHandle environment,environmentPdf;
+                #if UNITY_EDITOR
+                internal TextureHandle motion;
+                #endif
                 internal Vector4 environmentParameters,environmentTint,environmentConstant;
                 internal uint environmentRevision;
             }
@@ -180,6 +188,10 @@ namespace lilToon.URP.Extensions.RTDI
                     data.signature=source.signature;data.revision=source.revision;data.structureRevision=source.structureRevision;data.view=source.view;data.projection=source.projection;data.camera=source.camera;
                     data.renderTime=source.renderTime;
                     data.scene=scene.Read(graph,builder);data.primary=HoRTPrimarySurfaceInputs.Read(graph,frame,builder);
+                    #if UNITY_EDITOR
+                    if(context.nrd?.ValidationMotionCapture!=null)
+                    {data.motion=frame.Get<UniversalResourceData>().motionVectorColor;if(data.motion.IsValid())builder.UseTexture(data.motion,AccessFlags.Read);}
+                    #endif
                     if(context.finalVisibility!=null)builder.UseTexture(graph.ImportTexture(context.finalVisibility),AccessFlags.ReadWrite);
                     data.environment=TextureHandle.nullHandle;data.environmentPdf=TextureHandle.nullHandle;data.environmentRevision=0;
                     data.environmentParameters=data.environmentTint=data.environmentConstant=Vector4.zero;
@@ -212,6 +224,15 @@ namespace lilToon.URP.Extensions.RTDI
             private static void Dispatch(CommandBuffer cmd,Data d,bool compatibility,CameraData cameraData)
             {
                 var c=d.context;unchecked{d.signature=d.signature*397^(int)d.environmentRevision^d.settings.useEnvironment.GetHashCode()^(d.settings.environmentSamples*7919)^(d.settings.environmentBrdfSamples*104729);}
+                #if UNITY_EDITOR
+                if(c.nrd?.ValidationMotionCapture!=null)
+                {
+                    // Compatibility diagnostics must sample the shader global;
+                    // this name is not a temporary RT that CopyTexture resolves.
+                    if(compatibility)c.nrd.ValidationMotionCapture(cmd,new RenderTargetIdentifier("_MotionVectorTexture"));
+                    else if(d.motion.IsValid())c.nrd.ValidationMotionCapture(cmd,d.motion);
+                }
+                #endif
                 // One delta light and no environment has no light/UV uncertainty.
                 // Keep its exact initial estimate instead of injecting resampling variance.
                 bool singleDelta=d.lightCount==1&&!c.environmentSampling;
