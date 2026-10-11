@@ -71,7 +71,18 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 float ratio=(float)(sum/(512*256*expected));Near(ratio,1,$"cutout conservative/final reuse energy T={mode.Item1} S={mode.Item2}",.03f);
                 Debug.Log($"[HoRTDIValidation] CUTOUT_REUSE T={mode.Item1} S={mode.Item2} ratio={ratio:F6}");
             }
-            far.enabled=false;feature.Settings.temporal=feature.Settings.spatial=false;feature.Settings.initialSamples=1;
+            feature.Settings.denoise=true;feature.Settings.temporal=feature.Settings.spatial=false;
+            foreach(bool cutoutActive in new[]{true,false,true})
+            {
+                blocker.SetActive(cutoutActive);for(int i=0;i<96;i++)RenderCamera();
+                Require(feature.LastContext.nrd.AppliedSettings.diffPhi==(cutoutActive?.5f:2f),"NRD cutout/opaque luminance profile must follow scene support");
+                double sum=0;for(int frame=0;frame<256;frame++)
+                {RenderCamera();ReadImage(feature.LastContext.filteredDiffuse.rt,image);for(int y=24;y<40;y++)for(int x=24;x<40;x++)sum+=image.GetPixel(x,y).r;}
+                float ratio=(float)(sum/(256*256*(expected+(cutoutActive?0:ExpectedMean(light)))));
+                Near(ratio,1,"filtered energy after cutout/opaque profile switch",.05f);
+                Debug.Log($"[HoRTDIValidation] CUTOUT_NRD_PROFILE active={cutoutActive} phi={feature.LastContext.nrd.AppliedSettings.diffPhi} energy={ratio:F6}");
+            }
+            feature.Settings.denoise=false;far.enabled=false;feature.Settings.temporal=feature.Settings.spatial=false;feature.Settings.initialSamples=1;
         }
         private static void ValidateCutoutLightDomains()
         {

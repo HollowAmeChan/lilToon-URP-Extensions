@@ -335,7 +335,19 @@
 
 **完成后复查与下一项：** 本步交付未达标基线，不宣称问题已修或DI完成。静态颜色/形状偏差与运动历史清空分开定位，先对照输入、confidence、clamping/spatial与世界变化策略，禁止亮度补偿或用单灯收缩验收。无新Feature、不改古堡/接收设计，完整目标继续；GPU计时仍未达有效证据。详见 [双灯质量审计](../Ho-RTDI-MultiLightQuality.md)。
 
-## 30. 下一步取舍
+## 30. Cutout 漫反射亮度边界与回归
+
+**动手前评审：沿用真实多灯失败门槛，分阶段对照。** 核对用户NRD设置、固定NRD头及Atrous亮度权重。仅改一项的Atrous=1、历史8帧、phi=.5三个对照：前两项仍静态红+9%/+13%，后者静态/TS/全透光TS通过。独立重跑原配置仍静态红1.143329/蓝1.028095，meanL1 .129241，支持边界滤波问题判断；诊断多一帧，不冒充逐样本一致。
+
+**实现与取舍：** 全局phi=.5使原opaque filtered MSE升至.004099，放弃全局改动。仅DI有Cutout最终可见性时收紧diffusePhiLuminance=2→.5；无Cutout还原2，每帧向native更新切换。五次Atrous、历史预算、specular、ReSTIR/native/Shader/guide ABI均不变，无新资源或pass；Editor单项A/B不加产品开关。这是相机级条件，任意Cutout场景噪声仍要实测。
+
+**实际结果：** 两条原8组完整对照raw仍3%内，filtered原门槛7组通过：静态红1.004658/蓝.980818、meanL1 .057627，camera红.993814/蓝.993022、meanL1 .059636，静态TS meanL1 .083784。caster均值接近1、frameL1仍1.059944，因此qualityPass=false和正式失败保留，不宣称动态遮挡物修复。普通opaque noise filtered MSE .000183恢复原表现；Cutout/opaque/Cutout配置.5/2/.5及filtered能量.997938/.999160/.989462，两条通过。
+
+**完成前复查：** 核心两条、NRD两条、Cutout两条、材质边界、HDR镜面、环境VNDF、曲面回归通过；Runtime/Editor Roslyn及NRD派生SHA通过。两个Win64 Mono release构建errors0，实际EXE D3D12两条与D3D11 inactive均pass=true，无新增DI shader诊断，仍有原lilToon重复keyword警告。未改共享GI行为、原古堡资产或最终接收，不重复无关GI测试。过滤提交本步owned文件；GPU预算仍未证实。详见 [Cutout滤波](../Ho-RTDI-CutoutFiltering.md)。
+
+**下一项：** 核对世界revision与NRD主表面历史的区别；现有confidence的相同灯shortcut只在static-world成立，且保守射线跳过Cutout。先用可复现诊断评审保留历史的噪声收益/拖影失败，再设计真实动态可见性confidence，不能简单取消全局reset上线。
+
+## 31. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
@@ -343,7 +355,7 @@
 | Player 资源完整性 | DI/NRD/debug 的 Win64 Mono release 部署及旧 renderer 正常补引用/保存流程已交付。IL2CPP、未处理外部资产的构建迁移仍未证明；GB 泛用 fallback / MSAA 属于输入设施的另一个支持域，不借本步扩张。 |
 | NRD 质量与预算 | 当前/历史normal codec已统一，真实GPU history与SB匹配，评分表示差异消除；仍需分别核对运动误差和原平面64帧失败。SB输入及每个DI/GI history各增加1080p约7.91 MiB，下一项转向实际场景/灯域支持，保留既有失败，旧历史预算设置不会自动迁移。 |
 | ReGIR | 需要世界网格与更多采样资源；先证明较小的局部提案改进仍不足，再评估引入收益。 |
-| 血月古堡几何支持 | 基础Cutout已接入；合并天空/模型只作支持审计。真实双灯局部filtered能量/形状与运动噪声已有正式失败基线，下一项按阴影/全透光、静态/运动控制定位并修复；单灯不替代多灯。GPU计时仍不足，CPU pose28.54MiB/服务，不扩张PT。 |
+| 血月古堡几何支持 | 基础Cutout已接入；合并天空/模型只作支持审计。真实双灯局部静态/相机filtered质量已改善，移动caster仍失败；下一项核对世界变化与真实动态visibility confidence，不直接取消全部reset。GPU计时仍不足，CPU pose28.54MiB/服务，不扩张PT。 |
 | 环境灯 / GI路径归属 | DI HDR天空PDF/RIS及BRDF/VNDF MIS已验证常量窄镜面、斜视与特定小亮源；下一项实际场景与DI/GI直接天空路径归属。现有开关可显式选择一份直接天空，尚未补secondary环境NEE，动态/任意天空质量仍待验证。 |
 | 最终材质合成 / PT 扩展 | 维持现有范围边界。 |
 

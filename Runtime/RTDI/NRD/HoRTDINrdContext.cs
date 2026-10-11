@@ -32,6 +32,11 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         private readonly int constantStride;
         private readonly HoRTDINrdTiming timing=new();
         internal HoRTDINrdNative.RelaxSettings AppliedSettings {get;private set;}=HoRTDINrdNative.RelaxSettings.DenseDI();
+        internal bool HasCutoutVisibility;
+        #if UNITY_EDITOR
+        // Isolated stage/settings A/B only; no serialized/runtime product option.
+        internal Func<HoRTDINrdNative.RelaxSettings,HoRTDINrdNative.RelaxSettings> ValidationSettings;
+        #endif
         #if UNITY_EDITOR
         internal double? ValidationTimeSeconds;
         internal Action<CommandBuffer,int,RenderTargetIdentifier> ValidationSpecularStage;
@@ -139,8 +144,15 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         {
             HoRTDINrdNative.Check(HoRTDINrdNative.SetCommonSettings(instance,ref settings),"SetCommonSettings");
             var desired=HoRTDINrdNative.RelaxSettings.DenseDI(timing.FilteredSeconds);
+            // Final anyhit visibility can create sharp radiance discontinuities
+            // on a smooth receiver. Keep their diffuse luminance gate tighter.
+            if(HasCutoutVisibility)desired.diffPhi=.5f;
+            bool diagnostic=false;
+            #if UNITY_EDITOR
+            if(ValidationSettings!=null){desired=ValidationSettings(desired);diagnostic=true;}
+            #endif
             var previous=AppliedSettings;
-            if(desired.diffFrames!=previous.diffFrames||desired.specFrames!=previous.specFrames||desired.diffFast!=previous.diffFast||desired.specFast!=previous.specFast||desired.historyFixFrames!=previous.historyFixFrames)
+            if(diagnostic||desired.diffPhi!=previous.diffPhi||desired.diffFrames!=previous.diffFrames||desired.specFrames!=previous.specFrames||desired.diffFast!=previous.diffFast||desired.specFast!=previous.specFast||desired.historyFixFrames!=previous.historyFixFrames)
             {HoRTDINrdNative.Check(HoRTDINrdNative.SetDenoiserSettings(instance,0,ref desired),"SetDenoiserSettings");AppliedSettings=desired;}
             HoRTDINrdNative.Check(HoRTDINrdNative.GetComputeDispatches(instance,identifiers,1,out var pointer,out uint count),"GetComputeDispatches");
             if(count*constantStride>ConstantBytes)throw new InvalidOperationException("NRD dispatch constants exceed per-frame storage");

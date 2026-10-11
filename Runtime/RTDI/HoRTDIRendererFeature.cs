@@ -220,6 +220,7 @@ namespace lilToon.URP.Extensions.RTDI
                 var common=default(HoRTDINrdNative.CommonSettings);
                 if(c.nrd!=null)
                 {
+                    c.nrd.HasCutoutVisibility=c.finalVisibility!=null;
                     reset=!c.nrdHistoryValid||!c.historyValid||c.sceneRevision!=d.revision||c.settingsSignature!=d.signature;
                     common=HoRTDINrdNative.CommonSettings.Create(c.width,c.height,d.view,d.projection,c.previousView,c.previousProjection,c.frame,reset);
                     common.timeDelta=c.nrd.SetRenderTime(d.renderTime,out timeReset);if(timeReset)common.accumulationMode=2;
