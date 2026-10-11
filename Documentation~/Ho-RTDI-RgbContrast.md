@@ -41,4 +41,4 @@
 
 Roslyn errors0、原始SHA/派生check通过，无新增DI shader诊断。生成器精确重建派生改动；所有阶段复制只属Editor测试，Player aspect/raw日志只属Tests模板。无共享GI变更，不重复GI。
 
-下一步应在已修正RGB边界判定下改善噪声，扩展材质/灯/分辨率并关注阴影与Player蓝光余量；不能重新采用第39步已证明增加core残留的预滤波而省略core验收。真实URP motion时序、GPU预算和整古堡质量仍未证明，最终NPR合成/通用PT仍在原范围之外。
+第41步的[零F0 RGB重要性](Ho-RTDI-ZeroF0RgbSampling.md)降低了默认8候选颜色噪声并扩大core余量，保留非零F0原路径；单候选无复用的MSE仍未改善。重新测试的线性首轮在本RGB判定下仍core失败，已撤回。后续继续扩展材质/灯/分辨率，并核对颜色误差模型与资源收益。真实URP motion时序、GPU预算和整古堡质量仍未证明，最终NPR合成/通用PT仍在原范围之外。

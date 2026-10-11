@@ -439,7 +439,15 @@
 
 **下一项：** 改善噪声并扩展材质/灯/尺寸，在新的RGB判定下保留全部core/彩灯/动态镜面/Player验收；实际motion/GPU预算仍待证实。详见[RGB差判定](../Ho-RTDI-RgbContrast.md)。
 
-## 41. 下一步取舍
+## 41. 零F0表面的RGB重要性
+
+**动手前评审与证据：** 第40步阴影通过但噪声增加。新RGB判定下重试首轮几何预滤波，noise .000299却core2.08%～2.31%，撤回。实际四组/六阶段读取RGB/亮度时间方差，正确区分Temporal moment、首轮variance与末轮history alpha；基线Temporal RGB var .018286而luma约1.6e-9，后续几乎不降颜色噪声。核对用户RAB及pinned SDK/NRD，不直接增加未知RGB历史资源。
+
+**实现与结果：** 统一目标回调只对量化F0三通道全0使用完整贡献的RGB向量长度，其他F0保留原亮度；不关Fresnel/改Shade/光强，不增pass/射线/资源/参数。两条原双灯8组和新16组通过，默认8候选同位置none filtered MSE .005872→.002550；core最大1.04%～1.24%。512帧最终RGB var .003856→.001667。非零F0镜面/primary与边界/环境/HDR/曲面通过。0↔1/255时间切换两条raw3%/filtered5%/frame.35通过。单候选无复用noise .002776未改善，空间材质边界尚需扩大验证。
+
+**部署、范围与下一项：** 两个Mono release errors0，实际两条全suite及D3D11 inactive通过。立体连续/阶跃frameL1 .179656/.233885、蓝能量.990885/.991820改善，但阶跃变化像素误差约.134→.277329，仍过.35，短期响应待继续改进；单候选无复用Player MSE仍.000526。Roslyn/原SHA/派生check通过，无新增DI shader诊断，GI/合成/native不变。下一项扩大材质/灯/尺寸及GPU成本验证，评审单候选/非零F0颜色误差和短期残影，保留所有core/能量/动态镜面/Player门槛，不扩张通用PT。详见[零F0 RGB采样](../Ho-RTDI-ZeroF0RgbSampling.md)。
+
+## 42. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

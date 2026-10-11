@@ -190,7 +190,12 @@ float RAB_GetLightSampleTargetPdfForSurface(RAB_LightSample sample,RAB_Surface s
     #else
     float3 response=RAB_SurfaceEvaluateBrdfTimesNoL(surface,direction);
     #endif
-    return max(0,HoDILuminance(response*sample.radiance))/max(sample.solidAnglePdf,1e-12);
+    float3 contribution = response * sample.radiance;
+    // Preserve the established proposal for surfaces with nonzero F0. With
+    // quantized F0 exactly zero, balance RGB error rather than only luminance.
+    // This includes the same full BRDF response; Fresnel/Shade are not disabled.
+    float importance = all(surface.material.specularF0 == 0) ? length(max(0, contribution)) : max(0, HoDILuminance(contribution));
+    return importance/max(sample.solidAnglePdf,1e-12);
 }
 bool RAB_GetConservativeVisibility(RAB_Surface surface,RAB_LightSample sample)
 {
