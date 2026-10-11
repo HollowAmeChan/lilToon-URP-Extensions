@@ -405,7 +405,15 @@
 
 **完成前复查与下一项：** Runtime/Editor Roslyn、原SHA/派生check通过；恢复后阶段current/atrous3复现、完整gate实际失败。过滤仅Editor探针/参数范围/文档，无生产/GI/Player模板变化，不把实验构建失败冒充部署验收。下一项按方差与颜色梯度响应改善空间阶段，继续保留立体/镜面压力门槛和完整DI范围，motion源/GPU成本仍待证实。详见 [阶段审计](../Ho-RTDI-PrimaryFilteringAudit.md)。
 
-## 37. 下一步取舍
+## 37. diffuse方差传播和固定交换权重
+
+**动手前评审：** 保留全部原gate，核对pinned Smem/Atrous及已采用specular传播。diffuse首轮邻域moment差混入真实照明梯度，后续中心var/range及各行接受sumW造成不对称彩灯混合。单pair改善static但移动仍失败，历史均值除数候选不足且增噪，撤回。最终首轮保持RGB/range原处理，以w²传播temporal spread；后续pair min variance和固定Gaussian交换，拒绝系数留中心，不按接受sumW归一化；variance按系数平方，lastpass historyLength保留。
+
+**结果与取舍：** 主表面三diffuse原5%完整两条正式通过：static红/蓝.983276/1.016998、smooth .976124/1.041844、step .978639/1.043692，frameL1 .083512/.075203/.086434；原spec输出一致。Cutout diffuse/GGX八组及额外spec运动原两条gate通过，镜面近上限余量仍未改善。opaque noise filtered MSE .000183→.001333，raw .050401不变，原<raw×.3通过但绝对noise约7倍；接受完整能量与仍约97%方差抑制的实测取舍，不声称降噪全面变好。随机offset/资格不一定互惠，不声称严格全图守恒。
+
+**验证与范围：** boundaries/颜色/F0/金属/薄阴影/深度、HDR、环境GGX/MIS、曲面通过；Roslyn及原SHA/派生check通过。两个Mono release errors0，实际D3D12两条原suite/不可读资产Cutout及primary起点通过，立体连续/阶跃noise约.207/.234高于旧值但原gate通过，D3D11 inactive通过，无新增DI shader诊断。未改NV原始源/native/资源/5次调度/目标/Shade/NRD参数/GI；生成器和两份DI派生shader owned过滤提交。下步验证相关样本/材质/灯/尺寸并改善noise，真实motion与GPU预算仍待验，不扩张接收/AC/lilPBR/SSS/PT。详见 [diffuse交换](../Ho-RTDI-DiffuseExchange.md)。
+
+## 38. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

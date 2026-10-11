@@ -85,6 +85,9 @@ def generate():
         "        float4 sumSpecularIlluminationAnd2ndMoment = 0;": "        float4 sumSpecularIlluminationAnd2ndMoment = 0;\n        float sumSpecularTemporalVariance = 0;",
         "                sumSpecularIlluminationAnd2ndMoment += wSpecular * sampleSpecularIlluminationAnd2ndMoment;": "                sumSpecularIlluminationAnd2ndMoment += wSpecular * sampleSpecularIlluminationAnd2ndMoment;\n                sumSpecularTemporalVariance += wSpecular * wSpecular * sampleSpecularVar;",
         "        float specularVariance = max(0, specular2ndMoment - specular1stMoment * specular1stMoment);": "        float specularVariance = sumSpecularTemporalVariance / (sumWSpecular * sumWSpecular);",
+        "        float4 sumDiffuseIlluminationAnd2ndMoment = 0;": "        float4 sumDiffuseIlluminationAnd2ndMoment = 0;\n        float sumDiffuseTemporalVariance = 0;",
+        "                sumDiffuseIlluminationAnd2ndMoment += wDiffuse * sampleDiffuseIlluminationAnd2ndMoment;": "                sumDiffuseIlluminationAnd2ndMoment += wDiffuse * sampleDiffuseIlluminationAnd2ndMoment;\n                float sampleDiffuseTemporalVar = max(0.0, sampleDiffuseIlluminationAnd2ndMoment.a - sampleDiffuseLuminance * sampleDiffuseLuminance);\n                sumDiffuseTemporalVariance += wDiffuse * wDiffuse * sampleDiffuseTemporalVar;",
+        "        float diffuseVariance = max(0, diffuse2ndMoment - diffuse1stMoment * diffuse1stMoment);": "        float diffuseVariance = sumDiffuseTemporalVariance / (sumWDiffuse * sumWDiffuse);",
     }
     for old, new in patches.items():
         if derived.count(old) != 1: raise ValueError("Unexpected first A-trous variance propagation: " + old)
@@ -100,7 +103,7 @@ def generate():
     derived = derived.replace(old, new)
     notice = ("// Ho-RTDI dense-signal adaptation of NRD 4.17.3 RELAX_AtrousSmem.\n"
               f"// Original SHA256: {expected}\n"
-              "// Adapted: temporal variance, accumulated specular uncertainty/pair bandwidth, weighted propagation, F0 weights.\n"
+              "// Adapted: temporal variance, accumulated specular uncertainty/pair bandwidth, diffuse/specular weighted propagation, F0 weights.\n"
               "// Original source/license remain in ../../ThirdParty/NRD.\n")
     return notice + derived
 
@@ -123,7 +126,21 @@ def generate_atrous():
                 float specularLuminanceW = abs(centerSpecularLuminance - sampleSpecularLuminance) / max(1.0e-4, gSpecPhiLuminance * sqrt(pairSpecularVar));"""
     if text.count(old) != 1: raise ValueError("Unexpected atrous specular luminance weight")
     text = text.replace(old, new)
-    return f"// Ho-RTDI F0/pair-bandwidth adaptation of NRD 4.17.3. Original SHA256: {expected}\n" + text
+    old = "float diffuseLuminanceW = abs(centerDiffuseLuminance - sampleDiffuseLuminance) * diffusePhiLIlluminationInv;"
+    new = """float pairDiffuseVar = min(max(0.0, centerDiffuseVar), max(0.0, sampleDiffuseIlluminationAndVariance.a));
+                float diffuseLuminanceW = abs(centerDiffuseLuminance - sampleDiffuseLuminance) / max(1.0e-4, gDiffPhiLuminance * sqrt(pairDiffuseVar));"""
+    if text.count(old) != 1: raise ValueError("Unexpected atrous diffuse luminance weight")
+    text = text.replace(old, new)
+    old = "    float4 filteredDiffuseIlluminationAndVariance = float4(sumDiffuseIlluminationAndVariance / float4(sumWDiffuse.xxx, sumWDiffuse * sumWDiffuse));"
+    new = """    // Use fixed pair exchange coefficients instead of a row-dependent
+    // normalization. Rejected neighbor weight stays at the center.
+    const float diffuseCenterKernel = 0.44198 * 0.44198;
+    float retainedDiffuseWeight = saturate(1.0 - (sumWDiffuse - diffuseCenterKernel));
+    float4 diffuseNeighborSum = sumDiffuseIlluminationAndVariance - centerDiffuseIlluminationAndVariance * float4(diffuseCenterKernel.xxx, diffuseCenterKernel * diffuseCenterKernel);
+    float4 filteredDiffuseIlluminationAndVariance = diffuseNeighborSum + centerDiffuseIlluminationAndVariance * float4(retainedDiffuseWeight.xxx, retainedDiffuseWeight * retainedDiffuseWeight);"""
+    if text.count(old) != 1: raise ValueError("Unexpected atrous diffuse normalization")
+    text = text.replace(old, new)
+    return f"// Ho-RTDI F0/diffuse-specular pair-bandwidth adaptation of NRD 4.17.3. Original SHA256: {expected}\n" + text
 
 
 def generate_temporal():

@@ -1,6 +1,6 @@
 // Ho-RTDI dense-signal adaptation of NRD 4.17.3 RELAX_AtrousSmem.
 // Original SHA256: 58e8b5bdc93cc3b331a8cf9994a784d5137be2b566c78e39ef617ce6be8b289e
-// Adapted: temporal variance, accumulated specular uncertainty/pair bandwidth, weighted propagation, F0 weights.
+// Adapted: temporal variance, accumulated specular uncertainty/pair bandwidth, diffuse/specular weighted propagation, F0 weights.
 // Original source/license remain in ../../ThirdParty/NRD.
 /*
 Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
@@ -254,6 +254,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
         float sumWDiffuse = 0;
         float4 sumDiffuseIlluminationAnd2ndMoment = 0;
+        float sumDiffuseTemporalVariance = 0;
         #if( NRD_MODE == SH )
             float4 sumDiffuseSH = 0;
         #endif
@@ -349,6 +350,8 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 
                 sumWDiffuse += wDiffuse;
                 sumDiffuseIlluminationAnd2ndMoment += wDiffuse * sampleDiffuseIlluminationAnd2ndMoment;
+                float sampleDiffuseTemporalVar = max(0.0, sampleDiffuseIlluminationAnd2ndMoment.a - sampleDiffuseLuminance * sampleDiffuseLuminance);
+                sumDiffuseTemporalVariance += wDiffuse * wDiffuse * sampleDiffuseTemporalVar;
                 #if( NRD_MODE == SH )
                     sumDiffuseSH += wDiffuse * s_DiffSH[sharedMemoryIndexP.y][sharedMemoryIndexP.x];
                 #endif
@@ -372,7 +375,7 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
         sumDiffuseIlluminationAnd2ndMoment /= sumWDiffuse;
         float diffuse1stMoment = Color::Luminance(sumDiffuseIlluminationAnd2ndMoment.rgb);
         float diffuse2ndMoment = sumDiffuseIlluminationAnd2ndMoment.a;
-        float diffuseVariance = max(0, diffuse2ndMoment - diffuse1stMoment * diffuse1stMoment);
+        float diffuseVariance = sumDiffuseTemporalVariance / (sumWDiffuse * sumWDiffuse);
         float4 filteredDiffuseIlluminationAndVariance = float4(sumDiffuseIlluminationAnd2ndMoment.rgb, diffuseVariance);
         gOut_Diff_Variance[pixelPos] = filteredDiffuseIlluminationAndVariance;
         #if( NRD_MODE == SH )

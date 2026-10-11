@@ -1,4 +1,4 @@
-// Ho-RTDI F0/pair-bandwidth adaptation of NRD 4.17.3. Original SHA256: bc4c998e30852232ac98e4f2a7f924ef0072d900f44f4de1d725171f9e1508b8
+// Ho-RTDI F0/diffuse-specular pair-bandwidth adaptation of NRD 4.17.3. Original SHA256: bc4c998e30852232ac98e4f2a7f924ef0072d900f44f4de1d725171f9e1508b8
 /*
 Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
 
@@ -221,7 +221,8 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
                 float4 sampleDiffuseIlluminationAndVariance = gIn_Diff_Variance[p];
                 float sampleDiffuseLuminance = Color::Luminance(sampleDiffuseIlluminationAndVariance.rgb);
 
-                float diffuseLuminanceW = abs(centerDiffuseLuminance - sampleDiffuseLuminance) * diffusePhiLIlluminationInv;
+                float pairDiffuseVar = min(max(0.0, centerDiffuseVar), max(0.0, sampleDiffuseIlluminationAndVariance.a));
+                float diffuseLuminanceW = abs(centerDiffuseLuminance - sampleDiffuseLuminance) / max(1.0e-4, gDiffPhiLuminance * sqrt(pairDiffuseVar));
                 diffuseLuminanceW = min(gDiffMaxLuminanceRelativeDifference, diffuseLuminanceW);
                 diffuseLuminanceW *= diffuseLuminanceWeightRelaxation;
 
@@ -252,7 +253,12 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
 #endif
 
 #if( NRD_DIFF )
-    float4 filteredDiffuseIlluminationAndVariance = float4(sumDiffuseIlluminationAndVariance / float4(sumWDiffuse.xxx, sumWDiffuse * sumWDiffuse));
+    // Use fixed pair exchange coefficients instead of a row-dependent
+    // normalization. Rejected neighbor weight stays at the center.
+    const float diffuseCenterKernel = 0.44198 * 0.44198;
+    float retainedDiffuseWeight = saturate(1.0 - (sumWDiffuse - diffuseCenterKernel));
+    float4 diffuseNeighborSum = sumDiffuseIlluminationAndVariance - centerDiffuseIlluminationAndVariance * float4(diffuseCenterKernel.xxx, diffuseCenterKernel * diffuseCenterKernel);
+    float4 filteredDiffuseIlluminationAndVariance = diffuseNeighborSum + centerDiffuseIlluminationAndVariance * float4(retainedDiffuseWeight.xxx, retainedDiffuseWeight * retainedDiffuseWeight);
     #if( NRD_MODE == SH )
         // Luminance output is expected in YCoCg color space in SH mode, converting to YCoCg in last A-Trous pass
         if (gIsLastPass == 1)
