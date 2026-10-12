@@ -511,7 +511,15 @@
 
 **下一项：** 核对单reservoir/单最终样本的通道方差、Cutout额外样本可见性与成本，再选择DI采样改动，不继续无依据调NRD或增加初始数来掩盖最终样本限制。Roslyn/隔离Shader/两条正式失败与RG阶段检查通过，只过滤Editor/文档，不重建未变Player/GI。详见[提案证据](../Ho-RTDI-SpecularRgbProposalAudit.md)。
 
-## 50. 下一步取舍
+## 50. 独立第二最终样本隔离原型
+
+**动手前评审：** 单最终样本RGB提案权衡不能只调NRD。核对用户两份ShadeSamples单reservoir输出、SDK Stream/Finalize及块地址；inline跳过non-opaque，因此辅助样本必须走native any-hit。空间完成后复用slot2，既有R8临时编码两visibility位，原ReSTIR与独立均匀解析灯估计作平均；不增buffer/纹理。旧平均亮度不能与单primary重追比较，gradient改从旧primary缓存恢复对应物理亮度。
+
+**结果：** 两条256/512镜面与漫反射各六组、64多灯/core通过。镜面rapid=.343677/.344150近.35，step变化像素=.268236/.256798；core四组最大.00708.. .00781<2%，raw红0。GPU slot2/primary采样与CPU alpha缓存核对各2048次通过，辅助选灯随帧改变，默认正式回归仍原3/6与数值。所有输入/Shader副本仅隔离工程，生产不变，Roslyn/Shader/GUID/diff检查通过。
+
+**限制与下一项：** 原型只接native Cutout visibility且解析灯，无Cutout控制仍单样本；天空MIS/多灯分布/聚光灯/HDR/实际部署和额外射线成本未证明。先扩大灯域，处理均匀辅助退化与环境归属后再考虑产品接入，不以资源不增声称GPU免费。详见[原型证据](../Ho-RTDI-PairedFinalSamplePrototype.md)。
+
+## 51. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

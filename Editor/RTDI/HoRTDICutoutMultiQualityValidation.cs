@@ -11,7 +11,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         private static bool cutoutMultiAudit;
         private static string cutoutNrdDiagnostic;
         private static bool cutoutSpecularQuality;
-        [Serializable] private sealed class MultiQualityReport {public bool qualityPass;public string path,signal;public MultiQualityCase[] cases;}
+        [Serializable] private sealed class MultiQualityReport {public bool qualityPass;public int requestedFinalSamples;public string path,signal;public MultiQualityCase[] cases;}
         [Serializable] private sealed class MultiQualityCase
         {public string mode;public double rawRed,rawBlue,filteredRed,filteredBlue,rawMeanL1,filteredMeanL1,filteredFrameL1,filteredWorstFrameL1,transitionL1,transitionChangedL1,rawShadowCoreLeak,shadowCoreLeak,shadowCoreMeanLeak;public int shadowCorePixels;public bool rawPass,filteredPass;}
         public static void RunCutoutMultiQuality(){forceCutoutMultiQuality=true;RunCutoutQuality();}
@@ -45,6 +45,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         {
             light.color=Color.red;var far=Point(new Vector3(-1.5f,0,-1),Color.blue,4);
             if(cutoutSpecularQuality){surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetFloat("_Smoothness",.6f);}
+            if(cutoutPairedFinalSample)ApplyCutoutPairedFinalSample();
             feature.Settings.initialSamples=8;feature.Settings.denoise=true;
             if(forceCutoutShadowStages){ValidateCutoutShadowStages();return;}
             var raw=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));var filtered=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));
@@ -143,9 +144,10 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 Require(feature.LastContext.nrd.LastDispatchCount>0,"two nonzero lights bypassed RELAX");
                 Require(Math.Abs(rawRed/redRef-1)<.03&&Math.Abs(rawBlue/blueRef-1)<.03,"multi-light raw energy mismatch");
             }
-            var report=new MultiQualityReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",signal=cutoutSpecularQuality?"specular":"diffuse",cases=cases.ToArray()};
+            var report=new MultiQualityReport{qualityPass=allPass,requestedFinalSamples=cutoutPairedFinalSample?2:1,path=compatibility?"compatibility":"RenderGraph",signal=cutoutSpecularQuality?"specular":"diffuse",cases=cases.ToArray()};
             string prefix=motionAudit?(visibilityAudit||cutoutNrdDiagnostic=="motionProduction"?"rtdi-cutout32-":"rtdi-cutout31-")+cutoutNrdDiagnostic+"-"+(compatibility?"compat":"rg"):cutoutNrdDiagnostic==null?"rtdi-cutout32-current-"+(compatibility?"compat":"rg"):"rtdi-cutout30-"+cutoutNrdDiagnostic;
             if(cutoutSpecularQuality)prefix="rtdi-cutout33-spec-"+(motionAudit?"motion-":"all-")+(compatibility?"compat":"rg");
+            if(cutoutPairedFinalSample)prefix="rtdi-finalpair50-multi-"+(compatibility?"compat":"rg");
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+".json"),JsonUtility.ToJson(report,true));
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+".csv"),rows.ToString());
             Debug.Log($"[HoRTDIValidation] CUTOUT_MULTI_RESULT qualityPass={allPass} diagnostic={cutoutMultiAudit} compatibility={compatibility}");

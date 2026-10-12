@@ -38,3 +38,5 @@ step短期红通道误差在raw就从.231293升到.452006，Temporal从.266796�
 Roslyn errors0、隔离compute导入无新增Shader诊断，正式候选两条数值一致且失败出口正确，阶段读取/缩放/CPU参考检查通过。重新运行默认RenderGraph正式入口，仍原3/6、退出1、数值不变。生产Runtime/Shader/native/GI/Player无改动，未运行无关Player/GI构建；候选在当前最直接门槛已失败，不扩大接纳回归。
 
 下一项应评估如何同时降低各颜色通道的瞬时方差，保留confidence与step/core门槛。先核对现有单reservoir/单最终样本的能力边界、alpha可见性和多样本成本，再考虑有明确收益的DI采样改动；不通过继续加初始候选数或放宽滤波门槛掩盖单最终样本的颜色权衡。古堡仍只用于资产支持审计，不能由本小测试替代场景GPU预算或最终材质合成。
+
+第50步[第二最终样本隔离原型](Ho-RTDI-PairedFinalSamplePrototype.md)保留生产提案和confidence，在两条256/512镜面/漫反射及64 core中通过；每有效receiver增加一次native alpha射线，环境与多灯退化/部署/成本仍待检查，未进入生产。
