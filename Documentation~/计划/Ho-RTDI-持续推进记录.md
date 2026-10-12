@@ -519,7 +519,15 @@
 
 **限制与下一项：** 原型只接native Cutout visibility且解析灯，无Cutout控制仍单样本；天空MIS/多灯分布/聚光灯/HDR/实际部署和额外射线成本未证明。先扩大灯域，处理均匀辅助退化与环境归属后再考虑产品接入，不以资源不增声称GPU免费。详见[原型证据](../Ho-RTDI-PairedFinalSamplePrototype.md)。
 
-## 51. 下一步取舍
+## 51. 第二最终样本的灯域退化
+
+**动手前评审：** 两点灯不能代表古堡多灯；核对局部PDF/功率cone shaping，原baseline与paired分开评分spotRapid/spotStep/32灯强弱/hdrRapid。256/3584点与192+256固定时钟，独立CPU GGX/cone/alpha；Far/弱灯在完整blocker左侧且骨骼非负移动，Near预计算交点并逐帧抽查原参考。
+
+**结果：** 两条baseline0/4、paired2/4。paired spotRapid .360202失败、spotStep .226086/changed.264976通过、HDR .343575且scale1/256通过。32灯主采样仍Power，均匀辅助raw normalized MSE 1.289396→7.764652，filtered红/蓝.819039/.875879失败，拒绝生产接入；不放宽门槛或用平均raw正确替代噪声。
+
+**下一项：** 辅助正功率/CDF提案需对应实际灯索引和区间PDF，保留RGB短窗口、alpha/灯启停变化门槛。环境/opaque/Player/成本仍待处理。仅Editor/文档，原两点灯六组回归、Roslyn/Shader/GUID/diff通过。详见[灯域证据](../Ho-RTDI-PairedLightDomainAudit.md)。
+
+## 52. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

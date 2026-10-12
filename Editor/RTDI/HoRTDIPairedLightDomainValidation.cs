@@ -1,0 +1,94 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using lilToon.URP.Extensions.RTDI;
+using UnityEngine;
+
+namespace lilToon.URP.Extensions.Editor.RTDI
+{
+    public static partial class HoRTDIValidation
+    {
+        private static bool pairedLightDomainAudit;
+        public static void RunPairedLightDomainBaseline(){pairedLightDomainAudit=true;RunCutoutResolutionSpecular();}
+        public static void RunPairedLightDomainBaselineCompatibility(){compatibility=true;RunPairedLightDomainBaseline();}
+        public static void RunPairedLightDomain(){cutoutPairedFinalSample=true;RunPairedLightDomainBaseline();}
+        public static void RunPairedLightDomainCompatibility(){compatibility=true;RunPairedLightDomain();}
+        [Serializable] private sealed class PairedLightDomainReport{public bool qualityPass;public string path;public int finalSamples;public PairedLightDomainCase[] cases;}
+        [Serializable] private sealed class PairedLightDomainCase
+        {
+            public string profile;public int size,lights,points,tracedFrames;public bool pass;
+            public double rawRed,rawBlue,filteredRed,filteredBlue,frameL1,changedL1,rawNormalizedMse,filteredNormalizedMse,minScale;
+        }
+        private sealed class PairedLightDomainPoint{internal int x,y;internal Vector3 nearIntersection;internal double r,b;}
+        private static void ValidatePairedLightDomain(Light blue)
+        {
+            const int size=256,frames=256;target.Release();target.width=target.height=size;target.Create();camera.aspect=1;feature.Settings.useEnvironment=false;
+            var weak=new List<Light>();for(int i=0;i<30;i++){var lamp=Point(new Vector3(-1.5f-.06f*i,.3f*Mathf.Sin(i*.7f),-1),Color.blue,.01f);lamp.enabled=false;weak.Add(lamp);}
+            var raw=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));var filtered=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
+            var results=new List<PairedLightDomainCase>();bool allPass=true;int clock=0;
+            foreach(string profile in new[]{"spotRapid","spotStep","manyWeakRapid","hdrRapid"})
+            {
+                bool many=profile=="manyWeakRapid",spot=profile.StartsWith("spot",StringComparison.Ordinal),step=profile=="spotStep",hdr=profile=="hdrRapid";
+                foreach(var lamp in weak)lamp.enabled=many;
+                foreach(var lamp in new[]{light,blue})
+                {
+                    lamp.type=spot?LightType.Spot:LightType.Point;lamp.intensity=hdr?40000:4;lamp.useColorTemperature=false;lamp.range=100;
+                    lamp.spotAngle=55;lamp.innerSpotAngle=15;lamp.transform.rotation=Quaternion.LookRotation(-lamp.transform.position,Vector3.up);
+                }
+                feature.Settings.localSampling=many?HoRTDILocalSampling.Power:HoRTDILocalSampling.Uniform;
+                skinBlockerBone.localPosition=Vector3.zero;RenderCamera();var c=feature.LastContext;
+                Require(c.finalVisibility!=null&&!c.environmentSampling&&c.previousLightKeys.Length==(many?32:2),"Light-domain native visibility/light count invalid");
+                var points=new List<PairedLightDomainPoint>();float minCone=1,maxCone=0;
+                for(int y=size/4;y<3*size/4;y+=2)for(int x=size/4;x<11*size/16;x+=2)
+                {
+                    var p=PlanePosition(x,y,size);var delta=light.transform.position-p;float t=(blocker.transform.position.z-p.z)/delta.z;
+                    double r=PairedDomainLamp(light,p,out float cone),b=PairedDomainLamp(blue,p,out _);minCone=Mathf.Min(minCone,cone);maxCone=Mathf.Max(maxCone,cone);
+                    if(many)foreach(var lamp in weak)b+=PairedDomainLamp(lamp,p,out _);
+                    // All blue emitters are left of the complete blocker, for
+                    // the entire non-negative horizontal bone trajectory.
+                    Require(OutsideLeft(blue,p),"Far lamp intersects swept blocker");
+                    if(many)foreach(var lamp in weak)Require(OutsideLeft(lamp,p),"Weak lamp intersects swept blocker");
+                    points.Add(new PairedLightDomainPoint{x=x,y=y,nearIntersection=blocker.transform.InverseTransformPoint(p+delta*t),r=r,b=b});
+                }
+                if(spot)Require(minCone<.9f&&maxCone>.99f,"Spot fixture did not cover cone attenuation");
+                c.historyValid=c.nrdHistoryValid=false;c.frame=0;for(int i=0;i<192;i++)Draw();
+                double refR=0,refB=0,rr=0,rb=0,fr=0,fb=0,l1=0,rawMse=0,filteredMse=0,squares=0,changedError=0,changedReference=0,minScale=1;
+                int traced=0;var previous=new double[points.Count];var changed=new bool[points.Count];var scale=new uint[c.nrdScale.count];
+                for(int frame=0;frame<frames;frame++)
+                {
+                    float offset=step?((frame/16&1)==0?0:.5f):.25f+.25f*Mathf.Sin(frame*.27f);skinBlockerBone.localPosition=Vector3.right*offset;Draw();
+                    Require(c.nrd.LastDispatchCount>0,"Light-domain bypassed RELAX");traced+=c.lastVisibilityGradients?1:0;ReadImage(c.specular.rt,raw);ReadImage(c.filteredSpecular.rt,filtered);
+                    c.nrdScale.GetData(scale);double s=BitConverter.Int32BitsToSingle((int)scale[1]);Require(double.IsFinite(s)&&s>0&&s<=1,"Light-domain scale invalid");minScale=Math.Min(minScale,s);
+                    for(int i=0;i<points.Count;i++)
+                    {
+                        var p=points[i];var local=p.nearIntersection-skinBlockerBone.localPosition;
+                        bool shadow=Mathf.Abs(local.x)<=.5f&&Mathf.Abs(local.y)<=.5f&&CutoutCpuSample(alphaTexture,new Vector2(local.x+.5f,local.y+.5f))>=.5f;
+                        if(i%256==0)Require(shadow==CutoutPlaneShadow(light,p.x,p.y,size),"Precomputed CPU shadow differs from original ray reference");
+                        double r=shadow?0:p.r,b=p.b;var a=raw.GetPixel(p.x,p.y);var f=filtered.GetPixel(p.x,p.y);
+                        Require(float.IsFinite(a.r)&&float.IsFinite(a.g)&&float.IsFinite(a.b)&&float.IsFinite(f.r)&&float.IsFinite(f.g)&&float.IsFinite(f.b),"Light-domain non-finite signal");
+                        if(step&&frame%16==0)changed[i]=frame>0&&Math.Abs(r-previous[i])>1e-6;
+                        if(step&&frame%16<3&&changed[i]){changedError+=Math.Abs(f.r-r);changedReference+=p.r;}
+                        previous[i]=r;refR+=r;refB+=b;rr+=a.r;rb+=a.b;fr+=f.r;fb+=f.b;l1+=Math.Abs(f.r-r)+Math.Abs(f.b-b);
+                        rawMse+=(a.r-r)*(a.r-r)+a.g*a.g+(a.b-b)*(a.b-b);filteredMse+=(f.r-r)*(f.r-r)+f.g*f.g+(f.b-b)*(f.b-b);squares+=r*r+b*b;
+                    }
+                }
+                var result=new PairedLightDomainCase{profile=profile,size=size,lights=c.previousLightKeys.Length,points=points.Count,tracedFrames=traced,rawRed=rr/refR,rawBlue=rb/refB,filteredRed=fr/refR,filteredBlue=fb/refB,frameL1=l1/(refR+refB),changedL1=changedReference>0?changedError/changedReference:0,rawNormalizedMse=rawMse/squares,filteredNormalizedMse=filteredMse/squares,minScale=minScale};
+                result.pass=traced>0&&Math.Abs(result.rawRed-1)<.03&&Math.Abs(result.rawBlue-1)<.03&&Math.Abs(result.filteredRed-1)<.05&&Math.Abs(result.filteredBlue-1)<.05&&result.frameL1<.35&&(!step||changedReference>0&&result.changedL1<.35)&&(!hdr||minScale<1);
+                allPass&=result.pass;results.Add(result);c.nrd.ValidationTimeSeconds=null;
+                Debug.Log($"[HoRTDIValidation] PAIRED_LIGHT_DOMAIN paired={cutoutPairedFinalSample} profile={profile} lights={result.lights} raw={result.rawRed:F6}/{result.rawBlue:F6} filtered={result.filteredRed:F6}/{result.filteredBlue:F6} frameL1={result.frameL1:F6} changedL1={result.changedL1:F6} rawMse={result.rawNormalizedMse:F6} filteredMse={result.filteredNormalizedMse:F6} scale={minScale} pass={result.pass}");
+                void Draw(){c.nrd.ValidationTimeSeconds=++clock/60.0;RenderCamera();}
+            }
+            string name="rtdi-lightdomain51-"+(cutoutPairedFinalSample?"paired-":"baseline-")+(compatibility?"compat":"rg")+".json";
+            File.WriteAllText(Path.Combine(Application.dataPath,"../"+name),JsonUtility.ToJson(new PairedLightDomainReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",finalSamples=cutoutPairedFinalSample?2:1,cases=results.ToArray()},true));
+            Require(allPass,"Light-domain energy/noise/step/HDR gates failed");
+            bool OutsideLeft(Light source,Vector3 p){var delta=source.transform.position-p;float t=(blocker.transform.position.z-p.z)/delta.z;return t>0&&t<1&&blocker.transform.InverseTransformPoint(p+delta*t).x<-.5f;}
+        }
+        private static double PairedDomainLamp(Light source,Vector3 p,out float cone)
+        {
+            var delta=source.transform.position-p;double d2=delta.sqrMagnitude;cone=1;
+            if(source.type==LightType.Spot){float inner=Mathf.Cos(source.innerSpotAngle*Mathf.Deg2Rad*.5f),outer=Mathf.Cos(source.spotAngle*Mathf.Deg2Rad*.5f);cone=Mathf.Clamp01((Vector3.Dot(-delta.normalized,source.transform.forward)-outer)/(inner-outer));}
+            double response=ReferenceGGX(Vector3.back,-camera.transform.forward,delta.normalized,102f/255,new Color(10f/255,10f/255,10f/255,1)).r,fade=Math.Max(0,1-Math.Pow(d2/(source.range*source.range),2));
+            return response*source.intensity/d2*fade*fade*cone*cone;
+        }
+    }
+}

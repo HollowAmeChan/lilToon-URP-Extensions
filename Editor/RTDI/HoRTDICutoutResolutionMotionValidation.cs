@@ -25,6 +25,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(cutoutResolutionSpecular){surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetFloat("_Smoothness",.6f);}
             if(cutoutSpecularRgbProposal)ApplyCutoutSpecularRgbProposal();
             if(cutoutPairedFinalSample)ApplyCutoutPairedFinalSample();
+            if(pairedLightDomainAudit){ValidatePairedLightDomain(blue);return;}
             if(pairedFinalSequence){ValidatePairedFinalSequence(blue);return;}
             if(cutoutResolutionSpecularStages){ValidateCutoutResolutionSpecularStages(blue);return;}
             var cases=new List<ResolutionMotionCase>();bool allPass=true;int clock=0;
