@@ -551,7 +551,15 @@
 
 **下一项：** 捕获NRD阶段定位mixed能量/负值后再修，不放宽5%或称整个环境支持已交付。opaque/动态CDF/多相机/Player/GPU时间待完成；Roslyn/Shader/GUID/diff通过，仅Editor/文档。详见[环境对照](../Ho-RTDI-AuxiliaryEnvironmentPartition.md)。
 
-## 55. 下一步取舍
+## 55. 混合环境NRD阶段定位
+
+**动手前评审：** 第54步raw正确但filtered失败，按既有4/6/9/10双lobe接口立即复制，固定128/512观察与独立参考；diffuse恢复scale、uniform ortho spec恢复材质/scale，并全点检查末轮/发布一致，alpha不当方差。
+
+**结果：** baseline diffuse Temporal非负，Clamping min≈-1.099/-1.003，最终≈-.200/-.194；原型T/S Clamping仍2次负值。镜面原型首Atrous红/蓝约.992/.982或.989/.985，后续转1.051/1.049或1.044/1.050，明确两项问题。partition两条24记录完全一致、诊断0；正式54回归仍2/4与数值，无生产更改。
+
+**下一项：** 先修Clamping物理RGB非负/moment一致，保持派生可重建与upstream SHA及旧core/彩灯/动态/环境门槛，再处理镜面后续滤波。仅Editor/文档，Roslyn/Shader/GUID/diff通过。详见[阶段证据](../Ho-RTDI-MixedEnvironmentStages.md)。
+
+## 56. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

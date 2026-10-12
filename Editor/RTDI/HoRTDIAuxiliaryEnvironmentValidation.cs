@@ -36,7 +36,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var filteredD=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));var filteredS=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
             var flags=BindingFlags.Instance|BindingFlags.NonPublic;var computeField=feature.GetType().GetField("shader",flags);var rayField=feature.GetType().GetField("finalVisibilityShader",flags);var originalCompute=computeField.GetValue(feature);var originalRay=rayField.GetValue(feature);
             var cases=new List<AuxiliaryEnvironmentCase>();bool allPass=true;double skySpec=EnvironmentSpecularReference(102.0/255);
-            foreach(bool mixed in new[]{false,true})foreach(bool reuse in new[]{false,true})
+            foreach(bool mixed in auxiliaryEnvironmentStages?new[]{true}:new[]{false,true})foreach(bool reuse in new[]{false,true})
             {
                 light.enabled=blue.enabled=mixed;feature.Settings.temporal=feature.Settings.spatial=reuse;computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);RenderCamera();var c=feature.LastContext;
                 Require(c.environmentSampling&&c.finalVisibility!=null&&c.previousLightKeys.Length==(mixed?2:0),"Environment/alpha/light fixture invalid");
@@ -48,6 +48,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     ApplyCutoutPairedFinalSample();cdfBuffer.SetData(cdf);pairedFinalShader.SetBuffer("_HoRTDIAuxiliaryCDF",cdfBuffer);pairedFinalShader.SetBuffer("_HoRTDISecondAuxiliary",second);
                     var compute=(ComputeShader)computeField.GetValue(feature);compute.SetBuffer(compute.FindKernel("ShadeNRD"),Shader.PropertyToID("_HoRTDISecondAuxiliary"),second);
                 }
+                if(auxiliaryEnvironmentStages){ValidateAuxiliaryEnvironmentStages(c,mixed,reuse,blue,skySpec);computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);continue;}
                 c.historyValid=c.nrdHistoryValid=false;c.frame=0;for(int i=0;i<192;i++)RenderCamera();
                 var sums=new double[4,3];var references=new double[2,3];int samples=0;double minSignal=0;
                 var referencePoints=new List<(int x,int y,double dr,double db,double sr,double sb)>();
@@ -82,6 +83,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);c.nrd.ValidationTimeSeconds=null;
             }
             string mode=!cutoutPairedFinalSample?"baseline":auxiliaryEnvironmentPartition?"partition":"naive";
+            if(auxiliaryEnvironmentStages){WriteAuxiliaryEnvironmentStages(mode);return;}
             File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-auxenv54-"+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",mode=mode,cases=cases.ToArray()},true));
             Require(allPass,"Environment partition energy gates failed");
         }

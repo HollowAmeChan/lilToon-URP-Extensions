@@ -38,3 +38,5 @@ Naive原型0/4：sky-only全部0，mixed天空raw diffuse/spec约.50；这证明
 报告分别为`rtdi-auxenv54-baseline/naive/partition-rg/compat.json`，此次baseline/naive实测RenderGraph，partition两条实测。修正后的两条四组数值一致，原第53步解析四组回归4/4且数值不变。Roslyn errors0，无新增DI Shader诊断，GUID已修为32位且唯一，diff whitespace通过；Runtime/Shader/native/GI/Player未改，不重建未变Player。
 
 下一项用现有NRD阶段捕获定位mixed镜面能量变化与原运行时负输出，再选择必要修复；不能仅在发布端强制截零就称输入/滤波正确。opaque路径、动态CDF/多相机、实际Player、GPU时间与真实Unity天空仍待扩大验证。保持只做DI与直接读取既有输入，不扩张材质合成、AC副本或通用PT。
+
+第55步[阶段定位](Ho-RTDI-MixedEnvironmentStages.md)确认漫反射在Clamping首次转负，镜面偏差主要出现在后续Atrous；两项分开修复，正式2/4未改变。
