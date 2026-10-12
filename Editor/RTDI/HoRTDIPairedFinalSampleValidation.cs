@@ -103,6 +103,7 @@ float2 HoDICachedPrimaryLuminance(RTXDI_DIReservoir reservoir,RAB_Surface surfac
             }
             string folder=Path.Combine(Application.dataPath,"HoRTDIPairedFinalAudit");Directory.CreateDirectory(folder);
             if(pairedSecondAuxiliary)(compute,ray)=AddSecondAuxiliary(compute,ray);
+            if(auxiliaryEnvironmentPartition)(compute,ray)=PartitionAuxiliaryEnvironment(compute,ray);
             File.WriteAllText(Path.Combine(folder,"HoRTDIPaired.compute"),Rebase(compute,shaderRelative));File.WriteAllText(Path.Combine(folder,"HoRTDIPaired.raytrace"),Rebase(ray,rayRelative));
             AssetDatabase.ImportAsset(auditPath+"/HoRTDIPaired.compute",ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);
             AssetDatabase.ImportAsset(auditPath+"/HoRTDIPaired.raytrace",ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);

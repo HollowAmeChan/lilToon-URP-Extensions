@@ -543,7 +543,15 @@
 
 **限制与下一项：** 第二辅助256²增1.5MiB，1080估47.46MiB尚未测试；相对原单样本增两条最终射线。环境/opaque/动态CDF/多相机/Player/GPU预算仍未完成，不能称生产可用。两条正式/计数/旧CDF回归、Roslyn/Shader/GUID/diff通过，仅Editor/文档。详见[质量与代价](../Ho-RTDI-SecondAuxiliaryPrototype.md)。
 
-## 54. 下一步取舍
+## 54. 辅助样本与环境贡献归属
+
+**动手前评审：** 辅助只采解析灯，直接平均会减半天空；核对用户ShadeSamples/SDK环境MIS和当前native，已正确绑定Ho-Atmosphere，不改输入设施。隔离修正天空主样本权重1、解析主.5、两辅助各.25；只辅助生成要求解析数>0，避免sky-only不追主可见性。
+
+**结果：** 128/512观察独立常量绿色天空GGX积分+红蓝解析参考，透明Cutout强制native路径。Naive0/4，sky-only0/mixed绿约.5；修正两条2/4，raw绿约1，mixed镜面filtered红1.050745或蓝1.050032仍失败。原baseline mixed还存在约-.2负输出，完整记录并拒绝，不 clamp。原解析四组回归4/4，生产不变。
+
+**下一项：** 捕获NRD阶段定位mixed能量/负值后再修，不放宽5%或称整个环境支持已交付。opaque/动态CDF/多相机/Player/GPU时间待完成；Roslyn/Shader/GUID/diff通过，仅Editor/文档。详见[环境对照](../Ho-RTDI-AuxiliaryEnvironmentPartition.md)。
+
+## 55. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

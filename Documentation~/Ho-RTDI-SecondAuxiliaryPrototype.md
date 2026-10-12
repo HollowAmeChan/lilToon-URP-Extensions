@@ -38,3 +38,5 @@ spotRapid raw normalized MSE从.620097降到.495804，filtered从.211896降到.1
 Roslyn Runtime/Editor errors0、无新增DI Shader错误/警告、GUID唯一与diff whitespace通过。两条质量/实际PDF/可见性检查、独立射线审计、旧两样本CDF失败回归完成。生产未变，没有构建未变Player/GI，也没有宣称已部署或成本可接受。
 
 下一项应覆盖环境与opaque路径，检查辅助仅采解析灯时的贡献归属，避免平均后把天空贡献错误减半；再完成动态CDF/多相机/实际Player与有效GPU时间核对。现有距离guide仍选主样本、额外显存和两条辅助射线也必须在产品接入前评估。古堡继续用于资产支持审计，不借本步扩张最终NPR/PBR合成或通用PT。
+
+第54步[环境贡献归属](Ho-RTDI-AuxiliaryEnvironmentPartition.md)修复隔离原型sky-only归零与天空减半；原始能量恢复，但混合镜面filtered仍少量超5%，仅2/4，不进入生产。
