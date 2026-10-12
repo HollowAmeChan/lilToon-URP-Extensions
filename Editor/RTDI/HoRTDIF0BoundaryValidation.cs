@@ -8,9 +8,12 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     public static partial class HoRTDIValidation
     {
         private static bool forceF0Boundary;
+        private static bool f0BoundaryLarge;
         private static int f0BoundaryUniform=-1;
         public static void RunF0Boundary(){forceF0Boundary=true;RunReuseNoise();}
         public static void RunF0BoundaryCompatibility(){compatibility=true;RunF0Boundary();}
+        public static void RunF0BoundaryLarge(){f0BoundaryLarge=true;RunF0Boundary();}
+        public static void RunF0BoundaryLargeCompatibility(){compatibility=true;RunF0BoundaryLarge();}
         public static void RunF0BoundaryUniformZero(){f0BoundaryUniform=0;RunF0Boundary();}
         public static void RunF0BoundaryUniformOne(){f0BoundaryUniform=1;RunF0Boundary();}
         [Serializable] private sealed class F0BoundaryReport{public bool qualityPass;public string path;public int uniformF0;public F0BoundaryCase[] cases;}
@@ -26,7 +29,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             }
             feature.Settings.initialSamples=8;camera.aspect=1;
             var cases=new List<F0BoundaryCase>();bool allPass=true;int clock=0;
-            foreach(int size in f0BoundaryUniform<0?new[]{64,128}:new[]{64})
+            foreach(int size in f0BoundaryUniform<0?(f0BoundaryLarge?new[]{256,512}:new[]{64,128}):new[]{64})
             {
                 target.Release();target.width=target.height=size;target.Create();
                 var raw=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));var filtered=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
@@ -40,12 +43,15 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     for(int frame=0;frame<512;frame++)
                     {
                         Draw();ReadImage(c.diffuse.rt,raw);ReadImage(c.filteredDiffuse.rt,filtered);
-                        for(int y=3*size/8;y<5*size/8;y++)for(int x=3*size/8;x<5*size/8;x++)
+                        int stride=Math.Max(1,size/128);
+                        for(int y=3*size/8;y<5*size/8;y+=stride)for(int x=3*size/8;x<5*size/8;x++)
                         {
+                            bool grid=(x-3*size/8)%stride==0,edge=x>=size/2-2&&x<size/2+2;
+                            if(!grid&&!edge)continue;
                             double r=F0BoundaryLamp(light,x,y,size),b=F0BoundaryLamp(blue,x,y,size);var a=raw.GetPixel(x,y);var f=filtered.GetPixel(x,y);
                             Require(float.IsFinite(a.r)&&float.IsFinite(a.b)&&float.IsFinite(f.r)&&float.IsFinite(f.g)&&float.IsFinite(f.b),"F0 boundary non-finite signal");
                             Require(Math.Abs(a.g)<1e-6,"F0 boundary raw green absent-channel truth");
-                            Accumulate(sums[x<size/2?"left":"right"]);if(x>=size/2-2&&x<size/2)Accumulate(sums["leftEdge"]);if(x>=size/2&&x<size/2+2)Accumulate(sums["rightEdge"]);
+                            if(grid)Accumulate(sums[x<size/2?"left":"right"]);if(x>=size/2-2&&x<size/2)Accumulate(sums["leftEdge"]);if(x>=size/2&&x<size/2+2)Accumulate(sums["rightEdge"]);
                             void Accumulate(F0BoundarySums s){s.r+=r;s.b+=b;s.ar+=a.r;s.ab+=a.b;s.fr+=f.r;s.fb+=f.b;s.error+=Math.Abs(f.r-r)+Math.Abs(f.b-b);s.green+=Math.Abs(f.g);}
                         }
                     }
@@ -59,7 +65,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     void Draw(){c.nrd.ValidationTimeSeconds=++clock/60.0;RenderCamera();}
                 }
             }
-            File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-f0boundary42-"+(f0BoundaryUniform>=0?"uniform"+f0BoundaryUniform+"-":"")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new F0BoundaryReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",uniformF0=f0BoundaryUniform,cases=cases.ToArray()},true));
+            File.WriteAllText(Path.Combine(Application.dataPath,"../"+(f0BoundaryLarge?"rtdi-f0boundary44-":"rtdi-f0boundary42-")+(f0BoundaryUniform>=0?"uniform"+f0BoundaryUniform+"-":"")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new F0BoundaryReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",uniformF0=f0BoundaryUniform,cases=cases.ToArray()},true));
             Require(allPass,"F0 spatial boundary/resolution quality gates failed");
         }
         private static float F0BoundaryLamp(Light source,int x,int y,int size)

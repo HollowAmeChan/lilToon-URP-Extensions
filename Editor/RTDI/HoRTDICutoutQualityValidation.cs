@@ -22,6 +22,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         }
         private static void ValidateCutoutQuality()
         {
+            if(forceCutoutResolution){ValidateCutoutResolution();return;}
             if(forceMotionProtocol){ValidateMotionProtocol();return;}
             if(forcePrimaryMotion){ValidatePrimaryMotion();return;}
             if(forceCutoutCube){ValidateCutoutCube();return;}
@@ -65,9 +66,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         }
         private static bool CutoutPlaneShadow(int x,int y)
             =>CutoutPlaneShadow(light,x,y);
-        private static bool CutoutPlaneShadow(Light source,int x,int y)
+        private static bool CutoutPlaneShadow(Light source,int x,int y,int size=64)
         {
-            var ray=camera.ViewportPointToRay(new Vector3((x+.5f)/64,(y+.5f)/64,0));var p=ray.origin+ray.direction*(-ray.origin.z/ray.direction.z);
+            var ray=camera.ViewportPointToRay(new Vector3((x+.5f)/size,(y+.5f)/size,0));var p=ray.origin+ray.direction*(-ray.origin.z/ray.direction.z);
             var direction=source.transform.position-p;float t=(blocker.transform.position.z-p.z)/direction.z;if(t<=0||t>=1)return false;
             var point=blocker.transform.InverseTransformPoint(p+direction*t)-skinBlockerBone.localPosition;
             if(Mathf.Abs(point.x)>.5f||Mathf.Abs(point.y)>.5f)return false;
