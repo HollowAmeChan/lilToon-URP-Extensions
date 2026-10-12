@@ -479,7 +479,15 @@
 
 **验证与下一项：** Roslyn/新报告/原失败语义、旧大尺寸静态及64双灯core回归通过，无生产/Player/GI变更，不重复相同构建。过滤Editor验证/文档。下一项动态短期响应余量、更多灯/primary/尺寸与实际帧，1080/大尺寸spec/GPU预算/真实motion仍未证明，不扩张合成/PT。详见[动态大尺寸](../Ho-RTDI-LargeDynamicCutout.md)。
 
-## 46. 下一步取舍
+## 46. 大尺寸动态镜面失败基线
+
+**动手前评审：** 第45步只证明漫反射，旧64镜面不能代表256/512。复用可控Cutout场景、独立CPU Smith GGX与每帧遮挡参考，SB量化F0=10/255、roughness=102/255。核对用户NRD参数接口/固定头文件及fixed FullSample receiver/worldMotion可见性参考；不改古堡合并模型，不接未知URP motion。
+
+**结果与拒绝：** 默认两条各3/6，rapid frameL1=.507913/.539075，256 step=.357448失败；平均raw3%与filtered5%均通过。phi=2对照rapid=.469027/.508687仍失败，Atrous7/8=.497639/.517001且256 step=.352287仍失败，均不接受为生产修复。报告区分default/phi-two/radius并记录实际参数，保留false/exit1，不覆盖默认或放宽.35。
+
+**下一项：** 用已有镜面阶段捕获，先定位256 rapid的raw、Temporal、Clamping、首/末Atrous与最终发布误差及缩放一致性，再决定运行时改动。只改本步Editor与文档，原大尺寸漫反射及64镜面作共享夹具回归。详见[失败基线](../Ho-RTDI-LargeDynamicSpecular.md)。
+
+## 47. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

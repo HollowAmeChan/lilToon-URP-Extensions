@@ -29,4 +29,4 @@ step首帧位置与预热一致，随后15次变化触发gradient；固定位置
 
 Roslyn errors0、无新增DI shader诊断，新报告保留真实pass/失败出口。旧256/512静态Cutout及64双灯/core入口回归通过。产品Runtime/Shader/native、Player模板与GI未变，不重建相同Player/GI。
 
-下一项应关注阶跃变化像素的余量、扩大灯分布/移动primary/更大尺寸与实际帧证据。1080、specular大尺寸、真实motion与GPU预算仍未证明；原古堡仅作资产支持审计，不扩张最终材质合成或通用PT。
+第46步另做[大尺寸动态镜面验收](Ho-RTDI-LargeDynamicSpecular.md)：默认两条路径各3/6通过，快速遮挡噪声失败，参数对照未解决。不能把本页漫反射结果外推至镜面。下一项先定位镜面阶段误差，再考虑阶跃余量、灯分布/移动primary与实际帧证据。1080、真实motion与GPU预算仍未证明；原古堡仅作资产支持审计，不扩张最终材质合成或通用PT。
