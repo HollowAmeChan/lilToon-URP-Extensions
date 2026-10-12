@@ -567,7 +567,15 @@
 
 **部署与下一项：** 两个release errors0，实际D3D12两条与D3D11 inactive均退出0，旧环境/HDR/边界/NRD/多灯/Cutout门槛通过；Roslyn/派生SHA/DLL/hash/diff通过。过滤DI Shader/生成器/文档，无GI引用该NRD body。下一项镜面后续Atrous；三样本仍隔离，opaque/动态CDF/Player集成/GPU预算待完成。详见[修复](../Ho-RTDI-NonnegativeDiffuseHistory.md)。
 
-## 57. 下一步取舍
+## 57. 镜面后续固定交换隔离对照
+
+**动手前评审：** 55末Atrous偏差已定位；核对vendor/fork逐像素sumW归一化与既有diffuse固定系数，仅spec输出采用拒绝质量留中心/variance系数平方，邻域/带宽/参数/F0保持。实际index10 main0作用域替换并恢复，不声称随机偏移/几何项非对称下严格守恒。
+
+**结果：** 原型环境两条4/4，mixed spec红/蓝1.0507/1.0488→1.0255/1.0173、TS1.0444/1.0500→1.0228/1.0205；原单样本同场景也4/4。阶段9不变，10改善，物理scale/发布一致；恢复原入口仍2/4，未污染。生产不变，Roslyn/Shader/GUID/diff通过。
+
+**下一项：** 可重建DI派生候选后广验动态/primary/曲面/边界/窄环境/小太阳/HDR/core/彩灯/Player，噪声可能变差，不能只凭能量通过发布。三样本/opaque/动态CDF/GPU预算仍待完成。详见[对照](../Ho-RTDI-LateSpecularExchangeAudit.md)。
+
+## 58. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

@@ -48,6 +48,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     ApplyCutoutPairedFinalSample();cdfBuffer.SetData(cdf);pairedFinalShader.SetBuffer("_HoRTDIAuxiliaryCDF",cdfBuffer);pairedFinalShader.SetBuffer("_HoRTDISecondAuxiliary",second);
                     var compute=(ComputeShader)computeField.GetValue(feature);compute.SetBuffer(compute.FindKernel("ShadeNRD"),Shader.PropertyToID("_HoRTDISecondAuxiliary"),second);
                 }
+                using var lateSpecOverride=lateSpecExchangeAudit?ApplyLateSpecExchange(c):null;
                 if(auxiliaryEnvironmentStages){ValidateAuxiliaryEnvironmentStages(c,mixed,reuse,blue,skySpec);computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);continue;}
                 c.historyValid=c.nrdHistoryValid=false;c.frame=0;for(int i=0;i<192;i++)RenderCamera();
                 var sums=new double[4,3];var references=new double[2,3];int samples=0;double minSignal=0;
@@ -83,6 +84,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);c.nrd.ValidationTimeSeconds=null;
             }
             string mode=!cutoutPairedFinalSample?"baseline":auxiliaryEnvironmentPartition?"partition":"naive";
+            if(lateSpecExchangeAudit)mode+="-exchange";
             if(auxiliaryEnvironmentStages){WriteAuxiliaryEnvironmentStages(mode);return;}
             File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-auxenv54-"+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",mode=mode,cases=cases.ToArray()},true));
             Require(allPass,"Environment partition energy gates failed");

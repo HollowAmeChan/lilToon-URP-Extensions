@@ -27,3 +27,5 @@ DI派生body只在RADIANCE模式，对完成clamping/acceleration/reset的normal
 ## 下一项
 
 先处理已定位的镜面后续Atrous能量变化，保留非负/core/彩灯/primary/环境/Player门槛。三样本采样仍为隔离原型，opaque、动态CDF、多相机、实际GPU时间与最终产品接入未完成，不扩大材质合成/PT范围。
+
+第57步[镜面固定交换隔离对照](Ho-RTDI-LateSpecularExchangeAudit.md)将混合环境能量恢复到5%内；还需广泛噪声/边界/部署回归后才接纳。
