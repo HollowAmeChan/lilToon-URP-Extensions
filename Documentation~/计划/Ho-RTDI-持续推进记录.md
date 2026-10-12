@@ -607,7 +607,15 @@
 
 **下一项：** 核对透视/正交偏差覆盖及noise-dependent range/random offset具体项，不继续按代码直觉改表达或盲调曲线。只Editor/文档，Roslyn/Shader/diff通过，无生产/Player变化。详见[对照](../Ho-RTDI-OrthographicSpecularAudit.md)。
 
-## 62. 下一步取舍
+## 62. 透视混合环境覆盖
+
+**动手前评审：** 用户实际场景透视，orthographic差异并非能量修复。128/FOV40沿同一输入，逐像素V/distance/GGX与随NdotV的double天空积分，缓存1e-6精度，不套正交常量或改Shader。
+
+**结果：** 单样本/三样本两条各2/4，raw spec均5%内，mixed filtered蓝约1.155～1.188/1.161～1.182，透视更明显；diffuse/非负保持，原正交回归原值。只是中心ROI，不能据此断言全图同幅增能。
+
+**下一项：** 全有效平面与嵌套ROI积分/梯度，区分空间搬移和权重问题后再选过滤/guide改动。仅Editor/文档，Roslyn/Shader/diff通过，生产/Player不变。详见[透视证据](../Ho-RTDI-PerspectiveMixedEnvironment.md)。
+
+## 63. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

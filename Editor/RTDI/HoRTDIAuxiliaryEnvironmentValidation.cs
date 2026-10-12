@@ -10,11 +10,16 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     public static partial class HoRTDIValidation
     {
         private static bool auxiliaryEnvironmentAudit,auxiliaryEnvironmentPartition;
+        private static bool auxiliaryPerspectiveAudit;
         public static void RunAuxiliaryEnvironmentBaseline(){auxiliaryEnvironmentAudit=true;RunCutoutResolutionSpecular();}
         public static void RunAuxiliaryEnvironmentBaselineCompatibility(){compatibility=true;RunAuxiliaryEnvironmentBaseline();}
         public static void RunAuxiliaryEnvironmentNaive(){pairedSecondAuxiliary=pairedAuxiliaryPowerCDF=cutoutPairedFinalSample=true;RunAuxiliaryEnvironmentBaseline();}
         public static void RunAuxiliaryEnvironment(){auxiliaryEnvironmentPartition=true;RunAuxiliaryEnvironmentNaive();}
         public static void RunAuxiliaryEnvironmentCompatibility(){compatibility=true;RunAuxiliaryEnvironment();}
+        public static void RunPerspectiveAuxiliaryEnvironmentBaseline(){auxiliaryPerspectiveAudit=true;RunAuxiliaryEnvironmentBaseline();}
+        public static void RunPerspectiveAuxiliaryEnvironmentBaselineCompatibility(){compatibility=true;RunPerspectiveAuxiliaryEnvironmentBaseline();}
+        public static void RunPerspectiveAuxiliaryEnvironment(){auxiliaryPerspectiveAudit=true;RunAuxiliaryEnvironment();}
+        public static void RunPerspectiveAuxiliaryEnvironmentCompatibility(){compatibility=true;RunPerspectiveAuxiliaryEnvironment();}
         private static (string compute,string ray) PartitionAuxiliaryEnvironment(string compute,string ray)
         {
             compute=ReplaceOnce(compute,"diffuse=.5*diffuse+.25*(extraD+secondD);specular=.5*specular+.25*(extraS+secondS);diffuseLighting=.5*diffuseLighting+.25*(extraLighting+secondLighting);",@"
@@ -25,17 +30,19 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             ray=ReplaceOnce(ray,"        if(HoDITraceFinal(surface,sample2))bits|=4;","        if(HoDITraceFinal(surface,sample2))bits|=4;\n        }");
             return(compute,ray);
         }
-        [Serializable] private sealed class AuxiliaryEnvironmentReport{public bool qualityPass;public string path,mode;public AuxiliaryEnvironmentCase[] cases;}
+        [Serializable] private sealed class AuxiliaryEnvironmentReport{public bool qualityPass;public string path,mode,projection;public AuxiliaryEnvironmentCase[] cases;}
         [Serializable] private sealed class AuxiliaryEnvironmentCase{public bool mixed,reuse,pass;public double minSignal,diffuseRed,diffuseGreen,diffuseBlue,filteredDiffuseRed,filteredDiffuseGreen,filteredDiffuseBlue,specularRed,specularGreen,specularBlue,filteredSpecularRed,filteredSpecularGreen,filteredSpecularBlue;}
         private static void ValidateAuxiliaryEnvironment(Light blue)
         {
             const int size=128,frames=512;target.Release();target.width=target.height=size;target.Create();camera.aspect=1;
+            if(auxiliaryPerspectiveAudit){camera.orthographic=false;camera.fieldOfView=40;}
             AlphaFill(alphaTexture,0);AlphaFill(alphaMask,1);atmosphere.Settings.enabled=true;atmosphere.Settings.source=HoAtmosphereSource.Constant;atmosphere.Settings.constantColor=Color.green;
             feature.Settings.useEnvironment=true;feature.Settings.environmentSamples=feature.Settings.environmentBrdfSamples=4;
             var rawD=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));var rawS=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
             var filteredD=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));var filteredS=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
             var flags=BindingFlags.Instance|BindingFlags.NonPublic;var computeField=feature.GetType().GetField("shader",flags);var rayField=feature.GetType().GetField("finalVisibilityShader",flags);var originalCompute=computeField.GetValue(feature);var originalRay=rayField.GetValue(feature);
             var cases=new List<AuxiliaryEnvironmentCase>();bool allPass=true;double skySpec=EnvironmentSpecularReference(102.0/255);
+            var skyReferences=new Dictionary<int,double>();
             foreach(bool mixed in auxiliaryEnvironmentStages?new[]{true}:new[]{false,true})foreach(bool reuse in new[]{false,true})
             {
                 light.enabled=blue.enabled=mixed;feature.Settings.temporal=feature.Settings.spatial=reuse;computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);RenderCamera();var c=feature.LastContext;
@@ -53,11 +60,18 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 c.historyValid=c.nrdHistoryValid=false;c.frame=0;for(int i=0;i<192;i++)RenderCamera();
                 if(lateSpecWeightAudit)lateSpecOverride.ResetHistogram();
                 var sums=new double[4,3];var references=new double[2,3];int samples=0;double minSignal=0;
-                var referencePoints=new List<(int x,int y,double dr,double db,double sr,double sb)>();
+                var referencePoints=new List<(int x,int y,double dr,double db,double sr,double sg,double sb)>();
                 for(int y=48;y<80;y++)for(int x=48;x<80;x++)
                 {
                     Require(!CutoutPlaneShadow(light,x,y,size)&&!CutoutPlaneShadow(blue,x,y,size),"Transparent fixture occluded analytic reference");
-                    referencePoints.Add((x,y,mixed?F0BoundaryLamp(light,x,y,size):0,mixed?F0BoundaryLamp(blue,x,y,size):0,mixed?ResolutionMotionLamp(light,x,y,size):0,mixed?ResolutionMotionLamp(blue,x,y,size):0));
+                    double dr=mixed?F0BoundaryLamp(light,x,y,size):0,db=mixed?F0BoundaryLamp(blue,x,y,size):0,sr=mixed?ResolutionMotionLamp(light,x,y,size):0,sb=mixed?ResolutionMotionLamp(blue,x,y,size):0,sg=skySpec;
+                    if(auxiliaryPerspectiveAudit)
+                    {
+                        var p=PlanePosition(x,y,size);var view=(camera.transform.position-p).normalized;int key=(int)Math.Round(Math.Max(0,Vector3.Dot(Vector3.back,view))*1000000);
+                        if(!skyReferences.TryGetValue(key,out sg)){sg=EnvironmentObliqueReference(102.0/255,key/1000000.0);skyReferences[key]=sg;}
+                        if(mixed){var a=ReferenceLocalLight(light,x,y,size,102f/255);var b=ReferenceLocalLight(blue,x,y,size,102f/255);dr=a.diffuse.r;db=b.diffuse.b;sr=a.specular.r;sb=b.specular.b;}
+                    }
+                    referencePoints.Add((x,y,dr,db,sr,sg,sb));
                 }
                 var images=new[]{rawD,filteredD,rawS,filteredS};
                 for(int frame=0;frame<frames;frame++)
@@ -65,7 +79,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     RenderCamera();Require(c.nrd.LastDispatchCount>0&&c.environmentSampling,"Environment prototype bypassed RELAX/environment");ReadImage(c.diffuse.rt,rawD);ReadImage(c.specular.rt,rawS);ReadImage(c.filteredDiffuse.rt,filteredD);ReadImage(c.filteredSpecular.rt,filteredS);
                     foreach(var p in referencePoints)
                     {
-                        references[0,0]+=p.dr;references[0,1]+=1;references[0,2]+=p.db;references[1,0]+=p.sr;references[1,1]+=skySpec;references[1,2]+=p.sb;
+                        references[0,0]+=p.dr;references[0,1]+=1;references[0,2]+=p.db;references[1,0]+=p.sr;references[1,1]+=p.sg;references[1,2]+=p.sb;
                         for(int signal=0;signal<4;signal++)
                         {
                             var value=images[signal].GetPixel(p.x,p.y);
@@ -87,8 +101,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             }
             string mode=!cutoutPairedFinalSample?"baseline":auxiliaryEnvironmentPartition?"partition":"naive";
             if(lateSpecExchangeAudit)mode+=lateSpecWeightAudit?"-weights":lateSpecAdaptiveAudit?"-adaptive":allSpecOrthographicAudit?"-allortho":lateSpecOrthographicAudit?"-ortho":"-exchange";
+            if(auxiliaryPerspectiveAudit)mode+="-perspective";
             if(auxiliaryEnvironmentStages){WriteAuxiliaryEnvironmentStages(mode);return;}
-            File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-auxenv54-"+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",mode=mode,cases=cases.ToArray()},true));
+            File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-auxenv54-"+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",mode=mode,projection=auxiliaryPerspectiveAudit?"perspective":"orthographic",cases=cases.ToArray()},true));
             Require(allPass,"Environment partition energy gates failed");
         }
     }

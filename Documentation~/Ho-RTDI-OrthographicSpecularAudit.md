@@ -26,3 +26,5 @@
 报告`rtdi-auxenv54-partition-ortho/allortho-rg/compat.json`、`rtdi-orthospec61-motion-rg/compat.json`与`rtdi-allorthospec61-motion-rg.json`独立保存。恢复原环境仍2/4、原动态3/3及数值保持；Roslyn errors0、无新增DI Shader诊断、diff whitespace通过。Runtime/Shader/native/GI/Player始终未变，没有构建未变或已失败候选Player。
 
 正交差异可能值得独立正确性评估，但本次数据不支持其作为mixed能量修复。下一项应避免继续改交换曲线/正交表达，核对perspective与正交中该偏差的覆盖，以及noise-dependent luminance权重、随机大步offset等具体项的影响；对照必须保持原始归一化和门槛。目标场景是透视、多灯，需要从实际输入分布验证而非只在此简化场景消除一个数值差。
+
+第62步[透视混合对照](Ho-RTDI-PerspectiveMixedEnvironment.md)原始保持5%内，filtered解析蓝高出约15～19%；后续先区分中心ROI的空间搬移与全平面偏差，不再只归因ortho。
