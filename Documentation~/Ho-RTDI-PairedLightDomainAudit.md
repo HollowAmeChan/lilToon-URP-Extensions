@@ -32,3 +32,5 @@ spotStep改善短期响应，HDR实际scale为baseline 1/512、paired 1/256；HD
 生产Runtime/Shader/native/GI/Player未变，Roslyn errors0、无新增DI Shader诊断、GUID唯一和diff whitespace通过。原第50步两点灯镜面六组RenderGraph回归通过且数值不变；未重建未变Player/GI。所有实验入口与报告独立，正式失败保留。
 
 下一项为辅助估计提供匹配实际灯索引的正功率分布，减少稀有强灯的大权重，再按相同参考/种子与Uniform对照。应保留RGB通道短窗口表现，核对真实CDF区间PDF与inverse PDF、灯启停/索引变化及native alpha路径；不能只把亮度目标直接复制后称已解决颜色权衡。环境MIS/无Cutout路径、实际Player与额外射线/提案GPU成本仍待处理。古堡继续只作资产支持审计，不扩张材质合成/PT。
+
+第52步[辅助功率CDF](Ho-RTDI-PairedPowerCDFPrototype.md)恢复32灯filtered红/蓝到.983/.992、frameL1=.344326；整体3/4，聚光灯快速组仍失败，生产未改。

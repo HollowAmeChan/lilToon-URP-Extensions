@@ -527,7 +527,15 @@
 
 **下一项：** 辅助正功率/CDF提案需对应实际灯索引和区间PDF，保留RGB短窗口、alpha/灯启停变化门槛。环境/opaque/Player/成本仍待处理。仅Editor/文档，原两点灯六组回归、Roslyn/Shader/GUID/diff通过。详见[灯域证据](../Ho-RTDI-PairedLightDomainAudit.md)。
 
-## 52. 下一步取舍
+## 52. 辅助RGB功率CDF隔离原型
+
+**动手前评审：** 均匀辅助在弱灯群产生大权重，主Power不是问题。依据点/spot shaping构建maxRGB强度CDF，按实际灯索引快照排序、FP32真实区间PDF归一化；不改原ReSTIR/平均系数/物理Shade/alpha/gradient。只增加隔离structured float buffer，2/32灯8/128 bytes，GPU读完释放。
+
+**结果：** 两条3/4，32灯filtered红/蓝.983309/.991945、frameL1=.344326、raw normalized MSE7.764652→.577339恢复；spotRapid仍.360202失败。每配置64次真实GPU index/inversePDF检查及逐帧索引guard通过，两灯CDF等价Uniform数值保持。严格区间坍缩拒绝，未证明动态逐帧CDF/多相机或GPU预算。
+
+**下一项：** 在CDF基础上评估更多独立辅助估计的噪声/射线收益，不通过样本依赖加权或未知ReSTIR实际概率的MIS引入偏差。环境/opaque/Player/成本仍待完成；仅Editor/文档，Uniform回归/Roslyn/Shader/GUID/diff通过。详见[CDF证据](../Ho-RTDI-PairedPowerCDFPrototype.md)。
+
+## 53. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

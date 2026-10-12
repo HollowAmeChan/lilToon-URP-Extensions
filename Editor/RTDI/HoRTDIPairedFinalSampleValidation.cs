@@ -92,6 +92,15 @@ float2 HoDICachedPrimaryLuminance(RTXDI_DIReservoir reservoir,RAB_Surface surfac
 "+ray.Substring(end);
             ray=ReplaceOnce(ray,"        surface.worldPos=current.worldPos;","        RAB_Surface oldSampleSurface=surface;surface.worldPos=current.worldPos;");
             ray=ReplaceOnce(ray,"float2 previous=_HoRTDIPreviousLuminance.Load(int3(old,0)),traced=0;","float2 previous=HoDICachedPrimaryLuminance(reservoir,oldSampleSurface),traced=0;");
+            ray=ray.Replace("\r\n","\n");
+            if(pairedAuxiliaryPowerCDF)
+            {
+                ray=ReplaceOnce(ray,"int _HoRTDIExtraSampleFrame;","StructuredBuffer<float> _HoRTDIAuxiliaryCDF;\nint _HoRTDIExtraSampleFrame;");
+                ray=ReplaceOnce(ray,"uint count=(uint)_HoRTDIFrame.z,index=min((uint)(RTXDI_GetNextRandom(rng)*count),count-1);\n        RTXDI_StreamSample(extra,index,float2(.5,.5),0,1,count);",@"uint count=(uint)_HoRTDIFrame.z,lo=0,hi=count;float u=RTXDI_GetNextRandom(rng);
+        while(lo<hi){uint middle=(lo+hi)/2;if(_HoRTDIAuxiliaryCDF[middle]<=u)lo=middle+1;else hi=middle;}
+        uint index=min(lo,count-1);float pdf=_HoRTDIAuxiliaryCDF[index]-(index>0?_HoRTDIAuxiliaryCDF[index-1]:0);
+        RTXDI_StreamSample(extra,index,float2(.5,.5),0,1,1/pdf);");
+            }
             string folder=Path.Combine(Application.dataPath,"HoRTDIPairedFinalAudit");Directory.CreateDirectory(folder);
             File.WriteAllText(Path.Combine(folder,"HoRTDIPaired.compute"),Rebase(compute,shaderRelative));File.WriteAllText(Path.Combine(folder,"HoRTDIPaired.raytrace"),Rebase(ray,rayRelative));
             AssetDatabase.ImportAsset(auditPath+"/HoRTDIPaired.compute",ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);

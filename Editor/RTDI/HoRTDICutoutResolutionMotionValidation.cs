@@ -24,7 +24,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             light.color=Color.red;var blue=Point(new Vector3(-1.5f,0,-1),Color.blue,4);feature.Settings.initialSamples=8;feature.Settings.temporal=feature.Settings.spatial=feature.Settings.denoise=true;
             if(cutoutResolutionSpecular){surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetFloat("_Smoothness",.6f);}
             if(cutoutSpecularRgbProposal)ApplyCutoutSpecularRgbProposal();
-            if(cutoutPairedFinalSample)ApplyCutoutPairedFinalSample();
+            if(cutoutPairedFinalSample&&!pairedAuxiliaryPowerCDF)ApplyCutoutPairedFinalSample();
             if(pairedLightDomainAudit){ValidatePairedLightDomain(blue);return;}
             if(pairedFinalSequence){ValidatePairedFinalSequence(blue);return;}
             if(cutoutResolutionSpecularStages){ValidateCutoutResolutionSpecularStages(blue);return;}
