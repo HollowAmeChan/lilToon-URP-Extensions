@@ -34,3 +34,5 @@ RGB表达减少亮度抵消后，中心蓝偏差约16～18%降到6～8%；只说
 报告`rtdi-auxenv54-partition-exchange-perspective-rgbdistance-rg/compat.json`（exchange命名是已有隔离入口标签，实际保留原row normalization），动态为`rtdi-rgbspec64-motion-rg/compat.json`。恢复原透视2/4、动态3/3及数值保持；Roslyn errors0、无新增DI Shader诊断/diff whitespace通过。没有生产候选需回滚，也不构建失败候选Player。
 
 下一项应将高光梯度保留和噪声估计一并核对，避免只收紧range权重或只改归一化；可检查当前luminance moment对多色镜面输入的覆盖及scene分布的实际方差，再决定是否有值得接入的guide/统计调整。三样本/opaque/动态CDF/产品部署/GPU预算仍待完成，继续只做DI。
+
+第65步[真实moment/时间方差](Ho-RTDI-MixedSpecularMomentAudit.md)没有显示该mixed输入的亮度波动被漏掉；先核对raw moment到积累信号不确定度的换算一致性。

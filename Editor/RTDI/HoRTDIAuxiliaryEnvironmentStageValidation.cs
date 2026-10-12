@@ -10,13 +10,21 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     public static partial class HoRTDIValidation
     {
         private static bool auxiliaryEnvironmentStages;
+        private static bool auxiliaryEnvironmentMomentAudit;
         private static readonly List<AuxiliaryEnvironmentStageCase> auxiliaryEnvironmentStageCases=new();
         public static void RunAuxiliaryEnvironmentStagesBaseline(){auxiliaryEnvironmentStages=true;RunAuxiliaryEnvironmentBaseline();}
         public static void RunAuxiliaryEnvironmentStages(){auxiliaryEnvironmentStages=true;RunAuxiliaryEnvironment();}
         public static void RunAuxiliaryEnvironmentStagesCompatibility(){compatibility=true;RunAuxiliaryEnvironmentStages();}
+        public static void RunAuxiliaryEnvironmentMomentsBaseline(){auxiliaryEnvironmentMomentAudit=true;RunAuxiliaryEnvironmentStagesBaseline();}
+        public static void RunAuxiliaryEnvironmentMoments(){auxiliaryEnvironmentMomentAudit=true;RunAuxiliaryEnvironmentStages();}
+        public static void RunAuxiliaryEnvironmentMomentsCompatibility(){compatibility=true;RunAuxiliaryEnvironmentMoments();}
         [Serializable] private sealed class AuxiliaryEnvironmentStageReport{public bool diagnosticOnly=true;public string path,mode;public AuxiliaryEnvironmentStageCase[] cases;}
-        [Serializable] private sealed class AuxiliaryEnvironmentStageCase{public bool reuse,specular;public int pipeline,captures;public double red,green,blue,minSignal,maxNegative;public long negativeValues;}
-        private sealed class AuxiliaryStageSums{internal double r,g,b,min;internal long negatives;}
+        [Serializable] private sealed class AuxiliaryEnvironmentStageCase{public bool reuse,specular;public int pipeline,captures;public double red,green,blue,minSignal,maxNegative,rgbVariance,luminanceVariance,alphaSpread;public string alphaStatistic;public long negativeValues;}
+        private sealed class AuxiliaryStageSums
+        {
+            internal double r,g,b,min,alpha;internal long negatives;
+            internal readonly double[] rgb=new double[3072],rgb2=new double[3072],lum=new double[1024],lum2=new double[1024];
+        }
         private static void ValidateAuxiliaryEnvironmentStages(HoRTDIContext c,bool mixed,bool reuse,Light blue,double skySpec)
         {
             const int size=128,frames=512;Require(mixed,"Environment stage audit requires the failing mixed case");
@@ -55,6 +63,15 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                         {
                             int key=pair.Key;bool spec=key>=98;double factor=key==99||key==98||key<0?1:spec?specFactor:inverse;var v=pair.Value.GetPixel(p.x,p.y);double r=v.r*factor,g=v.g*factor,b=v.b*factor;
                             Require(double.IsFinite(r)&&double.IsFinite(g)&&double.IsFinite(b),"Environment stage non-finite signal");var s=sums[key];s.r+=r;s.g+=g;s.b+=b;s.min=Math.Min(s.min,Math.Min(r,Math.Min(g,b)));s.negatives+=(r<0?1:0)+(g<0?1:0)+(b<0?1:0);
+                            if(auxiliaryEnvironmentMomentAudit)
+                            {
+                                int index=(p.y-48)*32+p.x-48;double l=.2126*r+.7152*g+.0722*b;
+                                s.rgb[3*index]+=r;s.rgb[3*index+1]+=g;s.rgb[3*index+2]+=b;s.rgb2[3*index]+=r*r;s.rgb2[3*index+1]+=g*g;s.rgb2[3*index+2]+=b*b;s.lum[index]+=l;s.lum2[index]+=l*l;
+                                int pipeline=spec?key-100:key;
+                                if(pipeline==4||pipeline==6)s.alpha+=Math.Max(0,v.a*factor*factor-l*l);
+                                else if(pipeline==9)s.alpha+=Math.Max(0,v.a*factor*factor);
+                                // Last Atrous alpha is history length, never variance.
+                            }
                             if(key==10||key==110)
                             {
                                 var final=images[spec?98:-2].GetPixel(p.x,p.y);double reference=spec?p.sr+skySpec+p.sb:p.dr+1+p.db;
@@ -67,6 +84,16 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 {
                     bool spec=pair.Key>=98;int pipeline=spec?pair.Key-100:pair.Key;var s=pair.Value;
                     var result=new AuxiliaryEnvironmentStageCase{reuse=reuse,specular=spec,pipeline=pipeline,captures=pipeline<0?frames:captures[pair.Key],red=s.r/(spec?refSR:refDR),green=s.g/(frames*points.Count*(spec?skySpec:1)),blue=s.b/(spec?refSB:refDB),minSignal=s.min,maxNegative=-s.min,negativeValues=s.negatives};
+                    if(auxiliaryEnvironmentMomentAudit)
+                    {
+                        for(int i=0;i<points.Count;i++)
+                        {
+                            for(int channel=0;channel<3;channel++){int index=i*3+channel;result.rgbVariance+=Math.Max(0,s.rgb2[index]/frames-Math.Pow(s.rgb[index]/frames,2));}
+                            result.luminanceVariance+=Math.Max(0,s.lum2[i]/frames-Math.Pow(s.lum[i]/frames,2));
+                        }
+                        result.rgbVariance/=3*points.Count;result.luminanceVariance/=points.Count;result.alphaSpread=s.alpha/(frames*points.Count);result.alphaStatistic=pipeline==4||pipeline==6?"temporalMomentSpread":pipeline==9?"propagatedScalarVariance":"notVariance";
+                        Debug.Log($"[HoRTDIValidation] AUX_ENV_MOMENT reuse={reuse} specular={spec} pipeline={pipeline} rgbVariance={result.rgbVariance:E6} luminanceVariance={result.luminanceVariance:E6} alphaSpread={result.alphaSpread:E6} alpha={result.alphaStatistic}");
+                    }
                     auxiliaryEnvironmentStageCases.Add(result);Debug.Log($"[HoRTDIValidation] AUX_ENV_STAGE reuse={reuse} specular={spec} pipeline={pipeline} ratio={result.red:F6}/{result.green:F6}/{result.blue:F6} min={result.minSignal:E6} negativeValues={result.negativeValues} captures={result.captures}");
                 }
             }
@@ -74,6 +101,6 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             void Copy(CommandBuffer cmd,int key,RenderTargetIdentifier texture){if(targets.TryGetValue(key,out var rt)){cmd.CopyTexture(texture,new RenderTargetIdentifier(rt));captures[key]++;}}
         }
         private static void WriteAuxiliaryEnvironmentStages(string mode)
-            =>File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-auxenvstages55-"+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentStageReport{path=compatibility?"compatibility":"RenderGraph",mode=mode,cases=auxiliaryEnvironmentStageCases.ToArray()},true));
+            =>File.WriteAllText(Path.Combine(Application.dataPath,"../"+(auxiliaryEnvironmentMomentAudit?"rtdi-auxenvmoments65-":"rtdi-auxenvstages55-")+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentStageReport{path=compatibility?"compatibility":"RenderGraph",mode=mode,cases=auxiliaryEnvironmentStageCases.ToArray()},true));
     }
 }

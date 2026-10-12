@@ -631,7 +631,15 @@
 
 **下一项：** 同时核对颜色镜面噪声/moment与高光梯度，不只收紧range或改normalize。只Editor/文档，原门槛/DI范围保持。详见[拒绝](../Ho-RTDI-SpecularRgbDistanceRejection.md)。
 
-## 65. 下一步取舍
+## 65. 混合镜面实际方差与moment语义
+
+**动手前评审：** RGB range失败，先核对真实统计不增资源。128/1024点逐像素512时间RGB/luma方差，避免空间梯度混入；4/6 alpha为raw moment spread，9为scalar variance，10 history不当variance。
+
+**结果：** mixed原型Temporal luma variance≈1.48～1.63e-5、alpha spread≈1.02～1.07e-3，首Atrous scalar≈2.15～2.26e-5 vs实际luma≈3.62～4.29e-6；不支持在此认定luma遗漏颜色波动。原单样本类似。两条24记录一致，原stage/RGB比例保持、诊断0，正式失败不变。
+
+**下一项：** 核对first range与variance propagation对raw moment的样本换算一致性，再过形状/动态/core/Player等门槛，不先加RGB covariance或调phi。仅Editor/文档，Roslyn/Shader/diff通过。详见[统计](../Ho-RTDI-MixedSpecularMomentAudit.md)。
+
+## 66. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
