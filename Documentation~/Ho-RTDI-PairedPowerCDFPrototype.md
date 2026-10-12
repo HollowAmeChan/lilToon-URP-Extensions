@@ -30,3 +30,5 @@ CDF按实际GPU灯列表的`previousLightKeys`当前快照构建。以double累�
 Roslyn Runtime/Editor errors0、无新增DI Shader错误/警告、GUID唯一/diff whitespace通过，两条实际索引/PDF检查有效。Uniform灯域RenderGraph回归仍第51步2/4、数值不变；生产Runtime/Shader/native/GI/Player未改，没有重复未变Player构建。
 
 下一项在保留CDF与可见性响应的条件下检查额外独立辅助估计是否能给spotRapid足够余量，优先验证噪声收益与新增射线代价，不通过依赖当前随机样本的任意加权引入偏差。单个辅助样本与主ReSTIR的最优混合未知，直接用reservoir inverse PDF推断其精确选样概率做MIS也未经证明。环境MIS/opaque路径/动态CDF/多相机/实际Player/GPU预算仍须完成，不能把3/4当成完整DI接入。
+
+第53步[第二独立辅助样本](Ho-RTDI-SecondAuxiliaryPrototype.md)四组均通过，spotRapid=.324357；实际新增第二辅助buffer与第三条最终射线，尚未进入生产。

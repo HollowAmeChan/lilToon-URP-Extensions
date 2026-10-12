@@ -535,7 +535,15 @@
 
 **下一项：** 在CDF基础上评估更多独立辅助估计的噪声/射线收益，不通过样本依赖加权或未知ReSTIR实际概率的MIS引入偏差。环境/opaque/Player/成本仍待完成；仅Editor/文档，Uniform回归/Roslyn/Shader/GUID/diff通过。详见[CDF证据](../Ho-RTDI-PairedPowerCDFPrototype.md)。
 
-## 53. 下一步取舍
+## 53. 第二独立辅助估计与实际代价
+
+**动手前评审：** 两样本CDF spotRapid仍.360，试固定`.5主+.25辅助1+.25辅助2`而非样本依赖加权。沿SDK packing/归一化与真实CDF PDF，第二抽样单独native any-hit并用24-byte natural buffer保存，三visibility位暂存R8，主history/gradient/NRD/距离guide保持。
+
+**结果：** 两条4/4，spotRapid=.324357、step变化像素=.203049、多灯/HDR≈.308。每配置128次GPU index/PDF与两辅助/主缓存CPU alpha核对通过；64对抽样中相同30/27，非重复覆盖有效。另独立GPU计数审计：每辅助256帧16,777,216条，即65,536/帧，主spot略少；计数不包括gradient/inline，也不是GPU时间。
+
+**限制与下一项：** 第二辅助256²增1.5MiB，1080估47.46MiB尚未测试；相对原单样本增两条最终射线。环境/opaque/动态CDF/多相机/Player/GPU预算仍未完成，不能称生产可用。两条正式/计数/旧CDF回归、Roslyn/Shader/GUID/diff通过，仅Editor/文档。详见[质量与代价](../Ho-RTDI-SecondAuxiliaryPrototype.md)。
+
+## 54. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
