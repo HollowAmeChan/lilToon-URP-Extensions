@@ -647,7 +647,15 @@
 
 **下一项：** 核对实际Clamping/fast colour变化及不确定度影响或实际采样/guide接入收益，不继续固定预算试值。完整DI目标/原门槛保持。详见[核对与拒绝](../Ho-RTDI-SpecularNormalBudgetRejection.md)。
 
-## 67. 下一步取舍
+## 67. 稳定mixed真实Clamping改色
+
+**动手前评审：** 预算静态/动态表现不同，直接拷贝4/6 normal和各自fast输出。按各pass resource descriptor找pool并立即copy，修正初次permanent假设被guard拒绝；不读fast alpha当moment。512×1024观测与同CPU参考，阈值仅隔FP16末位。
+
+**结果：** 三样本none/TS normal改色13/16个观测，比例.000025/.000031，平均变化约3.50e-7/2.75e-7；normal-fast距离约.207/.214明显但clamp改变罕见。两条一致，原stage/最终比例保持，不能推广至动态caster或精确独立预算。
+
+**下一项：** 动态读取同样变化与实际采样接入/opaque/动态CDF/多相机未完项并行评审，避免项目变成固定NRD系数试值。只Editor/文档，Roslyn/Shader/GUID/diff通过，生产不变。详见[改色](../Ho-RTDI-ClampingColourAudit.md)。
+
+## 68. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

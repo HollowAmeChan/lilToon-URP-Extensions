@@ -32,3 +32,5 @@
 JSON `rtdi-auxenv54-partition-exchange-perspective-normalbudget-rg/compat.json`、`rtdi-normalbudget66-motion-rg/compat.json`独立。原透视2/4、动态3/3恢复原数值；Roslyn errors0、无新增DI Shader诊断/diff whitespace通过，Runtime/Shader/native/GI/Player一直未改，未构建失败候选Player。
 
 下一项应核对实际Clamping色彩变更/响应历史对有效不确定度的影响，或者评估现有DI采样/guide的实际接入收益，避免继续试固定预算或系数。非负修复仍有效，中心高光/动态噪声门槛保持；三样本、opaque、动态CDF、多相机/产品部署与GPU预算仍未完成，目标不收缩到本测试。
+
+第67步[实际Clamping改色比例](Ho-RTDI-ClampingColourAudit.md)读各pass的normal/fast输出，稳定mixed改色罕见；不能据此推翻动态预算失败或直接推广normal预算。

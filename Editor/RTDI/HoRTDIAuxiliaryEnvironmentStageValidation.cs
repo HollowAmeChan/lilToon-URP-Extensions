@@ -11,6 +11,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     {
         private static bool auxiliaryEnvironmentStages;
         private static bool auxiliaryEnvironmentMomentAudit;
+        private static bool auxiliaryClampingAudit;
         private static readonly List<AuxiliaryEnvironmentStageCase> auxiliaryEnvironmentStageCases=new();
         public static void RunAuxiliaryEnvironmentStagesBaseline(){auxiliaryEnvironmentStages=true;RunAuxiliaryEnvironmentBaseline();}
         public static void RunAuxiliaryEnvironmentStages(){auxiliaryEnvironmentStages=true;RunAuxiliaryEnvironment();}
@@ -18,6 +19,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunAuxiliaryEnvironmentMomentsBaseline(){auxiliaryEnvironmentMomentAudit=true;RunAuxiliaryEnvironmentStagesBaseline();}
         public static void RunAuxiliaryEnvironmentMoments(){auxiliaryEnvironmentMomentAudit=true;RunAuxiliaryEnvironmentStages();}
         public static void RunAuxiliaryEnvironmentMomentsCompatibility(){compatibility=true;RunAuxiliaryEnvironmentMoments();}
+        public static void RunAuxiliaryClampingBaseline(){auxiliaryClampingAudit=true;RunAuxiliaryEnvironmentStagesBaseline();}
+        public static void RunAuxiliaryClamping(){auxiliaryClampingAudit=true;RunAuxiliaryEnvironmentStages();}
+        public static void RunAuxiliaryClampingCompatibility(){compatibility=true;RunAuxiliaryClamping();}
         [Serializable] private sealed class AuxiliaryEnvironmentStageReport{public bool diagnosticOnly=true;public string path,mode;public AuxiliaryEnvironmentStageCase[] cases;}
         [Serializable] private sealed class AuxiliaryEnvironmentStageCase{public bool reuse,specular;public int pipeline,captures;public double red,green,blue,minSignal,maxNegative,rgbVariance,luminanceVariance,alphaSpread;public string alphaStatistic;public long negativeValues;}
         private sealed class AuxiliaryStageSums
@@ -36,7 +40,15 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             }
             foreach(int key in new[]{-1,-2,99,98})images[key]=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
             var input=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
-            c.nrd.ValidationDiffuseStage=(cmd,stage,texture)=>Copy(cmd,stage,texture);c.nrd.ValidationSpecularStage=(cmd,stage,texture)=>Copy(cmd,100+stage,texture);
+            RenderTexture fastSource=null,fastSource6=null,fast4=null,fast6=null;Texture2D fast4Image=null,fast6Image=null;
+            if(auxiliaryClampingAudit)
+            {
+                fastSource=FindNrdTemporalPool(c,"gOut_SpecFast");fastSource6=FindNrdTemporalPool(c,"gOut_SpecFast",false,6);var desc=fastSource.descriptor;desc.enableRandomWrite=false;
+                fast4=Keep(new RenderTexture(desc));fast4.Create();fast6=Keep(new RenderTexture(desc));fast6.Create();
+                fast4Image=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));fast6Image=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
+            }
+            c.nrd.ValidationDiffuseStage=(cmd,stage,texture)=>Copy(cmd,stage,texture);
+            c.nrd.ValidationSpecularStage=(cmd,stage,texture)=>{Copy(cmd,100+stage,texture);if(auxiliaryClampingAudit&&(stage==4||stage==6))cmd.CopyTexture(stage==4?fastSource:fastSource6,new RenderTargetIdentifier(stage==4?fast4:fast6));};
             var points=new List<(int x,int y,double dr,double db,double sr,double sb)>();
             for(int y=48;y<80;y++)for(int x=48;x<80;x++)points.Add((x,y,F0BoundaryLamp(light,x,y,size),F0BoundaryLamp(blue,x,y,size),ResolutionMotionLamp(light,x,y,size),ResolutionMotionLamp(blue,x,y,size)));
             try
@@ -44,11 +56,13 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 c.historyValid=c.nrdHistoryValid=false;c.frame=0;for(int i=0;i<192;i++)RenderCamera();foreach(int key in targets.Keys)captures[key]=0;
                 var sums=new Dictionary<int,AuxiliaryStageSums>();foreach(int key in images.Keys)sums[key]=new AuxiliaryStageSums();
                 double refDR=0,refDB=0,refSR=0,refSB=0;var scale=new uint[c.nrdScale.count];
+                long clampSamples=0,changed=0,fastChanged=0;double totalChange=0,totalFastChange=0,distanceBefore=0,distanceAfter=0,maxChange=0;
                 for(int frame=0;frame<frames;frame++)
                 {
                     var before=new Dictionary<int,int>(captures);RenderCamera();Require(c.nrd.LastDispatchCount>0,"Environment stage bypassed RELAX");
                     foreach(var pair in targets){Require(captures[pair.Key]>before[pair.Key],"Environment stage missing current capture");ReadImage(pair.Value,images[pair.Key]);}
                     ReadImage(c.diffuse.rt,images[-1]);ReadImage(c.filteredDiffuse.rt,images[-2]);ReadImage(c.specular.rt,images[99]);ReadImage(c.filteredSpecular.rt,images[98]);ReadImage(c.nrdSpecular.rt,input);
+                    if(auxiliaryClampingAudit){ReadImage(fast4,fast4Image);ReadImage(fast6,fast6Image);}
                     c.nrdScale.GetData(scale);double inverse=1/BitConverter.Int32BitsToSingle((int)scale[1]),specFactor=0;Require(double.IsFinite(inverse)&&inverse>0,"Environment stage scale invalid");
                     foreach(var p in points)
                     {
@@ -59,6 +73,13 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     foreach(var p in points)
                     {
                         refDR+=p.dr;refDB+=p.db;refSR+=p.sr;refSB+=p.sb;
+                        if(auxiliaryClampingAudit)
+                        {
+                            var a=images[104].GetPixel(p.x,p.y);var b=images[106].GetPixel(p.x,p.y);var f=fast4Image.GetPixel(p.x,p.y);var nextFast=fast6Image.GetPixel(p.x,p.y);
+                            double reference=p.sr+skySpec+p.sb,change=(Math.Abs(a.r-b.r)+Math.Abs(a.g-b.g)+Math.Abs(a.b-b.b))*specFactor/reference,fastChange=(Math.Abs(f.r-nextFast.r)+Math.Abs(f.g-nextFast.g)+Math.Abs(f.b-nextFast.b))*specFactor/reference;
+                            changed+=change>.0003?1:0;fastChanged+=fastChange>.0003?1:0;clampSamples++;totalChange+=change;totalFastChange+=fastChange;maxChange=Math.Max(maxChange,change);
+                            distanceBefore+=(Math.Abs(a.r-f.r)+Math.Abs(a.g-f.g)+Math.Abs(a.b-f.b))*specFactor/reference;distanceAfter+=(Math.Abs(b.r-nextFast.r)+Math.Abs(b.g-nextFast.g)+Math.Abs(b.b-nextFast.b))*specFactor/reference;
+                        }
                         foreach(var pair in images)
                         {
                             int key=pair.Key;bool spec=key>=98;double factor=key==99||key==98||key<0?1:spec?specFactor:inverse;var v=pair.Value.GetPixel(p.x,p.y);double r=v.r*factor,g=v.g*factor,b=v.b*factor;
@@ -96,11 +117,12 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     }
                     auxiliaryEnvironmentStageCases.Add(result);Debug.Log($"[HoRTDIValidation] AUX_ENV_STAGE reuse={reuse} specular={spec} pipeline={pipeline} ratio={result.red:F6}/{result.green:F6}/{result.blue:F6} min={result.minSignal:E6} negativeValues={result.negativeValues} captures={result.captures}");
                 }
+                if(auxiliaryClampingAudit)WriteClampingAudit(reuse,clampSamples,changed,fastChanged,totalChange,totalFastChange,distanceBefore,distanceAfter,maxChange,c.nrd.AppliedSettings.specFrames,c.nrd.AppliedSettings.specFast);
             }
             finally{c.nrd.ValidationDiffuseStage=null;c.nrd.ValidationSpecularStage=null;c.nrd.ValidationTimeSeconds=null;}
             void Copy(CommandBuffer cmd,int key,RenderTargetIdentifier texture){if(targets.TryGetValue(key,out var rt)){cmd.CopyTexture(texture,new RenderTargetIdentifier(rt));captures[key]++;}}
         }
         private static void WriteAuxiliaryEnvironmentStages(string mode)
-            =>File.WriteAllText(Path.Combine(Application.dataPath,"../"+(auxiliaryEnvironmentMomentAudit?"rtdi-auxenvmoments65-":"rtdi-auxenvstages55-")+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentStageReport{path=compatibility?"compatibility":"RenderGraph",mode=mode,cases=auxiliaryEnvironmentStageCases.ToArray()},true));
+            =>File.WriteAllText(Path.Combine(Application.dataPath,"../"+(auxiliaryClampingAudit?"rtdi-auxclamp67-stages-":auxiliaryEnvironmentMomentAudit?"rtdi-auxenvmoments65-":"rtdi-auxenvstages55-")+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentStageReport{path=compatibility?"compatibility":"RenderGraph",mode=mode,cases=auxiliaryEnvironmentStageCases.ToArray()},true));
     }
 }

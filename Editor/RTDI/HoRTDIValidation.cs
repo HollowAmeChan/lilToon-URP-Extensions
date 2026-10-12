@@ -902,13 +902,13 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         }
         private static RenderTexture FindNrdHistory(HoRTDIContext context,string name)
             =>FindNrdTemporalPool(context,name,true);
-        private static RenderTexture FindNrdTemporalPool(HoRTDIContext context,string name,bool requirePermanent=false)
+        private static RenderTexture FindNrdTemporalPool(HoRTDIContext context,string name,bool requirePermanent=false,int pipeline=4)
         {
             var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;var type=context.nrd.GetType();
             var passes=(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.DispatchDesc[])type.GetField("passes",flags).GetValue(context.nrd);
             var resources=(lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.ResourceDesc[,])type.GetField("resources",flags).GetValue(context.nrd);
-            var permanent=(RTHandle[])type.GetField("permanent",flags).GetValue(context.nrd);var transient=(RTHandle[])type.GetField("transient",flags).GetValue(context.nrd);var manifest=lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdManifest.Resources[4];
-            for(int i=0;i<context.nrd.LastDispatchCount;i++)if(passes[i].pipeline==4)
+            var permanent=(RTHandle[])type.GetField("permanent",flags).GetValue(context.nrd);var transient=(RTHandle[])type.GetField("transient",flags).GetValue(context.nrd);var manifest=lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdManifest.Resources[pipeline];
+            for(int i=0;i<context.nrd.LastDispatchCount;i++)if(passes[i].pipeline==pipeline)
                 for(int j=0;j<manifest.Length;j++)if(manifest[j]==name)
                 {var resource=resources[i,j];string kind=lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdNative.ResourceName(resource.type);Require(kind=="PERMANENT_POOL"||(!requirePermanent&&kind=="TRANSIENT_POOL"),"Temporal diagnostic is not the expected pool");return(kind=="PERMANENT_POOL"?permanent:transient)[resource.poolIndex].rt;}
             throw new InvalidOperationException("NRD history diagnostic input missing: "+name);
