@@ -681,6 +681,14 @@
 
 **下一项：** 每相机DI状态/资源隔离，再推进采样原型接入；保留100:1短窗、混合镜面及64diffuse失败。灯集启停clear/短时噪声与GPU预算待实际评估，未改GI/最终材质合成。详见[历史失效](../Ho-RTDI-LightDomainHistoryReset.md)。
 
+## 71. 交替多相机实际隔离与保留raw失败
+
+**动手前评审：** 每相机Dictionary不足以证明资源/输入正确。沿fork NRD矩阵/分辨率/frameIndex契约，交替64²点灯与96×80方向灯，各两灯保证NRD真实调度；复用隔离Player下游capture。
+
+**结果：** 四入口实际280render/80GPU隔离/87局部reset/skip/dispose检查通过，absent colour0、两路径一致。改变A类型/尺寸、跳过恢复A、销毁B不修改另一相机reservoir/历史。完整物理quality仍失败：raw最大1.399、filtered .810，首次点灯raw已有约5.2%差异，不能宣称多相机完整可用。
+
+**下一项：** 同fixture关闭ReSTIR reuse并读primary/packed估计，先拆分采样、输入坐标/尺寸与CPU参考，不猜测改GB/SB或系数。只有Editor/文档，Roslyn/Shader/GUID/diff通过、生产/Player不变。详见[隔离与失败](../Ho-RTDI-MultiCameraAudit.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

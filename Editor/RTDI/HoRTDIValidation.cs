@@ -91,6 +91,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 feature.Settings.denoise=forceDenoise;
                 renderer.rendererFeatures.Add(gb);renderer.rendererFeatures.Add(sb);renderer.rendererFeatures.Add(feature);
                 if(forceEnvironment)SetupEnvironment(renderer);
+                if(multiCameraDIAudit)SetupMultiCameraCapture(renderer);
                 var pipeline=Keep(UniversalRenderPipelineAsset.Create(renderer));pipeline.supportsHDR=true;pipeline.msaaSampleCount=1;
                 GraphicsSettings.defaultRenderPipeline=pipeline;QualitySettings.renderPipeline=pipeline;
                 #if URP_COMPATIBILITY_MODE
