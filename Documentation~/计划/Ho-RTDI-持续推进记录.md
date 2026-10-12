@@ -615,7 +615,15 @@
 
 **下一项：** 全有效平面与嵌套ROI积分/梯度，区分空间搬移和权重问题后再选过滤/guide改动。仅Editor/文档，Roslyn/Shader/diff通过，生产/Player不变。详见[透视证据](../Ho-RTDI-PerspectiveMixedEnvironment.md)。
 
-## 63. 下一步取舍
+## 63. 中心偏差与有效平面空间积分
+
+**动手前评审：** 透视中心偏差不等于全图增能。独立per-pixel参考与真实alpha关联覆盖13456有效点，嵌套64/32/16及outer/annulus严格分解，raw/published/reference/excess同时记录。
+
+**结果：** 三样本两条12记录一致、诊断0；all filtered红/蓝≈.98/.98，outer≈.975/.96，inner32≈1.08/1.16～1.18；原单样本也同样趋势。中心与外围存在空间搬移，整面仅1～3%亏损，不能继续按中心比值描述同幅全图增能。原中心正式回归仍2/4失败，门槛未删。
+
+**下一项：** 保持局部高光/梯度而非强行全图校能，核对spec lobe/view/range与空间支撑，兼顾噪声边缘。仅Editor/文档，Roslyn/GUID/Shader/diff通过。详见[空间证据](../Ho-RTDI-SpatialSpecularAudit.md)。
+
+## 64. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

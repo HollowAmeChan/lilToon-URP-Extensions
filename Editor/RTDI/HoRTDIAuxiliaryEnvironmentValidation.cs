@@ -43,7 +43,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var flags=BindingFlags.Instance|BindingFlags.NonPublic;var computeField=feature.GetType().GetField("shader",flags);var rayField=feature.GetType().GetField("finalVisibilityShader",flags);var originalCompute=computeField.GetValue(feature);var originalRay=rayField.GetValue(feature);
             var cases=new List<AuxiliaryEnvironmentCase>();bool allPass=true;double skySpec=EnvironmentSpecularReference(102.0/255);
             var skyReferences=new Dictionary<int,double>();
-            foreach(bool mixed in auxiliaryEnvironmentStages?new[]{true}:new[]{false,true})foreach(bool reuse in new[]{false,true})
+            foreach(bool mixed in auxiliaryEnvironmentStages||auxiliarySpatialAudit?new[]{true}:new[]{false,true})foreach(bool reuse in new[]{false,true})
             {
                 light.enabled=blue.enabled=mixed;feature.Settings.temporal=feature.Settings.spatial=reuse;computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);RenderCamera();var c=feature.LastContext;
                 Require(c.environmentSampling&&c.finalVisibility!=null&&c.previousLightKeys.Length==(mixed?2:0),"Environment/alpha/light fixture invalid");
@@ -56,6 +56,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     var compute=(ComputeShader)computeField.GetValue(feature);compute.SetBuffer(compute.FindKernel("ShadeNRD"),Shader.PropertyToID("_HoRTDISecondAuxiliary"),second);
                 }
                 using var lateSpecOverride=lateSpecExchangeAudit?ApplyLateSpecExchange(c):null;
+                if(auxiliarySpatialAudit){ValidateAuxiliarySpatial(c,reuse,blue);computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);continue;}
                 if(auxiliaryEnvironmentStages){ValidateAuxiliaryEnvironmentStages(c,mixed,reuse,blue,skySpec);computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);continue;}
                 c.historyValid=c.nrdHistoryValid=false;c.frame=0;for(int i=0;i<192;i++)RenderCamera();
                 if(lateSpecWeightAudit)lateSpecOverride.ResetHistogram();
@@ -102,6 +103,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             string mode=!cutoutPairedFinalSample?"baseline":auxiliaryEnvironmentPartition?"partition":"naive";
             if(lateSpecExchangeAudit)mode+=lateSpecWeightAudit?"-weights":lateSpecAdaptiveAudit?"-adaptive":allSpecOrthographicAudit?"-allortho":lateSpecOrthographicAudit?"-ortho":"-exchange";
             if(auxiliaryPerspectiveAudit)mode+="-perspective";
+            if(auxiliarySpatialAudit){WriteAuxiliarySpatial(mode);return;}
             if(auxiliaryEnvironmentStages){WriteAuxiliaryEnvironmentStages(mode);return;}
             File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-auxenv54-"+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",mode=mode,projection=auxiliaryPerspectiveAudit?"perspective":"orthographic",cases=cases.ToArray()},true));
             Require(allPass,"Environment partition energy gates failed");

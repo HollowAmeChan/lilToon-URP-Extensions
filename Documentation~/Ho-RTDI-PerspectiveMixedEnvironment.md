@@ -28,3 +28,5 @@ raw能量保持5%内、各观测min=0；diffuse也在门槛内。实际滤波解
 报告`rtdi-auxenv54-baseline/partition-perspective-rg/compat.json`，原正交入口回归仍2/4且原数值保持；Roslyn errors0、无新增DI Shader诊断/diff whitespace通过，Runtime/native/GI/Player未变。
 
 下一项同时评分整个有效平面及嵌套空间区域，读取独立逐像素参考梯度/过滤前后积分，确认中心偏差来自多少空间搬移、多少权重问题，再选择必要的过滤/guide改动。不将正交表达或仅看一个ROI的“能量校正”推广成场景修复；保持动态噪声和既有门槛，目标仍是透视多灯DI。
+
+第63步[全平面/嵌套区域](Ho-RTDI-SpatialSpecularAudit.md)显示整面约1～3%亏损、外围亏损与中心偏亮共存，应优先处理高光空间搬移，不能继续称作全图同幅增能。
