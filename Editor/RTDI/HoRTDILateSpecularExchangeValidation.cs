@@ -16,6 +16,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         private static bool lateSpecOrthographicAudit;
         private static bool allSpecOrthographicAudit;
         private static bool specularRgbDistanceAudit;
+        private static bool specularNormalBudgetAudit;
         public static void RunLateSpecularExchangeEnvironment(){lateSpecExchangeAudit=true;RunAuxiliaryEnvironment();}
         public static void RunLateSpecularExchangeEnvironmentCompatibility(){compatibility=true;RunLateSpecularExchangeEnvironment();}
         public static void RunLateSpecularExchangeEnvironmentBaseline(){lateSpecExchangeAudit=true;RunAuxiliaryEnvironmentBaseline();}
@@ -40,6 +41,10 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunRgbSpecularPerspectiveEnvironmentCompatibility(){compatibility=true;RunRgbSpecularPerspectiveEnvironment();}
         public static void RunRgbSpecularMotion(){specularRgbDistanceAudit=lateSpecExchangeAudit=true;RunCutoutSpecularMotionQuality();}
         public static void RunRgbSpecularMotionCompatibility(){compatibility=true;RunRgbSpecularMotion();}
+        public static void RunNormalBudgetPerspectiveEnvironment(){specularNormalBudgetAudit=lateSpecExchangeAudit=true;RunPerspectiveAuxiliaryEnvironment();}
+        public static void RunNormalBudgetPerspectiveEnvironmentCompatibility(){compatibility=true;RunNormalBudgetPerspectiveEnvironment();}
+        public static void RunNormalBudgetSpecularMotion(){specularNormalBudgetAudit=lateSpecExchangeAudit=true;RunCutoutSpecularMotionQuality();}
+        public static void RunNormalBudgetSpecularMotionCompatibility(){compatibility=true;RunNormalBudgetSpecularMotion();}
         private sealed class LateSpecOverride:IDisposable
         {
             private readonly ComputeShader[] shaders;private readonly ComputeShader original;
@@ -55,7 +60,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             const string packagePath="Packages/jp.lilxyzw.liltoon.urp.extensions",relative="Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrous.hlsl",entry="Runtime/RTDI/Shaders/NRD/HoRTDINrd10.compute",asset="Assets/HoRTDILateSpecAudit";
             var package=UnityEditor.PackageManager.PackageInfo.FindForAssetPath(packagePath+"/package.json");string root=package.resolvedPath;
             string body=File.ReadAllText(Path.Combine(root,relative)),compute=File.ReadAllText(Path.Combine(root,entry));
-            if(!lateSpecWeightAudit&&!lateSpecOrthographicAudit&&!specularRgbDistanceAudit)body=ReplaceOnce(body,"    float4 filteredSpecularIlluminationAndVariance = float4(sumSpecularIlluminationAndVariance / float4(sumWSpecular.xxx, sumWSpecular * sumWSpecular));",@"
+            if(!lateSpecWeightAudit&&!lateSpecOrthographicAudit&&!specularRgbDistanceAudit&&!specularNormalBudgetAudit)body=ReplaceOnce(body,"    float4 filteredSpecularIlluminationAndVariance = float4(sumSpecularIlluminationAndVariance / float4(sumWSpecular.xxx, sumWSpecular * sumWSpecular));",@"
     // Same fixed-kernel exchange form already used by the diffuse path.
     // Rejected neighbor mass remains at the center; do not renormalize rows.
     const float specularCenterKernel = 0.44198 * 0.44198;
@@ -101,11 +106,16 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var shader=AssetDatabase.LoadAssetAtPath<ComputeShader>(asset+"/HoRTDILateSpec.compute");Require(shader!=null&&shader.FindKernel("main")==0,"Late specular shader/kernel mismatch");
             foreach(var message in ShaderUtil.GetComputeShaderMessages(shader))Require(message.severity!=UnityEditor.Rendering.ShaderCompilerMessageSeverity.Warning&&message.severity!=UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error,message.message);
             ComputeShader firstShader=null;
-            if(allSpecOrthographicAudit)
+            if(allSpecOrthographicAudit||specularNormalBudgetAudit)
             {
                 const string firstBody="Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrousSmem.hlsl",firstEntry="Runtime/RTDI/Shaders/NRD/HoRTDINrd09.compute";
-                string first=File.ReadAllText(Path.Combine(root,firstBody));first=ReplaceOnce(first,"float3 centerV = -normalize(centerWorldPos);","float3 centerV = gOrthoMode == 0 ? -normalize(centerWorldPos) : -normalize(gFrustumForward.xyz);");
-                first=ReplaceOnce(first,"float3 sampleV = -normalize(sampleWorldPos + gRoughnessEdgeStoppingRelaxation * centerWorldPos);","float3 sampleV = gOrthoMode == 0 ? -normalize(sampleWorldPos + gRoughnessEdgeStoppingRelaxation * centerWorldPos) : centerV;");
+                string first=File.ReadAllText(Path.Combine(root,firstBody));
+                if(allSpecOrthographicAudit)
+                {
+                    first=ReplaceOnce(first,"float3 centerV = -normalize(centerWorldPos);","float3 centerV = gOrthoMode == 0 ? -normalize(centerWorldPos) : -normalize(gFrustumForward.xyz);");
+                    first=ReplaceOnce(first,"float3 sampleV = -normalize(sampleWorldPos + gRoughnessEdgeStoppingRelaxation * centerWorldPos);","float3 sampleV = gOrthoMode == 0 ? -normalize(sampleWorldPos + gRoughnessEdgeStoppingRelaxation * centerWorldPos) : centerV;");
+                }
+                if(specularNormalBudgetAudit)first=ReplaceOnce(first,"min(255.0 * gIn_HistoryLength[globalPos], gSpecMaxFastAccumulatedFrameNum + 1.0)","min(255.0 * gIn_HistoryLength[globalPos], gSpecMaxAccumulatedFrameNum + 1.0)");
                 string firstCompute=Rebase(File.ReadAllText(Path.Combine(root,firstEntry)),firstEntry).Replace(packagePath+"/"+firstBody,asset+"/HoRTDIFirstSpec.hlsl");
                 File.WriteAllText(Path.Combine(folder,"HoRTDIFirstSpec.hlsl"),Rebase(first,firstBody));File.WriteAllText(Path.Combine(folder,"HoRTDIFirstSpec.compute"),firstCompute);
                 AssetDatabase.ImportAsset(asset+"/HoRTDIFirstSpec.hlsl",ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);AssetDatabase.ImportAsset(asset+"/HoRTDIFirstSpec.compute",ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);

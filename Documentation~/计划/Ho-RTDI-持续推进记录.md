@@ -639,7 +639,15 @@
 
 **下一项：** 核对first range与variance propagation对raw moment的样本换算一致性，再过形状/动态/core/Player等门槛，不先加RGB covariance或调phi。仅Editor/文档，Roslyn/Shader/diff通过。详见[统计](../Ho-RTDI-MixedSpecularMomentAudit.md)。
 
-## 66. 下一步取舍
+## 66. 镜面normal预算方差对照拒绝
+
+**动手前评审：** 65的统计差异不是直接实现bug。检查sampleSpecularVar已经/varianceSamples，range与w²传播共用；不重复除预算。仅隔离first9将fast上限替成normal，保持moment/采样/参数/归一化。
+
+**结果：** 两条透视mixed蓝1.161/1.182→1.090/1.102有所减少但仍失败；动态rapid .343487→.384149、step .347752→.398122失败，拒绝normal全局预算。原透视2/4、动态3/3及数值恢复，Runtime/Player不变，Roslyn/Shader/diff通过。
+
+**下一项：** 核对实际Clamping/fast colour变化及不确定度影响或实际采样/guide接入收益，不继续固定预算试值。完整DI目标/原门槛保持。详见[核对与拒绝](../Ho-RTDI-SpecularNormalBudgetRejection.md)。
+
+## 67. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

@@ -30,3 +30,5 @@
 报告`rtdi-auxenvmoments65-baseline/partition-rg/compat.json`，partition两条24记录完全一致。stage/RGB比例与第55步一致，原阶段入口回归数值保持；diagnosticOnly=true、退出0不替代正式mixed质量失败。Roslyn errors0、无新增DI Shader诊断/diff whitespace通过，Runtime/native/GI/Player未改。
 
 下一项核对首Atrous range和variance传播对raw second moment的有效样本换算是否一致，保留Temporal/Clamping统计语义与真实colour/高光参考；若有修复候选，须同时过mixed局部形状、动态噪声、旧core/彩灯/环境/Player门槛。不先扩大RGB covariance buffer或盲调滤波带宽。
+
+第66步[预算核对](Ho-RTDI-SpecularNormalBudgetRejection.md)确认range与传播已共用换算后的sampleSpecularVar；改用normal预算使动态噪声退化，拒绝全局推广。

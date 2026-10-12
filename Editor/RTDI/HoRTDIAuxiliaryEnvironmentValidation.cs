@@ -104,6 +104,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(lateSpecExchangeAudit)mode+=lateSpecWeightAudit?"-weights":lateSpecAdaptiveAudit?"-adaptive":allSpecOrthographicAudit?"-allortho":lateSpecOrthographicAudit?"-ortho":"-exchange";
             if(auxiliaryPerspectiveAudit)mode+="-perspective";
             if(specularRgbDistanceAudit)mode+="-rgbdistance";
+            if(specularNormalBudgetAudit)mode+="-normalbudget";
             if(auxiliarySpatialAudit){WriteAuxiliarySpatial(mode);return;}
             if(auxiliaryEnvironmentStages){WriteAuxiliaryEnvironmentStages(mode);return;}
             File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-auxenv54-"+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",mode=mode,projection=auxiliaryPerspectiveAudit?"perspective":"orthographic",cases=cases.ToArray()},true));
