@@ -253,7 +253,11 @@ namespace lilToon.URP.Extensions.RTDI
                     worldReset&=!c.nrd.ValidationPreserveWorldHistory;
                     worldReset|=worldChanged&&c.nrd.ValidationForceWorldReset;
                     #endif
-                    reset=!c.nrdHistoryValid||!c.historyValid||worldReset||c.settingsSignature!=d.signature;
+                    // A removed emitter or changed analytic domain invalidates
+                    // NRD's accumulated colours. Keep ReSTIR's identity maps
+                    // and reservoir history; ordinary lamp motion/power changes
+                    // continue through the existing visibility-confidence path.
+                    reset=!c.nrdHistoryValid||!c.historyValid||worldReset||c.settingsSignature!=d.signature||d.lightFrame.domainChanged;
                     common=HoRTDINrdNative.CommonSettings.Create(c.width,c.height,d.view,d.projection,c.previousView,c.previousProjection,c.frame,reset);
                     common.timeDelta=c.nrd.SetRenderTime(d.renderTime,out timeReset);if(timeReset)common.accumulationMode=2;
                     traceConfidence=dynamicVisibility&&!(reset||timeReset)&&(worldChanged||LightsChanged(d.lightFrame));

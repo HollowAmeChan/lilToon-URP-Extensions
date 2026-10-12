@@ -671,6 +671,16 @@
 
 **下一项：** 灯集增删/类型变更的NRD历史失效策略，先隔离证据再生产单样本/动态/Player回归；保留普通移动/功率confidence及原环境失败。仅Editor/文档，Runtime/GI/native不变。详见[动态CDF审计](../Ho-RTDI-DynamicAuxiliaryCDFAudit.md)。
 
+## 70. 灯集变化的NRD历史失效
+
+**动手前评审：** GPU raw已无关灯通道，filtered残留；生产单最终样本也复现。隔离只失效NRD，再按实际snapshot identity/type接入，保留ReSTIR历史与普通功率/运动confidence。核对fork identity与NRD CLEAR_AND_RESTART契约。
+
+**结果：** Cutout/opaque关红峰值.001019/.002186→.000582/.000586，关蓝亦在.001内；production与候选数据差0，GPU映射/raw分解及首帧reset检查通过。同数量替换灯检查通过。动态灯域整体仍有原有3组失败，不宣称全通过。
+
+**回归：** 两条16组reuse/完整primary、两条256/512 diffuse六组、两条64 spec三组通过；64 diffuse step .352322旧失败用原HEAD复跑指标完全相同。两release构建0、实际D3D12两Player及D3D11不支持分支均pass/0；Roslyn/vendor派生/nativeSHA/diff通过。外部SolarHD及lil关键词警告保留。
+
+**下一项：** 每相机DI状态/资源隔离，再推进采样原型接入；保留100:1短窗、混合镜面及64diffuse失败。灯集启停clear/短时噪声与GPU预算待实际评估，未改GI/最终材质合成。详见[历史失效](../Ho-RTDI-LightDomainHistoryReset.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

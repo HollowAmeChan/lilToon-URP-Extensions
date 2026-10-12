@@ -181,16 +181,25 @@ namespace lilToon.URP.Extensions.RTDI
             internal readonly Light[] keys;
             internal readonly int[] currentToPrevious,previousToCurrent;
             internal readonly int previousCount;
+            internal readonly bool domainChanged;
             internal LightFrame(HoRTDIRendererFeature.AnalyticLight[] current,Light[] keys,
                 HoRTDIRendererFeature.AnalyticLight[] previous,Light[] previousKeys)
             {
                 this.current=current;this.keys=keys;this.previous=previous;previousCount=previousKeys.Length;
                 currentToPrevious=new int[Mathf.Max(1,keys.Length)];previousToCurrent=new int[Mathf.Max(1,previousCount)];
                 Array.Fill(currentToPrevious,-1);Array.Fill(previousToCurrent,-1);
+                domainChanged=keys.Length!=previousCount;
                 var oldIndices=new Dictionary<Light,int>(LightReferences.Instance);
                 for(int i=0;i<previousCount;i++)oldIndices.Add(previousKeys[i],i);
-                for(int i=0;i<keys.Length;i++)if(oldIndices.TryGetValue(keys[i],out int old))
-                {currentToPrevious[i]=old;previousToCurrent[old]=i;}
+                for(int i=0;i<keys.Length;i++)
+                {
+                    if(oldIndices.TryGetValue(keys[i],out int old))
+                    {
+                        currentToPrevious[i]=old;previousToCurrent[old]=i;
+                        domainChanged|=current[i].radianceType.w!=previous[old].radianceType.w;
+                    }
+                    else domainChanged=true;
+                }
             }
         }
         internal LightFrame CaptureLights(HoRTDIRendererFeature.AnalyticLight[] current,Light[] keys)

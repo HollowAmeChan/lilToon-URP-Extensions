@@ -9,7 +9,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
 {
     public static partial class HoRTDIValidation
     {
-        private static bool dynamicAuxiliaryCDFAudit,dynamicAuxiliaryLongAudit;
+        private static bool dynamicAuxiliaryCDFAudit,dynamicAuxiliaryLongAudit,dynamicAuxiliaryDomainReset,dynamicAuxiliaryBaseline,dynamicDomainProductionAudit;
         public static void RunDynamicAuxiliaryCDF(){dynamicAuxiliaryCDFAudit=pairedSecondAuxiliary=pairedAuxiliaryPowerCDF=cutoutPairedFinalSample=true;RunCutoutResolutionSpecular();}
         public static void RunDynamicAuxiliaryCDFCompatibility(){compatibility=true;RunDynamicAuxiliaryCDF();}
         public static void RunDynamicOpaqueAuxiliaryCDF(){pairedOpaqueAudit=true;RunDynamicAuxiliaryCDF();}
@@ -18,6 +18,22 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunDynamicAuxiliaryCDFLongCompatibility(){compatibility=true;RunDynamicAuxiliaryCDFLong();}
         public static void RunDynamicOpaqueAuxiliaryCDFLong(){pairedOpaqueAudit=true;RunDynamicAuxiliaryCDFLong();}
         public static void RunDynamicOpaqueAuxiliaryCDFLongCompatibility(){compatibility=true;RunDynamicOpaqueAuxiliaryCDFLong();}
+        public static void RunDynamicAuxiliaryDomainReset(){dynamicAuxiliaryDomainReset=true;RunDynamicAuxiliaryCDF();}
+        public static void RunDynamicAuxiliaryDomainResetCompatibility(){compatibility=true;RunDynamicAuxiliaryDomainReset();}
+        public static void RunDynamicOpaqueAuxiliaryDomainReset(){pairedOpaqueAudit=true;RunDynamicAuxiliaryDomainReset();}
+        public static void RunDynamicOpaqueAuxiliaryDomainResetCompatibility(){compatibility=true;RunDynamicOpaqueAuxiliaryDomainReset();}
+        public static void RunDynamicLightDomainBaseline(){dynamicAuxiliaryBaseline=dynamicAuxiliaryCDFAudit=true;RunCutoutResolutionSpecular();}
+        public static void RunDynamicLightDomainBaselineCompatibility(){compatibility=true;RunDynamicLightDomainBaseline();}
+        public static void RunDynamicLightDomainReset(){dynamicAuxiliaryDomainReset=true;RunDynamicLightDomainBaseline();}
+        public static void RunDynamicLightDomainResetCompatibility(){compatibility=true;RunDynamicLightDomainReset();}
+        public static void RunDynamicOpaqueLightDomainBaseline(){pairedOpaqueAudit=true;RunDynamicLightDomainBaseline();}
+        public static void RunDynamicOpaqueLightDomainBaselineCompatibility(){compatibility=true;RunDynamicOpaqueLightDomainBaseline();}
+        public static void RunDynamicOpaqueLightDomainReset(){pairedOpaqueAudit=true;RunDynamicLightDomainReset();}
+        public static void RunDynamicOpaqueLightDomainResetCompatibility(){compatibility=true;RunDynamicOpaqueLightDomainReset();}
+        public static void RunDynamicLightDomainProduction(){dynamicDomainProductionAudit=true;RunDynamicLightDomainBaseline();}
+        public static void RunDynamicLightDomainProductionCompatibility(){compatibility=true;RunDynamicLightDomainProduction();}
+        public static void RunDynamicOpaqueLightDomainProduction(){pairedOpaqueAudit=true;RunDynamicLightDomainProduction();}
+        public static void RunDynamicOpaqueLightDomainProductionCompatibility(){compatibility=true;RunDynamicOpaqueLightDomainProduction();}
 
         [Serializable] private sealed class DynamicCDFReport{public bool qualityPass;public string path,visibility;public DynamicCDFCase[] cases;}
         [Serializable] private sealed class DynamicCDFCase
@@ -41,15 +57,18 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             RenderCamera();var c=feature.LastContext;Require((c.finalVisibility==null)==pairedOpaqueAudit&&!c.environmentSampling,"Dynamic CDF visibility domain mismatch");
             using var cdfBuffer=new GraphicsBuffer(GraphicsBuffer.Target.Structured,lamps.Length,4);
             using var second=new GraphicsBuffer(GraphicsBuffer.Target.Structured,size*size,24);
-            ApplyCutoutPairedFinalSample();var compute=(ComputeShader)computeField.GetValue(feature);int kernel=compute.FindKernel("ShadeNRD");
-            pairedFinalShader.SetBuffer("_HoRTDIAuxiliaryCDF",cdfBuffer);pairedFinalShader.SetBuffer("_HoRTDISecondAuxiliary",second);
-            compute.SetBuffer(kernel,Shader.PropertyToID("_HoRTDISecondAuxiliary"),second);
-            if(pairedOpaqueAudit)compute.SetBuffer(kernel,Shader.PropertyToID("_HoRTDIAuxiliaryCDF"),cdfBuffer);
+            if(!dynamicAuxiliaryBaseline)
+            {
+                ApplyCutoutPairedFinalSample();var compute=(ComputeShader)computeField.GetValue(feature);int kernel=compute.FindKernel("ShadeNRD");
+                pairedFinalShader.SetBuffer("_HoRTDIAuxiliaryCDF",cdfBuffer);pairedFinalShader.SetBuffer("_HoRTDISecondAuxiliary",second);
+                compute.SetBuffer(kernel,Shader.PropertyToID("_HoRTDISecondAuxiliary"),second);
+                if(pairedOpaqueAudit)compute.SetBuffer(kernel,Shader.PropertyToID("_HoRTDIAuxiliaryCDF"),cdfBuffer);
+            }
             var cases=new List<DynamicCDFCase>();bool all=true;int clock=0;
             var reservoirs=new PairedPackedReservoir[c.reservoirs.count];var secondSamples=new PairedPackedReservoir[second.count];
             try
             {
-                foreach(string phase in new[]{"balanced","powerTemperature","disableBlue","blueDirectional","redSpot","disableRed","allDisabled","restore"})
+                foreach(string phase in new[]{"balanced","powerTemperature","disableBlue","blueDirectional","redSpot","disableRed","allDisabled","restore","replaceGreen"})
                 {
                     Configure(phase);var expectedKeys=new List<Light>();
                     int frames=dynamicAuxiliaryLongAudit&&phase=="powerTemperature"?2048:96;
@@ -64,20 +83,23 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     var reference=new double[3];var sums=new double[2,3];var primarySums=new double[3];var auxiliarySums=new double[3];double dark=0,shadeError=0;int checks=0,maps=0,resets=0,confidence=0;
                     for(int frame=0;frame<frames;frame++)
                     {
-                        var previous=(Light[])c.previousLightKeys.Clone();c.nrd.ValidationTimeSeconds=++clock/60.0;RenderCamera();
+                        var previous=(Light[])c.previousLightKeys.Clone();bool changedDomain=LightDomainChanged(c,keys);
+                        if(dynamicAuxiliaryDomainReset&&changedDomain)c.nrdHistoryValid=false;
+                        c.nrd.ValidationTimeSeconds=++clock/60.0;RenderCamera();
                         Require(c.nrd.LastDispatchCount>0&&c.previousLightKeys.Length==keys.Length,"Dynamic CDF dispatch/count mismatch");
+                        if(dynamicDomainProductionAudit)Require(c.lastNrdReset==changedDomain,"Production NRD domain reset did not match actual source identities/types");
                         for(int i=0;i<keys.Length;i++)Require(ReferenceEquals(c.previousLightKeys[i],keys[i]),"Dynamic CDF current collector ordering mismatch");
                         maps+=CheckDynamicLightMaps(c,previous,keys);resets+=c.lastNrdReset?1:0;confidence+=c.lastVisibilityGradients?1:0;
-                        checks+=CheckDynamicAuxiliarySamples(c,cdf,keys.Length,second);
-                        c.reservoirs.GetData(reservoirs);second.GetData(secondSamples);
+                        if(!dynamicAuxiliaryBaseline)checks+=CheckDynamicAuxiliarySamples(c,cdf,keys.Length,second);
+                        c.reservoirs.GetData(reservoirs);if(!dynamicAuxiliaryBaseline)second.GetData(secondSamples);
                         ReadImage(c.diffuse.rt,raw);ReadImage(c.filteredDiffuse.rt,filtered);
                         for(int y=48;y<80;y+=2)for(int x=48;x<80;x+=2)
                         {
                             Color a=raw.GetPixel(x,y),f=filtered.GetPixel(x,y);Color expected=Color.clear;
                             foreach(var lamp in keys)expected+=DynamicDiffuseReference(lamp,x,y,size);
                             int address=(y/16)*c.rowPitch+(x/16)*256+(y%16)*16+x%16;
-                            Color primary=Estimate(reservoirs[c.arrayPitch+address]),auxiliary=keys.Length>0?(Estimate(reservoirs[2*c.arrayPitch+address])+Estimate(secondSamples[y*size+x]))*.5f:Color.clear;
-                            Color predicted=(primary+auxiliary)*.5f;
+                            Color primary=Estimate(reservoirs[c.arrayPitch+address]),auxiliary=!dynamicAuxiliaryBaseline&&keys.Length>0?(Estimate(reservoirs[2*c.arrayPitch+address])+Estimate(secondSamples[y*size+x]))*.5f:Color.clear;
+                            Color predicted=dynamicAuxiliaryBaseline?primary:(primary+auxiliary)*.5f;
                             for(int channel=0;channel<3;channel++)
                             {
                                 Require(float.IsFinite(a[channel])&&float.IsFinite(f[channel])&&a[channel]>=0&&f[channel]>=0,"Dynamic CDF non-finite/negative radiance");
@@ -103,7 +125,10 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     Debug.Log($"[HoRTDIValidation] DYNAMIC_AUX_CDF opaque={pairedOpaqueAudit} phase={phase} lights={keys.Length} raw={result.rawRed:F6}/{result.rawGreen:F6}/{result.rawBlue:F6} filtered={result.filteredRed:F6}/{result.filteredGreen:F6}/{result.filteredBlue:F6} dark={dark:G6} resets={resets} confidence={confidence} pass={pass}");
                     Debug.Log($"[HoRTDIValidation] DYNAMIC_CDF_DECOMPOSITION phase={phase} primary={result.primaryRed:F6}/{result.primaryGreen:F6}/{result.primaryBlue:F6} auxiliary={result.auxiliaryRed:F6}/{result.auxiliaryGreen:F6}/{result.auxiliaryBlue:F6} maxShadeRelativeError={shadeError:G6}");
                 }
-                File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-dynamiccdf69-"+(dynamicAuxiliaryLongAudit?"long-":"")+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new DynamicCDFReport{qualityPass=all,path=compatibility?"compatibility":"RenderGraph",visibility=pairedOpaqueAudit?"inline-opaque":"native-cutout",cases=cases.ToArray()},true));
+                string variant=dynamicAuxiliaryBaseline?"single-":"triple-";
+                string prefix=dynamicAuxiliaryDomainReset||dynamicAuxiliaryBaseline?"rtdi-domainreset70-"+variant+(dynamicAuxiliaryDomainReset?"candidate-":"baseline-"):"rtdi-dynamiccdf69-";
+                if(dynamicDomainProductionAudit)prefix="rtdi-domainreset70-single-production-";
+                File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+(dynamicAuxiliaryLongAudit?"long-":"")+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new DynamicCDFReport{qualityPass=all,path=compatibility?"compatibility":"RenderGraph",visibility=pairedOpaqueAudit?"inline-opaque":"native-cutout",cases=cases.ToArray()},true));
                 Require(all,"Dynamic auxiliary CDF energy/dark-signal gates failed");
             }
             finally{c.nrd.ValidationTimeSeconds=null;computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);}
@@ -118,7 +143,21 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(phase=="redSpot"){light.type=LightType.Spot;light.spotAngle=70;light.innerSpotAngle=30;}
                 if(phase=="disableRed")light.enabled=false;
                 if(phase=="allDisabled")foreach(var lamp in lamps)lamp.enabled=false;
+                if(phase=="replaceGreen"){green.enabled=false;green=Point(new Vector3(.3f,.3f,-1.2f),Color.green,4);lamps[1]=green;}
             }
+        }
+
+        private static bool LightDomainChanged(HoRTDIContext c,Light[] keys)
+        {
+            if(keys.Length!=c.previousLightKeys.Length)return true;
+            var previousData=(HoRTDIRendererFeature.AnalyticLight[])typeof(HoRTDIContext).GetField("previousLightData",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(c);
+            foreach(var lamp in keys)
+            {
+                int old=Array.FindIndex(c.previousLightKeys,p=>ReferenceEquals(p,lamp));if(old<0)return true;
+                float type=lamp.type==LightType.Point?0:lamp.type==LightType.Spot?1:2;
+                if(previousData[old].radianceType.w!=type)return true;
+            }
+            return false;
         }
 
         private static int CheckDynamicLightMaps(HoRTDIContext c,Light[] previous,Light[] current)
