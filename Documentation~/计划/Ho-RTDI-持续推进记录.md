@@ -471,7 +471,15 @@
 
 **验证与下一项：** Roslyn/新旧入口/评分范围/原失败语义核对，旧64/128边界和64core检查，产品Runtime/Shader/Player/GI无变更，不重复相同构建。过滤仅Editor验证/文档。下一项动态更大尺寸/灯分布及真实应用帧/GPU预算，保留所有原门槛，不扩张合成/PT。详见[尺寸质量](../Ho-RTDI-ResolutionQuality.md)。
 
-## 45. 下一步取舍
+## 45. 256/512动态caster验收
+
+**动手前评审：** 静态通过不能说明大尺寸移动阴影稳定。核对fixed FullSample旧sample/worldMotion重求与本地gradient/world-structure调度、用户NRD frame接口；复用CPU大小可选平面/alpha参考，每帧更新骨骼位移。GPU完整256/512、3584世界区域网格点，192预热/256观察固定60Hz，不消费未知URP motion。
+
+**结果与余量：** 两条slow/rapid/step六组正式通过，raw3%/filtered5%/frame.35保留；slow约.113～.118、rapid约.243、step约.167～.172。阶跃真实变化像素最初三帧误差.329556/.314681<.35，但256接近门槛，不能用整体均值掩盖或宣称任意动画稳定。gradient调度255/256/15符合运动和稳定跳过，非GPU计时证明。
+
+**验证与下一项：** Roslyn/新报告/原失败语义、旧大尺寸静态及64双灯core回归通过，无生产/Player/GI变更，不重复相同构建。过滤Editor验证/文档。下一项动态短期响应余量、更多灯/primary/尺寸与实际帧，1080/大尺寸spec/GPU预算/真实motion仍未证明，不扩张合成/PT。详见[动态大尺寸](../Ho-RTDI-LargeDynamicCutout.md)。
+
+## 46. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

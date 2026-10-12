@@ -22,6 +22,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         }
         private static void ValidateCutoutQuality()
         {
+            if(forceCutoutResolutionMotion){ValidateCutoutResolutionMotion();return;}
             if(forceCutoutResolution){ValidateCutoutResolution();return;}
             if(forceMotionProtocol){ValidateMotionProtocol();return;}
             if(forcePrimaryMotion){ValidatePrimaryMotion();return;}

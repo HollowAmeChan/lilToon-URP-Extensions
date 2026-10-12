@@ -38,4 +38,4 @@
 
 Roslyn errors0、无新增DI shader诊断；新旧入口/数据范围及失败语义核对，旧64/128 F0边界与64双灯core回归检查。产品Runtime/Shader/native、Player模板与GI不变，因此不重复相同Player/GI构建。
 
-这一步确认特定静态场景能量、材质边界与阴影在更大真实GPU目标上通过原门槛。1080/实际场景、动态大尺寸、GPU预算、真实motion时序仍未证明。下一步优先扩大动态场景/灯分布与实际应用帧证据，保留当前静态和动态门槛，不借此扩张合成或通用PT。
+这一步确认特定静态场景在更大真实GPU目标上通过原门槛。第45步[动态Cutout大尺寸验收](Ho-RTDI-LargeDynamicCutout.md)进一步通过指定六组caster运动，但阶跃余量较小。1080/实际场景、移动primary、specular大尺寸、GPU预算、真实motion时序仍未证明。后续继续扩大动态场景/灯分布与实际应用帧证据，保留当前门槛，不扩张合成/PT。
