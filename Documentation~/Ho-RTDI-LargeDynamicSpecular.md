@@ -42,4 +42,6 @@ Roslyn Runtime/Editor errors0。默认两条与两项参数对照均按失败门
 
 先用现有Editor阶段捕获接口，在失败的256 rapid上同时读raw、Temporal、Clamping、首/末Atrous与最终发布镜面，沿相同CPU参考比较能量和逐帧误差，检查最终缩放一致性。平均能量正确只能排除本测试的整体能量失败，尚不能断言具体噪声环节。
 
+第47步[阶段定位](Ho-RTDI-LargeSpecularStages.md)已完成：rapid Temporal约.653，空间滤波逐步减到.508，关闭ReSTIR复用仍约.530失败。诊断还原材质因子/缩放通过，尚未接受运行时修复。
+
 继续保留大尺寸漫反射、64镜面、彩灯/core及Player门槛。生产Shader/native、GI与Player模板没有变化，不重复构建相同Player或扩张最终材质合成/PT。1080、实际URP motion、任意天空/材质与有效GPU预算仍待证明。

@@ -487,7 +487,15 @@
 
 **下一项：** 用已有镜面阶段捕获，先定位256 rapid的raw、Temporal、Clamping、首/末Atrous与最终发布误差及缩放一致性，再决定运行时改动。只改本步Editor与文档，原大尺寸漫反射及64镜面作共享夹具回归。详见[失败基线](../Ho-RTDI-LargeDynamicSpecular.md)。
 
-## 47. 下一步取舍
+## 47. 大尺寸镜面阶段定位
+
+**动手前评审：** 第46步快速噪声参数对照失败，先定位而不继续无依据调参。复用既有镜面阶段接口，固定256/3584点，slowTS/rapidTS/rapidNone三配置，192+256与独立CPU参考。核对NRD材质去调制/还原与Normalize/Resolve；初次仅HDR缩放被一致性gate拒绝，修正为固定均匀正交场景的raw/归一化输入比例，并全观测点检查末阶段/发布RGB。
+
+**结果：** 两条diagnosticOnly真实检查通过，正式rapid质量仍失败。rapidTS raw/Temporal/Clamping/首/末/发布frameL1=1.023884/.653306/.650717/.578224/.507934/.507913；rapidNone最终.530498，slowTS .077365。空间阶段在减小误差，关闭ReSTIR复用不足以解决。pipeline10每帧四轮、1024复制，不能当GPU成本；比例还原仅适用于固定均匀灰F0/正交场景，不外推复杂材质。
+
+**下一项：** 读快速confidence与实际历史，区分累积利用和输入噪声的贡献后再选运行时改动，保留正式能量/噪声、changed-pixel/core/Player门槛。仅Editor/文档，Roslyn errors0，两条阶段检查通过，不重建未变Player/GI。详见[阶段证据](../Ho-RTDI-LargeSpecularStages.md)。
+
+## 48. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

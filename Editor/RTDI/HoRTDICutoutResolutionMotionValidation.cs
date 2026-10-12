@@ -23,6 +23,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         {
             light.color=Color.red;var blue=Point(new Vector3(-1.5f,0,-1),Color.blue,4);feature.Settings.initialSamples=8;feature.Settings.temporal=feature.Settings.spatial=feature.Settings.denoise=true;
             if(cutoutResolutionSpecular){surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetFloat("_Smoothness",.6f);}
+            if(cutoutResolutionSpecularStages){ValidateCutoutResolutionSpecularStages(blue);return;}
             var cases=new List<ResolutionMotionCase>();bool allPass=true;int clock=0;
             foreach(int size in new[]{256,512})
             {
