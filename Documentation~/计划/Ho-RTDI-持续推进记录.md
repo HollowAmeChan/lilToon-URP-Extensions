@@ -495,7 +495,15 @@
 
 **下一项：** 读快速confidence与实际历史，区分累积利用和输入噪声的贡献后再选运行时改动，保留正式能量/噪声、changed-pixel/core/Player门槛。仅Editor/文档，Roslyn errors0，两条阶段检查通过，不重建未变Player/GI。详见[阶段证据](../Ho-RTDI-LargeSpecularStages.md)。
 
-## 48. 下一步取舍
+## 48. 快速镜面置信度与历史审计
+
+**动手前评审：** 第47步空间阶段持续减噪但rapid仍失败；核对用户ConfidencePass sensitivity/darkness/短时滤波与本地confidence/Temporal限制，直接读实际低分辨率线性confidence、末Atrous公共history及Temporal立即复制的重投影confidence，不扩张运行时接口或误用transient终态。
+
+**结果与拒绝：** 两条公共history31/重投影1，配置specFrames30；rapid平均confidence=.852241、当帧变化点.339311，step变化点.101288。跳过动态visibility confidence使rapid frameL1 .507913→.251653，但step变化像素最初三帧L1 .244762→.605561，超过.35，拒绝为生产修复。报告每阶段step changedL1并纳入质量标志，diagnosticOnly退出0不替代质量；默认仍失败。
+
+**下一项：** 先评估非零F0彩灯原始提案方差，以隔离shader而非新增产品参数做同种子对照；旧全表面RGB失败保持，只有现有大尺寸/step/core/primary/Player全过才考虑接纳。仅Editor/文档，正式报告分开。详见[置信度证据](../Ho-RTDI-SpecularConfidenceAudit.md)。
+
+## 49. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

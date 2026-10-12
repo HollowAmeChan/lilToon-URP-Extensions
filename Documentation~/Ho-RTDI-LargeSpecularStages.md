@@ -31,3 +31,5 @@ slowTS/rapidTS最终值与第46步正式默认基线一致，末阶段与发布�
 Runtime/Shader/native/GI/Player模板无变化。Roslyn errors0，两条真实D3D12阶段诊断各18条结果一致；重新运行原RenderGraph正式默认入口，仍3/6、退出1、数值不变。正式报告/失败门槛保持独立，不以诊断退出0替代qualityPass。改动过滤到Editor入口/诊断与文档，不重复未变的Player构建。
 
 下一项读同一快速场景的镜面confidence与实际历史，再以已有Editor设置做有明确目的的对照，区分历史利用不足和高输入方差。核对本地Temporal中confidence缩短最大累积帧数的实际分支，并沿用户FullSample gradient参考检查。只有证据支持时再改运行时；保留changed-pixel/core/彩灯与大尺寸镜面门槛。古堡合并天空模型继续只做资产支持审计，GPU预算/真实motion/最终材质合成不在本步扩张。
+
+第48步[置信度审计](Ho-RTDI-SpecularConfidenceAudit.md)已确认公共历史31、重投影1并不能代表镜面实际累积。跳过动态confidence改善rapid整体噪声，却使step真实变化像素误差升到.605561；该对照不接纳为生产修复。
