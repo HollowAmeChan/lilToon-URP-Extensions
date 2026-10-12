@@ -663,6 +663,14 @@
 
 **下一项：** 动态灯集/CDF帧同步与资源生命周期，之后多相机/Player/成本；混合环境镜面正式失败仍保留。只Editor/文档，生产/GI/native不变。详见[opaque审计](../Ho-RTDI-OpaqueAuxiliaryAudit.md)。
 
+## 69. 动态灯集/CDF与实际样本分解
+
+**动手前评审：** 静态CDF不可直接迁入产品；fixture同步更新CDF后核对实际collector、GPU双向identity map/辅助PDF与逐点primary+auxiliary重构。不引入重复生产collector。opaque零灯读旧scratch已修复。
+
+**结果：** 两路径short Cutout6/8、opaque5/8正式失败；映射/PDF通过、raw重构误差最大约.000974。100:1红raw1.149来自primary1.264/aux1.036，2048帧收敛1.011；不能据此删除短窗口失败。关红raw0但filtered峰值.00157/.00269超门槛，零灯/恢复正确，长窗口仍有残留。
+
+**下一项：** 灯集增删/类型变更的NRD历史失效策略，先隔离证据再生产单样本/动态/Player回归；保留普通移动/功率confidence及原环境失败。仅Editor/文档，Runtime/GI/native不变。详见[动态CDF审计](../Ho-RTDI-DynamicAuxiliaryCDFAudit.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

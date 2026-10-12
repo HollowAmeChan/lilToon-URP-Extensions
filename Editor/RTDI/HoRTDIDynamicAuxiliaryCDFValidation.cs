@@ -1,0 +1,162 @@
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Reflection;
+using lilToon.URP.Extensions.RTDI;
+using UnityEngine;
+
+namespace lilToon.URP.Extensions.Editor.RTDI
+{
+    public static partial class HoRTDIValidation
+    {
+        private static bool dynamicAuxiliaryCDFAudit,dynamicAuxiliaryLongAudit;
+        public static void RunDynamicAuxiliaryCDF(){dynamicAuxiliaryCDFAudit=pairedSecondAuxiliary=pairedAuxiliaryPowerCDF=cutoutPairedFinalSample=true;RunCutoutResolutionSpecular();}
+        public static void RunDynamicAuxiliaryCDFCompatibility(){compatibility=true;RunDynamicAuxiliaryCDF();}
+        public static void RunDynamicOpaqueAuxiliaryCDF(){pairedOpaqueAudit=true;RunDynamicAuxiliaryCDF();}
+        public static void RunDynamicOpaqueAuxiliaryCDFCompatibility(){compatibility=true;RunDynamicOpaqueAuxiliaryCDF();}
+        public static void RunDynamicAuxiliaryCDFLong(){dynamicAuxiliaryLongAudit=true;RunDynamicAuxiliaryCDF();}
+        public static void RunDynamicAuxiliaryCDFLongCompatibility(){compatibility=true;RunDynamicAuxiliaryCDFLong();}
+        public static void RunDynamicOpaqueAuxiliaryCDFLong(){pairedOpaqueAudit=true;RunDynamicAuxiliaryCDFLong();}
+        public static void RunDynamicOpaqueAuxiliaryCDFLongCompatibility(){compatibility=true;RunDynamicOpaqueAuxiliaryCDFLong();}
+
+        [Serializable] private sealed class DynamicCDFReport{public bool qualityPass;public string path,visibility;public DynamicCDFCase[] cases;}
+        [Serializable] private sealed class DynamicCDFCase
+        {
+            public string phase;public int lights,frames,cdfChecks,mappingChecks,resets,confidenceFrames;public bool pass;
+            public double rawRed,rawGreen,rawBlue,filteredRed,filteredGreen,filteredBlue,maxDarkSignal;
+            public double primaryRed,primaryGreen,primaryBlue,auxiliaryRed,auxiliaryGreen,auxiliaryBlue,maxShadeRelativeError;
+        }
+
+        private static void ValidateDynamicAuxiliaryCDF(Light blue)
+        {
+            const int size=128;target.Release();target.width=target.height=size;target.Create();camera.aspect=1;
+            feature.Settings.useEnvironment=false;feature.Settings.localSampling=HoRTDILocalSampling.Power;
+            surfaceMaterial.SetFloat("_Reflectance",0);surfaceMaterial.SetFloat("_Metallic",0);
+            blocker.transform.position=Vector3.right*4;
+            if(pairedOpaqueAudit)blocker.GetComponent<Renderer>().sharedMaterial=surfaceMaterial;
+            var green=Point(new Vector3(.3f,.3f,-1.2f),Color.green,4);var lamps=new[]{light,green,blue};
+            var raw=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));var filtered=Keep(new Texture2D(size,size,TextureFormat.RGBAFloat,false,true));
+            var flags=BindingFlags.Instance|BindingFlags.NonPublic;var computeField=feature.GetType().GetField("shader",flags);var rayField=feature.GetType().GetField("finalVisibilityShader",flags);
+            var originalCompute=computeField.GetValue(feature);var originalRay=rayField.GetValue(feature);
+            RenderCamera();var c=feature.LastContext;Require((c.finalVisibility==null)==pairedOpaqueAudit&&!c.environmentSampling,"Dynamic CDF visibility domain mismatch");
+            using var cdfBuffer=new GraphicsBuffer(GraphicsBuffer.Target.Structured,lamps.Length,4);
+            using var second=new GraphicsBuffer(GraphicsBuffer.Target.Structured,size*size,24);
+            ApplyCutoutPairedFinalSample();var compute=(ComputeShader)computeField.GetValue(feature);int kernel=compute.FindKernel("ShadeNRD");
+            pairedFinalShader.SetBuffer("_HoRTDIAuxiliaryCDF",cdfBuffer);pairedFinalShader.SetBuffer("_HoRTDISecondAuxiliary",second);
+            compute.SetBuffer(kernel,Shader.PropertyToID("_HoRTDISecondAuxiliary"),second);
+            if(pairedOpaqueAudit)compute.SetBuffer(kernel,Shader.PropertyToID("_HoRTDIAuxiliaryCDF"),cdfBuffer);
+            var cases=new List<DynamicCDFCase>();bool all=true;int clock=0;
+            var reservoirs=new PairedPackedReservoir[c.reservoirs.count];var secondSamples=new PairedPackedReservoir[second.count];
+            try
+            {
+                foreach(string phase in new[]{"balanced","powerTemperature","disableBlue","blueDirectional","redSpot","disableRed","allDisabled","restore"})
+                {
+                    Configure(phase);var expectedKeys=new List<Light>();
+                    int frames=dynamicAuxiliaryLongAudit&&phase=="powerTemperature"?2048:96;
+                    foreach(var lamp in lamps)if(lamp.enabled&&lamp.type!=LightType.Directional)expectedKeys.Add(lamp);
+                    expectedKeys.Sort((a,b)=>a.GetInstanceID().CompareTo(b.GetInstanceID()));
+                    var infinite=new List<Light>();foreach(var lamp in lamps)if(lamp.enabled&&lamp.type==LightType.Directional)infinite.Add(lamp);
+                    infinite.Sort((a,b)=>a.GetInstanceID().CompareTo(b.GetInstanceID()));expectedKeys.AddRange(infinite);
+                    var keys=expectedKeys.ToArray();float[] cdf=keys.Length>0?BuildAuxiliaryCDF(keys):new[]{1f};
+                    // Same update boundary as this fixture's lamp mutation. After
+                    // rendering, independently require the actual collector order.
+                    var upload=new float[lamps.Length];Array.Fill(upload,1f);Array.Copy(cdf,upload,cdf.Length);cdfBuffer.SetData(upload);
+                    var reference=new double[3];var sums=new double[2,3];var primarySums=new double[3];var auxiliarySums=new double[3];double dark=0,shadeError=0;int checks=0,maps=0,resets=0,confidence=0;
+                    for(int frame=0;frame<frames;frame++)
+                    {
+                        var previous=(Light[])c.previousLightKeys.Clone();c.nrd.ValidationTimeSeconds=++clock/60.0;RenderCamera();
+                        Require(c.nrd.LastDispatchCount>0&&c.previousLightKeys.Length==keys.Length,"Dynamic CDF dispatch/count mismatch");
+                        for(int i=0;i<keys.Length;i++)Require(ReferenceEquals(c.previousLightKeys[i],keys[i]),"Dynamic CDF current collector ordering mismatch");
+                        maps+=CheckDynamicLightMaps(c,previous,keys);resets+=c.lastNrdReset?1:0;confidence+=c.lastVisibilityGradients?1:0;
+                        checks+=CheckDynamicAuxiliarySamples(c,cdf,keys.Length,second);
+                        c.reservoirs.GetData(reservoirs);second.GetData(secondSamples);
+                        ReadImage(c.diffuse.rt,raw);ReadImage(c.filteredDiffuse.rt,filtered);
+                        for(int y=48;y<80;y+=2)for(int x=48;x<80;x+=2)
+                        {
+                            Color a=raw.GetPixel(x,y),f=filtered.GetPixel(x,y);Color expected=Color.clear;
+                            foreach(var lamp in keys)expected+=DynamicDiffuseReference(lamp,x,y,size);
+                            int address=(y/16)*c.rowPitch+(x/16)*256+(y%16)*16+x%16;
+                            Color primary=Estimate(reservoirs[c.arrayPitch+address]),auxiliary=keys.Length>0?(Estimate(reservoirs[2*c.arrayPitch+address])+Estimate(secondSamples[y*size+x]))*.5f:Color.clear;
+                            Color predicted=(primary+auxiliary)*.5f;
+                            for(int channel=0;channel<3;channel++)
+                            {
+                                Require(float.IsFinite(a[channel])&&float.IsFinite(f[channel])&&a[channel]>=0&&f[channel]>=0,"Dynamic CDF non-finite/negative radiance");
+                                if(expected[channel]==0)dark=Math.Max(dark,a[channel]);
+                                double error=Math.Abs(a[channel]-predicted[channel])/(Math.Max(Math.Abs(predicted[channel]),expected[channel])+.001);
+                                shadeError=Math.Max(shadeError,error);Require(error<.003,"Actual raw shading differs from GPU packed sample decomposition");
+                                if(frame>=16){reference[channel]+=expected[channel];sums[0,channel]+=a[channel];sums[1,channel]+=f[channel];primarySums[channel]+=primary[channel];auxiliarySums[channel]+=auxiliary[channel];if(expected[channel]==0)dark=Math.Max(dark,f[channel]);}
+                            }
+                            Color Estimate(PairedPackedReservoir reservoir)
+                            {
+                                if((reservoir.lightData&0x80000000)==0)return Color.clear;
+                                uint index=reservoir.lightData&0x7fffffff;Require(index<keys.Length&&float.IsFinite(reservoir.weight)&&reservoir.weight>=0,"Dynamic shading sample/key invalid");
+                                return DynamicDiffuseReference(keys[index],x,y,size)*reservoir.weight;
+                            }
+                        }
+                    }
+                    var ratios=new double[2,3];bool pass=dark<.001;
+                    for(int signal=0;signal<2;signal++)for(int channel=0;channel<3;channel++)
+                    {ratios[signal,channel]=reference[channel]>0?sums[signal,channel]/reference[channel]:sums[signal,channel]/((frames-16)*256);pass&=reference[channel]>0?Math.Abs(ratios[signal,channel]-1)<(signal==0?.03:.05):ratios[signal,channel]<.001;}
+                    var result=new DynamicCDFCase{phase=phase,lights=keys.Length,frames=frames,cdfChecks=checks,mappingChecks=maps,resets=resets,confidenceFrames=confidence,pass=pass,rawRed=ratios[0,0],rawGreen=ratios[0,1],rawBlue=ratios[0,2],filteredRed=ratios[1,0],filteredGreen=ratios[1,1],filteredBlue=ratios[1,2],maxDarkSignal=dark};cases.Add(result);all&=pass;
+                    result.primaryRed=Ratio(primarySums,0);result.primaryGreen=Ratio(primarySums,1);result.primaryBlue=Ratio(primarySums,2);result.auxiliaryRed=Ratio(auxiliarySums,0);result.auxiliaryGreen=Ratio(auxiliarySums,1);result.auxiliaryBlue=Ratio(auxiliarySums,2);result.maxShadeRelativeError=shadeError;
+                    double Ratio(double[] values,int channel)=>reference[channel]>0?values[channel]/reference[channel]:0;
+                    Debug.Log($"[HoRTDIValidation] DYNAMIC_AUX_CDF opaque={pairedOpaqueAudit} phase={phase} lights={keys.Length} raw={result.rawRed:F6}/{result.rawGreen:F6}/{result.rawBlue:F6} filtered={result.filteredRed:F6}/{result.filteredGreen:F6}/{result.filteredBlue:F6} dark={dark:G6} resets={resets} confidence={confidence} pass={pass}");
+                    Debug.Log($"[HoRTDIValidation] DYNAMIC_CDF_DECOMPOSITION phase={phase} primary={result.primaryRed:F6}/{result.primaryGreen:F6}/{result.primaryBlue:F6} auxiliary={result.auxiliaryRed:F6}/{result.auxiliaryGreen:F6}/{result.auxiliaryBlue:F6} maxShadeRelativeError={shadeError:G6}");
+                }
+                File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-dynamiccdf69-"+(dynamicAuxiliaryLongAudit?"long-":"")+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new DynamicCDFReport{qualityPass=all,path=compatibility?"compatibility":"RenderGraph",visibility=pairedOpaqueAudit?"inline-opaque":"native-cutout",cases=cases.ToArray()},true));
+                Require(all,"Dynamic auxiliary CDF energy/dark-signal gates failed");
+            }
+            finally{c.nrd.ValidationTimeSeconds=null;computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);}
+
+            void Configure(string phase)
+            {
+                foreach(var lamp in lamps){lamp.enabled=true;lamp.type=LightType.Point;lamp.intensity=4;lamp.range=100;lamp.useColorTemperature=false;lamp.transform.rotation=Quaternion.LookRotation(-lamp.transform.position,Vector3.up);}
+                light.color=Color.red;green.color=Color.green;blue.color=Color.blue;
+                if(phase=="powerTemperature"){light.intensity=.4f;blue.intensity=40;green.useColorTemperature=true;green.colorTemperature=3000;}
+                if(phase=="disableBlue")blue.enabled=false;
+                if(phase=="blueDirectional"){blue.type=LightType.Directional;blue.transform.rotation=Quaternion.identity;}
+                if(phase=="redSpot"){light.type=LightType.Spot;light.spotAngle=70;light.innerSpotAngle=30;}
+                if(phase=="disableRed")light.enabled=false;
+                if(phase=="allDisabled")foreach(var lamp in lamps)lamp.enabled=false;
+            }
+        }
+
+        private static int CheckDynamicLightMaps(HoRTDIContext c,Light[] previous,Light[] current)
+        {
+            var forward=new int[Math.Max(1,current.Length)];var reverse=new int[Math.Max(1,previous.Length)];c.currentToPrevious.GetData(forward);c.previousToCurrent.GetData(reverse);
+            int checks=0;for(int i=0;i<current.Length;i++){Require(forward[i]==Array.FindIndex(previous,p=>ReferenceEquals(p,current[i])),"Dynamic current-to-previous identity mismatch");checks++;}
+            for(int i=0;i<previous.Length;i++){Require(reverse[i]==Array.FindIndex(current,p=>ReferenceEquals(p,previous[i])),"Dynamic previous-to-current identity mismatch");checks++;}return checks;
+        }
+
+        private static int CheckDynamicAuxiliarySamples(HoRTDIContext c,float[] cdf,int count,GraphicsBuffer second)
+        {
+            var packed=new PairedPackedReservoir[1];int checks=0;
+            foreach(int x in new[]{52,60,68,76})
+            {
+                const int y=64;int address=2*c.arrayPitch+(y/16)*c.rowPitch+(x/16)*256+(y%16)*16+x%16;
+                for(int draw=0;draw<2;draw++)
+                {
+                    if(draw==0)c.reservoirs.GetData(packed,0,address,1);else second.GetData(packed,0,y*c.width+x,1);
+                    // Opaque zero-light shading deliberately skips both stale
+                    // scratch slots; image checks establish that they contribute 0.
+                    if(count==0)continue;
+                    uint index=packed[0].lightData&0x7fffffff;Require((packed[0].lightData&0x80000000)!=0&&index<count,"Dynamic auxiliary light index invalid");
+                    float pdf=cdf[index]-(index>0?cdf[index-1]:0),expected=1/pdf;Require(float.IsFinite(packed[0].weight)&&Math.Abs(packed[0].weight-expected)<expected*3e-5,"Dynamic auxiliary inverse PDF mismatch");checks++;
+                }
+            }
+            return checks;
+        }
+
+        private static Color DynamicDiffuseReference(Light lamp,int x,int y,int size)
+        {
+            Vector3 p=PlanePosition(x,y,size),delta=lamp.transform.position-p;double attenuation=1;Vector3 direction=-lamp.transform.forward;
+            if(lamp.type!=LightType.Directional)
+            {
+                direction=delta.normalized;double d2=delta.sqrMagnitude,fade=Math.Max(0,1-Math.Pow(d2/(lamp.range*lamp.range),2));attenuation=fade*fade/d2;
+                if(lamp.type==LightType.Spot){double inner=Math.Cos(lamp.innerSpotAngle*Math.PI/360),outer=Math.Cos(lamp.spotAngle*Math.PI/360),cone=Math.Clamp((Vector3.Dot(-direction,lamp.transform.forward)-outer)/(inner-outer),0,1);attenuation*=cone*cone;}
+            }
+            var color=QualitySettings.activeColorSpace==ColorSpace.Linear?lamp.color.linear:lamp.color;if(lamp.useColorTemperature)color*=Mathf.CorrelatedColorTemperatureToRGB(lamp.colorTemperature);
+            return color*(float)(Math.Max(0,Vector3.Dot(Vector3.back,direction))*Math.Max(0,lamp.intensity)*attenuation/Math.PI);
+        }
+    }
+}

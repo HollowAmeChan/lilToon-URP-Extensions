@@ -24,7 +24,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             else _HoRTDISecondAuxiliary[id.y*(uint)_HoRTDIFrame.x+id.x]=RTXDI_PackDIReservoir(auxiliary);
         }
     }
-    if(RAB_IsSurfaceValid(surface))");
+    if(RAB_IsSurfaceValid(surface)&&(uint)_HoRTDIFrame.z>0)");
             compute=ReplaceOnce(compute,"float3 radiance=sample.radiance*((bits>>1)&1)*RTXDI_GetDIReservoirInvPdf(extra)/max(sample.solidAnglePdf,1e-12);","float extraVisibility=_HoRTDIFinalVisibilityEnabled!=0?((bits>>1)&1):float(extra.packedVisibility&RTXDI_PackedDIReservoir_VisibilityChannelMax)/RTXDI_PackedDIReservoir_VisibilityChannelMax;\n            float3 radiance=sample.radiance*extraVisibility*RTXDI_GetDIReservoirInvPdf(extra)/max(sample.solidAnglePdf,1e-12);");
             compute=ReplaceOnce(compute,"float3 radiance=sample.radiance*((bits>>2)&1)*RTXDI_GetDIReservoirInvPdf(second)/max(sample.solidAnglePdf,1e-12);","float secondVisibility=_HoRTDIFinalVisibilityEnabled!=0?((bits>>2)&1):float(second.packedVisibility&RTXDI_PackedDIReservoir_VisibilityChannelMax)/RTXDI_PackedDIReservoir_VisibilityChannelMax;\n            float3 radiance=sample.radiance*secondVisibility*RTXDI_GetDIReservoirInvPdf(second)/max(sample.solidAnglePdf,1e-12);");
             return compute;
