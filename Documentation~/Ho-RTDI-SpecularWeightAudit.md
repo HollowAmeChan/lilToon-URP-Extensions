@@ -29,3 +29,5 @@ ROI归一化x[.25,.6875)、y[.25,.75)，与动态CPU评分范围相同；128环�
 Roslyn errors0、无新增DI Shader诊断、GUID唯一/diff whitespace通过，Runtime/Shader/native/GI/Player未改。三条真实入口结束；不重复未变Player构建。
 
 下一项评估与实际邻居接纳量关联的连续系数：低接纳时保留当前归一化降噪，较高接纳时减少不必要的质量放大，variance按最终系数平方传播。必要时结合实际confidence，但不能仅按环境开关分类或由bin均值推出普适阈值。候选仍须同时通过既有混合能量、动态镜面/三样本、边界、HDR/环境与Player门槛，不调整门槛压线。
+
+第60步[连续策略未解决能量偏差](Ho-RTDI-AdaptiveSpecularExchangeRejection.md)：动态保持通过，mixed红/蓝仍越5%，不接纳生产，也不继续盲调曲线。

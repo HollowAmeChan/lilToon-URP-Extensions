@@ -12,6 +12,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     {
         private static bool lateSpecExchangeAudit;
         private static bool lateSpecWeightAudit;
+        private static bool lateSpecAdaptiveAudit;
         public static void RunLateSpecularExchangeEnvironment(){lateSpecExchangeAudit=true;RunAuxiliaryEnvironment();}
         public static void RunLateSpecularExchangeEnvironmentCompatibility(){compatibility=true;RunLateSpecularExchangeEnvironment();}
         public static void RunLateSpecularExchangeEnvironmentBaseline(){lateSpecExchangeAudit=true;RunAuxiliaryEnvironmentBaseline();}
@@ -21,6 +22,10 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunLateSpecularWeightEnvironment(){lateSpecWeightAudit=lateSpecExchangeAudit=true;RunAuxiliaryEnvironmentBaseline();}
         public static void RunLateSpecularWeightMotion(){lateSpecWeightAudit=lateSpecExchangeAudit=true;RunCutoutSpecularMotionQuality();}
         public static void RunLateSpecularWeightMotionCompatibility(){compatibility=true;RunLateSpecularWeightMotion();}
+        public static void RunAdaptiveSpecularEnvironment(){lateSpecAdaptiveAudit=true;RunLateSpecularExchangeEnvironment();}
+        public static void RunAdaptiveSpecularEnvironmentCompatibility(){compatibility=true;RunAdaptiveSpecularEnvironment();}
+        public static void RunAdaptiveSpecularMotion(){lateSpecAdaptiveAudit=true;RunLateSpecularExchangeMotion();}
+        public static void RunAdaptiveSpecularMotionCompatibility(){compatibility=true;RunAdaptiveSpecularMotion();}
         private sealed class LateSpecOverride:IDisposable
         {
             private readonly ComputeShader[] shaders;private readonly ComputeShader original;
@@ -42,6 +47,19 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     float retainedSpecularWeight = saturate(1.0 - (sumWSpecular - specularCenterKernel));
     float4 specularNeighborSum = sumSpecularIlluminationAndVariance - centerSpecularIlluminationAndVariance * float4(specularCenterKernel.xxx, specularCenterKernel * specularCenterKernel);
     float4 filteredSpecularIlluminationAndVariance = specularNeighborSum + centerSpecularIlluminationAndVariance * float4(retainedSpecularWeight.xxx, retainedSpecularWeight * retainedSpecularWeight);");
+            if(lateSpecAdaptiveAudit)
+            {
+                body=ReplaceOnce(body,"    float retainedSpecularWeight = saturate(1.0 - (sumWSpecular - specularCenterKernel));",@"
+    float acceptedFraction=saturate((sumWSpecular-specularCenterKernel)/(1.0-specularCenterKernel));
+    float confidence=saturate(gIn_SpecConfidence.SampleLevel(gLinearClamp,pixelUv,0));
+    // Retain normalization when little neighboring mass is accepted.
+    // The smooth confidence/acceptance policy is an experiment, not an
+    // upstream optimum or a classification by environment presence.
+    float exchangeAmount=acceptedFraction*acceptedFraction*confidence;
+    float specularNeighborScale=lerp(rcp(sumWSpecular),1.0,exchangeAmount);
+    float retainedSpecularWeight=saturate(1.0-(sumWSpecular-specularCenterKernel)*specularNeighborScale);");
+                body=ReplaceOnce(body,"    float4 filteredSpecularIlluminationAndVariance = specularNeighborSum + centerSpecularIlluminationAndVariance * float4(retainedSpecularWeight.xxx, retainedSpecularWeight * retainedSpecularWeight);","    float4 filteredSpecularIlluminationAndVariance = specularNeighborSum * float4(specularNeighborScale.xxx,specularNeighborScale*specularNeighborScale) + centerSpecularIlluminationAndVariance * float4(retainedSpecularWeight.xxx, retainedSpecularWeight*retainedSpecularWeight);");
+            }
             if(lateSpecWeightAudit)
             {
                 body=ReplaceOnce(body,"[numthreads(GROUP_X, GROUP_Y, 1)]","RWStructuredBuffer<uint> _HoRTDISpecWeightHistogram;\n[numthreads(GROUP_X, GROUP_Y, 1)]");

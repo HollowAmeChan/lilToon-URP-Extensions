@@ -591,7 +591,15 @@
 
 **下一项：** 按邻居接纳量评估连续系数保留低接纳降噪，variance随最终权重平方；不按环境开关或bin均值硬分类，不压线。仅Editor/文档，Roslyn/Shader/GUID/diff通过，Runtime/Player不变。详见[分布](../Ho-RTDI-SpecularWeightAudit.md)。
 
-## 60. 下一步取舍
+## 60. 连续邻居接纳量策略拒绝
+
+**动手前评审：** 用59真实分布定义软exchange=a²×confidence，邻居scale从1/sumW到1，拒绝质量留中心，variance随最终系数平方；不按环境开关分类，明确实验曲线非最优。
+
+**结果：** 两条动态3/3、rapid/step .343609/.347919保持；环境仍2/4，mixed spec红1.051969、TS蓝1.051402失败，部分比原版稍差，拒绝。生产未改，恢复原入口数值保持，Roslyn/Shader/diff通过；不继续盲调指数或已失败候选Player构建。
+
+**下一项：** 核对normal/view权重与正交frustum契约：位置helper区分ortho但view按位置归一化，先对照再判断，不假设为全部根因。保留DI范围与完整门槛。详见[拒绝](../Ho-RTDI-AdaptiveSpecularExchangeRejection.md)。
+
+## 61. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
