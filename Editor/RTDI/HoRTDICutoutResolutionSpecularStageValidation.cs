@@ -11,7 +11,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         private static bool cutoutResolutionSpecularStages;
         public static void RunCutoutResolutionSpecularStages(){cutoutResolutionSpecularStages=true;RunCutoutResolutionSpecular();}
         public static void RunCutoutResolutionSpecularStagesCompatibility(){compatibility=true;RunCutoutResolutionSpecularStages();}
-        [Serializable] private sealed class ResolutionSpecularStageReport{public bool diagnosticOnly=true;public string path;public ResolutionSpecularStageCase[] cases;public ResolutionSpecularConfidenceCase[] confidenceCases;}
+        [Serializable] private sealed class ResolutionSpecularStageReport{public bool diagnosticOnly=true;public string path,proposal;public ResolutionSpecularStageCase[] cases;public ResolutionSpecularConfidenceCase[] confidenceCases;}
         [Serializable] private sealed class ResolutionSpecularStageCase
         {
             public int size,points,pipeline,captures,tracedFrames;
@@ -49,7 +49,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var confidenceResults=new List<ResolutionSpecularConfidenceCase>();
             try
             {
-                foreach(string profile in cutoutResolutionConfidenceAudit?new[]{"slowTS","rapidTS","rapidConfidenceOff","stepTS","stepConfidenceOff"}:new[]{"slowTS","rapidTS","rapidNone"})
+                string[] profiles=cutoutResolutionConfidenceAudit?(cutoutSpecularRgbProposal?new[]{"slowTS","rapidTS","stepTS"}:new[]{"slowTS","rapidTS","rapidConfidenceOff","stepTS","stepConfidenceOff"}):new[]{"slowTS","rapidTS","rapidNone"};
+                foreach(string profile in profiles)
                 {
                     bool reuse=profile!="rapidNone",rapid=profile!="slowTS",step=profile.StartsWith("step",StringComparison.Ordinal),skipConfidence=profile.EndsWith("ConfidenceOff",StringComparison.Ordinal);
                     c.nrd.ValidationSkipVisibilityConfidence=skipConfidence;
@@ -128,7 +129,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     Require(Math.Abs(sums[-1].red/referenceR-1)<.03&&Math.Abs(sums[-1].blue/referenceB-1)<.03,"specular stage raw energy reference failed");
                 }
                 string prefix=cutoutResolutionConfidenceAudit?"rtdi-specularconfidence48-":"rtdi-specularstages47-";
-                File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new ResolutionSpecularStageReport{path=compatibility?"compatibility":"RenderGraph",cases=results.ToArray(),confidenceCases=confidenceResults.ToArray()},true));
+                if(cutoutSpecularRgbProposal)prefix="rtdi-rgbproposalconfidence49-";
+                File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new ResolutionSpecularStageReport{path=compatibility?"compatibility":"RenderGraph",proposal=cutoutSpecularRgbProposal?"rgb-all":"production",cases=results.ToArray(),confidenceCases=confidenceResults.ToArray()},true));
             }
             finally{c.nrd.ValidationSpecularStage=null;c.nrd.ValidationTimeSeconds=null;c.nrd.ValidationSkipVisibilityConfidence=false;}
             void Draw(){c.nrd.ValidationTimeSeconds=++clock/60.0;RenderCamera();}

@@ -17,12 +17,13 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunCutoutResolutionSpecularCompatibility(){compatibility=true;RunCutoutResolutionSpecular();}
         public static void RunCutoutResolutionSpecularPhiTwo(){cutoutResolutionSpecPhiTwo=true;RunCutoutResolutionSpecular();}
         public static void RunCutoutResolutionSpecularRadiusAudit(){cutoutResolutionRadiusAudit=true;RunCutoutResolutionSpecular();}
-        [Serializable] private sealed class ResolutionMotionReport{public bool qualityPass;public string path,signal,audit;public ResolutionMotionCase[] cases;}
+        [Serializable] private sealed class ResolutionMotionReport{public bool qualityPass;public string path,signal,audit,proposal;public ResolutionMotionCase[] cases;}
         [Serializable] private sealed class ResolutionMotionCase{public int size,points,tracedFrames;public uint atrous;public float specPhi;public string mode;public bool pass;public double rawRed,rawBlue,filteredRed,filteredBlue,frameL1,changedL1;}
         private static void ValidateCutoutResolutionMotion()
         {
             light.color=Color.red;var blue=Point(new Vector3(-1.5f,0,-1),Color.blue,4);feature.Settings.initialSamples=8;feature.Settings.temporal=feature.Settings.spatial=feature.Settings.denoise=true;
             if(cutoutResolutionSpecular){surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetFloat("_Smoothness",.6f);}
+            if(cutoutSpecularRgbProposal)ApplyCutoutSpecularRgbProposal();
             if(cutoutResolutionSpecularStages){ValidateCutoutResolutionSpecularStages(blue);return;}
             var cases=new List<ResolutionMotionCase>();bool allPass=true;int clock=0;
             foreach(int size in new[]{256,512})
@@ -59,8 +60,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             }
             string audit=cutoutResolutionSpecPhiTwo?"phi-two":cutoutResolutionRadiusAudit?"radius":"default";
             string prefix=cutoutResolutionSpecular?"rtdi-resolutionspec46-":"rtdi-resolutionmotion45-";
+            if(cutoutSpecularRgbProposal)prefix="rtdi-specularproposal49-";
             if(audit!="default")prefix+=audit+"-";
-            File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new ResolutionMotionReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",signal=cutoutResolutionSpecular?"specular":"diffuse",audit=audit,cases=cases.ToArray()},true));
+            File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new ResolutionMotionReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",signal=cutoutResolutionSpecular?"specular":"diffuse",audit=audit,proposal=cutoutSpecularRgbProposal?"rgb-all":"production",cases=cases.ToArray()},true));
             Require(allPass,"large resolution motion energy/noise/changed-pixel gates failed");
         }
         private static double ResolutionMotionLamp(Light source,int x,int y,int size)

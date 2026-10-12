@@ -35,3 +35,5 @@ rapid当帧变化点86080个观测，约53.99%的confidence<.25；step为30720�
 Roslyn Runtime/Editor errors0、GUID唯一、diff whitespace通过。最终两条D3D12诊断各30个阶段结果与5个置信度结果完全一致；原第47步三配置阶段入口回归通过，数值不变。没有新增DI Shader错误，不重建未变的Player/GI。
 
 下一项优先审视非零F0下的原始彩灯采样方差与提案，核对用户RAB目标回调和固定RTXDI归一化，使用隔离shader对照检验能否减少输入噪声，同时保留动态可见性置信度与阶跃门槛。历史上全表面RGB目标曾引入其他质量失败，不能直接推广零F0策略；若重新评估，必须与当前运行时同种子比较，并通过大尺寸镜面、core/彩灯、primary与Player回归才考虑接纳。古堡合并天空模型只作资产支持审计，不扩张合成/PT或把诊断复制当GPU预算。
+
+第49步[隔离RGB提案对照](Ho-RTDI-SpecularRgbProposalAudit.md)降低了原始总RGB MSE，但rapid仍失败，step短期红通道误差从raw阶段就变差；没有接纳到生产。

@@ -503,7 +503,15 @@
 
 **下一项：** 先评估非零F0彩灯原始提案方差，以隔离shader而非新增产品参数做同种子对照；旧全表面RGB失败保持，只有现有大尺寸/step/core/primary/Player全过才考虑接纳。仅Editor/文档，正式报告分开。详见[置信度证据](../Ho-RTDI-SpecularConfidenceAudit.md)。
 
-## 49. 下一步取舍
+## 49. 隔离非零F0 RGB提案
+
+**动手前评审：** 第48步关闭confidence导致step失败，保留动态可见性、改查输入。核对用户RAB目标契约及固定Reservoir归一化。只生成隔离compute/bridge，将零F0限定扩为RGB全表面；生产spec proposal4/物理Shade/NRD不变，报告明确rgb-all且不覆盖默认，入口拒绝非隔离工程/变化源码。
+
+**结果与拒绝：** 两条仅2/6，rapid=.470918/.499755仍超.35；step整体虽改善，变化像素=.459106/.445930失败。256阶段rapid raw MSE约降51%、发布约降34%，但step raw短期红误差.231293→.452006，发布.244762→.459106，不能全部说成历史残影。阶段confidence/公共history读取有效；拒绝推广非零F0 RGB，默认正式回归原3/6及数值保持。
+
+**下一项：** 核对单reservoir/单最终样本的通道方差、Cutout额外样本可见性与成本，再选择DI采样改动，不继续无依据调NRD或增加初始数来掩盖最终样本限制。Roslyn/隔离Shader/两条正式失败与RG阶段检查通过，只过滤Editor/文档，不重建未变Player/GI。详见[提案证据](../Ho-RTDI-SpecularRgbProposalAudit.md)。
+
+## 50. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
