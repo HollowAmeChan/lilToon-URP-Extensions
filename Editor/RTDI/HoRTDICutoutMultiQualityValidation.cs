@@ -71,6 +71,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 feature.Settings.spatial=mode=="staticS"||mode=="staticTS"||mode=="camera"||movingCaster||mode=="unshadowedTS";
                 camera.transform.position=new Vector3(0,0,-3);skinBlockerBone.localPosition=Vector3.zero;
                 if(feature.LastContext!=null){feature.LastContext.historyValid=false;feature.LastContext.nrdHistoryValid=false;}
+                using var lateSpecOverride=lateSpecExchangeAudit?ApplyLateSpecExchange(feature.LastContext):null;
                 for(int i=0;i<192;i++)RenderCamera();
                 double redRef=0,blueRef=0,rawRed=0,rawBlue=0,filterRed=0,filterBlue=0,filteredL1=0;
                 var expectedMean=new double[64*64*2];var rawMean=new double[64*64*2];var filterMean=new double[64*64*2];
@@ -148,6 +149,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             string prefix=motionAudit?(visibilityAudit||cutoutNrdDiagnostic=="motionProduction"?"rtdi-cutout32-":"rtdi-cutout31-")+cutoutNrdDiagnostic+"-"+(compatibility?"compat":"rg"):cutoutNrdDiagnostic==null?"rtdi-cutout32-current-"+(compatibility?"compat":"rg"):"rtdi-cutout30-"+cutoutNrdDiagnostic;
             if(cutoutSpecularQuality)prefix="rtdi-cutout33-spec-"+(motionAudit?"motion-":"all-")+(compatibility?"compat":"rg");
             if(cutoutPairedFinalSample)prefix="rtdi-finalpair50-multi-"+(compatibility?"compat":"rg");
+            if(lateSpecExchangeAudit)prefix="rtdi-latespec58-motion-"+(compatibility?"compat":"rg");
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+".json"),JsonUtility.ToJson(report,true));
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+".csv"),rows.ToString());
             Debug.Log($"[HoRTDIValidation] CUTOUT_MULTI_RESULT qualityPass={allPass} diagnostic={cutoutMultiAudit} compatibility={compatibility}");

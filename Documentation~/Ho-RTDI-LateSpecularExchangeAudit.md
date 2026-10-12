@@ -28,3 +28,5 @@
 报告`rtdi-auxenv54-partition-exchange-rg/compat.json`、`...baseline-exchange-rg.json`；阶段为`rtdi-auxenvstages55-partition-exchange-rg.json`。恢复原入口`RunAuxiliaryEnvironment`仍2/4、退出1、数值不变，证明对照未污染原版本。Roslyn errors0、无新增DI Shader诊断、GUID唯一/diff whitespace通过，生产Runtime/Shader/native/GI/Player未变。
 
 下一项在可重建的DI私有派生中接入候选后，验证动态镜面/primary、曲面/材质边界、环境窄高光/小太阳、HDR、彩灯/core与实际Player；只在这些回归保持后接纳。该形式可能减弱噪声抑制，不能因一个环境case通过直接发布。三样本/opaque/动态CDF/多相机/GPU预算及最终产品接入仍待完成，不扩张NPR/PBR合成/PT。
+
+第58步[扩大验证后拒绝全局替换](Ho-RTDI-LateSpecularExchangeRejection.md)：64动态镜面rapid/step .365093/.380824超过原.35；候选运行时与生成器已撤回，Editor复现保留。

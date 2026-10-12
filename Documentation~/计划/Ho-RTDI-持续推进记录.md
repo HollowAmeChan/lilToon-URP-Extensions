@@ -575,7 +575,15 @@
 
 **下一项：** 可重建DI派生候选后广验动态/primary/曲面/边界/窄环境/小太阳/HDR/core/彩灯/Player，噪声可能变差，不能只凭能量通过发布。三样本/opaque/动态CDF/GPU预算仍待完成。详见[对照](../Ho-RTDI-LateSpecularExchangeAudit.md)。
 
-## 58. 下一步取舍
+## 58. 全局镜面固定交换候选拒绝
+
+**动手前评审：** 57能量通过不能代表噪声，在可重建派生临时RADIANCE候选下依次核对动态/primary/曲面/边界/rough环境/斜视/小太阳/三样本。原SHA/参数/可见性保持，不改.35。
+
+**结果与撤回：** 64动态rapid .343487→.365093、step .347752→.380824失败，拒绝；其他列出的RG入口通过，三样本spotRapid余量也从.324→.348变小。运行时/生成器恢复原版，Editor motion两条作用域复现相同false/exit1；恢复生产64镜面通过、原环境2/4失败保持，不做已失败候选的无关Player接纳构建。
+
+**下一项：** 读实际后续邻居质量/normalization/confidence的稳定/动态差异后选择策略，不盲调比率压线。Roslyn/原SHA/派生与diff检查通过，最终只Editor/文档。详见[拒绝证据](../Ho-RTDI-LateSpecularExchangeRejection.md)。
+
+## 59. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

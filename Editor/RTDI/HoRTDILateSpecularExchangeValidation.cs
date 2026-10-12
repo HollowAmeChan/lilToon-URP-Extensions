@@ -15,6 +15,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunLateSpecularExchangeEnvironmentCompatibility(){compatibility=true;RunLateSpecularExchangeEnvironment();}
         public static void RunLateSpecularExchangeEnvironmentBaseline(){lateSpecExchangeAudit=true;RunAuxiliaryEnvironmentBaseline();}
         public static void RunLateSpecularExchangeEnvironmentStages(){lateSpecExchangeAudit=true;RunAuxiliaryEnvironmentStages();}
+        public static void RunLateSpecularExchangeMotion(){lateSpecExchangeAudit=true;RunCutoutSpecularMotionQuality();}
+        public static void RunLateSpecularExchangeMotionCompatibility(){compatibility=true;RunLateSpecularExchangeMotion();}
         private sealed class LateSpecOverride:IDisposable
         {
             private readonly ComputeShader[] shaders;private readonly ComputeShader original;
