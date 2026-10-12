@@ -583,7 +583,15 @@
 
 **下一项：** 读实际后续邻居质量/normalization/confidence的稳定/动态差异后选择策略，不盲调比率压线。Roslyn/原SHA/派生与diff检查通过，最终只Editor/文档。详见[拒绝证据](../Ho-RTDI-LateSpecularExchangeRejection.md)。
 
-## 59. 下一步取舍
+## 59. 稳定/动态真实滤波权重分布
+
+**动手前评审：** 全局fixed失败，不盲调。隔离原row normalization pipeline10以8KiB联合hist读实际sumW/confidence，四个step严格核ROI计数；均值按bin中点近似，非性能计时或严格守恒证明。
+
+**结果：** 稳定mixed meanW step2≈.708到16≈.355/.388；动态rapid≈.408到.202，末轮97.81% W<.25接近中心.195，step96.83%。低接纳区原归一化仍放大少量邻居实现降噪，解释fixed退化。动态两条计数/统计完全一致且原.343/.348通过；环境仍2/4失败，不改输出。
+
+**下一项：** 按邻居接纳量评估连续系数保留低接纳降噪，variance随最终权重平方；不按环境开关或bin均值硬分类，不压线。仅Editor/文档，Roslyn/Shader/GUID/diff通过，Runtime/Player不变。详见[分布](../Ho-RTDI-SpecularWeightAudit.md)。
+
+## 60. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

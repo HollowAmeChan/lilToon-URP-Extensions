@@ -73,6 +73,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(feature.LastContext!=null){feature.LastContext.historyValid=false;feature.LastContext.nrdHistoryValid=false;}
                 using var lateSpecOverride=lateSpecExchangeAudit?ApplyLateSpecExchange(feature.LastContext):null;
                 for(int i=0;i<192;i++)RenderCamera();
+                if(lateSpecWeightAudit)lateSpecOverride.ResetHistogram();
                 double redRef=0,blueRef=0,rawRed=0,rawBlue=0,filterRed=0,filterBlue=0,filteredL1=0;
                 var expectedMean=new double[64*64*2];var rawMean=new double[64*64*2];var filterMean=new double[64*64*2];
                 double worstFrameL1=0,transitionError=0,transitionReference=0;
@@ -141,6 +142,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 }
                 allPass&=result.rawPass&&result.filteredPass;cases.Add(result);
                 Debug.Log($"[HoRTDIValidation] CUTOUT_MULTI_QUALITY signal={(cutoutSpecularQuality?"specular":"diffuse")} diagnostic={cutoutNrdDiagnostic??"baseline"} mode={mode} rawRed={rawRed/redRef:F6} rawBlue={rawBlue/blueRef:F6} filteredRed={filterRed/redRef:F6} filteredBlue={filterBlue/blueRef:F6} rawMeanL1={rawMeanL1/total:F6} filteredMeanL1={filterMeanL1/total:F6} filteredFrameL1={filteredL1/total:F6}");
+                if(lateSpecWeightAudit)WriteLateSpecWeights(lateSpecOverride,mode,64,frames);
                 if(motionAudit)Debug.Log($"[HoRTDIValidation] CUTOUT_MOTION mode={mode} reset={feature.LastContext.lastNrdReset} traced={feature.LastContext.lastVisibilityGradients} worstFrameL1={worstFrameL1:F6} transitionL1={result.transitionL1:F6} transitionChangedL1={result.transitionChangedL1:F6}");
                 Require(feature.LastContext.nrd.LastDispatchCount>0,"two nonzero lights bypassed RELAX");
                 Require(Math.Abs(rawRed/redRef-1)<.03&&Math.Abs(rawBlue/blueRef-1)<.03,"multi-light raw energy mismatch");
@@ -150,6 +152,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(cutoutSpecularQuality)prefix="rtdi-cutout33-spec-"+(motionAudit?"motion-":"all-")+(compatibility?"compat":"rg");
             if(cutoutPairedFinalSample)prefix="rtdi-finalpair50-multi-"+(compatibility?"compat":"rg");
             if(lateSpecExchangeAudit)prefix="rtdi-latespec58-motion-"+(compatibility?"compat":"rg");
+            if(lateSpecWeightAudit)prefix="rtdi-specweights59-motion-"+(compatibility?"compat":"rg");
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+".json"),JsonUtility.ToJson(report,true));
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+".csv"),rows.ToString());
             Debug.Log($"[HoRTDIValidation] CUTOUT_MULTI_RESULT qualityPass={allPass} diagnostic={cutoutMultiAudit} compatibility={compatibility}");

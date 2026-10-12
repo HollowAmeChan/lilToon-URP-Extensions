@@ -27,3 +27,5 @@
 生成器和`HoRTDINrdAtrous.hlsl`恢复HEAD，原SHA/全部派生check通过。恢复生产的64动态镜面再次通过，.343487/.347752及旧能量保持；第54步原环境入口仍2/4、退出1，既有混合镜面偏差继续保留。Editor复现两条与恢复回归、Roslyn/diff检查完成，Runtime/Shader/native/GI/Player无最终变化。
 
 下一项先读稳定混合环境与动态caster的实际邻居质量/归一化和confidence分布，确认哪种状态需要能量稳定、哪种需要更强降噪，再评估有依据的策略。保留source/seed/所有门槛，不用盲调交换比例或phi把单个case刚好压线，也不重定义DI目标。opaque、动态CDF、多相机、环境/三样本产品集成与GPU预算仍待完成。
+
+第59步[真实权重接纳量](Ho-RTDI-SpecularWeightAudit.md)显示稳定mixed末轮sumW≈.36～.39，动态≈.20接近中心.195，支持保留低接纳区降噪后再评估连续策略。

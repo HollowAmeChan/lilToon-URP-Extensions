@@ -51,6 +51,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 using var lateSpecOverride=lateSpecExchangeAudit?ApplyLateSpecExchange(c):null;
                 if(auxiliaryEnvironmentStages){ValidateAuxiliaryEnvironmentStages(c,mixed,reuse,blue,skySpec);computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);continue;}
                 c.historyValid=c.nrdHistoryValid=false;c.frame=0;for(int i=0;i<192;i++)RenderCamera();
+                if(lateSpecWeightAudit)lateSpecOverride.ResetHistogram();
                 var sums=new double[4,3];var references=new double[2,3];int samples=0;double minSignal=0;
                 var referencePoints=new List<(int x,int y,double dr,double db,double sr,double sb)>();
                 for(int y=48;y<80;y++)for(int x=48;x<80;x++)
@@ -81,10 +82,11 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 cases.Add(new AuxiliaryEnvironmentCase{mixed=mixed,reuse=reuse,pass=pass,minSignal=minSignal,diffuseRed=ratios[0,0],diffuseGreen=ratios[0,1],diffuseBlue=ratios[0,2],filteredDiffuseRed=ratios[1,0],filteredDiffuseGreen=ratios[1,1],filteredDiffuseBlue=ratios[1,2],specularRed=ratios[2,0],specularGreen=ratios[2,1],specularBlue=ratios[2,2],filteredSpecularRed=ratios[3,0],filteredSpecularGreen=ratios[3,1],filteredSpecularBlue=ratios[3,2]});allPass&=pass;
                 Debug.Log($"[HoRTDIValidation] AUXILIARY_ENV mixed={mixed} reuse={reuse} partition={auxiliaryEnvironmentPartition} rawD={ratios[0,0]:F6}/{ratios[0,1]:F6}/{ratios[0,2]:F6} filteredD={ratios[1,0]:F6}/{ratios[1,1]:F6}/{ratios[1,2]:F6} rawS={ratios[2,0]:F6}/{ratios[2,1]:F6}/{ratios[2,2]:F6} filteredS={ratios[3,0]:F6}/{ratios[3,1]:F6}/{ratios[3,2]:F6} pass={pass}");
                 Debug.Log($"[HoRTDIValidation] AUXILIARY_ENV_MIN mixed={mixed} reuse={reuse} value={minSignal:E9}");
+                if(lateSpecWeightAudit)WriteLateSpecWeights(lateSpecOverride,(mixed?"mixed":"sky")+(reuse?"-reuse":"-none"),size,frames);
                 computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);c.nrd.ValidationTimeSeconds=null;
             }
             string mode=!cutoutPairedFinalSample?"baseline":auxiliaryEnvironmentPartition?"partition":"naive";
-            if(lateSpecExchangeAudit)mode+="-exchange";
+            if(lateSpecExchangeAudit)mode+=lateSpecWeightAudit?"-weights":"-exchange";
             if(auxiliaryEnvironmentStages){WriteAuxiliaryEnvironmentStages(mode);return;}
             File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-auxenv54-"+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",mode=mode,cases=cases.ToArray()},true));
             Require(allPass,"Environment partition energy gates failed");
