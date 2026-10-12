@@ -43,13 +43,22 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     Require((packed[0].lightData&0x80000000)!=0&&secondIndex<cdf.Length,"Second auxiliary GPU sample invalid");
                     float secondPdf=cdf[secondIndex]-(secondIndex>0?cdf[secondIndex-1]:0),secondExpected=1/secondPdf;
                     Require(float.IsFinite(packed[0].weight)&&Math.Abs(packed[0].weight-secondExpected)<secondExpected*3e-5,"Second auxiliary GPU inverse PDF mismatch");
-                    uint bits=(uint)Mathf.RoundToInt(visibility.GetPixel(x,y).r*7);
-                    Require(((bits>>1)&1)==(CutoutPlaneShadow(c.previousLightKeys[index],x,y,c.width)?0u:1u)&&((bits>>2)&1)==(CutoutPlaneShadow(c.previousLightKeys[secondIndex],x,y,c.width)?0u:1u),"Two auxiliary native alpha visibility mismatch");
+                    uint bits=0;
+                    if(pairedOpaqueAudit)
+                    {
+                        Require(((packed[0].mVisibility&63)!=0)==!CutoutPlaneShadow(c.previousLightKeys[secondIndex],x,y,c.width),"Opaque second visibility/cache mismatch");
+                        c.reservoirs.GetData(packed,0,address,1);Require(((packed[0].mVisibility&63)!=0)==!CutoutPlaneShadow(c.previousLightKeys[index],x,y,c.width),"Opaque first visibility/cache mismatch");
+                    }
+                    else
+                    {
+                        bits=(uint)Mathf.RoundToInt(visibility.GetPixel(x,y).r*7);
+                        Require(((bits>>1)&1)==(CutoutPlaneShadow(c.previousLightKeys[index],x,y,c.width)?0u:1u)&&((bits>>2)&1)==(CutoutPlaneShadow(c.previousLightKeys[secondIndex],x,y,c.width)?0u:1u),"Two auxiliary native alpha visibility mismatch");
+                    }
                     c.reservoirs.GetData(packed,0,address-c.arrayPitch,1);
                     if((packed[0].lightData&0x80000000)!=0)
                     {
                         uint primaryIndex=packed[0].lightData&0x7fffffff;bool blocked=CutoutPlaneShadow(c.previousLightKeys[primaryIndex],x,y,c.width);
-                        Require((bits&1)==(blocked?0u:1u)&&((packed[0].mVisibility&63)!=0)==!blocked,"Three-sample primary visibility/cache mismatch");
+                        Require((pairedOpaqueAudit||(bits&1)==(blocked?0u:1u))&&((packed[0].mVisibility&63)!=0)==!blocked,"Three-sample primary visibility/cache mismatch");
                     }
                     if(secondIndex==index)agreements++;checks++;
                 }

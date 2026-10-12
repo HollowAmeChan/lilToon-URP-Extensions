@@ -655,7 +655,15 @@
 
 **下一项：** 动态读取同样变化与实际采样接入/opaque/动态CDF/多相机未完项并行评审，避免项目变成固定NRD系数试值。只Editor/文档，Roslyn/Shader/GUID/diff通过，生产不变。详见[改色](../Ho-RTDI-ClampingColourAudit.md)。
 
-## 68. 下一步取舍
+## 68. 无 Cutout 辅助样本执行
+
+**动手前评审：** 两辅助原型在 native pass 生成，opaque 不调度该 pass，不能从 Cutout 对照推定可用。对照 fork ShadeSamples/SDK visibility 和现有 inline bridge，只在隔离 opaque ShadeNRD 生成/缓存两次真实 CDF 样本；不引入透明标记物。
+
+**结果：** 两条四组全部通过，GPU inverse PDF/cache/CPU遮挡匹配；rapid/step/32灯/HDR frame L1=.062609/.099089/.062986/.059072，step changed=.075235。opaque rapid每帧reset、step15次，不是保留历史；native counters未启用，零值不是零成本。原Cutout四组回归数值保持。首次GUID导入失败已修复后完整重跑。
+
+**下一项：** 动态灯集/CDF帧同步与资源生命周期，之后多相机/Player/成本；混合环境镜面正式失败仍保留。只Editor/文档，生产/GI/native不变。详见[opaque审计](../Ho-RTDI-OpaqueAuxiliaryAudit.md)。
+
+## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
