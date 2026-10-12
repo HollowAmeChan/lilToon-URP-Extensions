@@ -26,3 +26,5 @@
 没有生产更改可撤：Runtime/Shader/native/GI/Player始终未变。恢复入口的混合环境仍2/4、退出1、原动态镜面3/3与数值保持；Roslyn/diff检查通过，无新增DI Shader诊断。仅保留Editor实验/文档，不构建未变或已失败候选Player。
 
 下一项核对具体权重来源和相机契约。已只读发现`GetCurrentWorldPosFromPixelPos`区分正交/透视，但后续spec中心/邻居view仍由位置归一化构造；正交相机真实视线平行，需要结合固定NRD/frustum输入核对并做隔离验证，不能先凭这处差异修改整个denoiser或假定它解释全部能量问题。继续保留现有动态/环境/Player门槛与DI范围。
+
+第61步[正交view对照](Ho-RTDI-OrthographicSpecularAudit.md)分别替换后续及首+后续，mixed仍2/4且偏差稍大，不接纳为当前能量修复。

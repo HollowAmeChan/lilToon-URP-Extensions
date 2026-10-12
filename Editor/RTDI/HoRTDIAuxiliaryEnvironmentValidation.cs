@@ -86,7 +86,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);c.nrd.ValidationTimeSeconds=null;
             }
             string mode=!cutoutPairedFinalSample?"baseline":auxiliaryEnvironmentPartition?"partition":"naive";
-            if(lateSpecExchangeAudit)mode+=lateSpecWeightAudit?"-weights":lateSpecAdaptiveAudit?"-adaptive":"-exchange";
+            if(lateSpecExchangeAudit)mode+=lateSpecWeightAudit?"-weights":lateSpecAdaptiveAudit?"-adaptive":allSpecOrthographicAudit?"-allortho":lateSpecOrthographicAudit?"-ortho":"-exchange";
             if(auxiliaryEnvironmentStages){WriteAuxiliaryEnvironmentStages(mode);return;}
             File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-auxenv54-"+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",mode=mode,cases=cases.ToArray()},true));
             Require(allPass,"Environment partition energy gates failed");

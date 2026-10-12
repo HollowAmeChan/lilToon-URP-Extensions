@@ -599,7 +599,15 @@
 
 **下一项：** 核对normal/view权重与正交frustum契约：位置helper区分ortho但view按位置归一化，先对照再判断，不假设为全部根因。保留DI范围与完整门槛。详见[拒绝](../Ho-RTDI-AdaptiveSpecularExchangeRejection.md)。
 
-## 61. 下一步取舍
+## 61. 正交镜面view契约对照
+
+**动手前评审：** fixed NRD位置重建区分ortho，但view按位置归一化；核对用户Relax.cpp frustum常量，以并行-gFrustumForward替换ortho分支，透视表达/归一化/参数不变。分别9+10和仅10作用域副本，恢复原shader。
+
+**结果：** 两条后续-only及两条9+10环境均2/4，mixed spec红/蓝约1.057/1.057、TS1.050/1.058，比原更偏；raw/diffuse保持，拒绝当前能量修复。后续-only动态两条3/3、9+10动态RG3/3，未据step改善称整体更优。恢复原环境2/4、动态3/3与数值保持。
+
+**下一项：** 核对透视/正交偏差覆盖及noise-dependent range/random offset具体项，不继续按代码直觉改表达或盲调曲线。只Editor/文档，Roslyn/Shader/diff通过，无生产/Player变化。详见[对照](../Ho-RTDI-OrthographicSpecularAudit.md)。
+
+## 62. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |
