@@ -455,7 +455,15 @@
 
 **共享与下一项：** 发现GI bridge直接包含共享DI，41目标变化曾传入GI，补充更正历史说明；本步编译隔离GI目标与新guard，必要GI两条Editor GPU回归通过，不推进新GI。两个Mono release errors0，实际DI两条全suite/D3D11 inactive通过，立体阶跃frame约.234、变化像素.277/.285仍过门槛但需改善；GI未新增Player验收。Roslyn/原SHA/派生check通过，无新增DI/GI shader诊断。过滤owned提交；下一项更多材质/灯/更大尺寸、GPU预算和动态短期响应，不扩张最终合成/PT。详见[策略边界](../Ho-RTDI-ProposalBoundary.md)。
 
-## 43. 下一步取舍
+## 43. 独立Development Player GPU计时入口
+
+**动手前评审：** 现有Editor样本不足，先核对Core ProfilingSampler及Unity6 FrameTiming/Recorder原始API，GPU数据延迟三帧且有计时开销。新增独立Development build目录/参数，每应用帧一次请求，512² base/opaque/movingCutout三状态，160帧/舍弃36，源标记复用，不修改产品Shader/资源。区分可用/新鲜frame记录、正GPU时长、相机事件、CPU标记和调度；不足-1/false/exit1，异常与Release误用均明确退出。
+
+**证据与限制：** RTX4060/D3D12、Development和FrameTiming均启用、GPU timer1GHz；三状态相机事件160/新鲜frame记录124，但GPU时长/marker均0样本。移动Cutout CPU标记及gradient调度124。隐藏非batch手动仍缺GPU时长，自动相机相机事件0，不能据此猜唯一原因或替代GPU预算。完整帧/状态差值即使取得也不等同单DI/pass成本，不做基于假GPU时间的优化。
+
+**验证与下一项：** Development和两Release build errors0，计时实际exit1、错误build类型也exit1并有JSON；普通实际DI两条完整suite及D3D11 inactive通过，Roslyn/提交检查通过。过滤仅测试构建/fixture/文档，产品DI/GI不变。下一项扩大尺寸质量、选择有真实帧/呈现/query证据的计时采集，GPU预算仍未证明；不扩张合成/PT。详见[GPU计时审计](../Ho-RTDI-GpuTimingAudit.md)。
+
+## 44. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

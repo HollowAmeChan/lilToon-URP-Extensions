@@ -25,13 +25,15 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         {
             ProjectRoot();var package=UnityEditor.PackageManager.PackageInfo.FindForAssetPath("Packages/jp.lilxyzw.liltoon.urp.extensions/package.json");
             string dst=Path.Combine(Application.dataPath,"RTDIPlayerProbe");Directory.CreateDirectory(dst);
-            foreach(string file in new[]{"HoRTDIPlayerCaptureFeature.cs","HoRTDIPlayerProbe.cs","HoRTDIPlayerCapture.shader"})
+            foreach(string file in new[]{"HoRTDIPlayerCaptureFeature.cs","HoRTDIPlayerProbe.cs","HoRTDIPlayerCapture.shader","HoRTDIPlayerGpuTiming.cs"})
                 File.Copy(Path.Combine(package.resolvedPath,"Tests~/Player/RTDI",file),Path.Combine(dst,file),true);
             AssetDatabase.Refresh();Debug.Log("[HoRTDIPlayerValidation] PREPARED runtime probe templates");EditorApplication.Exit(0);
         }
         public static void Build()=>Build(false);
         public static void BuildCompatibility()=>Build(true);
-        private static void Build(bool compatibility)
+        public static void BuildGpuTiming()=>Build(false,true);
+        public static void BuildGpuTimingCompatibility()=>Build(true,true);
+        private static void Build(bool compatibility,bool gpuTiming=false)
         {
             try
             {
@@ -73,7 +75,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 var cutoutMaterial=new Material(cutoutShader);AssetDatabase.CreateAsset(cutoutMaterial,assets+"Cutout.asset");Set(so,"cutoutMaterial",cutoutMaterial);
                 Set(so,"probeCamera",camera);Set(so,"feature",di);Set(so,"atmosphere",sky);Set(so,"capture",capture);Set(so,"light",light);Set(so,"blue",blue);Set(so,"blocker",blocker);Set(so,"receiver",receiver);Set(so,"surfaceMaterial",material);Set(so,"profile",profile);so.ApplyModifiedPropertiesWithoutUndo();
                 AssetDatabase.SaveAssets();EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(),assets+"Probe.unity");
-                var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{assets+"Probe.unity"},target=BuildTarget.StandaloneWindows64,locationPathName=Path.Combine(root,compatibility?"PlayerBuildCompatibility/HoRTDIProbe.exe":"PlayerBuild/HoRTDIProbe.exe"),options=BuildOptions.None});
+                string output=gpuTiming?(compatibility?"PlayerGpuTimingCompatibility":"PlayerGpuTiming"):(compatibility?"PlayerBuildCompatibility":"PlayerBuild");
+                var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{assets+"Probe.unity"},target=BuildTarget.StandaloneWindows64,locationPathName=Path.Combine(root,output,"HoRTDIProbe.exe"),options=gpuTiming?BuildOptions.Development:BuildOptions.None});
                 if(report.summary.result!=BuildResult.Succeeded)throw new Exception("Player build failed: "+report.summary.result);
                 Debug.Log($"[HoRTDIPlayerValidation] BUILD PASS size={report.summary.totalSize} errors={report.summary.totalErrors}");EditorApplication.Exit(0);
             }

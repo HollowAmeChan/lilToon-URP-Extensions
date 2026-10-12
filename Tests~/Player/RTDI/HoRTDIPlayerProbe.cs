@@ -8,7 +8,7 @@ using UnityEngine;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 
-public sealed class HoRTDIPlayerProbe:MonoBehaviour
+public sealed partial class HoRTDIPlayerProbe:MonoBehaviour
 {
     public Camera probeCamera;
     public HoRTDIRendererFeature feature;
@@ -44,6 +44,19 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
         // SubmitRenderRequest renders a square target; clearing targetTexture
         // otherwise restores the window's aspect for the independent CPU rays.
         probeCamera.aspect=(float)target.width/target.height;
+        if(!unsupported&&Array.Exists(args,x=>x=="--gpu-timing"))
+        {
+            var timing=GpuTiming();
+            while(true)
+            {
+                bool more;
+                try{more=timing.MoveNext();}
+                catch(Exception error)
+                {result.pass=false;result.error=error.ToString();if(gpuTimingReport!=null){gpuTimingReport.pass=false;gpuTimingReport.error=result.error;}Debug.LogException(error);break;}
+                if(!more)break;yield return timing.Current;
+            }
+            (timing as IDisposable)?.Dispose();Finish(args);yield break;
+        }
         if(!unsupported&&Array.Exists(args,x=>x=="--motion-protocol"))
         {yield return MotionProtocol();Finish(args);yield break;}
         try{Validate();result.pass=true;Debug.Log("[HoRTDIPlayerProbe] PASS "+JsonUtility.ToJson(result));}
@@ -52,7 +65,7 @@ public sealed class HoRTDIPlayerProbe:MonoBehaviour
     }
     private void Finish(string[] args)
     {
-        var index=Array.IndexOf(args,"--result");if(index>=0&&index+1<args.Length)File.WriteAllText(args[index+1],JsonUtility.ToJson(result,true));
+        var index=Array.IndexOf(args,"--result");if(index>=0&&index+1<args.Length)File.WriteAllText(args[index+1],gpuTimingReport!=null?JsonUtility.ToJson(gpuTimingReport,true):JsonUtility.ToJson(result,true));
         feature.Dispose();capture.Dispose();if(skinnedProbeMesh!=null)Destroy(skinnedProbeMesh);if(target!=null){target.Release();Destroy(target);}Application.Quit(result.pass?0:1);
     }
     private IEnumerator MotionProtocol()
