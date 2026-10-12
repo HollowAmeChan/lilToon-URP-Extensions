@@ -156,6 +156,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(lateSpecAdaptiveAudit)prefix="rtdi-adaptivespec60-motion-"+(compatibility?"compat":"rg");
             if(lateSpecOrthographicAudit)prefix="rtdi-orthospec61-motion-"+(compatibility?"compat":"rg");
             if(allSpecOrthographicAudit)prefix="rtdi-allorthospec61-motion-"+(compatibility?"compat":"rg");
+            if(specularRgbDistanceAudit)prefix="rtdi-rgbspec64-motion-"+(compatibility?"compat":"rg");
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+".json"),JsonUtility.ToJson(report,true));
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+".csv"),rows.ToString());
             Debug.Log($"[HoRTDIValidation] CUTOUT_MULTI_RESULT qualityPass={allPass} diagnostic={cutoutMultiAudit} compatibility={compatibility}");

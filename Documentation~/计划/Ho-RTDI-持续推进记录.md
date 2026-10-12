@@ -623,7 +623,15 @@
 
 **下一项：** 保持局部高光/梯度而非强行全图校能，核对spec lobe/view/range与空间支撑，兼顾噪声边缘。仅Editor/文档，Roslyn/GUID/Shader/diff通过。详见[空间证据](../Ho-RTDI-SpatialSpecularAudit.md)。
 
-## 64. 下一步取舍
+## 64. 镜面RGB range距离拒绝
+
+**动手前评审：** diff已有L(abs RGB)避免抵消，spec仍abs亮度差。核对vendor/fork，在隔离index10仅替换距离表达，其余带宽/归一化/参数/采样保持。
+
+**结果：** 两条透视中心蓝1.161/1.182→1.065/1.079改善但仍5%外，动态rapid .343487→.382012、step .347752→.401667失败，拒绝。原恢复透视2/4、动态3/3保持；Runtime/Player不变，Roslyn/Shader/diff通过。
+
+**下一项：** 同时核对颜色镜面噪声/moment与高光梯度，不只收紧range或改normalize。只Editor/文档，原门槛/DI范围保持。详见[拒绝](../Ho-RTDI-SpecularRgbDistanceRejection.md)。
+
+## 65. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

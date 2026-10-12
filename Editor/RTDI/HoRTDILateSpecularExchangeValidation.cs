@@ -15,6 +15,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         private static bool lateSpecAdaptiveAudit;
         private static bool lateSpecOrthographicAudit;
         private static bool allSpecOrthographicAudit;
+        private static bool specularRgbDistanceAudit;
         public static void RunLateSpecularExchangeEnvironment(){lateSpecExchangeAudit=true;RunAuxiliaryEnvironment();}
         public static void RunLateSpecularExchangeEnvironmentCompatibility(){compatibility=true;RunLateSpecularExchangeEnvironment();}
         public static void RunLateSpecularExchangeEnvironmentBaseline(){lateSpecExchangeAudit=true;RunAuxiliaryEnvironmentBaseline();}
@@ -35,6 +36,10 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunAllOrthographicSpecularEnvironment(){allSpecOrthographicAudit=true;RunOrthographicSpecularEnvironment();}
         public static void RunAllOrthographicSpecularMotion(){allSpecOrthographicAudit=true;RunOrthographicSpecularMotion();}
         public static void RunAllOrthographicSpecularEnvironmentCompatibility(){compatibility=true;RunAllOrthographicSpecularEnvironment();}
+        public static void RunRgbSpecularPerspectiveEnvironment(){specularRgbDistanceAudit=lateSpecExchangeAudit=true;RunPerspectiveAuxiliaryEnvironment();}
+        public static void RunRgbSpecularPerspectiveEnvironmentCompatibility(){compatibility=true;RunRgbSpecularPerspectiveEnvironment();}
+        public static void RunRgbSpecularMotion(){specularRgbDistanceAudit=lateSpecExchangeAudit=true;RunCutoutSpecularMotionQuality();}
+        public static void RunRgbSpecularMotionCompatibility(){compatibility=true;RunRgbSpecularMotion();}
         private sealed class LateSpecOverride:IDisposable
         {
             private readonly ComputeShader[] shaders;private readonly ComputeShader original;
@@ -50,7 +55,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             const string packagePath="Packages/jp.lilxyzw.liltoon.urp.extensions",relative="Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrous.hlsl",entry="Runtime/RTDI/Shaders/NRD/HoRTDINrd10.compute",asset="Assets/HoRTDILateSpecAudit";
             var package=UnityEditor.PackageManager.PackageInfo.FindForAssetPath(packagePath+"/package.json");string root=package.resolvedPath;
             string body=File.ReadAllText(Path.Combine(root,relative)),compute=File.ReadAllText(Path.Combine(root,entry));
-            if(!lateSpecWeightAudit&&!lateSpecOrthographicAudit)body=ReplaceOnce(body,"    float4 filteredSpecularIlluminationAndVariance = float4(sumSpecularIlluminationAndVariance / float4(sumWSpecular.xxx, sumWSpecular * sumWSpecular));",@"
+            if(!lateSpecWeightAudit&&!lateSpecOrthographicAudit&&!specularRgbDistanceAudit)body=ReplaceOnce(body,"    float4 filteredSpecularIlluminationAndVariance = float4(sumSpecularIlluminationAndVariance / float4(sumWSpecular.xxx, sumWSpecular * sumWSpecular));",@"
     // Same fixed-kernel exchange form already used by the diffuse path.
     // Rejected neighbor mass remains at the center; do not renormalize rows.
     const float specularCenterKernel = 0.44198 * 0.44198;
@@ -75,6 +80,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 body=ReplaceOnce(body,"float3 centerV = -normalize(centerWorldPos);","float3 centerV = gOrthoMode == 0 ? -normalize(centerWorldPos) : -normalize(gFrustumForward.xyz);");
                 body=ReplaceOnce(body,"float3 sampleV = -normalize(sampleWorldPos + gRoughnessEdgeStoppingRelaxation * centerWorldPos);","float3 sampleV = gOrthoMode == 0 ? -normalize(sampleWorldPos + gRoughnessEdgeStoppingRelaxation * centerWorldPos) : centerV;");
             }
+            if(specularRgbDistanceAudit)body=ReplaceOnce(body,"abs(centerSpecularLuminance - sampleSpecularLuminance) / max(1.0e-4, gSpecPhiLuminance * sqrt(pairSpecularVar))","Color::Luminance(abs(centerSpecularIlluminationAndVariance.rgb - sampleSpecularIlluminationAndVariance.rgb)) / max(1.0e-4, gSpecPhiLuminance * sqrt(pairSpecularVar))");
             if(lateSpecWeightAudit)
             {
                 body=ReplaceOnce(body,"[numthreads(GROUP_X, GROUP_Y, 1)]","RWStructuredBuffer<uint> _HoRTDISpecWeightHistogram;\n[numthreads(GROUP_X, GROUP_Y, 1)]");

@@ -36,3 +36,5 @@
 JSON `rtdi-auxspatial63-baseline/partition-perspective-rg/compat.json`，baseline本步RG、partition两条；原透视中心入口回归仍2/4及原数值。Roslyn errors0、GUID唯一、无新增DI Shader诊断/diff whitespace通过，Runtime/Shader/native/GI/Player无变化。
 
 下一项以局部高光形状/梯度保留为目标，核对spec lobe/view/range权重与空间支撑如何跨强解析BRDF梯度搬移亮度，再选择能同时保持噪声/边缘的修复。无需将目标错误改成全图强行能量校正，也不因全区域5%内删除原中心门槛。opaque/动态CDF/产品采样集成/Player/GPU时间仍待完成，保持DI范围。
+
+第64步[镜面RGB距离对照](Ho-RTDI-SpecularRgbDistanceRejection.md)减轻中心搬移，但rapid/step噪声.382/.402失败，拒绝直接推广diffuse策略。
