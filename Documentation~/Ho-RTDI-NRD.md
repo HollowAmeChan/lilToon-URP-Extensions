@@ -1,5 +1,7 @@
 # Ho-RTDI：NRD RELAX 初版
 
+第56步新增[漫反射非负历史约束](Ho-RTDI-NonnegativeDiffuseHistory.md)，在DI私有Clamping的moment更新前修复RGB反馈；原始NRD源码/CPU库保持固定版本。混合环境的镜面后续滤波偏差仍待处理。
+
 Feature 的 **NRD RELAX 降噪** 为可选项，默认关闭。开启后仍保留 raw diffuse/specular；公开的 diffuse/specular 输出改为经过 RELAX 并恢复材质因子的结果。默认不写 camera color，不修改 lilToon 最终接收、CS、ShadowCast 或 GI。
 
 ## 参考与实现选择

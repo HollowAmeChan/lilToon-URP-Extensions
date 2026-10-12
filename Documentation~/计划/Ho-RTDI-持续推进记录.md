@@ -559,7 +559,15 @@
 
 **下一项：** 先修Clamping物理RGB非负/moment一致，保持派生可重建与upstream SHA及旧core/彩灯/动态/环境门槛，再处理镜面后续滤波。仅Editor/文档，Roslyn/Shader/GUID/diff通过。详见[阶段证据](../Ho-RTDI-MixedEnvironmentStages.md)。
 
-## 56. 下一步取舍
+## 56. 漫反射历史的非负物理域
+
+**动手前评审：** 55已定位Clamping负RGB，不在发布端掩盖。仅DI派生RADIANCE在colour box/acceleration/reset后、moment更新前约束normal/fast diffuse为非负，moment随实际颜色修正。原源码/版权/SHA、specular/SH、参数/资源/native不变，生成器唯一边界guard可重建。
+
+**结果：** baseline mixed Clamping/发布负值全消失，原型TS的2次负值也消失；平均diffuse能量微变仍5%内，core最大四组.0104.. .0124保持。大尺寸动态diffuse、64动态镜面、两条primary、两条16彩灯回归通过；混合镜面偏差原样保留，非本步已解决。
+
+**部署与下一项：** 两个release errors0，实际D3D12两条与D3D11 inactive均退出0，旧环境/HDR/边界/NRD/多灯/Cutout门槛通过；Roslyn/派生SHA/DLL/hash/diff通过。过滤DI Shader/生成器/文档，无GI引用该NRD body。下一项镜面后续Atrous；三样本仍隔离，opaque/动态CDF/Player集成/GPU预算待完成。详见[修复](../Ho-RTDI-NonnegativeDiffuseHistory.md)。
+
+## 57. 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

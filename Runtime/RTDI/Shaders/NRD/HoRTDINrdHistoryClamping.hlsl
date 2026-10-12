@@ -1,6 +1,6 @@
 // Ho-RTDI adaptation of NRD 4.17.3 RELAX_HistoryClamping.
 // Original SHA256: 9cdac4a0810c72fc2da936b8bbb8633a9f27881b6930e5375d3f3b8e008e40fc
-// Only the disabled-HistoryFix specular copy changes; fast alpha is hit distance.
+// Disabled-HistoryFix specular copy preserves moments; diffuse RADIANCE feedback stays non-negative.
 // Original source/license remain in ../../ThirdParty/NRD.
 /*
 Copyright (c) 2022, NVIDIA CORPORATION. All rights reserved.
@@ -339,6 +339,14 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float3 diffNoisy = s_DiffNoisy_IsValid[sharedMemoryIndex.y][sharedMemoryIndex.x].rgb;
     outDiffuse.rgb = lerp(outDiffuse.rgb, diffNoisy, diffuseHistoryResetAmount);
     outDiffuseResponsive.rgb = lerp(outDiffuseResponsive.rgb, diffNoisy, diffuseHistoryResetAmount);
+
+#if( NRD_MODE == RADIANCE )
+    // A YCoCg box and the subsequent history acceleration can leave the
+    // non-negative RGB radiance domain. Correct both feedback colors here,
+    // before the second moment follows the actual published history color.
+    outDiffuse.rgb = max(0.0, outDiffuse.rgb);
+    outDiffuseResponsive.rgb = max(0.0, outDiffuseResponsive.rgb);
+#endif
 
     // 2nd moment correction
     float outDiffuseL = Color::Luminance(outDiffuse.rgb);

@@ -37,3 +37,5 @@
 baseline/partition报告为`rtdi-auxenvstages55-<mode>-rg/compat.json`，各24条记录，明确diagnosticOnly=true。baseline此次实测RG，partition两条完全一致且捕获/物理单位检查退出0；正式第54步RG回归仍2/4、退出1、数值不变。Roslyn errors0、GUID唯一、无新增DI Shader诊断/diff whitespace通过，Runtime/Shader/native/GI/Player无变化。
 
 下一项先修复DI私有Clamping中非负物理RGB约束及moment一致性，保留upstream源码/可重建派生与core/彩灯/环境/动态门槛，再单独处理镜面后续滤波权重/能量。opaque、动态CDF、Player、GPU预算仍待完成，不扩张材质合成/PT。
+
+第56步[非负历史修复](Ho-RTDI-NonnegativeDiffuseHistory.md)已在moment更新前约束normal/fast diffuse RGB，观测负值消失，Editor与实际Player回归通过；镜面偏差继续保留。

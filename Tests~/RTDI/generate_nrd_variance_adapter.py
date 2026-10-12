@@ -194,10 +194,22 @@ def generate_clamping():
             outSpecular = outSpecularResponsive;
     }"""
     derived = text.replace(old, new)
+    physical_boundary = "    // 2nd moment correction\n    float outDiffuseL = Color::Luminance(outDiffuse.rgb);"
+    if derived.count(physical_boundary) != 1:
+        raise ValueError("Unexpected NRD diffuse moment correction boundary")
+    derived = derived.replace(physical_boundary, """#if( NRD_MODE == RADIANCE )
+    // A YCoCg box and the subsequent history acceleration can leave the
+    // non-negative RGB radiance domain. Correct both feedback colors here,
+    // before the second moment follows the actual published history color.
+    outDiffuse.rgb = max(0.0, outDiffuse.rgb);
+    outDiffuseResponsive.rgb = max(0.0, outDiffuseResponsive.rgb);
+#endif
+
+""" + physical_boundary)
     derived = re.sub(r'#include "([^\"]+)"', r'#include "../../ThirdParty/NRD/\1"', derived)
     notice = ("// Ho-RTDI adaptation of NRD 4.17.3 RELAX_HistoryClamping.\n"
               f"// Original SHA256: {expected}\n"
-              "// Only the disabled-HistoryFix specular copy changes; fast alpha is hit distance.\n"
+              "// Disabled-HistoryFix specular copy preserves moments; diffuse RADIANCE feedback stays non-negative.\n"
               "// Original source/license remain in ../../ThirdParty/NRD.\n")
     return notice + derived
 

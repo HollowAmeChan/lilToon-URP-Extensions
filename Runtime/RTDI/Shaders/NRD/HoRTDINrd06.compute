@@ -1,4 +1,4 @@
-// Dense DI specular-moment adapter; remaining NRD kernel is unchanged.
+// Dense DI moment and non-negative diffuse-radiance adaptation.
 // See HoRTDINrdHistoryClamping.hlsl and ThirdParty/NRD/NOTICE.md.
 #pragma kernel main
 #pragma use_dxc
