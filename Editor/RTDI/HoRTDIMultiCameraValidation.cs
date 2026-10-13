@@ -37,6 +37,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             public double maxRawRelativeError,maxFilteredRelativeError,maxAbsentColour;
             public string reuse;public MultiCameraWorstPoint worstRaw;
             public MultiCameraRegion[] regions;
+            public bool pointwiseMeanPass,regionalMeanPass,instantaneousPass;public MultiCameraMeanPoint[] pointMeans;
+            public double maxRawMeanRelativeError,maxFilteredMeanRelativeError;
         }
         [Serializable] private sealed class MultiCameraWorstPoint
         {public string view,lightType;public int tick,x,y,width,height;public uint index;public float raw,expected,weight;public Vector3 cpuPosition;}
@@ -61,6 +63,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             string mode=multiCameraNoReuseAudit?"noreuse":multiCameraTemporalAudit?"temporal":multiCameraSpatialAudit?"spatial":"temporal-spatial";
             var report=new MultiCameraReport{path=compatibility?"compatibility":"RenderGraph",visibility=pairedOpaqueAudit?"opaque":"native-cutout",reuse=mode};
             var regions=new Dictionary<string,MultiCameraRegion>();
+            var images=new Dictionary<(int,int),(Texture2D raw,Texture2D filtered)>();
+            var meanPoints=new Dictionary<(string,int,int),CameraMeanAccumulator>();bool collectSteady=false;
             try
             {
                 for(int frame=0;frame<96;frame++){RenderView(cameraA,targetA,light,false,false);a=contexts[cameraA];RenderView(cameraB,targetB,blue,false,false);b=contexts[cameraB];}
@@ -68,6 +72,12 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 var flags=BindingFlags.Instance|BindingFlags.NonPublic;var poolField=a.nrd.GetType().GetField("permanent",flags);
                 var poolA=(RTHandle[])poolField.GetValue(a.nrd);var poolB=(RTHandle[])poolField.GetValue(b.nrd);
                 for(int i=0;i<poolA.Length;i++)Require(!ReferenceEquals(poolA[i],poolB[i]),"Camera NRD permanent history alias");
+                if(multiCameraMeanAudit)
+                {
+                    collectSteady=true;
+                    for(int sample=0;sample<1024;sample++){RenderView(cameraA,targetA,light,false,true);RenderView(cameraB,targetB,blue,false,true);}
+                    collectSteady=false;
+                }
                 for(int frame=0;frame<48;frame++)
                 {
                     if(frame==16){light.type=LightType.Spot;light.spotAngle=70;light.innerSpotAngle=30;light.transform.rotation=Quaternion.LookRotation(-light.transform.position,Vector3.up);}
@@ -86,9 +96,19 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     RenderView(cameraB,targetB,blue,false,true);
                     Require(a.frame==oldAFrame&&ReferenceEquals(a.reservoirs,oldABuffer)&&ReservoirFingerprint(a)==oldAHash,"Camera B render changed camera A reservoir/history");report.isolationChecks++;
                 }
-                report.regions=new List<MultiCameraRegion>(regions.Values).ToArray();foreach(var region in report.regions){region.rawRatio=region.raw/region.reference;region.filteredRatio=region.filtered/region.reference;}
-                report.isolationPass=true;report.pass=report.qualityFailures==0;File.WriteAllText(Path.Combine(Application.dataPath,"../"+(mode!="temporal-spatial"?"rtdi-multicamera72-"+mode+"-":"rtdi-multicamera71-")+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(report,true));
+                report.regions=new List<MultiCameraRegion>(regions.Values).ToArray();report.regionalMeanPass=true;
+                foreach(var region in report.regions){region.rawRatio=region.raw/region.reference;region.filteredRatio=region.filtered/region.reference;report.regionalMeanPass&=Math.Abs(region.rawRatio-1)<.03&&Math.Abs(region.filteredRatio-1)<.05;}
+                if(multiCameraMeanAudit)
+                {
+                    Require(meanPoints.Count==128,"Camera pointwise mean did not cover both 8x8 receiver regions");var results=new List<MultiCameraMeanPoint>();report.pointwiseMeanPass=true;
+                    foreach(var accumulator in meanPoints.Values){var result=accumulator.Finish();results.Add(result);report.pointwiseMeanPass&=result.pass;report.maxRawMeanRelativeError=Math.Max(report.maxRawMeanRelativeError,Math.Abs(result.rawRatio-1));report.maxFilteredMeanRelativeError=Math.Max(report.maxFilteredMeanRelativeError,Math.Abs(result.filteredRatio-1));}
+                    report.pointMeans=results.ToArray();
+                }
+                report.isolationPass=true;report.instantaneousPass=report.qualityFailures==0;report.pass=multiCameraMeanAudit?report.pointwiseMeanPass&&report.regionalMeanPass:report.instantaneousPass;
+                string prefix=multiCameraMeanAudit?"rtdi-multicamera73-"+mode+"-":mode!="temporal-spatial"?"rtdi-multicamera72-"+mode+"-":"rtdi-multicamera71-";
+                File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(report,true));
                 Debug.Log($"[HoRTDIValidation] MULTI_CAMERA pass={report.pass} isolationPass=true renders={report.alternatingRenders} isolation={report.isolationChecks} resets={report.resetChecks} skip={report.skipChecks} dispose={report.disposalChecks} raw={report.maxRawRelativeError:G6} filtered={report.maxFilteredRelativeError:G6} absent={report.maxAbsentColour:G6} qualityFailures={report.qualityFailures}");
+                if(multiCameraMeanAudit)Debug.Log($"[HoRTDIValidation] CAMERA_POINT_MEAN mode={mode} points={report.pointMeans.Length} samples=1024 rawWorst={report.maxRawMeanRelativeError:G6} filteredWorst={report.maxFilteredMeanRelativeError:G6} pointPass={report.pointwiseMeanPass} regionalPass={report.regionalMeanPass}");
                 Require(report.pass,"Multi-camera physical reference gates failed; isolation findings saved separately");
             }
             finally{volume.enable.value=true;camera=cameraA;target=targetA;if(a?.nrd!=null)a.nrd.ValidationTimeSeconds=null;if(b?.nrd!=null)b.nrd.ValidationTimeSeconds=null;}
@@ -120,7 +140,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     var captured=(RenderTexture)multiCameraCapture.GetType().GetProperty("Diffuse").GetValue(multiCameraCapture);var pixel=Read(captured);
                     int colour=ReferenceEquals(source,light)?0:2;
                     Require(pixel[colour]>.01f&&pixel[1]<.001f&&pixel[2-colour]<.001f,"Downstream pass consumed another camera's DI colour");
-                    var raw=Keep(new Texture2D(c.width,c.height,TextureFormat.RGBAFloat,false,true));var filtered=Keep(new Texture2D(c.width,c.height,TextureFormat.RGBAFloat,false,true));ReadImage(c.diffuse.rt,raw);ReadImage(c.filteredDiffuse.rt,filtered);
+                    if(!images.TryGetValue((c.width,c.height),out var imagePair))
+                    {imagePair=(Keep(new Texture2D(c.width,c.height,TextureFormat.RGBAFloat,false,true)),Keep(new Texture2D(c.width,c.height,TextureFormat.RGBAFloat,false,true)));images.Add((c.width,c.height),imagePair);}
+                    var raw=imagePair.raw;var filtered=imagePair.filtered;ReadImage(c.diffuse.rt,raw);ReadImage(c.filteredDiffuse.rt,filtered);
                     for(int y=c.height/2-4;y<c.height/2+4;y++)for(int x=c.width/2-4;x<c.width/2+4;x++)
                     {
                         // PlanePosition uses normalized viewport coordinates for
@@ -134,8 +156,15 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                             if(expected[channel]>0)
                             {
                                 string key=(ReferenceEquals(source,light)?"A":"B")+"-"+source.type+"-"+c.width+"x"+c.height;
+                                if(multiCameraMeanAudit)key=(collectSteady?"steady-":"dynamic-")+key;
                                 if(!regions.TryGetValue(key,out var region)){region=new MultiCameraRegion{key=key};regions.Add(key,region);}
                                 region.points++;region.reference+=expected[channel];region.raw+=r[channel];region.filtered+=f[channel];
+                                if(collectSteady)
+                                {
+                                    string viewKey=ReferenceEquals(source,light)?"A":"B";
+                                    if(!meanPoints.TryGetValue((viewKey,x,y),out var accumulator)){accumulator=new CameraMeanAccumulator(viewKey,x,y);meanPoints.Add((viewKey,x,y),accumulator);}
+                                    accumulator.Add(r[channel]/expected[channel],f[channel]/expected[channel]);
+                                }
                                 double er=Math.Abs(r[channel]/expected[channel]-1),ef=Math.Abs(f[channel]/expected[channel]-1);
                                 if(er>report.maxRawRelativeError)
                                 {

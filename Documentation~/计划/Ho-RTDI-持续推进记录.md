@@ -697,6 +697,14 @@
 
 **下一项：** 逐像素长期均值与区域积分验收，分离期望、噪声、状态隔离及动态响应；保留其他真实质量失败。仅Editor/文档，无生产输入/算法改动。详见[复用控制](../Ho-RTDI-MultiCameraReuseControl.md)。
 
+## 73. 多相机逐像素长期均值
+
+**动手前评审：** 区域积分可能掩盖局部偏差；保留瞬时诊断，1024交替帧/点、128点独立参考均值门槛raw3%/filtered5%，16个64帧block只作统计诊断。旧瞬时入口/报告未删除，生产算法不改。
+
+**结果：** Cutout/opaque两路径四入口均0，raw均值最大1.9428%，filtered1.3835%/1.1723%；no reuse对照.0651%/.3629%。逐点及动态阶段积分、2328render/80GPU隔离/2135reset/skip/dispose/颜色检查全部通过。瞬时raw1.399仍记录，不据其修改MIS或GB/SB。
+
+**下一项：** 第二fresh解析辅助样本的24-byte sidecar消费字段/更小存储，保持真实PDF、可见性及输出一致性，不改SDK ABI或提前产品化。仅Editor/文档，Roslyn/Shader/GUID/diff通过，其余真实质量失败保持。详见[逐点验收](../Ho-RTDI-MultiCameraPointMeans.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
