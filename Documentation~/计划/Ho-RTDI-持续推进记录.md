@@ -737,6 +737,14 @@
 
 **下一项决定：** 实现可选多最终样本，默认single；按实际snapshot CDF/每相机资源/scene同步后路径/两shade入口/RG及compat/Player/unsupported完整接入，不先加空字段。保留质量/GPU预算限制与最终材质合成边界。详见[接入评审与具体条件](../Ho-RTDI-MultiSampleIntegrationDecision.md)。
 
+## 78. 可选三最终样本实际Runtime/Player接入
+
+**动手前评审：** 沿77具体条件接入实际feature，默认single；冻结预算和numeric light snapshot，按实际天空/scene模式准备每相机CDF与native8-byte sidecar，opaque第二辅助局部消费，两shade与primary confidence一致。GraphicsFence管理旧辅助资源，未依赖测试readback。
+
+**结果：** 真Runtime16解析配置/两路径多相机均值/无readback72帧模式尺寸切换通过。初期纯power近弱远强Playerfiltered spec .635失败，补1/16 uniform support后 .973/.964、两multi Player全门槛通过；两single Player/默认noise及primary回归和D3D11 inactive通过。32灯L1 .3110仍过，GPU毫秒未知。
+
+**限制与下一项：** 中心mixed天空2/4及动态native8/9、opaque6/9的有效失败保留；未实现最终NPR接收/GI/通用PT/SSS。下一项实际feature/古堡几何与天空壳支持、有效GPU预算，不再仅Shader生成原型。Roslyn/Shader/GUID/vendor/nativeSHA/diff通过。详见[实际接入与验证](../Ho-RTDI-RuntimeMultiSamples.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

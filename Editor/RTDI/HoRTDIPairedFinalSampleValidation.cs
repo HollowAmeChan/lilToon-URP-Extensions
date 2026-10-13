@@ -25,6 +25,13 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             const string packagePath="Packages/jp.lilxyzw.liltoon.urp.extensions",shaderRelative="Runtime/RTDI/Shaders/HoRTDI.compute",rayRelative="Runtime/RTDI/Shaders/HoRTDIFinalVisibility.raytrace",auditPath="Assets/HoRTDIPairedFinalAudit";
             var package=UnityEditor.PackageManager.PackageInfo.FindForAssetPath(packagePath+"/package.json");Require(package!=null,"Paired package source missing");string root=package.resolvedPath;
             string compute=File.ReadAllText(Path.Combine(root,shaderRelative)).Replace("\r\n","\n"),ray=File.ReadAllText(Path.Combine(root,rayRelative)).Replace("\r\n","\n");
+            // Keep legacy prototype comparisons on the single primary gradient
+            // source. Runtime multi is disabled by their default Single setting.
+            if(ray.Contains("HoDICachedRuntimePrimaryLuminance"))
+            {
+                ray=ReplaceOnce(ray,"RAB_Surface oldSampleSurface=surface;surface.worldPos=current.worldPos;","surface.worldPos=current.worldPos;");
+                ray=ReplaceOnce(ray,"float2 previous=HoDIUseAuxiliary()?HoDICachedRuntimePrimaryLuminance(reservoir,oldSampleSurface,true):_HoRTDIPreviousLuminance.Load(int3(old,0)),traced=0;","float2 previous=_HoRTDIPreviousLuminance.Load(int3(old,0)),traced=0;");
+            }
             compute=ReplaceOnce(compute,"_HoRTDIFinalVisibility.Load(int3(id.xy,0)):","((uint)round(_HoRTDIFinalVisibility.Load(int3(id.xy,0))*3)&1):");
             compute=ReplaceOnce(compute,"    float receiver=RAB_IsSurfaceValid(surface)?1:0;\n    #if !defined(HO_RTDI_NRD_ACTIVE)",@"
     if(_HoRTDIFinalVisibilityEnabled!=0&&RAB_IsSurfaceValid(surface))

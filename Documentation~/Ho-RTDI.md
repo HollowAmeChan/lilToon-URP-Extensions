@@ -10,6 +10,8 @@ Renderer 上添加 `Ho-RTDI`，在其前面启用 GB / SB。需要 D3D12 inline 
 
 Feature 默认只生产独立直接光，主相机基础画面保持原有渲染。全局 Volume 的 `Ho-RTDI` 提供启用覆盖和 Diffuse / Specular / Combined / Receiver / RawDiffuse / RawSpecular / All 调试；Receiver 绿为有效接收面、红为无效，能区分有效暗部与输入不全。调试在最终后处理后显示，不能把它当成已完成的 NPR 合成。
 
+`finalSampling`默认单样本，可选择三样本以增加两次解析灯最终可见性查询、降低动态多灯噪声。Opaque局部消费，Cutout按相机持有8-byte/像素第二辅助，Sky-only和确定性单灯保留原路径。实际接入、Player验证、显存及仍存在的质量问题见[三最终样本](Ho-RTDI-RuntimeMultiSamples.md)；尚无GPU毫秒收益结论。
+
 RenderGraph 读取 `HoRTDIRenderGraphResources.diffuse / specular` 并声明读依赖。RGB 为线性 HDR、已经包含参考接收 BRDF 的贡献；A 为接收面有效性，阴影中的有效表面可以 RGB=0、A=1，输入缺失/取样域不匹配为 A=0。兼容全局为 `_HoRTDIDiffuseTexture`、`_HoRTDISpecularTexture` 和 `_HoRTDIActive`。
 
 ## 哪些沿用参考工程

@@ -3,12 +3,13 @@ using UnityEngine;
 namespace lilToon.URP.Extensions.RTDI
 {
     public enum HoRTDILocalSampling { [InspectorName("均匀")] Uniform, [InspectorName("功率")] Power }
+    public enum HoRTDIFinalSampling { [InspectorName("单样本")] Single, [InspectorName("三样本（增加可见性开销）")] TripleAnalytic }
     [Serializable]
     public sealed class HoRTDISettings
     {
         public bool enabled = true;
         public bool inSceneView = true;
-        [Tooltip("NRD RELAX diffuse/specular；当前仅支持静态几何、Mono 与同分辨率 GB/SB。保留原始光照输出以便对照。")]
+        [Tooltip("NRD RELAX diffuse/specular；Mono 与同分辨率 GB/SB。几何与光源变化通过历史失效和可见性 confidence 处理，保留原始光照输出以便对照。")]
         public bool denoise;
         [Tooltip("从前置 Ho-Atmosphere 借用天空 HDR，作为 RTXDI 环境光候选。")]
         public bool useEnvironment = true;
@@ -19,6 +20,8 @@ namespace lilToon.URP.Extensions.RTDI
         public HoRTDILocalSampling localSampling = HoRTDILocalSampling.Uniform;
         [Tooltip("局部灯初始候选数；存在方向灯时，另从方向灯分区抽取一个候选。")]
         [Range(1,32)] public int initialSamples = 8;
+        [Tooltip("三样本增加两次解析灯最终可见性查询，降低动态阴影与多灯噪声；默认单样本。")]
+        public HoRTDIFinalSampling finalSampling=HoRTDIFinalSampling.Single;
         public bool temporal = true;
         [Tooltip("ReSTIR 历史样本预算相对当前候选数的上限，不是 NRD 的历史帧数。推荐从 4 开始；长历史可能放大局部高光的方差，可按场景调整。")]
         [Range(1,32)] public int maxHistory = 4;

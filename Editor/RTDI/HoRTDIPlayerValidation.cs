@@ -31,9 +31,11 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         }
         public static void Build()=>Build(false);
         public static void BuildCompatibility()=>Build(true);
+        public static void BuildMulti()=>Build(false,false,true);
+        public static void BuildMultiCompatibility()=>Build(true,false,true);
         public static void BuildGpuTiming()=>Build(false,true);
         public static void BuildGpuTimingCompatibility()=>Build(true,true);
-        private static void Build(bool compatibility,bool gpuTiming=false)
+        private static void Build(bool compatibility,bool gpuTiming=false,bool multi=false)
         {
             try
             {
@@ -42,7 +44,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 var renderer=ScriptableObject.CreateInstance<UniversalRendererData>();AssetDatabase.CreateAsset(renderer,assets+"Renderer.asset");
                 var gb=ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>();gb.Settings.maxRenderQueue=(int)RenderQueue.GeometryLast;
                 var sb=ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>();sb.Settings.enableSemanticLanes=sb.Settings.enableCorrelatedSemantics=false;
-                var di=ScriptableObject.CreateInstance<HoRTDIRendererFeature>();di.Settings.denoise=true;di.Settings.inSceneView=false;di.Create();
+                var di=ScriptableObject.CreateInstance<HoRTDIRendererFeature>();di.Settings.denoise=true;di.Settings.inSceneView=false;di.Settings.finalSampling=multi?HoRTDIFinalSampling.TripleAnalytic:HoRTDIFinalSampling.Single;di.Create();
                 var sky=ScriptableObject.CreateInstance<HoAtmosphereRendererFeature>();sky.Settings.source=HoAtmosphereSource.Constant;sky.Settings.constantColor=new Color(1,.5f,.25f,1);sky.Settings.enabled=false;sky.Create();
                 var captureType=Type.GetType("HoRTDIPlayerCaptureFeature, Assembly-CSharp");var probeType=Type.GetType("HoRTDIPlayerProbe, Assembly-CSharp");
                 if(captureType==null||probeType==null)throw new Exception("Run Prepare and allow script import before Build");
@@ -76,6 +78,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 Set(so,"probeCamera",camera);Set(so,"feature",di);Set(so,"atmosphere",sky);Set(so,"capture",capture);Set(so,"light",light);Set(so,"blue",blue);Set(so,"blocker",blocker);Set(so,"receiver",receiver);Set(so,"surfaceMaterial",material);Set(so,"profile",profile);so.ApplyModifiedPropertiesWithoutUndo();
                 AssetDatabase.SaveAssets();EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(),assets+"Probe.unity");
                 string output=gpuTiming?(compatibility?"PlayerGpuTimingCompatibility":"PlayerGpuTiming"):(compatibility?"PlayerBuildCompatibility":"PlayerBuild");
+                if(multi)output=compatibility?"PlayerBuildMultiCompatibility":"PlayerBuildMulti";
                 var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{assets+"Probe.unity"},target=BuildTarget.StandaloneWindows64,locationPathName=Path.Combine(root,output,"HoRTDIProbe.exe"),options=gpuTiming?BuildOptions.Development:BuildOptions.None});
                 if(report.summary.result!=BuildResult.Succeeded)throw new Exception("Player build failed: "+report.summary.result);
                 Debug.Log($"[HoRTDIPlayerValidation] BUILD PASS size={report.summary.totalSize} errors={report.summary.totalErrors}");EditorApplication.Exit(0);

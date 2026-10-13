@@ -32,6 +32,7 @@
 #include "../ThirdParty/RTXDI/DI/TemporalResampling.hlsl"
 #include "../ThirdParty/RTXDI/DI/SpatialResampling.hlsl"
 #include "../ThirdParty/RTXDI/LightSampling/PresamplingFunctions.hlsl"
+#include "HoRTDIAuxiliary.hlsl"
 #if defined(HO_RTDI_NRD_ACTIVE)
 #include "../ThirdParty/NRD/NRD.hlsli"
 RWTexture2D<float4> _HoRTDINrdDiffuse,_HoRTDINrdSpecular,_HoRTDINrdNormal;
@@ -249,6 +250,7 @@ void HoDIShade(uint3 id,out uint peak)
     {
         RAB_LightSample sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(reservoir),false),surface,RTXDI_GetDIReservoirSampleUV(reservoir));
         float visibility=_HoRTDIFinalVisibilityEnabled!=0?_HoRTDIFinalVisibility.Load(int3(id.xy,0)):(RAB_GetConservativeVisibility(surface,sample)?1:0);
+        if(_HoRTDIFinalVisibilityEnabled!=0&&HoDIUseAuxiliary())visibility=(uint)round(visibility*7)&1;
         RTXDI_StoreVisibilityInDIReservoir(reservoir,visibility.xxx,false);
         float3 radiance=sample.radiance*visibility*RTXDI_GetDIReservoirInvPdf(reservoir)/max(sample.solidAnglePdf,1e-12);
         float3 L;float distance;RAB_GetLightDirDistance(surface,sample,L,distance);
@@ -261,6 +263,31 @@ void HoDIShade(uint3 id,out uint peak)
             diffuse=Lambert(surface.normal,-L)*surface.material.diffuseAlbedo*radiance;
             if(surface.material.roughness>=.03)specular=GGX_times_NdotL(surface.viewDir,L,surface.normal,max(.03,surface.material.roughness),surface.material.specularF0)*radiance;
         }
+    }
+    if(HoDIUseAuxiliary()&&RAB_IsSurfaceValid(surface))
+    {
+        RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTDIFrameIndex,0x6f527bbdu);
+        float3 auxiliaryD=0,auxiliaryS=0,auxiliaryLighting=0;
+        for(uint draw=0;draw<2;draw++)
+        {
+            RTXDI_DIReservoir extra;
+            if(_HoRTDIFinalVisibilityEnabled!=0)
+            {if(draw==0)extra=RTXDI_LoadDIReservoir(HoDILayout(),id.xy,2);else extra=HoDIUnpackRuntimeAuxiliary(_HoRTDIRuntimeAuxiliarySecondary[id.y*(uint)_HoRTDIFrame.x+id.x]);}
+            else extra=HoDIFreshAuxiliary(rng);
+            if(RTXDI_IsValidDIReservoir(extra))
+            {
+                RAB_LightSample sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(extra),false),surface,RTXDI_GetDIReservoirSampleUV(extra));
+                float visibility;
+                if(_HoRTDIFinalVisibilityEnabled!=0)visibility=((uint)round(_HoRTDIFinalVisibility.Load(int3(id.xy,0))*7)>>(draw+1))&1;
+                else visibility=RAB_GetConservativeVisibility(surface,sample)?1:0;
+                RTXDI_StoreVisibilityInDIReservoir(extra,visibility.xxx,false);
+                if(draw==0&&_HoRTDIFinalVisibilityEnabled==0)RTXDI_StoreDIReservoir(extra,HoDILayout(),id.xy,2);
+                float3 radiance=sample.radiance*visibility*extra.weightSum/max(sample.solidAnglePdf,1e-12);float3 L;float distance;RAB_GetLightDirDistance(surface,sample,L,distance);
+                if(dot(L,surface.geoNormal)>0){float3 lighting=Lambert(surface.normal,-L)*radiance;auxiliaryLighting+=lighting;auxiliaryD+=lighting*surface.material.diffuseAlbedo;if(surface.material.roughness>=.03)auxiliaryS+=GGX_times_NdotL(surface.viewDir,L,surface.normal,max(.03,surface.material.roughness),surface.material.specularF0)*radiance;}
+            }
+        }
+        float primaryWeight=RTXDI_GetDIReservoirLightIndex(reservoir)==HO_RTDI_ENVIRONMENT_LIGHT_INDEX?1:.5;
+        diffuse=primaryWeight*diffuse+.25*auxiliaryD;specular=primaryWeight*specular+.25*auxiliaryS;diffuseLighting=primaryWeight*diffuseLighting+.25*auxiliaryLighting;
     }
     float receiver=RAB_IsSurfaceValid(surface)?1:0;
     #if !defined(HO_RTDI_NRD_ACTIVE)

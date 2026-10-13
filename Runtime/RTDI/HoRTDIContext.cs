@@ -16,6 +16,32 @@ namespace lilToon.URP.Extensions.RTDI
     {
         internal const int PrimaryHistoryStride=20;
         internal GraphicsBuffer reservoirs,history,lights,neighbors,previousLights,currentToPrevious,previousToCurrent;
+        internal GraphicsBuffer auxiliaryCDF,auxiliarySecondary;
+        private GraphicsFence auxiliaryFence;
+        private bool auxiliaryFenceRecorded;
+        private readonly List<(GraphicsBuffer buffer,GraphicsFence fence)> retiredAuxiliary=new();
+        internal int RetiredAuxiliaryCount=>retiredAuxiliary.Count;
+        internal void PrepareAuxiliary(bool enabled,int lightCount,bool native)
+        {
+            for(int i=retiredAuxiliary.Count-1;i>=0;i--)if(retiredAuxiliary[i].fence.passed){retiredAuxiliary[i].buffer.Dispose();retiredAuxiliary.RemoveAt(i);}
+            ResizeAuxiliary(ref auxiliaryCDF,enabled?Mathf.NextPowerOfTwo(Mathf.Max(1,lightCount)):0,4,"HoRTDI auxiliary CDF");
+            ResizeAuxiliary(ref auxiliarySecondary,enabled&&native?checked(width*height):0,8,"HoRTDI native auxiliary sample");
+        }
+        private void ResizeAuxiliary(ref GraphicsBuffer buffer,int count,int stride,string name)
+        {
+            if(buffer!=null&&buffer.count==count)return;
+            if(buffer!=null)
+            {
+                if(auxiliaryFenceRecorded&&!auxiliaryFence.passed)retiredAuxiliary.Add((buffer,auxiliaryFence));else buffer.Dispose();
+                buffer=null;
+            }
+            if(count>0)buffer=new GraphicsBuffer(GraphicsBuffer.Target.Structured,count,stride){name=name};
+        }
+        internal void RecordAuxiliaryFence(CommandBuffer cmd)
+        {
+            if(auxiliaryCDF==null&&auxiliarySecondary==null)return;
+            if(SystemInfo.supportsGraphicsFence){auxiliaryFence=cmd.CreateGraphicsFence(GraphicsFenceType.AsyncQueueSynchronisation,SynchronisationStageFlags.AllGPUOperations);auxiliaryFenceRecorded=true;}
+        }
         internal RTHandle diffuse,specular;
         internal RTHandle finalVisibility;
         internal RTHandle powerPdf;
@@ -182,6 +208,7 @@ namespace lilToon.URP.Extensions.RTDI
             internal readonly int[] currentToPrevious,previousToCurrent;
             internal readonly int previousCount;
             internal readonly bool domainChanged;
+            internal float[] AuxiliaryCDF(int count)=>HoRTDIAuxiliaryProposal.Build(current,count);
             internal LightFrame(HoRTDIRendererFeature.AnalyticLight[] current,Light[] keys,
                 HoRTDIRendererFeature.AnalyticLight[] previous,Light[] previousKeys)
             {
@@ -214,6 +241,6 @@ namespace lilToon.URP.Extensions.RTDI
             previousLightKeys=lightFrame.keys;previousLightData=lightFrame.current;
         }
         public void Dispose()
-        {ReleaseDenoiser();reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();previousLights?.Dispose();currentToPrevious?.Dispose();previousToCurrent?.Dispose();ris?.Dispose();powerPdf?.Release();environmentPdf?.Release();finalVisibility?.Release();finalVisibility=null;ris=null;powerPdf=environmentPdf=null;diffuse?.Release();specular?.Release();reservoirs=history=lights=neighbors=previousLights=currentToPrevious=previousToCurrent=null;diffuse=specular=null;previousLightKeys=Array.Empty<Light>();previousLightData=null;}
+        {ReleaseDenoiser();auxiliaryCDF?.Dispose();auxiliarySecondary?.Dispose();foreach(var item in retiredAuxiliary)item.buffer.Dispose();retiredAuxiliary.Clear();auxiliaryCDF=auxiliarySecondary=null;auxiliaryFenceRecorded=false;reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();previousLights?.Dispose();currentToPrevious?.Dispose();previousToCurrent?.Dispose();ris?.Dispose();powerPdf?.Release();environmentPdf?.Release();finalVisibility?.Release();finalVisibility=null;ris=null;powerPdf=environmentPdf=null;diffuse?.Release();specular?.Release();reservoirs=history=lights=neighbors=previousLights=currentToPrevious=previousToCurrent=null;diffuse=specular=null;previousLightKeys=Array.Empty<Light>();previousLightData=null;}
     }
 }

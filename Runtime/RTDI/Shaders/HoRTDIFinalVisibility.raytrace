@@ -2,6 +2,7 @@
 #define HO_RTDI_ENVIRONMENT_ENABLED 1
 #include "HoRTDIApplicationBridge.hlsl"
 #include "../ThirdParty/RTXDI/DI/ReservoirStorage.hlsl"
+#include "HoRTDIAuxiliary.hlsl"
 #include "HoRTDIVisibilityPayload.hlsl"
 RWTexture2D<float> _HoRTDIFinalVisibility;
 Texture2D<float2> _HoRTDIPreviousLuminance;
@@ -30,9 +31,23 @@ void FinalVisibility()
     RTXDI_ReservoirBufferParameters layout=(RTXDI_ReservoirBufferParameters)0;
     layout.reservoirBlockRowPitch=(uint)_HoRTDIReservoirLayout.x;layout.reservoirArrayPitch=(uint)_HoRTDIReservoirLayout.y;
     RTXDI_DIReservoir reservoir=RTXDI_LoadDIReservoir(layout,pixel,1);
-    if(!RAB_IsSurfaceValid(surface)||!RTXDI_IsValidDIReservoir(reservoir))return;
-    RAB_LightSample sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(reservoir),false),surface,RTXDI_GetDIReservoirSampleUV(reservoir));
-    _HoRTDIFinalVisibility[pixel]=HoDITraceFinal(surface,sample)?1:0;
+    uint bits=0;
+    if(RAB_IsSurfaceValid(surface)&&RTXDI_IsValidDIReservoir(reservoir))
+    {RAB_LightSample sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(reservoir),false),surface,RTXDI_GetDIReservoirSampleUV(reservoir));bits=HoDITraceFinal(surface,sample)?1:0;}
+    if(HoDIUseAuxiliary())
+    {
+        RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(pixel,(uint)_HoRTDIFrameIndex,0x6f527bbdu);
+        for(uint draw=0;draw<2;draw++)
+        {
+            RTXDI_DIReservoir extra=RTXDI_EmptyDIReservoir();bool visible=false;
+            if(RAB_IsSurfaceValid(surface)){extra=HoDIFreshAuxiliary(rng);RAB_LightSample sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(extra),false),surface,RTXDI_GetDIReservoirSampleUV(extra));visible=HoDITraceFinal(surface,sample);}
+            if(visible)bits|=1u<<(draw+1);
+            if(draw==0)RTXDI_StoreDIReservoir(extra,layout,pixel,2);
+            else _HoRTDIRuntimeAuxiliarySecondary[pixel.y*(uint)_HoRTDIFrame.x+pixel.x]=HoDIPackRuntimeAuxiliary(extra,visible);
+        }
+        _HoRTDIFinalVisibility[pixel]=bits/7.0;
+    }
+    else _HoRTDIFinalVisibility[pixel]=bits;
 }
 
 // Re-evaluate exactly the previous shaded samples against the current TLAS.
@@ -60,9 +75,9 @@ void VisibilityGradients()
         // Reprojected correspondence: move the old shading sample to the
         // current surface before querying the current TLAS. An old origin can
         // lie behind a moving receiver and falsely count its own geometry.
-        surface.worldPos=current.worldPos;
+        RAB_Surface oldSampleSurface=surface;surface.worldPos=current.worldPos;
         RTXDI_DIReservoir reservoir=RTXDI_LoadDIReservoir(layout,old,0);
-        float2 previous=_HoRTDIPreviousLuminance.Load(int3(old,0)),traced=0;
+        float2 previous=HoDIUseAuxiliary()?HoDICachedRuntimePrimaryLuminance(reservoir,oldSampleSurface,true):_HoRTDIPreviousLuminance.Load(int3(old,0)),traced=0;
         int mapped=RTXDI_IsValidDIReservoir(reservoir)?RAB_TranslateLightIndex(RTXDI_GetDIReservoirLightIndex(reservoir),false):-1;
         if(mapped>=0)
         {

@@ -37,6 +37,11 @@ float2 HoDIEvaluateSample(RTXDI_DIReservoir r,RAB_Surface s,RAB_LightInfo info)
         if(!RAB_IsSurfaceValid(oldSurface)||dot(s.normal,oldSurface.normal)<.9||distance(s.worldPos,oldSurface.worldPos)>.02*max(1,s.viewDepth))continue;
         float2 current=float2(HoDILuminance(_HoRTDIDiffuse[p].rgb),HoDILuminance(_HoRTDISpecular[p].rgb));
         current=f16tof32(f32tof16(current));float2 prev=_HoRTDIPreviousLuminance[old];
+        if(HoDIUseAuxiliary())
+        {
+            current=HoDICachedRuntimePrimaryLuminance(RTXDI_LoadDIReservoir(HoDILayout(),p,1),s,false);
+            prev=HoDICachedRuntimePrimaryLuminance(RTXDI_LoadDIReservoir(HoDILayout(),old,0),oldSurface,true);
+        }
         float a=max(current.x,current.y),b=max(prev.x,prev.y),best=max(selected.x,selected.y);
         if(a>best&&a>b){selected=current;pixel=p;previousPixel=old;usePrevious=false;}
         else if(b>best){selected=prev;pixel=p;previousPixel=old;usePrevious=true;}

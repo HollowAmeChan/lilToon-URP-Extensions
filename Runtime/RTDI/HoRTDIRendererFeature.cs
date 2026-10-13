@@ -94,7 +94,7 @@ namespace lilToon.URP.Extensions.RTDI
             var renderers=UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);var geometry=new List<Renderer>();
             foreach(var item in renderers)if((settings.geometryLayers.value&(1<<item.gameObject.layer))!=0)geometry.Add(item);
             visibilityMaterials?.BeginFrame();scene.Synchronize(geometry);visibilityMaterials?.EndFrame();
-            var lightList=new List<AnalyticLight>();var lightKeys=new List<Light>();int signature=settings.initialSamples.GetHashCode()^settings.rayBias.GetHashCode()^((int)settings.localSampling*397)^(visibilityMaterials?.Signature??0);int excludedLights=0;
+            var lightList=new List<AnalyticLight>();var lightKeys=new List<Light>();int signature=settings.initialSamples.GetHashCode()^settings.rayBias.GetHashCode()^((int)settings.localSampling*397)^((int)settings.finalSampling*457)^(visibilityMaterials?.Signature??0);int excludedLights=0;
             var infiniteLights=new List<AnalyticLight>();var infiniteKeys=new List<Light>();
             foreach(var light in UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.InstanceID))
             {
@@ -132,6 +132,7 @@ namespace lilToon.URP.Extensions.RTDI
             var lightData=lightList.Count>0?lightList.ToArray():new AnalyticLight[1];
             pass.Setup(context,scene,shader,finalVisibilityShader,settings,lightData,lightKeys.ToArray(),lightList.Count,localCount,signature);
             renderer.EnqueuePass(pass);Status=$"RTXDI DI：{(context.powerSampling?"功率":"均匀")} / {localCount} 局部 / {infiniteLights.Count} 方向灯 / {scene.InstanceCount} RT submesh / 排除 {excludedLights} 灯、{scene.Rejections.Count} 几何项";
+            if(settings.finalSampling==HoRTDIFinalSampling.TripleAnalytic)Status+=" / 三最终样本";
             if(settings.denoise)Status+=" / "+context.nrdStatus;
             if(volume!=null&&volume.debugMode.value!=HoRTDIDebugMode.Off&&(camera.cameraType==CameraType.SceneView?volume.debugInSceneView.value:volume.debugInGameView.value))
             {
@@ -151,10 +152,12 @@ namespace lilToon.URP.Extensions.RTDI
             private HoRTDIContext context;private HoRTScene scene;private ComputeShader shader;private HoRTDISettings settings;
             private RayTracingShader finalVisibilityShader;
             private AnalyticLight[] lights;private Light[] lightKeys;private int lightCount,localLightCount,signature;
+            private int requestedFinalSamples;
             internal HoRTDIPass(){renderPassEvent=RenderPassEvent.BeforeRenderingPostProcessing;}
             internal void Setup(HoRTDIContext context,HoRTScene scene,ComputeShader shader,RayTracingShader finalVisibilityShader,HoRTDISettings settings,AnalyticLight[] lights,Light[] keys,int count,int localCount,int signature)
             {
                 this.context=context;this.scene=scene;this.shader=shader;this.finalVisibilityShader=finalVisibilityShader;this.settings=settings;this.lights=lights;lightKeys=keys;lightCount=count;localLightCount=localCount;this.signature=signature;
+                requestedFinalSamples=settings.finalSampling==HoRTDIFinalSampling.TripleAnalytic?3:1;
                 #if UNITY_EDITOR
                 ConfigureInput(context.nrd?.ValidationMotionCapture!=null?ScriptableRenderPassInput.Motion:ScriptableRenderPassInput.None);
                 #endif
@@ -166,6 +169,9 @@ namespace lilToon.URP.Extensions.RTDI
                 internal RayTracingShader finalVisibilityShader;
                 internal int lightCount,localLightCount,signature;internal uint revision,structureRevision;internal Matrix4x4 view,projection;internal Camera camera;
                 internal double renderTime;
+                internal int finalSamples;
+                internal float[] auxiliaryCDF;
+                internal GraphicsBuffer auxiliaryCDFBuffer,auxiliarySecondaryBuffer;
                 internal TextureHandle diffuse,specular,powerPdf;
                 internal TextureHandle environment,environmentPdf;
                 #if UNITY_EDITOR
@@ -175,7 +181,19 @@ namespace lilToon.URP.Extensions.RTDI
                 internal uint environmentRevision;
             }
             private Data Snapshot(Camera camera,Matrix4x4 view,Matrix4x4 projection) => new Data {context=context,scene=scene.ReadCompatibility(),shader=shader,finalVisibilityShader=finalVisibilityShader,settings=settings,lightFrame=context.CaptureLights(lights,lightKeys),
-                lightCount=lightCount,localLightCount=localLightCount,signature=signature,revision=scene.Revision,structureRevision=scene.StructureRevision,view=view,projection=projection,camera=camera,renderTime=Time.unscaledTimeAsDouble};
+                lightCount=lightCount,localLightCount=localLightCount,signature=signature,revision=scene.Revision,structureRevision=scene.StructureRevision,view=view,projection=projection,camera=camera,renderTime=Time.unscaledTimeAsDouble,finalSamples=requestedFinalSamples};
+            private static void PrepareAuxiliary(Data d)
+            {
+                var c=d.context;
+                if(d.lightCount==0||(d.lightCount==1&&!c.environmentSampling))d.finalSamples=1;
+                c.PrepareAuxiliary(d.finalSamples>1,d.lightCount,c.finalVisibility!=null);
+                d.auxiliaryCDFBuffer=c.auxiliaryCDF??c.currentToPrevious;
+                // Structured UAV validation still needs a binding in the single
+                // branch. The existing eight-byte neighbor buffer is never
+                // accessed by that branch or the opaque local estimator.
+                d.auxiliarySecondaryBuffer=c.auxiliarySecondary??c.neighbors;
+                if(d.finalSamples>1)d.auxiliaryCDF=d.lightFrame.AuxiliaryCDF(d.lightCount);
+            }
             public override void RecordRenderGraph(RenderGraph graph,ContextContainer frame)
             {
                 var camera=frame.Get<UniversalCameraData>();
@@ -187,6 +205,7 @@ namespace lilToon.URP.Extensions.RTDI
                     data.localLightCount=source.localLightCount;
                     data.signature=source.signature;data.revision=source.revision;data.structureRevision=source.structureRevision;data.view=source.view;data.projection=source.projection;data.camera=source.camera;
                     data.renderTime=source.renderTime;
+                    data.finalSamples=source.finalSamples;
                     data.scene=scene.Read(graph,builder);data.primary=HoRTPrimarySurfaceInputs.Read(graph,frame,builder);
                     #if UNITY_EDITOR
                     if(context.nrd?.ValidationMotionCapture!=null)
@@ -201,6 +220,9 @@ namespace lilToon.URP.Extensions.RTDI
                         data.environment=sky.radianceTexture;data.environmentParameters=sky.parameters;data.environmentTint=sky.tint;data.environmentConstant=sky.constantColor;data.environmentRevision=sky.revision;
                         builder.UseTexture(data.environment);data.environmentPdf=graph.ImportTexture(context.environmentPdf);builder.UseTexture(data.environmentPdf,AccessFlags.ReadWrite);
                     }
+                    PrepareAuxiliary(data);
+                    if(context.auxiliaryCDF!=null)builder.UseBuffer(graph.ImportBuffer(context.auxiliaryCDF),AccessFlags.Read);
+                    if(context.auxiliarySecondary!=null)builder.UseBuffer(graph.ImportBuffer(context.auxiliarySecondary),AccessFlags.ReadWrite);
                     foreach(var buffer in new[]{context.reservoirs,context.history,context.lights,context.previousLights,context.currentToPrevious,context.previousToCurrent,context.ris})builder.UseBuffer(graph.ImportBuffer(buffer),AccessFlags.ReadWrite);
                     data.powerPdf=TextureHandle.nullHandle;
                     if(context.powerSampling){data.powerPdf=graph.ImportTexture(context.powerPdf);builder.UseTexture(data.powerPdf,AccessFlags.ReadWrite);}
@@ -273,6 +295,7 @@ namespace lilToon.URP.Extensions.RTDI
                 }
                 cmd.SetBufferData(c.lights,d.lightFrame.current);cmd.SetBufferData(c.previousLights,d.lightFrame.previous);
                 cmd.SetBufferData(c.currentToPrevious,d.lightFrame.currentToPrevious);cmd.SetBufferData(c.previousToCurrent,d.lightFrame.previousToCurrent);
+                if(d.finalSamples>1)cmd.SetBufferData(d.auxiliaryCDFBuffer,d.auxiliaryCDF);
                 foreach(var stage in ReferenceStages)
                 {
                     if(singleDelta&&(stage=="Temporal"||stage=="Spatial"))continue;
@@ -283,6 +306,9 @@ namespace lilToon.URP.Extensions.RTDI
                     if(stage=="Shade"&&c.finalVisibility!=null)
                     {using(new ProfilingScope(cmd,FinalVisibilityProfiling))DispatchFinalVisibility(cmd,d,compatibility,cameraData);}
                     int kernel=d.shader.FindKernel(name);d.scene.BuildAndBind(cmd,d.shader,kernel);
+                    cmd.SetComputeIntParam(d.shader,"_HoRTDIFinalSamples",d.finalSamples);
+                    cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDIRuntimeAuxiliaryCDF",d.auxiliaryCDFBuffer);
+                    cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDIRuntimeAuxiliarySecondary",d.auxiliarySecondaryBuffer);
                     if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,kernel,cameraData);
                     else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,kernel);
                     cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDILights",c.lights);cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTDIReservoirs",c.reservoirs);
@@ -410,6 +436,7 @@ namespace lilToon.URP.Extensions.RTDI
                 cmd.SetGlobalFloat("_HoRTDIActive",1);cmd.SetGlobalTexture("_HoRTDIDiffuseTexture",c.PublishedDiffuse.nameID);cmd.SetGlobalTexture("_HoRTDISpecularTexture",c.PublishedSpecular.nameID);
                 cmd.SetGlobalTexture("_HoRTDIRawDiffuseTexture",c.diffuse.nameID);cmd.SetGlobalTexture("_HoRTDIRawSpecularTexture",c.specular.nameID);
                 c.Complete(d.view,d.projection,d.camera,d.revision,d.signature,d.lightFrame);
+                c.RecordAuxiliaryFence(cmd);
                 c.sceneStructureRevision=d.structureRevision;
             }
             private static bool LightsChanged(HoRTDIContext.LightFrame frame)
@@ -434,6 +461,8 @@ namespace lilToon.URP.Extensions.RTDI
                 else d.primary.Bind(CommandBufferHelpers.GetRasterCommandBuffer(cmd));
                 d.scene.BuildAndBind(cmd,rayShader);cmd.SetRayTracingShaderPass(rayShader,"HoRTDIVisibility");
                 cmd.SetRayTracingBufferParam(rayShader,"_HoRTDIReservoirs",c.reservoirs);cmd.SetRayTracingBufferParam(rayShader,"_HoRTDILights",c.lights);
+                cmd.SetRayTracingIntParam(rayShader,"_HoRTDIFinalSamples",d.finalSamples);cmd.SetRayTracingIntParam(rayShader,"_HoRTDIFrameIndex",c.frame);
+                cmd.SetRayTracingBufferParam(rayShader,"_HoRTDIRuntimeAuxiliaryCDF",d.auxiliaryCDFBuffer);cmd.SetRayTracingBufferParam(rayShader,"_HoRTDIRuntimeAuxiliarySecondary",d.auxiliarySecondaryBuffer);
                 cmd.SetRayTracingVectorParam(rayShader,"_HoRTDIFrame",new Vector4(c.width,c.height,d.lightCount,d.localLightCount));
                 cmd.SetRayTracingVectorParam(rayShader,"_HoRTDIReservoirLayout",new Vector4(c.rowPitch,c.arrayPitch,0,0));
                 cmd.SetRayTracingVectorParam(rayShader,"_HoRTDISettings",new Vector4(0,0,0,Mathf.Max(.00001f,d.settings.rayBias)));
@@ -484,6 +513,7 @@ namespace lilToon.URP.Extensions.RTDI
                 {
                     d.environmentParameters=HoAtmosphereBindings.compatibilityParameters;d.environmentTint=HoAtmosphereBindings.compatibilityTint;d.environmentConstant=HoAtmosphereBindings.compatibilityConstant;d.environmentRevision=HoAtmosphereBindings.compatibilityRevision;
                 }
+                PrepareAuxiliary(d);
                 var cmd=CommandBufferPool.Get("Ho-RTDI reference DI passes");Dispatch(cmd,d,true,data.cameraData);rendering.ExecuteCommandBuffer(cmd);CommandBufferPool.Release(cmd);
             }
         }

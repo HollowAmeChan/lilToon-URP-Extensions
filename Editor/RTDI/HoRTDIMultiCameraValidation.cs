@@ -69,6 +69,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             {
                 for(int frame=0;frame<96;frame++){RenderView(cameraA,targetA,light,false,false);a=contexts[cameraA];RenderView(cameraB,targetB,blue,false,false);b=contexts[cameraB];}
                 Require(!ReferenceEquals(a,b)&&!ReferenceEquals(a.reservoirs,b.reservoirs)&&!ReferenceEquals(a.history,b.history)&&!ReferenceEquals(a.nrd,b.nrd)&&!ReferenceEquals(a.filteredDiffuse,b.filteredDiffuse),"DI camera resources share ownership");
+                if(runtimeMultiAudit)Require(a.auxiliaryCDF!=null&&b.auxiliaryCDF!=null&&!ReferenceEquals(a.auxiliaryCDF,b.auxiliaryCDF)&&a.auxiliarySecondary!=null&&b.auxiliarySecondary!=null&&!ReferenceEquals(a.auxiliarySecondary,b.auxiliarySecondary),"Runtime multi camera auxiliary resources share ownership");
                 var flags=BindingFlags.Instance|BindingFlags.NonPublic;var poolField=a.nrd.GetType().GetField("permanent",flags);
                 var poolA=(RTHandle[])poolField.GetValue(a.nrd);var poolB=(RTHandle[])poolField.GetValue(b.nrd);
                 for(int i=0;i<poolA.Length;i++)Require(!ReferenceEquals(poolA[i],poolB[i]),"Camera NRD permanent history alias");
@@ -105,7 +106,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     report.pointMeans=results.ToArray();
                 }
                 report.isolationPass=true;report.instantaneousPass=report.qualityFailures==0;report.pass=multiCameraMeanAudit?report.pointwiseMeanPass&&report.regionalMeanPass:report.instantaneousPass;
-                string prefix=multiCameraMeanAudit?"rtdi-multicamera73-"+mode+"-":mode!="temporal-spatial"?"rtdi-multicamera72-"+mode+"-":"rtdi-multicamera71-";
+                string prefix=runtimeMultiAudit?"rtdi-runtime78-multicamera-":multiCameraMeanAudit?"rtdi-multicamera73-"+mode+"-":mode!="temporal-spatial"?"rtdi-multicamera72-"+mode+"-":"rtdi-multicamera71-";
                 File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(report,true));
                 Debug.Log($"[HoRTDIValidation] MULTI_CAMERA pass={report.pass} isolationPass=true renders={report.alternatingRenders} isolation={report.isolationChecks} resets={report.resetChecks} skip={report.skipChecks} dispose={report.disposalChecks} raw={report.maxRawRelativeError:G6} filtered={report.maxFilteredRelativeError:G6} absent={report.maxAbsentColour:G6} qualityFailures={report.qualityFailures}");
                 if(multiCameraMeanAudit)Debug.Log($"[HoRTDIValidation] CAMERA_POINT_MEAN mode={mode} points={report.pointMeans.Length} samples=1024 rawWorst={report.maxRawMeanRelativeError:G6} filteredWorst={report.maxFilteredMeanRelativeError:G6} pointPass={report.pointwiseMeanPass} regionalPass={report.regionalMeanPass}");
