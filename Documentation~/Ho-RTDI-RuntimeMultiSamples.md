@@ -40,6 +40,8 @@ Legacy prototype生成器保留Single预算下的独立对照；opaque/native原
 
 中心mixed天空镜面最终仍2/4，约5%偏差与第77步对照一致，原正式失败保持。动态灯域仍有native8/9、opaque6/9的短窗口/colour-tail失败，报告独立保存；不能把实际Player通过等同于任意场景无偏或无漏光。两种预算的primary distance guide仍取主样本，实际应用运动输入协议、IL2CPP/XR、GPU时间及目标场景预算均未在本步证明。
 
+第84步[diffuse凸裁剪](Ho-RTDI-DiffuseConvexClamping.md)已消除Clamping生成的关闭通道残色，opaque动态由6/9提升8/9；100:1短窗口能量和mixed天空镜面失败继续保留，四份实际Player均通过。
+
 报告 `rtdi-runtime78-lightdomain-*`、`rtdi-runtime78-env-*`、`rtdi-runtime78-dynamic-*`、`rtdi-runtime78-state-*`、`rtdi-runtime78-multicamera-*`、`rtdi-runtime78-player-single-*`、`rtdi-runtime78-mixedcdf-player-*`，保存隔离工程。初期pure-power Player失败另保留，不以成功结果覆盖该发现。
 
 下一项转向实际feature使用、目标场景的几何/天空壳支持与有效GPU预算，而不是继续停在Shader生成原型；保留独立质量fixture、上述有效失败和最终NPR/PBR合成边界。

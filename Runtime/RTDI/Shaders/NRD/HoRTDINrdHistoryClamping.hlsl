@@ -280,7 +280,23 @@ NRD_EXPORT void NRD_CS_MAIN( NRD_CS_MAIN_ARGS )
     float3 diffuseYCoCg = Color::RgbToYCoCg(diffuseIlluminationAnd2ndMoment.rgb);
     float3 clampedDiffuseYCoCg = diffuseYCoCg;
     if (gDiffMaxFastAccumulatedFrameNum < gDiffMaxAccumulatedFrameNum)
+    {
+#if( NRD_MODE == RADIANCE )
+        // HoRTDI diffuse convex colour clipping: preserve RGB planes shared
+        // by fast/normal endpoint colours while using the same YCoCg box.
+        float3 anchor = diffuseResponsiveCenterYCoCg.rgb;
+        float3 delta = diffuseYCoCg - anchor;
+        float amount = 1.0;
+        [unroll] for (uint axis = 0; axis < 3; axis++)
+        {
+            if (delta[axis] > 0.0) amount = min(amount, (diffuseResponsiveColorMaxYCoCg[axis] - anchor[axis]) / delta[axis]);
+            else if (delta[axis] < 0.0) amount = min(amount, (diffuseResponsiveColorMinYCoCg[axis] - anchor[axis]) / delta[axis]);
+        }
+        clampedDiffuseYCoCg = lerp(anchor, diffuseYCoCg, saturate(amount));
+#else
         clampedDiffuseYCoCg = clamp(diffuseYCoCg, diffuseResponsiveColorMinYCoCg, diffuseResponsiveColorMaxYCoCg);
+#endif
+    }
     float3 clampedDiffuse = Color::YCoCgToRgb(clampedDiffuseYCoCg);
 
     // If history length is less than gHistoryFixFrameNum,

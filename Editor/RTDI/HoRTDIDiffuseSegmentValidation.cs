@@ -28,7 +28,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             const string packagePath="Packages/jp.lilxyzw.liltoon.urp.extensions",relative="Runtime/RTDI/Shaders/NRD/HoRTDINrdHistoryClamping.hlsl",entry="Runtime/RTDI/Shaders/NRD/HoRTDINrd06.compute",asset="Assets/HoRTDIDiffuseSegmentAudit";
             var package=UnityEditor.PackageManager.PackageInfo.FindForAssetPath(packagePath+"/package.json");string root=package.resolvedPath;
             string body=File.ReadAllText(Path.Combine(root,relative)).Replace("\r\n","\n");
-            body=ReplaceOnce(body,"    if (gDiffMaxFastAccumulatedFrameNum < gDiffMaxAccumulatedFrameNum)\n        clampedDiffuseYCoCg = clamp(diffuseYCoCg, diffuseResponsiveColorMinYCoCg, diffuseResponsiveColorMaxYCoCg);",@"
+            if(!body.Contains("HoRTDI diffuse convex colour clipping"))body=ReplaceOnce(body,"    if (gDiffMaxFastAccumulatedFrameNum < gDiffMaxAccumulatedFrameNum)\n        clampedDiffuseYCoCg = clamp(diffuseYCoCg, diffuseResponsiveColorMinYCoCg, diffuseResponsiveColorMaxYCoCg);",@"
     if (gDiffMaxFastAccumulatedFrameNum < gDiffMaxAccumulatedFrameNum)
     {
         // Intersect the fast-to-normal colour segment with the same box.

@@ -781,6 +781,14 @@
 
 **下一项：** private shader及generator同步生产化，默认single/multi Player与必要质量回归再决定接纳。详见[隔离候选](../Ho-RTDI-DiffuseSegmentCandidate.md)。
 
+## 84. DI private diffuse凸裁剪生产化
+
+**动手前评审：** 83证明同box内标量fast→normal裁剪保留零通道，动态/能量没有新正式失败。RADIANCE diffuse接入private shader/generator，原vendor、spec/SH/参数/moment逻辑不改。
+
+**结果：** 两路径actual关灯全stage精确0，opaque dynamic6/9→8/9，旧100:1失败保持。默认16组noise/完整primary两路径、256/512diffuse六组、Runtime四灯域通过；四release构建/实际Single/Multi两Player与D3D11 inactive全部pass/0。首次过早构建被工程占用挡住，终止确认后重跑，不算先前构建通过。
+
+**下一项：** 实际场景支持或具体有效质量失败，GPU预算仍未证明。original SHA/派生/Roslyn/diff/nativeSHA通过，未改GI/NPR合成。详见[生产修复](../Ho-RTDI-DiffuseConvexClamping.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

@@ -194,6 +194,27 @@ def generate_clamping():
             outSpecular = outSpecularResponsive;
     }"""
     derived = text.replace(old, new)
+    axis_clip = "    if (gDiffMaxFastAccumulatedFrameNum < gDiffMaxAccumulatedFrameNum)\n        clampedDiffuseYCoCg = clamp(diffuseYCoCg, diffuseResponsiveColorMinYCoCg, diffuseResponsiveColorMaxYCoCg);"
+    if derived.count(axis_clip) != 1:
+        raise ValueError("Unexpected NRD diffuse colour box clipping")
+    derived = derived.replace(axis_clip, """    if (gDiffMaxFastAccumulatedFrameNum < gDiffMaxAccumulatedFrameNum)
+    {
+#if( NRD_MODE == RADIANCE )
+        // HoRTDI diffuse convex colour clipping: preserve RGB planes shared
+        // by fast/normal endpoint colours while using the same YCoCg box.
+        float3 anchor = diffuseResponsiveCenterYCoCg.rgb;
+        float3 delta = diffuseYCoCg - anchor;
+        float amount = 1.0;
+        [unroll] for (uint axis = 0; axis < 3; axis++)
+        {
+            if (delta[axis] > 0.0) amount = min(amount, (diffuseResponsiveColorMaxYCoCg[axis] - anchor[axis]) / delta[axis]);
+            else if (delta[axis] < 0.0) amount = min(amount, (diffuseResponsiveColorMinYCoCg[axis] - anchor[axis]) / delta[axis]);
+        }
+        clampedDiffuseYCoCg = lerp(anchor, diffuseYCoCg, saturate(amount));
+#else
+        clampedDiffuseYCoCg = clamp(diffuseYCoCg, diffuseResponsiveColorMinYCoCg, diffuseResponsiveColorMaxYCoCg);
+#endif
+    }""")
     physical_boundary = "    // 2nd moment correction\n    float outDiffuseL = Color::Luminance(outDiffuse.rgb);"
     if derived.count(physical_boundary) != 1:
         raise ValueError("Unexpected NRD diffuse moment correction boundary")
