@@ -45,7 +45,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 Require((pairedOpaqueAudit?c.finalVisibility==null:c.finalVisibility!=null)&&!c.environmentSampling&&c.previousLightKeys.Length==(many?32:2),"Light-domain visibility/light count invalid");
                 var cdfKeys=(Light[])c.previousLightKeys.Clone();float[] cdf=pairedAuxiliaryPowerCDF?BuildAuxiliaryCDF(cdfKeys):null;
                 using var cdfBuffer=pairedAuxiliaryPowerCDF?new GraphicsBuffer(GraphicsBuffer.Target.Structured,cdf.Length,4):null;
-                using var secondAuxiliary=pairedSecondAuxiliary?new GraphicsBuffer(GraphicsBuffer.Target.Structured,size*size,24):null;
+                using var secondAuxiliary=pairedSecondAuxiliary?new GraphicsBuffer(GraphicsBuffer.Target.Structured,size*size,SecondAuxiliaryStride):null;
                 using var rayCounter=secondAuxiliaryRayAudit?new GraphicsBuffer(GraphicsBuffer.Target.Structured,3,4):null;var rayCounts=new uint[3];
                 if(pairedAuxiliaryPowerCDF)
                 {
@@ -95,7 +95,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 }
                 if(pairedSecondAuxiliary)Require(agreements>0&&agreements<64,"Two auxiliary draws are identical or unexpectedly disjoint");
                 if(secondAuxiliaryRayAudit){rayCounter.GetData(rayCounts);Require(rayCounts[0]>0&&rayCounts[1]>0&&rayCounts[1]==rayCounts[2],"Final ray counters did not cover both auxiliary draws");}
-                var result=new PairedLightDomainCase{profile=profile,size=size,lights=c.previousLightKeys.Length,points=points.Count,tracedFrames=traced,resetFrames=resets,cdfChecks=cdfChecks,auxiliaryAgreements=agreements,auxiliaryBytes=(secondAuxiliary?.count??0)*24L+(cdfBuffer?.count??0)*4L,rawRed=rr/refR,rawBlue=rb/refB,filteredRed=fr/refR,filteredBlue=fb/refB,frameL1=l1/(refR+refB),changedL1=changedReference>0?changedError/changedReference:0,rawNormalizedMse=rawMse/squares,filteredNormalizedMse=filteredMse/squares,minScale=minScale};
+                var result=new PairedLightDomainCase{profile=profile,size=size,lights=c.previousLightKeys.Length,points=points.Count,tracedFrames=traced,resetFrames=resets,cdfChecks=cdfChecks,auxiliaryAgreements=agreements,auxiliaryBytes=(secondAuxiliary?.count??0)*(long)SecondAuxiliaryStride+(cdfBuffer?.count??0)*4L,rawRed=rr/refR,rawBlue=rb/refB,filteredRed=fr/refR,filteredBlue=fb/refB,frameL1=l1/(refR+refB),changedL1=changedReference>0?changedError/changedReference:0,rawNormalizedMse=rawMse/squares,filteredNormalizedMse=filteredMse/squares,minScale=minScale};
                 bool visibilityPath=pairedOpaqueAudit?traced==0&&resets>0:traced>0;
                 result.pass=visibilityPath&&Math.Abs(result.rawRed-1)<.03&&Math.Abs(result.rawBlue-1)<.03&&Math.Abs(result.filteredRed-1)<.05&&Math.Abs(result.filteredBlue-1)<.05&&result.frameL1<.35&&(!step||changedReference>0&&result.changedL1<.35)&&(!hdr||minScale<1);
                 result.primaryFinalRays=rayCounts[0];result.firstAuxiliaryRays=rayCounts[1];result.secondAuxiliaryRays=rayCounts[2];result.auxiliaryBytes+=(rayCounter?.count??0)*4L;
@@ -110,6 +110,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(pairedSecondAuxiliary)name="rtdi-triplecdf53-"+(compatibility?"compat":"rg")+".json";
             if(secondAuxiliaryRayAudit)name="rtdi-triplecdf53-rays-"+(compatibility?"compat":"rg")+".json";
             if(pairedOpaqueAudit)name="rtdi-opaqueaux68-"+(compatibility?"compat":"rg")+".json";
+            if(compactAuxiliaryAudit)name="rtdi-compact74-lightdomain-"+(secondAuxiliaryRayAudit?"rays-":"")+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json";
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+name),JsonUtility.ToJson(new PairedLightDomainReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",auxiliaryPdf=pairedAuxiliaryPowerCDF?"rgb-power-cdf":cutoutPairedFinalSample?"uniform":"none",finalSamples=pairedSecondAuxiliary?3:cutoutPairedFinalSample?2:1,cases=results.ToArray()},true));
             Require(allPass,"Light-domain energy/noise/step/HDR gates failed");
             bool OutsideLeft(Light source,Vector3 p){var delta=source.transform.position-p;float t=(blocker.transform.position.z-p.z)/delta.z;return t>0&&t<1&&blocker.transform.InverseTransformPoint(p+delta*t).x<-.5f;}

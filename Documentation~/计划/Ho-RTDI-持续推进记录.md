@@ -705,6 +705,14 @@
 
 **下一项：** 第二fresh解析辅助样本的24-byte sidecar消费字段/更小存储，保持真实PDF、可见性及输出一致性，不改SDK ABI或提前产品化。仅Editor/文档，Roslyn/Shader/GUID/diff通过，其余真实质量失败保持。详见[逐点验收](../Ho-RTDI-MultiCameraPointMeans.md)。
 
+## 74. 第二fresh解析辅助的8-byte sidecar
+
+**动手前评审：** 24-byte SDK packed样本仅被shade消费，fresh delta M/target1、固定UV、无reuse；核对fork/SDK/bridge后用私有uint2保存index、binary visibility与FP32 inverse PDF，SDK ABI不改。
+
+**结果：** 256²第二辅助1.5→.5 MiB，四路径16配置通过、全部质量指标差0，GPU PDF/cache检查通过。环境2/4和动态九阶段原失败与重跑24-byte完全一致。native实际最终ray counts不变，未测GPU毫秒；1080p47.46→15.82 MiB仅估算。
+
+**下一项：** opaque同shade直接消费是否可省sidecar，native alpha生命周期/切换与每相机/Player绑定，再评估产品接入；保持环境/动态失败，不泛化到面积/环境UV样本。仅Editor/文档，Roslyn/Shader/GUID/vendor/nativeSHA/diff通过。详见[compact记录](../Ho-RTDI-CompactAuxiliaryPayload.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

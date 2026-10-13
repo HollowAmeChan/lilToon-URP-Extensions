@@ -49,7 +49,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 Require(c.environmentSampling&&c.finalVisibility!=null&&c.previousLightKeys.Length==(mixed?2:0),"Environment/alpha/light fixture invalid");
                 var keys=(Light[])c.previousLightKeys.Clone();float[] cdf=mixed?BuildAuxiliaryCDF(keys):new[]{1f};
                 using var cdfBuffer=cutoutPairedFinalSample?new GraphicsBuffer(GraphicsBuffer.Target.Structured,cdf.Length,4):null;
-                using var second=cutoutPairedFinalSample?new GraphicsBuffer(GraphicsBuffer.Target.Structured,size*size,24):null;
+                using var second=cutoutPairedFinalSample?new GraphicsBuffer(GraphicsBuffer.Target.Structured,size*size,SecondAuxiliaryStride):null;
                 if(cutoutPairedFinalSample)
                 {
                     ApplyCutoutPairedFinalSample();cdfBuffer.SetData(cdf);pairedFinalShader.SetBuffer("_HoRTDIAuxiliaryCDF",cdfBuffer);pairedFinalShader.SetBuffer("_HoRTDISecondAuxiliary",second);
@@ -107,7 +107,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(specularNormalBudgetAudit)mode+="-normalbudget";
             if(auxiliarySpatialAudit){WriteAuxiliarySpatial(mode);return;}
             if(auxiliaryEnvironmentStages){WriteAuxiliaryEnvironmentStages(mode);return;}
-            File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-auxenv54-"+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",mode=mode,projection=auxiliaryPerspectiveAudit?"perspective":"orthographic",cases=cases.ToArray()},true));
+            File.WriteAllText(Path.Combine(Application.dataPath,"../"+(compactAuxiliaryAudit?"rtdi-compact74-env-":"rtdi-auxenv54-")+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",mode=mode,projection=auxiliaryPerspectiveAudit?"perspective":"orthographic",cases=cases.ToArray()},true));
             Require(allPass,"Environment partition energy gates failed");
         }
     }

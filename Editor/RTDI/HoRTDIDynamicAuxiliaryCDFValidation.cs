@@ -56,7 +56,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var originalCompute=computeField.GetValue(feature);var originalRay=rayField.GetValue(feature);
             RenderCamera();var c=feature.LastContext;Require((c.finalVisibility==null)==pairedOpaqueAudit&&!c.environmentSampling,"Dynamic CDF visibility domain mismatch");
             using var cdfBuffer=new GraphicsBuffer(GraphicsBuffer.Target.Structured,lamps.Length,4);
-            using var second=new GraphicsBuffer(GraphicsBuffer.Target.Structured,size*size,24);
+            using var second=new GraphicsBuffer(GraphicsBuffer.Target.Structured,size*size,SecondAuxiliaryStride);
             if(!dynamicAuxiliaryBaseline)
             {
                 ApplyCutoutPairedFinalSample();var compute=(ComputeShader)computeField.GetValue(feature);int kernel=compute.FindKernel("ShadeNRD");
@@ -91,7 +91,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                         for(int i=0;i<keys.Length;i++)Require(ReferenceEquals(c.previousLightKeys[i],keys[i]),"Dynamic CDF current collector ordering mismatch");
                         maps+=CheckDynamicLightMaps(c,previous,keys);resets+=c.lastNrdReset?1:0;confidence+=c.lastVisibilityGradients?1:0;
                         if(!dynamicAuxiliaryBaseline)checks+=CheckDynamicAuxiliarySamples(c,cdf,keys.Length,second);
-                        c.reservoirs.GetData(reservoirs);if(!dynamicAuxiliaryBaseline)second.GetData(secondSamples);
+                        c.reservoirs.GetData(reservoirs);if(!dynamicAuxiliaryBaseline)ReadSecondAuxiliary(second,secondSamples,0,0,secondSamples.Length);
                         ReadImage(c.diffuse.rt,raw);ReadImage(c.filteredDiffuse.rt,filtered);
                         for(int y=48;y<80;y+=2)for(int x=48;x<80;x+=2)
                         {
@@ -128,6 +128,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 string variant=dynamicAuxiliaryBaseline?"single-":"triple-";
                 string prefix=dynamicAuxiliaryDomainReset||dynamicAuxiliaryBaseline?"rtdi-domainreset70-"+variant+(dynamicAuxiliaryDomainReset?"candidate-":"baseline-"):"rtdi-dynamiccdf69-";
                 if(dynamicDomainProductionAudit)prefix="rtdi-domainreset70-single-production-";
+                if(compactAuxiliaryAudit)prefix="rtdi-compact74-dynamic-";
                 File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+(dynamicAuxiliaryLongAudit?"long-":"")+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new DynamicCDFReport{qualityPass=all,path=compatibility?"compatibility":"RenderGraph",visibility=pairedOpaqueAudit?"inline-opaque":"native-cutout",cases=cases.ToArray()},true));
                 Require(all,"Dynamic auxiliary CDF energy/dark-signal gates failed");
             }
@@ -175,7 +176,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 const int y=64;int address=2*c.arrayPitch+(y/16)*c.rowPitch+(x/16)*256+(y%16)*16+x%16;
                 for(int draw=0;draw<2;draw++)
                 {
-                    if(draw==0)c.reservoirs.GetData(packed,0,address,1);else second.GetData(packed,0,y*c.width+x,1);
+                    if(draw==0)c.reservoirs.GetData(packed,0,address,1);else ReadSecondAuxiliary(second,packed,0,y*c.width+x,1);
                     // Opaque zero-light shading deliberately skips both stale
                     // scratch slots; image checks establish that they contribute 0.
                     if(count==0)continue;

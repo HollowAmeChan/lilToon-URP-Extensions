@@ -39,7 +39,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 Require(float.IsFinite(packed[0].weight)&&Math.Abs(packed[0].weight-expected)<expected*3e-5,"Auxiliary CDF GPU inverse PDF mismatch");checks++;
                 if(second!=null)
                 {
-                    second.GetData(packed,0,y*c.width+x,1);uint secondIndex=packed[0].lightData&0x7fffffff;
+                    ReadSecondAuxiliary(second,packed,0,y*c.width+x,1);uint secondIndex=packed[0].lightData&0x7fffffff;bool secondCachedVisibility=(packed[0].mVisibility&63)!=0;
                     Require((packed[0].lightData&0x80000000)!=0&&secondIndex<cdf.Length,"Second auxiliary GPU sample invalid");
                     float secondPdf=cdf[secondIndex]-(secondIndex>0?cdf[secondIndex-1]:0),secondExpected=1/secondPdf;
                     Require(float.IsFinite(packed[0].weight)&&Math.Abs(packed[0].weight-secondExpected)<secondExpected*3e-5,"Second auxiliary GPU inverse PDF mismatch");
@@ -52,6 +52,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     else
                     {
                         bits=(uint)Mathf.RoundToInt(visibility.GetPixel(x,y).r*7);
+                        if(compactAuxiliaryAudit)Require(secondCachedVisibility==((bits&4)!=0),"Compact auxiliary cache differs from native final visibility");
                         Require(((bits>>1)&1)==(CutoutPlaneShadow(c.previousLightKeys[index],x,y,c.width)?0u:1u)&&((bits>>2)&1)==(CutoutPlaneShadow(c.previousLightKeys[secondIndex],x,y,c.width)?0u:1u),"Two auxiliary native alpha visibility mismatch");
                     }
                     c.reservoirs.GetData(packed,0,address-c.arrayPitch,1);
