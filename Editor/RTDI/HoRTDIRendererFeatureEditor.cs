@@ -18,6 +18,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             {
                 Draw(settings,"enabled","启用");Draw(settings,"localSampling","局部灯采样");Draw(settings,"initialSamples","局部灯候选数");Draw(settings,"temporal","时间重采样");Draw(settings,"maxHistory","历史样本预算");
                 Draw(settings,"spatial","空间重采样");Draw(settings,"spatialSamples","邻域样本数");Draw(settings,"spatialRadius","邻域半径");
+                Draw(settings,"finalSampling","最终可见性样本");
                 Draw(settings,"denoise","NRD RELAX 降噪");
                 Draw(settings,"useEnvironment","天空环境光");Draw(settings,"environmentSamples","环境光候选数");
                 Draw(settings,"environmentBrdfSamples","BRDF 环境候选");
