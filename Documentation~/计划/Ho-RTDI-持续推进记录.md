@@ -757,6 +757,14 @@
 
 **下一项：** 实际场景其它支持/拒绝项与有效GPU预算。原环境/动态限制、最终NPR/GI边界保持；Roslyn/Shader/GUID/diff通过。详见[材质排除](../Ho-RTDI-MaterialExclusion.md)。
 
+## 81. GPU计时读取实际Runtime sampler
+
+**动手前评审：** 不能盲目重复失败抓帧或把CPU当GPU。核对Core ProfilingSampler持有的Recorder、RenderDoc1.45与MCP能力，计时sidecar改读feature实际static sampler并enableRecording。
+
+**结果：** Development构建0，实际D3D12三状态各160camera/124fresh frame records、移动Cutout124 CPU marker/gradient；GPU样本仍0，-1/false/exit1真实保留。同名新sampler的疑点排除，不建立预算。无capture可分析，未重复相同失败抓帧条件；生产未改。
+
+**下一项：** 保持GPU预算未证明，继续实际DI质量/支持工作；等待有有效timestamp/capture的条件再测成本。详见[计时复查](../Ho-RTDI-GpuTimingAudit.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

@@ -10,7 +10,7 @@ public sealed partial class HoRTDIPlayerProbe
 {
     [Serializable] private sealed class GpuTimingReport
     {
-        public bool pass,development,frameTimingEnabled;public string gpu,api,error,renderDriver;public int size;public ulong gpuTimerHz;public GpuTimingCase[] cases;
+        public bool pass,development,frameTimingEnabled;public string gpu,api,error,renderDriver,samplerSource;public int size;public ulong gpuTimerHz;public GpuTimingCase[] cases;
     }
     [Serializable] private sealed class GpuTimingCase
     {
@@ -29,8 +29,11 @@ public sealed partial class HoRTDIPlayerProbe
         feature.Settings.initialSamples=8;feature.Settings.temporal=feature.Settings.spatial=feature.Settings.denoise=true;
         light.transform.position=new Vector3(.4f,0,-1.5f);light.intensity=4;light.color=Color.red;
         blue.transform.position=new Vector3(-.4f,0,-1.5f);blue.intensity=4;blue.color=Color.blue;blue.enabled=true;
-        var visibility=CustomSampler.Create("HoRTDI Final Visibility",true).GetRecorder();visibility.enabled=true;
-        var gradients=CustomSampler.Create("HoRTDI Visibility Gradients",true).GetRecorder();gradients.enabled=true;
+        const BindingFlags samplerFlags=BindingFlags.Static|BindingFlags.NonPublic;
+        var visibility=(ProfilingSampler)feature.GetType().GetField("FinalVisibilityProfiling",samplerFlags).GetValue(null);
+        var gradients=(ProfilingSampler)feature.GetType().GetField("VisibilityGradientsProfiling",samplerFlags).GetValue(null);
+        Require(visibility!=null&&gradients!=null,"Runtime DI profiling samplers missing");
+        visibility.enableRecording=gradients.enableRecording=true;gpuTimingReport.samplerSource="runtime ProfilingSampler instances";
         var frameTimings=new FrameTiming[1];var cases=new List<GpuTimingCase>();
         var contextProperty=feature.GetType().GetProperty("LastContext",BindingFlags.Instance|BindingFlags.NonPublic);
         var skin=blocker.GetComponent<SkinnedMeshRenderer>();var original=skin.sharedMaterial;
@@ -56,11 +59,11 @@ public sealed partial class HoRTDIPlayerProbe
                         if(ft.gpuFrameTime>0&&double.IsFinite(ft.gpuFrameTime)){frameSum+=ft.gpuFrameTime;item.frameSamples++;}
                     }
                 }
-                if(visibility.gpuSampleBlockCount>0&&visibility.gpuElapsedNanoseconds>0)
-                {visibilitySum+=visibility.gpuElapsedNanoseconds/1e6/visibility.gpuSampleBlockCount;item.finalVisibilitySamples++;}
-                if(gradients.gpuSampleBlockCount>0&&gradients.gpuElapsedNanoseconds>0)
-                {gradientSum+=gradients.gpuElapsedNanoseconds/1e6/gradients.gpuSampleBlockCount;item.gradientSamples++;}
-                if(visibility.sampleBlockCount>0)item.visibilityCpuSamples++;if(gradients.sampleBlockCount>0)item.gradientCpuSamples++;
+                if(visibility.gpuSampleCount>0&&visibility.gpuElapsedTime>0)
+                {visibilitySum+=visibility.gpuElapsedTime/visibility.gpuSampleCount;item.finalVisibilitySamples++;}
+                if(gradients.gpuSampleCount>0&&gradients.gpuElapsedTime>0)
+                {gradientSum+=gradients.gpuElapsedTime/gradients.gpuSampleCount;item.gradientSamples++;}
+                if(visibility.cpuSampleCount>0)item.visibilityCpuSamples++;if(gradients.cpuSampleCount>0)item.gradientCpuSamples++;
                 if(moving)
                 {
                     var c=contextProperty.GetValue(feature);if(c!=null&&(bool)c.GetType().GetField("lastVisibilityGradients",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(c))item.tracedFrames++;
@@ -72,7 +75,7 @@ public sealed partial class HoRTDIPlayerProbe
             Debug.Log($"[HoRTDIPlayerProbe] GPU_TIMING mode={mode} frameSamples={item.frameSamples} frameMs={item.frameGpuMs:F6} visibilitySamples={item.finalVisibilitySamples} visibilityMs={item.finalVisibilityMs:F6} gradientSamples={item.gradientSamples} gradientMs={item.gradientMs:F6} traced={item.tracedFrames}");
         }
         }
-        finally{RenderPipelineManager.endCameraRendering-=EndCamera;probeCamera.enabled=false;visibility.enabled=gradients.enabled=false;Profiler.enabled=false;skin.sharedMaterial=original;blocker.SetActive(false);}
+        finally{RenderPipelineManager.endCameraRendering-=EndCamera;probeCamera.enabled=false;visibility.enableRecording=gradients.enableRecording=false;Profiler.enabled=false;skin.sharedMaterial=original;blocker.SetActive(false);}
         gpuTimingReport.cases=cases.ToArray();gpuTimingReport.pass=cases.TrueForAll(x=>x.frameSamples>=32&&x.renderedCameras>=128)&&cases[2].finalVisibilitySamples>=32&&cases[2].gradientSamples>=32&&cases[2].tracedFrames>=32;
         if(!gpuTimingReport.pass)gpuTimingReport.error="Insufficient GPU frame/marker samples; no DI GPU budget is established";
         result.pass=gpuTimingReport.pass;result.error=gpuTimingReport.error;

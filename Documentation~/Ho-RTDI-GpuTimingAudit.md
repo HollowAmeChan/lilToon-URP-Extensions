@@ -33,3 +33,13 @@ GPU字段都为-1，正式false/exit1。相机事件/CPU标记/调度标志证�
 Development及两个普通Win64 Mono Release builds errors0。最终计时EXE按缺失数据实际exit1；Release误用参数按Development要求exit1并输出JSON。普通实际D3D12 RG/compat完整质量suite和D3D11 inactive通过。Roslyn和提交前检查通过，无产品Shader变更，不重复无共享变更的GI。
 
 独立计时入口为后续现场采集提供可复现条件，但不解决GPU预算；下一步继续扩大分辨率质量，同时评估能取得真实应用帧/GPU query的采集方式。不要将0样本当0成本或据此优化采样数量；保留原DI正确性、残影和材质门槛，不扩张最终合成/通用PT。
+
+## 第81步：实际Runtime sampler复查
+
+当前Core包`com.unity.render-pipelines.core@648b47f96bf1/Runtime/Debugging/ProfilingScope.cs`显示，ProfilingSampler创建GPU-enabled CustomSampler并持有自己的Recorder。计时sidecar原先另建同名CustomSampler；本步改为读取feature实际的FinalVisibilityProfiling/VisibilityGradientsProfiling对象，显式enableRecording，通过其gpuElapsedTime/gpuSampleCount统计。报告新增samplerSource，避免仅凭同名字符串假定测到了实际对象。
+
+新的Development构建errors0，实际D3D12隐藏batch Player完整执行并exit1。RTX4060、1GHz、FrameTimingEnabled=true，三状态仍各160次camera、124个新鲜frame records；moving Cutout实际CPU标记/gradient调度各124。GPU frame/两marker样本依然0，全部时长-1、pass=false。此变化排除了一项instrumentation疑点，没有解决GPU计时，也没有将现有结果改判通过。报告`rtdi-timing81-runtime-samplers.json`。
+
+当前安装RenderDoc1.45，MCP报告无已打开capture；没有可分析的rdc，也没有重复之前未产出文件的同条件捕获。[RenderDoc v1.36官方说明](https://github.com/baldurk/renderdoc/releases/tag/v1.36)已允许保存含标准raytracing调用的捕获，但raytracing内部仍不提供shader/binding/AS调试。当前MCP统计接口提供draw/dispatch/resource统计，未提供GPU duration查询；不能据其“statistics”名称宣称已测成本。Shell的renderdoc-cli不在PATH，未绕开技能改用其它批处理抓帧工具。
+
+本步仅改独立计时sidecar，生产DI/Shader/native/常规Player质量逻辑未改。参考与实际接口边界已确认，后续GPU预算需要能产出有效GPU timestamp/capture的测量条件；这不是当前DI质量/场景支持工作的整体阻塞。
