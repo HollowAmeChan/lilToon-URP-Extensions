@@ -56,6 +56,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     var compute=(ComputeShader)computeField.GetValue(feature);compute.SetBuffer(compute.FindKernel("ShadeNRD"),Shader.PropertyToID("_HoRTDISecondAuxiliary"),second);
                 }
                 using var lateSpecOverride=lateSpecExchangeAudit?ApplyLateSpecExchange(c):null;
+                using var diffuseSegmentOverride=diffuseSegmentAudit?ApplyDiffuseSegment(c):null;
                 if(auxiliarySpatialAudit){ValidateAuxiliarySpatial(c,reuse,blue);computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);continue;}
                 if(auxiliaryEnvironmentStages){ValidateAuxiliaryEnvironmentStages(c,mixed,reuse,blue,skySpec);computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);continue;}
                 c.historyValid=c.nrdHistoryValid=false;c.frame=0;for(int i=0;i<192;i++)RenderCamera();
@@ -105,6 +106,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(auxiliaryPerspectiveAudit)mode+="-perspective";
             if(specularRgbDistanceAudit)mode+="-rgbdistance";
             if(specularNormalBudgetAudit)mode+="-normalbudget";
+            if(diffuseSegmentAudit)mode+="-segment83";
             if(auxiliarySpatialAudit){WriteAuxiliarySpatial(mode);return;}
             if(auxiliaryEnvironmentStages){WriteAuxiliaryEnvironmentStages(mode);return;}
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+(runtimeMultiAudit?"rtdi-runtime78-env-":compactAuxiliaryAudit?"rtdi-compact74-env-":"rtdi-auxenv54-")+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",mode=mode,projection=auxiliaryPerspectiveAudit?"perspective":"orthographic",cases=cases.ToArray()},true));

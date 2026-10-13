@@ -66,6 +66,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var cases=new List<DynamicCDFCase>();bool all=true;int clock=0;
             var reservoirs=new PairedPackedReservoir[c.reservoirs.count];var secondSamples=new PairedPackedReservoir[size*size];
             using var colourStageCapture=diffuseColourStageAudit?new ColourStageCapture(c):null;
+            using var diffuseSegmentOverride=diffuseSegmentAudit?ApplyDiffuseSegment(c):null;
             try
             {
                 foreach(string phase in new[]{"balanced","powerTemperature","disableBlue","blueDirectional","redSpot","disableRed","allDisabled","restore","replaceGreen"})
@@ -138,6 +139,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(compactAuxiliaryAudit)prefix="rtdi-compact74-dynamic-";
                 if(AuxiliaryImageHash)prefix="rtdi-direct75-dynamic-"+(opaqueDirectAuxiliaryAudit?"direct-":"baseline-");
                 if(runtimeMultiAudit)prefix="rtdi-runtime78-dynamic-";
+                if(diffuseSegmentAudit)prefix="rtdi-diffusesegment83-dynamic-";
                 File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+(dynamicAuxiliaryLongAudit?"long-":"")+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new DynamicCDFReport{qualityPass=all,path=compatibility?"compatibility":"RenderGraph",visibility=pairedOpaqueAudit?"inline-opaque":"native-cutout",cases=cases.ToArray()},true));
                 Require(all,"Dynamic auxiliary CDF energy/dark-signal gates failed");
             }

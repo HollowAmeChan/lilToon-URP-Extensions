@@ -43,7 +43,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     points.Add(new CutoutResolutionPoint{x=x,y=y,unshadowed=ResolutionMotionLamp(light,x,y,size),b=ResolutionMotionLamp(blue,x,y,size)});
                 foreach(string mode in new[]{"slow","rapid","step"})
                 {
-                    skinBlockerBone.localPosition=Vector3.zero;RenderCamera();var c=feature.LastContext;if(cutoutPairedFinalSample)Require(c.finalVisibility!=null&&!c.environmentSampling,"Paired prototype requires native alpha visibility and analytic lights only");c.historyValid=c.nrdHistoryValid=false;c.frame=0;for(int i=0;i<192;i++)Draw();
+                    skinBlockerBone.localPosition=Vector3.zero;RenderCamera();var c=feature.LastContext;using var diffuseSegmentOverride=diffuseSegmentAudit?ApplyDiffuseSegment(c):null;if(cutoutPairedFinalSample)Require(c.finalVisibility!=null&&!c.environmentSampling,"Paired prototype requires native alpha visibility and analytic lights only");c.historyValid=c.nrdHistoryValid=false;c.frame=0;for(int i=0;i<192;i++)Draw();
                     double rr=0,rb=0,fr=0,fb=0,referenceR=0,referenceB=0,error=0,changedError=0,changedReference=0;int traced=0;var previous=new double[points.Count];var changed=new bool[points.Count];
                     for(int frame=0;frame<256;frame++)
                     {

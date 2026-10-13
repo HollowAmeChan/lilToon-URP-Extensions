@@ -45,6 +45,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 Require((pairedOpaqueAudit?c.finalVisibility==null:c.finalVisibility!=null)&&!c.environmentSampling&&c.previousLightKeys.Length==(many?32:2),"Light-domain visibility/light count invalid");
                 if(runtimeMultiAudit)Require(pairedOpaqueAudit?c.auxiliarySecondary==null:c.auxiliarySecondary!=null&&c.auxiliarySecondary.stride==8,"Runtime auxiliary resource mode invalid");
                 var cdfKeys=(Light[])c.previousLightKeys.Clone();float[] cdf=pairedAuxiliaryPowerCDF?BuildAuxiliaryCDF(cdfKeys):null;
+                using var diffuseSegmentOverride=diffuseSegmentAudit?ApplyDiffuseSegment(c):null;
                 if(runtimeMultiAudit)cdf=ReadRuntimeAuxiliaryCDF(c);
                 using var cdfBuffer=pairedAuxiliaryPowerCDF?new GraphicsBuffer(GraphicsBuffer.Target.Structured,cdf.Length,4):null;
                 using var secondAuxiliary=pairedSecondAuxiliary?new GraphicsBuffer(GraphicsBuffer.Target.Structured,SecondAuxiliaryCount(size*size),SecondAuxiliaryStride):null;
@@ -119,6 +120,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(compactAuxiliaryAudit)name="rtdi-compact74-lightdomain-"+(secondAuxiliaryRayAudit?"rays-":"")+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json";
             if(AuxiliaryImageHash)name="rtdi-direct75-lightdomain-"+(opaqueDirectAuxiliaryAudit?"direct-":"baseline-")+(compatibility?"compat":"rg")+".json";
             if(runtimeMultiAudit)name="rtdi-runtime78-lightdomain-"+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json";
+            if(diffuseSegmentAudit)name="rtdi-diffusesegment83-lightdomain-"+(compatibility?"compat":"rg")+".json";
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+name),JsonUtility.ToJson(new PairedLightDomainReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",auxiliaryPdf=runtimeMultiAudit||pairedAuxiliaryPowerCDF?"rgb-power-cdf":cutoutPairedFinalSample?"uniform":"none",finalSamples=runtimeMultiAudit||pairedSecondAuxiliary?3:cutoutPairedFinalSample?2:1,cases=results.ToArray()},true));
             Require(allPass,"Light-domain energy/noise/step/HDR gates failed");
             bool OutsideLeft(Light source,Vector3 p){var delta=source.transform.position-p;float t=(blocker.transform.position.z-p.z)/delta.z;return t>0&&t<1&&blocker.transform.InverseTransformPoint(p+delta*t).x<-.5f;}

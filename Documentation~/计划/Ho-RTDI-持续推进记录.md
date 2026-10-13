@@ -773,6 +773,14 @@
 
 **下一项：** 固定vendor/fork的独立YCoCg clamp可产生原RGB零通道外颜色，隔离测试fast→normal线段裁剪；保持sigma/其它参数与所有正式门槛，不先按当前raw为0硬清输出。仅Editor/文档，Roslyn/Shader/GUID/diff通过。详见[阶段证据](../Ho-RTDI-DiffuseColourStageAudit.md)。
 
+## 83. diffuse颜色线段裁剪隔离对照
+
+**动手前评审：** 82定位Clamping的YCoCg三轴截取先生成色，再历史反馈。保持同box/sigma和其它逻辑，沿expanded fast center→normal线段求box交点，避免离开端点共享的RGB平面；不按随机raw零值硬清。
+
+**结果：** 两路径关闭色全stage/published精确0，dynamic6/9→8/9，旧100:1能量仍失败。256/512diffuse六组和Runtime四灯域通过；mixed环境spec失败保持2/4，未引入新正式失败。只context index6 scoped override、无产品改动。
+
+**下一项：** private shader及generator同步生产化，默认single/multi Player与必要质量回归再决定接纳。详见[隔离候选](../Ho-RTDI-DiffuseSegmentCandidate.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

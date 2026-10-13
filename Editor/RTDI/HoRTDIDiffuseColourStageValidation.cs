@@ -45,7 +45,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             public void Dispose()
             {
                 context.nrd.ValidationDiffuseStage=null;var result=new List<ColourStagePoint>();foreach(var value in stats.Values){value.mean/=Math.Max(1,value.frames);result.Add(value);Debug.Log($"[HoRTDIValidation] COLOUR_STAGE phase={value.phase} stage={value.stage} peak={value.peak:G9} mean={value.mean:G9} initial={value.initialPeak:G9} firstPositive={value.firstPositiveFrame} frames={value.frames}");}
-                File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-colourstage82-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new ColourStageReport{diagnosticOnly=true,cases=result.ToArray()},true));
+                File.WriteAllText(Path.Combine(Application.dataPath,"../"+(diffuseSegmentAudit?"rtdi-diffusesegment83-stages-":"rtdi-colourstage82-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new ColourStageReport{diagnosticOnly=true,cases=result.ToArray()},true));
             }
         }
         [Serializable] private sealed class ColourStageReport{public bool diagnosticOnly;public ColourStagePoint[] cases;}
