@@ -16,7 +16,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         [Serializable] private sealed class PairedLightDomainReport{public bool qualityPass;public string path,auxiliaryPdf;public int finalSamples;public PairedLightDomainCase[] cases;}
         [Serializable] private sealed class PairedLightDomainCase
         {
-            public string profile;public int size,lights,points,tracedFrames,resetFrames,cdfChecks,auxiliaryAgreements;public long auxiliaryBytes;public bool pass;
+            public string profile,outputHash;public int size,lights,points,tracedFrames,resetFrames,cdfChecks,auxiliaryAgreements;public long auxiliaryBytes;public bool pass;
             public long primaryFinalRays,firstAuxiliaryRays,secondAuxiliaryRays;
             public double rawRed,rawBlue,filteredRed,filteredBlue,frameL1,changedL1,rawNormalizedMse,filteredNormalizedMse,minScale;
         }
@@ -45,12 +45,12 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 Require((pairedOpaqueAudit?c.finalVisibility==null:c.finalVisibility!=null)&&!c.environmentSampling&&c.previousLightKeys.Length==(many?32:2),"Light-domain visibility/light count invalid");
                 var cdfKeys=(Light[])c.previousLightKeys.Clone();float[] cdf=pairedAuxiliaryPowerCDF?BuildAuxiliaryCDF(cdfKeys):null;
                 using var cdfBuffer=pairedAuxiliaryPowerCDF?new GraphicsBuffer(GraphicsBuffer.Target.Structured,cdf.Length,4):null;
-                using var secondAuxiliary=pairedSecondAuxiliary?new GraphicsBuffer(GraphicsBuffer.Target.Structured,size*size,SecondAuxiliaryStride):null;
+                using var secondAuxiliary=pairedSecondAuxiliary?new GraphicsBuffer(GraphicsBuffer.Target.Structured,SecondAuxiliaryCount(size*size),SecondAuxiliaryStride):null;
                 using var rayCounter=secondAuxiliaryRayAudit?new GraphicsBuffer(GraphicsBuffer.Target.Structured,3,4):null;var rayCounts=new uint[3];
                 if(pairedAuxiliaryPowerCDF)
                 {
                     ApplyCutoutPairedFinalSample();cdfBuffer.SetData(cdf);pairedFinalShader.SetBuffer("_HoRTDIAuxiliaryCDF",cdfBuffer);
-                    if(pairedSecondAuxiliary){pairedFinalShader.SetBuffer("_HoRTDISecondAuxiliary",secondAuxiliary);var compute=(ComputeShader)computeField.GetValue(feature);compute.SetBuffer(compute.FindKernel("ShadeNRD"),Shader.PropertyToID("_HoRTDISecondAuxiliary"),secondAuxiliary);if(pairedOpaqueAudit)compute.SetBuffer(compute.FindKernel("ShadeNRD"),Shader.PropertyToID("_HoRTDIAuxiliaryCDF"),cdfBuffer);}
+                    if(pairedSecondAuxiliary){var compute=(ComputeShader)computeField.GetValue(feature);BindSecondAuxiliary(pairedFinalShader,compute,compute.FindKernel("ShadeNRD"),secondAuxiliary);if(pairedOpaqueAudit)compute.SetBuffer(compute.FindKernel("ShadeNRD"),Shader.PropertyToID("_HoRTDIAuxiliaryCDF"),cdfBuffer);}
                     if(secondAuxiliaryRayAudit){rayCounter.SetData(rayCounts);pairedFinalShader.SetBuffer("_HoRTDIValidationRayCounts",rayCounter);}
                 }
                 var points=new List<PairedLightDomainPoint>();float minCone=1,maxCone=0;
@@ -70,10 +70,13 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(secondAuxiliaryRayAudit){rayCounter.GetData(rayCounts);Array.Clear(rayCounts,0,rayCounts.Length);rayCounter.SetData(rayCounts);}
                 double refR=0,refB=0,rr=0,rb=0,fr=0,fb=0,l1=0,rawMse=0,filteredMse=0,squares=0,changedError=0,changedReference=0,minScale=1;
                 int traced=0,resets=0,cdfChecks=0,agreements=0;var previous=new double[points.Count];var changed=new bool[points.Count];var scale=new uint[c.nrdScale.count];
+                using var imageHash=AuxiliaryImageHash?System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.SHA256):null;
                 for(int frame=0;frame<frames;frame++)
                 {
                     float offset=step?((frame/16&1)==0?0:.5f):.25f+.25f*Mathf.Sin(frame*.27f);skinBlockerBone.localPosition=Vector3.right*offset;Draw();
                     Require(c.nrd.LastDispatchCount>0,"Light-domain bypassed RELAX");traced+=c.lastVisibilityGradients?1:0;resets+=c.lastNrdReset?1:0;ReadImage(c.specular.rt,raw);ReadImage(c.filteredSpecular.rt,filtered);
+                    if(opaqueDirectAuxiliaryAudit)Require(c.finalVisibility==null,"Direct opaque prototype cannot enter native Cutout visibility");
+                    if(imageHash!=null){imageHash.AppendData(raw.GetRawTextureData<byte>().ToArray());imageHash.AppendData(filtered.GetRawTextureData<byte>().ToArray());}
                     if(pairedAuxiliaryPowerCDF)
                     {
                         Require(c.previousLightKeys.Length==cdfKeys.Length,"Auxiliary CDF light count changed");for(int i=0;i<cdfKeys.Length;i++)Require(c.previousLightKeys[i]==cdfKeys[i],"Auxiliary CDF light ordering changed");
@@ -99,6 +102,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 bool visibilityPath=pairedOpaqueAudit?traced==0&&resets>0:traced>0;
                 result.pass=visibilityPath&&Math.Abs(result.rawRed-1)<.03&&Math.Abs(result.rawBlue-1)<.03&&Math.Abs(result.filteredRed-1)<.05&&Math.Abs(result.filteredBlue-1)<.05&&result.frameL1<.35&&(!step||changedReference>0&&result.changedL1<.35)&&(!hdr||minScale<1);
                 result.primaryFinalRays=rayCounts[0];result.firstAuxiliaryRays=rayCounts[1];result.secondAuxiliaryRays=rayCounts[2];result.auxiliaryBytes+=(rayCounter?.count??0)*4L;
+                if(imageHash!=null)result.outputHash=BitConverter.ToString(imageHash.GetHashAndReset()).Replace("-","");
                 allPass&=result.pass;results.Add(result);c.nrd.ValidationTimeSeconds=null;
                 if(pairedAuxiliaryPowerCDF){computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);}
                 Debug.Log($"[HoRTDIValidation] PAIRED_LIGHT_DOMAIN paired={cutoutPairedFinalSample} profile={profile} lights={result.lights} raw={result.rawRed:F6}/{result.rawBlue:F6} filtered={result.filteredRed:F6}/{result.filteredBlue:F6} frameL1={result.frameL1:F6} changedL1={result.changedL1:F6} rawMse={result.rawNormalizedMse:F6} filteredMse={result.filteredNormalizedMse:F6} scale={minScale} pass={result.pass}");
@@ -111,6 +115,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(secondAuxiliaryRayAudit)name="rtdi-triplecdf53-rays-"+(compatibility?"compat":"rg")+".json";
             if(pairedOpaqueAudit)name="rtdi-opaqueaux68-"+(compatibility?"compat":"rg")+".json";
             if(compactAuxiliaryAudit)name="rtdi-compact74-lightdomain-"+(secondAuxiliaryRayAudit?"rays-":"")+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json";
+            if(AuxiliaryImageHash)name="rtdi-direct75-lightdomain-"+(opaqueDirectAuxiliaryAudit?"direct-":"baseline-")+(compatibility?"compat":"rg")+".json";
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+name),JsonUtility.ToJson(new PairedLightDomainReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",auxiliaryPdf=pairedAuxiliaryPowerCDF?"rgb-power-cdf":cutoutPairedFinalSample?"uniform":"none",finalSamples=pairedSecondAuxiliary?3:cutoutPairedFinalSample?2:1,cases=results.ToArray()},true));
             Require(allPass,"Light-domain energy/noise/step/HDR gates failed");
             bool OutsideLeft(Light source,Vector3 p){var delta=source.transform.position-p;float t=(blocker.transform.position.z-p.z)/delta.z;return t>0&&t<1&&blocker.transform.InverseTransformPoint(p+delta*t).x<-.5f;}

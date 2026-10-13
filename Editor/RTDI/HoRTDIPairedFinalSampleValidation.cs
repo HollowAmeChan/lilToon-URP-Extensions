@@ -106,6 +106,7 @@ float2 HoDICachedPrimaryLuminance(RTXDI_DIReservoir reservoir,RAB_Surface surfac
             if(pairedOpaqueAudit)compute=AddOpaqueAuxiliary(compute);
             if(auxiliaryEnvironmentPartition)(compute,ray)=PartitionAuxiliaryEnvironment(compute,ray);
             if(compactAuxiliaryAudit)(compute,ray)=CompactSecondAuxiliary(compute,ray);
+            if(opaqueDirectAuxiliaryAudit)compute=ConsumeOpaqueAuxiliaryDirectly(compute);
             File.WriteAllText(Path.Combine(folder,"HoRTDIPaired.compute"),Rebase(compute,shaderRelative));File.WriteAllText(Path.Combine(folder,"HoRTDIPaired.raytrace"),Rebase(ray,rayRelative));
             AssetDatabase.ImportAsset(auditPath+"/HoRTDIPaired.compute",ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);
             AssetDatabase.ImportAsset(auditPath+"/HoRTDIPaired.raytrace",ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);

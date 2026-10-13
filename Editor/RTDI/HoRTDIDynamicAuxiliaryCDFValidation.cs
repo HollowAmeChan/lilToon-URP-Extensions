@@ -38,7 +38,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         [Serializable] private sealed class DynamicCDFReport{public bool qualityPass;public string path,visibility;public DynamicCDFCase[] cases;}
         [Serializable] private sealed class DynamicCDFCase
         {
-            public string phase;public int lights,frames,cdfChecks,mappingChecks,resets,confidenceFrames;public bool pass;
+            public string phase,outputHash,decompositionRegion;public int lights,frames,cdfChecks,mappingChecks,resets,confidenceFrames;public bool pass;
             public double rawRed,rawGreen,rawBlue,filteredRed,filteredGreen,filteredBlue,maxDarkSignal;
             public double primaryRed,primaryGreen,primaryBlue,auxiliaryRed,auxiliaryGreen,auxiliaryBlue,maxShadeRelativeError;
         }
@@ -56,16 +56,15 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var originalCompute=computeField.GetValue(feature);var originalRay=rayField.GetValue(feature);
             RenderCamera();var c=feature.LastContext;Require((c.finalVisibility==null)==pairedOpaqueAudit&&!c.environmentSampling,"Dynamic CDF visibility domain mismatch");
             using var cdfBuffer=new GraphicsBuffer(GraphicsBuffer.Target.Structured,lamps.Length,4);
-            using var second=new GraphicsBuffer(GraphicsBuffer.Target.Structured,size*size,SecondAuxiliaryStride);
+            using var second=new GraphicsBuffer(GraphicsBuffer.Target.Structured,SecondAuxiliaryCount(size*size),SecondAuxiliaryStride);
             if(!dynamicAuxiliaryBaseline)
             {
                 ApplyCutoutPairedFinalSample();var compute=(ComputeShader)computeField.GetValue(feature);int kernel=compute.FindKernel("ShadeNRD");
-                pairedFinalShader.SetBuffer("_HoRTDIAuxiliaryCDF",cdfBuffer);pairedFinalShader.SetBuffer("_HoRTDISecondAuxiliary",second);
-                compute.SetBuffer(kernel,Shader.PropertyToID("_HoRTDISecondAuxiliary"),second);
+                pairedFinalShader.SetBuffer("_HoRTDIAuxiliaryCDF",cdfBuffer);BindSecondAuxiliary(pairedFinalShader,compute,kernel,second);
                 if(pairedOpaqueAudit)compute.SetBuffer(kernel,Shader.PropertyToID("_HoRTDIAuxiliaryCDF"),cdfBuffer);
             }
             var cases=new List<DynamicCDFCase>();bool all=true;int clock=0;
-            var reservoirs=new PairedPackedReservoir[c.reservoirs.count];var secondSamples=new PairedPackedReservoir[second.count];
+            var reservoirs=new PairedPackedReservoir[c.reservoirs.count];var secondSamples=new PairedPackedReservoir[size*size];
             try
             {
                 foreach(string phase in new[]{"balanced","powerTemperature","disableBlue","blueDirectional","redSpot","disableRed","allDisabled","restore","replaceGreen"})
@@ -81,6 +80,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     // rendering, independently require the actual collector order.
                     var upload=new float[lamps.Length];Array.Fill(upload,1f);Array.Copy(cdf,upload,cdf.Length);cdfBuffer.SetData(upload);
                     var reference=new double[3];var sums=new double[2,3];var primarySums=new double[3];var auxiliarySums=new double[3];double dark=0,shadeError=0;int checks=0,maps=0,resets=0,confidence=0;
+                    var decompositionReference=new double[3];using var imageHash=AuxiliaryImageHash?System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.SHA256):null;
                     for(int frame=0;frame<frames;frame++)
                     {
                         var previous=(Light[])c.previousLightKeys.Clone();bool changedDomain=LightDomainChanged(c,keys);
@@ -93,6 +93,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                         if(!dynamicAuxiliaryBaseline)checks+=CheckDynamicAuxiliarySamples(c,cdf,keys.Length,second);
                         c.reservoirs.GetData(reservoirs);if(!dynamicAuxiliaryBaseline)ReadSecondAuxiliary(second,secondSamples,0,0,secondSamples.Length);
                         ReadImage(c.diffuse.rt,raw);ReadImage(c.filteredDiffuse.rt,filtered);
+                        if(opaqueDirectAuxiliaryAudit)Require(c.finalVisibility==null,"Direct dynamic prototype cannot enter native Cutout visibility");
+                        if(imageHash!=null){imageHash.AppendData(raw.GetRawTextureData<byte>().ToArray());imageHash.AppendData(filtered.GetRawTextureData<byte>().ToArray());}
                         for(int y=48;y<80;y+=2)for(int x=48;x<80;x+=2)
                         {
                             Color a=raw.GetPixel(x,y),f=filtered.GetPixel(x,y);Color expected=Color.clear;
@@ -100,13 +102,13 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                             int address=(y/16)*c.rowPitch+(x/16)*256+(y%16)*16+x%16;
                             Color primary=Estimate(reservoirs[c.arrayPitch+address]),auxiliary=!dynamicAuxiliaryBaseline&&keys.Length>0?(Estimate(reservoirs[2*c.arrayPitch+address])+Estimate(secondSamples[y*size+x]))*.5f:Color.clear;
                             Color predicted=dynamicAuxiliaryBaseline?primary:(primary+auxiliary)*.5f;
+                            bool decompositionPoint=!AuxiliaryImageHash||IsAuxiliaryProbe(x,y);
                             for(int channel=0;channel<3;channel++)
                             {
                                 Require(float.IsFinite(a[channel])&&float.IsFinite(f[channel])&&a[channel]>=0&&f[channel]>=0,"Dynamic CDF non-finite/negative radiance");
                                 if(expected[channel]==0)dark=Math.Max(dark,a[channel]);
-                                double error=Math.Abs(a[channel]-predicted[channel])/(Math.Max(Math.Abs(predicted[channel]),expected[channel])+.001);
-                                shadeError=Math.Max(shadeError,error);Require(error<.003,"Actual raw shading differs from GPU packed sample decomposition");
-                                if(frame>=16){reference[channel]+=expected[channel];sums[0,channel]+=a[channel];sums[1,channel]+=f[channel];primarySums[channel]+=primary[channel];auxiliarySums[channel]+=auxiliary[channel];if(expected[channel]==0)dark=Math.Max(dark,f[channel]);}
+                                if(decompositionPoint){double error=Math.Abs(a[channel]-predicted[channel])/(Math.Max(Math.Abs(predicted[channel]),expected[channel])+.001);shadeError=Math.Max(shadeError,error);Require(error<.003,"Actual raw shading differs from GPU packed sample decomposition");}
+                                if(frame>=16){reference[channel]+=expected[channel];sums[0,channel]+=a[channel];sums[1,channel]+=f[channel];if(decompositionPoint){decompositionReference[channel]+=expected[channel];primarySums[channel]+=primary[channel];auxiliarySums[channel]+=auxiliary[channel];}if(expected[channel]==0)dark=Math.Max(dark,f[channel]);}
                             }
                             Color Estimate(PairedPackedReservoir reservoir)
                             {
@@ -121,7 +123,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     {ratios[signal,channel]=reference[channel]>0?sums[signal,channel]/reference[channel]:sums[signal,channel]/((frames-16)*256);pass&=reference[channel]>0?Math.Abs(ratios[signal,channel]-1)<(signal==0?.03:.05):ratios[signal,channel]<.001;}
                     var result=new DynamicCDFCase{phase=phase,lights=keys.Length,frames=frames,cdfChecks=checks,mappingChecks=maps,resets=resets,confidenceFrames=confidence,pass=pass,rawRed=ratios[0,0],rawGreen=ratios[0,1],rawBlue=ratios[0,2],filteredRed=ratios[1,0],filteredGreen=ratios[1,1],filteredBlue=ratios[1,2],maxDarkSignal=dark};cases.Add(result);all&=pass;
                     result.primaryRed=Ratio(primarySums,0);result.primaryGreen=Ratio(primarySums,1);result.primaryBlue=Ratio(primarySums,2);result.auxiliaryRed=Ratio(auxiliarySums,0);result.auxiliaryGreen=Ratio(auxiliarySums,1);result.auxiliaryBlue=Ratio(auxiliarySums,2);result.maxShadeRelativeError=shadeError;
-                    double Ratio(double[] values,int channel)=>reference[channel]>0?values[channel]/reference[channel]:0;
+                    double Ratio(double[] values,int channel)=>decompositionReference[channel]>0?values[channel]/decompositionReference[channel]:0;
+                    result.decompositionRegion=AuxiliaryImageHash?"four-gpu-probes":"full-roi";if(imageHash!=null)result.outputHash=BitConverter.ToString(imageHash.GetHashAndReset()).Replace("-","");
                     Debug.Log($"[HoRTDIValidation] DYNAMIC_AUX_CDF opaque={pairedOpaqueAudit} phase={phase} lights={keys.Length} raw={result.rawRed:F6}/{result.rawGreen:F6}/{result.rawBlue:F6} filtered={result.filteredRed:F6}/{result.filteredGreen:F6}/{result.filteredBlue:F6} dark={dark:G6} resets={resets} confidence={confidence} pass={pass}");
                     Debug.Log($"[HoRTDIValidation] DYNAMIC_CDF_DECOMPOSITION phase={phase} primary={result.primaryRed:F6}/{result.primaryGreen:F6}/{result.primaryBlue:F6} auxiliary={result.auxiliaryRed:F6}/{result.auxiliaryGreen:F6}/{result.auxiliaryBlue:F6} maxShadeRelativeError={shadeError:G6}");
                 }
@@ -129,6 +132,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 string prefix=dynamicAuxiliaryDomainReset||dynamicAuxiliaryBaseline?"rtdi-domainreset70-"+variant+(dynamicAuxiliaryDomainReset?"candidate-":"baseline-"):"rtdi-dynamiccdf69-";
                 if(dynamicDomainProductionAudit)prefix="rtdi-domainreset70-single-production-";
                 if(compactAuxiliaryAudit)prefix="rtdi-compact74-dynamic-";
+                if(AuxiliaryImageHash)prefix="rtdi-direct75-dynamic-"+(opaqueDirectAuxiliaryAudit?"direct-":"baseline-");
                 File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+(dynamicAuxiliaryLongAudit?"long-":"")+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new DynamicCDFReport{qualityPass=all,path=compatibility?"compatibility":"RenderGraph",visibility=pairedOpaqueAudit?"inline-opaque":"native-cutout",cases=cases.ToArray()},true));
                 Require(all,"Dynamic auxiliary CDF energy/dark-signal gates failed");
             }

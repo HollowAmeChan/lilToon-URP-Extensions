@@ -713,6 +713,14 @@
 
 **下一项：** opaque同shade直接消费是否可省sidecar，native alpha生命周期/切换与每相机/Player绑定，再评估产品接入；保持环境/动态失败，不泛化到面积/环境UV样本。仅Editor/文档，Roslyn/Shader/GUID/vendor/nativeSHA/diff通过。详见[compact记录](../Ho-RTDI-CompactAuxiliaryPayload.md)。
 
+## 75. opaque第二辅助局部消费
+
+**动手前评审：** opaque第二fresh样本同shade生成/消费，无跨pass或历史使用，沿fork ShadeSamples及SDK finalized sample契约保留局部reservoir，第一辅助仍slot2。compute移除全分辨率sidecar依赖，32-byte四点快照只用于审计。
+
+**结果：** 256²四配置两路径8对全帧raw/filtered SHA256一致、质量通过；动态九阶段两路径18对hash及物理指标一致，原失败保持。实际GPU PDF/cache/四点分解保持；native compact回归通过。第二辅助GPU sidecar 524288→无，测试快照32 bytes，非总DI内存减少。GPU毫秒/占用率未知。
+
+**下一项：** opaque↔Cutout受控切换的变体与资源生命周期，再每相机/Player/实际budget。专用opaque原型不支持Cutout突然出现，不能提前产品化。仅Editor/文档，Roslyn/Shader/GUID/diff通过。详见[局部消费](../Ho-RTDI-OpaqueDirectAuxiliary.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

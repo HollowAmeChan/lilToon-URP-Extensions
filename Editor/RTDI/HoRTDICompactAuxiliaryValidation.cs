@@ -24,11 +24,19 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             Require(buffer.stride==SecondAuxiliaryStride,"Auxiliary buffer stride differs from shader variant");
             if(!compactAuxiliaryAudit){buffer.GetData(destination,destinationOffset,sourceOffset,count);return;}
             Require(Marshal.SizeOf<CompactAuxiliary>()==8,"Compact auxiliary ABI must be eight bytes");
-            var payload=new CompactAuxiliary[count];buffer.GetData(payload,0,sourceOffset,count);
-            for(int i=0;i<count;i++)
+            int readCount=count;
+            if(opaqueDirectAuxiliaryAudit)
+            {
+                Require(buffer.count==4,"Direct estimator audit must use only four GPU probe records");
+                if(count==1){int x=sourceOffset%DirectProbeWidth,y=sourceOffset/DirectProbeWidth;Require(IsAuxiliaryProbe(x,y),"Direct readback requested a non-probe pixel");sourceOffset=Array.IndexOf(DirectProbeXs,x);}
+                else{Require(destinationOffset==0&&sourceOffset==0&&count==DirectProbeWidth*DirectProbeWidth,"Direct bulk readback must target the diagnostic CPU image");readCount=4;}
+            }
+            var payload=new CompactAuxiliary[readCount];buffer.GetData(payload,0,sourceOffset,readCount);
+            for(int i=0;i<readCount;i++)
             {
                 uint index=payload[i].indexVisibility&0x7fffffff;bool visible=(payload[i].indexVisibility&0x80000000)!=0;
-                destination[destinationOffset+i]=index==0x7fffffff?default:new PairedPackedReservoir{lightData=index|0x80000000,uvData=0x7fff7fff,mVisibility=(1u<<18)|(visible?0x3ffffu:0),targetPdf=1,weight=BitConverter.Int32BitsToSingle((int)payload[i].inversePdf)};
+                int target=opaqueDirectAuxiliaryAudit&&count>1?DirectProbeWidth*DirectProbeWidth/2+DirectProbeXs[i]:destinationOffset+i;
+                destination[target]=index==0x7fffffff?default:new PairedPackedReservoir{lightData=index|0x80000000,uvData=0x7fff7fff,mVisibility=(1u<<18)|(visible?0x3ffffu:0),targetPdf=1,weight=BitConverter.Int32BitsToSingle((int)payload[i].inversePdf)};
             }
         }
         private static (string compute,string ray) CompactSecondAuxiliary(string compute,string ray)
