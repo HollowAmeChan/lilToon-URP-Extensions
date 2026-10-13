@@ -12,6 +12,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     {
         private static bool cutoutPairedFinalSample;
         private static RayTracingShader pairedFinalShader;
+        private static string pairedPrototypeAssetName="HoRTDIPaired";
         public static void RunCutoutResolutionPairedFinal(){cutoutPairedFinalSample=true;RunCutoutResolutionSpecular();}
         public static void RunCutoutResolutionPairedFinalCompatibility(){compatibility=true;RunCutoutResolutionPairedFinal();}
         public static void RunCutoutResolutionPairedFinalDiffuse(){cutoutPairedFinalSample=true;RunCutoutResolutionMotion();}
@@ -107,13 +108,13 @@ float2 HoDICachedPrimaryLuminance(RTXDI_DIReservoir reservoir,RAB_Surface surfac
             if(auxiliaryEnvironmentPartition)(compute,ray)=PartitionAuxiliaryEnvironment(compute,ray);
             if(compactAuxiliaryAudit)(compute,ray)=CompactSecondAuxiliary(compute,ray);
             if(opaqueDirectAuxiliaryAudit)compute=ConsumeOpaqueAuxiliaryDirectly(compute);
-            File.WriteAllText(Path.Combine(folder,"HoRTDIPaired.compute"),Rebase(compute,shaderRelative));File.WriteAllText(Path.Combine(folder,"HoRTDIPaired.raytrace"),Rebase(ray,rayRelative));
-            AssetDatabase.ImportAsset(auditPath+"/HoRTDIPaired.compute",ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);
-            AssetDatabase.ImportAsset(auditPath+"/HoRTDIPaired.raytrace",ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);
-            var shader=AssetDatabase.LoadAssetAtPath<ComputeShader>(auditPath+"/HoRTDIPaired.compute");pairedFinalShader=AssetDatabase.LoadAssetAtPath<RayTracingShader>(auditPath+"/HoRTDIPaired.raytrace");Require(shader!=null&&pairedFinalShader!=null,"Paired shader import failed");
+            File.WriteAllText(Path.Combine(folder,pairedPrototypeAssetName+".compute"),Rebase(compute,shaderRelative));File.WriteAllText(Path.Combine(folder,pairedPrototypeAssetName+".raytrace"),Rebase(ray,rayRelative));
+            AssetDatabase.ImportAsset(auditPath+"/"+pairedPrototypeAssetName+".compute",ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);
+            AssetDatabase.ImportAsset(auditPath+"/"+pairedPrototypeAssetName+".raytrace",ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);
+            var shader=AssetDatabase.LoadAssetAtPath<ComputeShader>(auditPath+"/"+pairedPrototypeAssetName+".compute");pairedFinalShader=AssetDatabase.LoadAssetAtPath<RayTracingShader>(auditPath+"/"+pairedPrototypeAssetName+".raytrace");Require(shader!=null&&pairedFinalShader!=null,"Paired shader import failed");
             foreach(var message in ShaderUtil.GetComputeShaderMessages(shader))Require(message.severity!=UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error&&message.severity!=UnityEditor.Rendering.ShaderCompilerMessageSeverity.Warning,message.message);
             var type=typeof(lilToon.URP.Extensions.RTDI.HoRTDIRendererFeature);var flags=BindingFlags.Instance|BindingFlags.NonPublic;type.GetField("shader",flags).SetValue(feature,shader);type.GetField("finalVisibilityShader",flags).SetValue(feature,pairedFinalShader);
-            Debug.Log("[HoRTDIValidation] PAIRED_FINAL prototype: production reservoir + independent uniform analytic sample; two native alpha rays; no additional buffers");
+            Debug.Log($"[HoRTDIValidation] PAIRED_FINAL prototype: samples={(pairedSecondAuxiliary?3:2)} proposal={(pairedAuxiliaryPowerCDF?"rgb-power-cdf":"uniform")} visibility={(pairedOpaqueAudit?"inline-opaque":"native-alpha")} secondStorage={(opaqueDirectAuxiliaryAudit?"local-with-four-probes":pairedSecondAuxiliary?SecondAuxiliaryStride+"-bytes-per-pixel":"scratch-only")}");
             string Rebase(string source,string relative)=>Regex.Replace(source,"(?m)^(\\s*#include\\s+)\"([^\"]+)\"",m=>
             {
                 string path=Path.GetRelativePath(root,Path.GetFullPath(Path.Combine(root,Path.GetDirectoryName(relative),m.Groups[2].Value))).Replace('\\','/');Require(!path.StartsWith("../",StringComparison.Ordinal),"Paired include escaped package");return m.Groups[1].Value+"\""+packagePath+"/"+path+"\"";

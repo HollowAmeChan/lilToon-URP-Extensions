@@ -721,6 +721,14 @@
 
 **下一项：** opaque↔Cutout受控切换的变体与资源生命周期，再每相机/Player/实际budget。专用opaque原型不支持Cutout突然出现，不能提前产品化。仅Editor/文档，Roslyn/Shader/GUID/diff通过。详见[局部消费](../Ho-RTDI-OpaqueDirectAuxiliary.md)。
 
+## 76. opaque↔Cutout前置变体与同步资源切换
+
+**动手前评审：** 专用opaque不能接突然出现的Cutout。核对scene同步/真实CutoutCount、native any-hit及texture update signature，用不同资产预持有变体，fixture在渲染前选择并逐帧核对实际classification。
+
+**结果：** 两路径candidate/baseline四入口0，九阶段各48帧（432帧）、1728GPU PDF/cache检查，18对全帧hash/所有指标一致。Opaque32-byte快照/native131072-byte侧记录正确切换；native首帧reset后47 confidence、opaque逐pose reset。首3帧L1是诊断，不冒充其它动态门槛。旧buffer在GPU读回同步后释放，未证明异步产品回收。
+
+**下一项：** 复查三样本对生产单样本的实际收益/既有filter失败归属，规划按相机snapshot/CDF/变体的产品接入及Player，不停留在孤立原型。仅Editor/文档，75opaque/74native回归、Roslyn/Shader/GUID/diff通过，其余真实失败保持。详见[路径切换](../Ho-RTDI-AuxiliaryVisibilitySwitch.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

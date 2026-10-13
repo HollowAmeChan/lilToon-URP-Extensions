@@ -11,8 +11,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         private static int SecondAuxiliaryCount(int pixels)=>opaqueDirectAuxiliaryAudit?4:pixels;
         private static string SecondAuxiliaryBinding=>opaqueDirectAuxiliaryAudit?"_HoRTDIProbeAuxiliary":"_HoRTDISecondAuxiliary";
         private static readonly int[] directDomainXs={72,104,136,168},directDynamicXs={52,60,68,76};
-        private static int DirectProbeWidth=>dynamicAuxiliaryCDFAudit?128:256;
-        private static int[] DirectProbeXs=>dynamicAuxiliaryCDFAudit?directDynamicXs:directDomainXs;
+        private static int DirectProbeWidth=>dynamicAuxiliaryCDFAudit||auxiliaryVisibilitySwitchAudit?128:256;
+        private static int[] DirectProbeXs=>dynamicAuxiliaryCDFAudit||auxiliaryVisibilitySwitchAudit?directDynamicXs:directDomainXs;
         private static bool IsAuxiliaryProbe(int x,int y)=>y==DirectProbeWidth/2&&Array.IndexOf(DirectProbeXs,x)>=0;
         public static void RunOpaqueDirectAuxiliaryDomain(){opaqueDirectAuxiliaryAudit=true;RunCompactOpaqueAuxiliaryDomain();}
         public static void RunOpaqueDirectAuxiliaryDomainCompatibility(){compatibility=true;RunOpaqueDirectAuxiliaryDomain();}

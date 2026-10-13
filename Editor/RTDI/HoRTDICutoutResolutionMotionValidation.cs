@@ -26,6 +26,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(cutoutSpecularRgbProposal)ApplyCutoutSpecularRgbProposal();
             if(cutoutPairedFinalSample&&!pairedAuxiliaryPowerCDF)ApplyCutoutPairedFinalSample();
             if(auxiliaryEnvironmentAudit){ValidateAuxiliaryEnvironment(blue);return;}
+            if(auxiliaryVisibilitySwitchAudit){ValidateAuxiliaryVisibilitySwitch(blue);return;}
             if(dynamicAuxiliaryCDFAudit){ValidateDynamicAuxiliaryCDF(blue);return;}
             if(multiCameraDIAudit){ValidateMultiCameraDI(blue);return;}
             if(pairedLightDomainAudit){ValidatePairedLightDomain(blue);return;}
