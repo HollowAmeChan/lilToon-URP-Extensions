@@ -174,7 +174,31 @@ public sealed partial class HoRTDIPlayerProbe:MonoBehaviour
         light.enabled=false;for(int i=0;i<4;i++)Render();Near(Read(capture.Raw).r,0,"Player switched-off raw light",.002f);Near(Read(capture.Diffuse).r,0,"Player switched-off filtered ghost",.002f);
         ValidateBoundaries();
         ValidateCutoutMotion();
+        ValidateMaterialExclusion();
         ValidatePrimaryOrigin();
+    }
+    private void ValidateMaterialExclusion()
+    {
+        var skin=blocker.GetComponent<SkinnedMeshRenderer>();var original=skin.sharedMaterial;var caster=Instantiate(surfaceMaterial);var oldExcluded=feature.Settings.excludedRayMaterials;
+        var position=light.transform.position;float intensity=light.intensity,range=light.range;var color=light.color;var bonePosition=skinnedProbeBone.localPosition;bool left=blue.enabled;
+        bool denoise=feature.Settings.denoise,lightEnabled=light.enabled,blockerActive=blocker.activeSelf;var lightType=light.type;
+        float metallic=surfaceMaterial.GetFloat("_Metallic"),reflectance=surfaceMaterial.GetFloat("_Reflectance");
+        try
+        {
+            surfaceMaterial.SetFloat("_Metallic",0);surfaceMaterial.SetFloat("_Reflectance",0);feature.Settings.denoise=false;blue.enabled=false;light.enabled=true;
+            light.type=LightType.Point;light.transform.position=new Vector3(1.5f,0,-1);light.intensity=4;light.range=100;light.color=Color.white;skinnedProbeBone.localPosition=Vector3.zero;
+            skin.sharedMaterial=caster;blocker.SetActive(true);Render();Near(Read(capture.Raw).r,0,"Player material filter baseline shadow",.002f);
+            feature.Settings.excludedRayMaterials=new[]{caster};Render();Near(Read(capture.Raw).r,Expected(32,32),"Player excluded material transmits",.015f);
+            Require(skin.sharedMaterial==caster&&receiver.GetComponent<Renderer>().sharedMaterial==surfaceMaterial,"Player exclusion changed source material arrays");
+            feature.Settings.excludedRayMaterials=System.Array.Empty<Material>();Render();Near(Read(capture.Raw).r,0,"Player material filter restore shadow",.002f);
+            Debug.Log("[HoRTDIPlayerProbe] MATERIAL_EXCLUSION pass=true actual compiled source mesh/material");
+        }
+        finally
+        {
+            feature.Settings.excludedRayMaterials=oldExcluded;feature.Settings.denoise=denoise;skin.sharedMaterial=original;blocker.SetActive(blockerActive);Destroy(caster);
+            light.transform.position=position;light.intensity=intensity;light.range=range;light.color=color;light.type=lightType;light.enabled=lightEnabled;skinnedProbeBone.localPosition=bonePosition;blue.enabled=left;
+            surfaceMaterial.SetFloat("_Metallic",metallic);surfaceMaterial.SetFloat("_Reflectance",reflectance);
+        }
     }
     private void ValidateBoundaries()
     {

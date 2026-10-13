@@ -745,6 +745,18 @@
 
 **限制与下一项：** 中心mixed天空2/4及动态native8/9、opaque6/9的有效失败保留；未实现最终NPR接收/GI/通用PT/SSS。下一项实际feature/古堡几何与天空壳支持、有效GPU预算，不再仅Shader生成原型。Roslyn/Shader/GUID/vendor/nativeSHA/diff通过。详见[实际接入与验证](../Ho-RTDI-RuntimeMultiSamples.md)。
 
+## 79. 自定义Inspector补齐采样预算
+
+第78步Runtime字段已接入，但手写Inspector漏画finalSampling。已以独立提交eee0d73补上「最终可见性样本」，使用原serialized property/tooltip，Roslyn errors0。此处是用户实际可操作入口的遗漏修复，不据C#字段存在宣称UI已可用。
+
+## 80. DI材质级submesh排除
+
+**动手前评审：** 古堡天空壳合并在同一mesh，按Renderer层排除会丢主体。沿fork submesh布局和现有实例登记，DI提供材质身份列表，在登记前排除对应submesh，默认空；不克隆/改写源材质或增Feature。
+
+**结果：** 两路径真实合并mesh阴影/透光/恢复、retained identity、Cutout资源生命周期、全排除skin不Bake通过。古堡真过滤15实例/12Cutout，仅天空submesh0排除，整pose仍28.54MiB。rigid/skinned/GI两路径默认回归通过；三个实际Player在修复测试denoise状态恢复后全部pass/0，原门槛保持。
+
+**下一项：** 实际场景其它支持/拒绝项与有效GPU预算。原环境/动态限制、最终NPR/GI边界保持；Roslyn/Shader/GUID/diff通过。详见[材质排除](../Ho-RTDI-MaterialExclusion.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

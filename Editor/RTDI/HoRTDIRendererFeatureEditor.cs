@@ -28,6 +28,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             using(new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 Draw(settings,"rayBias","射线偏移");Draw(settings,"geometryLayers","几何层");Draw(settings,"lightLayers","灯所在物体层");Draw(settings,"inSceneView","Scene View 中生产");
+                Draw(settings,"excludedRayMaterials","不参与求交的材质");
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("shader"),new GUIContent("Compute Shader"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("nrdShaders"),new GUIContent("NRD Shader Library"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("debugShader"),new GUIContent("Debug Shader"));
@@ -38,7 +39,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         private static void Draw(SerializedProperty settings,string name,string label)
         {
             var property=settings.FindPropertyRelative(name);
-            EditorGUILayout.PropertyField(property,new GUIContent(label,property.tooltip));
+            EditorGUILayout.PropertyField(property,new GUIContent(label,property.tooltip),true);
         }
     }
 }

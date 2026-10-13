@@ -96,12 +96,15 @@ namespace lilToon.URP.Extensions.RayTracing
 
         // Call before graph recording, never between Read and its execution. The list is the
         // world set, not camera culling results. Mesh content edits require MarkGeometryDirty.
-        internal void Synchronize(IReadOnlyList<Renderer> renderers, uint mask = 0xff)
+        internal void Synchronize(IReadOnlyList<Renderer> renderers, uint mask = 0xff, IReadOnlyList<Material> excludedMaterials=null)
         {
             ThrowIfDisposed();
             if (renderers == null) throw new ArgumentNullException(nameof(renderers));
             if (mask > 0xff) throw new ArgumentOutOfRangeException(nameof(mask), "RT instance masks are eight bits.");
             Rejections.Clear(); seen.Clear(); seenRenderers.Clear(); seenSkinned.Clear();
+            HashSet<Material> excluded=null;
+            if(excludedMaterials!=null&&excludedMaterials.Count>0)
+            {excluded=new HashSet<Material>(MaterialReferences.Instance);foreach(var material in excludedMaterials)if(material!=null)excluded.Add(material);}
             if (!IsAvailable) { Rejections.Add("D3D12 inline ray tracing is unavailable."); return; }
             bool changed = false, structureChanged = false;
             foreach (Renderer candidate in renderers)
@@ -125,7 +128,7 @@ namespace lilToon.URP.Extensions.RayTracing
                     if (!ValidTransform(renderer.localToWorldMatrix))
                     { Rejections.Add(renderer.name + ": non-finite or singular transform."); continue; }
                     bool hasOpaque = false;
-                    for (int i = 0; i < materials.Length; ++i) hasOpaque |= Opaque(materials[i]) || (supportsCutout != null && supportsCutout(materials[i]));
+                    for (int i = 0; i < materials.Length; ++i) if(excluded==null||!excluded.Contains(materials[i]))hasOpaque |= Opaque(materials[i]) || (supportsCutout != null && supportsCutout(materials[i]));
                     if (hasOpaque)
                     {
                         int id = skin.GetInstanceID();
@@ -142,6 +145,8 @@ namespace lilToon.URP.Extensions.RayTracing
                 for (int submesh = 0; submesh < mesh.subMeshCount; ++submesh)
                 {
                     var material = materials[submesh]; var descriptor = mesh.GetSubMesh(submesh);
+                    if(excluded!=null&&excluded.Contains(material))
+                    {Rejections.Add(renderer.name+" submesh "+submesh+": excluded by material filter.");continue;}
                     bool cutout = !Opaque(material) && supportsCutout != null && supportsCutout(material);
                     if ((!Opaque(material) && !cutout) || mesh.GetTopology(submesh) != MeshTopology.Triangles || descriptor.indexCount == 0 || descriptor.indexCount % 3 != 0)
                     { Rejections.Add(renderer.name + " submesh " + submesh + ": requires opaque triangle geometry and a material."); continue; }

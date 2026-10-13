@@ -12,6 +12,8 @@ Feature 默认只生产独立直接光，主相机基础画面保持原有渲染
 
 `finalSampling`默认单样本，可选择三样本以增加两次解析灯最终可见性查询、降低动态多灯噪声。Opaque局部消费，Cutout按相机持有8-byte/像素第二辅助，Sky-only和确定性单灯保留原路径。实际接入、Player验证、显存及仍存在的质量问题见[三最终样本](Ho-RTDI-RuntimeMultiSamples.md)；尚无GPU毫秒收益结论。
 
+合并模型中的天空壳可在「高级 → 不参与求交的材质」指定其材质。相同材质的子网格会从DI求交登记中排除，主画面仍正常绘制；保留的子网格继续遮挡。列表默认空，详见[材质排除与古堡审计](Ho-RTDI-MaterialExclusion.md)。
+
 RenderGraph 读取 `HoRTDIRenderGraphResources.diffuse / specular` 并声明读依赖。RGB 为线性 HDR、已经包含参考接收 BRDF 的贡献；A 为接收面有效性，阴影中的有效表面可以 RGB=0、A=1，输入缺失/取样域不匹配为 A=0。兼容全局为 `_HoRTDIDiffuseTexture`、`_HoRTDISpecularTexture` 和 `_HoRTDIActive`。
 
 ## 哪些沿用参考工程

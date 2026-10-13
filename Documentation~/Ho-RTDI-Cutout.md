@@ -33,7 +33,7 @@ Unity 原生 Mesh attribute fetch 与 Material hit group 提供纹理/UV 输入�
 
 ## 古堡的验收边界
 
-用户指出古堡有合并在主模型内的球形天空壳，不能据该场景整体照明判断 DI 阴影正确性。原资产仅用于支持审计：全部 16 submesh（其中 12 Cutout）可登记，未产生排除。`AuditBloodMoonCastleWithoutSkyShell` 在隔离场景中临时克隆名为“天空”的材质并仅从注册中排除它，最终恢复数组、销毁克隆，不修改/拆分/保存源模型或材质；此时登记 15 submesh、仍含全部 12 Cutout，额外的单个排除就是天空壳。
+用户指出古堡有合并在主模型内的球形天空壳，不能据该场景整体照明判断 DI 阴影正确性。原资产仅用于支持审计：全部 16 submesh（其中 12 Cutout）可登记，未产生排除。第80步为DI加入[材质排除列表](Ho-RTDI-MaterialExclusion.md)，`AuditBloodMoonCastleWithoutSkyShell`已改用该接口排除名为“天空”的源材质，不再克隆材质或修改sharedMaterials；登记15 submesh、仍含全部12 Cutout，唯一排除是天空壳。该名称选择仅用于已知fixture，生产列表按材质对象身份匹配。
 
 审计不渲染实际古堡完整画面，也不是性能/漏光验收。自有当前姿态 Mesh 仍约 28.54 MiB，因为合并网格没有拆开；最终接收、艺术阴影控制和 GI 归属继续延期。下一项应在可控场景检查 Cutout 局部边缘、运动与 GPU 成本，结合古堡隔离区域的实际结果再决定优化，不用天空壳或合并布局造成的现象调整采样/降噪参数。
 

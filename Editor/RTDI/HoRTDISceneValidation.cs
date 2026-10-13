@@ -55,7 +55,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if (!Application.dataPath.Replace('\\', '/').Contains("/.codex-research/"))
                 throw new InvalidOperationException("Copy the scene dependencies to an isolated project first.");
             int exit = 0;
-            var originals=new Dictionary<Renderer,Material[]>();var temporary=new List<Material>();
+            var excluded=new List<Material>();
             try
             {
                 if (!HoRTScene.IsSupported) throw new NotSupportedException("D3D12 inline tracing required for registry audit.");
@@ -63,25 +63,14 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 EditorSceneManager.OpenScene(scenePath, OpenSceneMode.Single);
                 var renderers = UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
                 var lights = UnityEngine.Object.FindObjectsByType<Light>(FindObjectsInactive.Include, FindObjectsSortMode.InstanceID);
-                if(excludeSkyShell)foreach(var renderer in renderers)
-                {
-                    var materials=renderer.sharedMaterials;bool replaced=false;
-                    for(int i=0;i<materials.Length;i++)if(materials[i]!=null&&materials[i].name=="天空")
-                    {
-                        if(!replaced)originals.Add(renderer,renderer.sharedMaterials);
-                        var clone=new Material(materials[i]){name=materials[i].name,hideFlags=HideFlags.HideAndDontSave};
-                        // A test-only registration exclusion; no source material, asset or mesh is changed.
-                        clone.SetOverrideTag("RenderType","Transparent");materials[i]=clone;temporary.Add(clone);replaced=true;
-                    }
-                    if(replaced)renderer.sharedMaterials=materials;
-                }
+                if(excludeSkyShell)foreach(var renderer in renderers)foreach(var material in renderer.sharedMaterials)if(material!=null&&material.name=="天空"&&!excluded.Contains(material))excluded.Add(material);
                 var visibilityShader=AssetDatabase.LoadAssetAtPath<Shader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTDI/Shaders/HoRTDIVisibilityMaterial.shader");
                 if(visibilityShader==null)throw new Exception("Visibility material shader missing");
                 using var visibility=new HoRTDIVisibilityMaterials(visibilityShader);
                 using var registry = new HoRTScene(visibility.Resolve,HoRTDIVisibilityMaterials.SupportsCutout);
-                visibility.BeginFrame();var timer = System.Diagnostics.Stopwatch.StartNew(); registry.Synchronize(renderers);visibility.EndFrame();timer.Stop();
+                visibility.BeginFrame();var timer = System.Diagnostics.Stopwatch.StartNew(); registry.Synchronize(renderers,0xff,excluded);visibility.EndFrame();timer.Stop();
                 double initialMs = timer.Elapsed.TotalMilliseconds; uint initialBakes = registry.SkinnedBakeCount, revision = registry.Revision;
-                timer.Restart(); for (int i = 0; i < 64; ++i){visibility.BeginFrame();registry.Synchronize(renderers);visibility.EndFrame();} timer.Stop();
+                timer.Restart(); for (int i = 0; i < 64; ++i){visibility.BeginFrame();registry.Synchronize(renderers,0xff,excluded);visibility.EndFrame();} timer.Stop();
                 if (registry.SkinnedBakeCount != initialBakes || registry.Revision != revision)
                     throw new Exception("Static source scene must reuse pose and registry revision.");
                 // IDs start at one in this fresh registry and no entries have been removed.
@@ -109,11 +98,6 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 Debug.Log($"[HoRTDISceneValidation] PASS registry audit: {report.instances} submeshes, {report.skinnedSnapshots} skin snapshots, {report.rejections.Length} exclusions; no image-quality assertion");
             }
             catch (Exception error) { Debug.LogException(error); exit = 1; }
-            finally
-            {
-                foreach(var pair in originals)if(pair.Key!=null)pair.Key.sharedMaterials=pair.Value;
-                foreach(var clone in temporary)UnityEngine.Object.DestroyImmediate(clone);
-            }
             EditorApplication.Exit(exit);
         }
 

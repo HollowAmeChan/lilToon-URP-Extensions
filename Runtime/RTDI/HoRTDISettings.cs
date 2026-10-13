@@ -30,6 +30,8 @@ namespace lilToon.URP.Extensions.RTDI
         [Range(1,32)] public float spatialRadius = 16;
         [Min(.00001f)] public float rayBias = .001f;
         public LayerMask geometryLayers = -1;
+        [Tooltip("使用这些材质的子网格不参与 RTDI 世界求交，可用于合并模型中的天空壳。灯光会穿过被排除的子网格，不改变主画面绘制。")]
+        public Material[] excludedRayMaterials=Array.Empty<Material>();
         public LayerMask lightLayers = -1;
     }
 }

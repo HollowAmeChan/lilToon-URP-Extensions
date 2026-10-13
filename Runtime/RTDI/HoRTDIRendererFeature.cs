@@ -93,7 +93,7 @@ namespace lilToon.URP.Extensions.RTDI
             foreach(var key in dead){contexts[key].Dispose();contexts.Remove(key);}
             var renderers=UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);var geometry=new List<Renderer>();
             foreach(var item in renderers)if((settings.geometryLayers.value&(1<<item.gameObject.layer))!=0)geometry.Add(item);
-            visibilityMaterials?.BeginFrame();scene.Synchronize(geometry);visibilityMaterials?.EndFrame();
+            visibilityMaterials?.BeginFrame();scene.Synchronize(geometry,0xff,settings.excludedRayMaterials);visibilityMaterials?.EndFrame();
             var lightList=new List<AnalyticLight>();var lightKeys=new List<Light>();int signature=settings.initialSamples.GetHashCode()^settings.rayBias.GetHashCode()^((int)settings.localSampling*397)^((int)settings.finalSampling*457)^(visibilityMaterials?.Signature??0);int excludedLights=0;
             var infiniteLights=new List<AnalyticLight>();var infiniteKeys=new List<Light>();
             foreach(var light in UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.InstanceID))
