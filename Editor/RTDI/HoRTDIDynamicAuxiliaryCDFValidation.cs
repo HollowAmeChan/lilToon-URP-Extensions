@@ -65,6 +65,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             }
             var cases=new List<DynamicCDFCase>();bool all=true;int clock=0;
             var reservoirs=new PairedPackedReservoir[c.reservoirs.count];var secondSamples=new PairedPackedReservoir[size*size];
+            using var colourStageCapture=diffuseColourStageAudit?new ColourStageCapture(c):null;
             try
             {
                 foreach(string phase in new[]{"balanced","powerTemperature","disableBlue","blueDirectional","redSpot","disableRed","allDisabled","restore","replaceGreen"})
@@ -95,6 +96,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                         if(!dynamicAuxiliaryBaseline&&!singleRuntime)checks+=CheckDynamicAuxiliarySamples(c,cdf,keys.Length,runtimeMultiAudit?c.auxiliarySecondary:second);
                         c.reservoirs.GetData(reservoirs);if(!dynamicAuxiliaryBaseline&&(!runtimeMultiAudit||c.auxiliarySecondary!=null))ReadSecondAuxiliary(runtimeMultiAudit?c.auxiliarySecondary:second,secondSamples,0,0,secondSamples.Length);
                         ReadImage(c.diffuse.rt,raw);ReadImage(c.filteredDiffuse.rt,filtered);
+                        colourStageCapture?.Observe(phase,frame,raw,filtered);
                         if(opaqueDirectAuxiliaryAudit)Require(c.finalVisibility==null,"Direct dynamic prototype cannot enter native Cutout visibility");
                         if(imageHash!=null){imageHash.AppendData(raw.GetRawTextureData<byte>().ToArray());imageHash.AppendData(filtered.GetRawTextureData<byte>().ToArray());}
                         for(int y=48;y<80;y+=2)for(int x=48;x<80;x+=2)

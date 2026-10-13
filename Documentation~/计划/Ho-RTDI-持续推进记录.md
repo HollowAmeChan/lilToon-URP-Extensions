@@ -765,6 +765,14 @@
 
 **下一项：** 保持GPU预算未证明，继续实际DI质量/支持工作；等待有有效timestamp/capture的条件再测成本。详见[计时复查](../Ho-RTDI-GpuTimingAudit.md)。
 
+## 82. 关闭彩灯残色的真实阶段入口
+
+**动手前评审：** raw关闭通道0但filtered有正残色；读取actual PrePass/Temporal/Clamping/Atrous并记录first-positive，避免将后期历史反馈误当首发。
+
+**结果：** 两路径完全一致，raw/PrePass一直0，首帧reset全部0；第2帧Clamping先有颜色，第3帧Temporal反馈。published蓝/红峰值.001141/.001584，正式dynamic仍失败/exit1，diagnosticOnly报告保存。
+
+**下一项：** 固定vendor/fork的独立YCoCg clamp可产生原RGB零通道外颜色，隔离测试fast→normal线段裁剪；保持sigma/其它参数与所有正式门槛，不先按当前raw为0硬清输出。仅Editor/文档，Roslyn/Shader/GUID/diff通过。详见[阶段证据](../Ho-RTDI-DiffuseColourStageAudit.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
