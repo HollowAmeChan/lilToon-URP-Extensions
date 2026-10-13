@@ -689,6 +689,14 @@
 
 **下一项：** 同fixture关闭ReSTIR reuse并读primary/packed估计，先拆分采样、输入坐标/尺寸与CPU参考，不猜测改GB/SB或系数。只有Editor/文档，Roslyn/Shader/GUID/diff通过、生产/Player不变。详见[隔离与失败](../Ho-RTDI-MultiCameraAudit.md)。
 
+## 72. 多相机reuse控制与判据复查
+
+**动手前评审：** 先同fixture关闭reuse，分别开temporal/spatial；不把瞬时raw大偏差直接归给输入。核对fork/SDK选中来源pi与各来源target*M的MIS归一化。
+
+**结果：** no reuse四入口全部0，raw/filtered最大.000651/.004506。各复用模式仍按旧瞬时门槛失败，但阶段raw积分约.9955～1.0096、filtered .9868～1.0033；实际weight2.71/3.69/4.80符合非恒定MIS来源权重，不能要求每次2。第71步随机单帧raw1%判据不适合采样期望验收，保留其诊断，未证实主表面或复用bug。
+
+**下一项：** 逐像素长期均值与区域积分验收，分离期望、噪声、状态隔离及动态响应；保留其他真实质量失败。仅Editor/文档，无生产输入/算法改动。详见[复用控制](../Ho-RTDI-MultiCameraReuseControl.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
