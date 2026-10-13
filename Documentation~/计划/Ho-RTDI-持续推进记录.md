@@ -729,6 +729,14 @@
 
 **下一项：** 复查三样本对生产单样本的实际收益/既有filter失败归属，规划按相机snapshot/CDF/变体的产品接入及Player，不停留在孤立原型。仅Editor/文档，75opaque/74native回归、Roslyn/Shader/GUID/diff通过，其余真实失败保持。详见[路径切换](../Ho-RTDI-AuxiliaryVisibilitySwitch.md)。
 
+## 77. 多样本接入收益与已有filter失败归属
+
+**动手前评审：** 不能把原单样本已存在的NRD失败全部归给新采样。重跑当前single四灯域/环境两路径，并与compact三样本同fixture比较；不为过门槛改设置。
+
+**结果：** 动态解析L1 .531/.365/.505/.515→.324/.203/.308/.309，filtered MSE减少61～69%。混合环境两者仍2/4；最坏通道差异略降低、个别蓝通道略升，原5%失败保持，不成为无限期不接入的借口。六入口fresh失败报告真实保存，无新增DI诊断。
+
+**下一项决定：** 实现可选多最终样本，默认single；按实际snapshot CDF/每相机资源/scene同步后路径/两shade入口/RG及compat/Player/unsupported完整接入，不先加空字段。保留质量/GPU预算限制与最终材质合成边界。详见[接入评审与具体条件](../Ho-RTDI-MultiSampleIntegrationDecision.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
