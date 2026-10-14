@@ -813,6 +813,14 @@
 
 **下一项：** 辅助提案与表面响应的匹配，兼顾实际静态与独立动态fixture；single默认/triple可选、预算未知保持，不盲目改滤波或加样本。仅Editor/文档，Roslyn/Shader/diff通过。详见[真实时间波动](../Ho-RTDI-CastleTemporalStability.md)。
 
+## 88. 表面响应辅助RIS隔离实验
+
+**动手前评审：** global功率与局部BRDF匹配不足；核对用户fork StreamSample/FinalizeResampling，用每辅助四fresh候选验证。古堡仅兼容/稳定性观察，解析能量与动态由可控fixture验收。
+
+**结果：** 古堡两路径raw方差相对triple下降40.29%，独立四灯域两路径通过但L1未改善。环境RG3/4、动态RG8/9，mixed镜面和100:1能量失败仍保留；不生产化。原Runtime/默认/NRD参数不改，额外target评估成本未测。补空RIS native guard与header同步导入，Roslyn/Shader/diff通过。
+
+**下一项：** 可控100:1灯变化primary/auxiliary能量与收敛定位，不能因古堡预览改善直接接纳。详见[隔离候选](../Ho-RTDI-SurfaceAuxiliaryCandidate.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

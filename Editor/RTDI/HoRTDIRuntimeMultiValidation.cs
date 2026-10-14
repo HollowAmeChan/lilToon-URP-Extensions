@@ -5,6 +5,11 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     public static partial class HoRTDIValidation
     {
         private static bool runtimeMultiAudit;
+        private static bool surfaceAuxiliaryAudit;
+        public static void RunSurfaceAuxiliaryDomain(){surfaceAuxiliaryAudit=true;RunRuntimeMultiDomain();}
+        public static void RunSurfaceAuxiliaryDomainCompatibility(){compatibility=true;RunSurfaceAuxiliaryDomain();}
+        public static void RunSurfaceAuxiliaryEnvironment(){surfaceAuxiliaryAudit=true;RunRuntimeMultiEnvironment();}
+        public static void RunSurfaceAuxiliaryDynamic(){surfaceAuxiliaryAudit=true;RunRuntimeMultiDynamic();}
         private static bool runtimeMultiStateAudit;
         public static void RunRuntimeMultiDomain(){runtimeMultiAudit=compactAuxiliaryAudit=true;RunPairedLightDomainBaseline();}
         public static void RunRuntimeMultiDomainCompatibility(){compatibility=true;RunRuntimeMultiDomain();}

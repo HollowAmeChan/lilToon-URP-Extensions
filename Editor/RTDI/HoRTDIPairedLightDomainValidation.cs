@@ -121,6 +121,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(AuxiliaryImageHash)name="rtdi-direct75-lightdomain-"+(opaqueDirectAuxiliaryAudit?"direct-":"baseline-")+(compatibility?"compat":"rg")+".json";
             if(runtimeMultiAudit)name="rtdi-runtime78-lightdomain-"+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json";
             if(diffuseSegmentAudit)name="rtdi-diffusesegment83-lightdomain-"+(compatibility?"compat":"rg")+".json";
+            if(surfaceAuxiliaryAudit)name="rtdi-surfaceris88-lightdomain-"+(compatibility?"compat":"rg")+".json";
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+name),JsonUtility.ToJson(new PairedLightDomainReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",auxiliaryPdf=runtimeMultiAudit||pairedAuxiliaryPowerCDF?"rgb-power-cdf":cutoutPairedFinalSample?"uniform":"none",finalSamples=runtimeMultiAudit||pairedSecondAuxiliary?3:cutoutPairedFinalSample?2:1,cases=results.ToArray()},true));
             Require(allPass,"Light-domain energy/noise/step/HDR gates failed");
             bool OutsideLeft(Light source,Vector3 p){var delta=source.transform.position-p;float t=(blocker.transform.position.z-p.z)/delta.z;return t>0&&t<1&&blocker.transform.InverseTransformPoint(p+delta*t).x<-.5f;}

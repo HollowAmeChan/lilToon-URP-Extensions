@@ -140,6 +140,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(AuxiliaryImageHash)prefix="rtdi-direct75-dynamic-"+(opaqueDirectAuxiliaryAudit?"direct-":"baseline-");
                 if(runtimeMultiAudit)prefix="rtdi-runtime78-dynamic-";
                 if(diffuseSegmentAudit)prefix="rtdi-diffusesegment83-dynamic-";
+                if(surfaceAuxiliaryAudit)prefix="rtdi-surfaceris88-dynamic-";
                 File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+(dynamicAuxiliaryLongAudit?"long-":"")+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new DynamicCDFReport{qualityPass=all,path=compatibility?"compatibility":"RenderGraph",visibility=pairedOpaqueAudit?"inline-opaque":"native-cutout",cases=cases.ToArray()},true));
                 Require(all,"Dynamic auxiliary CDF energy/dark-signal gates failed");
             }
@@ -192,7 +193,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     // scratch slots; image checks establish that they contribute 0.
                     if(count==0)continue;
                     uint index=packed[0].lightData&0x7fffffff;Require((packed[0].lightData&0x80000000)!=0&&index<count,"Dynamic auxiliary light index invalid");
-                    float pdf=cdf[index]-(index>0?cdf[index-1]:0),expected=1/pdf;Require(float.IsFinite(packed[0].weight)&&Math.Abs(packed[0].weight-expected)<expected*3e-5,"Dynamic auxiliary inverse PDF mismatch");checks++;
+                    float pdf=cdf[index]-(index>0?cdf[index-1]:0),expected=1/pdf;
+                    if(HoRTDISurfaceAuxiliaryValidation.Enabled)Require(float.IsFinite(packed[0].weight)&&packed[0].weight>=0&&(draw!=0||(packed[0].mVisibility>>18)==4),"Dynamic fresh RIS weight/metadata invalid");
+                    else Require(float.IsFinite(packed[0].weight)&&Math.Abs(packed[0].weight-expected)<expected*3e-5,"Dynamic auxiliary inverse PDF mismatch");checks++;
                 }
             }
             return checks;
