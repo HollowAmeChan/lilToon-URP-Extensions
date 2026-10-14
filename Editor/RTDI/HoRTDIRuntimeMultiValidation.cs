@@ -19,6 +19,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunRuntimeMultiEnvironmentCompatibility(){compatibility=true;RunRuntimeMultiEnvironment();}
         public static void RunRuntimeMultiDynamic(){runtimeMultiAudit=compactAuxiliaryAudit=true;dynamicAuxiliaryCDFAudit=true;RunCutoutResolutionSpecular();}
         public static void RunRuntimeMultiDynamicCompatibility(){compatibility=true;RunRuntimeMultiDynamic();}
+        public static void RunRuntimeMultiDynamicLong(){dynamicAuxiliaryLongAudit=true;RunRuntimeMultiDynamic();}
+        public static void RunRuntimeMultiDynamicLongCompatibility(){compatibility=true;RunRuntimeMultiDynamicLong();}
         public static void RunRuntimeMultiOpaqueDynamic(){pairedOpaqueAudit=true;RunRuntimeMultiDynamic();}
         public static void RunRuntimeMultiCamera(){runtimeMultiAudit=true;RunMultiCameraDIMean();}
         public static void RunRuntimeMultiCameraCompatibility(){compatibility=true;RunRuntimeMultiCamera();}
