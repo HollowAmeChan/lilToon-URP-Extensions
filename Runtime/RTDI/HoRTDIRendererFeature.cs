@@ -148,15 +148,30 @@ namespace lilToon.URP.Extensions.RTDI
 
         private sealed class HoRTDIPass : ScriptableRenderPass
         {
+            // Numeric values used after recording must not refer to the live
+            // Inspector object. Geometry/material filtering is already applied
+            // by the collector before this snapshot is constructed.
+            private readonly struct PassSettings
+            {
+                internal readonly bool useEnvironment,temporal,spatial;
+                internal readonly int environmentSamples,environmentBrdfSamples,initialSamples,maxHistory,spatialSamples;
+                internal readonly float spatialRadius,rayBias;
+                internal PassSettings(HoRTDISettings source)
+                {
+                    useEnvironment=source.useEnvironment;temporal=source.temporal;spatial=source.spatial;
+                    environmentSamples=source.environmentSamples;environmentBrdfSamples=source.environmentBrdfSamples;initialSamples=source.initialSamples;maxHistory=source.maxHistory;spatialSamples=source.spatialSamples;
+                    spatialRadius=source.spatialRadius;rayBias=source.rayBias;
+                }
+            }
             private static readonly string[] ReferenceStages={"BuildPowerPdf","Presample","BuildEnvironmentPdf","PresampleEnvironment","Initial","Temporal","Spatial","Shade"};
-            private HoRTDIContext context;private HoRTScene scene;private ComputeShader shader;private HoRTDISettings settings;
+            private HoRTDIContext context;private HoRTScene scene;private ComputeShader shader;private PassSettings settings;
             private RayTracingShader finalVisibilityShader;
             private AnalyticLight[] lights;private Light[] lightKeys;private int lightCount,localLightCount,signature;
             private int requestedFinalSamples;
             internal HoRTDIPass(){renderPassEvent=RenderPassEvent.BeforeRenderingPostProcessing;}
             internal void Setup(HoRTDIContext context,HoRTScene scene,ComputeShader shader,RayTracingShader finalVisibilityShader,HoRTDISettings settings,AnalyticLight[] lights,Light[] keys,int count,int localCount,int signature)
             {
-                this.context=context;this.scene=scene;this.shader=shader;this.finalVisibilityShader=finalVisibilityShader;this.settings=settings;this.lights=lights;lightKeys=keys;lightCount=count;localLightCount=localCount;this.signature=signature;
+                this.context=context;this.scene=scene;this.shader=shader;this.finalVisibilityShader=finalVisibilityShader;this.settings=new PassSettings(settings);this.lights=lights;lightKeys=keys;lightCount=count;localLightCount=localCount;this.signature=signature;
                 requestedFinalSamples=settings.finalSampling==HoRTDIFinalSampling.TripleAnalytic?3:1;
                 #if UNITY_EDITOR
                 ConfigureInput(context.nrd?.ValidationMotionCapture!=null?ScriptableRenderPassInput.Motion:ScriptableRenderPassInput.None);
@@ -165,7 +180,7 @@ namespace lilToon.URP.Extensions.RTDI
             private sealed class Data
             {
                 internal HoRTDIContext context;internal HoRTScene.Inputs scene;internal HoRTPrimarySurfaceInputs primary;
-                internal ComputeShader shader;internal HoRTDISettings settings;internal HoRTDIContext.LightFrame lightFrame;
+                internal ComputeShader shader;internal PassSettings settings;internal HoRTDIContext.LightFrame lightFrame;
                 internal RayTracingShader finalVisibilityShader;
                 internal int lightCount,localLightCount,signature;internal uint revision,structureRevision;internal Matrix4x4 view,projection;internal Camera camera;
                 internal double renderTime;

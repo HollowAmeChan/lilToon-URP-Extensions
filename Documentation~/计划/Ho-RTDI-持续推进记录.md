@@ -789,6 +789,14 @@
 
 **下一项：** 实际场景支持或具体有效质量失败，GPU预算仍未证明。original SHA/派生/Roslyn/diff/nativeSHA通过，未改GI/NPR合成。详见[生产修复](../Ho-RTDI-DiffuseConvexClamping.md)。
 
+## 85. dispatch设置的不可变数值快照
+
+**动手前评审：** pass/Data除final budget外仍引用live settings，记录后参数可能与signature/resource准备不匹配。沿fork numeric frame契约在Setup复制消费字段到readonly值，不增加配置框架。
+
+**结果：** 两路径各32项旧Data/下一Setup合同和GPU有效性通过；72帧无readback资源切换两路径、两个actual Single RG/Multi compatibility Player完整验收pass/0。原质量数据保持，Roslyn/Shader/GUID/diff通过。
+
+**下一项：** 继续实际DI质量/场景支持；scene/resource本身仍按现有stamp同步契约，不声称可任意异步改写。详见[设置快照](../Ho-RTDI-SettingsSnapshot.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

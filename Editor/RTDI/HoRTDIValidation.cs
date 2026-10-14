@@ -136,6 +136,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(forceTiming){ValidateTiming();Finish(null);return;}
                 if(forceCurved){ValidateCurved();Finish(null);return;}
                 if(forceMaterialExclusion){ValidateMaterialExclusion();Finish(null);return;}
+                if(forceSettingsSnapshot){ValidateSettingsSnapshot();Finish(null);return;}
                 if(forceEnvironment){ValidateEnvironment();Finish(null);return;}
                 if(forceBoundaries){ValidateBoundaries();Finish(null);return;}
                 if(forceSpecular){ValidateSpecular();Finish(null);return;}
