@@ -845,6 +845,14 @@
 
 **下一项：** 主reservoir目标对弱彩灯相对误差的分配，保留真实shade/PDF/门槛，不增加用户设置或盲目加样本。详见[共享范围候选](../Ho-RTDI-PresampleCoherenceCandidate.md)。
 
+## 92. 弱彩灯重要性目标的平方根隔离候选
+
+**动手前评审：** 91共享范围没有完整改善；沿fork目标回调与SDK归一化，只温和化零F0完整RGB贡献目标，shade/PDF/预算/复用不改。非零F0与材质类别保护保持。
+
+**结果：** Power两路径与Uniform候选九阶段全部通过，原Uniform实际对照失败；Power弱红raw1.014597/filtered.999766，primary相对方差165.87→15.01。Single32项256/512边界、六项运动及常量/旋转HDR天空通过；阶跃门槛余量小。Roslyn/Shader/GUID/diff通过，Runtime未改。
+
+**下一项：** 窄生产接入、默认完整primary/noise与实际Player、共享GI合同回归；不扩大到非零F0或添加设置。详见[目标候选](../Ho-RTDI-TemperedTargetCandidate.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

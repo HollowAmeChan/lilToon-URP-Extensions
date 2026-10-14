@@ -51,6 +51,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         {
             const int size=128;target.Release();target.width=target.height=size;target.Create();camera.aspect=1;
             feature.Settings.useEnvironment=false;feature.Settings.localSampling=HoRTDILocalSampling.Power;
+            if(dynamicUniformSource)feature.Settings.localSampling=HoRTDILocalSampling.Uniform;
             if(dynamicReuseMode!=null){feature.Settings.temporal=dynamicReuseMode=="both"||dynamicReuseMode=="temporal";feature.Settings.spatial=dynamicReuseMode=="both"||dynamicReuseMode=="spatial";}
             surfaceMaterial.SetFloat("_Reflectance",0);surfaceMaterial.SetFloat("_Metallic",0);
             blocker.transform.position=Vector3.right*4;
@@ -163,6 +164,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(surfaceAuxiliaryAudit)prefix="rtdi-surfaceris88-dynamic-";
                 if(dynamicReuseMode!=null)prefix="rtdi-reuse90-"+dynamicReuseMode+"-";
                 if(presampleTilePixels>0)prefix="rtdi-coherence91-tile"+presampleTilePixels+(presampleTilePixels==1?"-separated-":"-");
+                if(temperedTargetAudit||dynamicUniformSource)prefix="rtdi-tempered92-"+(dynamicUniformSource?"uniform-":"power-")+(temperedTargetAudit?"candidate-":"baseline-");
                 File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+(dynamicAuxiliaryLongAudit?"long-":"")+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new DynamicCDFReport{qualityPass=all,path=compatibility?"compatibility":"RenderGraph",visibility=pairedOpaqueAudit?"inline-opaque":"native-cutout",cases=cases.ToArray()},true));
                 Require(all,"Dynamic auxiliary CDF energy/dark-signal gates failed");
             }

@@ -21,6 +21,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         private sealed class F0BoundarySums{internal double r,b,ar,ab,fr,fb,error,green;}
         private static void ValidateF0Boundary(Light blue)
         {
+            using var temperedOverride=temperedTargetAudit?HoRTDITemperedTargetValidation.Apply(feature):null;
             blue.transform.position=new Vector3(-1.5f,0,-1);primaryReceiver.SetActive(false);
             var mats=new[]{Keep(new Material(surfaceMaterial)),Keep(new Material(surfaceMaterial))};
             for(int side=0;side<2;side++)
@@ -65,7 +66,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     void Draw(){c.nrd.ValidationTimeSeconds=++clock/60.0;RenderCamera();}
                 }
             }
-            File.WriteAllText(Path.Combine(Application.dataPath,"../"+(f0BoundaryLarge?"rtdi-f0boundary44-":"rtdi-f0boundary42-")+(f0BoundaryUniform>=0?"uniform"+f0BoundaryUniform+"-":"")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new F0BoundaryReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",uniformF0=f0BoundaryUniform,cases=cases.ToArray()},true));
+            File.WriteAllText(Path.Combine(Application.dataPath,"../"+(temperedTargetAudit?"rtdi-tempered92-f0boundary-":f0BoundaryLarge?"rtdi-f0boundary44-":"rtdi-f0boundary42-")+(f0BoundaryUniform>=0?"uniform"+f0BoundaryUniform+"-":"")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new F0BoundaryReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",uniformF0=f0BoundaryUniform,cases=cases.ToArray()},true));
             Require(allPass,"F0 spatial boundary/resolution quality gates failed");
         }
         private static float F0BoundaryLamp(Light source,int x,int y,int size)

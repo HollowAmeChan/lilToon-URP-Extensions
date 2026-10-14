@@ -27,6 +27,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         }
         private static void ValidateEnvironment()
         {
+            using var temperedOverride=temperedTargetAudit?HoRTDITemperedTargetValidation.Apply(feature):null;
             light.enabled=false;blocker.SetActive(false);feature.Settings.useEnvironment=true;feature.Settings.environmentSamples=4;feature.Settings.initialSamples=1;
             feature.Settings.temporal=feature.Settings.spatial=false;feature.Settings.denoise=false;
             var image=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));Color sum=Color.clear;

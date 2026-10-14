@@ -6,6 +6,14 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     {
         private static bool runtimeMultiAudit;
         private static string dynamicReuseMode;
+        private static bool temperedTargetAudit,dynamicUniformSource;
+        public static void RunRuntimeTemperedTarget(){temperedTargetAudit=true;RunRuntimeDynamicReuseBoth();}
+        public static void RunRuntimeTemperedUniformTarget(){dynamicUniformSource=true;RunRuntimeTemperedTarget();}
+        public static void RunRuntimeUniformTargetBaseline(){dynamicUniformSource=true;RunRuntimeDynamicReuseBoth();}
+        public static void RunRuntimeTemperedTargetCompatibility(){compatibility=true;RunRuntimeTemperedTarget();}
+        public static void RunTemperedF0BoundaryLarge(){temperedTargetAudit=true;RunF0BoundaryLarge();}
+        public static void RunTemperedDiffuseMotion(){temperedTargetAudit=true;RunCutoutResolutionMotion();}
+        public static void RunTemperedEnvironment(){temperedTargetAudit=true;RunEnvironment();}
         private static int presampleTilePixels;
         public static void RunRuntimePresampleTile4(){presampleTilePixels=4;RunRuntimeDynamicReuseBoth();}
         public static void RunRuntimePresampleTile1(){presampleTilePixels=1;RunRuntimeDynamicReuseBoth();}
