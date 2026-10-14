@@ -57,8 +57,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 }
                 using var lateSpecOverride=lateSpecExchangeAudit?ApplyLateSpecExchange(c):null;
                 using var diffuseSegmentOverride=diffuseSegmentAudit?ApplyDiffuseSegment(c):null;
+                using var referenceOverride=referenceSpecularAudit?new SpecularReferenceOverride(blue,mixed,reuse):null;
                 if(auxiliarySpatialAudit){ValidateAuxiliarySpatial(c,reuse,blue);computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);continue;}
-                if(auxiliaryEnvironmentStages){ValidateAuxiliaryEnvironmentStages(c,mixed,reuse,blue,skySpec);computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);continue;}
+                if(auxiliaryEnvironmentStages){ValidateAuxiliaryEnvironmentStages(c,mixed,reuse,blue,skySpec,referenceOverride);computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);continue;}
                 c.historyValid=c.nrdHistoryValid=false;c.frame=0;for(int i=0;i<192;i++)RenderCamera();
                 if(lateSpecWeightAudit)lateSpecOverride.ResetHistogram();
                 var sums=new double[4,3];var references=new double[2,3];int samples=0;double minSignal=0;
@@ -80,6 +81,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 for(int frame=0;frame<frames;frame++)
                 {
                     RenderCamera();Require(c.nrd.LastDispatchCount>0&&c.environmentSampling,"Environment prototype bypassed RELAX/environment");ReadImage(c.diffuse.rt,rawD);ReadImage(c.specular.rt,rawS);ReadImage(c.filteredDiffuse.rt,filteredD);ReadImage(c.filteredSpecular.rt,filteredS);
+                    referenceOverride?.Observe(frame,rawS);
                     guideCapture?.Observe(frame);
                     foreach(var p in referencePoints)
                     {
@@ -113,6 +115,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(surfaceAuxiliaryAudit)mode+="-surfaceris88";
             if(guideDistanceAudit){mode+="-guidedistance95";WriteGuideDistances();}
             if(specularDistanceControl>0)mode+="-distance96-"+DistanceControlName;
+            if(referenceSpecularAudit){mode+="-specreference97";WriteSpecularReference();}
             if(auxiliarySpatialAudit){WriteAuxiliarySpatial(mode);return;}
             if(auxiliaryEnvironmentStages){WriteAuxiliaryEnvironmentStages(mode);return;}
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+(runtimeMultiAudit?"rtdi-runtime78-env-":compactAuxiliaryAudit?"rtdi-compact74-env-":"rtdi-auxenv54-")+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",mode=mode,projection=auxiliaryPerspectiveAudit?"perspective":"orthographic",cases=cases.ToArray()},true));

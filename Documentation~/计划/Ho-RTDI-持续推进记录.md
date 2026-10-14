@@ -885,6 +885,14 @@
 
 **下一项：** 无采样噪声的独立镜面参考输入控制，区分噪声搬移与固有空间形状改变；距离合同缺口独立保留，不硬填常量或扩张PT。详见[距离控制](../Ho-RTDI-SpecularDistanceControl.md)。
 
+## 97. 无辐射采样噪声的镜面参考控制
+
+**动手前评审：** 96距离非静态根因；沿fork分lobe及NRD material factors合同，把CPU完整物理参考注入去调制前，保留距离/diffuse/HDR/参数，不将CPU色直接当内部信号。
+
+**结果：** 两路径参考输入4/4，三入口实际exit0；每组524288像素输入误差≤.0792%。mixed filtered红/蓝.987924/1.022054，原失败消失；Temporal/Clamping/first方差数值零，末Atrs仍改变形状。首次非唯一锚点guard拒绝后缩窄Shade并重跑，不算首轮通过。Roslyn/Shader/GUID/diff通过，Runtime未改。
+
+**下一项：** 匹配去调制两lobe量级的真实选样目标隔离对照，保留shader/PDF/预算/动态门槛；oracle不是生产修复，距离合同另行保留。详见[独立参考输入](../Ho-RTDI-SpecularReferenceControl.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

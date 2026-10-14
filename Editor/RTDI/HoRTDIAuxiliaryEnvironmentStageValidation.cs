@@ -29,7 +29,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             internal double r,g,b,min,alpha;internal long negatives;
             internal readonly double[] rgb=new double[3072],rgb2=new double[3072],lum=new double[1024],lum2=new double[1024];
         }
-        private static void ValidateAuxiliaryEnvironmentStages(HoRTDIContext c,bool mixed,bool reuse,Light blue,double skySpec)
+        private static void ValidateAuxiliaryEnvironmentStages(HoRTDIContext c,bool mixed,bool reuse,Light blue,double skySpec,SpecularReferenceOverride referenceOverride=null)
         {
             const int size=128,frames=512;Require(mixed,"Environment stage audit requires the failing mixed case");
             var targets=new Dictionary<int,RenderTexture>();var images=new Dictionary<int,Texture2D>();var captures=new Dictionary<int,int>();
@@ -62,6 +62,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     var before=new Dictionary<int,int>(captures);RenderCamera();Require(c.nrd.LastDispatchCount>0,"Environment stage bypassed RELAX");
                     foreach(var pair in targets){Require(captures[pair.Key]>before[pair.Key],"Environment stage missing current capture");ReadImage(pair.Value,images[pair.Key]);}
                     ReadImage(c.diffuse.rt,images[-1]);ReadImage(c.filteredDiffuse.rt,images[-2]);ReadImage(c.specular.rt,images[99]);ReadImage(c.filteredSpecular.rt,images[98]);ReadImage(c.nrdSpecular.rt,input);
+                    referenceOverride?.Observe(frame,images[99]);
                     if(auxiliaryClampingAudit){ReadImage(fast4,fast4Image);ReadImage(fast6,fast6Image);}
                     c.nrdScale.GetData(scale);double inverse=1/BitConverter.Int32BitsToSingle((int)scale[1]),specFactor=0;Require(double.IsFinite(inverse)&&inverse>0,"Environment stage scale invalid");
                     foreach(var p in points)
