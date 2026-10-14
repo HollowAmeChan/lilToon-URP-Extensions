@@ -26,6 +26,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             using var surfaceAuxiliaryOverride=surfaceAuxiliaryAudit?HoRTDISurfaceAuxiliaryValidation.Apply(feature):null;
             using var presampleOverride=presampleTilePixels>0?HoRTDIPresampleCoherenceValidation.Apply(feature,presampleTilePixels):null;
             using var temperedOverride=temperedTargetAudit?HoRTDITemperedTargetValidation.Apply(feature):null;
+            using var distanceOverride=ApplySpecularDistanceControl();
             if(runtimeMultiStateAudit){ValidateRuntimeMultiState(blue);return;}
             if(cutoutResolutionSpecular){surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetFloat("_Smoothness",.6f);}
             if(cutoutSpecularRgbProposal)ApplyCutoutSpecularRgbProposal();

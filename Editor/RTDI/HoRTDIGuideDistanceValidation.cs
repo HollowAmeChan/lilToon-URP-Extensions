@@ -42,6 +42,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     Require((packed[0].lightData&0x80000000)!=0,"Guide audit primary sample invalid");
                     float d=diffuse.GetPixel(x,y).a,s=specular.GetPixel(x,y).a;
                     Require(float.IsFinite(d)&&float.IsFinite(s)&&d>=0&&s>=0,"NRD input distance invalid");
+                    if(specularDistanceControl>0)Require(Math.Abs(s-specularDistanceControl)<.005,"Specular distance control did not reach actual NRD input");
                     double expected=primary==0x7ffffffe?65504:Distance(primary,x,y);
                     result.probes++;if(Math.Abs(s-expected)<Math.Max(.005,expected*.002))result.primaryMatches++;if(d==s)result.equalLobeDistances++;
                     result.minSpecDistance=Math.Min(result.minSpecDistance,s);result.maxSpecDistance=Math.Max(result.maxSpecDistance,s);
@@ -62,6 +63,6 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             }
             internal void Finish(){Require(result.probes==128,"Guide audit observation count mismatch");guideDistanceCases.Add(result);}
         }
-        private static void WriteGuideDistances()=>File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-guidedistance95-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new GuideDistanceReport{path=compatibility?"compatibility":"RenderGraph",cases=guideDistanceCases.ToArray()},true));
+        private static void WriteGuideDistances()=>File.WriteAllText(Path.Combine(Application.dataPath,"../"+(specularDistanceControl>0?"rtdi-guidedistance96-"+DistanceControlName+"-":"rtdi-guidedistance95-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new GuideDistanceReport{path=compatibility?"compatibility":"RenderGraph",cases=guideDistanceCases.ToArray()},true));
     }
 }

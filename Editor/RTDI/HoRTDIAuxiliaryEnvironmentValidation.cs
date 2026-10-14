@@ -112,6 +112,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(diffuseSegmentAudit)mode+="-segment83";
             if(surfaceAuxiliaryAudit)mode+="-surfaceris88";
             if(guideDistanceAudit){mode+="-guidedistance95";WriteGuideDistances();}
+            if(specularDistanceControl>0)mode+="-distance96-"+DistanceControlName;
             if(auxiliarySpatialAudit){WriteAuxiliarySpatial(mode);return;}
             if(auxiliaryEnvironmentStages){WriteAuxiliaryEnvironmentStages(mode);return;}
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+(runtimeMultiAudit?"rtdi-runtime78-env-":compactAuxiliaryAudit?"rtdi-compact74-env-":"rtdi-auxenv54-")+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",mode=mode,projection=auxiliaryPerspectiveAudit?"perspective":"orthographic",cases=cases.ToArray()},true));

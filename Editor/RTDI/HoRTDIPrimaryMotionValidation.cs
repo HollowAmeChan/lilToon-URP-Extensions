@@ -19,6 +19,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunPrimaryMotionQualityCompatibility(){compatibility=true;RunPrimaryMotionQuality();}
         private static void ValidatePrimaryMotion()
         {
+            using var distanceOverride=ApplySpecularDistanceControl();
             skinBlockerBone.localPosition=Vector3.right*100;light.color=Color.red;var far=Point(new Vector3(-1.5f,0,-1),Color.blue,4);
             surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetFloat("_Smoothness",.6f);
             feature.Settings.initialSamples=8;feature.Settings.temporal=feature.Settings.spatial=true;
@@ -49,7 +50,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 Debug.Log($"[HoRTDIValidation] PRIMARY_MOTION mode={mode} signal={result.signal} rawR={result.rawRed:F6} rawB={result.rawBlue:F6} filteredR={result.filteredRed:F6} filteredB={result.filteredBlue:F6} frameL1={result.frameL1:F6} resets={resets} traced={traced}");
                 Require(result.rawPass,"moving primary independent raw energy mismatch");
             }
-            File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-primary34-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new PrimaryMotionReport{qualityPass=allPass,originPass=originPass,path=compatibility?"compatibility":"RenderGraph",cases=cases.ToArray()},true));
+            File.WriteAllText(Path.Combine(Application.dataPath,"../"+(specularDistanceControl>0?"rtdi-distance96-"+DistanceControlName+"-primary-":"rtdi-primary34-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new PrimaryMotionReport{qualityPass=allPass,originPass=originPass,path=compatibility?"compatibility":"RenderGraph",cases=cases.ToArray()},true));
             Debug.Log($"[HoRTDIValidation] PRIMARY_MOTION_RESULT qualityPass={allPass} originPass={originPass} compatibility={compatibility}");
             Require(!primaryOriginQuality||originPass,"primary-origin self-visibility noise regression");
             Require(!primaryFullQuality||allPass,"primary full filtered quality gates failed");

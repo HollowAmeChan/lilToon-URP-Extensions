@@ -57,6 +57,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         }
         private static void ValidateCurved()
         {
+            using var distanceOverride=ApplySpecularDistanceControl();
             const int size=128;primaryReceiver.SetActive(false);blocker.SetActive(false);
             target.Release();target.width=target.height=size;target.Create();camera.orthographic=false;camera.fieldOfView=40;
             var receiver=Keep(GameObject.CreatePrimitive(PrimitiveType.Sphere));receiver.transform.localScale=Vector3.one*1.5f;receiver.GetComponent<Renderer>().sharedMaterial=surfaceMaterial;

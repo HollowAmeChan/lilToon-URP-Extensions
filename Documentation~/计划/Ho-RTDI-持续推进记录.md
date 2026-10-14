@@ -877,6 +877,14 @@
 
 **下一项：** 距离单变量控制分开检验静态阶段与运动追踪，再定义DI lobe guide producer；不能将该观察等同静态偏差根因，也不扩张PT/GI。详见[距离审计](../Ho-RTDI-GuideDistanceAudit.md)。
 
+## 96. specular距离近/远单变量控制
+
+**动手前评审：** 95关联差不证明静态根因。沿fork/helper及固定Temporal/PrePass合同，只在隔离compute把spec alpha设1/65504，GPU确认实际生效，不当正式距离方案。
+
+**结果：** 两距离环境均2/4/exit1、mixed过滤能量完全相同；遮挡3组及primary完整检查均通过且相同。透视curve30配置两控制全部通过，24个实际降噪配置的过滤日志不同，最大L1差.042712，raw日志不变；说明消费存在但不解静态偏差。Roslyn/Shader/GUID/diff通过，Runtime未改。
+
+**下一项：** 无采样噪声的独立镜面参考输入控制，区分噪声搬移与固有空间形状改变；距离合同缺口独立保留，不硬填常量或扩张PT。详见[距离控制](../Ho-RTDI-SpecularDistanceControl.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
