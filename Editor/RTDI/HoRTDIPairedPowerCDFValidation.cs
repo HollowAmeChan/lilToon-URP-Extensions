@@ -43,6 +43,12 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     ReadSecondAuxiliary(second,packed,0,y*c.width+x,1);uint secondIndex=packed[0].lightData&0x7fffffff;bool secondCachedVisibility=(packed[0].mVisibility&63)!=0;
                     Require((packed[0].lightData&0x80000000)!=0&&secondIndex<cdf.Length,"Second auxiliary GPU sample invalid");
                     float secondPdf=cdf[secondIndex]-(secondIndex>0?cdf[secondIndex-1]:0),secondExpected=1/secondPdf;
+                    if(stratifiedAuxiliaryAudit)
+                    {
+                        float firstLo=index>0?cdf[index-1]:0,secondLo=secondIndex>0?cdf[secondIndex-1]:0;
+                        Require((firstLo<.5f&&cdf[secondIndex]>.5f)||(secondLo<.5f&&cdf[index]>.5f),"Auxiliary pair cannot cover both CDF strata");
+                        if(cdf.Length==2&&cdf[0]==.5f)Require(index!=secondIndex,"Balanced two-light stratification repeated one light");
+                    }
                     if(HoRTDISurfaceAuxiliaryValidation.Enabled)Require(float.IsFinite(packed[0].weight)&&packed[0].weight>=0,"Fresh RIS compact finalized weight invalid");
                     else Require(float.IsFinite(packed[0].weight)&&Math.Abs(packed[0].weight-secondExpected)<secondExpected*3e-5,"Second auxiliary GPU inverse PDF mismatch");
                     uint bits=0;

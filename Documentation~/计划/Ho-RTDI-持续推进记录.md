@@ -901,6 +901,14 @@
 
 **下一项：** 原CDF两辅助样本随机分层并随机交换槽位，保留边际PDF/权重/ray数，测灯域/环境/动态；不硬绑反相关索引或继续调filter常数。详见[信号域目标拒绝](../Ho-RTDI-DemodulatedProposalRejection.md)。
 
+## 99. 两辅助最终样本随机分层隔离候选
+
+**动手前评审：** 98信号域目标失败，沿原CDF/SDK权重合同，两区间独立抽样并随机交换槽位，保留边际PDF/相同等权估计，不固定反相关索引。
+
+**结果：** native/opaque四灯域均通过，native frameL1下降约6%～9%，step changed .203049→.143168；actual PDF/cache/CPU遮挡与strata合同通过。动态9/9，环境两路径仍2/4/exit1。无额外ray/资源，native shade跳过重复RNG后环境复跑一致。Roslyn/Shader/GUID/diff通过。
+
+**下一项：** 窄生产接入、actual Player与状态/相机合同回归；默认Single、旧环境失败、未测GPU成本保持。详见[随机分层候选](../Ho-RTDI-StratifiedAuxiliaryCandidate.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
