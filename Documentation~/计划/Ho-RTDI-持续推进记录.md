@@ -869,6 +869,14 @@
 
 **下一项：** 三最终样本NRD距离合同审计，primary灯距离未必是对应lobe距离；不直接平均/清零或扩张PT。详见[随机偏移控制](../Ho-RTDI-LateJitterRejection.md)。
 
+## 95. 三最终样本NRD距离真实输入审计
+
+**动手前评审：** 94关闭jitter无完整收益；核对官方lobe距离与本地v4.17最小非零helper，用户新forkDI直接输出不等于NRD绑定。只读取，不直接平均或清零。
+
+**结果：** 两路径各四组128探针，alpha全部匹配primary且两lobe相等；mixed有119/120个primary天空但有可见局部镜面辅助，距离关联比最大39847.71。正式环境仍2/4/exit1、数据保持，报告diagnosticOnly。Roslyn/Shader/GUID/diff通过，Runtime未改。
+
+**下一项：** 距离单变量控制分开检验静态阶段与运动追踪，再定义DI lobe guide producer；不能将该观察等同静态偏差根因，也不扩张PT/GI。详见[距离审计](../Ho-RTDI-GuideDistanceAudit.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
