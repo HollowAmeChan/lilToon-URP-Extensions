@@ -17,10 +17,11 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             string root=UnityEditor.PackageManager.PackageInfo.FindForAssetPath(packagePath+"/package.json").resolvedPath;
             string source=File.ReadAllText(Path.Combine(root,bridge));
             const string original="float importance = HoDIUsesRgbImportance(surface.material) ? length(max(0, contribution)) : max(0, HoDILuminance(contribution));";
-            if(source.Split(new[]{original},StringSplitOptions.None).Length!=2)throw new Exception("RGB target changed; review candidate");
+            const string tempered="float importance = HoDIUsesRgbImportance(surface.material) ? sqrt(length(max(0, contribution))) : max(0, HoDILuminance(contribution));";
+            if(source.Split(new[]{original},StringSplitOptions.None).Length==2)source=source.Replace(original,tempered);
+            else if(!source.Contains("HO_RTDI_TEMPERED_ZERO_F0_TARGET")||source.Split(new[]{tempered},StringSplitOptions.None).Length!=2)throw new Exception("RGB target changed; review candidate");
             // Nonzero support and the SDK normalization remain intact. The
             // square root tempers only the zero-F0 proposal, never shaded radiance.
-            source=source.Replace(original,"float importance = HoDIUsesRgbImportance(surface.material) ? sqrt(length(max(0, contribution))) : max(0, HoDILuminance(contribution));");
             source=Rebase(source,bridge);
             string cs=Rebase(File.ReadAllText(Path.Combine(root,compute)),compute).Replace(packagePath+"/"+bridge,asset+"/HoRTDIApplicationBridge.hlsl");
             string folder=Path.Combine(Application.dataPath,"HoRTDITemperedTargetAudit");Directory.CreateDirectory(folder);

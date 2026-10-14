@@ -199,9 +199,11 @@ float RAB_GetLightSampleTargetPdfForSurface(RAB_LightSample sample,RAB_Surface s
     #endif
     float3 contribution = response * sample.radiance;
     // Preserve the established proposal for surfaces with nonzero F0. With
-    // quantized F0 exactly zero, balance RGB error rather than only luminance.
+    // quantized F0 exactly zero, temper RGB importance to give weak coloured
+    // contributions more selection weight. Shade and source PDF stay intact.
     // This includes the same full BRDF response; Fresnel/Shade are not disabled.
-    float importance = HoDIUsesRgbImportance(surface.material) ? length(max(0, contribution)) : max(0, HoDILuminance(contribution));
+    // HO_RTDI_TEMPERED_ZERO_F0_TARGET
+    float importance = HoDIUsesRgbImportance(surface.material) ? sqrt(length(max(0, contribution))) : max(0, HoDILuminance(contribution));
     return importance/max(sample.solidAnglePdf,1e-12);
 }
 bool RAB_GetConservativeVisibility(RAB_Surface surface,RAB_LightSample sample)

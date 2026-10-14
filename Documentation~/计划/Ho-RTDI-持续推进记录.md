@@ -853,6 +853,14 @@
 
 **下一项：** 窄生产接入、默认完整primary/noise与实际Player、共享GI合同回归；不扩大到非零F0或添加设置。详见[目标候选](../Ho-RTDI-TemperedTargetCandidate.md)。
 
+## 93. 零F0弱彩灯提案窄生产接入
+
+**动手前评审：** 92统一目标通过独立动态/边界/运动/天空，可窄接入。只有量化零F0重要性取平方根，原shade/PDF/预算/默认/材质保护保留；GI关闭RGB分支的合同明确。
+
+**结果：** 默认Single16组noise/完整primary、实际Triple动态9/9、共享GI五阶段通过；两个release构建与actual Single RG/Triple compatibility Player、DX11inactive全部exit0。弱红raw1.014597/filtered.999766匹配隔离候选，未放宽门槛。generator识别生产marker防重复变换，Roslyn/DI-GI Shader/diff通过；旧SolarHD/keyword warning保留。
+
+**下一项：** 混合天空非零F0镜面filtered能量失败的阶段/合同定位，不扩大本修复、不碰最终NPR合成。详见[生产提案](../Ho-RTDI-TemperedTarget.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
