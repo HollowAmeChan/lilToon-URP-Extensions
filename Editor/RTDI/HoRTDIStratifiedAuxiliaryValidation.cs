@@ -24,6 +24,11 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             const string packagePath="Packages/jp.lilxyzw.liltoon.urp.extensions",aux="Runtime/RTDI/Shaders/HoRTDIAuxiliary.hlsl",compute="Runtime/RTDI/Shaders/HoRTDI.compute",ray="Runtime/RTDI/Shaders/HoRTDIFinalVisibility.raytrace",asset="Assets/HoRTDIStratifiedAuxiliary";
             string root=UnityEditor.PackageManager.PackageInfo.FindForAssetPath(packagePath+"/package.json").resolvedPath;
             string source=File.ReadAllText(Path.Combine(root,aux));
+            if(source.Contains("HO_RTDI_STRATIFIED_AUXILIARY"))
+            {
+                Require(source.Contains("HoDIFreshAuxiliary(float u)")&&File.ReadAllText(Path.Combine(root,compute)).Contains("HoDIFreshAuxiliary(auxiliaryStrata[draw])")&&File.ReadAllText(Path.Combine(root,ray)).Contains("HoDIFreshAuxiliary(auxiliaryStrata[draw])"),"Production stratification marker has incomplete consumers");
+                return null;
+            }
             source=ReplaceOnce(source,"RTXDI_DIReservoir HoDIFreshAuxiliary(inout RTXDI_RandomSamplerState rng)",@"float2 HoDIAuxiliaryStrata(inout RTXDI_RandomSamplerState rng)
 {
     float lower=.5*RTXDI_GetNextRandom(rng);

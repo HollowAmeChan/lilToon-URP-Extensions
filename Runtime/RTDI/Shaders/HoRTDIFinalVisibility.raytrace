@@ -37,10 +37,11 @@ void FinalVisibility()
     if(HoDIUseAuxiliary())
     {
         RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(pixel,(uint)_HoRTDIFrameIndex,0x6f527bbdu);
+        float2 auxiliaryStrata=HoDIAuxiliaryStrata(rng);
         for(uint draw=0;draw<2;draw++)
         {
             RTXDI_DIReservoir extra=RTXDI_EmptyDIReservoir();bool visible=false;
-            if(RAB_IsSurfaceValid(surface)){extra=HoDIFreshAuxiliary(rng);RAB_LightSample sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(extra),false),surface,RTXDI_GetDIReservoirSampleUV(extra));visible=HoDITraceFinal(surface,sample);}
+            if(RAB_IsSurfaceValid(surface)){extra=HoDIFreshAuxiliary(auxiliaryStrata[draw]);RAB_LightSample sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(extra),false),surface,RTXDI_GetDIReservoirSampleUV(extra));visible=HoDITraceFinal(surface,sample);}
             if(visible)bits|=1u<<(draw+1);
             if(draw==0)RTXDI_StoreDIReservoir(extra,layout,pixel,2);
             else _HoRTDIRuntimeAuxiliarySecondary[pixel.y*(uint)_HoRTDIFrame.x+pixel.x]=HoDIPackRuntimeAuxiliary(extra,visible);

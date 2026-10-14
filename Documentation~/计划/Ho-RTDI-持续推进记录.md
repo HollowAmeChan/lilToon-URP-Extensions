@@ -909,6 +909,14 @@
 
 **下一项：** 窄生产接入、actual Player与状态/相机合同回归；默认Single、旧环境失败、未测GPU成本保持。详见[随机分层候选](../Ho-RTDI-StratifiedAuxiliaryCandidate.md)。
 
+## 100. 两辅助最终样本随机分层生产化
+
+**动手前评审：** 99两backend灯域与动态有收益且无新正式失败，可以窄接入。只改两样本相关性，原CDF/1PDF/visibility/合成/资源/defaultSingle保持，native shade不重复RNG。
+
+**结果：** 生产两backend灯域匹配候选；72帧无中间readback状态/尺寸切换、compat双相机1024点均值通过。两个actual Triple RG/compat release构建/Player及DX11inactive全部exit0，filteredMSE .000152352。旧环境2/4与单帧1%诊断失败保持，未称全矩阵或GPU毫秒完成。Roslyn/DI Shader/diff通过。
+
+**下一项：** mixed实际primary天空/辅助局部贡献的方差协方差，定位剩余噪声而非继续改NRD常数；距离合同独立保留。详见[分层生产接入](../Ho-RTDI-StratifiedAuxiliary.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

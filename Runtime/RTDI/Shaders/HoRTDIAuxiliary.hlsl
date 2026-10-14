@@ -7,9 +7,18 @@ int _HoRTDIFinalSamples;
 StructuredBuffer<float> _HoRTDIRuntimeAuxiliaryCDF;
 RWStructuredBuffer<uint2> _HoRTDIRuntimeAuxiliarySecondary;
 bool HoDIUseAuxiliary(){return _HoRTDIFinalSamples>1&&_HoRTDIFrame.z>0;}
-RTXDI_DIReservoir HoDIFreshAuxiliary(inout RTXDI_RandomSamplerState rng)
+// HO_RTDI_STRATIFIED_AUXILIARY
+// Independent samples in each half, randomized slots preserve the marginal CDF.
+float2 HoDIAuxiliaryStrata(inout RTXDI_RandomSamplerState rng)
 {
-    uint count=(uint)_HoRTDIFrame.z,lo=0,hi=count;float u=RTXDI_GetNextRandom(rng);
+    float lower=.5*RTXDI_GetNextRandom(rng);
+    float upper=.5+.5*RTXDI_GetNextRandom(rng);
+    bool swap=RTXDI_GetNextRandom(rng)<.5;
+    return swap?float2(upper,lower):float2(lower,upper);
+}
+RTXDI_DIReservoir HoDIFreshAuxiliary(float u)
+{
+    uint count=(uint)_HoRTDIFrame.z,lo=0,hi=count;
     while(lo<hi){uint middle=(lo+hi)/2;if(_HoRTDIRuntimeAuxiliaryCDF[middle]<=u)lo=middle+1;else hi=middle;}
     uint index=min(lo,count-1);float pdf=_HoRTDIRuntimeAuxiliaryCDF[index]-(index>0?_HoRTDIRuntimeAuxiliaryCDF[index-1]:0);
     RTXDI_DIReservoir sample=RTXDI_EmptyDIReservoir();RTXDI_StreamSample(sample,index,float2(.5,.5),0,1,1/pdf);RTXDI_FinalizeResampling(sample,1,1);return sample;

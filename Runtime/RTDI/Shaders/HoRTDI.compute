@@ -268,12 +268,14 @@ void HoDIShade(uint3 id,out uint peak)
     {
         RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTDIFrameIndex,0x6f527bbdu);
         float3 auxiliaryD=0,auxiliaryS=0,auxiliaryLighting=0;
+        float2 auxiliaryStrata=0;
+        if(_HoRTDIFinalVisibilityEnabled==0)auxiliaryStrata=HoDIAuxiliaryStrata(rng);
         for(uint draw=0;draw<2;draw++)
         {
             RTXDI_DIReservoir extra;
             if(_HoRTDIFinalVisibilityEnabled!=0)
             {if(draw==0)extra=RTXDI_LoadDIReservoir(HoDILayout(),id.xy,2);else extra=HoDIUnpackRuntimeAuxiliary(_HoRTDIRuntimeAuxiliarySecondary[id.y*(uint)_HoRTDIFrame.x+id.x]);}
-            else extra=HoDIFreshAuxiliary(rng);
+            else extra=HoDIFreshAuxiliary(auxiliaryStrata[draw]);
             if(RTXDI_IsValidDIReservoir(extra))
             {
                 RAB_LightSample sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(extra),false),surface,RTXDI_GetDIReservoirSampleUV(extra));

@@ -18,7 +18,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(!Application.dataPath.Replace('\\','/').Contains("/.codex-research/"))throw new InvalidOperationException("Surface auxiliary candidate requires isolated project");
             const string packagePath="Packages/jp.lilxyzw.liltoon.urp.extensions",aux="Runtime/RTDI/Shaders/HoRTDIAuxiliary.hlsl",compute="Runtime/RTDI/Shaders/HoRTDI.compute",ray="Runtime/RTDI/Shaders/HoRTDIFinalVisibility.raytrace",asset="Assets/HoRTDISurfaceAuxiliaryAudit";
             var package=UnityEditor.PackageManager.PackageInfo.FindForAssetPath(packagePath+"/package.json");string root=package.resolvedPath;
-            string source=File.ReadAllText(Path.Combine(root,aux)).Replace("\r\n","\n");int start=source.IndexOf("RTXDI_DIReservoir HoDIFreshAuxiliary(",StringComparison.Ordinal),end=source.IndexOf("uint2 HoDIPackRuntimeAuxiliary",StringComparison.Ordinal);if(start<0||end<=start)throw new Exception("Fresh auxiliary source changed; review candidate");
+            string source=File.ReadAllText(Path.Combine(root,aux)).Replace("\r\n","\n");
+            if(source.Contains("HO_RTDI_STRATIFIED_AUXILIARY"))throw new InvalidOperationException("Step 88 surface RIS candidate requires the independent auxiliary baseline; rebase before combining with stratification");
+            int start=source.IndexOf("RTXDI_DIReservoir HoDIFreshAuxiliary(",StringComparison.Ordinal),end=source.IndexOf("uint2 HoDIPackRuntimeAuxiliary",StringComparison.Ordinal);if(start<0||end<=start)throw new Exception("Fresh auxiliary source changed; review candidate");
             string body=@"RTXDI_DIReservoir HoDIFreshAuxiliary(inout RTXDI_RandomSamplerState rng,RAB_Surface surface)
 {
     RTXDI_DIReservoir reservoir=RTXDI_EmptyDIReservoir();
