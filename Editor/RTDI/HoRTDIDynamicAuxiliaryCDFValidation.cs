@@ -41,12 +41,17 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             public string phase,outputHash,decompositionRegion;public int lights,frames,cdfChecks,mappingChecks,resets,confidenceFrames;public bool pass;
             public double rawRed,rawGreen,rawBlue,filteredRed,filteredGreen,filteredBlue,maxDarkSignal;
             public double primaryRed,primaryGreen,primaryBlue,auxiliaryRed,auxiliaryGreen,auxiliaryBlue,maxShadeRelativeError;
+            public string reuseMode;
+            public int varianceFrames;
+            public double primaryRedRelativeTemporalVariance,rawRedRelativeTemporalVariance;
+            public double[] primaryRedBlockRatios;
         }
 
         private static void ValidateDynamicAuxiliaryCDF(Light blue)
         {
             const int size=128;target.Release();target.width=target.height=size;target.Create();camera.aspect=1;
             feature.Settings.useEnvironment=false;feature.Settings.localSampling=HoRTDILocalSampling.Power;
+            if(dynamicReuseMode!=null){feature.Settings.temporal=dynamicReuseMode=="both"||dynamicReuseMode=="temporal";feature.Settings.spatial=dynamicReuseMode=="both"||dynamicReuseMode=="spatial";}
             surfaceMaterial.SetFloat("_Reflectance",0);surfaceMaterial.SetFloat("_Metallic",0);
             blocker.transform.position=Vector3.right*4;
             if(pairedOpaqueAudit)blocker.GetComponent<Renderer>().sharedMaterial=surfaceMaterial;
@@ -82,6 +87,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     // rendering, independently require the actual collector order.
                     var upload=new float[lamps.Length];Array.Fill(upload,1f);Array.Copy(cdf,upload,cdf.Length);cdfBuffer.SetData(upload);
                     var reference=new double[3];var sums=new double[2,3];var primarySums=new double[3];var auxiliarySums=new double[3];double dark=0,shadeError=0;int checks=0,maps=0,resets=0,confidence=0;
+                    bool observeVariance=dynamicReuseMode!=null&&phase=="powerTemperature";
+                    var pointMeans=new double[2,256];var pointM2=new double[2,256];var blockPrimary=new double[(frames-16+15)/16];var blockReference=new double[blockPrimary.Length];
                     var decompositionReference=new double[3];using var imageHash=AuxiliaryImageHash?System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.SHA256):null;
                     for(int frame=0;frame<frames;frame++)
                     {
@@ -107,6 +114,13 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                             int address=(y/16)*c.rowPitch+(x/16)*256+(y%16)*16+x%16;
                             Color primary=Estimate(reservoirs[c.arrayPitch+address]),auxiliary=!dynamicAuxiliaryBaseline&&!singleRuntime&&keys.Length>0?(Estimate(reservoirs[2*c.arrayPitch+address])+Estimate(secondSamples[y*size+x]))*.5f:Color.clear;
                             Color predicted=dynamicAuxiliaryBaseline||singleRuntime?primary:(primary+auxiliary)*.5f;
+                            if(observeVariance&&frame>=16)
+                            {
+                                Require(expected.r>0,"Reuse variance fixture requires positive analytic red");
+                                int point=(y-48)/2*16+(x-48)/2,n=frame-15,block=(frame-16)/16;
+                                for(int signal=0;signal<2;signal++){double value=(signal==0?primary.r:a.r)/expected.r,delta=value-pointMeans[signal,point];pointMeans[signal,point]+=delta/n;pointM2[signal,point]+=delta*(value-pointMeans[signal,point]);}
+                                blockPrimary[block]+=primary.r;blockReference[block]+=expected.r;
+                            }
                             bool decompositionPoint=(!AuxiliaryImageHash||IsAuxiliaryProbe(x,y))&&(!runtimeMultiAudit||!pairedOpaqueAudit||singleRuntime);
                             for(int channel=0;channel<3;channel++)
                             {
@@ -128,6 +142,12 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     {ratios[signal,channel]=reference[channel]>0?sums[signal,channel]/reference[channel]:sums[signal,channel]/((frames-16)*256);pass&=reference[channel]>0?Math.Abs(ratios[signal,channel]-1)<(signal==0?.03:.05):ratios[signal,channel]<.001;}
                     var result=new DynamicCDFCase{phase=phase,lights=keys.Length,frames=frames,cdfChecks=checks,mappingChecks=maps,resets=resets,confidenceFrames=confidence,pass=pass,rawRed=ratios[0,0],rawGreen=ratios[0,1],rawBlue=ratios[0,2],filteredRed=ratios[1,0],filteredGreen=ratios[1,1],filteredBlue=ratios[1,2],maxDarkSignal=dark};cases.Add(result);all&=pass;
                     result.primaryRed=Ratio(primarySums,0);result.primaryGreen=Ratio(primarySums,1);result.primaryBlue=Ratio(primarySums,2);result.auxiliaryRed=Ratio(auxiliarySums,0);result.auxiliaryGreen=Ratio(auxiliarySums,1);result.auxiliaryBlue=Ratio(auxiliarySums,2);result.maxShadeRelativeError=shadeError;
+                    if(observeVariance)
+                    {
+                        result.reuseMode=dynamicReuseMode;result.varianceFrames=frames-16;result.primaryRedBlockRatios=new double[blockPrimary.Length];
+                        for(int point=0;point<256;point++){result.primaryRedRelativeTemporalVariance+=pointM2[0,point]/((frames-17)*256);result.rawRedRelativeTemporalVariance+=pointM2[1,point]/((frames-17)*256);}
+                        for(int block=0;block<blockPrimary.Length;block++)result.primaryRedBlockRatios[block]=blockPrimary[block]/blockReference[block];
+                    }
                     double Ratio(double[] values,int channel)=>decompositionReference[channel]>0?values[channel]/decompositionReference[channel]:0;
                     result.decompositionRegion=runtimeMultiAudit&&pairedOpaqueAudit?"local-second-not-captured":AuxiliaryImageHash?"four-gpu-probes":"full-roi";if(imageHash!=null)result.outputHash=BitConverter.ToString(imageHash.GetHashAndReset()).Replace("-","");
                     Debug.Log($"[HoRTDIValidation] DYNAMIC_AUX_CDF opaque={pairedOpaqueAudit} phase={phase} lights={keys.Length} raw={result.rawRed:F6}/{result.rawGreen:F6}/{result.rawBlue:F6} filtered={result.filteredRed:F6}/{result.filteredGreen:F6}/{result.filteredBlue:F6} dark={dark:G6} resets={resets} confidence={confidence} pass={pass}");
@@ -141,6 +161,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(runtimeMultiAudit)prefix="rtdi-runtime78-dynamic-";
                 if(diffuseSegmentAudit)prefix="rtdi-diffusesegment83-dynamic-";
                 if(surfaceAuxiliaryAudit)prefix="rtdi-surfaceris88-dynamic-";
+                if(dynamicReuseMode!=null)prefix="rtdi-reuse90-"+dynamicReuseMode+"-";
                 File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+(dynamicAuxiliaryLongAudit?"long-":"")+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new DynamicCDFReport{qualityPass=all,path=compatibility?"compatibility":"RenderGraph",visibility=pairedOpaqueAudit?"inline-opaque":"native-cutout",cases=cases.ToArray()},true));
                 Require(all,"Dynamic auxiliary CDF energy/dark-signal gates failed");
             }

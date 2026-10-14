@@ -5,6 +5,12 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     public static partial class HoRTDIValidation
     {
         private static bool runtimeMultiAudit;
+        private static string dynamicReuseMode;
+        public static void RunRuntimeDynamicReuseBoth(){dynamicReuseMode="both";RunRuntimeMultiDynamic();}
+        public static void RunRuntimeDynamicReuseNone(){dynamicReuseMode="none";RunRuntimeMultiDynamic();}
+        public static void RunRuntimeDynamicReuseTemporal(){dynamicReuseMode="temporal";RunRuntimeMultiDynamic();}
+        public static void RunRuntimeDynamicReuseSpatial(){dynamicReuseMode="spatial";RunRuntimeMultiDynamic();}
+        public static void RunRuntimeDynamicReuseBothCompatibility(){compatibility=true;RunRuntimeDynamicReuseBoth();}
         private static bool surfaceAuxiliaryAudit;
         public static void RunSurfaceAuxiliaryDomain(){surfaceAuxiliaryAudit=true;RunRuntimeMultiDomain();}
         public static void RunSurfaceAuxiliaryDomainCompatibility(){compatibility=true;RunSurfaceAuxiliaryDomain();}
