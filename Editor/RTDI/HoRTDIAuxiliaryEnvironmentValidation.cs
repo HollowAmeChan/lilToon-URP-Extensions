@@ -102,7 +102,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);c.nrd.ValidationTimeSeconds=null;
             }
             string mode=!cutoutPairedFinalSample?"baseline":auxiliaryEnvironmentPartition?"partition":"naive";
-            if(lateSpecExchangeAudit)mode+=lateSpecWeightAudit?"-weights":lateSpecAdaptiveAudit?"-adaptive":allSpecOrthographicAudit?"-allortho":lateSpecOrthographicAudit?"-ortho":"-exchange";
+            if(lateSpecExchangeAudit)mode+=lateJitterAudit?"-nojitter94":lateSpecWeightAudit?"-weights":lateSpecAdaptiveAudit?"-adaptive":allSpecOrthographicAudit?"-allortho":lateSpecOrthographicAudit?"-ortho":"-exchange";
             if(auxiliaryPerspectiveAudit)mode+="-perspective";
             if(specularRgbDistanceAudit)mode+="-rgbdistance";
             if(specularNormalBudgetAudit)mode+="-normalbudget";

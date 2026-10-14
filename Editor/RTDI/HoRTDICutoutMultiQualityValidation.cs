@@ -152,6 +152,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(cutoutSpecularQuality)prefix="rtdi-cutout33-spec-"+(motionAudit?"motion-":"all-")+(compatibility?"compat":"rg");
             if(cutoutPairedFinalSample)prefix="rtdi-finalpair50-multi-"+(compatibility?"compat":"rg");
             if(lateSpecExchangeAudit)prefix="rtdi-latespec58-motion-"+(compatibility?"compat":"rg");
+            if(lateJitterAudit)prefix="rtdi-nojitter94-motion-"+(compatibility?"compat":"rg");
             if(lateSpecWeightAudit)prefix="rtdi-specweights59-motion-"+(compatibility?"compat":"rg");
             if(lateSpecAdaptiveAudit)prefix="rtdi-adaptivespec60-motion-"+(compatibility?"compat":"rg");
             if(lateSpecOrthographicAudit)prefix="rtdi-orthospec61-motion-"+(compatibility?"compat":"rg");

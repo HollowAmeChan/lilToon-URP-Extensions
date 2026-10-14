@@ -861,6 +861,14 @@
 
 **下一项：** 混合天空非零F0镜面filtered能量失败的阶段/合同定位，不扩大本修复、不碰最终NPR合成。详见[生产提案](../Ho-RTDI-TemperedTarget.md)。
 
+## 94. 后续Atrous随机偏移隔离控制
+
+**动手前评审：** 55/63已知后续空间搬移，57—67失败策略不重试。核对固定vendor/用户fork的大步jitter目的，只隔离关闭index10公共offset，明确两lobe受影响，不改归一化。
+
+**结果：** 两路径mixed候选3/4仍exit1，none红1.050623超5%；Single动态3/3，恢复生产环境2/4保持。重复写入未变compute导致首次SourceAssetDB时间错误，内容变化才写后实际重跑无该错误、数据保持。拒绝生产化，Roslyn/Shader/diff通过。
+
+**下一项：** 三最终样本NRD距离合同审计，primary灯距离未必是对应lobe距离；不直接平均/清零或扩张PT。详见[随机偏移控制](../Ho-RTDI-LateJitterRejection.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

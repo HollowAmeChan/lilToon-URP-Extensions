@@ -11,6 +11,10 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     public static partial class HoRTDIValidation
     {
         private static bool lateSpecExchangeAudit;
+        private static bool lateJitterAudit;
+        public static void RunRuntimeNoLateJitterEnvironment(){lateJitterAudit=lateSpecExchangeAudit=true;RunRuntimeMultiEnvironment();}
+        public static void RunRuntimeNoLateJitterEnvironmentCompatibility(){compatibility=true;RunRuntimeNoLateJitterEnvironment();}
+        public static void RunNoLateJitterMotion(){lateJitterAudit=lateSpecExchangeAudit=true;RunCutoutSpecularMotionQuality();}
         private static bool lateSpecWeightAudit;
         private static bool lateSpecAdaptiveAudit;
         private static bool lateSpecOrthographicAudit;
@@ -60,7 +64,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             const string packagePath="Packages/jp.lilxyzw.liltoon.urp.extensions",relative="Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrous.hlsl",entry="Runtime/RTDI/Shaders/NRD/HoRTDINrd10.compute",asset="Assets/HoRTDILateSpecAudit";
             var package=UnityEditor.PackageManager.PackageInfo.FindForAssetPath(packagePath+"/package.json");string root=package.resolvedPath;
             string body=File.ReadAllText(Path.Combine(root,relative)),compute=File.ReadAllText(Path.Combine(root,entry));
-            if(!lateSpecWeightAudit&&!lateSpecOrthographicAudit&&!specularRgbDistanceAudit&&!specularNormalBudgetAudit)body=ReplaceOnce(body,"    float4 filteredSpecularIlluminationAndVariance = float4(sumSpecularIlluminationAndVariance / float4(sumWSpecular.xxx, sumWSpecular * sumWSpecular));",@"
+            if(lateJitterAudit)body=ReplaceOnce(body,"offset = int2(gStepSize.xx * 0.5 * (Rng::Hash::GetFloat2() - 0.5));","offset = int2(0, 0); // Isolated late-jitter control for both lobes.");
+            if(!lateJitterAudit&&!lateSpecWeightAudit&&!lateSpecOrthographicAudit&&!specularRgbDistanceAudit&&!specularNormalBudgetAudit)body=ReplaceOnce(body,"    float4 filteredSpecularIlluminationAndVariance = float4(sumSpecularIlluminationAndVariance / float4(sumWSpecular.xxx, sumWSpecular * sumWSpecular));",@"
     // Same fixed-kernel exchange form already used by the diffuse path.
     // Rejected neighbor mass remains at the center; do not renormalize rows.
     const float specularCenterKernel = 0.44198 * 0.44198;
@@ -101,7 +106,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     float4 filteredSpecularIlluminationAndVariance = float4(sumSpecularIlluminationAndVariance / float4(sumWSpecular.xxx, sumWSpecular * sumWSpecular));");
             }
             body=Rebase(body,relative);compute=Rebase(compute,entry).Replace(packagePath+"/"+relative,asset+"/HoRTDILateSpec.hlsl");
-            string folder=Path.Combine(Application.dataPath,"HoRTDILateSpecAudit");Directory.CreateDirectory(folder);File.WriteAllText(Path.Combine(folder,"HoRTDILateSpec.hlsl"),body);File.WriteAllText(Path.Combine(folder,"HoRTDILateSpec.compute"),compute);
+            string folder=Path.Combine(Application.dataPath,"HoRTDILateSpecAudit");Directory.CreateDirectory(folder);WriteChanged(Path.Combine(folder,"HoRTDILateSpec.hlsl"),body);WriteChanged(Path.Combine(folder,"HoRTDILateSpec.compute"),compute);
             AssetDatabase.ImportAsset(asset+"/HoRTDILateSpec.hlsl",ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);AssetDatabase.ImportAsset(asset+"/HoRTDILateSpec.compute",ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);
             var shader=AssetDatabase.LoadAssetAtPath<ComputeShader>(asset+"/HoRTDILateSpec.compute");Require(shader!=null&&shader.FindKernel("main")==0,"Late specular shader/kernel mismatch");
             foreach(var message in ShaderUtil.GetComputeShaderMessages(shader))Require(message.severity!=UnityEditor.Rendering.ShaderCompilerMessageSeverity.Warning&&message.severity!=UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error,message.message);
@@ -117,13 +122,14 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 }
                 if(specularNormalBudgetAudit)first=ReplaceOnce(first,"min(255.0 * gIn_HistoryLength[globalPos], gSpecMaxFastAccumulatedFrameNum + 1.0)","min(255.0 * gIn_HistoryLength[globalPos], gSpecMaxAccumulatedFrameNum + 1.0)");
                 string firstCompute=Rebase(File.ReadAllText(Path.Combine(root,firstEntry)),firstEntry).Replace(packagePath+"/"+firstBody,asset+"/HoRTDIFirstSpec.hlsl");
-                File.WriteAllText(Path.Combine(folder,"HoRTDIFirstSpec.hlsl"),Rebase(first,firstBody));File.WriteAllText(Path.Combine(folder,"HoRTDIFirstSpec.compute"),firstCompute);
+                WriteChanged(Path.Combine(folder,"HoRTDIFirstSpec.hlsl"),Rebase(first,firstBody));WriteChanged(Path.Combine(folder,"HoRTDIFirstSpec.compute"),firstCompute);
                 AssetDatabase.ImportAsset(asset+"/HoRTDIFirstSpec.hlsl",ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);AssetDatabase.ImportAsset(asset+"/HoRTDIFirstSpec.compute",ImportAssetOptions.ForceUpdate|ImportAssetOptions.ForceSynchronousImport);
                 firstShader=AssetDatabase.LoadAssetAtPath<ComputeShader>(asset+"/HoRTDIFirstSpec.compute");Require(firstShader!=null&&firstShader.FindKernel("main")==0,"First ortho shader/kernel missing");
                 foreach(var message in ShaderUtil.GetComputeShaderMessages(firstShader))Require(message.severity!=UnityEditor.Rendering.ShaderCompilerMessageSeverity.Warning&&message.severity!=UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error,message.message);
             }
             var shaders=(ComputeShader[])c.nrd.GetType().GetField("shaders",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(c.nrd);
-            Debug.Log("[HoRTDIValidation] LATE_SPEC_EXCHANGE isolated NRD pipeline10 override; histogram="+lateSpecWeightAudit+" firstOrtho="+allSpecOrthographicAudit);return new LateSpecOverride(shaders,shader,firstShader);
+            Debug.Log("[HoRTDIValidation] LATE_SPEC_EXCHANGE isolated NRD pipeline10 override; histogram="+lateSpecWeightAudit+" firstOrtho="+allSpecOrthographicAudit+" noLateJitter="+lateJitterAudit);return new LateSpecOverride(shaders,shader,firstShader);
+            void WriteChanged(string path,string content){if(!File.Exists(path)||File.ReadAllText(path)!=content)File.WriteAllText(path,content);}
             string Rebase(string text,string source)=>Regex.Replace(text,"(?m)^(\\s*#include\\s+)\"([^\"]+)\"",m=>
             {
                 string include=m.Groups[2].Value;if(include.StartsWith("Packages/",StringComparison.Ordinal))return m.Value;
