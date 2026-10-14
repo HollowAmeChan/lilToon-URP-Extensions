@@ -893,6 +893,14 @@
 
 **下一项：** 匹配去调制两lobe量级的真实选样目标隔离对照，保留shader/PDF/预算/动态门槛；oracle不是生产修复，距离合同另行保留。详见[独立参考输入](../Ho-RTDI-SpecularReferenceControl.md)。
 
+## 98. 去调制两lobe提案对照拒绝
+
+**动手前评审：** 97表明采样噪声参与偏差；沿RAB/SDK与NRD factors合同，仅非零F0比较去调制亮度和六路RGB目标，物理shade/PDF/预算/NRD不改。
+
+**结果：** 亮度两环境2/4、RGB环境2/4，蓝仍5%外。亮度动态3/3但primary static diffuse raw蓝.964130失败；RGB primary通过但step前三帧响应.482866失败。七实际进程、原门槛与失败出口保持，Roslyn/Shader/GUID/diff通过。两者均拒绝生产化。
+
+**下一项：** 原CDF两辅助样本随机分层并随机交换槽位，保留边际PDF/权重/ray数，测灯域/环境/动态；不硬绑反相关索引或继续调filter常数。详见[信号域目标拒绝](../Ho-RTDI-DemodulatedProposalRejection.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

@@ -48,6 +48,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(cutoutPairedFinalSample)ApplyCutoutPairedFinalSample();
             feature.Settings.initialSamples=8;feature.Settings.denoise=true;
             using var distanceOverride=ApplySpecularDistanceControl();
+            using var demodulatedOverride=ApplyDemodulatedProposal();
             if(forceCutoutShadowStages){ValidateCutoutShadowStages();return;}
             var raw=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));var filtered=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));
             var cases=new List<MultiQualityCase>();bool allPass=true;
@@ -155,6 +156,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(lateSpecExchangeAudit)prefix="rtdi-latespec58-motion-"+(compatibility?"compat":"rg");
             if(lateJitterAudit)prefix="rtdi-nojitter94-motion-"+(compatibility?"compat":"rg");
             if(specularDistanceControl>0)prefix="rtdi-distance96-"+DistanceControlName+"-motion-"+(compatibility?"compat":"rg");
+            if(demodulatedProposalAudit)prefix="rtdi-demodproposal98-motion-"+(compatibility?"compat":"rg");
+            if(demodulatedRgbAudit)prefix="rtdi-demodproposal98-rgb-motion-"+(compatibility?"compat":"rg");
             if(lateSpecWeightAudit)prefix="rtdi-specweights59-motion-"+(compatibility?"compat":"rg");
             if(lateSpecAdaptiveAudit)prefix="rtdi-adaptivespec60-motion-"+(compatibility?"compat":"rg");
             if(lateSpecOrthographicAudit)prefix="rtdi-orthospec61-motion-"+(compatibility?"compat":"rg");
