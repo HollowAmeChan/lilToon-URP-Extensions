@@ -162,6 +162,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(diffuseSegmentAudit)prefix="rtdi-diffusesegment83-dynamic-";
                 if(surfaceAuxiliaryAudit)prefix="rtdi-surfaceris88-dynamic-";
                 if(dynamicReuseMode!=null)prefix="rtdi-reuse90-"+dynamicReuseMode+"-";
+                if(presampleTilePixels>0)prefix="rtdi-coherence91-tile"+presampleTilePixels+(presampleTilePixels==1?"-separated-":"-");
                 File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+(dynamicAuxiliaryLongAudit?"long-":"")+(pairedOpaqueAudit?"opaque-":"cutout-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new DynamicCDFReport{qualityPass=all,path=compatibility?"compatibility":"RenderGraph",visibility=pairedOpaqueAudit?"inline-opaque":"native-cutout",cases=cases.ToArray()},true));
                 Require(all,"Dynamic auxiliary CDF energy/dark-signal gates failed");
             }

@@ -837,6 +837,14 @@
 
 **下一项：** 初始RIS tile共享像素范围隔离候选，保留预算/PDF，评估弱灯与其它灯域，不按单序列贸然改默认。详见[复用对照](../Ho-RTDI-PrimaryReuseAudit.md)。
 
+## 91. 初始RIS像素共享范围隔离候选
+
+**动手前评审：** 沿fork16像素tile与SDK双RNG合同，比较4像素和逐像素，保持预算/PDF/复用。只改隔离compute，不直接按第90步单序列关闭复用。
+
+**结果：** 4像素raw红.992241但filtered1.057938仍失败，两路径一致；独立灯域4/4通过，其中只有32灯域Power受该改动影响。逐像素首版同seed关联不算有效对照，分开stream重跑7/9、不改善。全部拒绝生产化，Roslyn/Shader/GUID/diff通过。
+
+**下一项：** 主reservoir目标对弱彩灯相对误差的分配，保留真实shade/PDF/门槛，不增加用户设置或盲目加样本。详见[共享范围候选](../Ho-RTDI-PresampleCoherenceCandidate.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

@@ -6,6 +6,11 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     {
         private static bool runtimeMultiAudit;
         private static string dynamicReuseMode;
+        private static int presampleTilePixels;
+        public static void RunRuntimePresampleTile4(){presampleTilePixels=4;RunRuntimeDynamicReuseBoth();}
+        public static void RunRuntimePresampleTile1(){presampleTilePixels=1;RunRuntimeDynamicReuseBoth();}
+        public static void RunRuntimePresampleTile4Domain(){presampleTilePixels=4;RunRuntimeMultiDomain();}
+        public static void RunRuntimePresampleTile4Compatibility(){compatibility=true;RunRuntimePresampleTile4();}
         public static void RunRuntimeDynamicReuseBoth(){dynamicReuseMode="both";RunRuntimeMultiDynamic();}
         public static void RunRuntimeDynamicReuseNone(){dynamicReuseMode="none";RunRuntimeMultiDynamic();}
         public static void RunRuntimeDynamicReuseTemporal(){dynamicReuseMode="temporal";RunRuntimeMultiDynamic();}

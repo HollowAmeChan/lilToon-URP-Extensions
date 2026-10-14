@@ -24,6 +24,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             light.color=Color.red;var blue=Point(new Vector3(-1.5f,0,-1),Color.blue,4);feature.Settings.initialSamples=8;feature.Settings.temporal=feature.Settings.spatial=feature.Settings.denoise=true;
             if(runtimeMultiAudit)feature.Settings.finalSampling=lilToon.URP.Extensions.RTDI.HoRTDIFinalSampling.TripleAnalytic;
             using var surfaceAuxiliaryOverride=surfaceAuxiliaryAudit?HoRTDISurfaceAuxiliaryValidation.Apply(feature):null;
+            using var presampleOverride=presampleTilePixels>0?HoRTDIPresampleCoherenceValidation.Apply(feature,presampleTilePixels):null;
             if(runtimeMultiStateAudit){ValidateRuntimeMultiState(blue);return;}
             if(cutoutResolutionSpecular){surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetFloat("_Smoothness",.6f);}
             if(cutoutSpecularRgbProposal)ApplyCutoutSpecularRgbProposal();
