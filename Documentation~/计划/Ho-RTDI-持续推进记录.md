@@ -805,6 +805,14 @@
 
 **下一项：** 可复现实际使用问题与具体有效质量失败，保留独立fixture及GPU预算边界。仅Editor/文档，Roslyn/Shader/GUID/diff通过。详见[实际帧](../Ho-RTDI-CastleFrameAudit.md)。
 
+## 87. 实际静止视点的逐像素时间方差
+
+**动手前评审：** 16帧预览不能区分纹理/噪声，也不能判断历史失效。64warm+64observe、16384固定点每RGB Welford时间方差，读取raw/filtered并记录真实reset/temporal。
+
+**结果：** 两路径triple/单路径single全部exit0；64帧temporal、reset0。NRD triple方差减少97.26%，但triple raw比single高33%、filtered高12.32%，不支持所有静态场景受益的结论。复杂场景mean不是解析能量或性能验收。
+
+**下一项：** 辅助提案与表面响应的匹配，兼顾实际静态与独立动态fixture；single默认/triple可选、预算未知保持，不盲目改滤波或加样本。仅Editor/文档，Roslyn/Shader/diff通过。详见[真实时间波动](../Ho-RTDI-CastleTemporalStability.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
