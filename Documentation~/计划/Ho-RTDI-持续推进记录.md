@@ -797,6 +797,14 @@
 
 **下一项：** 继续实际DI质量/场景支持；scene/resource本身仍按现有stamp同步契约，不声称可任意异步改写。详见[设置快照](../Ho-RTDI-SettingsSnapshot.md)。
 
+## 86. 复制古堡的实际GB/SB/DI帧审计
+
+**动手前评审：** registry支持不证明相机输入/输出已运行；实际18灯均受支持，没有凭空增加Cookie等缺口。临时pipeline/克隆源视点、512²16帧warmup，SceneSkybox与材质排除，完整读取实际输出。
+
+**结果：** 两路径18灯/15实例/有效UnearthlyRed天空、262144有效/244575非零receiver，有限非负、NRD实际调度；PNG hash一致。预览仍有明显噪声，只支持审计、不作艺术/解析能量/漏光或GPU成本验收。源资产未保存/改写。
+
+**下一项：** 可复现实际使用问题与具体有效质量失败，保留独立fixture及GPU预算边界。仅Editor/文档，Roslyn/Shader/GUID/diff通过。详见[实际帧](../Ho-RTDI-CastleFrameAudit.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
