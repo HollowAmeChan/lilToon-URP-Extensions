@@ -949,6 +949,14 @@
 
 **下一项：** firstAtrous9颜色与匹配scalar variance一起稳定的控制，不全局改normal预算或phi，保留动态/透视/shape/能量门槛。详见[稳定guide拒绝](../Ho-RTDI-StableSpecularGuideRejection.md)。
 
+## 105. firstAtrous颜色与range variance对照拒绝
+
+**动手前评审：** 104固定C6颜色配当前variance动态失败；沿smem converted/propagated scalar合同，改guide源9，对照固定颜色与固定颜色+range variance，不动实际moment/输出传播。
+
+**结果：** A正交两路径4/4、动态3/3但余量小，透视镜面9%～11%外失败；B正交2/4、动态3/3，透视25%～27%外失败。八实际进程、原门槛保持，均拒绝生产化；临时资源不增，Roslyn/Shader/capture/diff通过。
+
+**下一项：** 稳定first RGB距离单变量控制，避免重试第64步当前 noisy RGB；先透视/动态，不调phi或增加生产资源。详见[first guide对照](../Ho-RTDI-FirstGuideVarianceRejection.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

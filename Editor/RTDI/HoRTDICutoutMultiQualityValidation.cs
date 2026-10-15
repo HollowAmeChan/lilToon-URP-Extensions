@@ -160,6 +160,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(demodulatedProposalAudit)prefix="rtdi-demodproposal98-motion-"+(compatibility?"compat":"rg");
             if(demodulatedRgbAudit)prefix="rtdi-demodproposal98-rgb-motion-"+(compatibility?"compat":"rg");
             if(stableSpecularGuideAudit)prefix="rtdi-stableguide104-motion-"+(compatibility?"compat":"rg");
+            if(firstSpecularGuideAudit)prefix="rtdi-firstguide105-"+StableGuideVariant+"-motion-"+(compatibility?"compat":"rg");
             if(lateSpecWeightAudit)prefix="rtdi-specweights59-motion-"+(compatibility?"compat":"rg");
             if(lateSpecAdaptiveAudit)prefix="rtdi-adaptivespec60-motion-"+(compatibility?"compat":"rg");
             if(lateSpecOrthographicAudit)prefix="rtdi-orthospec61-motion-"+(compatibility?"compat":"rg");
