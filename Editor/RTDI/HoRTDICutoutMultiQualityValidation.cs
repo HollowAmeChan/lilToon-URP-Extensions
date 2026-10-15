@@ -74,6 +74,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 camera.transform.position=new Vector3(0,0,-3);skinBlockerBone.localPosition=Vector3.zero;
                 if(feature.LastContext!=null){feature.LastContext.historyValid=false;feature.LastContext.nrdHistoryValid=false;}
                 using var lateSpecOverride=lateSpecExchangeAudit?ApplyLateSpecExchange(feature.LastContext):null;
+                using var stableGuideOverride=ApplyStableSpecularGuide(feature.LastContext);
                 for(int i=0;i<192;i++)RenderCamera();
                 if(lateSpecWeightAudit)lateSpecOverride.ResetHistogram();
                 double redRef=0,blueRef=0,rawRed=0,rawBlue=0,filterRed=0,filterBlue=0,filteredL1=0;
@@ -158,6 +159,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(specularDistanceControl>0)prefix="rtdi-distance96-"+DistanceControlName+"-motion-"+(compatibility?"compat":"rg");
             if(demodulatedProposalAudit)prefix="rtdi-demodproposal98-motion-"+(compatibility?"compat":"rg");
             if(demodulatedRgbAudit)prefix="rtdi-demodproposal98-rgb-motion-"+(compatibility?"compat":"rg");
+            if(stableSpecularGuideAudit)prefix="rtdi-stableguide104-motion-"+(compatibility?"compat":"rg");
             if(lateSpecWeightAudit)prefix="rtdi-specweights59-motion-"+(compatibility?"compat":"rg");
             if(lateSpecAdaptiveAudit)prefix="rtdi-adaptivespec60-motion-"+(compatibility?"compat":"rg");
             if(lateSpecOrthographicAudit)prefix="rtdi-orthospec61-motion-"+(compatibility?"compat":"rg");

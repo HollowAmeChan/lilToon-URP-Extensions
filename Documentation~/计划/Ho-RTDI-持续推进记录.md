@@ -941,6 +941,14 @@
 
 **下一项：** 后续spec range guide每轮自变化与稳定阶段guide控制，保留moment/variance/动态/shape门槛，不继续概率调参或增加候选数。详见[VNDF候选拒绝](../Ho-RTDI-VndfProposalRejection.md)。
 
+## 104. 后续Atrous固定Clamping颜色guide拒绝
+
+**动手前评审：** 103只改候选方向失败；沿fork每轮range来自当前已滤颜色，临时固定stage6 guide，仅改range颜色，保留variance/权重/传播/采样。
+
+**结果：** 正交两路径4/4，mixed镜面约1.02；透视仍2/4，动态rapid/step .353885/.354206超.35，拒绝生产化。每环境组704Copy/2816late，临时128KiB、GPU成本未测。四实际进程，Roslyn/Shader/GUID/diff通过。
+
+**下一项：** firstAtrous9颜色与匹配scalar variance一起稳定的控制，不全局改normal预算或phi，保留动态/透视/shape/能量门槛。详见[稳定guide拒绝](../Ho-RTDI-StableSpecularGuideRejection.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
