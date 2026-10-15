@@ -1,5 +1,7 @@
 # Ho-RTDI：参考工程移植初版
 
+2026-10-15状态：[完成度审计](Ho-RTDI-CompletionAudit-2026-10-15.md)。独立DI/受控Mono Player已有交付，mixed镜面质量、正常帧运动合同和有效GPU预算仍未完成；最终材质合成此前不在DI推进范围。持续实验已转为交付审计。
+
 本版沿用用户提供的 `UnityPathTracing-6000.3.15` 的 Unity RTXDI 路径。直接复用 RTXDI 的初始采样、reservoir、时间/空间重采样；适配 RAB bridge 和 pass 绑定，不另写 ReSTIR。已补齐静态几何下动态解析灯的历史数据与索引映射；最终 lilToon 接收/合成尚未接入。GI 是独立 Feature，见文末链接。
 
 ## 使用与输出
