@@ -957,7 +957,15 @@
 
 **下一项：** 稳定first RGB距离单变量控制，避免重试第64步当前 noisy RGB；先透视/动态，不调phi或增加生产资源。详见[first guide对照](../Ho-RTDI-FirstGuideVarianceRejection.md)。
 
-## 下一步取舍
+## 106. 稳定首轮 RGB guide 拒绝与实验收尾
+
+**接手核对：** 原聊天因模型容量错误停下，四个实际 Unity 进程已完成，仅验证代码未提交。读取原退出码、日志及 JSON，未将任务中断误判为 Unity 卡死。
+
+**结果：** 正交4/4；透视两路径均2/4，mixed蓝仍偏高5.04%/6.41%；动态仅slow通过，rapid/step frameL1 .383257/.402277超过.35。捕获/消费合同通过，拒绝生产化。生产Runtime/vendor/native/GI不改，本轮Roslyn与NRD派生重建通过。详见[实验收尾](../Ho-RTDI-StableRgbGuideRejection.md)。
+
+**方向调整：** 按2026-10-15用户指示停止自动延伸滤波变体，转入当前生产基线和交付范围审计。以下历史“下一步取舍”仅作背景，当前优先级以[完成度审计](../Ho-RTDI-CompletionAudit-2026-10-15.md)为准。
+
+## 历史下一步取舍
 
 | 项目 | 当前判断与推进条件 |
 | --- | --- |

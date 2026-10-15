@@ -12,8 +12,12 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     public static partial class HoRTDIValidation
     {
         private static bool stableSpecularGuideAudit;
-        private static bool firstSpecularGuideAudit,matchedSpecularGuideVariance;
-        private static string StableGuideVariant=>matchedSpecularGuideVariance?"matched":"colour";
+        private static bool firstSpecularGuideAudit,matchedSpecularGuideVariance,stableRgbGuideAudit;
+        private static string StableGuideVariant=>stableRgbGuideAudit?"rgb106":matchedSpecularGuideVariance?"matched":"colour";
+        public static void RunRgbFirstGuideEnvironment(){stableRgbGuideAudit=true;RunFirstSpecularGuideEnvironment();}
+        public static void RunRgbFirstGuideMotion(){stableRgbGuideAudit=true;RunFirstSpecularGuideMotion();}
+        public static void RunRgbFirstGuidePerspective(){stableRgbGuideAudit=true;RunFirstSpecularGuidePerspective();}
+        public static void RunRgbFirstGuidePerspectiveCompatibility(){compatibility=true;RunRgbFirstGuidePerspective();}
         public static void RunFirstSpecularGuideEnvironment(){firstSpecularGuideAudit=true;RunStableSpecularGuideEnvironment();}
         public static void RunFirstSpecularGuideMotion(){firstSpecularGuideAudit=true;RunStableSpecularGuideMotion();}
         public static void RunFirstSpecularGuideEnvironmentCompatibility(){compatibility=true;RunFirstSpecularGuideEnvironment();}
@@ -35,6 +39,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             string body="Texture2D<float4> _HoRTDIAuditStableSpecGuide;\n"+File.ReadAllText(Path.Combine(root,bodyPath));
             body=ReplaceOnce(body,"float centerSpecularLuminance = Color::Luminance(centerSpecularIlluminationAndVariance.rgb);","float centerSpecularLuminance = Color::Luminance(_HoRTDIAuditStableSpecGuide[pixelPos].rgb);");
             body=ReplaceOnce(body,"float sampleSpecularLuminance = Color::Luminance(sampleSpecularIlluminationAndVariance.rgb);","float sampleSpecularLuminance = Color::Luminance(_HoRTDIAuditStableSpecGuide[p].rgb);");
+            if(stableRgbGuideAudit)body=ReplaceOnce(body,"abs(centerSpecularLuminance - sampleSpecularLuminance)","Color::Luminance(abs(_HoRTDIAuditStableSpecGuide[pixelPos].rgb - _HoRTDIAuditStableSpecGuide[p].rgb))");
             if(matchedSpecularGuideVariance)body=ReplaceOnce(body,"float pairSpecularVar = min(centerSpecularVar, max(0.0, sampleSpecularIlluminationAndVariance.a));","float pairSpecularVar = min(max(0.0, _HoRTDIAuditStableSpecGuide[pixelPos].a), max(0.0, _HoRTDIAuditStableSpecGuide[p].a));");
             body=Rebase(body,bodyPath);string compute=Rebase(File.ReadAllText(Path.Combine(root,entryPath)),entryPath).Replace(packagePath+"/"+bodyPath,asset+"/HoRTDINrdAtrous.hlsl");
             string folder=Path.Combine(Application.dataPath,"HoRTDIStableSpecularGuide");Directory.CreateDirectory(folder);
@@ -66,7 +71,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 };
                 shaders[10]=replacement;
             }
-            public void Dispose(){shaders[10]=original;context.nrd.ValidationSpecularStage=originalCallback;Require(captures>0&&latePasses>=captures,"Stable guide capture/consumption missing");Debug.Log($"[HoRTDIValidation] STABLE_SPEC_GUIDE captures={captures} latePasses={latePasses} bytes={context.width*context.height*8} first={firstSpecularGuideAudit} matchedVariance={matchedSpecularGuideVariance}; isolated guide");}
+            public void Dispose(){shaders[10]=original;context.nrd.ValidationSpecularStage=originalCallback;Require(captures>0&&latePasses>=captures,"Stable guide capture/consumption missing");Debug.Log($"[HoRTDIValidation] STABLE_SPEC_GUIDE captures={captures} latePasses={latePasses} bytes={context.width*context.height*8} first={firstSpecularGuideAudit} matchedVariance={matchedSpecularGuideVariance} rgb={stableRgbGuideAudit}; isolated guide");}
         }
     }
 }
