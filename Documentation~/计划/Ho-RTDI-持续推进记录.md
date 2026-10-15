@@ -917,6 +917,14 @@
 
 **下一项：** mixed实际primary天空/辅助局部贡献的方差协方差，定位剩余噪声而非继续改NRD常数；距离合同独立保留。详见[分层生产接入](../Ho-RTDI-StratifiedAuxiliary.md)。
 
+## 101. 真实主/辅助specular贡献方差协方差
+
+**动手前评审：** 100已有分层收益，mixed静态仍失败；沿fork finalized weight及生产合成合同，直接读packed/payload/visibility，四固定点逐帧分解，不继续试filter常数。
+
+**结果：** 两路径完全一致，mixed两辅助单独波动但负cov使合计方差0；剩余primary绿色方差约.00205/.00214。RGB分解误差≤.0842%，方差重建差≤.0770%。primary天空green由raw唯一来源归属，非独立BRDF重算；正式环境仍2/4/exit1，diagnosticOnly。Roslyn/Shader/GUID/diff通过。
+
+**下一项：** primary环境diffuse/spec混合方向与MIS分布，量化响应再决定改法；不增加无效局部候选或按green改输出，距离合同独立保留。详见[贡献分解](../Ho-RTDI-ComponentNoiseAudit.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
