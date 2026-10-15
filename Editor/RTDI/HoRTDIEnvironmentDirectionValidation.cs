@@ -43,11 +43,11 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     double green=response*sample.weight/(context.environmentPdf.rt.width*context.environmentPdf.rt.width/(4*Math.PI))*(((sample.mVisibility&63)!=0)?1:0),actual=raw.GetPixel(x,64).g;
                     double error=Math.Abs(green-actual)/(Math.Max(Math.Abs(green),Math.Abs(actual))+.001);Require(double.IsFinite(error)&&error<.003,"Environment direction/weight specular reconstruction mismatch");result.maxGreenReconstructionError=Math.Max(result.maxGreenReconstructionError,error);
                     result.greenSums[bin]+=actual;result.greenSquares[bin]+=actual*actual;
-                    double a2=Math.Pow(102.0/255,4),nh2=(1+mu)*.5,den=nh2*a2+1-nh2,D=a2/(Math.PI*den*den);result.brdfPdfSums[bin]+=.5*(mu/Math.PI+D/4);
+                    double a2=Math.Pow(102.0/255,4),nh2=(1+mu)*.5,den=nh2*a2+1-nh2,D=a2/(Math.PI*den*den);result.brdfPdfSums[bin]+=vndfProposalAudit?D/4:.5*(mu/Math.PI+D/4);
                 }
             }
             internal void Finish(){Require(result.frames==512&&result.probes==2048,"Direction audit count mismatch");environmentDirectionCases.Add(result);}
         }
-        private static void WriteEnvironmentDirections()=>File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-envdirection102-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new EnvironmentDirectionReport{path=compatibility?"compatibility":"RenderGraph",cases=environmentDirectionCases.ToArray()},true));
+        private static void WriteEnvironmentDirections()=>File.WriteAllText(Path.Combine(Application.dataPath,"../"+(vndfProposalAudit?"rtdi-envdirection103-vndf-":"rtdi-envdirection102-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new EnvironmentDirectionReport{path=compatibility?"compatibility":"RenderGraph",cases=environmentDirectionCases.ToArray()},true));
     }
 }

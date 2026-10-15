@@ -933,6 +933,14 @@
 
 **下一项：** 相同预算的BRDF VNDF方向候选控制，保持PDF一致和diffuse/动态门槛；不能因方向集中就推最终RIS方差收益，不扩张reservoir/PT。详见[方向审计](../Ho-RTDI-EnvironmentDirectionAudit.md)。
 
+## 103. 同预算VNDF方向候选拒绝
+
+**动手前评审：** 102高NoL承载大镜面值，不证明方向集中必降方差；沿fork共用sampler/PDF概率，两有效lobe从.5cos转VNDF，同预算/target/NRD保持。
+
+**结果：** 正交两路径与透视均2/4/exit1，mixed镜面5%仍失败；方向读取也保留正式失败，near-normal比例变化但pooled绿色spread未降。直接门槛已否决，不追加无关Player/动态构建。四实际进程，Roslyn/Shader/GUID/diff通过，Runtime未改。
+
+**下一项：** 后续spec range guide每轮自变化与稳定阶段guide控制，保留moment/variance/动态/shape门槛，不继续概率调参或增加候选数。详见[VNDF候选拒绝](../Ho-RTDI-VndfProposalRejection.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |

@@ -29,6 +29,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             using var distanceOverride=ApplySpecularDistanceControl();
             using var demodulatedOverride=ApplyDemodulatedProposal();
             using var stratifiedOverride=ApplyStratifiedAuxiliary();
+            using var vndfOverride=ApplyVndfProposal();
             if(runtimeMultiStateAudit){ValidateRuntimeMultiState(blue);return;}
             if(cutoutResolutionSpecular){surfaceMaterial.SetFloat("_Reflectance",.04f);surfaceMaterial.SetFloat("_Smoothness",.6f);}
             if(cutoutSpecularRgbProposal)ApplyCutoutSpecularRgbProposal();

@@ -127,6 +127,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(stratifiedAuxiliaryAudit)mode+="-stratified99";
             if(componentNoiseAudit){mode+="-componentnoise101";WriteComponentNoise();}
             if(environmentDirectionAudit){mode+="-envdirection102";WriteEnvironmentDirections();}
+            if(vndfProposalAudit)mode+="-vndf103";
             if(auxiliarySpatialAudit){WriteAuxiliarySpatial(mode);return;}
             if(auxiliaryEnvironmentStages){WriteAuxiliaryEnvironmentStages(mode);return;}
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+(runtimeMultiAudit?"rtdi-runtime78-env-":compactAuxiliaryAudit?"rtdi-compact74-env-":"rtdi-auxenv54-")+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",mode=mode,projection=auxiliaryPerspectiveAudit?"perspective":"orthographic",cases=cases.ToArray()},true));
