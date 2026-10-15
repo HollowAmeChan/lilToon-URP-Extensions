@@ -79,12 +79,14 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 var images=new[]{rawD,filteredD,rawS,filteredS};
                 var guideCapture=guideDistanceAudit?new GuideDistanceCapture(c,mixed,reuse):null;
                 var componentCapture=componentNoiseAudit?new ComponentNoiseCapture(c,mixed,reuse):null;
+                var directionCapture=environmentDirectionAudit?new EnvironmentDirectionCapture(c,mixed,reuse):null;
                 for(int frame=0;frame<frames;frame++)
                 {
                     RenderCamera();Require(c.nrd.LastDispatchCount>0&&c.environmentSampling,"Environment prototype bypassed RELAX/environment");ReadImage(c.diffuse.rt,rawD);ReadImage(c.specular.rt,rawS);ReadImage(c.filteredDiffuse.rt,filteredD);ReadImage(c.filteredSpecular.rt,filteredS);
                     referenceOverride?.Observe(frame,rawS);
                     guideCapture?.Observe(frame);
                     componentCapture?.Observe(rawS);
+                    directionCapture?.Observe(rawS);
                     foreach(var p in referencePoints)
                     {
                         references[0,0]+=p.dr;references[0,1]+=1;references[0,2]+=p.db;references[1,0]+=p.sr;references[1,1]+=p.sg;references[1,2]+=p.sb;
@@ -107,6 +109,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(lateSpecWeightAudit)WriteLateSpecWeights(lateSpecOverride,(mixed?"mixed":"sky")+(reuse?"-reuse":"-none"),size,frames);
                 guideCapture?.Finish();
                 componentCapture?.Finish();
+                directionCapture?.Finish();
                 computeField.SetValue(feature,originalCompute);rayField.SetValue(feature,originalRay);c.nrd.ValidationTimeSeconds=null;
             }
             string mode=!cutoutPairedFinalSample?"baseline":auxiliaryEnvironmentPartition?"partition":"naive";
@@ -123,6 +126,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(demodulatedRgbAudit)mode+="-rgb";
             if(stratifiedAuxiliaryAudit)mode+="-stratified99";
             if(componentNoiseAudit){mode+="-componentnoise101";WriteComponentNoise();}
+            if(environmentDirectionAudit){mode+="-envdirection102";WriteEnvironmentDirections();}
             if(auxiliarySpatialAudit){WriteAuxiliarySpatial(mode);return;}
             if(auxiliaryEnvironmentStages){WriteAuxiliaryEnvironmentStages(mode);return;}
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+(runtimeMultiAudit?"rtdi-runtime78-env-":compactAuxiliaryAudit?"rtdi-compact74-env-":"rtdi-auxenv54-")+mode+"-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new AuxiliaryEnvironmentReport{qualityPass=allPass,path=compatibility?"compatibility":"RenderGraph",mode=mode,projection=auxiliaryPerspectiveAudit?"perspective":"orthographic",cases=cases.ToArray()},true));

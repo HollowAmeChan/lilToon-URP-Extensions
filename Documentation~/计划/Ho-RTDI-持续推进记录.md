@@ -925,6 +925,14 @@
 
 **下一项：** primary环境diffuse/spec混合方向与MIS分布，量化响应再决定改法；不增加无效局部候选或按green改输出，距离合同独立保留。详见[贡献分解](../Ho-RTDI-ComponentNoiseAudit.md)。
 
+## 102. primary环境方向与MIS单位
+
+**动手前评审：** 101主要波动在primary；沿fork cos/VNDF及SDK solid-angle转换，读取packed UV/weight/cache并独立GGX重建，不先修改PDF或分母。
+
+**结果：** 两路径四组各2048probe，常量环境密度1/(4pi)、误差0，绿色重建≤.09488%。NoL>.9方向约25%～27%，承载68%～69%信号和91%～92%平方和，非方差份额。正式环境仍2/4/exit1。初次错误字段在Roslyn阶段修正后才启动，Shader/GUID/diff通过。
+
+**下一项：** 相同预算的BRDF VNDF方向候选控制，保持PDF一致和diffuse/动态门槛；不能因方向集中就推最终RIS方差收益，不扩张reservoir/PT。详见[方向审计](../Ho-RTDI-EnvironmentDirectionAudit.md)。
+
 ## 下一步取舍
 
 | 项目 | 当前判断与推进条件 |
