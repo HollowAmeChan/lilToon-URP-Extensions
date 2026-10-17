@@ -29,6 +29,10 @@ ReferenceFrame 提供世界原点和轴，随 Transform 动态更新。眼透保
 
 一个组件可以统一准备和发布多个 Renderer。相同 Mesh 共用准备缓存和上传数据，各 Renderer 保留独立 GD 槽；某个目标失败不会阻止其他有效目标发布。组件面板只保留配置项与生成按钮，手动生成失败时错误写入 Console。
 
+共享 Renderer 数据的低 16 bit 为 OB 身份，高 16 bit 为 GD 槽。角色特化的材质捕获必须通过 `HoRendererIdentity()` 取低位，再查询标签及角色组；直接把完整值传入 OB 表会使 GD 启用后的脸/眼标签失效，捕获被裁掉。捕获共用代码已修正这两个入口。
+
+GD 与角色捕获的联动验证通过 24 项 D3D12 检查：真实 lilToon 的眼睛颜色、Alpha、眼透遮罩、受光脸、模糊颜色和脸源遮罩在 GD 开关前后的图像差均为 0；另覆盖 GD 高位槽 256 / 32768 / 65535 及 OB 刷新。旧代码在相同测试中复现开启 GD 后捕获丢失。验证源和结果留在本地 `research~/GeometryData/`。
+
 原算法来自本机 Blender 4.5 HoTools 的 `SOLIDIFY_RAW2SMOOTH`：按边的两面角累计方向、Laplacian 判断曲率符号、角点加权求 shell 因子，再生成 TBN RGB 和以 0.5 为中性值的 A 补偿。专用输出不写 Mesh 顶点色。
 
 为了保持既有 RGBA 来源的画面，GD 把自己的数据交给同一个方向/宽度消费路径；A 仍按旧 lilToon 路径乘宽度，没有擅自改成另一种 shell 解码。准备动作与保存结果发生在组件上，不在 AssetPostprocessor 中触发。

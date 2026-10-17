@@ -3,6 +3,7 @@
 
 #include "Packages/com.unity.render-pipelines.universal/ShaderLibrary/Core.hlsl"
 #include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoObjectBufferIdPass.hlsl"
+#include "Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/ObjectBuffer/Shaders/HoRendererIdentity.hlsl"
 
 // Material capture passes should keep their own cutout/dissolve rules and use
 // Tags { "LightMode" = "HoCharacterCapture" }. Material alpha is intentionally
@@ -22,13 +23,13 @@ float LilHoCharacterCaptureByteToNormalized(float value)
     return saturate(round(clamp(value, 0.0, 255.0)) / 255.0);
 }
 
-// 角色语义只在 OB 里：RSUV 上的 16 bit 就是这个 renderer 的 partId（组 8 + 槽位 8），
+// 角色语义只在 OB 里：RSUV 低 16 bit 是 partId（组 8 + 槽位 8），高 16 bit 为 GD 槽。
 // 部件行表里存着它的**标签位掩码**。所以"这个 pass 该不该画"= 该部件有没有对应标签，
 // 角色 ID = 同一个 partId 的组字节 —— 与屏幕空间那边（OB 身份池层 0 的组字节）同一套编号。
 // OB 不在 renderer 里时表是空的：标签恒 0 ⇒ 整支不画（这是正确行为，不是退化）。
 uint LilHoCharacterCaptureTags()
 {
-    return HoObjectBufferLoadPart(unity_RendererUserValue).tags;
+    return HoObjectBufferLoadPart(HoRendererIdentity()).tags;
 }
 
 float LilHoCharacterCaptureHasTag(uint tags, uint tagBit)
@@ -38,8 +39,8 @@ float LilHoCharacterCaptureHasTag(uint tags, uint tagBit)
 
 float LilHoCharacterCaptureCharacterId()
 {
-    // HoObjectBufferGroup 写进 RSUV 的就是 partId = group << 8 | slot。
-    return (float)HoObjectBufferGroupId(unity_RendererUserValue);
+    // 只解码 OB 身份，GD 槽不参与标签查询或角色组编号。
+    return (float)HoObjectBufferGroupId(HoRendererIdentity());
 }
 
 float LilHoCharacterCaptureShouldDraw()
