@@ -55,8 +55,7 @@ namespace lilToon.URP.Extensions.Editor.GeometryData
                         if (p == null) continue;
                         SourceLink(p);
                         string state = !p.isActiveAndEnabled ? "停用" : HoOutlineDataRegistry.IsPublished(p) ? "已发布" : p.HasData ? "已准备 / 待发布" : "未准备或缓存失效";
-                        EditorGUILayout.LabelField($"{state} / GD 槽 {Slot(p.targetRenderer)}");
-                        EditorGUILayout.HelpBox(p.Status, MessageType.None);
+                        EditorGUILayout.LabelField($"{state} / {HoOutlineDataRegistry.GetPublishedRendererCount(p)} / {p.TargetCount} Renderer");
                     }
                     showTensions = EditorGUILayout.Foldout(showTensions, $"Tesion ({tensions.Length})", true);
                     if (showTensions) foreach (var p in tensions)

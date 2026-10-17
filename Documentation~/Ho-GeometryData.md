@@ -23,9 +23,11 @@ ReferenceFrame 提供世界原点和轴，随 Transform 动态更新。眼透保
 ## 2. 描边修正
 
 1. 在 URP Renderer Data 添加 `HoGeometryDataRendererFeature`。
-2. 在 MeshRenderer / SkinnedMeshRenderer 对象上添加 `Rendering/Ho-GeometryData OutlineCorrection`，指定目标 Renderer。
+2. 添加 `Rendering/Ho-GeometryData OutlineCorrection`，在“目标渲染器”列表中输入多个 MeshRenderer / SkinnedMeshRenderer。空列表只尝试组件同对象上的 Renderer；列表中的空项和重复项跳过。
 3. 按需要启用“初始化时准备”“Play 前准备”，或点击“生成 / 更新描边修正”。
 4. lilToon 描边的来源选择 `GD (Direction + Width)`，值为 3。原值 0/1/2 保持原语义。
+
+一个组件可以统一准备和发布多个 Renderer。相同 Mesh 共用准备缓存和上传数据，各 Renderer 保留独立 GD 槽；某个目标失败不会阻止其他有效目标发布。组件面板只保留配置项与生成按钮，手动生成失败时错误写入 Console。
 
 原算法来自本机 Blender 4.5 HoTools 的 `SOLIDIFY_RAW2SMOOTH`：按边的两面角累计方向、Laplacian 判断曲率符号、角点加权求 shell 因子，再生成 TBN RGB 和以 0.5 为中性值的 A 补偿。专用输出不写 Mesh 顶点色。
 

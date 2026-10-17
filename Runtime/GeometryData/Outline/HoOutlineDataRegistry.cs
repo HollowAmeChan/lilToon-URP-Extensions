@@ -1,4 +1,3 @@
-using System;
 using System.Collections.Generic;
 using System.Runtime.InteropServices;
 using UnityEngine;
@@ -9,11 +8,17 @@ namespace lilToon.URP.Extensions.GeometryData
     {
         [StructLayout(LayoutKind.Sequential)]
         private struct Entry { public uint offset, count, valid, reserved; }
-        private static readonly List<HoGeometryDataOutlineCorrection> Producers = new List<HoGeometryDataOutlineCorrection>();
-        private static readonly HashSet<HoGeometryDataOutlineCorrection> Bound = new HashSet<HoGeometryDataOutlineCorrection>();
+        // One owner token per Renderer: a component may publish several draws.
+        private sealed class Source
+        {
+            public HoGeometryDataOutlineCorrection producer;
+            public Renderer renderer;
+            public Vector4[] data;
+        }
+        private static readonly Dictionary<HoGeometryDataOutlineCorrection, Dictionary<Renderer, Source>> Producers
+            = new Dictionary<HoGeometryDataOutlineCorrection, Dictionary<Renderer, Source>>();
+        private static readonly HashSet<Source> Bound = new HashSet<Source>();
         private static readonly HashSet<Renderer> WarnedAmbiguous = new HashSet<Renderer>();
-        private static readonly Dictionary<HoGeometryDataOutlineCorrection, (Renderer renderer, Vector4[] data)> Published
-            = new Dictionary<HoGeometryDataOutlineCorrection, (Renderer, Vector4[])>();
         private static GraphicsBuffer entries, values;
         private static bool dirty = true;
         private static int bindingRevision = -1;
@@ -30,70 +35,128 @@ namespace lilToon.URP.Extensions.GeometryData
             entryBuffer = entries; valueBuffer = values;
             return entries != null && entries.IsValid() && values != null && values.IsValid();
         }
-        public static bool IsPublished(HoGeometryDataOutlineCorrection producer) => producer != null && producer.isActiveAndEnabled
-            && producer.HasData && !dirty && Bound.Contains(producer) && entries != null && entries.IsValid();
+        public static bool IsPublished(HoGeometryDataOutlineCorrection producer) => GetPublishedRendererCount(producer) > 0;
+
+        public static int GetPublishedRendererCount(HoGeometryDataOutlineCorrection producer)
+        {
+            if (producer == null || !producer.isActiveAndEnabled || dirty || entries == null || !entries.IsValid()) return 0;
+            int count = 0;
+            foreach (var source in Bound)
+                if (source.producer == producer && producer.GetPreparedData(source.renderer) == source.data) count++;
+            return count;
+        }
 
         internal static void Register(HoGeometryDataOutlineCorrection producer)
         {
-            if(!Producers.Contains(producer))Producers.Add(producer);
+            bool changed = false;
+            if (!Producers.ContainsKey(producer))
+            {
+                Producers.Add(producer, new Dictionary<Renderer, Source>());
+                changed = true;
+            }
+            changed |= SynchronizeSources(producer, Producers[producer]);
             // Unity snapshots draw metadata during camera culling, before AddRenderPasses/RecordRenderGraph.
-            if(producer.isActiveAndEnabled && producer.HasData && HoGeometryRendererBinding.Acquire(producer.targetRenderer,producer)!=0)Bound.Add(producer);
-            else { HoGeometryRendererBinding.Release(producer);Bound.Remove(producer); }
-            dirty=true;
+            if (changed) UpdateBindings();
+            dirty |= changed;
         }
         internal static void Unregister(HoGeometryDataOutlineCorrection producer)
         {
+            if (!Producers.TryGetValue(producer, out var sources)) return;
+            foreach (var source in sources.Values) Release(source);
             Producers.Remove(producer);
-            HoGeometryRendererBinding.Release(producer);
-            Bound.Remove(producer);
-            dirty=true;
+            UpdateBindings();
+            dirty = true;
         }
         public static void MarkDirty() => dirty = true;
 
+        private static bool SynchronizeSources(HoGeometryDataOutlineCorrection producer, Dictionary<Renderer, Source> sources)
+        {
+            var targets = new HashSet<Renderer>();
+            bool changed = false;
+            if (producer != null && producer.isActiveAndEnabled)
+            {
+                foreach (var renderer in producer.GetTargetRenderers())
+                {
+                    targets.Add(renderer);
+                    var data = producer.GetPreparedData(renderer);
+                    if (!sources.TryGetValue(renderer, out var source))
+                    {
+                        sources.Add(renderer, new Source { producer = producer, renderer = renderer, data = data });
+                        changed = true;
+                    }
+                    else if (source.data != data)
+                    {
+                        source.data = data;
+                        changed = true;
+                    }
+                }
+            }
+            var removed = new List<Renderer>();
+            foreach (var pair in sources) if (!targets.Contains(pair.Key)) removed.Add(pair.Key);
+            foreach (var renderer in removed)
+            {
+                Release(sources[renderer]);
+                sources.Remove(renderer);
+                changed = true;
+            }
+            return changed;
+        }
+
+        private static void Release(Source source)
+        {
+            HoGeometryRendererBinding.Release(source);
+            Bound.Remove(source);
+        }
+
+        private static void UpdateBindings()
+        {
+            var multiplicity = new Dictionary<Renderer, int>();
+            foreach (var sources in Producers.Values)
+                foreach (var source in sources.Values)
+                    multiplicity[source.renderer] = multiplicity.TryGetValue(source.renderer, out int count) ? count + 1 : 1;
+            foreach (var sources in Producers.Values)
+                foreach (var source in sources.Values)
+                {
+                    if (multiplicity[source.renderer] != 1)
+                    {
+                        Release(source);
+                        if (WarnedAmbiguous.Add(source.renderer))
+                            Debug.LogWarning("[Ho-GD] 同一 Renderer 有多个描边修正组件，未发布修正来源。", source.renderer);
+                        continue;
+                    }
+                    WarnedAmbiguous.Remove(source.renderer);
+                    if (source.data == null) Release(source);
+                    else if (!Bound.Contains(source) && HoGeometryRendererBinding.Acquire(source.renderer, source) != 0)
+                        Bound.Add(source);
+                }
+            WarnedAmbiguous.RemoveWhere(renderer => !multiplicity.ContainsKey(renderer));
+        }
+
         public static void Capture(out GraphicsBuffer entryBuffer, out GraphicsBuffer valueBuffer)
         {
-            Producers.RemoveAll(p=>p==null);
-            for(int i=0; !dirty && i<Producers.Count; i++)
-            {
-                var p=Producers[i];
-                if(Published.TryGetValue(p,out var published))
-                    dirty=p.targetRenderer!=published.renderer || p.Data!=published.data;
-                else if(p.isActiveAndEnabled && p.HasData)dirty=true;
-            }
-            if(bindingRevision!=HoGeometryRendererBinding.Revision)dirty=true;
-            if(dirty || entries==null || !entries.IsValid() || values==null || !values.IsValid())Rebuild();
-            entryBuffer=entries;valueBuffer=values;
+            bool changed = false;
+            foreach (var pair in Producers) changed |= SynchronizeSources(pair.Key, pair.Value);
+            if (changed) UpdateBindings();
+            dirty |= changed || bindingRevision != HoGeometryRendererBinding.Revision;
+            if (dirty || entries == null || !entries.IsValid() || values == null || !values.IsValid()) Rebuild();
+            entryBuffer = entries; valueBuffer = values;
         }
+
         private static void Rebuild()
         {
-            Published.Clear();
-            var multiplicity=new Dictionary<Renderer,int>();
-            foreach(var p in Producers)
-                if(p!=null && p.isActiveAndEnabled && p.targetRenderer!=null)
-                    multiplicity[p.targetRenderer]=multiplicity.TryGetValue(p.targetRenderer,out int n) ? n+1 : 1;
-            var accepted=new HashSet<HoGeometryDataOutlineCorrection>();
-            foreach(var p in Producers)
-                if(p!=null && p.isActiveAndEnabled && p.targetRenderer!=null && p.HasData && multiplicity[p.targetRenderer]==1)
-                    accepted.Add(p);
-            foreach(var p in Bound)if(!accepted.Contains(p))HoGeometryRendererBinding.Release(p);
-            Bound.Clear();
-            var records=new Dictionary<uint,Entry>();var data=new List<Vector4>{Vector4.zero};
-            foreach(var p in Producers)
+            var records = new Dictionary<uint, Entry>();
+            var offsets = new Dictionary<Vector4[], uint>();
+            var data = new List<Vector4> { Vector4.zero };
+            foreach (var source in Bound)
             {
-                if(p!=null)Published[p]=(p.targetRenderer,p.Data);
-                if(p==null || !p.isActiveAndEnabled || p.targetRenderer==null || !p.HasData)continue;
-                // A draw has one dedicated outline source. Ambiguous ownership is invalid, never last-writer-wins.
-                if(multiplicity[p.targetRenderer]!=1)
+                uint slot = HoGeometryRendererBinding.GetManagedValue(source.renderer) >> 16;
+                if (!offsets.TryGetValue(source.data, out uint offset))
                 {
-                    if(WarnedAmbiguous.Add(p.targetRenderer))Debug.LogWarning("[Ho-GD] 同一 Renderer 有多个描边修正组件，未发布修正来源。",p.targetRenderer);
-                    continue;
+                    offset = (uint)data.Count;
+                    offsets.Add(source.data, offset);
+                    data.AddRange(source.data);
                 }
-                WarnedAmbiguous.Remove(p.targetRenderer);
-                Vector4[] source=p.Data;
-                uint slot=HoGeometryRendererBinding.Acquire(p.targetRenderer,p);
-                if(slot==0)continue;
-                records.Add(slot,new Entry{offset=(uint)data.Count,count=(uint)source.Length,valid=1});
-                data.AddRange(source);Bound.Add(p);
+                records.Add(slot, new Entry { offset = offset, count = (uint)source.data.Length, valid = 1 });
             }
             var rows=new Entry[HoGeometryRendererBinding.SlotCapacity];
             foreach(var record in records)rows[record.Key]=record.Value;
