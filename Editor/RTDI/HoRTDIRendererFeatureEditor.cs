@@ -1,4 +1,5 @@
 using lilToon.URP.Extensions.RTDI;
+using lilToon.URP.Extensions.RTDI.NRD;
 using UnityEditor;
 using UnityEngine;
 namespace lilToon.URP.Extensions.Editor.RTDI
@@ -16,7 +17,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(LilUrpEditorSectionGui.DrawSectionHeader(ref runtime,"运行","RTXDI DI",RuntimeColor))
             using(new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                Draw(settings,"enabled","启用");Draw(settings,"localSampling","局部灯采样");Draw(settings,"initialSamples","局部灯候选数");Draw(settings,"temporal","时间重采样");Draw(settings,"maxHistory","历史样本预算");
+                Draw(settings,"enabled","启用");Draw(settings,"localSampling","局部灯采样");Draw(settings,"initialSamples","局部灯候选数");Draw(settings,"temporal","时间重采样");Draw(settings,"maxHistory","ReSTIR 历史上限");
                 Draw(settings,"composite","合成到画面（参考 PBR）");
                 if(settings.FindPropertyRelative("composite").boolValue)Draw(settings,"compositeWeight","合成过渡权重");
                 Draw(settings,"spatial","空间重采样");Draw(settings,"spatialSamples","邻域样本数");Draw(settings,"spatialRadius","邻域半径");
@@ -38,6 +39,13 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("debugOverlayShader"),new GUIContent("Debug Grid Shader"));
             }
             serializedObject.ApplyModifiedProperties();EditorGUILayout.LabelField("运行状态",((HoRTDIRendererFeature)target).Status);
+            var feature=(HoRTDIRendererFeature)target;
+            var context=feature.ContextForCamera(SceneView.lastActiveSceneView?.camera)??feature.LastContext;
+            if(context?.nrd!=null)
+            {
+                EditorGUILayout.LabelField("降噪历史",$"{(context.nrd.StableDiffuseHistory?"静止累积":"变化响应")} / 漫反射 {context.nrd.AppliedSettings.diffFrames} / 镜面 {context.nrd.AppliedSettings.specFrames}");
+                if(context.nrd.SceneViewPreview)EditorGUILayout.LabelField("预览采样",$"{context.nrd.SceneViewAccumulatedFrames}/{HoRTDINrdContext.SceneViewSettledSamples}（静止后自动补帧）");
+            }
         }
         private static void Draw(SerializedProperty settings,string name,string label)
         {

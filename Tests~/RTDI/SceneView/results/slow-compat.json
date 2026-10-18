@@ -1,0 +1,93 @@
+{
+    "pass": true,
+    "compatibility": true,
+    "protocol": "Injected 1.2-second sample intervals, not a GPU/FPS benchmark",
+    "legacy": {
+        "profile": "legacy-long-gap-reset",
+        "resets": 192,
+        "stableFrames": 0,
+        "diffuseHistory": 3,
+        "specularHistory": 30,
+        "raw": {
+            "signal": "rawDiffuse",
+            "firstFrame": 129,
+            "lastFrame": 192,
+            "frames": 64,
+            "components": 768,
+            "mean": 0.14678228894869486,
+            "normalizedTemporalVariance": 0.9509597390900619,
+            "normalizedFrameDifferenceMSE": 1.9104691437915285,
+            "frameDifferenceL1": 0.15494431894292277
+        },
+        "filtered": {
+            "signal": "filteredDiffuse",
+            "firstFrame": 129,
+            "lastFrame": 192,
+            "frames": 64,
+            "components": 768,
+            "mean": 0.14671776235021148,
+            "normalizedTemporalVariance": 0.9509530470947664,
+            "normalizedFrameDifferenceMSE": 1.910452708083284,
+            "frameDifferenceL1": 0.15487866094040257
+        }
+    },
+    "repaired": {
+        "profile": "stationary-scene-preview",
+        "resets": 1,
+        "stableFrames": 191,
+        "diffuseHistory": 30,
+        "specularHistory": 30,
+        "raw": {
+            "signal": "rawDiffuse",
+            "firstFrame": 129,
+            "lastFrame": 192,
+            "frames": 64,
+            "components": 768,
+            "mean": 0.14678228894869486,
+            "normalizedTemporalVariance": 0.9509597390900619,
+            "normalizedFrameDifferenceMSE": 1.9104691437915285,
+            "frameDifferenceL1": 0.15494431894292277
+        },
+        "filtered": {
+            "signal": "filteredDiffuse",
+            "firstFrame": 129,
+            "lastFrame": 192,
+            "frames": 64,
+            "components": 768,
+            "mean": 0.14401191969712577,
+            "normalizedTemporalVariance": 0.0004329189144235606,
+            "normalizedFrameDifferenceMSE": 0.00011600585055515118,
+            "frameDifferenceL1": 0.0012262914546583065
+        }
+    },
+    "referenceFast": {
+        "profile": "stationary-reference-fast",
+        "resets": 1,
+        "stableFrames": 191,
+        "diffuseHistory": 30,
+        "specularHistory": 30,
+        "raw": {
+            "signal": "rawDiffuse",
+            "firstFrame": 129,
+            "lastFrame": 192,
+            "frames": 64,
+            "components": 768,
+            "mean": 0.14678228894869486,
+            "normalizedTemporalVariance": 0.9509597390900619,
+            "normalizedFrameDifferenceMSE": 1.9104691437915285,
+            "frameDifferenceL1": 0.15494431894292277
+        },
+        "filtered": {
+            "signal": "filteredDiffuse",
+            "firstFrame": 129,
+            "lastFrame": 192,
+            "frames": 64,
+            "components": 768,
+            "mean": 0.1440042182803154,
+            "normalizedTemporalVariance": 0.0004328691864992443,
+            "normalizedFrameDifferenceMSE": 0.0001160864414667035,
+            "frameDifferenceL1": 0.0012266320526284516
+        }
+    },
+    "changeRestarts": 1
+}

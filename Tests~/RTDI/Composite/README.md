@@ -108,7 +108,11 @@ It verifies evidence integrity and declared acceptance, and does not rerun Unity
 Historical convergence evidence stays bound to its original source:
 
 ```powershell
-python Tests~/RTDI/Composite/verify_composite.py
+python Tests~/RTDI/Composite/verify_composite.py --source-commit da52a0f
 python Tests~/RTDI/Reference/verify_convergence.py --source-commit f537c26
 python Tests~/RTDI/generate_nrd_variance_adapter.py --check
 ```
+
+The composite capture predates the Scene View history fix. Its original source
+hashes remain bound to `da52a0f`; the new argument checks that historical source.
+Without it, the verifier continues to require exact current-file hashes.

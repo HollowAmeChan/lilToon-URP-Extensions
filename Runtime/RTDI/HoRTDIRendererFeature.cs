@@ -38,6 +38,7 @@ namespace lilToon.URP.Extensions.RTDI
         public HoRTDISettings Settings=>settings;
         public string Status {get;private set;}="未生产";
         internal HoRTDIContext LastContext {get;private set;}
+        internal HoRTDIContext ContextForCamera(Camera camera)=>camera!=null&&contexts.TryGetValue(camera,out var context)?context:null;
         internal static readonly ProfilingSampler FinalVisibilityProfiling=new("HoRTDI Final Visibility");
         internal static readonly ProfilingSampler VisibilityGradientsProfiling=new("HoRTDI Visibility Gradients");
         public override void Create()
@@ -310,6 +311,9 @@ namespace lilToon.URP.Extensions.RTDI
                     // continue through the existing visibility-confidence path.
                     reset=!c.nrdHistoryValid||!c.historyValid||worldReset||c.settingsSignature!=d.signature||d.lightFrame.domainChanged;
                     common=HoRTDINrdNative.CommonSettings.Create(c.width,c.height,d.view,d.projection,c.previousView,c.previousProjection,c.frame,reset);
+                    #if UNITY_EDITOR
+                    c.nrd.SceneViewPreview=!Application.isPlaying&&d.camera.cameraType==CameraType.SceneView&&!c.nrd.ValidationDisableSceneViewPreview;
+                    #endif
                     common.timeDelta=c.nrd.SetRenderTime(d.renderTime,out timeReset);if(timeReset)common.accumulationMode=2;
                     bool lightsChanged=LightsChanged(d.lightFrame);
                     reset|=c.nrd.ObserveLightingStability(reset||timeReset||worldChanged||lightsChanged||c.previousView!=d.view||c.previousProjection!=d.projection);
@@ -358,7 +362,11 @@ namespace lilToon.URP.Extensions.RTDI
                     cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDIDiffuse",c.diffuse.nameID);cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTDISpecular",c.specular.nameID);
                     cmd.SetComputeVectorParam(d.shader,"_HoRTDIFrame",new Vector4(c.width,c.height,d.lightCount,d.localLightCount));
                     cmd.SetComputeVectorParam(d.shader,"_HoRTDISettings",new Vector4(Mathf.Clamp(d.settings.initialSamples,1,32),Mathf.Clamp(d.settings.spatialSamples,1,16),Mathf.Clamp(d.settings.spatialRadius,1,32),Mathf.Max(.00001f,d.settings.rayBias)));
-                    cmd.SetComputeVectorParam(d.shader,"_HoRTDIFlags",new Vector4(temporal?1:0,d.settings.spatial?1:0,Mathf.Clamp(d.settings.maxHistory,1,32),0));
+                    int historyLimit=Mathf.Clamp(d.settings.maxHistory,1,32);
+                    #if UNITY_EDITOR
+                    historyLimit=Mathf.Clamp(c.ValidationReservoirHistory??historyLimit,1,32);
+                    #endif
+                    cmd.SetComputeVectorParam(d.shader,"_HoRTDIFlags",new Vector4(temporal?1:0,d.settings.spatial?1:0,historyLimit,0));
                     cmd.SetComputeVectorParam(d.shader,"_HoRTDIReservoirLayout",new Vector4(c.rowPitch,c.arrayPitch,0,0));cmd.SetComputeIntParam(d.shader,"_HoRTDIFrameIndex",c.frame);
                     cmd.SetComputeMatrixParam(d.shader,"_HoRTDIPreviousVP",c.previousVP);cmd.SetComputeMatrixParam(d.shader,"_HoRTDIPreviousInverseVP",c.previousInverseVP);
                     cmd.SetComputeVectorParam(d.shader,"_HoRTDIPreviousCameraPosition",c.previousCamera);cmd.SetComputeVectorParam(d.shader,"_HoRTDIPreviousTowardsEye",c.previousTowardsEye);

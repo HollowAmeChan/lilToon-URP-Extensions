@@ -1,0 +1,100 @@
+{
+    "complete": true,
+    "error": "",
+    "cases": [
+        {
+            "reservoirHistory": 20,
+            "diffuse": {
+                "signal": "diffuse",
+                "firstFrame": 33,
+                "lastFrame": 96,
+                "frames": 64,
+                "components": 12288,
+                "mean": 0.9851774381425003,
+                "normalizedTemporalVariance": 0.024284891512810239,
+                "normalizedFrameDifferenceMSE": 0.006179555650017681,
+                "frameDifferenceL1": 0.042609759927641047
+            },
+            "specular": {
+                "signal": "specular",
+                "firstFrame": 33,
+                "lastFrame": 96,
+                "frames": 64,
+                "components": 12288,
+                "mean": 0.08930945945765719,
+                "normalizedTemporalVariance": 0.0016373490319260773,
+                "normalizedFrameDifferenceMSE": 0.00020354326641659122,
+                "frameDifferenceL1": 0.000825054031333556
+            },
+            "combined": {
+                "signal": "combined",
+                "firstFrame": 33,
+                "lastFrame": 96,
+                "frames": 64,
+                "components": 12288,
+                "mean": 1.0744868976001574,
+                "normalizedTemporalVariance": 0.02151408411332135,
+                "normalizedFrameDifferenceMSE": 0.005459522283204044,
+                "frameDifferenceL1": 0.04300777269444162
+            },
+            "coarseCombined": {
+                "signal": "coarseCombined",
+                "firstFrame": 33,
+                "lastFrame": 96,
+                "frames": 64,
+                "components": 192,
+                "mean": 1.0744868976001574,
+                "normalizedTemporalVariance": 0.002301875607945489,
+                "normalizedFrameDifferenceMSE": 0.0003624584508791945,
+                "frameDifferenceL1": 0.013432354348614348
+            }
+        },
+        {
+            "reservoirHistory": 4,
+            "diffuse": {
+                "signal": "diffuse",
+                "firstFrame": 33,
+                "lastFrame": 96,
+                "frames": 64,
+                "components": 12288,
+                "mean": 1.0113259962552093,
+                "normalizedTemporalVariance": 0.002208233457541021,
+                "normalizedFrameDifferenceMSE": 0.0001233388139900263,
+                "frameDifferenceL1": 0.005867817713623428
+            },
+            "specular": {
+                "signal": "specular",
+                "firstFrame": 33,
+                "lastFrame": 96,
+                "frames": 64,
+                "components": 12288,
+                "mean": 0.08898298291228457,
+                "normalizedTemporalVariance": 0.0010566029851758808,
+                "normalizedFrameDifferenceMSE": 0.00017115901632752233,
+                "frameDifferenceL1": 0.0006178717771680562
+            },
+            "combined": {
+                "signal": "combined",
+                "firstFrame": 33,
+                "lastFrame": 96,
+                "frames": 64,
+                "components": 12288,
+                "mean": 1.1003089791674939,
+                "normalizedTemporalVariance": 0.002011232631515821,
+                "normalizedFrameDifferenceMSE": 0.00011479767904428649,
+                "frameDifferenceL1": 0.006247637208188372
+            },
+            "coarseCombined": {
+                "signal": "coarseCombined",
+                "firstFrame": 33,
+                "lastFrame": 96,
+                "frames": 64,
+                "components": 192,
+                "mean": 1.1003089791674939,
+                "normalizedTemporalVariance": 0.00029310886218600346,
+                "normalizedFrameDifferenceMSE": 0.000011643646305267094,
+                "frameDifferenceL1": 0.0028153014820957286
+            }
+        }
+    ]
+}

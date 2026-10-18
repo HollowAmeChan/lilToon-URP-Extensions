@@ -1,0 +1,11 @@
+--- a/Assets/Settings/PC_Renderer.asset
++++ b/Assets/Settings/PC_Renderer.asset
+@@ -454,7 +454,7 @@
+     initialSamples: 8
+     finalSampling: 0
+     temporal: 1
+-    maxHistory: 20
++    maxHistory: 4
+     spatial: 1
+     spatialSamples: 4
+     spatialRadius: 16

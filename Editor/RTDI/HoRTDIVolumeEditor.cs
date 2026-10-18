@@ -20,7 +20,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             using(new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 PropertyField(mode,new GUIContent("调试模式"));PropertyField(scene,new GUIContent("Debug In Scene View"));PropertyField(game,new GUIContent("Debug In Game View"));
-                EditorGUILayout.HelpBox("显示独立的参考 BRDF 直接光贡献；未与材质基础画面合成。",MessageType.None);
+                EditorGUILayout.HelpBox("这里显示独立的参考 BRDF 直接光。正常画面的参考 PBR 合成与 NRD 开关位于 Renderer Feature；调试关闭不影响合成。",MessageType.None);
             }
         }
     }

@@ -1,10 +1,15 @@
 """Verify captured normal-camera evidence; this does not launch Unity."""
 import hashlib
 import json
+import argparse
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 REPO = ROOT.parents[2]
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--source-commit", help="Check historical captured source at this Git commit instead of the current tree")
+args = parser.parse_args()
 
 
 def require(condition, message):
@@ -17,7 +22,11 @@ for filename, expected in manifest["artifactSha256"].items():
     require(hashlib.sha256((ROOT / filename).read_bytes()).hexdigest() == expected,
             "captured artifact changed: " + filename)
 for filename, expected in manifest["sourceSha256"].items():
-    source = (REPO / filename).read_text(encoding="utf-8-sig").encode("utf-8")
+    if args.source_commit:
+        source = subprocess.check_output(["git", "show", f"{args.source_commit}:{filename}"], cwd=REPO)
+        source = source.decode("utf-8-sig").replace("\r\n", "\n").encode("utf-8")
+    else:
+        source = (REPO / filename).read_text(encoding="utf-8-sig").encode("utf-8")
     require(hashlib.sha256(source).hexdigest() == expected, "audited source changed: " + filename)
 for filename, expected in manifest["binarySha256"].items():
     path = REPO / filename
@@ -64,5 +73,7 @@ require(regression["composite-regression-nrd-compat"] == 0, "NRD compatibility r
 require(not manifest["fullNprIntegration"] and not manifest["gpuBudgetEstablished"],
         "evidence overstates NPR/performance coverage")
 print("PASS: normal-camera replacement, 4 Editor colour/path cases, 2 actual Mono Players and DX11 inactive")
+if args.source_commit:
+    print("Historical source checked at " + args.source_commit + "; current runtime was not rerun by this verifier.")
 print("KNOWN FAILURE: full-core Power bright-identity-swap variance gate fails on both f537c26 and the current source, both paths.")
 print("NPR/GI artistic integration, object motion and GPU budgets remain outside this acceptance.")

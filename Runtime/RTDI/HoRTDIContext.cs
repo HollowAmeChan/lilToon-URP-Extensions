@@ -65,6 +65,9 @@ namespace lilToon.URP.Extensions.RTDI
         internal RTHandle previousLuminance,gradientA,gradientB,diffConfidence,specConfidence;
         internal bool nrdHistoryValid;
         internal string nrdStatus;
+        #if UNITY_EDITOR
+        internal int? ValidationReservoirHistory=null;
+        #endif
         internal RTHandle PublishedDiffuse=>nrd!=null?filteredDiffuse:diffuse;
         internal RTHandle PublishedSpecular=>nrd!=null?filteredSpecular:specular;
         internal Matrix4x4 previousView=Matrix4x4.identity,previousProjection=Matrix4x4.identity;

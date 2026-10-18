@@ -1,0 +1,9 @@
+{
+  "savedOnDisk": true,
+  "previous": 20,
+  "history": 4,
+  "onlySettingChanged": "RTDI.maxHistory",
+  "renderer": "D:\\Unity_Project\\BREAK_URP\\Assets\\Settings\\PC_Renderer.asset",
+  "beforeSha256": "4cdd1b6149fb5a0a952af327299c9c1ffc8bec3d63bf9c8f3719d4eab1c860f0",
+  "afterSha256": "2bf5f4f26b65563feca702225aebe30bb8d0a6486180099a5fcfcb57c492cfc5"
+}

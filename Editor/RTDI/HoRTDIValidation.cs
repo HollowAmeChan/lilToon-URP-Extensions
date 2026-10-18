@@ -131,6 +131,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(forceCutoutGpuTiming){TickCutoutGpuTiming();return;}
                 if(forceMotionProtocol&&motionProtocolRealFrames){TickMotionProtocol();return;}
                 if(forceComposite){ValidateComposite();Finish(null);return;}
+                if(slowSceneViewAudit){ValidateSlowSceneView();Finish(null);return;}
                 if(referenceConvergenceAudit){ValidateConvergence();Finish(null);return;}
                 if(forceCutout){ValidateCutout();Finish(null);return;}
                 if(forceBudget){ValidateBudget();Finish(null);return;}
@@ -254,6 +255,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         }
         private static void ValidateTiming()
         {
+            // Exercise real RELAX rather than the deterministic single-delta bypass.
+            Point(light.transform.position,Color.white,0);
             var timing=new lilToon.URP.Extensions.RTDI.NRD.HoRTDINrdTiming();timing.Advance(0);
             for(int i=1;i<90;i++)Require(!timing.Advance(i/30.0),"Continuous clock unexpectedly reset");
             var before=timing.FilteredSeconds;Require(!timing.Advance(89/30.0)&&timing.FilteredSeconds==before,"Duplicate render changed FPS estimate");
@@ -267,7 +270,8 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 double time=0;
                 for(int i=0;i<(int)(fps*.7);i++){context.nrd.ValidationTimeSeconds=time;RenderCamera();time+=1.0/fps;}
                 var settings=context.nrd.AppliedSettings;
-                uint expected=(uint)Math.Floor(.05*fps+.5);Require(settings.diffFrames==expected,"Time-based diffuse history budget mismatch");
+                double diffusePeriod=context.nrd.StableDiffuseHistory?.5:.05;
+                uint expected=(uint)Math.Floor(diffusePeriod*fps+.5);Require(settings.diffFrames==expected,"Time-based diffuse history budget mismatch");
                 Require(settings.specFrames==(uint)(fps/2),"Time-based specular history budget mismatch");
                 double error=0;int steps=(int)(fps*.4);
                 for(int i=1;i<=steps;i++)

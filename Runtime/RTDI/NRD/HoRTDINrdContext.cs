@@ -36,6 +36,11 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         private double currentSampleTime,lastLightingChange=double.NaN;
         internal bool StableDiffuseHistory {get;private set;}
         #if UNITY_EDITOR
+        // A slow or intermittently repainted Scene View is not a paused game.
+        internal bool SceneViewPreview;
+        internal const uint SceneViewSettledSamples=64;
+        internal uint SceneViewAccumulatedFrames {get;private set;}
+        internal bool ValidationDisableSceneViewPreview;
         // Isolated stage/settings A/B only; no serialized/runtime product option.
         internal Func<HoRTDINrdNative.RelaxSettings,HoRTDINrdNative.RelaxSettings> ValidationSettings;
         internal bool ValidationPreserveWorldHistory;
@@ -55,7 +60,11 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             #if UNITY_EDITOR
             time=ValidationTimeSeconds??time;
             #endif
-            currentSampleTime=time;reset=timing.Advance(time);return timing.Seconds*1000;
+            bool preserveLongInterval=false;
+            #if UNITY_EDITOR
+            preserveLongInterval=SceneViewPreview;
+            #endif
+            currentSampleTime=time;reset=timing.Advance(time,preserveLongInterval);return timing.Seconds*1000;
         }
         internal bool ObserveLightingStability(bool changed)
         {
@@ -167,8 +176,19 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         }
         internal void Record(CommandBuffer cmd,HoRTDINrdNative.CommonSettings settings,Dictionary<string,RenderTargetIdentifier> external)
         {
+            #if UNITY_EDITOR
+            if(SceneViewPreview)
+                SceneViewAccumulatedFrames=settings.accumulationMode==2||!StableDiffuseHistory?0:Math.Min(SceneViewSettledSamples,SceneViewAccumulatedFrames+1);
+            #endif
             HoRTDINrdNative.Check(HoRTDINrdNative.SetCommonSettings(instance,ref settings),"SetCommonSettings");
             var desired=HoRTDINrdNative.RelaxSettings.DenseDI(timing.FilteredSeconds,StableDiffuseHistory);
+            #if UNITY_EDITOR
+            // Keep useful sample history even when a large Scene View renders
+            // once a second. Input changes still leave the settled profile and
+            // restart once; game/Player response remains time based.
+            if(SceneViewPreview&&StableDiffuseHistory)
+            {desired.diffFrames=Math.Max(30u,desired.diffFrames);desired.specFrames=Math.Max(30u,desired.specFrames);}
+            #endif
             // Final anyhit visibility can create sharp radiance discontinuities
             // on a smooth receiver. Keep their diffuse luminance gate tighter.
             // Its rare visible light samples also need a wider history box;

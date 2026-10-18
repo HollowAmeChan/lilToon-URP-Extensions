@@ -1,0 +1,33 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-18",
+  "capturedAtUtc": "2026-10-18T14:45:07.487441+00:00",
+  "baseCommit": "da52a0f",
+  "sourceSha256": {
+    "Runtime/RTDI/HoRTDIRendererFeature.cs": "573efa45cb3f600f5d6a74403944603bfee4a474795cca430554c4fb5d22980e",
+    "Runtime/RTDI/HoRTDIContext.cs": "ba15dd4c1c908680bc9e6ca1292f6270bab7380d4c37cfbfde00697b7fb37040",
+    "Runtime/RTDI/NRD/HoRTDINrdContext.cs": "8ab553356bdcf077944f197a6c47660cd62f1f8a810426fd4d157bf40bbdf946",
+    "Runtime/RTDI/NRD/HoRTDINrdTiming.cs": "271cd7213196afdf1afead31635a2df945634805a7c80285e1b1220492dcd007",
+    "Editor/RTDI/HoRTDIRendererFeatureEditor.cs": "3ab7cb1717dde7c54c1ff09b1f466c166836c299cf4d1b3bee698ebec62d0c85",
+    "Editor/RTDI/HoRTDIVolumeEditor.cs": "243f9b8aa9caabde53bf8796d0c0e1d976387e73b5a733d32ac2b220573f1031",
+    "Editor/RTDI/HoRTDISceneViewRepaint.cs": "068a725da7e341c08c82cb5ef72d0ec7cfb15ba67900602f48e0b41e16a2a909",
+    "Editor/RTDI/HoRTDISceneViewConvergenceValidation.cs": "806f5cabc78607b05dd673b9ab27ff7bc0b0fb83678503cd456cce2789a20055",
+    "Editor/RTDI/HoRTDIValidation.cs": "fcad2f5ecc1649eb65ae45a40192bf72f3b45d8553d3ef2e31daa17e4fd71449",
+    "Tests~/RTDI/SceneView/verify_scene_view.py": "8160d99539224394e30d962291c8824e3f11110ce4b6587786b49a088666a5d3"
+  },
+  "artifactSha256": {
+    "results/live-before.json": "b59f6942771d24661e938652c78fa8c9ecf75e497da2b6aaad26d35582e4bb26",
+    "results/live-preview-fixed.json": "d1adaaca04b20ebb945e476006903a192c3637513bb87f3c089942876371ddd4",
+    "results/live-reservoir-20-vs4.json": "f8bc6b7d2b2868fca2f2479f01353a35cd37e6819838a7a9688af57edbbdf0e5",
+    "results/regression-exits.json": "b5ce10da83bbd754d7e6888703d1752fa7c3b79e9e9073e2174218486122fb80",
+    "results/renderer-change.json": "77f488a39d48a8ff9a7607bda99cedf202bae8fd7cc5592e7afc58f7f8be37fb",
+    "results/slow-compat.json": "9752f92f92e1544ac01d1e3d89e22f7c6990cc1204041a5e6903df8e8a6e0c25",
+    "results/slow-rg.json": "138dd98c58506ff227da4561bcae7d6cee1a83b5efce39742e94a3c593e54eda",
+    "PC_Renderer-history4.patch": "158ed2991dce28d477b19cb10a0b1293d00f2393f1829ada3a9951471ebb8e18"
+  },
+  "scope": "Non-playing Scene View; current user castle ROI; unchanged Player time policy",
+  "liveHelpers": "Preserved reproduction helpers include guard-only refinements after capture; live JSON data retained",
+  "residualNoiseEliminated": false,
+  "gpuBudgetEstablished": false,
+  "requestRateMeasured": false
+}
