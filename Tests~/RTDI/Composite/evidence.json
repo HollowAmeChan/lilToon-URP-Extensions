@@ -1,0 +1,74 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-18",
+  "capturedAtUtc": "2026-10-18T13:28:37.456338+00:00",
+  "auditedBaseCommit": "292641d",
+  "scope": "Optional reference PBR replacement in the normal camera output; debug Off",
+  "sourceHashNormalization": "UTF-8 without BOM; universal line endings normalized to LF",
+  "artifactSha256": {
+    "images/after.png": "a9dddff47cdefe2719f598371dfd2320aeec78ca8e3706a06c5c4bd19ae56637",
+    "images/before.png": "b0d4184b8f1dde71a7654f2dbad17715185ae8061172c392880342973276112d",
+    "results/baseline-regression-exits.json": "917b74e158a92315595a9b9ac9e29c339b216e0da1aad7f44f4b6b29c84c9165",
+    "results/editor-gamma-compat.json": "243b6fcab1fca3c93b9974560bbbbdc279b5de1b358c99638273d31f2807859e",
+    "results/editor-gamma-rg.json": "bbfaa3be2836425a63472d0f82c53029e1590558580b7df10cb71562af53824e",
+    "results/editor-linear-compat.json": "e8502a0234168295168e113fea83ffe34dba7cf2e251665f8d139b336cd7279b",
+    "results/editor-linear-rg.json": "c6405b14596b2f014a97e397ad558dc066cf60d767c606ae9448d20c2ba46033",
+    "results/player-dx11.json": "b578c6819e12a9a724a0f687d73d2af469d0c3b35039ba944cc41b1e04f1aca9",
+    "results/player-emission-fixture-failure.json": "33d466c854f7fdbc32e9b7676412f45183a41a7ca2b4c56435765fb92466217e",
+    "results/player-hidden-host-failure.json": "4cb9374a1e7cd9b064a2f331546c9ebf05f2eb42efd3f15d4298e0f05496656b",
+    "results/player-linear-compat.json": "633538c0314f4a7d7d51c292a8b3cf88f8e9e7f11559fe4329a52dd4e37497d0",
+    "results/player-linear-rg.json": "a6e8f20bb0feaafc0bef6beb5112d0b4f000d02a230f1d53763aafd8543cb22b",
+    "results/power-regression-audit.json": "89ed6a00a643fc98f53ec0c047073f648f4464e89e0a1555bac55f571366ff69",
+    "results/regression-exits.json": "330592d238cfeeddb8f0e96def39ba2eb8931d62612d0b726f4f96452576044a"
+  },
+  "sourceSha256": {
+    "Runtime/RTDI/HoRTDISettings.cs": "e1297f396a1e48a6362db238afdc3d5693a9afb1420b4977e87beff1883a477c",
+    "Runtime/RTDI/HoRTDIRendererFeature.cs": "753ec933c97792e89290b1044e40a8d8348bac1f4b37ba8e27bf535f4834065f",
+    "Runtime/RTDI/HoRTDICompositePass.cs": "c44617f310b744ec2383a516942bc14a40c9ccd2e94ecaf6813ffedb362df172",
+    "Runtime/RTDI/Shaders/HoRTDIComposite.shader": "10c2f83e2ae198a99dd218a7da7980601d9bc93b138c44aac165385c61f2e36e",
+    "Runtime/SurfaceBuffer/HoSurfaceBufferPass.cs": "d6d9a96b36d802f4024e77e815e5bc275365b1e4913e39aaa2cda3112793a6a3",
+    "Editor/RTDI/HoRTDICompositeValidation.cs": "001372123a2edd44e5f79653e3a82fda6b88771c8215c679a720845425f333b0",
+    "Editor/RTDI/HoRTDIValidation.cs": "b3ccba34ce14c0cec2658089b3ae3be84e62f9e5fb92c4839b9632a5d78de80e",
+    "Editor/RTDI/HoRTDIRendererFeatureEditor.cs": "68fda983b2fdf9e1da92a079b726e584f3a3ab30e9d3aedf97550eaf98385f62",
+    "Editor/RTDI/HoRTDIPlayerValidation.cs": "f7db8df6667af853884d155c475260a98b3e2e07d86c269406d3067aeb5fbe2b",
+    "Tests~/Player/RTDI/HoRTDIPlayerComposite.cs": "d300f7fc8e601e8b4be56cc8b2976744512c70e89f29b65d10081de41b25e376",
+    "Tests~/Player/RTDI/HoRTDIPlayerCaptureFeature.cs": "73453df8a3678ff8deec0433a0e9e4536c8a158e17fb68969b626940163933ff",
+    "Tests~/Player/RTDI/HoRTDIPlayerProbe.cs": "650be18a64eedf72f02d1ec3e537db42a788bec694bd1b0eec354ad03dcd05d0",
+    "Tests~/RTDI/Composite/verify_composite.py": "eaebfd061f917caa34083f2bfae265815f6c5a6f5c963ca89a68f8e54a7960e0"
+  },
+  "binarySha256": {
+    "Runtime/RTDI/Plugins/x86_64/HoRTDINRD.dll": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb",
+    ".codex-research/RTInputValidation/PlayerComposite/HoRTDIProbe_Data/Managed/Assembly-CSharp.dll": "9ab5e2fb618b7fce63c82bf1474de6daedb2aac31b613177a9d1cd436e93baa4",
+    ".codex-research/RTInputValidation/PlayerComposite/HoRTDIProbe_Data/Managed/jp.lilxyzw.liltoon.urp.extensions.Runtime.dll": "6bec832c01eac7b0e71bc2c70e176c452fcbde2fc7b2ec2034d4867d969f65ab",
+    ".codex-research/RTInputValidation/PlayerComposite/HoRTDIProbe_Data/Plugins/x86_64/HoRTDINRD.dll": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb",
+    ".codex-research/RTInputValidation/PlayerCompositeCompatibility/HoRTDIProbe_Data/Managed/Assembly-CSharp.dll": "9ab5e2fb618b7fce63c82bf1474de6daedb2aac31b613177a9d1cd436e93baa4",
+    ".codex-research/RTInputValidation/PlayerCompositeCompatibility/HoRTDIProbe_Data/Managed/jp.lilxyzw.liltoon.urp.extensions.Runtime.dll": "6bec832c01eac7b0e71bc2c70e176c452fcbde2fc7b2ec2034d4867d969f65ab",
+    ".codex-research/RTInputValidation/PlayerCompositeCompatibility/HoRTDIProbe_Data/Plugins/x86_64/HoRTDINRD.dll": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb"
+  },
+  "qualificationExitCodes": {
+    "editorGammaRG": 0,
+    "editorGammaCompatibility": 0,
+    "editorLinearRG": 0,
+    "editorLinearCompatibility": 0,
+    "monoBuildRG": 0,
+    "monoBuildCompatibility": 0,
+    "monoVisibleRG": 0,
+    "monoVisibleCompatibility": 0,
+    "monoDX11": 0,
+    "nrdCompatibility": 0,
+    "splitAssemblyCompile": 0,
+    "nrdDerivedSourceCheck": 0,
+    "historicalConvergenceEvidenceCheck": 0
+  },
+  "initialFailures": [
+    "results/player-emission-fixture-failure.json",
+    "results/player-hidden-host-failure.json"
+  ],
+  "fullNprIntegration": false,
+  "gpuBudgetEstablished": false,
+  "knownQualityFailures": [
+    "strict 60 Hz caster step",
+    "mixed-environment specular",
+    "full-core Power identity-swap variance gate (also failed on f537c26)"
+  ]
+}

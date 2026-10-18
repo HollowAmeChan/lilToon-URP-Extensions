@@ -9,6 +9,10 @@ namespace lilToon.URP.Extensions.RTDI
     {
         public bool enabled = true;
         public bool inSceneView = true;
+        [Tooltip("在透明物绘制前，用参考 PBR 的直接光与 SB 自发光替换有效不透明接收面的旧照明。天空、无效接收面与之后的透明物保留；不使用原 NPR ramp、间接光或反射探针。")]
+        public bool composite;
+        [Tooltip("原画面与参考 PBR 合成结果的过渡权重；1 完全替换旧照明，0 保留原画面。不是额外光照强度。")]
+        [Range(0,1)] public float compositeWeight=1;
         [Tooltip("NRD RELAX diffuse/specular；Mono 与同分辨率 GB/SB。几何与光源变化通过历史失效和可见性 confidence 处理，保留原始光照输出以便对照。")]
         public bool denoise;
         [Tooltip("从前置 Ho-Atmosphere 借用天空 HDR，作为 RTXDI 环境光候选。")]

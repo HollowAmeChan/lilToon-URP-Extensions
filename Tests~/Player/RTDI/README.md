@@ -143,3 +143,6 @@ idempotence behavior, then SaveAssets without explicitly dirtying the renderer o
 feature. Verify checks on-disk GUIDs before loading the assets in another process.
 Assigned overrides and DI settings must survive. This tests the normal open/save
 workflow; it does not run an automatic project-wide migration during a build.
+
+The normal-camera reference PBR composite has separate serialized builds and an
+automatic-camera observation probe. See [Composite reproduction](../../RTDI/Composite/README.md).

@@ -1,0 +1,76 @@
+{
+  "baselineSourceCommit": "f537c26",
+  "gate": "Power proposal did not follow the new bright light",
+  "varianceThreshold": 0.01,
+  "passed": false,
+  "runs": {
+    "current-rg": {
+      "exitCode": 1,
+      "logPath": ".codex-research/composite-regression-core-rg.log",
+      "logSha256": "bb337bdb461af7b7dcbbf20b51d269aec19f1f1b5f5c9839c1f4f1bf56631c9f",
+      "printedPreSwapStatistics": [
+        [
+          "uniform",
+          "1.003284",
+          "55.813219"
+        ],
+        [
+          "SDK power",
+          "0.999520",
+          "0.000000"
+        ]
+      ]
+    },
+    "current-compat": {
+      "exitCode": 1,
+      "logPath": ".codex-research/composite-regression-core-compat.log",
+      "logSha256": "9f7dedb71e4e6418c15053d35d778a070cb48bfbc8e3c67fdb3b3c19cfcc30a4",
+      "printedPreSwapStatistics": [
+        [
+          "uniform",
+          "1.003284",
+          "55.813219"
+        ],
+        [
+          "SDK power",
+          "0.999520",
+          "0.000000"
+        ]
+      ]
+    },
+    "baseline-rg": {
+      "exitCode": 1,
+      "logPath": ".codex-research/composite-baseline-core-rg.log",
+      "logSha256": "1eb41e2426ab061a0e02b4592bd6c893cdc9c66e0f0b0d4e5a872cbc7439fc6d",
+      "printedPreSwapStatistics": [
+        [
+          "uniform",
+          "1.003284",
+          "55.813219"
+        ],
+        [
+          "SDK power",
+          "0.999520",
+          "0.000000"
+        ]
+      ]
+    },
+    "baseline-compat": {
+      "exitCode": 1,
+      "logPath": ".codex-research/composite-baseline-core-compat.log",
+      "logSha256": "d04132cbe4d39d5e9dc1063268943a4de6268ae9b467ecba260b8d29b582b03d",
+      "printedPreSwapStatistics": [
+        [
+          "uniform",
+          "1.003284",
+          "55.813219"
+        ],
+        [
+          "SDK power",
+          "0.999520",
+          "0.000000"
+        ]
+      ]
+    }
+  }
+}

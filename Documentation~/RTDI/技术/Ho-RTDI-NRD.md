@@ -4,7 +4,7 @@
 
 ## 2026-10-18 当前状态
 
-NRD 默认关闭。开启后，稳定半秒的相机改用 .5 秒 diffuse 主历史，变化及半秒响应窗口使用 .05 秒；60Hz约为30/3。Fast diffuse 与镜面预算保持，离开稳定状态仅重启一次。判定是逐相机全局，持续动态尚无逐像素长历史方案。固定夹具静止方差降至旧版约1/19，两条真实Mono Player已验证；严格casterStep与mixed天空镜面仍失败，最终材质合成未接入。详见[最新参考收敛审计](../审计/Ho-RTDI-ReferenceConvergence.md)。
+NRD 默认关闭。开启后，稳定半秒的相机改用 .5 秒 diffuse 主历史，变化及半秒响应窗口使用 .05 秒；60Hz约为30/3。Fast diffuse 与镜面预算保持，离开稳定状态仅重启一次。判定是逐相机全局，持续动态尚无逐像素长历史方案。固定夹具静止方差降至旧版约1/19，两条真实Mono Player已验证；严格casterStep与mixed天空镜面仍失败。详见[参考收敛审计](../审计/Ho-RTDI-ReferenceConvergence.md)。其后已新增可选的正常相机参考PBR合成，使用已发布的filtered纹理；该合成与NRD输入/历史是两个合同，现行接入方式见[总文档](../../Ho-RTDI.md)。
 
 生产 diffuse 已包含[非负历史约束](Ho-RTDI-NonnegativeDiffuseHistory.md)与[颜色凸裁剪](Ho-RTDI-DiffuseConvexClamping.md)，vendor与CPU库仍固定。下文保存最初接入及步骤6—23的详细实现/测试语境，其中“当前预设”“3/1历史”和显存表指写作时状态，不能覆盖上述最新策略或视作当前完整资源预算。
 

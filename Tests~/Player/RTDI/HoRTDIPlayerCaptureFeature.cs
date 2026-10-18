@@ -14,6 +14,7 @@ public sealed class HoRTDIPlayerCaptureFeature:ScriptableRendererFeature
     private RTHandle diffuse,raw,specular,rawSpecular,motion;
     public bool CaptureMotion;
     public int MotionCaptureCount;
+    public int CaptureCount;
     public RenderTexture Motion=>motion?.rt;
     private CapturePass pass;
     public RenderTexture Diffuse=>diffuse?.rt;
@@ -45,6 +46,7 @@ public sealed class HoRTDIPlayerCaptureFeature:ScriptableRendererFeature
             using(var builder=graph.AddUnsafePass<Data>("Player DI capture",out var data))
             {
                 data.diffuse=input.diffuse;data.raw=input.rawDiffuse;data.specular=input.specular;data.rawSpecular=input.rawSpecular;
+                data.owner=owner;
                 data.outDiffuse=graph.ImportTexture(owner.diffuse);data.outRaw=graph.ImportTexture(owner.raw);data.outSpecular=graph.ImportTexture(owner.specular);data.outRawSpecular=graph.ImportTexture(owner.rawSpecular);
                 builder.UseTexture(data.diffuse);builder.UseTexture(data.raw);builder.UseTexture(data.specular);builder.UseTexture(data.rawSpecular);
                 builder.UseTexture(data.outDiffuse,AccessFlags.WriteAll);builder.UseTexture(data.outRaw,AccessFlags.WriteAll);builder.UseTexture(data.outSpecular,AccessFlags.WriteAll);builder.UseTexture(data.outRawSpecular,AccessFlags.WriteAll);
@@ -58,6 +60,7 @@ public sealed class HoRTDIPlayerCaptureFeature:ScriptableRendererFeature
                     cmd.Blit((RenderTargetIdentifier)d.raw,(RenderTargetIdentifier)d.outRaw);
                     cmd.Blit((RenderTargetIdentifier)d.specular,(RenderTargetIdentifier)d.outSpecular);
                     cmd.Blit((RenderTargetIdentifier)d.rawSpecular,(RenderTargetIdentifier)d.outRawSpecular);
+                    d.owner.CaptureCount++;
                     if(d.motion.IsValid()){cmd.CopyTexture(d.motion,d.outMotion);d.owner.MotionCaptureCount++;}
                 });
             }
@@ -65,6 +68,7 @@ public sealed class HoRTDIPlayerCaptureFeature:ScriptableRendererFeature
         public override void Execute(ScriptableRenderContext context,ref RenderingData data)
         {
             var cmd=CommandBufferPool.Get("Player DI capture");
+            owner.CaptureCount++;
             // Global shader bindings are not temporary RT identifiers.
             cmd.Blit(Texture2D.blackTexture,owner.diffuse.nameID,owner.material,0);
             cmd.Blit(Texture2D.blackTexture,owner.raw.nameID,owner.material,1);

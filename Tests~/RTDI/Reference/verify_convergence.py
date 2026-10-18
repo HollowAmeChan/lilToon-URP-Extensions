@@ -1,10 +1,15 @@
 """Validate the captured comparison without relabelling known quality failures."""
 import hashlib
 import json
+import argparse
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
 RESULTS = ROOT / "results"
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--source-commit", help="Verify the recorded source at this Git commit instead of claiming it matches the current tree")
+args = parser.parse_args()
 
 
 def load(name):
@@ -88,7 +93,11 @@ if manifest_path.exists():
               "captured report changed: " + filename)
     repo = ROOT.parents[2]
     for filename, expected in manifest["sourceSha256"].items():
-        source = (repo / filename).read_text(encoding="utf-8-sig").encode("utf-8")
+        if args.source_commit:
+            source = subprocess.check_output(["git", "show", f"{args.source_commit}:{filename}"], cwd=repo)
+            source = source.decode("utf-8-sig").replace("\r\n", "\n").encode("utf-8")
+        else:
+            source = (repo / filename).read_text(encoding="utf-8-sig").encode("utf-8")
         check(hashlib.sha256(source).hexdigest() == expected,
               "audited source changed: " + filename)
     for filename, expected in manifest["binarySha256"].items():
@@ -98,5 +107,7 @@ if manifest_path.exists():
                   "audited binary changed: " + filename)
 
 print("PASS: reference reconstruction, unchanged raw, >10x static improvement, runtime transitions and Player")
+if args.source_commit:
+    print("Historical captured evidence/source checked at " + args.source_commit + "; this does not rerun or certify the current runtime.")
 print("KNOWN QUALITY FAILURES: 60 Hz caster step; mixed-environment specular (2/4).")
 print("These remain failures; this verifier does not certify complete RTDI image quality.")

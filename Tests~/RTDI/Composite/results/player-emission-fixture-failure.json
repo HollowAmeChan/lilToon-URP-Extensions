@@ -1,0 +1,15 @@
+{
+    "pass": false,
+    "serializedComposite": true,
+    "api": "Direct3D12",
+    "mode": "RenderGraph",
+    "error": "System.Exception: Player composition loses emission\r\n  at HoRTDIPlayerProbe+<Composite>d__5.MoveNext () [0x006df] in <afcc3807b69949a193f6571947a463b6>:0 \r\n  at HoRTDIPlayerProbe+<Start>d__35.MoveNext () [0x00352] in <afcc3807b69949a193f6571947a463b6>:0 ",
+    "observedFrames": 0,
+    "disabledError": 0.0,
+    "opaqueError": 0.0,
+    "filteredError": 0.0,
+    "shadowError": 0.0,
+    "emission": 0.0,
+    "weightError": 0.0,
+    "reenabledError": 0.0
+}

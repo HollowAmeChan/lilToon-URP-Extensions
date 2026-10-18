@@ -25,7 +25,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         {
             ProjectRoot();var package=UnityEditor.PackageManager.PackageInfo.FindForAssetPath("Packages/jp.lilxyzw.liltoon.urp.extensions/package.json");
             string dst=Path.Combine(Application.dataPath,"RTDIPlayerProbe");Directory.CreateDirectory(dst);
-            foreach(string file in new[]{"HoRTDIPlayerCaptureFeature.cs","HoRTDIPlayerProbe.cs","HoRTDIPlayerCapture.shader","HoRTDIPlayerGpuTiming.cs","HoRTDIPlayerConvergence.cs"})
+            foreach(string file in new[]{"HoRTDIPlayerCaptureFeature.cs","HoRTDIPlayerProbe.cs","HoRTDIPlayerCapture.shader","HoRTDIPlayerGpuTiming.cs","HoRTDIPlayerConvergence.cs","HoRTDIPlayerComposite.cs"})
                 File.Copy(Path.Combine(package.resolvedPath,"Tests~/Player/RTDI",file),Path.Combine(dst,file),true);
             // Give the runtime copy its own name: Assembly-CSharp can also see
             // the package's Editor helper while preparing the Player project.
@@ -40,7 +40,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void BuildMultiCompatibility()=>Build(true,false,true);
         public static void BuildGpuTiming()=>Build(false,true);
         public static void BuildGpuTimingCompatibility()=>Build(true,true);
-        private static void Build(bool compatibility,bool gpuTiming=false,bool multi=false)
+        public static void BuildComposite()=>Build(false,false,false,true);
+        public static void BuildCompositeCompatibility()=>Build(true,false,false,true);
+        private static void Build(bool compatibility,bool gpuTiming=false,bool multi=false,bool composite=false)
         {
             try
             {
@@ -49,7 +51,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 var renderer=ScriptableObject.CreateInstance<UniversalRendererData>();AssetDatabase.CreateAsset(renderer,assets+"Renderer.asset");
                 var gb=ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>();gb.Settings.maxRenderQueue=(int)RenderQueue.GeometryLast;
                 var sb=ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>();sb.Settings.enableSemanticLanes=sb.Settings.enableCorrelatedSemantics=false;
-                var di=ScriptableObject.CreateInstance<HoRTDIRendererFeature>();di.Settings.denoise=true;di.Settings.inSceneView=false;di.Settings.finalSampling=multi?HoRTDIFinalSampling.TripleAnalytic:HoRTDIFinalSampling.Single;di.Create();
+                var di=ScriptableObject.CreateInstance<HoRTDIRendererFeature>();di.Settings.denoise=true;di.Settings.inSceneView=false;di.Settings.composite=composite;di.Settings.finalSampling=multi?HoRTDIFinalSampling.TripleAnalytic:HoRTDIFinalSampling.Single;di.Create();
                 var sky=ScriptableObject.CreateInstance<HoAtmosphereRendererFeature>();sky.Settings.source=HoAtmosphereSource.Constant;sky.Settings.constantColor=new Color(1,.5f,.25f,1);sky.Settings.enabled=false;sky.Create();
                 var captureType=Type.GetType("HoRTDIPlayerCaptureFeature, Assembly-CSharp");var probeType=Type.GetType("HoRTDIPlayerProbe, Assembly-CSharp");
                 if(captureType==null||probeType==null)throw new Exception("Run Prepare and allow script import before Build");
@@ -61,6 +63,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(serialized.FindProperty("finalVisibilityShader").objectReferenceValue==null||serialized.FindProperty("visibilityMaterialShader").objectReferenceValue==null)throw new Exception("DI alpha visibility shader references missing");
                 if(serialized.FindProperty("debugShader").objectReferenceValue==null)throw new Exception("DI debug shader serialization missing");
                 if(serialized.FindProperty("debugOverlayShader").objectReferenceValue==null)throw new Exception("DI debug grid shader serialization missing");
+                if(serialized.FindProperty("compositeShader").objectReferenceValue==null)throw new Exception("DI composite shader serialization missing");
                 for(int i=0;i<15;i++)if(serialized.FindProperty("nrdShaders").GetArrayElementAtIndex(i).objectReferenceValue==null)throw new Exception("NRD shader reference missing "+i);
                 var pipeline=UniversalRenderPipelineAsset.Create(renderer);pipeline.supportsHDR=true;pipeline.msaaSampleCount=1;AssetDatabase.CreateAsset(pipeline,assets+"Pipeline.asset");
                 GraphicsSettings.defaultRenderPipeline=pipeline;QualitySettings.renderPipeline=pipeline;
@@ -73,6 +76,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 camera.GetUniversalAdditionalCameraData().volumeLayerMask=-1;
                 var receiver=GameObject.CreatePrimitive(PrimitiveType.Quad);receiver.transform.localScale=new Vector3(2,2,1);
                 var material=new Material(Shader.Find("lilToon"));material.EnableKeyword("UNITY_UI_ALPHACLIP");material.SetColor("_Color",Color.white);material.SetTexture("_MainTex",Texture2D.whiteTexture);material.SetFloat("_Cull",0);material.SetFloat("_Reflectance",0);material.SetFloat("_Metallic",0);material.SetFloat("_Smoothness",.5f);
+                // Preserve the emission feature in the serialized build fixture;
+                // runtime-only enabling cannot recover a material feature stripped at build time.
+                if(composite){material.SetFloat("_UseEmission",1);material.SetColor("_EmissionColor",new Color(4,1,.25f,1));}
                 AssetDatabase.CreateAsset(material,assets+"Receiver.mat");receiver.GetComponent<Renderer>().sharedMaterial=material;
                 var blocker=GameObject.CreatePrimitive(PrimitiveType.Cube);blocker.layer=1;blocker.transform.position=new Vector3(.75f,0,-.5f);blocker.transform.localScale=new Vector3(.4f,.4f,.2f);blocker.GetComponent<Renderer>().sharedMaterial=material;blocker.SetActive(false);
                 var light=Point("White/Red light",new Vector3(1.5f,0,-1),Color.white);var blue=Point("Blue light",light.transform.position,Color.blue);blue.enabled=false;
@@ -84,6 +90,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 AssetDatabase.SaveAssets();EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(),assets+"Probe.unity");
                 string output=gpuTiming?(compatibility?"PlayerGpuTimingCompatibility":"PlayerGpuTiming"):(compatibility?"PlayerBuildCompatibility":"PlayerBuild");
                 if(multi)output=compatibility?"PlayerBuildMultiCompatibility":"PlayerBuildMulti";
+                if(composite)output=compatibility?"PlayerCompositeCompatibility":"PlayerComposite";
                 var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{assets+"Probe.unity"},target=BuildTarget.StandaloneWindows64,locationPathName=Path.Combine(root,output,"HoRTDIProbe.exe"),options=gpuTiming?BuildOptions.Development:BuildOptions.None});
                 if(report.summary.result!=BuildResult.Succeeded)throw new Exception("Player build failed: "+report.summary.result);
                 Debug.Log($"[HoRTDIPlayerValidation] BUILD PASS size={report.summary.totalSize} errors={report.summary.totalErrors}");EditorApplication.Exit(0);

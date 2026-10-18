@@ -12,11 +12,13 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public override void OnInspectorGUI()
         {
             serializedObject.Update();var settings=serializedObject.FindProperty("settings");
-            EditorGUILayout.HelpBox("需要 GB/SB 同分辨率单采样输入与 D3D12；当前提供独立光照，不自动合成。",MessageType.Info);
+            EditorGUILayout.HelpBox("需要 GB/SB 同分辨率单采样输入与 D3D12。参考 PBR 合成会替换有效接收面的旧照明，保留自发光；原 NPR ramp、间接光与反射探针不参与。",MessageType.Info);
             if(LilUrpEditorSectionGui.DrawSectionHeader(ref runtime,"运行","RTXDI DI",RuntimeColor))
             using(new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 Draw(settings,"enabled","启用");Draw(settings,"localSampling","局部灯采样");Draw(settings,"initialSamples","局部灯候选数");Draw(settings,"temporal","时间重采样");Draw(settings,"maxHistory","历史样本预算");
+                Draw(settings,"composite","合成到画面（参考 PBR）");
+                if(settings.FindPropertyRelative("composite").boolValue)Draw(settings,"compositeWeight","合成过渡权重");
                 Draw(settings,"spatial","空间重采样");Draw(settings,"spatialSamples","邻域样本数");Draw(settings,"spatialRadius","邻域半径");
                 Draw(settings,"finalSampling","最终可见性样本");
                 Draw(settings,"denoise","NRD RELAX 降噪");
@@ -32,6 +34,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("shader"),new GUIContent("Compute Shader"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("nrdShaders"),new GUIContent("NRD Shader Library"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("debugShader"),new GUIContent("Debug Shader"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("compositeShader"),new GUIContent("Composite Shader"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("debugOverlayShader"),new GUIContent("Debug Grid Shader"));
             }
             serializedObject.ApplyModifiedProperties();EditorGUILayout.LabelField("运行状态",((HoRTDIRendererFeature)target).Status);

@@ -24,6 +24,7 @@ namespace lilToon.URP.Extensions.RTDI
         [SerializeField] private ComputeShader[] nrdShaders;
         [SerializeField] private Shader debugShader;
         [SerializeField] private Shader debugOverlayShader;
+        [SerializeField] private Shader compositeShader;
         private HoRTScene scene;
         private HoRTDIVisibilityMaterials visibilityMaterials;
         private readonly Dictionary<Camera,HoRTDIContext> contexts=new();
@@ -31,6 +32,8 @@ namespace lilToon.URP.Extensions.RTDI
         private HoRTDIPass pass;
         private HoRTDIDebugPass debugPass;
         private Material debugMaterial;
+        private HoRTDICompositePass compositePass;
+        private Material compositeMaterial;
         private bool registered;
         public HoRTDISettings Settings=>settings;
         public string Status {get;private set;}="未生产";
@@ -39,7 +42,7 @@ namespace lilToon.URP.Extensions.RTDI
         internal static readonly ProfilingSampler VisibilityGradientsProfiling=new("HoRTDI Visibility Gradients");
         public override void Create()
         {
-            DisposeResources();pass=new HoRTDIPass();debugPass=new HoRTDIDebugPass();
+            DisposeResources();pass=new HoRTDIPass();debugPass=new HoRTDIDebugPass();compositePass=new HoRTDICompositePass();
             #if UNITY_EDITOR
             EnsureEditorShaderReferences();
             #endif
@@ -58,6 +61,7 @@ namespace lilToon.URP.Extensions.RTDI
             changed|=LoadMissing(ref finalVisibilityShader,root+"HoRTDIFinalVisibility.raytrace");
             changed|=LoadMissing(ref visibilityMaterialShader,root+"HoRTDIVisibilityMaterial.shader");
             changed|=LoadMissing(ref debugShader,root+"HoRTDIDebug.shader");
+            changed|=LoadMissing(ref compositeShader,root+"HoRTDIComposite.shader");
             changed|=LoadMissing(ref debugOverlayShader,"Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/Debug/Shaders/HoDebugGridOverlay.shader");
             if(nrdShaders==null||nrdShaders.Length!=HoRTDINrdManifest.Identifiers.Length)
             {Array.Resize(ref nrdShaders,HoRTDINrdManifest.Identifiers.Length);changed=true;}
@@ -131,7 +135,17 @@ namespace lilToon.URP.Extensions.RTDI
             HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTDI primary normals",System.Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.HighPrecisionSurfaceNormal);
             var lightData=lightList.Count>0?lightList.ToArray():new AnalyticLight[1];
             pass.Setup(context,scene,shader,finalVisibilityShader,settings,lightData,lightKeys.ToArray(),lightList.Count,localCount,signature);
+            bool composite=settings.composite&&settings.compositeWeight>0&&descriptor.msaaSamples==1&&descriptor.dimension==TextureDimension.Tex2D
+                &&!data.cameraData.xr.enabled&&camera.rect==new Rect(0,0,1,1);
+            if(composite&&compositeMaterial==null&&compositeShader!=null)compositeMaterial=CoreUtils.CreateEngineMaterial(compositeShader);
+            composite&=compositeMaterial!=null;
+            // Keep the legacy producer timing when compositing is disabled.
+            // In composite mode both passes share the named pre-transparent event,
+            // ordered by enqueue order: DI -> replacement -> transparent rendering.
+            pass.renderPassEvent=composite?RenderPassEvent.BeforeRenderingTransparents:RenderPassEvent.BeforeRenderingPostProcessing;
             renderer.EnqueuePass(pass);Status=$"RTXDI DI：{(context.powerSampling?"功率":"均匀")} / {localCount} 局部 / {infiniteLights.Count} 方向灯 / {scene.InstanceCount} RT submesh / 排除 {excludedLights} 灯、{scene.Rejections.Count} 几何项";
+            if(composite){compositePass.Setup(compositeMaterial,context,settings.compositeWeight);renderer.EnqueuePass(compositePass);Status+=" / 参考 PBR 合成";}
+            else if(settings.composite)Status+=" / 合成未启用（需要 Shader、全视口 Mono 单采样输入及非零权重）";
             if(settings.finalSampling==HoRTDIFinalSampling.TripleAnalytic)Status+=" / 三最终样本";
             if(settings.denoise)Status+=" / "+context.nrdStatus;
             if(volume!=null&&volume.debugMode.value!=HoRTDIDebugMode.Off&&(camera.cameraType==CameraType.SceneView?volume.debugInSceneView.value:volume.debugInGameView.value))
@@ -142,7 +156,7 @@ namespace lilToon.URP.Extensions.RTDI
             }
         }
         private void DisposeResources()
-        {HoAttributeCompositeConsumerRegistry.Remove(this);foreach(var context in contexts.Values)context.Dispose();contexts.Clear();scene?.Dispose();scene=null;visibilityMaterials?.Dispose();visibilityMaterials=null;debugPass?.ReleaseDebugResources();CoreUtils.Destroy(debugMaterial);debugMaterial=null;LastContext=null;}
+        {HoAttributeCompositeConsumerRegistry.Remove(this);foreach(var context in contexts.Values)context.Dispose();contexts.Clear();scene?.Dispose();scene=null;visibilityMaterials?.Dispose();visibilityMaterials=null;debugPass?.ReleaseDebugResources();CoreUtils.Destroy(debugMaterial);debugMaterial=null;compositePass?.Dispose();compositePass=null;CoreUtils.Destroy(compositeMaterial);compositeMaterial=null;LastContext=null;}
         protected override void Dispose(bool disposing)
         {if(registered)RenderPipelineManager.beginCameraRendering-=ResetCamera;registered=false;ResetCamera(default,null);DisposeResources();}
 

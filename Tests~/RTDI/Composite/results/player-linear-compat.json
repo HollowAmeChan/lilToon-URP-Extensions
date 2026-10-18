@@ -1,0 +1,20 @@
+{
+    "pass": true,
+    "serializedComposite": true,
+    "api": "Direct3D12",
+    "mode": "compatibility",
+    "error": "",
+    "observedFrames": 96,
+    "automaticCaptures": 96,
+    "automaticStartupFrames": 1,
+    "automaticContexts": 194,
+    "automaticCameraBegins": 97,
+    "automaticCameraCount": 0,
+    "disabledError": 0.0,
+    "opaqueError": 0.0,
+    "filteredError": 0.0000017881393432617188,
+    "shadowError": 0.0,
+    "emission": 4.0,
+    "weightError": 0.0,
+    "reenabledError": 0.0000019073486328125
+}

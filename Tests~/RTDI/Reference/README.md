@@ -1,5 +1,12 @@
 # RTDI reference convergence benchmark
 
+The captured source predates the normal-camera composite implementation. Verify
+its preserved evidence against `f537c26` with
+`python Tests~/RTDI/Reference/verify_convergence.py --source-commit f537c26`.
+Without that argument the verifier continues to require exact current source
+hashes. Historical verification is not a benchmark of the current runtime.
+Current composition tests and actual camera captures are in [Composite](../Composite/README.md).
+
 Use isolated Unity 6000.3.15f1 projects. Do not run these entry points in the
 user's working scene. The reference probe checks for `/.codex-research/` in its
 project path, creates an empty temporary scene and an in-memory renderer, and

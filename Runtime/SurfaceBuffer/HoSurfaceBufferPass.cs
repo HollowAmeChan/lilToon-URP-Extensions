@@ -36,6 +36,7 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
         private RTHandle ownerTexture;
         private RTHandle depthTexture;
         private readonly RenderTargetIdentifier[] colorIdentifiers = new RenderTargetIdentifier[HoSurfaceBufferShaderConstants.ValueAttachmentCount];
+        private readonly RTHandle[] colorAttachments = new RTHandle[HoSurfaceBufferShaderConstants.ValueAttachmentCount];
 
         private sealed class SurfacePassData
         {
@@ -137,6 +138,17 @@ namespace lilToon.URP.Extensions.SurfaceBuffer
             depthDescriptor.graphicsFormat = GraphicsFormat.None;
             depthDescriptor.depthStencilFormat = HoSurfaceBufferFormatUtility.GetDepthStencilFormat(renderingData.cameraData.cameraTargetDescriptor);
             RenderingUtils.ReAllocateIfNeeded(ref depthTexture, depthDescriptor, FilterMode.Point, TextureWrapMode.Clamp, name: HoSurfaceBufferShaderConstants.DepthTextureName);
+            colorAttachments[HoSurfaceBufferShaderConstants.ColorAttachment] = colorTexture;
+            colorAttachments[HoSurfaceBufferShaderConstants.EmissionAttachment] = emissionTexture;
+            colorAttachments[HoSurfaceBufferShaderConstants.NormalAttachment] = normalTexture;
+            colorAttachments[HoSurfaceBufferShaderConstants.MaterialAttachment] = materialTexture;
+            colorAttachments[HoSurfaceBufferShaderConstants.ReflectionAttachment] = reflectionTexture;
+            colorAttachments[HoSurfaceBufferShaderConstants.ClassificationAttachment] = classificationTexture;
+            colorAttachments[HoSurfaceBufferShaderConstants.OwnerAttachment] = ownerTexture;
+            // Keep URP's attachment cache in sync with this private MRT. A raw
+            // SetRenderTarget alone lets subsequent opaque draws overwrite SB
+            // when the camera switches to an intermediate colour attachment.
+            ConfigureTarget(colorAttachments, depthTexture);
         }
 
         public override void Execute(ScriptableRenderContext context, ref RenderingData renderingData)
