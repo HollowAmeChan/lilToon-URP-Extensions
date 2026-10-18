@@ -59,7 +59,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 qualityPass&=result.pass;results.Add(result);
                 Debug.Log($"[HoRTDIValidation] REUSE_NOISE initial={initialSamples} colocated={colocated} mode={result.mode} rawR={result.rawRed:F6} rawB={result.rawBlue:F6} filteredR={result.filteredRed:F6} filteredB={result.filteredBlue:F6} rawMSE={result.rawMse:F6} filteredMSE={result.filteredMse:F6} rawLumaMSE={result.rawLuminanceMse:F8} filteredLumaMSE={result.filteredLuminanceMse:F8} rawSpatial={result.rawSpatialCorrelation:F6} filteredSpatial={result.filteredSpatialCorrelation:F6} rawLag={result.rawLagCorrelation:F6} filteredLag={result.filteredLagCorrelation:F6} pass={result.pass}");
             }
-            File.WriteAllText(Path.Combine(Application.dataPath,"../rtdi-reuse38-"+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new ReuseNoiseReport{qualityPass=qualityPass,path=compatibility?"compatibility":"RenderGraph",cases=results.ToArray()},true));
+            File.WriteAllText(Path.Combine(Application.dataPath,"../"+(referenceConvergenceBaselineRegression?"rtdi-convergence108-baseline-reuse-":"rtdi-reuse38-")+(compatibility?"compat":"rg")+".json"),JsonUtility.ToJson(new ReuseNoiseReport{qualityPass=qualityPass,path=compatibility?"compatibility":"RenderGraph",cases=results.ToArray()},true));
             Require(qualityPass,"reuse noise energy or variance gate failed");
         }
         private static void CenterPixelErrors(double[] errors,int frames,int pixels)

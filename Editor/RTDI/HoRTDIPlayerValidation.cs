@@ -25,8 +25,13 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         {
             ProjectRoot();var package=UnityEditor.PackageManager.PackageInfo.FindForAssetPath("Packages/jp.lilxyzw.liltoon.urp.extensions/package.json");
             string dst=Path.Combine(Application.dataPath,"RTDIPlayerProbe");Directory.CreateDirectory(dst);
-            foreach(string file in new[]{"HoRTDIPlayerCaptureFeature.cs","HoRTDIPlayerProbe.cs","HoRTDIPlayerCapture.shader","HoRTDIPlayerGpuTiming.cs"})
+            foreach(string file in new[]{"HoRTDIPlayerCaptureFeature.cs","HoRTDIPlayerProbe.cs","HoRTDIPlayerCapture.shader","HoRTDIPlayerGpuTiming.cs","HoRTDIPlayerConvergence.cs"})
                 File.Copy(Path.Combine(package.resolvedPath,"Tests~/Player/RTDI",file),Path.Combine(dst,file),true);
+            // Give the runtime copy its own name: Assembly-CSharp can also see
+            // the package's Editor helper while preparing the Player project.
+            string statistics=File.ReadAllText(Path.Combine(package.resolvedPath,"Editor/RTDI/HoRTDIConvergenceStatistics.cs"));
+            File.WriteAllText(Path.Combine(dst,"HoRTDIPlayerConvergenceStatistics.cs"),statistics.Replace("HoRTDIConvergenceStatistics","HoRTDIPlayerConvergenceStatistics"));
+            if(File.Exists(Path.Combine(dst,"HoRTDIConvergenceStatistics.cs")))AssetDatabase.DeleteAsset("Assets/RTDIPlayerProbe/HoRTDIConvergenceStatistics.cs");
             AssetDatabase.Refresh();Debug.Log("[HoRTDIPlayerValidation] PREPARED runtime probe templates");EditorApplication.Exit(0);
         }
         public static void Build()=>Build(false);

@@ -1,0 +1,35 @@
+{
+    "pass": true,
+    "api": "Direct3D12",
+    "mode": "compatibility",
+    "error": "",
+    "observedFrames": 192,
+    "stableFrames": 175,
+    "staticHistoryBudget": 30,
+    "motionHistoryBudget": 3,
+    "motionRestarts": 1,
+    "elapsedSeconds": 3.409260600907029,
+    "oldColourTail": 0.0,
+    "raw": {
+        "signal": "rawDiffuse",
+        "firstFrame": 65,
+        "lastFrame": 192,
+        "frames": 128,
+        "components": 768,
+        "mean": 0.14684349484741689,
+        "normalizedTemporalVariance": 1.6980623502548607,
+        "normalizedFrameDifferenceMSE": 3.394954577191416,
+        "frameDifferenceL1": 0.16870553662457803
+    },
+    "filtered": {
+        "signal": "filteredDiffuse",
+        "firstFrame": 65,
+        "lastFrame": 192,
+        "frames": 128,
+        "components": 768,
+        "mean": 0.14401947582761447,
+        "normalizedTemporalVariance": 0.0008946900442601184,
+        "normalizedFrameDifferenceMSE": 0.00013627264685448604,
+        "frameDifferenceL1": 0.0013002517029369284
+    }
+}

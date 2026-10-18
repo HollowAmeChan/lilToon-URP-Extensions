@@ -75,6 +75,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(feature.LastContext!=null){feature.LastContext.historyValid=false;feature.LastContext.nrdHistoryValid=false;}
                 using var lateSpecOverride=lateSpecExchangeAudit?ApplyLateSpecExchange(feature.LastContext):null;
                 using var stableGuideOverride=ApplyStableSpecularGuide(feature.LastContext);
+                using var convergenceHistoryOverride=ApplyConvergenceMotionHistory(feature.LastContext);
                 for(int i=0;i<192;i++)RenderCamera();
                 if(lateSpecWeightAudit)lateSpecOverride.ResetHistogram();
                 double redRef=0,blueRef=0,rawRed=0,rawBlue=0,filterRed=0,filterBlue=0,filteredL1=0;
@@ -167,6 +168,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             if(allSpecOrthographicAudit)prefix="rtdi-allorthospec61-motion-"+(compatibility?"compat":"rg");
             if(specularRgbDistanceAudit)prefix="rtdi-rgbspec64-motion-"+(compatibility?"compat":"rg");
             if(specularNormalBudgetAudit)prefix="rtdi-normalbudget66-motion-"+(compatibility?"compat":"rg");
+            if(referenceConvergenceMotionControl)prefix="rtdi-convergence108-"+(referenceConvergenceFastOne?"long-main":"reference-history")+"-motion";
+            if(referenceConvergenceAdaptiveAudit)prefix="rtdi-convergence108-adaptive-"+(cutoutSpecularQuality?"specular-":"")+"motion"+(compatibility?"-compat":"");
+            if(referenceConvergenceShortMotion)prefix="rtdi-convergence108-short-history-motion";
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+".json"),JsonUtility.ToJson(report,true));
             File.WriteAllText(Path.Combine(Application.dataPath,"../"+prefix+".csv"),rows.ToString());
             Debug.Log($"[HoRTDIValidation] CUTOUT_MULTI_RESULT qualityPass={allPass} diagnostic={cutoutMultiAudit} compatibility={compatibility}");

@@ -59,13 +59,25 @@ public sealed partial class HoRTDIPlayerProbe:MonoBehaviour
         }
         if(!unsupported&&Array.Exists(args,x=>x=="--motion-protocol"))
         {yield return MotionProtocol();Finish(args);yield break;}
+        if(!unsupported&&Array.Exists(args,x=>x=="--convergence"))
+        {
+            var convergence=Convergence();
+            while(true)
+            {
+                bool more;
+                try{more=convergence.MoveNext();}
+                catch(Exception error){result.pass=false;result.error=error.ToString();if(convergenceReport!=null){convergenceReport.pass=false;convergenceReport.error=result.error;}Debug.LogException(error);break;}
+                if(!more)break;yield return convergence.Current;
+            }
+            (convergence as IDisposable)?.Dispose();Finish(args);yield break;
+        }
         try{Validate();result.pass=true;Debug.Log("[HoRTDIPlayerProbe] PASS "+JsonUtility.ToJson(result));}
         catch(Exception error){result.error=error.ToString();Debug.LogException(error);}
         Finish(args);
     }
     private void Finish(string[] args)
     {
-        var index=Array.IndexOf(args,"--result");if(index>=0&&index+1<args.Length)File.WriteAllText(args[index+1],gpuTimingReport!=null?JsonUtility.ToJson(gpuTimingReport,true):JsonUtility.ToJson(result,true));
+        var index=Array.IndexOf(args,"--result");if(index>=0&&index+1<args.Length)File.WriteAllText(args[index+1],gpuTimingReport!=null?JsonUtility.ToJson(gpuTimingReport,true):convergenceReport!=null?JsonUtility.ToJson(convergenceReport,true):JsonUtility.ToJson(result,true));
         feature.Dispose();capture.Dispose();if(skinnedProbeMesh!=null)Destroy(skinnedProbeMesh);if(target!=null){target.Release();Destroy(target);}Application.Quit(result.pass?0:1);
     }
     private IEnumerator MotionProtocol()

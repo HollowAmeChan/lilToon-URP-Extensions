@@ -1,5 +1,11 @@
 # Ho-RTDI release Player probe
 
+`--convergence` additionally runs 192 real application frames, checks actual
+stable/responsive NRD budgets, raw/filtered temporal variance and light recolouring
+without Editor time overrides. Prepare copies its partial probe and a separately
+named statistics helper; the helper is not part of the production assembly.
+See [reference convergence](../../RTDI/Reference/README.md) for the matched baseline.
+
 This folder is ignored by Unity. `HoRTDIPlayerValidation.Prepare` copies its three
 templates into `Assets/RTDIPlayerProbe` in an isolated `.codex-research` project.
 The capture helper is never exposed in the package's Renderer Features menu.

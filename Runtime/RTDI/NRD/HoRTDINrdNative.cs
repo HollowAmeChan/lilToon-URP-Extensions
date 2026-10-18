@@ -71,9 +71,11 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             internal float diffMinLum,specMinLum,depthThreshold,confidenceMultiplier,confidenceLum,confidenceNormal,lumRelax,normalRelax,roughRelax;
             internal byte checkerboard,reconstruction;
             internal float minDiffMaterial,minSpecMaterial;internal byte antiFirefly,roughEdge;
-            // Dense analytic DI needs responsive diffuse lighting; keep the
-            // specular history budget, use SDK fast history/antilag for changes.
-            internal static RelaxSettings DenseDI(float seconds=1f/60)
+            // Keep the established responsive diffuse profile during changes.
+            // A settled scene can retain the reference-length diffuse history;
+            // fast history, specular history and spatial settings stay unchanged.
+            internal const float StableDiffusePeriod=.5f;
+            internal static RelaxSettings DenseDI(float seconds=1f/60,bool stableDiffuse=false)
             {
                 var result=new RelaxSettings
                 {
@@ -87,7 +89,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
                 // Two temporal observations are the minimum for a variance
                 // estimate. Dense DI avoids the SDK cold spatial color bootstrap,
                 // which averages through depth and visibility discontinuities.
-                result.diffFrames=Math.Max(1u,Frames(.05f,seconds,255));result.specFrames=Frames(.5f,seconds,255);
+                result.diffFrames=Math.Max(1u,Frames(stableDiffuse?StableDiffusePeriod:.05f,seconds,255));result.specFrames=Frames(.5f,seconds,255);
                 result.diffFast=Math.Min(Frames(1f/60,seconds,255),result.diffFrames>0?result.diffFrames-1:0);
                 result.specFast=Math.Min(Frames(.1f,seconds,255),result.specFrames>0?result.specFrames-1:0);
                 // Dense DI supplies both lobes every pixel. The sparse-history

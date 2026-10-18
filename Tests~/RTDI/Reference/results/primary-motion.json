@@ -1,0 +1,85 @@
+{
+    "qualityPass": true,
+    "originPass": true,
+    "path": "RenderGraph",
+    "cases": [
+        {
+            "mode": "static",
+            "signal": "diffuse",
+            "rawRed": 1.0016589542021619,
+            "rawBlue": 0.9815553610968612,
+            "filteredRed": 0.9863851906764324,
+            "filteredBlue": 0.9678932599791166,
+            "frameL1": 0.04059059653647795,
+            "nrdResets": 0,
+            "tracedFrames": 0,
+            "rawPass": true,
+            "filteredPass": true
+        },
+        {
+            "mode": "smoothZ",
+            "signal": "diffuse",
+            "rawRed": 0.9933179793086435,
+            "rawBlue": 1.0115568027341003,
+            "filteredRed": 0.9880042107100304,
+            "filteredBlue": 1.0064212784521083,
+            "frameL1": 0.1302404763860448,
+            "nrdResets": 1,
+            "tracedFrames": 253,
+            "rawPass": true,
+            "filteredPass": true
+        },
+        {
+            "mode": "stepZ",
+            "signal": "diffuse",
+            "rawRed": 0.9981630907063781,
+            "rawBlue": 1.0062625756999975,
+            "filteredRed": 0.9930268146550801,
+            "filteredBlue": 1.000391460932513,
+            "frameL1": 0.1407909747029679,
+            "nrdResets": 1,
+            "tracedFrames": 15,
+            "rawPass": true,
+            "filteredPass": true
+        },
+        {
+            "mode": "static",
+            "signal": "specular",
+            "rawRed": 0.9932535544010683,
+            "rawBlue": 1.0063947329790098,
+            "filteredRed": 0.9712070237959286,
+            "filteredBlue": 1.0303729643623479,
+            "frameL1": 0.051243630794536528,
+            "nrdResets": 0,
+            "tracedFrames": 0,
+            "rawPass": true,
+            "filteredPass": true
+        },
+        {
+            "mode": "smoothZ",
+            "signal": "specular",
+            "rawRed": 0.9993787786359131,
+            "rawBlue": 0.9996032811546748,
+            "filteredRed": 0.9782460767087142,
+            "filteredBlue": 1.0197510020404806,
+            "frameL1": 0.056358809046163787,
+            "nrdResets": 1,
+            "tracedFrames": 253,
+            "rawPass": true,
+            "filteredPass": true
+        },
+        {
+            "mode": "stepZ",
+            "signal": "specular",
+            "rawRed": 1.0017570697086722,
+            "rawBlue": 1.0037973492973434,
+            "filteredRed": 0.978889335836378,
+            "filteredBlue": 1.0249419899302424,
+            "frameL1": 0.059138229589199928,
+            "nrdResets": 1,
+            "tracedFrames": 15,
+            "rawPass": true,
+            "filteredPass": true
+        }
+    ]
+}

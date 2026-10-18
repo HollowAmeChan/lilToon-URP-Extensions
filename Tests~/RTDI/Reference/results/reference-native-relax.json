@@ -1,0 +1,117 @@
+{
+    "diagnosticOnly": true,
+    "rrEnabled": false,
+    "emptyEmitterGuard": false,
+    "results": [
+        {
+            "signal": "rawCombined",
+            "firstFrame": 1,
+            "lastFrame": 8,
+            "frames": 8,
+            "components": 3072,
+            "mean": 0.0807624145286779,
+            "normalizedTemporalVariance": 1.6838553820453064,
+            "normalizedFrameDifferenceMSE": 3.0095491440103996,
+            "frameDifferenceL1": 0.09152886480093002
+        },
+        {
+            "signal": "relaxCombined",
+            "firstFrame": 1,
+            "lastFrame": 8,
+            "frames": 8,
+            "components": 3072,
+            "mean": 0.04977400147860559,
+            "normalizedTemporalVariance": 0.3066120207916126,
+            "normalizedFrameDifferenceMSE": 0.06877309456206569,
+            "frameDifferenceL1": 0.011519540844130374
+        },
+        {
+            "signal": "rawCombined",
+            "firstFrame": 9,
+            "lastFrame": 32,
+            "frames": 24,
+            "components": 3072,
+            "mean": 0.14550094836288025,
+            "normalizedTemporalVariance": 1.4701455792498624,
+            "normalizedFrameDifferenceMSE": 2.9300413485626857,
+            "frameDifferenceL1": 0.1536598754965736
+        },
+        {
+            "signal": "relaxCombined",
+            "firstFrame": 9,
+            "lastFrame": 32,
+            "frames": 24,
+            "components": 3072,
+            "mean": 0.12279334084855169,
+            "normalizedTemporalVariance": 0.020775718266400044,
+            "normalizedFrameDifferenceMSE": 0.0015543048781434318,
+            "frameDifferenceL1": 0.003580726575160372
+        },
+        {
+            "signal": "rawCombined",
+            "firstFrame": 33,
+            "lastFrame": 128,
+            "frames": 96,
+            "components": 3072,
+            "mean": 0.14990028368102169,
+            "normalizedTemporalVariance": 1.5143686674145623,
+            "normalizedFrameDifferenceMSE": 3.0303635779675375,
+            "frameDifferenceL1": 0.15804712318537635
+        },
+        {
+            "signal": "relaxCombined",
+            "firstFrame": 33,
+            "lastFrame": 128,
+            "frames": 96,
+            "components": 3072,
+            "mean": 0.14300573803484432,
+            "normalizedTemporalVariance": 0.0008689427147295957,
+            "normalizedFrameDifferenceMSE": 0.0008966043908931941,
+            "frameDifferenceL1": 0.0026854644741928369
+        },
+        {
+            "signal": "rawCombined",
+            "firstFrame": 129,
+            "lastFrame": 256,
+            "frames": 128,
+            "components": 3072,
+            "mean": 0.1492131508079666,
+            "normalizedTemporalVariance": 1.5400969308325177,
+            "normalizedFrameDifferenceMSE": 3.0719169033015678,
+            "frameDifferenceL1": 0.15709873170051423
+        },
+        {
+            "signal": "relaxCombined",
+            "firstFrame": 129,
+            "lastFrame": 256,
+            "frames": 128,
+            "components": 3072,
+            "mean": 0.14426463174944124,
+            "normalizedTemporalVariance": 0.0005405528030405777,
+            "normalizedFrameDifferenceMSE": 0.000930534205433181,
+            "frameDifferenceL1": 0.0027037812030221537
+        },
+        {
+            "signal": "rawCombined",
+            "firstFrame": 257,
+            "lastFrame": 512,
+            "frames": 256,
+            "components": 3072,
+            "mean": 0.1499640248514091,
+            "normalizedTemporalVariance": 1.5294028661449926,
+            "normalizedFrameDifferenceMSE": 3.0526469673844436,
+            "frameDifferenceL1": 0.15788377499580318
+        },
+        {
+            "signal": "relaxCombined",
+            "firstFrame": 257,
+            "lastFrame": 512,
+            "frames": 256,
+            "components": 3072,
+            "mean": 0.14452614441203574,
+            "normalizedTemporalVariance": 0.0005703632240293652,
+            "normalizedFrameDifferenceMSE": 0.000922922103285385,
+            "frameDifferenceL1": 0.0026942536721821705
+        }
+    ]
+}

@@ -1,0 +1,206 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-18",
+  "timezone": "Asia/Shanghai",
+  "auditedBaseCommit": "4cbb8256a06c0a1d2c1a7e391ccde97cc88f00c5",
+  "objective": "Matched local reference DI convergence, reconstruction differences, stable-history repair and dynamic/Player verification",
+  "productQualityComplete": false,
+  "status": "validated-improvement-with-known-quality-failures",
+  "reportSha256": {
+    "adaptive-dynamic-compat.json": "4febccc756738ff3bdd3f6b7510a07a884772787c7153f6cbdee9b20dddb57fa",
+    "adaptive-dynamic-rg.json": "8517dd4b8a87b7908c10d5af3f93b6d5e474f3e1031b6fd17170b2176372e7ac",
+    "adaptive-motion-compat.json": "bd91bfc802ea439be1bda60033f614e986d3032efa599b815861ceafdbd0fa7f",
+    "adaptive-motion-rg.json": "ffdca626388c92ee7aaf6709cde6c5ecdf0860eb347734cc9af6dc34dcca2275",
+    "adaptive-specular-motion.json": "68873b31c47ac6eec50818ba93343e122ba800122da7c277954dd754defc904f",
+    "adaptive-static-compat.json": "84615570378df547761854ca9c682107d578ea164a9ac9cabc383216d7211c65",
+    "adaptive-static-rg.json": "7ea09ef325152bfd13d2dccbc3d5f33dabf3f8ced244b8b1e61f66d18680b34d",
+    "baseline-motion.json": "9742099938fca5de70c9533bde1e7e78d2024ab1536d311af51a69ecb538fda2",
+    "baseline-static.json": "988e12b231c674972e10a8fa45a76f2aa679fea52b80de966b1e0916d9d02ddd",
+    "environment-compat.json": "03dad569ef9adaabfe496e403d6ffa6a84fed87724404bf4690326d8a9f549fe",
+    "environment-rg.json": "66417d0f6fb694c60c5e76504fccb027ce12ecc5f9170e81244c3863923140fe",
+    "original-relax-same-input.json": "d7e6fd0391fda39846c1dc1e2cf0dbb341ac2b62ac0a454a1aa511e20a4730a8",
+    "player-compat-convergence.json": "7a27799ed271b75cff50af4da7c82ff5900fe3d8220be12aa467c335120b5075",
+    "player-compat-suite.json": "dd25ba038fc61facdbd65688d17386103ca85a76cb59ce4ee191a60a94687a56",
+    "player-dx11.json": "177b359194448dd1852b766b32d4f40721f3fa915e71913c30c800198eff4d2a",
+    "player-rg-convergence.json": "1fadc9ea8df44b53fa461c07677381663928a042bf7a3a6c911331a381068531",
+    "player-rg-suite.json": "c4c6e71b7dcb1982ef895103b3b7e31153d2bdae706e6e6970ed1143c4a4c2b7",
+    "primary-motion.json": "58683ab4b9faa7f5fb047a3ac34d6dcace2fe2ef167b7897cdd04c8a73c7d7ec",
+    "reference-native-relax.json": "e1b44ba630e338ad8f61dfc7585610f3cc10c492a97ec11e4d8b1dba51714633",
+    "reference-raw.json": "8b572453557ea8e930ce49dbf36402cdeb34755350ed273fa1bc965dd10b3018",
+    "reference-rr.json": "d5e07fdfaec3b30a34225541325ee0f2f58c945c6821aeda80081819de8884b5",
+    "reference-settings-same-input.json": "e388d7460c6b5db1afa1d3ce7b7e823651a4b3dd72a114db3c3653bb9852e884",
+    "reuse-noise.json": "da06a6d93a3cdd3af8f916f0f81f77083142b49ff38dc6f273188e6cf9da2943"
+  },
+  "reportSources": {
+    "adaptive-dynamic-compat.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-convergence108-adaptive-dynamic-cutout-compat.json",
+      "capturedAtUtc": "2026-10-18T10:13:18.304532+00:00"
+    },
+    "adaptive-dynamic-rg.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-convergence108-adaptive-dynamic-cutout-rg.json",
+      "capturedAtUtc": "2026-10-18T10:13:05.040617+00:00"
+    },
+    "adaptive-motion-compat.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-convergence108-adaptive-motion-compat.json",
+      "capturedAtUtc": "2026-10-18T10:05:27.178339+00:00"
+    },
+    "adaptive-motion-rg.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-convergence108-adaptive-motion.json",
+      "capturedAtUtc": "2026-10-18T10:05:14.520103+00:00"
+    },
+    "adaptive-specular-motion.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-convergence108-adaptive-specular-motion.json",
+      "capturedAtUtc": "2026-10-18T10:12:52.340956+00:00"
+    },
+    "adaptive-static-compat.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-convergence108-matched-point-adaptive-production-compat.json",
+      "capturedAtUtc": "2026-10-18T10:06:30.549985+00:00"
+    },
+    "adaptive-static-rg.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-convergence108-matched-point-adaptive-production.json",
+      "capturedAtUtc": "2026-10-18T10:06:20.008228+00:00"
+    },
+    "baseline-motion.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-convergence108-short-history-motion.json",
+      "capturedAtUtc": "2026-10-18T10:05:01.800101+00:00"
+    },
+    "baseline-static.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-convergence108-matched-point-production.json",
+      "capturedAtUtc": "2026-10-18T10:04:20.079772+00:00"
+    },
+    "environment-compat.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-runtime78-env-baseline-compat.json",
+      "capturedAtUtc": "2026-10-18T10:14:27.952926+00:00"
+    },
+    "environment-rg.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-runtime78-env-baseline-rg.json",
+      "capturedAtUtc": "2026-10-18T10:14:09.328074+00:00"
+    },
+    "original-relax-same-input.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-convergence108-matched-point-original-relax-same-input.json",
+      "capturedAtUtc": "2026-10-18T10:12:40.120345+00:00"
+    },
+    "player-compat-convergence.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-convergence108-player-compat-convergence.json",
+      "capturedAtUtc": "2026-10-18T10:18:46.227010+00:00"
+    },
+    "player-compat-suite.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-convergence108-player-compat-suite.json",
+      "capturedAtUtc": "2026-10-18T10:18:33.507254+00:00"
+    },
+    "player-dx11.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-convergence108-player-dx11.json",
+      "capturedAtUtc": "2026-10-18T10:18:49.011067+00:00"
+    },
+    "player-rg-convergence.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-convergence108-player-rg-convergence.json",
+      "capturedAtUtc": "2026-10-18T10:18:39.941600+00:00"
+    },
+    "player-rg-suite.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-convergence108-player-rg-suite.json",
+      "capturedAtUtc": "2026-10-18T10:18:25.318718+00:00"
+    },
+    "primary-motion.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-primary34-rg.json",
+      "capturedAtUtc": "2026-10-18T10:13:51.305689+00:00"
+    },
+    "reference-native-relax.json": {
+      "path": ".codex-research/UnityPathTracing-6000.3.15/ho-reference-convergence108-matched-point-native-relax.json",
+      "capturedAtUtc": "2026-10-18T10:29:56.161132+00:00"
+    },
+    "reference-raw.json": {
+      "path": ".codex-research/UnityPathTracing-6000.3.15/ho-reference-convergence108-matched-point-raw.json",
+      "capturedAtUtc": "2026-10-18T10:28:52.059960+00:00"
+    },
+    "reference-rr.json": {
+      "path": ".codex-research/UnityPathTracing-6000.3.15/ho-reference-convergence108-matched-point-rr.json",
+      "capturedAtUtc": "2026-10-18T10:29:07.504690+00:00"
+    },
+    "reference-settings-same-input.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-convergence108-matched-point-reference-history.json",
+      "capturedAtUtc": "2026-10-18T10:12:29.740027+00:00"
+    },
+    "reuse-noise.json": {
+      "path": ".codex-research/RTInputValidation/rtdi-reuse38-rg.json",
+      "capturedAtUtc": "2026-10-18T10:13:38.974822+00:00"
+    }
+  },
+  "sourceSha256": {
+    "Runtime/RTDI/HoRTDIRendererFeature.cs": "e1c9be66495c1d37820d607295f023a93d8682d78f93523069c94db382bc1eeb",
+    "Runtime/RTDI/NRD/HoRTDINrdContext.cs": "51619d21e26ff2887af6b5276a2a12e4dbec4007491fea1c0702ce5b2b053c66",
+    "Runtime/RTDI/NRD/HoRTDINrdNative.cs": "3a059fc66eb4f2f2b5d131f2bafb2b37e4c0fd3ab4722840aeb9d4f56536377b",
+    "Editor/RTDI/HoRTDIConvergenceValidation.cs": "18e0d042d0593699b5b15678f54105d1dbfe94c4bb4819f0dfdaf057aa95d4fc",
+    "Editor/RTDI/HoRTDIConvergenceStatistics.cs": "ab383ec28cd374bad5856617b5ca27e64eb8b62f0b4b19a845eb7ee4df070214",
+    "Tests~/RTDI/Reference/HoReferenceConvergenceProbe.cs": "5476634b2156434d2f5a5087ef46f674c4b23c6436f53a55b0918b800658523d",
+    "Tests~/RTDI/Reference/NriDescriptorCompatibility.patch": "2e2431c12031f8d88b2f6f035c18ace480da29e61d798f621b550d636033d505",
+    "Tests~/Player/RTDI/HoRTDIPlayerConvergence.cs": "0e2e39609cb472eebb07687f15528f024e15e66162374d99a1b75e7b1a6a7b72",
+    "Tests~/Player/RTDI/HoRTDIPlayerProbe.cs": "672dd1fe5d771c8f91ff2f9e52c482c592c1134a40dd68f1f2c83e5a6755a6bb",
+    "Editor/RTDI/HoRTDIValidation.cs": "be66952d0ac817ec29114117d6a0c3ca4dc5cb07ef01c5ee46fcf62dd85195b6",
+    "Editor/RTDI/HoRTDICutoutMultiQualityValidation.cs": "0776683f25b395211be24cf54b6c4b3e5c12cfcaae5c0bce9e979825b0c9ecd5",
+    "Editor/RTDI/HoRTDIDynamicAuxiliaryCDFValidation.cs": "71390e46b0e16a62b9b75eb15191547c6e5142d1343f25c97e38783a51e6d68c",
+    "Editor/RTDI/HoRTDIReuseNoiseValidation.cs": "d362f9d86564924124080dda03f156eea732089a299b735651961d706abe8e76",
+    "Editor/RTDI/HoRTDIPlayerValidation.cs": "504713b0aecc68909d947c8f6ae4ed847b12bc82274cdf45d7d7ec43710871db",
+    "Tests~/RTDI/Reference/verify_convergence.py": "ef986cd25e0b4e3939186b2bffd368de0ec0f90accb8af7bd2441040081a8ce7"
+  },
+  "binarySha256": {
+    "Runtime/RTDI/Plugins/x86_64/HoRTDINRD.dll": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb",
+    ".codex-research/UnityPathTracing-6000.3.15/Assets/Plugins/x86_64/NRD.dll": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb",
+    ".codex-research/UnityPathTracing-6000.3.15/Assets/Plugins/x86_64/NRI.dll": "c00665282d0f0174562e7eb9b973e991abaebc951a276d3cf745f1e61dccfa8d",
+    ".codex-research/UnityPathTracing-6000.3.15/Assets/Plugins/x86_64/Denoiser.dll": "f2302046cc312c71211f56b95325fba7f005ad7d9d9b6dbe0811433cf7335b20",
+    ".codex-research/UnityPathTracing-6000.3.15/Packages/top.kuanmi.native-rendering/Plugins/x86_64/ShaderCompilerPlugin.dll": "813d92303e00310ede3ecac563f7ca5372997110a138deea40c5bd66b56e396c",
+    ".codex-research/RTInputValidation/PlayerBuild/HoRTDIProbe_Data/Plugins/x86_64/HoRTDINRD.dll": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb",
+    ".codex-research/RTInputValidation/PlayerBuildCompatibility/HoRTDIProbe_Data/Plugins/x86_64/HoRTDINRD.dll": "5eff9d42d56da8b38d305bc483d84263aee3c31a6c6c3a0a637370da68220edb"
+  },
+  "referenceNriCommit": "1ffdb954d0ab4f950594aa10f83111b1cc441cd9",
+  "existingLocalReferenceShaderToolingRequired": true,
+  "knownFailures": [
+    {
+      "gate": "60 Hz diffuse casterStep transitionChangedL1 < .35",
+      "baseline": 0.35773551921528524,
+      "after": 0.35041389718963084,
+      "passed": false
+    },
+    {
+      "gate": "mixed-environment filtered specular energy",
+      "rgPassed": 2,
+      "compatibilityPassed": 2,
+      "totalPerPath": 4,
+      "passed": false
+    }
+  ],
+  "capturedExitCodes": {
+    "referenceRaw": 0,
+    "referenceRR": 0,
+    "referenceNativeRELAX": 0,
+    "baselineStatic": 0,
+    "adaptiveStaticRG": 0,
+    "adaptiveStaticCompatibility": 0,
+    "baselineMotion": 1,
+    "adaptiveMotionRG": 1,
+    "adaptiveMotionCompatibility": 1,
+    "specularMotion": 0,
+    "dynamicRG": 0,
+    "dynamicCompatibility": 0,
+    "reuseNoise": 0,
+    "primaryMotion": 0,
+    "environmentRG": 1,
+    "environmentCompatibility": 1,
+    "playerBuildRG": 0,
+    "playerBuildCompatibility": 0,
+    "playerSuiteRG": 0,
+    "playerSuiteCompatibility": 0,
+    "playerConvergenceRG": 0,
+    "playerConvergenceCompatibility": 0,
+    "playerDX11": 0
+  },
+  "limits": [
+    "global per-camera stability decision",
+    "finite-history residual noise",
+    "existing strict step and mixed-specular failures",
+    "no final material composition",
+    "no object-motion/TAA/XR/IL2CPP acceptance",
+    "no GPU performance budget"
+  ],
+  "originalReferenceNriSha256": "c281233e6b1fdb654f616fb698583dc75daf0f386d5cec77001f0cf69224282b",
+  "sourceHashNormalization": "UTF-8 without BOM; universal line endings normalized to LF"
+}

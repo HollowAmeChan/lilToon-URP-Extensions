@@ -1,0 +1,62 @@
+{
+    "diagnosticOnly": true,
+    "rrEnabled": false,
+    "emptyEmitterGuard": false,
+    "results": [
+        {
+            "signal": "rawCombined",
+            "firstFrame": 1,
+            "lastFrame": 8,
+            "frames": 8,
+            "components": 3072,
+            "mean": 0.0808435995131731,
+            "normalizedTemporalVariance": 1.6933096923420206,
+            "normalizedFrameDifferenceMSE": 3.022951739633634,
+            "frameDifferenceL1": 0.09189094390187945
+        },
+        {
+            "signal": "rawCombined",
+            "firstFrame": 9,
+            "lastFrame": 32,
+            "frames": 24,
+            "components": 3072,
+            "mean": 0.1461643179257708,
+            "normalizedTemporalVariance": 1.4696327114138726,
+            "normalizedFrameDifferenceMSE": 2.9277896489047707,
+            "frameDifferenceL1": 0.1548072790754014
+        },
+        {
+            "signal": "rawCombined",
+            "firstFrame": 33,
+            "lastFrame": 128,
+            "frames": 96,
+            "components": 3072,
+            "mean": 0.15014471734563512,
+            "normalizedTemporalVariance": 1.5151534818036057,
+            "normalizedFrameDifferenceMSE": 3.028282871824968,
+            "frameDifferenceL1": 0.1585294393070957
+        },
+        {
+            "signal": "rawCombined",
+            "firstFrame": 129,
+            "lastFrame": 256,
+            "frames": 128,
+            "components": 3072,
+            "mean": 0.14930989996840558,
+            "normalizedTemporalVariance": 1.538536874982299,
+            "normalizedFrameDifferenceMSE": 3.065633262558845,
+            "frameDifferenceL1": 0.15718364433979424
+        },
+        {
+            "signal": "rawCombined",
+            "firstFrame": 257,
+            "lastFrame": 512,
+            "frames": 256,
+            "components": 3072,
+            "mean": 0.14996996444339553,
+            "normalizedTemporalVariance": 1.5345346318080014,
+            "normalizedFrameDifferenceMSE": 3.05621456005349,
+            "frameDifferenceL1": 0.15770637802049226
+        }
+    ]
+}

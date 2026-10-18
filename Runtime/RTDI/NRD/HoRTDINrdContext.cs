@@ -33,10 +33,13 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         private readonly HoRTDINrdTiming timing=new();
         internal HoRTDINrdNative.RelaxSettings AppliedSettings {get;private set;}=HoRTDINrdNative.RelaxSettings.DenseDI();
         internal bool HasCutoutVisibility;
+        private double currentSampleTime,lastLightingChange=double.NaN;
+        internal bool StableDiffuseHistory {get;private set;}
         #if UNITY_EDITOR
         // Isolated stage/settings A/B only; no serialized/runtime product option.
         internal Func<HoRTDINrdNative.RelaxSettings,HoRTDINrdNative.RelaxSettings> ValidationSettings;
         internal bool ValidationPreserveWorldHistory;
+        internal bool ValidationDisableStableDiffuseHistory;
         internal bool ValidationForceWorldReset,ValidationSkipVisibilityConfidence;
         internal bool ValidationTraceVisibilityConfidence;
         internal int ValidationVisibilityFilterPasses=2;
@@ -52,7 +55,23 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             #if UNITY_EDITOR
             time=ValidationTimeSeconds??time;
             #endif
-            reset=timing.Advance(time);return timing.Seconds*1000;
+            currentSampleTime=time;reset=timing.Advance(time);return timing.Seconds*1000;
+        }
+        internal bool ObserveLightingStability(bool changed)
+        {
+            #if UNITY_EDITOR
+            if(ValidationDisableStableDiffuseHistory){StableDiffuseHistory=false;lastLightingChange=currentSampleTime;return false;}
+            #endif
+            // Restart once when leaving the settled profile. Reusing its long
+            // accumulated colour with a newly shortened budget retains a stale
+            // first response; ongoing motion continues through normal confidence.
+            bool restart=StableDiffuseHistory&&changed;
+            if(!double.IsFinite(currentSampleTime)){lastLightingChange=double.NaN;StableDiffuseHistory=false;return restart;}
+            if(changed||double.IsNaN(lastLightingChange)||currentSampleTime<lastLightingChange)lastLightingChange=currentSampleTime;
+            // Retain the existing responsive profile while the camera, scene,
+            // or actual light snapshot changes, and while its short history settles.
+            StableDiffuseHistory=currentSampleTime-lastLightingChange>=HoRTDINrdNative.RelaxSettings.StableDiffusePeriod;
+            return restart;
         }
         internal int LastDispatchCount {get;private set;}
         internal HoRTDINrdContext(ComputeShader[] shaders)
@@ -149,7 +168,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         internal void Record(CommandBuffer cmd,HoRTDINrdNative.CommonSettings settings,Dictionary<string,RenderTargetIdentifier> external)
         {
             HoRTDINrdNative.Check(HoRTDINrdNative.SetCommonSettings(instance,ref settings),"SetCommonSettings");
-            var desired=HoRTDINrdNative.RelaxSettings.DenseDI(timing.FilteredSeconds);
+            var desired=HoRTDINrdNative.RelaxSettings.DenseDI(timing.FilteredSeconds,StableDiffuseHistory);
             // Final anyhit visibility can create sharp radiance discontinuities
             // on a smooth receiver. Keep their diffuse luminance gate tighter.
             // Its rare visible light samples also need a wider history box;

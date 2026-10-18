@@ -297,7 +297,10 @@ namespace lilToon.URP.Extensions.RTDI
                     reset=!c.nrdHistoryValid||!c.historyValid||worldReset||c.settingsSignature!=d.signature||d.lightFrame.domainChanged;
                     common=HoRTDINrdNative.CommonSettings.Create(c.width,c.height,d.view,d.projection,c.previousView,c.previousProjection,c.frame,reset);
                     common.timeDelta=c.nrd.SetRenderTime(d.renderTime,out timeReset);if(timeReset)common.accumulationMode=2;
-                    traceConfidence=dynamicVisibility&&!(reset||timeReset)&&(worldChanged||LightsChanged(d.lightFrame));
+                    bool lightsChanged=LightsChanged(d.lightFrame);
+                    reset|=c.nrd.ObserveLightingStability(reset||timeReset||worldChanged||lightsChanged||c.previousView!=d.view||c.previousProjection!=d.projection);
+                    if(reset)common.accumulationMode=2;
+                    traceConfidence=dynamicVisibility&&!(reset||timeReset)&&(worldChanged||lightsChanged);
                     #if UNITY_EDITOR
                     traceConfidence|=c.nrd.ValidationTraceVisibilityConfidence;
                     traceConfidence&=!c.nrd.ValidationSkipVisibilityConfidence;
