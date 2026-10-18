@@ -75,6 +75,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public static readonly int EnhancedOutlineFogParamsId = Shader.PropertyToID("_HoCharacterEnhancedOutlineFogParams");
         public static readonly int EnhancedOutlineHeightFadeParamsId = Shader.PropertyToID("_HoCharacterEnhancedOutlineHeightFadeParams");
         public static readonly int EnhancedOutlineOptionsId = Shader.PropertyToID("_HoCharacterEnhancedOutlineOptions");
+        public static readonly int OutlineHeightPlane0Id = Shader.PropertyToID("_HoCharacterOutlineHeightPlane0");
+        public static readonly int OutlineHeightPlane1Id = Shader.PropertyToID("_HoCharacterOutlineHeightPlane1");
         public static readonly int SubjectOutlineSourceParamsId = Shader.PropertyToID("_HoCharacterSubjectOutlineSourceParams");
         public static readonly int SubjectOutlineBlurParamsId = Shader.PropertyToID("_HoCharacterSubjectOutlineBlurParams");
         public static readonly int OptionsId = Shader.PropertyToID("_HoCharacterOptions");

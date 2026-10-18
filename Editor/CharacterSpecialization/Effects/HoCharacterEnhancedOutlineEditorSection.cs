@@ -40,6 +40,7 @@ namespace lilToon.URP.Extensions.Editor.CharacterSpecialization
             }
 
             DrawProperty(Find(effects, "enhancedOutlineHeightFadeGroundY"), "地面高度");
+            DrawProperty(Find(effects, "outlineHeightFadeReferenceDistance"), "渐隐参考距离（共用）");
             DrawProperty(Find(effects, "enhancedOutlineHeightFadeStart"), "渐隐开始距离");
             DrawProperty(Find(effects, "enhancedOutlineHeightFadeEnd"), "渐隐结束距离");
             DrawProperty(Find(effects, "enhancedOutlineHeightFadeHardness"), "渐隐硬度");

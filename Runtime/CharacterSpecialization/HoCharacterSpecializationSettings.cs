@@ -416,9 +416,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public float subjectOutlineFogSoftness = 0.55f;
 
         [InspectorName("高度渐隐")]
-        [Tooltip("按主体轮廓来源点的世界高度减弱轮廓。")]
+        [Tooltip("使用统一的相机渐变平面近似世界高度，不重建模糊后的角色位置。")]
         [NonSerialized]
         public HoCharacterSubjectOutlineHeightFadeMode subjectOutlineHeightFadeMode = HoCharacterSubjectOutlineHeightFadeMode.Off;
+
+        [NonSerialized]
+        public float outlineHeightFadeReferenceDistance = 0.0f;
 
         [InspectorName("地面高度")]
         [Tooltip("高度渐隐的地面世界 Y。")]
@@ -495,7 +498,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         public float enhancedOutlineFogSoftness = 0.45f;
 
         [InspectorName("高度渐隐")]
-        [Tooltip("按增强轮廓来源点的世界高度减弱雾气。")]
+        [Tooltip("使用与主体轮廓相同的相机渐变平面近似世界高度。")]
         [NonSerialized]
         public HoCharacterSubjectOutlineHeightFadeMode enhancedOutlineHeightFadeMode = HoCharacterSubjectOutlineHeightFadeMode.Off;
 

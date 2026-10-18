@@ -21,6 +21,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             public BufferHandle referenceFrameIdentities;
             public int referenceFrameCount;
             public Vector4 observerPosition;
+            public Vector4 outlineHeightPlane0;
+            public Vector4 outlineHeightPlane1;
             public TextureHandle source;
             public TextureHandle identityId0Texture;
             public TextureHandle geometryNormalDepthTexture;
@@ -99,7 +101,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             // 没有 source 字段：主体/增强轮廓的 source pass 也从不用相机颜色（同 F1/F2/F3）。
             public TextureHandle objectSemanticLowTexture;
             public TextureHandle objectSemanticHighTexture;
-            public TextureHandle geometryDepthTexture;
             public Material material;
             public Vector4 sourceParams;
         }

@@ -242,6 +242,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             target.subjectOutlineFogValue = Effects.value.subjectOutlineFogValue;
             target.subjectOutlineFogSoftness = Effects.value.subjectOutlineFogSoftness;
             target.subjectOutlineHeightFadeMode = Effects.value.subjectOutlineHeightFadeMode;
+            target.outlineHeightFadeReferenceDistance = Effects.value.outlineHeightFadeReferenceDistance;
             target.subjectOutlineHeightFadeGroundY = Effects.value.subjectOutlineHeightFadeGroundY;
             target.subjectOutlineHeightFadeStart = Effects.value.subjectOutlineHeightFadeStart;
             target.subjectOutlineHeightFadeEnd = Effects.value.subjectOutlineHeightFadeEnd;

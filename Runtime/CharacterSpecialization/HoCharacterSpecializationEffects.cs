@@ -166,7 +166,11 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [Range(0.05f, 4.0f)]
         public float subjectOutlineFogSoftness = 0.55f;
 
-        [InspectorName("高度渐隐"), Tooltip("按主体轮廓来源点的世界高度减弱轮廓。")]
+        [InspectorName("渐隐参考距离（共用）"), Min(0.0f)]
+        [Tooltip("主体与增强轮廓共用。0 自动使用画面内角色参考点的平均相机深度，无参考点时为 5。设为正数可指定相机前向到角色的距离，单位为世界单位。")]
+        public float outlineHeightFadeReferenceDistance = 0.0f;
+
+        [InspectorName("高度渐隐"), Tooltip("使用朝向相机的统一高度渐变平面近似地面高度，不读取或模糊角色深度。")]
         public HoCharacterSubjectOutlineHeightFadeMode subjectOutlineHeightFadeMode = HoCharacterSubjectOutlineHeightFadeMode.Off;
 
         [InspectorName("地面高度"), Tooltip("高度渐隐的地面世界 Y。")]
@@ -213,7 +217,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
         [Range(0.05f, 4.0f)]
         public float enhancedOutlineFogSoftness = 0.45f;
 
-        [InspectorName("高度渐隐"), Tooltip("按增强轮廓来源点的世界高度减弱雾气。")]
+        [InspectorName("高度渐隐"), Tooltip("使用与主体轮廓相同的相机渐变平面近似地面高度，不读取或模糊角色深度。")]
         public HoCharacterSubjectOutlineHeightFadeMode enhancedOutlineHeightFadeMode = HoCharacterSubjectOutlineHeightFadeMode.Off;
 
         [InspectorName("地面高度"), Tooltip("高度渐隐的地面世界 Y。")]

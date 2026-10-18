@@ -219,13 +219,37 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             }
         }
 
+        private static Vector4 CreateOutlineHeightPlane(Matrix4x4 view, Matrix4x4 gpuProjection, float referenceDepth)
+        {
+            // Unproject only three points on the CPU. Fixed eye depth is affine in
+            // screen UV for perspective/orthographic cameras, including roll/lens shift.
+            Matrix4x4 inverseViewProjection = (gpuProjection * view).inverse;
+            Vector4 clip = gpuProjection * new Vector4(0, 0, -referenceDepth, 1);
+            float deviceDepth = clip.z / clip.w;
+            float ySign = SystemInfo.graphicsUVStartsAtTop ? -1.0f : 1.0f;
+            float WorldY(float u, float v)
+            {
+                Vector4 world = inverseViewProjection * new Vector4(u * 2 - 1, (v * 2 - 1) * ySign, deviceDepth, 1);
+                return world.y / world.w;
+            }
+            float originY = WorldY(0, 0);
+            return new Vector4(WorldY(1, 0) - originY, WorldY(0, 1) - originY, originY, 0);
+        }
+
         private static TextureDesc CreateSubjectOutlineTextureDesc(
             RenderTextureDescriptor cameraTextureDescriptor,
             HoCharacterSpecializationSettings settings,
             GraphicsFormat format,
             string name)
         {
-            TextureDesc descriptor = CreateTextureDesc(cameraTextureDescriptor, settings, format, name);
+            // Only coverage is blurred. Single-channel float keeps small direction
+            // gradients without allocating position or depth channels.
+            const GraphicsFormat preciseFormat = GraphicsFormat.R32_SFloat;
+            const GraphicsFormat compactFallback = GraphicsFormat.R16_SFloat;
+            bool CanFilter(GraphicsFormat candidate) => IsColorFormatUsable(candidate)
+                && SystemInfo.IsFormatSupported(candidate, GraphicsFormatUsage.Linear);
+            TextureDesc descriptor = CreateTextureDesc(cameraTextureDescriptor, settings,
+                CanFilter(preciseFormat) ? preciseFormat : CanFilter(compactFallback) ? compactFallback : format, name);
             descriptor.msaaSamples = MSAASamples.None;
             descriptor.bindTextureMS = false;
             return descriptor;

@@ -94,6 +94,26 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             if (frameChanged || mapChanged) UploadRevision++;
             return buffer;
         }
+        // One shared depth per camera is intentionally an approximation. It cannot
+        // inherit local discontinuities from overlapping silhouettes or large blurs.
+        internal float GetOutlineReferenceDepth(Camera camera, float referenceDistance = 0.0f)
+        {
+            if (referenceDistance > 0.0f) return Mathf.Max(referenceDistance, camera.nearClipPlane);
+            float sum = 0.0f;
+            int count = 0;
+            foreach (var frame in frames)
+            {
+                if (!frame.IsValid) continue;
+                Vector3 viewport = camera.WorldToViewportPoint(frame.originValid);
+                if (viewport.z <= camera.nearClipPlane || viewport.x < 0 || viewport.x > 1 || viewport.y < 0 || viewport.y > 1)
+                    continue;
+                sum += viewport.z;
+                count++;
+            }
+            // Cameras without a registered visible reference use a fixed five-unit plane.
+            return count > 0 ? sum / count : Mathf.Max(5.0f, camera.nearClipPlane);
+        }
+
         public void Dispose()
         {
             if (disposed) return;

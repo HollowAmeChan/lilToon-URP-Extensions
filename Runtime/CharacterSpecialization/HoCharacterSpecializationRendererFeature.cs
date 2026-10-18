@@ -527,7 +527,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             bool requiresFaceHairDiffuseTextures = RequiresFaceHairDiffuseTextures(settings);
             bool requiresSubjectOutlineTextures = RequiresSubjectOutlineTextures(settings);
             bool requiresEnhancedOutlineTextures = RequiresEnhancedOutlineTextures(settings);
-            bool requiresGeometryDepth = requiresSubjectOutlineTextures || requiresEnhancedOutlineTextures;
             HoCharacterSpecializationRuntimeDiagnostics.PublishRenderGraphInputs(
                 cameraData.camera,
                 "Composite",
@@ -537,13 +536,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 objectSemanticAvailable,
                 hasGeometryNormalDepth,
                 hasGeometryDepth,
-                requiresGeometryDepth);
+                false); // Camera-plane outline fade does not require raw geometry depth.
 
             if (backBufferActive
                 || !hasCameraColor
                 || !objectSemanticAvailable
-                || !hasGeometryNormalDepth
-                || (requiresGeometryDepth && !hasGeometryDepth))
+                || !hasGeometryNormalDepth)
             {
                 return;
             }
@@ -770,7 +768,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             TextureHandle subjectOutlineSourceTexture = TextureHandle.nullHandle;
             TextureHandle subjectOutlineTempTexture = TextureHandle.nullHandle;
             TextureHandle subjectOutlineTexture = TextureHandle.nullHandle;
-            bool subjectOutlineReady = requiresSubjectOutlineTextures && hasGeometryDepth && subjectOutlineMaterial != null;
+            bool subjectOutlineReady = requiresSubjectOutlineTextures && subjectOutlineMaterial != null;
             if (subjectOutlineReady)
             {
                 TextureDesc subjectOutlineDesc = CreateSubjectOutlineTextureDesc(
@@ -788,7 +786,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 {
                     passData.objectSemanticLowTexture = objectSemanticLowTexture;
                     passData.objectSemanticHighTexture = objectSemanticHighTexture;
-                    passData.geometryDepthTexture = geometryResources.depthTexture;
                     passData.material = subjectOutlineMaterial;
                     passData.sourceParams = new Vector4((float)HoCharacterSemanticChannel.CharacterFull, 0.0f, 0.0f, 0.0f);
 
@@ -797,7 +794,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     // Blitter.BlitTexture 去绑 _BlitTexture，改成 DrawProcedural + 显式 _BlitScaleBias。
                     builder.UseTexture(passData.objectSemanticLowTexture, AccessFlags.Read);
                     builder.UseTexture(passData.objectSemanticHighTexture, AccessFlags.Read);
-                    builder.UseTexture(passData.geometryDepthTexture, AccessFlags.Read);
 
                     builder.SetRenderAttachment(subjectOutlineSourceTexture, 0, AccessFlags.WriteAll);
                     builder.AllowGlobalStateModification(true);
@@ -807,7 +803,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                         context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.SubjectOutlineSourceParamsId, data.sourceParams);
                         context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.ObjectSemanticLowTextureId, data.objectSemanticLowTexture);
                         context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.ObjectSemanticHighTextureId, data.objectSemanticHighTexture);
-                        context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, data.geometryDepthTexture);
 
                         context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.BlitScaleBiasId, new Vector4(1, 1, 0, 0));
                         context.cmd.DrawProcedural(Matrix4x4.identity, data.material, 0, MeshTopology.Triangles, 3, 1);
@@ -841,7 +836,7 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
             TextureHandle enhancedOutlineSourceTexture = TextureHandle.nullHandle;
             TextureHandle enhancedOutlineTempTexture = TextureHandle.nullHandle;
             TextureHandle enhancedOutlineTexture = TextureHandle.nullHandle;
-            bool enhancedOutlineReady = requiresEnhancedOutlineTextures && hasGeometryDepth && subjectOutlineMaterial != null;
+            bool enhancedOutlineReady = requiresEnhancedOutlineTextures && subjectOutlineMaterial != null;
             if (enhancedOutlineReady)
             {
                 TextureDesc enhancedOutlineDesc = CreateSubjectOutlineTextureDesc(
@@ -859,14 +854,12 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 {
                     passData.objectSemanticLowTexture = objectSemanticLowTexture;
                     passData.objectSemanticHighTexture = objectSemanticHighTexture;
-                    passData.geometryDepthTexture = geometryResources.depthTexture;
                     passData.material = subjectOutlineMaterial;
                     passData.sourceParams = new Vector4(Mathf.Clamp((int)settings.enhancedOutlineSourceChannel, 0, 7), 0.0f, 0.0f, 0.0f);
 
                     // 相机颜色在这趟里从来没有被采样（同 #7 的 shader）：去掉假读，改 DrawProcedural。
                     builder.UseTexture(passData.objectSemanticLowTexture, AccessFlags.Read);
                     builder.UseTexture(passData.objectSemanticHighTexture, AccessFlags.Read);
-                    builder.UseTexture(passData.geometryDepthTexture, AccessFlags.Read);
 
                     builder.SetRenderAttachment(enhancedOutlineSourceTexture, 0, AccessFlags.WriteAll);
                     builder.AllowGlobalStateModification(true);
@@ -876,7 +869,6 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                         context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.SubjectOutlineSourceParamsId, data.sourceParams);
                         context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.ObjectSemanticLowTextureId, data.objectSemanticLowTexture);
                         context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.ObjectSemanticHighTextureId, data.objectSemanticHighTexture);
-                        context.cmd.SetGlobalTexture(HoGeometryBufferShaderConstants.DepthTextureId, data.geometryDepthTexture);
 
                         context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.BlitScaleBiasId, new Vector4(1, 1, 0, 0));
                         context.cmd.DrawProcedural(Matrix4x4.identity, data.material, 0, MeshTopology.Triangles, 3, 1);
@@ -932,6 +924,22 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                 passData.referenceFrames = renderGraph.ImportBuffer(referenceFrameBuffer.Capture());
                 passData.referenceFrameIdentities = renderGraph.ImportBuffer(HoCharacterReferenceFrameBuffer.IdentityMapBuffer);
                 passData.referenceFrameCount = HoCharacterReferenceFrameBuffer.FrameCount;
+                if ((subjectOutlineReady && settings.subjectOutlineHeightFadeMode != HoCharacterSubjectOutlineHeightFadeMode.Off)
+                    || (enhancedOutlineReady && settings.enhancedOutlineHeightFadeMode != HoCharacterSubjectOutlineHeightFadeMode.Off))
+                {
+                    float outlineReferenceDepth = referenceFrameBuffer.GetOutlineReferenceDepth(
+                        cameraData.camera, settings.outlineHeightFadeReferenceDistance);
+                    passData.outlineHeightPlane0 = CreateOutlineHeightPlane(
+                        cameraData.GetViewMatrix(), cameraData.GetGPUProjectionMatrix(), outlineReferenceDepth);
+                    passData.outlineHeightPlane1 = cameraData.xr.enabled && cameraData.xr.singlePassEnabled && cameraData.xr.viewCount > 1
+                        ? CreateOutlineHeightPlane(cameraData.GetViewMatrix(1), cameraData.GetGPUProjectionMatrix(1), outlineReferenceDepth)
+                        : passData.outlineHeightPlane0;
+                }
+                else
+                {
+                    passData.outlineHeightPlane0 = Vector4.zero;
+                    passData.outlineHeightPlane1 = Vector4.zero;
+                }
                 Vector3 observerPosition = cameraData.camera.transform.position;
                 passData.observerPosition = new Vector4(observerPosition.x, observerPosition.y, observerPosition.z, 0);
                 passData.geometryNormalDepthTexture = geometryResources.normalDepthTexture;
@@ -1090,6 +1098,8 @@ namespace lilToon.URP.Extensions.CharacterSpecialization
                     context.cmd.SetGlobalTexture(HoCharacterSpecializationShaderConstants.ObjectSemanticHighTextureId, data.objectSemanticHighTexture);
                     context.cmd.SetGlobalTexture(HoObjectBufferShaderConstants.Id0TextureId, data.identityId0Texture);
                     context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.ScreenTexelSizeId, data.screenTexelSize);
+                    context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.OutlineHeightPlane0Id, data.outlineHeightPlane0);
+                    context.cmd.SetGlobalVector(HoCharacterSpecializationShaderConstants.OutlineHeightPlane1Id, data.outlineHeightPlane1);
                     context.cmd.SetGlobalBuffer(HoCharacterReferenceFrameBuffer.BufferId, data.referenceFrames);
                     context.cmd.SetGlobalBuffer(HoCharacterReferenceFrameBuffer.IdentityMapId, data.referenceFrameIdentities);
                     context.cmd.SetGlobalInt(HoCharacterReferenceFrameBuffer.FrameCountId, data.referenceFrameCount);

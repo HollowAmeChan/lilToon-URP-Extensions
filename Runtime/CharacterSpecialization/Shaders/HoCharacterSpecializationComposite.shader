@@ -48,6 +48,8 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             float4 _HoCharacterEnhancedOutlineFogParams; // x hue shift turns, y saturation, z value, w softness exponent
             float4 _HoCharacterEnhancedOutlineHeightFadeParams; // x mode, y ground world y, z fade start distance, w inverse fade distance
             float4 _HoCharacterEnhancedOutlineOptions; // x final enabled, y textures ready, z source channel, w height fade hardness
+            float4 _HoCharacterOutlineHeightPlane0; // xy UV slopes, z world Y at UV origin
+            float4 _HoCharacterOutlineHeightPlane1;
             float4 _HoCharacterOptions; // x eye enabled, y shadow enabled, z same character only, w debug mode
 
             float4 _lilHoCharacterScreenTexelSize; // xy = 1/宽高（语义平面 / 眼捕获 / 几何都是同一个渲染分辨率）
@@ -63,10 +65,10 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseSourceColorTexture);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseColorTexture);
             TEXTURE2D_X(_lilHoCharacterFaceHairDiffuseDepthTexture);
-            TEXTURE2D_X(_lilHoCharacterSubjectOutlineSourceTexture);
-            TEXTURE2D_X(_lilHoCharacterSubjectOutlineTexture);
-            TEXTURE2D_X(_lilHoCharacterEnhancedOutlineSourceTexture);
-            TEXTURE2D_X(_lilHoCharacterEnhancedOutlineTexture);
+            TEXTURE2D_X_FLOAT(_lilHoCharacterSubjectOutlineSourceTexture);
+            TEXTURE2D_X_FLOAT(_lilHoCharacterSubjectOutlineTexture);
+            TEXTURE2D_X_FLOAT(_lilHoCharacterEnhancedOutlineSourceTexture);
+            TEXTURE2D_X_FLOAT(_lilHoCharacterEnhancedOutlineTexture);
 
             float2 ScreenTexelSize()
             {
@@ -449,7 +451,17 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 return a / max(a + b, 0.0001);
             }
 
-            float ResolveSubjectOutlineHeightFade(float heightWeight, float weightedWorldY)
+            float ResolveOutlineWorldY(float2 uv)
+            {
+                // A single camera-facing plane: no blurred depth/position or normal field.
+                float3 plane = _HoCharacterOutlineHeightPlane0.xyz;
+                #if defined(USING_STEREO_MATRICES)
+                    if (unity_StereoEyeIndex != 0) plane = _HoCharacterOutlineHeightPlane1.xyz;
+                #endif
+                return dot(float3(uv, 1.0), plane);
+            }
+
+            float ResolveSubjectOutlineHeightFade(float worldY)
             {
                 float fadeMode = round(_HoCharacterSubjectOutlineHeightFadeParams.x);
                 if (fadeMode < 0.5)
@@ -457,17 +469,15 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                     return 1.0;
                 }
 
-                float hasHeight = step(0.0001, heightWeight);
-                float worldY = weightedWorldY / max(heightWeight, 0.0001);
                 float groundDistance = abs(worldY - _HoCharacterSubjectOutlineHeightFadeParams.y);
                 float fadeT = saturate((groundDistance - _HoCharacterSubjectOutlineHeightFadeParams.z) * _HoCharacterSubjectOutlineHeightFadeParams.w);
                 fadeT = fadeT * fadeT * (3.0 - 2.0 * fadeT);
                 fadeT = ApplySubjectOutlineHeightFadeHardness(fadeT);
                 float fade = fadeMode < 1.5 ? fadeT : 1.0 - fadeT;
-                return lerp(1.0, fade, hasHeight);
+                return fade;
             }
 
-            float ResolveEnhancedOutlineHeightFade(float heightWeight, float weightedWorldY)
+            float ResolveEnhancedOutlineHeightFade(float worldY)
             {
                 float fadeMode = round(_HoCharacterEnhancedOutlineHeightFadeParams.x);
                 if (fadeMode < 0.5)
@@ -475,21 +485,35 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                     return 1.0;
                 }
 
-                float hasHeight = step(0.0001, heightWeight);
-                float worldY = weightedWorldY / max(heightWeight, 0.0001);
                 float groundDistance = abs(worldY - _HoCharacterEnhancedOutlineHeightFadeParams.y);
                 float fadeT = saturate((groundDistance - _HoCharacterEnhancedOutlineHeightFadeParams.z) * _HoCharacterEnhancedOutlineHeightFadeParams.w);
                 fadeT = fadeT * fadeT * (3.0 - 2.0 * fadeT);
                 fadeT = ApplyEnhancedOutlineHeightFadeHardness(fadeT);
                 float fade = fadeMode < 1.5 ? fadeT : 1.0 - fadeT;
-                return lerp(1.0, fade, hasHeight);
+                return fade;
             }
 
-            float2 ResolveSubjectOutlineNormal(float blurMask)
+            float2 ResolveSubjectOutlineNormal(float2 uv)
             {
-                float2 gradient = float2(ddx(blurMask), ddy(blurMask));
+                // A symmetric Sobel stencil avoids quad-sized derivative blocks and
+                // averages small sampling errors before normalizing the direction.
+                float2 texel = ScreenTexelSize() * 2.0;
+                float tl = SampleSubjectOutlineBlurData(uv + texel * float2(-1.0, -1.0)).r;
+                float t  = SampleSubjectOutlineBlurData(uv + texel * float2( 0.0, -1.0)).r;
+                float tr = SampleSubjectOutlineBlurData(uv + texel * float2( 1.0, -1.0)).r;
+                float l  = SampleSubjectOutlineBlurData(uv + texel * float2(-1.0,  0.0)).r;
+                float r  = SampleSubjectOutlineBlurData(uv + texel * float2( 1.0,  0.0)).r;
+                float bl = SampleSubjectOutlineBlurData(uv + texel * float2(-1.0,  1.0)).r;
+                float b  = SampleSubjectOutlineBlurData(uv + texel * float2( 0.0,  1.0)).r;
+                float br = SampleSubjectOutlineBlurData(uv + texel * float2( 1.0,  1.0)).r;
+                // Both axes span the same number of pixels, including non-square targets.
+                float2 gradient = float2(tr + 2.0 * r + br - tl - 2.0 * l - bl,
+                                         bl + 2.0 * b + br - tl - 2.0 * t - tr);
+                #if UNITY_UV_STARTS_AT_TOP
+                    gradient.y = -gradient.y;
+                #endif
                 float gradientLength = length(gradient);
-                if (gradientLength <= 0.000001)
+                if (gradientLength <= 1.0e-8)
                 {
                     return float2(0.0, 1.0);
                 }
@@ -593,15 +617,18 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                 float subjectOutlineBlurMask = subjectOutlineBlurData.r;
                 float subjectOutlineEdgeSdf = ResolveSubjectOutlineEdgeSdf(subjectOutlineSourceMask, subjectOutlineBlurMask);
                 float subjectOutlineMask = ResolveSubjectOutlineMask(subjectOutlineEdgeSdf);
-                float2 subjectOutlineNormal = ResolveSubjectOutlineNormal(subjectOutlineBlurMask);
-                float subjectOutlineHeightFade = ResolveSubjectOutlineHeightFade(subjectOutlineBlurData.b, subjectOutlineBlurData.g);
+                int debugMode = (int)round(_HoCharacterOptions.w);
+                float2 subjectOutlineNormal = float2(0.0, 1.0);
+                if (debugMode == 12 || (_HoCharacterSubjectOutlineOptions.x > 0.5 && round(_HoCharacterSubjectOutlineOptions.z) == 1.0))
+                    subjectOutlineNormal = ResolveSubjectOutlineNormal(uv);
+                float outlineWorldY = ResolveOutlineWorldY(uv);
+                float subjectOutlineHeightFade = ResolveSubjectOutlineHeightFade(outlineWorldY);
                 float enhancedOutlineSourceMask = SampleEnhancedOutlineSourceMask(uv);
                 float4 enhancedOutlineBlurData = SampleEnhancedOutlineBlurData(uv);
                 float enhancedOutlineBlurMask = enhancedOutlineBlurData.r;
                 float enhancedOutlineEdgeSdf = ResolveSubjectOutlineEdgeSdf(enhancedOutlineSourceMask, enhancedOutlineBlurMask);
                 float enhancedOutlineFogMask = ResolveEnhancedOutlineFogMask(enhancedOutlineEdgeSdf);
-                float enhancedOutlineHeightFade = ResolveEnhancedOutlineHeightFade(enhancedOutlineBlurData.b, enhancedOutlineBlurData.g);
-                int debugMode = (int)round(_HoCharacterOptions.w);
+                float enhancedOutlineHeightFade = ResolveEnhancedOutlineHeightFade(outlineWorldY);
                 if (debugMode == 1)
                 {
                     return half4(eyeColor.rgb, source.a);
@@ -758,7 +785,8 @@ Shader "Hidden/lilToon-HoCharacterSpecialization/URP/Composite"
                         return half4(0.0, 0.0, 0.0, source.a);
                     }
 
-                    return half4(ResolveSubjectOutlineHueColor(subjectOutlineNormal), source.a);
+                    float directionVisible = step(1.0e-8, subjectOutlineBlurMask) * (1.0 - subjectOutlineSourceMask);
+                    return half4(ResolveSubjectOutlineHueColor(subjectOutlineNormal) * directionVisible, source.a);
                 }
 
                 if (debugMode == 13)
