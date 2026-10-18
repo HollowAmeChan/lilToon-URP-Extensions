@@ -27,8 +27,12 @@ requesting extra renders. Existing animation/tools can still render more frames.
   intervals. Legacy control resets192/192, repaired control resets1/192 with
   identical raw statistics. Filtered variance falls from about.951 to.000433.
   This is a signal/clock protocol test, not a measured FPS/GPU-performance result.
-- `referenceFast` in the controlled report is a diagnostic30/6 fast-history
-  candidate. It barely changes variance versus the first fix and was not adopted.
+- `referenceFast` in these original reports is a diagnostic30/6 fast-history
+  candidate. It barely changed variance in the simple two-light fixture and was
+  not adopted in that delivery. Subsequent live carpet measurement reproduced a
+  severe fast-history failure; the current follow-up repair and its separate
+  evidence are in [FastHistory](FastHistory/README.md). Do not generalize the
+  simple fixture's near-equality to the complex scene.
 
 Only `RTDI.maxHistory` in the test project's `PC_Renderer.asset` was restored
 from20 to4 after measurement. A local backup was kept. The A/B itself uses a
@@ -66,7 +70,8 @@ The live reports are retained unchanged. Production and controlled-test sources
 are separately fingerprinted in `evidence.json`.
 
 ```powershell
-python Tests~/RTDI/SceneView/verify_scene_view.py
+python Tests~/RTDI/SceneView/verify_scene_view.py --source-commit 295c641
+python Tests~/RTDI/SceneView/FastHistory/verify.py
 python Tests~/RTDI/Composite/verify_composite.py --source-commit da52a0f
 python Tests~/RTDI/Reference/verify_convergence.py --source-commit f537c26
 ```

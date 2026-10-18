@@ -43,7 +43,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             var context=feature.ContextForCamera(SceneView.lastActiveSceneView?.camera)??feature.LastContext;
             if(context?.nrd!=null)
             {
-                EditorGUILayout.LabelField("降噪历史",$"{(context.nrd.StableDiffuseHistory?"静止累积":"变化响应")} / 漫反射 {context.nrd.AppliedSettings.diffFrames} / 镜面 {context.nrd.AppliedSettings.specFrames}");
+                EditorGUILayout.LabelField(new GUIContent("降噪历史（主/快速）","快速历史也是裁剪主历史的参考；两路都必须保留有效累积。"),$"{(context.nrd.StableDiffuseHistory?"静止累积":"变化响应")} / 漫反射 {context.nrd.AppliedSettings.diffFrames}/{context.nrd.AppliedSettings.diffFast} / 镜面 {context.nrd.AppliedSettings.specFrames}/{context.nrd.AppliedSettings.specFast}");
                 if(context.nrd.SceneViewPreview)EditorGUILayout.LabelField("预览采样",$"{context.nrd.SceneViewAccumulatedFrames}/{HoRTDINrdContext.SceneViewSettledSamples}（静止后自动补帧）");
             }
         }

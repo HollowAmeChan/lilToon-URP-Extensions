@@ -1,0 +1,378 @@
+{
+    "complete": true,
+    "error": "",
+    "width": 1391,
+    "height": 933,
+    "settings": "{\"enabled\":true,\"inSceneView\":true,\"composite\":true,\"compositeWeight\":1.0,\"denoise\":true,\"useEnvironment\":true,\"environmentSamples\":4,\"environmentBrdfSamples\":4,\"localSampling\":0,\"initialSamples\":8,\"finalSampling\":0,\"temporal\":true,\"maxHistory\":4,\"spatial\":true,\"spatialSamples\":4,\"spatialRadius\":16.0,\"rayBias\":0.0010000000474974514,\"geometryLayers\":{\"serializedVersion\":\"2\",\"m_Bits\":4294967295},\"excludedRayMaterials\":[],\"lightLayers\":{\"serializedVersion\":\"2\",\"m_Bits\":4294967295}}",
+    "finalTarget": "SceneView RT",
+    "cases": [
+        {
+            "mode": "legacyFastZero",
+            "resets": 0,
+            "stableFrames": 96,
+            "main": 30,
+            "fast": 0,
+            "signals": [
+                {
+                    "name": "rawDiffuse",
+                    "pixels": {
+                        "signal": "rawDiffuse",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 12288,
+                        "mean": 0.09794185749423228,
+                        "normalizedTemporalVariance": 12.00428552165517,
+                        "normalizedFrameDifferenceMSE": 23.980531135307275,
+                        "frameDifferenceL1": 0.1835797185731823
+                    },
+                    "blocks": {
+                        "signal": "rawDiffuseBlocks",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 192,
+                        "mean": 0.0979418574942328,
+                        "normalizedTemporalVariance": 0.23487587130081354,
+                        "normalizedFrameDifferenceMSE": 0.3826640786167041,
+                        "frameDifferenceL1": 0.04929659965921912
+                    }
+                },
+                {
+                    "name": "rawSpecular",
+                    "pixels": {
+                        "signal": "rawSpecular",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 12288,
+                        "mean": 0.002645870661783385,
+                        "normalizedTemporalVariance": 12.483255602898634,
+                        "normalizedFrameDifferenceMSE": 23.755278178893975,
+                        "frameDifferenceL1": 0.004954315112544257
+                    },
+                    "blocks": {
+                        "signal": "rawSpecularBlocks",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 192,
+                        "mean": 0.0026458706617833954,
+                        "normalizedTemporalVariance": 0.3169963006729063,
+                        "normalizedFrameDifferenceMSE": 0.4952630492012772,
+                        "frameDifferenceL1": 0.0014520168990681045
+                    }
+                },
+                {
+                    "name": "filteredDiffuse",
+                    "pixels": {
+                        "signal": "filteredDiffuse",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 12288,
+                        "mean": 0.01669653417421722,
+                        "normalizedTemporalVariance": 0.11145908981953509,
+                        "normalizedFrameDifferenceMSE": 0.0253199393546746,
+                        "frameDifferenceL1": 0.0018345832435634773
+                    },
+                    "blocks": {
+                        "signal": "filteredDiffuseBlocks",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 192,
+                        "mean": 0.016696534174217137,
+                        "normalizedTemporalVariance": 0.0747119670600718,
+                        "normalizedFrameDifferenceMSE": 0.013642684814605332,
+                        "frameDifferenceL1": 0.0014981546182912497
+                    }
+                },
+                {
+                    "name": "filteredSpecular",
+                    "pixels": {
+                        "signal": "filteredSpecular",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 12288,
+                        "mean": 0.00041902820193071466,
+                        "normalizedTemporalVariance": 0.4264521249167664,
+                        "normalizedFrameDifferenceMSE": 0.04139968621307513,
+                        "frameDifferenceL1": 0.00003713959008005954
+                    },
+                    "blocks": {
+                        "signal": "filteredSpecularBlocks",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 192,
+                        "mean": 0.0004190282019307133,
+                        "normalizedTemporalVariance": 0.10018942368283662,
+                        "normalizedFrameDifferenceMSE": 0.01065715669904571,
+                        "frameDifferenceL1": 0.00003196501797024291
+                    }
+                },
+                {
+                    "name": "temporalDemodulated",
+                    "pixels": {
+                        "signal": "temporalDemodulated",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 12288,
+                        "mean": 0.23441236927384125,
+                        "normalizedTemporalVariance": 1.8144499612553007,
+                        "normalizedFrameDifferenceMSE": 0.6146884991801739,
+                        "frameDifferenceL1": 0.07248860852417062
+                    },
+                    "blocks": {
+                        "signal": "temporalDemodulatedBlocks",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 192,
+                        "mean": 0.23441236927384227,
+                        "normalizedTemporalVariance": 0.15941530569479943,
+                        "normalizedFrameDifferenceMSE": 0.03400020009729624,
+                        "frameDifferenceL1": 0.0329573181515004
+                    }
+                },
+                {
+                    "name": "clampedDemodulated",
+                    "pixels": {
+                        "signal": "clampedDemodulated",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 12288,
+                        "mean": 0.20269674125625507,
+                        "normalizedTemporalVariance": 2.0962687685906205,
+                        "normalizedFrameDifferenceMSE": 0.8435449054262004,
+                        "frameDifferenceL1": 0.07547276730387749
+                    },
+                    "blocks": {
+                        "signal": "clampedDemodulatedBlocks",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 192,
+                        "mean": 0.20269674125625496,
+                        "normalizedTemporalVariance": 0.2062194121562281,
+                        "normalizedFrameDifferenceMSE": 0.060055339082794607,
+                        "frameDifferenceL1": 0.03890136882760807
+                    }
+                },
+                {
+                    "name": "cameraOutput",
+                    "pixels": {
+                        "signal": "cameraOutput",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 12288,
+                        "mean": 0.03275074905266403,
+                        "normalizedTemporalVariance": 0.07243951013181993,
+                        "normalizedFrameDifferenceMSE": 0.013762666749456894,
+                        "frameDifferenceL1": 0.0028598893008995476
+                    },
+                    "blocks": {
+                        "signal": "cameraOutputBlocks",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 192,
+                        "mean": 0.03275074905266392,
+                        "normalizedTemporalVariance": 0.05762264477733072,
+                        "normalizedFrameDifferenceMSE": 0.009392457759826296,
+                        "frameDifferenceL1": 0.0025099699990006917
+                    }
+                }
+            ]
+        },
+        {
+            "mode": "production",
+            "resets": 0,
+            "stableFrames": 96,
+            "main": 30,
+            "fast": 6,
+            "signals": [
+                {
+                    "name": "rawDiffuse",
+                    "pixels": {
+                        "signal": "rawDiffuse",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 12288,
+                        "mean": 0.09794185749423228,
+                        "normalizedTemporalVariance": 12.00428552165517,
+                        "normalizedFrameDifferenceMSE": 23.980531135307275,
+                        "frameDifferenceL1": 0.1835797185731823
+                    },
+                    "blocks": {
+                        "signal": "rawDiffuseBlocks",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 192,
+                        "mean": 0.0979418574942328,
+                        "normalizedTemporalVariance": 0.23487587130081354,
+                        "normalizedFrameDifferenceMSE": 0.3826640786167041,
+                        "frameDifferenceL1": 0.04929659965921912
+                    }
+                },
+                {
+                    "name": "rawSpecular",
+                    "pixels": {
+                        "signal": "rawSpecular",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 12288,
+                        "mean": 0.002645870661783385,
+                        "normalizedTemporalVariance": 12.483255602898634,
+                        "normalizedFrameDifferenceMSE": 23.755278178893975,
+                        "frameDifferenceL1": 0.004954315112544257
+                    },
+                    "blocks": {
+                        "signal": "rawSpecularBlocks",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 192,
+                        "mean": 0.0026458706617833954,
+                        "normalizedTemporalVariance": 0.3169963006729063,
+                        "normalizedFrameDifferenceMSE": 0.4952630492012772,
+                        "frameDifferenceL1": 0.0014520168990681045
+                    }
+                },
+                {
+                    "name": "filteredDiffuse",
+                    "pixels": {
+                        "signal": "filteredDiffuse",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 12288,
+                        "mean": 0.09507497229969886,
+                        "normalizedTemporalVariance": 0.002077174762542864,
+                        "normalizedFrameDifferenceMSE": 0.0001735793142328387,
+                        "frameDifferenceL1": 0.0009328785685315859
+                    },
+                    "blocks": {
+                        "signal": "filteredDiffuseBlocks",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 192,
+                        "mean": 0.0950749722996988,
+                        "normalizedTemporalVariance": 0.0013738073414288164,
+                        "normalizedFrameDifferenceMSE": 0.00006329359582938603,
+                        "frameDifferenceL1": 0.0005988299064419902
+                    }
+                },
+                {
+                    "name": "filteredSpecular",
+                    "pixels": {
+                        "signal": "filteredSpecular",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 12288,
+                        "mean": 0.002538174935782279,
+                        "normalizedTemporalVariance": 0.08150027200641329,
+                        "normalizedFrameDifferenceMSE": 0.004018922063980197,
+                        "frameDifferenceL1": 0.00007147033823441649
+                    },
+                    "blocks": {
+                        "signal": "filteredSpecularBlocks",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 192,
+                        "mean": 0.0025381749357822828,
+                        "normalizedTemporalVariance": 0.005365217463035294,
+                        "normalizedFrameDifferenceMSE": 0.00022457936978479621,
+                        "frameDifferenceL1": 0.000026977233784763435
+                    }
+                },
+                {
+                    "name": "temporalDemodulated",
+                    "pixels": {
+                        "signal": "temporalDemodulated",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 12288,
+                        "mean": 1.156342907216134,
+                        "normalizedTemporalVariance": 0.1244356918090111,
+                        "normalizedFrameDifferenceMSE": 0.014262326810168692,
+                        "frameDifferenceL1": 0.070618666698666
+                    },
+                    "blocks": {
+                        "signal": "temporalDemodulatedBlocks",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 192,
+                        "mean": 1.1563429072161345,
+                        "normalizedTemporalVariance": 0.0038338671262370287,
+                        "normalizedFrameDifferenceMSE": 0.00027066436026150904,
+                        "frameDifferenceL1": 0.015310794494131156
+                    }
+                },
+                {
+                    "name": "clampedDemodulated",
+                    "pixels": {
+                        "signal": "clampedDemodulated",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 12288,
+                        "mean": 1.1563281428558783,
+                        "normalizedTemporalVariance": 0.12442558251724169,
+                        "normalizedFrameDifferenceMSE": 0.014266595262814864,
+                        "frameDifferenceL1": 0.07061912345847017
+                    },
+                    "blocks": {
+                        "signal": "clampedDemodulatedBlocks",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 192,
+                        "mean": 1.156328142855879,
+                        "normalizedTemporalVariance": 0.0038346769736633176,
+                        "normalizedFrameDifferenceMSE": 0.00027132349477793945,
+                        "frameDifferenceL1": 0.015318143080201066
+                    }
+                },
+                {
+                    "name": "cameraOutput",
+                    "pixels": {
+                        "signal": "cameraOutput",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 12288,
+                        "mean": 0.17615097138978895,
+                        "normalizedTemporalVariance": 0.001479210671009041,
+                        "normalizedFrameDifferenceMSE": 0.00009121889576909079,
+                        "frameDifferenceL1": 0.0012848575648508575
+                    },
+                    "blocks": {
+                        "signal": "cameraOutputBlocks",
+                        "firstFrame": 97,
+                        "lastFrame": 192,
+                        "frames": 96,
+                        "components": 192,
+                        "mean": 0.17615097138978956,
+                        "normalizedTemporalVariance": 0.0011203406689529515,
+                        "normalizedFrameDifferenceMSE": 0.000048830573621825575,
+                        "frameDifferenceL1": 0.0009864106251482378
+                    }
+                }
+            ]
+        }
+    ]
+}

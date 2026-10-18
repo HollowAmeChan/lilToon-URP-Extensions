@@ -184,10 +184,16 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             var desired=HoRTDINrdNative.RelaxSettings.DenseDI(timing.FilteredSeconds,StableDiffuseHistory);
             #if UNITY_EDITOR
             // Keep useful sample history even when a large Scene View renders
-            // once a second. Input changes still leave the settled profile and
-            // restart once; game/Player response remains time based.
+            // once a second. Keep the responsive history too: at zero samples
+            // it is the current noisy frame, so HistoryClamping repeatedly
+            // clips the long history against a stochastic 5x5 colour box.
+            // Input changes still leave this profile and restart once;
+            // game/Player response remains time based.
             if(SceneViewPreview&&StableDiffuseHistory)
-            {desired.diffFrames=Math.Max(30u,desired.diffFrames);desired.specFrames=Math.Max(30u,desired.specFrames);}
+            {
+                desired.diffFrames=Math.Max(30u,desired.diffFrames);desired.specFrames=Math.Max(30u,desired.specFrames);
+                desired.diffFast=Math.Max(6u,desired.diffFast);desired.specFast=Math.Max(6u,desired.specFast);
+            }
             #endif
             // Final anyhit visibility can create sharp radiance discontinuities
             // on a smooth receiver. Keep their diffuse luminance gate tighter.

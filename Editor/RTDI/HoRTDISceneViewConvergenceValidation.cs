@@ -15,7 +15,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         public static void RunSlowSceneViewCompatibility(){compatibility=true;RunSlowSceneView();}
         [Serializable]private sealed class SlowPreviewCase
         {
-            public string profile;public int resets,stableFrames;public uint diffuseHistory,specularHistory;
+            public string profile;public int resets,stableFrames;public uint diffuseHistory,specularHistory,diffuseFast,specularFast;
             public HoRTDIConvergenceStatistics.Result raw,filtered;
         }
         [Serializable]private sealed class SlowPreviewReport
@@ -44,6 +44,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 }
             }
             result.diffuseHistory=context.nrd.AppliedSettings.diffFrames;result.specularHistory=context.nrd.AppliedSettings.specFrames;
+            result.diffuseFast=context.nrd.AppliedSettings.diffFast;result.specularFast=context.nrd.AppliedSettings.specFast;
             result.raw=raw.Summarize("rawDiffuse",129,192);result.filtered=filtered.Summarize("filteredDiffuse",129,192);
             return result;
         }
@@ -60,6 +61,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             Require(report.legacy.resets==192,"Legacy control did not reproduce long-gap resets");
             Require(report.repaired.resets==1&&report.repaired.stableFrames>180,"Slow preview did not retain settled history");
             Require(report.repaired.diffuseHistory>=30&&report.repaired.specularHistory>=30,"Low FPS collapsed preview history");
+            Require(report.repaired.diffuseFast>=6&&report.repaired.specularFast>=6,"Low FPS collapsed the history-clamping reference");
             Require(feature.LastContext.nrd.SceneViewAccumulatedFrames==HoRTDINrdContext.SceneViewSettledSamples,"Preview repaint demand did not settle at its sample cap");
             Require(Math.Abs(report.legacy.raw.mean-report.repaired.raw.mean)<.000001,"Preview repair changed raw sample energy");
             Require(report.repaired.filtered.normalizedTemporalVariance<report.legacy.filtered.normalizedTemporalVariance*.25,"Slow preview variance did not improve by 4x");

@@ -1,0 +1,26 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-18",
+  "baseCommit": "295c641",
+  "scope": "Settled non-playing Scene View main/fast floors; live central64-square carpet ROI; no asset save or Game/Player budget change",
+  "liveProtocol": "96 rendered warmup frames + 96 observations per phase; legacyFastZero context override versus production; normalized variance, finite-window raw means only",
+  "artifacts": {
+    "live-pair.json": "5c7d54df6f8154ff768a5f0363daaadb211d2d4cbb2c08de9f56bd489b008aed",
+    "slow-rg.json": "d2092558e85fe5c6a6929af948127880f9086ec3f6be6eb42bc81b7ef6eabcd7",
+    "slow-compat.json": "b05a7b51885625506385b1ce59e24b874cc4e572e3608f8e3085483af99a5a51",
+    "regression-exits.json": "7c0aca2f547e817a574963a4e72f3e8558159c4635a72717909e9eb052a03320",
+    "verify.py": "e93a6ed0847435160ad146b8ba6fb06d12a18c99078fa8461750baef7a137332"
+  },
+  "sources": {
+    "Runtime/RTDI/NRD/HoRTDINrdContext.cs": "e38dc5ea2fc9bfd965d39cfa6edb60a4530678c48441f9f5cfe79cd86487774e",
+    "Runtime/RTDI/NRD/HoRTDINrdNative.cs": "3a059fc66eb4f2f2b5d131f2bafb2b37e4c0fd3ab4722840aeb9d4f56536377b",
+    "Runtime/RTDI/NRD/HoRTDINrdTiming.cs": "271cd7213196afdf1afead31635a2df945634805a7c80285e1b1220492dcd007",
+    "Runtime/RTDI/HoRTDIRendererFeature.cs": "573efa45cb3f600f5d6a74403944603bfee4a474795cca430554c4fb5d22980e",
+    "Runtime/RTDI/Shaders/NRD/HoRTDINrdTemporal.hlsl": "be360b034008e10c10c0ad9625a8cabcbcef3ac94df77b303a88c9abd311aa7f",
+    "Runtime/RTDI/Shaders/NRD/HoRTDINrdHistoryClamping.hlsl": "40d8b01ccc233a9800dc7500ceaa324296569897aecd81162f12eae877e3f7e1",
+    "Editor/RTDI/HoRTDISceneViewConvergenceValidation.cs": "5cde8b02ae455f4713ebfbfa912bbd3e0ff512730ba116ca66572384ec1b5d81",
+    "Editor/RTDI/HoRTDIConvergenceStatistics.cs": "ab383ec28cd374bad5856617b5ca27e64eb8b62f0b4b19a845eb7ee4df070214",
+    "Editor/RTDI/HoRTDIRendererFeatureEditor.cs": "31a1696d7593de1d5fda9b4dba7a6f20bf685e831c3cdc7d610a7f2b1a34c329",
+    "Tests~/RTDI/SceneView/Probes/HoRTDILiveFlowAudit.cs": "fccbd7f3f0759b56d0bc48447fe3263f51ddd7a7e8712b12ef1769c19399fd09"
+  }
+}

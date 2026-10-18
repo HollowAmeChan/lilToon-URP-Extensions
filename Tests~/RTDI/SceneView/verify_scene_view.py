@@ -1,6 +1,8 @@
 """Check the preserved Scene View evidence; this does not rerun Unity."""
 import hashlib
 import json
+import argparse
+import subprocess
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -17,10 +19,17 @@ def report(name):
 
 
 manifest = json.loads((ROOT / "evidence.json").read_text(encoding="utf-8"))
+parser = argparse.ArgumentParser(description=__doc__)
+parser.add_argument("--source-commit", help="Verify preserved source at this revision instead of the current checkout")
+args = parser.parse_args()
 for name, expected in manifest["artifactSha256"].items():
     require(hashlib.sha256((ROOT / name).read_bytes()).hexdigest() == expected, "artifact changed: " + name)
 for name, expected in manifest["sourceSha256"].items():
-    source = (REPO / name).read_text(encoding="utf-8-sig").encode("utf-8")
+    if args.source_commit:
+        source = subprocess.run(["git", "show", f"{args.source_commit}:{name}"], cwd=REPO,
+                                check=True, stdout=subprocess.PIPE).stdout.decode("utf-8-sig").replace("\r\n", "\n").encode("utf-8")
+    else:
+        source = (REPO / name).read_text(encoding="utf-8-sig").encode("utf-8")
     require(hashlib.sha256(source).hexdigest() == expected, "source changed: " + name)
 
 before = report("live-before.json")["samples"]
