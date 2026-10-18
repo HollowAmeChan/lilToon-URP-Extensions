@@ -18,7 +18,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             object Settings(object data)=>data.GetType().GetField("settings",inspect).GetValue(data);
             var oldData=Capture();var oldValues=Settings(oldData);var members=oldValues.GetType().GetFields(inspect);var expected=new object[members.Length];for(int i=0;i<members.Length;i++)expected[i]=members[i].GetValue(oldValues);
             var settings=feature.Settings;settings.useEnvironment=!settings.useEnvironment;settings.temporal=!settings.temporal;settings.spatial=!settings.spatial;
-            settings.initialSamples=31;settings.environmentSamples=17;settings.environmentBrdfSamples=13;settings.maxHistory=23;settings.spatialSamples=7;settings.spatialRadius=9;settings.rayBias=.017f;settings.finalSampling=HoRTDIFinalSampling.TripleAnalytic;
+            settings.initialSamples=31;settings.environmentSamples=17;settings.environmentBrdfSamples=13;settings.environmentIntensity=.25f;settings.maxHistory=23;settings.spatialSamples=7;settings.spatialRadius=9;settings.rayBias=.017f;settings.finalSampling=HoRTDIFinalSampling.TripleAnalytic;
             var beforeNewFrame=Capture();int checks=0;
             foreach(var data in new[]{oldData,beforeNewFrame})
             {

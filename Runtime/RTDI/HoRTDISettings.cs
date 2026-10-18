@@ -17,6 +17,9 @@ namespace lilToon.URP.Extensions.RTDI
         public bool denoise;
         [Tooltip("从前置 Ho-Atmosphere 借用天空 HDR，作为 RTXDI 环境光候选。")]
         public bool useEnvironment = true;
+        [Tooltip("仅缩放 RTDI 的天空照明，不改变可见天空、Ho-Atmosphere 或解析灯。1 保持原效果，0 关闭天空采样；调整会重置相关历史。")]
+        [Min(0)] public float environmentIntensity = 1;
+        internal float EffectiveEnvironmentIntensity=>float.IsFinite(environmentIntensity)?Mathf.Max(0,environmentIntensity):0;
         [Range(1,32)] public int environmentSamples = 4;
         [Tooltip("环境 BRDF 提案；余弦 diffuse / GGX VNDF 与天空 PDF 使用 SDK MIS。0 可用于对照。")]
         [Range(0,32)] public int environmentBrdfSamples = 4;

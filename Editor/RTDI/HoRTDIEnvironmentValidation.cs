@@ -31,6 +31,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             light.enabled=false;blocker.SetActive(false);feature.Settings.useEnvironment=true;feature.Settings.environmentSamples=4;feature.Settings.initialSamples=1;
             feature.Settings.temporal=feature.Settings.spatial=false;feature.Settings.denoise=false;
             var image=Keep(new Texture2D(64,64,TextureFormat.RGBAFloat,false,true));Color sum=Color.clear;
+            if(forceEnvironmentIntensity){ValidateEnvironmentIntensity(image);return;}
             if(forceEnvironmentSpecular){ValidateEnvironmentSpecular(image);return;}
             for(int i=0;i<8;i++)RenderCamera();var context=feature.LastContext;
             Require(context.environmentSampling&&context.environmentPdf!=null,"Environment PDF/RIS resources missing");

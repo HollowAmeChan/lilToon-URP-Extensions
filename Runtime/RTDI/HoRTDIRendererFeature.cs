@@ -170,12 +170,12 @@ namespace lilToon.URP.Extensions.RTDI
             {
                 internal readonly bool useEnvironment,temporal,spatial;
                 internal readonly int environmentSamples,environmentBrdfSamples,initialSamples,maxHistory,spatialSamples;
-                internal readonly float spatialRadius,rayBias;
+                internal readonly float spatialRadius,rayBias,environmentIntensity;
                 internal PassSettings(HoRTDISettings source)
                 {
                     useEnvironment=source.useEnvironment;temporal=source.temporal;spatial=source.spatial;
                     environmentSamples=source.environmentSamples;environmentBrdfSamples=source.environmentBrdfSamples;initialSamples=source.initialSamples;maxHistory=source.maxHistory;spatialSamples=source.spatialSamples;
-                    spatialRadius=source.spatialRadius;rayBias=source.rayBias;
+                    spatialRadius=source.spatialRadius;rayBias=source.rayBias;environmentIntensity=source.EffectiveEnvironmentIntensity;
                 }
             }
             private static readonly string[] ReferenceStages={"BuildPowerPdf","Presample","BuildEnvironmentPdf","PresampleEnvironment","Initial","Temporal","Spatial","Shade"};
@@ -244,10 +244,13 @@ namespace lilToon.URP.Extensions.RTDI
                     if(context.finalVisibility!=null)builder.UseTexture(graph.ImportTexture(context.finalVisibility),AccessFlags.ReadWrite);
                     data.environment=TextureHandle.nullHandle;data.environmentPdf=TextureHandle.nullHandle;data.environmentRevision=0;
                     data.environmentParameters=data.environmentTint=data.environmentConstant=Vector4.zero;
-                    var sky=frame.GetOrCreate<HoAtmosphereRenderGraphResources>();context.PrepareEnvironment(settings.useEnvironment&&sky.IsValid);
+                    var sky=frame.GetOrCreate<HoAtmosphereRenderGraphResources>();context.PrepareEnvironment(settings.useEnvironment&&settings.environmentIntensity>0&&sky.IsValid);
                     if(context.environmentSampling)
                     {
                         data.environment=sky.radianceTexture;data.environmentParameters=sky.parameters;data.environmentTint=sky.tint;data.environmentConstant=sky.constantColor;data.environmentRevision=sky.revision;
+                        // Copy the producer's snapshot. Scale only this DI
+                        // consumer; never change the borrowed sky or globals.
+                        data.environmentParameters.z*=settings.environmentIntensity;
                         builder.UseTexture(data.environment);data.environmentPdf=graph.ImportTexture(context.environmentPdf);builder.UseTexture(data.environmentPdf,AccessFlags.ReadWrite);
                     }
                     PrepareAuxiliary(data);
@@ -275,7 +278,7 @@ namespace lilToon.URP.Extensions.RTDI
             }
             private static void Dispatch(CommandBuffer cmd,Data d,bool compatibility,CameraData cameraData)
             {
-                var c=d.context;unchecked{d.signature=d.signature*397^(int)d.environmentRevision^d.settings.useEnvironment.GetHashCode()^(d.settings.environmentSamples*7919)^(d.settings.environmentBrdfSamples*104729);}
+                var c=d.context;unchecked{d.signature=d.signature*397^(int)d.environmentRevision^d.settings.useEnvironment.GetHashCode()^(d.settings.environmentSamples*7919)^(d.settings.environmentBrdfSamples*104729)^d.settings.environmentIntensity.GetHashCode();}
                 #if UNITY_EDITOR
                 if(c.nrd?.ValidationMotionCapture!=null)
                 {
@@ -548,10 +551,11 @@ namespace lilToon.URP.Extensions.RTDI
             public override void Execute(ScriptableRenderContext rendering,ref RenderingData data)
             {
                 var d=Snapshot(data.cameraData.camera,data.cameraData.GetViewMatrix(),data.cameraData.GetProjectionMatrix());
-                context.PrepareEnvironment(settings.useEnvironment&&HoAtmosphereBindings.compatibilityTexture!=null&&HoAtmosphereBindings.compatibilityParameters.w>.5f);
+                context.PrepareEnvironment(settings.useEnvironment&&settings.environmentIntensity>0&&HoAtmosphereBindings.compatibilityTexture!=null&&HoAtmosphereBindings.compatibilityParameters.w>.5f);
                 if(context.environmentSampling)
                 {
                     d.environmentParameters=HoAtmosphereBindings.compatibilityParameters;d.environmentTint=HoAtmosphereBindings.compatibilityTint;d.environmentConstant=HoAtmosphereBindings.compatibilityConstant;d.environmentRevision=HoAtmosphereBindings.compatibilityRevision;
+                    d.environmentParameters.z*=settings.environmentIntensity;
                 }
                 PrepareAuxiliary(d);
                 var cmd=CommandBufferPool.Get("Ho-RTDI reference DI passes");Dispatch(cmd,d,true,data.cameraData);rendering.ExecuteCommandBuffer(cmd);CommandBufferPool.Release(cmd);

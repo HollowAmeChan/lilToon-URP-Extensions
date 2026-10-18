@@ -71,7 +71,7 @@ are separately fingerprinted in `evidence.json`.
 
 ```powershell
 python Tests~/RTDI/SceneView/verify_scene_view.py --source-commit 295c641
-python Tests~/RTDI/SceneView/FastHistory/verify.py
+python Tests~/RTDI/SceneView/FastHistory/verify.py --source-commit 7360367
 python Tests~/RTDI/Composite/verify_composite.py --source-commit da52a0f
 python Tests~/RTDI/Reference/verify_convergence.py --source-commit f537c26
 ```

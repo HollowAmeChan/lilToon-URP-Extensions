@@ -77,7 +77,9 @@ callbacks on completion/reload/quit/timeout and never saves assets. Remove the
 imported helper afterward; the delivered copy is outside imported code.
 
 ```powershell
-python Tests~/RTDI/SceneView/FastHistory/verify.py
+python Tests~/RTDI/SceneView/FastHistory/verify.py --source-commit 7360367
 ```
 
-This checks stored reports and source fingerprints; it does not rerun Unity.
+This checks stored reports and captured source fingerprints; it does not rerun
+Unity. The historical source selector is needed after subsequent production
+changes; no selector still checks the current source strictly.

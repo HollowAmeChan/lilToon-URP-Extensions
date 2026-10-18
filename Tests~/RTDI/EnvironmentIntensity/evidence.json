@@ -1,0 +1,25 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-18",
+  "baseCommit": "7360367",
+  "scope": "RTDI-only environment radiance gain; actual isolated Editor GPU checks, not a new Player or full-scene acceptance",
+  "artifacts": {
+    "intensity-rg.json": "70b8adfb6870e32d796b486a41850194ac2e131d3d18524412687e1f98b0766e",
+    "intensity-compat.json": "cab02ab8d65ae4202ee5bc450e10da330c484786d6cf6f989ca3a0d19a28f494",
+    "snapshot-rg.json": "9e4bce7a6f50a2bbe3906478e61d0428e3d40ffd5c5e9e440ba3883c56489935",
+    "snapshot-compat.json": "9e4bce7a6f50a2bbe3906478e61d0428e3d40ffd5c5e9e440ba3883c56489935",
+    "legacy.json": "fe3bebce4cb712f4194f6e9230a0da6a277341b422d05ef23c787df5f136226d",
+    "composite.json": "2dab530de2609c540a027c898a3bc91dd82862677e861cb57cea5ce3c616b7f8",
+    "exits.json": "d9af43d24636d205c6fe0cb7afec2d6539f7b13e53b550d69b1c9099ac9a2046"
+  },
+  "sources": {
+    "Runtime/RTDI/HoRTDISettings.cs": "c406de3738e2c16c31191e11c06027b66504477fd207b9546da1215ac33e0af4",
+    "Runtime/RTDI/HoRTDIRendererFeature.cs": "8f5740aed71e33e667b10d6ec58401cb2e3365e4dd9a93d369db61d39390730c",
+    "Editor/RTDI/HoRTDIRendererFeatureEditor.cs": "437d53400feec8b96ed1c1d5f4d885f5ec513877faf03ac4118999d71082cc33",
+    "Editor/RTDI/HoRTDIEnvironmentIntensityValidation.cs": "65fd024ebf3ac6977e623fb571e8ad7d909d235d621971a90f1a29f307a3b174",
+    "Editor/RTDI/HoRTDIEnvironmentValidation.cs": "fc5d57ef8213eb7cccabf9284a244a93e38f56dcf291f8b53fbe80abc2bc2a05",
+    "Editor/RTDI/HoRTDISettingsSnapshotValidation.cs": "b4af16417d18fc0e806ac5179d9672a407322556d2fb7e61f8ea826476b49355",
+    "Editor/RTDI/HoRTDICompositeValidation.cs": "001372123a2edd44e5f79653e3a82fda6b88771c8215c679a720845425f333b0",
+    "Tests~/RTDI/EnvironmentIntensity/verify.py": "7b462b0235f8db2654539cdba9e40db3818b0e1263351b1a138e65b43cca169a"
+  }
+}
