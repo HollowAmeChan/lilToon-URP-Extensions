@@ -9,10 +9,10 @@
 调用 `Synchronize(IReadOnlyList<Renderer>, mask)`，传入世界集合，不传相机 culling results。每个支持的 Renderer/submesh 单独加入 AS，CPU 保存 Renderer、Mesh、submesh、Material 与 RT instance ID 的关系；GPU metadata 为 `uint4(submesh, materialId, primitiveCount, valid)`。
 
 - 支持 MeshRenderer 与 SkinnedMeshRenderer 的不透明三角形 submesh，要求一材质对应一 submesh。源 Mesh 不必开启 CPU Read/Write；刚性路径直接使用源 Mesh，蒙皮路径持有一份当前姿态 Mesh。
-- 排除 disabled、inactive、forceRenderingOff、static batch、additional vertex stream、其他 Renderer、缺失材质和非三角形。默认调用仍排除 alpha-test/透明。DI 提供明确的 Cutout 支持 predicate 与材质 hit group 时可登记已知裁切面，见 [Cutout 最终可见性](Ho-RTDI-Cutout.md)；未知/复杂 alpha 仍记录 `Rejections`。
+- 排除 disabled、inactive、forceRenderingOff、static batch、additional vertex stream、其他 Renderer、缺失材质和非三角形。默认调用仍排除 alpha-test/透明。DI 提供明确的 Cutout 支持 predicate 与材质 hit group 时可登记已知裁切面，见 [Cutout 最终可见性](RTDI/技术/Ho-RTDI-Cutout.md)；未知/复杂 alpha 仍记录 `Rejections`。
 - 这是明确的 opaque、双面几何参考。蒙皮快照包含骨骼与 BlendShape，不执行任意顶点 shader、自定义 GPU 变形、布料、Terrain 转换、fur 或描边壳。不能因此宣称与任意材质的画面几何完全一致。
 
-蒙皮使用 `BakeMesh(mesh, true)` 补偿 Renderer 缩放，由 AS 的 `localToWorld` 应用一次变换。骨骼相对矩阵、BlendShape、源 Mesh 或蒙皮质量变化时更新快照并刷新对应 BLAS；稳定姿态复用。缺失/非有限骨骼姿态移除旧实例，禁用、移除、显式 `MarkGeometryDirty` 与服务销毁释放自有 Mesh。源 Mesh 原地编辑仍须调用 `MarkGeometryDirty`。快照发生在图记录之前，姿态变化推进 Revision，DI/NRD 保守清历史，不提供动态角色 temporal。CPU 蒙皮及完整 Mesh 副本有成本，详见 [场景支持与验收](Ho-RTDI-SceneSupport.md)。
+蒙皮使用 `BakeMesh(mesh, true)` 补偿 Renderer 缩放，由 AS 的 `localToWorld` 应用一次变换。骨骼相对矩阵、BlendShape、源 Mesh 或蒙皮质量变化时更新快照并刷新对应 BLAS；稳定姿态复用。缺失/非有限骨骼姿态移除旧实例，禁用、移除、显式 `MarkGeometryDirty` 与服务销毁释放自有 Mesh。源 Mesh 原地编辑仍须调用 `MarkGeometryDirty`。快照发生在图记录之前，姿态变化推进 Revision，DI/NRD 保守清历史，不提供动态角色 temporal。CPU 蒙皮及完整 Mesh 副本有成本，详见 [场景支持与验收](RTDI/技术/Ho-RTDI-SceneSupport.md)。
 
 启用 Cutout 的 DI 调用中，inline `HoRTTraceScene` 是只求 opaque 的保守查询，最终 alpha 可见性另由原生材质射线计算；不要用该保守查询冒充最终裁切命中。默认/GI 只登记 opaque，原查询含义与支持域不扩张。
 - 不因 `shadowCastingMode=Off` 或材质旧 cast 接收关闭而删除显式登记的 RT 几何；AS 由本服务的集合与 mask 控制，不依赖 Renderer 的旧 rayTracingMode 设置。

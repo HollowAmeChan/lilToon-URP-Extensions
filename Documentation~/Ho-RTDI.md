@@ -1,94 +1,259 @@
-# Ho-RTDI：参考工程移植初版
+# Ho-RTDI：功能、接入与完成度
 
-2026-10-18：[参考工程收敛对照与静止历史修复](Ho-RTDI-ReferenceConvergence.md)已交付。开启NRD时，稳定场景改用较长漫反射历史；固定夹具静止噪声方差约降至旧版的1/19，两条Mono Player路径已验证。严格遮挡阶跃和混合天空镜面仍有明确失败，最终材质合成仍未接入。
+> 状态：现行总文档，更新于 **2026-10-18**。生产改进与验证基线：`f537c26`。本页统一说明当前行为；[专题与证据目录](RTDI/README.md)保存详细合同、审计和历史实验。
 
-2026-10-15状态：[完成度审计](Ho-RTDI-CompletionAudit-2026-10-15.md)。独立DI/受控Mono Player已有交付，mixed镜面质量、正常帧运动合同和有效GPU预算仍未完成；最终材质合成此前不在DI推进范围。持续实验已转为交付审计。
+Ho-RTDI 已能生产独立的世界空间直接光 diffuse/specular，支持解析灯、HDR 天空、真实世界遮挡、基础 lilToon Cutout，以及可选 NRD RELAX 降噪。**开启 NRD 后，已验证静止夹具的时间噪声方差约降至旧版的 1/19；最终 lilToon 材质合成仍未实现。** 当前正常相机画面继续使用原有照明，只有调试视图或显式消费发布纹理的代码会显示 RTDI。
 
-本版沿用用户提供的 `UnityPathTracing-6000.3.15` 的 Unity RTXDI 路径。直接复用 RTXDI 的初始采样、reservoir、时间/空间重采样；适配 RAB bridge 和 pass 绑定，不另写 ReSTIR。已补齐静态几何下动态解析灯的历史数据与索引映射；最终 lilToon 接收/合成尚未接入。GI 是独立 Feature，见文末链接。
+因此，当前交付是受限支持域的光照生产端与受控 Win64 Mono 部署。混合天空镜面偏差、严格遮挡阶跃、正常应用帧物体运动输入、实际场景画质和有效 GPU 预算仍需完成，不能把测试入口或实验数量当作产品完成度。
 
-## 使用与输出
+## 1. 当前完成度与下一阶段
 
-Renderer 上添加 `Ho-RTDI`，在其前面启用 GB / SB。需要 D3D12 inline RT、Mono、同分辨率单采样的 GB/SB 及已更新的 SB 网格法线布局。世界求交已支持刚性/骨骼opaque和基础lilToon Cutout，具体材质边界见[Cutout说明](Ho-RTDI-Cutout.md)。Cutout pose/transform的NRD历史以[真实最终可见性confidence](Ho-RTDI-VisibilityConfidence.md)处理，实例/源mesh结构变化仍重置；最终NPR接收/合成未接入。
+| 交付项 | 当前结论 | 实际边界 |
+| --- | --- | --- |
+| 独立 DI 与 raw 输出 | 已实现并验证 | RTXDI 初始/时间/空间/最终着色，两条渲染路径，逐相机资源与调试 |
+| 解析灯和世界遮挡 | 受限支持域已交付 | Point / Spot / Directional，opaque 与基础 Cutout；不等于支持所有灯型、材质和灯光链接 |
+| 动态灯历史 | 已实现并验证 | 实际前后灯快照、双向身份映射、移动/变色/换型/增删；不是动态物体运动重投影 |
+| HDR 天空 | 采样与可见性已接入 | Ho-Atmosphere HDR、PDF/RIS、BRDF MIS；mixed 镜面 filtered 正式门槛仍失败 |
+| 可选 NRD RELAX | 已接入，有静止收益 | 默认关闭；静止长历史修复已在 Editor 与真实 Player 部署；完整画质未验收 |
+| 三最终样本 | 可选生产路径 | 降低已测动态多灯噪声；增加两次解析灯最终可见性查询，默认仍为 Single |
+| Win64 Mono Player | 受控部署已验证 | D3D12 RenderGraph / compatibility、D3D11 inactive；不覆盖 IL2CPP / XR |
+| 主表面运动与动态角色 | 未完成完整合同 | Cutout 遮挡变化有 confidence；NRD 物体 world-motion 输入仍为静态协议 |
+| 目标场景性能 | 未完成 | 现有内存核算和同步总时长不等于有效 GPU 分段预算 |
+| 最终 lilToon PBR/NPR 合成 | **未实现** | 尚无正常材质接收、与旧照明的路由/去重、合成前后效果验收 |
 
-「天空环境光」默认开启，有效输入来自前置Ho-Atmosphere；没有输入时仍只运行解析灯。「环境光候选数」独立于局部预算。当前支持HDR环境PDF/RIS采样、真实世界可见性与独立raw/NRD输出；概率单位、成本、验证及与旧GI天空项的重叠见 [Ho-RTDI-Environment](Ho-RTDI-Environment.md)。
+距离“实际场景里看到完整合成效果”，剩余工作至少包括：确定接收材质与 DI/GI/旧照明的分工，接入最终 diffuse/specular 消费，处理天空及旧直接光重复，再以真实场景验证开关前后、材质边界、动态和成本。此前 DI 推进阶段明确将最终合成排除在范围外；这解释了生产端持续改进而主画面缺少变化。这里将它列为尚未交付的明确功能，不给缺乏依据的完成百分比或工期。
 
-Feature 默认只生产独立直接光，主相机基础画面保持原有渲染。全局 Volume 的 `Ho-RTDI` 提供启用覆盖和 Diffuse / Specular / Combined / Receiver / RawDiffuse / RawSpecular / All 调试；Receiver 绿为有效接收面、红为无效，能区分有效暗部与输入不全。调试在最终后处理后显示，不能把它当成已完成的 NPR 合成。
+后续交付应围绕这些实际缺口结束：先获得真实自动渲染帧基线和可信计时；镜面偏差与运动输入分别以固定协议验收；最终合成按明确的接收/去重合同交付场景对照。历史实验中的“下一项”已归档，不再视作自动推进队列。
 
-`finalSampling`默认单样本，可选择三样本以增加两次解析灯最终可见性查询、降低动态多灯噪声。Opaque局部消费，Cutout按相机持有8-byte/像素第二辅助，Sky-only和确定性单灯保留原路径。实际接入、Player验证、显存及仍存在的质量问题见[三最终样本](Ho-RTDI-RuntimeMultiSamples.md)；尚无GPU毫秒收益结论。
+## 2. 启用与查看效果
 
-合并模型中的天空壳可在「高级 → 不参与求交的材质」指定其材质。相同材质的子网格会从DI求交登记中排除，主画面仍正常绘制；保留的子网格继续遮挡。列表默认空，详见[材质排除与古堡审计](Ho-RTDI-MaterialExclusion.md)。
+1. 使用支持 D3D12 inline ray tracing 的环境。已验证 Unity `6000.3.15f1`、Windows x64 Mono、RTX 4060；D3D11 应保持 inactive。使用同分辨率、单采样 GB / SB，且 SB 已包含当前网格法线布局。
+2. Renderer 上在 GB / SB 之后添加并启用 `Ho-RTDI`。若需要天空输入，前置启用 [Ho-Atmosphere](Ho-Atmosphere.md)；没有有效 HDR 输入时只运行解析灯。
+3. 要查看累积降噪后的结果，打开 Feature 的 **NRD RELAX 降噪**。该开关默认关闭；Raw 调试始终保留随机样本，不能用 Raw 是否还有噪点判断 NRD 是否收敛。
+4. 在全局 Volume 的 `Ho-RTDI` 选择 Diffuse / Specular / Combined。RawDiffuse / RawSpecular 可作同帧对照，All 为网格调试。调试在最终后处理后显示，Combined 表示独立 DI 两分量相加，并不表示完成了原材质照明合成。
+5. Receiver 中绿色是有效接收面，红色是无效输入。有效阴影允许 RGB=0、A=1；输入缺失或域不匹配为 A=0。先检查接收有效性，再比较噪声与能量。
+6. 保持相机、几何与光源稳定至少半秒后，NRD 漫反射进入长历史；持续运动会保留响应优先的短历史。观察固定区域的跨帧变化，避免把材质纹理、空间渐变或高光形状当作时间噪声。
 
-RenderGraph 读取 `HoRTDIRenderGraphResources.diffuse / specular` 并声明读依赖。RGB 为线性 HDR、已经包含参考接收 BRDF 的贡献；A 为接收面有效性，阴影中的有效表面可以 RGB=0、A=1，输入缺失/取样域不匹配为 A=0。兼容全局为 `_HoRTDIDiffuseTexture`、`_HoRTDISpecularTexture` 和 `_HoRTDIActive`。
+旧 renderer 若缺少 compute/debug/grid-label 引用，`Create` 或打开 Feature Inspector 会补齐空位并标记待保存；保存 renderer asset 后再构建。既有 override 会保留。未实现构建时全工程批量资源迁移。部署步骤见 [Player 验证说明](../Tests~/Player/RTDI/README.md)。
 
-## 哪些沿用参考工程
+### 默认设置及其含义
 
-| 环节 | 来源 / 本版处理 |
+| 设置 | 当前默认 | 含义与取舍 |
+| --- | --- | --- |
+| `enabled` / `inSceneView` | true / true | 功能与 SceneView 开关，仍受平台和输入有效性限制 |
+| `denoise` | **false** | 关闭时发布 raw；打开时发布 RELAX 恢复材质后的结果，另保留 raw |
+| `useEnvironment` | true | 仅消费前置有效天空 HDR；不是另一套天空生产器 |
+| `environmentSamples` / `environmentBrdfSamples` | 4 / 4 | 独立天空 PDF/RIS 候选与 BRDF 候选，通过 SDK MIS 合并 |
+| `localSampling` | Uniform | Power 适合评估功率差异大的局部灯，但有固定预采样开销 |
+| `initialSamples` | 8 | 局部灯初始候选；有方向灯时另取一个方向灯候选 |
+| `finalSampling` | Single | TripleAnalytic 增加两个 fresh 解析灯最终样本 |
+| `temporal` / `maxHistory` | true / 4 | **ReSTIR** 历史预算；不是 NRD 的历史帧数 |
+| `spatial` / `spatialSamples` / `spatialRadius` | true / 4 / 16 | ReSTIR 空间复用，半径为像素 |
+| `rayBias` | .001 | 世界可见性射线偏移 |
+| `geometryLayers` / `lightLayers` | 全部 | 世界几何与灯收集过滤 |
+| `excludedRayMaterials` | 空 | 指定材质的子网格不参与 DI 求交，仍正常 raster 绘制 |
+
+不存在一个打开后即可保证所有场景无噪声的配置。Power、Triple、长历史分别改变提案分布、最终可见性预算和重建预算，必须区分收益来源与动态/资源代价。
+
+## 3. 当前支持域
+
+### 光源和环境
+
+- 支持显式 point、spot、directional。Point / spot 使用参考 delta 点灯的 inverse-square 极限并适配 Unity range / cone；directional 当前为 delta 方向光。RT 遮挡遵循 RAB 世界可见性，独立于 raster `Light.shadows`。
+- Local 与 infinite 分区独立候选，再由 SDK 合并。Cookie、非全局 `cullingMask`、baked-only 与其它灯型明确排除，状态显示排除数量。Rendering Layer / 艺术灯光链接、面灯和发光网格尚未接入。
+- 天空从 Ho-Atmosphere 借用原始 HDR radiance、旋转和 tint，通过环境 PDF/RIS 与 cosine / GGX VNDF 提案的 MIS 估计。没有复制另一份天空或新增环境 Feature。输入版本变化使相关历史失效；无有效天空或关闭环境时不执行该域。
+- 天空 DI 与旧 GI / 材质天空照明可能重叠。最终去重尚未设计成已实现的接收路由，不能直接把各项完整相加后称为正确合成。概率单位、世界可见性和验证见 [环境光专题](RTDI/技术/Ho-RTDI-Environment.md)。
+
+### 几何、材质和 Cutout
+
+世界遮挡支持 MeshRenderer 与 SkinnedMeshRenderer 的 opaque 当前姿态；蒙皮更新有 CPU 快照/自有网格成本。基础 lilToon Cutout 通过 Unity 材质射线 any-hit 读取原纹理与三角形 UV，透明 texel `IgnoreHit`，无需 CPU 纹理读取、UV atlas 或原纹理副本。
+
+支持 MainTex tiling/offset、静态旋转、背面 UV 移动、Color.a、cutoff 和基础 AlphaMask 运算，纹理过滤/包裹跟随已支持路径。射线显式 LOD 0，尚无 ray-cone/mip 覆盖过滤；MSAA AlphaToMask 不当作物理透射。第二/第三主纹理、视差、dissolve、dither、distance-fade、动态 UV、RenderTexture alpha、property block 和任意自定义 vertex/alpha shader 不在支持域，未知情况明确排除。完整边界见 [Cutout](RTDI/技术/Ho-RTDI-Cutout.md)。
+
+在存在 Cutout 的最终可见性路径，pose / transform 变化可保留 NRD 历史，并用同一个旧采样的真实最终可见性变化生成 confidence；ReSTIR 仍按完整 world revision 拒绝旧可见性历史。实例/材质/掩码、源 mesh 替换等结构变化硬重置，opaque-only 几何变化仍保守重置。这个能力处理遮挡变化，不能等同于动态接收面的运动向量重投影。见 [可见性 confidence](RTDI/技术/Ho-RTDI-VisibilityConfidence.md)。
+
+合并模型中的天空壳可用“高级 → 不参与求交的材质”排除：相同材质的子网格不再遮挡 DI，其余子网格继续参与，主画面仍绘制。它会让灯穿过被排除部分，应按实际资产设置。血月古堡只完成了特殊合并网格、天空壳和局部静止稳定性审计，不能作为完整画质或无漏光验收。见 [材质排除](RTDI/技术/Ho-RTDI-MaterialExclusion.md)与[场景支持](RTDI/技术/Ho-RTDI-SceneSupport.md)。
+
+### 接收响应
+
+当前使用明确的 PBR 参考响应：主色映射至 0～1，按 metallic 分出 diffuse 与 F0，perceptual roughness 交给参考 GGX。BRDF 为 Lambert + Donut GGX。没有改变 SB 原值，也没有接入 NPR ramp、影色、分层接收路由或将 Emissive 作为 DI 自发光叠加。
+
+## 4. 发布纹理与合成接入合同
+
+| 接口 | 内容 |
 | --- | --- |
-| 初始灯候选与 reservoir streaming | SDK `DI/InitialSampling.hlsl`，调用 `RTXDI_SampleLightsForSurface` |
-| reservoir 打包、布局、读取 | SDK `DI/Reservoir.hlsl` / `ReservoirStorage.hlsl`，三份 block-linear reservoir |
-| 时间复用 | SDK `RTXDI_DITemporalResampling` |
-| 空间复用与 bias correction | SDK `RTXDI_DISpatialResampling`，ray-traced correction |
-| RNG 与邻域 | SDK RNG；host offsets 适配参考 RtxdiUtils 的 R2/SNORM8 序列 |
-| BRDF 和最终着色 | 参考 RAB_Surface / ShadingHelpers 的 Lambert + Donut GGX、最终可见性与 reservoir inverse PDF |
-| 主表面 | RAB_GetGBufferSurface 改读 HoRTPrimarySurfaceInputs，不重新渲染/复制当前 GBuffer |
-| visibility | RAB_GetConservativeVisibility 改接 HoRTScene 的真实世界求交 |
-| 前后帧灯数据 / 索引 | 按 SDK `RAB_LoadLightInfo(previousFrame)` / `RAB_TranslateLightIndex` 契约提供实际快照与双向映射；参考 Unity 示例该处原本只做静态 identity 映射 |
+| `HoRTDIRenderGraphResources.diffuse / specular` | 当前发布的直接光；NRD 开启且实际可用时为 filtered，关闭/回退时为 raw |
+| `rawDiffuse / rawSpecular` | 始终保留同轮 raw，供诊断及显式消费 |
+| `_HoRTDIDiffuseTexture` / `_HoRTDISpecularTexture` | 兼容全局发布纹理 |
+| `_HoRTDIRawDiffuseTexture` / `_HoRTDIRawSpecularTexture` | raw 全局发布纹理 |
+| `_HoRTDIActive` | 功能活动状态；不能只凭纹理绑定存在就判断本轮有效 |
+| RGB | 线性 HDR、已经包含当前参考接收 BRDF 的光照贡献 |
+| Alpha | 接收面有效性，不是阴影可见性或透射率 |
 
-SDK 文件只改 include 路径，保留原始算法与许可。`Runtime/RTDI/ThirdParty/provenance.json` 保存原文件 SHA-256，许可说明见同目录 NOTICE 和 NVIDIA LICENSE。只引入 DI 依赖闭包，没有把参考项目的 PT/native/DLSS/NRD 框架搬进来。
+RenderGraph 消费者必须读取同轮资源并声明读依赖；不能依赖上一相机遗留全局。有效阴影可有零 RGB 和非零 alpha，无效输入则 alpha 为零。
 
-## 当前支持域
+当前 `diffuse` 已乘 diffuse albedo，`specular` 已含参考 GGX / Fresnel。未来接收方若把它们再当 irradiance 乘一次 albedo/BRDF，会重复调制。最终接入应先决定沿用这个参考响应，还是建立适用于 NPR 的另一个信号合同，并明确如何替换或混合旧直接光、旧天空和 GI。现有调试直接显示这些纹理，不承担上述路由。
 
-- 显式 point、spot、directional 灯；point/spot 在 local 分区使用均匀或功率提案，directional 在独立的 infinite 分区均匀选择，由 SDK 合并两个估计。局部灯候选预算 1～32，有方向灯时另取一个方向灯候选。point/spot 使用参考 delta point-light 的 inverse-square 极限，并适配 Unity range/spot cone；directional 当前为 delta 方向光。遵循参考 RAB 的 RT 可见性，独立于 Unity raster `Light.shadows` 开关。
-- Cookie、非全局 cullingMask、baked-only 和其他灯型排除，Feature 状态显示排除计数。Rendering Layer/艺术灯光链接、面灯/发光网格尚未接入；当前用于默认灯光链接的参考场景。
-- Ho-Atmosphere 提供有效 HDR 时可采环境灯，默认 4 个天空 PDF/RIS 候选与 4 个 BRDF/VNDF 候选，通过 SDK MIS 合并；mesh-light candidates 仍关闭。输入版本变化清历史，不复制另一份天空，详见 [环境光](Ho-RTDI-Environment.md)。
-- 世界遮挡支持不透明 MeshRenderer 与 SkinnedMeshRenderer 当前姿态；基础 lilToon Cutout 使用原生材质最终可见性，纹理/UV 不另复制，支持范围与成本见 [Cutout](Ho-RTDI-Cutout.md)。蒙皮更新有 CPU/自有网格成本，姿态变化清历史；血月古堡的天空壳/合并网格不作为阴影画质基准，见 [场景支持](Ho-RTDI-SceneSupport.md)。
-- 使用明确的 PBR 参考响应：主色在此响应层映射到 0～1，按 metallic 分出 diffuse 与 F0，perceptual roughness 交给参考 GGX。没有修改 SB 原值或设计 NPR ramp、影色与接收路由。Emissive 不作为 DI 自发光叠加。
-- 可选 NRD RELAX，默认关闭，接入与限制见 [NRD 初版](Ho-RTDI-NRD.md)。raw ReSTIR 输出仍可有噪声。单个像素的 colored-light 或重采样结果不要求逐帧等于所有灯的精确和，应以统计均值核对能量。
-- 单盏 point/spot/directional 且没有有效环境时，跳过无收益的 reservoir 时空复用与 RELAX，原发布输出保留实际 raw 硬阴影；多灯/天空仍用原完整路径。触发条件、验证与性能限制见 [单灯精确路径](Ho-RTDI-SingleDelta.md)。
+相关生产端接口见 [HoRTDIRenderGraphResources.cs](../Runtime/RTDI/HoRTDIRenderGraphResources.cs)，主表面输入见 [Ho-RT-PrimarySurface](Ho-RT-PrimarySurface.md)，世界求交见 [Ho-RTScene](Ho-RTScene.md)。
 
-## 历史、资源与调度
+## 5. 采样来源与当前生产改进
 
-采样四阶段在一个 graphics-queue unsafe pass 中有序执行，位置为 BeforeRenderingPostProcessing；主表面/AS/灯数据和输出均显式声明依赖。功率模式在同一 pass 内先执行 PDF build / GenerateMips / SDK Presample。初始化写 reservoir 1，temporal 写 2，spatial 写回 1，shade 保存历史 0。SDK reservoir stride 为 24 B，保存三份；只额外保存上一帧必要的 surface guide（raw depth、两种 2×16-bit octa normal、参考材质，20 B/像素），不物化另一套当前主表面属性。
+本版沿用本机 `UnityPathTracing-6000.3.15` 的 RTXDI Unity 路径，复用固定 SDK 的 reservoir / 重采样，主要适配 RAB bridge、输入、世界可见性与 Unity 调度。
 
-历史逐相机拥有。分辨率、场景 Revision、初始采样数或 ray bias 变化会使旧历史失效；禁用后重新启用也从新历史开始。静态世界的相机运动使用实际前后矩阵生成 SDK 所需的像素位移/深度差，未使用或重新生产 URP motion。几何变换时保守清历史，不宣称支持动态角色 temporal。
+| 环节 | 固定来源与适配 |
+| --- | --- |
+| 初始候选 / streaming | `DI/InitialSampling.hlsl`，`RTXDI_SampleLightsForSurface` |
+| reservoir 布局和存取 | `Reservoir.hlsl` / `ReservoirStorage.hlsl`，三份 block-linear reservoir |
+| 时间 / 空间复用 | `RTXDI_DITemporalResampling` / `RTXDI_DISpatialResampling`，ray-traced correction |
+| RNG / 邻域 | SDK RNG，参考 R2 / SNORM8 邻域序列 |
+| 主表面 | `HoRTPrimarySurfaceInputs` 借用 GB / SB，不重绘当前 GBuffer |
+| 世界可见性 | HoRTScene 真实求交，Cutout 最终可见性另走材质 any-hit |
+| 灯历史 | current / previous 数值快照与双向 Light 身份映射，替代参考示例的静态 identity 假设 |
+| 最终着色 | 参考物理 BRDF、最终可见性和 reservoir inverse PDF |
 
-灯的位置、颜色、强度、受支持的 delta 灯型变化，以及增删/启停/筛选导致的列表变化，不再整份清历史。每相机保存上一轮实际渲染的灯参数快照，分别绑定 current / previous light buffers；SDK 需要旧 target PDF 时读取真实旧数据。双向索引映射按 Light 的托管引用身份建立，灯在另一轮不存在就返回 -1，由 SDK 丢弃该样本，避免把删除/替换的灯误认成占据同一数组槽的新灯。容量扩展也保留 reservoir 历史。
+固定 SDK / Donut 共 29 份依赖文件的 provenance 记录在 [ThirdParty/provenance.json](../Runtime/RTDI/ThirdParty/provenance.json)。SDK 只适配 include 路径，原始算法与许可保留；NRD 的私有派生 shader 单独记录并可重建，不能把它们也称为完全未改的 vendor 算法。
 
-快照在 pass 记录时捕获，完成调度后推进到下一轮；GPU 上传、两个映射及其 RenderGraph 依赖都显式记录。GI 只在二次命中点调用 DI 初始采样，因此在其共享 bridge 中明确关闭 DI light-history 分支，不增加 GI 资源或改变其历史策略。
+### 局部灯 Power 提案
 
-没有 previous TLAS；几何变化仍清历史。允许复用时世界几何未变，当前 AS 同时描述上一轮世界，可从旧表面向旧灯做 temporal visibility。此处支持的是动态灯光与静态世界相机重投影，不能据此宣称支持动态角色/几何。
+Power 沿参考 PDF texture → box-filter mip → SDK `RTXDI_PresampleLocalLights` → `POWER_RIS`。Point 权重为 4π × 强度亮度，Spot 加 cone 衰减积分。它仅描述全局功率，不包含接收点距离、BRDF 或遮挡，不能取代 ReGIR。
 
-RGBA16F 输出约 16 B/像素（diffuse/specular 两张）；history 16 B/像素；reservoir 三份约 72 B/像素，另有 block padding、灯和 AS。1080p 三类合计约 206 MiB，不含 AS/其他输入/驱动开销。灯历史额外保存一份 64 B/灯参数及双向 4 B/索引，容量取二次幂，另外有 CPU 快照；没有复制主表面图。Windows x64 Mono Player 的受控 64² 输出链路已验收；尚未做生产性能预算。
+每相机有 64×256 个 uint2 RIS 条目（128 KiB）及按局部灯数扩展的 R32F mip PDF，每轮按真实灯参数更新。无局部灯或必要格式不支持时回退 Uniform；切回 Uniform 释放完整 PDF/RIS，仅保留必要 dummy 绑定。固定预采样有开销，所以默认仍是 Uniform。
 
-## 验证
+同位置 1 强灯 + 63 弱灯、每像素单候选且关闭复用的历史基准中，Uniform 归一均值约 1.0033、方差 55.8132；Power 均值 .9995、方差在 F6 精度下为零。该提案恰好匹配此夹具，不能推广到任意空间灯域。
 
-隔离入口 `HoRTDIValidation.Run` / `RunCompatibility` / `RunUnsupported`。验证真实 SDK 四阶段、单灯能量与世界遮挡、多灯统计均值、spot/方向光、独立 specular、历史累积/清理、静态世界相机重投影、输入域拒绝、无自动 camera composite、Volume 调试和资源关闭/销毁。Compute 编译警告和错误均作为失败。
+量化 F0 全零的 DI RGB 重要性类别，现以 RGB 贡献长度的平方根作为统一选样 target，缓和弱彩灯 rare 大权重；实际 BRDF、radiance、source PDF 和最终权重保持。非零 F0 分支及 GI 不采用该变更。固定 100:1 弱红灯序列 primary 相对时间方差约 165.87→15.01；当前 Triple 动态九阶段通过。见 [零 F0 弱彩灯修复](RTDI/技术/Ho-RTDI-TemperedTarget.md)。
 
-Unity 6000.3.15f1 的 D3D12 RenderGraph / compatibility 均通过；D3D11 不支持分支通过。多灯测试比较空间/时间样本均值，不把单像素噪声误判为能量错误。SDK/Donut 共 22 个源码文件的 SHA-256 与依赖 include 之外的算法正文已逐一核对。
+### Single 与 TripleAnalytic
 
-动态灯验证覆盖连续移动、变色/强度/delta 灯型变化、移动进入静态遮挡、增删/替换、空集合恢复与容量增长；实际读回 GPU 双向映射和旧灯参数。空间复用关闭时，检查时间阶段输出的 M 与 age 确认旧样本被选中；最终 shading 重测 visibility 会按 SDK 重置 visibility age，因此不拿最终历史槽中的 age 判断是否复用。动态 target PDF 的 ray-traced MIS 结果存在单像素方差，能量以区域统计均值核对；此处尚未降噪。
+Single 保持默认。Triple 使用一个主 ReSTIR 估计和两个 fresh 解析灯辅助，解析贡献权重 .5 / .25 / .25，天空域仍保留一份完整估计。辅助 CDF 使用当前数值快照、15/16 功率 proxy + 1/16 均匀支持，inverse PDF 根据实际 FP32 区间计算，不能用全局功率直接代替实际选样概率。
 
-分区验证在关闭时空复用、局部候选预算为 1 的条件下，加入 64 盏超出作用范围的局部灯及一盏方向灯，首帧仍得到正确的太阳贡献。混合有效局部灯后的统计均值约 0.36409，参考值 0.36480。方向灯改为点灯时会重排数组，双向历史映射与旧灯型快照也经过 GPU 核对。仅方向灯时仍维持非零的 local 候选参数，以满足 SDK 初始 MIS 计数的除法约定；空 local region 本身由 SDK 跳过，不生成假的局部灯贡献。
+两个辅助在 CDF 两半分别抽样并随机交换槽位，以降低辅助平均方差；每个槽位保留原边际分布的构造。它没有新增最终样本数、资源或用户设置，浮点离散与有限序列误差仍须由能量门槛检查。已测 native 四灯域 frame L1 约 .3244/.2029/.3110/.3086 → .2948/.1848/.2851/.2902。见 [辅助分层接入](RTDI/技术/Ho-RTDI-StratifiedAuxiliary.md)。
 
-分区本身不新增 GPU buffer、pass 或 Feature。后续局部灯采样质量与 NRD 接入的取舍见 [DI 持续推进记录](计划/Ho-RTDI-持续推进记录.md)。
+Opaque 在 shade 内局部消费第二辅助；Cutout 原生路径按相机保存每像素 8-byte 第二辅助 payload，1080p 容量约 15.82 MiB。两辅助各增加一次最终解析灯可见性查询。Sky-only / 零灯不分配无意义辅助；一盏解析 delta 且无有效环境走确定性路径，跳过无收益的复用与 RELAX，发布实际 raw 硬阴影。此时看到 raw 与 filtered 一致属于预期。完整资源与部署证据见 [三最终样本](RTDI/技术/Ho-RTDI-RuntimeMultiSamples.md)及[单灯精确路径](RTDI/技术/Ho-RTDI-SingleDelta.md)。
 
-## 可选的局部灯功率采样
+## 6. NRD 信号、重建与历史
 
-Feature 的「局部灯采样」可选择均匀/功率，默认均匀。功率模式沿参考 PdfTexture → box-filter mip chain → Presample 流程，直接调用 SDK `RTXDI_PresampleLocalLights`，初始采样使用 SDK `POWER_RIS`。PDF 为 R32F 的 Morton 方形域；点灯权重使用参考的 4π × 强度亮度，spot 再乘本 bridge 的平方 cone 衰减积分。该权重仅是提案，不改灯光着色；SDK 保留逆选择 PDF 以核对能量。它不包含接收点的距离/BRDF/遮挡，不能取代 ReGIR。
+可选 RELAX 使用固定 NRD **4.17.3** 核心 CPU DLL，由它选择 dispatch / 常量 / pool，Unity 持有并调度 GPU 资源。没有导入参考的 native renderer、DLSS/NIS、descriptor heap hook 或设备内存管理。固定库与参考 NRD DLL 的 SHA-256 相同，具体哈希与输入文件记录见[参考证据清单](../Tests~/RTDI/Reference/evidence.json)。
 
-每相机增加 64 × 256 个 uint2 RIS 条目（128 KiB）与一张按局部灯数取 2 次幂的 R32F 完整 mip PDF。每轮按当前灯参数重建，padding 清零；灯重排、功率变化和全黑根节点均经过验证。无局部灯或缺少 R32F UAV/过滤支持时实际使用均匀路径；状态显示实际模式。切回均匀会释放 PDF 与完整 RIS，只保留供编译后资源绑定的单条 8 B dummy buffer。GI 保持未启用 presampling 的编译分支。
+| 输入/输出 | 当前合同 |
+| --- | --- |
+| Diffuse NRD 信号 | 直接生成乘 albedo 前的 Lambert lighting，保留零颜色通道信息 |
+| Specular NRD 信号 | 由固定 NRD material factors 解调参考 GGX，再 pack |
+| Signal alpha | 已选灯距离；不是 receiver validity。有效暗面仍提供合法零信号与距离 |
+| Guide | 正线性 viewZ、世界法线、roughness，固定 normal/roughness 编码 2/1 |
+| Material class | active diffuse=0 / 全零 diffuse=3，不是完整材质资产 ID |
+| Motion | 静态世界 world-motion=0，相机由真实前后矩阵重投影；未接入通用物体运动源 |
+| 发布恢复 | 撤销共同线性尺度，恢复当前 diffuse albedo / specular factor，并写回接收有效性 alpha |
 
-均匀模式保持原有四个全屏 kernel；功率模式增加 PDF build、mip generation 与 16384 个预采样线程，不增加全屏 GBuffer、副 Feature 或原生 DLL。模式切换清 reservoir 历史，动态灯本身的参数变化继续使用既有前后快照/映射。
+DenseDI 私有派生包含颜色/方差与 F0 条件处理，原始 vendor 和 CPU ABI 保持固定。漫反射历史使用非负约束及 fast→normal 线段的凸裁剪，避免 YCoCg 三轴独立 clip 主动制造两个端点都没有的 RGB 通道；镜面过滤问题仍独立保留。派生源码由 [generate_nrd_variance_adapter.py](../Tests~/RTDI/generate_nrd_variance_adapter.py) 的 `--check` 核对，不能用“接入 NRD”替代完整信号合同验证。
 
-1 盏强灯与 63 盏弱灯同位置、每像素 1 候选、关闭时空复用的基准中，以每像素数学参考归一化后，均匀均值约 1.0033、方差 55.8132；功率均值约 0.9995，方差在 F6 打印精度下为 0。该场景的功率提案与目标几何因子匹配，不能据此推断任意场景都接近零方差。
+### 当前静止/变化预算
 
-完整 Power 模式的 D3D12 RG/compatibility、Gamma/Linear，以及 Uniform 两条路径回归通过；包含全黑 PDF、强灯身份互换并保留历史、完整 mip 链、资源释放、动态灯/类型跨分区、旧功能能量及 GI 回归。基准 Stopwatch 包含渲染请求、同步读回、CPU 开销和首次使用成本，不是 GPU kernel 时间；预采样的固定开销是继续保留均匀默认值的原因之一。尚无生产帧率承诺。
+历史按相机真实提交的 unscaled sample time 与低通 FPS 换算，不把同一应用帧中的多次渲染请求当作真实高帧率。Diffuse fast 约 1/60 秒，specular 主/fast 约 .5/.1 秒；diffuse 主预算分两种状态：
 
-共享 SDK 目录为 GI 追加 6 个、为 DI 功率预采样追加 1 个必要头文件（provenance 现共 29 个文件），原始算法均保持不变。参考 GI 链路已接入首版一跳 diffuse 输出，见 [Ho-RTGI](Ho-RTGI.md)；两者均尚未接入最终 PBR/NPR 合成。
+| 状态 | Diffuse 主历史时长 | 60 Hz 示例 |
+| --- | ---: | ---: |
+| 相机/世界/实际灯快照变化，以及变化后的半秒窗口 | .05 秒 | 约 3 |
+| 上述输入持续半秒稳定 | .5 秒 | 约 30 |
 
+离开稳定状态时 NRD 重启一次，恢复响应优先短预算；持续运动不会因这一策略每帧重启。Fast / specular / 空间设置、射线和资源预算没有随本次静止修复增加。实际整数预算随 FPS 变化，主历史上限 255，时间回退/无效时间/长间隔按既有策略失效。
 
-## 可选 NRD RELAX
+**稳定判定逐相机全局执行。** 持续移动的相机、灯或几何会让整个图像维持短预算，即使其中一些像素没有变化。这还不是逐像素区分静态环境与动态角色的长历史方案。
 
-开启 Feature 的 NRD RELAX 降噪后，公开 diffuse/specular 发布 filtered，额外 raw handles/globals 保持原始结果。当前已验证静态 Mono、D3D12 两条路径、Editor Gamma/Linear，以及 Windows x64 release Player 实际执行；IL2CPP、TAA/XR/动态几何与目标性能尚未验收。NRD 只过滤独立 DI 并恢复同一参考材质因子，不负责最终 lilToon 合成。信号、ABI、资源成本、测试与限制详见 [Ho-RTDI-NRD](Ho-RTDI-NRD.md)。
+### DI、NRD 与世界历史的区别
 
-Feature 序列化引用自身 debug shader 和网格标签 shader，Player Raw / Filtered / Receiver / All 网格调试已验收。升级旧 renderer 时，Create 或打开 Feature Inspector 会补齐缺失 shader 并标记待保存；保存后再构建。已有 override 保留，重复检查不会修改完整资产。尚未加入构建时全工程资源迁移。[隔离重载与发布验证](../Tests~/Player/RTDI/README.md)。
+DI 的分辨率、关键采样设置、几何/场景 revision、输入域与重新启用触发相关历史失效；每相机独立保存上一轮实际灯参数与身份映射。灯位置/颜色/强度等普通变化不再整份清 ReSTIR，SDK 读取真实旧 target，删除/替换返回 -1，而非误认数组槽位。
+
+NRD 还根据时间、结构、采样域与稳定状态管理自身历史；灯集合增删或类型变化有保守降噪历史失效，普通数值变化通过同采样重算 confidence / antilag。Cutout pose 保留历史的条件如前所述。没有 previous TLAS，也没有动态接收面 world-motion 源，不能将可见性 confidence 等同于通用动态 temporal 支持。
+
+完整 ABI、调度、历史设计和历次局部验证见 [NRD 技术专题](RTDI/技术/Ho-RTDI-NRD.md)。其中早期“3/1”等固定预算与资源表带有步骤语境，现行预算以本节和 2026-10-18 对照为准。
+
+## 7. 收敛对照：本机参考也会稳定
+
+本机参考实际跑通了 Unity DI raw / DLSS RR 与 Native DI raw / RELAX。启动阶段修复了插件依赖路径、固定 NRI 对旧设备缺少接口检查，以及 Native 合成缺少 `WITH_NRD` 导致仍读取 raw 的问题。修复限定隔离参考工程，没有改系统 D3D12、Unity.exe 或包内 HoRTDINRD.dll。
+
+对照固定 128²、透视 FOV40、白色非金属接收面、roughness≈.5、F0≈.04、红蓝两点灯 `(±1.5,0,-1)`、强度4/range100；候选8、ReSTIR 历史4、空间4/半径16、最终单样本，关闭环境/GI/jitter/PT。还有在完全相同 Ho 输入上运行原版 RELAX 的控制组。参考与 Ho 的量化、RNG 和镜面 target 并非逐位相同。
+
+统计固定 ROI 每像素 RGB 的时间方差，窗口为第257—512帧，以均值平方和归一。它衡量跨帧随机波动，不是空间纹理差异、完整图像误差或帧率。
+
+| 实际输出 | Combined 归一化时间方差 |
+| --- | ---: |
+| 参考 Unity DI raw | 约 1.535 |
+| 参考 Native DI raw | 约 1.529 |
+| Ho-RTDI raw | 约 1.535 |
+| Ho 旧响应优先 filtered | .0226155 |
+| Ho 当前静止历史 filtered | **.00118284** |
+| 参考 Native RELAX 最终输出 | .000570363 |
+| 参考 Unity DLSS RR 最终输出 | .00020627 |
+
+参考 raw 也有显著方差，稳定画面来自累积/重建。Ho 本次静止时间方差降低约94.8%，噪声标准差约为旧版1/4.4；raw 统计保持一致。两条 Ho 路径固定基准一致，512帧只有一次初始重置。残余时间方差仍约为参考 RELAX 的2倍、RR的5.7倍，所以仍存在重建差距；不能据此宣称所有 HDR、高光、遮挡或材质都达到参考画质。
+
+SSGI 与 RTDI 的具体信号、候选和滤波预算不同，不能仅凭同用 ReSTIR 推断应该有相同收敛速度。这次直接参考对照已证明“参考也一直不收敛”不是依据；应继续按 raw 方差、输入合同、累积预算和最终重建分别衡量。
+
+详细修复、原始数据与对照条件见 [2026-10-18 参考收敛审计](RTDI/审计/Ho-RTDI-ReferenceConvergence.md)。
+
+## 8. 已知失败与尚未验收项
+
+| 项目 | 当前证据 | 结论 |
+| --- | --- | --- |
+| 严格漫反射遮挡阶跃 | 固定60Hz变化区前三帧误差 .357736→.350414，原门槛 .35 | 仍失败；slow / rapid 通过，未放宽门槛 |
+| Mixed 天空镜面 filtered | 两条生产路径各2/4，存在通道略超原5%能量门槛 | 仍失败；raw 同组接近参考，静止漫反射改善不等于此偏差修复 |
+| 动态局部区域的长历史 | 稳定判定仍是逐相机全局 | 运动期间没有逐像素静态区域长累积保证 |
+| 物体 motion / lobe hit-distance | NRD 仍为静态 world-motion 协议；guide 取主样本距离 | 正常应用帧物体运动、每 lobe 距离代表性未完成 |
+| 实际复杂场景 | 古堡等只有几何/天空壳及局部稳定性检查 | 不是完整画质、无漏光、任意材质和目标帧率验收 |
+| 性能 | 历史 GPU 预算报告无有效样本，另有同步 batch 时长 | 有效 DI/visibility/NRD GPU 分段预算未交付 |
+| 平台与输入域 | Win64 Mono 受控验证 | IL2CPP、XR、TAA jitter、MSAA / 通用 GB fallback 等完整合同未验收 |
+| 最终材质合成 | 纹理消费者仍为自身调试/显式接口 | 原材质灯光路由、天空去重、最终场景效果未交付 |
+
+失败实验保留原始指标和门槛，归档文档中的一次通过不能覆盖另一协议下的失败。2026-10-15 的[完成度审计](RTDI/审计/Ho-RTDI-CompletionAudit-2026-10-15.md)是当时快照，最新静止修复和 Player 证据以本页及 10-18 审计为准。
+
+## 9. 调度、资源与性能口径
+
+DI 四阶段在一个 graphics-queue unsafe pass 内顺序执行，位于 `BeforeRenderingPostProcessing`，显式声明主表面、AS、灯和输出依赖。Initial 写 reservoir1，Temporal 写2，Spatial 回写1，Shade 保存历史0。Power 额外执行 PDF build / mip / presample，Cutout 增加原生最终可见性，NRD 开启时执行其信号准备、confidence、固定核心返回的 dispatch 与恢复。
+
+当前不复制另一套主表面 GBuffer。SB 在 RT 消费需求下请求高精度 normal；current / previous 共用2×16-bit oct 法线编码。DI / GI 的20-byte主表面历史含 depth、shading/mesh normal、diffuse/validity、F0/roughness，各自逐相机拥有。
+
+| 资源 | 可确认的量级/限制 |
+| --- | --- |
+| SDK reservoir | 单份24 B/像素，三份约72 B/像素，另有 block padding |
+| 主表面 guide 历史 | 20 B/像素，DI / GI context 分别计入 |
+| 两张 HDR diffuse/specular 发布图 | RGBA16F 约16 B/像素；NRD 开启另有 raw/信号/pool 等资源 |
+| 灯历史 | 额外一份64 B/灯参数与双向4 B/索引，容量按2次幂，另有CPU快照 |
+| Power | 128 KiB RIS + 随灯数扩展的 R32F mip PDF |
+| Cutout 最终可见性 | R8 约1 B/像素，不支持时 R32 回退为四倍 |
+| Triple native 第二辅助 | 8 B/像素；opaque 局部消费，无此全屏 sidecar |
+| NRD | 信号暂存、两路输出、永久/临时 pool、confidence、三份64 KiB常量 buffer 等；仅实际启用时承担 |
+
+上述不是可直接相加的完整峰值显存承诺：发布/raw/NRD输出存在选择与复用，输入、AS、driver、对齐、缓存和延迟释放还需独立统计。历史720p/1080p核算保存在技术专题，不能拿早期资源表代表当前所有配置。
+
+已预热的 NRD `Record` 段曾将 GC.Alloc 事件15→0、命令记录 CPU 均值约54.5→11.0μs；它只说明该局部 CPU 调度改进，首次分配、Feature 扫描和全帧不在零分配承诺内。同步渲染请求加 GPU 读回的 batch 时长包含 CPU、raster、输入与同步，不能当作 NRD GPU 时间或生产帧率。[GPU 计时审计](RTDI/审计/Ho-RTDI-GpuTimingAudit.md)明确保留未获得有效预算的结论。
+
+## 10. 验证与复现
+
+最新收敛交付包含23份原始 JSON、源文件/二进制哈希、参考探针和 NRI 补丁，入口为 [Tests~/RTDI/Reference/README.md](../Tests~/RTDI/Reference/README.md)。在包根执行：
+
+```powershell
+python Tests~/RTDI/Reference/verify_convergence.py
+python Tests~/RTDI/generate_nrd_variance_adapter.py --check
+```
+
+第一项复核已有证据、raw不变、静止收益、两路径一致性、动态与部署记录，并要求已知失败继续明确保留；它不代替重新运行 Unity 场景。第二项核对固定 NRD 原 SHA 与四份派生源码重建一致性。
+
+最新实际运行证据包括：
+
+- D3D12 RG / compatibility 固定512帧静止基准，两路径相同的时间噪声结果；原版 RELAX 同 Ho 输入及参考实际最终输出对照。
+- 镜面运动3项、Triple动态每路径9/9、默认Single复用噪声16配置、primary motion6配置通过。
+- 漫反射slow/rapid通过，严格casterStep仍失败；环境两路径各2/4仍失败。
+- 两个Win64 Mono release成功构建，实际默认suite通过，D3D11实际inactive通过。
+- 新Player `--convergence` 跨192个真实应用帧，进入长历史、变色后只重启一次回短历史，四帧后旧红色残留为0；没有Editor时间注入。
+
+隔离验证入口 `HoRTDIValidation.Run / RunCompatibility / RunUnsupported` 覆盖 SDK、能量、遮挡、输入拒绝、debug与生命周期；更细入口、限定fixture和旧报告见技术/审计文档。历史步骤验证与本次重跑分开记载；不能将“诊断进程退出成功”当成全部产品质量通过。
+
+## 11. 文档导航
+
+- [RTDI 专题与证据目录](RTDI/README.md)：全部技术专题、日期审计与历史实验检索。
+- [NRD 技术专题](RTDI/技术/Ho-RTDI-NRD.md)、[环境光](RTDI/技术/Ho-RTDI-Environment.md)、[Cutout](RTDI/技术/Ho-RTDI-Cutout.md)、[三最终样本](RTDI/技术/Ho-RTDI-RuntimeMultiSamples.md)：接口、成本与详细接入证据。
+- [最新参考收敛审计](RTDI/审计/Ho-RTDI-ReferenceConvergence.md)、[旧完成度快照](RTDI/审计/Ho-RTDI-CompletionAudit-2026-10-15.md)：有日期/协议边界的实际结论。
+- [持续推进历史](RTDI/归档/Ho-RTDI-持续推进记录.md)、[最初 DI/GI 可行性调查](RTDI/归档/Ho-RTDI-RTGI-可行性调查.md)：保留研究过程，不作当前任务队列。
+- [Ho-RTGI](Ho-RTGI.md)：独立一跳 diffuse GI 首版；次级环境NEE、specular GI、多跳与最终合成不能由 DI 验证替代。
+- [总文档索引](文档索引.md)：包内其它功能与架构入口。
