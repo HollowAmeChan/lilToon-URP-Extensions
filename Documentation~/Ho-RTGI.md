@@ -2,7 +2,7 @@
 
 已沿用户参考工程接通 BrdfRayTracing → ShadeSecondarySurfaces → GI temporal/spatial/final，提供独立的一跳diffuse GI输出及可选的场景加法合成。SDK GI reservoir与时间/空间重采样复用固定原文件；应用bridge适配Ho生产端。最终NPR影色/ramp映射或材质内接收未纳入本阶段。
 
-2026-10-19起的持续推进、实际参考对照、失败与交接见[RTGI入口](RTGI/README.md)。次级天空、显式直接天空归属和正常相机加法合成已有实测；独立GI降噪已接入固定原版RELAX_DIFFUSE，自动帧动态、Player与目标场景验收继续推进，不能由原型输出或局部对照通过替代。
+2026-10-19起的持续推进、实际参考对照、失败与交接见[RTGI入口](RTGI/README.md)。次级天空、显式直接天空归属和正常相机加法合成已有实测；独立GI降噪已接入原版RELAX_DIFFUSE，Linear D3D12 Mono Player两路径已验证真实应用帧下的请求式生产/响应/合成。正常enabled-camera自动呈现、目标场景、GPU预算和完整Player矩阵继续推进，不能由局部对照通过替代。
 
 ## 使用与输出
 
@@ -52,7 +52,7 @@ Emission 直接调用 lilToon 现有 `lilEmissionComponent` / `lilEmission2ndCom
 - 当前命中材质接收标准 `lilToon` opaque，第一主色链、两组 normal map、两组专用 emission，以及 smoothness/metallic 贴图。Main2nd/Main3rd、parallax 位移、Lite/Multi/Hair/自定义 shader 尚未接入，明确返回 unsupported。
 - 命中材质副本读取 sharedMaterial；Renderer MaterialPropertyBlock 属性覆盖及自定义 lilToon 扩展尚未接入。
 - Unsupported opaque 材质仍有真实命中，status=2，保持遮挡；不能把它转成环境 miss。status=0 才表示 miss，status=1 表示已求值的材质。
-- 纹理采样显式LOD0，尚未实现ray-cone过滤与GSAA。发光视角组分使用二次射线的观察方向。已有加法场景合成及独立GI降噪；SSS、最终NPR ramp/材质内接收及Player验收仍未交付。
+- 纹理采样显式LOD0，尚未实现ray-cone过滤与GSAA。发光视角组分使用二次射线的观察方向。已有加法场景合成及独立GI降噪；SSS、最终NPR ramp/材质内接收及完整Player/场景验收仍未交付。
 - 二次命中点支持 point / spot / directional 解析灯，限制与 Ho-RTDI 相同：cookie、非全局 cullingMask、baked-only、其他灯型排除；Rendering Layer / 艺术灯光链接未接入。RT 可见性独立于 raster Light.shadows。
 - 二次材质命中点计算解析灯、专用emission与天空照明。次级天空沿固定SDK的环境重要性采样接入；主表面直接天空仅在显式开启时经miss路径贡献。没有多跳反馈、发光网格重要性采样、主表面specular GI或完美镜面路径。
 - 不支持的 opaque 命中按黑表面处理；无贡献或被几何法线拒绝的方向仍计作黑样本，避免丢弃零贡献样本导致能量偏高。为保留 HDR 能量，未启用参考中的 firefly radiance clamp；当前 raw 输出有噪声。
@@ -76,6 +76,8 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 不维护 previous TLAS，也没有动态角色 motion；只有未变化的几何可以复用历史，此时当前 AS 同时描述上一帧世界，可从上一帧表面做 visibility。一次只做一跳，不把历史 reservoir 当作多跳反馈缓存。
 
 ## 验证
+
+2026-10-20步骤006：两个Linear D3D12 Win64 Mono Player（RG/compatibility）实际exit0，各304次相机请求、299条有效应用帧记录、16项runtime检查。非均匀红蓝emission反弹的filtered/raw红蓝均值约.970/.970，空间均值图L1约10.35%，时间方差约降99.89%；camera运动59帧保留重投影、几何移动24帧保守reset、移除emission首帧归零、Volume/denoise与实际filtered加法合成均通过。每个真实Update只一次请求，不标称正常自动camera；复现、失败和警告边界见[应用帧/Player证据](../Tests~/RTGI/Dynamic/README.md)。
 
 2026-10-19场景合成：Linear/Gamma × RG/compat四组，每组62次手动相机请求、33项检查，实际exit0；覆盖同帧贡献、主色/emission、Volume与两台相机独立强度、雾/透明/前景depth、域不匹配、局部视口绕过、DI+GI连续合成及真实离屏红墙反弹进入camera color。另有legacy GI与未合成环境两项回归。说明与边界见[合成验证](../Tests~/RTGI/Composite/README.md)，不据此宣称Player、自动帧运动或NRD完成。
 

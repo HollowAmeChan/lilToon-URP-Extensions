@@ -1,0 +1,14 @@
+{
+  "results/live-linear-rg.json": {
+    "archivedAt": "results/rejected-raster-basis-assumption.json",
+    "sha256": "9102EFA450F90C19136A7236E3713DB2CEB84FE164AD9B5AA6340B2D59E2EF4D"
+  },
+  "results/measured-linear-rg.json": {
+    "archivedAt": "results/rejected-volume-update.json",
+    "sha256": "B02E613D910D15C43E52D2E0B73F303480F8B6C00FB9323A3AF7C201E9B80794"
+  },
+  "rejected-raster-basis-run.json": {
+    "archivedAt": "live-rg-run.json",
+    "sha256": "563AD6593A6A9ED609BE990B75C6D0556EC4CC78F9B04EB92D674877F89C6D67"
+  }
+}

@@ -1,0 +1,18 @@
+{
+    "pass": false,
+    "compatibility": false,
+    "api": "Direct3D12",
+    "colorSpace": "Linear",
+    "requestMode": "one SubmitRenderRequest per distinct application Update",
+    "error": "System.NullReferenceException: Object reference not set to an instance of an object\r\n  at HoRTGIRuntimeProbe.get_Context () [0x00000] in <52868d3ce8374bbc9b1d4bc74c901701>:0 \r\n  at HoRTGIRuntimeProbe.Update () [0x001dd] in <52868d3ce8374bbc9b1d4bc74c901701>:0 ",
+    "spatialRelativeL1": 0.0,
+    "rawVariance": 0.0,
+    "filteredVariance": 0.0,
+    "leftRed": 0.0,
+    "rightRed": 0.0,
+    "reprojectedCameraFrames": 0,
+    "movingGeometryResetFrames": 0,
+    "renderCallbacks": 5,
+    "checks": [],
+    "frames": []
+}

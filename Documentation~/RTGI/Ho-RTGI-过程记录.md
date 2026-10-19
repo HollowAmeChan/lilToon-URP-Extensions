@@ -108,7 +108,7 @@
 
 步骤004过滤提交：`82df540`。
 
-## 005：GI独立RELAX降噪（进行中）
+## 005：GI独立RELAX降噪
 
 **事前review：** 场景合成已验证，但raw反弹仍有噪声。采用固定NRD4.17.3的原版RELAX_DIFFUSE，先查询本机CPU库真实instance/pipeline与资源布局，生成对应Unity wrappers；不复制DI private shader/body或默认为BOTH浪费specular资源。复用已核对的native ABI与通用dispatch/pool实现时保持DI默认行为不变。
 
@@ -123,3 +123,26 @@
 **事后review与收益：** 接纳为可选原版GI降噪基线，均匀天光反弹夹具方差降低约99.9966%，均值差约+1.1%，raw可直接对照，DI回归未退化。新增约79B/像素+tile+192KiB，1080p约156.4MiB；尚无实际GPU毫秒。均匀夹具不是复杂空间质量，手动请求不是自动帧动态；任意HDR、运动角色、目标场景/Player与当前共享工作区整体验收仍未完成。后续优先补真实自动帧/空间质量与预算，不直接用更多历史或DI私有参数继续压噪。
 
 **过滤提交范围：** Runtime/RTGI、Editor/RTGI、本步两份共享NRD API文件、Tests~/RTGI/NRD、Ho-RTGI说明及RTGI过程/禁试/交接。所有VolumeLight及其他并行文件、隔离package/工程和全量EXR/log排除。
+
+
+步骤005过滤提交：`95120a4`。
+
+## 006：真实应用帧与空间质量 / Player前置夹具（进行中）
+
+**事前review：** 步骤005在均匀反弹和受控RenderRequest时序中确认降噪基线；尚不能证明真实自动帧、非均匀空间细节或Player资源可达。优先补证据，不预设需要改变参数。复用DI历史中真实frameCount/Time、实际end-of-frame读取和序列化Shader引用验收原则。
+
+**实施边界与预期收益：** 在专用GI工程创建独立测试scene/pipeline/assets和runtime probe，以自动camera渲染；使用离屏红/蓝emission面产生空间渐变，测raw/filtered同帧均值图与时间方差，验证camera运动、emission关闭、几何移动、Volume与denoise/resize响应。runtime probe只放Tests~源并复制专用工程，不加入产品runtime流程。尽量复用同场景进入独立Mono D3D12 Player，以实际加载/dispatch证明serializedShader/NRD/native/composite可达。全部入口记录真实frameCount/时间/进程/来源。
+
+**判定与搁置条件：** 同一应用帧不能重复算时间样本；先用同次raw时间均值作降噪形状对照，明确有限采样限制。保守几何revision每移动帧reset是当前策略，不能伪装为动态表面motion；记录其收敛代价。有空间退化先定位实际输入/阶段，不延长历史放宽门槛。Player失败保留并按具体资源/ABI处理，不改系统D3D12或重编已有固定库。
+
+**DI过程补充与验证模式：** 已读DI Player Composite说明与hidden-host失败：隐藏/批处理宿主会推进Update但自动camera可能零事件，不能重试该条件充作通过。本轮先在Mono Player每个真实Update仅一次SubmitRenderRequest，frameCount/time严格递增；这可验应用帧历史和打包，但不声称正常enabled-camera自动呈现，后者仍独立待验。
+
+**首轮Player失败与定位（2026-10-20）：** 隔离包首build实际exit0/errors0，Player却有m_Script缺失/布局不符；探针Feature为null，清理二次NRE未退出，核对PID34808与本任务EXE绝对路径后结束，真实exit=-1，报告保留。脚本审计确认GI/GB/SB/Volume在快照中MonoScript.GetClass/FromScriptableObject均为空，单次全脚本强制重导入仍为空。并行VolumeLight此时已过滤提交76210e7/a525c36，专用工程改回实际工作区；同四类脚本映射正常、编译无error。暂缓快照导入唯一根因，禁止原样再build；构建helper加入脚本绑定强制检查，runtime probe清理null安全/首帧依赖检查，并加入camera color真实filtered合成断言后重建。隔离工程manifest当前已回实时工作区，步骤005历史snapshot证据未改。
+
+**夹具修正与拒绝证据：** 白色unlit raster实际为.2158203，原“必为1”的假设导致首个有效Player合成门槛失败；改为前一真实未合成帧基准，不改产品增益。下一轮空间/响应至268帧已通过，Volume off失败；沿DI既有Player Render helper补disabled-camera请求前的VolumeManager.Update，生产Volume未改。两份report和旧run SHA保留；重复字节报告去重并有别名映射。去除red后raw/filtered实际均0；LogLuv的近黑通道按绝对误差，不据相对绿通道差异声称物理退化。
+
+**正式验证与事后review：** Tests~/RTGI/Dynamic/formal-run.json，两套Win64 Mono release build和两个实际D3D12 Player全部exit0。Linear RG/compat各304次camera request、299条有效真实应用帧记录、16checks；绝不把它称enabled-camera自动呈现。静态非均匀emission反弹的时间均值空间图L1分别.103438/.103524，raw方差.0724847→filtered .00007721/.00007768（降约99.89%）；红/蓝均值比约.970/.970，原5%门槛通过，绿近黑按绝对<.001。camera移动59帧保留矩阵重投影，关闭red首帧0，移动几何24帧全reset，Volume/denoise实际切换通过，camera color对实际raster+filtered误差约.000073。
+
+**接纳/成本/限制：** 接纳本步为部署/应用帧证据，没有新增产品算法参数或Runtime改动。实际源码MonoScript绑定/serialized shader/15个wrapper/native DLL、正常合成的数据路径已在Player运行；完整payload SHA、来源源码SHA与每帧时钟均核对。原版降噪在空间不均匀信号下仍有明显收益，约3%均值差与10.35%形状L1需保留，不能据此称无偏或复杂细节已达标。正常自动camera、薄墙/小高亮源、骨骼/Cutout、GPU预算和完整Player矩阵仍待验收。构建三条非GI shader警告及Player GB fallback/resolve不可达、退出4条GraphicsBuffer GC清理警告均记录，不能声称全部域/完整生命周期通过。快照MonoScript唯一根因在一次重导入无收益后搁置F19，实际源码可推进。
+
+**过滤提交范围：** Editor/RTGI/HoRTGIPlayerValidation.cs/meta、Tests~/RTGI/Dynamic及RTGI说明/实施规划/过程/禁试/交接。排除Atmosphere/VolumeLight并行变化、隔离工程/Player二进制/全量log。后续优先实际场景输入支持与GPU预算，避免继续增加同类均匀夹具压噪。

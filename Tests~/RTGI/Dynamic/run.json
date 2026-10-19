@@ -1,0 +1,16 @@
+{
+  "activeProcess": null,
+  "build": {
+    "exitCode": 0,
+    "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step006-build-rg.log",
+    "logSha256": "296CE401A548CBB8FD80A0769BCB5F4D52E0FBFA3229A4230A5CDDDAF70503A8",
+    "id": 35872
+  },
+  "player": {
+    "report": "D:\\Unity_Fork\\lilToon-URP-Extensions\\Tests~\\RTGI\\Dynamic\\results\\initial-linear-rg.json",
+    "id": 34808,
+    "exitCode": -1,
+    "logSha256": "7848F18C5FD973DCCE150038282757F45C750F1AC447C67081DF17301EF1C3F1",
+    "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step006-player-initial-rg.log"
+  }
+}

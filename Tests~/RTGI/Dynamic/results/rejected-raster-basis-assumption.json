@@ -1,0 +1,41 @@
+{
+    "pass": false,
+    "compatibility": false,
+    "api": "Direct3D12",
+    "colorSpace": "Linear",
+    "requestMode": "one SubmitRenderRequest per distinct application Update",
+    "error": "System.Exception: Actual Player camera composites filtered GI over its white unlit receiver\r\n  at HoRTGIRuntimeProbe.Require (System.Boolean value, System.String text) [0x00003] in <2a9aba85475142a18f4b9485167be4fa>:0 \r\n  at HoRTGIRuntimeProbe.Update () [0x00398] in <2a9aba85475142a18f4b9485167be4fa>:0 ",
+    "spatialRelativeL1": 0.0,
+    "rawVariance": 0.0,
+    "filteredVariance": 0.0,
+    "leftRed": 0.0,
+    "rightRed": 0.0,
+    "compositeError": 0.7842540740966797,
+    "reprojectedCameraFrames": 0,
+    "movingGeometryResetFrames": 0,
+    "renderCallbacks": 5,
+    "checks": [
+        "Serialized GI/NRD references produce distinct raw and filtered in Mono Player"
+    ],
+    "frames": [
+        {
+            "sample": 4,
+            "applicationFrame": 5,
+            "giFrame": 5,
+            "time": 1.3952939058956915,
+            "reset": false,
+            "raw": {
+                "r": 0.41663098335266116,
+                "g": 0.0002025302965193987,
+                "b": 0.4330422580242157,
+                "a": 1.0
+            },
+            "filtered": {
+                "r": 0.4027845859527588,
+                "g": 0.00017581135034561157,
+                "b": 0.4154137372970581,
+                "a": 1.0
+            }
+        }
+    ]
+}

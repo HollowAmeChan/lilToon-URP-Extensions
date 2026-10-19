@@ -22,6 +22,9 @@
 | F16 / GI步骤005资产导入 | 手写33位GUID使Unity跳过新增NRD context，表现为namespace/type缺失；禁止只看文件存在便跳过导入检查 | 所有新增meta的GUID为32位且唯一；实际Unity编译/dispatch通过。首轮退出1日志摘要保留 |
 | F17 / GI步骤005隔离快照 | 并行VolumeLight未完成编译时改动其源码来让GI测试通过，或不记录快照来源；git archive的CRLF又触发旧ShadowCast宏解析错误 | 只使用HEAD加明确GI/API覆盖的隔离包，记录base/source SHA及唯一LF传输归一化；不修改生产ShadowCast/VolumeLight，保留失败 |
 | F18 / GI步骤005 runner | 给RunConvergence错误配置通用PASS marker；进程实际exit0且CAPTURE_COMPLETE，但runner拒绝。禁止为跑绿随意降低检测要求 | 核对真实入口及其完成合同；保留拒绝run，改为已有RunDenoise能量/噪声/生命周期实际门槛，再验证exit/marker/diagnostics |
+| F19 / GI步骤006 Player序列化 | 隔离快照中的CLR类型能CreateInstance，便假定MonoScript也已正确导入；首个Player中GB/SB/GI/Volume m_Script为空、布局不符，实际Feature引用null | 构建前MonoScript.FromScriptableObject/GetClass必须匹配；原快照一次强制脚本重导入仍为空，禁止原样再build。当前工作树映射恢复，先用其继续，暂缓追快照导入唯一根因 |
+| F20 / GI步骤006探针退出 | 主失败为Feature引用null，清理再次无条件feature.Dispose导致退出前二次异常、进程挂住 | 清理可处理缺失序列化依赖，报告保留主错误；只在核对PID与绝对EXE路径后结束本任务失败进程，记录人为终止exit=-1，不冒称正常exit1 |
+| F21 / GI步骤006夹具假设 | 将白色unlit材质的实际camera color假定为1，或对disabled-camera请求路径省略DI helper已有的显式Volume更新，导致误报合成/Volume策略失败 | 用此前实际raster基准加同帧GI；请求前更新Volume stack。两份拒绝报告保留；不能为夹具改生产增益或Volume策略 |
 
 长期无收益路线的记录模板：问题与基线 → 假说/参考 → 尝试和真实成本 → 哪些指标改善/退化 → 拒绝或搁置原因 → 禁止原样再试的条件 → 重开所需新证据。新记录必须关联过程步骤与报告，不只写“试过，不行”。
 

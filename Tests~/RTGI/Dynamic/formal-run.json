@@ -1,0 +1,52 @@
+{
+  "step": 6,
+  "head": "a525c3677ddc4426ce3704579b21205593f0e849",
+  "startedUtc": "2026-10-19T16:12:48.9431727Z",
+  "runtimeProbeSha256": "3339AF2029BBDC7988D6FC587E1DA1A2FF3AADA9975F6DFB5DB8C322AE73674E",
+  "editorBuilderSha256": "7CC2609029419713A79A474A4A261C4F672F451EE8FDBC50198B04BB21A1D67C",
+  "activeProcess": null,
+  "entries": [
+    {
+      "mode": "rg",
+      "buildExit": 0,
+      "buildMarker": true,
+      "buildLog": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step006-build-20261019T161248951-rg.log",
+      "buildLogSha256": "C1FEBDE8B8997636D6433F43DECB73F9F92944F3593523224CE5F89EB45FA7FF",
+      "buildWarnings": [
+        "Shader warning in 'Hidden/lilToon/URP/VolumeLight/SolarHD': floating point division by zero at /Unity_Fork/HoUrp17.3.0/ShaderLibrary/Shadows.hlsl(310) (on d3d11)",
+        "Shader warning in 'lilToon': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'",
+        "Shader warning in 'lilToon': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'"
+      ],
+      "exeSha256": "4E33A14C3EC94BF336FCDEF8E56429F865A2BF5FEF67261AA64713B15BF75D0B",
+      "nativeSha256": "5EFF9D42D56DA8B38D305BC483D84263AEE3C31A6C6C3A0A637370DA68220EDB",
+      "playerExit": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step006-player-20261019T161248951-rg.log",
+      "logSha256": "826A5B36230F5A1DB8457AFDEC888773562BC38E8FDAFC0F5410F81A08B82B08",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "E6F71D7DF6DF48D725A9CBA022514220119E6F62CC82FAD26A843942D8048661",
+      "playerMarker": true
+    },
+    {
+      "mode": "compat",
+      "buildExit": 0,
+      "buildMarker": true,
+      "buildLog": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step006-build-20261019T161317680-compat.log",
+      "buildLogSha256": "A09DE9614789EAE16A92559D814DBB4931FF1CD7454719543D68EB17865BD24D",
+      "buildWarnings": [
+        "Shader warning in 'Hidden/lilToon/URP/VolumeLight/SolarHD': floating point division by zero at /Unity_Fork/HoUrp17.3.0/ShaderLibrary/Shadows.hlsl(310) (on d3d11)",
+        "Shader warning in 'lilToon': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'",
+        "Shader warning in 'lilToon': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'"
+      ],
+      "exeSha256": "4E33A14C3EC94BF336FCDEF8E56429F865A2BF5FEF67261AA64713B15BF75D0B",
+      "nativeSha256": "5EFF9D42D56DA8B38D305BC483D84263AEE3C31A6C6C3A0A637370DA68220EDB",
+      "playerExit": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step006-player-20261019T161317680-compat.log",
+      "logSha256": "663CC9076ABAE1B0A5AEF0ACEC624E72FA0E93C27044542D149F88023B9B1383",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "5DAF97C2C5FE396B75D225526DECC582A75AABDD9475625DD6BBB11CC08E579F",
+      "playerMarker": true
+    }
+  ]
+}
