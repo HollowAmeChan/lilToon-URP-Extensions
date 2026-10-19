@@ -1,0 +1,155 @@
+{
+    "pass": true,
+    "diagnosticOnly": true,
+    "mode": "unity-rr",
+    "unity": "6000.3.15f1",
+    "gpu": "NVIDIA GeForce RTX 4060",
+    "api": "Direct3D12",
+    "colorSpace": "Linear",
+    "failure": "",
+    "settings": "{\"exposureEv\":0.0,\"cameraJitter\":false,\"showMode\":18,\"showMv\":false,\"pdfMipLevel\":0,\"pdfExposureStops\":0.0,\"upscalerMode\":0,\"tmpDisableRR\":false,\"skipRightEyeInVR\":true,\"enableDenoiser\":true,\"lightingSettings\":{\"denoiserMode\":0,\"enablePreviousTLAS\":true,\"enableAlphaTestedGeometry\":true,\"enableTransparentGeometry\":true,\"enableRayCounts\":true,\"visualizeRegirCells\":false,\"enableGradients\":true,\"gradientLogDarknessBias\":-12.0,\"gradientSensitivity\":8.0,\"confidenceHistoryLength\":0.75,\"brdfptParams\":{\"enableIndirectEmissiveSurfaces\":0,\"enableSecondaryResampling\":0,\"enableReSTIRGI\":0,\"pad1\":0,\"materialOverrideParams\":{\"roughnessOverride\":0.5,\"metalnessOverride\":0.5,\"minSecondaryRoughness\":0.5,\"pad1\":0},\"secondarySurfaceReSTIRDIParams\":{\"initialSamplingParams\":{\"numLocalLightSamples\":2,\"numInfiniteLightSamples\":1,\"numEnvironmentSamples\":1,\"numBrdfSamples\":0,\"brdfCutoff\":0.0,\"brdfRayMinT\":0.0,\"localLightSamplingMode\":2,\"enableInitialVisibility\":0,\"environmentMapImportanceSampling\":0,\"pad1\":0,\"pad2\":0,\"pad3\":0},\"spatialResamplingParams\":{\"numSamples\":1,\"numDisocclusionBoostSamples\":0,\"samplingRadius\":4.0,\"biasCorrectionMode\":1,\"depthThreshold\":0.10000000149011612,\"normalThreshold\":0.8999999761581421,\"targetHistoryLength\":0,\"enableMaterialSimilarityTest\":0,\"discountNaiveSamples\":0,\"pad1\":0,\"pad2\":0,\"pad3\":0}}}},\"directLightingMode\":2,\"indirectLightingMode\":3,\"enableGIFinalShading\":true,\"enableDIFinalShading\":true,\"enableEnv\":false,\"useRasterGBuffer\":true,\"regirDynamicParams\":{\"regirCellSize\":1.0,\"fallbackSamplingMode\":1,\"presamplingMode\":1,\"regirSamplingJitter\":1.0,\"regirNumBuildSamples\":8},\"useComputeForGis\":true,\"useComputeForTemporalResampling\":true,\"useComputeForSpatialResampling\":true,\"useComputeForShadeSamples\":true,\"useComputeForShadeSecondarySurfaces\":true,\"useComputeForGITemporalResampling\":true,\"useComputeForGISpatialResampling\":true,\"useComputeForGIFinalShading\":true,\"diResamplingMode\":0,\"initialSamplingParams\":{\"numLocalLightSamples\":1,\"numInfiniteLightSamples\":0,\"numEnvironmentSamples\":0,\"numBrdfSamples\":0,\"brdfCutoff\":0.00009999999747378752,\"brdfRayMinT\":0.0010000000474974514,\"localLightSamplingMode\":0,\"enableInitialVisibility\":1,\"environmentMapImportanceSampling\":1,\"pad1\":0,\"pad2\":0,\"pad3\":0},\"temporalResamplingParams\":{\"maxHistoryLength\":20,\"biasCorrectionMode\":1,\"depthThreshold\":0.10000000149011612,\"normalThreshold\":0.5,\"enableVisibilityShortcut\":0,\"enablePermutationSampling\":1,\"uniformRandomNumber\":0,\"permutationSamplingThreshold\":0.8999999761581421},\"spatialResamplingParams\":{\"numSamples\":1,\"numDisocclusionBoostSamples\":8,\"samplingRadius\":32.0,\"biasCorrectionMode\":1,\"depthThreshold\":0.10000000149011612,\"normalThreshold\":0.5,\"targetHistoryLength\":0,\"enableMaterialSimilarityTest\":1,\"discountNaiveSamples\":1,\"pad1\":0,\"pad2\":0,\"pad3\":0},\"shadingParams\":{\"enableFinalVisibility\":1,\"reuseFinalVisibility\":1,\"finalVisibilityMaxAge\":4,\"finalVisibilityMaxDistance\":16.0,\"enableDenoiserInputPacking\":0,\"pad1\":0,\"pad2\":0,\"pad3\":0},\"giResamplingMode\":3,\"giTemporalResamplingParams\":{\"depthThreshold\":0.10000000149011612,\"normalThreshold\":0.8999999761581421,\"maxHistoryLength\":20,\"enableFallbackSampling\":1,\"biasCorrectionMode\":1,\"maxReservoirAge\":30,\"enablePermutationSampling\":0,\"uniformRandomNumber\":0},\"giSpatialResamplingParams\":{\"depthThreshold\":0.10000000149011612,\"normalThreshold\":0.8999999761581421,\"numSamples\":4,\"samplingRadius\":16.0,\"biasCorrectionMode\":1,\"pad1\":0,\"pad2\":0,\"pad3\":0},\"giFinalShadingParams\":{\"enableFinalVisibility\":1,\"enableFinalMIS\":0,\"pad1\":0,\"pad2\":0},\"brdfptParams\":{\"enableIndirectEmissiveSurfaces\":0,\"enableSecondaryResampling\":0,\"enableReSTIRGI\":0,\"pad1\":0,\"materialOverrideParams\":{\"roughnessOverride\":0.5,\"metalnessOverride\":0.5,\"minSecondaryRoughness\":0.5,\"pad1\":0},\"secondarySurfaceReSTIRDIParams\":{\"initialSamplingParams\":{\"numLocalLightSamples\":1,\"numInfiniteLightSamples\":0,\"numEnvironmentSamples\":0,\"numBrdfSamples\":0,\"brdfCutoff\":0.0,\"brdfRayMinT\":0.0,\"localLightSamplingMode\":0,\"enableInitialVisibility\":0,\"environmentMapImportanceSampling\":0,\"pad1\":0,\"pad2\":0,\"pad3\":0},\"spatialResamplingParams\":{\"numSamples\":1,\"numDisocclusionBoostSamples\":0,\"samplingRadius\":4.0,\"biasCorrectionMode\":1,\"depthThreshold\":0.10000000149011612,\"normalThreshold\":0.8999999761581421,\"targetHistoryLength\":0,\"enableMaterialSimilarityTest\":0,\"discountNaiveSamples\":0,\"pad1\":0,\"pad2\":0,\"pad3\":0}}}}",
+    "secondaryMaterialSample": "diffuse=0x0100C4D4, specularRoughness=0xFF3B3B3B, position=(1.25, 1.01, -1.23)",
+    "frames": 264,
+    "baselineDelta": 0.0,
+    "rawIndirectMean": {
+        "x": 0.07212385535240174,
+        "y": 0.002532903105020523,
+        "z": 0.0016182512044906617
+    },
+    "filteredCombinedMean": {
+        "x": 1.1757898330688477,
+        "y": 1.1093944311141968,
+        "z": 1.1087825298309327
+    },
+    "windows": [
+        {
+            "first": 1,
+            "last": 1,
+            "mean": {
+                "x": 0.06984138488769531,
+                "y": 0.0027146339416503908,
+                "z": 0.0018453598022460938
+            },
+            "reconstructedCombinedMean": {
+                "x": 1.1134676933288575,
+                "y": 1.1087446212768555,
+                "z": 1.1088051795959473
+            },
+            "temporalVariance": 0.0,
+            "reconstructedTemporalVariance": 0.0
+        },
+        {
+            "first": 2,
+            "last": 4,
+            "mean": {
+                "x": 0.06969944387674332,
+                "y": 0.002420107601210475,
+                "z": 0.00154765450861305
+            },
+            "reconstructedCombinedMean": {
+                "x": 1.1250982284545899,
+                "y": 1.10883629322052,
+                "z": 1.1087459325790406
+            },
+            "temporalVariance": 0.0006241791674660124,
+            "reconstructedTemporalVariance": 0.00001585685337583264
+        },
+        {
+            "first": 5,
+            "last": 8,
+            "mean": {
+                "x": 0.07096171379089356,
+                "y": 0.002444028854370117,
+                "z": 0.0015369653701782227
+            },
+            "reconstructedCombinedMean": {
+                "x": 1.1441493034362794,
+                "y": 1.1091010570526124,
+                "z": 1.1088873147964478
+            },
+            "temporalVariance": 0.000038212223444134,
+            "reconstructedTemporalVariance": 0.000012047983343816466
+        },
+        {
+            "first": 9,
+            "last": 16,
+            "mean": {
+                "x": 0.07232409715652466,
+                "y": 0.0025148987770080568,
+                "z": 0.0016015172004699708
+            },
+            "reconstructedCombinedMean": {
+                "x": 1.1632976531982422,
+                "y": 1.1093664169311524,
+                "z": 1.109030842781067
+            },
+            "temporalVariance": 0.00003727348216454543,
+            "reconstructedTemporalVariance": 0.000012019274955881488
+        },
+        {
+            "first": 17,
+            "last": 32,
+            "mean": {
+                "x": 0.0715770423412323,
+                "y": 0.0025288164615631105,
+                "z": 0.0016252994537353516
+            },
+            "reconstructedCombinedMean": {
+                "x": 1.1735718250274659,
+                "y": 1.1091060638427735,
+                "z": 1.1086955070495606
+            },
+            "temporalVariance": 0.0007376867682776517,
+            "reconstructedTemporalVariance": 0.0000044190059674696739
+        },
+        {
+            "first": 33,
+            "last": 64,
+            "mean": {
+                "x": 0.07211451232433319,
+                "y": 0.0025382190942764284,
+                "z": 0.0016223341226577759
+            },
+            "reconstructedCombinedMean": {
+                "x": 1.1764365434646607,
+                "y": 1.1089264154434205,
+                "z": 1.1083886623382569
+            },
+            "temporalVariance": 0.0007251180314567812,
+            "reconstructedTemporalVariance": 0.000004963737928749164
+        },
+        {
+            "first": 65,
+            "last": 128,
+            "mean": {
+                "x": 0.07265654951334,
+                "y": 0.0025488808751106264,
+                "z": 0.0016292035579681397
+            },
+            "reconstructedCombinedMean": {
+                "x": 1.1784310340881348,
+                "y": 1.109441876411438,
+                "z": 1.1088130474090577
+            },
+            "temporalVariance": 0.0006656784052783796,
+            "reconstructedTemporalVariance": 0.000006414484001681334
+        },
+        {
+            "first": 129,
+            "last": 256,
+            "mean": {
+                "x": 0.07202662527561188,
+                "y": 0.0025292225182056429,
+                "z": 0.0016143396496772767
+            },
+            "reconstructedCombinedMean": {
+                "x": 1.1780297756195069,
+                "y": 1.1095534563064576,
+                "z": 1.1088587045669556
+            },
+            "temporalVariance": 0.0005901902356319309,
+            "reconstructedTemporalVariance": 0.000007525046786163254
+        }
+    ],
+    "protocol": "128x128, one point light, IOR=1/metallic=0/roughness=1, no environment or emission, jitter off; raw GI=combined minus converged direct-only baseline; reconstructed is combined, not isolated GI; synchronous readback is diagnostic, not GPU timing"
+}

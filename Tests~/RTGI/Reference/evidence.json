@@ -1,0 +1,60 @@
+{
+  "schemaVersion": 1,
+  "step": 1,
+  "diagnosticOnly": true,
+  "createdUtc": "2026-10-19T04:19:19.8047725Z",
+  "sourceAndFailureEvidence": [
+    {
+      "path": "Tests~/RTGI/Reference/HoReferenceGIProbe.cs",
+      "sha256": "7CA0087C82F3D084062484BFD0FB9BA29754FCD9BC15FBC933406FDE99CF22C1"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIMatchedReferenceValidation.cs",
+      "sha256": "1058BD2DA85449FF0B9347C6BDBDC27DB3F1D5DC97A5A7F30A512E314A900001"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGI.compute",
+      "sha256": "A3EEF5346B05EF42F6603ECB83BFE36ED53BD7054C4F78C84AD78BE56E40F35B"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGI.raytrace",
+      "sha256": "F5BBBEF7D28F94E03E335859B4D402392A73B19EF29DCDF5E83CC1B5B8284140"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGISecondaryData.hlsl",
+      "sha256": "DC2E41D583B9B366BA322C1035DB558FDD2A64950D78CEDAB1303770A7E70D3D"
+    },
+    {
+      "path": ".codex-research/UnityPathTracing-6000.3.15/Assets/Shaders/RayTracing/GI/BrdfRayTracing.hlsl",
+      "sha256": "39C9E05E8B134CCCACA6B348816E1C64EE9A61FF4669A2A81307B7AB2469EB9F"
+    },
+    {
+      "path": ".codex-research/UnityPathTracing-6000.3.15/Assets/Shaders/RayTracing/GI/ShadeSecondarySurfaces.hlsl",
+      "sha256": "42E26FB3D3704F669D051BEF1D09C7C707E869866E9DA43AD32628ACBA3BD554"
+    },
+    {
+      "path": ".codex-research/UnityPathTracing-6000.3.15/Assets/Shaders/RayTracing/GI/FinalShading.hlsl",
+      "sha256": "4A761DBBE1182103D94A84001312B9B1FF21848BF99B5559DF8938F89D2CB928"
+    },
+    {
+      "path": ".codex-research/UnityPathTracing-6000.3.15/Assets/Shaders/donut/packing.hlsli",
+      "sha256": "07D3C38BB9CC1EDAF71FF6F0E8421A0CD46B4A13C1F120571EE59CDFB2E98B68"
+    },
+    {
+      "path": ".codex-research/rtgi-v01-rejected-baseline-subtraction.cs.txt",
+      "sha256": "C9D2C9ADADD2D7A27F81A45563AC6254741971C66C74539F2384A685CE999923"
+    },
+    {
+      "path": ".codex-research/rtgi-v01-reference-RunNativeRelax.log",
+      "sha256": "F8D5E277F2705E9F3374ED01BB2262FF5C3A5AA051410272C921E51DC0165D10"
+    }
+  ],
+  "canonicalEntriesVerified": 7,
+  "productionRenderingChanged": false,
+  "knownLimitations": [
+    "Different F0/primary lobes prevent exact diffuse energy comparison",
+    "Synchronous readback, no GPU timing or automatic-frame motion acceptance",
+    "Native first subtraction protocol rejected; failure retained",
+    "Reference shutdown resource diagnostics remain"
+  ]
+}

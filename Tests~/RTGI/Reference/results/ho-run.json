@@ -1,0 +1,30 @@
+{
+  "sourceSha256": "1058BD2DA85449FF0B9347C6BDBDC27DB3F1D5DC97A5A7F30A512E314A900001",
+  "startedUtc": "2026-10-19T04:15:29.3357916Z",
+  "entries": [
+    {
+      "entry": "RunNoReuse",
+      "exitCode": 0,
+      "reportFresh": true,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-v01-ho-canonical-RunNoReuse.log",
+      "reportPass": true,
+      "reportSha256": "1760A2742ED543AC2A128801396693A634EFA0297B9AC74B31E8A6436D65137E"
+    },
+    {
+      "entry": "Run",
+      "exitCode": 0,
+      "reportFresh": true,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-v01-ho-canonical-Run.log",
+      "reportPass": true,
+      "reportSha256": "45CBC6EC8D266DC72A6679E703B4FE9372AD6CDABC5B4B29C0312EAD06A1EEF9"
+    },
+    {
+      "entry": "RunCompatibility",
+      "exitCode": 0,
+      "reportFresh": true,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-v01-ho-canonical-RunCompatibility.log",
+      "reportPass": true,
+      "reportSha256": "22EF9256A8B894C5ACEF55F6B2F8DAF04C94602529CE42255CFC77C7848C6F8C"
+    }
+  ]
+}

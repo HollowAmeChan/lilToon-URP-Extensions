@@ -1,0 +1,44 @@
+{
+  "probeSha256": "7CA0087C82F3D084062484BFD0FB9BA29754FCD9BC15FBC933406FDE99CF22C1",
+  "unity": "C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe",
+  "project": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\UnityPathTracing-6000.3.15",
+  "startedUtc": "2026-10-19T04:13:03.5294019Z",
+  "entries": [
+    {
+      "entry": "RunUnityNoReuse",
+      "exitCode": 0,
+      "startedUtc": "2026-10-19T04:13:03.5340676Z",
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-v01-canonical-RunUnityNoReuse.log",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "6D22EC90ECC01B42F8DEEAC75FEA31590A434DA29FC354A293E844A1648777AD"
+    },
+    {
+      "entry": "RunUnityRaw",
+      "exitCode": 0,
+      "startedUtc": "2026-10-19T04:13:18.2203951Z",
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-v01-canonical-RunUnityRaw.log",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "5CF3877973A327B7BF266F116F32D79323983B82C77A633FE8AF7029B18B6F65"
+    },
+    {
+      "entry": "RunUnityRR",
+      "exitCode": 0,
+      "startedUtc": "2026-10-19T04:13:31.7426217Z",
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-v01-canonical-RunUnityRR.log",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "AFE24366CF6D87299EF77C0F8677FDC42D8FDF1D25346FE341DF4783A03DD6A6"
+    },
+    {
+      "entry": "RunNativeRelax",
+      "exitCode": 0,
+      "startedUtc": "2026-10-19T04:13:48.2477101Z",
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-v01-canonical-RunNativeRelax.log",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "3E6483B04689967F09BAD07B64C6C83960BBB7034ABC611DD1BE5D12EDBC4544"
+    }
+  ]
+}

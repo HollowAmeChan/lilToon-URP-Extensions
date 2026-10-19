@@ -1,6 +1,6 @@
 # Ho-RTGI 当前交接
 
-更新：2026-10-19，步骤000文档提交准备；步骤001参考对照进行中。目标状态 active，未完成，未暂停。
+更新：2026-10-19，步骤000已提交，步骤001诊断矩阵与复审完成、准备过滤提交。目标状态 active，未完成，未暂停。M0仍需共同响应域的必要能量对照。
 
 ## 目标与不可丢失的用户要求
 
@@ -10,32 +10,33 @@
 
 ## 工作区与并行边界
 
-- 当前目录 `D:/Unity_Fork/lilToon-URP-Extensions`，共享 checkout。最近已存在 RTDI 提交 `94c9128`，不是本任务提交。
-- RTDI 另一任务仍在修改 Runtime/Editor/RTDI 的 Volume、Settings、RendererFeature、Player/GUI 等文件，有未跟踪 ViewSettings/VolumeControlsValidation；**保留，不暂存、不提交、不回退**。每次提交前重新看 `git status` / index，列表会变化。
-- 本任务自有文件：本目录四份文档、`Documentation~/计划/Ho-RTGI-v0.1-实施规划.md`、`Tests~/RTGI/Reference/HoReferenceGIProbe.cs`。步骤000只提交文档，探针留给步骤001完整复审后提交。
-- 尚未修改任何 GI Runtime/Editor 或用户场景。
+- 当前目录 `D:/Unity_Fork/lilToon-URP-Extensions`，共享 checkout。本任务步骤000提交 `7ece0fe`。RTDI已新增 `5c404cd`，不是本任务提交。
+- RTDI另一任务继续修改 Runtime/Editor/RTDI，最新见过 Context/RendererFeature、ProjectionSample、VolumeLiveAudit 和根README；**保留，不暂存、不提交、不回退**。每次提交前重新看 `git status` / index，列表会变化。
+- 本任务自有文件：本目录四份文档、规划、`Tests~/RTGI/Reference/`、`Editor/RTGI/HoRTGIMatchedReferenceValidation.cs`及meta。步骤001仅过滤提交这些相关诊断/证据/文档；提交号可用 `git log -1 -- Tests~/RTGI/Reference` 查询，下步骤再记入过程记录。
+- 尚未修改 GI Runtime 或用户场景；Editor仅增加隔离诊断入口。
 
 ## 工程与运行状态
 
 - 参考副本 `.codex-research/UnityPathTracing-6000.3.15`；native 源码 `.codex-research/UnityPathTracing/RenderingPlugin`。
 - Unity `C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe`，RTX4060 / D3D12，参考当前 Linear。
 - 参考启动对子进程 PATH 增加 `Assets/Plugins/x86_64` 与 `Packages/top.kuanmi.native-rendering/Plugins/x86_64`，不改系统 PATH。隐藏启动 `-batchmode -force-d3d12`，不使用 `-nographics`，同工程一次一进程。
-- `HoReferenceGIProbe.RunUnityRaw` 的 PID 18940 已完成、退出0。父 exec session 63997 已收取完成结果，没有本任务仍运行的 Unity 测试。用户 BREAK_URP Unity 和 AssetImportWorker 是其他进程，不操作。
+- 步骤001全部测试已结束，相关 exec session 63997/67520/68162/21469/72296/73483/75477/57623均已收取完成结果，没有本任务仍运行的Unity测试。最后Ho canonical PID43156/40808/11744均exit0。用户BREAK_URP与其AssetImportWorker等是其他进程，不操作。
 - 探针源码已复制到参考 `Assets/Editor/HoReferenceGIProbe.cs`；同目录原 DI probe/stats 未改。既有 NRI/Native 修复按 `Tests~/RTDI/Reference/README.md` 保留。
-- `.codex-research/RTInputValidation` 是 DI 既有测试工程，后续 Ho GI 对照应优先建立自己的隔离工程，避免与并行 DI 运行冲突。
+- 已建立 `.codex-research/RTGIValidation`：从既有验证工程复制ProjectSettings，显式设Linear，manifest引用本地HoURP/lilToon/Extensions，移除与本测试无关的GLTF两项依赖。RTInputValidation留给并行DI，不占用。
 
 ## 最新证据与限制
 
-参考 Unity raw 实际报告：`.codex-research/UnityPathTracing-6000.3.15/ho-reference-gi-v01-unity-raw/report.json`；日志 `.codex-research/rtgi-v01-reference-unity-raw.log`；同目录有 direct-only 和第1/4/8/16/32/64/128/256 GI raw EXR/PNG。
+正式证据快照与可复现说明：[Tests~/RTGI/Reference/README.md](../../Tests~/RTGI/Reference/README.md)及其results目录。`run.json`记录四个参考真实exit0/fresh/pass和source/report SHA；`ho-run.json`记录三个Ho入口同样信息。保留Native首版8帧协议失败的报告，不能删除。全量EXR/PNG仍在隔离项目的对应输出目录，选定PNG随步骤提交。
 
-报告 `pass=true`、264次手动请求，direct-only 基线差0，中心32² ROI GI raw 增量 RGB约 `(0.072124, 0.002533, 0.001618)`。这是单灯白接收面/离屏红墙的真实 GI 存在性诊断，尚无 Ho 同场景对照、无偏参考或重建收益结论。读取包含同步 GPU readback，非性能测试。
+参考Unity无复用/复用raw/RR、NativeGI+RELAX四项均264手动请求；Ho无复用/RG复用/compat复用三项均256请求。最后128帧时间方差：参考 `.0107172 → .000590190`，RR实际combined `.00000752505`；Ho `.00993115 → .0000167614`，RG/compat一致。不同响应域与输出语义下不能用这些值排名画质或断言无偏。未做真实自动帧motion、GPU预算、Player或目标场景验收。
 
-参考退出日志存在 licensing 握手/令牌提示（后续仍实际渲染并退出0），以及 persistent allocation / d3d12 referenced resource 释放提示；仍需归类/记录，不能静默声称无诊断。当前筛查未见本轮新增 shader 编译错误，正式步骤001仍需完整核对。
+关键发现：参考设置IOR1并未关闭二次F0，实际packet `FF3B3B3B`约.04；Ho为`FF000000`。参考Unity还合并primary specular，Nativedebug则为demodulated diff+spec。两边主色按各自codec接近，但当前不是严格diffuse-only能量匹配。Ho初次元数据reader曾误用参考48B布局，已按真实HLSL纠正并重跑三项；正式结果均为修正版本。
+
+七份canonical日志无shader编译error/warning或C#编译错误；仍存在licensing启动提示和reference退出persistent/reference-resource提示，未声称参考完整生命周期通过。诊断与暂缓项见过程记录及禁试F08～F10。
 
 ## 下一动作（按顺序）
 
-1. 完成步骤000文档的精确路径 review、链接检查、过滤提交；记录提交号。不要把探针或 RTDI 并行文件混进去。
-2. 复审 `HoReferenceGIProbe`：baseline 差应按每通道绝对值，标明 DI+GI 合成增量与重建 combined 的区别；核对 IOR/F0、粗糙度、采样参数实际消费和 shader 诊断。
-3. 运行 `RunUnityNoReuse`、`RunUnityRR`、`RunNativeRelax`（顺序、每项检查实际退出/新报告），观察参考 GI 原始/重建路径。如有失败先定位，不重复修已解决的 NRI/DLL 问题。
-4. 建 Ho 自用验证工程与相同场景，先匹配 diffuse 支持域与 raw 能量/时间方差，再决定优先补次级天空还是重建。
-5. 步骤001有充分结果后，将探针、必要报告快照/哈希、过程/禁试/交接更新作为一组过滤提交；之后继续 M1/M2。每次压缩前保证本文件反映真实未完成工作和运行进程。
+1. 完成步骤001最终hash/链接/diff与精确路径过滤提交。步骤000已结束，七个诊断已完成，不要无新理由重跑。
+2. 新步骤先评审必要的响应域对齐：参考次级F0约.04，primary最终输出含specular；用独立diffuse输出/已选reservoir的参考求值或其他有证据的最小方案完成共同域对照。不要为了追求逐位相同改参考采样算法，不凭表面IOR字段判断响应。
+3. 已知Ho ReSTIR在当前夹具有效，优先补用户可见缺口：沿既有参考/SDK适配次级天空、GI独立合成与重建，按实测选择顺序；不重写通用PT或重新做DI滤波试值。
+4. 对每个新步骤执行事前评审、实现、必要验证、正确性/收益/退化review、文档/禁试/交接更新和过滤提交。只在真实目标交付后完成goal，当前保持active。

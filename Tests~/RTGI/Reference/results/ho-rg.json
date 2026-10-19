@@ -1,0 +1,101 @@
+{
+    "pass": true,
+    "diagnosticOnly": true,
+    "noReuse": false,
+    "compatibility": false,
+    "unity": "6000.3.15f1",
+    "gpu": "NVIDIA GeForce RTX 4060",
+    "api": "Direct3D12",
+    "colorSpace": "Linear",
+    "failure": "",
+    "secondaryMaterialSample": "diffuse=0xFF01039A, specularRoughness=0xFF000000, position=(1.25, -1.02, -0.88)",
+    "frames": 256,
+    "rawIndirectMean": {
+        "x": 0.07350298762321472,
+        "y": 0.001455556252039969,
+        "z": 0.0005017983494326472
+    },
+    "windows": [
+        {
+            "first": 1,
+            "last": 1,
+            "mean": {
+                "x": 0.06660780310630799,
+                "y": 0.0013188703451305628,
+                "z": 0.0004546885611489415
+            },
+            "temporalVariance": 0.0
+        },
+        {
+            "first": 2,
+            "last": 4,
+            "mean": {
+                "x": 0.06863617151975632,
+                "y": 0.001359028392471373,
+                "z": 0.0004685285093728453
+            },
+            "temporalVariance": 0.00010516733937332777
+        },
+        {
+            "first": 5,
+            "last": 8,
+            "mean": {
+                "x": 0.07009720802307129,
+                "y": 0.001387997530400753,
+                "z": 0.00047851825365796685
+            },
+            "temporalVariance": 0.000013448360132643622
+        },
+        {
+            "first": 9,
+            "last": 16,
+            "mean": {
+                "x": 0.07286284863948822,
+                "y": 0.001442756736651063,
+                "z": 0.0004973877221345902
+            },
+            "temporalVariance": 0.00001460376117584088
+        },
+        {
+            "first": 17,
+            "last": 32,
+            "mean": {
+                "x": 0.07400050014257431,
+                "y": 0.0014654247788712383,
+                "z": 0.0005051951156929135
+            },
+            "temporalVariance": 0.000018364613825401866
+        },
+        {
+            "first": 33,
+            "last": 64,
+            "mean": {
+                "x": 0.07308085262775421,
+                "y": 0.001447306596674025,
+                "z": 0.000498947047162801
+            },
+            "temporalVariance": 0.000016576472693043163
+        },
+        {
+            "first": 65,
+            "last": 128,
+            "mean": {
+                "x": 0.07351440191268921,
+                "y": 0.0014557820977643133,
+                "z": 0.0005018786177970469
+            },
+            "temporalVariance": 0.000016837961921433594
+        },
+        {
+            "first": 129,
+            "last": 256,
+            "mean": {
+                "x": 0.07385500520467758,
+                "y": 0.0014625133480876685,
+                "z": 0.0005041969125159085
+            },
+            "temporalVariance": 0.000016761431365043953
+        }
+    ],
+    "protocol": "128x128, 256 manual render requests, one point light, reflectance=0/metallic=0/roughness=1, no environment/emission, dedicated raw GI; diagnostic signal comparison, not performance or automatic-frame motion validation"
+}
