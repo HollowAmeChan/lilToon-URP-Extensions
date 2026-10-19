@@ -1,6 +1,6 @@
 # Ho-RTGI 当前交接
 
-更新：2026-10-19，步骤003已提交，步骤004正常相机加法合成已实现并正式验证/review，准备过滤提交。目标active，未完成；下一项独立GI降噪，实际动态/场景/性能/Player仍须交付。
+更新：2026-10-19，步骤004已提交82df540；步骤005独立GI RELAX_DIFFUSE已完成正式矩阵/回归与复审，准备过滤提交。目标active，未完成；下一项正常自动帧动态/空间质量、目标场景/性能与Player。
 
 ## 目标与不可丢失的用户要求
 
@@ -10,10 +10,10 @@
 
 ## 工作区与并行边界
 
-- 当前目录 `D:/Unity_Fork/lilToon-URP-Extensions`，共享 checkout。本任务步骤000 `7ece0fe`、001 `6e90d21`、002 `f6278de`、003 `a0a89f6`。其他提交不属本任务，每次操作重新检查工作区/暂存区。
+- 当前目录 `D:/Unity_Fork/lilToon-URP-Extensions`，共享 checkout。本任务步骤000 `7ece0fe`、001 `6e90d21`、002 `f6278de`、003 `a0a89f6`、004 `82df540`。其他提交不属本任务，每次操作重新检查工作区/暂存区。
 - RTDI另一任务继续修改 Runtime/Editor/RTDI，最新见过 Context/RendererFeature、ProjectionSample、VolumeLiveAudit 和根README；**保留，不暂存、不提交、不回退**。每次提交前重新看 `git status` / index，列表会变化。
 - 步骤004自有改动：新Runtime/RTGI/CompositePass和shader及meta、GI Settings/Volume/Feature接入与Editor UI，新CompositeValidation、legacyGI测试显式DI启用、Tests~/RTGI/Composite，以及RTGI文档。提交号用`git log -1 -- Runtime/RTGI/HoRTGICompositePass.cs`查，下步记入过程。任何并行文件不纳入。
-- 没有改用户场景。次级天空和可选普通相机加法已有实际结果；独立NRD、Player、实际动态/目标场景性能仍未交付。
+- 没有改用户场景。次级天空、普通相机加法及独立NRD已有实际结果；Player、正常自动帧动态/复杂空间质量和目标场景性能仍未交付。
 
 ## 工程与运行状态
 
@@ -58,11 +58,23 @@
 
 七份canonical日志无shader编译error/warning或C#编译错误；仍存在licensing启动提示和reference退出persistent/reference-resource提示，未声称参考完整生命周期通过。诊断与暂缓项见过程记录及禁试F08～F10。
 
+## 步骤005最新状态
+
+独立原版RELAX_DIFFUSE：15个DIFF-only wrapper、6 permanent/4 transient池，每相机独立实例/guide/history。共用DI ABI/dispatch只加可选类型/manifest/settings，DI默认调用不变。乘albedo前直接生成demodulated信号，NRD前后成对除/乘64，保留raw，新RawDiffuse调试/global/RG发布，合成读取PublishedDiffuse。Settings/Volume denoise默认false。
+
+Tests~/RTGI/NRD/results/run.json汇总7项实际exit0：四组Linear/Gamma×RG/compat各243请求/41checks，DI RunDenoise完整能量/噪声/生命周期门槛、raw GI合成和Gamma环境compat回归。均值(.360382,.180422,.088747)→(.364358,.182411,.089711)，红通道逐像素时间方差.1141095684→.00000390791。HDR天空1000均值差约+.7%；零albedo、首暗帧reset、相机矩阵移动、invalid、Volume、两相机独立与resize均通过。新增1080p约156.4MiB，未测GPU毫秒。
+
+exec session79307（四组GI通过，DI marker误配runner失败）、75531（正确三项回归）终态均已收取。当前本任务没有活Unity测试，active.json/run.json均activeProcess=null，禁止重启旧PID。
+
+共享VolumeLight施工编译错误，未改他人文件；专用工程manifest现指向.codex-research/RTGIValidationPackage：base82df540加95份GI/API覆盖。snapshot-matrix.json与snapshot.json源码SHA逐项相同，已核对当前工作树。改GI后必须先snapshot_validation.ps1同步，不能将该隔离包当实时源码。git archive的旧ShadowCast合同CRLF导致宏parser误报，仅快照转LF并记录最终SHA，生产未改。不能扩称当前共享工作区整体验收通过。
+
+保留失败：33位GUID导入失败、缺using（已修正）；快照CRLF；DI RunConvergence实际exit0但错误marker拒绝，换已有RunDenoise严格门槛通过。部分历史同名log被成功后续运行覆盖，其旧SHA只能作历史；报告/Convergence capture均保留。后续runner已加时间戳。见Tests~/RTGI/NRD/README.md与F16～18。
+
+复审接纳为可选原版基线；正常自动帧动态、复杂空间细节/薄遮挡、任意HDR、运动角色、实际场景性能/Player均未完成，不能由均匀夹具噪声收益替代。
+
 ## 下一动作（按顺序）
 
-1. 完成步骤004最终源码/报告hash和过滤提交。6项已正式通过，不因文档变化重复矩阵；历史步骤001/002证据按对应历史source commit核对。
-2. 步骤005先review并接独立GI降噪：保留raw，生产正确的demodulated diffuse（从BRDF乘albedo前生成，不能反除丢零通道）、真实GI lobe命中距离、normal/roughness/viewZ，独立NRD实例/池/历史。优先原版固定RELAX基线，不直接套DI private参数/body或Native prior-DI距离。
-3. 当前DI的NRD dispatcher与固定manifest可作资源/ABI参考，但它还含DI特定历史/guide与新SceneView逻辑，且可能并行修改；如需共用接口先核对当前源码，避免把他人未提交变化带入提交。GI按其目标保留独立信号与reset策略。
-4. 合成compat当前读取context.diffuse、RG读发布资源；接NRD时两条都要消费filtered publication，并保留raw调试。另外核对新compositeShader和所有GI shader的serialized引用/Player reachability；目前仅Editor加载验证，Player尚未证明。
-5. 后续实际场景须补DI已有天空壳材质排除、基础Cutout/骨骼遮挡等GI支持，并做正常帧动态、GPU分段/显存和Mono Player。不要把合成开关或简单夹具当成完整goal交付。
-6. 每步都事前review、实测、复审、文档/禁试/交接更新并过滤提交。参考侧差异调查暂缓（F12），完整目标保持active。
+1. 步骤005最终过滤提交：仅Runtime/RTGI、Editor/RTGI、两份共享NRD API和Tests~/RTGI/NRD/RTGI文档；先看git/index，所有VolumeLight等并行变动排除。
+2. 步骤006先review正常自动帧动态与空间质量：真实应用frameCount推进，验证静态世界camera重投影、移动几何/天空/材质变化首帧reset、薄边/非均匀间接光的细节。不能将同帧多RenderRequest标为动态帧；无阶段证据不调NRD参数。
+3. 后续实际场景补DI已有天空壳排除、基础Cutout/骨骼遮挡等GI支持；分段GPU/显存与Mono Player全部shader/native/合成的引用及打包可达性必须实测，不能据Editor加载证明Player。
+4. 每步事前review、实测、复审正确性/收益/退化、过程/禁试/交接更新、过滤提交。参考侧偏暗差异调查暂缓F12；完整目标保持active。UI目标看似丢失时先get_goal，不虚假完成重建。

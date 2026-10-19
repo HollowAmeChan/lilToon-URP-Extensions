@@ -1,0 +1,45 @@
+{
+  "step": 5,
+  "startedUtc": "2026-10-19T15:49:31.6457861Z",
+  "project": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTGIValidation",
+  "snapshotSha256": "894B91857C8E8CB45FA3F4B0A45A82E0AF6C857EDEDF84CFA1B911FBD902AD8E",
+  "activeProcess": null,
+  "entries": [
+    {
+      "label": "Linear-di-nrd-regression",
+      "entry": "RTDI.HoRTDIValidation.RunDenoise",
+      "colorSpace": "Linear",
+      "exitCode": 0,
+      "passMarker": true,
+      "shaderCsDiagnostics": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step005-final-Linear-di-nrd-regression.log",
+      "logSha256": "EBEE5EEA6A8E8C858688591AED221AFB198F6CDF0D719BD9126CA54DE312CE67"
+    },
+    {
+      "label": "Linear-raw-composite-regression",
+      "entry": "RTGI.HoRTGICompositeValidation.Run",
+      "colorSpace": "Linear",
+      "exitCode": 0,
+      "passMarker": true,
+      "shaderCsDiagnostics": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step005-final-Linear-raw-composite-regression.log",
+      "logSha256": "D2D2E4F343CD9FC8165D7C7D6E7A8D28E79562AD6C61C76E2337691793F5C075",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "B5404A5A907708B16BF47427E10AFD04065C632EEE081E4494C631E0A335B172"
+    },
+    {
+      "label": "Gamma-raw-environment-regression",
+      "entry": "RTGI.HoRTGIEnvironmentValidation.RunCompatibility",
+      "colorSpace": "Gamma",
+      "exitCode": 0,
+      "passMarker": true,
+      "shaderCsDiagnostics": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step005-final-Gamma-raw-environment-regression.log",
+      "logSha256": "A2A9809116B3A02217F01E491EA6E1140DC133288E0CA5DCE8313B26B6B4383F",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "ECC6F1D01549F99938F6F23283CFA51F8E33331B7095552D15A47263F55D0FDC"
+    }
+  ]
+}

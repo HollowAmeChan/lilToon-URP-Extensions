@@ -1,0 +1,266 @@
+{
+  "denoiserType": 10,
+  "version": [
+    4,
+    17,
+    3
+  ],
+  "normal": 2,
+  "roughness": 1,
+  "sizes": {
+    "library": 40,
+    "creation": 48,
+    "pipeline": 320,
+    "instance": 112
+  },
+  "entry": "main",
+  "constantMax": 720,
+  "pipelines": [
+    {
+      "identifier": "RELAX_ClassifyTiles.cs.hlsl",
+      "ranges": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "constants": true
+    },
+    {
+      "identifier": "RELAX_HitDistReconstruction.cs.hlsl|NRD_SIGNAL=DIFF|NRD_MODE=RADIANCE|MODE_5X5=0",
+      "ranges": [
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "constants": true
+    },
+    {
+      "identifier": "RELAX_HitDistReconstruction.cs.hlsl|NRD_SIGNAL=DIFF|NRD_MODE=RADIANCE|MODE_5X5=1",
+      "ranges": [
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "constants": true
+    },
+    {
+      "identifier": "RELAX_PrePass.cs.hlsl|NRD_SIGNAL=DIFF|NRD_MODE=RADIANCE",
+      "ranges": [
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "constants": true
+    },
+    {
+      "identifier": "RELAX_TemporalAccumulation.cs.hlsl|NRD_SIGNAL=DIFF|NRD_MODE=RADIANCE",
+      "ranges": [
+        [
+          0,
+          13
+        ],
+        [
+          1,
+          3
+        ]
+      ],
+      "constants": true
+    },
+    {
+      "identifier": "RELAX_HistoryFix.cs.hlsl|NRD_SIGNAL=DIFF|NRD_MODE=RADIANCE",
+      "ranges": [
+        [
+          0,
+          5
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "constants": true
+    },
+    {
+      "identifier": "RELAX_HistoryClamping.cs.hlsl|NRD_SIGNAL=DIFF|NRD_MODE=RADIANCE",
+      "ranges": [
+        [
+          0,
+          6
+        ],
+        [
+          1,
+          3
+        ]
+      ],
+      "constants": true
+    },
+    {
+      "identifier": "RELAX_Copy.cs.hlsl|NRD_SIGNAL=DIFF|NRD_MODE=RADIANCE",
+      "ranges": [
+        [
+          0,
+          1
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "constants": true
+    },
+    {
+      "identifier": "RELAX_AntiFirefly.cs.hlsl|NRD_SIGNAL=DIFF|NRD_MODE=RADIANCE",
+      "ranges": [
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "constants": true
+    },
+    {
+      "identifier": "RELAX_AtrousSmem.cs.hlsl|NRD_SIGNAL=DIFF|NRD_MODE=RADIANCE",
+      "ranges": [
+        [
+          0,
+          6
+        ],
+        [
+          1,
+          4
+        ]
+      ],
+      "constants": true
+    },
+    {
+      "identifier": "RELAX_Atrous.cs.hlsl|NRD_SIGNAL=DIFF|NRD_MODE=RADIANCE",
+      "ranges": [
+        [
+          0,
+          6
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "constants": true
+    },
+    {
+      "identifier": "RELAX_SplitScreen.cs.hlsl|NRD_SIGNAL=DIFF|NRD_MODE=RADIANCE",
+      "ranges": [
+        [
+          0,
+          2
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "constants": true
+    },
+    {
+      "identifier": "RELAX_Validation.cs.hlsl",
+      "ranges": [
+        [
+          0,
+          4
+        ],
+        [
+          1,
+          1
+        ]
+      ],
+      "constants": true
+    },
+    {
+      "identifier": "Clear.cs.hlsl|FLOAT=1",
+      "ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "constants": false
+    },
+    {
+      "identifier": "Clear.cs.hlsl|FLOAT=0",
+      "ranges": [
+        [
+          1,
+          1
+        ]
+      ],
+      "constants": false
+    }
+  ],
+  "permanent": [
+    [
+      27,
+      1
+    ],
+    [
+      27,
+      1
+    ],
+    [
+      0,
+      1
+    ],
+    [
+      8,
+      1
+    ],
+    [
+      0,
+      1
+    ],
+    [
+      30,
+      1
+    ]
+  ],
+  "transient": [
+    [
+      27,
+      1
+    ],
+    [
+      27,
+      1
+    ],
+    [
+      0,
+      16
+    ],
+    [
+      0,
+      1
+    ]
+  ]
+}

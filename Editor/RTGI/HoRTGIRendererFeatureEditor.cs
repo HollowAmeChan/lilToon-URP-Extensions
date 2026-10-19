@@ -15,7 +15,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             if(LilUrpEditorSectionGui.DrawSectionHeader(ref runtime,"运行","ReSTIR GI",RuntimeColor))
             using(new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                Draw(settings,"enabled","启用");Draw(settings,"secondaryLightSamples","次级灯光采样数");Draw(settings,"temporal","时间重采样");Draw(settings,"maxHistory","历史长度");
+                Draw(settings,"enabled","启用");Draw(settings,"denoise","独立 GI 降噪");Draw(settings,"secondaryLightSamples","次级灯光采样数");Draw(settings,"temporal","时间重采样");Draw(settings,"maxHistory","历史长度");
                 Draw(settings,"spatial","空间重采样");Draw(settings,"spatialSamples","邻域样本数");Draw(settings,"spatialRadius","邻域半径");
             }
             EditorGUILayout.HelpBox("调试在 Ho-RTGI Volume 的「调试」分组。",MessageType.Info);
@@ -29,6 +29,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 Draw(settings,"composite","未覆盖时合成到场景");Draw(settings,"intensity","未覆盖时间接光强度");
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("shader"),new GUIContent("Compute Shader"));EditorGUILayout.PropertyField(serializedObject.FindProperty("rayShader"),new GUIContent("Ray Tracing Shader"));EditorGUILayout.PropertyField(serializedObject.FindProperty("secondaryMaterialShader"),new GUIContent("命中材质 Shader"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("compositeShader"),new GUIContent("合成 Shader"));
+                EditorGUILayout.PropertyField(serializedObject.FindProperty("nrdShaders"),new GUIContent("GI NRD Shaders"));
             }
             serializedObject.ApplyModifiedProperties();EditorGUILayout.LabelField("运行状态",((HoRTGIRendererFeature)target).Status);
         }

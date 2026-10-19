@@ -17,18 +17,20 @@ namespace lilToon.URP.Extensions.RTGI
         private HoRTGIDebugMode mode;private Material material;private HoRTGIContext context;
         internal void Setup(HoRTGIDebugMode mode,Material material,HoRTGIContext context)
         {this.mode=mode;this.material=material;this.context=context;renderPassEvent=RenderPassEvent.AfterRenderingPostProcessing;}
-        private sealed class Data {internal Material material;internal int mode;internal Vector2Int size;internal TextureHandle diffuse;}
+        private sealed class Data {internal Material material;internal int mode;internal Vector2Int size;internal TextureHandle diffuse,raw;}
         public override void RecordRenderGraph(RenderGraph graph,ContextContainer frame)
         {
             var input=frame.GetOrCreate<HoRTGIRenderGraphResources>();if(!input.diffuse.IsValid())return;
             var output=CreateDebugTarget(graph,frame);
             using(var builder=graph.AddRasterRenderPass<Data>("Ho-RTGI debug",out var d))
             {
-                d.material=material;d.mode=(int)mode;d.size=DebugSize(graph,output);d.diffuse=input.diffuse;
+                d.material=material;d.mode=(int)mode;d.size=DebugSize(graph,output);d.diffuse=input.diffuse;d.raw=input.rawDiffuse;
+                if(d.raw.IsValid())builder.UseTexture(d.raw);
                 builder.UseTexture(d.diffuse);builder.SetRenderAttachment(output,0,AccessFlags.Write);builder.AllowGlobalStateModification(true);
                 builder.SetRenderFunc(static(Data data,RasterGraphContext ctx)=>
                 {
                     ctx.cmd.SetGlobalTexture("_HoRTGIDiffuseTexture",data.diffuse);
+                    if(data.raw.IsValid())ctx.cmd.SetGlobalTexture("_HoRTGIRawDiffuseTexture",data.raw);
                     HoDebugGrid.Draw(ctx.cmd,data.material,data.mode,ModeId,HoRTGIDebugViewInfo.Views,data.size);
                 });
             }
@@ -36,7 +38,8 @@ namespace lilToon.URP.Extensions.RTGI
         public override void Execute(ScriptableRenderContext rendering,ref RenderingData data)
         {
             var cmd=CommandBufferPool.Get("Ho-RTGI debug");CoreUtils.SetRenderTarget(cmd,DebugTarget);
-            cmd.SetGlobalTexture("_HoRTGIDiffuseTexture",context.diffuse.nameID);
+            cmd.SetGlobalTexture("_HoRTGIDiffuseTexture",context.PublishedDiffuse.nameID);
+            cmd.SetGlobalTexture("_HoRTGIRawDiffuseTexture",context.diffuse.nameID);
             HoDebugGrid.Draw(CommandBufferHelpers.GetRasterCommandBuffer(cmd),material,(int)mode,ModeId,HoRTGIDebugViewInfo.Views,new Vector2Int(DebugTarget.rt.width,DebugTarget.rt.height));
             rendering.ExecuteCommandBuffer(cmd);CommandBufferPool.Release(cmd);PublishCompatibility(data.cameraData.camera);
         }

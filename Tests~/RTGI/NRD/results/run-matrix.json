@@ -1,0 +1,61 @@
+{
+  "step": 5,
+  "startedUtc": "2026-10-19T15:47:23.464499Z",
+  "project": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTGIValidation",
+  "snapshotSha256": "45961D09B0FED8DD76DDFDA59D1633BA1681AFCE8552D2C0BE7F8AD7498AAC99",
+  "activeProcess": null,
+  "entries": [
+    {
+      "label": "Linear-nrd-rg",
+      "entry": "RTGI.HoRTGINrdValidation.Run",
+      "colorSpace": "Linear",
+      "exitCode": 0,
+      "passMarker": true,
+      "shaderCsDiagnostics": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step005-final-Linear-nrd-rg.log",
+      "logSha256": "3F090E027D8C1E3AE7DFA916830F9B678CDA223F9050A4712B44BED5FA6978FF",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "D3A54280E86C264F4176575B8A4A7761E0EB11D7451D0B3B39B483621ACCFDCE"
+    },
+    {
+      "label": "Linear-nrd-compat",
+      "entry": "RTGI.HoRTGINrdValidation.RunCompatibility",
+      "colorSpace": "Linear",
+      "exitCode": 0,
+      "passMarker": true,
+      "shaderCsDiagnostics": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step005-final-Linear-nrd-compat.log",
+      "logSha256": "728E84106EFF2ACCA7CEADCD8C34AE2E556CA379D3492847AA7E63287780102A",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "13964CC247BD773CDD1C2922F0FDB1A70E468009D4A839AC7C6D41A15B201F40"
+    },
+    {
+      "label": "Gamma-nrd-rg",
+      "entry": "RTGI.HoRTGINrdValidation.Run",
+      "colorSpace": "Gamma",
+      "exitCode": 0,
+      "passMarker": true,
+      "shaderCsDiagnostics": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step005-final-Gamma-nrd-rg.log",
+      "logSha256": "92E3527DFA2638541B33DCE912D2696FAC975C31F3B39EC561A76287F4057EF4",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "5D29577CE67BB2BA05F16B7AC69C4ABCFAF632B7766686E8CCB8077FE4F7C181"
+    },
+    {
+      "label": "Gamma-nrd-compat",
+      "entry": "RTGI.HoRTGINrdValidation.RunCompatibility",
+      "colorSpace": "Gamma",
+      "exitCode": 0,
+      "passMarker": true,
+      "shaderCsDiagnostics": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step005-final-Gamma-nrd-compat.log",
+      "logSha256": "77F9901DD5C363A9DD43DF2F2D4F06A9BAD576295EC3F3D0CA548E203BE0CD9F",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "E26EE455C739ED00FA40427DEEDB4F1F32DF22A0F9873DD72B7A4B4A19D50B50"
+    }
+  ]
+}

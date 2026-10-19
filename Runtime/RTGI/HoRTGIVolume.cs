@@ -4,7 +4,7 @@ using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.RTGI
 {
-    public enum HoRTGIDebugMode { Off, Diffuse, Receiver, All=255 }
+    public enum HoRTGIDebugMode { Off, Diffuse, Receiver, RawDiffuse, All=255 }
     [Serializable]
     public sealed class HoRTGIDebugModeParameter : VolumeParameter<HoRTGIDebugMode>
     {
@@ -18,6 +18,7 @@ namespace lilToon.URP.Extensions.RTGI
         [InspectorName("启用")] public BoolParameter enable=new BoolParameter(true);
         [InspectorName("合成到场景")] public BoolParameter composite=new BoolParameter(false);
         [InspectorName("间接光强度")] public MinFloatParameter intensity=new MinFloatParameter(.25f,0);
+        [InspectorName("降噪")] public BoolParameter denoise=new BoolParameter(false);
         [InspectorName("调试模式")] public HoRTGIDebugModeParameter debugMode=new HoRTGIDebugModeParameter(HoRTGIDebugMode.Off);
         public BoolParameter debugInSceneView=new BoolParameter(true);
         public BoolParameter debugInGameView=new BoolParameter(true);

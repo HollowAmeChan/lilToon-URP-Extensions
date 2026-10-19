@@ -105,3 +105,21 @@
 **事后review与收益：** 接纳。用户现在可在Volume开关/调节GI合成，既有原画面、材质emission与fog保留；新实测camera color符合独立贡献，采样历史不因强度变化清零。阴影/透明归属和输入拒绝有实际覆盖，非仅调试输出。默认opt-in保留已有独立消费者。合成新增一次全屏光栅与目标，compat另有拷贝；没有GPU毫秒结论。当前raw仍有噪声，自动帧动态、NRD/Player/目标场景验收仍待推进。
 
 **过滤提交范围：** GI Runtime/Editor本步合成与Volume/GUI、legacyGI测试显式DI启用、Tests~/RTGI/Composite及RTGI文档；排除所有并行DI改动。下一项独立GI降噪与实际信号/命中距离合同。
+
+步骤004过滤提交：`82df540`。
+
+## 005：GI独立RELAX降噪（进行中）
+
+**事前review：** 场景合成已验证，但raw反弹仍有噪声。采用固定NRD4.17.3的原版RELAX_DIFFUSE，先查询本机CPU库真实instance/pipeline与资源布局，生成对应Unity wrappers；不复制DI private shader/body或默认为BOTH浪费specular资源。复用已核对的native ABI与通用dispatch/pool实现时保持DI默认行为不变。
+
+**信号与验收原则：** Final在乘primary albedo前直接生成demodulated diffuse，保留独立raw，不反除零通道；距离来自实际GI lobe/次级命中并区分远处天空与invalid。每相机独立NRD实例/池/历史，正确绑定原版normal/roughness/viewZ与静态世界motion契约；RG/compat及正常合成都消费filtered publication。必须有原版同输入基线、均值/颜色、时间噪声及变化响应证据，再接纳生产；不以进程启动或原型布线当画质收益。
+
+**实现：** 固定DLL实查RELAX_DIFFUSE type10，生成15个原版DIFF-only wrappers、6 permanent/4 transient池manifest；共用ABI/dispatch只增加可选类型/资源表/显式参数，DI默认路径不变。每相机独立实例、signal/normal/viewZ/output/filtered；Final直接生成乘primary albedo之前的信号，真实GI命中距离、原版signed-oct normal/roughness与正viewZ。固定64单位转换减小FP16 moments压力；按非缩放时间换算原版历史预算，静态世界使用相机矩阵/零world motion，保守签名变更reset。Settings/Volume denoise默认false，raw保留并新增RawDiffuse调试/RG/global，正常合成使用当前publication。
+
+**真实验证：** `Tests~/RTGI/NRD/results/run.json`汇总7项全部实际exit0/marker通过/编译诊断0：Linear/Gamma×RG/compat四组各243请求/41checks，DI既有RunDenoise完整门槛及raw GI合成/环境三项回归。四组数值一致：raw RGB(.360382,.180422,.088747)→filtered(.364358,.182411,.089711)，红通道逐像素时间方差.1141095684→.00000390791；HDR天空1000的均值差约+.7%。实际覆盖零albedo不丢incoming通道、首暗帧清旧亮、camera矩阵移动、独立相机、invalid、Volume/开关资源与resize。PNG/报告及源hash见该目录README。
+
+**保留失败/隔离依据：** 首轮33位GUID导致Context不导入、CS0246；修正后发现缺URP using（修正）及并行VolumeLight施工编译错误。未改他人文件，改用base82df540加95份GI/API明确覆盖的隔离package；两轮snapshot SHA逐项一致并与当前源码核对。git archive的旧ShadowCast合同CRLF触发既有validator，只有隔离副本转LF并记SHA；report保留。DI RunConvergence进程实际exit0但runner误配通用PASS marker而拒绝，保留run/capture，改跑已有RunDenoise严格门槛通过。旧同名smoke/Convergence log后来覆盖，旧SHA不可对当前同名文件验真；后续runner已增加时间戳，禁止隐去该限制。
+
+**事后review与收益：** 接纳为可选原版GI降噪基线，均匀天光反弹夹具方差降低约99.9966%，均值差约+1.1%，raw可直接对照，DI回归未退化。新增约79B/像素+tile+192KiB，1080p约156.4MiB；尚无实际GPU毫秒。均匀夹具不是复杂空间质量，手动请求不是自动帧动态；任意HDR、运动角色、目标场景/Player与当前共享工作区整体验收仍未完成。后续优先补真实自动帧/空间质量与预算，不直接用更多历史或DI私有参数继续压噪。
+
+**过滤提交范围：** Runtime/RTGI、Editor/RTGI、本步两份共享NRD API文件、Tests~/RTGI/NRD、Ho-RTGI说明及RTGI过程/禁试/交接。所有VolumeLight及其他并行文件、隔离package/工程和全量EXR/log排除。

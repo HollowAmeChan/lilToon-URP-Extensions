@@ -110,7 +110,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         internal static string ResourceName(uint type)=>type<HoRTDINrdManifest.ResourceTypes.Length?HoRTDINrdManifest.ResourceTypes[type]:throw new InvalidOperationException("NRD resource enum out of range");
         internal static T Read<T>(IntPtr pointer,int index=0)=>Marshal.PtrToStructure<T>(IntPtr.Add(pointer,index*Marshal.SizeOf<T>()));
         internal static void Check(uint result,string operation){if(result!=0)throw new InvalidOperationException($"NRD {operation}: result {result}");}
-        internal static IntPtr Create()
+        internal static IntPtr Create(uint denoiserType=14)
         {
             if(Marshal.SizeOf<LibraryDesc>()!=40||Marshal.SizeOf<CreationDesc>()!=48||Marshal.SizeOf<PipelineDesc>()!=320||Marshal.SizeOf<InstanceDesc>()!=112||Marshal.SizeOf<CommonSettings>()!=432)
                 throw new InvalidOperationException("NRD 4.17.3 managed ABI size mismatch");
@@ -120,7 +120,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             IntPtr method=Marshal.AllocHGlobal(8);
             try
             {
-                Marshal.StructureToPtr(new DenoiserDesc{identifier=0,type=14},method,false);
+                Marshal.StructureToPtr(new DenoiserDesc{identifier=0,type=denoiserType},method,false);
                 var creation=new CreationDesc{denoisers=method,count=1};Check(CreateInstance(ref creation,out var instance),"CreateInstance");
                 try
                 {

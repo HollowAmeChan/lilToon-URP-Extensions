@@ -2,7 +2,7 @@
 
 已沿用户参考工程接通 BrdfRayTracing → ShadeSecondarySurfaces → GI temporal/spatial/final，提供独立的一跳diffuse GI输出及可选的场景加法合成。SDK GI reservoir与时间/空间重采样复用固定原文件；应用bridge适配Ho生产端。最终NPR影色/ramp映射或材质内接收未纳入本阶段。
 
-2026-10-19起的持续推进、实际参考对照、失败与交接见[RTGI入口](RTGI/README.md)。次级天空、显式直接天空归属和正常相机加法合成已有实测；独立降噪、Player与目标场景验收继续推进，不能由原型输出或局部对照通过替代。
+2026-10-19起的持续推进、实际参考对照、失败与交接见[RTGI入口](RTGI/README.md)。次级天空、显式直接天空归属和正常相机加法合成已有实测；独立GI降噪已接入固定原版RELAX_DIFFUSE，自动帧动态、Player与目标场景验收继续推进，不能由原型输出或局部对照通过替代。
 
 ## 使用与输出
 
@@ -12,9 +12,19 @@ Renderer 添加 **Ho-RTGI**，前面启用 GB / SB；需要天空时再启用 Ho
 
 输出已含接收BRDF/albedo，合成不再乘主色、不再添加primary emission；Gamma工程先将原画面转线性相加，再转回显示空间。雾只衰减新增GI，保留原画面雾色；透明物在其后绘制。与DI同时合成时按Feature顺序消费当前camera color，通常将DI放在GI前。已有烘焙/SSGI等间接光仍由原路径负责，需要按场景决定叠加份额，GI不会自动改写它们。
 
-Diffuse / Receiver / All调试继续显示独立输出；Receiver绿为有效接收面、红为输入无效。调试与正常画面合成是两项独立控制。
+Diffuse / Receiver / RawDiffuse / All调试显示独立输出；Receiver绿为有效接收面、红为输入无效。Diffuse与正常合成消费当前发布结果；RawDiffuse始终显示未降噪贡献。调试与正常画面合成是两项独立控制。
 
 RenderGraph 消费 `HoRTGIRenderGraphResources.diffuse` 并声明读依赖；兼容全局为 `_HoRTGIDiffuseTexture` 与 `_HoRTGIActive`。RGB 为线性 HDR，**已包含参考 Lambert 接收 BRDF 与 diffuse albedo**；A 为 receiver validity。有效暗处可以 RGB=0、A=1，主表面缺失或 GB/SB 域不匹配为 A=0。
+
+### 独立GI降噪
+
+Volume的「独立 GI 降噪」可逐相机覆盖Feature的`denoise`默认值，默认关闭。启用后，每相机分配独立的NRD4.17.3 RELAX_DIFFUSE实例、池和guide/history；不共享DI的历史，不运行DI私有RELAX shader body。借用的只有固定native ABI与dispatch资源调度实现。若库、shader或UAV格式不可用，状态栏给出原因并发布raw。
+
+Final在乘主表面albedo之前直接产生demodulated diffuse；不从已乘色信号反除。NRD输入使用固定signed-oct normal编码、diffuse roughness=1、正viewZ与实际GI样本/射线命中距离，天空距离限于FP16可表示范围；invalid使用远viewZ并在resolve强制RGB/A清零。输入除64、输出乘64是固定HDR单位转换，保留原信号和raw；不是外观增益，也不承诺任意HDR范围。
+
+RELAX参数采用固定头文件的原版默认值，累计预算按观测到的非缩放渲染时间换算为约.5秒主历史/.1秒快速历史；Scene View使用30/6样本预算。静态世界使用前后相机矩阵及零world motion；几何/灯/材质/天空/采样签名变化保守清历史，暂不处理动态表面速度。关闭降噪释放资源，再启用从新历史开始。
+
+`HoRTGIRenderGraphResources.rawDiffuse` / `_HoRTGIRawDiffuseTexture`始终提供raw；`diffuse` / `_HoRTGIDiffuseTexture`在降噪开启且可用时提供filtered。二者的线性HDR、已乘接收albedo与receiver validity契约相同。启用降噪增加约79B/像素加16×16 tile标记、192KiB常量缓冲，1080p约156.4MiB，尚无目标场景GPU毫秒结论。
 
 ### 天空贡献归属
 
@@ -42,7 +52,7 @@ Emission 直接调用 lilToon 现有 `lilEmissionComponent` / `lilEmission2ndCom
 - 当前命中材质接收标准 `lilToon` opaque，第一主色链、两组 normal map、两组专用 emission，以及 smoothness/metallic 贴图。Main2nd/Main3rd、parallax 位移、Lite/Multi/Hair/自定义 shader 尚未接入，明确返回 unsupported。
 - 命中材质副本读取 sharedMaterial；Renderer MaterialPropertyBlock 属性覆盖及自定义 lilToon 扩展尚未接入。
 - Unsupported opaque 材质仍有真实命中，status=2，保持遮挡；不能把它转成环境 miss。status=0 才表示 miss，status=1 表示已求值的材质。
-- 纹理采样显式LOD0，尚未实现ray-cone过滤与GSAA。发光视角组分使用二次射线的观察方向。已有加法场景合成；SSS、最终NPR ramp/材质内接收、独立降噪及Player验收仍未交付。
+- 纹理采样显式LOD0，尚未实现ray-cone过滤与GSAA。发光视角组分使用二次射线的观察方向。已有加法场景合成及独立GI降噪；SSS、最终NPR ramp/材质内接收及Player验收仍未交付。
 - 二次命中点支持 point / spot / directional 解析灯，限制与 Ho-RTDI 相同：cookie、非全局 cullingMask、baked-only、其他灯型排除；Rendering Layer / 艺术灯光链接未接入。RT 可见性独立于 raster Light.shadows。
 - 二次材质命中点计算解析灯、专用emission与天空照明。次级天空沿固定SDK的环境重要性采样接入；主表面直接天空仅在显式开启时经miss路径贡献。没有多跳反馈、发光网格重要性采样、主表面specular GI或完美镜面路径。
 - 不支持的 opaque 命中按黑表面处理；无贡献或被几何法线拒绝的方向仍计作黑样本，避免丢弃零贡献样本导致能量偏高。为保留 HDR 能量，未启用参考中的 firefly radiance clamp；当前 raw 输出有噪声。

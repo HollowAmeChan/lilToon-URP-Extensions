@@ -1,0 +1,22 @@
+{
+  "step": 5,
+  "startedUtc": "2026-10-19T15:46:46.3247572Z",
+  "project": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTGIValidation",
+  "snapshotSha256": "7933F1DA9C0B442790C51A5860D3A9FCD27E536F4F85E2B6C17523940EC612A5",
+  "activeProcess": null,
+  "entries": [
+    {
+      "label": "Linear-nrd-rg",
+      "entry": "RTGI.HoRTGINrdValidation.Run",
+      "colorSpace": "Linear",
+      "exitCode": 0,
+      "passMarker": true,
+      "shaderCsDiagnostics": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step005-smoke-Linear-nrd-rg.log",
+      "logSha256": "8578E92395CED31576888826A68B9B9420FB18CD32ECEE1BE62A0E2609510613",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "D3A54280E86C264F4176575B8A4A7761E0EB11D7451D0B3B39B483621ACCFDCE"
+    }
+  ]
+}

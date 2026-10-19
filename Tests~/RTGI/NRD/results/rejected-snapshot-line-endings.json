@@ -1,0 +1,34 @@
+{
+    "pass": false,
+    "compatibility": false,
+    "failure": "System.Exception: Render diagnostic: [lilToon URP Extensions] ShadowCast shader contract: HO_SHADOW_CAST_CAPACITY_HIGH_LIGHTS is missing from HoShadowCastShaderContract.hlsl (expected 48).\r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation.Render () [0x000cc] in D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTGIValidationPackage\\Editor\\RTGI\\HoRTGINrdValidation.cs:84 \r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation.Tick () [0x00010] in D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTGIValidationPackage\\Editor\\RTGI\\HoRTGINrdValidation.cs:121 ",
+    "colorSpace": "Linear",
+    "frames": 1,
+    "rawMean": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "filteredMean": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "hdrRaw": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "hdrFiltered": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "rawVariance": 0.0,
+    "filteredVariance": 0.0,
+    "checks": []
+}

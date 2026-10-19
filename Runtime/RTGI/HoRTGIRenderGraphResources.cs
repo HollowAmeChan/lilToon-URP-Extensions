@@ -7,6 +7,7 @@ namespace lilToon.URP.Extensions.RTGI
     public sealed class HoRTGIRenderGraphResources : ContextItem
     {
         public TextureHandle diffuse = TextureHandle.nullHandle;
-        public override void Reset() => diffuse = TextureHandle.nullHandle;
+        public TextureHandle rawDiffuse = TextureHandle.nullHandle;
+        public override void Reset() {diffuse=rawDiffuse=TextureHandle.nullHandle;}
     }
 }

@@ -59,7 +59,7 @@ namespace lilToon.URP.Extensions.RTGI
         {
             var source=data.cameraData.renderer.cameraColorTargetHandle;var cmd=CommandBufferPool.Get("Ho-RTGI additive composite");
             HoRTPrimarySurfaceInputs.BindCompatibility(cmd,data.cameraData);
-            cmd.SetGlobalTexture(DiffuseId,lighting.diffuse.nameID);cmd.SetGlobalFloat(IntensityId,intensity);
+            cmd.SetGlobalTexture(DiffuseId,lighting.PublishedDiffuse.nameID);cmd.SetGlobalFloat(IntensityId,intensity);
             Blitter.BlitCameraTexture(cmd,source,scratch,material,0);Blitter.BlitCameraTexture(cmd,scratch,source);
             rendering.ExecuteCommandBuffer(cmd);CommandBufferPool.Release(cmd);
         }

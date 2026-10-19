@@ -7,12 +7,16 @@ using UnityEngine;
 using UnityEngine.Experimental.Rendering;
 using UnityEngine.Rendering;
 using UnityEngine.Rendering.Universal;
+using lilToon.URP.Extensions.RTGI.NRD;
 namespace lilToon.URP.Extensions.RTGI
 {
     internal sealed class HoRTGIContext : IDisposable
     {
         internal GraphicsBuffer reservoirs,history,lights,neighbors,secondary;
         internal RTHandle diffuse;
+        internal HoRTGINrdContext nrd;
+        internal string nrdStatus;
+        internal RTHandle PublishedDiffuse=>nrd?.filtered??diffuse;
         internal GraphicsBuffer environmentRis;
         internal RTHandle environmentPdf;
         internal bool environmentSampling,environmentPdfReady;
@@ -72,7 +76,13 @@ namespace lilToon.URP.Extensions.RTGI
             {graphicsFormat=GraphicsFormat.R32_SFloat,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true,useMipMap=true,autoGenerateMips=false};
             if(RenderingUtils.ReAllocateIfNeeded(ref environmentPdf,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI environment PDF"))environmentPdfReady=false;
         }
+        internal void PrepareDenoiser(bool enabled,ComputeShader[] shaders)
+        {
+            if(!enabled){nrd?.Dispose();nrd=null;nrdStatus=null;return;}
+            try{nrd??=new HoRTGINrdContext(shaders);nrd.Prepare(width,height);nrdStatus="RELAX diffuse";}
+            catch(Exception error){nrd?.Dispose();nrd=null;nrdStatus="NRD unavailable: "+error.Message;}
+        }
         public void Dispose()
-        {reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();secondary?.Dispose();environmentRis?.Dispose();environmentPdf?.Release();diffuse?.Release();reservoirs=history=lights=neighbors=secondary=environmentRis=null;diffuse=environmentPdf=null;}
+        {nrd?.Dispose();nrd=null;reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();secondary?.Dispose();environmentRis?.Dispose();environmentPdf?.Release();diffuse?.Release();reservoirs=history=lights=neighbors=secondary=environmentRis=null;diffuse=environmentPdf=null;}
     }
 }

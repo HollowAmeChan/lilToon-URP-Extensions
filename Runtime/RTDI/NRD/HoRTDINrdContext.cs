@@ -19,6 +19,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         private readonly ComputeShader[] shaders;
         private readonly int[][] bindings;
         private readonly int[] kernels;
+        private readonly string[][] pipelineResources;
         private readonly uint[] identifiers={0};
         private readonly HoRTDINrdNative.DispatchDesc[] passes;
         private readonly HoRTDINrdNative.ResourceDesc[,] resources;
@@ -84,20 +85,22 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             return restart;
         }
         internal int LastDispatchCount {get;private set;}
-        internal HoRTDINrdContext(ComputeShader[] shaders)
+        internal HoRTDINrdContext(ComputeShader[] shaders,uint denoiserType=14,string[] pipelineIdentifiers=null,string[][] pipelineResources=null)
         {
-            instance=HoRTDINrdNative.Create();description=HoRTDINrdNative.Read<HoRTDINrdNative.InstanceDesc>(HoRTDINrdNative.GetInstanceDesc(instance));
+            var expected=pipelineIdentifiers??HoRTDINrdManifest.Identifiers;
+            this.pipelineResources=pipelineResources??HoRTDINrdManifest.Resources;
+            instance=HoRTDINrdNative.Create(denoiserType);description=HoRTDINrdNative.Read<HoRTDINrdNative.InstanceDesc>(HoRTDINrdNative.GetInstanceDesc(instance));
             try
             {
-                if(description.pipelineCount!=HoRTDINrdManifest.Identifiers.Length||shaders==null||shaders.Length!=description.pipelineCount)
+                if(description.pipelineCount!=expected.Length||this.pipelineResources.Length!=expected.Length||shaders==null||shaders.Length!=description.pipelineCount)
                     throw new InvalidOperationException("NRD shader library count mismatch");
                 this.shaders=(ComputeShader[])shaders.Clone();bindings=new int[shaders.Length][];kernels=new int[shaders.Length];int maxResources=0;
                 for(int i=0;i<shaders.Length;i++)
                 {
                     if(shaders[i]==null)throw new InvalidOperationException("NRD Unity shader missing: "+i);
                     var pipeline=HoRTDINrdNative.Read<HoRTDINrdNative.PipelineDesc>(description.pipelines,i);
-                    if(pipeline.identifier!=HoRTDINrdManifest.Identifiers[i])throw new InvalidOperationException("NRD shader permutation mismatch");
-                    var resources=HoRTDINrdManifest.Resources[i];bindings[i]=new int[resources.Length];
+                    if(pipeline.identifier!=expected[i])throw new InvalidOperationException("NRD shader permutation mismatch");
+                    var resources=this.pipelineResources[i];bindings[i]=new int[resources.Length];
                     for(int j=0;j<resources.Length;j++)bindings[i][j]=Shader.PropertyToID(resources[j]);
                     maxResources=Math.Max(maxResources,resources.Length);kernels[i]=shaders[i].FindKernel("main");
                 }
@@ -161,7 +164,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             int found=0;
             for(int i=0;i<LastDispatchCount;i++)if(passes[i].pipeline==4)
             {
-                var manifest=HoRTDINrdManifest.Resources[4];
+                var manifest=pipelineResources[4];
                 for(int j=0;j<manifest.Length;j++)
                 {
                     string name=manifest[j];int bit=name switch{"gHistory_Spec"=>1,"gHistory_Diff"=>2,"gHistory_SpecFast"=>4,"gHistory_DiffFast"=>8,_=>0};
@@ -175,14 +178,14 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             }
             if(found!=15)throw new InvalidOperationException("NRD signal history inputs missing from pinned Temporal dispatch");
         }
-        internal void Record(CommandBuffer cmd,HoRTDINrdNative.CommonSettings settings,Dictionary<string,RenderTargetIdentifier> external)
+        internal void Record(CommandBuffer cmd,HoRTDINrdNative.CommonSettings settings,Dictionary<string,RenderTargetIdentifier> external,HoRTDINrdNative.RelaxSettings? suppliedSettings=null)
         {
             #if UNITY_EDITOR
             if(SceneViewPreview)
                 SceneViewAccumulatedFrames=settings.accumulationMode==2||!StableDiffuseHistory?0:Math.Min(SceneViewSettledSamples,SceneViewAccumulatedFrames+1);
             #endif
             HoRTDINrdNative.Check(HoRTDINrdNative.SetCommonSettings(instance,ref settings),"SetCommonSettings");
-            var desired=HoRTDINrdNative.RelaxSettings.DenseDI(timing.FilteredSeconds,StableDiffuseHistory);
+            var desired=suppliedSettings??HoRTDINrdNative.RelaxSettings.DenseDI(timing.FilteredSeconds,StableDiffuseHistory);
             #if UNITY_EDITOR
             // Keep useful sample history even when a large Scene View renders
             // once a second. Keep the responsive history too: at zero samples
@@ -190,7 +193,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             // clips the long history against a stochastic 5x5 colour box.
             // Input changes still leave this profile and restart once;
             // game/Player response remains time based.
-            if(SceneViewPreview&&StableDiffuseHistory)
+            if(!suppliedSettings.HasValue&&SceneViewPreview&&StableDiffuseHistory)
             {
                 desired.diffFrames=Math.Max(30u,desired.diffFrames);desired.specFrames=Math.Max(30u,desired.specFrames);
                 desired.diffFast=Math.Max(6u,desired.diffFast);desired.specFast=Math.Max(6u,desired.specFast);
@@ -200,8 +203,8 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             // on a smooth receiver. Keep their diffuse luminance gate tighter.
             // Its rare visible light samples also need a wider history box;
             // keep the ordinary opaque profile unchanged.
-            if(HasCutoutVisibility){desired.diffPhi=1f;desired.fastSigma=4f;}
-            bool diagnostic=false;
+            if(!suppliedSettings.HasValue&&HasCutoutVisibility){desired.diffPhi=1f;desired.fastSigma=4f;}
+            bool diagnostic=suppliedSettings.HasValue;
             #if UNITY_EDITOR
             if(ValidationSettings!=null){desired=ValidationSettings(desired);diagnostic=true;}
             #endif
@@ -253,12 +256,12 @@ namespace lilToon.URP.Extensions.RTDI.NRD
                     #if UNITY_EDITOR
                     if(ValidationSpecularStage!=null&&resource.descriptorType==1)
                     {
-                        string binding=HoRTDINrdManifest.Resources[pass.pipeline][j];
+                        string binding=pipelineResources[pass.pipeline][j];
                         if(binding=="gOut_Spec"||binding=="gOut_Spec_Variance"){validationOutput=texture;hasValidationOutput=true;}
                     }
                     if(ValidationDiffuseStage!=null&&resource.descriptorType==1)
                     {
-                        string binding=HoRTDINrdManifest.Resources[pass.pipeline][j];
+                        string binding=pipelineResources[pass.pipeline][j];
                         if(binding=="gOut_Diff"||binding=="gOut_Diff_Variance"){validationDiffuse=texture;hasValidationDiffuse=true;}
                     }
                     #endif

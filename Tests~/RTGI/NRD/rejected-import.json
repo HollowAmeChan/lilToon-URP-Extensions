@@ -1,0 +1,8 @@
+{
+  "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step005-initial.log",
+  "entry": "HoRTGINrdValidation.Run",
+  "startedUtc": "2026-10-19T15:42:40.8043796Z",
+  "id": 49928,
+  "exitCodeFromLog": 1,
+  "reason": "Initial prototype rejected: invalid 33-character new asset GUID prevented GI NRD context import"
+}
