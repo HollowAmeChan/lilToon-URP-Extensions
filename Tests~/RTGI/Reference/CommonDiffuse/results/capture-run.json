@@ -1,0 +1,74 @@
+{
+  "step": 2,
+  "diagnosticOnly": true,
+  "createdUtc": "2026-10-19T04:31:24.9514770Z",
+  "captures": [
+    {
+      "name": "reference-no-reuse",
+      "entry": "HoReferenceGIDiffuseProbe.RunNoReuse",
+      "processId": 26616,
+      "actualExitCode": 0,
+      "reportPass": true,
+      "reportSha256": "39D8AD170990DF22AA3B40559934E6DD2F0F7534B22D5193CF614AA0855E015B",
+      "log": ".codex-research/rtgi-step002-reference-final-RunNoReuse.log",
+      "logSha256": "D67076094188D25394D6F312B544485F6ABBACDBC8F8B597ECFE781AB4DF53D8"
+    },
+    {
+      "name": "reference-restir",
+      "entry": "HoReferenceGIDiffuseProbe.Run",
+      "processId": 47888,
+      "actualExitCode": 0,
+      "reportPass": true,
+      "reportSha256": "EFC0F3533067C3BEDC7A2C88ADC2601E00E7A1DE68A67085F1B7A4B266CF3F50",
+      "log": ".codex-research/rtgi-step002-reference-final-Run.log",
+      "logSha256": "317E1168CE3C506D3CEFEC72EB316A4DB966E74CEF90C55851C9FBE4B372C5D2"
+    },
+    {
+      "name": "ho-no-reuse",
+      "entry": "HoRTGIMatchedReferenceValidation.RunCommonDiffuseNoReuse",
+      "processId": 42440,
+      "actualExitCode": 0,
+      "reportPass": true,
+      "reportSha256": "CE5BE9D50FA8A574190BCAEC64DEE31642E0FAC3B60DC500287158D27AA7C312",
+      "log": ".codex-research/rtgi-step002-ho-final-RunCommonDiffuseNoReuse.log",
+      "logSha256": "B9DA584C9F9FBB9BDC51291A1218D4A3F911F48785021017B9BF801631E6AC55"
+    },
+    {
+      "name": "ho-restir",
+      "entry": "HoRTGIMatchedReferenceValidation.RunCommonDiffuse",
+      "processId": 40176,
+      "actualExitCode": 0,
+      "reportPass": true,
+      "reportSha256": "8CF47D130FFFBEB6BE235F1D05F6C5F41D417AFC5E10052ED09EDE13B6F74183",
+      "log": ".codex-research/rtgi-step002-ho-final-RunCommonDiffuse.log",
+      "logSha256": "E17AB98C828F1FEE1DBD4E2866BDB63CC69D23D38F4478BCFB4F1129A21CB5FB"
+    }
+  ],
+  "sources": [
+    {
+      "path": "Tests~/RTGI/Reference/HoReferenceGIProbe.cs",
+      "sha256": "7CA0087C82F3D084062484BFD0FB9BA29754FCD9BC15FBC933406FDE99CF22C1"
+    },
+    {
+      "path": "Tests~/RTGI/Reference/CommonDiffuse/HoReferenceGIDiffuseProbe.cs",
+      "sha256": "9D1725A18F5701D02DDD38AE64A99E6F7B66A9417C3701FA98B8FCF32D73D4E3"
+    },
+    {
+      "path": "Tests~/RTGI/Reference/CommonDiffuse/HoReferenceGIDiffuseFinal.compute",
+      "sha256": "FC9F82C75D48DD0522D150FB407F6E47F0E54E3E17F9102E28235AB4465D8C5C"
+    },
+    {
+      "path": "Tests~/RTGI/Reference/CommonDiffuse/integrate_fixture.py",
+      "sha256": "06AA468EAC9C8DF4D037141A16F1421866DCDCF693B1D35A2B99C7CB30D28F34"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIMatchedReferenceValidation.cs",
+      "sha256": "E8A72B46BE740EFA22F935068803C91D056ECB69D6481AF10C053C771E5248F2"
+    }
+  ],
+  "independentComparisonExitCode": 1,
+  "hoQualityPass": true,
+  "referenceQualityPass": false,
+  "overallPass": false,
+  "productionRenderingChanged": false
+}

@@ -1,0 +1,155 @@
+{
+    "pass": true,
+    "diagnosticOnly": true,
+    "mode": "common-diffuse-restir",
+    "unity": "6000.3.15f1",
+    "gpu": "NVIDIA GeForce RTX 4060",
+    "api": "Direct3D12",
+    "colorSpace": "Linear",
+    "failure": "",
+    "settings": "{\"exposureEv\":0.0,\"cameraJitter\":false,\"showMode\":18,\"showMv\":false,\"pdfMipLevel\":0,\"pdfExposureStops\":0.0,\"upscalerMode\":0,\"tmpDisableRR\":true,\"skipRightEyeInVR\":true,\"enableDenoiser\":true,\"lightingSettings\":{\"denoiserMode\":0,\"enablePreviousTLAS\":true,\"enableAlphaTestedGeometry\":true,\"enableTransparentGeometry\":true,\"enableRayCounts\":true,\"visualizeRegirCells\":false,\"enableGradients\":true,\"gradientLogDarknessBias\":-12.0,\"gradientSensitivity\":8.0,\"confidenceHistoryLength\":0.75,\"brdfptParams\":{\"enableIndirectEmissiveSurfaces\":0,\"enableSecondaryResampling\":0,\"enableReSTIRGI\":0,\"pad1\":0,\"materialOverrideParams\":{\"roughnessOverride\":0.5,\"metalnessOverride\":0.5,\"minSecondaryRoughness\":0.5,\"pad1\":0},\"secondarySurfaceReSTIRDIParams\":{\"initialSamplingParams\":{\"numLocalLightSamples\":2,\"numInfiniteLightSamples\":1,\"numEnvironmentSamples\":1,\"numBrdfSamples\":0,\"brdfCutoff\":0.0,\"brdfRayMinT\":0.0,\"localLightSamplingMode\":2,\"enableInitialVisibility\":0,\"environmentMapImportanceSampling\":0,\"pad1\":0,\"pad2\":0,\"pad3\":0},\"spatialResamplingParams\":{\"numSamples\":1,\"numDisocclusionBoostSamples\":0,\"samplingRadius\":4.0,\"biasCorrectionMode\":1,\"depthThreshold\":0.10000000149011612,\"normalThreshold\":0.8999999761581421,\"targetHistoryLength\":0,\"enableMaterialSimilarityTest\":0,\"discountNaiveSamples\":0,\"pad1\":0,\"pad2\":0,\"pad3\":0}}}},\"directLightingMode\":2,\"indirectLightingMode\":3,\"enableGIFinalShading\":true,\"enableDIFinalShading\":true,\"enableEnv\":false,\"useRasterGBuffer\":true,\"regirDynamicParams\":{\"regirCellSize\":1.0,\"fallbackSamplingMode\":1,\"presamplingMode\":1,\"regirSamplingJitter\":1.0,\"regirNumBuildSamples\":8},\"useComputeForGis\":true,\"useComputeForTemporalResampling\":true,\"useComputeForSpatialResampling\":true,\"useComputeForShadeSamples\":true,\"useComputeForShadeSecondarySurfaces\":true,\"useComputeForGITemporalResampling\":true,\"useComputeForGISpatialResampling\":true,\"useComputeForGIFinalShading\":true,\"diResamplingMode\":0,\"initialSamplingParams\":{\"numLocalLightSamples\":1,\"numInfiniteLightSamples\":0,\"numEnvironmentSamples\":0,\"numBrdfSamples\":0,\"brdfCutoff\":0.00009999999747378752,\"brdfRayMinT\":0.0010000000474974514,\"localLightSamplingMode\":0,\"enableInitialVisibility\":1,\"environmentMapImportanceSampling\":1,\"pad1\":0,\"pad2\":0,\"pad3\":0},\"temporalResamplingParams\":{\"maxHistoryLength\":20,\"biasCorrectionMode\":1,\"depthThreshold\":0.10000000149011612,\"normalThreshold\":0.5,\"enableVisibilityShortcut\":0,\"enablePermutationSampling\":1,\"uniformRandomNumber\":0,\"permutationSamplingThreshold\":0.8999999761581421},\"spatialResamplingParams\":{\"numSamples\":1,\"numDisocclusionBoostSamples\":8,\"samplingRadius\":32.0,\"biasCorrectionMode\":1,\"depthThreshold\":0.10000000149011612,\"normalThreshold\":0.5,\"targetHistoryLength\":0,\"enableMaterialSimilarityTest\":1,\"discountNaiveSamples\":1,\"pad1\":0,\"pad2\":0,\"pad3\":0},\"shadingParams\":{\"enableFinalVisibility\":1,\"reuseFinalVisibility\":1,\"finalVisibilityMaxAge\":4,\"finalVisibilityMaxDistance\":16.0,\"enableDenoiserInputPacking\":0,\"pad1\":0,\"pad2\":0,\"pad3\":0},\"giResamplingMode\":3,\"giTemporalResamplingParams\":{\"depthThreshold\":0.10000000149011612,\"normalThreshold\":0.8999999761581421,\"maxHistoryLength\":20,\"enableFallbackSampling\":1,\"biasCorrectionMode\":1,\"maxReservoirAge\":30,\"enablePermutationSampling\":0,\"uniformRandomNumber\":0},\"giSpatialResamplingParams\":{\"depthThreshold\":0.10000000149011612,\"normalThreshold\":0.8999999761581421,\"numSamples\":4,\"samplingRadius\":16.0,\"biasCorrectionMode\":1,\"pad1\":0,\"pad2\":0,\"pad3\":0},\"giFinalShadingParams\":{\"enableFinalVisibility\":1,\"enableFinalMIS\":0,\"pad1\":0,\"pad2\":0},\"brdfptParams\":{\"enableIndirectEmissiveSurfaces\":0,\"enableSecondaryResampling\":0,\"enableReSTIRGI\":0,\"pad1\":0,\"materialOverrideParams\":{\"roughnessOverride\":0.5,\"metalnessOverride\":0.5,\"minSecondaryRoughness\":0.5,\"pad1\":0},\"secondarySurfaceReSTIRDIParams\":{\"initialSamplingParams\":{\"numLocalLightSamples\":1,\"numInfiniteLightSamples\":0,\"numEnvironmentSamples\":0,\"numBrdfSamples\":0,\"brdfCutoff\":0.0,\"brdfRayMinT\":0.0,\"localLightSamplingMode\":0,\"enableInitialVisibility\":0,\"environmentMapImportanceSampling\":0,\"pad1\":0,\"pad2\":0,\"pad3\":0},\"spatialResamplingParams\":{\"numSamples\":1,\"numDisocclusionBoostSamples\":0,\"samplingRadius\":4.0,\"biasCorrectionMode\":1,\"depthThreshold\":0.10000000149011612,\"normalThreshold\":0.8999999761581421,\"targetHistoryLength\":0,\"enableMaterialSimilarityTest\":0,\"discountNaiveSamples\":0,\"pad1\":0,\"pad2\":0,\"pad3\":0}}}}",
+    "secondaryMaterialSample": "diffuse=0x0100C4D4, specularRoughness=0xFF3B3B3B, position=(1.25, 1.01, -1.23)",
+    "frames": 264,
+    "baselineDelta": 0.0,
+    "rawIndirectMean": {
+        "x": 0.07119466364383698,
+        "y": 0.00249641016125679,
+        "z": 0.0015904344618320466
+    },
+    "filteredCombinedMean": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "windows": [
+        {
+            "first": 1,
+            "last": 1,
+            "mean": {
+                "x": 0.068939208984375,
+                "y": 0.002682209014892578,
+                "z": 0.0018229484558105469
+            },
+            "reconstructedCombinedMean": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "temporalVariance": 0.0,
+            "reconstructedTemporalVariance": 0.0
+        },
+        {
+            "first": 2,
+            "last": 4,
+            "mean": {
+                "x": 0.06879917532205582,
+                "y": 0.0023848216515034439,
+                "z": 0.0015238126507028938
+            },
+            "reconstructedCombinedMean": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "temporalVariance": 0.0006081774416896855,
+            "reconstructedTemporalVariance": 0.0
+        },
+        {
+            "first": 5,
+            "last": 8,
+            "mean": {
+                "x": 0.0700373649597168,
+                "y": 0.002408146858215332,
+                "z": 0.001508951187133789
+            },
+            "reconstructedCombinedMean": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "temporalVariance": 0.00003725513427828749,
+            "reconstructedTemporalVariance": 0.0
+        },
+        {
+            "first": 9,
+            "last": 16,
+            "mean": {
+                "x": 0.07138407230377197,
+                "y": 0.0024765729904174806,
+                "z": 0.0015731453895568848
+            },
+            "reconstructedCombinedMean": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "temporalVariance": 0.00003635318855577636,
+            "reconstructedTemporalVariance": 0.0
+        },
+        {
+            "first": 17,
+            "last": 32,
+            "mean": {
+                "x": 0.07065710425376892,
+                "y": 0.00249326229095459,
+                "z": 0.0015965700149536133
+            },
+            "reconstructedCombinedMean": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "temporalVariance": 0.0007192212962157403,
+            "reconstructedTemporalVariance": 0.0
+        },
+        {
+            "first": 33,
+            "last": 64,
+            "mean": {
+                "x": 0.07118485867977143,
+                "y": 0.0025009214878082277,
+                "z": 0.0015951842069625855
+            },
+            "reconstructedCombinedMean": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "temporalVariance": 0.000706967760487059,
+            "reconstructedTemporalVariance": 0.0
+        },
+        {
+            "first": 65,
+            "last": 128,
+            "mean": {
+                "x": 0.07172370702028275,
+                "y": 0.0025122836232185365,
+                "z": 0.0016007423400878907
+            },
+            "reconstructedCombinedMean": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "temporalVariance": 0.0006489215234526132,
+            "reconstructedTemporalVariance": 0.0
+        },
+        {
+            "first": 129,
+            "last": 256,
+            "mean": {
+                "x": 0.07109786570072174,
+                "y": 0.002492900937795639,
+                "z": 0.0015866979956626893
+            },
+            "reconstructedCombinedMean": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "temporalVariance": 0.0005753432226302671,
+            "reconstructedTemporalVariance": 0.0
+        }
+    ],
+    "protocol": "Step002: preserved reference sampler and secondary radiance; diagnostic final evaluator selects receiver diffuse only with original visibility/BRDF, final MIS off. Raw=combined minus proven deterministic single-light direct baseline; no RR. Secondary F0 remains the measured reference dielectric value near .04. 128x128, 256 GI requests; not performance/motion/Player acceptance."
+}

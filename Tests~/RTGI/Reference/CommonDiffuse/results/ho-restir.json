@@ -1,0 +1,101 @@
+{
+    "pass": true,
+    "diagnosticOnly": true,
+    "noReuse": false,
+    "compatibility": false,
+    "unity": "6000.3.15f1",
+    "gpu": "NVIDIA GeForce RTX 4060",
+    "api": "Direct3D12",
+    "colorSpace": "Linear",
+    "failure": "",
+    "secondaryMaterialSample": "diffuse=0xFF01039A, specularRoughness=0xFF0A0A0A, position=(1.25, -1.02, -0.88)",
+    "frames": 256,
+    "rawIndirectMean": {
+        "x": 0.07541900128126145,
+        "y": 0.0030330258887261154,
+        "z": 0.0020963314455002548
+    },
+    "windows": [
+        {
+            "first": 1,
+            "last": 1,
+            "mean": {
+                "x": 0.06809289753437042,
+                "y": 0.002719396725296974,
+                "z": 0.001872311346232891
+            },
+            "temporalVariance": 0.0
+        },
+        {
+            "first": 2,
+            "last": 4,
+            "mean": {
+                "x": 0.07023625820875168,
+                "y": 0.0027961363084614279,
+                "z": 0.0019223729614168406
+            },
+            "temporalVariance": 0.00011031252768820265
+        },
+        {
+            "first": 5,
+            "last": 8,
+            "mean": {
+                "x": 0.0717155933380127,
+                "y": 0.0028729294426739218,
+                "z": 0.00198382674716413
+            },
+            "temporalVariance": 0.000013924241480352725
+        },
+        {
+            "first": 9,
+            "last": 16,
+            "mean": {
+                "x": 0.07464735209941864,
+                "y": 0.003020557574927807,
+                "z": 0.002094114664942026
+            },
+            "temporalVariance": 0.00001550278526071417
+        },
+        {
+            "first": 17,
+            "last": 32,
+            "mean": {
+                "x": 0.07578791677951813,
+                "y": 0.00306144286878407,
+                "z": 0.0021142084151506426
+            },
+            "temporalVariance": 0.000018390318581581097
+        },
+        {
+            "first": 33,
+            "last": 64,
+            "mean": {
+                "x": 0.07471496611833573,
+                "y": 0.003001123433932662,
+                "z": 0.002074503106996417
+            },
+            "temporalVariance": 0.000017356561312057427
+        },
+        {
+            "first": 65,
+            "last": 128,
+            "mean": {
+                "x": 0.07546097785234451,
+                "y": 0.003031298751011491,
+                "z": 0.0020928208250552418
+            },
+            "temporalVariance": 0.00001768882045394719
+        },
+        {
+            "first": 129,
+            "last": 256,
+            "mean": {
+                "x": 0.07587059587240219,
+                "y": 0.00305209681391716,
+                "z": 0.002110791392624378
+            },
+            "temporalVariance": 0.00001763093499082723
+        }
+    ],
+    "protocol": "Step002 common diffuse receiver: linear F0=.04 via gamma-tagged Reflectance property, metallic=0, roughness=1; same geometry/light as step001, reference final evaluator also selects diffuse only. Secondary F0 quantization differs (.0392 Ho vs about .03995 reference). 128x128, 256 requests; not performance/motion/Player acceptance."
+}

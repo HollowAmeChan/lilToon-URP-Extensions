@@ -1,0 +1,37 @@
+// Diagnostic adaptation of the local reference GI/FinalShading.hlsl.
+// Existing NVIDIA bridge/SDK/BRDF code remains under its original licenses.
+// Select only the final receiver diffuse lobe; do not change GI sampling.
+#pragma kernel main
+#pragma only_renderers d3d11
+#pragma use_dxc
+#pragma target 6.0
+#pragma require inlineraytracing
+#pragma require Native16Bit
+#define USE_RAY_QUERY
+#include "Assets/Shaders/RayTracing/RtxdiApplicationBridge/RtxdiApplicationBridge.hlsl"
+#include "Assets/Shaders/RTXDI/DI/Reservoir.hlsl"
+#include "Assets/Shaders/RTXDI/GI/Reservoir.hlsl"
+#include "Assets/Shaders/RTXDI/Utils/ReservoirAddressing.hlsl"
+#include "Assets/Shaders/RayTracing/ShadingHelpers.hlsl"
+
+[numthreads(RTXDI_SCREEN_SPACE_GROUP_SIZE,RTXDI_SCREEN_SPACE_GROUP_SIZE,1)]
+void main(uint2 index:SV_DispatchThreadID)
+{
+    uint2 pixel=RTXDI_ReservoirPosToPixelPos(index,g_Const.runtimeParams.activeCheckerboardField);
+    if(any(pixel>=uint2(gRectSize)))return;
+    RAB_Surface surface=RAB_GetGBufferSurface(pixel,false);
+    uint2 address=RTXDI_PixelPosToReservoirPos(pixel,g_Const.runtimeParams.activeCheckerboardField);
+    RTXDI_GIReservoir reservoir=RTXDI_LoadGIReservoir(g_Const.restirGI.reservoirBufferParams,address,
+        g_Const.restirGI.bufferIndices.secondarySurfaceReSTIRDIOutputBufferIndex);
+    float3 diffuse=0;
+    if(RAB_IsSurfaceValid(surface)&&RTXDI_IsValidGIReservoir(reservoir))
+    {
+        float3 visibility=1;
+        if(g_Const.restirGI.finalShadingParams.enableFinalVisibility)
+            visibility=GetFinalVisibility(surface,reservoir.position);
+        SplitBrdf brdf=EvaluateBrdf(surface,reservoir.position);
+        diffuse=brdf.demodulatedDiffuse*surface.material.diffuseAlbedo*
+            reservoir.radiance*reservoir.weightSum*visibility;
+    }
+    StoreShadingOutput(diffuse*gExposure,pixel,false,true);
+}

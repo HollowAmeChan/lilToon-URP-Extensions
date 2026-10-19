@@ -26,7 +26,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         static RenderTexture target;
         static Texture2D image;
         static RenderPipelineAsset oldDefault,oldQuality;
-        static bool noReuse,compatibility,oldAsync,finished;
+        static bool noReuse,compatibility,commonDiffuse,oldAsync,finished;
         static string failure,output;
         static int frame,windowStart=1,windowCount;
         static double[] sums,means,m2;
@@ -36,6 +36,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void Run(){Setup();}
         public static void RunNoReuse(){noReuse=true;Setup();}
         public static void RunCompatibility(){compatibility=true;Setup();}
+        public static void RunCommonDiffuse(){commonDiffuse=true;Setup();}
+        public static void RunCommonDiffuseNoReuse(){commonDiffuse=true;noReuse=true;Setup();}
         static void Setup()
         {
             try
@@ -43,8 +45,9 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 if(!Application.dataPath.Replace('\\','/').Contains("/.codex-research/RTGIValidation/"))throw new Exception("Dedicated RTGIValidation project required; do not use the parallel DI project");
                 oldDefault=GraphicsSettings.defaultRenderPipeline;oldQuality=QualitySettings.renderPipeline;
                 oldAsync=ShaderUtil.allowAsyncCompilation;ShaderUtil.allowAsyncCompilation=false;
-                output=Path.GetFullPath(Path.Combine(Application.dataPath,"../ho-gi-v01-matched-"+(compatibility?"compat":noReuse?"no-reuse":"rg")));Directory.CreateDirectory(output);
+                output=Path.GetFullPath(Path.Combine(Application.dataPath,"../ho-gi-"+(commonDiffuse?"common-diffuse-":"v01-matched-")+(compatibility?"compat":noReuse?"no-reuse":"rg")));Directory.CreateDirectory(output);
                 report=new Report{unity=Application.unityVersion,gpu=SystemInfo.graphicsDeviceName,api=SystemInfo.graphicsDeviceType.ToString(),colorSpace=QualitySettings.activeColorSpace.ToString(),noReuse=noReuse,compatibility=compatibility};
+                if(commonDiffuse)report.protocol="Step002 common diffuse receiver: linear F0=.04 via gamma-tagged Reflectance property, metallic=0, roughness=1; same geometry/light as step001, reference final evaluator also selects diffuse only. Secondary F0 quantization differs (.0392 Ho vs about .03995 reference). 128x128, 256 requests; not performance/motion/Player acceptance.";
                 EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
                 var renderer=Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
                 var gb=Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>());gb.Settings.maxRenderQueue=(int)RenderQueue.GeometryLast;
@@ -78,7 +81,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             var obj=Keep(GameObject.CreatePrimitive(PrimitiveType.Quad));obj.name=name;obj.transform.position=position;obj.transform.eulerAngles=rotation;obj.transform.localScale=new Vector3(size.x,size.y,1);
             var material=Keep(new Material(Shader.Find("lilToon")));material.EnableKeyword("UNITY_UI_ALPHACLIP");
             material.SetFloat("_Cull",0);material.SetColor("_Color",color);material.SetTexture("_MainTex",Texture2D.whiteTexture);
-            material.SetFloat("_Metallic",0);material.SetFloat("_Reflectance",0);material.SetFloat("_Smoothness",0);material.SetFloat("_UseEmission",0);material.SetFloat("_UseEmission2nd",0);
+            material.SetFloat("_Metallic",0);material.SetFloat("_Reflectance",commonDiffuse?Mathf.LinearToGammaSpace(.04f):0);material.SetFloat("_Smoothness",0);material.SetFloat("_UseEmission",0);material.SetFloat("_UseEmission2nd",0);
             obj.GetComponent<Renderer>().sharedMaterial=material;
         }
         static void OnLog(string text,string stack,LogType type)
@@ -120,6 +123,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var packets=new SecondaryPacket[feature.LastContext.secondary.count];feature.LastContext.secondary.GetData(packets);
                 var wall=packets.FirstOrDefault(p=>Math.Abs(p.position.x-1.25f)<.005f&&p.flags==1&&p.pdf>0);
                 if(wall.flags!=1||wall.diffuse==0)throw new Exception("No evaluated red-wall secondary material packet captured");
+                if(commonDiffuse&&(wall.specular&0x00ffffff)!=0x000a0a0a)throw new Exception("Common diffuse fixture did not produce the expected quantized linear F0=.04");
                 report.secondaryMaterialSample="diffuse=0x"+wall.diffuse.ToString("X8")+", specularRoughness=0x"+wall.specular.ToString("X8")+", position="+wall.position;
                 Debug.Log("[HoGIMatched] SECONDARY_MATERIAL "+report.secondaryMaterialSample);
                 if(report.rawIndirectMean.x<1e-5f||report.rawIndirectMean.x<report.rawIndirectMean.y*1.5f)throw new Exception("Red bounce contribution missing");

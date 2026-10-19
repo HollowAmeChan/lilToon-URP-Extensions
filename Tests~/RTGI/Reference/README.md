@@ -4,6 +4,11 @@ Step 001, 2026-10-19. This is a **diagnostic baseline**, not a complete GI quali
 unbiased-energy, performance, automatic-frame motion or Player acceptance suite.
 No production GI algorithm is changed by this step.
 
+Step001 source/evidence is preserved at commit6e90d21. The Ho diagnostic later
+adds explicit common-diffuse entries; verify historical hashes against that
+commit. See [step002](CommonDiffuse/README.md) for its response alignment,
+independent quadrature and explicitly retained reference-side quality failure.
+
 ## What actually ran
 
 Unity 6000.3.15f1, D3D12, RTX 4060, Linear, 128x128. Camera `(0,0,-3)`, FOV40,
