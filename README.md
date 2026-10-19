@@ -1,89 +1,32 @@
 # lilToon URP Extensions
 
-这个包包含本地 Ho 渲染系统使用的 URP RendererFeature 和 runtime 桥接代码。`lilToon` 暴露 shader pass 与材质属性，这个包负责分配 render target、调度 pass、发布全局贴图和缓冲。专用材质效果归现有 HoShader 模块，lilPBR / WaterFlowmap 已列入退役范围。
+Ho 渲染体系的 URP 功能扩展包，配合 lilToon 与 HoURP，提供光照、阴影、反射、透明合成和后处理。
 
-## 在整套系统里的定位
+## 功能
 
-- `lilToon`：消费 OIT、OB/SB/GB、HoCharacterCapture、HoShadowCast 和语义遮罩的角色/NPR shader。
-- `HoUrp17.3.0`：本包面向的本地 URP 版本。
-- `HoUrpConfig17.0.3`：本地 URP shader 配置包。
-- `lilToon-UnityGLTF-Extensions`：保存导入阶段的材质契约，映射到当前管线支持的材质。
+- **基础数据与语义遮罩**：几何数据、法线与深度、逐物体身份、表面材质数据，以及统一的属性与语义遮罩合成。
+- **世界空间直接光 RTDI**：解析灯、HDR 天空、射线遮挡、基础 Cutout、可选 NRD 降噪，以及参考 PBR 替换 / 加法叠加；常用参数由 Volume 控制。
+- **世界空间间接光 RTGI（开发中）**：独立一跳漫反射 GI，支持离屏几何与自发光；最终画面合成和降噪尚在推进。
+- **屏幕空间光照**：GTAO、SSGI 与次表面散射 SSS。
+- **阴影与环境**：独立多灯 ShadowCast / PCSS、角色局部阴影、共享大气与太阳体积光。
+- **反射与透明**：平面反射、Weighted Blended OIT 透明合成。
+- **角色特化**：眼睛透过、前发投影、脸色扩散与角色捕获。
+- **后处理与调试**：语义屏幕图层、图像效果栈、渐变映射、网点、调色预设和缓冲调试视图。
 
-## Runtime 模块
+详细说明见 [文档索引](Documentation~/文档索引.md)。
 
-- `Runtime/GeometryData`：专用 ReferenceFrame、OutlineCorrection 与 Tension 数据生产；眼透使用动态参考系和相机参数，lilToon 描边可选择 GD 来源，Tesion 可消费张力混合拉伸/挤压贴图。用法见 `Documentation~/Ho-GeometryData.md`。
-- `Runtime/OIT`：给 lilToon 透明 pass 使用的 Weighted Blended OIT。它会绘制 `LightMode = "lilToonOIT"`，写入 accumulation/revealage，再合成回 camera color。
-- `Runtime/SurfaceBuffer`：表面数值与语义 lane 的生产；与 OB/AC 一起替代已删除的 MetadataBuffer。
-- `Runtime/AttributeComposite`：按 OB 身份与 SB 语义查询和合成遮罩。
-- `Runtime/ObjectBuffer`：R1 逐 sample IdentityId + coverage 底层；`HoObjectBufferGroup` 把组/部件 ID 写入 RSUV，Renderer Feature 用自建 MSAA resolve 成 4 层身份池。
-- `Runtime/GeometryBuffer`：normal/depth 几何输入缓冲。
-- `Runtime/Atmosphere`：固定基础环境输入与共享 Box 介质，分别发布 radiance 与 Medium；用法见 `Documentation~/Ho-Atmosphere.md`。
-- `Runtime/VolumeLight`：消费大气介质与已有太阳的 HD 丁达尔，SDF 仅控制显示参与；v0.1 用法与边界见 `Documentation~/Ho-VolumeLight.md`。
-- `Runtime/CharacterSpecialization`：角色捕获和角色定制后处理，包括头发/脸部等风格化处理路径。
-- `Runtime/ScreenProcess`：用户可控的语义屏幕处理图层栈，使用 OB/SB/AC 遮罩，并有 RenderGraph/非 RenderGraph 路径。
-- `Runtime/ImageProcess`：最终图像处理链和具体效果移植。
-- `Runtime/PlanarReflection`：`HoPlanarReflectionRendererFeature` 调度 PLR surface 并发布 tent-prefiltered HDR mip source；opaque lilToon 在 ForwardLit 中按 PBR 响应消费，fullscreen composite 仅保留给水面/OIT/调试等特殊路径。
-- `Runtime/ShadowCast`：独立 HoShadowCast atlas 生成，用于指定的额外方向光、聚光和点光。多光容量由 `Light Capacity` 档位（同时采样灯数）与图集几何（切片数 = `floor(atlasSize / resolution)^2`，硬上限 128 片）共同决定；数值契约集中在 `Runtime/ShadowCast/HoShadowCastShaderContract.cs` + `Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl`，由编辑器校验器守住 C#/HLSL 一致性。
+## Ho 渲染体系相关仓库
 
-## Editor 模块
+| 仓库 | 用途 |
+| --- | --- |
+| [HoTools](https://github.com/HollowAmeChan/HoTools) | Blender 角色、模型、贴图、动画与自动化工具 |
+| [HoGLTF](https://github.com/HollowAmeChan/HoGLTF) | Blender glTF 导出与 Ho 材质契约桥接 |
+| [HoUrp17.3.0](https://github.com/HollowAmeChan/HoUrp17.3.0) | URP 渲染基座 |
+| [HoUrpConfig17.0.3](https://github.com/HollowAmeChan/HoUrpConfig17.0.3) | URP Shader 配置 |
+| [lilToon](https://github.com/HollowAmeChan/lilToon) | 角色 / NPR 着色器 |
+| [lilToon-UnityGLTF-Extensions](https://github.com/HollowAmeChan/lilToon-UnityGLTF-Extensions) | glTF 材质契约导入 |
+| [HoUnityTools](https://github.com/HollowAmeChan/HoUnityTools) | 角色、动画与创作工具 |
 
-- `Editor/GeometryData`：参考系/描边/张力组件 Inspector、显式准备按钮与 Play 前触发，不提供旧配置迁移。
-- `Editor/Atmosphere` / `Editor/VolumeLight`：大气区域手柄、参数/调试面板及隔离 GPU 验证入口。
-- `Editor/ObjectBuffer`：OB 组/部件 Inspector、Volume 调试 UI，以及 `HoLil/Validation/Validate Ho-ObjectBuffer R1` 最小闭环验证。
-- `Editor/CharacterSpecialization`：角色特化编辑器 UI。
-- `Editor/LilMatConvert`：材质转换工具。
-- `Editor/PostProcessing`：ScreenProcess/ImageProcess 图层栈编辑器。
-- `Editor/ShadowCast`：HoShadowCast Controller Inspector，以及 `HoShadowCastShaderContractValidator`（自动/菜单校验 C# 与 HLSL 契约，覆盖两个调试 shader）。
-- `Editor/ImageProcessIcons`：编辑器图标资源。
+## 可选材质合集
 
-## 主要 RendererFeature
-
-当前 Ho 管线的 GD/GB/OB/SB/AC/HoAtmosphere 作为基础项保持开启；效果项按需要添加到 URP Renderer Asset：
-
-- `WeightedOITRendererFeature`
-- `HoSurfaceBufferRendererFeature`
-- `HoAttributeCompositeRendererFeature`
-- `HoObjectBufferRendererFeature`
-- `HoGeometryBufferRendererFeature`
-- `HoGeometryDataRendererFeature`（描边数据发布与动态张力 Compute 生产）
-- `HoAtmosphereRendererFeature`（固定环境/空间介质输入）
-- `HoVolumeLightRendererFeature`（太阳 HD，RenderGraph）
-- `HoCharacterSpecializationRendererFeature`
-- `ScreenProcessRendererFeature`
-- `ImageProcessRendererFeature`
-- `HoShadowCastRendererFeature`
-- `HoPlanarReflectionRendererFeature`
-
-平面反射由 `HoPlanarReflectionRendererFeature` 统一调度；把 `HoPlanarReflectionSurface` 加到反射平面 mesh 上作为表面描述组件。
-
-OB R1 最小使用：
-
-1. 在 Renderer Data 中启用 `HoObjectBufferRendererFeature`。
-2. 在角色/物体根节点添加 `Rendering/Ho-ObjectBuffer Group`，添加部件并拖入 Renderer。
-3. 在 Volume Profile 添加 `Ho-ObjectBuffer/逐物体通道`，选择 ID 或 Coverage 调试模式；同一批 `object.*` 视图也可在 Ho-DebugTile 中选择。
-4. 改完部件配置、或发生过域重载 / 切场景之后，点组件面板上的「刷新全场景 RSUV」——RSUV **不参与序列化**，不重写就等于全场景身份索引变 0（症状：物体整片消失，只剩背景）。
-
-## 安装
-
-```json
-{
-  "dependencies": {
-    "jp.lilxyzw.liltoon.urp.extensions": "file:D:/Unity_Fork/lilToon-URP-Extensions"
-  }
-}
-```
-
-Peer requirement：
-
-- Unity 6000.x
-- URP 17.x，推荐使用本地 `HoUrp17.3.0`
-- 本地 `lilToon` fork，用于 toon shader pass 集成
-
-## 注意事项
-
-- 主要功能同时实现了 RenderGraph 和兼容模式路径。
-- HoShadowCast 使用自己的 atlas：`_HoShadowCastAtlas` 和 `_HoShadowCastSecondDirectionalAtlas`，不依赖 URP additional light shadow receiver。
-- `lilToon` 作为 peer package，由项目控制包解析；本包不要求安装 lilPBR。
-- `_LILPBRPlanarReflection*` 是现役平面反射协议的历史名称，仍由本包生产、lilToon 消费；旧包退役时保留这套协议。
-
-更多设计和排查记录见 `Documentation~/`。
+- [HoShader](https://github.com/HollowAmeChan/HoShader)：宝石、皮肤、绒毛等独立材质与 Shader 实验合集，按需选用。
