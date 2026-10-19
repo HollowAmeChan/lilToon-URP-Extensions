@@ -27,10 +27,18 @@ namespace lilToon.URP.Extensions.Editor.SurfaceBuffer
         {
             if(!Application.dataPath.Replace('\\','/').Contains("/.codex-research/"))throw new InvalidOperationException("Use the isolated project");
             int exit=0;HoInvisibleSurfaceProbe probe=null;var oldDefault=GraphicsSettings.defaultRenderPipeline;var oldQuality=QualitySettings.renderPipeline;bool oldAsync=ShaderUtil.allowAsyncCompilation;
+            #if URP_COMPATIBILITY_MODE
             var graphSettings=GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>();bool oldCompatibility=graphSettings.enableRenderCompatibilityMode;
+            #endif
             try
             {
-                ShaderUtil.allowAsyncCompilation=false;graphSettings.enableRenderCompatibilityMode=compatibility;EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
+                ShaderUtil.allowAsyncCompilation=false;
+                #if URP_COMPATIBILITY_MODE
+                graphSettings.enableRenderCompatibilityMode=compatibility;
+                #else
+                if(compatibility)throw new NotSupportedException("Compatibility validation requires URP_COMPATIBILITY_MODE");
+                #endif
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);
                 var renderer=Keep(ScriptableObject.CreateInstance<UniversalRendererData>());probe=Keep(ScriptableObject.CreateInstance<HoInvisibleSurfaceProbe>());
                 probe.material=Mat("Hidden/lilToon/URP/Validation/InvisibleSurface");
                 for(int i=0;i<6;i++)probe.outputs[i]=RTHandles.Alloc(64,64,colorFormat:GraphicsFormat.R32G32B32A32_SFloat,name:"Invisible surface probe "+i);
@@ -79,7 +87,14 @@ namespace lilToon.URP.Extensions.Editor.SurfaceBuffer
                 report.pass=true;File.WriteAllText("invisible-surface-"+(compatibility?"compat":"rg")+".json",JsonUtility.ToJson(report,true));Debug.Log("[HoInvisibleSurface] PASS "+report.checks+" checks; compatibility="+compatibility);
             }
             catch(Exception error){Debug.LogException(error);exit=1;}
-            finally{if(probe!=null)foreach(var output in probe.outputs)output?.Release();GraphicsSettings.defaultRenderPipeline=oldDefault;QualitySettings.renderPipeline=oldQuality;graphSettings.enableRenderCompatibilityMode=oldCompatibility;ShaderUtil.allowAsyncCompilation=oldAsync;for(int i=owned.Count-1;i>=0;i--)if(owned[i]!=null)Object.DestroyImmediate(owned[i]);owned.Clear();}
+            finally
+            {
+                if(probe!=null)foreach(var output in probe.outputs)output?.Release();GraphicsSettings.defaultRenderPipeline=oldDefault;QualitySettings.renderPipeline=oldQuality;
+                #if URP_COMPATIBILITY_MODE
+                graphSettings.enableRenderCompatibilityMode=oldCompatibility;
+                #endif
+                ShaderUtil.allowAsyncCompilation=oldAsync;for(int i=owned.Count-1;i>=0;i--)if(owned[i]!=null)Object.DestroyImmediate(owned[i]);owned.Clear();
+            }
             EditorApplication.Exit(exit);
         }
         private static T Keep<T>(T value)where T:Object{owned.Add(value);return value;}

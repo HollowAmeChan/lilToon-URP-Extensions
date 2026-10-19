@@ -73,6 +73,14 @@ Fresh surface-association RG/compatibility and RTDI blend RG/compatibility
 regressions also exit0. No source scene/material is saved, and thresholds were
 not relaxed. The test reads AC's inputs-published flag, not selection-pool active.
 
+The validation harness now guards both compatibility-mode assignments with
+`URP_COMPATIBILITY_MODE`. Without that define, normal RenderGraph compilation
+does not reference the removed setter; requesting the compatibility entry gives
+a clear unsupported-mode error. The main BREAK_URP reference assemblies compile
+with zero errors without the define; both isolated GPU entries were rerun after
+this guard fix and still pass28 checks each. The archived source fingerprints
+below describe the original qualification at `d78b66f`.
+
 Run `lilToon.URP.Extensions.Editor.SurfaceBuffer.HoInvisibleSurfaceValidation.Run`
 and `RunCompatibility` in `.codex-research/RTInputValidation` with Unity
 `-batchmode -force-d3d12 -projectPath <isolated project> -executeMethod <entry>
@@ -80,7 +88,7 @@ and `RunCompatibility` in `.codex-research/RTInputValidation` with Unity
 required. The shader fix is committed in lilToon at `b124f7e`.
 
 ```powershell
-python Tests~/Infrastructure/ZeroAlpha/verify.py
+python Tests~/Infrastructure/ZeroAlpha/verify.py --source-commit d78b66f
 ```
 
 This checks preserved artifacts/source fingerprints, not a fresh Unity rerun.
