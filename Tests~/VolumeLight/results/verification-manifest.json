@@ -1,0 +1,24 @@
+{
+  "implementationCommit": "76210e7",
+  "baselineCommit": "82df540",
+  "unity": "6000.3.15f1",
+  "pipeline": "HoURP 17.3.0",
+  "sourceHashNote": "SHA256 with normalized LF for text; exact bytes for PNG",
+  "files": {
+    "Runtime/VolumeLight/HoVolumeLightDebugViewInfo.cs": "c178903753a53c434d60449aec999c2ea5161e180aea54bd6d7b13ae01741fe1",
+    "Runtime/VolumeLight/HoVolumeLightHistory.cs": "73c2f8a8abe60df0af3df82c5e98e6182a90384492dbd786781a9d7a249ee20d",
+    "Runtime/VolumeLight/HoVolumeLightReconstruction.cs": "092ecfdef10c543774b3b7d3e9eeed1420077f376da331ed5458178687e188eb",
+    "Runtime/VolumeLight/HoVolumeLightRendererFeature.cs": "ee06b0442959ae6b3201d443fe044c98e6ab2e0cac5609caba0595c58c787319",
+    "Runtime/VolumeLight/HoVolumeLightVolume.cs": "4545a7df4ddfc87e71856d21374b6e50f4dbf36243a646a96af5efc09f955ed4",
+    "Runtime/VolumeLight/Resources/HoVolumeLightBlueNoise.png": "eaf87263d2b63482eed0edb54ea5e9c4fd2cfa7966cbb2c31d66481f1b551704",
+    "Runtime/VolumeLight/Resources/HoVolumeLightReconstruction.hlsl": "fd939d385720b9c45a1334cf6ad0c72eb9742d9ccbebbf51f7c00d1e69b2fa03",
+    "Runtime/VolumeLight/Resources/HoVolumeLightSolarCommon.hlsl": "35eab7c71fa24478b61131f7948568b350ad6697648971cc2bf9e02d22055fd0",
+    "Runtime/VolumeLight/Resources/HoVolumeLightSolarHD.shader": "26e7ebaa5ee86b6553db69fea17afe8ba703fba1e4c75286af5048d0507905d9",
+    "Editor/VolumeLight/HoVolumeLightAALegacy.shader": "3c3ad1418bddf6e3d77d51beb7a09cdc4d68242c35b9937d359c79fa087c91d0",
+    "Editor/VolumeLight/HoVolumeLightAAReference.shader": "8a98245c228b16079f41c62636f4098fd0c6283419c4274226739ccf1c4bf4c6",
+    "Editor/VolumeLight/HoVolumeLightAntialiasingValidation.cs": "3797ac4929350e43ad2a1ca013cd45f0ffe9e9ef5bb7932e34d57b0f3f375d45",
+    "Editor/VolumeLight/HoVolumeLightEditors.cs": "769784d0335afecb98ed0f091d5eb5d27905b0d2edf30fdadfff970ea83f8b45",
+    "Editor/VolumeLight/HoVolumeLightValidation.cs": "008a814030b54b9673de05f4af35b6b39a7f74e259338149218edfcba587645f",
+    "Editor/VolumeLight/HoVolumeLightValidation.shader": "08be13f740a23e5884f4650125bd55f9d6450a74a86562be4b1146aa882cf598"
+  }
+}

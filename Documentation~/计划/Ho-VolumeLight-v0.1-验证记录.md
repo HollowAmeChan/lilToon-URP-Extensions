@@ -2,6 +2,8 @@
 
 日期：2026-10-10。Unity 6000.3.15f1，HoURP 17.3.0，RenderGraph。隔离工程：`.codex-research/RTInputValidation`。
 
+本文记录最初 v0.1 的结果。2026-10-19–20 已补充太阳 HD 抗锯齿与相机历史，最新证据见 [HD 抗锯齿验证](Ho-VolumeLight-HD-抗锯齿验证.md)；下文“无持久效果 RT”仅描述最初实现，现在时域模式会持有按相机分配的历史。
+
 ## 最终结果
 
 | 入口 | 图形 API | 最终日志 | 结果 |

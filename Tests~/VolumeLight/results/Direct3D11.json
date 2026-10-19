@@ -1,0 +1,33 @@
+{
+    "passed": true,
+    "graphicsAPI": "Direct3D11",
+    "error": "",
+    "medium": "PASS",
+    "solar": "PASS",
+    "lilToonCutout": "MainTex alpha + AlphaMask PASS",
+    "antialiasing": {
+        "passed": true,
+        "legacy256RMSE": 0.14600691199302674,
+        "interval256RMSE": 0.012151327915489674,
+        "spatial256RMSE": 0.012692756950855255,
+        "temporal256RMSE": 0.0049850004725158218,
+        "temporal48RMSE": 0.01067719329148531,
+        "interval48RMSE": 0.1217036172747612,
+        "spatial48RMSE": 0.041573382914066318,
+        "steadyFrameDifference": 0.010647913441061974,
+        "historyAge": 32.0,
+        "narrowBeamEnergyRatio": 0.997681200504303,
+        "narrowBeamPeakRatio": 0.99811851978302,
+        "cameraTAAHistoryAge": 9.0,
+        "legacy256Banding": 0.02529267780482769,
+        "temporal256Banding": 0.004841885529458523,
+        "temporal48Banding": 0.00632171705365181,
+        "motionRMSE": 0.041256505995988849,
+        "legacyMean": 0.7585440874099731,
+        "referenceMean": 0.7588946223258972,
+        "temporalMean": 0.7561810612678528,
+        "blockerLeak": 0.0,
+        "movedShadowError": 0.024671098217368127
+    },
+    "windowReduction": 0.9999891519546509
+}
