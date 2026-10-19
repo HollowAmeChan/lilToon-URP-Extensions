@@ -17,6 +17,9 @@ namespace lilToon.URP.Extensions.RTGI
         [Min(.00001f)] public float rayBias = .001f;
         [Min(1)] public float maxDistance = 1000;
         public bool useEnvironment = true;
+        // With RTDI, direct sky belongs to DI. Enable explicitly for GI-only sky.
+        public bool includeDirectEnvironment;
+        [Range(0,32)] public int secondaryEnvironmentSamples = 4;
         public LayerMask geometryLayers = -1;
         public LayerMask lightLayers = -1;
     }

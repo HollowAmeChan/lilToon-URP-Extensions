@@ -22,7 +22,10 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             if(LilUrpEditorSectionGui.DrawSectionHeader(ref advanced,"高级","筛选 / Shader",AdvancedColor))
             using(new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                Draw(settings,"rayBias","射线偏移");Draw(settings,"maxDistance","几何追踪距离");Draw(settings,"useEnvironment","使用大气环境");Draw(settings,"geometryLayers","几何层");Draw(settings,"lightLayers","灯所在物体层");Draw(settings,"inSceneView","Scene View 中生产");
+                Draw(settings,"rayBias","射线偏移");Draw(settings,"maxDistance","几何追踪距离");Draw(settings,"useEnvironment","使用大气环境");
+                Draw(settings,"secondaryEnvironmentSamples","次级天空候选数");Draw(settings,"includeDirectEnvironment","额外包含主表面直接天空");
+                EditorGUILayout.HelpBox("与 RTDI 配合时，主表面直接天空由 RTDI 提供；GI 默认只增加表面反弹。GI 单独使用时可显式包含直接天空。",MessageType.Info);
+                Draw(settings,"geometryLayers","几何层");Draw(settings,"lightLayers","灯所在物体层");Draw(settings,"inSceneView","Scene View 中生产");
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("shader"),new GUIContent("Compute Shader"));EditorGUILayout.PropertyField(serializedObject.FindProperty("rayShader"),new GUIContent("Ray Tracing Shader"));EditorGUILayout.PropertyField(serializedObject.FindProperty("secondaryMaterialShader"),new GUIContent("命中材质 Shader"));
             }
             serializedObject.ApplyModifiedProperties();EditorGUILayout.LabelField("运行状态",((HoRTGIRendererFeature)target).Status);

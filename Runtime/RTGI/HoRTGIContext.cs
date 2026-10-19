@@ -13,6 +13,11 @@ namespace lilToon.URP.Extensions.RTGI
     {
         internal GraphicsBuffer reservoirs,history,lights,neighbors,secondary;
         internal RTHandle diffuse;
+        internal GraphicsBuffer environmentRis;
+        internal RTHandle environmentPdf;
+        internal bool environmentSampling,environmentPdfReady;
+        internal uint environmentPdfRevision;
+        internal const int EnvironmentPdfSize=128,RisTileSize=256,RisTileCount=64;
         internal int width,height,rowPitch,arrayPitch,frame;
         internal uint sceneRevision;
         internal int lightingSignature;
@@ -55,7 +60,19 @@ namespace lilToon.URP.Extensions.RTGI
             previousClip=new Vector4(camera.nearClipPlane,camera.farClipPlane,camera.orthographic?1:0,SystemInfo.usesReversedZBuffer?1:0);
             sceneRevision=revision;lightingSignature=signature;historyValid=true;frame++;
         }
+        internal void PrepareEnvironment(bool requested)
+        {
+            environmentSampling=requested&&SystemInfo.IsFormatSupported(GraphicsFormat.R32_SFloat,GraphicsFormatUsage.LoadStore)
+                &&SystemInfo.IsFormatSupported(GraphicsFormat.R32_SFloat,GraphicsFormatUsage.Linear);
+            int count=environmentSampling?RisTileSize*RisTileCount:1;
+            if(environmentRis==null||environmentRis.count!=count)
+            {environmentRis?.Dispose();environmentRis=new GraphicsBuffer(GraphicsBuffer.Target.Structured,count,8){name="HoRTGI environment RIS"};}
+            if(!environmentSampling){environmentPdf?.Release();environmentPdf=null;environmentPdfReady=false;return;}
+            var desc=new RenderTextureDescriptor(EnvironmentPdfSize,EnvironmentPdfSize)
+            {graphicsFormat=GraphicsFormat.R32_SFloat,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true,useMipMap=true,autoGenerateMips=false};
+            if(RenderingUtils.ReAllocateIfNeeded(ref environmentPdf,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI environment PDF"))environmentPdfReady=false;
+        }
         public void Dispose()
-        {reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();secondary?.Dispose();diffuse?.Release();reservoirs=history=lights=neighbors=secondary=null;diffuse=null;}
+        {reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();secondary?.Dispose();environmentRis?.Dispose();environmentPdf?.Release();diffuse?.Release();reservoirs=history=lights=neighbors=secondary=environmentRis=null;diffuse=environmentPdf=null;}
     }
 }

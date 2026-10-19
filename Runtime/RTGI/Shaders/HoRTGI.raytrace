@@ -41,8 +41,20 @@ void GenerateSecondary()
         TraceRay(_HoRTSceneAccelerationStructure,RAY_FLAG_FORCE_OPAQUE,255,0,1,0,ray,hit);
         if(hit.status==0)
         {
-            result.flags=2;
-            if(_HoRTGIRaySettings.z>.5)result.emission=HoAtmosphereSampleRadiance(direction);
+            // Finite bounce range is not proof of an unobstructed sky. Only
+            // GI-only direct-sky mode needs the additional distant query.
+            if(_HoRTGIRaySettings.z>.5&&HoAtmosphereAvailable()&&ray.TMax<_HoRTGIRaySettings.w)
+            {
+                ray.TMin=ray.TMax;ray.TMax=_HoRTGIRaySettings.w;
+                TraceRay(_HoRTSceneAccelerationStructure,RAY_FLAG_FORCE_OPAQUE|RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH,255,0,1,0,ray,hit);
+            }
+            if(hit.status==0)
+            {
+                result.flags=2;
+                if(_HoRTGIRaySettings.z>.5)result.emission=HoAtmosphereSampleRadiance(direction);
+            }
+            // Otherwise retain flags=3: an opaque black outcome still counts,
+            // and a surface beyond maxDistance does not become a GI bounce.
         }
         else
         {

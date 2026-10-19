@@ -9,6 +9,14 @@
 // Keep the shared light helpers' established GI proposal; DI's new sampling
 // policy and its neighbor-compatibility guard belong to the DI path.
 #define HO_RTDI_RGB_IMPORTANCE_ENABLED 0
+#define HO_RTDI_ENVIRONMENT_ENABLED 1
+#define HO_RTDI_PRESAMPLING_ENABLED 1
+#define _HoRTDIEnvironment _HoRTGIEnvironment
+#define _HoRTDIEnvironmentPdf _HoRTGIEnvironmentPdf
+#define _HoRTDIEnvironmentPdfOutput _HoRTGIEnvironmentPdfOutput
+#define _HoRTDIEnvironmentBrdfSamples _HoRTGIEnvironmentBrdfSamples
+#define _HoRTDIRISBuffer _HoRTGIEnvironmentRIS
+#define _HoRTDIRISLayout _HoRTGIEnvironmentRISLayout
 #define _HoRTDIFrame _HoRTGIFrame
 #define _HoRTDISettings _HoRTGISettings
 #define _HoRTDIFlags _HoRTGIFlags

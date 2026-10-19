@@ -1,0 +1,78 @@
+{
+  "step": 3,
+  "createdUtc": "2026-10-19T09:21:15.1517694Z",
+  "sources": [
+    {
+      "path": "Runtime/RTGI/HoRTGISettings.cs",
+      "sha256File": "2BC00262C48D3A7A8DB16D500BDEA406122665266F72B567995F1B43E8E5F2E0",
+      "gitBlob": "f5fca64c3a158576bcd4e2c736f6c86b74747099"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIContext.cs",
+      "sha256File": "43BF4C1870E915D4EAA9CD67E6538725B5636356314D5F3A2B5E09D976676947",
+      "gitBlob": "f085c35728cd5b0e25e17e1c4de28f6159aa2b07"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIRendererFeature.cs",
+      "sha256File": "9A096FAA931232EAF7A42B2892C22E34E139D642D32452F44851BCE074AB0BFA",
+      "gitBlob": "e91046b33e3ddffbab789233f576096b329fa5aa"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIApplicationBridge.hlsl",
+      "sha256File": "110657137C0413E3CA8808CD1FC74D741792942F818676BEC69B4CAAAD5897BB",
+      "gitBlob": "f2ac11568b30281046ffff15a9ea1eadca103a78"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGI.compute",
+      "sha256File": "44D085A6BD405969BE1AD022B6F420AC113D61E51BC033410B1B6519BD525149",
+      "gitBlob": "47e3a8bd40af42e041d8eecdc7a49d4a8fe6d531"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGI.raytrace",
+      "sha256File": "AE0257BF5AC9BF6E508FD062BC3C2D8CC58CFA4401CCCE78D51415A547D0091D",
+      "gitBlob": "1423fc0148ac6390e8daaaf18847362c4857f94d"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIEnvironmentValidation.cs",
+      "sha256File": "ACFD7965C83C8DA417CCEF8A6C0464B28FD96B7F926A1D2C1349D52513D5CCF5",
+      "gitBlob": "3b464b3d141cbf3862f40fd3d57c16b80329f14f"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIValidation.cs",
+      "sha256File": "63CC4909700539F6FEEAC7E46CF4459ECB97FB6425229F8A5B50988E2DBB4C4B",
+      "gitBlob": "23f26185cde47ca0fcd0255c55044030d0090dd1"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIRendererFeatureEditor.cs",
+      "sha256File": "C951DA61195FA3C6E79E7AD86AEE36FBD923D8A590FA92544EDF81E42C6D8459",
+      "gitBlob": "7c3417827aeefd00dce376508ec3005b25a454bf"
+    },
+    {
+      "path": "Tests~/RTGI/Environment/run_validation.ps1",
+      "sha256File": "533DFB9AD9461E733A170D8CF493B425C07EE67AC843A7643FC368A122E185BD",
+      "gitBlob": "65be32f9d4aafffc5fc32e3cb626c9421ba06d31"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIApplicationBridge.hlsl",
+      "sha256File": "CB76CA79A0E8DC2D41F7EE7AC37C88AADD60599C4A08E3B2AF10DC3DDEFE7127",
+      "gitBlob": "f9ef6114bfe55f01b3839b42f0fb90bb10ccb08d"
+    },
+    {
+      "path": "Runtime/RTDI/Shaders/HoRTDIEnvironment.hlsl",
+      "sha256File": "C5C4532C1AF349A89DA3BA151D2AEDDB03DCA23BB3234741E564231A60285F51",
+      "gitBlob": "d0efc7c99bce0696c7b08c8521c66fffa9b6f65a"
+    },
+    {
+      "path": "Runtime/RTDI/ThirdParty/RTXDI/DI/InitialSampling.hlsl",
+      "sha256File": "B4D0F3283C30C85A4DFE1D269FAAD3CEBD6F47E6AC791F6C6B4C15D7953FC941",
+      "gitBlob": "a26de91bbcf6ee2ea38921d73a1b105c7c3edd6a"
+    }
+  ],
+  "validatedEntries": 11,
+  "productionRenderingChanged": true,
+  "mode": "Secondary sky PDF/RIS plus explicit direct-sky ownership",
+  "independentGpuTiming": false,
+  "playerValidated": false,
+  "sourceHashNote": "sha256File captures actual working-copy bytes; gitBlob is canonical Git-normalized content for later checkout comparisons",
+  "knownFailure": "Initial Gamma first-frame receiver-invalid fixture rejected, corrected to established three-editor-update warmup; measured samples remain strictly checked"
+}

@@ -68,18 +68,15 @@ namespace lilToon.URP.Extensions.RTGI
                 if((settings.geometryLayers.value&(1<<item.gameObject.layer))!=0)geometry.Add(item);
             materials.BeginFrame();scene.Synchronize(geometry);materials.EndFrame();
             var lights=CollectLights(settings.lightLayers.value,out int excluded,out int signature);
-            unchecked
-            {
-                signature=signature*397^materials.Signature;signature=signature*397^settings.secondaryLightSamples;
-                signature=signature*397^settings.rayBias.GetHashCode();signature=signature*397^settings.maxDistance.GetHashCode();
-                signature=signature*397^settings.useEnvironment.GetHashCode();
-            }
+            var captured=new PassSettings(settings);
+            unchecked {signature=(signature*397^materials.Signature)*397^captured.signature;}
             if(!contexts.TryGetValue(camera,out var context)){context=new HoRTGIContext();contexts.Add(camera,context);}
             var descriptor=data.cameraData.cameraTargetDescriptor;
             context.Prepare(descriptor.width,descriptor.height,lights.Count,format);LastContext=context;
+            context.PrepareEnvironment(captured.useEnvironment&&captured.secondaryEnvironmentSamples>0);
             HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTGI primary normals",System.Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.HighPrecisionSurfaceNormal);
             if(materials.TimeVarying)context.historyValid=false;
-            pass.Setup(context,scene,shader,rayShader,settings,lights.Count>0?lights.ToArray():new HoRTDIRendererFeature.AnalyticLight[1],lights.Count,signature);
+            pass.Setup(context,scene,shader,rayShader,captured,lights.Count>0?lights.ToArray():new HoRTDIRendererFeature.AnalyticLight[1],lights.Count,signature);
             renderer.EnqueuePass(pass);
             Status=$"一跳 diffuse GI：{lights.Count} 灯 / {scene.InstanceCount} RT submesh / 排除 {excluded} 灯、{materials.Rejections.Count} 命中材质、{scene.Rejections.Count} 几何项";
             if(volume!=null&&volume.debugMode.value!=HoRTGIDebugMode.Off&&(camera.cameraType==CameraType.SceneView?volume.debugInSceneView.value:volume.debugInGameView.value))
@@ -123,20 +120,45 @@ namespace lilToon.URP.Extensions.RTGI
         protected override void Dispose(bool disposing)
         {if(registered)RenderPipelineManager.beginCameraRendering-=ResetCamera;registered=false;ResetCamera(default,null);DisposeResources();}
 
+        // Numeric frame values are captured before resources/signatures are prepared.
+        // Recording a graph must not retain the mutable inspector settings object.
+        internal readonly struct PassSettings
+        {
+            internal readonly bool temporal,spatial,useEnvironment,includeDirectEnvironment;
+            internal readonly int secondaryLightSamples,secondaryEnvironmentSamples,spatialSamples,maxHistory,signature;
+            internal readonly float spatialRadius,rayBias,maxDistance;
+            internal PassSettings(HoRTGISettings source)
+            {
+                temporal=source.temporal;spatial=source.spatial;useEnvironment=source.useEnvironment;includeDirectEnvironment=source.includeDirectEnvironment;
+                secondaryLightSamples=Mathf.Clamp(source.secondaryLightSamples,1,32);secondaryEnvironmentSamples=Mathf.Clamp(source.secondaryEnvironmentSamples,0,32);
+                spatialSamples=Mathf.Clamp(source.spatialSamples,1,16);maxHistory=Mathf.Clamp(source.maxHistory,1,32);
+                spatialRadius=Mathf.Clamp(Finite(source.spatialRadius,16),1,32);rayBias=Mathf.Max(.00001f,Finite(source.rayBias,.001f));
+                maxDistance=Mathf.Max(rayBias*2,Finite(source.maxDistance,1000));
+                unchecked
+                {
+                    int hash=secondaryLightSamples;hash=hash*397^secondaryEnvironmentSamples;hash=hash*397^spatialSamples;hash=hash*397^maxHistory;
+                    hash=hash*397^spatialRadius.GetHashCode();hash=hash*397^rayBias.GetHashCode();hash=hash*397^maxDistance.GetHashCode();
+                    hash=hash*397^temporal.GetHashCode();hash=hash*397^spatial.GetHashCode();hash=hash*397^useEnvironment.GetHashCode();signature=hash*397^includeDirectEnvironment.GetHashCode();
+                }
+            }
+            private static float Finite(float value,float fallback)=>float.IsNaN(value)||float.IsInfinity(value)?fallback:value;
+        }
         private sealed class HoRTGIPass : ScriptableRenderPass
         {
             private HoRTGIContext context;private HoRTScene scene;private ComputeShader shader;private RayTracingShader rayShader;
-            private HoRTGISettings settings;private HoRTDIRendererFeature.AnalyticLight[] lights;private int lightCount,signature;
+            private PassSettings settings;private HoRTDIRendererFeature.AnalyticLight[] lights;private int lightCount,signature;
+            private static readonly string[] Stages={"BuildEnvironmentPdf","PresampleEnvironment","ShadeSecondary","Temporal","Spatial","Final"};
             internal HoRTGIPass(){renderPassEvent=RenderPassEvent.BeforeRenderingPostProcessing;}
-            internal void Setup(HoRTGIContext context,HoRTScene scene,ComputeShader shader,RayTracingShader rayShader,HoRTGISettings settings,HoRTDIRendererFeature.AnalyticLight[] lights,int lightCount,int signature)
+            internal void Setup(HoRTGIContext context,HoRTScene scene,ComputeShader shader,RayTracingShader rayShader,PassSettings settings,HoRTDIRendererFeature.AnalyticLight[] lights,int lightCount,int signature)
             {this.context=context;this.scene=scene;this.shader=shader;this.rayShader=rayShader;this.settings=settings;this.lights=lights;this.lightCount=lightCount;this.signature=signature;}
             private sealed class Data
             {
                 internal HoRTGIContext context;internal HoRTScene.Inputs scene;internal HoRTPrimarySurfaceInputs primary;
-                internal ComputeShader shader;internal RayTracingShader rayShader;internal HoRTGISettings settings;
+                internal ComputeShader shader;internal RayTracingShader rayShader;internal PassSettings settings;
                 internal HoRTDIRendererFeature.AnalyticLight[] lights;internal int lightCount,signature;internal uint revision,environmentRevision;
                 internal Matrix4x4 view,projection;internal Camera camera;internal TextureHandle diffuse,environment;
                 internal Vector4 environmentParameters,environmentTint,environmentConstant;
+                internal RTHandle compatibilityEnvironment;
             }
             private Data Snapshot(Camera camera,Matrix4x4 view,Matrix4x4 projection) => new Data
             {context=context,scene=scene.ReadCompatibility(),shader=shader,rayShader=rayShader,settings=settings,lights=lights,lightCount=lightCount,signature=signature,revision=scene.Revision,view=view,projection=projection,camera=camera};
@@ -150,11 +172,14 @@ namespace lilToon.URP.Extensions.RTGI
                     data.signature=source.signature;data.revision=source.revision;data.view=source.view;data.projection=source.projection;data.camera=source.camera;
                     data.scene=scene.Read(graph,builder);data.primary=HoRTPrimarySurfaceInputs.Read(graph,frame,builder);
                     foreach(var buffer in new[]{context.reservoirs,context.history,context.secondary,context.lights})builder.UseBuffer(graph.ImportBuffer(buffer),AccessFlags.ReadWrite);
+                    builder.UseBuffer(graph.ImportBuffer(context.environmentRis),AccessFlags.ReadWrite);
+                    if(context.environmentPdf!=null)builder.UseTexture(graph.ImportTexture(context.environmentPdf),AccessFlags.ReadWrite);
                     builder.UseBuffer(graph.ImportBuffer(context.neighbors));
                     data.diffuse=graph.ImportTexture(context.diffuse);builder.UseTexture(data.diffuse,AccessFlags.WriteAll);
                     // RenderGraph pass data is pooled; absent/disabled sky must not
                     // inherit the previous pass's handle, parameters or revision.
                     data.environment=TextureHandle.nullHandle;data.environmentRevision=0;
+                    data.compatibilityEnvironment=null;
                     data.environmentParameters=data.environmentTint=data.environmentConstant=Vector4.zero;
                     var sky=frame.GetOrCreate<HoAtmosphereRenderGraphResources>();
                     if(settings.useEnvironment&&sky.IsValid)
@@ -180,23 +205,38 @@ namespace lilToon.URP.Extensions.RTGI
                 bool temporal=d.settings.temporal&&c.historyValid&&c.sceneRevision==d.revision&&c.lightingSignature==signature;
                 c.lastTemporal=temporal;
                 var frame=new Vector4(c.width,c.height,d.lightCount,0);
-                var settings=new Vector4(Mathf.Clamp(d.settings.secondaryLightSamples,1,32),Mathf.Clamp(d.settings.spatialSamples,1,16),Mathf.Clamp(d.settings.spatialRadius,1,32),Mathf.Max(.00001f,d.settings.rayBias));
+                var settings=new Vector4(d.settings.secondaryLightSamples,d.settings.spatialSamples,d.settings.spatialRadius,d.settings.rayBias);
+                bool environment=c.environmentSampling&&d.settings.useEnvironment&&d.environmentParameters.w>.5f;
                 cmd.SetBufferData(c.lights,d.lights);
                 cmd.SetRayTracingVectorParam(d.rayShader,HoAtmosphereBindings.ParametersId,d.environmentParameters);
                 cmd.SetRayTracingVectorParam(d.rayShader,HoAtmosphereBindings.TintId,d.environmentTint);
                 cmd.SetRayTracingVectorParam(d.rayShader,HoAtmosphereBindings.ConstantId,d.environmentConstant);
                 d.scene.BuildAndBind(cmd,d.rayShader);cmd.SetRayTracingShaderPass(d.rayShader,"HoRTGISecondarySurface");
                 cmd.SetRayTracingBufferParam(d.rayShader,"_HoRTGISecondary",c.secondary);cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIFrame",frame);
-                cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIRaySettings",new Vector4(settings.w,Mathf.Max(settings.w*2,d.settings.maxDistance),d.settings.useEnvironment?1:0,100000));
+                cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIRaySettings",new Vector4(settings.w,d.settings.maxDistance,d.settings.useEnvironment&&d.settings.includeDirectEnvironment?1:0,100000));
                 cmd.SetRayTracingIntParam(d.rayShader,"_HoRTGIFrameIndex",c.frame);
                 cmd.DispatchRays(d.rayShader,"GenerateSecondary",(uint)c.width,(uint)c.height,1);
-                foreach(var name in new[]{"ShadeSecondary","Temporal","Spatial","Final"})
+                foreach(var name in Stages)
                 {
+                    if((name=="BuildEnvironmentPdf"||name=="PresampleEnvironment")&&!environment)continue;
+                    if(name=="BuildEnvironmentPdf"&&c.environmentPdfReady&&c.environmentPdfRevision==d.environmentRevision)continue;
                     int kernel=d.shader.FindKernel(name);d.scene.BuildAndBind(cmd,d.shader,kernel);
                     if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,kernel,cameraData);
                     else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,kernel);
                     cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTGILights",c.lights);cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTGIReservoirs",c.reservoirs);
                     cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTGIHistory",c.history);cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTGINeighbors",c.neighbors);cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTGISecondary",c.secondary);
+                    cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTGIEnvironmentRIS",c.environmentRis);
+                    cmd.SetComputeVectorParam(d.shader,"_HoRTGIEnvironmentRISLayout",new Vector4(HoRTGIContext.RisTileSize,HoRTGIContext.RisTileCount,0,0));
+                    cmd.SetComputeVectorParam(d.shader,"_HoRTGIEnvironment",new Vector4(HoRTGIContext.EnvironmentPdfSize,d.settings.secondaryEnvironmentSamples,environment?1:0,0));
+                    cmd.SetComputeIntParam(d.shader,"_HoRTGIEnvironmentBrdfSamples",0);
+                    cmd.SetComputeVectorParam(d.shader,HoAtmosphereBindings.ParametersId,d.environmentParameters);
+                    cmd.SetComputeVectorParam(d.shader,HoAtmosphereBindings.TintId,d.environmentTint);
+                    cmd.SetComputeVectorParam(d.shader,HoAtmosphereBindings.ConstantId,d.environmentConstant);
+                    if(d.environment.IsValid())cmd.SetComputeTextureParam(d.shader,kernel,HoAtmosphereBindings.RadianceId,d.environment);
+                    else if(d.compatibilityEnvironment!=null)cmd.SetComputeTextureParam(d.shader,kernel,HoAtmosphereBindings.RadianceId,d.compatibilityEnvironment.nameID);
+                    else cmd.SetComputeTextureParam(d.shader,kernel,HoAtmosphereBindings.RadianceId,CoreUtils.blackCubeTexture);
+                    if(c.environmentPdf!=null)cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTGIEnvironmentPdf",c.environmentPdf.nameID);
+                    else cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTGIEnvironmentPdf",Texture2D.blackTexture);
                     cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTGIDiffuse",c.diffuse.nameID);
                     cmd.SetComputeVectorParam(d.shader,"_HoRTGIFrame",frame);cmd.SetComputeVectorParam(d.shader,"_HoRTGISettings",settings);
                     cmd.SetComputeVectorParam(d.shader,"_HoRTGIFlags",new Vector4(temporal?1:0,d.settings.spatial?1:0,Mathf.Clamp(d.settings.maxHistory,1,32),0));
@@ -204,7 +244,14 @@ namespace lilToon.URP.Extensions.RTGI
                     cmd.SetComputeMatrixParam(d.shader,"_HoRTGIPreviousVP",c.previousVP);cmd.SetComputeMatrixParam(d.shader,"_HoRTGIPreviousInverseVP",c.previousInverseVP);
                     cmd.SetComputeVectorParam(d.shader,"_HoRTGIPreviousCameraPosition",c.previousCamera);cmd.SetComputeVectorParam(d.shader,"_HoRTGIPreviousTowardsEye",c.previousTowardsEye);
                     cmd.SetComputeVectorParam(d.shader,"_HoRTGIPreviousViewZ",c.previousViewZ);cmd.SetComputeVectorParam(d.shader,"_HoRTGIPreviousClipParameters",c.previousClip);
-                    cmd.DispatchCompute(d.shader,kernel,(c.width+7)/8,(c.height+7)/8,1);
+                    if(name=="BuildEnvironmentPdf")
+                    {
+                        cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTGIEnvironmentPdfOutput",c.environmentPdf.nameID,0);
+                        cmd.DispatchCompute(d.shader,kernel,(HoRTGIContext.EnvironmentPdfSize+7)/8,(HoRTGIContext.EnvironmentPdfSize+7)/8,1);
+                        cmd.GenerateMips(c.environmentPdf.nameID);c.environmentPdfReady=true;c.environmentPdfRevision=d.environmentRevision;
+                    }
+                    else if(name=="PresampleEnvironment")cmd.DispatchCompute(d.shader,kernel,HoRTGIContext.RisTileSize/256,HoRTGIContext.RisTileCount,1);
+                    else cmd.DispatchCompute(d.shader,kernel,(c.width+7)/8,(c.height+7)/8,1);
                 }
                 cmd.SetGlobalFloat("_HoRTGIActive",1);cmd.SetGlobalTexture("_HoRTGIDiffuseTexture",c.diffuse.nameID);
                 c.Complete(d.view,d.projection,d.camera,d.revision,signature);
@@ -216,6 +263,7 @@ namespace lilToon.URP.Extensions.RTGI
                 HoRTPrimarySurfaceInputs.BindCompatibility(cmd,data.cameraData);
                 if(settings.useEnvironment&&HoAtmosphereBindings.compatibilityTexture!=null)
                 {
+                    d.compatibilityEnvironment=HoAtmosphereBindings.compatibilityTexture;
                     cmd.SetRayTracingTextureParam(d.rayShader,HoAtmosphereBindings.RadianceId,HoAtmosphereBindings.compatibilityTexture.nameID);
                     d.environmentParameters=HoAtmosphereBindings.compatibilityParameters;d.environmentTint=HoAtmosphereBindings.compatibilityTint;
                     d.environmentConstant=HoAtmosphereBindings.compatibilityConstant;d.environmentRevision=HoAtmosphereBindings.compatibilityRevision;

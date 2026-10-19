@@ -5,11 +5,14 @@
 #pragma kernel Temporal
 #pragma kernel Spatial
 #pragma kernel Final
+#pragma kernel BuildEnvironmentPdf
+#pragma kernel PresampleEnvironment
 #pragma use_dxc
 #pragma target 6.0
 #pragma require inlineraytracing
 #include "HoRTGIApplicationBridge.hlsl"
 #include "../../RTDI/ThirdParty/RTXDI/DI/InitialSampling.hlsl"
+#include "../../RTDI/ThirdParty/RTXDI/LightSampling/PresamplingFunctions.hlsl"
 #include "../../RTDI/ThirdParty/RTXDI/GI/TemporalResampling.hlsl"
 #include "../../RTDI/ThirdParty/RTXDI/GI/SpatialResampling.hlsl"
 RWTexture2D<float4> _HoRTGIDiffuse;
@@ -18,6 +21,25 @@ RTXDI_ReservoirBufferParameters HoGILayout()
 RTXDI_RuntimeParameters HoGIRuntime()
 {RTXDI_RuntimeParameters p=(RTXDI_RuntimeParameters)0;p.neighborOffsetMask=255;p.frameIndex=(uint)_HoRTGIFrameIndex;return p;}
 bool HoGIInside(uint2 pixel) {return all(pixel<(uint2)_HoRTGIFrame.xy);}
+RTXDI_RISBufferSegmentParameters HoGIEnvironmentRIS()
+{RTXDI_RISBufferSegmentParameters p=(RTXDI_RISBufferSegmentParameters)0;p.tileSize=(uint)_HoRTGIEnvironmentRISLayout.x;p.tileCount=(uint)_HoRTGIEnvironmentRISLayout.y;return p;}
+
+// Same equal-solid-angle PDF and pinned SDK pre-sampling used by Ho-RTDI.
+[numthreads(8,8,1)]
+void BuildEnvironmentPdf(uint3 id:SV_DispatchThreadID)
+{
+    uint size=(uint)_HoRTGIEnvironment.x;if(any(id.xy>=size))return;
+    float weight=HoDILuminance(HoAtmosphereSampleRadiance(HoDIEnvironmentDirection((float2(id.xy)+.5)/size)));
+    _HoRTGIEnvironmentPdfOutput[id.xy]=isfinite(weight)?max(weight,1e-8):0;
+}
+[numthreads(256,1,1)]
+void PresampleEnvironment(uint3 id:SV_DispatchThreadID)
+{
+    if(id.x>=(uint)_HoRTGIEnvironmentRISLayout.x||id.y>=(uint)_HoRTGIEnvironmentRISLayout.y)return;
+    RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTGIFrameIndex,17);
+    uint size=(uint)_HoRTGIEnvironment.x;
+    RTXDI_PresampleEnvironmentMap(rng,_HoRTGIEnvironmentPdf,uint2(size,size),id.y,id.x,HoGIEnvironmentRIS());
+}
 
 [numthreads(8,8,1)]
 void ShadeSecondary(uint3 id:SV_DispatchThreadID)
@@ -29,7 +51,7 @@ void ShadeSecondary(uint3 id:SV_DispatchThreadID)
     if(data.flags!=0)
     {
         float3 radiance=data.emission;
-        if(data.flags==1&&_HoRTGIFrame.z>0)
+        if(data.flags==1&&(_HoRTGIFrame.z>0||_HoRTGIEnvironment.z>.5))
         {
             RAB_Surface surface=RAB_EmptySurface();
             surface.worldPos=data.positionWS;surface.viewDepth=1;
@@ -41,14 +63,23 @@ void ShadeSecondary(uint3 id:SV_DispatchThreadID)
             RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTGIFrameIndex,RTXDI_SECONDARY_DI_GENERATE_INITIAL_SAMPLES_RANDOM_SEED);
             RTXDI_RandomSamplerState tileRng=RTXDI_InitRandomSampler(id.xy/16,(uint)_HoRTGIFrameIndex,RTXDI_SECONDARY_DI_GENERATE_INITIAL_SAMPLES_RANDOM_SEED);
             RTXDI_DIInitialSamplingParameters p=(RTXDI_DIInitialSamplingParameters)0;
-            p.numLocalLightSamples=(uint)_HoRTGISettings.x;p.enableInitialVisibility=1;p.brdfRayMinT=_HoRTGISettings.w;
+            p.numLocalLightSamples=_HoRTGIFrame.z>0?(uint)_HoRTGISettings.x:0;
+            p.numEnvironmentSamples=_HoRTGIEnvironment.z>.5?(uint)_HoRTGIEnvironment.y:0;
+            p.enableInitialVisibility=0;p.brdfRayMinT=_HoRTGISettings.w;
             RTXDI_LightBufferParameters lights=(RTXDI_LightBufferParameters)0;lights.localLightBufferRegion.numLights=(uint)_HoRTGIFrame.z;
+            lights.environmentLightParams.lightPresent=_HoRTGIEnvironment.z>.5?1:0;lights.environmentLightParams.lightIndex=HO_RTDI_ENVIRONMENT_LIGHT_INDEX;
             RAB_LightSample sample=RAB_EmptyLightSample();
-            RTXDI_DIReservoir lightReservoir=RTXDI_SampleLightsForSurface(rng,tileRng,surface,p,lights,sample);
-            if(RTXDI_IsValidDIReservoir(lightReservoir)&&RAB_GetConservativeVisibility(surface,sample))
+            RTXDI_DIReservoir lightReservoir=RTXDI_SampleLightsForSurface(rng,tileRng,surface,p,lights,HoGIEnvironmentRIS(),HoGIEnvironmentRIS(),sample);
+            if(RTXDI_IsValidDIReservoir(lightReservoir))
             {
-                float3 L;float distance;RAB_GetLightDirDistance(surface,sample,L,distance);
-                radiance+=RAB_SurfaceEvaluateBrdfTimesNoL(surface,L)*sample.radiance*RTXDI_GetDIReservoirInvPdf(lightReservoir)/max(sample.solidAnglePdf,1e-12);
+                // Reconstruct the stored choice before visibility; the SDK's out
+                // sample can diverge under Unity DXC with multiple candidates.
+                sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(lightReservoir),false),surface,RTXDI_GetDIReservoirSampleUV(lightReservoir));
+                if(RAB_GetConservativeVisibility(surface,sample))
+                {
+                    float3 L;float distance;RAB_GetLightDirDistance(surface,sample,L,distance);
+                    radiance+=RAB_SurfaceEvaluateBrdfTimesNoL(surface,L)*sample.radiance*RTXDI_GetDIReservoirInvPdf(lightReservoir)/max(sample.solidAnglePdf,1e-12);
+                }
             }
         }
         // Keep HDR energy; the reference's optional firefly clamp is disabled.

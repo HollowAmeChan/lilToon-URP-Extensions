@@ -1,6 +1,8 @@
-# Ho-RTGI：参考工程的一跳 diffuse GI 初版
+# Ho-RTGI：一跳 diffuse GI
 
 已沿用户参考工程接通 BrdfRayTracing → ShadeSecondarySurfaces → GI temporal/spatial/final，提供独立的一跳 diffuse GI 输出。SDK GI reservoir 与时间/空间重采样直接复用原文件，只改 include 路径；应用 bridge 适配 Ho 的生产端。尚未设计 lilToon 的最终 NPR 接收/合成。
+
+2026-10-19起的持续推进、实际参考对照、失败与交接见[RTGI入口](RTGI/README.md)。当前已接入次级天空照明与显式直接天空归属；正常相机合成、独立降噪和Player验收继续推进，不能由原型输出或参考对照通过替代。
 
 ## 使用与输出
 
@@ -9,6 +11,18 @@ Renderer 添加 **Ho-RTGI**，前面启用 GB / SB；需要天空时再启用 Ho
 默认不写 camera color。全局 Volume 的 Ho-RTGI 提供启用覆盖及 Diffuse / Receiver / All 调试；Receiver 绿为有效接收面、红为输入无效。调试显示不代表完成了与原材质画面的合成。
 
 RenderGraph 消费 `HoRTGIRenderGraphResources.diffuse` 并声明读依赖；兼容全局为 `_HoRTGIDiffuseTexture` 与 `_HoRTGIActive`。RGB 为线性 HDR，**已包含参考 Lambert 接收 BRDF 与 diffuse albedo**；A 为 receiver validity。有效暗处可以 RGB=0、A=1，主表面缺失或 GB/SB 域不匹配为 A=0。
+
+### 天空贡献归属
+
+| 设置 | 默认 | 行为 |
+| --- | --- | --- |
+| `useEnvironment` | true | 借用前置Ho-Atmosphere；关闭时直接天空与次级天空均关闭 |
+| `secondaryEnvironmentSamples` | 4 | 次级命中点的天空PDF/RIS候选预算，0关闭该项；即使没有解析灯也能生成反弹 |
+| `includeDirectEnvironment` | false | 是否将主表面射线直接miss的天空加入GI；与RTDI配合时保持关闭，GI独立承担直接天空时显式打开 |
+
+与早期原型相比，**主表面直接天空现在默认关闭**，避免和RTDI重复计光。天空经墙面再到接收面的贡献保留。调整GI设置或天空revision会按对应签名失效历史；关闭GI不会改写Ho-Atmosphere或DI的输入。
+
+`maxDistance` 控制GI反弹命中范围，不代表该距离外没有遮挡。启用直接天空时，有限范围内miss还会按需查询到100000世界单位的天空可见性；远处挡板仍能挡住天空。这个独立模式可能增加一条主射线，不能据输出分辨率不变称没有成本。
 
 ## 已接通的部分
 
@@ -20,32 +34,36 @@ Emission 直接调用 lilToon 现有 `lilEmissionComponent` / `lilEmission2ndCom
 
 ## 首版支持域
 
-- 使用现有 HoRTScene 的刚性 opaque MeshRenderer，支持屏幕外、变换更新和非均匀/镜像变换；不支持 skinned、cutout/透明、顶点变形、运行中 Mesh 内容编辑、static batching 或 additional vertex streams。
+- 刚性opaque MeshRenderer已有GI命中验证，支持屏幕外、变换更新和非均匀/镜像变换。共享HoRTScene后来已有skinned snapshot，但GI的骨骼材质命中/动态接收仍待专门验收；GI尚未接入Cutout适配，透明、任意shader顶点变形、static batching或additional vertex streams不在本阶段支持域。
 - 当前命中材质接收标准 `lilToon` opaque，第一主色链、两组 normal map、两组专用 emission，以及 smoothness/metallic 贴图。Main2nd/Main3rd、parallax 位移、Lite/Multi/Hair/自定义 shader 尚未接入，明确返回 unsupported。
 - 命中材质副本读取 sharedMaterial；Renderer MaterialPropertyBlock 属性覆盖及自定义 lilToon 扩展尚未接入。
 - Unsupported opaque 材质仍有真实命中，status=2，保持遮挡；不能把它转成环境 miss。status=0 才表示 miss，status=1 表示已求值的材质。
 - 纹理采样显式 LOD 0，尚未实现 ray-cone 过滤与 GSAA。发光视角组分使用二次射线的观察方向。没有 SSS、最终 NPR 接收、合成、降噪或 Player 验收。
 - 二次命中点支持 point / spot / directional 解析灯，限制与 Ho-RTDI 相同：cookie、非全局 cullingMask、baked-only、其他灯型排除；Rendering Layer / 艺术灯光链接未接入。RT 可见性独立于 raster Light.shadows。
-- **天空通过主表面生成射线的 miss 路径贡献；二次材质命中点暂只计算解析灯与 emission，未计算该点的天空照明或更多反弹。** 没有天空/发光网格重要性采样、主表面 specular GI 或完美镜面路径。
+- 二次材质命中点计算解析灯、专用emission与天空照明。次级天空沿固定SDK的环境重要性采样接入；主表面直接天空仅在显式开启时经miss路径贡献。没有多跳反馈、发光网格重要性采样、主表面specular GI或完美镜面路径。
 - 不支持的 opaque 命中按黑表面处理；无贡献或被几何法线拒绝的方向仍计作黑样本，避免丢弃零贡献样本导致能量偏高。为保留 HDR 能量，未启用参考中的 firefly radiance clamp；当前 raw 输出有噪声。
 
 ## 参考链路、资源与历史
 
-GenerateSecondary 使用参考 BrdfRayTracing 的 diffuse 分支、SDK RNG 与 Donut cosine hemisphere / ONB，每像素一条射线。ShadeSecondary 调用 `RTXDI_SampleLightsForSurface` 求命中点解析灯贡献，加专用 emission，再调用 `RTXDI_MakeGIReservoir`。Temporal / Spatial 分别调用 SDK `RTXDI_GITemporalResampling` / `RTXDI_GISpatialResampling`，均使用 ray-traced bias correction；Final 按参考 visibility / reservoir weight / diffuse BRDF 着色，不启用 final MIS。
+GenerateSecondary 使用参考 BrdfRayTracing 的 diffuse 分支、SDK RNG 与 Donut cosine hemisphere / ONB，每像素一条射线。ShadeSecondary调用`RTXDI_SampleLightsForSurface`统一解析灯/天空候选，使用stored reservoir重建真正选中的样本再测可见性、求辐射，加专用emission后调用`RTXDI_MakeGIReservoir`。Temporal / Spatial分别调用SDK的GI重采样，均使用ray-traced bias correction；Final按visibility / reservoir weight / diffuse BRDF着色，不启用final MIS。
 
-天空 miss 沿参考的 distant-sample 表示进入 GI reservoir，读取 Ho-Atmosphere 全方向原始 HDR 辐射。共享 SDK 目录为 GI 追加 6 个必要头文件，随后 DI 功率预采样又追加 1 个，现总计 29 个，源 SHA-256、原始许可和 provenance 均保留；没有引入 PT、native、DLSS、NRD、ReGIR 或环境预采样框架。
+显式启用的天空miss沿参考distant-sample表示进入GI reservoir，读取Ho-Atmosphere全方向原始HDR辐射。次级天空使用与DI相同的128²等立体角PDF mip和固定SDK RIS预采样，但拥有私有资源与shader-local绑定。SDK原算法/许可/provenance保留；不为GI引入通用PT、DLSS或ReGIR。
 
 五阶段在 BeforeRenderingPostProcessing 的一个 graphics-queue unsafe pass 内顺序执行。直接借用 GB/SB，不复制当前主表面 GBuffer；显式声明 AS metadata、buffer、输出与天空 texture 依赖。Ho-Atmosphere 先生产环境，GI 对天空做 shader-local 绑定，关闭 GI 天空采样不会清掉其他消费者的环境输入。
 
 兼容路径由 Ho-Atmosphere 环境 pass 发布借用快照，GI 在执行时读取；每相机开始和生产端销毁时清空快照。RenderGraph pass data 会由池复用，因此每次记录都显式清空缺失天空的 handle/参数/revision，避免沿用旧输入。
 
-每相机保存三份 32 B SDK GI reservoir、一份 48 B 二次射线数据、一份 16 B 上帧 guide，以及一张 RGBA16F 输出（8 B/像素）。1080p 约 332 MiB，另有 block padding、灯、AS 与输入开销。DI/GI 目前各自拥有场景注册和 AS 生命周期，尚未合并其持有成本，也未完成生产性能预算。
+每相机保存三份32B SDK GI reservoir、一份48B二次数据、一份20B共享布局的上帧guide，以及RGBA16F输出（8B/像素）。1080p含reservoir block padding约342MiB，另有灯/AS/输入；开启次级天空增加约.208MiB的128² R32F全mip PDF与16384条uint2 RIS，不随输出分辨率增长。禁用时释放PDF并仅保留单元素dummy RIS绑定。DI/GI各自持有场景和AS，目标场景GPU预算尚待验收。
 
 静态世界按前后相机矩阵生成 SDK 所需的像素 motion / depth delta。几何 Revision、灯、材质属性、纹理 updateCount / sampler / ST、天空 Revision、分辨率或关键采样设置变化清历史；禁用后重启也清历史。已声明的时间动画参数保守禁用时间复用。纹理更新识别依赖 Texture.updateCount，不能据此宣称识别任意外部 GPU 写入或自定义 shader global 变化。
+
+dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准备、signature、RG记录与兼容执行消费一致值；下一次Setup才消费Inspector/脚本新值。它不授权在已记录图执行前任意销毁借用的场景/纹理资源。
 
 不维护 previous TLAS，也没有动态角色 motion；只有未变化的几何可以复用历史，此时当前 AS 同时描述上一帧世界，可从上一帧表面做 visibility。一次只做一跳，不把历史 reservoir 当作多跳反馈缓存。
 
 ## 验证
+
+2026-10-19次级环境生产接入：Linear/Gamma下，新增环境RG/compat四项、既有完整GI链路RG/compat四项、secondary材质命中两项，以及DX11 inactive一项，11个实际进程均退出0。新增每组138次请求（含3次有界editor warmup）、23项检查，含解析灯+环境MIS叠加5%门槛、零解析灯、近/远挡板、天空归属、revision/历史失效与实际pass snapshot。原始失败保留；复现与范围见[次级环境验证](../Tests~/RTGI/Environment/README.md)。这不替代正常应用帧、NRD、目标场景GPU预算或Player验收。
 
 `HoRTGISecondaryValidation.Run` 在隔离工程的 D3D12 上分别以 Gamma / Linear 色彩空间执行真实 TraceRay，核对离屏命中/距离、材质参数、两组 HDR emission、main-strength、UV1/贴图 alpha/ST、mask RGB/alpha、禁用与材质切换、unsupported 遮挡、镜像非均匀变换及源材质保持原样。保留原材质 Color/HDR 与 Gamma-tagged metallic/reflectance 的颜色空间语义；三角形法线朝向射线所在侧，插值法线对齐同侧。Shader 警告/错误视作失败。
 

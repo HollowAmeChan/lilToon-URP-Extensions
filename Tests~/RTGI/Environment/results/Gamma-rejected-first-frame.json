@@ -1,0 +1,22 @@
+{
+    "pass": false,
+    "compatibility": false,
+    "failure": "System.Exception: Invalid receiver/signal\r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGIEnvironmentValidation.Render () [0x0013b] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTGI\\HoRTGIEnvironmentValidation.cs:86 \r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGIEnvironmentValidation.Mean (System.Int32 count) [0x0000a] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTGI\\HoRTGIEnvironmentValidation.cs:89 \r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGIEnvironmentValidation.Tick () [0x0004c] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTGI\\HoRTGIEnvironmentValidation.cs:101 ",
+    "colorSpace": "Gamma",
+    "frames": 1,
+    "bounce": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "doubled": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "checks": [
+        "Default GI excludes DI-owned direct sky"
+    ]
+}
