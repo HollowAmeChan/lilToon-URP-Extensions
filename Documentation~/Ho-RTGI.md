@@ -8,6 +8,8 @@
 
 Renderer 添加 **Ho-RTGI**，前面启用 GB / SB；需要天空时再启用 Ho-Atmosphere。需要 D3D12 DXR、inline RT、Compute、Mono、同分辨率单采样 GB/SB，以及已更新的 SB 网格法线布局。GI 可以独立启用，不要求先打开 Ho-RTDI；两者同时启用也各自生产独立输出。
 
+高级设置「不参与求交的材质」可排除合并模型内的天空壳子网格。`excludedRayMaterials`默认空，按Material对象身份匹配，忽略null/重复项；同名不同对象不会一起排除。使用同一材质引用的所有实例都会受影响，光线会穿过它们。该列表仅影响GI世界求交，不改源mesh、sharedMaterials、raster或GB/SB主表面；与DI的列表相互独立，需要分别配置。排除/恢复改变场景revision并清GI/NRD历史，等价列表不重置。
+
 合成默认关闭。全局或局部Volume的Ho-RTGI提供「合成到场景」及「间接光强度」，可逐相机覆盖Feature高级设置中的未覆盖默认值（强度默认.25）。启用后在透明物之前，把GI加到有效opaque接收面；强度0保留原画面，强度变化不重置采样历史。只支持全视口、Mono、单采样合成，其他情况保留独立生产与原画面。
 
 输出已含接收BRDF/albedo，合成不再乘主色、不再添加primary emission；Gamma工程先将原画面转线性相加，再转回显示空间。雾只衰减新增GI，保留原画面雾色；透明物在其后绘制。与DI同时合成时按Feature顺序消费当前camera color，通常将DI放在GI前。已有烘焙/SSGI等间接光仍由原路径负责，需要按场景决定叠加份额，GI不会自动改写它们。
@@ -76,6 +78,8 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 不维护 previous TLAS，也没有动态角色 motion；只有未变化的几何可以复用历史，此时当前 AS 同时描述上一帧世界，可从上一帧表面做 visibility。一次只做一跳，不把历史 reservoir 当作多跳反馈缓存。
 
 ## 验证
+
+2026-10-20步骤007：材质过滤四组Linear/Gamma×RG/compat各12请求/21检查，空列表合成和NRD两项回归，共6进程实际exit0。合并壳后保留emission、同名引用区分、恢复首帧清历史和源资产不变有实际输出；见[材质过滤](../Tests~/RTGI/MaterialExclusion/README.md)。本步未重复完整Player构建或宣称复杂场景/GPU收益。
 
 2026-10-20步骤006：两个Linear D3D12 Win64 Mono Player（RG/compatibility）实际exit0，各304次相机请求、299条有效应用帧记录、16项runtime检查。非均匀红蓝emission反弹的filtered/raw红蓝均值约.970/.970，空间均值图L1约10.35%，时间方差约降99.89%；camera运动59帧保留重投影、几何移动24帧保守reset、移除emission首帧归零、Volume/denoise与实际filtered加法合成均通过。每个真实Update只一次请求，不标称正常自动camera；复现、失败和警告边界见[应用帧/Player证据](../Tests~/RTGI/Dynamic/README.md)。
 

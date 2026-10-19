@@ -16,7 +16,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.Editor.RTGI
 {
-    public static class HoRTGICompositeValidation
+    public static partial class HoRTGICompositeValidation
     {
         const int Size=64;
         static readonly List<UnityEngine.Object> owned=new();
@@ -109,6 +109,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             EditorApplication.update-=Tick;
             try
             {
+                if(materialExclusion){ValidateMaterialExclusion();Finish(null);return;}
                 Require(!gi.Settings.composite&&gi.Settings.intensity==.25f,"Legacy/new defaults retain opt-in composition and gain .25");
                 original=Render();Save("before");Require(GI().a>.9f&&GI().r>0,"Dedicated GI remains produced with composition off");
                 gi.Settings.composite=true;gi.Settings.intensity=1;added=Render();Near(added,Expected(original,GI(),1),"Actual camera adds same-frame GI without repeating albedo");Save("added");

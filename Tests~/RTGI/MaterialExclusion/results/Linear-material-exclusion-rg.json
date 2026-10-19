@@ -1,0 +1,42 @@
+{
+    "pass": true,
+    "compatibility": false,
+    "colorSpace": "Linear",
+    "failure": "",
+    "frames": 12,
+    "original": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "added": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "checks": [
+        "GI material filter defaults empty",
+        "GI registers primary and both merged submeshes with real NRD",
+        "Unexcluded front shell blocks secondary emitter actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Filtered shell-blocked GI is black actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Only excluded shell removed; retained emitter identity stays stable",
+        "Changed exclusion resets GI reservoirs and independent NRD",
+        "Excluded shell exposes actual secondary emission actual=RGBA(1.000, 0.000, 0.001, 1.000) expected=RGBA(1.000, 0.000, 0.000, 1.000)",
+        "Filtered publication contains the newly exposed red contribution",
+        "Material filter does not mutate source renderer, mesh or material",
+        "Normal camera consumes GI exposed behind excluded merged shell actual=RGBA(1.215, 0.216, 0.217, 1.000) expected=RGBA(1.215, 0.216, 0.217, 1.000)",
+        "Equivalent null/duplicate-free filter preserves scene and both histories",
+        "Same-named other material remains eligible by reference identity",
+        "Restored shell gets a new identity and resets histories",
+        "Restored shell blocks raw contribution again actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Restored shell rejects old filtered red immediately actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Excluding only rear emitter does not remove front shell actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Excluding both submeshes retains independent primary",
+        "Missing secondary geometry stays black with direct sky excluded actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Null filter restores default registration",
+        "Null filter preserves shell blocking actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Fully excluded skin allocates no GI pose snapshot or bake"
+    ]
+}

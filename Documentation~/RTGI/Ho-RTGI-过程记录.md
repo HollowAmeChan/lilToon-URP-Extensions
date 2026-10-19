@@ -146,3 +146,22 @@
 **接纳/成本/限制：** 接纳本步为部署/应用帧证据，没有新增产品算法参数或Runtime改动。实际源码MonoScript绑定/serialized shader/15个wrapper/native DLL、正常合成的数据路径已在Player运行；完整payload SHA、来源源码SHA与每帧时钟均核对。原版降噪在空间不均匀信号下仍有明显收益，约3%均值差与10.35%形状L1需保留，不能据此称无偏或复杂细节已达标。正常自动camera、薄墙/小高亮源、骨骼/Cutout、GPU预算和完整Player矩阵仍待验收。构建三条非GI shader警告及Player GB fallback/resolve不可达、退出4条GraphicsBuffer GC清理警告均记录，不能声称全部域/完整生命周期通过。快照MonoScript唯一根因在一次重导入无收益后搁置F19，实际源码可推进。
 
 **过滤提交范围：** Editor/RTGI/HoRTGIPlayerValidation.cs/meta、Tests~/RTGI/Dynamic及RTGI说明/实施规划/过程/禁试/交接。排除Atmosphere/VolumeLight并行变化、隔离工程/Player二进制/全量log。后续优先实际场景输入支持与GPU预算，避免继续增加同类均匀夹具压噪。
+
+
+步骤006过滤提交：`035b9f9`。
+
+## 007：GI按材质排除合并天空壳（进行中）
+
+**事前review：** 已读DI第80步材质排除专题和实际古堡支持记录：天空壳与主体共用Renderer，按layer排掉整个对象会损失主体；DI已有Material对象身份列表及共享HoRTScene逐submesh过滤，GI仍未传入。该缺口可直接影响已有场景，不需要改变采样/降噪。沿现有接口增加GI独立默认空列表，高级Inspector可配，保留源mesh/material/raster。
+
+**Cutout边界复核：** GI当前native secondary closest-hit没有any-hit；共享inline查询显式CULL_NON_OPAQUE，DI另有native最终visibility。不能只把SupportsCutout传给GI registry就宣称接入，否则secondary/重连/次级灯可见性路径不一致、可能漏遮挡。Cutout需后续单独完整路线，本步不半接。
+
+**验收与预期收益：** 一个真实合并双submesh包含前遮挡壳和后emission面，验证只排壳后raw/filtered/正常camera增加反弹，保留面仍存在；同名材质按身份区分，恢复/空/重复null列表、retained identity、history reset与源资产不变；完全排除skin不Bake仅作为registry覆盖，不冒称骨骼GI材质全部已验。Linear/Gamma×RG/compat实际路径，沿已有Composite夹具专门入口，不泛增新的Feature或NRD参数。
+
+**实现与验证：** GI独立默认空Material[]，高级Inspector编辑，并传已有scene.Synchronize第三参数；共享registry/SDK/NRD/HLSL未改。正式四组各12请求/21checks、完整空列表Composite和Gamma NRD compatibility两回归，6实际进程全exit0、fresh/marker与编译诊断0。合并前壳令GI为0，只排壳后raw约(1,0,.001)，filtered/正常camera同步增加；恢复首帧清除旧红。同名不同引用、null/重复、保留identity与恢复新identity、完全排除skin不Bake、源对象不变均通过，说明见Tests~/RTGI/MaterialExclusion。
+
+**拒绝与修正：** 首轮含空间重采样，却把单像素值当常量解析期望，.928而非1导致exit1；报告保留。专门夹具关闭空间复用、保留temporal/NRD，.03门槛未放宽，生产算法/默认/增益没改。空间统计质量继续由独立步骤006负责。
+
+**事后review：** 接纳。用户现在可在GI单独过滤合并天空壳，不丢同Renderer主体，也不改raster/源资产。代价为共享已有逐帧身份过滤/HashSet逻辑，空列表不建HashSet；部分排除仍不缩小合并skin snapshot，不能从少实例推断GPU/VRAM节省。过滤变更需要清历史，等价列表保持历史有实测。没有重新验证非空GI Player列表或完整古堡/GPU预算，边界保留；Cutout完整路线仍需后续，不能半接predicate。
+
+**过滤提交：** 只含GI Settings/Feature/Inspector、Composite专门入口和新增partial测试、复用runner的可选MaterialExclusion模式、该步报告及RTGI文档；不改共享DI/Scene和其他任务文件。

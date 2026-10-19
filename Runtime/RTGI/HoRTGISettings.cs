@@ -25,6 +25,8 @@ namespace lilToon.URP.Extensions.RTGI
         public bool includeDirectEnvironment;
         [Range(0,32)] public int secondaryEnvironmentSamples = 4;
         public LayerMask geometryLayers = -1;
+        [Tooltip("使用这些材质的子网格不参与GI世界求交，可排除合并模型内的天空壳；光线穿过它们，不改变原画面绘制。")]
+        public Material[] excludedRayMaterials=Array.Empty<Material>();
         public LayerMask lightLayers = -1;
     }
 }

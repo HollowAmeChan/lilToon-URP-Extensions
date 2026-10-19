@@ -25,6 +25,8 @@
 | F19 / GI步骤006 Player序列化 | 隔离快照中的CLR类型能CreateInstance，便假定MonoScript也已正确导入；首个Player中GB/SB/GI/Volume m_Script为空、布局不符，实际Feature引用null | 构建前MonoScript.FromScriptableObject/GetClass必须匹配；原快照一次强制脚本重导入仍为空，禁止原样再build。当前工作树映射恢复，先用其继续，暂缓追快照导入唯一根因 |
 | F20 / GI步骤006探针退出 | 主失败为Feature引用null，清理再次无条件feature.Dispose导致退出前二次异常、进程挂住 | 清理可处理缺失序列化依赖，报告保留主错误；只在核对PID与绝对EXE路径后结束本任务失败进程，记录人为终止exit=-1，不冒称正常exit1 |
 | F21 / GI步骤006夹具假设 | 将白色unlit材质的实际camera color假定为1，或对disabled-camera请求路径省略DI helper已有的显式Volume更新，导致误报合成/Volume策略失败 | 用此前实际raster基准加同帧GI；请求前更新Volume stack。两份拒绝报告保留；不能为夹具改生产增益或Volume策略 |
+| F22 / GI步骤007代码复核 | 仅把DI SupportsCutout predicate接给GI registry就声称Cutout完整可用；共享inline显式CULL_NON_OPAQUE，而GI的次级命中/次级灯/最终重连还无一致alpha路径 | 先补完整native命中/可见性合同，再用实际孔洞、遮挡、重连和secondary-light验证；本条是代码合同风险，不伪称已经做过Cutout实验 |
+| F23 / GI步骤007夹具 | 用开启空间重采样后的单像素MC值断言统一发光面的解析常量；首轮.928失败 | 过滤夹具隔离空间复用并保留temporal/NRD reset，或使用有精度依据的空间/时间均值。门槛不放宽，生产算法/增益不为该误用调整 |
 
 长期无收益路线的记录模板：问题与基线 → 假说/参考 → 尝试和真实成本 → 哪些指标改善/退化 → 拒绝或搁置原因 → 禁止原样再试的条件 → 重开所需新证据。新记录必须关联过程步骤与报告，不只写“试过，不行”。
 

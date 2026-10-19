@@ -75,7 +75,7 @@ namespace lilToon.URP.Extensions.RTGI
             var geometry=new List<Renderer>();
             foreach(var item in Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None))
                 if((settings.geometryLayers.value&(1<<item.gameObject.layer))!=0)geometry.Add(item);
-            materials.BeginFrame();scene.Synchronize(geometry);materials.EndFrame();
+            materials.BeginFrame();scene.Synchronize(geometry,0xff,settings.excludedRayMaterials);materials.EndFrame();
             var lights=CollectLights(settings.lightLayers.value,out int excluded,out int signature);
             var captured=new PassSettings(settings);
             unchecked {signature=(signature*397^materials.Signature)*397^captured.signature;}

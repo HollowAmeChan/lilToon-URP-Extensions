@@ -1,4 +1,4 @@
-param([string]$Unity='C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe')
+param([switch]$MaterialExclusion,[string]$Unity='C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Unity.exe')
 $ErrorActionPreference='Stop'
 $workspaceRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
 $projectRoot=Join-Path $workspaceRoot '.codex-research/RTGIValidation'
@@ -6,20 +6,30 @@ $settingsPath=Join-Path $projectRoot 'ProjectSettings/ProjectSettings.asset'
 $active=Get-CimInstance Win32_Process -Filter "Name='Unity.exe'"|Where-Object{$_.CommandLine -and $_.CommandLine.Replace('\','/').Contains($projectRoot.Replace('\','/'))}
 if($active){throw 'GI project already running; inspect it before starting another process'}
 $original=[IO.File]::ReadAllBytes($settingsPath);$settingsText=[IO.File]::ReadAllText($settingsPath)
-$results=Join-Path $PSScriptRoot 'results';New-Item -ItemType Directory -Force -Path $results|Out-Null
+$results=if($MaterialExclusion){Join-Path $PSScriptRoot '../MaterialExclusion/results'}else{Join-Path $PSScriptRoot 'results'};New-Item -ItemType Directory -Force -Path $results|Out-Null
 $jobs=foreach($color in @('Linear','Gamma')){
     @{label="$color-composite-rg";color=$color;entry='HoRTGICompositeValidation.Run';report='ho-gi-composite-rg/report.json';marker='[HoGIComposite] END pass=True'}
     @{label="$color-composite-compat";color=$color;entry='HoRTGICompositeValidation.RunCompatibility';report='ho-gi-composite-compat/report.json';marker='[HoGIComposite] END pass=True'}
 }
 $jobs+=@{label='Linear-legacy-rg';color='Linear';entry='HoRTGIValidation.Run';marker='[HoRTGIValidation] PASS'}
 $jobs+=@{label='Gamma-uncomposited-environment-compat';color='Gamma';entry='HoRTGIEnvironmentValidation.RunCompatibility';report='ho-gi-secondary-environment-compat/report.json';marker='[HoGIEnvironment] END pass=True'}
-$run=[ordered]@{step=4;startedUtc=[DateTime]::UtcNow.ToString('o');project=$projectRoot;activeProcess=$null;entries=@()}
+if($MaterialExclusion){
+    $jobs=foreach($color in @('Linear','Gamma')){
+        @{label="$color-material-exclusion-rg";color=$color;entry='HoRTGICompositeValidation.RunMaterialExclusion';report='ho-gi-composite-rg/report.json';marker='[HoGIComposite] END pass=True'}
+        @{label="$color-material-exclusion-compat";color=$color;entry='HoRTGICompositeValidation.RunMaterialExclusionCompatibility';report='ho-gi-composite-compat/report.json';marker='[HoGIComposite] END pass=True'}
+    }
+    $jobs+=@{label='Linear-empty-default-composite-rg';color='Linear';entry='HoRTGICompositeValidation.Run';report='ho-gi-composite-rg/report.json';marker='[HoGIComposite] END pass=True'}
+    $jobs+=@{label='Gamma-nrd-regression-compat';color='Gamma';entry='HoRTGINrdValidation.RunCompatibility';report='ho-gi-nrd-compat/report.json';marker='[HoGINrd] END pass=True'}
+}
+$sourcePaths=@('Runtime/RTGI/HoRTGISettings.cs','Runtime/RTGI/HoRTGIRendererFeature.cs','Editor/RTGI/HoRTGIRendererFeatureEditor.cs','Editor/RTGI/HoRTGICompositeValidation.cs','Editor/RTGI/HoRTGIMaterialExclusionValidation.cs')
+$sources=if($MaterialExclusion){foreach($path in $sourcePaths){@{path=$path;sha256=(Get-FileHash -LiteralPath (Join-Path $workspaceRoot $path) -Algorithm SHA256).Hash}}}else{@()}
+$run=[ordered]@{step=$(if($MaterialExclusion){7}else{4});startedUtc=[DateTime]::UtcNow.ToString('o');project=$projectRoot;head=(& git -C $workspaceRoot rev-parse HEAD).Trim();sources=@($sources);activeProcess=$null;entries=@()}
 $runPath=Join-Path $results 'run.json'
 try{
     foreach($job in $jobs){
         $value=if($job.color -eq 'Linear'){1}else{0}
         [IO.File]::WriteAllText($settingsPath,[regex]::Replace($settingsText,'m_ActiveColorSpace: [01]',('m_ActiveColorSpace: '+$value)))
-        $started=[DateTime]::UtcNow;$log=Join-Path $workspaceRoot ('.codex-research/rtgi-step004-'+$job.label+'.log')
+        $started=[DateTime]::UtcNow;$log=Join-Path $workspaceRoot ('.codex-research/rtgi-step'+$(if($MaterialExclusion){'007-'}else{'004-'})+$job.label+'-'+$started.ToString('yyyyMMddTHHmmssfff')+'.log')
         $p=Start-Process -FilePath $Unity -WindowStyle Hidden -PassThru -ArgumentList @('-batchmode','-force-d3d12','-projectPath',('"'+$projectRoot+'"'),'-executeMethod',('lilToon.URP.Extensions.Editor.RTGI.'+$job.entry),'-logFile',('"'+$log+'"'))
         $run.activeProcess=[ordered]@{id=$p.Id;label=$job.label;entry=$job.entry;log=$log;startedUtc=$started.ToString('o')}
         $run|ConvertTo-Json -Depth 10|Set-Content -LiteralPath $runPath;Write-Output ($job.label+' PID '+$p.Id)

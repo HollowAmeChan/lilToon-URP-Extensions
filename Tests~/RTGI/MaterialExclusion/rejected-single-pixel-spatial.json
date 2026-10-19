@@ -1,0 +1,27 @@
+{
+    "pass": false,
+    "compatibility": false,
+    "colorSpace": "Linear",
+    "failure": "System.Exception: Excluded shell exposes actual secondary emission actual=RGBA(0.928, 0.000, 0.001, 1.000) expected=RGBA(1.000, 0.000, 0.000, 1.000)\r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGICompositeValidation.Require (System.Boolean value, System.String name) [0x00025] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTGI\\HoRTGICompositeValidation.cs:102 \r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGICompositeValidation.Near (UnityEngine.Color actual, UnityEngine.Color expected, System.String name, System.Single tolerance) [0x00000] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTGI\\HoRTGICompositeValidation.cs:104 \r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGICompositeValidation.ValidateMaterialExclusion () [0x004aa] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTGI\\HoRTGIMaterialExclusionValidation.cs:35 \r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGICompositeValidation.Tick () [0x00047] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTGI\\HoRTGICompositeValidation.cs:112 ",
+    "frames": 5,
+    "original": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "added": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "checks": [
+        "GI material filter defaults empty",
+        "GI registers primary and both merged submeshes with real NRD",
+        "Unexcluded front shell blocks secondary emitter actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Filtered shell-blocked GI is black actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Only excluded shell removed; retained emitter identity stays stable",
+        "Changed exclusion resets GI reservoirs and independent NRD"
+    ]
+}
