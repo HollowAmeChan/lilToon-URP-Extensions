@@ -5,6 +5,18 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.VolumeLight
 {
+    public enum HoVolumeLightAntialiasing
+    {
+        [InspectorName("关闭")] Off,
+        [InspectorName("单帧去噪")] Spatial,
+        [InspectorName("时域稳定")] Temporal
+    }
+    [Serializable]
+    public sealed class HoVolumeLightAntialiasingParameter : VolumeParameter<HoVolumeLightAntialiasing>
+    {
+        public HoVolumeLightAntialiasingParameter(HoVolumeLightAntialiasing value) : base(value) { }
+        public override void Interp(HoVolumeLightAntialiasing from, HoVolumeLightAntialiasing to, float t) => value = t > 0 ? to : from;
+    }
     public enum HoVolumeLightDebugMode
     {
         [InspectorName("关闭")] Off,
@@ -27,6 +39,8 @@ namespace lilToon.URP.Extensions.VolumeLight
         [InspectorName("最大照亮距离"), Tooltip("太阳体积效果的相机工作距离（米）；独立于 SDF 激活区域。")]
         public MinFloatParameter maxDistance = new(100, .01f);
         [InspectorName("采样步数")] public ClampedIntParameter stepCount = new(48, 8, 256);
+        [InspectorName("抗锯齿"), Tooltip("时域稳定使用体积自身的相机历史；单帧去噪不积累历史，适合快速变化的镜头。")]
+        public HoVolumeLightAntialiasingParameter antialiasing = new(HoVolumeLightAntialiasing.Temporal);
         [InspectorName("散射方向性"), Tooltip("前向散射程度；越大，朝向光源观察时越明亮。")]
         public ClampedFloatParameter anisotropy = new(.3f, 0, .9f);
         public HoVolumeLightDebugParameter debugMode = new(HoVolumeLightDebugMode.Off);

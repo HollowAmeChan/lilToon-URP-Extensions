@@ -14,7 +14,7 @@ using Object = UnityEngine.Object;
 namespace lilToon.URP.Extensions.VolumeLight
 {
     /// <summary>Isolated batch project only. GPU readback, no edits to user scenes/renderer assets.</summary>
-    public static class HoVolumeLightValidation
+    public static partial class HoVolumeLightValidation
     {
         private static readonly List<Object> objects = new();
         private static Camera camera;
@@ -33,6 +33,11 @@ namespace lilToon.URP.Extensions.VolumeLight
         private static Light previousSun;
         private static bool previousAsync;
         private static int frame;
+        private static string renderError;
+        private static void CaptureError(string message, string stack, LogType type)
+        {
+            if (type == LogType.Error || type == LogType.Exception || type == LogType.Assert) renderError ??= message;
+        }
         private static float initialWorldTime;
         private static readonly Dictionary<string, object> results = new();
         [Serializable] private sealed class Report
@@ -40,6 +45,7 @@ namespace lilToon.URP.Extensions.VolumeLight
             public bool passed;
             public string graphicsAPI, error, medium, solar;
             public string lilToonCutout;
+            public AAReport antialiasing;
             public float windowReduction;
         }
         public static void Run()
@@ -101,7 +107,7 @@ namespace lilToon.URP.Extensions.VolumeLight
                 if (++frame < 3) { Render(); return; }
                 Require(HoAtmosphereMediumClock.SampleTime > initialWorldTime, "editor medium clock did not advance");
                 EditorApplication.update -= Tick;
-                ValidateAuthoring(); ValidateMedium(); ValidateSolar();
+                ValidateAuthoring(); ValidateMedium(); ValidateAntialiasing(); ValidateSolar();
                 Debug.Log("[HoVolumeLightValidation] PASS: Medium GPU sampling/revision + solar shadow/cutout/offscreen/region mask/depth/inside/SSS + lifecycle; API=" + SystemInfo.graphicsDeviceType);
                 Finish(null);
             }
@@ -114,6 +120,10 @@ namespace lilToon.URP.Extensions.VolumeLight
             var featureEditor = Keep(UnityEditor.Editor.CreateEditor(lightFeature));
             Require(featureEditor.GetType().Name == "HoVolumeLightFeatureEditor", "feature inspector was not selected");
             Require(Resources.Load<Shader>("HoVolumeLightSolarHD") != null, "default player shader resource missing");
+            var samplingNoise = Resources.Load<Texture2D>("HoVolumeLightBlueNoise");
+            Require(samplingNoise != null && samplingNoise.width == 64 && samplingNoise.height == 64 && samplingNoise.mipmapCount == 1, "sampling mask import dimensions/mips invalid");
+            Require(!UnityEngine.Experimental.Rendering.GraphicsFormatUtility.IsSRGBFormat(samplingNoise.graphicsFormat) &&
+                !UnityEngine.Experimental.Rendering.GraphicsFormatUtility.IsCompressedFormat(samplingNoise.graphicsFormat), "sampling mask must remain linear and uncompressed");
             Vector3 original = region.size;
             Undo.RecordObject(region, "Validation region edit"); region.size = new Vector3(7, 8, 9);
             Undo.FlushUndoRecordObjects(); Undo.PerformUndo();
@@ -163,6 +173,8 @@ namespace lilToon.URP.Extensions.VolumeLight
         }
         private static void ValidateSolar()
         {
+            lightFeature.FeatureSettings.antialiasing = HoVolumeLightAntialiasing.Off;
+            sun.transform.rotation = Quaternion.LookRotation(new Vector3(.6f, 0, .8f));
             probe.material.SetFloat("_ProbeMode", 0);
             region.transform.SetPositionAndRotation(new Vector3(0, 1, 5), Quaternion.identity); region.transform.localScale = Vector3.one;
             region.size = new Vector3(12, 6, 8); region.density = .1f; region.blendDistance = .5f; region.volumeLightWeight = 1;
@@ -278,7 +290,11 @@ namespace lilToon.URP.Extensions.VolumeLight
         private static Color[] Render()
         {
             VolumeManager.instance.Update(camera.transform, -1);
-            RenderPipeline.SubmitRenderRequest(camera, new UniversalRenderPipeline.SingleCameraRequest { destination = target });
+            renderError = null;
+            Application.logMessageReceived += CaptureError;
+            try { RenderPipeline.SubmitRenderRequest(camera, new UniversalRenderPipeline.SingleCameraRequest { destination = target }); }
+            finally { Application.logMessageReceived -= CaptureError; }
+            Require(renderError == null, "Rendering logged an error: " + renderError);
             return Read(target);
         }
         private static Color[] Read(RenderTexture source)
@@ -300,11 +316,17 @@ namespace lilToon.URP.Extensions.VolumeLight
         }
         private static void Near(float actual, float expected, string label, float epsilon = .015f) => Require(Mathf.Abs(actual - expected) < epsilon, label + ": expected " + expected + ", got " + actual);
         private static void Require(bool condition, string message) { if (!condition) throw new Exception(message); }
-        private static T Keep<T>(T value) where T : Object { objects.Add(value); return value; }
+        private static T Keep<T>(T value) where T : Object
+        {
+            // Test-owned assets stand in for project assets; scene objects must still unload.
+            if (!(value is GameObject)) value.hideFlags = HideFlags.HideAndDontSave;
+            objects.Add(value); return value;
+        }
         private static Material Mat(string name) { var shader = Shader.Find(name); Require(shader != null, "Missing shader " + name); return Keep(new Material(shader)); }
         private static void Finish(Exception error)
         {
             EditorApplication.update -= Tick;
+            Application.logMessageReceived -= CaptureError;
             HoAtmosphereMediumClock.TimeOverride = null;
             GraphicsSettings.defaultRenderPipeline = previousDefault; QualitySettings.renderPipeline = previousQuality;
             RenderSettings.skybox = previousSkybox; RenderSettings.sun = previousSun; ShaderUtil.allowAsyncCompilation = previousAsync;
@@ -316,6 +338,7 @@ namespace lilToon.URP.Extensions.VolumeLight
             var report = new Report { passed = error == null, graphicsAPI = SystemInfo.graphicsDeviceType.ToString(), error = error?.Message ?? "",
                 medium = results.ContainsKey("medium") ? (string)results["medium"] : "NOT RUN", solar = results.ContainsKey("solar") ? (string)results["solar"] : "NOT PASSED",
                 lilToonCutout = results.ContainsKey("lilToonCutout") ? (string)results["lilToonCutout"] : "NOT RUN",
+                antialiasing = aaReport,
                 windowReduction = results.ContainsKey("windowReduction") ? Convert.ToSingle(results["windowReduction"]) : 0 };
             File.WriteAllText(Path.Combine(dir, "result-" + SystemInfo.graphicsDeviceType + ".json"), JsonUtility.ToJson(report, true));
             if (error != null) Debug.LogException(error);
