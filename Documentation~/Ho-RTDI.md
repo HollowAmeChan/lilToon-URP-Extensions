@@ -187,6 +187,7 @@ Opaque 在 shade 内局部消费第二辅助；Cutout 原生路径按相机保�
 | Signal alpha | 已选灯距离；不是 receiver validity。有效暗面仍提供合法零信号与距离 |
 | Guide | 正线性 viewZ、世界法线、roughness，固定 normal/roughness 编码 2/1 |
 | Material class | active diffuse=0 / 全零 diffuse=3，不是完整材质资产 ID |
+| 投影与TAA | 主表面/DI保留真实带抖动投影；NRD使用无抖动投影并单独传入当前/前帧采样抖动；静止判定使用无抖动镜头矩阵 |
 | Motion | 静态世界 world-motion=0，相机由真实前后矩阵重投影；未接入通用物体运动源 |
 | 发布恢复 | 撤销共同线性尺度，恢复当前 diffuse albedo / specular factor，并写回接收有效性 alpha |
 
@@ -208,6 +209,10 @@ DenseDI 私有派生包含颜色/方差与 F0 条件处理，原始 vendor 和 C
 实际血月古堡视角的中央64²区域做了ReSTIR上限20/4配对观察（32帧预热、64帧统计，不保存资产参数）：4的combined时间方差为20的约1/10.7，8×8块平均后的波动方差约1/7.9；区域均值相差约2.4%，不是全场景解析能量认证。测试工程 `PC_Renderer.asset` 已仅将该项20恢复到默认4，其他设置保留。细节和证据见 [Scene View 验证](../Tests~/RTDI/SceneView/README.md)。
 
 **稳定判定逐相机全局执行。** 持续移动的相机、灯或几何会让整个图像维持短预算，即使其中一些像素没有变化。这还不是逐像素区分静态环境与动态角色的长历史方案。
+
+2026-10-19 补充：实际Scene View开启TAA后，旧判定将逐帧投影抖动误认为镜头运动，NRD虽开启却一直停在主1/快速0。现在区分真实镜头矩阵和URP亚像素抖动，按固定NRD的无抖动投影＋独立jitter合同提交；DI重投影和主表面仍使用真实带抖动矩阵。两条GPU路径的实际URP TAA对照中，旧逻辑192帧静止档为0，新逻辑190帧进入静止档并达到30/6，raw统计相同；真实FOV变化仍重启一次。该修复覆盖当前Base/Mono静止抖动，不等于动态物体、任意自定义投影或完整TAA画质已验收。记录见 [TemporalJitter](../Tests~/RTDI/SceneView/TemporalJitter/README.md)。
+
+现场修复后70次实际渲染中有64次处于静止档，主/快速历史保持30/6，实际投影仍持续抖动。另观察到重启期间游戏时间暂为0，因此非播放Scene View的采样时间改用编辑器单调时钟；两条GPU路径均验证了同一游戏帧/冻结游戏时钟下，Scene View仍能进入稳定档。普通Game/Player时钟策略不变。
 
 ### DI、NRD 与世界历史的区别
 
@@ -252,7 +257,7 @@ SSGI 与 RTDI 的具体信号、候选和滤波预算不同，不能仅凭同用
 | 物体 motion / lobe hit-distance | NRD 仍为静态 world-motion 协议；guide 取主样本距离 | 正常应用帧物体运动、每 lobe 距离代表性未完成 |
 | 实际复杂场景 | 古堡等只有几何/天空壳及局部稳定性检查 | 不是完整画质、无漏光、任意材质和目标帧率验收 |
 | 性能 | 历史 GPU 预算报告无有效样本，另有同步 batch 时长 | 有效 DI/visibility/NRD GPU 分段预算未交付 |
-| 平台与输入域 | Win64 Mono 受控验证 | IL2CPP、XR、TAA jitter、MSAA / 通用 GB fallback 等完整合同未验收 |
+| 平台与输入域 | Win64 Mono受控验证，静止URP TAA投影分离专项通过 | IL2CPP、XR、动态物体配合TAA、MSAA / 通用GB fallback等完整合同未验收 |
 | NPR / GI 最终接收 | 参考 PBR 已进入正常画面；独立 RTGI 尚未加入 | 原 NPR ramp / 影色和物理光照的混合路由仍未交付 |
 | 近乎全光滑材质 | roughness<.03 时 BRDF、primary shade 与辅助 shade 都跳过镜面；金属 diffuse 又为0 | 接收有效但会丢失镜面，完整替换可变黑；需实现光滑极限或明确不支持并保留原照明，不能当作所有PBR材质已支持 |
 
@@ -264,7 +269,7 @@ SSGI 与 RTDI 的具体信号、候选和滤波预算不同，不能仅凭同用
 
 1. **P1，正式材质接收。** 参考替换模式执行 `lerp(original, diffuse+specular+emission, weight)`，权重1会丢弃该表面的旧NPR受光、环境/探针照明。审计后新增的可选加法模式允许保留旧外观并增加低强度RTDI，解决快速接入需求，但仍不是正式NPR接收。下一步应明确原直接光、RTDI、NPR ramp/影色、独立GI的接收与分层合同。
 2. **P1，近全光滑镜面边界。** 当前 `<.03` 的跳过在普通/NRD和Single/Triple共用的BRDF/shade路径存在；原粗糙度夹具不覆盖这一区间。先定义光滑极限或fallback，再做近镜面金属、介质、天空和解析灯的边界验收。这是静态代码发现，尚未新增现场GPU复现。
-3. **P1，动态物体与TAA。** NRD实际 `IN_MV` 仍绑定黑图，使用零world motion与前后相机矩阵。普通物体/蒙皮接收面运动、jitter变化尚非完整协议；逐相机全局稳定判定也会让局部运动缩短整个画面的历史。TAA自身收敛不能替代这项接入。
+3. **P1，动态物体与TAA。** NRD实际 `IN_MV` 仍绑定黑图，使用零world motion与前后相机矩阵。10-19已补齐静止URP TAA投影/jitter分离并验证；普通物体/蒙皮接收面运动及其与TAA的组合仍非完整协议，逐相机全局稳定判定也会让局部运动缩短整个画面的历史。
 4. **P1，保留的质量失败。** 先修既有Mixed天空镜面、严格caster step、Power换强灯身份后的方差门槛，再重跑对应原协议。当前专项通过不覆盖它们。
 5. **P2，阴影语义与性能。** RTDI世界可见性独立于 `Light.shadows`，当前也没有映射普通Renderer的 `shadowCastingMode` / `receiveShadows`。关闭raster阴影不是去重照明的必要条件；它可能省去最终被替换表面的无用工作，但仍需照顾透明、不支持材质及其它消费者。每相机世界扫描、AS、可见性和NRD的有效GPU预算仍需实测；IL2CPP/XR等另行验收。
 

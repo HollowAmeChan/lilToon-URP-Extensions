@@ -133,6 +133,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(++tick<3){Render();return;}
                 if(forceCutoutGpuTiming){TickCutoutGpuTiming();return;}
                 if(forceMotionProtocol&&motionProtocolRealFrames){TickMotionProtocol();return;}
+                if(temporalJitterAudit){TickTemporalJitter();return;}
                 if(forceComposite){ValidateComposite();Finish(null);return;}
                 if(slowSceneViewAudit){ValidateSlowSceneView();Finish(null);return;}
                 if(referenceConvergenceAudit){ValidateConvergence();Finish(null);return;}

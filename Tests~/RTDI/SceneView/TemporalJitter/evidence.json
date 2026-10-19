@@ -1,0 +1,24 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-19",
+  "baseCommit": "5c404cd",
+  "scope": "Static Base/Mono URP TAA projection/jitter separation, Scene View monotonic sample clock; no object-motion or new Player acceptance",
+  "liveCapture": "before: original projection policy; after: projection repair; editor-clock hardening additionally validated by the GPU fixture; poll fallback fields are not rendering Volume values",
+  "artifacts": {
+    "live-before.json": "a916118d66aebac4c6e077be6141e0d91621b4b0baaca7592d3e49b6af215cb3",
+    "live-after.json": "83c96ca50de4c91258a2290d4336c9dd39c47e8a04659e8a57deb213e4d7ffcd",
+    "startup-partial.json": "1ccf299524355c15c213a8f3ea70a469c0eb7965ef3fadbc1ff0f5db336fa9cf",
+    "taa-rg.json": "c2c9abf5b3dd790cf3b8ae850bfedee6455008a97b1a02d6186da4f6aa39389c",
+    "taa-compat.json": "3f8c4eb95df1343ba5b6bbc79f28c9c3e586d08b7234cb8c98352d7b48d33de3",
+    "exits.json": "0b85522d2fa0a8ca2d3269dd9f0207abfcefd1093da12b72f2643b084af6cc7e"
+  },
+  "sources": {
+    "Runtime/RTDI/HoRTDIProjectionSample.cs": "73b8e8749b098e8f48e1babc0ed176f8cd7d7932841dd722f0be560b894d3b0e",
+    "Runtime/RTDI/HoRTDIContext.cs": "cf9ee7da50815b4a18c78db3b1e52b26b6c20f539831be5daef38e6fd40de1c0",
+    "Runtime/RTDI/HoRTDIRendererFeature.cs": "08eb492881fe3730ffba2e0b47e6c9ce34cd14ba0828d32a710b32bccc844a52",
+    "Runtime/RTDI/NRD/HoRTDINrdContext.cs": "e48fb1ef81d43fd0f8f174958e9987d345798af293730db7f40bc347216dd316",
+    "Editor/RTDI/HoRTDITemporalJitterValidation.cs": "02354714d87ab59dac1f322c6767828c355bd086f9ddfb992b5b0ab4295f1349",
+    "Editor/RTDI/HoRTDIValidation.cs": "9a0584b10320be824264a590b0380205cde97911778f55e8e2315ddc8704e78e",
+    "Tests~/RTDI/SceneView/TemporalJitter/verify.py": "73858ab23b74f1049015ae662440bc2b1c663215c414c45bb4df95a82aeaa588"
+  }
+}

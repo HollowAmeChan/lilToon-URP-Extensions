@@ -200,6 +200,7 @@ namespace lilToon.URP.Extensions.RTDI
                 internal ComputeShader shader;internal PassSettings settings;internal HoRTDIContext.LightFrame lightFrame;
                 internal RayTracingShader finalVisibilityShader;
                 internal int lightCount,localLightCount,signature;internal uint revision,structureRevision;internal Matrix4x4 view,projection;internal Camera camera;
+                internal HoRTDIProjectionSample projectionSample;
                 internal double renderTime;
                 internal int finalSamples;
                 internal float[] auxiliaryCDF;
@@ -213,7 +214,17 @@ namespace lilToon.URP.Extensions.RTDI
                 internal uint environmentRevision;
             }
             private Data Snapshot(Camera camera,Matrix4x4 view,Matrix4x4 projection) => new Data {context=context,scene=scene.ReadCompatibility(),shader=shader,finalVisibilityShader=finalVisibilityShader,settings=settings,lightFrame=context.CaptureLights(lights,lightKeys),
-                lightCount=lightCount,localLightCount=localLightCount,signature=signature,revision=scene.Revision,structureRevision=scene.StructureRevision,view=view,projection=projection,camera=camera,renderTime=Time.unscaledTimeAsDouble,finalSamples=requestedFinalSamples};
+                lightCount=lightCount,localLightCount=localLightCount,signature=signature,revision=scene.Revision,structureRevision=scene.StructureRevision,view=view,projection=projection,
+                projectionSample=new HoRTDIProjectionSample(projection,camera.projectionMatrix,context.width,context.height),camera=camera,renderTime=RenderTime(camera),finalSamples=requestedFinalSamples};
+            private static double RenderTime(Camera camera)
+            {
+                #if UNITY_EDITOR
+                // Scene View repaints can occur while the player clock is
+                // frozen, notably during editor startup/pause. Use editor time.
+                if(!Application.isPlaying&&camera.cameraType==CameraType.SceneView)return UnityEditor.EditorApplication.timeSinceStartup;
+                #endif
+                return Time.unscaledTimeAsDouble;
+            }
             private static void PrepareAuxiliary(Data d)
             {
                 var c=d.context;
@@ -236,6 +247,7 @@ namespace lilToon.URP.Extensions.RTDI
                     data.finalVisibilityShader=source.finalVisibilityShader;
                     data.localLightCount=source.localLightCount;
                     data.signature=source.signature;data.revision=source.revision;data.structureRevision=source.structureRevision;data.view=source.view;data.projection=source.projection;data.camera=source.camera;
+                    data.projectionSample=source.projectionSample;
                     data.renderTime=source.renderTime;
                     data.finalSamples=source.finalSamples;
                     data.scene=scene.Read(graph,builder);data.primary=HoRTPrimarySurfaceInputs.Read(graph,frame,builder);
@@ -315,13 +327,19 @@ namespace lilToon.URP.Extensions.RTDI
                     // and reservoir history; ordinary lamp motion/power changes
                     // continue through the existing visibility-confidence path.
                     reset=!c.nrdHistoryValid||!c.historyValid||worldReset||c.settingsSignature!=d.signature||d.lightFrame.domainChanged;
-                    common=HoRTDINrdNative.CommonSettings.Create(c.width,c.height,d.view,d.projection,c.previousView,c.previousProjection,c.frame,reset);
+                    var nrdProjection=d.projectionSample.nonJittered;var previousNrdProjection=c.previousNonJitteredProjection;
+                    var nrdJitter=d.projectionSample.jitterPixels;var previousNrdJitter=c.previousJitterPixels;
                     #if UNITY_EDITOR
-                    c.nrd.SceneViewPreview=!Application.isPlaying&&d.camera.cameraType==CameraType.SceneView&&!c.nrd.ValidationDisableSceneViewPreview;
+                    if(c.nrd.ValidationUseJitteredProjection){nrdProjection=d.projection;previousNrdProjection=c.previousProjection;nrdJitter=previousNrdJitter=Vector2.zero;}
+                    #endif
+                    common=HoRTDINrdNative.CommonSettings.Create(c.width,c.height,d.view,nrdProjection,c.previousView,previousNrdProjection,c.frame,reset);
+                    common.jitter=nrdJitter;common.previousJitter=previousNrdJitter;
+                    #if UNITY_EDITOR
+                    c.nrd.SceneViewPreview=!Application.isPlaying&&(d.camera.cameraType==CameraType.SceneView||c.nrd.ValidationForceSceneViewPreview)&&!c.nrd.ValidationDisableSceneViewPreview;
                     #endif
                     common.timeDelta=c.nrd.SetRenderTime(d.renderTime,out timeReset);if(timeReset)common.accumulationMode=2;
                     bool lightsChanged=LightsChanged(d.lightFrame);
-                    reset|=c.nrd.ObserveLightingStability(reset||timeReset||worldChanged||lightsChanged||c.previousView!=d.view||c.previousProjection!=d.projection);
+                    reset|=c.nrd.ObserveLightingStability(reset||timeReset||worldChanged||lightsChanged||c.previousView!=d.view||previousNrdProjection!=nrdProjection);
                     if(reset)common.accumulationMode=2;
                     traceConfidence=dynamicVisibility&&!(reset||timeReset)&&(worldChanged||lightsChanged);
                     #if UNITY_EDITOR
@@ -480,7 +498,7 @@ namespace lilToon.URP.Extensions.RTDI
                 }
                 cmd.SetGlobalFloat("_HoRTDIActive",1);cmd.SetGlobalTexture("_HoRTDIDiffuseTexture",c.PublishedDiffuse.nameID);cmd.SetGlobalTexture("_HoRTDISpecularTexture",c.PublishedSpecular.nameID);
                 cmd.SetGlobalTexture("_HoRTDIRawDiffuseTexture",c.diffuse.nameID);cmd.SetGlobalTexture("_HoRTDIRawSpecularTexture",c.specular.nameID);
-                c.Complete(d.view,d.projection,d.camera,d.revision,d.signature,d.lightFrame);
+                c.Complete(d.view,d.projection,d.projectionSample,d.camera,d.revision,d.signature,d.lightFrame);
                 c.RecordAuxiliaryFence(cmd);
                 c.sceneStructureRevision=d.structureRevision;
             }

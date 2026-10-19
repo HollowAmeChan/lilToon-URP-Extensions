@@ -1,0 +1,10 @@
+{
+  "RunTemporalJitter": 0,
+  "RunTemporalJitterCompatibility": 0,
+  "RunTimingCompatibility": 0,
+  "RunSlowSceneView": 0,
+  "RunSlowSceneViewCompatibility": 0,
+  "RunVolumeControls": 0,
+  "RunVolumeControlsCompatibility": 0,
+  "RunMatchedConvergenceAdaptive": 0
+}

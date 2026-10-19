@@ -41,6 +41,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         internal const uint SceneViewSettledSamples=64;
         internal uint SceneViewAccumulatedFrames {get;private set;}
         internal bool ValidationDisableSceneViewPreview;
+        internal bool ValidationForceSceneViewPreview,ValidationUseJitteredProjection;
         // Isolated stage/settings A/B only; no serialized/runtime product option.
         internal Func<HoRTDINrdNative.RelaxSettings,HoRTDINrdNative.RelaxSettings> ValidationSettings;
         internal bool ValidationPreserveWorldHistory;

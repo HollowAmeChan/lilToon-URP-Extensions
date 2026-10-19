@@ -71,6 +71,8 @@ namespace lilToon.URP.Extensions.RTDI
         internal RTHandle PublishedDiffuse=>nrd!=null?filteredDiffuse:diffuse;
         internal RTHandle PublishedSpecular=>nrd!=null?filteredSpecular:specular;
         internal Matrix4x4 previousView=Matrix4x4.identity,previousProjection=Matrix4x4.identity;
+        internal Matrix4x4 previousNonJitteredProjection=Matrix4x4.identity;
+        internal Vector2 previousJitterPixels;
         internal int width,height,rowPitch,arrayPitch,frame;
         internal uint sceneRevision;
         internal uint sceneStructureRevision;
@@ -234,10 +236,11 @@ namespace lilToon.URP.Extensions.RTDI
         }
         internal LightFrame CaptureLights(HoRTDIRendererFeature.AnalyticLight[] current,Light[] keys)
             =>new LightFrame(current,keys,previousLightData,previousLightKeys);
-        internal void Complete(Matrix4x4 view,Matrix4x4 projection,Camera camera,uint revision,int signature,LightFrame lightFrame)
+        internal void Complete(Matrix4x4 view,Matrix4x4 projection,HoRTDIProjectionSample projectionSample,Camera camera,uint revision,int signature,LightFrame lightFrame)
         {
             previousVP=GL.GetGPUProjectionMatrix(projection,true)*view;previousInverseVP=previousVP.inverse;
             previousView=view;previousProjection=projection;
+            previousNonJitteredProjection=projectionSample.nonJittered;previousJitterPixels=projectionSample.jitterPixels;
             previousCamera=view.inverse.GetColumn(3);previousTowardsEye=view.GetRow(2);previousTowardsEye.w=0;previousViewZ=view.GetRow(2);
             previousClip=new Vector4(camera.nearClipPlane,camera.farClipPlane,camera.orthographic?1:0,SystemInfo.usesReversedZBuffer?1:0);
             sceneRevision=revision;settingsSignature=signature;historyValid=true;frame++;

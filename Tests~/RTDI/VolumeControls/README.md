@@ -62,7 +62,7 @@ Unity `-batchmode -force-d3d12 -projectPath <isolated project>
 the old `Assets/RTDIPlayerProbe/Volume.asset` fixture from Player preparation.
 
 ```powershell
-python Tests~/RTDI/VolumeControls/verify.py
+python Tests~/RTDI/VolumeControls/verify.py --source-commit 5c404cd
 python Tests~/RTDI/Composite/Blend/verify.py --source-commit 94c9128
 python Tests~/RTDI/SceneView/FastHistory/verify.py --source-commit 7360367
 ```
