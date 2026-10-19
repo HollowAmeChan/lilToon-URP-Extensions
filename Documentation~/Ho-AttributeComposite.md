@@ -1,5 +1,7 @@
 # Ho-AttributeComposite（AC）
 
+**2026-10-19 零透明度输入说明**：AC主要引用/合成GB几何、OB身份和SB表面/语义，不能在这里用一次额外alpha判断修补已经被前方假表面覆盖的数据。普通透明alpha=0片元已在材质writer处discard，AC应继续看到后方几何/身份/表面。实际验证及未覆盖域见[底层输出审计](../Tests~/Infrastructure/ZeroAlpha/README.md)。
+
 ## 调试入口（2026-10-09）
 
 日常操作收拢为 **关闭 / 彩色总览 / 单项遮罩**，分类为 **部件 / 身份组 / 选择组 / 语义**。

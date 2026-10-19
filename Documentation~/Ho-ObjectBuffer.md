@@ -1,5 +1,7 @@
 # Ho-ObjectBuffer（OB）
 
+**2026-10-19 零透明度原生写入修复**：普通透明材质经共享材质路径解析后，alpha=0的片元不写身份、coverage或selection，也不占用该pass深度。4x实际原生路径已验证后方身份保留；1x降级路径目前只跑opaque fallback，不能用它证明透明原生writer已执行。详见[底层输出审计](../Tests~/Infrastructure/ZeroAlpha/README.md)。
+
 > 调试架构更新：单视图与模块内 All 共用本模块 shader，并在最终后处理之后显示。DebugTile 已收缩为 APV 等外部系统入口；本文中原 DebugTile 接入要求由模块内 All 替代，见 [Ho-Debug.md](Ho-Debug.md)。
 
 > **状态：已落地并稳定**（代码在 `Runtime/ObjectBuffer/`）。本文是 **OB 的现行架构说明**：ID 空间、每像素存储、

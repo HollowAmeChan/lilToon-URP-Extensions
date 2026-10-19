@@ -1,0 +1,23 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-19",
+  "liltoonCommit": "b124f7e",
+  "scope": "Infrastructure writer opacity, actual perspective GB/SB/OB/AC outputs and 4x native identity; correlated/outline positive cases not separately accepted",
+  "artifacts": {
+    "rg.json": "d6fc501a2bd499ba408bd3b5e2ac80353cd8d7acaf3b912139938c0b7c9be771",
+    "compat.json": "b663aad700369914524df4aaf9715a7a3a10fbaba1fe44db9972b7e7be3c1eb8",
+    "exits.json": "6d0202ada2ec04710d9887e0c3f34c83e58344ecc70f50a5f11b78b215179de3",
+    "regressions.json": "9f4a297a079072dd8504a557a70398ae60f285a20916b8c2ab454704afe0dac7"
+  },
+  "sources": {
+    "Editor/SurfaceBuffer/HoInvisibleSurfaceValidation.cs": "6282178fcf60a5f55b70044113a55daa98651fbd8ea32e75d6a66bfde705d8fe",
+    "Editor/SurfaceBuffer/HoInvisibleSurfaceValidation.shader": "d690dddfcb246d4cffad1596a80a255ae20f6c66d471d7a9c3053fe4e745126f",
+    "Tests~/Infrastructure/ZeroAlpha/verify.py": "f5069eb4f7e04664893ac3180bf89244fb84ccdcc92c33cb3d47b68ba60345c5"
+  },
+  "liltoonSources": {
+    "Assets/lilToon/Shader/Includes/lil_ho_surface_alpha.hlsl": "06cb253e388b49230fee2a71f52b51093206bb204f9ea861b184878ad2c77a10",
+    "Assets/lilToon/Shader/Includes/lil_pass_geometry_buffer.hlsl": "2369b890451ee185ea84afa87ca99c4950cde68ce9effc4010b9fe371331fe1f",
+    "Assets/lilToon/Shader/Includes/lil_pass_surface_common.hlsl": "eba0147c2bbaca2ada8fdb592b8f0b57f305094b5ad7910471904a3ee48f0fa5",
+    "Assets/lilToon/Shader/Includes/lil_pass_outline_normal_depth.hlsl": "16dd5dd2fc9dac5fb3523ebfef74df69f36f5965aa5a87bebc2e4b94005c3fbb"
+  }
+}

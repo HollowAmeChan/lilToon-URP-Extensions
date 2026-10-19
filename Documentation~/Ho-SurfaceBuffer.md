@@ -9,6 +9,8 @@
 
 表面数值 buffer：回答"表面是什么样"。**几何在 GB，身份与逐物体属性在 OB，合成在 AC。**
 
+**2026-10-19 零透明度输出规则**：普通透明片元的最终有效alpha为0时，在共享材质构建路径直接discard，不能仅把颜色或validity清零后继续写深度。数值MRT、Emission writer、owner、语义owner/lane与关联写入共用这项裁剪，后方有效表面应保留。规则不把Opaque的Color.a或折射强度直接当作透明度。GPU覆盖范围与边界见[审计](../Tests~/Infrastructure/ZeroAlpha/README.md)。
+
 > **2026-10-07 数值面更新**：独立 Emission 已接入第 7 个 MRT（旧 0..5 索引不变），现为六张数值图 + owner。下文 R3 等执行记录中的“五张图 / 6 MRT”是旧实现记录，以本段与字段表为当前事实。Emission 可直接供 RT 消费，不要求经过 AC；SSS 本轮不扩展。
 >
 > 已在 Unity 6000.3.15f1 的 D3D12/11 RenderGraph 与 D3D11 compatibility 验证两层 HDR、mask、组分混色分离、未登记/零发光 writer、cutout、全屏/平铺调试及开关/销毁。入口为 `HoSurfaceBufferEmissionValidation.Run` / `RunCompatibility`（后者需隔离工程定义 `URP_COMPATIBILITY_MODE`）。

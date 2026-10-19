@@ -12,6 +12,8 @@
 
 ## 1. 设计边界
 
+**2026-10-19 透明零覆盖修复**：lilToon普通透明材质的有效片元alpha为0时，GB不得写入几何法线或深度来遮挡后方表面。现在与Forward一致检查透明cutoff，并额外拒绝cutoff=0时的零alpha；outline写入也补齐这一零边界。Opaque的颜色alpha不代表透明度，折射材质另有可见性语义，不统一按Color.a剔除。范围及实际输出对照见[零透明度底层输出审计](../Tests~/Infrastructure/ZeroAlpha/README.md)。
+
 GeometryBuffer 不是 URP `_CameraDepthTexture` 的别名，也不是完整 deferred GBuffer。它是由 Ho 管线主动重绘得到的、可复用的屏幕空间几何层：
 
 ```text
