@@ -1,0 +1,21 @@
+{
+  "step": 4,
+  "startedUtc": "2026-10-19T09:38:56.7840402Z",
+  "project": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTGIValidation",
+  "activeProcess": null,
+  "entries": [
+    {
+      "label": "Linear-composite-rg",
+      "entry": "HoRTGICompositeValidation.Run",
+      "colorSpace": "Linear",
+      "exitCode": 1,
+      "passMarker": false,
+      "shaderCsDiagnostics": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step004-Linear-composite-rg.log",
+      "logSha256": "4F064E222EC7451B3EEDF6D1CE4EFF4E597CF28BA588D29C14D8F2ECC1CD76FC",
+      "reportFresh": true,
+      "reportPass": false,
+      "reportSha256": "F4EEFACAA182898D8B199DBF1C781F0F3A2C1109BB4F93C8EE0CDE571DC73F8A"
+    }
+  ]
+}

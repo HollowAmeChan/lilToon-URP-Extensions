@@ -19,6 +19,7 @@ namespace lilToon.URP.Extensions.RTGI
         [SerializeField] private ComputeShader shader;
         [SerializeField] private RayTracingShader rayShader;
         [SerializeField] private Shader secondaryMaterialShader;
+        [SerializeField] private Shader compositeShader;
         private HoRTScene scene;
         private HoRTGISecondaryMaterials materials;
         private readonly Dictionary<Camera,HoRTGIContext> contexts = new();
@@ -26,6 +27,8 @@ namespace lilToon.URP.Extensions.RTGI
         private HoRTGIPass pass;
         private HoRTGIDebugPass debugPass;
         private Material debugMaterial;
+        private HoRTGICompositePass compositePass;
+        private Material compositeMaterial;
         private bool registered;
         public HoRTGISettings Settings => settings;
         public string Status { get; private set; } = "未生产";
@@ -39,10 +42,11 @@ namespace lilToon.URP.Extensions.RTGI
             if(shader==null)shader=UnityEditor.AssetDatabase.LoadAssetAtPath<ComputeShader>(root+"HoRTGI.compute");
             if(rayShader==null)rayShader=UnityEditor.AssetDatabase.LoadAssetAtPath<RayTracingShader>(root+"HoRTGI.raytrace");
             if(secondaryMaterialShader==null)secondaryMaterialShader=UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(root+"HoRTGISecondaryMaterial.shader");
+            if(compositeShader==null)compositeShader=UnityEditor.AssetDatabase.LoadAssetAtPath<Shader>(root+"HoRTGIComposite.shader");
             #endif
             if(secondaryMaterialShader!=null)materials=new HoRTGISecondaryMaterials(secondaryMaterialShader);
             scene=materials!=null?new HoRTScene(materials.Resolve):new HoRTScene();
-            pass=new HoRTGIPass();debugPass=new HoRTGIDebugPass();
+            pass=new HoRTGIPass();debugPass=new HoRTGIDebugPass();compositePass=new HoRTGICompositePass();
             if(!registered){RenderPipelineManager.beginCameraRendering+=ResetCamera;registered=true;}
         }
         private void ResetCamera(ScriptableRenderContext context,Camera camera)
@@ -77,8 +81,18 @@ namespace lilToon.URP.Extensions.RTGI
             HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTGI primary normals",System.Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.HighPrecisionSurfaceNormal);
             if(materials.TimeVarying)context.historyValid=false;
             pass.Setup(context,scene,shader,rayShader,captured,lights.Count>0?lights.ToArray():new HoRTDIRendererFeature.AnalyticLight[1],lights.Count,signature);
+            bool compositeRequested=volume!=null&&volume.composite.overrideState?volume.composite.value:settings.composite;
+            float amount=volume!=null&&volume.intensity.overrideState?volume.intensity.value:settings.intensity;
+            amount=float.IsFinite(amount)?Mathf.Max(0,amount):0;
+            bool composite=compositeRequested&&amount>0&&descriptor.msaaSamples==1&&descriptor.dimension==TextureDimension.Tex2D
+                &&!data.cameraData.xr.enabled&&camera.rect==new Rect(0,0,1,1);
+            if(composite&&compositeMaterial==null&&compositeShader!=null)compositeMaterial=CoreUtils.CreateEngineMaterial(compositeShader);
+            composite&=compositeMaterial!=null;
+            pass.renderPassEvent=composite?RenderPassEvent.BeforeRenderingTransparents:RenderPassEvent.BeforeRenderingPostProcessing;
             renderer.EnqueuePass(pass);
             Status=$"一跳 diffuse GI：{lights.Count} 灯 / {scene.InstanceCount} RT submesh / 排除 {excluded} 灯、{materials.Rejections.Count} 命中材质、{scene.Rejections.Count} 几何项";
+            if(composite){compositePass.Setup(compositeMaterial,context,amount);renderer.EnqueuePass(compositePass);Status+=" / GI 加法合成";}
+            else if(compositeRequested&&amount>0)Status+=" / 合成需要完整Shader、全视口Mono单采样输入";
             if(volume!=null&&volume.debugMode.value!=HoRTGIDebugMode.Off&&(camera.cameraType==CameraType.SceneView?volume.debugInSceneView.value:volume.debugInGameView.value))
             {
                 if(debugMaterial==null){var found=Shader.Find("Hidden/lilToon/URP/RTGI/Debug");if(found!=null)debugMaterial=CoreUtils.CreateEngineMaterial(found);}
@@ -116,6 +130,7 @@ namespace lilToon.URP.Extensions.RTGI
             HoAttributeCompositeConsumerRegistry.Remove(this);
             foreach(var context in contexts.Values)context.Dispose();contexts.Clear();scene?.Dispose();scene=null;
             materials?.Dispose();materials=null;debugPass?.ReleaseDebugResources();CoreUtils.Destroy(debugMaterial);debugMaterial=null;LastContext=null;
+            compositePass?.Dispose();compositePass=null;CoreUtils.Destroy(compositeMaterial);compositeMaterial=null;
         }
         protected override void Dispose(bool disposing)
         {if(registered)RenderPipelineManager.beginCameraRendering-=ResetCamera;registered=false;ResetCamera(default,null);DisposeResources();}

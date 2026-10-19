@@ -8,6 +8,9 @@ namespace lilToon.URP.Extensions.RTGI
     {
         public bool enabled = true;
         public bool inSceneView = true;
+        [Tooltip("在透明物前向有效接收面叠加GI；Volume可覆盖开关和强度。")]
+        public bool composite;
+        [Min(0)] public float intensity=.25f;
         [Range(1,32)] public int secondaryLightSamples = 8;
         public bool temporal = true;
         [Range(1,32)] public int maxHistory = 20;

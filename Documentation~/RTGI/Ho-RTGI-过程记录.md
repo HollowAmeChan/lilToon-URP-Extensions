@@ -85,3 +85,23 @@
 **事后review：** 接纳生产接入；原SDK/Donut/DI代码未改，zero outcomes计数、线性HDR/alpha validity及独立输出契约保留。资源增加约.208MiB/相机，RIS每帧更新、天空候选与可见性及可选远查询都有成本；尚无GPU毫秒结论。默认直接天空关闭属于有意的归属变化，已在主文档/Inspector说明。未交付正常相机合成、独立降噪、Player/目标场景或完整动态角色；不将本步11项通过扩称目标完成。下一步接可开关的正常相机GI合成。
 
 **过滤提交：** 仅Runtime/RTGI与Editor/RTGI本步文件、Tests~/RTGI/Environment、Ho-RTGI与RTGI过程/禁试/交接。排除并行RTDI/SSS修改及隔离工程与全量日志/EXR。
+
+步骤003过滤提交：`a0a89f6`。
+
+## 004：正常相机GI加法合成
+
+**事前review：** 独立GI与次级天空已验证，正常相机仍看不到GI。应交付可开关、可调强度的场景消费，而非继续只看调试纹理。沿DI已经实测的pre-transparent注入、primary/depth门控、Gamma线性相加和只衰减新增光的fog路径，GI只加其独立diffuse，不添加primary emission、不再次乘albedo。
+
+**范围与预期收益：** Feature保存未覆盖默认值，Volume提供逐相机合成开关/强度；默认关闭合成以保留已有资产行为，启用时直接显示GI。强度只影响合成，不改变采样/历史。先支持既有Mono、全视口、单采样输入；与DI同时启用按Feature顺序分别累加。raw/debug仍保留，后续NRD发布可接同一消费接口。
+
+**必要验证：** 实际camera color与同帧GI输出对照，覆盖开关/0强度/倍数、Volume、主色不重复相乘/emission不重复添加、背景/不匹配receiver/前景depth、fog和透明物顺序；Linear/Gamma × RG/compat。保持独立输出和旧环境链路回归，不能仅凭shader编译宣称合成已交付。
+
+**实现：** 新GI专用加法CompositePass与shader，沿DI既有深度/primary读取、Gamma/fog契约；RG创建当前camera color的后继纹理，compat用scratch避免读写同一目标。启用时把生产提前到同一BeforeRenderingTransparents事件，按入队顺序生产→合成；关闭则保留旧生产时序。Feature保存默认开关/强度，Volume可逐相机覆盖，外观设置不进入采样签名。
+
+**正式验证：** `Tests~/RTGI/Composite/run_validation.ps1`，Linear/Gamma×RG/compat四组各62请求/33checks，外加legacy GI和未合成环境回归两项，6个实际进程全部exit0，fresh/report/marker与shader诊断核对通过。包含两台真实相机独立Volume gain与context、透明混合在GI之后、局部视口绕过、DI之后GI连续消费当前camera color，实际离屏红墙天光反弹已在普通相机PNG可见。
+
+**保留的失败：** 并行DI在本步期间改为Volume显式启用；初次正式联合夹具沿旧默认未启用DI，LastContext=null而失败。保留报告并更新测试显式DI Volume enable及诊断信息，旧GI联合验证同样补明确启用；没有改DI生产策略，也没有以丢弃联合检查规避。新的正式矩阵全部通过。
+
+**事后review与收益：** 接纳。用户现在可在Volume开关/调节GI合成，既有原画面、材质emission与fog保留；新实测camera color符合独立贡献，采样历史不因强度变化清零。阴影/透明归属和输入拒绝有实际覆盖，非仅调试输出。默认opt-in保留已有独立消费者。合成新增一次全屏光栅与目标，compat另有拷贝；没有GPU毫秒结论。当前raw仍有噪声，自动帧动态、NRD/Player/目标场景验收仍待推进。
+
+**过滤提交范围：** GI Runtime/Editor本步合成与Volume/GUI、legacyGI测试显式DI启用、Tests~/RTGI/Composite及RTGI文档；排除所有并行DI改动。下一项独立GI降噪与实际信号/命中距离合同。

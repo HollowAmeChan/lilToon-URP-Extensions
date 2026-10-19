@@ -62,6 +62,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 #endif
                 var holder=Keep(new GameObject("RTGI validation volume")).AddComponent<Volume>();holder.isGlobal=true;
                 holder.sharedProfile=Keep(ScriptableObject.CreateInstance<VolumeProfile>());volume=holder.sharedProfile.Add<HoRTGIVolume>(true);
+                holder.sharedProfile.Add<HoRTDIVolume>().enable.Override(true);
                 camera=Keep(new GameObject("RTGI camera")).AddComponent<Camera>();camera.enabled=false;camera.orthographic=true;camera.orthographicSize=1;camera.aspect=1;
                 camera.transform.position=new Vector3(0,0,-3);camera.nearClipPlane=.1f;camera.farClipPlane=50;camera.allowHDR=true;camera.cullingMask=1;
                 camera.GetUniversalAdditionalCameraData().volumeLayerMask=-1;

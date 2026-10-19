@@ -1,0 +1,57 @@
+{
+    "pass": true,
+    "compatibility": true,
+    "failure": "",
+    "colorSpace": "Gamma",
+    "frames": 138,
+    "warmupFrames": 3,
+    "bounce": {
+        "r": 0.35780832171440127,
+        "g": 0.17913484573364259,
+        "b": 0.08811336010694504,
+        "a": 1.0
+    },
+    "doubled": {
+        "r": 0.7197685241699219,
+        "g": 0.3603479564189911,
+        "b": 0.17725162208080293,
+        "a": 1.0
+    },
+    "analytic": {
+        "r": 0.21778804063796998,
+        "g": 0.2164226621389389,
+        "b": 0.21474115550518037,
+        "a": 1.0
+    },
+    "mixed": {
+        "r": 0.5728910565376282,
+        "g": 0.39357590675354006,
+        "b": 0.301248162984848,
+        "a": 1.0
+    },
+    "checks": [
+        "Default GI excludes DI-owned direct sky",
+        "No analytic light / environment is black actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Disabled environment has no PDF/full RIS allocation",
+        "Zero analytic lights still receive finite secondary sky",
+        "Secondary sky spectral ratios",
+        "Private environment PDF and RIS produced",
+        "Analytic plus environment MIS preserves both contributions within 5% actual=RGBA(0.573, 0.394, 0.301, 1.000) expected=RGBA(0.576, 0.396, 0.303, 2.000)",
+        "Secondary candidate budget zero removes only bounce sky actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Direct sky remains excluded with no bounce geometry actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Explicit GI-only direct sky integral actual=RGBA(0.500, 0.250, 0.123, 1.000) expected=RGBA(0.500, 0.250, 0.125, 1.000)",
+        "Geometry beyond finite bounce range still blocks direct sky actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Direct sky ownership switch removes duplicate actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "World-only blocker occludes secondary sky actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Sky radiance doubling preserves bounce energy actual=RGBA(0.720, 0.360, 0.177, 1.000) expected=RGBA(0.716, 0.358, 0.176, 2.000)",
+        "Sky revision rebuilds private PDF",
+        "Stable secondary sky can reuse GI history",
+        "Disable sky rejects old lighting immediately actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Settings change resets GI reservoir history",
+        "Absent atmosphere does not inherit pooled bindings actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Actual pass snapshots retain captured numeric settings until next Setup",
+        "Next GPU frame consumes changed environment settings actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Next Setup publishes new numeric snapshot",
+        "No GI compute warnings/errors"
+    ]
+}

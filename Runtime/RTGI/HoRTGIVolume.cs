@@ -16,6 +16,8 @@ namespace lilToon.URP.Extensions.RTGI
     public sealed class HoRTGIVolume : VolumeComponent,IPostProcessComponent
     {
         [InspectorName("启用")] public BoolParameter enable=new BoolParameter(true);
+        [InspectorName("合成到场景")] public BoolParameter composite=new BoolParameter(false);
+        [InspectorName("间接光强度")] public MinFloatParameter intensity=new MinFloatParameter(.25f,0);
         [InspectorName("调试模式")] public HoRTGIDebugModeParameter debugMode=new HoRTGIDebugModeParameter(HoRTGIDebugMode.Off);
         public BoolParameter debugInSceneView=new BoolParameter(true);
         public BoolParameter debugInGameView=new BoolParameter(true);

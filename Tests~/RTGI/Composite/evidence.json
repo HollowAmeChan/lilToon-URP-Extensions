@@ -1,0 +1,77 @@
+{
+  "step": 4,
+  "createdUtc": "2026-10-19T09:55:23.8690136Z",
+  "sources": [
+    {
+      "path": "Runtime/RTGI/HoRTGIRendererFeature.cs",
+      "sha256File": "DF8636386049530CDC75F35B61C37FDF9C407F0C801BF4049F70E1E2B9D7B2EE",
+      "gitBlob": "0ca943c4f6b9f55e8cad01818bc06c864b60deb6",
+      "writtenUtc": "2026-10-19T09:26:51.3336010Z"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGISettings.cs",
+      "sha256File": "527B5DFB072D5C594D28CAAFD5457324A9736DA6CAE35DD9354A00A5F43F92FD",
+      "gitBlob": "866473bc365ce792fe16e7b1d1482d9ae3d2fc02",
+      "writtenUtc": "2026-10-19T09:26:51.3305641Z"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIVolume.cs",
+      "sha256File": "067251B0B0993AB10A1500FF3E286466760938771AF1E7882904BA63ADD480A8",
+      "gitBlob": "e08630bf8a5992f496d76c2807266ff6870a849f",
+      "writtenUtc": "2026-10-19T09:26:51.3305641Z"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGICompositePass.cs",
+      "sha256File": "D41A2CFD276BE5E9F7555A656A58278D2A2418AAB3D47E06DD9A5846E9588774",
+      "gitBlob": "88fee1229189f2622da3df1d74af27a455a29d22",
+      "writtenUtc": "2026-10-19T09:26:51.3320885Z"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIComposite.shader",
+      "sha256File": "730B7B3E806F2D54A62D5556061983417AF8DBF3F4A7CD35242E370C28E80479",
+      "gitBlob": "4b86f4f656dee10a569055358f2c017743e3dbf8",
+      "writtenUtc": "2026-10-19T09:26:51.3325921Z"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGICompositeValidation.cs",
+      "sha256File": "4F466A72113B7E6309551881A5CAA29637B798201F0897DDE43D56FBD9AFBBC7",
+      "gitBlob": "9d09417ab380a1551d931448157199537d071127",
+      "writtenUtc": "2026-10-19T09:42:05.9485434Z"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIValidation.cs",
+      "sha256File": "AF611DBDF0211B4311305D2216C51B57231512CB883298D3EE121CAE9FCC0198",
+      "gitBlob": "0cdcdd7ef5ccfa422190a3696b63d068238760da",
+      "writtenUtc": "2026-10-19T09:42:05.9485434Z"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIRendererFeature.cs",
+      "sha256File": "0A797864AF9FFE64A80490AE9C2B7F01325E4655DE7D7A7233F840365DD72D26",
+      "gitBlob": "f01e6a188c5b46e0aa4414bbde959eb98c03bb92",
+      "writtenUtc": "2026-10-19T09:34:55.3492882Z"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIViewSettings.cs",
+      "sha256File": "A8BC7BFD39240B4A1DAAD5BFE2B2D1EBB457829AD9A6EDA6A1A18B94D4E3FCCC",
+      "gitBlob": "c9a39c4787406ca2576747580f20c4e710e1873b",
+      "writtenUtc": "2026-10-19T09:34:55.3492882Z"
+    },
+    {
+      "path": "Runtime/RTDI/HoRTDIVolume.cs",
+      "sha256File": "AE02E14D345F0F497C28F65B43221C2E541309BD683B415A60825B6A33275A7F",
+      "gitBlob": "8061667662024aeab63c7a7dcf1625b8b9002cb3",
+      "writtenUtc": "2026-10-19T09:34:55.3477804Z"
+    }
+  ],
+  "sourceModificationTimeCheckedBeforeFinalRun": true,
+  "validatedProcesses": 6,
+  "compositeVariants": 4,
+  "checksPerCompositeVariant": 33,
+  "renderRequestsPerCompositeVariant": 62,
+  "productionCameraComposition": true,
+  "giDenoising": false,
+  "automaticMotionFrames": false,
+  "playerValidated": false,
+  "gpuTiming": false,
+  "knownFailure": "Companion DI now requires explicit Volume enable; invalid fixture retained and corrected without changing DI production"
+}
