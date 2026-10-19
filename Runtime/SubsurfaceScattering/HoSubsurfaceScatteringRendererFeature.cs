@@ -412,6 +412,7 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             UniversalCameraData cameraData = frameData.Get<UniversalCameraData>();
             HoAttributeCompositeRenderGraphResources acResources = frameData.GetOrCreate<HoAttributeCompositeRenderGraphResources>();
             HoGeometryBufferRenderGraphResources geometryResources = frameData.GetOrCreate<HoGeometryBufferRenderGraphResources>();
+            HoSurfaceBufferRenderGraphResources surfaceResources = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
             HoSubsurfaceScatteringRenderGraphResources sssResources = frameData.GetOrCreate<HoSubsurfaceScatteringRenderGraphResources>();
             TextureHandle cameraColor = resourceData.activeColorTexture;
             bool hasCameraColor = cameraColor.IsValid();
@@ -428,6 +429,21 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
                 return;
             }
 
+            // AC identity/geometry can exist while SB is disabled, filtered out for this
+            // camera, or scheduled later. Validate every SB read before creating a pass:
+            // disposing a partially recorded raster pass after UseTexture throws can
+            // leave the rest of this camera's render graph incomplete.
+            if (!surfaceResources.classificationTexture.IsValid()
+                || !surfaceResources.colorTexture.IsValid()
+                || !surfaceResources.materialTexture.IsValid()
+                || !surfaceResources.reflectionTexture.IsValid()
+                || !surfaceResources.ownerTexture.IsValid())
+            {
+                HoSubsurfaceScatteringRuntimeDiagnostics.PublishSkipped(
+                    cameraData.camera, "Source", "SurfaceBuffer 输入不可用或尚未在本相机中生成。");
+                return;
+            }
+
             TextureHandle source = renderGraph.CreateTexture(HoSubsurfaceScatteringRenderGraphResources.CreateDescriptor(
                 cameraData.cameraTargetDescriptor,
                 settings,
@@ -439,7 +455,6 @@ namespace lilToon.URP.Extensions.SubsurfaceScattering
             {
                 passData.source = cameraColor;
                 passData.normalDepthTexture = geometryResources.normalDepthTexture;
-                HoSurfaceBufferRenderGraphResources surfaceResources = frameData.GetOrCreate<HoSurfaceBufferRenderGraphResources>();
                 // 表面数值改从 SB 拿（AC 的门面读的就是这些全局名）：MB 的 surfaceData / surfaceColor 在
                 // SSS 这条链上退役。material / reflection / owner 的全局名由 SB 的 pass 自己绑好
                 // （RDG 用 SetGlobalTextureAfterPass），这里只需要**声明读依赖**，别让 RDG 以为没人读。
