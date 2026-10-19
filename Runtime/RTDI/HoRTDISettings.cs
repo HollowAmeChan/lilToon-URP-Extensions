@@ -10,6 +10,8 @@ namespace lilToon.URP.Extensions.RTDI
     {
         public bool enabled = true;
         public bool inSceneView = true;
+        // Serialized legacy appearance defaults. Artist-facing overrides now
+        // live in HoRTDIVolume; retain these names/values for existing assets/API.
         [Tooltip("在透明物绘制前，将 RTDI 合成到有效不透明接收面。混合模式决定替换旧照明或向现有画面叠加直接光。")]
         public bool composite;
         public HoRTDICompositeMode compositeMode=HoRTDICompositeMode.Replace;

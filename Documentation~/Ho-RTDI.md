@@ -30,8 +30,8 @@ Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天
 
 1. 使用支持 D3D12 inline ray tracing 的环境。已验证 Unity `6000.3.15f1`、Windows x64 Mono、RTX 4060；D3D11 应保持 inactive。使用同分辨率、单采样 GB / SB，且 SB 已包含当前网格法线布局。
 2. Renderer 上在 GB / SB 之后添加并启用 `Ho-RTDI`。若需要天空输入，前置启用 [Ho-Atmosphere](Ho-Atmosphere.md)；没有有效 HDR 输入时只运行解析灯。
-3. 要查看累积降噪后的结果，打开 Feature 的 **NRD RELAX 降噪**。该开关默认关闭；Raw 调试始终保留随机样本，不能用 Raw 是否还有噪点判断 NRD 是否收敛。
-4. 要影响正常画面，打开 Renderer Feature 的 **“合成到画面”**，全局 Volume 调试模式保持 **Off**。**混合模式 → 加法叠加** 适合快速接入现有场景，叠加强度默认.25；**参考 PBR 替换** 用于完整替换或检查RTDI照明，过渡权重1完全替换、0恢复原画面。两个模式各自保存强度，切换本身不重置DI/NRD历史。
+3. 在 **Ho-RTDI Volume → 运行** 勾选覆盖并开启 **NRD RELAX 降噪**。该开关默认关闭；Raw 调试始终保留随机样本，不能用 Raw 是否还有噪点判断 NRD 是否收敛。
+4. 在 **Ho-RTDI Volume → 画面合成** 勾选覆盖并开启 **“合成到画面”**，调试模式保持 **Off**。**混合模式 → 加法叠加** 适合快速接入现有场景，叠加强度默认.25；**参考 PBR 替换** 用于完整替换或检查RTDI照明，过渡权重1完全替换、0恢复原画面。两个模式各自保存强度，切换本身不重置DI/NRD历史。
 5. 排查时可临时在 Volume 选择 Diffuse / Specular / Combined 或 RawDiffuse / RawSpecular。调试在最终后处理后显示，All为网格；它与正常画面的合成是两条独立路径。
 6. Receiver 中绿色是有效接收面，红色是无效输入。有效阴影允许 RGB=0、A=1；输入缺失或域不匹配为 A=0。先检查接收有效性，再比较噪声与能量。
 7. 保持相机、几何与光源稳定至少半秒后，NRD 漫反射进入长历史；持续运动会保留响应优先的短历史。观察固定区域的跨帧变化，避免把材质纹理、空间渐变或高光形状当作时间噪声。
@@ -44,15 +44,20 @@ Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天
 
 ### 默认设置及其含义
 
+**常用画面参数统一在 Volume，低频配置留在 Feature。** Volume 提供启用、降噪、合成开关/模式、叠加强度、替换权重、天空开关/强度和调试；叠加强度、天空强度使用 **0～8滑条**，替换权重为 **0～1滑条**。两种模式的强度分别显示，方便独立覆盖和混合。
+
+Feature 只显示生产总开关、Scene View开关，以及默认折叠的采样质量、筛选/射线和Shader配置。旧Feature外观字段保留序列化/API但不再重复显示；**Volume未勾选覆盖时沿用旧配置**，不会因新增字段改变既有场景。运行时逐相机解析Volume，不把结果写回共享Feature。局部Volume权重按URP规则在已覆盖的全局/局部参数之间混合；Feature生产总开关仍可统一停用。迁移与实际双相机验证见 [VolumeControls](../Tests~/RTDI/VolumeControls/README.md)。
+
 | 设置 | 当前默认 | 含义与取舍 |
 | --- | --- | --- |
-| `enabled` / `inSceneView` | true / true | 功能与 SceneView 开关，仍受平台和输入有效性限制 |
+| Feature `enabled` / `inSceneView` | true / true | 生产总开关与 SceneView 支持，仍受平台和输入有效性限制 |
+| Volume `enable` | true | 当前相机的功能开关；不能绕过Feature生产总开关 |
 | `composite` / `compositeMode` | false / Replace | 正常相机合成开关及模式；旧资产保持替换模式 |
 | `compositeWeight` | 1 | 仅替换模式：原画面与参考PBR的0～1过渡权重 |
-| `additiveIntensity` | .25 | 仅加法模式：新增RTDI直接光的非负倍率；0保留原画面，不重复添加自发光 |
+| `additiveIntensity` | .25 | Volume 0～8滑条，仅加法模式：新增RTDI直接光倍率；0保留原画面，不重复添加自发光 |
 | `denoise` | **false** | 关闭时发布 raw；打开时发布 RELAX 恢复材质后的结果，另保留 raw |
 | `useEnvironment` | true | 仅消费前置有效天空 HDR；不是另一套天空生产器 |
-| `environmentIntensity` | 1 | RTDI 独立天空照明倍率；0关闭天空采样，.25为四分之一，2为两倍；不改变可见天空、共享 Atmosphere 或解析灯，调整时失效相关历史 |
+| `environmentIntensity` | 1 | Volume 0～8滑条，RTDI独立天空照明倍率；0关闭天空采样，.25为四分之一，2为两倍；不改变可见天空、共享Atmosphere或解析灯，调整时失效相关历史 |
 | `environmentSamples` / `environmentBrdfSamples` | 4 / 4 | 独立天空 PDF/RIS 候选与 BRDF 候选，通过 SDK MIS 合并 |
 | `localSampling` | Uniform | Power 适合评估功率差异大的局部灯，但有固定预采样开销 |
 | `initialSamples` | 8 | 局部灯初始候选；有方向灯时另取一个方向灯候选 |
@@ -65,7 +70,7 @@ Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天
 
 不存在一个打开后即可保证所有场景无噪声的配置。Power、Triple、长历史分别改变提案分布、最终可见性预算和重建预算，必须区分收益来源与动态/资源代价。
 
-天空压过场景灯时，用 Feature 的 **天空照明强度** 调低天空受光，保留 **天空环境光** 开关用于整项启停；无需为此修改可见天空或关闭场景阴影。这个控制只处理环境 radiance，不会把不透明天空壳自动移出世界求交。后者仍用“**不参与求交的材质**”筛选，避免把遮挡几何问题误当作环境强度问题。
+天空压过场景灯时，用 **Volume → 天空照明 → 天空照明强度** 调低天空受光，保留 **天空环境光** 开关用于整项启停；无需为此修改可见天空或关闭场景阴影。这个控制只处理环境 radiance，不会把不透明天空壳自动移出世界求交。后者仍用Feature“**不参与求交的材质**”筛选，避免把遮挡几何问题误当作环境强度问题。
 
 ## 3. 当前支持域
 

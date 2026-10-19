@@ -1,0 +1,30 @@
+{
+  "schemaVersion": 1,
+  "date": "2026-10-19",
+  "baseCommit": "94c9128",
+  "scope": "Artist-facing controls in Volume with standard sliders; per-camera immutable resolution; actual local Volume and camera GPU checks; no user asset rewrites or new Player build",
+  "artifacts": {
+    "volume-rg.json": "e50bef49e62c4daf0b214521ff5d603f29337756fda0d70fd4696741ee3a34ec",
+    "volume-compat.json": "1938cf40a87a6e35b40ab4836613144dcf9dddc13282aa963ffc6e7c54735adf",
+    "blend-rg.json": "271459b0f0366d5d09995ddd09148283722dc2b779be9ae6cca964eea51bd591",
+    "blend-compat.json": "b24f2c0c798f50ab6dc3173e1ff7780b2b6d06c69cb394b7f27760daa22fd525",
+    "slow-rg.json": "d2092558e85fe5c6a6929af948127880f9086ec3f6be6eb42bc81b7ef6eabcd7",
+    "slow-compat.json": "b05a7b51885625506385b1ce59e24b874cc4e572e3608f8e3085483af99a5a51",
+    "sky.json": "70b8adfb6870e32d796b486a41850194ac2e131d3d18524412687e1f98b0766e",
+    "snapshot.json": "9e4bce7a6f50a2bbe3906478e61d0428e3d40ffd5c5e9e440ba3883c56489935",
+    "exits.json": "0906eb6d542d3bf2f819faff7fd86ccd519ceedc298ec803e47567ac19c79d93"
+  },
+  "sources": {
+    "Runtime/RTDI/HoRTDIVolume.cs": "d065755a7b64bc2cb27443596014a4b221af7a84e93b0f081a5108ad73b4a066",
+    "Runtime/RTDI/HoRTDIViewSettings.cs": "da53541e43659565630959c7219b9dafa453f003dd49f215900cbaddda97478b",
+    "Runtime/RTDI/HoRTDIRendererFeature.cs": "e8da18a0f8db59883dc03a1c22698618da54e9138f756322d05a51510e151d28",
+    "Runtime/RTDI/HoRTDISettings.cs": "203947caa8110a89cd06f03bcb03ece8f5ea794d11fea53c008ddf7aad29a0ff",
+    "Editor/RTDI/HoRTDIVolumeEditor.cs": "c0d71923a1dac6a288cd9260dcaefd90e954472003b5b879d796e4af7a5a9e2d",
+    "Editor/RTDI/HoRTDIRendererFeatureEditor.cs": "c24c669840fb0333fed12731158c34e69f2202d743e4ceb715f0d371e58fda5f",
+    "Editor/RTDI/HoRTDISceneViewRepaint.cs": "d5566195746be25372954fb90ae2fd857167b60779c289b8fb0b295246b6fd82",
+    "Editor/RTDI/HoRTDIValidation.cs": "e95dbd4c71f4b31b94b983b05b0948bdf87bdfa428448aa96b1644a3e5e84da6",
+    "Editor/RTDI/HoRTDIVolumeControlsValidation.cs": "4644edc49d3751573fa7d21f70f1acf52ef3503eb0bd943f3375b78c6998659a",
+    "Editor/RTDI/HoRTDIPlayerValidation.cs": "71bb5414b3f98d793d4f5295e6f0e3b3a815e8b70e798f98cbc4b2d6baeb79cf",
+    "Tests~/RTDI/VolumeControls/verify.py": "b8faeaa5bd4873a3378f8684fc37226550a46f1519a64dcc95a1bce036174265"
+  }
+}

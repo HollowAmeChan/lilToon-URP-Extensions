@@ -1,7 +1,9 @@
 # RTDI sky illumination intensity
 
-`HoRTDISettings.environmentIntensity` defaults to1. In the Renderer Feature it
-appears as **天空照明强度** beneath the existing **天空环境光** checkbox.
+This folder preserves the original gain qualification at `1ea7d4f`.
+`environmentIntensity` defaults to1. The current **天空照明强度** slider lives in
+Ho-RTDI Volume beneath **天空环境光**; the original Feature field remains a legacy
+fallback when the Volume parameter is unchecked. See [VolumeControls](../VolumeControls/README.md).
 Use0 for no sky illumination, .25 for one quarter,1 for the original result,
 or2 for twice the illumination. The checkbox remains the master switch.
 Negative or non-finite script values are treated as0.

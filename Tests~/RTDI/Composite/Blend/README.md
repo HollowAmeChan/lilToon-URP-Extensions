@@ -1,6 +1,8 @@
 # Switchable RTDI composition
 
-The Renderer Feature's **合成到画面** switch now exposes **混合模式**:
+This folder preserves the blend qualification at `94c9128`. The current
+**合成到画面** and **混合模式** controls live in Ho-RTDI Volume; migration and
+current camera-override evidence are in [VolumeControls](../../VolumeControls/README.md).
 
 | Mode | Controls | Behaviour |
 | --- | --- | --- |
@@ -93,7 +95,7 @@ The blend fixture requires the existing `Assets/RTDIPlayerProbe/LegacyPartialRen
 from the Player preparation flow, still missing the new fields.
 
 ```powershell
-python Tests~/RTDI/Composite/Blend/verify.py
+python Tests~/RTDI/Composite/Blend/verify.py --source-commit 94c9128
 python Tests~/RTDI/EnvironmentIntensity/verify.py --source-commit 1ea7d4f
 python Tests~/RTDI/SceneView/FastHistory/verify.py --source-commit 7360367
 ```

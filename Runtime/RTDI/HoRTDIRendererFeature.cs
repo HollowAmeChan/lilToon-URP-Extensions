@@ -87,7 +87,8 @@ namespace lilToon.URP.Extensions.RTDI
         public override void AddRenderPasses(ScriptableRenderer renderer,ref RenderingData data)
         {
             var camera=data.cameraData.camera;var volume=VolumeManager.instance.stack.GetComponent<HoRTDIVolume>();
-            if(!settings.enabled||(volume!=null&&volume.enable.overrideState&&!volume.enable.value)||data.cameraData.renderType!=CameraRenderType.Base
+            var viewSettings=new HoRTDIViewSettings(settings,volume);
+            if(!viewSettings.enabled||data.cameraData.renderType!=CameraRenderType.Base
                 ||(camera.cameraType!=CameraType.Game&&(camera.cameraType!=CameraType.SceneView||!settings.inSceneView)))
             {if(contexts.TryGetValue(camera,out var skipped)){skipped.historyValid=false;skipped.nrdHistoryValid=false;}return;}
             if(!scene.IsAvailable||shader==null){Status="需要 D3D12 inline RT 与 Compute Shader";return;}
@@ -132,12 +133,12 @@ namespace lilToon.URP.Extensions.RTDI
             context.Prepare(descriptor.width,descriptor.height,lightList.Count,format);LastContext=context;
             context.PrepareFinalVisibility(scene.CutoutCount>0);
             context.PreparePower(localCount,settings.localSampling==HoRTDILocalSampling.Power);
-            context.PrepareDenoiser(settings.denoise,nrdShaders);
+            context.PrepareDenoiser(viewSettings.denoise,nrdShaders);
             HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTDI primary normals",System.Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.HighPrecisionSurfaceNormal);
             var lightData=lightList.Count>0?lightList.ToArray():new AnalyticLight[1];
-            pass.Setup(context,scene,shader,finalVisibilityShader,settings,lightData,lightKeys.ToArray(),lightList.Count,localCount,signature);
-            float compositeAmount=settings.EffectiveCompositeAmount;
-            bool composite=settings.composite&&compositeAmount>0&&descriptor.msaaSamples==1&&descriptor.dimension==TextureDimension.Tex2D
+            pass.Setup(context,scene,shader,finalVisibilityShader,settings,viewSettings,lightData,lightKeys.ToArray(),lightList.Count,localCount,signature);
+            float compositeAmount=viewSettings.compositeAmount;
+            bool composite=viewSettings.composite&&compositeAmount>0&&descriptor.msaaSamples==1&&descriptor.dimension==TextureDimension.Tex2D
                 &&!data.cameraData.xr.enabled&&camera.rect==new Rect(0,0,1,1);
             if(composite&&compositeMaterial==null&&compositeShader!=null)compositeMaterial=CoreUtils.CreateEngineMaterial(compositeShader);
             composite&=compositeMaterial!=null;
@@ -146,10 +147,10 @@ namespace lilToon.URP.Extensions.RTDI
             // ordered by enqueue order: DI -> replacement -> transparent rendering.
             pass.renderPassEvent=composite?RenderPassEvent.BeforeRenderingTransparents:RenderPassEvent.BeforeRenderingPostProcessing;
             renderer.EnqueuePass(pass);Status=$"RTXDI DI：{(context.powerSampling?"功率":"均匀")} / {localCount} 局部 / {infiniteLights.Count} 方向灯 / {scene.InstanceCount} RT submesh / 排除 {excludedLights} 灯、{scene.Rejections.Count} 几何项";
-            if(composite){compositePass.Setup(compositeMaterial,context,settings.compositeMode,compositeAmount);renderer.EnqueuePass(compositePass);Status+=settings.compositeMode==HoRTDICompositeMode.Additive?" / 加法叠加":" / 参考 PBR 合成";}
-            else if(settings.composite)Status+=" / 合成未启用（需要 Shader、全视口 Mono 单采样输入及非零权重）";
+            if(composite){compositePass.Setup(compositeMaterial,context,viewSettings.compositeMode,compositeAmount);renderer.EnqueuePass(compositePass);Status+=viewSettings.compositeMode==HoRTDICompositeMode.Additive?" / 加法叠加":" / 参考 PBR 合成";}
+            else if(viewSettings.composite)Status+=" / 合成未启用（需要 Shader、全视口 Mono 单采样输入及非零权重）";
             if(settings.finalSampling==HoRTDIFinalSampling.TripleAnalytic)Status+=" / 三最终样本";
-            if(settings.denoise)Status+=" / "+context.nrdStatus;
+            if(viewSettings.denoise)Status+=" / "+context.nrdStatus;
             if(volume!=null&&volume.debugMode.value!=HoRTDIDebugMode.Off&&(camera.cameraType==CameraType.SceneView?volume.debugInSceneView.value:volume.debugInGameView.value))
             {
                 if(debugMaterial==null&&debugShader!=null)debugMaterial=CoreUtils.CreateEngineMaterial(debugShader);
@@ -172,11 +173,11 @@ namespace lilToon.URP.Extensions.RTDI
                 internal readonly bool useEnvironment,temporal,spatial;
                 internal readonly int environmentSamples,environmentBrdfSamples,initialSamples,maxHistory,spatialSamples;
                 internal readonly float spatialRadius,rayBias,environmentIntensity;
-                internal PassSettings(HoRTDISettings source)
+                internal PassSettings(HoRTDISettings source,HoRTDIViewSettings view)
                 {
-                    useEnvironment=source.useEnvironment;temporal=source.temporal;spatial=source.spatial;
+                    useEnvironment=view.useEnvironment;temporal=source.temporal;spatial=source.spatial;
                     environmentSamples=source.environmentSamples;environmentBrdfSamples=source.environmentBrdfSamples;initialSamples=source.initialSamples;maxHistory=source.maxHistory;spatialSamples=source.spatialSamples;
-                    spatialRadius=source.spatialRadius;rayBias=source.rayBias;environmentIntensity=source.EffectiveEnvironmentIntensity;
+                    spatialRadius=source.spatialRadius;rayBias=source.rayBias;environmentIntensity=view.environmentIntensity;
                 }
             }
             private static readonly string[] ReferenceStages={"BuildPowerPdf","Presample","BuildEnvironmentPdf","PresampleEnvironment","Initial","Temporal","Spatial","Shade"};
@@ -185,9 +186,9 @@ namespace lilToon.URP.Extensions.RTDI
             private AnalyticLight[] lights;private Light[] lightKeys;private int lightCount,localLightCount,signature;
             private int requestedFinalSamples;
             internal HoRTDIPass(){renderPassEvent=RenderPassEvent.BeforeRenderingPostProcessing;}
-            internal void Setup(HoRTDIContext context,HoRTScene scene,ComputeShader shader,RayTracingShader finalVisibilityShader,HoRTDISettings settings,AnalyticLight[] lights,Light[] keys,int count,int localCount,int signature)
+            internal void Setup(HoRTDIContext context,HoRTScene scene,ComputeShader shader,RayTracingShader finalVisibilityShader,HoRTDISettings settings,HoRTDIViewSettings view,AnalyticLight[] lights,Light[] keys,int count,int localCount,int signature)
             {
-                this.context=context;this.scene=scene;this.shader=shader;this.finalVisibilityShader=finalVisibilityShader;this.settings=new PassSettings(settings);this.lights=lights;lightKeys=keys;lightCount=count;localLightCount=localCount;this.signature=signature;
+                this.context=context;this.scene=scene;this.shader=shader;this.finalVisibilityShader=finalVisibilityShader;this.settings=new PassSettings(settings,view);this.lights=lights;lightKeys=keys;lightCount=count;localLightCount=localCount;this.signature=signature;
                 requestedFinalSamples=settings.finalSampling==HoRTDIFinalSampling.TripleAnalytic?3:1;
                 #if UNITY_EDITOR
                 ConfigureInput(context.nrd?.ValidationMotionCapture!=null?ScriptableRenderPassInput.Motion:ScriptableRenderPassInput.None);

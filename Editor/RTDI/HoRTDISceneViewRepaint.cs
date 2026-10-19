@@ -37,7 +37,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         {
             if(pending==null||Application.isPlaying||EditorApplication.isCompiling||EditorApplication.isUpdating||!InternalEditorUtility.isApplicationActive)return;
             var context=producer!=null?producer.ContextForCamera(pending.camera):null;
-            if(producer==null||!producer.isActive||!producer.Settings.enabled||!producer.Settings.inSceneView||!producer.Settings.denoise
+            if(producer==null||!producer.isActive||!producer.Settings.enabled||!producer.Settings.inSceneView
                 ||context?.nrd==null||!context.nrdHistoryValid||context.nrd.SceneViewAccumulatedFrames>=HoRTDINrdContext.SceneViewSettledSamples)
             {pending=null;return;}
             double now=EditorApplication.timeSinceStartup;if(now<next)return;next=now+1.0/60;

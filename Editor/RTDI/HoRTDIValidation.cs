@@ -100,7 +100,10 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 Require(!compatibility,"Compatibility symbol missing");
                 #endif
                 var holder=Keep(new GameObject("RTDI validation volume")).AddComponent<Volume>();holder.isGlobal=true;
-                holder.sharedProfile=Keep(ScriptableObject.CreateInstance<VolumeProfile>());volume=holder.sharedProfile.Add<HoRTDIVolume>(true);
+                holder.sharedProfile=Keep(ScriptableObject.CreateInstance<VolumeProfile>());volume=holder.sharedProfile.Add<HoRTDIVolume>();
+                // Existing feature-API fixtures explicitly override only the
+                // original enable/debug controls; appearance tests opt in below.
+                volume.enable.overrideState=volume.debugMode.overrideState=volume.debugInSceneView.overrideState=volume.debugInGameView.overrideState=true;
                 camera=Keep(new GameObject("RTDI validation camera")).AddComponent<Camera>();camera.enabled=false;camera.orthographic=true;camera.orthographicSize=1;
                 camera.transform.position=new Vector3(0,0,-3);camera.nearClipPlane=.1f;camera.farClipPlane=50;camera.aspect=1;camera.allowHDR=true;camera.GetUniversalAdditionalCameraData().volumeLayerMask=-1;
                 target=Keep(new RenderTexture(64,64,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));target.Create();
@@ -140,6 +143,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 if(forceCurved){ValidateCurved();Finish(null);return;}
                 if(forceMaterialExclusion){ValidateMaterialExclusion();Finish(null);return;}
                 if(forceSettingsSnapshot){ValidateSettingsSnapshot();Finish(null);return;}
+                if(volumeControlsAudit){ValidateVolumeControls();Finish(null);return;}
                 if(forceEnvironment){ValidateEnvironment();Finish(null);return;}
                 if(forceBoundaries){ValidateBoundaries();Finish(null);return;}
                 if(forceSpecular){ValidateSpecular();Finish(null);return;}

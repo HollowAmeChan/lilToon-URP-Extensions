@@ -8,39 +8,29 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     internal sealed class HoRTDIRendererFeatureEditor:UnityEditor.Editor
     {
         private static readonly Color RuntimeColor=new Color(.46f,.64f,.92f),AdvancedColor=new Color(.62f,.58f,.78f);
-        private static bool runtime=true,advanced;
+        private static bool runtime=true,quality,advanced;
         private void OnEnable()=>((HoRTDIRendererFeature)target).EnsureEditorShaderReferences();
         public override void OnInspectorGUI()
         {
             serializedObject.Update();var settings=serializedObject.FindProperty("settings");
-            EditorGUILayout.HelpBox("需要 GB/SB 同分辨率单采样输入与 D3D12。画面合成可选择参考 PBR 替换或加法叠加。",MessageType.Info);
-            if(LilUrpEditorSectionGui.DrawSectionHeader(ref runtime,"运行","RTXDI DI",RuntimeColor))
+            EditorGUILayout.HelpBox("混合模式、画面/天空强度和降噪开关在 Ho-RTDI Volume 调节。此处保留低频的采样、资源与筛选配置。需要同分辨率单采样 GB/SB 与 D3D12。",MessageType.Info);
+            if(LilUrpEditorSectionGui.DrawSectionHeader(ref runtime,"基础","RTXDI DI",RuntimeColor))
             using(new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                Draw(settings,"enabled","启用");Draw(settings,"localSampling","局部灯采样");Draw(settings,"initialSamples","局部灯候选数");Draw(settings,"temporal","时间重采样");Draw(settings,"maxHistory","ReSTIR 历史上限");
-                Draw(settings,"composite","合成到画面");
-                if(settings.FindPropertyRelative("composite").boolValue)
-                {
-                    Draw(settings,"compositeMode","混合模式");
-                    bool additive=settings.FindPropertyRelative("compositeMode").enumValueIndex==(int)HoRTDICompositeMode.Additive;
-                    Draw(settings,additive?"additiveIntensity":"compositeWeight",additive?"叠加强度":"合成过渡权重");
-                    EditorGUILayout.HelpBox(additive?"保留原画面并添加 RTDI 直接光，不重复添加自发光。原直接光仍在，建议配合较低叠加强度与天空照明强度。":"替换有效接收面的旧照明，保留自发光；原 NPR ramp、间接光与反射探针不参与。",MessageType.Info);
-                }
+                Draw(settings,"enabled","生产总开关");Draw(settings,"inSceneView","Scene View 中生产");
+            }
+            if(LilUrpEditorSectionGui.DrawSectionHeader(ref quality,"采样质量","高级 / 低频",AdvancedColor))
+            using(new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+            {
+                Draw(settings,"localSampling","局部灯采样");Draw(settings,"initialSamples","局部灯候选数");Draw(settings,"temporal","时间重采样");Draw(settings,"maxHistory","ReSTIR 历史上限");
                 Draw(settings,"spatial","空间重采样");Draw(settings,"spatialSamples","邻域样本数");Draw(settings,"spatialRadius","邻域半径");
                 Draw(settings,"finalSampling","最终可见性样本");
-                Draw(settings,"denoise","NRD RELAX 降噪");
-                Draw(settings,"useEnvironment","天空环境光");
-                if(settings.FindPropertyRelative("useEnvironment").boolValue)
-                {
-                    Draw(settings,"environmentIntensity","天空照明强度");
-                    Draw(settings,"environmentSamples","环境光候选数");Draw(settings,"environmentBrdfSamples","BRDF 环境候选");
-                }
+                Draw(settings,"environmentSamples","环境光候选数");Draw(settings,"environmentBrdfSamples","BRDF 环境候选");
             }
-            EditorGUILayout.HelpBox("调试在 Ho-RTDI Volume 的「调试」分组。",MessageType.Info);
             if(LilUrpEditorSectionGui.DrawSectionHeader(ref advanced,"高级","筛选 / Shader",AdvancedColor))
             using(new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
-                Draw(settings,"rayBias","射线偏移");Draw(settings,"geometryLayers","几何层");Draw(settings,"lightLayers","灯所在物体层");Draw(settings,"inSceneView","Scene View 中生产");
+                Draw(settings,"rayBias","射线偏移");Draw(settings,"geometryLayers","几何层");Draw(settings,"lightLayers","灯所在物体层");
                 Draw(settings,"excludedRayMaterials","不参与求交的材质");
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("shader"),new GUIContent("Compute Shader"));
                 EditorGUILayout.PropertyField(serializedObject.FindProperty("nrdShaders"),new GUIContent("NRD Shader Library"));
