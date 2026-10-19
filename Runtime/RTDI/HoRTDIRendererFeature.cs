@@ -90,7 +90,7 @@ namespace lilToon.URP.Extensions.RTDI
             var viewSettings=new HoRTDIViewSettings(settings,volume);
             if(!viewSettings.enabled||data.cameraData.renderType!=CameraRenderType.Base
                 ||(camera.cameraType!=CameraType.Game&&(camera.cameraType!=CameraType.SceneView||!settings.inSceneView)))
-            {if(contexts.TryGetValue(camera,out var skipped)){skipped.historyValid=false;skipped.nrdHistoryValid=false;}return;}
+            {if(contexts.TryGetValue(camera,out var skipped)){skipped.historyValid=false;skipped.nrdHistoryValid=false;}Status=viewSettings.enabled?"当前相机未生产":"未生产：需要 Feature 总开关及 Volume 启用覆盖";return;}
             if(!scene.IsAvailable||shader==null){Status="需要 D3D12 inline RT 与 Compute Shader";return;}
             var format=GraphicsFormat.R16G16B16A16_SFloat;
             if(!SystemInfo.IsFormatSupported(format,GraphicsFormatUsage.LoadStore))format=GraphicsFormat.R32G32B32A32_SFloat;
@@ -100,7 +100,7 @@ namespace lilToon.URP.Extensions.RTDI
             var renderers=UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsSortMode.None);var geometry=new List<Renderer>();
             foreach(var item in renderers)if((settings.geometryLayers.value&(1<<item.gameObject.layer))!=0)geometry.Add(item);
             visibilityMaterials?.BeginFrame();scene.Synchronize(geometry,0xff,settings.excludedRayMaterials);visibilityMaterials?.EndFrame();
-            var lightList=new List<AnalyticLight>();var lightKeys=new List<Light>();int signature=settings.initialSamples.GetHashCode()^settings.rayBias.GetHashCode()^((int)settings.localSampling*397)^((int)settings.finalSampling*457)^(visibilityMaterials?.Signature??0);int excludedLights=0;
+            var lightList=new List<AnalyticLight>();var lightKeys=new List<Light>();int signature=viewSettings.initialSamples.GetHashCode()^settings.rayBias.GetHashCode()^((int)viewSettings.localSampling*397)^((int)viewSettings.finalSampling*457)^(visibilityMaterials?.Signature??0);int excludedLights=0;
             var infiniteLights=new List<AnalyticLight>();var infiniteKeys=new List<Light>();
             foreach(var light in UnityEngine.Object.FindObjectsByType<Light>(FindObjectsSortMode.InstanceID))
             {
@@ -132,7 +132,7 @@ namespace lilToon.URP.Extensions.RTDI
             var descriptor=data.cameraData.cameraTargetDescriptor;
             context.Prepare(descriptor.width,descriptor.height,lightList.Count,format);LastContext=context;
             context.PrepareFinalVisibility(scene.CutoutCount>0);
-            context.PreparePower(localCount,settings.localSampling==HoRTDILocalSampling.Power);
+            context.PreparePower(localCount,viewSettings.localSampling==HoRTDILocalSampling.Power);
             context.PrepareDenoiser(viewSettings.denoise,nrdShaders);
             HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTDI primary normals",System.Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.HighPrecisionSurfaceNormal);
             var lightData=lightList.Count>0?lightList.ToArray():new AnalyticLight[1];
@@ -149,7 +149,7 @@ namespace lilToon.URP.Extensions.RTDI
             renderer.EnqueuePass(pass);Status=$"RTXDI DI：{(context.powerSampling?"功率":"均匀")} / {localCount} 局部 / {infiniteLights.Count} 方向灯 / {scene.InstanceCount} RT submesh / 排除 {excludedLights} 灯、{scene.Rejections.Count} 几何项";
             if(composite){compositePass.Setup(compositeMaterial,context,viewSettings.compositeMode,compositeAmount);renderer.EnqueuePass(compositePass);Status+=viewSettings.compositeMode==HoRTDICompositeMode.Additive?" / 加法叠加":" / 参考 PBR 合成";}
             else if(viewSettings.composite)Status+=" / 合成未启用（需要 Shader、全视口 Mono 单采样输入及非零权重）";
-            if(settings.finalSampling==HoRTDIFinalSampling.TripleAnalytic)Status+=" / 三最终样本";
+            if(viewSettings.finalSampling==HoRTDIFinalSampling.TripleAnalytic)Status+=" / 三最终样本";
             if(viewSettings.denoise)Status+=" / "+context.nrdStatus;
             if(volume!=null&&volume.debugMode.value!=HoRTDIDebugMode.Off&&(camera.cameraType==CameraType.SceneView?volume.debugInSceneView.value:volume.debugInGameView.value))
             {
@@ -175,9 +175,9 @@ namespace lilToon.URP.Extensions.RTDI
                 internal readonly float spatialRadius,rayBias,environmentIntensity;
                 internal PassSettings(HoRTDISettings source,HoRTDIViewSettings view)
                 {
-                    useEnvironment=view.useEnvironment;temporal=source.temporal;spatial=source.spatial;
-                    environmentSamples=source.environmentSamples;environmentBrdfSamples=source.environmentBrdfSamples;initialSamples=source.initialSamples;maxHistory=source.maxHistory;spatialSamples=source.spatialSamples;
-                    spatialRadius=source.spatialRadius;rayBias=source.rayBias;environmentIntensity=view.environmentIntensity;
+                    useEnvironment=view.useEnvironment;temporal=view.temporal;spatial=view.spatial;
+                    environmentSamples=view.environmentSamples;environmentBrdfSamples=view.environmentBrdfSamples;initialSamples=view.initialSamples;maxHistory=view.maxHistory;spatialSamples=view.spatialSamples;
+                    spatialRadius=view.spatialRadius;rayBias=source.rayBias;environmentIntensity=view.environmentIntensity;
                 }
             }
             private static readonly string[] ReferenceStages={"BuildPowerPdf","Presample","BuildEnvironmentPdf","PresampleEnvironment","Initial","Temporal","Spatial","Shade"};
@@ -189,7 +189,7 @@ namespace lilToon.URP.Extensions.RTDI
             internal void Setup(HoRTDIContext context,HoRTScene scene,ComputeShader shader,RayTracingShader finalVisibilityShader,HoRTDISettings settings,HoRTDIViewSettings view,AnalyticLight[] lights,Light[] keys,int count,int localCount,int signature)
             {
                 this.context=context;this.scene=scene;this.shader=shader;this.finalVisibilityShader=finalVisibilityShader;this.settings=new PassSettings(settings,view);this.lights=lights;lightKeys=keys;lightCount=count;localLightCount=localCount;this.signature=signature;
-                requestedFinalSamples=settings.finalSampling==HoRTDIFinalSampling.TripleAnalytic?3:1;
+                requestedFinalSamples=view.finalSampling==HoRTDIFinalSampling.TripleAnalytic?3:1;
                 #if UNITY_EDITOR
                 ConfigureInput(context.nrd?.ValidationMotionCapture!=null?ScriptableRenderPassInput.Motion:ScriptableRenderPassInput.None);
                 #endif

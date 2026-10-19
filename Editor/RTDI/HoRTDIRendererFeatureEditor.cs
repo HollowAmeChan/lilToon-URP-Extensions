@@ -8,24 +8,16 @@ namespace lilToon.URP.Extensions.Editor.RTDI
     internal sealed class HoRTDIRendererFeatureEditor:UnityEditor.Editor
     {
         private static readonly Color RuntimeColor=new Color(.46f,.64f,.92f),AdvancedColor=new Color(.62f,.58f,.78f);
-        private static bool runtime=true,quality,advanced;
+        private static bool runtime=true,advanced;
         private void OnEnable()=>((HoRTDIRendererFeature)target).EnsureEditorShaderReferences();
         public override void OnInspectorGUI()
         {
             serializedObject.Update();var settings=serializedObject.FindProperty("settings");
-            EditorGUILayout.HelpBox("混合模式、画面/天空强度和降噪开关在 Ho-RTDI Volume 调节。此处保留低频的采样、资源与筛选配置。需要同分辨率单采样 GB/SB 与 D3D12。",MessageType.Info);
+            EditorGUILayout.HelpBox("此 Feature 只提供生产能力，还需在 Ho-RTDI Volume 勾选启用覆盖并开启。画面、降噪及采样质量均在 Volume 调节；此处保留资源、筛选与射线偏移。需要同分辨率单采样 GB/SB 与 D3D12。",MessageType.Info);
             if(LilUrpEditorSectionGui.DrawSectionHeader(ref runtime,"基础","RTXDI DI",RuntimeColor))
             using(new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
             {
                 Draw(settings,"enabled","生产总开关");Draw(settings,"inSceneView","Scene View 中生产");
-            }
-            if(LilUrpEditorSectionGui.DrawSectionHeader(ref quality,"采样质量","高级 / 低频",AdvancedColor))
-            using(new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-            {
-                Draw(settings,"localSampling","局部灯采样");Draw(settings,"initialSamples","局部灯候选数");Draw(settings,"temporal","时间重采样");Draw(settings,"maxHistory","ReSTIR 历史上限");
-                Draw(settings,"spatial","空间重采样");Draw(settings,"spatialSamples","邻域样本数");Draw(settings,"spatialRadius","邻域半径");
-                Draw(settings,"finalSampling","最终可见性样本");
-                Draw(settings,"environmentSamples","环境光候选数");Draw(settings,"environmentBrdfSamples","BRDF 环境候选");
             }
             if(LilUrpEditorSectionGui.DrawSectionHeader(ref advanced,"高级","筛选 / Shader",AdvancedColor))
             using(new EditorGUILayout.VerticalScope(EditorStyles.helpBox))

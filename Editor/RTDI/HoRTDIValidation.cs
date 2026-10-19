@@ -101,6 +101,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                 #endif
                 var holder=Keep(new GameObject("RTDI validation volume")).AddComponent<Volume>();holder.isGlobal=true;
                 holder.sharedProfile=Keep(ScriptableObject.CreateInstance<VolumeProfile>());volume=holder.sharedProfile.Add<HoRTDIVolume>();
+                volume.enable.Override(true);
                 // Existing feature-API fixtures explicitly override only the
                 // original enable/debug controls; appearance tests opt in below.
                 volume.enable.overrideState=volume.debugMode.overrideState=volume.debugInSceneView.overrideState=volume.debugInGameView.overrideState=true;
@@ -130,7 +131,9 @@ namespace lilToon.URP.Extensions.Editor.RTDI
                     RenderCamera();Require(feature.LastContext==null&&Shader.GetGlobalFloat("_HoRTDIActive")==0,"unsupported platform allocated/published DI");
                     Debug.Log("[HoRTDIValidation] PASS unsupported platform: "+feature.Status);Finish(null);return;
                 }
-                if(++tick<3){Render();return;}
+                // First request can recreate the pipeline/Volume stack after
+                // our manual update. Let it initialize before requiring DI.
+                if(++tick<3){RenderCamera();return;}
                 if(forceCutoutGpuTiming){TickCutoutGpuTiming();return;}
                 if(forceMotionProtocol&&motionProtocolRealFrames){TickMotionProtocol();return;}
                 if(temporalJitterAudit){TickTemporalJitter();return;}
@@ -1261,7 +1264,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             float fade=Mathf.Clamp01(1-Mathf.Pow(d2/(source.range*source.range),2));return source.intensity/d2*(-delta.normalized.z)/Mathf.PI*fade*fade;
         }
         private static void RenderCamera(){if(cutoutPairedFinalSample&&pairedFinalShader!=null)pairedFinalShader.SetInt("_HoRTDIExtraSampleFrame",feature.LastContext?.frame??0);if(feature.LastContext?.nrd!=null){if(referenceConvergenceBaselineRegression)feature.LastContext.nrd.ValidationDisableStableDiffuseHistory=true;if(forceBoundaries||forceSpecular||forceLocalLighting||forceCurved||forceEnvironment||referenceConvergenceAdaptiveAudit)feature.LastContext.nrd.ValidationTimeSeconds=++boundarySample/60.0;}VolumeManager.instance.Update(camera.transform,-1);RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest{destination=target});}
-        private static Color Render(){RenderCamera();Require(feature.LastContext!=null,"DI context missing: "+feature.Status);return Read(feature.LastContext.diffuse.rt);}
+        private static Color Render(){RenderCamera();var stack=VolumeManager.instance.stack.GetComponent<HoRTDIVolume>();Require(feature.LastContext!=null,$"DI context missing: {feature.Status}; profile enable={volume.enable.value}/{volume.enable.overrideState}, stack enable={stack?.enable.value}/{stack?.enable.overrideState}, active={stack?.active}");return Read(feature.LastContext.diffuse.rt);}
         private static Color Read(RenderTexture source)
         {
             var previous=RenderTexture.active;var image=new Texture2D(source.width,source.height,TextureFormat.RGBAFloat,false,true);

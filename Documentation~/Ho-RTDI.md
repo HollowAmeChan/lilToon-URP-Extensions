@@ -29,7 +29,7 @@ Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天
 ## 2. 启用与查看效果
 
 1. 使用支持 D3D12 inline ray tracing 的环境。已验证 Unity `6000.3.15f1`、Windows x64 Mono、RTX 4060；D3D11 应保持 inactive。使用同分辨率、单采样 GB / SB，且 SB 已包含当前网格法线布局。
-2. Renderer 上在 GB / SB 之后添加并启用 `Ho-RTDI`。若需要天空输入，前置启用 [Ho-Atmosphere](Ho-Atmosphere.md)；没有有效 HDR 输入时只运行解析灯。
+2. Renderer 上在 GB / SB 之后添加并启用 `Ho-RTDI`，再在 **Ho-RTDI Volume → 运行 → 启用** 勾选左侧覆盖并打开。**只有 Feature 开启不会运行 RTDI**；没有参与当前相机的有效 Volume、组件关闭、启用未覆盖或关闭、Volume 权重为零时均停止生产。若需要天空输入，前置启用 [Ho-Atmosphere](Ho-Atmosphere.md)；没有有效 HDR 输入时只运行解析灯。
 3. 在 **Ho-RTDI Volume → 运行** 勾选覆盖并开启 **NRD RELAX 降噪**。该开关默认关闭；Raw 调试始终保留随机样本，不能用 Raw 是否还有噪点判断 NRD 是否收敛。
 4. 在 **Ho-RTDI Volume → 画面合成** 勾选覆盖并开启 **“合成到画面”**，调试模式保持 **Off**。**混合模式 → 加法叠加** 适合快速接入现有场景，叠加强度默认.25；**参考 PBR 替换** 用于完整替换或检查RTDI照明，过渡权重1完全替换、0恢复原画面。两个模式各自保存强度，切换本身不重置DI/NRD历史。
 5. 排查时可临时在 Volume 选择 Diffuse / Specular / Combined 或 RawDiffuse / RawSpecular。调试在最终后处理后显示，All为网格；它与正常画面的合成是两条独立路径。
@@ -44,14 +44,14 @@ Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天
 
 ### 默认设置及其含义
 
-**常用画面参数统一在 Volume，低频配置留在 Feature。** Volume 提供启用、降噪、合成开关/模式、叠加强度、替换权重、天空开关/强度和调试；叠加强度、天空强度使用 **0～8滑条**，替换权重为 **0～1滑条**。两种模式的强度分别显示，方便独立覆盖和混合。
+**画面与采样质量统一在 Volume，基础配置留在 Feature。** Volume 提供启用、降噪、合成开关/模式、叠加强度、替换权重、天空开关/强度和调试；新增“采样质量”包含局部灯采样、初始候选数、时间重采样、ReSTIR历史上限、空间重采样、邻域样本数/半径、最终可见性样本、天空候选数和BRDF天空候选。数值使用标准有界滑条，枚举使用下拉选项。
 
-Feature 只显示生产总开关、Scene View开关，以及默认折叠的采样质量、筛选/射线和Shader配置。旧Feature外观字段保留序列化/API但不再重复显示；**Volume未勾选覆盖时沿用旧配置**，不会因新增字段改变既有场景。运行时逐相机解析Volume，不把结果写回共享Feature。局部Volume权重按URP规则在已覆盖的全局/局部参数之间混合；Feature生产总开关仍可统一停用。迁移与实际双相机验证见 [VolumeControls](../Tests~/RTDI/VolumeControls/README.md)。
+Feature 只显示生产总开关、Scene View开关，以及默认折叠的几何/灯筛选、排除材质、射线偏移和Shader配置。旧Feature外观/采样字段保留序列化/API但不再重复显示。**启用必须由Volume显式覆盖并开启**；其它参数未覆盖时沿用旧Renderer数值，保留已开启场景的调校。运行时逐相机解析Volume，不把结果写回共享Feature；局部Volume权重按URP规则混合。Feature总开关仍可统一停用。当前迁移与验证见 [启用及采样控制](../Tests~/RTDI/VolumeControls/OptInQuality/README.md)，此前外观迁移证据见 [VolumeControls](../Tests~/RTDI/VolumeControls/README.md)。
 
 | 设置 | 当前默认 | 含义与取舍 |
 | --- | --- | --- |
 | Feature `enabled` / `inSceneView` | true / true | 生产总开关与 SceneView 支持，仍受平台和输入有效性限制 |
-| Volume `enable` | true | 当前相机的功能开关；不能绕过Feature生产总开关 |
+| Volume `enable` | **false，未覆盖** | 当前相机必须有有效启用覆盖；不能绕过Feature生产总开关 |
 | `composite` / `compositeMode` | false / Replace | 正常相机合成开关及模式；旧资产保持替换模式 |
 | `compositeWeight` | 1 | 仅替换模式：原画面与参考PBR的0～1过渡权重 |
 | `additiveIntensity` | .25 | Volume 0～8滑条，仅加法模式：新增RTDI直接光倍率；0保留原画面，不重复添加自发光 |

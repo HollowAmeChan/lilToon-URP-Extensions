@@ -1,5 +1,9 @@
 # RTDI appearance controls in Volume
 
+> Historical qualification for `5c404cd`. Current behavior requires explicit
+> Volume enable and also moves sampling quality to Volume; see
+> [OptInQuality](OptInQuality/README.md). The reports below remain unchanged.
+
 Frequent appearance controls now live in Ho-RTDI Volume. Feature retains the
 production master/Scene View switches and collapsed sampling/resource/filter
 settings. Appearance values no longer appear in both editors.

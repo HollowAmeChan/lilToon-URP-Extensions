@@ -1,0 +1,35 @@
+{
+  "date": "2026-10-19",
+  "unity": "6000.3.15f1",
+  "graphicsAPI": "Direct3D12",
+  "compileErrors": 0,
+  "baseRevision": "d78b66f3b392a48957c87c891f051bb73719d6a2",
+  "sources": {
+    "Runtime/RTDI/HoRTDISettings.cs": "7ec6192d5dfb1fa175a30a769adad789f5164bdf134f666f8661fd4d4320890d",
+    "Runtime/RTDI/HoRTDIVolume.cs": "ae02e14d345f0f497c28f65b43221c2e541309bd683b415a60825b6a33275a7f",
+    "Runtime/RTDI/HoRTDIViewSettings.cs": "a8bc7bfd39240b4a1daad5bfe2b2d1ebb457829ad9a6eda6a1a18b94d4e3fccc",
+    "Runtime/RTDI/HoRTDIRendererFeature.cs": "bceeb74cd507008e83fda27bfb6070c1a9482d2115f1450016532b4a6bfcc638",
+    "Runtime/RTDI/HoRTDIProjectionSample.cs": "73b8e8749b098e8f48e1babc0ed176f8cd7d7932841dd722f0be560b894d3b0e",
+    "Runtime/RTDI/NRD/HoRTDINrdContext.cs": "e48fb1ef81d43fd0f8f174958e9987d345798af293730db7f40bc347216dd316",
+    "Editor/RTDI/HoRTDIVolumeEditor.cs": "05f5f17f69d89aaabe70b094c029071a90654034418c104b7d2768b7bec55392",
+    "Editor/RTDI/HoRTDIRendererFeatureEditor.cs": "5153befd234f927844ddf6bcebd5990ea14a96ec8490a6779562f9dd449872d0",
+    "Editor/RTDI/HoRTDIVolumeControlsValidation.cs": "f8d7926bf871b0fb66d7d661d1fda64c5c3b2ebefbc4ce913e3e857f14b2ccec",
+    "Editor/RTDI/HoRTDIValidation.cs": "dc7bdc28901c44184d18a66964010635227b71b9f1ed3e8e219a92568762f736",
+    "Editor/RTDI/HoRTDIPlayerValidation.cs": "05f2eba016700ccb2c386dde0bacead1b87a1243ed2de1d331b03fcbf4ef6d48",
+    "Editor/RTDI/HoRTDISettingsSnapshotValidation.cs": "b4af16417d18fc0e806ac5179d9672a407322556d2fb7e61f8ea826476b49355",
+    "Editor/RTDI/HoRTDICompositeBlendValidation.cs": "7ce78811f3beb8616c6fc0c8ba152a20ec3294fb4a0e50c55a351ba752e65458",
+    "Editor/RTDI/HoRTDITemporalJitterValidation.cs": "02354714d87ab59dac1f322c6767828c355bd086f9ddfb992b5b0ab4295f1349",
+    "Tests~/RTDI/VolumeControls/OptInQuality/verify.py": "a623f59586684193c5d3cd48e001274374210954f1ab51a669994bad1826a7fb"
+  },
+  "artifacts": {
+    "blend-compat.json": "b24f2c0c798f50ab6dc3173e1ff7780b2b6d06c69cb394b7f27760daa22fd525",
+    "blend-rg.json": "271459b0f0366d5d09995ddd09148283722dc2b779be9ae6cca964eea51bd591",
+    "exits.json": "8d01be532e9451d5a147693f465fea851aed0bfa720aad12713ba73e06451bda",
+    "jitter-compat.json": "36b6eba3251d78db90571383596d4172413d9b64a9a28d8eeb73d6e97cfd7c84",
+    "jitter-rg.json": "357783c3d6592bcb5fcd1ceed3cc787cd88c9ada17304e802dc9abb2378f9bc8",
+    "snapshot-compat.json": "9e4bce7a6f50a2bbe3906478e61d0428e3d40ffd5c5e9e440ba3883c56489935",
+    "snapshot-rg.json": "9e4bce7a6f50a2bbe3906478e61d0428e3d40ffd5c5e9e440ba3883c56489935",
+    "volume-compat.json": "ccf36c21c6334e48a103f0077e6cd02a7bdfb442c56d43b4c55c48d4f8021ba9",
+    "volume-rg.json": "b9cf3b5c624273cb14e5c5756cb13fbc16c05ea114705b2f1ac18ce1f4c55aa9"
+  }
+}
