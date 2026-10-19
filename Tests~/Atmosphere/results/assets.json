@@ -1,0 +1,22 @@
+{
+  "HoAtmosphereFineDust64.asset": {
+    "guid": "65ce1f4fdd5090e4896de24e0f2c7db8",
+    "densityBytes": 262144,
+    "densitySHA256": "44addf170849e61cb5a4fa3eef151af79f575079aefa7f2f821a2ae0122da6d1"
+  },
+  "HoAtmospherePatchyFog64.asset": {
+    "guid": "e8a96d453da96054c80834a905b6423e",
+    "densityBytes": 262144,
+    "densitySHA256": "7e9ed7e41741e54f0abed644486ef5b8abbd24a1267d64d5d6ade30959208cf7"
+  },
+  "HoAtmosphereSoftFog64.asset": {
+    "guid": "73bd648d9133f544494f01ce437f9ffe",
+    "densityBytes": 262144,
+    "densitySHA256": "d4255ff516c2745086eaaf97ad6545c1df0a821558b13466b74f1fa80c1acd6f"
+  },
+  "HoAtmosphereWisps64.asset": {
+    "guid": "bcfdadf4b05630742af1165d63b7e74b",
+    "densityBytes": 262144,
+    "densitySHA256": "f0af89c362c033ce95e0b3a0ea13b8b769521e494567429db1ea39f27f5a0e13"
+  }
+}

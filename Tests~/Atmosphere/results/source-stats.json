@@ -1,0 +1,34 @@
+{
+  "HoAtmosphereFineDust64": {
+    "size": 64,
+    "format": "R8_UNorm",
+    "min": 0.0,
+    "max": 1.0,
+    "mean": 0.4999986685958563,
+    "std": 0.15999926921647228
+  },
+  "HoAtmosphereSoftFog64": {
+    "size": 64,
+    "format": "R8_UNorm",
+    "min": 0.0,
+    "max": 1.0,
+    "mean": 0.500002498252719,
+    "std": 0.20986518432300746
+  },
+  "HoAtmosphereWisps64": {
+    "size": 64,
+    "format": "R8_UNorm",
+    "min": 0.0,
+    "max": 1.0,
+    "mean": 0.49999841428270525,
+    "std": 0.2268179986011035
+  },
+  "HoAtmospherePatchyFog64": {
+    "size": 64,
+    "format": "R8_UNorm",
+    "min": 0.0,
+    "max": 1.0,
+    "mean": 0.5000017502728631,
+    "std": 0.3130803232332975
+  }
+}

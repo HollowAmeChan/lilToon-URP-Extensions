@@ -1,0 +1,5 @@
+Preset,Format,Min,Max,Mean,GPU centres,Repeat seams
+HoAtmosphereFineDust64,R8_UNorm,0.0000,1.0000,0.499999,PASS,PASS
+HoAtmosphereSoftFog64,R8_UNorm,0.0000,1.0000,0.500003,PASS,PASS
+HoAtmosphereWisps64,R8_UNorm,0.0000,1.0000,0.499998,PASS,PASS
+HoAtmospherePatchyFog64,R8_UNorm,0.0000,1.0000,0.500002,PASS,PASS

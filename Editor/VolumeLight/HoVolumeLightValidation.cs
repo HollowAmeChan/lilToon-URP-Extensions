@@ -33,6 +33,8 @@ namespace lilToon.URP.Extensions.VolumeLight
         private static Light previousSun;
         private static bool previousAsync;
         private static int frame;
+        private static bool densityPresetsOnly;
+        public static void RunDensityPresets() { densityPresetsOnly = true; Run(); }
         private static string renderError;
         private static void CaptureError(string message, string stack, LogType type)
         {
@@ -107,6 +109,7 @@ namespace lilToon.URP.Extensions.VolumeLight
                 if (++frame < 3) { Render(); return; }
                 Require(HoAtmosphereMediumClock.SampleTime > initialWorldTime, "editor medium clock did not advance");
                 EditorApplication.update -= Tick;
+                if (densityPresetsOnly) { ValidateDensityPresets(); Finish(null); return; }
                 ValidateAuthoring(); ValidateMedium(); ValidateAntialiasing(); ValidateSolar();
                 Debug.Log("[HoVolumeLightValidation] PASS: Medium GPU sampling/revision + solar shadow/cutout/offscreen/region mask/depth/inside/SSS + lifecycle; API=" + SystemInfo.graphicsDeviceType);
                 Finish(null);
@@ -340,7 +343,7 @@ namespace lilToon.URP.Extensions.VolumeLight
                 lilToonCutout = results.ContainsKey("lilToonCutout") ? (string)results["lilToonCutout"] : "NOT RUN",
                 antialiasing = aaReport,
                 windowReduction = results.ContainsKey("windowReduction") ? Convert.ToSingle(results["windowReduction"]) : 0 };
-            File.WriteAllText(Path.Combine(dir, "result-" + SystemInfo.graphicsDeviceType + ".json"), JsonUtility.ToJson(report, true));
+            File.WriteAllText(Path.Combine(dir, (densityPresetsOnly ? "result-density-presets-" : "result-") + SystemInfo.graphicsDeviceType + ".json"), JsonUtility.ToJson(report, true));
             if (error != null) Debug.LogException(error);
             EditorApplication.Exit(error == null ? 0 : 1);
         }

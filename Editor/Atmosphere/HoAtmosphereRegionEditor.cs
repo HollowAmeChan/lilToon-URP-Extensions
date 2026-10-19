@@ -19,8 +19,9 @@ namespace lilToon.URP.Extensions.Editor.Atmosphere
             if (LilUrpEditorSectionGui.DrawSectionHeader(ref showMedium, "介质", "密度 / 颜色 / 动态纹理", RuntimeColor))
                 using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                 {
+                    HoAtmosphereDensityPresets.Draw(targets);
                     foreach (string field in new[] { "density", "tint", "densityTexture" }) EditorGUILayout.PropertyField(serializedObject.FindProperty(field));
-                    if (serializedObject.FindProperty("densityTexture").objectReferenceValue != null)
+                    if (serializedObject.FindProperty("densityTexture").objectReferenceValue != null || serializedObject.FindProperty("densityTexture").hasMultipleDifferentValues)
                         foreach (string field in new[] { "noiseStrength", "noiseWorldSize", "wind" }) EditorGUILayout.PropertyField(serializedObject.FindProperty(field));
                 }
             serializedObject.ApplyModifiedProperties();
