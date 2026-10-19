@@ -1,0 +1,25 @@
+{
+    "pass": true,
+    "compatibility": true,
+    "colorSpace": "Linear",
+    "checks": [
+        "default disabled leaves original camera color",
+        "camera receives published direct light",
+        "independent directional Lambert energy",
+        "weight crossfades rather than adding duplicate lighting",
+        "zero weight restores original camera color",
+        "reference lighting receives camera fog once",
+        "colored albedo is not multiplied twice",
+        "specular material response reaches camera",
+        "valid world shadow replaces raster lighting",
+        "emission survives zero direct illumination",
+        "valid zero direct light does not keep old ambient",
+        "background remains unchanged",
+        "invalid sample domain preserves original camera color",
+        "forward-only opaque foreground is not overwritten",
+        "transparent rendering follows compositing",
+        "camera consumes filtered publication rather than raw",
+        "volume disabled does not reuse stale composition",
+        "reenabling reconstructs a valid camera composite"
+    ]
+}

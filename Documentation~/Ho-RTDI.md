@@ -1,8 +1,8 @@
 # Ho-RTDI：功能、接入与完成度
 
-> 状态：现行总文档，更新于 **2026-10-18**。静止收敛基线：`f537c26`；其后已新增正常相机的参考 PBR 合成，复现与证据见 [Composite](../Tests~/RTDI/Composite/README.md)。本页统一说明当前行为；[专题与证据目录](RTDI/README.md)保存详细合同、审计和历史实验。
+> 状态：现行总文档，更新于 **2026-10-19**。静止收敛基线：`f537c26`；其后已新增正常相机合成、独立天空照明强度及可选加法模式，复现与证据见 [Composite](../Tests~/RTDI/Composite/README.md)。本页统一说明当前行为；[专题与证据目录](RTDI/README.md)保存详细合同、审计和历史实验。
 
-Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天空、真实世界遮挡、基础 lilToon Cutout，以及可选 NRD RELAX 降噪。**现在已能通过“合成到画面（参考 PBR）”把结果写入正常相机画面**，不必打开调试。有效不透明接收面使用参考 PBR 直接光＋SB 自发光替换旧照明，天空与无效面保留，透明物随后正常绘制。该开关默认关闭，升级资产不会自动改画面。
+Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天空、真实世界遮挡、基础 lilToon Cutout，以及可选 NRD RELAX 降噪。**“合成到画面”支持参考 PBR 替换和加法叠加两种模式**，不必打开调试。替换模式以直接光＋SB 自发光替换旧照明；加法模式保留现有外观，只增加可调强度的 RTDI 直接光。两种模式均保留天空与无效面，透明物随后正常绘制。合成默认关闭，旧资产的模式仍为替换，升级不会自动切换外观。
 
 开启 NRD 后，已验证静止夹具的时间噪声方差约降至旧版的1/19。当前画面接入使用已有 Lambert＋GGX 响应，**尚未把 RTDI 改造成原 lilToon NPR ramp / 影色的受光源**；混合天空镜面偏差、严格遮挡阶跃、正常应用帧物体运动输入、复杂场景完整画质和有效 GPU 预算仍未完成。
 
@@ -19,10 +19,10 @@ Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天
 | Win64 Mono Player | 受控部署已验证 | D3D12 RenderGraph / compatibility、D3D11 inactive；不覆盖 IL2CPP / XR |
 | 主表面运动与动态角色 | 未完成完整合同 | Cutout 遮挡变化有 confidence；NRD 物体 world-motion 输入仍为静态协议 |
 | 目标场景性能 | 未完成 | 现有内存核算和同步总时长不等于有效 GPU 分段预算 |
-| 正常相机参考 PBR 合成 | 已接入并验证 | 可控替换有效不透明面的旧照明，保留自发光、无效面与之后的透明物；有实际相机开关对照 |
+| 正常相机合成 | 替换与加法已接入 | 有实际相机开关对照；加法保留原照明，属于艺术混合，会与原直接光重复计光；不是完整NPR接收 |
 | lilToon NPR 接收与 DI/GI 混合 | 尚未完成 | 原 ramp、影色、SSS、MatCap、探针与新光照的艺术接收/分层路由不由参考 PBR 替换代替 |
 
-“只有独立纹理、正常画面没有消费者”的缺口现已补上。参考 PBR 模式以完整替换避免旧直接光、旧环境底色与探针重复相加；它没有保留原 NPR 照明再偷偷叠加一份物理响应。若目标是保留 lilToon 风格并由 RTDI 驱动 ramp，仍需建立对应的接收信号与分层路由；RTGI 也没有因此自动加入最终输出。
+“只有独立纹理、正常画面没有消费者”的缺口现已补上。参考 PBR 模式以完整替换避免旧照明重复相加；新增的加法模式则明确保留原照明，以较低强度增加 RTDI，适合快速接入现有场景。若目标是由 RTDI 正式驱动 lilToon ramp，仍需建立接收信号与分层路由；RTGI 也没有因此自动加入最终输出。
 
 后续仍需真实场景与可信计时、镜面偏差及运动输入验收，以及独立的 NPR / GI 接收设计。历史实验中的“下一项”已归档，不再视作自动推进队列。
 
@@ -31,7 +31,7 @@ Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天
 1. 使用支持 D3D12 inline ray tracing 的环境。已验证 Unity `6000.3.15f1`、Windows x64 Mono、RTX 4060；D3D11 应保持 inactive。使用同分辨率、单采样 GB / SB，且 SB 已包含当前网格法线布局。
 2. Renderer 上在 GB / SB 之后添加并启用 `Ho-RTDI`。若需要天空输入，前置启用 [Ho-Atmosphere](Ho-Atmosphere.md)；没有有效 HDR 输入时只运行解析灯。
 3. 要查看累积降噪后的结果，打开 Feature 的 **NRD RELAX 降噪**。该开关默认关闭；Raw 调试始终保留随机样本，不能用 Raw 是否还有噪点判断 NRD 是否收敛。
-4. 要影响正常画面，在 Renderer Feature 的运行设置打开 **“合成到画面（参考 PBR）”**，权重保持1；全局 Volume 的调试模式保持 **Off**。权重0恢复原画面，.5是原画面与替换结果的过渡，不是额外光照强度。
+4. 要影响正常画面，打开 Renderer Feature 的 **“合成到画面”**，全局 Volume 调试模式保持 **Off**。**混合模式 → 加法叠加** 适合快速接入现有场景，叠加强度默认.25；**参考 PBR 替换** 用于完整替换或检查RTDI照明，过渡权重1完全替换、0恢复原画面。两个模式各自保存强度，切换本身不重置DI/NRD历史。
 5. 排查时可临时在 Volume 选择 Diffuse / Specular / Combined 或 RawDiffuse / RawSpecular。调试在最终后处理后显示，All为网格；它与正常画面的合成是两条独立路径。
 6. Receiver 中绿色是有效接收面，红色是无效输入。有效阴影允许 RGB=0、A=1；输入缺失或域不匹配为 A=0。先检查接收有效性，再比较噪声与能量。
 7. 保持相机、几何与光源稳定至少半秒后，NRD 漫反射进入长历史；持续运动会保留响应优先的短历史。观察固定区域的跨帧变化，避免把材质纹理、空间渐变或高光形状当作时间噪声。
@@ -47,7 +47,9 @@ Ho-RTDI 生产世界空间直接光 diffuse/specular，支持解析灯、HDR 天
 | 设置 | 当前默认 | 含义与取舍 |
 | --- | --- | --- |
 | `enabled` / `inSceneView` | true / true | 功能与 SceneView 开关，仍受平台和输入有效性限制 |
-| `composite` / `compositeWeight` | false / 1 | 正常相机参考 PBR 替换及过渡权重；不改变独立输出合同 |
+| `composite` / `compositeMode` | false / Replace | 正常相机合成开关及模式；旧资产保持替换模式 |
+| `compositeWeight` | 1 | 仅替换模式：原画面与参考PBR的0～1过渡权重 |
+| `additiveIntensity` | .25 | 仅加法模式：新增RTDI直接光的非负倍率；0保留原画面，不重复添加自发光 |
 | `denoise` | **false** | 关闭时发布 raw；打开时发布 RELAX 恢复材质后的结果，另保留 raw |
 | `useEnvironment` | true | 仅消费前置有效天空 HDR；不是另一套天空生产器 |
 | `environmentIntensity` | 1 | RTDI 独立天空照明倍率；0关闭天空采样，.25为四分之一，2为两倍；不改变可见天空、共享 Atmosphere 或解析灯，调整时失效相关历史 |
@@ -104,9 +106,15 @@ RenderGraph 消费者必须读取同轮资源并声明读依赖；不能依赖�
 
 当前 `diffuse` 已乘 diffuse albedo，`specular` 已含参考 GGX / Fresnel；正常合成直接相加，不再乘一次材质因子。若要改为 NPR 受光，仍须建立不同的接收信号合同。
 
-### 正常画面的参考 PBR 替换
+### 正常画面的混合模式
 
-合成开关打开且权重大于0时，生产 DI / NRD 的 pass 移到 `BeforeRenderingTransparents`，紧接着在同一命名事件中按入队顺序执行合成；关闭时生产端保留原 `BeforeRenderingPostProcessing` 时序。此处没有隐藏的事件数值偏移。
+合成开关打开且当前模式的有效强度大于0时，生产 DI / NRD 的 pass 移到 `BeforeRenderingTransparents`，紧接着在同一命名事件中按入队顺序执行合成；关闭时生产端保留原 `BeforeRenderingPostProcessing` 时序。此处没有隐藏的事件数值偏移。
+
+**加法叠加** 的线性形式为 `original + additiveIntensity * (diffuse + specular) * fogTransmission`。原画面自发光、原雾色和原NPR受光已经存在，不能再加入SB自发光或重复雾色。Gamma项目先解码原颜色到线性空间，再相加并编码回去。原alpha不变。叠加强度可以超过1；负值或非有限值按0处理。它不能把原来过亮的像素压暗，也不能用RTDI阴影清除原来的未遮挡直接光。原场景阴影可继续使用；RTDI遮挡在加法中表示该处不再增加对应光照。
+
+接入现有场景建议先选择加法、叠加强度.25，按需要降低独立天空照明强度；这两个控制分别管理总新增量和天空占比。此模式明确允许与原直接光重复计光，属于外观可控的艺术混合，不是能量守恒的直接光替换。Screen/SoftLight等显示颜色混合不在本次模式中，避免让HDR贡献随原像素亮度非线性改变。实际关闭／替换／加法三组画面对照与验证见 [Blend](../Tests~/RTDI/Composite/Blend/README.md)。
+
+**参考 PBR 替换** 保持既有合同：
 
 有效像素的线性目标为 `diffuse.rgb + specular.rgb + SBEmission.rgb`，Gamma 项目先按 shader 的 sRGB 曲线编码，再施加一次 URP 相机雾。输出 RGB 为原相机颜色与该目标的权重插值，alpha保持原值。权重1替换旧照明，权重0跳过合成；不会将零光照误判无效，有效阴影可正确变黑，自发光仍保留。
 
@@ -249,7 +257,7 @@ SSGI 与 RTDI 的具体信号、候选和滤波预算不同，不能仅凭同用
 
 当前阶段是**受限场景下可用的直接光与参考PBR合成**。用户已确认当前视角收敛快、效果可见；不再以反复调整静止降噪参数为下一阶段主线。本轮核对当前代码、磁盘配置和保留证据，没有重新渲染整个用户场景，过亮的具体来源仍未做逐pass现场归因。
 
-1. **P1，正式材质接收。** Composite shader 实际执行 `lerp(original, diffuse+specular+emission, weight)`，并非旧照明加完整DI。权重1会丢弃该表面的旧NPR受光、环境/探针照明；权重小于1仅是两种外观的过渡。下一步应明确原直接光、RTDI、NPR ramp/影色、独立GI的接收与分层合同，避免靠压曝光或整场关阴影掩盖问题。
+1. **P1，正式材质接收。** 参考替换模式执行 `lerp(original, diffuse+specular+emission, weight)`，权重1会丢弃该表面的旧NPR受光、环境/探针照明。审计后新增的可选加法模式允许保留旧外观并增加低强度RTDI，解决快速接入需求，但仍不是正式NPR接收。下一步应明确原直接光、RTDI、NPR ramp/影色、独立GI的接收与分层合同。
 2. **P1，近全光滑镜面边界。** 当前 `<.03` 的跳过在普通/NRD和Single/Triple共用的BRDF/shade路径存在；原粗糙度夹具不覆盖这一区间。先定义光滑极限或fallback，再做近镜面金属、介质、天空和解析灯的边界验收。这是静态代码发现，尚未新增现场GPU复现。
 3. **P1，动态物体与TAA。** NRD实际 `IN_MV` 仍绑定黑图，使用零world motion与前后相机矩阵。普通物体/蒙皮接收面运动、jitter变化尚非完整协议；逐相机全局稳定判定也会让局部运动缩短整个画面的历史。TAA自身收敛不能替代这项接入。
 4. **P1，保留的质量失败。** 先修既有Mixed天空镜面、严格caster step、Power换强灯身份后的方差门槛，再重跑对应原协议。当前专项通过不覆盖它们。

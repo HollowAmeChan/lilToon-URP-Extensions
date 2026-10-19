@@ -8,7 +8,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.RTDI
 {
-    // Replace supported opaque receivers before transparents. The published
+    // Composite supported opaque receivers before transparents. The published
     // lighting already contains its BRDF; never multiply it by albedo again.
     internal sealed class HoRTDICompositePass:ScriptableRenderPass,IDisposable
     {
@@ -16,13 +16,15 @@ namespace lilToon.URP.Extensions.RTDI
         private static readonly int SpecularId=Shader.PropertyToID("_HoRTDICompositeSpecular");
         private static readonly int DepthId=Shader.PropertyToID("_CameraDepthTexture");
         private static readonly int WeightId=Shader.PropertyToID("_HoRTDICompositeWeight");
+        private static readonly int ModeId=Shader.PropertyToID("_HoRTDICompositeMode");
         private Material material;
         private HoRTDIContext lighting;
         private float weight;
+        private HoRTDICompositeMode mode;
         private RTHandle scratch;
-        internal void Setup(Material material,HoRTDIContext lighting,float weight)
+        internal void Setup(Material material,HoRTDIContext lighting,HoRTDICompositeMode mode,float amount)
         {
-            this.material=material;this.lighting=lighting;this.weight=Mathf.Clamp01(weight);
+            this.material=material;this.lighting=lighting;this.mode=mode;this.weight=amount;
             renderPassEvent=RenderPassEvent.BeforeRenderingTransparents;
             ConfigureInput(ScriptableRenderPassInput.Depth);
             requiresIntermediateTexture=true;
@@ -31,6 +33,7 @@ namespace lilToon.URP.Extensions.RTDI
         {
             internal Material material;
             internal float weight;
+            internal HoRTDICompositeMode mode;
             internal TextureHandle source,diffuse,specular,depth;
             internal HoRTPrimarySurfaceInputs primary;
         }
@@ -45,7 +48,7 @@ namespace lilToon.URP.Extensions.RTDI
             var destination=graph.CreateTexture(descriptor);
             using(var builder=graph.AddRasterRenderPass<Data>("Ho-RTDI reference PBR composite",out var data))
             {
-                data.material=material;data.weight=weight;data.source=source;data.diffuse=input.diffuse;data.specular=input.specular;
+                data.material=material;data.weight=weight;data.mode=mode;data.source=source;data.diffuse=input.diffuse;data.specular=input.specular;
                 data.depth=resources.cameraDepthTexture;data.primary=HoRTPrimarySurfaceInputs.Read(graph,frame,builder);
                 builder.UseTexture(data.source);builder.UseTexture(data.diffuse);builder.UseTexture(data.specular);builder.UseTexture(data.depth);
                 builder.SetRenderAttachment(destination,0,AccessFlags.WriteAll);builder.AllowGlobalStateModification(true);
@@ -54,6 +57,7 @@ namespace lilToon.URP.Extensions.RTDI
                     d.primary.Bind(ctx.cmd);
                     ctx.cmd.SetGlobalTexture(DiffuseId,d.diffuse);ctx.cmd.SetGlobalTexture(SpecularId,d.specular);ctx.cmd.SetGlobalTexture(DepthId,d.depth);
                     ctx.cmd.SetGlobalFloat(WeightId,d.weight);
+                    ctx.cmd.SetGlobalFloat(ModeId,d.mode==HoRTDICompositeMode.Additive?1:0);
                     Blitter.BlitTexture(ctx.cmd,d.source,new Vector4(1,1,0,0),d.material,0);
                 });
             }
@@ -75,6 +79,7 @@ namespace lilToon.URP.Extensions.RTDI
             // URP publishes this as a global texture, not a temporary RT ID.
             // The shader reads that binding directly in compatibility mode.
             cmd.SetGlobalFloat(WeightId,weight);
+            cmd.SetGlobalFloat(ModeId,mode==HoRTDICompositeMode.Additive?1:0);
             Blitter.BlitCameraTexture(cmd,source,scratch,material,0);Blitter.BlitCameraTexture(cmd,scratch,source);
             rendering.ExecuteCommandBuffer(cmd);CommandBufferPool.Release(cmd);
         }

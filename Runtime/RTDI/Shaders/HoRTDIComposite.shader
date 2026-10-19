@@ -18,6 +18,7 @@ Shader "Hidden/lilToon/URP/RTDI/Composite"
             TEXTURE2D(_HoRTDICompositeSpecular);
             TEXTURE2D_FLOAT(_CameraDepthTexture);
             float _HoRTDICompositeWeight;
+            float _HoRTDICompositeMode;
             float4 Frag(Varyings input):SV_Target
             {
                 float4 original=SAMPLE_TEXTURE2D_X(_BlitTexture,sampler_PointClamp,input.texcoord);
@@ -31,12 +32,24 @@ Shader "Hidden/lilToon/URP/RTDI/Composite"
                 float4 diffuse=SAMPLE_TEXTURE2D(_HoRTDICompositeDiffuse,sampler_PointClamp,input.texcoord);
                 float4 specular=SAMPLE_TEXTURE2D(_HoRTDICompositeSpecular,sampler_PointClamp,input.texcoord);
                 if(diffuse.a<.5||specular.a<.5)return original;
+                float fog=InitializeInputDataFog(float4(surface.positionWS,1),0);
+                if(_HoRTDICompositeMode>.5)
+                {
+                    // The original already owns its emission and camera fog.
+                    // Attenuate only the added light; never add the fog colour.
+                    float3 extra=MixFogColor((diffuse.rgb+specular.rgb)*_HoRTDICompositeWeight,float3(0,0,0),fog);
+                    #if defined(UNITY_COLORSPACE_GAMMA)
+                        return float4(LinearToSRGB(SRGBToLinear(original.rgb)+extra),original.a);
+                    #else
+                        return float4(original.rgb+extra,original.a);
+                    #endif
+                }
                 float3 result=diffuse.rgb+specular.rgb+surface.emission;
                 // Sources are physical linear HDR even in a Gamma project.
                 #if defined(UNITY_COLORSPACE_GAMMA)
                     result=LinearToSRGB(result);
                 #endif
-                result=MixFog(result,InitializeInputDataFog(float4(surface.positionWS,1),0));
+                result=MixFog(result,fog);
                 return float4(lerp(original.rgb,result,saturate(_HoRTDICompositeWeight)),original.a);
             }
             ENDHLSL

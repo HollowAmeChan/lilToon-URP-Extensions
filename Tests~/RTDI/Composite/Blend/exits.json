@@ -1,0 +1,12 @@
+{
+  "gamma-rg-blend": 0,
+  "gamma-rg-replace": 0,
+  "gamma-compat-replace": 0,
+  "gamma-compat-blend": 0,
+  "configure-linear": 0,
+  "linear-rg-replace": 0,
+  "linear-compat-replace": 0,
+  "linear-rg-blend": 0,
+  "linear-compat-blend": 0,
+  "restore-gamma": 0
+}

@@ -1,0 +1,25 @@
+{
+    "pass": true,
+    "compatibility": false,
+    "colorSpace": "Linear",
+    "checks": [
+        "old serialized renderer retains replacement and additive default .25",
+        "linear HDR addition gain=0",
+        "linear HDR addition gain=0.25",
+        "linear HDR addition gain=1",
+        "linear HDR addition gain=2",
+        "replacement crossfade independent of additive gain",
+        "additive does not duplicate emission in zero direct light",
+        "additive retains emission once with direct light",
+        "zero RT visibility preserves original artistic shadow/lighting",
+        "added light fog transmission without duplicate fog colour",
+        "fully fogged receiver receives no additive light",
+        "additive preserves background",
+        "additive rejects mismatched primary domain",
+        "additive protects foreground Unlit depth",
+        "transparent blends after additive composite",
+        "additive consumes filtered publication",
+        "blend switch preserves accumulation",
+        "volume disable removes additive composition"
+    ]
+}

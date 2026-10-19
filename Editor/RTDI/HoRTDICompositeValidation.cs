@@ -3,6 +3,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using lilToon.URP.Extensions.GeometryBuffer;
+using lilToon.URP.Extensions.RTDI;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
@@ -48,6 +49,7 @@ namespace lilToon.URP.Extensions.Editor.RTDI
         }
         private static void ValidateComposite()
         {
+            if(forceCompositeBlend){ValidateCompositeBlend();return;}
             Require(!feature.Settings.composite&&feature.Settings.compositeWeight==1,"legacy composite defaults changed");
             camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=new Color(.07f,.14f,.21f,1);
             light.type=LightType.Directional;light.transform.rotation=Quaternion.identity;light.intensity=2;light.shadows=LightShadows.None;
@@ -152,6 +154,11 @@ namespace lilToon.URP.Extensions.Editor.RTDI
             for(int i=0;i<96;i++)Render();
             SaveCompositeImage(Path.Combine(directory,(compatibility?"compat":"rg")+"-after.png"));
             feature.Settings.composite=false;Render();SaveCompositeImage(Path.Combine(directory,(compatibility?"compat":"rg")+"-before.png"));
+            if(forceCompositeBlend)
+            {
+                feature.Settings.composite=true;feature.Settings.compositeMode=HoRTDICompositeMode.Additive;feature.Settings.additiveIntensity=.25f;
+                Render();SaveCompositeImage(Path.Combine(directory,(compatibility?"compat":"rg")+"-additive.png"));
+            }
             target=oldTarget;
         }
         private static void SaveCompositeImage(string path)

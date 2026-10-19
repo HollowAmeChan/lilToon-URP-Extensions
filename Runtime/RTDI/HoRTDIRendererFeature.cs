@@ -136,7 +136,8 @@ namespace lilToon.URP.Extensions.RTDI
             HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTDI primary normals",System.Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.HighPrecisionSurfaceNormal);
             var lightData=lightList.Count>0?lightList.ToArray():new AnalyticLight[1];
             pass.Setup(context,scene,shader,finalVisibilityShader,settings,lightData,lightKeys.ToArray(),lightList.Count,localCount,signature);
-            bool composite=settings.composite&&settings.compositeWeight>0&&descriptor.msaaSamples==1&&descriptor.dimension==TextureDimension.Tex2D
+            float compositeAmount=settings.EffectiveCompositeAmount;
+            bool composite=settings.composite&&compositeAmount>0&&descriptor.msaaSamples==1&&descriptor.dimension==TextureDimension.Tex2D
                 &&!data.cameraData.xr.enabled&&camera.rect==new Rect(0,0,1,1);
             if(composite&&compositeMaterial==null&&compositeShader!=null)compositeMaterial=CoreUtils.CreateEngineMaterial(compositeShader);
             composite&=compositeMaterial!=null;
@@ -145,7 +146,7 @@ namespace lilToon.URP.Extensions.RTDI
             // ordered by enqueue order: DI -> replacement -> transparent rendering.
             pass.renderPassEvent=composite?RenderPassEvent.BeforeRenderingTransparents:RenderPassEvent.BeforeRenderingPostProcessing;
             renderer.EnqueuePass(pass);Status=$"RTXDI DI：{(context.powerSampling?"功率":"均匀")} / {localCount} 局部 / {infiniteLights.Count} 方向灯 / {scene.InstanceCount} RT submesh / 排除 {excludedLights} 灯、{scene.Rejections.Count} 几何项";
-            if(composite){compositePass.Setup(compositeMaterial,context,settings.compositeWeight);renderer.EnqueuePass(compositePass);Status+=" / 参考 PBR 合成";}
+            if(composite){compositePass.Setup(compositeMaterial,context,settings.compositeMode,compositeAmount);renderer.EnqueuePass(compositePass);Status+=settings.compositeMode==HoRTDICompositeMode.Additive?" / 加法叠加":" / 参考 PBR 合成";}
             else if(settings.composite)Status+=" / 合成未启用（需要 Shader、全视口 Mono 单采样输入及非零权重）";
             if(settings.finalSampling==HoRTDIFinalSampling.TripleAnalytic)Status+=" / 三最终样本";
             if(settings.denoise)Status+=" / "+context.nrdStatus;

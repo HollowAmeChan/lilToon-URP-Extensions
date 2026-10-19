@@ -55,7 +55,7 @@ resolution of the older mixed-environment specular/caster-step/Power failures.
 The latest static-convergence evidence remains bound to its own captured commit.
 
 ```powershell
-python Tests~/RTDI/EnvironmentIntensity/verify.py
+python Tests~/RTDI/EnvironmentIntensity/verify.py --source-commit 1ea7d4f
 python Tests~/RTDI/SceneView/FastHistory/verify.py --source-commit 7360367
 ```
 

@@ -1,0 +1,32 @@
+{
+  "schemaVersion": 1,
+  "capturedDate": "2026-10-18",
+  "deliveryDate": "2026-10-19",
+  "baseCommit": "1ea7d4f",
+  "scope": "Switchable reference replacement and artistic linear HDR addition; actual isolated Editor normal-camera targets; no new Player build",
+  "artifacts": {
+    "gamma-rg-blend.json": "271459b0f0366d5d09995ddd09148283722dc2b779be9ae6cca964eea51bd591",
+    "gamma-rg-replace.json": "2dab530de2609c540a027c898a3bc91dd82862677e861cb57cea5ce3c616b7f8",
+    "gamma-compat-blend.json": "b24f2c0c798f50ab6dc3173e1ff7780b2b6d06c69cb394b7f27760daa22fd525",
+    "gamma-compat-replace.json": "15396df80ad293d4b3d803f157e696e0a181c5649f8851b8c2e50553fd02b81b",
+    "linear-rg-blend.json": "b1bd3dc7ece7ffb7f93b9690c0f71b94f7346e766da4361b450754b495fb2503",
+    "linear-rg-replace.json": "815b50bf3b9197bc537eb529b5a0fdeb995b02967e75f7b84fc55ed0f744c62b",
+    "linear-compat-blend.json": "9929d94aeee25cf8c044baecc9afe99b7f38306944b9be22e5ebc1c56a0ab6dc",
+    "linear-compat-replace.json": "d1be7a5d547cc6fb2948f2f389401fe351f840a75fc72b08845711df7cc42d48",
+    "exits.json": "71e12a74c75402b19dc4b87a65fad6c10a8a9707793e794a0a90dd239ad7daeb",
+    "images/original.png": "b0d4184b8f1dde71a7654f2dbad17715185ae8061172c392880342973276112d",
+    "images/replace.png": "a9dddff47cdefe2719f598371dfd2320aeec78ca8e3706a06c5c4bd19ae56637",
+    "images/additive.png": "96dc0d2a87b39ffa9017784cf62b753e5bc943b819808093a6b277b6a14a4575"
+  },
+  "sources": {
+    "Runtime/RTDI/HoRTDISettings.cs": "9cdacb51de8fc7accb22a808f2feb36e0e3bd02271f1d593b821a87c2b974977",
+    "Runtime/RTDI/HoRTDIRendererFeature.cs": "f8338b9b3aad32c4c772a095d5660e3500c984a21a60916bf7b16ddb4c00e03f",
+    "Runtime/RTDI/HoRTDICompositePass.cs": "c094360a9274b2e609697ae360d64ca8b2d7f75e7d2fa8dadbc09e49d061a71d",
+    "Runtime/RTDI/Shaders/HoRTDIComposite.shader": "d2b6ec85053bfc52aa4943f14f8a5a060ecd9ec593ffc113a8f5de2f0097575a",
+    "Editor/RTDI/HoRTDIRendererFeatureEditor.cs": "8e50deff7dc7e3f35df3147bd12b162945c4fcad1af4e238f279c6a2ed90c5ce",
+    "Editor/RTDI/HoRTDICompositeValidation.cs": "e019d66f7b10e947930cdbe6368ce3f5804d26b8e999e7f540f602cad0d02870",
+    "Editor/RTDI/HoRTDICompositeBlendValidation.cs": "7ce78811f3beb8616c6fc0c8ba152a20ec3294fb4a0e50c55a351ba752e65458",
+    "Editor/RTDI/HoRTDIValidation.cs": "fcad2f5ecc1649eb65ae45a40192bf72f3b45d8553d3ef2e31daa17e4fd71449",
+    "Tests~/RTDI/Composite/Blend/verify.py": "38f99809d79e4a96e8df160770485cd696aad1bea04a2c0a367727946585b080"
+  }
+}

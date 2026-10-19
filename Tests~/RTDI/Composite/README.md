@@ -1,5 +1,10 @@
 # Normal-camera RTDI composition
 
+This folder preserves the original replacement-mode qualification at `da52a0f`.
+The current Inspector calls the switch **合成到画面** and also offers additive
+blending; current formulas, captures and qualification are in [Blend](Blend/README.md).
+The original reports below are not retroactively treated as additive tests.
+
 The production Feature now has an optional **合成到画面（参考 PBR）** setting.
 It defaults to false. With weight 1, valid opaque receivers get published
 diffuse + specular + SB emission in the normal camera target. Old receiver
