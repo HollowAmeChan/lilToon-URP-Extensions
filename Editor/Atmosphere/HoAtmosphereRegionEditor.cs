@@ -37,7 +37,7 @@ namespace lilToon.URP.Extensions.Editor.Atmosphere
                     var dust = serializedObject.FindProperty("dust"); EditorGUILayout.PropertyField(dust.FindPropertyRelative("enabled"));
                     if (dust.FindPropertyRelative("enabled").boolValue || dust.FindPropertyRelative("enabled").hasMultipleDifferentValues)
                     {
-                        foreach (string field in new[] { "texture", "grainDensity", "clusterSize", "textureWorldSize", "brightness", "flutter", "maxDistance", "maxClusters", "seed" }) EditorGUILayout.PropertyField(dust.FindPropertyRelative(field));
+                        foreach (string field in new[] { "texture", "grainDensity", "thickness", "clusterSize", "textureWorldSize", "brightness", "flutter", "maxDistance", "maxClusters", "seed" }) EditorGUILayout.PropertyField(dust.FindPropertyRelative(field));
                         if (targets.Length == 1)
                         {
                             var source = (HoAtmosphereRegion)target;

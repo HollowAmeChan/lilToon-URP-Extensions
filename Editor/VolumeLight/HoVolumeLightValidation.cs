@@ -339,6 +339,8 @@ namespace lilToon.URP.Extensions.VolumeLight
             EditorApplication.update -= Tick;
             EditorApplication.update -= TickDustTiming;
             HoVolumeLightDustPass.Profiling.enableRecording = false;
+            HoVolumeLightDustPass.ProfilingCameraId = 0;
+            RestoreDustProfiling();
             HoVolumeLightDustReferenceFeature.Profiling.enableRecording = false;
             Application.logMessageReceived -= CaptureError;
             HoAtmosphereMediumClock.TimeOverride = null;

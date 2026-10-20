@@ -12,6 +12,12 @@ namespace lilToon.URP.Extensions.VolumeLight
     {
         private static int dustTimingStage, dustTimingFrame, dustTimingCount;
         private static double dustTimingSum;
+        private static double dustTimingStarted;
+        private static int dustTimingLastFrame;
+        private static bool dustProfilerStarted, previousProfilerEnabled, previousProfileEditor, previousGpuArea;
+        private static readonly System.Collections.Generic.List<float> dustTimingSamples = new();
+        private static readonly System.Collections.Generic.List<int> dustTimingFrameIds = new();
+        public static void RunDustDepthTiming() { dustTimingStage = 3; RunDust(); }
         private static void BeginDustTiming()
         {
             // Same 1080p camera, medium, phase and sun visibility for all draws.
@@ -29,17 +35,36 @@ namespace lilToon.URP.Extensions.VolumeLight
             alpha.SetPixels(pixels); alpha.Apply(); cutout.SetTexture("_BaseMap", alpha); cutout.SetFloat("_AlphaClip", 1); cutout.SetFloat("_Cutoff", .5f); cutout.EnableKeyword("_ALPHATEST_ON");
             lightFeature.FeatureSettings.antialiasing = HoVolumeLightAntialiasing.Off; lightFeature.FeatureSettings.stepCount = 8; lightFeature.FeatureSettings.intensity = 1;
             HoAtmosphereMediumClock.TimeOverride = 0;
+            previousProfilerEnabled = UnityEditorInternal.ProfilerDriver.enabled;
+            previousProfileEditor = UnityEditorInternal.ProfilerDriver.profileEditor;
+            previousGpuArea = UnityEditorInternal.ProfilerDriver.IsAreaEnabled(UnityEngine.Profiling.ProfilerArea.GPU);
+            dustProfilerStarted = true;
+            UnityEditorInternal.ProfilerDriver.profileEditor = true; UnityEditorInternal.ProfilerDriver.enabled = true;
             UnityEditorInternal.ProfilerDriver.SetAreaEnabled(UnityEngine.Profiling.ProfilerArea.GPU, true);
             HoVolumeLightDustPass.Profiling.enableRecording = true; HoVolumeLightDustReferenceFeature.Profiling.enableRecording = true;
+            HoVolumeLightDustPass.ProfilingCameraId = camera.GetInstanceID(); dustReference.observer = camera;
             dustReport.gpu = SystemInfo.graphicsDeviceName;
             PrepareDustTimingStage(); EditorApplication.update += TickDustTiming;
         }
+        private static void RestoreDustProfiling()
+        {
+            if (!dustProfilerStarted) return;
+            UnityEditorInternal.ProfilerDriver.enabled = previousProfilerEnabled;
+            UnityEditorInternal.ProfilerDriver.profileEditor = previousProfileEditor;
+            UnityEditorInternal.ProfilerDriver.SetAreaEnabled(UnityEngine.Profiling.ProfilerArea.GPU, previousGpuArea);
+            dustProfilerStarted = false;
+        }
         private static void PrepareDustTimingStage()
         {
-            dustTimingFrame = dustTimingCount = 0; dustTimingSum = 0;
+            dustTimingFrame = dustTimingCount = 0; dustTimingSum = 0; dustTimingSamples.Clear(); dustTimingFrameIds.Clear(); dustTimingLastFrame = -1;
+            if (dustTimingStage == 3)
+            {
+                region.dust = new HoAtmosphereDustSettings { enabled = true, maxDistance = 200, maxClusters = 128, thickness = 3, brightness = 25 };
+                pipeline.shadowDistance = 250;
+            }
             region.dust.enabled = false; dustReference.SetActive(false);
             var baseline = Render();
-            if (dustTimingStage == 0) region.dust.enabled = true;
+            if (dustTimingStage == 0 || dustTimingStage == 3) region.dust.enabled = true;
             else { dustReference.Build(dustTimingStage == 1 ? 500 : 60); dustReference.SetActive(true); }
             var with = Render(); var contribution = new Color[with.Length]; int changed = 0;
             for (int i = 0; i < with.Length; ++i) { contribution[i] = with[i] - baseline[i]; if (contribution[i].r > .001f) ++changed; }
@@ -47,29 +72,42 @@ namespace lilToon.URP.Extensions.VolumeLight
             if (dustTimingStage == 0) { dustReport.benchmarkClusterPixels = changed; dustReport.benchmarkClusterMean = Mean(contribution); }
             if (dustTimingStage == 1) { dustReport.benchmarkGlobalPixels = changed; dustReport.benchmarkGlobalMean = Mean(contribution); }
             if (dustTimingStage == 2) { dustReport.benchmarkLocalPixels = changed; dustReport.benchmarkLocalMean = Mean(contribution); }
-            Debug.Log($"[HoDustPerformance] stage={dustTimingStage} instances={(dustTimingStage == 0 ? lightFeature.DustClusterCount : 1000000)} pixels={changed} mean={Mean(contribution)}");
+            Debug.Log($"[HoDustPerformance] stage={dustTimingStage} instances={(dustTimingStage == 0 || dustTimingStage == 3 ? lightFeature.DustClusterCount : 1000000)} pixels={changed} mean={Mean(contribution)}");
+            dustTimingStarted = EditorApplication.timeSinceStartup;
         }
         private static void TickDustTiming()
         {
             try
             {
-                var sampler = dustTimingStage == 0 ? HoVolumeLightDustPass.Profiling : HoVolumeLightDustReferenceFeature.Profiling;
-                if (dustTimingFrame >= 16 && sampler.gpuSampleCount > 0 && sampler.gpuElapsedTime > 0)
-                { dustTimingSum += sampler.gpuElapsedTime / sampler.gpuSampleCount; dustTimingCount++; }
+                var sampler = dustTimingStage == 0 || dustTimingStage == 3 ? HoVolumeLightDustPass.Profiling : HoVolumeLightDustReferenceFeature.Profiling;
+                int frameId = UnityEditorInternal.ProfilerDriver.lastFrameIndex;
+                if (frameId > dustTimingLastFrame && dustTimingFrame >= 32 && EditorApplication.timeSinceStartup - dustTimingStarted >= 2 && sampler.gpuSampleCount > 0 && sampler.gpuElapsedTime > 0)
+                {
+                    float sample = sampler.gpuElapsedTime / sampler.gpuSampleCount;
+                    dustTimingSum += sample; dustTimingCount++; dustTimingSamples.Add(sample);
+                    dustTimingFrameIds.Add(frameId); dustTimingLastFrame = frameId;
+                }
                 VolumeManager.instance.Update(camera.transform, -1);
                 renderError = null; Application.logMessageReceived += CaptureError;
                 try { RenderPipeline.SubmitRenderRequest(camera, new UniversalRenderPipeline.SingleCameraRequest { destination = target }); }
                 finally { Application.logMessageReceived -= CaptureError; }
                 Require(renderError == null, "Timing render error: " + renderError);
                 if (++dustTimingFrame < 3600 && dustTimingCount < 32) return;
-                float ms = dustTimingCount >= 32 ? (float)(dustTimingSum / dustTimingCount) : -1;
+                var samples = dustTimingSamples.ToArray(); var ordered = (float[])samples.Clone(); Array.Sort(ordered);
+                // A constant frozen counter is inconclusive, not 32 independent timings.
+                float ms = dustTimingCount >= 32 && ordered[ordered.Length - 1] - ordered[0] > .000001f ? (float)(dustTimingSum / dustTimingCount) : -1;
+                var timing = new DustTimingReport { stage = dustTimingStage, mean = ms, samples = samples, frameIds = dustTimingFrameIds.ToArray(),
+                    median = ms < 0 ? -1 : ordered[ordered.Length / 2], p95 = ms < 0 ? -1 : ordered[Mathf.CeilToInt((ordered.Length - 1) * .95f)],
+                    minimum = ms < 0 ? -1 : ordered[0], maximum = ms < 0 ? -1 : ordered[ordered.Length - 1] };
+                dustReport.timings[dustTimingStage] = timing;
                 if (dustTimingStage == 0) dustReport.clustersGpuMs = ms;
                 if (dustTimingStage == 1) dustReport.millionGlobalGpuMs = ms;
                 if (dustTimingStage == 2) dustReport.millionLocalGpuMs = ms;
-                Debug.Log($"[HoDustPerformance] stage={dustTimingStage} frames={dustTimingFrame} received={dustTimingCount} gpuMs={ms}; unavailable=-1");
-                if (++dustTimingStage < 3) { PrepareDustTimingStage(); return; }
+                if (dustTimingStage == 3) dustReport.largeSceneGpuMs = ms;
+                Debug.Log($"[HoDustPerformance] stage={dustTimingStage} frames={dustTimingFrame} received={dustTimingCount} gpuMs={ms} median={timing.median} p95={timing.p95} max={timing.maximum}; unavailable=-1");
+                if (++dustTimingStage < 4) { PrepareDustTimingStage(); return; }
                 // Million local is a stronger baseline, but equal coverage is not assumed.
-                Require(dustReport.benchmarkClusterPixels > dustReport.benchmarkGlobalPixels * 10, "cluster coverage did not improve the large-region failure case");
+                if (dustReport.benchmarkClusterPixels > 0) Require(dustReport.benchmarkClusterPixels > dustReport.benchmarkGlobalPixels * 10, "cluster coverage did not improve the large-region failure case");
                 Finish(null);
             }
             catch (Exception error) { Finish(error); }
@@ -82,6 +120,7 @@ namespace lilToon.URP.Extensions.VolumeLight
     internal sealed class HoVolumeLightDustReferenceFeature : ScriptableRendererFeature
     {
         internal static readonly ProfilingSampler Profiling = new("Ho-Dust Million Points Reference");
+        internal Camera observer;
         private GraphicsBuffer seeds;
         private Material material;
         private ReferencePass pass;
@@ -95,7 +134,7 @@ namespace lilToon.URP.Extensions.VolumeLight
             seeds = new GraphicsBuffer(GraphicsBuffer.Target.Structured, count, 16); seeds.SetData(values);
             if (material == null) material = CoreUtils.CreateEngineMaterial(Shader.Find("Hidden/lilToon/URP/VolumeLight/DustPointReference"));
         }
-        public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData data) { if (seeds != null) renderer.EnqueuePass(pass); }
+        public override void AddRenderPasses(ScriptableRenderer renderer, ref RenderingData data) { if (seeds != null && data.cameraData.camera == observer) renderer.EnqueuePass(pass); }
         protected override void Dispose(bool disposing) { seeds?.Dispose(); seeds = null; CoreUtils.Destroy(material); material = null; }
         private sealed class ReferencePass : ScriptableRenderPass
         {

@@ -9,6 +9,8 @@ namespace lilToon.URP.Extensions.VolumeLight
     internal sealed class HoVolumeLightDustPass : ScriptableRenderPass
     {
         internal static readonly ProfilingSampler Profiling = new("Ho-VolumeLight Dust Clusters");
+        internal static int ProfilingCameraId;
+        private static readonly ProfilingSampler OtherCameraProfiling = new("Ho-VolumeLight Dust Other Camera");
         private Material material;
         private RTHandle pattern;
         private float intensity, anisotropy;
@@ -52,13 +54,14 @@ namespace lilToon.URP.Extensions.VolumeLight
             if (pattern == null || pattern.externalTexture != texture) { pattern?.Release(); pattern = RTHandles.Alloc(texture); }
             ParticleCount = view.count; CapacityLimited = view.limited;
             var shadows = frame.Get<UniversalShadowData>();
-            using (var builder = graph.AddRasterRenderPass<Data>("Ho-VolumeLight Dust Clusters", out var data, Profiling))
+            var sampler = ProfilingCameraId == 0 || frame.Get<UniversalCameraData>().camera.GetInstanceID() == ProfilingCameraId ? Profiling : OtherCameraProfiling;
+            using (var builder = graph.AddRasterRenderPass<Data>("Ho-VolumeLight Dust Clusters", out var data, sampler))
             {
                 data.material = material; data.medium = medium; data.count = view.count;
                 data.seeds = graph.ImportBuffer(view.buffer); data.depth = resources.cameraDepthTexture; data.shadow = resources.mainShadowsTexture;
                 data.pattern = graph.ImportTexture(pattern);
                 data.shape = new Vector4(view.cardSize, s.dust.textureWorldSize, s.dust.flutter, view.distance);
-                data.textureParams = new Vector4(s.dust.grainDensity, 0, 0, 0);
+                data.textureParams = new Vector4(s.dust.grainDensity, s.dust.thickness, HoAtmosphereDustField.MaximumLevel(s.dust), 0);
                 data.lighting = new Vector4(s.dust.brightness, s.sampleTime, anisotropy, intensity);
                 data.shadows = new Vector4(shadows.mainLightShadowCascadesCount > 1 ? 1 : 0, shadows.supportsMainLightShadows && data.shadow.IsValid() ? 1 : 0, 0, 0);
                 builder.UseBuffer(data.seeds, AccessFlags.Read); builder.UseTexture(data.depth, AccessFlags.Read); builder.UseTexture(medium.densityTexture, AccessFlags.Read); builder.UseTexture(data.pattern, AccessFlags.Read);

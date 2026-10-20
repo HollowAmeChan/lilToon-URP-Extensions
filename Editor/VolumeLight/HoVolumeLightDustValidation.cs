@@ -24,7 +24,17 @@ namespace lilToon.URP.Extensions.VolumeLight
             public float clustersGpuMs = -1, millionGlobalGpuMs = -1, millionLocalGpuMs = -1;
             public int benchmarkClusterPixels, benchmarkGlobalPixels, benchmarkLocalPixels;
             public float benchmarkClusterMean, benchmarkGlobalMean, benchmarkLocalMean;
+            public int deepNearClusters, deepMiddleClusters, deepFarClusters, distantPixels, deepSharedNearSeeds;
+            public float distantMean, thicknessRatio, largeSceneGpuMs = -1;
+            public DustTimingReport[] timings = new DustTimingReport[4];
             public float meanContribution, movementError, shadowReduction, extinctionRatio, centerExtinctionError, narrowPhaseRatio, cutoutContrast;
+        }
+        [Serializable] private sealed class DustTimingReport
+        {
+            public int stage;
+            public float mean, median, p95, minimum, maximum;
+            public float[] samples;
+            public int[] frameIds;
         }
         private static DustReport dustReport;
         private static Color[] DustContribution()
@@ -170,6 +180,7 @@ namespace lilToon.URP.Extensions.VolumeLight
             Require(Mean(sparse) < Mean(huge) * .8f, "grain density did not change the texture population"); region.dust.grainDensity = 1;
             var emptyTile = Keep(new Texture2D(1, 1, TextureFormat.RGBA32, false, true)); emptyTile.SetPixel(0, 0, Color.clear); emptyTile.Apply();
             region.dust.texture = emptyTile; Require(Mathf.Abs(Mean(DustContribution())) < .00001f, "custom empty alpha texture was ignored"); region.dust.texture = null;
+            ValidateDustDepth();
             target = smallTarget;
             // Scene close must release the producer's shared buffer as well as effect materials.
             Render(); owned = region.GetDustField().buffer;
@@ -180,6 +191,46 @@ namespace lilToon.URP.Extensions.VolumeLight
                 Require(message.severity != UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error, message.message);
             dustReport.passed = true;
             Debug.Log("[HoAtmosphereDustValidation] PASS " + JsonUtility.ToJson(dustReport));
+        }
+        private static void ValidateDustDepth()
+        {
+            region.transform.position = camera.transform.position; region.size = Vector3.one * 1000;
+            region.density = .02f; region.anisotropy = .3f; region.wind = Vector3.zero;
+            region.dust = new HoAtmosphereDustSettings { enabled = true, maxDistance = 60, maxClusters = 128, thickness = 3 };
+            camera.farClipPlane = 1000; HoAtmosphereMediumClock.TimeOverride = 0;
+            Render(); var field = region.GetDustField();
+            var nearSeeds = new Vector4[field.Count]; field.buffer.GetData(nearSeeds, 0, 0, nearSeeds.Length);
+            var originalNear = new System.Collections.Generic.HashSet<Vector4>();
+            foreach (var seed in nearSeeds) if (Mathf.FloorToInt(seed.w) == 0) originalNear.Add(seed);
+            region.dust.maxDistance = 200; var deep = DustContribution(); Save(deep, "dust-depth-200m");
+            field = region.GetDustField(); var deepSeeds = new Vector4[field.Count]; field.buffer.GetData(deepSeeds, 0, 0, deepSeeds.Length);
+            foreach (var seed in deepSeeds)
+            {
+                float distance = Vector3.Distance(camera.transform.position, seed);
+                if (distance < 24) dustReport.deepNearClusters++;
+                else if (distance < 80) dustReport.deepMiddleClusters++;
+                else dustReport.deepFarClusters++;
+                if (originalNear.Contains(seed)) dustReport.deepSharedNearSeeds++;
+            }
+            Require(dustReport.deepNearClusters > 0 && dustReport.deepMiddleClusters > 0 && dustReport.deepFarClusters > 0,
+                "display-distance budget left one depth range empty");
+            Require(dustReport.deepSharedNearSeeds > 4, "extending display distance replaced the nearby world grid");
+            region.dust.maxClusters = 8; Render();
+            var bounded = region.GetDustField().Prepare(HoAtmosphereRegionRegistry.Capture(), camera);
+            Require(bounded.distance == 200 && bounded.count <= 8, "tight budget silently shortened display distance");
+            region.dust.maxClusters = 128;
+            region.dust.thickness = .5f; var thinImage = DustContribution(); float thin = Mean(thinImage); Save(thinImage, "dust-depth-thin");
+            region.dust.thickness = 3; var thick = DustContribution(); Save(thick, "dust-depth-thick");
+            dustReport.thicknessRatio = Mean(thick) / Mathf.Max(.00001f, thin);
+            Require(dustReport.thicknessRatio > 1.5f, "space thickness did not increase actual layered coverage");
+            // Only air 80-160 metres in front of the observer is active. Bright pixels
+            // in this test must come from distant cards, never the dense nearby shell.
+            region.transform.position = camera.transform.position + camera.transform.forward * 120;
+            region.size = new Vector3(240, 160, 80); region.blendDistance = 1;
+            var distant = DustContribution(); Save(distant, "dust-distant-80-160m");
+            dustReport.distantMean = Mean(distant);
+            foreach (var p in distant) if (p.r > .001f) dustReport.distantPixels++;
+            Require(dustReport.distantPixels > 4000 && dustReport.distantMean > .0002f, "distant mip filtering erased the dust layer");
         }
     }
 }

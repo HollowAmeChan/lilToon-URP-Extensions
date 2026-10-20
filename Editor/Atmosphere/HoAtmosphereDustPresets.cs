@@ -8,11 +8,11 @@ namespace lilToon.URP.Extensions.Editor.Atmosphere
         private readonly struct Preset
         {
             internal readonly string label, description;
-            internal readonly float density, size, tiling, brightness, flutter, distance;
+            internal readonly float density, thickness, size, tiling, brightness, flutter, distance;
             internal readonly int budget;
-            internal Preset(string label, string description, float density, float size, float tiling, float brightness, float flutter, float distance, int budget)
+            internal Preset(string label, string description, float density, float thickness, float size, float tiling, float brightness, float flutter, float distance, int budget)
             {
-                this.label = label; this.description = description; this.density = density; this.size = size;
+                this.label = label; this.description = description; this.density = density; this.thickness = thickness; this.size = size;
                 this.tiling = tiling; this.brightness = brightness; this.flutter = flutter; this.distance = distance; this.budget = budget;
             }
             internal bool Matches(SerializedProperty dust)
@@ -21,7 +21,7 @@ namespace lilToon.URP.Extensions.Editor.Atmosphere
                 var maxClusters = dust.FindPropertyRelative("maxClusters");
                 return !texture.hasMultipleDifferentValues && texture.objectReferenceValue == null &&
                     !maxClusters.hasMultipleDifferentValues && maxClusters.intValue == budget &&
-                    Equal(dust, "grainDensity", density) && Equal(dust, "clusterSize", size) && Equal(dust, "textureWorldSize", tiling) &&
+                    Equal(dust, "grainDensity", density) && Equal(dust, "thickness", thickness) && Equal(dust, "clusterSize", size) && Equal(dust, "textureWorldSize", tiling) &&
                     Equal(dust, "brightness", brightness) && Equal(dust, "flutter", flutter) && Equal(dust, "maxDistance", distance);
             }
             private static bool Equal(SerializedProperty dust, string name, float expected)
@@ -32,11 +32,12 @@ namespace lilToon.URP.Extensions.Editor.Atmosphere
         }
         private static readonly Preset[] All =
         {
-            new("轻微浮尘", "稀疏、轻柔的小尘点，适合安静的室内。", .4f, 8, 8, 12, .08f, 20, 24),
-            new("细密尘埃（默认）", "细密而清晰的灰尘，作为日常调节的起点。", 1, 8, 8, 20, .12f, 30, 64),
-            new("浓密光束尘", "更细、更密、更亮，适合强调光束内的尘埃；绘制开销较高。", 1, 8, 5, 30, .15f, 30, 96),
-            new("大颗粒漂浮", "较大的尘点和较明显的漂浮，适合近景观察。", .7f, 8, 16, 18, .25f, 20, 32),
-            new("低开销", "16 张簇片、18 米显示距离，适合先控制开销再调效果。", .75f, 8, 8, 20, .1f, 18, 16)
+            new("轻微浮尘", "稀疏、轻柔的小尘点，适合安静的室内。", .4f, .65f, 8, 8, 12, .08f, 20, 24),
+            new("细密尘埃（默认）", "细密而清晰的灰尘，作为日常调节的起点。", 1, 2, 8, 8, 20, .12f, 30, 64),
+            new("浓密光束尘", "更细、更厚、更亮，适合强调光束内的尘埃；绘制开销较高。", 1, 4, 8, 5, 30, .15f, 30, 96),
+            new("大场景厚尘", "200 米显示距离，近中远分层覆盖，适合大厅与大范围场景。", 1, 3, 8, 8, 25, .15f, 200, 128),
+            new("大颗粒漂浮", "较大的尘点和较明显的漂浮，适合近景观察。", .7f, 1.5f, 8, 16, 18, .25f, 20, 32),
+            new("低开销", "16 张簇片、18 米显示距离，适合先控制开销再调效果。", .75f, 1, 8, 8, 20, .1f, 18, 16)
         };
         private static void Apply(Object[] targets, Preset preset)
         {
@@ -47,6 +48,7 @@ namespace lilToon.URP.Extensions.Editor.Atmosphere
             dust.FindPropertyRelative("enabled").boolValue = true;
             dust.FindPropertyRelative("texture").objectReferenceValue = null;
             dust.FindPropertyRelative("grainDensity").floatValue = preset.density;
+            dust.FindPropertyRelative("thickness").floatValue = preset.thickness;
             dust.FindPropertyRelative("clusterSize").floatValue = preset.size;
             dust.FindPropertyRelative("textureWorldSize").floatValue = preset.tiling;
             dust.FindPropertyRelative("brightness").floatValue = preset.brightness;

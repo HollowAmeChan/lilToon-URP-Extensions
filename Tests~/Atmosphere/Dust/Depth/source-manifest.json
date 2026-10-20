@@ -1,0 +1,17 @@
+{
+  "date": "2026-10-20",
+  "engine": "Unity 6000.3.15f1 / HoURP 17.3.0",
+  "entry": "HoVolumeLightValidation.RunDust + Run",
+  "method": "Live package, D3D11/D3D12. GPU profiler enabled for Editor, target camera marker, warmup >=2 sec and >=32 frames, 32 distinct Profiler frame IDs, raw timings retained. Unavailable/frozen records = -1.",
+  "hashes": {
+    "Runtime/Atmosphere/Regions/HoAtmosphereDustField.cs": "b753f8976806ce3eb22ba8316af921cef8e789cf873584434bb02fb51b0fc518",
+    "Runtime/VolumeLight/HoVolumeLightDustPass.cs": "73c7a8a52de99ba53707fa5e0be265fb9f2a0197d06a581b53dc1f5f7dc90651",
+    "Runtime/VolumeLight/Resources/HoVolumeLightDust.shader": "8f44c9de1f52ec0d82f9b1eefeaeb3712f0433f4e7d05afa252ca81eeaabfc5c",
+    "Editor/Atmosphere/HoAtmosphereDustPresets.cs": "1a98ec5ce40b040627bf45d8b88b95c8093c5c318f8014d8bb7012e99183ae33",
+    "Editor/Atmosphere/HoAtmosphereRegionEditor.cs": "39ffee7f1ae29424df2c2a51951cc66ccceed276a82165f4b2de4444a2a2c5e1",
+    "Editor/VolumeLight/HoVolumeLightDustPerformance.cs": "15ea7772d89420954e41753db8c8b7b87cb99f63494388e6ba8e8dd73295e806",
+    "Editor/VolumeLight/HoVolumeLightDustValidation.cs": "a17d0cffdd12e47216147ba59dedc18aa6ddc643413ebde36e268d8ba97b7963",
+    "Editor/VolumeLight/HoVolumeLightValidation.cs": "4d03ce1a317ef1f21ed50be09acfe8c252e75c05582fd730d27ce56ad22ea0e1",
+    "Tests~/Atmosphere/make-depth-preview.py": "bc1131481bb6e35a914b60ccf8dad89e4a7fee25032492bb1dfda78589908b64"
+  }
+}
