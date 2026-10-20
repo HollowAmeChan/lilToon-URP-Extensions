@@ -327,3 +327,5 @@
 **事后review/收益：** 接纳实际slow moment/资源别名取证与仅Editor诊断能力；不接纳生产单位调整、HDR全域安全或RGB质量通过。没有GPU资源/Shader/NRD参数变更；Runtime两处只是Editor单位探针，默认/Player仍64，不声称新Player回归。Moments verifier核对4个实际进程、源/log/report、原逐帧raw一致、分桶/局部单位、真正4/6和3个原5%失败。014half搁置、010质量/012HD与正常camera/完整预算继续。
 
 **下一动作/过滤提交：** 016先补同一窗口full图RGB及16种stride4相位/局部阶段误差，区分网格取样与全图偏差、保留原0相位失败，不挑相位/改门槛。这将决定后续沿DI颜色裁剪/信号域的有界候选，而非继续盲调units。只提交GI两个Runtime文件Editor诊断hook、Castle入口/新MomentAudit/meta、Tests~/RTGI/Moments、RTGI过程/禁试/计划/交接。其他模块/他人Ho-GD plan不碰，全部进程结束，goal active。
+
+步骤015过滤提交：`419e4ef`。提交后Moments verifier再次通过；矩精度问题有真实证据，但3个RGB门槛继续失败，生产默认/Player仍64。index空、进程结束；下一项016按上述完整域/相位取证，不重复单位调参，goal active。

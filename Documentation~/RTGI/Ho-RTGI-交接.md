@@ -204,7 +204,7 @@ HalfGrid/verify_validation.py已核对正式两条真实失败、前置夹具失
 
 014已按上述白名单过滤提交ee962e4，HalfGrid verifier提交后再次通过；产品Runtime/Editor无diff，index空，仅他人Ho-GD plan未跟踪。所有进程结束。下一轮直接做015原版GI低信号moment真实取证，不重启已搁置half，不把新线索先认定根因；010/012及完整应用条件继续，goal active。
 
-### 015终态（2026-10-20，待过滤提交；矩精度实证，RGB仍失败）
+### 015终态（2026-10-20，已提交419e4ef；矩精度实证，RGB仍失败）
 
 没有半GI复活。新增Editor/RTGI/HoRTGIMomentAudit.cs/meta，Castle仅加moment/实际绑定入口与数据。每阶段对stride4同receiver采1048576样本，分物理luma档、记录m2=0/mean²亏损/饱和、最差12个同像素input/raw/filtered/stage。Runtime仅HoRTGINrdContext增加UNITY_EDITOR ValidationSignalScale/冻结AppliedSignalScale及变单位清NRD历史，Feature resolve改读同AppliedSignalScale；Player getter返回原常量64，原Shader/NRD参数/DI/vendor/native/资源没变，不声称新Player回归。
 
@@ -221,3 +221,5 @@ Moments/verify_validation.py通过：4个实际进程/源码/log/report，三组
 **下一项016：** 暂不直接改NRD派生或生产信号域。先在同一长窗口保留原stride4 offset(0,0)统计，再补full图、16个stride4相位及局部raw→Temporal/Clamping/Atrous→filtered空间误差；已有ReadPixels拿完整数组，额外统计不需新GPU产品pass。可比较原64与已测.125单位以分开precision影响，但不能再试新单位数值或挑相位。若全图也偏暗，沿DI的Ho-RTDI-DiffuseConvexClamping.md/第82～84步看局部裁剪证据后做有界GI私有候选；不先假定其能解决。若发现相位偏差，也必须保留旧失败并有科学口径证明，不用更方便指标静默替代原5%。NRD大范围HDR/动态/history单位安全、010质量/012HD/正常enabled-camera/完整Player预算仍需后续交付。Goal active，不complete也不blocked。
 
 待过滤提交仅Runtime/RTGI/NRD/HoRTGINrdContext.cs与HoRTGIRendererFeature.cs诊断hook，Editor Castle/MomentAudit/meta，Tests~/RTGI/Moments，RTGI README/过程/禁试/交接/计划。没有产品scale默认更改、half、Shader/DI/vendor/native/用户场景变更。每步review/过滤/失败/交接约束继续。
+
+015已按白名单过滤提交419e4ef，Moments verifier提交后再过；index空，仅他人Ho-GD plan未跟踪，全部本任务进程结束。下一轮直接进入016完整图/16相位与局部阶段取证，原stride0与质量门槛不删，不再缩单位或改生产默认。Goal active，未complete。
