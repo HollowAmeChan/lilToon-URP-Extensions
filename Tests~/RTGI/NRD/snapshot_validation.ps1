@@ -1,7 +1,7 @@
-param([switch]$Initialize,[string]$MetadataPath,[string[]]$AdditionalSources=@())
+param([switch]$Initialize,[string]$MetadataPath,[string[]]$AdditionalSources=@(),[ValidatePattern('^[A-Za-z0-9_-]+$')][string]$SnapshotName='RTGIValidationPackage')
 $ErrorActionPreference='Stop'
 $workspaceRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
-$snapshotRoot=Join-Path $workspaceRoot '.codex-research/RTGIValidationPackage'
+$snapshotRoot=Join-Path $workspaceRoot ('.codex-research/'+$SnapshotName)
 $projectRoot=Join-Path $workspaceRoot '.codex-research/RTGIValidation'
 $active=Get-CimInstance Win32_Process -Filter "Name='Unity.exe'"|Where-Object{$_.CommandLine -and $_.CommandLine.Replace('\','/').Contains($projectRoot.Replace('\','/'))}
 if($active){throw 'GI validation project is active; do not modify its package snapshot'}

@@ -19,6 +19,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void BuildCompatibility()=>Build(true);
         public static void BuildCutout()=>Build(false,true);
         public static void BuildCutoutCompatibility()=>Build(true,true);
+        public static void BuildSkinned()=>Build(false,true,true);
+        public static void BuildSkinnedCompatibility()=>Build(true,true,true);
         public static void AuditScripts()
         {
             try
@@ -41,7 +43,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
             AuditScripts();
         }
-        static void Build(bool compatibility,bool cutout=false)
+        static void Build(bool compatibility,bool cutout=false,bool skinned=false)
         {
             try
             {
@@ -77,13 +79,17 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                     var panel=GameObject.CreatePrimitive(PrimitiveType.Quad);panel.name="Player GI Cutout panel";panel.layer=1;panel.transform.position=new Vector3(0,0,-.5f);panel.transform.localScale=Vector3.one*4000;
                     cutoutMaterial=new Material(Shader.Find("Hidden/lilToonCutout"));cutoutMaterial.SetOverrideTag("RenderType","TransparentCutout");cutoutMaterial.renderQueue=2450;cutoutMaterial.SetFloat("_Cull",0);cutoutMaterial.SetFloat("_Cutoff",.5f);cutoutMaterial.SetFloat("_AlphaMaskMode",0);cutoutMaterial.SetFloat("_Reflectance",0);cutoutMaterial.SetFloat("_Metallic",0);cutoutMaterial.SetFloat("_Smoothness",0);cutoutMaterial.SetFloat("_UseEmission",0);cutoutMaterial.SetFloat("_UseEmission2nd",0);cutoutMaterial.SetTexture("_MainTex",Texture2D.whiteTexture);cutoutMaterial.SetColor("_Color",new Color(0,0,0,0));AssetDatabase.CreateAsset(cutoutMaterial,assets+"Cutout.mat");cutoutRenderer=panel.GetComponent<Renderer>();cutoutRenderer.sharedMaterial=cutoutMaterial;
                 }
+                Transform blueBone=null;SkinnedMeshRenderer blueSkin=null;
+                if(skinned){MakeSkin(red,false,assets+"RedSkin.asset",out _);blueSkin=MakeSkin(blue,true,assets+"BlueSkin.asset",out blueBone);cutoutRenderer=MakeSkin(cutoutRenderer.gameObject,false,assets+"CutoutSkin.asset",out _);}
                 var holder=new GameObject("GI Player Volume").AddComponent<Volume>();holder.isGlobal=true;var profile=ScriptableObject.CreateInstance<VolumeProfile>();var component=profile.Add<HoRTGIVolume>();BoundScript(component);component.enable.Override(true);AssetDatabase.CreateAsset(profile,assets+"Volume.asset");AssetDatabase.AddObjectToAsset(component,profile);EditorUtility.SetDirty(profile);EditorUtility.SetDirty(component);holder.sharedProfile=profile;
                 var probe=new GameObject("GI Runtime Probe").AddComponent(probeType);var so=new SerializedObject(probe);
                 Set(so,"probeCamera",camera);Set(so,"feature",gi);Set(so,"redMaterial",red.GetComponent<Renderer>().sharedMaterial);Set(so,"blueWall",blue.transform);Set(so,"profile",profile);so.ApplyModifiedPropertiesWithoutUndo();
                 if(cutout){Set(so,"cutoutMaterial",cutoutMaterial);Set(so,"cutoutRenderer",cutoutRenderer);Set(so,"excludedSky",skyMaterial);so.ApplyModifiedPropertiesWithoutUndo();}
+                if(skinned){Set(so,"blueBone",blueBone);Set(so,"blueSkin",blueSkin);so.ApplyModifiedPropertiesWithoutUndo();}
                 AssetDatabase.SaveAssets();EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(),assets+"Probe.unity");
                 string output=compatibility?"PlayerGIDynamicCompatibility":"PlayerGIDynamic";
                 if(cutout)output=compatibility?"PlayerGICutoutCompatibility":"PlayerGICutout";
+                if(skinned)output=compatibility?"PlayerGISkinnedCompatibility":"PlayerGISkinned";
                 var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{assets+"Probe.unity"},target=BuildTarget.StandaloneWindows64,locationPathName=Path.Combine(root,output,"HoRTGIProbe.exe"),options=BuildOptions.None});
                 if(report.summary.result!=BuildResult.Succeeded)throw new Exception("GI Player build failed: "+report.summary.result);
                 Debug.Log("[HoGIPlayerBuild] PASS size="+report.summary.totalSize+" errors="+report.summary.totalErrors);EditorApplication.Exit(0);
@@ -95,6 +101,14 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         {
             var script=MonoScript.FromScriptableObject(obj);
             if(script==null||script.GetClass()!=obj.GetType())throw new Exception("Script import/class mapping unavailable for serialized Player asset: "+obj.GetType().FullName);
+        }
+        static SkinnedMeshRenderer MakeSkin(GameObject obj,bool morph,string assetPath,out Transform bone)
+        {
+            var renderer=obj.GetComponent<MeshRenderer>();var material=renderer.sharedMaterial;var mesh=UnityEngine.Object.Instantiate(obj.GetComponent<MeshFilter>().sharedMesh);UnityEngine.Object.DestroyImmediate(renderer);UnityEngine.Object.DestroyImmediate(obj.GetComponent<MeshFilter>());
+            bone=new GameObject(obj.name+" bone").transform;bone.SetParent(obj.transform,false);mesh.bindposes=new[]{Matrix4x4.identity};var weights=new BoneWeight[mesh.vertexCount];for(int i=0;i<weights.Length;i++)weights[i]=new BoneWeight{boneIndex0=0,weight0=1};mesh.boneWeights=weights;
+            if(morph){var delta=new Vector3[mesh.vertexCount];for(int i=0;i<delta.Length;i++)delta[i]=Vector3.back*2;mesh.AddBlendShapeFrame("GI Player emitter move",100,delta,new Vector3[delta.Length],new Vector3[delta.Length]);}
+            AssetDatabase.CreateAsset(mesh,assetPath);mesh.UploadMeshData(true);EditorUtility.SetDirty(mesh);
+            var skin=obj.AddComponent<SkinnedMeshRenderer>();skin.sharedMesh=mesh;skin.sharedMaterial=material;skin.bones=new[]{bone};skin.rootBone=bone;skin.updateWhenOffscreen=false;return skin;
         }
         static GameObject Quad(string name,Vector3 position,Vector3 scale,int layer,Color albedo,Color emission,string path)
         {

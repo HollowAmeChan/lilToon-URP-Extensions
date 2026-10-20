@@ -191,3 +191,20 @@
 
 
 步骤008过滤提交：`6ebe065`。提交后复核只包含本步GI/必要共享接口/测试/文档，其他模块未纳入；Cutout verifier仍通过，当前所有测试进程结束，目标继续active。
+
+
+## 009：GI骨骼快照真实材质命中与反弹（进行中）
+
+**事前review：** DI/共享registry已证明骨骼、BlendShape和非均匀/镜像距离；BakeMesh(true)有既有实测依据，不能凭API名字反改。GI还需证明当前姿态mesh的UV0/UV1、normal/tangent、emission实际vertex fetch正确，以及遮挡/反弹和姿态清历史。先补独立线性蒙皮/变形几何对照，不先改生产代码。
+
+**边界与门槛：** 单/双骨、混合权重、刚性骨骼旋转/平移、BlendShape、renderer非均匀/镜像变换；用独立矩阵、原始mesh参数与光线目标推导距离/法线/UV颜色。再以离屏skinned emitter/caster的实际GI、Cutout/NRD history和源mesh不变验证。稳定姿态不得反复Bake；动作变化保守reset不标称动态表面motion。两颜色空间/路径与必要Player，故障保留再定位，不能只凭进入AS勾完成。
+
+**正式证据：** 六个Editor入口全exit0/marker/fresh/SHA成功、shader/C#诊断0。Linear/Gamma材质命中各140checks，包含独立矩阵、混合骨权、Morph、负行列式镜像、UV0主色/UV1 emission及切线normal map；完整四组各187请求/25checks。离屏蒙皮emission约(1,0,.001)，Bone/Morph移动后首帧raw/filtered=0、恢复重亮；opaque/Cutout skin roof的真实次级天空遮挡、非readable源、缓存/无效姿态移除均过。
+
+两个Linear D3D12 Mono Player实际build/EXE全exit0，各315请求/310有效应用帧/30checks，序列化非readable skinned emitter/caster、Bone/BlendShape/invalid/restore首帧响应及已有Cutout/材质过滤/动态/合成继续通过。每真实Update一次请求，不标称自动camera。来源为独立base fa64cc6+128覆盖的Editor快照及实际工作区Player，各自hash/payload/帧号经Skinned/verify_validation.py核对。
+
+**事后review与收益：** 接纳已有生产能力的支持域确认，没有改Runtime/共享BakeMesh/Shader/SDK/NRD，不为测试改参数。与DI已有true-scale实测一致，GI实际属性读取没有新缺陷；稳定pose复用、源mesh未改。代价/限制仍为CPU Bake、姿态变更保守reset，未测真实GPU成本，也不等于完整角色/场景/动态接收通过。没有新的有效生产失败；已保留构建/GB/退出GC既有警告。下一步转实际场景与有效GPU记录，避免继续堆同类小夹具。
+
+**后续取证准备：** 本机RenderDoc技能已读，CLI在D:/Unity_Fork/renderdoc-mcp/bin，可通过仅子进程PATH调用；当前help/MCP没有duration接口，统计数量不当耗时。DI此前隐藏自动camera零事件、GPU时长零样本、无capture记录已读，不同条件不足前不盲重试。只读定位RTInputValidation的血月古堡依赖副本，此前观察到PID49064在使用该工程；后续须查当前状态，不操作别的任务进程/资产。
+
+**过滤提交：** 仅Editor/RTGI骨骼验证/Player fixture扩展、Tests~/RTGI/Skinned、复用Cutout/Dynamic/NRD runner及RTGI文档。其他Atmosphere/VolumeLight未提交改动保留，生产Runtime未变。

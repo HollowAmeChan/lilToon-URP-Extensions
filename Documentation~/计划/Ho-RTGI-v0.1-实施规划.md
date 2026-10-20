@@ -198,6 +198,7 @@
 - M2：步骤005 `95120a4`原版RELAX_DIFFUSE独立实例/信号/历史与raw对照已有收益；步骤006两个Linear D3D12 Mono Player各304次请求覆盖真实应用帧、非均匀反弹、相机/几何/emission响应、Volume和启停。红/蓝均值约-3%、空间L1约10.35%、方差降低约99.89%，细节见Tests~/RTGI/Dynamic。
 - 本轮Player为每个真实Update一次请求，**不等同正常enabled-camera自动呈现**；动态表面motion未实现，几何变化仍保守reset。M2复杂薄边/小高亮源、M3实际场景支持、M4 GPU预算与完整Player矩阵仍未完成。
 - M3进展：步骤007独立天空壳材质过滤已交付；步骤008基础Cutout的初始/照明/复用bias/最终真实alpha与NRD距离、半开孔洞能量已有10项Editor及两个Mono Player证据。仍缺实际骨骼命中/漫游、完整目标场景和有效GPU预算，M3/M4不整体勾完成。
+- M3后续：步骤009已有独立矩阵对应的骨骼材质hit、UV/normal map/BlendShape及非readable source反弹/遮挡，六项Editor/两个315请求Mono Player通过。生产Runtime未因测试修改；复杂角色动态接收、实际场景漫游和M4有效GPU预算仍待交付。
 
 每步review/过滤提交/失败保留/交接约束继续执行；目标保持active。阶段局部通过不能替代最终场景/GPU验收。
 

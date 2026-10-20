@@ -50,7 +50,7 @@ Emission 直接调用 lilToon 现有 `lilEmissionComponent` / `lilEmission2ndCom
 
 ## 首版支持域
 
-- 刚性opaque MeshRenderer和基础lilToon Cutout已有GI命中/可见性验证，支持屏幕外、变换更新和非均匀/镜像变换。共享HoRTScene已有skinned snapshot，但GI的骨骼材质命中/动态接收仍待专门验收；透明混合、任意shader顶点变形、static batching或additional vertex streams不在本阶段支持域。
+- 刚性MeshRenderer与SkinnedMeshRenderer的opaque/基础lilToon Cutout已有GI命中/可见性验证，支持屏幕外、变换更新和非均匀/镜像变换。骨骼snapshot的UV/法线/法线贴图、BlendShape、实际遮挡与emission反弹已有独立证据；动态接收稳定性、复杂角色仍待验。透明混合、任意shader顶点变形、static batching或additional vertex streams不在本阶段支持域。
 - 当前命中材质接收标准 `lilToon` opaque，第一主色链、两组 normal map、两组专用 emission，以及 smoothness/metallic 贴图。Main2nd/Main3rd、parallax 位移、Lite/Multi/Hair/自定义 shader 尚未接入，明确返回 unsupported。
 - 命中材质副本读取 sharedMaterial；Renderer MaterialPropertyBlock 属性覆盖及自定义 lilToon 扩展尚未接入。
 - 基础Cutout沿DI的有界域：`Hidden/lilToonCutout*`、TransparentCutout tag、非透明队列、静态UV0、Main alpha/Color alpha与AlphaMask0～4，支持静态ST/旋转/背面UV。动画主UV、dissolve、distance fade、dither、多主色/视差、MPB等不在该域；共享registry要求UV0和无MPB。Unsupported Cutout会有几何拒绝记录，不作为已支持alpha遮挡物。
@@ -81,6 +81,8 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 有基础Cutout时，初始/远天空命中、次级照明、时间/空间重采样的bias visibility和最终连接统一用真实any-hit。原版SDK采样/重采样共用函数不变，切换到native ray-generation入口；最终记录可见性/实际命中距离，再由原Final/NRD消费。8B/像素buffer在1080p约15.82MiB，另多一次dispatch及hit-group/alpha取样成本，GPU毫秒待测。无Cutout时回原compute/inline并保留单元素8B dummy。visibility-only射线跳过完整lilToon材质求值，普通材质输出ABI、secondary48B与RGBA validity不变。
 
 ## 验证
+
+2026-10-20步骤009：六个Editor进程实际exit0，材质hit两颜色空间各140checks、完整两路径/两颜色空间各187请求/25checks。独立蒙皮矩阵与实际UV0/UV1、几何/着色法线、切线法线图一致；非readable蒙皮emission/遮挡、Bone/BlendShape首帧响应、稳定缓存及无效姿态清理通过。两个Mono Player各315请求/310有效应用帧/30checks实际exit0。见[骨骼证据](../Tests~/RTGI/Skinned/README.md)；本步没有改生产Runtime，也不将CPU Bake/保守reset当动态表面motion或GPU预算通过。
 
 2026-10-20步骤008：10个Editor入口实际exit0、编译诊断0；两颜色空间/路径完整Cutout各284请求，1024条独立连接判断及距离一致，512条遮挡无raw漏光，半开积分raw .486914对理论.5通过5%。两个Linear D3D12 Mono Player各309请求/304有效应用帧/22checks，非空序列化材质过滤、Cutout首帧响应/资源切换和原有动态/合成通过。见[Cutout证据](../Tests~/RTGI/Cutout/README.md)；仍不据此称完整场景/骨骼/自动camera或GPU预算通过。
 

@@ -1,6 +1,6 @@
 # Ho-RTGI 当前交接
 
-更新：2026-10-20。目标active，未完成。步骤005独立RELAX已提交95120a4；步骤006真实应用帧/空间质量与两个Mono Player已过滤提交035b9f9；步骤007材质排除已过滤提交20449c3；步骤008基础Cutout完整链路已通过Editor/Player并过滤提交6ebe065。下一项实际场景输入支持与GPU预算；不再围绕均匀夹具无限调NRD参数。
+更新：2026-10-20。目标active，未完成。步骤005独立RELAX已提交95120a4；步骤006真实应用帧/空间质量与两个Mono Player已过滤提交035b9f9；步骤007材质排除已过滤提交20449c3；步骤008已提交6ebe065；步骤009骨骼GI实际属性/反弹及Player已通过并复审，待过滤提交。下一项实际场景输入支持与GPU预算；不再围绕均匀夹具无限调NRD参数。
 
 ## 接手顺序与硬性要求
 
@@ -88,3 +88,20 @@ Cutout/verify_validation.py通过：原Editor快照、当前Runtime、源码/报
 下一项009应做GI骨骼snapshot真实命中/UV/法线/变换/BlendShape与遮挡/反弹，再结合实际场景；有效GPU预算/正常自动camera和完整Player矩阵仍必须推进。Goal active，不能完成。先更新008提交号，再事前review，别继续堆均匀NRD调参。
 
 008已按白名单过滤提交6ebe065，所有进程已结束、verifier通过。009尚未动手；下一轮先看当前git/index和本页最新段落，继续骨骼/实际场景与有效GPU预算，不将已完成的Cutout当整体goal完成。
+
+
+### 009终态（2026-10-20，待过滤提交）
+
+没有生产Runtime变更。Editor/RTGI新增SkinnedHit和SkinnedLighting partial，既有Secondary字段升Renderer用于skin；Player builder/probe与runner加可选Skinned模式。独立矩阵测UV0/UV1、normal/geo/normal-map、骨骼混权、Morph、非均匀/负行列式镜像；真实离屏skin emission/caster、non-readable、无效姿态/恢复和稳定缓存全部过。
+
+Editor六项正式exec73874已收终态：两颜色空间hit各140checks；四组full各187请求/25checks，全真实exit0/编译诊断0/marker/fresh/SHA成功。独立RTGIValidationSkinnedPackage快照base fa64cc6+128覆盖，保留008旧包不覆盖。源码与报告在Tests~/RTGI/Skinned。
+
+两个Linear D3D12 Mono release Player exec79406已收终态：RG build48096/Player50096、compat build40024/Player32924，全exit0，各315请求/310有效应用帧/30checks。Bone/Morph/invalid移走首帧蓝光0、恢复重亮，skinned Cutout/材质排除/动态/合成都保持。每真实Update一请求，非自动enabled-camera。Skinned/verify_validation.py已核对全部源、不可变快照、报告、实际日志与完整payload；当前active.json和两run均无活进程。
+
+专用GI项目manifest现回实际工作树。其他任务Atmosphere/Dust代码仍可能修改，不纳入。009待提交白名单：Editor/RTGI本步Secondary/Environment/Player与两个新partial/meta、Tests~/RTGI/Skinned，Cutout/Dynamic runner和NRD snapshot runner的可选Skinned/独立SnapshotName扩展，RTGI文档/计划。无Runtime/RTDI/vendor变动。
+
+没有新生产故障，不反改BakeMesh(true)；F26仅记录夹具负行列式覆盖复核。稳定pose复用有效，动画每变姿态保守reset及CPU Bake成本尚需场景/性能评估，不称动态表面motion。既有构建/GB/退出GC警告保留。
+
+下一项010转实际血月古堡场景与有效GPU记录。只读发现DI隔离工程RTInputValidation/Assets/mmd场景测试/血月古堡依赖副本；此前PID49064活着，须每次再查，不操作别人工程/进程。GI工程还没导入该场景；需在自己的项目复制依赖/必要gltf importer或导出原生fixture，源资产不写回。Read-only场景支持审核不等于画质/预算交付。
+
+RenderDoc技能已读；本机CLI D:/Unity_Fork/renderdoc-mcp/bin/renderdoc-cli.exe可子进程PATH调用，help仅事件/资源/捕获等，无duration接口。MCP也无GPU counters。DI既有隐藏宿主自动相机0事件、GPU duration0样本与无capture的失败已读，不同条件无新证据别盲重试；更不能用CPU时间替GPU。需要准备能实际呈现/计时的具体夹具再验，goal继续active。

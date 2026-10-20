@@ -1,0 +1,46 @@
+{
+    "pass": true,
+    "compatibility": false,
+    "colorSpace": "Linear",
+    "error": "",
+    "frames": 187,
+    "emission": {
+        "r": 1.0,
+        "g": 0.0,
+        "b": 0.0007548332214355469,
+        "a": 1.0
+    },
+    "sky": {
+        "r": 0.36323535442352297,
+        "g": 0.18185198307037354,
+        "b": 0.08944965153932572,
+        "a": 1.0
+    },
+    "checks": [
+        "GI emission is produced by a real owned skin snapshot and NRD",
+        "Offscreen skinned emission reaches primary actual=RGBA(1.000, 0.000, 0.001, 1.000) expected=RGBA(1.000, 0.000, 0.000, 1.000)",
+        "Filtered skinned emission keeps energy actual=RGBA(0.999, 0.000, 0.001, 1.000) expected=RGBA(1.000, 0.000, 0.001, 1.000)",
+        "Stable skin reuses pose/BLAS/GI and NRD histories",
+        "Bone moves emitter behind primary, raw vanishes first frame actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Bone move clears old filtered emission first frame actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Bone pose change rebakes once and resets both histories",
+        "Restored bone pose restores indirect emission actual=RGBA(1.000, 0.000, 0.001, 1.000) expected=RGBA(1.000, 0.000, 0.000, 1.000)",
+        "Restored bone pose rejects stale dark history",
+        "BlendShape moves emitter behind primary actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "BlendShape updates reject old GI/NRD history",
+        "BlendShape restoration returns emission actual=RGBA(1.000, 0.000, 0.001, 1.000) expected=RGBA(1.000, 0.000, 0.000, 1.000)",
+        "GI uses a non-CPU-readable source without modifying it",
+        "Skinned white wall receives secondary sky",
+        "Skinned offscreen roof blocks secondary sky actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Bone opens secondary sky without changing primary raster actual=RGBA(0.359, 0.180, 0.088, 1.000) expected=RGBA(0.363, 0.182, 0.089, 1.000)",
+        "Solid skinned Cutout roof uses native alpha shadow actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Skinned Cutout selects native GI backend",
+        "Skinned Cutout holes preserve secondary sky actual=RGBA(0.360, 0.180, 0.089, 1.000) expected=RGBA(0.363, 0.182, 0.089, 1.000)",
+        "Moved solid skinned Cutout opens light through updated geometry actual=RGBA(0.362, 0.181, 0.089, 1.000) expected=RGBA(0.363, 0.182, 0.089, 1.000)",
+        "Stable deformed emitter/caster does not rebake per request",
+        "Disabling last skinned Cutout releases native mode and its snapshot",
+        "Invalid skin removes old bounce geometry actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Invalid pose does not retain stale GI snapshot",
+        "Restoring valid skin returns real sky bounce actual=RGBA(0.359, 0.180, 0.088, 1.000) expected=RGBA(0.363, 0.182, 0.089, 1.000)"
+    ]
+}

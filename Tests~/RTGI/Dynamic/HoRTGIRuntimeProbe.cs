@@ -20,6 +20,8 @@ public sealed class HoRTGIRuntimeProbe:MonoBehaviour
     public VolumeProfile profile;
     public Material cutoutMaterial,excludedSky;
     public Renderer cutoutRenderer;
+    public Transform blueBone;
+    public SkinnedMeshRenderer blueSkin;
     const BindingFlags Flags=BindingFlags.Instance|BindingFlags.NonPublic|BindingFlags.Public;
     const int Size=64,Count=32*32;
     readonly List<string> checks=new();
@@ -35,6 +37,7 @@ public sealed class HoRTGIRuntimeProbe:MonoBehaviour
     Color rasterBasis;
     bool finished;
     bool cutoutProbe;
+    bool skinnedProbe;
     Result report=new();
     static object Field(object value,string name)=>value?.GetType().GetField(name,Flags)?.GetValue(value);
     object Context=>feature.GetType().GetProperty("LastContext",Flags).GetValue(feature);
@@ -49,6 +52,7 @@ public sealed class HoRTGIRuntimeProbe:MonoBehaviour
         report.api=SystemInfo.graphicsDeviceType.ToString();report.colorSpace=QualitySettings.activeColorSpace.ToString();report.requestMode="one SubmitRenderRequest per distinct application Update";
         if(feature==null||probeCamera==null||profile==null){Finish(new Exception("Required serialized camera/Feature/profile reference is missing"));return;}
         cutoutProbe=cutoutMaterial!=null;report.cutoutProbe=cutoutProbe;
+        skinnedProbe=blueSkin!=null;report.skinnedProbe=skinnedProbe;
         #if URP_COMPATIBILITY_MODE
         report.compatibility=GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode;
         #endif
@@ -89,6 +93,15 @@ public sealed class HoRTGIRuntimeProbe:MonoBehaviour
                 if(sample==307)feature.Settings.excludedRayMaterials=new[]{excludedSky};
                 if(sample==308)cutoutRenderer.enabled=false;
             }
+            if(skinnedProbe)
+            {
+                if(sample==309)blueBone.localPosition=Vector3.back*2;
+                if(sample==310)blueBone.localPosition=Vector3.zero;
+                if(sample==311)blueSkin.SetBlendShapeWeight(0,100);
+                if(sample==312)blueSkin.SetBlendShapeWeight(0,0);
+                if(sample==313)blueSkin.bones=new Transform[]{null};
+                if(sample==314)blueSkin.bones=new[]{blueBone};
+            }
             int before=renderCallbacks;
             // Match DI's request-based Player helper: a disabled camera does not
             // run the normal automatic Volume framework update for this request.
@@ -105,6 +118,7 @@ public sealed class HoRTGIRuntimeProbe:MonoBehaviour
             {
                 Require(Nrd!=null&&Raw!=Published,"Serialized GI/NRD references produce distinct raw and filtered in Mono Player");
                 if(cutoutProbe)Require((bool)Field(context,"alphaVisibility")&&((GraphicsBuffer)Field(context,"finalVisibility")).count==Size*Size&&feature.Settings.excludedRayMaterials.Length==1&&feature.Settings.excludedRayMaterials[0]==excludedSky,"Serialized nonempty GI material filter and native Cutout path are active in Player");
+                if(skinnedProbe)Require(!blueSkin.sharedMesh.isReadable&&cutoutRenderer is SkinnedMeshRenderer,"Player GI emitter and Cutout use actual non-readable skinned sources");
                 var cameraColor=Mean(Read(target));report.compositeError=Mathf.Max(Mathf.Abs(cameraColor.r-rasterBasis.r-filtered.r),Mathf.Abs(cameraColor.g-rasterBasis.g-filtered.g),Mathf.Abs(cameraColor.b-rasterBasis.b-filtered.b));
                 Require(report.compositeError<.01f,"Actual Player camera adds filtered GI to its measured raster basis");
             }
@@ -153,7 +167,10 @@ public sealed class HoRTGIRuntimeProbe:MonoBehaviour
             if(cutoutProbe&&sample==305)Require(reset&&raw.b>.05f&&filtered.b>.05f,"Player alpha hole restores emitter without stale black history");
             if(cutoutProbe&&sample==306)Require(!(bool)Field(context,"alphaVisibility")&&((GraphicsBuffer)Field(context,"finalVisibility")).count==1&&raw.b>.05f,"Player material exclusion removes last Cutout and releases full native visibility while preserving excluded sky");
             if(cutoutProbe&&sample==307)Require((bool)Field(context,"alphaVisibility")&&reset&&raw.b<.0001f&&filtered.b<.0001f,"Player restores solid Cutout and independent denoiser reset");
-            if(cutoutProbe&&sample==308){Require(!(bool)Field(context,"alphaVisibility")&&raw.b>.05f&&renderCallbacks==309,"Player disabling Cutout restores opaque compute path in a new application frame");report.pass=true;Finish(null);return;}
+            if(cutoutProbe&&sample==308){Require(!(bool)Field(context,"alphaVisibility")&&raw.b>.05f&&renderCallbacks==309,"Player disabling Cutout restores opaque compute path in a new application frame");if(!skinnedProbe){report.pass=true;Finish(null);return;}}
+            if(skinnedProbe&&(sample==309||sample==311||sample==313))Require(reset&&raw.b<.0001f&&filtered.b<.0001f,"Player changed/invalid skin removes stale blue bounce immediately sample="+sample);
+            if(skinnedProbe&&(sample==310||sample==312||sample==314))Require(reset&&raw.b>.05f&&filtered.b>.05f,"Player restored bone/morph/valid pose restores blue bounce sample="+sample);
+            if(skinnedProbe&&sample==314){Require(renderCallbacks==315,"Player skin sequence uses distinct application frames");report.pass=true;Finish(null);return;}
             sample++;
         }
         catch(Exception error){Finish(error);}
@@ -166,5 +183,5 @@ public sealed class HoRTGIRuntimeProbe:MonoBehaviour
         RenderPipelineManager.endCameraRendering-=OnCamera;feature?.Dispose();target?.Release();if(error!=null)Debug.LogException(error);Debug.Log("[HoGIRuntime] END pass="+report.pass);Application.Quit(report.pass?0:1);
     }
     [Serializable]sealed class Frame{public int sample,applicationFrame,giFrame;public double time;public bool reset;public Color raw,filtered;}
-    [Serializable]sealed class Result{public bool pass,compatibility,cutoutProbe;public string api,colorSpace,requestMode,error;public double spatialRelativeL1,rawVariance,filteredVariance;public float leftRed,rightRed,compositeError,removedRedRaw,removedRedFiltered;public Color rasterBasis;public int reprojectedCameraFrames,movingGeometryResetFrames,renderCallbacks;public string[] checks;public Frame[] frames;}
+    [Serializable]sealed class Result{public bool pass,compatibility,cutoutProbe,skinnedProbe;public string api,colorSpace,requestMode,error;public double spatialRelativeL1,rawVariance,filteredVariance;public float leftRed,rightRed,compositeError,removedRedRaw,removedRedFiltered;public Color rasterBasis;public int reprojectedCameraFrames,movingGeometryResetFrames,renderCallbacks;public string[] checks;public Frame[] frames;}
 }

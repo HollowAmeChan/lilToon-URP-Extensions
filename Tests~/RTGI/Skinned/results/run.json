@@ -1,0 +1,87 @@
+{
+  "step": 9,
+  "startedUtc": "2026-10-20T07:00:20.4430898Z",
+  "project": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTGIValidation",
+  "snapshotSha256": "294200EA27782752E4613AA7CE66CF4A6DB8906B98A8C355F917B5ACA5E187B1",
+  "activeProcess": null,
+  "entries": [
+    {
+      "label": "Linear-hit",
+      "entry": "RTGI.HoRTGISecondaryValidation.RunSkinned",
+      "colorSpace": "Linear",
+      "exitCode": 0,
+      "marker": true,
+      "shaderCsDiagnostics": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step009-Linear-hit-20261020T070020449.log",
+      "logSha256": "31D238A4975C148DA1EFEC79A36FA37A76085CF0BAC45DB2EFB380E7B9D6B7C7",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "6F1F423289FF3CF55A5AA1907BB819BE2922F273C3C4A1DF9EED9212876BB413"
+    },
+    {
+      "label": "Linear-full-rg",
+      "entry": "RTGI.HoRTGIEnvironmentValidation.RunSkinned",
+      "colorSpace": "Linear",
+      "exitCode": 0,
+      "marker": true,
+      "shaderCsDiagnostics": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step009-Linear-full-rg-20261020T070040573.log",
+      "logSha256": "E9DE2E9B38B8943F1725927736D7540F9538FB3E1098ACA6528A072C268F21B4",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "28B97A0CD941CA5D3BB796F70B67394C9BA869481DCD68701A511DE669123EE2"
+    },
+    {
+      "label": "Linear-full-compat",
+      "entry": "RTGI.HoRTGIEnvironmentValidation.RunSkinnedCompatibility",
+      "colorSpace": "Linear",
+      "exitCode": 0,
+      "marker": true,
+      "shaderCsDiagnostics": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step009-Linear-full-compat-20261020T070049478.log",
+      "logSha256": "3BBFD464D9D0542BBA5D71AF562C93CA690C17D64F0A20BD53C32BDF0E12A15E",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "01F2DF4C681C2749304E01DE958079BA45F3F9EACDBE3E222F073F3E2FE10180"
+    },
+    {
+      "label": "Gamma-hit",
+      "entry": "RTGI.HoRTGISecondaryValidation.RunSkinned",
+      "colorSpace": "Gamma",
+      "exitCode": 0,
+      "marker": true,
+      "shaderCsDiagnostics": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step009-Gamma-hit-20261020T070058030.log",
+      "logSha256": "C71B07E82C44773DDB0170F5B37BA6B2A20F0C76B64C82CF1255A4142ED848CE",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "D69B97E733B201A49BE992A624F9362764F020E75CE645B76FCB52A3A622E474"
+    },
+    {
+      "label": "Gamma-full-rg",
+      "entry": "RTGI.HoRTGIEnvironmentValidation.RunSkinned",
+      "colorSpace": "Gamma",
+      "exitCode": 0,
+      "marker": true,
+      "shaderCsDiagnostics": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step009-Gamma-full-rg-20261020T070110208.log",
+      "logSha256": "470AE2A4F49DFCCB4A0193EFA37639819042D75461679F487A2B43445CB0D09C",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "A032DC9671B02AE9E509B7B6C01C5AD60A38F8424D90DB277326BF39CE9C86AD"
+    },
+    {
+      "label": "Gamma-full-compat",
+      "entry": "RTGI.HoRTGIEnvironmentValidation.RunSkinnedCompatibility",
+      "colorSpace": "Gamma",
+      "exitCode": 0,
+      "marker": true,
+      "shaderCsDiagnostics": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step009-Gamma-full-compat-20261020T070136528.log",
+      "logSha256": "3469B5970604C6B1845543B7A6D0471CF0F9286366F9251129F737B0649B1482",
+      "reportFresh": true,
+      "reportPass": true,
+      "reportSha256": "86064FAA67B0C8411E82083EEDFFC4E7124800B3671B5B9F27A7400514933872"
+    }
+  ]
+}

@@ -29,7 +29,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         private static HoRTGISecondaryMaterials materials;
         private static GraphicsBuffer rays, hits;
         private static RayTracingShader shader;
-        private static MeshRenderer renderer;
+        private static Renderer renderer;
         private static Material source;
         private static bool previousAsync;
 
@@ -91,6 +91,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             try
             {
                 if(cutoutAudit){ValidateCutout();Finish(null);return;}
+                if(skinnedAudit){ValidateSkinnedHit();Finish(null);return;}
                 var hit = Trace(); Debug.Log($"[HoRTGISecondaryValidation] first status={hit.status} base={hit.baseColor} emission={hit.emission} normal={hit.normal}");
                 Require(hit.status == 1, "Opaque lilToon hit was not evaluated"); Near(hit.distance, 1, "hit distance");
                 var baseColor=source.GetColor("_Color");
@@ -131,12 +132,13 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             catch(Exception error) { Finish(error); }
         }
         private static T Keep<T>(T value) where T:Object { objects.Add(value); return value; }
-        private static void Require(bool value,string message) { if(!value)throw new Exception(message);if(cutoutAudit){cutoutChecks.Add(message);Debug.Log("[HoGICutoutHit] CHECK "+message);} }
+        private static void Require(bool value,string message) { if(!value)throw new Exception(message);if(cutoutAudit){cutoutChecks.Add(message);Debug.Log("[HoGICutoutHit] CHECK "+message);}if(skinnedAudit){skinnedChecks.Add(message);Debug.Log("[HoGISkinnedHit] CHECK "+message);} }
         private static void Near(float actual,float expected,string name) => Require(Mathf.Abs(actual-expected)<.005f,$"{name}: {actual} != {expected}");
         private static void Near3(Vector3 actual,Vector3 expected,string name) { Near(actual.x,expected.x,name+" X");Near(actual.y,expected.y,name+" Y");Near(actual.z,expected.z,name+" Z"); }
         private static void Finish(Exception error)
         {
             if(cutoutAudit)SaveCutoutReport(error);
+            if(skinnedAudit)SaveSkinnedHitReport(error);
             scene?.Dispose(); materials?.Dispose(); rays?.Dispose(); hits?.Dispose(); ShaderUtil.allowAsyncCompilation=previousAsync;
             for(int i=objects.Count-1;i>=0;i--)if(objects[i]!=null)Object.DestroyImmediate(objects[i]); objects.Clear();
             if(error!=null)Debug.LogException(error); EditorApplication.Exit(error==null?0:1);
