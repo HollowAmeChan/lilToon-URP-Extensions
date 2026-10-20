@@ -146,7 +146,7 @@ GpuTiming/verify_validation.py已过：7真实GPU进程、known-load/fence、当
 
 011已过滤提交63db17e，GPU verifier再过，全部进程结束。012尚未动手；只读预算/资源后再设计半GI输入映射与边缘重建，不把低camera分辨率对照冒称半GI交付。需继续正常自动camera/完整Player与010实际质量缺口，goal active。
 
-### 012终态（2026-10-20，待过滤提交；HD失败保留）
+### 012终态（2026-10-20，已提交ca3797f；HD失败保留）
 
 get_goal确认原目标仍active，未新建/替换。新增Editor/RTGI/HoRTGIResourceAudit.cs/meta，Castle验证器仅扩矩形尺寸/资源入口；没有任何Runtime/Shader/NRD改动。反射读取实际buffer/RTHandle/RELAX pools/constants/scene mapping，按对象去重、实际格式/尺寸/mip/stride算payload；另读Unity AS GetSize、pose Mesh运行时统计，不混称物理VRAM。
 
@@ -161,3 +161,5 @@ Resources/verify_validation.py过：当前所有实跑C#及Runtime源码SHA、�
 已完成本步事前/事后review及新半GI设计文档：参考CameraFrameStateRtxdiExtensions的render/rect/output/previous尺寸和NativeGBufferConstants/OutputBlit，不声称参考scale/DLSS已经提供Ho的全GB/SB半GI重建。DI ResolutionQuality只是整相机尺寸验证。GI当前直接借DI RAB pixel/full primary，Final depth UV/previous reconstruct/Temporal/NRD都同尺寸；2×2选2g+1时实际中心相对GI比例中心偏移.5full pixel，必须统一处理，奇数尺寸需专门证明/回退。下一项013先做独立坐标映射/历史/NRD投影小验证，再接GI私有bridge与全域深度/法线/validity重建；默认full，不只缩dispatch，不改DI公共pixel语义或用低图albedo串色。新条件/低驻留有界夹具后才恢复HD GPU资格和大场景。
 
 待过滤提交白名单：Editor/RTGI/HoRTGIResourceAudit.cs/meta、HoRTGICastleValidation.cs；Tests~/RTGI/Resources整个目录；Documentation~/RTGI的README/过程/踩坑/交接/半分辨率设计，Documentation~/Ho-RTGI.md和计划。无Runtime/Player改动，不重复相同Player build；别人的Documentation~/计划/Ho-GD-Outline-SourceDepth-Plan.md不纳入。010原版古堡filtered能量−6～−7%、sigma4/6两轮搁置未解除；正常enabled-camera、完整Player/应用预算仍未完。Goal active，不可标complete。
+
+012已按上述白名单过滤提交ca3797f，提交后Resources verifier再次通过；index空，仅别人的Ho-GD plan未跟踪。原始JSON/实跑C#和runner归档用局部.gitattributes保留逐字节SHA，当前C#与归档仅容许换行等价；最终runner后加保护未冒称执行。全部本任务进程结束。下一轮直接做013映射的独立实际验证，不重复HD，不把新资源账单或设计当成半GI画质/性能交付。

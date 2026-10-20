@@ -269,3 +269,5 @@
 **收益与下一阶段：** 清单把主开销定位为3份reservoir和NRD；可以据此设计半GI，但没有生产优化收益。新设计文档记录参考render/rect/output及前帧scale合同、DI尺寸验收边界，以及2×2代表full pixel与GI中心相差.5 full pixel的关键错误风险。下一步先独立验证映射/历史/NRD投影，再接重建，默认full不改。010能量失败、正常自动camera和完整Player预算继续。仅Editor取证改动，无理由重复相同Player构建。
 
 **过滤提交：** Editor/RTGI/HoRTGIResourceAudit.cs/meta与Castle矩形尺寸/新入口；Tests~/RTGI/Resources（含原运行脚本归档和失败证据）；RTGI说明/计划/过程/禁试/交接/设计。无Runtime、native binary、vendor、源场景或其他任务文件。所有本任务进程结束。
+
+步骤012过滤提交：`ca3797f`。提交后Resources verifier再次通过、Runtime无变更、index空，仅保留其他任务未跟踪文件。HD/稳定预算/filtered质量仍false，半GI未实现；下一项013先实际验证输入/历史/NRD映射，goal继续active。
