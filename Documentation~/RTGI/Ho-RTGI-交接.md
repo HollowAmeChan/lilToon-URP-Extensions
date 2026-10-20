@@ -164,7 +164,7 @@ Resources/verify_validation.py过：当前所有实跑C#及Runtime源码SHA、�
 
 012已按上述白名单过滤提交ca3797f，提交后Resources verifier再次通过；index空，仅别人的Ho-GD plan未跟踪。原始JSON/实跑C#和runner归档用局部.gitattributes保留逐字节SHA，当前C#与归档仅容许换行等价；最终runner后加保护未冒称执行。全部本任务进程结束。下一轮直接做013映射的独立实际验证，不重复HD，不把新资源账单或设计当成半GI画质/性能交付。
 
-### 013终态（2026-10-20，待过滤提交；网格合同通过，生产半GI未接）
+### 013终态（2026-10-20，已提交4950433；网格合同通过，生产半GI未接）
 
 新增Runtime/RTGI/HoRTGIGrid.cs/meta和Shaders/HoRTGIGrid.hlsl/meta，只有可复用内部helper，未改任何既有Runtime/Shader/NRD算法，当前生产路径仍full。参数float4=(fullW,fullH,scale,offsetFullPixels)；偶数且两维>=2时requestedHalf取scale2，否则明确scale1。代表fullPixel=s×g+floor(s/2)、primaryUV=gridUV+offset/fullSize、gridUV=primaryUV−offset/fullSize，其中offset=(s−1)/2。ProjectionForGrid在Unity逻辑projection上row0/row1减row3×2offset/fullSize，再由原GL.GetGPUProjectionMatrix做RT转换；必须和NRD输入点一致。CanReuseHistory只允许inputW/H和scale完全相同。
 
@@ -181,3 +181,5 @@ Tests~/RTGI/Grid/verify_validation.py已通过上述完整核对；gridContractQ
 F31仍禁原HD条件盲重试；需要有界低驻留/同步夹具或具体新host条件且先恢复GPU资格。010原版RELAX古堡RGB均值−6～−7%与sigma4/6两轮搁置仍未解除，正常自动camera/完整Player/稳定预算继续。当前无新生产回归需要重复旧Player；真正接GI阶段后必须重新跑必要GI/NRD/Cutout/动态/Player门槛。
 
 待过滤提交白名单：上述4个Runtime helper/meta、4个Editor审计/meta、Tests~/RTGI/Grid整个目录（包含失败和源归档），Documentation~/RTGI的README/过程/踩坑/交接/半分辨率设计和计划。无其他Runtime/DI/vendor/native/场景变更；别人的Ho-GD plan未跟踪不纳入。完整goal active，不能complete。
+
+013已按白名单过滤提交4950433，Grid verifier提交后再次通过；012资源verifier亦通过。所有本任务进程结束、index空，仅别人的Ho-GD plan未跟踪。下一轮直接推进014生产GI映射与全域重建，不重复纯网格/静态小夹具。原质量/HD/自动camera/Player预算缺口继续保留，goal active。

@@ -287,3 +287,5 @@
 **事后review与收益：** 接纳坐标合同和可复用helper，使下一步半GI不靠猜中心偏移；没有生产质量/性能收益，不能当半GI完成。受控请求不是正常自动camera/实际应用帧motion；只验证NRD投影合同，没有运行NRD过滤器。无AS/native计时桥/重建/生产采样参数变更，不原样重跑012HD。Grid verifier已核对两正式run、两失败、源/log/report/hash/门槛/负对照，生产half=false、NRD质量=false、HD=false。
 
 **下一动作与过滤提交：** 同helper接GI私有RAB（保留DI原语义）、初始native、Final history、Temporal和NRD投影，然后全域depth/normal/validity重建与原能量/细节/动态门槛。默认full；奇数full回退和尺度变更reset必须实际走生产验证。仅提交Runtime这两个新helper/meta、Editor Grid审计/meta、Tests~/RTGI/Grid及RTGI过程/禁试/设计/计划/交接。010实际能量失败、012HD/稳定预算和完整Player/正常camera仍待交付。
+
+步骤013过滤提交：`4950433`。提交后Grid verifier再次通过，012资源verifier仍过。所有进程结束、index空；下一项014转生产GI适配与完整输出重建，半GI功能/画质尚未交付，goal继续active。
