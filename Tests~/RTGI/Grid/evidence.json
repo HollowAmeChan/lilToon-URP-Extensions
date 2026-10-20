@@ -1,0 +1,62 @@
+{
+  "gridContractQualified": true,
+  "productionHalfGiImplemented": false,
+  "nrdFilteringQualityQualified": false,
+  "actual1080Qualified": false,
+  "runs": [
+    {
+      "label": "rg",
+      "cases": 12,
+      "pixels": 18190,
+      "historyPixels": 5961,
+      "maxErrors": {
+        "positionError": 0.0019159747753292322,
+        "normalError": 0.006913125514984131,
+        "depthError": 0.0016856193542480469,
+        "primaryUvError": 8.429369557916289e-08,
+        "gridUvError": 3.2098083124765253e-07,
+        "nrdPositionError": 0.0019159747753292322,
+        "previousPositionError": 7.152557373046875e-07,
+        "previousNrdPositionError": 7.539457556049456e-07,
+        "temporalUvError": 1.4820836440776475e-05
+      },
+      "negativeControlMissingProjectionMinError": 0.052378419786691666,
+      "negativeControlMissingMappingMinError": 3.7455105781555176,
+      "reportSha256": "4BC87B72945CEE6654268D4E258AFC01265DACC5E7D140390C497C858CA1530E"
+    },
+    {
+      "label": "compat",
+      "cases": 12,
+      "pixels": 18190,
+      "historyPixels": 5961,
+      "maxErrors": {
+        "positionError": 0.0019159747753292322,
+        "normalError": 0.006913125514984131,
+        "depthError": 0.0016856193542480469,
+        "primaryUvError": 8.429369557916289e-08,
+        "gridUvError": 3.2098083124765253e-07,
+        "nrdPositionError": 0.0019159747753292322,
+        "previousPositionError": 7.152557373046875e-07,
+        "previousNrdPositionError": 7.539457556049456e-07,
+        "temporalUvError": 1.4820836440776475e-05
+      },
+      "negativeControlMissingProjectionMinError": 0.052378419786691666,
+      "negativeControlMissingMappingMinError": 3.7455105781555176,
+      "reportSha256": "5361842281C4EE1BBE2E9500975B39C46EE0B829E366276814F528B8C065D883"
+    }
+  ],
+  "rejectedAttempts": [
+    {
+      "name": "rejected-initial",
+      "exitCode": 1,
+      "reportSha256": "66B474CE9C2B3E2E226332FEE57CBD146A0C6CE38207306C61E52CF23100F80D",
+      "reason": "CPU centre just outside foreground silhouette; GPU raster covers foreground. Final fixture permits both independent ray/plane candidates only in a measured 1/256-pixel edge band."
+    },
+    {
+      "name": "rejected-edge-diagnostic",
+      "exitCode": 1,
+      "reportSha256": "7AEED5126F23B5BC9730531A5E2A32F6595C022B46F114F50A4AD4768DDF1FFD",
+      "reason": "CPU centre just outside foreground silhouette; GPU raster covers foreground. Final fixture permits both independent ray/plane candidates only in a measured 1/256-pixel edge band."
+    }
+  ]
+}

@@ -163,3 +163,21 @@ Resources/verify_validation.py过：当前所有实跑C#及Runtime源码SHA、�
 待过滤提交白名单：Editor/RTGI/HoRTGIResourceAudit.cs/meta、HoRTGICastleValidation.cs；Tests~/RTGI/Resources整个目录；Documentation~/RTGI的README/过程/踩坑/交接/半分辨率设计，Documentation~/Ho-RTGI.md和计划。无Runtime/Player改动，不重复相同Player build；别人的Documentation~/计划/Ho-GD-Outline-SourceDepth-Plan.md不纳入。010原版古堡filtered能量−6～−7%、sigma4/6两轮搁置未解除；正常enabled-camera、完整Player/应用预算仍未完。Goal active，不可标complete。
 
 012已按上述白名单过滤提交ca3797f，提交后Resources verifier再次通过；index空，仅别人的Ho-GD plan未跟踪。原始JSON/实跑C#和runner归档用局部.gitattributes保留逐字节SHA，当前C#与归档仅容许换行等价；最终runner后加保护未冒称执行。全部本任务进程结束。下一轮直接做013映射的独立实际验证，不重复HD，不把新资源账单或设计当成半GI画质/性能交付。
+
+### 013终态（2026-10-20，待过滤提交；网格合同通过，生产半GI未接）
+
+新增Runtime/RTGI/HoRTGIGrid.cs/meta和Shaders/HoRTGIGrid.hlsl/meta，只有可复用内部helper，未改任何既有Runtime/Shader/NRD算法，当前生产路径仍full。参数float4=(fullW,fullH,scale,offsetFullPixels)；偶数且两维>=2时requestedHalf取scale2，否则明确scale1。代表fullPixel=s×g+floor(s/2)、primaryUV=gridUV+offset/fullSize、gridUV=primaryUV−offset/fullSize，其中offset=(s−1)/2。ProjectionForGrid在Unity逻辑projection上row0/row1减row3×2offset/fullSize，再由原GL.GetGPUProjectionMatrix做RT转换；必须和NRD输入点一致。CanReuseHistory只允许inputW/H和scale完全相同。
+
+Editor/RTGI/HoRTGIGridValidation.cs/meta与Shaders/HoRTGIGridAudit.compute/meta为真实GB/SB+Compute夹具，无GI/AS/native GPU probe/NRD过滤。CPU ViewportPointToRay对两个变换quad独立求交；GPU读取primary/device depth，并测当前规则grid投影/反投影、上次真实depth的physical/NRD重建、当前world投上次grid。12个受控RenderRequest包含full/half、移动透视/正交、offcenter、resize/scale、odd和single-row/column。不是正常enabled-camera或真实Update motion验收。
+
+正式exec24368终态已收：RG PID37868、compat50528均actual exit0/编译诊断0/fresh/marker/SHA通过，每条18190receiver、5961history、1443foreground。world最大.001916来自8×1 full极端宽视野，half均<1e−4；normal .006913、depth .001686、primaryUV8.43e−8、gridUV3.21e−7、previous world7.15e−7、previous NRD7.54e−7、temporalUV1.48e−5。原门槛未放宽。漏NRD补偿负对照half各case最大.052～.108world error，漏primary映射3.75～4.09，证明原.002门槛检错有效；full两个负对照等价原路径。
+
+首轮exec52335/PID52740、诊断exec86584/PID40264均actual exit1，唯一失败是最后full-moving像素18,31 GPU选foreground/CPU选back。double独立交点foreground local x−.5000122，距投影边缘约.000192px；最终只在1/256px投影轮廓带允许两个独立ray/plane候选，仍全像素位置/法线/深度原门槛，每条仅2点在带、18188点唯一候选。不是生产映射bug，也没放宽误差/跳过点。Tests~/RTGI/Grid/rejected-initial与rejected-edge-diagnostic保留失败report/run/logSHA及全部执行源码逐字节归档，edge-analysis.json/F32说明。最终source-at-run也保留所有9份执行源码与逐字节SHA；当前源码仅允许checkout换行等价，局部.gitattributes保护证据。
+
+Tests~/RTGI/Grid/verify_validation.py已通过上述完整核对；gridContractQualified=true、productionHalfGiImplemented=false、nrdFilteringQualityQualified=false、actual1080Qualified=false。所有本任务进程结束，run.activeProcess=null；旧012 verifier仍可核对（既有源没变），010质量失败/012HD失败不改。
+
+下一项014需要实际生产适配和重建，不能继续停留纯数学夹具：GI自己的RAB必须以GI bounds/history stride读低网格、current以helper映射full primary、previous以实际fullUV+physical inverse VP重建；GenerateSecondary也直接加载映射fullPixel。Final保存depth必须同代表fullUV，Temporal投影physical previousUV后转gridUV。NRD.Record接受ProjectionForGrid后的逻辑projection并保留其previous；camera/scene history用physical VP和同grid，尺度/尺寸变reset。保留DI公共RAB原语义，不用DI的full-pixel函数直接吃GI index。SDK空间半径明确转换GI单位以保持原屏幕像素足迹。再做全分辨率depth/normal/validity筛选与demodulated→目标full albedo重建，thin缺样定义/成本必须验；PublishedDiffuse/raw/debug/composite完整receiver输出合同不能变。生产默认full；尚不能只加half开关/缩dispatch。具体约束见半分辨率设计。
+
+F31仍禁原HD条件盲重试；需要有界低驻留/同步夹具或具体新host条件且先恢复GPU资格。010原版RELAX古堡RGB均值−6～−7%与sigma4/6两轮搁置仍未解除，正常自动camera/完整Player/稳定预算继续。当前无新生产回归需要重复旧Player；真正接GI阶段后必须重新跑必要GI/NRD/Cutout/动态/Player门槛。
+
+待过滤提交白名单：上述4个Runtime helper/meta、4个Editor审计/meta、Tests~/RTGI/Grid整个目录（包含失败和源归档），Documentation~/RTGI的README/过程/踩坑/交接/半分辨率设计和计划。无其他Runtime/DI/vendor/native/场景变更；别人的Ho-GD plan未跟踪不纳入。完整goal active，不能complete。

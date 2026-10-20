@@ -1,0 +1,4 @@
+*.json -text whitespace=cr-at-eol
+source-at-run/* -text whitespace=cr-at-eol
+rejected-initial/source/* -text whitespace=cr-at-eol
+rejected-edge-diagnostic/source/* -text whitespace=cr-at-eol

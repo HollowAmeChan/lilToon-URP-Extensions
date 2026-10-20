@@ -1,0 +1,57 @@
+{
+  "step": 13,
+  "startedUtc": "2026-10-20T12:53:33.0356342Z",
+  "sources": [
+    {
+      "sha256": "BDEC4CAE2DC8231708643B5A981C053DACE90E26ADCB9DA2BE68E0D71AA64083",
+      "path": "Runtime/RTGI/HoRTGIGrid.cs"
+    },
+    {
+      "sha256": "27CE1056448FF1161E407CDAF8E1790A575A62A3D0AA441113473CE458D33BEB",
+      "path": "Runtime/RTGI/Shaders/HoRTGIGrid.hlsl"
+    },
+    {
+      "sha256": "103269434DFF5FC824417E75EFB1CC02B26FC0855613E08D11D2883F60DB90A9",
+      "path": "Editor/RTGI/HoRTGIGridValidation.cs"
+    },
+    {
+      "sha256": "2E0143D0D5C6F9799DA126B1FC1F1B3B0DBC7449BDF2687852C60F51FF41E988",
+      "path": "Editor/RTGI/Shaders/HoRTGIGridAudit.compute"
+    },
+    {
+      "sha256": "E7817ACB6B60425DD9360D479E5533713E384CF5F820CC246D7BE8B2458CB265",
+      "path": "Runtime/RayTracing/HoRTPrimarySurfaceInputs.cs"
+    },
+    {
+      "sha256": "682CB34F549394EDC44C0E123F8471E5C68A42135614E2C7D98E267BCC96949B",
+      "path": "Runtime/RayTracing/Shaders/HoRTPrimarySurface.hlsl"
+    },
+    {
+      "sha256": "47735459925673E7D9F805A86AE227CA6D51AD490DCA4B9377134FDFF6E367BC",
+      "path": "Runtime/SurfaceBuffer/Shaders/HoSurfaceAssociation.hlsl"
+    },
+    {
+      "sha256": "A52825CED48EF6508A0781E585766B4E5B7852AEF55F691F9CA5037B3A048786",
+      "path": "Runtime/RTDI/NRD/HoRTDINrdNative.cs"
+    },
+    {
+      "sha256": "D98805FDE4C8B401366659137FE5F7BE051334CD09894D05D2FC4535DA268DBA",
+      "path": "Tests~/RTGI/Grid/run_validation.ps1"
+    }
+  ],
+  "activeProcess": null,
+  "entries": [
+    {
+      "label": "rg",
+      "abortReason": null,
+      "exitCode": 1,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step013-rg-20261020T125333038.log",
+      "logSha256": "43C30AC0BBC54413991B1E36BE786935F9AC39603762775872841D8B637B3186",
+      "marker": false,
+      "fresh": true,
+      "shaderCsDiagnostics": 0,
+      "pass": false,
+      "reportSha256": "66B474CE9C2B3E2E226332FEE57CBD146A0C6CE38207306C61E52CF23100F80D"
+    }
+  ]
+}

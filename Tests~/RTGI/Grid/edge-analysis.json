@@ -1,0 +1,52 @@
+{
+  "case": "full-moving-camera",
+  "pixel": [
+    18,
+    31
+  ],
+  "resolution": [
+    64,
+    48
+  ],
+  "fieldOfView": 55,
+  "cameraPosition": [
+    0.19,
+    -0.12,
+    -4.0
+  ],
+  "cameraEulerDegrees": [
+    -1.5,
+    2,
+    0
+  ],
+  "foregroundPosition": [
+    -0.25,
+    0.1,
+    0.0
+  ],
+  "foregroundEulerDegrees": [
+    -17,
+    -24,
+    0
+  ],
+  "foregroundScale": [
+    1.2,
+    1.7,
+    1
+  ],
+  "rayPlaneIntersection": [
+    -0.7407679423022047,
+    0.561374053274513,
+    -0.37290920363752234
+  ],
+  "localIntersection": [
+    -0.5000122184219841,
+    0.28379708480365917,
+    -3.1277690304506585e-16
+  ],
+  "outsideLocalX": 1.2218421984067085e-05,
+  "horizontalPixelDistanceToProjectedEdge": 0.00019238061348403335,
+  "finalFixtureEdgeBandPixels": 0.00390625,
+  "derivation": "Independent double precision ray/plane intersection; Unity Euler order Ry * Rx for zero Z. Project x=-.5 foreground edge at same local y back into camera viewport. Does not assume raster covers the analytic centre.",
+  "rejectedDiagnosticRun": "rejected-edge-diagnostic/run.json"
+}

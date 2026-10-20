@@ -271,3 +271,19 @@
 **过滤提交：** Editor/RTGI/HoRTGIResourceAudit.cs/meta与Castle矩形尺寸/新入口；Tests~/RTGI/Resources（含原运行脚本归档和失败证据）；RTGI说明/计划/过程/禁试/交接/设计。无Runtime、native binary、vendor、源场景或其他任务文件。所有本任务进程结束。
 
 步骤012过滤提交：`ca3797f`。提交后Resources verifier再次通过、Runtime无变更、index空，仅保留其他任务未跟踪文件。HD/稳定预算/filtered质量仍false，半GI未实现；下一项013先实际验证输入/历史/NRD映射，goal继续active。
+
+## 013：半GI输入网格和投影合同（进行中）
+
+**事前review：** 012确认资源需求，但当前RAB、Final history、Temporal与NRD仍把GI pixel当full primary pixel。2×2固定代表点必须与规则grid中心补偿一致；没有这项证据直接缩dispatch会读错误surface/旧worldPos。先实现GI私有可复用网格helper（full默认、偶数尺寸2倍、奇数/过小明确full回退），不改DI公共语义，不暴露尚无重建的半GI产品开关。
+
+**实际验证范围：** 在自有RTGIValidation运行小尺寸真实GB/SB和GPU Compute，读取映射后的实际primary及设备深度；CPU用独立ViewportPointToRay与两块变换平面求交，验证worldPos、normal和代表UV。当前/前帧真实深度重建、Temporal投影和NRD补偿后的投影往返独立比较；覆盖透视、正交、非中心投影、相机平移/旋转、full/half与尺寸变化、奇数和边界。低分辨率避免012 HD/fence条件，若再出现GPU fence错误立即中止自身进程。该项不是NRD质量或半GI重建验收；通过后才将同helper接GI桥和后续全域重建。
+
+**实现和正式验证：** Runtime新增私有HoRTGIGrid及HLSL helper，固定fullPixel=s×g+floor(s/2)、UV偏移(s−1)/2 full pixel；逻辑projection row0/row1减row3×2offset/fullSize。偶数且至少2×2才scale2，其他明确full，输入尺寸/scale变则历史拒绝。尚未接生产GI，不暴露半GI开关。Editor新GB/SB Compute审计，RGBA矩形解析quad双层求交，不用GI输出做真值。
+
+最终exec24368终态已收：RG37868、compat50528实际exit0/编译诊断0/fresh/marker/SHA通过；每条12受控请求、18190receiver/5961previous depth/1443foreground。最大world .001916（8×1 full极端宽视野，half <1e−4）、normal .006913、depth .001686、primaryUV8.43e−8、gridUV3.21e−7、previous物理/NRD world7.15e−7/7.54e−7、current→previous UV1.48e−5，全过原门槛。漏NRD投影补偿的负对照各half最大.052～.108world误差；漏primary映射3.75～4.09，确认原.002门槛能检出。Full零偏移保持一致。
+
+**失败与夹具复核：** 首轮52740和诊断轮40264各actual exit1；唯一错误是最后full移动像素(18,31)CPU选back、GPU选foreground。独立double求交得foreground local x−.5000122，距投影边缘.000192px，小于1/256。最终只在该窄轮廓带允许两个独立ray/plane候选，仍测全部位置/深度/法线，不跳过或放宽.002。每条仅2点在带内，其他18188点保持唯一候选。两次失败run/report/logSHA和全部执行源码逐字节归档，edge-analysis.json及F32保留，不伪称修复生产映射bug。
+
+**事后review与收益：** 接纳坐标合同和可复用helper，使下一步半GI不靠猜中心偏移；没有生产质量/性能收益，不能当半GI完成。受控请求不是正常自动camera/实际应用帧motion；只验证NRD投影合同，没有运行NRD过滤器。无AS/native计时桥/重建/生产采样参数变更，不原样重跑012HD。Grid verifier已核对两正式run、两失败、源/log/report/hash/门槛/负对照，生产half=false、NRD质量=false、HD=false。
+
+**下一动作与过滤提交：** 同helper接GI私有RAB（保留DI原语义）、初始native、Final history、Temporal和NRD投影，然后全域depth/normal/validity重建与原能量/细节/动态门槛。默认full；奇数full回退和尺度变更reset必须实际走生产验证。仅提交Runtime这两个新helper/meta、Editor Grid审计/meta、Tests~/RTGI/Grid及RTGI过程/禁试/设计/计划/交接。010实际能量失败、012HD/稳定预算和完整Player/正常camera仍待交付。

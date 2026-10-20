@@ -32,3 +32,9 @@ DI第44步ResolutionQuality扩大的是整个相机256/512尺寸，保持固定�
 5. 所有新增full输出、低guide、映射与临时资源进入012同一清单；Total包含映射/重建而不是只报ray少了。新条件下恢复1080p及RG/compat、Player、正常enabled-camera验证，才谈实际预算和用户默认值。默认仍full。
 
 每个有界实验独立review、实际报告、失败保留和过滤提交。若重建长期降低时间却丢失薄结构/能量，不以预算收益接纳画质失败；两轮无有效收益即按禁试文档搁置并写重开证据。
+
+## 013坐标合同验证进展
+
+新增HoRTGIGrid C#/HLSL可复用helper，实际GB/SB Compute对独立CPU平面求交，RG/compat各12case、18190receiver与5961前次depth样本通过；覆盖上述透视/正交、偏心、移动、resize/scale、odd/single row-column。半GI位置误差小于1e−4；漏投影补偿/漏primary映射的GPU负对照分别产生至少.052/3.75的最大world误差，原.002门槛能检出。见[实际报告](../../Tests~/RTGI/Grid/README.md)。
+
+明确odd或任一维<2时full回退；projection逻辑row0/row1减row3×2offset/fullSize，offset=(s−1)/2 full pixel。历史只在input width/height和scale完全相同时兼容。helper还没有接入GI生产链；没有实际NRD过滤/半GI重建/性能或画质接纳。首轮raster silhouette误判保留F32与两次失败，不能借此忽略全域薄边验收。下一步接GI私有RAB/Generate/Final history/Temporal/NRD，再做全域重建。

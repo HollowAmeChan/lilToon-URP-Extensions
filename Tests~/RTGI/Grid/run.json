@@ -1,0 +1,69 @@
+{
+  "step": 13,
+  "startedUtc": "2026-10-20T12:59:34.7885565Z",
+  "sources": [
+    {
+      "path": "Runtime/RTGI/HoRTGIGrid.cs",
+      "sha256": "BDEC4CAE2DC8231708643B5A981C053DACE90E26ADCB9DA2BE68E0D71AA64083"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIGrid.hlsl",
+      "sha256": "27CE1056448FF1161E407CDAF8E1790A575A62A3D0AA441113473CE458D33BEB"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIGridValidation.cs",
+      "sha256": "5A00F9ACE5A14405596CF5A5E58D78052C021ED12FDAD992BCA3A89A410ADC82"
+    },
+    {
+      "path": "Editor/RTGI/Shaders/HoRTGIGridAudit.compute",
+      "sha256": "139A46C62118236F56F036194F7DFFE00774606299E7D2E48F1BCEAEBCB8CDED"
+    },
+    {
+      "path": "Runtime/RayTracing/HoRTPrimarySurfaceInputs.cs",
+      "sha256": "E7817ACB6B60425DD9360D479E5533713E384CF5F820CC246D7BE8B2458CB265"
+    },
+    {
+      "path": "Runtime/RayTracing/Shaders/HoRTPrimarySurface.hlsl",
+      "sha256": "682CB34F549394EDC44C0E123F8471E5C68A42135614E2C7D98E267BCC96949B"
+    },
+    {
+      "path": "Runtime/SurfaceBuffer/Shaders/HoSurfaceAssociation.hlsl",
+      "sha256": "47735459925673E7D9F805A86AE227CA6D51AD490DCA4B9377134FDFF6E367BC"
+    },
+    {
+      "path": "Runtime/RTDI/NRD/HoRTDINrdNative.cs",
+      "sha256": "A52825CED48EF6508A0781E585766B4E5B7852AEF55F691F9CA5037B3A048786"
+    },
+    {
+      "path": "Tests~/RTGI/Grid/run_validation.ps1",
+      "sha256": "D98805FDE4C8B401366659137FE5F7BE051334CD09894D05D2FC4535DA268DBA"
+    }
+  ],
+  "activeProcess": null,
+  "entries": [
+    {
+      "label": "rg",
+      "abortReason": null,
+      "exitCode": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step013-rg-20261020T125934790.log",
+      "logSha256": "0D92A3428EC8CA89A8C4C32ABEE608764B8134DBEB903B13076A849C31DF7DDE",
+      "marker": true,
+      "fresh": true,
+      "shaderCsDiagnostics": 0,
+      "pass": true,
+      "reportSha256": "4BC87B72945CEE6654268D4E258AFC01265DACC5E7D140390C497C858CA1530E"
+    },
+    {
+      "label": "compat",
+      "abortReason": null,
+      "exitCode": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step013-compat-20261020T125945025.log",
+      "logSha256": "2C29BCE82AF66858079900F18480C7D5CE71C2C81A9441D348753D04D82B8589",
+      "marker": true,
+      "fresh": true,
+      "shaderCsDiagnostics": 0,
+      "pass": true,
+      "reportSha256": "5361842281C4EE1BBE2E9500975B39C46EE0B829E366276814F528B8C065D883"
+    }
+  ]
+}

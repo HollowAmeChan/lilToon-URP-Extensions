@@ -1,0 +1,70 @@
+#pragma kernel Audit
+#pragma target 5.0
+#include "../../../Runtime/RayTracing/Shaders/HoRTPrimarySurface.hlsl"
+#include "../../../Runtime/RTGI/Shaders/HoRTGIGrid.hlsl"
+
+struct Packet
+{
+    float4 worldDepth;
+    float4 normalRawDepth;
+    float4 primaryUVGridUV;
+    float4 nrdWorldValid;
+    float4 previousWorldValid;
+    float4 previousNrdWorldValid;
+    float4 currentToPrevious;
+};
+RWStructuredBuffer<Packet> _GridAuditOutput;
+StructuredBuffer<Packet> _GridAuditHistory;
+float4 _GridAuditGrid,_GridAuditPreviousGrid;
+float4 _GridAuditSize;
+float4x4 _GridAuditNrdInverseVP,_GridAuditPreviousNrdInverseVP;
+float4x4 _GridAuditPreviousInverseVP,_GridAuditPreviousVP,_GridAuditNrdVP;
+uint _GridAuditHasHistory;
+
+float3 Reconstruct(float2 uv,float depth,float4x4 inverseVP)
+{
+    #if !UNITY_REVERSED_Z
+        depth=lerp(UNITY_NEAR_CLIP_VALUE,1,depth);
+    #endif
+    return ComputeWorldSpacePosition(uv,depth,inverseVP);
+}
+float2 ProjectUV(float4 clip)
+{
+    float2 ndc=clip.xy/clip.w;
+    #if UNITY_UV_STARTS_AT_TOP
+        ndc.y=-ndc.y;
+    #endif
+    return ndc*.5+.5;
+}
+[numthreads(8,8,1)]
+void Audit(uint3 id:SV_DispatchThreadID)
+{
+    if(any(id.xy>=(uint2)_GridAuditSize.xy))return;
+    uint index=id.y*(uint)_GridAuditSize.x+id.x;
+    Packet result=(Packet)0;HoRTPrimarySurface surface;
+    uint2 primary=HoGIGridPrimaryPixel(id.xy,_GridAuditGrid);
+    float2 lowUV=(float2(id.xy)+.5)/_GridAuditSize.xy;
+    float2 primaryUV=HoGIGridPrimaryUV(id.xy,_GridAuditGrid);
+    if(HoRTTryLoadPrimarySurface(primary,surface))
+    {
+        float raw=SAMPLE_TEXTURE2D_X_LOD(_HoSurfaceAssociationSurfaceDepth,sampler_PointClamp,primaryUV,0).r;
+        result.worldDepth=float4(surface.positionWS,surface.eyeDepth);
+        result.normalRawDepth=float4(surface.geometricNormalWS,raw);
+        float2 projected=ProjectUV(mul(_GridAuditNrdVP,float4(surface.positionWS,1)));
+        result.primaryUVGridUV=float4(primaryUV,projected);
+        result.nrdWorldValid=float4(Reconstruct(lowUV,raw,_GridAuditNrdInverseVP),1);
+        float4 previousClip=mul(_GridAuditPreviousVP,float4(surface.positionWS,1));
+        result.currentToPrevious=float4(HoGIPrimaryToGridUV(ProjectUV(previousClip),_GridAuditPreviousGrid),previousClip.w,1);
+    }
+    if(_GridAuditHasHistory!=0)
+    {
+        Packet previous=_GridAuditHistory[index];
+        if(previous.nrdWorldValid.w>.5)
+        {
+            float2 previousPrimaryUV=HoGIGridToPrimaryUV(lowUV,_GridAuditPreviousGrid);
+            result.previousWorldValid=float4(Reconstruct(previousPrimaryUV,previous.normalRawDepth.w,_GridAuditPreviousInverseVP),1);
+            result.previousNrdWorldValid=float4(Reconstruct(lowUV,previous.normalRawDepth.w,_GridAuditPreviousNrdInverseVP),1);
+        }
+    }
+    _GridAuditOutput[index]=result;
+}

@@ -22,4 +22,6 @@
 
 步骤012补实际256/512的28项资源清单：自有payload16.588/65.151MiB；AS/pose统计分列。1080p约514MiB仅布局推算，HD首次Unity fence失败后终止，稳定预算不接纳。见[资源证据](../../Tests~/RTGI/Resources/README.md)、F31和[半GI设计](Ho-RTGI-半分辨率设计.md)。下一阶段先验证GI输入/历史/NRD中心映射，半GI尚未实现，010质量失败继续。
 
+步骤013坐标helper已有实际GB/SB GPU对独立CPU几何证据：RG/compat各12case/18190receiver/5961前次depth，补偿后的网格/历史/NRD投影通过，负对照确认会检出漏映射/漏补偿。helper尚未接生产GI或重建，不算半GI交付。两次raster轮廓夹具失败和修正限制保留F32，下一步接GI私有桥和全域输出。
+
 并行任务共享工作区，提交必须列明路径。避免占用其他任务的验证工程；同一个 Unity 工程一次只能运行一个实例。
