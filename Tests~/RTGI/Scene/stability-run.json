@@ -1,0 +1,21 @@
+{
+  "step": 10,
+  "startedUtc": "2026-10-20T07:27:02.0496691Z",
+  "head": "d0b6da7bbbffbfb8ccb229527a7d0a6f7159a1ed",
+  "builderSha256": "ADABAD8F2B3C01BA1D4287066123841D927BD706CC0C7EA86242B3566989CF60",
+  "dependenciesSha256": "ECC7AF34A0DDED0227AF3BBA4BA668487F6A09283418D78A23789FD982A88401",
+  "activeProcess": null,
+  "entries": [
+    {
+      "label": "256-rg-stability",
+      "exitCode": 1,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step010-256-rg-stability-20261020T072702119.log",
+      "logSha256": "8666124C18A891241D90F300A246149FBF8CA68611E27C0FB45BE7C0A60F7BCF",
+      "marker": false,
+      "fresh": true,
+      "shaderCsDiagnostics": 0,
+      "pass": false,
+      "reportSha256": "C6C294B7ED7CAD5A75E6721EDD1ACB5C2291AF26E4F1F2D83F556418481F5490"
+    }
+  ]
+}

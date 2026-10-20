@@ -30,6 +30,8 @@
 | F24 / GI步骤008夹具 | 黑albedo且F0=0便要求受天空照亮的rough-GGX次级面严格零；实测约.0013，真实包却flags1/z=-.5、diffuse/spec RGB0、emission0 | 阅读当前BRDF：Schlick仍有(1-V.H)^5。初始命中用真实包/位置验证，shadow能量另验；不改生产gain/BRDF消掉合法擦边反射 |
 | F25 / GI步骤008原型 | LIL_RENDER=0直接使用未声明的AlphaMask数值字段；由opaque换Shader却保留Opaque RenderType；或把并行C#失败后旧report当fresh结果 | 私有适配显式声明AlphaMask字段，夹具使用真实TransparentCutout域，退出/时间戳/源码绑定一起核对。正式隔离与Player实际源分开记录，不能以旧文件存在当通过 |
 | F26 / GI步骤009夹具复核 | 两个负缩放轴行列式仍正，却把该case命名为镜像并声称验证winding反转 | 检查真实变换行列式；本步在正式运行前改用单负轴并通过GI属性/normal-map gate。此为夹具覆盖复核，不伪称发现生产变换缺陷 |
+| F27 / GI步骤010实际场景 | 古堡“能渲染/变化像素>0”便声称filtered质量通过；或对约9%的RGB均值下降继续加gain、放宽5%或无界增加history/fastSigma | 64窗失败，256长窗仍约-6～-7%；stage显示输入准确，主要时间/色盒链下降。sigma4/6两轮仍失败且边际小，搁置更宽盒；重开需新阶段/局部误差及动态/细节证据。Runtime原版不改，qualityQualified=false保留 |
+| F28 / GI步骤010统计 | 用max(R,G,B)的单帧平均，直接证明RGB能量损失或改善；把独立GI曝光×100预览与正常camera按同曝光比较 | 逐通道时间均值与方差分开记录；显示曝光只影响标明倍率的PNG，EXR/生产增益保持，不能以预览亮度替数据 |
 
 长期无收益路线的记录模板：问题与基线 → 假说/参考 → 尝试和真实成本 → 哪些指标改善/退化 → 拒绝或搁置原因 → 禁止原样再试的条件 → 重开所需新证据。新记录必须关联过程步骤与报告，不只写“试过，不行”。
 

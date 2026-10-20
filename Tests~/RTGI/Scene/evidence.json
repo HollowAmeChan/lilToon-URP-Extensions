@@ -1,0 +1,90 @@
+{
+  "functionalSceneRuns": [
+    {
+      "label": "128-rg",
+      "valid": 16384,
+      "lit": 15340,
+      "changedPixels": 11692,
+      "rawMaxChannelMean": 0.0014882423529343214,
+      "filteredMaxChannelMean": 0.0012623532638826873
+    },
+    {
+      "label": "128-compat",
+      "valid": 16384,
+      "lit": 15340,
+      "changedPixels": 11692,
+      "rawMaxChannelMean": 0.0014882423529343214,
+      "filteredMaxChannelMean": 0.0012623532638826873
+    },
+    {
+      "label": "256-rg",
+      "valid": 65536,
+      "lit": 61390,
+      "changedPixels": 46793,
+      "rawMaxChannelMean": 0.0014294268175945035,
+      "filteredMaxChannelMean": 0.0012414802549756132
+    },
+    {
+      "label": "256-compat",
+      "valid": 65536,
+      "lit": 61390,
+      "changedPixels": 46793,
+      "rawMaxChannelMean": 0.0014294268175945035,
+      "filteredMaxChannelMean": 0.0012414802549756132
+    }
+  ],
+  "qualityQualified": false,
+  "rejectedQualityRuns": [
+    {
+      "label": "initial-window",
+      "rgbRelativeError": {
+        "x": -0.09358208406851043,
+        "y": -0.08961855363585791,
+        "z": -0.09262071006552175
+      },
+      "rawVariance": 4.961981051053363e-06,
+      "filteredVariance": 1.5314214619500667e-08
+    },
+    {
+      "label": "stages",
+      "rgbRelativeError": {
+        "x": -0.09358208406851043,
+        "y": -0.08961855363585791,
+        "z": -0.09262071006552175
+      },
+      "rawVariance": 4.961981051053363e-06,
+      "filteredVariance": 1.5314214619500667e-08
+    },
+    {
+      "label": "long-original",
+      "rgbRelativeError": {
+        "x": -0.05945720309190372,
+        "y": -0.06535379757752813,
+        "z": -0.07028454885931723
+      },
+      "rawVariance": 3.522253130049439e-06,
+      "filteredVariance": 2.306600870884494e-08
+    },
+    {
+      "label": "sigma4",
+      "rgbRelativeError": {
+        "x": -0.0440824647639223,
+        "y": -0.05181092888498351,
+        "z": -0.05684527479538748
+      },
+      "rawVariance": 3.522253130049439e-06,
+      "filteredVariance": 2.4901086783010432e-08
+    },
+    {
+      "label": "sigma6",
+      "rgbRelativeError": {
+        "x": -0.04125140619477985,
+        "y": -0.04950074564427631,
+        "z": -0.0541993167729834
+      },
+      "rawVariance": 3.522253130049439e-06,
+      "filteredVariance": 2.5661767687861735e-08
+    }
+  ],
+  "dependencyFiles": 54
+}

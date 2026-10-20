@@ -82,6 +82,8 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 
 ## 验证
 
+2026-10-20步骤010：真实血月古堡128²/256²两路径接入成功，15实例/12Cutout/1骨骼快照、18灯、全像素有效，正常camera已实际合成；但原版RELAX的逐通道长窗均值低约6～7%，未过5%门槛。阶段取证及sigma4/6两轮诊断仍失败，Runtime保持原版，不补gain。说明与画面见[实际场景及质量拒绝](../Tests~/RTGI/Scene/README.md)，不能把接入成功当完整画质/GPU预算交付。
+
 2026-10-20步骤009：六个Editor进程实际exit0，材质hit两颜色空间各140checks、完整两路径/两颜色空间各187请求/25checks。独立蒙皮矩阵与实际UV0/UV1、几何/着色法线、切线法线图一致；非readable蒙皮emission/遮挡、Bone/BlendShape首帧响应、稳定缓存及无效姿态清理通过。两个Mono Player各315请求/310有效应用帧/30checks实际exit0。见[骨骼证据](../Tests~/RTGI/Skinned/README.md)；本步没有改生产Runtime，也不将CPU Bake/保守reset当动态表面motion或GPU预算通过。
 
 2026-10-20步骤008：10个Editor入口实际exit0、编译诊断0；两颜色空间/路径完整Cutout各284请求，1024条独立连接判断及距离一致，512条遮挡无raw漏光，半开积分raw .486914对理论.5通过5%。两个Linear D3D12 Mono Player各309请求/304有效应用帧/22checks，非空序列化材质过滤、Cutout首帧响应/资源切换和原有动态/合成通过。见[Cutout证据](../Tests~/RTGI/Cutout/README.md)；仍不据此称完整场景/骨骼/自动camera或GPU预算通过。

@@ -211,3 +211,20 @@
 
 
 步骤009过滤提交：`4ccd02b`。提交后verifier复核通过，生产Runtime无diff；真实场景/GPU阶段继续，目标active。
+
+
+## 010：实际血月古堡画面与GPU取证准备（进行中）
+
+**事前review：** 008/009已验证基础Cutout/骨骼真实路径，不能以小夹具替代实际场景。DI第86步已有复制古堡、天空材质过滤、SceneSkybox、克隆源相机的成熟读取流程；只读复用其依赖副本，在本任务RTGIValidation项目导入，不占用或改写活跃RTInputValidation。先展示真实scene的GI off/raw/filtered/加法及支持/拒绝清单；同一支持域/曝光/相机，不把画面不同归因于收敛。
+
+**部署与取证：** glTF依赖通过GUID/URI闭包复制到自有工程，保留meta和哈希；必要UnityGLTF包复制到自有Packages，源侧只读。只创建临时pipeline/相机/Volume，不保存源场景。有效GPU时长仍单列，RenderDoc统计不当duration、CPU不代GPU；正常自动camera/呈现需要实际事件验证，不复刻已失败隐藏条件。先完成可审查的场景结果与采集夹具，再决定必要的交互运行条件。
+
+**实际接入：** GUID/URI闭包54文件49,941,388 bytes及私有UnityGLTF2.19.5复制，源/目标/包SHA完整；运行后两端均未变。128²/256²×RG/compat四项正式actual exit0/marker/fresh通过、编译诊断0，15 RT实例/12Cutout/1pose、18灯；唯一排除天空，无材质拒绝。128/256分别全部16384/65536像素有效，15340/61390像素GI非零，默认.25合成变化11692/46793像素。32预热后static无额外Bake，原相机/SceneSkybox已取图。只接入通过，不是质量通过。
+
+**发现质量失败：** 增加逐通道时间均值门槛（原5%）后，64额外预热/64窗filtered约低9%，实际exit1。256额外预热/256窗仍(-5.95%,-6.54%,-7.03%)。源输入还原红均值.001492365对raw .001492383基本保持；Prepass .001478197、Temporal .001384652、Fix .001463385、Clamp .001383324、末Atrous .001353189。明确不以max-channel单帧均值当RGB能量，也不把PNG显示曝光×100当实际增益。
+
+**两轮有界假说/搁置：** 据DI稀疏可见样本色盒经验，仅在Editor已有ValidationSettings测试fastSigma4/6，长窗分别(-4.41%,-5.18%,-5.68%)和(-4.13%,-4.95%,-5.42%)，两次实际exit1。仍未满足原门槛、边际收益小且噪声增加，搁置更宽盒，不再试8/盲加history/补gain。Runtime原版fastSigma2与所有Shader/NRD参数未改，qualityQualified=false。五份被拒绝报告及实际退出/SHA都保留；不是已接纳优化。
+
+**事后review：** 接纳真实场景接入/取证工具和失败发现，拒绝filtered画质接纳。它改变后续行动：不再以小夹具稳定性代表目标场景，质量缺口不能掩盖。原模型/NPR/源资产保持，实际贡献弱需按数据判断；GPU毫秒仍缺失。CLI/MCP只给数量统计，需新的官方D3D12 timestamp条件，先以fence/频率/空区间/已知负载验证，不能复刻DI零样本或用CPU耗时。正常自动camera/场景漫游仍独立待验。
+
+**过滤提交：** 仅Editor/RTGI/HoRTGICastleValidation.cs/meta，Tests~/RTGI/Scene、RTGI说明/计划/过程/禁试/交接；用户场景/依赖/二进制只在隔离工程不入仓，其他模块不纳入。下一阶段优先取得有效GPU分段与显存/分辨率成本，同时保留这项真实质量失败，整体goal不完成。

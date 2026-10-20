@@ -1,6 +1,6 @@
 # Ho-RTGI 当前交接
 
-更新：2026-10-20。目标active，未完成。步骤005独立RELAX已提交95120a4；步骤006真实应用帧/空间质量与两个Mono Player已过滤提交035b9f9；步骤007材质排除已过滤提交20449c3；步骤008已提交6ebe065；步骤009骨骼GI实际属性/反弹及Player已过滤提交4ccd02b。下一项实际场景输入支持与GPU预算；不再围绕均匀夹具无限调NRD参数。
+更新：2026-10-20。目标active，未完成。步骤005独立RELAX已提交95120a4；步骤006真实应用帧/空间质量与两个Mono Player已过滤提交035b9f9；步骤007材质排除已过滤提交20449c3；步骤008已提交6ebe065；009已提交4ccd02b；010实际古堡接入通过，但filtered能量门槛失败，诊断搁置记录待过滤提交。下一项实际场景输入支持与GPU预算；不再围绕均匀夹具无限调NRD参数。
 
 ## 接手顺序与硬性要求
 
@@ -107,3 +107,20 @@ Editor六项正式exec73874已收终态：两颜色空间hit各140checks；四�
 RenderDoc技能已读；本机CLI D:/Unity_Fork/renderdoc-mcp/bin/renderdoc-cli.exe可子进程PATH调用，help仅事件/资源/捕获等，无duration接口。MCP也无GPU counters。DI既有隐藏宿主自动相机0事件、GPU duration0样本与无capture的失败已读，不同条件无新证据别盲重试；更不能用CPU时间替GPU。需要准备能实际呈现/计时的具体夹具再验，goal继续active。
 
 009已过滤提交4ccd02b，verifier再次通过，生产Runtime未修改，全部进程结束。010尚未动手，下一轮直接进入自己的GI工程中的实际场景/有效GPU取证；不要继续同类小夹具或重置目标。
+
+
+### 010终态（2026-10-20，待过滤提交；质量明确失败）
+
+新增Editor/RTGI/HoRTGICastleValidation.cs/meta和Tests~/RTGI/Scene。生产Runtime/Shader/NRD未改。GUID/URI闭包从DI隔离副本只读复制54文件49.94MB与私有UnityGLTF2.19.5包到GI自有工程；dependencies.json含源/目标/package SHA，运行后均未变。专用GI manifest有gltf及lilToon-gltf扩展引用，独立项目内生成缓存，没保存用户/源场景。
+
+正式四项128/256×RG/compat接入exec77434终态已收：PID43816/50076/33092/53100全exit0/编译诊断0/marker/fresh/SHA成功，15实例、12Cutout、1skin snapshot、18灯。全16384/65536接收像素有效，15340/61390非零GI，.25合成变化11692/46793像素；稳定无额外Bake。图已实际查看，贡献较弱，不夸收益。普通camera before/quarter/one和raw/filtered PNG及GI显示曝光×100图在Scene/images，曝光不改EXR/生产数据。
+
+质量失败不能遗忘：64额外预热/64窗RGB约低9%，实际exit1（exec34750、PID53940）。Stage审计exec79440/PID45940 actual exit1：输入红均值.001492365近raw .001492383；Prepass .001478197、Temporal .001384652、Fix .001463385、Clamp .001383324、Atrous .001353189。长窗256预热/256观察exec96346/PID50600仍(-5.95%,-6.54%,-7.03%) exit1。
+
+仅Editor已有ValidationSettings的色盒sigma4/6两轮：exec56695/PID50444、82647/PID48324均exit1；误差(-4.41%,-5.18%,-5.68%)、(-4.13%,-4.95%,-5.42%)，仍过不了5%，边际小且噪声增。搁置更宽盒/盲history/gain，Runtime保留fastSigma2。F27/F28明确禁止改门槛/用max-channel均值或x100预览冒充能量。原版/长窗/stages/4/6五份失败报告及真实exit/SHA在Scene/rejected-runs.json。
+
+Scene/verify_validation.py通过的含义是“四个功能接入真实通过、五个质量真实失败且源未变”，evidence.qualityQualified=false，不是绿色画质。源builderSHA和功能run是在最终源码重跑后的版本。当前所有本任务进程结束，Scene/active.json无活进程。010不接纳filtered质量，完整goal保持active。
+
+待过滤提交仅上述Editor新工具、Tests~/RTGI/Scene及RTGI文档/计划。资产/包/EXR/log只在隔离工程，不纳入仓库；其他任务文件不碰。旧场景小夹具成功不能覆盖这个真实失败。
+
+下一项011有效GPU取证/预算可独立推进，但必须保留当前质量缺口。RenderDoc技能已读，CLI工具本机存在但无duration接口，DI隐藏宿主计时0样本/自动camera0事件/无capture经验禁止原样盲重试。已只读核对Unity6000.3 PluginAPI IUnityGraphicsD3D12v7/v8：CommandRecordingState提供正在录制的commandList，GetFrameFence/GetNextFrameFenceValue可验证GPU完成；ConfigureEvent区分DontCare(render线程commandList)与Allow(submission线程queue)。可在自有测试工程做限定GPU timestamp桥，先空区间/已知Compute负载、queue频率/fence/新鲜tick严格校验，再挂GI阶段。不要创建新D3D12 device/NRI/DLSS，不污染产品DLL或改系统；源码/编译器已定位Unity PluginAPI与VS2022 Community D:/Microsoft Visual Studio/2022/Community。若该方法无有效GPU数据仍记录失败，不能CPU替代。正常enabled-camera呈现/用户场景漫游仍独立未验，需实际可呈现条件。

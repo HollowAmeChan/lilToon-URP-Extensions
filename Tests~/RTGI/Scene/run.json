@@ -1,0 +1,54 @@
+{
+  "step": 10,
+  "startedUtc": "2026-10-20T07:41:35.5801314Z",
+  "head": "d0b6da7bbbffbfb8ccb229527a7d0a6f7159a1ed",
+  "builderSha256": "9473D858A9B040E4AC7E7879EF4A097F64E99ABD3F9A3EB7AE900DF880FC5DF0",
+  "dependenciesSha256": "ECC7AF34A0DDED0227AF3BBA4BA668487F6A09283418D78A23789FD982A88401",
+  "activeProcess": null,
+  "entries": [
+    {
+      "label": "128-rg",
+      "exitCode": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step010-128-rg-20261020T074135639.log",
+      "logSha256": "B945A24B0BB2B501D17BC4E3863AB25018451316DEBD23A24A359464006F581B",
+      "marker": true,
+      "fresh": true,
+      "shaderCsDiagnostics": 0,
+      "pass": true,
+      "reportSha256": "F1E3CD6E09D2EC70F5E5A8CB863100EBFC2B1D1248DBA1FA2FA2713D0E783195"
+    },
+    {
+      "label": "128-compat",
+      "exitCode": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step010-128-compat-20261020T074145484.log",
+      "logSha256": "137DF0C1C613D07A083D8D2558795C3129EA9F0A15278406C6A50E8481A08D7C",
+      "marker": true,
+      "fresh": true,
+      "shaderCsDiagnostics": 0,
+      "pass": true,
+      "reportSha256": "80C43429B2C11F07A4B0D73C74AA7C12A8337E8AEC9A2899FF4B8C6660EC659E"
+    },
+    {
+      "label": "256-rg",
+      "exitCode": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step010-256-rg-20261020T074154236.log",
+      "logSha256": "3FFBBC8FF1D03DB0A95D15B6387240536026C0A742A00B7B0A122A285C5ED229",
+      "marker": true,
+      "fresh": true,
+      "shaderCsDiagnostics": 0,
+      "pass": true,
+      "reportSha256": "A4CAB8067BB8946D71D45B9694F0377DBAE8FBB7FAA2F3AD4A0E94AF4F95D62A"
+    },
+    {
+      "label": "256-compat",
+      "exitCode": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step010-256-compat-20261020T074203273.log",
+      "logSha256": "FB661CB3B1CC82CECFCCF16E03857D4E2D6979A7D5772B3D701C1A3537054286",
+      "marker": true,
+      "fresh": true,
+      "shaderCsDiagnostics": 0,
+      "pass": true,
+      "reportSha256": "22C87061A7A4FA8B43F6AC1F286A39EAD92F3B41E14DD198C821693C2A3BAFD1"
+    }
+  ]
+}

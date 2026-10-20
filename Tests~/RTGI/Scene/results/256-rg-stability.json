@@ -1,0 +1,207 @@
+{
+    "pass": false,
+    "compatibility": false,
+    "historyReused": true,
+    "environment": true,
+    "nativeCutout": true,
+    "energyGatePass": false,
+    "error": "System.Exception: Castle scene lacks actual supported/lit/composed GI or stable pose cache\r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGICastleValidation.Run (System.Boolean compatibility, System.Int32 size, System.Boolean stability) [0x00d3e] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTGI\\HoRTGICastleValidation.cs:89 ",
+    "camera": "Main Camera",
+    "gpu": "NVIDIA GeForce RTX 4060",
+    "status": "一跳 diffuse GI：18 灯 / 15 RT submesh / 排除 0 灯、0 命中材质、1 几何项 / RELAX diffuse / 基础裁切 12",
+    "skybox": "UnearthlyRed",
+    "width": 256,
+    "height": 256,
+    "frames": 130,
+    "observedFrames": 64,
+    "instances": 15,
+    "cutouts": 12,
+    "skinnedSnapshots": 1,
+    "valid": 65536,
+    "invalid": 0,
+    "lit": 61398,
+    "changedPixels": 47740,
+    "bakes": 1,
+    "stableBakes": 0,
+    "rawMean": 0.001525205264442775,
+    "filteredMean": 0.0014142249992801226,
+    "peak": 0.0224761962890625,
+    "cameraMeanChange": 0.0003474231925792992,
+    "rawVariance": 0.000004961981051053363,
+    "filteredVariance": 1.5314214619500668e-8,
+    "staticRaw": {
+        "x": 0.0014923830749467016,
+        "y": 0.0001539267395855859,
+        "z": 0.00014102004934102297
+    },
+    "staticFiltered": {
+        "x": 0.0013527227565646172,
+        "y": 0.00014013204781804234,
+        "z": 0.0001279586722375825
+    },
+    "materials": [
+        {
+            "name": "天空",
+            "shader": "lilToon",
+            "queue": 2000,
+            "excluded": true,
+            "supported": true,
+            "cutout": false,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "红月",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "背景建筑",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "雕塑",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "荆棘玫瑰",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "彩窗",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "石柱",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "穹顶",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "古堡",
+            "shader": "lilToon",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": false,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "地板",
+            "shader": "lilToon",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": false,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "楼梯",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "红毯",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "红毯花纹",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "吊灯",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "发光",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "新建材质",
+            "shader": "lilToon",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": false,
+            "main2": false,
+            "main3": false
+        }
+    ],
+    "rejections": [
+        "1_mesh submesh 0: excluded by material filter."
+    ]
+}

@@ -1,0 +1,72 @@
+[
+  {
+    "label": "initial-window",
+    "exitCode": 1,
+    "exitEvidence": "actual exec session completion collected",
+    "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step010-256-rg-stability-20261020T072702119.log",
+    "logSha256": "8666124C18A891241D90F300A246149FBF8CA68611E27C0FB45BE7C0A60F7BCF",
+    "report": "ho-gi-castle-256-rg-stability.json",
+    "reportSha256": "C6C294B7ED7CAD5A75E6721EDD1ACB5C2291AF26E4F1F2D83F556418481F5490",
+    "rgbRelativeError": {
+      "x": -0.09358208406851043,
+      "y": -0.08961855363585791,
+      "z": -0.09262071006552175
+    }
+  },
+  {
+    "label": "stages",
+    "exitCode": 1,
+    "exitEvidence": "actual exec session completion collected",
+    "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step010-nrd-stages.log",
+    "logSha256": "B43143EA004C77C612B7947DEFEEE6CCC98B92321CCFDD4BCF90207D056C624C",
+    "report": "ho-gi-castle-256-rg-stability-stages.json",
+    "reportSha256": "004D958AD3BB4677F7162D3BB4CFD1CDF6B7A257B86C8DFC4EBDF39FE19DD43A",
+    "rgbRelativeError": {
+      "x": -0.09358208406851043,
+      "y": -0.08961855363585791,
+      "z": -0.09262071006552175
+    }
+  },
+  {
+    "label": "long-original",
+    "exitCode": 1,
+    "exitEvidence": "actual exec session completion collected",
+    "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step010-long-baseline.log",
+    "logSha256": "2A89D6EFA0C3AB1DDF9322599399F3D0810984732593C2464BD23BD965D58D3E",
+    "report": "rejected-long-original-relax.json",
+    "reportSha256": "9D1AA1B9BF7FE4EBB902433BE436BAF817080F6BD6FBC92E4D4348FC99A5BB85",
+    "rgbRelativeError": {
+      "x": -0.05945720309190372,
+      "y": -0.06535379757752813,
+      "z": -0.07028454885931723
+    }
+  },
+  {
+    "label": "sigma4",
+    "exitCode": 1,
+    "exitEvidence": "actual exec session completion collected",
+    "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step010-wide-clamp.log",
+    "logSha256": "A266BD18E74695764EFB66D67C7DBDF389174AA3121253E045E556AE47EFD189",
+    "report": "rejected-wide-clamp4.json",
+    "reportSha256": "28CA8DA29200C6D8B007E0CA5F5B9F2F47D39F45A627046895DEA272F0A80B05",
+    "rgbRelativeError": {
+      "x": -0.0440824647639223,
+      "y": -0.05181092888498351,
+      "z": -0.05684527479538748
+    }
+  },
+  {
+    "label": "sigma6",
+    "exitCode": 1,
+    "exitEvidence": "actual exec session completion collected",
+    "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step010-wide-clamp6.log",
+    "logSha256": "AF7E74F1284C1D2C7118847AECED854125CCEFA5FD196025873CD4E6840835D3",
+    "report": "rejected-wide-clamp6.json",
+    "reportSha256": "C5066A74EDC62786ACBB75FED7AE79FFA29E07D3F09299883BB80DF0D77AE27C",
+    "rgbRelativeError": {
+      "x": -0.04125140619477985,
+      "y": -0.04950074564427631,
+      "z": -0.0541993167729834
+    }
+  }
+]
