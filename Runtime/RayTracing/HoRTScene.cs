@@ -278,6 +278,7 @@ namespace lilToon.URP.Extensions.RayTracing
             {
                 Build(cmd);
                 cmd.SetRayTracingAccelerationStructure(shader, AccelerationId, scene.acceleration);
+                cmd.SetRayTracingVectorParam(shader, StateId, new Vector4(1, scene.instanceBuffer.count, scene.entries.Count, 0));
             }
         }
 

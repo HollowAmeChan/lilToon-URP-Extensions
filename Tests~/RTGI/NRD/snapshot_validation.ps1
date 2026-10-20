@@ -1,4 +1,4 @@
-param([switch]$Initialize)
+param([switch]$Initialize,[string]$MetadataPath,[string[]]$AdditionalSources=@())
 $ErrorActionPreference='Stop'
 $workspaceRoot=[IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../../..'))
 $snapshotRoot=Join-Path $workspaceRoot '.codex-research/RTGIValidationPackage'
@@ -22,6 +22,7 @@ $contract='Runtime/ShadowCast/Shaders/HoShadowCastShaderContract.hlsl'
 $contractPath=Join-Path $snapshotRoot $contract
 [IO.File]::WriteAllText($contractPath,([IO.File]::ReadAllText($contractPath).Replace("`r`n","`n")))
 $selected=@('Runtime/RTGI','Editor/RTGI','Runtime/RTDI/NRD/HoRTDINrdContext.cs','Runtime/RTDI/NRD/HoRTDINrdNative.cs')
+$selected+=$AdditionalSources
 $records=@()
 foreach($relative in $selected){
     $source=Join-Path $workspaceRoot $relative
@@ -39,5 +40,6 @@ $manifest=Get-Content -LiteralPath $manifestPath -Raw|ConvertFrom-Json
 $original=$manifest.dependencies.'jp.lilxyzw.liltoon.urp.extensions'
 $manifest.dependencies.'jp.lilxyzw.liltoon.urp.extensions'='file:'+($snapshotRoot.Replace('\','/'))
 $manifest|ConvertTo-Json -Depth 10|Set-Content -LiteralPath $manifestPath
-@{baseCommit=([IO.File]::ReadAllText((Join-Path $snapshotRoot 'snapshot-base.txt')));snapshot=$snapshotRoot;project=$projectRoot;originalManifestPackage=$original;updatedUtc=[DateTime]::UtcNow.ToString('o');lineEndingNormalization=@{path=$contract;operation='CRLF to LF';sha256=(Get-FileHash -LiteralPath $contractPath -Algorithm SHA256).Hash};overlays=$records}|ConvertTo-Json -Depth 10|Set-Content -LiteralPath (Join-Path $PSScriptRoot 'snapshot.json')
+if(-not $MetadataPath){$MetadataPath=Join-Path $PSScriptRoot 'snapshot.json'}
+@{baseCommit=([IO.File]::ReadAllText((Join-Path $snapshotRoot 'snapshot-base.txt')));snapshot=$snapshotRoot;project=$projectRoot;originalManifestPackage=$original;updatedUtc=[DateTime]::UtcNow.ToString('o');lineEndingNormalization=@{path=$contract;operation='CRLF to LF';sha256=(Get-FileHash -LiteralPath $contractPath -Algorithm SHA256).Hash};overlays=$records}|ConvertTo-Json -Depth 10|Set-Content -LiteralPath $MetadataPath
 Write-Output ('GI validation snapshot: '+$snapshotRoot+' / '+$records.Count+' overlays')

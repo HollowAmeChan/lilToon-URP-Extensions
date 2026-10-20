@@ -5,15 +5,7 @@ RaytracingAccelerationStructure _HoRTSceneAccelerationStructure;
 StructuredBuffer<uint4> _HoRTSceneInstances; // submesh, material ID, primitive count, valid
 float4 _HoRTSceneState; // built input, metadata capacity, active instances, reserved
 
-struct HoRTSceneHit
-{
-    uint status; // 0 miss, 1 hit, 2 invalid metadata, 3 invalid ray, 4 unavailable
-    float distance;
-    uint instanceId, submesh, materialId, primitiveIndex;
-    float2 barycentrics;
-    uint frontFace;
-    float3 positionWS;
-};
+#include "HoRTSceneHit.hlsl"
 
 HoRTSceneHit HoRTTraceScene(float3 origin, float3 direction, float tMin, float tMax, uint mask)
 {

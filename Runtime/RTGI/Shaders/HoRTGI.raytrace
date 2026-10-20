@@ -2,17 +2,10 @@
 // NVIDIA portions are governed by ../../RTDI/ThirdParty/RTXDI/LICENSE.txt.
 // Adapted from the diffuse branch of the reference GI/BrdfRayTracing.hlsl.
 #pragma max_recursion_depth 1
-#include "../../RayTracing/Shaders/HoRTPrimarySurface.hlsl"
-#include "../../Atmosphere/Shaders/HoAtmosphereSampling.hlsl"
-#include "../../RTDI/ThirdParty/RTXDI/Utils/RandomSamplerState.hlsl"
-#include "../../RTDI/ThirdParty/donut/brdf.hlsli"
-#include "HoRTGISecondarySurface.hlsl"
-#include "HoRTGISecondaryData.hlsl"
-RaytracingAccelerationStructure _HoRTSceneAccelerationStructure;
-RWStructuredBuffer<HoRTGISecondaryData> _HoRTGISecondary;
-float4 _HoRTGIFrame;
+#define HO_RTGI_NATIVE_SHADING 1
+#include "HoRTGIResampling.hlsl"
+RWStructuredBuffer<float2> _HoRTGIFinalVisibility;
 float4 _HoRTGIRaySettings; // bias, finite geometry range, environment enabled, distant sample range
-int _HoRTGIFrameIndex;
 
 [shader("miss")]
 void HoRTGIMiss(inout HoRTGISecondarySurface payload : SV_RayPayload) { payload=(HoRTGISecondarySurface)0; }
@@ -38,7 +31,7 @@ void GenerateSecondary()
         RayDesc ray;ray.Origin=primary.positionWS;ray.Direction=direction;
         ray.TMin=_HoRTGIRaySettings.x;ray.TMax=_HoRTGIRaySettings.y;
         HoRTGISecondarySurface hit=(HoRTGISecondarySurface)0;
-        TraceRay(_HoRTSceneAccelerationStructure,RAY_FLAG_FORCE_OPAQUE,255,0,1,0,ray,hit);
+        TraceRay(_HoRTSceneAccelerationStructure,0,255,0,1,0,ray,hit);
         if(hit.status==0)
         {
             // Finite bounce range is not proof of an unobstructed sky. Only
@@ -46,7 +39,8 @@ void GenerateSecondary()
             if(_HoRTGIRaySettings.z>.5&&HoAtmosphereAvailable()&&ray.TMax<_HoRTGIRaySettings.w)
             {
                 ray.TMin=ray.TMax;ray.TMax=_HoRTGIRaySettings.w;
-                TraceRay(_HoRTSceneAccelerationStructure,RAY_FLAG_FORCE_OPAQUE|RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH,255,0,1,0,ray,hit);
+                hit.status=HO_RTGI_VISIBILITY_QUERY;
+                TraceRay(_HoRTSceneAccelerationStructure,RAY_FLAG_ACCEPT_FIRST_HIT_AND_END_SEARCH,255,0,1,0,ray,hit);
             }
             if(hit.status==0)
             {
@@ -70,4 +64,30 @@ void GenerateSecondary()
         }
     }
     _HoRTGISecondary[index]=result;
+}
+
+[shader("raygeneration")]
+void ShadeSecondaryNative(){HoGIShadeSecondary(DispatchRaysIndex().xy);}
+[shader("raygeneration")]
+void TemporalNative(){HoGITemporal(DispatchRaysIndex().xy);}
+[shader("raygeneration")]
+void SpatialNative(){HoGISpatial(DispatchRaysIndex().xy);}
+
+[shader("raygeneration")]
+void TraceFinalVisibility()
+{
+    uint2 pixel=DispatchRaysIndex().xy;uint index=pixel.y*(uint)_HoRTGIFrame.x+pixel.x;
+    float2 result=0;
+    RAB_Surface surface=RAB_GetGBufferSurface(pixel,false);
+    RTXDI_GIReservoir reservoir=RTXDI_LoadGIReservoir(HoGILayout(),pixel,1);
+    if(RAB_IsSurfaceValid(surface)&&RTXDI_IsValidGIReservoir(reservoir))
+    {
+        float3 delta=reservoir.position-surface.worldPos;float distance=length(delta);float3 direction=delta/max(distance,1e-12);
+        if(distance>_HoRTGISettings.w*2&&dot(direction,surface.geoNormal)>0&&dot(direction,surface.normal)>0)
+        {
+            HoRTSceneHit hit=HoRTTraceScene(surface.worldPos,direction,_HoRTGISettings.w,distance-_HoRTGISettings.w,255);
+            result=float2(hit.status==0?1:0,min(65504,hit.status==0?distance:max(hit.distance,_HoRTGISettings.w)));
+        }
+    }
+    _HoRTGIFinalVisibility[index]=result;
 }

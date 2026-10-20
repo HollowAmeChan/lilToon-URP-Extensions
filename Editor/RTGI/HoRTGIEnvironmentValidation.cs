@@ -16,7 +16,7 @@ using UnityEngine.Rendering.Universal;
 
 namespace lilToon.URP.Extensions.Editor.RTGI
 {
-    public static class HoRTGIEnvironmentValidation
+    public static partial class HoRTGIEnvironmentValidation
     {
         const int Size=64;
         const BindingFlags Instance=BindingFlags.Instance|BindingFlags.NonPublic|BindingFlags.Public;
@@ -107,6 +107,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             EditorApplication.update-=Tick;
             try
             {
+                if(cutoutAudit){ValidateCutoutLighting();Finish(null);return;}
                 Require(!gi.Settings.includeDirectEnvironment,"Default GI excludes DI-owned direct sky");
                 gi.Settings.useEnvironment=false;Near(Mean(2),Color.black,"No analytic light / environment is black",.0001f);
                 Require(gi.LastContext.environmentPdf==null&&gi.LastContext.environmentRis.count==1,"Disabled environment has no PDF/full RIS allocation");
@@ -156,6 +157,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         {
             if(finished)return;finished=true;EditorApplication.update-=Tick;Application.logMessageReceived-=OnLog;
             if(error!=null)Debug.LogException(error);
+            if(cutoutAudit)SaveCutoutLightingReport(error);
             if(output!=null)File.WriteAllText(Path.Combine(output,"report.json"),JsonUtility.ToJson(new Report{pass=error==null,failure=error?.ToString(),frames=frames,warmupFrames=warmupFrames,compatibility=compatibility,colorSpace=QualitySettings.activeColorSpace.ToString(),bounce=bounced,doubled=doubled,analytic=analytic,mixed=mixed,checks=checks.ToArray()},true));
             GraphicsSettings.defaultRenderPipeline=oldDefault;QualitySettings.renderPipeline=oldQuality;ShaderUtil.allowAsyncCompilation=oldAsync;
             foreach(var obj in owned.AsEnumerable().Reverse())if(obj!=null)UnityEngine.Object.DestroyImmediate(obj);

@@ -165,3 +165,26 @@
 **事后review：** 接纳。用户现在可在GI单独过滤合并天空壳，不丢同Renderer主体，也不改raster/源资产。代价为共享已有逐帧身份过滤/HashSet逻辑，空列表不建HashSet；部分排除仍不缩小合并skin snapshot，不能从少实例推断GPU/VRAM节省。过滤变更需要清历史，等价列表保持历史有实测。没有重新验证非空GI Player列表或完整古堡/GPU预算，边界保留；Cutout完整路线仍需后续，不能半接predicate。
 
 **过滤提交：** 只含GI Settings/Feature/Inspector、Composite专门入口和新增partial测试、复用runner的可选MaterialExclusion模式、该步报告及RTGI文档；不改共享DI/Scene和其他任务文件。
+
+
+步骤007过滤提交：`20449c3`。
+
+## 008：基础Cutout完整GI命中与遮挡（进行中）
+
+**事前review：** 规划M3明确要求基础lilToon Cutout，DI实际古堡16个submesh中12个为Cutout；仅完成天空壳过滤还不能称实际支持域充分。已逐项核对：GenerateSecondary及远天空查询FORCE_OPAQUE，ShadeSecondary的灯/天空visibility使用inline保守跳nonopaque，Final重连也用该保守query。必须同时补全三处实际alpha语义，不能只开registry predicate。
+
+**实施路线与边界：** 沿DI现有基础Cutout classifier/静态UV0+Main alpha/AlphaMask0～4/背面UV规则；GI私有any-hit拒绝孔洞，native初始命中移除FORCE_OPAQUE。有Cutout时用同一份次级采样求值函数的native ray-generation分支测试次级灯/天空，新增最终native visibility/distance记录后由原Final/NRD消费。无Cutout保留现有compute照明/inline Final，不复制SDK/NRD算法或调参数。visibility-only payload采用私有输入状态标记，closest-hit只回遮挡/距离，不做完整lilToon材质求值；公开payload输出/secondary48B/validity协议不变。
+
+**验收：** 初始alpha0/1及纹理孔洞/UV/mask、次级解析灯和天空被cutout挡/透、重连最终可见性（包括NRD距离）、远天空范围、恢复/texture update/history、无Cutout资源释放和opaque回归；两路径/两颜色空间及必要Player。只有完整路径可运行且能量/遮挡门槛通过才接纳；失败保留，不能用保守inline假装实际alpha。骨骼vertex fetch随后独立验收，不据registry登记完成。
+
+008实现复核补充：时间/空间bias correction有Cutout时也使用同一份原SDK函数的native wrapper，避免其保守inline跳alpha与初始proposal不一致；opaque仍原compute。共享改动仅抽出原样HoRTSceneHit类型，以及native BuildAndBind补同等AS state向量（原来只绑定AS），不改registry/DI算法。首轮缺AlphaMask数值uniform编译失败已修，opaque材质过滤21checks回归过；单射线Cutout/mask/UV/backface/visibility-payload测试在修正由opaque转换材质的RenderType标签后实际exit0，尚未验证完整GI照明/复用链路。
+
+**正式Editor与实际Player：** 10个Editor进程全部exit0/marker/fresh通过、shader/C#诊断0：两颜色空间单射线、四组完整链路（每组284请求/17checks）及opaque环境两路径/opaque材质/DI native Cutout回归。1024条冻结有效后墙点的独立CPU线段/实际mesh UV/nearest判断与最终buffer及NRD距离全一致，512条遮挡raw无漏光；冻结注入不参与后续能量测量并清历史。恢复正常原SDK复用后，半开孔洞raw四组均.4869144，对独立.5积分误差-2.62%，原5%通过；filtered约.4873～.4891。次级天空/方向光透明时匹配参考，实体时归零；远1500挡板与孔洞正确，原型无额外gain/clamp。
+
+两个Linear D3D12 Win64 Mono release build与实际EXE全部exit0，各309请求/304有效真实应用帧/22checks，serialized非空天空材质排除、native Cutout、首帧alpha变化、NRD清历史/恢复、最后Cutout资源释放、opaque回切和原动态/合成检查通过。每Update一请求仍不称enabled-camera自动呈现。完整输入/报告/payload SHA与GUID经Cutout/verify_validation.py核对。
+
+**保留失败：** 黑albedo/F0=0的初始Cutout在天空下约.0013并非miss；GPU包确认flags1、z=-.5、diffuse/spec RGB0、emission0，原GGX的Schlick擦边项仍在。原黑色必须零断言错误，替换为所有中央射线真实命中/位置断言，没有改模型或放宽shadow能量阈值。并行Dust有编译错误那轮没有fresh report，未当新GPU结果；Editor正式用base82df540加124覆盖的不可变快照，Player在实际base6be5bd9工作区构建，MonoScript绑定已检查。两类来源有各自hash，不冒称相同整个工程。复用runner旧step006标签保留raw metadata，canonical只修正步骤编号，未改报告/退出。
+
+**事后review与收益：** 接纳基础Cutout完整路径。初始、次级灯/天空、重采样bias、最终真实alpha一致，避免只登记非opaque后各阶段漏遮挡。共用同一份应用/原SDK估计器与重采样函数，vendor/NRD参数未改；opaque维持原compute/inline。可见性专用payload输入sentinel只跳过昂贵材质求值，普通输出结构、secondary48B和公开RGBA validity不变。新增有Cutout时8B/像素（1080p约15.82MiB）buffer和一次dispatch，hit-group/alpha取样与原生复用成本尚无GPU毫秒。静态基础域接纳，不扩成动画alpha、MPB、多主色/dither/dissolve/视差；骨骼GI命中、实际古堡、正常自动camera及GPU预算仍需交付。既有非GI/GB/退出GC警告保留，不称完整生命周期通过。
+
+**过滤提交：** 仅GI Runtime/Editor、本步共享HoRTScene state绑定及原样Hit类型拆分、Cutout证据、复用Dynamic/NRD runner扩展与RTGI文档。当前Atmosphere/VolumeLight提交和改动保留，不纳入。下一项优先实际骨骼vertex fetch与场景、有效GPU预算，不继续单纯堆静态降噪门槛。

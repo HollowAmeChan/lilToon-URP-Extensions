@@ -1,0 +1,11 @@
+#pragma kernel Capture
+#pragma target 4.5
+Texture2D<float4> _Source;
+RWStructuredBuffer<float4> _Output;
+float4 _CaptureSize;
+[numthreads(8,8,1)]
+void Capture(uint3 id:SV_DispatchThreadID)
+{
+    if(any(id.xy>=(uint2)_CaptureSize.xy))return;
+    _Output[id.y*(uint)_CaptureSize.x+id.x]=_Source.Load(int3(id.xy,0));
+}

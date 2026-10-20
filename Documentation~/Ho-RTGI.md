@@ -50,9 +50,10 @@ Emission 直接调用 lilToon 现有 `lilEmissionComponent` / `lilEmission2ndCom
 
 ## 首版支持域
 
-- 刚性opaque MeshRenderer已有GI命中验证，支持屏幕外、变换更新和非均匀/镜像变换。共享HoRTScene后来已有skinned snapshot，但GI的骨骼材质命中/动态接收仍待专门验收；GI尚未接入Cutout适配，透明、任意shader顶点变形、static batching或additional vertex streams不在本阶段支持域。
+- 刚性opaque MeshRenderer和基础lilToon Cutout已有GI命中/可见性验证，支持屏幕外、变换更新和非均匀/镜像变换。共享HoRTScene已有skinned snapshot，但GI的骨骼材质命中/动态接收仍待专门验收；透明混合、任意shader顶点变形、static batching或additional vertex streams不在本阶段支持域。
 - 当前命中材质接收标准 `lilToon` opaque，第一主色链、两组 normal map、两组专用 emission，以及 smoothness/metallic 贴图。Main2nd/Main3rd、parallax 位移、Lite/Multi/Hair/自定义 shader 尚未接入，明确返回 unsupported。
 - 命中材质副本读取 sharedMaterial；Renderer MaterialPropertyBlock 属性覆盖及自定义 lilToon 扩展尚未接入。
+- 基础Cutout沿DI的有界域：`Hidden/lilToonCutout*`、TransparentCutout tag、非透明队列、静态UV0、Main alpha/Color alpha与AlphaMask0～4，支持静态ST/旋转/背面UV。动画主UV、dissolve、distance fade、dither、多主色/视差、MPB等不在该域；共享registry要求UV0和无MPB。Unsupported Cutout会有几何拒绝记录，不作为已支持alpha遮挡物。
 - Unsupported opaque 材质仍有真实命中，status=2，保持遮挡；不能把它转成环境 miss。status=0 才表示 miss，status=1 表示已求值的材质。
 - 纹理采样显式LOD0，尚未实现ray-cone过滤与GSAA。发光视角组分使用二次射线的观察方向。已有加法场景合成及独立GI降噪；SSS、最终NPR ramp/材质内接收及完整Player/场景验收仍未交付。
 - 二次命中点支持 point / spot / directional 解析灯，限制与 Ho-RTDI 相同：cookie、非全局 cullingMask、baked-only、其他灯型排除；Rendering Layer / 艺术灯光链接未接入。RT 可见性独立于 raster Light.shadows。
@@ -77,7 +78,11 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 
 不维护 previous TLAS，也没有动态角色 motion；只有未变化的几何可以复用历史，此时当前 AS 同时描述上一帧世界，可从上一帧表面做 visibility。一次只做一跳，不把历史 reservoir 当作多跳反馈缓存。
 
+有基础Cutout时，初始/远天空命中、次级照明、时间/空间重采样的bias visibility和最终连接统一用真实any-hit。原版SDK采样/重采样共用函数不变，切换到native ray-generation入口；最终记录可见性/实际命中距离，再由原Final/NRD消费。8B/像素buffer在1080p约15.82MiB，另多一次dispatch及hit-group/alpha取样成本，GPU毫秒待测。无Cutout时回原compute/inline并保留单元素8B dummy。visibility-only射线跳过完整lilToon材质求值，普通材质输出ABI、secondary48B与RGBA validity不变。
+
 ## 验证
+
+2026-10-20步骤008：10个Editor入口实际exit0、编译诊断0；两颜色空间/路径完整Cutout各284请求，1024条独立连接判断及距离一致，512条遮挡无raw漏光，半开积分raw .486914对理论.5通过5%。两个Linear D3D12 Mono Player各309请求/304有效应用帧/22checks，非空序列化材质过滤、Cutout首帧响应/资源切换和原有动态/合成通过。见[Cutout证据](../Tests~/RTGI/Cutout/README.md)；仍不据此称完整场景/骨骼/自动camera或GPU预算通过。
 
 2026-10-20步骤007：材质过滤四组Linear/Gamma×RG/compat各12请求/21检查，空列表合成和NRD两项回归，共6进程实际exit0。合并壳后保留emission、同名引用区分、恢复首帧清历史和源资产不变有实际输出；见[材质过滤](../Tests~/RTGI/MaterialExclusion/README.md)。本步未重复完整Player构建或宣称复杂场景/GPU收益。
 

@@ -3,6 +3,13 @@ Shader "Hidden/lilToon/URP/RTGI/SecondaryMaterial"
     Properties
     {
         [HideInInspector] _HoRTGISecondarySupported("Supported", Float) = 0
+        [HideInInspector] _HoRTGICutout("Cutout enabled", Float) = 0
+        _AlphaMask("Alpha mask",2D)="white"{}
+        _AlphaMaskMode("Mask mode",Float)=0
+        _AlphaMaskScale("Mask scale",Float)=1
+        _AlphaMaskValue("Mask value",Float)=0
+        _Cutoff("Cutoff",Float)=.5
+        _ShiftBackfaceUV("Back UV",Float)=0
         _MainTex("Main", 2D) = "white" {}
         _Color("Color", Color) = (1,1,1,1)
         [HDR] _EmissionColor("Emission color", Color) = (1,1,1,1)

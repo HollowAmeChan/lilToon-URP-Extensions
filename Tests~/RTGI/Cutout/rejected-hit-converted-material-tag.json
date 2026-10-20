@@ -1,0 +1,8 @@
+{
+    "pass": false,
+    "error": "System.Exception: Basic static Cutout classifier accepted\r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation.Require (System.Boolean value, System.String message) [0x0002c] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTGI\\HoRTGISecondaryValidation.cs:134 \r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation.ValidateCutout () [0x000d7] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTGI\\HoRTGICutoutHitValidation.cs:20 \r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGISecondaryValidation.Validate () [0x00007] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTGI\\HoRTGISecondaryValidation.cs:93 ",
+    "colorSpace": "Linear",
+    "checks": [
+        "Missing GI hit shaders"
+    ]
+}

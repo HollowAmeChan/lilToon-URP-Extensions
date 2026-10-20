@@ -47,14 +47,18 @@ namespace lilToon.URP.Extensions.RTGI
             unchecked { Signature ^= MaterialSignature(source); }
             if (supported) TimeVarying |= Animated(source);
             adapter.SetFloat("_HoRTGISecondarySupported", supported ? 1 : 0);
+            adapter.SetFloat("_HoRTGICutout", SupportsCutout(source) ? 1 : 0);
             if (!supported) Rejections.Add(source.name + ": secondary material not supported; remains opaque to RT.");
             return adapter;
         }
 
         internal static bool IsSupported(Material source) => source != null && source.shader != null
-            && source.shader.name == "lilToon" && source.renderQueue < (int)RenderQueue.AlphaTest
+            && ((source.shader.name == "lilToon" && source.renderQueue < (int)RenderQueue.AlphaTest) || SupportsCutout(source))
             && !Enabled(source, "_UseMain2ndTex") && !Enabled(source, "_UseMain3rdTex")
             && !Enabled(source, "_UseParallax");
+
+        // Same bounded static-alpha domain as the already verified DI any-hit.
+        internal static bool SupportsCutout(Material source)=>RTDI.HoRTDIVisibilityMaterials.SupportsCutout(source);
 
         private static bool Enabled(Material material, string property) => material.HasProperty(property) && material.GetFloat(property) != 0;
 

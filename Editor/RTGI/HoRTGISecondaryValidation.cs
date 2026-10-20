@@ -12,7 +12,7 @@ using Object = UnityEngine.Object;
 namespace lilToon.URP.Extensions.Editor.RTGI
 {
     // Isolated batch validation; deliberately not an addable renderer feature.
-    public static class HoRTGISecondaryValidation
+    public static partial class HoRTGISecondaryValidation
     {
         [StructLayout(LayoutKind.Sequential)]
         private struct Ray { public Vector4 originMin, directionMax; }
@@ -43,7 +43,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 shader = AssetDatabase.LoadAssetAtPath<RayTracingShader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI/Shaders/HoRTGISecondaryValidation.raytrace");
                 var hitShader = Shader.Find("Hidden/lilToon/URP/RTGI/SecondaryMaterial");
                 Require(shader != null && hitShader != null, "Missing GI hit shaders");
-                materials = new HoRTGISecondaryMaterials(hitShader); scene = new HoRTScene(materials.Resolve);
+                materials = new HoRTGISecondaryMaterials(hitShader); scene = new HoRTScene(materials.Resolve,HoRTGISecondaryMaterials.SupportsCutout);
                 var go = Keep(new GameObject("Offscreen GI receiver"));
                 go.transform.position = new Vector3(2, 0, 0);
                 var mesh = Keep(new Mesh());
@@ -69,7 +69,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             catch (Exception error) { Finish(error); }
         }
 
-        private static Hit Trace()
+        private static Hit Trace(bool visibilityOnly=false)
         {
             materials.BeginFrame(); scene.Synchronize(new Renderer[] { renderer }); materials.EndFrame();
             var cmd = new CommandBuffer { name = "HoRTGI secondary material validation" };
@@ -78,7 +78,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 scene.ReadCompatibility().BuildAndBind(cmd, shader);
                 cmd.SetRayTracingShaderPass(shader, "HoRTGISecondarySurface");
                 cmd.SetRayTracingBufferParam(shader, "_HoGITestRays", rays); cmd.SetRayTracingBufferParam(shader, "_HoGITestHits", hits);
-                cmd.DispatchRays(shader, "HoGIValidate", 2, 1, 1); Graphics.ExecuteCommandBuffer(cmd);
+                cmd.DispatchRays(shader, visibilityOnly?"HoGIVisibilityValidate":"HoGIValidate", 2, 1, 1); Graphics.ExecuteCommandBuffer(cmd);
                 var result = new Hit[2]; hits.GetData(result);
                 Require(result[1].status == 0, "World-space miss was not preserved");
                 return result[0];
@@ -90,6 +90,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         {
             try
             {
+                if(cutoutAudit){ValidateCutout();Finish(null);return;}
                 var hit = Trace(); Debug.Log($"[HoRTGISecondaryValidation] first status={hit.status} base={hit.baseColor} emission={hit.emission} normal={hit.normal}");
                 Require(hit.status == 1, "Opaque lilToon hit was not evaluated"); Near(hit.distance, 1, "hit distance");
                 var baseColor=source.GetColor("_Color");
@@ -130,11 +131,12 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             catch(Exception error) { Finish(error); }
         }
         private static T Keep<T>(T value) where T:Object { objects.Add(value); return value; }
-        private static void Require(bool value,string message) { if(!value)throw new Exception(message); }
+        private static void Require(bool value,string message) { if(!value)throw new Exception(message);if(cutoutAudit){cutoutChecks.Add(message);Debug.Log("[HoGICutoutHit] CHECK "+message);} }
         private static void Near(float actual,float expected,string name) => Require(Mathf.Abs(actual-expected)<.005f,$"{name}: {actual} != {expected}");
         private static void Near3(Vector3 actual,Vector3 expected,string name) { Near(actual.x,expected.x,name+" X");Near(actual.y,expected.y,name+" Y");Near(actual.z,expected.z,name+" Z"); }
         private static void Finish(Exception error)
         {
+            if(cutoutAudit)SaveCutoutReport(error);
             scene?.Dispose(); materials?.Dispose(); rays?.Dispose(); hits?.Dispose(); ShaderUtil.allowAsyncCompilation=previousAsync;
             for(int i=objects.Count-1;i>=0;i--)if(objects[i]!=null)Object.DestroyImmediate(objects[i]); objects.Clear();
             if(error!=null)Debug.LogException(error); EditorApplication.Exit(error==null?0:1);

@@ -12,7 +12,12 @@ namespace lilToon.URP.Extensions.RTGI
 {
     internal sealed class HoRTGIContext : IDisposable
     {
-        internal GraphicsBuffer reservoirs,history,lights,neighbors,secondary;
+        internal GraphicsBuffer reservoirs,history,lights,neighbors,secondary,finalVisibility;
+        internal bool alphaVisibility;
+        #if UNITY_EDITOR
+        // Isolated stage audit only; no serialized/runtime sampling policy.
+        internal Action<CommandBuffer,HoRTGIContext> ValidationBeforeFinal;
+        #endif
         internal RTHandle diffuse;
         internal HoRTGINrdContext nrd;
         internal string nrdStatus;
@@ -82,7 +87,13 @@ namespace lilToon.URP.Extensions.RTGI
             try{nrd??=new HoRTGINrdContext(shaders);nrd.Prepare(width,height);nrdStatus="RELAX diffuse";}
             catch(Exception error){nrd?.Dispose();nrd=null;nrdStatus="NRD unavailable: "+error.Message;}
         }
+        internal void PrepareVisibility(bool enabled)
+        {
+            alphaVisibility=enabled;int count=enabled?width*height:1;
+            if(finalVisibility==null||finalVisibility.count!=count)
+            {finalVisibility?.Dispose();finalVisibility=new GraphicsBuffer(GraphicsBuffer.Target.Structured,count,8){name="HoRTGI native final visibility/distance"};}
+        }
         public void Dispose()
-        {nrd?.Dispose();nrd=null;reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();secondary?.Dispose();environmentRis?.Dispose();environmentPdf?.Release();diffuse?.Release();reservoirs=history=lights=neighbors=secondary=environmentRis=null;diffuse=environmentPdf=null;}
+        {nrd?.Dispose();nrd=null;reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();secondary?.Dispose();finalVisibility?.Dispose();environmentRis?.Dispose();environmentPdf?.Release();diffuse?.Release();reservoirs=history=lights=neighbors=secondary=finalVisibility=environmentRis=null;diffuse=environmentPdf=null;}
     }
 }

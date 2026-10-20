@@ -19,6 +19,7 @@
 #define LIL_FEATURE_ANIMATE_EMISSION_UV
 #define LIL_FEATURE_ANIMATE_EMISSION_MASK_UV
 #define LIL_FEATURE_ANIMATE_MAIN_UV
+#define LIL_FEATURE_AlphaMask
 #define LIL_FEATURE_NORMAL_1ST
 #define LIL_FEATURE_NORMAL_2ND
 #define LIL_FEATURE_BumpMap
@@ -43,7 +44,11 @@ float4x4 HoGIObjectToWorld() { float3x4 m=ObjectToWorld3x4();return float4x4(m[0
 #include "Packages/jp.lilxyzw.liltoon/Shader/Includes/lil_common.hlsl"
 #include "Packages/jp.lilxyzw.liltoon/Shader/Includes/lil_common_frag.hlsl"
 
-float _HoRTGISecondarySupported;
+float _HoRTGISecondarySupported,_HoRTGICutout;
+// LIL_RENDER=0 keeps the opaque material component layout; its optional alpha
+// uniforms are therefore explicit for this private any-hit adapter.
+float4 _AlphaMask_ST;
+float _AlphaMaskMode,_AlphaMaskScale,_AlphaMaskValue;
 struct HoRTGIAttributes { float2 barycentrics; };
 float2 HoGIUV(uint3 tri, float3 weights, uint attribute)
 {
@@ -52,14 +57,40 @@ float2 HoGIUV(uint3 tri, float3 weights, uint attribute)
          + UnityRayTracingFetchVertexAttribute2(tri.z,attribute)*weights.z;
 }
 
+// Same bounded alpha chain as DI's verified native visibility material.
+[shader("anyhit")]
+void HoRTGIAlphaHit(inout HoRTGISecondarySurface payload : SV_RayPayload,
+    HoRTGIAttributes attributes : SV_IntersectionAttributes)
+{
+    if(_HoRTGICutout<.5)return;
+    uint3 tri=UnityRayTracingFetchTriangleIndices(PrimitiveIndex());
+    float3 weights=float3(1-attributes.barycentrics.x-attributes.barycentrics.y,attributes.barycentrics);
+    float2 uv=HoGIUV(tri,weights,kVertexAttributeTexCoord0);
+    if(HitKind()==HIT_KIND_TRIANGLE_BACK_FACE&&_ShiftBackfaceUV>0)uv.x+=1;
+    uv=uv*_MainTex_ST.xy+_MainTex_ST.zw;
+    float si,co;sincos(_MainTex_ScrollRotate.z,si,co);float2 rotated=uv-.5;
+    uv=float2(rotated.x*co-rotated.y*si,rotated.x*si+rotated.y*co)+.5;
+    float alpha=_MainTex.SampleLevel(sampler_MainTex,uv,0).a*_Color.a;
+    if(_AlphaMaskMode>0)
+    {
+        float mask=saturate(_AlphaMask.SampleLevel(sampler_MainTex,uv*_AlphaMask_ST.xy+_AlphaMask_ST.zw,0).r*_AlphaMaskScale+_AlphaMaskValue);
+        if(_AlphaMaskMode==1)alpha=mask;
+        if(_AlphaMaskMode==2)alpha*=mask;
+        if(_AlphaMaskMode==3)alpha=saturate(alpha+mask);
+        if(_AlphaMaskMode==4)alpha=saturate(alpha-mask);
+    }
+    if(alpha<_Cutoff)IgnoreHit();
+}
+
 [shader("closesthit")]
 void HoRTGIClosestHit(inout HoRTGISecondarySurface payload : SV_RayPayload,
     HoRTGIAttributes attributes : SV_IntersectionAttributes)
 {
+    bool visibilityOnly=payload.status==HO_RTGI_VISIBILITY_QUERY;
     payload=(HoRTGISecondarySurface)0;
     payload.distance=RayTCurrent();
     payload.status=2;
-    if(_HoRTGISecondarySupported<.5)return;
+    if(visibilityOnly||_HoRTGISecondarySupported<.5)return;
     uint3 tri=UnityRayTracingFetchTriangleIndices(PrimitiveIndex());
     float3 weights=float3(1-attributes.barycentrics.x-attributes.barycentrics.y,attributes.barycentrics);
     float3 p0=UnityRayTracingFetchVertexAttribute3(tri.x,kVertexAttributePosition);
@@ -85,7 +116,9 @@ void HoRTGIClosestHit(inout HoRTGISecondarySurface payload : SV_RayPayload,
     fd.uv1=HoGIUV(tri,weights,kVertexAttributeTexCoord1);
     fd.uv2=HoGIUV(tri,weights,kVertexAttributeTexCoord2);
     fd.uv3=HoGIUV(tri,weights,kVertexAttributeTexCoord3);
-    fd.uvMain=lilCalcUV(fd.uv0,_MainTex_ST,_MainTex_ScrollRotate);
+    float2 mainUV=fd.uv0;
+    if(_HoRTGICutout>.5&&HitKind()==HIT_KIND_TRIANGLE_BACK_FACE&&_ShiftBackfaceUV>0)mainUV.x+=1;
+    fd.uvMain=lilCalcUV(mainUV,_MainTex_ST,_MainTex_ScrollRotate);
     // Same main chain as the opaque SB producer; no ramp/shadow/matcap/rim lighting.
     OVERRIDE_MAIN
     if(dot(tangent.xyz,tangent.xyz)>1e-10)

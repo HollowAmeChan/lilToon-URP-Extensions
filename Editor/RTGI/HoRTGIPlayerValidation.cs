@@ -17,6 +17,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
     {
         public static void Build()=>Build(false);
         public static void BuildCompatibility()=>Build(true);
+        public static void BuildCutout()=>Build(false,true);
+        public static void BuildCutoutCompatibility()=>Build(true,true);
         public static void AuditScripts()
         {
             try
@@ -39,7 +41,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
             AuditScripts();
         }
-        static void Build(bool compatibility)
+        static void Build(bool compatibility,bool cutout=false)
         {
             try
             {
@@ -67,11 +69,21 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var receiver=Quad("Receiver",Vector3.zero,new Vector3(2,2,1),0,Color.white,Color.black,assets+"Receiver.mat");
                 var red=Quad("Offscreen red emitter",new Vector3(-1,0,-1),new Vector3(2,4,1),1,Color.black,Color.red,assets+"Red.mat");red.transform.rotation=Quaternion.Euler(0,180,0);
                 var blue=Quad("Offscreen blue emitter",new Vector3(1,0,-1),new Vector3(2,4,1),1,Color.black,Color.blue,assets+"Blue.mat");blue.transform.rotation=Quaternion.Euler(0,180,0);
+                Material cutoutMaterial=null,skyMaterial=null;Renderer cutoutRenderer=null;
+                if(cutout)
+                {
+                    var shell=Quad("Serialized excluded sky shell",new Vector3(0,0,-.25f),Vector3.one*4000,1,Color.black,Color.black,assets+"ExcludedSky.mat");skyMaterial=shell.GetComponent<Renderer>().sharedMaterial;
+                    gi.Settings.excludedRayMaterials=new[]{skyMaterial};EditorUtility.SetDirty(gi);
+                    var panel=GameObject.CreatePrimitive(PrimitiveType.Quad);panel.name="Player GI Cutout panel";panel.layer=1;panel.transform.position=new Vector3(0,0,-.5f);panel.transform.localScale=Vector3.one*4000;
+                    cutoutMaterial=new Material(Shader.Find("Hidden/lilToonCutout"));cutoutMaterial.SetOverrideTag("RenderType","TransparentCutout");cutoutMaterial.renderQueue=2450;cutoutMaterial.SetFloat("_Cull",0);cutoutMaterial.SetFloat("_Cutoff",.5f);cutoutMaterial.SetFloat("_AlphaMaskMode",0);cutoutMaterial.SetFloat("_Reflectance",0);cutoutMaterial.SetFloat("_Metallic",0);cutoutMaterial.SetFloat("_Smoothness",0);cutoutMaterial.SetFloat("_UseEmission",0);cutoutMaterial.SetFloat("_UseEmission2nd",0);cutoutMaterial.SetTexture("_MainTex",Texture2D.whiteTexture);cutoutMaterial.SetColor("_Color",new Color(0,0,0,0));AssetDatabase.CreateAsset(cutoutMaterial,assets+"Cutout.mat");cutoutRenderer=panel.GetComponent<Renderer>();cutoutRenderer.sharedMaterial=cutoutMaterial;
+                }
                 var holder=new GameObject("GI Player Volume").AddComponent<Volume>();holder.isGlobal=true;var profile=ScriptableObject.CreateInstance<VolumeProfile>();var component=profile.Add<HoRTGIVolume>();BoundScript(component);component.enable.Override(true);AssetDatabase.CreateAsset(profile,assets+"Volume.asset");AssetDatabase.AddObjectToAsset(component,profile);EditorUtility.SetDirty(profile);EditorUtility.SetDirty(component);holder.sharedProfile=profile;
                 var probe=new GameObject("GI Runtime Probe").AddComponent(probeType);var so=new SerializedObject(probe);
                 Set(so,"probeCamera",camera);Set(so,"feature",gi);Set(so,"redMaterial",red.GetComponent<Renderer>().sharedMaterial);Set(so,"blueWall",blue.transform);Set(so,"profile",profile);so.ApplyModifiedPropertiesWithoutUndo();
+                if(cutout){Set(so,"cutoutMaterial",cutoutMaterial);Set(so,"cutoutRenderer",cutoutRenderer);Set(so,"excludedSky",skyMaterial);so.ApplyModifiedPropertiesWithoutUndo();}
                 AssetDatabase.SaveAssets();EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(),assets+"Probe.unity");
                 string output=compatibility?"PlayerGIDynamicCompatibility":"PlayerGIDynamic";
+                if(cutout)output=compatibility?"PlayerGICutoutCompatibility":"PlayerGICutout";
                 var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{assets+"Probe.unity"},target=BuildTarget.StandaloneWindows64,locationPathName=Path.Combine(root,output,"HoRTGIProbe.exe"),options=BuildOptions.None});
                 if(report.summary.result!=BuildResult.Succeeded)throw new Exception("GI Player build failed: "+report.summary.result);
                 Debug.Log("[HoGIPlayerBuild] PASS size="+report.summary.totalSize+" errors="+report.summary.totalErrors);EditorApplication.Exit(0);

@@ -12,22 +12,13 @@
 #pragma use_dxc
 #pragma target 6.0
 #pragma require inlineraytracing
-#include "HoRTGIApplicationBridge.hlsl"
-#include "../../RTDI/ThirdParty/RTXDI/DI/InitialSampling.hlsl"
+#include "HoRTGIResampling.hlsl"
 #include "../../RTDI/ThirdParty/RTXDI/LightSampling/PresamplingFunctions.hlsl"
-#include "../../RTDI/ThirdParty/RTXDI/GI/TemporalResampling.hlsl"
-#include "../../RTDI/ThirdParty/RTXDI/GI/SpatialResampling.hlsl"
 RWTexture2D<float4> _HoRTGIDiffuse;
+StructuredBuffer<float2> _HoRTGIFinalVisibility;
 #if defined(HO_RTGI_NRD_ACTIVE)
 #include "HoRTGINrdSignal.hlsl"
 #endif
-RTXDI_ReservoirBufferParameters HoGILayout()
-{RTXDI_ReservoirBufferParameters p=(RTXDI_ReservoirBufferParameters)0;p.reservoirBlockRowPitch=(uint)_HoRTGIReservoirLayout.x;p.reservoirArrayPitch=(uint)_HoRTGIReservoirLayout.y;return p;}
-RTXDI_RuntimeParameters HoGIRuntime()
-{RTXDI_RuntimeParameters p=(RTXDI_RuntimeParameters)0;p.neighborOffsetMask=255;p.frameIndex=(uint)_HoRTGIFrameIndex;return p;}
-bool HoGIInside(uint2 pixel) {return all(pixel<(uint2)_HoRTGIFrame.xy);}
-RTXDI_RISBufferSegmentParameters HoGIEnvironmentRIS()
-{RTXDI_RISBufferSegmentParameters p=(RTXDI_RISBufferSegmentParameters)0;p.tileSize=(uint)_HoRTGIEnvironmentRISLayout.x;p.tileCount=(uint)_HoRTGIEnvironmentRISLayout.y;return p;}
 
 // Same equal-solid-angle PDF and pinned SDK pre-sampling used by Ho-RTDI.
 [numthreads(8,8,1)]
@@ -47,92 +38,12 @@ void PresampleEnvironment(uint3 id:SV_DispatchThreadID)
 }
 
 [numthreads(8,8,1)]
-void ShadeSecondary(uint3 id:SV_DispatchThreadID)
-{
-    if(!HoGIInside(id.xy))return;
-    uint index=id.y*(uint)_HoRTGIFrame.x+id.x;
-    HoRTGISecondaryData data=_HoRTGISecondary[index];
-    RTXDI_GIReservoir reservoir=RTXDI_EmptyGIReservoir();
-    if(data.flags!=0)
-    {
-        float3 radiance=data.emission;
-        if(data.flags==1&&(_HoRTGIFrame.z>0||_HoRTGIEnvironment.z>.5))
-        {
-            RAB_Surface surface=RAB_EmptySurface();
-            surface.worldPos=data.positionWS;surface.viewDepth=1;
-            surface.normal=HoGIUnpackNormal(data.normal);surface.geoNormal=HoGIUnpackNormal(data.geometricNormal);
-            surface.material.diffuseAlbedo=HoDIUnpack(data.diffuseAlbedo).rgb;
-            float4 specular=HoDIUnpack(data.specularRoughness);surface.material.specularF0=specular.rgb;surface.material.roughness=specular.a;
-            RAB_Surface primary=RAB_GetGBufferSurface(id.xy,false);
-            surface.viewDir=normalize(primary.worldPos-surface.worldPos);
-            RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTGIFrameIndex,RTXDI_SECONDARY_DI_GENERATE_INITIAL_SAMPLES_RANDOM_SEED);
-            RTXDI_RandomSamplerState tileRng=RTXDI_InitRandomSampler(id.xy/16,(uint)_HoRTGIFrameIndex,RTXDI_SECONDARY_DI_GENERATE_INITIAL_SAMPLES_RANDOM_SEED);
-            RTXDI_DIInitialSamplingParameters p=(RTXDI_DIInitialSamplingParameters)0;
-            p.numLocalLightSamples=_HoRTGIFrame.z>0?(uint)_HoRTGISettings.x:0;
-            p.numEnvironmentSamples=_HoRTGIEnvironment.z>.5?(uint)_HoRTGIEnvironment.y:0;
-            p.enableInitialVisibility=0;p.brdfRayMinT=_HoRTGISettings.w;
-            RTXDI_LightBufferParameters lights=(RTXDI_LightBufferParameters)0;lights.localLightBufferRegion.numLights=(uint)_HoRTGIFrame.z;
-            lights.environmentLightParams.lightPresent=_HoRTGIEnvironment.z>.5?1:0;lights.environmentLightParams.lightIndex=HO_RTDI_ENVIRONMENT_LIGHT_INDEX;
-            RAB_LightSample sample=RAB_EmptyLightSample();
-            RTXDI_DIReservoir lightReservoir=RTXDI_SampleLightsForSurface(rng,tileRng,surface,p,lights,HoGIEnvironmentRIS(),HoGIEnvironmentRIS(),sample);
-            if(RTXDI_IsValidDIReservoir(lightReservoir))
-            {
-                // Reconstruct the stored choice before visibility; the SDK's out
-                // sample can diverge under Unity DXC with multiple candidates.
-                sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(lightReservoir),false),surface,RTXDI_GetDIReservoirSampleUV(lightReservoir));
-                if(RAB_GetConservativeVisibility(surface,sample))
-                {
-                    float3 L;float distance;RAB_GetLightDirDistance(surface,sample,L,distance);
-                    radiance+=RAB_SurfaceEvaluateBrdfTimesNoL(surface,L)*sample.radiance*RTXDI_GetDIReservoirInvPdf(lightReservoir)/max(sample.solidAnglePdf,1e-12);
-                }
-            }
-        }
-        // Keep HDR energy; the reference's optional firefly clamp is disabled.
-        reservoir=RTXDI_MakeGIReservoir(data.positionWS,HoGIUnpackNormal(data.normal),radiance,data.pdf);
-    }
-    RTXDI_StoreGIReservoir(reservoir,HoGILayout(),id.xy,1);
-}
+void ShadeSecondary(uint3 id:SV_DispatchThreadID){HoGIShadeSecondary(id.xy);}
 
 [numthreads(8,8,1)]
-void Temporal(uint3 id:SV_DispatchThreadID)
-{
-    if(!HoGIInside(id.xy))return;
-    RTXDI_GIReservoir reservoir=RTXDI_LoadGIReservoir(HoGILayout(),id.xy,1);
-    RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
-    if(_HoRTGIFlags.x>.5&&RAB_IsSurfaceValid(surface))
-    {
-        float4 clip=mul(_HoRTGIPreviousVP,float4(surface.worldPos,1));
-        float previousDepth=-dot(_HoRTGIPreviousViewZ,float4(surface.worldPos,1));
-        if(all(isfinite(clip))&&clip.w>1e-6&&previousDepth>0)
-        {
-            float2 uv=clip.xy/clip.w*float2(.5,-.5)+.5;
-            float3 motion=float3(uv*_HoRTGIFrame.xy-.5-float2(id.xy),previousDepth-surface.viewDepth);
-            RTXDI_GITemporalResamplingParameters p=(RTXDI_GITemporalResamplingParameters)0;
-            p.depthThreshold=.1;p.normalThreshold=.9;p.maxHistoryLength=(uint)_HoRTGIFlags.z;p.maxReservoirAge=(uint)_HoRTGIFlags.z;
-            p.biasCorrectionMode=RTXDI_BIAS_CORRECTION_RAY_TRACED;
-            RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTGIFrameIndex,RTXDI_GI_TEMPORAL_RESAMPLING_RANDOM_SEED);
-            reservoir=RTXDI_GITemporalResampling(id.xy,surface,motion,0,reservoir,rng,HoGIRuntime(),HoGILayout(),p);
-        }
-    }
-    RTXDI_StoreGIReservoir(reservoir,HoGILayout(),id.xy,2);
-}
-
+void Temporal(uint3 id:SV_DispatchThreadID){HoGITemporal(id.xy);}
 [numthreads(8,8,1)]
-void Spatial(uint3 id:SV_DispatchThreadID)
-{
-    if(!HoGIInside(id.xy))return;
-    RTXDI_GIReservoir reservoir=RTXDI_LoadGIReservoir(HoGILayout(),id.xy,2);
-    RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
-    if(_HoRTGIFlags.y>.5&&RAB_IsSurfaceValid(surface))
-    {
-        RTXDI_GISpatialResamplingParameters p=(RTXDI_GISpatialResamplingParameters)0;
-        p.depthThreshold=.1;p.normalThreshold=.9;p.numSamples=(uint)_HoRTGISettings.y;p.samplingRadius=_HoRTGISettings.z;
-        p.biasCorrectionMode=RTXDI_BIAS_CORRECTION_RAY_TRACED;
-        RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTGIFrameIndex,RTXDI_GI_SPATIAL_RESAMPLING_RANDOM_SEED);
-        reservoir=RTXDI_GISpatialResampling(id.xy,surface,2,reservoir,rng,HoGIRuntime(),HoGILayout(),p);
-    }
-    RTXDI_StoreGIReservoir(reservoir,HoGILayout(),id.xy,1);
-}
+void Spatial(uint3 id:SV_DispatchThreadID){HoGISpatial(id.xy);}
 
 void HoGIFinal(uint2 pixel)
 {
@@ -148,9 +59,18 @@ void HoGIFinal(uint2 pixel)
             float3 delta=reservoir.position-surface.worldPos;float distance=length(delta);float3 direction=delta/max(distance,1e-12);
             if(distance>_HoRTGISettings.w*2&&dot(direction,surface.geoNormal)>0&&dot(direction,surface.normal)>0)
             {
-                HoRTSceneHit hit=HoRTTraceScene(surface.worldPos,direction,_HoRTGISettings.w,distance-_HoRTGISettings.w,255);
-                hitDistance=min(65504,hit.status==0?distance:max(hit.distance,_HoRTGISettings.w));
-                if(hit.status==0)demodulated=Lambert(surface.normal,-direction)*reservoir.radiance*reservoir.weightSum;
+                bool visible;
+                if(_HoRTGIFlags.w>.5)
+                {
+                    float2 visibility=_HoRTGIFinalVisibility[pixel.y*(uint)_HoRTGIFrame.x+pixel.x];
+                    visible=visibility.x>.5;hitDistance=visibility.y;
+                }
+                else
+                {
+                    HoRTSceneHit hit=HoRTTraceScene(surface.worldPos,direction,_HoRTGISettings.w,distance-_HoRTGISettings.w,255);
+                    visible=hit.status==0;hitDistance=min(65504,visible?distance:max(hit.distance,_HoRTGISettings.w));
+                }
+                if(visible)demodulated=Lambert(surface.normal,-direction)*reservoir.radiance*reservoir.weightSum;
             }
         }
     }

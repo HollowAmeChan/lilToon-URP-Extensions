@@ -6,14 +6,18 @@ StructuredBuffer<HoGITestRay> _HoGITestRays;
 RWStructuredBuffer<HoRTGISecondarySurface> _HoGITestHits;
 [shader("miss")]
 void HoGIMiss(inout HoRTGISecondarySurface payload : SV_RayPayload) { payload=(HoRTGISecondarySurface)0; }
-[shader("raygeneration")]
-void HoGIValidate()
+void HoGIValidateRay(bool visibilityOnly)
 {
     uint index=DispatchRaysIndex().x;
     HoGITestRay input=_HoGITestRays[index];
     RayDesc ray;ray.Origin=input.originMin.xyz;ray.TMin=input.originMin.w;
     ray.Direction=normalize(input.directionMax.xyz);ray.TMax=input.directionMax.w;
     HoRTGISecondarySurface hit=(HoRTGISecondarySurface)0;
-    TraceRay(_HoRTSceneAccelerationStructure,RAY_FLAG_FORCE_OPAQUE,255,0,1,0,ray,hit);
+    if(visibilityOnly)hit.status=HO_RTGI_VISIBILITY_QUERY;
+    TraceRay(_HoRTSceneAccelerationStructure,0,255,0,1,0,ray,hit);
     _HoGITestHits[index]=hit;
 }
+[shader("raygeneration")]
+void HoGIValidate(){HoGIValidateRay(false);}
+[shader("raygeneration")]
+void HoGIVisibilityValidate(){HoGIValidateRay(true);}

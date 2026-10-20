@@ -49,7 +49,7 @@ namespace lilToon.URP.Extensions.RTGI
             for(int i=0;i<nrdShaders.Length;i++)if(nrdShaders[i]==null)nrdShaders[i]=UnityEditor.AssetDatabase.LoadAssetAtPath<ComputeShader>(root+"NRD/HoRTGINrd"+i.ToString("D2")+".compute");
             #endif
             if(secondaryMaterialShader!=null)materials=new HoRTGISecondaryMaterials(secondaryMaterialShader);
-            scene=materials!=null?new HoRTScene(materials.Resolve):new HoRTScene();
+            scene=materials!=null?new HoRTScene(materials.Resolve,HoRTGISecondaryMaterials.SupportsCutout):new HoRTScene();
             pass=new HoRTGIPass();debugPass=new HoRTGIDebugPass();compositePass=new HoRTGICompositePass();
             if(!registered){RenderPipelineManager.beginCameraRendering+=ResetCamera;registered=true;}
         }
@@ -85,6 +85,7 @@ namespace lilToon.URP.Extensions.RTGI
             context.PrepareEnvironment(captured.useEnvironment&&captured.secondaryEnvironmentSamples>0);
             bool denoise=volume!=null&&volume.denoise.overrideState?volume.denoise.value:settings.denoise;
             context.PrepareDenoiser(denoise,nrdShaders);
+            context.PrepareVisibility(scene.CutoutCount>0);
             HoAttributeCompositeConsumerRegistry.DeclareForCamera(camera,this,"RTGI primary normals",System.Array.Empty<HoACQueryDescriptor>(),null,HoACDemandResources.HighPrecisionSurfaceNormal);
             if(materials.TimeVarying)context.historyValid=false;
             pass.Setup(context,scene,shader,rayShader,captured,lights.Count>0?lights.ToArray():new HoRTDIRendererFeature.AnalyticLight[1],lights.Count,signature);
@@ -99,6 +100,7 @@ namespace lilToon.URP.Extensions.RTGI
             renderer.EnqueuePass(pass);
             Status=$"一跳 diffuse GI：{lights.Count} 灯 / {scene.InstanceCount} RT submesh / 排除 {excluded} 灯、{materials.Rejections.Count} 命中材质、{scene.Rejections.Count} 几何项";
             if(denoise)Status+=" / "+context.nrdStatus;
+            if(scene.CutoutCount>0)Status+=" / 基础裁切 "+scene.CutoutCount;
             if(composite){compositePass.Setup(compositeMaterial,context,amount);renderer.EnqueuePass(compositePass);Status+=" / GI 加法合成";}
             else if(compositeRequested&&amount>0)Status+=" / 合成需要完整Shader、全视口Mono单采样输入";
             if(volume!=null&&volume.debugMode.value!=HoRTGIDebugMode.Off&&(camera.cameraType==CameraType.SceneView?volume.debugInSceneView.value:volume.debugInGameView.value))
@@ -203,7 +205,7 @@ namespace lilToon.URP.Extensions.RTGI
                     data.signature=source.signature;data.revision=source.revision;data.view=source.view;data.projection=source.projection;data.camera=source.camera;
                     data.renderTime=source.renderTime;
                     data.scene=scene.Read(graph,builder);data.primary=HoRTPrimarySurfaceInputs.Read(graph,frame,builder);
-                    foreach(var buffer in new[]{context.reservoirs,context.history,context.secondary,context.lights})builder.UseBuffer(graph.ImportBuffer(buffer),AccessFlags.ReadWrite);
+                    foreach(var buffer in new[]{context.reservoirs,context.history,context.secondary,context.lights,context.finalVisibility})builder.UseBuffer(graph.ImportBuffer(buffer),AccessFlags.ReadWrite);
                     builder.UseBuffer(graph.ImportBuffer(context.environmentRis),AccessFlags.ReadWrite);
                     if(context.environmentPdf!=null)builder.UseTexture(graph.ImportTexture(context.environmentPdf),AccessFlags.ReadWrite);
                     builder.UseBuffer(graph.ImportBuffer(context.neighbors));
@@ -250,11 +252,38 @@ namespace lilToon.URP.Extensions.RTGI
                 cmd.SetRayTracingBufferParam(d.rayShader,"_HoRTGISecondary",c.secondary);cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIFrame",frame);
                 cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIRaySettings",new Vector4(settings.w,d.settings.maxDistance,d.settings.useEnvironment&&d.settings.includeDirectEnvironment?1:0,100000));
                 cmd.SetRayTracingIntParam(d.rayShader,"_HoRTGIFrameIndex",c.frame);
+                cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGISettings",settings);
+                cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIReservoirLayout",new Vector4(c.rowPitch,c.arrayPitch,0,0));
+                cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIEnvironmentRISLayout",new Vector4(HoRTGIContext.RisTileSize,HoRTGIContext.RisTileCount,0,0));
+                cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIEnvironment",new Vector4(HoRTGIContext.EnvironmentPdfSize,d.settings.secondaryEnvironmentSamples,environment?1:0,0));
+                cmd.SetRayTracingIntParam(d.rayShader,"_HoRTGIEnvironmentBrdfSamples",0);
+                cmd.SetRayTracingBufferParam(d.rayShader,"_HoRTGILights",c.lights);
+                cmd.SetRayTracingBufferParam(d.rayShader,"_HoRTGIReservoirs",c.reservoirs);
+                cmd.SetRayTracingBufferParam(d.rayShader,"_HoRTGIEnvironmentRIS",c.environmentRis);
+                cmd.SetRayTracingBufferParam(d.rayShader,"_HoRTGIFinalVisibility",c.finalVisibility);
+                cmd.SetRayTracingBufferParam(d.rayShader,"_HoRTGIHistory",c.history);
+                cmd.SetRayTracingBufferParam(d.rayShader,"_HoRTGINeighbors",c.neighbors);
+                cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIFlags",new Vector4(temporal?1:0,d.settings.spatial?1:0,Mathf.Clamp(d.settings.maxHistory,1,32),1));
+                cmd.SetRayTracingMatrixParam(d.rayShader,"_HoRTGIPreviousVP",c.previousVP);cmd.SetRayTracingMatrixParam(d.rayShader,"_HoRTGIPreviousInverseVP",c.previousInverseVP);
+                cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIPreviousCameraPosition",c.previousCamera);cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIPreviousTowardsEye",c.previousTowardsEye);
+                cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIPreviousViewZ",c.previousViewZ);cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIPreviousClipParameters",c.previousClip);
+                cmd.SetRayTracingTextureParam(d.rayShader,"_HoRTGIEnvironmentPdf",c.environmentPdf!=null?c.environmentPdf.nameID:new RenderTargetIdentifier(Texture2D.blackTexture));
                 cmd.DispatchRays(d.rayShader,"GenerateSecondary",(uint)c.width,(uint)c.height,1);
                 foreach(var name in Stages)
                 {
                     if((name=="BuildEnvironmentPdf"||name=="PresampleEnvironment")&&!environment)continue;
                     if(name=="BuildEnvironmentPdf"&&c.environmentPdfReady&&c.environmentPdfRevision==d.environmentRevision)continue;
+                    if(name=="ShadeSecondary"&&c.alphaVisibility)
+                    {cmd.DispatchRays(d.rayShader,"ShadeSecondaryNative",(uint)c.width,(uint)c.height,1);continue;}
+                    if((name=="Temporal"||name=="Spatial")&&c.alphaVisibility)
+                    {cmd.DispatchRays(d.rayShader,name+"Native",(uint)c.width,(uint)c.height,1);continue;}
+                    if(name=="Final")
+                    {
+                        #if UNITY_EDITOR
+                        c.ValidationBeforeFinal?.Invoke(cmd,c);
+                        #endif
+                        if(c.alphaVisibility)cmd.DispatchRays(d.rayShader,"TraceFinalVisibility",(uint)c.width,(uint)c.height,1);
+                    }
                     int kernel=d.shader.FindKernel(name=="Final"&&c.nrd!=null?"FinalNRD":name);d.scene.BuildAndBind(cmd,d.shader,kernel);
                     if(name=="Final"&&c.nrd!=null)c.nrd.BindFinal(cmd,d.shader,kernel);
                     if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,kernel,cameraData);
@@ -262,6 +291,7 @@ namespace lilToon.URP.Extensions.RTGI
                     cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTGILights",c.lights);cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTGIReservoirs",c.reservoirs);
                     cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTGIHistory",c.history);cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTGINeighbors",c.neighbors);cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTGISecondary",c.secondary);
                     cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTGIEnvironmentRIS",c.environmentRis);
+                    cmd.SetComputeBufferParam(d.shader,kernel,"_HoRTGIFinalVisibility",c.finalVisibility);
                     cmd.SetComputeVectorParam(d.shader,"_HoRTGIEnvironmentRISLayout",new Vector4(HoRTGIContext.RisTileSize,HoRTGIContext.RisTileCount,0,0));
                     cmd.SetComputeVectorParam(d.shader,"_HoRTGIEnvironment",new Vector4(HoRTGIContext.EnvironmentPdfSize,d.settings.secondaryEnvironmentSamples,environment?1:0,0));
                     cmd.SetComputeIntParam(d.shader,"_HoRTGIEnvironmentBrdfSamples",0);
@@ -275,7 +305,7 @@ namespace lilToon.URP.Extensions.RTGI
                     else cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTGIEnvironmentPdf",Texture2D.blackTexture);
                     cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTGIDiffuse",c.diffuse.nameID);
                     cmd.SetComputeVectorParam(d.shader,"_HoRTGIFrame",frame);cmd.SetComputeVectorParam(d.shader,"_HoRTGISettings",settings);
-                    cmd.SetComputeVectorParam(d.shader,"_HoRTGIFlags",new Vector4(temporal?1:0,d.settings.spatial?1:0,Mathf.Clamp(d.settings.maxHistory,1,32),0));
+                    cmd.SetComputeVectorParam(d.shader,"_HoRTGIFlags",new Vector4(temporal?1:0,d.settings.spatial?1:0,Mathf.Clamp(d.settings.maxHistory,1,32),c.alphaVisibility?1:0));
                     cmd.SetComputeVectorParam(d.shader,"_HoRTGIReservoirLayout",new Vector4(c.rowPitch,c.arrayPitch,0,0));cmd.SetComputeIntParam(d.shader,"_HoRTGIFrameIndex",c.frame);
                     cmd.SetComputeMatrixParam(d.shader,"_HoRTGIPreviousVP",c.previousVP);cmd.SetComputeMatrixParam(d.shader,"_HoRTGIPreviousInverseVP",c.previousInverseVP);
                     cmd.SetComputeVectorParam(d.shader,"_HoRTGIPreviousCameraPosition",c.previousCamera);cmd.SetComputeVectorParam(d.shader,"_HoRTGIPreviousTowardsEye",c.previousTowardsEye);

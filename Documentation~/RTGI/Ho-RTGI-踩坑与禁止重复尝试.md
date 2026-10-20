@@ -27,6 +27,8 @@
 | F21 / GI步骤006夹具假设 | 将白色unlit材质的实际camera color假定为1，或对disabled-camera请求路径省略DI helper已有的显式Volume更新，导致误报合成/Volume策略失败 | 用此前实际raster基准加同帧GI；请求前更新Volume stack。两份拒绝报告保留；不能为夹具改生产增益或Volume策略 |
 | F22 / GI步骤007代码复核 | 仅把DI SupportsCutout predicate接给GI registry就声称Cutout完整可用；共享inline显式CULL_NON_OPAQUE，而GI的次级命中/次级灯/最终重连还无一致alpha路径 | 先补完整native命中/可见性合同，再用实际孔洞、遮挡、重连和secondary-light验证；本条是代码合同风险，不伪称已经做过Cutout实验 |
 | F23 / GI步骤007夹具 | 用开启空间重采样后的单像素MC值断言统一发光面的解析常量；首轮.928失败 | 过滤夹具隔离空间复用并保留temporal/NRD reset，或使用有精度依据的空间/时间均值。门槛不放宽，生产算法/增益不为该误用调整 |
+| F24 / GI步骤008夹具 | 黑albedo且F0=0便要求受天空照亮的rough-GGX次级面严格零；实测约.0013，真实包却flags1/z=-.5、diffuse/spec RGB0、emission0 | 阅读当前BRDF：Schlick仍有(1-V.H)^5。初始命中用真实包/位置验证，shadow能量另验；不改生产gain/BRDF消掉合法擦边反射 |
+| F25 / GI步骤008原型 | LIL_RENDER=0直接使用未声明的AlphaMask数值字段；由opaque换Shader却保留Opaque RenderType；或把并行C#失败后旧report当fresh结果 | 私有适配显式声明AlphaMask字段，夹具使用真实TransparentCutout域，退出/时间戳/源码绑定一起核对。正式隔离与Player实际源分开记录，不能以旧文件存在当通过 |
 
 长期无收益路线的记录模板：问题与基线 → 假说/参考 → 尝试和真实成本 → 哪些指标改善/退化 → 拒绝或搁置原因 → 禁止原样再试的条件 → 重开所需新证据。新记录必须关联过程步骤与报告，不只写“试过，不行”。
 
