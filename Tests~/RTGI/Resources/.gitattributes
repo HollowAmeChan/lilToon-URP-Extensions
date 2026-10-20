@@ -1,0 +1,3 @@
+# Evidence SHA256 hashes refer to exact bytes, including the original newlines.
+*.json -text whitespace=cr-at-eol
+source-at-run/* -text whitespace=cr-at-eol

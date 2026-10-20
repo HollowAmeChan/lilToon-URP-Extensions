@@ -201,6 +201,7 @@
 - M3后续：步骤009已有独立矩阵对应的骨骼材质hit、UV/normal map/BlendShape及非readable source反弹/遮挡，六项Editor/两个315请求Mono Player通过。生产Runtime未因测试修改；复杂角色动态接收、实际场景漫游和M4有效GPU预算仍待交付。
 - 实际场景：步骤010古堡四组接入和GI开关图通过，但逐RGB时间均值filtered质量门槛失败；长窗原版约低6～7%，sigma4/6两轮仍失败，明确搁置更宽色盒，原生产设置不改。该项未验收，不能以有效像素/变化像素重定义完成；有效GPU取证与质量缺口继续。
 - M4取证进展：步骤011严格GPU timestamp资格和古堡分段实测过，256/512两路径、AS/PDF重建与Total-only对照有有效fence/tick；仅限定Editor graphics-queue区间，未据此完成显存/1080p/半GI重建/正常自动camera或完整Player预算。010质量失败继续，不修改阶段成功定义。
+- M4资源：步骤012实际256/512去重payload16.588/65.151MiB、AS API16.523MiB；1080布局推算513.997MiB。HD连续Unity fence错误后仅终止本任务进程，未取得HD报告、compat未执行，稳定性能预算不接纳。F31保留条件与禁止原样重试；[半GI输入/历史/重建设计](../RTGI/Ho-RTGI-半分辨率设计.md)已写，尚未实现或验收。过程/失败/交接和过滤提交要求继续。
 
 每步review/过滤提交/失败保留/交接约束继续执行；目标保持active。阶段局部通过不能替代最终场景/GPU验收。
 

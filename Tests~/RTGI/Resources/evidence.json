@@ -1,0 +1,50 @@
+{
+  "resourceAccountingQualified": true,
+  "gpuTimestampsValidForCompletedRuns": true,
+  "stableGpuBudgetQualified": false,
+  "actual1080Qualified": false,
+  "filteredQualityQualified": false,
+  "halfGiImplemented": false,
+  "runs": [
+    {
+      "label": "256-rg",
+      "width": 256,
+      "height": 256,
+      "ownedPayloadMiB": 16.587726593017578,
+      "giMiB": 11.462238311767578,
+      "nrdMiB": 5.125244140625,
+      "asApiMiB": 16.52294921875,
+      "poseUnityRuntimeMiB": 28.53864288330078,
+      "gpuTotalMedianMs": 24.969216,
+      "gpuTotalP95Ms": 138.807296,
+      "reportSha256": "2F6898597BAF42E12C9A7E2687640CCCB5F2DA1D65349F23E623AF2464576FAE"
+    },
+    {
+      "label": "512-rg",
+      "width": 512,
+      "height": 512,
+      "ownedPayloadMiB": 65.15095901489258,
+      "giMiB": 45.21223831176758,
+      "nrdMiB": 19.9384765625,
+      "asApiMiB": 16.52294921875,
+      "poseUnityRuntimeMiB": 28.53864288330078,
+      "gpuTotalMedianMs": 117.351424,
+      "gpuTotalP95Ms": 125.691904,
+      "reportSha256": "B50B822083B5449A3A86277A9C1DF944B30634D933726AC698976AA4B435283E"
+    }
+  ],
+  "rejectedRuns": [
+    {
+      "label": "1080-rg",
+      "exitCode": -1,
+      "reason": "Repeated Unity D3D12Fence::Wait errors; owned process terminated; no qualified HD result",
+      "logSha256": "EC0475990F286B8800BEA52C6FB547816D30EBF34F5F22C772EAC25D44305B6F"
+    }
+  ],
+  "unmeasured1080DescriptorProjection": {
+    "width": 1920,
+    "height": 1080,
+    "payloadBytes": 538964532,
+    "basis": "Completed live 256/512 layout, assuming same 32-light capacity/16-instance mapping, environment, Cutout and NRD; excludes AS, pose mesh, GB/SB, assets, driver overhead and scratch. Not a successful HD allocation/render."
+  }
+}

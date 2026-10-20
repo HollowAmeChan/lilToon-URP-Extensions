@@ -251,3 +251,21 @@
 
 
 步骤011过滤提交：`63db17e`。提交后GPU verifier再次通过；产品算法/Shader/NRD不改，Editor-only hook与独立probe已隔离Release。GPU成本取证接纳，010质量失败保留，目标active。
+
+## 012：实际资源清单与1080p成本（进行中）
+
+**事前review：** 011只有256/512整相机尺寸，不能据此宣称1080p或半GI已交付。先在同一古堡独立工程读取实际GraphicsBuffer count/stride、已创建RTHandle的格式/尺寸/mip、RELAX permanent/transient/constants、场景实例映射、AS的Unity GetSize（若不可用明确unknown）和自有pose mesh的Unity运行时内存。对象去重，输出逐资源清单；描述符payload与Unity统计不称物理驻留VRAM，不含借用GB/SB、源mesh/材质/纹理、driver heap或临时AS scratch。
+
+**验证与边界：** 新独立输出目录保留011历史；256/512及1920×1080 RG/compat分别实跑，沿用已通过资格的fence/timestamp桥，仍40样本。核对像素有效性、真实Cutout/骨骼/合成、稳定pose无额外Bake、源码/日志/报告SHA和实际exit。1080p使用正常16:9投影，与旧方形视野不同，不能把差值只归因分辨率。没有产品参数/算法变更，不做质量成功宣称；010能量失败及F27搁置继续保留。
+
+**后续决策门槛：** 只在拿到清单与实测后设计半GI，必须包含全分辨率GB/SB代表像素、深度/法线/validity边缘重建、历史/屏幕坐标映射及原能量/动态/细节门槛。仅缩dispatch或相机不接受。正常enabled-camera与完整Player预算仍独立待验。
+
+**实际证据及拒绝：** 新Editor审计器读取28个去重对象。256/512两个进程52360/56712实际exit0、编译诊断0、40 GPU samples/marker及fence通过；自有GI+NRD+instance payload16.588/65.151 MiB，AS Unity GetSize均16.523 MiB，pose Mesh Unity运行时统计28.539 MiB（不称GPU驻留）。NRD实际79B/pixel+tile+192KiB constants。1080p同布局推算513.997 MiB，其中reservoir191.25、NRD156.421；没有HD成功分配/呈现结论。
+
+1080 RG PID44476在GPU clock同步出现连续Unity D3D12Fence::Wait；核对仅自有GI projectPath/PID后终止，真实exit−1，无fresh report，未跑compat。最初审计器读GraphicsBuffer.name的setter-only导致编译exit1，修正为owner field标识，日志及失败源SHA保留。步骤012的run/host observations/rejected compilation均在Tests~/RTGI/Resources；verifier明确actual1080Qualified=false、stableGpuBudgetQualified=false、filteredQualityQualified=false。
+
+**事后review：** 接纳逐资源取证和分辨率需求确认，不接纳HD/稳定成本。256/512本轮Total median24.969/117.351ms、p95 138.807/125.692ms，显著异于011；当时整卡约7.3～7.6/8GiB，但瞬时观测不足证明唯一根因。Runtime/Shader/NRD相对011完全相同，不伪称算法退化或以此线性估1080时间。保持其它应用/进程，未改驱动/TDR。F31明确新条件前不原样重试；runner后加仅自身fence中止/15分钟上限、HD显式记录新条件，只有语法复核，不冒称新控制实跑。
+
+**收益与下一阶段：** 清单把主开销定位为3份reservoir和NRD；可以据此设计半GI，但没有生产优化收益。新设计文档记录参考render/rect/output及前帧scale合同、DI尺寸验收边界，以及2×2代表full pixel与GI中心相差.5 full pixel的关键错误风险。下一步先独立验证映射/历史/NRD投影，再接重建，默认full不改。010能量失败、正常自动camera和完整Player预算继续。仅Editor取证改动，无理由重复相同Player构建。
+
+**过滤提交：** Editor/RTGI/HoRTGIResourceAudit.cs/meta与Castle矩形尺寸/新入口；Tests~/RTGI/Resources（含原运行脚本归档和失败证据）；RTGI说明/计划/过程/禁试/交接/设计。无Runtime、native binary、vendor、源场景或其他任务文件。所有本任务进程结束。

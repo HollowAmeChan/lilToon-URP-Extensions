@@ -1,0 +1,15 @@
+[
+  {
+    "utc": "2026-10-20T12:37:04.422180+00:00",
+    "activeRun": {
+      "id": 44476,
+      "entry": "HoRTGICastleValidation.RunResources1080",
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step012-1080-rg-20261020T123700342.log",
+      "label": "1080-rg"
+    },
+    "command": "nvidia-smi --query-gpu=name,memory.total,memory.used,utilization.gpu,utilization.memory,pstate,clocks.current.graphics,temperature.gpu --format=csv,noheader,nounits",
+    "exitCode": 0,
+    "csv": "NVIDIA GeForce RTX 4060, 8188, 7492, 27, 7, P3, 1335, 47",
+    "note": "Host-wide instantaneous observation, not isolated per-process memory or proof of cause."
+  }
+]

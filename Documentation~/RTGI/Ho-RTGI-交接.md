@@ -145,3 +145,19 @@ GpuTiming/verify_validation.py已过：7真实GPU进程、known-load/fence、当
 下一项012显存与实际分辨率/输入域重建、完整应用条件。512/256是整个camera变域比较，不冒称已实现全分辨率GB/SB上的半GI；Total不含GB/SB/Atmo/Forward及CPU扫描/Bake，非完整presented-frame。需要记录实际context/AS/pose资源payload并再决定优化。正常enabled-camera呈现仍未验。010原版RELAX长窗RGB约低6～7%质量失败，sigma4/6宽色盒已搁置，不重启gain/更宽sigma。Goal active，不能完成。
 
 011已过滤提交63db17e，GPU verifier再过，全部进程结束。012尚未动手；只读预算/资源后再设计半GI输入映射与边缘重建，不把低camera分辨率对照冒称半GI交付。需继续正常自动camera/完整Player与010实际质量缺口，goal active。
+
+### 012终态（2026-10-20，待过滤提交；HD失败保留）
+
+get_goal确认原目标仍active，未新建/替换。新增Editor/RTGI/HoRTGIResourceAudit.cs/meta，Castle验证器仅扩矩形尺寸/资源入口；没有任何Runtime/Shader/NRD改动。反射读取实际buffer/RTHandle/RELAX pools/constants/scene mapping，按对象去重、实际格式/尺寸/mip/stride算payload；另读Unity AS GetSize、pose Mesh运行时统计，不混称物理VRAM。
+
+Tests~/RTGI/Resources/run_validation.ps1实际exec42925终态已收：256 PID52360、512 PID56712实际exit0/marker/fresh/编译诊断0，40个fenced GPU样本/marker。资源28项，payload16.5877/65.1510 MiB，AS API均16.52295MiB，自有251321顶点pose Mesh Unity统计28.53864MiB。NRD79B/pixel+tile+192KiB确认。1080同布局计算513.9966MiB（reservoir191.25、NRD156.4209），只能推算，没实跑成功。
+
+1080 RG PID44476在GPU Clock同步出现多次D3D12Fence::Wait got小于目标；核对本任务projectPath/记录PID后Stop-Process终止，真实exit−1、无fresh report；compat未执行。run.activeProcess=null，无本任务Unity进程。host-observations.json整卡约7.3～7.6/8GiB，不能证明唯一原因；未动其它应用/进程/驱动/TDR。F31禁止原条件盲重试。256/512本轮Total median24.969/117.351、p95 138.807/125.692ms，远慢于011；源码完全相同且host条件异，保留原始tick但不接纳稳定预算或算法退化结论。
+
+初编译exit1是GraphicsBuffer.name setter-only，失败run/log/sourceSHA在rejected-compilation.json；失败源码副本.codex-research/HoRTGIResourceAudit-step012-name-getter-rejected.cs.txt。修正后两个正式实际退出0。原执行runner保留source-at-run/run_validation.ps1并对应SHA；最终runner加自身进程fence/15分钟中止、默认不再跑HD，-IncludeHd必须-HostConditionNote写具体新条件。新增控制仅PowerShell语法过，未重复GPU实跑，不冒称新证据。
+
+Resources/verify_validation.py过：当前所有实跑C#及Runtime源码SHA、原runner归档、真实log/report/错误、28项公式/alias/NRD池/mesh、GPU fence/tick全部核对；resourceAccountingQualified=true、completed GPU samples valid，actual1080Qualified=false、stableGpuBudgetQualified=false、filteredQualityQualified=false、halfGiImplemented=false。011旧GPU verifier因Castle源码合法变化应按其commit审阅，不覆盖新代码满足旧SHA。
+
+已完成本步事前/事后review及新半GI设计文档：参考CameraFrameStateRtxdiExtensions的render/rect/output/previous尺寸和NativeGBufferConstants/OutputBlit，不声称参考scale/DLSS已经提供Ho的全GB/SB半GI重建。DI ResolutionQuality只是整相机尺寸验证。GI当前直接借DI RAB pixel/full primary，Final depth UV/previous reconstruct/Temporal/NRD都同尺寸；2×2选2g+1时实际中心相对GI比例中心偏移.5full pixel，必须统一处理，奇数尺寸需专门证明/回退。下一项013先做独立坐标映射/历史/NRD投影小验证，再接GI私有bridge与全域深度/法线/validity重建；默认full，不只缩dispatch，不改DI公共pixel语义或用低图albedo串色。新条件/低驻留有界夹具后才恢复HD GPU资格和大场景。
+
+待过滤提交白名单：Editor/RTGI/HoRTGIResourceAudit.cs/meta、HoRTGICastleValidation.cs；Tests~/RTGI/Resources整个目录；Documentation~/RTGI的README/过程/踩坑/交接/半分辨率设计，Documentation~/Ho-RTGI.md和计划。无Runtime/Player改动，不重复相同Player build；别人的Documentation~/计划/Ho-GD-Outline-SourceDepth-Plan.md不纳入。010原版古堡filtered能量−6～−7%、sigma4/6两轮搁置未解除；正常enabled-camera、完整Player/应用预算仍未完。Goal active，不可标complete。
