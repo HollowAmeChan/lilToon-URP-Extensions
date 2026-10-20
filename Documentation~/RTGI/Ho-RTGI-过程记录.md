@@ -248,3 +248,6 @@
 **事后review：** 接纳GPU取证能力，取代先前缺失数据；不是采样/NRD优化，不改变010质量失败。测得空间复用、secondary、Generate为主要GPU段，512相对256显著增长；带插桩Editor graphics-queue区间而非完整Player presented-frame，不把阶段median相加或CPU扫描/Bake算进Total。显存/高分辨率/全域半GI重建/正常自动camera与原质量5%仍缺失。空标记开销不盲扣，host其它GPU活动和p95波动保留。下一步按实测成本推进分辨率/显存及实际应用条件，不重启宽色盒路线。
 
 **过滤提交：** 仅Runtime/RTGI三文件Editor-only hook、Editor/RTGI计时sidecar/Shader/古堡测量与隔离Release入口、Tests~/RTGI/GpuTiming源码与实测报告、RTGI文档。没有产品nativeDLL、NRD/vendor/header更改或用户资产；其他任务文件保留。
+
+
+步骤011过滤提交：`63db17e`。提交后GPU verifier再次通过；产品算法/Shader/NRD不改，Editor-only hook与独立probe已隔离Release。GPU成本取证接纳，010质量失败保留，目标active。
