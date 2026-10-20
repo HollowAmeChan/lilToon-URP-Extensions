@@ -224,7 +224,7 @@ Moments/verify_validation.py通过：4个实际进程/源码/log/report，三组
 
 015已按白名单过滤提交419e4ef，Moments verifier提交后再过；index空，仅他人Ho-GD plan未跟踪，全部本任务进程结束。下一轮直接进入016完整图/16相位与局部阶段取证，原stride0与质量门槛不删，不再缩单位或改生产默认。Goal active，未complete。
 
-### 016终态（2026-10-20，待过滤提交；全图仍失败，DI候选拒绝）
+### 016终态（2026-10-20，已提交c8a83dc；全图仍失败，DI候选拒绝）
 
 新增Editor/RTGI/HoRTGISpatialAudit.cs/meta；Castle加两个完整域审计入口/报告，Primary嵌套20B struct仅改internal供Editor helper访问。Runtime/Shader/DI/vendor/native没有修改；默认/Player仍64。CPU读取已有full数组累积raw/filtered每像素时均/方差、全图、全部16相位、7个阶段RGB及最大损失/增加各12点；不增加产品GPU pass。HistoryFix5明确fast/条件Fix RGB，未再算slow moment。
 
@@ -245,3 +245,5 @@ Tests~/RTGI/Spatial/run_validation.ps1 exec36028已收：原64 PID56596、已测
 推荐复用既有HoRTGIShadingCommon：ShadeSecondary直接写reservoir1，所以无复用参考只需GenerateSecondary→ShadeSecondaryNative→TraceFinalVisibility（有Cutout）→包装Final compute，initial flags0/2/black事件仍算样本；不复制材质BRDF/样本权重。为Reference compute显式绑定primary，raygen先Bind同full globals。新Feature用HoRTPrimarySurfaceInputs.Read/scene.Read声明RG依赖，借同一场景/18活灯/已生成环境PDF/RIS（不能把lights容量32当18，尾部未知）；批次更换随机seed，注意共享RIS表相关性，按批次判断收敛而非假定全iid。也可先选择更简单已有Reference探针扩展，但必须保持同支持域/不改变RNG原始主结果。所有这些仅是下一步设计，不是已证明的参考。
 
 017后再据真值决定GI采样还是过滤改动；015矩精度虽确有问题但纯单位已F35停止，F27宽sigma/history/gain、F31HD、F33half、F36本候选继续搁置。正常enabled-camera/完整Player预算仍未交付，goal active不complete。待过滤提交仅Editor SpatialAudit/meta+Castle、Tests~/RTGI/Spatial、RTGI README/过程/禁试/交接/计划；他人Ho-GD plan未跟踪不纳入。
+
+016已按白名单过滤提交c8a83dc，Spatial verifier提交后再过；Runtime零diff、index空、全部本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮直接017同域高样本无复用一跳参考及收敛，先读旧Reference/本机RTX，不重复已拒绝候选或新单位调参。所有原质量/HD/应用条件未完成项继续，goal active。

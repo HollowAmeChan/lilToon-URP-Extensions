@@ -351,3 +351,5 @@
 **事后review与下一动作：** 接纳完整域诊断，否定“只是取样相位”的解释，拒绝凸裁剪候选。下一项017先复核本机RTX/现有Reference一跳估计，再给热点与安静控制点做高样本无复用参考及批次收敛；匹配原full primary/material/light/sky/Cutout域，区分有限窗ReSTIR异常与filter偏差。此为一跳漫反射验证，不扩通用PT/多跳，不以子集冒充完整验收。先有真值证据再改降噪；原5%与所有失败保留，不盲gain/历史/sigma/更小单位。
 
 **过滤提交：** 仅Editor SpatialAudit/meta、Castle完整域接口（无候选）、Tests~/RTGI/Spatial及RTGI README/过程/禁试/交接/计划。拒绝候选只在Tests~可review归档，不进入Runtime/Editor产品入口；他人Ho-GD plan不碰，所有进程结束，goal active。
+
+步骤016过滤提交：`c8a83dc`。提交后Spatial verifier再过，Runtime零diff、index空、进程结束。下一项017建立同域高样本无复用一跳参考/收敛，不能把有限窗高方差raw或子集当完整真值；原5%和全部失败继续，goal active。
