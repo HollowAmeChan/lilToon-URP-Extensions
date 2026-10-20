@@ -1,0 +1,11 @@
+{
+  "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step011-release-no-probe-player.log",
+  "logSha256": "FE634792E3672AB3DC35FC2566F4C2BDA4145660138978A490A4AD6383C44792",
+  "id": 57360,
+  "probeDllAbsent": true,
+  "activeProcess": null,
+  "report": "D:\\Unity_Fork\\lilToon-URP-Extensions\\Tests~\\RTGI\\GpuTiming\\results\\release-no-probe.json",
+  "exe": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTGIValidation\\PlayerGISkinnedNoGpuProbe\\HoRTGIProbe.exe",
+  "reportSha256": "8BAB796485E5CB832A47856E1E88A3459140B81C76C112F6075AF1BF2B40A7A0",
+  "exitCode": 0
+}

@@ -1,0 +1,44 @@
+{
+    "pass": false,
+    "error": "System.Exception: Native timestamp sample failed: -14 slot=3 fence=23/22\r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGIGpuTimestampValidation.Tick () [0x00085] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTGI\\HoRTGIGpuTimestampValidation.cs:64 ",
+    "gpu": "NVIDIA GeForce RTX 4060",
+    "api": "Direct3D12",
+    "initStatus": 1,
+    "eventBase": 19,
+    "nativeResultSize": 48,
+    "emptyMedian": 0.0,
+    "shortMedian": 0.0,
+    "longMedian": 0.0,
+    "samples": [
+        {
+            "slot": 0,
+            "iterations": 0,
+            "begin": 1792482926822202912,
+            "end": 1792482926822203808,
+            "frequency": 1000000000,
+            "targetFence": 16,
+            "completedFence": 17,
+            "milliseconds": 0.000896
+        },
+        {
+            "slot": 1,
+            "iterations": 128,
+            "begin": 1792482926997772288,
+            "end": 1792482926997779456,
+            "frequency": 1000000000,
+            "targetFence": 18,
+            "completedFence": 19,
+            "milliseconds": 0.007168
+        },
+        {
+            "slot": 2,
+            "iterations": 2048,
+            "begin": 1792482927094512640,
+            "end": 1792482927094554624,
+            "frequency": 1000000000,
+            "targetFence": 20,
+            "completedFence": 21,
+            "milliseconds": 0.041984
+        }
+    ]
+}

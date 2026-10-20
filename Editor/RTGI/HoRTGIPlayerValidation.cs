@@ -21,6 +21,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void BuildCutoutCompatibility()=>Build(true,true);
         public static void BuildSkinned()=>Build(false,true,true);
         public static void BuildSkinnedCompatibility()=>Build(true,true,true);
+        public static void BuildSkinnedNoGpuProbe()=>Build(false,true,true,"NoGpuProbe");
         public static void AuditScripts()
         {
             try
@@ -43,7 +44,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
             AuditScripts();
         }
-        static void Build(bool compatibility,bool cutout=false,bool skinned=false)
+        static void Build(bool compatibility,bool cutout=false,bool skinned=false,string suffix="")
         {
             try
             {
@@ -90,6 +91,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 string output=compatibility?"PlayerGIDynamicCompatibility":"PlayerGIDynamic";
                 if(cutout)output=compatibility?"PlayerGICutoutCompatibility":"PlayerGICutout";
                 if(skinned)output=compatibility?"PlayerGISkinnedCompatibility":"PlayerGISkinned";
+                output+=suffix;
                 var report=BuildPipeline.BuildPlayer(new BuildPlayerOptions{scenes=new[]{assets+"Probe.unity"},target=BuildTarget.StandaloneWindows64,locationPathName=Path.Combine(root,output,"HoRTGIProbe.exe"),options=BuildOptions.None});
                 if(report.summary.result!=BuildResult.Succeeded)throw new Exception("GI Player build failed: "+report.summary.result);
                 Debug.Log("[HoGIPlayerBuild] PASS size="+report.summary.totalSize+" errors="+report.summary.totalErrors);EditorApplication.Exit(0);

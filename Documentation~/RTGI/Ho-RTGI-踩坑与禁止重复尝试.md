@@ -32,6 +32,8 @@
 | F26 / GI步骤009夹具复核 | 两个负缩放轴行列式仍正，却把该case命名为镜像并声称验证winding反转 | 检查真实变换行列式；本步在正式运行前改用单负轴并通过GI属性/normal-map gate。此为夹具覆盖复核，不伪称发现生产变换缺陷 |
 | F27 / GI步骤010实际场景 | 古堡“能渲染/变化像素>0”便声称filtered质量通过；或对约9%的RGB均值下降继续加gain、放宽5%或无界增加history/fastSigma | 64窗失败，256长窗仍约-6～-7%；stage显示输入准确，主要时间/色盒链下降。sigma4/6两轮仍失败且边际小，搁置更宽盒；重开需新阶段/局部误差及动态/细节证据。Runtime原版不改，qualityQualified=false保留 |
 | F28 / GI步骤010统计 | 用max(R,G,B)的单帧平均，直接证明RGB能量损失或改善；把独立GI曝光×100预览与正常camera按同曝光比较 | 逐通道时间均值与方差分开记录；显示曝光只影响标明倍率的PNG，EXR/生产增益保持，不能以预览亮度替数据 |
+| F29 / GI步骤011计时 | 把合法空GPU区间tick相等当无数据，或反过来把未完成/零起点/非空零时长当有效GPU成本 | 非零频率/起点、唯一slot、已完成目标fence与tick顺序同时验证；只允许空区间量化零，已知非空负载必须正并按负载扩展。原strict失败保留 |
+| F30 / GI步骤011隔离 | query resolve直接放native raster render pass，或仅关闭AnyPlatform/Win64就声称测试DLL Editor-only（Linux/OSX仍默认enabled） | EndQuery标记位置不变，Resolve延后camera外；明确禁所有Standalone，实际Release payload无probe DLL且功能实跑。不能给产品加计时native依赖 |
 
 长期无收益路线的记录模板：问题与基线 → 假说/参考 → 尝试和真实成本 → 哪些指标改善/退化 → 拒绝或搁置原因 → 禁止原样再试的条件 → 重开所需新证据。新记录必须关联过程步骤与报告，不只写“试过，不行”。
 

@@ -17,7 +17,23 @@ namespace lilToon.URP.Extensions.RTGI
         #if UNITY_EDITOR
         // Isolated stage audit only; no serialized/runtime sampling policy.
         internal Action<CommandBuffer,HoRTGIContext> ValidationBeforeFinal;
+        internal Action<CommandBuffer,string,bool> ValidationGpuMarker;
+        internal Action<RasterCommandBuffer,string,bool> ValidationGpuRasterMarker;
         #endif
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        internal void MarkGpu(CommandBuffer cmd,string name,bool begin)
+        {
+            #if UNITY_EDITOR
+            ValidationGpuMarker?.Invoke(cmd,name,begin);
+            #endif
+        }
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        internal void MarkGpu(RasterCommandBuffer cmd,string name,bool begin)
+        {
+            #if UNITY_EDITOR
+            ValidationGpuRasterMarker?.Invoke(cmd,name,begin);
+            #endif
+        }
         internal RTHandle diffuse;
         internal HoRTGINrdContext nrd;
         internal string nrdStatus;

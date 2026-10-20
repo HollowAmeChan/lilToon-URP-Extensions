@@ -82,6 +82,8 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 
 ## 验证
 
+2026-10-20步骤011：限定Editor测试桥取得真实D3D12队列timestamp/fence样本，资格+古堡分段/尺寸/重建/Total-only共7实际进程exit0。40帧中位数GI生产（含NRD、不含合成）256²约1.19/1.36ms、512²约3.99/3.93ms（RG/compat），强制AS首帧约2.69ms；见[GPU取证](../Tests~/RTGI/GpuTiming/README.md)。这是带插桩Editor区间，非完整presented-frame或1080p预算；显存/半分辨率重建仍待测。回调仅UNITY_EDITOR，单独Release315请求回归通过且无计时DLL。010质量失败未因计时通过而解除。
+
 2026-10-20步骤010：真实血月古堡128²/256²两路径接入成功，15实例/12Cutout/1骨骼快照、18灯、全像素有效，正常camera已实际合成；但原版RELAX的逐通道长窗均值低约6～7%，未过5%门槛。阶段取证及sigma4/6两轮诊断仍失败，Runtime保持原版，不补gain。说明与画面见[实际场景及质量拒绝](../Tests~/RTGI/Scene/README.md)，不能把接入成功当完整画质/GPU预算交付。
 
 2026-10-20步骤009：六个Editor进程实际exit0，材质hit两颜色空间各140checks、完整两路径/两颜色空间各187请求/25checks。独立蒙皮矩阵与实际UV0/UV1、几何/着色法线、切线法线图一致；非readable蒙皮emission/遮挡、Bone/BlendShape首帧响应、稳定缓存及无效姿态清理通过。两个Mono Player各315请求/310有效应用帧/30checks实际exit0。见[骨骼证据](../Tests~/RTGI/Skinned/README.md)；本步没有改生产Runtime，也不将CPU Bake/保守reset当动态表面motion或GPU预算通过。

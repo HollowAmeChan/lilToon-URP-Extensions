@@ -1,0 +1,8 @@
+{
+  "sourceSha256": "E8F5D018BAB92A4D561AAB9FF36B70294F946544A20D5BC9C8C0ED4EC95E9B15",
+  "dllSha256": "1D2468F15C5C930946954D291C48E574E6899DDFCA03110351DA76261ECCADD0",
+  "compiler": "VS2022 14.44.35207 x64",
+  "dll": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTGIValidation\\Assets\\Plugins\\x86_64\\HoGIGpuProbe.dll",
+  "builtUtc": "2026-10-20T08:02:05.3865714Z",
+  "unityApi": "C:/Program Files/Unity/Hub/Editor/6000.3.15f1/Editor/Data/PluginAPI"
+}

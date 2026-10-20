@@ -231,3 +231,20 @@
 
 
 步骤010过滤提交：`010b8cd`。提交后verify仍确认四项功能真实通过、五项质量真实拒绝，qualityQualified=false；无产品Runtime修改。整体目标active，后续GPU取证不得掩盖质量缺口。
+
+
+## 011：独立D3D12 GPU timestamp资格验证（进行中）
+
+**事前review：** 目标仍缺有效GPU成本。DI已证明隐藏请求/FrameTiming与实际sampler可零GPU duration，RenderDoc接口无duration；不复刻该条件。Unity6000.3官方PluginAPI提供当前commandList、queue频率及frame fence，可在同一队列记录真实timestamp。先做隔离test-only桥，不创建device、不接NRI/DLSS、不改NRD二进制/系统或产品依赖。
+
+**合同：** ConfigureEvent明确queue Allow与command-recording DontCare线程域；query写入当前Unity commandList，GPU Resolve到READBACK，只有结束事件+非零目标fence已完成、时钟频率有效、begin/end新鲜且有序才接受。先空区间与不同已知Compute负载资格验证，失败用真实缺失/exit1，不CPU代替。资源/指针待GPU完成后释放，限定自有GI工程Plugins。资格过后才挂GI阶段，记录instrumentation空区间/开销，不把单pass差值或回放统计当总帧成本。
+
+**实现与资格：** 自有test-only C++插件使用官方IUnityGraphicsD3D12v7当前commandList，不创device/截descriptor/NRI。Native Resolve延后camera外，避免raster render pass内ResolveQueryData。24样本空/128/2048迭代Compute，空median0、短约.006ms、长约.041ms，频率1GHz、每slot非零起点/有序/fence完成。初版严格end>begin拒绝合法empty，真实exit1报告保留；修正为只empty允许量化零，非空仍正，正式exit0。最初DXGI include/UTF8编译问题修正，官方header未改。
+
+**实际分段：** Runtime只加UNITY_EDITOR条件测试回调与标记，Player调用编译去除。资格、256RG/compat、512RG/compat、256Total-only、强制AS/PDF重建7个实际进程全exit0/marker/fresh/SHA/编译诊断0。每普通case40帧/marker40 fenced样本。生产Total（含NRD不含composite）median分别1.18784/1.360896/3.991552/3.926016ms，composite .016384/.019456/.023552/.03072ms；Total-only1.191936ms对全marker1.18784接近。稳定AS无build，marker可量化零；强制重建frame0 AS2.694144ms、PDF.016384ms。p95/完整tick与fence都保留。
+
+**隔离复核与Release：** 发现默认AnyPlatform导入且Linux/OSX仍enabled，配置明确禁全部Standalone、仅Windows Editor/x64。独立Win64 Mono release（不覆盖历史Player目录）build0、实际315请求/原Skinned/Cutout/动态/合成全部gate过，payload不含HoGIGpuProbe.dll；额外DLL不进产品仓库目录，HoRTDINRD未改。Editor配置/Release日志有实际完成证明，既有GB/退出GC/非GI警告不遮盖。
+
+**事后review：** 接纳GPU取证能力，取代先前缺失数据；不是采样/NRD优化，不改变010质量失败。测得空间复用、secondary、Generate为主要GPU段，512相对256显著增长；带插桩Editor graphics-queue区间而非完整Player presented-frame，不把阶段median相加或CPU扫描/Bake算进Total。显存/高分辨率/全域半GI重建/正常自动camera与原质量5%仍缺失。空标记开销不盲扣，host其它GPU活动和p95波动保留。下一步按实测成本推进分辨率/显存及实际应用条件，不重启宽色盒路线。
+
+**过滤提交：** 仅Runtime/RTGI三文件Editor-only hook、Editor/RTGI计时sidecar/Shader/古堡测量与隔离Release入口、Tests~/RTGI/GpuTiming源码与实测报告、RTGI文档。没有产品nativeDLL、NRD/vendor/header更改或用户资产；其他任务文件保留。

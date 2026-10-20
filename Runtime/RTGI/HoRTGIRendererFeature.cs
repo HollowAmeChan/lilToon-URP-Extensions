@@ -239,6 +239,7 @@ namespace lilToon.URP.Extensions.RTGI
             private static void Dispatch(CommandBuffer cmd,Data d,bool compatibility,CameraData cameraData)
             {
                 var c=d.context;int signature;unchecked{signature=d.signature*397^(int)d.environmentRevision;}
+                c.MarkGpu(cmd,"GI.Total",true);
                 bool temporal=d.settings.temporal&&c.historyValid&&c.sceneRevision==d.revision&&c.lightingSignature==signature;
                 c.lastTemporal=temporal;
                 var frame=new Vector4(c.width,c.height,d.lightCount,0);
@@ -248,7 +249,7 @@ namespace lilToon.URP.Extensions.RTGI
                 cmd.SetRayTracingVectorParam(d.rayShader,HoAtmosphereBindings.ParametersId,d.environmentParameters);
                 cmd.SetRayTracingVectorParam(d.rayShader,HoAtmosphereBindings.TintId,d.environmentTint);
                 cmd.SetRayTracingVectorParam(d.rayShader,HoAtmosphereBindings.ConstantId,d.environmentConstant);
-                d.scene.BuildAndBind(cmd,d.rayShader);cmd.SetRayTracingShaderPass(d.rayShader,"HoRTGISecondarySurface");
+                c.MarkGpu(cmd,"GI.AS",true);d.scene.BuildAndBind(cmd,d.rayShader);c.MarkGpu(cmd,"GI.AS",false);cmd.SetRayTracingShaderPass(d.rayShader,"HoRTGISecondarySurface");
                 cmd.SetRayTracingBufferParam(d.rayShader,"_HoRTGISecondary",c.secondary);cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIFrame",frame);
                 cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIRaySettings",new Vector4(settings.w,d.settings.maxDistance,d.settings.useEnvironment&&d.settings.includeDirectEnvironment?1:0,100000));
                 cmd.SetRayTracingIntParam(d.rayShader,"_HoRTGIFrameIndex",c.frame);
@@ -268,21 +269,23 @@ namespace lilToon.URP.Extensions.RTGI
                 cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIPreviousCameraPosition",c.previousCamera);cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIPreviousTowardsEye",c.previousTowardsEye);
                 cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIPreviousViewZ",c.previousViewZ);cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIPreviousClipParameters",c.previousClip);
                 cmd.SetRayTracingTextureParam(d.rayShader,"_HoRTGIEnvironmentPdf",c.environmentPdf!=null?c.environmentPdf.nameID:new RenderTargetIdentifier(Texture2D.blackTexture));
-                cmd.DispatchRays(d.rayShader,"GenerateSecondary",(uint)c.width,(uint)c.height,1);
+                c.MarkGpu(cmd,"GI.GenerateSecondary",true);cmd.DispatchRays(d.rayShader,"GenerateSecondary",(uint)c.width,(uint)c.height,1);c.MarkGpu(cmd,"GI.GenerateSecondary",false);
                 foreach(var name in Stages)
                 {
                     if((name=="BuildEnvironmentPdf"||name=="PresampleEnvironment")&&!environment)continue;
                     if(name=="BuildEnvironmentPdf"&&c.environmentPdfReady&&c.environmentPdfRevision==d.environmentRevision)continue;
+                    if(name!="Final")c.MarkGpu(cmd,"GI."+name,true);
                     if(name=="ShadeSecondary"&&c.alphaVisibility)
-                    {cmd.DispatchRays(d.rayShader,"ShadeSecondaryNative",(uint)c.width,(uint)c.height,1);continue;}
+                    {cmd.DispatchRays(d.rayShader,"ShadeSecondaryNative",(uint)c.width,(uint)c.height,1);c.MarkGpu(cmd,"GI."+name,false);continue;}
                     if((name=="Temporal"||name=="Spatial")&&c.alphaVisibility)
-                    {cmd.DispatchRays(d.rayShader,name+"Native",(uint)c.width,(uint)c.height,1);continue;}
+                    {cmd.DispatchRays(d.rayShader,name+"Native",(uint)c.width,(uint)c.height,1);c.MarkGpu(cmd,"GI."+name,false);continue;}
                     if(name=="Final")
                     {
                         #if UNITY_EDITOR
                         c.ValidationBeforeFinal?.Invoke(cmd,c);
                         #endif
-                        if(c.alphaVisibility)cmd.DispatchRays(d.rayShader,"TraceFinalVisibility",(uint)c.width,(uint)c.height,1);
+                        if(c.alphaVisibility){c.MarkGpu(cmd,"GI.FinalVisibility",true);cmd.DispatchRays(d.rayShader,"TraceFinalVisibility",(uint)c.width,(uint)c.height,1);c.MarkGpu(cmd,"GI.FinalVisibility",false);}
+                        c.MarkGpu(cmd,"GI.Final",true);
                     }
                     int kernel=d.shader.FindKernel(name=="Final"&&c.nrd!=null?"FinalNRD":name);d.scene.BuildAndBind(cmd,d.shader,kernel);
                     if(name=="Final"&&c.nrd!=null)c.nrd.BindFinal(cmd,d.shader,kernel);
@@ -318,11 +321,14 @@ namespace lilToon.URP.Extensions.RTGI
                     }
                     else if(name=="PresampleEnvironment")cmd.DispatchCompute(d.shader,kernel,HoRTGIContext.RisTileSize/256,HoRTGIContext.RisTileCount,1);
                     else cmd.DispatchCompute(d.shader,kernel,(c.width+7)/8,(c.height+7)/8,1);
+                    c.MarkGpu(cmd,"GI."+name,false);
                 }
                 if(c.nrd!=null)
                 {
                     bool reset=!c.historyValid||c.sceneRevision!=d.revision||c.lightingSignature!=signature;
+                    c.MarkGpu(cmd,"GI.NRD",true);
                     c.nrd.Record(cmd,d.view,d.projection,c.frame,reset,d.renderTime,!Application.isPlaying&&d.camera.cameraType==CameraType.SceneView);
+                    c.MarkGpu(cmd,"GI.NRD",false);c.MarkGpu(cmd,"GI.Resolve",true);
                     int resolve=d.shader.FindKernel("ResolveNRD");
                     cmd.SetComputeFloatParam(d.shader,"_HoRTGINrdSignalScale",HoRTGINrdContext.SignalScale);
                     if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,resolve,cameraData);
@@ -330,8 +336,10 @@ namespace lilToon.URP.Extensions.RTGI
                     cmd.SetComputeTextureParam(d.shader,resolve,"_HoRTGINrdOutput",c.nrd.output.nameID);
                     cmd.SetComputeTextureParam(d.shader,resolve,"_HoRTGIFiltered",c.nrd.filtered.nameID);
                     cmd.DispatchCompute(d.shader,resolve,(c.width+7)/8,(c.height+7)/8,1);
+                    c.MarkGpu(cmd,"GI.Resolve",false);
                 }
                 cmd.SetGlobalFloat("_HoRTGIActive",1);cmd.SetGlobalTexture("_HoRTGIDiffuseTexture",c.PublishedDiffuse.nameID);cmd.SetGlobalTexture("_HoRTGIRawDiffuseTexture",c.diffuse.nameID);
+                c.MarkGpu(cmd,"GI.Total",false);
                 c.Complete(d.view,d.projection,d.camera,d.revision,signature);
             }
             public override void Execute(ScriptableRenderContext rendering,ref RenderingData data)

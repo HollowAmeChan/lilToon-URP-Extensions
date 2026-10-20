@@ -1,6 +1,6 @@
 # Ho-RTGI 当前交接
 
-更新：2026-10-20。目标active，未完成。步骤005独立RELAX已提交95120a4；步骤006真实应用帧/空间质量与两个Mono Player已过滤提交035b9f9；步骤007材质排除已过滤提交20449c3；步骤008已提交6ebe065；009已提交4ccd02b；010古堡接入/filtered失败证据已过滤提交010b8cd，qualityQualified=false；下一项011有效GPU取证。下一项实际场景输入支持与GPU预算；不再围绕均匀夹具无限调NRD参数。
+更新：2026-10-20。目标active，未完成。步骤005独立RELAX已提交95120a4；步骤006真实应用帧/空间质量与两个Mono Player已过滤提交035b9f9；步骤007材质排除已过滤提交20449c3；步骤008已提交6ebe065；009已提交4ccd02b；010古堡接入/filtered失败证据已过滤提交010b8cd，qualityQualified=false；011已取得有效GPU timestamp与古堡分段，待过滤提交；010质量仍失败。下一项实际场景输入支持与GPU预算；不再围绕均匀夹具无限调NRD参数。
 
 ## 接手顺序与硬性要求
 
@@ -126,3 +126,20 @@ Scene/verify_validation.py通过的含义是“四个功能接入真实通过、
 下一项011有效GPU取证/预算可独立推进，但必须保留当前质量缺口。RenderDoc技能已读，CLI工具本机存在但无duration接口，DI隐藏宿主计时0样本/自动camera0事件/无capture经验禁止原样盲重试。已只读核对Unity6000.3 PluginAPI IUnityGraphicsD3D12v7/v8：CommandRecordingState提供正在录制的commandList，GetFrameFence/GetNextFrameFenceValue可验证GPU完成；ConfigureEvent区分DontCare(render线程commandList)与Allow(submission线程queue)。可在自有测试工程做限定GPU timestamp桥，先空区间/已知Compute负载、queue频率/fence/新鲜tick严格校验，再挂GI阶段。不要创建新D3D12 device/NRI/DLSS，不污染产品DLL或改系统；源码/编译器已定位Unity PluginAPI与VS2022 Community D:/Microsoft Visual Studio/2022/Community。若该方法无有效GPU数据仍记录失败，不能CPU替代。正常enabled-camera呈现/用户场景漫游仍独立未验，需实际可呈现条件。
 
 010已过滤提交010b8cd，verifier再次通过且明确qualityQualified=false，所有本任务进程结束。011限定GPU timestamp诊断尚未动手，先写事前review并严格校验GPU完成/频率/空区间/已知负载，不改目标或假报GPU数据。
+
+
+### 011终态（2026-10-20，待过滤提交）
+
+限定GPU桥已有有效数据，不再是0 duration。源码Tests~/RTGI/GpuTiming/Native/HoGIGpuProbe.cpp，DLL只生成在GI项目Assets/Plugins/x86_64。官方Unity IUnityGraphicsD3D12v7，ConfigureEvent：初始化Allow queue线程读频率/创query，Begin/End DontCare当前commandList EndQuery，Resolve在camera外另事件；目标frame fence完成后读READBACK。无device创建/NRI/DLSS/descriptor hook，HoRTDINRD未变。初strict empty失败报告保留，empty允许有序同tick，非空Compute必须正。
+
+Runtime自有三个文件只加UNITY_EDITOR条件hook/标记（Context/Feature/Composite），无Shader/SDK/NRD算法改变。Editor/GpuClock侧Record/Collect，Raster内只EndQuery，Resolve延后避免原生renderpass限制。Total不含Composite，AS稳定无build可0，强制frame0有真build。
+
+正式Tests~/RTGI/GpuTiming/run_validation.ps1，exec97588已收：qualification49120，256RG51280/compat50740，512RG50460/compat54488，total-only43680，rebuild54928全exit0/编译诊断0/fresh/marker/SHA成功。40帧每marker40样本（PDF冷1），有效频率1GHz、slot唯一/fence已完成。Total median 256RG1.18784/compat1.360896，512RG3.991552/compat3.926016ms；Composite .016384/.019456/.023552/.03072ms。Total-only1.191936近全marker1.18784；AS强制frame0 2.694144ms、PDF.016384ms。p95波动与所有tick/fence在报告，不宣称稳定预算。
+
+插件隔离配置初发现Linux/OSX默认enabled，已禁所有Standalone，只有Windows Editor/x64；模板ConfigureEditorPlugin.cs复制自有Assets/Editor执行。exec53148终态已收：配置42036 exit0，Release build28628 exit0。额外PlayerGISkinnedNoGpuProbe目录不覆盖历史，实跑PID57360 exit0、315请求，全旧Skinned/Cutout/动态/合成过，payload没有HoGIGpuProbe.dll。release-regression.json保留。TestsGpuTiming/prepare_probe.ps1可编译+配置；源码VS2022/SDK/UnityAPI/DLL hash都记录，binary不入产品。
+
+GpuTiming/verify_validation.py已过：7真实GPU进程、known-load/fence、当前8份源码、日志/报告、原生源码/DLL与Release无probe都核对。evidence.gpuCostQualified=true且filteredQualityQualified=false。当前所有本任务进程结束，active.json/run.json无活进程。其它Ho-GD plan未跟踪文件属别人，不暂存。
+
+待提交仅上述3 Runtime RTGI文件的Editor hook；Editor/RTGI GPUClock/Qualifier+meta、Probe.compute/meta、Castle GPU入口、Player隔离Release入口；Tests~/RTGI/GpuTiming及RTGI文档/计划。无需更改DLL/vendor/系统/其它工程。旧010场景verifier源码SHA现因合法GPU入口变化需按010历史commit用，不能覆盖新工作去满足旧verifier。
+
+下一项012显存与实际分辨率/输入域重建、完整应用条件。512/256是整个camera变域比较，不冒称已实现全分辨率GB/SB上的半GI；Total不含GB/SB/Atmo/Forward及CPU扫描/Bake，非完整presented-frame。需要记录实际context/AS/pose资源payload并再决定优化。正常enabled-camera呈现仍未验。010原版RELAX长窗RGB约低6～7%质量失败，sigma4/6宽色盒已搁置，不重启gain/更宽sigma。Goal active，不能完成。

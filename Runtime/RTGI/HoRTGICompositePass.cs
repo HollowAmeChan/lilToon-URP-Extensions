@@ -29,6 +29,7 @@ namespace lilToon.URP.Extensions.RTGI
             internal Material material;internal float intensity;
             internal TextureHandle source,diffuse,depth;
             internal HoRTPrimarySurfaceInputs primary;
+            internal HoRTGIContext lighting;
         }
         public override void RecordRenderGraph(RenderGraph graph,ContextContainer frame)
         {
@@ -38,14 +39,15 @@ namespace lilToon.URP.Extensions.RTGI
             var destination=graph.CreateTexture(descriptor);
             using(var builder=graph.AddRasterRenderPass<Data>("Ho-RTGI additive composite",out var data))
             {
-                data.material=material;data.intensity=intensity;data.source=resources.activeColorTexture;data.diffuse=input.diffuse;data.depth=resources.cameraDepthTexture;
+                data.material=material;data.intensity=intensity;data.source=resources.activeColorTexture;data.diffuse=input.diffuse;data.depth=resources.cameraDepthTexture;data.lighting=lighting;
                 data.primary=HoRTPrimarySurfaceInputs.Read(graph,frame,builder);
                 builder.UseTexture(data.source);builder.UseTexture(data.diffuse);builder.UseTexture(data.depth);
                 builder.SetRenderAttachment(destination,0,AccessFlags.WriteAll);builder.AllowGlobalStateModification(true);
                 builder.SetRenderFunc(static(Data d,RasterGraphContext ctx)=>
                 {
-                    d.primary.Bind(ctx.cmd);ctx.cmd.SetGlobalTexture(DiffuseId,d.diffuse);ctx.cmd.SetGlobalTexture(DepthId,d.depth);ctx.cmd.SetGlobalFloat(IntensityId,d.intensity);
+                    d.lighting.MarkGpu(ctx.cmd,"GI.Composite",true);d.primary.Bind(ctx.cmd);ctx.cmd.SetGlobalTexture(DiffuseId,d.diffuse);ctx.cmd.SetGlobalTexture(DepthId,d.depth);ctx.cmd.SetGlobalFloat(IntensityId,d.intensity);
                     Blitter.BlitTexture(ctx.cmd,d.source,new Vector4(1,1,0,0),d.material,0);
+                    d.lighting.MarkGpu(ctx.cmd,"GI.Composite",false);
                 });
             }
             resources.cameraColor=destination;
@@ -58,9 +60,11 @@ namespace lilToon.URP.Extensions.RTGI
         public override void Execute(ScriptableRenderContext rendering,ref RenderingData data)
         {
             var source=data.cameraData.renderer.cameraColorTargetHandle;var cmd=CommandBufferPool.Get("Ho-RTGI additive composite");
+            lighting.MarkGpu(cmd,"GI.Composite",true);
             HoRTPrimarySurfaceInputs.BindCompatibility(cmd,data.cameraData);
             cmd.SetGlobalTexture(DiffuseId,lighting.PublishedDiffuse.nameID);cmd.SetGlobalFloat(IntensityId,intensity);
             Blitter.BlitCameraTexture(cmd,source,scratch,material,0);Blitter.BlitCameraTexture(cmd,scratch,source);
+            lighting.MarkGpu(cmd,"GI.Composite",false);
             rendering.ExecuteCommandBuffer(cmd);CommandBufferPool.Release(cmd);
         }
         public void Dispose(){scratch?.Release();scratch=null;}

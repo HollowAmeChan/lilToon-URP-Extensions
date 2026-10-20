@@ -1,0 +1,263 @@
+{
+    "pass": true,
+    "error": "",
+    "gpu": "NVIDIA GeForce RTX 4060",
+    "api": "Direct3D12",
+    "initStatus": 1,
+    "eventBase": 19,
+    "nativeResultSize": 48,
+    "emptyMedian": 0.0,
+    "shortMedian": 0.006144,
+    "longMedian": 0.039936,
+    "failedSample": {
+        "begin": 0,
+        "end": 0,
+        "frequency": 0,
+        "targetFence": 0,
+        "completedFence": 0,
+        "error": 0,
+        "ready": 0
+    },
+    "samples": [
+        {
+            "slot": 0,
+            "iterations": 0,
+            "begin": 1792483048513583616,
+            "end": 1792483048513584512,
+            "frequency": 1000000000,
+            "targetFence": 13,
+            "completedFence": 14,
+            "milliseconds": 0.000896
+        },
+        {
+            "slot": 1,
+            "iterations": 128,
+            "begin": 1792483048601899008,
+            "end": 1792483048601907200,
+            "frequency": 1000000000,
+            "targetFence": 15,
+            "completedFence": 16,
+            "milliseconds": 0.008192
+        },
+        {
+            "slot": 2,
+            "iterations": 2048,
+            "begin": 1792483048711866368,
+            "end": 1792483048711916544,
+            "frequency": 1000000000,
+            "targetFence": 17,
+            "completedFence": 18,
+            "milliseconds": 0.050176
+        },
+        {
+            "slot": 3,
+            "iterations": 0,
+            "begin": 1792483048714319872,
+            "end": 1792483048714319872,
+            "frequency": 1000000000,
+            "targetFence": 19,
+            "completedFence": 20,
+            "milliseconds": 0.0
+        },
+        {
+            "slot": 4,
+            "iterations": 128,
+            "begin": 1792483048715089920,
+            "end": 1792483048715097088,
+            "frequency": 1000000000,
+            "targetFence": 21,
+            "completedFence": 22,
+            "milliseconds": 0.007168
+        },
+        {
+            "slot": 5,
+            "iterations": 2048,
+            "begin": 1792483048715879424,
+            "end": 1792483048715919360,
+            "frequency": 1000000000,
+            "targetFence": 23,
+            "completedFence": 24,
+            "milliseconds": 0.039936
+        },
+        {
+            "slot": 6,
+            "iterations": 0,
+            "begin": 1792483048716500992,
+            "end": 1792483048716500992,
+            "frequency": 1000000000,
+            "targetFence": 25,
+            "completedFence": 26,
+            "milliseconds": 0.0
+        },
+        {
+            "slot": 7,
+            "iterations": 128,
+            "begin": 1792483048717096960,
+            "end": 1792483048717103104,
+            "frequency": 1000000000,
+            "targetFence": 27,
+            "completedFence": 28,
+            "milliseconds": 0.006144
+        },
+        {
+            "slot": 8,
+            "iterations": 2048,
+            "begin": 1792483048717751296,
+            "end": 1792483048717792256,
+            "frequency": 1000000000,
+            "targetFence": 29,
+            "completedFence": 30,
+            "milliseconds": 0.04096
+        },
+        {
+            "slot": 9,
+            "iterations": 0,
+            "begin": 1792483048718364672,
+            "end": 1792483048718364672,
+            "frequency": 1000000000,
+            "targetFence": 31,
+            "completedFence": 32,
+            "milliseconds": 0.0
+        },
+        {
+            "slot": 10,
+            "iterations": 128,
+            "begin": 1792483048718955520,
+            "end": 1792483048718961664,
+            "frequency": 1000000000,
+            "targetFence": 33,
+            "completedFence": 33,
+            "milliseconds": 0.006144
+        },
+        {
+            "slot": 11,
+            "iterations": 2048,
+            "begin": 1792483048719529984,
+            "end": 1792483048719569920,
+            "frequency": 1000000000,
+            "targetFence": 35,
+            "completedFence": 36,
+            "milliseconds": 0.039936
+        },
+        {
+            "slot": 12,
+            "iterations": 0,
+            "begin": 1792483048720063488,
+            "end": 1792483048720063488,
+            "frequency": 1000000000,
+            "targetFence": 37,
+            "completedFence": 38,
+            "milliseconds": 0.0
+        },
+        {
+            "slot": 13,
+            "iterations": 128,
+            "begin": 1792483048720607232,
+            "end": 1792483048720613376,
+            "frequency": 1000000000,
+            "targetFence": 39,
+            "completedFence": 40,
+            "milliseconds": 0.006144
+        },
+        {
+            "slot": 14,
+            "iterations": 2048,
+            "begin": 1792483048721152000,
+            "end": 1792483048721191936,
+            "frequency": 1000000000,
+            "targetFence": 41,
+            "completedFence": 42,
+            "milliseconds": 0.039936
+        },
+        {
+            "slot": 15,
+            "iterations": 0,
+            "begin": 1792483048721720320,
+            "end": 1792483048721720320,
+            "frequency": 1000000000,
+            "targetFence": 43,
+            "completedFence": 44,
+            "milliseconds": 0.0
+        },
+        {
+            "slot": 16,
+            "iterations": 128,
+            "begin": 1792483048722204672,
+            "end": 1792483048722210816,
+            "frequency": 1000000000,
+            "targetFence": 45,
+            "completedFence": 46,
+            "milliseconds": 0.006144
+        },
+        {
+            "slot": 17,
+            "iterations": 2048,
+            "begin": 1792483048722708480,
+            "end": 1792483048722748416,
+            "frequency": 1000000000,
+            "targetFence": 47,
+            "completedFence": 48,
+            "milliseconds": 0.039936
+        },
+        {
+            "slot": 18,
+            "iterations": 0,
+            "begin": 1792483048723175424,
+            "end": 1792483048723175424,
+            "frequency": 1000000000,
+            "targetFence": 49,
+            "completedFence": 50,
+            "milliseconds": 0.0
+        },
+        {
+            "slot": 19,
+            "iterations": 128,
+            "begin": 1792483048723714048,
+            "end": 1792483048723720192,
+            "frequency": 1000000000,
+            "targetFence": 51,
+            "completedFence": 52,
+            "milliseconds": 0.006144
+        },
+        {
+            "slot": 20,
+            "iterations": 2048,
+            "begin": 1792483048724415488,
+            "end": 1792483048724455424,
+            "frequency": 1000000000,
+            "targetFence": 53,
+            "completedFence": 54,
+            "milliseconds": 0.039936
+        },
+        {
+            "slot": 21,
+            "iterations": 0,
+            "begin": 1792483048725050368,
+            "end": 1792483048725050368,
+            "frequency": 1000000000,
+            "targetFence": 55,
+            "completedFence": 56,
+            "milliseconds": 0.0
+        },
+        {
+            "slot": 22,
+            "iterations": 128,
+            "begin": 1792483048725567488,
+            "end": 1792483048725574656,
+            "frequency": 1000000000,
+            "targetFence": 57,
+            "completedFence": 58,
+            "milliseconds": 0.007168
+        },
+        {
+            "slot": 23,
+            "iterations": 2048,
+            "begin": 1792483048726580224,
+            "end": 1792483048726620160,
+            "frequency": 1000000000,
+            "targetFence": 59,
+            "completedFence": 60,
+            "milliseconds": 0.039936
+        }
+    ]
+}

@@ -1,0 +1,119 @@
+{
+  "step": 11,
+  "startedUtc": "2026-10-20T08:11:25.4926239Z",
+  "sources": [
+    {
+      "sha256": "BF569C7172177B8DF827E001BD18246AC7884964DBAF60317A54158300EF9E86",
+      "path": "Runtime/RTGI/HoRTGIContext.cs"
+    },
+    {
+      "sha256": "DF3D5C9A21963F6A99CAE989A9966C10296467AD0BB9D97A51C54FA4E722EDE3",
+      "path": "Runtime/RTGI/HoRTGIRendererFeature.cs"
+    },
+    {
+      "sha256": "4F6994033AD44BBC58214E8F38562AE86D9E4104EC7A82DBDC07D15213ACCEFB",
+      "path": "Runtime/RTGI/HoRTGICompositePass.cs"
+    },
+    {
+      "sha256": "254CA8A289B43E5B4C6BC59CFA98C05D019ADEB58A0660823BF28C32A0D47A06",
+      "path": "Editor/RTGI/HoRTGIGpuClock.cs"
+    },
+    {
+      "sha256": "6A1009D1B68E8A2C15F1E3B7EAA380A8BB0BFB7FCB9E5A56926D988E14F78C18",
+      "path": "Editor/RTGI/HoRTGIGpuTimestampValidation.cs"
+    },
+    {
+      "sha256": "E7E81CDEF89E660082162B370FF2531758A6501FE0938394134C4166952E01D6",
+      "path": "Editor/RTGI/HoRTGICastleValidation.cs"
+    },
+    {
+      "sha256": "2472CC8F265B303282C0A7671DDF614ED2AF332AB15BF960A9242DC4498B4C60",
+      "path": "Editor/RTGI/Shaders/HoRTGIGpuProbe.compute"
+    },
+    {
+      "sha256": "E8F5D018BAB92A4D561AAB9FF36B70294F946544A20D5BC9C8C0ED4EC95E9B15",
+      "path": "Tests~/RTGI/GpuTiming/Native/HoGIGpuProbe.cpp"
+    }
+  ],
+  "nativeBuildSha256": "F52499B0B1F896A9664F0EFA53D1790F6BFA4B67B14A68C8B5BE96325052D303",
+  "activeProcess": null,
+  "entries": [
+    {
+      "label": "qualification",
+      "exitCode": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step011-qualification-20261020T081125495.log",
+      "logSha256": "B507AE22D1AE324213208293DDBB4F004C21A0A1A94C1E4CBE8136CC04261625",
+      "marker": true,
+      "fresh": true,
+      "shaderCsDiagnostics": 0,
+      "pass": true,
+      "reportSha256": "AAE36D630E9BA6E7FE0596D6E6A8283D524D1AE8F7F63D6C66F64DED2E592AF0"
+    },
+    {
+      "label": "256-rg",
+      "exitCode": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step011-256-rg-20261020T081133750.log",
+      "logSha256": "F6A210CFCE341AECC55319849B09BDD31044FCC6E5D08AAEC79F821606894187",
+      "marker": true,
+      "fresh": true,
+      "shaderCsDiagnostics": 0,
+      "pass": true,
+      "reportSha256": "2DB5A4E07208E83EAB97988EB05514AB3AAE2DC0A62E049C67330017CEC291A4"
+    },
+    {
+      "label": "256-compat",
+      "exitCode": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step011-256-compat-20261020T081143434.log",
+      "logSha256": "A2D68BAB6443664C1FC22D045652DAE4E16724401E3347025246BFFC0E97620B",
+      "marker": true,
+      "fresh": true,
+      "shaderCsDiagnostics": 0,
+      "pass": true,
+      "reportSha256": "93657EF45848B85CE1C276C2623A73FDA7B944EF244949E908B0AE1DDAEE6A91"
+    },
+    {
+      "label": "512-rg",
+      "exitCode": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step011-512-rg-20261020T081152614.log",
+      "logSha256": "95EB94146F99BDC029178E805D9C7618A566C96C64EC9C476BC7DB92B36E1926",
+      "marker": true,
+      "fresh": true,
+      "shaderCsDiagnostics": 0,
+      "pass": true,
+      "reportSha256": "7233027D054E892ECD89A1555AF808BF3B9610BF1E451CBA730FFB155E40D41A"
+    },
+    {
+      "label": "512-compat",
+      "exitCode": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step011-512-compat-20261020T081202460.log",
+      "logSha256": "24C75F3C8E78B8B1EA28B53D9BD225C472AC4A9144BE6126B758EF4F47A1E821",
+      "marker": true,
+      "fresh": true,
+      "shaderCsDiagnostics": 0,
+      "pass": true,
+      "reportSha256": "8261B562AA63DB66632B7D025CB93CE8CAF298D0994A78747FA90D5341B71F12"
+    },
+    {
+      "label": "256-total-only",
+      "exitCode": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step011-256-total-only-20261020T081212249.log",
+      "logSha256": "D4A598FEF99FAF2076BC0FE85AFE994D4E8CFBA3358DA5F62316C49CBBFCB05A",
+      "marker": true,
+      "fresh": true,
+      "shaderCsDiagnostics": 0,
+      "pass": true,
+      "reportSha256": "729F7A9C68BEAE10F516BF47D8B59D4A70AC168A48C3D76A4419B53622D46D74"
+    },
+    {
+      "label": "256-rebuild",
+      "exitCode": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step011-256-rebuild-20261020T081221875.log",
+      "logSha256": "79EB61239E46AB1314D14D5E17C09DBF0C76C30BA9A6D910D24549B21B6AD4EA",
+      "marker": true,
+      "fresh": true,
+      "shaderCsDiagnostics": 0,
+      "pass": true,
+      "reportSha256": "09C891186994F4116E305B5A2A071E623ADD8FD7A43D40937ADFA62E13D046AB"
+    }
+  ]
+}

@@ -31,14 +31,21 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void RunLongStability()=>Run(false,256,true,false,256,256);
         public static void RunLongWideClamp()=>Run(false,256,true,false,256,256,true);
         public static void RunLongWideClampSix()=>Run(false,256,true,false,256,256,true,6);
-        static void Run(bool compatibility,int size,bool stability=false,bool stages=false,int settle=32,int measured=64,bool wideClamp=false,float historySigma=4)
+        public static void RunGpu256()=>Run(false,256,gpu:true);
+        public static void RunGpu256Compatibility()=>Run(true,256,gpu:true);
+        public static void RunGpu512()=>Run(false,512,gpu:true);
+        public static void RunGpu512Compatibility()=>Run(true,512,gpu:true);
+        public static void RunGpu256TotalOnly()=>Run(false,256,gpu:true,totalOnly:true);
+        public static void RunGpu256Rebuild()=>Run(false,256,gpu:true,rebuild:true);
+        static void Run(bool compatibility,int size,bool stability=false,bool stages=false,int settle=32,int measured=64,bool wideClamp=false,float historySigma=4,bool gpu=false,bool totalOnly=false,bool rebuild=false)
         {
             var oldDefault=GraphicsSettings.defaultRenderPipeline;var oldQuality=QualitySettings.renderPipeline;bool oldAsync=ShaderUtil.allowAsyncCompilation;HoRTGIRendererFeature gi=null;int exit=1;
+            HoRTGIGpuClock gpuClock=null;
             var report=new Report{compatibility=compatibility,width=size,height=size,gpu=SystemInfo.graphicsDeviceName};string output=null;
             try
             {
                 if(!Application.dataPath.Replace('\\','/').Contains("/.codex-research/RTGIValidation/"))throw new Exception("Dedicated GI project required");
-                output=Path.GetFullPath(Path.Combine(Application.dataPath,"../ho-gi-castle-"+size+"-"+(compatibility?"compat":"rg")+(stability?"-stability":"")+(stages?"-stages":"")+(measured>64?"-long":"")+(wideClamp?"-wide-clamp"+(historySigma==4?"":"-"+historySigma):"")));Directory.CreateDirectory(output);
+                output=Path.GetFullPath(Path.Combine(Application.dataPath,"../ho-gi-castle-"+size+"-"+(compatibility?"compat":"rg")+(stability?"-stability":"")+(stages?"-stages":"")+(measured>64?"-long":"")+(wideClamp?"-wide-clamp"+(historySigma==4?"":"-"+historySigma):"")+(gpu?"-gpu"+(totalOnly?"-total-only":"")+(rebuild?"-rebuild":""):"")));Directory.CreateDirectory(output);
                 ShaderUtil.allowAsyncCompilation=false;EditorSceneManager.OpenScene("Assets/mmd场景测试/血月古堡/血月古堡.unity",OpenSceneMode.Single);
                 var source=UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsSortMode.InstanceID).FirstOrDefault(c=>c.CompareTag("MainCamera"));if(source==null)throw new Exception("Castle MainCamera missing");report.camera=source.name;
                 var geometry=UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsSortMode.InstanceID);
@@ -60,6 +67,14 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var context=gi.LastContext;if(context?.nrd==null)throw new Exception("Actual castle GI/NRD missing: "+gi.Status);
                 report.status=gi.Status;var registry=(HoRTScene)typeof(HoRTGIRendererFeature).GetField("scene",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(gi);
                 report.instances=registry.InstanceCount;report.cutouts=registry.CutoutCount;report.skinnedSnapshots=registry.SkinnedMeshCount;report.rejections=registry.Rejections.ToArray();report.bakes=registry.SkinnedBakeCount;
+                if(gpu)
+                {
+                    gpuClock=new HoRTGIGpuClock{TotalOnly=totalOnly};context.ValidationGpuMarker=gpuClock.Mark;context.ValidationGpuRasterMarker=gpuClock.MarkRaster;gi.Settings.composite=true;gi.Settings.intensity=.25f;
+                    if(rebuild){registry.MarkGeometryDirty();context.environmentPdfReady=false;}
+                    for(int frame=0;frame<40;frame++){gpuClock.Frame=frame;Render();gpuClock.Collect();}
+                    report.gpuSummary=gpuClock.Summarize(32);report.gpuSamples=gpuClock.samples.OrderBy(x=>x.slot).ToArray();report.gpuQualified=true;report.gpuTotalOnly=totalOnly;report.gpuForcedRebuild=rebuild;
+                    context.ValidationGpuMarker=null;context.ValidationGpuRasterMarker=null;gi.Settings.composite=false;
+                }
                 if(stability)
                 {
                     if(wideClamp){context.nrd.core.ValidationSettings=s=>{s.fastSigma=historySigma;return s;};context.nrd.historyValid=false;}
@@ -108,6 +123,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 gi.Settings.intensity=1;Render();Save(target,"scene-added-one",false);
                 report.stableBakes=registry.SkinnedBakeCount-report.bakes;report.historyReused=context.lastTemporal;report.environment=context.environmentSampling;report.nativeCutout=context.alphaVisibility;report.skybox=RenderSettings.skybox!=null?RenderSettings.skybox.name:null;
                 report.pass=report.instances>0&&report.cutouts>0&&report.valid>0&&report.lit>0&&report.changedPixels>0&&report.stableBakes==0;
+                if(gpu)report.pass=report.gpuQualified&&report.instances>0&&report.valid>0&&report.changedPixels>0;
                 if(stability)report.pass&=report.energyGatePass;
                 if(stability&&!report.energyGatePass)throw new Exception("Castle filtered RGB time-mean failed original 5% energy gate");
                 if(!report.pass)throw new Exception("Castle scene lacks actual supported/lit/composed GI or stable pose cache");
@@ -121,7 +137,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             finally
             {
                 if(output!=null)File.WriteAllText(Path.Combine(output,"report.json"),JsonUtility.ToJson(report,true));
-                gi?.Dispose();GraphicsSettings.defaultRenderPipeline=oldDefault;QualitySettings.renderPipeline=oldQuality;ShaderUtil.allowAsyncCompilation=oldAsync;
+                if(gi?.LastContext!=null){gi.LastContext.ValidationGpuMarker=null;gi.LastContext.ValidationGpuRasterMarker=null;}gpuClock?.Dispose();gi?.Dispose();GraphicsSettings.defaultRenderPipeline=oldDefault;QualitySettings.renderPipeline=oldQuality;ShaderUtil.allowAsyncCompilation=oldAsync;
                 foreach(var obj in owned.AsEnumerable().Reverse())if(obj!=null)UnityEngine.Object.DestroyImmediate(obj);
             }
             EditorApplication.Exit(exit);
@@ -133,6 +149,6 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]struct Primary{public uint depth,normal,geometric,diffuse,specular;}
         [Serializable]sealed class StageMean{public int pipeline;public Vector3 remodulatedMean;}
         [Serializable]sealed class FrameMean{public int index;public Vector3 raw,filtered;}
-        [Serializable]sealed class Report{public bool pass,compatibility,historyReused,environment,nativeCutout,energyGatePass;public string error,camera,gpu,status,skybox;public int width,height,frames,observedFrames,instances,cutouts,skinnedSnapshots,valid,invalid,lit,changedPixels;public uint bakes,stableBakes;public double rawMean,filteredMean,peak,cameraMeanChange,rawVariance,filteredVariance;public Vector3 staticRaw,staticFiltered;public MaterialRow[] materials;public string[] rejections;public StageMean[] stages;public FrameMean[] frameMeans;}
+        [Serializable]sealed class Report{public bool pass,compatibility,historyReused,environment,nativeCutout,energyGatePass,gpuQualified,gpuTotalOnly,gpuForcedRebuild;public string error,camera,gpu,status,skybox;public int width,height,frames,observedFrames,instances,cutouts,skinnedSnapshots,valid,invalid,lit,changedPixels;public uint bakes,stableBakes;public double rawMean,filteredMean,peak,cameraMeanChange,rawVariance,filteredVariance;public Vector3 staticRaw,staticFiltered;public MaterialRow[] materials;public string[] rejections;public StageMean[] stages;public FrameMean[] frameMeans;public HoRTGIGpuClock.Sample[] gpuSamples;public HoRTGIGpuClock.Summary[] gpuSummary;}
     }
 }

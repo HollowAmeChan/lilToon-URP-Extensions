@@ -200,6 +200,7 @@
 - M3进展：步骤007独立天空壳材质过滤已交付；步骤008基础Cutout的初始/照明/复用bias/最终真实alpha与NRD距离、半开孔洞能量已有10项Editor及两个Mono Player证据。仍缺实际骨骼命中/漫游、完整目标场景和有效GPU预算，M3/M4不整体勾完成。
 - M3后续：步骤009已有独立矩阵对应的骨骼材质hit、UV/normal map/BlendShape及非readable source反弹/遮挡，六项Editor/两个315请求Mono Player通过。生产Runtime未因测试修改；复杂角色动态接收、实际场景漫游和M4有效GPU预算仍待交付。
 - 实际场景：步骤010古堡四组接入和GI开关图通过，但逐RGB时间均值filtered质量门槛失败；长窗原版约低6～7%，sigma4/6两轮仍失败，明确搁置更宽色盒，原生产设置不改。该项未验收，不能以有效像素/变化像素重定义完成；有效GPU取证与质量缺口继续。
+- M4取证进展：步骤011严格GPU timestamp资格和古堡分段实测过，256/512两路径、AS/PDF重建与Total-only对照有有效fence/tick；仅限定Editor graphics-queue区间，未据此完成显存/1080p/半GI重建/正常自动camera或完整Player预算。010质量失败继续，不修改阶段成功定义。
 
 每步review/过滤提交/失败保留/交接约束继续执行；目标保持active。阶段局部通过不能替代最终场景/GPU验收。
 
