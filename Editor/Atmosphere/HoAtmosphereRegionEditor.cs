@@ -36,11 +36,11 @@ namespace lilToon.URP.Extensions.Editor.Atmosphere
                     var dust = serializedObject.FindProperty("dust"); EditorGUILayout.PropertyField(dust.FindPropertyRelative("enabled"));
                     if (dust.FindPropertyRelative("enabled").boolValue || dust.FindPropertyRelative("enabled").hasMultipleDifferentValues)
                     {
-                        foreach (string field in new[] { "numberDensity", "size", "brightness", "flutter", "maxDistance", "maxParticles", "seed" }) EditorGUILayout.PropertyField(dust.FindPropertyRelative(field));
+                        foreach (string field in new[] { "texture", "grainDensity", "clusterSize", "textureWorldSize", "brightness", "flutter", "maxDistance", "maxClusters", "seed" }) EditorGUILayout.PropertyField(dust.FindPropertyRelative(field));
                         if (targets.Length == 1)
                         {
                             var source = (HoAtmosphereRegion)target;
-                            EditorGUILayout.LabelField("已准备尘粒", source.PreparedDustCount + (source.DustCapacityLimited ? "（已按数量上限稀疏）" : ""));
+                            EditorGUILayout.LabelField("已准备簇片", source.PreparedDustCount + (source.DustCapacityLimited ? "（已裁至片数预算）" : ""));
                         }
                     }
                 }

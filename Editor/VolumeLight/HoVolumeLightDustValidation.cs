@@ -15,10 +15,15 @@ namespace lilToon.URP.Extensions.VolumeLight
         [Serializable] private sealed class DustReport
         {
             public bool passed;
-            public int particles, changedPixels;
+            public int clusters, changedPixels;
             public int defaultChangedPixels;
             public float defaultMeanContribution;
-            public float subpixelEnergyRatio;
+            public int hugeRegionClusters;
+            public float hugeRegionError;
+            public string gpu;
+            public float clustersGpuMs = -1, millionGlobalGpuMs = -1, millionLocalGpuMs = -1;
+            public int benchmarkClusterPixels, benchmarkGlobalPixels, benchmarkLocalPixels;
+            public float benchmarkClusterMean, benchmarkGlobalMean, benchmarkLocalMean;
             public float meanContribution, movementError, shadowReduction, extinctionRatio, centerExtinctionError, narrowPhaseRatio, cutoutContrast;
         }
         private static DustReport dustReport;
@@ -58,25 +63,24 @@ namespace lilToon.URP.Extensions.VolumeLight
             Require(dustReport.centerExtinctionError < .003f, "uniform medium integration disagrees with analytic Beer-Lambert reference");
             Require(dustReport.extinctionRatio > .4f && dustReport.extinctionRatio < .95f, "path extinction did not attenuate scattered light"); region.pathExtinction = false;
 
-            region.dust.numberDensity = 1.5f; region.dust.size = new Vector2(.12f, .2f); region.dust.brightness = 15; region.dust.flutter = .08f;
+            region.dust.brightness = 15; region.dust.flutter = .08f;
             var grains = DustContribution(); Save(Render(), "dust-on"); Save(grains, "dust-contribution");
-            dustReport.particles = lightFeature.DustParticleCount; dustReport.meanContribution = Mean(grains);
+            dustReport.clusters = lightFeature.DustClusterCount; dustReport.meanContribution = Mean(grains);
             foreach (var p in grains) if (p.r > .01f) dustReport.changedPixels++;
-            Require(dustReport.particles > 0 && dustReport.particles <= region.dust.maxParticles && lightFeature.HasDustMaterial, "shared dust did not allocate/draw");
-            Require(dustReport.changedPixels > 40 && dustReport.changedPixels < grains.Length * .5f && dustReport.meanContribution > .0005f, "dust produced no sparse visible grain");
+            Require(dustReport.clusters > 0 && dustReport.clusters <= region.dust.maxClusters && lightFeature.HasDustMaterial, "shared dust did not allocate/draw");
+            Require(dustReport.changedPixels > 400 && dustReport.meanContribution > .0005f, "cluster dust produced insufficient coverage");
             var field = region.GetDustField(); var buffer = field.buffer; int rebuilds = field.RebuildCount;
             var repeat = Render(); var sameTime = Render(); Require(ImageError(repeat, sameTime) < .00001f, "same world time changed dust positions");
             var observer = camera; camera = Keep(new GameObject("Shared dust second observer")).AddComponent<Camera>(); camera.enabled = false;
             camera.transform.position = new Vector3(1, 1, -7); camera.clearFlags = CameraClearFlags.SolidColor; camera.backgroundColor = Color.black;
             camera.GetUniversalAdditionalCameraData().volumeLayerMask = -1; Render(); camera = observer;
-            Require(region.GetDustField().buffer == buffer && field.RebuildCount == rebuilds, "second camera duplicated or advanced the world field");
+            Render(); Require(region.GetDustField().buffer == buffer && field.RebuildCount == rebuilds + 1, "second observer replaced first visibility buffer");
             var originalSeeds = new Vector4[field.Count]; field.buffer.GetData(originalSeeds);
             var seedSet = new System.Collections.Generic.HashSet<Vector4>(originalSeeds);
             region.transform.position += Vector3.right * .3f; Render();
             var movedSeeds = new Vector4[field.Count]; field.buffer.GetData(movedSeeds); int shared = 0;
             foreach (var seed in movedSeeds) if (seedSet.Contains(seed)) shared++;
             Require(shared > originalSeeds.Length * .75f, "moving a region dragged/reseeded its whole world field"); region.transform.position -= Vector3.right * .3f; Render();
-            ValidateDustSubpixelStability();
             uint staticRevision = probe.mediumRevision;
             region.dust.brightness = 8; Render(); Require(probe.mediumRevision == staticRevision, "dust art parameter invalidated continuous medium history"); region.dust.brightness = 15;
             region.wind = new Vector3(.2f, .07f, 0); HoAtmosphereMediumClock.TimeOverride = 0; var t0 = DustContribution();
@@ -136,9 +140,9 @@ namespace lilToon.URP.Extensions.VolumeLight
             region.densityTexture = null; region.noiseWorldSize = 5;
             float thinDust = Mean(DustContribution()); region.pathExtinction = true; float extinguishedDust = Mean(DustContribution());
             Require(extinguishedDust > 0 && extinguishedDust < thinDust * .95f, "dust ignored shared path extinction"); region.pathExtinction = false;
-            region.dust.maxParticles = 128; region.dust.numberDensity = 50; Render();
-            Require(lightFeature.DustCapacityLimited && lightFeature.DustParticleCount <= 128, "dust population budget was not enforced");
-            region.dust.maxParticles = 8192; region.dust.numberDensity = 1.5f; Render();
+            region.dust.maxClusters = 8; Render();
+            Require(lightFeature.DustCapacityLimited && lightFeature.DustClusterCount <= 8, "dust cluster budget was not enforced");
+            region.dust.maxClusters = 64; Render();
             var owned = region.GetDustField().buffer; owned.Dispose(); Render();
             Require(region.HasDustBuffer, "destroyed shared dust buffer did not recover");
             region.enabled = false; Render(); Require(!region.HasDustBuffer && !lightFeature.HasDustMaterial, "disabled region retained dust resources"); region.enabled = true;
@@ -154,7 +158,18 @@ namespace lilToon.URP.Extensions.VolumeLight
             var defaults = DustContribution(); Save(Render(), "dust-defaults-on"); Save(defaults, "dust-defaults-contribution");
             dustReport.defaultMeanContribution = Mean(defaults);
             foreach (var p in defaults) if (p.r > .001f) dustReport.defaultChangedPixels++;
-            Require(dustReport.defaultChangedPixels > 20, "shipped dust defaults produced no visible small grains");
+            Require(dustReport.defaultChangedPixels > 4000, "shipped dust defaults produced insufficient grain coverage");
+            // Enlarging an already encompassing region must not dilute the local grid.
+            region.transform.position = camera.transform.position; region.size = Vector3.one * 100;
+            var local = DustContribution(); region.size = Vector3.one * 1000;
+            var huge = DustContribution(); Save(huge, "dust-huge-region");
+            dustReport.hugeRegionClusters = lightFeature.DustClusterCount;
+            dustReport.hugeRegionError = ImageError(local, huge);
+            Require(dustReport.hugeRegionError < .00001f && dustReport.hugeRegionClusters <= 64, "large region diluted nearby dust");
+            region.dust.grainDensity = .2f; var sparse = DustContribution();
+            Require(Mean(sparse) < Mean(huge) * .8f, "grain density did not change the texture population"); region.dust.grainDensity = 1;
+            var emptyTile = Keep(new Texture2D(1, 1, TextureFormat.RGBA32, false, true)); emptyTile.SetPixel(0, 0, Color.clear); emptyTile.Apply();
+            region.dust.texture = emptyTile; Require(Mathf.Abs(Mean(DustContribution())) < .00001f, "custom empty alpha texture was ignored"); region.dust.texture = null;
             target = smallTarget;
             // Scene close must release the producer's shared buffer as well as effect materials.
             Render(); owned = region.GetDustField().buffer;
@@ -165,29 +180,6 @@ namespace lilToon.URP.Extensions.VolumeLight
                 Require(message.severity != UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error, message.message);
             dustReport.passed = true;
             Debug.Log("[HoAtmosphereDustValidation] PASS " + JsonUtility.ToJson(dustReport));
-        }
-        private static void ValidateDustSubpixelStability()
-        {
-            var oldSize = region.dust.size; float oldFlutter = region.dust.flutter, oldBrightness = region.dust.brightness;
-            var oldPosition = camera.transform.position;
-            region.dust.size = Vector2.one * .005f; region.dust.flutter = 0; region.dust.brightness = 500;
-            double minimum = double.MaxValue, maximum = 0;
-            for (int step = 0; step < 9; ++step)
-            {
-                camera.transform.position = oldPosition + Vector3.right * (step * .012f);
-                region.dust.enabled = false; var background = Render(); region.dust.enabled = true; Render();
-                var field = region.GetDustField();
-                var seeds = new Vector4[field.Count];
-                for (int i = 0; i < seeds.Length; ++i) seeds[i] = new Vector4(1000, 1000, 1000, .5f);
-                seeds[0] = new Vector4(0, 1, 5, .5f); field.buffer.SetData(seeds);
-                var image = Render(); double sum = 0;
-                for (int i = 0; i < image.Length; ++i) sum += Math.Max(0, image[i].r - background[i].r);
-                minimum = Math.Min(minimum, sum); maximum = Math.Max(maximum, sum);
-            }
-            dustReport.subpixelEnergyRatio = (float)(maximum / Math.Max(1e-8, minimum));
-            Require(minimum > .0001 && dustReport.subpixelEnergyRatio < 1.8f, "subpixel dust blinked or changed too much across pixel phases: " + dustReport.subpixelEnergyRatio);
-            region.dust.size = oldSize; region.dust.flutter = oldFlutter; region.dust.brightness = oldBrightness;
-            camera.transform.position = oldPosition; region.ReleaseDust(); Render();
         }
     }
 }

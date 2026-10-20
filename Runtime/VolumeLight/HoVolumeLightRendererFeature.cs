@@ -40,7 +40,9 @@ namespace lilToon.URP.Extensions.VolumeLight
         public string Status { get; private set; } = "未生产";
         public bool HasMaterial => material != null;
         public int HistoryCameraCount => reconstruction.Count;
-        public int DustParticleCount => dustPass != null ? dustPass.ParticleCount : 0;
+        public int DustClusterCount => dustPass != null ? dustPass.ParticleCount : 0;
+        [System.Obsolete("Dust is drawn as texture clusters. Use DustClusterCount.")]
+        public int DustParticleCount => DustClusterCount;
         public bool DustCapacityLimited => dustPass != null && dustPass.CapacityLimited;
         public bool HasDustMaterial => dustPass != null && dustPass.HasMaterial;
         public void ResetHistory() => reconstruction.Dispose();

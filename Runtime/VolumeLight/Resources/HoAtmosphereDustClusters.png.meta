@@ -1,0 +1,37 @@
+fileFormatVersion: 2
+guid: 12cc1c96ba214c28ac0c75bc598cbb97
+TextureImporter:
+  serializedVersion: 13
+  mipmaps:
+    enableMipMap: 1
+    sRGBTexture: 0
+    mipMapsPreserveCoverage: 0
+  isReadable: 0
+  textureType: 0
+  textureShape: 1
+  alphaSource: 1
+  alphaIsTransparency: 0
+  textureSettings:
+    serializedVersion: 2
+    filterMode: 2
+    aniso: 1
+    mipBias: 0
+    wrapU: 0
+    wrapV: 0
+    wrapW: 0
+  maxTextureSize: 512
+  textureCompression: 0
+  platformSettings:
+  - serializedVersion: 4
+    buildTarget: DefaultTexturePlatform
+    maxTextureSize: 512
+    resizeAlgorithm: 0
+    textureFormat: -1
+    textureCompression: 0
+    compressionQuality: 100
+    crunchedCompression: 0
+    allowsAlphaSplitting: 0
+    overridden: 0
+  userData:
+  assetBundleName:
+  assetBundleVariant:

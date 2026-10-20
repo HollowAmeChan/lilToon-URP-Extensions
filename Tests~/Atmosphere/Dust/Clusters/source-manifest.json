@@ -1,0 +1,20 @@
+{
+  "date": "2026-10-20",
+  "engine": "Unity 6000.3.15f1 / HoURP 17.3.0",
+  "method": "RunDust + Run; current local package; D3D11/D3D12",
+  "hashes": {
+    "Runtime/Atmosphere/Regions/HoAtmosphereDustField.cs": "0860941bba9741da4daaaa63e6d3df0835236e71d4dc09da563c7fb683e36436",
+    "Runtime/VolumeLight/HoVolumeLightDustPass.cs": "ecc2e3a27d4cea99bc4b104725a1bec1d123a3a3a51caa92c818e3e4d995b1f8",
+    "Runtime/VolumeLight/HoVolumeLightRendererFeature.cs": "2da7f098b7adf10cfaa32f372918a284b7f2fc4df94925da8cd8b7e39bc3cedd",
+    "Runtime/VolumeLight/Resources/HoVolumeLightDust.shader": "55c488a15e4015bf26425c6760c2c83da310548e4c648b51538471d0d734adaf",
+    "Runtime/VolumeLight/Resources/HoAtmosphereDustClusters.png": "834786ce870ade93aed8e7e1f07e9cd1212e09df615aa9ba177520f654ab318d",
+    "Runtime/VolumeLight/Resources/HoAtmosphereDustClusters.png.meta": "9e1707e817b7ee4a5a60f63bc892b4c4d6bfcc8b724df34047c29cecac979946",
+    "Editor/Atmosphere/HoAtmosphereRegionEditor.cs": "7e16c79ac8138f2fe2928600f256f3563def9dec7ddacbc3e50affc940af0f6b",
+    "Editor/VolumeLight/HoVolumeLightDustValidation.cs": "c7a5fd22777328d44c5615a8ae8d045457a4a13bd1d6d68285c669f3b0186d24",
+    "Editor/VolumeLight/HoVolumeLightValidation.cs": "b3677ffe5dd3400b75107248389f3b5a136455653c5a2cec7744e72811788938",
+    "Editor/VolumeLight/HoVolumeLightDustPerformance.cs": "2a2db375b0db378fd6389c9553a6f8b13b9c2552543c8cd567bbf5942f2fbeee",
+    "Editor/VolumeLight/HoVolumeLightDustPointReference.shader": "c75045bc9cd0b0647ca58c47f98782a1f633f19ec1623603d282a3d07b815cb1",
+    "Tests~/Atmosphere/generate-dust-clusters.py": "e4a15f0fc587d2a0b8b553a760229efd1bff74dabe685c114a0ab255648212bd",
+    "Tests~/Atmosphere/make-cluster-preview.py": "920067af2040344745e6499e26295506b314b5adc039a925e8e4de5208b64439"
+  }
+}

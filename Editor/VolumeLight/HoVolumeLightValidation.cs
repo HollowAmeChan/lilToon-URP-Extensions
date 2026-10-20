@@ -27,6 +27,7 @@ namespace lilToon.URP.Extensions.VolumeLight
         private static HoAtmosphereVolume atmosphereVolume;
         private static HoVolumeLightProbeFeature probe;
         private static ScriptableRendererFeature screenShadows;
+        private static HoVolumeLightDustReferenceFeature dustReference;
         private static Light sun;
         private static RenderPipelineAsset previousDefault, previousQuality;
         private static Material previousSkybox;
@@ -70,6 +71,8 @@ namespace lilToon.URP.Extensions.VolumeLight
                 lightFeature = Keep(ScriptableObject.CreateInstance<HoVolumeLightRendererFeature>());
                 lightFeature.FeatureSettings.intensity = 10; lightFeature.FeatureSettings.maxDistance = 30; lightFeature.FeatureSettings.stepCount = 128; lightFeature.FeatureSettings.anisotropy = 0;
                 renderer.rendererFeatures.Add(lightFeature);
+                dustReference = Keep(ScriptableObject.CreateInstance<HoVolumeLightDustReferenceFeature>());
+                dustReference.SetActive(false); renderer.rendererFeatures.Add(dustReference);
                 var screenType = typeof(UniversalRenderer).Assembly.GetType("UnityEngine.Rendering.Universal.ScreenSpaceShadows");
                 Require(screenType != null, "ScreenSpaceShadows type missing");
                 screenShadows = Keep((ScriptableRendererFeature)ScriptableObject.CreateInstance(screenType)); screenShadows.SetActive(false);
@@ -114,7 +117,7 @@ namespace lilToon.URP.Extensions.VolumeLight
                 Require(HoAtmosphereMediumClock.SampleTime > initialWorldTime, "editor medium clock did not advance");
                 EditorApplication.update -= Tick;
                 if (densityPresetsOnly) { ValidateDensityPresets(); Finish(null); return; }
-                if (dustOnly) { ValidateDust(); Finish(null); return; }
+                if (dustOnly) { ValidateDust(); BeginDustTiming(); return; }
                 ValidateAuthoring(); ValidateMedium(); ValidateAntialiasing(); ValidateSolar();
                 Debug.Log("[HoVolumeLightValidation] PASS: Medium GPU sampling/revision + solar shadow/cutout/offscreen/region mask/depth/inside/SSS + lifecycle; API=" + SystemInfo.graphicsDeviceType);
                 Finish(null);
@@ -334,12 +337,15 @@ namespace lilToon.URP.Extensions.VolumeLight
         private static void Finish(Exception error)
         {
             EditorApplication.update -= Tick;
+            EditorApplication.update -= TickDustTiming;
+            HoVolumeLightDustPass.Profiling.enableRecording = false;
+            HoVolumeLightDustReferenceFeature.Profiling.enableRecording = false;
             Application.logMessageReceived -= CaptureError;
             HoAtmosphereMediumClock.TimeOverride = null;
             GraphicsSettings.defaultRenderPipeline = previousDefault; QualitySettings.renderPipeline = previousQuality;
             RenderSettings.skybox = previousSkybox; RenderSettings.sun = previousSun; ShaderUtil.allowAsyncCompilation = previousAsync;
             probe?.destination?.Release();
-            lightFeature?.Dispose(); atmosphere?.Dispose(); screenShadows?.Dispose();
+            lightFeature?.Dispose(); atmosphere?.Dispose(); screenShadows?.Dispose(); dustReference?.Dispose();
             for (int i = objects.Count - 1; i >= 0; --i) if (objects[i] != null) Object.DestroyImmediate(objects[i]); objects.Clear();
             results["passed"] = error == null; results["graphicsAPI"] = SystemInfo.graphicsDeviceType.ToString(); results["error"] = error?.Message ?? "";
             var dir = Path.Combine(Directory.GetCurrentDirectory(), "VolumeLightValidation"); Directory.CreateDirectory(dir);
