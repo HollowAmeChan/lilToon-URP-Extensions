@@ -10,9 +10,17 @@ float4 _HoAtmosphereMediumDensity;
 float4 _HoAtmosphereMediumTint;
 float4 _HoAtmosphereMediumNoise;
 float4 _HoAtmosphereMediumWind;
+float4 _HoAtmosphereMediumAlbedo;
+float4 _HoAtmosphereMediumOptics; // anisotropy, path extinction
 float _HoAtmosphereMediumTime;
 
 struct HoAtmosphereMediumSample { float activation; float density; float3 tint; };
+float HoAtmospherePhase(float cosine, float overrideG)
+{
+    float g = overrideG > 1 ? _HoAtmosphereMediumOptics.x : overrideG;
+    g = clamp(g, -.9, .9);
+    return (1 - g * g) / (4 * PI * pow(max(1e-4, 1 + g * g - 2 * g * cosine), 1.5));
+}
 float HoAtmosphereMediumActivation(float3 positionWS)
 {
     if (_HoAtmosphereMediumDensity.w < .5) return 0;

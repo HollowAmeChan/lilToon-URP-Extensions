@@ -218,6 +218,7 @@ namespace lilToon.URP.Extensions.VolumeLight
             camera.transform.position = new Vector3(0, 1, -8); camera.fieldOfView = 60; camera.aspect = 1; camera.farClipPlane = 100;
             camera.GetUniversalAdditionalCameraData().volumeLayerMask = -1;
             region = Keep(new GameObject("AA replacement scene medium")).AddComponent<HoAtmosphereRegion>();
+            region.anisotropy = 0;
             region.transform.position = new Vector3(0, 1, 5); region.size = new Vector3(12, 6, 8); region.density = .1f; region.blendDistance = .5f;
             sun = Keep(new GameObject("AA replacement scene sun")).AddComponent<Light>(); sun.type = LightType.Directional; sun.intensity = 2;
             sun.shadows = LightShadows.None; sun.transform.rotation = Quaternion.LookRotation(new Vector3(.6f, 0, .8f)); RenderSettings.sun = sun;

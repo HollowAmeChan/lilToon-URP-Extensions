@@ -92,15 +92,23 @@ float4 VolumeIntegrate(Varyings input) : SV_Target
         offset = frac(noise + _HoVolumeLightSampling.y * .61803398875);
     }
     Light sun = GetMainLight();
-    float g = _HoVolumeLightParams.w;
-    float phase = (1 - g * g) / (4 * PI * pow(max(1e-4, 1 + g * g - 2 * g * dot(sun.direction, ray.direction)), 1.5));
+    float phase = HoAtmospherePhase(dot(sun.direction, ray.direction), _HoVolumeLightParams.w);
     float3 result = 0;
+    float transmission = 1;
     [loop] for (int step = 0; step < count; ++step)
     {
         float3 p = ray.origin + ray.direction * (ray.start + (step + offset) * stepLength);
         HoAtmosphereMediumSample medium = HoAtmosphereSampleMedium(p, _HoAtmosphereMediumTime);
         if (medium.activation <= 0) continue;
-        result += medium.activation * medium.density * medium.tint * VolumeShadow(p) * stepLength;
+        float opticalDepth = medium.activation * medium.density * stepLength;
+        float amount = opticalDepth;
+        if (_HoAtmosphereMediumOptics.y > .5)
+        {
+            float stepTransmission = exp(-opticalDepth);
+            amount = transmission * (opticalDepth < .001 ? opticalDepth * (1 - .5 * opticalDepth) : 1 - stepTransmission);
+            transmission *= stepTransmission;
+        }
+        result += amount * medium.tint * _HoAtmosphereMediumAlbedo.rgb * VolumeShadow(p);
     }
     // Geometric scattering interval centre, not the opaque surface behind the fog.
     return float4(max(0, result * sun.color * phase * _HoVolumeLightParams.x), (ray.start + ray.end) * .5);

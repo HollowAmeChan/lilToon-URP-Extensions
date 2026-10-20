@@ -59,7 +59,9 @@ namespace lilToon.URP.Extensions.Atmosphere
         public readonly int regionCount;
         public readonly string status;
         public readonly Matrix4x4 worldToRegion;
-        public readonly Vector4 halfSizeAndBlend, densityAndWeight, tint, noise, wind;
+        public readonly Vector4 halfSizeAndBlend, densityAndWeight, tint, noise, wind, albedo, optics;
+        public readonly HoAtmosphereDustSnapshot dust;
+        internal readonly HoAtmosphereRegion owner;
         public readonly Bounds bounds;
         public readonly Texture3D densityTexture;
         public readonly uint revision;
@@ -73,6 +75,8 @@ namespace lilToon.URP.Extensions.Atmosphere
         {
             this = default;
             sampleTime = HoAtmosphereMediumClock.SampleTime;
+            owner = region;
+            dust = new HoAtmosphereDustSnapshot(region.dust);
             regionCount = 1;
             worldToRegion = region.transform.worldToLocalMatrix;
             bounds = region.WorldBounds;
@@ -80,6 +84,8 @@ namespace lilToon.URP.Extensions.Atmosphere
             halfSizeAndBlend = new Vector4(half.x, half.y, half.z, Mathf.Max(0, HoAtmosphereRegion.Finite(region.blendDistance)));
             densityAndWeight = new Vector4(Mathf.Max(0, HoAtmosphereRegion.Finite(region.density)), Mathf.Clamp01(HoAtmosphereRegion.Finite(region.volumeLightWeight)), 0, 1);
             tint = new Vector4(Mathf.Max(0, HoAtmosphereRegion.Finite(region.tint.r)), Mathf.Max(0, HoAtmosphereRegion.Finite(region.tint.g)), Mathf.Max(0, HoAtmosphereRegion.Finite(region.tint.b)), 1);
+            albedo = new Vector4(Mathf.Clamp01(HoAtmosphereRegion.Finite(region.scatteringAlbedo.r, 1)), Mathf.Clamp01(HoAtmosphereRegion.Finite(region.scatteringAlbedo.g, 1)), Mathf.Clamp01(HoAtmosphereRegion.Finite(region.scatteringAlbedo.b, 1)), 1);
+            optics = new Vector4(Mathf.Clamp(HoAtmosphereRegion.Finite(region.anisotropy, .3f), -.9f, .9f), region.pathExtinction ? 1 : 0, 0, 0);
             densityTexture = region.densityTexture;
             noise = new Vector4(1 / Mathf.Max(.0001f, HoAtmosphereRegion.Finite(region.noiseWorldSize, 5)), Mathf.Clamp01(HoAtmosphereRegion.Finite(region.noiseStrength)), densityTexture != null ? 1 : 0, 0);
             wind = new Vector4(HoAtmosphereRegion.Finite(region.wind.x), HoAtmosphereRegion.Finite(region.wind.y), HoAtmosphereRegion.Finite(region.wind.z), 0);
@@ -89,7 +95,7 @@ namespace lilToon.URP.Extensions.Atmosphere
             unchecked
             {
                 int hash = region.GetInstanceID();
-                foreach (int value in new[] { worldToRegion.GetHashCode(), halfSizeAndBlend.GetHashCode(), densityAndWeight.GetHashCode(), tint.GetHashCode(), noise.GetHashCode(), wind.GetHashCode(), densityTexture != null ? densityTexture.GetInstanceID() : 0, densityTexture != null ? (int)densityTexture.updateCount : 0 }) hash = hash * 397 ^ value;
+                foreach (int value in new[] { worldToRegion.GetHashCode(), halfSizeAndBlend.GetHashCode(), densityAndWeight.GetHashCode(), tint.GetHashCode(), albedo.GetHashCode(), optics.GetHashCode(), noise.GetHashCode(), wind.GetHashCode(), densityTexture != null ? densityTexture.GetInstanceID() : 0, densityTexture != null ? (int)densityTexture.updateCount : 0 }) hash = hash * 397 ^ value;
                 revision = valid ? (uint)hash : 0;
             }
         }

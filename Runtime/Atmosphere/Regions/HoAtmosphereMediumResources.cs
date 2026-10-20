@@ -26,6 +26,8 @@ namespace lilToon.URP.Extensions.Atmosphere
         public static readonly int WindId = Shader.PropertyToID("_HoAtmosphereMediumWind");
         public static readonly int TextureId = Shader.PropertyToID("_HoAtmosphereMediumTexture");
         public static readonly int TimeId = Shader.PropertyToID("_HoAtmosphereMediumTime");
+        public static readonly int AlbedoId = Shader.PropertyToID("_HoAtmosphereMediumAlbedo");
+        public static readonly int OpticsId = Shader.PropertyToID("_HoAtmosphereMediumOptics");
         internal static void ResetGlobals() => Shader.SetGlobalVector(DensityId, Vector4.zero);
         public static void Bind(RasterCommandBuffer cmd, HoAtmosphereMediumResources input, float time)
         {
@@ -36,6 +38,7 @@ namespace lilToon.URP.Extensions.Atmosphere
             cmd.SetGlobalVector(DensityId, input.IsValid ? s.densityAndWeight : Vector4.zero);
             cmd.SetGlobalVector(TintId, s.tint); cmd.SetGlobalVector(NoiseId, s.noise); cmd.SetGlobalVector(WindId, s.wind);
             cmd.SetGlobalFloat(TimeId, time);
+            cmd.SetGlobalVector(AlbedoId, s.albedo); cmd.SetGlobalVector(OpticsId, s.optics);
             if (input.densityTexture.IsValid()) cmd.SetGlobalTexture(TextureId, input.densityTexture);
         }
     }
@@ -74,6 +77,7 @@ namespace lilToon.URP.Extensions.Atmosphere
             cmd.SetGlobalVector(HoAtmosphereMediumBindings.NoiseId, snapshot.noise);
             cmd.SetGlobalVector(HoAtmosphereMediumBindings.WindId, snapshot.wind);
             cmd.SetGlobalFloat(HoAtmosphereMediumBindings.TimeId, snapshot.sampleTime);
+            cmd.SetGlobalVector(HoAtmosphereMediumBindings.AlbedoId, snapshot.albedo); cmd.SetGlobalVector(HoAtmosphereMediumBindings.OpticsId, snapshot.optics);
             cmd.SetGlobalTexture(HoAtmosphereMediumBindings.TextureId, texture.nameID);
             context.ExecuteCommandBuffer(cmd); CommandBufferPool.Release(cmd);
         }

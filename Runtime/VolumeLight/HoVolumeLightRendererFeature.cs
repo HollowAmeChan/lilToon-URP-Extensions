@@ -22,13 +22,15 @@ namespace lilToon.URP.Extensions.VolumeLight
             [Min(.01f), InspectorName("最大照亮距离")] public float maxDistance = 100;
             [Range(8, 256), InspectorName("采样步数")] public int stepCount = 48;
             [InspectorName("抗锯齿")] public HoVolumeLightAntialiasing antialiasing = HoVolumeLightAntialiasing.Temporal;
-            [Range(0, .9f), InspectorName("散射方向性")] public float anisotropy = .3f;
+            [InspectorName("覆盖区域方向性")] public bool overrideAnisotropy;
+            [Range(-.9f, .9f), InspectorName("散射方向性覆盖")] public float anisotropy = .3f;
             [InspectorName("Shader")] public Shader shader;
         }
         [SerializeField] private Settings settings = new();
         private Material material;
         private SolarPass pass;
         private SolarDebugPass debugPass;
+        private HoVolumeLightDustPass dustPass;
         private bool registered;
         private readonly HoVolumeLightReconstruction reconstruction = new();
         private Texture2D blueNoise;
@@ -38,10 +40,14 @@ namespace lilToon.URP.Extensions.VolumeLight
         public string Status { get; private set; } = "未生产";
         public bool HasMaterial => material != null;
         public int HistoryCameraCount => reconstruction.Count;
+        public int DustParticleCount => dustPass != null ? dustPass.ParticleCount : 0;
+        public bool DustCapacityLimited => dustPass != null && dustPass.CapacityLimited;
+        public bool HasDustMaterial => dustPass != null && dustPass.HasMaterial;
         public void ResetHistory() => reconstruction.Dispose();
         public override void Create()
         {
             ResetHistory();
+            dustPass?.Dispose(); dustPass = new HoVolumeLightDustPass();
             pass = new SolarPass(this);
             debugPass?.ReleaseDebugResources();
             debugPass = new SolarDebugPass(pass);
@@ -64,6 +70,7 @@ namespace lilToon.URP.Extensions.VolumeLight
         {
             debugPass?.ReleaseDebugResources();
             ResetHistory(); blueNoise = null;
+            dustPass?.Dispose();
             blueNoiseHandle?.Release(); blueNoiseHandle = null;
             CoreUtils.Destroy(material); material = null;
         }
@@ -117,7 +124,8 @@ namespace lilToon.URP.Extensions.VolumeLight
                 blueNoiseHandle?.Release(); blueNoiseHandle = RTHandles.Alloc(blueNoise);
             }
             if (aa != HoVolumeLightAntialiasing.Temporal) reconstruction.Remove(data.cameraData.camera);
-            float g = volume != null && volume.anisotropy.overrideState ? volume.anisotropy.value : settings.anisotropy;
+            float g = volume != null && volume.anisotropy.overrideState ? Mathf.Clamp(HoAtmosphereRegion.Finite(volume.anisotropy.value), -.9f, .9f) :
+                settings.overrideAnisotropy ? Mathf.Clamp(HoAtmosphereRegion.Finite(settings.anisotropy), -.9f, .9f) : 2;
             int debug = volume != null && (data.cameraData.cameraType == CameraType.SceneView ? volume.debugInSceneView.value : volume.debugInGameView.value) ? (int)volume.debugMode.value : 0;
             int sunSignature = HoAtmosphereCache.Hash(main, data.lightData.visibleLights[main].finalColor.GetHashCode());
             var light = data.lightData.visibleLights[main].light;
@@ -130,8 +138,9 @@ namespace lilToon.URP.Extensions.VolumeLight
                 if (light.TryGetComponent<UniversalAdditionalLightData>(out var additional))
                     sunSignature = HoAtmosphereCache.Hash(sunSignature, (int)additional.softShadowQuality);
             }
-            pass.Setup(new Vector4(Mathf.Max(0, HoAtmosphereRegion.Finite(intensity)), Mathf.Max(.01f, HoAtmosphereRegion.Finite(distance, 100)), Mathf.Clamp(steps, 8, 256), Mathf.Clamp(HoAtmosphereRegion.Finite(g), 0, .9f)), material, debug, aa, sunSignature);
+            pass.Setup(new Vector4(Mathf.Max(0, HoAtmosphereRegion.Finite(intensity)), Mathf.Max(.01f, HoAtmosphereRegion.Finite(distance, 100)), Mathf.Clamp(steps, 8, 256), g), material, debug, aa, sunSignature);
             renderer.EnqueuePass(pass);
+            dustPass.Setup(Mathf.Max(0, HoAtmosphereRegion.Finite(intensity)), g); renderer.EnqueuePass(dustPass);
             if (debug != 0) debugPass.Enqueue(renderer);
             else debugPass.ReleaseDebugResources();
             Status = "已安排太阳 HD";
@@ -147,7 +156,7 @@ namespace lilToon.URP.Extensions.VolumeLight
                 #endif
             }
             registered = false;
-            ReleaseResources(); debugPass = null; pass = null;
+            ReleaseResources(); debugPass = null; pass = null; dustPass = null;
         }
 
         private sealed class SolarDebugPass : HoDebugRenderPass

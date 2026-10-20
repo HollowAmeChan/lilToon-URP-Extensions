@@ -9,7 +9,7 @@ namespace lilToon.URP.Extensions.Editor.Atmosphere
     {
         private static readonly Color ContentColor = new(.42f, .72f, .58f);
         private static readonly Color RuntimeColor = new(.46f, .64f, .92f);
-        private static bool showRegion = true, showMedium = true;
+        private static bool showRegion = true, showMedium = true, showOptics = true, showDust;
         public override void OnInspectorGUI()
         {
             serializedObject.Update();
@@ -21,8 +21,28 @@ namespace lilToon.URP.Extensions.Editor.Atmosphere
                 {
                     HoAtmosphereDensityPresets.Draw(targets);
                     foreach (string field in new[] { "density", "tint", "densityTexture" }) EditorGUILayout.PropertyField(serializedObject.FindProperty(field));
-                    if (serializedObject.FindProperty("densityTexture").objectReferenceValue != null || serializedObject.FindProperty("densityTexture").hasMultipleDifferentValues)
-                        foreach (string field in new[] { "noiseStrength", "noiseWorldSize", "wind" }) EditorGUILayout.PropertyField(serializedObject.FindProperty(field));
+                    bool textured = serializedObject.FindProperty("densityTexture").objectReferenceValue != null || serializedObject.FindProperty("densityTexture").hasMultipleDifferentValues;
+                    if (textured)
+                        foreach (string field in new[] { "noiseStrength", "noiseWorldSize" }) EditorGUILayout.PropertyField(serializedObject.FindProperty(field));
+                    var dustEnabled = serializedObject.FindProperty("dust").FindPropertyRelative("enabled");
+                    if (textured || dustEnabled.boolValue || dustEnabled.hasMultipleDifferentValues) EditorGUILayout.PropertyField(serializedObject.FindProperty("wind"));
+                }
+            if (LilUrpEditorSectionGui.DrawSectionHeader(ref showOptics, "散射光学", "反照率 / 方向性", RuntimeColor))
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                    foreach (string field in new[] { "scatteringAlbedo", "anisotropy", "pathExtinction" }) EditorGUILayout.PropertyField(serializedObject.FindProperty(field));
+            if (LilUrpEditorSectionGui.DrawSectionHeader(ref showDust, "可见灰尘", "共享世界尘粒", ContentColor))
+                using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
+                {
+                    var dust = serializedObject.FindProperty("dust"); EditorGUILayout.PropertyField(dust.FindPropertyRelative("enabled"));
+                    if (dust.FindPropertyRelative("enabled").boolValue || dust.FindPropertyRelative("enabled").hasMultipleDifferentValues)
+                    {
+                        foreach (string field in new[] { "numberDensity", "size", "brightness", "flutter", "maxDistance", "maxParticles", "seed" }) EditorGUILayout.PropertyField(dust.FindPropertyRelative(field));
+                        if (targets.Length == 1)
+                        {
+                            var source = (HoAtmosphereRegion)target;
+                            EditorGUILayout.LabelField("已准备尘粒", source.PreparedDustCount + (source.DustCapacityLimited ? "（已按数量上限稀疏）" : ""));
+                        }
+                    }
                 }
             serializedObject.ApplyModifiedProperties();
             if (HoAtmosphereRegionRegistry.ActiveCount > 1) EditorGUILayout.HelpBox("v0.1 仅支持一个有效区域；多个区域会发布空介质。", MessageType.Warning);

@@ -35,6 +35,8 @@ namespace lilToon.URP.Extensions.VolumeLight
         private static int frame;
         private static bool densityPresetsOnly;
         public static void RunDensityPresets() { densityPresetsOnly = true; Run(); }
+        private static bool dustOnly;
+        public static void RunDust() { dustOnly = true; Run(); }
         private static string renderError;
         private static void CaptureError(string message, string stack, LogType type)
         {
@@ -48,6 +50,7 @@ namespace lilToon.URP.Extensions.VolumeLight
             public string graphicsAPI, error, medium, solar;
             public string lilToonCutout;
             public AAReport antialiasing;
+            public DustReport dust;
             public float windowReduction;
         }
         public static void Run()
@@ -95,6 +98,7 @@ namespace lilToon.URP.Extensions.VolumeLight
                 lightVolume = holder.sharedProfile.Add<HoVolumeLightVolume>(false);
                 atmosphereVolume = holder.sharedProfile.Add<HoAtmosphereVolume>(false);
                 region = Keep(new GameObject("Atmosphere region")).AddComponent<HoAtmosphereRegion>();
+                region.anisotropy = 0;
                 region.transform.position = new Vector3(0, 1, 5); region.size = new Vector3(12, 6, 8); region.blendDistance = .5f; region.density = .1f;
                 sun = Keep(new GameObject("Existing sun")).AddComponent<Light>(); sun.type = LightType.Directional; sun.intensity = 2; sun.color = Color.white; sun.shadows = LightShadows.None;
                 sun.transform.rotation = Quaternion.LookRotation(new Vector3(.6f, 0, .8f)); RenderSettings.sun = sun;
@@ -110,6 +114,7 @@ namespace lilToon.URP.Extensions.VolumeLight
                 Require(HoAtmosphereMediumClock.SampleTime > initialWorldTime, "editor medium clock did not advance");
                 EditorApplication.update -= Tick;
                 if (densityPresetsOnly) { ValidateDensityPresets(); Finish(null); return; }
+                if (dustOnly) { ValidateDust(); Finish(null); return; }
                 ValidateAuthoring(); ValidateMedium(); ValidateAntialiasing(); ValidateSolar();
                 Debug.Log("[HoVolumeLightValidation] PASS: Medium GPU sampling/revision + solar shadow/cutout/offscreen/region mask/depth/inside/SSS + lifecycle; API=" + SystemInfo.graphicsDeviceType);
                 Finish(null);
@@ -311,10 +316,10 @@ namespace lilToon.URP.Extensions.VolumeLight
         private static float ImageError(Color[] a, Color[] b) { double sum = 0; for (int i = 0; i < a.Length; i++) sum += Math.Abs(a[i].r - b[i].r); return (float)(sum / a.Length); }
         private static void Save(Color[] pixels, string name)
         {
-            var image = new Texture2D(160, 160, TextureFormat.RGBAFloat, false, true); image.SetPixels(pixels); image.Apply();
+            var image = new Texture2D(target.width, target.height, TextureFormat.RGBAFloat, false, true); image.SetPixels(pixels); image.Apply();
             string dir = Path.Combine(Directory.GetCurrentDirectory(), "VolumeLightValidation"); Directory.CreateDirectory(dir);
             File.WriteAllBytes(Path.Combine(dir, name + ".exr"), image.EncodeToEXR(Texture2D.EXRFlags.OutputAsFloat));
-            var preview = new Color[pixels.Length]; for (int i = 0; i < pixels.Length; i++) preview[i] = new Color(pixels[i].r / (1 + pixels[i].r), pixels[i].g / (1 + pixels[i].g), pixels[i].b / (1 + pixels[i].b), 1);
+            var preview = new Color[pixels.Length]; for (int i = 0; i < pixels.Length; i++) preview[i] = new Color(pixels[i].r / (1 + pixels[i].r), pixels[i].g / (1 + pixels[i].g), pixels[i].b / (1 + pixels[i].b), 1).gamma;
             image.SetPixels(preview); image.Apply(); File.WriteAllBytes(Path.Combine(dir, name + ".png"), image.EncodeToPNG()); Object.DestroyImmediate(image);
         }
         private static void Near(float actual, float expected, string label, float epsilon = .015f) => Require(Mathf.Abs(actual - expected) < epsilon, label + ": expected " + expected + ", got " + actual);
@@ -342,8 +347,9 @@ namespace lilToon.URP.Extensions.VolumeLight
                 medium = results.ContainsKey("medium") ? (string)results["medium"] : "NOT RUN", solar = results.ContainsKey("solar") ? (string)results["solar"] : "NOT PASSED",
                 lilToonCutout = results.ContainsKey("lilToonCutout") ? (string)results["lilToonCutout"] : "NOT RUN",
                 antialiasing = aaReport,
+                dust = dustReport,
                 windowReduction = results.ContainsKey("windowReduction") ? Convert.ToSingle(results["windowReduction"]) : 0 };
-            File.WriteAllText(Path.Combine(dir, (densityPresetsOnly ? "result-density-presets-" : "result-") + SystemInfo.graphicsDeviceType + ".json"), JsonUtility.ToJson(report, true));
+            File.WriteAllText(Path.Combine(dir, (dustOnly ? "result-dust-" : densityPresetsOnly ? "result-density-presets-" : "result-") + SystemInfo.graphicsDeviceType + ".json"), JsonUtility.ToJson(report, true));
             if (error != null) Debug.LogException(error);
             EditorApplication.Exit(error == null ? 0 : 1);
         }

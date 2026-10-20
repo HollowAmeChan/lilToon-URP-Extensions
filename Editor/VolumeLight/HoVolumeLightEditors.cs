@@ -17,7 +17,10 @@ namespace lilToon.URP.Extensions.Editor.VolumeLight
             EditorGUILayout.HelpBox("读取固定 HoAtmosphere 介质输入与当前主方向光；v0.1 使用 RenderGraph。", MessageType.Info);
             if (LilUrpEditorSectionGui.DrawSectionHeader(ref showRuntime, "运行（兜底默认值）", "太阳 HD", RuntimeColor))
                 using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
-                    foreach (string field in new[] { "enabled", "intensity", "maxDistance", "stepCount", "antialiasing", "anisotropy" }) EditorGUILayout.PropertyField(settings.FindPropertyRelative(field));
+                {
+                    foreach (string field in new[] { "enabled", "intensity", "maxDistance", "stepCount", "antialiasing", "overrideAnisotropy" }) EditorGUILayout.PropertyField(settings.FindPropertyRelative(field));
+                    if (settings.FindPropertyRelative("overrideAnisotropy").boolValue) EditorGUILayout.PropertyField(settings.FindPropertyRelative("anisotropy"));
+                }
             if (LilUrpEditorSectionGui.DrawSectionHeader(ref showAdvanced, "高级", "Shader", AdvancedColor))
                 using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox)) EditorGUILayout.PropertyField(settings.FindPropertyRelative("shader"));
             serializedObject.ApplyModifiedProperties();
@@ -46,7 +49,7 @@ namespace lilToon.URP.Extensions.Editor.VolumeLight
                 using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                 {
                     PropertyField(enable, new GUIContent("启用")); PropertyField(intensity, new GUIContent("体积亮度倍率"));
-                    PropertyField(distance, new GUIContent("最大照亮距离")); PropertyField(steps, new GUIContent("采样步数")); PropertyField(anisotropy, new GUIContent("散射方向性"));
+                    PropertyField(distance, new GUIContent("最大照亮距离")); PropertyField(steps, new GUIContent("采样步数")); PropertyField(anisotropy, new GUIContent("散射方向性覆盖"));
                     PropertyField(antialiasing, new GUIContent("抗锯齿"));
                 }
             if (LilUrpEditorSectionGui.DrawSectionHeader(ref showDebug, "调试", LilUrpEditorSectionGui.EnumSummary(debug), DebugColor))

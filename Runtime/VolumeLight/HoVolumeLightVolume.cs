@@ -41,8 +41,8 @@ namespace lilToon.URP.Extensions.VolumeLight
         [InspectorName("采样步数")] public ClampedIntParameter stepCount = new(48, 8, 256);
         [InspectorName("抗锯齿"), Tooltip("时域稳定使用体积自身的相机历史；单帧去噪不积累历史，适合快速变化的镜头。")]
         public HoVolumeLightAntialiasingParameter antialiasing = new(HoVolumeLightAntialiasing.Temporal);
-        [InspectorName("散射方向性"), Tooltip("前向散射程度；越大，朝向光源观察时越明亮。")]
-        public ClampedFloatParameter anisotropy = new(.3f, 0, .9f);
+        [InspectorName("散射方向性覆盖"), Tooltip("仅在勾选覆盖时替换大气区域的散射方向性；同时影响雾与可见尘粒。")]
+        public ClampedFloatParameter anisotropy = new(.3f, -.9f, .9f);
         public HoVolumeLightDebugParameter debugMode = new(HoVolumeLightDebugMode.Off);
         public BoolParameter debugInSceneView = new(true);
         public BoolParameter debugInGameView = new(true);

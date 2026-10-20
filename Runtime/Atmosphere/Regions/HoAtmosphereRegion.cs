@@ -11,10 +11,23 @@ namespace lilToon.URP.Extensions.Atmosphere
         public float blendDistance = 1;
         [Range(0, 1), InspectorName("体积光参与"), Tooltip("区域对体积光的显示权重；光源照亮范围与遮挡仍由光束维护。")]
         public float volumeLightWeight = 1;
-        [Min(0), InspectorName("介质密度"), Tooltip("稀薄介质的每米散射强度；增加它会增强体积光。")]
+        [Min(0), InspectorName("介质密度"), Tooltip("每米介质强度；启用路径消光时作为消光系数，散射再乘反照率。")]
         public float density = .02f;
         [ColorUsage(false, true), InspectorName("介质颜色"), Tooltip("介质对照明贡献的线性 HDR 染色。")]
         public Color tint = Color.white;
+        [ColorUsage(false), InspectorName("散射反照率"), Tooltip("RGB 各通道被散射的比例（0–1）；剩余部分为吸收。白色保持原有散射。")]
+        public Color scatteringAlbedo = Color.white;
+        [Range(-.9f, .9f), InspectorName("散射方向性"), Tooltip("正值更偏前向散射，负值更偏后向；由雾与尘粒共同读取。")]
+        public float anisotropy = .3f;
+        [InspectorName("路径消光"), Tooltip("沿观察路径衰减体积贡献；关闭时保持稀薄加亮近似，不改变背景表面颜色。")]
+        public bool pathExtinction;
+        [InspectorName("可见灰尘")]
+        public HoAtmosphereDustSettings dust = new();
+        [System.NonSerialized] private HoAtmosphereDustField dustField;
+        internal HoAtmosphereDustField GetDustField() => dustField ??= new HoAtmosphereDustField();
+        internal bool HasDustBuffer => dustField != null && dustField.HasBuffer;
+        public int PreparedDustCount => dustField != null ? dustField.Count : 0;
+        public bool DustCapacityLimited => dustField != null && dustField.CapacityLimited;
         [InspectorName("空间密度纹理"), Tooltip("可选 Texture3D，R 通道调制密度；为空时使用均匀密度，不自动创建资产。")]
         public Texture3D densityTexture;
         [Range(0, 1), InspectorName("纹理扰动强度")]
@@ -25,14 +38,21 @@ namespace lilToon.URP.Extensions.Atmosphere
         public Vector3 wind = new Vector3(.1f, 0, 0);
 
         private void OnEnable() => HoAtmosphereRegionRegistry.Register(this);
-        private void OnDisable() => HoAtmosphereRegionRegistry.Unregister(this);
-        private void OnDestroy() => HoAtmosphereRegionRegistry.Unregister(this);
+        private void Update() { if (dustField != null && (dust == null || !dust.enabled)) ReleaseDust(); }
+        private void OnDisable() { HoAtmosphereRegionRegistry.Unregister(this); ReleaseDust(); }
+        private void OnDestroy() { HoAtmosphereRegionRegistry.Unregister(this); ReleaseDust(); }
+        internal void ReleaseDust() { dustField?.Dispose(); dustField = null; }
         private void OnValidate()
         {
             size = new Vector3(Positive(size.x, 1), Positive(size.y, 1), Positive(size.z, 1));
             blendDistance = Mathf.Max(0, Finite(blendDistance));
             volumeLightWeight = Mathf.Clamp01(Finite(volumeLightWeight));
             density = Mathf.Max(0, Finite(density));
+            scatteringAlbedo = new Color(Mathf.Clamp01(Finite(scatteringAlbedo.r, 1)), Mathf.Clamp01(Finite(scatteringAlbedo.g, 1)), Mathf.Clamp01(Finite(scatteringAlbedo.b, 1)), 1);
+            anisotropy = Mathf.Clamp(Finite(anisotropy, .3f), -.9f, .9f);
+            dust ??= new HoAtmosphereDustSettings();
+            dust.Constrain();
+            // Release GPU resources from render/disable lifecycle, not the loading-thread OnValidate callback.
             noiseStrength = Mathf.Clamp01(Finite(noiseStrength));
             noiseWorldSize = Positive(noiseWorldSize, 5);
         }

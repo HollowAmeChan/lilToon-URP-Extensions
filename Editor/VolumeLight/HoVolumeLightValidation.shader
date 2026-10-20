@@ -23,6 +23,8 @@ Shader "Hidden/lilToon/URP/VolumeLight/Validation"
                 float3 p = _ProbePoints[min(15, (int)input.positionCS.x)].xyz;
                 HoAtmosphereMediumSample medium = HoAtmosphereSampleMedium(p, _ProbeTime);
                 if (_ProbeMode < .5) return float4(medium.activation, medium.density, medium.tint.r, _HoAtmosphereMediumDensity.w);
+                if (_ProbeMode > 1.5 && _ProbeMode < 2.5) return float4(_HoAtmosphereMediumAlbedo.rgb, _HoAtmosphereMediumOptics.x);
+                if (_ProbeMode > 2.5) return HoAtmospherePhase(p.x, 2).xxxx;
                 half shadow = 1;
                 #if defined(MAIN_LIGHT_CALCULATE_SHADOWS)
                 int cascade = _ProbeCascades > .5 ? (int)ComputeCascadeIndex(p) : 0;
