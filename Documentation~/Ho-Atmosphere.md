@@ -6,13 +6,13 @@ HoAtmosphere 生产供 RTDI / RTGI 查询的全方向线性 HDR 环境辐射，�
 
 用户明确 HoAtmosphere Feature 已固定开启，未来与 GD/GB/OB/SB/AC 一起作为底层基建。按这个前提，HoAtmosphere 统一维护并发布环境辐射与空间介质数据，消费者通过明确契约读取；此前按“可选天空输入 Feature”提出的独立外部发布建议由本条替代。
 
-`HoAtmosphereRegion` 当前保存 Box 的 Bounds/软权重、密度/颜色、Texture3D 动态噪声与体积光参与权重。任意 SDF 纹理和可见灰尘属性/模拟尚未实现。Region/Registry 是世界空间数据来源，Feature 负责准备和发布，内部不混入现有天空 Cache。SDF 权重只控制区域内的显示参与，不改变光束完整照亮范围或遮挡。
+`HoAtmosphereRegion` 当前保存 Box 的 Bounds/软权重、密度/颜色、散射反照率/方向性/路径消光、Texture3D 动态噪声、体积光参与权重，以及共享可见尘粒的参数与世界种子场。任意 SDF 纹理尚未实现。Region/Registry 是世界空间数据来源，Feature 负责准备和发布，内部不混入现有天空 Cache。SDF 权重只控制区域内的显示参与，不改变光束完整照亮范围或遮挡。
 
 VolumeLight 单向消费区域数据，管理自己的灯光绑定、SD/HD、光源深度与积分/绘制。区域 Bounds 可协助确定 HD 的接收/捕获范围，但介质区域外的投影遮挡物仍须保留。AC 接入效果名称、贡献/遮罩与后续导出，不承担大气场或光束渲染。
 
 环境 radiance 按世界方向采样，空间介质按世界位置/时间查询。两域有独立资源、有效性和 revision，由同一个固定基础 Feature 发布。环境来源缺失或环境 Volume 关闭不使有效区域失效；无区域发布空介质。v0.1 多个启用区域会明确报告容量限制并发布空介质。修改区域风/密度不触发环境 Cubemap 重捕获或 GI 的环境历史失效。`HoAtmosphereVolume` 是逐相机环境覆盖/调试，不代替世界空间 Region。
 
-Feature 固定存在，具体捕获/上传/模拟仍按变化和实际需求安排。初版可用区域组件/Registry + 共享采样函数与必要数据发布，无需先分配常驻体积 RT 或新增大气 Feature。灰尘状态/模拟由独立 world runtime 维护，每个逻辑时间步更新一次；Feature 发布供相机观察的数据，不在每次相机天空 pass 中重复推进。
+Feature 固定存在，具体捕获/上传/模拟仍按变化和实际需求安排。区域组件/Registry + 共享采样函数负责世界描述，无需先分配常驻体积 RT 或新增大气 Feature。可见尘粒的世界场归区域维护，以共同世界时间解析求值，仅在覆盖网格变化时更新种子缓冲；相机与灯光不会重复推进模拟。VolumeLight 消费该场，在粒子位置计算太阳照明和阴影并绘制。
 
 区域用法、`HoAtmosphereMediumResources` / CPU 快照 / HLSL 求值与当前边界见 [Ho-VolumeLight](Ho-VolumeLight.md)。下面的环境使用/API/验证保持既有契约。后续完整职责见 [VolumeLight 规划 §14](计划/Ho-VolumeLight-源码研究与模块规划.md#14-hoatmosphere-共享空间属性最新模块边界)。
 

@@ -1,0 +1,22 @@
+{
+  "implementationCommit": "4602a43",
+  "textHash": "SHA256 with LF",
+  "sources": {
+    "Editor/Atmosphere/HoAtmosphereRegionEditor.cs": "6f557b8c523d3764922ef2c8002fff8ec9903d307f6cc72ed863c36a8817c1d0",
+    "Editor/VolumeLight/HoVolumeLightAntialiasingValidation.cs": "95dd4fdaebef22f2c44c22e426e5440e92856cb597b98af8fd58f7cbed4efadf",
+    "Editor/VolumeLight/HoVolumeLightDustValidation.cs": "375b6e76b670ecad70d2660b8b490d44588ff2fc6e296d4a846414d642fb0299",
+    "Editor/VolumeLight/HoVolumeLightEditors.cs": "5fb9a5837be5b8886a9167d9aafaa9076c9933fa1da3b0235a8181f64297b680",
+    "Editor/VolumeLight/HoVolumeLightValidation.cs": "ef1dc0d864d0eadea11f992ee6bd4e176e2414780bbc0f812d9b9e3b74788224",
+    "Editor/VolumeLight/HoVolumeLightValidation.shader": "3a0ddf791dc3521c3c39472c8a5b96bdddfed42a6481b46fa68714fcbba1e437",
+    "Runtime/Atmosphere/Regions/HoAtmosphereDustField.cs": "f4309fbeaf1edefdf34e7f47b5ac3fe2b4fc8ea8c4123d5e67d6d74de4b7df47",
+    "Runtime/Atmosphere/Regions/HoAtmosphereMediumResources.cs": "f61bf82613652321b43028fc2ab335d3c6e56c00ebc0a8baef2e3ef182e4f098",
+    "Runtime/Atmosphere/Regions/HoAtmosphereRegion.cs": "013554ac4c2d97b340fb1df9b82c72ed566283320ab0eb0c0a98a925538da4c7",
+    "Runtime/Atmosphere/Regions/HoAtmosphereRegionRegistry.cs": "b792506ccb0e8788c6884e721421cbebb752f02406586ba1bc72af104d8d7579",
+    "Runtime/Atmosphere/Shaders/HoAtmosphereMedium.hlsl": "f9c27fe992423ff5ff9e04379fb6b606e2c0bbb3d8d916c8084ddf949ea6ac3b",
+    "Runtime/VolumeLight/HoVolumeLightDustPass.cs": "9115f73ac92fa6054f42ee7ea33ddd7d8c5c351e2e261a75488192e01972175b",
+    "Runtime/VolumeLight/HoVolumeLightRendererFeature.cs": "0587e70ed089477d369d521d639ca9166374b7dfafab2ffb13089bb059402d46",
+    "Runtime/VolumeLight/HoVolumeLightVolume.cs": "f7f0ee950fdfc6d0660803929f1a71d351a7fe468e0b17dd85c94aaf8bf533da",
+    "Runtime/VolumeLight/Resources/HoVolumeLightDust.shader": "7542d4e68bfe3a5e229a0d80b43efc2866d140906a75c44a10a055a01403f1d1",
+    "Runtime/VolumeLight/Resources/HoVolumeLightSolarCommon.hlsl": "b598e186bcc054a7566b2254479b743e4149047bf04e28d627977ce80efe61cd"
+  }
+}

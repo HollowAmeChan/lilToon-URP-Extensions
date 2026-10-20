@@ -1,0 +1,32 @@
+{
+  "entryPoint": "HoVolumeLightValidation.Run",
+  "graphicsAPI": "Direct3D11",
+  "passed": true,
+  "solar": "PASS",
+  "medium": "PASS",
+  "lilToonCutout": "MainTex alpha + AlphaMask PASS",
+  "antialiasing": {
+    "passed": true,
+    "legacy256RMSE": 0.14600710570812225,
+    "interval256RMSE": 0.012151115573942661,
+    "spatial256RMSE": 0.012692534364759922,
+    "temporal256RMSE": 0.004984771367162466,
+    "temporal48RMSE": 0.010677028447389603,
+    "interval48RMSE": 0.1217036172747612,
+    "spatial48RMSE": 0.04157339781522751,
+    "steadyFrameDifference": 0.010647913441061974,
+    "historyAge": 32.0,
+    "narrowBeamEnergyRatio": 0.997681200504303,
+    "narrowBeamPeakRatio": 0.99811851978302,
+    "cameraTAAHistoryAge": 9.0,
+    "legacy256Banding": 0.02529270388185978,
+    "temporal256Banding": 0.0048416536301374435,
+    "temporal48Banding": 0.006321510300040245,
+    "motionRMSE": 0.041256457567214966,
+    "legacyMean": 0.7585440874099731,
+    "referenceMean": 0.7588945627212524,
+    "temporalMean": 0.7561810612678528,
+    "blockerLeak": 0.0,
+    "movedShadowError": 0.02467111498117447
+  }
+}

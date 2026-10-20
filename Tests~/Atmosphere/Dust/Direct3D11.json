@@ -1,0 +1,22 @@
+{
+  "entryPoint": "HoVolumeLightValidation.RunDust",
+  "implementationCommit": "4602a43",
+  "graphicsAPI": "Direct3D11",
+  "passed": true,
+  "error": "",
+  "metrics": {
+    "passed": true,
+    "particles": 1408,
+    "changedPixels": 3026,
+    "defaultChangedPixels": 823,
+    "defaultMeanContribution": 1.3401322576100938e-05,
+    "subpixelEnergyRatio": 1.1724138259887695,
+    "meanContribution": 0.05326524376869202,
+    "movementError": 0.09168064594268799,
+    "shadowReduction": 1.0,
+    "extinctionRatio": 0.7497480511665344,
+    "centerExtinctionError": 0.00015310238813981414,
+    "narrowPhaseRatio": 43.52537536621094,
+    "cutoutContrast": 1.0
+  }
+}
