@@ -228,3 +228,6 @@
 **事后review：** 接纳真实场景接入/取证工具和失败发现，拒绝filtered画质接纳。它改变后续行动：不再以小夹具稳定性代表目标场景，质量缺口不能掩盖。原模型/NPR/源资产保持，实际贡献弱需按数据判断；GPU毫秒仍缺失。CLI/MCP只给数量统计，需新的官方D3D12 timestamp条件，先以fence/频率/空区间/已知负载验证，不能复刻DI零样本或用CPU耗时。正常自动camera/场景漫游仍独立待验。
 
 **过滤提交：** 仅Editor/RTGI/HoRTGICastleValidation.cs/meta，Tests~/RTGI/Scene、RTGI说明/计划/过程/禁试/交接；用户场景/依赖/二进制只在隔离工程不入仓，其他模块不纳入。下一阶段优先取得有效GPU分段与显存/分辨率成本，同时保留这项真实质量失败，整体goal不完成。
+
+
+步骤010过滤提交：`010b8cd`。提交后verify仍确认四项功能真实通过、五项质量真实拒绝，qualityQualified=false；无产品Runtime修改。整体目标active，后续GPU取证不得掩盖质量缺口。
