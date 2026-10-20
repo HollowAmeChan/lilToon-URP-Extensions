@@ -1,0 +1,140 @@
+// Copyright (c) 2020-2026, NVIDIA CORPORATION. All rights reserved.
+// NVIDIA portions are governed by ../../RTDI/ThirdParty/RTXDI/LICENSE.txt.
+// Reference ShadeSecondarySurfaces -> GI temporal/spatial/final, diffuse-only receiver.
+#pragma kernel ShadeSecondary
+#pragma kernel Temporal
+#pragma kernel Spatial
+#pragma kernel Final
+#pragma kernel FinalNRD HO_RTGI_NRD_ACTIVE
+#pragma kernel ResolveNRD HO_RTGI_NRD_ACTIVE
+#pragma kernel Reconstruct
+#pragma kernel BuildEnvironmentPdf
+#pragma kernel PresampleEnvironment
+#pragma use_dxc
+#pragma target 6.0
+#pragma require inlineraytracing
+#include "HoRTGIResampling.hlsl"
+#include "../../RTDI/ThirdParty/RTXDI/LightSampling/PresamplingFunctions.hlsl"
+RWTexture2D<float4> _HoRTGIDiffuse;
+StructuredBuffer<float2> _HoRTGIFinalVisibility;
+#if defined(HO_RTGI_NRD_ACTIVE)
+#include "HoRTGINrdSignal.hlsl"
+#endif
+
+// Same equal-solid-angle PDF and pinned SDK pre-sampling used by Ho-RTDI.
+[numthreads(8,8,1)]
+void BuildEnvironmentPdf(uint3 id:SV_DispatchThreadID)
+{
+    uint size=(uint)_HoRTGIEnvironment.x;if(any(id.xy>=size))return;
+    float weight=HoDILuminance(HoAtmosphereSampleRadiance(HoDIEnvironmentDirection((float2(id.xy)+.5)/size)));
+    _HoRTGIEnvironmentPdfOutput[id.xy]=isfinite(weight)?max(weight,1e-8):0;
+}
+[numthreads(256,1,1)]
+void PresampleEnvironment(uint3 id:SV_DispatchThreadID)
+{
+    if(id.x>=(uint)_HoRTGIEnvironmentRISLayout.x||id.y>=(uint)_HoRTGIEnvironmentRISLayout.y)return;
+    RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTGIFrameIndex,17);
+    uint size=(uint)_HoRTGIEnvironment.x;
+    RTXDI_PresampleEnvironmentMap(rng,_HoRTGIEnvironmentPdf,uint2(size,size),id.y,id.x,HoGIEnvironmentRIS());
+}
+
+[numthreads(8,8,1)]
+void ShadeSecondary(uint3 id:SV_DispatchThreadID){HoGIShadeSecondary(id.xy);}
+
+[numthreads(8,8,1)]
+void Temporal(uint3 id:SV_DispatchThreadID){HoGITemporal(id.xy);}
+[numthreads(8,8,1)]
+void Spatial(uint3 id:SV_DispatchThreadID){HoGISpatial(id.xy);}
+
+void HoGIFinal(uint2 pixel)
+{
+    RTXDI_GIReservoir reservoir=RTXDI_LoadGIReservoir(HoGILayout(),pixel,1);
+    RAB_Surface surface=RAB_GetGBufferSurface(pixel,false);float3 demodulated=0;float hitDistance=65504;
+    bool valid=RAB_IsSurfaceValid(surface);
+    if(valid)
+    {
+        HoRTGISecondaryData initial=_HoRTGISecondary[pixel.y*(uint)_HoRTGIFrame.x+pixel.x];
+        if(initial.flags==1)hitDistance=min(65504,length(initial.positionWS-surface.worldPos));
+        if(RTXDI_IsValidGIReservoir(reservoir))
+        {
+            float3 delta=reservoir.position-surface.worldPos;float distance=length(delta);float3 direction=delta/max(distance,1e-12);
+            if(distance>_HoRTGISettings.w*2&&dot(direction,surface.geoNormal)>0&&dot(direction,surface.normal)>0)
+            {
+                bool visible;
+                if(_HoRTGIFlags.w>.5)
+                {
+                    float2 visibility=_HoRTGIFinalVisibility[pixel.y*(uint)_HoRTGIFrame.x+pixel.x];
+                    visible=visibility.x>.5;hitDistance=visibility.y;
+                }
+                else
+                {
+                    HoRTSceneHit hit=HoRTTraceScene(surface.worldPos,direction,_HoRTGISettings.w,distance-_HoRTGISettings.w,255);
+                    visible=hit.status==0;hitDistance=min(65504,visible?distance:max(hit.distance,_HoRTGISettings.w));
+                }
+                if(visible)demodulated=Lambert(surface.normal,-direction)*reservoir.radiance*reservoir.weightSum;
+            }
+        }
+    }
+    _HoRTGIDiffuse[pixel]=float4(_HoRTGIInputGrid.z>1?demodulated:demodulated*surface.material.diffuseAlbedo,valid?1:0);
+    #if defined(HO_RTGI_NRD_ACTIVE)
+    _HoRTGINrdSignal[pixel]=RELAX_FrontEnd_PackRadianceAndHitDist(demodulated/_HoRTGINrdSignalScale,valid?max(hitDistance,.00001):0,true);
+    _HoRTGINrdNormal[pixel]=NRD_FrontEnd_PackNormalAndRoughness(valid?surface.normal:float3(0,0,1),1,0);
+    _HoRTGINrdViewZ[pixel]=valid?surface.viewDepth:1e6;
+    #endif
+    RTXDI_StoreGIReservoir(reservoir,HoGILayout(),pixel,0);
+    HoRTDIPrimaryHistory history=(HoRTDIPrimaryHistory)0;
+    if(RAB_IsSurfaceValid(surface))
+    {
+        float2 uv=HoGIGridPrimaryUV(pixel,_HoRTGIInputGrid);
+        history.depth=asuint(SAMPLE_TEXTURE2D_X_LOD(_HoSurfaceAssociationSurfaceDepth,sampler_PointClamp,uv,0).r);
+        history.shadingNormal=HoDIPackNormal(surface.normal);history.geometricNormal=HoDIPackNormal(surface.geoNormal);
+        history.diffuse=HoDIPack(float4(surface.material.diffuseAlbedo,1));history.specular=HoDIPack(float4(surface.material.specularF0,surface.material.roughness));
+    }
+    _HoRTGIHistory[pixel.y*(uint)_HoRTGIFrame.x+pixel.x]=history;
+}
+[numthreads(8,8,1)] void Final(uint3 id:SV_DispatchThreadID){if(HoGIInside(id.xy))HoGIFinal(id.xy);}
+#if defined(HO_RTGI_NRD_ACTIVE)
+[numthreads(8,8,1)] void FinalNRD(uint3 id:SV_DispatchThreadID){if(HoGIInside(id.xy))HoGIFinal(id.xy);}
+[numthreads(8,8,1)]
+void ResolveNRD(uint3 id:SV_DispatchThreadID)
+{
+    if(!HoGIInside(id.xy))return;
+    RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);bool valid=RAB_IsSurfaceValid(surface);
+    float3 signal=_HoRTGINrdOutput.Load(int3(id.xy,0)).rgb*_HoRTGINrdSignalScale;
+    _HoRTGIFiltered[id.xy]=float4(valid?max(signal,0)*surface.material.diffuseAlbedo:0,valid?1:0);
+}
+#endif
+
+// Full-domain publication for the bounded half-grid experiment. Filtering is
+// performed on incident diffuse radiance; target albedo is applied exactly once.
+Texture2D<float4> _HoRTGIReconstructInput;
+RWTexture2D<float4> _HoRTGIReconstructed;
+float _HoRTGIReconstructScale;
+[numthreads(8,8,1)]
+void Reconstruct(uint3 id:SV_DispatchThreadID)
+{
+    if(any(id.xy>=(uint2)_HoRTGIInputGrid.xy))return;
+    HoRTPrimarySurface primary;
+    if(!HoRTTryLoadPrimarySurface(id.xy,primary)){_HoRTGIReconstructed[id.xy]=0;return;}
+    RAB_Surface target=HoGIFromPrimary(primary);
+    float2 uv=(float2(id.xy)+.5)/_HoRTGIInputGrid.xy;
+    float2 low=HoGIPrimaryToGridUV(uv,_HoRTGIInputGrid)*_HoRTGIFrame.xy-.5;
+    int2 first=(int2)floor(low);float3 sum=0;float weight=0;
+    for(int y=0;y<2;y++)for(int x=0;x<2;x++)
+    {
+        int2 pixel=first+int2(x,y);
+        if(any(pixel<0)||any(pixel>=(int2)_HoRTGIFrame.xy))continue;
+        RAB_Surface guide=RAB_GetGBufferSurface(pixel,false);if(!RAB_IsSurfaceValid(guide))continue;
+        float normalDot=dot(guide.normal,target.normal);
+        if(dot(guide.geoNormal,target.geoNormal)<.9||normalDot<.9)continue;
+        float3 delta=guide.worldPos-target.worldPos;
+        float plane=max(abs(dot(delta,target.geoNormal)),abs(dot(delta,guide.geoNormal)));
+        if(plane>max(.0005,.002*target.viewDepth)||abs(guide.viewDepth-target.viewDepth)>max(.005,.02*target.viewDepth))continue;
+        float2 bilinear=saturate(1-abs(low-float2(pixel)));float w=bilinear.x*bilinear.y*pow(saturate(normalDot),16);
+        sum+=max(0,_HoRTGIReconstructInput.Load(int3(pixel,0)).rgb)*w;weight+=w;
+    }
+    // No compatible sample is a conservative missing contribution, never a
+    // background fill. Thin-receiver quality must qualify this policy separately.
+    float3 demodulated=weight>1e-8?sum/weight*_HoRTGIReconstructScale:0;
+    _HoRTGIReconstructed[id.xy]=float4(demodulated*target.material.diffuseAlbedo,1);
+}

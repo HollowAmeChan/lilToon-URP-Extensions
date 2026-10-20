@@ -36,6 +36,7 @@
 | F30 / GI步骤011隔离 | query resolve直接放native raster render pass，或仅关闭AnyPlatform/Win64就声称测试DLL Editor-only（Linux/OSX仍默认enabled） | EndQuery标记位置不变，Resolve延后camera外；明确禁所有Standalone，实际Release payload无probe DLL且功能实跑。不能给产品加计时native依赖 |
 | F31 / GI步骤012资源及HD | 把descriptor payload/Unity Mesh运行时统计称为物理VRAM；整卡高占用且HD连续D3D12Fence::Wait后原样跑下一路径或继续凑样本；用HD推算冒充成功 | 256/512实际清单接纳，AS API/pose统计单列。HD PID44476真实exit−1无报告，compat未执行；整卡7.3～7.6/8GiB仅相关观测，不证明根因。禁止原条件重试/改TDR/终止其它进程；重开须具体新host条件或有界低驻留/同步夹具证据，先恢复非空已知负载/fence资格再做HD。runner仅停止自身进程、15分钟上限；1080约514MiB只作布局投影，stable budget/actual1080均false |
 | F32 / GI步骤013独立几何夹具 | 把无限精度CPU轮廓中心覆盖当作raster唯一允许表面；发现孤立depth/normal误差就放宽world门槛或改生产投影 | 两次真实exit1定位唯一像素CPU foreground local x−.5000122（距边缘.000192px）、GPU覆盖foreground。最终只在投影轮廓1/256px带允许两个独立ray/plane候选，全部位置/法线/深度仍原门槛，不跳过点；每条2点在带，18188点唯一候选。保留失败/源/诊断，不能扩大band遮盖错映射，也不能据此声称薄边GI重建通过 |
+| F33 / GI步骤014半GI重建 | 固定2×2代表点没采到薄前景，仍用四邻居/更宽邻域/背景填充或gain声称恢复；只凭57.5%payload下降接纳half | 实际RG/compat各169请求exit1：平面/输出/历史通过，但x8白色薄前景30点full约.992、half全0，原5%失败。Runtime/Editor实验已过滤撤回、精确源/patch/图归档，产品full。禁止原样四邻居或扩大域重试；重开需要真实full receiver缺样补偿及动态/噪声/资源与GPU成本证据。当前搁置，继续原实际场景质量；首轮F23单帧误判也保留，不能作half正式失败根因 |
 
 长期无收益路线的记录模板：问题与基线 → 假说/参考 → 尝试和真实成本 → 哪些指标改善/退化 → 拒绝或搁置原因 → 禁止原样再试的条件 → 重开所需新证据。新记录必须关联过程步骤与报告，不只写“试过，不行”。
 

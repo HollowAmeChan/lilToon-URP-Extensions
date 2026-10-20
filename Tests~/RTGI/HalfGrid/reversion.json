@@ -1,0 +1,70 @@
+{
+  "baselineCommit": "e7fcb40a5eb2126a306c98c27bf238a49a45c8db",
+  "patchSha256": "C5B5B33720953ACFDEA2298779C9F8E15251076BA908E97340633CBBF67726E2",
+  "restoredSources": [
+    {
+      "path": "Runtime/RTGI/HoRTGIContext.cs",
+      "sha256": "BF569C7172177B8DF827E001BD18246AC7884964DBAF60317A54158300EF9E86"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIDebugPass.cs",
+      "sha256": "CD0E785B8285ED32863D421A1979E9C25CF07021359B96FC9E54317D5051DD70"
+    },
+    {
+      "path": "Runtime/RTGI/HoRTGIRendererFeature.cs",
+      "sha256": "DF3D5C9A21963F6A99CAE989A9966C10296467AD0BB9D97A51C54FA4E722EDE3"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGI.compute",
+      "sha256": "7DB6B2EFB81A4E241D3FC0DFB9377A76417970D6846CACFE04E5A55983E4CD68"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGI.raytrace",
+      "sha256": "2E4CEBAAFBC8FEB3A8BF1C711BC44C64020E4567A602F1DC21C7301447ED9144"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIApplicationBridge.hlsl",
+      "sha256": "110657137C0413E3CA8808CD1FC74D741792942F818676BEC69B4CAAAD5897BB"
+    },
+    {
+      "path": "Runtime/RTGI/Shaders/HoRTGIResampling.hlsl",
+      "sha256": "FBBB2D1CDF3B54ECFB1C9DBEAA12F72CE7DB2B96183B5A0E2FE000A94CAD0F79"
+    }
+  ],
+  "retainedProductHalfMode": false,
+  "reason": "Independent unsampled foreground receives zero GI; both actual RG/compat fail original 5% gate despite payload saving.",
+  "images": [
+    {
+      "path": "images/compat/full-thin-filtered.png",
+      "sha256": "47ECF8E606A03E1FDBD739AEC85584AB2E3CD606C3BE93F5829C168EEE6211FB"
+    },
+    {
+      "path": "images/compat/full-thin-raw.png",
+      "sha256": "88FE2A454CFBF9A4F93A34D70D29E9C00050F6940699BB21D0F4DA5C02A7E8DF"
+    },
+    {
+      "path": "images/compat/half-thin-filtered.png",
+      "sha256": "3C2EE787E60D47576D78B9C62F7FAB0E59CD510DEAE86EDDB7FC9FA31752220C"
+    },
+    {
+      "path": "images/compat/half-thin-raw.png",
+      "sha256": "F9EDDCA05486EEF03DC7CD9A604AF9F69EEDC0CFCE895A638A16F0A5FAF8B8C6"
+    },
+    {
+      "path": "images/rg/full-thin-filtered.png",
+      "sha256": "47ECF8E606A03E1FDBD739AEC85584AB2E3CD606C3BE93F5829C168EEE6211FB"
+    },
+    {
+      "path": "images/rg/full-thin-raw.png",
+      "sha256": "88FE2A454CFBF9A4F93A34D70D29E9C00050F6940699BB21D0F4DA5C02A7E8DF"
+    },
+    {
+      "path": "images/rg/half-thin-filtered.png",
+      "sha256": "3C2EE787E60D47576D78B9C62F7FAB0E59CD510DEAE86EDDB7FC9FA31752220C"
+    },
+    {
+      "path": "images/rg/half-thin-raw.png",
+      "sha256": "F9EDDCA05486EEF03DC7CD9A604AF9F69EEDC0CFCE895A638A16F0A5FAF8B8C6"
+    }
+  ]
+}

@@ -1,0 +1,6 @@
+*.json -text whitespace=cr-at-eol
+# Unified-diff blank context lines contain a required single space.
+rejected-runtime.patch -text -whitespace
+source-at-run/** -text whitespace=cr-at-eol
+rejected-single-frame/source/** -text whitespace=cr-at-eol
+rejected-editor/** -text whitespace=cr-at-eol

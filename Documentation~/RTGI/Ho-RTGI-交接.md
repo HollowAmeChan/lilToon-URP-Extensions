@@ -183,3 +183,21 @@ F31仍禁原HD条件盲重试；需要有界低驻留/同步夹具或具体新ho
 待过滤提交白名单：上述4个Runtime helper/meta、4个Editor审计/meta、Tests~/RTGI/Grid整个目录（包含失败和源归档），Documentation~/RTGI的README/过程/踩坑/交接/半分辨率设计和计划。无其他Runtime/DI/vendor/native/场景变更；别人的Ho-GD plan未跟踪不纳入。完整goal active，不能complete。
 
 013已按白名单过滤提交4950433，Grid verifier提交后再次通过；012资源verifier亦通过。所有本任务进程结束、index空，仅别人的Ho-GD plan未跟踪。下一轮直接推进014生产GI映射与全域重建，不重复纯网格/静态小夹具。原质量/HD/自动camera/Player预算缺口继续保留，goal active。
+
+### 014终态（2026-10-20，待过滤提交；half实际原型失败并撤回）
+
+已实际做完GI半网格/全域重建实验，不是继续纯数学。临时七Runtime文件接Generate映射、GI私有current/previous RAB、Final depth/history、Temporal grid UV、NRD补偿projection、空间半径缩放；内部raw demodulated，双full输出按深度/共面/normal四邻居重建后乘full目标albedo一次。只有Editor非序列化半GI入口，默认full/Player未开放。
+
+正式Tests~/RTGI/HalfGrid/run_validation.ps1 exec92640终态已收：RG PID10316、compat32560各169受控请求真实exit1、编译诊断0/marker/fresh/SHA成功、无fence。functionalPass=true但qualityPass=false。64²红蓝平面raw最大误差.00781，filtered full .00879/half .00928；scale切换首帧raw/NRD reset、stableTemporal、full输出/实际.25合成、65×63 odd全尺寸/释放half outputs过。实际payload full1227104B/half521556B，减少57.497%（含两full输出，不是VRAM/GPUms/1080证据）。无Cutout/Player/正常camera证明。
+
+明确拒绝原因：一个位于偶数列x8、半个full像素宽的白色前景，30个内部有效receiver full raw≈.9921875、filtered≈.9919271，half二者全0、alpha仍valid。所有低图代表点都在后方红蓝面，正确的depth拒绝防串色同时使前景缺光；不是调权重/更宽邻域能补的。原5%/局部最小值门槛不放宽，images/rg和images/compat保存full白线→half黑线，已实际查看。F33搁置相同代表点+四邻居路线，重开必须真实full receiver缺样补偿和动态/噪声/完整成本新证据；不要继续堆平面小夹具或产品化half开关。
+
+初轮exec63281/PID48012因夹具重复F23（spatial ReSTIR单帧当逐像素能量）在full-flat先失败raw max1.996，保留rejected-single-frame/run/report/logSHA/完整源码。修正仅fixture spatial=false，temporal/NRD保留，生产参数与5%不改；这个错误不是正式half失败根因。受控同应用帧请求/固定60Hz NRD测试钟不是实际Update motion验收。
+
+**已过滤撤回：** 七个Runtime文件（Context/Feature/DebugPass及compute/raytrace/ApplicationBridge/Resampling）全部按e7fcb40恢复逐字节原源码，SHA与012记录完全一致；没有使用reset/restore覆盖他人改动。新Editor/RTGI/HoRTGIHalfValidation.cs及meta移出产品，精确归档rejected-editor，当前Runtime/Editor无diff，仅保留013 helper。原型全执行源码在source-at-run（含原runner）、rejected-runtime.patch对基线git apply --check过，reversion.json绑定恢复SHA/patch/8张PNG SHA。root runner仅后加缺入口拒绝，未冒称执行新保护。Unity恢复编译exec45443/PID57944 actual exit0/C#0/fence0，restored-compile.json有日志/SHA；未重复或冒称Player/完整画面回归。
+
+HalfGrid/verify_validation.py已核对正式两条真实失败、前置夹具失败、实际资源公式/完整发布/薄前景0、精确源/图/patch、当前七文件还原及Unity编译。halfQualityQualified=false、halfProductionRetained=false，Grid/Resources旧verifier也再过。所有本任务进程结束、run.activeProcess=null、restored compile finished=true。Tests~归档约.65MB/199文件，源meta及原样JSON用局部.gitattributes保留字节，属于可review复现证据，不把拒绝代码编进产品。
+
+**下一项015切回010实际质量：** 禁止照旧重启014原型。新待验证线索：GI Runtime/RTGI/NRD/HoRTGINrdContext.SignalScale=64；实际古堡输入微弱，NRD RGBA16 permanent/transient中的平方矩是否精度不足？本地固定NRD RELAX_TemporalAccumulation.cs.hlsl:470–471确实luma²，:618写accumulated float4；HistoryClamping:319起使用矩和moment correction。DI技术Ho-RTDI-NRD.md约243–253有亮暗moment饱和/缩放/旧history量纲实测，必须多参考。先用已有Editor ValidationDiffuseStage捕获真实Temporal/Clamp moment、同像素RGB和信号范围/量化，关联局部误差，再考虑可逆单位缩放（输入除/输出乘同尺度、历史尺度一致）。当前只是新假说，不认定根因，不把改单位当gain，也不盲改sigma/history。F27仍禁止更宽盒/补亮；010原长窗−6～−7%质量失败和五份失败报告不覆盖。
+
+012HD/fence/稳定预算和正常自动camera/完整Player矩阵仍未完成；当前有015有意义独立工作，不算blocked。待过滤提交仅Tests~/RTGI/HalfGrid和RTGI文档（README/过程/禁试/交接/半GI设计/计划），没有Runtime/Editor/vendor/native/场景变更；别人的Ho-GD plan不纳入。Goal active，不可complete。

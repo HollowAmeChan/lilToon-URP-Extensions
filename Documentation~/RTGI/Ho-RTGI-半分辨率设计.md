@@ -38,3 +38,9 @@ DI第44步ResolutionQuality扩大的是整个相机256/512尺寸，保持固定�
 新增HoRTGIGrid C#/HLSL可复用helper，实际GB/SB Compute对独立CPU平面求交，RG/compat各12case、18190receiver与5961前次depth样本通过；覆盖上述透视/正交、偏心、移动、resize/scale、odd/single row-column。半GI位置误差小于1e−4；漏投影补偿/漏primary映射的GPU负对照分别产生至少.052/3.75的最大world误差，原.002门槛能检出。见[实际报告](../../Tests~/RTGI/Grid/README.md)。
 
 明确odd或任一维<2时full回退；projection逻辑row0/row1减row3×2offset/fullSize，offset=(s−1)/2 full pixel。历史只在input width/height和scale完全相同时兼容。helper还没有接入GI生产链；没有实际NRD过滤/半GI重建/性能或画质接纳。首轮raster silhouette误判保留F32与两次失败，不能借此忽略全域薄边验收。下一步接GI私有RAB/Generate/Final history/Temporal/NRD，再做全域重建。
+
+## 014实际原型结论：搁置并撤回
+
+同helper实际接入完整GI与NRD/full发布，RG/compat各169请求。平面跨材质、odd回退和历史通过，payload减少57.497%；但未采集到的偶数列半像素白色前景，full约.992、half全0，原5%门槛失败。四邻居depth/normal拒绝避免背景串入，却不能恢复缺失采样；不能靠更宽邻域/权重解决。见[实际失败与恢复证据](../../Tests~/RTGI/HalfGrid/README.md)。
+
+该Runtime/Editor原型已按review过滤撤回并精确归档，产品仍full，仅保留013可复用helper。F33规定没有真实full receiver缺样补偿及动态/噪声/完整成本证据前，不重开相同路线；不再只做更多映射/平面夹具。后续回到010实际场景质量和正常相机/预算。本文上方的“下一步接入”是013当时计划，不是当前待重复指令。

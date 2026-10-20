@@ -1,0 +1,30 @@
+{
+  "flatFunctionalQualified": true,
+  "halfQualityQualified": false,
+  "halfProductionRetained": false,
+  "runs": [
+    {
+      "label": "rg",
+      "actualExitCode": 1,
+      "requests": 169,
+      "fullPayloadBytes": 1227104,
+      "halfPayloadBytes": 521556,
+      "payloadReductionPercent": 57.49700106918403,
+      "fullThinMean": 0.9919270833333337,
+      "halfThinMean": 0.0,
+      "reportSha256": "39BA4B4DFBBAC0B1A49FF0F39780E5EE63C6CFE1F4173CABD7DEA74FD2B2A044"
+    },
+    {
+      "label": "compat",
+      "actualExitCode": 1,
+      "requests": 169,
+      "fullPayloadBytes": 1227104,
+      "halfPayloadBytes": 521556,
+      "payloadReductionPercent": 57.49700106918403,
+      "fullThinMean": 0.9919270833333337,
+      "halfThinMean": 0.0,
+      "reportSha256": "FD1E205EFDDD281EC13D65826E349F23E6D00FDAF6594F415ACDFF359CC1CB83"
+    }
+  ],
+  "reversionCompileQualified": true
+}

@@ -1,0 +1,315 @@
+diff --git a/Runtime/RTGI/HoRTGIContext.cs b/Runtime/RTGI/HoRTGIContext.cs
+index cfe3f53..2573850 100644
+--- a/Runtime/RTGI/HoRTGIContext.cs
++++ b/Runtime/RTGI/HoRTGIContext.cs
+@@ -34,10 +34,12 @@ namespace lilToon.URP.Extensions.RTGI
+             ValidationGpuRasterMarker?.Invoke(cmd,name,begin);
+             #endif
+         }
+-        internal RTHandle diffuse;
++        internal RTHandle diffuse,fullRaw,fullFiltered;
++        internal HoRTGIGrid grid;
+         internal HoRTGINrdContext nrd;
+         internal string nrdStatus;
+-        internal RTHandle PublishedDiffuse=>nrd?.filtered??diffuse;
++        internal RTHandle RawDiffuse=>grid.scale==2?fullRaw:diffuse;
++        internal RTHandle PublishedDiffuse=>grid.scale==2?(nrd!=null?fullFiltered:fullRaw):nrd?.filtered??diffuse;
+         internal GraphicsBuffer environmentRis;
+         internal RTHandle environmentPdf;
+         internal bool environmentSampling,environmentPdfReady;
+@@ -49,8 +51,11 @@ namespace lilToon.URP.Extensions.RTGI
+         internal bool historyValid,lastTemporal;
+         internal Matrix4x4 previousVP=Matrix4x4.identity,previousInverseVP=Matrix4x4.identity;
+         internal Vector4 previousCamera,previousTowardsEye,previousViewZ,previousClip;
+-        internal void Prepare(int w,int h,int lightCount,GraphicsFormat format)
++        internal void Prepare(int w,int h,int lightCount,GraphicsFormat format,bool halfRequested=false)
+         {
++            var next=new HoRTGIGrid(w,h,halfRequested);
++            if(!next.CanReuseHistory(grid)){historyValid=false;if(nrd!=null)nrd.historyValid=false;}
++            grid=next;w=grid.width;h=grid.height;
+             if(width!=w||height!=h)
+             {
+                 reservoirs?.Dispose();history?.Dispose();secondary?.Dispose(); width=w;height=h;
+@@ -77,6 +82,13 @@ namespace lilToon.URP.Extensions.RTGI
+             }
+             var desc=new RenderTextureDescriptor(w,h){graphicsFormat=format,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true};
+             RenderingUtils.ReAllocateIfNeeded(ref diffuse,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI Diffuse");
++            if(grid.scale==2)
++            {
++                desc.width=grid.inputWidth;desc.height=grid.inputHeight;
++                RenderingUtils.ReAllocateIfNeeded(ref fullRaw,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI reconstructed raw diffuse");
++                RenderingUtils.ReAllocateIfNeeded(ref fullFiltered,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI reconstructed filtered diffuse");
++            }
++            else{fullRaw?.Release();fullFiltered?.Release();fullRaw=fullFiltered=null;}
+         }
+         internal void Complete(Matrix4x4 view,Matrix4x4 projection,Camera camera,uint revision,int signature)
+         {
+@@ -110,6 +122,6 @@ namespace lilToon.URP.Extensions.RTGI
+             {finalVisibility?.Dispose();finalVisibility=new GraphicsBuffer(GraphicsBuffer.Target.Structured,count,8){name="HoRTGI native final visibility/distance"};}
+         }
+         public void Dispose()
+-        {nrd?.Dispose();nrd=null;reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();secondary?.Dispose();finalVisibility?.Dispose();environmentRis?.Dispose();environmentPdf?.Release();diffuse?.Release();reservoirs=history=lights=neighbors=secondary=finalVisibility=environmentRis=null;diffuse=environmentPdf=null;}
++        {nrd?.Dispose();nrd=null;reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();secondary?.Dispose();finalVisibility?.Dispose();environmentRis?.Dispose();environmentPdf?.Release();diffuse?.Release();fullRaw?.Release();fullFiltered?.Release();reservoirs=history=lights=neighbors=secondary=finalVisibility=environmentRis=null;diffuse=environmentPdf=fullRaw=fullFiltered=null;}
+     }
+ }
+diff --git a/Runtime/RTGI/HoRTGIDebugPass.cs b/Runtime/RTGI/HoRTGIDebugPass.cs
+index a361d8a..9a3b247 100644
+--- a/Runtime/RTGI/HoRTGIDebugPass.cs
++++ b/Runtime/RTGI/HoRTGIDebugPass.cs
+@@ -39,7 +39,7 @@ namespace lilToon.URP.Extensions.RTGI
+         {
+             var cmd=CommandBufferPool.Get("Ho-RTGI debug");CoreUtils.SetRenderTarget(cmd,DebugTarget);
+             cmd.SetGlobalTexture("_HoRTGIDiffuseTexture",context.PublishedDiffuse.nameID);
+-            cmd.SetGlobalTexture("_HoRTGIRawDiffuseTexture",context.diffuse.nameID);
++            cmd.SetGlobalTexture("_HoRTGIRawDiffuseTexture",context.RawDiffuse.nameID);
+             HoDebugGrid.Draw(CommandBufferHelpers.GetRasterCommandBuffer(cmd),material,(int)mode,ModeId,HoRTGIDebugViewInfo.Views,new Vector2Int(DebugTarget.rt.width,DebugTarget.rt.height));
+             rendering.ExecuteCommandBuffer(cmd);CommandBufferPool.Release(cmd);PublishCompatibility(data.cameraData.camera);
+         }
+diff --git a/Runtime/RTGI/HoRTGIRendererFeature.cs b/Runtime/RTGI/HoRTGIRendererFeature.cs
+index d7ae0ae..f42450a 100644
+--- a/Runtime/RTGI/HoRTGIRendererFeature.cs
++++ b/Runtime/RTGI/HoRTGIRendererFeature.cs
+@@ -35,6 +35,11 @@ namespace lilToon.URP.Extensions.RTGI
+         public HoRTGISettings Settings => settings;
+         public string Status { get; private set; } = "未生产";
+         internal HoRTGIContext LastContext { get; private set; }
++        #if UNITY_EDITOR
++        // Bounded experiment only: no serialized option or Player half mode
++        // until thin-receiver/energy/dynamic quality and complete costs qualify.
++        internal bool ValidationHalfResolution;
++        #endif
+ 
+         public override void Create()
+         {
+@@ -81,7 +86,11 @@ namespace lilToon.URP.Extensions.RTGI
+             unchecked {signature=(signature*397^materials.Signature)*397^captured.signature;}
+             if(!contexts.TryGetValue(camera,out var context)){context=new HoRTGIContext();contexts.Add(camera,context);}
+             var descriptor=data.cameraData.cameraTargetDescriptor;
+-            context.Prepare(descriptor.width,descriptor.height,lights.Count,format);LastContext=context;
++            bool halfRequested=false;
++            #if UNITY_EDITOR
++            halfRequested=ValidationHalfResolution;
++            #endif
++            context.Prepare(descriptor.width,descriptor.height,lights.Count,format,halfRequested);LastContext=context;
+             context.PrepareEnvironment(captured.useEnvironment&&captured.secondaryEnvironmentSamples>0);
+             bool denoise=volume!=null&&volume.denoise.overrideState?volume.denoise.value:settings.denoise;
+             context.PrepareDenoiser(denoise,nrdShaders);
+@@ -209,7 +218,8 @@ namespace lilToon.URP.Extensions.RTGI
+                     builder.UseBuffer(graph.ImportBuffer(context.environmentRis),AccessFlags.ReadWrite);
+                     if(context.environmentPdf!=null)builder.UseTexture(graph.ImportTexture(context.environmentPdf),AccessFlags.ReadWrite);
+                     builder.UseBuffer(graph.ImportBuffer(context.neighbors));
+-                    data.rawDiffuse=graph.ImportTexture(context.diffuse);builder.UseTexture(data.rawDiffuse,AccessFlags.WriteAll);
++                    data.rawDiffuse=graph.ImportTexture(context.RawDiffuse);builder.UseTexture(data.rawDiffuse,AccessFlags.WriteAll);
++                    if(context.grid.scale==2)builder.UseTexture(graph.ImportTexture(context.diffuse),AccessFlags.ReadWrite);
+                     if(context.nrd!=null){context.nrd.Declare(graph,builder);data.diffuse=graph.ImportTexture(context.PublishedDiffuse);}
+                     else data.diffuse=data.rawDiffuse;
+                     // RenderGraph pass data is pooled; absent/disabled sky must not
+@@ -243,7 +253,7 @@ namespace lilToon.URP.Extensions.RTGI
+                 bool temporal=d.settings.temporal&&c.historyValid&&c.sceneRevision==d.revision&&c.lightingSignature==signature;
+                 c.lastTemporal=temporal;
+                 var frame=new Vector4(c.width,c.height,d.lightCount,0);
+-                var settings=new Vector4(d.settings.secondaryLightSamples,d.settings.spatialSamples,d.settings.spatialRadius,d.settings.rayBias);
++                var settings=new Vector4(d.settings.secondaryLightSamples,d.settings.spatialSamples,d.settings.spatialRadius/c.grid.scale,d.settings.rayBias);
+                 bool environment=c.environmentSampling&&d.settings.useEnvironment&&d.environmentParameters.w>.5f;
+                 cmd.SetBufferData(c.lights,d.lights);
+                 cmd.SetRayTracingVectorParam(d.rayShader,HoAtmosphereBindings.ParametersId,d.environmentParameters);
+@@ -253,6 +263,7 @@ namespace lilToon.URP.Extensions.RTGI
+                 cmd.SetRayTracingBufferParam(d.rayShader,"_HoRTGISecondary",c.secondary);cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIFrame",frame);
+                 cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIRaySettings",new Vector4(settings.w,d.settings.maxDistance,d.settings.useEnvironment&&d.settings.includeDirectEnvironment?1:0,100000));
+                 cmd.SetRayTracingIntParam(d.rayShader,"_HoRTGIFrameIndex",c.frame);
++                cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIInputGrid",c.grid.Parameters);
+                 cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGISettings",settings);
+                 cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIReservoirLayout",new Vector4(c.rowPitch,c.arrayPitch,0,0));
+                 cmd.SetRayTracingVectorParam(d.rayShader,"_HoRTGIEnvironmentRISLayout",new Vector4(HoRTGIContext.RisTileSize,HoRTGIContext.RisTileCount,0,0));
+@@ -307,6 +318,7 @@ namespace lilToon.URP.Extensions.RTGI
+                     if(c.environmentPdf!=null)cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTGIEnvironmentPdf",c.environmentPdf.nameID);
+                     else cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTGIEnvironmentPdf",Texture2D.blackTexture);
+                     cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTGIDiffuse",c.diffuse.nameID);
++                    cmd.SetComputeVectorParam(d.shader,"_HoRTGIInputGrid",c.grid.Parameters);
+                     cmd.SetComputeVectorParam(d.shader,"_HoRTGIFrame",frame);cmd.SetComputeVectorParam(d.shader,"_HoRTGISettings",settings);
+                     cmd.SetComputeVectorParam(d.shader,"_HoRTGIFlags",new Vector4(temporal?1:0,d.settings.spatial?1:0,Mathf.Clamp(d.settings.maxHistory,1,32),c.alphaVisibility?1:0));
+                     cmd.SetComputeVectorParam(d.shader,"_HoRTGIReservoirLayout",new Vector4(c.rowPitch,c.arrayPitch,0,0));cmd.SetComputeIntParam(d.shader,"_HoRTGIFrameIndex",c.frame);
+@@ -327,7 +339,7 @@ namespace lilToon.URP.Extensions.RTGI
+                 {
+                     bool reset=!c.historyValid||c.sceneRevision!=d.revision||c.lightingSignature!=signature;
+                     c.MarkGpu(cmd,"GI.NRD",true);
+-                    c.nrd.Record(cmd,d.view,d.projection,c.frame,reset,d.renderTime,!Application.isPlaying&&d.camera.cameraType==CameraType.SceneView);
++                    c.nrd.Record(cmd,d.view,c.grid.ProjectionForGrid(d.projection),c.frame,reset,d.renderTime,!Application.isPlaying&&d.camera.cameraType==CameraType.SceneView);
+                     c.MarkGpu(cmd,"GI.NRD",false);c.MarkGpu(cmd,"GI.Resolve",true);
+                     int resolve=d.shader.FindKernel("ResolveNRD");
+                     cmd.SetComputeFloatParam(d.shader,"_HoRTGINrdSignalScale",HoRTGINrdContext.SignalScale);
+@@ -338,7 +350,24 @@ namespace lilToon.URP.Extensions.RTGI
+                     cmd.DispatchCompute(d.shader,resolve,(c.width+7)/8,(c.height+7)/8,1);
+                     c.MarkGpu(cmd,"GI.Resolve",false);
+                 }
+-                cmd.SetGlobalFloat("_HoRTGIActive",1);cmd.SetGlobalTexture("_HoRTGIDiffuseTexture",c.PublishedDiffuse.nameID);cmd.SetGlobalTexture("_HoRTGIRawDiffuseTexture",c.diffuse.nameID);
++                if(c.grid.scale==2)
++                {
++                    c.MarkGpu(cmd,"GI.Reconstruct",true);
++                    Reconstruct(c.diffuse,c.fullRaw,1);
++                    if(c.nrd!=null)Reconstruct(c.nrd.output,c.fullFiltered,HoRTGINrdContext.SignalScale);
++                    c.MarkGpu(cmd,"GI.Reconstruct",false);
++                }
++                void Reconstruct(RTHandle input,RTHandle output,float scale)
++                {
++                    int kernel=d.shader.FindKernel("Reconstruct");
++                    if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,kernel,cameraData);
++                    else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,kernel);
++                    cmd.SetComputeVectorParam(d.shader,"_HoRTGIInputGrid",c.grid.Parameters);cmd.SetComputeVectorParam(d.shader,"_HoRTGIFrame",frame);
++                    cmd.SetComputeFloatParam(d.shader,"_HoRTGIReconstructScale",scale);
++                    cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTGIReconstructInput",input.nameID);cmd.SetComputeTextureParam(d.shader,kernel,"_HoRTGIReconstructed",output.nameID);
++                    cmd.DispatchCompute(d.shader,kernel,(c.grid.inputWidth+7)/8,(c.grid.inputHeight+7)/8,1);
++                }
++                cmd.SetGlobalFloat("_HoRTGIActive",1);cmd.SetGlobalTexture("_HoRTGIDiffuseTexture",c.PublishedDiffuse.nameID);cmd.SetGlobalTexture("_HoRTGIRawDiffuseTexture",c.RawDiffuse.nameID);
+                 c.MarkGpu(cmd,"GI.Total",false);
+                 c.Complete(d.view,d.projection,d.camera,d.revision,signature);
+             }
+diff --git a/Runtime/RTGI/Shaders/HoRTGI.compute b/Runtime/RTGI/Shaders/HoRTGI.compute
+index d769c1d..4ca176a 100644
+--- a/Runtime/RTGI/Shaders/HoRTGI.compute
++++ b/Runtime/RTGI/Shaders/HoRTGI.compute
+@@ -7,6 +7,7 @@
+ #pragma kernel Final
+ #pragma kernel FinalNRD HO_RTGI_NRD_ACTIVE
+ #pragma kernel ResolveNRD HO_RTGI_NRD_ACTIVE
++#pragma kernel Reconstruct
+ #pragma kernel BuildEnvironmentPdf
+ #pragma kernel PresampleEnvironment
+ #pragma use_dxc
+@@ -74,7 +75,7 @@ void HoGIFinal(uint2 pixel)
+             }
+         }
+     }
+-    _HoRTGIDiffuse[pixel]=float4(demodulated*surface.material.diffuseAlbedo,valid?1:0);
++    _HoRTGIDiffuse[pixel]=float4(_HoRTGIInputGrid.z>1?demodulated:demodulated*surface.material.diffuseAlbedo,valid?1:0);
+     #if defined(HO_RTGI_NRD_ACTIVE)
+     _HoRTGINrdSignal[pixel]=RELAX_FrontEnd_PackRadianceAndHitDist(demodulated/_HoRTGINrdSignalScale,valid?max(hitDistance,.00001):0,true);
+     _HoRTGINrdNormal[pixel]=NRD_FrontEnd_PackNormalAndRoughness(valid?surface.normal:float3(0,0,1),1,0);
+@@ -84,7 +85,7 @@ void HoGIFinal(uint2 pixel)
+     HoRTDIPrimaryHistory history=(HoRTDIPrimaryHistory)0;
+     if(RAB_IsSurfaceValid(surface))
+     {
+-        float2 uv=(float2(pixel)+.5)/_HoRTGIFrame.xy;
++        float2 uv=HoGIGridPrimaryUV(pixel,_HoRTGIInputGrid);
+         history.depth=asuint(SAMPLE_TEXTURE2D_X_LOD(_HoSurfaceAssociationSurfaceDepth,sampler_PointClamp,uv,0).r);
+         history.shadingNormal=HoDIPackNormal(surface.normal);history.geometricNormal=HoDIPackNormal(surface.geoNormal);
+         history.diffuse=HoDIPack(float4(surface.material.diffuseAlbedo,1));history.specular=HoDIPack(float4(surface.material.specularF0,surface.material.roughness));
+@@ -103,3 +104,37 @@ void ResolveNRD(uint3 id:SV_DispatchThreadID)
+     _HoRTGIFiltered[id.xy]=float4(valid?max(signal,0)*surface.material.diffuseAlbedo:0,valid?1:0);
+ }
+ #endif
++
++// Full-domain publication for the bounded half-grid experiment. Filtering is
++// performed on incident diffuse radiance; target albedo is applied exactly once.
++Texture2D<float4> _HoRTGIReconstructInput;
++RWTexture2D<float4> _HoRTGIReconstructed;
++float _HoRTGIReconstructScale;
++[numthreads(8,8,1)]
++void Reconstruct(uint3 id:SV_DispatchThreadID)
++{
++    if(any(id.xy>=(uint2)_HoRTGIInputGrid.xy))return;
++    HoRTPrimarySurface primary;
++    if(!HoRTTryLoadPrimarySurface(id.xy,primary)){_HoRTGIReconstructed[id.xy]=0;return;}
++    RAB_Surface target=HoGIFromPrimary(primary);
++    float2 uv=(float2(id.xy)+.5)/_HoRTGIInputGrid.xy;
++    float2 low=HoGIPrimaryToGridUV(uv,_HoRTGIInputGrid)*_HoRTGIFrame.xy-.5;
++    int2 first=(int2)floor(low);float3 sum=0;float weight=0;
++    for(int y=0;y<2;y++)for(int x=0;x<2;x++)
++    {
++        int2 pixel=first+int2(x,y);
++        if(any(pixel<0)||any(pixel>=(int2)_HoRTGIFrame.xy))continue;
++        RAB_Surface guide=RAB_GetGBufferSurface(pixel,false);if(!RAB_IsSurfaceValid(guide))continue;
++        float normalDot=dot(guide.normal,target.normal);
++        if(dot(guide.geoNormal,target.geoNormal)<.9||normalDot<.9)continue;
++        float3 delta=guide.worldPos-target.worldPos;
++        float plane=max(abs(dot(delta,target.geoNormal)),abs(dot(delta,guide.geoNormal)));
++        if(plane>max(.0005,.002*target.viewDepth)||abs(guide.viewDepth-target.viewDepth)>max(.005,.02*target.viewDepth))continue;
++        float2 bilinear=saturate(1-abs(low-float2(pixel)));float w=bilinear.x*bilinear.y*pow(saturate(normalDot),16);
++        sum+=max(0,_HoRTGIReconstructInput.Load(int3(pixel,0)).rgb)*w;weight+=w;
++    }
++    // No compatible sample is a conservative missing contribution, never a
++    // background fill. Thin-receiver quality must qualify this policy separately.
++    float3 demodulated=weight>1e-8?sum/weight*_HoRTGIReconstructScale:0;
++    _HoRTGIReconstructed[id.xy]=float4(demodulated*target.material.diffuseAlbedo,1);
++}
+diff --git a/Runtime/RTGI/Shaders/HoRTGI.raytrace b/Runtime/RTGI/Shaders/HoRTGI.raytrace
+index 44a434a..848ec0a 100644
+--- a/Runtime/RTGI/Shaders/HoRTGI.raytrace
++++ b/Runtime/RTGI/Shaders/HoRTGI.raytrace
+@@ -17,7 +17,7 @@ void GenerateSecondary()
+     uint index=pixel.y*(uint)_HoRTGIFrame.x+pixel.x;
+     HoRTGISecondaryData result=(HoRTGISecondaryData)0;
+     HoRTPrimarySurface primary;
+-    if(!HoRTTryLoadPrimarySurface(pixel,primary)) { _HoRTGISecondary[index]=result;return; }
++    if(!HoRTTryLoadPrimarySurface(HoGIGridPrimaryPixel(pixel,_HoRTGIInputGrid),primary)) { _HoRTGISecondary[index]=result;return; }
+     RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(pixel,(uint)_HoRTGIFrameIndex,RTXDI_GI_GENERATE_INITIAL_SAMPLES_RANDOM_SEED);
+     float2 random=float2(RTXDI_GetNextRandom(rng),RTXDI_GetNextRandom(rng));
+     float3 tangent,bitangent;ConstructONB(primary.shadingNormalWS,tangent,bitangent);
+diff --git a/Runtime/RTGI/Shaders/HoRTGIApplicationBridge.hlsl b/Runtime/RTGI/Shaders/HoRTGIApplicationBridge.hlsl
+index f2ac115..20dbfac 100644
+--- a/Runtime/RTGI/Shaders/HoRTGIApplicationBridge.hlsl
++++ b/Runtime/RTGI/Shaders/HoRTGIApplicationBridge.hlsl
+@@ -31,7 +31,51 @@
+ #define _HoRTDILights _HoRTGILights
+ #define _HoRTDIHistory _HoRTGIHistory
+ #define _HoRTDINeighbors _HoRTGINeighbors
++// Keep the shared DI implementation intact. GI owns its lattice/history lookup.
++#define RAB_GetGBufferSurface HoGIUnusedSharedGBufferSurface
+ #include "../../RTDI/Shaders/HoRTDIApplicationBridge.hlsl"
++#undef RAB_GetGBufferSurface
++#include "HoRTGIGrid.hlsl"
++float4 _HoRTGIInputGrid;
++
++RAB_Surface HoGIFromPrimary(HoRTPrimarySurface p)
++{
++    RAB_Surface s=RAB_EmptySurface();
++    s.worldPos=p.positionWS;s.viewDir=p.viewDirectionWS;s.viewDepth=p.eyeDepth;
++    // Canonicalize both frames identically, including a producer's FP16 fallback.
++    s.normal=HoDIUnpackNormal(HoDIPackNormal(p.shadingNormalWS));s.geoNormal=HoDIUnpackNormal(HoDIPackNormal(p.geometricNormalWS));
++    // Explicit PBR reference response, not a change to the raw primary input or NPR reception.
++    float3 base=saturate(p.baseColor);
++    s.material.diffuseAlbedo=HoDIUnpack(HoDIPack(float4(base*(1-p.metallic),1))).rgb;
++    float4 specular=HoDIUnpack(HoDIPack(float4(lerp(p.reflectance.xxx,base,p.metallic),p.perceptualRoughness)));
++    s.material.specularF0=specular.rgb;s.material.roughness=specular.a;
++    return s;
++}
++RAB_Surface RAB_GetGBufferSurface(int2 pixel, bool previousFrame)
++{
++    RAB_Surface s=RAB_EmptySurface();
++    if(any(pixel<0)||any(pixel >= (int2)_HoRTGIFrame.xy))return s;
++    if(previousFrame)
++    {
++        if(_HoRTGIFlags.x<.5)return s;
++        HoRTDIPrimaryHistory h=_HoRTGIHistory[pixel.y*(uint)_HoRTGIFrame.x+pixel.x];
++        if((h.diffuse>>24)==0)return s;
++        float raw=asfloat(h.depth);float2 uv=HoGIGridPrimaryUV((uint2)pixel,_HoRTGIInputGrid);
++        #if !UNITY_REVERSED_Z
++            raw=lerp(UNITY_NEAR_CLIP_VALUE,1,raw);
++        #endif
++        s.worldPos=ComputeWorldSpacePosition(uv,raw,_HoRTGIPreviousInverseVP);
++        s.normal=HoDIUnpackNormal(h.shadingNormal);s.geoNormal=HoDIUnpackNormal(h.geometricNormal);
++        s.viewDepth=-dot(_HoRTGIPreviousViewZ,float4(s.worldPos,1));
++        s.viewDir=_HoRTGIPreviousClipParameters.z>.5?normalize(_HoRTGIPreviousTowardsEye.xyz):normalize(_HoRTGIPreviousCameraPosition.xyz-s.worldPos);
++        s.material.diffuseAlbedo=HoDIUnpack(h.diffuse).rgb;
++        float4 specular=HoDIUnpack(h.specular);s.material.specularF0=specular.rgb;s.material.roughness=specular.a;
++        return s;
++    }
++    HoRTPrimarySurface p;
++    if(!HoRTTryLoadPrimarySurface(HoGIGridPrimaryPixel((uint2)pixel,_HoRTGIInputGrid),p))return s;
++    return HoGIFromPrimary(p);
++}
+ #include "../../RTDI/ThirdParty/RTXDI/GI/ReSTIRGIParameters.h"
+ #include "HoRTGISecondaryData.hlsl"
+ RWStructuredBuffer<RTXDI_PackedGIReservoir> _HoRTGIReservoirs;
+diff --git a/Runtime/RTGI/Shaders/HoRTGIResampling.hlsl b/Runtime/RTGI/Shaders/HoRTGIResampling.hlsl
+index 646a7ad..55ade5d 100644
+--- a/Runtime/RTGI/Shaders/HoRTGIResampling.hlsl
++++ b/Runtime/RTGI/Shaders/HoRTGIResampling.hlsl
+@@ -21,6 +21,7 @@ void HoGITemporal(uint2 pixel)
+         if(all(isfinite(clip))&&clip.w>1e-6&&previousDepth>0)
+         {
+             float2 uv=clip.xy/clip.w*float2(.5,-.5)+.5;
++            uv=HoGIPrimaryToGridUV(uv,_HoRTGIInputGrid);
+             float3 motion=float3(uv*_HoRTGIFrame.xy-.5-float2(pixel),previousDepth-surface.viewDepth);
+             RTXDI_GITemporalResamplingParameters p=(RTXDI_GITemporalResamplingParameters)0;
+             p.depthThreshold=.1;p.normalThreshold=.9;p.maxHistoryLength=(uint)_HoRTGIFlags.z;p.maxReservoirAge=(uint)_HoRTGIFlags.z;

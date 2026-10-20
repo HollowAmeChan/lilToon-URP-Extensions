@@ -289,3 +289,21 @@
 **下一动作与过滤提交：** 同helper接GI私有RAB（保留DI原语义）、初始native、Final history、Temporal和NRD投影，然后全域depth/normal/validity重建与原能量/细节/动态门槛。默认full；奇数full回退和尺度变更reset必须实际走生产验证。仅提交Runtime这两个新helper/meta、Editor Grid审计/meta、Tests~/RTGI/Grid及RTGI过程/禁试/设计/计划/交接。010实际能量失败、012HD/稳定预算和完整Player/正常camera仍待交付。
 
 步骤013过滤提交：`4950433`。提交后Grid verifier再次通过，012资源verifier仍过。所有进程结束、index空；下一项014转生产GI适配与完整输出重建，半GI功能/画质尚未交付，goal继续active。
+
+## 014：GI实际网格适配与全域重建实验（进行中）
+
+**事前review：** 013已证明映射数学，必须转实际GI而不是继续纯夹具。先以仅Editor非序列化实验入口选择half，产品默认与Player仍full；同一Runtime链接Generate、GI私有RAB、Final depth/history、Temporal和NRD projection，DI公共代码及NRD原参数不变。full发布raw/filtered合同不变，half内部raw保留demodulated，独立全域输出按目标full albedo乘一次。
+
+**重建假说/有界门槛：** 四邻居按深度/共面/几何与shading normal筛选，重建demodulated后乘目标full albedo。无兼容代表样本时保守零贡献、保留receiver validity，绝不能拿背景填前景；这只是明确实验行为，薄结构缺失即质量失败。先实际uniform/跨材质、前后景薄边和孔洞对照full raw及独立解析期望、原5%能量/动态首帧reset，测资源收益；不把小夹具等同实际古堡画质。两轮若无可接纳收益则搁置half，不把实验入口当产品交付，回到目标质量/正常相机/完整预算。012HD保持禁试，010能量失败独立保留。
+
+**实际实现与执行：** 七个Runtime文件实现上述实验完整GI适配：013 helper贯穿初始ray、GI独立RAB（原DI函数仅rename后不使用，DI源未改）、低网格history stride/full depth UV、Temporal UV减偏移、NRD逻辑projection补偿；空间半径按scale换GI单位。half内部raw为demodulated，RawDiffuse/PublishedDiffuse为额外full outputs，depth/normal四邻居重建后按目标albedo乘一次。默认full，half仅Editor非序列化入口，没有产品Inspector/Volume/Player开关。
+
+初轮48012重复F23的夹具错误：空间复用单帧当逐像素能量，full raw最大1.996提前exit1，报告/source/log保留rejected-single-frame。只在夹具关闭spatial、保留temporal/NRD隔离解析信号，没有改生产参数或.05门槛。正式exec92640已收终态，RG10316/compat32560各169请求实际exit1/编译诊断0/fresh/marker/SHA，无fence错误；functionalPass=true但qualityPass=false。
+
+**收益与画质失败：** 平面跨红蓝albedo raw最大误差.00781，两路径filtered full .00879/half .00928；历史切换reset、stable reuse、full发布与.25合成、65×63 odd full回退/释放half输出通过。实际payload 1227104→521556B，减少57.497%（含双full输出，不是总VRAM/GPUms）。但偶数列x8、半个full像素宽的独立白色前景在低网格无任何代表点，30个内部receiver full raw≈.9921875、filtered≈.991927，half二者全0。validity保留、depth拒绝正确，却明显丢失真实GI，原5%/局部最小值gate失败。图片已实际查看，full白线变half黑线，没有忽略/放宽薄边。
+
+**事后review/过滤撤回：** 拒绝当前half方案；不是可交付画质。扩大邻域仍找不到该表面采样，不能背景填充或加gain冒充重建。按F33搁置，重开必须有实际full receiver缺样补偿和动态/噪声/完整成本证据。七个自有Runtime改动逐字节恢复到e7fcb40（SHA与012既有测量一致），新Editor入口/meta移到Tests~归档，产品只保留013已验证helper。Unity恢复编译57944 actual exit0、C#0/fence0；旧Grid/Resources verifier仍过，无需重复相同Player。原型patch、所有运行源码/失败/图片/reversion都保留，root runner加缺入口保护不原样再跑；该保护未声称实跑。
+
+**下一动作：** 回到010实际原版RELAX质量。DI NRD文档已有亮暗moment/尺度历史经验；GI当前SignalScale64将微弱输入缩小，是否损失FP16平方矩精度是新待验证线索，本地NRD原shader确有moment计算。下一项015先读真实stage moment/局部输入及尺度敏感性，再决定单位策略；这不是认定根因，不重启sigma8/盲history/gain，不更改原5%。010质量、012HD/稳定预算、正常camera和完整Player仍不完成。
+
+**本步过滤范围：** 仅Tests~/RTGI/HalfGrid的真实实验/撤回证据与RTGI过程/禁试/设计/计划/交接文档；不提交被拒绝的Runtime/Editor实现，不碰DI/vendor/native/源场景或他人Ho-GD plan。全部本任务进程结束，goal active。
