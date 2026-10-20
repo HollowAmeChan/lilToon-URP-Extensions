@@ -188,3 +188,6 @@
 **事后review与收益：** 接纳基础Cutout完整路径。初始、次级灯/天空、重采样bias、最终真实alpha一致，避免只登记非opaque后各阶段漏遮挡。共用同一份应用/原SDK估计器与重采样函数，vendor/NRD参数未改；opaque维持原compute/inline。可见性专用payload输入sentinel只跳过昂贵材质求值，普通输出结构、secondary48B和公开RGBA validity不变。新增有Cutout时8B/像素（1080p约15.82MiB）buffer和一次dispatch，hit-group/alpha取样与原生复用成本尚无GPU毫秒。静态基础域接纳，不扩成动画alpha、MPB、多主色/dither/dissolve/视差；骨骼GI命中、实际古堡、正常自动camera及GPU预算仍需交付。既有非GI/GB/退出GC警告保留，不称完整生命周期通过。
 
 **过滤提交：** 仅GI Runtime/Editor、本步共享HoRTScene state绑定及原样Hit类型拆分、Cutout证据、复用Dynamic/NRD runner扩展与RTGI文档。当前Atmosphere/VolumeLight提交和改动保留，不纳入。下一项优先实际骨骼vertex fetch与场景、有效GPU预算，不继续单纯堆静态降噪门槛。
+
+
+步骤008过滤提交：`6ebe065`。提交后复核只包含本步GI/必要共享接口/测试/文档，其他模块未纳入；Cutout verifier仍通过，当前所有测试进程结束，目标继续active。
