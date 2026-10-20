@@ -329,3 +329,25 @@
 **下一动作/过滤提交：** 016先补同一窗口full图RGB及16种stride4相位/局部阶段误差，区分网格取样与全图偏差、保留原0相位失败，不挑相位/改门槛。这将决定后续沿DI颜色裁剪/信号域的有界候选，而非继续盲调units。只提交GI两个Runtime文件Editor诊断hook、Castle入口/新MomentAudit/meta、Tests~/RTGI/Moments、RTGI过程/禁试/计划/交接。其他模块/他人Ho-GD plan不碰，全部进程结束，goal active。
 
 步骤015过滤提交：`419e4ef`。提交后Moments verifier再次通过；矩精度问题有真实证据，但3个RGB门槛继续失败，生产默认/Player仍64。index空、进程结束；下一项016按上述完整域/相位取证，不重复单位调参，goal active。
+
+## 016：完整图像、16相位与局部阶段误差（进行中）
+
+**事前review：** 015只修矩精度并不能过RGB，不能继续缩scale或将矩正确冒称质量正确。现有ReadPixels已读full256²，原能量只用stride4相位(0,0)。新增CPU审计同时累积全部receiver、全部16相位、同像素时间均值/方差与raw→input/PrePass/Temporal/fast/Clamp/Atrous→filtered，保持原32+256预热/256窗、原5%与原相位失败。单位只比较原64与已测.125，不引入新数字/产品默认变更。
+
+**接纳边界：** 相位/全图仅帮助判断全局偏差和局部损失，不能挑好看相位、删旧失败或以新统计静默替换原门槛。HistoryFix只标fast/条件fix RGB，不再当slow moment；A-trous只读取RGB。确认问题分布后才决定是否沿DI已验证颜色凸裁剪做有界候选，先不改vendor/采样/NRD参数。半GI与012HD继续搁置，正常相机/Player预算仍独立未验。
+
+**阶段证据及候选事前review：** 同窗全图scale64 RGB约(-7.25,-8.42,-8.78)%、.125约(-7.56,-7.34,-6.55)%，16相位两组全部失败，不能解释成原相位假阳性。局部热点(87,165)raw红均值.02472、input/prepass相近，Temporal约.01186、最终约.00363；矩精度改善并未消除压低。原Clamping出现少量负RGB，DI第82～84步有同box fast→slow线段裁剪成熟证据，可隔离测试其GI收益，不先认定能修均值。
+
+只在自有项目生成原vendor HistoryClamping的独立候选，替换diffuse轴向clip为DI同标量线段相交，保持box/sigma/预算/acceleration/reset/moment修正/其它body与资源布局；用已测.125单位和原.125对照，不新增单位调参。仅当前GI NRD实例shaders[6]临时替换并finally恢复，default/Player/vendor/DI源不改。若无质量收益则拒绝该路线，不能因“来自DI”就直接产品化；原stride0与全图5%都保留。
+
+**正式完整域证据：** exec36028已收：scale64 PID56596、.125 PID8564均actual exit1、编译诊断0/fresh/marker/完整audit、无fence。每组full16777216样本/16相位各1048576；原相位与015一致。全图64 RGB(-7.2477,-8.4152,-8.7755)%、.125(-7.5641,-7.3400,-6.5499)%，16相位全部失败。全图time-mean L1 .19121/.21131；方差filtered2.788e−8/1.774e−8。不是取样相位假阳性，不删旧门槛或挑相位。
+
+**局部阶段：** 全图64 raw/input红.00154717/.00154716，Pre .00153321，Temporal slow .00146992，fast/条件Fix .00152301，Clamp .00146839，末Atrous .00143554，published .00143504。最差(87,165) raw红均值.02472、Temporal约.01186、最终约.00363～.00372；raw方差.00257远高于filtered约3e−5。已定位阶段/位置，但有限窗raw高波动还不是独立高样本真值，不能直接把全部差值都定性物理能量损失。
+
+**候选真实失败与过滤：** exec62237/PID37456 actual exit1，只有原vendor一个diffuse clip块改成DI同box线段剪裁；原source SHA、DI参考/生成body/wrapper SHA入报告，compile0，当前GI实例数组[6]scope替换并finally restoredOriginal=true。fullRGB(-8.3104,-7.8915,-6.9069)%、原相位(-6.9120,-5.7901,-4.9390)%、L1 .21378都劣于.125对照；负分量计数352→4不能抵消整体退化。三组full raw256帧均值逐条完全相同。拒绝该GI能量修复路线，F36搁置，不否认DI已有独立保色收益。
+
+候选Editor入口/helper已精确归档并从产品移除，Castle恢复baseline全图审计版本；Runtime/Shader/DI/vendor/native没有diff。只保留SpatialAudit及Castle接口/Primary内部可访问。过滤后编译exec17362/PID41164 actual exit0、C#0/fence0。原型body/wrapper/完整执行源/报告在Tests~/RTGI/Spatial，验证器已核对全域/16相位守恒、旧相位、真实失败/源码/本体替换/恢复与编译。没有GPUms/Player/正常camera新验收，014half与012HD仍搁置。
+
+**事后review与下一动作：** 接纳完整域诊断，否定“只是取样相位”的解释，拒绝凸裁剪候选。下一项017先复核本机RTX/现有Reference一跳估计，再给热点与安静控制点做高样本无复用参考及批次收敛；匹配原full primary/material/light/sky/Cutout域，区分有限窗ReSTIR异常与filter偏差。此为一跳漫反射验证，不扩通用PT/多跳，不以子集冒充完整验收。先有真值证据再改降噪；原5%与所有失败保留，不盲gain/历史/sigma/更小单位。
+
+**过滤提交：** 仅Editor SpatialAudit/meta、Castle完整域接口（无候选）、Tests~/RTGI/Spatial及RTGI README/过程/禁试/交接/计划。拒绝候选只在Tests~可review归档，不进入Runtime/Editor产品入口；他人Ho-GD plan不碰，所有进程结束，goal active。

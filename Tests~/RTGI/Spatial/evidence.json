@@ -1,0 +1,62 @@
+{
+  "fullDomainQualityQualified": false,
+  "phaseBiasExplainsOriginalFailure": false,
+  "candidateAccepted": false,
+  "runtimeChanged": false,
+  "runs": [
+    {
+      "label": "scale64",
+      "fullRelativeErrorPercent": {
+        "x": -7.247671604156494,
+        "y": -8.415216445922852,
+        "z": -8.77550983428955
+      },
+      "phaseZeroRelativeErrorPercent": {
+        "x": -5.945717811584473,
+        "y": -6.535381317138672,
+        "z": -7.0284576416015625
+      },
+      "normalizedL1": 0.19121296672243507,
+      "filteredVariance": 2.7879898812155452e-08,
+      "all16PhasesFail": true,
+      "reportSha256": "43E9A01CD0EE7E657C85BF1FDE46D8D9E6D85FAB54F6B1F5089824C2C15F9442"
+    },
+    {
+      "label": "scale0125",
+      "fullRelativeErrorPercent": {
+        "x": -7.564072608947754,
+        "y": -7.340020656585693,
+        "z": -6.549924373626709
+      },
+      "phaseZeroRelativeErrorPercent": {
+        "x": -6.166971683502197,
+        "y": -5.252270698547363,
+        "z": -4.603085994720459
+      },
+      "normalizedL1": 0.21131427103240327,
+      "filteredVariance": 1.7744057647323713e-08,
+      "all16PhasesFail": true,
+      "reportSha256": "E2CD3E4496A1EE287420C3CA93C1B406EA69164EFC37CE810A55F659108BB31A"
+    },
+    {
+      "label": "convex0125",
+      "fullRelativeErrorPercent": {
+        "x": -8.310397148132324,
+        "y": -7.891484260559082,
+        "z": -6.906868934631348
+      },
+      "phaseZeroRelativeErrorPercent": {
+        "x": -6.912018299102783,
+        "y": -5.79006290435791,
+        "z": -4.938985347747803
+      },
+      "normalizedL1": 0.2137821646257283,
+      "filteredVariance": 1.7748206640844456e-08,
+      "all16PhasesFail": true,
+      "reportSha256": "E05221058AC8DE6334536E1CC1A2BD10EE40F77A2BDF7736A98CC88488EACD90",
+      "negativeClampingComponents": 4
+    }
+  ],
+  "filteredCompilePassed": true,
+  "rawFrameMeansIdentical": true
+}

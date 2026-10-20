@@ -1,0 +1,7 @@
+{
+  "candidateRetained": false,
+  "runtimeChanged": false,
+  "scopeRestoredOriginal": true,
+  "restoredBuilderSha256": "01787CC2222E470A802C5110FEDE5C47A1BD5659D2EF78E52BB72A380450942B",
+  "reason": "Same-box convex clipping reduces negative components but worsens full RGB energy and normalized L1; no GI production adoption."
+}

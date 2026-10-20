@@ -1,0 +1,4 @@
+*.json -text whitespace=cr-at-eol
+baseline-original/source/** -text whitespace=cr-at-eol
+convex-original/source/** -text whitespace=cr-at-eol
+candidate/* -text whitespace=cr-at-eol

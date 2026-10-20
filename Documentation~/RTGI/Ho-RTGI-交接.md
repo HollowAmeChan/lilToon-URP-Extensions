@@ -223,3 +223,25 @@ Moments/verify_validation.py通过：4个实际进程/源码/log/report，三组
 待过滤提交仅Runtime/RTGI/NRD/HoRTGINrdContext.cs与HoRTGIRendererFeature.cs诊断hook，Editor Castle/MomentAudit/meta，Tests~/RTGI/Moments，RTGI README/过程/禁试/交接/计划。没有产品scale默认更改、half、Shader/DI/vendor/native/用户场景变更。每步review/过滤/失败/交接约束继续。
 
 015已按白名单过滤提交419e4ef，Moments verifier提交后再过；index空，仅他人Ho-GD plan未跟踪，全部本任务进程结束。下一轮直接进入016完整图/16相位与局部阶段取证，原stride0与质量门槛不删，不再缩单位或改生产默认。Goal active，未complete。
+
+### 016终态（2026-10-20，待过滤提交；全图仍失败，DI候选拒绝）
+
+新增Editor/RTGI/HoRTGISpatialAudit.cs/meta；Castle加两个完整域审计入口/报告，Primary嵌套20B struct仅改internal供Editor helper访问。Runtime/Shader/DI/vendor/native没有修改；默认/Player仍64。CPU读取已有full数组累积raw/filtered每像素时均/方差、全图、全部16相位、7个阶段RGB及最大损失/增加各12点；不增加产品GPU pass。HistoryFix5明确fast/条件Fix RGB，未再算slow moment。
+
+Tests~/RTGI/Spatial/run_validation.ps1 exec36028已收：原64 PID56596、已测.125 PID8564各32初warm+256settle+256窗，实际exit1/编译诊断0/marker/fresh/完整audit，无fence。full65536像素×256=16777216样本；16相位各1048576。原相位(0,0)与015一致，全图原64 RGB(-7.24767,-8.41522,-8.77551)%、.125(-7.56407,-7.34002,-6.54992)%，所有相位也全失败，不能挑相位或换统计静默抹掉旧5%失败。full时均L1 .191213/.211314，filtered方差2.788e−8/1.774e−8。
+
+全图原64红均值raw/input .001547174/.001547158，Pre .001533215，Temporal slow .001469922，fast/条件Fix .001523014，Clamp .001468388，末Atrous .001435536，published .001435040。热点(87,165) raw红均值.0247237、input/prepass近同，Temporal约.011862、最后约.00363～.00372；raw方差.0025700而filtered约3e−5，有限窗raw很不稳定。定位了阶段/空间分布，但还无独立高样本真值，不把所有差值直接解释为真实物理能量偏差。
+
+**DI候选已实际执行并拒绝：** 参考DI技术Ho-RTDI-DiffuseConvexClamping.md/第82～84及Editor/RTDI/HoRTDIDiffuseSegmentValidation.cs。只从original NRD HistoryClamping替换一个diffuse轴向clamp块为同YCoCg box fast→slow线段交点；没复制DI其它private策略，box/sigma/历史/acceleration/reset/moment correction不动。自有GI项目Assets/HoRTGIClampingCandidate生成独立body/wrapper；当前GI context.core.shaders[6]临时替换，kernel0/15项库/compile消息核对，finally restoredOriginal=true。
+
+候选exec62237/PID37456实际exit1/compile0/fresh/完整audit，原相位(-6.9120,-5.7901,-4.9390)%、full(-8.3104,-7.8915,-6.9069)%、L1 .213782均劣于.125对照，Clamping负分量计数352→4不是质量成功。三组full raw256帧均值逐条完全相同。sourceSHA9CDAC4A0810C72FC2DA936B8BBB8633A9F27881B6930E5375D3F3B8E008E40FC，生成body5AF5AFADC1A1359E812673FCC4BDD2241182336C582D179C63B891580F519D1A。F36拒绝其作为本场景能量修复，不否认DI保色适用域；没有新的GI颜色平面/独立真值/完整收益证据不重试。
+
+**过滤状态：** 候选新Editor helper/meta及Castle candidate入口均移出产品，精确源归档convex-original/source与candidate；生成body/wrapper、DI参考本体、原报告/SHA保留。Castle按baseline-original源码精确恢复，仅保留全域审计；root runner恢复只跑两个原64/.125审计。candidate-review.json绑定恢复源码及拒绝原因。过滤后Unity编译exec17362/PID41164 actual exit0、C#0/fence0；未冒称新Player/完整渲染回归。Spatial verifier过：三真实exit1、均值/样本守恒、旧相位、raw逐帧不变、局部/阶段、候选单块/生成SHA/恢复/编译。Runtime零diff，所有进程结束；旧Moments verifier因合法Castle扩展当前SHA过时，按419e4ef核对，不覆盖新源满足旧hash。
+
+**下一项017（先独立参考，不盲改滤波）：** 先读现有Tests~/RTGI/Reference、对应Editor验证、本机UnityPathTracing GI/BrdfRayTracing及ShadeSecondarySurfaces。对016最强损失点和安静控制点建立同full256 primary/material/light/sky/Cutout的一跳漫反射高样本无时间/空间复用估计，分独立批次看收敛/不确定性。不要把高方差256窗raw当真值，也不要以少数点通过替代完整场景验收；原5%失败留着。
+
+可行实现方向（尚未实施）：Editor专用参考Feature在相同full相机GB/SB后读取primary，独立Context把(x=sampleID,y=receiverID)展开为4096×16/32样本；包装原GI shader前先include原Primary header，再定义MappedPrimaryLoader用receiverID查full pixel，再macro仅替换随后GI源码中的HoRTTryLoadPrimarySurface调用。这样保留原一跳Generate/secondary SDK RIS/true alpha/final，跳过Temporal/Spatial，不新造通用PT/多跳。Generate和RAB current都必须用映射；Final history的UV按样本域本来不对但参考历史不读，不能拿它的depth作primary一致性证明。另测实际RAB world/normal/material vs full primary，确认灯activeCount=18/sky/exclusion/AS/参数一致，再出样本统计。小独立GPU buffers，先1批再递增批次，不重开1080/大camera/fence条件；同GPU fence错误仍中止自身任务。
+
+推荐复用既有HoRTGIShadingCommon：ShadeSecondary直接写reservoir1，所以无复用参考只需GenerateSecondary→ShadeSecondaryNative→TraceFinalVisibility（有Cutout）→包装Final compute，initial flags0/2/black事件仍算样本；不复制材质BRDF/样本权重。为Reference compute显式绑定primary，raygen先Bind同full globals。新Feature用HoRTPrimarySurfaceInputs.Read/scene.Read声明RG依赖，借同一场景/18活灯/已生成环境PDF/RIS（不能把lights容量32当18，尾部未知）；批次更换随机seed，注意共享RIS表相关性，按批次判断收敛而非假定全iid。也可先选择更简单已有Reference探针扩展，但必须保持同支持域/不改变RNG原始主结果。所有这些仅是下一步设计，不是已证明的参考。
+
+017后再据真值决定GI采样还是过滤改动；015矩精度虽确有问题但纯单位已F35停止，F27宽sigma/history/gain、F31HD、F33half、F36本候选继续搁置。正常enabled-camera/完整Player预算仍未交付，goal active不complete。待过滤提交仅Editor SpatialAudit/meta+Castle、Tests~/RTGI/Spatial、RTGI README/过程/禁试/交接/计划；他人Ho-GD plan未跟踪不纳入。
