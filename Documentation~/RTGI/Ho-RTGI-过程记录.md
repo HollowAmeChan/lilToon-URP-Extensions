@@ -307,3 +307,5 @@
 **下一动作：** 回到010实际原版RELAX质量。DI NRD文档已有亮暗moment/尺度历史经验；GI当前SignalScale64将微弱输入缩小，是否损失FP16平方矩精度是新待验证线索，本地NRD原shader确有moment计算。下一项015先读真实stage moment/局部输入及尺度敏感性，再决定单位策略；这不是认定根因，不重启sigma8/盲history/gain，不更改原5%。010质量、012HD/稳定预算、正常camera和完整Player仍不完成。
 
 **本步过滤范围：** 仅Tests~/RTGI/HalfGrid的真实实验/撤回证据与RTGI过程/禁试/设计/计划/交接文档；不提交被拒绝的Runtime/Editor实现，不碰DI/vendor/native/源场景或他人Ho-GD plan。全部本任务进程结束，goal active。
+
+步骤014过滤提交：`ee962e4`。提交后HalfGrid verifier再次过，Runtime/Editor零diff，原型仅在Tests~归档而未产品化。下一项015回到原版GI低信号moment实际证据；已失败half按F33搁置，完整goal继续active。

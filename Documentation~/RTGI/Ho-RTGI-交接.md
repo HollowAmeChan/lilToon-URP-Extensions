@@ -184,7 +184,7 @@ F31仍禁原HD条件盲重试；需要有界低驻留/同步夹具或具体新ho
 
 013已按白名单过滤提交4950433，Grid verifier提交后再次通过；012资源verifier亦通过。所有本任务进程结束、index空，仅别人的Ho-GD plan未跟踪。下一轮直接推进014生产GI映射与全域重建，不重复纯网格/静态小夹具。原质量/HD/自动camera/Player预算缺口继续保留，goal active。
 
-### 014终态（2026-10-20，待过滤提交；half实际原型失败并撤回）
+### 014终态（2026-10-20，已提交ee962e4；half实际原型失败并撤回）
 
 已实际做完GI半网格/全域重建实验，不是继续纯数学。临时七Runtime文件接Generate映射、GI私有current/previous RAB、Final depth/history、Temporal grid UV、NRD补偿projection、空间半径缩放；内部raw demodulated，双full输出按深度/共面/normal四邻居重建后乘full目标albedo一次。只有Editor非序列化半GI入口，默认full/Player未开放。
 
@@ -201,3 +201,5 @@ HalfGrid/verify_validation.py已核对正式两条真实失败、前置夹具失
 **下一项015切回010实际质量：** 禁止照旧重启014原型。新待验证线索：GI Runtime/RTGI/NRD/HoRTGINrdContext.SignalScale=64；实际古堡输入微弱，NRD RGBA16 permanent/transient中的平方矩是否精度不足？本地固定NRD RELAX_TemporalAccumulation.cs.hlsl:470–471确实luma²，:618写accumulated float4；HistoryClamping:319起使用矩和moment correction。DI技术Ho-RTDI-NRD.md约243–253有亮暗moment饱和/缩放/旧history量纲实测，必须多参考。先用已有Editor ValidationDiffuseStage捕获真实Temporal/Clamp moment、同像素RGB和信号范围/量化，关联局部误差，再考虑可逆单位缩放（输入除/输出乘同尺度、历史尺度一致）。当前只是新假说，不认定根因，不把改单位当gain，也不盲改sigma/history。F27仍禁止更宽盒/补亮；010原长窗−6～−7%质量失败和五份失败报告不覆盖。
 
 012HD/fence/稳定预算和正常自动camera/完整Player矩阵仍未完成；当前有015有意义独立工作，不算blocked。待过滤提交仅Tests~/RTGI/HalfGrid和RTGI文档（README/过程/禁试/交接/半GI设计/计划），没有Runtime/Editor/vendor/native/场景变更；别人的Ho-GD plan不纳入。Goal active，不可complete。
+
+014已按上述白名单过滤提交ee962e4，HalfGrid verifier提交后再次通过；产品Runtime/Editor无diff，index空，仅他人Ho-GD plan未跟踪。所有进程结束。下一轮直接做015原版GI低信号moment真实取证，不重启已搁置half，不把新线索先认定根因；010/012及完整应用条件继续，goal active。
