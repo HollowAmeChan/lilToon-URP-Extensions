@@ -1,0 +1,9 @@
+{
+  "validMomentPipelines": [
+    4,
+    6
+  ],
+  "excludedPipeline": 5,
+  "reason": "HistoryFix writes transient PONG already written as Temporal fast. It early-outs on settled history; alpha can remain fast zero, not slow E[luma^2]. Do not infer precision loss from this stage.",
+  "source": "RenderingPlugin/External/NRD/Source/Denoisers/Relax_Diffuse.hpp: Temporal outputs PING/PONG, HistoryFix PING -> PONG conditional, HistoryClamping reads PING slow and PONG fast."
+}

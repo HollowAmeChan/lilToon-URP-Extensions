@@ -1,0 +1,115 @@
+// Copyright (c) 2020-2026, NVIDIA CORPORATION. All rights reserved.
+// Neighbor-offset generation is adapted from UnityPathTracing's RtxdiUtils.
+// NVIDIA portions are governed by ../RTDI/ThirdParty/RTXDI/LICENSE.txt, not the package MIT license.
+#pragma warning disable CS0618
+using System;
+using UnityEngine;
+using UnityEngine.Experimental.Rendering;
+using UnityEngine.Rendering;
+using UnityEngine.Rendering.Universal;
+using lilToon.URP.Extensions.RTGI.NRD;
+namespace lilToon.URP.Extensions.RTGI
+{
+    internal sealed class HoRTGIContext : IDisposable
+    {
+        internal GraphicsBuffer reservoirs,history,lights,neighbors,secondary,finalVisibility;
+        internal bool alphaVisibility;
+        #if UNITY_EDITOR
+        // Isolated stage audit only; no serialized/runtime sampling policy.
+        internal Action<CommandBuffer,HoRTGIContext> ValidationBeforeFinal;
+        internal Action<CommandBuffer,string,bool> ValidationGpuMarker;
+        internal Action<RasterCommandBuffer,string,bool> ValidationGpuRasterMarker;
+        #endif
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        internal void MarkGpu(CommandBuffer cmd,string name,bool begin)
+        {
+            #if UNITY_EDITOR
+            ValidationGpuMarker?.Invoke(cmd,name,begin);
+            #endif
+        }
+        [System.Diagnostics.Conditional("UNITY_EDITOR")]
+        internal void MarkGpu(RasterCommandBuffer cmd,string name,bool begin)
+        {
+            #if UNITY_EDITOR
+            ValidationGpuRasterMarker?.Invoke(cmd,name,begin);
+            #endif
+        }
+        internal RTHandle diffuse;
+        internal HoRTGINrdContext nrd;
+        internal string nrdStatus;
+        internal RTHandle PublishedDiffuse=>nrd?.filtered??diffuse;
+        internal GraphicsBuffer environmentRis;
+        internal RTHandle environmentPdf;
+        internal bool environmentSampling,environmentPdfReady;
+        internal uint environmentPdfRevision;
+        internal const int EnvironmentPdfSize=128,RisTileSize=256,RisTileCount=64;
+        internal int width,height,rowPitch,arrayPitch,frame;
+        internal uint sceneRevision;
+        internal int lightingSignature;
+        internal bool historyValid,lastTemporal;
+        internal Matrix4x4 previousVP=Matrix4x4.identity,previousInverseVP=Matrix4x4.identity;
+        internal Vector4 previousCamera,previousTowardsEye,previousViewZ,previousClip;
+        internal void Prepare(int w,int h,int lightCount,GraphicsFormat format)
+        {
+            if(width!=w||height!=h)
+            {
+                reservoirs?.Dispose();history?.Dispose();secondary?.Dispose(); width=w;height=h;
+                // Reference RTXDI block-linear layout / three-buffer GI schedule.
+                rowPitch=((w+15)/16)*256;arrayPitch=rowPitch*((h+15)/16);
+                reservoirs=new GraphicsBuffer(GraphicsBuffer.Target.Structured,arrayPitch*3,32){name="HoRTGI SDK reservoirs"};
+                history=new GraphicsBuffer(GraphicsBuffer.Target.Structured,w*h,lilToon.URP.Extensions.RTDI.HoRTDIContext.PrimaryHistoryStride){name="HoRTGI previous surface guides"};
+                secondary=new GraphicsBuffer(GraphicsBuffer.Target.Structured,w*h,48){name="HoRTGI secondary surfaces"};historyValid=false;frame=0;
+            }
+            if(lights==null||lights.count<Mathf.Max(1,lightCount))
+            {lights?.Dispose();lights=new GraphicsBuffer(GraphicsBuffer.Target.Structured,Mathf.NextPowerOfTwo(Mathf.Max(1,lightCount)),64){name="HoRTGI analytic lights"};historyValid=false;}
+            if(neighbors==null)
+            {
+                neighbors=new GraphicsBuffer(GraphicsBuffer.Target.Structured,256,8){name="HoRTGI reference neighbor offsets"};
+                // Adapted from the reference RtxdiUtils.FillNeighborOffsetBuffer, decoded from SNORM8.
+                var offsets=new Vector2[256];float u=.5f,v=.5f;const float phi=1.0f/1.3247179572447f;int index=0;
+                while(index<offsets.Length)
+                {
+                    u+=phi;v+=phi*phi;if(u>=1)u-=1;if(v>=1)v-=1;
+                    if((u-.5f)*(u-.5f)+(v-.5f)*(v-.5f)>.25f)continue;
+                    offsets[index++]=new Vector2((sbyte)((u-.5f)*250)/127f,(sbyte)((v-.5f)*250)/127f);
+                }
+                neighbors.SetData(offsets);
+            }
+            var desc=new RenderTextureDescriptor(w,h){graphicsFormat=format,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true};
+            RenderingUtils.ReAllocateIfNeeded(ref diffuse,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI Diffuse");
+        }
+        internal void Complete(Matrix4x4 view,Matrix4x4 projection,Camera camera,uint revision,int signature)
+        {
+            previousVP=GL.GetGPUProjectionMatrix(projection,true)*view;previousInverseVP=previousVP.inverse;
+            previousCamera=view.inverse.GetColumn(3);previousTowardsEye=view.GetRow(2);previousTowardsEye.w=0;previousViewZ=view.GetRow(2);
+            previousClip=new Vector4(camera.nearClipPlane,camera.farClipPlane,camera.orthographic?1:0,SystemInfo.usesReversedZBuffer?1:0);
+            sceneRevision=revision;lightingSignature=signature;historyValid=true;frame++;
+        }
+        internal void PrepareEnvironment(bool requested)
+        {
+            environmentSampling=requested&&SystemInfo.IsFormatSupported(GraphicsFormat.R32_SFloat,GraphicsFormatUsage.LoadStore)
+                &&SystemInfo.IsFormatSupported(GraphicsFormat.R32_SFloat,GraphicsFormatUsage.Linear);
+            int count=environmentSampling?RisTileSize*RisTileCount:1;
+            if(environmentRis==null||environmentRis.count!=count)
+            {environmentRis?.Dispose();environmentRis=new GraphicsBuffer(GraphicsBuffer.Target.Structured,count,8){name="HoRTGI environment RIS"};}
+            if(!environmentSampling){environmentPdf?.Release();environmentPdf=null;environmentPdfReady=false;return;}
+            var desc=new RenderTextureDescriptor(EnvironmentPdfSize,EnvironmentPdfSize)
+            {graphicsFormat=GraphicsFormat.R32_SFloat,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true,useMipMap=true,autoGenerateMips=false};
+            if(RenderingUtils.ReAllocateIfNeeded(ref environmentPdf,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI environment PDF"))environmentPdfReady=false;
+        }
+        internal void PrepareDenoiser(bool enabled,ComputeShader[] shaders)
+        {
+            if(!enabled){nrd?.Dispose();nrd=null;nrdStatus=null;return;}
+            try{nrd??=new HoRTGINrdContext(shaders);nrd.Prepare(width,height);nrdStatus="RELAX diffuse";}
+            catch(Exception error){nrd?.Dispose();nrd=null;nrdStatus="NRD unavailable: "+error.Message;}
+        }
+        internal void PrepareVisibility(bool enabled)
+        {
+            alphaVisibility=enabled;int count=enabled?width*height:1;
+            if(finalVisibility==null||finalVisibility.count!=count)
+            {finalVisibility?.Dispose();finalVisibility=new GraphicsBuffer(GraphicsBuffer.Target.Structured,count,8){name="HoRTGI native final visibility/distance"};}
+        }
+        public void Dispose()
+        {nrd?.Dispose();nrd=null;reservoirs?.Dispose();history?.Dispose();lights?.Dispose();neighbors?.Dispose();secondary?.Dispose();finalVisibility?.Dispose();environmentRis?.Dispose();environmentPdf?.Release();diffuse?.Release();reservoirs=history=lights=neighbors=secondary=finalVisibility=environmentRis=null;diffuse=environmentPdf=null;}
+    }
+}

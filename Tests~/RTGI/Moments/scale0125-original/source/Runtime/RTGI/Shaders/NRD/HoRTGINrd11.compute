@@ -1,0 +1,10 @@
+// Original pinned NRD RELAX_DIFFUSE shader; no DenseDI body.
+#pragma kernel main
+#pragma use_dxc
+#pragma target 6.0
+#define NRD_INTERNAL 1
+#define NRD_COMPILER_DXC 1
+#define NRD_SIGNAL DIFF
+#define NRD_MODE RADIANCE
+#include "../../../RTDI/Shaders/NRD/HoRTDINrdBindings.hlsl"
+#include "../../../RTDI/ThirdParty/NRD/RELAX_SplitScreen.cs.hlsl"

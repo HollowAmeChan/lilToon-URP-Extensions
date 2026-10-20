@@ -24,7 +24,22 @@ namespace lilToon.URP.Extensions.RTGI.NRD
         float seconds=1f/60;
         #if UNITY_EDITOR
         internal double? ValidationTimeSeconds;
+        // Isolated unit-domain comparison. Physical raw is unchanged; changing
+        // the NRD unit invalidates only its own history before recording.
+        internal float? ValidationSignalScale;
+        float validationAppliedScale=SignalScale;
         #endif
+        internal float AppliedSignalScale
+        {
+            get
+            {
+                #if UNITY_EDITOR
+                return validationAppliedScale;
+                #else
+                return SignalScale;
+                #endif
+            }
+        }
         internal HoRTGINrdContext(ComputeShader[] shaders)
         {core=new HoRTDINrdContext(shaders,HoRTGINrdManifest.DenoiserType,HoRTGINrdManifest.Identifiers,HoRTGINrdManifest.Resources);}
         internal void Prepare(int w,int h)
@@ -52,7 +67,12 @@ namespace lilToon.URP.Extensions.RTGI.NRD
         }
         internal void BindFinal(CommandBuffer cmd,ComputeShader shader,int kernel)
         {
-            cmd.SetComputeFloatParam(shader,"_HoRTGINrdSignalScale",SignalScale);
+            #if UNITY_EDITOR
+            float next=ValidationSignalScale??SignalScale;
+            if(!float.IsFinite(next)||next<=0)throw new ArgumentOutOfRangeException(nameof(ValidationSignalScale));
+            if(next!=validationAppliedScale){validationAppliedScale=next;historyValid=false;}
+            #endif
+            cmd.SetComputeFloatParam(shader,"_HoRTGINrdSignalScale",AppliedSignalScale);
             cmd.SetComputeTextureParam(shader,kernel,"_HoRTGINrdSignal",signal.nameID);
             cmd.SetComputeTextureParam(shader,kernel,"_HoRTGINrdNormal",normal.nameID);
             cmd.SetComputeTextureParam(shader,kernel,"_HoRTGINrdViewZ",viewZ.nameID);

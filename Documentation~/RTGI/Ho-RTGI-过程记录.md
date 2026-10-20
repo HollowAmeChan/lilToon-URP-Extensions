@@ -309,3 +309,21 @@
 **本步过滤范围：** 仅Tests~/RTGI/HalfGrid的真实实验/撤回证据与RTGI过程/禁试/设计/计划/交接文档；不提交被拒绝的Runtime/Editor实现，不碰DI/vendor/native/源场景或他人Ho-GD plan。全部本任务进程结束，goal active。
 
 步骤014过滤提交：`ee962e4`。提交后HalfGrid verifier再次过，Runtime/Editor零diff，原型仅在Tests~归档而未产品化。下一项015回到原版GI低信号moment实际证据；已失败half按F33搁置，完整goal继续active。
+
+## 015：实际古堡低信号moment精度取证（进行中）
+
+**事前review：** 014 half已撤回/搁置，不重开。DI NRD步骤14/15有亮暗moment与尺度历史实测；GI固定SignalScale=64，真实微弱信号平方可能落入FP16低精度区，但目前只是新假说。先保留原尺度/参数，扩既有Castle stage audit采集slow diffuse真实二阶矩。已核对共享dispatcher只按descriptorType=UAV且binding=gOut_Diff选择输出；固定manifest4=Temporal、5=HistoryFix、6=Clamping，其RGBA alpha经原shader确为moment。PrePass alpha是距离，Atrous阶段alpha是variance，不混当二阶矩；不改DI/vendor或复制fast alpha。
+
+**验证门槛：** 同010长窗256 settle/256观察、同stride4 receiver/原逐RGB5%门槛，读取4/5/6阶段RGB/alpha、正信号而moment为0比例、mean²与moment的FP16量化亏损及局部raw/filtered/input记录。先baseline actual exit/源码/log/report绑定，再据证据决定可逆单位缩放实验；物理raw/最终输出及history量纲必须一致，不能输入加gain或改门槛。012HD仍禁试，半GI保持撤回，目标继续active。
+
+**口径更正：** 上段事前review对5的判断错误。HistoryFix正文虽然写float4，但实际CPU把gOut_Diff绑到Temporal fast pong；稳定history早退后alpha仍fast0，不能一律统计slow m2。baseline原数据/错误标签保留，baseline-interpretation明确只采用4/6。另开真实DLL描述符探针16272 actual exit0：Temporal slow=transient0、fast=1；Fix读0/条件写1；Clamp slow读0/fast读1，slow写permanent0/fast写1。不是只凭函数名或固定pool猜测；F34禁止混用。
+
+**正式数据：** baseline exec1794/PID42056、单位1 exec39224/PID46844、单位.125 exec44355/PID37392，三个Unity均actual exit1、audit完成、原5%仍失败、编译诊断0/无fence。每条256额外预热/256观察，4/6各1048576样本。原64 Temporal/Clamp正亮m2=0约98.458/98.519%；单位1降.704/.729%；.125降.00315/.00315%。Temporal明显m2亏损样本188211→69685→90；该采样网格无饱和。baseline平均物理m2=7.208e−5低于平均mean²=8.624e−5；单位1 m2≈2.320e−4、mean²≈8.638e−5，统计精度问题得到实际支持。
+
+**单位对照及拒绝：** 只加Editor ValidationSignalScale，NRD前除/后乘同值、变单位清独立NRD历史；Player仍原64，Shader/vendor/DI/native/采样全不改。三组256条raw frame均值逐条完全相同。RGB误差原(-5.946,-6.535,-7.028)%→单位1(-6.220,-5.317,-4.699)%→.125(-6.167,-5.252,-4.603)%，都未全过。filtered方差2.307e−8→约1.484e−8有改善，但不能用降噪收益或绿蓝改善掩盖红/绿失败。换单位亦改变epsilon/舍入相对量，不声称moment是唯一根因。两个有界单位试验后停止缩尺度，F35不再盲试.0625/.015625、按通道调scale或直接生产化；HDR/动态/历史仍需以后整体策略。
+
+单位1实际报告完整，但初runner错用marker“HoGICastle”未匹配异常，脚本也exit1。原run保留marker=false；verifier另按实际失败异常/fresh/moment完整性/退出核对，不修改历史为true。后续marker修正后完成.125与绑定探针。所有时刻精确源/报告/logSHA均独立归档；原baseline5错误统计不覆盖，显式排除。
+
+**事后review/收益：** 接纳实际slow moment/资源别名取证与仅Editor诊断能力；不接纳生产单位调整、HDR全域安全或RGB质量通过。没有GPU资源/Shader/NRD参数变更；Runtime两处只是Editor单位探针，默认/Player仍64，不声称新Player回归。Moments verifier核对4个实际进程、源/log/report、原逐帧raw一致、分桶/局部单位、真正4/6和3个原5%失败。014half搁置、010质量/012HD与正常camera/完整预算继续。
+
+**下一动作/过滤提交：** 016先补同一窗口full图RGB及16种stride4相位/局部阶段误差，区分网格取样与全图偏差、保留原0相位失败，不挑相位/改门槛。这将决定后续沿DI颜色裁剪/信号域的有界候选，而非继续盲调units。只提交GI两个Runtime文件Editor诊断hook、Castle入口/新MomentAudit/meta、Tests~/RTGI/Moments、RTGI过程/禁试/计划/交接。其他模块/他人Ho-GD plan不碰，全部进程结束，goal active。

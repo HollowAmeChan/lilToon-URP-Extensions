@@ -1,0 +1,89 @@
+{
+  "slowMomentPrecisionDefectObserved": true,
+  "physicalRawUnchanged": true,
+  "rgbQualityQualified": false,
+  "productionScaleChanged": false,
+  "historyFixExcluded": true,
+  "runs": [
+    {
+      "label": "baseline64",
+      "actualExitCode": 1,
+      "signalScale": 64,
+      "rgbRelativeErrorPercent": [
+        -5.9457203091903725,
+        -6.535379757752812,
+        -7.028454885931723
+      ],
+      "filteredVariance": 2.306600870884494e-08,
+      "moments": [
+        {
+          "pipeline": 4,
+          "zeroMomentPositiveFraction": 0.9845846536456903,
+          "severeBelowSquaredSamples": 188211,
+          "samples": 1048576
+        },
+        {
+          "pipeline": 6,
+          "zeroMomentPositiveFraction": 0.9851870620582424,
+          "severeBelowSquaredSamples": 188091,
+          "samples": 1048576
+        }
+      ],
+      "reportSha256": "9FCE4B40D0571DADDA776561077CB438D5AD3093CCB1CAA4592454BFE44C4313"
+    },
+    {
+      "label": "scale1",
+      "actualExitCode": 1,
+      "signalScale": 1,
+      "rgbRelativeErrorPercent": [
+        -6.219858726514637,
+        -5.3172822711545775,
+        -4.699405785250221
+      ],
+      "filteredVariance": 1.4942896393041625e-08,
+      "moments": [
+        {
+          "pipeline": 4,
+          "zeroMomentPositiveFraction": 0.007038169119562386,
+          "severeBelowSquaredSamples": 69685,
+          "samples": 1048576
+        },
+        {
+          "pipeline": 6,
+          "zeroMomentPositiveFraction": 0.00729153099765564,
+          "severeBelowSquaredSamples": 69691,
+          "samples": 1048576
+        }
+      ],
+      "reportSha256": "1519C86EDBECCB27F7264292AAE4F868A644BEBA5AEFE6BC3E72772F70E8B935"
+    },
+    {
+      "label": "scale0125",
+      "actualExitCode": 1,
+      "signalScale": 0.125,
+      "rgbRelativeErrorPercent": [
+        -6.166969778228748,
+        -5.252269544313637,
+        -4.603081044932466
+      ],
+      "filteredVariance": 1.4835757546211858e-08,
+      "moments": [
+        {
+          "pipeline": 4,
+          "zeroMomentPositiveFraction": 3.1543045063818704e-05,
+          "severeBelowSquaredSamples": 90,
+          "samples": 1048576
+        },
+        {
+          "pipeline": 6,
+          "zeroMomentPositiveFraction": 3.1543045063818704e-05,
+          "severeBelowSquaredSamples": 90,
+          "samples": 1048576
+        }
+      ],
+      "reportSha256": "B3742EB34805324C09B9C56EB36FEDABC814F0AF3054C37E50ED51D3C982A7DF"
+    }
+  ],
+  "actualBindingAliasesVerified": true,
+  "momentRatioImprovesButEnergyStillFails": true
+}

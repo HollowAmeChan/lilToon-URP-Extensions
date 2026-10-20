@@ -203,3 +203,21 @@ HalfGrid/verify_validation.py已核对正式两条真实失败、前置夹具失
 012HD/fence/稳定预算和正常自动camera/完整Player矩阵仍未完成；当前有015有意义独立工作，不算blocked。待过滤提交仅Tests~/RTGI/HalfGrid和RTGI文档（README/过程/禁试/交接/半GI设计/计划），没有Runtime/Editor/vendor/native/场景变更；别人的Ho-GD plan不纳入。Goal active，不可complete。
 
 014已按上述白名单过滤提交ee962e4，HalfGrid verifier提交后再次通过；产品Runtime/Editor无diff，index空，仅他人Ho-GD plan未跟踪。所有进程结束。下一轮直接做015原版GI低信号moment真实取证，不重启已搁置half，不把新线索先认定根因；010/012及完整应用条件继续，goal active。
+
+### 015终态（2026-10-20，待过滤提交；矩精度实证，RGB仍失败）
+
+没有半GI复活。新增Editor/RTGI/HoRTGIMomentAudit.cs/meta，Castle仅加moment/实际绑定入口与数据。每阶段对stride4同receiver采1048576样本，分物理luma档、记录m2=0/mean²亏损/饱和、最差12个同像素input/raw/filtered/stage。Runtime仅HoRTGINrdContext增加UNITY_EDITOR ValidationSignalScale/冻结AppliedSignalScale及变单位清NRD历史，Feature resolve改读同AppliedSignalScale；Player getter返回原常量64，原Shader/NRD参数/DI/vendor/native/资源没变，不声称新Player回归。
+
+实际三组256额外预热/256观察：baseline64 exec1794/PID42056，scale1 exec39224/PID46844，scale.125 exec44355/PID37392均Unity实际exit1、编译诊断0/fresh、moment audit完整、原5%失败。三组256条raw frame RGB均值逐条完全相同。RGB误差依次(-5.94572,-6.53538,-7.02845)% / (-6.21986,-5.31728,-4.69941)% / (-6.16697,-5.25227,-4.60308)%。滤波方差2.3066e−8→1.4943e−8→1.4836e−8，有矩/方差收益但不能掩盖红/绿失败。
+
+真正slow Temporal4/Clamping6：基线正均值m2=0约98.458/98.519%，scale1 .704/.729%，.125 .003154/.003154%；Temporal明显m2<mean²188211→69685→90（已允许.5最小half单位舍入），每阶段1048576样本。基线平均物理m2≈7.208e−5低于平均mean²≈8.624e−5；scale1 m2≈2.320e−4、mean²≈8.638e−5。该采样网格未见饱和，不外推HDR1000/完整全域安全。换尺度还改变epsilon/舍入相对大小，不能认定矩是全部/唯一根因。两个单位试验后停止继续缩scale，F35禁止.0625/.015625/按通道调或默认改1；生产仍64。
+
+**重要口径错误及更正：** 初baseline把HistoryFix5 gOut_Diff alpha也称slow moment，实际错误。真实DLL绑定探针exec99994/PID16272 actual exit0：Temporal slow transient0/fast1，Fix读0、条件写1；Clamping slow读0、fast1，slow写permanent0/fast1。Fix稳定早退后留下fast alpha0，不能聚合slow统计。baseline报告/源中的5错误标签保留，baseline-interpretation.json明确排除；新helper只认4/6。PrePass hitT与Atrous variance也不认m2。F34记录，不再只凭float4正文/函数名判断。
+
+scale1原runner marker错写HoGICastle，没匹配原失败异常，脚本也exit1；scale1-original/run.json保留marker=false。报告fresh/audit完成、原异常/实际exit俱全，verifier独立核对，不把false改true。后续marker已修正完成.125/绑定。root runner当前只跑小64²绑定探针，历史metadata在baseline-original/scale1-original/scale0125-original/bindings-original，所有执行源码逐字节归档，DLL只hash不复制。results三份质量失败和绑定pass均保留。
+
+Moments/verify_validation.py通过：4个实际进程/源码/log/report，三组相同raw、4/6统计与bins/局部物理换算、真实slow/fast别名、三组原5%失败、默认64/fastSigma2。旧资源/HalfGrid verifier当前Runtime/Builder SHA因合法诊断变更过时，按对应历史commit核对，不回滚本步迎合旧hash。所有本任务进程结束，所有run activeProcess=null。其它Ho-GD plan仍未跟踪，不纳入。
+
+**下一项016：** 暂不直接改NRD派生或生产信号域。先在同一长窗口保留原stride4 offset(0,0)统计，再补full图、16个stride4相位及局部raw→Temporal/Clamping/Atrous→filtered空间误差；已有ReadPixels拿完整数组，额外统计不需新GPU产品pass。可比较原64与已测.125单位以分开precision影响，但不能再试新单位数值或挑相位。若全图也偏暗，沿DI的Ho-RTDI-DiffuseConvexClamping.md/第82～84步看局部裁剪证据后做有界GI私有候选；不先假定其能解决。若发现相位偏差，也必须保留旧失败并有科学口径证明，不用更方便指标静默替代原5%。NRD大范围HDR/动态/history单位安全、010质量/012HD/正常enabled-camera/完整Player预算仍需后续交付。Goal active，不complete也不blocked。
+
+待过滤提交仅Runtime/RTGI/NRD/HoRTGINrdContext.cs与HoRTGIRendererFeature.cs诊断hook，Editor Castle/MomentAudit/meta，Tests~/RTGI/Moments，RTGI README/过程/禁试/交接/计划。没有产品scale默认更改、half、Shader/DI/vendor/native/用户场景变更。每步review/过滤/失败/交接约束继续。

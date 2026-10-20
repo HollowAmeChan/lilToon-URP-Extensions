@@ -37,6 +37,8 @@
 | F31 / GI步骤012资源及HD | 把descriptor payload/Unity Mesh运行时统计称为物理VRAM；整卡高占用且HD连续D3D12Fence::Wait后原样跑下一路径或继续凑样本；用HD推算冒充成功 | 256/512实际清单接纳，AS API/pose统计单列。HD PID44476真实exit−1无报告，compat未执行；整卡7.3～7.6/8GiB仅相关观测，不证明根因。禁止原条件重试/改TDR/终止其它进程；重开须具体新host条件或有界低驻留/同步夹具证据，先恢复非空已知负载/fence资格再做HD。runner仅停止自身进程、15分钟上限；1080约514MiB只作布局投影，stable budget/actual1080均false |
 | F32 / GI步骤013独立几何夹具 | 把无限精度CPU轮廓中心覆盖当作raster唯一允许表面；发现孤立depth/normal误差就放宽world门槛或改生产投影 | 两次真实exit1定位唯一像素CPU foreground local x−.5000122（距边缘.000192px）、GPU覆盖foreground。最终只在投影轮廓1/256px带允许两个独立ray/plane候选，全部位置/法线/深度仍原门槛，不跳过点；每条2点在带，18188点唯一候选。保留失败/源/诊断，不能扩大band遮盖错映射，也不能据此声称薄边GI重建通过 |
 | F33 / GI步骤014半GI重建 | 固定2×2代表点没采到薄前景，仍用四邻居/更宽邻域/背景填充或gain声称恢复；只凭57.5%payload下降接纳half | 实际RG/compat各169请求exit1：平面/输出/历史通过，但x8白色薄前景30点full约.992、half全0，原5%失败。Runtime/Editor实验已过滤撤回、精确源/patch/图归档，产品full。禁止原样四邻居或扩大域重试；重开需要真实full receiver缺样补偿及动态/噪声/资源与GPU成本证据。当前搁置，继续原实际场景质量；首轮F23单帧误判也保留，不能作half正式失败根因 |
+| F34 / GI步骤015 moment口径 | 仅见HistoryFix正文float4，便把其gOut_Diff alpha一律当slow moment；或把PrePass距离/A-trous variance混进m2 | 实际DLL证明Temporal slow transient0/fast1，HistoryFix条件写fast1且稳定早退。只统计4/6无条件slow；baseline5错误数据/标签原样保留但排除。必须看实际descriptor alias与shader早退，不靠函数名/固定pool猜；单位1 runner marker漏匹配同样保留false，用fresh报告/实际异常独立核对，不改历史绿色 |
+| F35 / GI步骤015单位敏感性 | moment精度恢复就声称古堡RGB修复，或继续减scale/按通道调单位/盲改默认64 | 单位64→1→.125，slow m2=0从98%降至.00315%，raw256帧均值逐条相同；RGB仍原5%失败，最后约(-6.17,-5.25,-4.60)%。两轮后停止纯单位调参，生产仍64。新策略需HDR/动态/历史与完整质量证据，不能gain/改sigma/挑通道替代；下一步全图/相位/局部误差取证也必须保留原stride0失败 |
 
 长期无收益路线的记录模板：问题与基线 → 假说/参考 → 尝试和真实成本 → 哪些指标改善/退化 → 拒绝或搁置原因 → 禁止原样再试的条件 → 重开所需新证据。新记录必须关联过程步骤与报告，不只写“试过，不行”。
 

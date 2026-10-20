@@ -330,7 +330,7 @@ namespace lilToon.URP.Extensions.RTGI
                     c.nrd.Record(cmd,d.view,d.projection,c.frame,reset,d.renderTime,!Application.isPlaying&&d.camera.cameraType==CameraType.SceneView);
                     c.MarkGpu(cmd,"GI.NRD",false);c.MarkGpu(cmd,"GI.Resolve",true);
                     int resolve=d.shader.FindKernel("ResolveNRD");
-                    cmd.SetComputeFloatParam(d.shader,"_HoRTGINrdSignalScale",HoRTGINrdContext.SignalScale);
+                    cmd.SetComputeFloatParam(d.shader,"_HoRTGINrdSignalScale",c.nrd.AppliedSignalScale);
                     if(compatibility)HoRTPrimarySurfaceInputs.BindCompatibilityCompute(cmd,d.shader,resolve,cameraData);
                     else d.primary.Bind(CommandBufferHelpers.GetComputeCommandBuffer(cmd),d.shader,resolve);
                     cmd.SetComputeTextureParam(d.shader,resolve,"_HoRTGINrdOutput",c.nrd.output.nameID);

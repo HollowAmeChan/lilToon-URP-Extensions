@@ -86,6 +86,8 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 
 步骤012补[实际资源清单](../Tests~/RTGI/Resources/README.md)：古堡256/512²自有GI+NRD+映射payload16.588/65.151MiB，独立AS Unity API16.523MiB；pose Mesh运行时统计单列不称VRAM。相同布局1080p推算513.997MiB（含Cutout/NRD，不含GB/SB等）。HD首次连续D3D12Fence错误，已终止自有进程，实际1080及稳定预算未验收；本轮低尺寸计时受不同host条件影响，不与011作算法退化结论。[半分辨率设计](RTGI/Ho-RTGI-半分辨率设计.md)明确输入/历史/NRD中心映射及全域边缘重建要求，尚未实现。010质量失败继续。
 
+步骤014的实际half原型因薄前景缺光被拒绝并撤回，产品仍full。步骤015[实际moment取证](../Tests~/RTGI/Moments/README.md)发现原64单位在微弱GI中slow二阶矩精度不足；两个成对Editor单位对照改善矩/方差，物理raw逐帧均值不变，但古堡RGB仍未全过5%。默认/Player仍64，未声称修复原质量失败；HDR/动态/完整应用预算仍待验证。HistoryFix条件fast输出不可当slow moment，真实DLL别名与更正保留。
+
 2026-10-20步骤010：真实血月古堡128²/256²两路径接入成功，15实例/12Cutout/1骨骼快照、18灯、全像素有效，正常camera已实际合成；但原版RELAX的逐通道长窗均值低约6～7%，未过5%门槛。阶段取证及sigma4/6两轮诊断仍失败，Runtime保持原版，不补gain。说明与画面见[实际场景及质量拒绝](../Tests~/RTGI/Scene/README.md)，不能把接入成功当完整画质/GPU预算交付。
 
 2026-10-20步骤009：六个Editor进程实际exit0，材质hit两颜色空间各140checks、完整两路径/两颜色空间各187请求/25checks。独立蒙皮矩阵与实际UV0/UV1、几何/着色法线、切线法线图一致；非readable蒙皮emission/遮挡、Bone/BlendShape首帧响应、稳定缓存及无效姿态清理通过。两个Mono Player各315请求/310有效应用帧/30checks实际exit0。见[骨骼证据](../Tests~/RTGI/Skinned/README.md)；本步没有改生产Runtime，也不将CPU Bake/保守reset当动态表面motion或GPU预算通过。

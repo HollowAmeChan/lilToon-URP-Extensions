@@ -1,0 +1,339 @@
+{
+    "pass": true,
+    "compatibility": false,
+    "historyReused": true,
+    "environment": true,
+    "nativeCutout": true,
+    "energyGatePass": false,
+    "gpuQualified": false,
+    "gpuTotalOnly": false,
+    "gpuForcedRebuild": false,
+    "error": "",
+    "camera": "Main Camera",
+    "gpu": "NVIDIA GeForce RTX 4060",
+    "status": "一跳 diffuse GI：18 灯 / 15 RT submesh / 排除 0 灯、0 命中材质、1 几何项 / RELAX diffuse / 基础裁切 12",
+    "skybox": "UnearthlyRed",
+    "width": 64,
+    "height": 64,
+    "frames": 34,
+    "observedFrames": 0,
+    "instances": 15,
+    "cutouts": 12,
+    "skinnedSnapshots": 1,
+    "valid": 4096,
+    "invalid": 0,
+    "lit": 3828,
+    "changedPixels": 2717,
+    "bakes": 1,
+    "stableBakes": 0,
+    "rawMean": 0.0015570847899653018,
+    "filteredMean": 0.001164443019661121,
+    "peak": 0.0174102783203125,
+    "cameraMeanChange": 0.00028704898431897163,
+    "rawVariance": 0.0,
+    "filteredVariance": 0.0,
+    "staticRaw": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "staticFiltered": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "materials": [
+        {
+            "name": "天空",
+            "shader": "lilToon",
+            "queue": 2000,
+            "excluded": true,
+            "supported": true,
+            "cutout": false,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "红月",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "背景建筑",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "雕塑",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "荆棘玫瑰",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "彩窗",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "石柱",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "穹顶",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "古堡",
+            "shader": "lilToon",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": false,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "地板",
+            "shader": "lilToon",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": false,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "楼梯",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "红毯",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "红毯花纹",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "吊灯",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "发光",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "新建材质",
+            "shader": "lilToon",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": false,
+            "main2": false,
+            "main3": false
+        }
+    ],
+    "rejections": [
+        "1_mesh submesh 0: excluded by material filter."
+    ],
+    "stages": [],
+    "frameMeans": [],
+    "momentBindings": [
+        {
+            "pipeline": 4,
+            "dispatch": 2,
+            "name": "gIn_Diff",
+            "resourceType": "OUT_DIFF_RADIANCE_HITDIST",
+            "descriptorType": 0,
+            "poolIndex": 0
+        },
+        {
+            "pipeline": 4,
+            "dispatch": 2,
+            "name": "gHistory_DiffFast",
+            "resourceType": "PERMANENT_POOL",
+            "descriptorType": 0,
+            "poolIndex": 1
+        },
+        {
+            "pipeline": 4,
+            "dispatch": 2,
+            "name": "gHistory_Diff",
+            "resourceType": "PERMANENT_POOL",
+            "descriptorType": 0,
+            "poolIndex": 0
+        },
+        {
+            "pipeline": 4,
+            "dispatch": 2,
+            "name": "gIn_DiffConfidence",
+            "resourceType": "IN_VIEWZ",
+            "descriptorType": 0,
+            "poolIndex": 0
+        },
+        {
+            "pipeline": 4,
+            "dispatch": 2,
+            "name": "gOut_Diff",
+            "resourceType": "TRANSIENT_POOL",
+            "descriptorType": 1,
+            "poolIndex": 0
+        },
+        {
+            "pipeline": 4,
+            "dispatch": 2,
+            "name": "gOut_DiffFast",
+            "resourceType": "TRANSIENT_POOL",
+            "descriptorType": 1,
+            "poolIndex": 1
+        },
+        {
+            "pipeline": 5,
+            "dispatch": 3,
+            "name": "gIn_Diff",
+            "resourceType": "TRANSIENT_POOL",
+            "descriptorType": 0,
+            "poolIndex": 0
+        },
+        {
+            "pipeline": 5,
+            "dispatch": 3,
+            "name": "gOut_Diff",
+            "resourceType": "TRANSIENT_POOL",
+            "descriptorType": 1,
+            "poolIndex": 1
+        },
+        {
+            "pipeline": 6,
+            "dispatch": 4,
+            "name": "gIn_DiffNoisy",
+            "resourceType": "OUT_DIFF_RADIANCE_HITDIST",
+            "descriptorType": 0,
+            "poolIndex": 0
+        },
+        {
+            "pipeline": 6,
+            "dispatch": 4,
+            "name": "gIn_Diff",
+            "resourceType": "TRANSIENT_POOL",
+            "descriptorType": 0,
+            "poolIndex": 0
+        },
+        {
+            "pipeline": 6,
+            "dispatch": 4,
+            "name": "gIn_DiffFast",
+            "resourceType": "TRANSIENT_POOL",
+            "descriptorType": 0,
+            "poolIndex": 1
+        },
+        {
+            "pipeline": 6,
+            "dispatch": 4,
+            "name": "gOut_Diff",
+            "resourceType": "PERMANENT_POOL",
+            "descriptorType": 1,
+            "poolIndex": 0
+        },
+        {
+            "pipeline": 6,
+            "dispatch": 4,
+            "name": "gOut_DiffFast",
+            "resourceType": "PERMANENT_POOL",
+            "descriptorType": 1,
+            "poolIndex": 1
+        }
+    ],
+    "momentAuditComplete": false,
+    "moments": [],
+    "resourceAudit": {
+        "accounting": "Live owned descriptor payload; excludes driver allocation/residency, GB/SB, imported assets and AS scratch. Unity runtime statistics are separate and must not be summed as VRAM.",
+        "asApi": "",
+        "asError": "",
+        "giPayloadBytes": 0,
+        "nrdPayloadBytes": 0,
+        "sceneMappingPayloadBytes": 0,
+        "totalPayloadBytes": 0,
+        "asApiBytes": -1,
+        "poseUnityRuntimeBytes": 0,
+        "width": 0,
+        "height": 0,
+        "reservoirArrayPitch": 0,
+        "resources": [],
+        "poseMeshes": [],
+        "aliases": []
+    },
+    "gpuSamples": [],
+    "gpuSummary": []
+}

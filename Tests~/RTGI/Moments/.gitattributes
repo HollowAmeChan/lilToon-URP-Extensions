@@ -1,0 +1,5 @@
+*.json -text whitespace=cr-at-eol
+baseline-original/source/** -text whitespace=cr-at-eol
+scale1-original/source/** -text whitespace=cr-at-eol
+scale0125-original/source/** -text whitespace=cr-at-eol
+bindings-original/source/** -text whitespace=cr-at-eol
