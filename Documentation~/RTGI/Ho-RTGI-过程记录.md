@@ -208,3 +208,6 @@
 **后续取证准备：** 本机RenderDoc技能已读，CLI在D:/Unity_Fork/renderdoc-mcp/bin，可通过仅子进程PATH调用；当前help/MCP没有duration接口，统计数量不当耗时。DI此前隐藏自动camera零事件、GPU时长零样本、无capture记录已读，不同条件不足前不盲重试。只读定位RTInputValidation的血月古堡依赖副本，此前观察到PID49064在使用该工程；后续须查当前状态，不操作别的任务进程/资产。
 
 **过滤提交：** 仅Editor/RTGI骨骼验证/Player fixture扩展、Tests~/RTGI/Skinned、复用Cutout/Dynamic/NRD runner及RTGI文档。其他Atmosphere/VolumeLight未提交改动保留，生产Runtime未变。
+
+
+步骤009过滤提交：`4ccd02b`。提交后verifier复核通过，生产Runtime无diff；真实场景/GPU阶段继续，目标active。
