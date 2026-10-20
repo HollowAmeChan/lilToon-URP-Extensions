@@ -33,6 +33,7 @@ namespace lilToon.URP.Extensions.Editor.Atmosphere
             if (LilUrpEditorSectionGui.DrawSectionHeader(ref showDust, "可见灰尘", "共享世界尘粒", ContentColor))
                 using (new EditorGUILayout.VerticalScope(EditorStyles.helpBox))
                 {
+                    HoAtmosphereDustPresets.Draw(serializedObject);
                     var dust = serializedObject.FindProperty("dust"); EditorGUILayout.PropertyField(dust.FindPropertyRelative("enabled"));
                     if (dust.FindPropertyRelative("enabled").boolValue || dust.FindPropertyRelative("enabled").hasMultipleDifferentValues)
                     {
