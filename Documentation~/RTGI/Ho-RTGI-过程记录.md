@@ -461,3 +461,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **收益/取舍/提交：** 接纳实际生产质量/静态方差改善，并有真实默认TS的响应/Player回归；没有新策略回归被观察到。核心AS硬缺口为legacy相同错误，未放行或修好；完整原画质/预算未接纳。020局部GPU成本+.018ms Final仍适用为同策略局部参考，不冒称新生产/Player完整成本。Tests~/RTGI/ProductionHistory保存所有原/修正/legacy/构建拒绝/Player/质量元数据、19完整日志（含017warning对照）、源/图片/payload SHA、analysis/verifier。1191源hash中240旧blob、897基线Git对象+精确行尾重建、54新blob，避免复制大量无关未改代码；约5.48MB。verifier过表示证据完整且失败保留，不是核心/画质全部过。全部本任务进程结束、active=null；他人Ho-GD plan不纳入。
 
 **下一项022：** 原剩余损失现在有新的实际生产stage。先读015真实Temporal4/Clamping6的slow moment/descriptor别名，核对当前数据范围和各moment/variance消费者，再选一项有依据且维持HDR/历史语义的精度修复；生产64不盲改、F35不重启纯单位扫描、不补gain/宽sigma。优先用GI私有Editor资源/阶段试验验证，必须报告局部/全域/动态与额外资源成本，无益撤回。F39旧flags/重建/延迟不重试；本机Unity RTX参考Automatic/direct Build差异仅可读核对，有新原生API/分配机制才重开有界control。正常enabled-camera和实际1080/完整预算仍需继续，goal active。
+
+021已按白名单过滤提交`a93d4dd`，ProductionHistory verifier提交后再次通过（明确保留core debug与原5%失败）。实际生产Shader改动已保留、两315请求Release Player通过；index空、所有本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮022从当前生产NRD stage/真实moment绑定处理余损，不重复20隔离或F39旧调参；正常camera/HDR/局部/static/1080完整预算继续，goal active。

@@ -349,3 +349,5 @@ Tests~/RTGI/ProductionHistory已核对：run.json合同；rejected-old-spatial-r
 F39只读可比较本机UnityRtxdiFeature.Automatic/direct Build与Ho manual mesh config/cmd Build，NativeRtxdiGPUScene.AddInstance是NativeRender别名，不能误称同一个Unity API。无新因果/API/分配机制不要重启旧flags/延时/AS重建矩阵。当前有其它实质质量工作，不blocked。正常camera应读DI原记录后再定新可测机制，不能请求式冒称自动帧。
 
 021白名单：Runtime/RTGI/Shaders/HoRTGI.compute；Editor ProductionHistoryAudit/meta、Castle/HistoryFeedback.Equal可见性/PlayerBuilder/CoreValidation读点与legacycontrol；Tests~/RTGI/Dynamic/HoRTGIRuntimeProbe.cs；Tests~/RTGI/ProductionHistory；RTGI说明/计划/README/过程/禁试/交接。后续旧019/020 verifier current SHA过时要用各commit历史，不回滚生产。每步review/收益/过滤/禁试/交接继续。
+
+021已按白名单过滤提交`a93d4dd`，ProductionHistory verifier提交后再次通过（明确保留core debug与原5%失败）。实际生产Shader改动已保留、两315请求Release Player通过；index空、所有本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮022从当前生产NRD stage/真实moment绑定处理余损，不重复20隔离或F39旧调参；正常camera/HDR/局部/static/1080完整预算继续，goal active。
