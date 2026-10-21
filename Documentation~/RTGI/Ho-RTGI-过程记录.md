@@ -543,3 +543,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **画面/成本边界：** 10张backend独立实际屏幕PNG，已查看RG raster/one和compat emission-off，灰基线/红蓝反弹渐变/红off后蓝保留符合夹具；这是纯接收面功能图，不是复杂古堡画质验收。512²不是1080，截图有屏幕输出量化，不作HDR精密能量/稳定GPU预算证据。本步Runtime无改动、没有新生产资源成本；补齐默认screen自动呈现缺口，不解除fullgreen5.05869%/7phase/局部/参考偏差/F39/static/HD预算。
 
 **过滤/交接review：** Tests~/RTGI/Backbuffer有1164source对象（6新小文本、其余旧证据/Git）、5完整logs、缺模块失败、最终两payload/SHA无HoGIGpuProbe.dll、10原PNG、环境XML/package与verifier。归档与verify过，所有本任务进程结束、run active=null。白名单Builder、新Backbuffer probe/证据、RTGI六文档；他人Ho-GD计划排除。026先当前生产默认独立seed的全域/局部质量边界，不继续纯单位/格式/宽sigma扫描或挑phase过关，目标active。
+
+025已按白名单过滤提交`ba76e3b`，Backbuffer verifier提交后再次通过，环境XML及source blob已核对Git暂存原字节SHA。默认screen两Player各240自动帧与10张屏幕图完成，首次缺模块失败保留；所有本任务进程结束、Runtime无diff、index空，仅他人Ho-GD计划未跟踪。下一026当前生产独立seed全域/局部质量边界，保留原5%/7phase/F39/HD缺口，目标active。

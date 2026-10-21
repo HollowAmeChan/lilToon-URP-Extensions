@@ -417,3 +417,5 @@ Tests~/RTGI/AutomaticCamera verifier已过；1163source对象5新文本、7完�
 10张真实屏幕PNG/尺寸SHA完整，已查看RG raster/one与compat emission-off；纯平面灰→红蓝渐变→红off蓝留吻合，非复杂场景视觉验收。Tests~/RTGI/Backbuffer verifier过，1164source SHA仅6新小文本、5完整logs、原失败/最终payload无HoGIGpuProbe.dll/环境API原文。全部本任务进程已结束、active=null、Runtime无diff；他人Ho-GD计划排除。
 
 **026直接动作：** 默认targetRT与screen自动可用性已证，不重复隐藏无事件。回到当前生产默认的独立seed全域/局部质量证据：先复读019 SeedAudit和016局部/空间域定义，沿同场景同支持域、保留原5%及全部16phase，明确当前023精度/pre-S结果与早期019代码差异；不重复四模式大矩阵、不拿选择偏差参考作绝对真值。先提出一个有界、能区分剩余损失与seed方差/局部结构的测量，再据实际结果选择算法，不能为了green5.05869%调阈值/挑phase/继续格式单位扫描。F39/static非零base、完整场景动态/HD/完整Player预算继续，目标active。
+
+025已按白名单过滤提交`ba76e3b`，Backbuffer verifier提交后再次通过，环境XML及source blob已核对Git暂存原字节SHA。默认screen两Player各240自动帧与10张屏幕图完成，首次缺模块失败保留；所有本任务进程结束、Runtime无diff、index空，仅他人Ho-GD计划未跟踪。下一026当前生产独立seed全域/局部质量边界，保留原5%/7phase/F39/HD缺口，目标active。
