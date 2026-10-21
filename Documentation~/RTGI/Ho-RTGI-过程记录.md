@@ -437,3 +437,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **复审/接纳：** 接纳pre-S作为下一生产接入候选，未接纳完整画质/预算。12个原物理时均EXR/×100PNG均保留SHA，已查看原版/候选filtered预览，只说明形状/细节保留与亮度变化，不当普通相机合成。Tests~/RTGI/HistoryFeedback有四run/完整日志/246源hash（234共用旧blob）、生成源码与单处patch、gzip原始JSON/图片/可重算analysis/verifier，约7.03MB。verifier过含反事实控制、原版与019逐帧一致、packet/输入/计数、GPU1440区间及原5%失败。所有本任务进程结束、active=null，Runtime无diff，别人的Ho-GD plan不纳入。F41记录codec假说及禁止把subset/成本噪声当全面通过。
 
 **下一项021立即实施：** Runtime HoRTGI.compute Final仅在spatial flag开时直接packed-copy Temporal2→history0，S关保留旧store。不要改T/S当前输出、SDK/gain/NRD单位或加产品实验开关；Final后写避免Temporal读写0竞态。实际生产加history源断言，双路径、环境/材质/Cutout/蒙皮/真实应用帧响应及两独立Release Player验证，包含S开启的新历史路径，不能只沿旧S关闭的解析夹具。Win64 payload无GPU探针，旧fixture/default门槛保留，实测硬退化则撤回。020工具Generate依赖旧legacy store，生产改变后不可原样重跑错标baseline，须用本步历史版本或明确适配。原全5%/static F39/HDR/正常camera/1080/完整预算继续，goal active。
+
+020已按白名单过滤提交`3b6937e`，HistoryFeedback verifier提交后再次通过；Runtime无diff、index空、四个本任务进程均已结束，仅他人Ho-GD plan未跟踪。下一轮直接021生产pre-S packed history与实际S开路径/RG/compat/动态/两Release Player回归，不再重复20隔离矩阵；旧质量与预算缺口继续，goal active。

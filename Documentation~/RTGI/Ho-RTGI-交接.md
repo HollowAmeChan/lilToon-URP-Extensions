@@ -329,3 +329,5 @@ Tests~/RTGI/Seeds：四真实attempt metadata、完整日志、239精确source h
 接着实际生产history源合同断言+原GI核心/环境/材质/Cutout/蒙皮RG/compat回归；动态响应与两独立Win64 Mono Release Player，必须新增S开启的新历史路径，不能只跑旧为了F23而S关闭的解析夹具。沿017 Player Build/RuntimeProbe扩展，给本轮独立输出/资产前缀，不覆盖旧payload；验证新增shader真实包含、nonreadable/skinned/Cutout原合同、无HoGIGpuProbe.dll。生产最终source绑定到实际验证，性能可作256局部证据而不宣布完整预算。若有硬退化则撤回；原5%/HDR/正常enabled-camera/static F39/1080与完整预算继续，goal active。
 
 **工具警告：** 020 Generate要求原HoRTGI.compute里单个legacy store，改生产后它会拒绝；不可原样调用错标baseline。旧020证据用本步历史源码/生成compute重现，后续若继续用该工具必须显式支持新默认与legacy反事实，所有SHA重记，不覆盖此轮结果。当前全部四进程结束、run active=null、Runtime无diff。白名单仅新Editor helper/meta、Castle/SeedAudit、Tests~/RTGI/HistoryFeedback及RTGI五文档；他人Ho-GD plan未跟踪不纳入。每步review/过滤/收益/禁试/交接继续。
+
+020已按白名单过滤提交`3b6937e`，HistoryFeedback verifier提交后再次通过；Runtime无diff、index空、四个本任务进程均已结束，仅他人Ho-GD plan未跟踪。下一轮直接021生产pre-S packed history与实际S开路径/RG/compat/动态/两Release Player回归，不再重复20隔离矩阵；旧质量与预算缺口继续，goal active。
