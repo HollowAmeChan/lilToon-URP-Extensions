@@ -525,3 +525,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **收益/正确性/成本review：** 32raster、64quarter、32one、32Volume-off、20re-enabled、30moving、30emission-off构成240记录；读取applicationFrame=renderFrame+1且renderFrame连续。0.25/1强度RGB最大误差RG8.795e-5/6.855e-5、compat8.798e-5/6.711e-5，小于原.015。Volume-off全部32帧恢复raster，re-enable首帧reset；移动30帧全部保留有效历史；发光关闭首帧reset且raw/filtered红0。证明真实enabled-camera自动调度/合成/动态链路，补齐此前请求式证据缺口。没有生产改动、运行成本结论或视觉QA。**camera仍输出到targetRT，窗口可见不等于backbuffer已验**；025再做target=null屏幕呈现，不能扩大本步支持域。fullgreen5.05869%/7phase、static/F39与HD预算继续。
 
 **证据/提交review：** Tests~/RTGI/AutomaticCamera含两hidden失败/两visible成功、7完整logs、1163精确source对象（5新小文本，其余已有证据/Git，nativeDLL复用Git）、完整最终payload无HoGIGpuProbe.dll。首旧binary被重建覆盖仅保留manifest；不冒称其仍可执行。verify过逐条检查失败/源SHA/事件/全部RGB/响应；源码静态review确认无手动请求。全部本任务进程结束、active=null；Runtime无diff。白名单只Builder、新probe、新证据和RTGI六文档；他人Ho-GD计划不纳入。目标active，下一025默认屏幕目标连续呈现。
+
+024已按白名单过滤提交`0d80f85`，AutomaticCamera verifier提交后再次通过。两visible Player各240真实自动targetRT渲染，两个hidden失败保留，全部本任务进程结束、index空，仅他人Ho-GD计划未跟踪。下一025直接默认backbuffer呈现/色域/捕获时序资格，短暂visible授权已获；原质量/F39/HD缺口与目标active继续。

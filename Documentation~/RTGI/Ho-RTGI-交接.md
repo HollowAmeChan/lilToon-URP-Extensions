@@ -405,3 +405,5 @@ Fullgreen/其它8phase/局部质量仍缺；F35不重启纯scale试值/gain/宽s
 Tests~/RTGI/AutomaticCamera verifier已过；1163source对象5新文本、7完整logs、两失败和两成功、最终两payload SHA无HoGIGpuProbe.dll。原首binary被重建覆盖，manifest保留不冒称可现场验证。archive_evidence.py仅在本机最终输出存在时复核payload，verify无需那些二进制；source-index重建精确历史。所有本任务进程结束，两run active=null。未跟踪Ho-GD Outline计划为他人改动，不能stage。
 
 **025直接动作：** 独立backbuffer夹具/输出，serialized-enabled且targetTexture=null；需要CaptureScreenshotIntoRenderTexture/EndOfFrame之类捕获时先核本机Unity API与色域/坐标，不能手动提交渲染。保持真实callback/previous-frame证据和原强度/Volume/动态门槛，短暂可见测试已获授权。场景尺寸/纹理尺寸与屏幕大小分列；成功补截图/可见呈现，失败保留后review，不扩大为完整画质/GPU预算。每步前后review、收益/成本/禁试/交接与过滤提交持续，目标active。
+
+024已按白名单过滤提交`0d80f85`，AutomaticCamera verifier提交后再次通过。两visible Player各240真实自动targetRT渲染，两个hidden失败保留，全部本任务进程结束、index空，仅他人Ho-GD计划未跟踪。下一025直接默认backbuffer呈现/色域/捕获时序资格，短暂visible授权已获；原质量/F39/HD缺口与目标active继续。
