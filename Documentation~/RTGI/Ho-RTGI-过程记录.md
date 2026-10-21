@@ -395,3 +395,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **过滤/成本/接纳：** Runtime HoRTScene/HoRTRayMeshIndices和共享Editor场景测试仅本步骤自有修改按6ed9b41恢复；新mirror/partial/copyProbe移出产品。仅接纳独立Editor最小复现、Tests~/RTGI/StaticMesh证据与文档。rejected-candidate.patch对基线git apply --check通过；138份去重精确源码、15个完整实际进程日志约2.06MB，source/log index与review绑定。verify_validation.py通过表示失败/恢复证据自洽，不是static支持通过。所有本任务进程结束，run.activeProcess=null；无新Player或完整画面回归声明，017蒙皮修复保留。F39搁置静态镜像及无收益AS调参，静态非零base支持仍未修复。
 
 **下一步019：** 使用017已确认合法AS的原古堡域，先核对本机RTX和现有M0对T/S/none的seed/权重合同，再做有界独立seed的main raw误差对照；使用已经收敛的参考子集，保留暗点不确定、全图5%失败及selection bias，不能据选点接纳全图。先区分有限窗口方差/系统偏差，再决定生产采样或降噪改动。不重开F27/31/33/35/36/37/39；正常camera/1080/完整预算继续，goal active。所有用户要求继续约束后续步骤。
+
+018已按白名单过滤提交`ad900e7`，StaticMesh verifier提交后再次通过。生产Runtime/共享场景测试无diff、index空、全部本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮直接019合法AS古堡的独立seed/模式误差对照，不重复F39。目标仍active，未complete。

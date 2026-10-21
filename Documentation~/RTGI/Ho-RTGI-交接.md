@@ -291,3 +291,5 @@ Editor/RayTracing/HoRTAccelerationGrowthProbe是保留的独立Editor最小复�
 原全图RGB(-7.25,-8.42,-8.78)%、moment/HDR/正常enabled-camera/1080与完整预算继续未完成；F27/31/33/35/36/37/39继续。当前目标工具查到active，objective引用实施规划内六项用户强制要求，不能为重写字符串虚假完成/重建目标。每步review→实证→收益复盘→禁试/交接→白名单提交继续。
 
 018提交白名单：Editor/RayTracing/HoRTAccelerationGrowthProbe.cs/meta；Tests~/RTGI/StaticMesh；RTGI README/过程/禁试/交接/实施规划。别人的Ho-GD-Outline-SourceDepth-Plan.md仍未跟踪，不纳入。下一轮先看本节最新提交状态，不重跑旧15个进程凑次数。
+
+018已按白名单过滤提交`ad900e7`，StaticMesh verifier提交后再次通过。生产Runtime/共享场景测试无diff、index空、全部本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮直接019合法AS古堡的独立seed/模式误差对照，不重复F39。目标仍active，未complete。
