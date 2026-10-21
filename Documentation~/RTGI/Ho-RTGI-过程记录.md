@@ -507,3 +507,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **实际全域/取舍：** final16612 actual0、stride0过，但fullRGB−4.49450/−5.05869/−4.72749%，fullgreen与7相位仍失败，不因只差.05869就放宽阈值。接纳精度与低信号/HDR范围改善和真实功能回归为生产增量，不接纳完整质量/稳定预算。当前无新增硬退化被观察到；AS/F39/normal camera/局部/HD仍开。Tests~/RTGI/PrecisionQualification约6.14MB，1197精确source SHA仅25新blob，其余Git/旧blob、22实际logs、完整失败/反事实/最终metadata、gzip原报告、两套独立payload与analysis/verify过。所有本任务进程结束/active=null，仅他人Ho-GD plan未跟踪。
 
 **下一项024优先可用性证据：** 不继续围绕5.05869%调参/格式/单位或挑phase。先读DI关于hidden-host正常camera的真实记录/启动参数与当前运行条件，再设计一个有具体差异的enabled-camera连续呈现实验；必须Camera.enabled=true、无SubmitRequest/Render替代、真实endCameraRendering/帧/读回与GI开关/Volume/时域响应，不能把既有315请求当完成。可先核对无-batchmode但Hidden窗口/targetRT与OnDemandRendering是否已尝试，旧相同条件不盲试；开发约束不允许未经用户明确要求启动可见交互窗口，若确需可见UI先准备好reviewable结果再说明来源请求。其它质量用独立seed与局部/原5%完整保留，F39不重启旧参数，实际1080预算须新host/驻留机制证据，goal active。
+
+023已按白名单过滤提交`e5ff691`，PrecisionQualification verifier提交后再次通过；最终GI-only四32F池/output32、单位64/DI默认不变，原失败保留。两个最终315请求Player与HDR/生命周期通过，fullgreen/7phase与稳定目标预算仍未过；index空、22个本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮024优先normal enabled-camera连续呈现，先读DI原hidden条件，有新机制才试；goal active。

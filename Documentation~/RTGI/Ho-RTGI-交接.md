@@ -391,3 +391,5 @@ Fullgreen/其它8phase/局部质量仍缺；F35不重启纯scale试值/gain/宽s
 其余目标仍未完成：full/7phase/局部、AS/F39/static非零base、HDR更广支持、真正normal camera、实际1080/完整预算。F39旧flags/延时/重建不重试，NativeRtxdiGPUScene是NativeRender别名不是Unity overload；有新API/分配机制证据才重开。goal active，不complete也不blocked。
 
 023白名单：Runtime RTDI core构造/format、RTGI NrdContext；Editor NrdValidation partial/新PrecisionRange/meta、Castle/PoolPrecision capture、PlayerBuilder；Tests DynamicRuntimeProbe、PrecisionQualification；RTGI产品说明/计划/README/过程/禁试/交接。无用户场景、DI策略/Shader/Native DLL修改；五已知build warning只沿021逐字白名单。
+
+023已按白名单过滤提交`e5ff691`，PrecisionQualification verifier提交后再次通过；最终GI-only四32F池/output32、单位64/DI默认不变，原失败保留。两个最终315请求Player与HDR/生命周期通过，fullgreen/7phase与稳定目标预算仍未过；index空、22个本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮024优先normal enabled-camera连续呈现，先读DI原hidden条件，有新机制才试；goal active。
