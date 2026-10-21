@@ -38,6 +38,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void RunGpu512Compatibility()=>Run(true,512,gpu:true);
         public static void RunGpu256TotalOnly()=>Run(false,256,gpu:true,totalOnly:true);
         public static void RunGpu256Rebuild()=>Run(false,256,gpu:true,rebuild:true);
+        public static void RunLocalReferenceQualification()=>Run(false,256,denseReference:true,denseSamples:512,denseBatches:2,denseScheduled:true,validationTag:"local-reference-qualification",denseLocal:true);
+        public static void RunLocalReference()=>Run(false,256,denseReference:true,denseSamples:512,denseBatches:2048,denseScheduled:true,validationTag:"local-reference",denseLocal:true);
         public static void RunFixedASControls()=>Run(false,256,true,false,256,256,denseReference:true,denseSamples:512,denseBatches:16384,denseScheduled:true,denseControls:true,validationTag:"fixed-as");
         public static void RunFixedASReference()=>Run(false,256,true,false,256,256,denseReference:true,denseSamples:512,denseBatches:2048,denseScheduled:true,validationTag:"fixed-as");
         public static void RunFixedASSpatial()=>Run(false,256,true,true,256,256,spatialAudit:true,denseScheduled:true,validationTag:"fixed-as");
@@ -52,7 +54,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void RunResources512()=>Run(false,512,gpu:true,resources:true);
         public static void RunResources1080()=>Run(false,1920,gpu:true,resources:true,renderHeight:1080);
         public static void RunResources1080Compatibility()=>Run(true,1920,gpu:true,resources:true,renderHeight:1080);
-        static async void Run(bool compatibility,int size,bool stability=false,bool stages=false,int settle=32,int measured=64,bool wideClamp=false,float historySigma=4,bool gpu=false,bool totalOnly=false,bool rebuild=false,bool resources=false,int renderHeight=0,bool moments=false,float momentScale=64,bool bindings=false,bool spatialAudit=false,bool denseReference=false,int denseSamples=512,int denseBatches=2,bool denseScheduled=false,bool denseControls=false,string validationTag="",bool seedAudit=false,int seedCount=8,int seedWarmup=64,int seedMeasured=256,bool feedbackAudit=false,bool feedbackQualification=false,bool feedbackGpu=false,bool productionHistory=false,string poolPrecision="",bool seedProduction=false)
+        static async void Run(bool compatibility,int size,bool stability=false,bool stages=false,int settle=32,int measured=64,bool wideClamp=false,float historySigma=4,bool gpu=false,bool totalOnly=false,bool rebuild=false,bool resources=false,int renderHeight=0,bool moments=false,float momentScale=64,bool bindings=false,bool spatialAudit=false,bool denseReference=false,int denseSamples=512,int denseBatches=2,bool denseScheduled=false,bool denseControls=false,string validationTag="",bool seedAudit=false,int seedCount=8,int seedWarmup=64,int seedMeasured=256,bool feedbackAudit=false,bool feedbackQualification=false,bool feedbackGpu=false,bool productionHistory=false,string poolPrecision="",bool seedProduction=false,bool denseLocal=false)
         {
             int width=size,height=renderHeight>0?renderHeight:size;
             var oldDefault=GraphicsSettings.defaultRenderPipeline;var oldQuality=QualitySettings.renderPipeline;bool oldAsync=ShaderUtil.allowAsyncCompilation;HoRTGIRendererFeature gi=null;int exit=1;
@@ -81,7 +83,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var camera=Keep(new GameObject("GI copied castle view")).AddComponent<Camera>();camera.CopyFrom(source);camera.transform.SetPositionAndRotation(source.transform.position,source.transform.rotation);camera.enabled=false;camera.targetTexture=null;camera.aspect=(float)width/height;camera.GetUniversalAdditionalCameraData().volumeLayerMask=0;
                 var target=Keep(new RenderTexture(width,height,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));target.Create();var image=Keep(new Texture2D(width,height,TextureFormat.RGBAFloat,false,true));
                 int clock=0;for(int i=0;i<32;i++){if(denseScheduled)await NextEditorTick();Render();}
-                if(denseReference||seedAudit||feedbackAudit){denseFeature.targetCamera=camera;var receivers=denseControls?HoRTGIDenseReferenceAudit.ControlPixels:HoRTGIDenseReferenceAudit.Pixels;denseFeature.Initialize(seedAudit||feedbackAudit?1:denseSamples,receivers);denseFeature.scheduled=denseScheduled;denseAudit=new HoRTGIDenseReferenceAudit(denseFeature,receivers);}
+                if(denseReference||seedAudit||feedbackAudit){denseFeature.targetCamera=camera;var receivers=denseLocal?HoRTGIDenseReferenceAudit.LocalPixels:denseControls?HoRTGIDenseReferenceAudit.ControlPixels:HoRTGIDenseReferenceAudit.Pixels;denseFeature.Initialize(seedAudit||feedbackAudit?1:denseSamples,receivers);denseFeature.scheduled=denseScheduled;denseAudit=new HoRTGIDenseReferenceAudit(denseFeature,receivers);}
                 var context=gi.LastContext;if(context?.nrd==null)throw new Exception("Actual castle GI/NRD missing: "+gi.Status);
                 if(poolPrecision.Length>0){precision=new HoRTGIPoolPrecisionAudit(context.nrd,poolPrecision);if(!stability)Render();}
                 if(stages&&precision==null)precision=new HoRTGIPoolPrecisionAudit(context.nrd,"production");
@@ -147,7 +149,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                     for(int channel=0;channel<3;channel++)report.energyGatePass&=Math.Abs(rgb[1,channel]-rgb[0,channel])<Math.Max(.000005,Math.Abs(rgb[0,channel])*.05);
                 }
                 if(precision!=null)report.poolPrecision=precision.Snapshot();
-                if(denseReference){denseFeature.collect=true;for(int batch=0;batch<denseBatches;batch++){if(denseScheduled)await NextEditorTick();denseFeature.batch=batch;Render();denseAudit.AddBatch(batch);if(denseScheduled&&(batch+1)%512==0)File.WriteAllText(Path.Combine(output,"dense-progress.json"),JsonUtility.ToJson(new DenseProgress{terminal=false,completedBatches=batch+1,audit=denseAudit.Finish()},false));}denseFeature.collect=false;report.denseReference=denseAudit.Finish();}
+                if(denseReference){denseFeature.collect=true;for(int batch=0;batch<denseBatches;batch++){if(denseScheduled)await NextEditorTick();denseFeature.batch=batch;Render();denseAudit.AddBatch(batch,denseLocal&&(batch==0||batch==denseBatches-1));if(denseScheduled&&(batch+1)%512==0)File.WriteAllText(Path.Combine(output,"dense-progress.json"),JsonUtility.ToJson(new DenseProgress{terminal=false,completedBatches=batch+1,audit=denseAudit.Finish()},false));}denseFeature.collect=false;report.denseReference=denseAudit.Finish();}
                 Save(target,"scene-before",false);Save(context.diffuse.rt,"raw-gi",true);Save(context.PublishedDiffuse.rt,"filtered-gi",true);Save(context.PublishedDiffuse.rt,"filtered-gi-preview-x100",true,100);
                 var raw=Read(context.diffuse.rt);var filtered=Read(context.PublishedDiffuse.rt);var before=Read(target);
                 for(int i=0;i<filtered.Length;i++)

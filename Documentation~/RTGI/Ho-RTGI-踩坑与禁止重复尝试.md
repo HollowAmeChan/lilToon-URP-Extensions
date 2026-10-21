@@ -110,3 +110,11 @@ Windows Python默认Path.write_text可能把原UTF8中文C#写成GBK，Unity本�
 当前8seed TS pooled绿色−5.15807%，配对差经验SE/raw .11936%，3/8 full过；5%边界不能按单窗5.05869%定得过准，也不能因波动放宽/挑seed。pooled仍full不通过、9/16phase、32/64固定块失败，原5%保留。raw/filtered差不是独立物理真值误差，report.pass/functional仅测量功能，不接纳质量。
 
 探索首位(221,184)差.01454在holdout只.000127±.000172 SE，禁止围绕这样的事后极值盲调。6个x86跨seed保留较大差，只支持调查结构；旧017高样本参考不覆盖这些坐标，不能把raw视真值/直接修改NRD。重开算法候选前先新坐标及相邻控制的同支持域无复用高样本/primary/guide；旧参考15/16/选择偏差、F35/F36/F39/F31不解除。
+
+## F48 / 步骤027：新选点参考、guide与统计精度
+
+026 6个跨seed位置不能拿旧017参考点代替，也不能直接把raw当真值。027固定18点新参考每点1M，全部原收敛过，证实中心filtered相对同模型参考约剩.28～.65；仍有选择偏差/共用材质light，不推断全图。mainFrames0的旧mainRaw/mainFiltered不是测量均值，必须显式引用026实际map。原full绿色−5.158%/9phase等失败继续，不以局部真值接纳整体。
+
+Guide原pack/decode和depth、输入remod均过，不能继续无依据改normal编码/单位/格式来碰质量。相邻平面/材质边界是相关证据，未定位具体NRD阶段/根因；先实际stage+新参考L1，再选机制，禁止直接补gain、宽sigma、复活F36线段box。新增finite guard防NaN绕过比较，正式run源在guard前、最终短资格在后，必须保留唯一源diff及原数据finite证据，不改历史SHA。
+
+JSON float批均值要恢复IEEE float32；原C# LINQ Average(float selector)返回float后才赋double。若以decimal64直接算很小的split，会误报不一致；按既有精度重建，不放宽原2%/5%门槛或修改数据来凑绿。verifier既验证字节也从批次独立重算，功能exit0/guide正确不等于画质修复或GPU预算。

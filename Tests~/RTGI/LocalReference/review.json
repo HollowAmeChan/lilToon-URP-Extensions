@@ -1,0 +1,9 @@
+{
+  "sourceDifferenceAfterReference": [
+    "Editor/RTGI/HoRTGIDenseReferenceAudit.cs"
+  ],
+  "beforeSha256": "F55CBBADF90C2ED51444B02FF9F1EF4348269D8C152426E11A7E792E5228899B",
+  "afterSha256": "5A00FD350A8661B7F88F3AABFEE15DC1A3FD2D997ED6623D3C3F7D77589AE571",
+  "exactAddedLine": "                if(!float.IsFinite(p.x)||!float.IsFinite(p.y)||!float.IsFinite(p.z)||!float.IsFinite(p.w)||!float.IsFinite(z[at].r))throw new Exception(\"Nonfinite local normal/depth guide\");",
+  "reason": "Final review guards NaN normal/depth explicitly before comparisons; actual reference guide values are independently finite, no GPU/sampling/settings change. Final bounded qualification compiled this guard."
+}

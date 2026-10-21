@@ -567,3 +567,23 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 026最终静态review另修进度JSON标签：Snapshot(false)传显式modes，避免TS-only进度仍显示旧四模式；final Snapshot(true,modes)/GPU调用/实际report未改。reporting-review绑定一行精确字节替换，verifier区分历史实跑源与该纯报告修正；复用已编译签名/局部变量，不重跑GPU矩阵、不声称原run使用新字节。
 
 026已按白名单过滤提交`ecd9c6a`，ProductionSeeds verifier提交后再次通过（保留原pooled质量失败，3个实际进程均结束）。最终progress标签纯报告修正另有精确字节review，未冒称GPU重跑。index空、Runtime无diff，仅他人Ho-GD计划未跟踪。027直接新x86六位置及相邻控制的同域无复用高样本/primary/guide，不把raw当真值，不重复本轮完整8seed或旧四模式，不调门槛；原质量/F39/复杂动态/HD预算与目标active继续。
+
+## 027：holdout结构的同支持域无复用参考与NRD输入（进行中）
+
+**事前review：** 026的6个x86局部差跨seed保留，但有限预算TS raw不是真值；017参考不覆盖这些坐标。固定y=204/206/226/227/252/255，每行x85/86/87，共18点，包含6目标和12相邻控制；完整报告，不依据新参考挑点。沿017原一跳估计器/primary loader lattice/真实alpha final visibility，无T/S/NRD；相同256²古堡、18灯/15实例/12Cutout/天空、8 local/4 environment、bias .001/distance1000、FP32 reference和黑样本计入。512样本×2048独立批=每点1048576，原SE≤2%/split≤5%/低信号与positive gate不变。先2批实际资格，再完整固定预算，未收敛保留未定，不无限加样本。
+
+首次/末次额外读取同一主相机NRD normal/roughness、viewZ、scaled signal、raw/filtered；记录格式与scale，并按本机NRDConfig编码2/rough1验证normal pack/decoded/world primary、depth和half输入还原。只Editor读回/报告，不改生产或过滤参数。对比026全部8seed及heldout4seed同坐标均值和新同模型参考，保留选择偏差，不能外推全图真值。源码显式UTF8，hidden Editor、15分钟/fence只停自有进程；原全域5%/phase/F39/static/复杂动态/HD完整预算继续active。
+
+### 027事后review（2026-10-22）：18点参考收敛，确认局部欠亮但尚未修复
+
+**实际实现/资格：** 固定6行y204/206/226/227/252/255×x85/86/87=18点；Castle新增local入口/receiver选择，DenseFeature暴露实际mainContext给Editor审计；DenseAudit仅增首尾guide读回/报告。参考原一跳sample lattice，无T/S/NRD，主相机仍默认TS+NRD；相同256²/18活灯/15实例/12Cutout/次级天空、8 local/4 environment/.001/1000，黑事件计入、reference FP32。18160初资格actual0、22748正式actual0，36/2082真实Editor请求，API/Shader/Property/UAV/fence/drift0。
+
+**收敛/原门槛：** 每点2048×512=1048576，共18874368样本，18/18原SE≤2%/split≤5%/positive/低信号门槛过；最大相对SE .84477%、最大split2.97214%、最少positive250448。primary/full/history最大差1.89e−6、ray/compute0，整个batch域稳定。仍同材质/light模型且选点来自旧探索，非独立绝对着色真值或全图验收。mainFrames0，因此不拿旧mainRaw/mainFiltered零字段当本轮均值。
+
+**实际收益review：** 对026 8seed同坐标真实map，中心6点raw/reference normalized L1 .067544、filtered .494028；邻12 .046567/.423096；全部18 .056952/.458213。中心RGB总量raw相对reference +1.490/−1.242/−.994%，filtered −42.161/−59.933/−62.224%，逐点filtered仅reference .280～.651。此次证据排除了“这里只是raw单窗极值”的解释，支持有真实局部欠亮；不以18点替代全图质量/误差门槛。全部点/heldout后4seed/参考误差均保留，不挑点通过。
+
+**输入定位/边界：** 首/末批的主NRD normal/signal/raw/filtered16F、viewZ32F、scale64；按NRDConfig2/rough1独立核验pack最大误差.000228882、normal解码.000324177、viewZ0；signal remod在max(5e−6,.002raw)精度界内，max abs约1.077e−5。前4行x85/86相邻viewZ差约.155、法线接近平行、albedo约.02→.4，后2行左邻已在后平面。这说明实际几何/材质边界而非guide坐标错位；没有证明具体filter阶段/跨边界根因。仅读首尾，不外推所有帧/HDR。
+
+**最终防护与统计review：** 复核后增加normal/depth显式finite guard，36548重编译/36请求资格actual0。正式参考原源在guard前，唯一diff与实际guide全部finite由verifier独立核对，不伪称完整参考重跑。首次verifier按decimal64重算split不符，定位既有LINQ Average(float selector)返回float再赋double的数值语义；按原IEEE float32批均值及平均精度重建后全部原门槛一致，未改原结果/阈值。此修正不涉及渲染。
+
+**成本/交接/过滤：** 只Editor首尾CPU readback/新报告，无产品资源/参数/SDK/Shader改动，无新GPU预算/画质修复结论。Tests~/RTGI/LocalReference约2.5MiB，242source/9新文本含场景与NRD编码原文、3完整logs、3原JSON gzip、026 map输入SHA、analysis/review/verify全过。全部自有进程已终态、active=null。白名单Castle/DenseFeature/DenseAudit、新证据与RTGI六文档；他人Ho-GD计划排除。028先同18点4个预声明seed0/104729/5347609/6396185的实际局部stage及新参考L1，保留原全域/16phase门槛，用真实绑定和32F typed copy/F43 guard，再按主损失阶段选机制；不重跑本轮MC、gain/宽sigma/单位格式扫描或复活F36候选。原F39/static/复杂动态/HD预算继续，目标active。

@@ -21,7 +21,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
     {
         [StructLayout(LayoutKind.Sequential)]internal struct PrimaryProbe{internal Vector4 originalWorld,rabWorld,normalDepth,albedo,errors0,errors1;}
         internal HoRTGIRendererFeature source;internal Camera targetCamera;internal bool collect;internal int batch;
-        internal HoRTGIContext context;internal GraphicsBuffer pixels,probe,rayProbe;internal int samplesPerPoint,pointCount,lastLightCount,lastInstances,lastCutouts;
+        internal HoRTGIContext context,mainContext;internal GraphicsBuffer pixels,probe,rayProbe;internal int samplesPerPoint,pointCount,lastLightCount,lastInstances,lastCutouts;
         internal bool scheduled;
         internal HoRTGIRendererFeature.PassSettings lastSettings;internal bool lastEnvironment;
         internal int lastLightingSignature;internal uint lastSceneRevision,lastSkyRevision;
@@ -63,6 +63,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var camera=frame.Get<UniversalCameraData>().camera;
                 var contexts=(Dictionary<Camera,HoRTGIContext>)typeof(HoRTGIRendererFeature).GetField("contexts",Flags).GetValue(owner.source);
                 if(!contexts.TryGetValue(camera,out var main))throw new Exception("Full camera GI context missing");
+                owner.mainContext=main;
                 var registry=(HoRTScene)typeof(HoRTGIRendererFeature).GetField("scene",Flags).GetValue(owner.source);
                 var mainPass=typeof(HoRTGIRendererFeature).GetField("pass",Flags).GetValue(owner.source);
                 var settings=(HoRTGIRendererFeature.PassSettings)mainPass.GetType().GetField("settings",Flags).GetValue(mainPass);

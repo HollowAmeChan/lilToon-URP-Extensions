@@ -10,6 +10,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
     {
         internal static readonly Vector2Int[] Pixels={new(87,165),new(158,146),new(201,156),new(147,237),new(196,245),new(58,88),new(209,185),new(185,180),new(122,45),new(196,141),new(134,150),new(141,157),new(16,16),new(128,128),new(240,32),new(32,240)};
         internal static readonly Vector2Int[] ControlPixels={new(16,16),new(240,32)};
+        internal static readonly Vector2Int[] LocalPixels=new[]{204,206,226,227,252,255}.SelectMany(y=>new[]{85,86,87}.Select(x=>new Vector2Int(x,y))).ToArray();
         [Serializable]internal sealed class Batch{public int index,seed,samplesPerPoint,applicationFrame,renderedFrame;public double editorTimeSeconds;public Vector3[] means;public int[] positiveSamples;public float[] maxima;}
         [Serializable]internal sealed class Point
         {
@@ -22,18 +23,31 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             public bool functionalPass,allPointsConverged,environment,alphaVisibility;public int samplesPerPoint,batchCount,mainFrames,lightCount,instances,cutouts,secondaryLightSamples,secondaryEnvironmentSamples;
             public bool stableDomain,scheduledEditorTicks;public int lightingSignature;public uint sceneRevision,skyRevision;
             public float maxDistance,rayBias;public Point[] points;public Batch[] batches;
+            public GuideSnapshot firstGuides,lastGuides;
+        }
+        [Serializable]internal sealed class Guide
+        {
+            public int x,y;public Vector4 packedNormalRoughness,scaledSignal;
+            public Vector3 decodedNormal,remodulatedSignal,rawPhysical,filteredPhysical;
+            public float viewZ,normalPackError,decodedNormalError,signalRestorationError;
+        }
+        [Serializable]internal sealed class GuideSnapshot
+        {
+            public int batch,applicationFrame,width,height;public float signalScale;
+            public string normalFormat,viewZFormat,signalFormat,rawFormat,filteredFormat;public Guide[] points;
         }
         readonly HoRTGIDenseReferenceFeature feature;readonly List<Batch> batches=new();
         readonly Vector2Int[] receivers;readonly double[,] raw,filtered;
         HoRTGIDenseReferenceFeature.PrimaryProbe[] primary;int mainFrames;
         int lightingSignature;uint sceneRevision,skyRevision;
         readonly float[] rayErrors;
+        GuideSnapshot firstGuides,lastGuides;
         internal HoRTGIDenseReferenceAudit(HoRTGIDenseReferenceFeature feature,Vector2Int[] selected=null){this.feature=feature;receivers=(selected??Pixels).ToArray();raw=new double[receivers.Length,3];filtered=new double[receivers.Length,3];rayErrors=new float[receivers.Length];}
         internal void AddMain(Color[] a,Color[] b,int width)
         {
             for(int i=0;i<receivers.Length;i++)for(int c=0;c<3;c++){int at=receivers[i].y*width+receivers[i].x;raw[i,c]+=a[at][c];filtered[i,c]+=b[at][c];}mainFrames++;
         }
-        internal void AddBatch(int batch)
+        internal void AddBatch(int batch,bool captureGuides=false)
         {
             if(batch!=batches.Count)throw new Exception("Dense reference batches out of order");
             var probes=new HoRTGIDenseReferenceFeature.PrimaryProbe[receivers.Length];feature.probe.GetData(probes);
@@ -52,6 +66,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 {float error=Mathf.Abs(rayProbes[i*4+j][c]-expected[j][c]);if(!float.IsFinite(error)||error>.0005f)throw new Exception("Raygen/compute primary mismatch at "+receivers[i]);rayErrors[i]=Mathf.Max(rayErrors[i],error);}
             }
             primary=probes;
+            if(captureGuides){lastGuides=CaptureGuides(batch);firstGuides??=lastGuides;}
             var texture=feature.context.diffuse.rt;var image=new Texture2D(texture.width,texture.height,TextureFormat.RGBAFloat,false,true);Color[] values;var old=RenderTexture.active;
             try{RenderTexture.active=texture;image.ReadPixels(new Rect(0,0,texture.width,texture.height),0,0);image.Apply();values=image.GetPixels();}
             finally{RenderTexture.active=old;UnityEngine.Object.DestroyImmediate(image);}
@@ -70,6 +85,44 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             if((batch+1)%16==0)Debug.Log("[HoGIDense] completed batches="+(batch+1)+" samplesPerPoint="+((long)(batch+1)*feature.samplesPerPoint));
         }
         static string Group(Vector2Int pixel){int i=Array.IndexOf(Pixels,pixel);return i<0?"other":i<8?"high loss":i<12?"high gain":"control";}
+        GuideSnapshot CaptureGuides(int batch)
+        {
+            var main=feature.mainContext;var nrd=main?.nrd;if(nrd==null)throw new Exception("Local reference main NRD guides missing");
+            var normal=Read(nrd.normal.rt);var z=Read(nrd.viewZ.rt);var signal=Read(nrd.signal.rt);
+            var physical=Read(main.diffuse.rt);var publication=Read(main.PublishedDiffuse.rt);
+            var result=new GuideSnapshot{batch=batch,applicationFrame=Time.frameCount,width=main.width,height=main.height,signalScale=nrd.AppliedSignalScale,
+                normalFormat=nrd.normal.rt.graphicsFormat.ToString(),viewZFormat=nrd.viewZ.rt.graphicsFormat.ToString(),signalFormat=nrd.signal.rt.graphicsFormat.ToString(),
+                rawFormat=main.diffuse.rt.graphicsFormat.ToString(),filteredFormat=main.PublishedDiffuse.rt.graphicsFormat.ToString(),points=new Guide[receivers.Length]};
+            if(result.width!=256||result.height!=256||result.signalScale!=64)throw new Exception("Local guide domain or units changed");
+            for(int i=0;i<receivers.Length;i++)
+            {
+                int at=receivers[i].y*main.width+receivers[i].x;Vector4 p=normal[at];Vector3 n=primary[i].normalDepth;
+                if(!float.IsFinite(p.x)||!float.IsFinite(p.y)||!float.IsFinite(p.z)||!float.IsFinite(p.w)||!float.IsFinite(z[at].r))throw new Exception("Nonfinite local normal/depth guide");
+                var l1=n/(Mathf.Abs(n.x)+Mathf.Abs(n.y)+Mathf.Abs(n.z));
+                var expected=new Vector4(l1.x*.5f+l1.y*.5f+.5f,l1.y*.5f+.5f-l1.x*.5f,l1.z<0?0:1,0);
+                var decoded=new Vector3(p.x-p.y,p.x+p.y-1,(p.z*2-1<0?-1:1)*(1-Mathf.Abs(p.x-p.y)-Mathf.Abs(p.x+p.y-1))).normalized;
+                var guide=new Guide{x=receivers[i].x,y=receivers[i].y,packedNormalRoughness=p,scaledSignal=signal[at],decodedNormal=decoded,viewZ=z[at].r,
+                    rawPhysical=Rgb(physical[at]),filteredPhysical=Rgb(publication[at]),decodedNormalError=Vector3.Distance(decoded,n)};
+                for(int c=0;c<4;c++)guide.normalPackError=Mathf.Max(guide.normalPackError,Mathf.Abs(p[c]-expected[c]));
+                var albedo=(Vector3)primary[i].albedo;guide.remodulatedSignal=Vector3.Scale(Rgb(signal[at])*result.signalScale,albedo);
+                for(int c=0;c<3;c++)
+                {
+                    if(!float.IsFinite(guide.rawPhysical[c])||!float.IsFinite(guide.filteredPhysical[c])||!float.IsFinite(guide.remodulatedSignal[c]))throw new Exception("Nonfinite local guide publication");
+                    float error=Mathf.Abs(guide.rawPhysical[c]-guide.remodulatedSignal[c]);guide.signalRestorationError=Mathf.Max(guide.signalRestorationError,error);
+                    if(error>Mathf.Max(.000005f,Mathf.Abs(guide.rawPhysical[c])*.002f))throw new Exception("Local half-signal remodulation differs beyond input precision");
+                }
+                if(guide.normalPackError>.0005f||guide.decodedNormalError>.004f||Mathf.Abs(guide.viewZ-primary[i].normalDepth.w)>.0005f)throw new Exception("Local NRD guide differs from actual primary");
+                result.points[i]=guide;
+            }
+            return result;
+            static Vector3 Rgb(Color v)=>new(v.r,v.g,v.b);
+            static Color[] Read(RenderTexture texture)
+            {
+                var image=new Texture2D(texture.width,texture.height,TextureFormat.RGBAFloat,false,true);var old=RenderTexture.active;
+                try{RenderTexture.active=texture;image.ReadPixels(new Rect(0,0,texture.width,texture.height),0,0);image.Apply();return image.GetPixels();}
+                finally{RenderTexture.active=old;UnityEngine.Object.DestroyImmediate(image);}
+            }
+        }
         internal Report Finish()
         {
             if(batches.Count==0||primary==null)throw new Exception("No actual dense batches");var points=new Point[receivers.Length];
@@ -91,7 +144,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 p.maxRayPrimaryError=rayErrors[i];
             }
             var settings=feature.lastSettings;
-            return new Report{functionalPass=true,allPointsConverged=points.All(p=>p.converged),stableDomain=true,scheduledEditorTicks=feature.scheduled,lightingSignature=lightingSignature,sceneRevision=sceneRevision,skyRevision=skyRevision,environment=feature.lastEnvironment,alphaVisibility=feature.context.alphaVisibility,samplesPerPoint=feature.samplesPerPoint,batchCount=batches.Count,mainFrames=mainFrames,lightCount=feature.lastLightCount,instances=feature.lastInstances,cutouts=feature.lastCutouts,secondaryLightSamples=settings.secondaryLightSamples,secondaryEnvironmentSamples=settings.secondaryEnvironmentSamples,maxDistance=settings.maxDistance,rayBias=settings.rayBias,points=points,batches=batches.ToArray()};
+            return new Report{functionalPass=true,allPointsConverged=points.All(p=>p.converged),stableDomain=true,scheduledEditorTicks=feature.scheduled,lightingSignature=lightingSignature,sceneRevision=sceneRevision,skyRevision=skyRevision,environment=feature.lastEnvironment,alphaVisibility=feature.context.alphaVisibility,samplesPerPoint=feature.samplesPerPoint,batchCount=batches.Count,mainFrames=mainFrames,lightCount=feature.lastLightCount,instances=feature.lastInstances,cutouts=feature.lastCutouts,secondaryLightSamples=settings.secondaryLightSamples,secondaryEnvironmentSamples=settings.secondaryEnvironmentSamples,maxDistance=settings.maxDistance,rayBias=settings.rayBias,points=points,batches=batches.ToArray(),firstGuides=firstGuides,lastGuides=lastGuides};
         }
     }
 }

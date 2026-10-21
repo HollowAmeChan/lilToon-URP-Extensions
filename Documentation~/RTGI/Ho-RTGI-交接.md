@@ -433,3 +433,17 @@ first4seed探索top12、last4核验全部同点：探索首位(221,184)从.01454
 **027直接动作：** 先复读016 Spatial README关于有限窗raw不能当物理损失、017 DenseReference同域MC协议。对上述6个x86位置及预先固定相邻x85/x87控制点取得无复用高样本一跳参考及primary/normal/depth/albedo/输入guide证据，核对新像素与相同材质/光/sky/AS域，不拿旧参考15点代替新坐标。参考若未收敛则保留未定，不能用filtered/raw直接定性NRD错误。随后才考虑局部阶段/机制候选，拒绝gain/宽sigma/单位格式扫描/重复四模式大矩阵。原全图5%/所有phase、static非零base/F39、复杂动态与1080/完整Player预算继续，目标active。
 
 026已按白名单过滤提交`ecd9c6a`，ProductionSeeds verifier提交后再次通过（保留原pooled质量失败，3个实际进程均结束）。最终progress标签纯报告修正另有精确字节review，未冒称GPU重跑。index空、Runtime无diff，仅他人Ho-GD计划未跟踪。027直接新x86六位置及相邻控制的同域无复用高样本/primary/guide，不把raw当真值，不重复本轮完整8seed或旧四模式，不调门槛；原质量/F39/复杂动态/HD预算与目标active继续。
+
+### 027终态（2026-10-22，待过滤提交）：18局部参考全收敛，028定位NRD阶段
+
+新LocalPixels固定y204/206/226/227/252/255、每行x85/86/87，共18。Castle LocalReference入口与接收点选择、DenseFeature actual mainContext、DenseAudit首尾NRD guides/finite guard，仅Editor。Runtime/SDK/vendor/NRD设置无改。18160两批资格36请求、22748 2048批完整2082请求、36548最终finite guard后资格36请求均actual0，API/编译/绑定/fence/drift0。
+
+同256²古堡/18灯/15实例/12Cutout/次级天空，8 local/4 env/.001 bias/1000，原一跳无T/S/NRD参考、主相机生产TS+NRD，黑样本计入。每点1048576样本，18/18原SE≤2%/split≤5%/positive/低信号全部过，max相对SE .84477%、split2.97214%、min positive250448。原full/history/ray primary一致性通过，ray差0、primary约1.89e−6，场景/light/sky及normal/albedo稳定。仍same-model非绝对真值/全图验收。
+
+对026 8seed map同坐标，中心6 raw/ref L1 .067544、filtered .494028；邻12 .046567/.423096；全部18 .056952/.458213。中心RGB总量raw +1.490/−1.242/−.994%，filtered −42.161/−59.933/−62.224%；逐点filtered/reference .280～.651。全部18与heldout后4seed数据保留，证明这些位置欠亮不是仅raw单窗极值；不能外推全部画质。report.mainFrames0，旧mainRaw/mainFiltered未测，比较只来自026 maps。
+
+首尾主guide16F normal/signal/raw/filtered、viewZ32F、scale64；NRDConfig2/rough1 pack误差≤.000228882、decoded normal≤.000324177、viewZ0，input remod在max5e−6/.002raw界，maxabs约1.077e−5。前4行x85较中心depth低约.155、法线平行且albedo约.02→.4；后两行左邻已在后平面。输入匹配不等于具体filter因果，不能现在断言HistoryClamping或PrePass根因。
+
+正式run在新增finite guard前；唯一源diff已记review，原所有guide独立finite，最后36548资格编译/实际验证新guard。split verifier首次decimal64不符，按原C# LINQ Average(float selector)返回float再赋double及IEEE32批数据重建后全过，未改原门槛/数据。Tests~/RTGI/LocalReference约2.5MiB，242精确source/9新文本、3完整logs/3原JSON gzip/026输入SHA/analysis/review/verify；当前根源对应最终资格，旧reference字节仍完整。全部本任务进程已结束、active=null，Runtime无diff；他人Ho-GD计划不能纳入。
+
+**028直接动作：** 复用同18点新参考，预声明4seed0/104729/5347609/6396185，各64warm+256观察；先真实绑定/32F typed copy self-test及UAV/F43 guard，再捕获NRD input、PrePass、Temporal slow、条件HistoryFix/fast、Clamp slow、first/lastAtrous、physical publication。每阶段按同像素实际albedo×64重调制，分seed报告局部/reference L1，同时保留原全域/16phase/5%门槛及raw相同检查；5不是slow m2，不能误标。按实际主损失阶段再定一个有机制候选，不无依据关闭某阶段/宽sigma/gain/格式单位扫描，不复活F36同box线段clip。无需重跑027 1M参考或026完整8seed，只引用精确输入SHA。原full绿色−5.158%、9phase/32块/F39/static/复杂动态/1080完整预算继续，目标active。

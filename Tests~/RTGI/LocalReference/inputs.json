@@ -1,0 +1,40 @@
+{
+  "productionReport": {
+    "path": "../ProductionSeeds/results/matrix.json",
+    "rawSha256": "B2AD3A35801606CB328512712946B1EB535D3E8AE87C355A641E7B7E62DA8B8D"
+  },
+  "publicationMaps": [
+    {
+      "path": "../ProductionSeeds/results/matrix/publication-0.bin",
+      "rawSha256": "234DED939DE5030F94E33D0D772557641CE47ADC8D34D9F6D7A99DBC7FAF36E0"
+    },
+    {
+      "path": "../ProductionSeeds/results/matrix/publication-104729.bin",
+      "rawSha256": "6B23F62EC8800F61B41A2C753B378C6B7F93937AD4A1647D4E17525E1F8C2C20"
+    },
+    {
+      "path": "../ProductionSeeds/results/matrix/publication-1153305.bin",
+      "rawSha256": "2E405E6FC4079D4457C395F31A4D71FE559E9E4D9F5D0CD49F196D23C35AB6C4"
+    },
+    {
+      "path": "../ProductionSeeds/results/matrix/publication-2201881.bin",
+      "rawSha256": "BA9B7C1B72392574F79450BBC3F252DD85401A08553568521ED2A4072833AEAA"
+    },
+    {
+      "path": "../ProductionSeeds/results/matrix/publication-3250457.bin",
+      "rawSha256": "B352D6A3FE99E38AEFFC2187A7557B9593897EFC15E541D0609469AC43A0DC82"
+    },
+    {
+      "path": "../ProductionSeeds/results/matrix/publication-4299033.bin",
+      "rawSha256": "C8A5ED96A40246767F4E5073B506C04D3CB3740C5820A8F9D099D5FC20886311"
+    },
+    {
+      "path": "../ProductionSeeds/results/matrix/publication-5347609.bin",
+      "rawSha256": "BD61994610BBC52562C3E95A0703F351B85E538514860C0A232CD86906FACE38"
+    },
+    {
+      "path": "../ProductionSeeds/results/matrix/publication-6396185.bin",
+      "rawSha256": "8518C696FF1041D4566B87469186396FB4FC369CD933AE66477A914FBF27AF78"
+    }
+  ]
+}

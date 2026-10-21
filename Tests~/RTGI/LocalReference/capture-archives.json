@@ -1,0 +1,23 @@
+{
+  "results/qualification.json": {
+    "path": "results/qualification.json.gz",
+    "rawBytes": 55649,
+    "rawSha256": "F8ED49D32F52FFFBFDB45A878F1A70C3059DA1792B1CD85BB18F6C1D668EC6EA",
+    "archiveBytes": 13261,
+    "archiveSha256": "C5F7186E4E03CA74E10DE7BF505F1915212B0E3493D156D159B64FD0276DFA93"
+  },
+  "results/reference.json": {
+    "path": "results/reference.json.gz",
+    "rawBytes": 4187758,
+    "rawSha256": "C233802BAE403DC85B9D3DF50882B0CA9E5538A879ED6040838D8F41C6E5A9A9",
+    "archiveBytes": 1545868,
+    "archiveSha256": "AFB0CF247D4B8E93B5B770D91E0D04562CD85DEEB3B1641EE927774008BC17DB"
+  },
+  "initial-qualification/report.json": {
+    "path": "initial-qualification/report.json.gz",
+    "rawBytes": 55650,
+    "rawSha256": "59D27FDEA3D01C867D0A8EBD0000D712D0833EDF4E4E87BAD438F6CD11E392F2",
+    "archiveBytes": 13261,
+    "archiveSha256": "191494D2DB7B5766231225B00A58EB8969E90A15CDDF583CFEBB8AAE25B13E41"
+  }
+}
