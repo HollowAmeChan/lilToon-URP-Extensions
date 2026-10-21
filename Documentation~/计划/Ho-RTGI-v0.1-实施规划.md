@@ -224,3 +224,5 @@
 步骤020补充：三项×8seed TS实测pre-S packed history将filtered相对finite none的RGB偏移从+15.70/+11.58/+8.08%降至+1.22/−1.87/−3.28%，方差约−55%；原5%/局部质量仍失败。codec额外编码在测试域无差，否定其根因假说。GPU Final约+.018ms，Total相近但波动大，不作总性能/HD预算结论。当前仅Editor隔离候选，021直接生产接入和真实S开路径/RG/compat/动态/两Release Player回归；全目标/所有用户强制要求继续active，不能由局部收益complete。
 
 步骤021：生产Final已在S开时packed Temporal2→history0，S关原store；当前T/S/NRD/资源不改。实际RG/compat合同、环境/Cutout/蒙皮与两个315-request Release Player过，新23状态资源合同覆盖真实S开。生产long相对finite none改善约+1.77/−1.37/−2.84%，原filtered/raw5%与16phase仍失败；core功能断言过但2304B scratch错误在legacy同样复现，debug资格未过。F42保留旧读点/构建警告与失败，下一步据实际生产stage处理余损/精度，正常camera/HDR/局部/static/F39/1080完整预算继续未完成，目标active。
+
+步骤022：Editor-only GI四颜色池32F对照保持scale64/原算法，正式slow m2=0约99%→.026%、filtered方差−56%；stride0过但fullgreen仍−5.2075%、8/16phase失败。生产默认16F未改，额外2MiB@256/63.28125MiB@1080只payload投影。F43保留实际分配/capture错误与重跑，023先HDR/格式生命周期/GPU成本/两真实Player资格，再决定GI-only默认；DI默认不动，不重启F35纯单位扫描。全部未完成项与用户强制要求继续，active。

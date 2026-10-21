@@ -1,0 +1,30 @@
+{
+  "results/baseline.json": {
+    "path": "results/baseline.json.gz",
+    "rawSha256": "4AA766E3169D3153DBC7C06CEDB40DC2D060917206D4085FCDD7766CC8C01EF2",
+    "archiveSha256": "B5A0969905DF428D0E550A3243BAE8B1542B8DC699673846F9D45E908E130FB5",
+    "rawBytes": 374783,
+    "archiveBytes": 52907
+  },
+  "results/rgba32.json": {
+    "path": "results/rgba32.json.gz",
+    "rawSha256": "050A8DFBFC1EE4EE7069C84614F6BC925DAC03A0A8350EA7AA57F166B468B645",
+    "archiveSha256": "377A4B7721B12C9821C687B7464B43410FB365391ABE43E01067B9E8C8702644",
+    "rawBytes": 375521,
+    "archiveBytes": 53212
+  },
+  "rejected-copy-uav/baseline.json": {
+    "path": "rejected-copy-uav/baseline.json.gz",
+    "rawSha256": "82E8A617C629CEFF3ED971388FD8E2AF0B74BC3F50068FA3EF9DA3F3FA75E5CC",
+    "archiveSha256": "2F274D92A03783DB0F0E400949D2098780185414026FE77D5650A21A97C449BF",
+    "rawBytes": 335281,
+    "archiveBytes": 44701
+  },
+  "rejected-copy-uav/rgba32.json": {
+    "path": "rejected-copy-uav/rgba32.json.gz",
+    "rawSha256": "E4B41990C7FF7FB2A38E5F13581D5FCB1A624A3C4A57BF96E8A6E6A188840602",
+    "archiveSha256": "1B6C9433FCA1EA5036CE32A0C22D848F9DFD6A18066D585C0D2F53796F7CCE21",
+    "rawBytes": 334134,
+    "archiveBytes": 44133
+  }
+}

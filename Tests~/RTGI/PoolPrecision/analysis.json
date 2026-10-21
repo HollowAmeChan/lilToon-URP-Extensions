@@ -1,0 +1,120 @@
+{
+  "qualityQualified": false,
+  "productionFormatChanged": false,
+  "scope": "Only this GI instance's four RGBA16F pool textures promoted to RGBA32F. Scale64, original NRD/settings/epsilon and external formats retained. Full green still fails 5%; stride0 success alone is not full acceptance. Payload is not physical VRAM or performance.",
+  "variants": [
+    {
+      "name": "baseline",
+      "reportSha256": "4AA766E3169D3153DBC7C06CEDB40DC2D060917206D4085FCDD7766CC8C01EF2",
+      "originalStrideZeroGate": false,
+      "fullGate": false,
+      "full": {
+        "phaseX": -1,
+        "phaseY": -1,
+        "pixels": 65536,
+        "samples": 16777216,
+        "raw": {
+          "x": 0.0013284345623105764,
+          "y": 0.0001403346104780212,
+          "z": 0.0001281726435991004
+        },
+        "filtered": {
+          "x": 0.0012507009087130427,
+          "y": 0.0001290838554268703,
+          "z": 0.00011672953405650333
+        },
+        "relativeErrorPercent": {
+          "x": -5.851524829864502,
+          "y": -8.017087936401367,
+          "z": -8.927889823913574
+        },
+        "normalizedL1": 0.21194869017953022,
+        "rawVariance": 4.698496655773579e-06,
+        "filteredVariance": 1.2617752471128761e-08,
+        "energyGatePass": false
+      },
+      "failingPhases": 16,
+      "additionalPoolBytes": 0,
+      "moments": [
+        {
+          "pipeline": 4,
+          "samples": 1048576,
+          "positiveMean": 982725,
+          "zeroMomentWithPositiveMean": 972674,
+          "zeroPercent": 98.97723167722404,
+          "momentSaturated": 0,
+          "secondMomentSum": 34.1875,
+          "squaredMeanSum": 58.0132304759533
+        },
+        {
+          "pipeline": 6,
+          "samples": 1048576,
+          "positiveMean": 982725,
+          "zeroMomentWithPositiveMean": 972865,
+          "zeroPercent": 98.99666742985067,
+          "momentSaturated": 0,
+          "secondMomentSum": 33.967041015625,
+          "squaredMeanSum": 57.75011955304151
+        }
+      ]
+    },
+    {
+      "name": "rgba32",
+      "reportSha256": "050A8DFBFC1EE4EE7069C84614F6BC925DAC03A0A8350EA7AA57F166B468B645",
+      "originalStrideZeroGate": true,
+      "fullGate": false,
+      "full": {
+        "phaseX": -1,
+        "phaseY": -1,
+        "pixels": 65536,
+        "samples": 16777216,
+        "raw": {
+          "x": 0.0013284345623105764,
+          "y": 0.0001403346104780212,
+          "z": 0.0001281726435991004
+        },
+        "filtered": {
+          "x": 0.0012678770581260324,
+          "y": 0.00013302669685799628,
+          "z": 0.00012183668877696618
+        },
+        "relativeErrorPercent": {
+          "x": -4.558562278747559,
+          "y": -5.207492828369141,
+          "z": -4.943295001983643
+        },
+        "normalizedL1": 0.22080903563946494,
+        "rawVariance": 4.698496655773579e-06,
+        "filteredVariance": 5.534688134204731e-09,
+        "energyGatePass": false
+      },
+      "failingPhases": 8,
+      "additionalPoolBytes": 2097152,
+      "moments": [
+        {
+          "pipeline": 4,
+          "samples": 1048576,
+          "positiveMean": 984788,
+          "zeroMomentWithPositiveMean": 256,
+          "zeroPercent": 0.02599544267395622,
+          "momentSaturated": 0,
+          "secondMomentSum": 162.6312198529192,
+          "squaredMeanSum": 59.1710005621592
+        },
+        {
+          "pipeline": 6,
+          "samples": 1048576,
+          "positiveMean": 984784,
+          "zeroMomentWithPositiveMean": 256,
+          "zeroPercent": 0.02599554826236007,
+          "momentSaturated": 0,
+          "secondMomentSum": 162.3586909645858,
+          "squaredMeanSum": 58.898471677852754
+        }
+      ]
+    }
+  ],
+  "filteredVarianceRelativeChangePercent": -56.13570525441123,
+  "rawFrameMeansIdentical": true,
+  "additionalPoolPayloadProjection1080Bytes": 66355200
+}

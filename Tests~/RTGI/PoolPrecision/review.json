@@ -1,0 +1,23 @@
+{
+  "step": 22,
+  "goalStatus": "active",
+  "baselineGitRevision": "eb5f9c2d314822243ad9bc5bf485e2579e40fa0a",
+  "precisionCandidateAcceptedForFurtherValidation": true,
+  "productionFormatChanged": false,
+  "qualityQualified": false,
+  "originalUnitsRetained": 64,
+  "copySelfTestComponents": 64,
+  "changedPoolCount": 4,
+  "additionalPoolBytes256": 2097152,
+  "rawSamplesIdentical": true,
+  "failedBeforePreparePid": 47656,
+  "qualificationPid": 48792,
+  "rejectedCapturePids": [
+    9360,
+    24456
+  ],
+  "acceptedBaselinePid": 37676,
+  "acceptedFloatPid": 26252,
+  "unresolvedFullGreenPercent": -5.207492828369141,
+  "next": "Validate GI-only RGBA32F pool policy with unchanged scale64 under HDR extremes, dynamic/Player history, format lifecycle and GPU cost before production default. Keep external signal/output formats and DI defaults unchanged. Original full/phase gates and AS/camera/HD gaps remain explicit."
+}

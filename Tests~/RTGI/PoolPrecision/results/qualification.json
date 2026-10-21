@@ -1,0 +1,888 @@
+{
+    "pass": true,
+    "compatibility": false,
+    "historyReused": true,
+    "environment": true,
+    "nativeCutout": true,
+    "energyGatePass": false,
+    "gpuQualified": false,
+    "gpuTotalOnly": false,
+    "gpuForcedRebuild": false,
+    "error": "",
+    "camera": "Main Camera",
+    "gpu": "NVIDIA GeForce RTX 4060",
+    "status": "一跳 diffuse GI：18 灯 / 15 RT submesh / 排除 0 灯、0 命中材质、1 几何项 / RELAX diffuse / 基础裁切 12",
+    "skybox": "UnearthlyRed",
+    "width": 64,
+    "height": 64,
+    "frames": 35,
+    "observedFrames": 0,
+    "instances": 15,
+    "cutouts": 12,
+    "skinnedSnapshots": 1,
+    "valid": 4096,
+    "invalid": 0,
+    "lit": 3835,
+    "changedPixels": 3020,
+    "bakes": 1,
+    "stableBakes": 0,
+    "rawMean": 0.0013676467497134582,
+    "filteredMean": 0.0013857022859156132,
+    "peak": 0.0080413818359375,
+    "cameraMeanChange": 0.0003498006844893098,
+    "rawVariance": 0.0,
+    "filteredVariance": 0.0,
+    "staticRaw": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "staticFiltered": {
+        "x": 0.0,
+        "y": 0.0,
+        "z": 0.0
+    },
+    "materials": [
+        {
+            "name": "天空",
+            "shader": "lilToon",
+            "queue": 2000,
+            "excluded": true,
+            "supported": true,
+            "cutout": false,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "红月",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "背景建筑",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "雕塑",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "荆棘玫瑰",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "彩窗",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "石柱",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "穹顶",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "古堡",
+            "shader": "lilToon",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": false,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "地板",
+            "shader": "lilToon",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": false,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "楼梯",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "红毯",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "红毯花纹",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "吊灯",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "发光",
+            "shader": "Hidden/lilToonCutout",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": true,
+            "main2": false,
+            "main3": false
+        },
+        {
+            "name": "新建材质",
+            "shader": "lilToon",
+            "queue": 2000,
+            "excluded": false,
+            "supported": true,
+            "cutout": false,
+            "main2": false,
+            "main3": false
+        }
+    ],
+    "rejections": [
+        "1_mesh submesh 0: excluded by material filter."
+    ],
+    "stages": [],
+    "frameMeans": [],
+    "denseReference": {
+        "protocol": "Selected full-resolution receivers, independent batch seeds, original one-bounce estimator with temporal/spatial/NRD off. Shared material/light implementation, not independent absolute shading truth or full-image quality acceptance.",
+        "functionalPass": false,
+        "allPointsConverged": false,
+        "environment": false,
+        "alphaVisibility": false,
+        "samplesPerPoint": 0,
+        "batchCount": 0,
+        "mainFrames": 0,
+        "lightCount": 0,
+        "instances": 0,
+        "cutouts": 0,
+        "secondaryLightSamples": 0,
+        "secondaryEnvironmentSamples": 0,
+        "stableDomain": false,
+        "scheduledEditorTicks": false,
+        "lightingSignature": 0,
+        "sceneRevision": 0,
+        "skyRevision": 0,
+        "maxDistance": 0.0,
+        "rayBias": 0.0,
+        "points": [],
+        "batches": []
+    },
+    "spatialAudit": {
+        "complete": false,
+        "width": 0,
+        "height": 0,
+        "frames": 0,
+        "full": {
+            "phaseX": 0,
+            "phaseY": 0,
+            "pixels": 0,
+            "samples": 0,
+            "raw": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "filtered": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "relativeErrorPercent": {
+                "x": 0.0,
+                "y": 0.0,
+                "z": 0.0
+            },
+            "normalizedL1": 0.0,
+            "rawVariance": 0.0,
+            "filteredVariance": 0.0,
+            "energyGatePass": false
+        },
+        "phases": [],
+        "stages": [],
+        "frameMeans": [],
+        "largestLosses": [],
+        "largestGains": []
+    },
+    "momentBindings": [],
+    "seedAudit": {
+        "protocol": "Four original production reuse modes, predeclared independent frame seeds, GI/NRD reset per segment. Selected receivers have post-selection bias; reference is the same shading model, not independent absolute truth or full-image acceptance.",
+        "functionalPass": false,
+        "terminal": false,
+        "pairedEndpointsWithinInputPrecision": false,
+        "pairedEndpointsBitwiseEqual": false,
+        "maxPairedHitPositionError": 0.0,
+        "maxPairedMissDirectionError": 0.0,
+        "maxPairedNormalQuantizationSteps": 0,
+        "seedCount": 0,
+        "warmup": 0,
+        "measured": 0,
+        "width": 256,
+        "height": 256,
+        "referenceInputs": [],
+        "referencePoints": [],
+        "segments": []
+    },
+    "feedbackAudit": {
+        "functionalPass": false,
+        "qualification": false,
+        "restoredOriginal": false,
+        "restoredOriginalBound": false,
+        "qualityQualified": false,
+        "gpuOnly": false,
+        "gpuVariants": [],
+        "originalShaderPath": "",
+        "originalSourceSha256": "",
+        "sources": [],
+        "variants": [],
+        "historyChecks": []
+    },
+    "productionHistory": {
+        "pass": false,
+        "productionShaderBound": false,
+        "restoredSettings": false,
+        "checks": []
+    },
+    "poolPrecision": {
+        "pass": true,
+        "copyBitExact": true,
+        "copiedComponents": 64,
+        "changedPools": 4,
+        "mode": "rgba32",
+        "signalFormat": "R16G16B16A16_SFloat",
+        "outputFormat": "R16G16B16A16_SFloat",
+        "poolBytes": 307216,
+        "baselinePoolBytes": 176144,
+        "signalScale": 64.0,
+        "pools": [
+            {
+                "category": "permanent",
+                "format": "R32G32B32A32_SFloat",
+                "index": 0,
+                "width": 64,
+                "height": 64,
+                "nativeFormat": 27,
+                "bytes": 65536,
+                "baselineBytes": 32768
+            },
+            {
+                "category": "permanent",
+                "format": "R32G32B32A32_SFloat",
+                "index": 1,
+                "width": 64,
+                "height": 64,
+                "nativeFormat": 27,
+                "bytes": 65536,
+                "baselineBytes": 32768
+            },
+            {
+                "category": "permanent",
+                "format": "R8_UNorm",
+                "index": 2,
+                "width": 64,
+                "height": 64,
+                "nativeFormat": 0,
+                "bytes": 4096,
+                "baselineBytes": 4096
+            },
+            {
+                "category": "permanent",
+                "format": "R8G8B8A8_UNorm",
+                "index": 3,
+                "width": 64,
+                "height": 64,
+                "nativeFormat": 8,
+                "bytes": 16384,
+                "baselineBytes": 16384
+            },
+            {
+                "category": "permanent",
+                "format": "R8_UNorm",
+                "index": 4,
+                "width": 64,
+                "height": 64,
+                "nativeFormat": 0,
+                "bytes": 4096,
+                "baselineBytes": 4096
+            },
+            {
+                "category": "permanent",
+                "format": "R32_SFloat",
+                "index": 5,
+                "width": 64,
+                "height": 64,
+                "nativeFormat": 30,
+                "bytes": 16384,
+                "baselineBytes": 16384
+            },
+            {
+                "category": "transient",
+                "format": "R32G32B32A32_SFloat",
+                "index": 0,
+                "width": 64,
+                "height": 64,
+                "nativeFormat": 27,
+                "bytes": 65536,
+                "baselineBytes": 32768
+            },
+            {
+                "category": "transient",
+                "format": "R32G32B32A32_SFloat",
+                "index": 1,
+                "width": 64,
+                "height": 64,
+                "nativeFormat": 27,
+                "bytes": 65536,
+                "baselineBytes": 32768
+            },
+            {
+                "category": "transient",
+                "format": "R8_UNorm",
+                "index": 2,
+                "width": 4,
+                "height": 4,
+                "nativeFormat": 0,
+                "bytes": 16,
+                "baselineBytes": 16
+            },
+            {
+                "category": "transient",
+                "format": "R8_UNorm",
+                "index": 3,
+                "width": 64,
+                "height": 64,
+                "nativeFormat": 0,
+                "bytes": 4096,
+                "baselineBytes": 4096
+            }
+        ],
+        "bindings": [
+            {
+                "pipeline": 13,
+                "dispatch": 0,
+                "poolIndex": 2,
+                "binding": "gOut",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 13,
+                "dispatch": 1,
+                "poolIndex": 0,
+                "binding": "gOut",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 13,
+                "dispatch": 3,
+                "poolIndex": 3,
+                "binding": "gOut",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 13,
+                "dispatch": 4,
+                "poolIndex": 1,
+                "binding": "gOut",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 13,
+                "dispatch": 5,
+                "poolIndex": 2,
+                "binding": "gOut",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 13,
+                "dispatch": 6,
+                "poolIndex": 0,
+                "binding": "gOut",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 13,
+                "dispatch": 7,
+                "poolIndex": 1,
+                "binding": "gOut",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 13,
+                "dispatch": 8,
+                "poolIndex": 3,
+                "binding": "gOut",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 13,
+                "dispatch": 9,
+                "poolIndex": 4,
+                "binding": "gOut",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 13,
+                "dispatch": 10,
+                "poolIndex": 5,
+                "binding": "gOut",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 0,
+                "dispatch": 11,
+                "poolIndex": 2,
+                "binding": "gOut_Tiles",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 3,
+                "dispatch": 12,
+                "poolIndex": 2,
+                "binding": "gIn_Tiles",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 4,
+                "dispatch": 13,
+                "poolIndex": 2,
+                "binding": "gIn_Tiles",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 4,
+                "dispatch": 13,
+                "poolIndex": 3,
+                "binding": "gPrev_Normal_Roughness",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 4,
+                "dispatch": 13,
+                "poolIndex": 5,
+                "binding": "gPrev_ViewZ",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 4,
+                "dispatch": 13,
+                "poolIndex": 2,
+                "binding": "gPrev_HistoryLength",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 4,
+                "dispatch": 13,
+                "poolIndex": 4,
+                "binding": "gPrev_MateriallID",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 4,
+                "dispatch": 13,
+                "poolIndex": 1,
+                "binding": "gHistory_DiffFast",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 4,
+                "dispatch": 13,
+                "poolIndex": 0,
+                "binding": "gHistory_Diff",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 4,
+                "dispatch": 13,
+                "poolIndex": 3,
+                "binding": "gOut_HistoryLength",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 4,
+                "dispatch": 13,
+                "poolIndex": 0,
+                "binding": "gOut_Diff",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 4,
+                "dispatch": 13,
+                "poolIndex": 1,
+                "binding": "gOut_DiffFast",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 5,
+                "dispatch": 14,
+                "poolIndex": 2,
+                "binding": "gIn_Tiles",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 5,
+                "dispatch": 14,
+                "poolIndex": 3,
+                "binding": "gIn_HistoryLength",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 5,
+                "dispatch": 14,
+                "poolIndex": 0,
+                "binding": "gIn_Diff",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 5,
+                "dispatch": 14,
+                "poolIndex": 1,
+                "binding": "gOut_Diff",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 6,
+                "dispatch": 15,
+                "poolIndex": 2,
+                "binding": "gIn_Tiles",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 6,
+                "dispatch": 15,
+                "poolIndex": 3,
+                "binding": "gIn_HistoryLength",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 6,
+                "dispatch": 15,
+                "poolIndex": 0,
+                "binding": "gIn_Diff",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 6,
+                "dispatch": 15,
+                "poolIndex": 1,
+                "binding": "gIn_DiffFast",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 6,
+                "dispatch": 15,
+                "poolIndex": 2,
+                "binding": "gOut_HistoryLength",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 6,
+                "dispatch": 15,
+                "poolIndex": 0,
+                "binding": "gOut_Diff",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 6,
+                "dispatch": 15,
+                "poolIndex": 1,
+                "binding": "gOut_DiffFast",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 9,
+                "dispatch": 16,
+                "poolIndex": 2,
+                "binding": "gIn_Tiles",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 9,
+                "dispatch": 16,
+                "poolIndex": 3,
+                "binding": "gIn_HistoryLength",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 9,
+                "dispatch": 16,
+                "poolIndex": 0,
+                "binding": "gIn_Diff_Variance",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 9,
+                "dispatch": 16,
+                "poolIndex": 0,
+                "binding": "gOut_Diff_Variance",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 9,
+                "dispatch": 16,
+                "poolIndex": 3,
+                "binding": "gOut_NormalRoughness",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 9,
+                "dispatch": 16,
+                "poolIndex": 4,
+                "binding": "gOut_MaterialID",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 9,
+                "dispatch": 16,
+                "poolIndex": 5,
+                "binding": "gOut_ViewZ",
+                "resourceType": "PERMANENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 10,
+                "dispatch": 17,
+                "poolIndex": 2,
+                "binding": "gIn_Tiles",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 10,
+                "dispatch": 17,
+                "poolIndex": 3,
+                "binding": "gIn_HistoryLength",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 10,
+                "dispatch": 17,
+                "poolIndex": 0,
+                "binding": "gIn_Diff_Variance",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 10,
+                "dispatch": 17,
+                "poolIndex": 1,
+                "binding": "gOut_Diff_Variance",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 10,
+                "dispatch": 18,
+                "poolIndex": 2,
+                "binding": "gIn_Tiles",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 10,
+                "dispatch": 18,
+                "poolIndex": 3,
+                "binding": "gIn_HistoryLength",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 10,
+                "dispatch": 18,
+                "poolIndex": 1,
+                "binding": "gIn_Diff_Variance",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 10,
+                "dispatch": 18,
+                "poolIndex": 0,
+                "binding": "gOut_Diff_Variance",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 10,
+                "dispatch": 19,
+                "poolIndex": 2,
+                "binding": "gIn_Tiles",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 10,
+                "dispatch": 19,
+                "poolIndex": 3,
+                "binding": "gIn_HistoryLength",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 10,
+                "dispatch": 19,
+                "poolIndex": 0,
+                "binding": "gIn_Diff_Variance",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 10,
+                "dispatch": 19,
+                "poolIndex": 1,
+                "binding": "gOut_Diff_Variance",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 1
+            },
+            {
+                "pipeline": 10,
+                "dispatch": 20,
+                "poolIndex": 2,
+                "binding": "gIn_Tiles",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 10,
+                "dispatch": 20,
+                "poolIndex": 3,
+                "binding": "gIn_HistoryLength",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            },
+            {
+                "pipeline": 10,
+                "dispatch": 20,
+                "poolIndex": 1,
+                "binding": "gIn_Diff_Variance",
+                "resourceType": "TRANSIENT_POOL",
+                "descriptorType": 0
+            }
+        ]
+    },
+    "momentAuditComplete": false,
+    "moments": [],
+    "resourceAudit": {
+        "accounting": "Live owned descriptor payload; excludes driver allocation/residency, GB/SB, imported assets and AS scratch. Unity runtime statistics are separate and must not be summed as VRAM.",
+        "asApi": "",
+        "asError": "",
+        "giPayloadBytes": 0,
+        "nrdPayloadBytes": 0,
+        "sceneMappingPayloadBytes": 0,
+        "totalPayloadBytes": 0,
+        "asApiBytes": -1,
+        "poseUnityRuntimeBytes": 0,
+        "width": 0,
+        "height": 0,
+        "reservoirArrayPitch": 0,
+        "resources": [],
+        "poseMeshes": [],
+        "aliases": []
+    },
+    "gpuSamples": [],
+    "gpuSummary": []
+}

@@ -1,0 +1,14 @@
+#pragma kernel CopyFloat4
+#pragma kernel Seed
+#pragma use_dxc
+#pragma target 5.0
+Texture2D<float4> _Source;
+RWTexture2D<float4> _Dest;
+StructuredBuffer<float4> _Data;
+int2 _Size;
+[numthreads(8,8,1)]
+void CopyFloat4(uint3 id:SV_DispatchThreadID)
+{if(all(id.xy<(uint2)_Size))_Dest[id.xy]=_Source.Load(int3(id.xy,0));}
+[numthreads(8,8,1)]
+void Seed(uint3 id:SV_DispatchThreadID)
+{if(all(id.xy<(uint2)_Size))_Dest[id.xy]=_Data[id.y*_Size.x+id.x];}

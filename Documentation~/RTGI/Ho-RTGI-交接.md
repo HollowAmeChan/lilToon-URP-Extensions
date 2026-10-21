@@ -351,3 +351,21 @@ F39只读可比较本机UnityRtxdiFeature.Automatic/direct Build与Ho manual mes
 021白名单：Runtime/RTGI/Shaders/HoRTGI.compute；Editor ProductionHistoryAudit/meta、Castle/HistoryFeedback.Equal可见性/PlayerBuilder/CoreValidation读点与legacycontrol；Tests~/RTGI/Dynamic/HoRTGIRuntimeProbe.cs；Tests~/RTGI/ProductionHistory；RTGI说明/计划/README/过程/禁试/交接。后续旧019/020 verifier current SHA过时要用各commit历史，不回滚生产。每步review/收益/过滤/禁试/交接继续。
 
 021已按白名单过滤提交`a93d4dd`，ProductionHistory verifier提交后再次通过（明确保留core debug与原5%失败）。实际生产Shader改动已保留、两315请求Release Player通过；index空、所有本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮022从当前生产NRD stage/真实moment绑定处理余损，不重复20隔离或F39旧调参；正常camera/HDR/局部/static/1080完整预算继续，goal active。
+
+### 022终态（2026-10-21，待过滤提交）：NRD池32F候选，下一步HDR/动态/成本
+
+022已完成两组正式比较，不重跑纯精度矩阵。Runtime/RTDI/NRD/HoRTDINrdContext仅增加UNITY_EDITOR的ValidationPoolFormat及AllocatePool调用，默认null；只在当前GI core实例设置，DI/Player生产行为不变。GI格式默认仍16F、scale64，021pre-S仍生效。新Editor/RTGI/HoRTGIPoolPrecisionAudit及Shaders/HoRTGIPrecisionCopy.compute/meta，Castle加scoped策略/报告与float32 stage capture。所有RGBA16F pool才改32F，其它池与external signal/output16F不变，原NRD/epsilon/settings不动。
+
+正式baseline37676实际1原5%失败、rgba32 26252实际0原stride0过；API/compile/binding/drift0，各256settle/256观察+32warm，两组256 raw frameRGB逐条相同。4池permanent0/1、transient0/1；真实Native绑定全记录。Temporal/Clamp每阶段1048576样本，positive m2=0由98.9772/98.9967%变.025995/.025996%，32F各仍有256例，网格未见饱和，不称全修好/HDR安全。fullRGB error(-5.8515,-8.0171,-8.9279)%→(-4.5586,-5.2075,-4.9433)%，fullgreen仍失败、16phase8失败，不能stride0换门槛；filtered方差1.261775e−8→5.534688e−9，约−56.14%。NRD池2818304→4915456 B，+2097152=2MiB@256；1080同布局+63.28125MiB是投影，非VRAM/实际HD/成本。没有新HDR/动态/Player证据。
+
+**两个夹具陷阱/全部原样：** 47656资格实际1因设置策略后尚未Prepare；补仅资格一次render，48792实际0，64 tiny float components bitcopy/4池32F过。9360/24456首长实际1/0但捕获目标没UAV，Property错误被旧Shader-error regex漏计，所有stage/moment为0，明确拒绝为精度证据；publication变化不等于capture有效。改enableRandomWrite、Copy前guard、runner绑定错误检测，重新执行37676/26252获非零真实moment。F43记录，原counter0/源/报告不改绿。
+
+Tests~/RTGI/PoolPrecision约.98MB/六进程、精确源与完整log、原JSON gzip、pool/binding、analysis/verify。250source SHA仅9新blob，其余共用旧blob/Git-backed，verifier过包含原错误和full失败。当前所有本任务进程结束、run active=null，仅他人Ho-GD plan未跟踪。旧021 verifier当前CastIe/core SHA因合法Editor hook过时，按a93d4dd历史验证，不回滚新工具。
+
+**023下一动作要具体：** 候选有收益但先补HDR/格式生命周期/成本/动态资格，再决定生产。可给shared NRD core增加实例级构造参数（默认false，DI原格式不动），GI才显式启用32F；Editor ValidationPoolFormat若设定，应从native原格式构建baseline优先覆盖，避免新默认后baseline误变32F。当前typed float4 Shader可读32F已实测，不需要改Native DLL或NRD Shader。公共signal/output保持原16F和单位64，避免未知HDR单位变化。
+
+建议先解析发光平面，S关+T开以免F23单像素MC误判，低信号1e−4至20000物理值（/64后312.5，m2可>65504）实测有限/正确能量/slow m2超half而不溢出，明确所测HDR范围而非任意HDR。默认TS另验实际pool格式+pre-S packet合同/材质与相机变化reset。再resolution64→96→64/启停/释放、已知负载GPU资格与两政策40sample成本，两个独立Release Player应加四pool32F与动态/23history检查，不只Editor setter。验证硬退化或成本不合格则撤回，保留2MiB@256额外payload与未实际1080边界。
+
+Fullgreen/其它8phase/局部质量仍缺；F35不重启纯scale试值/gain/宽sigma，F39不重试旧AS参数；normal enabled-camera、HDR最终域、1080/完整预算继续，goal active。候选若通过上述资格再接生产，不能因stride0绿色complete。每步review/收益/过滤提交/禁试/交接继续。
+
+022白名单：Runtime/RTDI/NRD/HoRTDINrdContext.cs仅Editor hook；Editor Castle/PoolPrecisionAudit/meta与float copy shader/meta；Tests~/RTGI/PoolPrecision；RTGI README/过程/禁试/交接/实施规划。无DI生产策略/Shader/Native/Player/用户场景更改。

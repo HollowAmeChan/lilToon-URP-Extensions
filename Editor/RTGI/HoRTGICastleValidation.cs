@@ -52,11 +52,11 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void RunResources512()=>Run(false,512,gpu:true,resources:true);
         public static void RunResources1080()=>Run(false,1920,gpu:true,resources:true,renderHeight:1080);
         public static void RunResources1080Compatibility()=>Run(true,1920,gpu:true,resources:true,renderHeight:1080);
-        static async void Run(bool compatibility,int size,bool stability=false,bool stages=false,int settle=32,int measured=64,bool wideClamp=false,float historySigma=4,bool gpu=false,bool totalOnly=false,bool rebuild=false,bool resources=false,int renderHeight=0,bool moments=false,float momentScale=64,bool bindings=false,bool spatialAudit=false,bool denseReference=false,int denseSamples=512,int denseBatches=2,bool denseScheduled=false,bool denseControls=false,string validationTag="",bool seedAudit=false,int seedCount=8,int seedWarmup=64,int seedMeasured=256,bool feedbackAudit=false,bool feedbackQualification=false,bool feedbackGpu=false,bool productionHistory=false)
+        static async void Run(bool compatibility,int size,bool stability=false,bool stages=false,int settle=32,int measured=64,bool wideClamp=false,float historySigma=4,bool gpu=false,bool totalOnly=false,bool rebuild=false,bool resources=false,int renderHeight=0,bool moments=false,float momentScale=64,bool bindings=false,bool spatialAudit=false,bool denseReference=false,int denseSamples=512,int denseBatches=2,bool denseScheduled=false,bool denseControls=false,string validationTag="",bool seedAudit=false,int seedCount=8,int seedWarmup=64,int seedMeasured=256,bool feedbackAudit=false,bool feedbackQualification=false,bool feedbackGpu=false,bool productionHistory=false,string poolPrecision="")
         {
             int width=size,height=renderHeight>0?renderHeight:size;
             var oldDefault=GraphicsSettings.defaultRenderPipeline;var oldQuality=QualitySettings.renderPipeline;bool oldAsync=ShaderUtil.allowAsyncCompilation;HoRTGIRendererFeature gi=null;int exit=1;
-            HoRTGIGpuClock gpuClock=null;HoRTGIDenseReferenceFeature denseFeature=null;HoRTGIDenseReferenceAudit denseAudit=null;
+            HoRTGIPoolPrecisionAudit precision=null;HoRTGIGpuClock gpuClock=null;HoRTGIDenseReferenceFeature denseFeature=null;HoRTGIDenseReferenceAudit denseAudit=null;
             var report=new Report{compatibility=compatibility,width=width,height=height,gpu=SystemInfo.graphicsDeviceName};string output=null;
             try
             {
@@ -83,6 +83,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 int clock=0;for(int i=0;i<32;i++){if(denseScheduled)await NextEditorTick();Render();}
                 if(denseReference||seedAudit||feedbackAudit){denseFeature.targetCamera=camera;var receivers=denseControls?HoRTGIDenseReferenceAudit.ControlPixels:HoRTGIDenseReferenceAudit.Pixels;denseFeature.Initialize(seedAudit||feedbackAudit?1:denseSamples,receivers);denseFeature.scheduled=denseScheduled;denseAudit=new HoRTGIDenseReferenceAudit(denseFeature,receivers);}
                 var context=gi.LastContext;if(context?.nrd==null)throw new Exception("Actual castle GI/NRD missing: "+gi.Status);
+                if(poolPrecision.Length>0){precision=new HoRTGIPoolPrecisionAudit(context.nrd,poolPrecision);if(!stability)Render();}
                 report.status=gi.Status;var registry=(HoRTScene)typeof(HoRTGIRendererFeature).GetField("scene",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(gi);
                 report.instances=registry.InstanceCount;report.cutouts=registry.CutoutCount;report.skinnedSnapshots=registry.SkinnedMeshCount;report.rejections=registry.Rejections.ToArray();report.bakes=registry.SkinnedBakeCount;
                 if(gpu)
@@ -106,7 +107,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                     var spatial=spatialAudit?new HoRTGISpatialAudit(width,height):null;
                     var momentAudit=moments?new HoRTGIMomentAudit():null;
                     var captured=new Dictionary<int,RenderTexture>();var stageSums=new Dictionary<int,Vector3>();var frameMeans=new List<FrameMean>();
-                    if(stages)context.nrd.core.ValidationDiffuseStage=(cmd,index,texture)=>{if(!captured.TryGetValue(index,out var copy)){copy=Keep(new RenderTexture(width,height,0,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));copy.Create();captured.Add(index,copy);}cmd.CopyTexture(texture,copy);};
+                    if(stages)context.nrd.core.ValidationDiffuseStage=(cmd,index,texture)=>{if(!captured.TryGetValue(index,out var copy)){copy=Keep(new RenderTexture(width,height,0,precision!=null?RenderTextureFormat.ARGBFloat:RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear){enableRandomWrite=precision!=null});copy.Create();captured.Add(index,copy);}if(precision!=null)precision.Copy(cmd,texture,copy);else cmd.CopyTexture(texture,copy);};
                     for(int frame=0;frame<count;frame++)
                     {
                         if(denseScheduled)await NextEditorTick();
@@ -143,6 +144,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                     report.staticRaw=new Vector3((float)rgb[0,0],(float)rgb[0,1],(float)rgb[0,2]);report.staticFiltered=new Vector3((float)rgb[1,0],(float)rgb[1,1],(float)rgb[1,2]);report.observedFrames=count;report.energyGatePass=true;
                     for(int channel=0;channel<3;channel++)report.energyGatePass&=Math.Abs(rgb[1,channel]-rgb[0,channel])<Math.Max(.000005,Math.Abs(rgb[0,channel])*.05);
                 }
+                if(precision!=null)report.poolPrecision=precision.Snapshot();
                 if(denseReference){denseFeature.collect=true;for(int batch=0;batch<denseBatches;batch++){if(denseScheduled)await NextEditorTick();denseFeature.batch=batch;Render();denseAudit.AddBatch(batch);if(denseScheduled&&(batch+1)%512==0)File.WriteAllText(Path.Combine(output,"dense-progress.json"),JsonUtility.ToJson(new DenseProgress{terminal=false,completedBatches=batch+1,audit=denseAudit.Finish()},false));}denseFeature.collect=false;report.denseReference=denseAudit.Finish();}
                 Save(target,"scene-before",false);Save(context.diffuse.rt,"raw-gi",true);Save(context.PublishedDiffuse.rt,"filtered-gi",true);Save(context.PublishedDiffuse.rt,"filtered-gi-preview-x100",true,100);
                 var raw=Read(context.diffuse.rt);var filtered=Read(context.PublishedDiffuse.rt);var before=Read(target);
@@ -171,7 +173,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             finally
             {
                 if(output!=null)File.WriteAllText(Path.Combine(output,"report.json"),JsonUtility.ToJson(report,!denseReference));
-                if(gi?.LastContext!=null){gi.LastContext.ValidationGpuMarker=null;gi.LastContext.ValidationGpuRasterMarker=null;}gpuClock?.Dispose();denseFeature?.Dispose();gi?.Dispose();GraphicsSettings.defaultRenderPipeline=oldDefault;QualitySettings.renderPipeline=oldQuality;ShaderUtil.allowAsyncCompilation=oldAsync;
+                if(gi?.LastContext!=null){gi.LastContext.ValidationGpuMarker=null;gi.LastContext.ValidationGpuRasterMarker=null;}precision?.Dispose();gpuClock?.Dispose();denseFeature?.Dispose();gi?.Dispose();GraphicsSettings.defaultRenderPipeline=oldDefault;QualitySettings.renderPipeline=oldQuality;ShaderUtil.allowAsyncCompilation=oldAsync;
                 foreach(var obj in owned.AsEnumerable().Reverse())if(obj!=null)UnityEngine.Object.DestroyImmediate(obj);
             }
             EditorApplication.Exit(exit);
@@ -190,6 +192,6 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]internal struct Primary{public uint depth,normal,geometric,diffuse,specular;}
         [Serializable]sealed class StageMean{public int pipeline;public Vector3 remodulatedMean;}
         [Serializable]sealed class FrameMean{public int index;public Vector3 raw,filtered;}
-        [Serializable]sealed class Report{public bool pass,compatibility,historyReused,environment,nativeCutout,energyGatePass,gpuQualified,gpuTotalOnly,gpuForcedRebuild;public string error,camera,gpu,status,skybox;public int width,height,frames,observedFrames,instances,cutouts,skinnedSnapshots,valid,invalid,lit,changedPixels;public uint bakes,stableBakes;public double rawMean,filteredMean,peak,cameraMeanChange,rawVariance,filteredVariance;public Vector3 staticRaw,staticFiltered;public MaterialRow[] materials;public string[] rejections;public StageMean[] stages;public FrameMean[] frameMeans;public HoRTGIDenseReferenceAudit.Report denseReference;public HoRTGISpatialAudit.Report spatialAudit;public HoRTGIMomentAudit.Binding[] momentBindings;public HoRTGISeedAudit.Report seedAudit;public HoRTGIHistoryFeedbackAudit.Report feedbackAudit;public HoRTGIProductionHistoryAudit.Report productionHistory;public bool momentAuditComplete;public HoRTGIMomentAudit.Stage[] moments;public HoRTGIResourceAudit.Report resourceAudit;public HoRTGIGpuClock.Sample[] gpuSamples;public HoRTGIGpuClock.Summary[] gpuSummary;}
+        [Serializable]sealed class Report{public bool pass,compatibility,historyReused,environment,nativeCutout,energyGatePass,gpuQualified,gpuTotalOnly,gpuForcedRebuild;public string error,camera,gpu,status,skybox;public int width,height,frames,observedFrames,instances,cutouts,skinnedSnapshots,valid,invalid,lit,changedPixels;public uint bakes,stableBakes;public double rawMean,filteredMean,peak,cameraMeanChange,rawVariance,filteredVariance;public Vector3 staticRaw,staticFiltered;public MaterialRow[] materials;public string[] rejections;public StageMean[] stages;public FrameMean[] frameMeans;public HoRTGIDenseReferenceAudit.Report denseReference;public HoRTGISpatialAudit.Report spatialAudit;public HoRTGIMomentAudit.Binding[] momentBindings;public HoRTGISeedAudit.Report seedAudit;public HoRTGIHistoryFeedbackAudit.Report feedbackAudit;public HoRTGIProductionHistoryAudit.Report productionHistory;public HoRTGIPoolPrecisionAudit.Report poolPrecision;public bool momentAuditComplete;public HoRTGIMomentAudit.Stage[] moments;public HoRTGIResourceAudit.Report resourceAudit;public HoRTGIGpuClock.Sample[] gpuSamples;public HoRTGIGpuClock.Summary[] gpuSummary;}
     }
 }

@@ -41,6 +41,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         internal bool SceneViewPreview;
         internal const uint SceneViewSettledSamples=64;
         internal uint SceneViewAccumulatedFrames {get;private set;}
+        internal Func<string,int,GraphicsFormat,GraphicsFormat> ValidationPoolFormat;
         internal bool ValidationDisableSceneViewPreview;
         internal bool ValidationForceSceneViewPreview,ValidationUseJitteredProjection;
         // Isolated stage/settings A/B only; no serialized/runtime product option.
@@ -124,6 +125,9 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             {
                 var texture=HoRTDINrdNative.Read<HoRTDINrdNative.TextureDesc>(descriptors,i);int factor=Math.Max(1,(int)texture.downsample);
                 var format=Format(texture.format);
+                #if UNITY_EDITOR
+                if(ValidationPoolFormat!=null)format=ValidationPoolFormat(name,i,format);
+                #endif
                 if(!SystemInfo.IsFormatSupported(format,GraphicsFormatUsage.LoadStore))throw new NotSupportedException("NRD UAV format "+format);
                 var desc=new RenderTextureDescriptor((width+factor-1)/factor,(height+factor-1)/factor)
                 {graphicsFormat=format,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true};

@@ -78,3 +78,9 @@ pre-S有收益：filtered相对finite none均值从+15.70/+11.58/+8.08%到+1.22/
 成功build0/errors0也可能被过严包装器因旧warning拒绝。只能在核对017原log/SHA后允许逐字相同五行；新/GI warning与任何error继续拒绝。保留原metadata诊断5，记录复用的真实build出处和无源变更；不改SolarHD/lilToon其它任务代码凑绿。Player图通用文件名导致compat覆盖RG，不能冒称有两份截图。
 
 021生产long全域相对finite none改善至约+1.77/−1.37/−2.84%，但原filtered/raw5%及16phase仍失败、正常camera/HDR/局部/1080预算未完。两315-request Player和S开packet合同是实际新路径证据，不能扩大为普通enabled-camera或完整GPU预算。当前策略可保留为局部改善，目标不complete；020工具依赖旧store，使用历史版本而不是回滚新Runtime满足旧SHA。
+
+## F43 / 步骤022：格式生效、typed copy与矩精度口径
+
+设置selector不等于实际pool已换：首资格未执行Prepare即Snapshot实际1，保留并补真实render。float32 copy self-test通过也不能证明所有捕获目标有UAV flag：首两长run的阶段目标无UAV，Unity Property绑定错误被旧regex漏计，RGB/m2全0。禁止拿finite zero当有效或把旧counter0改绿。捕获目标需正确格式+UAV，Copy前显式guard，runner匹配Compute shader Property/UAV类错误；源/报告/失败原样保留。
+
+正式四池RGBA32F保持scale64使slow m2=0从约99%降至.026%、方差约−56%，但fullgreen仍−5.2075%、8/16phase失败。禁止stride0过就宣布整体通过、继续挑phase或把旧half严重误差容差当32F精确界。无新纯单位扫描，F35继续。+2MiB@256、+63.28125MiB@1080只是布局payload；没HDR/动态/Player/GPU成本证据前，不盲改所有NRD或按投影重试HD。当前只GI Editor实例；下一步资格要保持DI默认、格式生命周期和历史重置。

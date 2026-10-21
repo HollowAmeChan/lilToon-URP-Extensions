@@ -463,3 +463,23 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **下一项022：** 原剩余损失现在有新的实际生产stage。先读015真实Temporal4/Clamping6的slow moment/descriptor别名，核对当前数据范围和各moment/variance消费者，再选一项有依据且维持HDR/历史语义的精度修复；生产64不盲改、F35不重启纯单位扫描、不补gain/宽sigma。优先用GI私有Editor资源/阶段试验验证，必须报告局部/全域/动态与额外资源成本，无益撤回。F39旧flags/重建/延迟不重试；本机Unity RTX参考Automatic/direct Build差异仅可读核对，有新原生API/分配机制才重开有界control。正常enabled-camera和实际1080/完整预算仍需继续，goal active。
 
 021已按白名单过滤提交`a93d4dd`，ProductionHistory verifier提交后再次通过（明确保留core debug与原5%失败）。实际生产Shader改动已保留、两315请求Release Player通过；index空、所有本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮022从当前生产NRD stage/真实moment绑定处理余损，不重复20隔离或F39旧调参；正常camera/HDR/局部/static/1080完整预算继续，goal active。
+
+## 022：GI私有NRD池精度上界对照（进行中）
+
+**事前review：** 当前生产pre-S保留，021full仍原5%失败。015已证明scaled slow moment下溢，F35禁止纯单位扫描；当前source还确认AtrousSmem由m2求variance、后续Atrous继续读写alpha，且固定luma floor1e−4会破坏任意单位不变性。不能只改一个alpha存储又漏消费者，也不先改epsilon。
+
+本轮仅Editor对照baseline与GI实例所有RGBA16F pool→RGBA32F，默认scale64、原NRD/Shader/epsilon/settings/历史预算不变，external signal/output仍原格式。以高精度上界分离storage误差；没有收益就不扩为全量生产资源。用Editor-only instance allocation selector，默认null、DI与Player行为不变；格式变更重启GI自己的NRD历史，统计真实pool格式/bytes/Native绑定。阶段Capture不能再CopyTexture到R16：新增float32 Load/Store copy、先tiny-value位一致self-test，再保留完整RGB、原phase0、slow4/6 moment与15点边界。先小资格再两组固定长窗，仍严格D3D12/源漂移/退出/原5%，不拓宽HD或调单位/gain/sigma。
+
+### 022事后review（2026-10-21）：池精度显著改善，生产格式仍16F
+
+核对Native binding与消费者：Temporal4 slow→transient0、Clamp6 slow→permanent0，AtrousSmem由alpha m2计算variance、后续Atrous继续读写；固定luma floor1e−4也存在，故不能假定任意单位不变。没有改单位/epsilon/Shader/NRD设置。本轮仅GI实例RGBA16F池→RGBA32F上界，external signal/output仍16F、scale64。共享core增加UNITY_EDITOR-only allocator selector，默认null；未改变DI或Player生产行为。独立float32 copy shader先以64分量（含1e−12）GPU seed/load/store/readback位一致验真。
+
+**失败保留：** 首资格47656真实exit1，策略刚设置未经过Prepare导致实际格式未换，补一次真实render；长窗采样序列不变。48792小资格exit0，4池实际32F、copy64bit一致、API/compile/drift0。首长9360/24456虽actual1/0、pool与raw有效，阶段捕获目标漏UAV，Unity绑定报错且RGB/m2读回全0；旧regex漏该类错误，原diagnostics0保留但两组明确拒绝。仅加目标enableRandomWrite、Copy入口guard和绑定错误计数后重跑，不能把zero输出finite当capture有效。F43记录。
+
+**正式证据：** baseline37676 actualexit1原5%失败，rgba32 26252 actualexit0原stride0通过；两者API/compile/binding/source drift0，256settle+256观察（前32warm）。256条raw frame RGB均值逐条完全相同。各slow阶段1048576 samples：基线Temporal/Clamp正均值m2=0为972674/982725(98.9772%)、972865/982725(98.9967%)；32F为256/984788(.025995%)、256/984784(.025996%)，未见本采样网格m2饱和。不称消灭全部moment缺陷，severe旧half容差不当32F严格界。
+
+**收益/边界：** full filtered/rawRGB由(−5.8515,−8.0171,−8.9279)%改善至(−4.5586,−5.2075,−4.9433)%，原stride0过但fullgreen仍失败，16phase仍8失败（基线16），不挑phase或改5%。full filtered时间方差1.261775e−8→5.534688e−9(−56.14%)。实际改变permanent0/1、transient0/1四池，256² pool2818304→4915456 B，+2MiB；1080同布局投影+63.28125MiB仅payload，非实际VRAM/HD/性能证据。没有新HDR/动态/Player/GPU成本合格声明。
+
+**复审接纳：** 接纳精度候选进入HDR/生命周期/成本/动态资格，未改生产默认格式。Tests~/RTGI/PoolPrecision约.98MB，六实际进程/全部失败、精确源/日志/原JSON gzip/真实格式/绑定/统计/analysis/verifier均保留；250source hash仅9新blob。verifier过只表示证据及剩余失败准确。所有本任务进程结束，active=null；他人Ho-GD plan不纳入。021生产pre-S策略仍保留，F39不重开盲调。
+
+**下一项023具体动作：** 为GI-only RGBA32F pool建立真实HDR/动态/Player与GPU成本资格，scale64不变、DI默认16F不动。若需要生产构造参数，shared core defaultfalse，只有GI实例显式启用；Editor baseline callback须优先按native format重建baseline，防新默认下误标。先解析发光面低信号~1e−4至20000物理辐射；scale64下高段slow m2可超65504，实测32F有限且无溢出/残留；S关解析能量与默认TS状态分开验证、门槛不放宽。加resolution/启停/释放/资源格式、有效GPU已知负载与40sample成本、两真实Player的32F pool/历史/动态回归；若代价或HDR退化不接纳。原fullgreen/局部、AS/F39、normal enabled-camera、1080/完整预算继续，goal active。
