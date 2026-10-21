@@ -1,0 +1,50 @@
+{
+  "results/matrix-images/legacy-filtered-mean-preview-x100.png": {
+    "sha256": "9DD4DFF7DE9B4F291B756CEEDA67B659D451B91F7BA6CBC696854CF7D3B1E516",
+    "bytes": 93497
+  },
+  "results/matrix-images/legacy-filtered-mean.exr": {
+    "sha256": "F03A4AC578C81996766AC7875EF7C7385701075A2FD9FAFD486B77E828D8C3D9",
+    "bytes": 727837
+  },
+  "results/matrix-images/legacy-raw-mean-preview-x100.png": {
+    "sha256": "AE438758347BA40D97A95ED92698DD89F90DACB33CDD3C05DEA020CDCF7C1D97",
+    "bytes": 125969
+  },
+  "results/matrix-images/legacy-raw-mean.exr": {
+    "sha256": "204B98E52A21C146F9ED3B46491B11AF01A9355270471AC0F342C7ABBCA45716",
+    "bytes": 736842
+  },
+  "results/matrix-images/packed-spatial-filtered-mean-preview-x100.png": {
+    "sha256": "9DD4DFF7DE9B4F291B756CEEDA67B659D451B91F7BA6CBC696854CF7D3B1E516",
+    "bytes": 93497
+  },
+  "results/matrix-images/packed-spatial-filtered-mean.exr": {
+    "sha256": "F03A4AC578C81996766AC7875EF7C7385701075A2FD9FAFD486B77E828D8C3D9",
+    "bytes": 727837
+  },
+  "results/matrix-images/packed-spatial-raw-mean-preview-x100.png": {
+    "sha256": "AE438758347BA40D97A95ED92698DD89F90DACB33CDD3C05DEA020CDCF7C1D97",
+    "bytes": 125969
+  },
+  "results/matrix-images/packed-spatial-raw-mean.exr": {
+    "sha256": "204B98E52A21C146F9ED3B46491B11AF01A9355270471AC0F342C7ABBCA45716",
+    "bytes": 736842
+  },
+  "results/matrix-images/packed-temporal-filtered-mean-preview-x100.png": {
+    "sha256": "DF163C40C1B29AD9BA30F81BEC9BF6C5D1DCFC0E4B0F39C42DE2D930052EE15C",
+    "bytes": 93318
+  },
+  "results/matrix-images/packed-temporal-filtered-mean.exr": {
+    "sha256": "560ACF14F0E0A92FA158D24EC45812E94789381283531A3DD4C44E8FF5EFC20C",
+    "bytes": 727880
+  },
+  "results/matrix-images/packed-temporal-raw-mean-preview-x100.png": {
+    "sha256": "E230FD154D026BE952EA40B48DE5942A8BA8F602BFAFFCC0A2F572057605D9D6",
+    "bytes": 132483
+  },
+  "results/matrix-images/packed-temporal-raw-mean.exr": {
+    "sha256": "3A00A68EBBEC0D6DB55441DF7BEB402089081593525F696AEEA30A5CA535C4BF",
+    "bytes": 737169
+  }
+}

@@ -1,0 +1,2951 @@
+{
+  "qualityQualified": false,
+  "productionRetained": false,
+  "scope": "Three TS policies, eight fixed paired seeds; empirical SE across segment means. Full no-reuse comparator is finite and shared-model; 15 selected reference points have post-selection bias. No full-image absolute truth, original 5% gate replacement, Player/dynamic/HD acceptance or global performance claim.",
+  "variants": [
+    {
+      "policy": "legacy",
+      "raw": [
+        {
+          "mean": 0.0015447200858034194,
+          "seedMeanStandardError": 5.173310590661873e-06,
+          "relativeDifferenceFromNoReusePercent": 25.697568723131937
+        },
+        {
+          "mean": 0.0001599525276105851,
+          "seedMeanStandardError": 4.4487296619651514e-07,
+          "relativeDifferenceFromNoReusePercent": 22.20932591452909
+        },
+        {
+          "mean": 0.00014265919890021905,
+          "seedMeanStandardError": 4.2127935608952457e-07,
+          "relativeDifferenceFromNoReusePercent": 18.747422859723972
+        }
+      ],
+      "filtered": [
+        {
+          "mean": 0.001421796070644632,
+          "seedMeanStandardError": 3.304421360632062e-06,
+          "relativeDifferenceFromNoReusePercent": 15.694947545905059
+        },
+        {
+          "mean": 0.00014603876843466423,
+          "seedMeanStandardError": 2.660976627174419e-07,
+          "relativeDifferenceFromNoReusePercent": 11.578727228610862
+        },
+        {
+          "mean": 0.00012983784654352348,
+          "seedMeanStandardError": 2.7222805079492344e-07,
+          "relativeDifferenceFromNoReusePercent": 8.075117381554687
+        }
+      ],
+      "rawMinusLegacy": [
+        {
+          "mean": 0.0,
+          "seedMeanStandardError": 0.0
+        },
+        {
+          "mean": 0.0,
+          "seedMeanStandardError": 0.0
+        },
+        {
+          "mean": 0.0,
+          "seedMeanStandardError": 0.0
+        }
+      ],
+      "filteredMinusLegacy": [
+        {
+          "mean": 0.0,
+          "seedMeanStandardError": 0.0
+        },
+        {
+          "mean": 0.0,
+          "seedMeanStandardError": 0.0
+        },
+        {
+          "mean": 0.0,
+          "seedMeanStandardError": 0.0
+        }
+      ],
+      "selectedPoints": [
+        {
+          "x": 87,
+          "y": 165,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.001523292186902836,
+              "seedMeanStandardError": 0.0002445772095473713,
+              "referenceMean": 0.0014999499544501305,
+              "referenceSE": 1.1994436135864817e-05,
+              "relativeDifferencePercent": 1.5562007507952114
+            },
+            {
+              "mean": 0.00034644233528524637,
+              "seedMeanStandardError": 5.931769938650037e-05,
+              "referenceMean": 0.00035697894054464996,
+              "referenceSE": 2.980903673233115e-06,
+              "relativeDifferencePercent": -2.9516041599898513
+            },
+            {
+              "mean": 0.00029995967634022236,
+              "seedMeanStandardError": 5.3352533839040044e-05,
+              "referenceMean": 0.00030933390371501446,
+              "referenceSE": 2.411188461337588e-06,
+              "relativeDifferencePercent": -3.0304558479397947
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0010490923887118697,
+              "seedMeanStandardError": 0.00013733606858752355,
+              "referenceMean": 0.0014999499544501305,
+              "referenceSE": 1.1994436135864817e-05,
+              "relativeDifferencePercent": -30.058173901111353
+            },
+            {
+              "mean": 0.00021606674999929965,
+              "seedMeanStandardError": 3.378466876352003e-05,
+              "referenceMean": 0.00035697894054464996,
+              "referenceSE": 2.980903673233115e-06,
+              "relativeDifferencePercent": -39.47353037979152
+            },
+            {
+              "mean": 0.00019121935474686325,
+              "seedMeanStandardError": 3.0706909673280544e-05,
+              "referenceMean": 0.00030933390371501446,
+              "referenceSE": 2.411188461337588e-06,
+              "relativeDifferencePercent": -38.183512233747486
+            }
+          ]
+        },
+        {
+          "x": 158,
+          "y": 146,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.004766805534018204,
+              "seedMeanStandardError": 0.001357042603037846,
+              "referenceMean": 0.003753300756216049,
+              "referenceSE": 3.4174579923273996e-05,
+              "relativeDifferencePercent": 27.00302596650783
+            },
+            {
+              "mean": 0.00029551656916737556,
+              "seedMeanStandardError": 0.00012053097033180269,
+              "referenceMean": 0.0002290446573169902,
+              "referenceSE": 2.9208713385742158e-06,
+              "relativeDifferencePercent": 29.021376280517398
+            },
+            {
+              "mean": 0.00010241271229460835,
+              "seedMeanStandardError": 3.912488710618371e-05,
+              "referenceMean": 7.180368265835568e-05,
+              "referenceSE": 9.203762374454527e-07,
+              "relativeDifferencePercent": 42.62877404476795
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.004836650565266609,
+              "seedMeanStandardError": 0.00015696590878769452,
+              "referenceMean": 0.003753300756216049,
+              "referenceSE": 3.4174579923273996e-05,
+              "relativeDifferencePercent": 28.863922169209722
+            },
+            {
+              "mean": 0.00030142650939524174,
+              "seedMeanStandardError": 9.503385130567098e-06,
+              "referenceMean": 0.0002290446573169902,
+              "referenceSE": 2.9208713385742158e-06,
+              "relativeDifferencePercent": 31.601633029177133
+            },
+            {
+              "mean": 0.00010408382513560355,
+              "seedMeanStandardError": 2.7236708873413075e-06,
+              "referenceMean": 7.180368265835568e-05,
+              "referenceSE": 9.203762374454527e-07,
+              "relativeDifferencePercent": 44.956109884833985
+            }
+          ]
+        },
+        {
+          "x": 201,
+          "y": 156,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.002381769532803446,
+              "seedMeanStandardError": 0.0006605113722519116,
+              "referenceMean": 0.0034061712212860584,
+              "referenceSE": 2.6526062356424518e-05,
+              "relativeDifferencePercent": -30.074873573027016
+            },
+            {
+              "mean": 0.00013528738054446876,
+              "seedMeanStandardError": 3.849835018198486e-05,
+              "referenceMean": 0.0002087256289087236,
+              "referenceSE": 1.962324859050568e-06,
+              "relativeDifferencePercent": -35.18410688146477
+            },
+            {
+              "mean": 7.857504533603787e-05,
+              "seedMeanStandardError": 1.9505437277762333e-05,
+              "referenceMean": 0.00011988473124802113,
+              "referenceSE": 1.1186879191882326e-06,
+              "relativeDifferencePercent": -34.45783752604869
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.002961724065244198,
+              "seedMeanStandardError": 7.725686690335706e-05,
+              "referenceMean": 0.0034061712212860584,
+              "referenceSE": 2.6526062356424518e-05,
+              "relativeDifferencePercent": -13.048291679067503
+            },
+            {
+              "mean": 0.00016229675384238362,
+              "seedMeanStandardError": 6.528346767001803e-06,
+              "referenceMean": 0.0002087256289087236,
+              "referenceSE": 1.962324859050568e-06,
+              "relativeDifferencePercent": -22.243974211065122
+            },
+            {
+              "mean": 9.793919161893427e-05,
+              "seedMeanStandardError": 3.997858004472042e-06,
+              "referenceMean": 0.00011988473124802113,
+              "referenceSE": 1.1186879191882326e-06,
+              "relativeDifferencePercent": -18.30553349090408
+            }
+          ]
+        },
+        {
+          "x": 147,
+          "y": 237,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0033214400173164904,
+              "seedMeanStandardError": 0.00017307832609206672,
+              "referenceMean": 0.004260349553078413,
+              "referenceSE": 4.784799602930434e-05,
+              "relativeDifferencePercent": -22.0383215993038
+            },
+            {
+              "mean": 0.0006024166650604457,
+              "seedMeanStandardError": 4.492098365336134e-05,
+              "referenceMean": 0.0008407097775489092,
+              "referenceSE": 1.2137035810155794e-05,
+              "relativeDifferencePercent": -28.344277520264782
+            },
+            {
+              "mean": 0.00043212389573454857,
+              "seedMeanStandardError": 2.9244968793238974e-05,
+              "referenceMean": 0.0006058879080228508,
+              "referenceSE": 8.234163033193909e-06,
+              "relativeDifferencePercent": -28.679234225903837
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.00450281985104084,
+              "seedMeanStandardError": 4.7324658978091566e-05,
+              "referenceMean": 0.004260349553078413,
+              "referenceSE": 4.784799602930434e-05,
+              "relativeDifferencePercent": 5.6913240320204395
+            },
+            {
+              "mean": 0.0006807714235037565,
+              "seedMeanStandardError": 8.070114496387227e-06,
+              "referenceMean": 0.0008407097775489092,
+              "referenceSE": 1.2137035810155794e-05,
+              "relativeDifferencePercent": -19.024205298462594
+            },
+            {
+              "mean": 0.0005149570060893893,
+              "seedMeanStandardError": 6.115953732312215e-06,
+              "referenceMean": 0.0006058879080228508,
+              "referenceSE": 8.234163033193909e-06,
+              "relativeDifferencePercent": -15.00787533954746
+            }
+          ]
+        },
+        {
+          "x": 196,
+          "y": 245,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0031173591560218483,
+              "seedMeanStandardError": 0.0009890999265248232,
+              "referenceMean": 0.0018874353263527155,
+              "referenceSE": 1.5661462384741753e-05,
+              "relativeDifferencePercent": 65.16376018275764
+            },
+            {
+              "mean": 0.0005556062969844788,
+              "seedMeanStandardError": 0.00026789191461757967,
+              "referenceMean": 0.0002681536425370723,
+              "referenceSE": 2.5643164462962886e-06,
+              "relativeDifferencePercent": 107.19699785829539
+            },
+            {
+              "mean": 0.00037195172626525164,
+              "seedMeanStandardError": 0.00015783374196052377,
+              "referenceMean": 0.00019632879411801696,
+              "referenceSE": 1.756740402925061e-06,
+              "relativeDifferencePercent": 89.45347672316694
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0019912351854145527,
+              "seedMeanStandardError": 1.4464518757778339e-05,
+              "referenceMean": 0.0018874353263527155,
+              "referenceSE": 1.5661462384741753e-05,
+              "relativeDifferencePercent": 5.499518717943053
+            },
+            {
+              "mean": 0.00028245290741324425,
+              "seedMeanStandardError": 3.606335744332996e-06,
+              "referenceMean": 0.0002681536425370723,
+              "referenceSE": 2.5643164462962886e-06,
+              "relativeDifferencePercent": 5.332489516414118
+            },
+            {
+              "mean": 0.000203707255423069,
+              "seedMeanStandardError": 2.7681157798332064e-06,
+              "referenceMean": 0.00019632879411801696,
+              "referenceSE": 1.756740402925061e-06,
+              "relativeDifferencePercent": 3.7582165867206863
+            }
+          ]
+        },
+        {
+          "x": 58,
+          "y": 88,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0029842291260138154,
+              "seedMeanStandardError": 0.0002952676859159765,
+              "referenceMean": 0.0022283224388957024,
+              "referenceSE": 1.5933897884679027e-05,
+              "relativeDifferencePercent": 33.92267985654358
+            },
+            {
+              "mean": 0.0005519955593626946,
+              "seedMeanStandardError": 3.641175463298487e-05,
+              "referenceMean": 0.00046006281627342105,
+              "referenceSE": 3.5369155284570297e-06,
+              "relativeDifferencePercent": 19.982650159372326
+            },
+            {
+              "mean": 0.0002984362072311342,
+              "seedMeanStandardError": 2.2371779546441782e-05,
+              "referenceMean": 0.0002358580968575552,
+              "referenceSE": 1.844272105699929e-06,
+              "relativeDifferencePercent": 26.532101804998696
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0025188387371599674,
+              "seedMeanStandardError": 7.714652511500943e-05,
+              "referenceMean": 0.0022283224388957024,
+              "referenceSE": 1.5933897884679027e-05,
+              "relativeDifferencePercent": 13.037444365916695
+            },
+            {
+              "mean": 0.0004926537512801588,
+              "seedMeanStandardError": 1.8773237115059793e-05,
+              "referenceMean": 0.00046006281627342105,
+              "referenceSE": 3.5369155284570297e-06,
+              "relativeDifferencePercent": 7.084018497893241
+            },
+            {
+              "mean": 0.0002605490735732019,
+              "seedMeanStandardError": 1.0198854021406685e-05,
+              "referenceMean": 0.0002358580968575552,
+              "referenceSE": 1.844272105699929e-06,
+              "relativeDifferencePercent": 10.46857285995937
+            }
+          ]
+        },
+        {
+          "x": 209,
+          "y": 185,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0035460576764307916,
+              "seedMeanStandardError": 0.0009451623543044025,
+              "referenceMean": 0.003781798994168639,
+              "referenceSE": 2.7816073270514607e-05,
+              "relativeDifferencePercent": -6.233576086443248
+            },
+            {
+              "mean": 0.0007905177772045135,
+              "seedMeanStandardError": 0.00026875011176298363,
+              "referenceMean": 0.0008629459189251065,
+              "referenceSE": 6.967879926378373e-06,
+              "relativeDifferencePercent": -8.39312639786397
+            },
+            {
+              "mean": 0.0003262834798078984,
+              "seedMeanStandardError": 0.00010611968891668519,
+              "referenceMean": 0.0003635881294030696,
+              "referenceSE": 2.810133764796774e-06,
+              "relativeDifferencePercent": -10.260139586079752
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.002859116531908512,
+              "seedMeanStandardError": 2.5472898168738856e-05,
+              "referenceMean": 0.003781798994168639,
+              "referenceSE": 2.7816073270514607e-05,
+              "relativeDifferencePercent": -24.39797735635504
+            },
+            {
+              "mean": 0.0005428137956187129,
+              "seedMeanStandardError": 1.0461467423821706e-05,
+              "referenceMean": 0.0008629459189251065,
+              "referenceSE": 6.967879926378373e-06,
+              "relativeDifferencePercent": -37.09758819013283
+            },
+            {
+              "mean": 0.0002404862316325307,
+              "seedMeanStandardError": 4.44653882396371e-06,
+              "referenceMean": 0.0003635881294030696,
+              "referenceSE": 2.810133764796774e-06,
+              "relativeDifferencePercent": -33.85751288763049
+            }
+          ]
+        },
+        {
+          "x": 185,
+          "y": 180,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.005184419947909191,
+              "seedMeanStandardError": 0.0014242858576980447,
+              "referenceMean": 0.006395362783223391,
+              "referenceSE": 2.961923564726021e-05,
+              "relativeDifferencePercent": -18.934701225875727
+            },
+            {
+              "mean": 0.0009378429094795138,
+              "seedMeanStandardError": 0.00029854031556526427,
+              "referenceMean": 0.0012605144875124097,
+              "referenceSE": 6.937853868294042e-06,
+              "relativeDifferencePercent": -25.59840297192294
+            },
+            {
+              "mean": 0.0006313985795713961,
+              "seedMeanStandardError": 0.0001962764953514286,
+              "referenceMean": 0.0008530330378562212,
+              "referenceSE": 4.458441253518686e-06,
+              "relativeDifferencePercent": -25.981931349554788
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.002726496197283268,
+              "seedMeanStandardError": 5.4171301586438155e-05,
+              "referenceMean": 0.006395362783223391,
+              "referenceSE": 2.961923564726021e-05,
+              "relativeDifferencePercent": -57.36760697242167
+            },
+            {
+              "mean": 0.00037540437187999487,
+              "seedMeanStandardError": 1.7660367609406593e-05,
+              "referenceMean": 0.0012605144875124097,
+              "referenceSE": 6.937853868294042e-06,
+              "relativeDifferencePercent": -70.21816285341988
+            },
+            {
+              "mean": 0.00026914034970104694,
+              "seedMeanStandardError": 1.2204621261265479e-05,
+              "referenceMean": 0.0008530330378562212,
+              "referenceSE": 4.458441253518686e-06,
+              "relativeDifferencePercent": -68.44901220034451
+            }
+          ]
+        },
+        {
+          "x": 122,
+          "y": 45,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.005169302370632067,
+              "seedMeanStandardError": 0.0011329189439389052,
+              "referenceMean": 0.004727968014776707,
+              "referenceSE": 4.375225034891628e-05,
+              "relativeDifferencePercent": 9.334546140668088
+            },
+            {
+              "mean": 0.0005126939504407346,
+              "seedMeanStandardError": 0.00014434929810596843,
+              "referenceMean": 0.00045552494702860713,
+              "referenceSE": 4.446026196092134e-06,
+              "relativeDifferencePercent": 12.550136668703082
+            },
+            {
+              "mean": 0.0002978876873385161,
+              "seedMeanStandardError": 8.576601131223086e-05,
+              "referenceMean": 0.0002485036093275994,
+              "referenceSE": 2.34942558563489e-06,
+              "relativeDifferencePercent": 19.872579776422583
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.006783029064536095,
+              "seedMeanStandardError": 0.0001574247434839236,
+              "referenceMean": 0.004727968014776707,
+              "referenceSE": 4.375225034891628e-05,
+              "relativeDifferencePercent": 43.466052294273915
+            },
+            {
+              "mean": 0.0006299718515947461,
+              "seedMeanStandardError": 1.6322671913578518e-05,
+              "referenceMean": 0.00045552494702860713,
+              "referenceSE": 4.446026196092134e-06,
+              "relativeDifferencePercent": 38.29579602699204
+            },
+            {
+              "mean": 0.00035814428701996803,
+              "seedMeanStandardError": 8.298534970969094e-06,
+              "referenceMean": 0.0002485036093275994,
+              "referenceSE": 2.34942558563489e-06,
+              "relativeDifferencePercent": 44.1203562350801
+            }
+          ]
+        },
+        {
+          "x": 196,
+          "y": 141,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.01646946044638753,
+              "seedMeanStandardError": 0.006364626051227016,
+              "referenceMean": 0.007301318924874067,
+              "referenceSE": 3.082253533648327e-05,
+              "relativeDifferencePercent": 125.56829274063786
+            },
+            {
+              "mean": 0.0006681834347546101,
+              "seedMeanStandardError": 0.00023610494696540814,
+              "referenceMean": 0.00042346856207586825,
+              "referenceSE": 2.425079401291441e-06,
+              "relativeDifferencePercent": 57.78820309095316
+            },
+            {
+              "mean": 0.0001247738255187869,
+              "seedMeanStandardError": 3.660106056130285e-05,
+              "referenceMean": 8.957552927313372e-05,
+              "referenceSE": 5.703285523850354e-07,
+              "relativeDifferencePercent": 39.29454453830412
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0060240039601922035,
+              "seedMeanStandardError": 0.0003393980806926102,
+              "referenceMean": 0.007301318924874067,
+              "referenceSE": 3.082253533648327e-05,
+              "relativeDifferencePercent": -17.49430449244339
+            },
+            {
+              "mean": 0.00039224320789799094,
+              "seedMeanStandardError": 2.3715599669310792e-05,
+              "referenceMean": 0.00042346856207586825,
+              "referenceSE": 2.425079401291441e-06,
+              "relativeDifferencePercent": -7.373712472257388
+            },
+            {
+              "mean": 9.936324204318225e-05,
+              "seedMeanStandardError": 5.475537371440009e-06,
+              "referenceMean": 8.957552927313372e-05,
+              "referenceSE": 5.703285523850354e-07,
+              "relativeDifferencePercent": 10.926770792728258
+            }
+          ]
+        },
+        {
+          "x": 134,
+          "y": 150,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.002249910117825493,
+              "seedMeanStandardError": 0.0003281040900268584,
+              "referenceMean": 0.0013919802149757743,
+              "referenceSE": 1.1029699635400902e-05,
+              "relativeDifferencePercent": 61.63377134384416
+            },
+            {
+              "mean": 3.517011646181345e-05,
+              "seedMeanStandardError": 8.615462186305293e-06,
+              "referenceMean": 1.6027061064960435e-05,
+              "referenceSE": 9.925063437776771e-08,
+              "relativeDifferencePercent": 119.44208185931858
+            },
+            {
+              "mean": 3.076053690165281e-05,
+              "seedMeanStandardError": 9.07731701777729e-06,
+              "referenceMean": 1.2171549315098673e-05,
+              "referenceSE": 1.051555358344558e-07,
+              "relativeDifferencePercent": 152.72490876321476
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.005296740680932999,
+              "seedMeanStandardError": 0.00011550684819731088,
+              "referenceMean": 0.0013919802149757743,
+              "referenceSE": 1.1029699635400902e-05,
+              "relativeDifferencePercent": 280.5183884043339
+            },
+            {
+              "mean": 0.0001285671314690262,
+              "seedMeanStandardError": 2.7524682336499675e-06,
+              "referenceMean": 1.6027061064960435e-05,
+              "referenceSE": 9.925063437776771e-08,
+              "relativeDifferencePercent": 702.1878181403408
+            },
+            {
+              "mean": 0.00011433512554503977,
+              "seedMeanStandardError": 2.320988572028042e-06,
+              "referenceMean": 1.2171549315098673e-05,
+              "referenceSE": 1.051555358344558e-07,
+              "relativeDifferencePercent": 839.3637784731999
+            }
+          ]
+        },
+        {
+          "x": 141,
+          "y": 157,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.006947758985916153,
+              "seedMeanStandardError": 0.0017353883566830727,
+              "referenceMean": 0.006199366878718138,
+              "referenceSE": 3.437889245105907e-05,
+              "relativeDifferencePercent": 12.072073194557609
+            },
+            {
+              "mean": 0.00048758022603578866,
+              "seedMeanStandardError": 0.0001633132754338053,
+              "referenceMean": 0.0003781422274187207,
+              "referenceSE": 2.7449689241620945e-06,
+              "relativeDifferencePercent": 28.940962072423115
+            },
+            {
+              "mean": 0.0001376714208163321,
+              "seedMeanStandardError": 4.254649257616713e-05,
+              "referenceMean": 9.649994899518788e-05,
+              "referenceSE": 7.665407224521914e-07,
+              "relativeDifferencePercent": 42.66476018883421
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.005544194020330906,
+              "seedMeanStandardError": 0.00016970032539825904,
+              "referenceMean": 0.006199366878718138,
+              "referenceSE": 3.437889245105907e-05,
+              "relativeDifferencePercent": -10.568383372121126
+            },
+            {
+              "mean": 0.00036059628473594785,
+              "seedMeanStandardError": 1.3737799779880873e-05,
+              "referenceMean": 0.0003781422274187207,
+              "referenceSE": 2.7449689241620945e-06,
+              "relativeDifferencePercent": -4.640037903871574
+            },
+            {
+              "mean": 0.00010786514030769467,
+              "seedMeanStandardError": 4.139730887174222e-06,
+              "referenceMean": 9.649994899518788e-05,
+              "referenceSE": 7.665407224521914e-07,
+              "relativeDifferencePercent": 11.777406548757385
+            }
+          ]
+        },
+        {
+          "x": 16,
+          "y": 16,
+          "referenceConverged": false,
+          "raw": [
+            {
+              "mean": 0.0006237374327611178,
+              "seedMeanStandardError": 1.4161245202373497e-05,
+              "referenceMean": 0.0005335200112313032,
+              "referenceSE": 6.761316853953758e-06,
+              "relativeDifferencePercent": 16.909847734034035
+            },
+            {
+              "mean": 6.342478445731103e-05,
+              "seedMeanStandardError": 3.651859110192525e-06,
+              "referenceMean": 5.695326763088815e-05,
+              "referenceSE": 1.3190685876907082e-06,
+              "relativeDifferencePercent": 11.362854311300508
+            },
+            {
+              "mean": 6.31987932138145e-05,
+              "seedMeanStandardError": 3.1112042565035494e-06,
+              "referenceMean": 5.6361444876529276e-05,
+              "referenceSE": 8.455856459477218e-07,
+              "relativeDifferencePercent": 12.13125098595993
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0005945094162598252,
+              "seedMeanStandardError": 1.180838460010643e-05,
+              "referenceMean": 0.0005335200112313032,
+              "referenceSE": 6.761316853953758e-06,
+              "relativeDifferencePercent": 11.431512172854674
+            },
+            {
+              "mean": 6.335557554848492e-05,
+              "seedMeanStandardError": 1.0126353001719074e-06,
+              "referenceMean": 5.695326763088815e-05,
+              "referenceSE": 1.3190685876907082e-06,
+              "relativeDifferencePercent": 11.241335543888153
+            },
+            {
+              "mean": 6.271412712521851e-05,
+              "seedMeanStandardError": 9.91343495344388e-07,
+              "referenceMean": 5.6361444876529276e-05,
+              "referenceSE": 8.455856459477218e-07,
+              "relativeDifferencePercent": 11.271326103519929
+            }
+          ]
+        },
+        {
+          "x": 128,
+          "y": 128,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.007514205179177225,
+              "seedMeanStandardError": 0.0005014889924176615,
+              "referenceMean": 0.0034438620787113905,
+              "referenceSE": 1.739100116537884e-05,
+              "relativeDifferencePercent": 118.19123435944503
+            },
+            {
+              "mean": 0.0001972828758880496,
+              "seedMeanStandardError": 1.515484978526579e-05,
+              "referenceMean": 8.144342427840456e-05,
+              "referenceSE": 5.113972747494699e-07,
+              "relativeDifferencePercent": 142.23303186965936
+            },
+            {
+              "mean": 0.00019162875832989812,
+              "seedMeanStandardError": 1.4447975155400984e-05,
+              "referenceMean": 7.947362610138953e-05,
+              "referenceSE": 4.797003612111439e-07,
+              "relativeDifferencePercent": 141.12245499585637
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.005926251411437988,
+              "seedMeanStandardError": 0.00013190702391353167,
+              "referenceMean": 0.0034438620787113905,
+              "referenceSE": 1.739100116537884e-05,
+              "relativeDifferencePercent": 72.0815548355365
+            },
+            {
+              "mean": 0.00015712017193436623,
+              "seedMeanStandardError": 3.0010737612118408e-06,
+              "referenceMean": 8.144342427840456e-05,
+              "referenceSE": 5.113972747494699e-07,
+              "relativeDifferencePercent": 92.91940795277687
+            },
+            {
+              "mean": 0.00015591250848956406,
+              "seedMeanStandardError": 3.0178703545596755e-06,
+              "referenceMean": 7.947362610138953e-05,
+              "referenceSE": 4.797003612111439e-07,
+              "relativeDifferencePercent": 96.18144551584524
+            }
+          ]
+        },
+        {
+          "x": 240,
+          "y": 32,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0006048403156455606,
+              "seedMeanStandardError": 4.916007105968834e-05,
+              "referenceMean": 0.000540928216651082,
+              "referenceSE": 4.987743068340933e-06,
+              "relativeDifferencePercent": 11.815264396847724
+            },
+            {
+              "mean": 1.2238597264513373e-05,
+              "seedMeanStandardError": 6.490378903651748e-07,
+              "referenceMean": 1.0615668543323409e-05,
+              "referenceSE": 1.620875593744131e-07,
+              "relativeDifferencePercent": 15.288050060781956
+            },
+            {
+              "mean": 1.771794632077217e-05,
+              "seedMeanStandardError": 5.73899665069729e-07,
+              "referenceMean": 1.542106838314794e-05,
+              "referenceSE": 1.594222567291581e-07,
+              "relativeDifferencePercent": 14.894415098594905
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0006545139476656914,
+              "seedMeanStandardError": 5.86392257818449e-06,
+              "referenceMean": 0.000540928216651082,
+              "referenceSE": 4.987743068340933e-06,
+              "relativeDifferencePercent": 20.998300239877523
+            },
+            {
+              "mean": 1.085814437828958e-05,
+              "seedMeanStandardError": 2.022318962792677e-07,
+              "referenceMean": 1.0615668543323409e-05,
+              "referenceSE": 1.620875593744131e-07,
+              "relativeDifferencePercent": 2.2841315549426477
+            },
+            {
+              "mean": 1.54649605974555e-05,
+              "seedMeanStandardError": 2.8472728354286736e-07,
+              "referenceMean": 1.542106838314794e-05,
+              "referenceSE": 1.594222567291581e-07,
+              "relativeDifferencePercent": 0.28462498976742356
+            }
+          ]
+        },
+        {
+          "x": 32,
+          "y": 240,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0004512674640864134,
+              "seedMeanStandardError": 2.3920758611984565e-05,
+              "referenceMean": 0.00042419901001267135,
+              "referenceSE": 4.42753071183688e-06,
+              "relativeDifferencePercent": 6.3810743153156935
+            },
+            {
+              "mean": 4.910855204798281e-05,
+              "seedMeanStandardError": 7.476697081381421e-06,
+              "referenceMean": 4.2840245441766456e-05,
+              "referenceSE": 3.969351212163019e-07,
+              "relativeDifferencePercent": 14.631817678862236
+            },
+            {
+              "mean": 6.0435355408117175e-05,
+              "seedMeanStandardError": 7.78400951605213e-06,
+              "referenceMean": 5.431771569419652e-05,
+              "referenceSE": 4.841891723117442e-07,
+              "relativeDifferencePercent": 11.26269695942732
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.00043195136822760105,
+              "seedMeanStandardError": 1.356070284200575e-05,
+              "referenceMean": 0.00042419901001267135,
+              "referenceSE": 4.42753071183688e-06,
+              "relativeDifferencePercent": 1.8275285967070287
+            },
+            {
+              "mean": 4.246502066962421e-05,
+              "seedMeanStandardError": 9.117010786824214e-07,
+              "referenceMean": 4.2840245441766456e-05,
+              "referenceSE": 3.969351212163019e-07,
+              "relativeDifferencePercent": -0.8758698001679166
+            },
+            {
+              "mean": 5.281681660562754e-05,
+              "seedMeanStandardError": 1.1616035499901602e-06,
+              "referenceMean": 5.431771569419652e-05,
+              "referenceSE": 4.841891723117442e-07,
+              "relativeDifferencePercent": -2.763185213860797
+            }
+          ]
+        }
+      ],
+      "rawTemporalVariance": 5.0036587694275304e-06,
+      "filteredTemporalVariance": 2.838898654086693e-08,
+      "originalFullGatePassingSegments": 0,
+      "originalPhaseZeroGatePassingSegments": 0,
+      "selectedConvergedComponentCount": 45,
+      "selectedRawMeanAbsoluteRelativeError": 0.41785122948712844,
+      "selectedFilteredMeanAbsoluteRelativeError": 0.654216680113327
+    },
+    {
+      "policy": "packed-spatial",
+      "raw": [
+        {
+          "mean": 0.0015447200858034194,
+          "seedMeanStandardError": 5.173310590661873e-06,
+          "relativeDifferenceFromNoReusePercent": 25.697568723131937
+        },
+        {
+          "mean": 0.0001599525276105851,
+          "seedMeanStandardError": 4.4487296619651514e-07,
+          "relativeDifferenceFromNoReusePercent": 22.20932591452909
+        },
+        {
+          "mean": 0.00014265919890021905,
+          "seedMeanStandardError": 4.2127935608952457e-07,
+          "relativeDifferenceFromNoReusePercent": 18.747422859723972
+        }
+      ],
+      "filtered": [
+        {
+          "mean": 0.001421796070644632,
+          "seedMeanStandardError": 3.304421360632062e-06,
+          "relativeDifferenceFromNoReusePercent": 15.694947545905059
+        },
+        {
+          "mean": 0.00014603876843466423,
+          "seedMeanStandardError": 2.660976627174419e-07,
+          "relativeDifferenceFromNoReusePercent": 11.578727228610862
+        },
+        {
+          "mean": 0.00012983784654352348,
+          "seedMeanStandardError": 2.7222805079492344e-07,
+          "relativeDifferenceFromNoReusePercent": 8.075117381554687
+        }
+      ],
+      "rawMinusLegacy": [
+        {
+          "mean": 0.0,
+          "seedMeanStandardError": 0.0
+        },
+        {
+          "mean": 0.0,
+          "seedMeanStandardError": 0.0
+        },
+        {
+          "mean": 0.0,
+          "seedMeanStandardError": 0.0
+        }
+      ],
+      "filteredMinusLegacy": [
+        {
+          "mean": 0.0,
+          "seedMeanStandardError": 0.0
+        },
+        {
+          "mean": 0.0,
+          "seedMeanStandardError": 0.0
+        },
+        {
+          "mean": 0.0,
+          "seedMeanStandardError": 0.0
+        }
+      ],
+      "selectedPoints": [
+        {
+          "x": 87,
+          "y": 165,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.001523292186902836,
+              "seedMeanStandardError": 0.0002445772095473713,
+              "referenceMean": 0.0014999499544501305,
+              "referenceSE": 1.1994436135864817e-05,
+              "relativeDifferencePercent": 1.5562007507952114
+            },
+            {
+              "mean": 0.00034644233528524637,
+              "seedMeanStandardError": 5.931769938650037e-05,
+              "referenceMean": 0.00035697894054464996,
+              "referenceSE": 2.980903673233115e-06,
+              "relativeDifferencePercent": -2.9516041599898513
+            },
+            {
+              "mean": 0.00029995967634022236,
+              "seedMeanStandardError": 5.3352533839040044e-05,
+              "referenceMean": 0.00030933390371501446,
+              "referenceSE": 2.411188461337588e-06,
+              "relativeDifferencePercent": -3.0304558479397947
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0010490923887118697,
+              "seedMeanStandardError": 0.00013733606858752355,
+              "referenceMean": 0.0014999499544501305,
+              "referenceSE": 1.1994436135864817e-05,
+              "relativeDifferencePercent": -30.058173901111353
+            },
+            {
+              "mean": 0.00021606674999929965,
+              "seedMeanStandardError": 3.378466876352003e-05,
+              "referenceMean": 0.00035697894054464996,
+              "referenceSE": 2.980903673233115e-06,
+              "relativeDifferencePercent": -39.47353037979152
+            },
+            {
+              "mean": 0.00019121935474686325,
+              "seedMeanStandardError": 3.0706909673280544e-05,
+              "referenceMean": 0.00030933390371501446,
+              "referenceSE": 2.411188461337588e-06,
+              "relativeDifferencePercent": -38.183512233747486
+            }
+          ]
+        },
+        {
+          "x": 158,
+          "y": 146,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.004766805534018204,
+              "seedMeanStandardError": 0.001357042603037846,
+              "referenceMean": 0.003753300756216049,
+              "referenceSE": 3.4174579923273996e-05,
+              "relativeDifferencePercent": 27.00302596650783
+            },
+            {
+              "mean": 0.00029551656916737556,
+              "seedMeanStandardError": 0.00012053097033180269,
+              "referenceMean": 0.0002290446573169902,
+              "referenceSE": 2.9208713385742158e-06,
+              "relativeDifferencePercent": 29.021376280517398
+            },
+            {
+              "mean": 0.00010241271229460835,
+              "seedMeanStandardError": 3.912488710618371e-05,
+              "referenceMean": 7.180368265835568e-05,
+              "referenceSE": 9.203762374454527e-07,
+              "relativeDifferencePercent": 42.62877404476795
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.004836650565266609,
+              "seedMeanStandardError": 0.00015696590878769452,
+              "referenceMean": 0.003753300756216049,
+              "referenceSE": 3.4174579923273996e-05,
+              "relativeDifferencePercent": 28.863922169209722
+            },
+            {
+              "mean": 0.00030142650939524174,
+              "seedMeanStandardError": 9.503385130567098e-06,
+              "referenceMean": 0.0002290446573169902,
+              "referenceSE": 2.9208713385742158e-06,
+              "relativeDifferencePercent": 31.601633029177133
+            },
+            {
+              "mean": 0.00010408382513560355,
+              "seedMeanStandardError": 2.7236708873413075e-06,
+              "referenceMean": 7.180368265835568e-05,
+              "referenceSE": 9.203762374454527e-07,
+              "relativeDifferencePercent": 44.956109884833985
+            }
+          ]
+        },
+        {
+          "x": 201,
+          "y": 156,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.002381769532803446,
+              "seedMeanStandardError": 0.0006605113722519116,
+              "referenceMean": 0.0034061712212860584,
+              "referenceSE": 2.6526062356424518e-05,
+              "relativeDifferencePercent": -30.074873573027016
+            },
+            {
+              "mean": 0.00013528738054446876,
+              "seedMeanStandardError": 3.849835018198486e-05,
+              "referenceMean": 0.0002087256289087236,
+              "referenceSE": 1.962324859050568e-06,
+              "relativeDifferencePercent": -35.18410688146477
+            },
+            {
+              "mean": 7.857504533603787e-05,
+              "seedMeanStandardError": 1.9505437277762333e-05,
+              "referenceMean": 0.00011988473124802113,
+              "referenceSE": 1.1186879191882326e-06,
+              "relativeDifferencePercent": -34.45783752604869
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.002961724065244198,
+              "seedMeanStandardError": 7.725686690335706e-05,
+              "referenceMean": 0.0034061712212860584,
+              "referenceSE": 2.6526062356424518e-05,
+              "relativeDifferencePercent": -13.048291679067503
+            },
+            {
+              "mean": 0.00016229675384238362,
+              "seedMeanStandardError": 6.528346767001803e-06,
+              "referenceMean": 0.0002087256289087236,
+              "referenceSE": 1.962324859050568e-06,
+              "relativeDifferencePercent": -22.243974211065122
+            },
+            {
+              "mean": 9.793919161893427e-05,
+              "seedMeanStandardError": 3.997858004472042e-06,
+              "referenceMean": 0.00011988473124802113,
+              "referenceSE": 1.1186879191882326e-06,
+              "relativeDifferencePercent": -18.30553349090408
+            }
+          ]
+        },
+        {
+          "x": 147,
+          "y": 237,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0033214400173164904,
+              "seedMeanStandardError": 0.00017307832609206672,
+              "referenceMean": 0.004260349553078413,
+              "referenceSE": 4.784799602930434e-05,
+              "relativeDifferencePercent": -22.0383215993038
+            },
+            {
+              "mean": 0.0006024166650604457,
+              "seedMeanStandardError": 4.492098365336134e-05,
+              "referenceMean": 0.0008407097775489092,
+              "referenceSE": 1.2137035810155794e-05,
+              "relativeDifferencePercent": -28.344277520264782
+            },
+            {
+              "mean": 0.00043212389573454857,
+              "seedMeanStandardError": 2.9244968793238974e-05,
+              "referenceMean": 0.0006058879080228508,
+              "referenceSE": 8.234163033193909e-06,
+              "relativeDifferencePercent": -28.679234225903837
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.00450281985104084,
+              "seedMeanStandardError": 4.7324658978091566e-05,
+              "referenceMean": 0.004260349553078413,
+              "referenceSE": 4.784799602930434e-05,
+              "relativeDifferencePercent": 5.6913240320204395
+            },
+            {
+              "mean": 0.0006807714235037565,
+              "seedMeanStandardError": 8.070114496387227e-06,
+              "referenceMean": 0.0008407097775489092,
+              "referenceSE": 1.2137035810155794e-05,
+              "relativeDifferencePercent": -19.024205298462594
+            },
+            {
+              "mean": 0.0005149570060893893,
+              "seedMeanStandardError": 6.115953732312215e-06,
+              "referenceMean": 0.0006058879080228508,
+              "referenceSE": 8.234163033193909e-06,
+              "relativeDifferencePercent": -15.00787533954746
+            }
+          ]
+        },
+        {
+          "x": 196,
+          "y": 245,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0031173591560218483,
+              "seedMeanStandardError": 0.0009890999265248232,
+              "referenceMean": 0.0018874353263527155,
+              "referenceSE": 1.5661462384741753e-05,
+              "relativeDifferencePercent": 65.16376018275764
+            },
+            {
+              "mean": 0.0005556062969844788,
+              "seedMeanStandardError": 0.00026789191461757967,
+              "referenceMean": 0.0002681536425370723,
+              "referenceSE": 2.5643164462962886e-06,
+              "relativeDifferencePercent": 107.19699785829539
+            },
+            {
+              "mean": 0.00037195172626525164,
+              "seedMeanStandardError": 0.00015783374196052377,
+              "referenceMean": 0.00019632879411801696,
+              "referenceSE": 1.756740402925061e-06,
+              "relativeDifferencePercent": 89.45347672316694
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0019912351854145527,
+              "seedMeanStandardError": 1.4464518757778339e-05,
+              "referenceMean": 0.0018874353263527155,
+              "referenceSE": 1.5661462384741753e-05,
+              "relativeDifferencePercent": 5.499518717943053
+            },
+            {
+              "mean": 0.00028245290741324425,
+              "seedMeanStandardError": 3.606335744332996e-06,
+              "referenceMean": 0.0002681536425370723,
+              "referenceSE": 2.5643164462962886e-06,
+              "relativeDifferencePercent": 5.332489516414118
+            },
+            {
+              "mean": 0.000203707255423069,
+              "seedMeanStandardError": 2.7681157798332064e-06,
+              "referenceMean": 0.00019632879411801696,
+              "referenceSE": 1.756740402925061e-06,
+              "relativeDifferencePercent": 3.7582165867206863
+            }
+          ]
+        },
+        {
+          "x": 58,
+          "y": 88,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0029842291260138154,
+              "seedMeanStandardError": 0.0002952676859159765,
+              "referenceMean": 0.0022283224388957024,
+              "referenceSE": 1.5933897884679027e-05,
+              "relativeDifferencePercent": 33.92267985654358
+            },
+            {
+              "mean": 0.0005519955593626946,
+              "seedMeanStandardError": 3.641175463298487e-05,
+              "referenceMean": 0.00046006281627342105,
+              "referenceSE": 3.5369155284570297e-06,
+              "relativeDifferencePercent": 19.982650159372326
+            },
+            {
+              "mean": 0.0002984362072311342,
+              "seedMeanStandardError": 2.2371779546441782e-05,
+              "referenceMean": 0.0002358580968575552,
+              "referenceSE": 1.844272105699929e-06,
+              "relativeDifferencePercent": 26.532101804998696
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0025188387371599674,
+              "seedMeanStandardError": 7.714652511500943e-05,
+              "referenceMean": 0.0022283224388957024,
+              "referenceSE": 1.5933897884679027e-05,
+              "relativeDifferencePercent": 13.037444365916695
+            },
+            {
+              "mean": 0.0004926537512801588,
+              "seedMeanStandardError": 1.8773237115059793e-05,
+              "referenceMean": 0.00046006281627342105,
+              "referenceSE": 3.5369155284570297e-06,
+              "relativeDifferencePercent": 7.084018497893241
+            },
+            {
+              "mean": 0.0002605490735732019,
+              "seedMeanStandardError": 1.0198854021406685e-05,
+              "referenceMean": 0.0002358580968575552,
+              "referenceSE": 1.844272105699929e-06,
+              "relativeDifferencePercent": 10.46857285995937
+            }
+          ]
+        },
+        {
+          "x": 209,
+          "y": 185,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0035460576764307916,
+              "seedMeanStandardError": 0.0009451623543044025,
+              "referenceMean": 0.003781798994168639,
+              "referenceSE": 2.7816073270514607e-05,
+              "relativeDifferencePercent": -6.233576086443248
+            },
+            {
+              "mean": 0.0007905177772045135,
+              "seedMeanStandardError": 0.00026875011176298363,
+              "referenceMean": 0.0008629459189251065,
+              "referenceSE": 6.967879926378373e-06,
+              "relativeDifferencePercent": -8.39312639786397
+            },
+            {
+              "mean": 0.0003262834798078984,
+              "seedMeanStandardError": 0.00010611968891668519,
+              "referenceMean": 0.0003635881294030696,
+              "referenceSE": 2.810133764796774e-06,
+              "relativeDifferencePercent": -10.260139586079752
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.002859116531908512,
+              "seedMeanStandardError": 2.5472898168738856e-05,
+              "referenceMean": 0.003781798994168639,
+              "referenceSE": 2.7816073270514607e-05,
+              "relativeDifferencePercent": -24.39797735635504
+            },
+            {
+              "mean": 0.0005428137956187129,
+              "seedMeanStandardError": 1.0461467423821706e-05,
+              "referenceMean": 0.0008629459189251065,
+              "referenceSE": 6.967879926378373e-06,
+              "relativeDifferencePercent": -37.09758819013283
+            },
+            {
+              "mean": 0.0002404862316325307,
+              "seedMeanStandardError": 4.44653882396371e-06,
+              "referenceMean": 0.0003635881294030696,
+              "referenceSE": 2.810133764796774e-06,
+              "relativeDifferencePercent": -33.85751288763049
+            }
+          ]
+        },
+        {
+          "x": 185,
+          "y": 180,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.005184419947909191,
+              "seedMeanStandardError": 0.0014242858576980447,
+              "referenceMean": 0.006395362783223391,
+              "referenceSE": 2.961923564726021e-05,
+              "relativeDifferencePercent": -18.934701225875727
+            },
+            {
+              "mean": 0.0009378429094795138,
+              "seedMeanStandardError": 0.00029854031556526427,
+              "referenceMean": 0.0012605144875124097,
+              "referenceSE": 6.937853868294042e-06,
+              "relativeDifferencePercent": -25.59840297192294
+            },
+            {
+              "mean": 0.0006313985795713961,
+              "seedMeanStandardError": 0.0001962764953514286,
+              "referenceMean": 0.0008530330378562212,
+              "referenceSE": 4.458441253518686e-06,
+              "relativeDifferencePercent": -25.981931349554788
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.002726496197283268,
+              "seedMeanStandardError": 5.4171301586438155e-05,
+              "referenceMean": 0.006395362783223391,
+              "referenceSE": 2.961923564726021e-05,
+              "relativeDifferencePercent": -57.36760697242167
+            },
+            {
+              "mean": 0.00037540437187999487,
+              "seedMeanStandardError": 1.7660367609406593e-05,
+              "referenceMean": 0.0012605144875124097,
+              "referenceSE": 6.937853868294042e-06,
+              "relativeDifferencePercent": -70.21816285341988
+            },
+            {
+              "mean": 0.00026914034970104694,
+              "seedMeanStandardError": 1.2204621261265479e-05,
+              "referenceMean": 0.0008530330378562212,
+              "referenceSE": 4.458441253518686e-06,
+              "relativeDifferencePercent": -68.44901220034451
+            }
+          ]
+        },
+        {
+          "x": 122,
+          "y": 45,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.005169302370632067,
+              "seedMeanStandardError": 0.0011329189439389052,
+              "referenceMean": 0.004727968014776707,
+              "referenceSE": 4.375225034891628e-05,
+              "relativeDifferencePercent": 9.334546140668088
+            },
+            {
+              "mean": 0.0005126939504407346,
+              "seedMeanStandardError": 0.00014434929810596843,
+              "referenceMean": 0.00045552494702860713,
+              "referenceSE": 4.446026196092134e-06,
+              "relativeDifferencePercent": 12.550136668703082
+            },
+            {
+              "mean": 0.0002978876873385161,
+              "seedMeanStandardError": 8.576601131223086e-05,
+              "referenceMean": 0.0002485036093275994,
+              "referenceSE": 2.34942558563489e-06,
+              "relativeDifferencePercent": 19.872579776422583
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.006783029064536095,
+              "seedMeanStandardError": 0.0001574247434839236,
+              "referenceMean": 0.004727968014776707,
+              "referenceSE": 4.375225034891628e-05,
+              "relativeDifferencePercent": 43.466052294273915
+            },
+            {
+              "mean": 0.0006299718515947461,
+              "seedMeanStandardError": 1.6322671913578518e-05,
+              "referenceMean": 0.00045552494702860713,
+              "referenceSE": 4.446026196092134e-06,
+              "relativeDifferencePercent": 38.29579602699204
+            },
+            {
+              "mean": 0.00035814428701996803,
+              "seedMeanStandardError": 8.298534970969094e-06,
+              "referenceMean": 0.0002485036093275994,
+              "referenceSE": 2.34942558563489e-06,
+              "relativeDifferencePercent": 44.1203562350801
+            }
+          ]
+        },
+        {
+          "x": 196,
+          "y": 141,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.01646946044638753,
+              "seedMeanStandardError": 0.006364626051227016,
+              "referenceMean": 0.007301318924874067,
+              "referenceSE": 3.082253533648327e-05,
+              "relativeDifferencePercent": 125.56829274063786
+            },
+            {
+              "mean": 0.0006681834347546101,
+              "seedMeanStandardError": 0.00023610494696540814,
+              "referenceMean": 0.00042346856207586825,
+              "referenceSE": 2.425079401291441e-06,
+              "relativeDifferencePercent": 57.78820309095316
+            },
+            {
+              "mean": 0.0001247738255187869,
+              "seedMeanStandardError": 3.660106056130285e-05,
+              "referenceMean": 8.957552927313372e-05,
+              "referenceSE": 5.703285523850354e-07,
+              "relativeDifferencePercent": 39.29454453830412
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0060240039601922035,
+              "seedMeanStandardError": 0.0003393980806926102,
+              "referenceMean": 0.007301318924874067,
+              "referenceSE": 3.082253533648327e-05,
+              "relativeDifferencePercent": -17.49430449244339
+            },
+            {
+              "mean": 0.00039224320789799094,
+              "seedMeanStandardError": 2.3715599669310792e-05,
+              "referenceMean": 0.00042346856207586825,
+              "referenceSE": 2.425079401291441e-06,
+              "relativeDifferencePercent": -7.373712472257388
+            },
+            {
+              "mean": 9.936324204318225e-05,
+              "seedMeanStandardError": 5.475537371440009e-06,
+              "referenceMean": 8.957552927313372e-05,
+              "referenceSE": 5.703285523850354e-07,
+              "relativeDifferencePercent": 10.926770792728258
+            }
+          ]
+        },
+        {
+          "x": 134,
+          "y": 150,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.002249910117825493,
+              "seedMeanStandardError": 0.0003281040900268584,
+              "referenceMean": 0.0013919802149757743,
+              "referenceSE": 1.1029699635400902e-05,
+              "relativeDifferencePercent": 61.63377134384416
+            },
+            {
+              "mean": 3.517011646181345e-05,
+              "seedMeanStandardError": 8.615462186305293e-06,
+              "referenceMean": 1.6027061064960435e-05,
+              "referenceSE": 9.925063437776771e-08,
+              "relativeDifferencePercent": 119.44208185931858
+            },
+            {
+              "mean": 3.076053690165281e-05,
+              "seedMeanStandardError": 9.07731701777729e-06,
+              "referenceMean": 1.2171549315098673e-05,
+              "referenceSE": 1.051555358344558e-07,
+              "relativeDifferencePercent": 152.72490876321476
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.005296740680932999,
+              "seedMeanStandardError": 0.00011550684819731088,
+              "referenceMean": 0.0013919802149757743,
+              "referenceSE": 1.1029699635400902e-05,
+              "relativeDifferencePercent": 280.5183884043339
+            },
+            {
+              "mean": 0.0001285671314690262,
+              "seedMeanStandardError": 2.7524682336499675e-06,
+              "referenceMean": 1.6027061064960435e-05,
+              "referenceSE": 9.925063437776771e-08,
+              "relativeDifferencePercent": 702.1878181403408
+            },
+            {
+              "mean": 0.00011433512554503977,
+              "seedMeanStandardError": 2.320988572028042e-06,
+              "referenceMean": 1.2171549315098673e-05,
+              "referenceSE": 1.051555358344558e-07,
+              "relativeDifferencePercent": 839.3637784731999
+            }
+          ]
+        },
+        {
+          "x": 141,
+          "y": 157,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.006947758985916153,
+              "seedMeanStandardError": 0.0017353883566830727,
+              "referenceMean": 0.006199366878718138,
+              "referenceSE": 3.437889245105907e-05,
+              "relativeDifferencePercent": 12.072073194557609
+            },
+            {
+              "mean": 0.00048758022603578866,
+              "seedMeanStandardError": 0.0001633132754338053,
+              "referenceMean": 0.0003781422274187207,
+              "referenceSE": 2.7449689241620945e-06,
+              "relativeDifferencePercent": 28.940962072423115
+            },
+            {
+              "mean": 0.0001376714208163321,
+              "seedMeanStandardError": 4.254649257616713e-05,
+              "referenceMean": 9.649994899518788e-05,
+              "referenceSE": 7.665407224521914e-07,
+              "relativeDifferencePercent": 42.66476018883421
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.005544194020330906,
+              "seedMeanStandardError": 0.00016970032539825904,
+              "referenceMean": 0.006199366878718138,
+              "referenceSE": 3.437889245105907e-05,
+              "relativeDifferencePercent": -10.568383372121126
+            },
+            {
+              "mean": 0.00036059628473594785,
+              "seedMeanStandardError": 1.3737799779880873e-05,
+              "referenceMean": 0.0003781422274187207,
+              "referenceSE": 2.7449689241620945e-06,
+              "relativeDifferencePercent": -4.640037903871574
+            },
+            {
+              "mean": 0.00010786514030769467,
+              "seedMeanStandardError": 4.139730887174222e-06,
+              "referenceMean": 9.649994899518788e-05,
+              "referenceSE": 7.665407224521914e-07,
+              "relativeDifferencePercent": 11.777406548757385
+            }
+          ]
+        },
+        {
+          "x": 16,
+          "y": 16,
+          "referenceConverged": false,
+          "raw": [
+            {
+              "mean": 0.0006237374327611178,
+              "seedMeanStandardError": 1.4161245202373497e-05,
+              "referenceMean": 0.0005335200112313032,
+              "referenceSE": 6.761316853953758e-06,
+              "relativeDifferencePercent": 16.909847734034035
+            },
+            {
+              "mean": 6.342478445731103e-05,
+              "seedMeanStandardError": 3.651859110192525e-06,
+              "referenceMean": 5.695326763088815e-05,
+              "referenceSE": 1.3190685876907082e-06,
+              "relativeDifferencePercent": 11.362854311300508
+            },
+            {
+              "mean": 6.31987932138145e-05,
+              "seedMeanStandardError": 3.1112042565035494e-06,
+              "referenceMean": 5.6361444876529276e-05,
+              "referenceSE": 8.455856459477218e-07,
+              "relativeDifferencePercent": 12.13125098595993
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0005945094162598252,
+              "seedMeanStandardError": 1.180838460010643e-05,
+              "referenceMean": 0.0005335200112313032,
+              "referenceSE": 6.761316853953758e-06,
+              "relativeDifferencePercent": 11.431512172854674
+            },
+            {
+              "mean": 6.335557554848492e-05,
+              "seedMeanStandardError": 1.0126353001719074e-06,
+              "referenceMean": 5.695326763088815e-05,
+              "referenceSE": 1.3190685876907082e-06,
+              "relativeDifferencePercent": 11.241335543888153
+            },
+            {
+              "mean": 6.271412712521851e-05,
+              "seedMeanStandardError": 9.91343495344388e-07,
+              "referenceMean": 5.6361444876529276e-05,
+              "referenceSE": 8.455856459477218e-07,
+              "relativeDifferencePercent": 11.271326103519929
+            }
+          ]
+        },
+        {
+          "x": 128,
+          "y": 128,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.007514205179177225,
+              "seedMeanStandardError": 0.0005014889924176615,
+              "referenceMean": 0.0034438620787113905,
+              "referenceSE": 1.739100116537884e-05,
+              "relativeDifferencePercent": 118.19123435944503
+            },
+            {
+              "mean": 0.0001972828758880496,
+              "seedMeanStandardError": 1.515484978526579e-05,
+              "referenceMean": 8.144342427840456e-05,
+              "referenceSE": 5.113972747494699e-07,
+              "relativeDifferencePercent": 142.23303186965936
+            },
+            {
+              "mean": 0.00019162875832989812,
+              "seedMeanStandardError": 1.4447975155400984e-05,
+              "referenceMean": 7.947362610138953e-05,
+              "referenceSE": 4.797003612111439e-07,
+              "relativeDifferencePercent": 141.12245499585637
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.005926251411437988,
+              "seedMeanStandardError": 0.00013190702391353167,
+              "referenceMean": 0.0034438620787113905,
+              "referenceSE": 1.739100116537884e-05,
+              "relativeDifferencePercent": 72.0815548355365
+            },
+            {
+              "mean": 0.00015712017193436623,
+              "seedMeanStandardError": 3.0010737612118408e-06,
+              "referenceMean": 8.144342427840456e-05,
+              "referenceSE": 5.113972747494699e-07,
+              "relativeDifferencePercent": 92.91940795277687
+            },
+            {
+              "mean": 0.00015591250848956406,
+              "seedMeanStandardError": 3.0178703545596755e-06,
+              "referenceMean": 7.947362610138953e-05,
+              "referenceSE": 4.797003612111439e-07,
+              "relativeDifferencePercent": 96.18144551584524
+            }
+          ]
+        },
+        {
+          "x": 240,
+          "y": 32,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0006048403156455606,
+              "seedMeanStandardError": 4.916007105968834e-05,
+              "referenceMean": 0.000540928216651082,
+              "referenceSE": 4.987743068340933e-06,
+              "relativeDifferencePercent": 11.815264396847724
+            },
+            {
+              "mean": 1.2238597264513373e-05,
+              "seedMeanStandardError": 6.490378903651748e-07,
+              "referenceMean": 1.0615668543323409e-05,
+              "referenceSE": 1.620875593744131e-07,
+              "relativeDifferencePercent": 15.288050060781956
+            },
+            {
+              "mean": 1.771794632077217e-05,
+              "seedMeanStandardError": 5.73899665069729e-07,
+              "referenceMean": 1.542106838314794e-05,
+              "referenceSE": 1.594222567291581e-07,
+              "relativeDifferencePercent": 14.894415098594905
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0006545139476656914,
+              "seedMeanStandardError": 5.86392257818449e-06,
+              "referenceMean": 0.000540928216651082,
+              "referenceSE": 4.987743068340933e-06,
+              "relativeDifferencePercent": 20.998300239877523
+            },
+            {
+              "mean": 1.085814437828958e-05,
+              "seedMeanStandardError": 2.022318962792677e-07,
+              "referenceMean": 1.0615668543323409e-05,
+              "referenceSE": 1.620875593744131e-07,
+              "relativeDifferencePercent": 2.2841315549426477
+            },
+            {
+              "mean": 1.54649605974555e-05,
+              "seedMeanStandardError": 2.8472728354286736e-07,
+              "referenceMean": 1.542106838314794e-05,
+              "referenceSE": 1.594222567291581e-07,
+              "relativeDifferencePercent": 0.28462498976742356
+            }
+          ]
+        },
+        {
+          "x": 32,
+          "y": 240,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0004512674640864134,
+              "seedMeanStandardError": 2.3920758611984565e-05,
+              "referenceMean": 0.00042419901001267135,
+              "referenceSE": 4.42753071183688e-06,
+              "relativeDifferencePercent": 6.3810743153156935
+            },
+            {
+              "mean": 4.910855204798281e-05,
+              "seedMeanStandardError": 7.476697081381421e-06,
+              "referenceMean": 4.2840245441766456e-05,
+              "referenceSE": 3.969351212163019e-07,
+              "relativeDifferencePercent": 14.631817678862236
+            },
+            {
+              "mean": 6.0435355408117175e-05,
+              "seedMeanStandardError": 7.78400951605213e-06,
+              "referenceMean": 5.431771569419652e-05,
+              "referenceSE": 4.841891723117442e-07,
+              "relativeDifferencePercent": 11.26269695942732
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.00043195136822760105,
+              "seedMeanStandardError": 1.356070284200575e-05,
+              "referenceMean": 0.00042419901001267135,
+              "referenceSE": 4.42753071183688e-06,
+              "relativeDifferencePercent": 1.8275285967070287
+            },
+            {
+              "mean": 4.246502066962421e-05,
+              "seedMeanStandardError": 9.117010786824214e-07,
+              "referenceMean": 4.2840245441766456e-05,
+              "referenceSE": 3.969351212163019e-07,
+              "relativeDifferencePercent": -0.8758698001679166
+            },
+            {
+              "mean": 5.281681660562754e-05,
+              "seedMeanStandardError": 1.1616035499901602e-06,
+              "referenceMean": 5.431771569419652e-05,
+              "referenceSE": 4.841891723117442e-07,
+              "relativeDifferencePercent": -2.763185213860797
+            }
+          ]
+        }
+      ],
+      "rawTemporalVariance": 5.0036587694275304e-06,
+      "filteredTemporalVariance": 2.838898654086693e-08,
+      "originalFullGatePassingSegments": 0,
+      "originalPhaseZeroGatePassingSegments": 0,
+      "selectedConvergedComponentCount": 45,
+      "selectedRawMeanAbsoluteRelativeError": 0.41785122948712844,
+      "selectedFilteredMeanAbsoluteRelativeError": 0.654216680113327
+    },
+    {
+      "policy": "packed-temporal",
+      "raw": [
+        {
+          "mean": 0.0013238541723694652,
+          "seedMeanStandardError": 1.9716942592185283e-06,
+          "relativeDifferenceFromNoReusePercent": 7.725180982719793
+        },
+        {
+          "mean": 0.0001397503128828248,
+          "seedMeanStandardError": 2.667637887534737e-07,
+          "relativeDifferenceFromNoReusePercent": 6.774127229386373
+        },
+        {
+          "mean": 0.00012767947919201106,
+          "seedMeanStandardError": 2.147252427072753e-07,
+          "relativeDifferenceFromNoReusePercent": 6.278524084013926
+        }
+      ],
+      "filtered": [
+        {
+          "mean": 0.0012438785779522732,
+          "seedMeanStandardError": 1.466286178047753e-06,
+          "relativeDifferenceFromNoReusePercent": 1.217375544170185
+        },
+        {
+          "mean": 0.00012843884724134114,
+          "seedMeanStandardError": 1.4060738145774808e-07,
+          "relativeDifferenceFromNoReusePercent": -1.8682281731899342
+        },
+        {
+          "mean": 0.00011620013356150594,
+          "seedMeanStandardError": 1.4878580424434574e-07,
+          "relativeDifferenceFromNoReusePercent": -3.2767146965707483
+        }
+      ],
+      "rawMinusLegacy": [
+        {
+          "mean": -0.00022086591343395412,
+          "seedMeanStandardError": 5.246303221824502e-06
+        },
+        {
+          "mean": -2.0202214727760293e-05,
+          "seedMeanStandardError": 4.72917338513877e-07
+        },
+        {
+          "mean": -1.4979719708207995e-05,
+          "seedMeanStandardError": 3.9108377894548525e-07
+        }
+      ],
+      "filteredMinusLegacy": [
+        {
+          "mean": -0.0001779174926923588,
+          "seedMeanStandardError": 3.088942688143386e-06
+        },
+        {
+          "mean": -1.7599921193323098e-05,
+          "seedMeanStandardError": 2.528628459916924e-07
+        },
+        {
+          "mean": -1.3637712982017547e-05,
+          "seedMeanStandardError": 2.499961992583155e-07
+        }
+      ],
+      "selectedPoints": [
+        {
+          "x": 87,
+          "y": 165,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0015984816709533334,
+              "seedMeanStandardError": 0.0001576338670637357,
+              "referenceMean": 0.0014999499544501305,
+              "referenceSE": 1.1994436135864817e-05,
+              "relativeDifferencePercent": 6.569000266367153
+            },
+            {
+              "mean": 0.0003671226149890572,
+              "seedMeanStandardError": 4.3627424367653384e-05,
+              "referenceMean": 0.00035697894054464996,
+              "referenceSE": 2.980903673233115e-06,
+              "relativeDifferencePercent": 2.84153301282446
+            },
+            {
+              "mean": 0.00031285142176784575,
+              "seedMeanStandardError": 3.5440260970744e-05,
+              "referenceMean": 0.00030933390371501446,
+              "referenceSE": 2.411188461337588e-06,
+              "relativeDifferencePercent": 1.1371265841173095
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0010837289737537503,
+              "seedMeanStandardError": 9.99280278714076e-05,
+              "referenceMean": 0.0014999499544501305,
+              "referenceSE": 1.1994436135864817e-05,
+              "relativeDifferencePercent": -27.748991188773587
+            },
+            {
+              "mean": 0.0002294696168974042,
+              "seedMeanStandardError": 2.0131928387622063e-05,
+              "referenceMean": 0.00035697894054464996,
+              "referenceSE": 2.980903673233115e-06,
+              "relativeDifferencePercent": -35.71900444678956
+            },
+            {
+              "mean": 0.00019825887284241617,
+              "seedMeanStandardError": 1.7509514936374805e-05,
+              "referenceMean": 0.00030933390371501446,
+              "referenceSE": 2.411188461337588e-06,
+              "relativeDifferencePercent": -35.90781014903893
+            }
+          ]
+        },
+        {
+          "x": 158,
+          "y": 146,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0035760985629167408,
+              "seedMeanStandardError": 0.0006217493730787622,
+              "referenceMean": 0.003753300756216049,
+              "referenceSE": 3.4174579923273996e-05,
+              "relativeDifferencePercent": -4.721236181402033
+            },
+            {
+              "mean": 0.0002459141833242029,
+              "seedMeanStandardError": 6.275065123577351e-05,
+              "referenceMean": 0.0002290446573169902,
+              "referenceSE": 2.9208713385742158e-06,
+              "relativeDifferencePercent": 7.3651689608571935
+            },
+            {
+              "mean": 7.757419371046126e-05,
+              "seedMeanStandardError": 2.0128937928252342e-05,
+              "referenceMean": 7.180368265835568e-05,
+              "referenceSE": 9.203762374454527e-07,
+              "relativeDifferencePercent": 8.036511274166624
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0047498829662799835,
+              "seedMeanStandardError": 8.257942331554993e-05,
+              "referenceMean": 0.003753300756216049,
+              "referenceSE": 3.4174579923273996e-05,
+              "relativeDifferencePercent": 26.55215435143159
+            },
+            {
+              "mean": 0.0002880969550460577,
+              "seedMeanStandardError": 6.489008856367985e-06,
+              "referenceMean": 0.0002290446573169902,
+              "referenceSE": 2.9208713385742158e-06,
+              "relativeDifferencePercent": 25.78200182479746
+            },
+            {
+              "mean": 9.302471880801022e-05,
+              "seedMeanStandardError": 2.1401138363722344e-06,
+              "referenceMean": 7.180368265835568e-05,
+              "referenceSE": 9.203762374454527e-07,
+              "relativeDifferencePercent": 29.55424480193438
+            }
+          ]
+        },
+        {
+          "x": 201,
+          "y": 156,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.003997892985353246,
+              "seedMeanStandardError": 0.000825065832049919,
+              "referenceMean": 0.0034061712212860584,
+              "referenceSE": 2.6526062356424518e-05,
+              "relativeDifferencePercent": 17.372049894889695
+            },
+            {
+              "mean": 0.00025808921782299876,
+              "seedMeanStandardError": 5.6398956136799913e-05,
+              "referenceMean": 0.0002087256289087236,
+              "referenceSE": 1.962324859050568e-06,
+              "relativeDifferencePercent": 23.649989305272157
+            },
+            {
+              "mean": 0.00014778567128814757,
+              "seedMeanStandardError": 3.067158790363639e-05,
+              "referenceMean": 0.00011988473124802113,
+              "referenceSE": 1.1186879191882326e-06,
+              "relativeDifferencePercent": 23.273138914082516
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0035226945765316486,
+              "seedMeanStandardError": 0.0002650372845013584,
+              "referenceMean": 0.0034061712212860584,
+              "referenceSE": 2.6526062356424518e-05,
+              "relativeDifferencePercent": 3.420948263475565
+            },
+            {
+              "mean": 0.00018858458497561514,
+              "seedMeanStandardError": 1.7668967384983796e-05,
+              "referenceMean": 0.0002087256289087236,
+              "referenceSE": 1.962324859050568e-06,
+              "relativeDifferencePercent": -9.649530840276544
+            },
+            {
+              "mean": 0.00010820355964824557,
+              "seedMeanStandardError": 9.351548239429516e-06,
+              "referenceMean": 0.00011988473124802113,
+              "referenceSE": 1.1186879191882326e-06,
+              "relativeDifferencePercent": -9.743669171355274
+            }
+          ]
+        },
+        {
+          "x": 147,
+          "y": 237,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.004607282899087295,
+              "seedMeanStandardError": 0.0006954339746602902,
+              "referenceMean": 0.004260349553078413,
+              "referenceSE": 4.784799602930434e-05,
+              "relativeDifferencePercent": 8.143307061698657
+            },
+            {
+              "mean": 0.0009350941109005362,
+              "seedMeanStandardError": 0.00018107782320470755,
+              "referenceMean": 0.0008407097775489092,
+              "referenceSE": 1.2137035810155794e-05,
+              "relativeDifferencePercent": 11.226743862406918
+            },
+            {
+              "mean": 0.0006627645925618708,
+              "seedMeanStandardError": 0.00012339045356308279,
+              "referenceMean": 0.0006058879080228508,
+              "referenceSE": 8.234163033193909e-06,
+              "relativeDifferencePercent": 9.387327884562268
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.004480009898543358,
+              "seedMeanStandardError": 5.277877531628223e-05,
+              "referenceMean": 0.004260349553078413,
+              "referenceSE": 4.784799602930434e-05,
+              "relativeDifferencePercent": 5.1559230698857705
+            },
+            {
+              "mean": 0.0006864028982818127,
+              "seedMeanStandardError": 1.6242037102065955e-05,
+              "referenceMean": 0.0008407097775489092,
+              "referenceSE": 1.2137035810155794e-05,
+              "relativeDifferencePercent": -18.354357637778218
+            },
+            {
+              "mean": 0.0005188325885683298,
+              "seedMeanStandardError": 1.1271638222038763e-05,
+              "referenceMean": 0.0006058879080228508,
+              "referenceSE": 8.234163033193909e-06,
+              "relativeDifferencePercent": -14.368221960164574
+            }
+          ]
+        },
+        {
+          "x": 196,
+          "y": 245,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.00208072634995915,
+              "seedMeanStandardError": 7.342436349566439e-05,
+              "referenceMean": 0.0018874353263527155,
+              "referenceSE": 1.5661462384741753e-05,
+              "relativeDifferencePercent": 10.240934929407652
+            },
+            {
+              "mean": 0.00028132705483585596,
+              "seedMeanStandardError": 2.4518482828155964e-05,
+              "referenceMean": 0.0002681536425370723,
+              "referenceSE": 2.5643164462962886e-06,
+              "relativeDifferencePercent": 4.912635970239498
+            },
+            {
+              "mean": 0.00020326478988863528,
+              "seedMeanStandardError": 1.6349202998838932e-05,
+              "referenceMean": 0.00019632879411801696,
+              "referenceSE": 1.756740402925061e-06,
+              "relativeDifferencePercent": 3.5328469274094054
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0019571217708289623,
+              "seedMeanStandardError": 5.1691653638105676e-06,
+              "referenceMean": 0.0018874353263527155,
+              "referenceSE": 1.5661462384741753e-05,
+              "relativeDifferencePercent": 3.6921235659453933
+            },
+            {
+              "mean": 0.00027643959037959576,
+              "seedMeanStandardError": 1.6812518739413714e-06,
+              "referenceMean": 0.0002681536425370723,
+              "referenceSE": 2.5643164462962886e-06,
+              "relativeDifferencePercent": 3.0900001074488204
+            },
+            {
+              "mean": 0.00020003673853352666,
+              "seedMeanStandardError": 1.0993701010632573e-06,
+              "referenceMean": 0.00019632879411801696,
+              "referenceSE": 1.756740402925061e-06,
+              "relativeDifferencePercent": 1.8886401417413934
+            }
+          ]
+        },
+        {
+          "x": 58,
+          "y": 88,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.00266127593931742,
+              "seedMeanStandardError": 0.0004024730144316012,
+              "referenceMean": 0.0022283224388957024,
+              "referenceSE": 1.5933897884679027e-05,
+              "relativeDifferencePercent": 19.429571450901783
+            },
+            {
+              "mean": 0.0005240269820205867,
+              "seedMeanStandardError": 6.486651770127597e-05,
+              "referenceMean": 0.00046006281627342105,
+              "referenceSE": 3.5369155284570297e-06,
+              "relativeDifferencePercent": 13.90335482125793
+            },
+            {
+              "mean": 0.00027342227986082435,
+              "seedMeanStandardError": 3.34619650772711e-05,
+              "referenceMean": 0.0002358580968575552,
+              "referenceSE": 1.844272105699929e-06,
+              "relativeDifferencePercent": 15.926603115921756
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.002175541128963232,
+              "seedMeanStandardError": 0.00015851831882207263,
+              "referenceMean": 0.0022283224388957024,
+              "referenceSE": 1.5933897884679027e-05,
+              "relativeDifferencePercent": -2.3686567532222758
+            },
+            {
+              "mean": 0.0004327359492890537,
+              "seedMeanStandardError": 2.3873776187588263e-05,
+              "referenceMean": 0.00046006281627342105,
+              "referenceSE": 3.5369155284570297e-06,
+              "relativeDifferencePercent": -5.939812133855793
+            },
+            {
+              "mean": 0.00022410013480111957,
+              "seedMeanStandardError": 1.2399801134671292e-05,
+              "referenceMean": 0.0002358580968575552,
+              "referenceSE": 1.844272105699929e-06,
+              "relativeDifferencePercent": -4.9851848264241605
+            }
+          ]
+        },
+        {
+          "x": 209,
+          "y": 185,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.004242675582645461,
+              "seedMeanStandardError": 0.0008436652337864486,
+              "referenceMean": 0.003781798994168639,
+              "referenceSE": 2.7816073270514607e-05,
+              "relativeDifferencePercent": 12.186702391837123
+            },
+            {
+              "mean": 0.0009957262955140322,
+              "seedMeanStandardError": 0.0002125917432913752,
+              "referenceMean": 0.0008629459189251065,
+              "referenceSE": 6.967879926378373e-06,
+              "relativeDifferencePercent": 15.386871144175318
+            },
+            {
+              "mean": 0.0004150221939198673,
+              "seedMeanStandardError": 8.468682126920974e-05,
+              "referenceMean": 0.0003635881294030696,
+              "referenceSE": 2.810133764796774e-06,
+              "relativeDifferencePercent": 14.14624415853205
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0026698317378759384,
+              "seedMeanStandardError": 9.00429760966084e-05,
+              "referenceMean": 0.003781798994168639,
+              "referenceSE": 2.7816073270514607e-05,
+              "relativeDifferencePercent": -29.403129516066386
+            },
+            {
+              "mean": 0.0005169854266569018,
+              "seedMeanStandardError": 2.0179824054790145e-05,
+              "referenceMean": 0.0008629459189251065,
+              "referenceSE": 6.967879926378373e-06,
+              "relativeDifferencePercent": -40.09063426583398
+            },
+            {
+              "mean": 0.0002271810662932694,
+              "seedMeanStandardError": 7.86723354940322e-06,
+              "referenceMean": 0.0003635881294030696,
+              "referenceSE": 2.810133764796774e-06,
+              "relativeDifferencePercent": -37.5169187546772
+            }
+          ]
+        },
+        {
+          "x": 185,
+          "y": 180,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.005981509864795953,
+              "seedMeanStandardError": 0.0006191251807323266,
+              "referenceMean": 0.006395362783223391,
+              "referenceSE": 2.961923564726021e-05,
+              "relativeDifferencePercent": -6.471140613212367
+            },
+            {
+              "mean": 0.0012136381992604584,
+              "seedMeanStandardError": 0.00016048651429928637,
+              "referenceMean": 0.0012605144875124097,
+              "referenceSE": 6.937853868294042e-06,
+              "relativeDifferencePercent": -3.718821855388621
+            },
+            {
+              "mean": 0.0008261949406005442,
+              "seedMeanStandardError": 0.00010913039638866754,
+              "referenceMean": 0.0008530330378562212,
+              "referenceSE": 4.458441253518686e-06,
+              "relativeDifferencePercent": -3.1461966963348242
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.00332530215382576,
+              "seedMeanStandardError": 0.00022414486019135138,
+              "referenceMean": 0.006395362783223391,
+              "referenceSE": 2.961923564726021e-05,
+              "relativeDifferencePercent": -48.00447970600127
+            },
+            {
+              "mean": 0.0005303205689415336,
+              "seedMeanStandardError": 5.1300990382733926e-05,
+              "referenceMean": 0.0012605144875124097,
+              "referenceSE": 6.937853868294042e-06,
+              "relativeDifferencePercent": -57.92824484008061
+            },
+            {
+              "mean": 0.0003712340258061886,
+              "seedMeanStandardError": 3.307397939942717e-05,
+              "referenceMean": 0.0008530330378562212,
+              "referenceSE": 4.458441253518686e-06,
+              "relativeDifferencePercent": -56.48069777705842
+            }
+          ]
+        },
+        {
+          "x": 122,
+          "y": 45,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.004035117133753374,
+              "seedMeanStandardError": 0.0006842691995999334,
+              "referenceMean": 0.004727968014776707,
+              "referenceSE": 4.375225034891628e-05,
+              "relativeDifferencePercent": -14.65430558874148
+            },
+            {
+              "mean": 0.0003887781349476427,
+              "seedMeanStandardError": 6.691674515886588e-05,
+              "referenceMean": 0.00045552494702860713,
+              "referenceSE": 4.446026196092134e-06,
+              "relativeDifferencePercent": -14.652723745725549
+            },
+            {
+              "mean": 0.00022194994380697608,
+              "seedMeanStandardError": 3.8526076787773226e-05,
+              "referenceMean": 0.0002485036093275994,
+              "referenceSE": 2.34942558563489e-06,
+              "relativeDifferencePercent": -10.68542448637756
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.006325418129563332,
+              "seedMeanStandardError": 0.00010963159742342407,
+              "referenceMean": 0.004727968014776707,
+              "referenceSE": 4.375225034891628e-05,
+              "relativeDifferencePercent": 33.787244537060815
+            },
+            {
+              "mean": 0.000567696406506002,
+              "seedMeanStandardError": 1.1257953496356583e-05,
+              "referenceMean": 0.00045552494702860713,
+              "referenceSE": 4.446026196092134e-06,
+              "relativeDifferencePercent": 24.624657817116315
+            },
+            {
+              "mean": 0.0003173184231854975,
+              "seedMeanStandardError": 6.2370794202823375e-06,
+              "referenceMean": 0.0002485036093275994,
+              "referenceSE": 2.34942558563489e-06,
+              "relativeDifferencePercent": 27.691675804668225
+            }
+          ]
+        },
+        {
+          "x": 196,
+          "y": 141,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.006828621320892125,
+              "seedMeanStandardError": 0.0005194625013800933,
+              "referenceMean": 0.007301318924874067,
+              "referenceSE": 3.082253533648327e-05,
+              "relativeDifferencePercent": -6.47413993068513
+            },
+            {
+              "mean": 0.0003153859288431704,
+              "seedMeanStandardError": 6.695759862289313e-05,
+              "referenceMean": 0.00042346856207586825,
+              "referenceSE": 2.425079401291441e-06,
+              "relativeDifferencePercent": -25.52317761273004
+            },
+            {
+              "mean": 6.150035187602043e-05,
+              "seedMeanStandardError": 1.6779982698814337e-05,
+              "referenceMean": 8.957552927313372e-05,
+              "referenceSE": 5.703285523850354e-07,
+              "relativeDifferencePercent": -31.34246330993642
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.005532320588827133,
+              "seedMeanStandardError": 5.215492895182432e-05,
+              "referenceMean": 0.007301318924874067,
+              "referenceSE": 3.082253533648327e-05,
+              "relativeDifferencePercent": -24.228476447184445
+            },
+            {
+              "mean": 0.00033848383463919163,
+              "seedMeanStandardError": 4.0899914322415146e-06,
+              "referenceMean": 0.00042346856207586825,
+              "referenceSE": 2.425079401291441e-06,
+              "relativeDifferencePercent": -20.068721753529097
+            },
+            {
+              "mean": 7.93427461758256e-05,
+              "seedMeanStandardError": 9.917734335215447e-07,
+              "referenceMean": 8.957552927313372e-05,
+              "referenceSE": 5.703285523850354e-07,
+              "relativeDifferencePercent": -11.42363676814716
+            }
+          ]
+        },
+        {
+          "x": 134,
+          "y": 150,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0021018306142650545,
+              "seedMeanStandardError": 0.00012893790449572515,
+              "referenceMean": 0.0013919802149757743,
+              "referenceSE": 1.1029699635400902e-05,
+              "relativeDifferencePercent": 50.99572477053018
+            },
+            {
+              "mean": 2.3580301785841584e-05,
+              "seedMeanStandardError": 1.4061986784052056e-06,
+              "referenceMean": 1.6027061064960435e-05,
+              "referenceSE": 9.925063437776771e-08,
+              "relativeDifferencePercent": 47.128046060762884
+            },
+            {
+              "mean": 1.5948957297950983e-05,
+              "seedMeanStandardError": 9.394571283465556e-07,
+              "referenceMean": 1.2171549315098673e-05,
+              "referenceSE": 1.051555358344558e-07,
+              "relativeDifferencePercent": 31.03473424017169
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.004376253113150597,
+              "seedMeanStandardError": 2.5910339113987577e-05,
+              "referenceMean": 0.0013919802149757743,
+              "referenceSE": 1.1029699635400902e-05,
+              "relativeDifferencePercent": 214.39046805897019
+            },
+            {
+              "mean": 9.943961049430072e-05,
+              "seedMeanStandardError": 7.251291307753559e-07,
+              "referenceMean": 1.6027061064960435e-05,
+              "referenceSE": 9.925063437776771e-08,
+              "relativeDifferencePercent": 520.4481912888137
+            },
+            {
+              "mean": 8.461929974146187e-05,
+              "seedMeanStandardError": 7.411289811909129e-07,
+              "referenceMean": 1.2171549315098673e-05,
+              "referenceSE": 1.051555358344558e-07,
+              "relativeDifferencePercent": 595.2220917060456
+            }
+          ]
+        },
+        {
+          "x": 141,
+          "y": 157,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.005103662522742525,
+              "seedMeanStandardError": 0.0004172328100448109,
+              "referenceMean": 0.006199366878718138,
+              "referenceSE": 3.437889245105907e-05,
+              "relativeDifferencePercent": -17.674455753490992
+            },
+            {
+              "mean": 0.0002934034273494035,
+              "seedMeanStandardError": 3.0279853319020963e-05,
+              "referenceMean": 0.0003781422274187207,
+              "referenceSE": 2.7449689241620945e-06,
+              "relativeDifferencePercent": -22.40924020778169
+            },
+            {
+              "mean": 7.612191257067025e-05,
+              "seedMeanStandardError": 8.685478997273998e-06,
+              "referenceMean": 9.649994899518788e-05,
+              "referenceSE": 7.665407224521914e-07,
+              "relativeDifferencePercent": -21.11714735262069
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.005438273772597313,
+              "seedMeanStandardError": 6.41964778745728e-05,
+              "referenceMean": 0.006199366878718138,
+              "referenceSE": 3.437889245105907e-05,
+              "relativeDifferencePercent": -12.276948937053367
+            },
+            {
+              "mean": 0.0003382728318683803,
+              "seedMeanStandardError": 5.459952814550866e-06,
+              "referenceMean": 0.0003781422274187207,
+              "referenceSE": 2.7449689241620945e-06,
+              "relativeDifferencePercent": -10.543492014234268
+            },
+            {
+              "mean": 9.333310299552977e-05,
+              "seedMeanStandardError": 1.3274060171189485e-06,
+              "referenceMean": 9.649994899518788e-05,
+              "referenceSE": 7.665407224521914e-07,
+              "relativeDifferencePercent": -3.281707433665093
+            }
+          ]
+        },
+        {
+          "x": 16,
+          "y": 16,
+          "referenceConverged": false,
+          "raw": [
+            {
+              "mean": 0.0005308478721417487,
+              "seedMeanStandardError": 1.95779332033099e-05,
+              "referenceMean": 0.0005335200112313032,
+              "referenceSE": 6.761316853953758e-06,
+              "relativeDifferencePercent": -0.5008507709743704
+            },
+            {
+              "mean": 5.193080869503319e-05,
+              "seedMeanStandardError": 2.3090481415718708e-06,
+              "referenceMean": 5.695326763088815e-05,
+              "referenceSE": 1.3190685876907082e-06,
+              "relativeDifferencePercent": -8.81856150626038
+            },
+            {
+              "mean": 5.1871815230697393e-05,
+              "seedMeanStandardError": 2.4623760541314693e-06,
+              "referenceMean": 5.6361444876529276e-05,
+              "referenceSE": 8.455856459477218e-07,
+              "relativeDifferencePercent": -7.965781671614858
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0005713494028896093,
+              "seedMeanStandardError": 5.935274232361938e-06,
+              "referenceMean": 0.0005335200112313032,
+              "referenceSE": 6.761316853953758e-06,
+              "relativeDifferencePercent": 7.090529101429621
+            },
+            {
+              "mean": 6.210888386704028e-05,
+              "seedMeanStandardError": 8.860337498181374e-07,
+              "referenceMean": 5.695326763088815e-05,
+              "referenceSE": 1.3190685876907082e-06,
+              "relativeDifferencePercent": 9.052362490534293
+            },
+            {
+              "mean": 6.199919153004885e-05,
+              "seedMeanStandardError": 6.213252233823091e-07,
+              "referenceMean": 5.6361444876529276e-05,
+              "referenceSE": 8.455856459477218e-07,
+              "relativeDifferencePercent": 10.00284266287026
+            }
+          ]
+        },
+        {
+          "x": 128,
+          "y": 128,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0039030475018080324,
+              "seedMeanStandardError": 9.854028006661152e-05,
+              "referenceMean": 0.0034438620787113905,
+              "referenceSE": 1.739100116537884e-05,
+              "relativeDifferencePercent": 13.333444040490082
+            },
+            {
+              "mean": 9.286639397032559e-05,
+              "seedMeanStandardError": 4.0459112481542615e-06,
+              "referenceMean": 8.144342427840456e-05,
+              "referenceSE": 5.113972747494699e-07,
+              "relativeDifferencePercent": 14.025650067061246
+            },
+            {
+              "mean": 9.102022158913314e-05,
+              "seedMeanStandardError": 4.870166497012122e-06,
+              "referenceMean": 7.947362610138953e-05,
+              "referenceSE": 4.797003612111439e-07,
+              "relativeDifferencePercent": 14.528839382530379
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.003768889233469963,
+              "seedMeanStandardError": 2.915877610256881e-05,
+              "referenceMean": 0.0034438620787113905,
+              "referenceSE": 1.739100116537884e-05,
+              "relativeDifferencePercent": 9.437867932277634
+            },
+            {
+              "mean": 9.031267836689949e-05,
+              "seedMeanStandardError": 7.096072413168001e-07,
+              "referenceMean": 8.144342427840456e-05,
+              "referenceSE": 5.113972747494699e-07,
+              "relativeDifferencePercent": 10.890080036635542
+            },
+            {
+              "mean": 8.79256404004991e-05,
+              "seedMeanStandardError": 6.14136902695602e-07,
+              "referenceMean": 7.947362610138953e-05,
+              "referenceSE": 4.797003612111439e-07,
+              "relativeDifferencePercent": 10.634992655710484
+            }
+          ]
+        },
+        {
+          "x": 240,
+          "y": 32,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0005324372905306518,
+              "seedMeanStandardError": 2.1421139224539135e-05,
+              "referenceMean": 0.000540928216651082,
+              "referenceSE": 4.987743068340933e-06,
+              "relativeDifferencePercent": -1.56969554537163
+            },
+            {
+              "mean": 1.160020474344492e-05,
+              "seedMeanStandardError": 1.2181782516900568e-06,
+              "referenceMean": 1.0615668543323409e-05,
+              "referenceSE": 1.620875593744131e-07,
+              "relativeDifferencePercent": 9.274368317958848
+            },
+            {
+              "mean": 1.6846839571371675e-05,
+              "seedMeanStandardError": 1.185485245665857e-06,
+              "referenceMean": 1.542106838314794e-05,
+              "referenceSE": 1.594222567291581e-07,
+              "relativeDifferencePercent": 9.245605769972531
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.0006378872785717249,
+              "seedMeanStandardError": 4.471192683617021e-06,
+              "referenceMean": 0.000540928216651082,
+              "referenceSE": 4.987743068340933e-06,
+              "relativeDifferencePercent": 17.924570938621407
+            },
+            {
+              "mean": 1.0539224604144692e-05,
+              "seedMeanStandardError": 1.4894886267524492e-07,
+              "referenceMean": 1.0615668543323409e-05,
+              "referenceSE": 1.620875593744131e-07,
+              "relativeDifferencePercent": -0.7201048042027924
+            },
+            {
+              "mean": 1.5128578525036573e-05,
+              "seedMeanStandardError": 1.6920453279714414e-07,
+              "referenceMean": 1.542106838314794e-05,
+              "referenceSE": 1.594222567291581e-07,
+              "relativeDifferencePercent": -1.8966899753262045
+            }
+          ]
+        },
+        {
+          "x": 32,
+          "y": 240,
+          "referenceConverged": true,
+          "raw": [
+            {
+              "mean": 0.0004484293458517641,
+              "seedMeanStandardError": 3.4163597492820734e-05,
+              "referenceMean": 0.00042419901001267135,
+              "referenceSE": 4.42753071183688e-06,
+              "relativeDifferencePercent": 5.712020836250642
+            },
+            {
+              "mean": 3.87801555916667e-05,
+              "seedMeanStandardError": 4.1686268428680884e-06,
+              "referenceMean": 4.2840245441766456e-05,
+              "referenceSE": 3.969351212163019e-07,
+              "relativeDifferencePercent": -9.477279619274626
+            },
+            {
+              "mean": 4.8790592700242996e-05,
+              "seedMeanStandardError": 4.56749471168993e-06,
+              "referenceMean": 5.431771569419652e-05,
+              "referenceSE": 4.841891723117442e-07,
+              "relativeDifferencePercent": -10.17554387793237
+            }
+          ],
+          "filtered": [
+            {
+              "mean": 0.000418204115703702,
+              "seedMeanStandardError": 5.98425286207237e-06,
+              "referenceMean": 0.00042419901001267135,
+              "referenceSE": 4.42753071183688e-06,
+              "relativeDifferencePercent": -1.4132268504799872
+            },
+            {
+              "mean": 4.203864955343306e-05,
+              "seedMeanStandardError": 4.801548037242324e-07,
+              "referenceMean": 4.2840245441766456e-05,
+              "referenceSE": 3.969351212163019e-07,
+              "relativeDifferencePercent": -1.8711281414645953
+            },
+            {
+              "mean": 5.197510472498834e-05,
+              "seedMeanStandardError": 6.150571921119823e-07,
+              "referenceMean": 5.431771569419652e-05,
+              "referenceSE": 4.841891723117442e-07,
+              "relativeDifferencePercent": -4.312793605675269
+            }
+          ]
+        }
+      ],
+      "rawTemporalVariance": 4.544669378134422e-06,
+      "filteredTemporalVariance": 1.276398341204097e-08,
+      "originalFullGatePassingSegments": 0,
+      "originalPhaseZeroGatePassingSegments": 0,
+      "selectedConvergedComponentCount": 45,
+      "selectedRawMeanAbsoluteRelativeError": 0.13950201950970267,
+      "selectedFilteredMeanAbsoluteRelativeError": 0.46454092168909766
+    }
+  ],
+  "gpu": [
+    {
+      "policy": "legacy",
+      "summary": [
+        {
+          "name": "GI.Composite",
+          "count": 40,
+          "mean": 0.014975999999999993,
+          "median": 0.01536,
+          "p95": 0.016384
+        },
+        {
+          "name": "GI.Total",
+          "count": 40,
+          "mean": 1.1404800000000002,
+          "median": 1.043456,
+          "p95": 1.611776
+        },
+        {
+          "name": "GI.Resolve",
+          "count": 40,
+          "mean": 0.008960000000000001,
+          "median": 0.008192,
+          "p95": 0.02048
+        },
+        {
+          "name": "GI.NRD",
+          "count": 40,
+          "mean": 0.13964799999999994,
+          "median": 0.109568,
+          "p95": 0.390144
+        },
+        {
+          "name": "GI.Final",
+          "count": 40,
+          "mean": 0.028467200000000015,
+          "median": 0.027648,
+          "p95": 0.03584
+        },
+        {
+          "name": "GI.FinalVisibility",
+          "count": 40,
+          "mean": 0.09131519999999999,
+          "median": 0.090112,
+          "p95": 0.100352
+        },
+        {
+          "name": "GI.Spatial",
+          "count": 40,
+          "mean": 0.3195392000000001,
+          "median": 0.282624,
+          "p95": 0.672768
+        },
+        {
+          "name": "GI.Temporal",
+          "count": 40,
+          "mean": 0.11448320000000003,
+          "median": 0.114688,
+          "p95": 0.12288
+        },
+        {
+          "name": "GI.ShadeSecondary",
+          "count": 40,
+          "mean": 0.2080768,
+          "median": 0.197632,
+          "p95": 0.385024
+        },
+        {
+          "name": "GI.PresampleEnvironment",
+          "count": 40,
+          "mean": 0.008908800000000003,
+          "median": 0.009216,
+          "p95": 0.011264
+        },
+        {
+          "name": "GI.GenerateSecondary",
+          "count": 40,
+          "mean": 0.22026240000000002,
+          "median": 0.195584,
+          "p95": 0.43008
+        },
+        {
+          "name": "GI.AS",
+          "count": 40,
+          "mean": 0.0,
+          "median": 0.0,
+          "p95": 0.0
+        }
+      ]
+    },
+    {
+      "policy": "packed-spatial",
+      "summary": [
+        {
+          "name": "GI.Composite",
+          "count": 40,
+          "mean": 0.014310399999999992,
+          "median": 0.01536,
+          "p95": 0.016384
+        },
+        {
+          "name": "GI.Total",
+          "count": 40,
+          "mean": 1.184,
+          "median": 1.056768,
+          "p95": 1.793024
+        },
+        {
+          "name": "GI.Resolve",
+          "count": 40,
+          "mean": 0.008780799999999998,
+          "median": 0.008192,
+          "p95": 0.022528
+        },
+        {
+          "name": "GI.NRD",
+          "count": 40,
+          "mean": 0.14289920000000006,
+          "median": 0.108544,
+          "p95": 0.560128
+        },
+        {
+          "name": "GI.Final",
+          "count": 40,
+          "mean": 0.04597759999999999,
+          "median": 0.04608,
+          "p95": 0.049152
+        },
+        {
+          "name": "GI.FinalVisibility",
+          "count": 40,
+          "mean": 0.09087999999999999,
+          "median": 0.091136,
+          "p95": 0.09728
+        },
+        {
+          "name": "GI.Spatial",
+          "count": 40,
+          "mean": 0.3185664,
+          "median": 0.282624,
+          "p95": 0.518144
+        },
+        {
+          "name": "GI.Temporal",
+          "count": 40,
+          "mean": 0.11358720000000003,
+          "median": 0.113664,
+          "p95": 0.121856
+        },
+        {
+          "name": "GI.ShadeSecondary",
+          "count": 40,
+          "mean": 0.2360320000000001,
+          "median": 0.200704,
+          "p95": 0.53248
+        },
+        {
+          "name": "GI.PresampleEnvironment",
+          "count": 40,
+          "mean": 0.008576000000000004,
+          "median": 0.008192,
+          "p95": 0.011264
+        },
+        {
+          "name": "GI.GenerateSecondary",
+          "count": 40,
+          "mean": 0.21783039999999992,
+          "median": 0.195584,
+          "p95": 0.492544
+        },
+        {
+          "name": "GI.AS",
+          "count": 40,
+          "mean": 0.0,
+          "median": 0.0,
+          "p95": 0.0
+        }
+      ]
+    },
+    {
+      "policy": "packed-temporal",
+      "summary": [
+        {
+          "name": "GI.Composite",
+          "count": 40,
+          "mean": 0.014387199999999994,
+          "median": 0.01536,
+          "p95": 0.018432
+        },
+        {
+          "name": "GI.Total",
+          "count": 40,
+          "mean": 1.1401215999999998,
+          "median": 1.01888,
+          "p95": 1.552384
+        },
+        {
+          "name": "GI.Resolve",
+          "count": 40,
+          "mean": 0.022528,
+          "median": 0.008192,
+          "p95": 0.021504
+        },
+        {
+          "name": "GI.NRD",
+          "count": 40,
+          "mean": 0.12152320000000008,
+          "median": 0.108544,
+          "p95": 0.305152
+        },
+        {
+          "name": "GI.Final",
+          "count": 40,
+          "mean": 0.046643199999999996,
+          "median": 0.04608,
+          "p95": 0.054272
+        },
+        {
+          "name": "GI.FinalVisibility",
+          "count": 40,
+          "mean": 0.08855039999999995,
+          "median": 0.088064,
+          "p95": 0.095232
+        },
+        {
+          "name": "GI.Spatial",
+          "count": 40,
+          "mean": 0.3219199999999999,
+          "median": 0.26624,
+          "p95": 0.792576
+        },
+        {
+          "name": "GI.Temporal",
+          "count": 40,
+          "mean": 0.09797119999999998,
+          "median": 0.098304,
+          "p95": 0.1024
+        },
+        {
+          "name": "GI.ShadeSecondary",
+          "count": 40,
+          "mean": 0.2081792,
+          "median": 0.198656,
+          "p95": 0.375808
+        },
+        {
+          "name": "GI.PresampleEnvironment",
+          "count": 40,
+          "mean": 0.008780800000000002,
+          "median": 0.009216,
+          "p95": 0.012288
+        },
+        {
+          "name": "GI.GenerateSecondary",
+          "count": 40,
+          "mean": 0.22328320000000001,
+          "median": 0.195584,
+          "p95": 0.487424
+        },
+        {
+          "name": "GI.AS",
+          "count": 40,
+          "mean": 0.0,
+          "median": 0.0,
+          "p95": 0.0
+        }
+      ]
+    }
+  ],
+  "inputs": {
+    "matrixSha256": "BE4E4FE4FC5ABD1D1AB712B6791A8C518102C73C3E9F76EEC708609A428AF7A8",
+    "noReuseSourceSha256": "27EED5DCCB2032684D47CC47228904925C899F13949AD38AA99E73C0AC0E0309",
+    "gpuReportSha256": "4A68FAAB1C4956846F7C2001AC2A6A81EAD60A4844BFB52175236F6B2C87D0BE"
+  }
+}

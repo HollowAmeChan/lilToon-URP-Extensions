@@ -37,3 +37,5 @@
 步骤018静态owned镜像实际157功能checks完成，但实例3→5增长有scratch debug错误；原Ho及直接Unity API均能复现，初始5干净。多轮无收益方案已撤回、F39搁置，产品保留017实现，static非零base仍未交付。仅接纳最小复现及[失败/恢复证据](../../Tests~/RTGI/StaticMesh/README.md)，不声称具体上游根因。下一项转合法AS古堡独立seed/T/S/none质量对照，所有原质量/应用/预算缺口保留，goal active。
 
 步骤019完成RG256²四模式×8seed矩阵，实际exit0/API0/源漂移0。TS raw相对none全图RGB高25.70/22.21/18.75%，T或S单独仅约2.4～3.0%；所有32段filtered/raw仍原5%失败。当前只有定位收益，Runtime不改。两次byte-gate拒绝、精度合同与最终真实重跑保留F40和[完整证据](../../Tests~/RTGI/Seeds/README.md)。下一项020仅Editor尝试pre-spatial history，同帧T/S保持，再评质量/方差/成本，不关闭复用当完整通过；正常camera/1080/Player等目标仍active。
+
+步骤020 pre-spatial packed history隔离候选有收益：filtered相对finite none从+15.70/+11.58/+8.08%降到+1.22/−1.87/−3.28%，时间方差约降55%；原5%仍全失败、局部仍不足。额外codec假说在此域被反事实控制否定。256 GPU Final约+.018ms，总耗时相近但噪声大。四进程debug0，Runtime尚未改，下一项021直接生产接入及双路径/动态/Player回归。见[F41/证据](../../Tests~/RTGI/HistoryFeedback/README.md)和最新交接，不重跑纯诊断凑样本，目标active。

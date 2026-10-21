@@ -1,0 +1,23 @@
+{
+  "results/gpu-cost.json": {
+    "path": "results/gpu-cost.json.gz",
+    "rawSha256": "4A68FAAB1C4956846F7C2001AC2A6A81EAD60A4844BFB52175236F6B2C87D0BE",
+    "archiveSha256": "AC5147FCC3378A9B8C573A79AA356B1A7E292D02EC017B1F65462320FA84448C",
+    "rawBytes": 683279,
+    "archiveBytes": 32025
+  },
+  "results/matrix.json": {
+    "path": "results/matrix.json.gz",
+    "rawSha256": "BE4E4FE4FC5ABD1D1AB712B6791A8C518102C73C3E9F76EEC708609A428AF7A8",
+    "archiveSha256": "E9B44319DDA211D2CC591B0764FF6578F3BCA224FC7F2B0CEC2558F54D3BAA21",
+    "rawBytes": 8499795,
+    "archiveBytes": 820399
+  },
+  "results/qualification.json": {
+    "path": "results/qualification.json.gz",
+    "rawSha256": "F919C7312F537EED95E21F360054FF6C03C00A64EE696D39BAEFBD525BA5E817",
+    "archiveSha256": "227C29D1F76E1859878976FD4D7162E47F141D06E7466AC9EC2DBA0F44A745B7",
+    "rawBytes": 2840711,
+    "archiveBytes": 231624
+  }
+}

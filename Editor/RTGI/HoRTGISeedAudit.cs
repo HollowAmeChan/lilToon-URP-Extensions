@@ -191,10 +191,12 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             segments.Add(current); current = null; spatial = null;
         }
 
-        internal Report Snapshot(bool terminal)
+        internal Report Snapshot(bool terminal, int[] testedModes = null)
         {
             report.segments = segments.ToArray(); report.terminal = terminal;
-            report.functionalPass = terminal && segments.Count == report.seedCount * Modes.Length;
+            var requiredModes = (testedModes ?? new[] { 0, 1, 2, 3 }).Select(i => Modes[i]).OrderBy(x => x).ToArray();
+            if (requiredModes.Length == 0 || requiredModes.Distinct().Count() != requiredModes.Length) throw new Exception("Invalid selected mode contract.");
+            report.functionalPass = terminal && segments.Count == report.seedCount * requiredModes.Length;
             if (terminal)
             {
                 if (!report.functionalPass) throw new Exception("Seed matrix incomplete.");
@@ -202,6 +204,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 for (int seed = 0; seed < report.seedCount; seed++)
                 {
                     var matched = segments.Where(s => s.seed == Seeds[seed]).ToArray();
+                    if (!matched.Select(s => s.mode).OrderBy(x => x).SequenceEqual(requiredModes)) throw new Exception("Selected mode/seed matrix differs from its contract.");
                     if (matched.Select(s => s.firstRisHash).Distinct().Count() != 1 || matched.Select(s => s.lastRisHash).Distinct().Count() != 1)
                         throw new Exception("Paired modes changed the environment RIS proposal.");
                     foreach (var segment in matched.Skip(1))

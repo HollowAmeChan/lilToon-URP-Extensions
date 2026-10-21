@@ -311,3 +311,21 @@ Tests~/RTGI/Seeds：四真实attempt metadata、完整日志、239精确source h
 019提交白名单：Editor/RTGI/HoRTGISeedAudit.cs/meta与HoRTGICastleValidation.cs；Tests~/RTGI/Seeds；RTGI README/过程/禁试/交接/实施规划。其它Ho-GD plan仍未跟踪，不纳入。每步review、实证、收益复盘、过滤提交、失败禁令/交接继续。
 
 019已按白名单过滤提交`4019bd7`，Seeds verifier提交后再次通过；Runtime无diff、index空、四个本任务进程均已结束，仅他人Ho-GD plan未跟踪。下一轮直接020仅Editor的pre-spatial history候选，不重跑19矩阵凑样本；原5%/static/HDR/正常camera/1080/完整预算继续未完成，goal active。
+
+### 020终态（2026-10-21，待过滤提交）：候选收益已证，下一轮直接生产接入
+
+020已做完，不要重跑纯诊断或继续codec猜测。新增Editor/RTGI/HoRTGIHistoryFeedbackAudit.cs/meta，Castle加入口，SeedAudit.Snapshot增加显式selected-modes合同（默认四模式不变）；Runtime/Shader/SDK/NRD/Player均未改。参考packed Spatial反馈与Ho额外repack两变量拆legacy/packed Spatial1→0/packed Temporal2→0。自有Assets/HoRTGIHistoryFeedback的三compute，includes等义规范化/只替换一处Final历史store；8kernel、真实pass绑定与finally原shader重绑定过。
+
+质量：40296资格24段三项×四模式×2seed×16warm/16观察，总803请求；10500矩阵24段三项×TS×8原seed×64warm/256观察，总7715请求。四进程（含30436 GPU资格/35936成本）全actual exit0/debug0/compile0/source drift0。96端点×65536=6291456 packet检查无差，三个policy同seed首尾secondary/RIS全bitwise同；legacy本身也exact packed Spatial，因此codec假说在此域拒绝，不能认定偏亮根因。none/T/S小资格逐帧full与选点publication三项全同。
+
+**实测收益：** pre-S raw相对019 none全图RGB+7.73/+6.77/+6.28%（原+25.70/+22.21/+18.75）；filtered相对none+1.22/−1.87/−3.28%（原+15.70/+11.58/+8.08）。raw/filtered平均时间方差约−9.17%/−55.04%；15收敛选点45分量非加权相对L1 raw .41785→.13950，filtered .65422→.46454（选择偏差/暗分量放大，非全图指标）。(128,128)红raw/ref2.1819→1.1333、filtered1.7208→1.0944；(185,180)filtered仍仅.520。全24段full/phase0原5%均失败、15/16参考与暗点不确定仍保留，不冒称全面画质修复。
+
+成本：known-load24样本empty/128/2048 median0/.006144/.039936ms合格；3项×40帧×12marker=1440完整fence/slot/freq区间。legacy/pre-S Final median .027648/.046080ms（+.018432）；GI.Total1.043456/1.018880ms，p95大且顺序固定，不称总性能提升。无新reservoir，多另一buffer32B/receiver读取（非DRAM/VRAM实测），无1080/新Player证明。已有Editor sidecar SHA/meta绑定，无产品native依赖变化。
+
+证据Tests~/RTGI/HistoryFeedback约7.03MB：四run精确日志/源；246source hash中234共用既有blob；generated源码/单行patch；gzip原JSON（解压逐字节SHA原样）；12张2048观察帧/policy raw/filtered时均EXR与×100PNG及image SHA；analysis/verify均过。已实际查看原/候选filtered预览，不能当正常相机合成或全场景真值。capture DTO沿用019的旧protocol说明，矩阵仅TS，actual mode字段/24段范围为准。大JSON用Python+gzip只取需要字段。当前原版结果逐帧与019 TS完全一致。旧Seeds当前source SHA因合法Editor扩展过时，用4019bd7历史核对，不回滚新源。
+
+**021直接开始生产实施：** 改Runtime/RTGI/Shaders/HoRTGI.compute的HoGIFinal末尾历史写：S flag开时原样copy packed buffer2（Temporal结果）到0，S关保留原RTXDI_StoreGIReservoir(reservoir,...0)，不引入未测HDR codec变化。当前帧读1、native final visibility、NRD/T/S参数和3-buffer allocation不变。必须Final后写，不能在Temporal读0时并行写0。无产品实现细节开关。候选当前S关复制1与旧store在此域相同，但生产仍保留旧store更窄变更。
+
+接着实际生产history源合同断言+原GI核心/环境/材质/Cutout/蒙皮RG/compat回归；动态响应与两独立Win64 Mono Release Player，必须新增S开启的新历史路径，不能只跑旧为了F23而S关闭的解析夹具。沿017 Player Build/RuntimeProbe扩展，给本轮独立输出/资产前缀，不覆盖旧payload；验证新增shader真实包含、nonreadable/skinned/Cutout原合同、无HoGIGpuProbe.dll。生产最终source绑定到实际验证，性能可作256局部证据而不宣布完整预算。若有硬退化则撤回；原5%/HDR/正常enabled-camera/static F39/1080与完整预算继续，goal active。
+
+**工具警告：** 020 Generate要求原HoRTGI.compute里单个legacy store，改生产后它会拒绝；不可原样调用错标baseline。旧020证据用本步历史源码/生成compute重现，后续若继续用该工具必须显式支持新默认与legacy反事实，所有SHA重记，不覆盖此轮结果。当前全部四进程结束、run active=null、Runtime无diff。白名单仅新Editor helper/meta、Castle/SeedAudit、Tests~/RTGI/HistoryFeedback及RTGI五文档；他人Ho-GD plan未跟踪不纳入。每步review/过滤/收益/禁试/交接继续。

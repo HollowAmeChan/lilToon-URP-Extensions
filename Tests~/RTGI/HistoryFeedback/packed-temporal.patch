@@ -1,0 +1,11 @@
+--- OriginalNormalized.compute
++++ PackedTemporal.compute
+@@ -80,7 +80,7 @@
+     _HoRTGINrdNormal[pixel]=NRD_FrontEnd_PackNormalAndRoughness(valid?surface.normal:float3(0,0,1),1,0);
+     _HoRTGINrdViewZ[pixel]=valid?surface.viewDepth:1e6;
+     #endif
+-    RTXDI_StoreGIReservoir(reservoir,HoGILayout(),pixel,0);
++    _HoRTGIReservoirs[RTXDI_ReservoirPositionToPointer(HoGILayout(),pixel,0)]=_HoRTGIReservoirs[RTXDI_ReservoirPositionToPointer(HoGILayout(),pixel,(_HoRTGIFlags.y>.5?2:1))];
+     HoRTDIPrimaryHistory history=(HoRTDIPrimaryHistory)0;
+     if(RAB_IsSurfaceValid(surface))
+     {

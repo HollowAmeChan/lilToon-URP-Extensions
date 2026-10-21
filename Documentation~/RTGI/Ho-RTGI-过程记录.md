@@ -417,3 +417,23 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **下一项020候选（尚未实施）：** 参考ReSTIRGIContext.cs已核对，其TS也反馈空间输出，Ho不是因此被证明索引集成错误。以019组合偏移为依据，Editor私有compute仅把Final写history0的值换为pre-spatial buffer2（当前帧照旧读1做T/S/最终可见性/NRD）。在Final写避免Temporal读0/写0竞态，保留当前T/S功能，不新增reservoir；有一次32 B/receiver额外读取要实测。先隔离生成original body单行候选/同seed配对，验证raw/reference、filtered、方差/细节与GPU成本，再决定是否可进入Runtime及双路径/Player/动态回归。禁止直接关闭T/S当完整交付，或同时改gain/sigma/Jacobian；F27/31/33/35/36/37/39继续。原质量、static base、HDR/正常camera/1080/完整预算未完，goal active。
 
 019已按白名单过滤提交`4019bd7`，Seeds verifier提交后再次通过；Runtime无diff、index空、四个本任务进程均已结束，仅他人Ho-GD plan未跟踪。下一轮直接020仅Editor的pre-spatial history候选，不重跑19矩阵凑样本；原5%/static/HDR/正常camera/1080/完整预算继续未完成，goal active。
+
+## 020：打包历史复制与pre-spatial反馈候选（进行中）
+
+**事前review：** 019的TS组合raw偏移支持检查反馈链。复查Pinned GI/Reservoir.hlsl与参考Context：Ho Final的load1→StoreGIReservoir0会额外decode/encode LogLuv/normal；参考TS直接保留packed Spatial1。不能先假定codec幂等，也不能把pre-S和避免重编码的收益混在一起。因此有界比较legacy、packed Spatial1→history0、packed Temporal2→history0三项；后者S关闭时仍复制1。当前帧T/S/可见性/NRD、gain/sigma/Jacobian/SDK不改，不新增reservoir。
+
+仅在自有项目Assets生成独立compute副本，include路径等义规范化，只替换Final历史store，reflection临时替换后恢复。先四模式×2seed×16warm/16观察小资格，检查真实绑定、全pixel history0与所选packed源一致、域/生成proposal；再TS×8既定seed×64warm/256观察，保留full/phase0/点/方差及同曝光mean images。依收益再做有效GPU成本/回归，不先进入生产；无收益撤回并记禁试。所有原5%/参考15点及不确定/静态base/正常camera/1080预算边界继续，goal active。
+
+### 020事后review（2026-10-21）：pre-spatial历史有实测收益，准备生产接入
+
+**三项隔离：** 复查参考TS保留packed Spatial，而Ho Final再编码历史，因此拆legacy、packed Spatial1→0、packed Temporal2→0，后者S关闭时复制1；当前帧T/S/final visibility/NRD不改。自有项目生成compute，只等义规范化三个include并替换一个store，8kernels/实际pass绑定/恢复后实际绑定均验证。Runtime/SDK/Shader/NRD参数未改。
+
+**真实执行：** 40296小资格三项×四模式×2seed×(16warm+16观察)，24段/803总请求；10500完整三项×TS×8既定seed×(64warm+256观察)，24段/7715总请求；GPU已知负载30436与成本35936。四Unity实际exit0，debug/compile/source drift全0。两质量组96个端点、6291456个pixel packet比较无差；legacy也与Spatial packed一致，三项同seed端点secondary/RIS全bitwise同，18灯/15instances/12Cutout/sky/primary/actualT/frame域过。小资格none/T/S的每帧fullRGB和选点记录三项完全相同。codec额外重编码在此域没有误差，拒绝其为本次偏亮根因，不泛化到任意HDR；packed Spatial无画质收益。
+
+**画质/噪声收益：** legacy full raw相对019 none约+25.70/+22.21/+18.75%，pre-S候选降至+7.73/+6.77/+6.28%；filtered相对none由+15.70/+11.58/+8.08%降为+1.22/−1.87/−3.28%。raw平均时间方差5.00366e−6→4.54467e−6，filtered2.83890e−8→1.27640e−8，约−9.17%/−55.04%。选择的15收敛点45分量非加权相对L1 raw .41785→.13950、filtered .65422→.46454（有选择偏差和暗分量放大，非全图验收）。(128,128)红raw/ref2.1819→1.1333，filtered1.7208→1.0944；(185,180)filtered仍约.520，局部未修好。所有24段full及原phase0的filtered/raw5%仍失败，不换掉旧门槛。参考15/16/暗点/共用模型边界继续。
+
+**成本：** 当前GPU资格empty/128/2048 median0/.006144/.039936ms，24真实interval全部完成fence。三项各40帧、12markers，共1440有效interval；legacy/pre-S Final median .027648/.046080ms，增加.018432ms；GI.Total median1.043456/1.018880ms，但p95达1.611776/1.552384且固定顺序，不声称总性能提升。无新reservoir allocation，多一次其它buffer的32 B/receiver读取；不说实际DRAM/VRAM、不推算1080合格。计时DLL仍Editor-only，无新Player/payload证明。
+
+**复审/接纳：** 接纳pre-S作为下一生产接入候选，未接纳完整画质/预算。12个原物理时均EXR/×100PNG均保留SHA，已查看原版/候选filtered预览，只说明形状/细节保留与亮度变化，不当普通相机合成。Tests~/RTGI/HistoryFeedback有四run/完整日志/246源hash（234共用旧blob）、生成源码与单处patch、gzip原始JSON/图片/可重算analysis/verifier，约7.03MB。verifier过含反事实控制、原版与019逐帧一致、packet/输入/计数、GPU1440区间及原5%失败。所有本任务进程结束、active=null，Runtime无diff，别人的Ho-GD plan不纳入。F41记录codec假说及禁止把subset/成本噪声当全面通过。
+
+**下一项021立即实施：** Runtime HoRTGI.compute Final仅在spatial flag开时直接packed-copy Temporal2→history0，S关保留旧store。不要改T/S当前输出、SDK/gain/NRD单位或加产品实验开关；Final后写避免Temporal读写0竞态。实际生产加history源断言，双路径、环境/材质/Cutout/蒙皮/真实应用帧响应及两独立Release Player验证，包含S开启的新历史路径，不能只沿旧S关闭的解析夹具。Win64 payload无GPU探针，旧fixture/default门槛保留，实测硬退化则撤回。020工具Generate依赖旧legacy store，生产改变后不可原样重跑错标baseline，须用本步历史版本或明确适配。原全5%/static F39/HDR/正常camera/1080/完整预算继续，goal active。

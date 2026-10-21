@@ -62,3 +62,11 @@ F01～F06主要来自DI/参考历史，不伪装为本轮GI实测失败。F08～
 8seed实测TS raw相对none fullRGB高25.70/22.21/18.75%，T或S单独约2.4～3.0%；TS filtered又比none raw高15.70/11.58/8.08%，原filtered/raw5%仍全失败。禁止按某固定256窗raw补gain/挑点/关闭复用便称默认通过；参考15/16且有事后选点偏差，不能升级为独立全图真值。SE按seed均值，不把相关帧/pixels当iid、不把±SE说成严格置信。
 
 下一项可做有机制的pre-spatial history候选，同帧T/S保留、history0只存Temporal结果；原参考也反馈Spatial，不能先认定索引bug。需要同输入/同seed的真实质量/方差/成本与回归收益才接纳；无收益就撤回，不继续堆任意混合权重或盲调Jacobian/NRD。证据Tests~/RTGI/Seeds。
+
+## F41 / 步骤020：打包编码归因、pre-S收益与成本边界
+
+不要只见Ho额外decode/encode就认定codec导致TS偏亮。三项实跑中legacy与packed Spatial的逐帧publication完全相同；legacy32个端点共2097152个pixel packet与源Spatial全bitwise相同。此域额外编码无误差，packed Spatial只增加Final成本，没有画质收益；无新HDR/gamut非幂等证据不沿此假说反复改codec/SDK。
+
+pre-S有收益：filtered相对finite none均值从+15.70/+11.58/+8.08%到+1.22/−1.87/−3.28%，filtered方差约降55%，但raw仍高6～8%、15选点filtered相对L1仍.4645、原5%全部失败。禁止子集/选择偏差当全图真值、删掉旧门槛、只测S关便声称新默认回归。下一步生产S开路径/动态/Player必须实际验证；S关保留原store以限定未测HDR行为。
+
+有效GPU Final约增加.018432ms，Total中位相近但顺序固定/p95波动大，不称总性能提升，不用256外推1080或将逻辑32B读取当DRAM/VRAM。证据Tests~/RTGI/HistoryFeedback，当前Runtime未接入。020 Generate以旧legacy store生成候选，生产改后不可原样调用并错标baseline，必须历史源码或显式适配。保留全部原失败与目标缺口，不能complete。

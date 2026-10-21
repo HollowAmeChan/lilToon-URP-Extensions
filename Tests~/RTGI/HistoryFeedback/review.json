@@ -1,0 +1,23 @@
+{
+  "step": 20,
+  "goalStatus": "active",
+  "candidateAcceptedForIntegration": true,
+  "productionRuntimeChanged": false,
+  "qualityQualified": false,
+  "originalFivePercentGateRetained": true,
+  "codecRoundtripCauseRejectedInTestedDomain": true,
+  "shaderRestorationValidated": true,
+  "qualificationPid": 40296,
+  "matrixPid": 10500,
+  "gpuQualificationPid": 30436,
+  "gpuCostPid": 35936,
+  "qualifiedProcesses": 4,
+  "matrixSegments": 24,
+  "qualifiedFourModeControlSegments": 24,
+  "referenceConvergedPoints": 15,
+  "referenceUnresolvedPoints": 1,
+  "selectedConvergedComponentCount": 45,
+  "baselineGitRevision": "2afa47b976157c798f2e1af672063eff341faca2",
+  "candidatePatchSha256": "68BF6498E6667AD4C8FEF69585BC03E0FA7E728235595A15FA6A2C5FB4759E3F",
+  "next": "Integrate pre-spatial packed history in Runtime Final only while spatial is enabled; preserve the original non-spatial write. Validate actual production packed-history contract, RG/compat, temporal responses/Cutout/skinning and two Release Players. Keep the original 5% and all other unresolved goals open."
+}
