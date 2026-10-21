@@ -24,6 +24,10 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void BuildSkinnedCompatibility()=>Build(true,true,true);
         public static void BuildSkinnedBaseVertex()=>Build(false,true,true,"BaseVertex",true);
         public static void BuildSkinnedBaseVertexCompatibility()=>Build(true,true,true,"BaseVertex",true);
+        public static void BuildPrecisionOutput()=>Build(false,true,true,"PrecisionOutput",true,true,true);
+        public static void BuildPrecisionOutputCompatibility()=>Build(true,true,true,"PrecisionOutput",true,true,true);
+        public static void BuildPrecisionPool()=>Build(false,true,true,"PrecisionPool",true,true,true);
+        public static void BuildPrecisionPoolCompatibility()=>Build(true,true,true,"PrecisionPool",true,true,true);
         public static void BuildHistoryFeedback()=>Build(false,true,true,"HistoryFeedback",true,true);
         public static void BuildHistoryFeedbackCompatibility()=>Build(true,true,true,"HistoryFeedback",true,true);
         public static void BuildSkinnedNoGpuProbe()=>Build(false,true,true,"NoGpuProbe");
@@ -49,14 +53,14 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
             AuditScripts();
         }
-        static void Build(bool compatibility,bool cutout=false,bool skinned=false,string suffix="",bool baseVertex=false,bool historyProbe=false)
+        static void Build(bool compatibility,bool cutout=false,bool skinned=false,string suffix="",bool baseVertex=false,bool historyProbe=false,bool precisionProbe=false)
         {
             try
             {
                 string root=Directory.GetParent(Application.dataPath).FullName;
                 if(!root.Replace('\\','/').EndsWith("/.codex-research/RTGIValidation"))throw new Exception("Dedicated GI project required");
                 var probeType=Type.GetType("HoRTGIRuntimeProbe, Assembly-CSharp");if(probeType==null)throw new Exception("Copy Tests~/RTGI/Dynamic/HoRTGIRuntimeProbe.cs into isolated Assets before launching Build");
-                string assets=historyProbe?(compatibility?"Assets/RTGIPlayerProbeHistoryFeedbackCompatibility/":"Assets/RTGIPlayerProbeHistoryFeedback/"):baseVertex?"Assets/RTGIPlayerProbeBaseVertex/":"Assets/RTGIPlayerProbe/";Directory.CreateDirectory(Path.Combine(root,assets));AssetDatabase.Refresh();
+                string assets=precisionProbe?("Assets/RTGIPlayerProbe"+suffix+(compatibility?"Compatibility/":"/")):historyProbe?(compatibility?"Assets/RTGIPlayerProbeHistoryFeedbackCompatibility/":"Assets/RTGIPlayerProbeHistoryFeedback/"):baseVertex?"Assets/RTGIPlayerProbeBaseVertex/":"Assets/RTGIPlayerProbe/";Directory.CreateDirectory(Path.Combine(root,assets));AssetDatabase.Refresh();
                 // Own isolated outputs only.
                 EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);RenderSettings.fog=false;
                 var renderer=ScriptableObject.CreateInstance<UniversalRendererData>();AssetDatabase.CreateAsset(renderer,assets+"Renderer.asset");
@@ -94,6 +98,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 if(skinned){Set(so,"blueBone",blueBone);Set(so,"blueSkin",blueSkin);so.ApplyModifiedPropertiesWithoutUndo();}
                 var baseVertexProperty=so.FindProperty("baseVertexProbe");if(baseVertex&&baseVertexProperty==null)throw new Exception("Copy the updated runtime probe before base-vertex build");if(baseVertexProperty!=null){baseVertexProperty.boolValue=baseVertex;so.ApplyModifiedPropertiesWithoutUndo();}
                 var historyProperty=so.FindProperty("historyProbe");if(historyProbe&&historyProperty==null)throw new Exception("Copy the updated runtime history probe before build");if(historyProperty!=null){historyProperty.boolValue=historyProbe;so.ApplyModifiedPropertiesWithoutUndo();}
+                var precisionProperty=so.FindProperty("precisionProbe");if(precisionProbe&&precisionProperty==null)throw new Exception("Copy the precision runtime probe before build");if(precisionProperty!=null){precisionProperty.boolValue=precisionProbe;so.ApplyModifiedPropertiesWithoutUndo();}
                 AssetDatabase.SaveAssets();EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(),assets+"Probe.unity");
                 string output=compatibility?"PlayerGIDynamicCompatibility":"PlayerGIDynamic";
                 if(cutout)output=compatibility?"PlayerGICutoutCompatibility":"PlayerGICutout";

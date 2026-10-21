@@ -1,0 +1,348 @@
+{
+  "productionPrecisionRetained": true,
+  "fullQualityQualified": false,
+  "stableBudgetQualified": false,
+  "scope": "GI-only four RGBA32F pools plus RGBA32F shared PrePass/final output; signal/normal/filtered remain original. Units64 and original thresholds retained. Full green and seven phases still fail; cost snapshots are not target-resolution or stable-budget proof.",
+  "qualityReportSha256": "64BB19ABE52710080D92BF5D0AA942B23362795288FF6A70E90FE45D36642F5C",
+  "full": {
+    "phaseX": -1,
+    "phaseY": -1,
+    "pixels": 65536,
+    "samples": 16777216,
+    "raw": {
+      "x": 0.0013282771687954664,
+      "y": 0.0001403264031978324,
+      "z": 0.00012816398520953953
+    },
+    "filtered": {
+      "x": 0.0012685777619481087,
+      "y": 0.00013322773156687617,
+      "z": 0.0001221050479216501
+    },
+    "relativeErrorPercent": {
+      "x": -4.494496822357178,
+      "y": -5.058689117431641,
+      "z": -4.727485179901123
+    },
+    "normalizedL1": 0.22080613456565693,
+    "rawVariance": 4.681431976413236e-06,
+    "filteredVariance": 5.536693133986326e-09,
+    "energyGatePass": false
+  },
+  "failingPhases": 7,
+  "additionalPayloadBytes256": 2621440,
+  "additionalPayloadProjection1080Bytes": 82944000,
+  "rangeReports": [
+    {
+      "name": "output32-rg",
+      "sha256": "B7433D3AE9D4D6EAE7E29A5E11C05EA6E1B5C7DFE7AF402AC3BC8580A3B57D5B",
+      "frames": 493,
+      "ranges": [
+        {
+          "amplitude": 9.999999747378752e-05,
+          "raw": {
+            "r": 0.0001005945450742729,
+            "g": 9.989738464355469e-05,
+            "b": 9.916377894114703e-05,
+            "a": 1.0
+          },
+          "filtered": {
+            "r": 9.916377894114703e-05,
+            "g": 9.916377894114703e-05,
+            "b": 9.5348346803803e-05,
+            "a": 1.0
+          },
+          "slowMomentMax": 2.3883247809997066e-12,
+          "slowMomentMean": 2.3883117705736367e-12,
+          "firstFrameReset": true,
+          "energyGatePass": true
+        },
+        {
+          "amplitude": 1.0,
+          "raw": {
+            "r": 1.0058705806732178,
+            "g": 1.0,
+            "b": 0.9921875,
+            "a": 1.0
+          },
+          "filtered": {
+            "r": 1.00543212890625,
+            "g": 0.9998899698257446,
+            "b": 0.9920811057090759,
+            "a": 1.0
+          },
+          "slowMomentMax": 0.00024447363102808595,
+          "slowMomentMean": 0.00024447147734463215,
+          "firstFrameReset": true,
+          "energyGatePass": true
+        },
+        {
+          "amplitude": 20000.0,
+          "raw": {
+            "r": 20102.517578125,
+            "g": 19974.55859375,
+            "b": 19833.388671875,
+            "a": 1.0
+          },
+          "filtered": {
+            "r": 20101.5625,
+            "g": 19972.1640625,
+            "b": 19817.6953125,
+            "a": 1.0
+          },
+          "slowMomentMax": 97653.0234375,
+          "slowMomentMean": 97653.140625,
+          "firstFrameReset": true,
+          "energyGatePass": true
+        }
+      ],
+      "checks": 67,
+      "poolStates": [
+        {
+          "label": "initial production",
+          "width": 64,
+          "height": 64,
+          "rgba32Count": 4,
+          "rgba16Count": 0,
+          "colorPoolBytes": 262144
+        },
+        {
+          "label": "default constructor control",
+          "width": 64,
+          "height": 64,
+          "rgba32Count": 0,
+          "rgba16Count": 4,
+          "colorPoolBytes": 131072
+        },
+        {
+          "label": "resize96",
+          "width": 96,
+          "height": 96,
+          "rgba32Count": 4,
+          "rgba16Count": 0,
+          "colorPoolBytes": 589824
+        },
+        {
+          "label": "resize64",
+          "width": 64,
+          "height": 64,
+          "rgba32Count": 4,
+          "rgba16Count": 0,
+          "colorPoolBytes": 262144
+        },
+        {
+          "label": "re-enabled",
+          "width": 64,
+          "height": 64,
+          "rgba32Count": 4,
+          "rgba16Count": 0,
+          "colorPoolBytes": 262144
+        },
+        {
+          "label": "final resolution32",
+          "width": 32,
+          "height": 32,
+          "rgba32Count": 4,
+          "rgba16Count": 0,
+          "colorPoolBytes": 65536
+        }
+      ]
+    },
+    {
+      "name": "final-range-compat",
+      "sha256": "B031C9E718C19B28EB8E0BED61E200A649AF8FB886F7C5A4A7F476FDE0F71770",
+      "frames": 493,
+      "ranges": [
+        {
+          "amplitude": 9.999999747378752e-05,
+          "raw": {
+            "r": 0.0001005945450742729,
+            "g": 9.989738464355469e-05,
+            "b": 9.916377894114703e-05,
+            "a": 1.0
+          },
+          "filtered": {
+            "r": 9.916377894114703e-05,
+            "g": 9.916377894114703e-05,
+            "b": 9.5348346803803e-05,
+            "a": 1.0
+          },
+          "slowMomentMax": 2.3883247809997066e-12,
+          "slowMomentMean": 2.3883117705736367e-12,
+          "firstFrameReset": true,
+          "energyGatePass": true
+        },
+        {
+          "amplitude": 1.0,
+          "raw": {
+            "r": 1.0058705806732178,
+            "g": 1.0,
+            "b": 0.9921875,
+            "a": 1.0
+          },
+          "filtered": {
+            "r": 1.00543212890625,
+            "g": 0.9998899698257446,
+            "b": 0.9920811057090759,
+            "a": 1.0
+          },
+          "slowMomentMax": 0.00024447363102808595,
+          "slowMomentMean": 0.00024447147734463215,
+          "firstFrameReset": true,
+          "energyGatePass": true
+        },
+        {
+          "amplitude": 20000.0,
+          "raw": {
+            "r": 20102.517578125,
+            "g": 19974.55859375,
+            "b": 19833.388671875,
+            "a": 1.0
+          },
+          "filtered": {
+            "r": 20101.5625,
+            "g": 19972.1640625,
+            "b": 19817.6953125,
+            "a": 1.0
+          },
+          "slowMomentMax": 97653.0234375,
+          "slowMomentMean": 97653.140625,
+          "firstFrameReset": true,
+          "energyGatePass": true
+        }
+      ],
+      "checks": 67,
+      "poolStates": [
+        {
+          "label": "initial production",
+          "width": 64,
+          "height": 64,
+          "rgba32Count": 4,
+          "rgba16Count": 0,
+          "colorPoolBytes": 262144
+        },
+        {
+          "label": "default constructor control",
+          "width": 64,
+          "height": 64,
+          "rgba32Count": 0,
+          "rgba16Count": 4,
+          "colorPoolBytes": 131072
+        },
+        {
+          "label": "resize96",
+          "width": 96,
+          "height": 96,
+          "rgba32Count": 4,
+          "rgba16Count": 0,
+          "colorPoolBytes": 589824
+        },
+        {
+          "label": "resize64",
+          "width": 64,
+          "height": 64,
+          "rgba32Count": 4,
+          "rgba16Count": 0,
+          "colorPoolBytes": 262144
+        },
+        {
+          "label": "re-enabled",
+          "width": 64,
+          "height": 64,
+          "rgba32Count": 4,
+          "rgba16Count": 0,
+          "colorPoolBytes": 262144
+        },
+        {
+          "label": "final resolution32",
+          "width": 32,
+          "height": 32,
+          "rgba32Count": 4,
+          "rgba16Count": 0,
+          "colorPoolBytes": 65536
+        }
+      ]
+    }
+  ],
+  "players": [
+    {
+      "mode": "rg",
+      "sha256": "F4414118F495591ADB7C174B78476FEB2EAE651A7E69AB571760D4E75B98FC10",
+      "requests": 315,
+      "checks": 39,
+      "historyChecks": 23,
+      "poolChecks": 23,
+      "spatialL1": 0.1056890280781266,
+      "varianceRatio": 0.0014814521548607259
+    },
+    {
+      "mode": "compat",
+      "sha256": "E5EDB0A3A81FB9AEB324FBF9CE6E1787B8A31D3DC62414B8DF74A264D1A27C7A",
+      "requests": 315,
+      "checks": 39,
+      "historyChecks": 23,
+      "poolChecks": 23,
+      "spatialL1": 0.10566818437419201,
+      "varianceRatio": 0.0014912981858155577
+    }
+  ],
+  "gpu": [
+    {
+      "name": "gpu-baseline",
+      "summary": [
+        {
+          "name": "GI.Total",
+          "count": 40,
+          "mean": 42.147968000000006,
+          "median": 47.459328,
+          "p95": 75.749376
+        },
+        {
+          "name": "GI.NRD",
+          "count": 40,
+          "mean": 4.8300544,
+          "median": 0.11264,
+          "p95": 25.115648
+        }
+      ]
+    },
+    {
+      "name": "gpu-rgba32",
+      "summary": [
+        {
+          "name": "GI.Total",
+          "count": 40,
+          "mean": 35.014246400000005,
+          "median": 38.36928,
+          "p95": 59.819008
+        },
+        {
+          "name": "GI.NRD",
+          "count": 40,
+          "mean": 5.5264256000000005,
+          "median": 0.128,
+          "p95": 12.914688
+        }
+      ]
+    },
+    {
+      "name": "final-gpu",
+      "summary": [
+        {
+          "name": "GI.Total",
+          "count": 40,
+          "mean": 1.2632064,
+          "median": 1.042432,
+          "p95": 1.891328
+        },
+        {
+          "name": "GI.NRD",
+          "count": 40,
+          "mean": 0.26833919999999994,
+          "median": 0.129024,
+          "p95": 0.131072
+        }
+      ]
+    }
+  ]
+}

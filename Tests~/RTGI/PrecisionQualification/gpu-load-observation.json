@@ -1,0 +1,9 @@
+{
+  "origin": "actual nvidia-smi tool result after pool-only timing; not a concurrent trace or causal attribution",
+  "timestampLocal": "2026/10/21 21:41:11.825",
+  "name": "NVIDIA GeForce RTX 4060",
+  "memoryUsedMiB": 6296,
+  "memoryTotalMiB": 8188,
+  "gpuUtilizationPercent": 100,
+  "graphicsClockMHz": 2745
+}

@@ -25,6 +25,7 @@ namespace lilToon.URP.Extensions.RTDI.NRD
         private readonly HoRTDINrdNative.ResourceDesc[,] resources;
         private readonly int[] constantWords=new int[ConstantBytes/4];
         private readonly RTHandle[] permanent,transient;
+        private readonly bool highPrecisionColorPool;
         private readonly GraphicsBuffer[] constants=new GraphicsBuffer[3];
         private readonly Dictionary<uint,string> names=new();
         private static readonly int[] signalHistoryBindings={Shader.PropertyToID("_HoRTDINrdHistorySpec"),Shader.PropertyToID("_HoRTDINrdHistoryDiff"),Shader.PropertyToID("_HoRTDINrdHistorySpecFast"),Shader.PropertyToID("_HoRTDINrdHistoryDiffFast")};
@@ -86,10 +87,11 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             return restart;
         }
         internal int LastDispatchCount {get;private set;}
-        internal HoRTDINrdContext(ComputeShader[] shaders,uint denoiserType=14,string[] pipelineIdentifiers=null,string[][] pipelineResources=null)
+        internal HoRTDINrdContext(ComputeShader[] shaders,uint denoiserType=14,string[] pipelineIdentifiers=null,string[][] pipelineResources=null,bool highPrecisionColorPool=false)
         {
             var expected=pipelineIdentifiers??HoRTDINrdManifest.Identifiers;
             this.pipelineResources=pipelineResources??HoRTDINrdManifest.Resources;
+            this.highPrecisionColorPool=highPrecisionColorPool;
             instance=HoRTDINrdNative.Create(denoiserType);description=HoRTDINrdNative.Read<HoRTDINrdNative.InstanceDesc>(HoRTDINrdNative.GetInstanceDesc(instance));
             try
             {
@@ -124,9 +126,10 @@ namespace lilToon.URP.Extensions.RTDI.NRD
             for(int i=0;i<pool.Length;i++)
             {
                 var texture=HoRTDINrdNative.Read<HoRTDINrdNative.TextureDesc>(descriptors,i);int factor=Math.Max(1,(int)texture.downsample);
-                var format=Format(texture.format);
+                var nativeFormat=Format(texture.format);
+                var format=highPrecisionColorPool&&nativeFormat==GraphicsFormat.R16G16B16A16_SFloat?GraphicsFormat.R32G32B32A32_SFloat:nativeFormat;
                 #if UNITY_EDITOR
-                if(ValidationPoolFormat!=null)format=ValidationPoolFormat(name,i,format);
+                if(ValidationPoolFormat!=null)format=ValidationPoolFormat(name,i,nativeFormat);
                 #endif
                 if(!SystemInfo.IsFormatSupported(format,GraphicsFormatUsage.LoadStore))throw new NotSupportedException("NRD UAV format "+format);
                 var desc=new RenderTextureDescriptor((width+factor-1)/factor,(height+factor-1)/factor)

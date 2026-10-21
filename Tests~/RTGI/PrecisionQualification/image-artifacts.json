@@ -1,0 +1,34 @@
+{
+  "final-player-results/compat/filtered.png": {
+    "sha256": "01D5031B5DAFD4AC3B9E76A0DD7381B7889EFF2E6BC59B6976F92D6EE6907995",
+    "bytes": 4701
+  },
+  "final-player-results/compat/raw.png": {
+    "sha256": "729FDFAFE7E50B8F69681A3B539A09A285D1214BA3E5EB7156E9DFDDBF77BF24",
+    "bytes": 7469
+  },
+  "final-player-results/rg/filtered.png": {
+    "sha256": "67071426157E00DE6E9F4781AA1AAF52DC3623639233C62BD22CCC4ECD8C56C3",
+    "bytes": 4734
+  },
+  "final-player-results/rg/raw.png": {
+    "sha256": "729FDFAFE7E50B8F69681A3B539A09A285D1214BA3E5EB7156E9DFDDBF77BF24",
+    "bytes": 7469
+  },
+  "player-results/compat/filtered.png": {
+    "sha256": "71B571A845E10F7B710FECC0031D0AEB758991FB56B747C50458FC3CD1102600",
+    "bytes": 4726
+  },
+  "player-results/compat/raw.png": {
+    "sha256": "729FDFAFE7E50B8F69681A3B539A09A285D1214BA3E5EB7156E9DFDDBF77BF24",
+    "bytes": 7469
+  },
+  "player-results/rg/filtered.png": {
+    "sha256": "3C96461E69FC36A986A120071D766691CF5A9B7E66F649C50EB8A2E845F10B30",
+    "bytes": 4697
+  },
+  "player-results/rg/raw.png": {
+    "sha256": "729FDFAFE7E50B8F69681A3B539A09A285D1214BA3E5EB7156E9DFDDBF77BF24",
+    "bytes": 7469
+  }
+}

@@ -485,3 +485,25 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **下一项023具体动作：** 为GI-only RGBA32F pool建立真实HDR/动态/Player与GPU成本资格，scale64不变、DI默认16F不动。若需要生产构造参数，shared core defaultfalse，只有GI实例显式启用；Editor baseline callback须优先按native format重建baseline，防新默认下误标。先解析发光面低信号~1e−4至20000物理辐射；scale64下高段slow m2可超65504，实测32F有限且无溢出/残留；S关解析能量与默认TS状态分开验证、门槛不放宽。加resolution/启停/释放/资源格式、有效GPU已知负载与40sample成本、两真实Player的32F pool/历史/动态回归；若代价或HDR退化不接纳。原fullgreen/局部、AS/F39、normal enabled-camera、1080/完整预算继续，goal active。
 
 022已按白名单过滤提交`189fcd9`，PoolPrecision verifier提交后再次通过；生产池格式/单位仍16F/64，021pre-S保留，index空，六个本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮023直接HDR/生命周期/GPU成本/真实Player资格，再决定GI-only高精度默认，不重跑纯格式/单位矩阵；fullgreen/其它phase/局部与所有原缺口继续，goal active。
+
+## 023：GI-only 32F池HDR/生命周期/成本/Player资格（进行中）
+
+**事前review：** 022精度与噪声收益明确，但full green仍5.2075%失败且未量GPU/HDR。先以实例构造策略实现暂定GI-only高精度，shared core默认false，DI默认16F不动；Editor selector从native格式显式覆盖baseline。scale64/external16F/算法/参数不变。后续HDR、生命周期、GPU与两Player有硬退化就撤回策略，不把stride0过当全部完成。
+
+解析发光平面范围1e−4/1/20000，验证原能量/重置、slow m2高于half上限仍有限；S关的解析与默认TS另验，格式96→64/启停/释放/多camera与默认ctor控制。再已知负载/实际40sample GPU和两个独立Release Player的pool32+原315应用帧/23history。内存2MiB@256/63.28125MiB@1080为布局，F31禁止据此重开原HD；原局部/full/AS/正常camera与完整预算继续。
+
+### 023事后review（2026-10-21～22）：GI精度生产接入，HDR/Player通过，full与预算仍缺
+
+**实现/隔离：** shared NRD core增加实例highPrecisionColorPool构造参数默认false，GI显式true；只native RGBA16F颜色池转32F，DI默认不变。Editor selector从native format优先重建baseline。scale64/NRD Shader/算法/参数不变。初策略四pool32而external output16时低信号失败，定位output同时承载PrePass/最终信号会重复half量化，最终仅再将GI output转32；signal/normal/physical filtered保留原格式。阶段捕获自动production32模式以float copy保精度，不更改分配策略。
+
+**原失败/对照不删：** HDR夹具48476/17312实际1，因为Color.white×amp缩放了alpha，lilToon emissionBlend还乘alpha；显式RGBA(...,1)，未改算法/阈值。34708/12596输入改正后仍actual1，低1e−4 raw通过但filtered蓝低约7.7%，真实失败。47580/37696延迟能量失败记录完整HDR/生命周期后仍1，13764 legacy16F低信号也失败且更差；pass0仅测量完成。数据支持pool-only仍不足，未用历史失败放行新范围。仅output32新试验38732低/中/HDR全部过，最终compat36228也过，scope未扩其它格式。22真实进程全部源/原JSON/log保留。
+
+**范围/生命周期：** 幅度1e−4/1/20000，原5% raw解析与filtered/raw均过，首变化帧reset；high slow m2约97653、低约2.388e−12，实际有限，明确范围非任意HDR。四pool32/default ctor control仍四pool16、96→64、停用全部oldpool handle释放、重建新instance、原NRD二camera/32尺寸/相机/方差/合成检查继续，RG/compat debug/compile/binding/drift0。S关T开做解析避免F23，默认TS由Player额外验真。
+
+**真实Player：** pool-only6252/3340的315请求记录与原资产/payload保留；它们不是最终output32证明。最终独立PrecisionOutput build42680/43124、Player2932/17740 all0，defaultGI实际32池/16signal/32output，315真实Update请求、39checks、23pool/23history含NRDoff270 release、骨骼/morph/Cutout/base/能量/启停/相机/合成原门槛均过。最终空间L1约.105689/.105668<原.15。完整payload SHA、无HoGIGpuProbe.dll；五条精确旧build warning审查沿021，不改其它模块。截图按backend独立保存避免覆盖。仍请求式，不是enabled-camera自动呈现。
+
+**成本/资源：** 32200已知负载资格有效，43588/19896 pool-only各40区间有效但Total median47.46/38.37ms、NRD p95 25.12/12.91ms尖峰，不能稳定比较。事后GPU100%、6296/8188MiB快照仅观测，不证明原因，不干预其它进程。最终8372实际production40区间合格，Total median1.042432/p95 1.891328ms，NRD .129024/.131072ms，不跨不同负载宣称加速，也不称目标预算。最终+四pool及output共2.5MiB@256、1080+79.10156MiB只逻辑payload投影，非物理VRAM/实际HD。F31原条件未重跑。
+
+**实际全域/取舍：** final16612 actual0、stride0过，但fullRGB−4.49450/−5.05869/−4.72749%，fullgreen与7相位仍失败，不因只差.05869就放宽阈值。接纳精度与低信号/HDR范围改善和真实功能回归为生产增量，不接纳完整质量/稳定预算。当前无新增硬退化被观察到；AS/F39/normal camera/局部/HD仍开。Tests~/RTGI/PrecisionQualification约6.14MB，1197精确source SHA仅25新blob，其余Git/旧blob、22实际logs、完整失败/反事实/最终metadata、gzip原报告、两套独立payload与analysis/verify过。所有本任务进程结束/active=null，仅他人Ho-GD plan未跟踪。
+
+**下一项024优先可用性证据：** 不继续围绕5.05869%调参/格式/单位或挑phase。先读DI关于hidden-host正常camera的真实记录/启动参数与当前运行条件，再设计一个有具体差异的enabled-camera连续呈现实验；必须Camera.enabled=true、无SubmitRequest/Render替代、真实endCameraRendering/帧/读回与GI开关/Volume/时域响应，不能把既有315请求当完成。可先核对无-batchmode但Hidden窗口/targetRT与OnDemandRendering是否已尝试，旧相同条件不盲试；开发约束不允许未经用户明确要求启动可见交互窗口，若确需可见UI先准备好reviewable结果再说明来源请求。其它质量用独立seed与局部/原5%完整保留，F39不重启旧参数，实际1080预算须新host/驻留机制证据，goal active。

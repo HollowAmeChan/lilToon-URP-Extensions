@@ -1,0 +1,35 @@
+{
+  "step": 23,
+  "goalStatus": "active",
+  "baselineGitRevision": "5d5ef838bced6d5ecf88ffc27745d7761eafc0a3",
+  "productionPrecisionRetained": true,
+  "fullQualityQualified": false,
+  "stableTargetBudgetQualified": false,
+  "units": 64,
+  "diDefaultHighPrecision": false,
+  "giPoolRgba32Count": 4,
+  "externalSignal": "R16G16B16A16_SFloat",
+  "externalOutput": "R32G32B32A32_SFloat",
+  "finalHdrAmplitudes": [
+    0.0001,
+    1,
+    20000
+  ],
+  "finalRgPid": 38732,
+  "finalCompatPid": 36228,
+  "finalQualityPid": 16612,
+  "finalBuildPids": [
+    42680,
+    43124
+  ],
+  "finalPlayerPids": [
+    2932,
+    17740
+  ],
+  "finalGpuPid": 8372,
+  "extraPayloadBytes256": 2621440,
+  "extraPayloadProjection1080Bytes": 82944000,
+  "remainingFullGreenErrorPercent": -5.058689117431641,
+  "remainingFailingPhases": 7,
+  "next": "Complete normal enabled-camera presentation using a concrete new mechanism after reading DI hidden-host evidence; continue independent-seed/local quality and real target budget. Do not relax the remaining full/phase gate, retry F39 old flags or claim HD from payload projection."
+}

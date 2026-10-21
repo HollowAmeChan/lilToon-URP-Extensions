@@ -1,0 +1,96 @@
+{
+    "pass": false,
+    "compatibility": false,
+    "precision": true,
+    "ranges": [
+        {
+            "amplitude": 0.00009999999747378752,
+            "raw": {
+                "r": 0.0001005945450742729,
+                "g": 0.00009989738464355469,
+                "b": 0.00009916377894114703,
+                "a": 1.0
+            },
+            "filtered": {
+                "r": 0.000095367431640625,
+                "g": 0.000095367431640625,
+                "b": 0.000091552734375,
+                "a": 1.0
+            },
+            "slowMomentMax": 0.0,
+            "slowMomentMean": 0.0,
+            "firstFrameReset": true
+        }
+    ],
+    "poolStates": [
+        {
+            "label": "initial production",
+            "width": 64,
+            "height": 64,
+            "rgba32Count": 4,
+            "rgba16Count": 0,
+            "colorPoolBytes": 262144
+        },
+        {
+            "label": "default constructor control",
+            "width": 64,
+            "height": 64,
+            "rgba32Count": 0,
+            "rgba16Count": 4,
+            "colorPoolBytes": 131072
+        }
+    ],
+    "failure": "System.Exception: Precision filtered HDR/low-signal mean: 0.0001 actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)\r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation.Require (System.Boolean value, System.String name) [0x00025] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTGI\\HoRTGINrdValidation.cs:99 \r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation.Near (UnityEngine.Color actual, UnityEngine.Color expected, System.String name, System.Single relative, System.Single absolute) [0x00000] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTGI\\HoRTGINrdValidation.cs:101 \r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation.ValidatePrecisionRangeAndLifecycle () [0x00238] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTGI\\HoRTGIPrecisionRangeValidation.cs:59 \r\n  at lilToon.URP.Extensions.Editor.RTGI.HoRTGINrdValidation.Tick () [0x004d1] in D:\\Unity_Fork\\lilToon-URP-Extensions\\Editor\\RTGI\\HoRTGINrdValidation.cs:146 ",
+    "colorSpace": "Linear",
+    "frames": 314,
+    "rawMean": {
+        "r": 0.3603815734386444,
+        "g": 0.18042197823524476,
+        "b": 0.08874731510877609,
+        "a": 1.0
+    },
+    "filteredMean": {
+        "r": 0.36930668354034426,
+        "g": 0.18489043414592744,
+        "b": 0.09094317257404328,
+        "a": 1.0
+    },
+    "hdrRaw": {
+        "r": 725.7828369140625,
+        "g": 363.3553466796875,
+        "b": 178.73257446289063,
+        "a": 1.0
+    },
+    "hdrFiltered": {
+        "r": 737.08642578125,
+        "g": 369.0188293457031,
+        "b": 181.51634216308595,
+        "a": 1.0
+    },
+    "rawVariance": 0.11410956838582392,
+    "filteredVariance": 0.0000027237460074047705,
+    "checks": [
+        "Opt-in default allocates no GI denoiser",
+        "Original RELAX_DIFFUSE instance created: RELAX diffuse",
+        "Filtered publication retains separate raw texture",
+        "First dispatch resets independent GI history",
+        "Stationary diffuse mean within 8% of same-frame raw actual=RGBA(0.369, 0.185, 0.091, 1.000) expected=RGBA(0.360, 0.180, 0.089, 1.000)",
+        "Measured per-pixel temporal variance reduced at least 85%: raw=0.114109568385824 filtered=2.72374600740477E-06",
+        "Real primary viewZ and finite bounce hit distance are supplied",
+        "Demodulated input is produced before primary albedo actual=RGBA(0.353, 0.177, 0.087, 122.458) expected=RGBA(0.353, 0.177, 0.087, 1.000)",
+        "Stable frames retain denoiser history",
+        "Static-world camera motion uses NRD matrix reprojection",
+        "Camera move keeps stationary wall energy actual=RGBA(0.367, 0.184, 0.090, 1.000) expected=RGBA(0.369, 0.185, 0.091, 1.000)",
+        "Sky change resets independent GI history immediately",
+        "Old bright history removed on first dark frame actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Restored sky resets history",
+        "Zero primary albedo channel stays zero after remodulation actual=RGBA(0.000, 0.040, 0.091, 1.000) expected=RGBA(0.000, 0.039, 0.089, 1.000)",
+        "Zero albedo never destroys incoming red signal by division",
+        "HDR 1000 sky retains mean and finite moments actual=RGBA(737.086, 369.019, 181.516, 1.000) expected=RGBA(725.783, 363.355, 178.733, 1.000)",
+        "GI-only four color pools are actually RGBA32F: initial production",
+        "Precision policy retains units and external formats: initial production",
+        "Shared default constructor retains four half color pools",
+        "Precision range transition resets the first affected frame: 0.0001",
+        "Precision raw emissive integral: 0.0001 actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)"
+    ]
+}

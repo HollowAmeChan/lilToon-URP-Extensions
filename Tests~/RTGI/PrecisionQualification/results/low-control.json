@@ -1,0 +1,70 @@
+{
+    "pass": true,
+    "compatibility": false,
+    "precision": true,
+    "ranges": [
+        {
+            "amplitude": 0.00009999999747378752,
+            "raw": {
+                "r": 0.0001005945450742729,
+                "g": 0.00009989738464355469,
+                "b": 0.00009916377894114703,
+                "a": 1.0
+            },
+            "filtered": {
+                "r": 0.00009422877337783575,
+                "g": 0.00009342574048787355,
+                "b": 0.00009096064604818821,
+                "a": 1.0
+            },
+            "slowMomentMax": 0.0,
+            "slowMomentMean": 0.0,
+            "firstFrameReset": true,
+            "energyGatePass": false
+        }
+    ],
+    "poolStates": [
+        {
+            "label": "legacy low signal actual native format",
+            "width": 64,
+            "height": 64,
+            "rgba32Count": 0,
+            "rgba16Count": 4,
+            "colorPoolBytes": 131072
+        }
+    ],
+    "failure": "",
+    "colorSpace": "Linear",
+    "frames": 85,
+    "rawMean": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "filteredMean": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "hdrRaw": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "hdrFiltered": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 0.0
+    },
+    "rawVariance": 0.0,
+    "filteredVariance": 0.0,
+    "checks": [
+        "Opt-in default allocates no GI denoiser",
+        "Original RELAX_DIFFUSE instance created: RELAX diffuse",
+        "Low-signal control actually binds original half pools"
+    ]
+}

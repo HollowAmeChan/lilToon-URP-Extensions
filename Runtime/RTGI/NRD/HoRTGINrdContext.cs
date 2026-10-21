@@ -41,14 +41,18 @@ namespace lilToon.URP.Extensions.RTGI.NRD
             }
         }
         internal HoRTGINrdContext(ComputeShader[] shaders)
-        {core=new HoRTDINrdContext(shaders,HoRTGINrdManifest.DenoiserType,HoRTGINrdManifest.Identifiers,HoRTGINrdManifest.Resources);}
+        {core=new HoRTDINrdContext(shaders,HoRTGINrdManifest.DenoiserType,HoRTGINrdManifest.Identifiers,HoRTGINrdManifest.Resources,highPrecisionColorPool:true);}
         internal void Prepare(int w,int h)
         {
             if(w!=width||h!=height){historyValid=false;width=w;height=h;}
             var desc=new RenderTextureDescriptor(w,h){graphicsFormat=GraphicsFormat.R16G16B16A16_SFloat,depthStencilFormat=GraphicsFormat.None,msaaSamples=1,enableRandomWrite=true};
             RenderingUtils.ReAllocateIfNeeded(ref signal,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI NRD radiance/hit distance");
             RenderingUtils.ReAllocateIfNeeded(ref normal,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI NRD normal/roughness");
+            // PrePass and the final denoised signal share this external target.
+            // Keep low diffuse radiance out of repeated half-precision rounding.
+            desc.graphicsFormat=GraphicsFormat.R32G32B32A32_SFloat;
             RenderingUtils.ReAllocateIfNeeded(ref output,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI NRD demodulated output");
+            desc.graphicsFormat=GraphicsFormat.R16G16B16A16_SFloat;
             RenderingUtils.ReAllocateIfNeeded(ref filtered,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI filtered diffuse");
             desc.graphicsFormat=GraphicsFormat.R32_SFloat;
             RenderingUtils.ReAllocateIfNeeded(ref viewZ,desc,FilterMode.Point,TextureWrapMode.Clamp,name:"HoRTGI NRD viewZ");

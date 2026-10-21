@@ -114,3 +114,5 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 定向测试天空 RGB = 8 × (direction × 0.5 + 0.5)，面向 -Z 的白色 Lambert 接收面的理论积分为 (4, 4, 1.3333)，实测统计均值约 (4.008, 3.982, 1.330)。这是链路与能量验证，不是性能或最终画质验收。
 
 2026-10-21当前验收补充：旧核心“功能通过”记录不能替代当前debug资格。021核心功能断言全过，但RG/compat各两条2304 B scratch范围错误，legacy也同样复现；不算完整回归通过。原夹具Spatial输出检查已从history0改读实际buffer1，M>1门槛不变。新两个Linear D3D12 Mono Release Player各315请求/38检查，23状态累计94208 packet history0=2检查，原动态/Cutout/蒙皮/baseVertex/合成门槛过。生产古堡filtered相对有限none约+1.77/−1.37/−2.84%，原filtered/raw门槛仍约−5.85/−8.02/−8.93%失败。正常enabled-camera、HDR/局部质量、static/F39及1080完整预算继续未完成；目标active。
+
+2026-10-21～22步骤023：GI独立RELAX实例的四个颜色history/variance池与共用PrePass/最终信号output采用RGBA32F，避免小信号矩和颜色反复量化；signal/normal/最终physical filtered仍原格式，SignalScale64不变。shared core构造策略默认false，只有GI显式启用，不改变DI默认。解析幅度1e−4/1/20000双路径与真实Player通过，HDR slow m2约97653超过half上限仍有限；两个315-update-request Player各23pool/23history检查。额外payload+2.5MiB@256，1080投影+79.10MiB不是实际显存/预算。full绿色仍−5.05869%、7相位失败，正常enabled-camera、AS/F39、局部和1080完整预算继续，见[最终资格证据](../Tests~/RTGI/PrecisionQualification/README.md)。

@@ -371,3 +371,23 @@ Fullgreen/其它8phase/局部质量仍缺；F35不重启纯scale试值/gain/宽s
 022白名单：Runtime/RTDI/NRD/HoRTDINrdContext.cs仅Editor hook；Editor Castle/PoolPrecisionAudit/meta与float copy shader/meta；Tests~/RTGI/PoolPrecision；RTGI README/过程/禁试/交接/实施规划。无DI生产策略/Shader/Native/Player/用户场景更改。
 
 022已按白名单过滤提交`189fcd9`，PoolPrecision verifier提交后再次通过；生产池格式/单位仍16F/64，021pre-S保留，index空，六个本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮023直接HDR/生命周期/GPU成本/真实Player资格，再决定GI-only高精度默认，不重跑纯格式/单位矩阵；fullgreen/其它phase/局部与所有原缺口继续，goal active。
+
+### 023终态（2026-10-21～22，待过滤提交）：GI32颜色链生产策略，转正常camera证据
+
+023已验证并保留新策略：HoRTDINrdContext optional highPrecisionColorPool默认false，GI ctor显式true，所以DI默认16F不变；Editor override接收native format优先作baseline。四GI颜色池32F，再把GI共用PrePass/final output改32F；signal/normal/physical filtered原格式、单位64、原NRD/Shader/参数不变。pool-only真实低1e−4失败促成output-only有界后续试验，有收益才保留，没有继续扩其它格式。阶段捕获自动用production float32 copy，不开启selector。
+
+**最终资格：** 38732 RG与36228 compat三个解析发光范围1e−4/1/20000原5%全部通过，变化首帧reset，slow m2低2.388e−12、高97653>half上限仍有限；default core control四half、GI四32F、96→64/停用handle全release/重建/二camera与最终32尺寸原NRD检查过。22实际进程log各有真实exit，不捏造范围外HDR。原夹具48476/17312 Color.white×amp缩alpha导致发光再乘alpha失败；显式alpha1后34708/12596低signal仍真失败，47580/37696延迟失败收全HDR/lifecycle仍1，13764 legacy16低control也失败。所有原源/结果保留，不抬阈值。pool-only数据冻结在pool-only，不当最终output32证明。
+
+**真实默认最终Player：** build42680/43124、Player2932/17740 all0/debug0/runtime diagnostics0/drift0，新PrecisionOutput资产/输出避免覆盖pool-only旧PrecisionPool。两315真实Update、39checks、23pool+23history，实际flagtrue/四32F/无half颜色池/signal16/output32，270off旧handle release；原nonreadable/base4/canonical3skin、Cutout/骨骼/Morph/invalidPose/能量/方差/相机/几何/Volume/NRD/合成门槛继续。空间L1 .105689/.105668<.15，无GPU探针DLL，完整payload SHA。pool-only6252/3340记录及payload亦保留。两backend截图独立保存。仍SubmitRequest，不能算自动camera。
+
+**实际默认全图：** 16612长窗actual0/stride0过、API/compile/drift0，但fullRGB−4.49450/−5.05869/−4.72749%，7phase失败。不能只因fullgreen差.05869就调阈值或宣布complete。保留21/22/23原失败、局部与有限MC/选点不确定。当前阶段资料可作后续独立seed/局部诊断，不无限重跑固定窗口。
+
+**资源/成本：** +四pool2MiB+output.5MiB=2.5MiB@256，1080+79.10156MiB仅payload投影，无物理VRAM/实际HD。32200 GPUclock资格有效；43588/19896 pool-only计时虽有效却极不稳（Total47/38ms、NRDp95 25/13ms），事后快照GPU100%/6296MiB仅观察，不归因/干预其它进程。最终8372实际40帧Total median1.042432/p95 1.891328ms、NRD .129024/.131072ms，无跨负载性能提升结论，稳定目标/Player预算未合格，F31保持。
+
+证据Tests~/RTGI/PrecisionQualification约6.14MB，1197精确source SHA仅25新blob，其余共用Git/旧blob；22实际进程logs、所有早期失败/原始/最终report与独立两套payload、范围/格式/生命周期/40样本与analysis/verify通过。run.json=pool-only低signal最终失败组，output32-run/final-run=最终范围+质量，final-player-run=最终Player，final-gpu-run=最终cost，勿把单个Root run当全部成功。pool-only重命名source目录已在source-files映射。所有本任务进程结束/active=null；他人Ho-GD plan未跟踪。旧022 verifier currentSHA因新生产策略过时，用189fcd9历史，不回滚新代码迎合旧hash。
+
+**024下一任务先正常enabled-camera呈现：** 功能改善已入生产，不再只做小NRD平面或阈值边缘调参。先读DI hidden-host原证据及具体flags/启动方式，核对是否试过不带-batchmode但-WindowStyleHidden、启用camera+targetRT/OnDemandRendering。只有有新机制才有界实跑；真实自动endCameraRendering连续帧+GI/Volume开关/输出读回，不能SubmitRequest/Camera.Render替代。宿主约束明确Start-Process仅Hidden，用户未明确请求可见交互窗口时不能私自ShowWindow；如果新机制仍不可，先准备具体可review场景/步骤，再说明约束来源请求所需可见测试，不泛泛停工。
+
+其余目标仍未完成：full/7phase/局部、AS/F39/static非零base、HDR更广支持、真正normal camera、实际1080/完整预算。F39旧flags/延时/重建不重试，NativeRtxdiGPUScene是NativeRender别名不是Unity overload；有新API/分配机制证据才重开。goal active，不complete也不blocked。
+
+023白名单：Runtime RTDI core构造/format、RTGI NrdContext；Editor NrdValidation partial/新PrecisionRange/meta、Castle/PoolPrecision capture、PlayerBuilder；Tests DynamicRuntimeProbe、PrecisionQualification；RTGI产品说明/计划/README/过程/禁试/交接。无用户场景、DI策略/Shader/Native DLL修改；五已知build warning只沿021逐字白名单。

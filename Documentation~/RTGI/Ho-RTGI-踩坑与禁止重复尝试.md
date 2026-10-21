@@ -84,3 +84,9 @@ pre-S有收益：filtered相对finite none均值从+15.70/+11.58/+8.08%到+1.22/
 设置selector不等于实际pool已换：首资格未执行Prepare即Snapshot实际1，保留并补真实render。float32 copy self-test通过也不能证明所有捕获目标有UAV flag：首两长run的阶段目标无UAV，Unity Property绑定错误被旧regex漏计，RGB/m2全0。禁止拿finite zero当有效或把旧counter0改绿。捕获目标需正确格式+UAV，Copy前显式guard，runner匹配Compute shader Property/UAV类错误；源/报告/失败原样保留。
 
 正式四池RGBA32F保持scale64使slow m2=0从约99%降至.026%、方差约−56%，但fullgreen仍−5.2075%、8/16phase失败。禁止stride0过就宣布整体通过、继续挑phase或把旧half严重误差容差当32F精确界。无新纯单位扫描，F35继续。+2MiB@256、+63.28125MiB@1080只是布局payload；没HDR/动态/Player/GPU成本证据前，不盲改所有NRD或按投影重试HD。当前只GI Editor实例；下一步资格要保持DI默认、格式生命周期和历史重置。
+
+## F44 / 步骤023：HDR输入alpha、external output精度与范围口径
+
+发光RGB缩放不能用Color.white×amp同时缩alpha；lilToon混合再次乘alpha，初两actual1保留。改RGBA(...,1)后低信号仍失败，不能继续甩给输入；pool-only16output与legacy16F对照都实际失败。只提升GI external output（PrePass/最终共享）32F后，1e−4/1/20000原5%两路径通过，原失败/低信号对照保留。不得用早期pool-only Player来证明最终output32；最终独立新build/Player/payload/格式断言俱全。
+
+HDR slow m2约97653有限不等于任意HDR安全。最终fullgreen仍5.05869%/7相位失败，禁止放宽/挑phase或继续无依据扩格式。extra79.10MiB@1080是payload投影；pool-only高负载GPU计时有数十ms尖峰，事后100%util非因果，最终40区间也不等稳定目标预算。禁止跨负载称加速/按投影重试HD或停其它进程。normal enabled-camera仍缺，315 SubmitRequest不得换名验收。

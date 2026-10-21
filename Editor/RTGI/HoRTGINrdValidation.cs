@@ -17,7 +17,7 @@ using UnityEngine.Rendering.Universal;
 namespace lilToon.URP.Extensions.Editor.RTGI
 {
     // Real D3D12 production path: no replacement signal or denoiser kernel.
-    public static class HoRTGINrdValidation
+    public static partial class HoRTGINrdValidation
     {
         const int Size=64;
         static readonly List<UnityEngine.Object> owned=new();
@@ -31,7 +31,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         static HoAtmosphereRendererFeature sky;
         static HoRTGIVolume volume;
         static RenderPipelineAsset oldDefault,oldQuality;
-        static bool compatibility,oldAsync,finished;
+        static bool compatibility,oldAsync,finished,precisionAudit;
+        static Material bounceMaterial;
         static int frames,warmup;
         static string failure,output;
         static double rawVariance,filteredVariance;
@@ -44,7 +45,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             {
                 if(!Application.dataPath.Replace('\\','/').Contains("/.codex-research/RTGIValidation/"))throw new Exception("Dedicated isolated GI project required");
                 oldDefault=GraphicsSettings.defaultRenderPipeline;oldQuality=QualitySettings.renderPipeline;oldAsync=ShaderUtil.allowAsyncCompilation;ShaderUtil.allowAsyncCompilation=false;
-                output=Path.GetFullPath(Path.Combine(Application.dataPath,"../ho-gi-nrd-"+(compatibility?"compat":"rg")));Directory.CreateDirectory(output);
+                output=Path.GetFullPath(Path.Combine(Application.dataPath,"../ho-gi-nrd-"+(lowPrecisionControl?"precision-control-":precisionAudit?"precision-":"")+(compatibility?"compat":"rg")));Directory.CreateDirectory(output);
                 EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);RenderSettings.fog=false;
                 var renderer=Keep(ScriptableObject.CreateInstance<UniversalRendererData>());
                 var gb=Keep(ScriptableObject.CreateInstance<HoGeometryBufferRendererFeature>());gb.Settings.maxRenderQueue=(int)RenderQueue.GeometryLast;
@@ -62,7 +63,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 target=Keep(new RenderTexture(Size,Size,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));target.Create();image=Keep(new Texture2D(Size,Size,TextureFormat.RGBAFloat,false,true));
                 var holder=Keep(new GameObject("GI NRD Volume")).AddComponent<Volume>();holder.isGlobal=true;holder.sharedProfile=Keep(ScriptableObject.CreateInstance<VolumeProfile>());volume=holder.sharedProfile.Add<HoRTGIVolume>();
                 receiver=Quad("Receiver",0,2,0);receiverMaterial=receiver.GetComponent<Renderer>().sharedMaterial;
-                var wall=Quad("World only bounce",-1,4000,1);wall.transform.rotation=Quaternion.Euler(0,180,0);
+                var wall=Quad("World only bounce",-1,4000,1);bounceMaterial=wall.GetComponent<Renderer>().sharedMaterial;wall.transform.rotation=Quaternion.Euler(0,180,0);
                 Application.logMessageReceived+=OnLog;EditorApplication.update+=Tick;
             }
             catch(Exception error){Finish(error);}
@@ -124,6 +125,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             {
                 Require(!gi.Settings.denoise&&gi.LastContext.nrd==null,"Opt-in default allocates no GI denoiser");
                 gi.Settings.denoise=true;Render();var c=gi.LastContext;Require(c.nrd!=null,"Original RELAX_DIFFUSE instance created: "+c.nrdStatus);
+                if(lowPrecisionControl){ValidateLegacyLowSignal();Finish(null);return;}
                 Require(c.PublishedDiffuse==c.nrd.filtered&&c.PublishedDiffuse!=c.diffuse,"Filtered publication retains separate raw texture");
                 Require(c.nrd.core.LastDispatchCount>5&&c.nrd.lastReset,"First dispatch resets independent GI history");
                 Sample(48,64,out rawMean,out filteredMean,out rawVariance,out filteredVariance);
@@ -142,6 +144,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 receiverMaterial.SetColor("_Color",Color.white);sky.Settings.constantColor=new Color(1000,500,250,1);
                 Sample(32,32,out hdrRaw,out hdrFiltered,out _,out _);Near(hdrFiltered,hdrRaw,"HDR 1000 sky retains mean and finite moments",.1f,.01f);
                 sky.Settings.constantColor=new Color(.5f,.25f,.125f,1);Render();
+                if(precisionAudit)ValidatePrecisionRangeAndLifecycle();
                 gi.Settings.composite=false;Render();var basis=Mean(target);gi.Settings.composite=true;gi.Settings.intensity=1;Render();
                 var composed=Mean(target);var added=Mean(c.PublishedDiffuse.rt);
                 if(QualitySettings.activeColorSpace==ColorSpace.Linear)Near(composed,basis+added,"Normal camera composites filtered GI",.01f);
@@ -155,6 +158,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var original=camera;camera=other;Render();Require(gi.LastContext!=c&&gi.LastContext.nrd!=first&&gi.LastContext.nrd.core!=first.core,"Actual second camera owns independent native instance and textures");camera=original;Render();Require(gi.LastContext==c,"Original camera retains its own denoiser");
                 var smaller=Keep(new RenderTexture(32,32,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));smaller.Create();target=smaller;Render();Require(c.nrd.lastReset&&c.nrd.signal.rt.width==32&&c.nrd.filtered.rt.width==32,"Resolution change reallocates all GI guides and resets history");
                 foreach(var shader in AssetDatabase.FindAssets("t:ComputeShader",new[]{"Packages/jp.lilxyzw.liltoon.urp.extensions/Runtime/RTGI"}).Select(x=>AssetDatabase.LoadAssetAtPath<ComputeShader>(AssetDatabase.GUIDToAssetPath(x))))Require(ShaderUtil.GetComputeShaderMessages(shader).Length==0,"Compute has no diagnostics: "+shader.name);
+                if(precisionAudit){CheckPrecisionPools(gi.LastContext.nrd,"final resolution32");Require(precisionEnergyFailures.Count==0,"Precision 5% energy failed for amplitudes: "+string.Join(",",precisionEnergyFailures));}
                 Finish(null);
             }
             catch(Exception error){Finish(error);}
@@ -162,10 +166,10 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         static void Finish(Exception error)
         {
             if(finished)return;finished=true;EditorApplication.update-=Tick;Application.logMessageReceived-=OnLog;if(error!=null)Debug.LogException(error);
-            if(output!=null)File.WriteAllText(Path.Combine(output,"report.json"),JsonUtility.ToJson(new Report{pass=error==null,failure=error?.ToString(),frames=frames,compatibility=compatibility,colorSpace=QualitySettings.activeColorSpace.ToString(),rawMean=rawMean,filteredMean=filteredMean,rawVariance=rawVariance,filteredVariance=filteredVariance,hdrRaw=hdrRaw,hdrFiltered=hdrFiltered,checks=checks.ToArray()},true));
+            if(output!=null)File.WriteAllText(Path.Combine(output,"report.json"),JsonUtility.ToJson(new Report{pass=error==null,failure=error?.ToString(),frames=frames,compatibility=compatibility,colorSpace=QualitySettings.activeColorSpace.ToString(),rawMean=rawMean,filteredMean=filteredMean,rawVariance=rawVariance,filteredVariance=filteredVariance,hdrRaw=hdrRaw,hdrFiltered=hdrFiltered,checks=checks.ToArray(),precision=precisionAudit,ranges=precisionRanges.ToArray(),poolStates=precisionPoolStates.ToArray()},true));
             GraphicsSettings.defaultRenderPipeline=oldDefault;QualitySettings.renderPipeline=oldQuality;ShaderUtil.allowAsyncCompilation=oldAsync;foreach(var obj in owned.AsEnumerable().Reverse())if(obj!=null)UnityEngine.Object.DestroyImmediate(obj);
             Debug.Log("[HoGINrd] END pass="+(error==null));EditorApplication.Exit(error==null?0:1);
         }
-        [Serializable] sealed class Report{public bool pass,compatibility;public string failure,colorSpace;public int frames;public Color rawMean,filteredMean,hdrRaw,hdrFiltered;public double rawVariance,filteredVariance;public string[] checks;}
+        [Serializable] sealed class Report{public bool pass,compatibility,precision;public PrecisionRange[] ranges;public PoolState[] poolStates;public string failure,colorSpace;public int frames;public Color rawMean,filteredMean,hdrRaw,hdrFiltered;public double rawVariance,filteredVariance;public string[] checks;}
     }
 }

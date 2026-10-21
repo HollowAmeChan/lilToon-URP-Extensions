@@ -84,10 +84,12 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 if(denseReference||seedAudit||feedbackAudit){denseFeature.targetCamera=camera;var receivers=denseControls?HoRTGIDenseReferenceAudit.ControlPixels:HoRTGIDenseReferenceAudit.Pixels;denseFeature.Initialize(seedAudit||feedbackAudit?1:denseSamples,receivers);denseFeature.scheduled=denseScheduled;denseAudit=new HoRTGIDenseReferenceAudit(denseFeature,receivers);}
                 var context=gi.LastContext;if(context?.nrd==null)throw new Exception("Actual castle GI/NRD missing: "+gi.Status);
                 if(poolPrecision.Length>0){precision=new HoRTGIPoolPrecisionAudit(context.nrd,poolPrecision);if(!stability)Render();}
+                if(stages&&precision==null)precision=new HoRTGIPoolPrecisionAudit(context.nrd,"production");
                 report.status=gi.Status;var registry=(HoRTScene)typeof(HoRTGIRendererFeature).GetField("scene",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(gi);
                 report.instances=registry.InstanceCount;report.cutouts=registry.CutoutCount;report.skinnedSnapshots=registry.SkinnedMeshCount;report.rejections=registry.Rejections.ToArray();report.bakes=registry.SkinnedBakeCount;
                 if(gpu)
                 {
+                    if(precision!=null)for(int i=0;i<64;i++)Render();
                     gpuClock=new HoRTGIGpuClock{TotalOnly=totalOnly};context.ValidationGpuMarker=gpuClock.Mark;context.ValidationGpuRasterMarker=gpuClock.MarkRaster;gi.Settings.composite=true;gi.Settings.intensity=.25f;
                     if(rebuild){registry.MarkGeometryDirty();context.environmentPdfReady=false;}
                     for(int frame=0;frame<40;frame++){gpuClock.Frame=frame;Render();gpuClock.Collect();}

@@ -27,14 +27,14 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         readonly string mode;readonly bool bitExact;int copiedComponents;
         internal HoRTGIPoolPrecisionAudit(HoRTGINrdContext context,string mode)
         {
-            if(mode!="baseline"&&mode!="rgba32")throw new ArgumentException("Unknown precision policy");
+            if(mode!="baseline"&&mode!="rgba32"&&mode!="production")throw new ArgumentException("Unknown precision policy");
             this.context=context;this.mode=mode;
             copy=AssetDatabase.LoadAssetAtPath<ComputeShader>("Packages/jp.lilxyzw.liltoon.urp.extensions/Editor/RTGI/Shaders/HoRTGIPrecisionCopy.compute");
             if(copy==null)throw new Exception("Precision copy shader missing");kernel=copy.FindKernel("CopyFloat4");copy.FindKernel("Seed");
             foreach(var message in ShaderUtil.GetComputeShaderMessages(copy))
                 if(message.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Error||message.severity==UnityEditor.Rendering.ShaderCompilerMessageSeverity.Warning)throw new Exception(message.message);
             bitExact=ValidateCopy();
-            context.core.ValidationPoolFormat=SelectFormat;context.historyValid=false;
+            if(mode!="production")context.core.ValidationPoolFormat=SelectFormat;context.historyValid=false;
         }
         GraphicsFormat SelectFormat(string category,int index,GraphicsFormat original)
         {return mode=="rgba32"&&original==GraphicsFormat.R16G16B16A16_SFloat?GraphicsFormat.R32G32B32A32_SFloat:original;}
@@ -76,7 +76,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                     var native=HoRTDINrdNative.Read<HoRTDINrdNative.TextureDesc>(descriptors,i);var texture=handles[i].rt;
                     long bytes=(long)texture.width*texture.height*GraphicsFormatUtility.GetBlockSize(texture.graphicsFormat);
                     long baseline=(long)texture.width*texture.height*(native.format==27?8:native.format==30?4:native.format==17?2:native.format==8?4:native.format==0?1:throw new Exception("Unmapped native pool format"));
-                    var expected=native.format==27?(mode=="rgba32"?GraphicsFormat.R32G32B32A32_SFloat:GraphicsFormat.R16G16B16A16_SFloat):texture.graphicsFormat;
+                    var expected=native.format==27?(mode!="baseline"?GraphicsFormat.R32G32B32A32_SFloat:GraphicsFormat.R16G16B16A16_SFloat):texture.graphicsFormat;
                     if(texture.graphicsFormat!=expected)throw new Exception("Pool format selector was not applied");
                     if(bytes!=baseline)result.changedPools++;result.poolBytes+=bytes;result.baselinePoolBytes+=baseline;
                     pools.Add(new Pool{category=category,index=i,nativeFormat=native.format,format=texture.graphicsFormat.ToString(),width=texture.width,height=texture.height,bytes=bytes,baselineBytes=baseline});
@@ -96,6 +96,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
     }
     public static partial class HoRTGICastleValidation
     {
+        public static void RunPoolPrecisionGpuBaseline()=>Run(false,256,gpu:true,validationTag:"pool-precision-gpu-baseline",poolPrecision:"baseline");
+        public static void RunPoolPrecisionGpuFloat()=>Run(false,256,gpu:true,validationTag:"pool-precision-gpu-rgba32",poolPrecision:"rgba32");
         public static void RunPoolPrecisionQualification()=>Run(false,64,denseScheduled:true,validationTag:"pool-precision-qualification",poolPrecision:"rgba32");
         public static void RunPoolPrecisionBaseline()=>Run(false,256,true,true,256,256,moments:true,spatialAudit:true,denseScheduled:true,validationTag:"pool-precision-baseline",poolPrecision:"baseline");
         public static void RunPoolPrecisionFloat()=>Run(false,256,true,true,256,256,moments:true,spatialAudit:true,denseScheduled:true,validationTag:"pool-precision-rgba32",poolPrecision:"rgba32");
