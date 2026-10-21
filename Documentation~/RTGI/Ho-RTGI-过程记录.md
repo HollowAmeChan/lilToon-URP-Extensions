@@ -587,3 +587,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **最终防护与统计review：** 复核后增加normal/depth显式finite guard，36548重编译/36请求资格actual0。正式参考原源在guard前，唯一diff与实际guide全部finite由verifier独立核对，不伪称完整参考重跑。首次verifier按decimal64重算split不符，定位既有LINQ Average(float selector)返回float再赋double的数值语义；按原IEEE float32批均值及平均精度重建后全部原门槛一致，未改原结果/阈值。此修正不涉及渲染。
 
 **成本/交接/过滤：** 只Editor首尾CPU readback/新报告，无产品资源/参数/SDK/Shader改动，无新GPU预算/画质修复结论。Tests~/RTGI/LocalReference约2.5MiB，242source/9新文本含场景与NRD编码原文、3完整logs、3原JSON gzip、026 map输入SHA、analysis/review/verify全过。全部自有进程已终态、active=null。白名单Castle/DenseFeature/DenseAudit、新证据与RTGI六文档；他人Ho-GD计划排除。028先同18点4个预声明seed0/104729/5347609/6396185的实际局部stage及新参考L1，保留原全域/16phase门槛，用真实绑定和32F typed copy/F43 guard，再按主损失阶段选机制；不重跑本轮MC、gain/宽sigma/单位格式扫描或复活F36候选。原F39/static/复杂动态/HD预算继续，目标active。
+
+027已按白名单过滤提交`d099dff`，LocalReference verifier提交后再次通过；18/18新局部参考原收敛过，主guide输入匹配，局部filtered欠亮有同模型参考支持但未修复/未定位阶段。3个实际进程终态，index空、Runtime无diff，仅他人Ho-GD计划未跟踪。028直接同18点/4个预声明seed的实际32F stage与新参考误差，不重采本轮MC或重复0268seed；原全域/phase/F39/static/复杂动态/HD完整预算继续，目标active。旧verifier涉及current-source SHA时用所属历史提交，不回滚当前代码凑旧检查。
