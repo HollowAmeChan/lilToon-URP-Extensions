@@ -375,3 +375,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 热点(87,165) reference红约.001500，原256窗raw为16.48倍、filtered2.48倍；另一点filtered仅reference .49倍。选点有事后选择偏差，结论是有限窗raw不可一律作真值、不能整体补gain；不是16点代表全图。postfix full审计21152仍RGB(-7.25,-8.42,-8.78)%、原5%失败，矩/降噪/完整应用验收不由AS修复代替。
 
 **事后review/过滤：** 接纳共享owned-skin AS规范化、实际回归/Player和受控参考工具；不接纳旧非法AS真值、剩余暗控制点、全图质量或“device removal唯一原因已证实”。静态MeshRenderer非零baseVertex仍须自有镜像，不能泛化skin修复。所有尝试源按SHA去重保存，当前root runner仅小debug复核，移除旧不安全长循环入口。下一项先补静态base安全及只读源，再用合法AS独立seed评估复用模式/过滤；原F27/F31/F33/F35/F36和全部5%失败继续，正常camera/1080/完整预算未完，goal active。
+
+步骤017过滤提交：`5456782`。提交后DenseReference verifier再次过，owned-skin AS错误14→0、Editor/两Release Player证据保留；index空、进程结束。下一项018静态非零base与只读源的安全镜像，不泛化已修范围，完整goal active。

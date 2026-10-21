@@ -248,7 +248,7 @@ Tests~/RTGI/Spatial/run_validation.ps1 exec36028已收：原64 PID56596、已测
 
 016已按白名单过滤提交c8a83dc，Spatial verifier提交后再过；Runtime零diff、index空、全部本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮直接017同域高样本无复用一跳参考及收敛，先读旧Reference/本机RTX，不重复已拒绝候选或新单位调参。所有原质量/HD/应用条件未完成项继续，goal active。
 
-### 017终态（2026-10-21，待过滤提交；修复owned-skin AS越界，参考仍有边界）
+### 017终态（2026-10-21，已提交5456782；修复owned-skin AS越界，参考仍有边界）
 
 真实参考过程中发现比滤波更前置的问题。两长批device removal后，官方`-force-d3d12-debug`小批3432虽exit0，实际14条BuildRaytracingAccelerationStructure vertex buffer范围越界；旧regex只匹配“D3D12 ERROR”漏“validation”，debugErrors=0被明确拒绝，原参考结果撤销真值资格。日志887a0006且not out of Local memory，不能甩锅VRAM或认定HUNG唯一原因。只在本任务GI项目启用debug，无驱动/TDR/其它进程操作。
 
@@ -275,3 +275,5 @@ Player新增BuildSkinnedBaseVertex/Compatibility，独立Assets/RTGIPlayerProbeB
 随后用合法AS/同primary匹配/多个独立seed评估main ReSTIR T/S/none模式对已收敛选点的误差，区分有限窗方差与系统偏差；不只围着固定seed0的raw256窗调filter。先看现有M0与本机RTX，不直接抄混合lobe FinalMIS：参考GetGIMISWeight含primary spec/rough BRDF，纯diffuse下会退化为.125 fresh混合，域不同必须推导/验证，非自动修复。018后再推进M2/HDR/moment、正常automatic-camera、合法AS后1080/完整预算（F31新条件须记录），未完成goal不能complete。每步review/过滤/失败/交接继续。
 
 017待过滤白名单：Runtime/RayTracing/HoRTRayMeshIndices.cs/meta与HoRTSkinnedMesh.cs；Editor GI Dense/mesh-layout及wrapper/meta、Castle/SkinnedHit/Player扩展，Editor RayTracing场景测试；Tests~/RTGI/DenseReference和Dynamic/HoRTGIRuntimeProbe.cs；RTGI说明/计划/README/过程/禁试/交接。无DI算法/NRD Shader/vendor/native/源场景改动，索引规范化共享服务会影响DI需保留上述回归证据。
+
+017已按白名单过滤提交5456782，DenseReference verifier提交后再次通过；index空，仅他人Ho-GD plan未跟踪，全部本任务进程结束。下一轮直接018静态nonzero baseVertex安全镜像/只读源，不重复旧非法AS参考或无上限采样。既有5%、moment/HDR、正常camera/1080与完整预算仍未完成，goal active不complete。
