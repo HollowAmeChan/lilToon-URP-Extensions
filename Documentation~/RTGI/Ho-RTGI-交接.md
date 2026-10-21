@@ -419,3 +419,15 @@ Tests~/RTGI/AutomaticCamera verifier已过；1163source对象5新文本、7完�
 **026直接动作：** 默认targetRT与screen自动可用性已证，不重复隐藏无事件。回到当前生产默认的独立seed全域/局部质量证据：先复读019 SeedAudit和016局部/空间域定义，沿同场景同支持域、保留原5%及全部16phase，明确当前023精度/pre-S结果与早期019代码差异；不重复四模式大矩阵、不拿选择偏差参考作绝对真值。先提出一个有界、能区分剩余损失与seed方差/局部结构的测量，再据实际结果选择算法，不能为了green5.05869%调阈值/挑phase/继续格式单位扫描。F39/static非零base、完整场景动态/HD/完整Player预算继续，目标active。
 
 025已按白名单过滤提交`ba76e3b`，Backbuffer verifier提交后再次通过，环境XML及source blob已核对Git暂存原字节SHA。默认screen两Player各240自动帧与10张屏幕图完成，首次缺模块失败保留；所有本任务进程结束、Runtime无diff、index空，仅他人Ho-GD计划未跟踪。下一026当前生产独立seed全域/局部质量边界，保留原5%/7phase/F39/HD缺口，目标active。
+
+### 026终态（2026-10-22，待过滤提交）：当前TS八seed完成，027先新局部参考
+
+三个Editor实际进程38940资格/39616正式/44052编码修正资格均exit0、API/编译/Property/UAV/fence/drift0；请求98/2594/98。生产Runtime/参数/NRD算法/SDK不改。SeedAudit新增显式TS-only和全部16phase，SpatialAudit仅CPU map导出；正式8seed原列表，各64warm/256观察、256²/18灯/15实例/12Cutout/天空/alpha/primary域合同。report.pass/seedFunctional只是测量及功能，不等于质量过。
+
+当前full RGB误差−4.71577/−5.15807/−4.82336%，配对差seed经验SE/raw .05379/.11936/.08255%；3/8 full过，pooled full仍失败，pooled9/16phase及32/64固定32²块失败，各seed phase7/11/11/8/8/9/11/7失败。绿色距5%仅1.32经验SE，不过度确定、也不放宽或挑seed。filtered/raw下降不等于独立物理真值误差；所有旧门槛/参考15/16/选择偏差保留。
+
+first4seed探索top12、last4核验全部同点：探索首位(221,184)从.01454缩至.000127±.000172经验SE；x86在y206/227/255/252/204/226仍.00159～.00252亮度差、各约>4.5经验SE、RGB约−35～−66%。全部64块/16phase/12点包括反向与缩小都在analysis。不能据此将raw当真值或直接改NRD。
+
+编码修正：初脚本默认Windows locale使Castle源为GBK；原两实际run字节完整归档，修正为显式UTF8且Unicode文本同，44052重编译/场景资格0、两个publication map逐字节同。encoding-repair含源/图SHA；不要把历史run换标新source。后续读写显式UTF8。Tests~/RTGI/ProductionSeeds约12.6MiB，239source仅5新blob、3完整log、3JSON+12maps lossless gzip（两同map复用）、analysis/verify过。最终qualification除一行progress选中模式标签修正外对应当前代码；reporting-review以精确字节替换绑定该纯报告修正（false传modes，复用已编译签名，不改GPU/最终report）。matrix使用旧编码字节，文字语义不变及实际支持域已证。所有自有进程终态、active=null；Runtime无diff，仅他人Ho-GD计划排除。
+
+**027直接动作：** 先复读016 Spatial README关于有限窗raw不能当物理损失、017 DenseReference同域MC协议。对上述6个x86位置及预先固定相邻x85/x87控制点取得无复用高样本一跳参考及primary/normal/depth/albedo/输入guide证据，核对新像素与相同材质/光/sky/AS域，不拿旧参考15点代替新坐标。参考若未收敛则保留未定，不能用filtered/raw直接定性NRD错误。随后才考虑局部阶段/机制候选，拒绝gain/宽sigma/单位格式扫描/重复四模式大矩阵。原全图5%/所有phase、static非零base/F39、复杂动态与1080/完整Player预算继续，目标active。

@@ -545,3 +545,23 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **过滤/交接review：** Tests~/RTGI/Backbuffer有1164source对象（6新小文本、其余旧证据/Git）、5完整logs、缺模块失败、最终两payload/SHA无HoGIGpuProbe.dll、10原PNG、环境XML/package与verifier。归档与verify过，所有本任务进程结束、run active=null。白名单Builder、新Backbuffer probe/证据、RTGI六文档；他人Ho-GD计划排除。026先当前生产默认独立seed的全域/局部质量边界，不继续纯单位/格式/宽sigma扫描或挑phase过关，目标active。
 
 025已按白名单过滤提交`ba76e3b`，Backbuffer verifier提交后再次通过，环境XML及source blob已核对Git暂存原字节SHA。默认screen两Player各240自动帧与10张屏幕图完成，首次缺模块失败保留；所有本任务进程结束、Runtime无diff、index空，仅他人Ho-GD计划未跟踪。下一026当前生产独立seed全域/局部质量边界，保留原5%/7phase/F39/HD缺口，目标active。
+
+## 026：当前生产默认独立seed全域/局部边界（进行中）
+
+**事前review：** 025完成普通screen呈现后回质量。019四模式矩阵使用pre-S/32F前源码，不能拿其波动直接解释023的fullgreen−5.05869%/7phase；现SeedAudit只落盘full/phase0，虽然内部SpatialAudit算16phase却未保留。本轮只当前默认TS，不重复四模式大矩阵，不改算法/参数/阈值/生产资源。固定沿用8seed，逐段GI/NRD reset、64warm/256观察，18灯/15实例/12Cutout/天空及原primary支持域合同不变。先2seed×16warm/16观察资格再8seed正式；短资格只测夹具，不作画质。
+
+报告补全部16phase和全图每像素raw/filtered均值（CPU double累加后float32存档，非GPU格式修改），按seed均值估计经验SE，不把相关帧/像素当iid。固定8×8网格局部域全部报告；first4seed探索top12loss位置，last4seed验证同位置，不能拿探索选点接纳质量。旧15/16同模型参考与选择偏差保留，不作全图真值；原5%和旧失败完整。结果用于决定后续算法定位，若稳定损失不由seed解释再追阶段/局部结构，不宽sigma/gain/单位/格式扫描。Editor隐藏、15分钟/fence只限自身进程，Runtime无改动，F39/HD预算继续。
+
+### 026事后review（2026-10-22）：默认8seed质量边界与holdout局部结构
+
+**实现/资格：** Castle增加seedProduction flag；SeedAudit仅显式选TS且保留全部16phase、实际publication map SHA；SpatialAudit导出CPU double累计后的float32每像素raw/filtered均值。生产Runtime/算法/参数/GPU资源完全不改。38940资格actual0、39616正式actual0；正式32初预热+8×(64warm+256观察)+2合成=2594真实Editor请求，primary最大误差约1.9e−6、18灯/15实例/12Cutout/天空/alpha域与原合同通过，API/编译/绑定/fence/drift0。短资格98请求只测夹具，不当质量；report.pass/functional只代表测量/功能完成。
+
+**编码review/修复：** 复核diff发现脚本默认Windows编码将含中文Castle源从UTF8写成GBK，实际编译/场景与域均成功但不能原样提交。保留两个原run精确GBK字节，显式UTF8规范化，Unicode文本严格相同；44052实际98请求资格0，两个seed的全图publication map与修正前逐字节相同。前后source SHA/编码/图SHA均记encoding-repair。以后Path读写显式encoding，不用控制台显示代替字节审查。
+
+**结果/收益review：** 8seed full raw RGB(.00132385418,.000139750312,.000127679479)，filtered(.00126142420,.000132541894,.000121521042)；误差−4.71577/−5.15807/−4.82336%，配对差seed经验SE/raw .05379/.11936/.08255%。3/8full过，合并full不通过；逐seed phase失败7/11/11/8/8/9/11/7，合并9/16phase、32/64固定局部块不通过。5%绿边界仅.158个百分点约1.32经验SE，不能过度确定或挑seed；均值差不等于相对独立真值的物理损失。当前filtered时间方差5.805e−9/raw4.545e−6，非新GPU预算。
+
+**局部定位/禁止扩大：** predeclared first4探索top12、last4验证同点、全部8×8局部块报告。探索首位(221,184)亮度差.01454在holdout只.000127±.000172 SE，不围绕单窗极值调参。6个x86、y206/227/255/252/204/226的holdout差.00159～.00252，约大于各自SE4.5倍，RGB差约−35%～−66%，支持后续调查该结构，但未证明raw是真值或NRD错误。旧01715/16参考/选择偏差不解除；新坐标须独立同模型无复用高样本参考与guide，不能直接补gain/宽sigma/挑phase。
+
+**成本/过滤/交接：** CPU导出与读回是诊断开销，不进入产品也不作GPU成本；Tests~/RTGI/ProductionSeeds约12.6MiB，239source仅5新blob、3完整log、15原capture（3JSON+12maps，2同map归档复用）、所有原门槛/分析/encoding修复/verify均过。Runtime无diff、全部自有进程已结束、active=null。白名单三Editor审计helper、新证据与RTGI六文档；他人Ho-GD计划不纳入。027先新局部坐标同域无复用高样本参考+primary/guide核对，再决定算法，不能拿定位证据当画质修复。原全域/phase/F39/static/复杂动态/HD完整预算继续，目标active。
+
+026最终静态review另修进度JSON标签：Snapshot(false)传显式modes，避免TS-only进度仍显示旧四模式；final Snapshot(true,modes)/GPU调用/实际report未改。reporting-review绑定一行精确字节替换，verifier区分历史实跑源与该纯报告修正；复用已编译签名/局部变量，不重跑GPU矩阵、不声称原run使用新字节。

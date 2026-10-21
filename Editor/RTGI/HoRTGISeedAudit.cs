@@ -35,6 +35,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             public float maxPrimaryError;
             public bool temporal, spatial, actualTemporal, environment, alphaVisibility;
             public HoRTGISpatialAudit.Domain full, phaseZero;
+            public HoRTGISpatialAudit.Domain[] phases;
+            public string publicationMap, publicationMapSha256;
             public HoRTGISpatialAudit.Frame[] frameMeans;
             public Local[] points;
             public Secondary[] firstSecondary, lastSecondary;
@@ -49,6 +51,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             public ReferenceInput[] referenceInputs;
             public HoRTGIDenseReferenceAudit.Point[] referencePoints;
             public Segment[] segments;
+            public string[] testedModes;
         }
         [Serializable, StructLayout(LayoutKind.Sequential)] internal struct Secondary
         {
@@ -164,10 +167,15 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             frames++;
         }
 
-        internal void End()
+        internal void End(string publicationMap = null)
         {
             if (frames != report.measured) throw new Exception("Seed segment incomplete.");
-            var full = spatial.Finish(); current.full = full.full; current.phaseZero = full.phases[0]; current.frameMeans = full.frameMeans;
+            if(publicationMap!=null)
+            {
+                spatial.WritePublicationMeans(publicationMap);current.publicationMap=Path.GetFileName(publicationMap);
+                current.publicationMapSha256=Hash(File.ReadAllBytes(publicationMap));
+            }
+            var full = spatial.Finish(); current.full = full.full; current.phaseZero = full.phases[0]; current.phases=full.phases; current.frameMeans = full.frameMeans;
             current.points = new Local[reference.Length];
             for (int i = 0; i < reference.Length; i++)
             {
@@ -195,6 +203,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         {
             report.segments = segments.ToArray(); report.terminal = terminal;
             var requiredModes = (testedModes ?? new[] { 0, 1, 2, 3 }).Select(i => Modes[i]).OrderBy(x => x).ToArray();
+            report.testedModes=requiredModes;
+            report.protocol="Predeclared frame seeds and explicit selected production modes; GI/NRD reset per segment. Selected legacy receivers retain post-selection bias; same-model reference is not independent truth or full-image acceptance.";
             if (requiredModes.Length == 0 || requiredModes.Distinct().Count() != requiredModes.Length) throw new Exception("Invalid selected mode contract.");
             report.functionalPass = terminal && segments.Count == report.seedCount * requiredModes.Length;
             if (terminal)
@@ -285,16 +295,20 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void RunSeedQualification() => Run(false, 256, denseScheduled: true, validationTag: "seed-qualification",
             seedAudit: true, seedCount: 2, seedWarmup: 16, seedMeasured: 16);
         public static void RunSeedMatrix() => Run(false, 256, denseScheduled: true, validationTag: "seed-matrix", seedAudit: true);
+        public static void RunProductionSeedQualification() => Run(false,256,denseScheduled:true,validationTag:"production-seed-qualification",
+            seedAudit:true,seedCount:2,seedWarmup:16,seedMeasured:16,seedProduction:true);
+        public static void RunProductionSeeds() => Run(false,256,denseScheduled:true,validationTag:"production-seeds",seedAudit:true,seedProduction:true);
 
         static async Task<HoRTGISeedAudit.Report> AuditSeeds(HoRTGIRendererFeature gi, HoRTGIContext context,
             HoRTGIDenseReferenceFeature feature, Action render, Func<RenderTexture, Color[]> read,
-            int seedCount, int warmup, int measured, string output)
+            int seedCount, int warmup, int measured, string output, bool productionOnly=false)
         {
             var audit = new HoRTGISeedAudit(seedCount, warmup, measured, context.width);
             bool temporal = gi.Settings.temporal, spatial = gi.Settings.spatial; int oldFrame = context.frame;
             try
             {
-                for (int mode = 0; mode < HoRTGISeedAudit.Modes.Length; mode++) for (int seed = 0; seed < seedCount; seed++)
+                int[] modes=productionOnly?new[]{3}:new[]{0,1,2,3};
+                foreach(int mode in modes) for (int seed = 0; seed < seedCount; seed++)
                 {
                     gi.Settings.temporal = (mode & 1) != 0; gi.Settings.spatial = (mode & 2) != 0;
                     context.historyValid = false; context.nrd.historyValid = false; context.frame = HoRTGISeedAudit.Seeds[seed];
@@ -307,11 +321,11 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                         if (feature.collect) audit.ValidateProbe(feature, context, frame == 0);
                         audit.Add(read(context.diffuse.rt), read(context.PublishedDiffuse.rt), context);
                     }
-                    feature.collect = false; audit.End();
-                    File.WriteAllText(Path.Combine(output, "seed-progress.json"), JsonUtility.ToJson(audit.Snapshot(false), false));
+                    feature.collect = false; audit.End(productionOnly?Path.Combine(output,"publication-"+HoRTGISeedAudit.Seeds[seed]+".bin"):null);
+                    File.WriteAllText(Path.Combine(output, "seed-progress.json"), JsonUtility.ToJson(audit.Snapshot(false,modes), false));
                     Debug.Log("[HoGISeeds] segment mode=" + HoRTGISeedAudit.Modes[mode] + " seed=" + HoRTGISeedAudit.Seeds[seed] + " complete");
                 }
-                var report = audit.Snapshot(true);
+                var report = audit.Snapshot(true,modes);
                 Debug.Log("[HoGISeeds] COMPLETE segments=" + report.segments.Length);
                 return report;
             }

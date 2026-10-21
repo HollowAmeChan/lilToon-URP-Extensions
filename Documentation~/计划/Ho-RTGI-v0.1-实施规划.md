@@ -232,3 +232,5 @@
 步骤024：两个真实serialized-enabled相机Player各240连续自动渲染，通过合成/Volume/重投影/发光重置，无手动请求。两hidden失败与用户明确授权后的短暂visible单变量成功都保留；Runtime无改动。targetRT输出不冒称backbuffer完成，025补默认屏幕目标与捕获色域/位置证据；full质量/7phase/static/F39/HD预算及全部用户强制要求继续active。
 
 步骤025：默认screen目标已实际验证，两个512²Player各240自动渲染/截图对齐/固定色域/原强度与动态门槛通过，10张真实屏幕图保留。隔离模块缺失原失败保留，产品Runtime/依赖无改。屏幕功能可用性不替代复杂画质、原5%/7phase/F39/static/1080完整预算；026回当前生产独立seed全域/局部边界，全部用户强制要求与目标active继续。
+
+步骤026：当前TS默认8seed实测与全部phase/固定64局部块/探索holdout map已完成，full绿色−5.15807%（配对seed经验SE/raw .11936%），合并门槛仍失败；6个x86结构跨seed保留差但raw不是真值。仅Editor测量增强，无画质修复。027先新坐标与相邻控制的同支持域无复用高样本一跳参考/guide，再定算法；所有原5%/phase/static/F39/复杂动态/1080完整预算与用户强制要求继续active。

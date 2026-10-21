@@ -1,0 +1,107 @@
+{
+  "results/qualification.json": {
+    "path": "results/qualification.json.gz",
+    "rawBytes": 209446,
+    "rawSha256": "4EC23ADFE372BEF0B3BE2A88C1081DEEC2BAE46CCEDFECCFC089E2C1175B7FA7",
+    "archiveBytes": 28848,
+    "archiveSha256": "701A3E06AC63E9D63F35539393094E338484805E63A78B960B55DAA35C847DCB"
+  },
+  "results/matrix.json": {
+    "path": "results/matrix.json.gz",
+    "rawBytes": 2167084,
+    "rawSha256": "B2AD3A35801606CB328512712946B1EB535D3E8AE87C355A641E7B7E62DA8B8D",
+    "archiveBytes": 274865,
+    "archiveSha256": "BBECC0CEBB75F15CFC6F3EFFDB0E353EFE975F565855BFBB710A02D72953D72A"
+  },
+  "pre-utf8-qualification/report.json": {
+    "path": "pre-utf8-qualification/report.json.gz",
+    "rawBytes": 209439,
+    "rawSha256": "52BAC5D8C5AEC9CDE9CCF63DDBA7CCDF34F72CA332BD5AB581EF6EBC6BB45E85",
+    "archiveBytes": 28844,
+    "archiveSha256": "53B9824F4DDE166D52228E262D0AAEA0CFFE3A27D496E72664D28943DA143633"
+  },
+  "results/matrix/publication-0.bin": {
+    "path": "results/matrix/publication-0.bin.gz",
+    "rawBytes": 1572880,
+    "rawSha256": "234DED939DE5030F94E33D0D772557641CE47ADC8D34D9F6D7A99DBC7FAF36E0",
+    "archiveBytes": 1252640,
+    "archiveSha256": "51804304CA7700207376C56F9D580D99F6FF2D401127DE4E8F6CA5D37B28BB58"
+  },
+  "results/matrix/publication-104729.bin": {
+    "path": "results/matrix/publication-104729.bin.gz",
+    "rawBytes": 1572880,
+    "rawSha256": "6B23F62EC8800F61B41A2C753B378C6B7F93937AD4A1647D4E17525E1F8C2C20",
+    "archiveBytes": 1252967,
+    "archiveSha256": "A7651B0E4BB715E0140926128BF528F056CD7CB17DB9533D3D00AC6FD6EF4C55"
+  },
+  "results/matrix/publication-1153305.bin": {
+    "path": "results/matrix/publication-1153305.bin.gz",
+    "rawBytes": 1572880,
+    "rawSha256": "2E405E6FC4079D4457C395F31A4D71FE559E9E4D9F5D0CD49F196D23C35AB6C4",
+    "archiveBytes": 1252289,
+    "archiveSha256": "866E7D8FF24401E80E9A2B5B57D3216E91B45664AC286FD4BFA23EB4FC3AC25E"
+  },
+  "results/matrix/publication-2201881.bin": {
+    "path": "results/matrix/publication-2201881.bin.gz",
+    "rawBytes": 1572880,
+    "rawSha256": "BA9B7C1B72392574F79450BBC3F252DD85401A08553568521ED2A4072833AEAA",
+    "archiveBytes": 1252608,
+    "archiveSha256": "EA4B9D9EE47C5519477550B2027279116906000E0F76D5547E66722924FFE4FD"
+  },
+  "results/matrix/publication-3250457.bin": {
+    "path": "results/matrix/publication-3250457.bin.gz",
+    "rawBytes": 1572880,
+    "rawSha256": "B352D6A3FE99E38AEFFC2187A7557B9593897EFC15E541D0609469AC43A0DC82",
+    "archiveBytes": 1253980,
+    "archiveSha256": "506B1FCC41EB7D37FA956423094973BAB320192239F4502643C6559DF716A39C"
+  },
+  "results/matrix/publication-4299033.bin": {
+    "path": "results/matrix/publication-4299033.bin.gz",
+    "rawBytes": 1572880,
+    "rawSha256": "C8A5ED96A40246767F4E5073B506C04D3CB3740C5820A8F9D099D5FC20886311",
+    "archiveBytes": 1254963,
+    "archiveSha256": "DAF6F72A0F7EE1E19576D8809570657DEC667096206F15F87A7FA4FAE5238D91"
+  },
+  "results/matrix/publication-5347609.bin": {
+    "path": "results/matrix/publication-5347609.bin.gz",
+    "rawBytes": 1572880,
+    "rawSha256": "BD61994610BBC52562C3E95A0703F351B85E538514860C0A232CD86906FACE38",
+    "archiveBytes": 1253253,
+    "archiveSha256": "A65CB234E3471DBF6AEC05A793853EBB273D7C7150EDE61AE12530636C4C198C"
+  },
+  "results/matrix/publication-6396185.bin": {
+    "path": "results/matrix/publication-6396185.bin.gz",
+    "rawBytes": 1572880,
+    "rawSha256": "8518C696FF1041D4566B87469186396FB4FC369CD933AE66477A914FBF27AF78",
+    "archiveBytes": 1251287,
+    "archiveSha256": "315C9B09E232943FB6D062ADD7BE802EA9391621C53866BCDA2F3BB0959E0935"
+  },
+  "results/qualification/publication-0.bin": {
+    "path": "results/qualification/publication-0.bin.gz",
+    "rawBytes": 1572880,
+    "rawSha256": "21EA9A7078E6BE3FA0A25D7931F2784F740D21D7D9E90C3B643FA4EEB280E4BC",
+    "archiveBytes": 1083059,
+    "archiveSha256": "6A11A91B4BD56EB9D418AAD9AF8489611630B445185A512DC54AE8709F8B70D3"
+  },
+  "results/qualification/publication-104729.bin": {
+    "path": "results/qualification/publication-104729.bin.gz",
+    "rawBytes": 1572880,
+    "rawSha256": "89A276CB6CDA0418ADB314577731DCB7B06231476C1A33D2C9C7CCFC0719C9BF",
+    "archiveBytes": 1080768,
+    "archiveSha256": "E47009660E92DD687663662F0891066D1BCBFBD7B0CD8AE993A91365E0222652"
+  },
+  "pre-utf8-qualification/maps/publication-0.bin": {
+    "path": "results/qualification/publication-0.bin.gz",
+    "rawBytes": 1572880,
+    "rawSha256": "21EA9A7078E6BE3FA0A25D7931F2784F740D21D7D9E90C3B643FA4EEB280E4BC",
+    "archiveBytes": 1083059,
+    "archiveSha256": "6A11A91B4BD56EB9D418AAD9AF8489611630B445185A512DC54AE8709F8B70D3"
+  },
+  "pre-utf8-qualification/maps/publication-104729.bin": {
+    "path": "results/qualification/publication-104729.bin.gz",
+    "rawBytes": 1572880,
+    "rawSha256": "89A276CB6CDA0418ADB314577731DCB7B06231476C1A33D2C9C7CCFC0719C9BF",
+    "archiveBytes": 1080768,
+    "archiveSha256": "E47009660E92DD687663662F0891066D1BCBFBD7B0CD8AE993A91365E0222652"
+  }
+}

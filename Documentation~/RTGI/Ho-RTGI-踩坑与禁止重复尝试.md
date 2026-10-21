@@ -102,3 +102,11 @@ DI已试hidden普通启动，不能只去batch重复。GI新serialized-enabled/t
 本机API DLL存在不等于隔离项目已引用模块；首次build39064 CS0103实际失败，须在隔离manifest启用com.unity.modules.screencapture，不能改产品依赖/反射绕过或把未运行当Player失败。ScreenCapture只读取帧结束屏幕，必须对应真实enabled-camera callback；禁止把截图调用伪装成渲染请求。固定逐像素sRGB→linear并以独立raster线性基线资格，不按合成结果挑映射/放宽阈值。
 
 两个最终512²默认screen Player各240自动帧过，截图误差最高.006432<原.015；不能拿屏幕量化结果替代HDR/原5%质量。10张真实屏幕图是纯接收面，不等于古堡复杂视觉QA。两个既有未用GB fallback/MSAA shader缺省提示完整保留，不能称所有日志无warning或支持那些路径。fullgreen/7phase/F39/1080预算继续，不以默认screen呈现完成全目标。
+
+## F47 / 步骤026：源码编码、seed边界与局部极值的选择偏差
+
+Windows Python默认Path.write_text可能把原UTF8中文C#写成GBK，Unity本机仍可能正确编译/加载场景，成功日志不能替代源字节审查。026保留原GBK run，显式UTF8修正且Unicode文本严格相同，重新资格实际0、两map逐字节同；禁止删除原SHA/伪称原run用新UTF8字节。以后显式encoding。
+
+当前8seed TS pooled绿色−5.15807%，配对差经验SE/raw .11936%，3/8 full过；5%边界不能按单窗5.05869%定得过准，也不能因波动放宽/挑seed。pooled仍full不通过、9/16phase、32/64固定块失败，原5%保留。raw/filtered差不是独立物理真值误差，report.pass/functional仅测量功能，不接纳质量。
+
+探索首位(221,184)差.01454在holdout只.000127±.000172 SE，禁止围绕这样的事后极值盲调。6个x86跨seed保留较大差，只支持调查结构；旧017高样本参考不覆盖这些坐标，不能把raw视真值/直接修改NRD。重开算法候选前先新坐标及相邻控制的同支持域无复用高样本/primary/guide；旧参考15/16/选择偏差、F35/F36/F39/F31不解除。

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using UnityEngine;
 
@@ -76,6 +77,20 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 list.Add(local);list.Sort((u,v)=>Math.Abs(v.luminanceDeficit).CompareTo(Math.Abs(u.luminanceDeficit)));if(list.Count>12)list.RemoveAt(12);
             }
             return new Report{complete=true,width=width,height=height,frames=frames,full=DomainFor(-1,-1),phases=phases,stages=stages.OrderBy(p=>p.Key).Select(p=>new Stage{pipeline=p.Key,meaning=Meaning(p.Key),full=StageMean(p.Value.sums,-1,-1),phaseZero=StageMean(p.Value.sums,0,0),negativeComponents=p.Value.negative}).ToArray(),frameMeans=frameMeans.ToArray(),largestLosses=losses.ToArray(),largestGains=gains.ToArray()};
+        }
+        // Export CPU-accumulated means of actual GPU publications. This does not
+        // alter GPU formats, samples, denoising, or any energy acceptance gate.
+        internal void WritePublicationMeans(string path)
+        {
+            if(frames<2)throw new Exception("Incomplete publication map window");
+            using var writer=new BinaryWriter(File.Create(path));
+            writer.Write(new byte[]{(byte)'H',(byte)'G',(byte)'I',(byte)'1'});
+            writer.Write(width);writer.Write(height);writer.Write(frames);
+            for(int i=0;i<n;i++)
+            {
+                for(int c=0;c<3;c++)writer.Write((float)(raw[i*3+c]/frames));
+                for(int c=0;c<3;c++)writer.Write((float)(filtered[i*3+c]/frames));
+            }
         }
         Domain DomainFor(int phaseX,int phaseY)
         {

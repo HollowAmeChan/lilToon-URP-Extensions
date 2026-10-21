@@ -1,0 +1,8 @@
+{
+  "path": "Editor/RTGI/HoRTGISeedAudit.cs",
+  "beforeSha256": "8CE51B061736AC4C15B74DC80ED8485E9836C7923FF44A240B948218B78FA69D",
+  "afterSha256": "791EB48E36E687913AF9BA6D997754CC83857D3699223BE605BCE8F6EE0C17E4",
+  "exactBefore": "audit.Snapshot(false)",
+  "exactAfter": "audit.Snapshot(false,modes)",
+  "scope": "Progress JSON selected-mode label only; final Snapshot(true,modes) and all GPU calls/data unchanged. Static review uses the already compiled Snapshot signature and the same local modes argument."
+}

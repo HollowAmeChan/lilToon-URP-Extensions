@@ -49,3 +49,5 @@
 步骤024补齐真实enabled-camera自动调度：用户授权短暂可见窗口，同一RG构建从Hidden改Normal后240连续自动回调/合成/Volume/移动与发光reset通过，compat亦240通过；两hidden失败完整保留，Runtime不改。[自动相机证据](../../Tests~/RTGI/AutomaticCamera/README.md)。相机仍输出64²targetRT，最终backbuffer呈现与视觉QA待025；原质量/预算/F39全部继续，目标active。
 
 步骤025完成默认屏幕目标：RG/compat各240真实自动渲染，serialized-enabled+target=null、512²屏幕/GI、帧末截图与前帧publication对齐，固定sRGB解码后原合成/Volume/移动/发光响应通过。[屏幕证据及10张图](../../Tests~/RTGI/Backbuffer/README.md)。首次缺模块构建失败保留，Runtime无改；这是小场景功能呈现，026回当前生产独立seed全域/局部质量，原5%/7phase/F39/1080完整预算继续，目标active。
+
+步骤026完成当前生产TS默认的8seed全域/局部证据：full误差−4.716/−5.158/−4.823%，3/8 full通过但合并full/9phase/32固定块仍失败；first4探索/last4验证表明单窗极值会缩小，6个x86局部差仍保留。[完整seed/holdout证据](../../Tests~/RTGI/ProductionSeeds/README.md)。无生产改动或画质修复；027先这些新坐标及相邻控制的同域无复用高样本参考+guide，不把raw当真值或盲调NRD，原质量/F39/HD完整预算继续，目标active。

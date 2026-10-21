@@ -120,3 +120,5 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 024补充（2026-10-22）：独立RG/compat Release Player从序列化场景加载起Camera.enabled=true，各240连续endCameraRendering、241Update，无Render/SubmitRequest/Volume.Update；GI强度、Volume、移动重投影与发光重置通过。hidden两条件无事件，用户明确授权后短暂Normal窗口同构建通过。此处输出64²targetRT，backbuffer最终呈现尚待025，不代表新视觉QA/完整画质/预算验收。详见Tests~/RTGI/AutomaticCamera与过程/交接，目标active。
 
 025补充（2026-10-22）：RG/compat默认屏幕目标（camera.targetTexture=null）实跑512²，各240连续自动回调；帧末截屏与前帧GI对齐，固定sRGB→linear及独立raster基线资格，原合成/Volume/重投影/发光重置通过。10张真实屏幕图按backend归档Tests~/RTGI/Backbuffer，首次隔离项目缺ScreenCapture模块失败保留。纯接收面功能呈现非复杂画质或预算完成；原fullgreen/7phase/F39/1080完整预算继续，目标active。
+
+026补充（2026-10-22）：当前生产TS八seed（各64warm/256观察）全域、16phase、固定64块与first4探索/last4局部验证完成。full−4.716/−5.158/−4.823%，pooled仍不通过；6个x86跨seed局部差值得进一步同域高样本参考核对，不能将raw当真值。239源/完整log/map与编码修正资格见Tests~/RTGI/ProductionSeeds；无Runtime/算法/参数改动，无画质修复或新预算结论，目标active。

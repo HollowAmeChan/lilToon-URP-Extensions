@@ -1,0 +1,24 @@
+{
+  "path": "Editor/RTGI/HoRTGICastleValidation.cs",
+  "beforeSha256": "A72191D0AC4A31C27494873EEEEFCE860FA24F7EFB8F385C68046D3994FA90ED",
+  "beforeEncoding": "GBK",
+  "afterSha256": "BD565648ACB65B9094659E0ACAA67A761606D8CDBA557055504F4148F2B04140",
+  "afterEncoding": "UTF-8",
+  "unicodeTextUnchanged": true,
+  "reason": "Explicitly normalize Python default Windows locale write; keep original actual-run bytes and recompile bounded domain qualification.",
+  "qualificationAfterUtf8ActualExit": 0,
+  "mapComparison": [
+    {
+      "seed": 0,
+      "publicationMapBitwiseEqual": true,
+      "beforeSha256": "21EA9A7078E6BE3FA0A25D7931F2784F740D21D7D9E90C3B643FA4EEB280E4BC",
+      "afterSha256": "21EA9A7078E6BE3FA0A25D7931F2784F740D21D7D9E90C3B643FA4EEB280E4BC"
+    },
+    {
+      "seed": 104729,
+      "publicationMapBitwiseEqual": true,
+      "beforeSha256": "89A276CB6CDA0418ADB314577731DCB7B06231476C1A33D2C9C7CCFC0719C9BF",
+      "afterSha256": "89A276CB6CDA0418ADB314577731DCB7B06231476C1A33D2C9C7CCFC0719C9BF"
+    }
+  ]
+}
