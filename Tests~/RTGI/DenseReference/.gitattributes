@@ -1,0 +1,3 @@
+*.json -text whitespace=cr-at-eol
+source-blobs/* -text whitespace=cr-at-eol
+player-source/** -text whitespace=cr-at-eol

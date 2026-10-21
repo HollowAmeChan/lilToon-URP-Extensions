@@ -1,5 +1,6 @@
 using System;
 using System.IO;
+using System.Linq;
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.RTGI;
 using lilToon.URP.Extensions.SurfaceBuffer;
@@ -21,6 +22,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void BuildCutoutCompatibility()=>Build(true,true);
         public static void BuildSkinned()=>Build(false,true,true);
         public static void BuildSkinnedCompatibility()=>Build(true,true,true);
+        public static void BuildSkinnedBaseVertex()=>Build(false,true,true,"BaseVertex",true);
+        public static void BuildSkinnedBaseVertexCompatibility()=>Build(true,true,true,"BaseVertex",true);
         public static void BuildSkinnedNoGpuProbe()=>Build(false,true,true,"NoGpuProbe");
         public static void AuditScripts()
         {
@@ -44,14 +47,14 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
             AuditScripts();
         }
-        static void Build(bool compatibility,bool cutout=false,bool skinned=false,string suffix="")
+        static void Build(bool compatibility,bool cutout=false,bool skinned=false,string suffix="",bool baseVertex=false)
         {
             try
             {
                 string root=Directory.GetParent(Application.dataPath).FullName;
                 if(!root.Replace('\\','/').EndsWith("/.codex-research/RTGIValidation"))throw new Exception("Dedicated GI project required");
                 var probeType=Type.GetType("HoRTGIRuntimeProbe, Assembly-CSharp");if(probeType==null)throw new Exception("Copy Tests~/RTGI/Dynamic/HoRTGIRuntimeProbe.cs into isolated Assets before launching Build");
-                const string assets="Assets/RTGIPlayerProbe/";Directory.CreateDirectory(Path.Combine(Application.dataPath,"RTGIPlayerProbe"));AssetDatabase.Refresh();
+                string assets=baseVertex?"Assets/RTGIPlayerProbeBaseVertex/":"Assets/RTGIPlayerProbe/";Directory.CreateDirectory(Path.Combine(root,assets));AssetDatabase.Refresh();
                 // Own isolated outputs only.
                 EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);RenderSettings.fog=false;
                 var renderer=ScriptableObject.CreateInstance<UniversalRendererData>();AssetDatabase.CreateAsset(renderer,assets+"Renderer.asset");
@@ -81,12 +84,13 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                     cutoutMaterial=new Material(Shader.Find("Hidden/lilToonCutout"));cutoutMaterial.SetOverrideTag("RenderType","TransparentCutout");cutoutMaterial.renderQueue=2450;cutoutMaterial.SetFloat("_Cull",0);cutoutMaterial.SetFloat("_Cutoff",.5f);cutoutMaterial.SetFloat("_AlphaMaskMode",0);cutoutMaterial.SetFloat("_Reflectance",0);cutoutMaterial.SetFloat("_Metallic",0);cutoutMaterial.SetFloat("_Smoothness",0);cutoutMaterial.SetFloat("_UseEmission",0);cutoutMaterial.SetFloat("_UseEmission2nd",0);cutoutMaterial.SetTexture("_MainTex",Texture2D.whiteTexture);cutoutMaterial.SetColor("_Color",new Color(0,0,0,0));AssetDatabase.CreateAsset(cutoutMaterial,assets+"Cutout.mat");cutoutRenderer=panel.GetComponent<Renderer>();cutoutRenderer.sharedMaterial=cutoutMaterial;
                 }
                 Transform blueBone=null;SkinnedMeshRenderer blueSkin=null;
-                if(skinned){MakeSkin(red,false,assets+"RedSkin.asset",out _);blueSkin=MakeSkin(blue,true,assets+"BlueSkin.asset",out blueBone);cutoutRenderer=MakeSkin(cutoutRenderer.gameObject,false,assets+"CutoutSkin.asset",out _);}
+                if(skinned){MakeSkin(red,false,assets+"RedSkin.asset",out _,baseVertex);blueSkin=MakeSkin(blue,true,assets+"BlueSkin.asset",out blueBone,baseVertex);cutoutRenderer=MakeSkin(cutoutRenderer.gameObject,false,assets+"CutoutSkin.asset",out _,baseVertex);}
                 var holder=new GameObject("GI Player Volume").AddComponent<Volume>();holder.isGlobal=true;var profile=ScriptableObject.CreateInstance<VolumeProfile>();var component=profile.Add<HoRTGIVolume>();BoundScript(component);component.enable.Override(true);AssetDatabase.CreateAsset(profile,assets+"Volume.asset");AssetDatabase.AddObjectToAsset(component,profile);EditorUtility.SetDirty(profile);EditorUtility.SetDirty(component);holder.sharedProfile=profile;
                 var probe=new GameObject("GI Runtime Probe").AddComponent(probeType);var so=new SerializedObject(probe);
                 Set(so,"probeCamera",camera);Set(so,"feature",gi);Set(so,"redMaterial",red.GetComponent<Renderer>().sharedMaterial);Set(so,"blueWall",blue.transform);Set(so,"profile",profile);so.ApplyModifiedPropertiesWithoutUndo();
                 if(cutout){Set(so,"cutoutMaterial",cutoutMaterial);Set(so,"cutoutRenderer",cutoutRenderer);Set(so,"excludedSky",skyMaterial);so.ApplyModifiedPropertiesWithoutUndo();}
                 if(skinned){Set(so,"blueBone",blueBone);Set(so,"blueSkin",blueSkin);so.ApplyModifiedPropertiesWithoutUndo();}
+                var baseVertexProperty=so.FindProperty("baseVertexProbe");if(baseVertex&&baseVertexProperty==null)throw new Exception("Copy the updated runtime probe before base-vertex build");if(baseVertexProperty!=null){baseVertexProperty.boolValue=baseVertex;so.ApplyModifiedPropertiesWithoutUndo();}
                 AssetDatabase.SaveAssets();EditorSceneManager.SaveScene(UnityEngine.SceneManagement.SceneManager.GetActiveScene(),assets+"Probe.unity");
                 string output=compatibility?"PlayerGIDynamicCompatibility":"PlayerGIDynamic";
                 if(cutout)output=compatibility?"PlayerGICutoutCompatibility":"PlayerGICutout";
@@ -104,9 +108,15 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             var script=MonoScript.FromScriptableObject(obj);
             if(script==null||script.GetClass()!=obj.GetType())throw new Exception("Script import/class mapping unavailable for serialized Player asset: "+obj.GetType().FullName);
         }
-        static SkinnedMeshRenderer MakeSkin(GameObject obj,bool morph,string assetPath,out Transform bone)
+        static SkinnedMeshRenderer MakeSkin(GameObject obj,bool morph,string assetPath,out Transform bone,bool baseVertex=false)
         {
             var renderer=obj.GetComponent<MeshRenderer>();var material=renderer.sharedMaterial;var mesh=UnityEngine.Object.Instantiate(obj.GetComponent<MeshFilter>().sharedMesh);UnityEngine.Object.DestroyImmediate(renderer);UnityEngine.Object.DestroyImmediate(obj.GetComponent<MeshFilter>());
+            if(baseVertex)
+            {
+                var positions=mesh.vertices;var normals=mesh.normals;var tangents=mesh.tangents;var uv=mesh.uv;var indices=mesh.GetIndices(0,false);
+                mesh.vertices=positions.Concat(positions).ToArray();mesh.normals=normals.Concat(normals).ToArray();mesh.tangents=tangents.Concat(tangents).ToArray();
+                var allUV=new Vector2[mesh.vertexCount];Array.Copy(uv,0,allUV,uv.Length,uv.Length);mesh.uv=mesh.uv2=allUV;mesh.SetTriangles(indices,0,false,positions.Length);mesh.RecalculateBounds();
+            }
             bone=new GameObject(obj.name+" bone").transform;bone.SetParent(obj.transform,false);mesh.bindposes=new[]{Matrix4x4.identity};var weights=new BoneWeight[mesh.vertexCount];for(int i=0;i<weights.Length;i++)weights[i]=new BoneWeight{boneIndex0=0,weight0=1};mesh.boneWeights=weights;
             if(morph){var delta=new Vector3[mesh.vertexCount];for(int i=0;i<delta.Length;i++)delta[i]=Vector3.back*2;mesh.AddBlendShapeFrame("GI Player emitter move",100,delta,new Vector3[delta.Length],new Vector3[delta.Length]);}
             AssetDatabase.CreateAsset(mesh,assetPath);mesh.UploadMeshData(true);EditorUtility.SetDirty(mesh);

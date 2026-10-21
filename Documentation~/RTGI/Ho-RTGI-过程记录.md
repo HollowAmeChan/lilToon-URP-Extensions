@@ -353,3 +353,25 @@
 **过滤提交：** 仅Editor SpatialAudit/meta、Castle完整域接口（无候选）、Tests~/RTGI/Spatial及RTGI README/过程/禁试/交接/计划。拒绝候选只在Tests~可review归档，不进入Runtime/Editor产品入口；他人Ho-GD plan不碰，所有进程结束，goal active。
 
 步骤016过滤提交：`c8a83dc`。提交后Spatial verifier再过，Runtime零diff、index空、进程结束。下一项017建立同域高样本无复用一跳参考/收敛，不能把有限窗高方差raw或子集当完整真值；原5%和全部失败继续，goal active。
+
+## 017：同域高样本无复用一跳参考（进行中）
+
+**事前review：** 已重读M0/CommonDiffuse独立墙积分及本机RTX BrdfRayTracing/ShadeSecondarySurfaces。参考支持混合lobe/完整PT域，本步仍只匹配既有Ho一跳漫反射，不能抄完整PT或以旧reference偏暗反调Ho。016热点raw波动很大，需要比256窗高得多的无复用采样，并按独立批次看收敛；子集参考不等于全图/完整画质验收。
+
+**实现/门槛：** Editor专用Feature在同一full256 GB/SB之后，展开sampleID×receiverID，仅包装原primary loader映射到选择的full pixel；复用已验证Generate→次级SDK RIS→真实alpha final visibility→Final，无Temporal/Spatial/NRD。借同一场景/排除、18活灯及sky/RIS，确认不把容量32当活灯数。GPU probe对比原full primary、RAB与主GI实际history包，先小批有效性再递增独立seed批次。黑事件算样本，参考输出FP32防额外截断，保留与产品FP16差异边界；采样预算/参数不改main GI。F31仍禁原HD条件，fence错误只中止自身任务。原5%及全部失败保留。
+
+**AS前置错误及修复事前review（2026-10-21）：** 小批/1M采样有过functional pass和14/16统计收敛，但两次长批device removal（887a0006）后启用Unity官方D3D12 debug层，发现14条BuildRaytracingAccelerationStructure vertex buffer范围越界。Unity退出0和旧runner debugErrors=0均非合格（匹配式漏掉“validation”）；既有dense数值先取消真值接纳。日志明确not out of Local memory，不能归因显存不足。
+
+CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned mesh，14个非天空submesh都用非零baseVertex、局部indices；driver请求跨度10052812=(N−1)×40+12，却从baseVertex偏移处起读，超过10052840B整VB。拟只在已有自有BakeMesh快照上把index重写为absolute、baseVertex/firstVertex归零，保持顶点/UV/法线/材质/submesh顺序和原raster mesh不动，再用同场景debug层判定是否消除14条错误。小骨骼/非readable/Cutout/DI共享路径要回归；静态非零baseVertex未由本场景覆盖，不扩大修复结论。不凭数值“看起来对”接纳非法AS，先修几何再重跑参考。
+
+**实际修复/证明：** 新共享HoRTRayMeshIndices在自有pose上按applyBaseVertex取得absolute indices并重写index buffer，保留submesh/topology/bounds、base0；UInt16足够则保留，否则UInt32。仅在HoRTSkinnedMesh.BakeMesh(true)后调用，source/raster不动、stable pose无额外Bake。实际Unity重算firstVertex为minIndex，不能称返回firstVertex全0；合法AS范围依据base0。canonical-layout PID28044 actual exit0：vertex流SHA不变、absolute三角元组相同、14处base规范化。索引724416/约2.90MB，O(index) CPU与临时数组成本未计入GPU收益，动画成本后续测。
+
+同场景debug小批13720及最终复核29476 actual exit0、API错误14→0。shared scene非零base RG12436/compat58844各145checks、GI native属性57560共141checks全exit0/validation0，覆盖骨骼/Morph/镜像/缓存/非readable及真实UV0/UV1（unused UV poison避免错误索引也通过）。两份新Mono Release RG build54680/Player52168、compat build45800/Player58604全exit0，各315实际请求/35checks；serialized nonreadable source base4保持、三个owned snapshot base0且absolute，原Cutout/动态/启停/合成保留。payload/日志/报告SHA完整，无GPU计时DLL，不称正常自动camera。
+
+**参考与故障完整保留：** 分配早于URP初始化/compute include pragma未导出Final先后实际exit1，修后小512×2 functional通过。原4096×256同帧长循环与512×16384跨update旧AS长循环两次device removal，均actual exit−1无fresh终态；后者仅terminal=false的1024批检查点。日志887a0006、not out of Local memory，不能甩锅显存。恢复小负载57032 actual exit0，24fenced known-load资格过，但不当后续大场景稳定保证。首debug3432 exit0/runner漏匹配validation计0，实际14条；更正regex并撤销旧参考真值接纳。源/日志/错误结果不改写，F37/F38记录。
+
+**合法AS后的参考：** fixed-reference44048 actual exit1仅因旧原5%失败，debug0、场景域稳定，每点512×2048=1048576样本，14/16严格收敛。两个暗控制点fixed-controls29832再512×16384=8388608样本，约438.5秒、无device/fence/API错误，新增(240,32)收敛；(16,16) green batch-SE2.316%仍大于2%，不放宽、不无限采。最终15/16选点可信于同模型与当前精度，不当全场景/绝对物理真值。raygen/compute/full history primary误差0或微小量、18灯15实例12Cutout、8/4候选与sky/ray域一致。修复后数值与旧未定义范围数据恰好相同也不能恢复旧数据资格，依赖新的合法实跑。
+
+热点(87,165) reference红约.001500，原256窗raw为16.48倍、filtered2.48倍；另一点filtered仅reference .49倍。选点有事后选择偏差，结论是有限窗raw不可一律作真值、不能整体补gain；不是16点代表全图。postfix full审计21152仍RGB(-7.25,-8.42,-8.78)%、原5%失败，矩/降噪/完整应用验收不由AS修复代替。
+
+**事后review/过滤：** 接纳共享owned-skin AS规范化、实际回归/Player和受控参考工具；不接纳旧非法AS真值、剩余暗控制点、全图质量或“device removal唯一原因已证实”。静态MeshRenderer非零baseVertex仍须自有镜像，不能泛化skin修复。所有尝试源按SHA去重保存，当前root runner仅小debug复核，移除旧不安全长循环入口。下一项先补静态base安全及只读源，再用合法AS独立seed评估复用模式/过滤；原F27/F31/F33/F35/F36和全部5%失败继续，正常camera/1080/完整预算未完，goal active。

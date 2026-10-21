@@ -1,0 +1,17 @@
+{
+  "ownedSkinnedASRepairQualified": true,
+  "vertexAndAbsoluteIndexTuplesPreserved": true,
+  "preFixDenseGroundTruthQualified": false,
+  "selectedConvergedPoints": 15,
+  "selectedPoints": 16,
+  "oneDarkGreenControlUncertain": true,
+  "fullSceneQualityQualified": false,
+  "normalAutomaticCameraQualified": false,
+  "staticNonzeroBaseVertexQualified": false,
+  "playerBaseVertexRegressions": 2,
+  "postFixFullImageError": {
+    "x": -7.247671604156494,
+    "y": -8.415216445922852,
+    "z": -8.77550983428955
+  }
+}

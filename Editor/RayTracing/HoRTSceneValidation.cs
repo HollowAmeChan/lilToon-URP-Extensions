@@ -171,12 +171,13 @@ namespace lilToon.URP.Extensions.RayTracing
         }
         private static void Status(Color[] image,int ray,int expected,string label) => Near(Pixel(image,ray,2).a,expected,label);
         private static void Near(float value,float expected,string label) => Require(Mathf.Abs(value-expected)<.002f,label+": expected "+expected+", got "+value);
-        private static void Require(bool condition,string message) { if(!condition)throw new Exception(message); }
+        private static void Require(bool condition,string message) { if(!condition)throw new Exception(message);if(forceSkinnedBaseVertex)baseVertexChecks.Add(message); }
         private static T Keep<T>(T value) where T:Object { objects.Add(value);return value; }
         private static Material Mat(string name) { var shader=Shader.Find(name);Require(shader!=null,"Missing shader "+name);return Keep(new Material(shader)); }
         private static void Finish(Exception error)
         {
             EditorApplication.update-=Tick; GraphicsSettings.defaultRenderPipeline=previousDefault; QualitySettings.renderPipeline=previousQuality; ShaderUtil.allowAsyncCompilation=previousAsync;
+            if(forceSkinnedBaseVertex)SaveBaseVertexReport(error);
             scene?.Dispose(); scene=null; raysBuffer?.Dispose(); raysBuffer=null; capture?.Release(); capture=null;
             for(int i=objects.Count-1;i>=0;i--)if(objects[i]!=null)Object.DestroyImmediate(objects[i]); objects.Clear();
             if(error!=null)Debug.LogException(error); EditorApplication.Exit(error==null?0:1);

@@ -1,4 +1,7 @@
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.Rendering;
 using Object = UnityEngine.Object;
@@ -8,6 +11,10 @@ namespace lilToon.URP.Extensions.RayTracing
     public static partial class HoRTSceneValidation
     {
         private static bool forceSkinned;
+        private static bool forceSkinnedBaseVertex;
+        private static readonly List<string> baseVertexChecks=new();
+        public static void RunSkinnedBaseVertex(){forceSkinnedBaseVertex=true;RunSkinned();}
+        public static void RunSkinnedBaseVertexCompatibility(){compatibility=true;RunSkinnedBaseVertex();}
         private static Transform bone0, bone1;
         private static SkinnedMeshRenderer skin;
         public static void RunSkinned() { forceSkinned = true; Run(); }
@@ -16,6 +23,7 @@ namespace lilToon.URP.Extensions.RayTracing
         private static void SetupSkinned(GameObject root)
         {
             var materials = multi.sharedMaterials;
+            if(forceSkinnedBaseVertex)mesh.SetTriangles(new[]{0,2,1,2,3,1},1,false,4);
             Object.DestroyImmediate(multi); Object.DestroyImmediate(root.GetComponent<MeshFilter>());
             bone0 = Keep(new GameObject("RT bone zero")).transform; bone0.SetParent(root.transform, false);
             bone1 = Keep(new GameObject("RT bone one")).transform; bone1.SetParent(root.transform, false);
@@ -34,6 +42,13 @@ namespace lilToon.URP.Extensions.RayTracing
         {
             var image = Render(); Hit(image, 0, 3, skin, 0); Hit(image, 1, 3, skin, 1);
             Require(scene.SkinnedMeshCount == 1 && scene.SkinnedBakeCount == 1, "one owned pose for both submeshes");
+            if(forceSkinnedBaseVertex)
+            {
+                var canonical=ResolveMesh((uint)Pixel(image,1,0).g);
+                Require(mesh.GetBaseVertex(1)==4&&mesh.GetIndices(1,false).Max()==3,"original base-vertex source indices untouched");
+                Require(canonical.GetBaseVertex(0)==0&&canonical.GetBaseVertex(1)==0,"owned ray snapshot bases canonical");
+                Require(canonical.GetIndices(1,false).SequenceEqual(new[]{4,6,5,6,7,5}),"owned ray snapshot preserves absolute triangle vertices");
+            }
             uint builds = scene.BuildCount, revision = scene.Revision, structure = scene.StructureRevision;
             scene.Synchronize(new[] { outside, skin, skin }, 1); Render();
             Require(scene.SkinnedBakeCount == 1 && scene.BuildCount == builds && scene.Revision == revision, "stable/offscreen skin must reuse pose/BLAS");
@@ -85,6 +100,12 @@ namespace lilToon.URP.Extensions.RayTracing
             Debug.Log("[HoRTSceneValidation] PASS skinned world visibility: bones/blend-shapes, offscreen, submesh IDs, stable cache, nonuniform/mirrored scale, lifecycle and stale capture; compatibility=" + compatibility);
         }
 
+        [Serializable]private sealed class BaseVertexReport{public bool pass,compatibility;public string error;public string[] checks;}
+        private static void SaveBaseVertexReport(Exception error)
+        {
+            string path=Path.GetFullPath(Path.Combine(Application.dataPath,"../ho-rt-skinned-basevertex-"+(compatibility?"compat":"rg")));Directory.CreateDirectory(path);
+            File.WriteAllText(Path.Combine(path,"report.json"),JsonUtility.ToJson(new BaseVertexReport{pass=error==null,compatibility=compatibility,error=error?.ToString(),checks=baseVertexChecks.ToArray()},true));
+        }
         private static Mesh ResolveMesh(uint identity)
         { Require(scene.TryResolve(identity, out var instance), "missing skin identity"); return instance.mesh; }
     }

@@ -40,6 +40,8 @@
 | F34 / GI步骤015 moment口径 | 仅见HistoryFix正文float4，便把其gOut_Diff alpha一律当slow moment；或把PrePass距离/A-trous variance混进m2 | 实际DLL证明Temporal slow transient0/fast1，HistoryFix条件写fast1且稳定早退。只统计4/6无条件slow；baseline5错误数据/标签原样保留但排除。必须看实际descriptor alias与shader早退，不靠函数名/固定pool猜；单位1 runner marker漏匹配同样保留false，用fresh报告/实际异常独立核对，不改历史绿色 |
 | F35 / GI步骤015单位敏感性 | moment精度恢复就声称古堡RGB修复，或继续减scale/按通道调单位/盲改默认64 | 单位64→1→.125，slow m2=0从98%降至.00315%，raw256帧均值逐条相同；RGB仍原5%失败，最后约(-6.17,-5.25,-4.60)%。两轮后停止纯单位调参，生产仍64。新策略需HDR/动态/历史与完整质量证据，不能gain/改sigma/挑通道替代；下一步全图/相位/局部误差取证也必须保留原stride0失败 |
 | F36 / GI步骤016完整域/DI候选 | 把旧stride4失败归咎相位便换指标；或见DI保色成功/负分量减少便直接移植并称GI能量通过 | 实际full64/归一化.125与16相位全失败，fullRGB约−7～−9%。同box凸裁剪只改一块、负分量352→4，却使RGB/L1更差，候选scope恢复并移出产品、精确归档。拒绝其作为本场景能量修复，不否认DI保色适用域；无新的GI颜色平面/独立真值与质量收益证据不原样重试。热点raw方差很大，须先高样本无复用参考/收敛匹配，不把有限窗raw或子集当完整真值 |
+| F37 / GI步骤017采样与调度 | 同帧长循环发生device removal后原样重启；把非终态checkpoint或大量但不收敛样本当真值；锁文件存在就删/持锁仍开工程 | 两次−1/无报告保留；只在独占打开成功确认无人持有后清本任务空stale lock。小负载资格不是大场景保证。改实际Editor帧小批并记录ray/compute输入一致、场景域稳定，合法AS重采后15/16收敛；暗点8M green-SE2.316%仍不确定，禁止放宽2%或无限加样本。下一轮改方差/独立seed设计，不以子集替全图 |
+| F38 / GI步骤017 GPU AS范围 | 仅凭退出0/finite/映射匹配便接纳GPU结果，或把d3d12 validation error漏计成0；无证据归因VRAM | 首debug exit0但14条AS顶点范围越界，旧regex漏validation。实际251321顶点stride40、14个非零base偏移导致全mesh声明跨度超VB；自有skin快照absolute index/base0令14→0且顶点字节/三角元组不变。旧真值撤销资格，必须重采；not out of Local memory原日志保留。静态base仍需处理，不能泛化修复或称HUNG唯一根因已证实 |
 
 长期无收益路线的记录模板：问题与基线 → 假说/参考 → 尝试和真实成本 → 哪些指标改善/退化 → 拒绝或搁置原因 → 禁止原样再试的条件 → 重开所需新证据。新记录必须关联过程步骤与报告，不只写“试过，不行”。
 

@@ -1,0 +1,4 @@
+// Editor-only high-sample, no-reuse path. Original one-bounce shaders and hit ABI.
+#pragma max_recursion_depth 1
+#include "HoRTGIDensePrimary.hlsl"
+#include "../../../Runtime/RTGI/Shaders/HoRTGI.raytrace"

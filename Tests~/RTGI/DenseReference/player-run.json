@@ -1,0 +1,44 @@
+{
+  "step": 17,
+  "startedUtc": "2026-10-20T19:10:40.6739172Z",
+  "runtimeProbeSha256": "F0CCFE1DCB64D03E183C12DC2B184C6832D4D61843BB93353A5454A40649C799",
+  "builderSha256": "D1C74AAB74D2656B0E209C7A8227E5BC449166DFC632084CEBDF11E0B0239667",
+  "normalizerSha256": "F34F4512C3E51FF328316C96AF48CA3547A27CADBF327FBA8D724624B7F79D49",
+  "activeProcess": null,
+  "entries": [
+    {
+      "mode": "rg",
+      "buildExit": 0,
+      "buildLog": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step017-build-base-rg-20261020T191040682.log",
+      "buildLogSha256": "AD373791197292F5CB0CA4320734AB56670D32F4FB1341B554197767E5A53070",
+      "buildMarker": true,
+      "exe": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTGIValidation\\PlayerGISkinnedBaseVertex\\HoRTGIProbe.exe",
+      "exeSha256": "4E33A14C3EC94BF336FCDEF8E56429F865A2BF5FEF67261AA64713B15BF75D0B",
+      "probeDllAbsent": true,
+      "playerExit": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step017-player-base-rg-20261020T191116771.log",
+      "logSha256": "C22670C3B15BFA7D8E4C86F19DBB6D8CF32CE4026D11895E76B04D399ED6693D",
+      "fresh": true,
+      "pass": true,
+      "baseVertexProbe": true,
+      "reportSha256": "612E30EE8D0AFF4742195D24E1B720D55DB7B892BA785795D19366F4F3670C7B"
+    },
+    {
+      "mode": "compat",
+      "buildExit": 0,
+      "buildLog": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step017-build-base-compat-20261020T191125394.log",
+      "buildLogSha256": "6D47BBF8D22D3B4C53408D2F5496A54F52D01BCCF83FAC033C277E4AD8CE59B8",
+      "buildMarker": true,
+      "exe": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTGIValidation\\PlayerGISkinnedCompatibilityBaseVertex\\HoRTGIProbe.exe",
+      "exeSha256": "4E33A14C3EC94BF336FCDEF8E56429F865A2BF5FEF67261AA64713B15BF75D0B",
+      "probeDllAbsent": true,
+      "playerExit": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step017-player-base-compat-20261020T191138783.log",
+      "logSha256": "246FBE2254249AC8CE81A973DC828B94B5B4CED45C3856A7C449D25A9DD50537",
+      "fresh": true,
+      "pass": true,
+      "baseVertexProbe": true,
+      "reportSha256": "46555476DB00E5897C2D0CF7847D6AF2DD3F31A61E0801257D6C8CD8BB2C1623"
+    }
+  ]
+}

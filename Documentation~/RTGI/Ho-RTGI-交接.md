@@ -247,3 +247,31 @@ Tests~/RTGI/Spatial/run_validation.ps1 exec36028已收：原64 PID56596、已测
 017后再据真值决定GI采样还是过滤改动；015矩精度虽确有问题但纯单位已F35停止，F27宽sigma/history/gain、F31HD、F33half、F36本候选继续搁置。正常enabled-camera/完整Player预算仍未交付，goal active不complete。待过滤提交仅Editor SpatialAudit/meta+Castle、Tests~/RTGI/Spatial、RTGI README/过程/禁试/交接/计划；他人Ho-GD plan未跟踪不纳入。
 
 016已按白名单过滤提交c8a83dc，Spatial verifier提交后再过；Runtime零diff、index空、全部本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮直接017同域高样本无复用一跳参考及收敛，先读旧Reference/本机RTX，不重复已拒绝候选或新单位调参。所有原质量/HD/应用条件未完成项继续，goal active。
+
+### 017终态（2026-10-21，待过滤提交；修复owned-skin AS越界，参考仍有边界）
+
+真实参考过程中发现比滤波更前置的问题。两长批device removal后，官方`-force-d3d12-debug`小批3432虽exit0，实际14条BuildRaytracingAccelerationStructure vertex buffer范围越界；旧regex只匹配“D3D12 ERROR”漏“validation”，debugErrors=0被明确拒绝，原参考结果撤销真值资格。日志887a0006且not out of Local memory，不能甩锅VRAM或认定HUNG唯一原因。只在本任务GI项目启用debug，无驱动/TDR/其它进程操作。
+
+CPU layout：古堡1_mesh为SkinnedMeshRenderer，251321顶点、position stream0 stride40，VB10052840B；15submesh中sky0排除，其余14均非零baseVertex、局部indices。driver声明跨度10052812=(N−1)×40+12却从base偏移地址开始，超出placed resource。新Runtime/RayTracing/HoRTRayMeshIndices.CanonicalizeOwned在原HoRTSkinnedMesh.BakeMesh(true)后，仅自有可读pose上重写absolute indices、base0；保留submesh/topology/bounds、顶点/UV/normal/tangent/source/raster。UInt16能容纳就保留，否则UInt32。Unity会重算firstVertex为实际min，不称返回first全0；修复靠base地址归零。稳定pose不重复Bake；变化pose有O(index) CPU/临时数组，当前724416 indices约2.90MB，尚无动画CPU收益结论。
+
+同场景debug13720/最终29476均actual exit0/API0，14→0；CPU canonical-layout28044证明所有vertex stream SHA与absolute三角元组不变、14处规范化。新共享非零base场景RG12436/compat58844各145checks，GI native UV/normal/tangent/mixed bone/Morph57560共141checks全exit0/validation0；unused UV poison确保错误index也不会侥幸过。原source保base4/局部indices，owned snapshot base0/absolute，非readable源/稳定缓存/生命周期均过。
+
+Player新增BuildSkinnedBaseVertex/Compatibility，独立Assets/RTGIPlayerProbeBaseVertex与输出PlayerGISkinnedBaseVertex/PlayerGISkinnedCompatibilityBaseVertex，不覆盖旧payload。两Win64 Mono Release build54680/45800、实际Player52168/58604全部exit0，各315请求/35checks；三个serialized nonreadable source保base4、真实owned snapshot base0/absolute，原动态/Cutout/启停/合成过。完整178/177 payload SHA在player-payloads.json，无HoGIGpuProbe.dll；仍每真实Update一次SubmitRequest，不称正常enabled-camera呈现。
+
+**参考工具/源：** 新Editor/RTGI/HoRTGIDenseReferenceFeature/Audit及Shaders/HoRTGIDensePrimary.hlsl、DenseReference.raytrace/compute，Castle加诊断入口。先原Primary header声明，再macro仅映射后续GI primary loader到full pixel；原Generate/secondary SDK RIS/native alpha final visibility/Final，跳过GI T/S/NRD，输出FP32。场景/AS/main history/18活灯（容量32非18）与sky/RIS借同full256相机，main采样不改。probe同时匹配full/主history/compute RAB/raygen world/normal/albedo，ray-compute误差0；scene/light/sky signature与几何/normal/albedo采样期稳定。它共用材质/light实现，是同模型高样本参考，不是独立绝对着色真值或全图验收。
+
+初始化早于URP resource pool导致NullRef、include pragma没导出Final分别真实exit1，精确源/日志保留rejected-early-allocation/rejected-missing-kernel。root compute显式Final/Probe/use_dxc/target6/inlineRT，Raytrace显式depth1。初小512×2 functional通过；旧AS参考16批4096仅1/16收敛，旧512×2048一度14/16但后来API错误暴露后均不接纳真值。原4096×256同帧长循环和旧AS512×16384跨tick长批分别device removal−1/无终态报告；后者仅terminal=false1024批检查点，不能当完整结果。known-load恢复57032有24个有效fence/tick样本，恢复小负载≠大场景保证。
+
+为控制调度/资源生命周期，Castle私有Run改async void，仅denseScheduled分支await NextEditorTick；非scheduled旧入口依旧同步无await路径。actual frame/renderedFrame递增、有非终态检查点，不是普通camera自动绘制。移除了旧同步长循环入口；当前root runner仅小debug复核。发生非零exit留下空锁，只在独占打开成功证明无人持有后清该单个本任务项目锁；未清活锁/操作其它工程。Get-CimInstance本机一度无输出退出1，改用项目锁独占探测；不要因查询失败重启未知进程或输出完整带token命令行。
+
+**合法AS后数据：** post-fix full21152实际exit1仅原5%失败，debug0；fullRGB仍(-7.2477,-8.4152,-8.7755)%与修复前数值相同，不能由AS修复宣称图像门槛通过。fixed-reference44048实际exit1/functional true/debug0，每点512×2048=1048576，14/16统计收敛；fixed-controls29832再512×16384=8388608样本，约438.5sec无API/fence/device错误，(240,32)收敛，(16,16) green-SE2.316%仍超预设2%。合并仅15/16选点收敛，最后暗点保留不确定，不改标准/无限采。
+
+合法数据示例(87,165) ref红.001500、原256窗raw16.48倍、filtered2.48倍；(185,180) filtered约ref.49倍。有过亮/过暗，有限窗raw不能一律当真值，不能整体补gain。选点含事后最大损失/增加点，存在选择偏差，不推断全图resampling偏差。收敛用跨独立seed批次SE≤2%及前后半均值差≤5%（暗零另有绝对判据、非黑albedo要求足够positive样本）；共享RIS表有批内相关性，不拿所有ray当iid。原5%与所有失败不覆盖。
+
+**证据/状态：** Tests~/RTGI/DenseReference有全部attempt run、结果、device/validation审查、更正、CPU/Editor/Player/payload；source-index.json→source-blobs按SHA保留所有精确版本，去重原source目录，native DLL只hash不复制。player-source单独保留实际build代码。verify_validation.py已过：14→0、精确vertex/index语义、145×2/141、两315请求Player、合法AS后15/16及未解全图。所有本任务进程结束、run/player-run active=null；他人Ho-GD plan仍未跟踪不纳入。旧014/015/016当前source SHA因合法改动过时，按各自commit核对，不能回滚新工作去迎合旧verifier。
+
+**下一项018优先安全覆盖：静态MeshRenderer非零baseVertex尚未修复！** 本场景唯一static Sphere base0，不能泛化owned-skin修复到一般static。沿现有scene ownership做自有canonical静态镜像，原raster/source不动，保留绝对三角元组/全部vertex attrs/material/submesh与identity合同；可读源可clone，非readable源要核对实际GPU只读回拷/创建镜像路径，不能靠Editor-only读取或跳过几何制造漏光。先最小多submesh/base fixture、debug层0、native UV/normal/Cutout、非readable Player与生命周期/成本，再接真实scene。不要只加拒绝predicate冒称支持或修改源mesh。可重用HoRTRayMeshIndices但只对owned/readable mesh调用。
+
+随后用合法AS/同primary匹配/多个独立seed评估main ReSTIR T/S/none模式对已收敛选点的误差，区分有限窗方差与系统偏差；不只围着固定seed0的raw256窗调filter。先看现有M0与本机RTX，不直接抄混合lobe FinalMIS：参考GetGIMISWeight含primary spec/rough BRDF，纯diffuse下会退化为.125 fresh混合，域不同必须推导/验证，非自动修复。018后再推进M2/HDR/moment、正常automatic-camera、合法AS后1080/完整预算（F31新条件须记录），未完成goal不能complete。每步review/过滤/失败/交接继续。
+
+017待过滤白名单：Runtime/RayTracing/HoRTRayMeshIndices.cs/meta与HoRTSkinnedMesh.cs；Editor GI Dense/mesh-layout及wrapper/meta、Castle/SkinnedHit/Player扩展，Editor RayTracing场景测试；Tests~/RTGI/DenseReference和Dynamic/HoRTGIRuntimeProbe.cs；RTGI说明/计划/README/过程/禁试/交接。无DI算法/NRD Shader/vendor/native/源场景改动，索引规范化共享服务会影响DI需保留上述回归证据。

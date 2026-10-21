@@ -1,0 +1,33 @@
+// The original kernels use the mapped loader. Only Final is dispatched here.
+#include "HoRTGIDensePrimary.hlsl"
+#include "../../../Runtime/RTGI/Shaders/HoRTGI.compute"
+#undef HoRTTryLoadPrimarySurface
+#pragma kernel ProbeDensePrimary
+
+StructuredBuffer<HoRTDIPrimaryHistory> _HoGIDenseMainHistory;
+struct DensePrimaryProbe
+{
+    float4 originalWorld,rabWorld,normalDepth,albedo,errors0,errors1;
+};
+RWStructuredBuffer<DensePrimaryProbe> _HoGIDenseProbe;
+[numthreads(16,1,1)]
+void ProbeDensePrimary(uint3 id:SV_DispatchThreadID)
+{
+    if(id.x>=(uint)_HoRTGIFrame.y)return;
+    uint2 pixel=_HoGIDensePixels[id.x];HoRTPrimarySurface original;
+    bool valid=HoRTTryLoadPrimarySurface(pixel,original);
+    RAB_Surface mapped=RAB_GetGBufferSurface(int2(0,id.x),false);
+    HoRTDIPrimaryHistory history=_HoGIDenseMainHistory[pixel.y*(uint)_HoRTPrimarySize.x+pixel.x];
+    float raw=asfloat(history.depth);
+    #if !UNITY_REVERSED_Z
+        raw=lerp(UNITY_NEAR_CLIP_VALUE,1,raw);
+    #endif
+    float3 storedWorld=ComputeWorldSpacePosition((float2(pixel)+.5)*_HoRTPrimarySize.zw,raw,_HoRTPrimaryInverseViewProjection);
+    DensePrimaryProbe result=(DensePrimaryProbe)0;
+    result.originalWorld=float4(original.positionWS,valid?1:0);result.rabWorld=float4(mapped.worldPos,RAB_IsSurfaceValid(mapped)?1:0);
+    result.normalDepth=float4(mapped.normal,mapped.viewDepth);result.albedo=float4(mapped.material.diffuseAlbedo,1);
+    result.errors0=float4(length(original.positionWS-mapped.worldPos),length(storedWorld-mapped.worldPos),length(HoDIUnpackNormal(history.shadingNormal)-mapped.normal),length(HoDIUnpack(history.diffuse).rgb-mapped.material.diffuseAlbedo));
+    float4 specular=HoDIUnpack(history.specular);
+    result.errors1=float4(abs(original.eyeDepth-mapped.viewDepth),length(specular.rgb-mapped.material.specularF0),abs(specular.a-mapped.material.roughness),length(original.geometricNormalWS-mapped.geoNormal));
+    _HoGIDenseProbe[id.x]=result;
+}

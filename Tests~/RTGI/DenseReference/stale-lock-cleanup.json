@@ -1,0 +1,7 @@
+{
+  "abortedOwnedPid": 13340,
+  "reason": "Stale zero-length lock from terminated owned validation; no open process handle",
+  "lastWriteUtc": "2026-10-20T17:52:24.7664440Z",
+  "path": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTGIValidation\\Temp\\UnityLockfile",
+  "exclusiveOpenSucceeded": true
+}

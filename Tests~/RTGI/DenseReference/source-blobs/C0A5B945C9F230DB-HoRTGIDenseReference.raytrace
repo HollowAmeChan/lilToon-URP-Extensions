@@ -1,0 +1,3 @@
+// Editor-only high-sample, no-reuse path. Original one-bounce shaders and hit ABI.
+#include "HoRTGIDensePrimary.hlsl"
+#include "../../../Runtime/RTGI/Shaders/HoRTGI.raytrace"

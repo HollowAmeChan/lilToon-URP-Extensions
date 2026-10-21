@@ -64,6 +64,7 @@ namespace lilToon.URP.Extensions.RayTracing
             if (!changed) return true;
             // Compensate the renderer scale; the AS applies localToWorld exactly once.
             renderer.BakeMesh(mesh, true);
+            HoRTRayMeshIndices.CanonicalizeOwned(mesh);
             source = current; quality = renderer.quality; globalQuality = QualitySettings.skinWeights;
             initialized = true;
             return true;

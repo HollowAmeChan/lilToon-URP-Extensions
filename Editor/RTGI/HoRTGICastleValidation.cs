@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
+using System.Threading.Tasks;
 using lilToon.URP.Extensions.Atmosphere;
 using lilToon.URP.Extensions.GeometryBuffer;
 using lilToon.URP.Extensions.RayTracing;
@@ -37,6 +38,10 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void RunGpu512Compatibility()=>Run(true,512,gpu:true);
         public static void RunGpu256TotalOnly()=>Run(false,256,gpu:true,totalOnly:true);
         public static void RunGpu256Rebuild()=>Run(false,256,gpu:true,rebuild:true);
+        public static void RunFixedASControls()=>Run(false,256,true,false,256,256,denseReference:true,denseSamples:512,denseBatches:16384,denseScheduled:true,denseControls:true,validationTag:"fixed-as");
+        public static void RunFixedASReference()=>Run(false,256,true,false,256,256,denseReference:true,denseSamples:512,denseBatches:2048,denseScheduled:true,validationTag:"fixed-as");
+        public static void RunFixedASSpatial()=>Run(false,256,true,true,256,256,spatialAudit:true,denseScheduled:true,validationTag:"fixed-as");
+        public static void RunDenseScheduledQualification()=>Run(false,256,denseReference:true,denseSamples:512,denseBatches:2,denseScheduled:true);
         public static void RunSpatialAudit()=>Run(false,256,true,true,256,256,spatialAudit:true);
         public static void RunSpatialAuditNormalized()=>Run(false,256,true,true,256,256,spatialAudit:true,momentScale:.125f);
         public static void RunMomentBindings()=>Run(false,64,bindings:true);
@@ -47,16 +52,16 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void RunResources512()=>Run(false,512,gpu:true,resources:true);
         public static void RunResources1080()=>Run(false,1920,gpu:true,resources:true,renderHeight:1080);
         public static void RunResources1080Compatibility()=>Run(true,1920,gpu:true,resources:true,renderHeight:1080);
-        static void Run(bool compatibility,int size,bool stability=false,bool stages=false,int settle=32,int measured=64,bool wideClamp=false,float historySigma=4,bool gpu=false,bool totalOnly=false,bool rebuild=false,bool resources=false,int renderHeight=0,bool moments=false,float momentScale=64,bool bindings=false,bool spatialAudit=false)
+        static async void Run(bool compatibility,int size,bool stability=false,bool stages=false,int settle=32,int measured=64,bool wideClamp=false,float historySigma=4,bool gpu=false,bool totalOnly=false,bool rebuild=false,bool resources=false,int renderHeight=0,bool moments=false,float momentScale=64,bool bindings=false,bool spatialAudit=false,bool denseReference=false,int denseSamples=512,int denseBatches=2,bool denseScheduled=false,bool denseControls=false,string validationTag="")
         {
             int width=size,height=renderHeight>0?renderHeight:size;
             var oldDefault=GraphicsSettings.defaultRenderPipeline;var oldQuality=QualitySettings.renderPipeline;bool oldAsync=ShaderUtil.allowAsyncCompilation;HoRTGIRendererFeature gi=null;int exit=1;
-            HoRTGIGpuClock gpuClock=null;
+            HoRTGIGpuClock gpuClock=null;HoRTGIDenseReferenceFeature denseFeature=null;HoRTGIDenseReferenceAudit denseAudit=null;
             var report=new Report{compatibility=compatibility,width=width,height=height,gpu=SystemInfo.graphicsDeviceName};string output=null;
             try
             {
                 if(!Application.dataPath.Replace('\\','/').Contains("/.codex-research/RTGIValidation/"))throw new Exception("Dedicated GI project required");
-                output=Path.GetFullPath(Path.Combine(Application.dataPath,"../ho-gi-castle-"+width+(height==width?"":"x"+height)+"-"+(compatibility?"compat":"rg")+(stability?"-stability":"")+(stages?"-stages":"")+(measured>64?"-long":"")+(wideClamp?"-wide-clamp"+(historySigma==4?"":"-"+historySigma):"")+(spatialAudit?"-spatial-audit-scale-"+momentScale:"")+(bindings?"-bindings":"")+(moments?"-moments"+(momentScale==64?"":"-scale-"+momentScale):"")+(resources?"-resources":"")+(gpu?"-gpu"+(totalOnly?"-total-only":"")+(rebuild?"-rebuild":""):"")));Directory.CreateDirectory(output);
+                output=Path.GetFullPath(Path.Combine(Application.dataPath,"../ho-gi-castle-"+width+(height==width?"":"x"+height)+"-"+(compatibility?"compat":"rg")+(stability?"-stability":"")+(validationTag.Length>0?"-"+validationTag:"")+(stages?"-stages":"")+(measured>64?"-long":"")+(wideClamp?"-wide-clamp"+(historySigma==4?"":"-"+historySigma):"")+(denseReference?"-dense-"+denseSamples+"x"+denseBatches+(denseScheduled?"-scheduled":"")+(denseControls?"-controls":""):"")+(spatialAudit?"-spatial-audit-scale-"+momentScale:"")+(bindings?"-bindings":"")+(moments?"-moments"+(momentScale==64?"":"-scale-"+momentScale):"")+(resources?"-resources":"")+(gpu?"-gpu"+(totalOnly?"-total-only":"")+(rebuild?"-rebuild":""):"")));Directory.CreateDirectory(output);
                 ShaderUtil.allowAsyncCompilation=false;EditorSceneManager.OpenScene("Assets/mmd场景测试/血月古堡/血月古堡.unity",OpenSceneMode.Single);
                 var source=UnityEngine.Object.FindObjectsByType<Camera>(FindObjectsSortMode.InstanceID).FirstOrDefault(c=>c.CompareTag("MainCamera"));if(source==null)throw new Exception("Castle MainCamera missing");report.camera=source.name;
                 var geometry=UnityEngine.Object.FindObjectsByType<Renderer>(FindObjectsSortMode.InstanceID);
@@ -68,13 +73,15 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var atmosphere=Keep(ScriptableObject.CreateInstance<HoAtmosphereRendererFeature>());atmosphere.Settings.source=HoAtmosphereSource.SceneSkybox;
                 gi=Keep(ScriptableObject.CreateInstance<HoRTGIRendererFeature>());gi.Settings.excludedRayMaterials=sky;gi.Settings.denoise=true;gi.Settings.composite=false;
                 renderer.rendererFeatures.Add(atmosphere);renderer.rendererFeatures.Add(gb);renderer.rendererFeatures.Add(sb);renderer.rendererFeatures.Add(gi);
+                if(denseReference){denseFeature=Keep(ScriptableObject.CreateInstance<HoRTGIDenseReferenceFeature>());denseFeature.source=gi;renderer.rendererFeatures.Add(denseFeature);}
                 var pipeline=Keep(UniversalRenderPipelineAsset.Create(renderer));pipeline.supportsHDR=true;pipeline.msaaSampleCount=1;GraphicsSettings.defaultRenderPipeline=pipeline;QualitySettings.renderPipeline=pipeline;
                 #if URP_COMPATIBILITY_MODE
                 GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode=compatibility;
                 #endif
                 var camera=Keep(new GameObject("GI copied castle view")).AddComponent<Camera>();camera.CopyFrom(source);camera.transform.SetPositionAndRotation(source.transform.position,source.transform.rotation);camera.enabled=false;camera.targetTexture=null;camera.aspect=(float)width/height;camera.GetUniversalAdditionalCameraData().volumeLayerMask=0;
                 var target=Keep(new RenderTexture(width,height,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));target.Create();var image=Keep(new Texture2D(width,height,TextureFormat.RGBAFloat,false,true));
-                int clock=0;for(int i=0;i<32;i++)Render();
+                int clock=0;for(int i=0;i<32;i++){if(denseScheduled)await NextEditorTick();Render();}
+                if(denseReference){denseFeature.targetCamera=camera;var receivers=denseControls?HoRTGIDenseReferenceAudit.ControlPixels:HoRTGIDenseReferenceAudit.Pixels;denseFeature.Initialize(denseSamples,receivers);denseFeature.scheduled=denseScheduled;denseAudit=new HoRTGIDenseReferenceAudit(denseFeature,receivers);}
                 var context=gi.LastContext;if(context?.nrd==null)throw new Exception("Actual castle GI/NRD missing: "+gi.Status);
                 report.status=gi.Status;var registry=(HoRTScene)typeof(HoRTGIRendererFeature).GetField("scene",BindingFlags.Instance|BindingFlags.NonPublic).GetValue(gi);
                 report.instances=registry.InstanceCount;report.cutouts=registry.CutoutCount;report.skinnedSnapshots=registry.SkinnedMeshCount;report.rejections=registry.Rejections.ToArray();report.bakes=registry.SkinnedBakeCount;
@@ -92,14 +99,15 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 {
                     if(moments||spatialAudit)context.nrd.ValidationSignalScale=momentScale;
                     if(wideClamp){context.nrd.core.ValidationSettings=s=>{s.fastSigma=historySigma;return s;};context.nrd.historyValid=false;}
-                    for(int i=0;i<settle;i++)Render();int count=measured;int components=((width+3)/4)*((height+3)/4)*3;var means=new double[2,components];var m2=new double[2,components];
+                    for(int i=0;i<settle;i++){if(denseScheduled)await NextEditorTick();Render();}int count=measured;int components=((width+3)/4)*((height+3)/4)*3;var means=new double[2,components];var m2=new double[2,components];
                     var spatial=spatialAudit?new HoRTGISpatialAudit(width,height):null;
                     var momentAudit=moments?new HoRTGIMomentAudit():null;
                     var captured=new Dictionary<int,RenderTexture>();var stageSums=new Dictionary<int,Vector3>();var frameMeans=new List<FrameMean>();
                     if(stages)context.nrd.core.ValidationDiffuseStage=(cmd,index,texture)=>{if(!captured.TryGetValue(index,out var copy)){copy=Keep(new RenderTexture(width,height,0,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));copy.Create();captured.Add(index,copy);}cmd.CopyTexture(texture,copy);};
                     for(int frame=0;frame<count;frame++)
                     {
-                        Render();var a=Read(context.diffuse.rt);var b=Read(context.PublishedDiffuse.rt);int index=0;spatial?.AddPublication(a,b,frame);
+                        if(denseScheduled)await NextEditorTick();
+                        Render();var a=Read(context.diffuse.rt);var b=Read(context.PublishedDiffuse.rt);int index=0;spatial?.AddPublication(a,b,frame);denseAudit?.AddMain(a,b,width);
                         Vector3 frameA=Vector3.zero,frameB=Vector3.zero;
                         for(int y=0;y<height;y+=4)for(int x=0;x<width;x+=4)for(int channel=0;channel<3;channel++,index++)
                         {
@@ -132,6 +140,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                     report.staticRaw=new Vector3((float)rgb[0,0],(float)rgb[0,1],(float)rgb[0,2]);report.staticFiltered=new Vector3((float)rgb[1,0],(float)rgb[1,1],(float)rgb[1,2]);report.observedFrames=count;report.energyGatePass=true;
                     for(int channel=0;channel<3;channel++)report.energyGatePass&=Math.Abs(rgb[1,channel]-rgb[0,channel])<Math.Max(.000005,Math.Abs(rgb[0,channel])*.05);
                 }
+                if(denseReference){denseFeature.collect=true;for(int batch=0;batch<denseBatches;batch++){if(denseScheduled)await NextEditorTick();denseFeature.batch=batch;Render();denseAudit.AddBatch(batch);if(denseScheduled&&(batch+1)%512==0)File.WriteAllText(Path.Combine(output,"dense-progress.json"),JsonUtility.ToJson(new DenseProgress{terminal=false,completedBatches=batch+1,audit=denseAudit.Finish()},false));}denseFeature.collect=false;report.denseReference=denseAudit.Finish();}
                 Save(target,"scene-before",false);Save(context.diffuse.rt,"raw-gi",true);Save(context.PublishedDiffuse.rt,"filtered-gi",true);Save(context.PublishedDiffuse.rt,"filtered-gi-preview-x100",true,100);
                 var raw=Read(context.diffuse.rt);var filtered=Read(context.PublishedDiffuse.rt);var before=Read(target);
                 for(int i=0;i<filtered.Length;i++)
@@ -158,11 +167,18 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             catch(Exception error){report.error=error.ToString();Debug.LogException(error);}
             finally
             {
-                if(output!=null)File.WriteAllText(Path.Combine(output,"report.json"),JsonUtility.ToJson(report,true));
-                if(gi?.LastContext!=null){gi.LastContext.ValidationGpuMarker=null;gi.LastContext.ValidationGpuRasterMarker=null;}gpuClock?.Dispose();gi?.Dispose();GraphicsSettings.defaultRenderPipeline=oldDefault;QualitySettings.renderPipeline=oldQuality;ShaderUtil.allowAsyncCompilation=oldAsync;
+                if(output!=null)File.WriteAllText(Path.Combine(output,"report.json"),JsonUtility.ToJson(report,!denseReference));
+                if(gi?.LastContext!=null){gi.LastContext.ValidationGpuMarker=null;gi.LastContext.ValidationGpuRasterMarker=null;}gpuClock?.Dispose();denseFeature?.Dispose();gi?.Dispose();GraphicsSettings.defaultRenderPipeline=oldDefault;QualitySettings.renderPipeline=oldQuality;ShaderUtil.allowAsyncCompilation=oldAsync;
                 foreach(var obj in owned.AsEnumerable().Reverse())if(obj!=null)UnityEngine.Object.DestroyImmediate(obj);
             }
             EditorApplication.Exit(exit);
+        }
+        [Serializable]sealed class DenseProgress{public bool terminal;public int completedBatches;public HoRTGIDenseReferenceAudit.Report audit;}
+        static Task NextEditorTick()
+        {
+            var completion=new TaskCompletionSource<bool>();
+            void Wake(){EditorApplication.update-=Wake;completion.SetResult(true);}
+            EditorApplication.update+=Wake;EditorApplication.QueuePlayerLoopUpdate();return completion.Task;
         }
         static float Map(float x)=>Mathf.Pow(Mathf.Max(0,x)/(1+Mathf.Max(0,x)),1/2.2f);
         static bool Finite(Color c)=>float.IsFinite(c.r)&&float.IsFinite(c.g)&&float.IsFinite(c.b)&&float.IsFinite(c.a)&&c.r>=0&&c.g>=0&&c.b>=0;
@@ -171,6 +187,6 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]internal struct Primary{public uint depth,normal,geometric,diffuse,specular;}
         [Serializable]sealed class StageMean{public int pipeline;public Vector3 remodulatedMean;}
         [Serializable]sealed class FrameMean{public int index;public Vector3 raw,filtered;}
-        [Serializable]sealed class Report{public bool pass,compatibility,historyReused,environment,nativeCutout,energyGatePass,gpuQualified,gpuTotalOnly,gpuForcedRebuild;public string error,camera,gpu,status,skybox;public int width,height,frames,observedFrames,instances,cutouts,skinnedSnapshots,valid,invalid,lit,changedPixels;public uint bakes,stableBakes;public double rawMean,filteredMean,peak,cameraMeanChange,rawVariance,filteredVariance;public Vector3 staticRaw,staticFiltered;public MaterialRow[] materials;public string[] rejections;public StageMean[] stages;public FrameMean[] frameMeans;public HoRTGISpatialAudit.Report spatialAudit;public HoRTGIMomentAudit.Binding[] momentBindings;public bool momentAuditComplete;public HoRTGIMomentAudit.Stage[] moments;public HoRTGIResourceAudit.Report resourceAudit;public HoRTGIGpuClock.Sample[] gpuSamples;public HoRTGIGpuClock.Summary[] gpuSummary;}
+        [Serializable]sealed class Report{public bool pass,compatibility,historyReused,environment,nativeCutout,energyGatePass,gpuQualified,gpuTotalOnly,gpuForcedRebuild;public string error,camera,gpu,status,skybox;public int width,height,frames,observedFrames,instances,cutouts,skinnedSnapshots,valid,invalid,lit,changedPixels;public uint bakes,stableBakes;public double rawMean,filteredMean,peak,cameraMeanChange,rawVariance,filteredVariance;public Vector3 staticRaw,staticFiltered;public MaterialRow[] materials;public string[] rejections;public StageMean[] stages;public FrameMean[] frameMeans;public HoRTGIDenseReferenceAudit.Report denseReference;public HoRTGISpatialAudit.Report spatialAudit;public HoRTGIMomentAudit.Binding[] momentBindings;public bool momentAuditComplete;public HoRTGIMomentAudit.Stage[] moments;public HoRTGIResourceAudit.Report resourceAudit;public HoRTGIGpuClock.Sample[] gpuSamples;public HoRTGIGpuClock.Summary[] gpuSummary;}
     }
 }
