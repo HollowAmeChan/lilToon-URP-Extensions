@@ -1,0 +1,14 @@
+{
+  "rg": {
+    "manifest": "player-results/rg-payload.json",
+    "sha256": "65430C07E58C514DC2E337404988CB4D377083F9DE3E1ABB184F0F51071EDDE1",
+    "files": 178,
+    "verifiedAfterVisibleTest": true
+  },
+  "compat": {
+    "manifest": "visible-results/compat-payload.json",
+    "sha256": "96AFF20B8CC70E0153A562986AF9F4FA5B315C05D7807C356D85538E0CFF526A",
+    "files": 177,
+    "verifiedAfterVisibleTest": true
+  }
+}

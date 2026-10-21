@@ -509,3 +509,19 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **下一项024优先可用性证据：** 不继续围绕5.05869%调参/格式/单位或挑phase。先读DI关于hidden-host正常camera的真实记录/启动参数与当前运行条件，再设计一个有具体差异的enabled-camera连续呈现实验；必须Camera.enabled=true、无SubmitRequest/Render替代、真实endCameraRendering/帧/读回与GI开关/Volume/时域响应，不能把既有315请求当完成。可先核对无-batchmode但Hidden窗口/targetRT与OnDemandRendering是否已尝试，旧相同条件不盲试；开发约束不允许未经用户明确要求启动可见交互窗口，若确需可见UI先准备好reviewable结果再说明来源请求。其它质量用独立seed与局部/原5%完整保留，F39不重启旧参数，实际1080预算须新host/驻留机制证据，goal active。
 
 023已按白名单过滤提交`e5ff691`，PrecisionQualification verifier提交后再次通过；最终GI-only四32F池/output32、单位64/DI默认不变，原失败保留。两个最终315请求Player与HDR/生命周期通过，fullgreen/7phase与稳定目标预算仍未过；index空、22个本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮024优先normal enabled-camera连续呈现，先读DI原hidden条件，有新机制才试；goal active。
+
+## 024：正常enabled-camera连续呈现验证（进行中）
+
+**事前review：** DI MotionProtocol/Timing实际已试hidden batch及hidden普通启动，自动事件0，不能重复只去掉batch。代码显示先序列化disabled camera，运行后late-enable并请求预热。新机制仅一次：从场景加载就serialized enabled camera+targetRT，不做任何手动预热/Render/SubmitRequest/Volume.Update，显式background/OnDemand interval1；观察原生endCameraRendering并在下一Update读前帧数据。隐藏窗口约束保持，缺事件限时失败。
+
+先独立Player/资产前缀，真实自动frame/相机/输出/开关/Volume/相机移动证据，不借旧315请求充数。如果相同隐藏条件仍无自动渲染，保留失败并搁置同条件，不绕过可见窗口授权；场景/可执行已具体可review后再问必要的显示窗口许可，独立质量/预算工作仍可继续。原fullgreen/7phase/AS/F39与HD仍开，goal active。
+
+### 024事后review（2026-10-22）：真实自动相机通过，屏幕呈现另验
+
+**实施与原失败：** 独立Automatic资产/输出与HoRTGIAutomaticProbe，场景序列化Camera.enabled=true及64²target；Start设background/interval1，不调用Render/SubmitRequest/Volume.Update/手动预热。RG第一build46000/Player7000实际0/1，180Update/0事件且target未created；显式Create只分配资源后第二build0/Player1，targetCreated=true仍0事件。两次原报告/源码/log/payload清单完整，不再重复同一hidden条件，不把无事件归因具体Unity/驱动缺陷。
+
+**用户授权后的单变量对照：** 用户明确允许短暂可见窗口。同一份RG executable/完整payload不变，仅Hidden→Normal，Player43576在8.15秒自行exit0；独立compat build44364/Player45248约8.30秒exit0。两个Linear D3D12 Mono Release Player各241Update、240连续endCameraRendering、240前帧读回、10checks，camera始终enabled，无请求式渲染。RG/compat报告明确false/true；runtime debug/compile/绑定0/source drift0；build各五条精确历史warning继续记录。
+
+**收益/正确性/成本review：** 32raster、64quarter、32one、32Volume-off、20re-enabled、30moving、30emission-off构成240记录；读取applicationFrame=renderFrame+1且renderFrame连续。0.25/1强度RGB最大误差RG8.795e-5/6.855e-5、compat8.798e-5/6.711e-5，小于原.015。Volume-off全部32帧恢复raster，re-enable首帧reset；移动30帧全部保留有效历史；发光关闭首帧reset且raw/filtered红0。证明真实enabled-camera自动调度/合成/动态链路，补齐此前请求式证据缺口。没有生产改动、运行成本结论或视觉QA。**camera仍输出到targetRT，窗口可见不等于backbuffer已验**；025再做target=null屏幕呈现，不能扩大本步支持域。fullgreen5.05869%/7phase、static/F39与HD预算继续。
+
+**证据/提交review：** Tests~/RTGI/AutomaticCamera含两hidden失败/两visible成功、7完整logs、1163精确source对象（5新小文本，其余已有证据/Git，nativeDLL复用Git）、完整最终payload无HoGIGpuProbe.dll。首旧binary被重建覆盖仅保留manifest；不冒称其仍可执行。verify过逐条检查失败/源SHA/事件/全部RGB/响应；源码静态review确认无手动请求。全部本任务进程结束、active=null；Runtime无diff。白名单只Builder、新probe、新证据和RTGI六文档；他人Ho-GD计划不纳入。目标active，下一025默认屏幕目标连续呈现。

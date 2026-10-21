@@ -393,3 +393,15 @@ Fullgreen/其它8phase/局部质量仍缺；F35不重启纯scale试值/gain/宽s
 023白名单：Runtime RTDI core构造/format、RTGI NrdContext；Editor NrdValidation partial/新PrecisionRange/meta、Castle/PoolPrecision capture、PlayerBuilder；Tests DynamicRuntimeProbe、PrecisionQualification；RTGI产品说明/计划/README/过程/禁试/交接。无用户场景、DI策略/Shader/Native DLL修改；五已知build warning只沿021逐字白名单。
 
 023已按白名单过滤提交`e5ff691`，PrecisionQualification verifier提交后再次通过；最终GI-only四32F池/output32、单位64/DI默认不变，原失败保留。两个最终315请求Player与HDR/生命周期通过，fullgreen/7phase与稳定目标预算仍未过；index空、22个本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮024优先normal enabled-camera连续呈现，先读DI原hidden条件，有新机制才试；goal active。
+
+### 024终态（2026-10-22，待过滤提交）：真实自动targetRT相机已过，下一025屏幕目标
+
+先复读DI MotionProtocol/Timing后，新增Automatic独立资产/Player/probe，serialized Camera.enabled=true +64²target，无任何Render/SubmitRequest/Volume.Update/预热。两hidden RG实际exit1：第一target未created、第二显式GPU Create后created，均180Update/0事件；失败保留。用户随后明确授权“允许短暂可见窗口测试”，不要再次索要同一授权，也不要扩大为长时可见窗口。
+
+同一RG build/payload只Hidden→Normal，43576在8.15s自行exit0；compat独立build44364/Player45248在8.30s exit0。各241Update/240连续真实endCameraRendering/240前帧记录/10checks，runtime API/Shader/绑定0、source drift0；build五条历史warning逐字保留。全部RGB加法误差<8.80e-5/6.86e-5（quarter/one）、Volume-off32帧恢复raster、re-enable首帧reset、30移动帧无reset、发光off首帧redraw/filtered0+reset。没有手动请求，RG/compat各自报告false/true。
+
+边界：相机输出64²ARGBHalf targetTexture，窗口可见仅是正常自动调度条件；尚未证明target=null的backbuffer呈现/屏幕截图/视觉QA。Runtime完全未改、未测新GPU成本。全域green−5.05869%/7phase、局部/参考偏差、static非零base/F39、1080/完整预算都继续。不要回去调阈值、扫描纯单位/格式/挑phase、重启F39旧矩阵或F31同条件HD。
+
+Tests~/RTGI/AutomaticCamera verifier已过；1163source对象5新文本、7完整logs、两失败和两成功、最终两payload SHA无HoGIGpuProbe.dll。原首binary被重建覆盖，manifest保留不冒称可现场验证。archive_evidence.py仅在本机最终输出存在时复核payload，verify无需那些二进制；source-index重建精确历史。所有本任务进程结束，两run active=null。未跟踪Ho-GD Outline计划为他人改动，不能stage。
+
+**025直接动作：** 独立backbuffer夹具/输出，serialized-enabled且targetTexture=null；需要CaptureScreenshotIntoRenderTexture/EndOfFrame之类捕获时先核本机Unity API与色域/坐标，不能手动提交渲染。保持真实callback/previous-frame证据和原强度/Volume/动态门槛，短暂可见测试已获授权。场景尺寸/纹理尺寸与屏幕大小分列；成功补截图/可见呈现，失败保留后review，不扩大为完整画质/GPU预算。每步前后review、收益/成本/禁试/交接与过滤提交持续，目标active。

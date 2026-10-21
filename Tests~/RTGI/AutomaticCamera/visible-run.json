@@ -1,0 +1,17 @@
+{
+  "step": 24,
+  "windowStyle": "Normal",
+  "authorization": "User explicitly allowed short visible Player test",
+  "pid": 43576,
+  "startedUtc": "2026-10-21T19:08:53.6576803Z",
+  "exe": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\RTGIValidation\\PlayerGISkinnedAutomatic\\HoRTGIProbe.exe",
+  "exeSha256": "4E33A14C3EC94BF336FCDEF8E56429F865A2BF5FEF67261AA64713B15BF75D0B",
+  "hiddenRunSha256": "E159F03A6F7436419EC255EED25AACD9AFD63313D1D00943233E95573B9F1DAE",
+  "abort": null,
+  "exit": 0,
+  "elapsedSeconds": 8.1525571,
+  "logSha256": "DEDCB91A1CF09DB9E96383554F1A4DCBEEE7FCA0DB412D9D3044745DBEEF5A38",
+  "reportSha256": "3F559405FB7D75595CA9BA16BD5166413EAA2A2AD4BE078EAA452D5F1686BBE1",
+  "pass": true,
+  "cameras": 240
+}

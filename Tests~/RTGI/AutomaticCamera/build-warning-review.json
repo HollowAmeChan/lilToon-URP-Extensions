@@ -1,0 +1,20 @@
+{
+  "knownWarningLines": [
+    "Shader warning in 'lilToon': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'",
+    "Shader warning in 'lilToon': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'",
+    "Shader warning in 'Hidden/lilToon/URP/VolumeLight/SolarHD': floating point division by zero at /Unity_Fork/HoUrp17.3.0/ShaderLibrary/Shadows.hlsl(310) (on d3d11)",
+    "Shader warning in 'Hidden/lilToonCutout': Ignoring duplicate keyword line 'multi_compile_instancing __ INSTANCING_ON'",
+    "Shader warning in 'Hidden/lilToonCutout': Ignoring duplicate keyword line 'shader_feature _HO_SEMANTIC_MASK'"
+  ],
+  "oldBuildLogs": [
+    {
+      "path": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step017-build-base-rg-20261020T191040682.log",
+      "sha256": "AD373791197292F5CB0CA4320734AB56670D32F4FB1341B554197767E5A53070"
+    },
+    {
+      "path": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step017-build-base-compat-20261020T191125394.log",
+      "sha256": "6D47BBF8D22D3B4C53408D2F5496A54F52D01BCCF83FAC033C277E4AD8CE59B8"
+    }
+  ],
+  "policy": "Only exact warning lines already present in both step017 build logs; no GI/new warning or error allowance."
+}

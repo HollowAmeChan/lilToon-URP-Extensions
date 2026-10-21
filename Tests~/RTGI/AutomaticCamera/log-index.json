@@ -1,0 +1,30 @@
+{
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step024-build-rg-20261021T190326127.log": {
+    "path": "logs/rtgi-step024-build-rg-20261021T190326127.log",
+    "sha256": "CD98D282161C62739561285B76E89A6152006E471D96815A79CE2570E66EDCC0"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step024-player-rg-20261021T190351832.log": {
+    "path": "logs/rtgi-step024-player-rg-20261021T190351832.log",
+    "sha256": "727A76F85979E80524B626B3E21EDA7540D3977B63DC5AF5FA1372EE40138956"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step024-build-rg-20261021T190632149.log": {
+    "path": "logs/rtgi-step024-build-rg-20261021T190632149.log",
+    "sha256": "3043836B9AE75A1EA52586EA750E558B49FBF3E2FF03985F3761C9DBC0CF8216"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step024-player-rg-20261021T190652051.log": {
+    "path": "logs/rtgi-step024-player-rg-20261021T190652051.log",
+    "sha256": "ADFAF78357A26EC3EC71EFAD31180F1505493FCC497EC6ABE79B1AC1082E2C36"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step024-build-compat-20261021T190957106.log": {
+    "path": "logs/rtgi-step024-build-compat-20261021T190957106.log",
+    "sha256": "3D80B5C2DA0F7992998D11016852F3F2BA72C129F1B56D7178C43F812F3FB335"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\Tests~\\RTGI\\AutomaticCamera\\visible-results\\compat\\player.log": {
+    "path": "logs/player.log",
+    "sha256": "C091F3FD90375613D1A98221D43625C662D64EE4147315EDF6A6ED8DA4DE6236"
+  },
+  "visible-rg": {
+    "path": "visible-results/rg/player.log",
+    "sha256": "DEDCB91A1CF09DB9E96383554F1A4DCBEEE7FCA0DB412D9D3044745DBEEF5A38"
+  }
+}

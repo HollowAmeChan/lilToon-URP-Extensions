@@ -1,0 +1,26 @@
+{
+    "pass": false,
+    "batchMode": false,
+    "compatibility": false,
+    "cameraEnabledAtStart": true,
+    "targetAtStart": true,
+    "focused": true,
+    "cameraEnabled": true,
+    "targetCreated": true,
+    "willRender": true,
+    "api": "Direct3D12",
+    "error": "System.Exception: Serialized-enabled hidden host produced no new automatic camera completion\r\n  at HoRTGIAutomaticProbe.Update () [0x00049] in <27ed05e664dd422ba40f7d6de8c0356c>:0 ",
+    "updates": 180,
+    "renderedCameras": 0,
+    "lastRenderFrame": -1,
+    "allCameras": 1,
+    "screenWidth": 512,
+    "screenHeight": 512,
+    "interval": 1,
+    "reprojectedFrames": 0,
+    "checks": [
+        "Camera and target are enabled/assigned in the serialized scene before Start",
+        "Automatic target GPU allocation is ready without a rendering request"
+    ],
+    "frames": []
+}

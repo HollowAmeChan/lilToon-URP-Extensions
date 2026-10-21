@@ -90,3 +90,9 @@ pre-S有收益：filtered相对finite none均值从+15.70/+11.58/+8.08%到+1.22/
 发光RGB缩放不能用Color.white×amp同时缩alpha；lilToon混合再次乘alpha，初两actual1保留。改RGBA(...,1)后低信号仍失败，不能继续甩给输入；pool-only16output与legacy16F对照都实际失败。只提升GI external output（PrePass/最终共享）32F后，1e−4/1/20000原5%两路径通过，原失败/低信号对照保留。不得用早期pool-only Player来证明最终output32；最终独立新build/Player/payload/格式断言俱全。
 
 HDR slow m2约97653有限不等于任意HDR安全。最终fullgreen仍5.05869%/7相位失败，禁止放宽/挑phase或继续无依据扩格式。extra79.10MiB@1080是payload投影；pool-only高负载GPU计时有数十ms尖峰，事后100%util非因果，最终40区间也不等稳定目标预算。禁止跨负载称加速/按投影重试HD或停其它进程。normal enabled-camera仍缺，315 SubmitRequest不得换名验收。
+
+## F45 / 步骤024：隐藏窗口无自动回调与呈现边界
+
+DI已试hidden普通启动，不能只去batch重复。GI新serialized-enabled/target试验中，target未created和显式Create后都180Update/0事件；Create仅分配资源，不能算渲染。用户明确授权后同一RG构建只改Normal窗口，240真实连续回调通过；compat亦240通过。保留两hidden失败，不继续同条件反复启动、不将具体引擎/驱动根因写成定论，不以手动Render/SubmitRequest替代。可见Player每次限15秒、自行约8秒退出，授权仅短暂测试。
+
+本步相机仍输出64²targetRT，Unity窗口512²尺寸不代表512²GI，更不证明backbuffer最终屏幕或画质视觉QA。下一步target=null必须显式验证捕获时序/色域/坐标，不放宽加法阈值迁就sRGB读数；截图读取不得变成手动渲染。全局fullgreen5.05869%/7phase、F39和1080完整预算不由240事件解除。原失败binary后来被重建覆盖，仅manifest及源/log存在，不冒称全部旧payload仍可现场校验。

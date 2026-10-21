@@ -24,6 +24,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void BuildSkinnedCompatibility()=>Build(true,true,true);
         public static void BuildSkinnedBaseVertex()=>Build(false,true,true,"BaseVertex",true);
         public static void BuildSkinnedBaseVertexCompatibility()=>Build(true,true,true,"BaseVertex",true);
+        public static void BuildAutomatic()=>Build(false,true,true,"Automatic",true,true,true,true);
+        public static void BuildAutomaticCompatibility()=>Build(true,true,true,"Automatic",true,true,true,true);
         public static void BuildPrecisionOutput()=>Build(false,true,true,"PrecisionOutput",true,true,true);
         public static void BuildPrecisionOutputCompatibility()=>Build(true,true,true,"PrecisionOutput",true,true,true);
         public static void BuildPrecisionPool()=>Build(false,true,true,"PrecisionPool",true,true,true);
@@ -53,13 +55,13 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
             AuditScripts();
         }
-        static void Build(bool compatibility,bool cutout=false,bool skinned=false,string suffix="",bool baseVertex=false,bool historyProbe=false,bool precisionProbe=false)
+        static void Build(bool compatibility,bool cutout=false,bool skinned=false,string suffix="",bool baseVertex=false,bool historyProbe=false,bool precisionProbe=false,bool automatic=false)
         {
             try
             {
                 string root=Directory.GetParent(Application.dataPath).FullName;
                 if(!root.Replace('\\','/').EndsWith("/.codex-research/RTGIValidation"))throw new Exception("Dedicated GI project required");
-                var probeType=Type.GetType("HoRTGIRuntimeProbe, Assembly-CSharp");if(probeType==null)throw new Exception("Copy Tests~/RTGI/Dynamic/HoRTGIRuntimeProbe.cs into isolated Assets before launching Build");
+                var probeType=Type.GetType((automatic?"HoRTGIAutomaticProbe":"HoRTGIRuntimeProbe")+", Assembly-CSharp");if(probeType==null)throw new Exception("Copy Tests~/RTGI/Dynamic/HoRTGIRuntimeProbe.cs into isolated Assets before launching Build");
                 string assets=precisionProbe?("Assets/RTGIPlayerProbe"+suffix+(compatibility?"Compatibility/":"/")):historyProbe?(compatibility?"Assets/RTGIPlayerProbeHistoryFeedbackCompatibility/":"Assets/RTGIPlayerProbeHistoryFeedback/"):baseVertex?"Assets/RTGIPlayerProbeBaseVertex/":"Assets/RTGIPlayerProbe/";Directory.CreateDirectory(Path.Combine(root,assets));AssetDatabase.Refresh();
                 // Own isolated outputs only.
                 EditorSceneManager.NewScene(NewSceneSetup.EmptyScene,NewSceneMode.Single);RenderSettings.fog=false;
@@ -77,7 +79,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 #endif
                 PlayerSettings.SetUseDefaultGraphicsAPIs(BuildTarget.StandaloneWindows64,false);PlayerSettings.SetGraphicsAPIs(BuildTarget.StandaloneWindows64,new[]{GraphicsDeviceType.Direct3D12,GraphicsDeviceType.Direct3D11});PlayerSettings.SetScriptingBackend(NamedBuildTarget.Standalone,ScriptingImplementation.Mono2x);PlayerSettings.SetManagedStrippingLevel(NamedBuildTarget.Standalone,ManagedStrippingLevel.Disabled);
                 PlayerSettings.defaultScreenWidth=PlayerSettings.defaultScreenHeight=64;PlayerSettings.runInBackground=true;
-                var camera=new GameObject("GI Player camera").AddComponent<Camera>();camera.enabled=false;camera.orthographic=true;camera.orthographicSize=1;camera.aspect=1;camera.transform.position=new Vector3(0,0,-3);camera.nearClipPlane=.1f;camera.farClipPlane=50;camera.cullingMask=1;camera.allowHDR=true;camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=Color.black;camera.GetUniversalAdditionalCameraData().volumeLayerMask=-1;
+                var camera=new GameObject("GI Player camera").AddComponent<Camera>();camera.enabled=automatic;camera.orthographic=true;camera.orthographicSize=1;camera.aspect=1;camera.transform.position=new Vector3(0,0,-3);camera.nearClipPlane=.1f;camera.farClipPlane=50;camera.cullingMask=1;camera.allowHDR=true;camera.clearFlags=CameraClearFlags.SolidColor;camera.backgroundColor=Color.black;camera.GetUniversalAdditionalCameraData().volumeLayerMask=-1;
+                if(automatic){var automaticTarget=new RenderTexture(64,64,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear);automaticTarget.Create();AssetDatabase.CreateAsset(automaticTarget,assets+"AutomaticTarget.renderTexture");camera.targetTexture=automaticTarget;}
                 var receiver=Quad("Receiver",Vector3.zero,new Vector3(2,2,1),0,Color.white,Color.black,assets+"Receiver.mat");
                 var red=Quad("Offscreen red emitter",new Vector3(-1,0,-1),new Vector3(2,4,1),1,Color.black,Color.red,assets+"Red.mat");red.transform.rotation=Quaternion.Euler(0,180,0);
                 var blue=Quad("Offscreen blue emitter",new Vector3(1,0,-1),new Vector3(2,4,1),1,Color.black,Color.blue,assets+"Blue.mat");blue.transform.rotation=Quaternion.Euler(0,180,0);

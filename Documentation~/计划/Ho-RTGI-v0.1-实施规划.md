@@ -228,3 +228,5 @@
 步骤022：Editor-only GI四颜色池32F对照保持scale64/原算法，正式slow m2=0约99%→.026%、filtered方差−56%；stride0过但fullgreen仍−5.2075%、8/16phase失败。生产默认16F未改，额外2MiB@256/63.28125MiB@1080只payload投影。F43保留实际分配/capture错误与重跑，023先HDR/格式生命周期/GPU成本/两真实Player资格，再决定GI-only默认；DI默认不动，不重启F35纯单位扫描。全部未完成项与用户强制要求继续，active。
 
 步骤023：GI-only pool+共用PrePass/output32F已接入，shared默认false保DI16F、单位64。原alpha输入/低signal失败与旧16F控制全保留；最终1e−4..20000、格式生命周期/两315请求Release Player通过。full绿色仍5.05869%及7phase失败，不放宽；额外79.10MiB@1080是投影，40样本非稳定目标预算。F44记录范围/成本边界，024优先正常enabled-camera连续呈现，不能请求式换名；全部原缺口/用户强制条件与目标active继续。
+
+步骤024：两个真实serialized-enabled相机Player各240连续自动渲染，通过合成/Volume/重投影/发光重置，无手动请求。两hidden失败与用户明确授权后的短暂visible单变量成功都保留；Runtime无改动。targetRT输出不冒称backbuffer完成，025补默认屏幕目标与捕获色域/位置证据；full质量/7phase/static/F39/HD预算及全部用户强制要求继续active。

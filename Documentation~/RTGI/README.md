@@ -45,3 +45,5 @@
 步骤022 GI私有NRD池32F保持scale64，slow moment下溢约99%→.026%、filtered方差约−56%。原stride0过，但fullgreen−5.2075%、8/16phase仍失败；生产格式未改。+2MiB@256，1080+63.28125MiB仅布局投影。F43保存未Prepare/无UAV捕获两类失败和正式重跑，见[精度证据](../../Tests~/RTGI/PoolPrecision/README.md)。下一步023补HDR/生命周期/成本/真实Player再决定默认策略，全部旧缺口和goal active继续。
 
 步骤023已生产GI-only四color池及NRD output32F，DI默认16F不变、单位64。pool-only低信号失败与legacy对照保留；最终1e−4/1/20000双路径原5%通过，HDR m2>65504仍有限，两315-request Player验证最终格式/生命周期/动态。实际fullgreen仍−5.05869%、7phase失败；+2.5MiB@256/79.10MiB@1080仅布局，成本与目标预算不混同。见[完整资格](../../Tests~/RTGI/PrecisionQualification/README.md)、F44和最新交接。下一步024优先真正enabled-camera呈现证据，所有未完成项与goal active继续。
+
+步骤024补齐真实enabled-camera自动调度：用户授权短暂可见窗口，同一RG构建从Hidden改Normal后240连续自动回调/合成/Volume/移动与发光reset通过，compat亦240通过；两hidden失败完整保留，Runtime不改。[自动相机证据](../../Tests~/RTGI/AutomaticCamera/README.md)。相机仍输出64²targetRT，最终backbuffer呈现与视觉QA待025；原质量/预算/F39全部继续，目标active。
