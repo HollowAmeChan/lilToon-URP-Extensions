@@ -331,3 +331,21 @@ Tests~/RTGI/Seeds：四真实attempt metadata、完整日志、239精确source h
 **工具警告：** 020 Generate要求原HoRTGI.compute里单个legacy store，改生产后它会拒绝；不可原样调用错标baseline。旧020证据用本步历史源码/生成compute重现，后续若继续用该工具必须显式支持新默认与legacy反事实，所有SHA重记，不覆盖此轮结果。当前全部四进程结束、run active=null、Runtime无diff。白名单仅新Editor helper/meta、Castle/SeedAudit、Tests~/RTGI/HistoryFeedback及RTGI五文档；他人Ho-GD plan未跟踪不纳入。每步review/过滤/收益/禁试/交接继续。
 
 020已按白名单过滤提交`3b6937e`，HistoryFeedback verifier提交后再次通过；Runtime无diff、index空、四个本任务进程均已结束，仅他人Ho-GD plan未跟踪。下一轮直接021生产pre-S packed history与实际S开路径/RG/compat/动态/两Release Player回归，不再重复20隔离矩阵；旧质量与预算缺口继续，goal active。
+
+### 021终态（2026-10-21，待过滤提交）：生产pre-S已接入，后续转剩余质量
+
+021已实际实施，不要回到020“待接入”。Runtime唯一diff为HoRTGI.compute Final：S开packed Temporal2→history0，S关原StoreGIReservoir；当前Frame用Spatial1/final visibility/NRD不变，无新allocation/参数/SDK/产品开关。Final后写避免T读写0竞态。新ProductionHistoryAudit直接绑定Runtime，19188/30080 RG/compat各226请求/8全viewport checks，S开0=2且Spatial1与2实际不同约5.8～6.5万包，exit0/API0/compile0/drift0。环境双路径各138帧23checks、Cutout双路径各284帧17checks、蒙皮base/UV/normal/Morph141checks均过debug0。
+
+**核心未全过：** 原23244/40360 actual1为旧夹具误读history0验证SpatialM，改读实际1、M>1不变后12884/48892功能全过actual0，但各两条2304B scratch越界，严格runner均1。2260实际绑定020冻结legacy Final也同样两条（BOUND marker/源SHA），不是这次history引入，具体根因未知；不得把core列为全面通过。F39旧AS调参保持搁置。源码/原失败/修正/legacy全保留。Legacy control不回滚生产，只在独立fixture用冻结compute。
+
+**两个Release Player过：** 新独立Assets/RTGIPlayerProbeHistoryFeedback及Compatibility，输出PlayerGISkinnedHistoryFeedback/CompatibilityHistoryFeedback；旧017输出不覆盖。RG成功build17284被新wrapper因5历史warning拒绝，017两build原log/SHA证明逐字同五条后仅精确行白名单（无其它模块改动），源未变复用RG原成功build；compat47996新build。诊断5保留，不称0。实际Player11072/36020 exit0/debug0/runtime diagnostics0/source drift0，各315真实Update请求/310记录/38checks、23状态94208 packet0=2；sample52实际T且1/2不同。原nonreadable base4/三canonical snapshot、红蓝非均匀场/原15%L1/降噪方差/59相机重投影/24几何reset、Volume/NRD/Cutout/骨骼/Morph/invalid pose/合成全通过。L1约.10792/.10794、variance ratio.001053/.001064。完整payload SHA，无HoGIGpuProbe.dll。仍请求式，不是普通enabled-camera。旧Save通用PNG文件名被compat覆盖RG，只归档compat两图，数据两份完整。
+
+**实际生产质量仍失败：** 47984真实exit1，仅旧5%异常；API/compile/drift0，256观察/full/16phase及stage完整。rawRGB(.001328435,.000140335,.000128173)、filtered(.001250704,.000129084,.000116730)，filtered相对019有限none+1.773/−1.375/−2.835%，保留020收益；但原filtered/raw−5.851/−8.017/−8.927%，16phase全失败，不删门槛。当前slow stage红input .00132840、Pre .00133402、Temporal4 .00127925、Clamp6 .00127787、lastAtrous .00125113、publish .00125070。5仍条件fast不作m2，参考15/16/选择偏差不解除。
+
+Tests~/RTGI/ProductionHistory已核对：run.json合同；rejected-old-spatial-reader原7项/两失败；core-corrected/legacy两debug不合格；rejected-build-warnings原成功build被拒；player真实运行与完整payload；quality真实失败。19完整logs含017warning对照，1191source SHA（240旧blob、897 reachable基线Git blob+LF/CRLF精确重建、54新blob），不把无关未改Runtime重新复制入包。大报告gzip逐字节/SHA原样，约5.48MB，analysis/verify过只代表证据自洽。全部本任务进程结束/active=null。他人Ho-GD plan仍未跟踪不纳入。
+
+**022下一动作：** 当前生产Stage表已给出余损，不再重跑20全矩阵或宽sigma/gain/纯单位扫描。先复读015 moment实际绑定（Temporal slow transient0→Clamp slow permanent0，HistoryFix条件fast）、当前Native manifest和所有moment/variance读写者，核对默认64低信号范围，再提出一个GI私有、HDR/历史语义明确的精度候选；先Editor真实stage/全域/局部验证且记录资源与成本，再决定是否生产。不能因某选点或moment恢复宣布完整画质通过。原5%、HDR/局部、normal enabled-camera、1080/完整预算与static/F39都未完成，goal active。
+
+F39只读可比较本机UnityRtxdiFeature.Automatic/direct Build与Ho manual mesh config/cmd Build，NativeRtxdiGPUScene.AddInstance是NativeRender别名，不能误称同一个Unity API。无新因果/API/分配机制不要重启旧flags/延时/AS重建矩阵。当前有其它实质质量工作，不blocked。正常camera应读DI原记录后再定新可测机制，不能请求式冒称自动帧。
+
+021白名单：Runtime/RTGI/Shaders/HoRTGI.compute；Editor ProductionHistoryAudit/meta、Castle/HistoryFeedback.Equal可见性/PlayerBuilder/CoreValidation读点与legacycontrol；Tests~/RTGI/Dynamic/HoRTGIRuntimeProbe.cs；Tests~/RTGI/ProductionHistory；RTGI说明/计划/README/过程/禁试/交接。后续旧019/020 verifier current SHA过时要用各commit历史，不回滚生产。每步review/收益/过滤/禁试/交接继续。

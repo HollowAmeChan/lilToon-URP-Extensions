@@ -1,0 +1,78 @@
+{
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-core-rg-20261021T115938536.log": {
+    "path": "logs/E94D8CA91C2EC1BE.log",
+    "sha256": "E94D8CA91C2EC1BE06080E82209A770A94B3F24E45C0CCB4EAF2E813EAD370CA"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-core-compat-20261021T115948764.log": {
+    "path": "logs/3B279DF21547A29B.log",
+    "sha256": "3B279DF21547A29B94CF3A8BB028D409FD97DA6254222F6CB1DE80E3D896F2B1"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-legacy-core-rg-20261021T120447748.log": {
+    "path": "logs/A446442D0CD6DA8E.log",
+    "sha256": "A446442D0CD6DA8EA1CB3552882D66840943B19492E3C76B6759A5F51A7A7BCF"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-player-rg-20261021T121457181.log": {
+    "path": "logs/A0748C97F9AA8D87.log",
+    "sha256": "A0748C97F9AA8D8797E6005B1E21324FE07E0322F8CA9ED4BE19F20FDF055259"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-build-rg-20261021T120850698.log": {
+    "path": "logs/5666D9A6DF5358ED.log",
+    "sha256": "5666D9A6DF5358ED0BDD06907F6BC464CC3A357EF457346387E9DC53475A19AC"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-player-compat-20261021T121520841.log": {
+    "path": "logs/E2D75A5EDE18781D.log",
+    "sha256": "E2D75A5EDE18781D4DF888D90E6E5013B6C2E40A9D2FDC1A26E597A54B76CED7"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-build-compat-20261021T121506068.log": {
+    "path": "logs/55900F3BA0C8E004.log",
+    "sha256": "55900F3BA0C8E0049F486A6A34D71799A8483DB817301976CDA8A2D9A691C60A"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-production-quality-20261021T121934766.log": {
+    "path": "logs/F3F9B982E5E904E9.log",
+    "sha256": "F3F9B982E5E904E9D2106DA32E6D3516C493D2127DEA1439316B799AB539C710"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-core-rg-20261021T115501276.log": {
+    "path": "logs/6B137A1927EB4D7F.log",
+    "sha256": "6B137A1927EB4D7FB48FDDFC96F896AC8AA0D7738FADEDFD351BE55673E0F4FF"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-core-compat-20261021T115512236.log": {
+    "path": "logs/DDECFF73E6B34C9B.log",
+    "sha256": "DDECFF73E6B34C9BAA7E823D234E8FC7C0676652A2A0DF67B42DF539D73844AD"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-environment-rg-20261021T115520295.log": {
+    "path": "logs/DB7A5B6CD0F4354D.log",
+    "sha256": "DB7A5B6CD0F4354DE0454F430C5ED05F569C12C563AEBE56DFE75E2BADB2F096"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-environment-compat-20261021T115528486.log": {
+    "path": "logs/7D97E5FD02A75F74.log",
+    "sha256": "7D97E5FD02A75F7452CCE45FC928126AD27ACE7A6FCB2401D16F8D822F80120A"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-cutout-rg-20261021T115536444.log": {
+    "path": "logs/B17201B79FB53790.log",
+    "sha256": "B17201B79FB53790C811E7DCEE3F9744C4326F92EC3F2E04FF71BF2A0556134D"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-cutout-compat-20261021T115545159.log": {
+    "path": "logs/26616F1EA7C3A84C.log",
+    "sha256": "26616F1EA7C3A84C1E1D967D4DCA8EF16A414DE8D9B3E7696F35DF7647729372"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-skinned-hit-20261021T115554059.log": {
+    "path": "logs/E615182D1C78447B.log",
+    "sha256": "E615182D1C78447B204CE331A957D942975CA3496B645CD8D5A15E5759329035"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-production-rg-20261021T114743748.log": {
+    "path": "logs/47539347E46E1ABE.log",
+    "sha256": "47539347E46E1ABEEE9F55EFFB6625F7D92C2DFC906889FAD8642006BF33077B"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step021-production-compat-20261021T114759497.log": {
+    "path": "logs/B046365DD4ED1EE6.log",
+    "sha256": "B046365DD4ED1EE62E18E41C27E4C91AD2AC9C13C6A00889AEF884DBA333849D"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step017-build-base-rg-20261020T191040682.log": {
+    "path": "logs/AD373791197292F5.log",
+    "sha256": "AD373791197292F5CB0CA4320734AB56670D32F4FB1341B554197767E5A53070"
+  },
+  "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step017-build-base-compat-20261020T191125394.log": {
+    "path": "logs/6D47BBF8D22D3B4C.log",
+    "sha256": "6D47BBF8D22D3B4C53408D2F5496A54F52D01BCCF83FAC033C277E4AD8CE59B8"
+  }
+}

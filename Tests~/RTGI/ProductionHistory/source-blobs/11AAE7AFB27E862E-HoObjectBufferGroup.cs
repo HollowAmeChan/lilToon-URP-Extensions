@@ -1,0 +1,573 @@
+using System.Collections.Generic;
+using UnityEngine;
+using UnityEngine.Serialization;
+using UnityEngine.Scripting.APIUpdating;
+using lilToon.URP.Extensions.GeometryData;
+
+namespace lilToon.URP.Extensions.ObjectBuffer
+{
+    /// <summary>
+    /// 角色特化的身份来源：**部件表 + 选择表**（OB 架构 §5.7 / §5.11）。
+    /// <list type="bullet">
+    /// <item>部件条目回答"这个 renderer 是哪个角色的哪个部件"，索引写进 RSUV（低 16 bit = 角色 8 + 槽位 8）；</item>
+    /// <item>选择条目是具名的选区，取代 `custom0~3` 这类匿名通道；</item>
+    /// <item>组件是**编辑器期与运行期共用的真值**，但表本身由 <see cref="HoObjectBufferRegistry"/> 统一编译。</item>
+    /// </list>
+    /// 注意：RSUV **不会被序列化**（Unity 官方文档原话 "not serialized … resets when the object is reloaded"），
+    /// 所以每次表重建（含 OnEnable / 域重载后）都要重新写一遍。
+    /// </summary>
+    [ExecuteAlways]
+    [DisallowMultipleComponent]
+    [AddComponentMenu("Rendering/Ho-ObjectBuffer Group")]
+    [MovedFrom(true, "lilToon.URP.Extensions.CharacterBuffer", null, "HoCharacterBufferGroup")]
+    public sealed class HoObjectBufferGroup : MonoBehaviour
+    {
+        private static readonly List<HoObjectBufferGroup> ActiveGroups = new List<HoObjectBufferGroup>();
+        private static readonly Dictionary<Renderer, Assignment> Assignments = new Dictionary<Renderer, Assignment>();
+        private static readonly HashSet<Renderer> WarnedRenderers = new HashSet<Renderer>();
+        private static readonly List<HoObjectBufferConflict> Conflicts = new List<HoObjectBufferConflict>();
+
+        /// <summary>
+        /// 上次 <see cref="ResolveAssignments"/> 发现的所有重复指定（一个 Renderer 被多个条目命中）。
+        /// 裁决是确定性的，但**必须让人看见**——拖父级展开子级时最容易撞上。
+        /// </summary>
+        public static IReadOnlyList<HoObjectBufferConflict> GetConflicts()
+        {
+            return Conflicts;
+        }
+
+        /// <summary>
+        /// 组 ID = 像素里身份的高字节，同时**直接是组表的下标**（256 行）。它由
+        /// <see cref="HoObjectBufferRegistry"/> **自动分配**并在编辑器期落盘：新组件默认 0（待分配），
+        /// 注册表认领已经写好的号（旧场景手填的值、以及上次分配的结果都保持不动），
+        /// 没号或撞车的补到最小可用号。手改它没有意义——两个组件抢同一个号时，注册表会给后来者换号。
+        /// </summary>
+        [HideInInspector]
+        [FormerlySerializedAs("characterId")]
+        public int groupId;
+
+        [InspectorName("赋值方式")]
+        [Tooltip("一个物体被多个部件条目命中时归谁。默认「覆盖」。\n覆盖：顺序即优先级，排在下面的条目接管上面条目里的同一个物体 —— “顶上一条『全体』（全角色），下面人体 / 脸 / 前发（各自的位）”直接可写，不用反选、不用逐部件重复勾。同组内不再报冲突。\n指定：重叠算配置错误，面板底部逐条列出来，同组内取条目顺序在前的那个（想审计哪些物体被谁接管时切回来）。\n两种模式都不做标签继承：条目的标签就是它拿到的那些物体的全部标签，想让被接管的物体同时保住上面那条的位，就在下面那条里一起勾。")]
+        public HoObjectBufferAssignmentMode assignmentMode = HoObjectBufferAssignmentMode.Override;
+
+        [InspectorName("部件")]
+        public List<HoObjectBufferPartEntry> parts = new List<HoObjectBufferPartEntry>();
+
+        [InspectorName("选择")]
+        [Tooltip("具名的对象集合。可跨身份组、重叠；同名声明合并成员，AC 按名字查询。")]
+        public List<HoObjectBufferSelectionEntry> selections = new List<HoObjectBufferSelectionEntry>();
+
+        private readonly Dictionary<Renderer, int> localSlotByRenderer = new Dictionary<Renderer, int>();
+        private readonly List<string> partNameCache = new List<string>();
+        private readonly List<string> selectionNameCache = new List<string>();
+        // 本组上一次真正写出去的 renderer：下次重建时靠它做差集，把"不再属于本组"的索引收回来。
+        private readonly HashSet<Renderer> lastWrittenRenderers = new HashSet<Renderer>();
+
+        private void OnEnable()
+        {
+            if (!ActiveGroups.Contains(this))
+            {
+                ActiveGroups.Add(this);
+            }
+
+            HoObjectBufferRegistry.Register(this);
+        }
+
+        private void OnDisable()
+        {
+            // 先把自己写出去的索引收回，再退注册：组件被删/被禁用之后，它定义的组就从表里消失了，
+            // 而 renderer 上的索引还在——像素里那个 ID 查表落到 unknown 行，画面从"有身份"变成洋红，
+            // 看起来就像"删掉的组换了个颜色还在"。索引是我们写的，职责也在这里。
+            ClearIdentity();
+            ActiveGroups.Remove(this);
+            HoObjectBufferRegistry.Unregister(this);
+        }
+
+        private void OnValidate()
+        {
+            // 0 = 待分配（合法值：注册表下一帧给号并落盘）；上限是组表行数。
+            groupId = Mathf.Clamp(groupId, 0, HoObjectBufferPaletteLimits.MaxGroups - 1);
+            HoObjectBufferRegistry.MarkDirty();
+        }
+
+        /// <summary>活动 group 列表（消费者系统按需遍历）。</summary>
+        public static IReadOnlyList<HoObjectBufferGroup> GetActiveGroups()
+        {
+            return ActiveGroups;
+        }
+
+        /// <summary>强制重编译表（编辑器改了条目之后用）。</summary>
+        public void Apply()
+        {
+            HoObjectBufferRegistry.MarkDirty();
+            HoObjectBufferRegistry.EnsureBuilt();
+        }
+
+        /// <summary>
+        /// 重新编译 palette 并把 RSUV 索引写回所有 renderer。
+        /// RSUV **不会被序列化**，所以场景重载 / 域重载之后必须能手动刷新一次。
+        /// </summary>
+        public static void RefreshLoadedScenes()
+        {
+            HoObjectBufferRegistry.MarkDirty();
+            HoObjectBufferRegistry.EnsureBuilt();
+        }
+
+        /// <summary>部件名列表（按槽位顺序）；注册表按这个顺序分配槽位号。</summary>
+        public IReadOnlyList<string> GetPartNames()
+        {
+            partNameCache.Clear();
+            for (int i = 0; i < parts.Count; i++)
+            {
+                HoObjectBufferPartEntry part = parts[i];
+                if (part == null || string.IsNullOrEmpty(part.name))
+                {
+                    continue;
+                }
+
+                if (partNameCache.Contains(part.name))
+                {
+                    // 角色内重名会让两个部件抢同一个槽位，必须点名而不是静默跳过。
+                    Debug.LogWarning($"[Ho-ObjectBuffer] '{name}' 的部件名 '{part.name}' 重复，后一个被跳过。", this);
+                    continue;
+                }
+
+                partNameCache.Add(part.name);
+            }
+
+            return partNameCache;
+        }
+
+        public IReadOnlyList<string> GetSelectionNames()
+        {
+            selectionNameCache.Clear();
+            for (int i = 0; i < selections.Count; i++)
+            {
+                HoObjectBufferSelectionEntry selection = selections[i];
+                if (selection == null || string.IsNullOrEmpty(selection.name))
+                {
+                    continue;
+                }
+
+                selectionNameCache.Add(selection.name);
+            }
+
+            return selectionNameCache;
+        }
+
+        /// <summary>只读获取最终归属于本组的 Renderer；可按已有部件名过滤，遵循 OB 的覆盖与跨组裁决。</summary>
+        public void GetAssignedRenderers(List<Renderer> destination, ICollection<string> partFilter = null)
+        {
+            HoObjectBufferRegistry.EnsureBuilt();
+            destination.Clear();
+            IReadOnlyList<string> names = GetPartNames();
+            foreach (Renderer renderer in lastWrittenRenderers)
+            {
+                if (renderer == null || IsOwnedByOtherGroup(renderer)) continue;
+                if (partFilter != null && partFilter.Count > 0
+                    && (!localSlotByRenderer.TryGetValue(renderer, out int slot)
+                        || slot >= names.Count || !partFilter.Contains(names[slot]))) continue;
+                destination.Add(renderer);
+            }
+        }
+
+        /// <summary>把第 <paramref name="slot"/> 个部件条目编成 palette 行（partId 由注册表填）。</summary>
+        public HoObjectPartData BuildPartRow(int slot, string partName)
+        {
+            HoObjectBufferPartEntry entry = FindPart(partName);
+            return new HoObjectPartData
+            {
+                nameHash = HoObjectBufferHash.ComputePart(groupId, partName),
+                tags = (uint)(entry != null ? entry.tags : HoObjectBufferPartTags.None),
+                // 材质数值（thickness / curvature / roughness / metallic / reflectance / plrStrength /
+                // materialClass / transmittance）**不由组件提供**：它们在材质里已经填过一遍，
+                // 权威归属与写入路径见OB 架构 §5.3。定下来之前这里恒为 0，消费端不得依赖。
+                thickness = 0f,
+                curvature = 0f,
+                transmittance = 0f,
+                roughness = 0f,
+                metallic = 0f,
+                reflectance = 0f,
+                plrStrength = 0f,
+                materialClass = 0u,
+                displayColor = entry != null ? (Vector4)entry.displayColor : new Vector4(0.75f, 0.75f, 0.75f, 1f)
+            };
+        }
+
+        public HoObjectSelectionData BuildSelectionRow(int index, string selectionName)
+        {
+            HoObjectBufferSelectionEntry entry = FindSelection(selectionName);
+            return new HoObjectSelectionData
+            {
+                nameHash = HoObjectBufferHash.Compute(selectionName),
+                tags = (uint)(entry != null ? entry.tags : HoObjectBufferPartTags.None),
+                displayColor = entry != null ? (Vector4)entry.displayColor : new Vector4(0.2f, 0.6f, 1f, 1f)
+            };
+        }
+
+        /// <summary>把本组胜出的 renderer 的 RSUV 写成部件 ID。注册表在表重建后统一调用。</summary>
+        public void ApplyIdentity()
+        {
+            localSlotByRenderer.Clear();
+            IReadOnlyList<string> partNames = GetPartNames();
+            for (int slot = 0; slot < partNames.Count; slot++)
+            {
+                HoObjectBufferPartEntry entry = FindPart(partNames[slot]);
+                if (entry == null)
+                {
+                    continue;
+                }
+
+                CollectRenderers(entry, renderer =>
+                {
+                    // 同组内的裁决规则必须与 ResolveAssignments 一致：覆盖（默认）取后者、指定取前者。
+                    if (assignmentMode == HoObjectBufferAssignmentMode.Override
+                        || !localSlotByRenderer.ContainsKey(renderer))
+                    {
+                        localSlotByRenderer[renderer] = slot;
+                    }
+                });
+            }
+
+            // 上次写过索引、这次不再覆盖的 renderer：把索引擦掉。改名 / 删条目 / 把物体拖走都会走到这里，
+            // 不擦的话像素里留着一个表里已经没有的 ID —— 查表落到 unknown 行，画面从"有身份"变成洋红，
+            // 看起来就像"删掉的东西换了个颜色还在"。索引是我们写的，就得由我们负责收回。
+            foreach (Renderer previous in lastWrittenRenderers)
+            {
+                if (localSlotByRenderer.ContainsKey(previous) || IsOwnedByOtherGroup(previous))
+                {
+                    continue;
+                }
+
+                TrySetRendererUserValue(previous, 0u);
+            }
+
+            lastWrittenRenderers.Clear();
+
+            foreach (KeyValuePair<Renderer, int> pair in localSlotByRenderer)
+            {
+                if (IsOwnedByOtherGroup(pair.Key))
+                {
+                    continue;
+                }
+
+                uint partId = HoObjectBufferRegistry.MakePartId(groupId, pair.Value);
+                if (!TrySetRendererUserValue(pair.Key, partId))
+                {
+                    WarnUnsupportedRenderer(pair.Key);
+                    continue;
+                }
+
+                lastWrittenRenderers.Add(pair.Key);
+            }
+        }
+
+        /// <summary>
+        /// 把本组写出去的 RSUV 归零：组件被禁用 / 被删除（它定义的组随之从表里消失），
+        /// 或者本组整体失效（组 ID 撞车、组 ID = 0）。**已经被别的组接管的 renderer 不碰**，
+        /// 否则会把别人的身份擦掉。
+        /// </summary>
+        internal void ClearIdentity()
+        {
+            if (parts != null)
+            {
+                for (int i = 0; i < parts.Count; i++)
+                {
+                    HoObjectBufferPartEntry entry = parts[i];
+                    if (entry == null)
+                    {
+                        continue;
+                    }
+
+                    CollectRenderers(entry, renderer =>
+                    {
+                        if (!IsOwnedByOtherGroup(renderer))
+                        {
+                            TrySetRendererUserValue(renderer, 0u);
+                        }
+                    });
+                }
+            }
+
+            lastWrittenRenderers.Clear();
+        }
+
+        /// <summary>
+        /// 这个 renderer 是不是已经被**别人**接管了。
+        /// 必须用引用比较：组件被销毁时 Unity 重载的 <c>==</c> 会把"已销毁对象"判成与任何东西都不相等，
+        /// 于是"我自己"也会被认成"别的组"，该擦的索引就擦不掉（这个坑在本仓库的贴图表缓存上已经踩过一次）。
+        /// </summary>
+        private bool IsOwnedByOtherGroup(Renderer renderer)
+        {
+            return Assignments.TryGetValue(renderer, out Assignment assignment)
+                && !ReferenceEquals(assignment.group, this);
+        }
+
+        /// <summary>
+        /// 一个 renderer 只属于一个部件。**跨组**取层级距离更近的组（距离相同用组 ID 定序）；
+        /// **同组内按条目顺序**：覆盖（默认）取后者、指定取前者（见 <see cref="assignmentMode"/>）。
+        /// 由注册表在重建表之前调用一次；指定模式下的同类重复全部记进 <see cref="Conflicts"/>，不静默吞掉。
+        /// </summary>
+        public static void ResolveAssignments()
+        {
+            Assignments.Clear();
+            Conflicts.Clear();
+            for (int groupIndex = 0; groupIndex < ActiveGroups.Count; groupIndex++)
+            {
+                HoObjectBufferGroup group = ActiveGroups[groupIndex];
+                if (!HoObjectBufferRegistry.IsGroupValid(group))
+                {
+                    continue;
+                }
+
+                bool overridesLater = group.assignmentMode == HoObjectBufferAssignmentMode.Override;
+                // GetPartNames() 返回的是复用的缓存列表，而冲突记录会再次调它——
+                // 这里先拷一份快照，避免"迭代中清空同一个 List"这类自己咬自己的 bug。
+                var partNames = new List<string>(group.GetPartNames());
+                for (int slot = 0; slot < partNames.Count; slot++)
+                {
+                    HoObjectBufferPartEntry entry = group.FindPart(partNames[slot]);
+                    if (entry == null)
+                    {
+                        continue;
+                    }
+
+                    int currentSlot = slot;
+                    string currentPartName = partNames[slot];
+                    group.CollectRenderers(entry, renderer =>
+                    {
+                        int distance = group.GetHierarchyDistance(renderer.transform);
+                        var candidate = new Assignment(group, currentSlot, distance);
+                        if (!Assignments.TryGetValue(renderer, out Assignment existing))
+                        {
+                            Assignments[renderer] = candidate;
+                            return;
+                        }
+
+                        // 同一个部件自己命中两次（父级展开 + 显式子级）不算冲突。
+                        if (existing.group == candidate.group && existing.slot == candidate.slot)
+                        {
+                            return;
+                        }
+
+                        // 同组内：覆盖 = 后者接管（预期行为，不报）；指定 = 前者胜并报出来。
+                        if (ReferenceEquals(existing.group, group) && ReferenceEquals(candidate.group, group))
+                        {
+                            if (overridesLater)
+                            {
+                                Assignments[renderer] = candidate;
+                            }
+                            else
+                            {
+                                Conflicts.Add(MakeConflict(renderer, existing, candidate));
+                            }
+
+                            return;
+                        }
+
+                        // 跨组：距离更近者胜、距离相同用组 ID 定序。两个组抢同一个 renderer
+                        // 属于真的配置冲突，一律报出来。
+                        if (candidate.IsHigherPriorityThan(existing))
+                        {
+                            Conflicts.Add(MakeConflict(renderer, candidate, existing));
+                            Assignments[renderer] = candidate;
+                        }
+                        else
+                        {
+                            Conflicts.Add(MakeConflict(renderer, existing, candidate));
+                        }
+                    });
+                }
+            }
+        }
+
+        private static HoObjectBufferConflict MakeConflict(Renderer renderer, in Assignment winner, in Assignment loser)
+        {
+            string winnerName = GetPartNameAt(winner.group, winner.slot);
+            string loserName = GetPartNameAt(loser.group, loser.slot);
+            return new HoObjectBufferConflict(
+                renderer,
+                winner.group,
+                winner.slot,
+                winnerName,
+                loser.group,
+                loser.slot,
+                loserName);
+        }
+
+        private static string GetPartNameAt(HoObjectBufferGroup group, int slot)
+        {
+            if (group == null)
+            {
+                return "(已销毁)";
+            }
+
+            var names = new List<string>(group.GetPartNames());
+            return slot >= 0 && slot < names.Count ? names[slot] : $"(槽位 {slot})";
+        }
+
+        private void CollectRenderers(HoObjectBufferPartEntry entry, System.Action<Renderer> visit)
+        {
+            CollectRenderers(entry?.renderers, entry != null && entry.includeChildren, visit);
+        }
+
+        internal static void CollectRenderers(UnityEngine.Object[] targets, bool includeChildren, System.Action<Renderer> visit)
+        {
+            if (targets == null)
+            {
+                return;
+            }
+
+            for (int i = 0; i < targets.Length; i++)
+            {
+                UnityEngine.Object target = targets[i];
+                if (target == null)
+                {
+                    continue;
+                }
+
+                if (target is Renderer renderer)
+                {
+                    visit(renderer);
+                    if (includeChildren)
+                    {
+                        VisitChildren(renderer.transform, visit);
+                    }
+
+                    continue;
+                }
+
+                if (target is GameObject gameObject)
+                {
+                    // Inspector 允许直接拖 GameObject。根节点上的 MeshRenderer /
+                    // SkinnedMeshRenderer 必须先收集；旧实现只遍历 child，会让正常
+                    // 拖入的模型部件完全不写 RSUV，这就是场景调试只剩小块 unknown 的根因。
+                    if (gameObject.TryGetComponent(out Renderer rootRenderer))
+                    {
+                        visit(rootRenderer);
+                    }
+
+                    if (includeChildren)
+                    {
+                        VisitChildren(gameObject.transform, visit);
+                    }
+                }
+            }
+        }
+
+        private static void VisitChildren(Transform root, System.Action<Renderer> visit)
+        {
+            for (int i = 0; i < root.childCount; i++)
+            {
+                Transform child = root.GetChild(i);
+                if (child.TryGetComponent(out Renderer renderer))
+                {
+                    visit(renderer);
+                }
+
+                VisitChildren(child, visit);
+            }
+        }
+
+        private HoObjectBufferPartEntry FindPart(string partName)
+        {
+            if (parts == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < parts.Count; i++)
+            {
+                if (parts[i] != null && parts[i].name == partName)
+                {
+                    return parts[i];
+                }
+            }
+
+            return null;
+        }
+
+        private HoObjectBufferSelectionEntry FindSelection(string selectionName)
+        {
+            if (selections == null)
+            {
+                return null;
+            }
+
+            for (int i = 0; i < selections.Count; i++)
+            {
+                if (selections[i] != null && selections[i].name == selectionName)
+                {
+                    return selections[i];
+                }
+            }
+
+            return null;
+        }
+
+        private int GetHierarchyDistance(Transform target)
+        {
+            int distance = 0;
+            Transform current = target;
+            while (current != null)
+            {
+                if (current == transform)
+                {
+                    return distance;
+                }
+
+                current = current.parent;
+                distance++;
+            }
+
+            return int.MaxValue;
+        }
+
+        private void WarnUnsupportedRenderer(Renderer renderer)
+        {
+            if (!WarnedRenderers.Add(renderer))
+            {
+                return;
+            }
+
+            Debug.LogWarning($"[Ho-ObjectBuffer] '{renderer.name}'（{renderer.GetType().Name}）拿不到 RSUV，" +
+                             "这个部件不会写进 ID pass。角色部件请使用 MeshRenderer / SkinnedMeshRenderer。", renderer);
+        }
+
+        private static bool TrySetRendererUserValue(Renderer targetRenderer, uint value)
+        {
+            return HoGeometryRendererBinding.SetObjectIdentity(targetRenderer, value);
+        }
+
+        private readonly struct Assignment
+        {
+            public readonly HoObjectBufferGroup group;
+            public readonly int slot;
+            private readonly int distance;
+
+            public Assignment(HoObjectBufferGroup group, int slot, int distance)
+            {
+                this.group = group;
+                this.slot = slot;
+                this.distance = distance;
+            }
+
+            /// <summary>
+            /// 裁决只用"离 Renderer 更近者胜"，距离相同再用组 ID 决出确定性结果（组 ID 由注册表分配，
+            /// 所以这条比较是稳定的）。原来那套手填优先级已经撤掉：默认全 0 时它本来也没起作用，
+            /// 真需要"更上层的组强行接管"时再加回来也不迟。
+            /// </summary>
+            public bool IsHigherPriorityThan(Assignment other)
+            {
+                if (distance != other.distance)
+                {
+                    return distance < other.distance;
+                }
+
+                int groupCompare = group != null ? group.groupId : 0;
+                int otherCompare = other.group != null ? other.group.groupId : 0;
+                return groupCompare < otherCompare;
+            }
+        }
+    }
+}

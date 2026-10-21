@@ -1,0 +1,76 @@
+{
+    "pass": true,
+    "compatibility": false,
+    "colorSpace": "Linear",
+    "failure": "",
+    "frames": 284,
+    "checkedSegments": 1024,
+    "blockedSegments": 512,
+    "skyBaseline": {
+        "r": 0.3605439364910126,
+        "g": 0.18050454556941987,
+        "b": 0.08878696709871292,
+        "a": 1.0
+    },
+    "skyHole": {
+        "r": 0.3598557710647583,
+        "g": 0.18015936017036439,
+        "b": 0.08861727267503739,
+        "a": 1.0
+    },
+    "skyBlocked": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 1.0
+    },
+    "lightBaseline": {
+        "r": 0.15573656558990479,
+        "g": 0.1547848880290985,
+        "b": 0.15359607338905335,
+        "a": 1.0
+    },
+    "lightHole": {
+        "r": 0.15454569458961488,
+        "g": 0.15360134840011598,
+        "b": 0.15242162346839906,
+        "a": 1.0
+    },
+    "lightBlocked": {
+        "r": 0.0,
+        "g": 0.0,
+        "b": 0.0,
+        "a": 1.0
+    },
+    "halfRaw": {
+        "r": 0.5010185241699219,
+        "g": 0.0,
+        "b": 0.0003779830294661224,
+        "a": 1.0
+    },
+    "halfFiltered": {
+        "r": 0.4979451596736908,
+        "g": 0.0,
+        "b": 0.0003079173620790243,
+        "a": 1.0
+    },
+    "checks": [
+        "Cutout enables actual native secondary/reuse/final buffers",
+        "Transparent Cutout initial/lighting/final matches opaque-only sky baseline actual=RGBA(0.366, 0.183, 0.090, 1.000) expected=RGBA(0.361, 0.181, 0.089, 1.000)",
+        "All central initial rays hit the solid Cutout at z=-.5, rather than a sky miss or rear wall",
+        "Cutout behind primary remains transparent to secondary sky actual=RGBA(0.360, 0.180, 0.089, 1.000) expected=RGBA(0.361, 0.181, 0.089, 1.000)",
+        "Cutout behind primary blocks secondary sky with no initial-path obstruction actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Directional secondary reference is lit",
+        "Transparent secondary directional shadow matches no-Cutout reference actual=RGBA(0.155, 0.154, 0.152, 1.000) expected=RGBA(0.156, 0.155, 0.154, 1.000)",
+        "Solid secondary directional shadow uses true alpha visibility actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Cutout beyond finite bounce range still blocks direct sky actual=RGBA(0.000, 0.000, 0.000, 1.000) expected=RGBA(0.000, 0.000, 0.000, 1.000)",
+        "Distant alpha holes admit explicit direct sky actual=RGBA(0.500, 0.250, 0.123, 1.000) expected=RGBA(0.500, 0.250, 0.125, 1.000)",
+        "Readback uses actual pinned 32-byte GI reservoir layout",
+        "Actual generated reservoir contains a lit point on the rear emitter",
+        "Frozen actual wall sample exercises both visible and blocked reconnects, including NRD distance",
+        "Half-open periodic Cutout keeps ReSTIR raw energy within 5% of independent .5 integral: 0.5010185",
+        "Filtered half-open Cutout keeps same-run energy actual=RGBA(0.498, 0.000, 0.000, 1.000) expected=RGBA(0.501, 0.000, 0.000, 1.000)",
+        "Cutout native temporal history actually reused after reset",
+        "Removing last Cutout releases full-resolution native visibility storage"
+    ]
+}

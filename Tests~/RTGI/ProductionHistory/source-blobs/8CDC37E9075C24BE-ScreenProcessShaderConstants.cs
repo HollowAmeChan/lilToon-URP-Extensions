@@ -1,0 +1,50 @@
+using UnityEngine;
+
+namespace lilToon.URP.Extensions.PostProcessing
+{
+    internal static class ScreenProcessShaderConstants
+    {
+        public const string DefaultLayerShaderName = "Hidden/lilToon/URP/ScreenProcess/LayerBlit";
+        public const string EdgeLightShaderName = "Hidden/lilToon/URP/ScreenProcess/EdgeLight";
+        public const string OutlineShaderName = "Hidden/lilToon/URP/ScreenProcess/Outline";
+        public const string DropShadowShaderName = "Hidden/lilToon/URP/ScreenProcess/DropShadow";
+        public const string DepthOfFieldShaderName = "Hidden/lilToon/URP/ScreenProcess/DepthOfField";
+        public const string PostLightingShaderName = "Hidden/lilToon/URP/ScreenProcess/PostLighting";
+        public const string SkyTyndallShaderName = "Hidden/lilToon/URP/ScreenProcess/SkyTyndall";
+        public const string DepthFogShaderName = "Hidden/lilToon/URP/ScreenProcess/DepthFog";
+        public const string SubjectMaskShaderName = "Hidden/lilToon/URP/ScreenProcess/SubjectMask";
+        public const string TempTextureAName = "_lilScreenProcessTempA";
+        public const string TempTextureBName = "_lilScreenProcessTempB";
+        public const string SubjectMaskTextureName = "_lilScreenProcessSubjectMaskTexture";
+        /// <summary>当前层的 AC 查询与范围输入是否可用；缺失时包括反选都返回零。</summary>
+        public const string MaskValidName = "_lilHoSPMaskValid";
+        /// <summary>遮罩纹理的 texel / 尺寸（xy = texel、zw = 尺寸）：全局纹理没有 `_TexelSize`，只能 C# 发布。</summary>
+        public const string MaskTexelSizeName = "_lilHoSPMaskTexelSize";
+
+        public static readonly int IntensityId = Shader.PropertyToID("_Intensity");
+        public static readonly int LayerBlendModeId = Shader.PropertyToID("_LayerBlendMode");
+        public static readonly int LayerColorId = Shader.PropertyToID("_LayerColor");
+        public static readonly int LayerTextureId = Shader.PropertyToID("_LayerTexture");
+        public static readonly int LayerTextureEnabledId = Shader.PropertyToID("_LayerTextureEnabled");
+        public static readonly int LayerParams0Id = Shader.PropertyToID("_LayerParams0");
+        public static readonly int LayerParams1Id = Shader.PropertyToID("_LayerParams1");
+        public static readonly int LayerParams2Id = Shader.PropertyToID("_LayerParams2");
+        public static readonly int LayerParams3Id = Shader.PropertyToID("_LayerParams3");
+        public static readonly int LayerParams4Id = Shader.PropertyToID("_LayerParams4");
+        public static readonly int LayerParams5Id = Shader.PropertyToID("_LayerParams5");
+        public static readonly int LayerMaskEnabledId = Shader.PropertyToID("_LayerMaskEnabled");
+        public static readonly int LayerMaskInvertId = Shader.PropertyToID("_LayerMaskInvert");
+        public static readonly int LayerMaskDebugOutputId = Shader.PropertyToID("_LayerMaskDebugOutput");
+        public static readonly int SubjectMaskTextureId = Shader.PropertyToID(SubjectMaskTextureName);
+        public static readonly int SubjectMaskValidId = Shader.PropertyToID("_SubjectMaskValid");
+        public static readonly int MaskValidId = Shader.PropertyToID(MaskValidName);
+        public static readonly int MaskQueryId = Shader.PropertyToID("_LayerMaskQuery");
+        public static readonly int CoverageValidId = Shader.PropertyToID("_lilHoSPCoverageValid");
+        public static readonly int MaskTexelSizeId = Shader.PropertyToID(MaskTexelSizeName);
+        public static readonly int OutlineDepthValidId = Shader.PropertyToID("_lilHoSPOutlineDepthValid");
+        public static readonly int CameraDepthValidId = Shader.PropertyToID("_lilHoSPCameraDepthValid");
+        public static readonly int CameraNormalsValidId = Shader.PropertyToID("_lilHoSPCameraNormalsValid");
+        public static readonly int CameraDepthTextureId = Shader.PropertyToID("_CameraDepthTexture");
+        public static readonly int CameraNormalsTextureId = Shader.PropertyToID("_CameraNormalsTexture");
+    }
+}

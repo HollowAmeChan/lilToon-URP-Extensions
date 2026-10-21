@@ -39,3 +39,5 @@
 步骤019完成RG256²四模式×8seed矩阵，实际exit0/API0/源漂移0。TS raw相对none全图RGB高25.70/22.21/18.75%，T或S单独仅约2.4～3.0%；所有32段filtered/raw仍原5%失败。当前只有定位收益，Runtime不改。两次byte-gate拒绝、精度合同与最终真实重跑保留F40和[完整证据](../../Tests~/RTGI/Seeds/README.md)。下一项020仅Editor尝试pre-spatial history，同帧T/S保持，再评质量/方差/成本，不关闭复用当完整通过；正常camera/1080/Player等目标仍active。
 
 步骤020 pre-spatial packed history隔离候选有收益：filtered相对finite none从+15.70/+11.58/+8.08%降到+1.22/−1.87/−3.28%，时间方差约降55%；原5%仍全失败、局部仍不足。额外codec假说在此域被反事实控制否定。256 GPU Final约+.018ms，总耗时相近但噪声大。四进程debug0，Runtime尚未改，下一项021直接生产接入及双路径/动态/Player回归。见[F41/证据](../../Tests~/RTGI/HistoryFeedback/README.md)和最新交接，不重跑纯诊断凑样本，目标active。
+
+步骤021已将pre-S packed history接入实际Runtime，仅S开时2→0，S关旧路径保留。双路径真实合同、环境/Cutout/蒙皮回归及两个315请求Release Player过；新增23状态history0=2和反事实见证。生产long filtered相对finite none约+1.77/−1.37/−2.84%，原5%/16phase仍失败。核心功能通过但AS scratch两错误在冻结legacy同样复现，完整debug回归仍未过；5条历史build warning精确审查、不改其它模块。见[真实证据](../../Tests~/RTGI/ProductionHistory/README.md)、F42和最新交接。下一步处理实际NRD余损/精度，所有缺口和goal active保留。

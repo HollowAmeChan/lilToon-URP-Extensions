@@ -23,7 +23,8 @@ public sealed class HoRTGIRuntimeProbe:MonoBehaviour
     public Renderer cutoutRenderer;
     public Transform blueBone;
     public SkinnedMeshRenderer blueSkin;
-    public bool baseVertexProbe;
+    public bool baseVertexProbe,historyProbe;
+    readonly List<HistoryCheck> historyChecks=new();
     const BindingFlags Flags=BindingFlags.Instance|BindingFlags.NonPublic|BindingFlags.Public;
     const int Size=64,Count=32*32;
     readonly List<string> checks=new();
@@ -54,7 +55,7 @@ public sealed class HoRTGIRuntimeProbe:MonoBehaviour
         report.api=SystemInfo.graphicsDeviceType.ToString();report.colorSpace=QualitySettings.activeColorSpace.ToString();report.requestMode="one SubmitRenderRequest per distinct application Update";
         if(feature==null||probeCamera==null||profile==null){Finish(new Exception("Required serialized camera/Feature/profile reference is missing"));return;}
         cutoutProbe=cutoutMaterial!=null;report.cutoutProbe=cutoutProbe;
-        skinnedProbe=blueSkin!=null;report.skinnedProbe=skinnedProbe;report.baseVertexProbe=baseVertexProbe;
+        skinnedProbe=blueSkin!=null;report.skinnedProbe=skinnedProbe;report.baseVertexProbe=baseVertexProbe;report.historyProbe=historyProbe;
         #if URP_COMPATIBILITY_MODE
         report.compatibility=GraphicsSettings.GetRenderPipelineSettings<RenderGraphSettings>().enableRenderCompatibilityMode;
         #endif
@@ -116,6 +117,7 @@ public sealed class HoRTGIRuntimeProbe:MonoBehaviour
             var rawPixels=Read(Raw.rt);var raw=Mean(rawPixels);var filteredPixels=Read(Published.rt);var filtered=Mean(filteredPixels);
             bool reset=Nrd!=null&&Reset;
             frames.Add(new Frame{sample=sample,applicationFrame=Time.frameCount,time=Time.unscaledTimeAsDouble,giFrame=(int)Field(context,"frame"),reset=reset,raw=raw,filtered=filtered});
+            if(historyProbe&&HistorySample(sample))CheckHistory(context,reset);
             if(sample==4)
             {
                 Require(Nrd!=null&&Raw!=Published,"Serialized GI/NRD references produce distinct raw and filtered in Mono Player");
@@ -182,18 +184,37 @@ public sealed class HoRTGIRuntimeProbe:MonoBehaviour
             if(cutoutProbe&&sample==308){Require(!(bool)Field(context,"alphaVisibility")&&raw.b>.05f&&renderCallbacks==309,"Player disabling Cutout restores opaque compute path in a new application frame");if(!skinnedProbe){report.pass=true;Finish(null);return;}}
             if(skinnedProbe&&(sample==309||sample==311||sample==313))Require(reset&&raw.b<.0001f&&filtered.b<.0001f,"Player changed/invalid skin removes stale blue bounce immediately sample="+sample);
             if(skinnedProbe&&(sample==310||sample==312||sample==314))Require(reset&&raw.b>.05f&&filtered.b>.05f,"Player restored bone/morph/valid pose restores blue bounce sample="+sample);
-            if(skinnedProbe&&sample==314){Require(renderCallbacks==315,"Player skin sequence uses distinct application frames");report.pass=true;Finish(null);return;}
+            if(skinnedProbe&&sample==314){if(historyProbe)Require(historyChecks.Count==23,"Actual Player pre-spatial history checked across stationary/moving/reset/Cutout/skinned states");Require(renderCallbacks==315,"Player skin sequence uses distinct application frames");report.pass=true;Finish(null);return;}
             sample++;
         }
         catch(Exception error){Finish(error);}
     }
+    static bool HistorySample(int value)=>value==4||value==52||value==179||value==180||value==239||value==240||value==244||value==267||value==269||value==270||value==271||value>=303;
+    [System.Runtime.InteropServices.StructLayout(System.Runtime.InteropServices.LayoutKind.Sequential)]
+    struct Packet{public Vector3 position;public uint normal,misc;public float weight;public uint radiance,unused;}
+    [Serializable]sealed class HistoryCheck{public int sample,applicationFrame,giFrame,pixels,historySource,packetMismatches,spatialTemporalDifferentPackets;public bool temporalUsed,nrdReset,alphaVisibility;public string computeShader;}
+    void CheckHistory(object context,bool reset)
+    {
+        if(!feature.Settings.spatial||!feature.Settings.temporal)throw new Exception("History Player requires actual default T/S settings");
+        var buffer=(GraphicsBuffer)Field(context,"reservoirs");int pitch=(int)Field(context,"arrayPitch");var values=new Packet[buffer.count];buffer.GetData(values);
+        if(System.Runtime.InteropServices.Marshal.SizeOf<Packet>()!=32||pitch!=Size*Size)throw new Exception("Player history packet/layout changed");
+        var pass=Field(feature,"pass");var compute=(ComputeShader)Field(pass,"shader");if(compute==null)throw new Exception("Actual Player GI compute is missing");
+        var check=new HistoryCheck{sample=sample,applicationFrame=Time.frameCount,giFrame=(int)Field(context,"frame"),pixels=pitch,historySource=2,temporalUsed=(bool)Field(context,"lastTemporal"),nrdReset=reset,alphaVisibility=(bool)Field(context,"alphaVisibility"),computeShader=compute.name};
+        for(int i=0;i<pitch;i++){if(!Same(values[i],values[i+2*pitch]))check.packetMismatches++;if(!Same(values[i+pitch],values[i+2*pitch]))check.spatialTemporalDifferentPackets++;}
+        if(check.packetMismatches!=0)throw new Exception("Actual Player history did not preserve the pre-spatial packed source");
+        historyChecks.Add(check);
+        if(sample==4)Require(compute.name=="HoRTGI","Player uses the serialized production GI compute for pre-spatial history");
+        if(sample==52)Require(check.temporalUsed&&check.spatialTemporalDifferentPackets>0,"Player spatial and temporal results differ, so the history witness rejects spatial feedback");
+    }
+    static bool Same(Packet a,Packet b)=>Bits(a.position.x)==Bits(b.position.x)&&Bits(a.position.y)==Bits(b.position.y)&&Bits(a.position.z)==Bits(b.position.z)&&a.normal==b.normal&&a.misc==b.misc&&Bits(a.weight)==Bits(b.weight)&&a.radiance==b.radiance&&a.unused==b.unused;
+    static int Bits(float value)=>BitConverter.SingleToInt32Bits(value);
     void Save(Color[] pixels,string name){image.SetPixels(pixels);image.Apply();File.WriteAllBytes(Path.Combine(Path.GetDirectoryName(resultPath),name+".png"),image.EncodeToPNG());}
     void Finish(Exception error)
     {
-        if(finished)return;finished=true;report.pass=error==null&&report.pass;report.error=error?.ToString();report.checks=checks.ToArray();report.frames=frames.ToArray();report.renderCallbacks=renderCallbacks;
+        if(finished)return;finished=true;report.pass=error==null&&report.pass;report.error=error?.ToString();report.checks=checks.ToArray();report.frames=frames.ToArray();report.renderCallbacks=renderCallbacks;report.historyChecks=historyChecks.ToArray();
         Directory.CreateDirectory(Path.GetDirectoryName(resultPath));File.WriteAllText(resultPath,JsonUtility.ToJson(report,true));
         RenderPipelineManager.endCameraRendering-=OnCamera;feature?.Dispose();target?.Release();if(error!=null)Debug.LogException(error);Debug.Log("[HoGIRuntime] END pass="+report.pass);Application.Quit(report.pass?0:1);
     }
     [Serializable]sealed class Frame{public int sample,applicationFrame,giFrame;public double time;public bool reset;public Color raw,filtered;}
-    [Serializable]sealed class Result{public bool pass,compatibility,cutoutProbe,skinnedProbe,baseVertexProbe;public string api,colorSpace,requestMode,error;public double spatialRelativeL1,rawVariance,filteredVariance;public float leftRed,rightRed,compositeError,removedRedRaw,removedRedFiltered;public Color rasterBasis;public int reprojectedCameraFrames,movingGeometryResetFrames,renderCallbacks;public string[] checks;public Frame[] frames;}
+    [Serializable]sealed class Result{public bool pass,compatibility,cutoutProbe,skinnedProbe,baseVertexProbe,historyProbe;public HistoryCheck[] historyChecks;public string api,colorSpace,requestMode,error;public double spatialRelativeL1,rawVariance,filteredVariance;public float leftRed,rightRed,compositeError,removedRedRaw,removedRedFiltered;public Color rasterBasis;public int reprojectedCameraFrames,movingGeometryResetFrames,renderCallbacks;public string[] checks;public Frame[] frames;}
 }

@@ -70,3 +70,11 @@ F01～F06主要来自DI/参考历史，不伪装为本轮GI实测失败。F08～
 pre-S有收益：filtered相对finite none均值从+15.70/+11.58/+8.08%到+1.22/−1.87/−3.28%，filtered方差约降55%，但raw仍高6～8%、15选点filtered相对L1仍.4645、原5%全部失败。禁止子集/选择偏差当全图真值、删掉旧门槛、只测S关便声称新默认回归。下一步生产S开路径/动态/Player必须实际验证；S关保留原store以限定未测HDR行为。
 
 有效GPU Final约增加.018432ms，Total中位相近但顺序固定/p95波动大，不称总性能提升，不用256外推1080或将逻辑32B读取当DRAM/VRAM。证据Tests~/RTGI/HistoryFeedback，当前Runtime未接入。020 Generate以旧legacy store生成候选，生产改后不可原样调用并错标baseline，必须历史源码或显式适配。保留全部原失败与目标缺口，不能complete。
+
+## F42 / 步骤021：观察正确阶段、已知警告与核心debug资格
+
+生产history0改pre-S后，不能继续拿它判断Spatial是否合并。只将夹具读点改为actual Spatial1，M>1阈值不变；原两actual1保留。修正core actual0仍两条2304 B scratch错误，冻结legacy实际绑定也同样两条；不能因为功能/exit0放行debug，更不能把它无证归因新Shader或泛化为已确认Unity bug。F39仍开，不重试旧参数。
+
+成功build0/errors0也可能被过严包装器因旧warning拒绝。只能在核对017原log/SHA后允许逐字相同五行；新/GI warning与任何error继续拒绝。保留原metadata诊断5，记录复用的真实build出处和无源变更；不改SolarHD/lilToon其它任务代码凑绿。Player图通用文件名导致compat覆盖RG，不能冒称有两份截图。
+
+021生产long全域相对finite none改善至约+1.77/−1.37/−2.84%，但原filtered/raw5%及16phase仍失败、正常camera/HDR/局部/1080预算未完。两315-request Player和S开packet合同是实际新路径证据，不能扩大为普通enabled-camera或完整GPU预算。当前策略可保留为局部改善，目标不complete；020工具依赖旧store，使用历史版本而不是回滚新Runtime满足旧SHA。

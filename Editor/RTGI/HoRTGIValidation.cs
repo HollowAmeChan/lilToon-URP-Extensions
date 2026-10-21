@@ -34,6 +34,8 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         private static int tick;
         [StructLayout(LayoutKind.Sequential)]
         private struct Reservoir { public Vector3 position;public uint misc,radiance;public float weight;public uint normal;public float unused; }
+        static bool legacyHistoryControl;static ComputeShader legacyHistoryShader;
+        public static void RunLegacyHistoryControl(){legacyHistoryControl=true;Run();}
         public static void RunCompatibility(){compatibility=true;Run();}
         public static void RunUnsupported(){unsupported=true;Run();}
         public static void Run()
@@ -49,7 +51,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var sb=Keep(ScriptableObject.CreateInstance<HoSurfaceBufferRendererFeature>());sb.Settings.enableSemanticLanes=sb.Settings.enableCorrelatedSemantics=false;
                 atmosphere=Keep(ScriptableObject.CreateInstance<HoAtmosphereRendererFeature>());atmosphere.Settings.source=HoAtmosphereSource.Constant;
                 atmosphere.Settings.constantColor=new Color(.5f,.25f,.125f,1);
-                feature=Keep(ScriptableObject.CreateInstance<HoRTGIRendererFeature>());feature.Settings.temporal=false;feature.Settings.spatial=false;feature.Settings.secondaryLightSamples=1;
+                feature=Keep(ScriptableObject.CreateInstance<HoRTGIRendererFeature>());if(legacyHistoryControl){legacyHistoryShader=AssetDatabase.LoadAssetAtPath<ComputeShader>("Assets/HoRTGIProductionLegacyControl/Legacy.compute");if(legacyHistoryShader==null)throw new Exception("Frozen legacy control missing");typeof(HoRTGIRendererFeature).GetField("shader",System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic).SetValue(feature,legacyHistoryShader);}feature.Settings.temporal=false;feature.Settings.spatial=false;feature.Settings.secondaryLightSamples=1;
                 feature.Settings.includeDirectEnvironment=true;feature.Settings.secondaryEnvironmentSamples=0;
                 direct=Keep(ScriptableObject.CreateInstance<HoRTDIRendererFeature>());direct.Settings.useEnvironment=false;direct.Settings.temporal=false;direct.Settings.spatial=false;direct.Settings.initialSamples=1;direct.SetActive(false);
                 renderer.rendererFeatures.Add(gb);renderer.rendererFeatures.Add(sb);renderer.rendererFeatures.Add(atmosphere);renderer.rendererFeatures.Add(direct);renderer.rendererFeatures.Add(feature);
@@ -111,9 +113,10 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 NearRGB(skyMean,new Color(4,4,8f/6,1),"Unity skybox directional HDR integral",.09f);
                 atmosphere.Settings.source=HoAtmosphereSource.Constant;Render();
                 feature.Settings.spatial=true;Render();
+                if(legacyHistoryControl){var flags=System.Reflection.BindingFlags.Instance|System.Reflection.BindingFlags.NonPublic;var pass=typeof(HoRTGIRendererFeature).GetField("pass",flags).GetValue(feature);Require(ReferenceEquals(pass.GetType().GetField("shader",flags).GetValue(pass),legacyHistoryShader),"Legacy control shader was not actually bound");Debug.Log("[HoGIHistoryLegacy] BOUND frozen legacy Final");}
                 var spatialOnly=new Reservoir[feature.LastContext.reservoirs.count];feature.LastContext.reservoirs.GetData(spatialOnly);
                 int spatialAddress=(32/16)*feature.LastContext.rowPitch+(32/16)*256+(32%16)*16+32%16;
-                Require((spatialOnly[spatialAddress].misc&255)>1,"SDK spatial-only stage did not combine neighbors");
+                Require((spatialOnly[feature.LastContext.arrayPitch+spatialAddress].misc&255)>1,"SDK spatial-only stage did not combine neighbors");
                 feature.Settings.temporal=true;
                 for(int i=0;i<8;i++)Render();NearRGB(ReadMean(feature.LastContext.diffuse.rt),sky,"SDK GI resampling environment mean",.04f);
                 var reservoirs=new Reservoir[feature.LastContext.reservoirs.count];feature.LastContext.reservoirs.GetData(reservoirs);

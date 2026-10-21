@@ -80,7 +80,13 @@ void HoGIFinal(uint2 pixel)
     _HoRTGINrdNormal[pixel]=NRD_FrontEnd_PackNormalAndRoughness(valid?surface.normal:float3(0,0,1),1,0);
     _HoRTGINrdViewZ[pixel]=valid?surface.viewDepth:1e6;
     #endif
-    RTXDI_StoreGIReservoir(reservoir,HoGILayout(),pixel,0);
+    // Keep temporal history independent of the spatially resampled pool.
+    // Final executes after both stages, so no temporal reader races this write.
+    if(_HoRTGIFlags.y>.5)
+        _HoRTGIReservoirs[RTXDI_ReservoirPositionToPointer(HoGILayout(),pixel,0)]=
+            _HoRTGIReservoirs[RTXDI_ReservoirPositionToPointer(HoGILayout(),pixel,2)];
+    else
+        RTXDI_StoreGIReservoir(reservoir,HoGILayout(),pixel,0);
     HoRTDIPrimaryHistory history=(HoRTDIPrimaryHistory)0;
     if(RAB_IsSurfaceValid(surface))
     {

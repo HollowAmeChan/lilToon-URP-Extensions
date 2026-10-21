@@ -107,7 +107,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
             return check;
             int Address(int x, int y) => (y / 16) * context.rowPitch + (x / 16) * 256 + (y % 16) * 16 + x % 16;
         }
-        static bool Equal(Packet a, Packet b) => Bits(a.position.x) == Bits(b.position.x) && Bits(a.position.y) == Bits(b.position.y) && Bits(a.position.z) == Bits(b.position.z)
+        internal static bool Equal(Packet a, Packet b) => Bits(a.position.x) == Bits(b.position.x) && Bits(a.position.y) == Bits(b.position.y) && Bits(a.position.z) == Bits(b.position.z)
             && a.normal == b.normal && a.misc == b.misc && Bits(a.weight) == Bits(b.weight) && a.radiance == b.radiance && a.unused == b.unused;
         static int Bits(float value) => BitConverter.SingleToInt32Bits(value);
         internal static string Hash(byte[] bytes) { using var hash = SHA256.Create(); return BitConverter.ToString(hash.ComputeHash(bytes)).Replace("-", ""); }

@@ -1,0 +1,73 @@
+{
+  "productionHistoryRetained": true,
+  "qualityQualified": false,
+  "coreDebugQualified": false,
+  "scope": "Actual production shader, RG/compat contracts and two 315-request Release Players. Old filtered/raw 5% failure and baseline-reproduced native AS growth diagnostics stay open. Finite no-reuse comparator is not independent full-image truth.",
+  "inputs": {
+    "productionQualitySha256": "AB1C66FDFAB5640E7219AE8121876F96454A19105A5BD64D956409BED0AEB3C2",
+    "noReuseAnalysisSha256": "844FAC8355B0F981BCD67BD8716640B323875B67C835D124F0BDCFC321F6C4DE"
+  },
+  "productionFull": {
+    "phaseX": -1,
+    "phaseY": -1,
+    "pixels": 65536,
+    "samples": 16777216,
+    "raw": {
+      "x": 0.0013284345623105764,
+      "y": 0.0001403346104780212,
+      "z": 0.0001281726435991004
+    },
+    "filtered": {
+      "x": 0.0012507042847573757,
+      "y": 0.0001290838117711246,
+      "z": 0.00011673027620417997
+    },
+    "relativeErrorPercent": {
+      "x": -5.851263999938965,
+      "y": -8.017120361328125,
+      "z": -8.927308082580566
+    },
+    "normalizedL1": 0.21194651417099775,
+    "rawVariance": 4.698496655773579e-06,
+    "filteredVariance": 1.2613391248905711e-08,
+    "energyGatePass": false
+  },
+  "filteredRelativeToNoReusePercent": [
+    1.7727996356307951,
+    -1.3754527128639005,
+    -2.8354317435547505
+  ],
+  "rawRelativeToNoReusePercent": [
+    8.09789826962042,
+    7.220551029679645,
+    6.689026896587302
+  ],
+  "players": [
+    {
+      "mode": "rg",
+      "reportSha256": "D2386C79B27B136F69A02B8161739A7C8A587101E0FC9C6423ABCD6B597DF7FB",
+      "requests": 315,
+      "checks": 38,
+      "historyChecks": 23,
+      "historyPixels": 94208,
+      "historyMismatches": 0,
+      "stationarySpatialL1": 0.10791997698709804,
+      "filteredToRawVariance": 0.0010530921117053301,
+      "reprojectedCameraFrames": 59,
+      "changedGeometryResetFrames": 24
+    },
+    {
+      "mode": "compat",
+      "reportSha256": "EAEFCA88BABF4DA6C5B816FC0A0AFD78CD23ACFBB6B18FC68130F668155F2ED8",
+      "requests": 315,
+      "checks": 38,
+      "historyChecks": 23,
+      "historyPixels": 94208,
+      "historyMismatches": 0,
+      "stationarySpatialL1": 0.10793692931627791,
+      "filteredToRawVariance": 0.0010635970897671623,
+      "reprojectedCameraFrames": 59,
+      "changedGeometryResetFrames": 24
+    }
+  ]
+}

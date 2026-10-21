@@ -62,6 +62,9 @@ Emission 直接调用 lilToon 现有 `lilEmissionComponent` / `lilEmission2ndCom
 
 ## 参考链路、资源与历史
 
+2026-10-21步骤021：空间复用开启时，history buffer0保存Temporal buffer2的原始packed packet；当前帧照旧用Spatial buffer1着色。空间关闭保留原store。这样避免空间结果再跨帧反馈，3-buffer分配、SDK、当前T/S与NRD参数均不变。隔离对照及实际生产长窗口显示filtered更接近有限无复用均值、静态方差改善；原5%与局部质量仍未通过。双路径生产合同、两315请求Release Player已过；核心旧AS增长debug错误由冻结legacy复现，仍是未解决硬缺口，见[步骤021证据](../Tests~/RTGI/ProductionHistory/README.md)。
+
+
 GenerateSecondary 使用参考 BrdfRayTracing 的 diffuse 分支、SDK RNG 与 Donut cosine hemisphere / ONB，每像素一条射线。ShadeSecondary调用`RTXDI_SampleLightsForSurface`统一解析灯/天空候选，使用stored reservoir重建真正选中的样本再测可见性、求辐射，加专用emission后调用`RTXDI_MakeGIReservoir`。Temporal / Spatial分别调用SDK的GI重采样，均使用ray-traced bias correction；Final按visibility / reservoir weight / diffuse BRDF着色，不启用final MIS。
 
 显式启用的天空miss沿参考distant-sample表示进入GI reservoir，读取Ho-Atmosphere全方向原始HDR辐射。次级天空使用与DI相同的128²等立体角PDF mip和固定SDK RIS预采样，但拥有私有资源与shader-local绑定。SDK原算法/许可/provenance保留；不为GI引入通用PT、DLSS或ReGIR。
@@ -109,3 +112,5 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 `HoRTGIValidation.Run` / `RunCompatibility` / `RunUnsupported` 验证完整五阶段。Unity 6000.3.15f1 的 D3D12 RenderGraph / compatibility 在 Gamma / Linear 下通过：天空积分、实际 HDR cube、Unity 天空盒方向性 HDR 捕获、彩色/金属接收响应、离屏 HDR emission、次级 RTXDI 解析灯能量、unsupported 遮挡、空间单独复用、时间单独复用与 sample age、历史失效、静态世界相机重投影、receiver 域拒绝、关闭/销毁、无自动合成与 Volume 调试。Compute 警告/错误视作失败，D3D11 不支持分支通过。DI/GI 同时启用的独立发布与既有 DI 两条路径回归也通过。
 
 定向测试天空 RGB = 8 × (direction × 0.5 + 0.5)，面向 -Z 的白色 Lambert 接收面的理论积分为 (4, 4, 1.3333)，实测统计均值约 (4.008, 3.982, 1.330)。这是链路与能量验证，不是性能或最终画质验收。
+
+2026-10-21当前验收补充：旧核心“功能通过”记录不能替代当前debug资格。021核心功能断言全过，但RG/compat各两条2304 B scratch范围错误，legacy也同样复现；不算完整回归通过。原夹具Spatial输出检查已从history0改读实际buffer1，M>1门槛不变。新两个Linear D3D12 Mono Release Player各315请求/38检查，23状态累计94208 packet history0=2检查，原动态/Cutout/蒙皮/baseVertex/合成门槛过。生产古堡filtered相对有限none约+1.77/−1.37/−2.84%，原filtered/raw门槛仍约−5.85/−8.02/−8.93%失败。正常enabled-camera、HDR/局部质量、static/F39及1080完整预算继续未完成；目标active。

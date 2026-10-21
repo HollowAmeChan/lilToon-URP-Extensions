@@ -1,0 +1,37 @@
+{
+  "step": 21,
+  "goalStatus": "active",
+  "baselineGitRevision": "bd3e3f26cfe9879513add0ed5e9df4782a7fcc71",
+  "productionHistoryRetained": true,
+  "qualityQualified": false,
+  "coreDebugQualified": false,
+  "newHistoryRegressionsObserved": false,
+  "productionShaderSource": "Runtime/RTGI/Shaders/HoRTGI.compute",
+  "productionShaderSha256": "0B12B95A26BA24A2B991628F0EED4397C3713299EB5C9CAABE401B1E9FACC946",
+  "productionContractEditorPids": [
+    19188,
+    30080
+  ],
+  "oldReaderRejectedPids": [
+    23244,
+    40360
+  ],
+  "coreCorrectedPids": [
+    12884,
+    48892
+  ],
+  "legacyControlPid": 2260,
+  "nativeGrowthErrorBytes": 2304,
+  "nativeGrowthErrorsPerCoreProcess": 2,
+  "knownBuildWarningCount": 5,
+  "firstBuildPid": 17284,
+  "playerPids": [
+    11072,
+    36020
+  ],
+  "compatBuildPid": 47996,
+  "actualProductionQualityPid": 47984,
+  "playerRequestsEach": 315,
+  "historySamplesEach": 23,
+  "next": "Preserve this production improvement and unresolved core native-AS/debug and original 5% gates. Audit remaining current NRD precision/local losses from actual production stages; also complete normal enabled-camera and real target budget. F39 permits no blind repeat of flags/delays; only a new causal native API/allocator diagnosis may reopen AS growth."
+}

@@ -1,0 +1,10 @@
+{
+  "player-results/filtered.png": {
+    "sha256": "A3B697F9B8CFB163C2ACC0B2E45B6B4CC477A2F9E14951602B98565E0F99417B",
+    "bytes": 4696
+  },
+  "player-results/raw.png": {
+    "sha256": "729FDFAFE7E50B8F69681A3B539A09A285D1214BA3E5EB7156E9DFDDBF77BF24",
+    "bytes": 7469
+  }
+}

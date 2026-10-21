@@ -439,3 +439,25 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **下一项021立即实施：** Runtime HoRTGI.compute Final仅在spatial flag开时直接packed-copy Temporal2→history0，S关保留旧store。不要改T/S当前输出、SDK/gain/NRD单位或加产品实验开关；Final后写避免Temporal读写0竞态。实际生产加history源断言，双路径、环境/材质/Cutout/蒙皮/真实应用帧响应及两独立Release Player验证，包含S开启的新历史路径，不能只沿旧S关闭的解析夹具。Win64 payload无GPU探针，旧fixture/default门槛保留，实测硬退化则撤回。020工具Generate依赖旧legacy store，生产改变后不可原样重跑错标baseline，须用本步历史版本或明确适配。原全5%/static F39/HDR/正常camera/1080/完整预算继续，goal active。
 
 020已按白名单过滤提交`3b6937e`，HistoryFeedback verifier提交后再次通过；Runtime无diff、index空、四个本任务进程均已结束，仅他人Ho-GD plan未跟踪。下一轮直接021生产pre-S packed history与实际S开路径/RG/compat/动态/两Release Player回归，不再重复20隔离矩阵；旧质量与预算缺口继续，goal active。
+
+## 021：生产pre-spatial历史接入与回归（进行中）
+
+**事前review：** 020三项配对控制已否定当前域codec误差；pre-S改善全图相对finite MC偏移、选点与时间方差，Final成本约+.018ms，原5%仍失败。只接入S开启时packed Temporal2→history0；S关保持原store，当前帧Spatial1求值/visibility/NRD、SDK/参数/资源不变。Final后写避免Temporal跨线程读写0竞态。
+
+实际生产检查须证明Runtime shader被绑定、S开全viewport history0与2一致且1/2确实不同，兼顾S关原路径，不能只测C#开关。保留原环境/材质/Cutout/蒙皮双路径门槛；在真实Update Player默认TS开启序列加入history检查，两独立输出/资产前缀、不覆盖017 payload。原生产probe本就默认TS开启，并非S关闭；本步补资源合同与反事实见证，不改旧能量/响应门槛。若硬退化则撤回，全部原质量/static/HDR/正常camera/1080/预算缺口继续。
+
+### 021事后review（2026-10-21）：生产接入、Player通过；核心AS与原画质仍失败
+
+**生产改动/正确性：** Runtime仅HoRTGI.compute Final历史写7行：S开原样packed2→0，S关原store；当前帧Spatial1求值、visibility、NRD、SDK、参数及分配均不变。Final后写无Temporal跨线程读0竞态。实际Runtime compute绑定，RG19188/compat30080各226请求/8全viewport history检查，S开0=2且1/2有约5.8～6.5万不同packet，S关旧路径保留，全部exit0/API0/compile0/源漂移0。不是仅候选shader或C#开关检查。
+
+**回归与失败诚实保留：** 原次级环境47824/12240各138帧23checks、Cutout45552/25412各284帧17checks、蒙皮base/UV/normal/tangent/morph5316共141checks均exit0/debug0。首核心23244/40360实际1，旧夹具读history0判断SpatialM>1已不合新缓存语义；只改读实际Spatial1，M>1与其它门槛全不变。两次失败/源码保留。修正核心12884/48892功能全过actual0，但各两条2304 B AS scratch越界，严格runner拒绝。2260实际绑定020冻结legacy Final，仍功能过/actual0并同样两错误，说明并非新历史策略引入，具体引擎/driver根因未证，完整核心debug资格仍失败。F39不再盲调。拆runner时一个尾逗号解析失败发生在Unity启动前，已修正，不伪称实际实验。
+
+**Player构建警告：** RG build17284实际成功0/errors0，但包装器将5条warning全部拒绝，未launch。核对017两build原log/SHA，逐字相同五条（lilToon/Cutout duplicate keywords、既有SolarHD d3d11 Shadows.hlsl除零）后，只加精确行白名单，新warning/error仍拒绝，未动其它模块。源内容未变，RG复用该成功build并保留原run/SHA，compat47996新build。没有把5改0。独立资产/输出前缀，旧17 payload未覆盖。
+
+**真实应用：** Player11072/36020各315实际Update请求、310观察记录、38checks，exit0/debug0/runtime diagnostics0/source drift0；两完整payload SHA，无HoGIGpuProbe.dll。各23次/94208 pixel history0=2，sample52 Temporal/Spatial不同且实际T开启，覆盖静止/相机移动/灯光/几何/启停/native Cutout→opaque/skin/morph/invalid pose恢复，实际生产compute HoRTGI。原能量/响应/15%空间L1/60%降噪门槛不改：L1约.10792/.10794，方差比.001053/.001064，59相机重投影帧、24几何reset；nonreadable source base4、三owned snapshot base0的原合同继续过。仍为每Update SubmitRequest，不算正常enabled-camera。旧截图通用名在compat覆盖RG，所以只保留compat两PNG，不补造RG图片。
+
+**生产质量：** 实际Default古堡47984为256观察帧全域/16相位/stage审计，actualexit1仅原5%失败，debug/compile/drift0。full raw(.001328435,.000140335,.000128173)，filtered(.001250704,.000129084,.000116730)，filtered相对既有finite none约+1.773/−1.375/−2.835%，隔离改善保留；原filtered/rawRGB−5.851/−8.017/−8.927%，全部16phase也失败。保留原门槛、失败和局部误差，不换更方便比较器complete。当前stage红input .00132840→Pre .00133402→Temporal slow .00127925→Clamp .00127787→LastAtrous .00125113→published .00125070；HistoryFix5仍条件fast，不误标m2。
+
+**收益/取舍/提交：** 接纳实际生产质量/静态方差改善，并有真实默认TS的响应/Player回归；没有新策略回归被观察到。核心AS硬缺口为legacy相同错误，未放行或修好；完整原画质/预算未接纳。020局部GPU成本+.018ms Final仍适用为同策略局部参考，不冒称新生产/Player完整成本。Tests~/RTGI/ProductionHistory保存所有原/修正/legacy/构建拒绝/Player/质量元数据、19完整日志（含017warning对照）、源/图片/payload SHA、analysis/verifier。1191源hash中240旧blob、897基线Git对象+精确行尾重建、54新blob，避免复制大量无关未改代码；约5.48MB。verifier过表示证据完整且失败保留，不是核心/画质全部过。全部本任务进程结束、active=null；他人Ho-GD plan不纳入。
+
+**下一项022：** 原剩余损失现在有新的实际生产stage。先读015真实Temporal4/Clamping6的slow moment/descriptor别名，核对当前数据范围和各moment/variance消费者，再选一项有依据且维持HDR/历史语义的精度修复；生产64不盲改、F35不重启纯单位扫描、不补gain/宽sigma。优先用GI私有Editor资源/阶段试验验证，必须报告局部/全域/动态与额外资源成本，无益撤回。F39旧flags/重建/延迟不重试；本机Unity RTX参考Automatic/direct Build差异仅可读核对，有新原生API/分配机制才重开有界control。正常enabled-camera和实际1080/完整预算仍需继续，goal active。
