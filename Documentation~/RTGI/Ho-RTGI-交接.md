@@ -369,3 +369,5 @@ Tests~/RTGI/PoolPrecision约.98MB/六进程、精确源与完整log、原JSON gz
 Fullgreen/其它8phase/局部质量仍缺；F35不重启纯scale试值/gain/宽sigma，F39不重试旧AS参数；normal enabled-camera、HDR最终域、1080/完整预算继续，goal active。候选若通过上述资格再接生产，不能因stride0绿色complete。每步review/收益/过滤提交/禁试/交接继续。
 
 022白名单：Runtime/RTDI/NRD/HoRTDINrdContext.cs仅Editor hook；Editor Castle/PoolPrecisionAudit/meta与float copy shader/meta；Tests~/RTGI/PoolPrecision；RTGI README/过程/禁试/交接/实施规划。无DI生产策略/Shader/Native/Player/用户场景更改。
+
+022已按白名单过滤提交`189fcd9`，PoolPrecision verifier提交后再次通过；生产池格式/单位仍16F/64，021pre-S保留，index空，六个本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮023直接HDR/生命周期/GPU成本/真实Player资格，再决定GI-only高精度默认，不重跑纯格式/单位矩阵；fullgreen/其它phase/局部与所有原缺口继续，goal active。

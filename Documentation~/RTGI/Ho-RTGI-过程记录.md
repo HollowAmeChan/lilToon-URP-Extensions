@@ -483,3 +483,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **复审接纳：** 接纳精度候选进入HDR/生命周期/成本/动态资格，未改生产默认格式。Tests~/RTGI/PoolPrecision约.98MB，六实际进程/全部失败、精确源/日志/原JSON gzip/真实格式/绑定/统计/analysis/verifier均保留；250source hash仅9新blob。verifier过只表示证据及剩余失败准确。所有本任务进程结束，active=null；他人Ho-GD plan不纳入。021生产pre-S策略仍保留，F39不重开盲调。
 
 **下一项023具体动作：** 为GI-only RGBA32F pool建立真实HDR/动态/Player与GPU成本资格，scale64不变、DI默认16F不动。若需要生产构造参数，shared core defaultfalse，只有GI实例显式启用；Editor baseline callback须优先按native format重建baseline，防新默认下误标。先解析发光面低信号~1e−4至20000物理辐射；scale64下高段slow m2可超65504，实测32F有限且无溢出/残留；S关解析能量与默认TS状态分开验证、门槛不放宽。加resolution/启停/释放/资源格式、有效GPU已知负载与40sample成本、两真实Player的32F pool/历史/动态回归；若代价或HDR退化不接纳。原fullgreen/局部、AS/F39、normal enabled-camera、1080/完整预算继续，goal active。
+
+022已按白名单过滤提交`189fcd9`，PoolPrecision verifier提交后再次通过；生产池格式/单位仍16F/64，021pre-S保留，index空，六个本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮023直接HDR/生命周期/GPU成本/真实Player资格，再决定GI-only高精度默认，不重跑纯格式/单位矩阵；fullgreen/其它phase/局部与所有原缺口继续，goal active。
