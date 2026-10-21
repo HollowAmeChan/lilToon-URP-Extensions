@@ -407,3 +407,13 @@ Tests~/RTGI/AutomaticCamera verifier已过；1163source对象5新文本、7完�
 **025直接动作：** 独立backbuffer夹具/输出，serialized-enabled且targetTexture=null；需要CaptureScreenshotIntoRenderTexture/EndOfFrame之类捕获时先核本机Unity API与色域/坐标，不能手动提交渲染。保持真实callback/previous-frame证据和原强度/Volume/动态门槛，短暂可见测试已获授权。场景尺寸/纹理尺寸与屏幕大小分列；成功补截图/可见呈现，失败保留后review，不扩大为完整画质/GPU预算。每步前后review、收益/成本/禁试/交接与过滤提交持续，目标active。
 
 024已按白名单过滤提交`0d80f85`，AutomaticCamera verifier提交后再次通过。两visible Player各240真实自动targetRT渲染，两个hidden失败保留，全部本任务进程结束、index空，仅他人Ho-GD计划未跟踪。下一025直接默认backbuffer呈现/色域/捕获时序资格，短暂visible授权已获；原质量/F39/HD缺口与目标active继续。
+
+### 025终态（2026-10-22，待过滤提交）：默认screen自动呈现通过，下一026回质量
+
+新HoRTGIBackbufferProbe和BuildBackbuffer/Compatibility，独立资产/Player，serialized-enabled+target=null；实际512²屏幕/GI，WaitForEndOfFrame捕获已完成屏幕，下一Update核对callback/capture前帧。固定sRGB→linear及独立raster基线资格，未用手动Render/SubmitRequest/Volume.Update。用户短暂可见测试授权沿用、每次15s上限，不扩长时窗口。
+
+首build39064 actual1因为隔离工程没有ScreenCapture模块，失败与原manifest/源码/log归档；只隔离项目补本机内置模块1.0.0，产品依赖无改。最终build44940/38344、Player13180/44248 all0；RG/compat各241Update/240连续callback/240前帧记录/11checks，测量跨度4.514/4.576s。RGB加法最大quarter .00471446/one .00643197<原.015；Volume-off32帧恢复raster、re-enable首帧reset、移动30帧全不reset、发光off首帧raw/filtered红0+reset。两backend标记false/true，runtime API/Shader/绑定/fence0、drift0；build五条历史warning保留。两条旧未用GB fallback/MSAA资源缺省提示也保留，不称全日志无warning。
+
+10张真实屏幕PNG/尺寸SHA完整，已查看RG raster/one与compat emission-off；纯平面灰→红蓝渐变→红off蓝留吻合，非复杂场景视觉验收。Tests~/RTGI/Backbuffer verifier过，1164source SHA仅6新小文本、5完整logs、原失败/最终payload无HoGIGpuProbe.dll/环境API原文。全部本任务进程已结束、active=null、Runtime无diff；他人Ho-GD计划排除。
+
+**026直接动作：** 默认targetRT与screen自动可用性已证，不重复隐藏无事件。回到当前生产默认的独立seed全域/局部质量证据：先复读019 SeedAudit和016局部/空间域定义，沿同场景同支持域、保留原5%及全部16phase，明确当前023精度/pre-S结果与早期019代码差异；不重复四模式大矩阵、不拿选择偏差参考作绝对真值。先提出一个有界、能区分剩余损失与seed方差/局部结构的测量，再据实际结果选择算法，不能为了green5.05869%调阈值/挑phase/继续格式单位扫描。F39/static非零base、完整场景动态/HD/完整Player预算继续，目标active。

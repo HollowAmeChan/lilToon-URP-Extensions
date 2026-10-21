@@ -1,0 +1,10 @@
+{
+  "C:\\Program Files\\Unity\\Hub\\Editor\\6000.3.15f1\\Editor\\Data\\Managed\\UnityEngine\\UnityEngine.ScreenCaptureModule.xml": {
+    "path": "environment/UnityEngine.ScreenCaptureModule.xml",
+    "sha256": "EDE492BB46E136F48300EF4CC85CD6811E594CB080C9B17EB911446B803E055A"
+  },
+  "C:\\Program Files\\Unity\\Hub\\Editor\\6000.3.15f1\\Editor\\Data\\Resources\\PackageManager\\BuiltInPackages\\com.unity.modules.screencapture\\package.json": {
+    "path": "environment/package.json",
+    "sha256": "E45E41F0A7DF456749CAA73228C014489CFDB138A5CB6918A9C7824AEDA4CDD2"
+  }
+}

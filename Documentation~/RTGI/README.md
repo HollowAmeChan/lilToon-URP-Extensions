@@ -47,3 +47,5 @@
 步骤023已生产GI-only四color池及NRD output32F，DI默认16F不变、单位64。pool-only低信号失败与legacy对照保留；最终1e−4/1/20000双路径原5%通过，HDR m2>65504仍有限，两315-request Player验证最终格式/生命周期/动态。实际fullgreen仍−5.05869%、7phase失败；+2.5MiB@256/79.10MiB@1080仅布局，成本与目标预算不混同。见[完整资格](../../Tests~/RTGI/PrecisionQualification/README.md)、F44和最新交接。下一步024优先真正enabled-camera呈现证据，所有未完成项与goal active继续。
 
 步骤024补齐真实enabled-camera自动调度：用户授权短暂可见窗口，同一RG构建从Hidden改Normal后240连续自动回调/合成/Volume/移动与发光reset通过，compat亦240通过；两hidden失败完整保留，Runtime不改。[自动相机证据](../../Tests~/RTGI/AutomaticCamera/README.md)。相机仍输出64²targetRT，最终backbuffer呈现与视觉QA待025；原质量/预算/F39全部继续，目标active。
+
+步骤025完成默认屏幕目标：RG/compat各240真实自动渲染，serialized-enabled+target=null、512²屏幕/GI、帧末截图与前帧publication对齐，固定sRGB解码后原合成/Volume/移动/发光响应通过。[屏幕证据及10张图](../../Tests~/RTGI/Backbuffer/README.md)。首次缺模块构建失败保留，Runtime无改；这是小场景功能呈现，026回当前生产独立seed全域/局部质量，原5%/7phase/F39/1080完整预算继续，目标active。

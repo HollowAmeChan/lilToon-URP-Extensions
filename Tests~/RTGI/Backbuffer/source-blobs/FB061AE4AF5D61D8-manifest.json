@@ -1,0 +1,22 @@
+{
+  "dependencies": {
+    "com.unity.render-pipelines.universal": "file:D:/Unity_Fork/HoUrp17.3.0",
+    "com.unity.render-pipelines.universal-config": "file:D:/Unity_Fork/HoUrpConfig17.0.3",
+    "jp.lilxyzw.liltoon": "file:D:/Unity_Fork/lilToon/Assets/lilToon",
+    "jp.lilxyzw.liltoon.urp.extensions": "file:D:/Unity_Fork/lilToon-URP-Extensions",
+    "com.unity.modules.imgui": "1.0.0",
+    "com.unity.modules.jsonserialize": "1.0.0",
+    "com.unity.modules.ui": "1.0.0",
+    "com.unity.modules.uielements": "1.0.0",
+    "com.unity.modules.imageconversion": "1.0.0",
+    "com.unity.modules.unitywebrequest": "1.0.0",
+    "com.unity.modules.terrain": "1.0.0",
+    "com.unity.modules.physics": "1.0.0",
+    "com.unity.modules.animation": "1.0.0",
+    "com.unity.modules.particlesystem": "1.0.0",
+    "com.unity.modules.audio": "1.0.0",
+    "org.khronos.unitygltf": "file:org.khronos.unitygltf",
+    "jp.lilxyzw.liltoon.unitygltf.extensions": "file:D:/Unity_Fork/lilToon-UnityGLTF-Extensions",
+    "com.unity.modules.screencapture": "1.0.0"
+  }
+}

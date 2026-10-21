@@ -1,0 +1,62 @@
+{
+  "player-results/compat/emission-off.png": {
+    "bytes": 88232,
+    "sha256": "B3822748267DE4EC4A371384F33C71C7AAD265B80A30E032CAF960A928B5DBE9",
+    "width": 512,
+    "height": 512
+  },
+  "player-results/compat/one.png": {
+    "bytes": 161889,
+    "sha256": "12E3A43F88D6A0BC805490DCF17D295094EDF41F7264442DB492652EB7E8D461",
+    "width": 512,
+    "height": 512
+  },
+  "player-results/compat/quarter.png": {
+    "bytes": 88642,
+    "sha256": "0096B3A237FA93E84F91269F66F1079852D27260DF5C74A50F513443686C1A36",
+    "width": 512,
+    "height": 512
+  },
+  "player-results/compat/raster.png": {
+    "bytes": 5624,
+    "sha256": "1D486B92E08D61F843805C435C386C447F8F6A981E358F0185D789389574619C",
+    "width": 512,
+    "height": 512
+  },
+  "player-results/compat/volume-off.png": {
+    "bytes": 5624,
+    "sha256": "1D486B92E08D61F843805C435C386C447F8F6A981E358F0185D789389574619C",
+    "width": 512,
+    "height": 512
+  },
+  "player-results/rg/emission-off.png": {
+    "bytes": 88232,
+    "sha256": "B3822748267DE4EC4A371384F33C71C7AAD265B80A30E032CAF960A928B5DBE9",
+    "width": 512,
+    "height": 512
+  },
+  "player-results/rg/one.png": {
+    "bytes": 160568,
+    "sha256": "22F180A830444978485E18D11A3C6F0CA003119898742AACBC1A40BCEC3F6EF3",
+    "width": 512,
+    "height": 512
+  },
+  "player-results/rg/quarter.png": {
+    "bytes": 88629,
+    "sha256": "0B907B38217636A8E67A5ECED13B44B18C00CFDB3316D67EE6A145534CE0FDA1",
+    "width": 512,
+    "height": 512
+  },
+  "player-results/rg/raster.png": {
+    "bytes": 5624,
+    "sha256": "1D486B92E08D61F843805C435C386C447F8F6A981E358F0185D789389574619C",
+    "width": 512,
+    "height": 512
+  },
+  "player-results/rg/volume-off.png": {
+    "bytes": 5624,
+    "sha256": "1D486B92E08D61F843805C435C386C447F8F6A981E358F0185D789389574619C",
+    "width": 512,
+    "height": 512
+  }
+}

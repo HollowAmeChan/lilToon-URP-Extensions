@@ -118,3 +118,5 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 2026-10-21～22步骤023：GI独立RELAX实例的四个颜色history/variance池与共用PrePass/最终信号output采用RGBA32F，避免小信号矩和颜色反复量化；signal/normal/最终physical filtered仍原格式，SignalScale64不变。shared core构造策略默认false，只有GI显式启用，不改变DI默认。解析幅度1e−4/1/20000双路径与真实Player通过，HDR slow m2约97653超过half上限仍有限；两个315-update-request Player各23pool/23history检查。额外payload+2.5MiB@256，1080投影+79.10MiB不是实际显存/预算。full绿色仍−5.05869%、7相位失败，正常enabled-camera、AS/F39、局部和1080完整预算继续，见[最终资格证据](../Tests~/RTGI/PrecisionQualification/README.md)。
 
 024补充（2026-10-22）：独立RG/compat Release Player从序列化场景加载起Camera.enabled=true，各240连续endCameraRendering、241Update，无Render/SubmitRequest/Volume.Update；GI强度、Volume、移动重投影与发光重置通过。hidden两条件无事件，用户明确授权后短暂Normal窗口同构建通过。此处输出64²targetRT，backbuffer最终呈现尚待025，不代表新视觉QA/完整画质/预算验收。详见Tests~/RTGI/AutomaticCamera与过程/交接，目标active。
+
+025补充（2026-10-22）：RG/compat默认屏幕目标（camera.targetTexture=null）实跑512²，各240连续自动回调；帧末截屏与前帧GI对齐，固定sRGB→linear及独立raster基线资格，原合成/Volume/重投影/发光重置通过。10张真实屏幕图按backend归档Tests~/RTGI/Backbuffer，首次隔离项目缺ScreenCapture模块失败保留。纯接收面功能呈现非复杂画质或预算完成；原fullgreen/7phase/F39/1080完整预算继续，目标active。

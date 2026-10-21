@@ -527,3 +527,19 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **证据/提交review：** Tests~/RTGI/AutomaticCamera含两hidden失败/两visible成功、7完整logs、1163精确source对象（5新小文本，其余已有证据/Git，nativeDLL复用Git）、完整最终payload无HoGIGpuProbe.dll。首旧binary被重建覆盖仅保留manifest；不冒称其仍可执行。verify过逐条检查失败/源SHA/事件/全部RGB/响应；源码静态review确认无手动请求。全部本任务进程结束、active=null；Runtime无diff。白名单只Builder、新probe、新证据和RTGI六文档；他人Ho-GD计划不纳入。目标active，下一025默认屏幕目标连续呈现。
 
 024已按白名单过滤提交`0d80f85`，AutomaticCamera verifier提交后再次通过。两visible Player各240真实自动targetRT渲染，两个hidden失败保留，全部本任务进程结束、index空，仅他人Ho-GD计划未跟踪。下一025直接默认backbuffer呈现/色域/捕获时序资格，短暂visible授权已获；原质量/F39/HD缺口与目标active继续。
+
+## 025：默认屏幕目标与最终呈现（进行中）
+
+**事前review：** 024只证明自动targetRT相机。本步独立Backbuffer资产/输出，serialized-enabled且targetTexture=null，不改生产。已查本机Unity6000.3.15f1 ScreenCaptureModule XML，CaptureScreenshotAsTexture读取GameView；在WaitForEndOfFrame捕获已完成的屏幕，下一Update对齐真实callback/捕获帧。先固定sRGB→linear解码并以024同材质raster约.21582作独立色域资格，不按加法结果挑映射。保持原.015加法/Volume/移动/发光门槛，实际screen大小与GI尺寸明确，保存屏幕PNG并检查。
+
+两路径短暂可见测试沿用用户明确授权，各限15秒；不显示Editor、不干预他人进程。失败保留源/日志/图，不用截图触发Render/SubmitRequest、不把捕获成功等同正确画质。512窗口不是HD预算，fullgreen/7phase/F39/完整预算继续，目标active。
+
+### 025事后review（2026-10-22）：默认屏幕目标自动呈现通过
+
+**实现/资格：** 独立Backbuffer资产/Player/probe，Camera加载即enabled且target=null，512²屏幕与512²GI publication。WaitForEndOfFrame后CaptureScreenshotAsTexture，下一Update验证captureFrame=实际前帧endCameraRendering，不触发Render/SubmitRequest/Volume.Update。固定逐像素sRGB→linear，raster .215823859吻合024线性targetRT .215820313，再按原门槛检合成。首次build39064 actual1因隔离项目缺ScreenCapture模块，CS0103三条，原源码/manifest/log保留；仅隔离manifest启用本机内置1.0.0，产品依赖不动。
+
+**真实结果/收益review：** RG build44940/Player13180、compat build38344/Player44248 all actual0；各241Update/240连续原生callback/240前帧读回/11checks，测量跨度4.514/4.576s，用户短暂visible授权沿用且15s上限。两路径runtime API/Shader/Property/UAV/fence0、drift0，build五条旧warning保留。两条沿用024的未用GeometryBuffer fallback/MSAA缺省shader提示原样保留，不宣称那些路径支持。全部RGB .25/1加法误差RG .00471446/.00641033、compat .00471386/.00643197<原.015；Volume-off32帧恢复raster、re-enable首帧reset、移动30帧全保留history、发光off首帧raw/filtered红0+reset。
+
+**画面/成本边界：** 10张backend独立实际屏幕PNG，已查看RG raster/one和compat emission-off，灰基线/红蓝反弹渐变/红off后蓝保留符合夹具；这是纯接收面功能图，不是复杂古堡画质验收。512²不是1080，截图有屏幕输出量化，不作HDR精密能量/稳定GPU预算证据。本步Runtime无改动、没有新生产资源成本；补齐默认screen自动呈现缺口，不解除fullgreen5.05869%/7phase/局部/参考偏差/F39/static/HD预算。
+
+**过滤/交接review：** Tests~/RTGI/Backbuffer有1164source对象（6新小文本、其余旧证据/Git）、5完整logs、缺模块失败、最终两payload/SHA无HoGIGpuProbe.dll、10原PNG、环境XML/package与verifier。归档与verify过，所有本任务进程结束、run active=null。白名单Builder、新Backbuffer probe/证据、RTGI六文档；他人Ho-GD计划排除。026先当前生产默认独立seed的全域/局部质量边界，不继续纯单位/格式/宽sigma扫描或挑phase过关，目标active。

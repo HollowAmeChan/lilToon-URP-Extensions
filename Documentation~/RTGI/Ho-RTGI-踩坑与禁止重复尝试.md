@@ -96,3 +96,9 @@ HDR slow m2约97653有限不等于任意HDR安全。最终fullgreen仍5.05869%/7
 DI已试hidden普通启动，不能只去batch重复。GI新serialized-enabled/target试验中，target未created和显式Create后都180Update/0事件；Create仅分配资源，不能算渲染。用户明确授权后同一RG构建只改Normal窗口，240真实连续回调通过；compat亦240通过。保留两hidden失败，不继续同条件反复启动、不将具体引擎/驱动根因写成定论，不以手动Render/SubmitRequest替代。可见Player每次限15秒、自行约8秒退出，授权仅短暂测试。
 
 本步相机仍输出64²targetRT，Unity窗口512²尺寸不代表512²GI，更不证明backbuffer最终屏幕或画质视觉QA。下一步target=null必须显式验证捕获时序/色域/坐标，不放宽加法阈值迁就sRGB读数；截图读取不得变成手动渲染。全局fullgreen5.05869%/7phase、F39和1080完整预算不由240事件解除。原失败binary后来被重建覆盖，仅manifest及源/log存在，不冒称全部旧payload仍可现场校验。
+
+## F46 / 步骤025：截图模块与屏幕颜色空间
+
+本机API DLL存在不等于隔离项目已引用模块；首次build39064 CS0103实际失败，须在隔离manifest启用com.unity.modules.screencapture，不能改产品依赖/反射绕过或把未运行当Player失败。ScreenCapture只读取帧结束屏幕，必须对应真实enabled-camera callback；禁止把截图调用伪装成渲染请求。固定逐像素sRGB→linear并以独立raster线性基线资格，不按合成结果挑映射/放宽阈值。
+
+两个最终512²默认screen Player各240自动帧过，截图误差最高.006432<原.015；不能拿屏幕量化结果替代HDR/原5%质量。10张真实屏幕图是纯接收面，不等于古堡复杂视觉QA。两个既有未用GB fallback/MSAA shader缺省提示完整保留，不能称所有日志无warning或支持那些路径。fullgreen/7phase/F39/1080预算继续，不以默认screen呈现完成全目标。

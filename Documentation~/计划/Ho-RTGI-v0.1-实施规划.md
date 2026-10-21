@@ -230,3 +230,5 @@
 步骤023：GI-only pool+共用PrePass/output32F已接入，shared默认false保DI16F、单位64。原alpha输入/低signal失败与旧16F控制全保留；最终1e−4..20000、格式生命周期/两315请求Release Player通过。full绿色仍5.05869%及7phase失败，不放宽；额外79.10MiB@1080是投影，40样本非稳定目标预算。F44记录范围/成本边界，024优先正常enabled-camera连续呈现，不能请求式换名；全部原缺口/用户强制条件与目标active继续。
 
 步骤024：两个真实serialized-enabled相机Player各240连续自动渲染，通过合成/Volume/重投影/发光重置，无手动请求。两hidden失败与用户明确授权后的短暂visible单变量成功都保留；Runtime无改动。targetRT输出不冒称backbuffer完成，025补默认屏幕目标与捕获色域/位置证据；full质量/7phase/static/F39/HD预算及全部用户强制要求继续active。
+
+步骤025：默认screen目标已实际验证，两个512²Player各240自动渲染/截图对齐/固定色域/原强度与动态门槛通过，10张真实屏幕图保留。隔离模块缺失原失败保留，产品Runtime/依赖无改。屏幕功能可用性不替代复杂画质、原5%/7phase/F39/static/1080完整预算；026回当前生产独立seed全域/局部边界，全部用户强制要求与目标active继续。
