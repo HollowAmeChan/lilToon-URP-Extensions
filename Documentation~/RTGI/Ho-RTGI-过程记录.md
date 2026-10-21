@@ -397,3 +397,21 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **下一步019：** 使用017已确认合法AS的原古堡域，先核对本机RTX和现有M0对T/S/none的seed/权重合同，再做有界独立seed的main raw误差对照；使用已经收敛的参考子集，保留暗点不确定、全图5%失败及selection bias，不能据选点接纳全图。先区分有限窗口方差/系统偏差，再决定生产采样或降噪改动。不重开F27/31/33/35/36/37/39；正常camera/1080/完整预算继续，goal active。所有用户要求继续约束后续步骤。
 
 018已按白名单过滤提交`ad900e7`，StaticMesh verifier提交后再次通过。生产Runtime/共享场景测试无diff、index空、全部本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮直接019合法AS古堡的独立seed/模式误差对照，不重复F39。目标仍active，未complete。
+
+## 019：独立seed与复用模式质量对照（进行中）
+
+**事前review：** 017已证明固定256窗raw在局部可偏离同模型高样本参考十余倍，不能继续把所有filtered/raw差值当物理损失。018无收益AS增长路线F39搁置，使用017debug合法的原古堡域（15instance/12Cutout/18灯，static Sphere base0）。复读本机BrdfRayTracing/Secondary/FinalShading：各阶段RNG由pixel/frame/独立常数初始化；FinalMIS含主表面镜面BRDF，当前不移植、不改权重。DI过程审计要求功能/画质/预算分开，保留原5%失败。
+
+**预先固定协议：** 仅Editor诊断，无复用/T/ S/TS四模式，seed序列0及104729+i×1048576（i=0..6），每段重置GI/NRD历史，64帧warm+256帧观察；8seed×4×320=10240请求，实际Editor tick分散，15分钟上限/fence只停止自有进程。先2seed×4×(16+16)小资格，不把它当收敛。保留full RGB/原phase0/方差、16参考点每段均值/方差/32帧块均值；核对主表面映射/历史、fresh secondary几何和RIS hash、灯/sky/AS域。15个收敛参考和暗点不确定/事后选点偏差继续，不能子集接纳全图。没有生产默认、NRD、Shader/SDK或Player变更；若统计仍不足则明确不确定，不无限增加样本。
+
+### 019事后review（2026-10-21）：TS均值偏移定位，画质仍未通过
+
+**实际执行：** 新Editor/RTGI/HoRTGISeedAudit.cs/meta，Castle改partial并接独立入口/报告。Runtime/Shader/SDK/NRD/Player不改。RG古堡256²，none/T/S/TS×固定8seed×(64warm+256观察)，分Editor tick。最终PID6104实际exit0，debug/编译/源漂移0，共32段10240矩阵请求/含初始与末尾合成功能检查10274请求。每段全图及原phase0、16点、方差/32帧块均值俱全，same primary/light/sky/Cutout/actual T/frame约束过；同seed端点secondary与RIS最终逐字节匹配。参考仍15/16，暗点与选择偏差保留，不是独立全图真值。
+
+**结果与收益：** none full rawRGB(.001228918,.000130884,.000120137)；TS(.001544720,.000159953,.000142659)，相对none +25.698/+22.209/+18.747%，配对seed均值差SE约.418/.354/.333%。T和S单独约+2.4～3.0%，TS组合偏移大得多。none/T/S/TS filtered相对本模式raw分别约(−15.59,−17.40,−17.75)/(−13.11,−14.91,−15.53)/(−10.68,−12.70,−13.20)/(−7.96,−8.70,−8.99)%，full32/32仍原5%失败。TS filtered比none raw仍高15.70/11.58/8.08%，不能一律补gain。(128,128)红TS/reference=2.1819、seedSE/reference=.1456；T约.9707±.0739，none .9202±.1111。旧热点(87,165)新TS约1.0156±.1631，017固定窗16.48倍不能当长期真值。这些SE来自8个seed均值，非相关帧/像素iid或正式置信概率。定位收益是下一步优先查跨帧空间反馈，不称画质修复。
+
+**失败/精度复审：** PID45524首资格exit1，byte gate失败但没字段记录，具体差异未证实；11552加记录资格exit0。原矩阵43444实际exit1，32段完成后byte gate拒绝，精确保留。独立逐字段复核504组position末位差异：实体最大1.22177e−5、100000单位合成miss端点.008789；18组normal差1个oct16分量单位。flags/material/emission/PDF/geometric/RIS严格相同。只改后置比较为原世界界限.0005、miss单位方向/FP32半径、normal一个量化步，primary和所有能量门槛不变；patch证明不改采样/渲染。最终完整重跑6104实际0且端点全bitwise相同，不推断比较器修正导致GPU数据相同，不补写具体引擎/调度根因。F40保留协议边界。
+
+**接纳/成本/过滤：** 接纳Editor诊断、四attempt/完整日志/239源hash（97共享017 blob）、逐字节gzip原JSON及可重算分析、README/过程/禁试/交接/计划。约3.44MB，verifier四实际进程/536870912 receiver样本计数/逐字段SHA/旧失败/全部5%失败通过。没有新Player、compat或产品GPU成本证明，CPU ReadPixels耗时不作预算。当前Runtime无diff，全部本任务进程结束、activeProcess=null，别人的Ho-GD plan不纳入。
+
+**下一项020候选（尚未实施）：** 参考ReSTIRGIContext.cs已核对，其TS也反馈空间输出，Ho不是因此被证明索引集成错误。以019组合偏移为依据，Editor私有compute仅把Final写history0的值换为pre-spatial buffer2（当前帧照旧读1做T/S/最终可见性/NRD）。在Final写避免Temporal读0/写0竞态，保留当前T/S功能，不新增reservoir；有一次32 B/receiver额外读取要实测。先隔离生成original body单行候选/同seed配对，验证raw/reference、filtered、方差/细节与GPU成本，再决定是否可进入Runtime及双路径/Player/动态回归。禁止直接关闭T/S当完整交付，或同时改gain/sigma/Jacobian；F27/31/33/35/36/37/39继续。原质量、static base、HDR/正常camera/1080/完整预算未完，goal active。

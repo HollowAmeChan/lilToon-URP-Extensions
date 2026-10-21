@@ -1,0 +1,30 @@
+{
+  "results/matrix.json": {
+    "path": "results/matrix.json.gz",
+    "rawSha256": "27EED5DCCB2032684D47CC47228904925C899F13949AD38AA99E73C0AC0E0309",
+    "archiveSha256": "221B95044FC3BFEB957DE87CFC4300B0B4F473F9A7AC772F48BD48A3BAD4E6B6",
+    "rawBytes": 7935289,
+    "archiveBytes": 1005473
+  },
+  "results/qualification.json": {
+    "path": "results/qualification.json.gz",
+    "rawSha256": "9E57D626D66B07DD4B0769D9DAD1D635498D6B6A48824C3A5FBCBB880898CAC6",
+    "archiveSha256": "CB6A5059386738FE664058268E084360E8DE7D8564E5EFFA67F4C2ACC624947E",
+    "rawBytes": 543301,
+    "archiveBytes": 67555
+  },
+  "rejected-matrix-paired-hash/seed-progress.json": {
+    "path": "rejected-matrix-paired-hash/seed-progress.json.gz",
+    "rawSha256": "296B7CD721F7FDDBF69D7C10E31077B8ECA2DC84ACCE655DF40B97E531F5C870",
+    "archiveSha256": "EB1FD989F5EC0642A3A8AA06E6B717BA8EF3304C12292A5BAFCC9C8BA75E8EF6",
+    "rawBytes": 2791761,
+    "archiveBytes": 904982
+  },
+  "rejected-paired-hash/seed-progress.json": {
+    "path": "rejected-paired-hash/seed-progress.json.gz",
+    "rawSha256": "609C872FCF54CF8B1711542897097C669042E57E596D6E45CC513624FD9536F3",
+    "archiveSha256": "85FFA22CE55F44500BE5E63F4246AF62250A9F5794445F26CB3714023966645B",
+    "rawBytes": 133602,
+    "archiveBytes": 36641
+  }
+}

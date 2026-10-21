@@ -293,3 +293,19 @@ Editor/RayTracing/HoRTAccelerationGrowthProbe是保留的独立Editor最小复�
 018提交白名单：Editor/RayTracing/HoRTAccelerationGrowthProbe.cs/meta；Tests~/RTGI/StaticMesh；RTGI README/过程/禁试/交接/实施规划。别人的Ho-GD-Outline-SourceDepth-Plan.md仍未跟踪，不纳入。下一轮先看本节最新提交状态，不重跑旧15个进程凑次数。
 
 018已按白名单过滤提交`ad900e7`，StaticMesh verifier提交后再次通过。生产Runtime/共享场景测试无diff、index空、全部本任务进程结束，仅他人Ho-GD plan未跟踪。下一轮直接019合法AS古堡的独立seed/模式误差对照，不重复F39。目标仍active，未complete。
+
+### 019终态（2026-10-21，待过滤提交）：完整seed矩阵定位TS偏移
+
+已完成019，不要重复18增长调参或重跑19凑样本。新Editor/RTGI/HoRTGISeedAudit.cs/meta及Castle仅Editor接入口，Runtime/Shader/SDK/NRD/Player未改。RG古堡256²/18灯15instance12cutout/sky与017合法AS相同；none/T/S/TS×seed{0,104729,1153305,2201881,3250457,4299033,5347609,6396185}，每段64warm+256观测。最终PID6104真实exit0，debug/compile/source drift0，32段10240请求，报告10274含初始32及两次末尾合成检查。每段full/原phase0、16点、方差和32帧块均值完整；actual frame/T与域断言过。最终同seed四模式端点selected secondary及完整RIS逐字节匹配，primary error约1.9e−6。仅RG请求相机，无新compat/Player/正常enabled-camera/GPU成本结论。
+
+none full rawRGB(.001228918,.000130884,.000120137)；TS(.001544720,.000159953,.000142659)，TS相对none +25.698/+22.209/+18.747%，配对差SE相对none约.418/.354/.333%。T或S单独约+2.4～3.0%，TS组合偏移远大于seed间波动。所有32段filtered/raw原5%仍失败；TS filtered比none raw仍高15.70/11.58/8.08%，不能只因NRD使其下降便加gain。点(128,128)红TS/reference=2.1819±.1456，filtered/reference=1.7208；T raw=.9707±.0739，none=.9202±.1111。±仅一个经验seed-SE；参考仍15/16收敛、暗点不确定、事后选点偏差与共用模型边界均保留，不是全图绝对真值。
+
+**失败原样保留：** 首资格45524实际1，8段byte gate失败但无字段，不补写原因。加字段资格11552实际0。原完整矩阵43444实际1，32段捕获后byte gate失败：504组position小差（hit最大1.22177e−5，100000单位假miss端点.008789）、18组normal差1 oct16步，flags/material/emission/PDF/geometric/RIS全同。仅后置检查改用原world .0005、miss unit direction/FP32半径和normal量化步，所有primary/5%不变。最终重跑6104实际0且恰好端点bitwise相同，不把比较器变更说成GPU差异根因。F40及paired-contract-correction.patch说明边界，旧失败不改绿。
+
+Tests~/RTGI/Seeds：四真实attempt metadata、完整日志、239精确source hash（97引用017 blob）、analysis.py/json、capture-archives.json及gzip原始JSON（解压逐字节/SHA不变）约3.44MB；verifier已过，包含raw/filtered/full/phase/block/primary/source/15参考与4进程。大报告读取需gzip，不要Get-Content -Head打印单行百万token JSON；用Python解析只选字段。所有本任务进程结束，run.activeProcess=null，未操作他人工程/进程。旧DenseReference verifier当前Castle SHA因合法诊断变更过时，按5456782核对，不回滚新源迎合旧hash。
+
+**下一项020具体动作：先Editor私有pre-spatial history候选。** 已核对本机Assets/RTXDI/Scripts/Rtxdi/GI/ReSTIRGIContext.cs:234起，参考TS也把Spatial结果反馈至下帧，与Ho当前1→history0语义相同，不能称已发现索引集成错误。019数据支持有界尝试：只改Final history写0时取buffer2 Temporal结果；当前帧仍读1进行S后的最终可见性、求值和NRD，T/S不关闭。必须在Final写，不能Temporal边读history0边写而产生跨线程竞态。没有新reservoir allocation，但会多32 B/receiver读取，要量成本。
+
+可在自有Unity项目Assets生成原HoRTGI.compute独立body（include改绝对package路径以保持原义），只替换Final那一行store的value；保留所有kernels/pragmas，reflection暂换gi私有compute shader，finally恢复。不要动raytrace/SDK/源Shader/默认参数，不同时改NRD单位或Jacobian。先小资格核对非TS不受影响/实际kernel/原还原，再按相同8seed配对baseline/candidate TS看raw与参考/filtered/方差/空间细节/成本；不要仅最有利点或更方便门槛。若有收益再生产及RG/compat/Cutout/动态/Player回归，无收益就撤回记禁试。原质量/static非零base F39/moment-HDR/正常camera/1080/完整预算仍缺，goal active。
+
+019提交白名单：Editor/RTGI/HoRTGISeedAudit.cs/meta与HoRTGICastleValidation.cs；Tests~/RTGI/Seeds；RTGI README/过程/禁试/交接/实施规划。其它Ho-GD plan仍未跟踪，不纳入。每步review、实证、收益复盘、过滤提交、失败禁令/交接继续。

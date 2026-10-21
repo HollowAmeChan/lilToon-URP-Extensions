@@ -54,3 +54,11 @@ F01～F06主要来自DI/参考历史，不伪装为本轮GI实测失败。F08～
 **禁止原样重试：** 继续盲调上述flags/容量/延时；关闭debug、只测初始实例、跳过问题几何便声称static支持；把早期移除debug guard的脚本成功当通过；修改017已通过的skin修复迎合此问题。
 
 **允许重开：** 新的原生scratch分配诊断、明确引擎/host修复，或有可解释机制的新方案，必须同初始/增长对照API0，再补原计划UV/normal/Cutout、只读Player/生命周期/成本。候选完整源与失败见Tests~/RTGI/StaticMesh，生产已恢复。先继续合法AS古堡的独立seed/复用质量对照，static非零base缺口保留，不能被其它局部成功解除。
+
+## F40 / 步骤019：配对字节一致性与有限窗raw口径
+
+不要把浮点secondary结构byte hash不相同直接解释为路径/随机种子改变：原32段exit1逐字段只见hit位置≤1.22177e−5、远处合成miss≤.008789及normal一个oct16量化步，flags/材质/emission/PDF/geometric/RIS都相同。后置精度合同使用原world .0005界限、miss单位方向及FP32半径、normal一个量化步；保留实际失败/精确源，不能改历史exit/marker，不能放宽primary或5%。首个无字段资格失败的具体差异仍未知，不用后续记录补写原因。最终重跑端点bitwise全同，也不声称比较器修正让GPU数据变同。
+
+8seed实测TS raw相对none fullRGB高25.70/22.21/18.75%，T或S单独约2.4～3.0%；TS filtered又比none raw高15.70/11.58/8.08%，原filtered/raw5%仍全失败。禁止按某固定256窗raw补gain/挑点/关闭复用便称默认通过；参考15/16且有事后选点偏差，不能升级为独立全图真值。SE按seed均值，不把相关帧/pixels当iid、不把±SE说成严格置信。
+
+下一项可做有机制的pre-spatial history候选，同帧T/S保留、history0只存Temporal结果；原参考也反馈Spatial，不能先认定索引bug。需要同输入/同seed的真实质量/方差/成本与回归收益才接纳；无收益就撤回，不继续堆任意混合权重或盲调Jacobian/NRD。证据Tests~/RTGI/Seeds。

@@ -1,0 +1,11 @@
+// Dense DI moment and non-negative diffuse-radiance adaptation.
+// See HoRTDINrdHistoryClamping.hlsl and ThirdParty/NRD/NOTICE.md.
+#pragma kernel main
+#pragma use_dxc
+#pragma target 6.0
+#define NRD_INTERNAL 1
+#define NRD_COMPILER_DXC 1
+#define NRD_SIGNAL BOTH
+#define NRD_MODE RADIANCE
+#include "HoRTDINrdBindings.hlsl"
+#include "HoRTDINrdHistoryClamping.hlsl"

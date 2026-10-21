@@ -1,0 +1,76 @@
+--- strict-byte-gate
++++ numeric-input-contract
+@@ -42,7 +42,9 @@
+         [Serializable] internal sealed class Report
+         {
+             public string protocol = "Four original production reuse modes, predeclared independent frame seeds, GI/NRD reset per segment. Selected receivers have post-selection bias; reference is the same shading model, not independent absolute truth or full-image acceptance.";
+-            public bool functionalPass, terminal;
++            public bool functionalPass, terminal, pairedEndpointsWithinInputPrecision, pairedEndpointsBitwiseEqual;
++            public float maxPairedHitPositionError, maxPairedMissDirectionError;
++            public int maxPairedNormalQuantizationSteps;
+             public int seedCount, warmup, measured, width = 256, height = 256;
+             public ReferenceInput[] referenceInputs;
+             public HoRTGIDenseReferenceAudit.Point[] referencePoints;
+@@ -196,15 +198,58 @@
+             if (terminal)
+             {
+                 if (!report.functionalPass) throw new Exception("Seed matrix incomplete.");
++                report.pairedEndpointsBitwiseEqual = true;
+                 for (int seed = 0; seed < report.seedCount; seed++)
+                 {
+                     var matched = segments.Where(s => s.seed == Seeds[seed]).ToArray();
+-                    if (matched.Select(s => s.firstSecondaryHash).Distinct().Count() != 1 || matched.Select(s => s.lastSecondaryHash).Distinct().Count() != 1 ||
+-                        matched.Select(s => s.firstRisHash).Distinct().Count() != 1 || matched.Select(s => s.lastRisHash).Distinct().Count() != 1)
+-                        throw new Exception("Paired modes did not use identical selected fresh geometry/RIS proposals.");
+-                }
++                    if (matched.Select(s => s.firstRisHash).Distinct().Count() != 1 || matched.Select(s => s.lastRisHash).Distinct().Count() != 1)
++                        throw new Exception("Paired modes changed the environment RIS proposal.");
++                    foreach (var segment in matched.Skip(1))
++                    {
++                        report.pairedEndpointsBitwiseEqual &= segment.firstSecondaryHash == matched[0].firstSecondaryHash && segment.lastSecondaryHash == matched[0].lastSecondaryHash;
++                        CompareSecondary(matched[0].firstSecondary, segment.firstSecondary);
++                        CompareSecondary(matched[0].lastSecondary, segment.lastSecondary);
++                    }
++                }
++                report.pairedEndpointsWithinInputPrecision = true;
+             }
+             return report;
++        }
++
++        void CompareSecondary(Secondary[] first, Secondary[] other)
++        {
++            for (int i = 0; i < first.Length; i++)
++            {
++                var a = first[i]; var b = other[i];
++                if (a.flags < 1 || a.flags > 3 || a.flags != b.flags || a.diffuse != b.diffuse || a.specular != b.specular ||
++                    !a.emission.Equals(b.emission) || a.pdf != b.pdf || a.geometric != b.geometric)
++                    throw new Exception("Paired modes changed hit kind/material/emission/PDF/geometric normal.");
++                int normalSteps = Math.Max(Math.Abs((int)(a.normal & 65535) - (int)(b.normal & 65535)), Math.Abs((int)(a.normal >> 16) - (int)(b.normal >> 16)));
++                if (normalSteps > 1) throw new Exception("Paired secondary shading normal differs beyond one oct16 quantization step.");
++                report.maxPairedNormalQuantizationSteps = Math.Max(report.maxPairedNormalQuantizationSteps, normalSteps);
++                float positionError = Vector3.Distance(a.position, b.position);
++                if (!float.IsFinite(positionError)) throw new Exception("Non-finite paired position.");
++                if (a.flags == 1)
++                {
++                    // The existing full/history/reference world-position bound is
++                    // unchanged. Hash equality is stronger than this FP32 contract.
++                    if (positionError > .0005f) throw new Exception("Paired hit changed beyond the existing world-position bound.");
++                    report.maxPairedHitPositionError = Mathf.Max(report.maxPairedHitPositionError, positionError);
++                }
++                else
++                {
++                    // Miss samples encode a synthetic endpoint 100000 units away.
++                    // Compare the unit direction and relative FP32 roundoff rather
++                    // than interpreting that endpoint as an actual world hit.
++                    Vector3 da = a.position - reference[i].primaryWorld, db = b.position - reference[i].primaryWorld;
++                    float directionError = Vector3.Distance(da.normalized, db.normalized);
++                    float radiusTolerance = 8 * 1.192092896e-7f * 100000;
++                    if (!float.IsFinite(directionError) || directionError > 1e-6f ||
++                        Mathf.Abs(da.magnitude - 100000) > radiusTolerance || Mathf.Abs(db.magnitude - 100000) > radiusTolerance)
++                        throw new Exception("Paired miss changed direction or synthetic endpoint radius.");
++                    report.maxPairedMissDirectionError = Mathf.Max(report.maxPairedMissDirectionError, directionError);
++                }
++            }
+         }
+ 
+         string SecondaryHash(HoRTGIContext context, out Secondary[] selected)

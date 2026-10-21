@@ -35,3 +35,5 @@
 并行任务共享工作区，提交必须列明路径。避免占用其他任务的验证工程；同一个 Unity 工程一次只能运行一个实例。
 
 步骤018静态owned镜像实际157功能checks完成，但实例3→5增长有scratch debug错误；原Ho及直接Unity API均能复现，初始5干净。多轮无收益方案已撤回、F39搁置，产品保留017实现，static非零base仍未交付。仅接纳最小复现及[失败/恢复证据](../../Tests~/RTGI/StaticMesh/README.md)，不声称具体上游根因。下一项转合法AS古堡独立seed/T/S/none质量对照，所有原质量/应用/预算缺口保留，goal active。
+
+步骤019完成RG256²四模式×8seed矩阵，实际exit0/API0/源漂移0。TS raw相对none全图RGB高25.70/22.21/18.75%，T或S单独仅约2.4～3.0%；所有32段filtered/raw仍原5%失败。当前只有定位收益，Runtime不改。两次byte-gate拒绝、精度合同与最终真实重跑保留F40和[完整证据](../../Tests~/RTGI/Seeds/README.md)。下一项020仅Editor尝试pre-spatial history，同帧T/S保持，再评质量/方差/成本，不关闭复用当完整通过；正常camera/1080/Player等目标仍active。

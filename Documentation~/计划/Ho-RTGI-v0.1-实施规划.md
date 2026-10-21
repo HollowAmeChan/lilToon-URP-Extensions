@@ -218,3 +218,5 @@
 - [NVIDIA NRD 集成说明](https://github.com/NVIDIA-RTX/NRD/blob/master/README.md)：信号 demodulation、hit distance 与各 denoiser 的输入约定。具体实现以本地固定版本为准。
 
 步骤018补充：静态镜像157功能checks后仍有AS scratch增长错误，候选拒绝并从产品撤回。直接Unity API也复现初始5 debug0、先3后5 debug1，尚未定位具体上游根因；Static/重建/构建flags/延迟/update调参均无收益，F39搁置。static非零base支持仍缺，下一项先在017合法古堡AS域做独立seed与T/S/none模式质量对照，不能用诊断通过替代功能/画质/预算交付。原目标和六项强制要求不变，active。
+
+步骤019补充：RG古堡256²四模式×8seed×(64warm+256观察)真实exit0、API/compile/source drift0；TS raw相对none fullRGB+25.70/+22.21/+18.75%，T/S单独约+2.4～3.0%，旧filtered/raw5%全32段仍失败。参考15/16/选择偏差不解除，未修改生产渲染。下一项有界Editor pre-spatial history候选保留同帧T/S，必须以质量/方差/成本和完整回归取舍；原参考也反馈S，不先称索引bug。F40保留两次byte gate失败及精度更正，原5%、static base/HDR/正常camera/1080/完整预算继续未完成，目标active。

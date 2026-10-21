@@ -1,0 +1,367 @@
+// Copyright (c) 2020-2026, NVIDIA CORPORATION. All rights reserved.
+// NVIDIA portions are governed by ../ThirdParty/RTXDI/LICENSE.txt.
+// Pass sequence adapted from UnityPathTracing/Assets/Shaders/RayTracing/DI.
+#pragma kernel Initial
+#pragma kernel Temporal
+#pragma kernel Spatial
+#pragma kernel Shade
+#pragma kernel ShadeNRD HO_RTDI_NRD_ACTIVE
+#pragma kernel BeginNRDScale HO_RTDI_NRD_ACTIVE
+#pragma kernel SelectNRDScale HO_RTDI_NRD_ACTIVE
+#pragma kernel MeasureNRDHistory HO_RTDI_NRD_ACTIVE
+#pragma kernel NormalizeNRD HO_RTDI_NRD_ACTIVE
+#pragma kernel ResolveNRD HO_RTDI_NRD_ACTIVE
+#pragma kernel Gradients HO_RTDI_NRD_ACTIVE
+#pragma kernel FilterGradients HO_RTDI_NRD_ACTIVE
+#pragma kernel Confidence HO_RTDI_NRD_ACTIVE
+#pragma kernel SaveHistory HO_RTDI_NRD_ACTIVE
+#pragma kernel BuildPowerPdf
+#pragma kernel Presample
+#pragma kernel BuildEnvironmentPdf
+#pragma kernel PresampleEnvironment
+#pragma use_dxc
+#pragma target 6.0
+#pragma require inlineraytracing
+#define HO_RTDI_PRESAMPLING_ENABLED 1
+#define HO_RTDI_ENVIRONMENT_ENABLED 1
+// RIS target only: give narrow specular peaks more candidates; final shading stays physical.
+#define HO_RTDI_SPECULAR_PROPOSAL_IMPORTANCE 4.0
+#include "HoRTDIApplicationBridge.hlsl"
+#include "../ThirdParty/RTXDI/DI/InitialSampling.hlsl"
+#include "../ThirdParty/RTXDI/DI/ReservoirStorage.hlsl"
+#include "../ThirdParty/RTXDI/DI/TemporalResampling.hlsl"
+#include "../ThirdParty/RTXDI/DI/SpatialResampling.hlsl"
+#include "../ThirdParty/RTXDI/LightSampling/PresamplingFunctions.hlsl"
+#include "HoRTDIAuxiliary.hlsl"
+#if defined(HO_RTDI_NRD_ACTIVE)
+#include "../ThirdParty/NRD/NRD.hlsli"
+RWTexture2D<float4> _HoRTDINrdDiffuse,_HoRTDINrdSpecular,_HoRTDINrdNormal;
+RWTexture2D<float> _HoRTDINrdViewZ;
+RWTexture2D<float4> _HoRTDINrdOutputDiffuse,_HoRTDINrdOutputSpecular;
+RWStructuredBuffer<uint> _HoRTDINrdScale;
+int _HoRTDINrdScaleReset;
+groupshared uint HoDINrdGroupPeak;
+Texture2D<float4> _HoRTDINrdHistorySpec,_HoRTDINrdHistoryDiff,_HoRTDINrdHistorySpecFast,_HoRTDINrdHistoryDiffFast;
+
+#endif
+RWTexture2D<float4> _HoRTDIDiffuse, _HoRTDISpecular;
+Texture2D<float> _HoRTDIFinalVisibility;
+int _HoRTDIFinalVisibilityEnabled;
+Texture2D _HoRTDIPdf;
+RWTexture2D<float> _HoRTDIPdfOutput;
+int _HoRTDIPdfSize;
+RTXDI_RISBufferSegmentParameters HoDIRIS()
+{RTXDI_RISBufferSegmentParameters p=(RTXDI_RISBufferSegmentParameters)0;p.tileSize=(uint)_HoRTDIRISLayout.x;p.tileCount=(uint)_HoRTDIRISLayout.y;return p;}
+
+// Reference PdfTexture -> box-filter mip chain -> Presample sequence.
+[numthreads(8,8,1)]
+void BuildPowerPdf(uint3 id:SV_DispatchThreadID)
+{
+    if(any(id.xy>=(uint)_HoRTDIPdfSize))return;
+    uint lightIndex=RTXDI_ZCurveToLinearIndex(id.xy);
+    float power=0;
+    if(lightIndex<(uint)_HoRTDIFrame.w)
+    {
+        HoRTDILight light=_HoRTDILights[lightIndex];
+        // Reference point-light power is 4*pi*luminance(intensity). Integrate
+        // this bridge's squared spot-cone attenuation for its shaping factor.
+        float luminance=HoDILuminance(max(0,light.radianceType.rgb));
+        float shaping=light.radianceType.w>.5?max(0,1-light.innerShadow.x+max(0,light.innerShadow.x-light.directionOuter.w)/3)*.5:1;
+        power=4*M_PI*luminance*shaping;
+        if(!isfinite(power))power=0;
+    }
+    _HoRTDIPdfOutput[id.xy]=power;
+}
+[numthreads(256,1,1)]
+void Presample(uint3 id:SV_DispatchThreadID)
+{
+    if(id.x>=(uint)_HoRTDIRISLayout.x||id.y>=(uint)_HoRTDIRISLayout.y)return;
+    RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTDIFrameIndex,0);
+    RTXDI_LightBufferRegion local=(RTXDI_LightBufferRegion)0;local.numLights=(uint)_HoRTDIFrame.w;
+    RTXDI_PresampleLocalLights(rng,_HoRTDIPdf,uint2(_HoRTDIPdfSize,_HoRTDIPdfSize),id.y,id.x,local,HoDIRIS());
+}
+[numthreads(8,8,1)]
+void BuildEnvironmentPdf(uint3 id:SV_DispatchThreadID)
+{
+    uint size=(uint)_HoRTDIEnvironment.x;if(any(id.xy>=size))return;
+    float weight=HoDILuminance(HoAtmosphereSampleRadiance(HoDIEnvironmentDirection((float2(id.xy)+.5)/size)));
+    _HoRTDIEnvironmentPdfOutput[id.xy]=isfinite(weight)?max(weight,1e-8):0;
+}
+[numthreads(256,1,1)]
+void PresampleEnvironment(uint3 id:SV_DispatchThreadID)
+{
+    if(id.x>=(uint)_HoRTDIRISLayout.x||id.y>=(uint)_HoRTDIRISLayout.y)return;
+    RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTDIFrameIndex,17);
+    RTXDI_RISBufferSegmentParameters segment=HoDIRIS();segment.bufferOffset=(uint)_HoRTDIEnvironment.w;
+    uint size=(uint)_HoRTDIEnvironment.x;RTXDI_PresampleEnvironmentMap(rng,_HoRTDIEnvironmentPdf,uint2(size,size),id.y,id.x,segment);
+}
+
+RTXDI_ReservoirBufferParameters HoDILayout()
+{RTXDI_ReservoirBufferParameters p=(RTXDI_ReservoirBufferParameters)0;p.reservoirBlockRowPitch=(uint)_HoRTDIReservoirLayout.x;p.reservoirArrayPitch=(uint)_HoRTDIReservoirLayout.y;return p;}
+RTXDI_RuntimeParameters HoDIRuntime()
+{RTXDI_RuntimeParameters p=(RTXDI_RuntimeParameters)0;p.neighborOffsetMask=255;p.frameIndex=(uint)_HoRTDIFrameIndex;return p;}
+bool HoDIInside(uint2 pixel) {return all(pixel<(uint2)_HoRTDIFrame.xy);}
+#if defined(HO_RTDI_NRD_ACTIVE)
+#include "HoRTDIConfidence.hlsl"
+// Limit RGB to 128 so RELAX's squared luminance has FP16 headroom.
+// Include old RGB and sqrt(second moment) when growing the scale, so old
+// bright history also fits. This lets dark scenes recover FP16 precision.
+[numthreads(1,1,1)]void BeginNRDScale(uint3 id:SV_DispatchThreadID)
+{
+    _HoRTDINrdScale[0]=0;
+    float previous=_HoRTDINrdScaleReset!=0?1:asfloat(_HoRTDINrdScale[1]);
+    _HoRTDINrdScale[1]=asuint(previous);_HoRTDINrdScale[2]=asuint(previous);
+}
+[numthreads(1,1,1)]void SelectNRDScale(uint3 id:SV_DispatchThreadID)
+{
+    float peak=asfloat(_HoRTDINrdScale[0]);
+    float required=peak>128?exp2(floor(log2(128/peak))):1;
+    _HoRTDINrdScale[1]=asuint(required);
+}
+[numthreads(8,8,1)]void MeasureNRDHistory(uint3 id:SV_DispatchThreadID,uint index:SV_GroupIndex)
+{
+    if(index==0)HoDINrdGroupPeak=0;
+    GroupMemoryBarrierWithGroupSync();
+    uint peak=0;
+    if(_HoRTDINrdScaleReset==0&&all(id.xy<(uint2)_HoRTDIFrame.xy))
+    {
+        float4 spec=_HoRTDINrdHistorySpec[id.xy],diff=_HoRTDINrdHistoryDiff[id.xy];
+        float3 rgb=max(max(spec.rgb,diff.rgb),max(_HoRTDINrdHistorySpecFast[id.xy].rgb,_HoRTDINrdHistoryDiffFast[id.xy].rgb));
+        float bound=max(max(rgb.r,max(rgb.g,rgb.b)),sqrt(max(spec.a,diff.a)));
+        peak=asuint(bound/asfloat(_HoRTDINrdScale[2]));
+    }
+    InterlockedMax(HoDINrdGroupPeak,peak);
+    GroupMemoryBarrierWithGroupSync();
+    if(index==0)InterlockedMax(_HoRTDINrdScale[0],HoDINrdGroupPeak);
+}
+[numthreads(8,8,1)]void NormalizeNRD(uint3 id:SV_DispatchThreadID)
+{
+    if(any(id.xy>=(uint2)_HoRTDIFrame.xy))return;
+    float scale=asfloat(_HoRTDINrdScale[1]);
+    float4 diff=_HoRTDINrdDiffuse[id.xy],spec=_HoRTDINrdSpecular[id.xy];
+    // Publish physical raw lighting here while staging is still unscaled.
+    // This keeps ShadeNRD below the common eight-UAV compiler limit without
+    // adding a capture pass or tracing the selected light a second time.
+    RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
+    float3 rawDiff=0,rawSpec=0;float receiver=RAB_IsSurfaceValid(surface)?1:0;
+    if(receiver>.5)
+    {
+        float3 diffFactor,specFactor;
+        NRD_MaterialFactors(surface.normal,surface.viewDir,surface.material.diffuseAlbedo,surface.material.specularF0,surface.material.roughness,diffFactor,specFactor);
+        rawDiff=diff.rgb*surface.material.diffuseAlbedo;rawSpec=spec.rgb*specFactor;
+    }
+    _HoRTDIPreviousLuminance[id.xy]=f16tof32(f32tof16(float2(HoDILuminance(_HoRTDIDiffuse[id.xy].rgb),HoDILuminance(_HoRTDISpecular[id.xy].rgb))));
+    _HoRTDIDiffuse[id.xy]=float4(rawDiff,receiver);_HoRTDISpecular[id.xy]=float4(rawSpec,receiver);
+    _HoRTDINrdDiffuse[id.xy]=RELAX_FrontEnd_PackRadianceAndHitDist(diff.rgb*scale,diff.a,true);
+    _HoRTDINrdSpecular[id.xy]=RELAX_FrontEnd_PackRadianceAndHitDist(spec.rgb*scale,spec.a,true);
+}
+#endif
+
+[numthreads(8,8,1)]
+void Initial(uint3 id:SV_DispatchThreadID)
+{
+    if(!HoDIInside(id.xy))return;
+    RTXDI_DIReservoir reservoir=RTXDI_EmptyDIReservoir();RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
+    if(RAB_IsSurfaceValid(surface)&&(_HoRTDIFrame.z>0||_HoRTDIEnvironment.z>.5))
+    {
+        RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTDIFrameIndex,RTXDI_DI_GENERATE_INITIAL_SAMPLES_RANDOM_SEED);
+        RTXDI_RandomSamplerState tileRng=RTXDI_InitRandomSampler(id.xy/16,(uint)_HoRTDIFrameIndex,RTXDI_DI_GENERATE_INITIAL_SAMPLES_RANDOM_SEED);
+        RTXDI_DIInitialSamplingParameters p=(RTXDI_DIInitialSamplingParameters)0;
+        // Keep the local sample parameter nonzero even for an empty local
+        // region: SDK ComputeInitialSamplingMisData divides by its MIS count.
+        // The SDK skips the empty region and samples the infinite range below.
+        p.numLocalLightSamples=(uint)_HoRTDISettings.x;
+        p.localLightSamplingMode=_HoRTDIRISLayout.z>.5?ReSTIRDI_LocalLightSamplingMode_POWER_RIS:ReSTIRDI_LocalLightSamplingMode_UNIFORM;
+        p.numInfiniteLightSamples=_HoRTDIFrame.z>_HoRTDIFrame.w?1:0;
+        p.numEnvironmentSamples=_HoRTDIEnvironment.z>.5?(uint)_HoRTDIEnvironment.y:0;
+        p.numBrdfSamples=_HoRTDIEnvironment.z>.5?(uint)_HoRTDIEnvironmentBrdfSamples:0;
+        p.brdfRayMinT=_HoRTDISettings.w;p.enableInitialVisibility=0;
+        RTXDI_LightBufferParameters lights=(RTXDI_LightBufferParameters)0;
+        lights.localLightBufferRegion.numLights=(uint)_HoRTDIFrame.w;
+        lights.infiniteLightBufferRegion.firstLightIndex=(uint)_HoRTDIFrame.w;
+        lights.infiniteLightBufferRegion.numLights=(uint)(_HoRTDIFrame.z-_HoRTDIFrame.w);
+        lights.environmentLightParams.lightPresent=_HoRTDIEnvironment.z>.5?1:0;lights.environmentLightParams.lightIndex=HO_RTDI_ENVIRONMENT_LIGHT_INDEX;
+        RAB_LightSample sample=RAB_EmptyLightSample();
+        RTXDI_RISBufferSegmentParameters environmentRIS=HoDIRIS();environmentRIS.bufferOffset=(uint)_HoRTDIEnvironment.w;
+        reservoir=RTXDI_SampleLightsForSurface(rng,tileRng,surface,p,lights,HoDIRIS(),environmentRIS,sample);
+        if(RTXDI_IsValidDIReservoir(reservoir))
+        {
+            // The pinned SDK's returned sample can diverge from the selected
+            // reservoir with multiple candidates on Unity DXC. Reconstruct it
+            // before visibility; never discard a visible stored sample based
+            // on another candidate. Keep SDK's M-preserving discard policy.
+            RAB_LightSample selected=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(reservoir),false),surface,RTXDI_GetDIReservoirSampleUV(reservoir));
+            if(!RAB_GetConservativeVisibility(surface,selected))RTXDI_StoreVisibilityInDIReservoir(reservoir,0,true);
+        }
+    }
+    RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,1);
+}
+[numthreads(8,8,1)]
+void Temporal(uint3 id:SV_DispatchThreadID)
+{
+    if(!HoDIInside(id.xy))return;
+    RTXDI_DIReservoir reservoir=RTXDI_LoadDIReservoir(HoDILayout(),id.xy,1);RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
+    if(_HoRTDIFlags.x>.5&&RAB_IsSurfaceValid(surface))
+    {
+        float4 previousClip=mul(_HoRTDIPreviousVP,float4(surface.worldPos,1));
+        if(abs(previousClip.w)<1e-6 || !all(isfinite(previousClip)))
+        {RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,2);return;}
+        float2 previousUV=previousClip.xy/previousClip.w*.5+.5;
+        #if UNITY_UV_STARTS_AT_TOP
+            previousUV.y=1-previousUV.y;
+        #endif
+        float previousDepth=-dot(_HoRTDIPreviousViewZ,float4(surface.worldPos,1));
+        if(previousDepth<=0 || !all(isfinite(previousUV)))
+        {RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,2);return;}
+        float3 motion=float3(previousUV*_HoRTDIFrame.xy-(float2(id.xy)+.5),previousDepth-surface.viewDepth);
+        RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTDIFrameIndex,RTXDI_DI_TEMPORAL_RESAMPLING_RANDOM_SEED);
+        RTXDI_DITemporalResamplingParameters p=(RTXDI_DITemporalResamplingParameters)0;
+        // The SDK uses four low bits for a frame-uniform permutation offset.
+        // Match the reference hash rather than repeating the frame counter's 16-step pattern.
+        p.maxHistoryLength=(uint)_HoRTDIFlags.z;p.biasCorrectionMode=RTXDI_BIAS_CORRECTION_RAY_TRACED;p.depthThreshold=.05;p.normalThreshold=.9;p.enablePermutationSampling=1;p.uniformRandomNumber=RTXDI_JenkinsHash((uint)_HoRTDIFrameIndex);
+        int2 temporalPosition;RAB_LightSample sample=RAB_EmptyLightSample();
+        reservoir=RTXDI_DITemporalResampling(id.xy,surface,reservoir,rng,HoDIRuntime(),HoDILayout(),motion,0,p,temporalPosition,sample);
+    }
+    RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,2);
+}
+[numthreads(8,8,1)]
+void Spatial(uint3 id:SV_DispatchThreadID)
+{
+    if(!HoDIInside(id.xy))return;
+    RTXDI_DIReservoir reservoir=RTXDI_LoadDIReservoir(HoDILayout(),id.xy,2);RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
+    if(_HoRTDIFlags.y>.5&&RAB_IsSurfaceValid(surface))
+    {
+        RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTDIFrameIndex,RTXDI_DI_SPATIAL_RESAMPLING_RANDOM_SEED);
+        RTXDI_DISpatialResamplingParameters p=(RTXDI_DISpatialResamplingParameters)0;
+        p.numSamples=(uint)_HoRTDISettings.y;p.numDisocclusionBoostSamples=p.numSamples;p.samplingRadius=_HoRTDISettings.z;p.biasCorrectionMode=RTXDI_BIAS_CORRECTION_RAY_TRACED;p.depthThreshold=.05;p.normalThreshold=.9;p.enableMaterialSimilarityTest=1;
+        RAB_LightSample sample=RAB_EmptyLightSample();
+        reservoir=RTXDI_DISpatialResampling(id.xy,surface,reservoir,rng,HoDIRuntime(),HoDILayout(),2,p,sample);
+    }
+    RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,1);
+}
+void HoDIShade(uint3 id,out uint peak)
+{
+    peak=0;
+    if(!HoDIInside(id.xy))return;
+    RTXDI_DIReservoir reservoir=RTXDI_LoadDIReservoir(HoDILayout(),id.xy,1);RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
+    float3 diffuse=0,specular=0,diffuseLighting=0;
+    float selectedDistance=65504;
+    if(RAB_IsSurfaceValid(surface)&&RTXDI_IsValidDIReservoir(reservoir))
+    {
+        RAB_LightSample sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(reservoir),false),surface,RTXDI_GetDIReservoirSampleUV(reservoir));
+        float visibility=_HoRTDIFinalVisibilityEnabled!=0?_HoRTDIFinalVisibility.Load(int3(id.xy,0)):(RAB_GetConservativeVisibility(surface,sample)?1:0);
+        if(_HoRTDIFinalVisibilityEnabled!=0&&HoDIUseAuxiliary())visibility=(uint)round(visibility*7)&1;
+        RTXDI_StoreVisibilityInDIReservoir(reservoir,visibility.xxx,false);
+        float3 radiance=sample.radiance*visibility*RTXDI_GetDIReservoirInvPdf(reservoir)/max(sample.solidAnglePdf,1e-12);
+        float3 L;float distance;RAB_GetLightDirDistance(surface,sample,L,distance);
+        selectedDistance=min(distance,65504);
+        if(dot(L,surface.geoNormal)>0)
+        {
+            // Keep the reference DI Lambert lighting before albedo modulation.
+            // Dividing a modulated signal cannot recover zero color channels.
+            diffuseLighting=Lambert(surface.normal,-L)*radiance;
+            diffuse=Lambert(surface.normal,-L)*surface.material.diffuseAlbedo*radiance;
+            if(surface.material.roughness>=.03)specular=GGX_times_NdotL(surface.viewDir,L,surface.normal,max(.03,surface.material.roughness),surface.material.specularF0)*radiance;
+        }
+    }
+    if(HoDIUseAuxiliary()&&RAB_IsSurfaceValid(surface))
+    {
+        RTXDI_RandomSamplerState rng=RTXDI_InitRandomSampler(id.xy,(uint)_HoRTDIFrameIndex,0x6f527bbdu);
+        float3 auxiliaryD=0,auxiliaryS=0,auxiliaryLighting=0;
+        float2 auxiliaryStrata=0;
+        if(_HoRTDIFinalVisibilityEnabled==0)auxiliaryStrata=HoDIAuxiliaryStrata(rng);
+        for(uint draw=0;draw<2;draw++)
+        {
+            RTXDI_DIReservoir extra;
+            if(_HoRTDIFinalVisibilityEnabled!=0)
+            {if(draw==0)extra=RTXDI_LoadDIReservoir(HoDILayout(),id.xy,2);else extra=HoDIUnpackRuntimeAuxiliary(_HoRTDIRuntimeAuxiliarySecondary[id.y*(uint)_HoRTDIFrame.x+id.x]);}
+            else extra=HoDIFreshAuxiliary(auxiliaryStrata[draw]);
+            if(RTXDI_IsValidDIReservoir(extra))
+            {
+                RAB_LightSample sample=RAB_SamplePolymorphicLight(RAB_LoadLightInfo(RTXDI_GetDIReservoirLightIndex(extra),false),surface,RTXDI_GetDIReservoirSampleUV(extra));
+                float visibility;
+                if(_HoRTDIFinalVisibilityEnabled!=0)visibility=((uint)round(_HoRTDIFinalVisibility.Load(int3(id.xy,0))*7)>>(draw+1))&1;
+                else visibility=RAB_GetConservativeVisibility(surface,sample)?1:0;
+                RTXDI_StoreVisibilityInDIReservoir(extra,visibility.xxx,false);
+                if(draw==0&&_HoRTDIFinalVisibilityEnabled==0)RTXDI_StoreDIReservoir(extra,HoDILayout(),id.xy,2);
+                float3 radiance=sample.radiance*visibility*extra.weightSum/max(sample.solidAnglePdf,1e-12);float3 L;float distance;RAB_GetLightDirDistance(surface,sample,L,distance);
+                if(dot(L,surface.geoNormal)>0){float3 lighting=Lambert(surface.normal,-L)*radiance;auxiliaryLighting+=lighting;auxiliaryD+=lighting*surface.material.diffuseAlbedo;if(surface.material.roughness>=.03)auxiliaryS+=GGX_times_NdotL(surface.viewDir,L,surface.normal,max(.03,surface.material.roughness),surface.material.specularF0)*radiance;}
+            }
+        }
+        float primaryWeight=RTXDI_GetDIReservoirLightIndex(reservoir)==HO_RTDI_ENVIRONMENT_LIGHT_INDEX?1:.5;
+        diffuse=primaryWeight*diffuse+.25*auxiliaryD;specular=primaryWeight*specular+.25*auxiliaryS;diffuseLighting=primaryWeight*diffuseLighting+.25*auxiliaryLighting;
+    }
+    float receiver=RAB_IsSurfaceValid(surface)?1:0;
+    #if !defined(HO_RTDI_NRD_ACTIVE)
+    _HoRTDIDiffuse[id.xy]=float4(diffuse,receiver);_HoRTDISpecular[id.xy]=float4(specular,receiver);
+    #endif
+    #if defined(HO_RTDI_NRD_ACTIVE)
+    float4 diffSignal=0,specSignal=0,normal=0;float viewZ=1000000;
+    if(receiver>.5)
+    {
+        float3 diffFactor,specFactor;
+        NRD_MaterialFactors(surface.normal,surface.viewDir,surface.material.diffuseAlbedo,surface.material.specularF0,surface.material.roughness,diffFactor,specFactor);
+        float3 specLighting=specular/specFactor;
+        // Match front-end non-finite rejection, but defer its FP16 clamp until
+        // the full-frame peak has selected a common linear signal domain.
+        diffSignal=float4(all(isfinite(diffuseLighting))?max(0,diffuseLighting):0,selectedDistance);
+        specSignal=float4(all(isfinite(specLighting))?max(0,specLighting):0,selectedDistance);
+        float3 peakRGB=max(diffSignal.rgb,specSignal.rgb);
+        peak=asuint(max(peakRGB.r,max(peakRGB.g,peakRGB.b)));
+        // Separate zero-diffuse receivers (including full metals) from active
+        // diffuse. IDs 0/3 survive our FP16 normal transport exactly.
+        float materialClass=all(surface.material.diffuseAlbedo==0)?3:0;
+        normal=NRD_FrontEnd_PackNormalAndRoughness(surface.normal,surface.material.roughness,materialClass);
+        viewZ=surface.viewDepth;
+    }
+    _HoRTDINrdDiffuse[id.xy]=diffSignal;_HoRTDINrdSpecular[id.xy]=specSignal;
+    _HoRTDINrdNormal[id.xy]=normal;_HoRTDINrdViewZ[id.xy]=viewZ;
+    #endif
+    #if defined(HO_RTDI_NRD_ACTIVE)
+    RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,1);
+}
+[numthreads(8,8,1)]void SaveHistory(uint3 id:SV_DispatchThreadID)
+{
+    if(!HoDIInside(id.xy))return;
+    RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);
+    RTXDI_DIReservoir reservoir=RTXDI_LoadDIReservoir(HoDILayout(),id.xy,1);
+    #endif
+    RTXDI_StoreDIReservoir(reservoir,HoDILayout(),id.xy,0);
+    HoRTDIPrimaryHistory history=(HoRTDIPrimaryHistory)0;
+    if(RAB_IsSurfaceValid(surface))
+    {
+        float2 uv=(float2(id.xy)+.5)/_HoRTDIFrame.xy;
+        history.depth=asuint(SAMPLE_TEXTURE2D_X_LOD(_HoSurfaceAssociationSurfaceDepth,sampler_PointClamp,uv,0).r);
+        history.shadingNormal=HoDIPackNormal(surface.normal);history.geometricNormal=HoDIPackNormal(surface.geoNormal);
+        history.diffuse=HoDIPack(float4(surface.material.diffuseAlbedo,1));history.specular=HoDIPack(float4(surface.material.specularF0,surface.material.roughness));
+    }
+    _HoRTDIHistory[id.y*(uint)_HoRTDIFrame.x+id.x]=history;
+}
+[numthreads(8,8,1)]void Shade(uint3 id:SV_DispatchThreadID){uint peak;HoDIShade(id,peak);}
+[numthreads(8,8,1)]void ShadeNRD(uint3 id:SV_DispatchThreadID,uint index:SV_GroupIndex)
+{
+    #if defined(HO_RTDI_NRD_ACTIVE)
+    if(index==0)HoDINrdGroupPeak=0;
+    GroupMemoryBarrierWithGroupSync();
+    uint peak;HoDIShade(id,peak);
+    InterlockedMax(HoDINrdGroupPeak,peak);
+    GroupMemoryBarrierWithGroupSync();
+    if(index==0)InterlockedMax(_HoRTDINrdScale[0],HoDINrdGroupPeak);
+    #endif
+}
+[numthreads(8,8,1)]void ResolveNRD(uint3 id:SV_DispatchThreadID)
+{
+    #if defined(HO_RTDI_NRD_ACTIVE)
+    if(!HoDIInside(id.xy))return;
+    RAB_Surface surface=RAB_GetGBufferSurface(id.xy,false);float3 diffuse=0,specular=0;
+    if(RAB_IsSurfaceValid(surface))
+    {
+        float3 diffFactor,specFactor;
+        NRD_MaterialFactors(surface.normal,surface.viewDir,surface.material.diffuseAlbedo,surface.material.specularF0,surface.material.roughness,diffFactor,specFactor);
+        float inverseScale=rcp(asfloat(_HoRTDINrdScale[1]));
+        diffuse=_HoRTDINrdOutputDiffuse[id.xy].rgb*inverseScale*surface.material.diffuseAlbedo;specular=_HoRTDINrdOutputSpecular[id.xy].rgb*inverseScale*specFactor;
+    }
+    float receiver=RAB_IsSurfaceValid(surface)?1:0;
+    _HoRTDINrdOutputDiffuse[id.xy]=float4(diffuse,receiver);_HoRTDINrdOutputSpecular[id.xy]=float4(specular,receiver);
+    #endif
+}
