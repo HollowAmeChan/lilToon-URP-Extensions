@@ -309,3 +309,5 @@ Tests~/RTGI/Seeds：四真实attempt metadata、完整日志、239精确source h
 可在自有Unity项目Assets生成原HoRTGI.compute独立body（include改绝对package路径以保持原义），只替换Final那一行store的value；保留所有kernels/pragmas，reflection暂换gi私有compute shader，finally恢复。不要动raytrace/SDK/源Shader/默认参数，不同时改NRD单位或Jacobian。先小资格核对非TS不受影响/实际kernel/原还原，再按相同8seed配对baseline/candidate TS看raw与参考/filtered/方差/空间细节/成本；不要仅最有利点或更方便门槛。若有收益再生产及RG/compat/Cutout/动态/Player回归，无收益就撤回记禁试。原质量/static非零base F39/moment-HDR/正常camera/1080/完整预算仍缺，goal active。
 
 019提交白名单：Editor/RTGI/HoRTGISeedAudit.cs/meta与HoRTGICastleValidation.cs；Tests~/RTGI/Seeds；RTGI README/过程/禁试/交接/实施规划。其它Ho-GD plan仍未跟踪，不纳入。每步review、实证、收益复盘、过滤提交、失败禁令/交接继续。
+
+019已按白名单过滤提交`4019bd7`，Seeds verifier提交后再次通过；Runtime无diff、index空、四个本任务进程均已结束，仅他人Ho-GD plan未跟踪。下一轮直接020仅Editor的pre-spatial history候选，不重跑19矩阵凑样本；原5%/static/HDR/正常camera/1080/完整预算继续未完成，goal active。

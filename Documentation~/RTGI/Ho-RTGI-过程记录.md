@@ -415,3 +415,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **接纳/成本/过滤：** 接纳Editor诊断、四attempt/完整日志/239源hash（97共享017 blob）、逐字节gzip原JSON及可重算分析、README/过程/禁试/交接/计划。约3.44MB，verifier四实际进程/536870912 receiver样本计数/逐字段SHA/旧失败/全部5%失败通过。没有新Player、compat或产品GPU成本证明，CPU ReadPixels耗时不作预算。当前Runtime无diff，全部本任务进程结束、activeProcess=null，别人的Ho-GD plan不纳入。
 
 **下一项020候选（尚未实施）：** 参考ReSTIRGIContext.cs已核对，其TS也反馈空间输出，Ho不是因此被证明索引集成错误。以019组合偏移为依据，Editor私有compute仅把Final写history0的值换为pre-spatial buffer2（当前帧照旧读1做T/S/最终可见性/NRD）。在Final写避免Temporal读0/写0竞态，保留当前T/S功能，不新增reservoir；有一次32 B/receiver额外读取要实测。先隔离生成original body单行候选/同seed配对，验证raw/reference、filtered、方差/细节与GPU成本，再决定是否可进入Runtime及双路径/Player/动态回归。禁止直接关闭T/S当完整交付，或同时改gain/sigma/Jacobian；F27/31/33/35/36/37/39继续。原质量、static base、HDR/正常camera/1080/完整预算未完，goal active。
+
+019已按白名单过滤提交`4019bd7`，Seeds verifier提交后再次通过；Runtime无diff、index空、四个本任务进程均已结束，仅他人Ho-GD plan未跟踪。下一轮直接020仅Editor的pre-spatial history候选，不重跑19矩阵凑样本；原5%/static/HDR/正常camera/1080/完整预算继续未完成，goal active。
