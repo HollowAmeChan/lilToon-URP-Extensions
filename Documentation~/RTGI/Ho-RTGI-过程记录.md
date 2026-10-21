@@ -565,3 +565,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **成本/过滤/交接：** CPU导出与读回是诊断开销，不进入产品也不作GPU成本；Tests~/RTGI/ProductionSeeds约12.6MiB，239source仅5新blob、3完整log、15原capture（3JSON+12maps，2同map归档复用）、所有原门槛/分析/encoding修复/verify均过。Runtime无diff、全部自有进程已结束、active=null。白名单三Editor审计helper、新证据与RTGI六文档；他人Ho-GD计划不纳入。027先新局部坐标同域无复用高样本参考+primary/guide核对，再决定算法，不能拿定位证据当画质修复。原全域/phase/F39/static/复杂动态/HD完整预算继续，目标active。
 
 026最终静态review另修进度JSON标签：Snapshot(false)传显式modes，避免TS-only进度仍显示旧四模式；final Snapshot(true,modes)/GPU调用/实际report未改。reporting-review绑定一行精确字节替换，verifier区分历史实跑源与该纯报告修正；复用已编译签名/局部变量，不重跑GPU矩阵、不声称原run使用新字节。
+
+026已按白名单过滤提交`ecd9c6a`，ProductionSeeds verifier提交后再次通过（保留原pooled质量失败，3个实际进程均结束）。最终progress标签纯报告修正另有精确字节review，未冒称GPU重跑。index空、Runtime无diff，仅他人Ho-GD计划未跟踪。027直接新x86六位置及相邻控制的同域无复用高样本/primary/guide，不把raw当真值，不重复本轮完整8seed或旧四模式，不调门槛；原质量/F39/复杂动态/HD预算与目标active继续。

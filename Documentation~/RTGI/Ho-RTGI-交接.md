@@ -431,3 +431,5 @@ first4seed探索top12、last4核验全部同点：探索首位(221,184)从.01454
 编码修正：初脚本默认Windows locale使Castle源为GBK；原两实际run字节完整归档，修正为显式UTF8且Unicode文本同，44052重编译/场景资格0、两个publication map逐字节同。encoding-repair含源/图SHA；不要把历史run换标新source。后续读写显式UTF8。Tests~/RTGI/ProductionSeeds约12.6MiB，239source仅5新blob、3完整log、3JSON+12maps lossless gzip（两同map复用）、analysis/verify过。最终qualification除一行progress选中模式标签修正外对应当前代码；reporting-review以精确字节替换绑定该纯报告修正（false传modes，复用已编译签名，不改GPU/最终report）。matrix使用旧编码字节，文字语义不变及实际支持域已证。所有自有进程终态、active=null；Runtime无diff，仅他人Ho-GD计划排除。
 
 **027直接动作：** 先复读016 Spatial README关于有限窗raw不能当物理损失、017 DenseReference同域MC协议。对上述6个x86位置及预先固定相邻x85/x87控制点取得无复用高样本一跳参考及primary/normal/depth/albedo/输入guide证据，核对新像素与相同材质/光/sky/AS域，不拿旧参考15点代替新坐标。参考若未收敛则保留未定，不能用filtered/raw直接定性NRD错误。随后才考虑局部阶段/机制候选，拒绝gain/宽sigma/单位格式扫描/重复四模式大矩阵。原全图5%/所有phase、static非零base/F39、复杂动态与1080/完整Player预算继续，目标active。
+
+026已按白名单过滤提交`ecd9c6a`，ProductionSeeds verifier提交后再次通过（保留原pooled质量失败，3个实际进程均结束）。最终progress标签纯报告修正另有精确字节review，未冒称GPU重跑。index空、Runtime无diff，仅他人Ho-GD计划未跟踪。027直接新x86六位置及相邻控制的同域无复用高样本/primary/guide，不把raw当真值，不重复本轮完整8seed或旧四模式，不调门槛；原质量/F39/复杂动态/HD预算与目标active继续。
