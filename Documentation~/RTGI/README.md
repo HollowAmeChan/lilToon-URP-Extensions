@@ -33,3 +33,5 @@
 步骤017发现并修复大合并蒙皮mesh的AS范围越界：自有pose absolute indices/base0使同场景D3D12错误14→0，顶点字节与三角元组保留；Editor双路径/真实UV命中、两个315请求Release Player过。合法AS重采后15/16选点收敛，暗点8M仍不确定；旧非法AS参考不接纳。全图原5%仍失败，静态非零base尚须安全镜像，正常camera/1080预算继续，见[证据](../../Tests~/RTGI/DenseReference/README.md)。
 
 并行任务共享工作区，提交必须列明路径。避免占用其他任务的验证工程；同一个 Unity 工程一次只能运行一个实例。
+
+步骤018静态owned镜像实际157功能checks完成，但实例3→5增长有scratch debug错误；原Ho及直接Unity API均能复现，初始5干净。多轮无收益方案已撤回、F39搁置，产品保留017实现，static非零base仍未交付。仅接纳最小复现及[失败/恢复证据](../../Tests~/RTGI/StaticMesh/README.md)，不声称具体上游根因。下一项转合法AS古堡独立seed/T/S/none质量对照，所有原质量/应用/预算缺口保留，goal active。

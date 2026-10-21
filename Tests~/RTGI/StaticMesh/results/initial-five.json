@@ -1,0 +1,23 @@
+{
+    "pass": true,
+    "compatibility": false,
+    "error": "",
+    "copies": 0,
+    "readbacks": 0,
+    "checks": [
+        "D3D12 inline ray tracing is required for the hardware validation",
+        "Scene compute shader missing",
+        "Missing shader Universal Render Pipeline/Unlit",
+        "Missing shader Universal Render Pipeline/Unlit",
+        "Missing shader Universal Render Pipeline/Unlit",
+        "initial five instances",
+        "expected hit 0: expected 1, got 1",
+        "distance 0: expected 3, got 3",
+        "unknown hit instance",
+        "wrong instance/submesh/material association",
+        "invalid barycentrics/primitive",
+        "barycentric X: expected 0.09999997, got 0.1",
+        "barycentric Y: expected 0.1, got 0.1",
+        "barycentric Z: expected 0, got 0"
+    ]
+}

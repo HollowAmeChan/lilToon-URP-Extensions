@@ -216,3 +216,5 @@
 - 本地主要参考：`.codex-research/UnityPathTracing-6000.3.15/Assets/Shaders/RayTracing/GI/`，以及仓库固定的 RTXDI / NRD 源码与 provenance。
 - [NVIDIA RTXDI ReSTIR GI 集成说明](https://github.com/NVIDIA-RTX/RTXDI/blob/main/Doc/RestirGI.md)：次级表面、初始方向 PDF、radiance、重采样与方向性限制。网页用于核对原理，不自动升级本地固定 SDK。
 - [NVIDIA NRD 集成说明](https://github.com/NVIDIA-RTX/NRD/blob/master/README.md)：信号 demodulation、hit distance 与各 denoiser 的输入约定。具体实现以本地固定版本为准。
+
+步骤018补充：静态镜像157功能checks后仍有AS scratch增长错误，候选拒绝并从产品撤回。直接Unity API也复现初始5 debug0、先3后5 debug1，尚未定位具体上游根因；Static/重建/构建flags/延迟/update调参均无收益，F39搁置。static非零base支持仍缺，下一项先在017合法古堡AS域做独立seed与T/S/none模式质量对照，不能用诊断通过替代功能/画质/预算交付。原目标和六项强制要求不变，active。

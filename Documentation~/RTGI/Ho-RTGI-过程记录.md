@@ -377,3 +377,21 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **事后review/过滤：** 接纳共享owned-skin AS规范化、实际回归/Player和受控参考工具；不接纳旧非法AS真值、剩余暗控制点、全图质量或“device removal唯一原因已证实”。静态MeshRenderer非零baseVertex仍须自有镜像，不能泛化skin修复。所有尝试源按SHA去重保存，当前root runner仅小debug复核，移除旧不安全长循环入口。下一项先补静态base安全及只读源，再用合法AS独立seed评估复用模式/过滤；原F27/F31/F33/F35/F36和全部5%失败继续，正常camera/1080/完整预算未完，goal active。
 
 步骤017过滤提交：`5456782`。提交后DenseReference verifier再次过，owned-skin AS错误14→0、Editor/两Release Player证据保留；index空、进程结束。下一项018静态非零base与只读源的安全镜像，不泛化已修范围，完整goal active。
+
+## 018：静态非零baseVertex安全镜像（进行中）
+
+**事前review：** 017只修自有skin快照；静态MeshRenderer仍直接注册源Mesh，非零base同样可能形成非法AS。必须保留该几何支持域，不能跳过它制造漏光，也不修改源/raster。计划按source Mesh缓存自有canonical镜像，base0继续零拷贝；所有renderer共享同一source时复用镜像，变换/材质/过滤/identity沿原合同，MarkGeometryDirty/释放正确清理。
+
+**非readable路径：** 先实际核对Unity readonly clone/index写入能力，避免假定Editor可读。若不能原样clone后改index，GPU只读回拷完整vertex streams/index再创建owned readable镜像；验证格式/offset/stride、顶点原字节、absolute三角元组、UV/法线/alpha、source可读性与内容不变。回拷只在创建/显式dirty，稳定帧不能阻塞GPU或重复复制。先小fixture和debug层0，再完整DI/GI/Player与生命周期/成本；原质量/预算未完，goal active。
+
+### 018事后review（2026-10-21）：候选拒绝，原生增长问题复现
+
+实现了按source缓存的owned静态镜像，重用绝对索引规范化；readonly源只回读indices，clone顶点不动。共享缓存/稳定不复制/source dirty/empty等157功能checks实际完成，但首次3→5实例增长出现D3D12 scratch范围错误，整个候选不验收。没有完成native UV/Cutout、nonreadable Player与成本资格，不把功能报告pass当合格支持。早期clone capability原run元数据被覆盖，报告保留并明确不具独立验收资格。
+
+**有界失败与停止：** 原Ho未加mirror的共享/独立源增长同样各1条错误；初始5个干净，分Editor tick增长仍失败。Static mode、重建AS、PreferFastBuild、MinimizeMemory、跳过新增UpdateInstanceGeometry依次无收益，全部撤回。FastBuild错误范围2432 B，其余2560 B；没有继续盲调容量或参数。运行元数据/debugErrors原样保留，暂时移除debug拒绝的早期runner不被追认为通过。
+
+**最后定位收益：** 新Editor/RayTracing/HoRTAccelerationGrowthProbe直接使用Unity API，不调用HoRTScene或GI。Unity6000.3.15f1/RTX4060/D3D12 debug真实PID19372初始5个build1次exit0/API0；PID41084先3后5/build2次exit0但scratch2560 B错误1。root runner恢复严格debug拒绝，实际脚本exit1。定位到“不依赖Ho镜像的原生API增长复现”，尚未证明具体引擎/驱动根因；没有光线命中或画质/性能结论。
+
+**过滤/成本/接纳：** Runtime HoRTScene/HoRTRayMeshIndices和共享Editor场景测试仅本步骤自有修改按6ed9b41恢复；新mirror/partial/copyProbe移出产品。仅接纳独立Editor最小复现、Tests~/RTGI/StaticMesh证据与文档。rejected-candidate.patch对基线git apply --check通过；138份去重精确源码、15个完整实际进程日志约2.06MB，source/log index与review绑定。verify_validation.py通过表示失败/恢复证据自洽，不是static支持通过。所有本任务进程结束，run.activeProcess=null；无新Player或完整画面回归声明，017蒙皮修复保留。F39搁置静态镜像及无收益AS调参，静态非零base支持仍未修复。
+
+**下一步019：** 使用017已确认合法AS的原古堡域，先核对本机RTX和现有M0对T/S/none的seed/权重合同，再做有界独立seed的main raw误差对照；使用已经收敛的参考子集，保留暗点不确定、全图5%失败及selection bias，不能据选点接纳全图。先区分有限窗口方差/系统偏差，再决定生产采样或降噪改动。不重开F27/31/33/35/36/37/39；正常camera/1080/完整预算继续，goal active。所有用户要求继续约束后续步骤。

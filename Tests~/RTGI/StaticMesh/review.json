@@ -1,0 +1,19 @@
+{
+  "step": 18,
+  "goalStatus": "active",
+  "staticCanonicalProductionRetained": false,
+  "staticBaseVertexQualified": false,
+  "scratchRootCauseProven": false,
+  "nativeUnityApiReproducesScratch": true,
+  "nativeInitialFiveDebugErrors": 0,
+  "nativeThreeToFiveDebugErrors": 1,
+  "scratchRangeBytes": 2560,
+  "restoredToGitRevision": "6ed9b418f290291f3b339126be3570d38182dc11",
+  "restoredSourceHashes": {
+    "Runtime/RayTracing/HoRTScene.cs": "2CDF2AB3781A14D1CDED399717B88F9AEBA6D3DBCDD69135C1D52EFCE1DC6D29",
+    "Runtime/RayTracing/HoRTRayMeshIndices.cs": "F34F4512C3E51FF328316C96AF48CA3547A27CADBF327FBA8D724624B7F79D49",
+    "Editor/RayTracing/HoRTSceneValidation.cs": "A791C875D5871A8FF819A957929A8B60C875199BB7A4BDB7E86148A1D237A510"
+  },
+  "candidatePatchSha256": "4436A10935F5D66E7AD1CE548235F6135685177B60A0591A85BBA9E331E080FB",
+  "next": "Same legal-AS castle, bounded independent-seed main T/S/none comparison; static mirror deferred pending a concrete new AS-growth diagnostic or host fix. No blind flag or capacity tuning."
+}

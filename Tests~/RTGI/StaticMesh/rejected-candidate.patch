@@ -1,0 +1,371 @@
+--- a/Runtime/RayTracing/HoRTScene.cs
++++ b/Runtime/RayTracing/HoRTScene.cs
+@@ -26,6 +26,9 @@
+         private readonly Dictionary<int, HoRTSkinnedMesh> skinnedMeshes = new();
+         private readonly HashSet<int> seenSkinned = new();
+         private readonly List<int> removedSkinned = new();
++        private readonly Dictionary<int,HoRTStaticMesh> staticMeshes=new();
++        private readonly HashSet<int> seenStatic=new();
++        private readonly List<int> removedStatic=new();
+         private readonly Func<Material, Material> secondaryMaterial;
+         private readonly Func<Material, bool> supportsCutout;
+         internal readonly List<string> Rejections = new();
+@@ -33,7 +36,7 @@
+         private GraphicsBuffer instanceBuffer;
+         private InstanceData[] instanceData;
+         private uint nextIdentity = 1, nextMaterial = 1;
+-        private bool asDirty = true, metadataDirty = true, disposed;
++        private bool asDirty = true, metadataDirty = true, disposed,forceGeometryRefresh;
+         internal long Lifetime { get; } = Interlocked.Increment(ref nextLifetime);
+         internal uint Revision { get; private set; } = 1;
+         // Pose/transform updates invalidate cached ray visibility, while this
+@@ -44,6 +47,9 @@
+         internal int CutoutCount { get; private set; }
+         internal int SkinnedMeshCount => skinnedMeshes.Count;
+         internal uint SkinnedBakeCount { get; private set; }
++        internal int StaticMeshCount=>staticMeshes.Count;
++        internal uint StaticMeshCopyCount{get;private set;}
++        internal uint StaticIndexReadbackCount{get;private set;}
+         internal bool IsAvailable => !disposed && acceleration != null;
+         internal static bool IsSupported => SystemInfo.graphicsDeviceType == GraphicsDeviceType.Direct3D12 && SystemInfo.supportsInlineRayTracing;
+ 
+@@ -85,14 +91,15 @@
+             this.secondaryMaterial = secondaryMaterial;
+             this.supportsCutout = supportsCutout;
+             if (!IsSupported) return;
+-            acceleration = new RayTracingAccelerationStructure(new RayTracingAccelerationStructure.Settings
++            acceleration = CreateAcceleration();
++            EnsureMetadataCapacity();
++        }
++        private static RayTracingAccelerationStructure CreateAcceleration()=>new RayTracingAccelerationStructure(new RayTracingAccelerationStructure.Settings
+             {
+                 managementMode = RayTracingAccelerationStructure.ManagementMode.Manual,
+                 rayTracingModeMask = RayTracingAccelerationStructure.RayTracingModeMask.Everything,
+                 buildFlagsStaticGeometries = RayTracingAccelerationStructureBuildFlags.PreferFastTrace
+             });
+-            EnsureMetadataCapacity();
+-        }
+ 
+         // Call before graph recording, never between Read and its execution. The list is the
+         // world set, not camera culling results. Mesh content edits require MarkGeometryDirty.
+@@ -101,7 +108,7 @@
+             ThrowIfDisposed();
+             if (renderers == null) throw new ArgumentNullException(nameof(renderers));
+             if (mask > 0xff) throw new ArgumentOutOfRangeException(nameof(mask), "RT instance masks are eight bits.");
+-            Rejections.Clear(); seen.Clear(); seenRenderers.Clear(); seenSkinned.Clear();
++            Rejections.Clear(); seen.Clear(); seenRenderers.Clear(); seenSkinned.Clear();seenStatic.Clear();
+             HashSet<Material> excluded=null;
+             if(excludedMaterials!=null&&excludedMaterials.Count>0)
+             {excluded=new HashSet<Material>(MaterialReferences.Instance);foreach(var material in excludedMaterials)if(material!=null)excluded.Add(material);}
+@@ -142,6 +149,17 @@
+                         if (poseChanged) SkinnedBakeCount++;
+                     }
+                 }
++                if(rigid!=null&&HoRTStaticMesh.NeedsCanonical(mesh))
++                {
++                    bool eligible=false;for(int i=0;i<materials.Length;i++)if(excluded==null||!excluded.Contains(materials[i]))eligible|=Opaque(materials[i])||(supportsCutout!=null&&supportsCutout(materials[i]));
++                    if(eligible)
++                    {
++                        int id=sourceMesh.GetInstanceID();
++                        if(!staticMeshes.TryGetValue(id,out var copy)||!ReferenceEquals(copy.source,sourceMesh))
++                        {copy?.Dispose();copy=new HoRTStaticMesh(sourceMesh);staticMeshes[id]=copy;StaticMeshCopyCount++;if(copy.usedGpuReadback)StaticIndexReadbackCount++;}
++                        seenStatic.Add(id);mesh=copy.mesh;
++                    }
++                }
+                 for (int submesh = 0; submesh < mesh.subMeshCount; ++submesh)
+                 {
+                     var material = materials[submesh]; var descriptor = mesh.GetSubMesh(submesh);
+@@ -167,13 +185,13 @@
+                         var config = new RayTracingMeshInstanceConfig(mesh, (uint)submesh, hitMaterial)
+                         {
+                             mask = mask, enableTriangleCulling = false,
+-                            // Allow explicit geometry refresh instead of reusing a static BLAS after a Mesh edit.
++                            // Keep explicit geometry refresh for source/pose edits.
+                             rayTracingMode = UnityEngine.Experimental.Rendering.RayTracingMode.DynamicGeometryManualUpdate,
+                             subMeshFlags = cutout ? RayTracingSubMeshFlags.Enabled : RayTracingSubMeshFlags.Enabled | RayTracingSubMeshFlags.ClosestHitOnly
+                         };
+                         int handle = acceleration.AddInstance(config, matrix, null, identity);
+                         // Native instance handles are opaque signed tokens, not positive array indices.
+-                        acceleration.UpdateInstanceGeometry(handle);
++                        if(forceGeometryRefresh)acceleration.UpdateInstanceGeometry(handle);
+                         entry = new Entry { renderer = renderer, mesh = mesh, sourceMesh = sourceMesh, material = material, submesh = submesh,
+                             identity = identity, handle = handle, matrix = matrix, triangles = triangles, mask = mask, materialId = MaterialIdentity(material), hitMaterial = hitMaterial, cutout = cutout };
+                         entries.Add(key, entry); identities.Add(identity, entry); asDirty = metadataDirty = true; changed = structureChanged = true;
+@@ -191,6 +209,9 @@
+             foreach (var key in removed) { Remove(key); changed = structureChanged = true; }
+             removedSkinned.Clear(); foreach (var pair in skinnedMeshes) if (!seenSkinned.Contains(pair.Key)) removedSkinned.Add(pair.Key);
+             foreach (int id in removedSkinned) { skinnedMeshes[id].Dispose(); skinnedMeshes.Remove(id); }
++            removedStatic.Clear();foreach(int id in staticMeshes.Keys)if(!seenStatic.Contains(id))removedStatic.Add(id);
++            foreach(int id in removedStatic){staticMeshes[id].Dispose();staticMeshes.Remove(id);}
++            forceGeometryRefresh=false;
+             CutoutCount = 0; foreach (var entry in entries.Values) if (entry.cutout) CutoutCount++;
+             if (changed) { unchecked { Revision++; } EnsureMetadataCapacity(); }
+             if (structureChanged) { unchecked { StructureRevision++; } }
+@@ -226,9 +247,10 @@
+             ThrowIfDisposed();
+             // Explicit full re-registration keeps old primitive IDs from referring to edited topology.
+             if (!IsAvailable) return;
+-            acceleration.ClearInstances(); entries.Clear(); identities.Clear();
++            acceleration.ClearInstances(); entries.Clear(); identities.Clear();forceGeometryRefresh=true;
+             CutoutCount = 0;
+             foreach (var snapshot in skinnedMeshes.Values) snapshot.Dispose(); skinnedMeshes.Clear();
++            foreach(var copy in staticMeshes.Values)copy.Dispose();staticMeshes.Clear();
+             asDirty = metadataDirty = true; unchecked { Revision++; StructureRevision++; }
+         }
+ 
+@@ -304,6 +326,7 @@
+             if (disposed) return; disposed = true;
+             acceleration?.Dispose(); acceleration = null; instanceBuffer?.Dispose(); instanceBuffer = null;
+             foreach (var snapshot in skinnedMeshes.Values) snapshot.Dispose(); skinnedMeshes.Clear();
++            foreach(var copy in staticMeshes.Values)copy.Dispose();staticMeshes.Clear();
+             entries.Clear(); identities.Clear(); materialIds.Clear(); instanceData = null;
+         }
+     }
+--- a/Runtime/RayTracing/HoRTRayMeshIndices.cs
++++ b/Runtime/RayTracing/HoRTRayMeshIndices.cs
+@@ -16,10 +16,18 @@
+             for(int i=0;i<count;i++)needed|=mesh.GetSubMesh(i).baseVertex!=0;
+             if(!needed)return false;
+             if(!mesh.isReadable)throw new InvalidOperationException("Ray index canonicalization requires an owned readable snapshot");
+-            var descriptors=new SubMeshDescriptor[count];var values=new int[count][];int total=0,max=0;
++            var descriptors=new SubMeshDescriptor[count];var values=new int[count][];
++            for(int i=0;i<count;i++){descriptors[i]=mesh.GetSubMesh(i);values[i]=mesh.GetIndices(i,true);}
++            WriteAbsoluteOwned(mesh,descriptors,values);return true;
++        }
++        // Index-buffer replacement also works for an owned non-readable clone;
++        // its immutable vertex streams remain native copies of the source.
++        internal static void WriteAbsoluteOwned(Mesh mesh,SubMeshDescriptor[] descriptors,int[][] values)
++        {
++            int count=descriptors.Length,total=0,max=0;
++            if(count!=values.Length)throw new ArgumentException("Ray index/descriptor count differs");
+             for(int i=0;i<count;i++)
+             {
+-                descriptors[i]=mesh.GetSubMesh(i);values[i]=mesh.GetIndices(i,true);
+                 foreach(int index in values[i]){if(index<0||index>=mesh.vertexCount)throw new InvalidOperationException("Ray snapshot index outside vertex domain");max=Math.Max(max,index);}
+                 total=checked(total+values[i].Length);
+             }
+@@ -34,7 +42,7 @@
+             mesh.SetIndexBufferParams(total,narrow?IndexFormat.UInt16:IndexFormat.UInt32);
+             if(narrow){var packed=new ushort[total];for(int i=0;i<total;i++)packed[i]=(ushort)indices[i];mesh.SetIndexBufferData(packed,0,0,total,flags);}
+             else mesh.SetIndexBufferData(indices,0,0,total,flags);
+-            mesh.SetSubMeshes(descriptors,flags);return true;
++            mesh.SetSubMeshes(descriptors,flags);
+         }
+     }
+ }
+--- a/Editor/RayTracing/HoRTSceneValidation.cs
++++ b/Editor/RayTracing/HoRTSceneValidation.cs
+@@ -30,6 +30,8 @@
+         private static int frame;
+         [StructLayout(LayoutKind.Sequential)]
+         private struct TestRay { public Vector4 originMin, directionMax; public uint mask, pad0, pad1, pad2; }
++        public static void RunStaticBaseVertex(){forceStaticBaseVertex=true;Run();}
++        public static void RunStaticBaseVertexCompatibility(){compatibility=true;RunStaticBaseVertex();}
+         public static void RunCompatibility() { compatibility = true; Run(); }
+         public static void RunUnsupported()
+         {
+@@ -74,11 +76,13 @@
+                 mesh.subMeshCount = 2; mesh.SetTriangles(new[] {0,2,1,2,3,1},0); mesh.SetTriangles(new[] {4,6,5,6,7,5},1); mesh.RecalculateNormals(); mesh.RecalculateBounds();
+                 var multiObject = Keep(new GameObject("RT two submesh object")); multiObject.AddComponent<MeshFilter>().sharedMesh = mesh;
+                 multi = multiObject.AddComponent<MeshRenderer>(); multi.sharedMaterials = new[] { Mat("Universal Render Pipeline/Unlit"), Mat("Universal Render Pipeline/Unlit") };
++                if(forceStaticBaseVertex)mesh.SetTriangles(new[]{0,2,1,2,3,1},1,false,4);
+                 if (forceSkinned) SetupSkinned(multiObject);
+                 // Turning raster cast off must not remove the explicitly registered RT geometry.
+                 multi.shadowCastingMode = ShadowCastingMode.Off;
+                 outside = Keep(GameObject.CreatePrimitive(PrimitiveType.Cube)).GetComponent<Renderer>(); outside.transform.position = new Vector3(6, 0, 0);
+                 outside.sharedMaterial = Mat("Universal Render Pipeline/Unlit"); sources = new[] { multi, outside };
++                if(staticInitial5){var extra=Keep(new GameObject("Initial five instances"));extra.AddComponent<MeshFilter>().sharedMesh=mesh;var extraRenderer=extra.AddComponent<MeshRenderer>();extraRenderer.sharedMaterials=multi.sharedMaterials;extra.transform.position=Vector3.right*30;sources=new[]{multi,outside,extraRenderer};}
+                 scene.Synchronize(sources, 1);
+                 camera = Keep(new GameObject("RT scene test camera")).AddComponent<Camera>(); camera.enabled = false;
+                 camera.transform.position = new Vector3(0,0,-3); camera.farClipPlane = 5; camera.cullingMask = 0;
+@@ -93,12 +97,19 @@
+             try
+             {
+                 if (++frame < 3) { Render(); return; }
++                if(staticDeferredGrowth)
++                {
++                    if(frame==3){var extra=Keep(new GameObject("Deferred five instances"));extra.AddComponent<MeshFilter>().sharedMesh=mesh;var r=extra.AddComponent<MeshRenderer>();r.sharedMaterials=multi.sharedMaterials;extra.transform.position=Vector3.right*30;scene.Synchronize(new[]{multi,outside,r},1);return;}
++                    Require(scene.InstanceCount==5,"deferred five instances");Hit(Render(),0,3,multi,0);Finish(null);return;
++                }
++                if(staticInitial5){Require(scene.InstanceCount==5,"initial five instances");Hit(Render(),0,3,multi,0);Finish(null);return;}
+                 if (forceSkinned) { ValidateSkinned(); Finish(null); return; }
+                 var image = Render(); Require(scene.InstanceCount == 3, "one instance per submesh");
+                 Hit(image, 0, 3, multi, 0); Hit(image, 1, 3, multi, 1); Hit(image, 2, 2.5f, outside, 0);
+                 Status(image, 3, 0, "opposite ray miss"); Hit(image, 4, 3, multi, 0); Status(image, 5, 0, "instance mask");
+                 Hit(image, 6, 2.5f, outside, 0); Status(image, 7, 3, "zero direction rejected");
+                 Require(Pixel(image, 0, 1).a != Pixel(image, 4, 1).a, "two-sided queries must report opposite front-face values");
++                if(forceStaticBaseVertex)ValidateStaticCopyCache(image);else if(staticControlReport)ValidateStaticAliasControl();
+                 uint original = (uint)Pixel(image, 0, 0).g, builds = scene.BuildCount, revision = scene.Revision;
+                 scene.Synchronize(new[] { outside, multi, multi }, 1); Render();
+                 Require(scene.BuildCount == builds && scene.Revision == revision, "unchanged/reordered/duplicate registry should not rebuild");
+@@ -119,7 +130,8 @@
+                 var vertices = mesh.vertices; for (int i=0;i<vertices.Length;i++) vertices[i].z = 1; mesh.vertices = vertices; mesh.RecalculateBounds();
+                 scene.MarkGeometryDirty(); scene.Synchronize(sources,1); image = Render(); Hit(image,0,5,multi,0);
+                 mesh.UploadMeshData(true); scene.MarkGeometryDirty(); scene.Synchronize(sources,1); image = Render(); Hit(image,0,5,multi,0);
+-                scene.Synchronize(Array.Empty<Renderer>()); image = Render(); Require(scene.InstanceCount == 0, "empty registry"); Status(image,0,0,"empty AS miss");
++                if(forceStaticBaseVertex){Require(!mesh.isReadable&&scene.StaticIndexReadbackCount>0,"non-readable static mirror uses GPU index readback");var copies=scene.StaticMeshCopyCount;var reads=scene.StaticIndexReadbackCount;scene.Synchronize(sources,1);Render();Require(copies==scene.StaticMeshCopyCount&&reads==scene.StaticIndexReadbackCount,"non-readable stable frame never repeats readback");}
++                scene.Synchronize(Array.Empty<Renderer>()); image = Render(); Require(scene.InstanceCount == 0, "empty registry");if(forceStaticBaseVertex)Require(scene.StaticMeshCount==0,"empty registry releases static mirrors"); Status(image,0,0,"empty AS miss");
+                 scene.Synchronize(sources,1); Hit(Render(),0,5,multi,0);
+                 scene.MarkGeometryDirty(); scene.Synchronize(sources,1); image = Render(); Hit(image,0,5,multi,0);
+                 Hit(image,1,5,multi,1);
+@@ -148,10 +160,11 @@
+         }
+         private static Color[] Render()
+         {
++            if(forceStaticBaseVertex||staticControlReport)Debug.Log("[HoRTStaticAS] before render instances="+scene.InstanceCount+" build="+scene.BuildCount);
+             RenderPipeline.SubmitRenderRequest(camera,new UniversalRenderPipeline.SingleCameraRequest { destination=target });
+             var previous = RenderTexture.active; var image = new Texture2D(8,4,TextureFormat.RGBAFloat,false,true);
+             try { RenderTexture.active=capture.rt; image.ReadPixels(new Rect(0,0,8,4),0,0); image.Apply(); return image.GetPixels(); }
+-            finally { RenderTexture.active=previous; Object.DestroyImmediate(image); }
++            finally { RenderTexture.active=previous; Object.DestroyImmediate(image);if(forceStaticBaseVertex||staticControlReport)Debug.Log("[HoRTStaticAS] after render instances="+scene.InstanceCount+" build="+scene.BuildCount); }
+         }
+         private static Color Pixel(Color[] image,int ray,int row) => image[row*8+ray];
+         private static void Hit(Color[] image,int ray,float distance,Renderer renderer,int submesh)
+@@ -171,13 +184,13 @@
+         }
+         private static void Status(Color[] image,int ray,int expected,string label) => Near(Pixel(image,ray,2).a,expected,label);
+         private static void Near(float value,float expected,string label) => Require(Mathf.Abs(value-expected)<.002f,label+": expected "+expected+", got "+value);
+-        private static void Require(bool condition,string message) { if(!condition)throw new Exception(message);if(forceSkinnedBaseVertex)baseVertexChecks.Add(message); }
++        private static void Require(bool condition,string message) { if(!condition)throw new Exception(message);if(forceSkinnedBaseVertex)baseVertexChecks.Add(message);if(forceStaticBaseVertex||staticControlReport)staticBaseChecks.Add(message); }
+         private static T Keep<T>(T value) where T:Object { objects.Add(value);return value; }
+         private static Material Mat(string name) { var shader=Shader.Find(name);Require(shader!=null,"Missing shader "+name);return Keep(new Material(shader)); }
+         private static void Finish(Exception error)
+         {
+             EditorApplication.update-=Tick; GraphicsSettings.defaultRenderPipeline=previousDefault; QualitySettings.renderPipeline=previousQuality; ShaderUtil.allowAsyncCompilation=previousAsync;
+-            if(forceSkinnedBaseVertex)SaveBaseVertexReport(error);
++            if(forceSkinnedBaseVertex)SaveBaseVertexReport(error);if(forceStaticBaseVertex||staticControlReport)SaveStaticBaseReport(error);
+             scene?.Dispose(); scene=null; raysBuffer?.Dispose(); raysBuffer=null; capture?.Release(); capture=null;
+             for(int i=objects.Count-1;i>=0;i--)if(objects[i]!=null)Object.DestroyImmediate(objects[i]); objects.Clear();
+             if(error!=null)Debug.LogException(error); EditorApplication.Exit(error==null?0:1);
+--- /dev/null
++++ b/Runtime/RayTracing/HoRTStaticMesh.cs
+@@ -0,0 +1,43 @@
++using System;
++using UnityEngine;
++using UnityEngine.Rendering;
++
++namespace lilToon.URP.Extensions.RayTracing
++{
++    // Owned immutable geometry copy, shared by registrations of the same source
++    // inside one scene service. Source edits follow MarkGeometryDirty's contract.
++    internal sealed class HoRTStaticMesh:IDisposable
++    {
++        internal readonly Mesh source,mesh;
++        internal readonly bool usedGpuReadback;
++        internal static bool NeedsCanonical(Mesh source)
++        {for(int i=0;i<source.subMeshCount;i++)if(source.GetBaseVertex(i)!=0)return true;return false;}
++        internal HoRTStaticMesh(Mesh source)
++        {
++            this.source=source;mesh=UnityEngine.Object.Instantiate(source);mesh.name="Ho RT canonical static: "+source.name;mesh.hideFlags=HideFlags.HideAndDontSave;
++            try
++            {
++                if(source.isReadable){HoRTRayMeshIndices.CanonicalizeOwned(mesh);return;}
++                // Read only the index allocation. Do not change source buffer
++                // targets, Read/Write flags, vertex streams or raster ownership.
++                using var buffer=source.GetIndexBuffer();if(buffer==null)throw new InvalidOperationException("Non-readable ray source has no GPU index allocation");
++                var request=AsyncGPUReadback.Request(buffer);request.WaitForCompletion();if(request.hasError)throw new InvalidOperationException("Non-readable ray index readback failed");
++                usedGpuReadback=true;
++                int count=source.subMeshCount;var descriptors=new SubMeshDescriptor[count];var indices=new int[count][];
++                if(source.indexFormat==IndexFormat.UInt16)
++                {
++                    var data=request.GetData<ushort>();
++                    for(int i=0;i<count;i++){descriptors[i]=source.GetSubMesh(i);var d=descriptors[i];if(d.indexStart<0||d.indexCount<0||(long)d.indexStart+d.indexCount>data.Length)throw new InvalidOperationException("Source submesh outside GPU index allocation");indices[i]=new int[d.indexCount];for(int j=0;j<d.indexCount;j++)indices[i][j]=checked(data[d.indexStart+j]+d.baseVertex);}
++                }
++                else
++                {
++                    var data=request.GetData<uint>();
++                    for(int i=0;i<count;i++){descriptors[i]=source.GetSubMesh(i);var d=descriptors[i];if(d.indexStart<0||d.indexCount<0||(long)d.indexStart+d.indexCount>data.Length)throw new InvalidOperationException("Source submesh outside GPU index allocation");indices[i]=new int[d.indexCount];for(int j=0;j<d.indexCount;j++)indices[i][j]=checked((int)data[d.indexStart+j]+d.baseVertex);}
++                }
++                HoRTRayMeshIndices.WriteAbsoluteOwned(mesh,descriptors,indices);
++            }
++            catch{UnityEngine.Object.DestroyImmediate(mesh);throw;}
++        }
++        public void Dispose()=>UnityEngine.Object.DestroyImmediate(mesh);
++    }
++}
+--- /dev/null
++++ b/Editor/RayTracing/HoRTStaticSceneValidation.cs
+@@ -0,0 +1,40 @@
++using System;
++using System.Collections.Generic;
++using System.IO;
++using System.Linq;
++using UnityEngine;
++
++namespace lilToon.URP.Extensions.RayTracing
++{
++    public static partial class HoRTSceneValidation
++    {
++        static bool staticDeferredGrowth;public static void RunStaticDeferredGrowth(){staticDeferredGrowth=true;staticControlReport=true;Run();}
++        static bool staticInitial5;public static void RunStaticInitial5(){staticInitial5=true;staticControlReport=true;Run();}
++        static bool staticUniqueControl;public static void RunStaticAliasControl(){staticControlReport=true;Run();}public static void RunStaticUniqueControl(){staticUniqueControl=true;staticControlReport=true;Run();}
++        static bool staticControlReport;public static void RunStaticControl(){staticControlReport=true;Run();}
++        static bool forceStaticBaseVertex;static readonly List<string> staticBaseChecks=new();
++        static void ValidateStaticCopyCache(Color[] image)
++        {
++            uint id=(uint)Pixel(image,1,0).g;Require(scene.TryResolve(id,out var instance),"static mirror identity resolves");var copy=instance.mesh;
++            Require(copy!=mesh&&mesh.GetBaseVertex(1)==4&&copy.GetBaseVertex(1)==0,"static canonical copy preserves original source base");
++            Require(copy.GetIndices(1,false).SequenceEqual(new[]{4,6,5,6,7,5}),"static canonical copy preserves absolute triangle tuple");
++            Require(scene.StaticMeshCount==1&&scene.StaticMeshCopyCount==1&&scene.StaticIndexReadbackCount==0,"readable static source creates one copy without GPU readback");
++            uint copies=scene.StaticMeshCopyCount,builds=scene.BuildCount,revision=scene.Revision;
++            scene.Synchronize(sources,1);Render();Require(scene.StaticMeshCopyCount==copies&&scene.BuildCount==builds&&scene.Revision==revision,"stable static frame reuses copy and AS");
++            var other=Keep(new GameObject("Shared static mesh registration"));other.AddComponent<MeshFilter>().sharedMesh=mesh;var renderer=other.AddComponent<MeshRenderer>();renderer.sharedMaterials=multi.sharedMaterials;other.transform.position=Vector3.right*30;
++            scene.Synchronize(new[]{multi,outside,renderer},1);Render();Require(scene.StaticMeshCount==1&&scene.StaticMeshCopyCount==copies,"two renderers share one source mirror");
++            scene.Synchronize(sources,1);Render();Require(scene.StaticMeshCount==1&&scene.StaticMeshCopyCount==copies,"removing one consumer retains shared mirror");
++        }
++        static void ValidateStaticAliasControl()
++        {
++            var other=Keep(new GameObject("Static alias growth control"));var source=staticUniqueControl?Keep(UnityEngine.Object.Instantiate(mesh)):mesh;other.AddComponent<MeshFilter>().sharedMesh=source;var renderer=other.AddComponent<MeshRenderer>();renderer.sharedMaterials=multi.sharedMaterials;other.transform.position=Vector3.right*30;
++            scene.Synchronize(new[]{multi,outside,renderer},1);Render();scene.Synchronize(sources,1);Render();
++        }
++        [Serializable]sealed class StaticBaseReport{public bool pass,compatibility;public string error;public uint copies,readbacks;public string[] checks;}
++        static void SaveStaticBaseReport(Exception error)
++        {
++            string path=Path.GetFullPath(Path.Combine(Application.dataPath,"../ho-rt-static-"+(staticControlReport?(staticUniqueControl?"unique-control-":"alias-control-"):"basevertex-")+(compatibility?"compat":"rg")));Directory.CreateDirectory(path);
++            File.WriteAllText(Path.Combine(path,"report.json"),JsonUtility.ToJson(new StaticBaseReport{pass=error==null,compatibility=compatibility,error=error?.ToString(),copies=scene?.StaticMeshCopyCount??0,readbacks=scene?.StaticIndexReadbackCount??0,checks=staticBaseChecks.ToArray()},true));
++        }
++    }
++}
+--- /dev/null
++++ b/Editor/RayTracing/HoRTStaticMeshCopyProbe.cs
+@@ -0,0 +1,40 @@
++using System;
++using System.IO;
++using UnityEditor;
++using UnityEngine;
++using UnityEngine.Rendering;
++
++namespace lilToon.URP.Extensions.RayTracing
++{
++    public static class HoRTStaticMeshCopyProbe
++    {
++        [Serializable]sealed class Report{public bool pass,sourceReadable,cloneReadable,cloneWritable;public string error,writeError;public ushort[] sourceIndices,cloneIndices;}
++        public static void Run()
++        {
++            Mesh source=null,clone=null;var report=new Report();int exit=1;string output=null;
++            try
++            {
++                if(!Application.dataPath.Replace('\\','/').Contains("/.codex-research/RTGIValidation/"))throw new Exception("Dedicated GI project required");
++                output=Path.GetFullPath(Path.Combine(Application.dataPath,"../ho-rt-static-copy-probe.json"));
++                source=new Mesh{name="Readonly clone capability"};source.vertices=new[]{Vector3.zero,Vector3.right,Vector3.up,Vector3.one,new Vector3(2,0,0),new Vector3(3,0,0),new Vector3(2,1,0),new Vector3(3,1,0)};
++                source.subMeshCount=2;source.SetTriangles(new[]{0,2,1,2,3,1},0);source.SetTriangles(new[]{0,2,1,2,3,1},1,false,4);source.RecalculateNormals();source.RecalculateBounds();source.UploadMeshData(true);
++                report.sourceReadable=source.isReadable;report.sourceIndices=Read(source);clone=UnityEngine.Object.Instantiate(source);report.cloneReadable=clone.isReadable;
++                try
++                {
++                    clone.SetIndexBufferParams(12,IndexFormat.UInt16);clone.SetIndexBufferData(new ushort[]{0,2,1,2,3,1,4,6,5,6,7,5},0,0,12,MeshUpdateFlags.DontRecalculateBounds);
++                    clone.SetSubMeshes(new[]{new SubMeshDescriptor(0,6){baseVertex=0},new SubMeshDescriptor(6,6){baseVertex=0}},MeshUpdateFlags.DontRecalculateBounds);
++                    report.cloneIndices=Read(clone);report.cloneWritable=report.cloneIndices.Length==12&&report.cloneIndices[6]==4;
++                }
++                catch(Exception e){report.writeError=e.ToString();}
++                report.pass=!report.sourceReadable&&report.sourceIndices.Length==12;exit=report.pass?0:1;Debug.Log("[HoRTStaticCopyProbe] END cloneWritable="+report.cloneWritable);
++            }
++            catch(Exception e){report.error=e.ToString();Debug.LogException(e);}
++            finally{if(output!=null)File.WriteAllText(output,JsonUtility.ToJson(report,true));if(source!=null)UnityEngine.Object.DestroyImmediate(source);if(clone!=null)UnityEngine.Object.DestroyImmediate(clone);}
++            EditorApplication.Exit(exit);
++        }
++        static ushort[] Read(Mesh mesh)
++        {
++            using var buffer=mesh.GetIndexBuffer();var request=AsyncGPUReadback.Request(buffer);request.WaitForCompletion();if(request.hasError)throw new Exception("Index readback failed");return request.GetData<ushort>().ToArray();
++        }
++    }
++}

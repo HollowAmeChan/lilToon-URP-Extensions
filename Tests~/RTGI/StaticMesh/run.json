@@ -1,0 +1,61 @@
+{
+  "step": 18,
+  "debugLayerRequested": true,
+  "staleLockRemoved": false,
+  "startedUtc": "2026-10-21T06:56:12.3863628Z",
+  "sources": [
+    {
+      "sha256": "E750C7A41F9DCFA04478524EA51C4611698F326F9C24C8448B99522E130F63E2",
+      "path": "Editor/RayTracing/HoRTAccelerationGrowthProbe.cs"
+    },
+    {
+      "sha256": "2CDF2AB3781A14D1CDED399717B88F9AEBA6D3DBCDD69135C1D52EFCE1DC6D29",
+      "path": "Runtime/RayTracing/HoRTScene.cs"
+    },
+    {
+      "sha256": "F34F4512C3E51FF328316C96AF48CA3547A27CADBF327FBA8D724624B7F79D49",
+      "path": "Runtime/RayTracing/HoRTRayMeshIndices.cs"
+    },
+    {
+      "sha256": "A791C875D5871A8FF819A957929A8B60C875199BB7A4BDB7E86148A1D237A510",
+      "path": "Editor/RayTracing/HoRTSceneValidation.cs"
+    },
+    {
+      "sha256": "287D5F024F9B51510DCF197F6D83C035752A68722E59EC1A70F0D8A2D78CB3BE",
+      "path": "Tests~/RTGI/StaticMesh/run_validation.ps1"
+    }
+  ],
+  "activeProcess": null,
+  "entries": [
+    {
+      "label": "native-initial-five",
+      "abortReason": null,
+      "exitCode": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step018-native-initial-five-20261021T065612392.log",
+      "logSha256": "763D1EE828F5D9D799C80A88AD9B65A80E2315911D323D4FD1F104781DB44FF3",
+      "marker": true,
+      "fresh": true,
+      "debugErrors": 0,
+      "shaderCsDiagnostics": 0,
+      "pass": true,
+      "denseFunctional": null,
+      "energyGatePass": null,
+      "reportSha256": "F9D93420D73D3518A0DF47AA72AA561D021FDFE8C41068A31966D080A0D6D120"
+    },
+    {
+      "label": "native-growth",
+      "abortReason": null,
+      "exitCode": 0,
+      "log": "D:\\Unity_Fork\\lilToon-URP-Extensions\\.codex-research\\rtgi-step018-native-growth-20261021T065626600.log",
+      "logSha256": "46546F72E4A937A66A1BC4DACCC1EA63C1F0177D8B977C5D2204EF49AFA915F6",
+      "marker": true,
+      "fresh": true,
+      "debugErrors": 1,
+      "shaderCsDiagnostics": 0,
+      "pass": true,
+      "denseFunctional": null,
+      "energyGatePass": null,
+      "reportSha256": "1BC2DE3430CFDC96FE842233F6D56827144C259A26B8319D38A8E3B9C2B36FC8"
+    }
+  ]
+}

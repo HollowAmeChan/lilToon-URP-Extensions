@@ -1,0 +1,10 @@
+{
+    "pass": true,
+    "growth": false,
+    "error": "",
+    "unity": "6000.3.15f1",
+    "device": "NVIDIA GeForce RTX 4060",
+    "initialInstances": 5,
+    "finalInstances": 5,
+    "builds": 1
+}

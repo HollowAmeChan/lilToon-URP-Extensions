@@ -277,3 +277,17 @@ Player新增BuildSkinnedBaseVertex/Compatibility，独立Assets/RTGIPlayerProbeB
 017待过滤白名单：Runtime/RayTracing/HoRTRayMeshIndices.cs/meta与HoRTSkinnedMesh.cs；Editor GI Dense/mesh-layout及wrapper/meta、Castle/SkinnedHit/Player扩展，Editor RayTracing场景测试；Tests~/RTGI/DenseReference和Dynamic/HoRTGIRuntimeProbe.cs；RTGI说明/计划/README/过程/禁试/交接。无DI算法/NRD Shader/vendor/native/源场景改动，索引规范化共享服务会影响DI需保留上述回归证据。
 
 017已按白名单过滤提交5456782，DenseReference verifier提交后再次通过；index空，仅他人Ho-GD plan未跟踪，全部本任务进程结束。下一轮直接018静态nonzero baseVertex安全镜像/只读源，不重复旧非法AS参考或无上限采样。既有5%、moment/HDR、正常camera/1080与完整预算仍未完成，goal active不complete。
+
+### 018终态（2026-10-21，待过滤提交）：静态候选搁置，原生增长复现
+
+本轮不要从上一段“下一项018”重新实现mirror！它已真实完成候选、157功能checks，并因D3D12 scratch错误拒绝。原Ho无mirror共享/独立mesh增长亦各API1；初始5 API0。Static、AS重建、FastBuild/MinimizeMemory、跨tick、跳过新增update均无收益且撤回；F39禁止原样重试。不是新的画质/性能收益，static非零base支持仍未修复。
+
+Editor/RayTracing/HoRTAccelerationGrowthProbe是保留的独立Editor最小复现，直接Unity API，无HoRTScene/GI。root runner实际PID19372初始5/build1 exit0/debug0，41084先3后5/build2 exit0/debug1，范围2560 B，严格runner实际exit1。FastBuild旧对照2432 B，其余2560 B。这里只证明API调用序列可复现，不证明具体引擎/驱动根因，不证明ray-hit正确。不要在下一轮继续无界追scratch唯一原因。
+
+产品Runtime的HoRTScene/HoRTRayMeshIndices与共享HoRTSceneValidation仅自有修改按6ed9b41恢复，当前这三文件无git diff；017owned-skin修复保留。new mirror/partial/copyProbe移出产品，rejected-candidate.patch可review/apply但未接纳。Tests~/RTGI/StaticMesh保留15个实际进程、138个去重精确源、完整日志/SHA、review和恢复核对，约2.06MB；source-files/index映射旧归档路径，raw报告pass只是功能完成，早期runner移除debug guard的结果均拒绝。capability报告原run元数据缺失已明示，不能编造出处。verifier通过仅指拒绝/恢复证据自洽。所有本任务进程结束、activeProcess=null；独占锁保护继续，无他人进程操作。没有新Player/完整画面验收。
+
+**下一项019可直接做：** 本机RTX GI/BrdfRayTracing、ShadeSecondarySurfaces和M0已有模式合同先复读；在017合法AS/同full256 primary/18灯/sky/Cutout古堡条件下，建立有限预算的多个独立seed main raw T/S/none模式误差对照。优先已收敛的15个参考receiver；暗(16,16)green SE2.316%保留不确定且不无限加样。选点有事后挑选偏差，必须记录，不替代全图5%。采样与filtered逐点/全图统计分开，先判断窗口方差与系统偏差再决定改哪层。可先仅Editor诊断，不先改NRD、默认gain或MIS权重。
+
+原全图RGB(-7.25,-8.42,-8.78)%、moment/HDR/正常enabled-camera/1080与完整预算继续未完成；F27/31/33/35/36/37/39继续。当前目标工具查到active，objective引用实施规划内六项用户强制要求，不能为重写字符串虚假完成/重建目标。每步review→实证→收益复盘→禁试/交接→白名单提交继续。
+
+018提交白名单：Editor/RayTracing/HoRTAccelerationGrowthProbe.cs/meta；Tests~/RTGI/StaticMesh；RTGI README/过程/禁试/交接/实施规划。别人的Ho-GD-Outline-SourceDepth-Plan.md仍未跟踪，不纳入。下一轮先看本节最新提交状态，不重跑旧15个进程凑次数。

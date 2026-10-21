@@ -1,0 +1,4 @@
+*.json -text whitespace=cr-at-eol
+logs/** -text -diff
+source-blobs/** -text whitespace=cr-at-eol
+*.patch -text whitespace=-blank-at-eol,cr-at-eol

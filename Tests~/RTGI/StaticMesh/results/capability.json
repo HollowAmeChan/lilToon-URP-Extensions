@@ -1,0 +1,36 @@
+{
+    "pass": true,
+    "sourceReadable": false,
+    "cloneReadable": false,
+    "cloneWritable": true,
+    "error": "",
+    "writeError": "",
+    "sourceIndices": [
+        0,
+        2,
+        1,
+        2,
+        3,
+        1,
+        0,
+        2,
+        1,
+        2,
+        3,
+        1
+    ],
+    "cloneIndices": [
+        0,
+        2,
+        1,
+        2,
+        3,
+        1,
+        4,
+        6,
+        5,
+        6,
+        7,
+        5
+    ]
+}
