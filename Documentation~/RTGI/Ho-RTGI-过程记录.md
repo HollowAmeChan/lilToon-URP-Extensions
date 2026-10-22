@@ -653,3 +653,23 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **交接/范围：** Tests~/RTGI/AtrousQualification约12.8MiB，250source/8新文本、3完整logs、3JSON+12map/streams gzip、原输入/34点/分析/预声明contract/过滤review/verify通过。白名单两Editor回撤文件（SeedAudit恢复后无最终diff）、新证据与RTGI六文档；他人Ho-GD计划排除。031保持5轮，为新18和反例141157及相邻控制取得逐轮/邻域传播证据，解释同一全局滤波有利有害的结构差异后再定局部机制，不再全局cap3/迭代扫描、重采既有MC或宽sigma/gain/单位格式扫描。原full/phase/F39/static/复杂动态/1080完整预算继续active。
 
 030已按白名单过滤提交`6e8e6a1`，AtrousQualification verifier提交后再次通过。完整8seed/34点发现旧141157 G/B硬退化，固定3轮已搁置，Editor入口与override撤回默认5并实跑资格过；Runtime一直未变。三个自有进程均结束、index空，仅他人Ho-GD计划未跟踪。SeedAudit工作树与HEAD原字节SHA相同，已刷新索引stat，不增加伪diff。031保持5，为亮边和反例取逐轮/邻域传播新证据，不扫全局迭代数；全部原目标/缺口active继续。
+
+## 031：默认5轮逐轮与邻域权重观察（进行中）
+
+**事前review：** 030全局3轮因旧141157 G/B硬退化已拒绝，不能扫描迭代数。保持默认5，固定新18点+反例中心141157+其3×3其余8邻点=27点；19点有既有合格同模型参考，8邻点只作输入/几何传播观察，不伪造参考。固定4seed0/104729/5347609/6396185、64warm/256观察，先2seed16/16资格。
+
+按pipeline10真实ordinal保存4轮输出（步长2/4/8/16），并在观察帧0/32/64/96/128/160/192/224/255读取实际center/8tap/geometry-normal-material-luminance权重及sumW/output；短资格只0/last。仅在隔离Assets生成stock shader的debug-UAV附加版，原算式不改、只GI实例shader10临时替换，finally恢复。必须验证raw/pub全帧均值及全图时间均值图对既有默认5一致，权重能重建原输出、debug shader去附加块后与stock一致。额外读取不作为性能。
+
+不重采MC，不跑完整8seed，不改Runtime/设置/单位/格式/DI；若观察本身改变结果就保留失败并修夹具，不能据无效权重定机制。基于两类位置相反传播证据再定局部候选，F51全局cap3继续搁置。隐藏Editor，自有15分钟/fence上限；原所有质量/F39/static/动态/HD完整预算继续active。
+
+### 031事后review（2026-10-22）：原版逐轮与debug权重分离，得到下限假说
+
+**实现/资格：** 新Editor HoRTGIAtrousTrace/meta与LocalStageAudit的propagation分支，Castle选27点（新18+反例141157+8邻），19有参考/8仅guide，默认5/单位64/32F不变。ordinal10四轮分存；stock/debug分离。16584初debug98请求actual0但未满足exact observer，均值图差max2.38e−7原样保留；6360 stock短control98请求0且全raw/pub均值图对旧短资格逐bit同。9188 stock正式1314请求0；40664最终debug资格98请求0，45656 debug正式1314请求0。五进程API/Shader/Property/UAV/fence/drift0、typed copy64 bitexact，writer9×1+10×4。
+
+**正确性review：** stock4seed全raw/pub均值图对026逐bit同，作为唯一质量stage记录。debug shader只是原算式+UAV记录，去附加块/恢复include后非空行与stock逐行同，但compiled浮点差存在：正式全图mapmax1.49e−8～2.98e−8，局部intermediate约3.26e−9、个别pub样本3.81e−6；不称bit-exact/no-op通过或据其放宽质量门槛。debug实际权重重建其输出差≤7.34e−11、sumW≤1.20e−7，单独用于传播数值解释。当前GI实例shader10/kernel finally恢复，Runtime/DI/vendor原文件未改。
+
+**实际阶段收益：** 新18 L1从firstAtrous .130687，经step2/4/8/16为.215150/.306872/.386896/.462370。反例Clamp .04152→first .14924，step2/4/8/16 .14305/.15325/.12229/.11055，蓝/reference从first .8259至末.9967；后两轮确实恢复其首轮部分损失，不能全局删迭代。原full/phase失败未解除，F51继续搁置。
+
+**权重/机制线索：** 权重采样0/32/.../224/255（短资格0/last），非全部帧。每点每轮center/var/normalZ/offset/sumW/history/output与8tap坐标/权重/颜色方差/geometry-normal-material-luma因子/guide均存。6亮边中心step16平均亮度变化约−3.744e−4、低于center半亮donor占8.16%总权；反例step8/16约+4.620e−5/+2.220e−5，该类暗donor权0。单位域假说：phi2×sigma在亮边step8/16低于1e−4比例78.7/97.2%，反例13.9/69.4%；step16中位数4.85e−5/7.88e−5，实际luma因子反推inverse约10000，吻合stock分母floor。scale64下最小阈值未作物理单位对齐值得单独实验，不据此直接称bug或修复。
+
+**成本/过滤/交接：** 255source/12新小文本、5完整logs、47原JSON/bin gzip、生成源码SHA、observer-review/analysis/verify约24.4MiB。extra shader/copy/readback非产品性能，stock/debug边界明确，所有自有进程终态active=null。白名单新trace/meta、LocalStageAudit/Castle、新证据和RTGI六文档；Ho-GD计划排除。032只GI-private Atrous diffuse分母floor物理单位对齐1e−4/64，保持5和其它算式/参数/单位/格式，先scope/source/qual再同两组参考/暗控制/full/phase/noise，不扫迭代/单位。原F39/static/动态/HD完整预算继续active。

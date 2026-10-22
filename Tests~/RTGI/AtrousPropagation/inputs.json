@@ -1,0 +1,15 @@
+{
+  "baseline": {
+    "path": "../ProductionSeeds/results/matrix.json",
+    "rawSha256": "B2AD3A35801606CB328512712946B1EB535D3E8AE87C355A641E7B7E62DA8B8D"
+  },
+  "newReference": {
+    "path": "../LocalReference/results/reference.json.gz",
+    "archiveSha256": "AFB0CF247D4B8E93B5B770D91E0D04562CD85DEEB3B1641EE927774008BC17DB",
+    "rawSha256": "C233802BAE403DC85B9D3DF50882B0CA9E5538A879ED6040838D8F41C6E5A9A9"
+  },
+  "legacyReference": {
+    "path": "../DenseReference/results/fixed-reference.json",
+    "rawSha256": "E45D050F77519F949726046A29EB783BAFA3C8E93CE2E24C988651979543E664"
+  }
+}

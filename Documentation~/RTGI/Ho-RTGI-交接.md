@@ -491,3 +491,17 @@ Tests~/RTGI/AtrousQualification约12.8MiB，250source仅8新文本、3完整log�
 **031直接动作：** 保持5，扩充逐轮观察到反例(141,157)及相邻控制，并保留新18点；028只保留pipeline10末轮，需按每个10的ordinal保存输出/输入，结合几何/亮度邻域与权重解释哪些传播帮助/伤害两类位置。先做新观察自身不改结果的qual，再有限predeclared seeds，不重跑1M参考或完整8seed。判明机制后才选择一个局部候选，不再全局降低迭代数/宽sigma/gain/单位格式扫描，不只针对新18点。原full/所有phase/F39/static/复杂动态/1080完整预算及目标active继续。
 
 030已按白名单过滤提交`6e8e6a1`，AtrousQualification verifier提交后再次通过。完整8seed/34点发现旧141157 G/B硬退化，固定3轮已搁置，Editor入口与override撤回默认5并实跑资格过；Runtime一直未变。三个自有进程均结束、index空，仅他人Ho-GD计划未跟踪。SeedAudit工作树与HEAD原字节SHA相同，已刷新索引stat，不增加伪diff。031保持5，为亮边和反例取逐轮/邻域传播新证据，不扫全局迭代数；全部原目标/缺口active继续。
+
+### 031终态（2026-10-22，待过滤提交）：逐轮相反作用与luma floor假说，032单候选
+
+新HoRTGIAtrousTrace/meta，LocalStageAudit增加propagation可选分支，Castle可选27点：新18+旧141157+3×3其余8邻；19合格参考/8无参考仅guide。默认stock5/scale64/production32F/参数/Runtime/DI/SDK不变。五实际进程：16584初debug资格98请求0、6360 stock control98请求0、9188 stock4seed正式1314请求0、40664最终debug资格98请求0、45656 debug4seed正式1314请求0；API/compile/Property/UAV/fence/drift0，F32 copy64分量bitexact。
+
+重要边界：初debug并未通过exact observer，保留initial-debug源码/原报告（map差max2.38e−7）。stock对照与026全raw/pub均值图逐bit同，质量stage只用stock。debug原算式未改（去附加块后逐行同）但compiled浮点有差，正式mapmax1.49～2.98e−8、local intermediate约3.26e−9/pub个别3.81e−6；只用于独立权重解释，重建自身RGB误差≤7.34e−11/sumW≤1.20e−7，不称stock逐byte同，不改原质量门槛。shader10/kernel仅当前GI实例替换、finally恢复。
+
+原版结果：新18 L1 first .130687→step2 .215150→4 .306872→8 .386896→16 .462370。反例Clamp .04152，first .14924，后.14305/.15325/.12229/.11055，蓝/reference first.8259→末.9967；全局删后两轮会删恢复作用，F51不重开。新增HGP1存12stage/27RGB及6writer count；HGW1存选定观察帧每4轮27点37float4，含center、var、guide、offset/sumW/output、8tap与实际权重因子。主权重只在0/32/.../224/255采样，不作全帧保证。
+
+机制线索：6亮边中心step16平均负亮度贡献约−3.744e−4、暗于center一半的donor占8.16%总权，反例step8/16正贡献约4.620e−5/2.220e−5且该类暗donor0。源码phi2/sqrt(var)分母floor1e−4；记录variance显示亮边step8/16激活比例78.7/97.2%，反例13.9/69.4%；step16 phi×sigma中位数4.85e−5/7.88e−5。实际luma因子反推inverse~10000，支持floor在scale64下可能过宽的单位域假说，尚未证明修复。
+
+Tests~/RTGI/AtrousPropagation约24.4MiB，255source/12新文本、5完整log、47capture gzip、5模式生成body/wrapper原文SHA、observer-review/analysis/verify通过。所有进程终态active=null，Runtime无diff，Ho-GD计划排除。旧HGS1 baseline入口仍可用；propagation新增stock control/control-matrix与debug qualification/matrix，不能把两类数据混成exact结论。
+
+**032直接动作：** 只Editor GI私有Atrous diffuse luminance分母floor按AppliedSignalScale64作物理单位对齐（1e−4/64），保持5轮/phi/variance/实际RGB单位/格式/其它原算式不变；确切定位luma分母的1e−4，不能全局替换shader里tap cutoff1e−4或specular常量。先单scope/source diff及真实作用资格，再固定4seed所有新18+反例/暗邻，并完整8seed旧15控制/full/16phase/noise取舍；不得只看加权L1，失败隔离撤回。此是基于实际权重的最小阈值候选，不是重开F35单位1/.125或F51迭代扫描。其后必要动态/HDR/Player/GPU前不得生产化；所有原full/phase/F39/static/复杂动态/1080完整预算继续active。

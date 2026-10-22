@@ -54,7 +54,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
         public static void RunResources512()=>Run(false,512,gpu:true,resources:true);
         public static void RunResources1080()=>Run(false,1920,gpu:true,resources:true,renderHeight:1080);
         public static void RunResources1080Compatibility()=>Run(true,1920,gpu:true,resources:true,renderHeight:1080);
-        static async void Run(bool compatibility,int size,bool stability=false,bool stages=false,int settle=32,int measured=64,bool wideClamp=false,float historySigma=4,bool gpu=false,bool totalOnly=false,bool rebuild=false,bool resources=false,int renderHeight=0,bool moments=false,float momentScale=64,bool bindings=false,bool spatialAudit=false,bool denseReference=false,int denseSamples=512,int denseBatches=2,bool denseScheduled=false,bool denseControls=false,string validationTag="",bool seedAudit=false,int seedCount=8,int seedWarmup=64,int seedMeasured=256,bool feedbackAudit=false,bool feedbackQualification=false,bool feedbackGpu=false,bool productionHistory=false,string poolPrecision="",bool seedProduction=false,bool denseLocal=false,bool localStages=false)
+        static async void Run(bool compatibility,int size,bool stability=false,bool stages=false,int settle=32,int measured=64,bool wideClamp=false,float historySigma=4,bool gpu=false,bool totalOnly=false,bool rebuild=false,bool resources=false,int renderHeight=0,bool moments=false,float momentScale=64,bool bindings=false,bool spatialAudit=false,bool denseReference=false,int denseSamples=512,int denseBatches=2,bool denseScheduled=false,bool denseControls=false,string validationTag="",bool seedAudit=false,int seedCount=8,int seedWarmup=64,int seedMeasured=256,bool feedbackAudit=false,bool feedbackQualification=false,bool feedbackGpu=false,bool productionHistory=false,string poolPrecision="",bool seedProduction=false,bool denseLocal=false,bool localStages=false,bool propagation=false,bool traceControl=false)
         {
             int width=size,height=renderHeight>0?renderHeight:size;
             var oldDefault=GraphicsSettings.defaultRenderPipeline;var oldQuality=QualitySettings.renderPipeline;bool oldAsync=ShaderUtil.allowAsyncCompilation;HoRTGIRendererFeature gi=null;int exit=1;
@@ -83,7 +83,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 var camera=Keep(new GameObject("GI copied castle view")).AddComponent<Camera>();camera.CopyFrom(source);camera.transform.SetPositionAndRotation(source.transform.position,source.transform.rotation);camera.enabled=false;camera.targetTexture=null;camera.aspect=(float)width/height;camera.GetUniversalAdditionalCameraData().volumeLayerMask=0;
                 var target=Keep(new RenderTexture(width,height,24,RenderTextureFormat.ARGBHalf,RenderTextureReadWrite.Linear));target.Create();var image=Keep(new Texture2D(width,height,TextureFormat.RGBAFloat,false,true));
                 int clock=0;for(int i=0;i<32;i++){if(denseScheduled)await NextEditorTick();Render();}
-                if(denseReference||seedAudit||feedbackAudit||localStages){denseFeature.targetCamera=camera;var receivers=denseLocal?HoRTGIDenseReferenceAudit.LocalPixels:denseControls?HoRTGIDenseReferenceAudit.ControlPixels:HoRTGIDenseReferenceAudit.Pixels;denseFeature.Initialize(seedAudit||feedbackAudit||localStages?1:denseSamples,receivers);denseFeature.scheduled=denseScheduled;denseAudit=new HoRTGIDenseReferenceAudit(denseFeature,receivers);}
+                if(denseReference||seedAudit||feedbackAudit||localStages){denseFeature.targetCamera=camera;var receivers=propagation?HoRTGIAtrousTrace.Pixels:denseLocal?HoRTGIDenseReferenceAudit.LocalPixels:denseControls?HoRTGIDenseReferenceAudit.ControlPixels:HoRTGIDenseReferenceAudit.Pixels;denseFeature.Initialize(seedAudit||feedbackAudit||localStages?1:denseSamples,receivers);denseFeature.scheduled=denseScheduled;denseAudit=new HoRTGIDenseReferenceAudit(denseFeature,receivers);}
                 var context=gi.LastContext;if(context?.nrd==null)throw new Exception("Actual castle GI/NRD missing: "+gi.Status);
                 if(poolPrecision.Length>0){precision=new HoRTGIPoolPrecisionAudit(context.nrd,poolPrecision);if(!stability)Render();}
                 if(stages&&precision==null)precision=new HoRTGIPoolPrecisionAudit(context.nrd,"production");
@@ -103,7 +103,7 @@ namespace lilToon.URP.Extensions.Editor.RTGI
                 if(productionHistory)report.productionHistory=await AuditProductionHistory(gi,context,Render,Read);
                 if(feedbackAudit)report.feedbackAudit=await AuditHistoryFeedback(gi,context,denseFeature,Render,Read,feedbackQualification,output,feedbackGpu);
                 if(seedAudit)report.seedAudit=await AuditSeeds(gi,context,denseFeature,Render,Read,seedCount,seedWarmup,seedMeasured,output,seedProduction);
-                if(localStages)report.localStageAudit=await AuditLocalStages(gi,context,denseFeature,Render,Read,seedWarmup,seedMeasured,output);
+                if(localStages)report.localStageAudit=await AuditLocalStages(gi,context,denseFeature,Render,Read,seedWarmup,seedMeasured,output,propagation,traceControl);
                 if(stability)
                 {
                     if(moments||spatialAudit)context.nrd.ValidationSignalScale=momentScale;

@@ -1,0 +1,10 @@
+{
+  "stockObservation": "Exact equality to old default5 whole raw+filtered time-mean maps; stock outputs used for stage/reference analysis",
+  "debugObservation": "Additional-UAV shader changes floating arithmetic results slightly; not an exact no-op. Used only for measured weight explanation, never for original quality acceptance.",
+  "initialExactQualificationAccepted": false,
+  "stockControlQualified": true,
+  "debugMeanMapMaxAbsoluteDifference": 2.9802322387695312e-08,
+  "maxDebugWeightReconstructionError": 7.337356015737345e-11,
+  "qualityGatesRelaxed": false,
+  "nextHypothesis": "Inspect GI-private Atrous diffuse luminance denominator floor in the scale64 domain; fixed global iteration caps remain shelved, no production change."
+}

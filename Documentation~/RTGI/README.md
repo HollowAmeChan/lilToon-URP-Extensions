@@ -59,3 +59,5 @@
 步骤029固定Editor GI atrous5→3候选有收益：18点reference L1−33.6%，4seed pooled full过原门槛、phase8→6失败，暗邻未触发预设硬退化；方差+38.6%且仍明显欠亮。[候选原流与作用域证明](../../Tests~/RTGI/AtrousCandidate/README.md)完整，Runtime仍5。030固定3的8seed/旧参考/暗控制/全图/相位/噪声，再动态/HDR/Player/GPU后决定生产；全部原缺口和目标active继续。
 
 步骤030完整8seed/旧参考发现反例：全局atrous3虽改善新18点和pooled full，旧(141,157)G/B超过预声明硬退化界，候选已搁置。Editor入口/override移除并恢复默认5，过滤后实际98请求资格通过；Runtime一直未改。[完整资格/拒绝与原数据](../../Tests~/RTGI/AtrousQualification/README.md)。031保持5，对亮边和反例作逐轮/邻域传播取证后再开局部机制，不扫描2/4，全部原缺口继续active。
+
+步骤031用stock真实逐轮输出说明亮边连续损失、旧反例后轮部分恢复；独立debug权重可重建自身结果但不bit-exact，未替代质量门槛。[原版/权重边界与证据](../../Tests~/RTGI/AtrousPropagation/README.md)。后期luma分母floor在scale64下的激活差异支持032仅GI私有最小阈值单位对齐单候选，默认5及其它设置保持，全部原质量/预算缺口继续active。
