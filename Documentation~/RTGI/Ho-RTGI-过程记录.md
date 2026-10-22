@@ -651,3 +651,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **过滤与实跑：** 三Editor文件Castle/LocalStageAudit/SeedAudit精确恢复90fc233默认5诊断版，移除candidate入口和覆盖；原实跑源SHA/字节完整归档，不伪称当前源生成原候选。19648过滤后真实98请求资格actual0，64分量copy bitexact，Native9一次+10四次=5、API/compile/绑定/fence/drift0。filter-review绑定前后源与Git字节，三自有进程终态active=null。
 
 **交接/范围：** Tests~/RTGI/AtrousQualification约12.8MiB，250source/8新文本、3完整logs、3JSON+12map/streams gzip、原输入/34点/分析/预声明contract/过滤review/verify通过。白名单两Editor回撤文件（SeedAudit恢复后无最终diff）、新证据与RTGI六文档；他人Ho-GD计划排除。031保持5轮，为新18和反例141157及相邻控制取得逐轮/邻域传播证据，解释同一全局滤波有利有害的结构差异后再定局部机制，不再全局cap3/迭代扫描、重采既有MC或宽sigma/gain/单位格式扫描。原full/phase/F39/static/复杂动态/1080完整预算继续active。
+
+030已按白名单过滤提交`6e8e6a1`，AtrousQualification verifier提交后再次通过。完整8seed/34点发现旧141157 G/B硬退化，固定3轮已搁置，Editor入口与override撤回默认5并实跑资格过；Runtime一直未变。三个自有进程均结束、index空，仅他人Ho-GD计划未跟踪。SeedAudit工作树与HEAD原字节SHA相同，已刷新索引stat，不增加伪diff。031保持5，为亮边和反例取逐轮/邻域传播新证据，不扫全局迭代数；全部原目标/缺口active继续。

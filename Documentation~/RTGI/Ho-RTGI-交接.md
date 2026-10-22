@@ -489,3 +489,5 @@ raw全帧均值+局部所有样本、input/Pre/Temporal/条件fast/Clamp/first A
 Tests~/RTGI/AtrousQualification约12.8MiB，250source仅8新文本、3完整log、3JSON+12map/streams lossless gzip、原输入/34点/analysis/contract/filter-review/verify。current-source由filtered-run对应，历史candidate用归档源重现；当前run_validation.ps1的候选入口已移除，不直接运行它，也不回滚产品凑旧SHA。run_filtered.ps1仍验证默认5。只两Editor回撤最终diff，新证据/RTGI六文档白名单，Ho-GD计划不纳入。
 
 **031直接动作：** 保持5，扩充逐轮观察到反例(141,157)及相邻控制，并保留新18点；028只保留pipeline10末轮，需按每个10的ordinal保存输出/输入，结合几何/亮度邻域与权重解释哪些传播帮助/伤害两类位置。先做新观察自身不改结果的qual，再有限predeclared seeds，不重跑1M参考或完整8seed。判明机制后才选择一个局部候选，不再全局降低迭代数/宽sigma/gain/单位格式扫描，不只针对新18点。原full/所有phase/F39/static/复杂动态/1080完整预算及目标active继续。
+
+030已按白名单过滤提交`6e8e6a1`，AtrousQualification verifier提交后再次通过。完整8seed/34点发现旧141157 G/B硬退化，固定3轮已搁置，Editor入口与override撤回默认5并实跑资格过；Runtime一直未变。三个自有进程均结束、index空，仅他人Ho-GD计划未跟踪。SeedAudit工作树与HEAD原字节SHA相同，已刷新索引stat，不增加伪diff。031保持5，为亮边和反例取逐轮/邻域传播新证据，不扫全局迭代数；全部原目标/缺口active继续。
