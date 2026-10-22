@@ -505,3 +505,5 @@ Tests~/RTGI/AtrousQualification约12.8MiB，250source仅8新文本、3完整log�
 Tests~/RTGI/AtrousPropagation约24.4MiB，255source/12新文本、5完整log、47capture gzip、5模式生成body/wrapper原文SHA、observer-review/analysis/verify通过。所有进程终态active=null，Runtime无diff，Ho-GD计划排除。旧HGS1 baseline入口仍可用；propagation新增stock control/control-matrix与debug qualification/matrix，不能把两类数据混成exact结论。
 
 **032直接动作：** 只Editor GI私有Atrous diffuse luminance分母floor按AppliedSignalScale64作物理单位对齐（1e−4/64），保持5轮/phi/variance/实际RGB单位/格式/其它原算式不变；确切定位luma分母的1e−4，不能全局替换shader里tap cutoff1e−4或specular常量。先单scope/source diff及真实作用资格，再固定4seed所有新18+反例/暗邻，并完整8seed旧15控制/full/16phase/noise取舍；不得只看加权L1，失败隔离撤回。此是基于实际权重的最小阈值候选，不是重开F35单位1/.125或F51迭代扫描。其后必要动态/HDR/Player/GPU前不得生产化；所有原full/phase/F39/static/复杂动态/1080完整预算继续active。
+
+031已按白名单过滤提交`99f4fac`，AtrousPropagation verifier提交后再次通过。stock全图时间均值图逐bit相同、逐轮两类相反作用已证；debug非exact，独立数值边界/重建与初失败保留。五自有进程终态、index空、Runtime无diff，仅他人Ho-GD计划未跟踪。032仅GI私有diffuse luminance分母floor随scale64对齐的单候选，默认5/其它算式与参数不动，先新旧控制/full/phase/noise再资格，不能跳过141157或重开迭代/纯单位扫描；全目标和所有原缺口继续active。

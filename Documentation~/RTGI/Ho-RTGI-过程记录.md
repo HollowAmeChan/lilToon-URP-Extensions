@@ -673,3 +673,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **权重/机制线索：** 权重采样0/32/.../224/255（短资格0/last），非全部帧。每点每轮center/var/normalZ/offset/sumW/history/output与8tap坐标/权重/颜色方差/geometry-normal-material-luma因子/guide均存。6亮边中心step16平均亮度变化约−3.744e−4、低于center半亮donor占8.16%总权；反例step8/16约+4.620e−5/+2.220e−5，该类暗donor权0。单位域假说：phi2×sigma在亮边step8/16低于1e−4比例78.7/97.2%，反例13.9/69.4%；step16中位数4.85e−5/7.88e−5，实际luma因子反推inverse约10000，吻合stock分母floor。scale64下最小阈值未作物理单位对齐值得单独实验，不据此直接称bug或修复。
 
 **成本/过滤/交接：** 255source/12新小文本、5完整logs、47原JSON/bin gzip、生成源码SHA、observer-review/analysis/verify约24.4MiB。extra shader/copy/readback非产品性能，stock/debug边界明确，所有自有进程终态active=null。白名单新trace/meta、LocalStageAudit/Castle、新证据和RTGI六文档；Ho-GD计划排除。032只GI-private Atrous diffuse分母floor物理单位对齐1e−4/64，保持5和其它算式/参数/单位/格式，先scope/source/qual再同两组参考/暗控制/full/phase/noise，不扫迭代/单位。原F39/static/动态/HD完整预算继续active。
+
+031已按白名单过滤提交`99f4fac`，AtrousPropagation verifier提交后再次通过。stock全图时间均值图逐bit相同、逐轮两类相反作用已证；debug非exact，独立数值边界/重建与初失败保留。五自有进程终态、index空、Runtime无diff，仅他人Ho-GD计划未跟踪。032仅GI私有diffuse luminance分母floor随scale64对齐的单候选，默认5/其它算式与参数不动，先新旧控制/full/phase/noise再资格，不能跳过141157或重开迭代/纯单位扫描；全目标和所有原缺口继续active。
