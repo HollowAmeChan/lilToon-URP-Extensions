@@ -63,3 +63,5 @@
 步骤031用stock真实逐轮输出说明亮边连续损失、旧反例后轮部分恢复；独立debug权重可重建自身结果但不bit-exact，未替代质量门槛。[原版/权重边界与证据](../../Tests~/RTGI/AtrousPropagation/README.md)。后期luma分母floor在scale64下的激活差异支持032仅GI私有最小阈值单位对齐单候选，默认5及其它设置保持，全部原质量/预算缺口继续active。
 
 步骤032单位域floor候选失败：新18 L1仅−3.9%，原full2→0/4且11个phase pass→fail，已保存失败并移除候选入口/类，stock5过滤后实跑通过。[原失败与撤回证据](../../Tests~/RTGI/LumaFloor/README.md)。033复用现有中心/邻居方差和权重，先离线核对双向/归一化机制，不继续常量/单位/迭代扫描；Runtime未改，全部原缺口active继续。
+
+步骤033复用权重离线重建forward/geometry（31,104 tap0不符），简单luma对称化后期预测太小，不开GPU；既有factor2双向支持只在大步长能区分采样两类位置。[冻结重放与限制](../../Tests~/RTGI/PairwiseWeights/README.md)。034仅step>4局部候选，未修复生产、不能累加静态收益，全部原门槛/预算继续active。

@@ -148,3 +148,9 @@ JSON float批均值要恢复IEEE float32；原C# LINQ Average(float selector)返
 GI私有diffuse分母1e−4/64（9/10各仅一个token）保持5轮/单位64/其它参数仍失败：新18 L1只−3.9%，full2→0/4、11个phase pass→fail、pooled RGB约−5.03/−5.57/−5.34%。不可用局部微小平均改善或19点无hard-regression掩盖旧full/phase退化，不改预声明20%/原5%门槛。floor确实激活不证明它是主根因；固定策略搁置，不继续epsilon/scale/迭代扫描。
 
 候选入口/私有shader类/meta已从Editor移除，Castle恢复99f4fac，过滤后stock实际资格通过；原源/生成体/失败保留，历史runner入口不再存在。033应先利用现有center/sample方差与权重作离线双向/归一化核对，给出能区别亮边与反例的新机制，不能无依据叠更多阈值/增益。静态输入反事实不是完整GPU递归效果，仍需独立实际资格。
+
+## F54 / 步骤033：冻结重放不是GPU修复，对称luma预测太小
+
+原forward/geometry一致性已核对，不能无依据改坐标/阈值。仅luma正反向几何均值的后期L1预测仅约.0000875，搁置该GPU方向；反向方差不是完整反向kernel，未知reverse几何/jitter/归一化不能臆造。031固定factor2支持域在反例step2会微退化，不能全局启用；最多step>4单候选。
+
+每轮独立使用原输入，不能累加重放收益或当递归/动态/全场景验收。8邻点无MC真值必须保留限制，不扫ratio/epsilon/迭代或删反例。有实际GPU收益还要旧15/全8seed/full/phase/noise和后续资格，F51/F53继续。

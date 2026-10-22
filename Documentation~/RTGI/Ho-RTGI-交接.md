@@ -519,3 +519,13 @@ Tests~/RTGI/AtrousPropagation约24.4MiB，255source/12新文本、5完整log、4
 **033直接动作：** 复用031已有HGW1 center/sample variance、geometry/normal/material/luma因子/真实tap权重，离线检查luma权重双向方差依赖、归一化导致的亮度传播与两类结构差异，解释只调floor为何无效。固定原新18+反例与邻点，不能只挑亮边；静态输入重放不是完整迭代反馈或GPU资格。只有新机制能在现有反事实中区别两类位置，才再定一个局部GPU候选；不重采1M参考/重复旧完整矩阵/扫常量。默认stock5保持，F51/F53继续搁置，原full/phase/F39/static/复杂动态/1080完整预算和目标active继续。
 
 032已按白名单过滤提交`d9d4459`，LumaFloor verifier提交后再次通过。固定floor/64候选局部仅−3.9%、full2→0和11phase退化已拒绝，原候选源/生成体/失败完整；新增类/meta/入口已移除，stock5过滤后实跑过。三个自有进程终态、index空、Editor/Runtime无最终diff，仅Ho-GD计划未跟踪。033先复用031权重/两侧variance做离线双向归一化机制核对，不重跑旧GPU矩阵/MC、不扫常量，原全部目标/缺口active继续。
+
+### 033终态（2026-10-23，待过滤提交）：离线核对完成，034仅大步长factor2支持域
+
+无新GPU/Unity/MC，Runtime/Editor无diff；复用031 4seed×9帧×4轮×27点。forward luma max差3.013e−7/weighted output7.34e−11；27真实world/depth透视拟合rank4/cond4169.7、max residual3.93e−6，31,104安全tap几何判断0不符。仅样本一致性，未直接读native frustum或证明全场景。
+
+两固定结构重放：正反luma几何均值新18 deltaL1 step2/4/8/16=−.00635/−.00446/−.000779/−.0000875，后期预测太小，不试GPU。031既有[.5,2]亮度bin双向支持新18=−.01649/−.02065/−.01907/−.01795；反例step2 +.00206，step8/16仅1.4e−8/1e−9（全tap保留），所以只考虑大步长。原每轮输入冻结，不是完整逆kernel/迭代反馈/动态/GPU质量，不能把单轮变化叠加作承诺。原27点/19参考+8无参考guide/全部输出变化与分seed结果都保留。
+
+Tests~/RTGI/PairwiseWeights有压缩输入SHA/源码公式/analysis/verify，默认5、所有旧失败/范围保持，Ho-GD计划排除。033是机制筛选收益，没有修复交付。
+
+**034直接动作：** 一个Editor私有GI shader10候选，只有gStepSize>4时令sampleLuma处于centerLuma[.5,2]才保留原权重，双零保留；对称支持域非单向提亮，5轮/单位64/格式/phi/variance/原geometry-normal-material和其它算式不变。factor2只沿031既有bin，不扫阈值。先源码精确diff/作用域恢复/实际资格，再同4seed全部19参考+8邻/full/16phase/noise，不能漏141157；有收益再旧15/全8seed/动态/HDR/Player/GPU，失败撤回搁置。原F51/F53继续，全部原full/phase/F39/static/复杂动态/1080完整预算与目标active。

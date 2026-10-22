@@ -693,3 +693,17 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **交接/证据：** Tests~/RTGI/LumaFloor含254source、3完整logs、27原JSON/bin gzip、生成体SHA、预声明contract/analysis/filter-review/verify全部过，只代表证据自洽与撤回验证，不改绿质量失败。自有进程全终态active=null；白名单只新证据/RTGI六文档，Editor恢复后无最终源码diff，Ho-GD计划排除。033复用031center/sample variance/实际权重离线核对双向权重与归一化传播，先区别两类结构的机制再GPU单候选；静态输入重放不冒称迭代渲染或修复。原F39/static/复杂动态/HD完整预算及目标active继续。
 
 032已按白名单过滤提交`d9d4459`，LumaFloor verifier提交后再次通过。固定floor/64候选局部仅−3.9%、full2→0和11phase退化已拒绝，原候选源/生成体/失败完整；新增类/meta/入口已移除，stock5过滤后实跑过。三个自有进程终态、index空、Editor/Runtime无最终diff，仅Ho-GD计划未跟踪。033先复用031权重/两侧variance做离线双向归一化机制核对，不重跑旧GPU矩阵/MC、不扫常量，原全部目标/缺口active继续。
+
+## 033：已有权重的双向/归一化离线核对（进行中）
+
+**事前review：** F51全局3轮和F53floor/64已拒绝，不能继续扫描。复用031精确stock逐轮输出和分离debug权重，不新开Unity/MC矩阵。先独立重建forward luma、weighted sum、从27实际world/depth拟合透视几何核对native binary geometry；再仅作luma反向方差/无新参数几何均值对称化的冻结输入反事实。只额外检查031已固定factor2亮度分箱的双向对称支持，不能试多个阈值或把静态重放称GPU递归结果。
+
+原27点（19合格参考/8仅guide）/4seed/9采样帧保持，分seed/分组/分轮全部报告；source/input SHA验证，所有原质量失败继续。若只能微小预测收益不重开对称方差GPU候选；有能区分亮边与反例的新机制才安排单个有界GPU实验，仍须旧点/full/phase/noise资格。Runtime/Editor均不改，目标active。
+
+### 033事后review（2026-10-23）：离线排除简单方差对称化，限定支持域单候选
+
+复用031原数据，无新Unity/GPU/MC、无Editor/Runtime改动。原forward luma重建max3.013e−7、输出max7.34e−11；27实际world/depth拟合透视基rank4/cond4169.7，max world残差3.93e−6，31,104个安全tap几何判定0不符，不再盲追坐标/geometry错误（仅采样域一致，不泛称全几何证明）。
+
+固定原输入单轮重放：luma正反向因子几何均值对新18 L1变化step2/4/8/16仅−.00635/−.00446/−.000779/−.0000875，后期很小，不值得新GPU试验。031既有[.5,2]亮度分箱双向支持域对新18为−.01649/−.02065/−.01907/−.01795；反例step2略恶化+.00206，step8/16仅约1.4e−8/1.0e−9（tap全保留）。因此只支持一个大步长局部guard假说，不支持全局guard/迭代减少；没有调多个阈值。
+
+此是冻结每轮原输入、仅luma项反向，不是实际reverse geometry/jitter/完整转移矩阵，也没有递归传播/动态/全域质量结论，不能把单轮改善相加报最终收益。Tests~/RTGI/PairwiseWeights含原输入SHA/原公式/全部27点输出变化/分seed分轮/analysis/verify过。白名单仅新证据与RTGI六文档，Ho-GD计划排除。034只GI私有shader10 step>4双向factor2支持域、保持5/其它参数/单位/格式，先源码与实际scope资格再4seed全19参考/邻点/full/phase/noise，有收益再旧15完整8seed等资格；失败撤回不扫ratio。全部原质量/F39/static/复杂动态/HD预算继续active。

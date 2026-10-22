@@ -134,3 +134,5 @@ dispatch设置在Setup前捕获为不可变数值快照，同一帧的资源准�
 031补充（2026-10-22）：stock逐轮记录与旧全图map完全一致，亮边逐轮变暗而旧反例后期恢复；debug-UAV非bit-exact，单独用于权重解释并保存数值差/生成源/重建误差。Tests~/RTGI/AtrousPropagation包含27点/19参考+8guide、全部5进程证据。后期luma权重floor对低signal的影响为032最小阈值候选依据，Runtime保持5，未完成画质或全目标。
 
 032补充（2026-10-22）：只GI私有9/10 diffuse分母floor/64实验未改善整体，新18 L1−3.9%但full2→0/4、11phase退化，固定策略搁置；候选类/meta/入口已过滤移除，stock5实际资格复核过。Tests~/RTGI/LumaFloor完整保存源码/生成体/失败/撤回；033离线权重机制核对后再定下一候选，Runtime不变、目标active。
+
+033补充（2026-10-23）：已有权重离线核对几何/forward正确，简单luma方差对称化后期预测过小；冻结输入factor2支持域仅提示大步长局部候选，不是GPU/递归结果。Tests~/RTGI/PairwiseWeights保存全部输入与验证。Runtime/Editor未改，034实际资格前不生产化，目标active。

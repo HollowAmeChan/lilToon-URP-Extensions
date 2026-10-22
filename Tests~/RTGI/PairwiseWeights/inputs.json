@@ -1,0 +1,61 @@
+{
+  "data": [
+    {
+      "path": "../AtrousPropagation/results/matrix.json",
+      "rawSha256": "D055C0A233FB0FF4E63C7030C326EFC288197ACD278D4518A37FE7B9C4B608F5",
+      "archiveSha256": "6C4F77096849153959573CBCD8EB000308205353E4C2A1589ABCD830577DADD6"
+    },
+    {
+      "path": "../AtrousPropagation/results/control-matrix.json",
+      "rawSha256": "5DB2575049EF9752ECF71A52220E5D692FC1F29007836071823B88CCD71DD3F2",
+      "archiveSha256": "B40ECD08FEE18533A9134C135368E06E6FDF9B8153C2831C6DDCC49B9F6077CE"
+    },
+    {
+      "path": "../AtrousPropagation/results/matrix/weights-0.bin",
+      "rawSha256": "35212F19EAC6D9346CB8A5D27B52E9F87B533B7A9E01583C3CE3208B9B8C8235",
+      "archiveSha256": "5D50938781BF5EE7AA6CC8AA76AF05B55FE495DA8846DB21FCB9B97CC694B6C4"
+    },
+    {
+      "path": "../AtrousPropagation/results/matrix/weights-104729.bin",
+      "rawSha256": "1B42FC0B992FD22FB0C9CF51A6D670AA8A3F7B3148AE6614C58B16FFDABB8ED9",
+      "archiveSha256": "30765638F30A9FEFF79626A68204C3B2B24D6BCF85594E4AD806B982788D3FE2"
+    },
+    {
+      "path": "../AtrousPropagation/results/matrix/weights-5347609.bin",
+      "rawSha256": "41F1047A911933FB7FE0C43CBEBDA99113CFDFE98391E40398370280F2AB415E",
+      "archiveSha256": "3F73A281D7947C61F2425DC6D6715CF6BEC0C996D50B3DF97B9E293400EB9C35"
+    },
+    {
+      "path": "../AtrousPropagation/results/matrix/weights-6396185.bin",
+      "rawSha256": "2FD8E1EDDCFF5D108E531D93D91916F81C07BA3EDD0943AEE26FDAB6F478D09D",
+      "archiveSha256": "506370E699BDBCFBF612116FBDCC0872A08C0A583B67C8F4E79E5B9C825D514A"
+    }
+  ],
+  "code": [
+    {
+      "originalPath": "Runtime/RTDI/ThirdParty/NRD/RELAX_Common.hlsli",
+      "path": "code-references/RELAX_Common.hlsli",
+      "bytes": 7574,
+      "sha256": "4E0245D75951F6582D13C8257FEB56B1B78A2C369BD177113CF1CDAEE38C4D8A"
+    },
+    {
+      "originalPath": "Runtime/RTDI/ThirdParty/NRD/RELAX_Atrous.cs.hlsl",
+      "path": "code-references/RELAX_Atrous.cs.hlsl",
+      "bytes": 13037,
+      "sha256": "BC4C998E30852232AC98E4F2A7F924EF0072D900F44F4DE1D725171F9E1508B8"
+    },
+    {
+      "originalPath": "Runtime/RTGI/NRD/HoRTGINrdContext.cs",
+      "path": "code-references/HoRTGINrdContext.cs",
+      "bytes": 7237,
+      "sha256": "E4D798913A8826F7208929B9249FDD95AB03AFC471CF8B729FBDCA229E2AD302"
+    },
+    {
+      "originalPath": ".codex-research/UnityPathTracing/RenderingPlugin/External/NRD/Source/Relax.cpp",
+      "path": "code-references/Relax.cpp",
+      "bytes": 17645,
+      "sha256": "1F656B4D7671D1648FD3287F35E7A600B706C56DB9BCD9844B2BFD989681FC12"
+    }
+  ],
+  "baseRevision": "379515d09e1a5348c93d3252f113daeeef04f3c7"
+}
