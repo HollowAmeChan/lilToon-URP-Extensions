@@ -461,3 +461,5 @@ HGS1原流每帧有shader/app帧、6writer count、9stage×18RGB。3/4/5/6/9各�
 复读本机参考Relax.cpp步长1<<i、runtime Atrous shader与参考LF逐byte同、step>4随机offset；code-references原文/SHA保留，不误称当前DLL常量反编译证明。LocalStages约2.3MiB，246source/7新blob、2完整logs、2JSON+6streams lossless gzip、输入SHA/analysis/verify。当前根源对应actual runs，所有自有进程终态active=null，Runtime无diff，他人Ho-GD计划不纳入。
 
 **029直接动作：** 只Editor GI实例ValidationSettings设atrous=3（原5），保留前3轮移去后两大步长；不要改其它settings/采样/单位/格式/时域策略。沿同18点及4seed先资格+实际stage，Native writer count应9一次+10两次（3总），raw必须匹配，全部18点含暗邻与旧full/16phase/noise均报告。重点对新参考L1/细节、全域原门槛和方差取舍，不按加权L1掩盖暗邻硬退化。无实质收益或有硬退化搁置、不扫2/4；有收益才做8seed/旧合格参考点/动态/HDR/两Player/GPU后决定生产，不能跳过资格。028helper可继续用，verifier当前严格baseline10×4，候选另开证据目录/合同，不覆盖028或改绿。原F39/static/复杂动态/HD完整预算继续，目标active。
+
+028已按白名单过滤提交`90fc233`，LocalStages verifier提交后再次通过：copy/真实binding与writer count/全部stage原流/原质量失败保留，raw与pub观察一致性均通过。两个自有进程已结束、index空、Runtime无diff，仅他人Ho-GD计划未跟踪。029直接GI私有atrous5→3单Editor候选，先原18点/4seed/full/phase/暗邻/噪声取舍，有收益再8seed/旧参考/动态/HDR/Player/GPU，不扫其它迭代数、不提前生产化；全目标和原缺口继续active。

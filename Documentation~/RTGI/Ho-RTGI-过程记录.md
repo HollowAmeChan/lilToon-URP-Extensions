@@ -611,3 +611,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **参考/下一机制：** 复读本机参考NRD Relax.cpp，iteration clamp后gStepSize=1<<i；runtime Atrous shader与该参考按LF逐byte同，step>4有随机offset；CPU上下文/Shader原文和SHA已归档，不声称已反编译当前DLL常量。029只Editor GI私有atrous5→3，移去最后两大步长，其它setting/采样/单位/格式不改；相同4seed阶段/全部18点（含暗邻）/full/phase/noise与真实count对照。无收益或硬退化即搁置、不扫2/4；有收益再完整8seed/旧合格参考/动态/HDR/两Player/GPU资格，不现在接生产。
 
 **过滤/交接：** Tests~/RTGI/LocalStages约2.3MiB，246source/7新小文本、2完整logs、2原JSON+6streams gzip、code-reference/输入SHA/analysis/verify通过。当前Runtime无diff、全部自有进程结束/active=null。白名单新helper/meta、Castle、新证据和RTGI六文档，他人Ho-GD计划不纳入。原full/phase/F39/static/复杂动态/1080完整预算继续active。
+
+028已按白名单过滤提交`90fc233`，LocalStages verifier提交后再次通过：copy/真实binding与writer count/全部stage原流/原质量失败保留，raw与pub观察一致性均通过。两个自有进程已结束、index空、Runtime无diff，仅他人Ho-GD计划未跟踪。029直接GI私有atrous5→3单Editor候选，先原18点/4seed/full/phase/暗邻/噪声取舍，有收益再8seed/旧参考/动态/HDR/Player/GPU，不扫其它迭代数、不提前生产化；全目标和原缺口继续active。
