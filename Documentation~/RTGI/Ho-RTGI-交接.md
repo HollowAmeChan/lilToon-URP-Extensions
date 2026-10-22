@@ -517,3 +517,5 @@ Tests~/RTGI/AtrousPropagation约24.4MiB，255source/12新文本、5完整log、4
 过滤后Castle精确恢复99f4fac，新增HoRTGILumaFloorAudit.cs/meta已移除，入口/覆盖不保留；Runtime/DI/vendor一直未改。43936 stock control实际98请求0，Native5/copy64/scope/原math资格过，API/compile/绑定/fence/drift0。原候选所有源/生成体SHA与报告完整留存，不重标当前源。Tests~/RTGI/LumaFloor含254source、3完整log、27capture gzip、输入/contract/analysis/filter-review/verify；current-source对应filtered-run，历史候选runner入口已删，不能直接调用或回滚产品凑SHA。自有进程终态active=null，Ho-GD计划不纳入。
 
 **033直接动作：** 复用031已有HGW1 center/sample variance、geometry/normal/material/luma因子/真实tap权重，离线检查luma权重双向方差依赖、归一化导致的亮度传播与两类结构差异，解释只调floor为何无效。固定原新18+反例与邻点，不能只挑亮边；静态输入重放不是完整迭代反馈或GPU资格。只有新机制能在现有反事实中区别两类位置，才再定一个局部GPU候选；不重采1M参考/重复旧完整矩阵/扫常量。默认stock5保持，F51/F53继续搁置，原full/phase/F39/static/复杂动态/1080完整预算和目标active继续。
+
+032已按白名单过滤提交`d9d4459`，LumaFloor verifier提交后再次通过。固定floor/64候选局部仅−3.9%、full2→0和11phase退化已拒绝，原候选源/生成体/失败完整；新增类/meta/入口已移除，stock5过滤后实跑过。三个自有进程终态、index空、Editor/Runtime无最终diff，仅Ho-GD计划未跟踪。033先复用031权重/两侧variance做离线双向归一化机制核对，不重跑旧GPU矩阵/MC、不扫常量，原全部目标/缺口active继续。

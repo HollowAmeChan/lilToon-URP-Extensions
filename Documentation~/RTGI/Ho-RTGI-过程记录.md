@@ -691,3 +691,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **取舍/过滤：** 固定floor/64策略拒绝/搁置，不否认031floor激活证据，但它不是主要解法。不得扫其它epsilon/单位/迭代。实际候选源/生成体/所有失败保存后，Castle恢复99f4fac，新增LumaFloorAudit与meta移除，Editor入口/覆盖不保留；Runtime/DI/vendor始终未改。43936过滤后stock control实际98请求0、Native5/typed-copy64/原math scope验证过，API/compile/绑定/fence/drift0。
 
 **交接/证据：** Tests~/RTGI/LumaFloor含254source、3完整logs、27原JSON/bin gzip、生成体SHA、预声明contract/analysis/filter-review/verify全部过，只代表证据自洽与撤回验证，不改绿质量失败。自有进程全终态active=null；白名单只新证据/RTGI六文档，Editor恢复后无最终源码diff，Ho-GD计划排除。033复用031center/sample variance/实际权重离线核对双向权重与归一化传播，先区别两类结构的机制再GPU单候选；静态输入重放不冒称迭代渲染或修复。原F39/static/复杂动态/HD完整预算及目标active继续。
+
+032已按白名单过滤提交`d9d4459`，LumaFloor verifier提交后再次通过。固定floor/64候选局部仅−3.9%、full2→0和11phase退化已拒绝，原候选源/生成体/失败完整；新增类/meta/入口已移除，stock5过滤后实跑过。三个自有进程终态、index空、Editor/Runtime无最终diff，仅Ho-GD计划未跟踪。033先复用031权重/两侧variance做离线双向归一化机制核对，不重跑旧GPU矩阵/MC、不扫常量，原全部目标/缺口active继续。
