@@ -541,3 +541,5 @@ Tests~/RTGI/PairwiseWeights有压缩输入SHA/源码公式/analysis/verify，默
 原源/生成体/所有结果完整保存后，Castle恢复99f4fac，新增ContrastSupportAudit/meta已删除。49216过滤后stock control实际98请求0、Native5/copy64/scope和API/compile/绑定/fence/drift通过。Runtime一直未改，所有自有进程终态/active=null。Tests~/RTGI/ContrastSupport含源码/生成体/3logs/27capture/analysis/filter-review/verify，当前源码对应filtered-run，历史candidate入口已删，不能回滚产品凑SHA。Ho-GD计划不纳入。
 
 **035直接动作：** 暂停算法候选，先stock默认5同4seed的原版重复以及无操作shader clone对照，保持原27点/相机/时间预算；检查后两seed raw是否重现差异，记录实际shader frame、numeric lights/sky/RIS及secondary记录，必要逐字段比较而非仅单个hash。若stock原版本身变化，先定位状态/seed-reset/环境输入；若仅clone引入，定位观察/资源副作用。源/日志/失败都保留，严格pair恢复前不再试滤波参数或RGB算式。不要重采MC/跑旧AS flags或无新机制完整大矩阵。原质量/F39/static/复杂动态/1080完整预算及目标active继续。
+
+034已按白名单过滤提交`5095ddc`，ContrastSupport verifier提交后再次通过，明确保留comparisonQualified=false及后两seed raw不匹配。名义收益不足、不接纳因果质量；候选类/meta/入口已撤回，stock5实跑过，Runtime/Editor无最终diff。三自有进程终态/index空，仅Ho-GD计划未跟踪。035先stock重复/no-op clone及实际输入状态定位，严格pair恢复前停新滤波候选；所有原目标/质量/F39/动态/HD预算继续active。

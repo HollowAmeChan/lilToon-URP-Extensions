@@ -723,3 +723,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 名义新18 L1 .462545→.421666（−8.84%）未达预声明20%；旧反例近似不变/无19点hard，full仍2/4、pooled−4.69053/−5.02999/−4.71627%，phase7/11/11/7→7/10/11/7、无pass→fail，方差约+4～11%。但最终严格pair核对发现seed5347609/6396185 raw不逐bit同（前两个同）；全帧raw均值max差2.21911e−6/1.84949e−6、各767/768 RGB分量不同，local单样本max9.155e−5/.001495。不能把8.84%当受控因果收益；comparisonQualified=false与原数据保留，根因未知不归因engine/driver/场景/NRD。初Verifier据raw应同失败后，改为明确核验并保留该未满足条件，而非改绿质量/配对资格。
 
 候选搁置，不扫ratio。原所有源/生成体/SHA归档后Castle恢复99f4fac、新ContrastSupportAudit/meta删除，49216 stock control过滤后真实98请求actual0、Native5/copy64/scope过、API/compile/绑定/fence/drift0。Runtime/DI/vendor始终未改。新证据与RTGI文档白名单、Ho-GD计划排除。035先原版4seed重现性/no-op clone对照，记录frame/light/sky/RIS/secondary实际状态，恢复严格pair前停止算法候选；不重采MC或重启旧AS调参。原所有质量/F39/static/复杂动态/HD预算继续active。
+
+034已按白名单过滤提交`5095ddc`，ContrastSupport verifier提交后再次通过，明确保留comparisonQualified=false及后两seed raw不匹配。名义收益不足、不接纳因果质量；候选类/meta/入口已撤回，stock5实跑过，Runtime/Editor无最终diff。三自有进程终态/index空，仅Ho-GD计划未跟踪。035先stock重复/no-op clone及实际输入状态定位，严格pair恢复前停新滤波候选；所有原目标/质量/F39/动态/HD预算继续active。
