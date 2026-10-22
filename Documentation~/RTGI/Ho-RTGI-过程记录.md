@@ -767,3 +767,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **成本/参考：** 加2NRD+读回为诊断；diagnosticLogicalBytes只external outputs/validation，不含pools/constants/VRAM总量。已读DI技术DiffuseExchange和实际派生body，三项关联策略（首轮temporal-var w²传播、后续pair/RGB bandwidth、固定Gaussian rejected mass留center）有DI收益及增噪/动态限制，不能自动当GI最佳；原文/SHA冻结。037可只branch1评估GI-private diffuse bundle、5轮/时间/单位/格式不变，排除spec/F0身份guide，先精确差异与小资格再新旧控制/full/phase/noise。
 
 **过滤/交接：** SharedInput约11MiB，259source/9新文本、4完整logs/22capture gzip/全部初失败和成功/输入/生成体/analysis/verify通过。所有自有进程终态/active=null；白名单Editor工具/Stage/Castle、Runtime仅Editor hook、新证据和RTGI六文档，Ho-GD计划排除。没有生产画质修复/预算改善，原质量/F39/static/动态/1080完整预算继续active。
+
+036已按白名单过滤提交`dfa3dd4`，SharedInput verifier提交后再次通过：64²历史reset隔离、实际GI1024观察帧全RGBA逐bit等价、旧baseline全图均值不变、初allocation/wrapper失败完整保留。四自有进程终态、index空，Runtime只有UNITY_EDITOR hook/Player预处理排除，Ho-GD计划未跟踪不纳入。037基于已冻结DI DiffuseExchange实际派生，仅branch1 GI-private diffuse bundle同源对照，先exact source/小资格再新旧控制/full/phase/noise，原全部目标/质量/F39/动态/HD预算继续active。
