@@ -24,6 +24,7 @@ namespace lilToon.URP.Extensions.RTGI.NRD
         float seconds=1f/60;
         #if UNITY_EDITOR
         internal double? ValidationTimeSeconds;
+        internal Action<CommandBuffer,HoRTDINrdNative.CommonSettings,HoRTDINrdNative.RelaxSettings,IReadOnlyDictionary<string,RenderTargetIdentifier>> ValidationRecordInputs;
         // Isolated unit-domain comparison. Physical raw is unchanged; changing
         // the NRD unit invalidates only its own history before recording.
         internal float? ValidationSignalScale;
@@ -96,6 +97,9 @@ namespace lilToon.URP.Extensions.RTGI.NRD
             var common=HoRTDINrdNative.CommonSettings.Create(width,height,view,projection,historyValid?previousView:view,historyValid?previousProjection:projection,frame,lastReset);
             common.timeDelta=deltaMs;
             var settings=ReferenceSettings(preview?1f/60:seconds);
+            #if UNITY_EDITOR
+            ValidationRecordInputs?.Invoke(cmd,common,settings,external);
+            #endif
             core.Record(cmd,common,external,settings);
             previousView=view;previousProjection=projection;historyValid=true;
         }

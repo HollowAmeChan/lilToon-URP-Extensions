@@ -1,0 +1,20 @@
+[
+  {
+    "originalPath": "Documentation~/RTDI/\u6280\u672f/Ho-RTDI-DiffuseExchange.md",
+    "path": "di-reference/Ho-RTDI-DiffuseExchange.md",
+    "sha256": "847DED6F455FB4B357D11FD2005168F5C3768C8D378ACFAC5EC995D0FC42B02B",
+    "bytes": 4739
+  },
+  {
+    "originalPath": "Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrous.hlsl",
+    "path": "di-reference/HoRTDINrdAtrous.hlsl",
+    "sha256": "0D1EC5208684217BDE4F532A89408990AF35FAE0A393C6EB5BBB525BFCF8928B",
+    "bytes": 14364
+  },
+  {
+    "originalPath": "Runtime/RTDI/Shaders/NRD/HoRTDINrdAtrousSmem.hlsl",
+    "path": "di-reference/HoRTDINrdAtrousSmem.hlsl",
+    "sha256": "78F736102C5D27CEBA38B3F116E41AA27C2409210D95F162FD74B71E5766F40D",
+    "bytes": 22765
+  }
+]

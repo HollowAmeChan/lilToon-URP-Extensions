@@ -69,3 +69,5 @@
 步骤034大步长factor2 guard撤回：名义L1−8.84%不足筛选，且后两seed发现raw配对不满足，不能当因果收益；默认5过滤实跑过。[原数据与配对失败](../../Tests~/RTGI/ContrastSupport/README.md)。035先stock重复/no-op clone和输入状态重现性，严格pair恢复前暂停新算法，所有原缺口active继续。
 
 步骤035当前stockA/B/no-op四seed全raw/pub均值图与端点数值状态逐bit重现，记录序列化与失败停止已修复；历史漏项/device crash/误排/partial全部保留。[完整重现性证据](../../Tests~/RTGI/Reproducibility/README.md)。历史034仍未资格，036同源GI双NRD基线先资格，不重开弱候选，全部原缺口active继续。
+
+步骤036同一实际GI输入双独立NRD基线/no-op通过：1024观察帧完整RGBA逐bit同，baseline整图均值对旧基线不变，单支/统一reset证明历史隔离。[共享输入资格](../../Tests~/RTGI/SharedInput/README.md)。仅Editor hook/诊断，未修画质；037评估DI成熟diffuse策略单分支，不直接认定GI最佳，全部原缺口active。

@@ -252,3 +252,5 @@
 步骤034：late factor2 guard名义收益弱且后两seed raw配对未满足，候选已移除、stock5实际资格复核，Runtime未变。035优先基线/无操作clone重现性和frame/light/sky/RIS/secondary核对，配对恢复前停算法试验；所有原范围/预算/用户强制要求继续active。
 
 步骤035：当前stockA/B/no-op严格重现恢复，记录缺字段/编排失败停止修复，历史漏项/TDR/abort原样保留；小负载恢复与短资格通过后才运行有效矩阵。无画质/产品GPU预算结论，Runtime不改。036先同源输入双NRD基线资格再算法，所有旧质量/范围/预算与用户强制条件继续active。
+
+步骤036：same actual GI input/common/settings的2独立NRD branch与baseline在1024帧全RGBA bit同，小资格证明reset隔离/恢复；初URP初始化与wrapper退出记录失败保留。仅Editor hook，无Player行为/画质/预算改变。037依M2同输入评估GI-private DI diffuse派生bundle，先exact差异与全控制资格，所有原范围/预算/用户强制要求继续active。

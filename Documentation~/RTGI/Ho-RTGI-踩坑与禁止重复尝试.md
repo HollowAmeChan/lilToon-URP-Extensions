@@ -168,3 +168,9 @@ step>4 factor2支持域名义L1仅−8.84%未达原20%，更重要是后两seed 
 一次资格出现DEVICE_HUNG/removal/Unmap及fatal1073741845、无fresh report，序列化遗漏与device异常分开，不无证归因。先empty/no-AS小compute/fence与CPU schema资格、再新的host观测/短场景，不能原样反复重开大矩阵、改TDR/杀其它进程；当前A/B/no-op重现通过也不抹掉历史。
 
 历史selected secondary末位差在019原界内，不等于证明raw差异原因。当前严格pair可过，不给034原结果补发资格；端点hash不代表全帧输入。后续需新鲜stock配对或同一GI输入双NRD分支，不重启已搁置滤波候选。
+
+## F57 / 步骤036：共享输入资格与URP初始化/退出码边界
+
+空场景不代表URP pool已初始化，初小fixture在Prepare失败，尚无shared frame；wrapper又因null路径Copy丢actual child exit。只能保wrapper1/child未知，不能从EditorApplication.Exit源码补观察值。先64²空相机3request初始化（无GI/AS），先persist退出元数据，可选路径有值才Copy。旧F17同类初始化已知，不再省warmup。
+
+同源输入的3个instance输出bit同/单支reset只影响该支/统一reset重同，证明诊断资格，不代表质量或性能。IReadOnly IN标识、独立OUT/pool/constants与Native数据拷贝要保持；不能嵌套调用后继续用上个native pointer。诊断资源字段只partial logical payload不能叫VRAM。DI成熟diffuse策略也只能GI private单分支对照，不能混入spec/F0或无控制直接生产化。

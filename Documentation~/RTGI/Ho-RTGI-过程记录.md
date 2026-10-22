@@ -747,3 +747,23 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **收益/成本/交接：** 本步修复记录缺字段与编排失败停止，恢复新鲜stock严格pair前置，无画质/产品GPU预算改善。255source/8场景完整log+2辅助log/77capture gzip/当前和历史全部状态/analysis/verify，Runtime/DI/vendor无改动，所有自有进程已终态。白名单InputStateAudit/meta、3Editor增强、Castle、新证据与RTGI六文档，Ho-GD计划排除。036先同源GI输入双独立NRD baseline/no-op分支资格，后续实验只动一分支，避免跨进程ray末位差混入；旧候选不重开，全部原质量/F39/static/复杂动态/HD预算继续active。
 
 035已按白名单过滤提交`bff5850`，Reproducibility verifier提交后再次通过。当前stockA/B/no-op对旧全raw/pub均值图逐bit同、数值端点一致；历史漏序列化/devicehung/显式abort与partial均保留，不确认历史唯一根因。十个自有进程全终态、index空、Runtime无diff，仅Ho-GD计划未跟踪。036先同一GI输入双独立NRD baseline/no-op分支资格，保持host/短资格/失败停止约束，旧F51/F53/F55不自动重开，原全部目标/质量/F39/动态/HD预算继续active。
+
+## 036：同源GI输入双NRD基线/no-op资格（进行中）
+
+**事前review：** 035当前stock/no-op重现恢复，但历史跨进程raw差因果未定，后续重建比较改为同一GI输入分支。新增仅UNITY_EDITOR的GI NRD record-input观察hook，直接传实际common/settings/只读external；两个独立RELAX_DIFFUSE native实例、独立pool/输出/constant buffer只共享IN资源，原baseline及所有产品参数/Shader不改。回调前录制两个branch，baseline照常记录，Native描述符在各core中即时拷贝不共享指针；scope释放恢复。
+
+先64²空场景/no-AS确定性信号64帧：baseline/branch0/no-op branch1正常段输出逐bit相同，单独reset branch1必须只影响该分支，统一reset后应重新相同。再短实际GI资格、固定有限4seed27点/全图raw/pub与旧基线/每帧branch输出/输入绑定及时间重置等价；不直接开HD/新算法/旧候选。复制/三分支诊断开销不作产品GPU预算，hook在Player编译排除。host/超时/fence/失败停止约束保持，所有原质量/F39/static/动态/1080完整预算继续active。
+
+### 036事后review（2026-10-23）：实际同源双NRD逐bit等价与历史隔离资格通过
+
+**实现/边界：** GI NrdContext只加UNITY_EDITOR RecordInputs观察hook，传实际common/settings/只读external，Player字段和调用排除。Editor SharedInputAudit创建2个额外RELAX_DIFFUSE，IN标识全同，OUT/pool/constants独立；branch0原版、branch1原body no-op10，原baseline照常。Native每core立即拷贝descriptor/constants，无跨调用pointer复用。所有产品参数/Signal64/32F/Shader/DI不变，scope释放。
+
+**首失败原样：** 54932小fixture在URP pool未初始化时Prepare失败、0比较帧；wrapper空生成路径Copy又异常，实际子进程退出码未落盘，只确认wrapper1，不根据源码补actual1。initial-allocation/源/报告/日志/review保留。修为空相机64²三个request先初始化URP（无GI/AS），先落盘actual exit再读取可选生成路径。
+
+**小资格：** 41304 actual0，64²/64合成输入帧，branch0对baseline所有帧RGBA逐bit同；frame24只reset branch1，24～47仅该支不同且每帧至少14596分量（不只是alpha）；frame48统一reset后再次逐bit同，证明历史独立、baseline未受污染，hook/shader/资源恢复。此不作GI物理质量参考。
+
+**实际GI：** 38552短98request actual0/32比较帧，54328正式1314request actual0/1024比较帧，4seed64warm256观察；每帧262144分量 baseline/branch0/no-op全逐bit同，含warm1280次真实shared callback。原完整raw/pub时间均值图和逐帧raw对026同seed逐bit同。有效进程API/compile/Property/UAV/fence/drift0，时间/矩阵/重置由同一actual common value-copy，非另造时钟。原质量门槛不因observer成功改变。
+
+**成本/参考：** 加2NRD+读回为诊断；diagnosticLogicalBytes只external outputs/validation，不含pools/constants/VRAM总量。已读DI技术DiffuseExchange和实际派生body，三项关联策略（首轮temporal-var w²传播、后续pair/RGB bandwidth、固定Gaussian rejected mass留center）有DI收益及增噪/动态限制，不能自动当GI最佳；原文/SHA冻结。037可只branch1评估GI-private diffuse bundle、5轮/时间/单位/格式不变，排除spec/F0身份guide，先精确差异与小资格再新旧控制/full/phase/noise。
+
+**过滤/交接：** SharedInput约11MiB，259source/9新文本、4完整logs/22capture gzip/全部初失败和成功/输入/生成体/analysis/verify通过。所有自有进程终态/active=null；白名单Editor工具/Stage/Castle、Runtime仅Editor hook、新证据和RTGI六文档，Ho-GD计划排除。没有生产画质修复/预算改善，原质量/F39/static/动态/1080完整预算继续active。

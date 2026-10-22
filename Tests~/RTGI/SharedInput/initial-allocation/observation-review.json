@@ -1,0 +1,7 @@
+{
+  "wrapperExit": 1,
+  "unityActualExit": null,
+  "reason": "Child completed before wrapper Copy-Item failed on null generated path; original active state not rewritten. Report explicitly failed on URP pool null before recording any shared frame.",
+  "expectedFromSource": 1,
+  "expectedIsNotObservedExit": true
+}

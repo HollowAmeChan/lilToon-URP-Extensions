@@ -1,0 +1,48 @@
+{
+  "scope": "Two independent RELAX_DIFFUSE cores consume the exact source input identifiers and value-copied common/settings before the ordinary baseline Record; only writable external outputs and private pools/constants differ. Diagnostic-only no-op/equality qualification, not quality or product GPU-budget improvement.",
+  "productionBehaviorChanged": false,
+  "small": {
+    "frames": 64,
+    "baselineVsBranch0AllBitwiseEqual": true,
+    "branch1EqualBeforeOwnReset": true,
+    "minimumMismatchAfterOwnReset": 14596,
+    "branch1EqualAfterUnifiedReset": true,
+    "restoredHook": true,
+    "released": true
+  },
+  "scene": {
+    "recordedIncludingWarmup": 1280,
+    "comparedFrames": 1024,
+    "rgbaComponentsPerFrame": 262144,
+    "baselineVsBranch0Mismatches": 0,
+    "baselineVsNoopBranch1Mismatches": 0,
+    "independentPoolsAndConstants": true,
+    "sharedInputBindings": true,
+    "restoredHook": true,
+    "released": true
+  },
+  "observerChecks": [
+    {
+      "seed": 0,
+      "wholeRawFilteredMeanMapBitwiseEqual": true,
+      "rawFrameMeansBitwiseEqual": true
+    },
+    {
+      "seed": 104729,
+      "wholeRawFilteredMeanMapBitwiseEqual": true,
+      "rawFrameMeansBitwiseEqual": true
+    },
+    {
+      "seed": 5347609,
+      "wholeRawFilteredMeanMapBitwiseEqual": true,
+      "rawFrameMeansBitwiseEqual": true
+    },
+    {
+      "seed": 6396185,
+      "wholeRawFilteredMeanMapBitwiseEqual": true,
+      "rawFrameMeansBitwiseEqual": true
+    }
+  ],
+  "originalFailuresPreserved": "First empty-scene attempt failed before any NRD frame because URP RTHandle pool was uninitialized; wrapper then failed before saving actual child exit. Actual wrapper1/child unknown kept separately, not inferred from source.",
+  "next": "Read DI DiffuseExchange mature variance/retained-kernel policy against GI source; test only one scoped private reconstruction change on branch1 after all matched-input invariants remain, with original/new reference controls, full/phase/noise and later qualification. Do not automatically adopt DI presets."
+}

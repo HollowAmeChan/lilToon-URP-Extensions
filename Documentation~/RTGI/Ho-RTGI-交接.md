@@ -559,3 +559,15 @@ Tests~/RTGI/Reproducibility含255source、8场景logs+2辅助logs、77原capture
 **036直接动作：** 使用同一GI输入的两个独立NRD baseline/no-op分支，先证明输入纹理/矩阵/时间/重置和输出等价、互不污染，后续仅一分支实验；这样避免再靠跨进程raytrace完全一致推断重建差异。先小负载/短资格，不立即增加大场景/HD驻留；所有Native描述符/时间/回调范围与恢复要审查。若选择新算法，必须新鲜stock配对与原旧15/新18/暗控制/full/phase/noise等资格，F51/F53/F55不自动重开；原全质量/F39/static/复杂动态/1080完整预算与目标active继续。
 
 035已按白名单过滤提交`bff5850`，Reproducibility verifier提交后再次通过。当前stockA/B/no-op对旧全raw/pub均值图逐bit同、数值端点一致；历史漏序列化/devicehung/显式abort与partial均保留，不确认历史唯一根因。十个自有进程全终态、index空、Runtime无diff，仅Ho-GD计划未跟踪。036先同一GI输入双独立NRD baseline/no-op分支资格，保持host/短资格/失败停止约束，旧F51/F53/F55不自动重开，原全部目标/质量/F39/动态/HD预算继续active。
+
+### 036终态（2026-10-23，待过滤提交）：同源GI双独立NRD基线通过，037评估DI diffuse策略
+
+Runtime GI NrdContext仅UNITY_EDITOR增ValidationRecordInputs定义/Invoke，Player预处理排除。callback在实际common/settings生成后、baseline core.Record前；2额外type10 RELAX_DIFFUSE core共享IN标识和值拷贝common/settings，独立pool/constants/OUT。branch0stock、branch1literal-stock no-op10，baseline不变，hook/shader/kernel/资源finally释放。没有改设置/5轮/实际Signal64/32F/Shader/DI。
+
+首54932失败：URP pool未初始化导致Prepare null，0比较帧，wrapper又null生成path Copy失败，actual child exit未保存（wrapper1、child未知，别补成1）。initial-allocation原源/状态/报告/log/review保留。修为64²空相机3request先initURP、metadata在可选copy前persist。41304小64² actual0，64输入帧branch0始终baselineRGBA逐bit同；frame24只reset branch1使24～47每帧至少14596分量不同（>alpha4096），frame48统一reset后重同，历史独立。
+
+38552实际GI短98request/32比较帧actual0，54328正式1314request/1024观察帧actual0，4seed0/104729/5347609/6396185各64warm256观察。每帧262144分量 baseline/branch0/no-op都逐bit同；含warm1280次actual callback。时间/矩阵/reset直接same actual values；原全raw/pub时间均值图与逐帧raw对026全同，observer未改变这些原结果。有效进程API/compile/Property/UAV/fence/drift0。
+
+SharedInput约11MiB，259source/9新文本、4完整log/22capture gzip、Frame.common/settings/output SHA及diff、初失败/生成体/输入/analysis/verify。diagnosticLogicalBytes仅2branch external output/validation，不含pools/constants也不是VRAM；extra2NRD/readback不当产品预算。所有进程终态active=null，Ho-GD计划排除，原质量/full/phase未修复。
+
+**037直接动作：** 已读并冻结DI技术Ho-RTDI-DiffuseExchange.md及实际HoRTDINrdAtrous/Smem派生（SharedInput/di-reference）。以原stock作为branch0，在branch1对一个GI-private diffuse策略bundle做可精确重建评估：首轮只temporal variance用w²传播（不混入空间均值差），后续pair bandwidth/RGB contrast与拒绝Gaussian mass留center。保持5轮/时间历史/原资源/单位64/原参数，specular/F0/DI身份guide不带入；不要简单复制BOTH manifest。先审实际DI body与NRD_DIFF变体的exact patch/源SHA，再64²/实际短资格，之后旧15+新18/暗控制/full/16phase/noise/重置与后续部署。若无实质收益或硬退化就撤回，不重开cap3/floor/ratio扫描。此是计划M2允许的同Ho输入原版/DI派生对照，不能自动认为DI成功就GI接纳。原F39/static/复杂动态/1080完整预算和目标active继续。
