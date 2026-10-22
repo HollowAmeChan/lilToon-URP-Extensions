@@ -745,3 +745,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **历史差异解释界限：** 初stock对当前A的灯/sky/RIS/primary同、full secondary hash不同；selected差只position/normal：hitmax9.26e−6、miss方向7.82e−8/radius.01324、normal1oct16步，符合019既有界限。尚未证明其导致raw/TDR，不归因engine/driver/场景；端点非所有帧全部输入。
 
 **收益/成本/交接：** 本步修复记录缺字段与编排失败停止，恢复新鲜stock严格pair前置，无画质/产品GPU预算改善。255source/8场景完整log+2辅助log/77capture gzip/当前和历史全部状态/analysis/verify，Runtime/DI/vendor无改动，所有自有进程已终态。白名单InputStateAudit/meta、3Editor增强、Castle、新证据与RTGI六文档，Ho-GD计划排除。036先同源GI输入双独立NRD baseline/no-op分支资格，后续实验只动一分支，避免跨进程ray末位差混入；旧候选不重开，全部原质量/F39/static/复杂动态/HD预算继续active。
+
+035已按白名单过滤提交`bff5850`，Reproducibility verifier提交后再次通过。当前stockA/B/no-op对旧全raw/pub均值图逐bit同、数值端点一致；历史漏序列化/devicehung/显式abort与partial均保留，不确认历史唯一根因。十个自有进程全终态、index空、Runtime无diff，仅Ho-GD计划未跟踪。036先同一GI输入双独立NRD baseline/no-op分支资格，保持host/短资格/失败停止约束，旧F51/F53/F55不自动重开，原全部目标/质量/F39/动态/HD预算继续active。

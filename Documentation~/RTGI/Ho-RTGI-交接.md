@@ -557,3 +557,5 @@ Tests~/RTGI/PairwiseWeights有压缩输入SHA/源码公式/analysis/verify，默
 Tests~/RTGI/Reproducibility含255source、8场景logs+2辅助logs、77原capture gzip、数值schema/abort/恢复与所有失败/analysis/verify。全部自有进程已终态、无active；Ho-GD计划排除。是记录/编排/重现性收益，不是画质修复/新性能预算。
 
 **036直接动作：** 使用同一GI输入的两个独立NRD baseline/no-op分支，先证明输入纹理/矩阵/时间/重置和输出等价、互不污染，后续仅一分支实验；这样避免再靠跨进程raytrace完全一致推断重建差异。先小负载/短资格，不立即增加大场景/HD驻留；所有Native描述符/时间/回调范围与恢复要审查。若选择新算法，必须新鲜stock配对与原旧15/新18/暗控制/full/phase/noise等资格，F51/F53/F55不自动重开；原全质量/F39/static/复杂动态/1080完整预算与目标active继续。
+
+035已按白名单过滤提交`bff5850`，Reproducibility verifier提交后再次通过。当前stockA/B/no-op对旧全raw/pub均值图逐bit同、数值端点一致；历史漏序列化/devicehung/显式abort与partial均保留，不确认历史唯一根因。十个自有进程全终态、index空、Runtime无diff，仅Ho-GD计划未跟踪。036先同一GI输入双独立NRD baseline/no-op分支资格，保持host/短资格/失败停止约束，旧F51/F53/F55不自动重开，原全部目标/质量/F39/动态/HD预算继续active。
