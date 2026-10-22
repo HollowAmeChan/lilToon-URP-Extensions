@@ -631,3 +631,5 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 **正确性：** raw全帧RGB均值/局部raw全部样本对028逐bit一致；input/Pre/Temporal/条件fast/Clamp/first Atrous局部原流逐bit同。改变只影响后续空间滤波结果，参考/选点限制不解除。设置唯一4字节变化和真实Native绑定/count/恢复均可从原报告及stream重建。
 
 **过滤/交接：** Tests~/RTGI/AtrousCandidate约2.2MiB，246source仅3新小文本、2完整logs、2JSON+6streams gzip、review-contract/输入SHA/analysis/verify过；两个自有进程终态active=null，Runtime无diff，他人Ho-GD计划排除。保留有收益的Editor候选进入030完整8seed/旧合格参考/暗控制/full/phase/noise资格，不扫描其它迭代数；进一步有收益才动态/HDR/两Player/GPU与生产取舍。原F39/static/复杂动态/HD完整预算与目标active继续。
+
+029已按白名单过滤提交`e53709e`，AtrousCandidate verifier提交后再次通过。固定3轮局部L1−33.6%、pooled full过但6phase仍失败、方差+38.6%，只进入更广资格。Native设置只改4字节、真实3轮与回5已证；两个自有进程终态，index空/Runtime无diff，仅他人Ho-GD计划未跟踪。030直接固定3的8seed/旧合格参考与暗控制，再动态/HDR/Player/GPU；不要先改Runtime，不扫描2/4，原所有缺口/目标active继续。旧source-SHA verifier用所属提交，不回滚当前代码凑绿。

@@ -475,3 +475,5 @@ Editor-only settings scope只改GI atrous5→3，148B唯一差offset92 uint；�
 raw全帧均值+局部所有样本、input/Pre/Temporal/条件fast/Clamp/first Atrous局部原流均对028逐bit同。数据与新增scope恢复可核验，Editor override不能标成production。Tests~/RTGI/AtrousCandidate约2.2MiB、246source/3新blob、2完整logs、2JSON+6streams lossless gzip、输入/review-contract/analysis/verify过，全部自有进程终态/active=null，Runtime无diff，他人Ho-GD计划排除。
 
 **030直接动作：** 固定同一atrous3，先完整8seed/旧17合格参考点与暗控制、full/全部16phase/全域及局部noise；旧16点参考含15合格/暗点未定必须原样保留，不挑点或用新18点替代。可复用SeedAudit productionOnly真实probe+每seed full map，Editor settings scope只改3并验证Native counts/恢复，raw与0268seed必须匹配；对0294seed局部结果可交叉复核。新增候选完整数据仍与生产5隔离，不覆盖旧证据。若继续有收益，再动态/HDR/两Release Player/GPU，最后才决定生产；不扫2/4或直接关闭降噪。原F39/static非零base/复杂动态/1080完整预算继续active。
+
+029已按白名单过滤提交`e53709e`，AtrousCandidate verifier提交后再次通过。固定3轮局部L1−33.6%、pooled full过但6phase仍失败、方差+38.6%，只进入更广资格。Native设置只改4字节、真实3轮与回5已证；两个自有进程终态，index空/Runtime无diff，仅他人Ho-GD计划未跟踪。030直接固定3的8seed/旧合格参考与暗控制，再动态/HDR/Player/GPU；不要先改Runtime，不扫描2/4，原所有缺口/目标active继续。旧source-SHA verifier用所属提交，不回滚当前代码凑绿。
