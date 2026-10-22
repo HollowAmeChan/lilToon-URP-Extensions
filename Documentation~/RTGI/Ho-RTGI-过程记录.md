@@ -707,3 +707,19 @@ CPU-only实际layout确认：1_mesh为251321顶点、位置stride40的skinned me
 固定原输入单轮重放：luma正反向因子几何均值对新18 L1变化step2/4/8/16仅−.00635/−.00446/−.000779/−.0000875，后期很小，不值得新GPU试验。031既有[.5,2]亮度分箱双向支持域对新18为−.01649/−.02065/−.01907/−.01795；反例step2略恶化+.00206，step8/16仅约1.4e−8/1.0e−9（tap全保留）。因此只支持一个大步长局部guard假说，不支持全局guard/迭代减少；没有调多个阈值。
 
 此是冻结每轮原输入、仅luma项反向，不是实际reverse geometry/jitter/完整转移矩阵，也没有递归传播/动态/全域质量结论，不能把单轮改善相加报最终收益。Tests~/RTGI/PairwiseWeights含原输入SHA/原公式/全部27点输出变化/分seed分轮/analysis/verify过。白名单仅新证据与RTGI六文档，Ho-GD计划排除。034只GI私有shader10 step>4双向factor2支持域、保持5/其它参数/单位/格式，先源码与实际scope资格再4seed全19参考/邻点/full/phase/noise，有收益再旧15完整8seed等资格；失败撤回不扫ratio。全部原质量/F39/static/复杂动态/HD预算继续active。
+
+033已过滤提交`0955bd9`，PairwiseWeights verifier提交后再次通过。无新GPU/产品代码改动，原输入/公式/几何核对与冻结反事实范围明确。后期luma对称化预测太小搁置，034仅既有factor2大步长双向支持单候选，实际资格/新旧点/full/phase/noise前不称修复；Ho-GD计划排除，目标active。
+
+## 034：仅大步长双向factor2支持域候选（进行中）
+
+**事前review：** 033冻结输入中factor2支持在亮边有定向变化、反例仅step2微退化而step8/16保留全部tap，最多支持单GPU资格。只GI实例shader10在gStepSize>4且donor不在center[.5,2]时将原权重归零，双零保留；5轮/phi/variance/geometry-normal-material/单位64/格式/其它原式不改，非单向增益/迭代扫描。生成体只有一块guard新增，scope恢复。
+
+先2seed16/16资格再同4seed64/256原27点/19参考/8邻/full/16phase/noise，沿既有20%实质收益/无hard-regression筛选与原5%门槛；不能因冻结模型可能有益就降低标准。失败撤回搁置不扫ratio，有益再旧15完整8seed/后续实际资格。所有hidden Editor自有进程15分钟/fence约束，Runtime先不改，目标active。
+
+### 034事后review（2026-10-23）：支持域候选撤回，发现后两seed raw配对问题
+
+39032资格actual0/98请求、31792正式actual0/1314请求，5轮/其它settings/单位64/格式保持；只GI实例shader10 step>4新增对称factor2 guard，去一行后source恢复stock，scope恢复、F32copy64、API/compile/Property/UAV/fence/drift0。
+
+名义新18 L1 .462545→.421666（−8.84%）未达预声明20%；旧反例近似不变/无19点hard，full仍2/4、pooled−4.69053/−5.02999/−4.71627%，phase7/11/11/7→7/10/11/7、无pass→fail，方差约+4～11%。但最终严格pair核对发现seed5347609/6396185 raw不逐bit同（前两个同）；全帧raw均值max差2.21911e−6/1.84949e−6、各767/768 RGB分量不同，local单样本max9.155e−5/.001495。不能把8.84%当受控因果收益；comparisonQualified=false与原数据保留，根因未知不归因engine/driver/场景/NRD。初Verifier据raw应同失败后，改为明确核验并保留该未满足条件，而非改绿质量/配对资格。
+
+候选搁置，不扫ratio。原所有源/生成体/SHA归档后Castle恢复99f4fac、新ContrastSupportAudit/meta删除，49216 stock control过滤后真实98请求actual0、Native5/copy64/scope过、API/compile/绑定/fence/drift0。Runtime/DI/vendor始终未改。新证据与RTGI文档白名单、Ho-GD计划排除。035先原版4seed重现性/no-op clone对照，记录frame/light/sky/RIS/secondary实际状态，恢复严格pair前停止算法候选；不重采MC或重启旧AS调参。原所有质量/F39/static/复杂动态/HD预算继续active。

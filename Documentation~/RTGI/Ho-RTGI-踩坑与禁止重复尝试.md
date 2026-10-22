@@ -154,3 +154,9 @@ GI私有diffuse分母1e−4/64（9/10各仅一个token）保持5轮/单位64/其
 原forward/geometry一致性已核对，不能无依据改坐标/阈值。仅luma正反向几何均值的后期L1预测仅约.0000875，搁置该GPU方向；反向方差不是完整反向kernel，未知reverse几何/jitter/归一化不能臆造。031固定factor2支持域在反例step2会微退化，不能全局启用；最多step>4单候选。
 
 每轮独立使用原输入，不能累加重放收益或当递归/动态/全场景验收。8邻点无MC真值必须保留限制，不扫ratio/epsilon/迭代或删反例。有实际GPU收益还要旧15/全8seed/full/phase/noise和后续资格，F51/F53继续。
+
+## F55 / 步骤034：弱名义收益与raw配对不满足，先停滤波候选
+
+step>4 factor2支持域名义L1仅−8.84%未达原20%，更重要是后两seed raw不匹配旧基线：full逐帧均值max2.219e−6/1.849e−6，不能继续写raw相同或用该比较接纳质量。前两seed同，不代表后两同；根因未证明，不强行归因GPU/driver/场景/共享资源。保留actual0功能完成与comparisonQualified=false，两者不是矛盾。
+
+候选入口/类/meta撤回、默认5复核过；不扫描ratio。035优先stock四seed重复/no-op clone及frame/数值light/sky/RIS/secondary状态定位，严格paired恢复前不试新的滤波参数/算式，不重跑无关MC/AS旧矩阵。033静态预测也不能覆盖这个真实输入差异；F51/F53继续搁置。

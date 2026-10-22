@@ -529,3 +529,15 @@ Tests~/RTGI/AtrousPropagation约24.4MiB，255source/12新文本、5完整log、4
 Tests~/RTGI/PairwiseWeights有压缩输入SHA/源码公式/analysis/verify，默认5、所有旧失败/范围保持，Ho-GD计划排除。033是机制筛选收益，没有修复交付。
 
 **034直接动作：** 一个Editor私有GI shader10候选，只有gStepSize>4时令sampleLuma处于centerLuma[.5,2]才保留原权重，双零保留；对称支持域非单向提亮，5轮/单位64/格式/phi/variance/原geometry-normal-material和其它算式不变。factor2只沿031既有bin，不扫阈值。先源码精确diff/作用域恢复/实际资格，再同4seed全部19参考+8邻/full/16phase/noise，不能漏141157；有收益再旧15/全8seed/动态/HDR/Player/GPU，失败撤回搁置。原F51/F53继续，全部原full/phase/F39/static/复杂动态/1080完整预算与目标active。
+
+033已过滤提交`0955bd9`，PairwiseWeights verifier提交后再次通过。无新GPU/产品代码改动，原输入/公式/几何核对与冻结反事实范围明确。后期luma对称化预测太小搁置，034仅既有factor2大步长双向支持单候选，实际资格/新旧点/full/phase/noise前不称修复；Ho-GD计划排除，目标active。
+
+### 034终态（2026-10-23，待过滤提交）：guard候选撤回，035先stock配对重现性
+
+39032短资格98请求、31792四seed正式1314请求 all actual0，API/compile/绑定/fence/drift0、F32copy64/Native5与source scope恢复过。只GI shader10 step>4对称factor2 guard，去一行恢复stock，原Runtime/DI/vendor/其它settings/单位64/格式保持。
+
+数据只能叫名义对比：new18 L1 .462545→.421666（−8.84%，不足20%），counter近似同，full2/4、pooledRGB−4.69053/−5.02999/−4.71627%，phase7/11/11/7→7/10/11/7，无pass→fail、方差+4～11%。最终pair核对：seed0/104729 raw/local/preGuard全部同；seed5347609/6396185 raw不满足逐bit，全帧RGB均值max2.21911e−6/1.84949e−6（各767/768变化），local样本max9.155e−5/.001495。comparisonQualified=false，不能宣称因果收益，根因未知，别无证归因。
+
+原源/生成体/所有结果完整保存后，Castle恢复99f4fac，新增ContrastSupportAudit/meta已删除。49216过滤后stock control实际98请求0、Native5/copy64/scope和API/compile/绑定/fence/drift通过。Runtime一直未改，所有自有进程终态/active=null。Tests~/RTGI/ContrastSupport含源码/生成体/3logs/27capture/analysis/filter-review/verify，当前源码对应filtered-run，历史candidate入口已删，不能回滚产品凑SHA。Ho-GD计划不纳入。
+
+**035直接动作：** 暂停算法候选，先stock默认5同4seed的原版重复以及无操作shader clone对照，保持原27点/相机/时间预算；检查后两seed raw是否重现差异，记录实际shader frame、numeric lights/sky/RIS及secondary记录，必要逐字段比较而非仅单个hash。若stock原版本身变化，先定位状态/seed-reset/环境输入；若仅clone引入，定位观察/资源副作用。源/日志/失败都保留，严格pair恢复前不再试滤波参数或RGB算式。不要重采MC/跑旧AS flags或无新机制完整大矩阵。原质量/F39/static/复杂动态/1080完整预算及目标active继续。

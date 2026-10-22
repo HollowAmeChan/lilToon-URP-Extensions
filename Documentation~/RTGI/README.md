@@ -65,3 +65,5 @@
 步骤032单位域floor候选失败：新18 L1仅−3.9%，原full2→0/4且11个phase pass→fail，已保存失败并移除候选入口/类，stock5过滤后实跑通过。[原失败与撤回证据](../../Tests~/RTGI/LumaFloor/README.md)。033复用现有中心/邻居方差和权重，先离线核对双向/归一化机制，不继续常量/单位/迭代扫描；Runtime未改，全部原缺口active继续。
 
 步骤033复用权重离线重建forward/geometry（31,104 tap0不符），简单luma对称化后期预测太小，不开GPU；既有factor2双向支持只在大步长能区分采样两类位置。[冻结重放与限制](../../Tests~/RTGI/PairwiseWeights/README.md)。034仅step>4局部候选，未修复生产、不能累加静态收益，全部原门槛/预算继续active。
+
+步骤034大步长factor2 guard撤回：名义L1−8.84%不足筛选，且后两seed发现raw配对不满足，不能当因果收益；默认5过滤实跑过。[原数据与配对失败](../../Tests~/RTGI/ContrastSupport/README.md)。035先stock重复/no-op clone和输入状态重现性，严格pair恢复前暂停新算法，所有原缺口active继续。

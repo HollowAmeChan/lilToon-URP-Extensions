@@ -1,0 +1,547 @@
+{
+  "productionChanged": false,
+  "comparisonQualified": false,
+  "rawMismatchCause": "Unproven; no engine/driver/scene cause assigned",
+  "eligible": false,
+  "decision": "Shelve this exact late-step symmetric factor2 support candidate after insufficient nominal local benefit and a raw pairing mismatch in last2 seeds; retain original full/phase results; remove its Editor hooks, no epsilon/unit/iteration scan.",
+  "baselineNew18L1": 0.4625451132878015,
+  "candidateNew18L1": 0.42166580096676004,
+  "relativeL1Reduction": 0.08837908162183061,
+  "all19ReferencePointComparisons": [
+    {
+      "x": 85,
+      "y": 204,
+      "baselineOverReference": [
+        1.1193653559972865,
+        1.1809009565815904,
+        1.1952987049299977
+      ],
+      "candidateOverReference": [
+        1.119327590147223,
+        1.1808784818305684,
+        1.1952933200515306
+      ],
+      "errorIncrease": [
+        -7.916241884231567e-09,
+        -1.1641532182693481e-09,
+        -2.9103830456733704e-10
+      ],
+      "hardLimit": [
+        1.0480688069947064e-05,
+        5e-06,
+        5e-06
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 86,
+      "y": 204,
+      "baselineOverReference": [
+        0.6480380558323188,
+        0.5204472423513948,
+        0.5104918267475893
+      ],
+      "candidateOverReference": [
+        0.7512942903368574,
+        0.6877134605074281,
+        0.6864389410228492
+      ],
+      "errorIncrease": [
+        -0.0009703859686851501,
+        -0.00045036431401968,
+        -0.0005528493784368038
+      ],
+      "hardLimit": [
+        0.00046989219263195994,
+        0.00013462500646710396,
+        0.0001571066910400987
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 87,
+      "y": 204,
+      "baselineOverReference": [
+        0.735199686214807,
+        0.5847389676528058,
+        0.5638044021513117
+      ],
+      "candidateOverReference": [
+        0.8176718338015431,
+        0.7325574629458432,
+        0.7194528863933358
+      ],
+      "errorIncrease": [
+        -0.0006276145577430725,
+        -0.0002850969322025776,
+        -0.0003368072211742401
+      ],
+      "hardLimit": [
+        0.00038050091825425625,
+        9.643479716032745e-05,
+        0.00010819482849910855
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 85,
+      "y": 206,
+      "baselineOverReference": [
+        1.116986538641549,
+        1.1512591228931839,
+        1.1696181548944165
+      ],
+      "candidateOverReference": [
+        1.1162160453697303,
+        1.1504835728981548,
+        1.1688262147892698
+      ],
+      "errorIncrease": [
+        -1.6158446669578552e-07,
+        -3.4226104617118835e-08,
+        -3.812601789832115e-08
+      ],
+      "hardLimit": [
+        1.0485780512681232e-05,
+        5e-06,
+        5e-06
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 86,
+      "y": 206,
+      "baselineOverReference": [
+        0.6171848063969042,
+        0.46315715741408603,
+        0.4493777537966219
+      ],
+      "candidateOverReference": [
+        0.7117210168766352,
+        0.6167873994988654,
+        0.6111608862320886
+      ],
+      "errorIncrease": [
+        -0.0009581148624420166,
+        -0.00044121406972408295,
+        -0.0005561802536249161
+      ],
+      "hardLimit": [
+        0.0005067449063062668,
+        0.00014359609922394158,
+        0.00017189068021252754
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 87,
+      "y": 206,
+      "baselineOverReference": [
+        0.7005687474120094,
+        0.5260277783072056,
+        0.4990273554892776
+      ],
+      "candidateOverReference": [
+        0.7210400825618086,
+        0.5608366356753905,
+        0.5349346684478303
+      ],
+      "errorIncrease": [
+        -0.00017721951007843018,
+        -7.866695523262024e-05,
+        -9.114621207118034e-05
+      ],
+      "hardLimit": [
+        0.0004328479524701834,
+        0.00011299847392365336,
+        0.00012691873125731946
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 85,
+      "y": 226,
+      "baselineOverReference": [
+        1.0452367097792905,
+        1.0623618121026634,
+        1.0729127627002264
+      ],
+      "candidateOverReference": [
+        1.0455150849932764,
+        1.0627138525363748,
+        1.073176381455783
+      ],
+      "errorIncrease": [
+        6.041955202817917e-08,
+        1.8102582544088364e-08,
+        1.3795215636491776e-08
+      ],
+      "hardLimit": [
+        1.0852178820641712e-05,
+        5e-06,
+        5e-06
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 86,
+      "y": 226,
+      "baselineOverReference": [
+        0.5590089056161858,
+        0.3774698816871541,
+        0.34825718655242227
+      ],
+      "candidateOverReference": [
+        0.5870958422243754,
+        0.43073429655242945,
+        0.4033884219774112
+      ],
+      "errorIncrease": [
+        -0.0002982392907142639,
+        -0.00016187923029065132,
+        -0.0002045375294983387
+      ],
+      "hardLimit": [
+        0.0005309217143803835,
+        0.0001519581419415772,
+        0.0001855005859397352
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 87,
+      "y": 226,
+      "baselineOverReference": [
+        0.668585674855576,
+        0.47400505195421816,
+        0.43503083911791723
+      ],
+      "candidateOverReference": [
+        0.6695244383578526,
+        0.4755899985295453,
+        0.4366759301019042
+      ],
+      "errorIncrease": [
+        -8.683651685714722e-06,
+        -3.6614947021007538e-06,
+        -4.381407052278519e-06
+      ],
+      "hardLimit": [
+        0.00046250475570559503,
+        0.00011550845811143519,
+        0.000133166101295501
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 85,
+      "y": 227,
+      "baselineOverReference": [
+        1.0402377100439797,
+        1.075167416913999,
+        1.0887062893343007
+      ],
+      "candidateOverReference": [
+        1.0399225102522156,
+        1.075174329092112,
+        1.0886632651624293
+      ],
+      "errorIncrease": [
+        -6.833579391241074e-08,
+        3.4924596548080444e-10,
+        -2.2118911147117615e-09
+      ],
+      "hardLimit": [
+        1.084007599274628e-05,
+        5e-06,
+        5e-06
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 86,
+      "y": 227,
+      "baselineOverReference": [
+        0.5451709885080441,
+        0.3552861480597188,
+        0.3276432229677041
+      ],
+      "candidateOverReference": [
+        0.5551181206950584,
+        0.37388047672917063,
+        0.34704538653813993
+      ],
+      "errorIncrease": [
+        -0.00010810419917106628,
+        -5.815131589770317e-05,
+        -7.050158455967903e-05
+      ],
+      "hardLimit": [
+        0.0005433938000351191,
+        0.0001563684199936688,
+        0.00018168485257774591
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 87,
+      "y": 227,
+      "baselineOverReference": [
+        0.6744348395378639,
+        0.47061013200951374,
+        0.4307472867507871
+      ],
+      "candidateOverReference": [
+        0.6744878340001463,
+        0.4706643967582119,
+        0.43085801216836034
+      ],
+      "errorIncrease": [
+        -4.842877388000488e-07,
+        -1.2619420886039734e-07,
+        -2.8405338525772095e-07
+      ],
+      "hardLimit": [
+        0.00045692296698689465,
+        0.00011627641506493092,
+        0.0001282692770473659
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 85,
+      "y": 252,
+      "baselineOverReference": [
+        0.44130239686486683,
+        0.26631518643736646,
+        0.252342480151438
+      ],
+      "candidateOverReference": [
+        0.48255330723579526,
+        0.32943496725950555,
+        0.32027267456969793
+      ],
+      "errorIncrease": [
+        -0.00026892125606536865,
+        -0.00011643907055258751,
+        -0.0001645644661039114
+      ],
+      "hardLimit": [
+        0.00032595796510577203,
+        0.00011346737956484379,
+        0.00015888177217935842
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 86,
+      "y": 252,
+      "baselineOverReference": [
+        0.533302874528488,
+        0.3235474295094051,
+        0.2822598461859576
+      ],
+      "candidateOverReference": [
+        0.5334207326427781,
+        0.3237058055718936,
+        0.2824138207857682
+      ],
+      "errorIncrease": [
+        -1.2069940567016602e-06,
+        -5.010515451431274e-07,
+        -4.4656917452812195e-07
+      ],
+      "hardLimit": [
+        0.0005120538640767336,
+        0.00015818411484360697,
+        0.00014501390978693962
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 87,
+      "y": 252,
+      "baselineOverReference": [
+        0.6709567307660289,
+        0.44921320687978383,
+        0.3860836950986031
+      ],
+      "candidateOverReference": [
+        0.6709895866748866,
+        0.4492150422392691,
+        0.3860750552309378
+      ],
+      "errorIncrease": [
+        -2.7567148208618164e-07,
+        -4.190951585769653e-09,
+        1.7229467630386353e-08
+      ],
+      "hardLimit": [
+        0.00041951583698391915,
+        0.00011417249916121364,
+        9.970909450203181e-05
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 85,
+      "y": 255,
+      "baselineOverReference": [
+        0.4877924567306391,
+        0.32820165507213994,
+        0.31898785831145327
+      ],
+      "candidateOverReference": [
+        0.5788139448410922,
+        0.45712079131268085,
+        0.4581861033258137
+      ],
+      "errorIncrease": [
+        -0.0005652755498886108,
+        -0.00023844256065785885,
+        -0.0003008523490279913
+      ],
+      "hardLimit": [
+        0.0003105176379904151,
+        0.00013858533685812274,
+        0.0001708245282376571
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 86,
+      "y": 255,
+      "baselineOverReference": [
+        0.5524622257741268,
+        0.36596991350448843,
+        0.33005142828322304
+      ],
+      "candidateOverReference": [
+        0.559947629052085,
+        0.37625025905443815,
+        0.3406854997580571
+      ],
+      "errorIncrease": [
+        -7.88569450378418e-05,
+        -3.235042095184326e-05,
+        -3.470713272690773e-05
+      ],
+      "hardLimit": [
+        0.0005267381202429533,
+        0.00015734111657366158,
+        0.00016318835550919176
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 87,
+      "y": 255,
+      "baselineOverReference": [
+        0.6816538387852711,
+        0.4831349106092104,
+        0.4250874506322393
+      ],
+      "candidateOverReference": [
+        0.6818420383749536,
+        0.48341589470348945,
+        0.4253702503416195
+      ],
+      "errorIncrease": [
+        -1.6577541828155518e-06,
+        -6.603077054023743e-07,
+        -6.803311407566071e-07
+      ],
+      "hardLimit": [
+        0.00044042449444532395,
+        0.00011749912519007922,
+        0.00012028497876599432
+      ],
+      "hardRegressionChannels": []
+    },
+    {
+      "x": 141,
+      "y": 157,
+      "baselineOverReference": [
+        0.8858587434469319,
+        0.9155318132994194,
+        0.9963479951370942
+      ],
+      "candidateOverReference": [
+        0.8859687108255297,
+        0.9156629621727859,
+        0.9964324415291673
+      ],
+      "errorIncrease": [
+        -6.817281246185303e-07,
+        -4.959292709827423e-08,
+        -8.149072527885437e-09
+      ],
+      "hardLimit": [
+        0.0003099683439359069,
+        1.8907111370936037e-05,
+        5e-06
+      ],
+      "hardRegressionChannels": []
+    }
+  ],
+  "localHardRegressions": [],
+  "perSeed": [
+    {
+      "seed": 0,
+      "rawAllLocalSamplesBitwiseEqual": true,
+      "preGuardStagesBitwiseEqual": true,
+      "rawLocalMaxAbsoluteDifference": 0.0,
+      "rawFullFrameMeanMaxAbsoluteDifference": 0.0,
+      "baselineFullGatePass": true,
+      "candidateFullGatePass": true,
+      "baselinePhaseFailures": 7,
+      "candidatePhaseFailures": 7,
+      "filteredVarianceRatio": 1.0386850912229697
+    },
+    {
+      "seed": 104729,
+      "rawAllLocalSamplesBitwiseEqual": true,
+      "preGuardStagesBitwiseEqual": true,
+      "rawLocalMaxAbsoluteDifference": 0.0,
+      "rawFullFrameMeanMaxAbsoluteDifference": 0.0,
+      "baselineFullGatePass": false,
+      "candidateFullGatePass": false,
+      "baselinePhaseFailures": 11,
+      "candidatePhaseFailures": 10,
+      "filteredVarianceRatio": 1.101360164324077
+    },
+    {
+      "seed": 5347609,
+      "rawAllLocalSamplesBitwiseEqual": false,
+      "preGuardStagesBitwiseEqual": false,
+      "rawLocalMaxAbsoluteDifference": 9.1552734375e-05,
+      "rawFullFrameMeanMaxAbsoluteDifference": 2.2191088646650314e-06,
+      "baselineFullGatePass": false,
+      "candidateFullGatePass": false,
+      "baselinePhaseFailures": 11,
+      "candidatePhaseFailures": 11,
+      "filteredVarianceRatio": 1.1076761282625365
+    },
+    {
+      "seed": 6396185,
+      "rawAllLocalSamplesBitwiseEqual": false,
+      "preGuardStagesBitwiseEqual": false,
+      "rawLocalMaxAbsoluteDifference": 0.001495361328125,
+      "rawFullFrameMeanMaxAbsoluteDifference": 1.8494902178645134e-06,
+      "baselineFullGatePass": true,
+      "candidateFullGatePass": true,
+      "baselinePhaseFailures": 7,
+      "candidatePhaseFailures": 7,
+      "filteredVarianceRatio": 1.0439540309146762
+    }
+  ],
+  "phasePassToFailPairs": [],
+  "pooledFullRgbDifferencePercent": [
+    -4.690527771295738,
+    -5.029985290707351,
+    -4.71626737770624
+  ],
+  "candidatePassingFullSeeds": 2,
+  "baselinePassingFullSeeds": 2,
+  "referenceLimit": "8 neighbors are input/geometry controls without MC truth. Qualified references remain same-model/selected and do not prove full-image quality."
+}

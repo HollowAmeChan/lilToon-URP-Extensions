@@ -248,3 +248,5 @@
 步骤032：GI私有diffuse floor/64单候选失败（L1−3.9%、full2→0、11phase退化），已撤回/过滤后stock5实际资格重跑过，Runtime未改。033只复用现有权重/中心与样本方差作双向归一化核对，新可区分机制后再GPU，不重复常量扫描/旧矩阵；所有原范围、预算和用户强制要求继续active。
 
 步骤033：离线forward/geometry与固定结构重放完成，无新GPU/源码改动；排除预测微小的luma对称化GPU方向，仅保留大步长factor2支持域的可测假说。034单Editor局部候选需实际新旧控制/full/phase/noise及后续资格，冻结重放不等于完成；全部原范围/预算/用户强制要求继续active。
+
+步骤034：late factor2 guard名义收益弱且后两seed raw配对未满足，候选已移除、stock5实际资格复核，Runtime未变。035优先基线/无操作clone重现性和frame/light/sky/RIS/secondary核对，配对恢复前停算法试验；所有原范围/预算/用户强制要求继续active。

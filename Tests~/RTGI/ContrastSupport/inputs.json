@@ -1,0 +1,10 @@
+{
+  "baseline": {
+    "path": "../AtrousPropagation/results/control-matrix.json",
+    "rawSha256": "5DB2575049EF9752ECF71A52220E5D692FC1F29007836071823B88CCD71DD3F2"
+  },
+  "reference": {
+    "path": "../LocalReference/results/reference.json",
+    "rawSha256": "C233802BAE403DC85B9D3DF50882B0CA9E5538A879ED6040838D8F41C6E5A9A9"
+  }
+}

@@ -1,0 +1,21 @@
+{
+  "decision": "Shelve fixed late factor2 support: nominal8.84% below predeclared20%, plus raw pairing mismatch in seeds5347609/6396185; no causal-quality acceptance or ratio sweep",
+  "restored": {
+    "path": "Editor/RTGI/HoRTGICastleValidation.cs",
+    "fromRevision": "99f4fac",
+    "testedSha256": "B1F33B37A49DE571AAAA28E9883DF9307E31B18A53FCA9A3D256DA631961FCE0",
+    "restoredSha256": "F772943BB81A6FCA38105D3B24030C881E397F308FF3F1D9FCD70BC06080FBC7"
+  },
+  "removed": [
+    {
+      "path": "Editor/RTGI/HoRTGIContrastSupportAudit.cs",
+      "testedSha256": "583BEBEC57FDCC6DF7F21E03F3916E9E2B6417AA5356DBB17FCAAEF7FA9F9089"
+    },
+    {
+      "path": "Editor/RTGI/HoRTGIContrastSupportAudit.cs.meta",
+      "testedSha256": "66647BE5679D72A1AEB998BB32EDBC37D59E046C054B4BEBDC0FA701F542BFAA"
+    }
+  ],
+  "runtimeChanged": false,
+  "scanMoreValues": false
+}
